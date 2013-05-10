@@ -100,12 +100,11 @@ class LeicaScopeInterface
       int SetAFCDichroicMirrorPosition(MM::Device &device, MM::Core &core, int position);
 		int SetSidePortPosition(MM::Device& device, MM::Core& core, int position);
 
+      bool portInitialized_;
       LeicaMonitoringThread* monitoringThread_;
       LeicaDMIModel* scopeModel_;
 
-
       std::string port_;
-      bool portInitialized_;
       static const int RCV_BUF_LENGTH = 1024;
       unsigned char rcvBuf_[RCV_BUF_LENGTH];
 

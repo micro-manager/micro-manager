@@ -157,9 +157,9 @@ protected:
 
 private:
    bool initialized_;
-   long pos_;
    std::string name_;
    std::string description_;
+   long pos_;
 };
 
 class ObjectiveTurret : public CStateDeviceBase<ObjectiveTurret>
@@ -186,9 +186,9 @@ protected:
 
 private:
    bool initialized_;
-   long pos_;
    std::string name_;
    std::string description_;
+   long pos_;
 };
 
 class ZDrive : public CStageBase<ZDrive>
@@ -292,10 +292,10 @@ public:
    int OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
-   bool initialized_;
    std::string name_;
    std::string description_;
    unsigned int numPos_;
+   bool initialized_;
    LeicaDeviceModel* diaphragm_;
    int deviceID_;
 };
@@ -323,9 +323,9 @@ protected:
 
 private:
    bool initialized_;
-   long pos_;
    std::string name_;
    std::string description_;
+   long pos_;
 };
 
 class TLPolarizer : public CStateDeviceBase<TLPolarizer>
@@ -350,9 +350,9 @@ protected:
 
 private:
    bool initialized_;
-   long pos_;
    std::string name_;
    std::string description_;
+   long pos_;
 };
 
 class DICTurret : public CStateDeviceBase<DICTurret>
@@ -378,10 +378,10 @@ protected:
 
 private:
    bool initialized_;
-   long pos_;
-   double finePos_;
    std::string name_;
    std::string description_;
+   long pos_;
+   double finePos_;
 };
 
 class CondensorTurret : public CStateDeviceBase<CondensorTurret>
@@ -406,9 +406,9 @@ protected:
 
 private:
    bool initialized_;
-   long pos_;
    std::string name_;
    std::string description_;
+   long pos_;
 };
 
 // The incident light a.k.a the flourecense lamp is being derived
@@ -506,9 +506,9 @@ protected:
 
 private:
    bool initialized_;
-   long pos_;
    std::string name_;
    std::string description_;
+   long pos_;
 };
 
 #endif // _LeicaDMI_H_

@@ -195,8 +195,8 @@ int LeicaObjectiveTurretModel::GetImmersion(char & method)
  */
 LeicaDICPrismTurretModel::LeicaDICPrismTurretModel() :
    LeicaDeviceModel(),
-   motorized_(false),
-   prismName_(maxNrPrisms_ + 1)
+   prismName_(maxNrPrisms_ + 1),
+   motorized_(false)
 {
    position_ = 1;
 }

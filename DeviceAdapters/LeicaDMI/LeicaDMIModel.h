@@ -66,9 +66,9 @@ public:
 protected:
    MM_THREAD_GUARD mutex_;
    int position_;
-   bool busy_;
-   int maxPosition_;
    int minPosition_;
+   int maxPosition_;
+   bool busy_;
 };
 
 /*
@@ -333,8 +333,8 @@ public:
 	LeicaDeviceModel sidePort_;
 
 private:
-   std::vector<bool> availableDevices_;
    bool usesMethods_;
+   std::vector<bool> availableDevices_;
    std::vector<bool> availableMethods_;
    std::vector<std::string> methodNames_;
 

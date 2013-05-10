@@ -961,7 +961,7 @@ int ILTurret::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
          if (g_ScopeModel.UsesMethods()) {
             // check if the new position is allowed with this method
             int method;
-            int ret = g_ScopeModel.method_.GetPosition(method);
+            g_ScopeModel.method_.GetPosition(method);
             if (!g_ScopeModel.ILTurret_.cube_[pos].IsMethodAvailable(method)) {
                // the new cube does not support the current method.  Look for a method:
                // Look first in the FLUO methods, than in all available methods
@@ -1136,7 +1136,7 @@ int ObjectiveTurret::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
          if (g_ScopeModel.UsesMethods()) {
             // check if the new position is allowed with this method
             int method;
-            int ret = g_ScopeModel.method_.GetPosition(method);
+            g_ScopeModel.method_.GetPosition(method);
             if (!g_ScopeModel.ObjectiveTurret_.objective_[pos].IsMethodAvailable(method)) {
                // the new cube does not support the current method.  Look for a method:
                // Look first in the FLUO methods, than in all available methods
@@ -2283,8 +2283,6 @@ int DICTurret::Initialize()
    if (ret != DEVICE_OK)
       return ret;
 
-   ret = 
-
    ret = UpdateStatus();
    if (ret!= DEVICE_OK)
       return ret;
@@ -2485,7 +2483,7 @@ int CondensorTurret::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       pProp->Get(pos_);
       int pos;
-      int ret = g_ScopeModel.Condensor_.GetPosition(pos);
+      g_ScopeModel.Condensor_.GetPosition(pos);
       if (pos == pos_ + 1)
          return DEVICE_OK;
       pos = pos_ + 1;
@@ -2670,7 +2668,7 @@ int TransmittedLight::OnManual(MM::PropertyBase *pProp, MM::ActionType eAct)
    if (eAct == MM::BeforeGet)
    {
       int manual = 0;
-      int ret = g_ScopeInterface.GetTransmittedLightManual(*this, *GetCoreCallback(), manual);
+      g_ScopeInterface.GetTransmittedLightManual(*this, *GetCoreCallback(), manual);
       if (manual == 0)
       {
          pProp->Set("Computer");
