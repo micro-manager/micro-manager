@@ -65,25 +65,26 @@ public:
 	int OnWavelength(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
-    std::string port_;    
+   std::string port_;    
+   bool initialized_;
+	bool busy_;
+   double answerTimeoutMs_;
+	double power1_;
+	double power2_;
+   std::string laserOn_;
+	std::string operatingmode_;
+   std::string fault_;
+
+   std::string serialNumber_;
 	std::string hours_;
 	std::string wavelength_;
 	std::string specpower_;
-    std::string laserOn_;
-	std::string operatingmode_;
 	std::string suboperatingmode_;
-    std::string fault_;
-    std::string serialNumber_;
     
-	double power1_;
-	double power2_;
-    int specpower;
+   int specpower;
 	int serial_;
 	int device_;
     
-	bool busy_;
-    bool initialized_;
-    double answerTimeoutMs_;
 
 
 	bool PharseAnswerString(std::string &InputBuffer, const std::string &Kommando, std::vector<std::string> &ParameterVec);
