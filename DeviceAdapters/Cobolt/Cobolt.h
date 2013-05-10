@@ -59,17 +59,17 @@ public:
 private:
     std::string name_;
     std::string port_;
+    bool initialized_;
+    bool busy_;
+    double answerTimeoutMs_;
     std::string hours_;
+    double power_;
     std::string laserOn_;
     std::string laserStatus_;
-    std::string current_;
     std::string interlock_;  
+    std::string current_;
     std::string fault_;
     std::string serialNumber_;
     std::string version_;
-    double power_;
     int serial_;
-    bool busy_;
-    bool initialized_;
-    double answerTimeoutMs_;
 };
