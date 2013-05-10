@@ -64,9 +64,9 @@ public:
 private:
    bool initialized_;
    bool moving_;
+   long servoNr_;
    long minPos_;
    long maxPos_;
-   long servoNr_;
    long speed_;
    long acceleration_;
    // MMCore name of serial port
