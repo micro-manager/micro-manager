@@ -1,4 +1,4 @@
-///////////////////////////////////////////////////////////////////////////////
+
 // FILE:          Sapphire.h
 // PROJECT:       Micro-Manager
 // SUBSYSTEM:     DeviceAdapters
@@ -170,6 +170,8 @@ private:
 
    bool initialized_;
    std::string name_;
+   bool busy_;
+   MM::MMTime changedTime_;
    std::string port_;
 
 	// todo move these to DevImpl for better data hiding
@@ -185,18 +187,15 @@ private:
 	const std::string externalPowerControlToken_;
 	const std::string wavelengthToken_;
 
-
    unsigned char buf_[1000];
    string buf_string_;
    vector<string> buf_tokens_;
    unsigned long buf_bytes_;
    long armState_;
 
-   bool busy_;
    double answerTimeoutMs_;
 
 
-   MM::MMTime changedTime_;
 
 
    void SetPowerSetpoint(double powerSetpoint__, double& achievedSetpoint__);
