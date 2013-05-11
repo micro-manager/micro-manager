@@ -78,12 +78,14 @@ public:
 
 private:
 
+   bool initialized_;
    long intensity_;
    long state_;
-   int error_;
-
-   bool initialized_;
    std::string name_;
+   bool busy_;
+   int error_;
+   MM::MMTime changedTime_;
+
    std::string port_;
    char currentChannelLetter_;
    string currentChannelLabel_;
@@ -95,14 +97,12 @@ private:
    long armState_;
    TriggerType triggerMode_;
 
-   bool busy_;
    double answerTimeoutMs_;
    vector<char> channelLetters_;
    vector<string> channelLabels_;
    string triggerSequence_;
    string triggerMessage_;
    string trigger_;
-   MM::MMTime changedTime_;
 
 
    void SetIntensity(long intensity, long index);
