@@ -157,23 +157,23 @@ const int g_UniversalParamsCount = sizeof(g_UniversalParams)/sizeof(ParamNameIdP
 Universal::Universal(short cameraId) :
 CCameraBase<Universal> (),
 initialized_(false),
+imageCounter_(0),
+curImageCnt_(0),
 hPVCAM_(0),
+cameraId_(cameraId),
+circBuffer_(0),
+circBufferFrameCount_(CIRC_BUF_FRAME_CNT_DEF), // Sizes larger than 3 caused image tearing in ICX-674. Reason unknown.
+stopOnOverflow_(true),
+snappingSingleFrame_(false),
+singleFrameModeReady_(false),
+sequenceModeReady_(false),
+prevFrame_(0),
+triggerTimeout_(2),
+outputTriggerFirstMissing_(0),
 exposure_(10),
 binSize_(1),
 binXSize_(1),
 binYSize_(1),
-cameraId_(cameraId),
-stopOnOverflow_(true),
-snappingSingleFrame_(false),
-singleFrameModeReady_(false),
-imageCounter_(0),
-curImageCnt_(0),
-circBuffer_(0),
-prevFrame_(0),
-circBufferFrameCount_(CIRC_BUF_FRAME_CNT_DEF), // Sizes larger than 3 caused image tearing in ICX-674. Reason unknown.
-sequenceModeReady_(false),
-triggerTimeout_(2),
-outputTriggerFirstMissing_(0),
 rgbaColor_(false)
 {
    InitializeDefaultErrorMessages();
@@ -1211,11 +1211,11 @@ int Universal::initializeUniversalParams()
 int Universal::initializePostProcessing()
 {
    int nRet = DEVICE_OK;
-   rs_bool bAvail;
-   CPropertyAction *pAct;
 
 #ifdef WIN32
 
+   rs_bool bAvail;
+   CPropertyAction *pAct;
    // PARAM_ACTUAL_GAIN changes with PARAM_GAIN
    prmActualGain_ = new PvParam<uns16>( g_Keyword_ActualGain, PARAM_ACTUAL_GAIN, this );
    if ( prmActualGain_->IsAvailable() )
@@ -1932,7 +1932,7 @@ int Universal::ThreadRun(void)
       }
       while (DEVICE_OK == ret && !uniAcqThd_->getStop() && imageCounter_ < numImages_);
 
-      sprintf( dbgBuf, "ACQ LOOP FINISHED: thdGetStop:%u, ret:%u, retVal:%u, imageCounter_: %u, numImages_: %u", \
+      sprintf( dbgBuf, "ACQ LOOP FINISHED: thdGetStop:%u, ret:%u, retVal:%u, imageCounter_: %lu, numImages_: %lu", \
          uniAcqThd_->getStop(), ret, retVal, imageCounter_, numImages_);
       LogMMMessage( __LINE__, dbgBuf );
 
