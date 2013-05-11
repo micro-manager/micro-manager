@@ -132,23 +132,23 @@ const int n_param = sizeof(param_set)/sizeof(SParam);
 // &Universal constructor/destructor
 Universal::Universal(short cameraId) :
 CCameraBase<Universal> (),
+restart_(false),
 initialized_(false),
 busy_(false),
 hPVCAM_(0),
 exposure_(0),
 binSize_(1),
 bufferOK_(false),
+imageCounter_(0),
 cameraId_(cameraId),
 name_("Undefined"),
 nrPorts_ (1),
 circBuffer_(0),
 maxReadoutTime_(15),
 stopOnOverflow_(true),
-restart_(false),
 snappingSingleFrame_(false),
 singleFrameModeReady_(false),
 use_pl_exp_check_status_(true),
-imageCounter_(0),
 sequenceModeReady_(false)
 
 {
