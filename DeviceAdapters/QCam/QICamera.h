@@ -200,10 +200,10 @@ private:
         long GetRemaining(void) { return m_numImages - m_captureCount; }
 
     private:
-        QICamera*           m_pCam;         // parent camera
         bool                m_stop;         // thread stop requested
         long                m_numImages;    // total number of images to capture
         long                m_captureCount; // current count of images
+        QICamera*           m_pCam;         // parent camera
         bool                m_isRunning;    // is the thread running?
     }; // class QISequenceThread
 

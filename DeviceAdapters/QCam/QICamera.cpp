@@ -322,6 +322,8 @@ void ConvertTriggerTypeToEnum(const char *inType, QCam_qcTriggerType *outType)
 QICamera::QICamera()
 :CCameraBase<QICamera> ()
 ,m_isInitialized(false)
+,m_softwareTrigger(false)
+,m_rgbColor(false)
 ,m_dExposure(0)
 ,m_interval(0)
 ,m_bitDepth(0)
@@ -329,8 +331,6 @@ QICamera::QICamera()
 ,m_frameBuffs(NULL)
 ,m_frameBuffsAvail(NULL)
 ,m_frameDoneBuff(-1)
-,m_softwareTrigger(false)
-,m_rgbColor(false)
 {
    START_METHOD("QICamera::QICamera");
    try{
@@ -1794,13 +1794,10 @@ int QICamera::SetupITGain()
 */
 int QICamera::SetupEMAndEasyEMGain()
 {
-   CPropertyActionEx				*propertyAction;
-   char						tempStr[256];
    unsigned long				emGain, emGainMin, emGainMax;
-   QCam_Err					err;
-   int							nRet;
-   unsigned long				isEMGainAvailable, easyGainAsLong;					
-   bool                     minMaxSupport = true;
+   QCam_Err					   err;
+   unsigned long				isEMGainAvailable;					
+   bool                    minMaxSupport = true;
 
    START_METHOD("QICamera::SetupEMAndEasyEMGain");
 
@@ -3139,10 +3136,10 @@ int QICamera::OnEMGain(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 int QICamera::SetEasyEMGain(unsigned long  easyGainAsLong)
 {
-   QCam_Err				err = qerrSuccess;
-   unsigned long           emGainAsLong = 0;
 
 #ifdef WIN32
+   QCam_Err				err = qerrSuccess;
+   unsigned long           emGainAsLong = 0;
    if (easyGainAsLong == 1)
    {
 

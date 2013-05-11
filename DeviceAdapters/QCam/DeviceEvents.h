@@ -158,7 +158,6 @@ public:
          err = pthread_cond_wait(&event_, &lock_);
       } else {
          // determine the endtime
-			const long US_PER_MS = 1000;
 			const long NS_PER_US = 1000;
 
 			timeval startTime;
