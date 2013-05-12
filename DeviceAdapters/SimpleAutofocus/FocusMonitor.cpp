@@ -219,7 +219,7 @@ int FocusMonitor::AcqAfterFrame()
    // decide if we need to start af procedure
    double threshold(0.0);
    int ret = GetProperty(g_PropertyThreshold, threshold);
-   assert(ret == DEVICE_OK); ret; // Prevent var not used warning.
+   assert(ret == DEVICE_OK);  // Prevent var not used warning.
 
    if (score < threshold)
    {

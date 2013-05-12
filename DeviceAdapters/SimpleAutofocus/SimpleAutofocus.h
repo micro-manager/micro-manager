@@ -107,9 +107,11 @@ public:
 
 
 private:
-   double offset_; // TODO - need to know what this is.
+
+   std::string name_;
 
    // parameters for the Pakpoom Subsoontorn & Hernan Garcia brute force search
+   double offset_; // TODO - need to know what this is.
    double coarseStepSize_;
    long coarseSteps_; // +/- #of snapshot
    double fineStepSize_;
@@ -118,7 +120,6 @@ private:
 
    bool continuousFocusing_;
    bool locked_;
-   std::string name_;
    SimpleAutofocus& operator=(SimpleAutofocus& /*rhs*/) {
       assert(false);
       return *this;
@@ -129,11 +130,14 @@ private:
       std::sort(values.begin(), values.end());
       return values[(values.size())>>1];
    };
+
    double SharpnessAtZ(const double zvalue);
    double DoubleFunctionOfDouble(const double zvalue);
+
    MM::Core* pCore_;
    double cropFactor_;
    bool busy_;
+
    MMThreadLock busyLock_;
    double latestSharpness_;
 
@@ -214,7 +218,11 @@ private:
    class AFThread : public MMDeviceThreadBase
    {
    public:
-      AFThread(FocusMonitor* fm) : fm_(fm), delaySec_(2.0), running_(false) {}
+      AFThread(FocusMonitor* fm) : 
+         delaySec_(2.0), 
+         fm_(fm), 
+         running_(false) 
+      {}
       ~AFThread() {}
 
       int svc (void)
@@ -304,10 +312,10 @@ public:
 private:
    bool					busy_;
    bool					initialized_;
-   double				stepSize_;
    double				score_;
    double				cropFactor_;
-   double exposure_;
+   double				stepSize_;
+   double            exposure_;
 };
 
 #endif // _SIMPLEAUTOFOCUS_H_
