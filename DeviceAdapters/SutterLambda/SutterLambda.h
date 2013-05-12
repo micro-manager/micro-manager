@@ -149,13 +149,13 @@ private:
    bool initialized_;
    const int id_;
    std::string name_;
+   unsigned int nd_;
    std:: string port_;
    std::string controllerType_;
    std::string controllerId_;
    double answerTimeoutMs_;
    MM::MMTime changedTime_;
    std::string curMode_;
-   unsigned int nd_;
    Shutter& operator=(Shutter& /*rhs*/) {assert(false); return *this;}
 };
 
