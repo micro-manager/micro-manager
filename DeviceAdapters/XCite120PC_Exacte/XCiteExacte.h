@@ -89,8 +89,8 @@ private:
    string deviceName_;
    string serialPort_;
    bool shutterOpen_;
-   long lampIntensity_;
    string frontPanelLocked_;
+   long lampIntensity_;
    string lampState_;
    string pcShutterControl_;
    string irisControl_;

@@ -76,8 +76,8 @@ private:
    string deviceName_;
    string serialPort_;
    bool shutterOpen_;
-   string lampIntensity_;
    string frontPanelLocked_;
+   string lampIntensity_;
    string lampState_;
 
    static const char* cmdConnect;
