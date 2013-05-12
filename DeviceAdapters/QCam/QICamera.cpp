@@ -1841,6 +1841,11 @@ int QICamera::SetupEMAndEasyEMGain()
 
 #ifdef WIN32
 
+   unsigned long           easyGainAsLong;
+   int                     nRet;
+   CPropertyActionEx       *propertyAction;
+   char                    tempStr[256];
+
    sprintf(tempStr, "%lu", emGain);
 
    propertyAction = new CPropertyActionEx (this, &QICamera::OnEasyEMGain, 1);
