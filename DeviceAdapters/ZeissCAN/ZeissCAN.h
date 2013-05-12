@@ -120,8 +120,8 @@ class ZeissScope : public HubBase<ZeissScope>
       int DetectInstalledDevices();
 
    private:
-      double answerTimeoutMs_;
       bool initialized_;
+      double answerTimeoutMs_;
       bool IsMCU28Present();
       std::vector<std::string> peripherals_;
       std::map<int,std::string>* pTurretIDMap_;
