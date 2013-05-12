@@ -67,9 +67,7 @@ bool CSimpleCam::listCameras(vector<string>& detected)
 
    /* List cameras */
    CameraAbilitiesList *abilitiesList;
-   CameraAbilities abilities;
    GPPortInfoList *portInfoList;
-   GPPortInfo portInfo;
    CameraList *cameraList;
 
    if (rc >= GP_OK)
@@ -516,7 +514,7 @@ bool CSimpleCam::setShutterSpeed(std::string newShutterSpeed)
    }
 
    if (rc >= GP_OK)
-      rc = rc = gp_widget_set_value(shutterSpeedConfig, newShutterSpeed.c_str());
+      rc = gp_widget_set_value(shutterSpeedConfig, newShutterSpeed.c_str());
 
    if (rc >= GP_OK)
       rc = gp_camera_set_config(camera_, rootConfig, context_);
@@ -626,7 +624,7 @@ bool CSimpleCam::setISO(std::string newISO)
    }
 
    if (rc >= GP_OK)
-      rc = rc = gp_widget_set_value(isoConfig, newISO.c_str());
+      rc = gp_widget_set_value(isoConfig, newISO.c_str());
 
    if (rc >= GP_OK)
       rc = gp_camera_set_config(camera_, rootConfig, context_);

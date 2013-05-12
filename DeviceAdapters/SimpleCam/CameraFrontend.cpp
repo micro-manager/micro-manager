@@ -206,11 +206,11 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 */
 CCameraFrontend::CCameraFrontend() :
    CCameraBase<CCameraFrontend> (),
+   cameraSupportsLiveView_(false),
    initialized_(false),
    grayScale_(true),
    bitDepth_(8),
    keepOriginals_(false),
-   cameraSupportsLiveView_(false),
    imgBinning_(1),
    imgGrayScale_(false),
    imgBitDepth_(8),
@@ -751,8 +751,17 @@ int CCameraFrontend::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
          // either ask the 'hardware' or let the system return the value
          // cached in the property.
          ret=DEVICE_OK;
-      }break;
+      } break;
+   case MM::NoAction:
+      break;
+   case MM::IsSequenceable:
+   case MM::AfterLoadSequence:
+   case MM::StartSequence:
+   case MM::StopSequence:
+      return DEVICE_PROPERTY_NOT_SEQUENCEABLE;
+      break;
    }
+
    return ret; 
 }
 
@@ -799,6 +808,14 @@ int CCameraFrontend::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
             pProp->Set(g_PixelType_Color);
          ret=DEVICE_OK;
       }break;
+   case MM::NoAction:
+      break;
+   case MM::IsSequenceable:
+   case MM::AfterLoadSequence:
+   case MM::StartSequence:
+   case MM::StopSequence:
+      return DEVICE_PROPERTY_NOT_SEQUENCEABLE;
+      break;
    }
    return ret; 
 }
@@ -844,6 +861,14 @@ int CCameraFrontend::OnKeepOriginals(MM::PropertyBase* pProp, MM::ActionType eAc
             pProp->Set("0");
          ret=DEVICE_OK;
       }break;
+   case MM::NoAction:
+      break;
+   case MM::IsSequenceable:
+   case MM::AfterLoadSequence:
+   case MM::StartSequence:
+   case MM::StopSequence:
+      return DEVICE_PROPERTY_NOT_SEQUENCEABLE;
+      break;
    }
    return ret; 
 }
@@ -888,6 +913,14 @@ int CCameraFrontend::OnBitDepth(MM::PropertyBase* pProp, MM::ActionType eAct)
             pProp->Set("8");
          ret=DEVICE_OK;
       }break;
+   case MM::NoAction:
+      break;
+   case MM::IsSequenceable:
+   case MM::AfterLoadSequence:
+   case MM::StartSequence:
+   case MM::StopSequence:
+      return DEVICE_PROPERTY_NOT_SEQUENCEABLE;
+      break;
    }
    return ret; 
 }
@@ -988,6 +1021,14 @@ int CCameraFrontend::OnShutterSpeed(MM::PropertyBase* pProp, MM::ActionType eAct
          pProp->Set(shutterSpeed.c_str());
          ret = DEVICE_OK;
       }
+      break;
+   case MM::NoAction:
+      break;
+   case MM::IsSequenceable:
+   case MM::AfterLoadSequence:
+   case MM::StartSequence:
+   case MM::StopSequence:
+      return DEVICE_PROPERTY_NOT_SEQUENCEABLE;
       break;
    }
    return ret; 
@@ -1090,6 +1131,14 @@ int CCameraFrontend::OnISO(MM::PropertyBase* pProp, MM::ActionType eAct)
          ret = DEVICE_OK;
       }
       break;
+   case MM::NoAction:
+      break;
+   case MM::IsSequenceable:
+   case MM::AfterLoadSequence:
+   case MM::StartSequence:
+   case MM::StopSequence:
+      return DEVICE_PROPERTY_NOT_SEQUENCEABLE;
+      break;
    }
    return ret; 
 }
@@ -1152,6 +1201,14 @@ int CCameraFrontend::OnCameraName(MM::PropertyBase* pProp, MM::ActionType eAct)
          ret = DEVICE_OK;
       }
       break;
+   case MM::NoAction:
+      break;
+   case MM::IsSequenceable:
+   case MM::AfterLoadSequence:
+   case MM::StartSequence:
+   case MM::StopSequence:
+      return DEVICE_PROPERTY_NOT_SEQUENCEABLE;
+      break;
    }
    return ret; 
 }
@@ -1194,7 +1251,7 @@ int CCameraFrontend::SetAllowedCameraNames(string& defaultCameraName)
 
    // Log list of cameras
    ostringstream msg;
-   for (int i = 0; i < GetNumberOfPropertyValues(MM::g_Keyword_CameraName); i++)
+   for (unsigned int i = 0; i < GetNumberOfPropertyValues(MM::g_Keyword_CameraName); i++)
    {
       char value[MM::MaxStrLength];
       if (GetPropertyValueAt(MM::g_Keyword_CameraName, i, value))
@@ -1237,7 +1294,7 @@ int CCameraFrontend::SetAllowedISOs()
 
    // Log list of ISOs
    ostringstream msg;
-   for (int i = 0; i < GetNumberOfPropertyValues(g_Keyword_ISO); i++)
+   for (unsigned int i = 0; i < GetNumberOfPropertyValues(g_Keyword_ISO); i++)
    {
       char value[MM::MaxStrLength];
       if (GetPropertyValueAt(g_Keyword_ISO, i, value))
@@ -1285,7 +1342,7 @@ int CCameraFrontend::SetAllowedShutterSpeeds()
 
    // Log list of shutter speeds
    ostringstream msg;
-   for (int i = 0; i < GetNumberOfPropertyValues(g_Keyword_ShutterSpeed); i++)
+   for (unsigned int i = 0; i < GetNumberOfPropertyValues(g_Keyword_ShutterSpeed); i++)
    {
       char value[MM::MaxStrLength];
       if (GetPropertyValueAt(g_Keyword_ShutterSpeed, i, value))
@@ -1308,7 +1365,7 @@ int CCameraFrontend::SetShutterSpeed(double exposure_ms)
    string bestShutterSpeed = g_ShutterSpeed_NotSet;
    double bestError = 2.0 * exposure_ms;
    /* Loop over all shutter speeds, and choose closest approximation. */
-   for (int i = 0; i < GetNumberOfPropertyValues(g_Keyword_ShutterSpeed); i++)
+   for (unsigned int i = 0; i < GetNumberOfPropertyValues(g_Keyword_ShutterSpeed); i++)
    {
       char currShutterSpeedChar[MM::MaxStrLength];
       if (!GetPropertyValueAt(g_Keyword_ShutterSpeed, i, currShutterSpeedChar))
@@ -1429,7 +1486,7 @@ bool CCameraFrontend::UseCameraLiveView()
 
 void CCameraFrontend::EscapeValues(vector<string>& valueList)
 {
-   for(int i = 0; i < valueList.size(); i++)
+   for(unsigned int i = 0; i < valueList.size(); i++)
    {
       string newValue = "";
       string value = valueList[i];
