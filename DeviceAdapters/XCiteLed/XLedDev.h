@@ -92,10 +92,10 @@ private:
     int           m_nLedDevNumber;        // Led device number
     long          m_lOnOffState;          // Led on/off state
     long          m_lIntensity;           // Led intensity
-    long          m_lPWMUnit;             // Led PWM unit
     long          m_lSignalDelayTime;     // Led signal delay time
     long          m_lSignalOnTime;        // Led signal on time
     long          m_lSignalOffTime;       // Led signal off time
     long          m_lTriggerDelay;        // Led trigger delay time
     long          m_lPulseMode;           // pulse mode
+    long          m_lPWMUnit;             // Led PWM unit
 };

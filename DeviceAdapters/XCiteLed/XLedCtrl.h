@@ -81,8 +81,9 @@ class XLedCtrl : public CGenericBase<XLedCtrl>
       int WriteCommand(const unsigned char* sCommand);              // write command to serial port
       int ReadMessage(unsigned char* sMessage);                     // read message from serial port
 
-      bool          m_yInitialized;         // controller initialized flag
       double        m_dAnswerTimeoutMs;     // maximum waiting time for receiving reolied message
+      bool          m_yInitialized;         // controller initialized flag
+      long          m_lAllOnOff;            // all on/off flag
       long          m_lPWMState;            // PWM status
       long          m_lPWMMode;             // PWM mode
       long          m_lScrnLock;            // front panel lock
@@ -90,5 +91,4 @@ class XLedCtrl : public CGenericBase<XLedCtrl>
       long          m_lScrnBrite;           // screen brightness
       long          m_lScrnTimeout;         // screen saver time out
       long          m_lSpeakerVol;          // speaker volume
-      long          m_lAllOnOff;            // all on/off flag
 };

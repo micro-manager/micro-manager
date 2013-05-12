@@ -1497,7 +1497,10 @@ int XLedDev::OnSignalOnTime(MM::PropertyBase* pProp, MM::ActionType eAct)
         if (XLed::Instance()->GetDebugLogFlag() > 1)
         {
             osMessage.str("");
-            osMessage << "<XLedDev::OnSignalOnTime> AfterSet(2)(" << XLed::Instance()->GetXLedStr(XLed::XL_SignalOnTimeLabel).c_str() << "=<" << lSignalOnTime << "," <<  m_lSignalOnTime << ">), Returncode = " << ret; ">)";
+            osMessage << "<XLedDev::OnSignalOnTime> AfterSet(2)(" << 
+               XLed::Instance()->GetXLedStr(XLed::XL_SignalOnTimeLabel).c_str() << 
+               "=<" << lSignalOnTime << "," <<  m_lSignalOnTime << 
+               ">), Returncode = " << ret << ">)";
             this->LogMessage(osMessage.str().c_str());
         }
 
@@ -1584,7 +1587,10 @@ int XLedDev::OnSignalOffTime(MM::PropertyBase* pProp, MM::ActionType eAct)
         if (XLed::Instance()->GetDebugLogFlag() > 1)
         {
             osMessage.str("");
-            osMessage << "<XLedDev::OnSignalOffTime> AfterSet(2)(" << XLed::Instance()->GetXLedStr(XLed::XL_SignalOffTimeLabel).c_str() << "=<" << lSignalOffTime << "," <<  m_lSignalOffTime << ">), Returncode = " << ret; ">)";
+            osMessage << "<XLedDev::OnSignalOffTime> AfterSet(2)(" << 
+               XLed::Instance()->GetXLedStr(XLed::XL_SignalOffTimeLabel).c_str() << "=<" << 
+               lSignalOffTime << "," <<  m_lSignalOffTime << ">), Returncode = " << 
+               ret << ">)";
             this->LogMessage(osMessage.str().c_str());
         }
 
