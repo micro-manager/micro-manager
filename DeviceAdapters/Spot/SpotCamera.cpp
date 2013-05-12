@@ -688,7 +688,10 @@ int SpotCamera::NextSequentialImage(ImgBuffer& img)
 	const unsigned long bytesRequired = sourceheight*sourcewidth*bytesPerPixel;
 
 
-	if( (rawBufferSize_ < bytesRequired ) || (sourceheight != (int)img.Height()) || (sourcewidth != (int)img.Width()) || (bytesPerPixel !=img.Depth()) )
+	if( (rawBufferSize_ < bytesRequired ) || 
+         (sourceheight != (unsigned int)img.Height()) || 
+         (sourcewidth != (unsigned int)img.Width()) || 
+         (bytesPerPixel !=img.Depth()) )
 	{
 		this->ResizeImageBuffer( sourcewidth, sourceheight, bytesPerPixel);
 	}

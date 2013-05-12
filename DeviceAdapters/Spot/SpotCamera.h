@@ -159,10 +159,8 @@ private:
 	// hide any default ctor
 	SpotCamera(){};
 	// hide any default assigner
-	SpotCamera& operator=( const SpotCamera&){};
+	SpotCamera& operator=( const SpotCamera&){ return *this; };
 	
-	// using the popular PImpl idiom.
-	SpotDevice* pImplementation_;
 	
 	int selectedCameraIndexRequested_; // requested
 	int selectedCameraIndex_; // actually opened
@@ -170,24 +168,31 @@ private:
    std::string deviceName_;
 
    ImgBuffer imageBuffer;
-   bool initialized;  
 
+   bool initialized;  
    unsigned int numberOfChannels_;
-	unsigned long imageCounter_;
 	unsigned long numImages_;
+	// using the popular PImpl idiom.
+	SpotDevice* pImplementation_;
+   unsigned char* rawBuffer_;
+	unsigned long rawBufferSize_;
+	bool stopOnOverflow_;
+	double interval_ms_;
+	// for performance measurement:
+	double snapImageStartTime_; 
+	double previousFrameRateStartTime_;
+	bool startme_;
+	bool stopRequest_;
+
+	unsigned long imageCounter_;
 	//unsigned long sequenceLength_;
 	bool init_seqStarted_;
 	short frameRate_;
-	bool stopOnOverflow_;
-	double interval_ms_;
 
 	// cached computed or returned exposure time
 	double exposureTime_;
 	double exposureTimeRequested_;
 
-	// for performance measurement:
-	double snapImageStartTime_; 
-	double previousFrameRateStartTime_;
 
 
    ImgBuffer img_[3];
@@ -197,8 +202,6 @@ private:
    long readoutUs_;
    MM::MMTime readoutStartTime_;
    bool color_;
-   unsigned char* rawBuffer_;
-	unsigned long rawBufferSize_;
 
    int ResizeImageBuffer(  int imageSizeW = 1, 
                            int imageSizeH = 1);
@@ -211,8 +214,6 @@ private:
 	// interrupt whatever the camera is currently doing
 	int ShutdownImageBuffer(){	/* todo */ return DEVICE_OK;}
 
-	bool startme_;
-	bool stopRequest_;
 	MMThreadLock stopRequestLock_;
 	MMThreadLock cameraMMLock_;
 	bool WaitForExposureComplete(void);

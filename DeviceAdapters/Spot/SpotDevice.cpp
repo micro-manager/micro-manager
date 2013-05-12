@@ -53,8 +53,13 @@ static MMThreadLock imageReadyFlagLock_s;
 
 
 // construct the device  - this just loads the dll and maps the API functions 
-SpotDevice::SpotDevice(SpotCamera* pCamera): pMMCamera_(pCamera), pbuf_(NULL), sizeofbuf_(0),selectedCameraIndexRequested_(-1), voidStarBuffer_(NULL),
-nBufSize_(0)
+SpotDevice::SpotDevice(SpotCamera* pCamera): 
+   pMMCamera_(pCamera), 
+   voidStarBuffer_(NULL),
+   pbuf_(NULL), 
+   sizeofbuf_(0),
+   selectedCameraIndexRequested_(-1), 
+   nBufSize_(0)
 {
 	//MMThreadGuard libGuard(libraryLock_s);
 
@@ -217,7 +222,9 @@ void SpotDevice::InitializeCamera()
    stCameraInfo_.bIs1394FireWireCamera = (long) (dwAttributes & SPOT_ATTR_1394) != 0 ? true : false;
    stCameraInfo_.bCanDoLiveImageScaling = (long) (dwAttributes & SPOT_ATTR_LIVEHISTOGRAM) != 0 ? true : false;
    SpotAPI(SpotGetVersionInfo2)(&stVerInfo);
+#ifdef WIN32
 #pragma warning(disable:4996)
+#endif
    strcpy(stCameraInfo_.szModelNumber, stVerInfo.szCameraModelNum);
    strcpy(stCameraInfo_.szSerialNumber, stVerInfo.szCameraSerialNum);
    strcpy(stCameraInfo_.szRevisionNumber, stVerInfo.szCameraRevNum);
@@ -302,7 +309,9 @@ void SpotDevice::InitializeCamera()
 	g_Camera = pMMCamera_;
 	g_Device = this;
 
-#pragma warning(default:4996)
+#ifdef WIN32
+#pragma warning(disable:4996)
+#endif
 }
 
 
@@ -409,8 +418,6 @@ Specifies the number of image data buffers bytes per image row.  (MacOS only)
 
 void SpotDevice::SetupImageSequence( const int nimages , const int interval )
 {
-	//MMThreadGuard libGuard(libraryLock_s);
-	BOOL bDoAutoExposure = AutoExposure();
 	std::string message;
 	std::ostringstream timingInfo;
 
@@ -1320,9 +1327,9 @@ char* SpotDevice::GetNextSequentialImage(unsigned int& imheight, unsigned int& i
 			
 		if ( colorOrder[0] >= 0 ) 
 		{
-			for(int yoff = 0; yoff < imheight; ++yoff)
+			for(unsigned int yoff = 0; yoff < imheight; ++yoff)
 			{
-				for (int xoff = 0; xoff < imwidth*bytesppixel; xoff += bytesppixel) {
+				for (unsigned int xoff = 0; xoff < imwidth*bytesppixel; xoff += bytesppixel) {
 					// poutput[xoff] = 255-praster[xoff+colorOrder[0]]; // for Spot Idea USB camera???
 					poutput[xoff] = praster[xoff+colorOrder[0]];
 					poutput[xoff+1] = praster[xoff+colorOrder[1]];
@@ -1333,7 +1340,7 @@ char* SpotDevice::GetNextSequentialImage(unsigned int& imheight, unsigned int& i
 				praster += bytes;
 			}
 		} else {
-			for(int yoff = 0; yoff < imheight; ++yoff)
+			for(unsigned int yoff = 0; yoff < imheight; ++yoff)
 			{
 				// no rearrangement of color bytes or monochrome
 				memcpy(poutput, praster, imwidth*bytesppixel);
@@ -1876,8 +1883,8 @@ double SpotDevice::ActualGain(void)
 {
 	//MMThreadGuard libGuard(libraryLock_s);
 	float ag = 0.;
-	short gain = Gain();
 #ifdef _WINDOWS
+	short gain = Gain();
 	SpotAPI(SpotGetActualGain)(0, gain, &ag);
 #endif // weird - looks like this call not defined on Unix
 	return ag;
