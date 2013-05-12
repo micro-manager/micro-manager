@@ -468,11 +468,12 @@ class ZeissHub
 
       MM_THREAD_GUARD mutex;
       MMThreadLock executeLock_;
-      ZeissMonitoringThread* monitoringThread_;
-      MM::MMTime timeOutTime_;
-      unsigned char targetDevice_;
       std::vector<ZeissUByte > availableDevices_;
       std::string version_;
+
+      unsigned char targetDevice_;
+      ZeissMonitoringThread* monitoringThread_;
+      MM::MMTime timeOutTime_;
       bool scopeInitialized_;
 };
 

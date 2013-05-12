@@ -59,8 +59,8 @@ ZeissUByte ZeissHub::commandGroup_[MAXNUMBERDEVICES];
 
 
 ZeissHub::ZeissHub() :
-   targetDevice_ (AXIOOBSERVER),
    portInitialized_ (false),
+   targetDevice_ (AXIOOBSERVER),
    monitoringThread_(0),
    timeOutTime_(250000),
    scopeInitialized_ (false)
