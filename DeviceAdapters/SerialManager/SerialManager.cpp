@@ -385,17 +385,17 @@ void SerialManager::DestroyPort(MM::Device* port)
 }
 
 SerialPort::SerialPort(const char* portName) :
-   refCount_(0),
-   pService_(0),
-   pPort_(0),
-   pThread_(0),
-   busy_(false),
    initialized_(false),
+   busy_(false),
    portTimeoutMs_(2000.0),
    answerTimeoutMs_(500),
+   refCount_(0),
    transmitCharWaitMs_(0.0),
    stopBits_(g_StopBits_1),
    parity_(g_Parity_None),
+   pService_(0),
+   pPort_(0),
+   pThread_(0),
    verbose_(true)
 {
 
@@ -643,7 +643,7 @@ int SerialPort::GetAnswer(char* answer, unsigned bufLen, const char* term)
    std::ostringstream logMsg;
    unsigned long answerOffset = 0;
    memset(answer,0,bufLen);
-   char theData;
+   char theData = 0;
 
    MM::MMTime startTime = GetCurrentMMTime();
    MM::MMTime retryWarnTime(0);

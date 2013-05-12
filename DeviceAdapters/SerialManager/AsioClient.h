@@ -51,8 +51,8 @@ public:
       io_service_(io_service), 
       serialPortImplementation_(io_service, device),
       pSerialPortAdapter_(pPort),
-      shutDownInProgress_(false),
-      device_(device)
+      device_(device),
+      shutDownInProgress_(false)
    { 
       do // just a scope for the guard
       {
