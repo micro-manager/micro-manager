@@ -70,8 +70,8 @@ private:
    // MMCore name of serial port
    std::string port_;
    bool is_open_;
-   std::string lamp_intensity_;
    std::string is_locked_;
+   std::string lamp_intensity_;
    std::string lamp_state_;
    double exposure_time_s_;
 };
