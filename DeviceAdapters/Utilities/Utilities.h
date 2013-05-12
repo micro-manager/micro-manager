@@ -100,7 +100,7 @@ class CameraSnapThread : public MMDeviceThreadBase
       void SetCamera(MM::Camera* camera) {camera_ = camera;};
       int svc();
       void Start();
-      CameraSnapThread & operator = (const CameraSnapThread & ) {}
+      CameraSnapThread & operator = (const CameraSnapThread & ) {return *this;};
 
    private:
       MM::Camera* camera_;
@@ -198,8 +198,8 @@ public:
 
 private:
    std::vector<std::string> availableDAs_;
-   std::string DADeviceName_;
    MM::SignalIO* DADevice_;
+   std::string DADeviceName_;
    bool initialized_;
 };
 
