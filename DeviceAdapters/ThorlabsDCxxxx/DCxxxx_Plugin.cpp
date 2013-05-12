@@ -8,8 +8,8 @@
 //						"Off". "Fire" does nothing at all. All other commands are
 //						realized as properties and differ from device to device.
 //						Supported devices are:
-//							+ DC2010 - universal LED driver	\
-//							+ DC2100 - high power LED driver / both uses the DC2xxx class
+//                   + DC2010 - universal LED driver	
+//							+ DC2100 - high power LED driver - both uses the DC2xxx class
 //							+ DC3100 - FLIM LED driver
 //							+ DC4100 - four channel LED driver
 //
