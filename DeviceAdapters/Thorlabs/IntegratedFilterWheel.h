@@ -59,10 +59,10 @@ private:
    int GoToPosition(long pos);
    int RetrieveCurrentPosition(long& pos);
 
-   bool initialized_;
+   long numberOfPositions_;
    bool busy_;
    bool home_;
-   long numberOfPositions_;
+   bool initialized_;
    long position_;
    std::string port_;
    double answerTimeoutMs_;      // max wait for the device to answer

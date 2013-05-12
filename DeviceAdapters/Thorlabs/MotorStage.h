@@ -91,12 +91,12 @@ private:
    int ParseStatus(const unsigned char* buf, int bufLen, DCMOTSTATUS& stat);
    int GetCommandAnswer(unsigned char *reply, int reply_size, double timeout = -1);
 
-   int axis_;                    // which axis to control (0 = x, 1 = y, etc.)
-   HWINFO info_;                 // device information
    std::string port_;            // communications port
-   MOTTYPE type_;                // type of stage (servo, stepper)
-   double moveTimeoutMs_;        //
+   int axis_;                    // which axis to control (0 = x, 1 = y, etc.)
    double answerTimeoutMs_;      // max wait for the device to answer
+   double moveTimeoutMs_;        //
+   HWINFO info_;                 // device information
+   MOTTYPE type_;                // type of stage (servo, stepper)
    ThorlabsDeviceBase *parent_;  // parent device (XYStage, MotorXStage)
 };
 

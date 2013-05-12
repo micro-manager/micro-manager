@@ -89,10 +89,10 @@ private:
    bool initialized_;            // true if the device is intitalized
    bool home_;                   // true if stage is homed
    std::string port_;            // com port name
-   MotorStage *xstage_;          // x-axis stage device
-   MotorStage *ystage_;          // y-axis stage device
    double answerTimeoutMs_;      // max wait for the device to answer
    double moveTimeoutMs_;        // max wait for stage to finish moving
+   MotorStage *xstage_;          // x-axis stage device
+   MotorStage *ystage_;          // y-axis stage device
    HWINFO info_;                 // hardware information
    CommandThread* cmdThread_;    // thread used to execute move commands
 };

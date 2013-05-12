@@ -107,6 +107,5 @@ struct _ThorlabsCommand {
 });
 typedef struct _ThorlabsCommand ThorlabsCommand;
 
-static const char* g_PositionProp = "Position";
 
 #endif //_THORLABS_H_

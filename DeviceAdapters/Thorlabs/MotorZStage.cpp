@@ -162,9 +162,9 @@ MotorZStage::MotorZStage() :
    initialized_(false),
    answerTimeoutMs_(1000),
    moveTimeoutMs_(110000.0), // takes roughly 100 seconds to travel the whole range of ZST25
-   cmdThread_(0),
    zstage_(NULL),
-   home_(false)
+   home_(false),
+   cmdThread_(0)
 {
    InitializeDefaultErrorMessages();
 

@@ -83,10 +83,10 @@ private:
    std::string port_;            // com port name
    bool initialized_;            // true if the device is intitalized
    double answerTimeoutMs_;      // max wait for the device to answer
-   bool home_;                   // true if stage is homed
    double curPosUm_;             // cached current position
-   MotorStage *zstage_;          // fundamental stage device
    double moveTimeoutMs_;        // max wait for stage to finish moving
+   MotorStage *zstage_;          // fundamental stage device
+   bool home_;                   // true if stage is homed
    CommandThread* cmdThread_;    // thread used to execute move commands
    double maxSteps_;             // maximum number of steps supported by motor
    double stepSizeUm_;           // step size per appropriate unit for the current motor
