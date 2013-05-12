@@ -74,12 +74,12 @@ public:
    int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnCOMPort(MM::PropertyBase* pProp, MM::ActionType eAct);
 private:
-   bool initialized_;
-   bool busy_;
    long numPos_;
+   bool busy_;
+   bool initialized_;
+   MM::MMTime changedTime_;
    long position_;
    std::string port_;
-   MM::MMTime changedTime_;
 
    void InitializeFilterWheel();
 };
