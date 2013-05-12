@@ -68,11 +68,7 @@ public:
 	int OnNumPos(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
-	bool initialized_;
-	bool busy_;
-	long position_;
-	std::string port_;
-	MM::MMTime changedTime_;
+   
 	std::string ControllerName;
 	long HomeOffset;
 	long SlewVelocity;
@@ -81,6 +77,12 @@ private:
 	long HoldCurrent;
 	long RunCurrent;
 	long NumPos;
+
+	bool busy_;
+	bool initialized_;
+	MM::MMTime changedTime_;
+	long position_;
+	std::string port_;
 
 	int InitializeFilterWheel();
 };
@@ -133,11 +135,7 @@ public:
 
 
 private:
-	bool initialized_;
-	bool busy_;
-	std::string port_;
-	MM::MMTime changedTime_;
-	double stepSizeUm_;
+   
 	std::string ControllerName;
 	double SlewVelocity;
 	double InitVelocity;
@@ -149,6 +147,13 @@ private:
 	long WithLimits;
 	std::string Position;
 	double Speed;
+
+	bool busy_;
+	bool initialized_;
+	MM::MMTime changedTime_;
+	double stepSizeUm_;
+	std::string port_;
+   
 	std::string Execute;
 	long Out1;
 	long Out2;
@@ -228,42 +233,44 @@ public:
     int IsXYStageSequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
 
 private:
-	bool initialized_;
-	bool busy_;
-	std::string port_;
-	MM::MMTime changedTime_;
-	double stepSizeUmX_;
-	double stepSizeUmY_;
 	std::string ControllerNameX;
-	std::string ControllerNameY;
-	double SlewVelocityX;
-	double SlewVelocityY;
-	double InitVelocityX;
-	double InitVelocityY;
-	double AccelerationX;
-	double AccelerationY;
-	long HoldCurrentX;
-	long HoldCurrentY;
-	long RunCurrentX;
-	long RunCurrentY;
-	long MotorStepsX;
-	long MotorStepsY;
-	long LeadUmX;
-	long LeadUmY;
-	std::string PositionX;
-	std::string PositionY;
-	double SpeedX;
-	double SpeedY;
-	long Out1X;
-	long Out1Y;
-	long Out2X;
-	long Out2Y;
-	long LimitPolarityX;
-	long LimitPolarityY;
-	std::string ExecuteX;
-	std::string ExecuteY;
 	long StepDivideX;
+	double SlewVelocityX;
+	double InitVelocityX;
+	double AccelerationX;
+	long HoldCurrentX;
+	long RunCurrentX;
+	long MotorStepsX;
+	long LeadUmX;
+	std::string PositionX;
+	double SpeedX;
+	long Out1X;
+	long Out2X;
+	long LimitPolarityX;
+	double stepSizeUmX_;
+	std::string ExecuteX;
+
+	std::string ControllerNameY;
 	long StepDivideY;
+	double SlewVelocityY;
+	double InitVelocityY;
+	double AccelerationY;
+	long HoldCurrentY;
+	long RunCurrentY;
+	long MotorStepsY;
+	long LeadUmY;
+	std::string PositionY;
+	double SpeedY;
+	long Out1Y;
+	long Out2Y;
+	long LimitPolarityY;
+	double stepSizeUmY_;
+	std::string ExecuteY;
+
+	bool busy_;
+	bool initialized_;
+	MM::MMTime changedTime_;
+	std::string port_;
 
 	bool BusyX();
 	bool BusyY();
@@ -330,11 +337,6 @@ public:
 	int OnStepDivide(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
-	bool initialized_;
-	bool busy_;
-	long position_;
-	std::string port_;
-	MM::MMTime changedTime_;
 	std::string ControllerName;
 	double SlewVelocity;
 	double InitVelocity;
@@ -351,6 +353,12 @@ private:
 	long LeadUm;
 	long MotorSteps;
 	long StepDivide;
+
+	bool busy_;
+	bool initialized_;
+	MM::MMTime changedTime_;
+	long position_;
+	std::string port_;
 
 	int InitializeCubeSlider();
 };
@@ -380,11 +388,11 @@ public:
 	int OnChannel4Intensity(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
-	bool initialized_;
 	bool busy_;
+	bool initialized_;
+	MM::MMTime changedTime_;
 	long position_;
 	std::string port_;
-	MM::MMTime changedTime_;
 	long delay_;
 	double Channel1Intensity;
 	double Channel2Intensity;
