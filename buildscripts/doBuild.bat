@@ -1,3 +1,7 @@
+@rem We reset the echo mode after any "call" below to keep it consistent.
+@set ECHO_MODE=on
+@echo %ECHO_MODE%
+
 rem Parameters are:
 rem doBuild.bat Win32|x64 FULL|INCREMENTAL RELEASE|NIGHTLY UPLOAD|NOUPLOAD
 
@@ -55,6 +59,7 @@ if not "%PROCESSOR_ARCHITECTURE%"=="AMD64" (
 )
 pushd "%VC_PATH%"
 call vcvarsall.bat
+@echo %ECHO_MODE%
 popd
 
 set include=d:\projects\3rdpartypublic\boost;%include%
@@ -88,6 +93,7 @@ set YYYYMMDD=""
 set TARGETNAME=""
 call buildscripts\setmmversionvariable
 call buildscripts\setyyyymmddvariable
+@echo %ECHO_MODE%
 pushd .\mmstudio\src\org\micromanager
 del MMVersion.java
 svn update --non-interactive
@@ -116,6 +122,7 @@ PUSHD \projects\micromanager\mmStudio\src
 echo building mmStudio with command:
 echo call ant -buildfile ../build%ARCH%.xml %cleantarget% compile build buildMMReader
 call ant -buildfile ../build%ARCH%.xml %cleantarget% compile build buildMMReader
+@echo %ECHO_MODE%
 POPD
 
 rem haven't got to the bottom of this yet, but Pixel Calibrator and Slide Explorer need this jar file there....
@@ -123,10 +130,12 @@ copy \projects\micromanager\bin_%PLATFORM%\plugins\Micro-Manager\MMJ_.jar \proje
 
 pushd buildscripts
 call buildJars %DO_FULL_BUILD%
+@echo %ECHO_MODE%
 popd
 
 pushd mmStudio\src
 call ant -buildfile ../build%ARCH%.xml install packInstaller
+@echo %ECHO_MODE%
 popd
 
 pushd \Projects\micromanager\Install_%PLATFORM%\Output
