@@ -1,0 +1,11 @@
+Runnable doWorkRunnable = new Runnable() {
+   public void run() {
+      gui.message("Hallo");
+   };
+};
+
+for (int i=0; i < 3; i++) {
+   Thread myThread = new Thread(doWorkRunnable);
+   myThread.start();
+   myThread.join(1000);
+}
