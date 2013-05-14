@@ -35,6 +35,7 @@ import java.util.ArrayList;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.UIManager;
+import org.micromanager.utils.JavaUtils;
 import org.micromanager.utils.ReportingUtils;
 
 /**
@@ -44,6 +45,9 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
    
    private static final int LUT_HANDLE_SIZE = 10;
    private static final Color HIGHLIGHT_COLOR = Color.blue;
+   private static final int TOP_HANDLE_OFFSET = JavaUtils.isMac() ? 3 : 3;
+   private static final int BOTTOM_HANDLE_OFFSET = JavaUtils.isMac() ? 3 : 3;
+   private static final int PIXELS_PER_HANDLE_DIGIT = 6;
    
    private static final long serialVersionUID = -1789623844214721902L;
    // default histogram bins
@@ -234,12 +238,12 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
          g.setColor(HIGHLIGHT_COLOR);
          g.fillRect(x - width, y - LUT_HANDLE_SIZE, width, LUT_HANDLE_SIZE);
          g.setColor(UIManager.getColor("Panel.background"));
-         g.drawString(text, x - 6 * text.length(), y - 1);
+         g.drawString(text, x - PIXELS_PER_HANDLE_DIGIT * text.length() - TOP_HANDLE_OFFSET , y - 1);
       } else {
          g.setColor(UIManager.getColor("Panel.background"));
          g.fillRect(x - width, y - LUT_HANDLE_SIZE, width, LUT_HANDLE_SIZE);
          g.setColor(Color.black);
-         g.drawString(text, x - 6 * text.length(), y - 1);
+         g.drawString(text, x - PIXELS_PER_HANDLE_DIGIT * text.length() - TOP_HANDLE_OFFSET, y - 1);
       }
    }
 
@@ -255,12 +259,12 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
          g.setColor(HIGHLIGHT_COLOR);
          g.fillRect(x, y, width, LUT_HANDLE_SIZE + 1);
          g.setColor(UIManager.getColor("Panel.background"));
-         g.drawString(newContrast_.length() != 0 ? newContrast_ : text, x + 3, y + 10);
+         g.drawString(newContrast_.length() != 0 ? newContrast_ : text, x + BOTTOM_HANDLE_OFFSET, y + 10);
       } else {
          g.setColor(UIManager.getColor("Panel.background"));
          g.fillRect(x, y, width, LUT_HANDLE_SIZE + 1);
          g.setColor(Color.black);
-         g.drawString(text, x + 3, y + 10);
+         g.drawString(text, x + BOTTOM_HANDLE_OFFSET, y + 10);
       }
    }
 
@@ -479,6 +483,13 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
       return Math.max(min, Math.min(v, max));
    }
 
+   private float getHistogramTopNumbersWidth() {
+      return (float) (PIXELS_PER_HANDLE_DIGIT * cursorTextHigh_.length() + TOP_HANDLE_OFFSET);
+   }
+   
+   private float getHistogramBottomNumbersWidth() {
+      return (float) (PIXELS_PER_HANDLE_DIGIT * cursorTextLow_.length() + BOTTOM_HANDLE_OFFSET);
+   }
 
    private void getClickBand(int x, int y) {
       Rectangle box = getBox();
@@ -491,14 +502,14 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
       float deviceCursorHiX = getDevicePoint(new Point2D.Float(cursorHiPos_, 0), box, xUnit, (float) 1.0).x;
       clickLocation_ = 0;
       if (y < ymin + 10 && y >= ymin) {
-         if ((x > deviceCursorLoX)) {
+         if (x > deviceCursorLoX && x < deviceCursorLoX + getHistogramBottomNumbersWidth()) {
             clickLocation_ = 1;
             currentHandle_ = 0; //low cursor text field
             return;
          }
          currentHandle_ = 1; // Low cursor margin
       } else if (y <= ymax && y > ymax - 10) {
-         if ((x < deviceCursorHiX)) {
+         if (x < deviceCursorHiX && x > deviceCursorHiX - getHistogramTopNumbersWidth()) {
             clickLocation_ = 2;
             currentHandle_ = 0; //hi cursor text field
             return;
