@@ -191,6 +191,8 @@ COpenCVgrabber::COpenCVgrabber() :
 {
    // call the base class method to set-up default error codes/messages
    InitializeDefaultErrorMessages();
+   SetErrorText(FAILED_TO_GET_IMAGE, "Could not get an image from this camera");
+   SetErrorText(CAMERA_NOT_INITIALIZED, "Camera was not initialized");
    readoutStartTime_ = GetCurrentMMTime();
    thd_ = new MySequenceThread(this);
 }
@@ -247,9 +249,9 @@ int COpenCVgrabber::Initialize()
    frame = cvQueryFrame(capture);
    if (!frame)
    {
-      printf("Cannot retrieve frame from camera!");
-      return DEVICE_NOT_CONNECTED;
+      return FAILED_TO_GET_IMAGE;
    }
+
 #ifdef __APPLE__
    long w = frame->width;
    long h = frame->height;
@@ -445,6 +447,9 @@ int COpenCVgrabber::Shutdown()
 */
 int COpenCVgrabber::SnapImage()
 {
+   if (!initialized_)
+      return CAMERA_NOT_INITIALIZED;
+
    MM::MMTime startTime = GetCurrentMMTime();
    double exp = GetExposure();
    double expUs = exp * 1000.0;
@@ -487,6 +492,9 @@ int COpenCVgrabber::SnapImage()
 */
 const unsigned char* COpenCVgrabber::GetImageBuffer()
 {
+   if (!initialized_)
+      return NULL;
+
    IplImage* temp; // used during conversion
    MMThreadGuard g(imgPixelsLock_);
    MM::MMTime readoutTime(readoutUs_);

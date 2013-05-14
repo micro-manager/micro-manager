@@ -46,6 +46,8 @@
 #define ERR_IN_SEQUENCE          104
 #define ERR_SEQUENCE_INACTIVE    105
 #define SIMULATED_ERROR          200
+#define FAILED_TO_GET_IMAGE      201
+#define CAMERA_NOT_INITIALIZED   202
 
 
 //////////////////////////////////////////////////////////////////////////////
