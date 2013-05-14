@@ -38,6 +38,9 @@
 #include <map>
 #include <algorithm>
 
+#include "opencv/cv.h"
+#include "opencv/highgui.h"
+
 //////////////////////////////////////////////////////////////////////////////
 // Error codes
 //
@@ -107,6 +110,7 @@ public:
    // action interface
    // ----------------
 
+	int OnCameraID(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnGain(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -133,6 +137,10 @@ private:
    static const double nominalPixelSizeUm_;
 
 
+   // CvCapture* capture_;
+   // IplImage* frame_; // do not modify, do not release!
+
+   long int cameraID_;
    ImgBuffer img_;
    bool busy_;
    bool initialized_;
