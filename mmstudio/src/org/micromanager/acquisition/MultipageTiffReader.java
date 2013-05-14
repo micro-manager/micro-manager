@@ -554,6 +554,9 @@ public class MultipageTiffReader {
                }
             });
             
+            if (data.nextIFD <= filePosition || data.nextIFDOffsetLocation <= nextIFDOffsetLocation ) {
+               break; //so no recoverable data is ever lost
+            }
             filePosition = data.nextIFD;
             nextIFDOffsetLocation = data.nextIFDOffsetLocation;
          } catch (Exception e) {
@@ -567,12 +570,33 @@ public class MultipageTiffReader {
       ByteBuffer buffer = ByteBuffer.allocate(4).order(byteOrder_);
       buffer.putInt(0, 0);
       fileChannel_.write(buffer, nextIFDOffsetLocation); 
+      
+      JSONArray settings = VirtualAcquisitionDisplay.
+              getDisplaySettingsFromSummary(summaryMetadata_).getJSONArray("Channels");
+      filePosition += writeDisplaySettings(settings, filePosition);
+      
       raFile_.setLength(filePosition + 8);
       
       fileChannel_.close();
       raFile_.close();
       //reopen
       createFileChannel();
+   }
+   
+   private int writeDisplaySettings(JSONArray settings, long filePosition) throws IOException {
+      int numReservedBytes = settings.length() * MultipageTiffWriter.DISPLAY_SETTINGS_BYTES_PER_CHANNEL;
+      ByteBuffer header = ByteBuffer.allocate(8).order(MultipageTiffWriter.BYTE_ORDER);
+      ByteBuffer buffer = ByteBuffer.wrap(getBytesFromString(settings.toString()));
+      header.putInt(0, MultipageTiffWriter.DISPLAY_SETTINGS_HEADER);
+      header.putInt(4, numReservedBytes);
+       fileChannel_.write(header, filePosition);
+       fileChannel_.write(buffer, filePosition + 8);
+
+      ByteBuffer offsetHeader = ByteBuffer.allocate(8).order(MultipageTiffWriter.BYTE_ORDER);
+      offsetHeader.putInt(0, MultipageTiffWriter.DISPLAY_SETTINGS_OFFSET_HEADER);
+      offsetHeader.putInt(4, (int) filePosition);
+      fileChannel_.write(offsetHeader, 16);
+      return numReservedBytes + 8;
    }
    
    private int writeIndexMap(long filePosition) throws IOException {
