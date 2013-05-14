@@ -24,6 +24,7 @@
 package org.micromanager.utils;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 
 import javax.swing.BorderFactory;
 import javax.swing.JComponent;
@@ -43,20 +44,19 @@ public class ProgressBar extends JPanel {
       
       frame = new JFrame(windowName);
       frame.setDefaultCloseOperation (JFrame.DISPOSE_ON_CLOSE);
+      frame.setBounds(0,0,150 + 6 * windowName.length() ,100);
 
       progressBar = new JProgressBar(start,end);
       progressBar.setValue(0);
-      JPanel panel = new JPanel();
-      panel.add(progressBar);
-      add(panel, BorderLayout.PAGE_START);
+      JPanel panel = new JPanel(new BorderLayout());
+      panel.add(progressBar, BorderLayout.CENTER);
+      add(panel, BorderLayout.CENTER);
       panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
       JComponent newContentPane = panel;
       newContentPane.setOpaque(true);
       frame.setContentPane(newContentPane);
 
-      frame.pack();
-      frame.setBounds(0,0,250,100);
       frame.setLocationRelativeTo(null);
       frame.setVisible(true);
    }
