@@ -148,6 +148,11 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
 
       MultipageTiffReader reader = null;
       File dir = new File(directory_);
+      
+      final ProgressBar progressBar = new ProgressBar("Reading " + directory_, 0, dir.listFiles().length);
+      int numRead = 0;
+      progressBar.setProgress(numRead);
+      progressBar.setVisible(true);
       for (File f : dir.listFiles()) {
          if (f.getName().endsWith(".tif") || f.getName().endsWith(".TIF")) {
             //this is where fixing dataset code occurs
@@ -159,7 +164,10 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
                lastFrameOpenedDataSet_ = Math.max(frameIndex, lastFrameOpenedDataSet_);
             }
          }
+         numRead++;
+         progressBar.setProgress(numRead);
       }
+      progressBar.setVisible(false);
       //reset this static variable to false so the prompt is delivered if a new data set is opened
       reader.fixIndexMapWithoutPrompt_ = false;
 
