@@ -903,7 +903,7 @@ int BrightField::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
       if (pos == 0)
          pProp->Set("Confocal");
       else
-         pProp->Set("BrightField");
+         pProp->Set("Bright Field");
    }
    else if (eAct == MM::AfterSet)
    {
