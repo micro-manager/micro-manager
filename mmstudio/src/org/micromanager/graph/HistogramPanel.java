@@ -45,7 +45,7 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
    
    private static final int LUT_HANDLE_SIZE = 10;
    private static final Color HIGHLIGHT_COLOR = Color.blue;
-   private static final int TOP_HANDLE_OFFSET = JavaUtils.isMac() ? 3 : 3;
+   private static final int TOP_HANDLE_OFFSET = JavaUtils.isMac() ? 7 : 3;
    private static final int BOTTOM_HANDLE_OFFSET = JavaUtils.isMac() ? 3 : 3;
    private static final int PIXELS_PER_HANDLE_DIGIT = 6;
    
@@ -233,7 +233,7 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
           text = newContrast_;
       }
       
-      int width = 6 * text.length() + 3;
+      int width = PIXELS_PER_HANDLE_DIGIT * text.length() + TOP_HANDLE_OFFSET;
       if (contrastMaxEditable_) {
          g.setColor(HIGHLIGHT_COLOR);
          g.fillRect(x - width, y - LUT_HANDLE_SIZE, width, LUT_HANDLE_SIZE);
@@ -254,7 +254,7 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
       if (contrastMinEditable_ && newContrast_.length() != 0) {
          text = newContrast_;
       }
-      int width = 6 * text.length() + 3;
+      int width = PIXELS_PER_HANDLE_DIGIT * text.length() + 7;
       if (contrastMinEditable_) {
          g.setColor(HIGHLIGHT_COLOR);
          g.fillRect(x, y, width, LUT_HANDLE_SIZE + 1);
