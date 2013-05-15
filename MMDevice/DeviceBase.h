@@ -74,17 +74,17 @@ const char* const g_Msg_DEVICE_PROPERTY_NOT_SEQUENCEABLE="This property is not s
 const char* const g_Msg_DEVICE_SEQUENCE_TOO_LARGE="Sequence is too large for this device";
 const char* const g_Msg_DEVICE_NOT_YET_IMPLEMENTED="This command has not yet been implemented for this devce.";
 
+inline long nint( double value )
+{
+   return (long)floor( 0.5 + value);
+};
+
 /**
 * Implements functionality common to all devices.
 * Typically used as the base class for actual device adapters. In general,
 * derived class do not override DeviceBase methods, but rather take advantage
 * of using them to simplify development of specific drivers.
 */
-inline long nint( double value )
-{ 
-   return (long)floor( 0.5 + value);
-};
-
 template <class T, class U>
 class CDeviceBase : public T
 {
