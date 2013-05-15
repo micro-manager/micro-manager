@@ -35,7 +35,6 @@ if "%DO_FULL_BUILD%"=="FULL" (
     pushd ..\3rdpartypublic
     echo update 3rdpartypublic tree from the repository
     svn cleanup --non-interactive
-    rem - been having trouble updating from boost.org, but don't need to do that anyhow for now.
     svn update --accept postpone --force --ignore-externals --non-interactive
     popd
 )
