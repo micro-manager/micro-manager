@@ -31,7 +31,7 @@ const char* StandaZStage::DeviceName_ = "StandaZStage";
 const char* g_Standa_ZStageAxisLimitUm = "Limit_um";
 const char* g_Standa_ZStageDeviceNumber = "Device Number";
 
-USMC_Devices deviceList;
+static USMC_Devices deviceList;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Exported MMDevice API
