@@ -24,7 +24,7 @@
 #define _STANDA_H_
 
 // Standa headers
-#include "../../../3rdparty/Standa/USMCDLL.h"
+#include "USMCDLL.h"
 
 // MM headers
 #include "../../MMDevice/MMDevice.h"
