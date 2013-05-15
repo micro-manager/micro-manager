@@ -88,7 +88,7 @@ public class MultipageTiffWriter {
    
    private static ThreadPoolExecutor writingExecutor_ = null;
       
-   public static final ByteOrder BYTE_ORDER = ByteOrder.BIG_ENDIAN;
+   public static final ByteOrder BYTE_ORDER = ByteOrder.nativeOrder();
    
    final private boolean omeTiff_;
    
@@ -176,7 +176,7 @@ public class MultipageTiffWriter {
    }
    
    private ByteBuffer allocateByteBuffer(int capacity) {
-      return ByteBuffer.allocate(capacity).order(BYTE_ORDER);
+      return ByteBuffer.allocateDirect(capacity).order(BYTE_ORDER);
    }
    
    private void executeWritingTask(Runnable writingTask) {
