@@ -17,6 +17,7 @@ if "%1"=="x64" (
 set DO_FULL_BUILD=%2
 set DO_RELEASE_BUILD=%3
 set DO_UPLOAD=%4
+if "%DO_FULL_BUILD%"=="FULL" set DO_REBUILD=REBUILD else set DO_REBUILD=
 
 echo stop any instances that might already be running.
 pskill javaw.exe
@@ -47,44 +48,14 @@ svn cleanup --non-interactive
 svn update --accept postpone --non-interactive
 popd
 
-echo Building native C++ libraries....
-
-echo setup include path for Visual Studio....
-set include=
-
-set VC_PATH=\Program Files (x86)\Microsoft Visual Studio 9.0\VC\
-if not "%PROCESSOR_ARCHITECTURE%"=="AMD64" (
-    set VC_PATH=\Program Files\Microsoft Visual Studio 9.0\VC\
-)
-pushd "%VC_PATH%"
-call vcvarsall.bat
+call buildscripts\buildCpp.bat %PLATFORM% %DO_REBUILD%
 @echo %ECHO_MODE%
-popd
 
-set include=d:\projects\3rdpartypublic\boost;%include%
-
-echo include path is:
-set include
-
-echo continue working in:
-cd
-set buildswitch=/build
-IF "%DO_FULL_BUILD%"=="FULL" SET buildswitch=/rebuild
-
-echo building core with command:
-echo start /wait vcexpress .\MMCore\MMCore.vcproj %buildswitch% "Release|%PLATFORM%"
-start /wait vcexpress .\MMCore\MMCore.vcproj %buildswitch% "Release|%PLATFORM%"
-
-echo building python wrapper with command:
-echo start /wait vcexpress .\MMCorePy_wrap\MMCorePy_wrap.sln %buildswitch% "Release|%PLATFORM%"
-start /wait vcexpress .\MMCorePy_wrap\MMCorePy_wrap.sln %buildswitch% "Release|%PLATFORM%"
+rem MMCorePy needs to be manually staged
+rem (MMCoreJ is staged by the Java build process)
 copy .\bin_%PLATFORM%\MMCorePy.py .\Install_%PLATFORM%\micro-manager
 copy .\bin_%PLATFORM%\_MMCorePy.pyd .\Install_%PLATFORM%\micro-manager
 copy .\MMCorePy_wrap\MMCoreWrapDemo.py .\Install_%PLATFORM%\micro-manager
-
-echo building Java wrapper with command:
-echo start /wait vcexpress .\MMCoreJ_wrap\MMCoreJ_wrap.sln %buildswitch% "Release|%PLATFORM%"
-start /wait vcexpress .\MMCoreJ_wrap\MMCoreJ_wrap.sln %buildswitch% "Release|%PLATFORM%"
 
 echo Update the version number in MMVersion.java
 set mmversion=""
