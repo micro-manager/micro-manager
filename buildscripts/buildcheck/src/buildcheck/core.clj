@@ -64,6 +64,9 @@
   (map first
     (re-seq #"([0-9]*[1-9])\serrors?" result-text)))
 
+(defn clojure-errors [result-text]
+  (re-seq #"(?m)^Exception in thread.*?$" result-text))
+
 (defn device-adapter-dlls [dir]
   (filter
       (fn [file]
@@ -209,6 +212,7 @@
         vs-errors (visual-studio-errors-and-warnings bits)
         outdated-dlls (map #(.getName %) (old-dlls (bin-dir bits) 24))
         javac-errs (javac-errors result-txt)
+        clojure-errors (clojure-errors result-txt)
         outdated-jars (map #(.getName %)
                            (old-jars (File. micromanager "Install_AllPlatforms") 24))
         installer-ok (exe-on-server? bits today-token)
@@ -218,6 +222,7 @@
                    (empty? vs-errors)
                    (empty? outdated-dlls)
                    (empty? javac-errs)
+                   (empty? clojure-errors)
                    (empty? outdated-jars)
                    (empty? missing-vcproj-files)
                    (empty? missing-device-links)
@@ -231,6 +236,7 @@
         (report-segment "Visual Studio reported errors and warnings" vs-errors)
         (report-segment "Outdated device adapter DLLs" outdated-dlls)
         (report-segment "Errors reported by java compiler" javac-errs)
+        (report-segment "Errors reported by clojure compiler" clojure-errors)
         (report-segment "Outdated jar files" outdated-jars)
         (when (= 32 bits)
           (report-segment "Missing .vcproj files" missing-vcproj-files))
