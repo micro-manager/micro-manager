@@ -24,33 +24,45 @@
     (.put am uuid action)))
 
 (defn bind-keys
+  "Bind hot keys to a given swing component."
   [component input-keys action-fn global?]
   (dorun (map #(bind-key component % action-fn global?) input-keys)))
 
 (defn bind-window-keys
+  "Bind hot keys to a given window."
   [window input-keys action-fn]
   (bind-keys (.getContentPane window) input-keys action-fn true))
 
 ;; window and screen utilities
 
-(defn screen-bounds [screen]
+(defn screen-bounds
+  "Returns the boundary rectangle for a given screen."
+  [screen]
   (.. screen getDefaultConfiguration getBounds))
 
-(defn screen-devices []
+(defn screen-devices
+  "List all screen devices."
+  []
   (seq (.. java.awt.GraphicsEnvironment
       getLocalGraphicsEnvironment
       getScreenDevices)))
 
-(defn default-screen-device []
+(defn default-screen-device
+  "Get the default (main) screen device."
+  []
   (.. java.awt.GraphicsEnvironment
       getLocalGraphicsEnvironment
       getDefaultScreenDevice))
 
-(defn- overlap-area [rect1 rect2]
+(defn- overlap-area
+  "Find the area of overlap between two rectangles of type java.awt.Rectangle."
+  [rect1 rect2]
   (let [intersection (.intersection rect1 rect2)]
     (* (.height intersection) (.width intersection))))
 
-(defn window-screen [window]
+(defn window-screen
+  "Find the screen a given window currently occupies the most."
+  [window]
   (when window
     (let [window-bounds (.getBounds window)
           screens (screen-devices)]
@@ -116,7 +128,10 @@
       (exit-full-screen! window)
       (full-screen! window))))
 
-(defn setup-fullscreen [window]
+(defn setup-fullscreen
+  "Endows the given window with the ability to enter and exit full screen.
+   Key commands are F for enter/exit and ESCAPE also for exit." 
+  [window]
   (bind-window-keys window ["F"] #(toggle-full-screen! window))
   (bind-window-keys window ["ESCAPE"] #(exit-full-screen! window)))
 
