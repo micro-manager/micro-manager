@@ -73,7 +73,7 @@ private:
    long curSteps_;
    double stepSizeUm_;
    double axisLimitUm_;
-   int stepDivisor_;
+   BYTE stepDivisor_;
    float stageSpeed_;
    MM::TimeoutMs* timeOutTimer_;
    std::string deviceString_;
