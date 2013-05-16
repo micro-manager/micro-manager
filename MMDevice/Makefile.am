@@ -6,9 +6,9 @@ AM_CXXFLAGS = $(BOOST_CPPFLAGS)
 noinst_LTLIBRARIES = libMMDevice.la
 noinst_HEADERS = DeviceBase.h MMDevice.h MMDeviceConstants.h \
 	ModuleInterface.h Property.h DeviceUtils.h ImgBuffer.h DeviceThreads.h \
-	ImageMetadata.h
+	ImageMetadata.h Debayer.h
 libMMDevice_la_SOURCES = $(noinst_HEADERS) ModuleInterface.cpp \
-	Property.cpp DeviceUtils.cpp ImgBuffer.cpp
+	Property.cpp DeviceUtils.cpp ImgBuffer.cpp Debayer.cpp
 
 EXTRA_DIST = license.txt
 
