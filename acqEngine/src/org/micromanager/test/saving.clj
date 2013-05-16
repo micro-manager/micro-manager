@@ -2,7 +2,8 @@
   (:import (java.util.concurrent LinkedBlockingQueue)
            (mmcorej TaggedImage)
            (java.nio ByteBuffer ByteOrder)
-           (java.io RandomAccessFile))
+           (java.io FileOutputStream RandomAccessFile)
+           (java.nio.channels FileChannel$MapMode))
   (:require [org.micromanager.mm :as mm])
   (:use [org.micromanager.mm :only (core)]))
 
@@ -91,7 +92,7 @@
    images to a file using the direct byte buffer method."
   [num-images]
     (let [filename (str "D:/AcquisitionData/test" (rand-int 100000) ".dat")
-          file (RandomAccessFile. filename "rw")
+          file (FileOutputStream. filename false)
           channel (.getChannel file)]
       (try
         (let [buffer-queue (time (byte-buffer-queue num-images))]
@@ -103,6 +104,21 @@
         (catch Exception e (println e))
         (finally (.close file)))
       filename))
+
+(defn acquire-and-map
+  [num-images]
+  (let [buffer-queue (time (byte-buffer-queue num-images))]
+    (let [filename (str "D:/AcquisitionData/test" (rand-int 100000) ".dat")
+          file (RandomAccessFile. filename "rw")
+          channel (.getChannel file)
+          out (.. file getChannel (map FileChannel$MapMode/READ_WRITE 0 (* num-images 2560 2160 2)))]
+      (try
+        (dotimes-timed [i num-images] 100
+                       (let [pixels (.take buffer-queue)]
+                         (.put out pixels)))
+        (catch Exception e (println e))
+        (finally (.close file))))))
+        
 
 (defn acquire-and-store-in-ram
   "Simulate running a sequence acquisition, and store
