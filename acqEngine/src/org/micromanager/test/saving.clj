@@ -51,8 +51,9 @@
   [num-images image-queue]
   (run-sequence-acquisition num-images false)
   (dotimes [i num-images]
-        (when-let [image (pop-next-image)]
-          (.put image-queue image))))
+    (when-let [image (pop-next-image)]
+      (when image-queue
+        (.put image-queue image)))))
 
 (defn byte-buffer-queue
   "Run a sequence acquisition, convert the incoming
@@ -62,13 +63,14 @@
   (let [image-queue (LinkedBlockingQueue. 1)]
     (future (single-thread-pop-test num-images image-queue))
     (let [queue (LinkedBlockingQueue. 1)]
-      (future (dotimes [_ num-images]
+      (future (dotimes [i num-images]
                 (let [img (.take image-queue)
                       n (count img)]
                   (.put queue
                         (image-to-byte-buffer
                           img
-                          (byte-buffer (* n 2)))))))
+                          (byte-buffer (* n 2))))
+                  )))
       queue)))
 
 (defmacro dotimes-timed [bindings interval & body]
@@ -76,14 +78,19 @@
      (println '~(first bindings) "time (ms)")
      (dotimes ~bindings
        (when (zero? (mod ~(first bindings) ~interval))
-         (println ~(first bindings) (- (System/currentTimeMillis) t0#)))
+         (println ~(first bindings) (- (System/currentTimeMillis) t0#)
+                  (core getRemainingImageCount)))
        ~@body)))
+
+(defn write-buf [channel buffer]
+  (.write channel buffer)
+  )
 
 (defn acquire-and-save
   "Simulate running a sequence acquisition, and save the
    images to a file using the direct byte buffer method."
   [num-images]
-    (let [filename (str "E:/acquisition/test" (rand-int 100000) ".dat")
+    (let [filename (str "D:/AcquisitionData/test" (rand-int 100000) ".dat")
           file (RandomAccessFile. filename "rw")
           channel (.getChannel file)]
       (try
@@ -91,7 +98,8 @@
           (println filename)
           (dotimes-timed [i num-images] 100
             (let [buffer (.take buffer-queue)]
-              (.write channel buffer))))
+              (write-buf channel buffer)
+              )))
         (catch Exception e (println e))
         (finally (.close file)))
       filename))
