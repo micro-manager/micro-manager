@@ -92,7 +92,7 @@
    images to a file using the direct byte buffer method."
   [num-images]
     (let [filename (str "D:/AcquisitionData/test" (rand-int 100000) ".dat")
-          file (FileOutputStream. filename false)
+          file (RandomAccessFile. filename "rw")
           channel (.getChannel file)]
       (try
         (let [buffer-queue (time (byte-buffer-queue num-images))]
@@ -110,11 +110,11 @@
   (let [buffer-queue (time (byte-buffer-queue num-images))]
     (let [filename (str "D:/AcquisitionData/test" (rand-int 100000) ".dat")
           file (RandomAccessFile. filename "rw")
-          channel (.getChannel file)
-          out (.. file getChannel (map FileChannel$MapMode/READ_WRITE 0 (* num-images 2560 2160 2)))]
+          channel (.getChannel file)]
       (try
         (dotimes-timed [i num-images] 100
-                       (let [pixels (.take buffer-queue)]
+                       (let [pixels (.take buffer-queue)
+                             out (.. file getChannel (map FileChannel$MapMode/READ_WRITE 0 (.limit pixels)))]
                          (.put out pixels)))
         (catch Exception e (println e))
         (finally (.close file))))))
@@ -131,6 +131,22 @@
         (let [buffer (.take buffer-queue)]
           (.put storage-queue buffer)))
     storage-queue))
+
+(defn test-write [num-images]
+  (let [buffer (byte-buffer (* 2560 2160 2))
+        filename (str "D:/AcquisitionData/test" (rand-int 100000) ".dat")
+        file (RandomAccessFile. filename "rw")
+        channel (.getChannel file)]
+    (println filename)
+    (try
+      (dotimes-timed [i num-images] 100
+                     (.rewind buffer)
+        (.write channel buffer))
+      (catch Exception e (println e))
+      (finally
+        (.close file)))))
+      
+    
 
 (defn monitor-circular-buffer []
   (while (not (core isSequenceRunning))
