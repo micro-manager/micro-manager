@@ -484,6 +484,8 @@ private JComboBox byLibCombo_;
    }
    
 	public boolean enterPage(boolean fromNextPage) {
+      Cursor oldCur = getCursor();
+      setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 		try {
          // double check that list of device libraries is valid before continuing.
          CMMCore.getDeviceLibraries();
@@ -493,17 +495,16 @@ private JComboBox byLibCombo_;
 			   // do nothing for now
 			} else {
 			   model_.loadModel(core_);
-			   Cursor oldCur = getCursor();
-			   setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
             model_.initializeModel(core_);
-            setCursor(oldCur);
 			}
 	      buildTree();
 			return true;
 		} catch (Exception e2) {
 			ReportingUtils.showError(e2);
 			setCursor(Cursor.getDefaultCursor());
-		}
+		} finally {
+         setCursor(oldCur);
+      }
       
 		return false;
 	}

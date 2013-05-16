@@ -23,6 +23,7 @@
 //
 package org.micromanager.conf2;
 
+import java.awt.Cursor;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -145,12 +146,16 @@ public class IntroPage extends PagePanel {
 
    public boolean exitPage(boolean toNextPage) {
       if (modifyRadioButton_.isSelected() && (!initialized_ || filePathField_.getText().compareTo(model_.getFileName()) != 0)) {
+         Cursor oldCur = getCursor();
+			setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
          try {
             model_.loadFromFile(filePathField_.getText());
          } catch (MMConfigFileException e) {
             ReportingUtils.showError(e);
             model_.reset();
             return false;
+         } finally {
+            setCursor(oldCur);
          }
          initialized_ = true;
       }
