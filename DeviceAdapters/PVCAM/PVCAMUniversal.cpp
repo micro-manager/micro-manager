@@ -2238,9 +2238,28 @@ void Universal::LogMMMessage(int lineNr, std::string message, bool debug) const 
    catch(...){}
 }
 
+// Handle color mode property (Debayer ON or OFF)
+int Universal::OnColorMode(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   START_ONPROPERTY("Universal::OnColorMode", eAct);
+   if (eAct == MM::AfterSet)
+   {
+      string val;
+      pProp->Get(val);
+      val.compare(g_ON) == 0 ? rgbaColor_ = true : rgbaColor_ = false;
+      ResizeImageBufferSingle();
+   }
+   else if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(rgbaColor_ ? g_ON : g_OFF);
+   }
+   return DEVICE_OK;
+}
+
+
+
 /**************************** Post Processing Functions ******************************/
 #ifdef WIN32
-
 
 int Universal::OnResetPostProcProperties(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
@@ -2453,25 +2472,5 @@ int Universal::OnReadNoiseProperties(MM::PropertyBase* pProp, MM::ActionType eAc
    return DEVICE_OK;
 }
 
-// Handle color mode property (Debayer ON or OFF)
-int Universal::OnColorMode(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-   START_ONPROPERTY("Universal::OnColorMode", eAct);
-   if (eAct == MM::AfterSet)
-   {
-      string val;
-      pProp->Get(val);
-      val.compare(g_ON) == 0 ? rgbaColor_ = true : rgbaColor_ = false;
-      ResizeImageBufferSingle();
-   }
-   else if (eAct == MM::BeforeGet)
-   {
-      pProp->Set(rgbaColor_ ? g_ON : g_OFF);
-   }
-   return DEVICE_OK;
-}
-
 #endif
 
-
-    
