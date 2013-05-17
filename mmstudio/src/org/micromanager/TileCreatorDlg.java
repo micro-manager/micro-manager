@@ -59,11 +59,14 @@ public class TileCreatorDlg extends MMDialog {
    private JComboBox overlapUnitsCombo_;
    private enum OverlapUnitEnum {UM, PX, PERCENT};
    private OverlapUnitEnum overlapUnit_ = OverlapUnitEnum.UM;
+   private int centeredFrames_ = 0;
    private JTextField pixelSizeField_;
    private final JLabel labelLeft_ = new JLabel();
    private final JLabel labelTop_ = new JLabel();
    private final JLabel labelRight_ = new JLabel();
    private final JLabel labelBottom_ = new JLabel();
+   private final JLabel labelWidth_ = new JLabel();
+   private final JLabel labelWidthUmPx_ = new JLabel();
    private int prefix_ = 0;
 
    private static final DecimalFormat FMT_POS = new DecimalFormat("000");
@@ -137,7 +140,7 @@ public class TileCreatorDlg extends MMDialog {
       final JButton goToTopButton = new JButton();
       goToTopButton.setFont(new Font("", Font.PLAIN, 10));
       goToTopButton.setText("Go To");
-      goToTopButton.setBounds(133, 28, 93, 23);
+      goToTopButton.setBounds(129, 28, 93, 23);
       getContentPane().add(goToTopButton);
       goToTopButton.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent arg0) {
@@ -153,7 +156,7 @@ public class TileCreatorDlg extends MMDialog {
             labelTop_.setText(thisPosition());
          }
       });
-      setTopButton.setBounds(133, 5, 93, 23);
+      setTopButton.setBounds(129, 5, 93, 23);
       setTopButton.setFont(new Font("", Font.PLAIN, 10));
       setTopButton.setText("Set");
       getContentPane().add(setTopButton);
@@ -191,7 +194,7 @@ public class TileCreatorDlg extends MMDialog {
       });
       setBottomButton.setFont(new Font("", Font.PLAIN, 10)); 
       setBottomButton.setText("Set");
-      setBottomButton.setBounds(133, 126, 93, 23);
+      setBottomButton.setBounds(129, 126, 93, 23);
       getContentPane().add(setBottomButton);
 
       final JButton goToRightButton = new JButton();
@@ -209,7 +212,7 @@ public class TileCreatorDlg extends MMDialog {
       final JButton goToBottomButton = new JButton();
       goToBottomButton.setFont(new Font("", Font.PLAIN, 10));
       goToBottomButton.setText("Go To");
-      goToBottomButton.setBounds(133, 149, 93, 23);
+      goToBottomButton.setBounds(129, 149, 93, 23);
       getContentPane().add(goToBottomButton);
       goToBottomButton.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent arg0) {
@@ -218,6 +221,60 @@ public class TileCreatorDlg extends MMDialog {
          }
       });
 
+      final JButton gridCenteredHereButton = new JButton();
+      gridCenteredHereButton.setFont(new Font("", Font.PLAIN, 10));
+      gridCenteredHereButton.setText("Center Here");
+      gridCenteredHereButton.setBounds(129, 66, 93, 23);
+      gridCenteredHereButton.addActionListener(new ActionListener() {
+          public void actionPerformed(ActionEvent arg0) {
+              centerGridHere();
+              savePosition();
+              addToPositionList();
+          }
+      });
+      getContentPane().add(gridCenteredHereButton);
+ 
+      final JButton centeredPlusButton = new JButton();
+      centeredPlusButton.setFont(new Font("", Font.PLAIN, 10));
+      centeredPlusButton.setText("+");
+      centeredPlusButton.setBounds(184, 89, 38, 19);
+      centeredPlusButton.addActionListener(new ActionListener() {
+          public void actionPerformed(ActionEvent arg0) {
+              ++centeredFrames_;
+              labelWidth_.setText(Integer.toString(centeredFrames_));
+              updateCenteredSizeLabel();
+  
+          }
+      });
+      getContentPane().add(centeredPlusButton);
+ 
+      labelWidth_.setFont(new Font("", Font.PLAIN, 10));
+      labelWidth_.setHorizontalAlignment(JLabel.CENTER);
+      labelWidth_.setText("");
+      labelWidth_.setBounds(157, 89, 37, 19);
+      getContentPane().add(labelWidth_);
+ 
+      final JButton centeredMinusButton = new JButton();
+      centeredMinusButton.setFont(new Font("", Font.PLAIN, 10));
+      centeredMinusButton.setText("-");
+      centeredMinusButton.setBounds(129, 89, 38, 19);
+      centeredMinusButton.addActionListener(new ActionListener() {
+          public void actionPerformed(ActionEvent arg0) {
+              --centeredFrames_;
+              if(centeredFrames_ < 1)
+                 centeredFrames_ = 1;
+              labelWidth_.setText(Integer.toString(centeredFrames_));
+              updateCenteredSizeLabel();
+          }
+      });
+      getContentPane().add(centeredMinusButton);
+ 
+      labelWidthUmPx_.setFont(new Font("", Font.PLAIN, 8));
+      labelWidthUmPx_.setHorizontalAlignment(JLabel.CENTER);
+      labelWidthUmPx_.setText("");
+      labelWidthUmPx_.setBounds(129, 108, 93, 14);
+      getContentPane().add(labelWidthUmPx_);
+ 
       final JLabel overlapLabel = new JLabel();
       overlapLabel.setFont(new Font("", Font.PLAIN, 10)); 
       overlapLabel.setText("Overlap");
@@ -228,6 +285,12 @@ public class TileCreatorDlg extends MMDialog {
       overlapField_.setBounds(70, 186, 50, 20);
       overlapField_.setFont(new Font("", Font.PLAIN, 10));
       overlapField_.setText("0");
+      overlapField_.addActionListener(new ActionListener() {
+          public void actionPerformed(ActionEvent arg0) {
+              updateCenteredSizeLabel();
+          }
+      });
+
       getContentPane().add(overlapField_);
 
       String[] unitStrings = { "um", "px", "%" };
@@ -237,9 +300,10 @@ public class TileCreatorDlg extends MMDialog {
          public void actionPerformed(ActionEvent arg0) {
              JComboBox cb = (JComboBox)arg0.getSource();
              overlapUnit_ = OverlapUnitEnum.values()[cb.getSelectedIndex()];
+             updateCenteredSizeLabel();
          }
       });
-      overlapUnitsCombo_.setBounds(125, 186, 80, 20);
+      overlapUnitsCombo_.setBounds(125, 186, 60, 20);
       getContentPane().add(overlapUnitsCombo_);
 
       final JLabel pixelSizeLabel = new JLabel();
@@ -252,6 +316,11 @@ public class TileCreatorDlg extends MMDialog {
       pixelSizeField_.setFont(new Font("", Font.PLAIN, 10));
       pixelSizeField_.setBounds(280, 186, 50, 20);
       pixelSizeField_.setText(NumberUtils.doubleToDisplayString(core_.getPixelSizeUm()));
+      pixelSizeField_.addActionListener(new ActionListener() {
+          public void actionPerformed(ActionEvent arg0) {
+              updateCenteredSizeLabel();
+          }
+      });
       getContentPane().add(pixelSizeField_);
 
       final JButton okButton = new JButton();
@@ -267,7 +336,7 @@ public class TileCreatorDlg extends MMDialog {
       getContentPane().add(okButton);
 
       final JButton cancelButton = new JButton();
-      cancelButton.setBounds(133, 216, 93, 23);
+      cancelButton.setBounds(129, 216, 93, 23);
       cancelButton.setFont(new Font("", Font.PLAIN, 10));
       cancelButton.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent arg0) {
@@ -364,11 +433,178 @@ public class TileCreatorDlg extends MMDialog {
       return sb.toString();
    }
 
-   /*
-    * Create the tile list based on user input, pixelsize, and imagesize
+   /**
+    * Updates the labelWidthUmPx_ field when the number of frames in
+    * a centered grid is changed.
     */
-   private void addToPositionList() {
-      // check if we are calibrated, TODO: allow input of image size
+
+   private void updateCenteredSizeLabel()
+   {
+       double[] centeredSize = getCenteredSize();
+       if(centeredSize[0] == 0.0)
+           labelWidthUmPx_.setText("");
+       else
+           labelWidthUmPx_.setText(
+                   Integer.toString((int)centeredSize[0]) + "x" + 
+                   Integer.toString((int)centeredSize[1]) + "um");
+   }
+
+   /**
+    * Compute the um size of an nxn grid.
+    */
+
+   private double[] getCenteredSize() {
+      double imageSizeXUm = getImageSize()[0];
+      double imageSizeYUm = getImageSize()[1];
+
+      double tileSizeXUm = getTileSize()[0];
+      double tileSizeYUm = getTileSize()[1];
+
+      double overlapXUm = imageSizeXUm - tileSizeXUm;
+      double overlapYUm = imageSizeYUm - tileSizeYUm;
+
+      double totalXUm = tileSizeXUm * centeredFrames_ + overlapXUm;
+      double totalYUm = tileSizeYUm * centeredFrames_ + overlapYUm;
+
+      return new double[] {totalXUm, totalYUm};
+   }
+
+   /**
+    * Updates all four positions to create a grid that's centered at the
+    * current location and has a total diameter with the specified number
+    * of frames.
+    */
+   private void centerGridHere() {
+      double imageSizeXUm = getImageSize()[0];
+      double imageSizeYUm = getImageSize()[1];
+
+      double tileSizeXUm = getTileSize()[0];
+      double tileSizeYUm = getTileSize()[1];
+
+      double overlapXUm = imageSizeXUm - tileSizeXUm;
+      double overlapYUm = imageSizeYUm - tileSizeYUm;
+
+      double [] centeredSize = getCenteredSize();
+      if(centeredSize[0] == 0.0)
+          return;
+
+      double offsetXUm = centeredSize[0] / 2.0 - imageSizeXUm / 2.0 - 1;
+      double offsetYUm = centeredSize[1] / 2.0 - imageSizeYUm / 2.0 - 1;
+
+      for(int location = 0; location < 4; ++location)
+      {
+          // get the current position
+          MultiStagePosition msp = new MultiStagePosition();
+          StringBuffer sb = new StringBuffer();
+          msp.setDefaultXYStage(core_.getXYStageDevice());
+          msp.setDefaultZStage(core_.getFocusDevice());
+
+          // read 1-axis stages
+          try {
+              StrVector stages = core_.getLoadedDevicesOfType(DeviceType.StageDevice);
+              for (int i=0; i<stages.size(); i++) {
+                  StagePosition sp = new StagePosition();
+                  sp.stageName = stages.get(i);
+                  sp.numAxes = 1;
+                  sp.x = core_.getPosition(stages.get(i));
+                  msp.add(sp);
+                  sb.append(sp.getVerbose() + "\n");
+              }
+
+              // read 2-axis stages
+              StrVector stages2D = core_.getLoadedDevicesOfType(DeviceType.XYStageDevice);
+              for (int i=0; i<stages2D.size(); i++) {
+                  StagePosition sp = new StagePosition();
+                  sp.stageName = stages2D.get(i);
+                  sp.numAxes = 2;
+                  sp.x = core_.getXPosition(stages2D.get(i));
+                  sp.y = core_.getYPosition(stages2D.get(i));
+
+                  switch(location)
+                  {
+                      case 0: // top
+                          sp.y += offsetYUm;
+                          break;
+                      case 1: // right
+                          sp.x += offsetXUm;
+                          break;
+                      case 2: // bottom
+                          sp.y -= offsetYUm;
+                          break;
+                       case 3: // left
+                          sp.x -= offsetXUm;
+                          break;
+                  }
+                  msp.add(sp);
+                  sb.append(sp.getVerbose() + "\n");
+              }
+          } catch (Exception e) {
+              ReportingUtils.showError(e);
+          }
+
+          endPosition_[location] = msp;
+          endPositionSet_[location] = true;
+
+          switch(location)
+          {
+              case 0: // top
+                  labelTop_.setText(sb.toString());
+                  break;
+              case 1: // right
+                  labelRight_.setText(sb.toString());
+                  break;
+              case 2: // bottom
+                  labelBottom_.setText(sb.toString());
+                  break;
+              case 3: // left
+                  labelLeft_.setText(sb.toString());
+                  break;
+          }
+      }
+   }
+
+   private boolean isSwappedXY()
+   {
+       boolean correction, transposeXY, mirrorX, mirrorY;
+       String camera = core_.getCameraDevice();
+       if (camera == null) {
+           JOptionPane.showMessageDialog(null, "This function does not work without a camera");
+           return false;
+       }
+
+       try{
+           String tmp = core_.getProperty(camera, "TransposeCorrection");
+           if (tmp.equals("0"))
+               correction = false;
+           else
+               correction = true;
+           tmp = core_.getProperty(camera, MMCoreJ.getG_Keyword_Transpose_MirrorX());
+           if (tmp.equals("0"))
+               mirrorX = false;
+           else
+               mirrorX = true;
+           tmp = core_.getProperty(camera, MMCoreJ.getG_Keyword_Transpose_MirrorY());
+           if (tmp.equals("0"))
+               mirrorY = false;
+           else
+               mirrorY = true;
+           
+           tmp = core_.getProperty(camera, MMCoreJ.getG_Keyword_Transpose_SwapXY());
+           if (tmp.equals("0"))
+               transposeXY = false;
+           else
+               transposeXY = true;
+       } catch(Exception exc) {
+           ReportingUtils.showError(exc);
+           return false;
+       }
+
+       return !correction && transposeXY;
+   }
+
+   private double getPixelSizeUm()
+   {
+       // check if we are calibrated, TODO: allow input of image size
       double pixSizeUm = 0.0;
       try {
          pixSizeUm = NumberUtils.displayStringToDouble(pixelSizeField_.getText());
@@ -377,47 +613,23 @@ public class TileCreatorDlg extends MMDialog {
       }
       if (pixSizeUm <= 0.0) {
          JOptionPane.showMessageDialog(this, "Pixel Size should be a value > 0 (usually 0.1 -1 um).  It should be experimentally determined. ");
-         return;
+         return 0.0;
       }
 
+      return pixSizeUm;
+
+
+   }
+
+   private double[] getTileSize()
+   {
+      double pixSizeUm = getPixelSizeUm();
       double overlap = 0.0;
       try {
          overlap = NumberUtils.displayStringToDouble(overlapField_.getText());
       } catch (Exception e) {
          //handleError(e.getMessage());
       }
-      boolean correction, transposeXY, mirrorX, mirrorY;
-      String camera = core_.getCameraDevice();
-      if (camera == null) {
-         JOptionPane.showMessageDialog(null, "This function does not work without a camera");
-         return;
-      }
-
-      try{
-      String tmp = core_.getProperty(camera, "TransposeCorrection");
-      if (tmp.equals("0"))
-         correction = false;
-      else
-         correction = true;
-      tmp = core_.getProperty(camera, MMCoreJ.getG_Keyword_Transpose_MirrorX());
-      if (tmp.equals("0"))
-         mirrorX = false;
-      else
-         mirrorX = true;
-      tmp = core_.getProperty(camera, MMCoreJ.getG_Keyword_Transpose_MirrorY());
-      if (tmp.equals("0"))
-         mirrorY = false;
-      else
-         mirrorY = true;
-      tmp = core_.getProperty(camera, MMCoreJ.getG_Keyword_Transpose_SwapXY());
-      if (tmp.equals("0"))
-         transposeXY = false;
-      else
-         transposeXY = true;
-      } catch(Exception exc) {
-            ReportingUtils.showError(exc);
-            return;
-         }
 
       double overlapUmX;
       double overlapUmY;
@@ -433,7 +645,7 @@ public class TileCreatorDlg extends MMDialog {
       }
 
       // if camera does not correct image orientation, we'll correct for it here:
-      boolean swapXY = (!correction && transposeXY);
+      boolean swapXY = isSwappedXY();
 
       double tileSizeXUm = swapXY ? 
                            pixSizeUm * core_.getImageHeight() - overlapUmY :
@@ -443,13 +655,26 @@ public class TileCreatorDlg extends MMDialog {
                            pixSizeUm * core_.getImageWidth() - overlapUmX :
                            pixSizeUm * core_.getImageHeight() - overlapUmY;
 
-      double imageSizeXUm = swapXY ? pixSizeUm * core_.getImageHeight() : 
-                                     pixSizeUm * core_.getImageWidth();
-      double imageSizeYUm = swapXY ? pixSizeUm * core_.getImageWidth() :
-                                     pixSizeUm * core_.getImageHeight();
+      return new double[] {tileSizeXUm, tileSizeYUm};
+   }
 
-      overlapUmX = swapXY ? overlapUmY : overlapUmX;
-      overlapUmY = swapXY ? overlapUmX : overlapUmY;
+   private double[] getImageSize()
+   {
+       double pixSizeUm = getPixelSizeUm();
+       boolean swapXY = isSwappedXY();
+       double imageSizeXUm = swapXY ? pixSizeUm * core_.getImageHeight() : 
+                                      pixSizeUm * core_.getImageWidth();
+       double imageSizeYUm = swapXY ? pixSizeUm * core_.getImageWidth() :
+                                      pixSizeUm * core_.getImageHeight();
+
+       return new double[] {imageSizeXUm, imageSizeYUm};
+   }
+
+
+   /*
+    * Create the tile list based on user input, pixelsize, and imagesize
+    */
+   private void addToPositionList() {
 
       // Make sure at least two corners were set
       int nrSet = 0;
@@ -594,19 +819,30 @@ public class TileCreatorDlg extends MMDialog {
 
       }
 
+      double pixSizeUm = getPixelSizeUm();
+
+      double imageSizeXUm = getImageSize()[0];
+      double imageSizeYUm = getImageSize()[1];
+
+      double tileSizeXUm = getTileSize()[0];
+      double tileSizeYUm = getTileSize()[0];
+
+      double overlapXUm = imageSizeXUm - tileSizeXUm;
+      double overlapYUm = imageSizeYUm - tileSizeYUm;
+
       // bounding box size
-      double boundingUmX = maxX - minX + imageSizeXUm;
-      double boundingUmY = maxY - minY + imageSizeYUm;
+      double boundingXUm = maxX - minX + imageSizeXUm;
+      double boundingYUm = maxY - minY + imageSizeYUm;
 
       // calculate number of images in X and Y
-      int nrImagesX = (int) Math.ceil((boundingUmX - overlapUmX) / tileSizeXUm);
-      int nrImagesY = (int) Math.ceil((boundingUmY - overlapUmY) / tileSizeYUm);
+      int nrImagesX = (int) Math.ceil((boundingXUm - overlapXUm) / tileSizeXUm);
+      int nrImagesY = (int) Math.ceil((boundingYUm - overlapYUm) / tileSizeYUm);
 
-      double totalSizeXUm = nrImagesX * tileSizeXUm + overlapUmX;
-      double totalSizeYUm = nrImagesY * tileSizeYUm + overlapUmY;
+      double totalSizeXUm = nrImagesX * tileSizeXUm + overlapXUm;
+      double totalSizeYUm = nrImagesY * tileSizeYUm + overlapYUm;
 
-      double offsetXUm = (totalSizeXUm - boundingUmX) / 2;
-      double offsetYUm = (totalSizeYUm - boundingUmY) / 2;
+      double offsetXUm = (totalSizeXUm - boundingXUm) / 2;
+      double offsetYUm = (totalSizeYUm - boundingYUm) / 2;
 
       // Increment prefix for these positions
       prefix_ += 1;
@@ -649,16 +885,16 @@ public class TileCreatorDlg extends MMDialog {
 
             if(overlapUnit_ == OverlapUnitEnum.UM || overlapUnit_ == OverlapUnitEnum.PX)
             {
-                msp.setProperty("OverlapUm", NumberUtils.doubleToCoreString(overlapUmX));
-                int overlapPix = (int) Math.floor(overlapUmX/pixSizeUm);
+                msp.setProperty("OverlapUm", NumberUtils.doubleToCoreString(overlapXUm));
+                int overlapPix = (int) Math.floor(overlapXUm/pixSizeUm);
 
                 msp.setProperty("OverlapPixels", NumberUtils.intToCoreString(overlapPix));
             } else { // overlapUnit_ == OverlapUnit.PERCENT
                 // overlapUmX != overlapUmY; store both
-                msp.setProperty("OverlapUmX", NumberUtils.doubleToCoreString(overlapUmX));
-                msp.setProperty("OverlapUmY", NumberUtils.doubleToCoreString(overlapUmY));
-                int overlapPixX = (int) Math.floor(overlapUmX/pixSizeUm);
-                int overlapPixY = (int) Math.floor(overlapUmY/pixSizeUm);
+                msp.setProperty("OverlapUmX", NumberUtils.doubleToCoreString(overlapXUm));
+                msp.setProperty("OverlapUmY", NumberUtils.doubleToCoreString(overlapYUm));
+                int overlapPixX = (int) Math.floor(overlapXUm/pixSizeUm);
+                int overlapPixY = (int) Math.floor(overlapYUm/pixSizeUm);
                 msp.setProperty("OverlapPixelsX", NumberUtils.intToCoreString(overlapPixX));
                 msp.setProperty("OverlapPixelsY", NumberUtils.intToCoreString(overlapPixX));
             }
@@ -681,8 +917,12 @@ public class TileCreatorDlg extends MMDialog {
       labelRight_.setText("");
       labelBottom_.setText("");
       labelLeft_.setText("");
+      labelWidth_.setText("");
+      labelWidthUmPx_.setText("");
+
       double pxsz = core_.getPixelSizeUm();
       pixelSizeField_.setText(NumberUtils.doubleToDisplayString(pxsz));
+      centeredFrames_ = 0;
    }
    
    /*
