@@ -432,16 +432,24 @@ public class TileCreatorDlg extends MMDialog {
           overlapUmY = overlap * pixSizeUm;
       }
 
-      double tmpXUm = pixSizeUm * core_.getImageWidth() - overlapUmX;
-      double tmpYUm = pixSizeUm * core_.getImageHeight() - overlapUmY;
+      // if camera does not correct image orientation, we'll correct for it here:
+      boolean swapXY = (!correction && transposeXY);
 
-      double tileSizeXUm = tmpXUm;
-      double tileSizeYUm = tmpYUm ;
-         // if camera does not correct image orientation, we'll correct for it here:
-      if (!correction) {
-            // Order: swapxy, then mirror axis
-            if (transposeXY) {tileSizeXUm = tmpYUm; tileSizeYUm = tmpXUm;}
-         }
+      double tileSizeXUm = swapXY ? 
+                           pixSizeUm * core_.getImageHeight() - overlapUmY :
+                           pixSizeUm * core_.getImageWidth() - overlapUmX;
+
+      double tileSizeYUm = swapXY ? 
+                           pixSizeUm * core_.getImageWidth() - overlapUmX :
+                           pixSizeUm * core_.getImageHeight() - overlapUmY;
+
+      double imageSizeXUm = swapXY ? pixSizeUm * core_.getImageHeight() : 
+                                     pixSizeUm * core_.getImageWidth();
+      double imageSizeYUm = swapXY ? pixSizeUm * core_.getImageWidth() :
+                                     pixSizeUm * core_.getImageHeight();
+
+      overlapUmX = swapXY ? overlapUmY : overlapUmX;
+      overlapUmY = swapXY ? overlapUmX : overlapUmY;
 
       // Make sure at least two corners were set
       int nrSet = 0;
@@ -456,33 +464,28 @@ public class TileCreatorDlg extends MMDialog {
 
       // Calculate a bounding rectangle around the defaultXYStage positions
       // TODO: develop method to deal with multiple axis
-      double minX = 0.0, minY = 0.0, maxX = 0.0, maxY = 0.0, meanZ = 0.0;
-      boolean firstSet = false;
+      double minX = Double.POSITIVE_INFINITY; 
+      double minY = Double.POSITIVE_INFINITY;
+      double maxX = Double.NEGATIVE_INFINITY;
+      double maxY = Double.NEGATIVE_INFINITY; 
+      double meanZ = 0.0;
       StagePosition sp = new StagePosition();
       for (int i=0; i<4; i++) {
-         if (endPositionSet_[i]) {
-            if (!firstSet) {
-               sp = endPosition_[i].get(endPosition_[i].getDefaultXYStage());
-               minX = maxX = sp.x;
-               minY = maxY = sp.y;
-               sp = endPosition_[i].get(endPosition_[i].getDefaultZStage());
-               meanZ = sp.x;
-               firstSet = true;
-            } else {
-               sp = endPosition_[i].get(endPosition_[i].getDefaultXYStage());
-               if (sp.x < minX)
+          if (endPositionSet_[i]) {
+              sp = endPosition_[i].get(endPosition_[i].getDefaultXYStage());
+              if (sp.x < minX)
                   minX = sp.x;
-               if (sp.x > maxX)
+              if (sp.x > maxX)
                   maxX = sp.x;
-               if (sp.y < minY)
+              if (sp.y < minY)
                   minY = sp.y;
-               if (sp.y > maxY)
+              if (sp.y > maxY)
                   maxY = sp.y;
-               sp = endPosition_[i].get(endPosition_[i].getDefaultZStage());
-               meanZ += sp.x;
-            }
-         }
+              sp = endPosition_[i].get(endPosition_[i].getDefaultZStage());
+              meanZ += sp.x;
+          }
       }
+
       meanZ = meanZ/nrSet;
 
       // if there are at least three set points, use them to define a 
@@ -591,9 +594,19 @@ public class TileCreatorDlg extends MMDialog {
 
       }
 
+      // bounding box size
+      double boundingUmX = maxX - minX + imageSizeXUm;
+      double boundingUmY = maxY - minY + imageSizeYUm;
+
       // calculate number of images in X and Y
-      int nrImagesX = (int) Math.floor ( (maxX - minX) / tileSizeXUm ) + 2;
-      int nrImagesY = (int) Math.floor ( (maxY - minY) / tileSizeYUm ) + 2;
+      int nrImagesX = (int) Math.ceil((boundingUmX - overlapUmX) / tileSizeXUm);
+      int nrImagesY = (int) Math.ceil((boundingUmY - overlapUmY) / tileSizeYUm);
+
+      double totalSizeXUm = nrImagesX * tileSizeXUm + overlapUmX;
+      double totalSizeYUm = nrImagesY * tileSizeYUm + overlapUmY;
+
+      double offsetXUm = (totalSizeXUm - boundingUmX) / 2;
+      double offsetYUm = (totalSizeYUm - boundingUmY) / 2;
 
       // Increment prefix for these positions
       prefix_ += 1;
@@ -613,8 +626,8 @@ public class TileCreatorDlg extends MMDialog {
             StagePosition spXY = new StagePosition();
             spXY.stageName = core_.getXYStageDevice();
             spXY.numAxes = 2;
-            spXY.x = minX + (tmpX * tileSizeXUm);
-            spXY.y = minY + (y * tileSizeYUm);
+            spXY.x = minX - offsetXUm + (tmpX * tileSizeXUm);
+            spXY.y = minY - offsetYUm + (y * tileSizeYUm);
             msp.add(spXY);
 
             // Add Z position
