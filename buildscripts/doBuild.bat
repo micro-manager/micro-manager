@@ -17,7 +17,6 @@ if "%1"=="x64" (
 set DO_FULL_BUILD=%2
 set DO_RELEASE_BUILD=%3
 set DO_UPLOAD=%4
-if "%DO_FULL_BUILD%"=="FULL" set DO_REBUILD=REBUILD else set DO_REBUILD=
 
 echo stop any instances that might already be running.
 pskill javaw.exe
@@ -48,8 +47,13 @@ svn cleanup --non-interactive
 svn update --accept postpone --non-interactive
 popd
 
-call buildscripts\buildCpp.bat %PLATFORM% %DO_REBUILD%
-@echo %ECHO_MODE%
+if "%DO_FULL_BUILD%"=="FULL" (
+    call buildscripts\buildCpp.bat %PLATFORM% REBUILD
+    @echo %ECHO_MODE%
+) else (
+    call buildscripts\buildCpp.bat %PLATFORM%
+    @echo %ECHO_MODE%
+)
 
 rem MMCorePy needs to be manually staged
 rem (MMCoreJ is staged by the Java build process)
