@@ -42,13 +42,14 @@ import mmcorej.DeviceType;
 import mmcorej.MMCoreJ;
 import mmcorej.StrVector;
 
+import org.micromanager.api.MMListenerInterface;
 import org.micromanager.navigation.MultiStagePosition;
 import org.micromanager.navigation.StagePosition;
 import org.micromanager.utils.MMDialog;
 import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.ReportingUtils;
 
-public class TileCreatorDlg extends MMDialog {
+public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
    private static final long serialVersionUID = 1L;
    private CMMCore core_;
    private MultiStagePosition[] endPosition_;
@@ -57,6 +58,8 @@ public class TileCreatorDlg extends MMDialog {
 
    private JTextField overlapField_;
    private JComboBox overlapUnitsCombo_;
+
+   
    private enum OverlapUnitEnum {UM, PX, PERCENT};
    private OverlapUnitEnum overlapUnit_ = OverlapUnitEnum.UM;
    private int centeredFrames_ = 0;
@@ -303,7 +306,7 @@ public class TileCreatorDlg extends MMDialog {
              updateCenteredSizeLabel();
          }
       });
-      overlapUnitsCombo_.setBounds(125, 186, 60, 20);
+      overlapUnitsCombo_.setBounds(125, 186, 75, 20);
       getContentPane().add(overlapUnitsCombo_);
 
       final JLabel pixelSizeLabel = new JLabel();
@@ -403,7 +406,7 @@ public class TileCreatorDlg extends MMDialog {
     * Update display of the current xy position.
     */
    private String thisPosition() {
-      StringBuffer sb = new StringBuffer();
+      StringBuilder sb = new StringBuilder();
 
       // read 1-axis stages
       try {
@@ -413,7 +416,7 @@ public class TileCreatorDlg extends MMDialog {
             sp.stageName = stages.get(i);
             sp.numAxes = 1;
             sp.x = core_.getPosition(stages.get(i));
-            sb.append(sp.getVerbose() + "\n");
+            sb.append(sp.getVerbose()).append("\n");
          }
 
          // read 2-axis stages
@@ -424,7 +427,7 @@ public class TileCreatorDlg extends MMDialog {
             sp.numAxes = 2;
             sp.x = core_.getXPosition(stages2D.get(i));
             sp.y = core_.getYPosition(stages2D.get(i));
-            sb.append(sp.getVerbose() + "\n");
+            sb.append(sp.getVerbose()).append("\n");
          }
       } catch (Exception e) {
          ReportingUtils.showError(e);
@@ -495,7 +498,7 @@ public class TileCreatorDlg extends MMDialog {
       {
           // get the current position
           MultiStagePosition msp = new MultiStagePosition();
-          StringBuffer sb = new StringBuffer();
+          StringBuilder sb = new StringBuilder();
           msp.setDefaultXYStage(core_.getXYStageDevice());
           msp.setDefaultZStage(core_.getFocusDevice());
 
@@ -508,7 +511,7 @@ public class TileCreatorDlg extends MMDialog {
                   sp.numAxes = 1;
                   sp.x = core_.getPosition(stages.get(i));
                   msp.add(sp);
-                  sb.append(sp.getVerbose() + "\n");
+                  sb.append(sp.getVerbose()).append("\n");
               }
 
               // read 2-axis stages
@@ -536,7 +539,7 @@ public class TileCreatorDlg extends MMDialog {
                           break;
                   }
                   msp.add(sp);
-                  sb.append(sp.getVerbose() + "\n");
+                  sb.append(sp.getVerbose()).append("\n");
               }
           } catch (Exception e) {
               ReportingUtils.showError(e);
@@ -943,6 +946,32 @@ public class TileCreatorDlg extends MMDialog {
    public static String generatePosLabel(String prefix, int x, int y) {
       String name = prefix + "_" + FMT_POS.format(x) + "_" + FMT_POS.format(y);
       return name;
+   }
+   
+   
+   // Implementation of MMListenerInterface
+   
+   public void propertiesChangedAlert() {
+   }
+
+   public void propertyChangedAlert(String device, String property, String value) {
+   }
+
+   public void configGroupChangedAlert(String groupName, String newConfig) {
+   }
+
+   public void pixelSizeChangedAlert(double newPixelSizeUm) {
+      pixelSizeField_.setText(NumberUtils.doubleToDisplayString(newPixelSizeUm));
+      updateCenteredSizeLabel();
+   }
+
+   public void stagePositionChangedAlert(String deviceName, double pos) {
+   }
+
+   public void xyStagePositionChanged(String deviceName, double xPos, double yPos) {
+   }
+
+   public void exposureChanged(String cameraName, double newExposureTime) {
    }
 
 }

@@ -906,6 +906,7 @@ public void addPosition(MultiStagePosition msp, String label) {
       if (tileCreatorDlg_ == null) {
          tileCreatorDlg_ = new TileCreatorDlg(core_, opts_, this);
          gui_.addMMBackgroundListener(tileCreatorDlg_);
+         gui_.addMMListener(tileCreatorDlg_);
       }
       tileCreatorDlg_.setBackground(guiColors_.background.get(opts_.displayBackground_));
       tileCreatorDlg_.setVisible(true);
