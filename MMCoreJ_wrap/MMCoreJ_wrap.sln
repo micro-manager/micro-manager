@@ -275,6 +275,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SigmaKoki", "..\SecretDevic
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Standa", "..\DeviceAdapters\Standa\Standa.vcproj", "{1995D553-BABB-4987-A0AC-84496297DDE5}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FLICamera", "..\DeviceAdapters\FLICamera\FLICamera.vcproj", "{4FFC5AC3-7A59-40C2-B155-AA3EA5D391AE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -1319,6 +1321,14 @@ Global
 		{1995D553-BABB-4987-A0AC-84496297DDE5}.Release|Win32.Build.0 = Release|Win32
 		{1995D553-BABB-4987-A0AC-84496297DDE5}.Release|x64.ActiveCfg = Release|x64
 		{1995D553-BABB-4987-A0AC-84496297DDE5}.Release|x64.Build.0 = Release|x64
+		{4FFC5AC3-7A59-40C2-B155-AA3EA5D391AE}.Debug|Win32.ActiveCfg = Debug|Win32
+		{4FFC5AC3-7A59-40C2-B155-AA3EA5D391AE}.Debug|Win32.Build.0 = Debug|Win32
+		{4FFC5AC3-7A59-40C2-B155-AA3EA5D391AE}.Debug|x64.ActiveCfg = Debug|x64
+		{4FFC5AC3-7A59-40C2-B155-AA3EA5D391AE}.Debug|x64.Build.0 = Debug|x64
+		{4FFC5AC3-7A59-40C2-B155-AA3EA5D391AE}.Release|Win32.ActiveCfg = Release|Win32
+		{4FFC5AC3-7A59-40C2-B155-AA3EA5D391AE}.Release|Win32.Build.0 = Release|Win32
+		{4FFC5AC3-7A59-40C2-B155-AA3EA5D391AE}.Release|x64.ActiveCfg = Release|x64
+		{4FFC5AC3-7A59-40C2-B155-AA3EA5D391AE}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
