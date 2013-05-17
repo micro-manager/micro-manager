@@ -24,7 +24,10 @@ package org.micromanager.acquisition;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -89,7 +92,7 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
       setSummaryMetadata(summaryMetadata);
 
       // TODO: throw error if no existing dataset
-      if (!newDataSet_) {
+      if (!newDataSet_) {       
          openExistingDataSet();
       }    
       
@@ -115,15 +118,17 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
          ReportingUtils.logError(ex);
          numPositions_ = 1;
       }
-      try {
-         //Estimate of max number of image planes
-         numChannels_ = MDUtils.getNumChannels(summaryMetadata_);
-         numSlices_ = MDUtils.getNumSlices(summaryMetadata_);
-         totalNumImagePlanes_ = numChannels_ * MDUtils.getNumFrames(summaryMetadata_)
-                 * numPositions_ * numSlices_;
-      } catch (Exception ex) {
-         ReportingUtils.logError("Error estimating total number of image planes");
-         totalNumImagePlanes_ = 1;
+      if (newDataSet_) {
+         try {
+            //Estimate of max number of image planes
+            numChannels_ = MDUtils.getNumChannels(summaryMetadata_);
+            numSlices_ = MDUtils.getNumSlices(summaryMetadata_);
+            totalNumImagePlanes_ = numChannels_ * MDUtils.getNumFrames(summaryMetadata_)
+                    * numPositions_ * numSlices_;
+         } catch (Exception ex) {
+            ReportingUtils.logError("Error estimating total number of image planes");
+            totalNumImagePlanes_ = 1;
+         }
       }
    }
    
@@ -143,25 +148,28 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
       fixIndexMap_ = true;
    }
 
-   private void openExistingDataSet() throws IOException {
+   private void openExistingDataSet() {
       //Need to throw error if file not found
-
       MultipageTiffReader reader = null;
       File dir = new File(directory_);
-      
-      final ProgressBar progressBar = new ProgressBar("Reading " + directory_, 0, dir.listFiles().length);
+
+      ProgressBar progressBar = new ProgressBar("Reading " + directory_, 0, dir.listFiles().length);
       int numRead = 0;
       progressBar.setProgress(numRead);
       progressBar.setVisible(true);
       for (File f : dir.listFiles()) {
          if (f.getName().endsWith(".tif") || f.getName().endsWith(".TIF")) {
-            //this is where fixing dataset code occurs
-            reader = new MultipageTiffReader(f);         
-            Set<String> labels = reader.getIndexKeys();
-            for (String label : labels) {
-               tiffReadersByLabel_.put(label, reader);
-               int frameIndex = Integer.parseInt(label.split("_")[2]);
-               lastFrameOpenedDataSet_ = Math.max(frameIndex, lastFrameOpenedDataSet_);
+            try {
+               //this is where fixing dataset code occurs
+               reader = new MultipageTiffReader(f);
+               Set<String> labels = reader.getIndexKeys();
+               for (String label : labels) {
+                  tiffReadersByLabel_.put(label, reader);
+                  int frameIndex = Integer.parseInt(label.split("_")[2]);
+                  lastFrameOpenedDataSet_ = Math.max(frameIndex, lastFrameOpenedDataSet_);
+               }
+            } catch (IOException ex) {
+               ReportingUtils.showError("Couldn't open file: " + f.toString());
             }
          }
          numRead++;
@@ -171,15 +179,19 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
       //reset this static variable to false so the prompt is delivered if a new data set is opened
       reader.fixIndexMapWithoutPrompt_ = false;
 
+
       try {
-         setSummaryMetadata(reader.getSummaryMetadata());
+         setSummaryMetadata(reader.getSummaryMetadata(),true);
          numPositions_ = MDUtils.getNumPositions(summaryMetadata_);
          displayAndComments_ = reader.getDisplayAndComments();
       } catch (JSONException ex) {
          ReportingUtils.logError(ex);
-      } 
+      }
+      progressBar.setProgress(1);
+      progressBar.setVisible(false);
+
    }
-   
+
    @Override
    public TaggedImage getImage(int channelIndex, int sliceIndex, int frameIndex, int positionIndex) {
       String label = MDUtils.generateLabel(channelIndex, sliceIndex, frameIndex, positionIndex);
@@ -190,7 +202,7 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
       if (!tiffReadersByLabel_.containsKey(label)) {
          return null;
       }
-      
+
       //DEbugging code for a strange exception found in core log
       try {
          img = tiffReadersByLabel_.get(label).readImage(label);
@@ -203,7 +215,7 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
             ReportingUtils.logError("Specific reader is null " + label);
          }
       }
-      return img;   
+      return img;
    }
 
    @Override
@@ -307,6 +319,10 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
 
    @Override
    public void setSummaryMetadata(JSONObject md) {
+      setSummaryMetadata(md, false);
+   }
+   
+   private void setSummaryMetadata(JSONObject md, boolean showProgress) {
       summaryMetadata_ = md;
       if (summaryMetadata_ != null) {
          try {
@@ -314,7 +330,20 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
             boolean timeFirst = summaryMetadata_.getBoolean("TimeFirst");
             TreeMap<String, MultipageTiffReader> oldImageMap = tiffReadersByLabel_;
             tiffReadersByLabel_ = new TreeMap<String, MultipageTiffReader>(new ImageLabelComparator(slicesFirst, timeFirst));
-            tiffReadersByLabel_.putAll(oldImageMap);
+            if (showProgress) {
+               ProgressBar progressBar = new ProgressBar("Building image location map", 0, oldImageMap.keySet().size());
+               progressBar.setProgress(0);
+               progressBar.setVisible(true);
+               int i = 1;
+               for (String label : oldImageMap.keySet()) {
+                  tiffReadersByLabel_.put(label, oldImageMap.get(label));
+                  progressBar.setProgress(i);
+                  i++;
+               }
+               progressBar.setVisible(false);
+            } else {
+               tiffReadersByLabel_.putAll(oldImageMap);
+            }
          } catch (JSONException ex) {
             ReportingUtils.logError("Couldn't find SlicesFirst or TimeFirst in summary metadata");
          }
