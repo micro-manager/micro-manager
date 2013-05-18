@@ -2499,10 +2499,13 @@ int CondensorTurret::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 // Transmitted Light
 ///////////////////////////////////////////////////////////////////////////////
 TransmittedLight::TransmittedLight():   
-initialized_ (false),
-state_(false), level_(1)
+   initialized_ (false),
+   state_(false), 
+   level_(1),
+   changedTime_(0.0)
 {
    InitializeDefaultErrorMessages();
+   EnableDelay();
 
    SetErrorText(ERR_SCOPE_NOT_ACTIVE, "Leica Scope is not initialized.  It is needed for the Transmitted Light module to work");
    SetErrorText(ERR_MODULE_NOT_FOUND, "This device is not installed in this Leica microscope");
@@ -2544,6 +2547,9 @@ int TransmittedLight::Initialize()
    if (DEVICE_OK != ret)
       return ret;
 
+   // Set timer for Busy signal
+   changedTime_ = GetCurrentMMTime();
+
    // State
    CPropertyAction* pAct = new CPropertyAction (this, &TransmittedLight::OnState);
    ret = CreateProperty(MM::g_Keyword_State, state_ ? "1" : "0", MM::Integer, false, pAct); 
@@ -2568,10 +2574,6 @@ int TransmittedLight::Initialize()
 
    AddAllowedValue("Control", "Computer");
    AddAllowedValue("Control", "Manual");
-
-   //ret = UpdateStatus();
-   //if (ret != DEVICE_OK) 
-   //  return ret; 
 
    // set TL to known initial state: shutter=closed, level = 0
    level_ = 0;
@@ -2598,12 +2600,16 @@ int TransmittedLight::Shutdown()
 
 bool TransmittedLight::Busy()
 {
-   bool busy;
-   int ret = g_ScopeModel.TransmittedLight_.GetBusy(busy);
+   bool model_busy;
+   int ret = g_ScopeModel.TransmittedLight_.GetBusy(model_busy);
    if (ret != DEVICE_OK)  // This is bad and should not happen
       return false;
 
-   return busy;
+   MM::MMTime interval = GetCurrentMMTime() - changedTime_;
+   MM::MMTime delay(GetDelayMs()*1000.0);
+   bool timer_busy = (interval < delay);
+
+   return model_busy || timer_busy;
 }
 
 int TransmittedLight::OnState(MM::PropertyBase *pProp, MM::ActionType eAct)
@@ -2655,6 +2661,8 @@ int TransmittedLight::OnLevel(MM::PropertyBase *pProp, MM::ActionType eAct)
       // apply level is shutter is open
       if (state_)
       {
+         // Set timer for Busy signal
+         changedTime_ = GetCurrentMMTime();
          int ret = g_ScopeInterface.SetTransmittedLightShutterPosition(*this, *GetCoreCallback(), (int)level_);
          if (ret != DEVICE_OK)
             return ret;
@@ -2697,6 +2705,7 @@ int TransmittedLight::SetOpen(bool open)
 {
    if (open && !state_)
    {
+      changedTime_ = GetCurrentMMTime();
       // shutter opening
 	   int ret = g_ScopeInterface.SetTransmittedLightShutterPosition(*this, *GetCoreCallback(), (int)level_);
 	   if (ret != DEVICE_OK)
@@ -2704,8 +2713,9 @@ int TransmittedLight::SetOpen(bool open)
    }
    else if (!open && state_)
    {
+      changedTime_ = GetCurrentMMTime();
       // shutter closing
-	   int ret = g_ScopeInterface.SetTransmittedLightShutterPosition(*this, *GetCoreCallback(), 0);
+      int ret = g_ScopeInterface.SetTransmittedLightShutterPosition(*this, *GetCoreCallback(), 0);
 	   if (ret != DEVICE_OK)
 		   return ret;
    }

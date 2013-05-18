@@ -446,6 +446,7 @@ private:
    std::string description_;
    bool state_;
    long level_;
+   MM::MMTime changedTime_;
 };
 
 class AFC: public CAutoFocusBase<AFC>
