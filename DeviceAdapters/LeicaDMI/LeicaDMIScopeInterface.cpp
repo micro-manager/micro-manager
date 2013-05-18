@@ -1616,10 +1616,14 @@ int LeicaScopeInterface::SetDrivePosition(MM::Device& device, MM::Core& core, Le
  */
 int LeicaScopeInterface::SetDrivePositionRelative(MM::Device& device, MM::Core& core, LeicaDriveModel& drive, int deviceID, int position)
 {
-   drive.SetBusy(true);
-   std::ostringstream os;
-   os << deviceID << "024" << " " << position;
-   return core.SetSerialCommand(&device, port_.c_str(), os.str().c_str(), "\r");
+   if (position != 0)
+   {
+      drive.SetBusy(true);
+      std::ostringstream os;
+      os << deviceID << "024" << " " << position;
+      return core.SetSerialCommand(&device, port_.c_str(), os.str().c_str(), "\r");
+   }
+   return DEVICE_OK;
 }
 
 /**
