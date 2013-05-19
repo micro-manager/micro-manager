@@ -45,7 +45,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\..\..\3rdparty\Microsoft\WinDDK"
+				AdditionalIncludeDirectories="&quot;$(VCInstallDir)include&quot;;..\..\..\3rdparty\Microsoft\WinDDK\7600.16385.1\inc\api"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;MODULE_EXPORTS;_CRT_SECURE_NO_WARNINGS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -70,7 +70,7 @@
 				AdditionalDependencies="hid.lib setupapi.lib"
 				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="..\..\..\3rdparty\Microsoft\WinDDK\$(PlatformName)"
+				AdditionalLibraryDirectories="..\..\..\3rdparty\Microsoft\WinDDK\7600.16385.1\lib\wxp\i386"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)/$(ProjectName).pdb"
 				SubSystem="2"
@@ -128,7 +128,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\..\..\3rdparty\Microsoft\WinDDK"
+				AdditionalIncludeDirectories="&quot;$(VCInstallDir)include&quot;;..\..\..\3rdparty\Microsoft\WinDDK\7600.16385.1\inc\api"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;MODULE_EXPORTS;_CRT_SECURE_NO_WARNINGS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -153,7 +153,7 @@
 				AdditionalDependencies="hid.lib setupapi.lib"
 				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="..\..\..\3rdparty\Microsoft\WinDDK\$(PlatformName)"
+				AdditionalLibraryDirectories="..\..\..\3rdparty\Microsoft\WinDDK\7600.16385.1\lib\win7\amd64"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)/$(ProjectName).pdb"
 				SubSystem="2"
@@ -209,7 +209,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="..\..\..\3rdparty\Microsoft\WinDDK"
+				AdditionalIncludeDirectories="&quot;$(VCInstallDir)include&quot;;..\..\..\3rdparty\Microsoft\WinDDK\7600.16385.1\inc\api"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;MODULE_EXPORTS;_CRT_SECURE_NO_WARNINGS"
 				RuntimeLibrary="0"
 				RuntimeTypeInfo="true"
@@ -232,7 +232,7 @@
 				AdditionalDependencies="hid.lib setupapi.lib"
 				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="..\..\..\3rdparty\Microsoft\WinDDK\$(PlatformName)"
+				AdditionalLibraryDirectories="..\..\..\3rdparty\Microsoft\WinDDK\7600.16385.1\lib\wxp\i386"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
@@ -290,7 +290,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="..\..\..\3rdparty\Microsoft\WinDDK"
+				AdditionalIncludeDirectories="&quot;$(VCInstallDir)include&quot;;..\..\..\3rdparty\Microsoft\WinDDK\7600.16385.1\inc\api"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;MODULE_EXPORTS;_CRT_SECURE_NO_WARNINGS"
 				RuntimeLibrary="0"
 				RuntimeTypeInfo="true"
@@ -313,7 +313,7 @@
 				AdditionalDependencies="hid.lib setupapi.lib"
 				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="..\..\..\3rdparty\Microsoft\WinDDK\$(PlatformName)"
+				AdditionalLibraryDirectories="..\..\..\3rdparty\Microsoft\WinDDK\7600.16385.1\lib\win7\amd64"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
