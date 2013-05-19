@@ -824,13 +824,12 @@ int CGigECamera::SetAllowedBinning()
 
 	if( vValues.empty() && hValues.empty() )
 		binValues.push_back( "1" );
-	else if( vValues.empty() )
-		binValues = hValues;
-	else if( hValues.empty() )
-		binValues = vValues;
-	else
-		std::set_union( vValues.begin(), vValues.begin() + vValues.size(), 
-						hValues.begin(), hValues.begin() + hValues.size(), binValues.begin() );
+	else {
+		binValues.reserve( vValues.size() + hValues.size() );
+		std::set_union( vValues.begin(), vValues.end(),
+				hValues.begin(), hValues.end(),
+				std::back_inserter(binValues) );
+	}
 	return SetAllowedValues( MM::g_Keyword_Binning, binValues );
 }
 
