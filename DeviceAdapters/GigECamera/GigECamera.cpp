@@ -824,6 +824,10 @@ int CGigECamera::SetAllowedBinning()
 
 	if( vValues.empty() && hValues.empty() )
 		binValues.push_back( "1" );
+	else if( vValues.empty() )
+		binValues = hValues;
+	else if( hValues.empty() )
+		binValues = vValues;
 	else {
 		binValues.reserve( vValues.size() + hValues.size() );
 		std::set_union( vValues.begin(), vValues.end(),
