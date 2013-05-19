@@ -229,7 +229,8 @@ if test -f "$FREEIMAGEINCDIR/FreeImage.h"; then
          AC_SUBST(LIBFREEIMAGEPLUS, "$FREEIMAGEPLUSLIBDIR/libfreeimageplus.a")
       fi
    fi
-else
+fi
+if test -n $LIBFREEIMAGE && test -n $LIBFREEIMAGE_CXXFLAGS; then
    buildsc=false
    AC_MSG_RESULT([not found: To build the GPhoto device adapter download and install FreeImage in ../../3rdpartypublic/FreeImage])
 fi
