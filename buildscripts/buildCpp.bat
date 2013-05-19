@@ -36,6 +36,7 @@ if not "%1"=="" (
     call :USAGE
     goto :EOF
 )
+call :SETUP_ENVIRONS
 call :DO_BUILD
 goto :EOF
 
@@ -45,11 +46,22 @@ goto :EOF
 @echo Usage: buildCpp.bat PLATFORM [rebuild]
 @echo PLATFORM is either 'Win32' or 'x64'.
 @echo If 'rebuild' is given, a full rebuild is performed.
+
+rem End of subroutine USAGE
 goto :EOF
 
 
-:DO_BUILD
-@echo building C++ libraries...
+:SETUP_ENVIRONS
+rem Set up envirnoment variables for Visual C++
+
+rem First, clear the variables to which vcvarsall.bat will append items, so
+rem that we don't have any stray settings leaking in. (It should be safe to
+rem clear PATH because setlocal is in effect and the only external commands we
+rem invoke below are from VC++.)
+set PATH=
+set INCLUDE=
+set LIB=
+set LIBPATH=
 
 set BOOT_DRIVE=%windir:~0,2%
 if "%BOOT_DRIVE%"=="" set BOOT_DRIVE=C:
@@ -57,11 +69,18 @@ set VC_PATH=%BOOT_DRIVE%\Program Files (x86)\Microsoft Visual Studio 9.0\VC\
 if not "%PROCESSOR_ARCHITECTURE%"=="AMD64" (
     set VC_PATH=%BOOT_DRIVE%\Program Files\Microsoft Visual Studio 9.0\VC\
 )
+
 pushd "%VC_PATH%"
 call vcvarsall.bat
 @echo %ECHO_MODE%
 popd
 
+rem End of subroutine SETUP_ENVIRONS
+goto :EOF
+
+
+:DO_BUILD
+@echo building C++ libraries...
 set SRC_ROOT=%~dp0..
 pushd %SRC_ROOT%
 for %%I in (
@@ -74,4 +93,5 @@ for %%I in (
 )
 popd
 
+rem End of subroutine DO_BUILD
 goto :EOF
