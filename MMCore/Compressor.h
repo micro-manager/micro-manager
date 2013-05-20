@@ -22,6 +22,10 @@
 
 #ifndef COMPRESSOR_H
 #define COMPRESSOR_H
+
+#ifdef WIN32
+#define ZLIB_WINAPI
+#endif
 #include "zlib.h"
 #include "memory.h"
 #include "stdlib.h"

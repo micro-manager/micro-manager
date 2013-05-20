@@ -70,9 +70,9 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
-				AdditionalDependencies="zlib.lib"
+				AdditionalDependencies="zlibstat.lib"
 				OutputFile="$(OutDir)/MMCore.lib"
-				AdditionalLibraryDirectories="&quot;..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib&quot;;&quot;..\..\3rdpartypublic\zlib\bin_$(PlatformName)&quot;"
+				AdditionalLibraryDirectories="&quot;..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib&quot;;&quot;..\..\3rdpartypublic\zlib_build\VS2008\$(PlatformName)\$(ConfigurationName)&quot;"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -143,9 +143,9 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
-				AdditionalDependencies="zlib.lib"
+				AdditionalDependencies="zlibstat.lib"
 				OutputFile="$(OutDir)/MMCore.lib"
-				AdditionalLibraryDirectories="&quot;..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib&quot;;&quot;..\..\3rdpartypublic\zlib\bin_$(PlatformName)&quot;"
+				AdditionalLibraryDirectories="&quot;..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib&quot;;&quot;..\..\3rdpartypublic\zlib_build\VS2008\$(PlatformName)\$(ConfigurationName)&quot;"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -212,9 +212,9 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
-				AdditionalDependencies="zlib.lib"
+				AdditionalDependencies="zlibstat.lib"
 				OutputFile="$(OutDir)/MMCore.lib"
-				AdditionalLibraryDirectories="&quot;..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib&quot;;&quot;..\..\3rdpartypublic\zlib\bin_$(PlatformName)&quot;"
+				AdditionalLibraryDirectories="&quot;..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib&quot;;&quot;..\..\3rdpartypublic\zlib_build\VS2008\$(PlatformName)\$(ConfigurationName)&quot;"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -282,9 +282,9 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
-				AdditionalDependencies="zlib.lib"
+				AdditionalDependencies="zlibstat.lib"
 				OutputFile="$(OutDir)/MMCore.lib"
-				AdditionalLibraryDirectories="&quot;..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib&quot;;&quot;..\..\3rdpartypublic\zlib\bin_$(PlatformName)&quot;"
+				AdditionalLibraryDirectories="&quot;..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib&quot;;&quot;..\..\3rdpartypublic\zlib_build\VS2008\$(PlatformName)\$(ConfigurationName)&quot;"
 			/>
 			<Tool
 				Name="VCALinkTool"
