@@ -219,7 +219,6 @@ if test -f "$FREEIMAGEINCDIR/FreeImage.h"; then
    AC_FIND_FILE([FreeImagePlus.h], [/usr/local/include /usr/include ${thirdpartypublic}/FreeImage/Wrapper/FreeImagePlus], FREEIMAGEPLUSINCDIR)
    if test -f "$FREEIMAGEPLUSINCDIR/FreeImagePlus.h"; then
       AC_MSG_RESULT([found])
-
       AC_SUBST(LIBFREEIMAGEPLUS_CXXFLAGS, "-I$FREEIMAGEPLUSINCDIR")
       AC_FIND_FILE([libfreeimageplus.a], [/usr/lib /usr/lib64 /usr/local/$ARCH/lib], FREEIMAGEPLUSLIBDIR)
       if test x$FREEIMAGEPLUSLIBDIR = xNO; then
@@ -228,9 +227,11 @@ if test -f "$FREEIMAGEINCDIR/FreeImage.h"; then
          AC_MSG_RESULT(["libfreeimageplus.a" found])
          AC_SUBST(LIBFREEIMAGEPLUS, "$FREEIMAGEPLUSLIBDIR/libfreeimageplus.a")
       fi
+   else
+      AC_MSG_RESULT([not found])
    fi
 fi
-if test -n $LIBFREEIMAGE && test -n $LIBFREEIMAGE_CXXFLAGS; then
+if test x$FREEIMAGELIBDIR = xNO; then
    buildsc=false
    AC_MSG_RESULT([not found: To build the GPhoto device adapter download and install FreeImage in ../../3rdpartypublic/FreeImage])
 fi
