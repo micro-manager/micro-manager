@@ -55,10 +55,7 @@ goto :EOF
 rem Set up envirnoment variables for Visual C++
 
 rem First, clear the variables to which vcvarsall.bat will append items, so
-rem that we don't have any stray settings leaking in. (It should be safe to
-rem clear PATH because setlocal is in effect and the only external commands we
-rem invoke below are from VC++.)
-set PATH=
+rem that we don't have any stray settings leaking in (except for PATH).
 set INCLUDE=
 set LIB=
 set LIBPATH=
