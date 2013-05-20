@@ -75,6 +75,7 @@ Source: micro-manager\opencv_highgui231.dll; DestDir: {app}; Flags: ignoreversio
 Source: micro-manager\opencv_core231.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mcam64.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\hrfw64.dll; DestDir: {app}; Flags: ignoreversion
+Source: micro-manager\mrc564.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mrfw64.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mcammr64.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\XCLIBW64.dll; DestDir: {app}; Flags: ignoreversion
