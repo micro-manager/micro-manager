@@ -45,7 +45,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\src\DEMessaging;$(THIRDPARTYLIBS)\google\protocolbuffers\src\;$(THIRDPARTYLIBS)\boost\"
+				AdditionalIncludeDirectories="..\src\DEMessaging;$(THIRDPARTYLIBS)\google\protocolbuffers_build\VS2008\include;$(THIRDPARTYLIBS)\boost"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WIN32_WINNT=0x0501"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -66,7 +66,7 @@
 			<Tool
 				Name="VCLibrarianTool"
 				AdditionalDependencies="libprotobuf.lib DEMessaging.lib"
-				AdditionalLibraryDirectories="$(THIRDPARTYLIBS)\boost\stage_$(PlatformName)\lib;$(THIRDPARTYLIBS)\google\protocolbuffers\vsprojects\$(PlatformName)\$(ConfigurationName);$(TargetDir)"
+				AdditionalLibraryDirectories="$(THIRDPARTYLIBS)\boost\stage_$(PlatformName)\lib;$(THIRDPARTYLIBS)\google\protocolbuffers_build\VS2008\$(PlatformName)\$(ConfigurationName);$(TargetDir)"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -111,7 +111,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\src\DEMessaging;$(THIRDPARTYLIBS)\google\protocolbuffers\src\;$(THIRDPARTYLIBS)\boost\"
+				AdditionalIncludeDirectories="..\src\DEMessaging;$(THIRDPARTYLIBS)\google\protocolbuffers_build\VS2008\include;$(THIRDPARTYLIBS)\boost"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WIN32_WINNT=0x0501"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -132,7 +132,7 @@
 			<Tool
 				Name="VCLibrarianTool"
 				AdditionalDependencies="libprotobuf.lib DEMessaging.lib"
-				AdditionalLibraryDirectories="$(THIRDPARTYLIBS)\boost\stage_$(PlatformName)\lib;$(THIRDPARTYLIBS)\google\protocolbuffers\vsprojects\$(PlatformName)\$(ConfigurationName);$(TargetDir)"
+				AdditionalLibraryDirectories="$(THIRDPARTYLIBS)\boost\stage_$(PlatformName)\lib;$(THIRDPARTYLIBS)\google\protocolbuffers_build\VS2008\$(PlatformName)\$(ConfigurationName);$(TargetDir)"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -175,7 +175,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="..\src\DEMessaging;$(THIRDPARTYLIBS)\google\protocolbuffers\src\;$(THIRDPARTYLIBS)\boost\"
+				AdditionalIncludeDirectories="..\src\DEMessaging;$(THIRDPARTYLIBS)\google\protocolbuffers_build\VS2008\include;$(THIRDPARTYLIBS)\boost"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WIN32_WINNT=0x0501"
 				RuntimeLibrary="2"
 				UsePrecompiledHeader="0"
@@ -194,7 +194,7 @@
 			<Tool
 				Name="VCLibrarianTool"
 				AdditionalDependencies="libprotobuf.lib DEMessaging.lib"
-				AdditionalLibraryDirectories="$(THIRDPARTYLIBS)\boost\stage_$(PlatformName)\lib;$(THIRDPARTYLIBS)\google\protocolbuffers\vsprojects\$(PlatformName)\$(ConfigurationName);$(TargetDir)"
+				AdditionalLibraryDirectories="$(THIRDPARTYLIBS)\boost\stage_$(PlatformName)\lib;$(THIRDPARTYLIBS)\google\protocolbuffers_build\VS2008\$(PlatformName)\$(ConfigurationName);$(TargetDir)"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -238,7 +238,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="..\src\DEMessaging;$(THIRDPARTYLIBS)\google\protocolbuffers\src\;$(THIRDPARTYLIBS)\boost\"
+				AdditionalIncludeDirectories="..\src\DEMessaging;$(THIRDPARTYLIBS)\google\protocolbuffers_build\VS2008\include;$(THIRDPARTYLIBS)\boost"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WIN32_WINNT=0x0501"
 				RuntimeLibrary="2"
 				UsePrecompiledHeader="0"
@@ -257,7 +257,7 @@
 			<Tool
 				Name="VCLibrarianTool"
 				AdditionalDependencies="libprotobuf.lib DEMessaging.lib"
-				AdditionalLibraryDirectories="$(THIRDPARTYLIBS)\boost\stage_$(PlatformName)\lib;$(THIRDPARTYLIBS)\google\protocolbuffers\vsprojects\$(PlatformName)\$(ConfigurationName);$(TargetDir)"
+				AdditionalLibraryDirectories="$(THIRDPARTYLIBS)\boost\stage_$(PlatformName)\lib;$(THIRDPARTYLIBS)\google\protocolbuffers_build\VS2008\$(PlatformName)\$(ConfigurationName);$(TargetDir)"
 			/>
 			<Tool
 				Name="VCALinkTool"

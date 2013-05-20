@@ -45,7 +45,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="$(THIRDPARTYLIBS)\google\protocolbuffers\src\;$(THIRDPARTYLIBS)\boost\"
+				AdditionalIncludeDirectories="&quot;$(THIRDPARTYLIBS)\google\protocolbuffers_build\VS2008\include&quot;;&quot;$(THIRDPARTYLIBS)\boost&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WIN32_WINNT=0x0501"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -65,7 +65,7 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
-				AdditionalLibraryDirectories="$(THIRDPARTYLIBS)\google\protocolbuffers\vsprojects\$(PlatformName)\$(ConfigurationName);$(THIRDPARTYLIBS)\boost\stage_$(PlatformName)\lib"
+				AdditionalLibraryDirectories="&quot;$(THIRDPARTYLIBS)\google\protocolbuffers_build\VS2008\$(PlatformName)\$(ConfigurationName)&quot;;&quot;$(THIRDPARTYLIBS)\boost\stage_$(PlatformName)\lib&quot;"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -110,7 +110,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="$(THIRDPARTYLIBS)\google\protocolbuffers\src\;$(THIRDPARTYLIBS)\boost\"
+				AdditionalIncludeDirectories="&quot;$(THIRDPARTYLIBS)\google\protocolbuffers_build\VS2008\include&quot;;&quot;$(THIRDPARTYLIBS)\boost&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WIN32_WINNT=0x0501"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -130,7 +130,7 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
-				AdditionalLibraryDirectories="$(THIRDPARTYLIBS)\google\protocolbuffers\vsprojects\$(PlatformName)\$(ConfigurationName);$(THIRDPARTYLIBS)\boost\stage_$(PlatformName)\lib"
+				AdditionalLibraryDirectories="&quot;$(THIRDPARTYLIBS)\google\protocolbuffers_build\VS2008\$(PlatformName)\$(ConfigurationName)&quot;;&quot;$(THIRDPARTYLIBS)\boost\stage_$(PlatformName)\lib&quot;"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -173,7 +173,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="$(THIRDPARTYLIBS)\google\protocolbuffers\src\;$(THIRDPARTYLIBS)\boost\"
+				AdditionalIncludeDirectories="&quot;$(THIRDPARTYLIBS)\google\protocolbuffers_build\VS2008\include&quot;;&quot;$(THIRDPARTYLIBS)\boost&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WIN32_WINNT=0x0501"
 				RuntimeLibrary="2"
 				UsePrecompiledHeader="0"
@@ -191,7 +191,7 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
-				AdditionalLibraryDirectories="$(THIRDPARTYLIBS)\google\protocolbuffers\vsprojects\$(PlatformName)\$(ConfigurationName);$(THIRDPARTYLIBS)\boost\stage_$(PlatformName)\lib"
+				AdditionalLibraryDirectories="&quot;$(THIRDPARTYLIBS)\google\protocolbuffers_build\VS2008\$(PlatformName)\$(ConfigurationName)&quot;;&quot;$(THIRDPARTYLIBS)\boost\stage_$(PlatformName)\lib&quot;"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -235,7 +235,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="$(THIRDPARTYLIBS)\google\protocolbuffers\src\;$(THIRDPARTYLIBS)\boost\"
+				AdditionalIncludeDirectories="&quot;$(THIRDPARTYLIBS)\google\protocolbuffers_build\VS2008\include&quot;;&quot;$(THIRDPARTYLIBS)\boost&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WIN32_WINNT=0x0501"
 				RuntimeLibrary="2"
 				UsePrecompiledHeader="0"
@@ -253,7 +253,7 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
-				AdditionalLibraryDirectories="$(THIRDPARTYLIBS)\google\protocolbuffers\vsprojects\$(PlatformName)\$(ConfigurationName);$(THIRDPARTYLIBS)\boost\stage_$(PlatformName)\lib"
+				AdditionalLibraryDirectories="&quot;$(THIRDPARTYLIBS)\google\protocolbuffers_build\VS2008\$(PlatformName)\$(ConfigurationName)&quot;;&quot;$(THIRDPARTYLIBS)\boost\stage_$(PlatformName)\lib&quot;"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -377,7 +377,7 @@
 				>
 				<Tool
 					Name="VCCustomBuildTool"
-					CommandLine="$(THIRDPARTYLIBS)\google\protocolbuffers\vsprojects\Win32\Debug\protoc --proto_path=$(ProjectDir)..\src\DEMessaging\ --cpp_out=$(ProjectDir)..\src\DEMessaging\ $(ProjectDir)..\src\DEMessaging\DEServer.proto&#x0D;&#x0A;"
+					CommandLine="$(THIRDPARTYLIBS)\google\protocolbuffers_build\VS2008\bin\protoc --proto_path=$(ProjectDir)..\src\DEMessaging\ --cpp_out=$(ProjectDir)..\src\DEMessaging\ $(ProjectDir)..\src\DEMessaging\DEServer.proto&#x0D;&#x0A;"
 					Outputs="..\src\DEMessaging\DEServer.pb.h;..\src\DEMessaging\DEServer.pb.cc"
 				/>
 			</FileConfiguration>
@@ -386,7 +386,7 @@
 				>
 				<Tool
 					Name="VCCustomBuildTool"
-					CommandLine="$(THIRDPARTYLIBS)\google\protocolbuffers\vsprojects\Win32\Debug\protoc --proto_path=$(ProjectDir)..\src\DEMessaging\ --cpp_out=$(ProjectDir)..\src\DEMessaging\ $(ProjectDir)..\src\DEMessaging\DEServer.proto&#x0D;&#x0A;"
+					CommandLine="$(THIRDPARTYLIBS)\google\protocolbuffers_build\VS2008\bin\protoc --proto_path=$(ProjectDir)..\src\DEMessaging\ --cpp_out=$(ProjectDir)..\src\DEMessaging\ $(ProjectDir)..\src\DEMessaging\DEServer.proto&#x0D;&#x0A;"
 					Outputs="..\src\DEMessaging\DEServer.pb.h;..\src\DEMessaging\DEServer.pb.cc"
 				/>
 			</FileConfiguration>
@@ -395,7 +395,7 @@
 				>
 				<Tool
 					Name="VCCustomBuildTool"
-					CommandLine="$(THIRDPARTYLIBS)\google\protocolbuffers\vsprojects\Win32\Debug\protoc --proto_path=$(ProjectDir)..\src\DEMessaging\ --cpp_out=$(ProjectDir)..\src\DEMessaging\ $(ProjectDir)..\src\DEMessaging\DEServer.proto&#x0D;&#x0A;"
+					CommandLine="$(THIRDPARTYLIBS)\google\protocolbuffers_build\VS2008\bin\protoc --proto_path=$(ProjectDir)..\src\DEMessaging\ --cpp_out=$(ProjectDir)..\src\DEMessaging\ $(ProjectDir)..\src\DEMessaging\DEServer.proto&#x0D;&#x0A;"
 					Outputs="..\src\DEMessaging\DEServer.pb.h;..\src\DEMessaging\DEServer.pb.cc"
 				/>
 			</FileConfiguration>
@@ -404,7 +404,7 @@
 				>
 				<Tool
 					Name="VCCustomBuildTool"
-					CommandLine="$(THIRDPARTYLIBS)\google\protocolbuffers\vsprojects\Win32\Debug\protoc --proto_path=$(ProjectDir)..\src\DEMessaging\ --cpp_out=$(ProjectDir)..\src\DEMessaging\ $(ProjectDir)..\src\DEMessaging\DEServer.proto&#x0D;&#x0A;"
+					CommandLine="$(THIRDPARTYLIBS)\google\protocolbuffers_build\VS2008\bin\protoc --proto_path=$(ProjectDir)..\src\DEMessaging\ --cpp_out=$(ProjectDir)..\src\DEMessaging\ $(ProjectDir)..\src\DEMessaging\DEServer.proto&#x0D;&#x0A;"
 					Outputs="..\src\DEMessaging\DEServer.pb.h;..\src\DEMessaging\DEServer.pb.cc"
 				/>
 			</FileConfiguration>
