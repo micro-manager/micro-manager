@@ -157,32 +157,43 @@ else
    AC_MSG_RESULT([not found])
 fi
 
-# SimpleCam - GPhoto
 PKG_PROG_PKG_CONFIG
 PKG_CHECK_MODULES([GPHOTO2], [libgphoto2 >= 2.5.1], [have_libgphoto2=yes], [have_libgphoto2=no])
 
-if test x$have_libgphoto2 = xno; then
-   buildsc=false
-   AC_MSG_RESULT([not found])
+# Libtool library 
+AC_MSG_CHECKING(for ltdl)
+AC_FIND_FILE([libltdl.dylib], [/usr/local/$ARCH/lib /usr/lib /usr/lib64], LIBLTDLPATH)
+if test x$LIBLTDLPATH = xNO; then
+   AC_MSG_RESULT(["libltdl not found, can not build GPhoto adapter"])
 else
-   AC_MSG_RESULT([found])
-   GPHOTO2_VERSION=`$PKG_CONFIG --modversion libgphoto2`
-   GPHOTO2_PORT_VERSION=`$PKG_CONFIG --modversion libgphoto2_port`
-   GPHOTO2_LIBDIR=`$PKG_CONFIG --variable=libdir libgphoto2`
-   LIBGPHOTO2LIBDIR=`$PKG_CONFIG --variable=libdir libgphoto2`
-   buildsc=false
-   if test -f "$LIBGPHOTO2LIBDIR/libgphoto2.la"; then
-      LIBGPHOTO2="$LIBGPHOTO2LIBDIR/libgphoto2.la -lltdl"
-      buildsc=true
+   AC_MSG_RESULT(["libltdl" found])
+   LIBLTDL="$LIBLTDLPATH/libltdl.dylib"
+
+   # SimpleCam - GPhoto
+   if test x$have_libgphoto2 = xno; then
+      buildsc=false
+      AC_MSG_RESULT([not found])
    else
-      if test -f "$LIBGPHOTO2LIBDIR/libgphoto2.so"; then
-         LIBGPHOTO2="-lgphoto2"
+      AC_MSG_RESULT([found])
+      GPHOTO2_VERSION=`$PKG_CONFIG --modversion libgphoto2`
+      GPHOTO2_PORT_VERSION=`$PKG_CONFIG --modversion libgphoto2_port`
+      GPHOTO2_LIBDIR=`$PKG_CONFIG --variable=libdir libgphoto2`
+      LIBGPHOTO2LIBDIR=`$PKG_CONFIG --variable=libdir libgphoto2`
+      buildsc=false
+      if test -f "$LIBGPHOTO2LIBDIR/libgphoto2.la"; then
+         LIBGPHOTO2="$LIBGPHOTO2LIBDIR/libgphoto2.la $LIBLTDL"
          buildsc=true
+      else
+         if test -f "$LIBGPHOTO2LIBDIR/libgphoto2.so"; then
+            LIBGPHOTO2="-lgphoto2"
+            buildsc=true
+         fi
       fi
    fi
 fi
 
-# On mac, install dynamic gphoto2 libraries 
+
+   # On mac, install dynamic gphoto2 libraries 
 case $host in
    *apple-darwin*)
       AC_SUBST([INSTALL_LIBGPHOTO], [install_macos])
@@ -197,6 +208,7 @@ AC_SUBST(GPHOTO2_LIBDIR)
 AC_SUBST(GPHOTO2_VERSION)
 AC_SUBST(GPHOTO2_PORT_VERSION)
 AC_SUBST(LIBGPHOTO2)
+AC_SUBST(LIBLTDL)
 
 # LibFreeImage
 AC_MSG_CHECKING(for libFreeImage headers)
