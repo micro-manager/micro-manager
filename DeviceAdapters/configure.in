@@ -159,7 +159,7 @@ fi
 
 # SimpleCam - GPhoto
 PKG_PROG_PKG_CONFIG
-PKG_CHECK_MODULES([GPHOTO2], [libgphoto2 >= 2.1.10], [have_libgphoto2=yes], [have_libgphoto2=no])
+PKG_CHECK_MODULES([GPHOTO2], [libgphoto2 >= 2.5.1], [have_libgphoto2=yes], [have_libgphoto2=no])
 
 if test x$have_libgphoto2 = xno; then
    buildsc=false
