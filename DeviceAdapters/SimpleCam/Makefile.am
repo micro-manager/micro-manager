@@ -23,7 +23,8 @@ install_macos:
 	cp .libs/libmmgr_dal_GPhoto$(MMSUFFIX) $(DESTDIR)$(DEVICEADAPTERPATH)/libmmgr_dal_GPhoto$(MMSUFFIX)
 	install_name_tool -change $(GPHOTO2_LIBDIR)/libgphoto2.6.dylib @loader_path/libgphoto2/libgphoto2.6.dylib $(DEVICEADAPTERPATH)/libmmgr_dal_GPhoto$(MMSUFFIX)
 	install_name_tool -change $(GPHOTO2_LIBDIR)/libgphoto2_port.10.dylib @loader_path/libgphoto2/libgphoto2_port.10.dylib $(DEVICEADAPTERPATH)/libmmgr_dal_GPhoto$(MMSUFFIX)
-	install_name_tool -change /usr/lib/libltdl.3.dylib /usr/lib/libltdl.dylib $(DEVICEADAPTERPATH)/libmmgr_dal_GPhoto$(MMSUFFIX)
+	install_name_tool -change $(LIBLTDL) @loader_path/libgphoto2/libltdl.dylib $(DEVICEADAPTERPATH)/libmmgr_dal_GPhoto$(MMSUFFIX)
+	install_name_tool -change /usr/local/x86_64/lib/libltdl.7.dylib @loader_path/libgphoto2/libltdl.dylib $(DEVICEADAPTERPATH)/libmmgr_dal_GPhoto$(MMSUFFIX)
 	test -d $(DEVICEADAPTERPATH)/libgphoto2 || mkdir $(DESTDIR)$(DEVICEADAPTERPATH)/libgphoto2
 	test -d $(DEVICEADAPTERPATH)/libgphoto2/libgphoto2 || mkdir $(DESTDIR)$(DEVICEADAPTERPATH)/libgphoto2/libgphoto2
 	test -d $(DEVICEADAPTERPATH)/libgphoto2/libgphoto2_port || mkdir $(DESTDIR)$(DEVICEADAPTERPATH)/libgphoto2/libgphoto2_port
