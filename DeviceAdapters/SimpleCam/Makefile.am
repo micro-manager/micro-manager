@@ -30,13 +30,15 @@ install_macos:
 	rm -rf $(DEVICEADAPTERPATH)/libgphoto2/libgphoto2/*
 	rm -rf $(DEVICEADAPTERPATH)/libgphoto2/libgphoto2_port/*
 	cp $(GPHOTO2_LIBDIR)/libgphoto2.6.dylib $(DEVICEADAPTERPATH)/libgphoto2/
-	cp $(LIBLTDL) $(DEVICEADAPTERPATH)/libgphoto2/
 	install_name_tool -id @loader_path/libgphoto2/libgphoto2.6.dylib $(DEVICEADAPTERPATH)/libgphoto2/libgphoto2.6.dylib
 	install_name_tool -change $(GPHOTO2_LIBDIR)/libgphoto2_port.10.dylib @loader_path/libgphoto2_port.10.dylib $(DEVICEADAPTERPATH)/libgphoto2/libgphoto2.6.dylib
-	install_name_tool -change /usr/lib/libltdl.3.dylib /usr/lib/libltdl.dylib $(DEVICEADAPTERPATH)/libgphoto2/libgphoto2.6.dylib
 	cp $(GPHOTO2_LIBDIR)/libgphoto2_port.10.dylib $(DEVICEADAPTERPATH)/libgphoto2/
 	install_name_tool -id @loader_path/libgphoto2/libgphoto2_port.10.dylib $(DEVICEADAPTERPATH)/libgphoto2/libgphoto2_port.10.dylib
-	install_name_tool -change /usr/lib/libltdl.3.dylib /usr/lib/libltdl.dylib $(DEVICEADAPTERPATH)/libgphoto2/libgphoto2_port.10.dylib
+	cp $(LIBLTDL) $(DEVICEADAPTERPATH)/libgphoto2/
+	install_name_tool -id @loader_path/libgphoto2/libltdl.dylib $(DEVICEADAPTERPATH)/libgphoto2/libltdl.dylib
+	install_name_tool -change $(LIBLTDL) @loader_path/libltdl.dylib $(DEVICEADAPTERPATH)/libgphoto2/libgphoto2.6.dylib
+	install_name_tool -change $(LIBLTDL) @loader_path/libltdl.dylib $(DEVICEADAPTERPATH)/libgphoto2/libgphoto2_port.10.dylib
+	install_name_tool -change /usr/lib/libltdl.7.dylib @loader_path/libltdl.dylib $(DEVICEADAPTERPATH)/libgphoto2/libgphoto2_port.10.dylib
 	cp $(GPHOTO2_LIBDIR)/libgphoto2/$(GPHOTO2_VERSION)/*.so $(DEVICEADAPTERPATH)/libgphoto2/libgphoto2/
 	cp $(GPHOTO2_LIBDIR)/libgphoto2_port/$(GPHOTO2_PORT_VERSION)/*.so $(DEVICEADAPTERPATH)/libgphoto2/libgphoto2_port/
 	ls $(DEVICEADAPTERPATH)/libgphoto2/libgphoto2/*.so $(DESTDIR)$(DEVICEADAPTERPATH)/libgphoto2/libgphoto2_port/*.so | xargs -n 1 install_name_tool -change $(GPHOTO2_LIBDIR)/libgphoto2.6.dylib @loader_path/../libgphoto2.6.dylib
