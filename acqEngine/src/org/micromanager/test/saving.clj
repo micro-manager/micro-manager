@@ -7,20 +7,43 @@
   (:require [org.micromanager.mm :as mm])
   (:use [org.micromanager.mm :only (core)]))
 
-(def native-order (ByteOrder/nativeOrder))
+;; bucket brigade
 
-(defn byte-buffer
-  "Create a direct byte-buffer with native order."
-  [size-bytes]
-  (.. ByteBuffer (allocateDirect size-bytes)
-      (order native-order)))
+(defn bucket-node [input-queue function output-queue]
+  (future
+    (loop []
+      (let [item (.take input-queue)]
+        (if (= item input-queue)
+          (.put output-queue output-queue)
+          (do (.put output-queue (function item))
+              (recur)))))))
 
-(defn image-to-byte-buffer
-  "Store 16-bit image pixel array data in a
-   pre-existing byte buffer instance."
-  [pix buffer]
-  (.. buffer asShortBuffer (put pix))
-  buffer)
+(defn first-node [n function output-queue]
+  (future
+    (dotimes [i n]
+      (.put output-queue (function)))
+    (.put output-queue output-queue)))
+
+(defn last-node [input-queue function]
+  (loop []
+    (let [item (.take input-queue)]
+      (when (not= item input-queue)
+        (function item)
+        (recur)))))
+        
+
+(defn bucket-brigade [n & functions]
+  (let [first-queue (LinkedBlockingQueue.)
+        first-node (first-node n (first functions) first-queue)]
+    (loop [remaining-functions (rest functions) input-queue first-queue]
+      (let [f (first remaining-functions)]
+        (if-let [n (next remaining-functions)]
+          (let [output-queue (LinkedBlockingQueue.)]
+            (bucket-node input-queue f output-queue)
+            (recur n output-queue))
+          (last-node input-queue f))))))
+      
+;; acquiring and popping images
 
 (defn run-sequence-acquisition
   "Start a sequence acquisition and, optionally, wait for it."
@@ -46,91 +69,52 @@
              (when (core isBufferOverflowed)
                (throw (Exception. "Circular buffer overflowed."))))))
 
-(defn single-thread-pop-test
-  "Run a sequence acquisition and pop the images,
-   inserting them into image-queue as they arrive."
-  [num-images image-queue]
-  (run-sequence-acquisition num-images false)
-  (dotimes [i num-images]
-    (when-let [image (pop-next-image)]
-      (when image-queue
-        (.put image-queue image)))))
+(def pop-next-image-memo (memoize pop-next-image))
 
-(defn byte-buffer-queue
-  "Run a sequence acquisition, convert the incoming
-   images to direct byte buffers, and return references
-   to the buffers in a queue."
-  [num-images]
-  (let [image-queue (LinkedBlockingQueue. 1)]
-    (future (single-thread-pop-test num-images image-queue))
-    (let [queue (LinkedBlockingQueue. 1)]
-      (future (dotimes [i num-images]
-                (let [img (.take image-queue)
-                      n (count img)]
-                  (.put queue
-                        (image-to-byte-buffer
-                          img
-                          (byte-buffer (* n 2))))
-                  )))
-      queue)))
+;; converting to byte buffer
 
-(defmacro dotimes-timed [bindings interval & body]
-  `(let [t0# (System/currentTimeMillis)]
-     (println '~(first bindings) "time (ms)")
-     (dotimes ~bindings
-       (when (zero? (mod ~(first bindings) ~interval))
-         (println ~(first bindings) (- (System/currentTimeMillis) t0#)
-                  (core getRemainingImageCount)))
-       ~@body)))
+(def native-order (ByteOrder/nativeOrder))
+  
+(defn byte-buffer
+  "Create a direct byte-buffer with native order."
+  [size-bytes]
+  (.. ByteBuffer (allocateDirect size-bytes)
+      (order native-order)))
+
+(defn image-to-byte-buffer
+  "Store 16-bit image pixel array data in a
+   pre-existing byte buffer instance."
+  ([pix buffer]
+  (doto buffer
+    .rewind
+    (.. asShortBuffer (put pix))))
+  ([pix]
+    (image-to-byte-buffer pix (byte-buffer (* 2 (count pix))))))
+
+
+;; writing to disk
 
 (defn write-buf [channel buffer]
-  (.write channel buffer)
-  )
+  (.write channel buffer))
 
-(defn acquire-and-save
-  "Simulate running a sequence acquisition, and save the
-   images to a file using the direct byte buffer method."
-  [num-images]
-    (let [filename (str "D:/AcquisitionData/test" (rand-int 100000) ".dat")
-          file (RandomAccessFile. filename "rw")
-          channel (.getChannel file)]
-      (try
-        (let [buffer-queue (time (byte-buffer-queue num-images))]
-          (println filename)
-          (dotimes-timed [i num-images] 100
-            (let [buffer (.take buffer-queue)]
-              (write-buf channel buffer)
-              )))
-        (catch Exception e (println e))
-        (finally (.close file)))
-      filename))
+(defn acquire-and-write-to-disk [num-images]
+  (let [filename (str "D:/AcquisitionData/deleteMe" (rand-int 100000) ".dat")
+        file (RandomAccessFile. filename "rw")
+        channel (.getChannel file)
+        fake-buf (image-to-byte-buffer (core getImage))]
+    (println filename)
+    (run-sequence-acquisition num-images false)
+    (time (bucket-brigade num-images
+            pop-next-image
+            ;pop-next-image-memo
+            image-to-byte-buffer
+            ;(constantly fake-buf)
+            #(write-buf channel %)
+            ;(constantly nil)
+            ))
+    (.close file)))
 
-(defn acquire-and-map
-  [num-images]
-  (let [buffer-queue (time (byte-buffer-queue num-images))]
-    (let [filename (str "D:/AcquisitionData/test" (rand-int 100000) ".dat")
-          file (RandomAccessFile. filename "rw")
-          channel (.getChannel file)]
-      (try
-        (dotimes-timed [i num-images] 100
-                       (let [pixels (.take buffer-queue)
-                             out (.. file getChannel (map FileChannel$MapMode/READ_WRITE 0 (.limit pixels)))]
-                         (.put out pixels)))
-        (catch Exception e (println e))
-        (finally (.close file))))))
-        
-
-(defn acquire-and-store-in-ram
-  "Simulate running a sequence acquisition, and store
-   the images in RAM using the direct byte buffer method."
-  [num-images]
-  (let [buffer-queue (time (byte-buffer-queue num-images))
-        storage-queue (proxy [LinkedBlockingQueue] []
-                        (toString [] (str "(" (count this) " items)")))]
-      (dotimes-timed [i num-images] 100
-        (let [buffer (.take buffer-queue)]
-          (.put storage-queue buffer)))
-    storage-queue))
+;; other tests
 
 (defn test-write [num-images]
   (let [buffer (byte-buffer (* 2560 2160 2))
@@ -144,9 +128,7 @@
         (.write channel buffer))
       (catch Exception e (println e))
       (finally
-        (.close file)))))
-      
-    
+        (.close file)))))  
 
 (defn monitor-circular-buffer []
   (while (not (core isSequenceRunning))
@@ -154,4 +136,34 @@
   (while (core isSequenceRunning)
     (println (core getRemainingImageCount))
     (Thread/sleep 250)))
+
+(defn drain-queue [blocking-queue]
+  (future (loop [i 0]
+            (let [obj (.take blocking-queue)]
+              (when (zero? (mod i 100))
+                (println i (core getRemainingImageCount)))
+              (when (not= obj blocking-queue)
+                (recur (inc i)))))))
+
+(defn profile [repetitions f]
+  (time (dorun (repeatedly repetitions f))))
+
+(defn test-popping-speed [n]
+  ;(future (monitor-circular-buffer))
+  (core startSequenceAcquisition n 0 false)
+ ; (time (while (core isSequenceRunning)
+ ;         (Thread/sleep 1)))
+  (profile n #(pop-next-image)))
+
+(defn extract-array [short-buf]
+  (.rewind short-buf)
+  (let [n (.limit short-buf)
+        a (short-array n)]
+    (.get short-buf a 0 n)
+    a))
+  
+(defn extract-array-test [n]
+  (let [short-buf (.asShortBuffer (byte-buffer (* 2 2560 2160)))]
+    (profile n #(extract-array short-buf))))
+  
 
