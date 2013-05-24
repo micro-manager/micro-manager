@@ -18,15 +18,17 @@ if "%1"=="x64" (
 
 set CONFIGURATION=Release
 
-set buildswitch=/build
+set BUILDSWITCH=
 if "%1"=="rebuild" (
-    set buildswitch=/rebuild
+    set BUILDSWITCH=/rebuild
     shift
 )
 if "%1"=="REBUILD" (
-    set buildswitch=/rebuild
+    set BUILDSWITCH=/rebuild
     shift
 )
+
+set NPROCS=8
 
 if "%ARCH%"=="" (
     call :USAGE
@@ -86,7 +88,7 @@ for %%I in (
     .\MMCorePy_wrap\MMCorePy_wrap.sln
 ) do (
     @echo building %%I...
-    start /wait vcexpress %%I %buildswitch% "%CONFIGURATION%|%PLATFORM%"
+    vcbuild /M%NPROCS% %BUILDSWITCH% %%I "%CONFIGURATION%|%PLATFORM%"
 )
 popd
 
