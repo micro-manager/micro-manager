@@ -156,7 +156,8 @@
       {"AttachedTasks" (JSONArray. (map str runnables))})))
 
 (defn annotate-image [img event state elapsed-time-ms]
-  {:pix (:pix img)
+  {:direct-buffer (:direct-buffer img)
+   :bytes-per-pixel (:bytes-per-pixel img)
    :tags
    (merge
      (generate-metadata event state)
@@ -165,7 +166,9 @@
      )}) ;; include any existing metadata
 
 (defn make-TaggedImage [annotated-img]
-  (TaggedImage. (:pix annotated-img) (JSONObject. (:tags annotated-img))))
+  (TaggedImage. (:direct-buffer annotated-img)
+                (:bytes-per-pixel annotated-img)
+                (JSONObject. (:tags annotated-img))))
 
 ;; hardware error handling
 
@@ -376,8 +379,9 @@
 (defn pop-burst-image
   [timeout-ms]
   (let [tagged-image (pop-tagged-image-timeout timeout-ms)]
-    {:pix (.pix tagged-image)
-     :tags (json-to-data (.tags tagged-image))}))
+    {:direct-buffer (.getDirectBuffer tagged-image)
+     :bytes-per-pixel (.getBytesPerPixel tagged-image)
+     :tags (json-to-data (.getTags tagged-image))}))
 
 (defn pop-burst-images
   [n timeout-ms]

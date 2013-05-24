@@ -42,6 +42,16 @@
             (bucket-node input-queue f output-queue)
             (recur n output-queue))
           (last-node input-queue f))))))
+
+(defn queuify
+  "Runs zero-arg function n times on another thread. Returns
+   a queue that will eventually receive n return values.
+   Will block whenever queue reaches queue-size."
+  [n queue-size function]
+  (let [queue (LinkedBlockingQueue. queue-size)]
+    (future (dotimes [i n]
+              (.put queue (function))))
+    queue))
       
 ;; acquiring and popping images
 
@@ -65,21 +75,19 @@
              (Thread/sleep 1))
            (if (pos? (core getRemainingImageCount))
              (when-let [img (core popNextTaggedImage)]
-               (.pix img))
+               (.getDirectBuffer img))
              (when (core isBufferOverflowed)
                (throw (Exception. "Circular buffer overflowed."))))))
 
 (def pop-next-image-memo (memoize pop-next-image))
 
 ;; converting to byte buffer
-
-(def native-order (ByteOrder/nativeOrder))
   
 (defn byte-buffer
-  "Create a direct byte-buffer with native order."
+  "Create a direct byte buffer with native order."
   [size-bytes]
   (.. ByteBuffer (allocateDirect size-bytes)
-      (order native-order)))
+      (order (ByteOrder/nativeOrder))))
 
 (defn image-to-byte-buffer
   "Store 16-bit image pixel array data in a
@@ -89,30 +97,51 @@
     .rewind
     (.. asShortBuffer (put pix))))
   ([pix]
-    (image-to-byte-buffer pix (byte-buffer (* 2 (count pix))))))
+    (if (instance? ByteBuffer pix)
+      pix
+      (image-to-byte-buffer pix (byte-buffer (* 2 (count pix)))))))
 
 
 ;; writing to disk
 
 (defn write-buf [channel buffer]
+  ;(println "write")
+  (.rewind buffer)
   (.write channel buffer))
 
+(def corePop-memo (memoize #(core popNextImage)))
+
 (defn acquire-and-write-to-disk [num-images]
-  (let [filename (str "D:/AcquisitionData/deleteMe" (rand-int 100000) ".dat")
-        file (RandomAccessFile. filename "rw")
-        channel (.getChannel file)
-        fake-buf (image-to-byte-buffer (core getImage))]
+  (let [filename (str "E:/acquisition/deleteMe" (rand-int 100000) ".dat")]
     (println filename)
-    (run-sequence-acquisition num-images false)
-    (time (bucket-brigade num-images
-            pop-next-image
-            ;pop-next-image-memo
-            image-to-byte-buffer
-            ;(constantly fake-buf)
-            #(write-buf channel %)
-            ;(constantly nil)
-            ))
-    (.close file)))
+    ;(run-sequence-acquisition num-images false)
+    (with-open [file (RandomAccessFile. filename "rw")]
+               (time (let [channel (.getChannel file)
+                           image-queue (queuify num-images 5 #(core getImage))
+                           filled-buffer-queue (queuify num-images 5 #(image-to-byte-buffer
+                                                                        (.take image-queue)))
+                           ]
+                       ;(println image-queue empty-buffer-queue filled-buffer-queue)
+                       (dotimes [_ num-images]
+                         (write-buf channel (.take filled-buffer-queue))))))))
+
+(defn acquire-and-write-parallel [num-images]
+  (let [filename (str "E:/acquisition/deleteMe" (rand-int 100000) ".dat")]
+    (println filename)
+    ;(run-sequence-acquisition num-images false)
+    (with-open [file (RandomAccessFile. filename "rw")]
+               (time (let [channel (.getChannel file)
+                           image-queue (queuify num-images 5 #(core getImage))
+                           empty-buffer-queue (queuify num-images 5 #(byte-buffer (* 2 n)))
+                           filled-buffer-queue (queuify num-images 5 #(image-to-byte-buffer
+                                                                        (.take image-queue)
+                                                                        (.take empty-buffer-queue)))
+                           ]
+                       ;(println image-queue empty-buffer-queue filled-buffer-queue)
+                       (dotimes [_ num-images]
+                         (write-buf channel (.take filled-buffer-queue))))))))
+        
+  
 
 ;; other tests
 
@@ -123,7 +152,7 @@
         channel (.getChannel file)]
     (println filename)
     (try
-      (dotimes-timed [i num-images] 100
+      (dotimes [i num-images]; 100
                      (.rewind buffer)
         (.write channel buffer))
       (catch Exception e (println e))
