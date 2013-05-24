@@ -414,6 +414,7 @@ AC_CONFIG_FILES(
 	[ThorlabsSC10/Makefile:ThorlabsSC10/Makefile.in:MMDEVAPI.rules]
 	[Tofra/Makefile:Tofra/Makefile.in:MMDEVAPI.rules]
 	[USBManager/Makefile:USBManager/Makefile.in:MMDEVAPI.rules]
+	[HIDManager/Makefile:HIDManager/Makefile.in:MMDEVAPI.rules]
    [Utilities/Makefile:Utilities/Makefile.in:MMDEVAPI.rules]
    [VariLC/Makefile:VariLC/Makefile.in:MMDEVAPI.rules]
 	[Video4Linux/Makefile:Video4Linux/Makefile.in:MMDEVAPI.rules]
