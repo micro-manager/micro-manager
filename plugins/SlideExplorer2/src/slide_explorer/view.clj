@@ -261,7 +261,7 @@
     (user-controls/handle-1x-view screen-state-atom screen-state-atom2)
     (user-controls/handle-window-closing frame screen-state-atom screen-state-atom2 memory-tile-atom)
     (.show frame)
-    (when @utils/test
+    (when @utils/testing
       (def w widgets)
       (def ss screen-state-atom)
       (def ss2 screen-state-atom2)

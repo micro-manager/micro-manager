@@ -61,5 +61,5 @@
   (doto @single-frame .show))
                      
 (defn test-frame []
-  (reset! utils/test true)
+  (reset! utils/testing true)
   (construct-frame nil))
