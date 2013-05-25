@@ -215,6 +215,7 @@ private:
 
    std::vector<double> sequence_;
    std::string axis_;
+   unsigned int axisNr_;
    double stepSizeUm_;
    double answerTimeoutMs_;
    bool sequenceable_;

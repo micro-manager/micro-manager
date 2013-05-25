@@ -1507,6 +1507,7 @@ int XYStage::SetAxisDirection()
 ZStage::ZStage() :
    ASIBase(this, "1H"),
    axis_("Z"),
+   axisNr_(4),
    stepSizeUm_(0.1),
    answerTimeoutMs_(1000),
    sequenceable_(false),
@@ -1813,10 +1814,13 @@ bool ZStage::HasRingBuffer()
 int ZStage::StartStageSequence()
 {
    string answer;
-   std::string command = "RM Y=4 Z=0";
-   if (axis_ == "F")
-      command = "RM Y=8 Z=0";
-   int ret = QueryCommand(command.c_str(), answer); // ensure that ringbuffer pointer points to first entry and that we only trigger the Z axis
+   
+   // ensure that ringbuffer pointer points to first entry and 
+   // that we only trigger the desired axis
+   ostringstream os;
+   os << "RM Y=" << axisNr_ << " Z=0";
+ 
+   int ret = QueryCommand(os.str().c_str(), answer); 
    if (ret != DEVICE_OK)
       return ret;
 
@@ -1915,9 +1919,24 @@ int ZStage::GetControllerInfo()
    {
       if (token == "RING BUFFER")
          hasRingBuffer_ = true;
+	   std::string ma = "Motor Axes: ";
+	   if (token.substr(0, ma.length()) == ma)
+	   {
+		   std::istringstream axes(token.substr(ma.length(), std::string::npos));
+		   std::string thisAxis;
+		   int i = 1;
+		   while (getline(axes, thisAxis, ' '))
+		   {
+            if (thisAxis == axis_)
+			   {
+               axisNr_ = i;
+            }
+            i = i << 1;
+         }
+      }	 
       // TODO: add in tests for other capabilities/devices
    }
-
+ 
    LogMessage(answer.c_str(), false);
 
    return DEVICE_OK;
