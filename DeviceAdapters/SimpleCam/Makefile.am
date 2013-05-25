@@ -19,6 +19,7 @@ install: $(INSTALL_LIBGPHOTO)
 install_linux:
 	cp .libs/libmmgr_dal_GPhoto$(MMSUFFIX) $(DESTDIR)$(DEVICEADAPTERPATH)/libmmgr_dal_GPhoto$(MMSUFFIX)
 
+# The libltdl situation is miserable.  Chase it all over the place to point to the copy we provide
 install_macos:
 	cp .libs/libmmgr_dal_GPhoto$(MMSUFFIX) $(DESTDIR)$(DEVICEADAPTERPATH)/libmmgr_dal_GPhoto$(MMSUFFIX)
 	install_name_tool -change $(GPHOTO2_LIBDIR)/libgphoto2.6.dylib @loader_path/libgphoto2/libgphoto2.6.dylib $(DEVICEADAPTERPATH)/libmmgr_dal_GPhoto$(MMSUFFIX)
@@ -47,7 +48,9 @@ install_macos:
 	cp $(GPHOTO2_LIBDIR)/libgphoto2_port/$(GPHOTO2_PORT_VERSION)/*.so $(DEVICEADAPTERPATH)/libgphoto2/libgphoto2_port/
 	ls $(DEVICEADAPTERPATH)/libgphoto2/libgphoto2/*.so $(DESTDIR)$(DEVICEADAPTERPATH)/libgphoto2/libgphoto2_port/*.so | xargs -n 1 install_name_tool -change $(GPHOTO2_LIBDIR)/libgphoto2.6.dylib @loader_path/../libgphoto2.6.dylib
 	ls $(DEVICEADAPTERPATH)/libgphoto2/libgphoto2/*.so $(DESTDIR)$(DEVICEADAPTERPATH)/libgphoto2/libgphoto2_port/*.so | xargs -n 1 install_name_tool -change $(GPHOTO2_LIBDIR)/libgphoto2_port.10.dylib @loader_path/../libgphoto2_port.10.dylib
-	ls $(DEVICEADAPTERPATH)/libgphoto2/libgphoto2/*.so $(DESTDIR)$(DEVICEADAPTERPATH)/libgphoto2/libgphoto2_port/*.so | xargs -n 1 install_name_tool -change /usr/lib/libltdl.3.dylib /usr/lib/libltdl.dylib
+	ls $(DEVICEADAPTERPATH)/libgphoto2/libgphoto2/*.so $(DESTDIR)$(DEVICEADAPTERPATH)/libgphoto2/libgphoto2_port/*.so | xargs -n 1 install_name_tool -change $(LIBLTDL) @loader_path/libltdl.dylib
+	ls $(DEVICEADAPTERPATH)/libgphoto2/libgphoto2/*.so $(DESTDIR)$(DEVICEADAPTERPATH)/libgphoto2/libgphoto2_port/*.so | xargs -n 1 install_name_tool -change /usr/lib/libltdl.3.dylib @loader_path/libltdl.dylib
+	ls $(DEVICEADAPTERPATH)/libgphoto2/libgphoto2/*.so $(DESTDIR)$(DEVICEADAPTERPATH)/libgphoto2/libgphoto2_port/*.so | xargs -n 1 install_name_tool -change /usr/lib/libltdl.7.dylib @loader_path/libltdl.dylib
 	osacompile -e 'tell application "PTPCamera" to quit' -o $(DEVICEADAPTERPATH)/libgphoto2/KillPtpCamera.app
 
 EXTRA_DIST = license.txt
