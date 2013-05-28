@@ -205,7 +205,7 @@
          (str-lines (flatten (list data)))
          "None.")))
 
-(defn report-build-errors [bits mode test]
+(defn report-build-errors [bits mode report-missing? test]
   (let [f (result-file bits mode)
         svn-confs (svn-conflicts)
         result-txt (slurp f)
@@ -238,22 +238,21 @@
         (report-segment "Errors reported by java compiler" javac-errs)
         (report-segment "Errors reported by clojure compiler" clojure-errors)
         (report-segment "Outdated jar files" outdated-jars)
-        (when (= 32 bits)
+        (when report-missing?
           (report-segment "Missing .vcproj files" missing-vcproj-files))
         (report-segment "Uncompiled device adapters" (missing-device-adapters bits))
-        (when (= 32 bits)
+        (when report-missing?
           (report-segment "Missing device links" (missing-device-links)))
-        (when (= 32 bits)
+        (when report-missing?
           (report-segment "Missing device pages" (missing-device-pages)))
         "\n\nIs installer download available on website?\n"
-        (if installer-ok "Yes." "No. (build missing)\n")
-      ))))
+        (if installer-ok "Yes." "No. (build missing)\n")))))
 
 (defn make-full-report [mode send?]
   (let [report
         (str
-          (report-build-errors 32 mode false)
-          (report-build-errors 64 mode false))]
+          (report-build-errors 32 mode true false)
+          (report-build-errors 64 mode false false))]
     (if-not (empty? report)
       (do 
         (when send?
@@ -270,7 +269,7 @@
 
 (defn test-report []
   (doseq [bits [32 64]]
-    (println (report-build-errors bits :full true))))
+    (println (report-build-errors bits :full true true))))
 
 (defn -main [mode]
   (make-full-report (get {"inc" :inc "full" :full} mode) true))
