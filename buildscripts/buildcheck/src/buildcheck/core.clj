@@ -47,6 +47,11 @@
        (map second)
        (apply str)))
 
+(defn vs-log-summary [text]
+  ; Assumption: the last line contains the error and warning counts.
+  (let [lines (clojure.string/split-lines text)]
+    (str (last lines) "\n")))
+
 (defn contains-errors? [log-text]
   (if (re-find #"\n[^\n]+\b([1-9]|[0-9][1-9]|[0-9][0-9][1-9])\b\serror\(s\)[^\n]+\n"
                log-text)
@@ -56,9 +61,17 @@
   (if (re-find #"\: warning" log-text)
     true false))
 
-(defn visual-studio-errors-and-warnings [bits]
-  (let [texts (map vs-log-text (vs-log-files bits))]
-    (filter #(or (contains-warnings? %) (contains-errors? %)) texts)))
+(defn visual-studio-errors-and-warnings [bits warnings? full-msgs? full-errors?]
+  (->> (vs-log-files bits)
+       (map vs-log-text)
+       (filter (if warnings? #(or (contains-warnings? %)
+                                  (contains-errors? %))
+                             contains-errors?))
+       (map #(if (or full-msgs?
+                     (and full-errors?
+                          (contains-errors? %)))
+                 %
+                 (vs-log-summary %)))))
 
 (defn javac-errors [result-text]
   (map first
@@ -209,7 +222,7 @@
   (let [f (result-file bits mode)
         svn-confs (svn-conflicts)
         result-txt (slurp f)
-        vs-errors (visual-studio-errors-and-warnings bits)
+        vs-errors (visual-studio-errors-and-warnings bits true false true)
         outdated-dlls (map #(.getName %) (old-dlls (bin-dir bits) 24))
         javac-errs (javac-errors result-txt)
         clojure-errors (clojure-errors result-txt)
