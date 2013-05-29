@@ -62,7 +62,7 @@
 
 ;; globals
 
-(def ^:dynamic state (atom {:stop false}))
+(def ^:dynamic state nil)
 
 (def attached-runnables (atom (vec nil)))
 
@@ -393,7 +393,7 @@
                            (if (instance? Throwable item)
                              (throw item)
                              item))))]
-    (future (dotimes [i n]
+    (future (dotimes [_ n]
               (try (.put queue (function))
                    (catch Throwable t
                           (.put queue t)
@@ -427,6 +427,7 @@
    burst-events))
 
 (defn burst-cleanup []
+  (println "burst-cleanup")
   (when (core isBufferOverflowed)
     (throw-exception "Circular buffer overflowed."))
   (core stopSequenceAcquisition)
@@ -469,14 +470,15 @@
     (annotate-image image event @state time-stamp)))
 
 (defn produce-burst-images
-  "Pops images from circular buffer and sends them to output queue."
+  "Pops images from circular buffer, tags them, and sends them to output queue."
   [burst-events camera-channel-names timeout-ms out-queue]
   (let [total (* (count burst-events)
                  (count camera-channel-names))
         camera-index-tag (str (. mmc getCameraDevice) "-CameraChannelIndex")
         image-number-offset (if (first-trigger-missing?) -1 0)
         image-queue (pop-burst-images total timeout-ms)]
-    (doseq [_ (range total) :while (not (@state :stop))]
+    (doseq [i (range total) :while (not (@state :stop))]
+      ;(println i)
       (.put out-queue
             (-> (.take image-queue)
                 (tag-burst-image burst-events camera-channel-names camera-index-tag
@@ -850,6 +852,7 @@
 
 (defn run [this settings cleanup?]
   (def last-acq this)
+  (def last-state (.state this))
     (reset! (.state this) {:stop false :pause false :finished false})
     (let [out-queue (LinkedBlockingQueue. 10)
           acq-thread (Thread. #(binding [state (.state this)]
