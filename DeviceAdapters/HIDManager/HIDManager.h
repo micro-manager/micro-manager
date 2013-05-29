@@ -60,7 +60,6 @@ struct HIDDeviceInfo
    std::string name;
    u_int16_t idVendor;
    u_int16_t idProduct;
-   int outputEndPoint;
 
 };
 

@@ -52,10 +52,12 @@ MM::MMTime g_deviceListLastUpdated = MM::MMTime(0);
  * Struct containing device name, vendor ID, device ID, ports for sending and receiving and data length
  */
 HIDDeviceInfo g_knownDevices[] = {
-   {"Velleman K8055-0", 0x10cf, 0x5500, 0x01},
-   {"Velleman K8055-1", 0x10cf, 0x5501, 0x01},
+   {"Velleman K8055-0", 0x10cf, 0x5500},
+   {"Velleman K8055-1", 0x10cf, 0x5501},
+   {"Velleman K8055-2", 0x10cf, 0x5502},
+   {"Velleman K8055-3", 0x10cf, 0x5503},
 };
-int g_numberKnownDevices = 2;
+int g_numberKnownDevices = 4;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Exported MMDevice API
@@ -594,14 +596,18 @@ void HIDDeviceLister::FindHIDDevices(std::vector<std::string> &availableDevices)
 
    while (curDev)
    {
-         printf("Device Found\n  type: %04hx %04hx\n  path: %s\n  serial_number: %ls",
-         curDev->vendor_id, curDev->product_id, curDev->path, curDev->serial_number);
-      printf("\n");
-      printf("  Manufacturer: %ls\n", curDev->manufacturer_string);
-      printf("  Product:      %ls\n", curDev->product_string);
-      printf("\n");
+      for (int i=0; i<g_numberKnownDevices; i++) 
+      {
+         if ( (curDev->vendor_id == g_knownDevices[i].idVendor) &&
+            (curDev->product_id == g_knownDevices[i].idProduct) ) 
+         {
+            availableDevices.push_back(g_knownDevices[i].name);
+            printf ("HID Device found: %s\n", g_knownDevices[i].name.c_str());
+         }
+      }
       curDev = curDev->next;
    }
+
    hid_free_enumeration(devs);
 
 
