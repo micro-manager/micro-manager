@@ -74,15 +74,15 @@ case $host in
       AC_FIND_FILE([hid.c], [../../3rdpartypublic/hidapi/hidapi-0.7.0/mac], HIDAPICDIR)
       if test x$HIDAPCDIR = xNO; then
          AC_MSG_RESULT([not found])
-      else
-         AM_CONDITIONAL([BUILD_HID], [test -f "$HIDAPIINCDIR/hidapi.h"])
-         if test -f "$HIDAPIINCDIR/hidapi.h" ; then
-            AC_MSG_RESULT([found])
-         fi
       fi
    fi
    ;;
 esac
+
+AM_CONDITIONAL([BUILD_HID], [test -f "$HIDAPIINCDIR/hidapi.h"])
+if test -f "$HIDAPIINCDIR/hidapi.h" ; then
+   AC_MSG_RESULT([found])
+fi
 AC_SUBST(HIDAPICDIR)
 AC_SUBST(HIDAPIINCDIR)
 
