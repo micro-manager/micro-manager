@@ -1,0 +1,12 @@
+IDS_uEye.cpp v. 1.0 TODO list
+
+
+- update all pixel clock, framerate, exposure properties if one of them is changed
+- binning: handle image memory correctly; support more modes
+- handle camera disconnect
+- handle more than one camera
+
+- support external trigger option
+- export all important properties
+- extend database of supported cameras
+- error messages with error codes
