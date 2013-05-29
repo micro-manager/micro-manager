@@ -7,42 +7,6 @@
   (:require [org.micromanager.mm :as mm])
   (:use [org.micromanager.mm :only (core)]))
 
-;; bucket brigade
-
-(defn bucket-node [input-queue function output-queue]
-  (future
-    (loop []
-      (let [item (.take input-queue)]
-        (if (= item input-queue)
-          (.put output-queue output-queue)
-          (do (.put output-queue (function item))
-              (recur)))))))
-
-(defn first-node [n function output-queue]
-  (future
-    (dotimes [i n]
-      (.put output-queue (function)))
-    (.put output-queue output-queue)))
-
-(defn last-node [input-queue function]
-  (loop []
-    (let [item (.take input-queue)]
-      (when (not= item input-queue)
-        (function item)
-        (recur)))))
-        
-
-(defn bucket-brigade [n & functions]
-  (let [first-queue (LinkedBlockingQueue.)
-        first-node (first-node n (first functions) first-queue)]
-    (loop [remaining-functions (rest functions) input-queue first-queue]
-      (let [f (first remaining-functions)]
-        (if-let [n (next remaining-functions)]
-          (let [output-queue (LinkedBlockingQueue.)]
-            (bucket-node input-queue f output-queue)
-            (recur n output-queue))
-          (last-node input-queue f))))))
-
 (defn queuify
   "Runs zero-arg function n times on another thread. Returns
    a queue that will eventually receive n return values.
@@ -89,6 +53,8 @@
   (.. ByteBuffer (allocateDirect size-bytes)
       (order (ByteOrder/nativeOrder))))
 
+(def byte-buffer-memo (memoize byte-buffer))
+
 (defn image-to-byte-buffer
   "Store 16-bit image pixel array data in a
    pre-existing byte buffer instance."
@@ -112,9 +78,8 @@
 (def corePop-memo (memoize #(core popNextImage)))
 
 (defn acquire-and-write-to-disk [num-images]
-  (let [filename (str "E:/acquisition/deleteMe" (rand-int 100000) ".dat")]
-    (println filename)
-    ;(run-sequence-acquisition num-images false)
+  (let [filename (str "D:/AcquisitionData/deleteMe" (rand-int 100000) ".dat")]
+    (println "\nto disk:" filename)
     (with-open [file (RandomAccessFile. filename "rw")]
                (time (let [channel (.getChannel file)
                            image-queue (queuify num-images 5 #(core getImage))
@@ -125,46 +90,44 @@
                        (dotimes [_ num-images]
                          (write-buf channel (.take filled-buffer-queue))))))))
 
+
+(defn write-test [num-images]
+  (let [filename (str "D:/AcquisitionData/deleteMe" (rand-int 100000) ".dat")
+        buf (image-to-byte-buffer (core getImage) (byte-buffer (* 2 n)))]
+    (println "\nparallel:" filename)
+    (with-open [file (RandomAccessFile. filename "rw")]
+               (time (let [channel (.getChannel file)]
+                       (dotimes [_ num-images]
+                         (write-buf channel buf)))))))
+
 (defn acquire-and-write-parallel [num-images]
-  (let [filename (str "E:/acquisition/deleteMe" (rand-int 100000) ".dat")]
-    (println filename)
-    ;(run-sequence-acquisition num-images false)
+  (let [filename (str "D:/AcquisitionData/deleteMe" (rand-int 100000) ".dat")]
+    (println "\nparallel:" filename)
     (with-open [file (RandomAccessFile. filename "rw")]
                (time (let [channel (.getChannel file)
+                           n (count (core getImage))
                            image-queue (queuify num-images 5 #(core getImage))
-                           empty-buffer-queue (queuify num-images 5 #(byte-buffer (* 2 n)))
+                           empty-buffer-queue (queuify 10 10 #(byte-buffer (* 2 n)))
                            filled-buffer-queue (queuify num-images 5 #(image-to-byte-buffer
                                                                         (.take image-queue)
                                                                         (.take empty-buffer-queue)))
                            ]
                        ;(println image-queue empty-buffer-queue filled-buffer-queue)
                        (dotimes [_ num-images]
-                         (write-buf channel (.take filled-buffer-queue))))))))
+                         (let [buf (.take filled-buffer-queue)]
+                           (write-buf channel buf)
+                           (.offer empty-buffer-queue buf))))))))
         
   
 
 ;; other tests
-
-(defn test-write [num-images]
-  (let [buffer (byte-buffer (* 2560 2160 2))
-        filename (str "D:/AcquisitionData/test" (rand-int 100000) ".dat")
-        file (RandomAccessFile. filename "rw")
-        channel (.getChannel file)]
-    (println filename)
-    (try
-      (dotimes [i num-images]; 100
-                     (.rewind buffer)
-        (.write channel buffer))
-      (catch Exception e (println e))
-      (finally
-        (.close file)))))  
 
 (defn monitor-circular-buffer []
   (while (not (core isSequenceRunning))
     (Thread/sleep 100))
   (while (core isSequenceRunning)
     (println (core getRemainingImageCount))
-    (Thread/sleep 250)))
+    (Thread/sleep 1000)))
 
 (defn drain-queue [blocking-queue]
   (future (loop [i 0]
