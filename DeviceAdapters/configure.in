@@ -63,6 +63,29 @@ fi
 AC_SUBST(LIBUSB)
 AM_CONDITIONAL([BUILD_USBMANAGER], [test -n "$LIBUSB"])
 
+# Check for HIDAPI
+case $host in
+   *apple-darwin*)
+   AC_MSG_CHECKING(for hidapi)
+   AC_FIND_FILE([hidapi.h], [../../3rdpartypublic/hidapi/hidapi-0.7.0/hidapi], HIDAPIINCDIR)
+   if test x$HIDAPIINCDIR = xNO; then
+       AC_MSG_RESULT([not found])
+   else
+      AC_FIND_FILE([hidapi.c], [../../3rdpartypublic/hidapi/hidapi-0.7.0/mac], HIDAPICDIR)
+      if test x$HIDAPCDIR = xNO; then
+         AC_MSG_RESULT([not found])
+      else
+         AM_CONDITIONAL([BUILD_HID], [test -f "$HIDAPIINCDIR/hidapi.h"])
+         if test -f "$HIDAPIINCDIR/hidapi.h" ; then
+            AC_MSG_RESULT([found])
+         fi
+      fi
+   fi
+   ;;
+esac
+
+
+
 # Only build PVCAM if header files present.
 AC_MSG_CHECKING(for Pvcam)
 AC_FIND_FILE([pvcam.h], [/usr/include/pvcam /Library/Frameworks/PVCAM.framework/Headers], PVCAMINCDIR)
@@ -84,6 +107,7 @@ if test -f "/Library/Frameworks/QCam.framework/Headers/QCamApi.h" ; then
 else
    AC_MSG_RESULT([not found])
 fi
+
 
 # Same for Scion
 AC_MSG_CHECKING(for Scion)
@@ -193,7 +217,7 @@ else
 fi
 
 
-   # On mac, install dynamic gphoto2 libraries 
+# On mac, install dynamic gphoto2 libraries 
 case $host in
    *apple-darwin*)
       AC_SUBST([INSTALL_LIBGPHOTO], [install_macos])

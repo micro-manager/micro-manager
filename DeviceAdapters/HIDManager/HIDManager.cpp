@@ -590,6 +590,21 @@ void HIDDeviceLister::FindHIDDevices(std::vector<std::string> &availableDevices)
 
    devs = hid_enumerate(0x0, 0x0);
 
+   curDev = devs;
+
+   while (curDev)
+   {
+         printf("Device Found\n  type: %04hx %04hx\n  path: %s\n  serial_number: %ls",
+         curDev->vendor_id, curDev->product_id, curDev->path, curDev->serial_number);
+      printf("\n");
+      printf("  Manufacturer: %ls\n", curDev->manufacturer_string);
+      printf("  Product:      %ls\n", curDev->product_string);
+      printf("\n");
+      curDev = curDev->next;
+   }
+   hid_free_enumeration(devs);
+
+
    // loop through the busses found and remember the ones that match our list
 /*   for (bus = busses; bus; bus = bus->next) {
       for (dev = bus->devices; dev; dev = dev->next) {
