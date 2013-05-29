@@ -36,6 +36,7 @@ import java.nio.CharBuffer;
 import java.nio.channels.FileChannel;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -179,6 +180,19 @@ public class MultipageTiffWriter {
       return ByteBuffer.allocateDirect(capacity).order(BYTE_ORDER);
    }
    
+   private BlockingQueue<ByteBuffer> currentImageByteBuffers_ = new LinkedBlockingQueue<ByteBuffer>(10);
+   private int currentImageByteBufferCapacity_ = 0;
+           
+   private ByteBuffer allocateByteBufferMemo(int capacity) {
+       if (capacity != currentImageByteBufferCapacity_) {
+           currentImageByteBuffers_.clear();
+           currentImageByteBufferCapacity_ = capacity;
+       }
+       
+       ByteBuffer cachedBuf = currentImageByteBuffers_.poll();
+       return (cachedBuf != null) ? cachedBuf : allocateByteBuffer(capacity);
+   }
+   
    private void executeWritingTask(Runnable writingTask) {
       if (fastStorageMode_) {
          writingExecutor_.execute(writingTask);
@@ -192,7 +206,11 @@ public class MultipageTiffWriter {
         new Runnable() {
            public void run() {
              try {
+                buffer.rewind();
                 fileChannel_.write(buffer, position);
+                if (buffer.limit() == currentImageByteBufferCapacity_) {
+                    currentImageByteBuffers_.offer(buffer);
+                }
               } catch (IOException e) {
                 ReportingUtils.logError(e);
               }
@@ -206,6 +224,11 @@ public class MultipageTiffWriter {
            public void run() {
              try {
                 fileChannel_.write(buffers);
+                for (ByteBuffer buffer:buffers) {
+                    if (buffer.limit() == currentImageByteBufferCapacity_) {
+                        currentImageByteBuffers_.offer(buffer);
+                    }
+                }
               } catch (IOException e) {
                 ReportingUtils.logError(e);
               }
@@ -489,7 +512,8 @@ public class MultipageTiffWriter {
                   count++;
                }
             }
-            ByteBuffer buffer = allocateByteBuffer(pix.length * 2);
+            ByteBuffer buffer = allocateByteBufferMemo(pix.length * 2);
+            buffer.rewind();
             buffer.asShortBuffer().put(pix);
             return buffer;
          }
@@ -498,7 +522,8 @@ public class MultipageTiffWriter {
             return ByteBuffer.wrap((byte[]) img.pix);
          } else {
             short[] pix = (short[]) img.pix;
-            ByteBuffer buffer = allocateByteBuffer(pix.length * 2);
+            ByteBuffer buffer = allocateByteBufferMemo(pix.length * 2);
+            buffer.rewind();
             buffer.asShortBuffer().put(pix);
             return buffer;
          }
