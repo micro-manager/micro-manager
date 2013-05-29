@@ -386,7 +386,7 @@
    Will block whenever queue reaches queue-size. If function
    throws an exception, this exception will be placed on
    the queue, the thread will stop, and the final call to .take
-   on the queue will throw an exception."
+   on the queue will re-throw the exception."
   [n queue-size function]
   (let [queue (proxy [LinkedBlockingQueue] [queue-size]
                 (take [] (let [item (proxy-super take)]
@@ -427,10 +427,11 @@
    burst-events))
 
 (defn burst-cleanup []
- (when (core isBufferOverflowed)
-   (throw-exception "Circular buffer overflowed."))
- (while (and (not (@state :stop)) (. mmc isSequenceRunning))
-   (Thread/sleep 5)))
+  (when (core isBufferOverflowed)
+    (throw-exception "Circular buffer overflowed."))
+  (core stopSequenceAcquisition)
+  (while (and (not (@state :stop)) (. mmc isSequenceRunning))
+    (Thread/sleep 5)))
 
 (defn assoc-if-nil [m k v]
   (if (nil? (m k))
