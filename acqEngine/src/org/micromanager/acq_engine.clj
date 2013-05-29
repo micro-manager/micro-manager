@@ -200,9 +200,9 @@
       (catch Exception e (log "wait for device" dev "failed.")))))
 
 (defn set-exposure [camera exp]
-  (when (not= exp (get-in @state [camera :exposure]))
+  (when (not= exp (get-in @state [:cameras camera :exposure]))
     (device-best-effort camera (core setExposure exp))
-    (swap! state assoc-in [camera :exposure] exp)))
+    (swap! state assoc-in [:cameras camera :exposure] exp)))
 
 (defn wait-for-pending-devices []
   (log "pending devices: " @pending-devices)
@@ -369,6 +369,7 @@
           (throw-exception (str (- (System/currentTimeMillis) start-time)
                                 " Timed out waiting for image\nto arrive from camera."))
           (do (when (core isBufferOverflowed)
+                (println "Circular buffer overflowed")
                 (throw-exception "Circular buffer overflowed."))
               (Thread/sleep 1)
               (recur)))))))
@@ -379,18 +380,29 @@
     {:pix (.pix tagged-image)
      :tags (json-to-data (.tags tagged-image))}))
 
-(defn pop-burst-images
-  [n timeout-ms]
-  (let [queue (proxy [LinkedBlockingQueue] [10]
+(defn queuify
+  "Runs zero-arg function n times on a new thread. Returns
+   a queue that will eventually receive n return values.
+   Will block whenever queue reaches queue-size. If function
+   throws an exception, this exception will be placed on
+   the queue, the thread will stop, and the final call to .take
+   on the queue will throw an exception."
+  [n queue-size function]
+  (let [queue (proxy [LinkedBlockingQueue] [queue-size]
                 (take [] (let [item (proxy-super take)]
                            (if (instance? Throwable item)
                              (throw item)
                              item))))]
-    (future
-      (dotimes [i n]
-        (try (.put queue (pop-burst-image timeout-ms))
-             (catch Throwable t (.put queue t)))))
-      queue))
+    (future (dotimes [i n]
+              (try (.put queue (function))
+                   (catch Throwable t
+                          (.put queue t)
+                          (throw t)))))
+    queue))
+
+(defn pop-burst-images
+  [n timeout-ms]
+  (queuify n 10 #(pop-burst-image timeout-ms)))
 
 (defn make-multicamera-channel [raw-channel-index camera-channel num-camera-channels]
   (+ camera-channel (* num-camera-channels (or raw-channel-index 0))))
