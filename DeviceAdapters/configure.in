@@ -71,7 +71,7 @@ case $host in
    if test x$HIDAPIINCDIR = xNO; then
        AC_MSG_RESULT([not found])
    else
-      AC_FIND_FILE([hidapi.c], [../../3rdpartypublic/hidapi/hidapi-0.7.0/mac], HIDAPICDIR)
+      AC_FIND_FILE([hid.c], [../../3rdpartypublic/hidapi/hidapi-0.7.0/mac], HIDAPICDIR)
       if test x$HIDAPCDIR = xNO; then
          AC_MSG_RESULT([not found])
       else
@@ -83,8 +83,8 @@ case $host in
    fi
    ;;
 esac
-
-
+AC_SUBST(HIDAPICDIR)
+AC_SUBST(HIDAPIINCDIR)
 
 # Only build PVCAM if header files present.
 AC_MSG_CHECKING(for Pvcam)
