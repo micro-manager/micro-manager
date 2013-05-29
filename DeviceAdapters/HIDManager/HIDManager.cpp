@@ -52,10 +52,10 @@ MM::MMTime g_deviceListLastUpdated = MM::MMTime(0);
  * Struct containing device name, vendor ID, device ID, ports for sending and receiving and data length
  */
 HIDDeviceInfo g_knownDevices[] = {
-   {"Velleman K8055-0", 0x10cf, 0x5500},
-   {"Velleman K8055-1", 0x10cf, 0x5501},
-   {"Velleman K8055-2", 0x10cf, 0x5502},
-   {"Velleman K8055-3", 0x10cf, 0x5503},
+   {"K8055-0-HID", 0x10cf, 0x5500},
+   {"K8055-1-HID", 0x10cf, 0x5501},
+   {"K8055-2-HID", 0x10cf, 0x5502},
+   {"K8055-3-HID", 0x10cf, 0x5503},
 };
 int g_numberKnownDevices = 4;
 
@@ -150,14 +150,15 @@ void HIDManager::DestroyPort(MM::Device* device)
 
 
 MDHIDDevice::MDHIDDevice(std::string deviceName) :
-refCount_(0),
-busy_(false),
-open_(false),
-initialized_(false),
-portTimeoutMs_(2000.0),
-answerTimeoutMs_(20),
-overflowBufferOffset_(0),
-overflowBufferLength_(0)
+   handle_(NULL),
+   refCount_(0),
+   busy_(false),
+   open_(false),
+   initialized_(false),
+   portTimeoutMs_(2000.0),
+   answerTimeoutMs_(20),
+   overflowBufferOffset_(0),
+   overflowBufferLength_(0)
 {
    deviceLister = new HIDDeviceLister();
    deviceLister->ListCachedHIDDevices(availableDevices_);
@@ -218,15 +219,31 @@ int MDHIDDevice::Open(const char* /*portName*/)
    bool deviceFound = false;
    int i;
 
+   printf("Looking for: %s\n", deviceName_.c_str());
+
    for (i=0; i< g_numberKnownDevices; i++) {
       if (strcmp(deviceName_.c_str(), g_knownDevices[i].name.c_str()) == 0) {
          deviceFound = true;
+         printf("Opening handle \n");
+         handle_ = hid_open(g_knownDevices[i].idVendor, 
+               g_knownDevices[i].idProduct, NULL);
+         if (handle_ == NULL)
+         {
+            printf("Handle was null\n");
+            logMsg << "Failed to open HID device " << deviceName_;
+            LogMessage(logMsg.str().c_str());
+            deviceFound = false;
+         }
          break;
       }
    }
 
    if (!deviceFound)
       return ERR_INTERNAL_ERROR;
+
+   wchar_t wstr[255];
+   int res = hid_get_serial_number_string(handle_, wstr, 255);
+   printf("Serial Number StringL %ls\n", wstr);
 
    return DEVICE_OK;
 
@@ -238,7 +255,9 @@ int MDHIDDevice::Close()
    ostringstream logMsg;
    logMsg << "Closing HID Device " << deviceName_ ; 
    this->LogMessage(logMsg.str().c_str());
-   if (open_) {
+   if (open_) 
+   {
+      hid_close(handle_);
       open_ = false;
       return ret;
    }
@@ -250,9 +269,11 @@ int MDHIDDevice::Initialize()
    // verify callbacks are supported and refuse to continue if not
    if (!IsCallbackRegistered())
       return DEVICE_NO_CALLBACK_REGISTERED;
+
    // open the port:
    if (open_)
       return DEVICE_OK;
+
    int ret = Open(deviceName_.c_str());
    if (ret != DEVICE_OK)
       return ret;
@@ -269,6 +290,7 @@ int MDHIDDevice::Shutdown()
 {
    if (open_)
       Close();
+
    initialized_ = false;
 
    return DEVICE_OK;
@@ -297,98 +319,23 @@ int MDHIDDevice::SetCommand(const char* command, const char* term)
 */
 int MDHIDDevice::GetAnswer(char* answer, unsigned answerLen, const char* term)
 {
-   unsigned long charsRead;
-   ostringstream logMsg;
-   char* termpos = 0;
-   char* internalBuf;
-   bool termFound = false;
-
-   if (answerLen < 1)
-      return ERR_BUFFER_OVERRUN;
-
-   internalBuf = (char*) malloc(answerLen);
-   memset(internalBuf, 0, answerLen);
-   MM::MMTime startTime = GetCurrentMMTime();
-   MM::MMTime timeOut = MM::MMTime(answerTimeoutMs_ * 1000.0);
-
-   while (!termFound && ((GetCurrentMMTime() - startTime) < timeOut)) {
-      int ret = Read((unsigned char *) internalBuf, answerLen, charsRead);
-
-      if (ret != DEVICE_OK) {
-         free(internalBuf);
-         return ret;
-      }
-      termpos = strstr(internalBuf, term);
-      if (termpos != 0)
-         termFound = true;
-   }
-
-   if (!termFound)
+   // Need to parse the answer for a terminating character.
+   // Also, need to figure out to work with answerLen
+   int res = hid_read_timeout(handle_, answer, answerLen, answerTimeoutMs_);
+   if (res == -1)
       return ERR_RECEIVE_FAILED;
-
-   *termpos = '\0';
-
-   strcpy(answer, internalBuf);
-
-   free (internalBuf);
 
    return DEVICE_OK;
 }
 
-/*
+/**
 * Writes content of buf to the HID device
-* Splits up into chunks with a maxlength of maxPacketSize_
-* Last packet is not padded
 */
 int MDHIDDevice::Write(const unsigned char* buf, unsigned long bufLen)
 {
-   int packet, nrPackets, packetLength, status;
-   unsigned long i;
-   bool success = false;
-   ostringstream logMsg;
-
-   logMsg << "HID Out: ";
-   for (i=0; i<bufLen; i++)
-      logMsg << hex << (unsigned int) *(buf + i) << " ";
-   LogMessage(logMsg.str().c_str(), true);
-   // check if the message is larger than the package size and split up if needed
-   if ( (bufLen % maxPacketSize_) == 0)
-      nrPackets = bufLen/maxPacketSize_;
-   else
-      nrPackets = bufLen/maxPacketSize_ + 1;
-
-   for (packet = 0; packet < nrPackets; packet++) 
-   {
-      // don't know why, but we'll try up to 3 times:
-      for (i = 0;  (i < 3) && !success; i++)
-      {
-         if (packet < nrPackets -1)
-            packetLength = maxPacketSize_;
-         else
-         {
-            packetLength = bufLen % maxPacketSize_;
-            if (packetLength == 0)
-               packetLength = maxPacketSize_;
-         }
-
-         }
-         // write stuff here
-      
-         if (status != (int) bufLen)
-         {
-            logMsg.clear();
-            logMsg << "HID write failed...";
-            LogMessage(logMsg.str().c_str());
-            if (i == 2)
-            {
-               return ERR_WRITE_FAILED;
-            }
-         }
-         else 
-         {
-            success = true;
-         }
-      }
+   int res = hid_write(handle_, buf, bufLen);
+   if (-1 == res)
+      return ERR_WRITE_FAILED;
 
    return DEVICE_OK;
 }
@@ -398,48 +345,11 @@ int MDHIDDevice::Write(const unsigned char* buf, unsigned long bufLen)
 */
 int MDHIDDevice::Read(unsigned char* buf, unsigned long bufLen, unsigned long& charsRead)
 {
-   ostringstream logMsg;
-   //usb_interrupt_read really does send us negative numbers
-   signed int charsReceived = 0;
-   int nrPackets, packet;
-   bool statusContinue = true;
-   char* internalBuf;
+   int res = hid_read(handle_, buf, bufLen);
+   if (res == -1) 
+      return ERR_RECEIVE_FAILED;
 
-   charsRead = 0;
-   memset(buf, 0, bufLen);
-
-   logMsg << "HID read ";
-
-   // keep an internal buffer in case we read too many chars from HID
-   if (overflowBufferLength_ > 0) {
-      unsigned int size = overflowBufferLength_ - overflowBufferOffset_;
-      if (size >= bufLen) {
-         memcpy(buf, overflowBuffer_ + overflowBufferOffset_, bufLen);
-         charsRead = bufLen;
-      } else {
-         memcpy(buf, overflowBuffer_ + overflowBufferOffset_, size);
-         charsRead = size;
-      }
-      overflowBufferOffset_ += charsRead;
-      if (overflowBufferOffset_ >= overflowBufferLength_) {
-         overflowBufferOffset_ = 0;
-         overflowBufferLength_ = 0;
-         free (overflowBuffer_);
-      }
-      if (charsRead >= bufLen) {
-         for (unsigned long j=0; j<bufLen; j++)
-            logMsg << hex << (unsigned int) *(buf + j) << " ";
-         this->LogMessage(logMsg.str().c_str(), true);
-         return DEVICE_OK;
-      }
-   }
-
-   // we will try to read up to bufLen characters, even if bufLen is larger than maxPacketSize
-   int neededChars = bufLen - charsRead;
-   if ( (neededChars % maxPacketSize_) == 0)
-      nrPackets = neededChars/maxPacketSize_;
-   else
-      nrPackets = neededChars/maxPacketSize_ + 1;
+   charsRead = res;
 
    return DEVICE_OK;
 }
@@ -610,19 +520,4 @@ void HIDDeviceLister::FindHIDDevices(std::vector<std::string> &availableDevices)
 
    hid_free_enumeration(devs);
 
-
-   // loop through the busses found and remember the ones that match our list
-/*   for (bus = busses; bus; bus = bus->next) {
-      for (dev = bus->devices; dev; dev = dev->next) {
-         for (int i=0; i<g_numberKnownDevices; i++) {
-            if ( (dev->descriptor.idVendor == g_knownDevices[i].idVendor) &&
-               (dev->descriptor.idProduct == g_knownDevices[i].idProduct) ) {
-                  availableDevices.push_back(g_knownDevices[i].name);
-                  printf ("HID Device found: %s\n", g_knownDevices[i].name.c_str());
-                  break;
-            }
-         }
-      }
-   }
-      */
 }

@@ -137,6 +137,7 @@ private:
    std::string ReadLine(const unsigned int msTimeOut, const char* lineTerminator) throw (NotOpen, ReadTimeout, std::runtime_error);
 
    std::string deviceName_;
+   hid_device *handle_;
    int refCount_;
    bool busy_;
    bool open_;
