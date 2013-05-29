@@ -1960,7 +1960,7 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay,
       if (simple_) {
          return 1;
       }
-      return ((IMMImagePlus) hyperImage_).getNSlicesUnverified();
+      return hyperImage_ == null ? 1 : ((IMMImagePlus) hyperImage_).getNSlicesUnverified();
    }
 
    public int getNumFrames() {
@@ -2120,7 +2120,7 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay,
    }
 
    public int getNumChannels() {
-      return ((IMMImagePlus) hyperImage_).getNChannelsUnverified();
+      return hyperImage_ == null ? 1 : ((IMMImagePlus) hyperImage_).getNChannelsUnverified();
    }
 
    public int getNumGrayChannels() {
