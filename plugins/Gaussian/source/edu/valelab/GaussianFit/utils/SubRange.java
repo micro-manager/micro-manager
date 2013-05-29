@@ -15,6 +15,7 @@ package edu.valelab.GaussianFit.utils;
 
 import edu.valelab.GaussianFit.GaussianSpotData;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * SubRange
@@ -41,7 +42,7 @@ public class SubRange {
       output.spotList_.clear();
       
       int start = desiredFrames.get(0);
-      ArrayList<GaussianSpotData> spots = (ArrayList<GaussianSpotData>) 
+      List<GaussianSpotData> spots = (List<GaussianSpotData>) 
               input.spotList_;
       boolean found = false;
 
