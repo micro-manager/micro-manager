@@ -141,7 +141,12 @@ int K8055Interface::OpenDevice()
 
    std::string vellemanName = "Velleman K8055-";
    if (port_.find(vellemanName) != 0)
-     return ERR_BOARD_NOT_FOUND;
+   {
+      if (port_.find("K8055-") != 0)
+      {
+         return ERR_BOARD_NOT_FOUND;
+      }
+   }
 
    return DEVICE_OK;
 }
