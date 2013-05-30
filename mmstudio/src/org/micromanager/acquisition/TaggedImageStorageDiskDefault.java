@@ -281,7 +281,7 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
             saveImageProcessor(ip, md, path, tiffFileName);
          } else if (pixelType.equals("GRAY16")) {
             ip = new ShortProcessor(width, height);
-            ip.setPixels((short[]) img);
+            ip.setPixels((short[]) img);           
             saveImageProcessor(ip, md, path, tiffFileName);
          } else if (pixelType.equals("RGB32")) {
             byte[][] planes = ImageUtils.getColorPlanesFromRGB32((byte []) img);
@@ -308,7 +308,30 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
    private void saveImageProcessor(ImageProcessor ip, JSONObject md, String path, String tiffFileName) {
       if (ip != null) {
          ImagePlus imp = new ImagePlus(path + "/" + tiffFileName, ip);
+         applyPixelSizeCalibration(imp);
          saveImagePlus(imp, md, path, tiffFileName);
+      }
+   }
+   
+     private void applyPixelSizeCalibration(final ImagePlus ip) {
+      try {
+         JSONObject summary = getSummaryMetadata();
+         double pixSizeUm = summary.getDouble("PixelSize_um");
+         if (pixSizeUm > 0) {
+            ij.measure.Calibration cal = new ij.measure.Calibration();
+            cal.setUnit("um");
+            cal.pixelWidth = pixSizeUm;
+            cal.pixelHeight = pixSizeUm;
+            String intMs = "Interval_ms";
+            if (summary.has(intMs))
+               cal.frameInterval = summary.getDouble(intMs) / 1000.0;
+            String zStepUm = "z-step_um";
+            if (summary.has(zStepUm))
+               cal.pixelDepth = summary.getDouble(zStepUm);
+            ip.setCalibration(cal);
+         }
+      } catch (JSONException ex) {
+         // no pixelsize defined.  Nothing to do
       }
    }
 
