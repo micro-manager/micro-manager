@@ -69,10 +69,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="lib32/atcorem.lib"
+				AdditionalDependencies="lib32/atcorem.lib atunpackerlib.lib"
 				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories=""
+				AdditionalLibraryDirectories="..\..\..\3rdparty\Andor\Atunpackerlib_20130514\Win32"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)/$(ProjectName).pdb"
 				SubSystem="2"
@@ -154,10 +154,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="lib64/atcorem.lib"
+				AdditionalDependencies="lib64/atcorem.lib atunpackerlib.lib"
 				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories=""
+				AdditionalLibraryDirectories="..\..\..\3rdparty\Andor\Atunpackerlib_20130514\x64"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)/$(ProjectName).pdb"
 				SubSystem="2"
@@ -235,10 +235,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="lib32/atcorem.lib"
+				AdditionalDependencies="lib32/atcorem.lib atunpackerlib.lib"
 				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories=""
+				AdditionalLibraryDirectories="..\..\..\3rdparty\Andor\Atunpackerlib_20130514\Win32"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
@@ -318,10 +318,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="lib64/atcorem.lib"
+				AdditionalDependencies="lib64/atcorem.lib atunpackerlib.lib"
 				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories=""
+				AdditionalLibraryDirectories="..\..\..\3rdparty\Andor\Atunpackerlib_20130514\x64"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
@@ -403,10 +403,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\lineparser.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\..\MMDevice\ModuleInterface.cpp"
 				>
 			</File>
@@ -437,15 +433,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\atunpacker.h"
+				>
+			</File>
+			<File
 				RelativePath=".\BooleanProperty.h"
 				>
 			</File>
 			<File
 				RelativePath=".\CallBackManager.h"
-				>
-			</File>
-			<File
-				RelativePath=".\datapacking.h"
 				>
 			</File>
 			<File
@@ -474,10 +470,6 @@
 			</File>
 			<File
 				RelativePath=".\IntegerProperty.h"
-				>
-			</File>
-			<File
-				RelativePath=".\lineparser.h"
 				>
 			</File>
 			<File

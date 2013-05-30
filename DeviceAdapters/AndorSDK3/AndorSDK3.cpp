@@ -38,9 +38,8 @@
 #include "AOIProperty.h"
 #include "BooleanProperty.h"
 
-#include "datapacking.h"
+#include "atunpacker.h"
 #include "triggerremapper.h"
-#include "lineparser.h"
 #include "AndorSDK3Strings.h"
 #include "EventsManager.h"
 #include "CallBackManager.h"
@@ -567,50 +566,25 @@ void CAndorSDK3Camera::InitialiseSDK3Defaults()
 
 void CAndorSDK3Camera::UnpackDataWithPadding(unsigned char * _pucSrcBuffer)
 {
-   andoru32 u32_pixelHeight = static_cast<andoru32>(aoi_property_->GetHeight());
-   andoru32 u32_pixelWidth = static_cast<andoru32>(aoi_property_->GetWidth());
-   andoru32 u32_destinationStride = u32_pixelWidth * aoi_property_->GetBytesPerPixel();
-   andoru32 u32_sourceStride = static_cast<andoru32>(aoi_property_->GetStride());
-
-   TLineParser * p_sourceLineParser = NULL;
-   TLineParser * p_destinationLineParser = NULL;
-
-   p_sourceLineParser = new TLineParser(u32_sourceStride, u32_pixelHeight);
-   p_destinationLineParser = new TLineParser(u32_destinationStride, u32_pixelHeight);
-
+   wstring ws_pixelEncoding(L"Mono12Packed");
+   
+   if (!snapShotController_->isMono12Packed())
+   {
+      ws_pixelEncoding = L"Mono16";
+   }
+   
    MMThreadGuard g(imgPixelsLock_);
    unsigned char * pucDstData = const_cast<unsigned char *>(img_.GetPixels());
    
-   unsigned char * puc_sourceLine = p_sourceLineParser->GetFirstLine(_pucSrcBuffer, u32_sourceStride * u32_pixelHeight);
-   unsigned char * puc_destinationLine = p_destinationLineParser->GetFirstLine(pucDstData, u32_destinationStride * u32_pixelHeight);
-
-   while (puc_sourceLine != NULL && puc_destinationLine != NULL)
+   unsigned int ret_code = AT_UnpackBuffer(_pucSrcBuffer, pucDstData, aoi_property_->GetWidth(), aoi_property_->GetHeight(), 
+                                          aoi_property_->GetStride(), ws_pixelEncoding.c_str(), L"Mono16", 0);
+                                          
+   if (AT_SUCCESS != ret_code)
    {
-      if (snapShotController_->isMono12Packed())
-      {
-         // Convert from Mono12Packed to Mono12 using stride
-         unsigned short * unpacked_buffer = reinterpret_cast<unsigned short *>(puc_destinationLine);
-         for (andoru32 i = 0; i < u32_pixelWidth / 2; ++i)
-         {
-            unpacked_buffer[i * 2  ] = static_cast<unsigned short>(EXTRACTLOWPACKED(puc_sourceLine));
-            unpacked_buffer[i * 2 + 1] = static_cast<unsigned short>(EXTRACTHIGHPACKED(puc_sourceLine));
-            puc_sourceLine += 3;
-         }
-         if (u32_pixelWidth % 2 != 0)
-         {
-            unpacked_buffer[u32_pixelWidth - 1] = static_cast<unsigned short>(EXTRACTLOWPACKED(puc_sourceLine));
-         }
-      }
-      else
-      {
-         memcpy(puc_destinationLine, puc_sourceLine, u32_destinationStride);
-      }
-      puc_sourceLine = p_sourceLineParser->GetNextLine();
-      puc_destinationLine = p_destinationLineParser->GetNextLine();
-   } //end While loop
-
-   delete p_sourceLineParser;
-   delete p_destinationLineParser;
+      stringstream ss;
+      ss << "[UnpackDataWithPadding] failed with code: " << ret_code << endl;
+      LogMessage(ss.str().c_str());
+   }
 }
 
 
@@ -661,7 +635,7 @@ const unsigned char * CAndorSDK3Camera::GetImageBuffer()
 */
 unsigned CAndorSDK3Camera::GetImageWidth() const
 {
-   return aoi_property_->GetWidth();
+   return static_cast<unsigned>(aoi_property_->GetWidth());
 }
 
 /**
@@ -670,7 +644,7 @@ unsigned CAndorSDK3Camera::GetImageWidth() const
 */
 unsigned CAndorSDK3Camera::GetImageHeight() const
 {
-   return aoi_property_->GetHeight();
+   return static_cast<unsigned>(aoi_property_->GetHeight());
 }
 
 /**
@@ -714,7 +688,7 @@ int CAndorSDK3Camera::ResizeImageBuffer()
 {
    if (initialized_)
    {
-      img_.Resize(aoi_property_->GetWidth(), aoi_property_->GetHeight(), aoi_property_->GetBytesPerPixel());
+      img_.Resize(GetImageWidth(), GetImageHeight(), GetImageBytesPerPixel());
    }
    return DEVICE_OK;
 }
@@ -1024,8 +998,12 @@ int CAndorSDK3Camera::StartSequenceAcquisition(long numImages, double interval_m
 
 AT_64 CAndorSDK3Camera::GetTimeStamp(unsigned char* pBuf)
 {
+#if defined(linux) && defined(_LP64)
+   typedef unsigned int    AT_U32;
+#else
+   typedef unsigned long   AT_U32;
+#endif
    IInteger* imageSizeBytes = NULL;
-   stringstream ss_logTimeStamp;
    AT_64 imageSize = 0;
    try
    {
@@ -1045,15 +1023,11 @@ AT_64 CAndorSDK3Camera::GetTimeStamp(unsigned char* pBuf)
    unsigned char* puc_metadata = pBuf + i_imageSize;
    AT_64 i64_timestamp = 0;
    puc_metadata -= LENGTH_FIELD_SIZE;
-   andoru32 timestampSize = *(reinterpret_cast<andoru32*>(puc_metadata));
+   AT_U32 timestampSize = *(reinterpret_cast<AT_U32*>(puc_metadata));
    puc_metadata -= CID_FIELD_SIZE;
-   andoru32 cid = *(reinterpret_cast<andoru32*>(puc_metadata));
+   AT_U32 cid = *(reinterpret_cast<AT_U32*>(puc_metadata));
    if (CID_FPGA_TICKS == cid) {
       i64_timestamp = *(reinterpret_cast<AT_64*>(puc_metadata - (timestampSize-CID_FIELD_SIZE)));
-      ss_logTimeStamp << "[GetTimeStamp] found CID, value is: " << i64_timestamp;
-   }
-   else {
-      ss_logTimeStamp << "[GetTimeStamp] No timestamp found in frame: " << thd_->GetImageCounter();
    }
    return i64_timestamp;
 }

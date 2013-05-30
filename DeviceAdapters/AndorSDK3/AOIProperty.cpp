@@ -231,14 +231,14 @@ int TAOIProperty::OnAOI(MM::PropertyBase * pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
-unsigned TAOIProperty::GetHeight()
+AT_64 TAOIProperty::GetHeight()
 {
-   return static_cast<unsigned>(aoi_height_->Get());
+   return aoi_height_->Get();
 }
 
-unsigned TAOIProperty::GetWidth()
+AT_64 TAOIProperty::GetWidth()
 {
-   return static_cast<unsigned>(aoi_width_->Get());
+   return aoi_width_->Get();
 }
 
 unsigned TAOIProperty::GetBytesPerPixel()
@@ -258,17 +258,17 @@ unsigned TAOIProperty::GetBytesPerPixel()
    return ret;
 }
 
-unsigned TAOIProperty::GetStride()
+AT_64 TAOIProperty::GetStride()
 {
-   unsigned ret = 0;
+   AT_64 ret = 0;
 
    if (aoi_stride_)
    {
-      ret = static_cast<unsigned>(aoi_stride_->Get());
+      ret = aoi_stride_->Get();
    }
    else
    {
-      ret = static_cast<unsigned>(GetWidth() * GetBytesPerPixelF());
+      ret = static_cast<AT_64>(GetWidth() * GetBytesPerPixelF());
    }
 
    return ret;

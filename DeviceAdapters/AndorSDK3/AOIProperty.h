@@ -4,6 +4,7 @@
 #include <map>
 #include "MMDeviceConstants.h"
 #include "Property.h"
+#include "atcore.h"
 
 namespace andor
 {
@@ -28,10 +29,10 @@ public:
    int OnAOI(MM::PropertyBase* pProp, MM::ActionType eAct);
    typedef MM::Action<TAOIProperty> CPropertyAction;
 
-   unsigned GetWidth();
-   unsigned GetHeight();
+   AT_64 GetWidth();
+   AT_64 GetHeight();
    unsigned GetBytesPerPixel();
-   unsigned GetStride();
+   AT_64 GetStride();
    double GetBytesPerPixelF();
    void SetReadOnly(bool set_to);
    void SetCustomAOISize(unsigned left, unsigned top, unsigned width, unsigned height);
