@@ -72,6 +72,12 @@ public class GaussianSpotData {
       y_ = spot.y_;
       intensity_ = spot.intensity_;
       background_ = spot.background_;
+      xCenter_ = spot.xCenter_;
+      yCenter_ = spot.yCenter_;
+      zCenter_ = spot.zCenter_;
+      xOri_ = spot.xOri_;
+      yOri_ = spot.yOri_;
+      zOri_ = spot.zOri_;
       width_ = spot.width_;
       a_ = spot.a_;
       theta_ = spot.theta_;
