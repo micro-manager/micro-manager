@@ -44,7 +44,7 @@
 
 using namespace std;
 
-HIDManager g_usbManager;
+HIDManager g_hidManager;
 std::vector<std::string> g_deviceList;
 MM::MMTime g_deviceListLastUpdated = MM::MMTime(0);
 
@@ -56,8 +56,12 @@ HIDDeviceInfo g_knownDevices[] = {
    {"K8055-1-HID", 0x10cf, 0x5501},
    {"K8055-2-HID", 0x10cf, 0x5502},
    {"K8055-3-HID", 0x10cf, 0x5503},
+   {"K8061-0-HID", 0x10cf, 0x8061},
+   {"K8061-1-HID", 0x10cf, 0x8062},
+   {"LMM5-HID", 0x1bdb, 0x0300}
+
 };
-int g_numberKnownDevices = 4;
+int g_numberKnownDevices = 7;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Exported MMDevice API
@@ -82,12 +86,12 @@ MODULE_API void InitializeModuleData()
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)
 {
-   return g_usbManager.CreatePort(deviceName);
+   return g_hidManager.CreatePort(deviceName);
 }
 
 MODULE_API void DeleteDevice(MM::Device* pDevice)
 {
-   g_usbManager.DestroyPort(pDevice);
+   g_hidManager.DestroyPort(pDevice);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -215,23 +219,23 @@ int MDHIDDevice::Open(const char* /*portName*/)
       return ERR_PORT_ALREADY_OPEN;
    }
 
-   ostringstream logMsg;
    bool deviceFound = false;
    int i;
 
-   printf("Looking for: %s\n", deviceName_.c_str());
+   ostringstream logMsg;
+   logMsg << "Opening HID ports: " << deviceName_.c_str() ; 
+   this->LogMessage(logMsg.str().c_str(), true);
 
    for (i=0; i< g_numberKnownDevices; i++) {
       if (strcmp(deviceName_.c_str(), g_knownDevices[i].name.c_str()) == 0) {
+         ostringstream logMsgMsg;
          deviceFound = true;
-         printf("Opening handle \n");
          handle_ = hid_open(g_knownDevices[i].idVendor, 
                g_knownDevices[i].idProduct, NULL);
          if (handle_ == NULL)
          {
-            printf("Handle was null\n");
-            logMsg << "Failed to open HID device " << deviceName_;
-            LogMessage(logMsg.str().c_str());
+            logMsgMsg << "Failed to open HID device " << deviceName_;
+            LogMessage(logMsgMsg.str().c_str());
             deviceFound = false;
          }
          break;
@@ -243,7 +247,13 @@ int MDHIDDevice::Open(const char* /*portName*/)
 
    wchar_t wstr[255];
    int res = hid_get_serial_number_string(handle_, wstr, 255);
-   printf("Serial Number StringL %ls\n", wstr);
+
+   if (res != 0)
+      return ERR_SETUP_FAILED;
+
+   ostringstream logMsg2;
+   logMsg2 << "Serial Number Stringe " << wstr ; 
+   this->LogMessage(logMsg.str().c_str(), true);
 
    return DEVICE_OK;
 
@@ -321,6 +331,8 @@ int MDHIDDevice::GetAnswer(char* answer, unsigned answerLen, const char* term)
 {
    // Need to parse the answer for a terminating character.
    // Also, need to figure out to work with answerLen
+   // Conversion between unsigned and signed char is also bad
+   // Is this function useful at all in HID devices?
    int res = hid_read_timeout(handle_, answer, answerLen, answerTimeoutMs_);
    if (res == -1)
       return ERR_RECEIVE_FAILED;

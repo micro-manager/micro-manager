@@ -240,7 +240,8 @@ namespace MM {
    enum PortType {
       InvalidPort,
       SerialPort,
-      USBPort
+      USBPort,
+      HIDPort
    };
 
    //////////////////////////////////////////////////////////////////////////////

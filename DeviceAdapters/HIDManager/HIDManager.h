@@ -118,7 +118,7 @@ public:
    int Read(unsigned char* buf, unsigned long bufLen, unsigned long& charsRead);
    int Purge();
    // TODO: Add type HIDPort to MM!!!
-   MM::PortType GetPortType() const {return MM::USBPort;}    
+   MM::PortType GetPortType() const {return MM::HIDPort;}
 
    // action interface
    // ----------------
