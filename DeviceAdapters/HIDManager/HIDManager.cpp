@@ -56,12 +56,10 @@ HIDDeviceInfo g_knownDevices[] = {
    {"K8055-1-HID", 0x10cf, 0x5501},
    {"K8055-2-HID", 0x10cf, 0x5502},
    {"K8055-3-HID", 0x10cf, 0x5503},
-   {"K8061-0-HID", 0x10cf, 0x8061},
-   {"K8061-1-HID", 0x10cf, 0x8062},
    {"LMM5-HID", 0x1bdb, 0x0300}
 
 };
-int g_numberKnownDevices = 7;
+int g_numberKnownDevices = 5;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Exported MMDevice API
@@ -518,6 +516,7 @@ void HIDDeviceLister::FindHIDDevices(std::vector<std::string> &availableDevices)
 
    while (curDev)
    {
+      printf ("HID Device pid: %d vid: %d\n", curDev->product_id, curDev->product_id);
       for (int i=0; i<g_numberKnownDevices; i++) 
       {
          if ( (curDev->vendor_id == g_knownDevices[i].idVendor) &&
