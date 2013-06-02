@@ -47,6 +47,7 @@ using namespace std;
 // global constants
 const char* g_DeviceTsiCam = "TSICam";
 const char* g_ReadoutRate = "ReadoutRate";
+const char* g_Gain = "Gain";
 const char* g_NumberOfTaps = "Taps";
 
 TsiSDK* TsiCam::tsiSdk = 0;
@@ -209,6 +210,11 @@ int TsiCam::Initialize()
    // exposure
    pAct = new CPropertyAction (this, &TsiCam::OnExposure);
    ret = CreateProperty(MM::g_Keyword_Exposure, "2.0", MM::Float, false, pAct);
+   assert(ret == DEVICE_OK);
+
+   // gain
+   pAct = new CPropertyAction (this, &TsiCam::OnGain);
+   ret = CreateProperty(g_Gain, "0", MM::Integer, false, pAct);
    assert(ret == DEVICE_OK);
 
    bool bRet;

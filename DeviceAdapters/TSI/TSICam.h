@@ -123,6 +123,7 @@ public:
    int OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnReadoutRate(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnTaps(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnGain(MM::PropertyBase* pProp, MM::ActionType eAct);
 
    // stubs
    int OnTemperature(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -131,7 +132,6 @@ public:
    int OnTriggerMode(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnChipName(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnGain(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnMultiplierGain(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnReadoutPort(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnOffset(MM::PropertyBase* pProp, MM::ActionType eAct);
