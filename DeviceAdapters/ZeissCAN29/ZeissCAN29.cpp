@@ -1809,7 +1809,7 @@ int XYStage::Stop()
 
 int XYStage::SetOrigin()
 {
-   return DEVICE_OK;
+   return SetAdapterOriginUm(0.0, 0.0);
 }
 
 int XYStage::OnMoveMode(MM::PropertyBase* pProp, MM::ActionType eAct)
