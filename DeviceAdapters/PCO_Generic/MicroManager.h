@@ -24,11 +24,11 @@
 #ifndef _SENSICAM_H_
 #define _SENSICAM_H_
 
-#include "..\..\MMDevice/DeviceBase.h"
-#include "..\..\MMDevice/ImgBuffer.h"
-#include "..\..\MMDevice/DeviceThreads.h"
-#include "..\..\MMDevice/DeviceUtils.h"
-#include "..\..\..\3rdparty\Pco\Windows\pco_generic\Camera.h"
+#include "../../MMDevice/DeviceBase.h"
+#include "../../MMDevice/ImgBuffer.h"
+#include "../../MMDevice/DeviceThreads.h"
+#include "../../MMDevice/DeviceUtils.h"
+#include "Camera.h"
 #include <string>
 #include <map>
 

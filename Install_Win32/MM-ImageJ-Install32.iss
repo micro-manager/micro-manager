@@ -79,6 +79,7 @@ Source: micro-manager\mrc5.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mrfw.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\XCLIBWNT.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\LaserCombinerSDK.dll; DestDir: {app}; Flags: ignoreversion
+Source: micro-manager\PCO_Kamlib.dll; DestDir: {app}; Flags: ignoreversion
 
 ; Breeze stuff
 Source: micro-manager\DSLRRemoteLib.dll; DestDir: {app}; Flags: ignoreversion

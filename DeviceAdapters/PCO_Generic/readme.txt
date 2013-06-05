@@ -64,3 +64,8 @@ see SVN repository.
  Any trademarks referenced in this document are the property of
  their respective owners.
 -------------------------------------------------------------------
+
+
+for
+DEVICE_INTERFACE_VERSION  See mmdevice.h
+MODULE_INTERFACE_VERSION  See moduleinterface.h

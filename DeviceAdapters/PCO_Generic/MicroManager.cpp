@@ -29,7 +29,7 @@
 
 #define PCO_ERRT_H_CREATE_OBJECT
 
-#include "..\..\MMDevice/ModuleInterface.h"
+#include "../../MMDevice/ModuleInterface.h"
 #include "MicroManager.h"
 //#pragma warning(disable : 4996) // disable warning for deperecated CRT functions on Windows 
 
@@ -1181,8 +1181,10 @@ const unsigned int* CPCOCam::GetImageBufferAsRGB32()
 const unsigned char* CPCOCam::GetImageBuffer()
 {
   int nErr = 0, iw, ih;
+  double dsigma = 0.0;
+  DWORD dwflags = 0;
 
-  m_pic = m_pCamera->GetPic12(NULL);
+  m_pic = m_pCamera->GetPic12(NULL, &dsigma, dwflags);
 
   if (img_.Depth() == 2)
   {
