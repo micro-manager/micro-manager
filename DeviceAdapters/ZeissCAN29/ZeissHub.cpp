@@ -1574,7 +1574,7 @@ int ZeissHub::ExecuteCommand(MM::Device& device, MM::Core& core, const unsigned 
 int ZeissHub::GetAnswer(MM::Device& device, MM::Core& core, unsigned char* answer, unsigned long &answerLength) 
 {     
    int ret(DEVICE_OK);
-   long unsigned int dataLength = 1;
+   const unsigned long dataLength = 1;
    bool terminatorFound = false;
    bool timeOut = false;
    MM::MMTime startTime = core.GetCurrentMMTime();
@@ -1602,7 +1602,7 @@ int ZeissHub::GetAnswer(MM::Device& device, MM::Core& core, unsigned char* answe
               // make current position of 0x0D available
               dataReadLength -= 1;
               // overwrite the 0x10 preceeding the original 0x0D with 0X0D
-              dataRead[dataReadLength - 1] = 0x0D;
+              dataRead[dataReadLength] = 0x0D;
            }
            else {
               tenFound = false;
@@ -1610,7 +1610,7 @@ int ZeissHub::GetAnswer(MM::Device& device, MM::Core& core, unsigned char* answe
          }
          else if (rcvBuf_[0] == 0x10)
             tenFound = true;
-         dataReadLength += 1;
+         dataReadLength += dataLength;
       }
       if ((core.GetCurrentMMTime() - startTime) > timeOutTime_)
          timeOut = true;
