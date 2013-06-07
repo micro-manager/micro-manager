@@ -279,6 +279,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FLICamera", "..\DeviceAdapt
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "IDS_uEye", "..\DeviceAdapters\IDS_uEye\IDS_uEye.vcproj", "{AFC831A1-1946-43A5-BCA9-1B4618703C20}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Oxxius", "..\DeviceAdapters\Oxxius\Oxxius.vcproj", "{70ADDFBB-1216-412E-B326-51A146C3B8A4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -1339,6 +1341,14 @@ Global
 		{AFC831A1-1946-43A5-BCA9-1B4618703C20}.Release|Win32.Build.0 = Release|Win32
 		{AFC831A1-1946-43A5-BCA9-1B4618703C20}.Release|x64.ActiveCfg = Release|x64
 		{AFC831A1-1946-43A5-BCA9-1B4618703C20}.Release|x64.Build.0 = Release|x64
+		{70ADDFBB-1216-412E-B326-51A146C3B8A4}.Debug|Win32.ActiveCfg = Debug|Win32
+		{70ADDFBB-1216-412E-B326-51A146C3B8A4}.Debug|Win32.Build.0 = Debug|Win32
+		{70ADDFBB-1216-412E-B326-51A146C3B8A4}.Debug|x64.ActiveCfg = Debug|x64
+		{70ADDFBB-1216-412E-B326-51A146C3B8A4}.Debug|x64.Build.0 = Debug|x64
+		{70ADDFBB-1216-412E-B326-51A146C3B8A4}.Release|Win32.ActiveCfg = Release|Win32
+		{70ADDFBB-1216-412E-B326-51A146C3B8A4}.Release|Win32.Build.0 = Release|Win32
+		{70ADDFBB-1216-412E-B326-51A146C3B8A4}.Release|x64.ActiveCfg = Release|x64
+		{70ADDFBB-1216-412E-B326-51A146C3B8A4}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
