@@ -5,11 +5,8 @@
 
 package org.micromanager.acquisition;
 
-import java.util.HashMap;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
