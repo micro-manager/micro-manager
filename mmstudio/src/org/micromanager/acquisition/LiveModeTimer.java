@@ -22,16 +22,11 @@
 package org.micromanager.acquisition;
 
 import java.text.NumberFormat;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
@@ -65,7 +60,7 @@ public class LiveModeTimer {
    private Timer timer_;
    private TimerTask task_;
    private MMStudioMainFrame.DisplayImageRoutine displayImageRoutine_;
-    private LinkedBlockingQueue imageQueue_;
+   private LinkedBlockingQueue imageQueue_;
    
    public LiveModeTimer() {
       gui_ = MMStudioMainFrame.getInstance();
@@ -322,6 +317,7 @@ public class LiveModeTimer {
       };
    }
 
+   /*
    private void addTags(TaggedImage ti, int channel) throws JSONException {
       MDUtils.setChannelIndex(ti.tags, channel);
       MDUtils.setFrameIndex(ti.tags, 0);
@@ -335,7 +331,7 @@ public class LiveModeTimer {
       gui_.addStagePositionToTags(ti);
    }
    
-   /*
+   
    private TaggedImage makeTaggedImage(Object pixels) throws JSONException, MMScriptException {
        TaggedImage ti = ImageUtils.makeTaggedImage(pixels,
                     0, 0, 0, 0,
