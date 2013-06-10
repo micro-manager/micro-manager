@@ -8,13 +8,15 @@
  * This is useful when you see something interesting in live mode and want to 
  * save this data.
  * 
- * No attempt is made to interpret the data coming from the circular buffer.
- * Images and tags currently are not processed by ImageProcessors (this would
- * be a nice addition)
  * 
  * Nico Stuurman, 2009(?)
  * 
- * copyright University of California
+ * Updated June 2013 to use ImageProcssor Queue, so that images from multiple 
+ * cameras are displayed correctly and so that images are all processed by
+ * the default image processing queue.
+ * 
+ * 
+ * Copyright University of California
  * 
  * LICENSE:      This file is distributed under the BSD license.
  *               License text is included with the source distribution.
@@ -30,14 +32,19 @@
 
 package org.micromanager.recall;
 
+import java.util.concurrent.LinkedBlockingQueue;
+
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
+import org.json.JSONException;
 import org.micromanager.api.MMPlugin;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.MMStudioMainFrame;
+import org.micromanager.acquisition.TaggedImageQueue;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ReportingUtils;
+
 
 
 
@@ -48,10 +55,25 @@ public class RecallPlugin implements MMPlugin {
 		   "in options (under Tools menu)";
    private CMMCore core_;
    private MMStudioMainFrame gui_;
+   private MMStudioMainFrame.DisplayImageRoutine displayImageRoutine_;
+   private final String ACQ_NAME = "Live Replay";
+   private int multiChannelCameraNrCh_;
+   
+  
 
    public void setApp(ScriptInterface app) {
       gui_ = (MMStudioMainFrame) app;                                        
-      core_ = app.getMMCore();                                               
+      core_ = app.getMMCore(); 
+      
+      displayImageRoutine_ = new MMStudioMainFrame.DisplayImageRoutine() {
+         public void show(final TaggedImage ti) {
+            try {
+               gui_.addImage(ACQ_NAME, ti, true, true);
+            } catch (Exception e) {
+               ReportingUtils.logError(e);
+            }
+         }
+      };
    }
 
    public void dispose() {
@@ -60,58 +82,95 @@ public class RecallPlugin implements MMPlugin {
 
    public void show() {
       try {
-         String ig = "Live Replay";
-         if (gui_.acquisitionExists(ig))
-            gui_.closeAcquisition(ig);
+         if (gui_.acquisitionExists(ACQ_NAME))
+            gui_.closeAcquisition(ACQ_NAME);
 
          int remaining = core_.getRemainingImageCount();
 
          if (remaining < 1) {
             ReportingUtils.showMessage("There are no Images in the Micro-Manage buffer");
             return;
-         }
+         }       
+         
+         LinkedBlockingQueue imageQueue_ = new LinkedBlockingQueue();
+         
+         multiChannelCameraNrCh_ = (int) core_.getNumberOfCameraChannels();
+         
+         gui_.openAcquisition(ACQ_NAME, "tmp", core_.getRemainingImageCount(), 
+                 multiChannelCameraNrCh_, 1, true);
 
-         gui_.openAcquisition(ig, "tmp", core_.getRemainingImageCount(), 1, 1, true);
-
+         String camera = core_.getCameraDevice();
          long width = core_.getImageWidth();
          long height = core_.getImageHeight();
          long depth = core_.getBytesPerPixel();
 
+         gui_.initializeAcquisition(ACQ_NAME, (int) width,(int) height, (int) depth);
 
-         gui_.initializeAcquisition(ig, (int) width,(int) height, (int) depth);
-
-         try {
-            String binning = core_.getProperty(core_.getCameraDevice(), "Binning");
-            int bin = Integer.parseInt(binning);
-            for (int i=0; i < remaining; i++) {
-               TaggedImage tImg = core_.popNextTaggedImage();
-
-               tImg.tags.put("Time", MDUtils.getCurrentTime());
-               tImg.tags.put("Frame", i);
-               tImg.tags.put("ChannelIndex", 0);
-               tImg.tags.put("Slice", 0);
-               tImg.tags.put("PositionIndex", 0);
-               tImg.tags.put("Width", width);
-               tImg.tags.put("Height", height);
-               MDUtils.setBinning(tImg.tags, bin);
-
-               if (depth == 1)
-                  tImg.tags.put("PixelType", "GRAY8");
-               else if (depth == 2)
-                  tImg.tags.put("PixelType", "GRAY16");
-               gui_.addImage(ig, tImg);
-               if (i == 0) {
-                  gui_.setContrastBasedOnFrame(ig, 0, 0);
+         gui_.runDisplayThread(imageQueue_, displayImageRoutine_);
+         
+         if (multiChannelCameraNrCh_ == 0) {                    
+            int frameCounter = 0;
+            try {
+               for (int i = 0; i < remaining; i++) {
+                  TaggedImage tImg = core_.popNextTaggedImage();
+                  normalizeTags(tImg, frameCounter);
+                  frameCounter++;
+                  imageQueue_.put(tImg);
                }
+               imageQueue_.put(TaggedImageQueue.POISON);
+            } catch (Exception ex) {
+               ReportingUtils.logError(ex, "Error in Live Replay");
             }
-         } catch (Exception ex){
+         } else if (multiChannelCameraNrCh_ > 0) {
+            int[] frameCounters = new int[multiChannelCameraNrCh_];
+            try {
+               for (int i = 0; i < remaining; i++) {
+                  TaggedImage tImg = core_.popNextTaggedImage();
+                  
+                  if (tImg.tags.has(camera + "-CameraChannelName")) {
+                     String channelName = tImg.tags.getString(camera + "-CameraChannelName");
+                     tImg.tags.put("Channel", channelName);
+                     int channelIndex = tImg.tags.getInt(camera + "-CameraChannelIndex");
+                     tImg.tags.put("ChannelIndex", channelIndex);
+                     normalizeTags(tImg, frameCounters[channelIndex]);
+                     frameCounters[channelIndex]++;
+                     imageQueue_.put(tImg);
+                  }
+               }  
+               imageQueue_.put(TaggedImageQueue.POISON);
+            } catch (Exception ex) {
+               ReportingUtils.logError(ex, "Error in Live Replay Plugin");
+            }
          }
+        
       } catch (MMScriptException e) {
          ReportingUtils.showError(e);
-      }
-
+      }        
    }
 
+   
+   private void normalizeTags(TaggedImage ti, int frameIndex) {
+      if (ti != TaggedImageQueue.POISON) {
+         int channel = 0;
+         try {
+            if (ti.tags.has("Multi Camera-CameraChannelIndex")) {
+               channel = ti.tags.getInt("Multi Camera-CameraChannelIndex");
+            } else if (ti.tags.has("CameraChannelIndex")) {
+               channel = ti.tags.getInt("CameraChannelIndex");
+            } else if (ti.tags.has("ChannelIndex")) {
+               channel = MDUtils.getChannelIndex(ti.tags);
+            }
+            ti.tags.put("ChannelIndex", channel);
+            ti.tags.put("PositionIndex", 0);
+            ti.tags.put("SliceIndex", 0);
+            ti.tags.put("FrameIndex", frameIndex);
+
+         } catch (JSONException ex) {
+            ReportingUtils.logError(ex);
+         }
+      }
+   }
+   
    public void configurationChanged() {
    }
 
