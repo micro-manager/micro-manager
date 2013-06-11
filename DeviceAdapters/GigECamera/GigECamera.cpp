@@ -526,11 +526,11 @@ int CGigECamera::Initialize()
 		dn1 = px1;
 	else
 		dn1 = it->second;
-	nRet = CreateProperty( MM::g_Keyword_AcquisitionMode, dn1.c_str(), MM::String, !nodes->isWritable( ACQUISITION_MODE ), pAct );
+   nRet = CreateProperty( MM::g_Keyword_Acquisition_Mode, dn1.c_str(), MM::String, !nodes->isWritable( ACQUISITION_MODE ), pAct );
 	if (nRet != DEVICE_OK)
 		return nRet;
 
-	nRet = SetAllowedValues(MM::g_Keyword_AcquisitionMode, acquistionmodeValues);
+   nRet = SetAllowedValues( MM::g_Keyword_Acquisition_Mode, acquistionmodeValues );
 	if (nRet != DEVICE_OK)
 		return nRet;
 

@@ -43,6 +43,7 @@ namespace MM
 	const char* const g_Keyword_Image_Height_Max	= "Image Height Max";
 	const char* const g_Keyword_Pixel_Format		= "Pixel Format";
 	const char* const g_Keyword_Frame_Rate			= "Acquisition Frame Rate";
+	const char* const g_Keyword_Acquisition_Mode	= "Acquisition Mode";
 } 
 
 extern const char* g_CameraDeviceName;
