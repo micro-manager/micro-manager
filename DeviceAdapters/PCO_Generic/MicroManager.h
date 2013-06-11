@@ -56,25 +56,6 @@
 #define ERR_UNKNOWN_CAMERA_TYPE  11
 #define ERR_TIMEOUT              12
 
-class CPCOMicroManagerApp : public CWinApp
-{
-public:
-	CPCOMicroManagerApp();
-
-// Overrides
-	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(CPCOMicroManagerApp)
-	public:
-	virtual int ExitInstance();
-	virtual BOOL InitInstance();
-	//}}AFX_VIRTUAL
-
-	//{{AFX_MSG(CPCOMicroManagerApp)
-		// NOTE - the ClassWizard will add and remove member functions here.
-		//    DO NOT EDIT what you see in these blocks of generated code !
-	//}}AFX_MSG
-	DECLARE_MESSAGE_MAP()
-};
 
 //////////////////////////////////////////////////////////////////////////////
 // Implementation of the MMDevice and MMCamera interfaces

@@ -25,7 +25,7 @@
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="2"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
-			UseOfMFC="1"
+			UseOfMFC="0"
 			CharacterSet="2"
 			>
 			<Tool
@@ -46,7 +46,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\..\..\3rdparty\PCO\Windows\pco_generic\DLL_based;&quot;..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\include&quot;"
+				AdditionalIncludeDirectories="..\..\..\3rdparty\PCO\Windows\pco_generic\DLL_based"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS;_LIGHT"
 				MinimalRebuild="true"
 				ExceptionHandling="2"
@@ -70,10 +70,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="version.lib nafxcwd.lib PCO_Kamlib.lib"
+				AdditionalDependencies="PCO_Kamlib.lib"
 				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="..\..\..\3rdparty\PCO\Windows\pco_generic\DLL_based;&quot;..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\lib\Win32&quot;"
+				AdditionalLibraryDirectories="..\..\..\3rdparty\PCO\Windows\pco_generic\DLL_based"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)/$(ProjectName).pdb"
 				SubSystem="2"
@@ -110,7 +110,7 @@
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="2"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
-			UseOfMFC="1"
+			UseOfMFC="0"
 			CharacterSet="2"
 			>
 			<Tool
@@ -132,7 +132,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\..\..\3rdparty\PCO\Windows\pco_generic\DLL_based;&quot;..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\include&quot;"
+				AdditionalIncludeDirectories="..\..\..\3rdparty\PCO\Windows\pco_generic\DLL_based"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS;_LIGHT"
 				MinimalRebuild="true"
 				ExceptionHandling="2"
@@ -156,10 +156,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="version.lib nafxcwd.lib PCO_Kamlib64.lib"
+				AdditionalDependencies="PCO_Kamlib64.lib"
 				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="..\..\..\3rdparty\PCO\Windows\pco_generic\DLL_based;&quot;..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\lib\x64&quot;"
+				AdditionalLibraryDirectories="..\..\..\3rdparty\PCO\Windows\pco_generic\DLL_based"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)/$(ProjectName).pdb"
 				SubSystem="2"
@@ -196,7 +196,7 @@
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="2"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
-			UseOfMFC="1"
+			UseOfMFC="0"
 			CharacterSet="2"
 			>
 			<Tool
@@ -216,7 +216,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="..\..\..\3rdparty\PCO\Windows\pco_generic\DLL_based;&quot;..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\include&quot;"
+				AdditionalIncludeDirectories="..\..\..\3rdparty\PCO\Windows\pco_generic\DLL_based"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS;_LIGHT"
 				ExceptionHandling="2"
 				RuntimeLibrary="0"
@@ -238,10 +238,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="version.lib nafxcw.lib PCO_Kamlib.lib"
+				AdditionalDependencies="PCO_Kamlib.lib"
 				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="..\..\..\3rdparty\PCO\Windows\pco_generic\DLL_based;&quot;..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\lib\Win32&quot;"
+				AdditionalLibraryDirectories="..\..\..\3rdparty\PCO\Windows\pco_generic\DLL_based"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
@@ -279,7 +279,7 @@
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="2"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
-			UseOfMFC="1"
+			UseOfMFC="0"
 			CharacterSet="2"
 			>
 			<Tool
@@ -300,7 +300,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="..\..\..\3rdparty\PCO\Windows\pco_generic\DLL_based;&quot;..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\include&quot;"
+				AdditionalIncludeDirectories="..\..\..\3rdparty\PCO\Windows\pco_generic\DLL_based"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS;_LIGHT"
 				ExceptionHandling="2"
 				RuntimeLibrary="0"
@@ -322,10 +322,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="version.lib nafxcw.lib PCO_Kamlib64.lib"
+				AdditionalDependencies="PCO_Kamlib64.lib"
 				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="..\..\..\3rdparty\PCO\Windows\pco_generic\DLL_based;&quot;..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\lib\x64&quot;"
+				AdditionalLibraryDirectories="..\..\..\3rdparty\PCO\Windows\pco_generic\DLL_based"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"

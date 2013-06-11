@@ -25,8 +25,6 @@
    #include <windows.h>
 #endif*/
 
-#include "stdafx.h"
-
 #define PCO_ERRT_H_CREATE_OBJECT
 
 #include "../../MMDevice/ModuleInterface.h"
@@ -44,42 +42,6 @@ const char* g_PixelType_8bit = "8bit";
 const char* g_PixelType_16bit = "16bit";
 const char* g_PixelType_RGB32bit = "RGB 32bit";
 
-#ifdef WIN32
-/////////////////////////////////////////////////////////////////////////////
-// CPCOMicroManagerApp
-
-BEGIN_MESSAGE_MAP(CPCOMicroManagerApp, CWinApp)
-	//{{AFX_MSG_MAP(CPCOMicroManagerApp)
-		// NOTE - the ClassWizard will add and remove mapping macros here.
-		//    DO NOT EDIT what you see in these blocks of generated code!
-	//}}AFX_MSG_MAP
-END_MESSAGE_MAP()
-
-/////////////////////////////////////////////////////////////////////////////
-// CPCOMicroManagerApp construction
-CPCOMicroManagerApp::CPCOMicroManagerApp()
-{
-}
-
-BOOL CPCOMicroManagerApp::InitInstance() 
-{
-//call base class
-  return CWinApp::InitInstance();
-}
-
-int CPCOMicroManagerApp::ExitInstance() 
-{
-
-  return CWinApp::ExitInstance();
-}
-
-
-
-/////////////////////////////////////////////////////////////////////////////
-// The one and only CPCOMicroManagerApp object
-
-CPCOMicroManagerApp theApp;
-#endif
 
 ///////////////////////////////////////////////////////////////////////////////
 // Exported MMDevice API
