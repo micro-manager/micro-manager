@@ -35,9 +35,9 @@ int CGigECamera::OnBinning( MM::PropertyBase* pProp, MM::ActionType eAct )
 			long binFactor;
 			pProp->Get( binFactor );
 			if( nodes->isAvailable( BINNING_VERTICAL ) )
-				ret |= SetProperty( MM::g_Keyword_Binning_Vertical, CDeviceUtils::ConvertToString( binFactor ) );
+				ret |= SetProperty( g_Keyword_Binning_Vertical, CDeviceUtils::ConvertToString( binFactor ) );
 			if( nodes->isAvailable( BINNING_HORIZONTAL ) )
-				ret |= SetProperty( MM::g_Keyword_Binning_Horizontal, CDeviceUtils::ConvertToString( binFactor ) );
+				ret |= SetProperty( g_Keyword_Binning_Horizontal, CDeviceUtils::ConvertToString( binFactor ) );
 		}
 		break;
 	case MM::BeforeGet:
@@ -84,7 +84,7 @@ int CGigECamera::OnBinningV( MM::PropertyBase* pProp, MM::ActionType eAct )
 					int64_t high, low;
 					high = nodes->getMax( HEIGHT );
 					low = nodes->getMin( HEIGHT );
-					SetPropertyLimits( MM::g_Keyword_Image_Height, (double) low, (double) high );
+					SetPropertyLimits( g_Keyword_Image_Height, (double) low, (double) high );
 
 					// new height
 					int64_t dim;
@@ -93,8 +93,8 @@ int CGigECamera::OnBinningV( MM::PropertyBase* pProp, MM::ActionType eAct )
 					{
 						dim = dim * oldBin / binFactor;
 					}
-					SetProperty( MM::g_Keyword_Image_Height, CDeviceUtils::ConvertToString( (long) dim ) );
-					UpdateProperty( MM::g_Keyword_Image_Height );
+					SetProperty( g_Keyword_Image_Height, CDeviceUtils::ConvertToString( (long) dim ) );
+					UpdateProperty( g_Keyword_Image_Height );
 					LogMessage( (std::string) "setting v bin to " + boost::lexical_cast<std::string>( binFactor ) 
 								+ " and height to " + boost::lexical_cast<std::string>( dim ) 
 								+ " (oldBin:  " + boost::lexical_cast<std::string>( oldBin ) + ")  " 
@@ -103,7 +103,7 @@ int CGigECamera::OnBinningV( MM::PropertyBase* pProp, MM::ActionType eAct )
 
 					if( nodes->isAvailable( HEIGHT_MAX ) )
 					{
-						UpdateProperty( MM::g_Keyword_Image_Height_Max );
+						UpdateProperty( g_Keyword_Image_Height_Max );
 					}
 					OnPropertiesChanged();
 					ret = DEVICE_OK;
@@ -160,12 +160,12 @@ int CGigECamera::OnBinningH( MM::PropertyBase* pProp, MM::ActionType eAct )
 					{
 						dim = dim * oldBin / binFactor;
 					}
-					SetProperty( MM::g_Keyword_Image_Width, CDeviceUtils::ConvertToString( (long) dim ) );
+					SetProperty( g_Keyword_Image_Width, CDeviceUtils::ConvertToString( (long) dim ) );
 					int64_t high, low;
 					high = nodes->getMax( WIDTH );
 					low = nodes->getMin( WIDTH );
-					SetPropertyLimits( MM::g_Keyword_Image_Width, (double) low, (double) high );
-					UpdateProperty( MM::g_Keyword_Image_Width );
+					SetPropertyLimits( g_Keyword_Image_Width, (double) low, (double) high );
+					UpdateProperty( g_Keyword_Image_Width );
 					LogMessage( (std::string) "setting h bin to " + boost::lexical_cast<std::string>( binFactor ) 
 								+ " and width to " + boost::lexical_cast<std::string>( dim ) 
 								+ " (oldBin:  " + boost::lexical_cast<std::string>( oldBin ) + ")  " 
@@ -173,7 +173,7 @@ int CGigECamera::OnBinningH( MM::PropertyBase* pProp, MM::ActionType eAct )
 								+ " " + boost::lexical_cast<std::string>( high ) + ")", true );
 					if( nodes->isAvailable( WIDTH_MAX ) )
 					{
-						UpdateProperty( MM::g_Keyword_Image_Width_Max );
+						UpdateProperty( g_Keyword_Image_Width_Max );
 					}
 					OnPropertiesChanged();
 					ret = DEVICE_OK;

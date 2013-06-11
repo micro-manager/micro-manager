@@ -30,21 +30,18 @@
 #define ERR_UNKNOWN_POSITION     103
 
 
-namespace MM 
-{
-	const char* const g_Keyword_Binning_Vertical	= "Binning Vertical";
-	const char* const g_Keyword_Binning_Horizontal	= "Binning Horizontal";
-	const char* const g_Keyword_Image_Width			= "Image Width";
-	const char* const g_Keyword_Image_Height		= "Image Height";
-	const char* const g_Keyword_Camera_Choice		= "Available Cameras";
-	const char* const g_Keyword_Sensor_Width		= "Sensor Width";
-	const char* const g_Keyword_Sensor_Height		= "Sensor Height";
-	const char* const g_Keyword_Image_Width_Max		= "Image Width Max";
-	const char* const g_Keyword_Image_Height_Max	= "Image Height Max";
-	const char* const g_Keyword_Pixel_Format		= "Pixel Format";
-	const char* const g_Keyword_Frame_Rate			= "Acquisition Frame Rate";
-	const char* const g_Keyword_Acquisition_Mode	= "Acquisition Mode";
-} 
+const char* const g_Keyword_Binning_Vertical	= "Binning Vertical";
+const char* const g_Keyword_Binning_Horizontal	= "Binning Horizontal";
+const char* const g_Keyword_Image_Width			= "Image Width";
+const char* const g_Keyword_Image_Height		= "Image Height";
+const char* const g_Keyword_Camera_Choice		= "Available Cameras";
+const char* const g_Keyword_Sensor_Width		= "Sensor Width";
+const char* const g_Keyword_Sensor_Height		= "Sensor Height";
+const char* const g_Keyword_Image_Width_Max		= "Image Width Max";
+const char* const g_Keyword_Image_Height_Max	= "Image Height Max";
+const char* const g_Keyword_Pixel_Format		= "Pixel Format";
+const char* const g_Keyword_Frame_Rate			= "Acquisition Frame Rate";
+const char* const g_Keyword_Acquisition_Mode	= "Acquisition Mode";
 
 extern const char* g_CameraDeviceName;
 extern const char* g_PixelType_8bit;

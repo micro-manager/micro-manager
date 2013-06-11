@@ -259,10 +259,10 @@ int CGigECamera::Initialize()
 
 		// available cameras
 		pAct = new CPropertyAction (this, &CGigECamera::OnCameraChoice);
-		nRet = CreateProperty(MM::g_Keyword_Camera_Choice, selectedCamera.c_str(), MM::String, false, pAct);
+		nRet = CreateProperty(g_Keyword_Camera_Choice, selectedCamera.c_str(), MM::String, false, pAct);
 		if (nRet != DEVICE_OK)
 			return nRet;
-		nRet = SetAllowedValues(MM::g_Keyword_Camera_Choice, correctedCameras);
+		nRet = SetAllowedValues(g_Keyword_Camera_Choice, correctedCameras);
 		if (nRet != DEVICE_OK)
 			return nRet;
 
@@ -377,12 +377,12 @@ int CGigECamera::Initialize()
 	if( nodes->get( dim, WIDTH ) )
 	{
 		pAct = new CPropertyAction( this, &CGigECamera::OnImageWidth );
-		nRet = CreateProperty( MM::g_Keyword_Image_Width, CDeviceUtils::ConvertToString( (long) dim ), MM::Integer, !nodes->isWritable( WIDTH ), pAct );
+		nRet = CreateProperty( g_Keyword_Image_Width, CDeviceUtils::ConvertToString( (long) dim ), MM::Integer, !nodes->isWritable( WIDTH ), pAct );
 		if( nRet != DEVICE_OK )
 			return nRet;
 		int64_t low = nodes->getMin( WIDTH );
 		int64_t high = nodes->getMax( WIDTH );
-		nRet = SetPropertyLimits( MM::g_Keyword_Image_Width, (double) low, (double) high );
+		nRet = SetPropertyLimits( g_Keyword_Image_Width, (double) low, (double) high );
 		if( nRet != DEVICE_OK )
 			return nRet;
 	}
@@ -390,12 +390,12 @@ int CGigECamera::Initialize()
 	if( nodes->get( dim, HEIGHT ) )
 	{
 		pAct = new CPropertyAction( this, &CGigECamera::OnImageHeight );
-		nRet = CreateProperty( MM::g_Keyword_Image_Height, CDeviceUtils::ConvertToString( (long) dim ), MM::Integer, !nodes->isWritable( HEIGHT ), pAct );
+		nRet = CreateProperty( g_Keyword_Image_Height, CDeviceUtils::ConvertToString( (long) dim ), MM::Integer, !nodes->isWritable( HEIGHT ), pAct );
 		if( nRet != DEVICE_OK )
 			return nRet;
 		int64_t low = nodes->getMin( HEIGHT );
 		int64_t high = nodes->getMax( HEIGHT );
-		nRet = SetPropertyLimits( MM::g_Keyword_Image_Height, (double) low, (double) high );
+		nRet = SetPropertyLimits( g_Keyword_Image_Height, (double) low, (double) high );
 		if( nRet != DEVICE_OK )
 			return nRet;
 	}
@@ -405,7 +405,7 @@ int CGigECamera::Initialize()
 	{
 		nodes->get( dim, WIDTH_MAX );
 		pAct = new CPropertyAction( this, &CGigECamera::OnImageWidthMax );
-		nRet = CreateProperty( MM::g_Keyword_Image_Width_Max, CDeviceUtils::ConvertToString( (long) dim ), MM::Integer, !nodes->isWritable( WIDTH_MAX ), pAct );
+		nRet = CreateProperty( g_Keyword_Image_Width_Max, CDeviceUtils::ConvertToString( (long) dim ), MM::Integer, !nodes->isWritable( WIDTH_MAX ), pAct );
 		if( nRet != DEVICE_OK )
 			return nRet;
 	}
@@ -414,7 +414,7 @@ int CGigECamera::Initialize()
 	{
 		nodes->get( dim, HEIGHT_MAX );
 		pAct = new CPropertyAction( this, &CGigECamera::OnImageHeightMax );
-		nRet = CreateProperty( MM::g_Keyword_Image_Height_Max, CDeviceUtils::ConvertToString( (long) dim ), MM::Integer, !nodes->isWritable( HEIGHT_MAX ), pAct );
+		nRet = CreateProperty( g_Keyword_Image_Height_Max, CDeviceUtils::ConvertToString( (long) dim ), MM::Integer, !nodes->isWritable( HEIGHT_MAX ), pAct );
 		if( nRet != DEVICE_OK )
 			return nRet;
 	}
@@ -423,7 +423,7 @@ int CGigECamera::Initialize()
 	if( nodes->isAvailable( SENSOR_WIDTH ) )
 	{
 		nodes->get( dim, SENSOR_WIDTH );
-		nRet = CreateProperty( MM::g_Keyword_Sensor_Width, CDeviceUtils::ConvertToString( (long) dim ), MM::Integer, !nodes->isWritable( SENSOR_WIDTH ) );
+		nRet = CreateProperty( g_Keyword_Sensor_Width, CDeviceUtils::ConvertToString( (long) dim ), MM::Integer, !nodes->isWritable( SENSOR_WIDTH ) );
 		if( nRet != DEVICE_OK )
 			return nRet;
 	}
@@ -431,7 +431,7 @@ int CGigECamera::Initialize()
 	if( nodes->isAvailable( SENSOR_HEIGHT ) )
 	{
 		nodes->get( dim, SENSOR_HEIGHT );
-		nRet = CreateProperty( MM::g_Keyword_Sensor_Height, CDeviceUtils::ConvertToString( (long) dim ), MM::Integer, !nodes->isWritable( SENSOR_HEIGHT ) );
+		nRet = CreateProperty( g_Keyword_Sensor_Height, CDeviceUtils::ConvertToString( (long) dim ), MM::Integer, !nodes->isWritable( SENSOR_HEIGHT ) );
 		if( nRet != DEVICE_OK )
 			return nRet;
 	}
@@ -451,7 +451,7 @@ int CGigECamera::Initialize()
 	{
 		nodes->get( bin, BINNING_VERTICAL );
 		pAct = new CPropertyAction( this, &CGigECamera::OnBinningV );
-		nRet = CreateProperty( MM::g_Keyword_Binning_Vertical, CDeviceUtils::ConvertToString( (long) bin ), MM::Integer, !nodes->isWritable( BINNING_VERTICAL ), pAct );
+		nRet = CreateProperty( g_Keyword_Binning_Vertical, CDeviceUtils::ConvertToString( (long) bin ), MM::Integer, !nodes->isWritable( BINNING_VERTICAL ), pAct );
 		if (DEVICE_OK != nRet)
 			return nRet;
 	}
@@ -460,7 +460,7 @@ int CGigECamera::Initialize()
 	{
 		nodes->get( bin, BINNING_HORIZONTAL );
 		pAct = new CPropertyAction( this, &CGigECamera::OnBinningH );
-		nRet = CreateProperty( MM::g_Keyword_Binning_Horizontal, CDeviceUtils::ConvertToString( (long) bin ), MM::Integer, !nodes->isWritable( BINNING_HORIZONTAL ), pAct );
+		nRet = CreateProperty( g_Keyword_Binning_Horizontal, CDeviceUtils::ConvertToString( (long) bin ), MM::Integer, !nodes->isWritable( BINNING_HORIZONTAL ), pAct );
 		if (DEVICE_OK != nRet)
 			return nRet;
 	}
@@ -526,11 +526,11 @@ int CGigECamera::Initialize()
 		dn1 = px1;
 	else
 		dn1 = it->second;
-   nRet = CreateProperty( MM::g_Keyword_Acquisition_Mode, dn1.c_str(), MM::String, !nodes->isWritable( ACQUISITION_MODE ), pAct );
+   nRet = CreateProperty( g_Keyword_Acquisition_Mode, dn1.c_str(), MM::String, !nodes->isWritable( ACQUISITION_MODE ), pAct );
 	if (nRet != DEVICE_OK)
 		return nRet;
 
-   nRet = SetAllowedValues( MM::g_Keyword_Acquisition_Mode, acquistionmodeValues );
+   nRet = SetAllowedValues( g_Keyword_Acquisition_Mode, acquistionmodeValues );
 	if (nRet != DEVICE_OK)
 		return nRet;
 
@@ -626,21 +626,21 @@ int CGigECamera::Initialize()
 		pAct = new CPropertyAction( this, &CGigECamera::OnFrameRate );
 		double d = 0;
 		nodes->get( d, ACQUISITION_FRAME_RATE );
-		nRet = CreateProperty( MM::g_Keyword_Frame_Rate, boost::lexical_cast<std::string>( d ).c_str(), MM::Float, 
+		nRet = CreateProperty( g_Keyword_Frame_Rate, boost::lexical_cast<std::string>( d ).c_str(), MM::Float, 
 								!nodes->isWritable( ACQUISITION_FRAME_RATE ), pAct );
 		if( nRet != DEVICE_OK )
 			return nRet;
 		double low, high;
 		low = nodes->getMin( ACQUISITION_FRAME_RATE );
 		high = nodes->getMax( ACQUISITION_FRAME_RATE );
-		SetPropertyLimits( MM::g_Keyword_Frame_Rate, low, high );
+		SetPropertyLimits( g_Keyword_Frame_Rate, low, high );
 	}
 	else if( nodes->isAvailable( ACQUISITION_FRAME_RATE_STR ) )
 	{
 		pAct = new CPropertyAction( this, &CGigECamera::OnFrameRate );
 		std::string d;
 		nodes->get( d, ACQUISITION_FRAME_RATE_STR );
-		nRet = CreateProperty( MM::g_Keyword_Frame_Rate, d.c_str(), MM::String, 
+		nRet = CreateProperty( g_Keyword_Frame_Rate, d.c_str(), MM::String, 
 								!nodes->isWritable( ACQUISITION_FRAME_RATE_STR ), pAct );
 		if( nRet != DEVICE_OK )
 			return nRet;
@@ -655,7 +655,7 @@ int CGigECamera::Initialize()
 			frameRateMap.insert( std::pair<std::string, std::string>( displayName, entry ) );
 			frameRateValues.push_back( displayName );
 		}
-		nRet = SetAllowedValues( MM::g_Keyword_Frame_Rate, frameRateValues );
+		nRet = SetAllowedValues( g_Keyword_Frame_Rate, frameRateValues );
 		if( nRet != DEVICE_OK )
 			return nRet;
 	}
@@ -836,7 +836,7 @@ int CGigECamera::SetAllowedBinning()
 		inc = nodes->getIncrement( BINNING_VERTICAL );
 		for( int64_t i = min; i <= max; i += inc )
 			vValues.push_back( boost::lexical_cast<std::string>( i ) );
-		SetAllowedValues( MM::g_Keyword_Binning_Vertical, vValues );
+		SetAllowedValues( g_Keyword_Binning_Vertical, vValues );
 	}
 
 	// horizontal binning
@@ -847,7 +847,7 @@ int CGigECamera::SetAllowedBinning()
 		inc = nodes->getIncrement( BINNING_HORIZONTAL );
 		for( int64_t i = min; i <= max; i += inc )
 			hValues.push_back( boost::lexical_cast<std::string>( i ) );
-		SetAllowedValues( MM::g_Keyword_Binning_Horizontal, hValues );
+		SetAllowedValues( g_Keyword_Binning_Horizontal, hValues );
 	}
 
 	if( vValues.empty() && hValues.empty() )
