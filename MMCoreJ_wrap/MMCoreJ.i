@@ -388,13 +388,17 @@
 
    private TaggedImage createTaggedImage(Object pixels, Metadata md, int cameraChannelIndex) throws java.lang.Exception {
       TaggedImage image = createTaggedImage(pixels, md);
-      if (!image.tags.has("CameraChannelIndex")) {
-         image.tags.put("CameraChannelIndex", cameraChannelIndex);
+      JSONObject tags = image.tags;
+      
+      if (!tags.has("CameraChannelIndex")) {
+         tags.put("CameraChannelIndex", cameraChannelIndex);
+         tags.put("ChannelIndex", cameraChannelIndex);
       }
-      if (!image.tags.has("Camera")) {
-         String physicalCamera = getMultiCameraChannel(image.tags, cameraChannelIndex);
+      if (!tags.has("Camera")) {
+         String physicalCamera = getMultiCameraChannel(tags, cameraChannelIndex);
          if (physicalCamera != null) {
-            image.tags.put("Camera", physicalCamera);
+            tags.put("Camera", physicalCamera);
+            tags.put("Channel",physicalCamera);
          }
       }
       return image;
@@ -416,6 +420,20 @@
       tags.put("Width", getImageWidth());
       tags.put("Height", getImageHeight());
       tags.put("PixelType", getPixelType());
+      tags.put("Frame", 0);
+      tags.put("FrameIndex", 0);
+      tags.put("Position", "Default");
+      tags.put("PositionIndex", 0);
+      tags.put("Slice", 0);
+      tags.put("SliceIndex", 0);
+      String channel = getCurrentConfig(getChannelGroup());
+      if ((channel == null) || (channel.length() == 0)) {
+         channel = "Default";
+      }
+      tags.put("Channel", channel);
+      tags.put("ChannelIndex", 0);
+
+
       try {
          tags.put("Binning", getProperty(getCameraDevice(), "Binning"));
       } catch (Exception ex) {}
