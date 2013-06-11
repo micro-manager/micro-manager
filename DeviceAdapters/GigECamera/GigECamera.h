@@ -175,7 +175,7 @@ public:
 	int OnExposure( MM::PropertyBase* pProp, MM::ActionType eAct );
 	int OnTemperature( MM::PropertyBase* pProp, MM::ActionType eAct );
 	int OnFrameRate( MM::PropertyBase* pProp, MM::ActionType eAct );
-
+	int onAcquisitionMode( MM::PropertyBase* pProp, MM::ActionType eAct );
 
 protected:
 	int SetAllowedBinning();
@@ -210,6 +210,7 @@ protected:
 	std::map< std::string, std::string > cameraNameMap;
 	std::map< std::string, std::string > frameRateMap;
 	std::map< std::string, std::string > pixelFormatMap;
+	std::map< std::string, std::string > acqModeMap;
 
 	// other members
 	GigENodes* nodes;

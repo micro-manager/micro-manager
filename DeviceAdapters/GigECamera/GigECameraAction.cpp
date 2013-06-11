@@ -381,6 +381,47 @@ int CGigECamera::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
 	return ret; 
 }
 
+int CGigECamera::onAcquisitionMode( MM::PropertyBase* pProp, MM::ActionType eAct )
+{
+	int ret = DEVICE_OK;
+	switch(eAct)
+	{
+	case MM::AfterSet:
+		{
+			if(IsCapturing())
+				return DEVICE_CAMERA_BUSY_ACQUIRING;
+
+			std::string displayName, acqMode;
+			pProp->Get( displayName );
+			std::map<std::string, std::string>::iterator it = acqModeMap.find( displayName );
+			if( it == acqModeMap.end() )
+			{
+				LogMessage( (std::string) "internal error:  inconsistency in acquisition mode map (" + acqMode + ")", false );
+				return DEVICE_INTERNAL_INCONSISTENCY;
+			}
+			acqMode = it->second;
+
+			if (nodes->set( acqMode, ACQUISITION_MODE ))
+			{
+				ret = DEVICE_OK;
+			}
+		}
+		break;
+	case MM::BeforeGet:
+		{
+			std::string s;
+			nodes->get( s, ACQUISITION_MODE );
+			std::map<std::string, std::string>::iterator it = acqModeMap.find( s );
+			if( it != acqModeMap.end() )
+				pProp->Set( it->second.c_str() );
+			else
+				pProp->Set( s.c_str() );
+			ret = DEVICE_OK;
+		}
+		break;
+	}
+	return ret;
+}
 
 int CGigECamera::OnCameraChoice( MM::PropertyBase* pProp, MM::ActionType eAct )
 {

@@ -506,6 +506,34 @@ int CGigECamera::Initialize()
 	if (nRet != DEVICE_OK)
 		return nRet;
 
+	//Acquisition mode
+	std::vector<std::string> acquistionmodeValues;
+	for( uint32_t i = 0; i <= nodes->getNumEnumEntries( ACQUISITION_MODE ) - 1; i++ )
+	{
+		std::string entry, displayName;
+		nodes->getEnumEntry( entry, i, ACQUISITION_MODE );
+		nodes->getEnumDisplayName( displayName, i, ACQUISITION_MODE );
+		acqModeMap.insert( std::pair<std::string, std::string>( entry, displayName ) );
+		acqModeMap.insert( std::pair<std::string, std::string>( displayName, entry ) );
+		acquistionmodeValues.push_back( displayName );
+	}
+
+	pAct = new CPropertyAction (this, &CGigECamera::onAcquisitionMode);
+	std::string px1, dn1;
+	nodes->get( px1, ACQUISITION_MODE );
+	it = acqModeMap.find( px1 );
+	if( it == acqModeMap.end() )
+		dn1 = px1;
+	else
+		dn1 = it->second;
+	nRet = CreateProperty( MM::g_Keyword_AcquisitionMode, dn1.c_str(), MM::String, !nodes->isWritable( ACQUISITION_MODE ), pAct );
+	if (nRet != DEVICE_OK)
+		return nRet;
+
+	nRet = SetAllowedValues(MM::g_Keyword_AcquisitionMode, acquistionmodeValues);
+	if (nRet != DEVICE_OK)
+		return nRet;
+
 	// exposure
 	// note that exposure in GenICam has units of us; umanager has units of ms
 	if( nodes->isAvailable( EXPOSURE_TIME ) )
