@@ -31,6 +31,7 @@
 #include <string>
 #include <sstream>
 #include <algorithm>
+#include "atcore++.h"
 #include "SnapShotControl.h"
 #include "EnumProperty.h"
 #include "IntegerProperty.h"
@@ -54,14 +55,17 @@ double g_IntensityFactor_ = 1.0;
 // External names used used by the rest of the system
 // to load particular device from the "AndorSDK3Camera.dll" library
 const char * const g_CameraName = "Andor sCMOS Camera";
-const char * const g_CameraDeviceName = "Andor sCMOS";
-const char * const g_CameraDeviceDescription = "Andor SDK3 Device Adapter";
+const char * const g_CameraDeviceDescription = "SDK3 Device Adapter for sCMOS cameras";
+const char * const g_Keyword_FirmwareVersion = "CameraFirmware";
+const char * const g_Keyword_CameraModel = "CameraModel";
+const char * const g_Keyword_SoftwareVersion = "CurrentSoftware";
 
 const char * const g_CameraDefaultBinning = "1x1";
 
 static const wstring g_RELEASE_2_0_FIRMWARE_VERSION = L"11.1.12.0";
 static const wstring g_RELEASE_2_1_FIRMWARE_VERSION = L"11.7.30.0";
 
+static const unsigned int MAX_CHARS_INFO_STRING = 64;
 static const unsigned int LENGTH_FIELD_SIZE = 4;
 static const unsigned int CID_FIELD_SIZE = 4;
 
@@ -116,7 +120,7 @@ MODULE_API MM::Device * CreateDevice(const char * deviceName)
       if (openedDevice)
       {
          CAndorSDK3Camera * cameraPtr = dynamic_cast<CAndorSDK3Camera *>(openedDevice);
-         if (cameraPtr && cameraPtr->GetCameraPresent())
+         if (cameraPtr && cameraPtr->GetNumberOfDevicesPresent() > 0)
          {
             return openedDevice;
          }
@@ -153,14 +157,10 @@ MODULE_API void DeleteDevice(MM::Device * pDevice)
 CAndorSDK3Camera::CAndorSDK3Camera()
 : CCameraBase<CAndorSDK3Camera> (),
   deviceManager(NULL),
-  systemDevice(NULL),
   cameraDevice(NULL),
-  cycleMode(NULL),
   bufferControl(NULL),
   startAcquisitionCommand(NULL),
-  stopAcquisitionCommand(NULL),
   sendSoftwareTrigger(NULL),
-  frameCount(NULL),
   initialized_(false),
   b_cameraPresent_(false),
   number_of_devices_(0),
@@ -192,40 +192,14 @@ CAndorSDK3Camera::CAndorSDK3Camera()
    deviceManager = new TDeviceManager;
 
    // Open a system device
-   systemDevice = deviceManager->OpenSystemDevice();
+   IDevice * systemDevice = deviceManager->OpenSystemDevice();
    IInteger * deviceCount = systemDevice->GetInteger(L"DeviceCount");
    SetNumberOfDevicesPresent(static_cast<int>(deviceCount->Get()));
    systemDevice->Release(deviceCount);
-
-   if (GetNumberOfDevicesPresent() > 0)
-   {
-      for (int i = 0; i < GetNumberOfDevicesPresent(); i++)
-      {
-         cameraDevice = deviceManager->OpenDevice(i);
-         IString * cameraFamilyString = cameraDevice->GetString(L"CameraFamily");
-         std::wstring temp_ws = cameraFamilyString->Get();
-         cameraDevice->Release(cameraFamilyString);
-         if (temp_ws.compare(L"Andor sCMOS") == 0)
-         {
-            b_cameraPresent_ = true;
-            break;
-         }
-         else
-         {
-            deviceManager->CloseDevice(cameraDevice);
-         }
-      }
-   }
-
-   if (GetCameraPresent())
-   {
-      bufferControl = cameraDevice->GetBufferControl();
-      startAcquisitionCommand = cameraDevice->GetCommand(L"AcquisitionStart");
-      stopAcquisitionCommand = cameraDevice->GetCommand(L"AcquisitionStop");
-      cycleMode = cameraDevice->GetEnum(L"CycleMode");
-      sendSoftwareTrigger = cameraDevice->GetCommand(L"SoftwareTrigger");
-      frameCount = cameraDevice->GetInteger(L"FrameCount");
-   }
+   IString * swVersion = systemDevice->GetString(L"SoftwareVersion");
+   currentSoftwareVersion_ = swVersion->Get();
+   systemDevice->Release(deviceCount);
+   deviceManager->CloseDevice(systemDevice);
 }
 
 /**
@@ -239,17 +213,10 @@ CAndorSDK3Camera::~CAndorSDK3Camera()
 {
    StopSequenceAcquisition();
    delete thd_;
+#ifdef TESTRESOURCELOCKING
    delete pDemoResourceLock_;
+#endif
 
-   // Clean up atcore++ stuff
-   cameraDevice->ReleaseBufferControl(bufferControl);
-   cameraDevice->Release(startAcquisitionCommand);
-   cameraDevice->Release(stopAcquisitionCommand);
-   cameraDevice->Release(cycleMode);
-   cameraDevice->Release(sendSoftwareTrigger);
-   cameraDevice->Release(frameCount);
-   deviceManager->CloseDevice(cameraDevice);
-   deviceManager->CloseDevice(systemDevice);
    delete deviceManager;
 }
 
@@ -259,25 +226,25 @@ CAndorSDK3Camera::~CAndorSDK3Camera()
 */
 void CAndorSDK3Camera::GetName(char * name) const
 {
-   // We just return the name we use for referring to this
-   // device adapter.
+   // We just return the name we use for referring to this device adapter.
    CDeviceUtils::CopyLimitedString(name, g_CameraName);
 }
 
-void CAndorSDK3Camera::PerformReleaseVersionCheck()
+wstring CAndorSDK3Camera::PerformReleaseVersionCheck()
 {
+   wstring ws(L"Error retrieving Firmware");
    //Release 2 / 2.1 checks
    try
    {
       IString * firmwareVersion = cameraDevice->GetString(L"FirmwareVersion");
       if (firmwareVersion && firmwareVersion->IsImplemented())
       {
-         wstring ws = firmwareVersion->Get();
-         if (ws == g_RELEASE_2_0_FIRMWARE_VERSION)
+         ws = firmwareVersion->Get();
+         if (g_RELEASE_2_0_FIRMWARE_VERSION == ws)
          {
             LogMessage("Warning: Release 2.0 Camera firmware detected! Please upgrade your camera to Release 3");
          }
-         else if (ws == g_RELEASE_2_1_FIRMWARE_VERSION)
+         else if (g_RELEASE_2_1_FIRMWARE_VERSION == ws)
          {
             LogMessage("Warning: Release 2.1 Camera firmware detected! Please upgrade your camera to Release 3");
          }
@@ -288,6 +255,7 @@ void CAndorSDK3Camera::PerformReleaseVersionCheck()
    {
       LogMessage(e.what());
    }
+   return ws;
 }
 
 /**
@@ -310,43 +278,92 @@ int CAndorSDK3Camera::Initialize()
       return DEVICE_NOT_CONNECTED;
    }
 
-   PerformReleaseVersionCheck();
-
-   // set property list
-   // -----------------
-
-   // Name
-   int nRet = CreateProperty(MM::g_Keyword_Name, g_CameraName, MM::String, true);
-   if (DEVICE_OK != nRet)
-      return nRet;
-
-   // CameraName
-   nRet = CreateProperty(MM::g_Keyword_CameraName, g_CameraDeviceName, MM::String, true);
-   assert(nRet == DEVICE_OK);
-
+   for (int i = 0; i < GetNumberOfDevicesPresent(); i++)
+   {
+      cameraDevice = deviceManager->OpenDevice(i);
+      IString * cameraFamilyString = cameraDevice->GetString(L"CameraFamily");
+      std::wstring temp_ws = cameraFamilyString->Get();
+      cameraDevice->Release(cameraFamilyString);
+      if (temp_ws.compare(L"Andor sCMOS") == 0)
+      {
+         b_cameraPresent_ = true;
+         break;
+      }
+      else
+      {
+         deviceManager->CloseDevice(cameraDevice);
+      }
+   }
+   
    // Description
-   nRet = CreateProperty(MM::g_Keyword_Description, g_CameraDeviceDescription, MM::String, true);
-   if (DEVICE_OK != nRet)
-      return nRet;
+   int ret = CreateProperty(MM::g_Keyword_Description, g_CameraDeviceDescription, MM::String, true);
+   assert(DEVICE_OK == ret);
 
-   // CameraID
+   //Camera Firmware
+   wstring temp_ws = PerformReleaseVersionCheck();
+   char * p_cameraInfoString = new char[MAX_CHARS_INFO_STRING];
+   memset(p_cameraInfoString, 0, MAX_CHARS_INFO_STRING);
+   wcstombs(p_cameraInfoString, temp_ws.c_str(), temp_ws.size());
+   ret = CreateProperty(g_Keyword_FirmwareVersion, p_cameraInfoString, MM::String, true);
+   assert(DEVICE_OK == ret);
+   
+   if (GetCameraPresent())
+   {
+      bufferControl = cameraDevice->GetBufferControl();
+      startAcquisitionCommand = cameraDevice->GetCommand(L"AcquisitionStart");
+      sendSoftwareTrigger = cameraDevice->GetCommand(L"SoftwareTrigger");
+   }
+   else
+   {
+      return DEVICE_NOT_YET_IMPLEMENTED;
+   }
+
+   // CameraID(Serial))
    IString * cameraSerialNumber = cameraDevice->GetString(L"SerialNumber");
-   std::wstring temp_ws = cameraSerialNumber->Get();
-   char * p_cameraSerialNumber = new char[temp_ws.size() + 1];
-   memset(p_cameraSerialNumber, 0, temp_ws.size() + 1);
-   wcstombs(p_cameraSerialNumber, temp_ws.c_str(), temp_ws.size());
+   temp_ws = cameraSerialNumber->Get();
+   memset(p_cameraInfoString, 0, MAX_CHARS_INFO_STRING);
+   wcstombs(p_cameraInfoString, temp_ws.c_str(), temp_ws.size());
    cameraDevice->Release(cameraSerialNumber);
-   nRet = CreateProperty(MM::g_Keyword_CameraID, p_cameraSerialNumber, MM::String, true);
-   assert(nRet == DEVICE_OK);
-   delete [] p_cameraSerialNumber;
+   ret = CreateProperty(MM::g_Keyword_CameraID, p_cameraInfoString, MM::String, true);
+   assert(DEVICE_OK == ret);
 
+   //Name and Interface type
+   string s_cameraName("Neo ");
    temp_ws.erase(4);
    bool b_zyla = false;
    if (0 == temp_ws.compare(L"VSC-") )
    {
       b_zyla = true;
+      s_cameraName = "Zyla ";
    }
    
+   IString * cameraInterfaceType = cameraDevice->GetString(L"InterfaceType");
+   temp_ws = cameraInterfaceType->Get();
+   memset(p_cameraInfoString, 0, MAX_CHARS_INFO_STRING);
+   wcstombs(p_cameraInfoString, temp_ws.c_str(), temp_ws.size());
+   cameraDevice->Release(cameraInterfaceType);
+   
+   s_cameraName += p_cameraInfoString;
+   ret = CreateProperty(MM::g_Keyword_CameraName, s_cameraName.c_str(), MM::String, true);
+   assert(DEVICE_OK == ret);
+
+   // Current Software Version running
+   memset(p_cameraInfoString, 0, MAX_CHARS_INFO_STRING);
+   wcstombs(p_cameraInfoString, currentSoftwareVersion_.c_str(), currentSoftwareVersion_.size());
+   ret = CreateProperty(g_Keyword_SoftwareVersion, p_cameraInfoString, MM::String, true);
+   assert(DEVICE_OK == ret);
+
+   // Camera Model
+   IString * cameraModel = cameraDevice->GetString(L"CameraModel");
+   temp_ws = cameraModel->Get();
+   memset(p_cameraInfoString, 0, MAX_CHARS_INFO_STRING);
+   wcstombs(p_cameraInfoString, temp_ws.c_str(), temp_ws.size());
+   cameraDevice->Release(cameraModel);
+   ret = CreateProperty(g_Keyword_CameraModel, p_cameraInfoString, MM::String, true);
+   assert(DEVICE_OK == ret);
+
+   delete [] p_cameraInfoString;
+
    InitialiseSDK3Defaults();
 
    //Create event manager and snapshot controller here
@@ -397,11 +414,11 @@ int CAndorSDK3Camera::Initialize()
                                          thd_, snapShotController_, false, false);
 
    spuriousNoiseFilter_property = new TBooleanProperty(TAndorSDK3Strings::SPURIOUS_NOISE_FILTER,
-                                                       cameraDevice->GetBool(L"SpuriousNoiseFilter"), this, thd_,
-                                                       snapShotController_, false);
+                                                       cameraDevice->GetBool(L"SpuriousNoiseFilter"),
+                                                       callbackManager_, false);
 
    sensorCooling_property = new TBooleanProperty(TAndorSDK3Strings::SENSOR_COOLING, 
-                                                 cameraDevice->GetBool(L"SensorCooling"), this, thd_, snapShotController_, false);
+                                                 cameraDevice->GetBool(L"SensorCooling"), callbackManager_, false);
 
    triggerMode_Enum = cameraDevice->GetEnum(L"TriggerMode");
    triggerMode_remapper = new TTriggerRemapper(snapShotController_, triggerMode_Enum);
@@ -419,7 +436,7 @@ int CAndorSDK3Camera::Initialize()
                                                  callbackManager_, true, false);
 
    overlap_property = new TBooleanProperty(TAndorSDK3Strings::OVERLAP, cameraDevice->GetBool(L"Overlap"),
-                                           this, thd_, snapShotController_, false);
+                                           callbackManager_, false);
 
    exposureTime_property = new TFloatProperty(MM::g_Keyword_Exposure,
                                        new TAndorFloatValueMapper(cameraDevice->GetFloat(L"ExposureTime"), 1000),
@@ -484,8 +501,14 @@ int CAndorSDK3Camera::Shutdown()
       delete triggerMode_remapper;
       cameraDevice->Release(triggerMode_Enum);
       delete eventsManager_;
+
+      // Clean up atcore++ stuff
+      cameraDevice->ReleaseBufferControl(bufferControl);
+      cameraDevice->Release(startAcquisitionCommand);
+      cameraDevice->Release(sendSoftwareTrigger);
    }
 
+   deviceManager->CloseDevice(cameraDevice);
    initialized_ = false;
    return DEVICE_OK;
 }
@@ -498,6 +521,11 @@ void CAndorSDK3Camera::InitialiseSDK3Defaults()
    IBool * b_feature = NULL;
    try
    {
+      //Sensor cooling mode on
+      b_feature = cameraDevice->GetBool(L"SensorCooling");
+      b_feature->Set(true);
+      cameraDevice->Release(b_feature);
+      b_feature = NULL;
       e_feature = cameraDevice->GetEnum(L"ElectronicShutteringMode");
       e_feature->Set(L"Rolling");
       cameraDevice->Release(e_feature);
@@ -532,6 +560,11 @@ void CAndorSDK3Camera::InitialiseSDK3Defaults()
       e_feature->Set(L"Internal");
       cameraDevice->Release(e_feature);
       e_feature = NULL;
+      //Overlap mode
+      b_feature = cameraDevice->GetBool(L"Overlap");
+      b_feature->Set(true);
+      cameraDevice->Release(b_feature);
+      b_feature = NULL;
       //Exposure
       f_feature = cameraDevice->GetFloat(L"ExposureTime");
       f_feature->Set(0.0340f);
@@ -882,10 +915,14 @@ int CAndorSDK3Camera::SetupCameraForSeqAcquisition(int numImages)
 {
    int retCode = DEVICE_OK;
    bool b_memOkRet = false;
+   IEnum * cycleMode = cameraDevice->GetEnum(L"CycleMode");
+
    if (LONG_MAX != numImages)
    {
       cycleMode->Set(L"Fixed");
+      IInteger * frameCount = cameraDevice->GetInteger(L"FrameCount");
       frameCount->Set(numImages);
+      cameraDevice->Release(frameCount);
       b_memOkRet = InitialiseDeviceCircularBuffer(NUMBER_MDA_BUFFERS);
    }
    else
@@ -906,6 +943,7 @@ int CAndorSDK3Camera::SetupCameraForSeqAcquisition(int numImages)
       CleanUpDeviceCircularBuffer();
       retCode = DEVICE_OUT_OF_MEMORY;
    }
+   cameraDevice->Release(cycleMode);
    return retCode;
 }
 
@@ -995,6 +1033,17 @@ int CAndorSDK3Camera::StartSequenceAcquisition(long numImages, double interval_m
    return retCode;
 }
 
+void CAndorSDK3Camera::RestartLiveAcquisition()
+{
+   CleanUpDeviceCircularBuffer();
+   snapShotController_->setupTriggerModeSilently();
+   if (false == InitialiseDeviceCircularBuffer(NUMBER_LIVE_BUFFERS) )
+   {
+      bufferControl->Flush();
+      CleanUpDeviceCircularBuffer();
+   }
+   CameraStart();
+}
 
 AT_64 CAndorSDK3Camera::GetTimeStamp(unsigned char* pBuf)
 {
@@ -1181,10 +1230,7 @@ bool CAndorSDK3Camera::IsCapturing()
  */
 void CAndorSDK3Camera::OnThreadExiting() throw()
 {
-   stopAcquisitionCommand->Do();
-   bufferControl->Flush();
-   snapShotController_->resetTriggerMode();
-
+   snapShotController_->resetCameraAcquiring();
    CleanUpDeviceCircularBuffer();
 
    if (initialized_)

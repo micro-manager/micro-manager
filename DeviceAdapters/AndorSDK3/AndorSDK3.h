@@ -35,16 +35,13 @@
 #include "../../MMDevice/DeviceBase.h"
 #include "../../MMDevice/ImgBuffer.h"
 #include "../../MMDevice/DeviceThreads.h"
-#include "atcore++.h"
-
+#include "atcore.h"
 
 class MySequenceThread;
 namespace andor {
    class IDevice;
    class IDeviceManager;
    class IEnum;
-   class IBool;
-   class IInteger;
    class IBufferControl;
    class ICommand;
 };
@@ -73,6 +70,8 @@ public:
    CAndorSDK3Camera();
    ~CAndorSDK3Camera();
   
+   int GetNumberOfDevicesPresent() { return number_of_devices_; };
+
    // MMDevice API
    // ------------
    int Initialize();
@@ -80,7 +79,6 @@ public:
   
    void GetName(char* name) const;      
    
-   bool GetCameraPresent() { return b_cameraPresent_; };
    andor::IDevice * GetCameraDevice() { return cameraDevice; };
 
    // MMCamera API
@@ -106,14 +104,16 @@ public:
    int ThreadRun();
    bool IsCapturing();
    void OnThreadExiting() throw(); 
-   double GetNominalPixelSizeUm() const {return nominalPixelSizeUm_;}
+   //double GetNominalPixelSizeUm() const {return nominalPixelSizeUm_;}
    double GetPixelSizeUm() const {return nominalPixelSizeUm_ * GetBinning();}
    int GetBinning() const;
    int SetBinning(int bS);
    int IsExposureSequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
+   void RestartLiveAcquisition();
 
 private:
-   void PerformReleaseVersionCheck();
+   std::wstring currentSoftwareVersion_;
+   std::wstring PerformReleaseVersionCheck();
    void InitialiseSDK3Defaults();
    void UnpackDataWithPadding(unsigned char* _pucSrcBuffer);
    bool InitialiseDeviceCircularBuffer(const unsigned numBuffers);
@@ -145,7 +145,7 @@ private:
 
    bool b_cameraPresent_;
 
-   int GetNumberOfDevicesPresent() { return number_of_devices_; };
+   bool GetCameraPresent() { return b_cameraPresent_; };
    void SetNumberOfDevicesPresent(int deviceCount) { number_of_devices_ = deviceCount; };
    AT_64 GetTimeStamp(unsigned char* pBuf);
 
@@ -179,14 +179,10 @@ private:
 
    // atcore++ objects
    andor::IDeviceManager* deviceManager;
-   andor::IDevice* systemDevice;
    andor::IDevice* cameraDevice;
-   andor::IEnum* cycleMode;
    andor::IBufferControl* bufferControl;
    andor::ICommand* startAcquisitionCommand;
-   andor::ICommand* stopAcquisitionCommand;
    andor::ICommand* sendSoftwareTrigger;
-   andor::IInteger* frameCount;
 
    // Objects used by the properties
    andor::IEnum* triggerMode_Enum;
@@ -200,7 +196,7 @@ private:
 class MySequenceThread : public MMDeviceThreadBase
 {
    friend class CAndorSDK3Camera;
-   enum { default_numImages=1, default_intervalMS = 100 };
+   enum { default_numImages=1, default_intervalMS = 0 };
 public:
    MySequenceThread(CAndorSDK3Camera* pCam);
    ~MySequenceThread();

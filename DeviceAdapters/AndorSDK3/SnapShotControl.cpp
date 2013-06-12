@@ -244,15 +244,18 @@ void SnapShotControl::getData(unsigned char *& return_buffer)
    }
 }
 
+void SnapShotControl::resetCameraAcquiring()
+{
+   stopAcquisitionCommand->Do();
+   bufferControl->Flush();
+   resetTriggerMode();
+}
+
 void SnapShotControl::leavePoisedMode()
 {
    is_poised_ = false;
-   stopAcquisitionCommand->Do();
-   bufferControl->Flush();
-
+   resetCameraAcquiring();
    delete [] image_buffer_;
    image_buffer_ = NULL;
-
-   resetTriggerMode();
 }
 

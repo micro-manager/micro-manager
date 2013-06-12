@@ -16,11 +16,11 @@ public:
    ~SnapShotControl();
 
    void setupTriggerModeSilently();
-   void resetTriggerMode();
    void poiseForSnapShot();
    void leavePoisedMode();
    bool takeSnapShot();
    void getData(unsigned char*& image_buffers);
+   void resetCameraAcquiring();
 
    bool isPoised(){return is_poised_;};
    bool isInternal() {return set_internal_;}
@@ -33,6 +33,7 @@ private:
    int  getTransferTime();
    int  retrieveCurrentExposureTime();
    bool isGlobalShutter();
+   void resetTriggerMode();
 
 private:
    static const unsigned int EXT_TRIG_TIMEOUT_MILLISECONDS = 10000;
