@@ -159,8 +159,8 @@
   {:pix (:pix img)
    :tags
    (merge
-     (generate-metadata event state)
      (:tags img)
+     (generate-metadata event state)
      {"ElapsedTime-ms" elapsed-time-ms}
      )}) ;; include any existing metadata
 
