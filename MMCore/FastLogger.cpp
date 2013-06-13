@@ -456,14 +456,14 @@ void FastLogger::Log(IMMLogger::priority p, const char* format, ...) throw()
 
 		std::ostringstream percenttReplacement;
 #ifdef _WINDOWS_
-		boost::thread::id tid = boost::this_thread::get_id();//thread::get_thread_info;native_handle()
-                percenttReplacement << tid;
+      // boost::this_thread::get_id() is the "right" thing to use,
+      // but integer ids are much easier to follow by eye.
+      DWORD tid = GetCurrentThreadId();
+      percenttReplacement << tid;
 
 #else
-		//unsigned long tid = 0;
 		pthread_t pthreadInfo;
 		pthreadInfo = pthread_self();
-		//tid = *(unsigned long*)(pthreadInfo);
 		percenttReplacement << pthreadInfo;
 #endif
 
@@ -535,10 +535,10 @@ void FastLogger::ReportLogFailure()throw()
    }
 };
 
-#define CORE_DEBUG_PREFIX_T "DBG(%D, %P, %t:) "
-#define CORE_LOG_PREFIX_T "LOG(%D, %P, %t:): "
-#define CORE_DEBUG_PREFIX "DBG(%D, %P, t:%t:) "
-#define CORE_LOG_PREFIX "LOG(%D, %P, %t:): "
+#define CORE_DEBUG_PREFIX_T "%D p:%P t:%t [dbg] "
+#define CORE_LOG_PREFIX_T "%D p:%P t:%t [LOG] "
+#define CORE_DEBUG_PREFIX "%D p:%P t:%t [dbg] "
+#define CORE_LOG_PREFIX "%D p:%P t:%t [LOG] "
 
 const char * FastLogger::GetFormatPrefix(Fast_Log_Priorities p)
 {
