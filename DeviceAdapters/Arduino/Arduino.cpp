@@ -40,8 +40,8 @@ const char* g_versionProp = "Version";
 const char* g_normalLogicString = "Normal";
 const char* g_invertedLogicString = "Inverted";
 
-const char* g_On = g_On;
-const char* g_Off = g_Off;
+const char* g_On = "On";
+const char* g_Off = "Off";
 
 // static lock
 MMThreadLock CArduinoHub::lock_;
