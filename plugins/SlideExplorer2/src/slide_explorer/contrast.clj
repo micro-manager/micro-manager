@@ -4,10 +4,25 @@
            [slide-explorer.reactive :as reactive]))
 
 
+(defonce data-atom (atom nil))
+
+(def channel-atom (atom {:color :red :min 100 :max 200}))
+
+(def allowed-colors [:red :green :blue :cyan :magenta :yellow :white])
+
 ;(def color-wheel
 ;  (memoize
 ;    (fn []
 ;      (image/read-image "hue-saturation-wheel.png"))))
+
+(defn next-color [current-color]
+  (let [color-cycle (conj allowed-colors (first allowed-colors))]
+    (->> color-cycle
+         (drop-while #(not= current-color %))
+         second)))
+
+(defn cycle-color []
+  (swap! channel-atom update-in [:color] next-color))
 
 (defn bar-graph-vertices [data width height]
   (let [peak (apply max data)
@@ -26,23 +41,30 @@
       [{:x width :y 0}])))
 
 (defn color-picker [side]
-  (let [colors [:red :green :blue :cyan :magenta :yellow :white]
-        n (count colors)]
+       [:compound
+      {:x 10 :y 41}
+  (let [n (count allowed-colors)]
     [:compound {:x 0 :y 0 :w 50 :h (* side (inc n))}
      (for [i (range n)]
        [:rect {:t (* i side) :l 0 :h side :w side
                :stroke {:width 0}
-               :fill {:color (colors i)}}])]))
+               :fill {:color (allowed-colors i)}}])])
+        [:rect {:l 0 :t 0 :w 30 :h 210 :color :black :stroke {:width 1}}]
+        [:rect {:l 4 :t 4 :w 30 :h 210 :color :black :stroke {:width 0}
+                :fill {:color 0x303030}}]])
+
+(defn color-slider [id pos fill-color]
+  [:rect {:id id
+          :x pos :y -6 :w 8 :h 8
+          :color :gray
+          :stroke {:width 1}
+          :fill {:color fill-color}}])
       
 (defn contrast-graph [data width height {:keys [color min max]}]
   (let [n (count data)
         xmin (* width (/ min n))
         xmax (* width (/ max n))]
-    [:graphics {}
-     [:rect {:fill {:color :dark-gray}
-             :stroke {:width 0}
-             :l 0 :t 0
-             :width (+ 200 width) :height (+ 200 height)}]
+    [:graphics {:fill :dark-gray}
      [:compound {:x 100 :y (+ 10 height) :scale-y -1}
       [:polygon
        {:id :graph
@@ -57,34 +79,19 @@
         :color :dark-gray
         :stroke {:width 0
                  :cap :butt}}]
-      [:rect {:id :min-handle
-              :x xmin :y -6 :w 8 :h 8
-              :color :gray
-              :stroke {:width 1}
-              :fill {:color :black}}]
-      [:rect {:id :max-handle
-              :x xmax :y -6 :w 8 :h 8
-              :color :gray
-              :stroke {:width 1}
-              :fill {:color color}}]]
+      (color-slider :min-handle xmin :black)
+      (color-slider :max-handle xmax color)]
      [:text {:text "Cy3" :l 50 :t 12 :color :white}]
      [:rect {:l 10 :t 10 :w 30 :h 30 :fill {:color color}
-             :stroke {:width 1 :color :white}}]
-     [:compound
-      {:x 10 :y 41}
-      [:rect {:l 4 :t 4 :w 30 :h 210 :color :black :stroke {:width 0}
-              :fill {:color 0x303030}}]
-      (color-picker 30)
-      [:rect {:l 0 :t 0 :w 30 :h 210 :color :black :stroke {:width 1}}]]]))
+             :stroke {:width 1 :color :white}
+             :input {:click (constantly cycle-color)}}]
+      ;(color-picker 30)
+      ]))
 
 (defonce test-graphics (atom nil))
 
 (defn test-data []
   (repeatedly 256 #(long (rand 256))))  
-
-(defonce data-atom (atom nil))
-
-(def channel-atom (atom {:color :red :min 100 :max 200}))
 
 (defn update-contrast-graph [_ _]
   (reset! test-graphics (contrast-graph @data-atom 512 100

@@ -3,7 +3,8 @@
                      Graphics2D GradientPaint Image
                      Polygon RenderingHints Shape)
            (java.awt.font TextAttribute)
-           (java.awt.geom Arc2D Arc2D$Double Area Ellipse2D$Double
+           (java.awt.geom AffineTransform
+                          Arc2D Arc2D$Double Area Ellipse2D$Double
                           Line2D$Double Path2D$Double
                           Point2D$Double
                           Rectangle2D$Double
@@ -25,7 +26,9 @@
 
 (def ^:dynamic *canvas-error*)
 
-(defn read-image [file]
+(defn read-image
+  "Read an image from a file."
+  [file]
   (javax.imageio.ImageIO/read (clojure.java.io/file file)))
 
 (defn enable-anti-aliasing
@@ -39,9 +42,6 @@
                          (if on
                            RenderingHints/VALUE_ANTIALIAS_ON
                            RenderingHints/VALUE_ANTIALIAS_OFF)))))
-
-(def default-primitive-params
-  {:filled false :color :black})
 
 (def stroke-caps
   {:butt BasicStroke/CAP_BUTT
@@ -73,59 +73,92 @@
    :brown (Color. 0xA52A2A)
    })
 
-(defn color-object [color]
+(defn color-object
+  "Convert a color name (keyword or string) or an
+   integer to a color object. Color objects
+   are returned unchanged."
+  [color]
   (cond
     (integer? color) (Color. color)
     (keyword? color) (colors color)
     (string? color)  (colors (keyword color))
     :else            color))
 
-(defn set-color [g2d color]
+(defn set-color
+  "Set the current color of a Graphics2D instance."
+  [g2d color]
   (.setColor g2d (color-object color)))
-
-(defn set-gradient [g2d {:keys [x1 y1 color1
-                                x2 y2 color2]}]
-  (.setPaint g2d (GradientPaint. x1 y1 (color-object color1)
-                             x2 y2 (color-object color2))))
   
-
 (def degrees-to-radians (/ Math/PI 180))
 
-(defn set-g2d-state [g2d {:keys [alpha color stroke rotate x y
-                                 scale scale-x scale-y]}]
-    (.setColor g2d (color-object (or color :black)))
+(defn set-alpha
+  "Set the current alpha (transparency) for a Graphics2D instance."
+  [g2d alpha]
   (when (and alpha (< alpha 1))
     (.setComposite g2d
-      (let [compound-alpha (* (or alpha 1) (.. g2d getComposite getAlpha))]
-        (AlphaComposite/getInstance AlphaComposite/SRC_ATOP compound-alpha))))
-    (.setStroke g2d (let [{:keys [width cap join miter-limit dashes dash-phase]
-                       :or {width 1.0 cap :square
-                            join :miter miter-limit 10.0
-                            dashes [] dash-phase 0.0}} stroke
-                      cap-code (stroke-caps cap)
-                      join-code (stroke-joins join)
-                      dashes-array (float-array dashes)]
-                  (if-not (empty? dashes)
-                    (BasicStroke. width cap-code join-code miter-limit
-                                  dashes-array dash-phase)
-                    (BasicStroke. width cap-code join-code miter-limit))))
+                   (let [compound-alpha (* alpha (.. g2d getComposite getAlpha))]
+                     (AlphaComposite/getInstance AlphaComposite/SRC_ATOP compound-alpha)))))
+
+(defn set-stroke
+  "Set the current stroke for a Graphics2D instance."
+  [g2d {:keys [width cap join miter-limit
+               dashes dash-phase]
+        :or {width 1.0 cap :square
+             join :miter miter-limit 10.0
+             dashes [] dash-phase 0.0}}]
+  (.setStroke g2d
+              (let [cap-code (stroke-caps cap)
+                    join-code (stroke-joins join)
+                    dashes-array (float-array dashes)]
+                (if-not (empty? dashes)
+                  (BasicStroke. width cap-code join-code miter-limit
+                                dashes-array dash-phase)
+                  (BasicStroke. width cap-code join-code miter-limit)))))
+
+(defn set-transform!
+  "Modifes the affine transform. Can be a Grahpics2D or an
+   AffineTransform object."
+  [transform-object {:keys [x y rotate scale scale-x scale-y]}]
   (when (or x y rotate scale scale-x scale-y)
-    (doto g2d
+    (doto transform-object
       (.translate (double (or x 0)) (double (or y 0)))
       (.rotate (* degrees-to-radians (or rotate 0.0)))
-      (.scale (or scale-x scale 1.0) (or scale-y scale 1.0))
-      )))
+      (.scale (or scale-x scale 1.0) (or scale-y scale 1.0)))))
 
-(defn intersect-shapes [shape1 shape2]
+(defn apply-transform
+  "Modifies the affine transform. Returns a new instance,
+   so the original instance is not modified."
+  [transform {:keys [x y rotate scale scale-x scale-y] :as params}]
+  (-> transform
+      .clone
+      (set-transform! params)))
+  
+(defn set-g2d-state
+  "Modifies the drawing state of the Graphics2D instance."
+  [g2d {:keys [alpha color stroke] :as params}]
+  (set-color g2d (or color :black))
+  (set-alpha g2d alpha)
+  (set-stroke g2d stroke)
+  (set-transform! g2d params))
+
+(defn intersect-shapes
+  "Returns the intersection of two shapes."
+  [shape1 shape2]
   (doto (Area. shape1) (.intersect (Area. shape2))))
 
-(defn- with-g2d-clip-fn [g2d clip body-fn]
+(defn- with-g2d-clip-fn
+  "Runs body-fn while a particular clipping shape is temporarily
+   to the Graphics2D instance."
+  [g2d clip body-fn]
   (let [original-clip (.getClip g2d)]
     (.setClip g2d (intersect-shapes clip original-clip))
     (body-fn)
     (.setClip g2d original-clip)))
 
-(defn- with-g2d-state-fn [g2d params body-fn]
+(defn- with-g2d-state-fn
+  "Runs body-fn while applying temporary graphics settings to
+   the Grahpics2D instance."
+  [g2d params body-fn]
   (let [color (.getColor g2d)
         composite (.getComposite g2d)
         paint (.getPaint g2d)
@@ -138,8 +171,12 @@
       (.setComposite composite)
       (.setPaint paint)
       (.setStroke stroke)
-      (.setTransform transform))
-    ))
+      (.setTransform transform))))
+
+(defn set-gradient [g2d {:keys [x1 y1 color1
+                                x2 y2 color2]}]
+  (.setPaint g2d (GradientPaint. x1 y1 (color-object color1)
+                                 x2 y2 (color-object color2))))
 
 (defmacro with-g2d-state [[g2d params] & body]
   `(with-g2d-state-fn ~g2d ~params (fn [] ~@body)))
@@ -249,7 +286,7 @@
 (defmethod draw-primitive nil [_ _ _])
 
 (defmethod draw-primitive Shape
-  [g2d shape {:keys [color fill stroke] :as params}]
+  [g2d shape {:keys [color fill stroke id input] :as params}]
   (when fill
     (when-let [fill-color (:color fill)]
       (doto g2d
@@ -303,9 +340,16 @@
 ;  (enable-anti-aliasing g2d)
 ;  (doseq [[type params & inner-items] items]
 
-(defn draw [g2d [type params & inner-items]]
+(defn draw
+  "Draw in the Graphics2D reference, according to the data
+   structure in the second argument"
+  [g2d [type params & inner-items]]
   (when (= type :graphics)
-    (enable-anti-aliasing g2d))
+    (when-let [fill (params :fill)]
+      (doto g2d
+        enable-anti-aliasing
+        (.setColor (color-object fill))
+        (.fill (.getClipRect g2d)))))
   (let [params+ (complete-coordinates params)]
     (with-g2d-state [g2d params+]
       (if (#{:compound :graphics} type)
@@ -315,7 +359,11 @@
           (draw g2d inner-item))
         (draw-primitive g2d (make-obj type params+) params+)))))
 
-(defn canvas [reference]
+(defn canvas
+  "Create a blank JPanel \"canvas\" for automatic painting. The
+  canvas is automatically updated with the graphics description
+  in the reference."
+  [reference]
   (let [meta-atom (atom nil)
         panel (proxy [JPanel clojure.lang.IReference] []
                 (paintComponent [^Graphics graphics]
@@ -332,8 +380,24 @@
     (add-watch reference panel (fn [_ _ _ _]
                                  (.repaint panel)))
     (alter-meta! panel assoc ::data-source reference)
-    (.setBackground panel Color/BLACK)
     panel))
+
+(defn get-shape [transform type params]
+  (when-let [obj (make-obj type params)]
+    (.createTransformedShape transform obj)))
+
+(defn get-shapes
+  ([[type params & inner-items :as data]]
+    (get-shapes (AffineTransform.) data))
+  ([transform [type params & inner-items]]
+  (let [params+ (complete-coordinates params)
+        new-transform (apply-transform transform params+)]
+    [(get-shape new-transform type params+)
+     params+
+     (vec (for [inner-item (if (seq? (first inner-items))
+                              (first inner-items)
+                              inner-items)]
+            (get-shapes new-transform inner-item)))])))
 
 ;; interaction
 
