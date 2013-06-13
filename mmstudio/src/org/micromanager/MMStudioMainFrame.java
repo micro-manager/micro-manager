@@ -3162,7 +3162,6 @@ public class MMStudioMainFrame extends JFrame implements
          long c = core_.getNumberOfCameraChannels();
          runDisplayThread(snapImageQueue, new DisplayImageRoutine() {
             public void show(final TaggedImage image) {
-                normalizeTags(image);
                   if (album) {
                      try {
                         addToAlbum(image);
