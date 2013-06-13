@@ -40,6 +40,9 @@ const char* g_versionProp = "Version";
 const char* g_normalLogicString = "Normal";
 const char* g_invertedLogicString = "Inverted";
 
+const char* g_On = g_On;
+const char* g_Off = g_Off;
+
 // static lock
 MMThreadLock CArduinoHub::lock_;
 
@@ -204,7 +207,7 @@ MM::DeviceDetectionStatus CArduinoHub::DetectDevice(void)
 
          // device specific default communication parameters
          // for Arduino Duemilanova
-         GetCoreCallback()->SetDeviceProperty(port_.c_str(), MM::g_Keyword_Handshaking, "Off");
+         GetCoreCallback()->SetDeviceProperty(port_.c_str(), MM::g_Keyword_Handshaking, g_Off);
          GetCoreCallback()->SetDeviceProperty(port_.c_str(), MM::g_Keyword_BaudRate, "57600" );
          GetCoreCallback()->SetDeviceProperty(port_.c_str(), MM::g_Keyword_StopBits, "1");
          // Arduino timed out in GetControllerVersion even if AnswerTimeout  = 300 ms
@@ -443,11 +446,11 @@ int CArduinoSwitch::Initialize()
       return nRet;
 
    pAct = new CPropertyAction(this, &CArduinoSwitch::OnSequence);
-   nRet = CreateProperty("Sequence", "On", MM::String, false, pAct);
+   nRet = CreateProperty("Sequence", g_On, MM::String, false, pAct);
    if (nRet != DEVICE_OK)
       return nRet;
-   AddAllowedValue("Sequence", "On");
-   AddAllowedValue("Sequence", "Off");
+   AddAllowedValue("Sequence", g_On);
+   AddAllowedValue("Sequence", g_Off);
 
    // Starts "blanking" mode: goal is to synchronize laser light with camera exposure
    std::string blankMode = "Blanking Mode";
@@ -455,11 +458,18 @@ int CArduinoSwitch::Initialize()
    nRet = CreateProperty(blankMode.c_str(), "Idle", MM::String, false, pAct);
    if (nRet != DEVICE_OK)
       return nRet;
-   AddAllowedValue(blankMode.c_str(), "Stop");
-   AddAllowedValue(blankMode.c_str(), "Start");
-   AddAllowedValue(blankMode.c_str(), "Running");
-   AddAllowedValue(blankMode.c_str(), "Idle");
+   AddAllowedValue(blankMode.c_str(), g_On);
+   AddAllowedValue(blankMode.c_str(), g_Off);
 
+   // Blank on TTL high or low
+   pAct = new CPropertyAction(this, &CArduinoSwitch::OnBlankingTriggerDirection);
+   nRet = CreateProperty("Blank On", "Low", MM::String, false, pAct);
+   if (nRet != DEVICE_OK)
+      return nRet;
+   AddAllowedValue("Blank On", "Low");
+   AddAllowedValue("Blank On", "High");
+
+   /*
    // Starts producing timed digital output patterns 
    // Parameters that influence the pattern are 'Repeat Timed Pattern', 'Delay', 'State' where the latter two are manipulated with the Get and SetPattern functions
    std::string timedOutput = "Timed Output Mode";
@@ -471,14 +481,6 @@ int CArduinoSwitch::Initialize()
    AddAllowedValue(timedOutput.c_str(), "Start");
    AddAllowedValue(timedOutput.c_str(), "Running");
    AddAllowedValue(timedOutput.c_str(), "Idle");
-
-   // Blank on TTL high or low
-   pAct = new CPropertyAction(this, &CArduinoSwitch::OnBlankingTriggerDirection);
-   nRet = CreateProperty("Blank On", "Low", MM::String, false, pAct);
-   if (nRet != DEVICE_OK)
-      return nRet;
-   AddAllowedValue("Blank On", "Low");
-   AddAllowedValue("Blank On", "High");
 
    // Sets a delay (in ms) to be used in timed output mode
    // This delay will be transferred to the Arduino using the Get and SetPattern commands
@@ -494,6 +496,7 @@ int CArduinoSwitch::Initialize()
    if (nRet != DEVICE_OK)
       return nRet;
    SetPropertyLimits("Repeat Timed Pattern", 0, 255);
+   */
 
    nRet = UpdateStatus();
    if (nRet != DEVICE_OK)
@@ -721,15 +724,15 @@ int CArduinoSwitch::OnSequence(MM::PropertyBase* pProp, MM::ActionType eAct)
    if (eAct == MM::BeforeGet)
    {
       if (sequenceOn_)
-         pProp->Set("On");
+         pProp->Set(g_On);
       else
-         pProp->Set("Off");
+         pProp->Set(g_Off);
    }
    else if (eAct == MM::AfterSet)
    {
       std::string state;
       pProp->Get(state);
-      if (state == "On")
+      if (state == g_On)
          sequenceOn_ = true;
       else
          sequenceOn_ = false;
@@ -811,9 +814,9 @@ int CArduinoSwitch::OnBlanking(MM::PropertyBase* pProp, MM::ActionType eAct)
 
    if (eAct == MM::BeforeGet) {
       if (blanking_)
-         pProp->Set("Running");
+         pProp->Set(g_On);
       else
-         pProp->Set("Idle");
+         pProp->Set(g_Off);
    }
    else if (eAct == MM::AfterSet)
    {
@@ -822,7 +825,7 @@ int CArduinoSwitch::OnBlanking(MM::PropertyBase* pProp, MM::ActionType eAct)
       std::string prop;
       pProp->Get(prop);
 
-      if (prop =="Start" && !blanking_) {
+      if (prop ==g_On && !blanking_) {
          hub->PurgeComPortH();
          unsigned char command[1];
          command[0] = 20;
@@ -844,7 +847,7 @@ int CArduinoSwitch::OnBlanking(MM::PropertyBase* pProp, MM::ActionType eAct)
             return ERR_COMMUNICATION;
          blanking_ = true;
          hub->SetTimedOutput(false);
-      } else if (prop =="Stop" && blanking_){
+      } else if (prop ==g_Off && blanking_){
          unsigned char command[1];
          command[0] = 21;
          int ret = hub->WriteToComPortH((const unsigned char*) command, 1);
@@ -1412,9 +1415,9 @@ CArduinoInput::CArduinoInput() :
    AddAllowedValue("Pin", "4");
    AddAllowedValue("Pin", "5");
 
-   CreateProperty("Pull-Up-Resistor", "On", MM::String, false, 0, true);
-   AddAllowedValue("Pull-Up-Resistor", "On");
-   AddAllowedValue("Pull-Up-Resistor", "Off");
+   CreateProperty("Pull-Up-Resistor", g_On, MM::String, false, 0, true);
+   AddAllowedValue("Pull-Up-Resistor", g_On);
+   AddAllowedValue("Pull-Up-Resistor", g_Off);
 
    // Name
    int ret = CreateProperty(MM::g_Keyword_Name, name_.c_str(), MM::String, true);
@@ -1489,7 +1492,7 @@ int CArduinoInput::Initialize()
       if (ret != DEVICE_OK)
          return ret;
       // set pull up resistor state for this pin
-      if (strcmp("On", pullUp_) == 0) {
+      if (strcmp(g_On, pullUp_) == 0) {
          SetPullUp(i, 1);
       } else {
          SetPullUp(i, 0);
