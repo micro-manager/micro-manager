@@ -1302,6 +1302,10 @@ bool Shutter::SetShutterPosition(bool state)
 
    int ret = SutterUtils::SetCommand( *this, *GetCoreCallback(),  port_, command, alternateEcho, 
       (unsigned long)(0.5+answerTimeoutMs_));
+
+   // Start timer for Busy flag
+   changedTime_ = GetCurrentMMTime();
+
    return (DEVICE_OK == ret)? true: false;
 }
 
