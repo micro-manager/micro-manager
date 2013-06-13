@@ -426,7 +426,7 @@
       tags.put("PositionIndex", 0);
       tags.put("Slice", 0);
       tags.put("SliceIndex", 0);
-      String channel = getCurrentConfig(getChannelGroup());
+      String channel = getCurrentConfigFromCache(getPropertyFromCache("Core","ChannelGroup"));
       if ((channel == null) || (channel.length() == 0)) {
          channel = "Default";
       }
