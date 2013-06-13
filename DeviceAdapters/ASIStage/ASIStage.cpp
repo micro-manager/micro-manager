@@ -2546,6 +2546,7 @@ CRISP::CRISP() :
    pAct = new CPropertyAction (this, &CRISP::OnAxis);
    CreateProperty("Axis", "Z", MM::String, false, pAct, true);
    AddAllowedValue("Axis", "Z");
+   AddAllowedValue("Axis", "P");
    AddAllowedValue("Axis", "F");
 }
 
