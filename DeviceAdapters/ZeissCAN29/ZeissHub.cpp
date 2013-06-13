@@ -157,11 +157,16 @@ int ZeissHub::Initialize(MM::Device& device, MM::Core& core)
    // Get the status for all devices found in this scope
    for (ZeissUByte i=0; i < availableDevices_.size(); i++) {
       ZeissUByte devId = availableDevices_[i];
-      ZeissLong position, maxPosition;
+      ZeissLong position = 0;
+      ZeissLong maxPosition = 0;
       GetPosition(device, core, commandGroup_[devId], (ZeissUByte)devId, position);
       deviceInfo_[devId].currentPos = position;
       GetMaxPosition(device, core, commandGroup_[devId], devId, maxPosition);
       deviceInfo_[devId].maxPos = maxPosition;
+      // hack to work around issue with Condensor Contrast
+      // investigate when a microscope is available
+      if ( (devId == 0x22) && (deviceInfo_[devId].maxPos == 8) )
+         deviceInfo_[devId].maxPos = 7;
       if ((commandGroup_[devId] == (ZeissUByte) 0xA2) || (commandGroup_[devId] == (ZeissUByte) 0xA3)) { // only Axis and Servos have scaling information
          GetDeviceScalings(device, core, commandGroup_[devId], devId, deviceInfo_[devId]);
          for (unsigned int j=0; j<deviceInfo_[devId].deviceScalings.size(); j++) {
@@ -248,14 +253,16 @@ int ZeissHub::Initialize(MM::Device& device, MM::Core& core)
       os << "\n" << sidePortList_[i].c_str();
    }
    core.LogMessage(&device, os.str().c_str(), false);
-
+   
    GetCondenserLabels(device, core);
    os.str("");
    os <<"Condenser: ";
-   for (int i=0; i< deviceInfo_[0x22].maxPos && i < 8;i++) {
+   for (int i=0; (i<= deviceInfo_[0x22].maxPos) && (i < 7); i++) {
       os << "\n" << condenserList_[i].c_str();
    }
    core.LogMessage(&device, os.str().c_str(), false);
+
+
 
    monitoringThread_ = new ZeissMonitoringThread(device, core, *this, &deviceInfo_[0], debug_);
    monitoringThread_->Start();
@@ -986,11 +993,13 @@ int ZeissHub::GetCondenserLabels(MM::Device& device, MM::Core& core)
    unsigned char  dataLength;
    ZeissUByte dataType;
    std::string label;
-   if (!deviceInfo_[0x22].present)
+   if (!deviceInfo_[0x22].present) 
+   {
       return DEVICE_OK; // no Condenser, lets not make a fuss
+   }
    for (ZeissLong i=0; (i<= deviceInfo_[0x22].maxPos) && (i < 7); i++) {
       memset(data, 0, RCV_BUF_LENGTH);
-      dataLength =0;
+      dataLength = 0;
       GetPermanentParameter(device, core, (ZeissUShort) 0x1470, (ZeissByte) (0x15 + ((i)*8)), dataType, data, dataLength);
       std::ostringstream os;
       os << (i+1) << "-";
