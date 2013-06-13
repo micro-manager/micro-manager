@@ -252,26 +252,26 @@ int ThorlabsUSBCam::Initialize()
 	// New Properties
 	// CCD size of the camera we are modeling
    pAct = new CPropertyAction (this, &ThorlabsUSBCam::OnCameraCCDXSize);
-   CreateProperty("OnCameraCCDXSize", "512", MM::Integer, false, pAct);
-   SetPropertyLimits("OnCameraCCDXSize", 32, 1260);
+   CreateProperty("CCDXSize", "512", MM::Integer, false, pAct);
+   SetPropertyLimits("CCDXSize", 32, 1260);
    pAct = new CPropertyAction (this, &ThorlabsUSBCam::OnCameraCCDYSize);
-   CreateProperty("OnCameraCCDYSize", "512", MM::Integer, false, pAct);
-   SetPropertyLimits("OnCameraCCDYSize", 4, 1024);
+   CreateProperty("CCDYSize", "512", MM::Integer, false, pAct);
+   SetPropertyLimits("CCDYSize", 4, 1024);
 
    // Exposure
    pAct = new CPropertyAction (this, &ThorlabsUSBCam::OnExposure);
-   CreateProperty("OnExposure (ms)", "15", MM::Integer, false, pAct);
-   SetPropertyLimits("OnExposure (ms)", 1, 35);
+   CreateProperty(MM::g_Keyword_Exposure, "15", MM::Integer, false, pAct);
+   SetPropertyLimits(MM::g_Keyword_Exposure, 1, 35);
 
    // camera gain
    pAct = new CPropertyAction (this, &ThorlabsUSBCam::OnHardwareGain);
-   CreateProperty("OnHardwareGain", "1", MM::Integer, false, pAct);
-   SetPropertyLimits("OnHardwareGain", 1, 100);
+   CreateProperty("HardwareGain", "1", MM::Integer, false, pAct);
+   SetPropertyLimits("HardwareGain", 1, 100);
 
    // PixelClock
    pAct = new CPropertyAction(this, &ThorlabsUSBCam::OnPixelClock);
-   CreateProperty("OnPixelClock (MHz)", "43", MM::Integer, false, pAct);
-   SetPropertyLimits("OnPixelClock (MHz)", 5, 43);
+   CreateProperty("PixelClock (MHz)", "43", MM::Integer, false, pAct);
+   SetPropertyLimits("PixelClock (MHz)", 5, 43);
 
    //Initialize TransposeProcessor to 1
    SetProperty(MM::g_Keyword_Transpose_Correction, CDeviceUtils::ConvertToString(1));
@@ -1058,7 +1058,7 @@ int ThorlabsUSBCam::OnCameraCCDXSize(MM::PropertyBase* pProp , MM::ActionType eA
 			is_SetImageSize(m_hG, (int) cameraCCDXSize_, (int) cameraCCDYSize_ ); //It is necessary to call SetImageSize here, because the acquisition area will affect the values returned by GetFrameTimeRange,etc.
 			is_GetExposureRange(m_hG, minExposurep, maxExposurep, intervalfoop);
 			if (minExposure < 1) minExposure = 1;
-			SetPropertyLimits("OnExposure (ms)", (int) minExposure, (int) maxExposure);
+			SetPropertyLimits(MM::g_Keyword_Exposure, (int) minExposure, (int) maxExposure);
 		}
    }
 	return DEVICE_OK;
@@ -1096,7 +1096,7 @@ int ThorlabsUSBCam::OnCameraCCDYSize(MM::PropertyBase* pProp, MM::ActionType eAc
 			is_SetImageSize(m_hG, (int) cameraCCDXSize_, (int) cameraCCDYSize_ ); //It is necessary to call SetImageSize here, because the acquisition area will affect the values returned by GetFrameTimeRange,etc.
 			is_GetExposureRange(m_hG, minExposurep, maxExposurep, intervalfoop);
 			if (minExposure < 1) minExposure = 1;
-			SetPropertyLimits("OnExposure (ms)", (int) minExposure, (int) maxExposure);
+			SetPropertyLimits(MM::g_Keyword_Exposure, (int) minExposure, (int) maxExposure);
 		}
    }
 	return DEVICE_OK;
@@ -1183,7 +1183,7 @@ int ThorlabsUSBCam::OnPixelClock(MM::PropertyBase* pProp, MM::ActionType eAct)
 			is_SetFrameRate (m_hG, maxframe, intervalfoop);
 			is_GetExposureRange(m_hG, minExposurep, maxExposurep, intervalfoop);
 			if (minExposure < 1) minExposure = 1;
-			SetPropertyLimits("OnExposure (ms)", (int) minExposure, (int) maxExposure);
+			SetPropertyLimits(MM::g_Keyword_Exposure, (int) minExposure, (int) maxExposure);
 		}
    }
 	return DEVICE_OK;
