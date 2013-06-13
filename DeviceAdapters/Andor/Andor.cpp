@@ -4359,7 +4359,8 @@ int AndorCamera::GetListOfAvailableCameras()
                width,
                height,
                bytesPerPixel,
-               md.Serialize().c_str());
+               md.Serialize().c_str(),
+               false);
          }
 
          imagePtr += width*height;
