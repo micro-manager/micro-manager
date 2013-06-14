@@ -41,13 +41,13 @@ vector<string> MM::Property::GetAllowedValues() const
 
 void MM::Property::AddAllowedValue(const char* value)
 {
-   values_.insert(make_pair<string, long>(value, 0L));
+   values_.insert(make_pair(value, 0L));
    limits_ = false;
 }
 
 void MM::Property::AddAllowedValue(const char* value, long data)
 {
-   values_.insert(make_pair<string, long>(value, data));
+   values_.insert(make_pair(value, data));
    hasData_ = true;
    limits_ = false;
 }
