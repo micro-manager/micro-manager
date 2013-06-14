@@ -492,14 +492,19 @@ unsigned MultiCamera::GetImageBytesPerPixel() const
 
 unsigned MultiCamera::GetBitDepth() const
 {
+   // Return the maximum bit depth found in all channels.
    if (physicalCameras_[0] != 0)
    {
-      unsigned bitDepth = physicalCameras_[0]->GetBitDepth();
-      for (unsigned int i = 1; i < physicalCameras_.size(); i++)
+      unsigned bitDepth = 0;
+      for (unsigned int i = 0; i < physicalCameras_.size(); i++)
       {
-         if (physicalCameras_[i] != 0) 
-            if (bitDepth != physicalCameras_[i]->GetBitDepth())
-               return 0;
+         unsigned nextBitDepth;
+         if (physicalCameras_[i] != 0)
+            nextBitDepth = physicalCameras_[i]->GetBitDepth();
+            if (bitDepth < nextBitDepth)
+            {
+               bitDepth = nextBitDepth;
+            }
       }
       return bitDepth;
    }
