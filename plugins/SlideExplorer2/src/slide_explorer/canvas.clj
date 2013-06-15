@@ -2,6 +2,7 @@
   (:import (java.awt AlphaComposite BasicStroke Color Font Graphics 
                      Graphics2D GradientPaint Image
                      Polygon RenderingHints Shape)
+           (java.awt.event MouseAdapter)
            (java.awt.font TextAttribute)
            (java.awt.geom AffineTransform
                           Arc2D Arc2D$Double Area Ellipse2D$Double
@@ -119,11 +120,12 @@
   "Modifes the affine transform. Can be a Grahpics2D or an
    AffineTransform object."
   [transform-object {:keys [x y rotate scale scale-x scale-y]}]
-  (when (or x y rotate scale scale-x scale-y)
+  (if (or x y rotate scale scale-x scale-y)
     (doto transform-object
       (.translate (double (or x 0)) (double (or y 0)))
       (.rotate (* degrees-to-radians (or rotate 0.0)))
-      (.scale (or scale-x scale 1.0) (or scale-y scale 1.0)))))
+      (.scale (or scale-x scale 1.0) (or scale-y scale 1.0)))
+    transform-object))
 
 (defn apply-transform
   "Modifies the affine transform. Returns a new instance,
@@ -273,6 +275,14 @@
   [_ {:keys [data]}]
   data)
 
+(defmethod make-obj :graphics
+  [_ _]
+  nil)
+
+(defmethod make-obj :compound
+  [_ _]
+  nil)
+
 (defmethod make-obj nil
   [_ _]
   nil)
@@ -340,22 +350,25 @@
 ;  (enable-anti-aliasing g2d)
 ;  (doseq [[type params & inner-items] items]
 
+(defn- de-nest [inner-items]
+  (if (seq? (first inner-items))
+    (first inner-items)
+    inner-items))
+
 (defn draw
   "Draw in the Graphics2D reference, according to the data
    structure in the second argument"
   [g2d [type params & inner-items]]
   (when (= type :graphics)
+    (enable-anti-aliasing g2d)
     (when-let [fill (params :fill)]
       (doto g2d
-        enable-anti-aliasing
         (.setColor (color-object fill))
         (.fill (.getClipRect g2d)))))
   (let [params+ (complete-coordinates params)]
     (with-g2d-state [g2d params+]
       (if (#{:compound :graphics} type)
-        (doseq [inner-item (if (seq? (first inner-items))
-                             (first inner-items)
-                             inner-items)]
+        (doseq [inner-item (de-nest inner-items)]
           (draw g2d inner-item))
         (draw-primitive g2d (make-obj type params+) params+)))))
 
@@ -384,20 +397,49 @@
 
 (defn get-shape [transform type params]
   (when-let [obj (make-obj type params)]
-    (.createTransformedShape transform obj)))
+    (when (instance? Shape obj)
+      (.createTransformedShape transform obj))))
 
 (defn get-shapes
   ([[type params & inner-items :as data]]
     (get-shapes (AffineTransform.) data))
   ([transform [type params & inner-items]]
-  (let [params+ (complete-coordinates params)
-        new-transform (apply-transform transform params+)]
-    [(get-shape new-transform type params+)
-     params+
-     (vec (for [inner-item (if (seq? (first inner-items))
-                              (first inner-items)
-                              inner-items)]
-            (get-shapes new-transform inner-item)))])))
+    (let [params+ (complete-coordinates params)
+          new-transform (apply-transform transform params+)]
+      (vec (concat
+             [(get-shape new-transform type params+)
+              params+]
+             (for [inner-item (de-nest inner-items)]
+               (get-shapes new-transform inner-item)))))))
+
+(defn component-seq
+  [[type params & inner-items]]
+  (cons [type params] (mapcat component-seq (de-nest inner-items))))
+
+(defn mouse-actions [[x y] data]
+  (->> data
+       get-shapes
+       component-seq
+       (filter #(-> % second :mouse))
+       (filter #(-> % first (.contains x y)))
+       (map #(-> % second :mouse))))
+
+(defn interactive-canvas
+  [reference]
+  (let [canvas (canvas reference)
+        mouse-adapter (proxy [MouseAdapter] []
+                        (mouseClicked [e]
+                          (let [x (.getX e) y (.getY e)]                                  
+                            (doseq [action (mouse-actions
+                                             [x y]
+                                             @reference)]
+                              (action x y)))))]
+    (doto canvas
+      (.addMouseListener mouse-adapter))))
+
+;(defn trigger-mouse-events [{:keys [type x y]}]
+  
+  
 
 ;; interaction
 
@@ -407,7 +449,7 @@
 (def grafix (atom nil))
 
 (defn canvas-frame [reference]
-  (let [panel (canvas reference)]
+  (let [panel (interactive-canvas reference)]
     (doto (JFrame. "canvas")
       (.. getContentPane (add panel))
       (.setBounds 10 10 500 500)
@@ -518,7 +560,8 @@
 ;              :miter-limit 10.0}}]
     [:text
      {:text "Navigate"
-      :color :white
+      :color :blue
+      :x 100 :y 10
 }]
    [:compound {:x 180 :y 300 :scale 1.0 :alpha 0.9 :rotate 0} 
 ;    [:round-rect
@@ -531,16 +574,18 @@
 ;      :rotate 0}]
     ]
    [:compound
-    {:x 150 :y 150 :rotate 0 :scale 0.8 }
+    {:x 150 :y 150 :rotate 0 :scale 2 }
     [:ellipse
-     {:w 40 :h 40 :fill {:color :pink} :alpha 0.1
+     {:w 41 :h 41 :fill {:color :pink} :alpha 0.9
+      :x 0 :y 0
+      :mouse #(swap! grafix update-in [4 1] merge {:x %1 :y %2})
       :stroke {:width 4 :color 0xE06060}}]
     [:line
-     {:w 18 :h 18 :scale 1.0 :color :red :alpha 1.0
+     {:w 19 :h 19 :scale 1.0 :color :red :alpha 1.0
       :stroke {:width 7 :cap :butt}
       }]
     [:line
-     {:x 0 :y 0 :w -18 :h 18 :fill false :color :red :alpha 1.0
+     {:x 0 :y 0 :w -19 :h 19 :fill false :color :red :alpha 1.0
       :stroke {:width 7 :cap :butt}}]]
 ;   [:image
 ;     {:x 200 :t 150 :data img :rotate 171}]

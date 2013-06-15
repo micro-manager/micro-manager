@@ -54,11 +54,13 @@
                 :fill {:color 0x303030}}]])
 
 (defn color-slider [id pos fill-color]
-  [:rect {:id id
-          :x pos :y -6 :w 8 :h 8
-          :color :gray
-          :stroke {:width 1}
-          :fill {:color fill-color}}])
+  [:polygon {:id id
+             :vertices [{:x pos :y 0}
+                        {:x (- pos 7) :y -16}
+                        {:x (+ pos 7) :y -16}]
+             :color :gray
+             :stroke {:width 2}
+             :fill {:color fill-color}}])
       
 (defn contrast-graph [data width height {:keys [color min max]}]
   (let [n (count data)
@@ -84,7 +86,7 @@
      [:text {:text "Cy3" :l 50 :t 12 :color :white}]
      [:rect {:l 10 :t 10 :w 30 :h 30 :fill {:color color}
              :stroke {:width 1 :color :white}
-             :input {:click (constantly cycle-color)}}]
+             :mouse (fn [_ _] (cycle-color))}]
       ;(color-picker 30)
       ]))
 
