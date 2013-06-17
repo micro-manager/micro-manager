@@ -158,13 +158,22 @@
 (defn annotate-image [img event state elapsed-time-ms]
   {:pix (:pix img)
    :tags
-   (merge
+   (merge-with #(or %2 %1) ; only overwrite tags if generated tag is not nil
      (:tags img)
      (generate-metadata event state)
      {"ElapsedTime-ms" elapsed-time-ms}
      )}) ;; include any existing metadata
 
-(defn make-TaggedImage [annotated-img]
+(defn unwrap-tagged-image
+  "Take a TaggedImage (as from core) and return a clojure data object,
+   with keys :pix and :tags."
+  [^TaggedImage tagged-image]
+  {:pix (.pix tagged-image)
+   :tags (json-to-data (.tags tagged-image))})
+
+(defn make-TaggedImage
+  "Take a clojure map with keys :pix and :tags and generate a TaggedImage."
+  [annotated-img]
   (TaggedImage. (:pix annotated-img) (JSONObject. (:tags annotated-img))))
 
 ;; hardware error handling
@@ -376,9 +385,7 @@
 
 (defn pop-burst-image
   [timeout-ms]
-  (let [tagged-image (pop-tagged-image-timeout timeout-ms)]
-    {:pix (.pix tagged-image)
-     :tags (json-to-data (.tags tagged-image))}))
+  (unwrap-tagged-image (pop-tagged-image-timeout timeout-ms)))
 
 (defn queuify
   "Runs zero-arg function n times on a new thread. Returns
@@ -497,9 +504,7 @@
       (produce-burst-images burst-events camera-channel-names pop-timeout-ms out-queue))))
 
 (defn collect-snap-image [event out-queue]
-  (let [image
-        {:pix (core getImage (event :camera-channel-index))
-         :tags nil}]
+  (let [image (unwrap-tagged-image (core getTaggedImage (event :camera-channel-index)))]
     (select-keys event [:position-index :frame-index
                         :slice-index :channel-index])
     (when out-queue
