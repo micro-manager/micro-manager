@@ -164,6 +164,7 @@ private:
    unsigned shutterNr_;
    bool external_;
    bool state_;
+   MM::MMTime changedTime_;
 };
 
 class ZeissShutterMF : public CShutterBase<ZeissShutterMF>

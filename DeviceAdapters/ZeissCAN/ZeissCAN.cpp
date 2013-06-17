@@ -809,9 +809,11 @@ ZeissShutter::ZeissShutter () :
    name_ (g_ZeissShutter),
    shutterNr_ (1),
    external_ (false),
-   state_ (1)
+   state_ (1),
+   changedTime_ (0.0)
 {
    InitializeDefaultErrorMessages();
+   EnableDelay();
 
    // Todo: Add custom messages
    SetErrorText(ERR_SCOPE_NOT_ACTIVE, "Zeiss Scope is not initialized.  It is needed for the Zeiss Shutter to work");
@@ -854,6 +856,11 @@ int ZeissShutter::Initialize()
    if (DEVICE_OK != ret)
       return ret;
 
+   // Set timer for the Busy signal, or we'll get a time-out the first time 
+   // we check the state of the shutter, for good measure, go back 'delay' 
+   // time into the past
+   changedTime_ = GetCurrentMMTime();
+
    // Check current state of shutter:
    ret = GetOpen(state_);
    if (DEVICE_OK != ret)
@@ -885,8 +892,13 @@ int ZeissShutter::Initialize()
 
 bool ZeissShutter::Busy()
 {
-   bool busy;
+   bool timer_busy, shutter_busy;
    ostringstream cmd;
+
+   // first check the timer
+   MM::MMTime interval = GetCurrentMMTime() - changedTime_;
+   MM::MMTime delay(GetDelayMs()*1000.0);
+   timer_busy = (interval < delay );
 
    if (external_)
       cmd << "SPSb2";
@@ -919,9 +931,9 @@ bool ZeissShutter::Busy()
    }
 
    // interpret the status byte returned by the micrsocope
-   busy = (1 & (statusByte >> 4));
+   shutter_busy = (1 & (statusByte >> 4));
 
-   return busy;
+   return timer_busy || shutter_busy;
 }
 
 int ZeissShutter::Shutdown()
@@ -936,6 +948,10 @@ int ZeissShutter::Shutdown()
 int ZeissShutter::SetOpen(bool open)
 {
    int ret;
+
+   // Set timer for the Busy signal
+   changedTime_ = GetCurrentMMTime();
+   
    char command[8] = "HPCK1,2";
    if (external_)
       command[0] = 'S';
