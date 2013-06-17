@@ -2172,6 +2172,13 @@ int TLPolarizer::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
    else if (eAct == MM::AfterSet)
    {
       pProp->Get(pos_);
+      int curr_pos;
+      int ret = g_ScopeModel.tlPolarizer_.GetPosition(curr_pos);
+      if (ret != DEVICE_OK)
+         return ret;
+      if (curr_pos == pos_)
+         return DEVICE_OK;
+
       return g_ScopeInterface.SetTLPolarizerPosition(*this, *GetCoreCallback(), pos_);
    }
    return DEVICE_OK;
