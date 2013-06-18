@@ -359,18 +359,19 @@
   "Draw in the Graphics2D reference, according to the data
    structure in the second argument"
   [g2d [type params & inner-items]]
-  (when (= type :graphics)
-    (enable-anti-aliasing g2d)
-    (when-let [fill (params :fill)]
-      (doto g2d
-        (.setColor (color-object fill))
-        (.fill (.getClipRect g2d)))))
-  (let [params+ (complete-coordinates params)]
-    (with-g2d-state [g2d params+]
-      (if (#{:compound :graphics} type)
-        (doseq [inner-item (de-nest inner-items)]
-          (draw g2d inner-item))
-        (draw-primitive g2d (make-obj type params+) params+)))))
+  (when-not (:hidden params)
+    (when (= type :graphics)
+      (enable-anti-aliasing g2d)
+      (when-let [fill (params :fill)]
+        (doto g2d
+          (.setColor (color-object fill))
+          (.fill (.getClipRect g2d)))))
+    (let [params+ (complete-coordinates params)]
+      (with-g2d-state [g2d params+]
+                      (if (#{:compound :graphics} type)
+                        (doseq [inner-item (de-nest inner-items)]
+                          (draw g2d inner-item))
+                        (draw-primitive g2d (make-obj type params+) params+))))))
 
 (defn canvas
   "Create a blank JPanel \"canvas\" for automatic painting. The
@@ -416,26 +417,42 @@
   [[type params & inner-items]]
   (cons [type params] (mapcat component-seq (de-nest inner-items))))
 
-(defn mouse-actions [[x y] data]
+(defn create-action [[shape widget-map] action-type]
+  (let [offset-x (.. shape getBounds getX)
+        offset-y (.. shape getBounds getY)]
+    (fn [x y] ((widget-map action-type)
+                 (- x offset-x) (- y offset-y)))))
+
+(defn mouse-actions [action-type [x y] data]
   (->> data
        get-shapes
        component-seq
-       (filter #(-> % second :mouse))
+       (filter #(-> % second action-type))
        (filter #(-> % first (.contains x y)))
-       (map #(-> % second :mouse))))
+       (map #(create-action % action-type))))
 
+(defn mouse-respond [e action-type reference]
+  (let [x (.getX e) y (.getY e)]                    
+    (doseq [action (mouse-actions
+                     action-type
+                     [x y]
+                     @reference)]
+      (action x y))))
+  
 (defn interactive-canvas
   [reference]
   (let [canvas (canvas reference)
-        mouse-adapter (proxy [MouseAdapter] []
-                        (mouseClicked [e]
-                          (let [x (.getX e) y (.getY e)]                                  
-                            (doseq [action (mouse-actions
-                                             [x y]
-                                             @reference)]
-                              (action x y)))))]
+        mouse-adapter
+        (proxy [MouseAdapter] []
+          (mouseClicked [e] (mouse-respond e :on-mouse-click reference))
+          (mousePressed [e] (mouse-respond e :on-mouse-down reference))
+          (mouseReleased [e] (mouse-respone e :on-mouse-up reference))
+          (mouseEntered [e] (mouse-respond e :on-mouse-enter reference))
+          (mouseExited [e] (mouse-respond e :on-mouse-exit reference))
+          (mouseDragged [e] (mouse-respond e :on-mouse-drag reference)))]
     (doto canvas
-      (.addMouseListener mouse-adapter))))
+      (.addMouseListener mouse-adapter)
+      (.addMouseMotionListener mouse-adapter))))
 
 ;(defn trigger-mouse-events [{:keys [type x y]}]
   

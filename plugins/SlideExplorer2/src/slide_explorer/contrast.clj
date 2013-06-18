@@ -6,14 +6,9 @@
 
 (defonce data-atom (atom nil))
 
-(def channel-atom (atom {:color :red :min 100 :max 200}))
+(def channel-atom (atom {:name "DAPI" :color :red :min 100 :max 200}))
 
 (def allowed-colors [:red :green :blue :cyan :magenta :yellow :white])
-
-;(def color-wheel
-;  (memoize
-;    (fn []
-;      (image/read-image "hue-saturation-wheel.png"))))
 
 (defn next-color [current-color]
   (let [color-cycle (conj allowed-colors (first allowed-colors))]
@@ -62,7 +57,10 @@
              :stroke {:width 2}
              :fill {:color fill-color}}])
       
-(defn contrast-graph [data width height {:keys [color min max]}]
+(defn update-limit! [val]
+  (swap! channel-atom assoc :min val))
+
+(defn contrast-graph [data width height {:keys [name color min max]}]
   (let [n (count data)
         xmin (* width (/ min n))
         xmax (* width (/ max n))]
@@ -81,12 +79,23 @@
         :color :dark-gray
         :stroke {:width 0
                  :cap :butt}}]
+      [:rect {:b 2 :h 20 :l 0 :w width
+              :hidden false
+              :on-mouse-down (fn [x _] (update-limit! (* n (/ x width))))
+              :on-mouse-drag (fn [x _] (update-limit! (* n (/ x width))))}]
       (color-slider :min-handle xmin :black)
       (color-slider :max-handle xmax color)]
-     [:text {:text "Cy3" :l 50 :t 12 :color :white}]
+     [:text {:text name :l 50 :t 12 :color :white :font {:size 18}}]
+     [:compound {:l 10 :t 50 :w 0 :h 0}
+      [:text {:text (str "Min: " (int min))
+              :l 0 :t 0
+              :color :white :font {:size 12}}]
+      [:text {:text (str "Max: " (int max))
+              :l 0 :t 15
+              :color :white :font {:size 12}}]]
      [:rect {:l 10 :t 10 :w 30 :h 30 :fill {:color color}
              :stroke {:width 1 :color :white}
-             :mouse (fn [_ _] (cycle-color))}]
+             :on-mouse-click (fn [_ _] (cycle-color))}]
       ;(color-picker 30)
       ]))
 
