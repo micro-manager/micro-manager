@@ -58,8 +58,8 @@
              :stroke {:width 2}
              :fill {:color fill-color}}])
       
-(defn update-limit! [val]
-  (let [val (canvas/clip-value val 0 255)]
+(defn update-limit! [val max]
+  (let [val (canvas/clip-value val 0 max)]
     (swap! channel-atom assoc :min val)))
 
 (defn contrast-graph [data width height {:keys [name color min max]}]
@@ -78,8 +78,8 @@
         :stroke {:width 0 :cap :butt}}]
       [:rect {:b 2 :h 20 :l 0 :w width
               :hidden false
-              :on-mouse-down (fn [x _] (update-limit! (* n (/ x width))))
-              :on-mouse-drag (fn [x _] (update-limit! (* n (/ x width))))}]
+              :on-mouse-down (fn [x _] (update-limit! (* n (/ x width)) max))
+              :on-mouse-drag (fn [x _] (update-limit! (* n (/ x width)) max))}]
       (color-slider :min-handle xmin :black)
       (color-slider :max-handle xmax color)]
      [:text {:text name :l 50 :t 12 :color :white :font {:size 18}}]
@@ -117,8 +117,10 @@
     (handle-settings)
     (reset! data-atom (test-data))))
 
-(defn random-test [n]
+(defn random-test [secs]
   (future
-    (dotimes [_ n]
+    (let [t0 (System/currentTimeMillis)]
+    (while (< (- (System/currentTimeMillis) t0)
+              (int (* 1000 secs)))
       (Thread/sleep 10)
-      (reset! data-atom (test-data)))))
+      (reset! data-atom (test-data))))))
