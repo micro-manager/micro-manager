@@ -27,6 +27,11 @@
 
 (def ^:dynamic *canvas-error*)
 
+(defn clip-value
+  "Clips a value between min-value and max-value."
+  [value min-value max-value]
+  (max min-value (min max-value value)))
+
 (defn read-image
   "Read an image from a file."
   [file]
@@ -431,25 +436,38 @@
        (filter #(-> % first (.contains x y)))
        (map #(create-action % action-type))))
 
-(defn mouse-respond [e action-type reference]
+(defn mouse-respond [e action-type data]
   (let [x (.getX e) y (.getY e)]                    
-    (doseq [action (mouse-actions
-                     action-type
-                     [x y]
-                     @reference)]
+    (doseq [action (mouse-actions action-type [x y] data)]
       (action x y))))
-  
+
+(defn activate-dragging! [e data canvas]
+  (let [x (.getX e) y (.getY e)]
+    (alter-meta! canvas assoc ::dragging-action
+                 (last (mouse-actions :on-mouse-drag [x y] data)))))
+
+(defn stop-dragging! [canvas]
+  (alter-meta! canvas dissoc ::dragging-action))
+
+(defn continue-dragging [e canvas]
+  (let [x (.getX e) y (.getY e)]
+    (when-let [action ((meta canvas) ::dragging-action)]
+      (action x y))))
+
 (defn interactive-canvas
   [reference]
   (let [canvas (canvas reference)
+        data @reference
         mouse-adapter
         (proxy [MouseAdapter] []
-          (mouseClicked [e] (mouse-respond e :on-mouse-click reference))
-          (mousePressed [e] (mouse-respond e :on-mouse-down reference))
-          (mouseReleased [e] (mouse-respone e :on-mouse-up reference))
-          (mouseEntered [e] (mouse-respond e :on-mouse-enter reference))
-          (mouseExited [e] (mouse-respond e :on-mouse-exit reference))
-          (mouseDragged [e] (mouse-respond e :on-mouse-drag reference)))]
+          (mouseClicked [e] (mouse-respond e :on-mouse-click data))
+          (mousePressed [e] (activate-dragging! e data canvas)
+                            (mouse-respond e :on-mouse-down data))
+          (mouseReleased [e] (stop-dragging! canvas)
+                             (mouse-respond e :on-mouse-up data))
+          (mouseEntered [e] (mouse-respond e :on-mouse-enter data))
+          (mouseExited [e] (mouse-respond e :on-mouse-exit data))
+          (mouseDragged [e] (continue-dragging e canvas)))]
     (doto canvas
       (.addMouseListener mouse-adapter)
       (.addMouseMotionListener mouse-adapter))))

@@ -1,7 +1,8 @@
 (ns slide-explorer.contrast
   (require [slide-explorer.canvas :as canvas]
            [slide-explorer.image :as image]
-           [slide-explorer.reactive :as reactive]))
+           [slide-explorer.reactive :as reactive]
+           [slide-explorer.utils :as utils]))
 
 
 (defonce data-atom (atom nil))
@@ -58,7 +59,8 @@
              :fill {:color fill-color}}])
       
 (defn update-limit! [val]
-  (swap! channel-atom assoc :min val))
+  (let [val (canvas/clip-value val 0 255)]
+    (swap! channel-atom assoc :min val)))
 
 (defn contrast-graph [data width height {:keys [name color min max]}]
   (let [n (count data)
@@ -70,15 +72,10 @@
        {:id :graph
         :vertices (bar-graph-vertices data width height)
         :fill {:gradient
-               {:color1 :black
-                :x1 xmin
-                :y1 0
-                :color2 color
-                :x2 xmax
-                :y2 0}}
+               {:color1 :black :x1 xmin :y1 0
+                :color2 color :x2 xmax :y2 0}}
         :color :dark-gray
-        :stroke {:width 0
-                 :cap :butt}}]
+        :stroke {:width 0 :cap :butt}}]
       [:rect {:b 2 :h 20 :l 0 :w width
               :hidden false
               :on-mouse-down (fn [x _] (update-limit! (* n (/ x width))))
