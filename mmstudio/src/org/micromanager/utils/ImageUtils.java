@@ -283,6 +283,16 @@ public class ImageUtils {
       return bytes;
    }
 
+   public static int[] convertRGB32BytesToInt(byte[] pixels) {
+      int[] ints = new int[pixels.length/4];
+      for (int i=0; i<ints.length; ++i) {
+         ints[i] =  pixels[4*i]
+                 + (pixels[4*i + 1] << 8)
+                 + (pixels[4*i + 2] << 16);
+      }
+      return ints;
+   }
+
    public static byte[] getRGB32PixelsFromColorPanes(byte[][] planes) {
       int j=0;
       byte[] pixels = new byte[planes.length * 4];
