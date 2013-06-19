@@ -24,8 +24,10 @@
 //
 //CVS:            $Id: MetadataDlg.java 1275 2008-06-03 21:31:24Z nenad $
 
+import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
+import ij.process.ShortProcessor;
 
 import java.awt.Rectangle;
 import java.text.ParseException;
@@ -39,10 +41,13 @@ import org.apache.commons.math.FunctionEvaluationException;
 import org.apache.commons.math.analysis.UnivariateRealFunction;
 import org.apache.commons.math.optimization.GoalType;
 import org.apache.commons.math.optimization.univariate.BrentOptimizer;
+import org.json.JSONException;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.AutofocusBase;
 import org.micromanager.utils.ImageUtils;
+import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMException;
+import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.MathFunctions;
 import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.ReportingUtils;
@@ -188,6 +193,42 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
       core.waitForDevice(focusDevice);
    }
 
+
+   public static ImageProcessor makeMonochromeProcessor(CMMCore core, Object pixels) {
+      int w = (int) core.getImageWidth();
+      int h = (int) core.getImageHeight();
+      if (pixels instanceof byte[]) {
+         return new ByteProcessor(w, h, (byte[]) pixels, null);
+      } else if (pixels instanceof short[]) {
+         return new ShortProcessor(w, h, (short[]) pixels, null);
+      } else {
+         return null;
+      }
+   }
+
+   public static Object getMonochromePixels(TaggedImage image) throws JSONException, MMScriptException {
+      if (MDUtils.isRGB32(image)) {
+         final byte[][] planes = ImageUtils.getColorPlanesFromRGB32((byte[]) image.pix);
+         final int numPixels = planes[0].length;
+         byte[] monochrome = new byte[numPixels];
+         for (int j=0;j<numPixels;++j) {
+            monochrome[j] = (byte) ((planes[0][j] + planes[1][j] + planes[2][j]) / 3);
+         }
+         return monochrome;
+      } else if (MDUtils.isRGB64(image)) {
+         final short[][] planes = ImageUtils.getColorPlanesFromRGB64((short[]) image.pix);
+         final int numPixels = planes[0].length;
+         short[] monochrome = new short[numPixels];
+         for (int j=0;j<numPixels;++j) {
+            monochrome[j] = (short) ((planes[0][j] + planes[1][j] + planes[2][j]) / 3);
+         }
+         return monochrome;
+      } else {
+         return image.pix;  // Presumably already a gray image.
+      }
+   }
+
+
    public double measureFocusScore(double z) throws Exception {
       CMMCore core = app_.getMMCore();
       long start = System.currentTimeMillis();
@@ -213,7 +254,7 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
             }
          }
          long tI = System.currentTimeMillis() - start - tZ;
-         ImageProcessor proc = ImageUtils.makeProcessor(core, img.pix);
+         ImageProcessor proc = makeMonochromeProcessor(core, getMonochromePixels(img));
          double score = computeScore(proc);
          long tC = System.currentTimeMillis() - start - tZ - tI;
          ReportingUtils.logMessage("OughtaFocus: image=" + imageCount_++
