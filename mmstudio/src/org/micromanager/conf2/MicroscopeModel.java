@@ -1387,11 +1387,9 @@ public class MicroscopeModel {
       }
 
       // remove differently named com ports from device lists
-      for (int i = 0; i < devices_.size(); i++) {
-         Device dev = devices_.get(i);
-         if (dev.isSerialPort()) {
-            removeDevice(dev.getName());
-
+      for (Device device : new ArrayList<Device>(devices_)) {
+         if (device.isSerialPort()) {
+            removeDevice(device.getName());
          }
       }
    }
@@ -1544,7 +1542,7 @@ public class MicroscopeModel {
       }
       
       // initialize hubs first
-      for (Device d : devices_) {
+      for (Device d : new ArrayList<Device>(devices_)) {
          if (d.isHub() && !d.isInitialized()) {
             try {
                core_.initializeDevice(d.getName());
@@ -1569,7 +1567,7 @@ public class MicroscopeModel {
       }
       
       // then remaining devices
-      for (Device d : devices_) {
+      for (Device d : new ArrayList<Device>(devices_)) {
          if (!d.isInitialized() && !d.isCore()) {
             try { 
                String parentHub = d.getParentHub();
