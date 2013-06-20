@@ -106,6 +106,11 @@
         pattern (re-pattern (str "MMSetup" bits "BIT_[^\\s]+?_" date-token ".exe"))]
     (re-find pattern txt)))
 
+(defn mac-build-on-server? [date-token]
+  (let [txt (slurp "http://valelab.ucsf.edu/~MM/nightlyBuilds/1.4/Mac/")
+        pattern (re-pattern (str date-token ".dmg"))]
+    (re-find pattern txt)))
+
 (def device-adapter-parent-dirs [(File. micromanager "/DeviceAdapters")
                                  (File. micromanager "/SecretDeviceAdapters")])
 
@@ -229,6 +234,7 @@
         outdated-jars (map #(.getName %)
                            (old-jars (File. micromanager "Install_AllPlatforms") 24))
         installer-ok (exe-on-server? bits today-token)
+        mac-ok (mac-build-on-server? today-token)
         missing-vcproj-files (missing-vcproj)]
     (when-not (and (not test)
                    (empty? svn-confs)
@@ -239,7 +245,8 @@
                    (empty? outdated-jars)
                    (empty? missing-vcproj-files)
                    (empty? missing-device-links)
-                   installer-ok)
+                   installer-ok
+                   mac-ok)
       (str
         "\n\nMICROMANAGER " bits "-bit "
           ({:inc "INCREMENTAL" :full "FULL"} mode)
@@ -258,8 +265,10 @@
           (report-segment "Missing device links" (missing-device-links)))
         (when report-missing?
           (report-segment "Missing device pages" (missing-device-pages)))
-        "\n\nIs installer download available on website?\n"
-        (if installer-ok "Yes." "No. (build missing)\n")))))
+        "\n\nIs Windows installer download available on website?\n"
+        (if installer-ok "Yes." "No. (build missing)\n")
+        "\n\nIs Mac installer download available on website?\n"
+        (if mac-ok "Yes." "No. (build missing)\n")))))
 
 (defn make-full-report [mode send?]
   (let [report
