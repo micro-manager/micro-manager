@@ -310,7 +310,7 @@ private:
    bool            sequenceModeReady_;    // Continuous acquisition prepared
    unsigned short* prevFrame_;            // A pointer to the previous frame in circular buffer
    long            triggerTimeout_;       // Max time to wait for an external trigger
-
+   bool			   microsecResSupported_;
    friend class    AcqSequenceThread;
    AcqSequenceThread* uniAcqThd_;         // Pointer to the sequencing thread
 

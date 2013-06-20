@@ -171,6 +171,7 @@ prevFrame_(0),
 triggerTimeout_(2),
 outputTriggerFirstMissing_(0),
 exposure_(10),
+microsecResSupported_(false),
 binSize_(1),
 binXSize_(1),
 binYSize_(1),
@@ -436,6 +437,23 @@ int Universal::Initialize()
       }
       else
          nRet = CreateProperty(g_ReadoutPort, prmReadoutPort_->ToString().c_str(), MM::String, true, pAct);
+   }
+
+   uns16 expResCount = 0;
+   int32 expResVal;
+   uns32 const expResDescLen = 200;
+   char expResDesc[expResDescLen];
+   
+   microsecResSupported_ = false;
+
+   if (!pl_get_param(hPVCAM_, PARAM_EXP_RES_INDEX, ATTR_COUNT, (void *)&expResCount))
+	   return LogCamError(__LINE__, "pl_get_param(PARAM_EXP_RES_INDEX)" );
+   	  
+   for (uns32 i = 0; i < expResCount; i++)
+   {
+	  pl_get_enum_param(hPVCAM_, PARAM_EXP_RES, i, &expResVal, expResDesc, expResDescLen);
+	  if ( strstr(expResDesc, "Micro") != 0 || strstr(expResDesc, "micro") != 0 || strstr(expResDesc, "MICRO") != 0)
+	     microsecResSupported_ = true;
    }
 
    /// MULTIPLIER GAIN
@@ -1781,8 +1799,31 @@ int Universal::ResizeImageBufferContinuous()
       uns32 frameSize;
       int16 trigModeValue = (int16)prmTriggerMode_->Current();
 
+      uns32 convertedExposure;
+	  uns16 expRes = EXP_RES_ONE_MILLISEC;
+
+	  if (exposure_ < 60 && microsecResSupported_)
+	  {		  
+		  expRes = EXP_RES_ONE_MICROSEC;
+		  convertedExposure = (uns32)(1000*exposure_);
+	  }
+	  else
+	  {
+		  expRes = EXP_RES_ONE_MILLISEC;
+		  convertedExposure = (uns32)exposure_;
+	  }
+	
+	  g_pvcamLock.Lock();
+	  if (!pl_set_param(hPVCAM_, PARAM_EXP_RES_INDEX, (void *)&expRes))
+	  {
+		  g_pvcamLock.Unlock();
+		  return LogCamError(__LINE__, "");
+	  }
+	  g_pvcamLock.Unlock();
+
+
       g_pvcamLock.Lock();
-      if (!pl_exp_setup_cont(hPVCAM_, 1, &camRegion_, (int16)trigModeValue, (uns32)exposure_, &frameSize, CIRC_OVERWRITE)) 
+      if (!pl_exp_setup_cont(hPVCAM_, 1, &camRegion_, (int16)trigModeValue, convertedExposure, &frameSize, CIRC_OVERWRITE)) 
       {
          g_pvcamLock.Unlock();
          return LogCamError(__LINE__, "");
@@ -1830,11 +1871,32 @@ int Universal::ResizeImageBufferSingle()
       colorImg_.Resize(roi_.newXSize, roi_.newYSize, 4);
 
       uns32 frameSize;
-
       int16 trigModeValue = (int16)prmTriggerMode_->Current();
 
+      uns32 convertedExposure;
+	  uns16 expRes = EXP_RES_ONE_MILLISEC;
+  
+	  if (exposure_ < 60 && microsecResSupported_)
+	  {		  
+		  expRes = EXP_RES_ONE_MICROSEC;
+		  convertedExposure = (uns32)(1000*exposure_);
+	  }
+	  else 
+	  {
+		  expRes = EXP_RES_ONE_MILLISEC;
+		  convertedExposure = (uns32)exposure_;
+	  }
+	
+	  g_pvcamLock.Lock();
+	  if (!pl_set_param(hPVCAM_, PARAM_EXP_RES_INDEX, (void *)&expRes))
+	  {
+		  g_pvcamLock.Unlock();
+		  return LogCamError(__LINE__, "");
+	  }
+	  g_pvcamLock.Unlock();
+
       g_pvcamLock.Lock();
-      if (!pl_exp_setup_seq(hPVCAM_, 1, 1, &camRegion_, (int16)trigModeValue, (uns32)exposure_, &frameSize ))
+      if (!pl_exp_setup_seq(hPVCAM_, 1, 1, &camRegion_, (int16)trigModeValue, convertedExposure, &frameSize ))
       {
          g_pvcamLock.Unlock();
          return LogCamError(__LINE__, "");
