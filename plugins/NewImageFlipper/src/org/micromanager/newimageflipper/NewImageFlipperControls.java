@@ -53,6 +53,8 @@ public class NewImageFlipperControls extends javax.swing.JFrame {
    private final String R180 = "180" + "\u00B0";
    private final String R270 = "270" + "\u00B0";
    private final String[] RS = {R0, R90, R180, R270};
+   private final String ROTATEBOX = "RotateBox";
+   private final String MIRRORCHECKBOX = "MirrorCheckBox";
    private Preferences prefs_;
    private int frameXPos_ = 300;
    private int frameYPos_ = 300;
@@ -69,9 +71,12 @@ public class NewImageFlipperControls extends javax.swing.JFrame {
 
       initComponents();
       
+      mirrorCheckBox_.setSelected(prefs_.getBoolean(MIRRORCHECKBOX, false));
+      
       rotateComboBox_.removeAllItems();
       for (String item: RS)
          rotateComboBox_.addItem(item);
+      rotateComboBox_.setSelectedItem(prefs_.get(ROTATEBOX, R0));
 
       setLocation(frameXPos_, frameYPos_);
 
@@ -199,10 +204,12 @@ public class NewImageFlipperControls extends javax.swing.JFrame {
 
     private void mirrorCheckBox_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mirrorCheckBox_ActionPerformed
        processExample();
+       prefs_.putBoolean(MIRRORCHECKBOX, mirrorCheckBox_.isSelected());
     }//GEN-LAST:event_mirrorCheckBox_ActionPerformed
 
    private void rotateComboBox_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rotateComboBox_ActionPerformed
       processExample();
+      prefs_.put(ROTATEBOX, (String) rotateComboBox_.getSelectedItem());
    }//GEN-LAST:event_rotateComboBox_ActionPerformed
 
    /**
