@@ -18,10 +18,10 @@
 // this is/should be called only from JAI-started threads for image acquisition
 void CGigECamera::SnapImageCallback( J_tIMAGE_INFO* imageInfo )
 {
-	//LogMessage( (std::string) "SnapImageCallback:  " 
-	//			+ boost::lexical_cast<std::string>( (int) J_BitsPerPixel( imageInfo->iPixelType ) ) + " bits/pixel, " 
-	//			+ boost::lexical_cast<std::string>( imageInfo->iSizeX ) + "w x "
-	//			+ boost::lexical_cast<std::string>( imageInfo->iSizeY ) + "h" );
+	LogMessage( (std::string) "SnapImageCallback:  "
+				+ boost::lexical_cast<std::string>( (int) J_BitsPerPixel( imageInfo->iPixelType ) ) + " bits/pixel, " 
+				+ boost::lexical_cast<std::string>( imageInfo->iSizeX ) + "w x "
+				+ boost::lexical_cast<std::string>( imageInfo->iSizeY ) + "h", true );
 	
 	if( !( doContinuousAcquisition || snapOneImageOnly ) ) return; // no acquisition requested
 
@@ -33,18 +33,6 @@ void CGigECamera::SnapImageCallback( J_tIMAGE_INFO* imageInfo )
 		memcpy( buffer, imageInfo->pImageBuffer, min( numBytes, bufferSizeBytes ) );
 
 		int nRet;
-		// process image
-      /* NOTE: this is now done automatically in MMCore
-		MM::ImageProcessor* ip = GetCoreCallback()->GetImageProcessor(this);
-		if( ip != NULL )
-		{
-			nRet = ip->Process( buffer, GetImageWidth(), GetImageHeight(), GetImageBytesPerPixel() );
-			if (nRet != DEVICE_OK)
-			{
-				LogMessage( (std::string) "process failure " );
-			}
-		}
-      */
 
 		// create metadata
 		Metadata md;
@@ -205,6 +193,8 @@ int CGigECamera::SnapImage()
 	}
 	else // retval == J_ST_SUCCESS
 	{
+		LogMessage( "SnapImage: acquisition started; waiting" );
+
 		MM::MMTime startTime = GetCurrentMMTime();
 		double exp = GetExposure();
 		// wait until the image is acquired (or 20x the expected exposure time has passed)
