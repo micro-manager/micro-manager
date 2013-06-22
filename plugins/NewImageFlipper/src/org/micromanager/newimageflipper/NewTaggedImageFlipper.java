@@ -21,6 +21,7 @@
 
 package org.micromanager.newimageflipper;
 
+import org.micromanager.MMStudioMainFrame;
 import org.micromanager.api.AcquisitionEngine;
 import org.micromanager.api.MMPlugin;
 import org.micromanager.api.ScriptInterface;
@@ -54,8 +55,10 @@ public class NewTaggedImageFlipper implements MMPlugin {
    }
 
    public void show() {
-      if (ctls_ == null)
+      if (ctls_ == null) {
          ctls_ = new NewImageFlipperControls();
+         MMStudioMainFrame.getInstance().addMMBackgroundListener(ctls_);
+      }
       else
          ctls_.updateCameras();
       AcquisitionEngine eng = gui_.getAcquisitionEngine();

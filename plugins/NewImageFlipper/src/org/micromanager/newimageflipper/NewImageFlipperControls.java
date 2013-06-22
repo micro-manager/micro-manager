@@ -24,11 +24,9 @@ package org.micromanager.newimageflipper;
 
 import ij.ImagePlus;
 import ij.process.ByteProcessor;
-import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+//import java.util.logging.Level;
+//import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 import javax.swing.ImageIcon;
 import mmcorej.StrVector;
@@ -61,18 +59,7 @@ public class NewImageFlipperControls extends javax.swing.JFrame {
    private final String MIRROR = "_Mirror";
    private Preferences prefs_;
    private int frameXPos_ = 300;
-   private int frameYPos_ = 300;
-   
-   private class Settings {
-      public String rotation_;
-      public boolean mirror_;
-      public Settings(String rotation, boolean mirror) {
-         rotation_ = rotation;
-         mirror_ = mirror;
-      }
-   }
-   private Map<String, Settings> cameraSettings_ = 
-           new HashMap<String, Settings>();
+   private int frameYPos_ = 300;   
 
    /** 
     * Creates form NewImageFlipperControls 
@@ -125,12 +112,9 @@ public class NewImageFlipperControls extends javax.swing.JFrame {
          while (it.hasNext()) {
             String camera = (String) it.next();
             cameraComboBox_.addItem(camera);
-            String rotation = prefs_.get(camera + ROTATE, R0);
-            Boolean mirror = prefs_.getBoolean(camera + MIRROR, false);
-            cameraSettings_.put(camera, new Settings(rotation, mirror));
          }
       } catch (Exception ex) {
-         Logger.getLogger(NewImageFlipperControls.class.getName()).log(Level.SEVERE, null, ex);
+         ReportingUtils.logError(ex);
       }
       cameraComboBox_.setSelectedItem(selectedCamera_);
    }
