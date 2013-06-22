@@ -44,10 +44,10 @@
  *
  * Start trigger mode: 8
  *   Controller will return 8 to indicate start of triggered mode
- *   Stop triggered mode by sending any key (including new commands, that will be 
- *   processed).  Trigger mode will  stop blanking mode (if it was active)
+ *   Stop triggered a 9. Trigger mode will  supersede (but not stop) 
+ *   blanking mode (if it was active)
  * 
- * Get result of Trigger mode: 9
+ * Stop Trigger mode: 9
  *   Controller will return 9x where x is the number of triggers received during the last
  *   trigger mode run
  *
@@ -127,6 +127,8 @@
    const unsigned long timeOut_ = 1000;
    bool blanking_ = false;
    bool blankOnHigh_ = true;
+   bool triggerMode_ = false;
+   int triggerState_ = 0;
  
  void setup() {
    // Higher speeds do not appear to be reliable
@@ -237,28 +239,17 @@
          if (patternLength_ > 0) {
            sequenceNr_ = 0;
            triggerNr_ = -skipTriggers_;
-           int state = digitalRead(inPin_);
+           triggerState_ = digitalRead(inPin_);
            PORTB = B00000000;
            Serial.write( byte(8));
-           while (Serial.available() == 0) {
-             int tmp = digitalRead(inPin_);
-             if (tmp != state) {
-               if (triggerNr_ >=0) {
-                 PORTB = triggerPattern_[sequenceNr_];
-                 sequenceNr_++;
-                 if (sequenceNr_ >= patternLength_)
-                   sequenceNr_ = 0;
-               }
-               triggerNr_++;
-             }
-             state = tmp;
-           }
-           PORTB = B00000000;
+           triggerMode_ = true;           
          }
          break;
          
          // return result from last triggermode
        case 9:
+          triggerMode_ = false;
+          PORTB = B00000000;
           Serial.write( byte(9));
           Serial.write( triggerNr_);
           break;
@@ -382,7 +373,19 @@
 
        }
     }
-    if (blanking_) {
+    if (triggerMode_) {
+      int tmp = digitalRead(inPin_);
+      if (tmp != triggerState_) {
+        if (triggerNr_ >=0) {
+          PORTB = triggerPattern_[sequenceNr_];
+          sequenceNr_++;
+          if (sequenceNr_ >= patternLength_)
+            sequenceNr_ = 0;
+        }
+        triggerNr_++;
+      }
+      triggerState_ = tmp;         
+    } else if (blanking_) {
       if (blankOnHigh_) {
         if (digitalRead(inPin_) == LOW)
           PORTB = currentPattern_;
