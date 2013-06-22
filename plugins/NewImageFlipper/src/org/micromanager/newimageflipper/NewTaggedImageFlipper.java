@@ -41,6 +41,7 @@ public class NewTaggedImageFlipper implements MMPlugin {
    public static String tooltipDescription = "Mirrors, flips and rotates images on the fly";
    private ScriptInterface gui_;
    private NewImageFlipperControls ctls_;
+
    
 
    public void dispose() {

@@ -6,7 +6,7 @@
 //
 // AUTHOR:       Arthur Edelstein, Nico Stuurman
 //
-// COPYRIGHT:    University of California, San Francisco, 2011, 2012
+// COPYRIGHT:    University of California, San Francisco, 2011, 2012, 2013
 //
 // LICENSE:      This file is distributed under the BSD license.
 //               License text is included with the source distribution.
@@ -24,7 +24,9 @@ package org.micromanager.newimageflipper;
 
 import ij.ImagePlus;
 import ij.process.ByteProcessor;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.prefs.Preferences;
@@ -55,9 +57,22 @@ public class NewImageFlipperControls extends javax.swing.JFrame {
    private final String[] RS = {R0, R90, R180, R270};
    private final String ROTATEBOX = "RotateBox";
    private final String MIRRORCHECKBOX = "MirrorCheckBox";
+   private final String ROTATE = "_Rotation";
+   private final String MIRROR = "_Mirror";
    private Preferences prefs_;
    private int frameXPos_ = 300;
    private int frameYPos_ = 300;
+   
+   private class Settings {
+      public String rotation_;
+      public boolean mirror_;
+      public Settings(String rotation, boolean mirror) {
+         rotation_ = rotation;
+         mirror_ = mirror;
+      }
+   }
+   private Map<String, Settings> cameraSettings_ = 
+           new HashMap<String, Settings>();
 
    /** 
     * Creates form NewImageFlipperControls 
@@ -81,8 +96,8 @@ public class NewImageFlipperControls extends javax.swing.JFrame {
       setLocation(frameXPos_, frameYPos_);
 
       updateCameras();
+          
       setBackground(MMStudioMainFrame.getInstance().getBackgroundColor());
-      MMStudioMainFrame.getInstance().addMMBackgroundListener(this);
       processor_ = new NewImageFlippingProcessor(this);
    }
 
@@ -108,7 +123,11 @@ public class NewImageFlipperControls extends javax.swing.JFrame {
          StrVector cameras = MMStudioMainFrame.getInstance().getCore().getAllowedPropertyValues("Core", "Camera");
          Iterator it = cameras.iterator();
          while (it.hasNext()) {
-            cameraComboBox_.addItem((String) it.next());
+            String camera = (String) it.next();
+            cameraComboBox_.addItem(camera);
+            String rotation = prefs_.get(camera + ROTATE, R0);
+            Boolean mirror = prefs_.getBoolean(camera + MIRROR, false);
+            cameraSettings_.put(camera, new Settings(rotation, mirror));
          }
       } catch (Exception ex) {
          Logger.getLogger(NewImageFlipperControls.class.getName()).log(Level.SEVERE, null, ex);
@@ -149,6 +168,12 @@ public class NewImageFlipperControls extends javax.swing.JFrame {
 
         exampleImageTarget_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/icons/R.png"))); // NOI18N
 
+        cameraComboBox_.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cameraComboBox_ActionPerformed(evt);
+            }
+        });
+
         rotateComboBox_.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "0", "90", "180", "270" }));
         rotateComboBox_.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -179,7 +204,7 @@ public class NewImageFlipperControls extends javax.swing.JFrame {
                         .add(38, 38, 38))
                     .add(layout.createSequentialGroup()
                         .add(mirrorCheckBox_)
-                        .addContainerGap(115, Short.MAX_VALUE))))
+                        .addContainerGap(121, Short.MAX_VALUE))))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -204,13 +229,23 @@ public class NewImageFlipperControls extends javax.swing.JFrame {
 
     private void mirrorCheckBox_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mirrorCheckBox_ActionPerformed
        processExample();
-       prefs_.putBoolean(MIRRORCHECKBOX, mirrorCheckBox_.isSelected());
+       String camera = (String) cameraComboBox_.getSelectedItem();
+       if (camera != null)
+       prefs_.putBoolean(camera + MIRROR, mirrorCheckBox_.isSelected());
     }//GEN-LAST:event_mirrorCheckBox_ActionPerformed
 
    private void rotateComboBox_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rotateComboBox_ActionPerformed
       processExample();
-      prefs_.put(ROTATEBOX, (String) rotateComboBox_.getSelectedItem());
+      String camera = (String) cameraComboBox_.getSelectedItem();
+      if (camera != null)
+         prefs_.put(camera + ROTATE, (String) rotateComboBox_.getSelectedItem());
    }//GEN-LAST:event_rotateComboBox_ActionPerformed
+
+   private void cameraComboBox_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cameraComboBox_ActionPerformed
+      String camera = (String) cameraComboBox_.getSelectedItem();
+      mirrorCheckBox_.setSelected(prefs_.getBoolean(camera + MIRROR, false));
+      rotateComboBox_.setSelectedItem(prefs_.get(camera + ROTATE, R0));
+   }//GEN-LAST:event_cameraComboBox_ActionPerformed
 
    /**
     * @param args the command line arguments
