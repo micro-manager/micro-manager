@@ -39,7 +39,7 @@
 #include <cstdio>
 #include <sstream>
 #include <algorithm>
-
+#include <sys/time.h>
 #define HID_TIMEOUT 20
 
 using namespace std;
