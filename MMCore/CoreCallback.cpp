@@ -214,9 +214,9 @@ int CoreCallback::OnPropertyChanged(const MM::Device* device, const char* propNa
       MMThreadGuard g(*pValueChangeLock_);
       char label[MM::MaxStrLength];
       device->GetLabel(label);
-	  bool readOnly;
-	  device->GetPropertyReadOnly(propName, readOnly);
-	  const PropertySetting* ps = new PropertySetting(label, propName, value, readOnly);
+      bool readOnly;
+      device->GetPropertyReadOnly(propName, readOnly);
+      const PropertySetting* ps = new PropertySetting(label, propName, value, readOnly);
       core_->stateCache_.addSetting(*ps);
       core_->externalCallback_->onPropertyChanged(label, propName, value);
       
