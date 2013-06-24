@@ -114,10 +114,10 @@ public:
 
   // MMCamera API - sequence acqusition
   // ----------------------------------
-  int   StartSequenceAcquisition( long numImages, double interval_ms, bool stopOnOverflow );
-  int   StopSequenceAcquisition();
+  virtual int StartSequenceAcquisition( long numImages, double interval_ms, bool stopOnOverflow );
+  virtual int StopSequenceAcquisition();
   int   InsertImage();
-  int   ThreadRun();
+  virtual int ThreadRun (void);
 
   double GetNominalPixelSizeUm() const {return nominalPixelSizeUm_;}
   double GetPixelSizeUm() const {return nominalPixelSizeUm_ * GetBinning();}
@@ -321,10 +321,15 @@ private:
   string        exposureLongTime_;
 
   bool          stopOnOverflow_;
+  long          numImages_;
+  double        interval_ms_;
+  volatile bool abortGetImageFired_;
+  volatile bool bFirstExposureLongTimeImage_;
 
-  CABSCameraSequenceThread* thread_;
+  //CABSCameraSequenceThread* thread_;
+ // CABSCameraSequenceThread* thd_;
 };
-
+/*
 // image aquisition thread class
 class CABSCameraSequenceThread : public CCameraBase<CABSCamera>::BaseSequenceThread
 {
@@ -340,5 +345,5 @@ private:
   //! them into the circular buffer
   int svc(void) throw();
 }; 
-
+*/
 #endif // __ABSCAMERA_H__

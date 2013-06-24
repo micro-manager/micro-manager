@@ -96,6 +96,7 @@
 //! \name  Buffer formats: Mono buffer defines 
 //!@{
 //! <hr>
+#define PIX_INVALID                     (0x00000000)                                        //!< invalid pixel type
 #define PIX_MONO8                       (PIX_MONO   | PIX_OCCUPY8BIT              | 0x0001) //!< Mono 8Bit
 #define PIX_MONO8SIGEND                 (PIX_MONO   | PIX_OCCUPY8BIT              | 0x0002) //!< not supported
 #define PIX_MONO10                      (PIX_MONO   | PIX_OCCUPY16BIT             | 0x0003) //!< Mono 10Bit stored 16Bit (uses the lower bits)
@@ -140,9 +141,13 @@
 #define PIX_BAYGB12                     (PIX_MONO   | PIX_OCCUPY16BIT             | 0x0012)  //!< Bayer pattern 12Bit stored at stored 16Bit (uses the lower bits, first line: green - blue)
 #define PIX_BAYBG12                     (PIX_MONO   | PIX_OCCUPY16BIT             | 0x0013)  //!< Bayer pattern 12Bit stored at stored 16Bit (uses the lower bits, first line: blue - green)
 #define PIX_BAYGR14                     (PIX_MONO   | PIX_OCCUPY16BIT             | 0x022A)  //!< Bayer pattern 14Bit stored at stored 16Bit (uses the lower bits, first line: green - red)
-#define PIX_BAYRG14                     (PIX_MONO   | PIX_OCCUPY16BIT             | 0x022B)  //!< Bayer pattern 12Bit stored at stored 16Bit (uses the lower bits, first line: red - green)
-#define PIX_BAYGB14                     (PIX_MONO   | PIX_OCCUPY16BIT             | 0x022C)  //!< Bayer pattern 12Bit stored at stored 16Bit (uses the lower bits, first line: green - blue)
+#define PIX_BAYRG14                     (PIX_MONO   | PIX_OCCUPY16BIT             | 0x022B)  //!< Bayer pattern 14Bit stored at stored 16Bit (uses the lower bits, first line: red - green)
+#define PIX_BAYGB14                     (PIX_MONO   | PIX_OCCUPY16BIT             | 0x022C)  //!< Bayer pattern 14Bit stored at stored 16Bit (uses the lower bits, first line: green - blue)
 #define PIX_BAYBG14                     (PIX_MONO   | PIX_OCCUPY16BIT             | 0x022D)  //!< Bayer pattern 14Bit stored at stored 16Bit (uses the lower bits, first line: blue - green)
+#define PIX_BAYGR16                     (PIX_MONO   | PIX_OCCUPY16BIT             | 0x0239)  //!< Bayer pattern 16Bit stored at stored 16Bit (uses the lower bits, first line: green - red)
+#define PIX_BAYRG16                     (PIX_MONO   | PIX_OCCUPY16BIT             | 0x023A)  //!< Bayer pattern 16Bit stored at stored 16Bit (uses the lower bits, first line: red - green)
+#define PIX_BAYGB16                     (PIX_MONO   | PIX_OCCUPY16BIT             | 0x023B)  //!< Bayer pattern 16Bit stored at stored 16Bit (uses the lower bits, first line: green - blue)
+#define PIX_BAYBG16                     (PIX_MONO   | PIX_OCCUPY16BIT             | 0x023C)  //!< Bayer pattern 16Bit stored at stored 16Bit (uses the lower bits, first line: blue - green)
 
 #define PIX_BAYGR10_PACKED10            (PIX_MONO   | PIX_OCCUPY10BIT             | 0x0206)  //!< not supported for applications
 #define PIX_BAYRG10_PACKED10            (PIX_MONO   | PIX_OCCUPY10BIT             | 0x0207)  //!< not supported for applications
@@ -153,7 +158,6 @@
 #define PIX_BAYRG12_PACKED12            (PIX_MONO   | PIX_OCCUPY12BIT             | 0x020B)  //!< not supported for applications
 #define PIX_BAYGB12_PACKED12            (PIX_MONO   | PIX_OCCUPY12BIT             | 0x020C)  //!< not supported for applications
 #define PIX_BAYBG12_PACKED12            (PIX_MONO   | PIX_OCCUPY12BIT             | 0x020D)  //!< not supported for applications
-
 
 #define PIX_BAYGR14_PACKED14            (PIX_MONO   | PIX_OCCUPY14BIT             | 0x0226)  //!< not supported for applications
 #define PIX_BAYRG14_PACKED14            (PIX_MONO   | PIX_OCCUPY14BIT             | 0x0227)  //!< not supported for applications

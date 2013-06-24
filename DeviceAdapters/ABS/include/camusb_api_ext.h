@@ -2,14 +2,14 @@
 /*!
  *
  * \file            CamUSB_API_Ext.h
- * \brief			API exported extended functions
-					DEVELOPMENT SYS  "Microsoft Visual C++ V6.0 SP 6"
-					and "Win2000 DDK"\n\n
-					This function collection is used to simplify the 
-					camera functionality for rapid application development. \n
-					Internal they based on the "CamUSB_API.h" - functions.
- * \version			1.00
- * \author			ABS GmbH Jena (HBau)
+ * \brief      API exported extended functions
+          DEVELOPMENT SYS  "Microsoft Visual C++ V6.0 SP 6"
+          and "Win2000 DDK"\n\n
+          This function collection is used to simplify the 
+          camera functionality for rapid application development. \n
+          Internal they based on the "CamUSB_API.h" - functions.
+ * \version      1.00
+ * \author      ABS GmbH Jena (HBau)
  *
  * \date 15.11.05 -> reorganised
  *
@@ -25,56 +25,55 @@
 
 /////////////////////////////////////////////////////////////////////////////
 //! \name Functions: Image Sensor
-/////////////////////////////////////////////////////////////////////////////
 //!@{
 // --------------------------------------------------------------------------
 // CamUSB_SetCameraResolution
-//! \brief		Selects the region of interest (ROI) of the active image sensor.
+//! \brief    Selects the region of interest (ROI) of the active image sensor.
 //!
-//! 			Valid from next image on.
+//!       Valid from next image on.
 //!
-//! \param		wOffsetX	X offset of ROI (relative to visible area)
-//!	\param		wOffsetY	Y offset of ROI (relative to visible area)	
-//!	\param		wSizeX		X size (width, columns) of ROI
-//!	\param		wSizeY		Y size (height, lines) of ROI
-//!	\param		dwSkip		X- and Y- Skip settings  see #XY_SKIP_NONE
-//!	\param		dwBin;		X- and Y- Bin settings see #XY_BIN_NONE
-//! \param		bKeepExposure	if TRUE the exposure time is nearly constant
-//!								during resolution changes
-//!	\param		nDevNr			Camera index number, that identifies the 
-//!								camera device which should be used with this
-//!								function
-//!								
+//! \param    wOffsetX  X offset of ROI (relative to visible area)
+//!  \param    wOffsetY  Y offset of ROI (relative to visible area)  
+//!  \param    wSizeX    X size (width, columns) of ROI
+//!  \param    wSizeY    Y size (height, lines) of ROI
+//!  \param    dwSkip    X- and Y- Skip settings  see #XY_SKIP_NONE
+//!  \param    dwBin;    X- and Y- Bin settings see #XY_BIN_NONE
+//! \param    bKeepExposure  if TRUE the exposure time is nearly constant
+//!                during resolution changes
+//!  \param    nDevNr      Camera index number, that identifies the 
+//!                camera device which should be used with this
+//!                function
+//!                
 //!
-//! \retval		TRUE			success
-//!	\retval		FALSE			error
+//! \retval    TRUE      success
+//!  \retval    FALSE      error
 //!
 //! \see #FUNC_RESOLUTION for ROI details
 //!
 USBAPI BOOL CCONV CamUSB_SetCameraResolution ( SHORT wOffsetX, SHORT wOffsetY, 
-                                               WORD  wSizeX,   WORD  wSizeY,									 
+                                               WORD  wSizeX,   WORD  wSizeY,                   
                                                DWORD dwSkip=0, DWORD dwBin=0, 
                                                BOOL bKeepExposure = TRUE,
                                                BYTE nDevNr=0);
 
 // --------------------------------------------------------------------------
 // CamUSB_GetCameraResolution
-/*! \brief		Returns the region of interest (ROI) .
+/*! \brief    Returns the region of interest (ROI) .
  * 
- *  			Valid from next image on.
+ *        Valid from next image on.
  * 
- *  \param		pwOffsetX	X offset of ROI (relative to visible area)
- * 	\param		pwOffsetY	Y offset of ROI (relative to visible area)	
- * 	\param		pwSizeX		X size (width, columns) of ROI
- * 	\param		pwSizeY		Y size (height, lines) of ROI
- * 	\param		pdwSkip		X- and Y- Skip settings  see #XY_SKIP_NONE
- * 	\param		pdwBin;		X- and Y- Bin settings see #XY_BIN_NONE
- * 	\param		nDevNr			Camera index number, that identifies the 
- * 								camera device which should be used with this
- * 								function
+ *  \param    pwOffsetX  X offset of ROI (relative to visible area)
+ *   \param    pwOffsetY  Y offset of ROI (relative to visible area)  
+ *   \param    pwSizeX    X size (width, columns) of ROI
+ *   \param    pwSizeY    Y size (height, lines) of ROI
+ *   \param    pdwSkip    X- and Y- Skip settings  see #XY_SKIP_NONE
+ *   \param    pdwBin;    X- and Y- Bin settings see #XY_BIN_NONE
+ *   \param    nDevNr      Camera index number, that identifies the 
+ *                 camera device which should be used with this
+ *                 function
  * 
- *  \retval		TRUE			success
- * 	\retval		FALSE			error
+ *  \retval    TRUE      success
+ *   \retval    FALSE      error
  * 
  *  \see #FUNC_RESOLUTION for ROI details
  *
@@ -86,7 +85,7 @@ USBAPI BOOL CCONV CamUSB_SetCameraResolution ( SHORT wOffsetX, SHORT wOffsetY,
  DWORD dwSkip, dwBin;
 
  if ( CamUSB_GetCameraResolution( &wOffsetX, &wOffsetY, &wSizeX, 
-                                  &wSizeY, &dwSkip, &dwBin) != TRUE )	
+                                  &wSizeY, &dwSkip, &dwBin) != TRUE )  
  {
    // error see CamUSB_GetLastError
  }
@@ -97,20 +96,23 @@ USBAPI BOOL CCONV CamUSB_SetCameraResolution ( SHORT wOffsetX, SHORT wOffsetY,
 
  \endcode
 */
-USBAPI BOOL CCONV CamUSB_GetCameraResolution ( SHORT*  pwOffsetX, SHORT*  pwOffsetY, 
-                                               LPWORD  pwSizeX,   LPWORD  pwSizeY,									 
-                                               LPDWORD pdwSkip,   LPDWORD pdwBin, 											  
+USBAPI BOOL CCONV CamUSB_GetCameraResolution ( SHORT*  pwOffsetX, SHORT*  pwOffsetY,
+                                               LPWORD  pwSizeX,   LPWORD  pwSizeY,
+                                               LPDWORD pdwSkip,   LPDWORD pdwBin,
                                                BYTE    nDevNr=0 );
 
 // --------------------------------------------------------------------------
 // CamUSB_GetCameraResolutionInfo
-/*! \brief		Apply the camera resolution constrains at the passed camera
+/*! \brief    Apply the camera resolution constrains at the passed camera
  *              resolution parameter. The adapted parameters and the resulting 
  *              image dimensions will be returned.
  *              The structure #S_RESOLUTION_INFO is used for data exchange.
- * 
- * \retval		TRUE			success
- * \retval		FALSE			error
+ *
+ *\remark Resolution changes are not be taken into account,
+ *        if they caused by #FUNC_ROTATE_REMAP!
+ *
+ * \retval    TRUE      success
+ * \retval    FALSE      error
  * \par Example:
  * \code
 
@@ -122,7 +124,7 @@ sResInfo.sResIn.wSizeY = 1542;
 sResInfo.sResIn.dwSkip = XY_SKIP_2X;
 
 // execute function
-if ( CamUSB_GetCameraResolutionInfo( &sResInfo ) != TRUE )	
+if ( CamUSB_GetCameraResolutionInfo( &sResInfo ) != TRUE )  
 {
 // error see CamUSB_GetLastError
 }
@@ -141,17 +143,17 @@ USBAPI BOOL CCONV CamUSB_GetCameraResolutionInfo (  S_RESOLUTION_INFO* pResInfo,
 
 // --------------------------------------------------------------------------
 // CamUSB_SetExposureTime
-/*! \brief		Sets the integration time of the camera sensor of the active camera channel.
+/*! \brief    Sets the integration time of the camera sensor of the active camera channel.
  * 
- *  			Valid from the next image on.
+ *        Valid from the next image on.
  * 
- *  \param		pdwExposure_us	Exposure / Integration time value in 탎 (us).
- * 	\param		nDevNr			Camera index number, that identifies the 
- * 								camera device which should be used with this
- * 								function
- * 								
- *  \retval		TRUE			success
- * 	\retval		FALSE			error
+ *  \param    pdwExposure_us  Exposure / Integration time value in 탎 (us).
+ *   \param    nDevNr      Camera index number, that identifies the 
+ *                 camera device which should be used with this
+ *                 function
+ *                 
+ *  \retval    TRUE      success
+ *   \retval    FALSE      error
  * 
  *  \par Example:
  *  \code
@@ -162,10 +164,10 @@ USBAPI BOOL CCONV CamUSB_GetCameraResolutionInfo (  S_RESOLUTION_INFO* pResInfo,
  // will correct this value to the
  // lowest allowed value
 
- DWORD nExposure;		
-	
- // reading the exposure time							
-	if (CamUSB_GetExposureTime( &nExposure ) != TRUE)
+ DWORD nExposure;    
+  
+ // reading the exposure time              
+  if (CamUSB_GetExposureTime( &nExposure ) != TRUE)
  { 
      // error see CamUSB_GetLastError
  }
@@ -174,18 +176,18 @@ USBAPI BOOL CCONV CamUSB_GetCameraResolutionInfo (  S_RESOLUTION_INFO* pResInfo,
     // nExposure contains now actual exposure time
  }
 
- nExposure = 20000;	// 20000탎 = 20ms
+ nExposure = 20000;  // 20000탎 = 20ms
  if (CamUSB_SetExposureTime( &nExposure ) != TRUE)
- {	
+ {  
    // error see CamUSB_GetLastError
  }
  else
  {
-	  // nExposure => has be changed and contains the real 
-	  //              Exposure Time which could be set at the camera
+    // nExposure => has be changed and contains the real 
+    //              Exposure Time which could be set at the camera
 
  }
-	
+  
  \endcode
 */
 USBAPI BOOL CCONV CamUSB_SetExposureTime( LPDWORD pdwExposure_us, 
@@ -193,15 +195,15 @@ USBAPI BOOL CCONV CamUSB_SetExposureTime( LPDWORD pdwExposure_us,
 
 // --------------------------------------------------------------------------
 // CamUSB_GetExposureTime
-//! \brief		returns the active Exposure Time.
+//! \brief    returns the active Exposure Time.
 //!
-//! \param		pdwExposure_us	Exposure / Integration time value in 탎 (us).
-//!	\param		nDevNr			Camera index number, that identifies the 
-//!								camera device which should be used with this
-//!								function
-//!								
-//! \retval		TRUE			success
-//!	\retval		FALSE			error
+//! \param    pdwExposure_us  Exposure / Integration time value in 탎 (us).
+//!  \param    nDevNr      Camera index number, that identifies the 
+//!                camera device which should be used with this
+//!                function
+//!                
+//! \retval    TRUE      success
+//!  \retval    FALSE      error
 //!
 //! \par Example: see CamUSB_SetExposureTime
 //!
@@ -211,44 +213,44 @@ USBAPI BOOL CCONV CamUSB_GetExposureTime( LPDWORD pdwExposure_us,
 
 // --------------------------------------------------------------------------
 // CamUSB_SetGain
-/*! \brief		Sets the color gain level for the Bayer Pattern pixel 
- * 				group "nGainChannel".
- * 		
- * 				As an alternative for setting the individual color gains,
- * 				the global gain level can be set with this function.
- * 				IMPORTANT: calling this function invalidates the settings of
- * 				individual color gains.
+/*! \brief    Sets the color gain level for the Bayer Pattern pixel 
+ *         group "nGainChannel".
+ *     
+ *         As an alternative for setting the individual color gains,
+ *         the global gain level can be set with this function.
+ *         IMPORTANT: calling this function invalidates the settings of
+ *         individual color gains.
  * 
- * 				Valid from the next image on.
+ *         Valid from the next image on.
  * 
- * 				Attention, not all gain values are supported by all sensor
+ *         Attention, not all gain values are supported by all sensor
  *              types. Call #CamUSB_GetFunctionCaps to determine the gain capability 
- * 				of camera sensor 
+ *         of camera sensor 
  * 
- * 				Generally a gain value is interpreted as fixed point value.
- * 				e.g. gain value \arg 1000 means   1.0   \n
- * 								\arg 1755 means   1.755 \n
- * 								\arg 6515 means   6.515 \n
- * 							  \arg 128000 means 128.0   \n
+ *         Generally a gain value is interpreted as fixed point value.
+ *         e.g. gain value \arg 1000 means   1.0   \n
+ *                 \arg 1755 means   1.755 \n
+ *                 \arg 6515 means   6.515 \n
+ *                 \arg 128000 means 128.0   \n
  * 
- * 				This function rounds the gain value to the next possible value
- * 				which is returned with "pGain". 
+ *         This function rounds the gain value to the next possible value
+ *         which is returned with "pGain". 
  * 
  * 
- *  \param		pdwGain			gain value
- *  \param		wGainChannel	color channel 
- *  \arg		\c GAIN_RED		red
- *  \arg		\c GAIN_GREEN1  green 1
- *  \arg		\c GAIN_GREEN2  green 2
- *  \arg		\c GAIN_BLUE    blue
- *  \arg		\c GAIN_GLOBAL  all
+ *  \param    pdwGain      gain value
+ *  \param    wGainChannel  color channel 
+ *  \arg    \c GAIN_RED    red
+ *  \arg    \c GAIN_GREEN1  green 1
+ *  \arg    \c GAIN_GREEN2  green 2
+ *  \arg    \c GAIN_BLUE    blue
+ *  \arg    \c GAIN_GLOBAL  all
  * 
- * 	\param		nDevNr			Camera index number, that identifies the 
- * 								camera device which should be used with this
- * 								function
+ *   \param    nDevNr      Camera index number, that identifies the 
+ *                 camera device which should be used with this
+ *                 function
  * 
- *  \retval		TRUE			success
- * 	\retval		FALSE			error
+ *  \retval    TRUE      success
+ *   \retval    FALSE      error
  * 
  *  \par Example: Set- and GetGain
  *  \code
@@ -269,7 +271,7 @@ USBAPI BOOL CCONV CamUSB_GetExposureTime( LPDWORD pdwExposure_us,
    {
      // nGain contains now actual gloabl gain value
    }
-	
+  
  nGain = 2000;  // (2.0)
  if (CamUSB_SetGain( &nGain, GAIN_GLOBAL ) != TRUE)
  {
@@ -280,7 +282,7 @@ USBAPI BOOL CCONV CamUSB_GetExposureTime( LPDWORD pdwExposure_us,
      // nGain contains now rounded and applied 
      // global gain value
  }
-	
+  
  \endcode
 */
 USBAPI BOOL CCONV CamUSB_SetGain ( LPDWORD pdwGain, 
@@ -290,18 +292,18 @@ USBAPI BOOL CCONV CamUSB_SetGain ( LPDWORD pdwGain,
 
 // --------------------------------------------------------------------------
 // CamUSB_GetGain
-//! \brief		returns the color gain level for the Bayer Pattern pixel 
-//!	\brief		group "nGainChannel".
-//!				
-//!				
-//! \param		pdwGain			gain value
-//! \param		wGainChannel	color channel 
-//!	\param		nDevNr			Camera index number, that identifies the 
-//!								camera device which should be used with this
-//!								function
+//! \brief    returns the color gain level for the Bayer Pattern pixel 
+//!  \brief    group "nGainChannel".
+//!        
+//!        
+//! \param    pdwGain      gain value
+//! \param    wGainChannel  color channel 
+//!  \param    nDevNr      Camera index number, that identifies the 
+//!                camera device which should be used with this
+//!                function
 //!
-//! \retval		TRUE			success
-//!	\retval		FALSE			error
+//! \retval    TRUE      success
+//!  \retval    FALSE      error
 //!
 //! \par Example: see GetGlobalGain
 //!
@@ -312,29 +314,29 @@ USBAPI BOOL CCONV CamUSB_GetGain( LPDWORD pdwGain,
 
 // --------------------------------------------------------------------------
 // CamUSB_SetStandardRes
-//! \brief		Set one of the standard camera resolutions
+//! \brief    Set one of the standard camera resolutions
 //!
-//!				Valid from the next image on.
+//!        Valid from the next image on.
 //!
-//! \param		dwStdRes			Specifies working mode:
-//! \arg		\c STDRES_QSXGA		= 0x001	- 2592 x 1944
-//! \arg		\c STDRES_QXGA		= 0x002	- 2048 x 1536
-//!	\arg		\c STDRES_UXGA		= 0x004	- 1600 x 1200
-//!	\arg		\c STDRES_SXGA		= 0x008	- 1280 x 1024
-//!	\arg		\c STDRES_XGA		= 0x010	- 1024 x  768
-//!	\arg		\c STDRES_SVGA		= 0x020	-  800 x  600
-//!	\arg		\c STDRES_VGA		= 0x040 -  640 x  480
-//!	\arg		\c STDRES_CIF		= 0x080 -  352 x  288
-//!	\arg		\c STDRES_QVGA		= 0x100 -  320 x  240
-//!	\arg		\c STDRES_HDTV_1080 = 0x200 - 1920 x 1080
-//!	\arg		\c STDRES_HDTV_720  = 0x400 - 1280 x  720
+//! \param    dwStdRes      Specifies working mode:
+//! \arg    \c STDRES_QSXGA    = 0x001  - 2592 x 1944
+//! \arg    \c STDRES_QXGA    = 0x002  - 2048 x 1536
+//!  \arg    \c STDRES_UXGA    = 0x004  - 1600 x 1200
+//!  \arg    \c STDRES_SXGA    = 0x008  - 1280 x 1024
+//!  \arg    \c STDRES_XGA    = 0x010  - 1024 x  768
+//!  \arg    \c STDRES_SVGA    = 0x020  -  800 x  600
+//!  \arg    \c STDRES_VGA    = 0x040 -  640 x  480
+//!  \arg    \c STDRES_CIF    = 0x080 -  352 x  288
+//!  \arg    \c STDRES_QVGA    = 0x100 -  320 x  240
+//!  \arg    \c STDRES_HDTV_1080 = 0x200 - 1920 x 1080
+//!  \arg    \c STDRES_HDTV_720  = 0x400 - 1280 x  720
 //!
-//!	\param		nDevNr			Camera index number, that identifies the 
-//!								camera device which should be used with this
-//!								function
+//!  \param    nDevNr      Camera index number, that identifies the 
+//!                camera device which should be used with this
+//!                function
 //!
-//! \retval		TRUE			success
-//!	\retval		FALSE			error
+//! \retval    TRUE      success
+//!  \retval    FALSE      error
 //!
 USBAPI BOOL CCONV CamUSB_SetStandardRes( u32 dwStdResID, 
                                          u08 nDevNr = 0);
@@ -342,18 +344,18 @@ USBAPI BOOL CCONV CamUSB_SetStandardRes( u32 dwStdResID,
 
 // --------------------------------------------------------------------------
 // CamUSB_GetStandardRes
-//! \brief		Get one of the standard camera resolutions or 
-//!	\brief		that an ROI is active
+//! \brief    Get one of the standard camera resolutions or 
+//!  \brief    that an ROI is active
 //!
-//! \param		pdwStdRes   Specifies working mode see #CamUSB_SetStandardRes
+//! \param    pdwStdRes   Specifies working mode see #CamUSB_SetStandardRes
 //!                       and #NO_STDRES
 //!
-//!	\param		nDevNr			Camera index number, that identifies the 
-//!								        camera device which should be used with this
-//!								        function
+//!  \param    nDevNr      Camera index number, that identifies the 
+//!                        camera device which should be used with this
+//!                        function
 //!
-//! \retval		TRUE			  success
-//!	\retval		FALSE			  error
+//! \retval    TRUE        success
+//!  \retval    FALSE        error
 //!
 USBAPI BOOL CCONV CamUSB_GetStandardRes( u32* pdwStdResID, 
                                          u08  nDevNr = 0);
@@ -361,104 +363,104 @@ USBAPI BOOL CCONV CamUSB_GetStandardRes( u32* pdwStdResID,
 
 // --------------------------------------------------------------------------
 // CamUSB_GetStandardResCaps
-//! \brief		Returns the mask of the supported standard resolutions
+//! \brief    Returns the mask of the supported standard resolutions
 //!
 //!
-//! \param		pdwStdResMask see standard resolution defines #STDRES_VGA
+//! \param    pdwStdResMask see standard resolution defines #STDRES_VGA
 //!
-//!	\param		nDevNr			Camera index number, that identifies the 
-//!								camera device which should be used with this
-//!								function
+//!  \param    nDevNr      Camera index number, that identifies the 
+//!                camera device which should be used with this
+//!                function
 //!
-//! \retval		TRUE			success
-//!	\retval		FALSE			error
-//!	
+//! \retval    TRUE      success
+//!  \retval    FALSE      error
+//!  
 USBAPI BOOL CCONV CamUSB_GetStandardResCaps( u32* pdwStdResMask, 
-											                       u08  nDevNr = 0 );
+                                             u08  nDevNr = 0 );
 
 // --------------------------------------------------------------------------
 // CamUSB_SetStandardRes2
-//! \brief		Set one of the standard camera resolutions
+//! \brief    Set one of the standard camera resolutions
 //!
-//!				Effective as of the next image.
+//!        Effective as of the next image.
 //!
-//! \param		pdwStdResID2		Specifies working mode:
-//! \arg		\c STDRES2_QUXGA    = 3200 x 2400
-//! \arg		\c STDRES2_QSXGA    = 2560 x 2048
-//!	\arg		\c STDRES2_WQXGA    = 2560 x 1600
-//!	\arg		\c STDRES2_QXGA     = 2048 x 1536
-//!	\arg		\c STDRES2_WUXGA    = 1920 x 1200
-//!	\arg		\c STDRES2_UXGA     = 1600 x 1200
-//!	\arg		\c STDRES2_WSXGAP   = 1680 x 1050
-//!	\arg		\c STDRES2_SXGA     = 1280 x 1024
-//!	\arg		\c STDRES2_XGA2     = 1360 x 1024
-//!	\arg		\c STDRES2_WXGA     = 1360 x 768
-//!	\arg		\c STDRES2_XGA      = 1024 x 768
-//!	\arg		\c STDRES2_SVGA     =  800 x 600
-//!	\arg		\c STDRES2_WIDEVGA  =  752 x 480
-//!	\arg		\c STDRES2_VGA      =  640 x 480
-//!	\arg		\c STDRES2_WQVGA    =  384 x 240
-//!	\arg		\c STDRES2_QVGA     =  320 x 240
+//! \param    pdwStdResID2    Specifies working mode:
+//! \arg    \c STDRES2_QUXGA    = 3200 x 2400
+//! \arg    \c STDRES2_QSXGA    = 2560 x 2048
+//!  \arg    \c STDRES2_WQXGA    = 2560 x 1600
+//!  \arg    \c STDRES2_QXGA     = 2048 x 1536
+//!  \arg    \c STDRES2_WUXGA    = 1920 x 1200
+//!  \arg    \c STDRES2_UXGA     = 1600 x 1200
+//!  \arg    \c STDRES2_WSXGAP   = 1680 x 1050
+//!  \arg    \c STDRES2_SXGA     = 1280 x 1024
+//!  \arg    \c STDRES2_XGA2     = 1360 x 1024
+//!  \arg    \c STDRES2_WXGA     = 1360 x 768
+//!  \arg    \c STDRES2_XGA      = 1024 x 768
+//!  \arg    \c STDRES2_SVGA     =  800 x 600
+//!  \arg    \c STDRES2_WIDEVGA  =  752 x 480
+//!  \arg    \c STDRES2_VGA      =  640 x 480
+//!  \arg    \c STDRES2_WQVGA    =  384 x 240
+//!  \arg    \c STDRES2_QVGA     =  320 x 240
 //!
-//!	\param  nDevNr  Camera index number, that identifies the 
-//!								  camera device which should be used with this
-//!								  function
+//!  \param  nDevNr  Camera index number, that identifies the 
+//!                  camera device which should be used with this
+//!                  function
 //!
-//! \retval		TRUE			success
-//!	\retval		FALSE			error
+//! \retval    TRUE      success
+//!  \retval    FALSE      error
 //!
 USBAPI BOOL CCONV CamUSB_SetStandardRes2( u64 qwStdResID2, 
                                           u08 nDevNr = 0);
 
 // --------------------------------------------------------------------------
 // CamUSB_GetStandardRes
-//! \brief		Get one of the standard camera resolutions or 
-//!	\brief		that an ROI is active
+//! \brief    Get one of the standard camera resolutions or 
+//!  \brief    that an ROI is active
 //!
-//! \param		pdwStdResID2  Specifies working mode see #CamUSB_SetStandardRes2
+//! \param    pdwStdResID2  Specifies working mode see #CamUSB_SetStandardRes2
 //!                         and #STDRES2_NONE
 //!
-//!	\param		nDevNr			Camera index number, that identifies the 
-//!								        camera device which should be used with this
-//!								        function
+//!  \param    nDevNr      Camera index number, that identifies the 
+//!                        camera device which should be used with this
+//!                        function
 //!
-//! \retval		TRUE			  success
-//!	\retval		FALSE			  error
+//! \retval    TRUE        success
+//!  \retval    FALSE        error
 //!
 USBAPI BOOL CCONV CamUSB_GetStandardRes2( u64* pdwStdResID2, 
                                           u08  nDevNr = 0);
 
 // --------------------------------------------------------------------------
 // CamUSB_GetStandardRes2Caps
-//! \brief		Returns the mask of the supported standard resolutions
+//! \brief    Returns the mask of the supported standard resolutions
 //!
 //!
-//! \param		pdwStdResID2Mask see standard resolution defines #STDRES2_VGA
+//! \param    pdwStdResID2Mask see standard resolution defines #STDRES2_VGA
 //!
-//!	\param		nDevNr		Camera index number, that identifies the 
-//!								      camera device which should be used with this
-//!								      function
+//!  \param    nDevNr    Camera index number, that identifies the 
+//!                      camera device which should be used with this
+//!                      function
 //!
-//! \retval		TRUE			success
-//!	\retval		FALSE			error
-//!	
+//! \retval    TRUE      success
+//!  \retval    FALSE      error
+//!  
 USBAPI BOOL CCONV CamUSB_GetStandardRes2Caps( u64* pdwStdResID2Mask, 
                                               u08  nDevNr = 0 );
 
 
 // --------------------------------------------------------------------------
 // CamUSB_SetSleepMode
-//! \brief		Set an Camera sleep mode e.g. #SLEEPMODE_SENSOR to shut 
+//! \brief    Set an Camera sleep mode e.g. #SLEEPMODE_SENSOR to shut 
 //!             down (power down) the sensor module
 //!
-//! \param		dwSleepMode		Sleep mode
+//! \param    dwSleepMode    Sleep mode
 //!
-//!	\param		nDevNr			Camera index number, that identifies the 
-//!								camera device which should be used with this
-//!								function
+//!  \param    nDevNr      Camera index number, that identifies the 
+//!                camera device which should be used with this
+//!                function
 //!
-//! \retval		TRUE			success
-//!	\retval		FALSE			error
+//! \retval    TRUE      success
+//!  \retval    FALSE      error
 //! 
 //! \remark     If you set an sleep mode to active and turn off your program,
 //! \remark     the sleep mode will be stay active till you reboot the camera 
@@ -482,16 +484,16 @@ USBAPI BOOL CCONV CamUSB_SetSleepMode( DWORD dwSleepMode,
 
 // --------------------------------------------------------------------------
 // CamUSB_GetSleepMode
-//! \brief		Get the current camera sleep mode e.g. #SLEEPMODE_NONE
+//! \brief    Get the current camera sleep mode e.g. #SLEEPMODE_NONE
 //!
-//! \param		pdwSleepMode	return the sleep mode
+//! \param    pdwSleepMode  return the sleep mode
 //!
-//!	\param		nDevNr			Camera index number, that identifies the 
-//!								camera device which should be used with this
-//!								function
+//!  \param    nDevNr      Camera index number, that identifies the 
+//!                camera device which should be used with this
+//!                function
 //!
-//! \retval		TRUE			success
-//!	\retval		FALSE			error
+//! \retval    TRUE      success
+//!  \retval    FALSE      error
 //!
 //! \remark See remarks on #CamUSB_SetSleepMode!
 //!
@@ -504,40 +506,40 @@ USBAPI BOOL CCONV CamUSB_GetSleepMode( LPDWORD pdwSleepMode,
 
 // --------------------------------------------------------------------------
 // CamUSB_GetSleepModeCaps
-//! \brief		Returns the mask of the supported sleep modes. If sleep mode
-//! \brief		mask "zero" sleep modes are not supported and calls to 
-//! \brief		#CamUSB_GetSleepMode and #CamUSB_SetSleepMode will be fail.
+//! \brief    Returns the mask of the supported sleep modes. If sleep mode
+//! \brief    mask "zero" sleep modes are not supported and calls to 
+//! \brief    #CamUSB_GetSleepMode and #CamUSB_SetSleepMode will be fail.
 //!
-//! \param		pdwStdResMask   return the mask of supported sleep modes
+//! \param    pdwStdResMask   return the mask of supported sleep modes
 //!
-//!	\param		nDevNr			Camera index number, that identifies the 
-//!								camera device which should be used with this
-//!								function
+//!  \param    nDevNr      Camera index number, that identifies the 
+//!                camera device which should be used with this
+//!                function
 //!
-//! \retval		TRUE			success
-//!	\retval		FALSE			error
+//! \retval    TRUE      success
+//!  \retval    FALSE      error
 //!
 //! \par Example:
 //!     - \ref example_13
 //!
 USBAPI BOOL CCONV CamUSB_GetSleepModeCaps( LPDWORD pdwSleepModeMask, 
-										   BYTE nDevNr=0);
+                       BYTE nDevNr=0);
 
 // --------------------------------------------------------------------------
 // CamUSB_SetPixelType
-//! \brief		Set the camera pixel type 
-//!				(attention call #CamUSB_GetFunctionCaps to get valid pixel types)
+//! \brief    Set the camera pixel type 
+//!        (attention call #CamUSB_GetFunctionCaps to get valid pixel types)
 //!
-//!				Valid from the next image on.
+//!        Valid from the next image on.
 //!
-//! \param		dwPixelType		Specifies working mode (see pixeltypes.h)
+//! \param    dwPixelType    Specifies working mode (see pixeltypes.h)
 //!
-//!	\param		nDevNr			Camera index number, that identifies the 
-//!								camera device which should be used with this
-//!								function
+//!  \param    nDevNr      Camera index number, that identifies the 
+//!                camera device which should be used with this
+//!                function
 //!
-//! \retval		TRUE			success
-//!	\retval		FALSE			error
+//! \retval    TRUE      success
+//!  \retval    FALSE      error
 //!
 //!
 USBAPI BOOL CCONV CamUSB_SetPixelType( DWORD dwPixelType, 
@@ -546,17 +548,17 @@ USBAPI BOOL CCONV CamUSB_SetPixelType( DWORD dwPixelType,
 
 // --------------------------------------------------------------------------
 // CamUSB_GetPixelType
-//! \brief		Get the camera pixel type 
+//! \brief    Get the camera pixel type 
 //!
-//! \param		pdwPixelType	pointer to the returned pixeltype 
-//!								(see pixeltypes.h)
+//! \param    pdwPixelType  pointer to the returned pixeltype 
+//!                (see pixeltypes.h)
 //!
-//!	\param		nDevNr			Camera index number, that identifies the 
-//!								camera device which should be used with this
-//!								function
+//!  \param    nDevNr      Camera index number, that identifies the 
+//!                camera device which should be used with this
+//!                function
 //!
-//! \retval		TRUE			success
-//!	\retval		FALSE			error
+//! \retval    TRUE      success
+//!  \retval    FALSE      error
 //!
 //!
 USBAPI BOOL CCONV CamUSB_GetPixelType( LPDWORD pdwPixelType, 
@@ -565,36 +567,36 @@ USBAPI BOOL CCONV CamUSB_GetPixelType( LPDWORD pdwPixelType,
 
 // --------------------------------------------------------------------------
 // CamUSB_SetFramerateLimit
-//! \brief		Set the maxium framerate, at which the dll try to read an 
-//!	\brief		image from the camera. The resulting framerate depends on
-//!	\brief		the integration (exposure) time and the maximum sensor 
-//!	\brief		readout rate.
+//! \brief    Set the maxium framerate, at which the dll try to read an 
+//!  \brief    image from the camera. The resulting framerate depends on
+//!  \brief    the integration (exposure) time and the maximum sensor 
+//!  \brief    readout rate.
 //!
-//! \param		pwFps		maximum allowed framerate, return max. posible value
-//!	\param		nDevNr		Camera index number, that identifies the 
-//!							camera device which should be used with this
-//!							function
+//! \param    pwFps    maximum allowed framerate, return max. posible value
+//!  \param    nDevNr    Camera index number, that identifies the 
+//!              camera device which should be used with this
+//!              function
 //!
-//! \retval		TRUE		success
-//!	\retval		FALSE		error
+//! \retval    TRUE    success
+//!  \retval    FALSE    error
 //!
 USBAPI BOOL CCONV CamUSB_SetFramerateLimit( LPWORD pwFps, 
                                             BYTE nDevNr=0);
 
 // --------------------------------------------------------------------------
 // CamUSB_GetFramerateLimit
-//! \brief		Get the maxium framerate, at which the dll can read an 
-//!	\brief		image from the camera. The resulting framerate depends on
-//!	\brief		the integration (exposure) time and the maximum sensor 
-//!	\brief		readout rate.
+//! \brief    Get the maxium framerate, at which the dll can read an 
+//!  \brief    image from the camera. The resulting framerate depends on
+//!  \brief    the integration (exposure) time and the maximum sensor 
+//!  \brief    readout rate.
 //!
-//! \param		pwFps		maximum allowed framerate
-//!	\param		nDevNr		Camera index number, that identifies the 
-//!							camera device which should be used with this
-//!							function
+//! \param    pwFps    maximum allowed framerate
+//!  \param    nDevNr    Camera index number, that identifies the 
+//!              camera device which should be used with this
+//!              function
 //!
-//! \retval		TRUE		success
-//!	\retval		FALSE		error
+//! \retval    TRUE    success
+//!  \retval    FALSE    error
 //!
 USBAPI BOOL CCONV CamUSB_GetFramerateLimit( LPWORD pwFps, 
                                             BYTE nDevNr=0);
@@ -604,23 +606,22 @@ USBAPI BOOL CCONV CamUSB_GetFramerateLimit( LPWORD pwFps,
 
 /////////////////////////////////////////////////////////////////////////////
 //! \name Functions: Look-Up Table (LUT) Control
-/////////////////////////////////////////////////////////////////////////////
 //!@{
 // --------------------------------------------------------------------------
 // CamUSB_SelectLUT
-//! \brief		Selects the lookup table (LUT) that should be used for the next image.
+//! \brief    Selects the lookup table (LUT) that should be used for the next image.
 //!
-//!				The selected LUT is copied to an internal working LUT buffer
-//!				so the function has to be called after every change to the
-//!				desired LUT.
+//!        The selected LUT is copied to an internal working LUT buffer
+//!        so the function has to be called after every change to the
+//!        desired LUT.
 //!
-//! \param		wLUTIndex		index of the lut to be used (see #CamUSB_GetFunctionCaps)
-//!	\param		nDevNr			Camera index number, that identifies the 
-//!								camera device which should be used with this
-//!								function
+//! \param    wLUTIndex    index of the lut to be used (see #CamUSB_GetFunctionCaps)
+//!  \param    nDevNr      Camera index number, that identifies the 
+//!                camera device which should be used with this
+//!                function
 //!
-//! \retval		TRUE		success
-//!	\retval		FALSE		error
+//! \retval    TRUE    success
+//!  \retval    FALSE    error
 //!
 USBAPI BOOL CCONV CamUSB_SelectLUT( WORD wLUTIndex, 
                                     BYTE nDevNr=0);
@@ -628,23 +629,23 @@ USBAPI BOOL CCONV CamUSB_SelectLUT( WORD wLUTIndex,
 
 // --------------------------------------------------------------------------
 // CamUSB_WriteLUTData
-//! \brief		Writes data to a given LUT.
+//! \brief    Writes data to a given LUT.
 //!
-//!				The written LUT data is used after the next call of the
-//!				SelectLUT() function with the appropriate LUT number,
-//!				even if the last SelectLUT() call used the same LUT number.
-//!				This is because SelectLUT() copies the selected LUT to an
-//!				internal working LUT buffer.
+//!        The written LUT data is used after the next call of the
+//!        SelectLUT() function with the appropriate LUT number,
+//!        even if the last SelectLUT() call used the same LUT number.
+//!        This is because SelectLUT() copies the selected LUT to an
+//!        internal working LUT buffer.
 //!
-//! \param		wLUTIndex		index of the lut (0-3) which data should be updated
-//!	\param		pwLUTData		data to be written
-//!	\param		wDataSize       data size to be written
-//!	\param		nDevNr			Camera index number, that identifies the 
-//!								camera device which should be used with this
-//!								function
+//! \param    wLUTIndex    index of the lut (0-3) which data should be updated
+//!  \param    pwLUTData    data to be written
+//!  \param    wDataSize       data size to be written
+//!  \param    nDevNr      Camera index number, that identifies the 
+//!                camera device which should be used with this
+//!                function
 //!
-//! \retval		TRUE		success
-//!	\retval		FALSE		error
+//! \retval    TRUE    success
+//!  \retval    FALSE    error
 //!
 USBAPI BOOL CCONV CamUSB_WriteLUT(WORD wLUTIndex, 
                                   LPWORD pwLUTData, 
@@ -654,22 +655,21 @@ USBAPI BOOL CCONV CamUSB_WriteLUT(WORD wLUTIndex,
 
 /////////////////////////////////////////////////////////////////////////////
 //! \name Functions: Configuration
-/////////////////////////////////////////////////////////////////////////////
 //!@{
 
 // --------------------------------------------------------------------------
 // CamUSB_SaveCameraSettingsToFile
-//! \brief		Writes the current camera setting in a INI file which can
-//! \brief		be applied by CamUSB_LoadCameraSettingsFromFile
+//! \brief    Writes the current camera setting in a INI file which can
+//! \brief    be applied by CamUSB_LoadCameraSettingsFromFile
 //!
-//! \param		szFileName	    file name of INI-file to write
-//! \param		szSettingsName	name of settings data which should be used
-//!	\param		nDevNr		Camera index number, that identifies the 
-//!							camera device which should be used with this
-//!							function
+//! \param    szFileName      file name of INI-file to write
+//! \param    szSettingsName  name of settings data which should be used
+//!  \param    nDevNr    Camera index number, that identifies the 
+//!              camera device which should be used with this
+//!              function
 //!
-//! \retval		TRUE		success
-//!	\retval		FALSE		error
+//! \retval    TRUE    success
+//!  \retval    FALSE    error
 //!
 USBAPI BOOL CCONV CamUSB_SaveCameraSettingsToFile(  char* szFileName, 
                                                     char* szSettingsName,
@@ -677,19 +677,19 @@ USBAPI BOOL CCONV CamUSB_SaveCameraSettingsToFile(  char* szFileName,
 
 // --------------------------------------------------------------------------
 // CamUSB_SaveCameraSettingsToFileEx
-//! \brief		Writes the current camera setting in a INI file which can
-//! \brief		be applied by CamUSB_LoadCameraSettingsFromFile
+//! \brief    Writes the current camera setting in a INI file which can
+//! \brief    be applied by CamUSB_LoadCameraSettingsFromFile
 //!
 //! \param      dwFlags         optional flags to control the behavoir
 //!                             default => 0
-//! \param		szFileName	    file name of INI-file to write
-//! \param		szSettingsName	name of settings data which should be used
-//!	\param		nDevNr		Camera index number, that identifies the 
-//!							camera device which should be used with this
-//!							function
+//! \param    szFileName      file name of INI-file to write
+//! \param    szSettingsName  name of settings data which should be used
+//!  \param    nDevNr    Camera index number, that identifies the 
+//!              camera device which should be used with this
+//!              function
 //!
-//! \retval		TRUE		success
-//!	\retval		FALSE		error
+//! \retval    TRUE    success
+//!  \retval    FALSE    error
 //!
 USBAPI BOOL CCONV CamUSB_SaveCameraSettingsToFileEx(  
                                                   u32   dwFlags,
@@ -700,17 +700,17 @@ USBAPI BOOL CCONV CamUSB_SaveCameraSettingsToFileEx(
 
 // --------------------------------------------------------------------------
 // CamUSB_LoadCameraSettingsFromFile
-//! \brief		Load the new camera setting from an INI file which can
-//! \brief		be saved with CamUSB_SaveCameraSettingsToFile
+//! \brief    Load the new camera setting from an INI file which can
+//! \brief    be saved with CamUSB_SaveCameraSettingsToFile
 //!
-//! \param		szFileName	    file name of INI-file to read
-//! \param		szSettingsName	name of settings data which should be used
-//!	\param		nDevNr		Camera index number, that identifies the 
-//!							camera device which should be used with this
-//!							function
+//! \param    szFileName      file name of INI-file to read
+//! \param    szSettingsName  name of settings data which should be used
+//!  \param    nDevNr    Camera index number, that identifies the 
+//!              camera device which should be used with this
+//!              function
 //!
-//! \retval		TRUE		success
-//!	\retval		FALSE		error
+//! \retval    TRUE    success
+//!  \retval    FALSE    error
 //!
 USBAPI BOOL CCONV CamUSB_LoadCameraSettingsFromFile(  char* szFileName,
                                                       char* szSettingsName,
