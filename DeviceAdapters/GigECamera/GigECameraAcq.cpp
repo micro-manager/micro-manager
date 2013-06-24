@@ -18,10 +18,14 @@
 // this is/should be called only from JAI-started threads for image acquisition
 void CGigECamera::SnapImageCallback( J_tIMAGE_INFO* imageInfo )
 {
-	LogMessage( (std::string) "SnapImageCallback:  "
-				+ boost::lexical_cast<std::string>( (int) J_BitsPerPixel( imageInfo->iPixelType ) ) + " bits/pixel, " 
-				+ boost::lexical_cast<std::string>( imageInfo->iSizeX ) + "w x "
-				+ boost::lexical_cast<std::string>( imageInfo->iSizeY ) + "h", true );
+	// Skip logging for sequence acquisition
+	if( snapOneImageOnly )
+	{
+		LogMessage( (std::string) "SnapImageCallback:  "
+					+ boost::lexical_cast<std::string>( (int) J_BitsPerPixel( imageInfo->iPixelType ) ) + " bits/pixel, " 
+					+ boost::lexical_cast<std::string>( imageInfo->iSizeX ) + "w x "
+					+ boost::lexical_cast<std::string>( imageInfo->iSizeY ) + "h", true );
+	}
 	
 	if( !( doContinuousAcquisition || snapOneImageOnly ) ) return; // no acquisition requested
 
@@ -193,18 +197,25 @@ int CGigECamera::SnapImage()
 	}
 	else // retval == J_ST_SUCCESS
 	{
-		LogMessage( "SnapImage: acquisition started; waiting" );
-
 		MM::MMTime startTime = GetCurrentMMTime();
-		double exp = GetExposure();
-		// wait until the image is acquired (or 20x the expected exposure time has passed)
-		while( !snapImageDone && ( GetCurrentMMTime() - startTime < MM::MMTime( 20 * exp * 1000 ) ) ) // x1000 to scale ms -> us
+
+		double waitTimeMs = 20.0 * GetExposure();
+		const double minWaitTimeMs = 200.0;
+		if( waitTimeMs < minWaitTimeMs )
+		{
+			waitTimeMs = minWaitTimeMs;
+		}
+		LogMessage( "SnapImage: acquisition started; waiting with timeout of " + boost::lexical_cast<std::string>(waitTimeMs) + " ms" );
+
+		// wait until the image is acquired or 20x the exposure time (min. 100 ms) has past
+		MM::MMTime deadline = startTime + MM::MMTime( waitTimeMs * 1000.0 );
+		while( !snapImageDone && ( GetCurrentMMTime() < deadline ) ) // x1000 to scale ms -> us
 		{
 			CDeviceUtils::SleepMs( 1 );
 		}
 		if( !snapImageDone ) // something happened and we didn't get an image
 		{
-			LogMessage( (std::string) "SnapImage stopped the acquisition because no image had been returned after a long while" );
+			LogMessage( (std::string) "SnapImage stopped the acquisition because no image had been returned after " + boost::lexical_cast<std::string>(waitTimeMs) + " ms" );
 			retval = J_Camera_ExecuteCommand( hCamera, "AcquisitionStop" ); 
 			if( retval != J_ST_SUCCESS )
 			{
