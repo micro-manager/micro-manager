@@ -198,7 +198,7 @@ CAndorSDK3Camera::CAndorSDK3Camera()
    systemDevice->Release(deviceCount);
    IString * swVersion = systemDevice->GetString(L"SoftwareVersion");
    currentSoftwareVersion_ = swVersion->Get();
-   systemDevice->Release(deviceCount);
+   systemDevice->Release(swVersion);
    deviceManager->CloseDevice(systemDevice);
 }
 
@@ -506,9 +506,10 @@ int CAndorSDK3Camera::Shutdown()
       cameraDevice->ReleaseBufferControl(bufferControl);
       cameraDevice->Release(startAcquisitionCommand);
       cameraDevice->Release(sendSoftwareTrigger);
+      
+      deviceManager->CloseDevice(cameraDevice);
    }
 
-   deviceManager->CloseDevice(cameraDevice);
    initialized_ = false;
    return DEVICE_OK;
 }
