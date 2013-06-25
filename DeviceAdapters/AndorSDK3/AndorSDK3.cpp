@@ -1088,7 +1088,7 @@ AT_64 CAndorSDK3Camera::GetTimeStamp(unsigned char* pBuf)
 int CAndorSDK3Camera::InsertImage()
 {
    char deviceName[MM::MaxStrLength];
-   GetProperty(MM::g_Keyword_Name, deviceName);
+   GetProperty(MM::g_Keyword_CameraName, deviceName);
    
    Metadata md;
 
