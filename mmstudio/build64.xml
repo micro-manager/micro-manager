@@ -29,7 +29,7 @@
 			<fileset dir="../../3rdpartypublic/classext">
 				<include name="*.jar" />
 			</fileset>
-			<fileset dir="../bin_Win32">
+			<fileset dir="../bin_x64">
 				<include name="MMCoreJ.jar" />
 			</fileset>
 		</classpath>
