@@ -661,8 +661,10 @@ public class MMStudioMainFrame extends JFrame implements
     * the default processor stack to process images as they arrive on
     * the rawImageQueue.
     */
-    public void runDisplayThread(BlockingQueue rawImageQueue, final DisplayImageRoutine displayImageRoutine) {
-        final BlockingQueue processedImageQueue = ProcessorStack.run(rawImageQueue, getAcquisitionEngine().getImageProcessors());
+    public void runDisplayThread(BlockingQueue rawImageQueue, 
+            final DisplayImageRoutine displayImageRoutine) {
+        final BlockingQueue processedImageQueue = 
+                ProcessorStack.run(rawImageQueue, getAcquisitionEngine().getImageProcessors());
         new Thread("Display thread") {
          @Override
             public void run() {

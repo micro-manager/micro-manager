@@ -489,7 +489,9 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
          if (img_.getProcessor().getMin() == 0) {
             histogram[0] = imgWidth * imgHeight;
          } else {
-            histogram[numBins - 1] = imgWidth * imgHeight;
+            if (numBins > 0) {
+               histogram[numBins - 1] = imgWidth * imgHeight;
+            }
          }
       }
       if (drawHist) {
