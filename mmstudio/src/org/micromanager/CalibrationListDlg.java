@@ -23,26 +23,15 @@
 
 package org.micromanager;
 
+import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Rectangle;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.awt.event.*;
 import java.util.prefs.Preferences;
-
-import javax.swing.JButton;
-import javax.swing.JOptionPane;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
-import javax.swing.ListSelectionModel;
-import javax.swing.SpringLayout;
+import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
-
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
-
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.Calibration;
 import org.micromanager.utils.CalibrationList;
@@ -79,18 +68,22 @@ public class CalibrationListDlg extends MMDialog {
          calibrationList = cl;
       }
 
+      @Override
       public int getRowCount() {
          return calibrationList.size();
       }
       
+      @Override
       public int getColumnCount() {
          return COLUMN_NAMES.length;
       }
 
+      @Override
       public String getColumnName(int columnIndex) {
          return COLUMN_NAMES[columnIndex];
       }
 
+      @Override
       public Object getValueAt(int rowIndex, int columnIndex) {
          Calibration cal = calibrationList.get(rowIndex);
          if (columnIndex == 0) {
@@ -101,6 +94,7 @@ public class CalibrationListDlg extends MMDialog {
             return null;
       }
 
+      @Override
       public void setValueAt(Object value, int rowIndex, int columnIndex) {
          Calibration cal = calibrationList.get(rowIndex);
          if (columnIndex == 1) {
@@ -130,6 +124,7 @@ public class CalibrationListDlg extends MMDialog {
          return -1;
       }
 
+      @Override
       public boolean isCellEditable(int rowIndex, int columnIndex) {
          if (columnIndex == 1)
             return true;
@@ -150,6 +145,7 @@ public class CalibrationListDlg extends MMDialog {
    public CalibrationListDlg(CMMCore core) {
       super();
       addWindowListener(new WindowAdapter() {
+         @Override
          public void windowClosing(WindowEvent arg0) {
             savePosition();
          }
@@ -160,7 +156,8 @@ public class CalibrationListDlg extends MMDialog {
       setTitle("Pixel Size calibration");
       springLayout = new SpringLayout();
       getContentPane().setLayout(springLayout);
-      setBounds(100, 100, 362, 495);
+      setMinimumSize(new Dimension(263, 239));
+      setBounds(100, 100, 365, 495);
 
       Preferences root = Preferences.userNodeForPackage(this.getClass());
       prefs_ = root.node(root.absolutePath() + "/CalibrationListDlg");
@@ -168,7 +165,7 @@ public class CalibrationListDlg extends MMDialog {
 
       Rectangle r = getBounds();
       loadPosition(r.x, r.y, r.width, r.height);
-
+      
       final JScrollPane scrollPane = new JScrollPane();
       getContentPane().add(scrollPane);
       springLayout.putConstraint(SpringLayout.SOUTH, scrollPane, -16, SpringLayout.SOUTH, getContentPane());
@@ -181,6 +178,7 @@ public class CalibrationListDlg extends MMDialog {
       calTable_ = new JTable() {
          private static final long serialVersionUID = -5870707914970187465L;
 
+         @Override
          public String getToolTipText(MouseEvent e) {
             String tip = "";
             java.awt.Point p = e.getPoint();
@@ -211,6 +209,7 @@ public class CalibrationListDlg extends MMDialog {
       final JButton newButton = new JButton();
       newButton.setFont(new Font("", Font.PLAIN, 10));
       newButton.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent arg0) {
             addNewCalibration();
          }
@@ -224,6 +223,7 @@ public class CalibrationListDlg extends MMDialog {
       final JButton editButton = new JButton();
       editButton.setFont(new Font("", Font.PLAIN, 10));
       editButton.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent arg0) {
             editCalibration();
          }
@@ -239,6 +239,7 @@ public class CalibrationListDlg extends MMDialog {
       final JButton removeButton = new JButton();
       removeButton.setFont(new Font("", Font.PLAIN, 10));
       removeButton.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent arg0) {
             removeCalibration();
          }
@@ -255,6 +256,7 @@ public class CalibrationListDlg extends MMDialog {
       final JButton removeAllButton = new JButton();
       removeAllButton.setFont(new Font("", Font.PLAIN, 10));
       removeAllButton.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent arg0) {
             removeAllCalibrations();
          }
@@ -268,6 +270,7 @@ public class CalibrationListDlg extends MMDialog {
       final JButton closeButton = new JButton();
       closeButton.setFont(new Font("", Font.PLAIN, 10));
       closeButton.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent arg0) {
             savePosition();
             dispose();
@@ -282,12 +285,10 @@ public class CalibrationListDlg extends MMDialog {
       springLayout.putConstraint(SpringLayout.WEST, scrollPane, 10, SpringLayout.WEST, getContentPane());
       springLayout.putConstraint(SpringLayout.EAST, closeButton, -5, SpringLayout.EAST, getContentPane());
       springLayout.putConstraint(SpringLayout.WEST, closeButton, 0, SpringLayout.WEST, removeButton);
-
-
    }
 
    public void addNewCalibration() {
-      String name = new String("Res" + calibrationList_.size());
+      String name = "Res" + calibrationList_.size();
       if (editPreset(name, "0.00")) {
          // Clear calibrationlist and re-read from core
          calibrationList_.getCalibrationsFromCore();

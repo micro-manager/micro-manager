@@ -25,51 +25,21 @@ package org.micromanager;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.Font;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.prefs.Preferences;
-
-import javax.swing.AbstractCellEditor;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
-import javax.swing.JTextArea;
-import javax.swing.JTextField;
-import javax.swing.ListSelectionModel;
-import javax.swing.SpringLayout;
-import javax.swing.WindowConstants;
+import javax.swing.*;
 import javax.swing.border.BevelBorder;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
-
-import mmcorej.CMMCore;
-import mmcorej.Configuration;
-import mmcorej.DeviceType;
-import mmcorej.PropertySetting;
-import mmcorej.PropertyType;
-import mmcorej.StrVector;
-
+import mmcorej.*;
 import org.micromanager.api.ScriptInterface;
-import org.micromanager.utils.MMDialog;
-import org.micromanager.utils.NumberUtils;
-import org.micromanager.utils.PropertyItem;
-import org.micromanager.utils.ReportingUtils;
-import org.micromanager.utils.ShowFlags;
-import org.micromanager.utils.SliderPanel;
-import org.micromanager.utils.SortFunctionObjects;
+import org.micromanager.utils.*;
 
 /**
  * Dialog for editing of a pixel size configuration preset.
@@ -107,7 +77,7 @@ public class CalibrationEditor extends MMDialog {
       changed_ = false;
       Preferences root = Preferences.userNodeForPackage(this.getClass());
       // Share Prefs with PresetEditor
-      setPrefsNode(root.node(root.absolutePath() + "/PresetEditor"));
+      setPrefsNode(root.node(root.absolutePath() + "/CalibrationEditor"));
       initialCfg_ = new Configuration();
       
       flags_ = new ShowFlags();
@@ -115,7 +85,6 @@ public class CalibrationEditor extends MMDialog {
       
       springLayout = new SpringLayout();
       getContentPane().setLayout(springLayout);
-      setSize(551, 562);
       addWindowListener(new WindowAdapter() {
          @Override
          public void windowClosing(WindowEvent e) {
@@ -137,7 +106,9 @@ public class CalibrationEditor extends MMDialog {
       });
       setTitle("Calibration Group Editor");
 
-      loadPosition(100, 100, 400, 300);
+      setMinimumSize(new Dimension(490, 280));
+      loadPosition(100, 100, 551, 562);
+      // setResizable(false);
       setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 
       scrollPane_ = new JScrollPane();
@@ -157,6 +128,7 @@ public class CalibrationEditor extends MMDialog {
       showCamerasCheckBox_ = new JCheckBox();
       showCamerasCheckBox_.setFont(new Font("", Font.PLAIN, 10));
       showCamerasCheckBox_.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent arg0) {
             flags_.cameras_ = showCamerasCheckBox_.isSelected();
             data_.updateStatus();
@@ -171,6 +143,7 @@ public class CalibrationEditor extends MMDialog {
       showShuttersCheckBox_ = new JCheckBox();
       showShuttersCheckBox_.setFont(new Font("", Font.PLAIN, 10));
       showShuttersCheckBox_.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent arg0) {
             flags_.shutters_ = showShuttersCheckBox_.isSelected();
             data_.updateStatus();
@@ -185,6 +158,7 @@ public class CalibrationEditor extends MMDialog {
       showStagesCheckBox_ = new JCheckBox();
       showStagesCheckBox_.setFont(new Font("", Font.PLAIN, 10));
       showStagesCheckBox_.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent arg0) {
             flags_.stages_ = showStagesCheckBox_.isSelected();
             data_.updateStatus();
@@ -200,6 +174,7 @@ public class CalibrationEditor extends MMDialog {
       showStateDevicesCheckBox_ = new JCheckBox();
       showStateDevicesCheckBox_.setFont(new Font("", Font.PLAIN, 10));
       showStateDevicesCheckBox_.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent arg0) {
             flags_.state_ = showStateDevicesCheckBox_.isSelected();
             data_.updateStatus();
@@ -215,6 +190,7 @@ public class CalibrationEditor extends MMDialog {
       showOtherCheckBox_ = new JCheckBox();
       showOtherCheckBox_.setFont(new Font("", Font.PLAIN, 10));
       showOtherCheckBox_.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent arg0) {
             flags_.other_ = showOtherCheckBox_.isSelected();
             data_.updateStatus();
@@ -231,6 +207,7 @@ public class CalibrationEditor extends MMDialog {
          showReadonlyCheckBox_ = new JCheckBox();
          showReadonlyCheckBox_.setFont(new Font("Arial", Font.PLAIN, 10));
          showReadonlyCheckBox_.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                // show/hide read-only properties
                data_.setShowReadonly(showReadonlyCheckBox_.isSelected());
@@ -280,6 +257,7 @@ public class CalibrationEditor extends MMDialog {
 
       final JButton okButton = new JButton();
       okButton.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent arg0) {
             if (applySettings()) {
                changed_ = Boolean.TRUE;
@@ -296,6 +274,7 @@ public class CalibrationEditor extends MMDialog {
 
       final JButton cancelButton = new JButton();
       cancelButton.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent arg0) {
             dispose();
          }
@@ -323,7 +302,6 @@ public class CalibrationEditor extends MMDialog {
    
 
    protected boolean applySettings() {
-
       // stop all editing
       int column = table_.getEditingColumn(); 
       if (column >    -1) { 
@@ -409,12 +387,7 @@ public class CalibrationEditor extends MMDialog {
    public void setParentGUI(ScriptInterface parent) {
       parentGUI_ = parent;
    }
-   
-   private void handleException (Exception e) {
-      String errText = "Exception occurred: " + e.getMessage();
-      JOptionPane.showMessageDialog(this, errText);
-   }
-      
+
 
    /**
     * Property table data model, representing MMCore data
@@ -581,10 +554,12 @@ public class CalibrationEditor extends MMDialog {
          }
       }
   
+      @Override
       public int getRowCount() {
          return propList_.size();
       }
       
+      @Override
       public int getColumnCount() {
          if (isEditingGroup())
             return columnNames_.length;
@@ -600,8 +575,8 @@ public class CalibrationEditor extends MMDialog {
          return propList_.get(row);
       }
       
-      public Object getValueAt(int row, int col) {
-         
+      @Override
+      public Object getValueAt(int row, int col) {         
          PropertyItem item = propList_.get(row);
          if (col == 0)
             return item.device + "-" + item.name;
@@ -674,67 +649,67 @@ public class CalibrationEditor extends MMDialog {
          }
       }
 
-      public final void updateStatus(){
-         
+      public final void updateStatus() {
+
          // determine the group signature
          groupData_ = new Configuration[0];
-         StrVector cfgNames = new StrVector(0);
          try {
-                if (core_.isPixelSizeConfigDefined(label_)) {
-                   initialCfg_ = core_.getPixelSizeConfigData(label_);
-                }
-                // collect the group data
-               cfgNames = core_.getAvailablePixelSizeConfigs();
-               groupData_ = new Configuration[(int)cfgNames.size()];
-               presetNames_ = new String[(int)cfgNames.size()];
-               for (int i=0; i<groupData_.length; i++) {
-                  groupData_[i] = core_.getPixelSizeConfigData(cfgNames.get(i));
-                  presetNames_[i] = cfgNames.get(i);
+            if (core_.isPixelSizeConfigDefined(label_)) {
+               initialCfg_ = core_.getPixelSizeConfigData(label_);
+            }
+            // collect the group data
+            StrVector cfgNames = core_.getAvailablePixelSizeConfigs();
+            groupData_ = new Configuration[(int) cfgNames.size()];
+            presetNames_ = new String[(int) cfgNames.size()];
+            for (int i = 0; i < groupData_.length; i++) {
+               groupData_[i] = core_.getPixelSizeConfigData(cfgNames.get(i));
+               presetNames_[i] = cfgNames.get(i);
+            }
+
+            if (groupData_.length > 0) {
+               // extract the signature
+               groupSignature_ = new PropertySetting[(int) groupData_[0].size()];
+               for (int i = 0; i < groupData_[0].size(); i++) {
+                  groupSignature_[i] = groupData_[0].getSetting(i);
                }
-               
-               if (groupData_.length > 0) {
-                  // extract the signature
-                  groupSignature_ = new PropertySetting[(int)groupData_[0].size()];
-                  for (int i=0; i < groupData_[0].size(); i++) {
-                     groupSignature_[i] = groupData_[0].getSetting(i);
-                  }
-               } else {
-                  groupSignature_ = new PropertySetting[0];
-               }
+            } else {
+               groupSignature_ = new PropertySetting[0];
+            }
          } catch (Exception e) {
             ReportingUtils.showError(e);
          }
-         
+
          try {
-            
+
             StrVector devices = core_.getLoadedDevices();
             propList_.clear();
-            
-            for (int i=0; i<devices.size(); i++){               
+
+            for (int i = 0; i < devices.size(); i++) {
                // select which devices to display
                DeviceType dtype = core_.getDeviceType(devices.get(i));
-               boolean showDevice = false;
-               if (dtype == DeviceType.MagnifierDevice)
+               boolean showDevice;
+               if (dtype == DeviceType.MagnifierDevice) {
                   showDevice = false;
-               else if (dtype == DeviceType.SerialDevice)
+               } else if (dtype == DeviceType.SerialDevice) {
                   showDevice = false;
-               else if (dtype == DeviceType.CameraDevice)
+               } else if (dtype == DeviceType.CameraDevice) {
                   showDevice = flags_.cameras_;
-               else if (dtype == DeviceType.ShutterDevice)
+               } else if (dtype == DeviceType.ShutterDevice) {
                   showDevice = flags_.shutters_;
-               else if (dtype == DeviceType.StageDevice)
+               } else if (dtype == DeviceType.StageDevice) {
                   showDevice = flags_.stages_;
-               else if (dtype == DeviceType.XYStageDevice)
+               } else if (dtype == DeviceType.XYStageDevice) {
                   showDevice = flags_.stages_;
-               else if (dtype == DeviceType.StateDevice)
+               } else if (dtype == DeviceType.StateDevice) {
                   showDevice = flags_.state_;
-               else
+               } else {
                   showDevice = flags_.other_;
-               
+               }
+
                if (showDevice) {
                   StrVector properties = core_.getDevicePropertyNames(devices.get(i));
-                  
-                  for (int j=0; j<properties.size(); j++) {
+
+                  for (int j = 0; j < properties.size(); j++) {
                      PropertyItem item = new PropertyItem();
                      item.device = devices.get(i);
                      item.name = properties.get(j);
@@ -747,47 +722,47 @@ public class CalibrationEditor extends MMDialog {
                      item.upperLimit = core_.getPropertyUpperLimit(devices.get(i), properties.get(j));
                      item.type = core_.getPropertyType(item.device, item.name);
                      StrVector values = core_.getAllowedPropertyValues(devices.get(i), properties.get(j));
-                     item.allowed = new String[(int)values.size()];
-                     for (int k=0; k<values.size(); k++){
+                     item.allowed = new String[(int) values.size()];
+                     for (int k = 0; k < values.size(); k++) {
                         item.allowed[k] = values.get(k);
                      }
-         
+
                      // todo - no need to re-new the comparators inside the loop!
-                     if ( PropertyType.Float == item.type){
+                     if (PropertyType.Float == item.type) {
                         Arrays.sort(item.allowed, new SortFunctionObjects.DoubleStringComp());
-                     }
-                     else if ( PropertyType.Integer == item.type){
+                     } else if (PropertyType.Integer == item.type) {
                         //ReportingUtils.logMessage("Sorting " + device + "."+ name);
                         Arrays.sort(item.allowed, new SortFunctionObjects.IntStringComp());
+                     } else if (PropertyType.String == item.type) {
+                        boolean allNumeric = true;
+                        // test that first character of every possible value is a numeral
+                        // if so, show user the list sorted by the numeric prefix
+                        for (int k = 0; k < item.allowed.length; k++) {
+                           if (item.allowed[k].equals("") || !Character.isDigit(item.allowed[k].charAt(0))) {
+                              allNumeric = false;
+                              break;
+                           }
+                        }
+                        if (allNumeric) {
+                           Arrays.sort(item.allowed, new SortFunctionObjects.NumericPrefixStringComp());
+                        } else {
+                           Arrays.sort(item.allowed);
+                        }
                      }
-                     else if ( PropertyType.String == item.type){
-                         boolean allNumeric = true;
-                         // test that first character of every possible value is a numeral
-                         // if so, show user the list sorted by the numeric prefix
-                         for (int k=0; k<item.allowed.length; k++){
-                            if (item.allowed[k].equals("") || !Character.isDigit(item.allowed[k].charAt(0))){
-                            allNumeric = false;
-                            break;
-                         }
-                      }
-                      if( allNumeric)
-                         Arrays.sort(item.allowed, new SortFunctionObjects.NumericPrefixStringComp());
-                      else
-                         Arrays.sort(item.allowed);
-                     }                     
-                     
+
                      if (!item.preInit && (!item.readOnly || showReadonly_)) {
-                        if(initialCfg_.isPropertyIncluded(item.device, item.name)){
+                        if (initialCfg_.isPropertyIncluded(item.device, item.name)) {
                            item.confInclude = true;
                         } else {
                            item.confInclude = false;
                         }
-                        
+
                         if (isMatchingSignature(item)) {
-                           if ( ! ((dtype == DeviceType.CameraDevice) && (item.name.equals("Binning"))) ) {
+                           if (!((dtype == DeviceType.CameraDevice) && (item.name.equals("Binning")))) {
                               propList_.add(item);
-                              if (!isEditingGroup())
+                              if (!isEditingGroup()) {
                                  item.confInclude = true;
+                              }
                            }
                         }
                      }
@@ -799,15 +774,15 @@ public class CalibrationEditor extends MMDialog {
          }
          this.fireTableStructureChanged();
       }
-      
+
       private boolean isMatchingSignature(PropertyItem item) {
          if (isEditingGroup())
             return true;
          else {
             int j;
-            for (j=0; j<groupSignature_.length; j++) {
-               if (item.device.compareTo(groupSignature_[j].getDeviceLabel()) == 0 &&
-                   item.name.compareTo(groupSignature_[j].getPropertyName()) == 0 ) {
+            for (j = 0; j < groupSignature_.length; j++) {
+               if (item.device.compareTo(groupSignature_[j].getDeviceLabel()) == 0
+                       && item.name.compareTo(groupSignature_[j].getPropertyName()) == 0) {
                   break;
                }
             }
@@ -893,18 +868,21 @@ public class CalibrationEditor extends MMDialog {
          super();
          check_.setSelected(false);
          check_.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                fireEditingStopped();
             }
          });
          // end editing on selection change
          combo_.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                fireEditingStopped();
             }
          });
          
          slider_.addEditActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                fireEditingStopped();
             }            
@@ -918,6 +896,7 @@ public class CalibrationEditor extends MMDialog {
       }
 
       // This method is called when a cell value is edited by the user.
+      @Override
       public Component getTableCellEditorComponent(JTable table, Object value,
             boolean isSelected, int rowIndex, int colIndex) {
                  
@@ -971,6 +950,7 @@ public class CalibrationEditor extends MMDialog {
       
       // This method is called when editing is completed.
       // It must return the new value to be stored in the cell.
+      @Override
       public Object getCellEditorValue() {
          if (editingCol_ == 1) {
             if (item_.allowed.length == 0) {
@@ -994,6 +974,7 @@ public class CalibrationEditor extends MMDialog {
       PropertyItem item_;
       
      
+      @Override
       public Component getTableCellRendererComponent(JTable table, Object value,
             boolean isSelected, boolean hasFocus, int rowIndex, int colIndex) {
          

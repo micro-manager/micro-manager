@@ -26,46 +26,14 @@ package org.micromanager;
 
 import java.awt.Font;
 import java.awt.Rectangle;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-
-import javax.swing.AbstractAction;
-import javax.swing.ActionMap;
-import javax.swing.InputMap;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JRootPane;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
-import javax.swing.JTextArea;
-import javax.swing.JTextField;
-import javax.swing.KeyStroke;
-import javax.swing.ListSelectionModel;
-import javax.swing.SpringLayout;
-import javax.swing.SwingConstants;
+import java.awt.event.*;
+import javax.swing.*;
 import javax.swing.border.BevelBorder;
 import javax.swing.table.TableColumn;
-
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
-
 import org.micromanager.api.ScriptInterface;
-import org.micromanager.utils.MMDialog;
-import org.micromanager.utils.PropertyNameCellRenderer;
-import org.micromanager.utils.PropertyValueCellEditor;
-import org.micromanager.utils.PropertyValueCellRenderer;
-import org.micromanager.utils.PropertyTableData;
-import org.micromanager.utils.PropertyUsageCellEditor;
-import org.micromanager.utils.PropertyUsageCellRenderer;
-import org.micromanager.utils.ReportingUtils;
-import org.micromanager.utils.ShowFlags;
-import org.micromanager.utils.ShowFlagsPanel;
+import org.micromanager.utils.*;
 
 /*
  * A base class from which GroupEditor and PresetEditor are derived.
@@ -113,6 +81,7 @@ public class ConfigDialog extends MMDialog {
    public ConfigDialog(String groupName, String presetName, ScriptInterface gui, CMMCore core, boolean newItem) {
       super();
       addWindowListener(new WindowAdapter() {
+         @Override
          public void windowClosing(WindowEvent arg0) {
             savePosition();
          }
@@ -125,8 +94,8 @@ public class ConfigDialog extends MMDialog {
       springLayout_ = new SpringLayout();
       getContentPane().setLayout(springLayout_);
       setBounds(100, 100, 550, 600);
-       Rectangle r = getBounds();
-       this.loadPosition(r.x, r.y);
+      Rectangle r = getBounds();
+      this.loadPosition(r.x, r.y);
          
       setResizable(false);
    }
@@ -157,6 +126,7 @@ public class ConfigDialog extends MMDialog {
       // Setup ENTER key.
       inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "enter");
       actionMap.put("enter", new AbstractAction()  {
+         @Override
          public void actionPerformed(ActionEvent e)
          {
             if (table_.isEditing() && table_.getCellEditor() != null)
@@ -168,6 +138,7 @@ public class ConfigDialog extends MMDialog {
       // Setup ESCAPE key.
       inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "escape");
       actionMap.put("escape", new AbstractAction() {
+         @Override
          public void actionPerformed(ActionEvent e)
          {
             cancelChosen();
@@ -200,6 +171,7 @@ public class ConfigDialog extends MMDialog {
          showReadonlyCheckBox_ = new JCheckBox();
          showReadonlyCheckBox_.setFont(new Font("Arial", Font.PLAIN, 10));
          showReadonlyCheckBox_.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                // show/hide read-only properties
                data_.setShowReadOnly(showReadonlyCheckBox_.isSelected());
@@ -243,6 +215,7 @@ public class ConfigDialog extends MMDialog {
       springLayout_.putConstraint(SpringLayout.SOUTH, okButton_, 30, SpringLayout.NORTH, getContentPane());
       springLayout_.putConstraint(SpringLayout.NORTH, okButton_, 5, SpringLayout.NORTH, getContentPane());
       okButton_.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent e) {
             if (table_.isEditing() && table_.getCellEditor() != null)
                table_.getCellEditor().stopCellEditing();
@@ -258,6 +231,7 @@ public class ConfigDialog extends MMDialog {
       springLayout_.putConstraint(SpringLayout.SOUTH, cancelButton_, 57, SpringLayout.NORTH, getContentPane());
       springLayout_.putConstraint(SpringLayout.NORTH, cancelButton_, 32, SpringLayout.NORTH, getContentPane());
       cancelButton_.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent e) {
             cancelChosen();
          }

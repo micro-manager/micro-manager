@@ -26,7 +26,6 @@ package org.micromanager.utils;
 import java.awt.Frame;
 import java.awt.Rectangle;
 import java.util.prefs.Preferences;
-
 import javax.swing.JDialog;
 import org.micromanager.MMStudioMainFrame;
 
