@@ -39,7 +39,7 @@
 #include <cstdio>
 #include <sstream>
 #include <algorithm>
-#include <sys/time.h>
+//#include <sys/time.h>
 #define HID_TIMEOUT 20
 
 using namespace std;
@@ -331,7 +331,7 @@ int MDHIDDevice::GetAnswer(char* answer, unsigned answerLen, const char* term)
    // Also, need to figure out to work with answerLen
    // Conversion between unsigned and signed char is also bad
    // Is this function useful at all in HID devices?
-   int res = hid_read_timeout(handle_, answer, answerLen, answerTimeoutMs_);
+   int res = hid_read_timeout(handle_, (unsigned char*) answer, answerLen, answerTimeoutMs_);
    if (res == -1)
       return ERR_RECEIVE_FAILED;
 

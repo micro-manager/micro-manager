@@ -132,7 +132,7 @@ public:
    bool OKToDelete() {return refCount_ < 1;}
 
 private:
-   int TakeOverDevice(int interface);
+   int TakeOverDevice(int interfaceIndex);
    int WriteByte(const unsigned char dataByte);
    std::string ReadLine(const unsigned int msTimeOut, const char* lineTerminator) throw (NotOpen, ReadTimeout, std::runtime_error);
 
