@@ -363,13 +363,9 @@ int MDHIDDevice::Write(const unsigned char* buf, unsigned long bufLen)
 */
 int MDHIDDevice::Read(unsigned char* buf, unsigned long bufLen, unsigned long& charsRead)
 {
-   unsigned char* reportBuf = new unsigned char[bufLen + 1];
-   int res = hid_read(handle_, reportBuf, bufLen + 1);
+   int res = hid_read(handle_, buf, bufLen + 1);
    if (res == -1) 
       return ERR_RECEIVE_FAILED;
-   memcpy(buf, reportBuf + 1, bufLen);
-   delete reportBuf;
-
    charsRead = res;
    return DEVICE_OK;
 }
