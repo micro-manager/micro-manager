@@ -240,6 +240,11 @@ int MDHIDDevice::Open(const char* /*portName*/)
             LogMessage(logMsgMsg.str().c_str());
             deviceFound = false;
          }
+         else
+         {
+            open_ = true;
+         }
+         
          break;
       }
    }
