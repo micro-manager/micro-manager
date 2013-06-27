@@ -80,6 +80,7 @@ Source: micro-manager\mrfw.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\XCLIBWNT.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\LaserCombinerSDK.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\PCO_Kamlib.dll; DestDir: {app}; Flags: ignoreversion
+Source: ..\..\3rdpartypublic\hidapi\hidapi-0.7.0\windows\Win32\Release\hidapi.dll; DestDir: {app}; Flags: ignoreversion
 
 ; Breeze stuff
 Source: micro-manager\DSLRRemoteLib.dll; DestDir: {app}; Flags: ignoreversion

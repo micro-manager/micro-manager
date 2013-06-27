@@ -3,7 +3,7 @@
 	ProjectType="Visual C++"
 	Version="9.00"
 	Name="HIDManager"
-	ProjectGUID="{DCAF2299-3620-40FB-9E55-62A860FD67F2}"
+	ProjectGUID="{349B37AE-AB50-410E-A445-6C4A29522434}"
 	RootNamespace="HIDManager"
 	Keyword="Win32Proj"
 	TargetFrameworkVersion="131072"

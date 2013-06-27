@@ -281,6 +281,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "IDS_uEye", "..\DeviceAdapte
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Oxxius", "..\DeviceAdapters\Oxxius\Oxxius.vcproj", "{70ADDFBB-1216-412E-B326-51A146C3B8A4}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "HIDManager", "..\DeviceAdapters\HIDManager\HIDManager.vcproj", "{349B37AE-AB50-410E-A445-6C4A29522434}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -1349,6 +1351,14 @@ Global
 		{70ADDFBB-1216-412E-B326-51A146C3B8A4}.Release|Win32.Build.0 = Release|Win32
 		{70ADDFBB-1216-412E-B326-51A146C3B8A4}.Release|x64.ActiveCfg = Release|x64
 		{70ADDFBB-1216-412E-B326-51A146C3B8A4}.Release|x64.Build.0 = Release|x64
+		{349B37AE-AB50-410E-A445-6C4A29522434}.Debug|Win32.ActiveCfg = Debug|Win32
+		{349B37AE-AB50-410E-A445-6C4A29522434}.Debug|Win32.Build.0 = Debug|Win32
+		{349B37AE-AB50-410E-A445-6C4A29522434}.Debug|x64.ActiveCfg = Debug|x64
+		{349B37AE-AB50-410E-A445-6C4A29522434}.Debug|x64.Build.0 = Debug|x64
+		{349B37AE-AB50-410E-A445-6C4A29522434}.Release|Win32.ActiveCfg = Release|Win32
+		{349B37AE-AB50-410E-A445-6C4A29522434}.Release|Win32.Build.0 = Release|Win32
+		{349B37AE-AB50-410E-A445-6C4A29522434}.Release|x64.ActiveCfg = Release|x64
+		{349B37AE-AB50-410E-A445-6C4A29522434}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

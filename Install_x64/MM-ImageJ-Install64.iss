@@ -81,6 +81,7 @@ Source: micro-manager\mcammr64.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\XCLIBW64.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\LaserCombinerSDK64.dll; DestDir: {app}; Flags: ignoreversion
 source: micro-manager\PCO_Kamlib64.dll; DestDir: {app}; Flags: ignoreversion
+Source: ..\..\3rdpartypublic\hidapi\hidapi-0.7.0\windows\x64\Release\hidapi.dll; DestDir: {app}; Flags: ignoreversion
 
 ; device adapters
 Source: micro-manager\mmgr_dal_*.dll; DestDir: {app}; Flags: ignoreversion
