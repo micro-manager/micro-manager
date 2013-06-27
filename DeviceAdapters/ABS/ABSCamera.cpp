@@ -239,14 +239,11 @@ fractionOfPixelsToDropOrSaturate_(0.002)
 
 /**
 * CABSCamera destructor.
-* If this device used as intended within the Micro-Manager system,
-* Shutdown() will be always called before the destructor. But in any case
-* we need to make sure that all resources are properly released even if
-* Shutdown() was not called.
+* Calls Shutdown in case it wasn't explicity called already.
 */
 CABSCamera::~CABSCamera()
 {
-  StopSequenceAcquisition();
+   Shutdown();
 }
 
 //-----------------------------------------------------------------------------
