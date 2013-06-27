@@ -343,9 +343,13 @@ int MDHIDDevice::GetAnswer(char* answer, unsigned answerLen, const char* term)
 */
 int MDHIDDevice::Write(const unsigned char* buf, unsigned long bufLen)
 {
-   int res = hid_write(handle_, buf, bufLen);
+   unsigned char* reportBuf = new unsigned char[bufLen + 1];
+   reportBuf[0] = 0x0;
+   memcpy(reportBuf + 1, buf, bufLen);
+   int res = hid_write(handle_, reportBuf, bufLen + 1);
    if (-1 == res)
       return ERR_WRITE_FAILED;
+   delete reportBuf;
 
    return DEVICE_OK;
 }
@@ -355,12 +359,14 @@ int MDHIDDevice::Write(const unsigned char* buf, unsigned long bufLen)
 */
 int MDHIDDevice::Read(unsigned char* buf, unsigned long bufLen, unsigned long& charsRead)
 {
-   int res = hid_read(handle_, buf, bufLen);
+   unsigned char* reportBuf = new unsigned char[bufLen + 1];
+   int res = hid_read(handle_, reportBuf, bufLen + 1);
    if (res == -1) 
       return ERR_RECEIVE_FAILED;
+   memcpy(buf, reportBuf + 1, bufLen);
+   delete reportBuf;
 
    charsRead = res;
-
    return DEVICE_OK;
 }
 
