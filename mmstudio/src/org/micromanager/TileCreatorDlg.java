@@ -828,7 +828,7 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
       double imageSizeYUm = getImageSize()[1];
 
       double tileSizeXUm = getTileSize()[0];
-      double tileSizeYUm = getTileSize()[0];
+      double tileSizeYUm = getTileSize()[1];
 
       double overlapXUm = imageSizeXUm - tileSizeXUm;
       double overlapYUm = imageSizeYUm - tileSizeYUm;
