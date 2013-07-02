@@ -1883,6 +1883,10 @@ int QICamera::SetupEMAndEasyEMGain()
    string	easyGain;
    easyGainAsLong = 0;
    err = QCam_GetParam((QCam_Settings *)m_settings, qprmEasyEmMode, &easyGainAsLong);
+   if (err != qerrSuccess) {
+      REPORT_QERR(err);
+      return DEVICE_ERR;
+   }
 
    if (easyGainAsLong == 1){
 
