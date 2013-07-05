@@ -65,7 +65,7 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
    private static final String SHOW_IMAGES = "ShowImages";
    private static final String SCORING_METHOD = "Maximize";
    private static final String showValues[] = {"Yes", "No"};
-   private final static String scoringMethods[] = {"Edges", "StdDev", "Mean", "SharpEdges", "Redondo", "Volath", "Volath5"};
+   private final static String scoringMethods[] = {"Edges", "StdDev", "Mean", "NormalizedVariance", "SharpEdges", "Redondo", "Volath", "Volath5"};
    private double searchRange = 10;
    private double tolerance = 1;
    private double cropFactor = 1;
@@ -335,11 +335,16 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
    }
 
    private double computeNormalizedStdDev(ImageProcessor proc) {
-
       ImageStatistics stats = proc.getStatistics();
       return stats.stdDev / stats.mean;
    }
 
+   private double computeNormalizedVariance(ImageProcessor proc) {
+      ImageStatistics stats = proc.getStatistics();
+      return (stats.stdDev * stats.stdDev) / stats.mean;
+   }
+
+   
    // this is NOT a traditional Laplace filter; the "center" weight is
    // actually the bottom-center cell of the 3x3 matrix.  AFAICT it's a
    // typo in the source paper, but works better than the traditional
@@ -423,6 +428,8 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
          return computeMean(proc);
       } else if (scoringMethod.contentEquals("StdDev")) {
          return computeNormalizedStdDev(proc);
+      } else if (scoringMethod.contentEquals("NormalizedVariance")) {
+         return computeNormalizedVariance(proc);
       } else if (scoringMethod.contentEquals("Edges")) {
          return computeEdges(proc);
       } else if (scoringMethod.contentEquals("SharpEdges")) {
