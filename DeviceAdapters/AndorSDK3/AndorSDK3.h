@@ -135,6 +135,7 @@ private:
    AT_64 fpgaTSclockFrequency_;
    AT_64 timeStamp_;
    int number_of_devices_;
+   int deviceInUseIndex_;
    bool keep_trying_;
    bool in_external_;
    unsigned int currentSeqExposure_;

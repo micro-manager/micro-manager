@@ -190,9 +190,14 @@ void TFloatStringProperty::Update(ISubject * /*Subject*/)
    {
       if ( !callback_->IsSSCPoised() )
       {
+         IFloat * maxIntTransRate = callback_->GetCameraDevice()->GetFloat(L"MaxInterfaceTransferRate");
+         double d_rate = maxIntTransRate->Get();
+         callback_->GetCameraDevice()->Release(maxIntTransRate);
+
          stringstream ss;
          ss.setf(ios::fixed, ios::floatfield);
          ss << "Min: " << setprecision(5) << float_feature_->Min() << "  Max: " << float_feature_->Max();
+         ss << "  Max Sustain: " << d_rate;
          displayStrValue_ = ss.str();
       }
    }

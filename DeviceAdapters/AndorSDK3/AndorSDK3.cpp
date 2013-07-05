@@ -62,6 +62,9 @@ const char * const g_Keyword_SoftwareVersion = "CurrentSoftware";
 
 const char * const g_CameraDefaultBinning = "1x1";
 
+static const unsigned int MAX_NUMBER_DEVICES = 8;
+bool DEVICE_IN_USE[MAX_NUMBER_DEVICES] = {false, false, false, false, false, false, false, false};
+
 static const wstring g_RELEASE_2_0_FIRMWARE_VERSION = L"11.1.12.0";
 static const wstring g_RELEASE_2_1_FIRMWARE_VERSION = L"11.7.30.0";
 
@@ -164,6 +167,7 @@ CAndorSDK3Camera::CAndorSDK3Camera()
   initialized_(false),
   b_cameraPresent_(false),
   number_of_devices_(0),
+  deviceInUseIndex_(0),
   sequenceStartTime_(0),
   fpgaTSclockFrequency_(0),
   timeStamp_(0),
@@ -280,18 +284,31 @@ int CAndorSDK3Camera::Initialize()
 
    for (int i = 0; i < GetNumberOfDevicesPresent(); i++)
    {
-      cameraDevice = deviceManager->OpenDevice(i);
-      IString * cameraFamilyString = cameraDevice->GetString(L"CameraFamily");
-      std::wstring temp_ws = cameraFamilyString->Get();
-      cameraDevice->Release(cameraFamilyString);
-      if (temp_ws.compare(L"Andor sCMOS") == 0)
+      if (!DEVICE_IN_USE[i])
       {
-         b_cameraPresent_ = true;
-         break;
-      }
-      else
-      {
-         deviceManager->CloseDevice(cameraDevice);
+         try
+         {
+           cameraDevice = deviceManager->OpenDevice(i);
+         }
+         catch (exception & e)
+         {
+            LogMessage(e.what());
+            continue;
+         }
+         IString * cameraFamilyString = cameraDevice->GetString(L"CameraFamily");
+         std::wstring temp_ws = cameraFamilyString->Get();
+         cameraDevice->Release(cameraFamilyString);
+         if (temp_ws.compare(L"Andor sCMOS") == 0)
+         {
+            b_cameraPresent_ = true;
+            DEVICE_IN_USE[i] = true;
+            deviceInUseIndex_ = i;
+            break;
+         }
+         else
+         {
+            deviceManager->CloseDevice(cameraDevice);
+         }
       }
    }
    
@@ -508,6 +525,7 @@ int CAndorSDK3Camera::Shutdown()
       cameraDevice->Release(sendSoftwareTrigger);
       
       deviceManager->CloseDevice(cameraDevice);
+      DEVICE_IN_USE[deviceInUseIndex_] = false;
    }
 
    initialized_ = false;
