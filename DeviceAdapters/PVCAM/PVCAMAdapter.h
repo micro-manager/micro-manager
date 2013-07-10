@@ -66,11 +66,12 @@
 //////////////////////////////////////////////////////////////////////////////
 // Error codes
 //
-#define ERR_INVALID_BUFFER          10002
-#define ERR_INVALID_PARAMETER_VALUE 10003
-#define ERR_BUSY_ACQUIRING          10004
+#define ERR_INVALID_BUFFER            10002
+#define ERR_INVALID_PARAMETER_VALUE   10003
+#define ERR_BUSY_ACQUIRING            10004
 #define ERR_STREAM_MODE_NOT_SUPPORTED 10005
-#define ERR_CAMERA_NOT_FOUND        10006
+#define ERR_CAMERA_NOT_FOUND          10006
+#define ERR_ROI_SIZE_NOT_SUPPORTED    10007
 
 /***
 * User selected region of interest
@@ -301,7 +302,7 @@ private:
    MM::MMTime      startTime_;            // Acquisition start time
 
    short           cameraId_;             // 0-based camera ID, used to allow multiple cameras connected
-   unsigned short* circBuffer_;           // a buffer used for pl_exp_start_cont
+   unsigned char*  circBuffer_;           // a buffer used for pl_exp_start_cont
    unsigned long   circBufferSize_;       // total byte-wise size of the circular buffer
    long            circBufferFrameCount_; // number of frames to allocate the buffer for
    bool            stopOnOverflow_;       // Stop inserting images to MM buffer if it's full
@@ -310,7 +311,7 @@ private:
    bool            sequenceModeReady_;    // Continuous acquisition prepared
    unsigned short* prevFrame_;            // A pointer to the previous frame in circular buffer
    long            triggerTimeout_;       // Max time to wait for an external trigger
-   bool			   microsecResSupported_;
+   bool            microsecResSupported_; // True if camera supports microsecond exposures
    friend class    AcqSequenceThread;
    AcqSequenceThread* uniAcqThd_;         // Pointer to the sequencing thread
 

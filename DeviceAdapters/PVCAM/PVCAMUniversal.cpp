@@ -92,7 +92,7 @@ MMThreadLock g_pvcamLock;
 // Maximum pixel time to be used in case we fail to get the PARAM_PIX_TIME from the camera.
 const int MAX_PIX_TIME = 1000;
 // Circular buffer default values
-const int CIRC_BUF_FRAME_CNT_DEF = 10;
+const int CIRC_BUF_FRAME_CNT_DEF = 8;
 const int CIRC_BUF_FRAME_CNT_MIN = 3;
 
 // global constants
@@ -162,6 +162,7 @@ curImageCnt_(0),
 hPVCAM_(0),
 cameraId_(cameraId),
 circBuffer_(0),
+circBufferSize_(0),
 circBufferFrameCount_(CIRC_BUF_FRAME_CNT_DEF), // Sizes larger than 3 caused image tearing in ICX-674. Reason unknown.
 stopOnOverflow_(true),
 snappingSingleFrame_(false),
@@ -182,6 +183,7 @@ rgbaColor_(false)
    // add custom messages
    SetErrorText(ERR_CAMERA_NOT_FOUND, "No Camera Found. Is it connected and switched on?");
    SetErrorText(ERR_BUSY_ACQUIRING, "Acquisition already in progress.");
+   SetErrorText(ERR_ROI_SIZE_NOT_SUPPORTED, "Selected ROI is not supported by the camera");
    
    uniAcqThd_ = new AcqSequenceThread(this);             // Pointer to the sequencing thread
 
@@ -439,6 +441,7 @@ int Universal::Initialize()
          nRet = CreateProperty(g_ReadoutPort, prmReadoutPort_->ToString().c_str(), MM::String, true, pAct);
    }
 
+   /// EXPOSURE RESOLUTION
    uns16 expResCount = 0;
    int32 expResVal;
    uns32 const expResDescLen = 200;
@@ -447,13 +450,13 @@ int Universal::Initialize()
    microsecResSupported_ = false;
 
    if (!pl_get_param(hPVCAM_, PARAM_EXP_RES_INDEX, ATTR_COUNT, (void *)&expResCount))
-	   return LogCamError(__LINE__, "pl_get_param(PARAM_EXP_RES_INDEX)" );
+      return LogCamError(__LINE__, "pl_get_param(PARAM_EXP_RES_INDEX)" );
    	  
    for (uns32 i = 0; i < expResCount; i++)
    {
-	  pl_get_enum_param(hPVCAM_, PARAM_EXP_RES, i, &expResVal, expResDesc, expResDescLen);
-	  if ( strstr(expResDesc, "Micro") != 0 || strstr(expResDesc, "micro") != 0 || strstr(expResDesc, "MICRO") != 0)
-	     microsecResSupported_ = true;
+      pl_get_enum_param(hPVCAM_, PARAM_EXP_RES, i, &expResVal, expResDesc, expResDescLen);
+      if ( strstr(expResDesc, "Micro") != 0 || strstr(expResDesc, "micro") != 0 || strstr(expResDesc, "MICRO") != 0)
+         microsecResSupported_ = true;
    }
 
    /// MULTIPLIER GAIN
@@ -1600,6 +1603,14 @@ int Universal::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize)
 {
    START_METHOD("Universal::SetROI");
 
+   // PVCAM does not like ROIs smaller than 2x2 pixels (8 bytes)
+   // (This check avoids crash for 1x1 ROIs in PVCAM 2.9.5)
+   if ( xSize * ySize < 4 )
+   {
+      LogCamError( __LINE__, "Universal::SetROI ROI size not supported" );
+      return ERR_ROI_SIZE_NOT_SUPPORTED;
+   }
+   
    // The acquisition must be stopped, and will be
    // automatically started again by MMCore
    if (IsCapturing())
@@ -1800,26 +1811,26 @@ int Universal::ResizeImageBufferContinuous()
       int16 trigModeValue = (int16)prmTriggerMode_->Current();
 
       uns32 convertedExposure;
-	  uns16 expRes = EXP_RES_ONE_MILLISEC;
+      uns16 expRes = EXP_RES_ONE_MILLISEC;
 
-	  if (exposure_ < 60 && microsecResSupported_)
-	  {		  
-		  expRes = EXP_RES_ONE_MICROSEC;
-		  convertedExposure = (uns32)(1000*exposure_);
-	  }
-	  else
-	  {
-		  expRes = EXP_RES_ONE_MILLISEC;
-		  convertedExposure = (uns32)exposure_;
-	  }
-	
-	  g_pvcamLock.Lock();
-	  if (!pl_set_param(hPVCAM_, PARAM_EXP_RES_INDEX, (void *)&expRes))
-	  {
-		  g_pvcamLock.Unlock();
-		  return LogCamError(__LINE__, "");
-	  }
-	  g_pvcamLock.Unlock();
+      if (exposure_ < 60 && microsecResSupported_)
+      {
+         expRes = EXP_RES_ONE_MICROSEC;
+         convertedExposure = (uns32)(1000*exposure_);
+      }
+      else
+      {
+         expRes = EXP_RES_ONE_MILLISEC;
+         convertedExposure = (uns32)exposure_;
+      }
+
+      g_pvcamLock.Lock();
+      if (!pl_set_param(hPVCAM_, PARAM_EXP_RES_INDEX, (void *)&expRes))
+      {
+         g_pvcamLock.Unlock();
+         return LogCamError(__LINE__, "");
+      }
+      g_pvcamLock.Unlock();
 
 
       g_pvcamLock.Lock();
@@ -1839,12 +1850,13 @@ int Universal::ResizeImageBufferContinuous()
       circBufferSize_ = frameSize * circBufferFrameCount_;
       if( circBuffer_ != NULL )
          delete[] circBuffer_;
-      circBuffer_ = new unsigned short[circBufferSize_];
+      circBuffer_ = new unsigned char[circBufferSize_];
 
       nRet = DEVICE_OK;
    }
-   catch(...)
+   catch( const std::exception& e)
    {
+       LogCamError( __LINE__, e.what() );
    }
    //ToDo: use semaphore
    singleFrameModeReady_ = false;
@@ -1874,26 +1886,26 @@ int Universal::ResizeImageBufferSingle()
       int16 trigModeValue = (int16)prmTriggerMode_->Current();
 
       uns32 convertedExposure;
-	  uns16 expRes = EXP_RES_ONE_MILLISEC;
-  
-	  if (exposure_ < 60 && microsecResSupported_)
-	  {		  
-		  expRes = EXP_RES_ONE_MICROSEC;
-		  convertedExposure = (uns32)(1000*exposure_);
-	  }
-	  else 
-	  {
-		  expRes = EXP_RES_ONE_MILLISEC;
-		  convertedExposure = (uns32)exposure_;
-	  }
+      uns16 expRes = EXP_RES_ONE_MILLISEC;
+
+      if (exposure_ < 60 && microsecResSupported_)
+      {
+         expRes = EXP_RES_ONE_MICROSEC;
+         convertedExposure = (uns32)(1000*exposure_);
+      }
+      else 
+      {
+         expRes = EXP_RES_ONE_MILLISEC;
+         convertedExposure = (uns32)exposure_;
+      }
 	
-	  g_pvcamLock.Lock();
-	  if (!pl_set_param(hPVCAM_, PARAM_EXP_RES_INDEX, (void *)&expRes))
-	  {
-		  g_pvcamLock.Unlock();
-		  return LogCamError(__LINE__, "");
-	  }
-	  g_pvcamLock.Unlock();
+      g_pvcamLock.Lock();
+      if (!pl_set_param(hPVCAM_, PARAM_EXP_RES_INDEX, (void *)&expRes))
+      {
+         g_pvcamLock.Unlock();
+         return LogCamError(__LINE__, "");
+      }
+      g_pvcamLock.Unlock();
 
       g_pvcamLock.Lock();
       if (!pl_exp_setup_seq(hPVCAM_, 1, 1, &camRegion_, (int16)trigModeValue, convertedExposure, &frameSize ))
