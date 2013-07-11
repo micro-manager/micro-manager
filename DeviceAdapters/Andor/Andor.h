@@ -158,9 +158,7 @@ public:
    int OnTemperatureRangeMax(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnVCVoltage(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnBaselineClamp(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnCropModeSwitch(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnCropModeWidth(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnCropModeHeight(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnCropModeSwitch(MM::PropertyBase* /*pProp*/, MM::ActionType eAct);
    int OnActualIntervalMS(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSelectTrigger(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnTimeOut(MM::PropertyBase* pProp, MM::ActionType eAct);  // kdb July-30-2009
@@ -170,6 +168,7 @@ public:
    int OnSpuriousNoiseFilterThreshold(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSpuriousNoiseFilterDescription(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnOptAcquireMode(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnROI(MM::PropertyBase* pProp, MM::ActionType eAct);
    void UpdateOAParams(const char*  OAModeName);
    int OnOADescription(MM::PropertyBase* pProp, MM::ActionType eAct);
 
@@ -227,7 +226,13 @@ private:
    std::vector<std::string> PreAmpGains_;
    long currentGain_;   
 
-   bool cropModeSwitch_;
+   enum CROPMODE {
+      OFF,
+      BOTTOM,
+      CENTRAL
+   };
+
+   CROPMODE cropModeSwitch_;
    long currentCropWidth_;
    long currentCropHeight_;
    std::vector<std::string> VSpeeds_;
@@ -245,27 +250,24 @@ private:
 #endif
 
    bool busy_;
-
+public:
    struct ROI {
       int x;
       int y;
       int xSize;
       int ySize;
-
-      ROI() : x(0), y(0), xSize(0), ySize(0) {}
-      ~ROI() {}
-
-      bool isEmpty() {return x==0 && y==0 && xSize==0 && ySize == 0;}
    };
+private:
+   ROI roi_, customROI_;
+   std::vector<ROI> roiList;
 
-   ROI roi_;
+
+
    int binSize_;
    double expMs_; //value used by camera
    std::string driverDir_;
    int fullFrameX_;
    int fullFrameY_;
-   int tempFrameX_;
-   int tempFrameY_;
    short* fullFrameBuffer_;
    std::vector<std::string> readoutModes_;
 
@@ -282,6 +284,7 @@ private:
    int UpdateExposureFromCamera();
    int UpdatePreampGains();
    int GetPreAmpGainString(int PreAmpgainIdx, char * PreAmpGainString,int PreAmpGainStringLength );
+   void GetROIPropertyName(int position, int hSize, int vSize, char * buffer);
 
    int HSSpeedIdx_;
    int PreAmpGainIdx_;
@@ -303,6 +306,8 @@ private:
       OPEN=1,
       CLOSED=2
    };
+
+
 
    int iInternalShutterMode_;
    int iShutterMode_;
@@ -353,11 +358,14 @@ private:
    unsigned char* GetAcquiredImage();
    std::string getCameraType();
    unsigned int createGainProperty(AndorCapabilities * caps);
+   unsigned int createROIProperties(AndorCapabilities * caps);
+   unsigned int PopulateROIDropdown();
+   unsigned int ApplyROI(bool forSingleSnap);
    unsigned int createTriggerProperty(AndorCapabilities * caps);
    unsigned int createSnapTriggerMode();
    unsigned int createShutterProperty(AndorCapabilities * caps);
    unsigned int AddTriggerProperty(int mode);
-   unsigned int createIsolatedCropModeProperty(AndorCapabilities * caps);
+
 
    bool mb_canUseFan;
    bool mb_canSetTemp;
