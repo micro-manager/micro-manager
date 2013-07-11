@@ -167,6 +167,55 @@ private:
    ImgBuffer img_;
 };
 
+/**
+ * DAMonochromator: Use DA device as monochromator
+ * Also acts as a shutter (using a particular wavelength as "closed")
+ */
+class DAMonochromator : public CShutterBase<DAMonochromator>
+{
+public:
+   DAMonochromator();
+   ~DAMonochromator();
+
+   // Device API
+   // ----------
+   int Initialize();
+   int Shutdown() {initialized_ = false; return DEVICE_OK;}
+
+   void GetName(char* pszName) const;
+   bool Busy();
+
+   // Shutter API
+   int SetOpen(bool open = true);
+   int GetOpen(bool& open);
+   int Fire (double /* deltaT */) { return DEVICE_UNSUPPORTED_COMMAND;}
+   // ---------
+
+   // action interface
+   // ----------------
+   int OnDADevice(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+   int OnOpenWavelength(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnClosedWavelength(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnMinWavelength(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnMaxWavelength(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnMinVoltage(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnMaxVoltage(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+private:
+   std::vector<std::string> availableDAs_;
+   MM::SignalIO* DADevice_;
+   std::string DADeviceName_;
+   bool initialized_;
+
+   bool open_;
+   double openVoltage_, closedVoltage_;
+   double minVoltage_, maxVoltage_;
+   double minWavelength_, maxWavelength_;
+   double openWavelength_, closedWavelength_;
+
+};
 
 /**
  * DAShutter: Adds shuttering capabilities to a DA device
