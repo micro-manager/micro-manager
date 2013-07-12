@@ -502,13 +502,14 @@ unsigned MultiCamera::GetBitDepth() const
       unsigned bitDepth = 0;
       for (unsigned int i = 0; i < physicalCameras_.size(); i++)
       {
-         unsigned nextBitDepth;
          if (physicalCameras_[i] != 0)
-            nextBitDepth = physicalCameras_[i]->GetBitDepth();
-            if (bitDepth < nextBitDepth)
+         {
+            unsigned nextBitDepth = physicalCameras_[i]->GetBitDepth();
+            if (nextBitDepth > bitDepth)
             {
                bitDepth = nextBitDepth;
             }
+         }
       }
       return bitDepth;
    }
@@ -829,15 +830,15 @@ void CameraSnapThread::Start()
  */
 DAMonochromator::DAMonochromator() :
    DADevice_(0),
+   DADeviceName_ (""),
+   initialized_ (false),
    open_(false),
    minVoltage_(0.0),
    maxVoltage_(10.0),
    minWavelength_(200.0),
    maxWavelength_(1000.0),
-   closedWavelength_(200.0),
    openWavelength_(400.0),
-   DADeviceName_ (""),
-   initialized_ (false)
+   closedWavelength_(200.0)
 {
    InitializeDefaultErrorMessages();
 

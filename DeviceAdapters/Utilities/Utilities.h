@@ -208,12 +208,11 @@ private:
    MM::SignalIO* DADevice_;
    std::string DADeviceName_;
    bool initialized_;
-
    bool open_;
-   double openVoltage_, closedVoltage_;
    double minVoltage_, maxVoltage_;
    double minWavelength_, maxWavelength_;
    double openWavelength_, closedWavelength_;
+   double openVoltage_, closedVoltage_;
 
 };
 
