@@ -1334,12 +1334,10 @@ public class MMStudioMainFrame extends JFrame implements
       toolsMenu.add(acquisitionMenuItem);
       acquisitionMenuItem.setToolTipText("Open multi-dimensional acquisition window");
       
-      centerAndDragMenuItem_ = new JCheckBoxMenuItem();
-
       
+      centerAndDragMenuItem_ = new JCheckBoxMenuItem();     
       
       centerAndDragMenuItem_.addActionListener(new ActionListener() {
-
          public void actionPerformed(ActionEvent e) {
             updateCenterAndDragListener();
             IJ.setTool(Toolbar.HAND);
@@ -1351,14 +1349,12 @@ public class MMStudioMainFrame extends JFrame implements
       centerAndDragMenuItem_.setSelected(mainPrefs_.getBoolean(MOUSE_MOVES_STAGE, false));
       centerAndDragMenuItem_.setToolTipText("When enabled, double clicking or dragging in the snap/live\n"
                                           + "window moves the XY-stage. Requires the hand tool.");
-      
-
       toolsMenu.add(centerAndDragMenuItem_);
 
+      
       final JMenuItem calibrationMenuItem = new JMenuItem();
       toolsMenu.add(calibrationMenuItem);
       calibrationMenuItem.addActionListener(new ActionListener() {
-
          @Override
          public void actionPerformed(ActionEvent e) {
             createCalibrationListDlg();

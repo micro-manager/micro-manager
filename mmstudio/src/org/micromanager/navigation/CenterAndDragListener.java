@@ -7,10 +7,11 @@ import ij.gui.ImageCanvas;
 import ij.gui.ImageWindow;
 import ij.gui.Toolbar;
 import java.awt.Event;
-import java.awt.Window;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 import java.util.Arrays;
 import javax.swing.JOptionPane;
 import mmcorej.CMMCore;
@@ -22,7 +23,8 @@ import org.micromanager.utils.ReportingUtils;
  * @author OD
  *
  */
-public class CenterAndDragListener implements MouseListener, MouseMotionListener {
+public class CenterAndDragListener implements MouseListener, 
+        MouseMotionListener, WindowListener {
       private CMMCore core_;
       private MMStudioMainFrame gui_;
 	   private ImageCanvas canvas_;
@@ -77,6 +79,9 @@ public class CenterAndDragListener implements MouseListener, MouseMotionListener
          }
          if (!Arrays.asList(canvas_.getMouseMotionListeners()).contains(this)) {
             canvas_.addMouseMotionListener(this);
+         }
+         if (!Arrays.asList(win.getWindowListeners()).contains(this)) {
+            win.addWindowListener(this);
          }
 
 	      getOrientation();
@@ -254,5 +259,27 @@ public class CenterAndDragListener implements MouseListener, MouseMotionListener
 	   public void mouseExited(MouseEvent e) {}
 	   public void mouseEntered(MouseEvent e) {}
 	   public void mouseMoved(MouseEvent e) {}
+
+   public void windowOpened(WindowEvent we) {
+   }
+
+   public void windowClosing(WindowEvent we) {
+   }
+
+   public void windowClosed(WindowEvent we) {
+      stop();
+   }
+
+   public void windowIconified(WindowEvent we) {
+   }
+
+   public void windowDeiconified(WindowEvent we) {
+   }
+
+   public void windowActivated(WindowEvent we) {
+   }
+
+   public void windowDeactivated(WindowEvent we) {
+   }
 
 }
