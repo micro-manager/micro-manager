@@ -825,7 +825,7 @@ int CArduinoSwitch::OnBlanking(MM::PropertyBase* pProp, MM::ActionType eAct)
       std::string prop;
       pProp->Get(prop);
 
-      if (prop ==g_On && !blanking_) {
+      if (prop == g_On && !blanking_) {
          hub->PurgeComPortH();
          unsigned char command[1];
          command[0] = 20;
@@ -847,7 +847,9 @@ int CArduinoSwitch::OnBlanking(MM::PropertyBase* pProp, MM::ActionType eAct)
             return ERR_COMMUNICATION;
          blanking_ = true;
          hub->SetTimedOutput(false);
-      } else if (prop ==g_Off && blanking_){
+         LogMessage("Switched blanking on", true);
+
+      } else if (prop == g_Off && blanking_){
          unsigned char command[1];
          command[0] = 21;
          int ret = hub->WriteToComPortH((const unsigned char*) command, 1);
@@ -868,6 +870,7 @@ int CArduinoSwitch::OnBlanking(MM::PropertyBase* pProp, MM::ActionType eAct)
             return ERR_COMMUNICATION;
          blanking_ = false;
          hub->SetTimedOutput(false);
+         LogMessage("Switched blanking off", true);
       }
    }
 

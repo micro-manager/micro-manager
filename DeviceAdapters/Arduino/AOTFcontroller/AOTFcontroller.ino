@@ -373,18 +373,28 @@
 
        }
     }
+    // In trigger mode, we will blank even if blanking is not on..
     if (triggerMode_) {
       int tmp = digitalRead(inPin_);
       if (tmp != triggerState_) {
-        if (triggerNr_ >=0) {
-          PORTB = triggerPattern_[sequenceNr_];
-          sequenceNr_++;
-          if (sequenceNr_ >= patternLength_)
-            sequenceNr_ = 0;
+        if (blankOnHigh_ && (tmp == HIGH) ) {
+          PORTB = 0;
         }
-        triggerNr_++;
-      }
-      triggerState_ = tmp;         
+        else if (!blankOnHigh_ && (tmp == LOW) ) {
+          PORTB = 0;
+        }
+        else { 
+          if (triggerNr_ >=0) {
+            PORTB = triggerPattern_[sequenceNr_];
+            sequenceNr_++;
+            if (sequenceNr_ >= patternLength_)
+              sequenceNr_ = 0;
+          }
+          triggerNr_++;
+        }
+        
+        triggerState_ = tmp;       
+      }  
     } else if (blanking_) {
       if (blankOnHigh_) {
         if (digitalRead(inPin_) == LOW)
