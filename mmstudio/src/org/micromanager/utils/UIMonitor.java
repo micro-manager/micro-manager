@@ -74,8 +74,8 @@ public class UIMonitor {
       final int eventID = event.getID();
       String identifier = null;
       String action = null;
-      // System.out.println(event.toString()+"\n");
-      if (0 != (eventID & (ActionEvent.ACTION_EVENT_MASK | 0))) {
+
+      if (0 != (eventID & (ActionEvent.ACTION_EVENT_MASK))) {
          Object source = event.getSource();
 
          if (source instanceof Component) {
@@ -94,8 +94,10 @@ public class UIMonitor {
                }
             }
             if (identifier != null && action != null) {
-               String message = identifier + action + " in " + ((Window) SwingUtilities.getAncestorOfClass(Window.class, (Component) source)).getClass().getSimpleName() + ".";
-               ReportingUtils.logMessage(message);
+               try {
+                  String message = identifier + action + " in " + ((Window) SwingUtilities.getAncestorOfClass(Window.class, (Component) source)).getClass().getSimpleName() + ".";
+                  ReportingUtils.logMessage(message);
+               } catch (NullPointerException npe) {}
             }
          }
       }
