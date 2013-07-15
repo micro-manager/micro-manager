@@ -14,11 +14,15 @@ if ($_FILES['file']['error'] > 0)
 }
 else
 {
-   echo 'Upload: ' . $_FILES['file']['name'] . '<br />';
-   echo 'Type: ' . $_FILES['file']['type'] . '<br />';
-   echo 'Size: ' . ($_FILES['file']['size'] / 1024) . ' Kb<br />';
-   echo 'Temp file: ' . $_FILES['file']['tmp_name'] . '<br />';
+   // echo 'Upload: ' . $_FILES['file']['name'] . '<br />';
+   // echo 'Type: ' . $_FILES['file']['type'] . '<br />';
+   // echo 'Size: ' . ($_FILES['file']['size'] / 1024) . ' Kb<br />';
+   // echo 'Temp file: ' . $_FILES['file']['tmp_name'] . '<br />';
    $ipaddress = getenv(REMOTE_ADDR);
+
+   if (strlen($_FILES['file']['name']) < 1) {
+      return;
+   }
 
    $opath = $uploadPlace_ . '/'. $_FILES['file']['name'] . '_' . $ipaddress;
 
@@ -56,8 +60,6 @@ else
        fclose($rhandle);
 
        mail('info@micro-manager.org', 'New Problem Report!', $mess);
-       mail('karl.hoover@ucsf.edu', 'New Problem Report!', $mess);
-       //mail('mugwortmoxa@hotmail.com', 'New Problem Report!', $mess);
 
    }// uploaded .uu was found
 } // FILES was parsed
