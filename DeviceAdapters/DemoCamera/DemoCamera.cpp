@@ -2600,12 +2600,13 @@ int CDemoObjectiveTurret::OnTrigger(MM::PropertyBase* pProp, MM::ActionType eAct
 // ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 CDemoStage::CDemoStage() : 
-stepSize_um_(0.025),
-pos_um_(0.0),
-busy_(false),
-initialized_(false),
-lowerLimit_(0.0),
-upperLimit_(20000.0)
+   stepSize_um_(0.025),
+   pos_um_(0.0),
+   busy_(false),
+   initialized_(false),
+   lowerLimit_(0.0),
+   upperLimit_(20000.0),
+   sequenceable_(false)
 {
    InitializeDefaultErrorMessages();
 
@@ -2657,6 +2658,15 @@ int CDemoStage::Initialize()
    // --------
    CPropertyAction* pAct = new CPropertyAction (this, &CDemoStage::OnPosition);
    ret = CreateProperty(MM::g_Keyword_Position, "0", MM::Float, false, pAct);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   // Sequenceability
+   // --------
+   pAct = new CPropertyAction (this, &CDemoStage::OnSequence);
+   ret = CreateProperty("UseSequences", "No", MM::String, false, pAct);
+   AddAllowedValue("UseSequences", "No");
+   AddAllowedValue("UseSequences", "Yes");
    if (ret != DEVICE_OK)
       return ret;
 
@@ -2736,6 +2746,26 @@ int CDemoStage::OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
+int CDemoStage::OnSequence(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      std::string answer = "No";
+      if (sequenceable_)
+         answer = "Yes";
+      pProp->Set(answer.c_str());
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      std::string answer;
+      pProp->Get(answer);
+      if (answer == "Yes")
+         sequenceable_ = true;
+      else
+         sequenceable_ = false;
+   }
+   return DEVICE_OK;
+}
 ///////////////////////////////////////////////////////////////////////////////
 // CDemoXYStage implementation
 // ~~~~~~~~~~~~~~~~~~~~~~~~~

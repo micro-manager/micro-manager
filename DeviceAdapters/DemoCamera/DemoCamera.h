@@ -474,36 +474,29 @@ public:
    // action interface
    // ----------------
    int OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSequence(MM::PropertyBase* pProp, MM::ActionType eAct);
 
    // Sequence functions
    int IsStageSequenceable(bool& isSequenceable) const {
-      isSequenceable = false;
+      isSequenceable = sequenceable_;
       return DEVICE_OK;
    }
    int GetStageSequenceMaxLength(long& nrEvents) const 
    {
-      DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
-      if (pHub && pHub->GenerateRandomError())
-         return SIMULATED_ERROR;
-      nrEvents = 0; return DEVICE_OK;
-   }
-   int StartStageSequence() const
-   {
-      DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
-      if (pHub && pHub->GenerateRandomError())
-         return SIMULATED_ERROR;
+      nrEvents = 2000; 
       return DEVICE_OK;
    }
-   int StopStageSequence() const
+   int StartStageSequence() 
+   {
+      return DEVICE_OK;
+   }
+   int StopStageSequence() 
    {  
-      DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
-      if (pHub && pHub->GenerateRandomError())
-         return SIMULATED_ERROR;
       return DEVICE_OK;
    }
    int ClearStageSequence() {return DEVICE_OK;}
    int AddToStageSequence(double /* position */) {return DEVICE_OK;}
-   int SendStageSequence() const {return DEVICE_OK;}
+   int SendStageSequence()  {return DEVICE_OK;}
 
 private:
    void SetIntensityFactor(double pos);
@@ -513,6 +506,7 @@ private:
    bool initialized_;
    double lowerLimit_;
    double upperLimit_;
+   bool sequenceable_;
 };
 
 //////////////////////////////////////////////////////////////////////////////
