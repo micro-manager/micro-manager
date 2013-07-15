@@ -702,10 +702,10 @@ public class MMStudioMainFrame extends JFrame implements
       public void onPropertiesChanged() {
          // TODO: remove test once acquisition engine is fully multithreaded
          if (engine_ != null && engine_.isAcquisitionRunning()) {
-            core_.logMessage("Notification from MMCore ignored because acquistion is running!");
+            core_.logMessage("Notification from MMCore ignored because acquistion is running!", true);
          } else {
             if (ignorePropertyChanges_) {
-               core_.logMessage("Notification from MMCore ignored since the system is still loading");
+               core_.logMessage("Notification from MMCore ignored since the system is still loading", true);
             } else {
                core_.updateSystemStateCache();
                updateGUI(true);
@@ -713,7 +713,7 @@ public class MMStudioMainFrame extends JFrame implements
                for (MMListenerInterface mmIntf : MMListeners_) {
                   mmIntf.propertiesChangedAlert();
                }
-               core_.logMessage("Notification from MMCore!");
+               core_.logMessage("Notification from MMCore!", true);
             }
          }
       }
@@ -721,7 +721,7 @@ public class MMStudioMainFrame extends JFrame implements
       @Override
       public void onPropertyChanged(String deviceName, String propName, String propValue) {
          core_.logMessage("Notification for Device: " + deviceName + " Property: " +
-               propName + " changed to value: " + propValue);
+               propName + " changed to value: " + propValue, true);
          // update all registered listeners
          for (MMListenerInterface mmIntf:MMListeners_) {
             mmIntf.propertyChangedAlert(deviceName, propName, propValue);
