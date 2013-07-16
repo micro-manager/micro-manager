@@ -47,7 +47,7 @@ public:
    BFCamera(bool dual);
    ~BFCamera();
 
-   int Initialize();
+   int Initialize(MM::Device* caller, MM::Core* core);
    int Shutdown();
    unsigned long GetBufferSize() {return (unsigned long)width_ * height_ * depth_ + 2 * MAX_FRAME_OFFSET;}
    unsigned GetNumberOfBuffers() {return (unsigned) boards_.size();}
@@ -59,6 +59,7 @@ public:
    int StartSequence();
    int StopSequence();
    bool isAcquiring() {return acquiring_;}
+   int GetTimeout();
   
    unsigned Width() {return width_;}
    unsigned Height() {return height_;}
@@ -76,8 +77,10 @@ private:
    unsigned depth_;
    bool initialized_;
    CiSIGNAL eofSignal_;
-   unsigned timeoutMs_;
+   BFU32 timeoutMs_;
    bool acquiring_;
    int frameOffset_;
    bool dual_;
+   MM::Device* caller_;
+   MM::Core* core_;
 };

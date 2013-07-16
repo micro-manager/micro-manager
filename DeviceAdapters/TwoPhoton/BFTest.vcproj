@@ -44,7 +44,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\..\MMDevice;..\..\..\3rdparty\bitflow\SDK_5.20\include"
+				AdditionalIncludeDirectories="..\..\MMDevice;..\..\..\3rdparty\bitflow\SDK_5.70\include"
 				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
