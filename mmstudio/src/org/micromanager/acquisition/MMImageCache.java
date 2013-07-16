@@ -88,6 +88,7 @@ public class MMImageCache implements ImageCache {
             l.imagingFinished(path);
          }
       }
+      listenerExecutor_.shutdown();
    }
 
    public boolean isFinished() {
