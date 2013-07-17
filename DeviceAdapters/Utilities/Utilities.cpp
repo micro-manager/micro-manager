@@ -838,7 +838,9 @@ DAMonochromator::DAMonochromator() :
    minWavelength_(200.0),
    maxWavelength_(1000.0),
    openWavelength_(400.0),
-   closedWavelength_(200.0)
+   closedWavelength_(200.0),
+   openVoltage_(4.0),
+   closedVoltage_(0.0)
 {
    InitializeDefaultErrorMessages();
 
@@ -1036,7 +1038,7 @@ int DAMonochromator::OnOpenWavelength(MM::PropertyBase* pProp, MM::ActionType eA
       pProp->Get(val);
       openWavelength_ = val;
 
-      double volt = ( openWavelength_ / (maxWavelength_ - minWavelength_)) * (maxVoltage_ - minVoltage_);
+      double volt = (openWavelength_ - minWavelength_) * (maxVoltage_ - minVoltage_) / (maxWavelength_ - minWavelength_) + minVoltage_;
       if (volt > maxVoltage_ || volt < minVoltage_)
          return ERR_POS_OUT_OF_RANGE;
 
