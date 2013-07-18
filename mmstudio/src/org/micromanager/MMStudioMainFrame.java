@@ -3684,9 +3684,9 @@ public class MMStudioMainFrame extends JFrame implements
             // read text file and evaluate
             interp.eval(TextUtils.readTextFile(startupScriptFile_));
          } catch (IOException exc) {
-            ReportingUtils.showError(exc, "Unable to read the startup script (" + startupScriptFile_ + ").");
+            ReportingUtils.logError(exc, "Unable to read the startup script (" + startupScriptFile_ + ").");
          } catch (EvalError exc) {
-            ReportingUtils.showError(exc);
+            ReportingUtils.logError(exc);
          } finally {
             waitDlg.closeDialog();
          }
