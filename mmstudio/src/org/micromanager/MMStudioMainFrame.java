@@ -1770,6 +1770,7 @@ public class MMStudioMainFrame extends JFrame implements
             }
 
             loadMRUConfigFiles();
+            afMgr_ = new AutofocusManager(gui_);
             initializePlugins();
 
             toFront();
@@ -3360,8 +3361,8 @@ public class MMStudioMainFrame extends JFrame implements
           ReportingUtils.logError(e);
           toolTipDescription = "Description not available";
        } catch (NoSuchFieldException e) {
-    	   toolTipDescription = "Description not available";
-          ReportingUtils.logError(cl.getName() + " fails to implement static String tooltipDescription.");
+          toolTipDescription = "Description not available";
+          ReportingUtils.logMessage(cl.getName() + " fails to implement static String tooltipDescription.");
        } catch (IllegalArgumentException e) {
           ReportingUtils.logError(e);
        } catch (IllegalAccessException e) {
@@ -3705,7 +3706,7 @@ public class MMStudioMainFrame extends JFrame implements
       saveMRUConfigFiles();
 
       final WaitDialog waitDlg = new WaitDialog(
-            "Loading system configuration, please wait...");
+              "Loading system configuration, please wait...");
 
       waitDlg.setAlwaysOnTop(true);
       waitDlg.showDialog();
@@ -3715,22 +3716,22 @@ public class MMStudioMainFrame extends JFrame implements
          if (sysConfigFile_.length() > 0) {
             GUIUtils.preventDisplayAdapterChangeExceptions();
             core_.waitForSystem();
-            ignorePropertyChanges_ = true; 
+            ignorePropertyChanges_ = true;
             core_.loadSystemConfiguration(sysConfigFile_);
-            ignorePropertyChanges_ = false; 
+            ignorePropertyChanges_ = false;
             GUIUtils.preventDisplayAdapterChangeExceptions();
-            
+
          }
       } catch (final Exception err) {
          GUIUtils.preventDisplayAdapterChangeExceptions();
-       
+
          ReportingUtils.showError(err);
          result = false;
-     } finally { 
- 		         waitDlg.closeDialog(); 
- 		      } 
- 		      setEnabled(true); 
- 		      initializeGUI();
+      } finally {
+         waitDlg.closeDialog();
+      }
+      setEnabled(true);
+      initializeGUI();
 
       updateSwitchConfigurationMenu();
 
@@ -4507,7 +4508,7 @@ public class MMStudioMainFrame extends JFrame implements
             pi.menuItem = className;
          } catch (NoSuchFieldException e) {
             pi.menuItem = className;
-            ReportingUtils.logError(className + " fails to implement static String menuName.");
+            ReportingUtils.logMessage(className + " fails to implement static String menuName.");
          } catch (IllegalArgumentException e) {
             ReportingUtils.logError(e);
          } catch (IllegalAccessException e) {
@@ -4516,7 +4517,6 @@ public class MMStudioMainFrame extends JFrame implements
 
          if (pi.menuItem == null) {
             pi.menuItem = className;
-            //core_.logMessage(className + " fails to implement static String menuName.");
          }
          pi.menuItem = pi.menuItem.replace("_", " ");
          pi.pluginClass = cl;
@@ -4677,8 +4677,7 @@ public class MMStudioMainFrame extends JFrame implements
 
 
    private void loadPlugins() {
-      afMgr_ = new AutofocusManager(this);
-
+      
       ArrayList<Class<?>> pluginClasses = new ArrayList<Class<?>>();
       ArrayList<Class<?>> autofocusClasses = new ArrayList<Class<?>>();
       List<Class<?>> classes;
