@@ -102,6 +102,9 @@
           </StringArray>
         </Property>
       </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="dataSet1ComboBox_ActionPerformed"/>
+      </Events>
     </Component>
     <Component class="javax.swing.JComboBox" name="actionComboBox_">
       <Properties>

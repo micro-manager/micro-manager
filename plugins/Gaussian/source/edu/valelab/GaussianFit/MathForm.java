@@ -1,9 +1,4 @@
 /*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
-
-/*
  * MathForm.java
  *
  * Created on Mar 20, 2012, 2:14:26 PM
@@ -21,6 +16,7 @@ public class MathForm extends javax.swing.JFrame {
    private Preferences prefs_;
    private static final String FRAMEXPOS = "MathXPos";
    private static final String FRAMEYPOS = "MathYPos";
+   private final String SELECTED = "Selected";
 
    /** Creates new form MathForm */
    public MathForm(int[] dataSets1, int[] dataSets2) {
@@ -31,7 +27,9 @@ public class MathForm extends javax.swing.JFrame {
       setLocation(prefs_.getInt(FRAMEXPOS, 50), prefs_.getInt(FRAMEYPOS, 100));
        
       
-      dataSet1ComboBox_.removeAllItems();     
+      dataSet1ComboBox_.removeAllItems(); 
+      
+      dataSet1ComboBox_.addItem(SELECTED);
       for (int i : dataSets1)
          dataSet1ComboBox_.addItem(i);
       dataSet2ComboBox_.removeAllItems();
@@ -72,6 +70,11 @@ public class MathForm extends javax.swing.JFrame {
 
         dataSet1ComboBox_.setFont(new java.awt.Font("Lucida Grande", 0, 11));
         dataSet1ComboBox_.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+        dataSet1ComboBox_.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                dataSet1ComboBox_ActionPerformed(evt);
+            }
+        });
 
         actionComboBox_.setFont(new java.awt.Font("Lucida Grande", 0, 11));
         actionComboBox_.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Subtract" }));
@@ -162,9 +165,23 @@ public class MathForm extends javax.swing.JFrame {
    }//GEN-LAST:event_cancelButton_ActionPerformed
 
    private void okButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okButton_ActionPerformed
-      final int id1 = (Integer) dataSet1ComboBox_.getSelectedItem();
-      final int id2 = (Integer) dataSet2ComboBox_.getSelectedItem();
 
+      boolean usr = false;
+      int i1 = 0;
+      int i2 = 0;
+      try {
+         if (SELECTED.equals((String) dataSet1ComboBox_.getSelectedItem())) {
+            usr = true;
+         }
+      } catch (java.lang.ClassCastException cce) {
+
+         i1 = (Integer) dataSet1ComboBox_.getSelectedItem();
+         
+      }
+      i2 = (Integer) dataSet2ComboBox_.getSelectedItem();
+      final int id1 = i1;
+      final int id2 = i2;
+      final boolean useSelectedRows = usr;
 
       Runnable doWorkRunnable = new Runnable() {
 
@@ -173,16 +190,32 @@ public class MathForm extends javax.swing.JFrame {
             DataCollectionForm df = DataCollectionForm.getInstance();
             RowData rd1 = null;
             RowData rd2 = null;
-
-            for (int i = 0; i < df.rowData_.size(); i++) {
-               if (id1 == df.rowData_.get(i).ID_) {
-                  rd1 = df.rowData_.get(i);
+            
+            if (!useSelectedRows) {
+               for (int i = 0; i < df.rowData_.size(); i++) {
+                  if (id1 == df.rowData_.get(i).ID_) {
+                     rd1 = df.rowData_.get(i);
+                  }
+                  if (id2 == df.rowData_.get(i).ID_) {
+                     rd2 = df.rowData_.get(i);
+                  }
                }
-               if (id2 == df.rowData_.get(i).ID_) {
-                  rd2 = df.rowData_.get(i);
+               df.doMathOnRows(rd1, rd2, 0);
+            } else {
+               for (int i = 0; i < df.rowData_.size(); i++) {
+                  if (id2 == df.rowData_.get(i).ID_) {
+                     rd2 = df.rowData_.get(i);
+                  }
                }
             }
-            df.doMathOnRows(rd1, rd2, 0);
+               int rows[] = df.getResultsTable().getSelectedRows();
+               if (rows.length > 0) {
+                  for (int i = 0; i < rows.length; i++) {
+                     df.doMathOnRows(df.rowData_.get(rows[i]), rd2, 0);
+                  }
+               }
+      
+               
          }
       };
       
@@ -194,6 +227,10 @@ public class MathForm extends javax.swing.JFrame {
       prefs_.putInt(FRAMEXPOS, getX());
       prefs_.putInt(FRAMEYPOS, getY());
    }//GEN-LAST:event_formWindowClosing
+
+   private void dataSet1ComboBox_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_dataSet1ComboBox_ActionPerformed
+      // TODO add your handling code here:
+   }//GEN-LAST:event_dataSet1ComboBox_ActionPerformed
 
    
    
