@@ -533,6 +533,7 @@ public class MMAcquisition {
          tags.put("Channel", getChannelName(channel));
          tags.put("ChannelIndex", channel);
          tags.put("Frame", frame);
+         tags.put("FrameIndex", frame);
          tags.put("Height", height_);
          tags.put("PositionIndex", position);
          // the following influences the format data will be saved!
@@ -551,6 +552,7 @@ public class MMAcquisition {
       }
    }
 
+   // Somebody please comment on why this is a separate method from insertImage.
    public void insertTaggedImage(TaggedImage taggedImg, int frame, int channel, int slice)
            throws MMScriptException {
       if (!initialized_) {
@@ -561,12 +563,11 @@ public class MMAcquisition {
       try {
          JSONObject tags = taggedImg.tags;
 
-         tags.put("FrameIndex", frame);
-         tags.put("Frame", frame);
-         tags.put("ChannelIndex", channel);
-         tags.put("SliceIndex", slice);
+         MDUtils.setFrameIndex(tags, frame);
+         MDUtils.setChannelIndex(tags, channel);
+         MDUtils.setSliceIndex(tags, slice);
          MDUtils.setPixelTypeFromByteDepth(tags, byteDepth_);
-         tags.put("PositionIndex", 0);
+         MDUtils.setPositionIndex(tags, 0);
          insertImage(taggedImg);
       } catch (JSONException e) {
          throw new MMScriptException(e);
@@ -575,28 +576,31 @@ public class MMAcquisition {
 
    public void insertImage(TaggedImage taggedImg, int frame, int channel, int slice,
            int position) throws MMScriptException, JSONException {
-      taggedImg.tags.put("FrameIndex", frame);
-      taggedImg.tags.put("ChannelIndex", channel);
-      taggedImg.tags.put("SliceIndex", slice);
-      taggedImg.tags.put("PositionIndex", position);
+      JSONObject tags = taggedImg.tags;
+      MDUtils.setFrameIndex(tags, frame);
+      MDUtils.setChannelIndex(tags, channel);
+      MDUtils.setSliceIndex(tags, slice);
+      MDUtils.setPositionIndex(tags, position);
       insertImage(taggedImg, show_);
    }
 
    public void insertImage(TaggedImage taggedImg, int frame, int channel, int slice,
            int position, boolean updateDisplay) throws MMScriptException, JSONException {
-      taggedImg.tags.put("FrameIndex", frame);
-      taggedImg.tags.put("ChannelIndex", channel);
-      taggedImg.tags.put("SliceIndex", slice);
-      taggedImg.tags.put("PositionIndex", position);
+      JSONObject tags = taggedImg.tags;
+      MDUtils.setFrameIndex(tags, frame);
+      MDUtils.setChannelIndex(tags, channel);
+      MDUtils.setSliceIndex(tags, slice);
+      MDUtils.setPositionIndex(tags, position);
       insertImage(taggedImg, updateDisplay, true);
    }
 
    public void insertImage(TaggedImage taggedImg, int frame, int channel, int slice,
            int position, boolean updateDisplay, boolean waitForDisplay) throws MMScriptException, JSONException {
-      taggedImg.tags.put("FrameIndex", frame);
-      taggedImg.tags.put("ChannelIndex", channel);
-      taggedImg.tags.put("SliceIndex", slice);
-      taggedImg.tags.put("PositionIndex", position);
+      JSONObject tags = taggedImg.tags;
+      MDUtils.setFrameIndex(tags, frame);
+      MDUtils.setChannelIndex(tags, channel);
+      MDUtils.setSliceIndex(tags, slice);
+      MDUtils.setPositionIndex(tags, position);
       insertImage(taggedImg, updateDisplay, waitForDisplay);
    }
 

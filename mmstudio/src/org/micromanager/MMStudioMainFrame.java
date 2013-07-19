@@ -3208,10 +3208,10 @@ public class MMStudioMainFrame extends JFrame implements
          } else if (ti.tags.has("ChannelIndex")) {
             channel = MDUtils.getChannelIndex(ti.tags);
          }
-         ti.tags.put("ChannelIndex", channel);
-         ti.tags.put("PositionIndex", 0);
-         ti.tags.put("SliceIndex", 0);
-         ti.tags.put("FrameIndex", 0);
+         MDUtils.setChannelIndex(ti.tags, channel);
+         MDUtils.setPositionIndex(ti.tags, 0);
+         MDUtils.setSliceIndex(ti.tags, 0);
+         MDUtils.setFrameIndex(ti.tags, 0);
          
       } catch (JSONException ex) {
          ReportingUtils.logError(ex);
@@ -4235,10 +4235,10 @@ public class MMStudioMainFrame extends JFrame implements
             core_.snapImage();
             ti = core_.getTaggedImage();
          }
-         ti.tags.put("ChannelIndex", channel);
-         ti.tags.put("FrameIndex", frame);
-         ti.tags.put("SliceIndex", slice);
-         ti.tags.put("PositionIndex", position);
+         MDUtils.setChannelIndex(ti.tags, channel);
+         MDUtils.setFrameIndex(ti.tags, frame);
+         MDUtils.setSliceIndex(ti.tags, slice);
+         MDUtils.setPositionIndex(ti.tags, position);
          
          MMAcquisition acq = acqMgr_.getAcquisition(name);
          if (!acq.isInitialized()) {
@@ -4253,7 +4253,7 @@ public class MMStudioMainFrame extends JFrame implements
          }
          
          if (acq.getPositions() > 1) {
-            ti.tags.put("PositionName", "Pos" + position);
+            MDUtils.setPositionName(ti.tags, "Pos" + position);
          }
 
          addImage(name, ti, true);
