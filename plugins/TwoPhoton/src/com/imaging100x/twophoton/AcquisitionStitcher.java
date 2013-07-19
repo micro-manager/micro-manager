@@ -4,8 +4,11 @@
  */
 package com.imaging100x.twophoton;
 
-import ij.gui.ImageCanvas;
-import ij.gui.ImageWindow;
+import ij.ImageListener;
+import ij.ImagePlus;
+import ij.gui.*;
+import java.awt.Color;
+import java.awt.Font;
 import java.awt.Point;
 import java.util.Collections;
 import java.util.Comparator;
@@ -16,6 +19,7 @@ import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
+import org.json.JSONObject;
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.acquisition.VirtualAcquisitionDisplay;
 import org.micromanager.api.ImageCache;
@@ -33,12 +37,15 @@ public class AcquisitionStitcher implements ImageFocusListener{
    private ScriptInterface gui_;
    private ImageCache cache_;
    private VirtualAcquisitionDisplay display_;
+   private ImageWindow imageWindow_;
 
    private boolean invertX_, invertY_, swapXandY_;
-   private int overlapX_, overlapY_;
+   private boolean drawPosNames_, showGrid_;
    private int gridWidth_, gridHeight_;
    private int oldImageWidth_, oldImageHeight_, newImageWidth_ = -1, newImageHeight_ = -1;
    private Comparator gridSorter_;
+   private double stitchedWindowZoom_ = 1;
+   private Point stitchedWindowLocation_ = null;
 
    
    public AcquisitionStitcher() {
@@ -46,12 +53,13 @@ public class AcquisitionStitcher implements ImageFocusListener{
       GUIUtils.registerImageFocusListener(this);
    }
    
-   public void setStitchParameters(boolean invX, boolean invY, boolean swap, int overlapX, int overlapY) {
+   public void setStitchParameters(boolean invX, boolean invY, boolean swap, 
+           boolean drawPosNames, boolean showGrid) {
       invertX_ = invX;
       invertY_ = invY;
       swapXandY_ = swap;
-      overlapX_ = overlapX;
-      overlapY_ = overlapY;
+      drawPosNames_ = drawPosNames;
+      showGrid_ = showGrid;
    }
 
    private Object stitchBatch(LinkedList<TaggedImage> batch) {    
@@ -64,18 +72,17 @@ public class AcquisitionStitcher implements ImageFocusListener{
                  + "8 bits per pixel because no one has needed it yet. Go talk to him and he will add this");
       }
 
-      if (overlapX_ == 0 && overlapY_ == 0) {
-         return stitchPixelsNoOverlap(batch);
-      }
-      return stitchPixels(batch);
+      return stitchPixelsNoOverlap(batch);
    }
+
    
-   public void createStitchedFromCurrentFrame() {
+      public void createStitchedFromCurrentFrame() {
       try {
-         int frameIndex = MDUtils.getFrameIndex(cache_.getLastImageTags());
-         int sliceIndex = MDUtils.getSliceIndex(cache_.getLastImageTags());
-         int channelIndex = MDUtils.getChannelIndex(cache_.getLastImageTags());
-         int positionIndex = MDUtils.getPositionIndex(cache_.getLastImageTags());
+         JSONObject tags = cache_.getLastImageTags();
+         int frameIndex = MDUtils.getFrameIndex(tags);
+         int sliceIndex = MDUtils.getSliceIndex(tags);
+         int channelIndex = MDUtils.getChannelIndex(tags);
+         int positionIndex = MDUtils.getPositionIndex(tags);
          if (frameIndex == 0 && sliceIndex + 1 == display_.getNumSlices() && positionIndex + 1 == display_.getNumPositions()
                  && channelIndex + 1 == display_.getNumChannels()) {
             //first time point complete, do nothing
@@ -87,15 +94,11 @@ public class AcquisitionStitcher implements ImageFocusListener{
             frameIndex--;
          }
 
-         Point location = null;
-         double zoom = 1;
+
          if (gui_.acquisitionExists(ACQ_NAME)) {
-            location = gui_.getAcquisition(ACQ_NAME).getAcquisitionWindow().getImagePlus().getWindow().getLocation();
-            zoom = gui_.getAcquisition(ACQ_NAME).getAcquisitionWindow().getImagePlus().getWindow().getCanvas().getMagnification();
             gui_.getAcquisition(ACQ_NAME).closeImageWindow();
          }
          gui_.openAcquisition(ACQ_NAME, "", 1, cache_.getNumDisplayChannels(), display_.getNumSlices(), true, false);
-
 
 
          for (int slice = 0; slice < display_.getNumSlices(); slice++) {
@@ -107,27 +110,51 @@ public class AcquisitionStitcher implements ImageFocusListener{
                if (channel == 0 && slice == 0) {
                   try {
                      calcGridDimensions(batch);
-                     
+
                      gui_.initializeAcquisition(ACQ_NAME, newImageWidth_, newImageHeight_, 1);
-                     gui_.getAcquisition(ACQ_NAME).getAcquisitionWindow().promptToSave(false);
+                     gui_.getAcquisition(ACQ_NAME).getAcquisitionWindow().promptToSave(false);                
+                     imageWindow_ = gui_.getAcquisition(ACQ_NAME).getAcquisitionWindow().getHyperImage().getWindow();
+
+                     
+                     //add windowclosing listener to record zoom and position
+                     if (stitchedWindowLocation_ == null) { //only need to add this listener once
+                        gui_.getAcquisition(ACQ_NAME).getAcquisitionWindow().getImagePlus().addImageListener(new ImageListener() {
+
+                           public void imageOpened(ImagePlus ip) {
+                           }
+
+                           public void imageUpdated(ImagePlus ip) {
+                           }
+
+                           public void imageClosed(ImagePlus ip) {
+                                 stitchedWindowLocation_ = imageWindow_.getLocation();
+                                 stitchedWindowZoom_ = imageWindow_.getCanvas().getMagnification();
+              
+                           }
+                        });
+                     }
+
 
                      try {
-                        if (location != null) {
+                        
+                        if (stitchedWindowLocation_ != null) {
                            ImageWindow win = gui_.getAcquisition(ACQ_NAME).getAcquisitionWindow().getImagePlus().getWindow();
-                           win.setLocation(location);
+                           win.setLocation(stitchedWindowLocation_);
 
                            //Apply same 
                            ImageCanvas canvas = win.getCanvas();
-                           if (zoom < canvas.getMagnification()) {
-                              while (zoom < canvas.getMagnification()) {
+                           if (stitchedWindowZoom_ < canvas.getMagnification()) {
+                              while (stitchedWindowZoom_ < canvas.getMagnification()) {
                                  canvas.zoomOut(canvas.getWidth() / 2, canvas.getHeight() / 2);
                               }
-                           } else if (zoom > canvas.getMagnification()) {
-                              while (zoom > canvas.getMagnification()) {
+                           } else if (stitchedWindowZoom_ > canvas.getMagnification()) {
+                              while (stitchedWindowZoom_ > canvas.getMagnification()) {
                                  canvas.zoomIn(canvas.getWidth() / 2, canvas.getHeight() / 2);
                               }
                            }        
                         }
+                        
+                        
                      } catch (Exception e) {
                         ReportingUtils.showError("Couldnt re use stitched window settings");
                      }
@@ -137,6 +164,8 @@ public class AcquisitionStitcher implements ImageFocusListener{
                   }
                }
                gui_.getAcquisition(ACQ_NAME).insertImage(stitchBatch(batch), 0, channel, slice);
+               //Add overlay
+               addPositionNameAndGridOverlay(batch);
 
             }
          }
@@ -163,6 +192,41 @@ public class AcquisitionStitcher implements ImageFocusListener{
       }
 
    }
+   
+   private void addPositionNameAndGridOverlay(LinkedList<TaggedImage> batch) throws MMScriptException, JSONException {
+      if (!drawPosNames_ && !showGrid_) {
+         return;
+      }
+      Overlay overlay = new Overlay();
+      if (drawPosNames_) {
+         TextRoi.setFont(Font.SANS_SERIF, 30, Font.BOLD);
+         TextRoi.setColor(Color.white);
+         for (int x = 0; x < gridWidth_; x++) {
+            for (int y = 0; y < gridHeight_; y++) {
+               String posName = batch.get(x + y * gridWidth_).tags.getString("PositionName");
+               TextRoi text = new TextRoi(newImageWidth_ / gridWidth_ * x + 0.4 * oldImageWidth_,
+                       newImageHeight_ / gridHeight_ * y + 0.45 * oldImageHeight_, posName);
+               overlay.add(text);
+            }
+         }
+      }
+      
+      if (showGrid_) {
+         //draw vertical lines
+         for (int i = 1; i < gridWidth_; i++) {
+            Line l = new Line( oldImageWidth_ * i, 0, oldImageWidth_ * i, newImageHeight_ );
+            overlay.add(l);
+         }
+         //draw horizontal lines
+         for (int i = 1; i < gridWidth_; i++) {
+            Line l = new Line( 0, oldImageHeight_ * i, newImageWidth_, oldImageHeight_ * i );
+            overlay.add(l);
+         }
+         
+      }
+      gui_.getAcquisition(ACQ_NAME).getAcquisitionWindow().getImagePlus().setOverlay(overlay);
+
+   }
 
    @Override
    public void focusReceived(ImageWindow iw) {
@@ -176,100 +240,8 @@ public class AcquisitionStitcher implements ImageFocusListener{
          }
       }
    }
-   
-   private int getTilePixel(byte[] pixels, int x, int y) {
-      return pixels[x + oldImageWidth_ * y] & 0xff;
-   }
 
-    private byte[] stitchPixels(LinkedList<TaggedImage> batch) {
-      byte[] newPixels = new byte[newImageWidth_ * newImageHeight_];
-      for (int y = 0; y < newImageHeight_; y++) {
-         //Grid width and grid height are indices of larger numbered tile
-         for (int x = 0; x < newImageWidth_; x++) {
-            int gridX = Math.min(x / (oldImageWidth_ - overlapX_), gridWidth_ - 1);
-            int gridY = Math.min(y / (oldImageHeight_ - overlapY_), gridHeight_ - 1);
-
-            boolean xOverlap = x % (oldImageWidth_ - overlapX_) < overlapX_;
-            boolean yOverlap = y % (oldImageHeight_ - overlapY_) < overlapY_;
-
-            //Coordinates of pixels of interest in tiles
-            int tileX = (x % (oldImageWidth_ - overlapX_)) % oldImageWidth_;
-            int tileY = y % (oldImageHeight_ - overlapY_);
-
-            //special cases for starting edges
-            if (x < oldImageWidth_ - overlapX_) {
-               xOverlap = false;
-            }
-            if (y < oldImageHeight_ - overlapY_) {
-               yOverlap = false;
-            }
-            //special cases for ending edges
-            if (x >= gridWidth_ * (oldImageWidth_ - overlapX_)) {
-               xOverlap = false;
-               tileX += oldImageWidth_ - overlapX_;
-            }
-            if (y >= gridHeight_ * (oldImageHeight_ - overlapY_)) {
-               yOverlap = false;
-               tileY += oldImageHeight_ - overlapY_;
-            }
-
-            int tileAboveX = tileX;
-            int tileAboveY = oldImageHeight_ - overlapY_ + tileY;
-            int tileLeftX = oldImageWidth_ - overlapX_ + tileX;
-            int tileLeftY = tileY;
-
-
-            byte[] tilePix = (byte[]) batch.get(gridY * gridWidth_ + gridX).pix;
-            if(tilePix == null) {
-               //If the tile pixels are ever null, return null;
-               return null;
-            }
-            byte[] tileAbovePix = null, tileLeftPix = null, tileDiagonalPix = null;
-            //get tiles above and left of tile as needed
-            if (xOverlap) {
-               tileLeftPix = (byte[]) batch.get(gridY * gridWidth_ + gridX - 1).pix;
-            }
-            if (yOverlap) {
-               tileAbovePix = (byte[]) batch.get((gridY - 1) * gridWidth_ + gridX).pix;
-            }
-            if (xOverlap && yOverlap) {
-               tileDiagonalPix = (byte[]) batch.get((gridY - 1) * gridWidth_ + gridX - 1).pix;
-            }
-
-            if (xOverlap && yOverlap) {
-               //average all four overlapping values
-               newPixels[x + newImageWidth_ * y] = (byte) ((getTilePixel(tilePix, tileX, tileY)
-                       + getTilePixel(tileAbovePix, tileAboveX, tileAboveY)
-                       + getTilePixel(tileLeftPix, tileLeftX, tileLeftY)
-                       + getTilePixel(tileDiagonalPix, tileLeftX, tileAboveY)) / 4);
-            } else if (xOverlap) {
-               newPixels[x + newImageWidth_ * y] = (byte) ((getTilePixel(tilePix, tileX, tileY)
-                       + getTilePixel(tileLeftPix, tileLeftX, tileLeftY)) / 2);
-            } else if (yOverlap) {
-               newPixels[x + newImageWidth_ * y] = (byte) ((getTilePixel(tilePix, tileX, tileY)
-                       + getTilePixel(tileAbovePix, tileAboveX, tileAboveY)) / 2);
-            } else {
-               int numPixelsToCopy = oldImageWidth_ - 2 * overlapX_;
-               //special cases for left and right side of image
-               if (x < oldImageWidth_ - overlapX_) {
-                  numPixelsToCopy = oldImageWidth_ - overlapX_;
-               } else if (x >= gridWidth_ * (oldImageWidth_ - overlapX_)) {
-                  numPixelsToCopy = overlapX_;
-               }
-               try {
-                  System.arraycopy(tilePix, tileY * oldImageWidth_ + tileX, newPixels, x + newImageWidth_ * y, numPixelsToCopy);
-               } catch (Exception e) {
-                  System.out.println();
-               }
-               //subtract one to account for increment in loop
-               x += numPixelsToCopy - 1;
-            }
-         }
-      }
-      return newPixels;
-   }
-  
-   private byte[] stitchPixelsNoOverlap(LinkedList<TaggedImage> batch) {
+  private byte[] stitchPixelsNoOverlap(LinkedList<TaggedImage> batch) {
       byte[] newPixels = new byte[oldImageHeight_ * oldImageWidth_ * gridWidth_ * gridHeight_];
       for (int line = 0; line < (gridWidth_ * gridHeight_) * (oldImageHeight_); line++) {
          int gridX = line % gridWidth_;
@@ -300,8 +272,8 @@ public class AcquisitionStitcher implements ImageFocusListener{
          gridWidth_ = xPositions.size();
          gridHeight_ = yPositions.size();
       }
-      newImageWidth_ = gridWidth_ * oldImageWidth_ - (gridWidth_ - 1)*overlapX_;
-      newImageHeight_ = gridHeight_ * oldImageHeight_ - (gridHeight_ - 1)*overlapY_;
+      newImageWidth_ = gridWidth_ * oldImageWidth_;
+      newImageHeight_ = gridHeight_ * oldImageHeight_;
    }
    
     private Comparator<TaggedImage> makeGridSorter() {

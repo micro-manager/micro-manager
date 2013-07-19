@@ -132,7 +132,7 @@ private DepthSetting depthSettingCache[];
 private AcquisitionStitcher stitcher_ = new AcquisitionStitcher();
 private JButton stitchButton_;
 private JCheckBox invertXCheckBox_, invertYCheckBox_, swapXandYCheckBox_;
-private JSpinner xStitchOverlapSpinner_, yStitchOverlapSpinner_;
+private JCheckBox drawGrid_, drawPosNames_;
 
    private class StatusTimerTask extends TimerTask {
 
@@ -291,7 +291,7 @@ private JSpinner xStitchOverlapSpinner_, yStitchOverlapSpinner_;
       {
          JLabel autoStitch = new JLabel("Stitch current time point");
          autoStitch.setFont(new Font("Tahoma", Font.BOLD, 11));
-         autoStitch.setBounds(220, 88, 300, 14);
+         autoStitch.setBounds(280, 88, 300, 14);
          getContentPane().add(autoStitch);
       }
       {
@@ -613,51 +613,42 @@ private JSpinner xStitchOverlapSpinner_, yStitchOverlapSpinner_;
       }
       {         
          invertXCheckBox_ = new JCheckBox("Flip in X");
-         invertXCheckBox_.setBounds(220, 110, 80, 22);
+         invertXCheckBox_.setBounds(280, 110, 80, 22);
          getContentPane().add(invertXCheckBox_);
          invertXCheckBox_.setSelected(prefs_.getBoolean(INVERT_X, false));
       }
       {
          invertYCheckBox_ = new JCheckBox("Flip in Y");
-         invertYCheckBox_.setBounds(300, 110, 80, 22);
+         invertYCheckBox_.setBounds(360, 110, 80, 22);
          getContentPane().add(invertYCheckBox_);
          invertYCheckBox_.setSelected(prefs_.getBoolean(INVERT_Y, false));
       }
       {
          swapXandYCheckBox_ = new JCheckBox("Transpose tiling");
-         swapXandYCheckBox_.setBounds(380, 110, 120, 22);
+         swapXandYCheckBox_.setBounds(440, 110, 120, 22);
          getContentPane().add(swapXandYCheckBox_);
          swapXandYCheckBox_.setSelected(prefs_.getBoolean(SWAP_X_AND_Y, false));
       }
       {
-         JLabel xOverlap = new JLabel("X Overlap");
-         xOverlap.setBounds(220, 140, 60, 22);
-         getContentPane().add(xOverlap);
-         xStitchOverlapSpinner_ = new JSpinner();
-         xStitchOverlapSpinner_.setModel(new SpinnerNumberModel(0,0,1000,1));
-         xStitchOverlapSpinner_.setBounds(280, 140, 40, 22);
-         getContentPane().add(xStitchOverlapSpinner_);
+         drawPosNames_ = new JCheckBox("Show position names");
+         drawPosNames_.setBounds(280, 140, 130, 22);
+         getContentPane().add(drawPosNames_);
       }
       {
-         JLabel yOverlap = new JLabel("Y Overlap");
-         yOverlap.setBounds(330, 140, 60, 22);
-         getContentPane().add(yOverlap);
-         yStitchOverlapSpinner_ = new JSpinner();
-         yStitchOverlapSpinner_.setModel(new SpinnerNumberModel(0,0,1000,1));
-         yStitchOverlapSpinner_.setBounds(390, 140, 40, 22);
-         getContentPane().add(yStitchOverlapSpinner_);
+         drawGrid_ = new JCheckBox("Draw grid");
+         drawGrid_.setBounds(420, 140, 80, 22);
+         getContentPane().add(drawGrid_);
       }
       {
          stitchButton_ = new JButton("Stitch");
          stitchButton_.setFont(new Font("Tahoma", Font.BOLD, 11));
-         stitchButton_.setBounds(220, 170, 100, 23);
+         stitchButton_.setBounds(380, 170, 100, 23);
          getContentPane().add(stitchButton_);
          stitchButton_.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                stitcher_.setStitchParameters(invertXCheckBox_.isSelected(), invertYCheckBox_.isSelected(),
-                       swapXandYCheckBox_.isSelected(), (Integer) xStitchOverlapSpinner_.getValue(),
-                       (Integer) yStitchOverlapSpinner_.getValue());
+                       swapXandYCheckBox_.isSelected(), drawPosNames_.isSelected(), drawGrid_.isSelected());
                new Thread(new Runnable() {
 
                   @Override
