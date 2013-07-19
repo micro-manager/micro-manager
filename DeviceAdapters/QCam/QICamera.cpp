@@ -635,7 +635,7 @@ int QICamera::Initialize()
 
    // recover the camera unique id set with the pre-init property, if applicable
    bool useUniqueId = false;
-   unsigned long uniqueId;
+   unsigned long uniqueId = 0;
    if (HasProperty(g_Keyword_Camera)) {
       char buf[MM::MaxStrLength];
       if (GetProperty(g_Keyword_Camera, buf) == DEVICE_OK) {
