@@ -49,6 +49,7 @@
 // Error codes
 //
 #define ERR_NO_CAMERAS_FOUND			    100
+#define ERR_CAMERA_ALREADY_OPENED           1006
 #define ERR_SOFTWARE_TRIGGER_FAILED         1004
 #define ERR_BUSY_ACQUIRING                  1003
 #define ERR_NO_CAMERA_FOUND                 1005
@@ -61,6 +62,7 @@
 //////////////////////////////////////////////////////////////////////////////
 // Properties
 //
+#define g_Keyword_Camera                    "Camera"
 #define	g_Keyword_Cooler					"Cooler"
 #define	g_Keyword_CCDTemperature_Min		"CCDTemperatureMin"
 #define	g_Keyword_CCDTemperature_Max		"CCDTemperatureMax"
@@ -104,6 +106,37 @@ void ConvertReadoutPortToString(QCam_qcReadoutPort inPort, char *outString);
 void ConvertReadoutPortToEnum(const char *inSpeed, QCam_qcReadoutPort *outPort);
 void ConvertTriggerTypeToString(QCam_qcTriggerType inType, char *outString);
 void ConvertTriggerTypeToEnum(const char *inType, QCam_qcTriggerType *outType);
+
+
+//////////////////////////////////////////////////////////////////////////////
+// QIDriver class
+//
+// Reference-counted access wrapping QCam_LoadDriver and QCam_ReleaseDriver
+
+class QIDriver
+{
+public:
+    // Return display strings for available cameras (empty on any error)
+    static std::vector<std::string> AvailableCameras();
+    // Get the uniqueId back from a display string
+    static unsigned long UniqueIdForCamera(const std::string& displayString);
+
+    // RAII class for access
+    class Access
+    {
+    public:
+        Access::Access();
+        Access::~Access();
+        operator bool() { return m_error == qerrSuccess; }
+        QCam_Err Status() { return m_error; }
+    private:
+        QCam_Err m_error;
+    };
+
+private:
+    friend class QIDriver::Access;
+    static unsigned s_usageCount;
+};
 
 
 //////////////////////////////////////////////////////////////////////////////
@@ -234,6 +267,8 @@ private:
     void ExposureDone(long frameNumber, QCam_Err errcode);
 #endif
     int SendSettingsToCamera(QCam_Settings* settings);
+
+    std::auto_ptr<QIDriver::Access> m_driverAccess;
 
     bool				m_isInitialized;    // Has the camera been initialized (setup)?
     QCam_Handle			m_camera;           // handle to the camera. Used by all QCam_* functions

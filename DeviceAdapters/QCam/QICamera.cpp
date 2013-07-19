@@ -27,11 +27,13 @@
 #pragma warning ( disable: 4068)
 #endif
 
-#include "QICamera.h"
 #include <string>
 #include <math.h>
 #include <sstream>
 #include <algorithm>
+#include <boost/algorithm/string.hpp>
+#include <boost/lexical_cast.hpp>
+#include "QICamera.h" // Must be included after boost (QCamApi.h uses #define for types(!), which breaks boost)
 
 using namespace std;
 
@@ -305,9 +307,219 @@ void ConvertTriggerTypeToEnum(const char *inType, QCam_qcTriggerType *outType)
    }
 }
 
+static string ConvertCameraTypeToString(unsigned long cameraType)
+{
+   char cameraStr[256] = "Unknown Model"; // use of C string is only for historical reasons
+
+   switch(cameraType) {
+      case qcCameraRet1300B:
+         strcpy(cameraStr, "Retiga 1300B");
+         break;
+
+      case qcCameraRet1350B:
+         strcpy(cameraStr, "Retiga 1350B");
+         break;
+
+      case qcCameraQICamB:
+         strcpy(cameraStr, "QICAM");
+         break;
+
+      case qcCameraMicroPub:
+         strcpy(cameraStr, "Micropublisher");
+         break;
+
+      case qcCameraRetIT:
+         strcpy(cameraStr, "Retiga Intensified");
+         break;
+
+      case qcCameraQICamIR:
+         strcpy(cameraStr, "QICAM IR");
+         break;
+
+      case qcCameraRet4000R:
+         strcpy(cameraStr, "Retiga 4000R");
+         break;
+
+      case qcCameraRet2000R:
+         strcpy(cameraStr, "Retiga 2000R");
+         break;
+
+      case qcCameraRoleraXR:
+         strcpy(cameraStr, "Rolera XR");
+         break;
+
+      case qcCameraRetigaSRV:
+         strcpy(cameraStr, "Retiga SRV");
+         break;
+
+      case qcCameraRoleraMGi:
+         strcpy(cameraStr, "Rolera MGi");
+         break;
+
+      case qcCameraRet4000RV:
+         strcpy(cameraStr, "Retiga 4000RV");
+         break;
+
+      case qcCameraGo1:
+         strcpy(cameraStr, "Go 1");
+         break;
+
+      case qcCameraGo3:
+         strcpy(cameraStr, "Go 3");
+         break;
+
+      case qcCameraGo5:
+         strcpy(cameraStr, "Go 5");
+         break;
+
+      case qcCameraGo21:
+         strcpy(cameraStr, "Go 21");
+         break;
+
+#ifdef WIN32
+
+      case qcCameraEXiBlue:
+         strcpy(cameraStr, "EXi Blue");
+         break;
+
+
+      case 34: // TODO get this from header
+         strcpy (cameraStr, "Rolera Bolt");
+         break;
+
+#endif
+         /*		case qcCameraRoleraOne:
+         strcpy(cameraStr, "Rolera One");
+         break;
+         */
+
+      default:
+         strcpy(cameraStr, ("Unknown Model (" + boost::lexical_cast<string>(cameraType) + ")").c_str());
+         break;
+   }
+
+   return cameraStr;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// QIDriver implementation
+///////////////////////////////////////////////////////////////////////////////
+
+unsigned QIDriver::s_usageCount = 0;
+
+vector<string> QIDriver::AvailableCameras()
+{
+   // We cache results, because we may have trouble getting camera names when
+   // they are already in use. We assume that this function will have to be
+   // called at least once before opening any camera, so that we can get all
+   // the camera names. If that is not the case, we still get at least a list
+   // of unique id strings that are fully functional if not human-readable.
+   static bool cached = false;
+   static vector<string> displayStrings;
+
+   if (cached) {
+      return displayStrings;
+   }
+
+   QIDriver::Access access;
+   if (!access) {
+      return displayStrings;
+   }
+
+   QCam_CamListItem cameras[10];
+   unsigned long numCameras = sizeof(cameras) / sizeof(QCam_CamListItem);
+   QCam_Err err = QCam_ListCameras(cameras, &numCameras);
+   if (err != qerrSuccess || numCameras == 0) {
+      return displayStrings;
+   }
+
+   for (size_t i = 0; i < numCameras; i++) {
+      // Our display strings always start with the unique id for later retrieval
+      string displayString = boost::lexical_cast<string>(cameras[i].uniqueId);
+
+      // Append camera model and serial number if available
+      if (cameras[i].isOpen) {
+         // Fall back to enum values
+         displayString += " ";
+         displayString += ConvertCameraTypeToString(cameras[i].cameraType);
+      }
+      else {
+         QCam_Handle camera;
+         err = QCam_OpenCamera(cameras[i].cameraId, &camera);
+         if (err == qerrSuccess) {
+            char model[512];
+            err = QCam_GetCameraModelString(camera, model, sizeof(model) - 1); // not sure if -1 is necessary
+            if (err == qerrSuccess) {
+               displayString += " ";
+               displayString += model;
+            }
+            else {
+               displayString += " ";
+               displayString += ConvertCameraTypeToString(cameras[i].cameraType);
+            }
+
+            char serial[512];
+            err = QCam_GetSerialString(camera, serial, sizeof(serial) - 1);
+            if (err == qerrSuccess) {
+               if (strlen(serial) == 0) {
+                  strcpy(serial, "N/A");
+               }
+               displayString += " S/N ";
+               displayString += serial;
+            }
+
+            err = QCam_CloseCamera(camera);
+         }
+         else {
+            displayString += " ";
+            displayString += ConvertCameraTypeToString(cameras[i].cameraType);
+         }
+      }
+
+      displayStrings.push_back(displayString);
+   }
+
+   cached = true;
+   return displayStrings;
+}
+
+unsigned long QIDriver::UniqueIdForCamera(const string& displayString)
+{
+   vector<string> items;
+   boost::split(items, displayString, boost::is_space());
+   if (items.empty()) { // Shouldn't happen
+      return 0;
+   }
+   return boost::lexical_cast<unsigned long>(items[0]);
+}
+
+QIDriver::Access::Access() : m_error(qerrSuccess)
+{
+   if (QIDriver::s_usageCount) {
+      ++QIDriver::s_usageCount;
+      return;
+   }
+
+   // try releasing the driver first
+   QCam_ReleaseDriver();
+
+   m_error = QCam_LoadDriver();
+   if (m_error == qerrSuccess) {
+      ++QIDriver::s_usageCount;
+   }
+}
+
+QIDriver::Access::~Access()
+{
+   if (bool(*this) && !--QIDriver::s_usageCount) {
+      QCam_ReleaseDriver();
+   }
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // QICamera Constructor/Destructor and Initialization/Shutdown
 ///////////////////////////////////////////////////////////////////////////////
+
 
 /**
 * QICamera constructor.
@@ -333,18 +545,23 @@ QICamera::QICamera()
 ,m_frameDoneBuff(-1)
 {
    START_METHOD("QICamera::QICamera");
-   try{
-      m_sthd = new QISequenceThread(this);
 
-      // call the base class method to set-up default error codes/messages
-      InitializeDefaultErrorMessages();
+   m_sthd = new QISequenceThread(this);
 
-      // setup additional error codes/messages
-      SetErrorText(ERR_NO_CAMERAS_FOUND, "No cameras found.  Please connect a QImaging camera and turn it on");
-      SetErrorText(ERR_BUSY_ACQUIRING,   "QImaging camera is already acquiring images.");
-      SetErrorText(ERR_SOFTWARE_TRIGGER_FAILED, "QImaging camera is not in software trigger mode.");
-   } catch(...) {
-      LogMessage("QICamera: Exception in constructor", false);
+   // call the base class method to set-up default error codes/messages
+   InitializeDefaultErrorMessages();
+
+   // setup additional error codes/messages
+   SetErrorText(ERR_NO_CAMERAS_FOUND, "No cameras found.  Please connect a QImaging camera and turn it on");
+   SetErrorText(ERR_CAMERA_ALREADY_OPENED, "Camera is already in use");
+   SetErrorText(ERR_BUSY_ACQUIRING,   "QImaging camera is already acquiring images.");
+   SetErrorText(ERR_SOFTWARE_TRIGGER_FAILED, "QImaging camera is not in software trigger mode.");
+
+   // Get the list of connected cameras, and provide it as a pre-init property
+   vector<string> cameras = QIDriver::AvailableCameras();
+   if (!cameras.empty()) {
+      (void)CreateProperty(g_Keyword_Camera, cameras[0].c_str(), MM::String, false, NULL, true);
+      SetAllowedValues(g_Keyword_Camera, cameras);
    }
 }
 
@@ -391,7 +608,7 @@ int QICamera::Initialize()
    const unsigned short		CAMERA_STRING_LENGTH = 256;
 
    QCam_Err            err;
-   QCam_CamListItem	   cameraList[1];
+   QCam_CamListItem	   cameraList[10];
    unsigned long	      numOfCameras;
    char	               cameraStr[CAMERA_STRING_LENGTH];
    char						cameraName[CAMERA_STRING_LENGTH];
@@ -409,14 +626,22 @@ int QICamera::Initialize()
       return DEVICE_OK;
    }
 
-   // try releasing the driver first
-   QCam_ReleaseDriver();
-
    // init the driver
-   err = QCam_LoadDriver();
-   if (err != qerrSuccess) {
-      REPORT_QERR(err);
+   m_driverAccess = auto_ptr<QIDriver::Access>(new QIDriver::Access);
+   if (!*m_driverAccess) {
+      REPORT_QERR(m_driverAccess->Status());
       return DEVICE_NATIVE_MODULE_FAILED;
+   }
+
+   // recover the camera unique id set with the pre-init property, if applicable
+   bool useUniqueId = false;
+   unsigned long uniqueId;
+   if (HasProperty(g_Keyword_Camera)) {
+      char buf[MM::MaxStrLength];
+      if (GetProperty(g_Keyword_Camera, buf) == DEVICE_OK) {
+         uniqueId = QIDriver::UniqueIdForCamera(buf);
+         useUniqueId = true;
+      }
    }
 
    try {
@@ -431,8 +656,26 @@ int QICamera::Initialize()
          throw ERR_NO_CAMERAS_FOUND;
       }
 
-      // open the first camera
-      err = QCam_OpenCamera(cameraList[0].cameraId, &m_camera);
+      size_t cameraIndex = 0; // open the first camera by default
+      if (useUniqueId) {
+         bool found = false;
+         for (size_t i = 0; i < numOfCameras; i++) {
+            if (cameraList[i].uniqueId == uniqueId) {
+               cameraIndex = i;
+               found = true;
+               break;
+            }
+         }
+         if (!found) {
+            LogMessage("The specified camera was not found; falling back to using the first available one");
+         }
+      }
+
+      if (cameraList[cameraIndex].isOpen) {
+         throw ERR_CAMERA_ALREADY_OPENED;
+      }
+
+      err = QCam_OpenCamera(cameraList[cameraIndex].cameraId, &m_camera);
       if (err != qerrSuccess) {
          REPORT_QERR(err);
          throw DEVICE_ERR;
@@ -548,92 +791,7 @@ int QICamera::Initialize()
             throw DEVICE_ERR;
          }
 
-         switch(cameraType) {
-            case qcCameraRet1300B:
-               strcpy(cameraStr, "Retiga 1300B");
-               break;
-
-            case qcCameraRet1350B:
-               strcpy(cameraStr, "Retiga 1350B");
-               break;
-
-            case qcCameraQICamB:
-               strcpy(cameraStr, "QICAM");
-               break;
-
-            case qcCameraMicroPub:
-               strcpy(cameraStr, "Micropublisher");
-               break;
-
-            case qcCameraRetIT:
-               strcpy(cameraStr, "Retiga Intensified");
-               break;
-
-            case qcCameraQICamIR:
-               strcpy(cameraStr, "QICAM IR");
-               break;
-
-            case qcCameraRet4000R:
-               strcpy(cameraStr, "Retiga 4000R");
-               break;
-
-            case qcCameraRet2000R:
-               strcpy(cameraStr, "Retiga 2000R");
-               break;
-
-            case qcCameraRoleraXR:
-               strcpy(cameraStr, "Rolera XR");
-               break;
-
-            case qcCameraRetigaSRV:
-               strcpy(cameraStr, "Retiga SRV");
-               break;
-
-            case qcCameraRoleraMGi:
-               strcpy(cameraStr, "Rolera MGi");
-               break;
-
-            case qcCameraRet4000RV:
-               strcpy(cameraStr, "Retiga 4000RV");
-               break;
-
-            case qcCameraGo1:
-               strcpy(cameraStr, "Go 1");
-               break;
-
-            case qcCameraGo3:
-               strcpy(cameraStr, "Go 3");
-               break;
-
-            case qcCameraGo5:
-               strcpy(cameraStr, "Go 5");
-               break;
-
-            case qcCameraGo21:
-               strcpy(cameraStr, "Go 21");
-               break;
-
-#ifdef WIN32
-
-            case qcCameraEXiBlue:
-               strcpy(cameraStr, "EXi Blue");
-               break;
-
-
-            case 34: // TODO get this from header
-               strcpy (cameraStr, "Rolera Bolt");
-               break;
-
-#endif
-               /*		case qcCameraRoleraOne:
-               strcpy(cameraStr, "Rolera One");
-               break;
-               */
-
-            default:
-               strcpy(cameraStr, "Unknown");
-               break;
-         }
+         strcpy(cameraStr, ConvertCameraTypeToString(cameraType).c_str());
       }
 
       strcpy(cameraName, cameraStr);
@@ -803,7 +961,6 @@ int QICamera::Initialize()
 
    } catch (int error) {
       REPORT_MMERR3(error, "QICamera::Initialize", __LINE__);
-      QCam_ReleaseDriver();
       m_isInitialized = false;
       return error;
    }
@@ -861,7 +1018,7 @@ int QICamera::Shutdown()
    QCam_ReleaseCameraSettingsStruct((QCam_SettingsEx *)m_settings);
 #endif
    // release the driver
-   QCam_ReleaseDriver();
+   m_driverAccess.reset();
 
    // free up the memory used by the frames
    if (m_frameBuffs != NULL) {
