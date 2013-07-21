@@ -102,6 +102,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
    private static final String COL3Width = "Col3Width";
    private static final String COL4Width = "Col4Width";
    private static final String COL5Width = "Col5Width";
+   private static final String COL6Width = "Col6Width";
    
    private static final int OK = 0;
    private static final int FAILEDDONOTINFORM = 1;
@@ -282,6 +283,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
        cm.getColumn(3).setPreferredWidth(prefs_.getInt(COL3Width, 75));
        cm.getColumn(4).setPreferredWidth(prefs_.getInt(COL4Width, 75));
        cm.getColumn(5).setPreferredWidth(prefs_.getInt(COL5Width, 75));
+       cm.getColumn(6).setPreferredWidth(prefs_.getInt(COL6Width, 75));
        
        // Drag and Drop support for file loading
        this.setTransferHandler(new TransferHandler() {
@@ -2207,6 +2209,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
        prefs_.putInt(COL2Width, cm.getColumn(2).getWidth());
        prefs_.putInt(COL3Width, cm.getColumn(3).getWidth());
        prefs_.putInt(COL4Width, cm.getColumn(4).getWidth());
+       prefs_.putInt(COL5Width, cm.getColumn(5).getWidth());
+       prefs_.putInt(COL6Width, cm.getColumn(6).getWidth());
        
        setVisible(false);
    }//GEN-LAST:event_formWindowClosing
