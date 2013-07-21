@@ -403,8 +403,6 @@ public class DataCollectionForm extends javax.swing.JFrame {
    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
    private void initComponents() {
 
-      jScrollPane1_ = new javax.swing.JScrollPane();
-      jTable1_ = new javax.swing.JTable();
       jPanel1 = new javax.swing.JPanel();
       jLabel7 = new javax.swing.JLabel();
       intensityMax_ = new javax.swing.JTextField();
@@ -454,6 +452,9 @@ public class DataCollectionForm extends javax.swing.JFrame {
       showButton_ = new javax.swing.JButton();
       jLabel2 = new javax.swing.JLabel();
       jLabel3 = new javax.swing.JLabel();
+      jPanel2 = new javax.swing.JPanel();
+      jScrollPane1_ = new javax.swing.JScrollPane();
+      jTable1_ = new javax.swing.JTable();
 
       setDefaultCloseOperation(javax.swing.WindowConstants.DO_NOTHING_ON_CLOSE);
       setTitle("Gaussian tracking data");
@@ -468,13 +469,6 @@ public class DataCollectionForm extends javax.swing.JFrame {
             formComponentResized(evt);
          }
       });
-
-      jScrollPane1_.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
-      jScrollPane1_.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-
-      jTable1_.setModel(myTableModel_);
-      jTable1_.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_ALL_COLUMNS);
-      jScrollPane1_.setViewportView(jTable1_);
 
       jLabel7.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
       jLabel7.setText("General");
@@ -981,27 +975,37 @@ public class DataCollectionForm extends javax.swing.JFrame {
                   .add(41, 41, 41)
                   .add(SigmaLabel3)
                   .add(7, 7, 7)
-                  .add(IntLabel2)))
-            .add(0, 0, Short.MAX_VALUE))
+                  .add(IntLabel2))))
          .add(jSeparator3)
          .add(jSeparator2)
          .add(jSeparator4)
       );
+
+      jPanel2.setLayout(new java.awt.BorderLayout());
+
+      jScrollPane1_.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
+      jScrollPane1_.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+
+      jTable1_.setModel(myTableModel_);
+      jTable1_.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_ALL_COLUMNS);
+      jScrollPane1_.setViewportView(jTable1_);
+
+      jPanel2.add(jScrollPane1_, java.awt.BorderLayout.CENTER);
 
       org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
       getContentPane().setLayout(layout);
       layout.setHorizontalGroup(
          layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
          .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-         .add(jScrollPane1_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 1033, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+         .add(jPanel2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
       );
       layout.setVerticalGroup(
          layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
          .add(layout.createSequentialGroup()
             .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
             .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-            .add(jScrollPane1_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 398, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-            .add(0, 2, Short.MAX_VALUE))
+            .add(jPanel2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 407, Short.MAX_VALUE)
+            .add(0, 0, 0))
       );
 
       pack();
@@ -2825,6 +2829,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
    private javax.swing.JLabel jLabel6;
    private javax.swing.JLabel jLabel7;
    private javax.swing.JPanel jPanel1;
+   private javax.swing.JPanel jPanel2;
    private javax.swing.JScrollPane jScrollPane1_;
    private javax.swing.JSeparator jSeparator2;
    private javax.swing.JSeparator jSeparator3;
