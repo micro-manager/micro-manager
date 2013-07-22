@@ -80,8 +80,8 @@ int LeicaDMSTCHub::Initialize(MM::Device& device, MM::Core& core)
 	//	return ret;
 	
 	//travel to origin (top left) and define zero point, must be done or READ_POS_X/Y sends three question marks
-	//ret = SetCommand(device, core, xyStage_, 11);	
-	//if (ret != DEVICE_OK)													
+	//ret = SetCommand(device, core, xyStage_, 11);
+	//if (ret != DEVICE_OK)
 	//	return ret;
 
    initialized_ = true;
@@ -149,53 +149,53 @@ int LeicaDMSTCHub::StopXY(MM::Device& device, MM::Core& core)
 int LeicaDMSTCHub::GetXYAbs(MM::Device& device, MM::Core& core, long& positionX, long& positionY)
 {
 	int answerX, answerY;
-	
+
 	int ret =  GetCommand(device, core, xyStage_, 16, answerX);
 	if (ret != DEVICE_OK)
 		return ret;
-	
+
 	ret =  GetCommand(device, core, xyStage_, 17, answerY);
 	if (ret != DEVICE_OK)
 		return ret;
 
 	positionX = (long) answerX;
 	positionY = (long) answerY;
-	
+
 	return DEVICE_OK;
 }
 
 int LeicaDMSTCHub::GetXYUpperThreshold(MM::Device& device, MM::Core& core, long& positionX, long& positionY)
 {
 	int answerX, answerY;
-	
+
 	int ret =  GetCommand(device, core, xyStage_, 21, answerX);
 	if (ret != DEVICE_OK)
 		return ret;
-	
+
 	ret =  GetCommand(device, core, xyStage_, 23, answerY);
 	if (ret != DEVICE_OK)
 		return ret;
 
 	positionX = (long) answerX;
 	positionY = (long) answerY;
-	
+
 	return DEVICE_OK;
 }
 int LeicaDMSTCHub::GetXYLowerThreshold(MM::Device& device, MM::Core& core, long& positionX, long& positionY)
 {
 	int answerX, answerY;
-	
+
 	int ret =  GetCommand(device, core, xyStage_, 20, answerX);
 	if (ret != DEVICE_OK)
 		return ret;
-	
+
 	ret =  GetCommand(device, core, xyStage_, 22, answerY);
 	if (ret != DEVICE_OK)
 		return ret;
 
 	positionX = (long) answerX;
 	positionY = (long) answerY;
-	
+
 	return DEVICE_OK;
 }
 
@@ -284,7 +284,7 @@ double LeicaDMSTCHub::GetStepSize(MM::Device& device, MM::Core& core)
 		motor = 200;
 	else
 		motor = 100;  //default to 100-step motor
-	
+
 	if(answer[2]=='2') //2-mm pitch
 		pitch = 2;
 	else if(answer[2]=='4')  // 4-mm pitch
@@ -353,7 +353,7 @@ int LeicaDMSTCHub::ReadEvents2(MM::Device& device, MM::Core& core, int& event1, 
 	event2 = byte2;
 	event3 = byte3;
 	event4 = byte4;
-	
+
 	return DEVICE_OK;
 }
 */
