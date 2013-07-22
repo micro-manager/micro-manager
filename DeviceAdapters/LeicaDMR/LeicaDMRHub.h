@@ -126,7 +126,6 @@ private:
    std::string version_;
    std::string microscope_;
    bool initialized_;
-   long expireTimeUs_;
 };
 
 #endif // _LeicaDMRHUB_H_

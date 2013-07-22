@@ -88,7 +88,6 @@ private:
    bool oldProtocol_;
    std::string port_;
    std::vector<char> answerBuf_;
-   long expireTimeUs_;
    std::string commandMode_;
    long activeWheel_;
 };

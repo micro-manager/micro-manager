@@ -43,8 +43,6 @@ using namespace std;
 
 CSU22Hub::CSU22Hub ()
 {
-   expireTimeUs_ = 5000000; // each command will finish within 5sec
-
    ClearRcvBuf();
 }
 

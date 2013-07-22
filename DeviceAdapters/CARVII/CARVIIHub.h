@@ -100,7 +100,6 @@ private:
     std::string port_;
     std::vector<char> answerBuf_;
     std::multimap<std::string, long> waitingCommands_;
-    long expireTimeUs_;
     std::string commandMode_;
     int deviceWaitMs_;
 };

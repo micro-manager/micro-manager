@@ -43,8 +43,6 @@ using namespace std;
 
 CSUXHub::CSUXHub ()
 {
-   expireTimeUs_ = 5000000; // each command will finish within 5sec
-
    ClearRcvBuf();
 }
 

@@ -44,8 +44,6 @@ LeicaDMSTCHub::LeicaDMSTCHub () :
    port_(""),
    initialized_(false)
 {
-   expireTimeUs_ = 5000000; // each command will finish within 5sec
-
    ClearRcvBuf();
 }
 

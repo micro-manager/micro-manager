@@ -35,8 +35,6 @@
 using namespace std;
 
 CARVIIHub::CARVIIHub() {
-    expireTimeUs_ = 5000000; // each command will finish within 5sec
-
     // CARVII does not confirm successful device movement; wait time
     // in millisec to ensure movement has ended
     deviceWaitMs_ = 20;

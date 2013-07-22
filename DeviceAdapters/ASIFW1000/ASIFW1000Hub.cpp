@@ -47,8 +47,6 @@ ASIFW1000Hub::ASIFW1000Hub ()  :
 	oldProtocol_(false),
 	port_("Undefined")
 {
-   expireTimeUs_ = 5000000; // each command will finish within 5sec
-
    ClearRcvBuf();
 }
 
