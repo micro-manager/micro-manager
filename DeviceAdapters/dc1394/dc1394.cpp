@@ -35,6 +35,7 @@
 #endif
 
 #include "../../MMDevice/ModuleInterface.h"
+#include "../../MMDevice/DeviceUtils.h"
 #include "dc1394.h"
 #include <dc1394/control.h>
 #include <dc1394/utils.h>
@@ -1776,7 +1777,6 @@ int Cdc1394::ResizeImageBuffer()
    int i = 0;
    while( status == DC1394_OFF && i < 10 ) 
    {
-     //usleep(50000);
      CDeviceUtils::SleepMs(50);
      if (dc1394_video_get_transmission(camera_, &status)!=DC1394_SUCCESS)
         return ERR_GET_TRANSMISSION_FAILED;
@@ -1791,7 +1791,7 @@ int Cdc1394::ResizeImageBuffer()
    i = 0;
    while ( captureSuccess == false && i < 10)
    {
-      usleep(250000);
+      CDeviceUtils::SleepMs(250);
       err_ = dc1394_capture_dequeue(camera_, DC1394_CAPTURE_POLICY_POLL, &frame_);
       if (frame_ && err_==DC1394_SUCCESS)
       {
@@ -1945,7 +1945,6 @@ int Cdc1394::StopTransmission()
    int i = 0;
    while( status == DC1394_ON && i < 50 )
    {       
-      // usleep(50000);
       CDeviceUtils::SleepMs(50);
       if (dc1394_video_get_transmission(camera_, &status)!=DC1394_SUCCESS)
          return ERR_GET_TRANSMISSION_FAILED;

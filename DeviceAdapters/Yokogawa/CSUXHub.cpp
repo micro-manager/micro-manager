@@ -37,10 +37,7 @@
 #include <sstream>
 #include <iostream>
 
-#ifdef WIN32
-   #include <windows.h>
-   #define usleep(us) Sleep(us/1000) 
-#endif
+#include "../../MMDevice/DeviceUtils.h"
 
 using namespace std;
 
@@ -80,7 +77,7 @@ int CSUXHub::SetFilterWheelPosition(MM::Device& device, MM::Core& core, long whe
          return ret;
       ret = GetAcknowledgment(device,core);
       if (ret != DEVICE_OK)  {
-         usleep(50000);
+         CDeviceUtils::SleepMs(50);
          counter++;
       } else
          succeeded = true;
@@ -337,7 +334,7 @@ int CSUXHub::SetBrightFieldPort(MM::Device& device, MM::Core& core, int pos)
          return ret;
       ret = GetAcknowledgment(device,core);
       if (ret != DEVICE_OK)  {
-         usleep(50000);
+         CDeviceUtils::SleepMs(50);
          counter++;
       } else
          succeeded = true;

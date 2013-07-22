@@ -19,6 +19,7 @@
 
 #include "MMITC18.h"
 #include "../../MMDevice/ModuleInterface.h"
+#include "../../MMDevice/DeviceUtils.h"
 
 
 #define PIPELINE 3 // Size of ITC-18 hardware pipeline
@@ -179,11 +180,7 @@ CITC18Hub::~CITC18Hub()
     g_seqThread->Stop();
     //g_seqThread->wait();
 
-    #ifdef WIN32
-    Sleep(10);
-    #else 
-    usleep(10 * 1000);
-    #endif
+    CDeviceUtils::SleepMs(10);
     
     delete g_seqThread;
     g_seqThread = NULL;
@@ -473,11 +470,7 @@ int CITC18Protocol::RunProtocolFile()
     
     do 
     {
-        #ifdef WIN32
-        Sleep(10);
-        #else 
-        usleep(10 * 1000);
-        #endif
+        CDeviceUtils::SleepMs(10);
     } while (g_seqThread->Busy() == true);
     //g_seqThread->wait();
 
@@ -1820,11 +1813,7 @@ int AcqSequenceThread::svc(void)
     {
         //while (!stop_) {   
             ITC18_SmallRun(itc_, sequenceSize_, sequenceInstructions_, ticks_, externalClock_, dataSizeOut_, dataOut_, dataSizeIn_, dataIn_, externalTrigger_,outputEnabled_);
-            #ifdef WIN32
-            Sleep(waitTime_);
-            #else 
-            usleep(waitTime_ * 1000);
-            #endif
+            CDeviceUtils::SleepMs(waitTime_);
         //}
     }
     if (mode_ == 1)
@@ -1858,11 +1847,7 @@ int AcqSequenceThread::svc(void)
 
         while (!stop_) {   
             Poll();
-    #ifdef WIN32
-            Sleep(waitTime_);
-    #else 
-            usleep(waitTime_ * 1000);
-    #endif
+            CDeviceUtils::SleepMs(waitTime_);
         }
     }
 

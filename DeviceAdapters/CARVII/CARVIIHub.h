@@ -102,7 +102,7 @@ private:
     std::multimap<std::string, long> waitingCommands_;
     long expireTimeUs_;
     std::string commandMode_;
-    int deviceWait_;
+    int deviceWaitMs_;
 };
 
 #endif // _CARVIIHUB_H_
