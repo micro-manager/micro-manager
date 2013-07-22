@@ -1063,7 +1063,7 @@ int DAMonochromator::OnClosedWavelength(MM::PropertyBase* pProp, MM::ActionType 
       pProp->Get(val);
       closedWavelength_ = val;
 
-      double volt = ( closedWavelength_ / (maxWavelength_ - minWavelength_)) * (maxVoltage_ - minVoltage_);
+      double volt = (closedWavelength_ - minWavelength_) * (maxVoltage_ - minVoltage_) / (maxWavelength_ - minWavelength_) + minVoltage_;
       if (volt > maxVoltage_ || volt < minVoltage_)
          return ERR_POS_OUT_OF_RANGE;
 
