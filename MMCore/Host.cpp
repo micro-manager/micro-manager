@@ -45,6 +45,7 @@
 #include <net/if.h>
 #include <string.h>
 #include <errno.h>
+#include <unistd.h>
 #endif // linux
 
 
