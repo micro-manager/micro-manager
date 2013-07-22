@@ -49,17 +49,20 @@ else
       $rhandle = fopen( $opath, 'r');
       $lineCount = 0;
       if ($rhandle){
-	 while(! feof($rhandle) ){
-            $line = fgets($rhandle);
-            $mess = $mess . rtrim($line) . "\n";
-            $lineCount = $lineCount + 1;
-            if( 2000 < $lineCount)
-                break 1;
-            }
+      while(! feof($rhandle) ){
+           $line = fgets($rhandle);
+           if (strcmp(substr($line, 0, 11), "#User Name:") == 0)
+              $username = substr($line, 11, 36);
+           $mess = $mess . rtrim($line) . "\n";
+           $lineCount = $lineCount + 1;
+           if( 2000 < $lineCount)
+               break 1;
+           }
        } 
        fclose($rhandle);
 
-       mail('info@micro-manager.org', 'New Problem Report!', $mess);
+       $subject = "New Problem Report: " . date("Y-m-d") . " " . $username;
+       mail('info@micro-manager.org', $subject, $mess);
 
    }// uploaded .uu was found
 } // FILES was parsed
