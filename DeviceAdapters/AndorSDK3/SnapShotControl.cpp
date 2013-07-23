@@ -219,6 +219,7 @@ bool SnapShotControl::takeSnapShot()
       else
       {
          Sleep(exposure_ms);
+         b_ret = true;
       }
    }
 

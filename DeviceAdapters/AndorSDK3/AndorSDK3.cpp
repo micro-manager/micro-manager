@@ -1173,6 +1173,7 @@ bool CAndorSDK3Camera::waitForData(unsigned char *& return_buffer, int & buffer_
    bool got_image = false;
    bool endExpEventFired = false;
    bool softwareTrigger = snapShotController_->isSoftware();
+   //if support events & SW, wait for end exp and fire next trigger
    if (softwareTrigger && eventsManager_->IsEventRegistered(CEventsManager::EV_EXPOSURE_END_EVENT) )
    {
       endExpEventFired = eventsManager_->WaitForEvent(CEventsManager::EV_EXPOSURE_END_EVENT, INFINITE);
@@ -1183,8 +1184,14 @@ bool CAndorSDK3Camera::waitForData(unsigned char *& return_buffer, int & buffer_
       }
    }
 
+   //else just wait on frame (1st trigger sent at Acq start)
    int timeout_ms = currentSeqExposure_ + WAITBUFFER_TIMEOUT_MILLISECONDS;
    got_image = bufferControl->Wait(return_buffer, buffer_size, timeout_ms);
+   //if NO events supported, send next SW trigger
+   if (softwareTrigger && !eventsManager_->IsEventRegistered(CEventsManager::EV_EXPOSURE_END_EVENT) )
+   {
+      sendSoftwareTrigger->Do();
+   }
    return got_image;
 }
 
