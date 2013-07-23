@@ -90,19 +90,16 @@ public:
 
    std::string Name(void) const;
 
+   // This overrides a protected nonvirtual function and makes it public.
    void LogMessage(const char *const p, bool debugOnly = false)
-	{
-      if(this->IsCallbackRegistered())
+   {
+      if (this->IsCallbackRegistered())
          CSerialBase<SerialPort>::LogMessage(std::string(p), debugOnly);
       else
          std::cerr << p << std::endl;;
-	};
+   }
 
-   void LogBinaryMessage( const bool isInput, const unsigned char*const pdata, const int length, bool debugOnly = false);
-   void LogBinaryMessage( const bool isInput, const std::vector<unsigned char>& data, bool debugOnly = false);
-   void LogBinaryMessage( const bool isInput, const std::vector<char>& data, bool debugOnly = false);
 
-   
    // action interface
    // ----------------
    int OnStopBits(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -119,7 +116,7 @@ public:
    bool OKToDelete() {return refCount_ < 1;}
 
 
-   bool Initialized(void) { return initialized_;};
+   bool Initialized(void) { return initialized_; }
 
 
 private:
@@ -147,6 +144,8 @@ private:
    boost::thread* pThread_;
    bool verbose_; // if false, turn off LogBinaryMessage even in Debug Log
 
+   void LogBinaryMessage(bool isInput, const unsigned char* pdata, std::size_t length, bool debugOnly);
+   void LogBinaryMessage(bool isInput, const std::vector<unsigned char>& data, bool debugOnly);
 
 };
 

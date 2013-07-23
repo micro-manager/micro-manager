@@ -938,42 +938,21 @@ int SerialPort::OnDelayBetweenCharsMs(MM::PropertyBase* pProp, MM::ActionType eA
    return DEVICE_OK;
 }
 
-void SerialPort::LogBinaryMessage( const bool isInput, const unsigned char*const pdata, const int length, bool debugOnly)
+void SerialPort::LogBinaryMessage(bool isInput, const unsigned char* pdata, std::size_t length, bool debugOnly)
 {
-   std::vector<unsigned char> tmpString;
-   for( const unsigned char* p = pdata; p < pdata+length; ++ p)
-   {
-      tmpString.push_back(*p);
-   }
-   LogBinaryMessage(isInput, tmpString, debugOnly);
+   const std::vector<unsigned char> data(pdata, pdata + length);
+   LogBinaryMessage(isInput, data, debugOnly);
 }
 
-void SerialPort::LogBinaryMessage( const bool isInput, const std::vector<char>& data, bool debugOnly)
+void SerialPort::LogBinaryMessage(bool isInput, const std::vector<unsigned char>& data, bool debugOnly)
 {
-   std::vector<unsigned char> tmpString;
-   for( std::vector<char>::const_iterator p = data.begin(); p != data.end(); ++ p)
-   {
-      tmpString.push_back((unsigned char)*p);
-   }
-   LogBinaryMessage(isInput, tmpString, debugOnly);
-}
+   std::string messs(isInput ? "<- " : "-> ");
 
-#define DECIMALREPRESENTATIONOFCONTROLCHARACTERS 1
-void SerialPort::LogBinaryMessage( const bool isInput, const std::vector<unsigned char>& data, bool debugOnly)
-{
-   std::string messs;
-   // input or output
-   messs += (isInput ? "<- " : "-> ");
-   for( std::vector<unsigned char>::const_iterator ii = data.begin(); ii != data.end(); ++ii)
-   {
-#ifndef DECIMALREPRESENTATIONOFCONTROLCHARACTERS
-      // caret representation:
-            messs +=   ( 31 < *ii) ? boost::lexical_cast<std::string, unsigned char>(*ii) : 
-         ("^" + boost::lexical_cast<std::string, unsigned char>(64+*ii));
-#else
-      messs +=   ( 31 < *ii)    ?  boost::lexical_cast<std::string, unsigned char>(*ii) : 
-         ("<" + boost::lexical_cast<std::string, unsigned short>((unsigned short)*ii) + ">");
-#endif
+   std::vector<unsigned char>::const_iterator end = data.end();
+   for (std::vector<unsigned char>::const_iterator ii = data.begin(); ii != end; ++ii) {
+      messs += (31 < *ii) ?
+         boost::lexical_cast<std::string>(*ii) : 
+         ("<" + boost::lexical_cast<std::string>(static_cast<unsigned short>(*ii)) + ">");
    }
-   LogMessage(messs.c_str(),debugOnly);
+   LogMessage(messs.c_str(), debugOnly);
 }
