@@ -950,7 +950,10 @@ void SerialPort::LogBinaryMessage(bool isInput, const std::vector<unsigned char>
          oss << static_cast<char>(*ii);
       }
       else {
-         oss << boost::format("\\x%02hhx") % *ii;
+         // boost::format doesn't work with %02hhx. Also note that the
+         // following requires that *ii is _unsigned_ char (a signed char would
+         // be sign-extended).
+         oss << boost::format("\\x%02x") % static_cast<unsigned>(*ii);
       }
    }
 
