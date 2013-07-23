@@ -22,20 +22,18 @@
 // CVS:           $Id$
 //
 
-// PRE-REQUISITES: 
-//#include "../../MMDevice/DeviceUtils.h"
-//#include <sstream>
-//#include <cstdio>
-//
-//#include <deque> 
-//#include <iostream> 
-//#include <boost/bind.hpp> 
-//#include <boost/asio.hpp> 
-//#include <boost/asio/serial_port.hpp> 
-//#include <boost/thread.hpp> 
-
 #ifndef ASIOCLIENT_H
 #define ASIOCLIENT_H
+
+#include "../../MMDevice/DeviceUtils.h"
+
+#include "SerialManager.h"
+
+#include <deque> 
+#include <boost/bind.hpp> 
+#include <boost/asio.hpp> 
+#include <boost/asio/serial_port.hpp> 
+#include <boost/lexical_cast.hpp> 
 
 bool bfalse_s = false;
 

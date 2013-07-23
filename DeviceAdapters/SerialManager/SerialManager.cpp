@@ -26,7 +26,6 @@
 #ifdef WIN32
    #define WIN32_LEAN_AND_MEAN
    #include <windows.h>
-   #define snprintf _snprintf 
 #endif
 
 #ifdef __APPLE__    
@@ -48,16 +47,11 @@
 #include "../../MMDevice/ModuleInterface.h"
 #include "../../MMDevice/DeviceUtils.h"
 #include "SerialManager.h"
+
+#include <iostream>
 #include <sstream>
-#include <cstdio>
-
-#include <deque> 
-#include <iostream> 
-
 
 #include <boost/bind.hpp> 
-#include <boost/asio.hpp> 
-#include <boost/asio/serial_port.hpp> 
 #include <boost/thread.hpp> 
 #include <boost/lexical_cast.hpp> 
 #include <boost/date_time/posix_time/posix_time_types.hpp> 
@@ -220,16 +214,16 @@ void SerialPortLister::ListPorts(std::vector<std::string> &availablePorts)
    // Serial devices are instances of class IOSerialBSDClient          
    classesToMatch = IOServiceMatching(kIOSerialBSDServiceValue); 
    if (classesToMatch == NULL) {                                 
-       printf("IOServiceMatching returned a NULL dictionary.\n");  
-   } else {                                                   
+      std::cerr << "IOServiceMatching returned a NULL dictionary.\n";
+   } else {
        CFDictionarySetValue(classesToMatch,                         
                            CFSTR(kIOSerialBSDTypeKey),        
                            CFSTR(kIOSerialBSDAllTypes));   
    }
    kernResult = IOServiceGetMatchingServices(kIOMasterPortDefault, classesToMatch, &serialPortIterator);
    if (KERN_SUCCESS != kernResult) {
-      printf("IOServiceGetMatchingServices returned %d\n", kernResult);
-   }                           
+      std::cerr << "IOServiceGetMatchingServices returned " << kernResult << "\n";
+   }
                                                                         
    // Given an iterator across a set of modems, return the BSD path to the first one.
    // If no modems are found the path name is set to an empty string.            
