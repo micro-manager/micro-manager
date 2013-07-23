@@ -55,6 +55,7 @@
 #include <boost/thread.hpp> 
 #include <boost/lexical_cast.hpp> 
 #include <boost/date_time/posix_time/posix_time_types.hpp> 
+#include <boost/format.hpp>
 
 
 // serial device implementation class
@@ -940,13 +941,18 @@ void SerialPort::LogBinaryMessage(bool isInput, const unsigned char* pdata, std:
 
 void SerialPort::LogBinaryMessage(bool isInput, const std::vector<unsigned char>& data, bool debugOnly)
 {
-   std::string messs(isInput ? "<- " : "-> ");
+   std::ostringstream oss;
+   oss << (isInput ? "<- " : "-> ");
 
    std::vector<unsigned char>::const_iterator end = data.end();
    for (std::vector<unsigned char>::const_iterator ii = data.begin(); ii != end; ++ii) {
-      messs += (31 < *ii) ?
-         boost::lexical_cast<std::string>(*ii) : 
-         ("<" + boost::lexical_cast<std::string>(static_cast<unsigned short>(*ii)) + ">");
+      if (*ii < 0x80 && std::isgraph(*ii)) { // ASCII and graphical
+         oss << static_cast<char>(*ii);
+      }
+      else {
+         oss << boost::format("\\x%02hhx") % *ii;
+      }
    }
-   LogMessage(messs.c_str(), debugOnly);
+
+   LogMessage(oss.str().c_str(), debugOnly);
 }
