@@ -946,7 +946,7 @@ void SerialPort::LogBinaryMessage(bool isInput, const std::vector<unsigned char>
 
    std::vector<unsigned char>::const_iterator end = data.end();
    for (std::vector<unsigned char>::const_iterator ii = data.begin(); ii != end; ++ii) {
-      if (*ii < 0x80 && std::isgraph(*ii)) { // ASCII and graphical
+      if (*ii < 0x80 && std::isgraph(*ii) && *ii != '\\') { // ASCII and graphical and not backslash
          oss << static_cast<char>(*ii);
       }
       else {
