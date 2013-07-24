@@ -58,8 +58,8 @@ class HIDDevice;
 struct HIDDeviceInfo
 {
    std::string name;
-   u_int16_t idVendor;
-   u_int16_t idProduct;
+   unsigned short idVendor;
+   unsigned short idProduct;
 
 };
 

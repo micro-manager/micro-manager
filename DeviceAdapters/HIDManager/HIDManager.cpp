@@ -37,6 +37,7 @@
 #include "../../MMDevice/ModuleInterface.h"
 #include "../../MMDevice/DeviceBase.h"
 #include <cstdio>
+#include <cmath>
 #include <sstream>
 #include <algorithm>
 
@@ -334,13 +335,14 @@ int MDHIDDevice::SetCommand(const char* command, const char* term)
 *  Reads from port into buffer answer of length answerLen untill full, or the terminating
 *  character term was found or a timeout (local variable maxWait) was reached
 */
-int MDHIDDevice::GetAnswer(char* answer, unsigned answerLen, const char* term)
+int MDHIDDevice::GetAnswer(char* answer, unsigned answerLen, const char* /* term */)
 {
    // Need to parse the answer for a terminating character.
    // Also, need to figure out to work with answerLen
    // Conversion between unsigned and signed char is also bad
    // Is this function useful at all in HID devices?
-   int res = hid_read_timeout(handle_, (unsigned char*) answer, answerLen, answerTimeoutMs_);
+   int timeout = static_cast<int>(std::ceil(answerTimeoutMs_));
+   int res = hid_read_timeout(handle_, (unsigned char*) answer, answerLen, timeout);
    if (res == -1)
       return ERR_RECEIVE_FAILED;
 
