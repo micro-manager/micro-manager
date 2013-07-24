@@ -24,7 +24,7 @@
 			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="2"
-			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops;.\buildProps2008.vsprops"
+			InheritedPropertySheets=".\buildProps2008.vsprops"
 			CharacterSet="2"
 			>
 			<Tool
@@ -106,7 +106,7 @@
 			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="2"
-			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops;.\buildProps2008.vsprops"
+			InheritedPropertySheets=".\buildProps2008.vsprops"
 			CharacterSet="2"
 			>
 			<Tool
@@ -189,7 +189,7 @@
 			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="2"
-			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops;.\buildProps2008.vsprops"
+			InheritedPropertySheets=".\buildProps2008.vsprops"
 			CharacterSet="2"
 			>
 			<Tool
@@ -269,7 +269,7 @@
 			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="2"
-			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops;.\buildProps2008.vsprops"
+			InheritedPropertySheets=".\buildProps2008.vsprops"
 			CharacterSet="2"
 			>
 			<Tool
