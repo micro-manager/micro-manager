@@ -48,7 +48,6 @@
 				ExceptionHandling="2"
 				RuntimeLibrary="1"
 				WarningLevel="4"
-				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="3"
 				DisableSpecificWarnings="4290"
 			/>
@@ -127,7 +126,6 @@
 				ExceptionHandling="2"
 				RuntimeLibrary="1"
 				WarningLevel="4"
-				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="3"
 				DisableSpecificWarnings="4290"
 			/>
@@ -203,7 +201,6 @@
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS"
 				ExceptionHandling="2"
 				WarningLevel="4"
-				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="3"
 				DisableSpecificWarnings="4290"
 			/>
@@ -278,7 +275,6 @@
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS"
 				ExceptionHandling="2"
 				WarningLevel="4"
-				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="3"
 				DisableSpecificWarnings="4290"
 			/>

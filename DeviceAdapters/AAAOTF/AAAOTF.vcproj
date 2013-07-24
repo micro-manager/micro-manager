@@ -53,7 +53,6 @@
 				RuntimeTypeInfo="true"
 				UsePrecompiledHeader="0"
 				WarningLevel="4"
-				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="4"
 				DisableSpecificWarnings="4290"
 			/>
@@ -137,7 +136,6 @@
 				RuntimeTypeInfo="true"
 				UsePrecompiledHeader="0"
 				WarningLevel="4"
-				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="3"
 				DisableSpecificWarnings="4290"
 			/>
@@ -217,7 +215,6 @@
 				RuntimeTypeInfo="true"
 				UsePrecompiledHeader="0"
 				WarningLevel="4"
-				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="3"
 				DisableSpecificWarnings="4290"
 			/>
@@ -299,7 +296,6 @@
 				RuntimeTypeInfo="true"
 				UsePrecompiledHeader="0"
 				WarningLevel="4"
-				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="3"
 				DisableSpecificWarnings="4290"
 			/>

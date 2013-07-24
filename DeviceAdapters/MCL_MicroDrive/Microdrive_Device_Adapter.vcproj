@@ -49,7 +49,6 @@
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="0"
 				WarningLevel="4"
-				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="4"
 			/>
 			<Tool
@@ -126,7 +125,6 @@
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="0"
 				WarningLevel="4"
-				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="3"
 			/>
 			<Tool
@@ -199,7 +197,6 @@
 				PreprocessorDefinitions="MODULE_EXPORTS;WIN32"
 				RuntimeLibrary="0"
 				WarningLevel="4"
-				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="3"
 			/>
 			<Tool
@@ -275,7 +272,6 @@
 				PreprocessorDefinitions="MODULE_EXPORTS;WIN32"
 				RuntimeLibrary="0"
 				WarningLevel="4"
-				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="3"
 			/>
 			<Tool
