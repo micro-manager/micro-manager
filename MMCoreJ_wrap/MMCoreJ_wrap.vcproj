@@ -377,22 +377,6 @@
 			<File
 				RelativePath=".\MMCoreJ_wrap.cxx"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalOptions="/wd4701"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|x64"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalOptions="/wd4701"
-					/>
-				</FileConfiguration>
 			</File>
 		</Filter>
 		<Filter
