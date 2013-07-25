@@ -27,32 +27,39 @@
 
 #define PCO_ERRT_H_CREATE_OBJECT
 
-#include "../../MMDevice/ModuleInterface.h"
+#include "..\..\MMDevice/ModuleInterface.h"
 #include "MicroManager.h"
 //#pragma warning(disable : 4996) // disable warning for deperecated CRT functions on Windows 
 
 #include <string>
 #include <sstream>
-#include <cmath>	// Liisa: for ceil
+#include <list>
 
 using namespace std;
 
-CPCOCam* CPCOCam::m_pInstance = 0;
+list<CPCOCam*> PCO_CamList;
+const char* g_CameraDeviceName = "pco_camera";
+
 const char* g_PixelType_8bit = "8bit";
 const char* g_PixelType_16bit = "16bit";
 const char* g_PixelType_RGB32bit = "RGB 32bit";
 
+int g_iCameraCount = 0;
+int g_iSC2Count = 0;
+int g_iSenCount = 0;
+int g_iPFCount = 0;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Exported MMDevice API
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-  AddAvailableDeviceName("pco_camera", "PCO generic camera adapter");
+  AddAvailableDeviceName(g_CameraDeviceName, "PCO generic camera adapter");
 }
 
 MODULE_API void DeleteDevice(MM::Device* pDevice)
 {
+  PCO_CamList.remove((CPCOCam*)pDevice);
   delete pDevice;
 }
 
@@ -63,9 +70,12 @@ MODULE_API MM::Device* CreateDevice(const char* pszDeviceName)
 
   string strName(pszDeviceName);
    
-  if (strName == "pco_camera")
-    return CPCOCam::GetInstance();
-   
+  if (strName == g_CameraDeviceName)
+  {
+    CPCOCam *pcam = new CPCOCam();
+    PCO_CamList.push_front(pcam);
+    return pcam;
+  }
   return 0;
 }
 
@@ -85,7 +95,9 @@ CPCOCam::CPCOCam() :
   pictime_(0.0)
 {
   // initialize the array of camera settings
-  m_nBoard = 0;
+  m_iCameraNum = 0;
+  m_iInterFace = 0;
+  m_iCameraNumAtInterface = 0;
   m_nCameraType = 0;
   m_pszTimes[0] = 0;
   m_nSubMode = 0;
@@ -110,7 +122,7 @@ CPCOCam::CPCOCam() :
   m_bStartStopMode = TRUE;
   m_iSkipImages = 0;
   m_iFpsMode = 0;
-  m_iNoiseFilterMode = 0;
+  m_iNoiseFilterMode = 1;
   m_dFps = 10.0;
   m_iPixelRate = 0;
   m_iTimestamp = 0;
@@ -128,15 +140,34 @@ CPCOCam::CPCOCam() :
 
 CPCOCam::~CPCOCam()
 {
-  InitLib(255, NULL, 0, NULL); // Removes allocated objects
-
-  if (m_bInitialized)
+  if(m_bInitialized)
+  {
+    g_iCameraCount--;
+    if(m_iInterFace == 1)
+      g_iSenCount--;
+    if(m_iInterFace == 2)
+      g_iPFCount--;
+    if(m_iInterFace == 3)
+      g_iSC2Count--;
     Shutdown();
-  
-  delete(sthd_);
-  m_pInstance = 0;
-}
+  }
 
+  if(g_iCameraCount <= 0)
+  {
+    InitLib(255, NULL, 0, NULL); // Removes allocated objects
+    g_iCameraCount = 0;
+    g_iSenCount = 0;
+    g_iPFCount = 0;
+    g_iSC2Count = 0;
+  }
+ 
+  delete(sthd_);
+}
+void CPCOCam::GetName(char* name) const
+{
+  // Return the name used to referr to this device adapte
+  CDeviceUtils::CopyLimitedString(name, g_CameraDeviceName);
+}
 // Camera type
 int CPCOCam::OnCameraType(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
@@ -175,7 +206,7 @@ int CPCOCam::OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct)
         sprintf(m_pszTimes, "0,%d,-1,-1", (int)m_dExposure);
       nErr = SetupCamera();
     }
-	    
+      
     if (nErr != 0)
       return nErr;
   }
@@ -286,7 +317,7 @@ int CPCOCam::OnFpsMode(MM::PropertyBase* pProp, MM::ActionType eAct)
         sprintf(m_pszTimes, "0,%d,-1,-1", (int)m_dExposure);
       nErr = SetupCamera();
     }
-	    
+      
     if (nErr != 0)
       return nErr;
   }
@@ -348,7 +379,7 @@ int CPCOCam::OnFps(MM::PropertyBase* pProp, MM::ActionType eAct)
         sprintf(m_pszTimes, "0,%d,-1,-1", (int)m_dExposure);
       nErr = SetupCamera();
     }
-	    
+      
     if (nErr != 0)
       return nErr;
   }
@@ -381,7 +412,7 @@ int CPCOCam::OnPixelRate(MM::PropertyBase* pProp, MM::ActionType eAct)
       m_iPixelRate = ihelp;
       nErr = SetupCamera();
     }
-	    
+      
     if (nErr != 0)
       return nErr;
   }
@@ -621,7 +652,7 @@ int CPCOCam::OnEMGain(MM::PropertyBase* pProp, MM::ActionType eAct)
       sprintf(m_pszTimes, "0,%d,-1,-1\r\nmg%d", (int)m_dExposure, m_iEMGain);
       nErr = SetupCamera();
     }
-	    
+      
     if (nErr != 0)
       return nErr;
   }
@@ -657,14 +688,42 @@ int CPCOCam::Initialize()
 
   if (! m_bDemoMode)
   {
-    nErr = m_pCamera->PreInitSC2(0, 0, 0);
-    if(nErr != PCO_NOERROR)
-      nErr = m_pCamera->PreInitSen(0, 0, 0);
-    if(nErr != PCO_NOERROR)
-      nErr = m_pCamera->PreInitPcCam(0, 0, 0);
+    nErr = m_pCamera->PreInitSC2(g_iSC2Count, g_iCameraCount, 0);
     if(nErr != PCO_NOERROR)
     {
-      return DEVICE_NOT_CONNECTED;
+      nErr = m_pCamera->PreInitSen(g_iSenCount, g_iCameraCount, 0);
+      if(nErr != PCO_NOERROR)
+      {
+        nErr = m_pCamera->PreInitPcCam(g_iPFCount, g_iCameraCount, 0);
+        if(nErr != PCO_NOERROR)
+        {
+          return DEVICE_NOT_CONNECTED;
+        }
+        else
+        {
+          m_iCameraNum = g_iCameraCount;
+          m_iCameraNumAtInterface = g_iPFCount;
+          m_iInterFace = 2;
+          g_iPFCount++;
+          g_iCameraCount++;
+        }
+      }
+      else
+      {
+        m_iCameraNum = g_iCameraCount;
+        m_iCameraNumAtInterface = g_iSenCount;
+        m_iInterFace = 1;
+        g_iSenCount++;
+        g_iCameraCount++;
+      }
+    }
+    else
+    {
+      m_iCameraNum = g_iCameraCount;
+      m_iCameraNumAtInterface = g_iSC2Count;
+      m_iInterFace = 3;
+      g_iSC2Count++;
+      g_iCameraCount++;
     }
   }
   else

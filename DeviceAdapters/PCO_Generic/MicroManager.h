@@ -63,19 +63,14 @@
 class CPCOCam : public CCameraBase<CPCOCam>
 {
 public:
-   static CPCOCam* GetInstance()
-   {
-      if (!m_pInstance)
-         m_pInstance = new CPCOCam();
-      return m_pInstance;
-   }
+   CPCOCam();
    ~CPCOCam();
    
    // MMDevice API
    int Initialize();
    int Shutdown();
    
-   void GetName(char* pszName) const {CDeviceUtils::CopyLimitedString(pszName, "Sensicam");}
+   void GetName(char* pszName) const;
    bool Busy() {return m_bBusy;}
    void WriteLog(char *message, int err);
    
@@ -133,7 +128,6 @@ public:
    */
 
 private:
-   CPCOCam();
    int ResizeImageBuffer();
    int SetupCamera();
    int CleanupSequenceAcquisition();
@@ -167,8 +161,6 @@ private:
 
    int InsertImage();
 
-
-   static CPCOCam* m_pInstance;
    ImgBuffer img_;
    int pixelDepth_;
    float pictime_;
@@ -190,7 +182,9 @@ private:
    bool m_bInitialized;
 
    // sensicam data
-   int m_nBoard;
+   int m_iCameraNum;
+   int m_iInterFace;
+   int m_iCameraNumAtInterface;
    int m_nCameraType;
    char m_pszTimes[MMSENSICAM_MAX_STRLEN];
    int m_nTimesLen;
