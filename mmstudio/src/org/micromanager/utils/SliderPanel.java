@@ -128,7 +128,7 @@ public class SliderPanel extends JPanel {
 
 
    private void setSliderValue(double val) {
-      slider_.setValue((int) ((val - lowerLimit_)/factor_) );
+      slider_.setValue((int)Math.round((val - lowerLimit_) / factor_));
    }
 
    private void onSliderMove() {
