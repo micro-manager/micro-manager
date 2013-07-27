@@ -684,12 +684,16 @@ public class MMAcquisition {
 
    /**
     * Same as close(), but also closes the display
+    * @return false if canceled by user, true otherwise
     */
-   public void closeImageWindow() {
-      close();
+   public boolean closeImageWindow() {
       if (virtAcq_ != null) {
-         virtAcq_.close();
+         if (!virtAcq_.close()) {
+            return false;
+         }
       }
+      close();
+      return true;
    }
 
    /**
@@ -965,6 +969,11 @@ public class MMAcquisition {
       }
    }
 
+   /**
+    * Tests whether the window associated with this acquisition is closed
+    * 
+    * @return true when acquisition has an open window, false otherwise 
+    */
    public boolean windowClosed() {
       if (!show_ || !initialized_) {
          return false;
@@ -975,6 +984,12 @@ public class MMAcquisition {
       return true;
    }
    
+   /**
+    * Returns show flag, indicating whether this acquisition was opened with
+    * a request to show the image in a window
+    * 
+    * @return flag for request to display image in window
+    */
    public boolean getShow() {
       return show_;
    }

@@ -107,22 +107,19 @@ import bsh.EvalError;
 import bsh.Interpreter;
 
 import com.swtdesigner.SwingResourceManager;
-import ij.Menus;
 import ij.gui.ImageCanvas;
 import ij.gui.ImageWindow;
 import ij.gui.Toolbar;
 import java.awt.Cursor;
-import java.awt.Frame;
 import java.awt.KeyboardFocusManager;
-import java.awt.Menu;
-import java.awt.MenuItem;
 import java.awt.dnd.DropTarget;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Collections;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.BorderFactory;
 import javax.swing.JPanel;
 import javax.swing.JSplitPane;
@@ -669,7 +666,7 @@ public class MMStudioMainFrame extends JFrame implements
          @Override
             public void run() {
                 try {
-                    TaggedImage image = null;
+                    TaggedImage image;
                     do {
                         image = (TaggedImage) processedImageQueue.take();
                         if (image != TaggedImageQueue.POISON) {
@@ -1166,9 +1163,9 @@ public class MMStudioMainFrame extends JFrame implements
             } catch (Exception e) {
                ReportingUtils.showError(e);
             }
-            return;
          }
       });
+      
       topPanel.add(shutterComboBox_);
       topLayout.putConstraint(SpringLayout.SOUTH, shutterComboBox_,
             114 - 22, SpringLayout.NORTH, topPanel);
@@ -1771,7 +1768,7 @@ public class MMStudioMainFrame extends JFrame implements
 
             loadMRUConfigFiles();
             afMgr_ = new AutofocusManager(gui_);
-            initializePlugins();
+            Thread pluginLoader = initializePlugins();
 
             toFront();
             
@@ -1797,7 +1794,15 @@ public class MMStudioMainFrame extends JFrame implements
             // Create an instance of HotKeys so that they can be read in from prefs
             hotKeys_ = new org.micromanager.utils.HotKeys();
             hotKeys_.loadSettings();
-
+            
+            // before loading the system configuration, we need to wait 
+            // until the plugins are loaded
+            try {  
+               pluginLoader.join(2000);
+            } catch (InterruptedException ex) {
+               ReportingUtils.logError(ex, "Plugin loader thread was interupted");
+            }
+            
             // if an error occurred during config loading, 
             // do not display more errors than needed
             if (!loadSystemConfiguration())
@@ -1832,26 +1837,34 @@ public class MMStudioMainFrame extends JFrame implements
                   ReportingUtils.showError(e1);
                }
             }
-            
-            
-             centerAndDragListener_ = new CenterAndDragListener(gui_);
+                        
+            centerAndDragListener_ = new CenterAndDragListener(gui_);
              
             // switch error reporting back on
             ReportingUtils.showErrorOn(true);
          }
 
-         private void initializePlugins() {
+         private Thread initializePlugins() {
             pluginMenu_ = new JMenu();
             pluginMenu_.setText("Plugins");
             menuBar_.add(pluginMenu_);
-            new Thread("Plugin loading") {
-               @Override
-               public void run() {
-                  // Needed for loading clojure-based jars:
-                  Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
-                  loadPlugins();
-               }
-            }.start();
+            Thread myThread = new ThreadPluginLoading("Plugin loading");
+            myThread.start();
+            return myThread;
+         }
+
+         class ThreadPluginLoading extends Thread {
+
+            public ThreadPluginLoading(String string) {
+               super(string);
+            }
+
+            @Override
+            public void run() {
+               // Needed for loading clojure-based jars:
+               Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
+               loadPlugins();
+            }
          }
 
         
@@ -3272,7 +3285,7 @@ public class MMStudioMainFrame extends JFrame implements
             }
 
             comboBinning_.setMaximumRowCount((int) binSizes.size());
-            if (binSizes.size() == 0) {
+            if (binSizes.isEmpty()) {
                 comboBinning_.setEditable(true);
             } else {
                 comboBinning_.setEditable(false);
@@ -3401,7 +3414,7 @@ public class MMStudioMainFrame extends JFrame implements
             double exp = core_.getExposure();
             textFieldExp_.setText(NumberUtils.doubleToDisplayString(exp));
             configureBinningCombo();
-            String binSize = "";
+            String binSize;
             if (fromCache) {
                binSize = core_.getPropertyFromCache(cameraLabel_, MMCoreJ.getG_Keyword_Binning());
             } else {
@@ -3442,7 +3455,10 @@ public class MMStudioMainFrame extends JFrame implements
          // update Channel menus in Multi-dimensional acquisition dialog
          updateChannelCombos();
 
-         
+         // update list of pixel sizes in pixel size configuration window
+         if (calibrationListDlg_ != null) {
+            calibrationListDlg_.refreshCalibrations();
+         }
 
       } catch (Exception e) {
          ReportingUtils.logError(e);
@@ -3466,6 +3482,12 @@ public class MMStudioMainFrame extends JFrame implements
       enableLiveMode(false);
    }
 
+   /**
+    * Cleans up resources while shutting down 
+    * 
+    * @param calledByImageJ
+    * @return flag indicating success.  Shut down should abort when flag is false 
+    */
    private boolean cleanupOnClose(boolean calledByImageJ) {
       // Save config presets if they were changed.
       if (configChanged_) {
@@ -3476,6 +3498,12 @@ public class MMStudioMainFrame extends JFrame implements
                null, options, options[0]);
          if (n == JOptionPane.YES_OPTION) {
             saveConfigPresets();
+            // if the configChanged_ flag did not become false, the user 
+            // must have cancelled the configuration saving and we should cancel
+            // quitting as well
+            if (configChanged_) {
+               return false;
+            }
          }
       }
       if (liveModeTimer_ != null)
@@ -3526,7 +3554,8 @@ public class MMStudioMainFrame extends JFrame implements
 
       synchronized (shutdownLock_) {
          try {
-            if (core_ != null){
+            if (core_ != null) {
+               ReportingUtils.setCore(null);
                core_.delete();
                core_ = null;
             }
@@ -3574,14 +3603,14 @@ public class MMStudioMainFrame extends JFrame implements
    }
 
 
-   public synchronized void closeSequence(boolean calledByImageJ) {
+   public synchronized boolean closeSequence(boolean calledByImageJ) {
 
       if (!this.isRunning()) {
          if (core_ != null) {
             core_.logMessage("MMStudioMainFrame::closeSequence called while running_ is false");
          }
          this.dispose();
-         return;
+         return true;
       }
       
       if (engine_ != null && engine_.isAcquisitionRunning()) {
@@ -3592,14 +3621,25 @@ public class MMStudioMainFrame extends JFrame implements
                JOptionPane.INFORMATION_MESSAGE);
 
          if (result == JOptionPane.NO_OPTION) {
-            return;
+            return false;
          }
       }
 
       stopAllActivity();
+      
+      try {
+         // Close all image windows associated with MM.  Canceling saving of 
+         // any of these should abort shutdown
+         if (!acqMgr_.closeAllImageWindows()) {
+            return false;
+         }
+      } catch (MMScriptException ex) {
+         // Not sure what to do here...
+      }
 
-      if (!cleanupOnClose(calledByImageJ))
-         return;
+      if (!cleanupOnClose(calledByImageJ)) {
+         return false;
+      }
 
       running_ = false;
 
@@ -3626,8 +3666,8 @@ public class MMStudioMainFrame extends JFrame implements
       } else {
          this.dispose();
       }
-     
-
+      
+      return true;
    }
 
    public void applyContrastSettings(ContrastSettings contrast8,
@@ -4337,7 +4377,9 @@ public class MMStudioMainFrame extends JFrame implements
       }
    }
 
-   
+   /**
+    * Closes all acquisitions
+    */
    public void closeAllAcquisitions() {
       acqMgr_.closeAll();
    }
@@ -4548,12 +4590,11 @@ public class MMStudioMainFrame extends JFrame implements
    }
 
    public String installPlugin(String className) {
-      String msg = "";
       try {
          Class clazz = Class.forName(className);
          return installPlugin(clazz);
       } catch (ClassNotFoundException e) {
-         msg = className + " plugin not found.";
+         String msg = className + " plugin not found.";
          ReportingUtils.logError(e, msg);
          return msg;
       }
@@ -4797,6 +4838,11 @@ public class MMStudioMainFrame extends JFrame implements
             setCursor(Cursor.getDefaultCursor());        		 
          }
 
+         if (cfg2 == null)
+         {
+            ReportingUtils.showError("Failed to launch Hardware Configuration Wizard");
+            return;
+         }
          cfg2.setVisible(true);
          GUIUtils.preventDisplayAdapterChangeExceptions();
 
@@ -4813,7 +4859,6 @@ public class MMStudioMainFrame extends JFrame implements
 
       } catch (Exception e) {
          ReportingUtils.showError(e);
-         return;
       }
    }
 }

@@ -317,11 +317,15 @@ public class CalibrationListDlg extends MMDialog {
    }
 
    public void updateCalibrations() {
+      refreshCalibrations();
+      parentGUI_.setConfigChanged(true);
+      parentGUI_.refreshGUI();
+   }
+   
+   public void refreshCalibrations() {
       CalTableModel ptm = (CalTableModel)calTable_.getModel();
       calibrationList_.getCalibrationsFromCore();
       ptm.fireTableDataChanged();
-      parentGUI_.setConfigChanged(true);
-      parentGUI_.refreshGUI();
       int row = ptm.getCurrentPixelConfigRow();
       if (row >= 0)
           calTable_.setRowSelectionInterval(row, row);

@@ -87,7 +87,9 @@ public class MMStudioPlugin implements PlugIn, CommandListener {
    public String commandExecuting(String command) { 
       if (command.equalsIgnoreCase("Quit") && frame_ != null) {
          try {
-            frame_.closeSequence(true);
+            if (!frame_.closeSequence(true)) {
+               return null;
+            }
          } catch (Exception ex) {
             // do nothing, just make sure to continue quitting
          }

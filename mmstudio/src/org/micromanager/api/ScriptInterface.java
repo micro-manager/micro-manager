@@ -245,6 +245,7 @@ public interface ScriptInterface {
     * Closes the acquisition.
     * After this command metadata is complete, all the references to this data set are cleaned-up,
     * and no additional images can be added to the acquisition
+    * Does not close the window in which the acquisition data is displayed
     * @throws MMScriptException 
     */
    public void closeAcquisition(String name) throws MMScriptException;

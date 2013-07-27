@@ -82,11 +82,34 @@ public class AcquisitionManager {
       }
    }
    
-   public void closeImageWindow(String name) throws MMScriptException {
+   /**
+    * Closes display window associated with an acquisition
+    * @param name of acquisition
+    * @return false if canceled by user, true otherwise
+    * @throws MMScriptException 
+    */
+   public boolean closeImageWindow(String name) throws MMScriptException {
       if (!acquisitionExists(name))
          throw new MMScriptException("The name does not exist");
-      else
-         acqs_.get(name).closeImageWindow();
+      
+      return acqs_.get(name).closeImageWindow();
+   }
+   
+   /**
+    * Closes all windows associated with acquisitions
+    * Can be interrupted by the user (by pressing cancel)
+    * 
+    * @return false is saving was canceled, true otherwise
+    * @throws MMScriptException 
+    */
+   public boolean closeAllImageWindows() throws MMScriptException {
+      String[] acqNames = getAcqusitionNames();
+      for (String acqName : acqNames) {
+         if (!closeImageWindow(acqName)) {
+            return false;
+         }
+      }       
+      return true;
    }
    
    public boolean acquisitionExists(String name) {
@@ -111,9 +134,9 @@ public class AcquisitionManager {
    }
 
    public void closeAll() {
-      for (Enumeration<MMAcquisition> e=acqs_.elements(); e.hasMoreElements(); )
+      for (Enumeration<MMAcquisition> e=acqs_.elements(); e.hasMoreElements(); ) {
          e.nextElement().close();
-      
+      }
       acqs_.clear();
    }
 

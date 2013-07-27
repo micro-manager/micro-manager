@@ -47,8 +47,6 @@ import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
@@ -653,7 +651,6 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay,
          zAnimated_ = false;
          refreshScrollbarIcons();
          moveScrollBarsToLockedPositions();
-         return;
       } else {
          animateFrames(false);
          animationTimer_ = new java.util.Timer();
@@ -2011,11 +2008,19 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay,
    }
     */
 
-   public void close() {
+   /**
+    * Closes the ImageWindow and associated ImagePlus
+    * 
+    * @return false if canceled by user, true otherwise 
+    */
+   public boolean close() {
       if (hyperImage_ != null) {
-         hyperImage_.getWindow().windowClosing(null);
+         if (!hyperImage_.getWindow().close()) {
+            return false;
+         }
          hyperImage_.close();
       }
+      return true;
    }
 
    public synchronized boolean windowClosed() {
