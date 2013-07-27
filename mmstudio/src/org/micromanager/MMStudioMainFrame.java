@@ -118,8 +118,6 @@ import java.awt.event.MouseEvent;
 import java.util.Collections;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.BorderFactory;
 import javax.swing.JPanel;
 import javax.swing.JSplitPane;
@@ -609,6 +607,9 @@ public class MMStudioMainFrame extends JFrame implements
       //engine_.setDirName(originalDirName);
    }
 
+   /**
+    * Inserts version info for various components in the Corelog
+    */
    public void logStartupProperties() {
       core_.enableDebugLog(options_.debugLogEnabled_);
       core_.logMessage("MM Studio version: " + getVersion());
@@ -3458,6 +3459,9 @@ public class MMStudioMainFrame extends JFrame implements
          // update list of pixel sizes in pixel size configuration window
          if (calibrationListDlg_ != null) {
             calibrationListDlg_.refreshCalibrations();
+         }
+         if (propertyBrowser_ != null) {
+            propertyBrowser_.refresh();
          }
 
       } catch (Exception e) {
