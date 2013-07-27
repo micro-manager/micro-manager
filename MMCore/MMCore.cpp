@@ -773,7 +773,6 @@ void CMMCore::unloadAllDevices() throw (CMMError)
       CORE_LOG("All devices unloaded.\n");
       imageSynchro_.clear();
       
-
       // clear configurations
       CConfigMap::const_iterator it;
       for (it = configs_.begin(); it != configs_.end(); it++)
@@ -786,10 +785,22 @@ void CMMCore::unloadAllDevices() throw (CMMError)
 
       //selected channel group is no longer valid
       //channelGroup_ = "":
-	   properties_->Refresh();
+
+      // clear pixel size configurations
+      if (!pixelSizeGroup_->IsEmpty())
+      {
+         std::vector<std::string> pixelSizes = pixelSizeGroup_->GetAvailable();
+         for (std::vector<std::string>::iterator it = pixelSizes.begin();
+               it != pixelSizes.end(); it++)
+         {
+            pixelSizeGroup_->Delete((*it).c_str());
+         }
+      }
    
-     // clear equipment definitions ???
-	  // TODO
+	   properties_->Refresh();
+
+      // TODO
+      // clear equipment definitions ???
    }
    catch (CMMError& err) {
       // augment the error message with the core text
