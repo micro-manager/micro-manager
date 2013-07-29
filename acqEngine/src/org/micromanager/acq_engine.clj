@@ -400,11 +400,13 @@
                            (if (instance? Throwable item)
                              (throw item)
                              item))))]
-    (future (dotimes [_ n]
-              (try (.put queue (function))
-                   (catch Throwable t
-                          (.put queue t)
-                          (throw t)))))
+    (future (try
+              (dotimes [_ n]
+                (try (.put queue (function))
+                     (catch Throwable t
+                            (.put queue t)
+                            (throw t))))
+              (catch Throwable t nil)))
     queue))
 
 (defn pop-burst-images
