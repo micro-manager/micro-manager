@@ -18,6 +18,7 @@
 #include "../../MMCore/Error.h"
 #include <sstream>
 #include <algorithm>
+#include <iterator>
 
 #include "boost/lexical_cast.hpp"
 
