@@ -1705,7 +1705,7 @@ int AndorCamera::GetListOfAvailableCameras()
       if(roiPosition !=-1)
       {
          char buffer[64];
-         GetROIPropertyName(roiPosition, roi_.xSize, roi_.ySize, buffer);
+         GetROIPropertyName(roiPosition, roi_.xSize, roi_.ySize, buffer,cropModeSwitch_ );
          SetProperty(g_ROIProperty, buffer);
       }
       else
@@ -1800,6 +1800,8 @@ int AndorCamera::GetListOfAvailableCameras()
          if (bin <= 0)
             return DEVICE_INVALID_PROPERTY_VALUE;
 
+         int oldBin = binSize_;
+         binSize_ = (int) bin;
          // adjust roi to accomodate the new bin size
          ROI oldRoi = roi_;
          roi_.xSize = fullFrameX_;
@@ -1812,6 +1814,7 @@ int AndorCamera::GetListOfAvailableCameras()
          if (DRV_SUCCESS!=aret)
          {
             roi_ = oldRoi;
+            binSize_ = oldBin;
             return aret;
          }
 
@@ -3289,7 +3292,7 @@ int AndorCamera::GetListOfAvailableCameras()
          if(roiPosition !=-1)
          {
             char buffer[64];
-            GetROIPropertyName(roiPosition, roi_.xSize, roi_.ySize, buffer);
+            GetROIPropertyName(roiPosition, roi_.xSize, roi_.ySize, buffer,cropModeSwitch_);
             pProp->Set(buffer);
          }
          else
@@ -4589,7 +4592,7 @@ unsigned int AndorCamera::createROIProperties(AndorCapabilities * caps)
 
       if(AC_CAMERATYPE_IXONULTRA==caps->ulCameraType) 
       {
-         AddAllowedValue(g_cropMode, "On (centered)",CENTRAL);
+         AddAllowedValue(g_cropMode, "On (any ROI)",CENTRAL);
       }
       AddAllowedValue(g_cropMode, "On (bottom corner)", BOTTOM);
       AddAllowedValue(g_cropMode, "Off",OFF);
@@ -4670,7 +4673,7 @@ unsigned int AndorCamera::PopulateROIDropdown()
          roiList.push_back(roi);
 
          char buffer[64];
-         GetROIPropertyName(uiROICount, roi.xSize, roi.ySize, buffer);
+         GetROIPropertyName(uiROICount, roi.xSize, roi.ySize, buffer,cropModeSwitch_);
          AddAllowedValue(g_ROIProperty, buffer,uiROICount);
 
          uiROICount++;
@@ -4684,7 +4687,7 @@ unsigned int AndorCamera::PopulateROIDropdown()
          ROI roi = g_UltraCropROIs[i];
          roiList.push_back(roi);
          char buffer[64];
-         GetROIPropertyName(uiROICount, roi.xSize, roi.ySize, buffer);
+         GetROIPropertyName(uiROICount, roi.xSize, roi.ySize, buffer,cropModeSwitch_);
          AddAllowedValue(g_ROIProperty, buffer,uiROICount);
          uiROICount++;
       }
@@ -4972,7 +4975,7 @@ unsigned int AndorCamera::PopulateROIDropdown()
       return s;
    }
 
-   void AndorCamera::GetROIPropertyName(int position, int hSize, int vSize, char * buffer)
+   void AndorCamera::GetROIPropertyName(int position, int hSize, int vSize, char * buffer, int mode)
    {
       if(position==0) //full frame
       {
@@ -4980,7 +4983,22 @@ unsigned int AndorCamera::PopulateROIDropdown()
       }
       else
       {
-         sprintf(buffer, "%d. %d x %d",position, hSize, vSize);
+        
+         int offset = sprintf(buffer, "%d. %d x %d",position, hSize, vSize);
+
+         if(OFF==mode)
+         {
+            sprintf(buffer+offset," (centered)");
+         }
+         else if(BOTTOM==mode)
+         {
+           sprintf(buffer+offset," (bottom corner)");
+         }
+         else
+         {
+           sprintf(buffer+offset," (centered - ROI optimised for performance)");
+         }
+
       }
    }
 
