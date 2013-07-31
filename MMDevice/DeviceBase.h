@@ -1018,6 +1018,9 @@ protected:
       return DEVICE_NO_CALLBACK_REGISTERED;
    }
 
+   /**
+    * Signals to the core that a property value has changed.
+    */
    int OnPropertyChanged(const char* propName, const char* propValue)
    {
       if (callback_)
@@ -2279,6 +2282,23 @@ public:
       }
 
       return DEVICE_OK;
+   }
+
+   /**
+    * Signals to the core that the state has changed, so that
+    * both "State" and "Label" properties should be updated.
+    */
+   int OnStateChanged(long position) {
+      int ret;   
+      ret = OnPropertyChanged(MM::g_Keyword_State,CDeviceUtils::ConvertToString(position));
+      if (ret != DEVICE_OK) {
+         return ret;
+      }
+
+      char label[MM::MaxStrLength];
+      GetPositionLabel(position, label);
+      ret = OnPropertyChanged(MM::g_Keyword_Label, label);
+      return ret;
    }
 
 private:
