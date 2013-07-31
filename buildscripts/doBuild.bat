@@ -2,6 +2,9 @@
 @set ECHO_MODE=on
 @echo %ECHO_MODE%
 
+rem Build script for official nightly and release builds.
+rem Sorry, won't work for anybody else (easily, at least).
+
 rem Parameters are:
 rem doBuild.bat Win32|x64 FULL|INCREMENTAL RELEASE|NIGHTLY UPLOAD|NOUPLOAD
 
