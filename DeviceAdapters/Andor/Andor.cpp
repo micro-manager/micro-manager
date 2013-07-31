@@ -1685,13 +1685,13 @@ int AndorCamera::GetListOfAvailableCameras()
    */
    int AndorCamera::SetROI(unsigned uX, unsigned uY, unsigned uXSize, unsigned uYSize)
    {
-      
+      int ret;
       int roiPosition = -1;
       //find it in list of predefined ROIs
-      customROI_.x = uX;
-      customROI_.y = uY;
-      customROI_.xSize = uXSize;
-      customROI_.ySize = uYSize;
+      customROI_.x = uX*binSize_;
+      customROI_.y = uY*binSize_;
+      customROI_.xSize = uXSize*binSize_;
+      customROI_.ySize = uYSize*binSize_;
 
       for(unsigned int i=0; i<roiList.size(); i++)
       {
@@ -1705,15 +1705,16 @@ int AndorCamera::GetListOfAvailableCameras()
       if(roiPosition !=-1)
       {
          char buffer[64];
-         GetROIPropertyName(roiPosition, roi_.xSize, roi_.ySize, buffer,cropModeSwitch_ );
-         SetProperty(g_ROIProperty, buffer);
+         GetROIPropertyName(roiPosition, customROI_.xSize, customROI_.ySize, buffer,cropModeSwitch_ );
+         ret = SetProperty(g_ROIProperty, buffer);
+         
       }
       else
       {
          AddAllowedValue(g_ROIProperty, g_ROICustom, -1);
-         SetProperty(g_ROIProperty, g_ROICustom);
+         ret = SetProperty(g_ROIProperty, g_ROICustom);
       }
-      return DEVICE_OK;
+      return ret;
    }
 
 
@@ -3405,6 +3406,7 @@ int AndorCamera::GetListOfAvailableCameras()
                {
                   bool changeAmp(false);
                   if(ui_swVersion > 283) {
+
                      std::map<std::string, int>::iterator iter, iterLast;
                      iterLast = mapAmps.end();
                      vAvailAmps.clear();
