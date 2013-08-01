@@ -67,7 +67,6 @@ else
        
        $subject = "New Problem Report: " . date("Y-m-d") . " " . $username;
        $header = "Reply-To: ".$user_email."\r\n";
-       $header .= "Cc: ".$user_email."\r\n";
        mail('info@micro-manager.org', $subject, $mess, $header);
 
    }// uploaded .uu was found
