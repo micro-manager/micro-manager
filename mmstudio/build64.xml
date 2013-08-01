@@ -6,8 +6,7 @@
 	<!-- Specify version in the installer name -->
 	<property name="InstallerName" value="MMSetup_"/>
 
-	<!-- Specify the system path to the ImageJ root directory -->
-	<property name="ImageJPath" value="/Program Files/ImageJ"/>
+	<!-- Specify the system paths -->
 	<property name="InstallRoot" value="../Install_x64/micro-manager"/>
 	<property name="NativeRoot" value="../MMCoreJ_wrap"/>
 	<property name="ScriptsRoot" value="../scripts"/>
@@ -15,7 +14,6 @@
 	<property name="DriversRoot" value="../drivers"/>
 	<property name="DriversInstall" value="../Install_x64/micro-manager/drivers"/>
 	<property name="AdaptersRoot" value="../DeviceAdapters"/>
-	<property name="MMPluginDir" value="${ImageJPath}/plugins/Micro-Manager"/>
 	<property name="IJ" value="../../3rdpartypublic/classext/ij.jar"/>
 	<property name="IJLauncher" value="../../3rdpartypublic/JavaLauncher/ImageJ.exe"/>
 	<property name="MMCoreJ" value="../bin_x64/MMCoreJ.jar"/>
@@ -53,26 +51,12 @@
 
 		<copy file="./bin/plugins_mmstudio.config" tofile="./build/plugins.config"  overwrite="true" verbose="true" />
 		<jar jarfile="MMJ_.jar" basedir="build" manifest="./src/MANIFEST.MF" />
-
-		<mkdir dir="${MMPluginDir}" />
-		<copy file="MMJ_.jar" todir="${MMPluginDir}" overwrite="true" />
-		<copy file="${MMCoreJ}" todir="${MMPluginDir}" overwrite="true"  />
-
-		<copy todir="${MMPluginDir}">
-			<fileset dir="../../3rdpartypublic/classext/" casesensitive="no">
-				<include name="*.jar"/>
-				<exclude name="ij.jar"/>
-			</fileset>
-		</copy>
-
-
 	</target>
 
-	<target name="buildMMReader" description="Build MMReader_.jar">
 
+	<target name="buildMMReader" description="Build MMReader_.jar">
 		<copy file="./bin/plugins_reader.config" tofile="./build/plugins.config" overwrite="true" verbose="true"/>
 		<jar jarfile="MMReader_.jar" basedir="build" manifest="./src/MANIFEST.MF" />
-
 	</target>
 
 	<target name="clean" description="Delete the MMStudio build files.">
@@ -83,8 +67,6 @@
 
 
 	<target name="install" description="Create installation image">
-
-
 		<!-- always clean the device adapters from install image -->
             <delete>
 			<fileset dir="${InstallRoot}">
@@ -106,7 +88,7 @@
 			</fileset>
 		</copy>
 		
-<copy file="${BinRoot}/MMCoreJ_wrap.dll" todir="${InstallRoot}" />
+		<copy file="${BinRoot}/MMCoreJ_wrap.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/MMConfig_demo.cfg" todir="${InstallRoot}" />
 		<copy todir="${InstallRoot}">
 			<fileset dir="${BinRoot}" casesensitive="no">

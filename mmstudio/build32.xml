@@ -18,17 +18,11 @@
 	<property name="IJLauncher" value="../../3rdpartypublic/JavaLauncher/ImageJ.exe"/>
 	<property name="MMCoreJ" value="../bin_Win32/MMCoreJ.jar"/>
 	<property name="MMPluginDir-inst" value="${InstallRoot}/plugins/Micro-Manager"/>
-	<property name="BinRoot" value="../bin_Win32"/>
-
-	<path id="project.MMPlugins.path">
-		<pathelement location="${MMPluginDir}"/>
-	</path>
+	<property name="BinRoot" value="../bin_x64"/>
 
 	<target name="compile" description="Compile MM Studio.">
-
 		<mkdir dir="build" />
 		<javac srcdir="./src" destdir="./build" sourcepath="./src/org/micromanager/utils/AutofocusBase.java" optimize="on" source="1.5" target="1.5" debug="on">
-
 		<classpath>
 			<fileset dir="../../3rdpartypublic/classext">
 				<include name="*.jar" />
@@ -51,17 +45,12 @@
 				<include name="**/*.html"/>
 			</fileset>
 		</copy>
-</target>
+	</target>
 
 	<target name="build" description="Build MMJ_.jar">
 
 		<copy file="./bin/plugins_mmstudio.config" tofile="./build/plugins.config"  overwrite="true" verbose="true" />
 		<jar jarfile="MMJ_.jar" basedir="build" manifest="./src/MANIFEST.MF" />
-		<copy todir="${MMPluginDir}">
-			<fileset dir="../../3rdpartypublic/classext/" casesensitive="no">
-				<include name="*.jar"/>
-			</fileset>
-		</copy>
 	</target>
 
 
@@ -94,7 +83,7 @@
 		</copy>
 
 		<mkdir dir="${MMPluginDir-inst}"/>
-		<copy file="${MMCoreJ}" todir="${MMPluginDir-inst}" /> 
+		<copy file="${MMCoreJ}" todir="${MMPluginDir-inst}" />
 		<copy file="${IJLauncher}" todir="${InstallRoot}" />
 		<copy file="${IJ}" todir="${InstallRoot}" />
 		<copy file="MMJ_.jar" todir="${MMPluginDir-inst}" />
@@ -114,7 +103,7 @@
 				<include name="mmgr_dal_*.dll"/>
 			</fileset>
 		</copy>
-		
+
 
 		<copy file="${ScriptsRoot}/sdemo1.bsh" todir="${ScriptsInstall}" />
 		<copy file="${ScriptsRoot}/sdemo2.bsh" todir="${ScriptsInstall}" />
