@@ -38,7 +38,13 @@ std::string PvUniversalParam::ToString()
         os << mValue.rs_bool_val;
         return os.str();
     case TYPE_ENUM:
-        return mEnumStrings[mValue.enum_val];
+        for ( unsigned i = 0; i < mEnumValues.size(); ++i )
+        {
+            if ( mEnumValues[i] == mValue.enum_val )
+                return mEnumStrings[i];
+        }
+        mCamera->LogCamError(__LINE__, "PvUniversalParam::ToString() Enum string not found" );
+        return "VALUE NAME NOT FOUND";
     case TYPE_UNS32:
         os << mValue.uns32_val;
         return os.str();
@@ -128,7 +134,7 @@ int PvUniversalParam::Set(std::string aValue)
         {
             if ( mEnumStrings[i].compare( aValue ) == 0 )
             {
-                mValue.enum_val = i;
+                mValue.enum_val = mEnumValues[i];
                 return DEVICE_OK;
             }
         }
@@ -291,6 +297,7 @@ int PvUniversalParam::initialize()
    if ( mType == TYPE_ENUM )
    {
        mEnumStrings.clear();
+       mEnumValues.clear();
        
        uns32 count;
        char enumStr[MAX_ENUM_STR_LEN];
@@ -308,6 +315,7 @@ int PvUniversalParam::initialize()
                return DEVICE_ERR;
            }
            mEnumStrings.push_back(std::string( enumStr ));
+           mEnumValues.push_back(enumValue);
        }
    }
    else

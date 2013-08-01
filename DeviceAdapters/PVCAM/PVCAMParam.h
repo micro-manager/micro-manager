@@ -169,7 +169,7 @@ protected:
     T           mCurrent;
     T           mMax;
     T           mMin;
-    T           mCount;
+    uns32       mCount;     // ATTR_COUNT is always TYPE_UNS32
     T           mIncrement;
 
 private:
@@ -180,7 +180,7 @@ private:
 * A special case of PvParam that contains supporting functions for reading the enumerable parameter
 * types.
 */
-class PvEnumParam : public PvParam<uns32>
+class PvEnumParam : public PvParam<int32>
 {
 public:
 
@@ -188,9 +188,10 @@ public:
     * Initializes the enumerable PVCAM parameter type
     */
     PvEnumParam( std::string aName, uns32 aParamId, Universal* aCamera )
-        : PvParam<uns32>( aName, aParamId, aCamera )
+        : PvParam<int32>( aName, aParamId, aCamera )
     {
         mEnumStrings.clear();
+        mEnumValues.clear();
 
         int32 enumVal;
         char enumStr[MAX_ENUM_STR_LEN];
@@ -200,10 +201,12 @@ public:
             {
                 mCamera->LogCamError(__LINE__, "pl_get_enum_param");
                 mEnumStrings.push_back( "Unable to read" );
+                mEnumValues.push_back(0);
             }
             else
             {
                 mEnumStrings.push_back( std::string( enumStr ) );
+                mEnumValues.push_back( enumVal );
             }
         }
     }
@@ -213,7 +216,13 @@ public:
     */
     std::string ToString()
     {
-       return mEnumStrings[mCurrent];
+        for ( unsigned i = 0; i < mEnumValues.size(); ++i )
+        {
+            if ( mEnumValues[i] == mCurrent )
+                return mEnumStrings[i];
+        }
+        mCamera->LogCamError(__LINE__, "PvUniversalParam::ToString() Enum string not found" );
+        return "VALUE NAME NOT FOUND";
     }
 
     /***
@@ -230,11 +239,11 @@ public:
     */
     int Set(std::string aValue)
     {
-        for ( uns32 i = 0; i < mEnumStrings.size(); i++)
+        for ( unsigned i = 0; i < mEnumStrings.size(); i++)
         {
             if ( mEnumStrings[i].compare( aValue ) == 0 )
             {
-                mCurrent = i;
+                mCurrent = mEnumValues[i];
                 return DEVICE_OK;
             }
         }
@@ -245,7 +254,9 @@ public:
 
 private:
 
-   std::vector<std::string> mEnumStrings; // All string representation of enum values
+   // Enum values and their corresponding names
+   std::vector<std::string> mEnumStrings;
+   std::vector<int>         mEnumValues;
 
 };
 
@@ -265,7 +276,7 @@ typedef union
     int16      int16_val;
     uns16      uns16_val;
     int32      int32_val;
-    uns32      enum_val;
+    int32      enum_val;
     uns32      uns32_val;
     flt64      flt64_val;
     long64     long64_val;
@@ -318,7 +329,9 @@ protected:
     PvUniversalParamValue mValueMax;
     PvUniversalParamValue mValueMin;
     
+    // Enum values and their corresponding names obtained by pl_get_enum_param
     std::vector<std::string> mEnumStrings;
+    std::vector<int>         mEnumValues;
 
 private:
 
