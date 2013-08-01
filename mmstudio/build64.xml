@@ -106,7 +106,6 @@
 		</copy>
 		
 <copy file="${BinRoot}/MMCoreJ_wrap.dll" todir="${InstallRoot}" />
-		<copy file="${BinRoot}/LaunchMicroManager.bat" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/MMConfig_demo.cfg" todir="${InstallRoot}" />
 		<copy todir="${InstallRoot}">
 			<fileset dir="${BinRoot}" casesensitive="no">
