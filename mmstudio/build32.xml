@@ -93,6 +93,7 @@
 			</fileset>
 		</copy>
 
+		<mkdir dir="${MMPluginDir-inst}"/>
 		<copy file="${MMCoreJ}" todir="${MMPluginDir-inst}" /> 
 		<copy file="${IJLauncher}" todir="${InstallRoot}" />
 		<copy file="${IJ}" todir="${InstallRoot}" />

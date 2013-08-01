@@ -92,11 +92,12 @@
 			</fileset>
             </delete>
 
+		<mkdir dir="${MMPluginDir-inst}"/>
+		<copy file="${MMCoreJ}" todir="${MMPluginDir-inst}" />
 		<copy file="${IJLauncher}" todir="${InstallRoot}" />
 		<copy file="${IJ}" todir="${InstallRoot}" />
 		<copy file="MMJ_.jar" todir="${MMPluginDir-inst}" />
 		<copy file="MMJ_.jar" todir="${BinRoot}/plugins/Micro-Manager" />
-		<copy file="${MMCoreJ}" todir="${MMPluginDir-inst}" /> 
 
 		<copy todir="${MMPluginDir-inst}">
 			<fileset dir="../../3rdpartypublic/classext/" casesensitive="no">
