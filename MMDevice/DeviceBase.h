@@ -2290,14 +2290,14 @@ public:
     */
    int OnStateChanged(long position) {
       int ret;   
-      ret = OnPropertyChanged(MM::g_Keyword_State,CDeviceUtils::ConvertToString(position));
+      ret = this.OnPropertyChanged(MM::g_Keyword_State,CDeviceUtils::ConvertToString(position));
       if (ret != DEVICE_OK) {
          return ret;
       }
 
       char label[MM::MaxStrLength];
       GetPositionLabel(position, label);
-      ret = OnPropertyChanged(MM::g_Keyword_Label, label);
+      ret = this.OnPropertyChanged(MM::g_Keyword_Label, label);
       return ret;
    }
 
