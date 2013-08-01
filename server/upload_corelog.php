@@ -51,8 +51,12 @@ else
       if ($rhandle){
       while(! feof($rhandle) ){
            $line = fgets($rhandle);
-           if (strcmp(substr($line, 0, 11), "#User Name:") == 0)
-              $username = substr($line, 11, 36);
+           $username_tag = "#User Name:";
+           if (strcmp(substr($line, 0, strlen($username_tag)), $username_tag) == 0)
+              $username = substr($line, strlen($username_tag), 36);
+           $user_email_tag = "#User e-mail:";
+           if (strcmp(substr($line, 0, strlen($user_email_tag)), $user_email_tag) == 0)
+              $user_email = trim(substr($line, strlen($user_email_tag), 256));
            $mess = $mess . rtrim($line) . "\n";
            $lineCount = $lineCount + 1;
            if( 2000 < $lineCount)
@@ -60,9 +64,11 @@ else
            }
        } 
        fclose($rhandle);
-
+       
        $subject = "New Problem Report: " . date("Y-m-d") . " " . $username;
-       mail('info@micro-manager.org', $subject, $mess);
+       $header = "Reply-To: ".$user_email."\r\n";
+       $header .= "Cc: ".$user_email."\r\n";
+       mail('info@micro-manager.org', $subject, $mess, $header);
 
    }// uploaded .uu was found
 } // FILES was parsed
