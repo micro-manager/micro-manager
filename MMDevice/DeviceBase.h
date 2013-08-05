@@ -582,6 +582,22 @@ public:
    }
 
    /**
+   * Creates a new property for the device.
+   * @param name - property name
+   * @param value - initial value
+   * @param eType - property type (string, integer or float)
+   * @param readOnly - is the property read-only or not
+   * @param memberFunction - Function pointer to the device object "OnProperty" member function, e.g. &MyDevice::OnState
+   * @param initStatus - initialization status of the property. True if the property must exist
+   * prior to initialization, false if it doesn't matter. 
+   */
+   int CreatePropertyWithHandler(const char* name, const char* value, MM::PropertyType eType, bool readOnly,
+                                 int(U::*memberFunction)(MM::PropertyBase* pProp, MM::ActionType eAct), bool initStatus=false) {
+      CPropertyAction* pAct = new CPropertyAction((U*) this, memberFunction);
+      return CreateProperty(name, value, eType, readOnly, pAct, initStatus);
+   }
+
+   /**
    * Define limits for properties with continous range of values
    */
    int SetPropertyLimits(const char* name, double low, double high)
