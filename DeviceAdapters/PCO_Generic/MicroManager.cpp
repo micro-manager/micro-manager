@@ -1379,8 +1379,8 @@ int CPCOCam::ClearROI()
     // Liisa: changed these to round up, else uX or uY < 32 rounds to zero, Sensicam needs min 1.
     m_nRoiXMin = 1;
     m_nRoiYMin = 1;
-    m_nRoiXMax = roiXMaxFull_ / 32;
-    m_nRoiYMax = roiYMaxFull_ / 32;
+    m_nRoiXMax = roiXMaxFull_ / m_nHBin;
+    m_nRoiYMax = roiYMaxFull_ / m_nVBin;
   }
   else
   {
