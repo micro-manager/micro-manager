@@ -2,11 +2,7 @@
 @set ECHO_MODE=on
 @echo %ECHO_MODE%
 
-rem This is an experimental build script that is less dependent on absolute paths
-rem than the nightly build script (doBuild.bat).
-rem It is a work in progress and may be replaced with an Ant build file in the future.
-rem As it stands, it should do the same thing as doBuild.bat except for things that
-rem are specific to the nightly build (including setting the version number).
+rem Build all components of Micro-Manager for Windows, and produce an installer.
 
 rem Parameters are:
 rem build_all.bat Win32|x64 FULL|INCREMENTAL
