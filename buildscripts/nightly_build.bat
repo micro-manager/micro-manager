@@ -57,18 +57,15 @@ set TARGETNAME=""
 call buildscripts\setmmversionvariable
 call buildscripts\setyyyymmddvariable
 @echo %ECHO_MODE%
-pushd .\mmstudio\src\org\micromanager
-del MMVersion.java
-svn update --non-interactive
-rem for nightly builds we put the version + the date-stamp
 if "%DO_RELEASE_BUILD%"=="RELEASE" (
     set TARGETNAME=MMSetup%ARCH%BIT_%mmversion%.exe
-    sed -i "s/\"1\.4.*/\"%mmversion%\";/"  MMVersion.java
+    set MMVERSION_LONG=%mmversion%
 ) else (
+    rem Version + date for nightly build
     set TARGETNAME=MMSetup%ARCH%BIT_%mmversion%_%YYYYMMDD%.exe
-    sed -i "s/\"1\.4.*/\"%mmversion%  %YYYYMMDD%\";/"  MMVersion.java
+    set MMVERSION_LONG=%mmversion%  %YYYYMMDD%
 )
-popd
+( sed -e "s/@VERSION_STRING@/%MMVERSION_LONG%/" buildscripts\MMVersion.java.in ) > mmstudio\src\org\micromanager\MMVersion.java
 
 rem remove any installer package with exactly the same name as the current output
 del \Projects\micromanager\Install_%PLATFORM%\Output\MMSetup_.exe
@@ -79,6 +76,8 @@ call buildscripts\build_all.bat %PLATFORM% %DO_FULL_BUILD%
 pushd Install_%PLATFORM%\Output
 rename MMSetup_.exe %TARGETNAME%
 popd
+
+svn revert --non-interactive mmstudio\src\org\micromanager\MMVersion.java
 
 rem -- try to install on build machine
 set DO_INSTALL=YES
@@ -95,10 +94,5 @@ if "%DO_INSTALL%"=="YES" (
 if "%DO_UPLOAD%"=="UPLOAD" (
     pscp -i c:\projects\MM.ppk -batch Install_%PLATFORM%/Output/%TARGETNAME% arthur@valelab.ucsf.edu:../MM/public_html/nightlyBuilds/1.4/Windows/%TARGETNAME%
 )
-
-pushd .\mmstudio\src\org\micromanager
-del MMVersion.java
-svn update --non-interactive
-popd
 
 echo %date% - %time%

@@ -94,7 +94,7 @@ if [ "$FULL" != "full" ]; then
 fi
 echo $VERSION
 echo $VERSION >> $BUILDLOG
-sed -i -e "s/\"1.4.*\"/\"$VERSION\"/"  mmstudio/src/org/micromanager/MMVersion.java || exit
+sed -e "s/@VERSION_STRING@/$VERSION/" buildscripts/MMVersion.java.in > mmstudio/src/org/micromanager/MMVersion.java || exit
 
 
 ./mmUnixBuild.sh || exit

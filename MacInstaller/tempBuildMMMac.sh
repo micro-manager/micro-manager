@@ -66,7 +66,7 @@ VERSION=`cat version.txt`
 #daily build
 VERSION=$VERSION-`date "+%Y%m%d"`
 echo $VERSION
-sed -i -e "s/\"1.4.*\"/\"$VERSION\"/"  mmstudio/src/org/micromanager/MMVersion.java || exit
+sed -e "s/@VERSION_STRING@/$VERSION/" buildscripts/MMVersion.java.in > mmstudio/src/org/micromanager/MMVersion.java || exit
 
 
 ./mmUnixBuild.sh || exit
