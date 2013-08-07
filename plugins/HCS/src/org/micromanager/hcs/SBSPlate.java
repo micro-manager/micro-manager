@@ -62,6 +62,7 @@ public class SBSPlate {
    private static String FIRST_WELL_X = "first_well_x";
    private static String FIRST_WELL_Y = "first_well_y";
 
+   public static final String SBS_24_WELL= "24WELL";
    public static final String SBS_96_WELL= "96WELL";
    public static final String SBS_384_WELL= "384WELL";
    public static final String SLIDE_HOLDER ="SLIDES";
@@ -87,7 +88,20 @@ public class SBSPlate {
    }
 
    public boolean initialize(String id) {
-      if (id.equals(SBS_96_WELL)){
+      if (id.equals(SBS_24_WELL)){
+         id_ = SBS_24_WELL;
+         numColumns_ = 6;
+         numRows_ = 4;
+         sizeXUm_ = 127760.0;
+         sizeYUm_ = 85480.0;
+         wellSpacingX_ = 18000.0;
+         wellSpacingY_ = 18000.0;
+         firstWellX_ = 18880.0;
+         firstWellY_ = 15734.5;
+         wellSizeX_ = 14000.0;
+         wellSizeY_ = 14000.0;
+         circular_ = true;
+      } else if (id.equals(SBS_96_WELL)){
          id_ = SBS_96_WELL;
          numColumns_ = 12;
          numRows_ = 8;
