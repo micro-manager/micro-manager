@@ -1545,9 +1545,8 @@ int AndorCamera::GetListOfAvailableCameras()
          }
          else
          {
-			CDeviceUtils::SleepMs((long) (ActualInterval_ms_ - ReadoutTime_ + 0.99)); 			
+            CDeviceUtils::SleepMs((long) (ActualInterval_ms_ - ReadoutTime_ + 0.99));
          }
-
       }//release camera
       
       CDeviceUtils::SleepMs(iSnapImageDelay_);
@@ -1707,7 +1706,6 @@ int AndorCamera::GetListOfAvailableCameras()
          char buffer[64];
          GetROIPropertyName(roiPosition, customROI_.xSize, customROI_.ySize, buffer,cropModeSwitch_ );
          ret = SetProperty(g_ROIProperty, buffer);
-         
       }
       else
       {
@@ -3381,13 +3379,12 @@ int AndorCamera::GetListOfAvailableCameras()
 
                if (sequenceRunning_) {
                   return ERR_BUSY_ACQUIRING;
-               }     
+               }
 
 
-               if (bFrameTransfer_ == false){
-                  SetProperty(g_cropMode, "Off");           
-               } 
-
+               if (bFrameTransfer_ == false) {
+                  SetProperty(g_cropMode, "Off");
+               }
                   
                SetToIdle();
 
@@ -3401,11 +3398,12 @@ int AndorCamera::GetListOfAvailableCameras()
                   return ret;
                }
 
-               ::PrepareAcquisition();
+               
                if(HasProperty(g_OutputAmplifier)) 
                {
                   bool changeAmp(false);
-                  if(ui_swVersion > 283) {
+                  if("Clara" == m_str_camType) 
+                  {
 
                      std::map<std::string, int>::iterator iter, iterLast;
                      iterLast = mapAmps.end();
@@ -3421,37 +3419,36 @@ int AndorCamera::GetListOfAvailableCameras()
                            }
                         }
                      }
-                  }
-                  SetAllowedValues(g_OutputAmplifier, vAvailAmps);
-                  UpdateProperty(g_OutputAmplifier);
+                  
+                    SetAllowedValues(g_OutputAmplifier, vAvailAmps);
+                    UpdateProperty(g_OutputAmplifier);
 
-                  //if (initialized_) {
-                  //   OnPropertiesChanged();
-                  //}
-
-                  if(changeAmp) {
-                     if(vAvailAmps.size() > 0) {
-                        OutputAmplifierIndex_ = mapAmps[vAvailAmps[0]];
-                        int nRet = SetProperty(g_OutputAmplifier,  vAvailAmps[0].c_str());   
-                        assert(nRet == DEVICE_OK);
-                        if (nRet != DEVICE_OK) {
-                           return nRet;
-                        }
-                     }
-                     else {
-                        return ERR_NO_AVAIL_AMPS;
-                     }
+                    if(changeAmp) {
+                       if(vAvailAmps.size() > 0) {
+                          OutputAmplifierIndex_ = mapAmps[vAvailAmps[0]];
+                          int nRet = SetProperty(g_OutputAmplifier,  vAvailAmps[0].c_str());   
+                          assert(nRet == DEVICE_OK);
+                          if (nRet != DEVICE_OK) {
+                             return nRet;
+                          }
+                       }
+                       else {
+                          return ERR_NO_AVAIL_AMPS;
+                       }
+                    }
                   }
                   UpdateHSSpeeds();
                   ret = UpdatePreampGains();
                   if(DRV_SUCCESS!=ret)
                      return ret;
 
-                  if (acquiring)
+                  
+               }
+
+               if (acquiring)
                      StartSequenceAcquisition(sequenceLength_ - imageCounter_, intervalMs_, stopOnOverflow_);
 
-                  PrepareSnap();
-               }
+               PrepareSnap();
             }
          }
       }
@@ -3523,22 +3520,22 @@ int AndorCamera::GetListOfAvailableCameras()
       
       if (eAct == MM::AfterSet)
       {
-         bool acquiring = sequenceRunning_;
-         if (acquiring)
-            StopSequenceAcquisition(true);
-
-         DriverGuard dg(this); //moved driver guard to here to allow AcqSequenceThread to terminate properly
-
-         if (sequenceRunning_)
-            return ERR_BUSY_ACQUIRING;
-
-         SetToIdle();
-
          string strAmp;
          pProp->Get(strAmp);
          if(strAmp.compare(strCurrentAmp) != 0 ) {
             strCurrentAmp = strAmp;
             OutputAmplifierIndex_ = mapAmps[strAmp];
+
+            bool acquiring = sequenceRunning_;
+            if (acquiring)
+               StopSequenceAcquisition(true);
+
+            DriverGuard dg(this); //moved driver guard to here to allow AcqSequenceThread to terminate properly
+
+            if (sequenceRunning_)
+               return ERR_BUSY_ACQUIRING;
+
+            SetToIdle();
 
 
             unsigned ret = SetOutputAmplifier(OutputAmplifierIndex_);
@@ -3550,10 +3547,6 @@ int AndorCamera::GetListOfAvailableCameras()
             int retCode = UpdatePreampGains();
             if(DRV_SUCCESS!=retCode)
                return retCode;
-
-            if (initialized_) {
-               OnPropertiesChanged();
-            }
 
             if (acquiring) {
                StartSequenceAcquisition(sequenceLength_ - imageCounter_, intervalMs_, stopOnOverflow_);
@@ -5062,9 +5055,14 @@ unsigned int AndorCamera::PopulateROIDropdown()
             if (ret != DRV_SUCCESS)
                return ret;
 
-            ret = SetIsolatedCropMode(0, roi_.ySize, roi_.xSize, binSize_, binSize_);
-            if (ret != DRV_SUCCESS)
-               return ret;
+
+            if(HasProperty(g_cropMode))
+            {
+               ret = SetIsolatedCropMode(0, roi_.ySize, roi_.xSize, binSize_, binSize_);
+               if (ret != DRV_SUCCESS)
+                  return ret;
+            }
+            
 
          }
 
@@ -5100,9 +5098,12 @@ unsigned int AndorCamera::PopulateROIDropdown()
                }
                else //just plain frame xfer
                {
-                  ret = SetIsolatedCropMode(0, roi_.ySize, roi_.xSize, binSize_, binSize_);
-                  if (ret != DRV_SUCCESS)
-                     return ret;
+                  if(HasProperty(g_cropMode))
+                  {
+                     ret = SetIsolatedCropMode(0, roi_.ySize, roi_.xSize, binSize_, binSize_);
+                     if (ret != DRV_SUCCESS)
+                        return ret;
+                  }
 
                   ret = SetImage(binSize_, binSize_, roi_.x+1, roi_.x+roi_.xSize, roi_.y+1, roi_.y+roi_.ySize);
                   if (ret != DRV_SUCCESS)
