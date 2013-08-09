@@ -289,12 +289,16 @@ const char* ScopeLEDMSMMicroscopeIlluminator::DeviceDescription = "ScopeLED MSM 
 
 void ScopeLEDMSMMicroscopeIlluminator::ClearOpticalState()
 {
-    for (int i=0; i < SCOPELED_ILLUMINATOR_CHANNELS_MAX; i++)
+    int i;
+    for (i=0; i < SCOPELED_ILLUMINATOR_CHANNELS_MAX; i++)
     {
         brightnessRawChannel[i] = 0.0;
     }
-    activePresetModeBrightness = 0.0;
-    activePresetModeIndex = 0;
+    for (i=0; i < SCOPELED_ILLUMINATOR_MSM_PRESET_CHANNELS_MAX; i++)
+    {
+        brightnessPresetMode[i] = 0.0;
+    }
+    activePresetModeIndex = 0L;
 }
 
 ScopeLEDMSMMicroscopeIlluminator::ScopeLEDMSMMicroscopeIlluminator()
@@ -388,6 +392,11 @@ int ScopeLEDMSMMicroscopeIlluminator::Initialize()
     if (nRet != DEVICE_OK) return nRet;
     SetPropertyLimits("Channel4Brightness", 0.0, 100.0);
 
+    pAct = new CPropertyAction (this, &ScopeLEDMSMMicroscopeIlluminator::OnActivePresetMode);
+    nRet = CreateProperty("ActivePresetMode", "0", MM::Integer, false, pAct);
+    if (nRet != DEVICE_OK) return nRet;
+    SetPropertyLimits("ActivePresetMode", 0, SCOPELED_ILLUMINATOR_MSM_PRESET_CHANNELS_MAX);
+
     pAct = new CPropertyAction (this, &ScopeLEDMSMMicroscopeIlluminator::OnPresetMode1Brightness);
     nRet = CreateProperty("PresetMode1Brightness", "0.0", MM::Float, false, pAct);
     if (nRet != DEVICE_OK) return nRet;
@@ -447,7 +456,7 @@ int ScopeLEDMSMMicroscopeIlluminator::GetOpen(bool& open)
     return GetShutter(open);
 }
 
-int ScopeLEDMSMMicroscopeIlluminator::SetColor(bool on)
+int ScopeLEDMSMMicroscopeIlluminator::SetManualColor()
 {
     unsigned char cmdbuf[9];
     memset(cmdbuf, 0, sizeof(cmdbuf));
@@ -459,19 +468,9 @@ int ScopeLEDMSMMicroscopeIlluminator::SetColor(bool on)
     unsigned char* const pChecksum = &cmdbuf[7];
     unsigned char* const pStart = &cmdbuf[1];
 
-    if (on)
+    for (int i=0; i < SCOPELED_ILLUMINATOR_CHANNELS_MAX; i++)
     {
-        for (int i=0; i < SCOPELED_ILLUMINATOR_CHANNELS_MAX; i++)
-        {
-            cmdbuf[i+3] = (unsigned char) round((brightnessRawChannel[i] * (unsigned)0xFF) / 100);
-        }
-    }
-    else
-    {
-        for (int i=0; i < SCOPELED_ILLUMINATOR_CHANNELS_MAX; i++)
-        {
-            cmdbuf[i+3] = 0;
-        }
+        cmdbuf[i+3] = (unsigned char) round((brightnessRawChannel[i] * (unsigned)0xFF) / 100);
     }
 
     *pChecksum = g_USBCommAdapter.CalculateChecksum(pStart, *pStart);
@@ -479,11 +478,6 @@ int ScopeLEDMSMMicroscopeIlluminator::SetColor(bool on)
     unsigned char RxBuffer[16];
     unsigned long cbRxBuffer = sizeof(RxBuffer);
     int result = Transact(cmdbuf, sizeof(cmdbuf), RxBuffer, &cbRxBuffer);
-    if ((DEVICE_OK == result) && (cbRxBuffer >= 5))
-    {
-        activePresetModeBrightness = 0.0;
-        activePresetModeIndex = 0;
-    }
     return result;
 }
 
@@ -527,15 +521,15 @@ int ScopeLEDMSMMicroscopeIlluminator::GetPresetMode(unsigned char mode)
 }
 */
 
-int ScopeLEDMSMMicroscopeIlluminator::PlayPresetMode(int mode, double brightness)
+int ScopeLEDMSMMicroscopeIlluminator::PlayPresetMode()
 {
     unsigned char cmdbuf[7];
     memset(cmdbuf, 0, sizeof(cmdbuf));
     cmdbuf[0] = 0xA9;  // Start Byte
     cmdbuf[1] = 0x04;  // Length Byte
     cmdbuf[2] = 24;    // Play Preset Mode
-    cmdbuf[3] = (unsigned char) mode;
-    cmdbuf[4] = (unsigned char) round((brightness * (unsigned)0xFF) / 100);
+    cmdbuf[3] = (unsigned char) activePresetModeIndex;
+    cmdbuf[4] = (unsigned char) round((brightnessPresetMode[activePresetModeIndex-1] * (unsigned)0xFF) / 100);
     cmdbuf[6] = 0x5C;  // End Byte
 
     unsigned char* const pChecksum = &cmdbuf[5];
@@ -545,17 +539,7 @@ int ScopeLEDMSMMicroscopeIlluminator::PlayPresetMode(int mode, double brightness
 
     unsigned char RxBuffer[16];
     unsigned long cbRxBuffer = sizeof(RxBuffer);
-    int result = Transact(cmdbuf, sizeof(cmdbuf), RxBuffer, &cbRxBuffer);
-    if ((DEVICE_OK == result) && (cbRxBuffer >= 5))
-    {
-        activePresetModeBrightness = brightness;
-        activePresetModeIndex = mode;
-        for (int i=0; i < SCOPELED_ILLUMINATOR_CHANNELS_MAX; i++)
-        {
-            brightnessRawChannel[i] = 0.0;
-        }
-    }
-    return result;
+    return Transact(cmdbuf, sizeof(cmdbuf), RxBuffer, &cbRxBuffer);
 }
 
 
@@ -572,7 +556,10 @@ int ScopeLEDMSMMicroscopeIlluminator::OnChannelBrightness(int index, MM::Propert
     else if (eAct == MM::AfterSet)
     {
         pProp->Get(brightnessRawChannel[index]);
-        SetColor(true);
+        if (0L == activePresetModeIndex)
+        {
+            SetManualColor();
+        }
     }
     return DEVICE_OK;
 }
@@ -594,25 +581,40 @@ int ScopeLEDMSMMicroscopeIlluminator::OnChannel4Brightness(MM::PropertyBase* pPr
     return OnChannelBrightness(3, pProp, eAct);
 }
 
+int ScopeLEDMSMMicroscopeIlluminator::OnActivePresetMode(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+    if (eAct == MM::BeforeGet)
+    {
+        pProp->Set(activePresetModeIndex);
+    }
+    else if (eAct == MM::AfterSet)
+    {
+        pProp->Get(activePresetModeIndex);
+        if (0L == activePresetModeIndex)
+        {
+            SetManualColor();
+        }
+        else
+        {
+            PlayPresetMode();
+        }
+    }
+    return DEVICE_OK;
+}
 
 int ScopeLEDMSMMicroscopeIlluminator::OnPresetModeBrightness(int index, MM::PropertyBase* pProp, MM::ActionType eAct)
 {
     if (eAct == MM::BeforeGet)
     {
-        if (index == activePresetModeIndex)
-        {
-            pProp->Set(activePresetModeBrightness);
-        }
-        else
-        {
-            pProp->Set(0.0);
-        }
+        pProp->Set(brightnessPresetMode[index-1]);
     }
     else if (eAct == MM::AfterSet)
     {
-        double brightness = 0.0;
-        pProp->Get(brightness);
-        PlayPresetMode(index, brightness);
+        pProp->Get(brightnessPresetMode[index-1]);
+        if (index == activePresetModeIndex)
+        {
+            PlayPresetMode();
+        }
     }
     return DEVICE_OK;
 }
@@ -760,6 +762,7 @@ int ScopeLEDFluorescenceIlluminator::Initialize()
             SetPropertyLimits("Channel4Brightness", 0.0, 100.0);
         }
 
+        /*
         pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnLEDGroup);
         nRet = CreateProperty("LEDGroup", "0", MM::Integer, false, pAct);
         if (nRet != DEVICE_OK) return nRet;
@@ -774,7 +777,13 @@ int ScopeLEDFluorescenceIlluminator::Initialize()
         {
             SetPropertyLimits("LEDGroup", MIN_FMI_LED_GROUP, MAX_FMI_LED_GROUP);
         }
+        */
     }
+
+    pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnLEDGroup);
+    nRet = CreateProperty("LEDGroup", "0", MM::Integer, false, pAct);
+    if (nRet != DEVICE_OK) return nRet;
+    SetPropertyLimits("LEDGroup", MIN_FMI_LED_GROUP, m_NumChannels);
 
     pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnLEDGroup1Channels);
     nRet = CreateProperty("LEDGroup1Channels", "0", MM::Integer, true, pAct);

@@ -55,6 +55,7 @@ private:
     double brightness[SCOPELED_ILLUMINATOR_CHANNELS_MAX];
 };
 
+#define SCOPELED_ILLUMINATOR_MSM_PRESET_CHANNELS_MAX 6
 class ScopeLEDMSMMicroscopeIlluminator : public ScopeLEDBasicIlluminator<ScopeLEDMSMMicroscopeIlluminator>
 {    
 public:
@@ -84,6 +85,8 @@ public:
     int OnPresetMode5Brightness(MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnPresetMode6Brightness(MM::PropertyBase* pProp, MM::ActionType eAct);
 
+    int OnActivePresetMode(MM::PropertyBase* pProp, MM::ActionType eAct);
+
     static const char* DeviceName;
     static const char* DeviceDescription;
 protected:
@@ -91,12 +94,11 @@ protected:
 
 private:
     double brightnessRawChannel[SCOPELED_ILLUMINATOR_CHANNELS_MAX];
-    double activePresetModeBrightness;
-    int activePresetModeIndex;
+    double brightnessPresetMode[SCOPELED_ILLUMINATOR_MSM_PRESET_CHANNELS_MAX];
+    long activePresetModeIndex;
 
-    int SetColor(bool on);
-    //int GetPresetMode(unsigned char mode);
-    int PlayPresetMode(int mode, double brightness);
+    int SetManualColor();
+    int PlayPresetMode();
 };
 
 #define MIN_FMI_LED_GROUP 0
