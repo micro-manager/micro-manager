@@ -15,16 +15,16 @@ xmlns="http://www.w3.org/TR/REC-html40">
   <o:Description>http://www.scopeled.com</o:Description>
   <o:LastAuthor>Ryan Clark</o:LastAuthor>
   <o:Revision>2</o:Revision>
-  <o:TotalTime>146</o:TotalTime>
-  <o:Created>2012-04-20T16:43:00Z</o:Created>
-  <o:LastSaved>2012-04-20T16:43:00Z</o:LastSaved>
-  <o:Pages>4</o:Pages>
-  <o:Words>678</o:Words>
-  <o:Characters>3865</o:Characters>
+  <o:TotalTime>178</o:TotalTime>
+  <o:Created>2013-08-09T18:51:00Z</o:Created>
+  <o:LastSaved>2013-08-09T18:51:00Z</o:LastSaved>
+  <o:Pages>5</o:Pages>
+  <o:Words>928</o:Words>
+  <o:Characters>5295</o:Characters>
   <o:Company>ScopeLED</o:Company>
-  <o:Lines>32</o:Lines>
-  <o:Paragraphs>7</o:Paragraphs>
-  <o:CharactersWithSpaces>4746</o:CharactersWithSpaces>
+  <o:Lines>44</o:Lines>
+  <o:Paragraphs>10</o:Paragraphs>
+  <o:CharactersWithSpaces>6502</o:CharactersWithSpaces>
   <o:Version>9.6926</o:Version>
  </o:DocumentProperties>
 </xml><![endif]-->
@@ -33,7 +33,10 @@ xmlns="http://www.w3.org/TR/REC-html40">
  /* Style Definitions */
 p.MsoNormal, li.MsoNormal, div.MsoNormal
 	{mso-style-parent:"";
-	margin:0in;
+	margin-top:3.0pt;
+	margin-right:0in;
+	margin-bottom:0in;
+	margin-left:0in;
 	margin-bottom:.0001pt;
 	mso-pagination:widow-orphan;
 	font-size:12.0pt;
@@ -140,7 +143,7 @@ div.Section1
   <p class=MsoNormal>Property</p>
   </td>
   <td width=547 valign=top style='width:5.7in;padding:0in 5.4pt 0in 5.4pt'>
-  <p class=MsoNormal>SerialNumber</p>
+  <p class=MsoNormal>InitSerialNumber</p>
   </td>
  </tr>
  <tr>
@@ -156,14 +159,14 @@ div.Section1
   <p class=MsoNormal>Function</p>
   </td>
   <td width=547 valign=top style='width:5.7in;padding:0in 5.4pt 0in 5.4pt'>
-  <p class=MsoNormal>Prior to initialization, this property sets the Serial
-  Number string used to identify the target device. It is optional to set this
-  property. </p>
-  <p class=MsoNormal>During initialization, this property is set to the Serial
-  Number string of the device.<br>
-  After initialization Micro-Manager will make no further use of this property.
-  It is for information purposes only. Changing the value will not make any
-  changes to the device. </p>
+  <p class=MsoNormal>Prior to initialization, this property indicates the
+  Serial Number string to be used to identify the target device. It is optional
+  to set this property. </p>
+  <p class=MsoNormal>Use this value to identify a specific device in a system
+  where more than one device is present. </p>
+  <p class=MsoNormal>If this value is not set prior to initialization,
+  Micro-Manager will open the first available device with the matching VendorID
+  and ProductID. </p>
   </td>
  </tr>
 </table>
@@ -174,31 +177,37 @@ div.Section1
  mso-padding-alt:0in 5.4pt 0in 5.4pt'>
  <tr>
   <td width=91 valign=top style='width:.95in;padding:0in 5.4pt 0in 5.4pt'>
-  <p class=MsoNormal>Property</p>
+  <p class=MsoNormal style='mso-pagination:widow-orphan lines-together;
+  page-break-after:avoid'>Property</p>
   </td>
   <td width=547 valign=top style='width:5.7in;padding:0in 5.4pt 0in 5.4pt'>
-  <p class=MsoNormal>Version</p>
+  <p class=MsoNormal style='mso-pagination:widow-orphan lines-together;
+  page-break-after:avoid'>SerialNumber</p>
   </td>
  </tr>
  <tr>
   <td width=91 valign=top style='width:.95in;padding:0in 5.4pt 0in 5.4pt'>
-  <p class=MsoNormal>Type</p>
+  <p class=MsoNormal style='mso-pagination:widow-orphan lines-together;
+  page-break-after:avoid'>Type</p>
   </td>
   <td width=547 valign=top style='width:5.7in;padding:0in 5.4pt 0in 5.4pt'>
-  <p class=MsoNormal>Numeric.</p>
+  <p class=MsoNormal style='mso-pagination:widow-orphan lines-together;
+  page-break-after:avoid'>String value </p>
   </td>
  </tr>
  <tr>
   <td width=91 valign=top style='width:.95in;padding:0in 5.4pt 0in 5.4pt'>
-  <p class=MsoNormal>Function</p>
+  <p class=MsoNormal style='mso-pagination:widow-orphan lines-together;
+  page-break-after:avoid'>Function</p>
   </td>
   <td width=547 valign=top style='width:5.7in;padding:0in 5.4pt 0in 5.4pt'>
-  <p class=MsoNormal>Read-only value indicating the firmware version of the
-  device.</p>
-  <p class=MsoNormal>The version is a four-byte value. Each byte represents one
-  portion of the version number. The most significant byte contains the most
-  significant version number. For example, a Version value of 0x02030100 (note
-  the hexadecimal notation) indicates a version of 2.3.1.0. </p>
+  <p class=MsoNormal style='mso-pagination:widow-orphan lines-together;
+  page-break-after:avoid'>During initialization, this property is set to the
+  Serial Number string of the device.</p>
+  <p class=MsoNormal style='mso-pagination:widow-orphan lines-together;
+  page-break-after:avoid'>Micro-Manager makes no use of this property. It is
+  for information purposes only. Changing the value will not make any changes
+  to the device. </p>
   </td>
  </tr>
 </table>
@@ -209,26 +218,74 @@ div.Section1
  mso-padding-alt:0in 5.4pt 0in 5.4pt'>
  <tr>
   <td width=91 valign=top style='width:.95in;padding:0in 5.4pt 0in 5.4pt'>
-  <p class=MsoNormal>Property</p>
+  <p class=MsoNormal style='mso-pagination:widow-orphan lines-together;
+  page-break-after:avoid'>Property</p>
   </td>
   <td width=547 valign=top style='width:5.7in;padding:0in 5.4pt 0in 5.4pt'>
-  <p class=MsoNormal>LastError</p>
+  <p class=MsoNormal style='mso-pagination:widow-orphan lines-together;
+  page-break-after:avoid'>Version</p>
   </td>
  </tr>
  <tr>
   <td width=91 valign=top style='width:.95in;padding:0in 5.4pt 0in 5.4pt'>
-  <p class=MsoNormal>Type</p>
+  <p class=MsoNormal style='mso-pagination:widow-orphan lines-together;
+  page-break-after:avoid'>Type</p>
   </td>
   <td width=547 valign=top style='width:5.7in;padding:0in 5.4pt 0in 5.4pt'>
-  <p class=MsoNormal>Numeric</p>
+  <p class=MsoNormal style='mso-pagination:widow-orphan lines-together;
+  page-break-after:avoid'>Numeric.</p>
   </td>
  </tr>
  <tr>
   <td width=91 valign=top style='width:.95in;padding:0in 5.4pt 0in 5.4pt'>
-  <p class=MsoNormal>Function</p>
+  <p class=MsoNormal style='mso-pagination:widow-orphan lines-together;
+  page-break-after:avoid'>Function</p>
   </td>
   <td width=547 valign=top style='width:5.7in;padding:0in 5.4pt 0in 5.4pt'>
-  <p class=MsoNormal>Read-only value indicating the last USB communication
+  <p class=MsoNormal style='mso-pagination:widow-orphan lines-together;
+  page-break-after:avoid'>Read-only value indicating the firmware version of
+  the device.</p>
+  <p class=MsoNormal style='mso-pagination:widow-orphan lines-together;
+  page-break-after:avoid'>The version is a four-byte value. Each byte
+  represents one portion of the version number. The most significant byte
+  contains the most significant version number. For example, a Version value of
+  0x02030100 (note the hexadecimal notation) indicates a version of 2.3.1.0. </p>
+  </td>
+ </tr>
+</table>
+
+<p class=MsoNormal><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></p>
+
+<table border=0 cellspacing=0 cellpadding=0 style='border-collapse:collapse;
+ mso-padding-alt:0in 5.4pt 0in 5.4pt'>
+ <tr>
+  <td width=91 valign=top style='width:.95in;padding:0in 5.4pt 0in 5.4pt'>
+  <p class=MsoNormal style='mso-pagination:widow-orphan lines-together;
+  page-break-after:avoid'>Property</p>
+  </td>
+  <td width=547 valign=top style='width:5.7in;padding:0in 5.4pt 0in 5.4pt'>
+  <p class=MsoNormal style='mso-pagination:widow-orphan lines-together;
+  page-break-after:avoid'>LastError</p>
+  </td>
+ </tr>
+ <tr>
+  <td width=91 valign=top style='width:.95in;padding:0in 5.4pt 0in 5.4pt'>
+  <p class=MsoNormal style='mso-pagination:widow-orphan lines-together;
+  page-break-after:avoid'>Type</p>
+  </td>
+  <td width=547 valign=top style='width:5.7in;padding:0in 5.4pt 0in 5.4pt'>
+  <p class=MsoNormal style='mso-pagination:widow-orphan lines-together;
+  page-break-after:avoid'>Numeric</p>
+  </td>
+ </tr>
+ <tr>
+  <td width=91 valign=top style='width:.95in;padding:0in 5.4pt 0in 5.4pt'>
+  <p class=MsoNormal style='mso-pagination:widow-orphan lines-together;
+  page-break-after:avoid'>Function</p>
+  </td>
+  <td width=547 valign=top style='width:5.7in;padding:0in 5.4pt 0in 5.4pt'>
+  <p class=MsoNormal style='mso-pagination:widow-orphan lines-together;
+  page-break-after:avoid'>Read-only value indicating the last USB communication
   error. See Appendix A for a description of the error codes.</p>
   </td>
  </tr>
@@ -240,40 +297,46 @@ div.Section1
  mso-padding-alt:0in 5.4pt 0in 5.4pt'>
  <tr>
   <td width=91 valign=top style='width:.95in;padding:0in 5.4pt 0in 5.4pt'>
-  <p class=MsoNormal>Property</p>
+  <p class=MsoNormal style='mso-pagination:widow-orphan lines-together;
+  page-break-after:avoid'>Property</p>
   </td>
   <td width=547 valign=top style='width:5.7in;padding:0in 5.4pt 0in 5.4pt'>
-  <p class=MsoNormal>LastDeviceResult</p>
+  <p class=MsoNormal style='mso-pagination:widow-orphan lines-together;
+  page-break-after:avoid'>LastDeviceResult</p>
   </td>
  </tr>
  <tr>
   <td width=91 valign=top style='width:.95in;padding:0in 5.4pt 0in 5.4pt'>
-  <p class=MsoNormal>Type</p>
+  <p class=MsoNormal style='mso-pagination:widow-orphan lines-together;
+  page-break-after:avoid'>Type</p>
   </td>
   <td width=547 valign=top style='width:5.7in;padding:0in 5.4pt 0in 5.4pt'>
-  <p class=MsoNormal>Numeric</p>
+  <p class=MsoNormal style='mso-pagination:widow-orphan lines-together;
+  page-break-after:avoid'>Numeric</p>
   </td>
  </tr>
  <tr>
   <td width=91 valign=top style='width:.95in;padding:0in 5.4pt 0in 5.4pt'>
-  <p class=MsoNormal>Function</p>
+  <p class=MsoNormal style='mso-pagination:widow-orphan lines-together;
+  page-break-after:avoid'>Function</p>
   </td>
   <td width=547 valign=top style='width:5.7in;padding:0in 5.4pt 0in 5.4pt'>
-  <p class=MsoNormal>Read-only value indicating the last device error. See your
-  device documentation for a description of the error codes.</p>
+  <p class=MsoNormal style='mso-pagination:widow-orphan lines-together;
+  page-break-after:avoid'>Read-only value indicating the last device error. See
+  your device documentation for a description of the error codes.</p>
   </td>
  </tr>
 </table>
 
 <p class=MsoNormal><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></p>
 
-<h3 style='mso-pagination:widow-orphan lines-together'>ScopeLED-MSB/MSP</h3>
+<h3 style='mso-pagination:widow-orphan lines-together'>ScopeLED-G</h3>
 
 <p class=MsoNormal style='mso-pagination:widow-orphan lines-together;
-page-break-after:avoid'><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></p>
+page-break-after:avoid'>ScopeLED Fiber Guide Illuminators</p>
 
 <p class=MsoNormal style='mso-pagination:widow-orphan lines-together;
-page-break-after:avoid'>Note: The ProductID for MSB/MSP illuminators is 4867
+page-break-after:avoid'>Note: The ProductID for G-Series illuminators is 4867
 (0x1303).</p>
 
 <p class=MsoNormal style='mso-pagination:widow-orphan lines-together;
@@ -311,24 +374,158 @@ page-break-after:avoid'><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></p
   <td width=547 valign=top style='width:5.7in;padding:0in 5.4pt 0in 5.4pt'>
   <p class=MsoNormal style='mso-pagination:widow-orphan lines-together;
   page-break-after:avoid'>Gets or sets the brightness level of the indicated
-  channel. This property changes the cached value. The new value will not take
-  effect until the shutter is next opened.</p>
+  channel. These properties change only the cached value. The new value will
+  not take effect until the shutter is next opened.</p>
   </td>
  </tr>
 </table>
 
 <p class=MsoNormal><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></p>
 
+<h3 style='mso-pagination:widow-orphan lines-together'>ScopeLED-B</h3>
+
+<p class=MsoNormal>ScopeLED Brightfield Microscope Illuminators</p>
+
+<p class=MsoNormal style='mso-pagination:widow-orphan lines-together;
+page-break-after:avoid'>Note: The ProductID for B-Series illuminators is 4874
+(0x130A).</p>
+
+<p class=MsoNormal style='mso-pagination:widow-orphan lines-together;
+page-break-after:avoid'><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></p>
+
+<table border=0 cellspacing=0 cellpadding=0 style='border-collapse:collapse;
+ mso-padding-alt:0in 5.4pt 0in 5.4pt'>
+ <tr>
+  <td width=91 valign=top style='width:.95in;padding:0in 5.4pt 0in 5.4pt'>
+  <p class=MsoNormal style='mso-pagination:widow-orphan lines-together;
+  page-break-after:avoid'>Property</p>
+  </td>
+  <td width=547 valign=top style='width:5.7in;padding:0in 5.4pt 0in 5.4pt'>
+  <p class=MsoNormal style='mso-pagination:widow-orphan lines-together;
+  page-break-after:avoid'>ActivePresetMode</p>
+  </td>
+ </tr>
+ <tr>
+  <td width=91 valign=top style='width:.95in;padding:0in 5.4pt 0in 5.4pt'>
+  <p class=MsoNormal style='mso-pagination:widow-orphan lines-together;
+  page-break-after:avoid'>Type</p>
+  </td>
+  <td width=547 valign=top style='width:5.7in;padding:0in 5.4pt 0in 5.4pt'>
+  <p class=MsoNormal style='mso-pagination:widow-orphan lines-together;
+  page-break-after:avoid'>Integer value from 0 to 6, representing the active
+  Preset Mode. </p>
+  </td>
+ </tr>
+ <tr>
+  <td width=91 valign=top style='width:.95in;padding:0in 5.4pt 0in 5.4pt'>
+  <p class=MsoNormal style='mso-pagination:widow-orphan lines-together;
+  page-break-after:avoid'>Function</p>
+  </td>
+  <td width=547 valign=top style='width:5.7in;padding:0in 5.4pt 0in 5.4pt'>
+  <p class=MsoNormal>Gets or sets the active Preset Mode.</p>
+  <p class=MsoNormal>The brightness of the illuminator will be controlled
+  according to the setting of the corresponding preset mode. </p>
+  <p class=MsoNormal>Preset Mode 0 activates brightness control for the
+  individual channels via the properties Channel1Brightness,
+  Channel2Brightness, Channel3Brightness, and Channel4Brightness.</p>
+  </td>
+ </tr>
+</table>
+
 <p class=MsoNormal><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></p>
 
-<h3>ScopeLED-FMI</h3>
+<table border=0 cellspacing=0 cellpadding=0 style='border-collapse:collapse;
+ mso-padding-alt:0in 5.4pt 0in 5.4pt'>
+ <tr>
+  <td width=91 valign=top style='width:.95in;padding:0in 5.4pt 0in 5.4pt'>
+  <p class=MsoNormal style='mso-pagination:widow-orphan lines-together;
+  page-break-after:avoid'>Property</p>
+  </td>
+  <td width=547 valign=top style='width:5.7in;padding:0in 5.4pt 0in 5.4pt'>
+  <p class=MsoNormal style='mso-pagination:widow-orphan lines-together;
+  page-break-after:avoid'>Channel1Brightness, Channel2Brightness,
+  Channel3Brightness, Channel4Brightness</p>
+  </td>
+ </tr>
+ <tr>
+  <td width=91 valign=top style='width:.95in;padding:0in 5.4pt 0in 5.4pt'>
+  <p class=MsoNormal style='mso-pagination:widow-orphan lines-together;
+  page-break-after:avoid'>Type</p>
+  </td>
+  <td width=547 valign=top style='width:5.7in;padding:0in 5.4pt 0in 5.4pt'>
+  <p class=MsoNormal style='mso-pagination:widow-orphan lines-together;
+  page-break-after:avoid'>Floating-point value from 0 to 100, representing the
+  percentage. </p>
+  </td>
+ </tr>
+ <tr>
+  <td width=91 valign=top style='width:.95in;padding:0in 5.4pt 0in 5.4pt'>
+  <p class=MsoNormal style='mso-pagination:widow-orphan lines-together;
+  page-break-after:avoid'>Function</p>
+  </td>
+  <td width=547 valign=top style='width:5.7in;padding:0in 5.4pt 0in 5.4pt'>
+  <p class=MsoNormal style='mso-pagination:widow-orphan lines-together;
+  page-break-after:avoid'>Gets or sets the brightness level of the indicated
+  channel. The intensities set by these properties are only active when
+  ActivePresetMode is set to 0. </p>
+  </td>
+ </tr>
+</table>
 
 <p class=MsoNormal><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></p>
 
-<p class=MsoNormal>Note: The ProductID for fluorescence illuminators is 4869
-(0x1305).</p>
+<table border=0 cellspacing=0 cellpadding=0 style='border-collapse:collapse;
+ mso-padding-alt:0in 5.4pt 0in 5.4pt'>
+ <tr>
+  <td width=91 valign=top style='width:.95in;padding:0in 5.4pt 0in 5.4pt'>
+  <p class=MsoNormal style='mso-pagination:widow-orphan lines-together;
+  page-break-after:avoid'>Property</p>
+  </td>
+  <td width=547 valign=top style='width:5.7in;padding:0in 5.4pt 0in 5.4pt'>
+  <p class=MsoNormal style='mso-pagination:widow-orphan lines-together;
+  page-break-after:avoid'>PresetMode1Brightness, PresetMode2Brightness,
+  PresetMode3Brightness, PresetMode4Brightness, PresetMode5Brightness,
+  PresetMode6Brightness</p>
+  </td>
+ </tr>
+ <tr>
+  <td width=91 valign=top style='width:.95in;padding:0in 5.4pt 0in 5.4pt'>
+  <p class=MsoNormal style='mso-pagination:widow-orphan lines-together;
+  page-break-after:avoid'>Type</p>
+  </td>
+  <td width=547 valign=top style='width:5.7in;padding:0in 5.4pt 0in 5.4pt'>
+  <p class=MsoNormal style='mso-pagination:widow-orphan lines-together;
+  page-break-after:avoid'>Floating-point value from 0 to 100, representing the
+  percentage. </p>
+  </td>
+ </tr>
+ <tr>
+  <td width=91 valign=top style='width:.95in;padding:0in 5.4pt 0in 5.4pt'>
+  <p class=MsoNormal style='mso-pagination:widow-orphan lines-together;
+  page-break-after:avoid'>Function</p>
+  </td>
+  <td width=547 valign=top style='width:5.7in;padding:0in 5.4pt 0in 5.4pt'>
+  <p class=MsoNormal style='mso-pagination:widow-orphan lines-together;
+  page-break-after:avoid'>Gets or sets the brightness level of the indicated
+  Preset Mode. The intensities set by these properties are only active when
+  ActivePresetMode is set to the corresponding Preset Mode. For example, in
+  order to make active PresetMode4Brightness, ActivePresetMode must be 4. </p>
+  </td>
+ </tr>
+</table>
 
 <p class=MsoNormal><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></p>
+
+<h3 style='mso-pagination:widow-orphan lines-together'>ScopeLED-F</h3>
+
+<p class=MsoNormal style='mso-pagination:widow-orphan lines-together;
+page-break-after:avoid'>ScopeLED Fluorescence Microscope Illuminators</p>
+
+<p class=MsoNormal style='mso-pagination:widow-orphan lines-together;
+page-break-after:avoid'>Note: The ProductID for F-Series illuminators is 4869 (0x1305).</p>
+
+<p class=MsoNormal style='mso-pagination:widow-orphan lines-together;
+page-break-after:avoid'><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></p>
 
 <table border=0 cellspacing=0 cellpadding=0 style='border-collapse:collapse;
  mso-padding-alt:0in 5.4pt 0in 5.4pt'>
@@ -376,8 +573,8 @@ page-break-after:avoid'><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></p
   <p class=MsoNormal>Type</p>
   </td>
   <td width=547 valign=top style='width:5.7in;padding:0in 5.4pt 0in 5.4pt'>
-  <p class=MsoNormal>Floating-point value from 0 to 100, representing the
-  percentage. </p>
+  <p class=MsoNormal>Floating-point value from 0 to 100, representing the percentage.
+  </p>
   </td>
  </tr>
  <tr>
@@ -401,8 +598,8 @@ page-break-after:avoid'><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></p
   <p class=MsoNormal>Property</p>
   </td>
   <td width=547 valign=top style='width:5.7in;padding:0in 5.4pt 0in 5.4pt'>
-  <p class=MsoNormal>Channel1Wavelength, Channel2Wavelength,
-  Channel3Wavelength, Channel4Wavelength</p>
+  <p class=MsoNormal>Channel1Wavelength, Channel2Wavelength, Channel3Wavelength,
+  Channel4Wavelength</p>
   </td>
  </tr>
  <tr>
@@ -683,8 +880,8 @@ property. </p>
   <p class=MsoNormal><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></p>
   <p class=MsoNormal><i>Make sure that the device is properly connected to your
   computer and powered on. <o:p></o:p></i></p>
-  <p class=MsoNormal><i>Make sure that the VendorID, ProductID and SerialNumber
-  (optional) properties match your device.</i> </p>
+  <p class=MsoNormal><i>Make sure that the VendorID, ProductID and
+  InitSerialNumber (optional) properties match your device.</i> </p>
   </td>
  </tr>
  <tr>
