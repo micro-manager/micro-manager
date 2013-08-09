@@ -90,8 +90,8 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 // ScopeLEDMSBMicroscopeIlluminator class implementation
 ///////////////////////////////////////////////////////////////////////////////
 
-const char* ScopeLEDMSBMicroscopeIlluminator::DeviceName = "ScopeLED-MSB/MSP";
-const char* ScopeLEDMSBMicroscopeIlluminator::DeviceDescription = "ScopeLED MSB/MSP Microscope Illuminator";
+const char* ScopeLEDMSBMicroscopeIlluminator::DeviceName = "ScopeLED-G";
+const char* ScopeLEDMSBMicroscopeIlluminator::DeviceDescription = "ScopeLED Fiber Guide Illuminator";
 
 void ScopeLEDMSBMicroscopeIlluminator::ClearOpticalState()
 {
@@ -284,8 +284,8 @@ int ScopeLEDMSBMicroscopeIlluminator::OnChannel4Brightness(MM::PropertyBase* pPr
 // ScopeLEDMSMMicroscopeIlluminator class implementation
 ///////////////////////////////////////////////////////////////////////////////
 
-const char* ScopeLEDMSMMicroscopeIlluminator::DeviceName = "ScopeLED-MSM";
-const char* ScopeLEDMSMMicroscopeIlluminator::DeviceDescription = "ScopeLED MSM Microscope Illuminator";
+const char* ScopeLEDMSMMicroscopeIlluminator::DeviceName = "ScopeLED-B";
+const char* ScopeLEDMSMMicroscopeIlluminator::DeviceDescription = "ScopeLED Brightfield Microscope Illuminator";
 
 void ScopeLEDMSMMicroscopeIlluminator::ClearOpticalState()
 {
@@ -649,7 +649,7 @@ int ScopeLEDMSMMicroscopeIlluminator::OnPresetMode6Brightness(MM::PropertyBase* 
 // ScopeLEDFluorescenceIlluminator class implementation
 ///////////////////////////////////////////////////////////////////////////////
 
-const char* ScopeLEDFluorescenceIlluminator::DeviceName = "ScopeLED-FMI";
+const char* ScopeLEDFluorescenceIlluminator::DeviceName = "ScopeLED-F";
 const char* ScopeLEDFluorescenceIlluminator::DeviceDescription = "ScopeLED Fluorescence Microscope Illuminator";
 
 void ScopeLEDFluorescenceIlluminator::ClearOpticalState()
