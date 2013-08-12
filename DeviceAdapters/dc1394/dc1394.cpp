@@ -1,4 +1,4 @@
-   ///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 // FILE:       dc1394.cpp
 // PROJECT:    MicroManage
 // SUBSYSTEM:  DeviceAdapters
@@ -129,7 +129,7 @@ Cdc1394::Cdc1394() :
 {
    SetErrorText(ERR_DC1394, "Could not initialize libdc1394.  Someting in your system is broken");
    SetErrorText(ERR_CAMERA_NOT_FOUND, "Did not find a IIDC firewire camera_");
-   SetErrorText(ERR_SET_CAPTURE_FAILED, "Failed to set capture");
+   SetErrorText(ERR_CAPTURE_SETUP_FAILED, "Failed to set up capture");
    SetErrorText(ERR_TRANSMISSION_FAILED, "Problem starting transmission");
    SetErrorText(ERR_MODE_LIST_NOT_FOUND, "Did not find camera_s mode list");
    SetErrorText(ERR_ROI_NOT_SUPPORTED, "ROIs not supported with this camera_");
@@ -1762,7 +1762,7 @@ int Cdc1394::ResizeImageBuffer()
    
    // Start the image capture
    if (dc1394_capture_setup(camera_,dmaBufferSize_,DC1394_CAPTURE_FLAGS_DEFAULT) != DC1394_SUCCESS) 
-      return ERR_SET_CAPTURE_FAILED;
+      return ERR_CAPTURE_SETUP_FAILED;
 
    // Set camera_ trigger mode
    // if( dc1394_external_trigger_set_mode(camera_, DC1394_TRIGGER_MODE_0) != DC1394_SUCCESS)
