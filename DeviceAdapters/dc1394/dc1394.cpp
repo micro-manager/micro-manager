@@ -58,8 +58,8 @@ const char* g_Keyword_Modes = "Video Modes";
 const char* g_Keyword_FrameRates = "Frame Rates";
 
 // singleton instance
-Cdc1394* Cdc1394::m_pInstance = 0;
-unsigned Cdc1394::refCount_ = 0;
+Cdc1394* Cdc1394::s_pInstance = 0;
+unsigned Cdc1394::s_refCount = 0;
 
 #ifdef WIN32
 // Windows dll entry routine
@@ -112,14 +112,14 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
 
 Cdc1394::Cdc1394() :
    isSonyXCDX700_(false),
-   m_bInitialized(false),
-   m_bBusy(false),
+   initialized_(false),
+   busy_(false),
    snapInProgress_(false),
    frameRatePropDefined_(false),
    dmaBufferSize_(16),
    triedCaptureCount_(0),
    integrateFrameNumber_(1),
-   maxNrIntegration(1),
+   maxNrIntegration_(1),
    lnBin_(1),
    longestWait_(1,0),
    dequeued_(false),
@@ -160,15 +160,15 @@ Cdc1394::Cdc1394() :
 
 Cdc1394::~Cdc1394()
 {
-   refCount_--;
-   if (refCount_ == 0)
+   s_refCount--;
+   if (s_refCount == 0)
    {
       // release resources
-      if (m_bInitialized)
+      if (initialized_)
          Shutdown();
 
       // clear the instance pointer
-      m_pInstance = 0;
+      s_pInstance = 0;
 
       // Clear the burst mode thread
       delete acqThread_;
@@ -177,11 +177,11 @@ Cdc1394::~Cdc1394()
 
 Cdc1394* Cdc1394::GetInstance()
 {
-   if (!m_pInstance)
-      m_pInstance = new Cdc1394();
+   if (!s_pInstance)
+      s_pInstance = new Cdc1394();
 
-   refCount_++;
-   return m_pInstance;
+   s_refCount++;
+   return s_pInstance;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -224,7 +224,7 @@ int Cdc1394::OnMode(MM::PropertyBase* pProp, MM::ActionType eAct)
          logMsg_.str("");
          logMsg_ << "In OnMode, bitDepth is now" << depth_;
          LogMessage(logMsg_.str().c_str(), true);
-         maxNrIntegration = 1 << (16-depth_);
+         maxNrIntegration_ = 1 << (16-depth_);
          GetBytesPerPixel ();
 
          // reset the list of framerates allowed:
@@ -277,7 +277,7 @@ int Cdc1394::OnFrameRate(MM::PropertyBase* pProp, MM::ActionType eAct)
          err_ = dc1394_video_get_data_depth(camera_, &depth_);
          if (err_ != DC1394_SUCCESS)
             LogMessage ("Error establishing bit-depth\n");
-         maxNrIntegration = 1 << (16 - depth_);
+         maxNrIntegration_ = 1 << (16 - depth_);
          GetBytesPerPixel ();
 
          // Restart capture
@@ -362,14 +362,14 @@ int Cdc1394::OnIntegration(MM::PropertyBase* pProp, MM::ActionType eAct)
    if (eAct == MM::AfterSet)
    {
       pProp->Get(tmp);
-      if (tmp > maxNrIntegration)
-         integrateFrameNumber_ = maxNrIntegration;
+      if (tmp > maxNrIntegration_)
+         integrateFrameNumber_ = maxNrIntegration_;
       else if (tmp < 1)
          integrateFrameNumber_ = 1;
-      else if ( (tmp >= 1) && (tmp <= maxNrIntegration) )
+      else if ( (tmp >= 1) && (tmp <= maxNrIntegration_) )
          integrateFrameNumber_ = tmp;
       GetBytesPerPixel();
-      img_.Resize(width, height, bytesPerPixel_);
+      img_.Resize(width_, height_, bytesPerPixel_);
    }
    else if (eAct == MM::BeforeGet)
    {
@@ -543,7 +543,7 @@ int Cdc1394::OnFeatureMode(MM::PropertyBase* pProp, MM::ActionType eAct, dc1394f
 // Brightness
 int Cdc1394::OnBrightness(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-	return OnFeature(pProp, eAct, brightness, brightnessMin, brightnessMax, DC1394_FEATURE_BRIGHTNESS);
+	return OnFeature(pProp, eAct, brightness_, brightnessMin_, brightnessMax_, DC1394_FEATURE_BRIGHTNESS);
 }
 
 
@@ -556,7 +556,7 @@ int Cdc1394::OnBrightnessMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 // Hue
 int Cdc1394::OnHue(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-	return OnFeature(pProp, eAct, brightness, brightnessMin, brightnessMax, DC1394_FEATURE_HUE);
+	return OnFeature(pProp, eAct, brightness_, brightnessMin_, brightnessMax_, DC1394_FEATURE_HUE);
 }
 
 
@@ -569,7 +569,7 @@ int Cdc1394::OnHueMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 // Saturation
 int Cdc1394::OnSaturation(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-	return OnFeature(pProp, eAct, brightness, brightnessMin, brightnessMax, DC1394_FEATURE_SATURATION);
+	return OnFeature(pProp, eAct, brightness_, brightnessMin_, brightnessMax_, DC1394_FEATURE_SATURATION);
 }
 
 
@@ -582,7 +582,7 @@ int Cdc1394::OnSaturationMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 // Gain
 int Cdc1394::OnGain(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-  return OnFeature(pProp, eAct, gain, gainMin, gainMax, DC1394_FEATURE_GAIN);
+  return OnFeature(pProp, eAct, gain_, gainMin_, gainMax_, DC1394_FEATURE_GAIN);
 }
 
 
@@ -594,7 +594,7 @@ int Cdc1394::OnGainMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 // Gamma
 int Cdc1394::OnGamma(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-   return OnFeature(pProp, eAct, gain, gainMin, gainMax, DC1394_FEATURE_GAMMA);
+   return OnFeature(pProp, eAct, gain_, gainMin_, gainMax_, DC1394_FEATURE_GAMMA);
 }
 
 
@@ -607,7 +607,7 @@ int Cdc1394::OnGammaMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 // Temperature
 int Cdc1394::OnTemp(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-	return OnFeature(pProp, eAct, gain, gainMin, gainMax, DC1394_FEATURE_TEMPERATURE);
+	return OnFeature(pProp, eAct, gain_, gainMin_, gainMax_, DC1394_FEATURE_TEMPERATURE);
 }
 
 
@@ -624,7 +624,7 @@ int Cdc1394::OnShutter(MM::PropertyBase* pProp, MM::ActionType eAct)
       // Need to turn off absolute mode so that we can set it using integer shutter values
       dc1394_feature_set_absolute_control(camera_, DC1394_FEATURE_SHUTTER, DC1394_OFF);
    }
-   return OnFeature(pProp, eAct, shutter, shutterMin, shutterMax, DC1394_FEATURE_SHUTTER);
+   return OnFeature(pProp, eAct, shutter_, shutterMin_, shutterMax_, DC1394_FEATURE_SHUTTER);
 }
 
 
@@ -743,13 +743,13 @@ int Cdc1394::OnWhitebalanceMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 int Cdc1394::OnWhitebalanceUB(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-	return OnColorFeature(pProp, eAct, colub, colMin, colMax, COLOR_UB);
+	return OnColorFeature(pProp, eAct, colub_, colMin_, colMax_, COLOR_UB);
 }
 
 
 int Cdc1394::OnWhitebalanceVR(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-	return OnColorFeature(pProp, eAct, colvr, colMin, colMax, COLOR_VR);
+	return OnColorFeature(pProp, eAct, colvr_, colMin_, colMax_, COLOR_VR);
 }
 
 
@@ -761,19 +761,19 @@ int Cdc1394::OnWhiteshadingMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 int Cdc1394::OnWhiteshadingRed(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-	return OnColorFeature(pProp, eAct, colred, colMin, colMax, COLOR_RED);
+	return OnColorFeature(pProp, eAct, colred_, colMin_, colMax_, COLOR_RED);
 }
 
 
 int Cdc1394::OnWhiteshadingBlue(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-	return OnColorFeature(pProp, eAct, colblue, colMin, colMax, COLOR_BLUE);
+	return OnColorFeature(pProp, eAct, colblue_, colMin_, colMax_, COLOR_BLUE);
 }
 
 
 int Cdc1394::OnWhiteshadingGreen(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-	return OnColorFeature(pProp, eAct, colgreen, colMin, colMax, COLOR_GREEN);
+	return OnColorFeature(pProp, eAct, colgreen_, colMin_, colMax_, COLOR_GREEN);
 }
 
 
@@ -830,7 +830,7 @@ int Cdc1394::Initialize()
       return nRet;
 
    // We have  a handle to the camera_ now:
-   m_bInitialized = true;
+   initialized_ = true;
 
    // Figure out what this camera_ can do
    // get supported modes
@@ -910,7 +910,7 @@ int Cdc1394::Initialize()
    logMsg_.str("");
    logMsg_ << "BitDepth is " << depth_;
    LogMessage(logMsg_.str().c_str(), true);
-   maxNrIntegration = 1 << (16 - depth_);
+   maxNrIntegration_ = 1 << (16 - depth_);
    GetBytesPerPixel();
 
    // Frame integration
@@ -979,7 +979,7 @@ int Cdc1394::Initialize()
 			  bool hasManual = InitFeatureMode(featureInfo_, DC1394_FEATURE_BRIGHTNESS, "BrightnessSetting", &Cdc1394::OnBrightnessMode);
 			  if (hasManual)
 			  {
-				  InitFeatureManual(featureInfo_, "Brightness", brightness, brightnessMin, brightnessMax, &Cdc1394::OnBrightness);
+				  InitFeatureManual(featureInfo_, "Brightness", brightness_, brightnessMin_, brightnessMax_, &Cdc1394::OnBrightness);
 			  }
           } 
           else if (strcmp(featureLabel, "Gain") == 0) 
@@ -987,7 +987,7 @@ int Cdc1394::Initialize()
 			 bool hasManual = InitFeatureMode(featureInfo_, DC1394_FEATURE_GAIN, "GainSetting", &Cdc1394::OnGainMode);
 			 if (hasManual)
 			 {
-				  InitFeatureManual(featureInfo_, MM::g_Keyword_Gain, gain, gainMin, gainMax, &Cdc1394::OnGain);
+				  InitFeatureManual(featureInfo_, MM::g_Keyword_Gain, gain_, gainMin_, gainMax_, &Cdc1394::OnGain);
 			 }
 		  }
           else if (strcmp(featureLabel, "Shutter") == 0) 
@@ -995,7 +995,7 @@ int Cdc1394::Initialize()
 			  bool hasManual = InitFeatureMode(featureInfo_, DC1394_FEATURE_GAIN, "ShutterSetting", &Cdc1394::OnShutterMode);
 			  if (hasManual)
 			  {
-				  InitFeatureManual(featureInfo_, "Shutter", shutter, shutterMin, shutterMax, &Cdc1394::OnShutter);
+				  InitFeatureManual(featureInfo_, "Shutter", shutter_, shutterMin_, shutterMax_, &Cdc1394::OnShutter);
 			  }
 			  
              // Check if shutter has absolute control
@@ -1028,8 +1028,8 @@ int Cdc1394::Initialize()
           {
              // Offer option to switch between auto, manual and one-push modes
 			 InitFeatureMode(featureInfo_, DC1394_FEATURE_EXPOSURE, "ExposureSetting", &Cdc1394::OnExposureMode);
-             err_ = dc1394_feature_get_value(camera_, DC1394_FEATURE_EXPOSURE, &exposure);
-             err_ = dc1394_feature_get_boundaries(camera_, DC1394_FEATURE_EXPOSURE, &exposureMin, &exposureMax);
+             err_ = dc1394_feature_get_value(camera_, DC1394_FEATURE_EXPOSURE, &exposure_);
+             err_ = dc1394_feature_get_boundaries(camera_, DC1394_FEATURE_EXPOSURE, &exposureMin_, &exposureMax_);
           }
           else if (strcmp(featureLabel, "Trigger") == 0) 
           {
@@ -1072,7 +1072,7 @@ int Cdc1394::Initialize()
 			   bool hasManual = InitFeatureMode(featureInfo_, DC1394_FEATURE_GAIN, "GammaSetting", &Cdc1394::OnGammaMode);
 			   if (hasManual)
 			   {
-				   InitFeatureManual(featureInfo_, "Gamma", gamma, gammaMin, gammaMax, &Cdc1394::OnGamma);
+				   InitFeatureManual(featureInfo_, "Gamma", gamma_, gammaMin_, gammaMax_, &Cdc1394::OnGamma);
 			   }
 		   }
 		   else if (strcmp(featureLabel, "Hue") == 0) 
@@ -1080,7 +1080,7 @@ int Cdc1394::Initialize()
 			   bool hasManual = InitFeatureMode(featureInfo_, DC1394_FEATURE_GAIN, "HueSetting", &Cdc1394::OnHueMode);
 			   if (hasManual)
 			   {
-				   InitFeatureManual(featureInfo_, "Hue", hue, hueMin, hueMax, &Cdc1394::OnHue);
+				   InitFeatureManual(featureInfo_, "Hue", hue_, hueMin_, hueMax_, &Cdc1394::OnHue);
 			   }
 		   }
 		   else if (strcmp(featureLabel, "Saturation") == 0) 
@@ -1088,7 +1088,7 @@ int Cdc1394::Initialize()
 			   bool hasManual = InitFeatureMode(featureInfo_, DC1394_FEATURE_GAIN, "SaturationSetting", &Cdc1394::OnSaturationMode);
 			   if (hasManual)
 			   {
-				   InitFeatureManual(featureInfo_, "Saturation", saturation, saturationMin, saturationMax, &Cdc1394::OnSaturation);
+				   InitFeatureManual(featureInfo_, "Saturation", saturation_, saturationMin_, saturationMax_, &Cdc1394::OnSaturation);
 			   }
 		   }
 		   else if (strcmp(featureLabel, "Temperature") == 0) 
@@ -1096,7 +1096,7 @@ int Cdc1394::Initialize()
 			   bool hasManual = InitFeatureMode(featureInfo_, DC1394_FEATURE_GAIN, "TemperatureSetting", &Cdc1394::OnTempMode);
 			   if (hasManual)
 			   {
-				   InitFeatureManual(featureInfo_, "Temperature", temperature, temperatureMin, temperatureMax, &Cdc1394::OnTemp);
+				   InitFeatureManual(featureInfo_, "Temperature", temperature_, temperatureMin_, temperatureMax_, &Cdc1394::OnTemp);
 			   }
 		   }
 		   else if (strcmp(featureLabel, "White Balance") == 0) 
@@ -1108,21 +1108,21 @@ int Cdc1394::Initialize()
 				   // Check that this feature is read-out capable
 				   if ( featureInfo_.readout_capable )
 				   {	
-					   colub = featureInfo_.BU_value;
-					   colvr = featureInfo_.RV_value;
+					   colub_ = featureInfo_.BU_value;
+					   colvr_ = featureInfo_.RV_value;
 				   }
-				   colMin = 0;
-				   colMax = 255;
+				   colMin_ = 0;
+				   colMax_ = 255;
 				   
 				   char tmp[10];
 				   pAct = new CPropertyAction (this, &Cdc1394::OnWhitebalanceUB);
-				   sprintf(tmp,"%d",colub);
+				   sprintf(tmp,"%d",colub_);
 				   nRet = CreateProperty("WhitebalanceUB", tmp, MM::Integer, false, pAct);
 				   assert(nRet == DEVICE_OK);
 				   nRet = SetPropertyLimits("WhitebalanceUB", 0, 1000);
 				   assert(nRet == DEVICE_OK);
 				   pAct = new CPropertyAction (this, &Cdc1394::OnWhitebalanceVR);
-				   sprintf(tmp,"%d",colvr);
+				   sprintf(tmp,"%d",colvr_);
 				   nRet = CreateProperty("WhitebalanceVR", tmp, MM::Integer, false, pAct);
 				   assert(nRet == DEVICE_OK);
 				   nRet = SetPropertyLimits("WhitebalanceVR", 0, 1000);
@@ -1138,28 +1138,28 @@ int Cdc1394::Initialize()
 				   // Check that this feature is read-out capable
 				   if ( featureInfo_.readout_capable )
 				   {	
-					   colred = featureInfo_.R_value;
-					   colgreen = featureInfo_.G_value;
-					   colblue = featureInfo_.B_value;
+					   colred_ = featureInfo_.R_value;
+					   colgreen_ = featureInfo_.G_value;
+					   colblue_ = featureInfo_.B_value;
 				   }
-				   colMin = 0;
-				   colMax = 255;
+				   colMin_ = 0;
+				   colMax_ = 255;
 				   
 				   char tmp[10];
 				   pAct = new CPropertyAction (this, &Cdc1394::OnWhiteshadingRed);
-				   sprintf(tmp,"%d",colub);
+				   sprintf(tmp,"%d",colub_);
 				   nRet = CreateProperty("WhiteshadingRed", tmp, MM::Integer, false, pAct);
 				   assert(nRet == DEVICE_OK);
 				   nRet = SetPropertyLimits("WhiteshadingRed", 0, 1000);
 				   assert(nRet == DEVICE_OK);
 				   pAct = new CPropertyAction (this, &Cdc1394::OnWhiteshadingGreen);
-				   sprintf(tmp,"%d",colub);
+				   sprintf(tmp,"%d",colub_);
 				   nRet = CreateProperty("WhiteshadingGreen", tmp, MM::Integer, false, pAct);
 				   assert(nRet == DEVICE_OK);
 				   nRet = SetPropertyLimits("WhiteshadingGreen", 0, 1000);
 				   assert(nRet == DEVICE_OK);
 				   pAct = new CPropertyAction (this, &Cdc1394::OnWhiteshadingBlue);
-				   sprintf(tmp,"%d",colub);
+				   sprintf(tmp,"%d",colub_);
 				   nRet = CreateProperty("WhiteshadingBlue", tmp, MM::Integer, false, pAct);
 				   assert(nRet == DEVICE_OK);
 				   nRet = SetPropertyLimits("WhiteshadingBlue", 0, 1000);
@@ -1306,7 +1306,7 @@ void Cdc1394::InitFeatureManual(dc1394feature_info_t &featureInfo, const char *f
 
 int Cdc1394::Shutdown()
 {
-   if (m_bInitialized)
+   if (initialized_)
    {
       // TODO: Added err_or handling
       err_ = dc1394_capture_stop(camera_);
@@ -1319,7 +1319,7 @@ int Cdc1394::Shutdown()
 
       LogMessage("Shutdown camera_\n");
 
-      m_bInitialized = false;
+      initialized_ = false;
    }
    return DEVICE_OK;
 }
@@ -1501,17 +1501,17 @@ int Cdc1394::SnapImage()
 int Cdc1394::ProcessImage(dc1394video_frame_t *frame, const unsigned char* destination) 
 {
    dc1394video_frame_t *internalFrame;
-   int numPixels = width * height;
+   int numPixels = width_ * height_;
    if (colorCoding_==DC1394_COLOR_CODING_YUV411 || colorCoding_==DC1394_COLOR_CODING_YUV422 || colorCoding_==DC1394_COLOR_CODING_YUV444) 
    {
       uint8_t *rgb_image = (uint8_t *)malloc(3 * numPixels);
       dc1394_convert_to_RGB8((uint8_t *)frame->image,      
-             rgb_image, width, height, DC1394_BYTE_ORDER_UYVY, colorCoding_, 16);
+             rgb_image, width_, height_, DC1394_BYTE_ORDER_UYVY, colorCoding_, 16);
       // no integration, straight forward stuff
       if (integrateFrameNumber_ == 1)
       {
          uint8_t* pixBuffer = const_cast<uint8_t*> (destination);
-         rgb8ToBGRA8(pixBuffer, rgb_image, width, height);
+         rgb8ToBGRA8(pixBuffer, rgb_image, width_, height_);
       }
       // when integrating we are dealing with 16 bit images
       if (integrateFrameNumber_ > 1)
@@ -1519,16 +1519,16 @@ int Cdc1394::ProcessImage(dc1394video_frame_t *frame, const unsigned char* desti
          void* pixBuffer = const_cast<unsigned char*> (destination);
          // funny, we need to clear the memory since we'll add to it, not overwrite it
          memset(pixBuffer, 0, GetImageBufferSize());
-         rgb8AddToMono16((uint16_t*) pixBuffer, rgb_image, width, height);
+         rgb8AddToMono16((uint16_t*) pixBuffer, rgb_image, width_, height_);
          // now repeat for the other frames:
          for (int frameNr=1; frameNr<integrateFrameNumber_; frameNr++)
          {
             if (dc1394_capture_dequeue(camera_,DC1394_CAPTURE_POLICY_WAIT, &internalFrame)!=DC1394_SUCCESS)
                   return ERR_CAPTURE_FAILED;
             dc1394_convert_to_RGB8((uint8_t *)internalFrame->image,
-                      rgb_image, width, height, DC1394_BYTE_ORDER_UYVY, colorCoding_, 16);
+                      rgb_image, width_, height_, DC1394_BYTE_ORDER_UYVY, colorCoding_, 16);
             dc1394_capture_enqueue(camera_, internalFrame);
-            rgb8AddToMono16((uint16_t*) pixBuffer, rgb_image, width, height);
+            rgb8AddToMono16((uint16_t*) pixBuffer, rgb_image, width_, height_);
          }
       }
       free(rgb_image);
@@ -1542,7 +1542,7 @@ int Cdc1394::ProcessImage(dc1394video_frame_t *frame, const unsigned char* desti
          uint8_t* pixBuffer = const_cast<unsigned char*> (destination);
 		 // GJ: Deinterlace image if required
          if (avtInterlaced_) 
-            avtDeinterlaceMono8 (pixBuffer, (uint8_t*) src, width, height);
+            avtDeinterlaceMono8 (pixBuffer, (uint8_t*) src, width_, height_);
 		   else 
             memcpy (pixBuffer, src, GetImageBufferSize());
       }
@@ -1551,13 +1551,13 @@ int Cdc1394::ProcessImage(dc1394video_frame_t *frame, const unsigned char* desti
          void* src = (void *) frame->image;
          uint8_t* pixBuffer = const_cast<unsigned char*> (destination);
          memset(pixBuffer, 0, GetImageBufferSize());
-         mono8AddToMono16((uint16_t*) pixBuffer, (uint8_t*) src, width, height);
+         mono8AddToMono16((uint16_t*) pixBuffer, (uint8_t*) src, width_, height_);
          // now repeat for the other frames:
          for (int frameNr=1; frameNr<integrateFrameNumber_; frameNr++)
          {
             if (dc1394_capture_dequeue(camera_,DC1394_CAPTURE_POLICY_WAIT, &internalFrame)!=DC1394_SUCCESS)
                   return ERR_CAPTURE_FAILED;
-            mono8AddToMono16((uint16_t*) pixBuffer, (uint8_t*) frame->image, width, height);
+            mono8AddToMono16((uint16_t*) pixBuffer, (uint8_t*) frame->image, width_, height_);
             dc1394_capture_enqueue(camera_, internalFrame);
          }
 		 // GJ:  Finished integrating, so we can deinterlace the 16 bit result
@@ -1567,7 +1567,7 @@ int Cdc1394::ProcessImage(dc1394video_frame_t *frame, const unsigned char* desti
 		 if (avtInterlaced_) {
 			 uint16_t *interlacedImaged = (uint16_t *) malloc(numPixels*sizeof(uint16_t));
 			 memcpy(interlacedImaged, (uint16_t*) pixBuffer, GetImageBufferSize());
-			 avtDeinterlaceMono16((uint16_t*) pixBuffer, interlacedImaged, width, height);
+			 avtDeinterlaceMono16((uint16_t*) pixBuffer, interlacedImaged, width_, height_);
 			 free(interlacedImaged);
 		 }
 	   }
@@ -1577,7 +1577,7 @@ int Cdc1394::ProcessImage(dc1394video_frame_t *frame, const unsigned char* desti
       uint8_t* src;
       src = (uint8_t *) frame->image;
       uint8_t* pixBuffer = const_cast<uint8_t*> (destination);
-      rgb8ToBGRA8 (pixBuffer, src, width, height);
+      rgb8ToBGRA8 (pixBuffer, src, width_, height_);
    }
    
    return DEVICE_OK;
@@ -1809,7 +1809,7 @@ int Cdc1394::ResizeImageBuffer()
       LogMessage (logMsg_.str().c_str(), false);
       // Camera is in a bad state.  Try to rescue what we can:
       dc1394_camera_free(camera_);
-      m_bInitialized = false;
+      initialized_ = false;
       // If/when we get here, try starting the camera_ again, probably hopeless
       int nRet = GetCamera();
       logMsg_.str("");
@@ -1826,14 +1826,14 @@ int Cdc1394::ResizeImageBuffer()
 
    // Get the image size from the camera_:
    // GJ: nb this is clever and returns current ROI size for format 7 modes
-   err_ = dc1394_get_image_size_from_video_mode(camera_, mode_, &width, &height);
+   err_ = dc1394_get_image_size_from_video_mode(camera_, mode_, &width_, &height_);
    if (err_ != DC1394_SUCCESS)
       return ERR_GET_IMAGE_SIZE_FAILED;
    GetBitDepth();
    GetBytesPerPixel();
    // Set the internal buffer (for now 8 bit gray scale only)
    // TODO: implement other pixel sizes
-   img_.Resize(width, height, bytesPerPixel_);
+   img_.Resize(width_, height_, bytesPerPixel_);
 
 
    logMsg_.str("");
@@ -2318,7 +2318,7 @@ int Cdc1394::PushImage(dc1394video_frame_t *myframe)
    // to avoid unnecessary copying
    //    uint8_t* pixBuffer = const_cast<unsigned char*> (img_.GetPixels());
    //  // GJ: Deinterlace image if required
-   //    if (avtInterlaced) avtDeinterlaceMono8 (pixBuffer, (uint8_t*) src, width, height);         
+   //    if (avtInterlaced) avtDeinterlaceMono8 (pixBuffer, (uint8_t*) src, width_, height_);
    // else memcpy (pixBuffer, src, GetImageBufferSize());
 
    // Copy to img_ ?
@@ -2333,18 +2333,18 @@ int Cdc1394::PushImage(dc1394video_frame_t *myframe)
    MM::ImageProcessor* ip = GetCoreCallback()->GetImageProcessor(this);
    if (ip)
    {
-      int ret = ip->Process(img_.GetPixels(), width, height,bytesPerPixel);
+      int ret = ip->Process(img_.GetPixels(), width_, height_,bytesPerPixel_);
       if (ret != DEVICE_OK) return ret;
    }
    */
 
    // insert image into the circular MMCore buffer
-   int ret =  GetCoreCallback()->InsertImage(this, buf, width, height, bytesPerPixel_);
+   int ret =  GetCoreCallback()->InsertImage(this, buf, width_, height_, bytesPerPixel_);
 
    if (!stopOnOverflow_ && ret == DEVICE_BUFFER_OVERFLOW) {
       // do not stop on overflow - just reset the buffer                     
       GetCoreCallback()->ClearImageBuffer(this);                             
-      ret =  GetCoreCallback()->InsertImage(this, buf, width, height, bytesPerPixel_);
+      ret =  GetCoreCallback()->InsertImage(this, buf, width_, height_, bytesPerPixel_);
    }
 
    std::ostringstream os;

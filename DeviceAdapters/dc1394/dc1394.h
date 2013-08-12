@@ -77,7 +77,7 @@ public:
    int Initialize();
    int Shutdown();
    void GetName(char* pszName) const;
-   bool Busy() {return m_bBusy;}
+   bool Busy() {return busy_;}
    bool IsCapturing() {return acquiring_;}
    
    // MMCamera API
@@ -172,6 +172,9 @@ private:
    double X700Shutter2Exposure(int shutter) const;
    int X700Exposure2Shutter(double exposure);
 
+   static Cdc1394* s_pInstance;
+   static unsigned s_refCount;
+
    // video mode information
    std::map<dc1394video_mode_t, std::string> videoModeMap_;
    typedef std::map<dc1394video_mode_t, std::string>::value_type videoModeMapType;
@@ -197,32 +200,30 @@ private:
    dc1394feature_info_t featureInfo_;
    dc1394framerates_t framerates_;
    dc1394framerate_t framerate_;
-   uint32_t numCameras, width, height, depth_;
-   uint32_t brightness, brightnessMin, brightnessMax;
-   uint32_t gain, gainMin, gainMax;
-   uint32_t shutter, shutterMin, shutterMax;
-   uint32_t exposure, exposureMin, exposureMax;
-   uint32_t hue, hueMin, hueMax;
-   uint32_t saturation, saturationMin, saturationMax;
-   uint32_t gamma, gammaMin, gammaMax;
-   uint32_t temperature, temperatureMin, temperatureMax;
+   uint32_t numCameras_, width_, height_, depth_;
+   uint32_t brightness_, brightnessMin_, brightnessMax_;
+   uint32_t gain_, gainMin_, gainMax_;
+   uint32_t shutter_, shutterMin_, shutterMax_;
+   uint32_t exposure_, exposureMin_, exposureMax_;
+   uint32_t hue_, hueMin_, hueMax_;
+   uint32_t saturation_, saturationMin_, saturationMax_;
+   uint32_t gamma_, gammaMin_, gammaMax_;
+   uint32_t temperature_, temperatureMin_, temperatureMax_;
 	
    // for color settings
    enum colorAdjustment { COLOR_UB, COLOR_VR, COLOR_RED, COLOR_GREEN, COLOR_BLUE };
    int OnColorFeature(MM::PropertyBase* pProp, MM::ActionType eAct, uint32_t &value, int valueMin, int valueMax, colorAdjustment valueColor);
-   uint32_t colub, colvr;
-   uint32_t colred, colblue, colgreen;
-   uint32_t colMin, colMax;
+   uint32_t colub_, colvr_;
+   uint32_t colred_, colblue_, colgreen_;
+   uint32_t colMin_, colMax_;
 	
-   static Cdc1394* m_pInstance;
-   static unsigned refCount_;
    ImgBuffer img_;
-   bool m_bInitialized;
-   bool m_bBusy;
+   bool initialized_;
+   bool busy_;
    bool snapInProgress_;
    bool frameRatePropDefined_;
    int dmaBufferSize_, triedCaptureCount_, bytesPerPixel_, integrateFrameNumber_;
-   int maxNrIntegration;
+   int maxNrIntegration_;
    long lnBin_;
    std::ostringstream logMsg_;
    MM::MMTime longestWait_;
@@ -236,7 +237,6 @@ private:
    unsigned long sequenceLength_;
    bool init_seqStarted_;
    AcqSequenceThread* acqThread_; // burst mode thread
-   
 };
 
 /**
