@@ -119,7 +119,6 @@ Cdc1394::Cdc1394() :
    dmaBufferSize_(16),
    triedCaptureCount_(0),
    integrateFrameNumber_(1),
-   maxNrIntegration_(1),
    lnBin_(1),
    longestWait_(1,0),
    dequeued_(false),
@@ -224,7 +223,6 @@ int Cdc1394::OnMode(MM::PropertyBase* pProp, MM::ActionType eAct)
          logMsg_.str("");
          logMsg_ << "In OnMode, bitDepth is now" << depth_;
          LogMessage(logMsg_.str().c_str(), true);
-         maxNrIntegration_ = 1 << (16-depth_);
          GetBytesPerPixel ();
 
          // reset the list of framerates allowed:
@@ -263,6 +261,9 @@ int Cdc1394::OnFrameRate(MM::PropertyBase* pProp, MM::ActionType eAct)
       }                                                                      
       if (found)                                                             
       {                                                                      
+         // XXX Why do we need this code? The image buffer should not depend on
+         // frame rate, should it?
+
          // Transmission needs to be stopped before changing framerates
          dc1394_capture_stop(camera_);
          
@@ -277,7 +278,6 @@ int Cdc1394::OnFrameRate(MM::PropertyBase* pProp, MM::ActionType eAct)
          err_ = dc1394_video_get_data_depth(camera_, &depth_);
          if (err_ != DC1394_SUCCESS)
             LogMessage ("Error establishing bit-depth\n");
-         maxNrIntegration_ = 1 << (16 - depth_);
          GetBytesPerPixel ();
 
          // Restart capture
@@ -358,15 +358,17 @@ int Cdc1394::OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 int Cdc1394::OnIntegration(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-   long tmp;
    if (eAct == MM::AfterSet)
    {
+      int maxNrIntegration = 1 << (16 - depth_);
+
+      long tmp;
       pProp->Get(tmp);
-      if (tmp > maxNrIntegration_)
-         integrateFrameNumber_ = maxNrIntegration_;
+      if (tmp > maxNrIntegration)
+         integrateFrameNumber_ = maxNrIntegration;
       else if (tmp < 1)
          integrateFrameNumber_ = 1;
-      else if ( (tmp >= 1) && (tmp <= maxNrIntegration_) )
+      else if (tmp >= 1 && tmp <= maxNrIntegration)
          integrateFrameNumber_ = tmp;
       GetBytesPerPixel();
       img_.Resize(width_, height_, bytesPerPixel_);
@@ -910,7 +912,6 @@ int Cdc1394::Initialize()
    logMsg_.str("");
    logMsg_ << "BitDepth is " << depth_;
    LogMessage(logMsg_.str().c_str(), true);
-   maxNrIntegration_ = 1 << (16 - depth_);
    GetBytesPerPixel();
 
    // Frame integration
@@ -919,6 +920,7 @@ int Cdc1394::Initialize()
       pAct = new CPropertyAction (this, &Cdc1394::OnIntegration);
       nRet = CreateProperty("Integration", "1", MM::Integer, false, pAct);
       assert(nRet == DEVICE_OK);
+      // TODO Set allowed range (which needs to be updated when mode changes)
    }
 
 

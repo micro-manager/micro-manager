@@ -223,7 +223,6 @@ private:
    bool snapInProgress_;
    bool frameRatePropDefined_;
    int dmaBufferSize_, triedCaptureCount_, bytesPerPixel_, integrateFrameNumber_;
-   int maxNrIntegration_;
    long lnBin_;
    std::ostringstream logMsg_;
    MM::MMTime longestWait_;
