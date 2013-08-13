@@ -57,7 +57,9 @@ unsigned Cdc1394::s_refCount = 0;
 // All calls to dc1394 library functions that return dc1394error_t should use
 // one of these.
 
+#ifdef WIN32
 #pragma warning(disable: 4127) // Conditional expression is constant
+#endif
 
 // Helper; do not use directly
 // TODO Translate dc1394 codes to readable messages
