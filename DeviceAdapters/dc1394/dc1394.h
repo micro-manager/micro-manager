@@ -106,7 +106,6 @@ public:
    int OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnIntegration(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnFrameRate(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnPixelType(MM::PropertyBase* /* pProp */, MM::ActionType /* eAct */ );
    int OnScanMode(MM::PropertyBase* /* pProp */, MM::ActionType /* eAct */);
    int OnTimeout(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnGain(MM::PropertyBase* pProp, MM::ActionType eAct);

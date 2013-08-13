@@ -365,58 +365,6 @@ int Cdc1394::OnIntegration(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
-
-int Cdc1394::OnPixelType(MM::PropertyBase* /* pProp */, MM::ActionType /* eAct */ )
-{
-   /*
-   ccDatatype ccDataType;
-   if (eAct == MM::BeforeGet)
-   {
-      if (!dcam_getdatatype(m_hDCAM, &ccDataType))
-         return dcam_getlasterr_or(m_hDCAM, NULL, 0);
-
-      if (ccDataType == ccDatatype_uint8 || ccDataType == ccDatatype_int8)
-      {
-         pProp->Set(g_PixelType_8bit);
-      }
-      else if (ccDataType == ccDatatype_uint16 || ccDataType == ccDatatype_int16)
-      {
-         pProp->Set(g_PixelType_16bit);
-      }
-      else
-      {
-         // we do not support color images at this time
-         return DEVICE_UNSUPPORTED_DATA_FORMAT;
-      }
-   }
-   else if (eAct == MM::AfterSet)
-   {
-      ccDatatype ccDataType;
-      string strType;
-      pProp->Get(strType);
-
-      if (strType.compare(g_PixelType_8bit) == 0)
-         ccDataType = ccDatatype_uint8;
-      else if (strType.compare(g_PixelType_16bit) == 0)
-         ccDataType = ccDatatype_uint16;
-      else
-         return DEVICE_INTERNAL_INCONSISTENCY;
-
-      int nRet = ShutdownImageBuffer();
-      if (nRet != DEVICE_OK)
-         return nRet;
-
-      if (!dcam_setdatatype(m_hDCAM, ccDataType))
-         return dcam_getlasterr_or(m_hDCAM, NULL, 0);
-
-      nRet = ResizeImageBuffer();
-      if (nRet != DEVICE_OK)
-         return nRet;
-   }
-   */
-   return DEVICE_OK;
-}
-
 // ScanMode
 int Cdc1394::OnScanMode(MM::PropertyBase* /* pProp */ , MM::ActionType /* eAct*/ )
 {
@@ -940,20 +888,7 @@ int Cdc1394::Initialize()
    if (nRet != DEVICE_OK)
       return nRet;
 
-   // pixel type, defaults to 8-bit for now
-   pAct = new CPropertyAction (this, &Cdc1394::OnPixelType);
-   if (depth_ <= 8)
-      nRet = CreateProperty(MM::g_Keyword_PixelType, g_PixelType_8bit, MM::String, false, pAct);
-   else
-      nRet = CreateProperty(MM::g_Keyword_PixelType, g_PixelType_16bit, MM::String, false, pAct);
-   assert(nRet == DEVICE_OK);
-   vector<string> pixelTypeValues;
-      pixelTypeValues.push_back(g_PixelType_8bit);
-   nRet = SetAllowedValues(MM::g_Keyword_PixelType, pixelTypeValues);
-   if (nRet != DEVICE_OK)
-      return nRet;
-
-   // camera_ _gain
+   // camera gain
    /*
    pAct = new CPropertyAction (this, &Cdc1394::OnGain);
    nRet = CreateProperty(MM::g_Keyword_Gain, "1", MM::Integer, false, pAct);
@@ -1795,45 +1730,6 @@ int Cdc1394::ResizeImageBuffer()
    if (i == 10)
       return ERR_CAMERA_DOES_NOT_SEND_DATA;
 
-   /*
-   // Make sure we can get images
-   bool captureSuccess = false;
-   i = 0;
-   while ( captureSuccess == false && i < 10)
-   {
-      CDeviceUtils::SleepMs(250);
-      err_ = dc1394_capture_dequeue(camera_, DC1394_CAPTURE_POLICY_POLL, &frame_);
-      if (frame_ && err_==DC1394_SUCCESS)
-      {
-         captureSuccess = true;
-         dc1394_capture_enqueue(camera_, frame_);
-      }
-      i++;
-   }
-   logMsg_.str("");
-   logMsg_ << "tried " << i << " times";
-   LogMessage (logMsg_.str().c_str(), true);
-   if (i==10) {
-      logMsg_.str("");
-      logMsg_ << "PROBLEM!!!:: Failed to capture";
-      LogMessage (logMsg_.str().c_str(), false);
-      // Camera is in a bad state.  Try to rescue what we can:
-      dc1394_camera_free(camera_);
-      initialized_ = false;
-      // If/when we get here, try starting the camera_ again, probably hopeless
-      int nRet = GetCamera();
-      logMsg_.str("");
-      logMsg_ <<"Tried restarting the camera_, Result: " <<  nRet;
-      LogMessage (logMsg_.str().c_str(), false);
-      if (nRet == DEVICE_OK && triedCaptureCount_ <= 5)
-      {
-         triedCaptureCount_++;
-         return ResizeImageBuffer();
-      } else
-         return ERR_CAPTURE_FAILED;
-   }
-   */
-
    // Get the image size from the camera_:
    // GJ: nb this is clever and returns current ROI size for format 7 modes
    CHECK_DC1394_ERROR(dc1394_get_image_size_from_video_mode(camera_, mode_, &width_, &height_),
@@ -2046,29 +1942,6 @@ int Cdc1394::SetUpFrameRates()
    LogMessage (logMsg_.str().c_str(), true);
    return nRet;
 }
-
-
-/*
- * Utility function, create property for dc1394 features 
- */
-
-
-/*
-int Cdc1394::AddFeature(dc1394feature_t feature, const char* label, int(Cdc1394::*fpt)(PropertyBase* pProp, ActionType eAct) , uint32_t  &value, uint32_t &valueMin, uint32_t &valueMax)
-{
-    // TODO: offer option to switch between auto, manual and one-push modes
-    err_ = dc1394_feature_get_value(camera_, feature, &value);
-    printf("%s: %d\n", label, shutter);
-    err_ = dc1394_feature_get_boundaries(camera_, feature, &valueMin, &valueMax);
-    printf("%s Min: %d, Max: %d\n", label, valueMin, valueMax);
-    char* tmp;
-    CPropertyAction *pAct = new CPropertyAction (this, fpt);
-    sprintf(tmp,"%d",value);
-    int nRet = CreateProperty(label, tmp, MM::Integer, false, pAct);
-    assert(nRet == DEVICE_OK);
-}
-*/
-
 
 
 std::map<dc1394video_mode_t, std::string> Cdc1394::MakeVideoModeMap()
