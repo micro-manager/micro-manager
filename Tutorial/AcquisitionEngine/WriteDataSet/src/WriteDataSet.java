@@ -1,15 +1,16 @@
+import mmcorej.CMMCore;
+import mmcorej.StrVector;
+import mmcorej.TaggedImage;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.acquisition.MMAcquisition;
+import org.micromanager.acquisition.TaggedImageStorageDiskDefault;
 import org.micromanager.acquisition.TaggedImageStorageMultipageTiff;
 import org.micromanager.api.ScriptInterface;
-import org.micromanager.utils.MMException;
+import org.micromanager.api.TaggedImageStorage;
 import org.micromanager.utils.MMScriptException;
-
-import mmcorej.CMMCore;
-import mmcorej.StrVector;
-import mmcorej.TaggedImage;
 
 
 public class WriteDataSet {
@@ -69,6 +70,7 @@ public class WriteDataSet {
       // set up acquisition parameters
       String acqName = "Test-A";
       String rootName = "C:/AcqusitionData";
+      boolean ome = false;
       final int frames = 20;
       final int slices = 10;
       final double deltaZ = 0.3;
@@ -102,7 +104,7 @@ public class WriteDataSet {
          }
          summary.put("Width", 512);
          summary.put("Height", 512);
-         summary.put("Prefix", acqName);
+         summary.put("Prefix", acqName); // Acquisition name
          
          //these are used to create display settings
          JSONArray chColors = new JSONArray();
@@ -120,7 +122,13 @@ public class WriteDataSet {
          summary.put("ChMins", chMins);
          summary.put("ChMaxes", chMaxs);
          
-         TaggedImageStorageMultipageTiff storage = new TaggedImageStorageMultipageTiff(rootName, true, summary, true, true, false); 
+         TaggedImageStorage storage = null;
+         if (ome)
+            // use ome compatible single file
+            storage = new TaggedImageStorageMultipageTiff(rootName, true, summary, true, true, false); 
+         else
+            // use micro-manager format
+            storage = new TaggedImageStorageDiskDefault(rootName, true, summary); 
 
          int imageCounter = 0;
          for (int fr=0; fr<frames; fr++)
