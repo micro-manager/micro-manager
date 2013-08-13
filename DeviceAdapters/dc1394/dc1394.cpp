@@ -317,7 +317,7 @@ int Cdc1394::OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct)
                DEVICE_ERR, "Failed to set SHUTTER to ON");
 
          CHECK_DC1394_ERROR(dc1394_feature_set_absolute_value(camera_, DC1394_FEATURE_SHUTTER, exposure_s),
-               DEVICE_ERR, "Failed to set exposure (SHUTTER) value");;
+               DEVICE_ERR, "Failed to set exposure (SHUTTER) value");
       }
    }
    else if (eAct == MM::BeforeGet)
@@ -464,7 +464,7 @@ int Cdc1394::OnFeature(MM::PropertyBase* pProp, MM::ActionType eAct, uint32_t &v
    else if (eAct == MM::BeforeGet)
    {
       CHECK_DC1394_ERROR(dc1394_feature_get_value(camera_, feature, &value), DEVICE_ERR,
-            "Failed to get value for feature");;
+            "Failed to get value for feature");
       logMsg_.str("");
       logMsg_ << "Getting feature " << feature << ".  It is now " << value;
       LogMessage (logMsg_.str().c_str(), true);
@@ -682,7 +682,7 @@ int Cdc1394::OnColorFeature(MM::PropertyBase* pProp, MM::ActionType eAct, uint32
                DEVICE_ERR, "Failed to set mode of feature WHITE_SHADING to MANUAL");
 			switch (valueColor) {
 				case COLOR_RED:
-					red = value;;
+					red = value;
 					break;
 				case COLOR_GREEN:
 					green = value;
@@ -1038,7 +1038,7 @@ int Cdc1394::Initialize()
              // Offer option to switch between auto, manual and one-push modes
              InitFeatureMode(featureInfo_, DC1394_FEATURE_EXPOSURE, "ExposureSetting", &Cdc1394::OnExposureMode);
              CHECK_DC1394_ERROR(dc1394_feature_get_value(camera_, DC1394_FEATURE_EXPOSURE, &exposure_), DEVICE_ERR,
-                   "Failed to get value of feature EXPOSURE");;
+                   "Failed to get value of feature EXPOSURE");
              CHECK_DC1394_ERROR(dc1394_feature_get_boundaries(camera_, DC1394_FEATURE_EXPOSURE,
                       &exposureMin_, &exposureMax_),
                    DEVICE_ERR, "Failed to get allowed range for feature EXPOSURE");
@@ -1055,7 +1055,7 @@ int Cdc1394::Initialize()
               // and reset the trigger setting to OFF to avoid camera startup problems
               if (pwr == DC1394_ON) {
                   CHECK_DC1394_ERROR(dc1394_external_trigger_set_power(camera_, DC1394_OFF), DEVICE_ERR,
-                        "Failed to turn off external trigger");;
+                        "Failed to turn off external trigger");
               }
 
               pAct = new CPropertyAction (this, &Cdc1394::OnExternalTrigger);
