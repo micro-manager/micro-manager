@@ -145,7 +145,7 @@ private:
    int InitFeatureMode(dc1394feature_info_t &featureInfo, dc1394feature_t feature, const char *featureLabel, int (Cdc1394::*cb_onfeaturemode)(MM::PropertyBase*, MM::ActionType))
    { bool flag; return InitFeatureMode(featureInfo, feature, featureLabel, cb_onfeaturemode, flag); }
 
-   void InitFeatureManual(dc1394feature_info_t &featureInfo, const char *featureLabel, uint32_t &value, uint32_t &valueMin, uint32_t &valueMax, int (Cdc1394::*cb_onfeature)(MM::PropertyBase*, MM::ActionType));
+   int InitFeatureManual(dc1394feature_info_t &featureInfo, const char *featureLabel, uint32_t &value, uint32_t &valueMin, uint32_t &valueMax, int (Cdc1394::*cb_onfeature)(MM::PropertyBase*, MM::ActionType));
 
    int ResizeImageBuffer();
    int SetManual(dc1394feature_t feature);
