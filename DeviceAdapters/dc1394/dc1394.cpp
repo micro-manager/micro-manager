@@ -69,6 +69,54 @@ BOOL APIENTRY DllMain( HANDLE /*hModule*/,
 }
 #endif
 
+
+// Macros for error chacking on dc1394 calls.
+//
+// All calls to dc1394 library functions that return dc1394error_t should use
+// one of these.
+
+#pragma warning(disable: 4127) // Conditional expression is constant
+
+// Helper; do not use directly
+// TODO Translate dc1394 codes to readable messages
+#define _LOG_DC1394_ERROR(_func, _err, _msg) do { \
+   ostringstream __err_oss; __err_oss << (_err); \
+   ostringstream __line_oss; __line_oss << __LINE__; \
+   _func("dc1394 error " + __err_oss.str() + " at " + __FILE__ + ":" + __line_oss.str() + "; " + (_msg)); \
+} while (0)
+
+// Check if _err (of type dc1394error_t) is an error. If it is, log it,
+// together with _msg (const std::string or const char*), and return _mm_err
+// (an int representing a MM error code) from the current function (whose
+// return type must be int).
+#define CHECK_DC1394_ERROR(_err, _mm_err, _msg) do { \
+   dc1394error_t __err = (_err); \
+   int __mm_err = (_mm_err); \
+   const std::string& __msg = (_msg); \
+   if (__err != DC1394_SUCCESS) { \
+      _LOG_DC1394_ERROR(LogMessage, __err, __msg); \
+      if (__mm_err != DEVICE_OK) { \
+         ostringstream mm_err_oss; mm_err_oss << __mm_err; \
+         LogMessage("Returning MM error code " + mm_err_oss.str()); \
+         return __mm_err; \
+      } \
+   } \
+} while (0)
+
+// Check if _err is an error. If it is, log it using _func. For use outside of
+// class Cdc1394.
+#define LOG_DC1394_ERROR_EX(_func, _err, _msg) do { \
+   dc1394error_t __err = (_err); \
+   const std::string& __msg = (_msg); \
+   if (__err != DC1394_SUCCESS) { \
+      _LOG_DC1394_ERROR(_func, __err, __msg); \
+   } \
+} while (0)
+
+// Check if _err is an error. If it is, log it. For use inside class Cdc1394.
+#define LOG_DC1394_ERROR(_err, _msg) LOG_DC1394_ERROR_EX(LogMessage, (_err), (_msg))
+
+
 ///////////////////////////////////////////////////////////////////////////////
 // Exported MMDevice API
 ///////////////////////////////////////////////////////////////////////////////
@@ -193,19 +241,20 @@ int Cdc1394::OnMode(MM::PropertyBase* pProp, MM::ActionType eAct)
       // If Mode has changed, we need to update the allowed values for some of the properties.
 
       LogMessage("Now changing mode...\n", true);
-      dc1394_capture_stop(camera_);
+      LogMessage("STOPPING CAPTURE");
+      CHECK_DC1394_ERROR(dc1394_capture_stop(camera_), DEVICE_ERR, "Failed to stop capture");
       
       // stop transmission and make sure it stopped
       if (StopTransmission() != DEVICE_OK)
          LogMessage ("Error stopping transmission\n");
 
       // get the new color coding mode:
-      dc1394_get_color_coding_from_video_mode(camera_, mode_, &colorCoding_);
+      CHECK_DC1394_ERROR(dc1394_get_color_coding_from_video_mode(camera_, mode_, &colorCoding_), DEVICE_ERR,
+            "Failed to get color coding from video mode");
 
       // Get the new bitdepth
-      err_ = dc1394_video_get_data_depth(camera_, &depth_);
-      if (err_ != DC1394_SUCCESS)
-         LogMessage ("Error establishing bit-depth\n");
+      CHECK_DC1394_ERROR(dc1394_video_get_data_depth(camera_, &depth_), DEVICE_ERR, "Failed to get bit depth");
+
       logMsg_.str("");
       logMsg_ << "In OnMode, bitDepth is now" << depth_;
       LogMessage(logMsg_.str().c_str(), true);
@@ -270,21 +319,24 @@ int Cdc1394::OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct)
          // this accepts shutter times in µs which makes it easier to work with
          // OK, set using extended register, MM exposure is in ms so *1000 -> us
          exposure_us = (uint32_t) 1000.0 * (uint32_t) exposure_ms;
-         err_=dc1394_avt_set_extented_shutter(camera_,exposure_us);
-         if(err_!=DC1394_SUCCESS) return DEVICE_ERR;
+         CHECK_DC1394_ERROR(dc1394_avt_set_extented_shutter(camera_, exposure_us), DEVICE_ERR,
+               "Failed to set AVT extended shutter value");
       } else {
          // set using ordinary absolute shutter dc1394 function
          // this expects a float in seconds
          float minAbsShutter, maxAbsShutter;
-         err_ = dc1394_feature_get_absolute_boundaries(camera_, DC1394_FEATURE_SHUTTER, &minAbsShutter, &maxAbsShutter);
+         CHECK_DC1394_ERROR(dc1394_feature_get_absolute_boundaries(camera_, DC1394_FEATURE_SHUTTER,
+                  &minAbsShutter, &maxAbsShutter),
+               DEVICE_ERR, "Failed to get allowed range for exposure (SHUTTER)");
+
          float exposure_s=0.001f*(float)exposure_ms;
          if(minAbsShutter>exposure_s || exposure_s>maxAbsShutter) return DEVICE_ERR;
          
-         err_=dc1394_feature_set_absolute_control(camera_,DC1394_FEATURE_SHUTTER,DC1394_ON);
-         if(err_!=DC1394_SUCCESS) return DEVICE_ERR;
+         CHECK_DC1394_ERROR(dc1394_feature_set_absolute_control(camera_, DC1394_FEATURE_SHUTTER, DC1394_ON),
+               DEVICE_ERR, "Failed to set SHUTTER to ON");
 
-         err_=dc1394_feature_set_absolute_value(camera_,DC1394_FEATURE_SHUTTER,exposure_s);
-         if(err_!=DC1394_SUCCESS) return DEVICE_ERR;		 
+         CHECK_DC1394_ERROR(dc1394_feature_set_absolute_value(camera_, DC1394_FEATURE_SHUTTER, exposure_s),
+               DEVICE_ERR, "Failed to set exposure (SHUTTER) value");;
       }
    }
    else if (eAct == MM::BeforeGet)
@@ -292,16 +344,16 @@ int Cdc1394::OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct)
       if(camera_->vendor_id==AVT_VENDOR_ID){
          // AVT has vendor specific code for an extended shutter
          // this accepts shutter times in µs which makes it easier to work with
-         err_=dc1394_avt_get_extented_shutter(camera_,&exposure_us);
-         if(err_!=DC1394_SUCCESS) return DEVICE_ERR;
+         CHECK_DC1394_ERROR(dc1394_avt_get_extented_shutter(camera_, &exposure_us), DEVICE_ERR,
+               "Failed to get AVT extended shutter value");
          // convert it to milliseconds
          exposure_ms = 0.001 * (double) exposure_us;         
       } else {
           // set using ordinary absolute shutter dc1394 function
           // this expects a float in seconds
          float exposure_s;
-         err_=dc1394_feature_get_absolute_value(camera_,DC1394_FEATURE_SHUTTER,&exposure_s);
-         if(err_!=DC1394_SUCCESS) return DEVICE_ERR;
+         CHECK_DC1394_ERROR(dc1394_feature_get_absolute_value(camera_, DC1394_FEATURE_SHUTTER, &exposure_s),
+               DEVICE_ERR, "Failed to get exposure (SHUTTER) value");
          exposure_ms=1000.0 * (double) exposure_s;
       }      
       pProp->Set(exposure_ms);
@@ -417,21 +469,23 @@ int Cdc1394::OnFeature(MM::PropertyBase* pProp, MM::ActionType eAct, uint32_t &v
          value = valueMax;
       else if ( (tmp >= valueMin) && (tmp <= valueMax) )
          value = (uint32_t) tmp;
-	  // First make sure we are in manual mode, otherwise changing the value has little effect 
-	  err_ = dc1394_feature_set_mode(camera_, feature, DC1394_FEATURE_MODE_MANUAL);
-	  // set to value
-      err_ = dc1394_feature_set_value(camera_, feature, value);
+      // First make sure we are in manual mode, otherwise changing the value has little effect 
+      CHECK_DC1394_ERROR(dc1394_feature_set_mode(camera_, feature, DC1394_FEATURE_MODE_MANUAL), DEVICE_ERR,
+            "Failed to set mode of feature to MANUAL");
+      CHECK_DC1394_ERROR(dc1394_feature_set_value(camera_, feature, value), DEVICE_ERR,
+            "Failed to set value for feature");
       logMsg_.str("");
-      logMsg_ << "Settings feature " << feature << " to " << value <<  " result: " << err_;
+      logMsg_ << "Settings feature " << feature << " to " << value;
       LogMessage(logMsg_.str().c_str(), true);
-	  // we may have changed to manual
-	  OnPropertiesChanged();
+      // we may have changed to manual
+      OnPropertiesChanged();
    }
    else if (eAct == MM::BeforeGet)
    {
-      err_ = dc1394_feature_get_value(camera_, feature, &value);
+      CHECK_DC1394_ERROR(dc1394_feature_get_value(camera_, feature, &value), DEVICE_ERR,
+            "Failed to get value for feature");;
       logMsg_.str("");
-      logMsg_ << "Getting feature " << feature << ".  It is now " << value << " err: " << err_;
+      logMsg_ << "Getting feature " << feature << ".  It is now " << value;
       LogMessage (logMsg_.str().c_str(), true);
       tmp = (long)  value;
       pProp->Set(tmp);
@@ -450,7 +504,8 @@ int Cdc1394::OnFeatureMode(MM::PropertyBase* pProp, MM::ActionType eAct, dc1394f
 	{
 		pProp->Get(value);
 		if ( value == "OFF" ) {
-			err_ = dc1394_feature_set_power(camera_, feature, DC1394_OFF );
+			CHECK_DC1394_ERROR(dc1394_feature_set_power(camera_, feature, DC1394_OFF), DEVICE_ERR,
+               "Failed to switch off feature");
 		} else {
 			if ( value == "MANUAL" )
 				mode = DC1394_FEATURE_MODE_MANUAL;
@@ -458,10 +513,12 @@ int Cdc1394::OnFeatureMode(MM::PropertyBase* pProp, MM::ActionType eAct, dc1394f
 				mode = DC1394_FEATURE_MODE_AUTO;
 			else
 				mode = DC1394_FEATURE_MODE_ONE_PUSH_AUTO;
-			err_ = dc1394_feature_set_mode(camera_, feature, mode);
+			CHECK_DC1394_ERROR(dc1394_feature_set_mode(camera_, feature, mode), DEVICE_ERR,
+               "Failed to set mode of feature");
 			if ( mode == DC1394_FEATURE_MODE_ONE_PUSH_AUTO) {
 				// set to MANUAL after one push auto
-				err_ = dc1394_feature_set_mode(camera_, feature, DC1394_FEATURE_MODE_MANUAL);
+				CHECK_DC1394_ERROR(dc1394_feature_set_mode(camera_, feature, DC1394_FEATURE_MODE_MANUAL), DEVICE_ERR,
+                  "Failed to set mode of feature back to MANUAL (after setting to ONE_PUSH_AUTO)");
 			}
 		}
 		
@@ -470,12 +527,14 @@ int Cdc1394::OnFeatureMode(MM::PropertyBase* pProp, MM::ActionType eAct, dc1394f
 	}
 	else if (eAct == MM::BeforeGet) // property will be read -> update property with value from hardware
 	{  	
-		err_ = dc1394_feature_get_power(camera_, feature, &pwSwitch );
+		CHECK_DC1394_ERROR(dc1394_feature_get_power(camera_, feature, &pwSwitch), DEVICE_ERR,
+            "Failed to get on/off state of feature");
 		if ( pwSwitch == DC1394_OFF ) {
 			pProp->Set("OFF");
 		}
 		else {
-			dc1394_feature_get_mode(camera_, feature, &mode);
+			CHECK_DC1394_ERROR(dc1394_feature_get_mode(camera_, feature, &mode), DEVICE_ERR,
+               "Failed to get mode of feature");
 			// write back to GUI
 			switch ( mode ) {
 				case DC1394_FEATURE_MODE_MANUAL:
@@ -576,7 +635,8 @@ int Cdc1394::OnShutter(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if((eAct == MM::AfterSet) && absoluteShutterControl_){
       // Need to turn off absolute mode so that we can set it using integer shutter values
-      dc1394_feature_set_absolute_control(camera_, DC1394_FEATURE_SHUTTER, DC1394_OFF);
+      CHECK_DC1394_ERROR(dc1394_feature_set_absolute_control(camera_, DC1394_FEATURE_SHUTTER, DC1394_OFF), DEVICE_ERR,
+            "Failed to switch off absolute mode for feature SHUTTER");
    }
    return OnFeature(pProp, eAct, shutter_, shutterMin_, shutterMax_, DC1394_FEATURE_SHUTTER);
 }
@@ -616,26 +676,29 @@ int Cdc1394::OnColorFeature(MM::PropertyBase* pProp, MM::ActionType eAct, uint32
 		if ( valueColor == COLOR_UB || valueColor == COLOR_VR ) {
 			// Set Whitebalance
 			// Find the "other" value first
-			err_ = dc1394_feature_whitebalance_get_value(camera_, &ub, &vr);
-			std::cerr << "DC1394: Whitebalance values: ub=" << ub << ", vr=" << vr << std::endl;
+			CHECK_DC1394_ERROR(dc1394_feature_whitebalance_get_value(camera_, &ub, &vr), DEVICE_ERR,
+               "Failed to get white balance value");
 			// Make sure we are in manual mode, otherwise changing the value has little effect 
-			err_ = dc1394_feature_set_mode(camera_, DC1394_FEATURE_WHITE_BALANCE, DC1394_FEATURE_MODE_MANUAL);
+			CHECK_DC1394_ERROR(dc1394_feature_set_mode(camera_, DC1394_FEATURE_WHITE_BALANCE, DC1394_FEATURE_MODE_MANUAL),
+               DEVICE_ERR, "Failed to set mode of feature WHITE_BALANCE to MANUAL");
 			// set to value
 			if ( valueColor == COLOR_UB )
 				ub = value;
 			else 
 				vr = value;
-			err_ = dc1394_feature_whitebalance_set_value(camera_, ub, vr);
-			std::cerr << "DC1394: Whitebalance setting to values: ub=" << ub << ", vr=" << vr << std::endl;
+			CHECK_DC1394_ERROR(dc1394_feature_whitebalance_set_value(camera_, ub, vr), DEVICE_ERR,
+               "Failed to set white balance value");
 			logMsg_.str("");
-			logMsg_ << "Settings whitebalance " << " to " << value <<  " result: " << err_;
+			logMsg_ << "Set whitebalance to " << value;
 			LogMessage(logMsg_.str().c_str(), true);
 		} else {
 			// Set White Shading
 			// Find the "other" value first
-			err_ = dc1394_feature_whiteshading_get_value(camera_, &red, &green, &blue);
+			CHECK_DC1394_ERROR(dc1394_feature_whiteshading_get_value(camera_, &red, &green, &blue), DEVICE_ERR,
+               "Failed to get white shading value");
 			// Make sure we are in manual mode, otherwise changing the value has little effect 
-			err_ = dc1394_feature_set_mode(camera_, DC1394_FEATURE_WHITE_SHADING, DC1394_FEATURE_MODE_MANUAL);
+			CHECK_DC1394_ERROR(dc1394_feature_set_mode(camera_, DC1394_FEATURE_WHITE_SHADING, DC1394_FEATURE_MODE_MANUAL),
+               DEVICE_ERR, "Failed to set mode of feature WHITE_SHADING to MANUAL");
 			switch (valueColor) {
 				case COLOR_RED:
 					red = value;;
@@ -649,7 +712,8 @@ int Cdc1394::OnColorFeature(MM::PropertyBase* pProp, MM::ActionType eAct, uint32
 				default:
 					break;
 			}
-			err_ = dc1394_feature_whiteshading_get_value(camera_, &red, &green, &blue);
+			CHECK_DC1394_ERROR(dc1394_feature_whiteshading_get_value(camera_, &red, &green, &blue), DEVICE_ERR,
+               "Failed to get white shading value");
 		}
 
 		// we may have changed to manual
@@ -659,14 +723,17 @@ int Cdc1394::OnColorFeature(MM::PropertyBase* pProp, MM::ActionType eAct, uint32
 	{
 		if ( valueColor == COLOR_UB || valueColor == COLOR_VR ) {
 			// White balance
-			err_ = dc1394_feature_whitebalance_get_value(camera_, &ub, &vr);
+			CHECK_DC1394_ERROR(dc1394_feature_whitebalance_get_value(camera_, &ub, &vr), DEVICE_ERR,
+               "Failed to get white balance value");
+
 			logMsg_.str("");
-			logMsg_ << "Getting whitebalance " << ".  It is now " << value << " err: " << err_;
+			logMsg_ << "Got whitebalance. It is now " << value;
 			LogMessage (logMsg_.str().c_str(), true);
 			tmp = (long) (valueColor == COLOR_UB ? ub : vr);
 		} else {
 			// White Shading
-			err_= dc1394_feature_whiteshading_get_value(camera_, &red, &green, &blue);
+			CHECK_DC1394_ERROR(dc1394_feature_whiteshading_get_value(camera_, &red, &green, &blue), DEVICE_ERR,
+               "Failed to get white shading value");
 			switch (valueColor) {
 				case COLOR_RED:
 					tmp = (long) red;
@@ -742,17 +809,19 @@ int Cdc1394::OnExternalTrigger(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       pProp->Get(triggerStatus);
       pwr = (triggerStatus==1L) ? DC1394_ON : DC1394_OFF;
-      err_ = dc1394_external_trigger_set_power(camera_, pwr);
+      CHECK_DC1394_ERROR(dc1394_external_trigger_set_power(camera_, pwr), DEVICE_ERR,
+            string("Failed to turn external trigger ") + (pwr == DC1394_ON ? "on" : "off"));
       logMsg_.clear();
-      logMsg_ << "Setting external trigger state:" << triggerStatus << " err_:" << err_;
+      logMsg_ << "Set external trigger state:" << triggerStatus;
       LogMessage(logMsg_.str().c_str(), true);
    }
    else if (eAct == MM::BeforeGet)
    {
-      err_ = dc1394_external_trigger_get_power(camera_, &pwr);
+      CHECK_DC1394_ERROR(dc1394_external_trigger_get_power(camera_, &pwr), DEVICE_ERR,
+            "Failed to get on/off state of external trigger");
       triggerStatus = (pwr==DC1394_ON) ? 1L : 0L;
       logMsg_.str("");
-      logMsg_ << "Getting external trigger state:" << triggerStatus << " err_: " << err_;
+      logMsg_ << "Got external trigger state:" << triggerStatus;
       LogMessage (logMsg_.str().c_str(), true);
       pProp->Set(triggerStatus);
    }
@@ -788,8 +857,8 @@ int Cdc1394::Initialize()
 
    // Figure out what this camera_ can do
    // get supported modes
-   if (dc1394_video_get_supported_modes(camera_, &modes_)!=DC1394_SUCCESS)
-      return ERR_MODE_LIST_NOT_FOUND;                         
+   CHECK_DC1394_ERROR(dc1394_video_get_supported_modes(camera_, &modes_), ERR_MODE_LIST_NOT_FOUND,
+         "Failed to get list of supported video modes");
    for (unsigned int i = 0; i < modes_.num; i++) {
       logMsg_.str("");
       logMsg_ << "Mode found: " << modes_.modes[i];
@@ -839,7 +908,8 @@ int Cdc1394::Initialize()
       return nRet;
 
    // get the current color coding mode:
-   dc1394_get_color_coding_from_video_mode(camera_, mode_, &colorCoding_);
+   CHECK_DC1394_ERROR(dc1394_get_color_coding_from_video_mode(camera_, mode_, &colorCoding_), DEVICE_ERR,
+         "Failed to get color coding from video mode");
    if ( IsColor() ) 
    {
 	   logMsg_.str("");
@@ -858,15 +928,13 @@ int Cdc1394::Initialize()
       return nRet;
 
    // Get the new bitdepth
-   err_ = dc1394_video_get_data_depth(camera_, &depth_);
-   if (err_ != DC1394_SUCCESS)
-      LogMessage ("Error establishing bit-depth\n");
+   CHECK_DC1394_ERROR(dc1394_video_get_data_depth(camera_, &depth_), DEVICE_ERR,
+         "Failed to get bit depth");
    logMsg_.str("");
    logMsg_ << "BitDepth is " << depth_;
    LogMessage(logMsg_.str().c_str(), true);
 
-   // Frame integration
-   // XXX I don't think the code works for integration if the image is color.
+   // Frame integration (Currently only implemented for 8-bit images)
    if (depth_ == 8)
    {
       pAct = new CPropertyAction (this, &Cdc1394::OnIntegration);
@@ -920,8 +988,8 @@ int Cdc1394::Initialize()
    assert(nRet == DEVICE_OK);
 		      
    // Other features, ask what the camera_ _has to offer
-   if (dc1394_feature_get_all(camera_,&features_) !=DC1394_SUCCESS) 
-         return ERR_GET_CAMERA_FEATURE_SET_FAILED;                         
+   CHECK_DC1394_ERROR(dc1394_feature_get_all(camera_, &features_), ERR_GET_CAMERA_FEATURE_SET_FAILED,
+         "Failed to get list of all features");
    int j = 0;
    for (int i= DC1394_FEATURE_MIN; i <= DC1394_FEATURE_MAX; i++, j++)  
    {
@@ -930,7 +998,9 @@ int Cdc1394::Initialize()
           const char *featureLabel = dc1394_feature_get_string(featureInfo_.id);
           if (strcmp(featureLabel, "Brightness") ==0) 
           {
-			  bool hasManual = InitFeatureMode(featureInfo_, DC1394_FEATURE_BRIGHTNESS, "BrightnessSetting", &Cdc1394::OnBrightnessMode);
+             bool hasManual;
+            InitFeatureMode(featureInfo_, DC1394_FEATURE_BRIGHTNESS, "BrightnessSetting", &Cdc1394::OnBrightnessMode,
+                  hasManual);
 			  if (hasManual)
 			  {
 				  InitFeatureManual(featureInfo_, "Brightness", brightness_, brightnessMin_, brightnessMax_, &Cdc1394::OnBrightness);
@@ -938,7 +1008,8 @@ int Cdc1394::Initialize()
           } 
           else if (strcmp(featureLabel, "Gain") == 0) 
           {
-			 bool hasManual = InitFeatureMode(featureInfo_, DC1394_FEATURE_GAIN, "GainSetting", &Cdc1394::OnGainMode);
+             bool hasManual;
+             InitFeatureMode(featureInfo_, DC1394_FEATURE_GAIN, "GainSetting", &Cdc1394::OnGainMode, hasManual);
 			 if (hasManual)
 			 {
 				  InitFeatureManual(featureInfo_, MM::g_Keyword_Gain, gain_, gainMin_, gainMax_, &Cdc1394::OnGain);
@@ -946,7 +1017,8 @@ int Cdc1394::Initialize()
 		  }
           else if (strcmp(featureLabel, "Shutter") == 0) 
           {
-			  bool hasManual = InitFeatureMode(featureInfo_, DC1394_FEATURE_GAIN, "ShutterSetting", &Cdc1394::OnShutterMode);
+             bool hasManual;
+             InitFeatureMode(featureInfo_, DC1394_FEATURE_GAIN, "ShutterSetting", &Cdc1394::OnShutterMode, hasManual);
 			  if (hasManual)
 			  {
 				  InitFeatureManual(featureInfo_, "Shutter", shutter_, shutterMin_, shutterMax_, &Cdc1394::OnShutter);
@@ -955,7 +1027,8 @@ int Cdc1394::Initialize()
              // Check if shutter has absolute control
              dc1394bool_t absolute;
              absoluteShutterControl_ = false;
-             err_ = dc1394_feature_has_absolute_control(camera_, DC1394_FEATURE_SHUTTER, &absolute);
+             CHECK_DC1394_ERROR(dc1394_feature_has_absolute_control(camera_, DC1394_FEATURE_SHUTTER, &absolute),
+                   DEVICE_ERR, "Failed to check if feature SHUTTER has absolute mode");
              if(absolute==DC1394_TRUE) {
                 absoluteShutterControl_ = true;
              }
@@ -966,8 +1039,9 @@ int Cdc1394::Initialize()
                 LogMessage (logMsg_.str().c_str(), false);
                 // for AVT camera_s, check if we have access to the extended shutter mode
                 uint32_t timebase_id;
-                err_=dc1394_avt_get_extented_shutter(camera_,&timebase_id);
-                if(err_==DC1394_SUCCESS) absoluteShutterControl_ = true;
+                if (dc1394_avt_get_extented_shutter(camera_, &timebase_id) == DC1394_SUCCESS) {
+                   absoluteShutterControl_ = true;
+                }
              }
              logMsg_.str("");
              if(absoluteShutterControl_){
@@ -981,9 +1055,12 @@ int Cdc1394::Initialize()
           else if (strcmp(featureLabel, "Exposure") == 0) 
           {
              // Offer option to switch between auto, manual and one-push modes
-			 InitFeatureMode(featureInfo_, DC1394_FEATURE_EXPOSURE, "ExposureSetting", &Cdc1394::OnExposureMode);
-             err_ = dc1394_feature_get_value(camera_, DC1394_FEATURE_EXPOSURE, &exposure_);
-             err_ = dc1394_feature_get_boundaries(camera_, DC1394_FEATURE_EXPOSURE, &exposureMin_, &exposureMax_);
+             InitFeatureMode(featureInfo_, DC1394_FEATURE_EXPOSURE, "ExposureSetting", &Cdc1394::OnExposureMode);
+             CHECK_DC1394_ERROR(dc1394_feature_get_value(camera_, DC1394_FEATURE_EXPOSURE, &exposure_), DEVICE_ERR,
+                   "Failed to get value of feature EXPOSURE");;
+             CHECK_DC1394_ERROR(dc1394_feature_get_boundaries(camera_, DC1394_FEATURE_EXPOSURE,
+                      &exposureMin_, &exposureMax_),
+                   DEVICE_ERR, "Failed to get allowed range for feature EXPOSURE");
           }
           else if (strcmp(featureLabel, "Trigger") == 0) 
           {
@@ -992,38 +1069,25 @@ int Cdc1394::Initialize()
               LogMessage (logMsg_.str().c_str(), false);
               // Fetch the actual trigger status from the camera_
               dc1394switch_t pwr;
-              err_ = dc1394_external_trigger_get_power(camera_,&pwr);
-              // and reset the trigger setting to OFF to avoid camera_ startup problems
-              if(err_==DC1394_SUCCESS && pwr==DC1394_ON) {
-                  pwr=DC1394_OFF;
-                  err_ = dc1394_external_trigger_set_power(camera_,pwr);
+              CHECK_DC1394_ERROR(dc1394_external_trigger_get_power(camera_, &pwr), DEVICE_ERR,
+                    "Failed to get on/off state for external trigger");
+              // and reset the trigger setting to OFF to avoid camera startup problems
+              if (pwr == DC1394_ON) {
+                  CHECK_DC1394_ERROR(dc1394_external_trigger_set_power(camera_, DC1394_OFF), DEVICE_ERR,
+                        "Failed to turn off external trigger");;
               }
-              if(err_==DC1394_SUCCESS) {
-                 // if(pwr==DC1394_ON) logMsg_ << "External trigger currently on\n";
-                 // if(pwr==DC1394_OFF) logMsg_ << "External trigger currently off\n";
-                 // LogMessage (logMsg_.str().c_str(), false);
-          
-                 pAct = new CPropertyAction (this, &Cdc1394::OnExternalTrigger);
- 
-                 logMsg_.str("");
-                 logMsg_ << "Creating ExternalTrigger property";
-                 LogMessage (logMsg_.str().c_str(), false);
-                
-                 nRet = CreateProperty("ExternalTrigger", 
-                    pwr==DC1394_ON ? "1" : "0", MM::Integer, false, pAct); 
-                 assert(nRet == DEVICE_OK);
-                 AddAllowedValue("ExternalTrigger", "0"); // Closed
-                 AddAllowedValue("ExternalTrigger", "1"); // Open             
-             } else {
-                logMsg_.str("");
-                logMsg_ << "Unable to check external trigger status\n";
-                LogMessage (logMsg_.str().c_str(), false);
-             }
+
+              pAct = new CPropertyAction (this, &Cdc1394::OnExternalTrigger);
+              nRet = CreateProperty("ExternalTrigger", "0", MM::Integer, false, pAct); 
+              assert(nRet == DEVICE_OK);
+              AddAllowedValue("ExternalTrigger", "0"); // Closed
+              AddAllowedValue("ExternalTrigger", "1"); // Open             
            }
 		   // EF: addtional camera parameters to play around with
 		   else if (strcmp(featureLabel, "Gamma") == 0) 
 		   {
-			   bool hasManual = InitFeatureMode(featureInfo_, DC1394_FEATURE_GAIN, "GammaSetting", &Cdc1394::OnGammaMode);
+            bool hasManual;
+			   InitFeatureMode(featureInfo_, DC1394_FEATURE_GAIN, "GammaSetting", &Cdc1394::OnGammaMode, hasManual);
 			   if (hasManual)
 			   {
 				   InitFeatureManual(featureInfo_, "Gamma", gamma_, gammaMin_, gammaMax_, &Cdc1394::OnGamma);
@@ -1031,7 +1095,8 @@ int Cdc1394::Initialize()
 		   }
 		   else if (strcmp(featureLabel, "Hue") == 0) 
 		   {
-			   bool hasManual = InitFeatureMode(featureInfo_, DC1394_FEATURE_GAIN, "HueSetting", &Cdc1394::OnHueMode);
+            bool hasManual;
+			   InitFeatureMode(featureInfo_, DC1394_FEATURE_GAIN, "HueSetting", &Cdc1394::OnHueMode, hasManual);
 			   if (hasManual)
 			   {
 				   InitFeatureManual(featureInfo_, "Hue", hue_, hueMin_, hueMax_, &Cdc1394::OnHue);
@@ -1039,7 +1104,8 @@ int Cdc1394::Initialize()
 		   }
 		   else if (strcmp(featureLabel, "Saturation") == 0) 
 		   {
-			   bool hasManual = InitFeatureMode(featureInfo_, DC1394_FEATURE_GAIN, "SaturationSetting", &Cdc1394::OnSaturationMode);
+            bool hasManual;
+			   InitFeatureMode(featureInfo_, DC1394_FEATURE_GAIN, "SaturationSetting", &Cdc1394::OnSaturationMode, hasManual);
 			   if (hasManual)
 			   {
 				   InitFeatureManual(featureInfo_, "Saturation", saturation_, saturationMin_, saturationMax_, &Cdc1394::OnSaturation);
@@ -1047,7 +1113,8 @@ int Cdc1394::Initialize()
 		   }
 		   else if (strcmp(featureLabel, "Temperature") == 0) 
 		   {
-			   bool hasManual = InitFeatureMode(featureInfo_, DC1394_FEATURE_GAIN, "TemperatureSetting", &Cdc1394::OnTempMode);
+            bool hasManual;
+			   InitFeatureMode(featureInfo_, DC1394_FEATURE_GAIN, "TemperatureSetting", &Cdc1394::OnTempMode, hasManual);
 			   if (hasManual)
 			   {
 				   InitFeatureManual(featureInfo_, "Temperature", temperature_, temperatureMin_, temperatureMax_, &Cdc1394::OnTemp);
@@ -1055,7 +1122,8 @@ int Cdc1394::Initialize()
 		   }
 		   else if (strcmp(featureLabel, "White Balance") == 0) 
 		   {
-			   bool hasManual = InitFeatureMode(featureInfo_, DC1394_FEATURE_GAIN, "WhiteBalanceSetting", &Cdc1394::OnWhitebalanceMode);
+            bool hasManual;
+			   InitFeatureMode(featureInfo_, DC1394_FEATURE_GAIN, "WhiteBalanceSetting", &Cdc1394::OnWhitebalanceMode, hasManual);
 			   
 			   if (hasManual)
 			   {
@@ -1085,7 +1153,8 @@ int Cdc1394::Initialize()
 		   }
 		   else if (strcmp(featureLabel, "White Shading") == 0) 
 		   {
-			   bool hasManual = InitFeatureMode(featureInfo_, DC1394_FEATURE_GAIN, "WhiteShadingSetting", &Cdc1394::OnWhiteshadingMode);
+            bool hasManual;
+			   InitFeatureMode(featureInfo_, DC1394_FEATURE_GAIN, "WhiteShadingSetting", &Cdc1394::OnWhiteshadingMode, hasManual);
 			   
 			   if (hasManual)
 			   {
@@ -1150,18 +1219,20 @@ int Cdc1394::Initialize()
 }
 
 
-bool Cdc1394::InitFeatureMode(dc1394feature_info_t &featureInfo, dc1394feature_t feature, const char *featureLabel, int (Cdc1394::*cb_onfeaturemode)(MM::PropertyBase*, MM::ActionType) )
+int Cdc1394::InitFeatureMode(dc1394feature_info_t &featureInfo, dc1394feature_t feature, const char *featureLabel, int (Cdc1394::*cb_onfeaturemode)(MM::PropertyBase*, MM::ActionType), bool& hasManualMode)
 {
+   hasManualMode = false;
+
 	enum dcModes { NONE =0, OFF=1, MANUAL=2, ONE_PUSH=4, AUTO=8 };
 	int modeAvail = NONE;
 	int dcModeCt = 0;
 	dc1394feature_mode_t modeDefault = DC1394_FEATURE_MODE_MANUAL;
 	
 	// First make sure the feature is switched on by default
-	if ( err_ == DC1394_SUCCESS && featureInfo.on_off_capable )
-	{
+	if (featureInfo.on_off_capable) {
 		modeAvail |= OFF; dcModeCt++;
-		dc1394_feature_set_power(camera_, feature, DC1394_ON);
+		CHECK_DC1394_ERROR(dc1394_feature_set_power(camera_, feature, DC1394_ON), DEVICE_ERR,
+            "Failed to turn on feature");
 		std::cerr << featureLabel << ": Setting power on\n";
 	}
 	// Find out what modes are available, set by default to manual, override to auto if available
@@ -1184,7 +1255,8 @@ bool Cdc1394::InitFeatureMode(dc1394feature_info_t &featureInfo, dc1394feature_t
 		}
 	}
 	
-	err_ = dc1394_feature_set_mode(camera_, feature, modeDefault);
+	CHECK_DC1394_ERROR(dc1394_feature_set_mode(camera_, feature, modeDefault), DEVICE_ERR,
+         "Failed to set mode of feature");
 
 	if ( dcModeCt > 1 )
 	{	
@@ -1209,11 +1281,10 @@ bool Cdc1394::InitFeatureMode(dc1394feature_info_t &featureInfo, dc1394feature_t
 	}
 	
 	if ( modeAvail & MANUAL ) {
-		return true;
-	} else {
-		return false;
+		hasManualMode = true;
 	}
 
+   return DEVICE_OK;
 }	
 
 
@@ -1262,18 +1333,26 @@ int Cdc1394::Shutdown()
 {
    if (initialized_)
    {
-      // TODO: Added err_or handling
-      err_ = dc1394_capture_stop(camera_);
-      if (err_ != DC1394_SUCCESS)
-         LogMessage ("Failed to stop capture\n");
-      err_ = dc1394_video_set_transmission(camera_, DC1394_OFF);
-      if (err_ != DC1394_SUCCESS)
-         LogMessage ("Failed to stop tranmission\n");
+      bool had_error = false;
+
+      LogMessage("STOPPING CAPTURE");
+      dc1394error_t err = dc1394_capture_stop(camera_);
+      LOG_DC1394_ERROR(err, "Failed to stop capture");
+      had_error = had_error || (err != DC1394_SUCCESS);
+
+      err = dc1394_video_set_transmission(camera_, DC1394_OFF);
+      LOG_DC1394_ERROR(err, "Failed to stop transmission");
+      had_error = had_error || (err != DC1394_SUCCESS);
+
       dc1394_camera_free(camera_);
 
-      LogMessage("Shutdown camera_\n");
+      LogMessage("Shutdown");
 
       initialized_ = false;
+
+      if (had_error) {
+         return DEVICE_ERR;
+      }
    }
    return DEVICE_OK;
 }
@@ -1288,9 +1367,8 @@ int Cdc1394::GetCamera()
    if (!d)
       return ERR_DC1394;
 
-   err_ = dc1394_camera_enumerate(d, &list); 
-   if (err_ != DC1394_SUCCESS)
-      return ERR_CAMERA_NOT_FOUND; 
+   CHECK_DC1394_ERROR(dc1394_camera_enumerate(d, &list), ERR_CAMERA_NOT_FOUND,
+         "Failed to get list of cameras");
    if (list->num == 0) 
       return ERR_CAMERA_NOT_FOUND;
    
@@ -1301,12 +1379,6 @@ int Cdc1394::GetCamera()
       return ERR_INITIALIZATION_FAILED;
 
    dc1394_camera_free_list (list);
-   /*
-   // free the other ones:
-   for (int i=1; i<numCameras; i++)                                                 
-      dc1394_camera_free(camera_s[i]);                                          
-   free(camera_s);                                                             
-   */
 
    return DEVICE_OK;
 }
@@ -1396,52 +1468,58 @@ int Cdc1394::SnapImage()
 {
    // If GetImageBuffer was not called after a previous snap, we need to enqueue the current frame
    if (dequeued_)
-      dc1394_capture_enqueue(camera_, frame_);
+      CHECK_DC1394_ERROR(dc1394_capture_enqueue(camera_, frame_), DEVICE_ERR,
+            "Failed to enqueue frame buffer");
 
-   // find the end of the capture buffer, so that we can get a fresh frame
-   bool endFound = false;
-   int nrFrames = 0;
+   // TODO In all that follows, the actual error returned by
+   // dc1394_capture_dequeue() should be checked to see if it is
+   // DC1394_NO_FRAME.
+
+   // Empty the ring buffer to ensure we get a fresh frame
+   // XXX Would it make sense to limit the number of images to dequeue to the
+   // known size of the ring buffer?
    MM::MMTime startTime = GetCurrentMMTime();
-   while (!endFound && !Timeout(startTime) ) {
-      err_ = dc1394_capture_dequeue(camera_,DC1394_CAPTURE_POLICY_POLL, &frame_);
-      if (frame_ && err_==DC1394_SUCCESS) {
-         dc1394_capture_enqueue(camera_, frame_);
-         nrFrames +=1;
+   while (!Timeout(startTime)) {
+      dc1394error_t err = dc1394_capture_dequeue(camera_, DC1394_CAPTURE_POLICY_POLL, &frame_);
+      if (frame_ && err == DC1394_SUCCESS) {
+         CHECK_DC1394_ERROR(dc1394_capture_enqueue(camera_, frame_), DEVICE_ERR,
+               "Failed to enqueue frame buffer");
       } else {
-         endFound=true;
+         break;
       }
    }
           
    // Exposure of the following image might have started before the SnapImage function was called, so discard it:
+   // XXX Why can't we just do this with DC1394_CAPTURE_POLICY_WAIT?
    bool frameFound = false;
    startTime = GetCurrentMMTime();
    while (!frameFound && !Timeout(startTime) ) {
-      err_ = dc1394_capture_dequeue(camera_,DC1394_CAPTURE_POLICY_POLL, &frame_);
-      if (frame_ && err_==DC1394_SUCCESS) {
-        frameFound = true;
-        dc1394_capture_enqueue(camera_, frame_);
+      dc1394error_t err = dc1394_capture_dequeue(camera_, DC1394_CAPTURE_POLICY_POLL, &frame_);
+      if (frame_ && err == DC1394_SUCCESS) {
+         frameFound = true;
+         CHECK_DC1394_ERROR(dc1394_capture_enqueue(camera_, frame_), DEVICE_ERR,
+               "Failed to enqueue frame buffer");
       } else
          CDeviceUtils::SleepMs(10);
    }
-   if (!frameFound || 0 == frame_)
+   if (!frameFound)
       return  ERR_CAPTURE_TIMEOUT;
 
 
    // Now capture the frame that we are interested in
+   // XXX Why can't we just do this with DC1394_CAPTURE_POLICY_WAIT?
    frameFound = false;
    startTime = GetCurrentMMTime();
    while (!frameFound && !Timeout(startTime) ) {
-      err_ = dc1394_capture_dequeue(camera_,DC1394_CAPTURE_POLICY_POLL, &frame_);
-      if (frame_ && err_==DC1394_SUCCESS) {
+      dc1394error_t err = dc1394_capture_dequeue(camera_, DC1394_CAPTURE_POLICY_POLL, &frame_);
+      if (frame_ && err == DC1394_SUCCESS) {
          dequeued_ = true;
          frameFound = true;
       } else 
          CDeviceUtils::SleepMs(10);
    }
-   if (!frameFound || 0 == frame_)
+   if (!frameFound)
       return  ERR_CAPTURE_TIMEOUT;
-
-
 
    return DEVICE_OK;
 }
@@ -1459,8 +1537,9 @@ int Cdc1394::ProcessImage(dc1394video_frame_t *frame, const unsigned char* desti
    if (colorCoding_==DC1394_COLOR_CODING_YUV411 || colorCoding_==DC1394_COLOR_CODING_YUV422 || colorCoding_==DC1394_COLOR_CODING_YUV444) 
    {
       uint8_t *rgb_image = (uint8_t *)malloc(3 * numPixels);
-      dc1394_convert_to_RGB8((uint8_t *)frame->image,      
-             rgb_image, width_, height_, DC1394_BYTE_ORDER_UYVY, colorCoding_, 16);
+      CHECK_DC1394_ERROR(dc1394_convert_to_RGB8((uint8_t *)frame->image,
+               rgb_image, width_, height_, DC1394_BYTE_ORDER_UYVY, colorCoding_, 16),
+            DEVICE_ERR, "Failed to convert image to RGB8");
       // no integration, straight forward stuff
       if (integrateFrameNumber_ == 1)
       {
@@ -1471,17 +1550,19 @@ int Cdc1394::ProcessImage(dc1394video_frame_t *frame, const unsigned char* desti
       if (integrateFrameNumber_ > 1)
       {
          void* pixBuffer = const_cast<unsigned char*> (destination);
-         // funny, we need to clear the memory since we'll add to it, not overwrite it
+         // we need to clear the memory since we'll add to it, not overwrite it
          memset(pixBuffer, 0, GetImageBufferSize());
          rgb8AddToMono16((uint16_t*) pixBuffer, rgb_image, width_, height_);
          // now repeat for the other frames:
          for (int frameNr=1; frameNr<integrateFrameNumber_; frameNr++)
          {
-            if (dc1394_capture_dequeue(camera_,DC1394_CAPTURE_POLICY_WAIT, &internalFrame)!=DC1394_SUCCESS)
-                  return ERR_CAPTURE_FAILED;
-            dc1394_convert_to_RGB8((uint8_t *)internalFrame->image,
-                      rgb_image, width_, height_, DC1394_BYTE_ORDER_UYVY, colorCoding_, 16);
-            dc1394_capture_enqueue(camera_, internalFrame);
+            CHECK_DC1394_ERROR(dc1394_capture_dequeue(camera_, DC1394_CAPTURE_POLICY_WAIT, &internalFrame),
+                  ERR_CAPTURE_FAILED, "Failed to dequeue frame buffer (POLICY_WAIT)");
+            CHECK_DC1394_ERROR(dc1394_convert_to_RGB8((uint8_t *)internalFrame->image,
+                     rgb_image, width_, height_, DC1394_BYTE_ORDER_UYVY, colorCoding_, 16),
+                  DEVICE_ERR, "Failed to convert image to RGB8");
+            CHECK_DC1394_ERROR(dc1394_capture_enqueue(camera_, internalFrame), DEVICE_ERR,
+                  "Failed to enqueue frame buffer");
             rgb8AddToMono16((uint16_t*) pixBuffer, rgb_image, width_, height_);
          }
       }
@@ -1509,10 +1590,11 @@ int Cdc1394::ProcessImage(dc1394video_frame_t *frame, const unsigned char* desti
          // now repeat for the other frames:
          for (int frameNr=1; frameNr<integrateFrameNumber_; frameNr++)
          {
-            if (dc1394_capture_dequeue(camera_,DC1394_CAPTURE_POLICY_WAIT, &internalFrame)!=DC1394_SUCCESS)
-                  return ERR_CAPTURE_FAILED;
+            CHECK_DC1394_ERROR(dc1394_capture_dequeue(camera_, DC1394_CAPTURE_POLICY_WAIT, &internalFrame),
+                  ERR_CAPTURE_FAILED, "Failed to dequeue frame buffer (POLICY_WAIT)");
             mono8AddToMono16((uint16_t*) pixBuffer, (uint8_t*) frame->image, width_, height_);
-            dc1394_capture_enqueue(camera_, internalFrame);
+            CHECK_DC1394_ERROR(dc1394_capture_enqueue(camera_, internalFrame), DEVICE_ERR,
+                  "Failed to enqueue frame buffer");
          }
 		 // GJ:  Finished integrating, so we can deinterlace the 16 bit result
 		 // That does mean doing a pixel buffer shuffle unfortunately
@@ -1579,7 +1661,7 @@ const unsigned char* Cdc1394::GetImageBuffer()
    // Now process the frame according to the video mode used
    ProcessImage(frame_, img_.GetPixels());
    // we copied the mage, so release the frame:
-   dc1394_capture_enqueue(camera_, frame_);
+   LOG_DC1394_ERROR(dc1394_capture_enqueue(camera_, frame_), "Failed to enqueue frame buffer");
    // capture complete
    void* pixBuffer = const_cast<unsigned char*> (img_.GetPixels());
    return (unsigned char*)pixBuffer;
@@ -1629,28 +1711,18 @@ int Cdc1394::SetROI(unsigned uX, unsigned uY, unsigned uXSize, unsigned uYSize)
 	if ( mode_ >= DC1394_VIDEO_MODE_FORMAT7_MIN && mode_ <= DC1394_VIDEO_MODE_FORMAT7_MAX ) {
 		// First thing to do is stop transmission - otherwise we won't be
 		// able to (re)set ROI.
-		// TODO - can't figure out what we need to do to stop capture and
-		// then restart appropriately
-		// For example Shutdown() and Initialize() - which seems extreme -
-		// leads to an assertion failure.
-		err_ = dc1394_capture_stop(camera_);
-		  if (err_ != DC1394_SUCCESS)
-			 LogMessage ("SetROI: Failed to stop capture\n");
+      LogMessage("STOPPING CAPTURE");
+		CHECK_DC1394_ERROR(dc1394_capture_stop(camera_), DEVICE_ERR, "Failed to stop capture");
 		 StopTransmission();
 		
        logMsg_.str("");
 		 logMsg_ << "SetROI: Aout to set to  " << uX << "," << uY << "," << uXSize << "," << uYSize ;
 		LogMessage (logMsg_.str().c_str(), true);
 		
-		dc1394error_t err_val= dc1394_format7_set_roi(camera_, mode_, 
+		CHECK_DC1394_ERROR(dc1394_format7_set_roi(camera_, mode_, 
 					(dc1394color_coding_t) DC1394_COLOR_CODING_MONO8 /*color_coding*/,
-					(int) DC1394_USE_MAX_AVAIL /*bytes_per_packet*/, uX, uY, uXSize, uYSize);
-		if (err_val!=DC1394_SUCCESS) {
-         logMsg_.str("");
-			logMsg_ << "SetROI: libdc1394 err_or message " <<  err_val;
-			LogMessage (logMsg_.str().c_str(), true);
-			return ERR_SET_F7_ROI_FAILED;
-		}
+					(int) DC1394_USE_MAX_AVAIL /*bytes_per_packet*/, uX, uY, uXSize, uYSize),
+            ERR_SET_F7_ROI_FAILED, "Failed to set Format_7 ROI");
 		// This will restart capture	
 		return ResizeImageBuffer();
 	} else return ERR_ROI_NOT_SUPPORTED;
@@ -1660,11 +1732,13 @@ int Cdc1394::GetROI(unsigned& uX, unsigned& uY, unsigned& uXSize, unsigned& uYSi
 {
 	// GJ TODO - what should happen if ROI is not supported?
 	// May not be correct just to return OK
+   // XXX Should just return the full image size in that case.
 	if ( mode_ >= DC1394_VIDEO_MODE_FORMAT7_MIN && mode_ <= DC1394_VIDEO_MODE_FORMAT7_MAX) {
 		uint32_t bytes_per_packet;
 		dc1394color_coding_t color_coding;
-		if(dc1394_format7_get_roi(camera_, mode_, &color_coding, &bytes_per_packet, &uX, &uY, &uXSize, &uYSize)!=DC1394_SUCCESS)
-		return ERR_GET_F7_ROI_FAILED;
+		CHECK_DC1394_ERROR(dc1394_format7_get_roi(camera_, mode_, &color_coding, &bytes_per_packet,
+               &uX, &uY, &uXSize, &uYSize),
+            ERR_GET_F7_ROI_FAILED, "Failed to get Format_7 ROI");
 	}
 	return DEVICE_OK;
 }
@@ -1675,8 +1749,8 @@ int Cdc1394::ClearROI()
 		// Get the recommended ROI - ie the max size of the image in
 		// current format 7 mode
 		uint32_t width, height;
-		if(dc1394_format7_get_max_image_size(camera_, mode_, &width, &height)!=DC1394_SUCCESS)
-		return ERR_GET_F7_MAX_IMAGE_SIZE_FAILED;
+		CHECK_DC1394_ERROR(dc1394_format7_get_max_image_size(camera_, mode_, &width, &height),
+            ERR_GET_F7_MAX_IMAGE_SIZE_FAILED, "Failed to get Format_7 max image size");
 		// now set that ROI
 		return SetROI(0, 0, width, height);
 	}
@@ -1693,10 +1767,11 @@ int Cdc1394::ResizeImageBuffer()
    // 2: buffer for exchange with MicroManager (img_)
 
    // set up the camera_ (TODO: implement iso speed control):
-   dc1394_video_set_iso_speed(camera_, DC1394_ISO_SPEED_400);
-   err_ = dc1394_video_set_mode(camera_,mode_);
-   if (err_ != DC1394_SUCCESS)
-      return ERR_SET_MODE_FAILED;
+   CHECK_DC1394_ERROR(dc1394_video_set_iso_speed(camera_, DC1394_ISO_SPEED_400),
+         DEVICE_ERR, "Failed to set ISO speed");
+
+   CHECK_DC1394_ERROR(dc1394_video_set_mode(camera_, mode_), ERR_SET_MODE_FAILED,
+         "Failed to set video mode");
    logMsg_.str("");
    logMsg_ << "Mode set to " <<  mode_;
    LogMessage (logMsg_.str().c_str(), true);
@@ -1707,24 +1782,24 @@ int Cdc1394::ResizeImageBuffer()
 	   logMsg_ << "Format_7: Skipping setting of framerate";
    } else {
 	   // GJ bracket this off - doesn't make sense for format7
-	   err_ = dc1394_video_set_framerate(camera_,framerate_);
-	   if (err_ != DC1394_SUCCESS)
-		  return ERR_SET_FRAMERATE_FAILED;
-		  logMsg_ <<  "Framerate set to " << framerate_;
+	   CHECK_DC1394_ERROR(dc1394_video_set_framerate(camera_, framerate_), ERR_SET_FRAMERATE_FAILED,
+            "Failed to set framerate");
+		logMsg_ <<  "Framerate set to " << framerate_;
    }
    LogMessage (logMsg_.str().c_str(), true);
    
    // Start the image capture
-   if (dc1394_capture_setup(camera_,dmaBufferSize_,DC1394_CAPTURE_FLAGS_DEFAULT) != DC1394_SUCCESS) 
-      return ERR_CAPTURE_SETUP_FAILED;
+   LogMessage("STARTING CAPTURE");
+   CHECK_DC1394_ERROR(dc1394_capture_setup(camera_, dmaBufferSize_, DC1394_CAPTURE_FLAGS_DEFAULT),
+         ERR_CAPTURE_SETUP_FAILED, "Failed to start capture");
 
    // Set camera_ trigger mode
    // if( dc1394_external_trigger_set_mode(camera_, DC1394_TRIGGER_MODE_0) != DC1394_SUCCESS)
     //  return ERR_SET_TRIGGER_MODE_FAILED;
 
    // Have the camera_ start sending data
-   if (dc1394_video_set_transmission(camera_, DC1394_ON) !=DC1394_SUCCESS) 
-      return ERR_SET_TRANSMISSION_FAILED;
+   CHECK_DC1394_ERROR(dc1394_video_set_transmission(camera_, DC1394_ON), ERR_SET_TRANSMISSION_FAILED,
+         "Failed to turn on transmission");
 
    // Sleep until the camera_ sent data
    dc1394switch_t status = DC1394_OFF;
@@ -1732,8 +1807,8 @@ int Cdc1394::ResizeImageBuffer()
    while( status == DC1394_OFF && i < 10 ) 
    {
      CDeviceUtils::SleepMs(50);
-     if (dc1394_video_get_transmission(camera_, &status)!=DC1394_SUCCESS)
-        return ERR_GET_TRANSMISSION_FAILED;
+     CHECK_DC1394_ERROR(dc1394_video_get_transmission(camera_, &status), ERR_GET_TRANSMISSION_FAILED,
+           "Failed to get on/off state of transmission");
      i++;
    }
    if (i == 10)
@@ -1780,9 +1855,8 @@ int Cdc1394::ResizeImageBuffer()
 
    // Get the image size from the camera_:
    // GJ: nb this is clever and returns current ROI size for format 7 modes
-   err_ = dc1394_get_image_size_from_video_mode(camera_, mode_, &width_, &height_);
-   if (err_ != DC1394_SUCCESS)
-      return ERR_GET_IMAGE_SIZE_FAILED;
+   CHECK_DC1394_ERROR(dc1394_get_image_size_from_video_mode(camera_, mode_, &width_, &height_),
+         ERR_GET_IMAGE_SIZE_FAILED, "Failed to get image size from video mode");
 
    img_.Resize(width_, height_, GetBytesPerPixel());
 
@@ -1796,20 +1870,23 @@ int Cdc1394::ResizeImageBuffer()
 
 /*
  * Set this feature in Manual mode and switch it on
- * TODO: Error checking
  * TODO: implement this correctly!
  */
 int Cdc1394::SetManual(dc1394feature_t feature)
 {
     dc1394bool_t isSwitchable = DC1394_FALSE;
-    err_ = dc1394_feature_is_switchable(camera_, feature, &isSwitchable);
+    CHECK_DC1394_ERROR(dc1394_feature_is_switchable(camera_, feature, &isSwitchable), DEVICE_ERR,
+          "Failed to determine whether feature is switchable");
     if (isSwitchable)
-       dc1394_feature_set_power(camera_, feature, DC1394_ON);
+       CHECK_DC1394_ERROR(dc1394_feature_set_power(camera_, feature, DC1394_ON), DEVICE_ERR,
+             "Failed to turn on feature");
     // dc1394bool_t hasManualMode = DC1394_FALSE;
     //hasManualMode = feature->
     //err_ = dc1394_feature_has_manual_mode(camera_, feature, &hasManualMode);
     //if (hasManualMode)
-    dc1394_feature_set_mode(camera_, feature, DC1394_FEATURE_MODE_MANUAL);
+    // XXX Use CHECK, not LOG, after determining whether feature has manual mode
+    LOG_DC1394_ERROR(dc1394_feature_set_mode(camera_, feature, DC1394_FEATURE_MODE_MANUAL),
+          "Failed to set mode of feature to MANUAL");
     return DEVICE_OK;
 }
 
@@ -1884,21 +1961,22 @@ int Cdc1394::StopTransmission()
 {
 	// GJ: first check if off
    dc1394switch_t status;
-	if (dc1394_video_get_transmission(camera_, &status)!=DC1394_SUCCESS) {
-		LogMessage("Could not get ISO status");
-	}
+	CHECK_DC1394_ERROR(dc1394_video_get_transmission(camera_, &status), ERR_GET_TRANSMISSION_FAILED,
+         "Failed to get on/off state of transmission");
+
 	// Camera already off
 	if(status==DC1394_OFF) return DEVICE_OK;
 	
-	LogMessage("About to stop transmission");
-	dc1394_video_set_transmission(camera_, DC1394_OFF);
+	LogMessage("About to stop transmission", true);
+	CHECK_DC1394_ERROR(dc1394_video_set_transmission(camera_, DC1394_OFF), DEVICE_ERR,
+         "Failed to turn off transmission");
    // wait untill the camera_ stopped transmitting:
    int i = 0;
    while( status == DC1394_ON && i < 50 )
    {       
       CDeviceUtils::SleepMs(50);
-      if (dc1394_video_get_transmission(camera_, &status)!=DC1394_SUCCESS)
-         return ERR_GET_TRANSMISSION_FAILED;
+      CHECK_DC1394_ERROR(dc1394_video_get_transmission(camera_, &status), ERR_GET_TRANSMISSION_FAILED,
+            "Failed to get on/off state of transmission");
       i++;
    }
    logMsg_.str("");
@@ -1943,7 +2021,6 @@ bool Cdc1394::InArray(dc1394framerate_t *array, int size, uint32_t num)
  */
 int Cdc1394::SetUpFrameRates() 
 {
-	// dc1394err_or_t err_val;
 	if ( mode_ >=DC1394_VIDEO_MODE_FORMAT7_MIN && mode_ <= DC1394_VIDEO_MODE_FORMAT7_MAX) {
 		// GJ Format_7: no specific framerate so just bail out early
 		// framerate = 0;
@@ -1953,8 +2030,9 @@ int Cdc1394::SetUpFrameRates()
 		LogMessage (logMsg_.str().c_str(), true);
 		// What should I return now?
 		return DEVICE_OK;
-	} else if (dc1394_video_get_supported_framerates(camera_,mode_,&framerates_)!=DC1394_SUCCESS) {
-		return ERR_GET_FRAMERATES_FAILED;
+	} else {
+      CHECK_DC1394_ERROR(dc1394_video_get_supported_framerates(camera_, mode_, &framerates_),
+            ERR_GET_FRAMERATES_FAILED, "Failed to get list of supported framerates");
 	}
 		
 	// Default to the first framerate belonging to this mode
@@ -2161,7 +2239,8 @@ int Cdc1394::StartSequenceAcquisition(long numImages, double interval_ms, bool s
       return ERR_BUSY_ACQUIRING;
 
    if (dequeued_)
-      dc1394_capture_enqueue(camera_, frame_);
+      CHECK_DC1394_ERROR(dc1394_capture_enqueue(camera_, frame_), DEVICE_ERR,
+            "Failed to enqueue frame buffer");
 
    logMsg_.str("");
    logMsg_ << "Started sequence acquisition: " << numImages << " at " << interval_ms << " ms" << endl;
@@ -2175,14 +2254,15 @@ int Cdc1394::StartSequenceAcquisition(long numImages, double interval_ms, bool s
    acqThread_->SetInterval(actualIntervalMs);
    SetProperty(MM::g_Keyword_ActualInterval_ms, CDeviceUtils::ConvertToString(actualIntervalMs));
 
-   err_ = dc1394_video_set_multi_shot(camera_, numImages, DC1394_ON);
-   if (err_ != DC1394_SUCCESS) {
-      logMsg_.str("");
-      logMsg_ << "Unable to start multi-shot" << endl;
-      LogMessage(logMsg_.str().c_str());
+   dc1394error_t err = dc1394_video_set_multi_shot(camera_, numImages, DC1394_ON);
+   LOG_DC1394_ERROR(err, "Failed to start multi-shot");
+   if (err == DC1394_SUCCESS) {
+      multi_shot_ = true;
    }
-   multi_shot_ = true;
 
+   // XXX Calling ResizeImageBuffer() (which, despite its horrible name,
+   // actually starts a capture sequence) here, without terminating the
+   // existing capture, results in an error, at least on Windows.
    ResizeImageBuffer();
 
    int ret = GetCoreCallback()->PrepareForAcq(this);
@@ -2195,13 +2275,12 @@ int Cdc1394::StartSequenceAcquisition(long numImages, double interval_ms, bool s
 
    // emtpy the buffer to ensure we'll get fresh images
    bool endFound = false;
-   int nrFrames = 0;
    MM::MMTime startTime = GetCurrentMMTime();
    while (!endFound && !Timeout(startTime) ) {
-      err_ = dc1394_capture_dequeue(camera_,DC1394_CAPTURE_POLICY_POLL, &frame_);
-      if (frame_ && err_==DC1394_SUCCESS) {
-         dc1394_capture_enqueue(camera_, frame_);
-         nrFrames +=1;
+      dc1394error_t err = dc1394_capture_dequeue(camera_,DC1394_CAPTURE_POLICY_POLL, &frame_);
+      if (frame_ && err == DC1394_SUCCESS) {
+         CHECK_DC1394_ERROR(dc1394_capture_enqueue(camera_, frame_), DEVICE_ERR,
+               "Failed to enqueue frame buffer");
       } else {
          endFound=true;
       }
@@ -2225,7 +2304,8 @@ int Cdc1394::StartSequenceAcquisition(double interval_ms)
       return ERR_BUSY_ACQUIRING;
 
    if (dequeued_)
-      dc1394_capture_enqueue(camera_, frame_);
+      CHECK_DC1394_ERROR(dc1394_capture_enqueue(camera_, frame_), DEVICE_ERR,
+            "Failed to enqueue frame buffer");
 
    logMsg_.str("");
    logMsg_ << "Starting continuous sequence acquisition: at " << interval_ms << " ms" << endl;
@@ -2239,6 +2319,9 @@ int Cdc1394::StartSequenceAcquisition(double interval_ms)
    acqThread_->SetInterval(actualIntervalMs);
    SetProperty(MM::g_Keyword_ActualInterval_ms, CDeviceUtils::ConvertToString(actualIntervalMs));
 
+   // XXX Calling ResizeImageBuffer() (which, despite its horrible name,
+   // actually starts a capture sequence) here, without terminating the
+   // existing capture, results in an error, at least on Windows.
    ResizeImageBuffer();
 
    int ret = GetCoreCallback()->PrepareForAcq(this);
@@ -2251,13 +2334,11 @@ int Cdc1394::StartSequenceAcquisition(double interval_ms)
 
    // emtpy the buffer to ensure we'll get fresh images
    bool endFound = false;
-   int nrFrames = 0;
    MM::MMTime startTime = GetCurrentMMTime();
    while (!endFound && !Timeout(startTime) ) {
-      err_ = dc1394_capture_dequeue(camera_,DC1394_CAPTURE_POLICY_POLL, &frame_);
-      if (frame_ && err_==DC1394_SUCCESS) {
+      dc1394error_t err = dc1394_capture_dequeue(camera_,DC1394_CAPTURE_POLICY_POLL, &frame_);
+      if (frame_ && err == DC1394_SUCCESS) {
          dc1394_capture_enqueue(camera_, frame_);
-         nrFrames +=1;
       } else {
          endFound=true;
       }
@@ -2284,12 +2365,8 @@ int Cdc1394::StopSequenceAcquisition()
    acquiring_ = false;
 
    if (multi_shot_) {
-      err_ = dc1394_video_set_multi_shot(camera_, 0, DC1394_OFF);
-      if (err_ != DC1394_SUCCESS) {
-         logMsg_.str("");
-         logMsg_ << "Unable to stop multi-shot" << endl;
-         LogMessage(logMsg_.str().c_str());
-      }
+      CHECK_DC1394_ERROR(dc1394_video_set_multi_shot(camera_, 0, DC1394_OFF), DEVICE_ERR,
+            "Failed to stop multi-shot");
       multi_shot_ = false;
    }
 
@@ -2349,16 +2426,13 @@ int AcqSequenceThread::svc(void)
    dc1394error_t err;                                                         
    dc1394video_frame_t *myframe;  
    std::ostringstream logMsg_;
-   
+
    do
    {
        // wait until the frame becomes available
-      err=dc1394_capture_dequeue(camera_->camera_, DC1394_CAPTURE_POLICY_WAIT, &myframe);/* Capture */
-      if(err!=DC1394_SUCCESS)
-      {
-         std::ostringstream logMsg;
-         logMsg << "Dequeue failed with code: " << err;
-         camera_->LogMessage(logMsg_.str().c_str());
+      err = dc1394_capture_dequeue(camera_->camera_, DC1394_CAPTURE_POLICY_WAIT, &myframe);
+      LOG_DC1394_ERROR_EX(camera_->LogMessage, err, "Failed to dequeue frame buffer (POLICY_WAIT)");
+      if (err != DC1394_SUCCESS) {
          camera_->StopSequenceAcquisition();
          return err; 
       } else {
@@ -2378,19 +2452,15 @@ int AcqSequenceThread::svc(void)
          camera_->StopSequenceAcquisition();
          return 2;
       }
-      err=dc1394_capture_enqueue(camera_->camera_, myframe);/* Capture */
-      if(err!=DC1394_SUCCESS)
-      {
-         std::ostringstream logMsg;
-         logMsg.str("");
-         logMsg<< "Failed to enqueue image" <<imageCounter<< endl;
-         camera_->LogMessage(logMsg.str().c_str());
 
+      err = dc1394_capture_enqueue(camera_->camera_, myframe);
+      LOG_DC1394_ERROR_EX(camera_->LogMessage, err, "Failed to enqueue frame buffer");
+      if (err != DC1394_SUCCESS)
+      {
          camera_->StopSequenceAcquisition();
          return err; 
       } 
       imageCounter++;
-      printf("Acquired frame %ld.\n", imageCounter);                           
    } while (!stop_ && imageCounter < numImages_);
 
    if (stop_)

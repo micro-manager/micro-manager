@@ -141,8 +141,13 @@ public:
 
 private:
    Cdc1394();
-   bool InitFeatureMode(dc1394feature_info_t &featureInfo, dc1394feature_t feature, const char *featureLabel, int (Cdc1394::*cb_onfeaturemode)(MM::PropertyBase*, MM::ActionType) );
+
+   int InitFeatureMode(dc1394feature_info_t &featureInfo, dc1394feature_t feature, const char *featureLabel, int (Cdc1394::*cb_onfeaturemode)(MM::PropertyBase*, MM::ActionType), bool& hasManualMode);
+   int InitFeatureMode(dc1394feature_info_t &featureInfo, dc1394feature_t feature, const char *featureLabel, int (Cdc1394::*cb_onfeaturemode)(MM::PropertyBase*, MM::ActionType))
+   { bool flag; return InitFeatureMode(featureInfo, feature, featureLabel, cb_onfeaturemode, flag); }
+
    void InitFeatureManual(dc1394feature_info_t &featureInfo, const char *featureLabel, uint32_t &value, uint32_t &valueMin, uint32_t &valueMax, int (Cdc1394::*cb_onfeature)(MM::PropertyBase*, MM::ActionType));
+
    int ResizeImageBuffer();
    int SetManual(dc1394feature_t feature);
    int ShutdownImageBuffer();
@@ -187,7 +192,6 @@ private:
    dc1394framerate_t FramerateForString(const std::string& str) const;
 
    dc1394camera_t *camera_;
-   dc1394error_t err_;
    dc1394video_frame_t *frame_;
    dc1394video_modes_t modes_;
    // current mode
