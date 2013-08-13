@@ -50,25 +50,6 @@ const char* g_Keyword_FrameRates = "Frame Rates";
 Cdc1394* Cdc1394::s_pInstance = 0;
 unsigned Cdc1394::s_refCount = 0;
 
-#ifdef WIN32
-// Windows dll entry routine
-BOOL APIENTRY DllMain( HANDLE /*hModule*/, 
-                       DWORD  ul_reason_for_call, 
-                       LPVOID /*lpReserved*/
-					 )
-{
-	switch (ul_reason_for_call)
-	{
-	case DLL_PROCESS_ATTACH:
-	case DLL_THREAD_ATTACH:
-	case DLL_THREAD_DETACH:
-	case DLL_PROCESS_DETACH:
-		break;
-	}
-    return TRUE;
-}
-#endif
-
 
 // Macros for error chacking on dc1394 calls.
 //
