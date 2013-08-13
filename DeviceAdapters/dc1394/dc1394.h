@@ -38,7 +38,6 @@
 #define ERR_SET_MODE_FAILED 113
 #define ERR_ROI_NOT_SUPPORTED 114
 #define ERR_GET_CAMERA_FEATURE_SET_FAILED 115
-#define ERR_MODE_NOT_AVAILABLE 116
 #define ERR_SET_FRAMERATE_FAILED 117
 #define ERR_GET_FRAMERATES_FAILED 118
 #define ERR_INITIALIZATION_FAILED 119
@@ -153,8 +152,6 @@ private:
    bool IsColor() const;
    int SetUpFrameRates();
    int StopTransmission();
-   void SetVideoModeMap();
-   void SetFrameRateMap();
    bool Timeout(MM::MMTime startTime);
    int OnFeature(MM::PropertyBase* pProp, MM::ActionType eAct, uint32_t &value, int valueMin, int valueMax, dc1394feature_t feature);
    int OnFeatureMode(MM::PropertyBase* pProp, MM::ActionType eAct, dc1394feature_t feature);
@@ -175,12 +172,16 @@ private:
    static Cdc1394* s_pInstance;
    static unsigned s_refCount;
 
-   // video mode information
-   std::map<dc1394video_mode_t, std::string> videoModeMap_;
-   typedef std::map<dc1394video_mode_t, std::string>::value_type videoModeMapType;
-   // FrameRate information
-   std::map<dc1394framerate_t, std::string> frameRateMap_;
-   typedef std::map<dc1394framerate_t, std::string>::value_type frameRateMapType;
+   // Property values for video mode
+   const std::map<dc1394video_mode_t, std::string> videoModeMap_;
+   static std::map<dc1394video_mode_t, std::string> MakeVideoModeMap();
+   std::string StringForVideoMode(dc1394video_mode_t mode) const;
+   dc1394video_mode_t VideoModeForString(const std::string& str) const;
+   // Property values for framerate
+   const std::map<dc1394framerate_t, std::string> framerateMap_;
+   static std::map<dc1394framerate_t, std::string> MakeFramerateMap();
+   std::string StringForFramerate(dc1394framerate_t framerate) const;
+   dc1394framerate_t FramerateForString(const std::string& str) const;
 
    dc1394camera_t *camera_;
    dc1394error_t err_;

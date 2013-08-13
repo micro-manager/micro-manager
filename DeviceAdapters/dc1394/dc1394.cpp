@@ -111,6 +111,8 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
 // Cdc1394 constructor/destructor
 
 Cdc1394::Cdc1394() :
+   videoModeMap_(MakeVideoModeMap()),
+   framerateMap_(MakeFramerateMap()),
    isSonyXCDX700_(false),
    initialized_(false),
    busy_(false),
@@ -132,16 +134,11 @@ Cdc1394::Cdc1394() :
    SetErrorText(ERR_TRANSMISSION_FAILED, "Problem starting transmission");
    SetErrorText(ERR_MODE_LIST_NOT_FOUND, "Did not find camera_s mode list");
    SetErrorText(ERR_ROI_NOT_SUPPORTED, "ROIs not supported with this camera_");
-   SetErrorText(ERR_MODE_NOT_AVAILABLE, "Requested mode not available on this camera_");
    SetErrorText(ERR_INITIALIZATION_FAILED, "Error Initializing the camera_.  Unplug and replug the camera_ and restart this application");
    SetErrorText(ERR_CAPTURE_TIMEOUT, "Timeout during image capture.  Increase the camera timeout, increase shutter speed, or decrease exposure time");
 
    InitializeDefaultErrorMessages();
 
-   // setup map to hold data on video modes:
-   this->SetVideoModeMap();
-   this->SetFrameRateMap();
-   
    // Name
    int nRet = CreateProperty(MM::g_Keyword_Name, g_DeviceName, MM::String, true);
    assert(nRet == DEVICE_OK);
@@ -194,48 +191,45 @@ int Cdc1394::OnMode(MM::PropertyBase* pProp, MM::ActionType eAct)
       // find the key to the mode that was just set:
       string modeString;
       pProp->Get(modeString);
-      std::map<dc1394video_mode_t, std::string>::iterator it = videoModeMap_.begin();
-      bool found = false;
-      while ((it != videoModeMap_.end()) && !found) 
-      {
-          if (it->second == modeString) {
-             mode_ = it->first;
-             found = true;
-          }
-          ++it;
+      dc1394video_mode_t videoMode = VideoModeForString(modeString);
+      if (videoMode == -1) {
+         return DEVICE_INVALID_PROPERTY_VALUE;
       }
-      if (found) 
-      {
-         LogMessage("Now changing mode...\n", true);
-         dc1394_capture_stop(camera_);
-         
-         // stop transmission and make sure it stopped
-         if (StopTransmission() != DEVICE_OK)
-            LogMessage ("Error stopping transmission\n");
 
-         // get the new color coding mode:
-         dc1394_get_color_coding_from_video_mode(camera_, mode_, &colorCoding_);
-
-         // Get the new bitdepth
-         err_ = dc1394_video_get_data_depth(camera_, &depth_);
-         if (err_ != DC1394_SUCCESS)
-            LogMessage ("Error establishing bit-depth\n");
-         logMsg_.str("");
-         logMsg_ << "In OnMode, bitDepth is now" << depth_;
-         LogMessage(logMsg_.str().c_str(), true);
-         GetBytesPerPixel ();
-
-         // reset the list of framerates allowed:
-         if (SetUpFrameRates() != DEVICE_OK)
-            LogMessage ("Error changing list of framerates\n");
-         return ResizeImageBuffer();
+      if (videoMode == mode_) {
+         return DEVICE_OK;
       }
-      else
-         return ERR_MODE_NOT_AVAILABLE;
+      mode_ = videoMode;
+
+      // If Mode has changed, we need to update the allowed values for some of the properties.
+
+      LogMessage("Now changing mode...\n", true);
+      dc1394_capture_stop(camera_);
+      
+      // stop transmission and make sure it stopped
+      if (StopTransmission() != DEVICE_OK)
+         LogMessage ("Error stopping transmission\n");
+
+      // get the new color coding mode:
+      dc1394_get_color_coding_from_video_mode(camera_, mode_, &colorCoding_);
+
+      // Get the new bitdepth
+      err_ = dc1394_video_get_data_depth(camera_, &depth_);
+      if (err_ != DC1394_SUCCESS)
+         LogMessage ("Error establishing bit-depth\n");
+      logMsg_.str("");
+      logMsg_ << "In OnMode, bitDepth is now" << depth_;
+      LogMessage(logMsg_.str().c_str(), true);
+      GetBytesPerPixel ();
+
+      // reset the list of framerates allowed:
+      if (SetUpFrameRates() != DEVICE_OK)
+         LogMessage ("Error changing list of framerates\n");
+      return ResizeImageBuffer();
    }
    else if (eAct == MM::BeforeGet)
    {
-      pProp->Set(videoModeMap_[mode_].c_str());
+      pProp->Set(StringForVideoMode(mode_).c_str());
    }
 
    return DEVICE_OK;
@@ -246,47 +240,18 @@ int Cdc1394::OnFrameRate(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::AfterSet)
    {
-      string frameString;
-      pProp->Get(frameString);
-      // find the key to the frameRate that was just set:
-      std::map<dc1394framerate_t, std::string>::iterator it = frameRateMap_.begin();
-      bool found = false;
-      while ((it != frameRateMap_.end()) && !found)
-      {
-          if (it->second == frameString) {
-             framerate_ = it->first;
-             found = true;
-          }  
-          ++it;                                                              
-      }                                                                      
-      if (found)                                                             
-      {                                                                      
-         // XXX Why do we need this code? The image buffer should not depend on
-         // frame rate, should it?
+      string framerateString;
+      pProp->Get(framerateString);
+      dc1394framerate_t framerate = FramerateForString(framerateString);
+      if (framerate == -1) {
+         return DEVICE_INVALID_PROPERTY_VALUE;
+      }
 
-         // Transmission needs to be stopped before changing framerates
-         dc1394_capture_stop(camera_);
-         
-         // stop transmission and make sure it stopped
-         if (StopTransmission() != DEVICE_OK)
-            LogMessage ("Error stopping transmission\n");
-
-         // get the new color coding mode:
-         dc1394_get_color_coding_from_video_mode(camera_, mode_, &colorCoding_);
-
-         // Get the new bitdepth
-         err_ = dc1394_video_get_data_depth(camera_, &depth_);
-         if (err_ != DC1394_SUCCESS)
-            LogMessage ("Error establishing bit-depth\n");
-         GetBytesPerPixel ();
-
-         // Restart capture
-         return ResizeImageBuffer();
-      }                                                                      
+      framerate_ = framerate;
    }
    else if (eAct == MM::BeforeGet)
    {
-      pProp->Set(frameRateMap_[framerate_].c_str());
+      pProp->Set(StringForFramerate(framerate_).c_str());
    }
    return DEVICE_OK;
 }
@@ -874,13 +839,13 @@ int Cdc1394::Initialize()
    }
    else avtInterlaced_ = false;
    
-   nRet = CreateProperty(g_Keyword_Modes, videoModeMap_[mode_].c_str(), MM::String, false, pAct);
+   nRet = CreateProperty(g_Keyword_Modes, StringForVideoMode(mode_).c_str(), MM::String, false, pAct);
    assert(nRet == DEVICE_OK);
    vector<string> modeValues;
    for (unsigned int i=0; i<modes_.num; i++) {
-      string tmp = videoModeMap_[ modes_.modes[i] ];
-      if (tmp != "") 
-         modeValues.push_back(tmp);
+      string modeString = StringForVideoMode(modes_.modes[i]);
+      if (!modeString.empty()) 
+         modeValues.push_back(modeString);
    }   
    nRet = SetAllowedValues(g_Keyword_Modes, modeValues);
    if (nRet != DEVICE_OK)
@@ -2020,7 +1985,8 @@ int Cdc1394::SetUpFrameRates()
    if (!frameRatePropDefined_)
    {
       CPropertyAction *pAct = new CPropertyAction (this, &Cdc1394::OnFrameRate);
-      int nRet = CreateProperty(g_Keyword_FrameRates, frameRateMap_[framerates_.framerates[0]].c_str(), MM::String, false, pAct);
+      int nRet = CreateProperty(g_Keyword_FrameRates, StringForFramerate(framerates_.framerates[0]).c_str(),
+            MM::String, false, pAct);
       if (nRet != DEVICE_OK)
          return nRet;
       frameRatePropDefined_ = true;
@@ -2030,7 +1996,7 @@ int Cdc1394::SetUpFrameRates()
    // set allowed values, this will delete a pre-existing list of allowed values
    vector<string> rateValues;
    for (unsigned int i=0; i<framerates_.num; i++) {
-      string tmp = frameRateMap_[ framerates_.framerates[i] ];
+      string tmp = StringForFramerate(framerates_.framerates[i]);
       if (tmp != "")
          rateValues.push_back(tmp);
    }   
@@ -2065,54 +2031,106 @@ int Cdc1394::AddFeature(dc1394feature_t feature, const char* label, int(Cdc1394:
 
 
 
-void Cdc1394::SetVideoModeMap()
+std::map<dc1394video_mode_t, std::string> Cdc1394::MakeVideoModeMap()
 {
-   videoModeMap_.insert(videoModeMapType (DC1394_VIDEO_MODE_160x120_YUV444,"160x120_YUV444"));
-   videoModeMap_.insert(videoModeMapType (DC1394_VIDEO_MODE_320x240_YUV422,"320x240_YUV422"));
-   videoModeMap_.insert(videoModeMapType (DC1394_VIDEO_MODE_640x480_YUV411,"640x480_YUV411"));
-   videoModeMap_.insert(videoModeMapType (DC1394_VIDEO_MODE_640x480_YUV422,"640x480_YUV422"));
-   videoModeMap_.insert(videoModeMapType (DC1394_VIDEO_MODE_640x480_RGB8,"640x480_RGB8"));
-   videoModeMap_.insert(videoModeMapType (DC1394_VIDEO_MODE_640x480_MONO8,"640x480_MONO8"));
-   videoModeMap_.insert(videoModeMapType (DC1394_VIDEO_MODE_640x480_MONO16,"640x480_MONO16"));
-   videoModeMap_.insert(videoModeMapType (DC1394_VIDEO_MODE_800x600_YUV422,"800x600_YUV422"));
-   videoModeMap_.insert(videoModeMapType (DC1394_VIDEO_MODE_800x600_RGB8,"800x600_RGB8"));
-   videoModeMap_.insert(videoModeMapType (DC1394_VIDEO_MODE_800x600_MONO8,"800x600_MONO8"));
-   videoModeMap_.insert(videoModeMapType (DC1394_VIDEO_MODE_800x600_MONO16,"800x600_MONO16"));
-   videoModeMap_.insert(videoModeMapType (DC1394_VIDEO_MODE_1024x768_YUV422,"1024x768_YUV422"));
-   videoModeMap_.insert(videoModeMapType (DC1394_VIDEO_MODE_1024x768_RGB8,"1024x768_RGB8"));
-   videoModeMap_.insert(videoModeMapType (DC1394_VIDEO_MODE_1024x768_MONO8,"1024x768_MONO8"));
-   videoModeMap_.insert(videoModeMapType (DC1394_VIDEO_MODE_1024x768_MONO16,"1024x768_MONO16"));
-   videoModeMap_.insert(videoModeMapType (DC1394_VIDEO_MODE_1280x960_YUV422,"1280x960_YUV422"));
-   videoModeMap_.insert(videoModeMapType (DC1394_VIDEO_MODE_1280x960_RGB8,"1280x960_RGB8"));
-   videoModeMap_.insert(videoModeMapType (DC1394_VIDEO_MODE_1280x960_MONO8,"1280x960_MONO8"));
-   videoModeMap_.insert(videoModeMapType (DC1394_VIDEO_MODE_1280x960_MONO16,"1280x960_MONO16"));
-   videoModeMap_.insert(videoModeMapType (DC1394_VIDEO_MODE_1600x1200_YUV422,"1600x1200_YUV422"));
-   videoModeMap_.insert(videoModeMapType (DC1394_VIDEO_MODE_1600x1200_RGB8,"1600x1200_RGB8"));
-   videoModeMap_.insert(videoModeMapType (DC1394_VIDEO_MODE_1600x1200_MONO8,"1600x1200_MONO8"));
-   videoModeMap_.insert(videoModeMapType (DC1394_VIDEO_MODE_1600x1200_MONO16,"1600x1200_MONO16"));
-   // GJ Add format 7 modes
-   videoModeMap_.insert(videoModeMapType (DC1394_VIDEO_MODE_FORMAT7_0,"Format_7_0"));
-   videoModeMap_.insert(videoModeMapType (DC1394_VIDEO_MODE_FORMAT7_1,"Format_7_1"));
-   videoModeMap_.insert(videoModeMapType (DC1394_VIDEO_MODE_FORMAT7_2,"Format_7_2"));
-   videoModeMap_.insert(videoModeMapType (DC1394_VIDEO_MODE_FORMAT7_3,"Format_7_3"));
-   videoModeMap_.insert(videoModeMapType (DC1394_VIDEO_MODE_FORMAT7_4,"Format_7_4"));
-   videoModeMap_.insert(videoModeMapType (DC1394_VIDEO_MODE_FORMAT7_5,"Format_7_5"));
-   videoModeMap_.insert(videoModeMapType (DC1394_VIDEO_MODE_FORMAT7_6,"Format_7_6"));
-   videoModeMap_.insert(videoModeMapType (DC1394_VIDEO_MODE_FORMAT7_7,"Format_7_7"));
+   std::map<dc1394video_mode_t, std::string> map;
+   map.insert(std::make_pair(DC1394_VIDEO_MODE_160x120_YUV444, "160x120_YUV444"));
+   map.insert(std::make_pair(DC1394_VIDEO_MODE_320x240_YUV422, "320x240_YUV422"));
+   map.insert(std::make_pair(DC1394_VIDEO_MODE_640x480_YUV411, "640x480_YUV411"));
+   map.insert(std::make_pair(DC1394_VIDEO_MODE_640x480_YUV422, "640x480_YUV422"));
+   map.insert(std::make_pair(DC1394_VIDEO_MODE_640x480_RGB8, "640x480_RGB8"));
+   map.insert(std::make_pair(DC1394_VIDEO_MODE_640x480_MONO8, "640x480_MONO8"));
+   map.insert(std::make_pair(DC1394_VIDEO_MODE_640x480_MONO16, "640x480_MONO16"));
+   map.insert(std::make_pair(DC1394_VIDEO_MODE_800x600_YUV422, "800x600_YUV422"));
+   map.insert(std::make_pair(DC1394_VIDEO_MODE_800x600_RGB8, "800x600_RGB8"));
+   map.insert(std::make_pair(DC1394_VIDEO_MODE_800x600_MONO8, "800x600_MONO8"));
+   map.insert(std::make_pair(DC1394_VIDEO_MODE_800x600_MONO16, "800x600_MONO16"));
+   map.insert(std::make_pair(DC1394_VIDEO_MODE_1024x768_YUV422, "1024x768_YUV422"));
+   map.insert(std::make_pair(DC1394_VIDEO_MODE_1024x768_RGB8, "1024x768_RGB8"));
+   map.insert(std::make_pair(DC1394_VIDEO_MODE_1024x768_MONO8, "1024x768_MONO8"));
+   map.insert(std::make_pair(DC1394_VIDEO_MODE_1024x768_MONO16, "1024x768_MONO16"));
+   map.insert(std::make_pair(DC1394_VIDEO_MODE_1280x960_YUV422, "1280x960_YUV422"));
+   map.insert(std::make_pair(DC1394_VIDEO_MODE_1280x960_RGB8, "1280x960_RGB8"));
+   map.insert(std::make_pair(DC1394_VIDEO_MODE_1280x960_MONO8, "1280x960_MONO8"));
+   map.insert(std::make_pair(DC1394_VIDEO_MODE_1280x960_MONO16, "1280x960_MONO16"));
+   map.insert(std::make_pair(DC1394_VIDEO_MODE_1600x1200_YUV422, "1600x1200_YUV422"));
+   map.insert(std::make_pair(DC1394_VIDEO_MODE_1600x1200_RGB8, "1600x1200_RGB8"));
+   map.insert(std::make_pair(DC1394_VIDEO_MODE_1600x1200_MONO8, "1600x1200_MONO8"));
+   map.insert(std::make_pair(DC1394_VIDEO_MODE_1600x1200_MONO16, "1600x1200_MONO16"));
+   map.insert(std::make_pair(DC1394_VIDEO_MODE_FORMAT7_0, "Format_7_0"));
+   map.insert(std::make_pair(DC1394_VIDEO_MODE_FORMAT7_1, "Format_7_1"));
+   map.insert(std::make_pair(DC1394_VIDEO_MODE_FORMAT7_2, "Format_7_2"));
+   map.insert(std::make_pair(DC1394_VIDEO_MODE_FORMAT7_3, "Format_7_3"));
+   map.insert(std::make_pair(DC1394_VIDEO_MODE_FORMAT7_4, "Format_7_4"));
+   map.insert(std::make_pair(DC1394_VIDEO_MODE_FORMAT7_5, "Format_7_5"));
+   map.insert(std::make_pair(DC1394_VIDEO_MODE_FORMAT7_6, "Format_7_6"));
+   map.insert(std::make_pair(DC1394_VIDEO_MODE_FORMAT7_7, "Format_7_7"));
+   return map;
 }
 
 
-void Cdc1394::SetFrameRateMap()
+std::string Cdc1394::StringForVideoMode(dc1394video_mode_t mode) const
 {
-   frameRateMap_.insert (frameRateMapType(DC1394_FRAMERATE_1_875, "  1.88 fps"));
-   frameRateMap_.insert (frameRateMapType(DC1394_FRAMERATE_3_75, "  3.75 fps"));
-   frameRateMap_.insert (frameRateMapType(DC1394_FRAMERATE_7_5, "  7.5 fps"));
-   frameRateMap_.insert (frameRateMapType(DC1394_FRAMERATE_15, " 15 fps"));
-   frameRateMap_.insert (frameRateMapType(DC1394_FRAMERATE_30, " 30 fps"));
-   frameRateMap_.insert (frameRateMapType(DC1394_FRAMERATE_60, " 60 fps"));
-   frameRateMap_.insert (frameRateMapType(DC1394_FRAMERATE_120, "120 fps"));
-   frameRateMap_.insert (frameRateMapType(DC1394_FRAMERATE_240, "240 fps"));
+   std::map<dc1394video_mode_t, std::string>::const_iterator it = videoModeMap_.find(mode),
+      end = videoModeMap_.end();
+   if (it != end) {
+      return it->second;
+   }
+   return "";
 }
+
+
+dc1394video_mode_t Cdc1394::VideoModeForString(const std::string& str) const
+{
+   for (std::map<dc1394video_mode_t, std::string>::const_iterator it = videoModeMap_.begin(),
+         end = videoModeMap_.end();
+         it != end; ++it) {
+      if (str == it->second) {
+         return it->first;
+      }
+   }
+   return (dc1394video_mode_t)-1;
+}
+
+
+std::map<dc1394framerate_t, std::string> Cdc1394::MakeFramerateMap()
+{
+   std::map<dc1394framerate_t, std::string> map;
+   map.insert(std::make_pair(DC1394_FRAMERATE_1_875, "  1.88 fps"));
+   map.insert(std::make_pair(DC1394_FRAMERATE_3_75, "  3.75 fps"));
+   map.insert(std::make_pair(DC1394_FRAMERATE_7_5, "  7.5 fps"));
+   map.insert(std::make_pair(DC1394_FRAMERATE_15, " 15 fps"));
+   map.insert(std::make_pair(DC1394_FRAMERATE_30, " 30 fps"));
+   map.insert(std::make_pair(DC1394_FRAMERATE_60, " 60 fps"));
+   map.insert(std::make_pair(DC1394_FRAMERATE_120, "120 fps"));
+   map.insert(std::make_pair(DC1394_FRAMERATE_240, "240 fps"));
+   return map;
+}
+
+
+std::string Cdc1394::StringForFramerate(dc1394framerate_t framerate) const
+{
+   std::map<dc1394framerate_t, std::string>::const_iterator it = framerateMap_.find(framerate),
+      end = framerateMap_.end();
+   if (it != end) {
+      return it->second;
+   }
+   return "";
+}
+
+
+dc1394framerate_t Cdc1394::FramerateForString(const std::string& str) const
+{
+   for (std::map<dc1394framerate_t, std::string>::const_iterator it = framerateMap_.begin(),
+         end = framerateMap_.end();
+         it != end; ++it) {
+      if (str == it->second) {
+         return it->first;
+      }
+   }
+   return (dc1394framerate_t)-1;
+}
+
 
 bool Cdc1394::Timeout(MM::MMTime startTime)
 {
