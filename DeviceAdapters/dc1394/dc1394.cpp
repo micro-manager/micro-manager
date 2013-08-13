@@ -22,18 +22,6 @@
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 
-#ifdef WIN32
-   #pragma warning(disable : 4996) // disable warning for deperecated CRT functions on Windows 
-   #define WIN32_LEAN_AND_MEAN
-   #include <windows.h>
-#else
-   #include <memory.h>
-   void ZeroMemory(void* mem, int size) 
-   {
-      memset(mem, 0, size);
-   }
-#endif
-
 #include "../../MMDevice/ModuleInterface.h"
 #include "../../MMDevice/DeviceUtils.h"
 #include "dc1394.h"
@@ -42,6 +30,7 @@
 #include <dc1394/conversions.h>
 #include <dc1394/vendor/avt.h>
 #include <string>
+#include <cstring> // memset(), memcpy()
 #include <sstream>
 #include <iomanip>
 #include <math.h>
