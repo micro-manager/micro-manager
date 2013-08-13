@@ -209,7 +209,6 @@ int Cdc1394::OnMode(MM::PropertyBase* pProp, MM::ActionType eAct)
       logMsg_.str("");
       logMsg_ << "In OnMode, bitDepth is now" << depth_;
       LogMessage(logMsg_.str().c_str(), true);
-      GetBytesPerPixel ();
 
       // reset the list of framerates allowed:
       if (SetUpFrameRates() != DEVICE_OK)
@@ -324,8 +323,7 @@ int Cdc1394::OnIntegration(MM::PropertyBase* pProp, MM::ActionType eAct)
          integrateFrameNumber_ = 1;
       else if (tmp >= 1 && tmp <= maxNrIntegration)
          integrateFrameNumber_ = tmp;
-      GetBytesPerPixel();
-      img_.Resize(width_, height_, bytesPerPixel_);
+      img_.Resize(width_, height_, GetBytesPerPixel());
    }
    else if (eAct == MM::BeforeGet)
    {
@@ -866,9 +864,9 @@ int Cdc1394::Initialize()
    logMsg_.str("");
    logMsg_ << "BitDepth is " << depth_;
    LogMessage(logMsg_.str().c_str(), true);
-   GetBytesPerPixel();
 
    // Frame integration
+   // XXX I don't think the code works for integration if the image is color.
    if (depth_ == 8)
    {
       pAct = new CPropertyAction (this, &Cdc1394::OnIntegration);
@@ -1785,11 +1783,8 @@ int Cdc1394::ResizeImageBuffer()
    err_ = dc1394_get_image_size_from_video_mode(camera_, mode_, &width_, &height_);
    if (err_ != DC1394_SUCCESS)
       return ERR_GET_IMAGE_SIZE_FAILED;
-   GetBitDepth();
-   GetBytesPerPixel();
-   // Set the internal buffer (for now 8 bit gray scale only)
-   // TODO: implement other pixel sizes
-   img_.Resize(width_, height_, bytesPerPixel_);
+
+   img_.Resize(width_, height_, GetBytesPerPixel());
 
 
    logMsg_.str("");
@@ -1914,26 +1909,23 @@ int Cdc1394::StopTransmission()
    return DEVICE_OK;
 }
 
-void Cdc1394::GetBytesPerPixel()
+int Cdc1394::GetBytesPerPixel() const
 {
-   if (depth_==8 && integrateFrameNumber_==1)
-	  if (IsColor() == true)
-	  {
-		 bytesPerPixel_ = 4;
+   if (depth_ <= 8 && integrateFrameNumber_ == 1) {
+	  if (IsColor()) {
+        return 4;
 	  }
-	  else
-	  {
-         bytesPerPixel_ = 1;
+	  else {
+        return 1;
 	  }
-   else if (depth_==8 && integrateFrameNumber_>1)
-      bytesPerPixel_ = 2;
-   else if (depth_ > 8 && depth_ <= 16)
-      bytesPerPixel_ = 2;
-   else {
-      std::ostringstream os;
-      os << "Can not figure out Bytes per Pixel.  bitdepth=" << depth_;
-      LogMessage(os.str().c_str());
    }
+   else if (depth_ <= 8 && integrateFrameNumber_ > 1) {
+      // When integration is enabled, we always return 16-bit monochrome images.
+      return 2;
+   }
+
+   // 16-bit mode
+   return 2;
 }
 
 
@@ -2197,8 +2189,6 @@ int Cdc1394::StartSequenceAcquisition(long numImages, double interval_ms, bool s
    if (ret != DEVICE_OK)
       return ret;
 
-   GetBytesPerPixel();
-
    acqThread_->SetLength(numImages);
 
    // TODO: check trigger mode, etc..
@@ -2254,8 +2244,6 @@ int Cdc1394::StartSequenceAcquisition(double interval_ms)
    int ret = GetCoreCallback()->PrepareForAcq(this);
    if (ret != DEVICE_OK)
       return ret;
-
-   GetBytesPerPixel();
 
    acqThread_->SetLength(sequenceLength_);
 
@@ -2338,22 +2326,13 @@ int Cdc1394::PushImage(dc1394video_frame_t *myframe)
    unsigned char* buf = (unsigned char *)malloc(numChars);
    ProcessImage(myframe, buf);
 
-   /*
-   MM::ImageProcessor* ip = GetCoreCallback()->GetImageProcessor(this);
-   if (ip)
-   {
-      int ret = ip->Process(img_.GetPixels(), width_, height_,bytesPerPixel_);
-      if (ret != DEVICE_OK) return ret;
-   }
-   */
-
    // insert image into the circular MMCore buffer
-   int ret =  GetCoreCallback()->InsertImage(this, buf, width_, height_, bytesPerPixel_);
+   int ret =  GetCoreCallback()->InsertImage(this, buf, width_, height_, GetBytesPerPixel());
 
    if (!stopOnOverflow_ && ret == DEVICE_BUFFER_OVERFLOW) {
       // do not stop on overflow - just reset the buffer                     
       GetCoreCallback()->ClearImageBuffer(this);                             
-      ret =  GetCoreCallback()->InsertImage(this, buf, width_, height_, bytesPerPixel_);
+      ret =  GetCoreCallback()->InsertImage(this, buf, width_, height_, GetBytesPerPixel());
    }
 
    std::ostringstream os;

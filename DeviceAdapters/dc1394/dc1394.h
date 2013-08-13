@@ -149,7 +149,10 @@ private:
    int GetCamera();
    int StartCamera();
    bool IsFeatureSupported(int featureId);
+
+   // Whether the camera is in color mode. NOT whether we return color images to Micro-Manager.
    bool IsColor() const;
+
    int SetUpFrameRates();
    int StopTransmission();
    bool Timeout(MM::MMTime startTime);
@@ -165,7 +168,7 @@ private:
    void avtDeinterlaceMono16(uint16_t* dest, uint16_t* src, uint32_t outputWidth, uint32_t outputHeight);
    
    bool InArray(dc1394framerate_t *array, int size, uint32_t num);
-   void GetBytesPerPixel();
+   int GetBytesPerPixel() const;
    double X700Shutter2Exposure(int shutter) const;
    int X700Exposure2Shutter(double exposure);
 
@@ -223,7 +226,7 @@ private:
    bool busy_;
    bool snapInProgress_;
    bool frameRatePropDefined_;
-   int dmaBufferSize_, triedCaptureCount_, bytesPerPixel_, integrateFrameNumber_;
+   int dmaBufferSize_, triedCaptureCount_, integrateFrameNumber_;
    long lnBin_;
    std::ostringstream logMsg_;
    MM::MMTime longestWait_;
