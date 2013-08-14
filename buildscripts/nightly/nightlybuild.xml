@@ -5,13 +5,12 @@
 	<!-- Don't give up build if a device adapter or plugin is broken -->
 	<property name="mm.build.failonerror" value="false"/>
 
-	<property name="mm.nightly.upload.server" value="valelab.ucsf.edu"/>
-	<property name="mm.nightly.upload.path" value="../MM/public_html/nightlyBuilds/1.4/Windows"/>
-
 	<!-- Import the main build file -->
 	<import file="../../build.xml"/>
 
 	<target name="upload" depends="package">
+		<fail unless="mm.nightly.upload.server"/>
+		<fail unless="mm.nightly.upload.path"/>
 		<fail unless="mm.nightly.upload.user"/>
 		<fail unless="mm.nightly.upload.ssh_key"/>
 

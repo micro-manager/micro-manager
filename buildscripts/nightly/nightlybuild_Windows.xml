@@ -1,0 +1,23 @@
+<project name="mm.nightly.windows" basedir="../..">
+	<property name="mm.platform" value="Windows"/>
+
+	<property name="mm.nightly.target" value="package"/>
+
+	<tstamp/>
+	<property name="XmlLogger.file" location="buildlog_${DSTAMP}T${TSTAMP}.xml"/>
+
+	<property name="mm.nightly.upload.path" value="../MM/public_html/nightlyBuilds/1.4/Windows"/>
+	<property name="mm.nightly.upload.server" value="valelab.ucsf.edu"/>
+
+	<property name="mm.nightly.build.script" location="buildscripts/nightly/nightlybuild.xml"/>
+
+	<ant antfile="${mm.nightly.build.script}" target="unstage-all" useNativeBaseDir="true"/>
+	<ant antfile="${mm.nightly.build.script}" target="clean-all" useNativeBaseDir="true"/>
+
+	<ant antfile="${mm.nightly.build.script}" target="${mm.nightly.target}" useNativeBaseDir="true">
+		<property name="mm.architecture" value="x64"/>
+	</ant>
+	<ant antfile="${mm.nightly.build.script}" target="${mm.nightly.target}" useNativeBaseDir="true">
+		<property name="mm.architecture" value="Win32"/>
+	</ant>
+</project>

@@ -1,8 +1,8 @@
-@rem We reset the echo mode after any "call" below to keep it consistent.
-@set ECHO_MODE=on
+@setlocal
+@if "%ECHO_MODE%"=="" set ECHO_MODE=off
 @echo %ECHO_MODE%
 
-cd /d %~dp0\..\..
+cd /d %~dp0..\..
 
 set ANT_SSH_ARGS=-Dmm.nightly.upload.user=%1 -Dmm.nightly.upload.ssh_key=%2
 
@@ -46,22 +46,8 @@ pushd SecretDeviceAdapters
 call :UPDATE_SVN_SOURCE
 popd
 
-call ant -f buildscripts\nightly\nightlybuild.xml unstage-all clean-all
-if errorlevel 1 (
-    @echo Failed to unstage and clean
-    exit /B 1
-)
+call ant -f buildscripts\nightly\nightlybuild_Windows.xml -listener org.apache.tools.ant.XmlLogger -logger org.apache.tools.ant.listener.SimpleBigProjectLogger -Dmm.nightly.target=%TARGET% %ANT_SSH_ARGS%
 @echo %ECHO_MODE%
-
-rem (Build of Clojure projects may fail if the JVM at JAVA_HOME does not match
-rem mm.architecture, due to failure to load MMCoreJ_wrap.dll. We prevent this
-rem (for now) by building the MMCoreJ_wrap.dll matching the build JVM first.)
-
-set ARCH=x64
-call :BUILD_ARCH
-
-set ARCH=Win32
-call :BUILD_ARCH
 
 goto :EOF
 
@@ -72,14 +58,6 @@ if "%USE_SVN%" == "yes" (
     svn revert --non-interactive --depth=infinity .
     svn update --non-interactive --accept theirs-full --force --ignore-externals
 )
+rem End of subroutine UPDATE_SVN_SOURCE
 goto :EOF
 
-
-:BUILD_ARCH
-call ant -f buildscripts\nightly\nightlybuild.xml -Dmm.platform=Windows -Dmm.architecture=%ARCH% %ANT_SSH_ARGS% %TARGET%
-if errorlevel 1 (
-    @echo Failed to build %ARCH%
-    exit /B 1
-)
-@echo %ECHO_MODE%
-goto :EOF
