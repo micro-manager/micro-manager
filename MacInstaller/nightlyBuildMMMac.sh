@@ -74,10 +74,14 @@ cd $RX86_64/SecretDeviceAdapters
 svn update --accept theirs-conflict
 cd $RPPC
 
-cp -r MacInstaller/Micro-Manager $TARGET
+cp -r $REPOSITORY/bindist/any-platform/* $TARGET
+cp -r $REPOSITORY/bindist/MacOSX/* $TARGET
 find $TARGET -name '.svn' -exec rm -fr {} \;
 cp $CLASSEXT/ij.jar $TARGET
-cp $CLASSEXT/*.jar $TARGET/plugins/
+MMPLUGINDIR=$TARGET/plugins/Micro-Manager
+test -d $MMPLUGINDIR && rm -rf $MMPLUGINDIR
+mkdir $MMPLUGINDIR
+cp $CLASSEXT/*.jar $MMPLUGINDIR
 rm $TARGET/plugins/ij.jar || echo "No problem"
 cp -r $TARGET $PPC
 cp -r $TARGET $I386
