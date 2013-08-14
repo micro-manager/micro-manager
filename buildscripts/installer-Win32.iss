@@ -60,42 +60,42 @@ Source: ..\..\3rdparty\Microsoft\VisualC++\lib\x86\Microsoft.VC90.OPENMP\Microso
 Source: ..\..\3rdparty\jre6_32\* ; DestDir: {app}\jre; Flags: ignoreversion recursesubdirs createallsubdirs
 
 ; device libraries
-Source: micro-manager\inpout32.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\atmcd32d.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\usb_main.bin; DestDir: {app}; Flags: ignoreversion
+Source: ..\stage\Release\Win32\inpout32.dll; DestDir: {app}; Flags: ignoreversion
+Source: ..\stage\Release\Win32\atmcd32d.dll; DestDir: {app}; Flags: ignoreversion
+Source: ..\stage\Release\Win32\usb_main.bin; DestDir: {app}; Flags: ignoreversion
 Source: ..\drivers\K8061\x86\libusb0_x86.dll; DestDir: {app}; DestName: libusb0.dll; Flags: ignoreversion
-Source: micro-manager\camconj.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\FireCamJ.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\MexJCam.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\ProcessLib.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\FxLib.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\SysInfo.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\opencv_highgui231.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\opencv_core231.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\mcam.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\hrfw.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\mcammr.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\mrc5.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\mrfw.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\XCLIBWNT.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\LaserCombinerSDK.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\PCO_Kamlib.dll; DestDir: {app}; Flags: ignoreversion
+Source: ..\stage\Release\Win32\camconj.dll; DestDir: {app}; Flags: ignoreversion
+Source: ..\stage\Release\Win32\FireCamJ.dll; DestDir: {app}; Flags: ignoreversion
+Source: ..\stage\Release\Win32\MexJCam.dll; DestDir: {app}; Flags: ignoreversion
+Source: ..\stage\Release\Win32\ProcessLib.dll; DestDir: {app}; Flags: ignoreversion
+Source: ..\stage\Release\Win32\FxLib.dll; DestDir: {app}; Flags: ignoreversion
+Source: ..\stage\Release\Win32\SysInfo.dll; DestDir: {app}; Flags: ignoreversion
+Source: ..\stage\Release\Win32\opencv_highgui231.dll; DestDir: {app}; Flags: ignoreversion
+Source: ..\stage\Release\Win32\opencv_core231.dll; DestDir: {app}; Flags: ignoreversion
+Source: ..\stage\Release\Win32\mcam.dll; DestDir: {app}; Flags: ignoreversion
+Source: ..\stage\Release\Win32\hrfw.dll; DestDir: {app}; Flags: ignoreversion
+Source: ..\stage\Release\Win32\mcammr.dll; DestDir: {app}; Flags: ignoreversion
+Source: ..\stage\Release\Win32\mrc5.dll; DestDir: {app}; Flags: ignoreversion
+Source: ..\stage\Release\Win32\mrfw.dll; DestDir: {app}; Flags: ignoreversion
+Source: ..\stage\Release\Win32\XCLIBWNT.dll; DestDir: {app}; Flags: ignoreversion
+Source: ..\stage\Release\Win32\LaserCombinerSDK.dll; DestDir: {app}; Flags: ignoreversion
+Source: ..\stage\Release\Win32\PCO_Kamlib.dll; DestDir: {app}; Flags: ignoreversion
 Source: ..\..\3rdpartypublic\hidapi\hidapi-0.7.0\windows\Win32\Release\hidapi.dll; DestDir: {app}; Flags: ignoreversion
 
 ; Breeze stuff
-Source: micro-manager\DSLRRemoteLib.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\NKRemoteLib.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\PSRemoteLib.dll; DestDir: {app}; Flags: ignoreversion
+Source: ..\stage\Release\Win32\DSLRRemoteLib.dll; DestDir: {app}; Flags: ignoreversion
+Source: ..\stage\Release\Win32\NKRemoteLib.dll; DestDir: {app}; Flags: ignoreversion
+Source: ..\stage\Release\Win32\PSRemoteLib.dll; DestDir: {app}; Flags: ignoreversion
 
-Source: micro-manager\MMCoreJ_wrap.dll; DestDir: {app}; Flags: ignoreversion
+Source: ..\stage\Release\Win32\MMCoreJ_wrap.dll; DestDir: {app}; Flags: ignoreversion
 
 ; device adapters
-Source: micro-manager\mmgr_dal_*.dll; DestDir: {app}; Flags: ignoreversion
+Source: ..\stage\Release\Win32\mmgr_dal_*.dll; DestDir: {app}; Flags: ignoreversion
 
 ; python wrapper
-Source: micro-manager\_MMCorePy.pyd; DestDir: {app}; Flags: ignoreversion skipifsourcedoesntexist
-Source: micro-manager\MMCorePy.py; DestDir: {app}; Flags: ignoreversion skipifsourcedoesntexist
-Source: micro-manager\MMCoreWrapDemo.py; DestDir: {app}; Flags: ignoreversion skipifsourcedoesntexist
+Source: ..\stage\Release\Win32\_MMCorePy.pyd; DestDir: {app}; Flags: ignoreversion skipifsourcedoesntexist
+Source: ..\stage\Release\Win32\MMCorePy.py; DestDir: {app}; Flags: ignoreversion skipifsourcedoesntexist
+Source: ..\stage\Release\Win32\MMCoreWrapDemo.py; DestDir: {app}; Flags: ignoreversion skipifsourcedoesntexist
 
 ; drivers
 ;Source: ..\drivers\*; DestDir: {app}\drivers; Flags: ignoreversion recursesubdirs
@@ -104,17 +104,17 @@ Source: micro-manager\MMCoreWrapDemo.py; DestDir: {app}; Flags: ignoreversion sk
 Source: ..\scripts\*; DestDir: {app}\scripts; Flags: ignoreversion
 
 ; configuration files
-Source: micro-manager\MMConfig_demo.cfg; DestDir: {app}; Flags: ignoreversion
+Source: ..\stage\Release\Win32\MMConfig_demo.cfg; DestDir: {app}; Flags: ignoreversion
 
 ; ImageJ files
-Source: micro-manager\ImageJ.exe; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\ImageJ.cfg; DestDir: {app}; Flags: onlyifdoesntexist;  Permissions: users-modify
+Source: ..\stage\Release\Win32\ImageJ.exe; DestDir: {app}; Flags: ignoreversion
+Source: ..\stage\Release\Win32\ImageJ.cfg; DestDir: {app}; Flags: onlyifdoesntexist;  Permissions: users-modify
 Source: ..\..\3rdpartypublic\classext\ij.jar; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\IJ_Prefs.txt; DestDir: {app}; Flags: onlyifdoesntexist
-Source: micro-manager\macros\*; DestDir: {app}\macros; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: micro-manager\plugins\*; DestDir: {app}\plugins; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: ..\Install_AllPlatforms\micro-manager\mmplugins\*; DestDir: {app}\mmplugins; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: ..\Install_AllPlatforms\micro-manager\mmautofocus\*; DestDir: {app}\mmautofocus; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: ..\stage\Release\Win32\IJ_Prefs.txt; DestDir: {app}; Flags: onlyifdoesntexist
+Source: ..\stage\Release\Win32\macros\*; DestDir: {app}\macros; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: ..\stage\Release\Win32\plugins\*; DestDir: {app}\plugins; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: ..\stage\Release\Win32\mmplugins\*; DestDir: {app}\mmplugins; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: ..\stage\Release\Win32\mmautofocus\*; DestDir: {app}\mmautofocus; Flags: ignoreversion recursesubdirs createallsubdirs
 
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 

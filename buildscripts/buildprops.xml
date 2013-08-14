@@ -23,6 +23,12 @@
 	<!-- Root of build products directory -->
 	<property name="mm.outdir" location="${mm.basedir}/build"/>
 
+	<!-- Directories for prebuilt files -->
+	<property name="mm.bindist.basedir" location="${mm.basedir}/bindist"/>
+	<property name="mm.common.bindistdir" location="${mm.bindist.basedir}/any-platform"/>
+	<property name="mm.platform.bindistdir" location="${mm.bindist.basedir}/any-Windows"/>
+	<property name="mm.bindistdir" location="${mm.bindist.basedir}/${mm.architecture}"/>
+
 	<!-- Root of install/stage directory -->
 	<!-- Unlike the intermediates and products directory, staging can be
 	     configuration/architecture-specific even for platform-independent
