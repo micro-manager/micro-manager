@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>files</key>
+	<dict>
+		<key>Resources/.DS_Store</key>
+		<data>
+		wtnST7ztXkFkDeVT792EE2U2KwU=
+		</data>
+		<key>Resources/ImageJ.icns</key>
+		<data>
+		TnFfzPtKeL+FQasEFY9YF4YIoFM=
+		</data>
+		<key>Resources/Java/.DS_Store</key>
+		<data>
+		BAbg68Oxxv9IdryxpBr+6BZt7vY=
+		</data>
+		<key>Resources/Java/Where is ij.jar.txt</key>
+		<data>
+		l9olTtCxFUlk6nGk8FJc8B7yvKM=
+		</data>
+		<key>Resources/MicroManager.icns</key>
+		<data>
+		TnFfzPtKeL+FQasEFY9YF4YIoFM=
+		</data>
+	</dict>
+	<key>rules</key>
+	<dict>
+		<key>^Resources/</key>
+		<true/>
+		<key>^Resources/.*\.lproj/</key>
+		<dict>
+			<key>optional</key>
+			<true/>
+			<key>weight</key>
+			<real>1000</real>
+		</dict>
+		<key>^Resources/.*\.lproj/locversion.plist$</key>
+		<dict>
+			<key>omit</key>
+			<true/>
+			<key>weight</key>
+			<real>1100</real>
+		</dict>
+		<key>^version.plist$</key>
+		<true/>
+	</dict>
+</dict>
+</plist>

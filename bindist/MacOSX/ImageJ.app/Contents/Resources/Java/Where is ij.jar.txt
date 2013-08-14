@@ -1,0 +1,1 @@
+With ImageJ 1.35 and later, the ij.jar file goes in the ImageJ folder.
