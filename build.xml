@@ -2,14 +2,43 @@
 <!-- Run 'ant -p' for usage -->
 <project name="mm" basedir="." default="build">
 	<include file="buildscripts/buildprops.xml"/>
+	<import file="buildscripts/version.xml"/>
+
+	<fail message="Micro-Manager Ant build files are currently designed for Windows only">
+		<condition><not><os family="winnt"/></not></condition>
+	</fail>
 
 	<presetdef name="buildcpp">
-		<exec executable="cmd">
+		<exec executable="cmd" failonerror="${mm.build.failonerror}">
 			<arg value="/c"/>
-			<arg value="buildscripts\buildCpp.bat"/>
+			<arg file="${mm.basedir}/buildscripts/buildCpp.bat"/>
 			<arg value="${mm.architecture}"/>
 		</exec>
 	</presetdef>
+
+	<presetdef name="cleancpp">
+		<exec executable="cmd" failonerror="${mm.build.failonerror}">
+			<arg value="/c"/>
+			<arg file="${mm.basedir}/buildscripts/buildCpp.bat"/>
+			<arg value="${mm.architecture}"/>
+			<arg value="clean"/>
+		</exec>
+	</presetdef>
+
+	<macrodef name="run-all-java-projects">
+		<attribute name="target"/>
+		<sequential>
+			<subant target="@{target}">
+				<filelist dir="${mm.basedir}">
+					<!-- Note: Order matters -->
+					<file name="mmstudio/build.xml"/>
+					<file name="acqEngine/build.xml"/>
+					<file name="plugins/build.xml"/>
+					<file name="autofocus/build.xml"/>
+				</filelist>
+			</subant>
+		</sequential>
+	</macrodef>
 
 	<target name="build-cpp" description="Build all C++ components">
 		<mkdir dir="${mm.cpp.intdir}"/>
@@ -22,22 +51,7 @@
 		<copy todir="${mm.java.outdir}" file="${mm.cpp.outdir}/MMCoreJ.jar"/>
 	</target>
 
-	<macrodef name="run-all-java-projects">
-		<attribute name="target"/>
-		<sequential>
-			<subant target="@{target}">
-				<filelist dir=".">
-					<!-- Note: Order matters -->
-					<file name="mmstudio/build.xml"/>
-					<file name="acqEngine/build.xml"/>
-					<file name="plugins/build.xml"/>
-					<file name="autofocus/build.xml"/>
-				</filelist>
-			</subant>
-		</sequential>
-	</macrodef>
-
-	<target name="build" depends="build-cpp" description="Build all components">
+	<target name="build" depends="build-cpp,set-version" description="Build all components">
 		<run-all-java-projects target="jar"/>
 	</target>
 
@@ -76,14 +90,30 @@
 		</copy>
 	</target>
 
-	<target name="package" depends="stage" description="Create installer">
-		<mkdir dir="${mm.basedir}/dist"/>
-		<exec dir="${mm.installdir}" executable="${mm.basedir}/../3rdparty/Inno_Setup_5/iscc.exe">
-			<arg line="/O${mm.basedir}/dist /FMMSetup_${mm.architecture} ${mm.basedir}/buildscripts/installer-${mm.architecture}.iss"/>
+	<target name="package" depends="stage" description="Create installer from staged files">
+		<!-- Default name, if not set -->
+		<property name="mm.installer.basename" value="MMSetup_${mm.architecture.bits}bit"/>
+		<property name="mm.installer" value="${mm.installer.basename}.exe"/>
+
+		<!-- TODO Generate installer script from single copy -->
+
+		<mkdir dir="${mm.distdir}"/>
+		<delete file="${mm.distdir}/${mm.installer}"/>
+		<exec dir="${mm.basedir}" executable="${mm.basedir}/../3rdparty/Inno_Setup_5/iscc.exe">
+			<arg value="/O${mm.distdir}"/>
+			<arg value="/F${mm.installer.basename}"/>
+			<arg file="${mm.basedir}/buildscripts/installer-${mm.architecture}.iss"/>
 		</exec>
 	</target>
 
 	<target name="clean">
+		<!-- Until we have the C++ output going to the proper
+		     directories, use vcbuild and 'delete' to clean -->
+		<cleancpp/>
+		<delete>
+			<fileset dir="${mm.cpp.outdir}" includes="*.dll"/>
+		</delete>
+
 		<!-- <delete dir="${mm.cpp.outdir}"/> -->
 		<delete dir="${mm.cpp.intdir}"/>
 		<run-all-java-projects target="clean"/>
@@ -92,6 +122,18 @@
 	<target name="clean-all">
 		<delete dir="${mm.outdir}"/>
 		<delete dir="${mm.intdir}"/>
+
+		<!-- Until all C++ output goes to the proper dirs, we need
+		     these messy calls (they are not perfect, but good enough
+		     for the time being) -->
+		<antcall target="clean">
+			<param name="mm.architecture" value="Win32"/>
+			<param name="mm.cpp.outdir" value="${mm.basedir}/bin_Win32"/>
+		</antcall>
+		<antcall target="clean">
+			<param name="mm.architecture" value="x64"/>
+			<param name="mm.cpp.outdir" value="${mm.basedir}/bin_x64"/>
+		</antcall>
 	</target>
 
 	<target name="unstage">

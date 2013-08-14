@@ -5,6 +5,8 @@
 rem Build the C++ components of Micro-Manager, using Visual Studio 2008
 rem See below (:USAGE) for usage.
 
+set SRC_ROOT=%~dp0..
+
 set ARCH=
 if "%1"=="x64" (
     set PLATFORM=x64
@@ -23,8 +25,8 @@ if "%1"=="rebuild" (
     set BUILDSWITCH=/rebuild
     shift
 )
-if "%1"=="REBUILD" (
-    set BUILDSWITCH=/rebuild
+if "%1"=="clean" (
+    set BUILDSWITCH=/clean
     shift
 )
 
@@ -65,7 +67,7 @@ set LIBPATH=
 set BOOT_DRIVE=%windir:~0,2%
 if "%BOOT_DRIVE%"=="" set BOOT_DRIVE=C:
 set VC_PATH=%BOOT_DRIVE%\Program Files (x86)\Microsoft Visual Studio 9.0\VC\
-if not "%PROCESSOR_ARCHITECTURE%"=="AMD64" (
+if not exist "%VC_PATH%" (
     set VC_PATH=%BOOT_DRIVE%\Program Files\Microsoft Visual Studio 9.0\VC\
 )
 
@@ -80,7 +82,6 @@ goto :EOF
 
 :DO_BUILD
 @echo building C++ libraries...
-set SRC_ROOT=%~dp0..
 pushd %SRC_ROOT%
 for %%I in (
     .\MMCore\MMCore.vcproj

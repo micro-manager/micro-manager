@@ -1,31 +1,32 @@
 <project name="mm.autofocus.plugins" basedir="." default="jar">
 	<macrodef name="run-all">
 		<attribute name="target"/>
+		<attribute name="failonerror" default="true"/>
 		<sequential>
-			<subant target="@{target}">
+			<subant target="@{target}" failonerror="@{failonerror}">
 				<fileset dir="buildscripts" includes="*.xml" excludes="autofocusbuild.xml"/>
 			</subant>
 		</sequential>
 	</macrodef>
 
 	<target name="prerequisites">
-		<run-all target="prerequisites"/>
+		<run-all target="prerequisites" failonerror="${mm.build.failonerror}"/>
 	</target>
 
 	<target name="compile">
-		<run-all target="compile"/>
+		<run-all target="compile" failonerror="${mm.build.failonerror}"/>
 	</target>
 
 	<target name="copy-files">
-		<run-all target="copy-files"/>
+		<run-all target="copy-files" failonerror="${mm.build.failonerror}"/>
 	</target>
 
 	<target name="jar">
-		<run-all target="jar"/>
+		<run-all target="jar" failonerror="${mm.build.failonerror}"/>
 	</target>
 
 	<target name="install">
-		<run-all target="install"/>
+		<run-all target="install" failonerror="${mm.build.failonerror}"/>
 	</target>
 
 	<target name="clean">

@@ -1,0 +1,25 @@
+<project name="mm.nightly">
+	<property name="mm.build.mode" value="nightly"/>
+	<property name="mm.configuration" value="Release"/>
+
+	<!-- Don't give up build if a device adapter or plugin is broken -->
+	<property name="mm.build.failonerror" value="false"/>
+
+	<property name="mm.nightly.upload.server" value="valelab.ucsf.edu"/>
+	<property name="mm.nightly.upload.path" value="../MM/public_html/nightlyBuilds/1.4/Windows"/>
+
+	<!-- Import the main build file -->
+	<import file="../../build.xml"/>
+
+	<target name="upload" depends="package">
+		<fail unless="mm.nightly.upload.user"/>
+		<fail unless="mm.nightly.upload.ssh_key"/>
+
+		<exec executable="pcsp">
+			<arg value="-i"/><arg value="${mm.nightly.upload.ssh_key}"/>
+			<arg value="-batch"/>
+			<arg file="${mm.distdir}/${mm.installer}"/>
+			<arg value="${mm.nightly.upload.user}@${mm.nightly.upload.server}:${mm.nightly.upload.path}/"/>
+		</exec>
+	</target>
+</project>
