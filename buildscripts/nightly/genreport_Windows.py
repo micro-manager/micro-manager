@@ -1,60 +1,16 @@
 # Python >= 3.3
 
-# Generate a summary report from a nightly build log file.
+# Generate a summary report from a build log file.
 
 # This program is necessarily written in a rather ad-hoc style, since the XML
 # log written by Ant is not very structured.
 
 
-import glob
-import os, os.path
+import os.path
 import re
 import sys
-import time
 import traceback
 from xml.etree import ElementTree
-
-
-def parse_iso8601_datetime(s):
-    posix_time = time.mktime(time.strptime(s, "%Y%m%dT%H%M"))
-    return posix_time
-
-
-def format_iso8601_datetime(posix_time):
-    local_time_str = time.strftime("%Y%m%dT%H%M",
-                                   time.localtime(posix_time))
-    return local_time_str
-
-
-def find_log_with_approx_time(glob_pattern, posix_time, tolerance=15 * 60,
-                              use_latest_if_multiple=True):
-    candidates = []
-    for filename in glob.iglob(glob_pattern):
-        basename = os.path.basename(filename)
-        m = re.match(r".*_(\d\d\d\d\d\d\d\dT\d\d\d\d).xml$", basename)
-        if not m:
-            continue
-
-        log_time = parse_iso8601_datetime(m.group(1))
-        if abs(log_time - posix_time) < tolerance:
-            candidates.append((filename, log_time))
-
-    if not candidates:
-        raise FileNotFoundError("No log found matching '{}' with timestamp "
-                                "suffix within {} minutes of {}".
-                                format(glob_pattern,
-                                       int(round(tolerance / 60.0)),
-                                       format_iso8601_datetime(posix_time)))
-
-    if len(candidates) > 1 and not use_latest_if_multiple:
-        raise RuntimeError("More than one log matching '{}' with timestamp "
-                           "suffix within {} minutes of {}: {}".
-                           format(glob_pattern,
-                                  int(round(tolerance / 60.0)),
-                                  format_iso8601_datetime(posix_time),
-                                  ", ".join(p[0] for p in candidates)))
-
-    return sorted(candidates, key=lambda x: x[1])[-1][0]
 
 
 def build_status_report(section_sink, log_filename, build):
@@ -163,19 +119,19 @@ def clojure_build_report(section_sink, stage_target, architecture):
             section_sink.send((True, title, text))
 
 
-def nightly_report(section_sink, log_filename, build):
+def generate_report(section_sink, log_filename, build):
     build_status_report(section_sink, log_filename, build)
 
     # At the top level, there are task[@name='ant'] elements for unstage-all,
     # clean-all, package/upload (x64), and package/upload(Win32). Each of these
     # tasks contain an e.g. target[@name='unstage-all'] elements.
 
-    nightly_sequential_tasks = build.findall("./task[@name='ant']")
+    sequential_tasks = build.findall("./task[@name='ant']")
     # Sorry, this is rather fragile...
     seen_cpp_x64 = False
     seen_cpp_Win32 = False
 
-    for task in nightly_sequential_tasks:
+    for task in sequential_tasks:
         targets = task.findall("./target")
         target_names = list(target.attrib["name"] for target in targets)
         if "unstage-all" in target_names or "clean-all" in target_names:
@@ -207,14 +163,6 @@ def nightly_report(section_sink, log_filename, build):
                                  arch)
 
 
-def parse_log_from_seconds_ago(log_glob, seconds, tolerance=5 * 60):
-    expected_time = time.time() - seconds
-    log_xml_filename = find_log_with_approx_time(log_glob,
-                                                 expected_time,
-                                                 tolerance)
-    return log_xml_filename, ElementTree.parse(log_xml_filename)
-
-
 def section_writer(file):
     any_critical = False
     while True:
@@ -227,31 +175,22 @@ def section_writer(file):
         print("<pre>{}</pre>".format(text), file=file)
 
 
-def generate_report(root_dir, minutes_ago, output_filename):
-    log_glob = os.path.join(root_dir, "buildlog_*.xml")
+def main(src_root, log_filename, output_filename):
     with open(output_filename, "w") as f:
         section_sink = section_writer(f)
-        next(section_sink)
-        nightly_report(section_sink,
-                       *parse_log_from_seconds_ago(log_glob,
-                                                   minutes_ago * 60,
-                                                   10 * 60))
+        next(section_sink)  # Prime the coroutine
+
+        generate_report(section_sink,
+                        log_filename,
+                        ElementTree.parse(log_filename))
 
 
 if __name__ == "__main__":
     try:
-        root_dir, minutes_ago, output_filename = sys.argv[1:]
-        minutes_ago = int(minutes_ago)
+        src_root, log_filename, output_filename = sys.argv[1:]
     except:
-        print("Usage: python {} src_root minutes_ago output_filename".
+        print("Usage: python {} src_root log_filename output_filename".
               format(sys.argv[0]))
         sys.exit(2)
 
-    try:
-        generate_report(root_dir, minutes_ago, output_filename)
-    except:
-        print("Exception while running:")
-        print(" ".join(sys.argv))
-        print()
-        traceback.print_exception(*sys.exc_info(), file=sys.stdout)
-        sys.exit(1)
+    main(src_root, log_filename, output_filename)

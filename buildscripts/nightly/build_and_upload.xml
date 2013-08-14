@@ -1,4 +1,4 @@
-<project name="mm.nightly">
+<project name="mm.build_and_upload">
 	<property name="mm.build.mode" value="nightly"/>
 	<property name="mm.configuration" value="Release"/>
 
@@ -9,16 +9,17 @@
 	<import file="../../build.xml"/>
 
 	<target name="upload" depends="package">
-		<fail unless="mm.nightly.upload.server"/>
-		<fail unless="mm.nightly.upload.path"/>
-		<fail unless="mm.nightly.upload.user"/>
-		<fail unless="mm.nightly.upload.ssh_key"/>
+		<fail unless="mm.upload.server"/>
+		<fail unless="mm.upload.path"/>
+		<fail unless="mm.upload.user"/>
+		<fail unless="mm.upload.ssh_key"/>
 
+        <!-- TODO Unix version -->
 		<exec executable="pcsp">
-			<arg value="-i"/><arg value="${mm.nightly.upload.ssh_key}"/>
+			<arg value="-i"/><arg value="${mm.upload.ssh_key}"/>
 			<arg value="-batch"/>
 			<arg file="${mm.distdir}/${mm.installer}"/>
-			<arg value="${mm.nightly.upload.user}@${mm.nightly.upload.server}:${mm.nightly.upload.path}/"/>
+			<arg value="${mm.upload.user}@${mm.upload.server}:${mm.upload.path}/"/>
 		</exec>
 	</target>
 </project>

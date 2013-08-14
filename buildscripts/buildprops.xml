@@ -5,8 +5,8 @@
 	     definitions but no targets. Everything defined in this file should
 	     have the "mm" prefix. -->
 
-  <!-- Whether to skip nonessential components that don't build -->
-  <property name="mm.build.failonerror" value="true"/>
+	<!-- Whether to skip nonessential components that don't build -->
+	<property name="mm.build.failonerror" value="true"/>
 
 	<!-- Path of repository root, from the project basedir -->
 	<dirname property="mm.basedir" file="${ant.file.mm.props}/.."/>

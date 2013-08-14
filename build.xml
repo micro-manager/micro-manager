@@ -111,7 +111,7 @@
 		<!-- Until we have the C++ output going to the proper
 		     directories, use vcbuild and 'delete' to clean -->
 		<cleancpp/>
-		<delete>
+		<delete failonerror="false">
 			<fileset dir="${mm.cpp.outdir}" includes="*.dll"/>
 		</delete>
 

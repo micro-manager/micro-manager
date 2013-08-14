@@ -1,0 +1,41 @@
+Setting up Windows automated build with Jenkins
+===============================================
+
+Configure Jenkins to prepare 3rdparty, 3rdpartypublic, micromanager, and
+micromanager/SecretDeviceAdapters
+
+
+Ant command line parameters for nightly build and installer upload
+------------------------------------------------------------------
+
+-f buildscripts\nightly\nightlybuild_Windows.xml
+-listener org.apache.tools.ant.XmlLogger
+-logger org.apache.tools.ant.listener.SimpleBigProjectLogger
+-Dmm.nightly.target=upload
+-Dmm.upload.user=...
+-Dmm.upload.ssh_key=....ppk
+-Dmm.upload.server=valelab.ucsf.edu
+-Dmm.upload.path=...
+-DXmlLogger.file=...
+
+The value for XmlLogger.file should be passed from Jenkins so that the build
+checking scripts (also called from Jenkins) can locate the log file.
+
+
+Ant command line parameters for generic test build
+--------------------------------------------------
+
+-f buildscripts\nightly\nightlybuild_Windows.xml
+-listener org.apache.tools.ant.XmlLogger
+-logger org.apache.tools.ant.listener.SimpleBigProjectLogger
+-Dmm.nightly.target=package
+-Dmm.versionstring=...
+-DXmlLogger.file=...
+
+
+Running the log summary script
+------------------------------
+
+Python 3.3 is required
+
+python buildscripts\nightly\genreport_Windows.py . buildlog.xml report.html
