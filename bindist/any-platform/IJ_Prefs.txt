@@ -1,5 +1,5 @@
-#ImageJ 1.44a Preferences
-#Wed May 26 16:23:22 PDT 2010
+#ImageJ 1.44g Preferences
+#Fri Oct 01 15:27:40 PDT 2010
 menu.size=14
 fps=7.0
 new.type=0
@@ -12,7 +12,7 @@ ij.y=125
 roicolor=\#FFFF00
 ij.x=460
 noise.sd=25.0
-prefs.options=53248
+prefs.options=16384
 new.slices=1
 raw.width=512
 new.height=400
