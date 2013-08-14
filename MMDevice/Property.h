@@ -410,7 +410,7 @@ public:
    PropertyCollection();
    ~PropertyCollection();
 
-   int CreateProperty(const char* name, const char* value, PropertyType eType, bool bReadOnly, ActionFunctor* pAct=0, bool initStatus=false);
+   int CreateProperty(const char* name, const char* value, PropertyType eType, bool bReadOnly, ActionFunctor* pAct=0, bool isPreInitProperty=false);
    int RegisterAction(const char* name, ActionFunctor* fpAct);
    int SetAllowedValues(const char* name, std::vector<std::string>& values);
    int ClearAllowedValues(const char* name);

@@ -573,12 +573,12 @@ public:
    * @param eType - property type (string, integer or float)
    * @param readOnly - is the property read-only or not
    * @param pAct - function object called on the property actions
-   * @param initStatus - initialization status of the property. True if the property must exist
-   * prior to initialization, false if it doesn't matter. 
+   * @param isPreInitProperty - whether to create a "pre-init" property, whose
+   * value will be available before Initialize() is called
    */
-   int CreateProperty(const char* name, const char* value, MM::PropertyType eType, bool readOnly, MM::ActionFunctor* pAct=0, bool initStatus=false)
+   int CreateProperty(const char* name, const char* value, MM::PropertyType eType, bool readOnly, MM::ActionFunctor* pAct=0, bool isPreInitProperty=false)
    {
-      return properties_.CreateProperty(name, value, eType, readOnly, pAct, initStatus);
+      return properties_.CreateProperty(name, value, eType, readOnly, pAct, isPreInitProperty);
    }
 
    /**
@@ -588,13 +588,13 @@ public:
    * @param eType - property type (string, integer or float)
    * @param readOnly - is the property read-only or not
    * @param memberFunction - Function pointer to the device object "OnProperty" member function, e.g. &MyDevice::OnState
-   * @param initStatus - initialization status of the property. True if the property must exist
-   * prior to initialization, false if it doesn't matter. 
+   * @param isPreInitProperty - whether to create a "pre-init" property, whose
+   * value will be available before Initialize() is called
    */
    int CreatePropertyWithHandler(const char* name, const char* value, MM::PropertyType eType, bool readOnly,
-                                 int(U::*memberFunction)(MM::PropertyBase* pProp, MM::ActionType eAct), bool initStatus=false) {
+                                 int(U::*memberFunction)(MM::PropertyBase* pProp, MM::ActionType eAct), bool isPreInitProperty=false) {
       CPropertyAction* pAct = new CPropertyAction((U*) this, memberFunction);
-      return CreateProperty(name, value, eType, readOnly, pAct, initStatus);
+      return CreateProperty(name, value, eType, readOnly, pAct, isPreInitProperty);
    }
 
    /**

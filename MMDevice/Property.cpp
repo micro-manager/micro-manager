@@ -378,7 +378,7 @@ unsigned MM::PropertyCollection::GetSize() const
    return (unsigned) properties_.size();
 }
 
-int MM::PropertyCollection::CreateProperty(const char* pszName, const char* pszValue, MM::PropertyType eType, bool bReadOnly, MM::ActionFunctor* pAct, bool initStatus)
+int MM::PropertyCollection::CreateProperty(const char* pszName, const char* pszValue, MM::PropertyType eType, bool bReadOnly, MM::ActionFunctor* pAct, bool isPreInitProperty)
 {
    // check if the name allready exists
    if (Find(pszName))
@@ -408,7 +408,7 @@ int MM::PropertyCollection::CreateProperty(const char* pszName, const char* pszV
    if (!pProp->Set(pszValue))
       return false;
    pProp->SetReadOnly(bReadOnly);
-   pProp->SetInitStatus(initStatus);
+   pProp->SetInitStatus(isPreInitProperty);
    properties_[pszName] = pProp;
 
    // assign action functor
