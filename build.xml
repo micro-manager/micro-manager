@@ -99,7 +99,8 @@
 
 		<mkdir dir="${mm.distdir}"/>
 		<delete file="${mm.distdir}/${mm.installer}"/>
-		<exec dir="${mm.basedir}" executable="${mm.basedir}/../3rdparty/Inno_Setup_5/iscc.exe">
+		<exec dir="${mm.basedir}" executable="${mm.basedir}/../3rdparty/Inno_Setup_5/iscc.exe"
+			failonerror="true">
 			<arg value="/O${mm.distdir}"/>
 			<arg value="/F${mm.installer.basename}"/>
 			<arg file="${mm.basedir}/buildscripts/installer-${mm.architecture}.iss"/>
