@@ -1,3 +1,8 @@
+import java.io.File;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+
+import ij.ImagePlus;
 import mmcorej.CMMCore;
 import mmcorej.StrVector;
 import mmcorej.TaggedImage;
@@ -6,6 +11,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.acquisition.MMAcquisition;
+import org.micromanager.acquisition.MMImageCache;
 import org.micromanager.acquisition.TaggedImageStorageDiskDefault;
 import org.micromanager.acquisition.TaggedImageStorageMultipageTiff;
 import org.micromanager.api.ScriptInterface;
@@ -44,10 +50,13 @@ public class WriteDataSet {
    public static final String FRAME_INDEX = "FrameIndex";
    public static final String CHANNEL_NAME = "Channel";
    public static final String POS_NAME = "PositionName";
+   public static final String POS_INDEX = "PositionIndex";
    public static final String PIX_TYPE = "PixelType";
    public static final String BIT_DEPTH = "BitDepth";
    public static final String SLICES_FIRST = "SlicesFirst";
    public static final String TIME_FIRST = "TimeFirst";
+   public static final String IJ_TYPE = "IJType";
+   public static final String TIME = "Time";
    
    public static void main(String[] args) {
       taggedWrite();
@@ -69,10 +78,10 @@ public class WriteDataSet {
 
       // set up acquisition parameters
       String acqName = "Test-A";
-      String rootName = "C:/AcqusitionData";
+      String rootName = "C:/AcqusitionData/Tests";
       boolean ome = false;
-      final int frames = 20;
-      final int slices = 10;
+      final int frames = 5;
+      final int slices = 3;
       final double deltaZ = 0.3;
       final String channelGroup = "Channel";
       StrVector channels = core.getAvailableConfigs(channelGroup);
@@ -87,18 +96,20 @@ public class WriteDataSet {
       try {
          // Create new data set
          JSONObject summary = new JSONObject();
-         summary.put("Slices", slices);
-         summary.put("Positions", 1);
-         summary.put("Channels", channels.size());
-         summary.put("Frames", frames);
-         summary.put("SlicesFirst", true);
-         summary.put("TimeFirst", false);
+         summary.put(SLICES, slices);
+         summary.put(POSITIONS, 1);
+         summary.put(CHANNELS, channels.size());
+         summary.put(FRAMES, frames);
+         summary.put(SLICES_FIRST, true);
+         summary.put(TIME_FIRST, false);
          
-         if (d == 2)
+         if (d == 2) {
             summary.put(PIX_TYPE, "GRAY16");
-         else if (d==1)
+            summary.put(IJ_TYPE, ImagePlus.GRAY16);
+         } else if (d==1) {
             summary.put(PIX_TYPE, "GRAY8");
-         else {
+            summary.put(IJ_TYPE, ImagePlus.GRAY8);
+         } else {
             System.out.println("Unsupported pixel type");
             return;
          }
@@ -123,12 +134,23 @@ public class WriteDataSet {
          summary.put("ChMaxes", chMaxs);
          
          TaggedImageStorage storage = null;
+         String path = rootName + "/" + acqName;
+         String actualPath = path;
+         File f = new File(path);
+         int count = 1;
+         while (f.exists()) {
+            actualPath = path + "_" + count;
+            f = new File(actualPath);
+         }
+         
          if (ome)
             // use ome compatible single file
-            storage = new TaggedImageStorageMultipageTiff(rootName, true, summary, true, true, false); 
+            storage = new TaggedImageStorageMultipageTiff(actualPath, true, summary, true, true, false); 
          else
             // use micro-manager format
-            storage = new TaggedImageStorageDiskDefault(rootName, true, summary); 
+            storage = new TaggedImageStorageDiskDefault(actualPath, true, summary);
+         
+         MMImageCache imageCache = new MMImageCache(storage);
 
          int imageCounter = 0;
          for (int fr=0; fr<frames; fr++)
@@ -167,14 +189,25 @@ public class WriteDataSet {
 
                   md.put(CHANNEL_INDEX, ch);
                   md.put(CHANNEL_NAME, channels.get(ch));
-                  md.put("PositionIndex", 1);
+                  md.put(POS_INDEX, 1);
 
                   md.put(XUM, x[0]);
                   md.put(YUM, y[0]);
                   md.put(ZUM, z);
+                  
+                  if (d == 2) {
+                     md.put(IJ_TYPE, ImagePlus.GRAY16);
+                  } else if (d==1) {
+                     md.put(IJ_TYPE, ImagePlus.GRAY8);
+                  } else {
+                     System.out.println("Unsupported pixel type");
+                     return;
+                  }
+
+                  md.put(TIME, new SimpleDateFormat("yyyyMMdd HHmmss").format(Calendar.getInstance().getTime())); // TIME FORMAT ???
 
                   TaggedImage ti = new TaggedImage(img, md);
-                  storage.putImage(ti);
+                  imageCache.putImage(ti);
                                     
                   imageCounter++;
                }
