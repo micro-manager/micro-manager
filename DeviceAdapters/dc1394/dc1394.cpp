@@ -434,7 +434,7 @@ int Cdc1394::OnFeature(MM::PropertyBase* pProp, MM::ActionType eAct, uint32_t &v
    }
    else if (eAct == MM::BeforeGet)
    {
-      CHECK_DC1394_ERROR(dc1394_feature_get_value(camera_, feature, &value), DEVICE_ERR,
+      LOG_DC1394_ERROR(dc1394_feature_get_value(camera_, feature, &value), 
             "Failed to get value for feature " + boost::lexical_cast<string>(feature));
       logMsg_.str("");
       logMsg_ << "Getting feature " << feature << ".  It is now " << value;
@@ -1657,8 +1657,13 @@ int Cdc1394::ResizeImageBuffer()
    
    // Start the image capture
    LogMessage("STARTING CAPTURE");
-   CHECK_DC1394_ERROR(dc1394_capture_setup(camera_, dmaBufferSize_, DC1394_CAPTURE_FLAGS_DEFAULT),
-         ERR_CAPTURE_SETUP_FAILED, "Failed to start capture");
+   if (dc1394_capture_setup(camera_, dmaBufferSize_, DC1394_CAPTURE_FLAGS_DEFAULT) != DC1394_SUCCESS)
+   {
+      CHECK_DC1394_ERROR(dc1394_capture_stop(camera_), DEVICE_ERR,
+            "Failed to stop capture");
+      CHECK_DC1394_ERROR(dc1394_capture_setup(camera_, dmaBufferSize_, DC1394_CAPTURE_FLAGS_DEFAULT),
+            ERR_CAPTURE_SETUP_FAILED, "Failed to start capture");
+   }
 
    // Set camera_ trigger mode
    // if( dc1394_external_trigger_set_mode(camera_, DC1394_TRIGGER_MODE_0) != DC1394_SUCCESS)
