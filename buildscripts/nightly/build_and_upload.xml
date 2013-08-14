@@ -14,8 +14,8 @@
 		<fail unless="mm.upload.user"/>
 		<fail unless="mm.upload.ssh_key"/>
 
-        <!-- TODO Unix version -->
-		<exec executable="pscp">
+		<!-- TODO Unix version -->
+		<exec executable="pscp" failonerror="true">
 			<arg value="-i"/><arg value="${mm.upload.ssh_key}"/>
 			<arg value="-batch"/>
 			<arg file="${mm.distdir}/${mm.installer}"/>
