@@ -1,0 +1,11 @@
+<project name="mm.pluginprops">
+	<include file="../buildscripts/buildprops.xml"/>
+
+	<property name="product" value="${ant.project.name}"/>
+	<property name="intdir" location="${mm.java.plugin.intdir}/${product}"/>
+	<property name="outdir" location="${mm.java.plugin.outdir}"/>
+	<property name="installdir" location="${mm.java.plugin.installdir}"/>
+
+	<!-- Additional classpath items for plugin; empty by default -->
+	<path id="plugin.classpath"/>
+</project>

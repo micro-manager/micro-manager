@@ -1,9 +1,9 @@
-<project name="mm.autofocus.plugins" basedir="." default="jar">
+<project name="mm.plugins" basedir="." default="jar">
 	<macrodef name="run-all">
 		<attribute name="target"/>
 		<sequential>
 			<subant target="@{target}">
-				<fileset dir="buildscripts" includes="*.xml" excludes="autofocusbuild.xml"/>
+				<fileset dir="." includes="*/build.xml"/>
 			</subant>
 		</sequential>
 	</macrodef>

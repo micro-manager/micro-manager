@@ -1,0 +1,50 @@
+<project name="mm.javabuild">
+	<!-- This file is intended to be used via 'import' in each Java
+	     project's buildfile -->
+
+	<include file="buildprops.xml"/>
+
+	<!-- Default settings (importing buildfile can override) -->
+	<property name="product" value="${ant.project.name}"/>
+	<property name="srcdir" value="src"/>
+	<property name="intdir" location="${mm.java.intdir}/${product}"/>
+	<property name="outdir" location="${mm.java.outdir}"/>
+	<property name="installdir" location="${mm.java.installdir}"/>
+
+	<!-- Settings that are normally not overridden -->
+	<property name="jarfilename" value="${product}.jar"/>
+	<property name="jarfile" value="${outdir}/${product}.jar"/>
+
+	<!-- Default classpath (override after the 'import' element) -->
+	<path id="project.classpath"/>
+
+	<target name="prerequisites" description="Build Jars for prerequisites"/>
+
+	<target name="compile" depends="prerequisites" description="Compile Java sources">
+		<mkdir dir="${intdir}"/>
+		<mm-javac srcdir="${srcdir}" destdir="${intdir}">
+			<classpath refid="project.classpath"/>
+		</mm-javac>
+	</target>
+
+	<target name="copy-files" depends="prerequisites" description="Copy resource files">
+		<copy todir="${intdir}">
+			<fileset dir="${srcdir}" includes="**/*.form"/>
+		</copy>
+	</target>
+
+	<target name="jar" depends="compile,copy-files" description="Build Jar file">
+		<mkdir dir="${outdir}"/>
+		<mm-jar basedir="${intdir}" destfile="${jarfile}"/>
+	</target>
+
+	<target name="install" depends="jar" description="Install Jar file">
+		<mkdir dir="${installdir}"/>
+		<copy todir="${installdir}" file="${jarfile}"/>
+	</target>
+
+	<target name="clean" description="Delete build product and intermediates">
+		<delete file="${jarfile}"/>
+		<delete dir="${intdir}"/>
+	</target>
+</project>

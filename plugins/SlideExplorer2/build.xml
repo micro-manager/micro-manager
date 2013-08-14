@@ -1,0 +1,11 @@
+<project name="SlideExplorer2" default="jar">
+	<property name="namespace" value="slide-explorer.plugin"/>
+	<import file="../clojurepluginbuild.xml"/>
+
+	<path id="plugin.classpath">
+		<pathelement location="${mm.java.lib.acq-engine}"/>
+		<pathelement location="${mm.java.lib.beanshell}"/>
+		<pathelement location="${mm.clojure.lib.core-cache}"/>
+		<pathelement location="${mm.clojure.lib.core-memoize}"/>
+	</path>
+</project>

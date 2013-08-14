@@ -1,0 +1,6 @@
+<project name="mm.pluginpaths">
+	<path id="project.classpath">
+		<path refid="mm.java.plugin.defaultclasspath"/>
+		<path refid="plugin.classpath"/>
+	</path>
+</project>

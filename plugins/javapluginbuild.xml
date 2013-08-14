@@ -1,0 +1,8 @@
+<project name="mm.javapluginbuild">
+	<!-- This file is intended to be used via 'import' in each plugin
+	     project's buildfile -->
+
+	<include file="pluginprops.xml"/>
+	<import file="../buildscripts/javabuild.xml"/>
+	<include file="pluginpaths.xml"/>
+</project>

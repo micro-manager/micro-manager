@@ -1,0 +1,4 @@
+<project name="MMOughtaFocus" default="jar">
+	<property name="sourcefile" value="OughtaFocus.java"/>
+	<import file="autofocusbuild.xml"/>
+</project>

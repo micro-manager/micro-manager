@@ -1,0 +1,13 @@
+<project name="Gaussian" basedir="." default="jar">
+	<!-- TODO Should just move 'source' to 'src' and remove this line -->
+	<property name="srcdir" location="source"/>
+
+	<import file="../javapluginbuild.xml"/>
+
+	<path id="plugin.classpath">
+		<pathelement location="${mm.java.lib.jcommon}"/>
+		<pathelement location="${mm.java.lib.jfreechart}"/>
+		<pathelement location="${mm.java.lib.protobuf}"/>
+		<pathelement location="${mm.java.lib.tsfproto}"/>
+	</path>
+</project>

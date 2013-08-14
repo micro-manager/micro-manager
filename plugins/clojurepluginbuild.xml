@@ -1,0 +1,8 @@
+<project name="mm.clojurepluginbuild">
+	<!-- This file is intended to be used via 'import' in each plugin
+	     project's buildfile -->
+
+	<include file="pluginprops.xml"/>
+	<import file="../buildscripts/clojurebuild.xml"/>
+	<include file="pluginpaths.xml"/>
+</project>

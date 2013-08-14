@@ -1,29 +1,8 @@
-<!-- Ant makefile for the Micro-Manager ClojureEditor plugin  -->
-<!-- This file assumes Micro-Manager project tree structure -->
+<project name="ClojureEditor" default="jar">
+	<import file="../javapluginbuild.xml"/>
 
-<project name="MMClojureEditor" default="build">
-
-	<target name="compile" description="Compile ClojureEditor plugin.">
-		<mkdir dir="build" />
-		<javac srcdir="./src" destdir="./build" optimize="on" source="1.5" target="1.5" debug="on">
-			<classpath>
-				<pathelement path="../../mmstudio/MMJ_.jar"/>
-				<fileset dir="../../../3rdpartypublic/classext/" >
-					<include name="*.jar"/>
-				</fileset>
-			</classpath>
-
-		</javac>
-	</target>
-
-	<target name="build" description="Build ClojureEditor.jar">
-		<jar jarfile="ClojureEditor.jar" basedir="build" />
-		<copy file="ClojureEditor.jar" todir="..\..\Install_AllPlatforms\micro-manager\mmplugins\" />
-	</target>
-	
-	<target name="clean" description="Delete the ClojureEditor build files.">
-		<delete dir="build" />
-		<delete file="ClojureEditor.jar" />
-	</target>
-	
+	<path id="plugin.classpath">
+		<pathelement location="${mm.java.lib.clojure}"/>
+		<pathelement location="${mm.clojure.lib.clooj}"/>
+	</path>
 </project>

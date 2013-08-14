@@ -1,0 +1,12 @@
+<project name="MMAcqEngine">
+	<property name="namespace" value="org.micromanager.acq-engine"/>
+
+	<import file="../buildscripts/clojurebuild.xml"/>
+
+	<path id="project.classpath">
+		<pathelement location="${mm.java.lib.imagej}"/>
+		<pathelement location="${mm.java.lib.mmcorej}"/>
+		<pathelement location="${mm.java.lib.mmstudio}"/>
+		<pathelement location="${mm.java.lib.beanshell}"/>
+	</path>
+</project>

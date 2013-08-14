@@ -1,0 +1,104 @@
+<project name="mm.props">
+	<!-- Global definitions for building Micro-Manager -->
+
+	<!-- This file should contain property, reference, and macro
+	     definitions but no targets. Everything defined in this file should
+	     have the "mm" prefix. -->
+
+	<!-- Path of repository root, from the project basedir -->
+	<dirname property="mm.basedir" file="${ant.file.mm.props}/.."/>
+
+	<!-- Default build settings; can be overridden on command line -->
+	<!-- TODO Provide reasonable defaults on Unix -->
+	<property name="mm.configuration" value="Release"/>
+	<property name="mm.architecture" value="x64"/>
+
+	<!-- Root of build intermediates directory -->
+	<property name="mm.intdir" location="${mm.basedir}/build/intermediates"/>
+
+	<!-- XXX Override the C++ output dir until we update the Visual Studio
+	     projects -->
+	<property name="mm.cpp.outdir" location="${mm.basedir}/bin_${mm.architecture}"/>
+
+	<!-- Root of build products directory -->
+	<property name="mm.outdir" location="${mm.basedir}/build"/>
+
+	<!-- Root of install/stage directory -->
+	<!-- Unlike the intermediates and products directory, staging can be
+	     configuration/architecture-specific even for platform-independent
+	     (e.g. Java) components. -->
+	<property name="mm.stagedir" location="${mm.basedir}/stage"/>
+	<property name="mm.installdir" location="${mm.stagedir}/${mm.configuration}/${mm.architecture}"/>
+
+	<!-- C++ components -->
+	<property name="mm.cpp.intdir" location="${mm.intdir}/${mm.configuration}/${mm.architecture}"/>
+	<property name="mm.cpp.outdir" location="${mm.outdir}/${mm.configuration}/${mm.architecture}"/>
+
+	<!-- Swig output -->
+	<property name="mm.swig.gensrcdir" location="${mm.intdir}/Swig"/>
+
+	<!-- Java components -->
+	<property name="mm.java.intdir" location="${mm.intdir}/Classes"/>
+	<property name="mm.java.outdir" location="${mm.outdir}/Java"/>
+	<property name="mm.java.installdir" location="${mm.installdir}/plugins/Micro-Manager"/>
+
+	<!-- Java plugins -->
+	<property name="mm.java.plugin.srcdir" location="${mm.basedir}/plugins"/>
+	<property name="mm.java.plugin.intdir" location="${mm.java.intdir}/plugins"/>
+	<property name="mm.java.plugin.outdir" location="${mm.java.outdir}/plugins"/>
+	<property name="mm.java.plugin.installdir" location="${mm.installdir}/mmplugins"/>
+	<property name="mm.java.autofocus.installdir" location="${mm.installdir}/mmautofocus"/>
+
+	<!-- Java library classpaths -->
+	<property name="mm.java.lib.mmcorej" location="${mm.java.outdir}/MMCoreJ.jar"/>
+	<property name="mm.java.lib.mmstudio" location="${mm.java.outdir}/MMJ_.jar"/>
+	<property name="mm.java.lib.acq-engine" location="${mm.java.outdir}/MMAcqEngine.jar"/>
+
+  <!-- Other directories -->
+  <property name="mm.scripts.srcdir" location="${mm.basedir}/scripts"/>
+  <property name="mm.scripts.installdir" location="${mm.installdir}/scripts"/>
+
+	<!-- Third-party lib paths -->
+	<include file="javalibs.xml"/>
+
+	<!-- Packages available by default from plugins -->
+	<path id="mm.java.plugin.defaultclasspath">
+		<pathelement location="${mm.java.lib.commons-math}"/>
+		<pathelement location="${mm.java.lib.imagej}"/>
+		<pathelement location="${mm.java.lib.mmcorej}"/>
+		<pathelement location="${mm.java.lib.mmstudio}"/>
+		<pathelement location="${mm.java.lib.swing-layout}"/>
+	</path>
+
+	<!-- Compiling Java -->
+	<presetdef name="mm-javac">
+		<javac debug="on" debuglevel="lines,vars.source"
+			optimize="on" deprecation="off"
+			source="1.5" target="1.5"
+			includeantruntime="false"/>
+	</presetdef>
+
+	<presetdef name="mm-jar">
+		<jar compress="true" index="true" indexMetaInf="true"/>
+	</presetdef>
+
+	<macrodef name="mm-cljc">
+		<attribute name="namespace"/>
+		<attribute name="srcdir"/>
+		<attribute name="destdir"/>
+		<element name="clj-classpath" optional="false"/>
+		<sequential>
+			<java classname="clojure.lang.Compile" fork="true" failonerror="true">
+				<arg value="@{namespace}"/>
+				<sysproperty key="clojure.compile.path" value="@{destdir}"/>
+				<sysproperty key="java.library.path" value="${mm.cpp.outdir}"/>
+				<classpath>
+					<pathelement location="@{destdir}"/>
+					<pathelement location="@{srcdir}"/>
+					<pathelement location="${mm.java.lib.clojure}"/>
+					<clj-classpath/>
+				</classpath>
+			</java>
+		</sequential>
+	</macrodef>
+</project>
