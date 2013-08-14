@@ -51,11 +51,11 @@
 		<copy todir="${mm.java.outdir}" file="${mm.cpp.outdir}/MMCoreJ.jar"/>
 	</target>
 
-	<target name="build" depends="build-cpp,set-version" description="Build all components">
+	<target name="build" depends="set-version,build-cpp" description="Build all components">
 		<run-all-java-projects target="jar"/>
 	</target>
 
-	<target name="stage" depends="build" description="Assemble files to install">
+	<target name="stage" depends="set-version,build-cpp" description="Assemble files to install">
 		<run-all-java-projects target="install"/>
 
 		<!-- Until we update the C++ build, just copy all output files
