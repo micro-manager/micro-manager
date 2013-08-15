@@ -31,7 +31,7 @@ public class AcqStandalone {
       s.channels = new ArrayList<ChannelSpec>();
       ChannelSpec ch1 = new ChannelSpec();
       ch1.config_ = "DAPI";
-      ch1.name_ = "DAPI"; // what is the difference from config?
+      ch1.name_ = "DAPI"; // what is the difference between 'name' and 'config'?
       ch1.exposure_ = 5.0;
       s.channels.add(ch1);
       ChannelSpec ch2 = new ChannelSpec();
@@ -67,7 +67,9 @@ public class AcqStandalone {
          e.printStackTrace();
       }
       
-      // List<DataProcessor<TaggedImage>> imageProcessors =new List<DataProcessor<TaggedImage>>(); // can't instantiate this class???
+      // List<DataProcessor<TaggedImage>> imageProcessors =new List<DataProcessor<TaggedImage>>();
+      // The line above does not work, because we need a specific derived class - 
+      // so if we don't need any processors, we are forced to use null value
       List<DataProcessor<TaggedImage>> imageProcessors = null;
       
       try {
@@ -75,10 +77,10 @@ public class AcqStandalone {
                acqEng,
                s,
                imageProcessors,
-               null, // we have no GUI
+               null, // we have no GUI so we pass null?
                s.save);
          
-         taggedImagePipeline.wait();
+         taggedImagePipeline.wait(); // wait for the thread to finish
          
       } catch (ClassNotFoundException e) {
          // TODO Auto-generated catch block
