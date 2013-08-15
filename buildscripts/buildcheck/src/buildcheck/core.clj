@@ -155,13 +155,14 @@
   (let [installer32-ok (exe-on-server? 32 today-token)
         installer64-ok (exe-on-server? 64 today-token)
         mac-ok (mac-build-on-server? today-token)
-        missing-vcproj-files (missing-vcproj)]
+        missing-vcproj-files (missing-vcproj)
+        missing-links (missing-device-links)]
     (when-not (and (not testmode)
                    installer32-ok
                    installer64-ok
                    mac-ok
                    (empty? missing-vcproj-files)
-                   (empty? missing-device-links))
+                   (empty? missing-links))
       (str
         "MICROMANAGER BUILD STATUS REPORT\n"
         "\n\nIs Windows 32-bit installer download available on website?\n"
@@ -173,7 +174,7 @@
         (report-segment "Missing .vcproj files" missing-vcproj-files)
         (report-segment "Uncompiled device adapters (Win32)" (missing-device-adapters 32))
         (report-segment "Uncompiled device adapters (x64)" (missing-device-adapters 64))
-        (report-segment "Missing device links" (missing-device-links))
+        (report-segment "Missing device links" (missing-links))
         (report-segment "Missing device pages" (missing-device-pages))))))
 
 (defn make-full-report [send?]
