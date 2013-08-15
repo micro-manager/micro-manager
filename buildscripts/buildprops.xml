@@ -93,7 +93,7 @@
 
 	<!-- Compiling Java -->
 	<presetdef name="mm-javac">
-		<javac debug="on" debuglevel="lines,vars.source"
+		<javac debug="on" debuglevel="lines,vars,source"
 			optimize="on" deprecation="off"
 			source="1.5" target="1.5"
 			includeantruntime="false"/>
