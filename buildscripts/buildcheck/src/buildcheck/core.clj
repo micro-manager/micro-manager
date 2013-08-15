@@ -174,7 +174,7 @@
         (report-segment "Missing .vcproj files" missing-vcproj-files)
         (report-segment "Uncompiled device adapters (Win32)" (missing-device-adapters 32))
         (report-segment "Uncompiled device adapters (x64)" (missing-device-adapters 64))
-        (report-segment "Missing device links" (missing-links))
+        (report-segment "Missing device links" missing-links)
         (report-segment "Missing device pages" (missing-device-pages))))))
 
 (defn make-full-report [send?]
