@@ -116,7 +116,7 @@ public class SBSPlate {
          firstWellY_ = 13670.0;        
          wellSizeX_ = 15540.0;
          wellSizeY_ = 15540.0;
-         circular_ = false;
+         circular_ = true;
       } else if (id.equals(SBS_96_WELL)){
          id_ = SBS_96_WELL;
          numColumns_ = 12;
