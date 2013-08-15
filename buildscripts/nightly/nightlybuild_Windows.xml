@@ -1,24 +1,28 @@
 <project name="mm.nightly.windows" basedir="../..">
 	<property name="mm.platform" value="Windows"/>
+	<property name="mm.configuration" value="Release"/>
 
-	<!-- Override to 'upload' from command line if desired -->
-	<property name="mm.nightly.target" value="package"/>
+	<!-- Use the nightly-build-style version string -->
+	<property name="mm.build.mode" value="nightly"/>
 
-	<!-- mm.upload.* must be set from command line if uploading -->
+	<!-- Don't give up build if a device adapter or plugin is broken -->
+	<property name="mm.build.failonerror" value="false"/>
 
+	<!-- Default name for XML log file -->
+	<!-- Specify -listener org.apache.tools.ant.XmlLogger on the command
+	     line to enable. -->
 	<tstamp/>
 	<property name="XmlLogger.file" location="buildlog_${DSTAMP}T${TSTAMP}.xml"/>
 
 
-	<property name="mm.nightly.build.script" location="buildscripts/nightly/build_and_upload.xml"/>
+	<ant antfile="build.xml" target="unstage-all" useNativeBaseDir="true"/>
+	<ant antfile="build.xml" target="clean-all" useNativeBaseDir="true"/>
 
-	<ant antfile="${mm.nightly.build.script}" target="unstage-all" useNativeBaseDir="true"/>
-	<ant antfile="${mm.nightly.build.script}" target="clean-all" useNativeBaseDir="true"/>
-
-	<ant antfile="${mm.nightly.build.script}" target="${mm.nightly.target}" useNativeBaseDir="true">
+	<ant antfile="build.xml" target="package" useNativeBaseDir="true">
 		<property name="mm.architecture" value="x64"/>
 	</ant>
-	<ant antfile="${mm.nightly.build.script}" target="${mm.nightly.target}" useNativeBaseDir="true">
+
+	<ant antfile="build.xml" target="package" useNativeBaseDir="true">
 		<property name="mm.architecture" value="Win32"/>
 	</ant>
 </project>
