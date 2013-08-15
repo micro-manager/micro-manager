@@ -88,7 +88,9 @@ public class SBSPlate {
    }
 
    public boolean initialize(String id) {
-      if (id.equals(SBS_24_WELL)){
+      /* // SDS definition, does not seem to be adhered to
+         // replaced with definition below
+        if (id.equals(SBS_24_WELL)){
          id_ = SBS_24_WELL;
          numColumns_ = 6;
          numRows_ = 4;
@@ -101,6 +103,20 @@ public class SBSPlate {
          wellSizeX_ = 14000.0;
          wellSizeY_ = 14000.0;
          circular_ = true;
+*/
+      if (id.equals(SBS_24_WELL)){
+         id_ = SBS_24_WELL;
+         numColumns_ = 6;
+         numRows_ = 4;
+         sizeXUm_ = 127500.0;
+         sizeYUm_ = 85250.0;
+         wellSpacingX_ = 19300.0;
+         wellSpacingY_ = 19300.0;
+         firstWellX_ = 17050.0;
+         firstWellY_ = 13670.0;        
+         wellSizeX_ = 15540.0;
+         wellSizeY_ = 15540.0;
+         circular_ = false;
       } else if (id.equals(SBS_96_WELL)){
          id_ = SBS_96_WELL;
          numColumns_ = 12;
