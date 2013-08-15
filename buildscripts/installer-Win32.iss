@@ -12,7 +12,6 @@ DefaultDirName=C:/Program Files/Micro-Manager-1.4
 DefaultGroupName=Micro-Manager-1.4
 OutputBaseFilename=MMSetup_
 Compression=lzma
-PrivilegesRequired=admin
 SolidCompression=true
 VersionInfoVersion=1.4
 VersionInfoCompany=(c)University of California San Francisco
@@ -21,6 +20,8 @@ AppCopyright=University of California San Francisco, 100XImaging Inc
 ShowLanguageDialog=yes
 AppVersion=1.4
 AppID=31830087-F23D-4198-B67D-AD4A2A69147F
+ArchitecturesAllowed=
+ArchitecturesInstallIn64BitMode=
 
 [Languages]
 Name: eng; MessagesFile: compiler:Default.isl
@@ -56,36 +57,34 @@ Source: ..\..\3rdparty\Microsoft\VisualC++\lib\x86\Microsoft.VC90.OPENMP\vcomp90
 Source: ..\..\3rdparty\Microsoft\VisualC++\lib\x86\Microsoft.VC90.OPENMP\Microsoft.VC90.OpenMP.manifest ; DestDir: {app}\Microsoft.VC90.OPENMP; Flags: ignoreversion
 
 
-;include the jre for 32 bit
-Source: ..\..\3rdparty\jre6_32\* ; DestDir: {app}\jre; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: ..\..\3rdparty\jre\* ; DestDir: {app}\jre; Flags: ignoreversion recursesubdirs createallsubdirs
 
-; device libraries
-Source: ..\stage\Release\Win32\inpout32.dll; DestDir: {app}; Flags: ignoreversion
-Source: ..\stage\Release\Win32\atmcd32d.dll; DestDir: {app}; Flags: ignoreversion
-Source: ..\stage\Release\Win32\usb_main.bin; DestDir: {app}; Flags: ignoreversion
+
+; Vendor DLLs
+Source: ..\..\3rdpartypublic\hidapi\hidapi-0.7.0\windows\Win32\Release\hidapi.dll; DestDir: {app}; Flags: ignoreversion
 Source: ..\drivers\K8061\x86\libusb0_x86.dll; DestDir: {app}; DestName: libusb0.dll; Flags: ignoreversion
-Source: ..\stage\Release\Win32\camconj.dll; DestDir: {app}; Flags: ignoreversion
+Source: ..\stage\Release\Win32\DSLRRemoteLib.dll; DestDir: {app}; Flags: ignoreversion
 Source: ..\stage\Release\Win32\FireCamJ.dll; DestDir: {app}; Flags: ignoreversion
-Source: ..\stage\Release\Win32\MexJCam.dll; DestDir: {app}; Flags: ignoreversion
-Source: ..\stage\Release\Win32\ProcessLib.dll; DestDir: {app}; Flags: ignoreversion
 Source: ..\stage\Release\Win32\FxLib.dll; DestDir: {app}; Flags: ignoreversion
+Source: ..\stage\Release\Win32\LaserCombinerSDK.dll; DestDir: {app}; Flags: ignoreversion
+Source: ..\stage\Release\Win32\MexJCam.dll; DestDir: {app}; Flags: ignoreversion
+Source: ..\stage\Release\Win32\NKRemoteLib.dll; DestDir: {app}; Flags: ignoreversion
+Source: ..\stage\Release\Win32\PCO_Kamlib.dll; DestDir: {app}; Flags: ignoreversion
+Source: ..\stage\Release\Win32\PSRemoteLib.dll; DestDir: {app}; Flags: ignoreversion
+Source: ..\stage\Release\Win32\ProcessLib.dll; DestDir: {app}; Flags: ignoreversion
 Source: ..\stage\Release\Win32\SysInfo.dll; DestDir: {app}; Flags: ignoreversion
-Source: ..\stage\Release\Win32\opencv_highgui231.dll; DestDir: {app}; Flags: ignoreversion
-Source: ..\stage\Release\Win32\opencv_core231.dll; DestDir: {app}; Flags: ignoreversion
-Source: ..\stage\Release\Win32\mcam.dll; DestDir: {app}; Flags: ignoreversion
+Source: ..\stage\Release\Win32\XCLIBWNT.dll; DestDir: {app}; Flags: ignoreversion
+Source: ..\stage\Release\Win32\atmcd32d.dll; DestDir: {app}; Flags: ignoreversion
+Source: ..\stage\Release\Win32\camconj.dll; DestDir: {app}; Flags: ignoreversion
 Source: ..\stage\Release\Win32\hrfw.dll; DestDir: {app}; Flags: ignoreversion
+Source: ..\stage\Release\Win32\inpout32.dll; DestDir: {app}; Flags: ignoreversion
+Source: ..\stage\Release\Win32\mcam.dll; DestDir: {app}; Flags: ignoreversion
 Source: ..\stage\Release\Win32\mcammr.dll; DestDir: {app}; Flags: ignoreversion
 Source: ..\stage\Release\Win32\mrc5.dll; DestDir: {app}; Flags: ignoreversion
 Source: ..\stage\Release\Win32\mrfw.dll; DestDir: {app}; Flags: ignoreversion
-Source: ..\stage\Release\Win32\XCLIBWNT.dll; DestDir: {app}; Flags: ignoreversion
-Source: ..\stage\Release\Win32\LaserCombinerSDK.dll; DestDir: {app}; Flags: ignoreversion
-Source: ..\stage\Release\Win32\PCO_Kamlib.dll; DestDir: {app}; Flags: ignoreversion
-Source: ..\..\3rdpartypublic\hidapi\hidapi-0.7.0\windows\Win32\Release\hidapi.dll; DestDir: {app}; Flags: ignoreversion
-
-; Breeze stuff
-Source: ..\stage\Release\Win32\DSLRRemoteLib.dll; DestDir: {app}; Flags: ignoreversion
-Source: ..\stage\Release\Win32\NKRemoteLib.dll; DestDir: {app}; Flags: ignoreversion
-Source: ..\stage\Release\Win32\PSRemoteLib.dll; DestDir: {app}; Flags: ignoreversion
+Source: ..\stage\Release\Win32\opencv_core231.dll; DestDir: {app}; Flags: ignoreversion
+Source: ..\stage\Release\Win32\opencv_highgui231.dll; DestDir: {app}; Flags: ignoreversion
+Source: ..\stage\Release\Win32\usb_main.bin; DestDir: {app}; Flags: ignoreversion
 
 Source: ..\stage\Release\Win32\MMCoreJ_wrap.dll; DestDir: {app}; Flags: ignoreversion
 
@@ -97,9 +96,6 @@ Source: ..\stage\Release\Win32\_MMCorePy.pyd; DestDir: {app}; Flags: ignoreversi
 Source: ..\stage\Release\Win32\MMCorePy.py; DestDir: {app}; Flags: ignoreversion skipifsourcedoesntexist
 Source: ..\stage\Release\Win32\MMCoreWrapDemo.py; DestDir: {app}; Flags: ignoreversion skipifsourcedoesntexist
 
-; drivers
-;Source: ..\drivers\*; DestDir: {app}\drivers; Flags: ignoreversion recursesubdirs
-
 ; beanshell scripts
 Source: ..\scripts\*; DestDir: {app}\scripts; Flags: ignoreversion
 
@@ -108,7 +104,7 @@ Source: ..\stage\Release\Win32\MMConfig_demo.cfg; DestDir: {app}; Flags: ignorev
 
 ; ImageJ files
 Source: ..\stage\Release\Win32\ImageJ.exe; DestDir: {app}; Flags: ignoreversion
-Source: ..\stage\Release\Win32\ImageJ.cfg; DestDir: {app}; Flags: onlyifdoesntexist;  Permissions: users-modify
+Source: ..\stage\Release\Win32\ImageJ.cfg; DestDir: {app}; Flags: onlyifdoesntexist; Permissions: users-modify
 Source: ..\..\3rdpartypublic\classext\ij.jar; DestDir: {app}; Flags: ignoreversion
 Source: ..\stage\Release\Win32\IJ_Prefs.txt; DestDir: {app}; Flags: onlyifdoesntexist
 Source: ..\stage\Release\Win32\macros\*; DestDir: {app}\macros; Flags: ignoreversion recursesubdirs createallsubdirs
@@ -120,6 +116,7 @@ Source: ..\stage\Release\Win32\mmautofocus\*; DestDir: {app}\mmautofocus; Flags:
 
 [DIRS]
 Name: "{app}"; Permissions: users-modify
+; TODO Test if subdir permissions really need to be set here.
 Name: "{app}\macros"; Permissions: users-modify
 Name: "{app}\plugins"; Permissions: users-modify
 Name: "{app}\mmplugins"; Permissions: users-modify
@@ -129,9 +126,6 @@ Name: "{app}\mmautofocus"; Permissions: users-modify
 Name: {group}\Micro-Manager-1.4; Filename: {app}\ImageJ.exe; WorkingDir: {app}
 Name: {group}\{cm:UninstallProgram,Micro-Manager-1.4}; Filename: {uninstallexe}
 Name: {commondesktop}\Micro-Manager 1.4; Filename: {app}\ImageJ.exe; Tasks: desktopicon; WorkingDir: {app}; IconIndex: 0
-
-[Registry]
-Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; ValueType: string; ValueName: "DISCOVERABILITYTEST"; ValueData: "1"
 
 [Run]
 Filename: "{app}\ImageJ.exe"; WorkingDir: "{app}"; Description: {cm:LaunchProgram,Micro-Manager-1.4}; Flags: nowait postinstall

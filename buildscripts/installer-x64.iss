@@ -21,9 +21,6 @@ ShowLanguageDialog=yes
 AppVersion=1.4
 AppID=31830087-F23D-4198-B67D-AD4A2A69147F
 ArchitecturesAllowed=x64
-; "ArchitecturesInstallIn64BitMode=x64" requests that the install be
-; done in "64-bit mode" on x64, meaning it should use the native
-; 64-bit Program Files directory and the 64-bit view of the registry.
 ArchitecturesInstallIn64BitMode=x64
 
 [Languages]
@@ -60,28 +57,35 @@ Source: ..\..\3rdparty\Microsoft\VisualC++\lib\amd64\Microsoft.VC90.OPENMP\vcomp
 Source: ..\..\3rdparty\Microsoft\VisualC++\lib\amd64\Microsoft.VC90.OPENMP\Microsoft.VC90.OpenMP.manifest ; DestDir: {app}\Microsoft.VC90.OPENMP; Flags: ignoreversion
 
 
-;
 Source: ..\..\3rdparty\jre\* ; DestDir: {app}\jre; Flags: ignoreversion recursesubdirs createallsubdirs
 
 
-; device libraries
-Source: ..\stage\Release\x64\atmcd64d.dll; DestDir: {app}; Flags: ignoreversion
-Source: ..\stage\Release\x64\inpoutx64.dll; DestDir: {app}; Flags: ignoreversion
-Source: ..\stage\Release\x64\MMCoreJ_wrap.dll; DestDir: {app}; Flags: ignoreversion
+; Vendor DLLs
+Source: ..\..\3rdpartypublic\hidapi\hidapi-0.7.0\windows\x64\Release\hidapi.dll; DestDir: {app}; Flags: ignoreversion
 Source: ..\drivers\K8061\amd64\libusb0.dll; DestDir: {app}; DestName: libusb0.dll; Flags: ignoreversion
+
+
 Source: ..\stage\Release\x64\FxLib.dll; DestDir: {app}; Flags: ignoreversion
+Source: ..\stage\Release\x64\LaserCombinerSDK64.dll; DestDir: {app}; Flags: ignoreversion
+
+
+Source: ..\stage\Release\x64\PCO_Kamlib64.dll; DestDir: {app}; Flags: ignoreversion
+
+
 Source: ..\stage\Release\x64\SysInfo.dll; DestDir: {app}; Flags: ignoreversion
-Source: ..\stage\Release\x64\opencv_highgui231.dll; DestDir: {app}; Flags: ignoreversion
-Source: ..\stage\Release\x64\opencv_core231.dll; DestDir: {app}; Flags: ignoreversion
-Source: ..\stage\Release\x64\mcam64.dll; DestDir: {app}; Flags: ignoreversion
+Source: ..\stage\Release\x64\XCLIBW64.dll; DestDir: {app}; Flags: ignoreversion
+Source: ..\stage\Release\x64\atmcd64d.dll; DestDir: {app}; Flags: ignoreversion
+
 Source: ..\stage\Release\x64\hrfw64.dll; DestDir: {app}; Flags: ignoreversion
+Source: ..\stage\Release\x64\inpoutx64.dll; DestDir: {app}; Flags: ignoreversion
+Source: ..\stage\Release\x64\mcam64.dll; DestDir: {app}; Flags: ignoreversion
+Source: ..\stage\Release\x64\mcammr64.dll; DestDir: {app}; Flags: ignoreversion
 Source: ..\stage\Release\x64\mrc564.dll; DestDir: {app}; Flags: ignoreversion
 Source: ..\stage\Release\x64\mrfw64.dll; DestDir: {app}; Flags: ignoreversion
-Source: ..\stage\Release\x64\mcammr64.dll; DestDir: {app}; Flags: ignoreversion
-Source: ..\stage\Release\x64\XCLIBW64.dll; DestDir: {app}; Flags: ignoreversion
-Source: ..\stage\Release\x64\LaserCombinerSDK64.dll; DestDir: {app}; Flags: ignoreversion
-source: ..\stage\Release\x64\PCO_Kamlib64.dll; DestDir: {app}; Flags: ignoreversion
-Source: ..\..\3rdpartypublic\hidapi\hidapi-0.7.0\windows\x64\Release\hidapi.dll; DestDir: {app}; Flags: ignoreversion
+Source: ..\stage\Release\x64\opencv_core231.dll; DestDir: {app}; Flags: ignoreversion
+Source: ..\stage\Release\x64\opencv_highgui231.dll; DestDir: {app}; Flags: ignoreversion
+
+Source: ..\stage\Release\x64\MMCoreJ_wrap.dll; DestDir: {app}; Flags: ignoreversion
 
 ; device adapters
 Source: ..\stage\Release\x64\mmgr_dal_*.dll; DestDir: {app}; Flags: ignoreversion
@@ -91,9 +95,6 @@ Source: ..\stage\Release\x64\_MMCorePy.pyd; DestDir: {app}; Flags: ignoreversion
 Source: ..\stage\Release\x64\MMCorePy.py; DestDir: {app}; Flags: ignoreversion skipifsourcedoesntexist
 Source: ..\stage\Release\x64\MMCoreWrapDemo.py; DestDir: {app}; Flags: ignoreversion skipifsourcedoesntexist
 
-; drivers
-;Source: ..\drivers\*; DestDir: {app}\drivers; Flags: ignoreversion recursesubdirs
-
 ; beanshell scripts
 Source: ..\scripts\*; DestDir: {app}\scripts; Flags: ignoreversion
 
@@ -101,7 +102,7 @@ Source: ..\scripts\*; DestDir: {app}\scripts; Flags: ignoreversion
 Source: ..\stage\Release\x64\MMConfig_demo.cfg; DestDir: {app}; Flags: ignoreversion
 
 ; ImageJ files
-Source: ..\..\3rdpartypublic\JavaLauncher\ImageJ.exe; DestDir: {app}; Flags: ignoreversion
+Source: ..\stage\Release\x64\ImageJ.exe; DestDir: {app}; Flags: ignoreversion
 Source: ..\stage\Release\x64\ImageJ.cfg; DestDir: {app}; Flags: onlyifdoesntexist; Permissions: users-modify
 Source: ..\..\3rdpartypublic\classext\ij.jar; DestDir: {app}; Flags: ignoreversion
 Source: ..\stage\Release\x64\IJ_Prefs.txt; DestDir: {app}; Flags: onlyifdoesntexist
@@ -114,6 +115,11 @@ Source: ..\stage\Release\x64\mmautofocus\*; DestDir: {app}\mmautofocus; Flags: i
 
 [DIRS]
 Name: "{app}"; Permissions: users-modify
+; TODO Test if subdir permissions really need to be set here.
+Name: "{app}\macros"; Permissions: users-modify
+Name: "{app}\plugins"; Permissions: users-modify
+Name: "{app}\mmplugins"; Permissions: users-modify
+Name: "{app}\mmautofocus"; Permissions: users-modify
 
 [Icons]
 Name: {group}\Micro-Manager-1.4; Filename: {app}\ImageJ.exe; WorkingDir: {app}
@@ -121,4 +127,4 @@ Name: {group}\{cm:UninstallProgram,Micro-Manager-1.4}; Filename: {uninstallexe}
 Name: {commondesktop}\Micro-Manager 1.4; Filename: {app}\ImageJ.exe; Tasks: desktopicon; WorkingDir: {app}; IconIndex: 0
 
 [Run]
-Filename: "{app}\ImageJ.exe"; Description: {cm:LaunchProgram,Micro-Manager-1.4}; Flags: nowait postinstall
+Filename: "{app}\ImageJ.exe"; WorkingDir: "{app}"; Description: {cm:LaunchProgram,Micro-Manager-1.4}; Flags: nowait postinstall
