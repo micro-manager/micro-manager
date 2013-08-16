@@ -39,7 +39,7 @@ public class DefaultTaggedImagePipeline {
            boolean diskCached) throws ClassNotFoundException, InstantiationException, IllegalAccessException, MMScriptException {
 
       // Start up the acquisition engine
-      BlockingQueue<TaggedImage> taggedImageQueue = acqEngine.run(sequenceSettings);
+      BlockingQueue<TaggedImage> taggedImageQueue = acqEngine.run(sequenceSettings, true, gui.getPositionList(), gui.getAutofocusManager().getDevice());
       summaryMetadata_ = acqEngine.getSummaryMetadata();
 
       // Set up the DataProcessor<TaggedImage> sequence
