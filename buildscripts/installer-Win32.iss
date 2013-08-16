@@ -57,7 +57,7 @@ Source: ..\..\3rdparty\Microsoft\VisualC++\lib\x86\Microsoft.VC90.OPENMP\vcomp90
 Source: ..\..\3rdparty\Microsoft\VisualC++\lib\x86\Microsoft.VC90.OPENMP\Microsoft.VC90.OpenMP.manifest ; DestDir: {app}\Microsoft.VC90.OPENMP; Flags: ignoreversion
 
 
-Source: ..\..\3rdparty\jre\* ; DestDir: {app}\jre; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: ..\..\3rdparty\jre6_32\* ; DestDir: {app}\jre; Flags: ignoreversion recursesubdirs createallsubdirs
 
 
 ; Vendor DLLs
