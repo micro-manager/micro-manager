@@ -15,9 +15,6 @@
 	<property name="XmlLogger.file" location="buildlog_${DSTAMP}T${TSTAMP}.xml"/>
 
 
-	<ant antfile="build.xml" target="unstage-all" useNativeBaseDir="true"/>
-	<ant antfile="build.xml" target="clean-all" useNativeBaseDir="true"/>
-
 	<ant antfile="build.xml" target="package" useNativeBaseDir="true">
 		<property name="mm.architecture" value="x64"/>
 	</ant>
