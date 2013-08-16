@@ -157,7 +157,7 @@ Source: ..\stage\Release\{#MMArch}\mmautofocus\*; DestDir: {app}\mmautofocus; Fl
 
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
-[DIRS]
+[Dirs]
 Name: "{app}"; Permissions: users-modify
 ; TODO Test if subdir permissions really need to be set here.
 Name: "{app}\macros"; Permissions: users-modify
@@ -171,4 +171,4 @@ Name: {group}\{cm:UninstallProgram,Micro-Manager-1.4}; Filename: {uninstallexe}
 Name: {commondesktop}\Micro-Manager 1.4; Filename: {app}\ImageJ.exe; Tasks: desktopicon; WorkingDir: {app}; IconIndex: 0
 
 [Run]
-Filename: "{app}\ImageJ.exe"; WorkingDir: "{app}"; Description: {cm:LaunchProgram,Micro-Manager-1.4}; Flags: nowait postinstall
+Filename: "{app}\ImageJ.exe"; WorkingDir: "{app}"; Description: {cm:LaunchProgram,Micro-Manager-1.4}; Flags: nowait postinstall skipifsilent
