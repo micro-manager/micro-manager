@@ -1,3 +1,10 @@
 <project name="StageControl" default="jar">
 	<import file="../javapluginbuild.xml"/>
+
+	<target name="copy-files" depends="mm.javabuild.copy-files">
+		<copy todir="${intdir}">
+			<fileset dir="${srcdir}" includes="**/*.png"/>
+			<fileset dir="${srcdir}" includes="**/*.lut"/>
+		</copy>
+	</target>
 </project>
