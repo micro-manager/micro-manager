@@ -1,0 +1,8 @@
+<project name="mm.clojurepluginbuild.noaot">
+	<!-- This file is intended to be used via 'import' in each plugin
+	     project's buildfile -->
+
+	<include file="pluginprops.xml"/>
+	<import file="../buildscripts/clojurebuild_noaot.xml"/>
+	<include file="pluginpaths.xml"/>
+</project>

@@ -1,0 +1,20 @@
+<project name="mm.clojurebuild.noaot">
+	<!-- This file is intended to be used via 'import' in each Clojure
+	     project's buildfile -->
+
+	<!-- The importing buildfile must define the 'namespace' and 'genclass'
+	     properties -->
+
+	<import file="javabuild.xml"/>
+
+	<!-- Override just the 'compile' target -->
+	<target name="compile" description="Compile Clojure generated class">
+		<mkdir dir="${intdir}"/>
+		<mm-clj-genclass namespace="${namespace}" genclass="${genclass}"
+			srcdir="${srcdir}" destdir="${intdir}">
+			<clj-classpath>
+				<path refid="project.classpath"/>
+			</clj-classpath>
+		</mm-clj-genclass>
+	</target>
+</project>

@@ -122,4 +122,47 @@
 			</java>
 		</sequential>
 	</macrodef>
+
+	<!-- Compile a Java class for a Clojure project, but do not AOT compile
+	     the Clojure source -->
+	<macrodef name="mm-clj-genclass">
+		<attribute name="namespace"/>
+		<attribute name="genclass"/>
+		<attribute name="srcdir"/>
+		<attribute name="destdir"/>
+		<element name="cljc-elements" implicit="true"/>
+		<sequential>
+			<!-- Convert "com.example.package.Class" to
+			     "com/example/package/Class" -->
+			<property name="genclass.classname" value="@{genclass}"/>
+			<loadresource property="genclass.path">
+				<propertyresource name="genclass.classname"/>
+				<filterchain>
+					<tokenfilter>
+						<filetokenizer/>
+						<replacestring from="." to="/"/>
+					</tokenfilter>
+				</filterchain>
+			</loadresource>
+
+			<tempfile property="genclass.tmpdir"/>
+			<mkdir dir="${genclass.tmpdir}"/>
+
+			<mm-cljc namespace="@{namespace}" srcdir="@{srcdir}"
+				destdir="${genclass.tmpdir}">
+				<cljc-elements/>
+			</mm-cljc>
+
+			<!-- Copy the compiled Java class only -->
+			<copy tofile="@{destdir}/${genclass.path}.class"
+				file="${genclass.tmpdir}/${genclass.path}.class"/>
+
+			<!-- Copy Clojure source files -->
+			<copy todir="@{destdir}">
+				<fileset dir="@{srcdir}" includes="**/*.clj"/>
+			</copy>
+
+			<delete dir="${genclass.tmpdir}"/>
+		</sequential>
+	</macrodef>
 </project>
