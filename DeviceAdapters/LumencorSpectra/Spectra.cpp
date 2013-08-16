@@ -477,11 +477,17 @@ int Spectra::SendColorEnableCmd(ColorNameT ColorName,bool State, char* EnableMas
 		case SHUTTER:
 			if(State== ON)
 			{
-				DACSetupArray[1] = *EnableMask;  // set enabled channels on
+				// DACSetupArray[1] = *EnableMask;  // set enabled channels on
+				DACSetupArray[1] = 0x00 | (*EnableMask & 0x10);  // Enable All Channels and YGFIlter if was on
 			}
 			else
 			{
-				DACSetupArray[1] = 0x7F; // all off
+				if((*EnableMask & 0x10) == 0x10){  //if YGFilter is disabled
+					DACSetupArray[1] = 0x7F; // all off
+				}
+				else {
+					DACSetupArray[1] = 0x6F; // all off except YGFilter so we dont toggle it
+				}
 			}
 		default:
 			break;		
