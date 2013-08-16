@@ -33,6 +33,11 @@
   [& body]
   `(SwingUtilities/invokeLater (fn [] ~@body)))
 
+(defn store-mmcore
+  [mmc]
+    (def gui nil)
+    (def mmc mmc))
+
 (defn load-mm
   "Load Micro-Manager gui and mmc objects."
   ([gui]
@@ -241,8 +246,10 @@
        
 (defn get-positions
   "Get the position list as a vector of MultiStagePositions."
-  []
-  (vec (.. gui getPositionList getPositions)))
+  ([position-list]
+    (vec (.getPositions (or position-list (.getPositionList gui)))))
+  ([]
+    (get-positions nil)))
 
 (defn get-allowed-property-values
   "Returns a sequence of the allowed property values
@@ -280,7 +287,7 @@
 (defn reload-device
   "Unload a device, and reload it, preserving its property settings."
   [dev]
-  (when (. gui getAutoreloadOption)
+  (when (and gui (. gui getAutoreloadOption))
     (log "Attempting to reload " dev "...")
     (let [props (filter #(= (first %) dev)
                         (get-system-config-cached))
@@ -378,44 +385,54 @@
 (defn get-msp
   "Get a MultiStagePosition object from the Position List with the specified
    index number."
-  [idx]
-  (when idx
-    (let [p-list (. gui getPositionList)]
-      (when (pos? (. p-list getNumberOfPositions))
-        (.getPosition p-list idx)))))
+  ([position-list idx]
+    (when idx
+      (let [position-list (or position-list (.getPositionList gui))]
+        (when (pos? (.getNumberOfPositions position-list))
+          (.getPosition position-list idx)))))
+  ([idx]
+    (get-msp nil idx)))
+
 
 (defn add-msp
-  [label x y z]
-  (let [p-list (.getPositionList gui)]
-    (.addPosition p-list
+  "Add a MultiStagePosition object to the position list."
+  ([position-list label x y z]
+    (.addPosition position-list
                   (doto
                     (MultiStagePosition.
                       (core getXYStageDevice) x y
                       (core getFocusDevice) z)
-                    (.setLabel label)))))
+                    (.setLabel label))))
+  ([label x y z]
+    (add-msp (.getPositionList gui) label x y z)))
 
 (defn remove-msp
-  [idx]
-  (let [p-list (.getPositionList gui)]
-    (.removePosition p-list idx)))
+  ([position-list idx]
+    (.removePosition position-list idx))
+  ([idx]
+    (remove-msp (.getPositionList gui))))
 
 (defn get-msp-z-position
   "Get the z position for a given z-stage from the MultiStagePosition
    with the given index in the Position List."
-  [idx z-stage]
-  (if-let [msp (get-msp idx)]
-    (if-let [stage-pos (. msp get z-stage)]
-      (. stage-pos x))))
+  ([position-list idx z-stage]
+    (if-let [msp (get-msp position-list idx)]
+      (if-let [stage-pos (. msp get z-stage)]
+        (. stage-pos x))))
+  ([idx z-stage]
+    (get-msp-z-position nil idx z-stage)))
 
 (defn set-msp-z-position
   "Set the z position for a given z-stage from the MultiStagePosition
    with the given index in the Position List."
-  [idx z-stage z]
-  (when-let [msp (get-msp idx)]
+  ([position-list idx z-stage z]
+  (when-let [msp (get-msp position-list idx)]
     (when-let [stage-pos (. msp (get z-stage))]
-      (set! (. stage-pos x) z))))  
+      (set! (. stage-pos x) z))))
+  ([idx z-stage z]
+    (set-msp-z-position nil idx z-stage z)))  
 
-(defn positions-map []
+(defn positions-map [position-list]
   (let [position (map MultiStagePosition-to-map (get-positions))]
     (zipmap
       (map :label position)

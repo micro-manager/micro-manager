@@ -16,7 +16,7 @@
 
 (ns org.micromanager.acq-engine
   (:use [org.micromanager.mm :only
-          [when-lets map-config get-config get-positions load-mm
+          [when-lets map-config get-config get-positions load-mm store-mmcore
            get-default-devices core log log-cmd mmc gui with-core-setting
            do-when if-args get-system-config-cached select-values-match?
            get-property get-camera-roi parse-core-metadata reload-device
@@ -51,7 +51,7 @@
      :name org.micromanager.AcquisitionEngine2010
      :implements [org.micromanager.api.IAcquisitionEngine2010]
      :init init
-     :constructors {[org.micromanager.api.ScriptInterface] []}
+     :constructors {[org.micromanager.api.ScriptInterface] [] [mmcorej.CMMCore] []}
      :state state))
 
 ;; test utils
@@ -137,7 +137,7 @@
        "PixelType" (state :pixel-type)
        "PositionIndex" (:position-index event)
        "PositionName" (when-lets [pos (:position event)
-                                  msp (get-msp pos)]
+                                  msp (get-msp (state :position-list) pos)]
                                  (.getLabel msp))
        "Slice" (:slice-index event)
        "SliceIndex" (:slice-index event)
@@ -222,8 +222,9 @@
 
 (defn get-xy-stage-position [stage]
   (if-not (empty? stage)
-    (let [xy (.getXYStagePosition gui)]
-      [(.x xy) (.y xy)])))
+    (let [x (double-array 1) y (double-array 1)]
+      (core getXYPosition stage x y)
+      [(get x 0) (get y 0)])))
 
 (defn enable-continuous-focus [on?]
   (let [autofocus (core getAutoFocusDevice)]
@@ -271,8 +272,8 @@
   (let [z-drive (@state :default-z-drive)
         z0 (get-z-stage-position z-drive)]
   (try
-    (log "running autofocus " (.. gui getAutofocusManager getDevice getDeviceName))
-    (let [z (.. gui getAutofocusManager getDevice fullFocus)]
+    (log "running autofocus " (-> @state :autofocus-device .getDeviceName))
+    (let [z (-> @state :autofocus-device .fullFocus)]
       (swap! state assoc-in [:last-stage-positions (@state :default-z-drive)] z))
     (catch Exception e
            (ReportingUtils/logError e "Autofocus failed.")
@@ -545,16 +546,18 @@
     (try (enable-continuous-focus true) (catch Throwable t nil))) ; don't quit if this fails
   (let [target-time (+ (@state :last-wake-time) interval-ms)
         delta (- target-time (jvm-time-ms))]
-     (when (and (< 1000 delta)
+     (when (and gui
+                (< 1000 delta)
                 (@state :live-mode-on)
                 (not (.isLiveModeOn gui)))
       (.enableLiveMode gui true))
     (when (pos? delta)
       (interruptible-sleep delta))
     (await-resume)
-    (swap! state assoc :live-mode-on (.isLiveModeOn gui))
-    (when (.isLiveModeOn gui)
-      (.enableLiveMode gui false))
+    (when gui
+      (swap! state assoc :live-mode-on (.isLiveModeOn gui))
+      (when (.isLiveModeOn gui)
+        (.enableLiveMode gui false)))
     (let [now (jvm-time-ms)
           wake-time (if (> now (+ target-time 10)) now target-time)]
       (swap! state assoc :last-wake-time wake-time))))
@@ -584,7 +587,8 @@
   (-> msp MultiStagePosition-to-map :axes (get z-drive) first))
 
 (defn compute-z-position [event]
-  (let [z-ref (or (-> event :position get-msp (z-in-msp (@state :default-z-drive)))
+  (let [z-ref (or (-> (get-msp (@state :position-list) (:position event))
+                      (z-in-msp (@state :default-z-drive)))
                   (@state :reference-z))]
     (+ (or (get-in event [:channel :z-offset]) 0) ;; add a channel offset if there is one.
        (if-let [slice (:slice event)]
@@ -600,20 +604,20 @@
             (not (is-continuous-focus-drive stage-name)))))
 
 (defn update-z-positions [msp-index]
-  (when-let [msp (get-msp msp-index)]
+  (when-let [msp (get-msp (@state :position-list) msp-index)]
     (dotimes [i (.size msp)]
       (let [stage-pos (.get msp i)
             stage-name (.stageName stage-pos)]
         (when (= 1 (.numAxes stage-pos))
           (when (z-stage-needs-adjustment stage-name)
-            (set-msp-z-position msp-index stage-name
+            (set-msp-z-position (@state :position-list) msp-index stage-name
                                 (get-z-stage-position stage-name))))))))
 
 (defn recall-z-reference [current-position]
   (let [z-drive (@state :default-z-drive)]
     (when (z-stage-needs-adjustment z-drive)
       (set-stage-position z-drive
-        (or (get-msp-z-position current-position z-drive)
+        (or (get-msp-z-position (@state :position-list) current-position z-drive)
             (@state :reference-z)))
       (wait-for-device z-drive))))
 
@@ -626,7 +630,7 @@
 
 ;; startup and shutdown
 
-(defn prepare-state [state]
+(defn prepare-state [state position-list autofocus-device]
   (let [default-z-drive (core getFocusDevice)
         default-xy-stage (core getXYStageDevice)
         z (get-z-stage-position default-z-drive)
@@ -647,6 +651,8 @@
            :exposure {(core getCameraDevice) exposure}
            :default-z-drive default-z-drive
            :default-xy-stage default-xy-stage
+           :autofocus-device autofocus-device
+           :position-list position-list
            :init-z-position z
            :init-system-state (get-system-config-cached)
            :init-continuous-focus (core isContinuousFocusEnabled)
@@ -675,7 +681,7 @@
       (when (and (@state :init-continuous-focus)
                  (not (core isContinuousFocusEnabled)))
         (enable-continuous-focus true))
-      (. gui enableRoiButtons true))
+      (when gui (.enableRoiButtons gui true)))
     (catch Throwable t 
            (ReportingUtils/showError t "Acquisition cleanup failed."))))
 
@@ -694,7 +700,7 @@
           #(log event)
           (when (:new-position event)
             (for [[axis pos] (:axes (MultiStagePosition-to-map
-                                      (get-msp current-position)))
+                                      (get-msp (@state :position-list) current-position)))
                   :when pos]
               #(apply set-stage-position axis pos)))
           (for [prop (get-in event [:channel :properties])]
@@ -728,13 +734,15 @@
     (event-fn)
     (await-resume)))
 
-(defn run-acquisition [settings out-queue cleanup?]
+(defn run-acquisition [settings out-queue cleanup? position-list autofocus-device]
     (try
       (def acq-settings settings)
       (log "Starting MD Acquisition: " settings)
-      (. gui enableLiveMode false)
-      (. gui enableRoiButtons false)
-      (prepare-state state)
+      (when gui
+        (doto gui
+          (.enableLiveMode false)
+          (.enableRoiButtons false)))
+      (prepare-state state position-list autofocus-device)
       (def last-state state) ; for debugging
       (let [acq-seq (generate-acq-sequence settings @attached-runnables)]
         (def acq-sequence acq-seq)
@@ -839,7 +847,7 @@
       "IJType" (get-IJ-type depth)
       "KeepShutterOpenChannels" (:keep-shutter-open-channels settings)
       "KeepShutterOpenSlices" (:keep-shutter-open-slices settings)
-      "MicroManagerVersion" (.getVersion gui)
+      "MicroManagerVersion" (if gui (.getVersion gui) "N/A")
       "MetadataVersion" 10
       "PixelAspect" 1.0
       "PixelSize_um" (core getPixelSizeUm)
@@ -857,13 +865,13 @@
       "z-step_um" (get-z-step-um (:slices settings))
      })))
 
-(defn run [this settings cleanup?]
+(defn run [this settings cleanup? position-list autofocus-device]
   (def last-acq this)
   (def last-state (.state this))
     (reset! (.state this) {:stop false :pause false :finished false})
     (let [out-queue (LinkedBlockingQueue. 10)
           acq-thread (Thread. #(binding [state (.state this)]
-                                 (run-acquisition settings out-queue cleanup?))
+                                 (run-acquisition settings out-queue cleanup? position-list autofocus-device))
                               "AcquisitionSequence2010 Thread (Clojure)")]
       (reset! (.state this)
               {:stop false
@@ -878,14 +886,20 @@
 
 ;; java interop -- implements org.micromanager.api.IAcquisitionEngine2010
 
-(defn -init [script-gui]
-  [[] (do (load-mm script-gui)
-          (atom {:stop false}))])
+(defn -init
+  ([one-arg]
+    [[] (do (if (isa? (type one-arg) org.micromanager.api.ScriptInterface)
+              (load-mm one-arg)
+              (store-mmcore one-arg))
+            (atom {:stop false}))]))
 
 (defn -run
+  ([this acq-settings cleanup? position-list autofocus-device]
+    (let [settings (convert-settings acq-settings)]
+      (run this settings cleanup? position-list autofocus-device)))
   ([this acq-settings cleanup?]
     (let [settings (convert-settings acq-settings)]
-      (run this settings cleanup?)))
+      (run this settings cleanup? (.getPositionList gui) (.. gui getAutofocusManager getDevice))))
   ([this acq-settings]
     (-run this acq-settings true)))
 
