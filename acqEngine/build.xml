@@ -1,4 +1,4 @@
-<project name="MMAcqEngine">
+<project name="MMAcqEngine" default="jar">
 	<property name="namespace" value="org.micromanager.acq-engine"/>
 
 	<import file="../buildscripts/clojurebuild.xml"/>
