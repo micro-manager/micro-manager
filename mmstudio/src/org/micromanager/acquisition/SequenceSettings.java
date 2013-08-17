@@ -17,7 +17,6 @@ public class SequenceSettings {
    public int numFrames = 1;   
    public double intervalMs;
    public ArrayList<Double> customIntervalsMs = null;
-   public ArrayList<MultiStagePosition> positions = new ArrayList<MultiStagePosition>();
    public ArrayList<ChannelSpec> channels = new ArrayList<ChannelSpec>();
    public ArrayList<Double> slices = new ArrayList<Double>();
    public boolean relativeZSlice = false;

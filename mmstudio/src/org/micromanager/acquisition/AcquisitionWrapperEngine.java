@@ -313,12 +313,6 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
          }
       }
 
-      // Positions
-      if (this.useMultiPosition_) {
-         acquisitionSettings.positions.addAll(Arrays.asList(posList_.getPositions()));
-      }
-
-
       //timeFirst = true means that time points are collected at each position
       acquisitionSettings.timeFirst = (acqOrderMode_ == AcqOrderMode.POS_TIME_CHANNEL_SLICE
               || acqOrderMode_ == AcqOrderMode.POS_TIME_SLICE_CHANNEL);
