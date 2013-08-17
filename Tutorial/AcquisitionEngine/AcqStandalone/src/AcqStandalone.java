@@ -12,6 +12,7 @@ import mmcorej.TaggedImage;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.micromanager.AcquisitionEngine2010;
 import org.micromanager.acquisition.AcquisitionWrapperEngine;
 import org.micromanager.acquisition.DefaultTaggedImagePipeline;
 import org.micromanager.acquisition.LiveAcq;
@@ -24,6 +25,7 @@ import org.micromanager.api.IAcquisitionEngine2010;
 import org.micromanager.api.ImageCache;
 import org.micromanager.api.TaggedImageAnalyzer;
 import org.micromanager.api.TaggedImageStorage;
+import org.micromanager.navigation.PositionList;
 import org.micromanager.utils.ChannelSpec;
 import org.micromanager.utils.MMScriptException;
 
@@ -125,32 +127,12 @@ public class AcqStandalone {
       }
 
       IAcquisitionEngine2010 acqEng = null;
-      try {
-         Class acquisitionEngine2010Class = Class.forName("org.micromanager.AcquisitionEngine2010");
-         acqEng = (IAcquisitionEngine2010) acquisitionEngine2010Class.getConstructors()[0].newInstance(null);
-      } catch (ClassNotFoundException e1) {
-         // TODO Auto-generated catch block
-         e1.printStackTrace();
-      } catch (InstantiationException e) {
-         // TODO Auto-generated catch block
-         e.printStackTrace();
-      } catch (IllegalAccessException e) {
-         // TODO Auto-generated catch block
-         e.printStackTrace();
-      } catch (IllegalArgumentException e) {
-         // TODO Auto-generated catch block
-         e.printStackTrace();
-      } catch (InvocationTargetException e) {
-         // TODO Auto-generated catch block
-         e.printStackTrace();
-      } catch (SecurityException e) {
-         // TODO Auto-generated catch block
-         e.printStackTrace();
-      }
+      acqEng = new AcquisitionEngine2010(core);
 
       try {
          // Start up the acquisition engine
-         BlockingQueue<TaggedImage> taggedImageQueue = acqEng.run(s);
+         PositionList posList = new PositionList();
+         BlockingQueue<TaggedImage> taggedImageQueue = acqEng.run(s, true, posList, null);
 
          // create storage
          TaggedImageStorage storage = new TaggedImageStorageDiskDefault(actualPath, true, summary);
