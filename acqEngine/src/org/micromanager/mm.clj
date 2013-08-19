@@ -352,7 +352,7 @@
 (defn ChannelSpec-to-map
   "Convert a Micro-Manager ChannelSpec object to a clojure data map
    with friendly keys."
-  [^ChannelSpec chan]
+  [channel-group ^ChannelSpec chan]
   (into (sorted-map)
         (-> chan
             (data-object-to-map)
@@ -365,7 +365,7 @@
               :useChannel_             :use-channel
               :color_                  :color
               )
-            (assoc :properties (get-config (core getChannelGroup) (.config_ chan))))))
+            (assoc :properties (get-config channel-group (.config_ chan))))))
 
 (defn MultiStagePosition-to-map
   "Convert a Micro-Manager MultiStagePosition object to a clojure data map."

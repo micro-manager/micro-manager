@@ -773,10 +773,12 @@
               :relativeZSlice          :relative-slices
               :intervalMs              :interval-ms
               :customIntervalsMs       :custom-intervals-ms
+              :channelGroup            :channel-group
               )
             (assoc :frames (range (.numFrames settings))
                    :channels (vec (filter :use-channel
-                                          (map ChannelSpec-to-map (.channels settings))))
+                                          (map #(ChannelSpec-to-map (.channelGroup settings) %)
+                                               (.channels settings))))
                    :positions (vec (range (.getNumberOfPositions position-list)))
                    :slices (vec (.slices settings))
                    :default-exposure (core getExposure)
