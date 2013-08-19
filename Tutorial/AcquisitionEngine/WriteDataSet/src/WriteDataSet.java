@@ -92,7 +92,7 @@ public class WriteDataSet {
       long w = core.getImageWidth();
       long h = core.getImageHeight();
       long d = core.getBytesPerPixel();
-      
+            
       try {
          // Create new data set
          JSONObject summary = new JSONObject();
@@ -139,7 +139,7 @@ public class WriteDataSet {
          File f = new File(path);
          int count = 1;
          while (f.exists()) {
-            actualPath = path + "_" + count;
+            actualPath = path + "_" + count++;
             f = new File(actualPath);
          }
          
@@ -150,6 +150,7 @@ public class WriteDataSet {
             // use micro-manager format
             storage = new TaggedImageStorageDiskDefault(actualPath, true, summary);
          
+         core.setProperty("Core",  "ChannelGroup", channelGroup);
          MMImageCache imageCache = new MMImageCache(storage);
 
          int imageCounter = 0;

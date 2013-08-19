@@ -25,6 +25,7 @@ import org.micromanager.api.IAcquisitionEngine2010;
 import org.micromanager.api.ImageCache;
 import org.micromanager.api.TaggedImageAnalyzer;
 import org.micromanager.api.TaggedImageStorage;
+import org.micromanager.navigation.MultiStagePosition;
 import org.micromanager.navigation.PositionList;
 import org.micromanager.utils.ChannelSpec;
 import org.micromanager.utils.MMScriptException;
@@ -72,6 +73,7 @@ public class AcqStandalone {
       CMMCore core = new CMMCore();
       try {
          core.loadSystemConfiguration("MMConfig_demo.cfg");
+         core.setProperty("Core",  "ChannelGroup", "Channel");
       } catch (Exception e1) {
          // TODO Auto-generated catch block
          e1.printStackTrace();
@@ -132,6 +134,7 @@ public class AcqStandalone {
       try {
          // Start up the acquisition engine
          PositionList posList = new PositionList();
+         posList.addPosition(new MultiStagePosition());
          BlockingQueue<TaggedImage> taggedImageQueue = acqEng.run(s, true, posList, null);
 
          // create storage
