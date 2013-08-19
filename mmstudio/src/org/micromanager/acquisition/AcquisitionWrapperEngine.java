@@ -217,7 +217,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    private String getSource(ChannelSpec channel) {
       PropertySetting setting;
       try {
-         Configuration state = core_.getConfigGroupState(channel.config_);
+         Configuration state = core_.getConfigState(core_.getChannelGroup(), channel.config_);
          if (state.isPropertyIncluded("Core", "Camera")) {
             return state.getSetting("Core", "Camera").getPropertyValue();
          } else {
@@ -311,6 +311,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
                acquisitionSettings.channels.add(channel);
             }
          }
+         acquisitionSettings.channelGroup = core_.getChannelGroup();
       }
 
       //timeFirst = true means that time points are collected at each position

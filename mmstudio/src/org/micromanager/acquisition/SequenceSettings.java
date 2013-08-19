@@ -31,4 +31,5 @@ public class SequenceSettings {
    public String prefix = null;
    public double zReference = 0;
    public String comment = "";
+   String channelGroup = "";
 }

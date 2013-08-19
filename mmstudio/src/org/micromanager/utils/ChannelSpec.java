@@ -31,12 +31,12 @@ public class ChannelSpec {
    public static final String DEFAULT_CHANNEL_GROUP = "Channel";
    
    public Boolean doZStack_ = true;
-   public String config_ = "";
+   public String config_ = ""; // Configuration setting name
    public double exposure_ = 10.0; // ms
    public double zOffset_ = 0.0; // um
    public Color color_ = Color.gray;
    public ContrastSettings contrast_;
-   public String name_ = "";
+   public String name_ = "";  // Deprecated; unused.
    public int skipFactorFrame_ = 0;
    public boolean useChannel_ = true;
    public String camera_ = "";
