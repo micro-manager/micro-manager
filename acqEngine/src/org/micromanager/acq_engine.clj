@@ -35,6 +35,7 @@
                                          ProcessorStack SequenceSettings
                                          MMAcquisition
                                          TaggedImageStorageRam]
+           [org.micromanager.navigation PositionList]
            [org.micromanager.utils ReportingUtils]
            [mmcorej TaggedImage Configuration Metadata]
            (java.util.concurrent Executors TimeUnit)
@@ -757,7 +758,7 @@
 
 ;; generic metadata
 
-(defn convert-settings [^SequenceSettings settings]
+(defn convert-settings [^SequenceSettings settings ^PositionList position-list]
   (def seqSettings settings)
   (into (sorted-map)
         (-> settings
@@ -776,7 +777,7 @@
             (assoc :frames (range (.numFrames settings))
                    :channels (vec (filter :use-channel
                                           (map ChannelSpec-to-map (.channels settings))))
-                   :positions (vec (range (.. settings positions size)))
+                   :positions (vec (range (.getNumberOfPositions position-list)))
                    :slices (vec (.slices settings))
                    :default-exposure (core getExposure)
                    :custom-intervals-ms (vec (.customIntervalsMs settings)))
@@ -895,11 +896,12 @@
 
 (defn -run
   ([this acq-settings cleanup? position-list autofocus-device]
-    (let [settings (convert-settings acq-settings)]
+    (let [settings (convert-settings acq-settings position-list)]
       (run this settings cleanup? position-list autofocus-device)))
   ([this acq-settings cleanup?]
-    (let [settings (convert-settings acq-settings)]
-      (run this settings cleanup? (.getPositionList gui) (.. gui getAutofocusManager getDevice))))
+    (let [position-list (.getPositionList gui)
+          settings (convert-settings acq-settings position-list)]
+      (run this settings cleanup? position-list (.. gui getAutofocusManager getDevice))))
   ([this acq-settings]
     (-run this acq-settings true)))
 
