@@ -411,110 +411,115 @@ int Spectra::SendColorEnableCmd(ColorNameT ColorName,bool State, char* EnableMas
 {
 	enum StateValue {OFF=0, ON=1};
 	unsigned char DACSetupArray[]= "\x4F\x00\x50\x00";
-	if(LightEngine == Aura_Type)
+	bool open; 
+	int ret = GetOpen(open);
+	if (ret == DEVICE_OK) // only set enable if shuttern 
 	{
-		if(ColorName == BLUE || ColorName == CYAN)
-		{	
-			return DEVICE_OK;  // we exit here as the Aura does not support these colors
+		if(LightEngine == Aura_Type)
+		{
+			if(ColorName == BLUE || ColorName == CYAN)
+			{	
+				return DEVICE_OK;  // we exit here as the Aura does not support these colors
+			}
 		}
-	}
-	if(LightEngine == Sola_Type)
-	{
-		 ColorName = ALL;
-	}
-	switch (ColorName)
-	{	
-		case  RED:
-			if(State==ON)
-				DACSetupArray[1] = *EnableMask & 0x7E;
-			else
-				DACSetupArray[1] = *EnableMask | 0x01;
-			break;
-		case  GREEN:
-			if(State==ON)
-				DACSetupArray[1] = *EnableMask & 0x7D;
-			else
-				DACSetupArray[1] = *EnableMask | 0x02;
-			break;
-		case  VIOLET:
-			if(State==ON)
-				DACSetupArray[1] = *EnableMask & 0x77;
-			else
-				DACSetupArray[1] = *EnableMask | 0x08;
-			break;
-		case  CYAN:
-			if(State==ON)
-				DACSetupArray[1] = *EnableMask & 0x7B;
-			else
-				DACSetupArray[1] = *EnableMask | 0x04;
-			break;
-		case  BLUE:
-			if(State==ON)
-				DACSetupArray[1] = *EnableMask & 0x5F;
-			else
-				DACSetupArray[1] = *EnableMask | 0x20;
-			break;
-		case  TEAL:
-			if(State==ON)
-				DACSetupArray[1] = *EnableMask & 0x3F;
-			else
-				DACSetupArray[1] = *EnableMask | 0x40;
-			break;
-		case  YGFILTER:
-			if(State==ON)
-				DACSetupArray[1] = *EnableMask & 0x6F;
-			else
-				DACSetupArray[1] = *EnableMask | 0x10;
-			break;
-		case ALL:
-		case WHITE:
-			if(State==ON)
-			{
-				DACSetupArray[1] = ((*EnableMask & 0x40) == 0x40) ? 0x40 : 0x00;
-			}
-			else
-			    DACSetupArray[1] = ((*EnableMask & 0x40) == 0x40) ? 0x7F : 0xCF; // dont toggle YG filter if not needed
-			break;
-		case SHUTTER:
-			if(State== ON)
-			{
-				// DACSetupArray[1] = *EnableMask;  // set enabled channels on
-				DACSetupArray[1] = 0x00 | (*EnableMask & 0x10);  // Enable All Channels and YGFIlter if was on
-			}
-			else
-			{
-				if((*EnableMask & 0x10) == 0x10){  //if YGFilter is disabled
-					DACSetupArray[1] = 0x7F; // all off
+		if(LightEngine == Sola_Type)
+		{
+			 ColorName = ALL;
+		}
+		switch (ColorName)
+		{	
+			case  RED:
+				if(State==ON && open)
+					DACSetupArray[1] = *EnableMask & 0x7E;
+				else
+					DACSetupArray[1] = *EnableMask | 0x01;
+				break;
+			case  GREEN:
+				if(State==ON && open)
+					DACSetupArray[1] = *EnableMask & 0x7D;
+				else
+					DACSetupArray[1] = *EnableMask | 0x02;
+				break;
+			case  VIOLET:
+				if(State==ON && open)
+					DACSetupArray[1] = *EnableMask & 0x77;
+				else
+					DACSetupArray[1] = *EnableMask | 0x08;
+				break;
+			case  CYAN:
+				if(State==ON && open)
+					DACSetupArray[1] = *EnableMask & 0x7B;
+				else
+					DACSetupArray[1] = *EnableMask | 0x04;
+				break;
+			case  BLUE:
+				if(State==ON && open)
+					DACSetupArray[1] = *EnableMask & 0x5F;
+				else
+					DACSetupArray[1] = *EnableMask | 0x20;
+				break;
+			case  TEAL:
+				if(State==ON && open)
+					DACSetupArray[1] = *EnableMask & 0x3F;
+				else
+					DACSetupArray[1] = *EnableMask | 0x40;
+				break;
+			case  YGFILTER:
+				if(State==ON && open)
+					DACSetupArray[1] = *EnableMask & 0x6F;
+				else
+					DACSetupArray[1] = *EnableMask | 0x10;
+				break;
+			case ALL:
+			case WHITE:
+				if(State==ON && open)
+				{
+					DACSetupArray[1] = ((*EnableMask & 0x40) == 0x40) ? 0x40 : 0x00;
 				}
-				else {
-					DACSetupArray[1] = 0x6F; // all off except YGFilter so we dont toggle it
+				else
+					DACSetupArray[1] = ((*EnableMask & 0x40) == 0x40) ? 0x7F : 0xCF; // dont toggle YG filter if not needed
+				break;
+			case SHUTTER:
+				if(State== ON && open)
+				{
+					// DACSetupArray[1] = *EnableMask;  // set enabled channels on
+					DACSetupArray[1] = 0x00 | (*EnableMask & 0x10);  // Enable All Channels and YGFIlter if was on
 				}
-			}
-		default:
-			break;		
-	}
-	if (LightEngine == Aura_Type)
-	{
-		// See Aura TTL IF Doc: Front Panel Control/DAC for more detail
-		//DACSetupArray[1] = DACSetupArray[1] | 0x20; // Mask for Aura to be sure DACs are Enabled
-		// Byte 1 bit 5 Selects either DAC or Pot control on the Aura so we want to set this
-		// to a zero for DAC control.
-		// Examples:
-		// 4f 70 50  sets Pot intensity control and all channels ON.
-		// 4F 50 50  sets DAC intensity control and all channels ON.
-		DACSetupArray[1] = DACSetupArray[1] & 0x5F; // Mask for Aura to be sure DACs are Enabled 
-	}
+				else
+				{
+					if((*EnableMask & 0x10) == 0x10){  //if YGFilter is disabled
+						DACSetupArray[1] = 0x7F; // all off
+					}
+					else {
+						DACSetupArray[1] = 0x6F; // all off except YGFilter so we dont toggle it
+					}
+				}
+			default:
+				break;		
+		}
+		if (LightEngine == Aura_Type)
+		{
+			// See Aura TTL IF Doc: Front Panel Control/DAC for more detail
+			//DACSetupArray[1] = DACSetupArray[1] | 0x20; // Mask for Aura to be sure DACs are Enabled
+			// Byte 1 bit 5 Selects either DAC or Pot control on the Aura so we want to set this
+			// to a zero for DAC control.
+			// Examples:
+			// 4f 70 50  sets Pot intensity control and all channels ON.
+			// 4F 50 50  sets DAC intensity control and all channels ON.
+			DACSetupArray[1] = DACSetupArray[1] & 0x5F; // Mask for Aura to be sure DACs are Enabled 
+		}
 
-	if(ColorName != SHUTTER) // shutter is a unique case were we dont want to change our mask
-	{
-		*EnableMask = DACSetupArray[1]; // Sets the Mask to current state
+		if(ColorName != SHUTTER) // shutter is a unique case were we dont want to change our mask
+		{
+			*EnableMask = DACSetupArray[1]; // Sets the Mask to current state
+		}
+
+		WriteToComPort(port_.c_str(),DACSetupArray, 3); // Write Event Data to device
+
+		// block/wait no acknowledge so just give it time                     
+		// CDeviceUtils::SleepMs(200);
 	}
-
-	WriteToComPort(port_.c_str(),DACSetupArray, 3); // Write Event Data to device
-
-   // block/wait no acknowledge so just give it time                     
-   // CDeviceUtils::SleepMs(200);
-	return DEVICE_OK;  // debug only 
+	return DEVICE_OK;  // debug only
 }
 
 // Lumencor Initialization Info
