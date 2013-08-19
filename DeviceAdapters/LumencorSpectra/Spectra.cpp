@@ -329,6 +329,7 @@ int Spectra::SetShutterPosition(bool state)
 		SendColorEnableCmd(SHUTTER, true, &EnableMask);  // If on then Set
 	else
 		SendColorEnableCmd(SHUTTER, false, &EnableMask);  // close
+	SetOpen(state);
     return DEVICE_OK;
 }
 
