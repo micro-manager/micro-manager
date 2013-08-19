@@ -266,6 +266,7 @@ public class Window extends ImageWindow {
 	 * the slideexplorer stops and cleans the cache.
 	 */
 	public boolean close() {
+        	display_.reactivateRoiManager();
 		display_.shutdown();
 		return super.close();
 	}

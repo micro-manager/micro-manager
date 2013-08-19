@@ -169,7 +169,7 @@ public class RoiManager extends ij.plugin.frame.RoiManager{
     public ArrayList<Point> generateRoiTrajectory(Roi acqRoiOffScreen) {
         Rectangle frameRect = slideexplorerCoords_.offScreenToRoiRect(new Point(0,0));
         Dimension frameDimensions = new Dimension(frameRect.width, frameRect.height);
-		Rectangle acqRect = acqRoiOffScreen.getBoundingRect();
+		Rectangle acqRect = acqRoiOffScreen.getBounds();
         System.out.println("acqRect: "+acqRect);
 
         ArrayList<Point> latticeInRectangle = getFrameCentersOnRoiBoundingRect(acqRect, frameDimensions);

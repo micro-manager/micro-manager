@@ -43,13 +43,13 @@ public class Display {
 		imgp_ = new ImagePlus("Slide Explorer",proc_);
 
 		cvs_ = new Canvas(this, imgp_);
-		
+
 		win_ = new Window(imgp_, (ImageCanvas) cvs_, this);
 		imgCount_=0;
 		win_.setVisible(true);
 
         }
-	
+
     public void setCoords(Coordinates coords) {
         coords_ = coords;
 		updateDimensions();
@@ -80,12 +80,12 @@ public class Display {
     public Window getWindow() {
         return win_;
     }
-    
+
 	public void placeImage(Point offScreenPosition, ImageProcessor img) {
 		proc_.insert(img, offScreenPosition.x, offScreenPosition.y);
         imgCount_++;
 	}
-	
+
 	public void pan(Rectangle panRectangle, boolean update) {
         if (!currentlyPanning_) {
             currentlyPanning_ = true;
@@ -110,7 +110,7 @@ public class Display {
         }
 	}
 
-    
+
     protected void panRoisBy(int dx, int dy) {
         Roi roi = imgp_.getRoi();
 		panRoi(roi, dx, dy);
@@ -131,7 +131,7 @@ public class Display {
 	void showRoiAt(Rectangle roiRect) {
 		imgp_.setRoi(roiRect);
 	}
-	
+
 	public void updateAndDraw() {
 		imgp_.updateAndDraw();
 		/*ImageStatistics stats = imgp_.getStatistics();
@@ -156,7 +156,7 @@ public class Display {
 	protected void reapplyDisplayRange() {
 		imgp_.setDisplayRange(displayRangeMin_, displayRangeMax_);
 	}
-	
+
 	public void zoomOut(Point point) {
 		hub_.zoomBy(-1);
 	}
@@ -171,7 +171,7 @@ public class Display {
 
 	public void shutdown() {
 		hub_.shutdown();
-		
+
 	}
 
 	public void navigate(Point canvasPos) {
@@ -180,7 +180,7 @@ public class Display {
 
 	public void survey() {
 		hub_.survey();
-		
+
 	}
 
     public void pauseSlideExplorer() {
@@ -242,7 +242,10 @@ public class Display {
     }
 
     void roiDrawn() {
-      roiManager_.add(imgp_,imgp_.getRoi(),-1);
+      Roi roi = imgp_.getRoi();
+      if (roi.getState() == Roi.NORMAL) {
+         roiManager_.add(imgp_,roi,-1);
+      }
       cvs_.setShowAllROIs(true);
       cvs_.repaint();
     }
@@ -254,5 +257,11 @@ public class Display {
         cvs_.setShowAllROIs(false);
         cvs_.repaint();
     }
-   
+
+    public void reactivateRoiManager() {
+    	roiManager_.runCommand("Reset");
+    	roiManager_.setVisible(true);
+    	roiManager_.close();
+    }
+
 }
