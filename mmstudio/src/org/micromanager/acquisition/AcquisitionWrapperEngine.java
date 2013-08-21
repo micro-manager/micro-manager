@@ -488,7 +488,13 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
             try {
                core_.setChannelGroup("");
             } catch (Exception ex) {
-               ReportingUtils.showError(e);
+               // The following error is useless to show to the user:
+               if (ex.getMessage().startsWith("Attempted to set \"Core-Camera")) {
+                  ReportingUtils.logError(ex);
+               } else {
+                  ReportingUtils.showError(ex);
+               }
+
             }
             return false;
          }
