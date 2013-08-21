@@ -8,16 +8,17 @@ import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ReportingUtils;
 
 /**
+ * Dequeue tagged images and append to image cache
  *
  * @author arthur
  */
-public class LiveAcq  {
+public class DefaultTaggedImageSink  {
 
    private static int untitledID_ = 0;
    private final BlockingQueue<TaggedImage> imageProducingQueue_;
    private ImageCache imageCache_ = null;
 
-   public LiveAcq(BlockingQueue imageProducingQueue,
+   public DefaultTaggedImageSink(BlockingQueue imageProducingQueue,
                   ImageCache imageCache) throws MMScriptException {
       imageProducingQueue_ = imageProducingQueue;
          imageCache_ = imageCache;

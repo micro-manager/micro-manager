@@ -39,11 +39,11 @@ public class DefaultTaggedImagePipeline {
            boolean diskCached) throws ClassNotFoundException, InstantiationException, IllegalAccessException, MMScriptException {
 
       // Start up the acquisition engine
-      BlockingQueue<TaggedImage> taggedImageQueue = acqEngine.run(sequenceSettings, true, gui.getPositionList(), gui.getAutofocusManager().getDevice());
+      BlockingQueue<TaggedImage> engineOutputQueue = acqEngine.run(sequenceSettings, true, gui.getPositionList(), gui.getAutofocusManager().getDevice());
       summaryMetadata_ = acqEngine.getSummaryMetadata();
 
       // Set up the DataProcessor<TaggedImage> sequence
-      BlockingQueue<TaggedImage> taggedImageQueue2 = ProcessorStack.run(taggedImageQueue, imageProcessors);
+      BlockingQueue<TaggedImage> procStackOutputQueue = ProcessorStack.run(engineOutputQueue, imageProcessors);
 
       // Create the default display
       acqName_ = gui.createAcquisition(summaryMetadata_, diskCached, gui.getHideMDADisplayOption());
@@ -52,8 +52,8 @@ public class DefaultTaggedImagePipeline {
       imageCache_ = acq.getImageCache();
 
       // Start pumping images into the ImageCache
-      LiveAcq liveAcq = new LiveAcq(taggedImageQueue2, imageCache_);
-      liveAcq.start();
+      DefaultTaggedImageSink sink = new DefaultTaggedImageSink(procStackOutputQueue, imageCache_);
+      sink.start();
    }
 
 }
