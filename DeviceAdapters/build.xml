@@ -1,0 +1,19 @@
+<project name="mm.deviceadapters">
+	<macrodef name="run-all">
+		<attribute name="target"/>
+		<attribute name="failonerror" default="true"/>
+		<sequential>
+			<subant target="@{target}" failonerror="@{failonerror}">
+				<fileset dir="." includes="*/build.xml"/>
+				<fileset dir="../SecretDeviceAdapters" includes="*/build.xml"/>
+			</subant>
+		</sequential>
+	</macrodef>
+
+	<!-- Default -->
+	<property name="mm.build.failonerror" value="true"/>
+
+	<target name="install">
+		<run-all target="install" failonerror="${mm.build.failonerror}"/>
+	</target>
+</project>

@@ -1,0 +1,26 @@
+<project name="mm.deviceadapter">
+	<include file="buildprops.xml"/>
+
+	<condition property="mm.architecture.is_Win32">
+		<equals arg1="${mm.architecture}" arg2="Win32"/>
+	</condition>
+
+	<condition property="mm.architecture.is_x64">
+		<equals arg1="${mm.architecture}" arg2="x64"/>
+	</condition>
+
+	<target name="install-if-Win32" if="mm.architecture.is_Win32">
+		<antcall target="install-Win32"/>
+	</target>
+
+	<target name="install-if-x64" if="mm.architecture.is_x64">
+		<antcall target="install-x64"/>
+	</target>
+
+	<target name="install" depends="install-if-Win32,install-if-x64"/>
+
+	<!-- Targets to be (optionally) overridden by device adapter build
+	     script, mainly for staging third-party DLLs -->
+	<target name="install-Win32"/>
+	<target name="install-x64"/>
+</project>

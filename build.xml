@@ -51,17 +51,27 @@
 		<copy todir="${mm.java.outdir}" file="${mm.cpp.outdir}/MMCoreJ.jar"/>
 	</target>
 
+	<target name="stage-deviceadapters">
+		<copy todir="${mm.dll.installdir}">
+			<!-- TODO Avoid using wildcard -->
+			<fileset dir="${mm.cpp.outdir}" includes="mmgr_dal_*.dll"/>
+		</copy>
+		<ant antfile="DeviceAdapters/build.xml" useNativeBasedir="true" target="install"/>
+	</target>
+
 	<target name="build" depends="set-version,build-cpp" description="Build all components">
 		<run-all-java-projects target="jar"/>
 	</target>
 
 	<target name="stage" depends="set-version,build-cpp" description="Assemble files to install">
+		<antcall target="stage-deviceadapters"/>
 		<run-all-java-projects target="install"/>
 
 		<!-- Until we update the C++ build, just copy all output files
 		     here -->
-		<copy todir="${mm.installdir}">
-			<fileset dir="${mm.cpp.outdir}" includes="*" excludes="MMCoreJ.jar"/>
+		<copy todir="${mm.dll.installdir}">
+			<!-- Device adapters are covered in stage-deviceadapters -->
+			<filelist dir="${mm.cpp.outdir}" files="MMCoreJ_wrap.dll,_MMCorePy.pyd"/>
 		</copy>
 
 		<copy todir="${mm.installdir}">

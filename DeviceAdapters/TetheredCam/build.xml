@@ -1,0 +1,9 @@
+<project name="TetheredCamera">
+	<import file="../../buildscripts/deviceadapter.xml"/>
+
+	<target name="install-Win32">
+		<copy todir="${mm.dll.installdir}" file="DSLRRemoteLib.dll"/>
+		<copy todir="${mm.dll.installdir}" file="NKRemoteLib.dll"/>
+		<copy todir="${mm.dll.installdir}" file="PSRemoteLib.dll"/>
+	</target>
+</project>

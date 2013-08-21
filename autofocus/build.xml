@@ -9,6 +9,9 @@
 		</sequential>
 	</macrodef>
 
+	<!-- Default -->
+	<property name="mm.build.failonerror" value="true"/>
+
 	<target name="prerequisites">
 		<run-all target="prerequisites" failonerror="${mm.build.failonerror}"/>
 	</target>
