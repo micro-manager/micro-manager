@@ -196,6 +196,7 @@ public:
    int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnAxis(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSequence(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnRingBufferSize(MM::PropertyBase* pProp, MM::ActionType eAct);
 
    // Sequence functions
    int IsStageSequenceable(bool& isSequenceable) const {isSequenceable = sequenceable_; return DEVICE_OK;}

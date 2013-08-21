@@ -1535,6 +1535,13 @@ ZStage::ZStage() :
    AddAllowedValue("Axis", "F");
    AddAllowedValue("Axis", "P");
    AddAllowedValue("Axis", "Z");
+
+   // size of the ring buffer
+   pAct = new CPropertyAction (this, &ZStage::OnRingBufferSize);
+   CreateProperty("RingBufferSize", "50", MM::Integer, false, pAct, true);
+   AddAllowedValue("RingBufferSize", "50");
+   AddAllowedValue("RingBufferSize", "250");
+
 }
 
 ZStage::~ZStage()
@@ -2003,6 +2010,23 @@ int ZStage::OnSequence(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
+int ZStage::OnRingBufferSize(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(nrEvents_);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      pProp->Get(nrEvents_);
+   }
+
+   return DEVICE_OK;
+}
+
+//////////////////////////////////////////////////////////////////////
+// CRIF reflection-based autofocussing unit (Nico, May 2007)
+////
 //////////////////////////////////////////////////////////////////////
 // CRIF reflection-based autofocussing unit (Nico, May 2007)
 ////
