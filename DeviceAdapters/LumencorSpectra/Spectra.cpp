@@ -629,7 +629,10 @@ int Spectra::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
       long pos;
       pProp->Get(pos);
 
-      return SetShutterPosition(pos == 0 ? false : true);
+      int ret = SetShutterPosition(pos == 0 ? false : true);
+      if (ret != DEVICE_OK)
+         return ret;
+      state_ = pos;
    }
    return DEVICE_OK;
 }
