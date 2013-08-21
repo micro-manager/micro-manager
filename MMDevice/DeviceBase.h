@@ -1157,6 +1157,23 @@ protected:
       return 0;
    }
 
+   /**
+    * Returns the parent Hub device pointer, or null if there isn't any.
+    * Makes sure the Parent ID has been assigned.
+    */
+   template<class T_HUB>
+   T_HUB* AssignToHub() {
+      T_HUB* hub = static_cast<T_HUB*>(GetParentHub());
+      if (hub == NULL) {
+         LogMessage("Parent hub not defined.");
+      } else {
+         char hubLabel[MM::MaxStrLength];
+         hub->GetLabel(hubLabel);
+         SetParentID(hubLabel); // for backward comp.
+      }
+      return hub;
+   }
+
 private:
    bool PropertyDefined(const char* propName) const
    {
@@ -1627,7 +1644,7 @@ template <class U>
 class CStageBase : public CDeviceBase<MM::Stage, U>
 {
    /**
-   * Default implementation for the realative motion
+   * Default implementation for relative motion
    */
    using CDeviceBase<MM::Stage, U>::GetPositionUm;
    using CDeviceBase<MM::Stage, U>::SetPositionUm;
