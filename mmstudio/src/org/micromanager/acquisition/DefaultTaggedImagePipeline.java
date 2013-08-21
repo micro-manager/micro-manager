@@ -27,7 +27,7 @@ public class DefaultTaggedImagePipeline {
    /*
     * This class creates the default sequence of modules
     * that digest a TaggedImage. They are
-    * AcquisitionEngine2010 -> ProcessorStack -> LiveAcq -> ImageCache
+    * AcquisitionEngine2010 -> ProcessorStack -> DefaultTaggedImageSink -> ImageCache
     *   -> VirtualAcquisitionDisplay
     * Other kinds of pipelines can be set up in this way.
     */

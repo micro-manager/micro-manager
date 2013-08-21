@@ -15,7 +15,7 @@ import org.json.JSONObject;
 import org.micromanager.AcquisitionEngine2010;
 import org.micromanager.acquisition.AcquisitionWrapperEngine;
 import org.micromanager.acquisition.DefaultTaggedImagePipeline;
-import org.micromanager.acquisition.LiveAcq;
+import org.micromanager.acquisition.DefaultTaggedImageSink;
 import org.micromanager.acquisition.MMImageCache;
 import org.micromanager.acquisition.ProcessorStack;
 import org.micromanager.acquisition.SequenceSettings;
@@ -142,8 +142,8 @@ public class AcqStandalone {
          MMImageCache imageCache = new MMImageCache(storage);
          
          // Start pumping images into the ImageCache
-         LiveAcq liveAcq = new LiveAcq(taggedImageQueue, imageCache);
-         liveAcq.start();
+         DefaultTaggedImageSink sink = new DefaultTaggedImageSink(taggedImageQueue, imageCache);
+         sink.start();
          
          taggedImageQueue.wait();
 

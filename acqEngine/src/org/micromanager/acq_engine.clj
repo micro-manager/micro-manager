@@ -31,10 +31,10 @@
             [org.micromanager.mm :as mm])
   (:import [org.micromanager AcqControlDlg]
            [org.micromanager.api AcquisitionEngine TaggedImageAnalyzer]
-           [org.micromanager.acquisition AcquisitionWrapperEngine LiveAcq TaggedImageQueue
-                                         ProcessorStack SequenceSettings
+           [org.micromanager.acquisition AcquisitionWrapperEngine 
                                          MMAcquisition
-                                         TaggedImageStorageRam]
+                                         SequenceSettings
+                                         TaggedImageQueue]
            [org.micromanager.navigation PositionList]
            [org.micromanager.utils ReportingUtils]
            [mmcorej TaggedImage Configuration Metadata]

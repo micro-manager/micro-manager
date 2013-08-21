@@ -75,7 +75,7 @@ public class NewImageFlippingProcessor extends DataProcessor<TaggedImage> {
                ReportingUtils.logError(ex);
             }
          } else {
-            //Must produce Poison image so LiveAcq Thread terminates properly
+            // Must produce Poison (sentinel) image to terminate tagged image pipeline
             produce(nextImage);
          }
       } catch (Exception ex) {

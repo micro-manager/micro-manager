@@ -25,7 +25,7 @@ public class DefaultTaggedImageSink  {
    }
 
    public void start() {
-      Thread savingThread = new Thread("LiveAcq saving thread.") {
+      Thread savingThread = new Thread("tagged image sink thread") {
 
          @Override
          public void run() {
