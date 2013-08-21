@@ -90,14 +90,14 @@
     (-> vcproj-file clojure.xml/parse :attrs :Name)
     (catch Exception e (println vcproj-file))))
 
-(defn bin-dir [bits]
+(defn dll-dir [bits]
   (File. micromanager
          (condp = bits
-           32 "bin_Win32"
-           64 "bin_x64")))
+           32 "stage/Release/Win32"
+           64 "stage/Release/x64")))
 
 (defn get-dll-names [bits]
-  (map dll-name (device-adapter-dlls (bin-dir bits))))
+  (map dll-name (device-adapter-dlls (dll-dir bits))))
 
 (def helper-vcprojs #{"DEClientLib" "DEMessaging"})
 
