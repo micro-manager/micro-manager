@@ -626,7 +626,6 @@ void CMMCore::loadDevice(const char* label, const char* library, const char* dev
       MM::Device* pDevice = pluginManager_.LoadDevice(label, library, device);
       CORE_LOG3("Device %s loaded from %s and labeled as %s\n", device, library, label);
       pDevice->SetCallback(callback_);
-      assignDefaultRole(pDevice);
    }
    catch (CMMError& err)
    {
@@ -884,6 +883,7 @@ void CMMCore::initializeAllDevices() throw (CMMError)
          logError(devices[i].c_str(), getDeviceErrorText(nRet, pDevice).c_str(), __FILE__, __LINE__);
          throw CMMError(getDeviceErrorText(nRet, pDevice).c_str(), MMERR_DEVICE_GENERIC);
       }
+      assignDefaultRole(pDevice);
       CORE_LOG1("Device %s initialized.\n", devices[i].c_str());
    }
 
