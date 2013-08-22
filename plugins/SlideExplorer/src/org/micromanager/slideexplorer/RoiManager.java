@@ -244,7 +244,7 @@ public class RoiManager extends ij.plugin.frame.RoiManager{
 		System.out.println("Position list: ");
 		for (int i=0;i<posList.getNumberOfPositions();++i) {
 			MultiStagePosition pos = posList.getPosition(i);
-			System.out.println("    ["+pos.getX() +","+ pos.getY()+"]");
+			System.out.println("    ["+pos.get(0).x +","+ pos.get(0).y +"]");
 		}
 	}
 
