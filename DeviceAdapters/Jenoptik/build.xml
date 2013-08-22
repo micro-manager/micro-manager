@@ -1,0 +1,14 @@
+<project name="Jenoptik">
+	<import file="../../buildscripts/deviceadapter.xml"/>
+
+	<target name="install-Win32">
+		<copy todir="${mm.dll.installdir}">
+			<filelist dir="lib">
+				<file name="MexJCam.dll"/>
+				<file name="FireCamJ.dll"/>
+				<file name="ProcessLib.dll"/>
+				<file name="camconj.dll"/>
+			</filelist>
+		</copy>
+	</target>
+</project>

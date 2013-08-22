@@ -78,10 +78,6 @@
 			<fileset dir="${mm.bindistdir}" includes="**"/>
 			<fileset dir="${mm.platform.bindistdir}" includes="**"/>
 			<fileset dir="${mm.common.bindistdir}" includes="**"/>
-			<!-- Temporary kludge to install vendor DLLs: files
-			     will late be moved to individual device adapter
-			     dirs -->
-			<fileset dir="${mm.bindist.basedir}/DLLs/${mm.architecture}" includes="**"/>
 		</copy>
 
 		<!-- XXX Remaining files to copy; should put elsewhere -->

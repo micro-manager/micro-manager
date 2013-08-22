@@ -1,0 +1,21 @@
+<project name="BaumerOptronic">
+	<import file="../../buildscripts/deviceadapter.xml"/>
+
+	<target name="install-Win32">
+		<copy todir="${mm.dll.installdir}">
+			<filelist dir="lib/Win32">
+				<file name="FxLib.dll"/>
+				<file name="SysInfo.dll"/>
+			</filelist>
+		</copy>
+	</target>
+
+	<target name="install-x64">
+		<copy todir="${mm.dll.installdir}">
+			<filelist dir="lib/x64">
+				<file name="FxLib.dll"/>
+				<file name="SysInfo.dll"/>
+			</filelist>
+		</copy>
+	</target>
+</project>

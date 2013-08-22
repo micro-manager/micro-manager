@@ -1,0 +1,14 @@
+<project name="AOTF">
+	<import file="../../buildscripts/deviceadapter.xml"/>
+
+	<!-- The AOTF adapter shares the Logix4u library with the ParallelPort
+	     adapter -->
+
+	<target name="install-Win32">
+		<copy todir="${mm.dll.installdir}" file="../ParallelPort/lib/inpout32.dll"/>
+	</target>
+
+	<target name="install-x64">
+		<copy todir="${mm.dll.installdir}" file="../ParallelPort/lib/inpoutx64.dll"/>
+	</target>
+</project>

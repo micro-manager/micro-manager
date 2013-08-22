@@ -1,0 +1,11 @@
+<project name="AgilentLaserCombiner">
+	<import file="../../buildscripts/deviceadapter.xml"/>
+
+	<target name="install-Win32">
+		<copy todir="${mm.dll.installdir}" file="lib/LaserCombinerSDK.dll"/>
+	</target>
+
+	<target name="install-x64">
+		<copy todir="${mm.dll.installdir}" file="lib/LaserCombinerSDK64.dll"/>
+	</target>
+</project>

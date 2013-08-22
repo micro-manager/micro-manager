@@ -1,0 +1,27 @@
+License and disclaimer agreement
+
+IMPORTANT - READ CAREFULLY
+
+This license and disclaimer statement constitutes a legal agreement ("License Agreement") between you (either as an individual or a single entity) and pco ag (the "Author"), for this software product ("Software"), including any software, source code, media, and accompanying on-line or printed documentation or verbally or electronically transmitted information produced by pco ag.
+
+BY DOWNLOADING, INSTALLING, COPYING, OR OTHERWISE USING THE SOFTWARE, YOU AGREE TO BE BOUND BY ALL OF THE TERMS AND CONDITIONS OF THIS LICENSE AND DISCLAIMER AGREEMENT.
+
+If you do not agree with the terms and conditions of this agreement, you must promptly cease all use of the software and destroy all copies of this software and all of its component parts in your possession or under your control.
+
+This software is freeware. You can use this software royalty-free for private and commercial purposes.
+
+You can freely distribute copies of the installation archive as long as no alterations are made to the contents and no charge is raised.
+
+You must not modify, reverse engineer, decompile, or disassemble the object code portions of this software.
+
+This Software is owned by pco ag and is protected by copyright law and international copyright treaty. Therefore, you must treat this Software like any other copyrighted material.
+
+In case the installation contains source code files you are allowed to modify and re-distribute copies of the source code and the compiled binaries which are based on the contained source code.
+
+This software is provided "as is" and without any warranties expressed or implied, including, but not limited to, implied warranties of fitness for a particular purpose, and non-infringement.
+
+THE AUTHOR DOES NOT WARRANT THAT THE SOFTWARE PRODUCT IS ERROR-FREE. THE ENTIRE RISK AS TO THE RESULTS AND PERFORMANCE OF THE SOFTWARE PRODUCT IS ASSUMED BY YOU. IF THE SOFTWARE PRODUCT CONTAINS DEFECTS, YOU, AND NOT THE AUTHOR, ASSUME THE ENTIRE COST OF ALL NECESSARY SERVICING, REPAIR OR CORRECTION.
+You expressly acknowledge and agree that use of the Software is at your sole risk.
+
+In no event shall the Author be liable for any damages whatsoever (including, without limitation, damages for loss of business profits, business interruption, loss of business information, or other pecuniary loss) arising out of the use of or inability to use this software or documentation, even if the Author has been advised of the possibility of such damages.
+Any feedback given to the Author will be treated as non-confidential. The Author may use any feedback free of charge without limitation.

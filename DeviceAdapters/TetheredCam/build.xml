@@ -2,8 +2,12 @@
 	<import file="../../buildscripts/deviceadapter.xml"/>
 
 	<target name="install-Win32">
-		<copy todir="${mm.dll.installdir}" file="DSLRRemoteLib.dll"/>
-		<copy todir="${mm.dll.installdir}" file="NKRemoteLib.dll"/>
-		<copy todir="${mm.dll.installdir}" file="PSRemoteLib.dll"/>
+		<copy todir="${mm.dll.installdir}">
+			<filelist dir=".">
+				<file name="DSLRRemoteLib.dll"/>
+				<file name="NKRemoteLib.dll"/>
+				<file name="PSRemoteLib.dll"/>
+			</filelist>
+		</copy>
 	</target>
 </project>
