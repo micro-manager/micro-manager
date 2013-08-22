@@ -34,7 +34,7 @@ import org.micromanager.utils.MMScriptException;
 public class AcqStandalone {
 
    public static void main(String[] args) {
-
+      String channelGroup = "Channel";
       SequenceSettings s = new SequenceSettings();
 
       s.numFrames = 3;
@@ -59,6 +59,7 @@ public class AcqStandalone {
 
       s.prefix = "ACQ-TEST-B";
       s.root = "C:/AcquisitionData";
+      s.channelGroup = channelGroup;
 
       String path = s.root + "/" + s.prefix;
       String actualPath = path;
@@ -73,7 +74,7 @@ public class AcqStandalone {
       CMMCore core = new CMMCore();
       try {
          core.loadSystemConfiguration("MMConfig_demo.cfg");
-         core.setProperty("Core",  "ChannelGroup", "Channel");
+         core.setProperty("Core",  "ChannelGroup", channelGroup);
       } catch (Exception e1) {
          // TODO Auto-generated catch block
          e1.printStackTrace();
