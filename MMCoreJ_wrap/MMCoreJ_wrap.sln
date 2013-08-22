@@ -283,6 +283,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Oxxius", "..\DeviceAdapters
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "HIDManager", "..\DeviceAdapters\HIDManager\HIDManager.vcproj", "{349B37AE-AB50-410E-A445-6C4A29522434}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "VersaLase", "..\DeviceAdapters\Vortran\VersaLase.vcproj", "{6D793C18-411A-4D31-B186-636817767C86}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -1359,6 +1361,14 @@ Global
 		{349B37AE-AB50-410E-A445-6C4A29522434}.Release|Win32.Build.0 = Release|Win32
 		{349B37AE-AB50-410E-A445-6C4A29522434}.Release|x64.ActiveCfg = Release|x64
 		{349B37AE-AB50-410E-A445-6C4A29522434}.Release|x64.Build.0 = Release|x64
+		{6D793C18-411A-4D31-B186-636817767C86}.Debug|Win32.ActiveCfg = Debug|Win32
+		{6D793C18-411A-4D31-B186-636817767C86}.Debug|Win32.Build.0 = Debug|Win32
+		{6D793C18-411A-4D31-B186-636817767C86}.Debug|x64.ActiveCfg = Debug|x64
+		{6D793C18-411A-4D31-B186-636817767C86}.Debug|x64.Build.0 = Debug|x64
+		{6D793C18-411A-4D31-B186-636817767C86}.Release|Win32.ActiveCfg = Release|Win32
+		{6D793C18-411A-4D31-B186-636817767C86}.Release|Win32.Build.0 = Release|Win32
+		{6D793C18-411A-4D31-B186-636817767C86}.Release|x64.ActiveCfg = Release|x64
+		{6D793C18-411A-4D31-B186-636817767C86}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
