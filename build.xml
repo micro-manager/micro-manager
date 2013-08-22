@@ -71,7 +71,7 @@
 		     here -->
 		<copy todir="${mm.dll.installdir}">
 			<!-- Device adapters are covered in stage-deviceadapters -->
-			<filelist dir="${mm.cpp.outdir}" files="MMCoreJ_wrap.dll,_MMCorePy.pyd"/>
+			<filelist dir="${mm.cpp.outdir}" files="MMCoreJ_wrap.dll,_MMCorePy.pyd,MMCorePy.py"/>
 		</copy>
 
 		<copy todir="${mm.installdir}">

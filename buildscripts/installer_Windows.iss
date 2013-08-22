@@ -125,9 +125,9 @@ Source: ..\stage\Release\{#MMArch}\MMCoreJ_wrap.dll; DestDir: {app}; Flags: igno
 Source: ..\stage\Release\{#MMArch}\mmgr_dal_*.dll; DestDir: {app}; Flags: ignoreversion
 
 ; python wrapper
-Source: ..\stage\Release\{#MMArch}\_MMCorePy.pyd; DestDir: {app}; Flags: ignoreversion skipifsourcedoesntexist
-Source: ..\stage\Release\{#MMArch}\MMCorePy.py; DestDir: {app}; Flags: ignoreversion skipifsourcedoesntexist
-Source: ..\stage\Release\{#MMArch}\MMCoreWrapDemo.py; DestDir: {app}; Flags: ignoreversion skipifsourcedoesntexist
+Source: ..\stage\Release\{#MMArch}\_MMCorePy.pyd; DestDir: {app}; Flags: ignoreversion
+Source: ..\stage\Release\{#MMArch}\MMCorePy.py; DestDir: {app}; Flags: ignoreversion
+Source: ..\stage\Release\{#MMArch}\MMCoreWrapDemo.py; DestDir: {app}; Flags: ignoreversion
 
 ; beanshell scripts
 Source: ..\scripts\*; DestDir: {app}\scripts; Flags: ignoreversion
