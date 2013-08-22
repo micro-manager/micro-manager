@@ -619,17 +619,17 @@ int Spectra::OnPort(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 int Spectra::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
+   enum statevalue {open = 1, closed = 0};
    if (eAct == MM::BeforeGet)
    {                                                                         
       // instead of relying on stored state we could actually query the device
-      pProp->Set((long)state_);                                                          
+      // pProp->Set((long)state_);
    }                                                                         
    else if (eAct == MM::AfterSet)
    {
       long pos;
-      pProp->Get(pos);
-
-      int ret = SetShutterPosition(pos == 0 ? false : true);
+	  pProp->Get(pos);
+      int ret = SetShutterPosition(pos == open ? open : closed);
       if (ret != DEVICE_OK)
          return ret;
       state_ = pos;
