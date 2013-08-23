@@ -285,9 +285,9 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "HIDManager", "..\DeviceAdap
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "VersaLase", "..\DeviceAdapters\Vortran\VersaLase.vcproj", "{6D793C18-411A-4D31-B186-636817767C86}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "OlympusIX83", "..\SecretDeviceAdapters\OlympuxIX83\OlympusIX83.vcproj", "{849D7396-9AD9-4C0E-A0FD-F6126FBA2CAB}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "OlympusIX83", "..\SecretDeviceAdapters\OlympusIX83\OlympusIX83.vcproj", "{849D7396-9AD9-4C0E-A0FD-F6126FBA2CAB}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "OlympusIX3Control", "..\SecretDeviceAdapters\OlympuxIX83\OlympusIX3Control\OlympusIX83Control.vcproj", "{2D7CE355-8831-40EE-9B43-E60866A45D7D}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "OlympusIX3Control", "..\SecretDeviceAdapters\OlympusIX83\OlympusIX3Control\OlympusIX83Control.vcproj", "{2D7CE355-8831-40EE-9B43-E60866A45D7D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
