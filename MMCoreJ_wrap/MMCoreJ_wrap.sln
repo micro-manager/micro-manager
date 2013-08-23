@@ -285,6 +285,10 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "HIDManager", "..\DeviceAdap
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "VersaLase", "..\DeviceAdapters\Vortran\VersaLase.vcproj", "{6D793C18-411A-4D31-B186-636817767C86}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "OlympusIX83", "..\SecretDeviceAdapters\OlympuxIX83\OlympusIX83.vcproj", "{849D7396-9AD9-4C0E-A0FD-F6126FBA2CAB}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "OlympusIX3Control", "..\SecretDeviceAdapters\OlympuxIX83\OlympusIX3Control\OlympusIX83Control.vcproj", "{2D7CE355-8831-40EE-9B43-E60866A45D7D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -1369,6 +1373,22 @@ Global
 		{6D793C18-411A-4D31-B186-636817767C86}.Release|Win32.Build.0 = Release|Win32
 		{6D793C18-411A-4D31-B186-636817767C86}.Release|x64.ActiveCfg = Release|x64
 		{6D793C18-411A-4D31-B186-636817767C86}.Release|x64.Build.0 = Release|x64
+		{849D7396-9AD9-4C0E-A0FD-F6126FBA2CAB}.Debug|Win32.ActiveCfg = Debug|Win32
+		{849D7396-9AD9-4C0E-A0FD-F6126FBA2CAB}.Debug|Win32.Build.0 = Debug|Win32
+		{849D7396-9AD9-4C0E-A0FD-F6126FBA2CAB}.Debug|x64.ActiveCfg = Debug|x64
+		{849D7396-9AD9-4C0E-A0FD-F6126FBA2CAB}.Debug|x64.Build.0 = Debug|x64
+		{849D7396-9AD9-4C0E-A0FD-F6126FBA2CAB}.Release|Win32.ActiveCfg = Release|Win32
+		{849D7396-9AD9-4C0E-A0FD-F6126FBA2CAB}.Release|Win32.Build.0 = Release|Win32
+		{849D7396-9AD9-4C0E-A0FD-F6126FBA2CAB}.Release|x64.ActiveCfg = Release|x64
+		{849D7396-9AD9-4C0E-A0FD-F6126FBA2CAB}.Release|x64.Build.0 = Release|x64
+		{2D7CE355-8831-40EE-9B43-E60866A45D7D}.Debug|Win32.ActiveCfg = Debug|Win32
+		{2D7CE355-8831-40EE-9B43-E60866A45D7D}.Debug|Win32.Build.0 = Debug|Win32
+		{2D7CE355-8831-40EE-9B43-E60866A45D7D}.Debug|x64.ActiveCfg = Debug|x64
+		{2D7CE355-8831-40EE-9B43-E60866A45D7D}.Debug|x64.Build.0 = Debug|x64
+		{2D7CE355-8831-40EE-9B43-E60866A45D7D}.Release|Win32.ActiveCfg = Release|Win32
+		{2D7CE355-8831-40EE-9B43-E60866A45D7D}.Release|Win32.Build.0 = Release|Win32
+		{2D7CE355-8831-40EE-9B43-E60866A45D7D}.Release|x64.ActiveCfg = Release|x64
+		{2D7CE355-8831-40EE-9B43-E60866A45D7D}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

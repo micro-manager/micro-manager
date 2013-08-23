@@ -71,19 +71,13 @@ Source: ..\..\3rdparty\jre6_32\* ; DestDir: {app}\jre; Flags: ignoreversion recu
 #if MMArch == "x64"
 Source: ..\..\3rdpartypublic\hidapi\hidapi-0.7.0\windows\x64\Release\hidapi.dll; DestDir: {app}; Flags: ignoreversion
 Source: ..\drivers\K8061\amd64\libusb0.dll; DestDir: {app}; DestName: libusb0.dll; Flags: ignoreversion
-
-
 Source: ..\stage\Release\x64\FxLib.dll; DestDir: {app}; Flags: ignoreversion
 Source: ..\stage\Release\x64\LaserCombinerSDK64.dll; DestDir: {app}; Flags: ignoreversion
-
-
+Source: ..\stage\Release\x64\OlympusIX3Control\*; DestDir: {app}\OlympusIX3Control\*; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: ..\stage\Release\x64\PCO_Kamlib64.dll; DestDir: {app}; Flags: ignoreversion
-
-
 Source: ..\stage\Release\x64\SysInfo.dll; DestDir: {app}; Flags: ignoreversion
 Source: ..\stage\Release\x64\XCLIBW64.dll; DestDir: {app}; Flags: ignoreversion
 Source: ..\stage\Release\x64\atmcd64d.dll; DestDir: {app}; Flags: ignoreversion
-
 Source: ..\stage\Release\x64\hrfw64.dll; DestDir: {app}; Flags: ignoreversion
 Source: ..\stage\Release\x64\inpoutx64.dll; DestDir: {app}; Flags: ignoreversion
 Source: ..\stage\Release\x64\mcam64.dll; DestDir: {app}; Flags: ignoreversion
@@ -101,6 +95,7 @@ Source: ..\stage\Release\Win32\FxLib.dll; DestDir: {app}; Flags: ignoreversion
 Source: ..\stage\Release\Win32\LaserCombinerSDK.dll; DestDir: {app}; Flags: ignoreversion
 Source: ..\stage\Release\Win32\MexJCam.dll; DestDir: {app}; Flags: ignoreversion
 Source: ..\stage\Release\Win32\NKRemoteLib.dll; DestDir: {app}; Flags: ignoreversion
+Source: ..\stage\Release\Win32\OlympusIX3Control\*; DestDir: {app}\OlympusIX3Control\*; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: ..\stage\Release\Win32\PCO_Kamlib.dll; DestDir: {app}; Flags: ignoreversion
 Source: ..\stage\Release\Win32\PSRemoteLib.dll; DestDir: {app}; Flags: ignoreversion
 Source: ..\stage\Release\Win32\ProcessLib.dll; DestDir: {app}; Flags: ignoreversion
