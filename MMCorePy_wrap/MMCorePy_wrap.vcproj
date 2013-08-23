@@ -95,7 +95,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy $(OutDir)\_MMCorePy.pyd $(InputDir)\..\bin_$(PlatformName)&#x0D;&#x0A;copy $(InputDir)\MMCorePy.py $(InputDir)\..\bin_$(PlatformName)&#x0D;&#x0A;"
+				CommandLine="copy $(TargetPath) ..\bin_$(PlatformName)"
 			/>
 		</Configuration>
 		<Configuration
@@ -174,7 +174,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy $(OutDir)\_MMCorePy.pyd $(InputDir)\..\bin_$(PlatformName)&#x0D;&#x0A;copy $(InputDir)\MMCorePy.py $(InputDir)\..\bin_$(PlatformName)&#x0D;&#x0A;"
+				CommandLine="copy $(TargetPath) ..\bin_$(PlatformName)"
 			/>
 		</Configuration>
 		<Configuration
@@ -252,7 +252,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy $(OutDir)\_MMCorePy.pyd $(InputDir)\..\bin_$(PlatformName)&#x0D;&#x0A;copy $(InputDir)\MMCorePy.py $(InputDir)\..\bin_$(PlatformName)&#x0D;&#x0A;"
+				CommandLine="copy $(TargetPath) ..\bin_$(PlatformName)"
 			/>
 		</Configuration>
 		<Configuration
@@ -330,7 +330,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy $(OutDir)\_MMCorePy.pyd $(InputDir)\..\bin_$(PlatformName)&#x0D;&#x0A;copy $(InputDir)\MMCorePy.py $(InputDir)\..\bin_$(PlatformName)&#x0D;&#x0A;"
+				CommandLine="copy $(TargetPath) ..\bin_$(PlatformName)"
 			/>
 		</Configuration>
 	</Configurations>
@@ -346,12 +346,33 @@
 				RelativePath=".\MMCorePy.i"
 				>
 				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Running Swig on $(InputFileName)"
+						CommandLine="set swig=..\..\3rdpartypublic\swig\swig&#x0D;&#x0A;rem Stage output within IntDir so that it will be cleaned.&#x0D;&#x0A;set swig_out_dir=$(IntDir)\Swig&#x0D;&#x0A;set py_src_dir=..\build\Swig&#x0D;&#x0A;&#x0D;&#x0A;mkdir %swig_out_dir%&#x0D;&#x0A;%swig% -c++ -python -outdir %swig_out_dir% $(InputPath)&#x0D;&#x0A;&#x0D;&#x0A;mkdir %py_src_dir%&#x0D;&#x0A;copy %swig_out_dir%\*.py %py_src_dir%\"
+						Outputs="$(InputName)_wrap.h;$(InputName)_wrap.cxx"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|x64"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Running Swig on $(InputFileName)"
+						CommandLine="set swig=..\..\3rdpartypublic\swig\swig&#x0D;&#x0A;rem Stage output within IntDir so that it will be cleaned.&#x0D;&#x0A;set swig_out_dir=$(IntDir)\Swig&#x0D;&#x0A;set py_src_dir=..\build\Swig&#x0D;&#x0A;&#x0D;&#x0A;mkdir %swig_out_dir%&#x0D;&#x0A;%swig% -c++ -python -outdir %swig_out_dir% $(InputPath)&#x0D;&#x0A;&#x0D;&#x0A;mkdir %py_src_dir%&#x0D;&#x0A;copy %swig_out_dir%\*.py %py_src_dir%\"
+						Outputs="$(InputName)_wrap.h;$(InputName)_wrap.cxx"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
 					Name="Release|Win32"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
-						CommandLine="..\..\3rdparty\swigwin\swig -python -c++ -o MMCorePy_wrap.cxx MMCorePy.i&#x0D;&#x0A;"
-						Outputs="MMCorePy_wrap.cxx"
+						Description="Running Swig on $(InputFileName)"
+						CommandLine="set swig=..\..\3rdpartypublic\swig\swig&#x0D;&#x0A;rem Stage output within IntDir so that it will be cleaned.&#x0D;&#x0A;set swig_out_dir=$(IntDir)\Swig&#x0D;&#x0A;set py_src_dir=..\build\Swig&#x0D;&#x0A;&#x0D;&#x0A;mkdir %swig_out_dir%&#x0D;&#x0A;%swig% -c++ -python -outdir %swig_out_dir% $(InputPath)&#x0D;&#x0A;&#x0D;&#x0A;mkdir %py_src_dir%&#x0D;&#x0A;copy %swig_out_dir%\*.py %py_src_dir%\"
+						Outputs="$(InputName)_wrap.h;$(InputName)_wrap.cxx"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -359,8 +380,9 @@
 					>
 					<Tool
 						Name="VCCustomBuildTool"
-						CommandLine="..\..\3rdparty\swigwin\swig -python -c++ -o MMCorePy_wrap.cxx MMCorePy.i&#x0D;&#x0A;"
-						Outputs="MMCorePy_wrap.cxx"
+						Description="Running Swig on $(InputFileName)"
+						CommandLine="set swig=..\..\3rdpartypublic\swig\swig&#x0D;&#x0A;rem Stage output within IntDir so that it will be cleaned.&#x0D;&#x0A;set swig_out_dir=$(IntDir)\Swig&#x0D;&#x0A;set py_src_dir=..\build\Swig&#x0D;&#x0A;&#x0D;&#x0A;mkdir %swig_out_dir%&#x0D;&#x0A;%swig% -c++ -python -outdir %swig_out_dir% $(InputPath)&#x0D;&#x0A;&#x0D;&#x0A;mkdir %py_src_dir%&#x0D;&#x0A;copy %swig_out_dir%\*.py %py_src_dir%\"
+						Outputs="$(InputName)_wrap.h;$(InputName)_wrap.cxx"
 					/>
 				</FileConfiguration>
 			</File>
@@ -390,6 +412,10 @@
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
+			<File
+				RelativePath=".\MMCorePy_wrap.h"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Resource Files"

@@ -1,7 +1,7 @@
 <project name="MMCoreJ" basedir="." default="jar">
 	<include file="../buildscripts/buildprops.xml"/>
 	<property name="srcdir" value="."/>
-	<property name="gensrcdir" value="${mm.swig.gensrcdir}/MMCoreJ"/>
+	<property name="swig.javasrcdir" value="${mm.swig.javasrcdir}/MMCoreJ"/>
 	<property name="json.srcdir" value="${mm.basedir}/mmstudio/src/org/json"/>
 
 	<import file="../buildscripts/javabuild.xml"/>
@@ -19,7 +19,7 @@
 			</classpath>
 		</mm-javac>
 
-		<mm-javac srcdir="${gensrcdir}" destdir="${intdir}">
+		<mm-javac srcdir="${swig.javasrcdir}" destdir="${intdir}">
 			<classpath>
 				<pathelement location="${intdir}"/>
 			</classpath>

@@ -57,7 +57,8 @@
 	<property name="mm.dll.installdir" location="${mm.installdir}"/>
 
 	<!-- Swig output -->
-	<property name="mm.swig.gensrcdir" location="${mm.intdir}/Swig"/>
+	<property name="mm.swig.javasrcdir" location="${mm.intdir}/Swig"/>
+	<property name="mm.swig.pysrcdir" location="${mm.outdir}/Swig"/>
 
 	<!-- Java components -->
 	<property name="mm.java.intdir" location="${mm.intdir}/Classes"/>

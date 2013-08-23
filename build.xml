@@ -63,13 +63,19 @@
 		<antcall target="stage-deviceadapters"/>
 		<run-all-java-projects target="install"/>
 
-		<!-- Until we update the C++ build, just copy all output files
-		     here -->
+		<!-- MMCoreJ DLL -->
+		<!-- XXX Should be staged by MMCoreJ_wrap/build.xml -->
 		<copy todir="${mm.dll.installdir}">
-			<!-- Device adapters are covered in stage-deviceadapters -->
-			<filelist dir="${mm.cpp.outdir}" files="MMCoreJ_wrap.dll,_MMCorePy.pyd,MMCorePy.py"/>
+			<filelist dir="${mm.cpp.outdir}" files="MMCoreJ_wrap.dll"/>
 		</copy>
 
+		<!-- MMCorePy files -->
+		<copy todir="${mm.installdir}">
+			<filelist dir="${mm.cpp.outdir}" files="_MMCorePy.pyd"/>
+			<filelist dir="${mm.swig.pysrcdir}" files="MMCorePy.py"/>
+		</copy>
+
+		<!-- Files to distribute as is -->
 		<copy todir="${mm.installdir}">
 			<fileset dir="${mm.bindistdir}" includes="**"/>
 			<fileset dir="${mm.platform.bindistdir}" includes="**"/>
