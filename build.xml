@@ -31,6 +31,7 @@
 			<subant target="@{target}">
 				<filelist dir="${mm.basedir}">
 					<!-- Note: Order matters -->
+					<file name="MMCoreJ_wrap/build.xml"/>
 					<file name="mmstudio/build.xml"/>
 					<file name="acqEngine/build.xml"/>
 					<file name="plugins/build.xml"/>
@@ -44,11 +45,6 @@
 		<mkdir dir="${mm.cpp.intdir}"/>
 		<mkdir dir="${mm.cpp.outdir}"/>
 		<buildcpp/>
-
-		<!-- TODO Extract scripts (build events) from MMCoreJ and
-		     MMCorePy projects and put in per-project build.xml files -->
-		<mkdir dir="${mm.java.outdir}"/>
-		<copy todir="${mm.java.outdir}" file="${mm.cpp.outdir}/MMCoreJ.jar"/>
 	</target>
 
 	<target name="stage-deviceadapters">
@@ -87,7 +83,6 @@
 			<!-- XXX Should limit to the Jars that are actually
 			     used. Use Ivy? -->
 			<fileset dir="${mm.java.libs}" includes="*.jar" excludes="ij.jar"/>
-			<filelist dir="${mm.java.outdir}" files="MMCoreJ.jar"/>
 		</copy>
 
 		<mkdir dir="${mm.scripts.installdir}"/>
