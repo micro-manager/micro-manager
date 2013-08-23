@@ -2,27 +2,23 @@
 #define _AOIPROPERTY_H_
 
 #include <map>
+#include <vector>
 #include "MMDeviceConstants.h"
 #include "Property.h"
 #include "atcore.h"
 
+class ICallBackManager;
+
 namespace andor
 {
-   class IDevice;
    class ISubject;
    class IInteger;
 }
 
-class MySequenceThread;
-class CAndorSDK3Camera;
-class SnapShotControl;
-
 class TAOIProperty
 {
 public:
-   TAOIProperty(const std::string MM_name, CAndorSDK3Camera* camera,
-      andor::IDevice* device_hndl, MySequenceThread* thd,
-      SnapShotControl* snapShotController, bool readOnly);
+   TAOIProperty(const std::string & MM_name, ICallBackManager* callback, bool readOnly);
    ~TAOIProperty();
 
    void Update(andor::ISubject* Subject);
@@ -31,33 +27,39 @@ public:
 
    AT_64 GetWidth();
    AT_64 GetHeight();
+   AT_64 GetLeftOffset();
+   AT_64 GetTopOffset();
    unsigned GetBytesPerPixel();
    AT_64 GetStride();
    double GetBytesPerPixelF();
    void SetReadOnly(bool set_to);
-   void SetCustomAOISize(unsigned left, unsigned top, unsigned width, unsigned height);
-   void ResetToFullImage();
+   const char* SetCustomAOISize(unsigned left, unsigned top, unsigned width, unsigned height);
+   const char* ResetToFullImage();
 
 private:
    typedef std::map<long long, int> TMapAOIIndexType;
    typedef std::map<long long, long long> TMapAOIWidthHeightType;
+   typedef std::vector<long long> TVectorXYType;
+
+   void populateWidthMaps(bool fullAoiControl);
+   void populateLeftTopVectors();
+   void findBestR2AOICoords(TMapAOIIndexType::iterator iter, AT_64 i64_sensorWidth, AT_64 i64_sensorHeight);
+   void setFeature(long data);
+
+   ICallBackManager* callback_;
    andor::IInteger* aoi_height_;
    andor::IInteger* aoi_width_;
    andor::IInteger* aoi_top_;
    andor::IInteger* aoi_left_;
    andor::IInteger* aoi_stride_;
-   CAndorSDK3Camera* camera_;
-   andor::IDevice* device_hndl_;
-   std::string MM_name_;
-   MySequenceThread * thd_;
-   SnapShotControl* snapShotController_;
    MM::Property* pbProp_;
+   std::string customStr_;
 
    TMapAOIIndexType aoiWidthIndexMap_;
    TMapAOIWidthHeightType aoiWidthHeightMap_;
+   TVectorXYType leftX_;
+   TVectorXYType topY_;
    bool fullAoiControl_;
-   long long leftOffset_;
-   long long topOffset_;
 };
 
 #endif // _AOIPROPERTY_H_

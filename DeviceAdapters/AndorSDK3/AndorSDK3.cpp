@@ -75,8 +75,6 @@ static const unsigned int CID_FIELD_SIZE = 4;
 static const unsigned int NUMBER_MDA_BUFFERS = 10;
 static const unsigned int NUMBER_LIVE_BUFFERS = 2;
 
-static const unsigned int WAITBUFFER_TIMEOUT_MILLISECONDS = 500;
-
 // TODO: linux entry code
 
 // windows DLL entry code
@@ -176,8 +174,6 @@ CAndorSDK3Camera::CAndorSDK3Camera()
   numImgBuffersAllocated_(0),
   currentSeqExposure_(0),
   keep_trying_(false),
-  roiX_(0),
-  roiY_(0),
   stopOnOverflow_(false)
 {
    // call the base class method to set-up default error codes/messages
@@ -404,12 +400,10 @@ int CAndorSDK3Camera::Initialize()
 
    binning_property = new TEnumProperty(MM::g_Keyword_Binning, cameraDevice->GetEnum(L"AOIBinning"),
                                         this, thd_, snapShotController_, false, false);
-   
+   //To support Rel2.1 cameras if no binning, always have 1x1
    AddAllowedValue(MM::g_Keyword_Binning, g_CameraDefaultBinning);
-   SetProperty(MM::g_Keyword_Binning, g_CameraDefaultBinning);
 
-   aoi_property_ = new TAOIProperty(TAndorSDK3Strings::ACQUISITION_AOI, this, cameraDevice, thd_,
-                                    snapShotController_, false);
+   aoi_property_ = new TAOIProperty(TAndorSDK3Strings::ACQUISITION_AOI, callbackManager_, false);
 
    pixelReadoutRate_property = new TEnumProperty(TAndorSDK3Strings::PIXEL_READOUT_RATE,
                                                  cameraDevice->GetEnum(L"PixelReadoutRateMapper"),
@@ -466,16 +460,14 @@ int CAndorSDK3Camera::Initialize()
                                              new TAndorFloatCache(cameraDevice->GetFloat(L"FrameRate")),  
                                              callbackManager_, false, true);
 
-   initialized_ = true;
-   //If this is commented out, Snap will fail untill reset to full image
-   ClearROI(); //TODO Remove when refactor AOI properties for R3
-
    char errorStr[MM::MaxStrLength];
    if (false == eventsManager_->Initialise(errorStr) )
    {
       LogMessage(errorStr);
    }
 
+   initialized_ = true;
+   ResizeImageBuffer();
    snapShotController_->poiseForSnapShot();
    return DEVICE_OK;
 }
@@ -740,7 +732,16 @@ int CAndorSDK3Camera::ResizeImageBuffer()
 {
    if (initialized_)
    {
-      img_.Resize(GetImageWidth(), GetImageHeight(), GetImageBytesPerPixel());
+      if (GetImageBytesPerPixel() == img_.Depth() )
+      {
+         //This memsets the new size to 0 - if any issues occur,
+         // a blank image will be shown as opposed to corrupt image.
+         img_.Resize(GetImageWidth(), GetImageHeight() );
+      }
+      else
+      {
+         img_.Resize(GetImageWidth(), GetImageHeight(), GetImageBytesPerPixel() );
+      }
    }
    return DEVICE_OK;
 }
@@ -754,7 +755,6 @@ int CAndorSDK3Camera::ResizeImageBuffer()
 * exact dimensions requested - but should try do as close as possible.
 * If the hardware does not have this capability the software should simulate the ROI by
 * appropriately cropping each frame.
-* This demo implementation ignores the position coordinates and just crops the buffer.
 * @param x - top-left corner coordinate - Left
 * @param y - top-left corner coordinate - Top
 * @param xSize - width
@@ -768,14 +768,16 @@ int CAndorSDK3Camera::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned yS
    }
    else
    {
+      x += 1;
+      y += 1;
       //Adjust for binning
       int binning = GetBinning();
       x *= binning;
       y *= binning;
 
-      aoi_property_->SetCustomAOISize(x, y, xSize, ySize);
-      roiX_ = x;
-      roiY_ = y;
+      const char* propStrValue = aoi_property_->SetCustomAOISize(x, y, xSize, ySize);
+      ResizeImageBuffer();
+      this->OnPropertyChanged(TAndorSDK3Strings::ACQUISITION_AOI.c_str(), propStrValue);
    }
    return DEVICE_OK;
 }
@@ -786,11 +788,15 @@ int CAndorSDK3Camera::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned yS
 */
 int CAndorSDK3Camera::GetROI(unsigned & x, unsigned & y, unsigned & xSize, unsigned & ySize)
 {
-   x = roiX_;
-   y = roiY_;
+   //Adjust for binning
+   int binning = GetBinning();
+   x = static_cast<unsigned>(aoi_property_->GetLeftOffset() / binning);
+   y = static_cast<unsigned>(aoi_property_->GetTopOffset() / binning);
+   x -= 1;
+   y -= 1;
 
-   xSize = img_.Width();
-   ySize = img_.Height();
+   xSize = static_cast<unsigned>(aoi_property_->GetWidth());
+   ySize = static_cast<unsigned>(aoi_property_->GetHeight());
 
    return DEVICE_OK;
 }
@@ -801,10 +807,8 @@ int CAndorSDK3Camera::GetROI(unsigned & x, unsigned & y, unsigned & xSize, unsig
 */
 int CAndorSDK3Camera::ClearROI()
 {
-   aoi_property_->ResetToFullImage();
-   roiX_ = 0;
-   roiY_ = 0;
-
+   const char * propStrValue = aoi_property_->ResetToFullImage();
+   this->OnPropertyChanged(TAndorSDK3Strings::ACQUISITION_AOI.c_str(), propStrValue);
    return DEVICE_OK;
 }
 
@@ -1027,6 +1031,7 @@ int CAndorSDK3Camera::StartSequenceAcquisition(long numImages, double interval_m
 
    if (DEVICE_OK == retCode)
    {
+      aoi_property_->SetReadOnly(true);
       retCode = SetupCameraForSeqAcquisition(numImages);
    }
 
@@ -1042,11 +1047,6 @@ int CAndorSDK3Camera::StartSequenceAcquisition(long numImages, double interval_m
       keep_trying_ = true;
       thd_->Start(numImages, interval_ms);
       stopOnOverflow_ = stopOnOverflow;
-
-      if (initialized_)
-      {
-         aoi_property_->SetReadOnly(true);
-      }
    }
 
    return retCode;
@@ -1061,6 +1061,7 @@ void CAndorSDK3Camera::RestartLiveAcquisition()
       bufferControl->Flush();
       CleanUpDeviceCircularBuffer();
    }
+   ResizeImageBuffer();
    CameraStart();
 }
 
@@ -1185,7 +1186,7 @@ bool CAndorSDK3Camera::waitForData(unsigned char *& return_buffer, int & buffer_
    }
 
    //else just wait on frame (1st trigger sent at Acq start)
-   int timeout_ms = currentSeqExposure_ + WAITBUFFER_TIMEOUT_MILLISECONDS;
+   int timeout_ms = currentSeqExposure_ + SnapShotControl::WAIT_DATA_TIMEOUT_BUFFER_MILLISECONDS;
    got_image = bufferControl->Wait(return_buffer, buffer_size, timeout_ms);
    //if NO events supported, send next SW trigger
    if (softwareTrigger && !eventsManager_->IsEventRegistered(CEventsManager::EV_EXPOSURE_END_EVENT) )
@@ -1207,7 +1208,7 @@ int CAndorSDK3Camera::ThreadRun(void)
    int buffer_size = 0;
 
    bool got_image = false;
-   while (!got_image && keep_trying_)
+   while (!got_image && keep_trying_ && !thd_->IsSuspended())
    {
       try
       {
@@ -1242,6 +1243,11 @@ int CAndorSDK3Camera::ThreadRun(void)
       UnpackDataWithPadding(return_buffer);
       ret = InsertImage();
    }
+
+   if (thd_->IsSuspended() )
+   {
+      ret = DEVICE_OK;
+   }
    return ret;
 };
 
@@ -1258,11 +1264,7 @@ void CAndorSDK3Camera::OnThreadExiting() throw()
 {
    snapShotController_->resetCameraAcquiring();
    CleanUpDeviceCircularBuffer();
-
-   if (initialized_)
-   {
-      aoi_property_->SetReadOnly(false);
-   }
+   aoi_property_->SetReadOnly(false);
 
    try
    {

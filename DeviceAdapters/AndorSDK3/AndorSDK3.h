@@ -129,8 +129,6 @@ private:
    ImgBuffer img_;
    bool busy_;
    bool initialized_;
-   unsigned roiX_;
-   unsigned roiY_;
    AT_64 sequenceStartTime_;
    AT_64 fpgaTSclockFrequency_;
    AT_64 timeStamp_;

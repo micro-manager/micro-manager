@@ -15,6 +15,8 @@ public:
    SnapShotControl(andor::IDevice* cameraDevice, CEventsManager* _evMngr);
    ~SnapShotControl();
 
+   static const unsigned int WAIT_DATA_TIMEOUT_BUFFER_MILLISECONDS = 500;
+
    void setupTriggerModeSilently();
    void poiseForSnapShot();
    void leavePoisedMode();

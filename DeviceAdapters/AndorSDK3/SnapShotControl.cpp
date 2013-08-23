@@ -230,18 +230,11 @@ void SnapShotControl::getData(unsigned char *& return_buffer)
 {
    int buffer_size = 0;
 
-   bool got_image = bufferControl->Wait(return_buffer, buffer_size, getTransferTime());
+   int timeout_ms = getTransferTime() + WAIT_DATA_TIMEOUT_BUFFER_MILLISECONDS;
+   bool got_image = bufferControl->Wait(return_buffer, buffer_size, timeout_ms);
    if (got_image)
    {
       bufferControl->Queue(return_buffer, buffer_size);
-   }
-   else
-   {
-      got_image = bufferControl->Wait(return_buffer, buffer_size, getTransferTime());
-      if (got_image)
-      {
-         bufferControl->Queue(return_buffer, buffer_size);
-      }
    }
 }
 

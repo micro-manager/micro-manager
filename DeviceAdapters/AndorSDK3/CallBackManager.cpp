@@ -68,6 +68,11 @@ int CCallBackManager::CPCSetAllowedValues(const char* pszName, vector<string>& v
    return parentClass_->SetAllowedValues(pszName, values);
 }
 
+int CCallBackManager::CPCAddAllowedValueWithData(const char* pszName, const string & value, long data)
+{
+   return parentClass_->AddAllowedValue(pszName, value.c_str(), data);
+}
+
 int CCallBackManager::CPCLog(const char * msg)
 {
    return parentClass_->LogMessage(msg);
@@ -75,14 +80,35 @@ int CCallBackManager::CPCLog(const char * msg)
 
 void CCallBackManager::PauseLiveAcquisition()
 {
+   thd_->Suspend();
    ssControl_->resetCameraAcquiring();
-   //thd_->Suspend();
 }
 
 void CCallBackManager::CPCRestartLiveAcquisition()
 {
    parentClass_->RestartLiveAcquisition();
-   //thd_->Resume();
+   thd_->Resume();
+}
+
+void CCallBackManager::CPCStopLiveAcquisition()
+{
+   parentClass_->StopSequenceAcquisition();
+   parentClass_->GetCoreCallback()->ClearImageBuffer(parentClass_);
+}
+
+void CCallBackManager::CPCStartLiveAcquisition()
+{
+   parentClass_->StartSequenceAcquisition(0.f);
+}
+
+void CCallBackManager::CPCResizeImageBuffer()
+{
+   parentClass_->ResizeImageBuffer();
+}
+
+int CCallBackManager::CPCGetBinningFactor()
+{
+   return parentClass_->GetBinning();
 }
 
 andor::IDevice * CCallBackManager::GetCameraDevice()
