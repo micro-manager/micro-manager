@@ -52,22 +52,32 @@
 (defn color-slider [id pos fill-color]
   [:polygon {:id id
              :vertices [{:x pos :y 0}
-                        {:x (- pos 7) :y -16}
-                        {:x (+ pos 7) :y -16}]
+                        {:x (- pos 7) :y 16}
+                        {:x (+ pos 7) :y 16}]
              :color :gray
              :stroke {:width 2}
              :fill {:color fill-color}}])
       
-(defn update-limit! [val max]
-  (let [val (canvas/clip-value val 0 max)]
-    (swap! channel-atom assoc :min val)))
+(defn update-limit [{:keys [min max] :as channel-map}
+                    handle val]
+  (let [val (canvas/clip-value val 0 255)]
+    (if (= handle :min)
+      (assoc channel-map
+             :min val
+             :max (canvas/clip-value (inc val) max 255))
+      (assoc channel-map
+             :max val
+             :min (canvas/clip-value (dec val) 0 min)))))           
+
+(defn update-limit! [handle val]
+  (swap! channel-atom update-limit handle val))
 
 (defn contrast-graph [data width height {:keys [name color min max]}]
   (let [n (count data)
         xmin (* width (/ min n))
         xmax (* width (/ max n))]
     [:graphics {:fill :dark-gray}
-     [:compound {:x 100 :y (+ 10 height) :scale-y -1}
+     [:compound {:x 100 :y (+ 30 height) :scale-y -1}
       [:polygon
        {:id :graph
         :vertices (bar-graph-vertices data width height)
@@ -76,12 +86,14 @@
                 :color2 color :x2 xmax :y2 0}}
         :color :dark-gray
         :stroke {:width 0 :cap :butt}}]
-      [:rect {:b 2 :h 20 :l 0 :w width
-              :hidden false
-              :on-mouse-down (fn [x _] (update-limit! (* n (/ x width)) max))
-              :on-mouse-drag (fn [x _] (update-limit! (* n (/ x width)) max))}]
-      (color-slider :min-handle xmin :black)
-      (color-slider :max-handle xmax color)]
+      [:compound {:y height :h 20 :x 0 :w width :scale-y 1
+                  :on-mouse-down (fn [x _] (update-limit! :max (* n (/ x width))))
+                  :on-mouse-drag (fn [x _] (update-limit! :max (* n (/ x width))))}
+       (color-slider :max-handle xmax color)]    
+      [:compound {:y 0 :h 20 :x 0 :w width :scale-y -1
+                  :on-mouse-down (fn [x _] (update-limit! :min (* n (/ x width))))
+                  :on-mouse-drag (fn [x _] (update-limit! :min (* n (/ x width))))}
+       (color-slider :min-handle xmin :black)]]
      [:text {:text name :l 50 :t 12 :color :white :font {:size 18}}]
      [:compound {:l 10 :t 50 :w 0 :h 0}
       [:text {:text (str "Min: " (int min))

@@ -1,8 +1,8 @@
 (ns slide-explorer.widgets
   (:import (java.awt.event ActionListener)
            (java.util UUID)
-           (javax.swing AbstractAction JButton JCheckBox JFrame JComponent KeyStroke)
-           (org.micromanager.utils JavaUtils)))
+           (javax.swing AbstractAction JButton JCheckBox JFrame JComponent KeyStroke))
+  (:require [slide-explorer.utils :as utils]))
 
 ;; key binding
 
@@ -97,7 +97,7 @@
     (.dispose window)
     (.setUndecorated window true)
     (let [screen (window-screen window)]
-      (if (and (JavaUtils/isMac)
+      (if (and (utils/is-mac)
                (= screen (default-screen-device)))
         (.setFullScreenWindow screen window)
         (.setBounds window (screen-bounds screen))))
