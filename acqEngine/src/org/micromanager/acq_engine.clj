@@ -78,8 +78,8 @@
 
 (def pixel-type-depths {"GRAY8" 1 "GRAY16" 2 "RGB32" 4 "RGB64" 8})
 
-(defn throw-data-exception [data]
-  (throw-exception (pr-str data)))
+(defn throw-exception [msg] 
+  (throw (Exception. msg))) 
 
 ;; time
 
