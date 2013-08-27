@@ -78,8 +78,8 @@
 
 (def pixel-type-depths {"GRAY8" 1 "GRAY16" 2 "RGB32" 4 "RGB64" 8})
 
-(defn throw-exception [msg]
-  (throw (Exception. msg)))
+(defn throw-data-exception [data]
+  (throw-exception (pr-str data)))
 
 ;; time
 
@@ -379,11 +379,14 @@
         (if (< timeout-ms (- (System/currentTimeMillis) start-time))
           (throw-exception (str (- (System/currentTimeMillis) start-time)
                                 " Timed out waiting for image\nto arrive from camera."))
-          (do (when (core isBufferOverflowed)
+          (do 
+            (when (core isBufferOverflowed)
                 (println "Circular buffer overflowed")
                 (throw-exception "Circular buffer overflowed."))
-              (Thread/sleep 1)
-              (recur)))))))
+            (when (@state :stop)
+              (throw-exception "Aborted!"))
+            (Thread/sleep 1)
+            (recur)))))))
 
 (defn pop-burst-image
   [timeout-ms]
