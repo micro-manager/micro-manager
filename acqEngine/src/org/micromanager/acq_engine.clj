@@ -29,10 +29,8 @@
                                                     make-property-sequences]])
   (:require [clojure.set]
             [org.micromanager.mm :as mm])
-  (:import [org.micromanager AcqControlDlg]
-           [org.micromanager.api AcquisitionEngine TaggedImageAnalyzer]
-           [org.micromanager.acquisition AcquisitionWrapperEngine 
-                                         MMAcquisition
+  (:import [org.micromanager.api AcquisitionEngine]
+           [org.micromanager.acquisition MMAcquisition
                                          SequenceSettings
                                          TaggedImageQueue]
            [org.micromanager.navigation PositionList]
@@ -963,15 +961,6 @@
   (reset! attached-runnables (vec nil)))
 
 ;; testing
-
-(defn create-acq-eng []
-  (doto
-    (proxy [AcquisitionWrapperEngine] []
-      (runPipeline [^SequenceSettings settings]
-        (-run settings this)
-    (.setCore mmc (.getAutofocusManager gui))
-    (.setParentGUI gui)
-    (.setPositionList (.getPositionList gui))))))
 
 (defn stop []
   (when-let [acq-thread (:acq-thread (.state last-acq))]
