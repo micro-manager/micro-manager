@@ -4638,7 +4638,7 @@ public class MMStudioMainFrame extends JFrame implements
       try {
          acquisitionEngine2010LoadingThread.join();
          if (acquisitionEngine2010 == null) {
-            acquisitionEngine2010 = (IAcquisitionEngine2010) acquisitionEngine2010Class.getConstructors()[0].newInstance(this);
+            acquisitionEngine2010 = (IAcquisitionEngine2010) acquisitionEngine2010Class.getConstructor(ScriptInterface.class).newInstance(this);
          }
          return acquisitionEngine2010;
       } catch (Exception e) {
