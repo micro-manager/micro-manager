@@ -70,7 +70,7 @@
 		</copy>
 
 		<!-- MMCorePy files -->
-		<copy todir="${mm.installdir}" failonerror=${mm.build.failonerror}>
+		<copy todir="${mm.installdir}" failonerror="${mm.build.failonerror}">
 			<filelist dir="${mm.cpp.outdir}" files="_MMCorePy.pyd"/>
 			<filelist dir="${mm.swig.pysrcdir}" files="MMCorePy.py"/>
 		</copy>
