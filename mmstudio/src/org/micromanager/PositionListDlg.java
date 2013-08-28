@@ -224,7 +224,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
    private class AxisTableModel extends AbstractTableModel {
       private static final long serialVersionUID = 1L;
       public final String[] COLUMN_NAMES = new String[] {
-            "Use",
+            "Record",
             "Axis"
       };
       
@@ -776,22 +776,23 @@ public void addPosition(MultiStagePosition msp, String label) {
     */
    public void markPosition() {
       refreshCurrentPosition();
-      MultiStagePosition msp = new MultiStagePosition();
-      msp = curMsp_;
+      MultiStagePosition msp = curMsp_;
 
       PosTableModel ptm = (PosTableModel)posTable_.getModel();
-      MultiStagePosition selMsp = ptm.getPositionList().getPosition(posTable_.getSelectedRow() -1);
+      MultiStagePosition selMsp = 
+              ptm.getPositionList().getPosition(posTable_.getSelectedRow() -1);
 
-      int selectedRow = 0;
       if (selMsp == null) {
          msp.setLabel(ptm.getPositionList().generateLabel());
          ptm.getPositionList().addPosition(msp);
          ptm.fireTableDataChanged();
          gui_.getAcqDlg().updateGUIContents();
       } else { // replace instead of add 
-         msp.setLabel(ptm.getPositionList().getPosition(posTable_.getSelectedRow() - 1).getLabel() );
-         selectedRow = posTable_.getSelectedRow();
-         ptm.getPositionList().replacePosition(posTable_.getSelectedRow() -1, msp);
+         msp.setLabel(ptm.getPositionList().getPosition(
+                 posTable_.getSelectedRow() - 1).getLabel() );
+         int selectedRow = posTable_.getSelectedRow();
+         ptm.getPositionList().replacePosition(
+                 posTable_.getSelectedRow() -1, msp);
          ptm.fireTableCellUpdated(selectedRow, 1);
          // Not sure why this is here as we undo the selecion after 
          // this functions exits...
