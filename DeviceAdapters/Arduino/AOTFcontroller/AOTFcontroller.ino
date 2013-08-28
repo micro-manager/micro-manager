@@ -106,8 +106,11 @@
  
    unsigned int version_ = 2;
    
-   // pin on which to receive the trigger (either 2 or 3, changed attachInterrupt accordingly)
-   int inPin_ = 2;  
+   // pin on which to receive the trigger (2 and 3 can be used with interrupts, although this code does not use interrupts)
+   int inPin_ = 2;
+   // to read out the state of inPin_ faster, use 
+   int inPinBit_ = 1 << inPin_;  // bit mask 
+   
    // pin connected to DIN of TLV5618
    int dataPin = 3;
    // pin connected to SCLK of TLV5618
@@ -375,7 +378,7 @@
     }
     // In trigger mode, we will blank even if blanking is not on..
     if (triggerMode_) {
-      int tmp = digitalRead(inPin_);
+      int tmp = PIND & inPinBit_;
       if (tmp != triggerState_) {
         if (blankOnHigh_ && (tmp == HIGH) ) {
           PORTB = 0;
@@ -397,12 +400,12 @@
       }  
     } else if (blanking_) {
       if (blankOnHigh_) {
-        if (digitalRead(inPin_) == LOW)
+        if (! (PIND & inPinBit_))
           PORTB = currentPattern_;
         else
           PORTB = 0;
       } else {
-        if (digitalRead(inPin_) == LOW)
+        if (! (PIND & inPinBit_))
           PORTB = 0;
         else     
           PORTB = currentPattern_; 
