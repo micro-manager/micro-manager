@@ -635,6 +635,11 @@ namespace MM {
       static const DeviceType Type = XYStageDevice;
 
       // XYStage API
+      // it is recommended that device adapters implement the  "Steps" methods taking
+      // long integers but leave the default implementations (in DeviceBase.h) for
+      // the "Um" methods taking doubles.  The latter utilize directionality and origin
+      // settings set by user and operate via the "Steps" methods.  The step size is
+      // the inherent minimum distance/step and should be defined by the adapter.
       virtual int SetPositionUm(double x, double y) = 0;
       virtual int SetRelativePositionUm(double dx, double dy) = 0;
       virtual int SetAdapterOriginUm(double x, double y) = 0;
