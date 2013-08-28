@@ -278,7 +278,7 @@ int CArduinoHub::Initialize()
       return ret;
 
    // turn off verbose serial debug messages
-   GetCoreCallback()->SetDeviceProperty(port_.c_str(), "Verbose", "0");
+   // GetCoreCallback()->SetDeviceProperty(port_.c_str(), "Verbose", "0");
 
    initialized_ = true;
    return DEVICE_OK;
