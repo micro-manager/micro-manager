@@ -6,7 +6,8 @@
 // DESCRIPTION:   Controls power levels of Cobolt lasers through a serial port
 // COPYRIGHT:     University of Massachusetts Medical School, 2009
 // LICENSE:       LGPL
-// AUTHOR:        Karl Bellve, Karl.Bellve@umassmed.edu
+// AUTHORS:       Karl Bellve, Karl.Bellve@umassmed.edu
+//                with contribution from alexis Maizel, alexis.maizel@cos.uni-heidelberg.de
 //
 
 #ifndef _COBOLT_H_
@@ -27,7 +28,8 @@
 #define ERR_PORT_CHANGE_FORBIDDEN    101
 
 
-class Cobolt: public CGenericBase<Cobolt>
+//class Cobolt: public CGenericBase<Cobolt>
+class Cobolt: public CShutterBase<Cobolt>
 {
 public:
     Cobolt();
@@ -41,12 +43,15 @@ public:
     void GetName(char* pszName) const;
     bool Busy();
     int LaserOnOff(int);
-
+    
+ 
     // action interface
     // ----------------
     int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
-    int OnPower(MM::PropertyBase* pProp, MM::ActionType eAct);
-    int OnPowerStatus(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnPowerMax(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnPowerSetPoint(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int Cobolt::OnPowerSetMax(MM::PropertyBase* pProp, MM::ActionType  eAct);
+	int OnPowerStatus(MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnHours(MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnLaserOnOff(MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnLaserStatus(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -55,6 +60,12 @@ public:
     int OnFault(MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnSerialNumber(MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnVersion(MM::PropertyBase* pProp, MM::ActionType eAct);
+    
+    // Shutter API
+    // ----------------
+    int SetOpen(bool open = true);
+    int GetOpen(bool& open);
+    int Fire(double deltaT);
 
 private:
     std::string name_;
@@ -64,6 +75,7 @@ private:
     double answerTimeoutMs_;
     std::string hours_;
     double power_;
+    double maxPower_;
     std::string laserOn_;
     std::string laserStatus_;
     std::string interlock_;  
@@ -72,4 +84,10 @@ private:
     std::string serialNumber_;
     std::string version_;
     int serial_;
+    
+    int GetState(int &value);
+    int SetPowerSetpoint(double requestedPowerSetpoint);
+    int GetPowerSetpoint(double& value);
+
+
 };
