@@ -36,14 +36,14 @@
 #include <sstream>
 
 const char* g_LumencorController = "Lumencor";
-const char* g_Spectra =		"Spectra";
 const char* g_Channel_1 =	"1";
 const char* g_Channel_2 =	"2";
 const char* g_Channel_3 =	"3";
+const char* g_Aura = "Aura";
+const char* g_Sola = "Sola";
+const char* g_Spectra = "Spectra";
+const char* g_SpectraX = "SpectraX";
 
-char EnableMask = 0x7f;
-enum LEType {Aura_Type,Sola_Type,Spectra_Type,SpectraX_Type};
-LEType LightEngine = Spectra_Type; // Light Engine Type
 using namespace std;
 
 
@@ -128,7 +128,9 @@ void DbgPrintf(LPTSTR fmt,...    )
 
 Spectra::Spectra() :
    port_("Undefined"),
-   state_(0),
+   open_(false),
+   lightEngine_(Spectra_Type),
+   enableMask_(0x7f),
    initialized_(false),
    activeChannel_(g_Channel_1),
    version_("Undefined")
@@ -144,10 +146,21 @@ Spectra::Spectra() :
    //
    // Description                                                            
    CreateProperty(MM::g_Keyword_Description, "Lumencor Spectra Light Engine", MM::String, true);
-                                                                             
+
    // Port                                                                   
    CPropertyAction* pAct = new CPropertyAction (this, &Spectra::OnPort);      
-   CreateProperty(MM::g_Keyword_Port, "Undefined", MM::String, false, pAct, true);       
+   CreateProperty(MM::g_Keyword_Port, "Undefined", MM::String, false, pAct, true);    
+
+   // Light engine type
+   pAct = new CPropertyAction(this,&Spectra::OnSetLE_Type);
+   std::string LEType = "SetLE_Type";
+   CreateProperty(LEType.c_str(), g_Spectra, MM::String, false, pAct, true);
+   vector<string> LETypeStr;
+   LETypeStr.push_back(g_Aura);
+   LETypeStr.push_back(g_Sola);
+   LETypeStr.push_back(g_Spectra);
+   LETypeStr.push_back(g_SpectraX);
+   SetAllowedValues(LEType.c_str(), LETypeStr);
 }                                                                            
                                                                              
 Spectra::~Spectra()                                                            
@@ -195,105 +208,97 @@ int Spectra::Initialize()
    pAct = new CPropertyAction(this,&Spectra::OnVersion);
 
    // If GetVersion fails we are not talking to the Lumencor
+   // Note that GetVersion will also call the InitLE function
    ret = GetVersion();
    if (ret != DEVICE_OK)                                                     
       return ret;                                                            
 
-   ret = CreateProperty("Version", version_.c_str(), MM::String,true,pAct); 
+   CreateProperty("Version", version_.c_str(), MM::String,true,pAct); 
 
    // switch all channels off on startup instead of querying which one is open
    SetProperty(MM::g_Keyword_State, "0");
 
-   pAct = new CPropertyAction(this,&Spectra::OnSetLE_Type);
-   CreateProperty("SetLE_Type",    "Spectra", MM::String, false, pAct, false);
-      vector<string> LETypeStr;
-		LETypeStr.push_back("Aura");
-		LETypeStr.push_back("Sola");
-		LETypeStr.push_back("Spectra");
-		LETypeStr.push_back("SpectraX");
-		ret = SetAllowedValues("SetLE_Type", LETypeStr);
-		assert(ret == DEVICE_OK);
+   // There does not seem to be a need for the user to call InitLE after initialization...
+   // pAct = new CPropertyAction(this,&Spectra::OnInitLE);
+   // CreateProperty("Init_LE",    "0", MM::Integer, false, pAct, false);  
+   // SetPropertyLimits("Init_LE",       0, 1);
 
-   pAct = new CPropertyAction(this,&Spectra::OnInitLE);
-   CreateProperty("Init_LE",    "0", MM::Integer, false, pAct, false);
-   //
-   // Declare action function for color Value changes
-   //
-   pAct = new CPropertyAction(this,&Spectra::OnRedValue);
-   CreateProperty("Red_Level",    "0", MM::Integer, false, pAct, false);
-
-   pAct = new CPropertyAction(this,&Spectra::OnGreenValue);
-   CreateProperty("Green_Level",  "0", MM::Integer, false, pAct, false);
-
-   pAct = new CPropertyAction(this,&Spectra::OnCyanValue);
-   CreateProperty("Cyan_Level",   "0", MM::Integer, false, pAct, false);
-
-   pAct = new CPropertyAction(this,&Spectra::OnVioletValue);
-   CreateProperty("Violet_Level", "0", MM::Integer, false, pAct, false);
-
-   pAct = new CPropertyAction(this,&Spectra::OnTealValue);
-   CreateProperty("Teal_Level",   "0", MM::Integer, false, pAct, false);
-
-   pAct = new CPropertyAction(this,&Spectra::OnBlueValue);
-   CreateProperty("Blue_Level",   "0", MM::Integer, false, pAct, false);
-
-   pAct = new CPropertyAction(this,&Spectra::OnWhiteValue);
-   CreateProperty("White_Level",   "0", MM::Integer, false, pAct, false);
-   //
-   // Declare action function for color Enable changes
-   //
-   pAct = new CPropertyAction(this,&Spectra::OnRedEnable);
-   CreateProperty("Red_Enable",    "0", MM::Integer, false, pAct, false);
-
-   pAct = new CPropertyAction(this,&Spectra::OnGreenEnable);
-   CreateProperty("Green_Enable",  "0", MM::Integer, false, pAct, false);
-
-   pAct = new CPropertyAction(this,&Spectra::OnCyanEnable);
-   CreateProperty("Cyan_Enable",   "0", MM::Integer, false, pAct, false);
-
-   pAct = new CPropertyAction(this,&Spectra::OnVioletEnable);
-   CreateProperty("Violet_Enable", "0", MM::Integer, false, pAct, false);
-
-   pAct = new CPropertyAction(this,&Spectra::OnTealEnable);
-   CreateProperty("Teal_Enable",   "0", MM::Integer, false, pAct, false);
-
-   pAct = new CPropertyAction(this,&Spectra::OnBlueEnable);
-   CreateProperty("Blue_Enable",   "0", MM::Integer, false, pAct, false);
-
+   // All light engines appear to have White
    pAct = new CPropertyAction(this,&Spectra::OnWhiteEnable);
    CreateProperty("White_Enable",   "0", MM::Integer, false, pAct, false);
-
-   // Yellow Green Filter
-   pAct = new CPropertyAction(this,&Spectra::OnYGFilterEnable);
-   CreateProperty("YG_Filter", "0", MM::Integer, false, pAct, false);
-   SetPropertyLimits("YG_Filter", 0, 1);
-
-   // Color Value Limits
-   SetPropertyLimits("Red_Level",    0, 100);
-   SetPropertyLimits("Green_Level",  0, 100);
-   SetPropertyLimits("Cyan_Level",   0, 100);
-   SetPropertyLimits("Violet_Level", 0, 100);
-   SetPropertyLimits("Teal_Level",   0, 100);
-   SetPropertyLimits("Blue_Level",   0, 100);
-   SetPropertyLimits("White_Level",   0, 100);
-	 
-   //
-   SetPropertyLimits("Init_LE",       0, 1);
-   //
-   SetPropertyLimits("Red_Enable",    0, 1);
-   SetPropertyLimits("Green_Enable",  0, 1);
-   SetPropertyLimits("Cyan_Enable",   0, 1);
-   SetPropertyLimits("Violet_Enable", 0, 1);
-   SetPropertyLimits("Teal_Enable",   0, 1);
-   SetPropertyLimits("Blue_Enable",   0, 1);
    SetPropertyLimits("White_Enable",   0, 1);
-   //
 
-   ret = UpdateStatus();
+   pAct = new CPropertyAction(this,&Spectra::OnWhiteValue);
+   CreateProperty("White_Level",   "100", MM::Integer, false, pAct, false);
+   SetPropertyLimits("White_Level",   0, 100);
 
-   if (ret != DEVICE_OK)                                                     
-      return ret;                                                            
-                                                                             
+   if (lightEngine_ != Sola_Type) {
+      //
+      // Declare action functions for color Value changes
+      //
+      pAct = new CPropertyAction(this,&Spectra::OnRedValue);
+      CreateProperty("Red_Level",    "100", MM::Integer, false, pAct, false);
+
+      pAct = new CPropertyAction(this,&Spectra::OnGreenValue);
+      CreateProperty("Green_Level",  "100", MM::Integer, false, pAct, false);
+
+      pAct = new CPropertyAction(this,&Spectra::OnCyanValue);
+      CreateProperty("Cyan_Level",   "100", MM::Integer, false, pAct, false);
+
+      pAct = new CPropertyAction(this,&Spectra::OnVioletValue);
+      CreateProperty("Violet_Level", "100", MM::Integer, false, pAct, false);
+
+      pAct = new CPropertyAction(this,&Spectra::OnTealValue);
+      CreateProperty("Teal_Level",   "100", MM::Integer, false, pAct, false);
+
+      pAct = new CPropertyAction(this,&Spectra::OnBlueValue);
+      CreateProperty("Blue_Level",   "100", MM::Integer, false, pAct, false);
+
+      //
+      // Declare action functions for color Enable changes
+      //
+      pAct = new CPropertyAction(this,&Spectra::OnRedEnable);
+      CreateProperty("Red_Enable",    "0", MM::Integer, false, pAct, false);
+
+      pAct = new CPropertyAction(this,&Spectra::OnGreenEnable);
+      CreateProperty("Green_Enable",  "0", MM::Integer, false, pAct, false);
+
+      pAct = new CPropertyAction(this,&Spectra::OnCyanEnable);
+      CreateProperty("Cyan_Enable",   "0", MM::Integer, false, pAct, false);
+
+      pAct = new CPropertyAction(this,&Spectra::OnVioletEnable);
+      CreateProperty("Violet_Enable", "0", MM::Integer, false, pAct, false);
+
+      pAct = new CPropertyAction(this,&Spectra::OnTealEnable);
+      CreateProperty("Teal_Enable",   "0", MM::Integer, false, pAct, false);
+
+      pAct = new CPropertyAction(this,&Spectra::OnBlueEnable);
+      CreateProperty("Blue_Enable",   "0", MM::Integer, false, pAct, false);
+
+
+      // Yellow Green Filter
+      pAct = new CPropertyAction(this,&Spectra::OnYGFilterEnable);
+      CreateProperty("YG_Filter", "0", MM::Integer, false, pAct, false);
+      SetPropertyLimits("YG_Filter", 0, 1);
+
+      // Color Value Limits
+      SetPropertyLimits("Red_Level",    0, 100);
+      SetPropertyLimits("Green_Level",  0, 100);
+      SetPropertyLimits("Cyan_Level",   0, 100);
+      SetPropertyLimits("Violet_Level", 0, 100);
+      SetPropertyLimits("Teal_Level",   0, 100);
+      SetPropertyLimits("Blue_Level",   0, 100);
+
+      SetPropertyLimits("Red_Enable",    0, 1);
+      SetPropertyLimits("Green_Enable",  0, 1);
+      SetPropertyLimits("Cyan_Enable",   0, 1);
+      SetPropertyLimits("Violet_Enable", 0, 1);
+      SetPropertyLimits("Teal_Enable",   0, 1);
+      SetPropertyLimits("Blue_Enable",   0, 1);
+
+   }
+   // ret = UpdateStatus();
+                                                                                                                                     
    initialized_ = true;                                                      
    return DEVICE_OK;                                                         
 }  
@@ -322,14 +327,14 @@ int Spectra::GetOpen(bool& open)
 /**
  * Here we set the shutter to open or close
  */
-int Spectra::SetShutterPosition(bool state)                              
+int Spectra::SetShutterPosition(bool open)                              
 {   
-	enum statevalue {open = 1, closed = 0};
-	if(state == open)
-		SendColorEnableCmd(SHUTTER, true, &EnableMask);  // If on then Set
+	if(open)
+		SendColorEnableCmd(SHUTTER, true, &enableMask_);  // If on then Set
 	else
-		SendColorEnableCmd(SHUTTER, false, &EnableMask);  // close
-    return DEVICE_OK;
+		SendColorEnableCmd(SHUTTER, false, &enableMask_);  // close
+   open_ = open;
+   return DEVICE_OK;
 }
 
 // *****************************************************************************
@@ -345,7 +350,7 @@ int Spectra::SendColorLevelCmd(ColorNameT ColorName,int ColorLevel)
 	ColorValue &= 0xFF;  // Mask to one byte
 	ColorValue = (ColorLevel == 100) ? 0 : ColorValue;
 	ColorValue = (ColorLevel == 0) ? 0xFF : ColorValue;  // coherce to correct values at limits
-	if(LightEngine == Sola_Type)
+	if(lightEngine_ == Sola_Type)
 	{
 		ColorName = ALL;
 	}
@@ -406,7 +411,7 @@ int Spectra::SendColorLevelCmd(ColorNameT ColorName,int ColorLevel)
 // *****************************************************************************
 // Sends color Enable/Disable command to Lumencor LightEngine
 // *****************************************************************************
-int Spectra::SendColorEnableCmd(ColorNameT ColorName,bool State, char* EnableMask)
+int Spectra::SendColorEnableCmd(ColorNameT ColorName, bool State, char* enableMask)
 {
 	enum StateValue {OFF=0, ON=1};
 	unsigned char DACSetupArray[]= "\x4F\x00\x50\x00";
@@ -414,14 +419,14 @@ int Spectra::SendColorEnableCmd(ColorNameT ColorName,bool State, char* EnableMas
 	int ret = GetOpen(open);
 	if (ret == DEVICE_OK) // only set enable if shuttern 
 	{
-		if(LightEngine == Aura_Type)
+		if(lightEngine_ == Aura_Type)
 		{
 			if(ColorName == BLUE || ColorName == CYAN)
 			{	
 				return DEVICE_OK;  // we exit here as the Aura does not support these colors
 			}
 		}
-		if(LightEngine == Sola_Type)
+		if(lightEngine_ == Sola_Type)
 		{
 			 ColorName = ALL;
 		}
@@ -429,64 +434,64 @@ int Spectra::SendColorEnableCmd(ColorNameT ColorName,bool State, char* EnableMas
 		{	
 			case  RED:
 				if(State==ON && open)
-					DACSetupArray[1] = *EnableMask & 0x7E;
+					DACSetupArray[1] = *enableMask & 0x7E;
 				else
-					DACSetupArray[1] = *EnableMask | 0x01;
+					DACSetupArray[1] = *enableMask | 0x01;
 				break;
 			case  GREEN:
 				if(State==ON && open)
-					DACSetupArray[1] = *EnableMask & 0x7D;
+					DACSetupArray[1] = *enableMask & 0x7D;
 				else
-					DACSetupArray[1] = *EnableMask | 0x02;
+					DACSetupArray[1] = *enableMask | 0x02;
 				break;
 			case  VIOLET:
 				if(State==ON && open)
-					DACSetupArray[1] = *EnableMask & 0x77;
+					DACSetupArray[1] = *enableMask & 0x77;
 				else
-					DACSetupArray[1] = *EnableMask | 0x08;
+					DACSetupArray[1] = *enableMask | 0x08;
 				break;
 			case  CYAN:
 				if(State==ON && open)
-					DACSetupArray[1] = *EnableMask & 0x7B;
+					DACSetupArray[1] = *enableMask & 0x7B;
 				else
-					DACSetupArray[1] = *EnableMask | 0x04;
+					DACSetupArray[1] = *enableMask | 0x04;
 				break;
 			case  BLUE:
 				if(State==ON && open)
-					DACSetupArray[1] = *EnableMask & 0x5F;
+					DACSetupArray[1] = *enableMask & 0x5F;
 				else
-					DACSetupArray[1] = *EnableMask | 0x20;
+					DACSetupArray[1] = *enableMask | 0x20;
 				break;
 			case  TEAL:
 				if(State==ON && open)
-					DACSetupArray[1] = *EnableMask & 0x3F;
+					DACSetupArray[1] = *enableMask & 0x3F;
 				else
-					DACSetupArray[1] = *EnableMask | 0x40;
+					DACSetupArray[1] = *enableMask | 0x40;
 				break;
 			case  YGFILTER:
 				if(State==ON && open)
-					DACSetupArray[1] = *EnableMask & 0x6F;
+					DACSetupArray[1] = *enableMask & 0x6F;
 				else
-					DACSetupArray[1] = *EnableMask | 0x10;
+					DACSetupArray[1] = *enableMask | 0x10;
 				break;
 			case ALL:
 			case WHITE:
 				if(State==ON && open)
 				{
-					DACSetupArray[1] = ((*EnableMask & 0x40) == 0x40) ? 0x40 : 0x00;
+					DACSetupArray[1] = ((*enableMask & 0x40) == 0x40) ? 0x40 : 0x00;
 				}
 				else
-					DACSetupArray[1] = ((*EnableMask & 0x40) == 0x40) ? 0x7F : 0xCF; // dont toggle YG filter if not needed
+					DACSetupArray[1] = ((*enableMask & 0x40) == 0x40) ? 0x7F : 0xCF; // dont toggle YG filter if not needed
 				break;
 			case SHUTTER:
 				if(State== ON && open)
 				{
-					// DACSetupArray[1] = *EnableMask;  // set enabled channels on
-					DACSetupArray[1] = 0x00 | (*EnableMask & 0x10);  // Enable All Channels and YGFIlter if was on
+					DACSetupArray[1] = *enableMask;  // set enabled channels on
+					// DACSetupArray[1] = 0x00 | (*enableMask & 0x10);  // Enable All Channels and YGFIlter if was on
 				}
 				else
 				{
-					if((*EnableMask & 0x10) == 0x10){  //if YGFilter is disabled
+					if((*enableMask & 0x10) == 0x10){  //if YGFilter is disabled
 						DACSetupArray[1] = 0x7F; // all off
 					}
 					else {
@@ -496,10 +501,10 @@ int Spectra::SendColorEnableCmd(ColorNameT ColorName,bool State, char* EnableMas
 			default:
 				break;		
 		}
-		if (LightEngine == Aura_Type)
+		if (lightEngine_ == Aura_Type)
 		{
 			// See Aura TTL IF Doc: Front Panel Control/DAC for more detail
-			//DACSetupArray[1] = DACSetupArray[1] | 0x20; // Mask for Aura to be sure DACs are Enabled
+			// DACSetupArray[1] = DACSetupArray[1] | 0x20; // Mask for Aura to be sure DACs are Enabled
 			// Byte 1 bit 5 Selects either DAC or Pot control on the Aura so we want to set this
 			// to a zero for DAC control.
 			// Examples:
@@ -510,10 +515,12 @@ int Spectra::SendColorEnableCmd(ColorNameT ColorName,bool State, char* EnableMas
 
 		if(ColorName != SHUTTER) // shutter is a unique case were we dont want to change our mask
 		{
-			*EnableMask = DACSetupArray[1]; // Sets the Mask to current state
+			*enableMask = DACSetupArray[1]; // Sets the Mask to current state
 		}
-
-		WriteToComPort(port_.c_str(),DACSetupArray, 3); // Write Event Data to device
+      if ( (ColorName == SHUTTER) || open_)
+      {
+		   WriteToComPort(port_.c_str(),DACSetupArray, 3); // Write Event Data to device
+      }
 
 		// block/wait no acknowledge so just give it time                     
 		// CDeviceUtils::SleepMs(200);
@@ -546,10 +553,10 @@ int Spectra::SendColorEnableCmd(ColorNameT ColorName,bool State, char* EnableMas
 
 int Spectra::GetVersion()
 {
-     int ret;
+    int ret;
 	 ret = InitLE();
-     version_ = "092712"; // this is the software build date for now.. return real version when hardware supports it
-     return DEVICE_OK;  // debug only 
+    version_ = "092712"; // this is the software build date for now.. return real version when hardware supports it
+    return DEVICE_OK;  // debug only 
 }
 
 // This function Inits the GPIO on the 
@@ -558,7 +565,7 @@ int Spectra::InitLE()
 {
    int ret;
    char DACCtl[] = "\x4f\x7F\x50";  // Disable All Colors
-   if(LightEngine == Aura_Type)
+   if(lightEngine_ == Aura_Type)
    {
 		DACCtl[1] = 0x5f;  // set all off and Dac Control if an Aura
    }
@@ -632,7 +639,6 @@ int Spectra::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
       int ret = SetShutterPosition(pos == open ? open : closed);
       if (ret != DEVICE_OK)
          return ret;
-      state_ = pos;
    }
    return DEVICE_OK;
 }
@@ -650,7 +656,7 @@ int Spectra::OnChannel(MM::PropertyBase* pProp, MM::ActionType eAct)
       pProp->Get(tmpChannel);
       if (tmpChannel != activeChannel_) {
          activeChannel_ = tmpChannel;
-         if (state_ == 1)
+         if (open_)
             SetShutterPosition(true);
       }
       // It might be a good idea to close the shutter at this point...
@@ -680,22 +686,22 @@ int Spectra::OnSetLE_Type(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
 	  if(TypeStr == "Aura")
 	  {
-		  LightEngine = Aura_Type;
+		  lightEngine_ = Aura_Type;
 	  }
 
 	  if(TypeStr == "Sola")
 	  {
-		  LightEngine = Sola_Type;
+		  lightEngine_ = Sola_Type;
 	  }
 
 	  if(TypeStr == "Spectra")
 	  {
-		  LightEngine = Spectra_Type;
+		  lightEngine_ = Spectra_Type;
 	  }
 
 	  if(TypeStr == "SpectraX")
 	  {
-		  LightEngine = SpectraX_Type;
+		  lightEngine_ = SpectraX_Type;
 	  }
    }
    return DEVICE_OK;
@@ -802,146 +808,217 @@ int Spectra::OnWhiteValue(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 int Spectra::OnRedEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-    string State;
+	string State;
 	if (eAct == MM::AfterSet)
-   {
-	    pProp->Get(State);
+	{
+		pProp->Get(State);
 		if (State == "1")
 		{
-			SendColorEnableCmd(RED,true,&EnableMask);
+			enableMask_ &= 0x7E;
 		}
 		else
 		{
-			SendColorEnableCmd(RED,false,&EnableMask);
+			enableMask_ = enableMask_ | 0x01;
 		}
-   }
-   return DEVICE_OK;
+		SetShutterPosition(open_);
+	}
+	if (eAct == MM::BeforeGet)
+	{
+		if ( (enableMask_ & 0x01) > 0)
+			pProp->Set("0");
+		else
+			pProp->Set("1");
+
+	}
+	return DEVICE_OK;
 }
 
 int Spectra::OnGreenEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-   string State;
+	string State;
 	if (eAct == MM::AfterSet)
-    {
-	    pProp->Get(State);
+	{
+		pProp->Get(State);
 		if (State == "1")
 		{
-			SendColorEnableCmd(GREEN,true,&EnableMask);
+			enableMask_ &= 0x7D;
 		}
 		else
 		{
-			SendColorEnableCmd(GREEN,false,&EnableMask);
+			enableMask_ |= 0x02;;
 		}
-   }
-   return DEVICE_OK;
+		SetShutterPosition(open_);
+	}
+	if (eAct == MM::BeforeGet)
+	{
+		if ( (enableMask_ & 0x02) > 0)
+			pProp->Set("0");
+		else
+			pProp->Set("1");
+	}
+	return DEVICE_OK;
 }
+
 
 int Spectra::OnCyanEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-   string State;
+	string State;
 	if (eAct == MM::AfterSet)
-    {
-	    pProp->Get(State);
+	{
+		pProp->Get(State);
 		if (State == "1")
 		{
-			SendColorEnableCmd(CYAN,true,&EnableMask);
+			enableMask_ &= 0x7B;
 		}
 		else
 		{
-			SendColorEnableCmd(CYAN,false,&EnableMask);
+			enableMask_ |= 0x04;
 		}
+		SetShutterPosition(open_);
 	}
-   return DEVICE_OK;
+	if (eAct == MM::BeforeGet)
+	{
+		if ( (enableMask_ & 0x04) > 0)
+			pProp->Set("0");
+		else
+			pProp->Set("1");
+	}
+
+
+	return DEVICE_OK;
 }
+
 
 int Spectra::OnVioletEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-   string State;
+	string State;
 	if (eAct == MM::AfterSet)
-    {
-	    pProp->Get(State);
+	{
+		pProp->Get(State);
 		if (State == "1")
 		{
-			SendColorEnableCmd(VIOLET,true,&EnableMask);
+			enableMask_ &= 0x77;
 		}
 		else
 		{
-			SendColorEnableCmd(VIOLET,false,&EnableMask);
+			enableMask_ |= 0x08;
 		}
+		SetShutterPosition(open_);
 	}
-   return DEVICE_OK;
+	if (eAct == MM::BeforeGet) 
+	{
+		if ( (enableMask_ & 0x08) > 0)
+			pProp->Set("0");
+		else
+			pProp->Set("1");
+	}
+
+	return DEVICE_OK;
 }
 
 int Spectra::OnTealEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-   string State;
+	string State;
 	if (eAct == MM::AfterSet)
-    {
-	    pProp->Get(State);
+	{
+		pProp->Get(State);
 		if (State == "1")
 		{
-			SendColorEnableCmd(TEAL,true,&EnableMask);
+			enableMask_ &= 0x3F;
 		}
 		else
 		{
-			SendColorEnableCmd(TEAL,false,&EnableMask);
+			enableMask_ |= 0x40;
 		}
+		SetShutterPosition(open_);
 	}
-   return DEVICE_OK;
+	if (eAct == MM::BeforeGet) 
+	{
+		if ( (enableMask_ & 0x40) > 0)
+			pProp->Set("0");
+		else
+			pProp->Set("1");
+	}
+	return DEVICE_OK;
 }
 
 int Spectra::OnBlueEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-   string State;
+	string State;
 	if (eAct == MM::AfterSet)
-    {
-	    pProp->Get(State);
+	{
+		pProp->Get(State);
 		if (State == "1")
 		{
-			SendColorEnableCmd(BLUE,true,&EnableMask);
+			enableMask_ &= 0x5F;
 		}
 		else
 		{
-			SendColorEnableCmd(BLUE,false,&EnableMask);
+			enableMask_ |= 0x20;
 		}
+		SetShutterPosition(open_);
 	}
-   return DEVICE_OK;
+	if (eAct == MM::BeforeGet)
+	{	
+		if ( (enableMask_ & 0x20) > 0)
+			pProp->Set("0");
+		else
+			pProp->Set("1");
+	}
+	return DEVICE_OK;
 }
 
 int Spectra::OnWhiteEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-   string State;
+	string State;
 	if (eAct == MM::AfterSet)
-    {
-	    pProp->Get(State);
+	{
+		pProp->Get(State);
 		if (State == "1")
 		{
-			SendColorEnableCmd(WHITE,true,&EnableMask);
+			enableMask_ &= 0x50;
 		}
 		else
 		{
-			SendColorEnableCmd(WHITE,false,&EnableMask);
+			enableMask_ |= 0x6f;
 		}
+		SetShutterPosition(open_);
 	}
-   return DEVICE_OK;
+	if (eAct == MM::BeforeGet)
+	{
+		if (enableMask_ & 0x2f)
+			pProp->Set("0");
+		else
+			pProp->Set("1");
+	}
+	return DEVICE_OK;
 }
 
 
 int Spectra::OnYGFilterEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-   string State;
+	string State;
 	if (eAct == MM::AfterSet)
-    {
-	    pProp->Get(State);
+	{
+		pProp->Get(State);
 		if (State == "1")
 		{
-			SendColorEnableCmd(YGFILTER,true,&EnableMask);
+			enableMask_ &= 0x6F;
 		}
 		else
 		{
-			SendColorEnableCmd(YGFILTER,false,&EnableMask);
+			enableMask_ |= 0x10;
 		}
+		SetShutterPosition(open_);
 	}
-   return DEVICE_OK;
+	if (eAct == MM::BeforeGet)
+	{	
+		if ( (enableMask_ & 0x10) > 0)
+			pProp->Set("0");
+		else
+			pProp->Set("1");
+	}
+
+	return DEVICE_OK;
 }
 

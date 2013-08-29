@@ -50,7 +50,7 @@
 #define ERR_Lumencor_OFFSET 10200
 
 enum ColorNameT {VIOLET,CYAN,GREEN,RED,BLUE,TEAL,WHITE,ALL,YGFILTER,SHUTTER};
-
+enum LEType {Aura_Type,Sola_Type,Spectra_Type,SpectraX_Type};
 
 class Spectra : public CShutterBase<Spectra>
 {
@@ -114,8 +114,12 @@ private:
    double openingTimeMs_;                                                    
    // Command exchange with MMCore                                           
    std::string command_;           
-   // close (0) or open (1)
-   int state_;
+   // flag stating whether the shutter is open or closed
+   bool open_;
+   // LightEngine identifier
+   LEType lightEngine_;
+   // byte used to indicate which LEDs should be switched on
+   char enableMask_;
    bool initialized_;
    // channel that we are currently working on 
    std::string activeChannel_;
