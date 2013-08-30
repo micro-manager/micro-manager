@@ -302,7 +302,7 @@ public class MMStudioMainFrame extends JFrame implements
    }
 
    public static void createSimpleDisplay(String name, ImageCache cache) throws MMScriptException {
-      simpleDisplay_ = new VirtualAcquisitionDisplay(cache, name);  
+      simpleDisplay_ = new VirtualAcquisitionDisplay(cache, name); 
    }
    
  public void checkSimpleAcquisition() {
@@ -3210,16 +3210,17 @@ public class MMStudioMainFrame extends JFrame implements
       }
    }
 
+   /**
+    * Is this function still needed?  It does some magic with tags. I found 
+    * it to do harmful thing with tags when a Multi-Camera device is
+    * present (that issue is now fixed).
+    */
    public void normalizeTags(TaggedImage ti) {
       if (ti != TaggedImageQueue.POISON) {
       int channel = 0;
       try {
-         
-         if (ti.tags.has("Multi Camera-CameraChannelIndex")) {
-            channel = ti.tags.getInt("Multi Camera-CameraChannelIndex");
-         } else if (ti.tags.has("CameraChannelIndex")) {
-            channel = ti.tags.getInt("CameraChannelIndex");
-         } else if (ti.tags.has("ChannelIndex")) {
+
+         if (ti.tags.has("ChannelIndex")) {
             channel = MDUtils.getChannelIndex(ti.tags);
          }
          MDUtils.setChannelIndex(ti.tags, channel);

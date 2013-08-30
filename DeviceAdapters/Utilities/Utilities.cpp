@@ -626,6 +626,13 @@ int MultiCamera::StartSequenceAcquisition(double interval)
    {
       if (physicalCameras_[i] != 0)
       {
+         std::ostringstream os;
+         os << i;
+         physicalCameras_[i]->AddTag(MM::g_Keyword_CameraChannelName, usedCameras_[i], 
+                 usedCameras_[i].c_str());
+         physicalCameras_[i]->AddTag(MM::g_Keyword_CameraChannelIndex, usedCameras_[i], 
+                 os.str().c_str());
+         
          int ret = physicalCameras_[i]->StartSequenceAcquisition(interval);
          if (ret != DEVICE_OK)
             return ret;
@@ -655,8 +662,16 @@ int MultiCamera::StopSequenceAcquisition()
       if (physicalCameras_[i] != 0)
       {
          int ret = physicalCameras_[i]->StopSequenceAcquisition();
+
+         // 
          if (ret != DEVICE_OK)
             return ret;
+         std::ostringstream os;
+         os << 0;
+         physicalCameras_[i]->AddTag(MM::g_Keyword_CameraChannelName, usedCameras_[i], 
+                 "");
+         physicalCameras_[i]->AddTag(MM::g_Keyword_CameraChannelIndex, usedCameras_[i], 
+                 os.str().c_str());
       }
    }
    return DEVICE_OK;
