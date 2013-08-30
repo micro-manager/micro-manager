@@ -685,7 +685,6 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay,
          tAnimated_ = false;
          refreshScrollbarIcons();
          moveScrollBarsToLockedPositions();
-         return;
       } else {
          animateSlices(false);
          animationTimer_ = new java.util.Timer();
@@ -1433,7 +1432,8 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay,
                slice = MDUtils.getSliceIndex(tags);
                channel = MDUtils.getChannelIndex(tags);
                position = MDUtils.getPositionIndex(tags);
-               superChannel = VirtualAcquisitionDisplay.this.rgbToGrayChannel(MDUtils.getChannelIndex(tags));
+               superChannel = VirtualAcquisitionDisplay.this.rgbToGrayChannel(
+                       MDUtils.getChannelIndex(tags));
             } catch (Exception ex) {
                ReportingUtils.logError(ex);
             }

@@ -29,10 +29,7 @@ import java.util.TimerTask;
 import java.util.concurrent.LinkedBlockingQueue;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
-import org.json.JSONException;
 import org.micromanager.MMStudioMainFrame;
-import org.micromanager.utils.MDUtils;
-import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ReportingUtils;
 
 /**
@@ -43,7 +40,7 @@ import org.micromanager.utils.ReportingUtils;
  */
 public class LiveModeTimer {
 
-   private static final String CCHANNELINDEX = "CameraChannelIndex";
+   //private static final String CCHANNELINDEX = "CameraChannelIndex";
    private static final String ACQ_NAME = MMStudioMainFrame.SIMPLE_ACQ;
    private VirtualAcquisitionDisplay win_;
    private CMMCore core_;
