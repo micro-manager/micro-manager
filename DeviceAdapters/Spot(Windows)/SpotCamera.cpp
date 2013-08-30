@@ -40,38 +40,13 @@
 #include "../../MMDevice/ModuleInterface.h"
 #include "CodeUtility.h"
 
-bool requestShutdown;
 using namespace std;
 const char* g_DeviceName = "Spot";
 
-//
 typedef std::pair<std::string, std::string> DeviceInfo;
 extern std::vector<DeviceInfo> g_availableDevices;
 
 static bool bApiAvailable_s;
-
-
-// ------------------------------ DLL main --------------------------------------
-//
-// windows DLL entry code
-#ifdef WIN32
-BOOL APIENTRY DllMain( HANDLE /*hModule*/, DWORD  ul_reason_for_call, LPVOID /*lpReserved*/ ) 
-{
-	switch (ul_reason_for_call)
-	{
-	case DLL_PROCESS_ATTACH:
-
-	case DLL_THREAD_ATTACH:
-		break;
-	case DLL_THREAD_DETACH:
-	case DLL_PROCESS_DETACH:
-		requestShutdown = true;
-		break;
-	}
-	return TRUE;
-}
-#endif
-
 
 
 ///////////////////////////////////////////////////////////////////////////////
