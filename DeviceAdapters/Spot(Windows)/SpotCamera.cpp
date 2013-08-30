@@ -1674,8 +1674,14 @@ int SpotCamera::ThreadRun(void)
 	{
 		startme_ = false;
 		exposureTime_ = pImplementation_->ExposureTime();
-		pImplementation_->SetupNonStopSequence();
 
+		try {
+			pImplementation_->SetupNonStopSequence();
+		}
+		catch (const SpotBad& e) {
+			LogMessage(e.ReasonText());
+			return DEVICE_ERR;
+		}
 	}
 	return DEVICE_OK;
 

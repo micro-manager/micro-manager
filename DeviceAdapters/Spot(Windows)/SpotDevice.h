@@ -337,7 +337,7 @@ public:
 	SpotBad(){};
 	SpotBad(const std::string areason):reason_(areason){};
 	SpotBad(const char *const ptext):reason_(ptext){ };
-	const char* ReasonText(void){ return reason_.c_str();};
+	const char* ReasonText(void) const { return reason_.c_str();};
 	std::string reason_;
 
 };
