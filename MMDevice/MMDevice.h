@@ -506,17 +506,26 @@ namespace MM {
       virtual bool IsCapturing() = 0;
 
       /**
-       * Get the tags stored in this device.
+       * Get the metadata tags stored in this device.
+       * These tags will automatically be add to the metadata of an image inserted 
+       * into the circular buffer
+       *
        */
       virtual void GetTags(char* serializedMetadata) = 0;
 
       /**
        * Adds new tag or modifies the value of an existing one 
+       * These will automatically be added to images inserted into the circular buffer.
+       * Use this mechanism for tags that do not change often.  For metadata that
+       * change often, create an instance of metadata yourself and add to one of 
+       * the versions of the InsertImage function
        */
       virtual void AddTag(const char* key, std::string deviceLabel, const char* value) = 0;
 
       /**
-       * Removes an existing tag 
+       * Removes an existing tag from the metadata assoicated with this device
+       * These tags will automatically be add to the metadata of an image inserted 
+       * into the circular buffer
        */
       virtual void RemoveTag(const char* key) = 0;
 
