@@ -18,6 +18,9 @@ import ij.gui.Roi;
 import ij.plugin.frame.RoiManager;
 import java.awt.Color;
 import java.awt.Polygon;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.prefs.Preferences;
 import javax.swing.JOptionPane;
 import javax.swing.JTextField;
@@ -25,7 +28,6 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.micromanager.api.MMWindow;
 import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.ReportingUtils;
 
@@ -780,106 +782,157 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
          // nothing to do
       }
    }
-   
-   private void noiseToleranceTextField_FocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_noiseToleranceTextField_FocusLost
 
+   private void noiseToleranceTextField_FocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_noiseToleranceTextField_FocusLost
    }//GEN-LAST:event_noiseToleranceTextField_FocusLost
 
    private void readParmsButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_readParmsButton_ActionPerformed
       // should not have made this a push button...
       readParmsButton_.setSelected(false);
       // take the active ImageJ image
-      ImagePlus siPlus = null;
+      ImagePlus siPlus;
       try {
          siPlus = IJ.getImage();
       } catch (Exception ex) {
          return;
       }
-      if (ip_ != siPlus)
-          ip_ = siPlus;
+      if (ip_ != siPlus) {
+         ip_ = siPlus;
+      }
+      try {
+         Class<?> mmWin = Class.forName("org.micromanager.api.MMWindow");
+         Constructor[] aCTors = mmWin.getDeclaredConstructors();
+         aCTors[0].setAccessible(true);
+         Object mw = aCTors[0].newInstance(siPlus);
+         Method[] allMethods = mmWin.getDeclaredMethods();
+         Boolean isMMWindow = false;
+         // assemble all methods we need
+         Method mIsMMWindow = null;
+         Method mGetSummaryMetaData = null;
+         Method mGetImageMetaData = null;
+         for (Method m : allMethods) {
+            String mname = m.getName();
+            if (mname.startsWith("isMMWindow")
+                    && m.getGenericReturnType() == boolean.class) {
+               mIsMMWindow = m;
+               mIsMMWindow.setAccessible(true);
+            }
+            if (mname.startsWith("getSummaryMetaData")
+                    && m.getGenericReturnType() == JSONObject.class) {
+               mGetSummaryMetaData = m;
+               mGetSummaryMetaData.setAccessible(true);
+            }
+            if (mname.startsWith("getImageMetadata")
+                    && m.getGenericReturnType() == JSONObject.class) {
+               mGetImageMetaData = m;
+               mGetImageMetaData.setAccessible(true);
+            }
 
-      ImagePlus imp = siPlus;
-      MMWindow mw = new MMWindow(siPlus);
-      if (mw.isMMWindow()) {
-         JSONObject summary = mw.getSummaryMetaData();
-         if (summary != null) {
-            // it may be better to read the timestamp of the first and last frame and deduce interval from there
-            if (summary.has("Interval_ms")) {
-               try {
-                  timeIntervalTextField_.setText(NumberUtils.doubleToDisplayString
-                          (summary.getDouble("Interval_ms")) );
-                  timeIntervalTextField_.setBackground(Color.lightGray);
-               } catch (JSONException jex) {
-                  // nothing to do
-               }
-            }
-            if (summary.has("PixelSize_um")) {
-               try {
-                  pixelSizeTextField_.setText(NumberUtils.doubleToDisplayString
-                       (summary.getDouble("PixelSize_um") * 1000.0));
-                  pixelSizeTextField_.setBackground(Color.lightGray);
-               } catch (JSONException jex) {
-                  System.out.println("Error");
-               } 
-            }
          }
-         JSONObject im = mw.getImageMetadata(0, 0, 0, 0);
-         double emGain = -1.0;
-         boolean conventionalGain = false;
-         boolean emGainFound = false;
-         if (im != null) {
 
-            // find amplifier for Andor camera
-            try {
-               String camera = im.getString("Core-Camera");
-               if (im.getString(camera + "-Output_Amplifier").equals("Conventional")) {
-                  conventionalGain = true;
-               }
-               // TODO: find amplifier for other cameras
-               
-               // find gain for Andor:
+         if (mIsMMWindow != null && (Boolean) mIsMMWindow.invoke(mw)) {
+            JSONObject summary = null;
+            int lastFrame = 0;
+            if (mGetSummaryMetaData != null) {
+               summary = (JSONObject) mGetSummaryMetaData.invoke(mw);
                try {
-                  emGain = im.getDouble(camera + "-Gain");
-               } catch (JSONException jex) {
+                  lastFrame = summary.getInt("Frames");
+               } catch (JSONException ex) {
+               }               
+            }
+            JSONObject im = null;
+            JSONObject imLast = null;
+            if (mGetImageMetaData != null) {
+               im = (JSONObject) mGetImageMetaData.invoke(mw, 0, 0, 0, 0);
+               if (lastFrame > 0)
+                  imLast = (JSONObject) 
+                          mGetImageMetaData.invoke(mw, 0, 0, lastFrame - 1, 0);              
+            }
+                                  
+            if (summary != null && im != null) {
+
+               // it may be better to read the timestamp of the first and last frame and deduce interval from there
+               if (summary.has("Interval_ms")) {
                   try {
-                     emGain = im.getDouble(camera + "-EMGain");
-                  } catch (JSONException jex2) {
-                     // key not found, nothing to do
+                     timeIntervalTextField_.setText(NumberUtils.doubleToDisplayString(summary.getDouble("Interval_ms")));
+                     timeIntervalTextField_.setBackground(Color.lightGray);
+                  } catch (JSONException jex) {
+                     // nothing to do
                   }
                }
+               if (summary.has("PixelSize_um")) {
+                  try {
+                     pixelSizeTextField_.setText(NumberUtils.doubleToDisplayString(summary.getDouble("PixelSize_um") * 1000.0));
+                     pixelSizeTextField_.setBackground(Color.lightGray);
+                  } catch (JSONException jex) {
+                     System.out.println("Error");
+                  }
 
-            } catch (JSONException ex) {
-               // tag not found...
+               }
+               double emGain = -1.0;
+               boolean conventionalGain = false;
+
+
+               // find amplifier for Andor camera
+               try {
+                  String camera = im.getString("Core-Camera");
+                  if (im.getString(camera + "-Output_Amplifier").equals("Conventional")) {
+                     conventionalGain = true;
+                  }
+                  // TODO: find amplifier for other cameras
+
+                  // find gain for Andor:
+                  try {
+                     emGain = im.getDouble(camera + "-Gain");
+                  } catch (JSONException jex) {
+                     try {
+                        emGain = im.getDouble(camera + "-EMGain");
+                     } catch (JSONException jex2) {
+                        // key not found, nothing to do
+                     }
+                  }
+
+               } catch (JSONException ex) {
+                  // tag not found...
+               }
+
+
+               if (conventionalGain) {
+                  emGain = 1;
+               }
+               if (emGain > 0) {
+                  emGainTextField_.setText(NumberUtils.doubleToDisplayString(emGain));
+                  emGainTextField_.setBackground(Color.lightGray);
+               }
+
+               // Get time stamp from first and last frame
+               try {
+                  double firstTimeMs = im.getDouble("ElapsedTime-ms");
+                  double lastTimeMs = imLast.getDouble("ElapsedTime-ms");
+                  double intervalMs = (lastTimeMs - firstTimeMs) / lastFrame;
+                  timeIntervalTextField_.setText(
+                          NumberUtils.doubleToDisplayString(intervalMs));
+                  timeIntervalTextField_.setBackground(Color.lightGray);
+               } catch (JSONException jex) {
+               }
+
             }
+         }
 
-         }
-         
-         if (conventionalGain) {
-            emGain = 1;
-         }
-         if (emGain > 0) {
-            emGainTextField_.setText(NumberUtils.doubleToDisplayString(emGain));
-            emGainTextField_.setBackground(Color.lightGray);
-         }
-         
-         // Get time stamp from first and last frame
-         try {
-            double firstTimeMs = im.getDouble("ElapsedTime-ms");
-            int lastFrame = summary.getInt("Frames");
-            JSONObject imLast = mw.getImageMetadata(0, 0, lastFrame - 1, 0);
-            double lastTimeMs = imLast.getDouble("ElapsedTime-ms");
-            double intervalMs = (lastTimeMs - firstTimeMs) / lastFrame;
-            timeIntervalTextField_.setText(
-                    NumberUtils.doubleToDisplayString(intervalMs));
-            timeIntervalTextField_.setBackground(Color.lightGray);
-         } catch (JSONException jex) {}
-         
+      } catch (ClassNotFoundException ex) {
+      } catch (InstantiationException ex) {
+         //Logger.getLogger(MainForm.class.getName()).log(Level.SEVERE, null, ex);
+      } catch (IllegalAccessException ex) {
+         //Logger.getLogger(MainForm.class.getName()).log(Level.SEVERE, null, ex);
+      } catch (IllegalArgumentException ex) {
+         //Logger.getLogger(MainForm.class.getName()).log(Level.SEVERE, null, ex);
+      } catch (InvocationTargetException ex) {
+         //Logger.getLogger(MainForm.class.getName()).log(Level.SEVERE, null, ex);
       }
 
    }//GEN-LAST:event_readParmsButton_ActionPerformed
 
    private void noiseToleranceTextField_KeyTyped(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_noiseToleranceTextField_KeyTyped
-
    }//GEN-LAST:event_noiseToleranceTextField_KeyTyped
 
    private void fitMethodComboBox1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_fitMethodComboBox1ActionPerformed
@@ -892,13 +945,13 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
          showOverlay_.setText("hide");
       } else {
          ImagePlus siPlus;
-       try {
-          siPlus = IJ.getImage();
-       } catch (Exception e) {
-          return;
-       }
-       siPlus.setHideOverlay(true);
-       showOverlay_.setText("show");
+         try {
+            siPlus = IJ.getImage();
+         } catch (Exception e) {
+            return;
+         }
+         siPlus.setHideOverlay(true);
+         showOverlay_.setText("show");
       }
    }//GEN-LAST:event_showOverlay_ActionPerformed
 
@@ -907,20 +960,20 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
    }//GEN-LAST:event_pixelSizeTextField_ActionPerformed
 
    private void mTrackButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mTrackButton_ActionPerformed
-       
+
       // Poor way of tracking multiple spots by running sequential tracks
       // TODO: optimize
       final ImagePlus siPlus;
-       try {
-          siPlus = IJ.getImage();
-       } catch (Exception e) {
-          return;
-       }
-       if (ip_ != siPlus)
-          ip_ = siPlus;
+      try {
+         siPlus = IJ.getImage();
+      } catch (Exception e) {
+         return;
+      }
+      if (ip_ != siPlus) {
+         ip_ = siPlus;
+      }
 
       Runnable MTracker = new Runnable() {
-
          public void run() {
             int val = Integer.parseInt(noiseToleranceTextField_.getText());
             int halfSize = (int) Integer.parseInt(boxSizeTextField.getText()) / 2;
@@ -960,12 +1013,12 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
             }
          }
       };
-      
-      (new Thread(MTracker)).start() ;
+
+      (new Thread(MTracker)).start();
 
    }//GEN-LAST:event_mTrackButton_ActionPerformed
 
-    public void updateValues(GaussianInfo tT) {
+   public void updateValues(GaussianInfo tT) {
       try {
          tT.setNoiseTolerance(Integer.parseInt(noiseToleranceTextField_.getText()));
          tT.setPhotonConversionFactor(NumberUtils.displayStringToDouble(photonConversionTextField.getText()));
@@ -990,7 +1043,6 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
          JOptionPane.showMessageDialog(null, "Error interpreting input: " + ex.getMessage());
       }
    }
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTextField baseLevelTextField;
     private javax.swing.JTextField boxSizeTextField;

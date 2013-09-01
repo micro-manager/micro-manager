@@ -45,6 +45,7 @@ import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseListener;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.io.*;
 import java.nio.channels.FileChannel;
@@ -162,6 +163,15 @@ public class DataCollectionForm extends javax.swing.JFrame {
          jitterMaxSpots_ = jm;
    }
   
+   /**
+    * Method that lets a script gets the Affinetransform calculated by the
+    * CoordinateMapper
+    */
+   public AffineTransform getAffineTransform() {
+      if (c2t_ == null)
+         return null;
+      return c2t_.getAffineTransform();
+   }
   
    
    public static DataCollectionForm instance_ = null;

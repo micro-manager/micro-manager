@@ -1,0 +1,116 @@
+/*
+ * Utility class that transforms an image into a new image given a affine
+ * transform
+ */
+package edu.valelab.GaussianFit.utils;
+
+import ij.ImagePlus;
+import java.awt.geom.AffineTransform;
+import java.awt.image.AffineTransformOp;
+import java.awt.image.BufferedImage;
+import ij.ImageStack;
+import ij.IJ;
+import ij.gui.ImageWindow;
+import ij.process.ShortProcessor;
+import java.awt.geom.Rectangle2D;
+
+/**
+ *
+ * @author nico
+ */
+public class ImageAffineTransform {
+
+   /**
+    *
+    * @param input
+    * @param af
+    * @param interpolationType - AffineTransformOp.Type_Bilinear, or
+    * AffineTransformOp.Type_Bicubic AffineTransformOp.Type_Nearest_Neighbor if
+    * an invalid number is supplied, Nearest_neighbor will be used
+    * @return transform image
+    */
+   public static BufferedImage transform(BufferedImage input, AffineTransform af,
+           int interpolationType) {
+      if (interpolationType != AffineTransformOp.TYPE_BICUBIC
+              && interpolationType != AffineTransformOp.TYPE_BILINEAR
+              && interpolationType != AffineTransformOp.TYPE_NEAREST_NEIGHBOR) {
+         interpolationType = AffineTransformOp.TYPE_NEAREST_NEIGHBOR;
+      }
+      AffineTransformOp aOp = new AffineTransformOp(af, interpolationType);
+      return aOp.filter(input, null);
+   }
+
+   
+   /**
+    * Given an input image and affine transform, will apply the affine transform
+    * to the second channel and create a new window with the untouched
+    * first channel and transformed second channel
+    * For now only works on 16 bit (short) images, and 2-channel images (which
+    * may contain multiple frames and slices)
+    * 
+    * @param siPlus - input image
+    * @param af - affine transform that will be applied
+    * @param interpolationType - valid AffinTRansformOp type
+    */
+   public static void transformImagePlus(ImagePlus siPlus, AffineTransform af,
+           int interpolationType) {
+      
+      if (siPlus.getNChannels() == 2) {
+         
+         if (interpolationType != AffineTransformOp.TYPE_BICUBIC
+                 && interpolationType != AffineTransformOp.TYPE_BILINEAR
+                 && interpolationType != AffineTransformOp.TYPE_NEAREST_NEIGHBOR) {
+            interpolationType = AffineTransformOp.TYPE_NEAREST_NEIGHBOR;
+         }
+
+         AffineTransformOp aOp = new AffineTransformOp(af, interpolationType);
+
+         ImageStack stack = siPlus.getStack();
+         if (stack.getBitDepth() > 8) {
+
+            // first get the final width and height
+            ShortProcessor proc = (ShortProcessor) stack.getProcessor(2);
+            BufferedImage bi16 = proc.get16BitBufferedImage();
+            Rectangle2D r2D = aOp.getBounds2D(bi16);
+            BufferedImage afBi16 = aOp.filter(bi16, null);
+
+            // we take the minimum of the original and transformed images
+            int width = Math.min(proc.getWidth(), afBi16.getWidth());
+            int height = Math.min(proc.getHeight(), afBi16.getHeight());
+
+            // Create the destination Window
+            ImagePlus dest = IJ.createHyperStack(siPlus.getTitle() + "aligned",
+                    width, height, siPlus.getNChannels(),
+                    siPlus.getNSlices(), siPlus.getNFrames(), siPlus.getBitDepth());
+
+            ImageStack destStack = dest.getStack();
+            BufferedImage aOpResult = new BufferedImage(afBi16.getWidth(),
+               afBi16.getHeight(), BufferedImage.TYPE_USHORT_GRAY);
+
+            for (int i = 1; i <= stack.getSize(); i++) {
+               proc = (ShortProcessor) stack.getProcessor(i);
+               ShortProcessor destProc;
+               if (i % 2 == 0) {
+                  bi16 = proc.get16BitBufferedImage();
+                  r2D = aOp.getBounds2D(bi16);
+                  afBi16 = aOp.filter(bi16, aOpResult);
+                  ImagePlus p = new ImagePlus("" + i, afBi16);
+                  destProc = (ShortProcessor) p.getProcessor();
+               } else {
+                  destProc = (ShortProcessor) proc.duplicate();
+               }
+               destProc.setRoi(0, 0, width, height);
+               destProc = (ShortProcessor) destProc.crop();
+               destStack.setPixels(destProc.getPixels(), i);
+            }
+            
+            ImageWindow win = new ij.gui.StackWindow(dest);
+         } else {
+            ij.IJ.showMessage("This only works with a 2 channel image");
+         }
+
+      }
+   }
+   
+   
+}

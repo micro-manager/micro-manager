@@ -213,7 +213,7 @@ public class CoordinateMapper {
    }
    
    
-   /***  Affine Transform (from Micro-Manager Math utils ***/
+   /***  Affine Transform (from Micro-Manager Math utils) ***/
    
    
    /**
@@ -348,8 +348,11 @@ public class CoordinateMapper {
       af_ = generateAffineTransformFromPointPairs(pointMap);
       
       // set up Rigid Body
-      rbAf_ = generateRigidBodyTransform(pointMap);
-
-      
+      rbAf_ = generateRigidBodyTransform(pointMap);      
    }   
+   
+   public AffineTransform getAffineTransform() {
+      return af_;
+   }
+   
 }
