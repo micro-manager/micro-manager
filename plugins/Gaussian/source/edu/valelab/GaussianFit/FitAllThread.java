@@ -24,10 +24,10 @@ import java.util.Comparator;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import org.micromanager.api.MMWindow;
-import org.micromanager.utils.MMScriptException;
-import org.micromanager.utils.ReportingUtils;
+import edu.valelab.GaussianFit.utils.ReportingUtils;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 /**
  *
@@ -78,7 +78,7 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
       resultList_ = Collections.synchronizedList(new ArrayList<GaussianSpotData>());
 
       // take the active ImageJ image
-      ImagePlus siPlus = null;
+      ImagePlus siPlus;
       try {
          siPlus = IJ.getImage();
       } catch (Exception ex) {
@@ -99,28 +99,77 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
       int nrSlices = siPlus.getNSlices();
       int maxNrSpots = 0;
 
-      MMWindow mw = new MMWindow(siPlus);
+      boolean isMMWindow = false;
+     
+      try {
+         Class<?> mmWin = Class.forName("org.micromanager.api.MMWindow");
+         Constructor[] aCTors = mmWin.getDeclaredConstructors();
+         aCTors[0].setAccessible(true);
+         Object mw = aCTors[0].newInstance(siPlus);
+         Method[] allMethods = mmWin.getDeclaredMethods();
 
-      if (!mw.isMMWindow()) {
+         // assemble all methods we need
+         Method mIsMMWindow = null;
+         Method mGetNumberOfPositions = null;
+         Method mSetPosition = null;
+         for (Method m : allMethods) {
+            String mname = m.getName();
+            if (mname.startsWith("isMMWindow")
+                    && m.getGenericReturnType() == boolean.class) {
+               mIsMMWindow = m;
+               mIsMMWindow.setAccessible(true);
+            }
+            if (mname.startsWith("getNumberOfPositions")) {
+               mGetNumberOfPositions = m;
+               mGetNumberOfPositions.setAccessible(true);
+            }
+            if (mname.startsWith("setPosition")) {
+               mSetPosition = m;
+               mSetPosition.setAccessible(true);
+            }
+
+         }
+
+         if (mIsMMWindow != null && (Boolean) mIsMMWindow.invoke(mw)) {
+            isMMWindow = true;
+         }
+
+         if (isMMWindow) { // MMImageWindow
+            if (mGetNumberOfPositions != null) {
+               nrPositions = (Integer) mGetNumberOfPositions.invoke(mw);
+
+               for (int p = 1; p <= nrPositions; p++) {
+                  if (mSetPosition != null) {
+                     mSetPosition.invoke(mw, p);
+
+                     int nrSpots = analyzeImagePlus(siPlus, p, nrThreads, originalRoi);
+                     if (nrSpots > maxNrSpots) {
+                        maxNrSpots = nrSpots;
+                     }
+                  }
+
+               }
+            }
+         }
+      } catch (IllegalAccessException ex) {
+         Logger.getLogger(FitAllThread.class.getName()).log(Level.SEVERE, null, ex);
+      } catch (IllegalArgumentException ex) {
+         Logger.getLogger(FitAllThread.class.getName()).log(Level.SEVERE, null, ex);
+      } catch (InvocationTargetException ex) {
+         Logger.getLogger(FitAllThread.class.getName()).log(Level.SEVERE, null, ex);
+      } catch (ClassNotFoundException ex) {
+         Logger.getLogger(FitAllThread.class.getName()).log(Level.SEVERE, null, ex);
+      } catch (InstantiationException ex) {
+         Logger.getLogger(FitAllThread.class.getName()).log(Level.SEVERE, null, ex);
+      } 
+   
+      
+      if (!isMMWindow) {
          int nrSpots = analyzeImagePlus(siPlus, 1, nrThreads, originalRoi);
          if (nrSpots > maxNrSpots) {
             maxNrSpots = nrSpots;
          }
-      } else { // MMImageWindow
-         nrPositions = mw.getNumberOfPositions();
-     
-         for (int p = 1; p <= nrPositions; p++) {
-            try {
-               mw.setPosition(p);
-               int nrSpots = analyzeImagePlus(siPlus, p, nrThreads, originalRoi);
-               if (nrSpots > maxNrSpots) {
-                  maxNrSpots = nrSpots;
-               }
-            } catch (MMScriptException ex) {
-               Logger.getLogger(FitAllThread.class.getName()).log(Level.SEVERE, null, ex);
-            }
-         }
-      }
+      } 
 
       long endTime = System.nanoTime();
 
@@ -131,7 +180,7 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
          return;
       }
       DataCollectionForm dcForm = DataCollectionForm.getInstance();
-      
+
       double zMax = resultList_.get(0).getZCenter();
       if (zMax < 0.0) {
          zMax = 0.0;
@@ -146,26 +195,26 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
             }
             if (zMin > zTmp && zTmp > 0.0) {
                zMin = zTmp;
-            }  
+            }
          }
       }
-      
-      
+
+
       ArrayList<Double> timePoints = new ArrayList<Double>();
       // ugly code to deal with 1-based frame numbers and their relation to timePoints
       timePoints.add(0.0);
-      for (int i=1; i <= nrFrames; i++) {
+      for (int i = 1; i <= nrFrames; i++) {
          timePoints.add((i - 1) * timeIntervalMs_);
       }
 
       dcForm.addSpotData(siPlus.getWindow().getTitle(), siPlus.getTitle(), "",
-              siPlus.getWidth(), siPlus.getHeight(), (float) pixelSize_, 
+              siPlus.getWidth(), siPlus.getHeight(), (float) pixelSize_,
               (float) zStackStepSize_, shape_, halfSize_,
-              nrChannels, nrFrames, nrSlices, nrPositions, resultList_.size(), 
-              resultList_, timePoints, false, DataCollectionForm.Coordinates.NM, 
-              DataCollectionForm.zc_.hasFitFunctions(), 
+              nrChannels, nrFrames, nrSlices, nrPositions, resultList_.size(),
+              resultList_, timePoints, false, DataCollectionForm.Coordinates.NM,
+              DataCollectionForm.zc_.hasFitFunctions(),
               zMin, zMax);
-      
+
       dcForm.setVisible(true);
 
       // report duration of analysis
@@ -173,20 +222,19 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
       double rate = resultList_.size() / took;
       DecimalFormat df2 = new DecimalFormat("#.##");
       DecimalFormat df0 = new DecimalFormat("#");
-      print ("Analyzed " + resultList_.size() + " spots in " + df2.format(took) + 
-              " seconds (" + df0.format(rate) + " spots/sec.)");
+      print("Analyzed " + resultList_.size() + " spots in " + df2.format(took)
+              + " seconds (" + df0.format(rate) + " spots/sec.)");
 
       running_ = false;
    }
-
 
    private int analyzeImagePlus(ImagePlus siPlus, int position, int nrThreads, Roi originalRoi) {
 
       int nrSpots = 0;
       // Start up IJ.Prefs.getThreads() threads for gaussian fitting
       gfsThreads_ = new GaussianFitStackThread[nrThreads];
-      for (int i=0; i<nrThreads; i++) {
-         gfsThreads_[i] = new GaussianFitStackThread(sourceList_,resultList_, siPlus, halfSize_,
+      for (int i = 0; i < nrThreads; i++) {
+         gfsThreads_[i] = new GaussianFitStackThread(sourceList_, resultList_, siPlus, halfSize_,
                  shape_, fitMode_);
 
          // TODO: more efficient way of passing through settings!
@@ -206,7 +254,7 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
          gfsThreads_[i].setUseNrPhotonsFilter(useNrPhotonsFilter_);
          gfsThreads_[i].init();
       }
-      
+
       // work around strange bug that happens with freshly opened images
       for (int i = 1; i <= siPlus.getNChannels(); i++) {
          siPlus.setPosition(i, siPlus.getCurrentSlice(), siPlus.getFrame());
@@ -216,22 +264,26 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
       int imageCount = 0;
       try {
          for (int c = 1; c <= siPlus.getNChannels(); c++) {
-            if (!running_)
+            if (!running_) {
                break;
+            }
             for (int z = 1; z <= siPlus.getNSlices(); z++) {
-               if (!running_)
+               if (!running_) {
                   break;
+               }
                for (int f = 1; f <= siPlus.getNFrames(); f++) {
-                  if (!running_)
+                  if (!running_) {
                      break;
+                  }
                   // to avoid making a gigantic sourceList and running out of memory
                   // sleep a bit when the sourcesize gets too big
                   // once we have very fast multi-core computers, this constant can be increased
-                  if (sourceList_.size() > 100000)
+                  if (sourceList_.size() > 100000) {
                      try {
-                     Thread.sleep(1000);
-                  } catch (InterruptedException ex) {
-                     // not sure what to do
+                        Thread.sleep(1000);
+                     } catch (InterruptedException ex) {
+                        // not sure what to do
+                     }
                   }
 
                   imageCount++;

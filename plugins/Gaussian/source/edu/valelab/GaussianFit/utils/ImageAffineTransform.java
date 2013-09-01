@@ -82,7 +82,7 @@ edu.valelab.GaussianFit.utils.ImageAffineTransform.transformImagePlus(siPlus, af
          AffineTransformOp aOp = new AffineTransformOp(af, interpolationType);
 
          ImageStack stack = siPlus.getStack();
-         if (stack.getBitDepth() > 8) {
+         if (stack.getProcessor(1).getBitDepth() > 8) {
 
             // first get the final width and height
             ShortProcessor testProc = (ShortProcessor) stack.getProcessor(2);
@@ -128,11 +128,11 @@ edu.valelab.GaussianFit.utils.ImageAffineTransform.transformImagePlus(siPlus, af
             ImageWindow win = new ij.gui.StackWindow(dest);
 
          } else {
-            ij.IJ.showMessage("This only works with a 2 channel image");
+            ij.IJ.showMessage("This only works with 16 bit images");
          }
-
+      } else {
+         ij.IJ.showMessage("This only works with a 2 channel image");
       }
+
    }
-   
-   
 }

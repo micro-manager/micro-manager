@@ -22,8 +22,12 @@ import edu.ucsf.tsf.TaggedSpotsProtos.IntensityUnits;
 import edu.ucsf.tsf.TaggedSpotsProtos.LocationUnits;
 import edu.ucsf.tsf.TaggedSpotsProtos.Spot;
 import edu.ucsf.tsf.TaggedSpotsProtos.SpotList;
-import edu.valelab.GaussianFit.utils.ListUtils;
 import edu.valelab.GaussianFit.utils.RowData;
+import edu.valelab.GaussianFit.utils.ListUtils;
+import edu.valelab.GaussianFit.utils.ReportingUtils;
+import edu.valelab.GaussianFit.utils.NumberUtils;
+import edu.valelab.GaussianFit.utils.FileDialogs;
+import edu.valelab.GaussianFit.utils.FileDialogs.FileType;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.WindowManager;
@@ -62,11 +66,6 @@ import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumnModel;
 import org.apache.commons.math.stat.StatUtils;
 import org.jfree.data.xy.XYSeries;
-import org.micromanager.MMStudioMainFrame;
-import org.micromanager.utils.FileDialogs;
-import org.micromanager.utils.FileDialogs.FileType;
-import org.micromanager.utils.NumberUtils;
-import org.micromanager.utils.ReportingUtils;
 
 
 /**
@@ -192,7 +191,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
    public static DataCollectionForm getInstance() {
       if (instance_ == null) {
          instance_ =  new DataCollectionForm();
-         MMStudioMainFrame.getInstance().addMMBackgroundListener(instance_);
+         // MMStudioMainFrame.getInstance().addMMBackgroundListener(instance_);
       }
       return instance_;
    }
@@ -329,7 +328,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
          }
       });
 
-      setBackground(MMStudioMainFrame.getInstance().getBackgroundColor());
+      // setBackground(MMStudioMainFrame.getInstance().getBackgroundColor());
 
       setVisible(true);
    }
@@ -2543,8 +2542,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
 
       MathForm mf = new MathForm(rows, rows);
 
-      mf.setBackground(MMStudioMainFrame.getInstance().getBackgroundColor());
-      MMStudioMainFrame.getInstance().addMMBackgroundListener(mf);
+      // mf.setBackground(MMStudioMainFrame.getInstance().getBackgroundColor());
+      // MMStudioMainFrame.getInstance().addMMBackgroundListener(mf);
 
       mf.setVisible(true);
    }//GEN-LAST:event_mathButton_ActionPerformed

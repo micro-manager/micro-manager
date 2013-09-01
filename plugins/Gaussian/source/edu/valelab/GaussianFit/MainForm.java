@@ -28,8 +28,8 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.micromanager.utils.NumberUtils;
-import org.micromanager.utils.ReportingUtils;
+import edu.valelab.GaussianFit.utils.NumberUtils;
+import edu.valelab.GaussianFit.utils.ReportingUtils;
 
 
 
@@ -805,7 +805,7 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
          aCTors[0].setAccessible(true);
          Object mw = aCTors[0].newInstance(siPlus);
          Method[] allMethods = mmWin.getDeclaredMethods();
-         Boolean isMMWindow = false;
+         
          // assemble all methods we need
          Method mIsMMWindow = null;
          Method mGetSummaryMetaData = null;
