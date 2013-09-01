@@ -41,6 +41,22 @@ public class ImageAffineTransform {
    }
 
    
+   /*
+    * Beanshell script to test transformImagePlus:
+    * 
+   
+import java.awt.image.AffineTransformOp;
+
+dc = edu.valelab.GaussianFit.DataCollectionForm.getInstance();
+af = dc.getAffineTransform().clone();
+af.invert();
+siPlus = ij.IJ.getImage();
+type = AffineTransformOp.TYPE_NEAREST_NEIGHBOR;
+edu.valelab.GaussianFit.utils.ImageAffineTransform.transformImagePlus(siPlus, af, type);
+
+    */
+   
+   
    /**
     * Given an input image and affine transform, will apply the affine transform
     * to the second channel and create a new window with the untouched
@@ -69,26 +85,27 @@ public class ImageAffineTransform {
          if (stack.getBitDepth() > 8) {
 
             // first get the final width and height
-            ShortProcessor proc = (ShortProcessor) stack.getProcessor(2);
-            BufferedImage bi16 = proc.get16BitBufferedImage();
+            ShortProcessor testProc = (ShortProcessor) stack.getProcessor(2);
+            BufferedImage bi16 = testProc.get16BitBufferedImage();
             Rectangle2D r2D = aOp.getBounds2D(bi16);
             BufferedImage afBi16 = aOp.filter(bi16, null);
 
             // we take the minimum of the original and transformed images
-            int width = Math.min(proc.getWidth(), afBi16.getWidth());
-            int height = Math.min(proc.getHeight(), afBi16.getHeight());
+            int width = Math.min(testProc.getWidth(), afBi16.getWidth());
+            int height = Math.min(testProc.getHeight(), afBi16.getHeight());
 
             // Create the destination Window
             ImagePlus dest = IJ.createHyperStack(siPlus.getTitle() + "aligned",
                     width, height, siPlus.getNChannels(),
                     siPlus.getNSlices(), siPlus.getNFrames(), siPlus.getBitDepth());
-
+            dest.copyScale(siPlus);
+            
             ImageStack destStack = dest.getStack();
             BufferedImage aOpResult = new BufferedImage(afBi16.getWidth(),
                afBi16.getHeight(), BufferedImage.TYPE_USHORT_GRAY);
 
             for (int i = 1; i <= stack.getSize(); i++) {
-               proc = (ShortProcessor) stack.getProcessor(i);
+               ShortProcessor proc = (ShortProcessor) stack.getProcessor(i);
                ShortProcessor destProc;
                if (i % 2 == 0) {
                   bi16 = proc.get16BitBufferedImage();
@@ -102,9 +119,14 @@ public class ImageAffineTransform {
                destProc.setRoi(0, 0, width, height);
                destProc = (ShortProcessor) destProc.crop();
                destStack.setPixels(destProc.getPixels(), i);
+               // The following is weird, but was needed to get the first frame 
+               // of the first channel to display.  Remove when solved in ImageJ
+               if (i == 1)
+                  dest.setProcessor(destProc);
             }
-            
+                        
             ImageWindow win = new ij.gui.StackWindow(dest);
+
          } else {
             ij.IJ.showMessage("This only works with a 2 channel image");
          }
