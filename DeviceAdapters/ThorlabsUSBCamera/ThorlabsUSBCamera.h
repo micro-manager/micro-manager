@@ -4,13 +4,12 @@
 // SUBSYSTEM:     DeviceAdapters
 //-----------------------------------------------------------------------------
 // DESCRIPTION:   Device adapter for Thorlabs USB cameras DCU223M, DCU223C, 
-//				  DCU224M, DCU224C, DCC1545M, DCC1645C, DCC1240M, DCC1240C.
-//				  Has been developped and tested with the DCC1545M, based on the 
-//				  source code of the DemoCamera device adapter
+//				      DCU224M, DCU224C, DCC1545M, DCC1645C, DCC1240M, DCC1240C.
+//				      Has been developed and tested with the DCC1545M, based on the 
+//				      source code of the DemoCamera device adapter
 //                
 // AUTHOR:        Christophe Dupre, christophe.dupre@gmail.com, 09/25/2012
-//				  DemoCamera Source code originally developped by 
-//				  Nenad Amodaj, Karl Hoover, Arthur Edelstein
+//				      Updated to support DC3240C features, Nenad Amodaj, 09/2013
 //
 // COPYRIGHT:     University of California, San Francisco, 2006
 // LICENSE:       This file is distributed under the BSD license.
@@ -107,56 +106,41 @@ public:
 	// floating point read-only properties for testing
    int OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnBitDepth(MM::PropertyBase* pProp, MM::ActionType eAct);
-
-   //New properties
-   int OnErrorSimulation(MM::PropertyBase* , MM::ActionType );
    int OnCameraCCDXSize(MM::PropertyBase* , MM::ActionType );
+   int OnCameraCCDYSize(MM::PropertyBase* , MM::ActionType );
    int OnExposure(MM::PropertyBase* , MM::ActionType );
    int OnHardwareGain(MM::PropertyBase* , MM::ActionType );
    int OnPixelClock(MM::PropertyBase* , MM::ActionType );
-   int OnCameraCCDYSize(MM::PropertyBase* , MM::ActionType );
 
 private:
    int SetAllowedBinning();
-   void TestResourceLocking(const bool);
-   void GenerateEmptyImage(ImgBuffer& img);
-   void GenerateSyntheticImage();
+   void AcquireOneImage();
    int ResizeImageBuffer();
 
    static const double nominalPixelSizeUm_;
 
-   double dPhase_;
    ImgBuffer img_;
    bool busy_;
    bool stopOnOverFlow_;
    bool initialized_;
    double readoutUs_;
    MM::MMTime readoutStartTime_;
-   long scanMode_;
+   MM::MMTime sequenceStartTime_;
    int bitDepth_;
    unsigned roiX_;
    unsigned roiY_;
-   MM::MMTime sequenceStartTime_;
    long imageCounter_;
 	long binSize_;
 	long cameraCCDXSize_;
 	long cameraCCDYSize_;
-   double ccdT_;
-	std::string triggerDevice_;
+	std::string triggerDevice_; // TODO: is this really used??
 
-	bool dropPixels_;
-	bool saturatePixels_;
-	double fractionOfPixelsToDropOrSaturate_;
-
-   MMThreadLock* pDemoResourceLock_;
    MMThreadLock imgPixelsLock_;
    int nComponents_;
    friend class MySequenceThread;
    MySequenceThread * thd_;
-   bool stopOnOverflow_;
 
-	HCAM	m_hG;			// handle to frame grabber
+	HCAM	camHandle_;			// handle to camera driver
    double Exposure_;
    double HardwareGain_;
    double PixelClock_;
