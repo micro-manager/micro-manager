@@ -12,7 +12,6 @@ import ij.ImageStack;
 import ij.IJ;
 import ij.gui.ImageWindow;
 import ij.process.ShortProcessor;
-import java.awt.geom.Rectangle2D;
 
 /**
  *
@@ -87,10 +86,9 @@ edu.valelab.GaussianFit.utils.ImageAffineTransform.transformImagePlus(siPlus, af
             // first get the final width and height
             ShortProcessor testProc = (ShortProcessor) stack.getProcessor(2);
             BufferedImage bi16 = testProc.get16BitBufferedImage();
-            Rectangle2D r2D = aOp.getBounds2D(bi16);
             BufferedImage afBi16 = aOp.filter(bi16, null);
 
-            // we take the minimum of the original and transformed images
+            // take the minimum of the original and transformed images
             int width = Math.min(testProc.getWidth(), afBi16.getWidth());
             int height = Math.min(testProc.getHeight(), afBi16.getHeight());
 
@@ -107,9 +105,8 @@ edu.valelab.GaussianFit.utils.ImageAffineTransform.transformImagePlus(siPlus, af
             for (int i = 1; i <= stack.getSize(); i++) {
                ShortProcessor proc = (ShortProcessor) stack.getProcessor(i);
                ShortProcessor destProc;
-               if (i % 2 == 0) {
+               if (i % 2 == 0) { // even images will be affine transformed
                   bi16 = proc.get16BitBufferedImage();
-                  r2D = aOp.getBounds2D(bi16);
                   afBi16 = aOp.filter(bi16, aOpResult);
                   ImagePlus p = new ImagePlus("" + i, afBi16);
                   destProc = (ShortProcessor) p.getProcessor();
@@ -119,6 +116,7 @@ edu.valelab.GaussianFit.utils.ImageAffineTransform.transformImagePlus(siPlus, af
                destProc.setRoi(0, 0, width, height);
                destProc = (ShortProcessor) destProc.crop();
                destStack.setPixels(destProc.getPixels(), i);
+               
                // The following is weird, but was needed to get the first frame 
                // of the first channel to display.  Remove when solved in ImageJ
                if (i == 1)
