@@ -8,7 +8,7 @@
 //				      Has been developed and tested with the DCC1545M, based on the 
 //				      source code of the DemoCamera device adapter
 //                
-// AUTHOR:    Christophe Dupre, christophe.dupre@gmail.com, 09/25/2012
+// AUTHOR:        Christophe Dupre, christophe.dupre@gmail.com, 09/25/2012
 //				      Updated to support DC3240C features, Nenad Amodaj, 09/2013
 //
 // COPYRIGHT:     University of California, San Francisco, 2006
@@ -93,8 +93,6 @@ public:
    int ThreadRun();
    bool IsCapturing();
    void OnThreadExiting() throw(); 
-   double GetNominalPixelSizeUm() const {return nominalPixelSizeUm_;}
-   double GetPixelSizeUm() const {return nominalPixelSizeUm_ * GetBinning();}
    int GetBinning() const;
    int SetBinning(int bS);
    int IsExposureSequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
@@ -106,8 +104,6 @@ public:
 	// floating point read-only properties for testing
    int OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnCameraCCDXSize(MM::PropertyBase* , MM::ActionType );
-   int OnCameraCCDYSize(MM::PropertyBase* , MM::ActionType );
    int OnExposure(MM::PropertyBase* , MM::ActionType );
    int OnHardwareGain(MM::PropertyBase* , MM::ActionType );
    int OnPixelClock(MM::PropertyBase* , MM::ActionType );
@@ -116,8 +112,6 @@ private:
    int SetAllowedBinning();
    void AcquireOneImage();
    int ResizeImageBuffer();
-
-   static const double nominalPixelSizeUm_;
 
    ImgBuffer img_;
    bool busy_;
@@ -131,8 +125,8 @@ private:
    unsigned roiY_;
    long imageCounter_;
 	long binSize_;
-	long cameraCCDXSize_;
-	long cameraCCDYSize_;
+	SENSORINFO sensorInfo;
+
 	std::string triggerDevice_; // TODO: is this really used??
 
    MMThreadLock imgPixelsLock_;
