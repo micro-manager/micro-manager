@@ -211,6 +211,7 @@ int ThorlabsUSBCam::Initialize()
    nRet = is_SetColorMode(camHandle_, IS_CM_SENSOR_RAW8);
    if (nRet != IS_SUCCESS)
       return nRet;
+   bitDepth_ = 8;
 
    // binning
    CPropertyAction *pAct = new CPropertyAction (this, &ThorlabsUSBCam::OnBinning);
@@ -222,6 +223,7 @@ int ThorlabsUSBCam::Initialize()
       return nRet;
 
    // pixel type
+   // start in the default 8-bit mode
    pAct = new CPropertyAction (this, &ThorlabsUSBCam::OnPixelType);
    nRet = CreateProperty(MM::g_Keyword_PixelType, g_PixelType_8bit, MM::String, false, pAct);
    assert(nRet == DEVICE_OK);
@@ -772,52 +774,49 @@ int ThorlabsUSBCam::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
 */
 int ThorlabsUSBCam::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-   int ret = DEVICE_ERR;
-   switch(eAct)
+   if (eAct == MM::AfterSet)
    {
-   case MM::AfterSet:
-      {
-         if(IsCapturing())
-            return DEVICE_CAMERA_BUSY_ACQUIRING;
+      if(IsCapturing())
+         return DEVICE_CAMERA_BUSY_ACQUIRING;
 
-         string pixelType;
-         pProp->Get(pixelType);
+      string pixelType;
+      pProp->Get(pixelType);
 
-         if (pixelType.compare(g_PixelType_8bit) == 0)
-         {
-            nComponents_ = 1;
-            img_.Resize(img_.Width(), img_.Height(), 1);
-            bitDepth_ = 8;
-            ret=DEVICE_OK;
-         }
-         else if (pixelType.compare(g_PixelType_16bit) == 0)
-         {
-            nComponents_ = 1;
-            img_.Resize(img_.Width(), img_.Height(), 2);
-            ret=DEVICE_OK;
-         }
-         else
-         {
-            // on error switch to default pixel type
-            nComponents_ = 1;
-            img_.Resize(img_.Width(), img_.Height(), 1);
-            pProp->Set(g_PixelType_8bit);
-            ret = ERR_UNKNOWN_MODE;
-         }
-      } break;
-   case MM::BeforeGet:
+      if (pixelType.compare(g_PixelType_8bit) == 0)
       {
-         long bytesPerPixel = GetImageBytesPerPixel();
-         if (bytesPerPixel == 1)
-         	pProp->Set(g_PixelType_8bit);
-         else if (bytesPerPixel == 2)
-         	pProp->Set(g_PixelType_16bit);
-			else
-				pProp->Set(g_PixelType_8bit);
-         ret=DEVICE_OK;
-      }break;
+         int nRet = is_SetColorMode(camHandle_, IS_CM_SENSOR_RAW8);
+         if (nRet != IS_SUCCESS)
+            return nRet;
+         bitDepth_ = 8;
+         nComponents_ = 1;
+         return ResizeImageBuffer();
+      }
+      else if (pixelType.compare(g_PixelType_16bit) == 0)
+      {
+         int nRet = is_SetColorMode(camHandle_, IS_CM_SENSOR_RAW16);
+         if (nRet != IS_SUCCESS)
+            return nRet;
+          
+         bitDepth_ = 16;
+         nComponents_ = 1;
+         return ResizeImageBuffer();
+      }
+      else
+      {
+         // on error switch to default pixel type
+         nComponents_ = 1;
+         bitDepth_ = 8;
+         return ERR_UNKNOWN_MODE;
+      }
    }
-   return ret; 
+   else if (eAct == MM::BeforeGet)
+   {
+      if (bitDepth_ == 8)
+         pProp->Set(g_PixelType_8bit);
+      else
+         pProp->Set(g_PixelType_16bit);
+   }
+   return DEVICE_OK; 
 }
 
 int ThorlabsUSBCam::OnExposure(MM::PropertyBase* pProp , MM::ActionType eAct)
@@ -917,28 +916,7 @@ int ThorlabsUSBCam::OnPixelClock(MM::PropertyBase* pProp, MM::ActionType eAct)
 */
 int ThorlabsUSBCam::ResizeImageBuffer()
 {
-   char buf[MM::MaxStrLength];
-
-   int ret = GetProperty(MM::g_Keyword_PixelType, buf);
-   if (ret != DEVICE_OK)
-      return ret;
-
-	std::string pixelType(buf);
-	int byteDepth = 0;
-
-   if (pixelType.compare(g_PixelType_8bit) == 0)
-   {
-      byteDepth = 1;
-   }
-   else if (pixelType.compare(g_PixelType_16bit) == 0)
-   {
-      byteDepth = 2;
-   } else {
-      assert(false); // other pixel types are not supported
-   }
-
-   img_.Resize(sensorInfo.nMaxWidth/binSize_, sensorInfo.nMaxHeight/binSize_, byteDepth);
-
+   img_.Resize(sensorInfo.nMaxWidth/binSize_, sensorInfo.nMaxHeight/binSize_, bitDepth_ == 8 ? 1 : 2);
    return DEVICE_OK;
 }
 
@@ -948,32 +926,27 @@ void ThorlabsUSBCam::AcquireOneImage()
 	timer t0;
 	
 	unsigned char* pBuf = const_cast<unsigned char*>(img_.GetPixels());
-	memset(pBuf, 0, img_.Height()*img_.Width()*img_.Depth());
-
 
 	int		m_Ret;			// return value for SDK functions
 	INT		m_nSizeX;		// width of video 
 	INT		m_nSizeY;		// height of video
-	INT		m_nBitsPerPixel;// number of bits needed store one pixel
 	INT		m_lMemoryId;	// grabber memory - buffer ID
-	INT		m_nColorMode;	// Y8/RGB16/RGB24/REG32
 	char*	m_pcImageMemory;// grabber memory - pointer to buffer
 
 	m_nSizeX = sensorInfo.nMaxWidth;		
    m_nSizeY = sensorInfo.nMaxHeight;
+
+   int byteDepth = bitDepth_ == 8 ? 1 : 2;
 	
-   is_GetColorDepth(camHandle_, &m_nBitsPerPixel, &m_nColorMode);
 	is_AllocImageMem(	camHandle_,
 						m_nSizeX,
 						m_nSizeY,
-						8,
+						byteDepth * 8,
 						&m_pcImageMemory,
 						&m_lMemoryId);
 	is_SetImageMem(camHandle_, m_pcImageMemory, m_lMemoryId );	// set memory active
-	is_SetImageSize(camHandle_, m_nSizeX, m_nSizeY );
-	is_SetDisplayMode(camHandle_, IS_SET_DM_DIB);
 	m_Ret = is_FreezeVideo(camHandle_, IS_WAIT );
-   memcpy(pBuf, m_pcImageMemory, m_nSizeX * m_nSizeY);
+   memcpy(pBuf, m_pcImageMemory, m_nSizeX * m_nSizeY * byteDepth);
 
 	is_FreeImageMem (camHandle_, m_pcImageMemory, m_lMemoryId);
 	time = t0.elapsed();
