@@ -24,16 +24,15 @@
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
 #include "ThorlabsUSBCamera.h"
+#include "ModuleInterface.h"
+#include "uc480.h"
 #include <cstdio>
 #include <string>
 #include <math.h>
-#include "../../MMDevice/ModuleInterface.h"
-#include "../../MMCore/Error.h"
 #include <sstream>
 #include <algorithm>
 #include <iostream>
 
-#include "uc480.h"
 #include <fstream>
 #include <boost/progress.hpp>
 using boost::timer;
@@ -635,12 +634,6 @@ void ThorlabsUSBCam::OnThreadExiting() throw()
       LogMessage(g_Msg_SEQUENCE_ACQUISITION_THREAD_EXITING);
       GetCoreCallback()?GetCoreCallback()->AcqFinished(this,0):DEVICE_OK;
    }
-
-   catch( CMMError& e){
-      std::ostringstream oss;
-      oss << g_Msg_EXCEPTION_IN_ON_THREAD_EXITING << " " << e.getMsg() << " " << e.getCode();
-      LogMessage(oss.str().c_str(), false);
-   }
    catch(...)
    {
       LogMessage(g_Msg_EXCEPTION_IN_ON_THREAD_EXITING, false);
@@ -714,10 +707,7 @@ int MySequenceThread::svc(void) throw()
       if (IsStopped())
          camera_->LogMessage("SeqAcquisition interrupted by the user\n");
 
-   }catch( CMMError& e){
-      camera_->LogMessage(e.getMsg(), false);
-      ret = e.getCode();
-   }catch(...){
+   } catch(...){
       camera_->LogMessage(g_Msg_EXCEPTION_IN_THREAD, false);
    }
    stop_=true;

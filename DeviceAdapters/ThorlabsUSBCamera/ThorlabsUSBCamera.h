@@ -8,7 +8,7 @@
 //				      Has been developed and tested with the DCC1545M, based on the 
 //				      source code of the DemoCamera device adapter
 //                
-// AUTHOR:        Christophe Dupre, christophe.dupre@gmail.com, 09/25/2012
+// AUTHOR:    Christophe Dupre, christophe.dupre@gmail.com, 09/25/2012
 //				      Updated to support DC3240C features, Nenad Amodaj, 09/2013
 //
 // COPYRIGHT:     University of California, San Francisco, 2006
