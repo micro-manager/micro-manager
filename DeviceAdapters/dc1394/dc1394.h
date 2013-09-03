@@ -113,7 +113,7 @@ public:
    int Initialize();
    int Shutdown();
    void GetName(char* pszName) const;
-   bool Busy() {return busy_;}
+   bool Busy() { return false; }
    bool IsCapturing() {return acquiring_;}
    
    // MMCamera API
@@ -197,9 +197,10 @@ private:
    int SetUpFrameRates();
    int StopTransmission();
    bool Timeout(MM::MMTime startTime);
+
    int OnFeature(MM::PropertyBase* pProp, MM::ActionType eAct, uint32_t &value, int valueMin, int valueMax, dc1394feature_t feature);
    int OnFeatureMode(MM::PropertyBase* pProp, MM::ActionType eAct, dc1394feature_t feature);
-	//int AddFeature(dc1394feature_t feature, const char* label, int(Cdc1394::*fpt)(PropertyBase* pProp, ActionType eAct) , uint32_t  &value, uint32_t &valueMin, uint32_t &valueMax);
+
    void rgb8ToMono8(uint8_t* dest, uint8_t* src, uint32_t width, uint32_t height); 
    void rgb8ToBGRA8(uint8_t* dest, uint8_t* src, uint32_t width, uint32_t height); 
    void rgb8AddToMono16(uint16_t* dest, uint8_t* src, uint32_t width, uint32_t height); 
@@ -238,6 +239,7 @@ private:
    // GJ keep track of whether the camera is interlaced
    bool avtInterlaced_;
    bool isSonyXCDX700_;
+
    // GJ will store whether we have absolute shutter control
    // (using a float value in seconds)
    bool absoluteShutterControl_;
@@ -245,7 +247,7 @@ private:
    dc1394color_coding_t colorCoding_;
    dc1394framerates_t framerates_;
    dc1394framerate_t framerate_;
-   uint32_t numCameras_, width_, height_, depth_;
+   uint32_t width_, height_, depth_;
    uint32_t brightness_, brightnessMin_, brightnessMax_;
    uint32_t gain_, gainMin_, gainMax_;
    uint32_t shutter_, shutterMin_, shutterMax_;
@@ -263,23 +265,23 @@ private:
    uint32_t colMin_, colMax_;
 	
    ImgBuffer img_;
-   bool initialized_;
-   bool busy_;
-   bool snapInProgress_;
+   static const int dmaBufferSize_ = 16;
+
    bool frameRatePropDefined_;
-   int dmaBufferSize_, triedCaptureCount_, integrateFrameNumber_;
-   long lnBin_;
+   int integrateFrameNumber_;
+
    std::ostringstream logMsg_;
    MM::MMTime longestWait_;
-   bool dequeued_; // indicates whether or not the current frame is dequeued_
+
+   bool dequeued_; // indicates whether or not the current frame is dequeued
    
-   // For Burst Mode
+   // For sequence acquisition
    bool stopOnOverflow_;
    bool multi_shot_;
    bool acquiring_;
    unsigned long imageCounter_;
    unsigned long sequenceLength_;
-   bool init_seqStarted_;
+
    AcqSequenceThread* acqThread_; // burst mode thread
 };
 
@@ -290,21 +292,19 @@ class AcqSequenceThread : public MMDeviceThreadBase
 {
 public:
    AcqSequenceThread(Cdc1394* pCam) : 
-      intervalMs_(100.0), numImages_(1), busy_(false), stop_(false) {camera_ = pCam;}
+      intervalMs_(100.0), numImages_(1), stop_(false) {camera_ = pCam;}
    ~AcqSequenceThread() {}
    int svc(void);
 
    void SetInterval(double intervalMs) {intervalMs_ = intervalMs;}
    void SetLength(long images) {numImages_ = images;}
    void Stop() {stop_ = true;}
-   //void Start() {stop_ = false; activate();}
    void Start();
 
 private:
    Cdc1394* camera_;
    double intervalMs_;
    long numImages_;
-   bool busy_;
    bool stop_;
 };
 

@@ -162,13 +162,8 @@ Cdc1394::Cdc1394() :
 
    absoluteShutterControl_(false),
 
-   busy_(false),
-   snapInProgress_(false),
    frameRatePropDefined_(false),
-   dmaBufferSize_(16),
-   triedCaptureCount_(0),
    integrateFrameNumber_(1),
-   lnBin_(1),
    longestWait_(1,0),
    dequeued_(false),
    stopOnOverflow_(false),
@@ -1880,6 +1875,7 @@ int Cdc1394::SetUpFrameRates()
 	{
 	   framerate_ = framerates_.framerates[0];
 	}
+
    // Create the MicroManager Property FrameRates, only when it was not yet defined
    if (!frameRatePropDefined_)
    {
