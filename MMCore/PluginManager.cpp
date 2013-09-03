@@ -287,22 +287,9 @@ void CPluginManager::UnloadDevice(MM::Device* pDevice)
 {
    if (pDevice == 0)
       return;
-   
-   // identify currently loaded module
-   HDEVMODULE hLib = pDevice->GetModuleHandle();
-   if (hLib == 0)
-      throw CMMError(MMERR_UnknownModule); // can't get the handle to the device module
-   
-   // obtain handle to the DeleteDevice method
-   // we are assuming here that the current device module is already loaded
-   fnDeleteDevice hDeleteDeviceFunc = (fnDeleteDevice) GetModuleFunction(hLib, "DeleteDevice");
 
-   // release device resources
-   pDevice->Shutdown(); // perhaps there is no need to do this explicitly???
-                        // rely on device destructor to call Shutdown()?
-
-   // delete device
-   hDeleteDeviceFunc(pDevice);
+   // Remove all references to the device first, in order to avoid dangling pointers
+   // in the case where the device destructor throws.
 
    {
       // remove the entry from the device map
@@ -331,6 +318,22 @@ void CPluginManager::UnloadDevice(MM::Device* pDevice)
       }
       devVector_ = newDevVector;
    }
+
+   // identify currently loaded module
+   HDEVMODULE hLib = pDevice->GetModuleHandle();
+   if (hLib == 0)
+      throw CMMError(MMERR_UnknownModule); // can't get the handle to the device module
+
+   // obtain handle to the DeleteDevice method
+   // we are assuming here that the current device module is already loaded
+   fnDeleteDevice hDeleteDeviceFunc = (fnDeleteDevice) GetModuleFunction(hLib, "DeleteDevice");
+
+   // release device resources
+   pDevice->Shutdown(); // perhaps there is no need to do this explicitly???
+                        // rely on device destructor to call Shutdown()?
+
+   // delete device
+   hDeleteDeviceFunc(pDevice);
 }
 
 /**
