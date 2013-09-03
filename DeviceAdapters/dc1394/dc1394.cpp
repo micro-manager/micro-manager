@@ -127,7 +127,7 @@ unsigned Cdc1394::s_refCount = 0;
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(g_DeviceName, "Firewire camera_s (IIDC compatible)");
+   AddAvailableDeviceName(g_DeviceName, "FireWire camera (IIDC/DCAM compatible)");
 }
 
 MODULE_API void DeleteDevice(MM::Device* pDevice)
@@ -186,7 +186,7 @@ Cdc1394::Cdc1394() :
    assert(nRet == DEVICE_OK);
 
    // Description
-   nRet = CreateProperty(MM::g_Keyword_Description, "Firewire camera_ (IIDC) dc1394 adapter", MM::String, true);
+   nRet = CreateProperty(MM::g_Keyword_Description, "FireWire camera (IIDC/DCAM) via libdc1394", MM::String, true);
    assert(nRet == DEVICE_OK);
    
    // GJ set these to false for now
