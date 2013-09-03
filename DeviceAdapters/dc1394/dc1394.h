@@ -21,6 +21,8 @@
 #include <dc1394/control.h>
 #include <string>
 #include <map>
+#include <boost/shared_ptr.hpp>
+#include <boost/weak_ptr.hpp>
 
 // error codes
 #define ERR_BUFFER_ALLOCATION_FAILED 101
@@ -58,18 +60,53 @@
 // 00 0A 47 …. Node_Vendor_Id
 #define AVT_VENDOR_ID 2631
 
+
+// Pseudo-RAII for dc1394 library context
+// (Take care of reference counting in one place and ensure library is released
+// when all cameras are released.)
+class DC1394Context
+{
+public:
+   void Acquire()
+   {
+      if (singleton_) {
+         return;
+      }
+
+      singleton_ = s_singleton_instance.lock();
+      if (!singleton_) {
+         singleton_ = boost::shared_ptr<Singleton>(new Singleton());
+         s_singleton_instance = singleton_;
+      }
+   }
+
+   dc1394_t* Get() { return singleton_->Get(); }
+
+private:
+   class Singleton
+   {
+      dc1394_t* ctx_;
+   public:
+      Singleton() { ctx_ = dc1394_new(); }
+      ~Singleton() { if (ctx_) dc1394_free(ctx_); }
+      dc1394_t* Get() { return ctx_; }
+   };
+
+   static boost::weak_ptr<Singleton> s_singleton_instance;
+   boost::shared_ptr<Singleton> singleton_;
+};
+
+
 // forward declaration
 class AcqSequenceThread;
-//////////////////////////////////////////////////////////////////////////////
-// Implementation of the MMDevice and MMCamera interfaces
-//
+
 class Cdc1394 : public CCameraBase<Cdc1394>
 {
    
 friend class AcqSequenceThread;
    
 public:
-   static Cdc1394* GetInstance();
+   Cdc1394();
    ~Cdc1394();
    
    // MMDevice API
@@ -100,7 +137,6 @@ public:
    int IsExposureSequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
 
    // action interface
-   int OnBinning(MM::PropertyBase* /* pProp */ , MM::ActionType /* eAct */);
    int OnBrightness(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnBrightnessMode(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -139,20 +175,21 @@ public:
    int PushImage(dc1394video_frame_t *myframe);
 
 private:
-   Cdc1394();
+   int InitFeatureModeProperty(const dc1394feature_info_t& featureInfo,
+         bool& hasManualMode, // out param
+         int (Cdc1394::*cb_onfeaturemode)(MM::PropertyBase*, MM::ActionType),
+         const std::string& overridePropertyName = ""); // if not using the default feature name + "Setting"
 
-   int InitFeatureMode(dc1394feature_info_t &featureInfo, dc1394feature_t feature, const char *featureLabel, int (Cdc1394::*cb_onfeaturemode)(MM::PropertyBase*, MM::ActionType), bool& hasManualMode);
-   int InitFeatureMode(dc1394feature_info_t &featureInfo, dc1394feature_t feature, const char *featureLabel, int (Cdc1394::*cb_onfeaturemode)(MM::PropertyBase*, MM::ActionType))
-   { bool flag; return InitFeatureMode(featureInfo, feature, featureLabel, cb_onfeaturemode, flag); }
-
-   int InitFeatureManual(dc1394feature_info_t &featureInfo, const char *featureLabel, uint32_t &value, uint32_t &valueMin, uint32_t &valueMax, int (Cdc1394::*cb_onfeature)(MM::PropertyBase*, MM::ActionType));
+   int InitManualFeatureProperty(const dc1394feature_info_t& featureInfo,
+         uint32_t &value, uint32_t &valueMin, uint32_t &valueMax, // out params
+         int (Cdc1394::*cb_onfeature)(MM::PropertyBase*, MM::ActionType),
+         const std::string& overridePropertyName = ""); // if not using the default (feature name string)
 
    int ResizeImageBuffer();
    int SetManual(dc1394feature_t feature);
    int ShutdownImageBuffer();
-   int GetCamera();
+   int SetUpCamera();
    int StartCamera();
-   bool IsFeatureSupported(int featureId);
 
    // Whether the camera is in color mode. NOT whether we return color images to Micro-Manager.
    bool IsColor() const;
@@ -176,25 +213,28 @@ private:
    double X700Shutter2Exposure(int shutter) const;
    int X700Exposure2Shutter(double exposure);
 
-   static Cdc1394* s_pInstance;
-   static unsigned s_refCount;
-
    // Property values for video mode
-   const std::map<dc1394video_mode_t, std::string> videoModeMap_;
-   static std::map<dc1394video_mode_t, std::string> MakeVideoModeMap();
-   std::string StringForVideoMode(dc1394video_mode_t mode) const;
-   dc1394video_mode_t VideoModeForString(const std::string& str) const;
+   static const std::map<dc1394video_mode_t, std::string>& MakeVideoModeMap();
+   static std::string StringForVideoMode(dc1394video_mode_t mode);
+   static dc1394video_mode_t VideoModeForString(const std::string& str);
    // Property values for framerate
-   const std::map<dc1394framerate_t, std::string> framerateMap_;
-   static std::map<dc1394framerate_t, std::string> MakeFramerateMap();
-   std::string StringForFramerate(dc1394framerate_t framerate) const;
-   dc1394framerate_t FramerateForString(const std::string& str) const;
+   static const std::map<dc1394framerate_t, std::string>& MakeFramerateMap();
+   static std::string StringForFramerate(dc1394framerate_t framerate);
+   static dc1394framerate_t FramerateForString(const std::string& str);
 
+   // Reference-counted dc1394 library context
+   DC1394Context dc1394Context_;
+
+   // The main dc1394 camera object; released in Shutdown() (or dtor)
+   // Nonzero iff connected to camera
    dc1394camera_t *camera_;
+
+   // A dc1394 DMA frame buffer; memory is managed by dc1394 library
    dc1394video_frame_t *frame_;
-   dc1394video_modes_t modes_;
-   // current mode
+
+   // Current video mode
    dc1394video_mode_t mode_;
+
    // GJ keep track of whether the camera is interlaced
    bool avtInterlaced_;
    bool isSonyXCDX700_;
@@ -203,8 +243,6 @@ private:
    bool absoluteShutterControl_;
    
    dc1394color_coding_t colorCoding_;
-   dc1394featureset_t features_;
-   dc1394feature_info_t featureInfo_;
    dc1394framerates_t framerates_;
    dc1394framerate_t framerate_;
    uint32_t numCameras_, width_, height_, depth_;

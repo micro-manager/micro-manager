@@ -47,10 +47,6 @@ const char* g_PixelType_16bit = "16bit";
 const char* g_Keyword_Modes = "Video Modes";
 const char* g_Keyword_FrameRates = "Frame Rates";
 
-// singleton instance
-Cdc1394* Cdc1394::s_pInstance = 0;
-unsigned Cdc1394::s_refCount = 0;
-
 
 // Macros for error chacking on dc1394 calls.
 //
@@ -141,22 +137,30 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
       return 0;
 
    string strName(deviceName);
-   
+
    if (strcmp(deviceName, g_DeviceName) == 0)
-      return Cdc1394::GetInstance();
+      return new Cdc1394();
    
    return 0;
 }
+
+
+boost::weak_ptr<DC1394Context::Singleton> DC1394Context::s_singleton_instance =
+   boost::weak_ptr<DC1394Context::Singleton>();
 
 
 ///////////////////////////////////////////////////////////////////////////////
 // Cdc1394 constructor/destructor
 
 Cdc1394::Cdc1394() :
-   videoModeMap_(MakeVideoModeMap()),
-   framerateMap_(MakeFramerateMap()),
+   camera_(0),
+   frame_(0),
+
+   avtInterlaced_(false),
    isSonyXCDX700_(false),
-   initialized_(false),
+
+   absoluteShutterControl_(false),
+
    busy_(false),
    snapInProgress_(false),
    frameRatePropDefined_(false),
@@ -189,38 +193,16 @@ Cdc1394::Cdc1394() :
    nRet = CreateProperty(MM::g_Keyword_Description, "FireWire camera (IIDC/DCAM) via libdc1394", MM::String, true);
    assert(nRet == DEVICE_OK);
    
-   // GJ set these to false for now
-   avtInterlaced_ = false;
-   
    // Create a thread for burst mode
    acqThread_ = new AcqSequenceThread(this); 
 }
 
 Cdc1394::~Cdc1394()
 {
-   s_refCount--;
-   if (s_refCount == 0)
-   {
-      // release resources
-      if (initialized_)
-         Shutdown();
-
-      // clear the instance pointer
-      s_pInstance = 0;
-
-      // Clear the burst mode thread
-      delete acqThread_;
-   }
+   Shutdown();
+   delete acqThread_;
 }
 
-Cdc1394* Cdc1394::GetInstance()
-{
-   if (!s_pInstance)
-      s_pInstance = new Cdc1394();
-
-   s_refCount++;
-   return s_pInstance;
-}
 
 ///////////////////////////////////////////////////////////////////////////////
 // Action handlers
@@ -297,12 +279,6 @@ int Cdc1394::OnFrameRate(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
-
-// Binning, not supported yet
-int Cdc1394::OnBinning(MM::PropertyBase* /* pProp */, MM::ActionType /* eAct*/)
-{
-   return DEVICE_OK;
-}
 
 int Cdc1394::OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
@@ -791,42 +767,33 @@ void Cdc1394::GetName(char* name) const
    CDeviceUtils::CopyLimitedString(name, g_DeviceName);
 }
 
-///////////////////////////////////////////////////////////////////////////////
-// Function name   : Cdc1394::Initialize
-// Description     : Initialize the camera_
-// Return type     : bool 
 
 int Cdc1394::Initialize()
 {
-   // setup the camera
-   // ----------------
-   CHECK_MM_ERROR(GetCamera());
+   CHECK_MM_ERROR(SetUpCamera());
 
-   // We have  a handle to the camera_ now:
-   initialized_ = true;
 
-   // Figure out what this camera_ can do
-   // get supported modes
-   CHECK_DC1394_ERROR(dc1394_video_get_supported_modes(camera_, &modes_), ERR_MODE_LIST_NOT_FOUND,
-         "Failed to get list of supported video modes");
-   for (unsigned int i = 0; i < modes_.num; i++) {
-      logMsg_.str("");
-      logMsg_ << "Mode found: " << modes_.modes[i];
-      LogMessage (logMsg_.str().c_str(), true);
+   //
+   // Vendor and model
+   //
+   string vendor(camera_->vendor ? camera_->vendor : "Unknown");
+   if (vendor.empty()) {
+      vendor = "Unknown";
    }
+   CHECK_MM_ERROR(CreateProperty("Camera Vendor", vendor.c_str(), MM::String, true));
+   LogMessage("Camera Vendor: " + vendor);
 
-   // Camera video modes, default to the first mode found
-   CPropertyAction *pAct = new CPropertyAction (this, &Cdc1394::OnMode);
-   mode_ = modes_.modes[0];
-   
-   logMsg_.str("");
-   logMsg_ << "Camera vendor/model is: " << camera_->vendor << "/" << camera_->model;
-   LogMessage (logMsg_.str().c_str(), true);
+   string model(camera_->model ? camera_->model : "Unknwon");
+   if (model.empty()) {
+      model = "Unknown";
+   }
+   CHECK_MM_ERROR(CreateProperty("Camera Model", model.c_str(), MM::String, true));
+   LogMessage("Camera Model: " + model);
 
-   logMsg_.str("");
-   logMsg_ << "Camera vendor/model id is: " << camera_->vendor_id << "/" <<camera_->model_id;
-   LogMessage (logMsg_.str().c_str(), true);
 
+   //
+   // Model-specific stuff (TODO: document these)
+   //
    if (!strncmp("XCD-X700", camera_->model, 8)) {
       isSonyXCDX700_ = true;
       LogMessage("Found a Sony XCD-X700 camera");
@@ -839,20 +806,31 @@ int Cdc1394::Initialize()
 			 !strncmp("Guppy F038",camera_->model,10) ||
 			 !strncmp("Guppy F044",camera_->model,10) ) {
 	   avtInterlaced_ = true;
-      logMsg_.str("");
-	   logMsg_ << "Camera is Guppy interlaced series, setting interlace = true";
-	   LogMessage (logMsg_.str().c_str(), true);
+	   LogMessage("Camera is Guppy interlaced series");
    }
-   else avtInterlaced_ = false;
-   
+
+
+   //
+   // Video modes
+   //
+   dc1394video_modes_t modes;
+   CHECK_DC1394_ERROR(dc1394_video_get_supported_modes(camera_, &modes), ERR_MODE_LIST_NOT_FOUND,
+         "Failed to get list of supported video modes");
+
+   CPropertyAction* pAct = new CPropertyAction(this, &Cdc1394::OnMode);
+   mode_ = modes.modes[0];
    CHECK_MM_ERROR(CreateProperty(g_Keyword_Modes, StringForVideoMode(mode_).c_str(), MM::String, false, pAct));
-   vector<string> modeValues;
-   for (unsigned int i=0; i<modes_.num; i++) {
-      string modeString = StringForVideoMode(modes_.modes[i]);
-      if (!modeString.empty()) 
-         modeValues.push_back(modeString);
-   }   
-   CHECK_MM_ERROR(SetAllowedValues(g_Keyword_Modes, modeValues));
+   for (unsigned i = 0; i < modes.num; i++) {
+      string modeString = StringForVideoMode(modes.modes[i]);
+      if (!modeString.empty()) {
+         CHECK_MM_ERROR(AddAllowedValue(g_Keyword_Modes, modeString.c_str()));
+         LogMessage("Found video mode: " + modeString, true);
+      }
+   }
+
+   // VideoModeChanged(); XXX See right below.
+
+   // XXX Beginning of code that should go in VideoModeChanged()
 
    // XXX The following should be done in a common function with OnMode
    CHECK_DC1394_ERROR(dc1394_get_color_coding_from_video_mode(camera_, mode_, &colorCoding_), DEVICE_ERR,
@@ -877,221 +855,267 @@ int Cdc1394::Initialize()
       // TODO Set allowed range (which needs to be updated when mode changes)
    }
 
+   // XXX End of code that should go in VideoModeChanged()
 
-   // binning, not implemented, would need software binning
-   pAct = new CPropertyAction (this, &Cdc1394::OnBinning);
-   CHECK_MM_ERROR(CreateProperty(MM::g_Keyword_Binning, "1", MM::Integer, false, pAct));
-   vector<string> binValues;
-   binValues.push_back("1");
-   CHECK_MM_ERROR(SetAllowedValues(MM::g_Keyword_Binning, binValues));
 
+   //
+   // Binning: unimplemented
+   //
+   // Note: IIDC does not support binning; some vendors do through Format_7
+   // video modes.
+   CHECK_MM_ERROR(CreateProperty(MM::g_Keyword_Binning, "1", MM::Integer, false));
+   CHECK_MM_ERROR(AddAllowedValue(MM::g_Keyword_Binning, "1"));
+   SetProperty(MM::g_Keyword_Binning,"1"); // XXX Do we need this? (Comment said needed on Mac but I doubt it.)
+
+
+   //
+   // Timeout
+   //
    pAct = new CPropertyAction(this, &Cdc1394::OnTimeout);
    CHECK_MM_ERROR(CreateProperty("Timeout(ms)", "1000", MM::Float, false, pAct));
 
-   // camera gain
-   /*
-   pAct = new CPropertyAction (this, &Cdc1394::OnGain);
-   CHECK_MM_ERROR(CreateProperty(MM::g_Keyword_Gain, "1", MM::Integer, false, pAct));
-   */
 
-   // CameraName
-   char	CameraName[(2 * 256) + 4] = "Unrecognized";
-   strcpy (CameraName, camera_->vendor);
-   strcat (CameraName, ", ");
-   strcat (CameraName, camera_->model);
-   CHECK_MM_ERROR(CreateProperty("Vendor Info", CameraName, MM::String, true));
-		      
-   // Other features, ask what the camera has to offer
-   CHECK_DC1394_ERROR(dc1394_feature_get_all(camera_, &features_), ERR_GET_CAMERA_FEATURE_SET_FAILED,
-         "Failed to get list of all features");
-   int j = 0;
-   for (int i= DC1394_FEATURE_MIN; i <= DC1394_FEATURE_MAX; i++, j++)  
-   {
-      featureInfo_ = features_.feature[j];
-      if (featureInfo_.available) {
-         const char *featureLabel = dc1394_feature_get_string(featureInfo_.id);
-         if (strcmp(featureLabel, "Brightness") ==0) {
-            bool hasManual;
-            CHECK_MM_ERROR(InitFeatureMode(featureInfo_, DC1394_FEATURE_BRIGHTNESS, "BrightnessSetting", &Cdc1394::OnBrightnessMode, hasManual));
-            if (hasManual) {
-               CHECK_MM_ERROR(InitFeatureManual(featureInfo_, "Brightness", brightness_, brightnessMin_, brightnessMax_, &Cdc1394::OnBrightness));
-            }
-         } 
-         else if (strcmp(featureLabel, "Gain") == 0) {
-            bool hasManual;
-            CHECK_MM_ERROR(InitFeatureMode(featureInfo_, DC1394_FEATURE_GAIN, "GainSetting", &Cdc1394::OnGainMode, hasManual));
-            if (hasManual) {
-               CHECK_MM_ERROR(InitFeatureManual(featureInfo_, MM::g_Keyword_Gain, gain_, gainMin_, gainMax_, &Cdc1394::OnGain));
-            }
-         }
-         else if (strcmp(featureLabel, "Shutter") == 0) {
-            bool hasManual;
-            CHECK_MM_ERROR(InitFeatureMode(featureInfo_, DC1394_FEATURE_SHUTTER, "ShutterSetting", &Cdc1394::OnShutterMode, hasManual));
-            if (hasManual) {
-               CHECK_MM_ERROR(InitFeatureManual(featureInfo_, "Shutter", shutter_, shutterMin_, shutterMax_, &Cdc1394::OnShutter));
-            }
+   //
+   // Other, camera-dependent features
+   //
+   // XXX There is no reason to use dc1394_feature_get_all(); we should just
+   // use dc1394_feature_get() for each feature.
+   dc1394featureset_t features;
+   CHECK_DC1394_ERROR(dc1394_feature_get_all(camera_, &features), ERR_GET_CAMERA_FEATURE_SET_FAILED,
+         "Failed to get camera feature list");
 
-             // Check if shutter has absolute control
-             dc1394bool_t absolute;
-             absoluteShutterControl_ = false;
-             CHECK_DC1394_ERROR(dc1394_feature_has_absolute_control(camera_, DC1394_FEATURE_SHUTTER, &absolute),
-                   DEVICE_ERR, "Failed to check if feature SHUTTER has absolute mode");
-             if(absolute==DC1394_TRUE) {
-                absoluteShutterControl_ = true;
-             }
 
-             if(!absoluteShutterControl_ && camera_->vendor_id==AVT_VENDOR_ID){
-                logMsg_.str("");
-                logMsg_ << "Checking AVT absolute shutter\n";
-                LogMessage (logMsg_.str().c_str(), false);
-                // for AVT camera_s, check if we have access to the extended shutter mode
-                uint32_t timebase_id;
-                if (dc1394_avt_get_extented_shutter(camera_, &timebase_id) == DC1394_SUCCESS) {
-                   absoluteShutterControl_ = true;
-                }
-             }
-             logMsg_.str("");
-             if(absoluteShutterControl_){
-                logMsg_ << "Absolute shutter";
-                LogMessage (logMsg_.str().c_str(), false);                
-             } else { 
-                logMsg_ << " No absolute shutter";
-                LogMessage (logMsg_.str().c_str(), false);                
-             }
-          }
-         else if (strcmp(featureLabel, "Exposure") == 0) {
-            // Offer option to switch between auto, manual and one-push modes
-            CHECK_MM_ERROR(InitFeatureMode(featureInfo_, DC1394_FEATURE_EXPOSURE, "ExposureSetting", &Cdc1394::OnExposureMode));
-            CHECK_DC1394_ERROR(dc1394_feature_get_value(camera_, DC1394_FEATURE_EXPOSURE, &exposure_), DEVICE_ERR,
-                  "Failed to get value of feature EXPOSURE");
-            CHECK_DC1394_ERROR(dc1394_feature_get_boundaries(camera_, DC1394_FEATURE_EXPOSURE,
-                     &exposureMin_, &exposureMax_),
-                  DEVICE_ERR, "Failed to get allowed range for feature EXPOSURE");
-         }
-         else if (strcmp(featureLabel, "Trigger") == 0) 
-         {
-            logMsg_.str("");
-            logMsg_ << "Checking External Trigger Status";
-            LogMessage (logMsg_.str().c_str(), false);
-            // Fetch the actual trigger status from the camera_
-            dc1394switch_t pwr;
-            CHECK_DC1394_ERROR(dc1394_external_trigger_get_power(camera_, &pwr), DEVICE_ERR,
-                  "Failed to get on/off state for external trigger");
-            // and reset the trigger setting to OFF to avoid camera startup problems
-            if (pwr == DC1394_ON) {
-                CHECK_DC1394_ERROR(dc1394_external_trigger_set_power(camera_, DC1394_OFF), DEVICE_ERR,
-                      "Failed to turn off external trigger");
-            }
+   // The member features.feature is an array, size DC1394_FEATURE_NUM, of
+   // dc1394feature_info_t structs; we find features using the id field (using
+   // pointers as C++ iterators).
+   const dc1394feature_info_t* features_begin = features.feature;
+   const dc1394feature_info_t* features_end = features_begin + DC1394_FEATURE_NUM;
+   class IsFeatureAvailable { // Unary predicate for std::find_if()
+      dc1394feature_t id_;
+   public:
+      IsFeatureAvailable(dc1394feature_t id) : id_(id) {}
+      bool operator()(const dc1394feature_info_t& feature) { return feature.id == id_ && feature.available; }
+   };
 
-            pAct = new CPropertyAction (this, &Cdc1394::OnExternalTrigger);
-            CHECK_MM_ERROR(CreateProperty("ExternalTrigger", "0", MM::Integer, false, pAct)); 
-            AddAllowedValue("ExternalTrigger", "0"); // Closed
-            AddAllowedValue("ExternalTrigger", "1"); // Open             
-         }
-         // EF: addtional camera parameters to play around with
-         else if (strcmp(featureLabel, "Gamma") == 0) {
-            bool hasManual;
-            CHECK_MM_ERROR(InitFeatureMode(featureInfo_, DC1394_FEATURE_GAMMA, "GammaSetting", &Cdc1394::OnGammaMode, hasManual));
-            if (hasManual) {
-               CHECK_MM_ERROR(InitFeatureManual(featureInfo_, "Gamma", gamma_, gammaMin_, gammaMax_, &Cdc1394::OnGamma));
-            }
-         }
-         else if (strcmp(featureLabel, "Hue") == 0) {
-            bool hasManual;
-            CHECK_MM_ERROR(InitFeatureMode(featureInfo_, DC1394_FEATURE_HUE, "HueSetting", &Cdc1394::OnHueMode, hasManual));
-            if (hasManual) {
-               CHECK_MM_ERROR(InitFeatureManual(featureInfo_, "Hue", hue_, hueMin_, hueMax_, &Cdc1394::OnHue));
-            }
-         }
-         else if (strcmp(featureLabel, "Saturation") == 0) {
-            bool hasManual;
-            CHECK_MM_ERROR(InitFeatureMode(featureInfo_, DC1394_FEATURE_SATURATION, "SaturationSetting", &Cdc1394::OnSaturationMode, hasManual));
-            if (hasManual) {
-               CHECK_MM_ERROR(InitFeatureManual(featureInfo_, "Saturation", saturation_, saturationMin_, saturationMax_, &Cdc1394::OnSaturation));
-            }
-         }
-         else if (strcmp(featureLabel, "Temperature") == 0) {
-            bool hasManual;
-            CHECK_MM_ERROR(InitFeatureMode(featureInfo_, DC1394_FEATURE_TEMPERATURE, "TemperatureSetting", &Cdc1394::OnTempMode, hasManual));
-            if (hasManual) {
-               CHECK_MM_ERROR(InitFeatureManual(featureInfo_, "Temperature", temperature_, temperatureMin_, temperatureMax_, &Cdc1394::OnTemp));
-            }
-         }
-         else if (strcmp(featureLabel, "White Balance") == 0) {
-            bool hasManual;
-            CHECK_MM_ERROR(InitFeatureMode(featureInfo_, DC1394_FEATURE_WHITE_BALANCE, "WhiteBalanceSetting", &Cdc1394::OnWhitebalanceMode, hasManual));
-      
-            if (hasManual) {
-               // Check that this feature is read-out capable
-               if ( featureInfo_.readout_capable ) {
-                  colub_ = featureInfo_.BU_value;
-                  colvr_ = featureInfo_.RV_value;
-               }
-               colMin_ = 0;
-               colMax_ = 255;
-               
-               char tmp[10];
-               pAct = new CPropertyAction (this, &Cdc1394::OnWhitebalanceUB);
-               sprintf(tmp,"%d",colub_);
-               CHECK_MM_ERROR(CreateProperty("WhitebalanceUB", tmp, MM::Integer, false, pAct));
-               CHECK_MM_ERROR(SetPropertyLimits("WhitebalanceUB", 0, 1000));
 
-               pAct = new CPropertyAction (this, &Cdc1394::OnWhitebalanceVR);
-               sprintf(tmp,"%d",colvr_);
-               CHECK_MM_ERROR(CreateProperty("WhitebalanceVR", tmp, MM::Integer, false, pAct));
-               CHECK_MM_ERROR(SetPropertyLimits("WhitebalanceVR", 0, 1000));
-            }
-         }
-         else if (strcmp(featureLabel, "White Shading") == 0) {
-            bool hasManual;
-            CHECK_MM_ERROR(InitFeatureMode(featureInfo_, DC1394_FEATURE_WHITE_SHADING, "WhiteShadingSetting", &Cdc1394::OnWhiteshadingMode, hasManual));
+   const dc1394feature_info_t* pFeature;
+   pFeature = find_if(features_begin, features_end, IsFeatureAvailable(DC1394_FEATURE_SHUTTER));
+   if (pFeature != features_end) {
+      bool hasManual;
+      CHECK_MM_ERROR(InitFeatureModeProperty(*pFeature, hasManual, &Cdc1394::OnShutterMode));
+      if (hasManual) {
+         CHECK_MM_ERROR(InitManualFeatureProperty(*pFeature, shutter_, shutterMin_, shutterMax_, &Cdc1394::OnShutter));
+      }
 
-            if (hasManual) {
-               // Check that this feature is read-out capable
-               if ( featureInfo_.readout_capable ) {
-                  colred_ = featureInfo_.R_value;
-                  colgreen_ = featureInfo_.G_value;
-                  colblue_ = featureInfo_.B_value;
-               }
-               colMin_ = 0;
-               colMax_ = 255;
-               
-               char tmp[10];
-               pAct = new CPropertyAction (this, &Cdc1394::OnWhiteshadingRed);
-               sprintf(tmp,"%d",colub_);
-               CHECK_MM_ERROR(CreateProperty("WhiteshadingRed", tmp, MM::Integer, false, pAct));
-               CHECK_MM_ERROR(SetPropertyLimits("WhiteshadingRed", 0, 1000));
-               pAct = new CPropertyAction (this, &Cdc1394::OnWhiteshadingGreen);
-               sprintf(tmp,"%d",colub_);
-               CHECK_MM_ERROR(CreateProperty("WhiteshadingGreen", tmp, MM::Integer, false, pAct));
-               CHECK_MM_ERROR(SetPropertyLimits("WhiteshadingGreen", 0, 1000));
-               pAct = new CPropertyAction (this, &Cdc1394::OnWhiteshadingBlue);
-               sprintf(tmp,"%d",colub_);
-               CHECK_MM_ERROR(CreateProperty("WhiteshadingBlue", tmp, MM::Integer, false, pAct));
-               CHECK_MM_ERROR(SetPropertyLimits("WhiteshadingBlue", 0, 1000));
-            }
+      dc1394bool_t hasAbsoluteShutterControl;
+      CHECK_DC1394_ERROR(dc1394_feature_has_absolute_control(camera_, DC1394_FEATURE_SHUTTER,
+               &hasAbsoluteShutterControl),
+            DEVICE_ERR, "Failed to check if feature SHUTTER has absolute mode");
+
+      if (hasAbsoluteShutterControl == DC1394_TRUE) {
+         absoluteShutterControl_ = true;
+      }
+
+      if (!absoluteShutterControl_ && camera_->vendor_id == AVT_VENDOR_ID){
+         LogMessage("Checking AVT absolute shutter");
+         // For AVT cameras, check if we have access to the extended shutter mode
+         uint32_t timebase_id;
+         if (dc1394_avt_get_extented_shutter(camera_, &timebase_id) == DC1394_SUCCESS) {
+            absoluteShutterControl_ = true;
          }
       }
+
+      LogMessage("Absolute shutter control is " + string(absoluteShutterControl_ ? "available" : "not available"));
    }
-   
-   // exposure
+
+
+   pFeature = find_if(features_begin, features_end, IsFeatureAvailable(DC1394_FEATURE_EXPOSURE));
+   if (pFeature != features_end) {
+      bool hasManual;
+      CHECK_MM_ERROR(InitFeatureModeProperty(*pFeature, hasManual, &Cdc1394::OnExposureMode));
+
+      CHECK_DC1394_ERROR(dc1394_feature_get_value(camera_, DC1394_FEATURE_EXPOSURE, &exposure_), DEVICE_ERR,
+            "Failed to get value of feature EXPOSURE");
+      CHECK_DC1394_ERROR(dc1394_feature_get_boundaries(camera_, DC1394_FEATURE_EXPOSURE, &exposureMin_, &exposureMax_),
+            DEVICE_ERR, "Failed to get allowed range for feature EXPOSURE");
+   }
+
+   // For exposure, use the Shutter feature if available and supports absolute
+   // control; otherwise we don't have control over exposure. Note that we
+   // create the Exposure property even if MANUAL control of the Shutter
+   // feature is not available (XXX is this the right thing to do?).
    if(absoluteShutterControl_) {
-      pAct = new CPropertyAction (this, &Cdc1394::OnExposure);
+      pAct = new CPropertyAction(this, &Cdc1394::OnExposure);
       CHECK_MM_ERROR(CreateProperty(MM::g_Keyword_Exposure, "10.0", MM::Float, false, pAct));
    }
 
-   // setup the buffer
-   CHECK_MM_ERROR(ResizeImageBuffer());
 
-   // We seem to need this on the Mac...
-   SetProperty(MM::g_Keyword_Binning,"1");
+   pFeature = find_if(features_begin, features_end, IsFeatureAvailable(DC1394_FEATURE_TRIGGER));
+   if (pFeature != features_end) {
+      dc1394switch_t pwr;
+      CHECK_DC1394_ERROR(dc1394_external_trigger_get_power(camera_, &pwr), DEVICE_ERR,
+            "Failed to get on/off state for external trigger");
+
+      // Start up with trigger mode disabled, to avoid confusion
+      if (pwr == DC1394_ON) {
+          CHECK_DC1394_ERROR(dc1394_external_trigger_set_power(camera_, DC1394_OFF), DEVICE_ERR,
+                "Failed to turn off external trigger");
+      }
+
+      pAct = new CPropertyAction (this, &Cdc1394::OnExternalTrigger);
+      CHECK_MM_ERROR(CreateProperty("ExternalTrigger", "0", MM::Integer, false, pAct)); 
+      AddAllowedValue("ExternalTrigger", "0");
+      AddAllowedValue("ExternalTrigger", "1");
+   }
+
+
+   pFeature = find_if(features_begin, features_end, IsFeatureAvailable(DC1394_FEATURE_BRIGHTNESS));
+   if (pFeature != features_end) {
+      bool hasManual;
+      CHECK_MM_ERROR(InitFeatureModeProperty(*pFeature, hasManual, &Cdc1394::OnBrightnessMode));
+      if (hasManual) {
+         CHECK_MM_ERROR(InitManualFeatureProperty(*pFeature, brightness_, brightnessMin_, brightnessMax_,
+                  &Cdc1394::OnBrightness));
+      }
+   }
+
+
+   pFeature = find_if(features_begin, features_end, IsFeatureAvailable(DC1394_FEATURE_GAIN));
+   if (pFeature != features_end) {
+      bool hasManual;
+      CHECK_MM_ERROR(InitFeatureModeProperty(*pFeature, hasManual, &Cdc1394::OnGainMode));
+      if (hasManual) {
+         CHECK_MM_ERROR(InitManualFeatureProperty(*pFeature, gain_, gainMin_, gainMax_,
+                  &Cdc1394::OnGain, MM::g_Keyword_Gain));
+      }
+   }
+
+
+   pFeature = find_if(features_begin, features_end, IsFeatureAvailable(DC1394_FEATURE_GAMMA));
+   if (pFeature != features_end) {
+      bool hasManual;
+      CHECK_MM_ERROR(InitFeatureModeProperty(*pFeature, hasManual, &Cdc1394::OnGammaMode));
+      if (hasManual) {
+         CHECK_MM_ERROR(InitManualFeatureProperty(*pFeature, gamma_, gammaMin_, gammaMax_,
+                  &Cdc1394::OnGamma));
+      }
+   }
+
+
+   pFeature = find_if(features_begin, features_end, IsFeatureAvailable(DC1394_FEATURE_HUE));
+   if (pFeature != features_end) {
+      bool hasManual;
+      CHECK_MM_ERROR(InitFeatureModeProperty(*pFeature, hasManual, &Cdc1394::OnHueMode));
+      if (hasManual) {
+         CHECK_MM_ERROR(InitManualFeatureProperty(*pFeature, hue_, hueMin_, hueMax_, &Cdc1394::OnHue));
+      }
+   }
+
+
+   pFeature = find_if(features_begin, features_end, IsFeatureAvailable(DC1394_FEATURE_SATURATION));
+   if (pFeature != features_end) {
+      bool hasManual;
+      CHECK_MM_ERROR(InitFeatureModeProperty(*pFeature, hasManual, &Cdc1394::OnSaturationMode));
+      if (hasManual) {
+         CHECK_MM_ERROR(InitManualFeatureProperty(*pFeature, saturation_, saturationMin_, saturationMax_,
+                  &Cdc1394::OnSaturation));
+      }
+   }
+
+
+   pFeature = find_if(features_begin, features_end, IsFeatureAvailable(DC1394_FEATURE_TEMPERATURE));
+   if (pFeature != features_end) {
+      bool hasManual;
+      CHECK_MM_ERROR(InitFeatureModeProperty(*pFeature, hasManual, &Cdc1394::OnTempMode));
+      if (hasManual) {
+         CHECK_MM_ERROR(InitManualFeatureProperty(*pFeature, temperature_, temperatureMin_, temperatureMax_,
+                  &Cdc1394::OnTemp));
+      }
+   }
+
+
+   pFeature = find_if(features_begin, features_end, IsFeatureAvailable(DC1394_FEATURE_WHITE_BALANCE));
+   if (pFeature != features_end) {
+      bool hasManual;
+      CHECK_MM_ERROR(InitFeatureModeProperty(*pFeature, hasManual,
+               &Cdc1394::OnWhitebalanceMode, "WhiteBalanceSetting"));
+
+      if (hasManual) {
+         if (pFeature->readout_capable) {
+            colub_ = pFeature->BU_value;
+            colvr_ = pFeature->RV_value;
+         }
+         colMin_ = 0;
+         colMax_ = 255;
+         
+         pAct = new CPropertyAction(this, &Cdc1394::OnWhitebalanceUB);
+         const string ubString(boost::lexical_cast<string>(colub_));
+         CHECK_MM_ERROR(CreateProperty("WhitebalanceUB", ubString.c_str(), MM::Integer, false, pAct));
+         CHECK_MM_ERROR(SetPropertyLimits("WhitebalanceUB", 0, 1000));
+
+         pAct = new CPropertyAction(this, &Cdc1394::OnWhitebalanceVR);
+         const string vrString(boost::lexical_cast<string>(colvr_));
+         CHECK_MM_ERROR(CreateProperty("WhitebalanceVR", vrString.c_str(), MM::Integer, false, pAct));
+         CHECK_MM_ERROR(SetPropertyLimits("WhitebalanceVR", 0, 1000));
+      }
+   }
+
+
+   pFeature = find_if(features_begin, features_end, IsFeatureAvailable(DC1394_FEATURE_WHITE_SHADING));
+   if (pFeature != features_end) {
+      bool hasManual;
+      CHECK_MM_ERROR(InitFeatureModeProperty(*pFeature, hasManual,
+               &Cdc1394::OnWhiteshadingMode, "WhiteShadingSetting"));
+
+      if (hasManual) {
+         if (pFeature->readout_capable) {
+            colred_ = pFeature->R_value;
+            colgreen_ = pFeature->G_value;
+            colblue_ = pFeature->B_value;
+         }
+         colMin_ = 0;
+         colMax_ = 255;
+         
+         pAct = new CPropertyAction(this, &Cdc1394::OnWhiteshadingRed);
+         const string redString(boost::lexical_cast<string>(colred_));
+         CHECK_MM_ERROR(CreateProperty("WhiteshadingRed", redString.c_str(), MM::Integer, false, pAct));
+         CHECK_MM_ERROR(SetPropertyLimits("WhiteshadingRed", 0, 1000));
+
+         pAct = new CPropertyAction(this, &Cdc1394::OnWhiteshadingGreen);
+         const string greenString(boost::lexical_cast<string>(colgreen_));
+         CHECK_MM_ERROR(CreateProperty("WhiteshadingGreen", greenString.c_str(), MM::Integer, false, pAct));
+         CHECK_MM_ERROR(SetPropertyLimits("WhiteshadingGreen", 0, 1000));
+
+         pAct = new CPropertyAction(this, &Cdc1394::OnWhiteshadingBlue);
+         const string blueString(boost::lexical_cast<string>(colblue_));
+         CHECK_MM_ERROR(CreateProperty("WhiteshadingBlue", blueString.c_str(), MM::Integer, false, pAct));
+         CHECK_MM_ERROR(SetPropertyLimits("WhiteshadingBlue", 0, 1000));
+      }
+   }
+
+
+   // setup the buffer
+   // XXX Which settings does this depend on? Should this be done here?
+   CHECK_MM_ERROR(ResizeImageBuffer());
 
    return DEVICE_OK;
 }
 
 
-int Cdc1394::InitFeatureMode(dc1394feature_info_t &featureInfo, dc1394feature_t feature, const char *featureLabel, int (Cdc1394::*cb_onfeaturemode)(MM::PropertyBase*, MM::ActionType), bool& hasManualMode)
+// Set up a property for a feature's mode (auto/manual, etc.); determine whether manual mode is available
+int Cdc1394::InitFeatureModeProperty(const dc1394feature_info_t& featureInfo,
+      bool& hasManualMode,
+      int (Cdc1394::*cb_onfeaturemode)(MM::PropertyBase*, MM::ActionType),
+      const string& overridePropertyName)
 {
+   string propertyName;
+   if (overridePropertyName.empty()) {
+      propertyName = string(dc1394_feature_get_string(featureInfo.id)) + "Setting";
+   }
+   else {
+      propertyName = overridePropertyName;
+   }
+
    hasManualMode = false;
 
 	enum dcModes { NONE =0, OFF=1, MANUAL=2, ONE_PUSH=4, AUTO=8 };
@@ -1102,51 +1126,51 @@ int Cdc1394::InitFeatureMode(dc1394feature_info_t &featureInfo, dc1394feature_t 
 	// First make sure the feature is switched on by default
 	if (featureInfo.on_off_capable) {
 		modeAvail |= OFF; dcModeCt++;
-		CHECK_DC1394_ERROR(dc1394_feature_set_power(camera_, feature, DC1394_ON), DEVICE_ERR,
+		CHECK_DC1394_ERROR(dc1394_feature_set_power(camera_, featureInfo.id, DC1394_ON), DEVICE_ERR,
             "Failed to turn on feature");
-		std::cerr << featureLabel << ": Setting power on\n";
+		std::cerr << propertyName << ": Setting power on\n";
 	}
 	// Find out what modes are available, set by default to manual, override to auto if available
-	for (unsigned int mod_no = 0; mod_no < featureInfo_.modes.num; mod_no++)  
+	for (unsigned int mod_no = 0; mod_no < featureInfo.modes.num; mod_no++)  
 	{
-		switch ( featureInfo_.modes.modes[mod_no] ) {
+		switch ( featureInfo.modes.modes[mod_no] ) {
 			case DC1394_FEATURE_MODE_MANUAL:
 				modeAvail |= MANUAL; dcModeCt++;
-				std::cerr << featureLabel << ": Found manual mode\n";
+				std::cerr << propertyName << ": Found manual mode\n";
 				break;
 			case DC1394_FEATURE_MODE_AUTO:
 				modeAvail |= AUTO; dcModeCt++;
 				modeDefault = DC1394_FEATURE_MODE_AUTO;
-				std::cerr << featureLabel << ": Found auto mode\n";
+				std::cerr << propertyName << ": Found auto mode\n";
 				break;
 			case DC1394_FEATURE_MODE_ONE_PUSH_AUTO:
 				modeAvail |= ONE_PUSH; dcModeCt++;
-				std::cerr << featureLabel << ": Found one-push mode\n";
+				std::cerr << propertyName << ": Found one-push mode\n";
 				break;
 		}
 	}
 	
-	CHECK_DC1394_ERROR(dc1394_feature_set_mode(camera_, feature, modeDefault), DEVICE_ERR,
+	CHECK_DC1394_ERROR(dc1394_feature_set_mode(camera_, featureInfo.id, modeDefault), DEVICE_ERR,
          "Failed to set mode of feature");
 
 	if ( dcModeCt > 1 )
 	{	
 		CPropertyAction *pAct = new CPropertyAction (this, cb_onfeaturemode);
 		if ( modeDefault == DC1394_FEATURE_MODE_MANUAL ) {
-			CHECK_MM_ERROR(CreateProperty(featureLabel, "MANUAL", MM::String, false, pAct));
+			CHECK_MM_ERROR(CreateProperty(propertyName.c_str(), "MANUAL", MM::String, false, pAct));
 		}
 		else {
-			CHECK_MM_ERROR(CreateProperty(featureLabel, "AUTO", MM::String, false, pAct));
+			CHECK_MM_ERROR(CreateProperty(propertyName.c_str(), "AUTO", MM::String, false, pAct));
 		}
 		
 		if ( modeAvail & OFF )
-			AddAllowedValue( featureLabel, "OFF");
+			AddAllowedValue(propertyName.c_str(), "OFF");
 		if ( modeAvail & MANUAL )
-			AddAllowedValue( featureLabel, "MANUAL");
+			AddAllowedValue(propertyName.c_str(), "MANUAL");
 		if ( modeAvail & ONE_PUSH	)
-			AddAllowedValue( featureLabel, "ONE-PUSH");
+			AddAllowedValue(propertyName.c_str(), "ONE-PUSH");
 		if ( modeAvail & AUTO )
-			AddAllowedValue( featureLabel, "AUTO");			  
+			AddAllowedValue(propertyName.c_str(), "AUTO");			  
 	}
 	
 	if ( modeAvail & MANUAL ) {
@@ -1157,8 +1181,19 @@ int Cdc1394::InitFeatureMode(dc1394feature_info_t &featureInfo, dc1394feature_t 
 }
 
 
-int Cdc1394::InitFeatureManual(dc1394feature_info_t &featureInfo, const char *featureLabel, uint32_t &value, uint32_t &valueMin, uint32_t &valueMax, int (Cdc1394::*cb_onfeature)(MM::PropertyBase*, MM::ActionType))
+int Cdc1394::InitManualFeatureProperty(const dc1394feature_info_t& featureInfo,
+      uint32_t &value, uint32_t &valueMin, uint32_t &valueMax,
+      int (Cdc1394::*cb_onfeature)(MM::PropertyBase*, MM::ActionType),
+      const string& overridePropertyName)
 {
+   string propertyName;
+   if (overridePropertyName.empty()) {
+      propertyName = dc1394_feature_get_string(featureInfo.id);
+   }
+   else {
+      propertyName = overridePropertyName;
+   }
+
 	// Check that this feature is read-out capable
 	if ( featureInfo.readout_capable )
 	{	
@@ -1166,10 +1201,10 @@ int Cdc1394::InitFeatureManual(dc1394feature_info_t &featureInfo, const char *fe
 		valueMin = featureInfo.min;
 		valueMax = featureInfo.max;
 		logMsg_.str("");
-		logMsg_ << featureLabel << " " <<  value;
+		logMsg_ << propertyName << " " <<  value;
 		LogMessage (logMsg_.str().c_str(), false);
 		logMsg_.str("");
-		logMsg_ << featureLabel << " Min: " << valueMin  << " Max: " << valueMax;
+		logMsg_ << propertyName << " Min: " << valueMin  << " Max: " << valueMax;
 		LogMessage (logMsg_.str().c_str(), false);
 	}
 	else 
@@ -1183,8 +1218,8 @@ int Cdc1394::InitFeatureManual(dc1394feature_info_t &featureInfo, const char *fe
 	char tmp[10];
 	CPropertyAction *pAct = new CPropertyAction (this, cb_onfeature);
 	sprintf(tmp,"%d",value);
-	CHECK_MM_ERROR(CreateProperty(featureLabel, tmp, MM::Integer, false, pAct));
-	CHECK_MM_ERROR(SetPropertyLimits(featureLabel, valueMin, valueMax));
+	CHECK_MM_ERROR(CreateProperty(propertyName.c_str(), tmp, MM::Integer, false, pAct));
+	CHECK_MM_ERROR(SetPropertyLimits(propertyName.c_str(), valueMin, valueMax));
 
    return DEVICE_OK;
 } 
@@ -1198,7 +1233,7 @@ int Cdc1394::InitFeatureManual(dc1394feature_info_t &featureInfo, const char *fe
 
 int Cdc1394::Shutdown()
 {
-   if (initialized_)
+   if (camera_)
    {
       bool had_error = false;
 
@@ -1212,10 +1247,9 @@ int Cdc1394::Shutdown()
       had_error = had_error || (err != DC1394_SUCCESS);
 
       dc1394_camera_free(camera_);
+      camera_ = 0;
 
       LogMessage("Shutdown");
-
-      initialized_ = false;
 
       if (had_error) {
          return DEVICE_ERR;
@@ -1224,28 +1258,25 @@ int Cdc1394::Shutdown()
    return DEVICE_OK;
 }
 
-int Cdc1394::GetCamera()
+int Cdc1394::SetUpCamera()
 {
-   dc1394_t * d;
-   dc1394camera_list_t * list;
-
-   // Find and initialize the camera_
-   d = dc1394_new();
-   if (!d)
+   dc1394Context_.Acquire();
+   if (!dc1394Context_.Get()) {
       return ERR_DC1394;
+   }
 
-   CHECK_DC1394_ERROR(dc1394_camera_enumerate(d, &list), ERR_CAMERA_NOT_FOUND,
-         "Failed to get list of cameras");
+   dc1394camera_list_t* list;
+   CHECK_DC1394_ERROR(dc1394_camera_enumerate(dc1394Context_.Get(), &list),
+         ERR_CAMERA_NOT_FOUND, "Failed to get list of cameras");
    if (list->num == 0) 
       return ERR_CAMERA_NOT_FOUND;
    
-   // TODO: work with multiple camera_s (select by name??)
-   // For now we'll take the first camera_ on the bus
-   camera_ = dc1394_camera_new(d, list->ids[0].guid);
+   // TODO Support multiple cameras
+   camera_ = dc1394_camera_new(dc1394Context_.Get(), list->ids[0].guid);
    if (!camera_)
       return ERR_INITIALIZATION_FAILED;
 
-   dc1394_camera_free_list (list);
+   dc1394_camera_free_list(list);
 
    return DEVICE_OK;
 }
@@ -1553,22 +1584,12 @@ int Cdc1394::GetBinning () const
 {
    // Not supported yet
    return 1;
-   /*
-   char binMode[MM::MaxStrLength];
-   GetProperty(MM::g_Keyword_Binning, binMode);
-   return atoi(binMode);
-   */
 }
 
 int Cdc1394::SetBinning (int /*binSize*/) 
 {
    // Not supported yet
    return ERR_NOT_IMPLEMENTED;
-   /*
-   ostringstream os;
-   os << binSize;
-   return SetProperty(MM::g_Keyword_Binning, os.str().c_str());
-   */
 }
 
 // GJ nb uX,uY = top left
@@ -1728,12 +1749,6 @@ int Cdc1394::ShutdownImageBuffer()
 {
    return DEVICE_OK;
 }
-
-bool Cdc1394::IsFeatureSupported(int /*featureId*/)
-{
-   return DEVICE_OK;
-}
-
 
 // EF: determine if camera currently returns color
 bool Cdc1394::IsColor() const
@@ -1898,48 +1913,53 @@ int Cdc1394::SetUpFrameRates()
 }
 
 
-std::map<dc1394video_mode_t, std::string> Cdc1394::MakeVideoModeMap()
+const map<dc1394video_mode_t, string>& Cdc1394::MakeVideoModeMap()
 {
-   std::map<dc1394video_mode_t, std::string> map;
-   map.insert(std::make_pair(DC1394_VIDEO_MODE_160x120_YUV444, "160x120_YUV444"));
-   map.insert(std::make_pair(DC1394_VIDEO_MODE_320x240_YUV422, "320x240_YUV422"));
-   map.insert(std::make_pair(DC1394_VIDEO_MODE_640x480_YUV411, "640x480_YUV411"));
-   map.insert(std::make_pair(DC1394_VIDEO_MODE_640x480_YUV422, "640x480_YUV422"));
-   map.insert(std::make_pair(DC1394_VIDEO_MODE_640x480_RGB8, "640x480_RGB8"));
-   map.insert(std::make_pair(DC1394_VIDEO_MODE_640x480_MONO8, "640x480_MONO8"));
-   map.insert(std::make_pair(DC1394_VIDEO_MODE_640x480_MONO16, "640x480_MONO16"));
-   map.insert(std::make_pair(DC1394_VIDEO_MODE_800x600_YUV422, "800x600_YUV422"));
-   map.insert(std::make_pair(DC1394_VIDEO_MODE_800x600_RGB8, "800x600_RGB8"));
-   map.insert(std::make_pair(DC1394_VIDEO_MODE_800x600_MONO8, "800x600_MONO8"));
-   map.insert(std::make_pair(DC1394_VIDEO_MODE_800x600_MONO16, "800x600_MONO16"));
-   map.insert(std::make_pair(DC1394_VIDEO_MODE_1024x768_YUV422, "1024x768_YUV422"));
-   map.insert(std::make_pair(DC1394_VIDEO_MODE_1024x768_RGB8, "1024x768_RGB8"));
-   map.insert(std::make_pair(DC1394_VIDEO_MODE_1024x768_MONO8, "1024x768_MONO8"));
-   map.insert(std::make_pair(DC1394_VIDEO_MODE_1024x768_MONO16, "1024x768_MONO16"));
-   map.insert(std::make_pair(DC1394_VIDEO_MODE_1280x960_YUV422, "1280x960_YUV422"));
-   map.insert(std::make_pair(DC1394_VIDEO_MODE_1280x960_RGB8, "1280x960_RGB8"));
-   map.insert(std::make_pair(DC1394_VIDEO_MODE_1280x960_MONO8, "1280x960_MONO8"));
-   map.insert(std::make_pair(DC1394_VIDEO_MODE_1280x960_MONO16, "1280x960_MONO16"));
-   map.insert(std::make_pair(DC1394_VIDEO_MODE_1600x1200_YUV422, "1600x1200_YUV422"));
-   map.insert(std::make_pair(DC1394_VIDEO_MODE_1600x1200_RGB8, "1600x1200_RGB8"));
-   map.insert(std::make_pair(DC1394_VIDEO_MODE_1600x1200_MONO8, "1600x1200_MONO8"));
-   map.insert(std::make_pair(DC1394_VIDEO_MODE_1600x1200_MONO16, "1600x1200_MONO16"));
-   map.insert(std::make_pair(DC1394_VIDEO_MODE_FORMAT7_0, "Format_7_0"));
-   map.insert(std::make_pair(DC1394_VIDEO_MODE_FORMAT7_1, "Format_7_1"));
-   map.insert(std::make_pair(DC1394_VIDEO_MODE_FORMAT7_2, "Format_7_2"));
-   map.insert(std::make_pair(DC1394_VIDEO_MODE_FORMAT7_3, "Format_7_3"));
-   map.insert(std::make_pair(DC1394_VIDEO_MODE_FORMAT7_4, "Format_7_4"));
-   map.insert(std::make_pair(DC1394_VIDEO_MODE_FORMAT7_5, "Format_7_5"));
-   map.insert(std::make_pair(DC1394_VIDEO_MODE_FORMAT7_6, "Format_7_6"));
-   map.insert(std::make_pair(DC1394_VIDEO_MODE_FORMAT7_7, "Format_7_7"));
+   static bool initialized = false;
+   static map<dc1394video_mode_t, string> map;
+   if (!initialized) {
+      map.insert(std::make_pair(DC1394_VIDEO_MODE_160x120_YUV444, "160x120_YUV444"));
+      map.insert(std::make_pair(DC1394_VIDEO_MODE_320x240_YUV422, "320x240_YUV422"));
+      map.insert(std::make_pair(DC1394_VIDEO_MODE_640x480_YUV411, "640x480_YUV411"));
+      map.insert(std::make_pair(DC1394_VIDEO_MODE_640x480_YUV422, "640x480_YUV422"));
+      map.insert(std::make_pair(DC1394_VIDEO_MODE_640x480_RGB8, "640x480_RGB8"));
+      map.insert(std::make_pair(DC1394_VIDEO_MODE_640x480_MONO8, "640x480_MONO8"));
+      map.insert(std::make_pair(DC1394_VIDEO_MODE_640x480_MONO16, "640x480_MONO16"));
+      map.insert(std::make_pair(DC1394_VIDEO_MODE_800x600_YUV422, "800x600_YUV422"));
+      map.insert(std::make_pair(DC1394_VIDEO_MODE_800x600_RGB8, "800x600_RGB8"));
+      map.insert(std::make_pair(DC1394_VIDEO_MODE_800x600_MONO8, "800x600_MONO8"));
+      map.insert(std::make_pair(DC1394_VIDEO_MODE_800x600_MONO16, "800x600_MONO16"));
+      map.insert(std::make_pair(DC1394_VIDEO_MODE_1024x768_YUV422, "1024x768_YUV422"));
+      map.insert(std::make_pair(DC1394_VIDEO_MODE_1024x768_RGB8, "1024x768_RGB8"));
+      map.insert(std::make_pair(DC1394_VIDEO_MODE_1024x768_MONO8, "1024x768_MONO8"));
+      map.insert(std::make_pair(DC1394_VIDEO_MODE_1024x768_MONO16, "1024x768_MONO16"));
+      map.insert(std::make_pair(DC1394_VIDEO_MODE_1280x960_YUV422, "1280x960_YUV422"));
+      map.insert(std::make_pair(DC1394_VIDEO_MODE_1280x960_RGB8, "1280x960_RGB8"));
+      map.insert(std::make_pair(DC1394_VIDEO_MODE_1280x960_MONO8, "1280x960_MONO8"));
+      map.insert(std::make_pair(DC1394_VIDEO_MODE_1280x960_MONO16, "1280x960_MONO16"));
+      map.insert(std::make_pair(DC1394_VIDEO_MODE_1600x1200_YUV422, "1600x1200_YUV422"));
+      map.insert(std::make_pair(DC1394_VIDEO_MODE_1600x1200_RGB8, "1600x1200_RGB8"));
+      map.insert(std::make_pair(DC1394_VIDEO_MODE_1600x1200_MONO8, "1600x1200_MONO8"));
+      map.insert(std::make_pair(DC1394_VIDEO_MODE_1600x1200_MONO16, "1600x1200_MONO16"));
+      map.insert(std::make_pair(DC1394_VIDEO_MODE_FORMAT7_0, "Format_7_0"));
+      map.insert(std::make_pair(DC1394_VIDEO_MODE_FORMAT7_1, "Format_7_1"));
+      map.insert(std::make_pair(DC1394_VIDEO_MODE_FORMAT7_2, "Format_7_2"));
+      map.insert(std::make_pair(DC1394_VIDEO_MODE_FORMAT7_3, "Format_7_3"));
+      map.insert(std::make_pair(DC1394_VIDEO_MODE_FORMAT7_4, "Format_7_4"));
+      map.insert(std::make_pair(DC1394_VIDEO_MODE_FORMAT7_5, "Format_7_5"));
+      map.insert(std::make_pair(DC1394_VIDEO_MODE_FORMAT7_6, "Format_7_6"));
+      map.insert(std::make_pair(DC1394_VIDEO_MODE_FORMAT7_7, "Format_7_7"));
+      initialized = true;
+   }
    return map;
 }
 
 
-std::string Cdc1394::StringForVideoMode(dc1394video_mode_t mode) const
+string Cdc1394::StringForVideoMode(dc1394video_mode_t mode)
 {
-   std::map<dc1394video_mode_t, std::string>::const_iterator it = videoModeMap_.find(mode),
-      end = videoModeMap_.end();
+   const map<dc1394video_mode_t, string>& videoModeMap(MakeVideoModeMap());
+   map<dc1394video_mode_t, string>::const_iterator it = videoModeMap.find(mode),
+      end = videoModeMap.end();
    if (it != end) {
       return it->second;
    }
@@ -1947,10 +1967,11 @@ std::string Cdc1394::StringForVideoMode(dc1394video_mode_t mode) const
 }
 
 
-dc1394video_mode_t Cdc1394::VideoModeForString(const std::string& str) const
+dc1394video_mode_t Cdc1394::VideoModeForString(const string& str)
 {
-   for (std::map<dc1394video_mode_t, std::string>::const_iterator it = videoModeMap_.begin(),
-         end = videoModeMap_.end();
+   const map<dc1394video_mode_t, string>& videoModeMap(MakeVideoModeMap());
+   for (std::map<dc1394video_mode_t, std::string>::const_iterator it = videoModeMap.begin(),
+         end = videoModeMap.end();
          it != end; ++it) {
       if (str == it->second) {
          return it->first;
@@ -1960,25 +1981,30 @@ dc1394video_mode_t Cdc1394::VideoModeForString(const std::string& str) const
 }
 
 
-std::map<dc1394framerate_t, std::string> Cdc1394::MakeFramerateMap()
+const map<dc1394framerate_t, string>& Cdc1394::MakeFramerateMap()
 {
-   std::map<dc1394framerate_t, std::string> map;
-   map.insert(std::make_pair(DC1394_FRAMERATE_1_875, "  1.88 fps"));
-   map.insert(std::make_pair(DC1394_FRAMERATE_3_75, "  3.75 fps"));
-   map.insert(std::make_pair(DC1394_FRAMERATE_7_5, "  7.5 fps"));
-   map.insert(std::make_pair(DC1394_FRAMERATE_15, " 15 fps"));
-   map.insert(std::make_pair(DC1394_FRAMERATE_30, " 30 fps"));
-   map.insert(std::make_pair(DC1394_FRAMERATE_60, " 60 fps"));
-   map.insert(std::make_pair(DC1394_FRAMERATE_120, "120 fps"));
-   map.insert(std::make_pair(DC1394_FRAMERATE_240, "240 fps"));
+   static bool initialized = false;
+   static map<dc1394framerate_t, string> map;
+   if (!initialized) {
+      map.insert(std::make_pair(DC1394_FRAMERATE_1_875, "  1.88 fps"));
+      map.insert(std::make_pair(DC1394_FRAMERATE_3_75, "  3.75 fps"));
+      map.insert(std::make_pair(DC1394_FRAMERATE_7_5, "  7.5 fps"));
+      map.insert(std::make_pair(DC1394_FRAMERATE_15, " 15 fps"));
+      map.insert(std::make_pair(DC1394_FRAMERATE_30, " 30 fps"));
+      map.insert(std::make_pair(DC1394_FRAMERATE_60, " 60 fps"));
+      map.insert(std::make_pair(DC1394_FRAMERATE_120, "120 fps"));
+      map.insert(std::make_pair(DC1394_FRAMERATE_240, "240 fps"));
+      initialized = true;
+   }
    return map;
 }
 
 
-std::string Cdc1394::StringForFramerate(dc1394framerate_t framerate) const
+string Cdc1394::StringForFramerate(dc1394framerate_t framerate)
 {
-   std::map<dc1394framerate_t, std::string>::const_iterator it = framerateMap_.find(framerate),
-      end = framerateMap_.end();
+   const map<dc1394framerate_t, string>& framerateMap(MakeFramerateMap());
+   map<dc1394framerate_t, string>::const_iterator it = framerateMap.find(framerate),
+      end = framerateMap.end();
    if (it != end) {
       return it->second;
    }
@@ -1986,10 +2012,11 @@ std::string Cdc1394::StringForFramerate(dc1394framerate_t framerate) const
 }
 
 
-dc1394framerate_t Cdc1394::FramerateForString(const std::string& str) const
+dc1394framerate_t Cdc1394::FramerateForString(const string& str)
 {
-   for (std::map<dc1394framerate_t, std::string>::const_iterator it = framerateMap_.begin(),
-         end = framerateMap_.end();
+   const map<dc1394framerate_t, string>& framerateMap(MakeFramerateMap());
+   for (map<dc1394framerate_t, string>::const_iterator it = framerateMap.begin(),
+         end = framerateMap.end();
          it != end; ++it) {
       if (str == it->second) {
          return it->first;
