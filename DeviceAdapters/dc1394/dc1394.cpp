@@ -31,6 +31,7 @@
 #include <dc1394/vendor/avt.h>
 #include <boost/lexical_cast.hpp>
 #include <string>
+#include <set>
 #include <cstring> // memset(), memcpy()
 #include <sstream>
 #include <iomanip>
@@ -902,23 +903,27 @@ int Cdc1394::Initialize()
    pFeature = find_if(features_begin, features_end, IsFeatureAvailable(DC1394_FEATURE_SHUTTER));
    if (pFeature != features_end) {
       bool hasManual;
-      CHECK_MM_ERROR(InitFeatureModeProperty(*pFeature, hasManual, &Cdc1394::OnShutterMode));
-      if (hasManual) {
-         CHECK_MM_ERROR(InitManualFeatureProperty(*pFeature, shutter_, shutterMin_, shutterMax_, &Cdc1394::OnShutter));
+      int err = InitFeatureModeProperty(*pFeature, hasManual, &Cdc1394::OnShutterMode);
+      if (err == DEVICE_OK && hasManual) {
+         err = InitManualFeatureProperty(*pFeature, shutter_, shutterMin_, shutterMax_, &Cdc1394::OnShutter);
       }
 
-      dc1394bool_t hasAbsoluteShutterControl;
-      CHECK_DC1394_ERROR(dc1394_feature_has_absolute_control(camera_, DC1394_FEATURE_SHUTTER,
-               &hasAbsoluteShutterControl),
-            DEVICE_ERR, "Failed to check if feature SHUTTER has absolute mode");
+      // XXX Do we ever have absolute control without having manual mode?
 
-      if (hasAbsoluteShutterControl == DC1394_TRUE) {
-         absoluteShutterControl_ = true;
+      dc1394bool_t hasAbsoluteShutterControl;
+      dc1394error_t dcerr = dc1394_feature_has_absolute_control(camera_, DC1394_FEATURE_SHUTTER,
+               &hasAbsoluteShutterControl);
+      if (dcerr != DC1394_SUCCESS) {
+            LogMessage("Failed to check if feature SHUTTER has absolute mode");
+      }
+      else {
+         if (hasAbsoluteShutterControl == DC1394_TRUE) {
+            absoluteShutterControl_ = true;
+         }
       }
 
       if (!absoluteShutterControl_ && camera_->vendor_id == AVT_VENDOR_ID){
-         LogMessage("Checking AVT absolute shutter");
-         // For AVT cameras, check if we have access to the extended shutter mode
+         LogMessage("Checking for AVT absolute shutter");
          uint32_t timebase_id;
          if (dc1394_avt_get_extented_shutter(camera_, &timebase_id) == DC1394_SUCCESS) {
             absoluteShutterControl_ = true;
@@ -932,12 +937,15 @@ int Cdc1394::Initialize()
    pFeature = find_if(features_begin, features_end, IsFeatureAvailable(DC1394_FEATURE_EXPOSURE));
    if (pFeature != features_end) {
       bool hasManual;
-      CHECK_MM_ERROR(InitFeatureModeProperty(*pFeature, hasManual, &Cdc1394::OnExposureMode));
+      int err = InitFeatureModeProperty(*pFeature, hasManual, &Cdc1394::OnExposureMode);
 
-      CHECK_DC1394_ERROR(dc1394_feature_get_value(camera_, DC1394_FEATURE_EXPOSURE, &exposure_), DEVICE_ERR,
-            "Failed to get value of feature EXPOSURE");
-      CHECK_DC1394_ERROR(dc1394_feature_get_boundaries(camera_, DC1394_FEATURE_EXPOSURE, &exposureMin_, &exposureMax_),
-            DEVICE_ERR, "Failed to get allowed range for feature EXPOSURE");
+      if (err == DEVICE_OK) {
+         LOG_DC1394_ERROR(dc1394_feature_get_value(camera_, DC1394_FEATURE_EXPOSURE, &exposure_),
+               "Failed to get value of feature EXPOSURE");
+         LOG_DC1394_ERROR(dc1394_feature_get_boundaries(camera_, DC1394_FEATURE_EXPOSURE, &exposureMin_, &exposureMax_),
+               "Failed to get allowed range for feature EXPOSURE");
+         // XXX BUG We need to tell code that uses EXPOSURE not to use it!
+      }
    }
 
    // For exposure, use the Shutter feature if available and supports absolute
@@ -953,29 +961,34 @@ int Cdc1394::Initialize()
    pFeature = find_if(features_begin, features_end, IsFeatureAvailable(DC1394_FEATURE_TRIGGER));
    if (pFeature != features_end) {
       dc1394switch_t pwr;
-      CHECK_DC1394_ERROR(dc1394_external_trigger_get_power(camera_, &pwr), DEVICE_ERR,
-            "Failed to get on/off state for external trigger");
-
-      // Start up with trigger mode disabled, to avoid confusion
-      if (pwr == DC1394_ON) {
-          CHECK_DC1394_ERROR(dc1394_external_trigger_set_power(camera_, DC1394_OFF), DEVICE_ERR,
-                "Failed to turn off external trigger");
+      dc1394error_t dcerr = dc1394_external_trigger_get_power(camera_, &pwr);
+      if (dcerr != DC1394_SUCCESS) {
+         LogMessage("Failed to get on/off state for external trigger");
       }
+      else {
+         // Start up with trigger mode disabled, to avoid confusion
+         if (pwr == DC1394_ON) {
+             dcerr = dc1394_external_trigger_set_power(camera_, DC1394_OFF);
+             if (dcerr != DC1394_SUCCESS) {
+                LogMessage("Failed to turn off external trigger");
+             }
+         }
 
-      pAct = new CPropertyAction (this, &Cdc1394::OnExternalTrigger);
-      CHECK_MM_ERROR(CreateProperty("ExternalTrigger", "0", MM::Integer, false, pAct)); 
-      AddAllowedValue("ExternalTrigger", "0");
-      AddAllowedValue("ExternalTrigger", "1");
+         pAct = new CPropertyAction (this, &Cdc1394::OnExternalTrigger);
+         CHECK_MM_ERROR(CreateProperty("ExternalTrigger", "0", MM::Integer, false, pAct)); 
+         AddAllowedValue("ExternalTrigger", "0");
+         AddAllowedValue("ExternalTrigger", "1");
+      }
    }
 
 
    pFeature = find_if(features_begin, features_end, IsFeatureAvailable(DC1394_FEATURE_BRIGHTNESS));
    if (pFeature != features_end) {
       bool hasManual;
-      CHECK_MM_ERROR(InitFeatureModeProperty(*pFeature, hasManual, &Cdc1394::OnBrightnessMode));
-      if (hasManual) {
-         CHECK_MM_ERROR(InitManualFeatureProperty(*pFeature, brightness_, brightnessMin_, brightnessMax_,
-                  &Cdc1394::OnBrightness));
+      int err = InitFeatureModeProperty(*pFeature, hasManual, &Cdc1394::OnBrightnessMode);
+      if (err == DEVICE_OK && hasManual) {
+         err = InitManualFeatureProperty(*pFeature, brightness_, brightnessMin_, brightnessMax_,
+                  &Cdc1394::OnBrightness);
       }
    }
 
@@ -983,10 +996,10 @@ int Cdc1394::Initialize()
    pFeature = find_if(features_begin, features_end, IsFeatureAvailable(DC1394_FEATURE_GAIN));
    if (pFeature != features_end) {
       bool hasManual;
-      CHECK_MM_ERROR(InitFeatureModeProperty(*pFeature, hasManual, &Cdc1394::OnGainMode));
-      if (hasManual) {
-         CHECK_MM_ERROR(InitManualFeatureProperty(*pFeature, gain_, gainMin_, gainMax_,
-                  &Cdc1394::OnGain, MM::g_Keyword_Gain));
+      int err = InitFeatureModeProperty(*pFeature, hasManual, &Cdc1394::OnGainMode);
+      if (err == DEVICE_OK && hasManual) {
+         err = InitManualFeatureProperty(*pFeature, gain_, gainMin_, gainMax_,
+                  &Cdc1394::OnGain, MM::g_Keyword_Gain);
       }
    }
 
@@ -994,10 +1007,10 @@ int Cdc1394::Initialize()
    pFeature = find_if(features_begin, features_end, IsFeatureAvailable(DC1394_FEATURE_GAMMA));
    if (pFeature != features_end) {
       bool hasManual;
-      CHECK_MM_ERROR(InitFeatureModeProperty(*pFeature, hasManual, &Cdc1394::OnGammaMode));
-      if (hasManual) {
-         CHECK_MM_ERROR(InitManualFeatureProperty(*pFeature, gamma_, gammaMin_, gammaMax_,
-                  &Cdc1394::OnGamma));
+      int err = InitFeatureModeProperty(*pFeature, hasManual, &Cdc1394::OnGammaMode);
+      if (err == DEVICE_OK && hasManual) {
+         err = InitManualFeatureProperty(*pFeature, gamma_, gammaMin_, gammaMax_,
+                  &Cdc1394::OnGamma);
       }
    }
 
@@ -1005,9 +1018,9 @@ int Cdc1394::Initialize()
    pFeature = find_if(features_begin, features_end, IsFeatureAvailable(DC1394_FEATURE_HUE));
    if (pFeature != features_end) {
       bool hasManual;
-      CHECK_MM_ERROR(InitFeatureModeProperty(*pFeature, hasManual, &Cdc1394::OnHueMode));
-      if (hasManual) {
-         CHECK_MM_ERROR(InitManualFeatureProperty(*pFeature, hue_, hueMin_, hueMax_, &Cdc1394::OnHue));
+      int err = InitFeatureModeProperty(*pFeature, hasManual, &Cdc1394::OnHueMode);
+      if (err == DEVICE_OK && hasManual) {
+         err = InitManualFeatureProperty(*pFeature, hue_, hueMin_, hueMax_, &Cdc1394::OnHue);
       }
    }
 
@@ -1015,10 +1028,10 @@ int Cdc1394::Initialize()
    pFeature = find_if(features_begin, features_end, IsFeatureAvailable(DC1394_FEATURE_SATURATION));
    if (pFeature != features_end) {
       bool hasManual;
-      CHECK_MM_ERROR(InitFeatureModeProperty(*pFeature, hasManual, &Cdc1394::OnSaturationMode));
-      if (hasManual) {
-         CHECK_MM_ERROR(InitManualFeatureProperty(*pFeature, saturation_, saturationMin_, saturationMax_,
-                  &Cdc1394::OnSaturation));
+      int err = InitFeatureModeProperty(*pFeature, hasManual, &Cdc1394::OnSaturationMode);
+      if (err == DEVICE_OK && hasManual) {
+         err = InitManualFeatureProperty(*pFeature, saturation_, saturationMin_, saturationMax_,
+                  &Cdc1394::OnSaturation);
       }
    }
 
@@ -1026,10 +1039,10 @@ int Cdc1394::Initialize()
    pFeature = find_if(features_begin, features_end, IsFeatureAvailable(DC1394_FEATURE_TEMPERATURE));
    if (pFeature != features_end) {
       bool hasManual;
-      CHECK_MM_ERROR(InitFeatureModeProperty(*pFeature, hasManual, &Cdc1394::OnTempMode));
-      if (hasManual) {
-         CHECK_MM_ERROR(InitManualFeatureProperty(*pFeature, temperature_, temperatureMin_, temperatureMax_,
-                  &Cdc1394::OnTemp));
+      int err = InitFeatureModeProperty(*pFeature, hasManual, &Cdc1394::OnTempMode);
+      if (err == DEVICE_OK && hasManual) {
+         err = InitManualFeatureProperty(*pFeature, temperature_, temperatureMin_, temperatureMax_,
+                  &Cdc1394::OnTemp);
       }
    }
 
@@ -1037,10 +1050,10 @@ int Cdc1394::Initialize()
    pFeature = find_if(features_begin, features_end, IsFeatureAvailable(DC1394_FEATURE_WHITE_BALANCE));
    if (pFeature != features_end) {
       bool hasManual;
-      CHECK_MM_ERROR(InitFeatureModeProperty(*pFeature, hasManual,
-               &Cdc1394::OnWhitebalanceMode, "WhiteBalanceSetting"));
+      int err = InitFeatureModeProperty(*pFeature, hasManual,
+               &Cdc1394::OnWhitebalanceMode, "WhiteBalanceSetting");
 
-      if (hasManual) {
+      if (err == DEVICE_OK && hasManual) {
          if (pFeature->readout_capable) {
             colub_ = pFeature->BU_value;
             colvr_ = pFeature->RV_value;
@@ -1064,10 +1077,10 @@ int Cdc1394::Initialize()
    pFeature = find_if(features_begin, features_end, IsFeatureAvailable(DC1394_FEATURE_WHITE_SHADING));
    if (pFeature != features_end) {
       bool hasManual;
-      CHECK_MM_ERROR(InitFeatureModeProperty(*pFeature, hasManual,
-               &Cdc1394::OnWhiteshadingMode, "WhiteShadingSetting"));
+      int err = InitFeatureModeProperty(*pFeature, hasManual,
+               &Cdc1394::OnWhiteshadingMode, "WhiteShadingSetting");
 
-      if (hasManual) {
+      if (err == DEVICE_OK && hasManual) {
          if (pFeature->readout_capable) {
             colred_ = pFeature->R_value;
             colgreen_ = pFeature->G_value;
@@ -1116,66 +1129,53 @@ int Cdc1394::InitFeatureModeProperty(const dc1394feature_info_t& featureInfo,
       propertyName = overridePropertyName;
    }
 
-   hasManualMode = false;
+   // libdc1394 considers manual/one-push/auto to be modes...
+   set<int> availableModes;
+   for (unsigned i = 0; i < featureInfo.modes.num; i++) {
+      dc1394feature_mode_t mode = featureInfo.modes.modes[i];
+      availableModes.insert(mode);
+   }
 
-	enum dcModes { NONE =0, OFF=1, MANUAL=2, ONE_PUSH=4, AUTO=8 };
-	int modeAvail = NONE;
-	int dcModeCt = 0;
-	dc1394feature_mode_t modeDefault = DC1394_FEATURE_MODE_MANUAL;
-	
-	// First make sure the feature is switched on by default
-	if (featureInfo.on_off_capable) {
-		modeAvail |= OFF; dcModeCt++;
-		CHECK_DC1394_ERROR(dc1394_feature_set_power(camera_, featureInfo.id, DC1394_ON), DEVICE_ERR,
-            "Failed to turn on feature");
-		std::cerr << propertyName << ": Setting power on\n";
-	}
-	// Find out what modes are available, set by default to manual, override to auto if available
-	for (unsigned int mod_no = 0; mod_no < featureInfo.modes.num; mod_no++)  
-	{
-		switch ( featureInfo.modes.modes[mod_no] ) {
-			case DC1394_FEATURE_MODE_MANUAL:
-				modeAvail |= MANUAL; dcModeCt++;
-				std::cerr << propertyName << ": Found manual mode\n";
-				break;
-			case DC1394_FEATURE_MODE_AUTO:
-				modeAvail |= AUTO; dcModeCt++;
-				modeDefault = DC1394_FEATURE_MODE_AUTO;
-				std::cerr << propertyName << ": Found auto mode\n";
-				break;
-			case DC1394_FEATURE_MODE_ONE_PUSH_AUTO:
-				modeAvail |= ONE_PUSH; dcModeCt++;
-				std::cerr << propertyName << ": Found one-push mode\n";
-				break;
-		}
-	}
-	
-	CHECK_DC1394_ERROR(dc1394_feature_set_mode(camera_, featureInfo.id, modeDefault), DEVICE_ERR,
-         "Failed to set mode of feature");
+   // ... but we want to consider "off" to be a mode, too.
+   const int FEATURE_MODE_OFF = DC1394_FEATURE_MODE_MAX + 1;
+   if (featureInfo.on_off_capable) {
+      availableModes.insert(FEATURE_MODE_OFF);
 
-	if ( dcModeCt > 1 )
-	{	
-		CPropertyAction *pAct = new CPropertyAction (this, cb_onfeaturemode);
-		if ( modeDefault == DC1394_FEATURE_MODE_MANUAL ) {
-			CHECK_MM_ERROR(CreateProperty(propertyName.c_str(), "MANUAL", MM::String, false, pAct));
-		}
-		else {
-			CHECK_MM_ERROR(CreateProperty(propertyName.c_str(), "AUTO", MM::String, false, pAct));
-		}
-		
-		if ( modeAvail & OFF )
-			AddAllowedValue(propertyName.c_str(), "OFF");
-		if ( modeAvail & MANUAL )
-			AddAllowedValue(propertyName.c_str(), "MANUAL");
-		if ( modeAvail & ONE_PUSH	)
-			AddAllowedValue(propertyName.c_str(), "ONE-PUSH");
-		if ( modeAvail & AUTO )
-			AddAllowedValue(propertyName.c_str(), "AUTO");			  
-	}
-	
-	if ( modeAvail & MANUAL ) {
-		hasManualMode = true;
-	}
+      // Start with feature turned on by default
+      CHECK_DC1394_ERROR(dc1394_feature_set_power(camera_, featureInfo.id, DC1394_ON), DEVICE_ERR,
+            "Failed to turn on feature: " + string(dc1394_feature_get_string(featureInfo.id)));
+   }
+
+   dc1394feature_mode_t initialMode = DC1394_FEATURE_MODE_MANUAL;
+   const char* defaultModeString = "MANUAL";
+   if (availableModes.count(DC1394_FEATURE_MODE_AUTO)) {
+      initialMode = DC1394_FEATURE_MODE_AUTO;
+      defaultModeString = "AUTO";
+   }
+
+   // Bring hardware into sync with our default mode
+   CHECK_DC1394_ERROR(dc1394_feature_set_mode(camera_, featureInfo.id, initialMode), DEVICE_ERR,
+         "Failed to set mode of feature " + string(dc1394_feature_get_string(featureInfo.id)));
+
+   if (!availableModes.empty()) {
+      CPropertyAction *pAct = new CPropertyAction(this, cb_onfeaturemode);
+      CHECK_MM_ERROR(CreateProperty(propertyName.c_str(), defaultModeString, MM::String, false, pAct));
+
+      if (availableModes.count(FEATURE_MODE_OFF)) {
+         AddAllowedValue(propertyName.c_str(), "OFF");
+      }
+      if (availableModes.count(DC1394_FEATURE_MODE_MANUAL)) {
+         AddAllowedValue(propertyName.c_str(), "MANUAL");
+      }
+      if (availableModes.count(DC1394_FEATURE_MODE_ONE_PUSH_AUTO)) {
+         AddAllowedValue(propertyName.c_str(), "ONE-PUSH");
+      }
+      if (availableModes.count(DC1394_FEATURE_MODE_AUTO)) {
+         AddAllowedValue(propertyName.c_str(), "AUTO");
+      }
+   }
+
+   hasManualMode = (availableModes.count(DC1394_FEATURE_MODE_MANUAL) != 0);
 
    return DEVICE_OK;
 }
@@ -1194,35 +1194,27 @@ int Cdc1394::InitManualFeatureProperty(const dc1394feature_info_t& featureInfo,
       propertyName = overridePropertyName;
    }
 
-	// Check that this feature is read-out capable
-	if ( featureInfo.readout_capable )
-	{	
-		value = featureInfo.value;
-		valueMin = featureInfo.min;
-		valueMax = featureInfo.max;
-		logMsg_.str("");
-		logMsg_ << propertyName << " " <<  value;
-		LogMessage (logMsg_.str().c_str(), false);
-		logMsg_.str("");
-		logMsg_ << propertyName << " Min: " << valueMin  << " Max: " << valueMax;
-		LogMessage (logMsg_.str().c_str(), false);
-	}
-	else 
-	{
-		// some sensible (?) default values
-		value = 0;
-		valueMin = 0;
-		valueMax = 1000;
-	}
-	
-	char tmp[10];
-	CPropertyAction *pAct = new CPropertyAction (this, cb_onfeature);
-	sprintf(tmp,"%d",value);
-	CHECK_MM_ERROR(CreateProperty(propertyName.c_str(), tmp, MM::Integer, false, pAct));
-	CHECK_MM_ERROR(SetPropertyLimits(propertyName.c_str(), valueMin, valueMax));
+   if (featureInfo.readout_capable) {
+      value = featureInfo.value;
+      valueMin = featureInfo.min;
+      valueMax = featureInfo.max;
+   }
+   else {
+      // some sensible (?) default values
+      // XXX BUG: should use featureInfo.min and featureInfo.max; they should
+      // be valid even if not capable of readout.
+      value = 0;
+      valueMin = 0;
+      valueMax = 1000;
+   }
+
+   CPropertyAction *pAct = new CPropertyAction(this, cb_onfeature);
+   const string valueString(boost::lexical_cast<string>(value));
+   CHECK_MM_ERROR(CreateProperty(propertyName.c_str(), valueString.c_str(), MM::Integer, false, pAct));
+   CHECK_MM_ERROR(SetPropertyLimits(propertyName.c_str(), valueMin, valueMax));
 
    return DEVICE_OK;
-} 
+}
 
 
 
