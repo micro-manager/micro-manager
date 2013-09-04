@@ -764,6 +764,16 @@ void Cdc1394::GetName(char* name) const
 }
 
 
+// Unary predicate for std::find_if(); used in Initialize()
+// XXX See comment where used about getting rid of this
+class IsFeatureAvailable {
+   dc1394feature_t id_;
+public:
+   IsFeatureAvailable(dc1394feature_t id) : id_(id) {}
+   bool operator()(const dc1394feature_info_t& feature) { return feature.id == id_ && feature.available; }
+};
+
+
 int Cdc1394::Initialize()
 {
    CHECK_MM_ERROR(SetUpCamera());
@@ -886,15 +896,9 @@ int Cdc1394::Initialize()
    // pointers as C++ iterators).
    const dc1394feature_info_t* features_begin = features.feature;
    const dc1394feature_info_t* features_end = features_begin + DC1394_FEATURE_NUM;
-   class IsFeatureAvailable { // Unary predicate for std::find_if()
-      dc1394feature_t id_;
-   public:
-      IsFeatureAvailable(dc1394feature_t id) : id_(id) {}
-      bool operator()(const dc1394feature_info_t& feature) { return feature.id == id_ && feature.available; }
-   };
-
-
    const dc1394feature_info_t* pFeature;
+
+
    pFeature = find_if(features_begin, features_end, IsFeatureAvailable(DC1394_FEATURE_SHUTTER));
    if (pFeature != features_end) {
       bool hasManual;
