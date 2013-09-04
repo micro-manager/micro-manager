@@ -291,6 +291,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "OlympusIX3Control", "..\Sec
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MCCDAQ", "..\DeviceAdapters\MCCDAQ\MCCDAQ.vcproj", "{8F66F808-6E8C-46D5-B9D1-DE50811030D4}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Okolab", "..\DeviceAdapters\Okolab\Okolab.vcproj", "{49E0167C-FF14-42F2-BEB4-EDBA568640A5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -1399,6 +1401,14 @@ Global
 		{8F66F808-6E8C-46D5-B9D1-DE50811030D4}.Release|Win32.Build.0 = Release|Win32
 		{8F66F808-6E8C-46D5-B9D1-DE50811030D4}.Release|x64.ActiveCfg = Release|x64
 		{8F66F808-6E8C-46D5-B9D1-DE50811030D4}.Release|x64.Build.0 = Release|x64
+		{49E0167C-FF14-42F2-BEB4-EDBA568640A5}.Debug|Win32.ActiveCfg = Debug|Win32
+		{49E0167C-FF14-42F2-BEB4-EDBA568640A5}.Debug|Win32.Build.0 = Debug|Win32
+		{49E0167C-FF14-42F2-BEB4-EDBA568640A5}.Debug|x64.ActiveCfg = Debug|x64
+		{49E0167C-FF14-42F2-BEB4-EDBA568640A5}.Debug|x64.Build.0 = Debug|x64
+		{49E0167C-FF14-42F2-BEB4-EDBA568640A5}.Release|Win32.ActiveCfg = Release|Win32
+		{49E0167C-FF14-42F2-BEB4-EDBA568640A5}.Release|Win32.Build.0 = Release|Win32
+		{49E0167C-FF14-42F2-BEB4-EDBA568640A5}.Release|x64.ActiveCfg = Release|x64
+		{49E0167C-FF14-42F2-BEB4-EDBA568640A5}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
