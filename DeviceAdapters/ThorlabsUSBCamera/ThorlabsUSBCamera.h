@@ -117,7 +117,7 @@ private:
    long imageCounter_;
 	long binSize_;
 	SENSORINFO sensorInfo;
-   double fps;
+   volatile double framesPerSecond;
 
 	std::string triggerDevice_; // TODO: is this really used??
 

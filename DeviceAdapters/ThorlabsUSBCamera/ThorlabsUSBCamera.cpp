@@ -134,7 +134,7 @@ ThorlabsUSBCam::ThorlabsUSBCam() :
    cameraBuf(0),
    cameraBufId(0),
    hEvent(0),
-   fps(0.0)
+   framesPerSecond(0.0)
 {
 
    // call the base class method to set-up default error codes/messages
@@ -574,17 +574,17 @@ int ThorlabsUSBCam::StartSequenceAcquisition(long numImages, double interval_ms,
  */
 int ThorlabsUSBCam::InsertImage()
 {
-   MM::MMTime timeStamp = this->GetCurrentMMTime();
+   //MM::MMTime timeStamp = this->GetCurrentMMTime();
    char label[MM::MaxStrLength];
    this->GetLabel(label);
  
    // Important:  metadata about the image are generated here:
    Metadata md;
    md.put("Camera", label);
-   md.put(MM::g_Keyword_Metadata_StartTime, CDeviceUtils::ConvertToString(sequenceStartTime_.getMsec()));
-   md.put(MM::g_Keyword_Elapsed_Time_ms, CDeviceUtils::ConvertToString((timeStamp - sequenceStartTime_).getMsec()));
-   md.put(MM::g_Keyword_Metadata_ROI_X, CDeviceUtils::ConvertToString( (long) roiX_)); 
-   md.put(MM::g_Keyword_Metadata_ROI_Y, CDeviceUtils::ConvertToString( (long) roiY_)); 
+   //md.put(MM::g_Keyword_Metadata_StartTime, CDeviceUtils::ConvertToString(sequenceStartTime_.getMsec()));
+   //md.put(MM::g_Keyword_Elapsed_Time_ms, CDeviceUtils::ConvertToString((timeStamp - sequenceStartTime_).getMsec()));
+   //md.put(MM::g_Keyword_Metadata_ROI_X, CDeviceUtils::ConvertToString( (long) roiX_)); 
+   //md.put(MM::g_Keyword_Metadata_ROI_Y, CDeviceUtils::ConvertToString( (long) roiY_)); 
 
    imageCounter_++;
 
@@ -612,6 +612,7 @@ int ThorlabsUSBCam::InsertImage()
  */
 int ThorlabsUSBCam::ThreadRun (void)
 {
+   MM::MMTime startFrame = GetCurrentMMTime();
    DWORD dwRet = WaitForSingleObject(hEvent, 2000);
    if (dwRet == WAIT_TIMEOUT)
    {
@@ -623,7 +624,14 @@ int ThorlabsUSBCam::ThreadRun (void)
              cameraBuf,
              img_.Width()*img_.Height()*img_.Depth());
 
-      return InsertImage();
+
+      int ret = InsertImage();
+
+      MM::MMTime frameInterval = GetCurrentMMTime() - startFrame;
+      if (frameInterval.getMsec() > 0.0)
+         framesPerSecond = 1000.0 / frameInterval.getMsec();
+
+      return ret;
    }
    else
    {
@@ -720,15 +728,7 @@ int MySequenceThread::svc(void) throw()
    {
       do
       {  
-         MM::MMTime startTime = camera_->GetCurrentMMTime();
          ret = camera_->ThreadRun();
-         MM::MMTime frameTime;
-         frameTime = camera_->GetCurrentMMTime() - startTime;
-         double secInterval = frameTime.getMsec() / 1000.0;
-         if (secInterval > 0.0)
-            camera_->fps = 1.0 / secInterval;
-         else
-            camera_->fps = 0.0;
       } while (DEVICE_OK == ret && !IsStopped() && imageCounter_++ < numImages_-1);
 
       if (IsStopped())
@@ -904,7 +904,7 @@ int ThorlabsUSBCam::OnPixelClock(MM::PropertyBase* pProp, MM::ActionType eAct)
 int ThorlabsUSBCam::OnFPS(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)
-		pProp->Set(fps);
+		pProp->Set(framesPerSecond);
 
 	return DEVICE_OK;
 }
