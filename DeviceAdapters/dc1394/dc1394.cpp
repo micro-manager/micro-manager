@@ -1212,16 +1212,12 @@ int Cdc1394::InitManualFeatureProperty(const dc1394feature_info_t& featureInfo,
 }
 
 
-
-///////////////////////////////////////////////////////////////////////////////
-// Function name   : Cdc1394::Shutdown
-// Description     : Deactivate the camera, reverse the initialization process
-// Return type     : bool 
-
 int Cdc1394::Shutdown()
 {
    if (camera_)
    {
+      acqThread_->Stop();
+
       bool had_error = false;
 
       LogMessage("STOPPING CAPTURE");
@@ -1244,6 +1240,7 @@ int Cdc1394::Shutdown()
    }
    return DEVICE_OK;
 }
+
 
 int Cdc1394::SetUpCamera()
 {

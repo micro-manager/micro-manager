@@ -100,6 +100,7 @@ private:
 // forward declaration
 class AcqSequenceThread;
 
+
 class Cdc1394 : public CCameraBase<Cdc1394>
 {
    
@@ -285,20 +286,19 @@ private:
    AcqSequenceThread* acqThread_; // burst mode thread
 };
 
-/**
- * Acquisition thread
- */
-class AcqSequenceThread : public MMDeviceThreadBase
+
+class AcqSequenceThread : private MMDeviceThreadBase
 {
 public:
    AcqSequenceThread(Cdc1394* pCam) : 
-      intervalMs_(100.0), numImages_(1), stop_(false) {camera_ = pCam;}
-   ~AcqSequenceThread() {}
+      camera_(pCam), intervalMs_(100.0), numImages_(1), stop_(true) {}
+   ~AcqSequenceThread() { Stop(); }
    int svc(void);
 
    void SetInterval(double intervalMs) {intervalMs_ = intervalMs;}
    void SetLength(long images) {numImages_ = images;}
-   void Stop() {stop_ = true;}
+
+   void Stop() { if (!stop_) { stop_ = true; wait(); } }
    void Start();
 
 private:
