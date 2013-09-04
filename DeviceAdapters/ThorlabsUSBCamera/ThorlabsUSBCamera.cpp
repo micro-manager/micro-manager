@@ -125,15 +125,15 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 ThorlabsUSBCam::ThorlabsUSBCam() :
    CCameraBase<ThorlabsUSBCam> (),
    initialized_(false),
-   readoutUs_(0.0),
    bitDepth_(8),
    roiX_(0),
    roiY_(0),
    sequenceStartTime_(0),
 	binSize_(1),
    nComponents_(1),
-
-   triggerDevice_("")
+   cameraBuf(0),
+   cameraBufId(0),
+   hEvent(0)
 {
 
    // call the base class method to set-up default error codes/messages
@@ -247,16 +247,29 @@ int ThorlabsUSBCam::Initialize()
    SetPropertyLimits("HardwareGain", 1, 100);
 
    // PixelClock
+   UINT pixClockRange[3];
+   ZeroMemory(pixClockRange, sizeof(pixClockRange));
+   nRet = is_PixelClock(camHandle_, IS_PIXELCLOCK_CMD_GET_RANGE, (void*)pixClockRange, sizeof(pixClockRange));
+   if (nRet != IS_SUCCESS)
+      return nRet;
+
+   int minClock = pixClockRange[0];
+   int maxClock = pixClockRange[1];
+   
+   UINT curPixClock(0);
+   nRet = is_PixelClock(camHandle_, IS_PIXELCLOCK_CMD_GET, (void*)&curPixClock, sizeof(curPixClock));
+
+   ostringstream osClock;
+   osClock << curPixClock;
    pAct = new CPropertyAction(this, &ThorlabsUSBCam::OnPixelClock);
-   CreateProperty("PixelClockMHz", "43", MM::Integer, false, pAct);
-   SetPropertyLimits("PixelClockMHz", 5, 43);
+   CreateProperty("PixelClockMHz", osClock.str().c_str(), MM::Integer, false, pAct);
+   SetPropertyLimits("PixelClockMHz", minClock, maxClock);
 
    // synchronize all properties
    // --------------------------
    nRet = UpdateStatus();
    if (nRet != DEVICE_OK)
       return nRet;
-
 
    // setup the buffer
    // ----------------
@@ -278,6 +291,16 @@ int ThorlabsUSBCam::Initialize()
 */
 int ThorlabsUSBCam::Shutdown()
 {
+   if (cameraBuf != 0)
+   {
+      int ret = is_FreeImageMem(camHandle_, cameraBuf, cameraBufId);
+      if (ret != IS_SUCCESS)
+         return ret;
+
+      cameraBuf = 0;
+      cameraBufId = 0;
+   }
+
 	is_ExitCamera(camHandle_);
 
    initialized_ = false;
@@ -292,33 +315,13 @@ int ThorlabsUSBCam::Shutdown()
 */
 int ThorlabsUSBCam::SnapImage()
 {
-	static int callCounter = 0;
-	++callCounter;
+	int ret = is_FreezeVideo(camHandle_, IS_WAIT);
+   if (ret != IS_SUCCESS)
+      return ret;
 
-   MM::MMTime startTime = GetCurrentMMTime();
-   double exp = GetExposure();
-   double expUs = exp * 1000.0;
-   AcquireOneImage();
-
-   MM::MMTime s0(0,0);
-   MM::MMTime t2 = GetCurrentMMTime();
-   if( s0 < startTime )
-   {
-      // ensure wait time is non-negative
-      long naptime = (long)(0.5 + expUs - (double)(t2-startTime).getUsec());
-      if( naptime < 1)
-         naptime = 1;
-      // longest possible nap is about 38 minutes
-      CDeviceUtils::NapMicros((unsigned long) naptime);
-   }
-   else
-   {
-      std::cerr << "You are operating this device adapter without setting the core callback, timing functions aren't yet available" << std::endl;
-      // called without the core callback probably in off line test program
-      // need way to build the core in the test program
-
-   }
-   readoutStartTime_ = GetCurrentMMTime();
+   memcpy(img_.GetPixelsRW(),
+          cameraBuf,
+          img_.Width()*img_.Height()*img_.Depth());
 
    return DEVICE_OK;
 }
@@ -338,8 +341,6 @@ const unsigned char* ThorlabsUSBCam::GetImageBuffer()
 {
 
    MMThreadGuard g(imgPixelsLock_);
-   MM::MMTime readoutTime(readoutUs_);
-   while (readoutTime > (GetCurrentMMTime() - readoutStartTime_)) {}		
    unsigned char *pB = (unsigned char*)(img_.GetPixels());
    return pB;
 }
@@ -523,9 +524,9 @@ int ThorlabsUSBCam::StartSequenceAcquisition(double interval) {
 */                                                                        
 int ThorlabsUSBCam::StopSequenceAcquisition()                                     
 {
-   if (IsCallbackRegistered())
-   {
-   }
+   int ret = is_StopLiveVideo(camHandle_, IS_DONT_WAIT);
+   if (ret != IS_SUCCESS)
+      LogMessage("Camera failed to stop live video.");
 
    if (!thd_->IsStopped()) {
       thd_->Stop();                                                       
@@ -550,6 +551,15 @@ int ThorlabsUSBCam::StartSequenceAcquisition(long numImages, double interval_ms,
       return ret;
    sequenceStartTime_ = GetCurrentMMTime();
    imageCounter_ = 0;
+
+   hEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+   is_InitEvent(camHandle_, hEvent, IS_SET_EVENT_FRAME);
+   is_EnableEvent(camHandle_, IS_SET_EVENT_FRAME);
+
+   ret = is_CaptureVideo(camHandle_, IS_WAIT);
+   if (ret != IS_SUCCESS)
+      return ret;
+
    thd_->Start(numImages,interval_ms);
    stopOnOverFlow_ = stopOnOverflow;
    return DEVICE_OK;
@@ -573,10 +583,6 @@ int ThorlabsUSBCam::InsertImage()
    md.put(MM::g_Keyword_Metadata_ROI_Y, CDeviceUtils::ConvertToString( (long) roiY_)); 
 
    imageCounter_++;
-
-   char buf[MM::MaxStrLength];
-   GetProperty(MM::g_Keyword_Binning, buf);
-   md.put(MM::g_Keyword_Binning, buf);
 
    MMThreadGuard g(imgPixelsLock_);
 
@@ -602,28 +608,26 @@ int ThorlabsUSBCam::InsertImage()
  */
 int ThorlabsUSBCam::ThreadRun (void)
 {
-   int ret=DEVICE_ERR;
-   
-   // Trigger
-   if (triggerDevice_.length() > 0) {
-      MM::Device* triggerDev = GetDevice(triggerDevice_.c_str());
-      if (triggerDev != 0) {
-      	LogMessage("trigger requested");
-      	triggerDev->SetProperty("Trigger","+");
-      }
-   }
-   
-   ret = SnapImage();
-   if (ret != DEVICE_OK)
+   DWORD dwRet = WaitForSingleObject(hEvent, 2000);
+   if (dwRet == WAIT_TIMEOUT)
    {
-      return ret;
+      return ERR_THORCAM_LIVE_TIMEOUT;
    }
-   ret = InsertImage();
-   if (ret != DEVICE_OK)
+   else if (dwRet == WAIT_OBJECT_0)
    {
-      return ret;
+      memcpy(img_.GetPixelsRW(),
+             cameraBuf,
+             img_.Width()*img_.Height()*img_.Depth());
+
+      return InsertImage();
    }
-   return ret;
+   else
+   {
+      ostringstream os;
+      os << "Unknown event status " << dwRet;
+      LogMessage(os.str());
+      return ERR_THORCAM_LIVE_UNKNOWN_EVENT;
+   }
 };
 
 bool ThorlabsUSBCam::IsCapturing() {
@@ -635,6 +639,10 @@ bool ThorlabsUSBCam::IsCapturing() {
  */
 void ThorlabsUSBCam::OnThreadExiting() throw()
 {
+   is_DisableEvent(camHandle_, IS_SET_EVENT_FRAME);
+   is_ExitEvent(camHandle_, IS_SET_EVENT_FRAME);
+   CloseHandle(hEvent);
+   hEvent = 0;
    try
    {
       LogMessage(g_Msg_SEQUENCE_ACQUISITION_THREAD_EXITING);
@@ -703,13 +711,14 @@ void MySequenceThread::Resume() {
 
 int MySequenceThread::svc(void) throw()
 {
-   int ret=DEVICE_ERR;
+   int ret = DEVICE_ERR;
    try 
    {
       do
       {  
-         ret=camera_->ThreadRun();
+         ret = camera_->ThreadRun();
       } while (DEVICE_OK == ret && !IsStopped() && imageCounter_++ < numImages_-1);
+
       if (IsStopped())
          camera_->LogMessage("SeqAcquisition interrupted by the user\n");
 
@@ -726,12 +735,6 @@ int MySequenceThread::svc(void) throw()
 ///////////////////////////////////////////////////////////////////////////////
 // ThorlabsUSBCam Action handlers
 ///////////////////////////////////////////////////////////////////////////////
-
-/*
-* this Read Only property will update whenever any property is modified
-*/
-
-
 /**
 * Handles "Binning" property.
 */
@@ -806,7 +809,7 @@ int ThorlabsUSBCam::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
          // on error switch to default pixel type
          nComponents_ = 1;
          bitDepth_ = 8;
-         return ERR_UNKNOWN_MODE;
+         return ERR_THORCAM_UNKNOWN_PIXEL_TYPE;
       }
    }
    else if (eAct == MM::BeforeGet)
@@ -865,42 +868,23 @@ int ThorlabsUSBCam::OnHardwareGain(MM::PropertyBase* pProp , MM::ActionType eAct
 
 int ThorlabsUSBCam::OnPixelClock(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-   double maxframe;
-   double* maxframep;
-   maxframep = &maxframe;
-   double minframe;
-   double* minframep;
-   minframep = &minframe;
-   double intervalfoo;
-   double* intervalfoop;
-   intervalfoop = &intervalfoo;
-   double maxExposure;
-   double* maxExposurep;
-   maxExposurep = &maxExposure;
-   double minExposure;
-   double* minExposurep;
-   minExposurep = &minExposure;
-
-   
-
    if (eAct == MM::BeforeGet)
    {
-		pProp->Set(PixelClock_);
+      UINT curPixClock(0);
+      int ret = is_PixelClock(camHandle_, IS_PIXELCLOCK_CMD_GET, (void*)&curPixClock, sizeof(curPixClock));
+      if (ret != IS_SUCCESS)
+         return ret;
+
+		pProp->Set((long)curPixClock);
    }
    else if (eAct == MM::AfterSet)
    {
       long value;
       pProp->Get(value);
-		if( value != PixelClock_)
-		{
-			PixelClock_ = value;
-			is_SetPixelClock(camHandle_, (int) PixelClock_);
-			is_GetFrameTimeRange (camHandle_, minframep, maxframep, intervalfoop);
-			is_SetFrameRate (camHandle_, maxframe, intervalfoop);
-			is_GetExposureRange(camHandle_, minExposurep, maxExposurep, intervalfoop);
-			if (minExposure < 1) minExposure = 1;
-			SetPropertyLimits(MM::g_Keyword_Exposure, (int) minExposure, (int) maxExposure);
-		}
+      UINT pixClock = (unsigned) value;
+      int ret = is_PixelClock(camHandle_, IS_PIXELCLOCK_CMD_SET, (void*)&pixClock, sizeof(pixClock));
+      if (ret != IS_SUCCESS)
+         return ret;
    }
 	return DEVICE_OK;
 }
@@ -916,41 +900,33 @@ int ThorlabsUSBCam::OnPixelClock(MM::PropertyBase* pProp, MM::ActionType eAct)
 */
 int ThorlabsUSBCam::ResizeImageBuffer()
 {
-   img_.Resize(sensorInfo.nMaxWidth/binSize_, sensorInfo.nMaxHeight/binSize_, bitDepth_ == 8 ? 1 : 2);
+   if (cameraBuf != 0)
+   {
+      int ret = is_FreeImageMem(camHandle_, cameraBuf, cameraBufId);
+      if (ret != IS_SUCCESS)
+         return ret;
+
+      cameraBuf = 0;
+      cameraBufId = 0;
+   }
+
+   int byteDepth = bitDepth_ == 8 ? 1 : 2;
+   int ret = is_AllocImageMem(   camHandle_,
+                                 sensorInfo.nMaxWidth/binSize_,
+                                 sensorInfo.nMaxHeight/binSize_,
+						               byteDepth * 8,
+						               &cameraBuf,
+						               &cameraBufId);
+   if (ret != IS_SUCCESS)
+      return ret;
+
+	is_SetImageMem(camHandle_, cameraBuf, cameraBufId);	// set memory active
+
+   img_.Resize(sensorInfo.nMaxWidth/binSize_, sensorInfo.nMaxHeight/binSize_, byteDepth);
+
    return DEVICE_OK;
 }
 
-void ThorlabsUSBCam::AcquireOneImage()
-{ 
-   double time;
-	timer t0;
-	
-	unsigned char* pBuf = const_cast<unsigned char*>(img_.GetPixels());
-
-	int		m_Ret;			// return value for SDK functions
-	INT		m_nSizeX;		// width of video 
-	INT		m_nSizeY;		// height of video
-	INT		m_lMemoryId;	// grabber memory - buffer ID
-	char*	m_pcImageMemory;// grabber memory - pointer to buffer
-
-	m_nSizeX = sensorInfo.nMaxWidth;		
-   m_nSizeY = sensorInfo.nMaxHeight;
-
-   int byteDepth = bitDepth_ == 8 ? 1 : 2;
-	
-	is_AllocImageMem(	camHandle_,
-						m_nSizeX,
-						m_nSizeY,
-						byteDepth * 8,
-						&m_pcImageMemory,
-						&m_lMemoryId);
-	is_SetImageMem(camHandle_, m_pcImageMemory, m_lMemoryId );	// set memory active
-	m_Ret = is_FreezeVideo(camHandle_, IS_WAIT );
-   memcpy(pBuf, m_pcImageMemory, m_nSizeX * m_nSizeY * byteDepth);
-
-	is_FreeImageMem (camHandle_, m_pcImageMemory, m_lMemoryId);
-	time = t0.elapsed();
-}
 
 
 

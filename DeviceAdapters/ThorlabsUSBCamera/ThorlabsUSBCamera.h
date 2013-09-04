@@ -37,16 +37,9 @@
 //////////////////////////////////////////////////////////////////////////////
 // Error codes
 //
-#define ERR_UNKNOWN_MODE         102
-#define ERR_UNKNOWN_POSITION     103
-#define ERR_IN_SEQUENCE          104
-#define ERR_SEQUENCE_INACTIVE    105
-#define ERR_STAGE_MOVING         106
-#define SIMULATED_ERROR          200
-#define HUB_NOT_AVAILABLE        107
-
-const char* NoHubError = "Parent Hub not defined.";
-
+#define ERR_THORCAM_LIVE_TIMEOUT 11001
+#define ERR_THORCAM_LIVE_UNKNOWN_EVENT 11002
+#define ERR_THORCAM_UNKNOWN_PIXEL_TYPE 11003
 
 //////////////////////////////////////////////////////////////////////////////
 // ThorlabsUSBCam class
@@ -110,14 +103,12 @@ public:
 
 private:
    int SetAllowedBinning();
-   void AcquireOneImage();
    int ResizeImageBuffer();
 
    ImgBuffer img_;
    bool busy_;
    bool stopOnOverFlow_;
    bool initialized_;
-   double readoutUs_;
    MM::MMTime readoutStartTime_;
    MM::MMTime sequenceStartTime_;
    int bitDepth_;
@@ -135,10 +126,11 @@ private:
    MySequenceThread * thd_;
 
 	HCAM	camHandle_;			// handle to camera driver
+   char* cameraBuf;        // camera buffer for image transfer
+   HANDLE hEvent;          // event handle for camera notifications
+   int cameraBufId;        // buffer id, required by the SDK
    double Exposure_;
    double HardwareGain_;
-   double PixelClock_;
-
 };
 
 class MySequenceThread : public MMDeviceThreadBase
