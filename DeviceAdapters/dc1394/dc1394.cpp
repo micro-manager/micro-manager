@@ -4,7 +4,7 @@
 // SUBSYSTEM:  DeviceAdapters
 //-----------------------------------------------------------------------------
 // DESCRIPTION:
-// dc1394 camera_ module based on libdc1394 API
+// dc1394 camera module based on libdc1394 API
 //                
 // AUTHOR:        Nico Stuurman, 12/29/2006, contributions by Gregory Jefferis
 //                
@@ -171,12 +171,12 @@ Cdc1394::Cdc1394() :
    acquiring_(false)
 {
    SetErrorText(ERR_DC1394, "Could not initialize libdc1394.  Someting in your system is broken");
-   SetErrorText(ERR_CAMERA_NOT_FOUND, "Did not find a IIDC firewire camera_");
+   SetErrorText(ERR_CAMERA_NOT_FOUND, "Did not find a IIDC firewire camera");
    SetErrorText(ERR_CAPTURE_SETUP_FAILED, "Failed to set up capture");
    SetErrorText(ERR_TRANSMISSION_FAILED, "Problem starting transmission");
-   SetErrorText(ERR_MODE_LIST_NOT_FOUND, "Did not find camera_s mode list");
-   SetErrorText(ERR_ROI_NOT_SUPPORTED, "ROIs not supported with this camera_");
-   SetErrorText(ERR_INITIALIZATION_FAILED, "Error Initializing the camera_.  Unplug and replug the camera_ and restart this application");
+   SetErrorText(ERR_MODE_LIST_NOT_FOUND, "Did not find camera mode list");
+   SetErrorText(ERR_ROI_NOT_SUPPORTED, "ROIs not supported with this camera");
+   SetErrorText(ERR_INITIALIZATION_FAILED, "Error Initializing the camera.  Unplug and replug the camera and restart this application");
    SetErrorText(ERR_CAPTURE_TIMEOUT, "Timeout during image capture.  Increase the camera timeout, increase shutter speed, or decrease exposure time");
 
    InitializeDefaultErrorMessages();
@@ -289,7 +289,7 @@ int Cdc1394::OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       // Get the new exposure time (in ms)
       pProp->Get(exposure_ms);
-      // Send the new exposure setting to the camera_ if we have absolute control
+      // Send the new exposure setting to the camera if we have absolute control
       if(camera_->vendor_id==AVT_VENDOR_ID){
          // AVT has vendor specific code for an extended shutter
          // this accepts shutter times in µs which makes it easier to work with
@@ -1215,7 +1215,7 @@ int Cdc1394::InitManualFeatureProperty(const dc1394feature_info_t& featureInfo,
 
 ///////////////////////////////////////////////////////////////////////////////
 // Function name   : Cdc1394::Shutdown
-// Description     : Deactivate the camera_, reverse the initialization process
+// Description     : Deactivate the camera, reverse the initialization process
 // Return type     : bool 
 
 int Cdc1394::Shutdown()
@@ -1311,7 +1311,7 @@ void Cdc1394::rgb8ToBGRA8(uint8_t* dest, uint8_t* src, uint32_t width, uint32_t 
 
 
 
-// GJ: Deinterlace fields from interlaced AVT Guppy camera_s
+// GJ: Deinterlace fields from interlaced AVT Guppy cameras
 // See http://www.alliedvisiontec.com
 // May have general utility
 void Cdc1394::avtDeinterlaceMono8(uint8_t* dest, uint8_t* src, uint32_t outputWidth, uint32_t outputHeight) {
@@ -1638,10 +1638,10 @@ int Cdc1394::ClearROI()
 
 int Cdc1394::ResizeImageBuffer()
 {
-   // there are two buffers, 1: DMA buffer that the camera_ streams into (frame)
+   // there are two buffers, 1: DMA buffer that the camera streams into (frame)
    // 2: buffer for exchange with MicroManager (img_)
 
-   // set up the camera_ (TODO: implement iso speed control):
+   // set up the camera (TODO: implement iso speed control):
    CHECK_DC1394_ERROR(dc1394_video_set_iso_speed(camera_, DC1394_ISO_SPEED_400),
          DEVICE_ERR, "Failed to set ISO speed");
 
@@ -1673,15 +1673,15 @@ int Cdc1394::ResizeImageBuffer()
             ERR_CAPTURE_SETUP_FAILED, "Failed to start capture");
    }
 
-   // Set camera_ trigger mode
+   // Set camera trigger mode
    // if( dc1394_external_trigger_set_mode(camera_, DC1394_TRIGGER_MODE_0) != DC1394_SUCCESS)
     //  return ERR_SET_TRIGGER_MODE_FAILED;
 
-   // Have the camera_ start sending data
+   // Have the camera start sending data
    CHECK_DC1394_ERROR(dc1394_video_set_transmission(camera_, DC1394_ON), ERR_SET_TRANSMISSION_FAILED,
          "Failed to turn on transmission");
 
-   // Sleep until the camera_ sent data
+   // Sleep until the camera sent data
    dc1394switch_t status = DC1394_OFF;
    int i = 0;
    while( status == DC1394_OFF && i < 10 ) 
@@ -1694,7 +1694,7 @@ int Cdc1394::ResizeImageBuffer()
    if (i == 10)
       return ERR_CAMERA_DOES_NOT_SEND_DATA;
 
-   // Get the image size from the camera_:
+   // Get the image size from the camera:
    // GJ: nb this is clever and returns current ROI size for format 7 modes
    CHECK_DC1394_ERROR(dc1394_get_image_size_from_video_mode(camera_, mode_, &width_, &height_),
          ERR_GET_IMAGE_SIZE_FAILED, "Failed to get image size from video mode");
@@ -1805,7 +1805,7 @@ int Cdc1394::StopTransmission()
 	LogMessage("About to stop transmission", true);
 	CHECK_DC1394_ERROR(dc1394_video_set_transmission(camera_, DC1394_OFF), DEVICE_ERR,
          "Failed to turn off transmission");
-   // wait untill the camera_ stopped transmitting:
+   // wait untill the camera stopped transmitting:
    int i = 0;
    while( status == DC1394_ON && i < 50 )
    {       
