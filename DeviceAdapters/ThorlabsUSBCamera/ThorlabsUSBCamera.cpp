@@ -133,7 +133,8 @@ ThorlabsUSBCam::ThorlabsUSBCam() :
    nComponents_(1),
    cameraBuf(0),
    cameraBufId(0),
-   hEvent(0)
+   hEvent(0),
+   fps(0.0)
 {
 
    // call the base class method to set-up default error codes/messages
@@ -264,6 +265,9 @@ int ThorlabsUSBCam::Initialize()
    pAct = new CPropertyAction(this, &ThorlabsUSBCam::OnPixelClock);
    CreateProperty("PixelClockMHz", osClock.str().c_str(), MM::Integer, false, pAct);
    SetPropertyLimits("PixelClockMHz", minClock, maxClock);
+
+   pAct = new CPropertyAction(this, &ThorlabsUSBCam::OnFPS);
+   CreateProperty("FPS", "0.0", MM::Float, true, pAct);
 
    // synchronize all properties
    // --------------------------
@@ -716,7 +720,15 @@ int MySequenceThread::svc(void) throw()
    {
       do
       {  
+         MM::MMTime startTime = camera_->GetCurrentMMTime();
          ret = camera_->ThreadRun();
+         MM::MMTime frameTime;
+         frameTime = camera_->GetCurrentMMTime() - startTime;
+         double secInterval = frameTime.getMsec() / 1000.0;
+         if (secInterval > 0.0)
+            camera_->fps = 1.0 / secInterval;
+         else
+            camera_->fps = 0.0;
       } while (DEVICE_OK == ret && !IsStopped() && imageCounter_++ < numImages_-1);
 
       if (IsStopped())
@@ -889,6 +901,13 @@ int ThorlabsUSBCam::OnPixelClock(MM::PropertyBase* pProp, MM::ActionType eAct)
 	return DEVICE_OK;
 }
 
+int ThorlabsUSBCam::OnFPS(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+		pProp->Set(fps);
+
+	return DEVICE_OK;
+}
 
 
 ///////////////////////////////////////////////////////////////////////////////

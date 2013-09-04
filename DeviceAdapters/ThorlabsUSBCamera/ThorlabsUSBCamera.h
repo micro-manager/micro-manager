@@ -94,12 +94,12 @@ public:
 
    // action interface
    // ----------------
-	// floating point read-only properties for testing
    int OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnExposure(MM::PropertyBase* , MM::ActionType );
    int OnHardwareGain(MM::PropertyBase* , MM::ActionType );
    int OnPixelClock(MM::PropertyBase* , MM::ActionType );
+   int OnFPS(MM::PropertyBase* , MM::ActionType );
 
 private:
    int SetAllowedBinning();
@@ -117,6 +117,7 @@ private:
    long imageCounter_;
 	long binSize_;
 	SENSORINFO sensorInfo;
+   double fps;
 
 	std::string triggerDevice_; // TODO: is this really used??
 
