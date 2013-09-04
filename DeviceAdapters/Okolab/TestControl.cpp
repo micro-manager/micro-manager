@@ -17,6 +17,10 @@
 #include "../../MMDevice/ModuleInterface.h"
 #include <sstream>
 
+// Note: this module uses Microsoft's C++/CLI to call CLR API.
+// This is only used to check if a process of a given name is running,
+// and could be rewritten using Win32 API should we need to disable
+// C++/CLI.
 #if defined(WIN32) || defined(WIN64)
  #using <System.dll>  // Process
 #endif
