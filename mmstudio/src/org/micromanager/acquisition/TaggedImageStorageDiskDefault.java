@@ -133,7 +133,7 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
          File saveFile = new File(dir_, fileName);
          if (saveFile.exists()) {
             MMStudioMainFrame.getInstance().stopAllActivity();
-            throw new Exception("Image saving failed: " + saveFile.getAbsolutePath());
+            throw new IOException("Image saving failed: " + saveFile.getAbsolutePath());
          }
          
          saveImageFile(img, md, dir_, fileName);
@@ -346,7 +346,7 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
       fs.saveAsTiff(path + "/" + tiffFileName);
    }
 
-   private void openNewDataSet(TaggedImage firstImage) throws Exception, IOException {
+   private void openNewDataSet(TaggedImage firstImage) throws IOException, Exception {
       String time = firstImage.tags.getString("Time");
       int pos;
       String posName = getPosition(firstImage);
@@ -361,7 +361,7 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
       if (positionNames_.containsKey(pos)
               && positionNames_.get(pos) != null
               && !positionNames_.get(pos).contentEquals(posName)) {
-         throw new Exception ("Position name changed during acquisition.");
+         throw new IOException ("Position name changed during acquisition.");
       }
 
       positionNames_.put(pos, posName);
@@ -458,7 +458,7 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
                ReportingUtils.showError(ex);
             }
          } else {
-            throw (new Exception("No metadata file found"));
+            throw (new IOException("No metadata file found"));
          }
         
       }
