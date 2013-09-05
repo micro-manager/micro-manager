@@ -57,7 +57,8 @@ import org.micromanager.utils.ReportingUtils;
       private String childDevices_[];
       private boolean initialized_;
 
-   public Device(String name, String lib, String adapterName, String descr, boolean discoverable, String master,Vector<String> slaves ) {
+   public Device(String name, String lib, String adapterName, String descr, 
+           boolean discoverable, String master,Vector<String> slaves ) {
       name_ = name;
       library_ = lib;
       adapterName_ = adapterName;

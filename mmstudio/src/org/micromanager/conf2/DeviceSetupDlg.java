@@ -357,7 +357,7 @@ public class DeviceSetupDlg extends MMDialog {
       try {
          System.out.println("rebuild " + portDev.getPropertyValue("BaudRate"));
       } catch (MMConfigFileException e1) {
-         ReportingUtils.logError(e1);
+         ReportingUtils.logMessage("Property BaudRate is not defined");
       }
       
       ComPropTableModel tm = new ComPropTableModel(model, portDev);

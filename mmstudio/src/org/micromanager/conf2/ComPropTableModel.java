@@ -32,8 +32,7 @@ class ComPropTableModel extends AbstractTableModel implements MMPropertyTableMod
       try {
          System.out.println("InitPort " + dev_.getPropertyValue("BaudRate"));
       } catch (MMConfigFileException e) {
-         // TODO Auto-generated catch block
-         e.printStackTrace();
+         ReportingUtils.logMessage("Property Baudrate is not defined");
       }
       
       if (!dev.isSerialPort())
