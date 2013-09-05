@@ -59,11 +59,7 @@ int SpectralLMM5Interface::ExecuteCommand(MM::Device& device, MM::Core& core, un
       ret = core.SetSerialCommand(&device, port_.c_str(), serialCommand.c_str(), "\r");
    } else  // check for USB port
    {
-      unsigned char c[2];
-      c[0]=0x01;
-      c[1]=0x02;
-      ret = core.WriteToSerial(&device, port_.c_str(), c, 2);
-      //ret = core.WriteToSerial(&device, port_.c_str(), buf, bufLen);
+      ret = core.WriteToSerial(&device, port_.c_str(), buf, bufLen);
    }
 
    if (ret != DEVICE_OK)  
@@ -76,30 +72,34 @@ int SpectralLMM5Interface::ExecuteCommand(MM::Device& device, MM::Core& core, un
       ret = core.GetSerialAnswer(&device, port_.c_str(), 128, strAnswer, "\r");
       if (ret != DEVICE_OK)
          return ret;
+      
       std::ostringstream os;
       os << "LMM5 answered: " << strAnswer << " Port status: " << ret;
       core.LogMessage(&device, os.str().c_str(), true);
+   
       // 'translate' back into numbers:
       std::string tmp = strAnswer;
       for (unsigned int i=0; i < tmp.length()/2; i++) {
          char * end;
          long j = strtol(tmp.substr(i*2,2).c_str(), &end, 16);
          answer[i] = (unsigned char) j;
-         // printf("c:%x i:%u j:%ld\n", answer[i], i, j);
          read++;
       }
-   } else // TODO: check that we have a USB port
+   } else if (portType_ == MM::HIDPort) 
    {
       // The USB port will attempt to read up to answerLen characters
       ret = core.ReadFromSerial(&device, port_.c_str(), answer, answerLen, read);
       if (ret != DEVICE_OK)
          return ret;
+
+      /* 
+       // Uncomment for debugging (although port should give the same info)
       std::ostringstream os;
-      os << "LMM5 answered: ";
+      os << "LMM5 answered: " << std::hex << std::setfill('0');
       for (unsigned int i=0; i < read; i++)
-         os << std::hex << answer[i];
-      os << std::endl;
+         os << std::setw(2) << (unsigned int) answer[i] << " ";
       core.LogMessage(&device, os.str().c_str(), true);
+      */
    }
    return DEVICE_OK;
 }
