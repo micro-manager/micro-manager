@@ -226,7 +226,7 @@ int MDHIDDevice::Open(const char* /*portName*/)
    int i;
 
    ostringstream logMsg;
-   logMsg << "Opening HID ports: " << deviceName_.c_str() ; 
+   logMsg << "Opening HID device: " << deviceName_.c_str() ; 
    this->LogMessage(logMsg.str().c_str(), true);
 
    for (i=0; i< g_numberKnownDevices; i++) {
@@ -238,13 +238,15 @@ int MDHIDDevice::Open(const char* /*portName*/)
          if (handle_ == NULL)
          {
             logMsgMsg << "Failed to open HID device " << deviceName_;
-            LogMessage(logMsgMsg.str().c_str());
             deviceFound = false;
          }
          else
          {
+            logMsgMsg << "Opened HID device with vendor ID: " << std::hex << g_knownDevices[i].idVendor;
+            logMsgMsg << ", and product ID: " << std::hex << g_knownDevices[i].idProduct;
             open_ = true;
          }
+         LogMessage(logMsgMsg.str().c_str());
          
          break;
       }
@@ -254,14 +256,45 @@ int MDHIDDevice::Open(const char* /*portName*/)
       return ERR_INTERNAL_ERROR;
 
    wchar_t wstr[255];
-   int res = hid_get_serial_number_string(handle_, wstr, 255);
-
-   if (res != 0)
-      return ERR_SETUP_FAILED;
-
+   char str[255];
+   wstr[0] = 0x0000;
+   int res = hid_get_manufacturer_string(handle_, wstr, 255);
+   if (res < 0) 
+   {
+      ostringstream logMsg2;
+      logMsg2 << "hid_get_manufacturer_string error: " << res << ", " << wstr ; 
+      this->LogMessage(logMsg2.str().c_str(), true);
+   }
    ostringstream logMsg2;
-   logMsg2 << "Serial Number Stringe " << wstr ; 
-   this->LogMessage(logMsg.str().c_str(), true);
+   sprintf(str, "%ls", wstr);
+   logMsg2 << "Manufacturer String: " << str ; 
+   this->LogMessage(logMsg2.str().c_str(), true);
+
+   wstr[0] = 0x0000;
+   res = hid_get_product_string(handle_, wstr, 255);
+   if (res < 0) 
+   {
+      ostringstream logMsg3;
+      logMsg2 << "hid_get_product_string: " << res << ", " << wstr ; 
+      this->LogMessage(logMsg3.str().c_str(), true);
+   }
+   ostringstream logMsg3;
+   sprintf(str, "%ls", wstr);
+   logMsg3 << "Product String: " << str ; 
+   this->LogMessage(logMsg3.str().c_str(), true);
+
+   wstr[0] = 0x0000;
+   res = hid_get_serial_number_string(handle_, wstr, 255);
+   if (res < 0) 
+   {
+      ostringstream logMsg4;
+      logMsg4 << "hid_get_serial_number error: " << res << ", " << wstr ; 
+      this->LogMessage(logMsg4.str().c_str(), true);
+   }
+   ostringstream logMsg4;
+   sprintf(str, "%ls", wstr);
+   logMsg4 << "Serial Number String: " << str ; 
+   this->LogMessage(logMsg4.str().c_str(), true);
 
    return DEVICE_OK;
 
@@ -362,6 +395,16 @@ int MDHIDDevice::Write(const unsigned char* buf, unsigned long bufLen)
       return ERR_WRITE_FAILED;
    delete reportBuf;
 
+   // TODO: switch logging on and off with pre-init property
+   // logging
+   ostringstream os;
+   os << "Wrote: " << std::hex << std::setfill('0');
+   for (unsigned long i=0; i < bufLen; i++) 
+   {
+      os << std::setw(2) << (unsigned int) buf[i] << " ";
+   }
+   LogMessage(os.str().c_str(), true);
+
    return DEVICE_OK;
 }
 
@@ -374,6 +417,16 @@ int MDHIDDevice::Read(unsigned char* buf, unsigned long bufLen, unsigned long& c
    if (res == -1) 
       return ERR_RECEIVE_FAILED;
    charsRead = res;
+
+   // logging:
+   ostringstream os;
+   os << "Read: " << std::hex << std::setfill('0');
+   for (unsigned long i=0; i < charsRead; i++) 
+   {
+      os << std::setw(2) << (unsigned int) buf[i] << " ";
+   }
+   LogMessage(os.str().c_str(), true);
+
    return DEVICE_OK;
 }
 
@@ -529,7 +582,7 @@ void HIDDeviceLister::FindHIDDevices(std::vector<std::string> &availableDevices)
 
    while (curDev)
    {
-      printf ("HID Device pid: %d vid: %d\n", curDev->product_id, curDev->product_id);
+      printf ("HID Device pid: %04hx vid: %04hx\n", curDev->product_id, curDev->product_id);
       for (int i=0; i<g_numberKnownDevices; i++) 
       {
          if ( (curDev->vendor_id == g_knownDevices[i].idVendor) &&
