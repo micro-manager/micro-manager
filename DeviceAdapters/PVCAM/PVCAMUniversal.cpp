@@ -170,6 +170,8 @@ stopOnOverflow_(true),
 snappingSingleFrame_(false),
 singleFrameModeReady_(false),
 sequenceModeReady_(false),
+isUsingCallbacks_(false),
+isAcquiring_(false),
 triggerTimeout_(2),
 microsecResSupported_(false),
 outputTriggerFirstMissing_(0),
@@ -177,9 +179,7 @@ exposure_(10),
 binSize_(1),
 binXSize_(1),
 binYSize_(1),
-rgbaColor_(false),
-isUsingCallbacks_(false),
-isAcquiring_(false)
+rgbaColor_(false)
 #ifdef PVCAM_FRAME_INFO_SUPPORTED
 ,pFrameInfo_(0)
 #endif
@@ -1573,7 +1573,7 @@ bool Universal::WaitForExposureDone()throw()
          while ( curImageCnt_ != numImages_ && elapsed < timeout )
          {
             elapsed = GetCurrentMMTime()  - startTime;
-            Sleep(1);
+            CDeviceUtils::SleepMs(1);
          }
          if ( elapsed < timeout )
          {
