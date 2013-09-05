@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-// FILE:          PVCAM.h
+// FILE:          PVCAMAdapter.h
 // PROJECT:       Micro-Manager
 // SUBSYSTEM:     DeviceAdapters
 //-----------------------------------------------------------------------------
@@ -24,8 +24,8 @@
 //
 // CVS:           $Id: PVCAM.h 8240 2011-12-04 01:05:17Z nico $
 
-#ifndef _PVCAM_H_
-#define _PVCAM_H_
+#ifndef _PVCAMADAPTER_H_
+#define _PVCAMADAPTER_H_
 
 #include "DeviceBase.h"
 #include "../../MMDevice/ImgBuffer.h"
@@ -58,6 +58,13 @@
    TryEnterCriticalSection(
       __inout LPCRITICAL_SECTION lpCriticalSection
     );
+#endif
+
+#ifdef WIN32
+// FRAME_INFO is currently supported on Windows only (PVCAM 2.9.5)
+#define PVCAM_FRAME_INFO_SUPPORTED
+// Callbacks are not supported on Linux and Mac
+#define PVCAM_CALLBACKS_SUPPORTED
 #endif
 
 #include <string>
@@ -259,6 +266,9 @@ public:
    int OnOutputTriggerFirstMissing(MM::PropertyBase* pProp, MM::ActionType eAct); 
    int OnCircBufferFrameCount(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnColorMode(MM::PropertyBase* pProp, MM::ActionType eAct);
+#ifdef PVCAM_CALLBACKS_SUPPORTED
+   int OnAcquisitionMethod(MM::PropertyBase* pProp, MM::ActionType eAct);
+#endif
 
    bool IsCapturing();
 
@@ -276,8 +286,9 @@ protected:
    void OnThreadExiting() throw();
 #endif
 
-   int PushImage();
-   int PushImage2(const unsigned char* pixBuffer);
+   int FrameDone();
+   int BuildMetadata( Metadata& md );
+   int PushImage(const unsigned char* pixBuffer, Metadata* pMd );
 
 private:
 
@@ -290,7 +301,6 @@ private:
 
    bool            initialized_;          // Driver initialization status in this class instance
    long            numImages_;            // Number of images to acquire
-   long            imageCounter_;         // Total number of images acquired
    long            curImageCnt_;          // Current number of images acquired
    short           hPVCAM_;               // Camera handle
    static int      refCount_;             // This class reference counter
@@ -309,9 +319,15 @@ private:
    bool            snappingSingleFrame_;  // Single frame mode acquisition ongoing
    bool            singleFrameModeReady_; // Single frame mode acquisition prepared
    bool            sequenceModeReady_;    // Continuous acquisition prepared
-   unsigned short* prevFrame_;            // A pointer to the previous frame in circular buffer
+
+   bool            isUsingCallbacks_;
+   bool            isAcquiring_;
+
    long            triggerTimeout_;       // Max time to wait for an external trigger
    bool            microsecResSupported_; // True if camera supports microsecond exposures
+#ifdef PVCAM_FRAME_INFO_SUPPORTED
+   PFRAME_INFO     pFrameInfo_;           // PVCAM frame metadata
+#endif
    friend class    AcqSequenceThread;
    AcqSequenceThread* uniAcqThd_;         // Pointer to the sequencing thread
 
@@ -370,6 +386,13 @@ private:
    int ClearROI();
    int SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize); 
    int GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySize);
+
+private:
+
+#ifdef PVCAM_CALLBACKS_SUPPORTED
+   static void PvcamCallbackEofEx3( PFRAME_INFO pNewFrameInfo, void* pContext );
+#endif
+
 };
 
 /***
@@ -392,4 +415,4 @@ class AcqSequenceThread : public MMDeviceThreadBase
       Universal* camera_;
 };
 
-#endif //_PVCAM_H_
+#endif //_PVCAMADAPTER_H_
