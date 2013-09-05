@@ -165,7 +165,8 @@ MDHIDDevice::MDHIDDevice(std::string deviceName) :
    portTimeoutMs_(2000.0),
    answerTimeoutMs_(20),
    overflowBufferOffset_(0),
-   overflowBufferLength_(0)
+   overflowBufferLength_(0),
+   verbose_(true)
 {
    deviceLister = new HIDDeviceLister();
    deviceLister->ListCachedHIDDevices(availableDevices_);
@@ -207,8 +208,11 @@ MDHIDDevice::MDHIDDevice(std::string deviceName) :
    ret = CreateProperty("AnswerTimeout", "20", MM::Float, false, pAct, true);
    assert(ret == DEVICE_OK);                                                 
 
-   ret = UpdateStatus();
-   assert(ret == DEVICE_OK);
+   // verbose debug messages
+   pAct = new CPropertyAction (this, &MDHIDDevice::OnVerbose);
+   CreateProperty("Verbose", (verbose_?"1":"0"), MM::Integer, false, pAct, true);
+   AddAllowedValue("Verbose", "0");
+   AddAllowedValue("Verbose", "1");
 }
 
 MDHIDDevice::~MDHIDDevice()
@@ -395,21 +399,23 @@ int MDHIDDevice::Write(const unsigned char* buf, unsigned long bufLen)
       return ERR_WRITE_FAILED;
    delete reportBuf;
 
-   // TODO: switch logging on and off with pre-init property
    // logging
-   ostringstream os;
-   os << "Wrote: " << std::hex << std::setfill('0');
-   for (unsigned long i=0; i < bufLen; i++) 
+   if (verbose_) 
    {
-      os << std::setw(2) << (unsigned int) buf[i] << " ";
+      ostringstream os;
+      os << "Wrote: " << std::hex << std::setfill('0');
+      for (unsigned long i=0; i < bufLen; i++) 
+      {
+         os << std::setw(2) << (unsigned int) buf[i] << " ";
+      }
+      LogMessage(os.str().c_str(), true);
    }
-   LogMessage(os.str().c_str(), true);
 
    return DEVICE_OK;
 }
 
 /*
-* This functions does the actual reading from the HID device
+* This function does the actual reading from the HID device
 */
 int MDHIDDevice::Read(unsigned char* buf, unsigned long bufLen, unsigned long& charsRead)
 {
@@ -419,13 +425,16 @@ int MDHIDDevice::Read(unsigned char* buf, unsigned long bufLen, unsigned long& c
    charsRead = res;
 
    // logging:
-   ostringstream os;
-   os << "Read: " << std::hex << std::setfill('0');
-   for (unsigned long i=0; i < charsRead; i++) 
+   if (verbose_)
    {
-      os << std::setw(2) << (unsigned int) buf[i] << " ";
+      ostringstream os;
+      os << "Read: " << std::hex << std::setfill('0');
+      for (unsigned long i=0; i < charsRead; i++) 
+      {
+         os << std::setw(2) << (unsigned int) buf[i] << " ";
+      }
+      LogMessage(os.str().c_str(), true);
    }
-   LogMessage(os.str().c_str(), true);
 
    return DEVICE_OK;
 }
@@ -523,6 +532,23 @@ int MDHIDDevice::OnTimeout(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 } 
 
+int MDHIDDevice::OnVerbose(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(verbose_?1L:0L);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      long value;
+      pProp->Get(value);
+      verbose_ = !!value;
+   }                                                          
+                                                              
+   return DEVICE_OK;                                          
+                                                              
+}
 
 /*
 * Class whose sole function is to list HID devices available on the user's system

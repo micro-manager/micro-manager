@@ -117,13 +117,14 @@ public:
    int Write(unsigned const char* buf, unsigned long bufLen);
    int Read(unsigned char* buf, unsigned long bufLen, unsigned long& charsRead);
    int Purge();
-   // TODO: Add type HIDPort to MM!!!
+
    MM::PortType GetPortType() const {return MM::HIDPort;}
 
    // action interface
    // ----------------
    int OnTimeout(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnDevice(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnVerbose(MM::PropertyBase* pProp, MM::ActionType eAct);
 
    int Open(const char* portName);
    int Close();
@@ -156,6 +157,8 @@ private:
    char* overflowBuffer_;
    unsigned overflowBufferOffset_;
    unsigned overflowBufferLength_;
+
+   bool verbose_; // whether or not to do verbose logging
 };
 
 class HIDManager
