@@ -210,9 +210,10 @@ MDHIDDevice::MDHIDDevice(std::string deviceName) :
 
    // verbose debug messages
    pAct = new CPropertyAction (this, &MDHIDDevice::OnVerbose);
-   CreateProperty("Verbose", (verbose_?"1":"0"), MM::Integer, false, pAct, true);
-   AddAllowedValue("Verbose", "0");
-   AddAllowedValue("Verbose", "1");
+   string verbose = "Verbose logging";
+   CreateProperty(verbose.c_str(), (verbose_?"On":"Off"), MM::String, false, pAct, true);
+   AddAllowedValue(verbose.c_str(), "On");
+   AddAllowedValue(verbose.c_str(), "Off");
 }
 
 MDHIDDevice::~MDHIDDevice()
@@ -537,13 +538,13 @@ int MDHIDDevice::OnVerbose(MM::PropertyBase* pProp, MM::ActionType eAct)
 
    if (eAct == MM::BeforeGet)
    {
-      pProp->Set(verbose_?1L:0L);
+      pProp->Set(verbose_?"On":"Off");
    }
    else if (eAct == MM::AfterSet)
    {
-      long value;
+      string value;
       pProp->Get(value);
-      verbose_ = !!value;
+      verbose_ = (value == "On");
    }                                                          
                                                               
    return DEVICE_OK;                                          
