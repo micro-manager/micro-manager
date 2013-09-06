@@ -46,6 +46,11 @@ const char* g_CameraDeviceName = "ThorCam";
 // constants for naming pixel types (allowed values of the "PixelType" property)
 const char* g_PixelType_8bit = "8bit";
 const char* g_PixelType_16bit = "16bit";
+const char* g_PixelType_RGB32 = "RGB32bit";
+
+const char* g_propHWGain = "HardwareGain";
+const char* g_propPixelClock = "PixelClockMHz";
+const char* g_propFPS = "FPS";
 
 // TODO: linux entry code
 
@@ -232,6 +237,7 @@ int ThorlabsUSBCam::Initialize()
    vector<string> pixelTypeValues;
    pixelTypeValues.push_back(g_PixelType_8bit);
    pixelTypeValues.push_back(g_PixelType_16bit); 
+   pixelTypeValues.push_back(g_PixelType_RGB32); 
 
    nRet = SetAllowedValues(MM::g_Keyword_PixelType, pixelTypeValues);
    if (nRet != DEVICE_OK)
@@ -244,8 +250,8 @@ int ThorlabsUSBCam::Initialize()
 
    // camera gain
    pAct = new CPropertyAction (this, &ThorlabsUSBCam::OnHardwareGain);
-   CreateProperty("HardwareGain", "1", MM::Integer, false, pAct);
-   SetPropertyLimits("HardwareGain", 1, 100);
+   CreateProperty(g_propHWGain, "1", MM::Integer, false, pAct);
+   SetPropertyLimits(g_propHWGain, 1, 100);
 
    // PixelClock
    UINT pixClockRange[3];
@@ -263,11 +269,11 @@ int ThorlabsUSBCam::Initialize()
    ostringstream osClock;
    osClock << curPixClock;
    pAct = new CPropertyAction(this, &ThorlabsUSBCam::OnPixelClock);
-   CreateProperty("PixelClockMHz", osClock.str().c_str(), MM::Integer, false, pAct);
-   SetPropertyLimits("PixelClockMHz", minClock, maxClock);
+   CreateProperty(g_propPixelClock, osClock.str().c_str(), MM::Integer, false, pAct);
+   SetPropertyLimits(g_propPixelClock, minClock, maxClock);
 
    pAct = new CPropertyAction(this, &ThorlabsUSBCam::OnFPS);
-   CreateProperty("FPS", "0.0", MM::Float, true, pAct);
+   CreateProperty(g_propFPS, "0.0", MM::Float, true, pAct);
 
    // synchronize all properties
    // --------------------------
@@ -816,20 +822,34 @@ int ThorlabsUSBCam::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
          nComponents_ = 1;
          return ResizeImageBuffer();
       }
+      else if (pixelType.compare(g_PixelType_RGB32) == 0)
+      {
+         int nRet = is_SetColorMode(camHandle_, IS_CM_BGRA8_PACKED);
+         if (nRet != IS_SUCCESS)
+            return nRet;
+          
+         bitDepth_ = 8;
+         nComponents_ = 4;
+         return ResizeImageBuffer();
+      }
+
       else
       {
          // on error switch to default pixel type
          nComponents_ = 1;
          bitDepth_ = 8;
+         ResizeImageBuffer();
          return ERR_THORCAM_UNKNOWN_PIXEL_TYPE;
       }
    }
    else if (eAct == MM::BeforeGet)
    {
-      if (bitDepth_ == 8)
+      if (bitDepth_ == 8 && nComponents_ == 1)
          pProp->Set(g_PixelType_8bit);
-      else
+      else if (bitDepth_ == 16 && nComponents_ == 1)
          pProp->Set(g_PixelType_16bit);
+      else
+         pProp->Set(g_PixelType_RGB32);
    }
    return DEVICE_OK; 
 }
@@ -930,6 +950,9 @@ int ThorlabsUSBCam::ResizeImageBuffer()
    }
 
    int byteDepth = bitDepth_ == 8 ? 1 : 2;
+   if (nComponents_ == 4)
+      byteDepth = 4;
+
    int ret = is_AllocImageMem(   camHandle_,
                                  sensorInfo.nMaxWidth/binSize_,
                                  sensorInfo.nMaxHeight/binSize_,
