@@ -580,34 +580,34 @@ int ThorlabsUSBCam::StartSequenceAcquisition(long numImages, double interval_ms,
  */
 int ThorlabsUSBCam::InsertImage()
 {
-   //MM::MMTime timeStamp = this->GetCurrentMMTime();
+   // Image metadata
+   Metadata md;
    char label[MM::MaxStrLength];
    this->GetLabel(label);
- 
-   // Important:  metadata about the image are generated here:
-   Metadata md;
    md.put("Camera", label);
-   //md.put(MM::g_Keyword_Metadata_StartTime, CDeviceUtils::ConvertToString(sequenceStartTime_.getMsec()));
-   //md.put(MM::g_Keyword_Elapsed_Time_ms, CDeviceUtils::ConvertToString((timeStamp - sequenceStartTime_).getMsec()));
-   //md.put(MM::g_Keyword_Metadata_ROI_X, CDeviceUtils::ConvertToString( (long) roiX_)); 
-   //md.put(MM::g_Keyword_Metadata_ROI_Y, CDeviceUtils::ConvertToString( (long) roiY_)); 
+   md.put(MM::g_Keyword_Metadata_StartTime, CDeviceUtils::ConvertToString(sequenceStartTime_.getMsec()));
+   md.put(MM::g_Keyword_Elapsed_Time_ms, CDeviceUtils::ConvertToString((GetCurrentMMTime() - sequenceStartTime_).getMsec()));
+   md.put(MM::g_Keyword_Metadata_ImageNumber, CDeviceUtils::ConvertToString(imageCounter_)); 
 
    imageCounter_++;
 
    MMThreadGuard g(imgPixelsLock_);
 
-   const unsigned char* pI = GetImageBuffer();
-   unsigned int w = GetImageWidth();
-   unsigned int h = GetImageHeight();
-   unsigned int b = GetImageBytesPerPixel();
+   int ret = GetCoreCallback()->InsertImage(this, img_.GetPixels(),
+                                                  img_.Width(),
+                                                  img_.Height(), 
+                                                  img_.Depth(), 
+                                                  md.Serialize().c_str());
 
-   int ret = GetCoreCallback()->InsertImage(this, pI, w, h, b, md.Serialize().c_str());
    if (!stopOnOverFlow_ && ret == DEVICE_BUFFER_OVERFLOW)
    {
-      // do not stop on overflow - just reset the buffer
+      // do not stop on overflow, reset the buffer and insert the same image again
       GetCoreCallback()->ClearImageBuffer(this);
-      // don't process this same image again...
-      return GetCoreCallback()->InsertImage(this, pI, w, h, b, md.Serialize().c_str(), false);
+      return GetCoreCallback()->InsertImage(this, img_.GetPixels(),
+                                                  img_.Width(),
+                                                  img_.Height(), 
+                                                  img_.Depth(), 
+                                                  md.Serialize().c_str());
    } else
       return ret;
 }
