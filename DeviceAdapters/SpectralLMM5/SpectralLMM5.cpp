@@ -397,6 +397,16 @@ int LMM5Shutter::Initialize()
       }
    }
 
+   for (long i=0; i < nrLines_; i++) 
+   {
+      if (lines[i].present) 
+      {
+         CPropertyActionEx *pActEx = new CPropertyActionEx(this, &LMM5Shutter::OnStateEx, i);
+         CreateProperty(lines[i].name.c_str(), "0", MM::Integer, false, pActEx);
+         SetPropertyLimits(lines[i].name.c_str(), 0, 1);
+      }
+   }
+
    changedTime_ = GetCurrentMMTime();
  
    ret = UpdateStatus();
@@ -530,6 +540,26 @@ int LMM5Shutter::OnLabel(MM::PropertyBase* pProp, MM::ActionType pAct)
       pProp->Get(label);
       state_ = LabelToState(label);
       SetOpen(open_);
+   }
+
+   return DEVICE_OK;
+}
+
+int LMM5Shutter::OnStateEx(MM::PropertyBase* pProp, MM::ActionType pAct, long line)
+{
+   if (pAct == MM::BeforeGet)
+   {
+      long mesg = 0;
+      bool state = (state_ && (1 << line) ) > 0;
+      if (state)
+         mesg = 1;
+      pProp->Set(mesg);
+   }
+   else if (pAct == MM::AfterSet)
+   {
+      long mesg;
+      pProp->Get(mesg);
+      // TODO:
    }
 
    return DEVICE_OK;

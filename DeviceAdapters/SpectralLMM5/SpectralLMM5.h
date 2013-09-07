@@ -94,6 +94,7 @@ public:
    // ----------------
    int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnLabel(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnStateEx(MM::PropertyBase* pProp, MM::ActionType eAct, long line);
    unsigned long GetNumberOfPositions();
    int LabelToState(std::string label);
    std::string StateToLabel(int state);
