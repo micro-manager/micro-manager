@@ -549,17 +549,24 @@ int LMM5Shutter::OnStateEx(MM::PropertyBase* pProp, MM::ActionType pAct, long li
 {
    if (pAct == MM::BeforeGet)
    {
-      long mesg = 0;
-      bool state = (state_ && (1 << line) ) > 0;
-      if (state)
-         mesg = 1;
-      pProp->Set(mesg);
+      long stateEx = (state_ >> line) & 1;
+      pProp->Set(stateEx);
    }
    else if (pAct == MM::AfterSet)
    {
-      long mesg;
-      pProp->Get(mesg);
-      // TODO:
+      long stateEx;
+      pProp->Get(stateEx);
+      if (stateEx == 1) 
+      {
+         stateEx <<= line;
+         state_ |= stateEx;
+      } else 
+      {
+         int invState = ~state_;
+         int mask = 1 << line;
+         invState |= mask;
+         state_ = ~invState;
+      }
    }
 
    return DEVICE_OK;
