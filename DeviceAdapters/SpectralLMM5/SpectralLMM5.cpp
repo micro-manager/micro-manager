@@ -480,7 +480,7 @@ std::string LMM5Shutter::StateToLabel(int state)
    for (int j=0; j<nrLines_; j++)
    {
       if (state & (1 << j)) 
-         label += lines[j].name + "/";
+         label += lines[j].name + "_";
    }
    printf ("StateToLabel: state %d label %s\n", state, label.c_str());
    return label.substr(0,label.length()-1);
@@ -492,8 +492,8 @@ int LMM5Shutter::LabelToState(std::string label)
    int state = 0;
    availableLines* lines = g_Interface->getAvailableLaserLines();
    // tokenize the label string on "/"
-   std::string::size_type lastPos = label.find_first_not_of("/", 0);
-   std::string::size_type pos     = label.find_first_of("/", lastPos);
+   std::string::size_type lastPos = label.find_first_not_of("_", 0);
+   std::string::size_type pos     = label.find_first_of("_", lastPos);
    while (std::string::npos != pos || std::string::npos != lastPos)
    {
       std::string wave = label.substr(lastPos, pos - lastPos);
@@ -504,8 +504,8 @@ int LMM5Shutter::LabelToState(std::string label)
          if (wave == lines[j].name)
             state |= (1 << j);
       }
-      lastPos = label.find_first_not_of("/", pos);
-      pos = label.find_first_of("/", lastPos);
+      lastPos = label.find_first_not_of("_", pos);
+      pos = label.find_first_of("_", lastPos);
    }
   
    return state;
@@ -567,6 +567,7 @@ int LMM5Shutter::OnStateEx(MM::PropertyBase* pProp, MM::ActionType pAct, long li
          invState |= mask;
          state_ = ~invState;
       }
+      SetOpen(open_);
    }
 
    return DEVICE_OK;

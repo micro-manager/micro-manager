@@ -124,6 +124,7 @@ int SpectralLMM5Interface::DetectLaserLines(MM::Device& device, MM::Core& core) 
    uint16_t* lineP = (uint16_t*) (answer + 1);
    nrLines_ = (read-1)/2;
    printf("NrLines: %d\n", nrLines_);
+   char outputPort = 'A';
    for (int i=0; i<nrLines_; i++) 
    {
       laserLines_[i].lineNr = i;
@@ -133,11 +134,18 @@ int SpectralLMM5Interface::DetectLaserLines(MM::Device& device, MM::Core& core) 
       } else {
          laserLines_[i].present = true;
          std::ostringstream os;
-         os << laserLines_[i].waveLength << "nm-" << i + 1;
+         if (laserLines_[i].waveLength > 100)
+         {
+            os << laserLines_[i].waveLength << "nm-" << i + 1;
+         } else
+         {
+            outputPort++;
+            os << "output-port " << outputPort;
+         }
          laserLines_[i].name = os.str();
       }
-      // printf ("Line: %d %f %d %s\n", i, laserLines_[i].waveLength, laserLines_[i].present, laserLines_[i].name.c_str());
    }
+
    laserLinesDetected_ = true;
    return DEVICE_OK;
 }
