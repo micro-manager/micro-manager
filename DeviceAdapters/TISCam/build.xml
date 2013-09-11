@@ -1,0 +1,21 @@
+<project name="TISCam">
+	<import file="../../buildscripts/deviceadapter.xml"/>
+
+	<target name="install-Win32">
+		<copy todir="${mm.dll.installdir}">
+			<filelist dir="lib/Win32/Release">
+				<file name="TIS_DShowLib09.dll"/>
+				<file name="TIS_UDSHL09_vc9.dll"/>
+			</filelist>
+		</copy>
+	</target>
+
+	<target name="install-x64">
+		<copy todir="${mm.dll.installdir}">
+			<filelist dir="lib/x64/Release">
+				<file name="TIS_DShowLib09_x64.dll"/>
+				<file name="TIS_UDSHL09_vc9_x64.dll"/>
+			</filelist>
+		</copy>
+	</target>
+</project>
