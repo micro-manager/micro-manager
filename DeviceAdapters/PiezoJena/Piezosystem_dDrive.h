@@ -286,8 +286,8 @@ class Hub :  public HubBase<Hub>  //public CGenericBase<Hub>
       // Command exchange with MMCore
       std::string command_;
 	  const char* name_;
-      bool initialized_;
 	  int transmissionDelay_;
+      bool initialized_;
 	  int bright_;
 };
 
@@ -621,14 +621,14 @@ public:
 private:
    bool initialized_;
    int nr_;
-   int xChannel_;
-   int yChannel_;
    double stepSize_;
    long xStep_;
    long yStep_;   
    EVD chx_;
    EVD chy_;
    double stepSizeUm_;
+   int xChannel_;
+   int yChannel_;
 };
 
 class Tritor : public CGenericBase<Tritor> ,EVDBase
@@ -781,13 +781,13 @@ public:
 private:
 	int nr_;
 	std::string name_;
-	bool initialized_;
 	int xChannel_;
 	int yChannel_;
 	int zChannel_;
 	EVD chx_;
 	EVD chy_;
 	EVD chz_;
+	bool initialized_;
 };
 
 class Shutter : public CShutterBase<Shutter>,EVDBase
@@ -857,8 +857,8 @@ private:
    std::string name_;
    unsigned shutterNumber_;
    bool initialized_;
-   bool shut_;			//state
    bool close_;			//zero volt position
+   bool shut_;			//state
    EVD chx_;  
    double answerTimeoutMs_;
    MM::MMTime changedTime_;
@@ -1013,13 +1013,13 @@ private:
 	int nr_;
 	int channelcount_;
 	std::string name_;
-	bool initialized_;
 	int xChannel_;
 	int yChannel_;
 	int zChannel_;
 	EVD chx_;
 	EVD chy_;
 	EVD chz_;
+	bool initialized_;
 };
 
 #endif //_PIEZOSYSTEM_DDRIVE_H_

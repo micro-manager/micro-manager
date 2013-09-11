@@ -1210,7 +1210,7 @@ std::vector<int> Hub::GetDeviceAddresses(){
 //Convert name to a standard (without space, upper case)
 std::string Hub::ConvertName(std::string name){
 	std::string str;	
-	str.assign(name.begin(), remove_if(name.begin(), name.end(), &isspace));
+	str.assign(name.begin(), remove_if(name.begin(), name.end(), ::isspace));
 	//str.assign(name.begin(), remove_if(name.begin(), name.end(), &isdigit));
 	//str.assign(name.begin(), remove_if(name.begin(), name.end(), &ispunct));
 	std::transform(str.begin(),str.end(),str.begin(),::toupper);
@@ -1469,10 +1469,9 @@ Stage::Stage(int channel) :
 }
 Stage::Stage(int channel, std::string name) :
    EVDBase(this),
+   name_(name),
    initialized_(false),
    stepSizeUm_(0.1),
-   name_(name),
-   //port_("Undefined"),
    answerTimeoutMs_(2000)
 {
    LogMessage ("new Stage(ch)");
@@ -9703,7 +9702,7 @@ int Shutter::OnShutterState(MM::PropertyBase* pProp, MM::ActionType eAct){
     else if (eAct == MM::AfterSet){	  
 		std::string state;
 		long b=0;
-		long l;
+		long l=0;
 		pProp->Get(state);
 		if (state == g_Open){
 			shut_ = false;
