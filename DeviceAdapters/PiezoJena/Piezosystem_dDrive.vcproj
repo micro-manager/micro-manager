@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9,00"
+	Version="9.00"
 	Name="Piezosystem_dDrive"
 	ProjectGUID="{23F9BA69-3FBF-419F-AD60-F06E1AC0706B}"
 	RootNamespace="Piezosystem"
@@ -48,14 +48,14 @@
 				AdditionalIncludeDirectories="../../../3rdpartypublic/boost;../../../3rdparty"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS"
 				MinimalRebuild="true"
-				ExceptionHandling="2"
+				ExceptionHandling="1"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="1"
+				RuntimeLibrary="3"
 				RuntimeTypeInfo="true"
 				UsePrecompiledHeader="0"
 				WarningLevel="4"
 				Detect64BitPortabilityProblems="false"
-				DebugInformationFormat="4"
+				DebugInformationFormat="3"
 				DisableSpecificWarnings="4290;4355"
 			/>
 			<Tool
@@ -132,9 +132,9 @@
 				AdditionalIncludeDirectories="../../../3rdpartypublic/boost;../../../3rdparty;../../../3rdpartypublic/boost/boost"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS"
 				MinimalRebuild="true"
-				ExceptionHandling="2"
+				ExceptionHandling="1"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="1"
+				RuntimeLibrary="3"
 				RuntimeTypeInfo="true"
 				UsePrecompiledHeader="0"
 				WarningLevel="4"
@@ -214,8 +214,8 @@
 				Optimization="2"
 				AdditionalIncludeDirectories="../../../3rdpartypublic/boost;../../../3rdparty"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS"
-				ExceptionHandling="2"
-				RuntimeLibrary="0"
+				ExceptionHandling="1"
+				RuntimeLibrary="2"
 				RuntimeTypeInfo="true"
 				UsePrecompiledHeader="0"
 				WarningLevel="4"
@@ -297,8 +297,8 @@
 				Optimization="2"
 				AdditionalIncludeDirectories="../../../3rdpartypublic/boost;../../../3rdparty"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS"
-				ExceptionHandling="2"
-				RuntimeLibrary="0"
+				ExceptionHandling="1"
+				RuntimeLibrary="2"
 				RuntimeTypeInfo="true"
 				UsePrecompiledHeader="0"
 				WarningLevel="4"
@@ -380,15 +380,6 @@
 				RelativePath="..\..\MMDevice\Property.cpp"
 				>
 			</File>
-			<Filter
-				Name="Resource Files"
-				Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx"
-				>
-				<File
-					RelativePath=".\Piezossytem_dDrive.rc"
-					>
-				</File>
-			</Filter>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -417,10 +408,6 @@
 			</File>
 			<File
 				RelativePath="..\..\MMDevice\Property.h"
-				>
-			</File>
-			<File
-				RelativePath=".\resource.h"
 				>
 			</File>
 		</Filter>

@@ -293,6 +293,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MCCDAQ", "..\DeviceAdapters
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Okolab", "..\DeviceAdapters\Okolab\Okolab.vcproj", "{49E0167C-FF14-42F2-BEB4-EDBA568640A5}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Piezosystem_dDrive", "..\DeviceAdapters\PiezoJena\Piezosystem_dDrive.vcproj", "{23F9BA69-3FBF-419F-AD60-F06E1AC0706B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -1409,6 +1411,14 @@ Global
 		{49E0167C-FF14-42F2-BEB4-EDBA568640A5}.Release|Win32.Build.0 = Release|Win32
 		{49E0167C-FF14-42F2-BEB4-EDBA568640A5}.Release|x64.ActiveCfg = Release|x64
 		{49E0167C-FF14-42F2-BEB4-EDBA568640A5}.Release|x64.Build.0 = Release|x64
+		{23F9BA69-3FBF-419F-AD60-F06E1AC0706B}.Debug|Win32.ActiveCfg = Debug|Win32
+		{23F9BA69-3FBF-419F-AD60-F06E1AC0706B}.Debug|Win32.Build.0 = Debug|Win32
+		{23F9BA69-3FBF-419F-AD60-F06E1AC0706B}.Debug|x64.ActiveCfg = Debug|x64
+		{23F9BA69-3FBF-419F-AD60-F06E1AC0706B}.Debug|x64.Build.0 = Debug|x64
+		{23F9BA69-3FBF-419F-AD60-F06E1AC0706B}.Release|Win32.ActiveCfg = Release|Win32
+		{23F9BA69-3FBF-419F-AD60-F06E1AC0706B}.Release|Win32.Build.0 = Release|Win32
+		{23F9BA69-3FBF-419F-AD60-F06E1AC0706B}.Release|x64.ActiveCfg = Release|x64
+		{23F9BA69-3FBF-419F-AD60-F06E1AC0706B}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
