@@ -487,10 +487,12 @@ int ThorlabsUSBCam::GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& 
 */
 int ThorlabsUSBCam::ClearROI()
 {
-   ResizeImageBuffer();
    roiX_ = 0;
    roiY_ = 0;
-      
+   roiWidth_ = sensorInfo.nMaxWidth;
+   roiHeight_ = sensorInfo.nMaxHeight;
+
+   ResizeImageBuffer();
    return DEVICE_OK;
 }
 
