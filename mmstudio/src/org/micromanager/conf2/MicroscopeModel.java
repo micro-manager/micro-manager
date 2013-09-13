@@ -231,7 +231,7 @@ public class MicroscopeModel {
                   }
                } catch (Exception e) {
             	   // This usually happens when vendor's drivers are not installed
-            	   ReportingUtils.logError(null, "Unable to load " + libs.get(i) + " library.");
+                  ReportingUtils.logError(null, "Unable to load " + libs.get(i) + " library: " + e.getMessage());
                }
             }
             if (!good)
