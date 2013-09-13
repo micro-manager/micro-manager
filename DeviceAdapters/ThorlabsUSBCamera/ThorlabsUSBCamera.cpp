@@ -233,12 +233,16 @@ int ThorlabsUSBCam::Initialize()
 
    vector<string> binValues;
    binValues.push_back("1");
-   binValues.push_back("2");
-//   binValues.push_back("4");
-//   binValues.push_back("8");
-   // the newer cameras do not seem to support binning higher than 2
-   // TODO: query the camera which sizes are supported and set allowed
-   // values accordingly
+
+   int supported = is_SetBinning(camHandle_, IS_GET_SUPPORTED_BINNING);
+
+   if (supported & IS_BINNING_2X_VERTICAL)
+      binValues.push_back("2");
+   if (supported & IS_BINNING_4X_VERTICAL)
+      binValues.push_back("4");
+   if (supported & IS_BINNING_8X_VERTICAL)
+      binValues.push_back("8");
+
    nRet = SetAllowedValues(MM::g_Keyword_Binning, binValues);
    if (nRet != DEVICE_OK)
       return nRet;
