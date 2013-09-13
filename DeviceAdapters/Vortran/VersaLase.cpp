@@ -436,62 +436,7 @@ int VersaLase::SetOpen(bool open)
 
 int VersaLase::GetOpen(bool& open)
 {
-   long state;
-   std::ostringstream command;
-   std::string answer;
-   std::vector<std::string> tokens;
-   std::string delims="=";
-   int ret;
-
-   command << "a.?le";
-   ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
-   if (ret != DEVICE_OK) return ret;
-   CDeviceUtils::SleepMs(50);
-   ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
-   ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
-   PurgeComPort(port_.c_str());
-   if (ret != DEVICE_OK) return ret;
-
-   command << "b.?le";
-   ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
-   if (ret != DEVICE_OK) return ret;
-   CDeviceUtils::SleepMs(50);
-   ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
-   ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
-   PurgeComPort(port_.c_str());
-   if (ret != DEVICE_OK) return ret;
-
-   command << "c.?le";
-   ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
-   if (ret != DEVICE_OK) return ret;
-   CDeviceUtils::SleepMs(50);
-   ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
-   ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
-   PurgeComPort(port_.c_str());
-   if (ret != DEVICE_OK) return ret;
-
-   command << "d.?le";
-   ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
-   if (ret != DEVICE_OK) return ret;
-   CDeviceUtils::SleepMs(50);
-   ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
-   ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
-   PurgeComPort(port_.c_str());
-   if (ret != DEVICE_OK) return ret;
-
-
-   VersaLase::Tokenize(answer, tokens, delims);
-   if ( 2 == tokens.size())
-   {
-   		answer=tokens.at(1).c_str();
-   }
-
-   state=atol(answer.c_str());
-   if (state==1)
-      open = true;
-   else if (state==0)
-      open = false;
-
+   open=true;
    return DEVICE_OK;
 }
 
@@ -874,6 +819,8 @@ int VersaLase::OnDigModA(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
     std::ostringstream command;
     std::string answer;
+    std::vector<std::string> tokens;
+    std::string delims="=";
 
     if (eAct == MM::BeforeGet)
     {
@@ -886,6 +833,12 @@ int VersaLase::OnDigModA(MM::PropertyBase* pProp, MM::ActionType eAct)
           PurgeComPort(port_.c_str());
           if (ret != DEVICE_OK) return ret;
 
+		  VersaLase::Tokenize(answer, tokens, delims);
+
+		  if ( 2 == tokens.size())
+		  {
+		  	   answer=tokens.at(1).c_str();
+		  }
 
 	      if (answer == "0")
                digModA_ = "OFF";
@@ -916,6 +869,8 @@ int VersaLase::OnDigModB(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
     std::ostringstream command;
     std::string answer;
+    std::vector<std::string> tokens;
+    std::string delims="=";
 
     if (eAct == MM::BeforeGet)
     {
@@ -928,6 +883,12 @@ int VersaLase::OnDigModB(MM::PropertyBase* pProp, MM::ActionType eAct)
           PurgeComPort(port_.c_str());
           if (ret != DEVICE_OK) return ret;
 
+		  VersaLase::Tokenize(answer, tokens, delims);
+
+		  if ( 2 == tokens.size())
+		  {
+		  	   answer=tokens.at(1).c_str();
+		  }
 
 	      if (answer == "0")
                digModB_ = "OFF";
@@ -958,6 +919,8 @@ int VersaLase::OnDigModC(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
     std::ostringstream command;
     std::string answer;
+    std::vector<std::string> tokens;
+    std::string delims="=";
 
     if (eAct == MM::BeforeGet)
     {
@@ -970,6 +933,12 @@ int VersaLase::OnDigModC(MM::PropertyBase* pProp, MM::ActionType eAct)
           PurgeComPort(port_.c_str());
           if (ret != DEVICE_OK) return ret;
 
+		  VersaLase::Tokenize(answer, tokens, delims);
+
+		  if ( 2 == tokens.size())
+		  {
+		  	   answer=tokens.at(1).c_str();
+		  }
 
 	      if (answer == "0")
                digModC_ = "OFF";
@@ -1000,6 +969,8 @@ int VersaLase::OnDigModD(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
     std::ostringstream command;
     std::string answer;
+    std::vector<std::string> tokens;
+    std::string delims="=";
 
     if (eAct == MM::BeforeGet)
     {
@@ -1011,6 +982,13 @@ int VersaLase::OnDigModD(MM::PropertyBase* pProp, MM::ActionType eAct)
           ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
           PurgeComPort(port_.c_str());
           if (ret != DEVICE_OK) return ret;
+
+		  VersaLase::Tokenize(answer, tokens, delims);
+
+		  if ( 2 == tokens.size())
+		  {
+		  	   answer=tokens.at(1).c_str();
+		  }
 
 
 	      if (answer == "0")
