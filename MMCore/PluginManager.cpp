@@ -45,6 +45,8 @@
 #include <algorithm>
 using namespace std;
 
+#include <boost/algorithm/string.hpp>
+
 #ifdef linux
 #define LIB_NAME_SUFFIX ".so.0"
 #else
@@ -81,9 +83,9 @@ void CPluginManager::AddSearchPath(string path)
 }
 
 /**
- * Look up a file in the search paths.
+ * Search for a library and return its absolute path.
  *
- * This returns the absolute path, if found, and the filename itself otherwise.
+ * If no match is found, the filename is returned as is.
  *
  * @param filename the name of the file to look up.
  */
@@ -95,22 +97,20 @@ string CPluginManager::FindInSearchPath(string filename)
 
    vector<string>::const_iterator it;
    for (it = searchPaths_.begin(); it != searchPaths_.end(); it++) {
-      stringstream path;
-      path << *it;
+      string path(*it);
       #ifdef WIN32
-      path << "\\" << filename << ".dll";
+      path += "\\" + filename + ".dll";
       #else
-      path << "/" << filename;
+      path += "/" + filename;
       #endif
 
       // test whether it exists
-      //cout << "Searching for " << path.str() << endl;
-      ifstream in(path.str().c_str(), ifstream::in);
+      ifstream in(path.c_str(), ifstream::in);
       in.close();
 
       if (!in.fail())
          // we found it!
-         return path.str();
+         return path;
    }
 
    // not found!
@@ -118,24 +118,24 @@ string CPluginManager::FindInSearchPath(string filename)
 }
 
 /** 
- * Loads the plugin library. Platform dependent.
+ * Load a plugin library.
  *
  * Since we want to have a consistent plugin discovery/loading mechanism,
  * the search path -- if specified explicitly -- is traversed.
  *
  * This has to be done so that users do not have to make sure that
  * DYLD_LIBRARY_PATH, LD_LIBRARY_PATH or PATH and java.library.path are in
- * sync and include the correct paths (to make this the users' task violates
- * the law of the least surprises).
+ * sync and include the correct paths.
  *
- * @param name module name without extension and directory. Each platform has different conventions
- * for resolving the actual path from the library name.
- * @param funcName the name of the function
- * @return module handle if successful, throws exception if not
+ * However, the OS-dependent default search path is still searched in the case
+ * where the library is not found in our list of search paths. (XXX This should
+ * perhaps change, to avoid surprises.)
+ *
+ * @param shortName Simple module name without path, prefix, or suffix.
+ * @return Module handle if successful, throws exception if not
  */
 HDEVMODULE CPluginManager::LoadPluginLibrary(const char* shortName)
 {
-   // add specific name prefix
    string name(LIB_NAME_PREFIX);
    name += shortName;
    name += LIB_NAME_SUFFIX;
@@ -145,14 +145,17 @@ HDEVMODULE CPluginManager::LoadPluginLibrary(const char* shortName)
    string errorText;
    #ifdef WIN32
       int originalErrorMode = SetErrorMode(SEM_NOOPENFILEERRORBOX | SEM_FAILCRITICALERRORS);
-      hMod = (HDEVMODULE) LoadLibrary(name.c_str());
+      hMod = LoadLibrary(name.c_str());
       SetErrorMode(originalErrorMode);
    #else
       int mode = RTLD_NOW | RTLD_LOCAL;
       // Hack to make Andor adapter on Linux work
       if (strcmp (shortName, "Andor") == 0)
          mode = RTLD_LAZY | RTLD_LOCAL;
+
+      // XXX What's this line for? It makes absolutely no sense - Mark.
       hMod = dlopen(name.c_str(), RTLD_NOLOAD | mode);
+
       if (!hMod)
       {
          hMod = dlopen(name.c_str(), mode);
@@ -164,42 +167,34 @@ HDEVMODULE CPluginManager::LoadPluginLibrary(const char* shortName)
       CreateModuleLock(shortName);
       return hMod;
    }
-   GetSystemError (errorText);
-   errorText += " ";
-   errorText += shortName;
-   throw CMMError(errorText.c_str(), MMERR_LoadLibraryFailed); // dll load failed
 
+   GetSystemError(errorText);
+   errorText = "Failed to load library \"" + name + "\" (for \"" +
+         shortName + "\") [" + errorText + "]";
+   throw CMMError(errorText.c_str(), MMERR_LoadLibraryFailed);
 }
 
 /** 
- * Unloads the plugin library. Experimental.
+ * Forcefully unload a library. Do not use.
  */
 void CPluginManager::UnloadPluginLibrary(const char* moduleName)
 {
-   string name(LIB_NAME_PREFIX);
-   name += moduleName;
-   name += LIB_NAME_SUFFIX;
-   name = FindInSearchPath(name);
+   HDEVMODULE hLib = moduleMap_[moduleName];
+   if (!hLib)
+      return;
 
+   // XXX A terrible thing is done here, to completely unload the library: the
+   // API function to unload is called repetitively until it fails, so that the
+   // library is actually unloaded regardless of its current (OS-managed)
+   // reference count. This was presumably done to get the DLLAutoReloader
+   // plugin to work, and there is no other place from which this function is
+   // called, so I'm keeping the behavior for now - Mark.
    #ifdef WIN32
-      BOOL freed = false;
-      do {
-         HMODULE hLib = GetModuleHandle(name.c_str());
-         if (hLib != NULL) {
-            freed = FreeLibrary(hLib);
-         } else {
-            freed = false;
-         }
-      } while(freed);
+      while (FreeLibrary(hLib))
+         ;
    #else
-      dlclose(moduleMap_[moduleName]);
-      // Nico: the code below does not make much sense, the intent is also unclear
-      /*
-      int ret;
-      do {
-         int ret = dlclose(moduleMap_[moduleName]);
-      } while (ret == 0);
-      */
+      while (dlclose(hLib) == 0)
+         ;
    #endif
 }
 
@@ -212,43 +207,65 @@ void CPluginManager::UnloadPluginLibrary(const char* moduleName)
 void* CPluginManager::GetModuleFunction(HDEVMODULE hLib, const char* funcName)
 {
    string errorText;
+   void* procAddr;
    #ifdef WIN32
-      void* procAddr = ::GetProcAddress((HMODULE)hLib, funcName);
-      if (procAddr)
-         return procAddr;
-      else
-         GetSystemError(errorText);
+      procAddr = ::GetProcAddress(hLib, funcName);
    #else
-      return dlsym(hLib, funcName);
+      procAddr = dlsym(hLib, funcName);
    #endif
-   errorText += " ";
-   errorText += funcName;
+   if (procAddr)
+      return procAddr;
+      
+   GetSystemError(errorText);
+   // TODO Would be nice to include name of library.
+   errorText = "Failed to find function \"" + string(funcName) +
+         "\" in device adapter library [" + errorText + "]";
    throw CMMError(errorText.c_str(), MMERR_LibraryFunctionNotFound);
 }
 
-/** Platform dependent system error text */
+/**
+ * Get the OS error message.
+ *
+ * Must be called right after a dynamic library related API call, and can only
+ * be called once.
+ */
 void CPluginManager::GetSystemError(string& errorText)
 {
+   errorText.clear();
+
    #ifdef WIN32
-   // obtain error info from the system
-   void* pMsgBuf(0);
-   if (FormatMessage( 
-         FORMAT_MESSAGE_ALLOCATE_BUFFER | 
-         FORMAT_MESSAGE_FROM_SYSTEM | 
-         FORMAT_MESSAGE_IGNORE_INSERTS,
-         NULL,
-         GetLastError(),
-         MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
-         (LPTSTR)&pMsgBuf,
-         0,
-         NULL ))
-   {
-      errorText = (LPTSTR)(pMsgBuf);
-      LocalFree(pMsgBuf);
-   }
+      DWORD err = GetLastError();
+      LPSTR pMsgBuf(0);
+      if (FormatMessageA( 
+            FORMAT_MESSAGE_ALLOCATE_BUFFER | 
+            FORMAT_MESSAGE_FROM_SYSTEM | 
+            FORMAT_MESSAGE_IGNORE_INSERTS,
+            NULL,
+            err,
+            MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+            (LPSTR)&pMsgBuf,
+            0,
+            NULL) && pMsgBuf)
+      {
+         errorText = (const char*)pMsgBuf;
+
+         // Windows error messages sometimes have trailing newlines
+         boost::algorithm::trim(errorText);
+      }
+      if (pMsgBuf)
+      {
+         LocalFree(pMsgBuf);
+      }
    #else
-      errorText = dlerror();  
+      const char* errorString = dlerror();  
+      if (errorString) {
+         errorText = errorString;
+      }
    #endif
+
+   if (errorText.empty()) {
+      errorText = "operating system error message not available";
+   }
 }
 
 /**
@@ -279,6 +296,7 @@ void CPluginManager::CheckVersion(HDEVMODULE hLib)
       throw CMMError(errTxt.str().c_str(), MMERR_DeviceVersionMismatch);
    }
 }
+
 /**
  * Unloads the specified device from the core.
  * @param pDevice pointer to the device to unload
@@ -319,7 +337,6 @@ void CPluginManager::UnloadDevice(MM::Device* pDevice)
       devVector_ = newDevVector;
    }
 
-   // identify currently loaded module
    HDEVMODULE hLib = pDevice->GetModuleHandle();
    if (hLib == 0)
       throw CMMError(MMERR_UnknownModule); // can't get the handle to the device module
@@ -329,8 +346,7 @@ void CPluginManager::UnloadDevice(MM::Device* pDevice)
    fnDeleteDevice hDeleteDeviceFunc = (fnDeleteDevice) GetModuleFunction(hLib, "DeleteDevice");
 
    // release device resources
-   pDevice->Shutdown(); // perhaps there is no need to do this explicitly???
-                        // rely on device destructor to call Shutdown()?
+   pDevice->Shutdown();
 
    // delete device
    hDeleteDeviceFunc(pDevice);
@@ -387,7 +403,6 @@ MM::Device* CPluginManager::LoadDevice(const char* label, const char* moduleName
    {
       if( NULL != it->second)
          throw CMMError(label, MMERR_DuplicateLabel);
-
    }
 
    if (strlen(label) == 0)
@@ -396,24 +411,21 @@ MM::Device* CPluginManager::LoadDevice(const char* label, const char* moduleName
    // always attempt to load the plugin module
    // this should work fine even if the same module was previously loaded
    HDEVMODULE hLib = LoadPluginLibrary(moduleName);
-   assert(hLib);
 
    fnCreateDevice hCreateDeviceFunc(0);
    fnGetDeviceDescription hGetDeviceDescription(0);
    try
    {
-      CheckVersion(hLib); // verify that versions match
+      CheckVersion(hLib);
       hCreateDeviceFunc = (fnCreateDevice) GetModuleFunction(hLib, "CreateDevice");
-      assert(hCreateDeviceFunc);
       hGetDeviceDescription = (fnGetDeviceDescription) GetModuleFunction(hLib, "GetDeviceDescription");
-      assert(hGetDeviceDescription);
    }
    catch (CMMError& err)
    {
-      std::ostringstream o;
-      o << label << " module " << moduleName << " device " << deviceName;
+      string msg = string("Failed to load device \"") + deviceName + "\" from module \"" +
+            moduleName + "\" as \"" + label + "\" [" + err.getMsg() + "]";
 
-      CMMError newErr( o.str().c_str(), err.getCoreMsg().c_str(), err.getCode());
+      CMMError newErr(msg.c_str(), err.getCode());
       throw newErr;
    }
    
@@ -448,7 +460,10 @@ MM::Device* CPluginManager::GetDevice(const char* label) const throw (CMMError)
    CDeviceMap::const_iterator it;
    it = devices_.find(label);
    if (it == devices_.end() || it->second == 0)
-      throw CMMError(label, MMERR_InvalidLabel);
+   {
+      string msg = string("No device with label \"") + label + "\"";
+      throw CMMError(msg.c_str(), MMERR_InvalidLabel);
+   }
 
    return it->second;
 }
@@ -471,8 +486,6 @@ string CPluginManager::GetDeviceLabel(const MM::Device& device) const
       }
    }
    
-   //char buf[MM::MaxStrLength];
-   //device.GetLabel(buf);
    throw CMMError(MMERR_UnexpectedDevice);
 }
 
@@ -593,7 +606,7 @@ vector<string> CPluginManager::GetLoadedPeripherals(const char* label) const
 }
 
 /**
- * List all modules (device libraries) in the search path.
+ * List all modules (device libraries) at a given path.
  */
 void CPluginManager::GetModules(vector<string> &modules, const char* searchPath)
 {
@@ -602,112 +615,71 @@ void CPluginManager::GetModules(vector<string> &modules, const char* searchPath)
    string path = searchPath;
    path += "\\";
    path += LIB_NAME_PREFIX;
-   path += "*.*";
+   path += "*.dll";
 
-   // find the first dll file in the directory
+   // Use _findfirst(), _findnext(), and _findclose() from Microsoft C library
    struct _finddata_t moduleFile;
-   intptr_t hFile;
-   hFile = _findfirst(path.c_str(), &moduleFile);
-   if( hFile != -1L )
+   intptr_t hSearch;
+   hSearch = _findfirst(path.c_str(), &moduleFile);
+   if (hSearch != -1L) // Match found
    {
-      // remove prefix
-      string strippedName = std::string(moduleFile.name).substr(strlen(LIB_NAME_PREFIX));
-      strippedName = strippedName.substr(0, strippedName.find_first_of("."));
-      modules.push_back(strippedName);
-      while( _findnext( hFile, &moduleFile ) == 0 )
-      {
-         strippedName = std::string(moduleFile.name).substr(strlen(LIB_NAME_PREFIX));
+      do {
+         // remove prefix and suffix
+         string strippedName = std::string(moduleFile.name).substr(strlen(LIB_NAME_PREFIX));
          strippedName = strippedName.substr(0, strippedName.find_first_of("."));
          modules.push_back(strippedName);
-      }
+      } while (_findnext(hSearch, &moduleFile) == 0);
 
-      _findclose( hFile );
+      _findclose(hSearch);
    }
-#else
+#else // UNIX
    DIR *dp;
    struct dirent *dirp;
-   if ((dp  = opendir(searchPath)) != NULL)
+   if ((dp = opendir(searchPath)) != NULL)
    {
       while ((dirp = readdir(dp)) != NULL)
       {
-         if (strncmp(dirp->d_name,LIB_NAME_PREFIX,strlen(LIB_NAME_PREFIX)) == 0
+         const char* dir_name = dirp->d_name;
+         if (strncmp(dir_name, LIB_NAME_PREFIX, strlen(LIB_NAME_PREFIX)) == 0
 #ifdef linux
-             && strncmp(&dirp->d_name[strlen(dirp->d_name)-strlen(LIB_NAME_SUFFIX)],LIB_NAME_SUFFIX,strlen(LIB_NAME_SUFFIX)) == 0)
-#else
-             && strchr(&dirp->d_name[strlen(dirp->d_name)-strlen(LIB_NAME_SUFFIX)],'.') == NULL)
+             && strncmp(&dir_name[strlen(dir_name) - strlen(LIB_NAME_SUFFIX)], LIB_NAME_SUFFIX, strlen(LIB_NAME_SUFFIX)) == 0)
+#else // OS X
+             && strchr(&dir_name[strlen(dir_name) - strlen(LIB_NAME_SUFFIX)], '.') == NULL)
 #endif
          {
-           // remove prefix and suffix
-           string strippedName = std::string(dirp->d_name).substr(strlen(LIB_NAME_PREFIX));
-           strippedName = strippedName.substr(0,strippedName.length()-strlen(LIB_NAME_SUFFIX));
-           modules.push_back(strippedName);
+            // remove prefix and suffix
+            string strippedName = std::string(dir_name).substr(strlen(LIB_NAME_PREFIX));
+            strippedName = strippedName.substr(0, strippedName.length() - strlen(LIB_NAME_SUFFIX));
+            modules.push_back(strippedName);
          }
       }
       closedir(dp);
    }
-#endif
-
-   std::ostringstream duplicateLibraries;
-   if( 1 < modules.size())
-   {
-      std::sort(modules.begin(), modules.end());
-
-      std::vector<std::string>::iterator mit = modules.begin();
-      ++mit;
-      for(; mit != modules.end(); ++mit)
-      {
-         if( 0 == (*mit).compare(*(mit-1)) )
-         {
-            duplicateLibraries << searchPath << "/" << LIB_NAME_PREFIX << *mit;
-            duplicateLibraries << "\n";
-         }
-
-      }
-   }
-
-
-   if( 0 < duplicateLibraries.str().length())
-   {
-      std::ostringstream mes;
-      mes << "Duplicate Libraries found:\n" << duplicateLibraries.str();
-      CMMError toThrow( mes.str().c_str(), DEVICE_DUPLICATE_LIBRARY);
-      throw toThrow;
-   }
-
-
-
+#endif // UNIX
 }
 
+/**
+ * List all modules (device libraries) in all search paths.
+ *
+ * Duplicates may be included if they are in different directories.
+ */
 vector<string> CPluginManager::GetModules()
 {
    vector<string> modules;
    vector<string>::const_iterator it;
 
-   std::string searchPathList;
-   std::string delim;
-#ifdef WIN32
-   delim = "\n";
-#else
-   delim = "\n";
-#endif
    for (it = searchPaths_.begin(); it != searchPaths_.end(); it++)
-   {
-      if(0 < searchPathList.length())
-         searchPathList+=delim;
-      searchPathList += *it;
-   }
+      GetModules(modules, it->c_str());
 
-   try
-   {
-      for (it = searchPaths_.begin(); it != searchPaths_.end(); it++)
-         GetModules(modules, it->c_str());
-   }
-   catch(CMMError e)
-   {
-      std::string m = e.getCoreMsg();
-      m += "search path list is :\n" + searchPathList + "\nPlease check the path.";
-      e.setCoreMsg(m.c_str() );
-      throw e;
+   // Check for duplicates
+   // XXX Is this the right place to be doing this checking? Shouldn't it be an
+   // error to have duplicates even if we're not listing all libraries?
+   set<string> moduleSet;
+   for (vector<string>::const_iterator it = modules.begin(), end = modules.end(); it != end; ++it) {
+      if (moduleSet.count(*it)) {
+         string msg("Duplicate libraries found with name \"" + *it + "\"");
+         throw CMMError(msg.c_str(), DEVICE_DUPLICATE_LIBRARY);
+      }
    }
 
    return modules;
@@ -720,7 +692,7 @@ vector<string> CPluginManager::GetAvailableDevices(const char* moduleName) throw
 {
    vector<string> devices;
    HDEVMODULE hLib = LoadPluginLibrary(moduleName);
-   CheckVersion(hLib); // verify that versions match
+   CheckVersion(hLib);
 
    fnGetNumberOfDevices hGetNumberOfDevices(0);
    fnGetDeviceName hGetDeviceName(0);
@@ -765,7 +737,7 @@ vector<string> CPluginManager::GetAvailableDeviceDescriptions(const char* module
 {
    vector<string> descriptions;
    HDEVMODULE hLib = LoadPluginLibrary(moduleName);
-   CheckVersion(hLib); // verify that versions match
+   CheckVersion(hLib);
 
    fnGetNumberOfDevices hGetNumberOfDevices(0);
    fnGetDeviceDescription hGetDeviceDescription(0);
@@ -818,7 +790,7 @@ vector<long> CPluginManager::GetAvailableDeviceTypes(const char* moduleName) thr
 {
    vector<long> types;
    HDEVMODULE hLib = LoadPluginLibrary(moduleName);
-   CheckVersion(hLib); // verify that versions match
+   CheckVersion(hLib);
 
    fnGetNumberOfDevices hGetNumberOfDevices(0);
    fnInitializeModuleData hInitializeModuleData(0);
@@ -877,46 +849,6 @@ vector<long> CPluginManager::GetAvailableDeviceTypes(const char* moduleName) thr
    }
    
    return types;
-}
-
-string CPluginManager::Serialize()
-{
-   ostringstream os;
-   CDeviceMap::const_iterator it;
-   for (it=devices_.begin(); it != devices_.end(); it++)
-   {
-      MM::Device* pDev = it->second;
-      if (pDev)
-      {
-         char deviceName[MM::MaxStrLength] = "";
-         char moduleName[MM::MaxStrLength] = "";
-         pDev->GetName(deviceName);
-         pDev->GetModuleName(moduleName);
-         os << it->first << " " << moduleName << " " << deviceName << endl; 
-      }
-   }
-   return os.str();
-}
-
-void CPluginManager::Restore(const string& data)
-{
-   UnloadAllDevices();
-   istringstream is(data);
-
-   char line[3 * MM::MaxStrLength];
-   while(is.getline(line, 3 * MM::MaxStrLength, '\n'))
-   {
-      string label, moduleName, deviceName;
-      istringstream isl(line);
-      if (isl)
-         isl >> label;
-      if (isl)
-         isl >> moduleName;
-      if (isl)
-         isl >> deviceName;
-      if (!label.empty() && !moduleName.empty() && !deviceName.empty())
-         LoadDevice(label.c_str(), moduleName.c_str(), deviceName.c_str());
-   }
 }
 
 /**

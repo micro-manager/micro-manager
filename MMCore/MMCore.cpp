@@ -978,7 +978,7 @@ std::string CMMCore::getDeviceLibrary(const char* label) throw (CMMError)
 }
 
 /**
- * Unload a library with a particular name. Experimental.
+ * Forcefully unload a library. Experimental. Don't use.
  */
 void CMMCore::unloadLibrary(const char* moduleName) throw (CMMError)
 {

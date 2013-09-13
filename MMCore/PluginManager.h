@@ -74,11 +74,6 @@ public:
    static std::vector<std::string> GetAvailableDeviceDescriptions(const char* moduleName) throw (CMMError);
    static std::vector<long> GetAvailableDeviceTypes(const char* moduleName) throw (CMMError);
 
-   // persistence
-   static void SetPersistentData(HDEVMODULE hLib, const char* moduleName);
-   std::string Serialize();
-   void Restore(const std::string& data);
-
    // module level thread locking
    static void CreateModuleLock(const char* moduleName);
    void DeleteModuleLocks();
