@@ -133,6 +133,8 @@ ThorlabsUSBCam::ThorlabsUSBCam() :
    bitDepth_(8),
    roiX_(0),
    roiY_(0),
+   roiWidth_(0),
+   roiHeight_(0),
    sequenceStartTime_(0),
 	binSize_(1),
    nComponents_(1),
@@ -208,6 +210,11 @@ int ThorlabsUSBCam::Initialize()
    if (nRet != IS_SUCCESS)
       return nRet;
 
+   roiX_=0;
+   roiY_=0;
+   roiWidth_ = sensorInfo.nMaxWidth;
+   roiHeight_ = sensorInfo.nMaxHeight;
+
    // set display mode
    nRet = is_SetDisplayMode(camHandle_, IS_SET_DM_DIB);
    if (nRet != IS_SUCCESS)
@@ -221,10 +228,18 @@ int ThorlabsUSBCam::Initialize()
 
    // binning
    CPropertyAction *pAct = new CPropertyAction (this, &ThorlabsUSBCam::OnBinning);
-   nRet = CreateProperty(MM::g_Keyword_Binning, "1", MM::Integer, true, pAct);
+   nRet = CreateProperty(MM::g_Keyword_Binning, "1", MM::Integer, false, pAct);
    assert(nRet == DEVICE_OK);
 
-   nRet = SetAllowedBinning();
+   vector<string> binValues;
+   binValues.push_back("1");
+   binValues.push_back("2");
+//   binValues.push_back("4");
+//   binValues.push_back("8");
+   // the newer cameras do not seem to support binning higher than 2
+   // TODO: query the camera which sizes are supported and set allowed
+   // values accordingly
+   nRet = SetAllowedValues(MM::g_Keyword_Binning, binValues);
    if (nRet != DEVICE_OK)
       return nRet;
 
@@ -419,9 +434,13 @@ long ThorlabsUSBCam::GetImageBufferSize() const
 * @param xSize - width
 * @param ySize - height
 */
-int ThorlabsUSBCam::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize)
+int ThorlabsUSBCam::SetROI(unsigned /*x*/, unsigned /*y*/, unsigned /*xSize*/, unsigned /*ySize*/)
 {
 
+   return DEVICE_UNSUPPORTED_COMMAND;
+   // This is not properly implemented yet
+   // should use is_AOI() call
+   /*
    if (xSize == 0 && ySize == 0)
    {
       // effectively clear ROI
@@ -432,11 +451,14 @@ int ThorlabsUSBCam::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySiz
    else
    {
       // apply ROI
+      roiWidth_ = xSize;
+      roiHeight_ = ySize;
       img_.Resize(xSize, ySize);
       roiX_ = x;
       roiY_ = y;
    }
    return DEVICE_OK;
+   */
 }
 
 /**
@@ -510,13 +532,6 @@ int ThorlabsUSBCam::GetBinning() const
 int ThorlabsUSBCam::SetBinning(int binF)
 {
    return SetProperty(MM::g_Keyword_Binning, CDeviceUtils::ConvertToString(binF));
-}
-
-int ThorlabsUSBCam::SetAllowedBinning() 
-{
-   vector<string> binValues;
-   binValues.push_back("1");
-   return SetAllowedValues(MM::g_Keyword_Binning, binValues);
 }
 
 
@@ -758,36 +773,63 @@ int MySequenceThread::svc(void) throw()
 */
 int ThorlabsUSBCam::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-
-   int ret = DEVICE_ERR;
-   switch(eAct)
+   if (eAct == MM::AfterSet)
    {
-   case MM::AfterSet:
-      {
-         if(IsCapturing())
-            return DEVICE_CAMERA_BUSY_ACQUIRING;
+      if(IsCapturing())
+         return DEVICE_CAMERA_BUSY_ACQUIRING;
 
-         // the user just set the new value for the property, so we have to
-         // apply this value to the 'hardware'.
-         long binFactor;
-         pProp->Get(binFactor);
-			if(binFactor > 0 && binFactor < 10)
-			{
-				img_.Resize(sensorInfo.nMaxWidth/binFactor, sensorInfo.nMaxHeight/binFactor);
-				binSize_ = binFactor;
-            std::ostringstream os;
-            os << binSize_;
-            OnPropertyChanged("Binning", os.str().c_str());
-				ret=DEVICE_OK;
-			}
-      }break;
-   case MM::BeforeGet:
+      int supported = is_SetBinning(camHandle_, IS_GET_SUPPORTED_BINNING);
+
+      long binFactor;
+      pProp->Get(binFactor);
+
+      if (binFactor == 1)
       {
-         ret=DEVICE_OK;
-			pProp->Set(binSize_);
-      }break;
+         int ret = is_SetBinning(camHandle_, IS_BINNING_DISABLE);
+         if (ret != IS_SUCCESS)
+            return ret;
+      }
+      else if (binFactor == 2)
+      {
+         int ret = is_SetBinning(camHandle_, IS_BINNING_2X_VERTICAL | IS_BINNING_2X_HORIZONTAL);
+         if (ret != IS_SUCCESS)
+         {
+            // the method returned error code, but there seems to be a bug in the firmware/driver
+            // that makes the camera return the -1 error code even if it succeeds
+            // or perhaps the SDK documentation is not correct
+            // so we are going to try to override the error code under the following condition
+            bool shouldWork = supported & IS_BINNING_2X_VERTICAL && supported & IS_BINNING_2X_HORIZONTAL && ret == IS_NO_SUCCESS;
+            if (!shouldWork)
+               return ret;
+         }
+      }
+      else if (binFactor == 4)
+      {
+         int ret = is_SetBinning(camHandle_, IS_BINNING_4X_VERTICAL | IS_BINNING_4X_HORIZONTAL);
+         if (ret != IS_SUCCESS)
+            return ret;
+      }
+      else if (binFactor == 8)
+      {
+         int ret = is_SetBinning(camHandle_, IS_BINNING_8X_VERTICAL | IS_BINNING_8X_HORIZONTAL);
+         if (ret != IS_SUCCESS)
+            return ret;
+      }
+      else
+      {
+         return ERR_THORCAM_UNKNOWN_BIN_SIZE;
+      }
+
+      // bin setting succeded
+      binSize_ = binFactor;
+      return ResizeImageBuffer();
    }
-   return ret; 
+   else if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(binSize_);
+   }
+
+   return DEVICE_OK;
 }
 
 /**

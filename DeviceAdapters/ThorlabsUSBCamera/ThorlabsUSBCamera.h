@@ -40,6 +40,7 @@
 #define ERR_THORCAM_LIVE_TIMEOUT 11001
 #define ERR_THORCAM_LIVE_UNKNOWN_EVENT 11002
 #define ERR_THORCAM_UNKNOWN_PIXEL_TYPE 11003
+#define ERR_THORCAM_UNKNOWN_BIN_SIZE 11004
 
 //////////////////////////////////////////////////////////////////////////////
 // ThorlabsUSBCam class
@@ -102,7 +103,6 @@ public:
    int OnFPS(MM::PropertyBase* , MM::ActionType );
 
 private:
-   int SetAllowedBinning();
    int ResizeImageBuffer();
 
    ImgBuffer img_;
@@ -114,12 +114,12 @@ private:
    int bitDepth_;
    unsigned roiX_;
    unsigned roiY_;
+   unsigned roiWidth_;
+   unsigned roiHeight_;
    long imageCounter_;
 	long binSize_;
 	SENSORINFO sensorInfo;
    volatile double framesPerSecond;
-
-	std::string triggerDevice_; // TODO: is this really used??
 
    MMThreadLock imgPixelsLock_;
    int nComponents_;
