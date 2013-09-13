@@ -101,10 +101,10 @@ public:
    int OnJoystickEnableDisable(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
-   double stepSizeXUm_;
-   double stepSizeYUm_;
    double unitMultX_;
    double unitMultY_;
+   double stepSizeXUm_;
+   double stepSizeYUm_;
    string axisLetterX_;
    string axisLetterY_;
 };

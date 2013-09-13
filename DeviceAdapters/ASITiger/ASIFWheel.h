@@ -60,8 +60,8 @@ public:
 private:
    unsigned int numPositions_;
    unsigned int curPosition_;
-   string axisLetter_;
    unsigned int spinning_;
+   string axisLetter_;
 
    int SelectWheel();
 };

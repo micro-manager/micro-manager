@@ -95,8 +95,8 @@ public:
    int OnJoystickSelect       (MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
-   double stepSizeUm_;
    double unitMult_;
+   double stepSizeUm_;
    string axisLetter_;
 };
 

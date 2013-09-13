@@ -100,17 +100,17 @@ public:
    int OnSAPatternByteY       (MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
+   string axisLetterX_;
+   string axisLetterY_;
    double unitMultX_;  // units per degree
    double unitMultY_;  // units per degree
    double limitX_;   // positive limit only (on power-up things are symmetric about 0)
    double limitY_;   // positive limit only (on power-up things are symmetric about 0)
-   string axisLetterX_;
-   string axisLetterY_;
    double lastX_;   // used to cache position
    double lastY_;   // used to cache position
 
    // for polygons
-   vector<pair<double,double>> polygons_;
+   vector< pair<double,double> > polygons_;
    long polygonRepetitions_;
 };
 

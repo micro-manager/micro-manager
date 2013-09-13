@@ -1318,9 +1318,9 @@ int CMMirror::OnJoystickMirror(MM::PropertyBase* pProp, MM::ActionType eAct)
    else if (eAct == MM::AfterSet) {
       string tmpstr;
       pProp->Get(tmpstr);
-      double joystickFast;
+      double joystickFast = 0.0;
       RETURN_ON_MM_ERROR ( GetProperty(g_JoystickFastSpeedPropertyName, joystickFast) );
-      double joystickSlow;
+      double joystickSlow = 0.0;
       RETURN_ON_MM_ERROR ( GetProperty(g_JoystickSlowSpeedPropertyName, joystickSlow) );
       if (tmpstr.compare(g_YesState) == 0)
          command << addressChar_ << "JS X=-" << joystickFast << " Y=-" << joystickSlow;

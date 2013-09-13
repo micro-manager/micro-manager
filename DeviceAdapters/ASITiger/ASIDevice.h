@@ -66,13 +66,14 @@ public:
    bool Busy() { return false; }          // should be implemented in child class
 
 protected:
-   bool initialized_;
    ASIDeviceBase *deviceASI_;    // used to call functions in CDeviceBase (e.g. property methods)
+   string addressChar_;    // address within hub, in single character (possibly extended ASCII)
+
+   bool initialized_;
    double firmwareVersion_;
    ASIHub *hub_;           // used for serial communication
-   string addressString_;  // address within hub, in hex format
-   string addressChar_;    // address within hub, in single character (possibly extended ASCII)
    int ret_;               // return code for use with Micro-manager functions
+   string addressString_;  // address within hub, in hex format
 
    void InitializeASIErrorMessages();
 

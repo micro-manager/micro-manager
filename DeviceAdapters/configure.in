@@ -379,6 +379,7 @@ AC_CONFIG_FILES(
 	[Arduino/Makefile:Arduino/Makefile.in:MMDEVAPI.rules]
 	[ASIFW1000/Makefile:ASIFW1000/Makefile.in:MMDEVAPI.rules]
 	[ASIStage/Makefile:ASIStage/Makefile.in:MMDEVAPI.rules]
+	[ASITiger/Makefile:ASITiger/Makefile.in:MMDEVAPI.rules]
 	[ASIWPTR/Makefile:ASIWPTR/Makefile.in:MMDEVAPI.rules]
 	[CARVII/Makefile:CARVII/Makefile.in:MMDEVAPI.rules]
 	[Cobolt/Makefile:Cobolt/Makefile.in:MMDEVAPI.rules]

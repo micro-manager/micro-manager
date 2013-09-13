@@ -80,8 +80,8 @@ public:
    int OnMotorControl         (MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
-   double stepSizeUm_;
    double unitMult_;
+   double stepSizeUm_;
    string axisLetter_;
 };
 
