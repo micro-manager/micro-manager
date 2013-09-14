@@ -236,7 +236,7 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
          setZPosition(z);
          long tZ = System.currentTimeMillis() - start;
 
-         TaggedImage img = null;
+         TaggedImage img;
          if (liveModeOn_) {
             img = core.getLastTaggedImage();
          } else {
@@ -283,10 +283,9 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
 
    public double getCurrentFocusScore() {
       CMMCore core = app_.getMMCore();
-      double z = 0.0;
       double score = 0.0;
       try {
-         z = core.getPosition(core.getFocusDevice());
+         double z = core.getPosition(core.getFocusDevice());
          core.waitForDevice(core.getCameraDevice());
          core.snapImage();
          Object img = core.getImage();
