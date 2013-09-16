@@ -44,7 +44,7 @@ ASIDevice::ASIDevice(MM::Device *device, const char* name) :
       initialized_(false),
       firmwareVersion_(0.0),
       hub_(NULL),
-      ret_(0),
+      ret_(DEVICE_OK),
       addressString_(g_EmptyCardAddressStr)
 {
    // get pointer to object where we can call property and other methods
@@ -55,7 +55,8 @@ ASIDevice::ASIDevice(MM::Device *device, const char* name) :
    // name property will be used to re-create the object by calling CreateDevice again with this parameter
    // if name isn't specified then skip this step (=> method for parent objects to delay setting name until child created)
    if (strcmp(name, "") != 0)
-      ASSERT_DEVICE_OK ( deviceASI_->CreateProperty(MM::g_Keyword_Name, name, MM::String, true) );
+      deviceASI_->CreateProperty(MM::g_Keyword_Name, name, MM::String, true);
+
 
    // sometimes constructor gets called without the full name like in the case of the hub
    //   so only set up these properties if we have the required information
@@ -64,7 +65,7 @@ ASIDevice::ASIDevice(MM::Device *device, const char* name) :
       addressString_ = GetHexAddrFromExtName(name);
       if (addressString_.compare(g_EmptyCardAddressStr) != 0 )
       {
-         ASSERT_DEVICE_OK ( deviceASI_->CreateProperty(g_TigerHexAddrPropertyName, addressString_.c_str(), MM::String, true) );
+         deviceASI_->CreateProperty(g_TigerHexAddrPropertyName, addressString_.c_str(), MM::String, true);
          addressChar_ = ConvertToTigerRawAddress(addressString_);
       }
    }
@@ -117,7 +118,7 @@ void ASIDevice::GetName(char* pszName) const
 {
    char name[MM::MaxStrLength];
    if (deviceASI_->HasProperty(MM::g_Keyword_Name))
-      ASSERT_DEVICE_OK ( deviceASI_->GetProperty(MM::g_Keyword_Name, name) );
+      deviceASI_->GetProperty(MM::g_Keyword_Name, name);
    else
       strcpy(name, "Undefined");
    CDeviceUtils::CopyLimitedString(pszName, name);

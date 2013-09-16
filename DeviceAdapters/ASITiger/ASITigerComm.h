@@ -50,7 +50,7 @@ public:
    // Hub API
    MM::DeviceDetectionStatus DetectDevice();
    int DetectInstalledDevices();
-   MM::Device* CTigerCommHub::CreatePeripheralDevice(const char* adapterName);
+   MM::Device* CreatePeripheralDevice(const char* adapterName);
 
    // for use of other ASI methods
    string ConvertToTigerRawAddress(const string &s);  // returns single character but since could be extended ASCII keep in string

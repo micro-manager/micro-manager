@@ -38,7 +38,9 @@ using namespace std;
 // ASI-specific macros
 //
 #define RETURN_ON_MM_ERROR( result ) if( DEVICE_OK != (ret_ = result) ) return ret_;
-#define ASSERT_DEVICE_OK( result ) assert( DEVICE_OK == (result) )
+// NB: assert shouldn't be used to do useful work because release version strips it out
+// e.g. instead of "assert(foo() == 1);" should do "int tmp = foo(); assert(tmp==1);"
+//#define ASSERT_DEVICE_OK( result ) assert( DEVICE_OK == (result) )
 
 // some shortcuts for bit manipulations
 #define BIT0   0x01
