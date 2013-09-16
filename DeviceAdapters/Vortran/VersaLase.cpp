@@ -436,8 +436,34 @@ int VersaLase::SetOpen(bool open)
 
 int VersaLase::GetOpen(bool& open)
 {
-   open=true;
-   return DEVICE_OK;
+     long state;
+     std::ostringstream command;
+     std::string answer;
+     std::vector<std::string> tokens;
+     std::string delims="=";
+     int ret;
+
+     command << "a.?le";
+     ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
+	  if (ret != DEVICE_OK) return ret;
+	  CDeviceUtils::SleepMs(50);
+	  ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+	  ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+	  PurgeComPort(port_.c_str());
+	  if (ret != DEVICE_OK) return ret;
+
+	  VersaLase::Tokenize(answer, tokens, delims);
+	  if ( 2 == tokens.size())
+	  {
+			answer=tokens.at(1).c_str();
+	  }
+
+	  state=atol(answer.c_str());
+	  if (state==1)
+		    open = true;
+	  else if (state==0)
+	       open = false;
+     return DEVICE_OK;
 }
 
 int VersaLase::Fire(double /*deltaT*/)
