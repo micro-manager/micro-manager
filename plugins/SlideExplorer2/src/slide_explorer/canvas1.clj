@@ -3,6 +3,7 @@
                      GraphicsEnvironment
                      Graphics2D GradientPaint Image
                      Polygon RenderingHints Shape)
+           (java.awt.event MouseAdapter)
            (java.awt.font TextAttribute)
            (java.awt.image BufferedImage)
            (javax.swing JFrame JPanel JScrollPane JTextArea)
@@ -20,9 +21,14 @@
 ; on screen.
 (def ^:dynamic *font-render-context*
   (.. GraphicsEnvironment getLocalGraphicsEnvironment
-      (createGraphics (BufferedImage. 1 1 BufferedImage/TYPE_3BYTE_BGR))))
+      (createGraphics (BufferedImage. 1 1 BufferedImage/TYPE_3BYTE_BGR))
+      getFontRenderContext))
 
 (def ^:dynamic *canvas-error*)
+
+(defn show [x]
+  (do (pr x)
+      x))
 
 (defn clip-value
   "Clips a value between min-value and max-value."
@@ -256,13 +262,15 @@
 
 (defn transform-object [{:keys [transform l t x y w h
                          scale-x scale-y scale rotate] :as m}]
-      ; (println x y w h rotate scale scale-x scale-y)
    (if (or x y w h rotate scale scale-x scale-y)
     (doto (.clone (or transform (AffineTransform.)))
-      (.translate (double (or x 0)) (double (or y 0)))
+      (.translate (double (or x 0))
+                  (double (or y 0)))
       (.rotate (* degrees-to-radians (or rotate 0.0)))
-      (.scale (or scale-x scale 1.0) (or scale-y scale 1.0))
-      (.translate (double (or (/ w -2) 0)) (double (or (/ h -2)))))
+      (.scale (or scale-x scale 1.0)
+              (or scale-y scale 1.0))
+      (.translate (double (/ (or w 0) 2))
+                  (double (/ (or h 0) -2))))
     transform))
 
 (defn shape [{:keys [transform l t x y
@@ -330,7 +338,6 @@
                  (or arc-radius arc-width)
                  (or arc-radius arc-height))))
 
-
 (defn font-object
   "Create a java font object with various properties."
   [{:keys [name size bold italic underline strikethrough]
@@ -349,13 +356,15 @@
 (defn string-bounds
   "Measure the bounds of a string."
   [font-obj text]
+  ;(println *font-render-context*)
   (.getStringBounds font-obj text *font-render-context*))
 
 (defmethod widget :text
   [{:keys [text font] :as m}]
   (let [font-obj (font-object font)
         shape-obj (string-bounds font-obj text)
-        m+ (assoc m :w (.getWidth shape-obj) :h (.getHeight shape-obj))
+        m+ (assoc m :w (.getWidth shape-obj)
+                    :h (.getHeight shape-obj))
         m++ (complete-coordinates m+)
         new-transform (transform-object m++)]
     (-> m+
@@ -443,6 +452,13 @@
                             (draw-primitive g2d %))
            (denest (expand widgets))))))
 
+(defn draw-error [graphics e]
+  (draw graphics
+        [{:type :text
+          :left 0
+          :top 20
+          :text (.getMessage e)}]))  
+
 (defn canvas
   "Create a blank JPanel \"canvas\" for automatic painting. The
   canvas is automatically updated with the graphics description
@@ -454,7 +470,7 @@
                   (proxy-super paintComponent graphics)
                   (try
                     (draw graphics @reference)
-                    (catch Throwable e (.printStackTrace e))))
+                    (catch Throwable e (draw-error graphics e))))
                 (alterMeta [alter args]
                   (apply swap! meta-atom alter args))
                 (resetMeta [m]
@@ -466,13 +482,66 @@
     (alter-meta! panel assoc ::data-source reference)
     panel))
 
+;; mouse inputs
+
+(defn create-action [{:keys [shape] :as widget} action-type]
+  (let [offset-x (.. shape getBounds getX)
+        offset-y (.. shape getBounds getY)]
+    (fn [x y] ((widget action-type)
+                 (- x offset-x) (- y offset-y)))))
+
+(defn triggered-mouse-actions [action-type [x y] data]
+  (->> data
+       expand
+       ;show
+       (filter #(and (% action-type)
+                     (-> (.createTransformedShape
+                           (% :transform) (% :shape)) (.contains x y))))
+       (map #(create-action % action-type))))
+
+(defn run-mouse-actions [e action-type reference]
+  (let [x (.getX e) y (.getY e)]                    
+    (doseq [action (triggered-mouse-actions action-type [x y] @reference)]
+      (action x y))))
+
+(defn activate-dragging! [e reference canvas]
+  (let [x (.getX e) y (.getY e)]
+    (alter-meta! canvas assoc ::dragging-action
+                 (last (mouse-actions :on-mouse-drag [x y] @reference)))))
+
+(defn stop-dragging! [canvas]
+  (alter-meta! canvas dissoc ::dragging-action))
+
+(defn continue-dragging [e canvas]
+  (let [x (.getX e) y (.getY e)]
+    (when-let [action ((meta canvas) ::dragging-action)]
+      (action x y))))
+
+(defn interactive-canvas
+  [reference]
+  (let [canvas (canvas reference)
+        data @reference
+        mouse-adapter
+        (proxy [MouseAdapter] []
+          (mouseClicked [e] (run-mouse-actions e :mouse-click reference))
+          (mousePressed [e] (activate-dragging! e reference canvas)
+                            (run-mouse-actions e :mouse-down reference))
+          (mouseReleased [e] (stop-dragging! canvas)
+                             (run-mouse-actions e :mouse-up reference))
+          (mouseEntered [e] (run-mouse-actions e :mouse-enter reference))
+          (mouseExited [e] (run-mouse-actions e :mouse-exit reference))
+          (mouseDragged [e] (continue-dragging e canvas)))]
+    (doto canvas
+      (.addMouseListener mouse-adapter)
+      (.addMouseMotionListener mouse-adapter))))
+
 
 ;; test
 
 (def grafix (atom nil))
 
 (defn canvas-frame [reference]
-  (let [panel (canvas reference)]
+  (let [panel (interactive-canvas reference)]
     (doto (JFrame. "canvas")
       (.. getContentPane (add panel))
       (.setBounds 10 10 500 500)
@@ -506,10 +575,11 @@
         scroll-pane (JScrollPane. text-area)]
     (handle-data-changed text-area
       #(try (reset! data-atom
-              (read-string (.getText text-area)))
+              (eval (read-string (.getText text-area))))
                  (catch Exception e nil)))
     (.setText text-area (with-out-str (clojure.pprint/pprint @data-atom)))
     (doto (JFrame. "Data Editor")
+      (.setBounds 10 10 400 400)
       (.. getContentPane (add scroll-pane))
       .show)))
 
@@ -524,11 +594,13 @@
     :side 100}
    {:type :text
     :text "hello"
-    :color red
+    :color :cyan
     :x 100
     :y 100}
    {:type :arc
-    :l 100
+    :scale 2
+      :mouse-up (fn [x y] (println "yo: " x y))
+     :l 100
      :y 200
      :w 50
      :h 70
@@ -536,3 +608,7 @@
      :arc-angle 140
      :arc-boundary :pie}
    ])
+
+(defn run-test []
+  (reset! grafix test-data)
+  (canvas-frame grafix))
