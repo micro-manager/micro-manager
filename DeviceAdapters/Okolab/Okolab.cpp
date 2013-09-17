@@ -11,20 +11,21 @@
 //
 // LICENSE:       This file is distributed under the BSD license.
 //
-// LAST REVISION: 2012-11-06
+// LAST REVISION: 2013-09-10
 //
 
 #include "Okolab.h"
 #include "TestControl.h"
 #include "OCSControl.h"
 #include "H201BLControl.h"
+#include "H301BLControl.h"
 #include "O2BLControl.h"
 #include "CO2BLControl.h"
 #include "CO2O2BLControl.h"
 #include "CO2O2BL13Control.h"
 
 #include "../../MMDevice/ModuleInterface.h"
-#include <sstream>
+// #include <sstream>
 
 
 #ifdef WIN32
@@ -35,12 +36,12 @@
  #pragma comment(lib, "ws2_32.lib") 
 #endif
 
-// Note: this module uses Microsoft's C++/CLI to call CLR API.
-// This is only used to check if a process of a given name is running,
-// and could be rewritten using Win32 API should we need to disable
-// C++/CLI.
 #if defined(WIN32) || defined(WIN64)
-// #using <System.dll>  // Process
+ #include <windows.h>
+ #include <process.h>
+ #include <Tlhelp32.h>
+ #include <winbase.h>
+ #include <string.h>
 #endif
 
 const char* g_DeviceName = "Okolab";
@@ -48,12 +49,12 @@ const char* g_DeviceName = "Okolab";
 extern const char* g_TestControl;
 extern const char* g_OCSControl;
 extern const char* g_H201BLControl;
+extern const char* g_H301BLControl;
 extern const char* g_CO2BLControl;
 extern const char* g_CO2O2BLControl;
 extern const char* g_CO2O2BL13Control;
 extern const char* g_O2BLControl;
 
-using namespace std;
 
 #ifdef WIN32
  #define SCK_VERSION1            0x0101
@@ -98,6 +99,7 @@ MODULE_API void InitializeModuleData()
  AddAvailableDeviceName(g_H201BLControl, "Okolab H201 T Unit-BL");
  AddAvailableDeviceName(g_CO2O2BLControl, "Okolab CO2-O2 Unit-BL [0-10;1-18]");
  AddAvailableDeviceName(g_CO2O2BL13Control, "Okolab CO2-O2 Unit-BL [0-20;1-95]");
+ AddAvailableDeviceName(g_H301BLControl, "Okolab H301 T Unit-BL");
  SockSetup();
 }
 
@@ -130,6 +132,10 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
  if(strcmp(deviceName, g_CO2O2BL13Control)==0)
   {
    return new CO2O2BL13Control();
+  }
+ if(strcmp(deviceName, g_H301BLControl)==0)
+  {
+   return new H301BLControl();
   }
 
  #ifdef _DEBUG_
@@ -533,14 +539,29 @@ bool OkolabDevice::OCSRunning()
  if(rcv_statuscode!=0) return false;
  bRunning=true;
  */
-// #if defined(WIN32) || defined(WIN64)
-#if 0
-   using namespace System;
-   using namespace System::Diagnostics;
-   array<Process^> ^processes;
-   processes=Process::GetProcessesByName("OKO-Control Server");
-   if(processes->Length>0) bRunning=true;
+ #if defined(WIN32) || defined(WIN64)
+   HANDLE hSnapShot = CreateToolhelp32Snapshot(TH32CS_SNAPALL, NULL);
+   PROCESSENTRY32 pEntry;
+   pEntry.dwSize = sizeof (pEntry);
+   BOOL hRes = Process32First(hSnapShot, &pEntry);
+   while(hRes)
+    {
+     /*
+     FILE *fp;
+     fp=fopen("processes_log.txt","a");
+     char buffer[200];
+     wcstombs(buffer, pEntry.szExeFile, sizeof(buffer));
+     fprintf(fp,"%s\n",buffer);
+     fclose(fp);
+     */
+     if(lstrcmp(pEntry.szExeFile, _T("OKO-Control Server.exe"))==0)
+      {
+       bRunning=true;
+      }
+     hRes=Process32Next(hSnapShot, &pEntry);
+	}
  #endif
+
  return bRunning;
 }
 
@@ -559,12 +580,24 @@ void OkolabDevice::OCSStart()
  DWORD type=REG_SZ;
  TCHAR wvalue[255];
  HKEY hKey;
+
+ #if defined(WIN32)
  if(RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion", 0, KEY_READ | KEY_WOW64_64KEY, &hKey)==ERROR_SUCCESS)
   {
    DWORD dwret;
    dwret=RegQueryValueEx(hKey, L"ProgramFilesDir", NULL, &type, (LPBYTE)wvalue, &size);
    RegCloseKey(hKey);
   }
+ #endif
+
+ #if defined(WIN64)
+ if(RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion", 0, KEY_READ | KEY_WOW64_64KEY, &hKey)==ERROR_SUCCESS)
+  {
+   DWORD dwret;
+   dwret=RegQueryValueEx(hKey, L"ProgramFilesDir (x86)", NULL, &type, (LPBYTE)wvalue, &size);
+   RegCloseKey(hKey);
+  }
+ #endif
 
  char value[400]; 
  WideCharToMultiByte(CP_ACP,0,wvalue,255,value,400,NULL,NULL);

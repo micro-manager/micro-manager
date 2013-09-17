@@ -21,9 +21,10 @@
 // This is only used to check if a process of a given name is running,
 // and could be rewritten using Win32 API should we need to disable
 // C++/CLI.
-#if defined(WIN32) || defined(WIN64)
- #using <System.dll>  // Process
-#endif
+///// Removed
+/////#if defined(WIN32) || defined(WIN64)
+///// #using <System.dll>  // Process
+/////#endif
 
 const char* g_TestControl  = "Test Unit";
 
@@ -171,37 +172,39 @@ int TestControl::OnTestAction(MM::PropertyBase* pProp, MM::ActionType eAct)
 }
 
 
+
 int TestControl::TestAction(char *straction)
 {
  #if defined(WIN32) || defined(WIN64)
 
- bool bRunning=false;
- using namespace System;
- using namespace System::Diagnostics;
- array<Process^> ^processes;
- processes=Process::GetProcessesByName("OKO-Control Server");
- if(processes->Length>0) bRunning=true;
- if(bRunning) return DEVICE_OK;
-
+ char cmdline[500]; 
 
  DWORD size=1023;
  DWORD type=REG_SZ;
  TCHAR wvalue[255];
  HKEY hKey;
+
+ #if defined(WIN32)
  if(RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion", 0, KEY_READ | KEY_WOW64_64KEY, &hKey)==ERROR_SUCCESS)
   {
    DWORD dwret;
    dwret=RegQueryValueEx(hKey, L"ProgramFilesDir", NULL, &type, (LPBYTE)wvalue, &size);
    RegCloseKey(hKey);
   }
+ #endif
+
+ #if defined(WIN64)
+ if(RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion", 0, KEY_READ | KEY_WOW64_64KEY, &hKey)==ERROR_SUCCESS)
+  {
+   DWORD dwret;
+   dwret=RegQueryValueEx(hKey, L"ProgramFilesDir (x86)", NULL, &type, (LPBYTE)wvalue, &size);
+   RegCloseKey(hKey);
+  }
+ #endif
 
  char value[400]; 
- char cmdline[500]; 
  WideCharToMultiByte(CP_ACP,0,wvalue,255,value,400,NULL,NULL);
-
  snprintf(cmdline,500,"\"%s\\OKOlab\\OKO-Control Server\\OKO-Control Server.exe\"",value);
-
-// snprintf(cmdline,500,"C:\\notepad.exe");
 /*
 FILE *fp;
 fp=fopen("registry_log.txt","a");
@@ -209,7 +212,6 @@ fprintf(fp,"cmdline=%s\n",cmdline);
 fclose(fp);
 */
 // if(OCSRunning()) return;
-
  TCHAR path[500];
  MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, cmdline, -1, path, 500);
 
@@ -225,8 +227,6 @@ fclose(fp);
  ShExecInfo.hInstApp = NULL;
  ShellExecuteEx(&ShExecInfo);
 
- //CloseHandle(pi.hThread);
- //CloseHandle(pi.hProcess);
  #endif
 
  return DEVICE_OK;                                                         

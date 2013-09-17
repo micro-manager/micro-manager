@@ -16,7 +16,7 @@
 #ifndef _OKOLAB_H_
 #define _OKOLAB_H_
 
-#define _VERSION_ "20121106"
+#define _VERSION_ "20130910"
 
 #define _LOG_ 1 // Set this to 0 to disable logging
 //#define _DEBUG_ // Undefine this to disable debbugging features 
