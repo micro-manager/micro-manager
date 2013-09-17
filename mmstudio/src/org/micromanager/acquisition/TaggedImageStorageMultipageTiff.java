@@ -299,13 +299,21 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
       newDataSet_ = false;
       try {
          if (fileSets_ != null) {
+              
+            int count = 0;
+            ProgressBar progressBar = new ProgressBar("Closing Files", 0, fileSets_.size());
+            progressBar.setProgress(count);
+            progressBar.setVisible(true);
             for (FileSet p : fileSets_.values()) {
                p.finishAbortedAcqIfNeeded();
             }
             for (FileSet p : fileSets_.values()) {
                p.finished();
+               count++;
+               progressBar.setProgress(count);
             }
-         }                 
+            progressBar.setVisible(false);
+         }
       } catch (IOException ex) {
          ReportingUtils.logError(ex);
       }
