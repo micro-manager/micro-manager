@@ -502,12 +502,16 @@
     (fn [x y] ((widget action-type)
                  (- x offset-x) (- y offset-y)))))
 
+(defn match-shapes [[x y] data]
+  (->> data
+       (filter #(-> (.createTransformedShape
+                           (% :transform) (% :shape)) (.contains x y)))))
+
 (defn triggered-mouse-actions [action-type [x y] data]
   (->> data
        expand-memo
-       (filter #(and (% action-type)
-                     (-> (.createTransformedShape
-                           (% :transform) (% :shape)) (.contains x y))))
+       (filter action-type)
+       (match-shapes [x y])
        (map #(create-action % action-type))))
 
 (defn run-mouse-actions [e action-type reference]
@@ -515,6 +519,23 @@
     (doseq [action (triggered-mouse-actions action-type [x y] @reference)]
       (action x y))))
 
+(defn mouse-is-over [[x y] data]
+  (->> data
+       expand-memo
+       (remove #(empty? (select-keys % [:mouse-in :mouse-out])))
+       (match-shapes [x y])))
+
+(defn handle-mouse-move [e reference canvas]
+  (let [data @reference
+        last-widgets-under-mouse ((meta canvas) ::last-widgets-under-mouse)
+        widgets-under-mouse (set (map #(select-keys % [:mouse-in :mouse-out :shape]) (mouse-is-over [(.getX e) (.getY e)] data)))
+        in (clojure.set/difference widgets-under-mouse last-widgets-under-mouse)
+        out (clojure.set/difference last-widgets-under-mouse widgets-under-mouse)]
+    (alter-meta! canvas assoc ::last-widgets-under-mouse
+                 widgets-under-mouse)
+    (doseq [action (map :mouse-in in)] (when action (action)))
+    (doseq [action (map :mouse-out out)] (when action (action)))))
+    
 (defn activate-dragging! [e reference canvas]
   (let [x (.getX e) y (.getY e)]
     (alter-meta! canvas assoc ::dragging-action
@@ -539,6 +560,7 @@
                             (run-mouse-actions e :mouse-down reference))
           (mouseReleased [e] (stop-dragging! canvas)
                              (run-mouse-actions e :mouse-up reference))
+          (mouseMoved [e] (handle-mouse-move e reference canvas))
           (mouseDragged [e] (continue-dragging e canvas)))]
     (doto canvas
       (.addMouseListener mouse-adapter)
@@ -607,8 +629,10 @@
     :x 100
     :y 100}
    {:type :arc
+    :mouse-in #(swap! grafix assoc-in [2 :fill] :red)
+    :mouse-out #(swap! grafix assoc-in [2 :fill] :pink)
     :scale 2
-      :mouse-up (fn [x y] (println "yo: " x y))
+      :mouse-up (fn [x y] (println "coords: " x y))
      :l 100
      :y 200
      :w 50
