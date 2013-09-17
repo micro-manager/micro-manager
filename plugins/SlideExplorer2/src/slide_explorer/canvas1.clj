@@ -260,6 +260,18 @@
           (first (drop-while #(-> % :type primitive-widgets not)
                      (iterate widget data)))))
 
+(defn memoize-simple [function]
+  (let [last-computation-atom (atom [::nothing nil])]
+    (fn [& args]
+      (let [[last-args last-result] @last-computation-atom]
+        (if (identical? args last-args)
+          last-result
+          (let [result (apply function args)]
+            (reset! last-computation-atom [args result])
+            result))))))
+
+(def expand-memo (memoize-simple expand))
+        
 (defn transform-object [{:keys [transform l t x y w h
                          scale-x scale-y scale rotate] :as m}]
    (if (or x y w h rotate scale scale-x scale-y)
@@ -450,7 +462,7 @@
     (dorun
       (map #(with-g2d-state [g2d %]
                             (draw-primitive g2d %))
-           (denest (expand widgets))))))
+           (denest (expand-memo widgets))))))
 
 (defn draw-error [graphics e]
   (draw graphics
@@ -492,8 +504,7 @@
 
 (defn triggered-mouse-actions [action-type [x y] data]
   (->> data
-       expand
-       ;show
+       expand-memo
        (filter #(and (% action-type)
                      (-> (.createTransformedShape
                            (% :transform) (% :shape)) (.contains x y))))
@@ -528,8 +539,6 @@
                             (run-mouse-actions e :mouse-down reference))
           (mouseReleased [e] (stop-dragging! canvas)
                              (run-mouse-actions e :mouse-up reference))
-          (mouseEntered [e] (run-mouse-actions e :mouse-enter reference))
-          (mouseExited [e] (run-mouse-actions e :mouse-exit reference))
           (mouseDragged [e] (continue-dragging e canvas)))]
     (doto canvas
       (.addMouseListener mouse-adapter)
