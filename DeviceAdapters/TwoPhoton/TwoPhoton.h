@@ -245,59 +245,6 @@ private:
    int GetFrameOffset();
 };
 
-//////////////////////////////////////////////////////////////////////////////
-// MaiTai laser control class
-// 
-//////////////////////////////////////////////////////////////////////////////
-
-class MaiTai : public CGenericBase<MaiTai>
-{
-public:
-   MaiTai();
-   ~MaiTai();
-  
-   // MMDevice API
-   // ------------
-   int Initialize();
-   int Shutdown();
-  
-   void GetName(char* name) const;      
-   bool Busy() {return false;}
-
-   // action interface
-   // ----------------
-   int OnOnOff(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnPower(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnWarmedup(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnWavelength(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnShutter(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnComPort(MM::PropertyBase* pProp, MM::ActionType eAct);
-
-private:
-   bool initialized_;
-   std::string port_;
-
-};
-
-class DemoLaser : public CGenericBase<DemoLaser>
-{
-public:
-   DemoLaser();
-   ~DemoLaser();
-  
-   // MMDevice API
-   // ------------
-   int Initialize();
-   int Shutdown();
-  
-   void GetName(char* name) const;      
-   bool Busy() {return false;}
-
-
-private:
-   bool initialized_;
-
-};
 
 /**
  * DAShutter: Adds shuttering capabilities to a DA device

@@ -62,9 +62,6 @@ const char* g_PropertyColor_R = "R";
 const char* g_PropertyColor_G = "G";
 const char* g_PropertyColor_B = "B";
 
-// Mai Tai device
-extern const char* g_MaiTaiDeviceName;
-extern const char* g_DemoLaserDeviceName;
 extern const char* g_VShutterDeviceName;
 
 
@@ -96,8 +93,6 @@ MODULE_API void InitializeModuleData()
 {
    AddAvailableDeviceName(g_BitFlowCameraDeviceName, "BitFlow frame grabber");
    AddAvailableDeviceName(g_BitFlowCameraDeviceName2, "BitFlow dual frame grabber");
-   AddAvailableDeviceName(g_MaiTaiDeviceName, "Mai Tai laser");
-   AddAvailableDeviceName(g_DemoLaserDeviceName, "Demo laser");
    AddAvailableDeviceName(g_VShutterDeviceName, "Virtual dual shutter");
    // AddAvailableDeviceName(g_TwoPhotonFilterDeviceName, "2-photon filter wheel");
 }
@@ -117,16 +112,6 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
    {
       // create camera
       return new BitFlowCamera(true);
-   }
-   else if (strcmp(deviceName, g_MaiTaiDeviceName) == 0)
-   {
-      // create claser
-      return new MaiTai();
-   }
-   else if (strcmp(deviceName, g_DemoLaserDeviceName) == 0)
-   {
-      // create demo laser
-      return new DemoLaser();
    }
    else if (strcmp(deviceName, g_VShutterDeviceName) == 0)
    {
