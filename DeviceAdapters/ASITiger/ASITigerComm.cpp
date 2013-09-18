@@ -226,7 +226,6 @@ int CTigerCommHub::DetectInstalledDevices()
             else
             {
                return ERR_TIGER_PAIR_NOT_PRESENT;
-//               ret = QueryCommand(debug.str().c_str(), answer);
             }
             break;
          case 'u': // MMirror type
@@ -248,6 +247,7 @@ int CTigerCommHub::DetectInstalledDevices()
             }
             break;
          case 'p':
+         case 'a':
             name = g_PiezoDeviceName;
             name.push_back(g_NameInfoDelimiter);
             name.push_back((char)toupper(vAxesLetter[i].at(0)));
@@ -257,6 +257,7 @@ int CTigerCommHub::DetectInstalledDevices()
             AddInstalledDevice(pDev);
             break;
          case 'z':
+         case 'l':
             name = g_ZStageDeviceName;
             name.push_back(g_NameInfoDelimiter);
             name.push_back((char)toupper(vAxesLetter[i].at(0)));
