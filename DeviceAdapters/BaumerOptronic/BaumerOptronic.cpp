@@ -203,7 +203,7 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 
 // forward declaration
 unsigned int __stdcall mSeqEventHandler( void*  );
-unsigned long synchTimeout_g = 5000; // milliseconds to wait for image ready event
+unsigned long imageTimeoutMs_g = 5000; // milliseconds to wait for image ready event
 
 
 #define FXOK 1
@@ -1580,7 +1580,7 @@ unsigned int __stdcall mSeqEventHandler( void* pArguments )
       Sleep(0);
       MMThreadGuard g(::acquisitionThreadTerminateLock_g); // have to wait for the event time-out !!
 
-      DWORD  Status = WaitForMultipleObjects( 1, aHandle, FALSE,  synchTimeout_g ); 
+      DWORD Status = WaitForMultipleObjects(1, aHandle, FALSE, imageTimeoutMs_g);
       Status -= WAIT_OBJECT_0;
       if( Status == 0 )
       {
@@ -2297,7 +2297,7 @@ int CBaumerOptronic::OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       long val;
       pProp->Get(val);
-      synchTimeout_g = val + 500;
+      imageTimeoutMs_g = val + 500;
       pWorkerThread_->Exposure(static_cast<int>(1000 * val));
    }
    return DEVICE_OK;
