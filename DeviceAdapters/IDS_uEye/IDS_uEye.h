@@ -430,10 +430,10 @@ class CIDS_uEye : public CCameraBase<CIDS_uEye>
 
 
   //convenience functions
-  void GetPixelClockRange(HIDS hCam, UINT* pixClkMin_, UINT* pixClkMax_);
+  void GetPixelClockRange(HIDS hCam, UINT* pixClkMin, UINT* pixClkMax);
   void SetPixelClock(UINT pixClk);
-  void GetFramerateRange(HIDS hCam, double* fpsMin_, double* fpsMax_, double* fpsInt_);
-  void GetExposureRange(HIDS hCam, double* expMin_, double* expMax_, double* expInt_);
+  void GetFramerateRange(HIDS hCam, double* fpsMin, double* fpsMax);
+  void GetExposureRange(HIDS hCam, double* expMin, double* expMax, double* expIncrement);
 
 
   // action interface
@@ -490,11 +490,10 @@ class CIDS_uEye : public CCameraBase<CIDS_uEye>
   double framerateMin_;                                         //minimal framerate
   double framerateMax_;                                         //maximal framerate
   double framerateCur_;                                         //current (real) framerate
-  double framerateInt_;      
 
   double exposureMin_;                                          //minimal allowed exposure
   double exposureMax_;                                          //maximal allowed exposure
-  double exposureInt_;
+  double exposureIncrement_;
   double exposureSet_;                                          //set (desired) exposure value
   double exposureCur_;                                          //current (real) exposure value
 

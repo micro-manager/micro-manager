@@ -318,15 +318,14 @@ int CIDS_uEye::Initialize()
 
 
    //get frame rate range
-   GetFramerateRange(hCam, &framerateMin_, &framerateMax_, &framerateInt_); 
+   GetFramerateRange(hCam, &framerateMin_, &framerateMax_);
    printf("frame rate range %.2f - %.2f\n",framerateMin_,framerateMax_);
 
 
    //get current exposure range
-   //is_GetExposureRange(hCam, &exposureMin_, &exposureMax_, &exposureInt_);      //deprecated since v 4.0
-   GetExposureRange(hCam, &exposureMin_, &exposureMax_, &exposureInt_);
+   GetExposureRange(hCam, &exposureMin_, &exposureMax_, &exposureIncrement_);
    if(exposureMax_>EXPOSURE_MAX) exposureMax_=EXPOSURE_MAX;                            //limit exposure time to keep the interface responsive
-   printf("Exposure (%.3f, %.3f) ms, interval %.4f ms\n",exposureMin_, exposureMax_, exposureInt_ );
+   printf("Exposure (%.3f, %.3f) ms, increment %.4f ms\n", exposureMin_, exposureMax_, exposureIncrement_);
 
 
    //get current gain
@@ -437,7 +436,7 @@ int CIDS_uEye::Initialize()
    SetExposure(exposureMin_);
 
    //exposure interval (read-only)
-   nRet = CreateProperty(MM::g_Keyword_Interval_ms,CDeviceUtils::ConvertToString(exposureInt_) , MM::Float, true);
+   nRet = CreateProperty(MM::g_Keyword_Interval_ms,CDeviceUtils::ConvertToString(exposureIncrement_) , MM::Float, true);
 	
   
    // camera gain
@@ -807,12 +806,12 @@ int CIDS_uEye::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize)
     rectAOI.s32X = x;
     rectAOI.s32Y = y;
 
-    if((xSize>sizeMin.s32Width)&(xSize<=cameraCCDXSize_)){
-      rectAOI.s32Width= xSize/sizeInc.s32Width* sizeInc.s32Width;
-     }
-    if((ySize>sizeMin.s32Height)&(ySize<=cameraCCDYSize_)){
-      rectAOI.s32Height= ySize/sizeInc.s32Height* sizeInc.s32Height;
-    } 
+    if (((long)xSize > sizeMin.s32Width) && ((long)xSize <= cameraCCDXSize_)) {
+      rectAOI.s32Width= xSize / sizeInc.s32Width * sizeInc.s32Width;
+    }
+    if (((long)ySize > sizeMin.s32Height) && ((long)ySize <= cameraCCDYSize_)) {
+      rectAOI.s32Height= ySize / sizeInc.s32Height * sizeInc.s32Height;
+    }
     
 
     //apply ROI  
@@ -844,8 +843,7 @@ int CIDS_uEye::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize)
 
 
       //update the exposure range
-      //is_GetExposureRange (hCam, &exposureMin_, &exposureMax_, &exposureInt_);   //deprecated since v. 4.0
-      GetExposureRange (hCam, &exposureMin_, &exposureMax_, &exposureInt_);
+      GetExposureRange(hCam, &exposureMin_, &exposureMax_, &exposureIncrement_);
       if(exposureMax_>EXPOSURE_MAX) exposureMax_=EXPOSURE_MAX;                  //limit exposure time to keep the interface responsive
       SetPropertyLimits(MM::g_Keyword_Exposure, exposureMin_, exposureMax_);
 
@@ -918,8 +916,7 @@ int CIDS_uEye::ClearROI()
 
 
     //update the exposure range
-    //is_GetExposureRange (hCam, &exposureMin_, &exposureMax_, &exposureInt_);     //deprecated since v. 4.0
-    GetExposureRange (hCam, &exposureMin_, &exposureMax_, &exposureInt_);
+    GetExposureRange(hCam, &exposureMin_, &exposureMax_, &exposureIncrement_);
     if(exposureMax_>EXPOSURE_MAX) exposureMax_=EXPOSURE_MAX;                       //limit exposure time to keep the interface responsive
     SetPropertyLimits(MM::g_Keyword_Exposure, exposureMin_, exposureMax_);  
 
@@ -938,13 +935,13 @@ int CIDS_uEye::ClearROI()
 /*
   convenience function for obtaining the pixel clock range
 */
-void CIDS_uEye::GetPixelClockRange(HIDS hCam, UINT* pixClkMin_, UINT* pixClkMax_) {
+void CIDS_uEye::GetPixelClockRange(HIDS hCam, UINT* pixClkMin, UINT* pixClkMax) {
   
    UINT pixClkRange[3];
    UINT nReturn = is_PixelClock(hCam, IS_PIXELCLOCK_CMD_GET_RANGE, (void*)pixClkRange, sizeof(pixClkRange));
    if (nReturn == IS_SUCCESS){
-     pixelClkMin_ = pixClkRange[0];
-     pixelClkMax_ = pixClkRange[1];
+     *pixClkMin = pixClkRange[0];
+     *pixClkMax = pixClkRange[1];
    }
 
 }
@@ -953,18 +950,18 @@ void CIDS_uEye::GetPixelClockRange(HIDS hCam, UINT* pixClkMin_, UINT* pixClkMax_
 /*
   convenience function for obtaining the pixel clock range
 */
-void CIDS_uEye::GetFramerateRange(HIDS hCam, double* fpsMin_, double* fpsMax_, double* fpsInt_) {
+void CIDS_uEye::GetFramerateRange(HIDS hCam, double* fpsMin, double* fpsMax) {
     
   double minFrameTime=0;
   double maxFrameTime=0;
-  double frameTimeInt=0;
+  double frameTimeInc=0;
   
-  UINT nReturn= is_GetFrameTimeRange(hCam, &minFrameTime, &maxFrameTime, &frameTimeInt);  
+  UINT nReturn= is_GetFrameTimeRange(hCam, &minFrameTime, &maxFrameTime, &frameTimeInc);
   
   if (nReturn == IS_SUCCESS){
-    *fpsMin_=1/maxFrameTime;
-    *fpsMax_=1/minFrameTime;
-    
+    *fpsMin=1/maxFrameTime;
+    *fpsMax=1/minFrameTime;
+
   }
 
 }
@@ -1021,13 +1018,13 @@ void CIDS_uEye::SetExposure(double exp)
 /*
   convenience function for obtaining the exposure range (compatible to v. 3.82 format)
  */
-void CIDS_uEye::GetExposureRange(HIDS hCam, double* expMin_, double* expMax_, double* expInterval_) {
+void CIDS_uEye::GetExposureRange(HIDS hCam, double* expMin, double* expMax, double* expIncrement) {
   
   double params[3];
   is_Exposure(hCam, IS_EXPOSURE_CMD_GET_EXPOSURE_RANGE, &params, sizeof(params));
-  *expMin_=params[0];
-  *expMax_=params[1];
-  *expInterval_=params[2];
+  *expMin = params[0];
+  *expMax = params[1];
+  *expIncrement = params[2];
 
 }
 
