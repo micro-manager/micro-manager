@@ -71,6 +71,9 @@ const char* g_ControllerName = "AndorLaserCombiner";
 const char* g_PiezoStageName = "PiezoStage";
 const char* g_Keyword_PowerSetpoint = "PowerSetpoint";
 const char* g_Keyword_PowerReadback = "PowerReadback";
+const char* g_Keyword_Enable = "Enable";
+const char* g_Keyword_EnableOn = "On";
+const char* g_Keyword_EnableOff = "Off";
 
 const char * carriage_return = "\r";
 const char * line_feed = "\n";
@@ -215,6 +218,7 @@ AndorLaserCombiner::AndorLaserCombiner( const char* name) :
 	for( int il = 0; il <MaxLasers+1; ++il)
 	{
 		powerSetPoint_[il] = 0;
+		enable_[il] = g_Keyword_EnableOn;
 	}
 
 
@@ -414,6 +418,15 @@ void AndorLaserCombiner::GenerateALCProperties()
 		buildname <<  "LaserState" << Wavelength(il);
 		CreateProperty(buildname.str().c_str(), "0", MM::Integer, true, pAct);
 
+		// enable
+		buildname.str("");
+		pAct = new CPropertyActionEx(this, &AndorLaserCombiner::OnEnable, il);
+		buildname <<  g_Keyword_Enable << Wavelength(il);
+		enableStates_[il].clear();
+		enableStates_[il].push_back(g_Keyword_EnableOn);
+		enableStates_[il].push_back(g_Keyword_EnableOff);
+		CreateProperty(buildname.str().c_str(), enableStates_[il][0].c_str(), MM::String, false, pAct);
+		SetAllowedValues(buildname.str().c_str(),  enableStates_[il]);
 	}
 	
 
@@ -620,6 +633,27 @@ int AndorLaserCombiner::OnLaserState(MM::PropertyBase* pProp, MM::ActionType eAc
    return HandleErrors();
 }
 
+
+int AndorLaserCombiner::OnEnable(MM::PropertyBase* pProp, MM::ActionType eAct, long il)
+{
+	if (eAct == MM::BeforeGet)
+	{
+		pProp->Set(enable_[il].c_str());
+	}
+	else if (eAct == MM::AfterSet)
+	{
+		std::string enable;
+		pProp->Get(enable);
+		if( enable_[il].compare(enable) != 0 )
+		{
+			enable_[il] = enable;
+			LogMessage("Enable" + boost::lexical_cast<std::string, long>(Wavelength(il)) + " = " + enable_[il], true);
+			if( openRequest_)
+				SetOpen();
+		}
+	}
+	return HandleErrors();
+}
 
 
 int AndorLaserCombiner::OnDIN(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -1013,7 +1047,7 @@ int AndorLaserCombiner::SetOpen(bool open)
 		if(open)
 		{
          double fullScale = 10.00; /* Volts instead of milliWatts, and  double instead of int */
-         bool onn = ( 0 < PowerSetpoint(il))  && (0. < fullScale);
+         bool onn = ( 0 < PowerSetpoint(il))  && (enable_[il].compare(g_Keyword_EnableOff) != 0);
          double percentScale = 0.;
          if( onn)
             percentScale = 100.*PowerSetpoint(il)/fullScale;

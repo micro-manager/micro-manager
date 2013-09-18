@@ -132,6 +132,7 @@ public:
 	int OnMaximumLaserPower(MM::PropertyBase* pProp, MM::ActionType eAct, long index);
 	int OnWaveLength(MM::PropertyBase* pProp, MM::ActionType eAct, long index);
    int OnLaserState(MM::PropertyBase* , MM::ActionType , long );
+	int AndorLaserCombiner::OnEnable(MM::PropertyBase* pProp, MM::ActionType, long index);
 
 
 	//ALC mechanics
@@ -192,6 +193,8 @@ private:
 	int nLasers_;
 	// 1 based array
 	float powerSetPoint_[MaxLasers+1];
+	std::string enable_[MaxLasers+1]; // allow external mode in future for ALC-601
+	std::vector<std::string> enableStates_[MaxLasers+1];
 	bool openRequest_;
 	unsigned char DOUT_;
    bool multiPortUnitPresent_;
