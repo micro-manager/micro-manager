@@ -1,0 +1,16 @@
+2013-09-18  Pariksheet Nanda  <p.nanda@andor.com>
+
+	* AndorLaserCombiner.cpp (OnEnable): Added new "Enable" property
+	to separate laser AOTF on/off from "PowerSetpoint" for simpler UI.
+
+	* CMakeLists.txt: New file for generating Visual Studio project
+	files.
+
+2011-07-27  Ed Simmons  <ed@esimaging.co.uk>
+
+	* AndorLaserCombiner.cpp (GenerateALCProperties): Explicit
+	controls for TTL outputs.
+
+2010-10-19  Karl Hoover <Karl.Hoover@ucsf.edu>
+
+	* AndorLaserCombiner.cpp (PiezoStage, OnLaserPort): New functions.
