@@ -281,7 +281,7 @@ int Cobolt::OnPowerSetPoint(MM::PropertyBase* pProp, MM::ActionType  eAct)
 }
 
 
-int Cobolt::OnPowerSetMax(MM::PropertyBase* pProp, MM::ActionType  eAct)
+int Cobolt::OnPowerSetMax(MM::PropertyBase* pProp, MM::ActionType /* eAct */)
 {
     pProp->Set(maxPower_);
     return DEVICE_OK;
