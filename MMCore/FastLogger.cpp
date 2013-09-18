@@ -304,9 +304,7 @@ void FastLogger::Log(IMMLogger::priority p, const char* format, ...) throw()
 	// let snprintf be OK
 #pragma warning (disable:4996)  
 #endif
-	bool bfalse = false;
 
-	do // scope for the file lock
 	{
 		MMThreadGuard guard(logFileLock_g);
 		if( NULL == plogFile_g) 
@@ -314,7 +312,7 @@ void FastLogger::Log(IMMLogger::priority p, const char* format, ...) throw()
 			cerr<< " log file is NULL!" << endl;
 			return;
 		}
-	}while(bfalse);
+	}
 
 	try
 	{
@@ -491,13 +489,12 @@ void FastLogger::Log(IMMLogger::priority p, const char* format, ...) throw()
 
 
 
-		do // scope for the string lock
 		{
 			MMThreadGuard stringGuard(logStringLock_g);
 			if ( 0 <stringToWrite_g.size())
 				stringToWrite_g += '\n';
 			stringToWrite_g += workingString;
-		}while(bfalse);
+		}
 
 
 

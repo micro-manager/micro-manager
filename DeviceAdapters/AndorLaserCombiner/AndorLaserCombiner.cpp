@@ -304,8 +304,8 @@ int AndorLaserCombiner::Initialize()
 		//Andor says that lasers can take up to 90 seconds to initialize;
       MM::TimeoutMs timerout(GetCurrentMMTime(), 91000);
 		int iloop  = 0;
-		bool btrue = true;
-		do
+
+		for (;;)
 		{
 			bool finishWaiting = true;
 			for( int il = 1; il <=nLasers_; ++il)
@@ -345,7 +345,7 @@ int AndorLaserCombiner::Initialize()
 				iloop++;			
 			}
 			CDeviceUtils::SleepMs(100);
-		}while(btrue);  
+		}
 
 		//
 

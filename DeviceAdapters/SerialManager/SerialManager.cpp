@@ -557,15 +557,13 @@ int SerialPort::Shutdown()
    if (!initialized_)
       return DEVICE_OK;
 
-   do
+   if( 0 != pPort_)
    {
-      if( 0 != pPort_)
-      {
-         pPort_->ShutDownInProgress(true);
-         CDeviceUtils::SleepMs(100);
-         pPort_->Close();
-      }
-   }while(bfalse_s);
+      pPort_->ShutDownInProgress(true);
+      CDeviceUtils::SleepMs(100);
+      pPort_->Close();
+   }
+
    if( 0 != pThread_)
    {
       CDeviceUtils::SleepMs(100);

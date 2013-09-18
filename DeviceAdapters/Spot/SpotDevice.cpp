@@ -518,14 +518,11 @@ void SpotDevice::SetupImageSequence( const int nimages , const int interval )
 		nImageBitDepth_ = 48;
 		break;
 	default:
-		do
 		{
 			std::ostringstream messs;
 			messs << "unsupported ADC bit depth: " << bitDepthOfADC_;		
 			throw SpotBad(messs.str());
-		
-		}while(false);
-	
+		}
 	}
 
 #ifdef __APPLE__
@@ -1046,8 +1043,9 @@ char* SpotDevice::GetNextSequentialImage(unsigned int& imheight, unsigned int& i
 	}
 #else
 
-	do{ // just a scope to delete this lock
+	{
 		MMThreadGuard guard(imageReadyFlagLock_s);
+
 		nloops = 0;
       // rough estimate of milliseconds to wait for the image
 		int maxdelayloop = (int)(.5+ExposureTime()) + approxTransferTime + 200;
@@ -1104,14 +1102,11 @@ char* SpotDevice::GetNextSequentialImage(unsigned int& imheight, unsigned int& i
 		nImageBitDepth_ = 48;
 		break;
 	default:
-		do
 		{
 			std::ostringstream messs;
 			messs << "unsupported ADC bit depth: " << bitDepthOfADC_;		
 			throw SpotBad(messs.str());
-		
-		}while(false);
-	
+		}
 	}
 		
 		
@@ -1179,7 +1174,7 @@ char* SpotDevice::GetNextSequentialImage(unsigned int& imheight, unsigned int& i
 	imageReady_s = false;
 
 
-	}while(false);
+	} // guard(imageReadyFlagLock_s)
 #endif
 
 	suc = ProcessSpotCode(spotcode, message);

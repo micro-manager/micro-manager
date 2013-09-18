@@ -35,7 +35,6 @@
 #include <boost/asio/serial_port.hpp> 
 #include <boost/lexical_cast.hpp> 
 
-bool bfalse_s = false;
 
 class AsioClient 
 { 
@@ -52,7 +51,6 @@ public:
       device_(device),
       shutDownInProgress_(false)
    { 
-      do // just a scope for the guard
       {
          MMThreadGuard g(implementationLock_);
          if (! serialPortImplementation_.is_open()) 
@@ -108,7 +106,7 @@ public:
          serialPortImplementation_.set_option( boost::asio::serial_port_base::character_size( 8 ), anError ); 
          if( !!anError)
             pSerialPortAdapter_->LogMessage(("error setting character_size in AsioClient(): "+boost::lexical_cast<std::string,int>(anError.value()) + " " + anError.message()).c_str(), false);
-      }while(bfalse_s);
+      }
 
       ReadStart(); 
    } 
@@ -199,16 +197,16 @@ public:
    void Purge(void)
    {
       // clear read buffer;
-      do{
+      {
       MMThreadGuard g(readBufferLock_);
       data_read_.clear();
-      }while(bfalse_s);
+      }
 
       // clear write buffer
-      do{
+      {
       MMThreadGuard g(writeBufferLock_);
       write_msgs_.clear(); // buffered write data 
-      }while(bfalse_s);
+      }
    }
 
 
@@ -252,14 +250,13 @@ private:
    { // the asynchronous read operation has now completed or failed and returned an error 
       if (!error) 
       { // read completed, so process the data 
-         do  // just a scope for the guard...
          {
             MMThreadGuard g(readBufferLock_);
             for(unsigned int ib = 0; ib < bytes_transferred; ++ib)
             {
                data_read_.push_back(read_msg_[ib]);
             }
-         }while(bfalse_s);
+         }
          CDeviceUtils::SleepMs(1);
          ReadStart(); // start waiting for another asynchronous read again 
       } 
