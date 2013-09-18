@@ -90,10 +90,8 @@ using namespace std;
 
 
 const double CBaumerOptronic::nominalPixelSizeUm_ = 1.0;
-double g_IntensityFactor_ = 1.0;
 
-// External names used used by the rest of the system
-// to load particular device from the "BaumerOptronic.dll" library
+// External names used by the rest of the system
 const char* g_CameraDeviceName = "BaumerOptronic";
 
 // constants for naming pixel types (allowed values of the "PixelType" property)
@@ -212,7 +210,6 @@ unsigned long imageTimeoutMs_g = 5000; // milliseconds to wait for image ready e
 BOImplementationThread::BOImplementationThread(CBaumerOptronic* pCamera) : 
    intervalMs_(100.0), 
    numImages_(1), 
-   stop_(false), 
    acquisitionThread_(NULL), 
    quantizedExposure_(0), 
    quantizedGain_(0.), 
@@ -317,8 +314,6 @@ void BOImplementationThread::Snap(void)
          dcBoType.iSizeof = sizeof(dcBoType);
          dcBoStatus.iSizeof = sizeof(dcBoStatus);
          FX_GetCameraInfo( gCameraId[0], &dcBoType, &dcBoStatus );
-         //maxxDim_ = dcBoType.wTotalFrmSizeX;
-         //maxyDim_ = dcBoType.wTotalFrmSizeY;
 
          unsigned long sz = dcBoStatus.iNumImgCodeBytes;
 
@@ -619,8 +614,6 @@ void BOImplementationThread::QueryCapabilities(void)
 
    if( 1 == fxret)
    {
-		//tBoImgFormat* m_aImgFormat = (tBoImgFormat* )new tBoImgFormat[nImgFormat];
-
       // copy out of library's local memory
 
 		for( int i = 0; i < nImgFormat; i++ ) 
@@ -722,10 +715,6 @@ void BOImplementationThread::ParseCapabilities(void)
       if( (3!= thisBin) && binSizes_.end() == std::find( binSizes_.begin(), binSizes_.end(), thisBin))
          binSizes_.push_back(thisBin);
       
-      FrameSize thisSize = std::make_pair<int, int> ( i->f_.iSizeX, i->f_.iSizeY);
-      if( frameSizes_.end() == std::find( frameSizes_.begin(), frameSizes_.end(), thisSize))
-         frameSizes_.push_back( thisSize);
-
       int thisDepth = i->f_.iPixelBits;
       if ( pixelDepths_.end() ==  std::find( pixelDepths_.begin(), pixelDepths_.end(), thisDepth))
          pixelDepths_.push_back( thisDepth);
@@ -822,10 +811,6 @@ int BOImplementationThread::svc(void)
             }
             catch(...){}
          }
-         Stop();
-         //LLogMessage( "stop request sent to CCamera acquisition thread ", true);
-         //wait();
-         //Command(Noop);
          break;
       }
 
@@ -860,8 +845,6 @@ int BOImplementationThread::svc(void)
 
          case Acquiring:  // sequence Acquisition processing
             {
-               int ret = DEVICE_ERR;
-
                // checks size of buffer and allocates a new one if needed
                Acquire();
 
@@ -888,19 +871,10 @@ int BOImplementationThread::svc(void)
                }
 
 
-               //if (ret != DEVICE_OK)
-               //{
-               //   std::ostringstream mezz;
-               //   mezz <<  "in SnapImage";
-               //   pCamera_->GetCoreCallback()->PostError(std::make_pair( (int)ret, mezz.str()));
-               //   CameraState(Ready);
-               //}
-               // hmmm.
                MMThreadGuard g(mmCameraLock_);
                
-               
                // GetImageBuffer and copy pixels into circular buffer
-               ret = pCamera_->InsertImage();
+               int ret = pCamera_->InsertImage();
                if (ret != DEVICE_OK)
                {
                   ostringstream os;
@@ -930,147 +904,12 @@ int BOImplementationThread::svc(void)
 }
 
 
-
-
-// enumerate capabilities and formats
-
-
-
-#if 0
-
-int CCameraFx::EnumImgMode()
-{
-	int 	        nImgFormat;	
-	tpBoImgFormat*  aImgFormat;
-	int nRetCode = wrapFX_GetCapability( m_Define.CamLabel, 
-						BCAM_QUERYCAP_IMGFORMATS, 0/*UNUSED*/, (void**)&aImgFormat, &nImgFormat );
-	
-	if( nRetCode == TRUE ) {
-		if( m_aImgFormat ) 
-			delete[] m_aImgFormat;
-        if( m_aImgFormatNames ) 
-			delete[] m_aImgFormatNames;
-		m_aImgFormat = (tBoImgFormat* )new tBoImgFormat[nImgFormat];
-        m_aImgFormatNames = (tPH128*  )new tPH128[nImgFormat];
-		for( int i = 0; i < nImgFormat; i++ ) {
-			memcpy( &m_aImgFormat[i], aImgFormat[i], sizeof(tBoImgFormat));
-            strncpy( m_aImgFormatNames[i].placeholder, aImgFormat[i]->aName, min( 128, strlen(aImgFormat[i]->aName)));
-            m_aImgFormatNames[i].placeholder[min( 127, strlen(aImgFormat[i]->aName))] = 0;
-            m_aImgFormat[i].aName = (char*)m_aImgFormatNames[i].placeholder;
-   		}
-		m_nImgFormat = nImgFormat;
-		return nImgFormat;
-	}
-	return 0;	
-}
-
-int CCameraFx::EnumMonMode()
-{
-	int 	        nMonitorFormat;	
-	tpBoMonFormat*  aMonitorFormat;
-	int nRetCode = wrapFX_GetCapability( m_Define.CamLabel, 
-						BCAM_QUERYCAP_MONFORMATS, 0/*UNUSED*/, (void**)&aMonitorFormat, &nMonitorFormat );
-	
-	if( nRetCode == TRUE ) {
-		if( m_aMonitorFormat ) 
-			delete[] m_aMonitorFormat;
-        if( m_aMonitorFormatNames ) 
-			delete[] m_aMonitorFormatNames;
-		m_aMonitorFormat = (tBoMonFormat* )new tBoMonFormat[nMonitorFormat];
-        m_aMonitorFormatNames = (tPH128*  )new tPH128[nMonitorFormat];
-		for( int i = 0; i < nMonitorFormat; i++ ) {
-			memcpy( &m_aMonitorFormat[i], aMonitorFormat[i], sizeof(tBoMonFormat));
-            strncpy( m_aMonitorFormatNames[i].placeholder, aMonitorFormat[i]->aName, min( 128, strlen(aMonitorFormat[i]->aName)));
-            m_aMonitorFormatNames[i].placeholder[min( 127, strlen(aMonitorFormat[i]->aName))] = 0;
-            // m_aMonitorFormat[i].aName = (char*)m_aMonitorFormatNames[i].placeholder;
-   		}
-		m_nMonitorFormat = nMonitorFormat;
-		return nMonitorFormat;
-	}
-	return 0;	
-}
-
-
-
-
-int CCameraFx::EnumImgCode( int iFormat ) 
-{
-	int 	         nImgCode;
-	tpBoImgCode * 	 aImgCode;
-	int nRetCode = wrapFX_GetCapability(  m_Define.CamLabel, BCAM_QUERYCAP_IMGCODES, iFormat, (void**)&aImgCode, &nImgCode );
-
-	if( nRetCode == TRUE ) {
-		if( m_aImgCode ) 
-			delete[] m_aImgCode;
-		m_aImgCode = (tBoImgCodeS *) new tBoImgCodeS[nImgCode];
-		for( int i = 0; i < nImgCode; i++ ) {
-			memcpy( &m_aImgCode[i], aImgCode[i], sizeof(tBoImgCodeS));
-   		}
-		m_nImgCode = nImgCode;
-		return nImgCode;
-	}
-	return 0;	
-}
-
-int CCameraFx::EnumImgIpol( int iFormat ) 
-{
-	int 	         nImgIpol;
-	tpBoRawInterpolation * 	 aImgIpol;
-	int nRetCode = wrapFX_GetCapability(  m_Define.CamLabel, BCAM_QUERYCAP_RAWINTERPOL,  iFormat, (void**)&aImgIpol, &nImgIpol );
-
-	if( nRetCode == TRUE ) {
-		if( m_aImgIpol ) 
-			delete[] m_aImgIpol;
-		m_aImgIpol = (tBoRawInterpolation *) new tBoRawInterpolation[nImgIpol];
-		for( int i = 0; i < nImgIpol; i++ ) {
-			memcpy( &m_aImgIpol[i], aImgIpol[i], sizeof(tBoRawInterpolation));
-   		}
-		m_nImgIpol = nImgIpol;
-		return nImgIpol;
-	}
-	else {
-		if( m_aImgIpol ) 
-			delete[] m_aImgIpol;
-		m_aImgIpol = NULL;
-		m_nImgIpol = nImgIpol; 
-		return 0;	
-	}
-}
-
-int CCameraFx::EnumImgFilter( int iFormat ) 
-{
-	int 	         nImgFilter;
-	tpBoImgFilter * 	 aImgFilter;
-	int nRetCode = wrapFX_GetCapability(  m_Define.CamLabel, BCAM_QUERYCAP_IMGFILTER,  iFormat, (void**)&aImgFilter, &nImgFilter );
-
-	if( nRetCode == TRUE ) {
-		if( m_aImgFilter) 
-			delete[] m_aImgFilter;
-		m_aImgFilter = (tBoImgFilter *) new tBoImgFilter[nImgFilter];
-		for( int i = 0; i < nImgFilter; i++ ) {
-			memcpy( &m_aImgFilter[i], aImgFilter[i], sizeof(tBoImgFilter));
-   		}
-		m_nImgFilter = nImgFilter;
-		return nImgFilter;
-	}
-	else {
-		if( m_aImgFilter ) 
-			delete[] m_aImgFilter;
-		m_aImgFilter = NULL;
-		m_nImgFilter = nImgFilter; 
-		return 0;	
-	}
-}
-#endif
-
-
 int BOImplementationThread::BOInitializationSequence(void)
 {
    int fxReturn = 0;
    try
    {
       MMThreadGuard g(stateMachineLock_);
-      //todo  ::  the printf's are from Baumer's example program, replace with std::ostringstream
       char fxMess[500];
       fxMess[0] = 0;
 
@@ -1210,7 +1049,6 @@ void BOImplementationThread::PostError(const int errorCode, const char* pMessage
 {
    if( NULL != pCamera_)
    {
-//      printf( "%d %s\n", errorCode,pMessage);
       MMThreadGuard g(mmCameraLock_);
       pCamera_->GetCoreCallback()->PostError( errorCode, pMessage  );
    }
@@ -1648,13 +1486,11 @@ unsigned int __stdcall mSeqEventHandler( void* pArguments )
 CBaumerOptronic::CBaumerOptronic() :
    CCameraBase<CBaumerOptronic> (),
    initialized_(false),
-   readoutUs_(0.0),
    pWorkerThread_(NULL),
    stopOnOverflow_(false)
 {
    // call the base class method to set-up default error codes/messages
    InitializeDefaultErrorMessages();
-   readoutStartTime_ = GetCurrentMMTime();
 }
 
 /**
@@ -1685,8 +1521,6 @@ int CBaumerOptronic::Shutdown()
       LogMessage(" sending Exit command to implementation thread " , true);
       pWorkerThread_->Command(Exit);
       LogMessage(  "deleting  BO camera implementation thread " , true);
-      // It is not clear whether Stop does anything
-      pWorkerThread_->Stop();
       pWorkerThread_->wait();
       delete pWorkerThread_;
       pWorkerThread_ = NULL;
@@ -1834,27 +1668,6 @@ int CBaumerOptronic::Initialize()
    nRet = SetAllowedValues("BitDepth", bitDepths);
    if (nRet != DEVICE_OK)
       return nRet;
-#if 0
-
-   // camera offset
-   nRet = CreateProperty(MM::g_Keyword_Offset, "0", MM::Integer, false);
-   assert(nRet == DEVICE_OK);
-
-   // camera temperature
-   nRet = CreateProperty(MM::g_Keyword_CCDTemperature, "0", MM::Float, false);
-   assert(nRet == DEVICE_OK);
-   SetPropertyLimits(MM::g_Keyword_CCDTemperature, -100, 10);
-
-   // readout mode
-
-   pAct = new CPropertyAction (this, &CBaumerOptronic::OnReadoutMode);
-   nRet = CreateProperty(MM::g_Keyword_ReadoutMode, "0", MM::String, false, pAct);
-   assert(nRet == DEVICE_OK);
-   AddAllowedValue(MM::g_Keyword_ReadoutMode, "Fast readout", BOCFN_ROFAST);
-   AddAllowedValue(MM::g_Keyword_ReadoutMode, "Fast readout faster", BOCFN_ROFASTP);
-   AddAllowedValue(MM::g_Keyword_ReadoutMode, "Slow readout", BOCFN_ROSLOW);
-   AddAllowedValue(MM::g_Keyword_ReadoutMode, "Slow readout faster", BOCFN_ROSLOWP);
-#endif
 
    // synchronize all properties
    // --------------------------
@@ -2238,49 +2051,6 @@ int CBaumerOptronic::OnBitDepth(MM::PropertyBase* pProp, MM::ActionType eAct)
    return ret; 
 }
 
-/**
-* Handles "ReadoutMode" property.
-*/
-#if 0
-int CBaumerOptronic::OnReadoutMode(MM::Property* pProp, MM::ActionType eAct)
-{
-   if (eAct == MM::AfterSet)
-   {
-      std::string sval;
-      long theMode;
-      pProp->Get(sval);
-      pProp->GetData(sval.c_str(), theMode);
-      pWorkerThread->ReadOutMode(theMode);
-   }
-   else if (eAct == MM::BeforeGet)
-   {
-      long theMode = pWorkerThread->ReadOutMode();
-      std::string p;
-
-      switch(theMode)
-      {
-      case  BOCFN_ROFAST:
-        p =  "Fast readout";
-        break;
-      case  BOCFN_ROFASTP:
-        p = "Fast readout faster";
-        break;
-      case BOCFN_ROSLOW:
-        p =  "Slow readout";
-        break;
-      case  BOCFN_ROSLOWP:
-         p = "Slow readout faster";
-         break;
-      default:
-         break;
-      }
-      pProp->Set(p.c_str());
-   }
-   return DEVICE_OK;
-}
-
-
-#endif
 
 // Exposure Time
 int CBaumerOptronic::OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -2380,9 +2150,6 @@ int CBaumerOptronic::StartSequenceAcquisition(long numImages, double interval_ms
    return DEVICE_OK;
 }
 
-//int CBaumerOptronic::RestartSequenceAcquisition() {
-//   return StartSequenceAcquisition(sequenceLength_ - imageCounter_, interval_ms_, stopOnOverflow_);
-//}
 
 /**
  * Stops Burst acquisition
@@ -2457,15 +2224,8 @@ int CBaumerOptronic::ResizeImageBuffer()
    unsigned long bufSize;
    pWorkerThread_->CurrentImageSize(xDim,  yDim, bitsInOneColor, colors,  bufSize);
 
-// todo get rid of this:
-
    if (( 0 == xDim) ||  (0 == yDim) || ( 0 == bitsInOneColor))
       return DEVICE_ERR;
-   //   xDim = 1600;
-   //if
-   //   yDim = 1200;
-   //if
-   //   bitsInOneColor = 8;
 
    short nbytes = (short)(bitsInOneColor+7);
    nbytes /= 8;

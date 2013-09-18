@@ -33,20 +33,6 @@
 #include <map>
 
 
-
-//////////////////////////////////////////////////////////////////////////////
-// Error codes
-//
-#define ERR_UNKNOWN_MODE         102
-#define ERR_UNKNOWN_POSITION     103
-
-
-//////////////////////////////////////////////////////////////////////////////
-// Type definitions
-//
-typedef std::pair < int, int > FrameSize;
-
-
 enum WorkerCommand { Noop = 0, 
                      InitializeLibrary = 10, 
                      StartSequence = 20, 
@@ -115,30 +101,19 @@ public:
 
    // action interface
    // ----------------
-	// floating point read-only property for testing
-	int OnTestProperty(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnBitDepth(MM::PropertyBase* pProp, MM::ActionType eAct);
-   //int OnReadoutMode(MM::Property* pProp, MM::ActionType eAct);
    int OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnGain(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 
 private:
-   int SetAllowedBinning();
-   void GenerateSyntheticImage(ImgBuffer& img, double exp);
    int ResizeImageBuffer();
 
    static const double nominalPixelSizeUm_;
    ImgBuffer img_;
-   MMThreadLock imgBufferLock_;
-   unsigned width_;
-   unsigned height_;
-   unsigned depth_;
    bool initialized_;
-   double readoutUs_;
-   MM::MMTime readoutStartTime_;
    bool stopOnOverflow_;
 
    BOImplementationThread* pWorkerThread_; // implementation thread
@@ -159,15 +134,11 @@ class BOImplementationThread : public MMDeviceThreadBase
       void SetLength(long images) {numImages_ = images;}
       long FrameCount(void) const {return frameCount_;}
       void FrameCount(const long v_a) { frameCount_ = v_a;};
-      void Stop() {stop_ = true;}
-      void Start() {stop_ = false; activate();}
+      void Start() { activate(); }
 
       // a lock for each data section that will be modified or viewed in the other thread
       MMThreadLock stateMachineLock_;
       MMThreadLock mmCameraLock_; // when we write data out of here onto the mm device.
-
-      // expose this lock to the caller / container of this thread
-      MMThreadLock& StateMachineLock(void) { return stateMachineLock_; };
 
       void TriggerMode( const bool v);
       void Exposure( int v );
@@ -196,15 +167,8 @@ class BOImplementationThread : public MMDeviceThreadBase
       std::pair<double, double> GainLimits();
       std::pair<int, int> ExposureLimits();
 
-      std::vector< FrameSize > FrameSizes(void) const 
-      { 
-         return frameSizes_;
-      };
-
       std::vector< int > BinSizes(void) const { return binSizes_;};
-      std::vector< int > PixelDepths(void) const { return pixelDepths_;};
       std::vector < int > PossibleBitsInOneColor(void) const { return possibleBitsInOneColor_;};
-      std::vector < int > PossibleNPlanes(void) const { return possibleNPlanes_; };
 
       WorkerCommand Command(void)
       {
@@ -239,8 +203,6 @@ class BOImplementationThread : public MMDeviceThreadBase
       void PostError(const int errorCode_a, const char* pMessage_a);
 
       typedef std::pair< std::string, tBoImgFormat >  NamedFormat;
-      std::vector< tpBoImgFormat > imageFormats;
-      std::vector< std::string > formatNames;
       typedef std::vector< tBoImgCode > ImageCodesPerFormat;
       typedef std::vector< tBoImgFilter > ImageFiltersPerFormat;
       std::vector< NamedFormat > formats;
@@ -282,7 +244,6 @@ class BOImplementationThread : public MMDeviceThreadBase
 
       double intervalMs_;
       long numImages_;
-      bool stop_;
       CBaumerOptronic* pCamera_;
       WorkerState cameraState_;
       WorkerCommand command_;
@@ -305,7 +266,6 @@ class BOImplementationThread : public MMDeviceThreadBase
       double quantizedGain_;
       int quantizedExposure_; // microseconds
 
-      std::vector< FrameSize > frameSizes_;
       std::vector< int > binSizes_;
       std::vector< int > pixelDepths_;
 
@@ -325,7 +285,6 @@ class BOImplementationThread : public MMDeviceThreadBase
 
       RECT roi_;
       bool partialScanMode_; //if true then roi_ will have the ROI, else use the image format
-
 };
 
 
