@@ -28,8 +28,6 @@
 #define ERR_WRITE_FAILED 415
 #define ERR_CLOSE_FAILED 416
 #define ERR_BOARD_NOT_FOUND 417
-#define ERR_DEPTH_IDX_OUT_OF_RANGE 418
-#define ERR_WRONG_DEPTH_LIST 419
 #define ERR_PORT_CHANGE_FORBIDDEN    10004
 #define ERR_UNRECOGNIZED_ANSWER      10009
 #define ERR_OFFSET 10100
@@ -76,19 +74,15 @@ public:
    int OnPercent(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnMinVolts(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnMaxVolts(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnZ(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnDisable(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnVD(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnDepthListSize(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnDemo(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnPropertyListIdx(MM::PropertyBase* pProp, MM::ActionType eAct);
 
-   // specific 2-photon related interface
-   int ApplyDepthControl(double z, int list);
-   int ApplyDepthControl(double z);
 
 private:
    bool initialized_;
    bool busy_;
+   bool disable_;
    double minV_;
    double maxV_;
    double volts_;
@@ -99,16 +93,8 @@ private:
    bool gateOpen_;
    TaskHandle task_;
    int ApplyVoltage(double v);
-   double GetInterpolatedV(double z, int listIdx);
    long GetListIndex();
 
-   struct DepthList
-   {
-      std::vector<double> zList_;
-      std::vector<double> vList_;
-   };
-   std::vector<DepthList> lists_;
-   int depthIdx_;
    bool demo_;
 };
 
@@ -141,123 +127,4 @@ private:
    std::string channel_;
    TaskHandle task_;
    int state_;
-};
-
-class PIZStage : public CStageBase<PIZStage>
-{
-public:
-   PIZStage();
-   ~PIZStage();
-  
-   // Device API
-   // ----------
-   int Initialize();
-   int Shutdown();
-  
-   void GetName(char* pszName) const;
-   bool Busy();
-
-   // Stage API
-   // ---------
-  int SetPositionUm(double pos);
-  int GetPositionUm(double& pos);
-  int SetPositionSteps(long steps);
-  int GetPositionSteps(long& steps);
-  int SetOrigin();
-  int GetLimits(double& min, double& max);
-  int IsStageSequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
-  int GetStageSequenceMaxLength(long& nrEvents) const {nrEvents = 0; return DEVICE_OK;}
-  int StartStageSequence() {return DEVICE_UNSUPPORTED_COMMAND;}
-  int StopStageSequence() {return DEVICE_UNSUPPORTED_COMMAND;}
-  int LoadStageSequence(std::vector<double> positions) const {return DEVICE_UNSUPPORTED_COMMAND;}
-  int ClearStageSequence() {return DEVICE_UNSUPPORTED_COMMAND;}
-  int AddToStageSequence(double position) {return DEVICE_UNSUPPORTED_COMMAND;}
-  int SendStageSequence() {return DEVICE_UNSUPPORTED_COMMAND;}
-  bool IsContinuousFocusDrive() const {return false;}
-
-   // action interface
-   // ----------------
-   int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnStepSizeUm(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnInterface(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct);
-   //int OnDepthControl(MM::PropertyBase* pProp, MM::ActionType eAct);
-
-private:
-   int ExecuteCommand(const std::string& cmd, std::string& response);
-   bool GetValue(std::string& sMessage, double& pos);
-   bool waitForResponse();
-   double getAxisLimit();
-
-   std::string port_;
-   std::string axisName_;
-   double stepSizeUm_;
-   bool initialized_;
-   long curSteps_;
-   double answerTimeoutMs_;
-   double pos_;
-
-};
-
-class PIGCSZStage : public CStageBase<PIGCSZStage>
-{
-public:
-   PIGCSZStage();
-   ~PIGCSZStage();
-  
-   // Device API
-   // ----------
-   int Initialize();
-   int Shutdown();
-  
-   void GetName(char* pszName) const;
-   bool Busy();
-
-   // Stage API
-   // ---------
-  int SetPositionUm(double pos);
-  int GetPositionUm(double& pos);
-  int SetPositionSteps(long steps);
-  int GetPositionSteps(long& steps);
-  int SetOrigin();
-  int GetLimits(double& min, double& max);
-  int IsStageSequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
-  int GetStageSequenceMaxLength(long& nrEvents) const {nrEvents = 0; return DEVICE_OK;}
-  int StartStageSequence() const {return DEVICE_UNSUPPORTED_COMMAND;}
-  int StopStageSequence() const {return DEVICE_UNSUPPORTED_COMMAND;}
-  int LoadStageSequence(std::vector<double> positions) const {return DEVICE_UNSUPPORTED_COMMAND;}
-  int ClearStageSequence() {return DEVICE_UNSUPPORTED_COMMAND;}
-  int AddToStageSequence(double position) {return DEVICE_UNSUPPORTED_COMMAND;}
-  int SendStageSequence() const {return DEVICE_UNSUPPORTED_COMMAND;}
-  bool IsContinuousFocusDrive() const {return false;}
-
-   // action interface
-   // ----------------
-   int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnStepSizeUm(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnAxisName(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnAxisLimit(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnDepthControl(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnDepthList(MM::PropertyBase* pProp, MM::ActionType eAct);
-
-private:
-   int ExecuteCommand(const std::string& cmd, std::string& response);
-   bool GetValue(std::string& sMessage, double& dval);
-   bool GetValue(std::string& sMessage, long& lval);
-   bool ExtractValue(std::string& sMessage);
-   int GetError();
-   bool waitForResponse();
-   void ApplyDepthControl(double pos);
-
-   std::string port_;
-   std::string axisName_;
-   bool checkIsMoving_;
-   double stepSizeUm_;
-   bool initialized_;
-   long curSteps_;
-   double answerTimeoutMs_;
-   double axisLimitUm_;
-   int depthList_;
-   double posUm_;
 };
