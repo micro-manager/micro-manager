@@ -624,7 +624,7 @@ int VariLC::OnSendToVariLC(MM::PropertyBase* pProp, MM::ActionType eAct)
       pProp->Get(sendToVariLC_);
       // write retardance out to device....
 	  
-	  int len = strlen(sendToVariLC_.c_str());
+	  size_t len = strlen(sendToVariLC_.c_str());
 	  char state[5]; 
 
 	  if (len > 5) {		  
