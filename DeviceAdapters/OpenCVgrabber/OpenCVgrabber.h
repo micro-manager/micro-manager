@@ -38,8 +38,15 @@
 #include <map>
 #include <algorithm>
 
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable: 4267)
+#endif
 #include "opencv/cv.h"
 #include "opencv/highgui.h"
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
 //////////////////////////////////////////////////////////////////////////////
 // Error codes
