@@ -23,15 +23,16 @@
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.  
 //                
-// AUTHOR:        Nenad Amodaj
+// AUTHOR:        Nenad Amodaj, Henry Pinkard
 
 package com.imaging100x.twophoton;
 
+import ij.ImagePlus;
+import ij.WindowManager;
+import ij.gui.ImageWindow;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.ContainerEvent;
-import java.awt.event.ContainerListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
@@ -41,11 +42,10 @@ import java.awt.event.WindowEvent;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Timer;
-import java.util.TimerTask;
 import java.util.prefs.Preferences;
 
 import javax.swing.*;
-import javax.swing.border.LineBorder;
+import javax.swing.border.Border;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileFilter;
@@ -54,35 +54,45 @@ import javax.swing.table.TableColumn;
 import mmcorej.CMMCore;
 import mmcorej.MMCoreJ;
 import mmcorej.StrVector;
+import org.micromanager.MMStudioMainFrame;
+import org.micromanager.acquisition.ComponentTitledBorder;
+import org.micromanager.acquisition.VirtualAcquisitionDisplay;
+import org.micromanager.api.AcquisitionEngine;
 
 import org.micromanager.api.MMPlugin;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.navigation.MultiStagePosition;
 import org.micromanager.navigation.PositionList;
 import org.micromanager.navigation.StagePosition;
+import org.micromanager.utils.GUIUtils;
+import org.micromanager.utils.ImageFocusListener;
 import org.micromanager.utils.MMFrame;
 import org.micromanager.utils.MMScriptException;
+import org.micromanager.utils.ReportingUtils;
 
-public class TwoPhotonControl extends MMFrame implements MMPlugin, KeyListener, ContainerListener {
+public class TwoPhotonControl extends MMFrame implements MMPlugin, KeyListener, 
+         ImageFocusListener {
    private static final long serialVersionUID = 1L;
 
    public static String LASER_EOM_1 = "EOM1";
    public static String LASER_EOM_2 = "EOM2";
    public static String SHUTTER = "EOM12Shutter";
    public static String VOLTS = "Volts";
+   public static String DISABLE = "Disable";
    public static String Z_STAGE = "Z";
+   public static String RESOLUTION = "Objective Res";
 
    public static final String menuName = "100X | 2Photon...";
    public static final String tooltipDescription = "2Photon control panel";
 
+   
    // preference keys and other string constants
    static private final String PANEL_X = "panel_x";
    static private final String PANEL_Y = "panel_y";
    static private final String INVERT_X = "Invert_x";
    static private final String INVERT_Y = "Invert_y";
    static private final String SWAP_X_AND_Y = "SwapXandY";
-   static private final String AUTO_REFRESH = "auto_refresh";
-   static private final String VERSION_INFO = "2.1";
+   static private final String VERSION_INFO = "3.0";
    static private final String COPYRIGHT_NOTICE = "Copyright by 100X, 2011";
    static private final String DESCRIPTION = "Two Photon control module";
    static private final String INFO = "Not available";
@@ -96,24 +106,17 @@ public class TwoPhotonControl extends MMFrame implements MMPlugin, KeyListener, 
 
    private Timer statusTimer_;
    private boolean initialized_;
-   private boolean lockZ_;
 
-   private JLabel pifocPlaceholder_;
-   private JLabel laser1Placeholder_;
-   private JLabel laser2Placeholder_;
    private SliderPanel laserSlider2_;
    private SliderPanel laserSlider1_;
    private JSpinner gridOverlapYSpinner_, gridOverlapXSpinner_;
    private JSpinner gridSizeXSpinner_, gridSizeYSpinner_;
-
+   
    private SliderPanel pifocSlider_;
-   private JButton btnMark_1;
-   private JButton btnRemove;
-   private JButton btnMark;
-   private JCheckBox chckbxAutoRefresh_;
-
-   protected boolean autoRefresh_ = false;
-   private JCheckBox chckbxLockZ_;
+   private JButton markButton;
+   private JButton removeButton;
+   private JButton removeAllButton;
+   private JCheckBox activateDepthList_;
    private JComboBox pixelSizeCombo_;
    
    private File depthFile_;
@@ -121,7 +124,6 @@ public class TwoPhotonControl extends MMFrame implements MMPlugin, KeyListener, 
    private String posListDir_;
    private static final String DEFAULT_DEPTH_FNAME = "default_depth_list.dlf";
 
-   private JLabel labelListName_;
 
 private ActionListener pixelSizeListener_;
 
@@ -131,37 +133,10 @@ private DepthSetting depthSettingCache[];
 
 private AcquisitionStitcher stitcher_ = new AcquisitionStitcher();
 private JButton stitchButton_;
+private JComboBox windowsToStitchCombo_;
+private ArrayList<VirtualAcquisitionDisplay> availableVADs_;
 private JCheckBox invertXCheckBox_, invertYCheckBox_, swapXandYCheckBox_;
 private JCheckBox drawGrid_, drawPosNames_;
-
-   private class StatusTimerTask extends TimerTask {
-
-      public StatusTimerTask() {
-      }
-
-      public void run() {
-         updateLasers();
-         if (!autoRefresh_)
-            cancel();
-      }
-   }
-   
-   private class SharedListSelectionHandler implements ListSelectionListener {
-      public void valueChanged(ListSelectionEvent e) { 
-          ListSelectionModel lsm = (ListSelectionModel)e.getSource();
-          if (! lsm.isSelectionEmpty()) {
-              // Find out which indexes are selected.
-              int minIndex = lsm.getMinSelectionIndex();
-              int maxIndex = lsm.getMaxSelectionIndex();
-              for (int i = minIndex; i <= maxIndex; i++) {
-                  if (lsm.isSelectedIndex(i)) {
-                      DepthSetting ds = depthData_.getDepthSetting(i);
-                      applyDepthSetting(ds, true);
-                  }
-              }
-          }
-      }
-  }
    
    /**
     * File filter class for Open/Save file choosers 
@@ -207,11 +182,9 @@ private JCheckBox drawGrid_, drawPosNames_;
     */
    public TwoPhotonControl() {
       super();
-      addKeyAndContainerListenerRecursively(this);
       
       setLocation(-3, -31);
       initialized_ = false;
-      lockZ_ = false;
 
       // load preferences
       Preferences root = Preferences.userNodeForPackage(this.getClass());
@@ -220,13 +193,9 @@ private JCheckBox drawGrid_, drawPosNames_;
 
       addWindowListener(new WindowAdapter() {
          public void windowClosing(WindowEvent arg0) {
-            if (canExit()) {
                saveSettings();
                dispose();
-            } else {
-               displayMessageDialog("Can't exit now.");
-               return;
-            }
+  
          }
 
          public void windowOpened(final WindowEvent arg0) {
@@ -240,114 +209,238 @@ private JCheckBox drawGrid_, drawPosNames_;
          }
       });
 
-      depthSettingCache = new DepthSetting[2];
-      depthSettingCache[0] = null;
-      depthSettingCache[1] = null;
       
       getContentPane().setLayout(null);
       setResizable(false);
 
       setTitle("Two Photon Control v " + VERSION_INFO);
-      setSize(626, 650);
+      setSize(660, 580);
       loadPosition(100, 100);
+      
+      createExcitationPanel();
+      createZPanel();
+      createPMTPanel();
+      createGridPanel();
+      createStitchPanel();
+      createDepthPanel();
 
-      final JButton exitButton = new JButton();
-      exitButton.addActionListener(new ActionListener() {
-         public void actionPerformed(final ActionEvent e) {
-            if (canExit()) {
-               dispose();
-               saveSettings();
-            } else {
-               displayMessageDialog("Can't exit now");
-               return;
+      pixelSizeCombo_ = new JComboBox();
+      pixelSizeListener_ = new ActionListener() {
+         public void actionPerformed(ActionEvent e) {
+            onPixelSize();
+         }
+      };
+      pixelSizeCombo_.addActionListener(pixelSizeListener_);
+      pixelSizeCombo_.setBounds(460, 380 , 184, 20);
+      getContentPane().add(pixelSizeCombo_);
+      JLabel lblPixelSize = new JLabel("Pixel size");
+      lblPixelSize.setBounds(410, 383, 59, 14);
+      getContentPane().add(lblPixelSize);
+      
+      
+      //Add credit
+      JLabel lblCopyrightxImaging = new JLabel("Copyright 100X Imaging Inc, 2010");
+      lblCopyrightxImaging.setBounds(438, 510, 172, 14);
+      getContentPane().add(lblCopyrightxImaging);
+
+      // load previous settings from the registry
+      loadSettings();
+
+      GUIUtils.registerImageFocusListener(this);
+      initializeDepthListRunnable();
+   }
+
+   private void createDepthPanel() {
+      JPanel panel = createPanel("Vary excitation with Z position", 5, 320, 400, 545);
+      panel.setLayout(new BorderLayout());
+
+      depthTable_ = new JTable();
+      depthTable_.setAutoCreateColumnsFromModel(false);
+      depthData_ = new DepthDataModel();
+      depthTable_.setModel(depthData_);
+      int firstColWidth = 100;
+      depthTable_.addColumn(new TableColumn(0, firstColWidth, null, null));
+      depthTable_.addColumn(new TableColumn(1, 100, null, null));
+      JScrollPane scrollPane = new JScrollPane();
+      scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+      scrollPane.setViewportView(depthTable_);
+      panel.add(scrollPane, BorderLayout.CENTER);
+            
+      
+      JPanel buttonPanel = new JPanel();
+      buttonPanel.setLayout(new BoxLayout(buttonPanel,BoxLayout.Y_AXIS));
+      JPanel row1 = new JPanel(new FlowLayout());
+      markButton = new JButton("Mark");
+      markButton.addActionListener(new ActionListener() {
+         public void actionPerformed(ActionEvent e) {
+            onDepthMark();
+         }
+      });
+      removeButton = new JButton("Remove");
+      removeButton.addActionListener(new ActionListener() {
+
+         public void actionPerformed(ActionEvent e) {
+            onDepthRemove();
+         }
+      });
+      removeAllButton = new JButton("Remove all");
+      removeAllButton.addActionListener(new ActionListener() {
+
+         public void actionPerformed(ActionEvent e) {
+            onDepthRemoveAll();
+         }
+      });      
+      JButton saveAsButton = new JButton("Save as");
+      saveAsButton.addActionListener(new ActionListener() {
+         public void actionPerformed(ActionEvent e) {
+            onSaveDepthListAs();
+         }
+      });
+      JButton loadButton = new JButton("Load");
+      loadButton.addActionListener(new ActionListener() {
+         public void actionPerformed(ActionEvent e) {
+            onLoadDepthList();
+         }
+      });
+           row1.add(markButton);
+      row1.add(removeButton);
+      row1.add(removeAllButton);
+      row1.add(saveAsButton);
+      row1.add(loadButton);  
+      buttonPanel.add(row1);
+      
+      JPanel row2 = new JPanel(new FlowLayout());
+      activateDepthList_ = new JCheckBox("Activate");
+      row2.add(activateDepthList_); 
+      activateDepthList_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            if (activateDepthList_.isSelected()) {
+               applyDepthSetting();
             }
          }
       });
-      exitButton.setText("Close");
-      exitButton.setBounds(521, 11, 89, 23);
-      getContentPane().add(exitButton);
-      {
-         JLabel lblExcitation = new JLabel("Excitation (EOM Voltage)");
-         lblExcitation.setFont(new Font("Tahoma", Font.BOLD, 11));
-         lblExcitation.setBounds(10, 11, 251, 14);
-         getContentPane().add(lblExcitation);
-      }
-      {
-         JLabel lblLaser = new JLabel("Laser-1");
-         lblLaser.setBounds(10, 36, 46, 14);
-         getContentPane().add(lblLaser);
-      }
-      {
-         JSeparator separator = new JSeparator();
-         separator.setBounds(10, 82, 606, 2);
-         getContentPane().add(separator);
-      }
-      {
-         JLabel lblMakeGrid = new JLabel("Create multi-position grid");
-         lblMakeGrid.setFont(new Font("Tahoma", Font.BOLD, 11));
-         lblMakeGrid.setBounds(10, 88, 251, 14);
-         getContentPane().add(lblMakeGrid);
-      }
-      {
-         JLabel autoStitch = new JLabel("Stitch current time point");
-         autoStitch.setFont(new Font("Tahoma", Font.BOLD, 11));
-         autoStitch.setBounds(280, 88, 300, 14);
-         getContentPane().add(autoStitch);
-      }
-      {
-         JSeparator separator = new JSeparator();
-         separator.setBounds(10, 216, 606, 2);
-         getContentPane().add(separator);
-      }
-      {
-         JLabel lblPmtGain = new JLabel("PMT gain [V]");
-         lblPmtGain.setFont(new Font("Tahoma", Font.BOLD, 11));
-         lblPmtGain.setBounds(10, 266, 121, 14);
-         getContentPane().add(lblPmtGain);
-      }
-      {
-         Label label = new Label("Z [um]");
-         label.setBounds(10, 462, 54, 23);
-         getContentPane().add(label);
-      }
-      {
-         pmtTable_ = new JTable();
-         pmtTable_.setAutoCreateColumnsFromModel(false);
+      buttonPanel.add(row2);
+      panel.add(buttonPanel,BorderLayout.PAGE_END);
+   }
+   
+   private void createStitchPanel() {
+      JPanel panel = createPanel("Stitch last time point", 405, 235, 650, 365);
+      panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+      
+      JPanel row1 = new JPanel(new FlowLayout(FlowLayout.LEFT));      
+      row1.add(new JLabel("Layout:"));
+      invertXCheckBox_ = new JCheckBox("Flip X");
+      invertXCheckBox_.setSelected(prefs_.getBoolean(INVERT_X, false));
+      invertYCheckBox_ = new JCheckBox("Flip Y");
+      invertYCheckBox_.setSelected(prefs_.getBoolean(INVERT_Y, false));
+      swapXandYCheckBox_ = new JCheckBox("Transpose");
+      swapXandYCheckBox_.setSelected(prefs_.getBoolean(SWAP_X_AND_Y, false));
+      row1.add(invertXCheckBox_);
+      row1.add(invertYCheckBox_);
+      row1.add(swapXandYCheckBox_);
+      panel.add(row1);
 
-         pmtData_ = new PMTDataModel();
-         pmtTable_.setModel(pmtData_);
+      JPanel row2 = new JPanel(new FlowLayout(FlowLayout.LEFT));
+      drawPosNames_ = new JCheckBox("Show position names");
+      drawGrid_ = new JCheckBox("Draw grid");
+      row2.add(drawPosNames_);
+      row2.add(drawGrid_);
+      panel.add(row2);
+      
+      stitchButton_ = new JButton("Stitch: ");
+      stitchButton_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            VirtualAcquisitionDisplay vadToStitch = null;
+            int index = windowsToStitchCombo_.getSelectedIndex();
+            if (index < availableVADs_.size()) {
+               vadToStitch = availableVADs_.get(index);
+            }
+            stitcher_.setStitchParameters(invertXCheckBox_.isSelected(), invertYCheckBox_.isSelected(),
+                    swapXandYCheckBox_.isSelected(), drawPosNames_.isSelected(), drawGrid_.isSelected(),
+                    vadToStitch);
+            new Thread(new Runnable() {
 
-         int firstColWidth = 80;
-         pmtTable_.addColumn(new TableColumn(0, firstColWidth, null, null));
-         pmtTable_.addColumn(new TableColumn(1, 309, new SliderCellRenderer(), new SliderCellEditor(this)));
+               @Override
+               public void run() {
+                  stitcher_.createStitchedFromCurrentFrame();
+               }
+            }).start();
+         }
+      });
+      windowsToStitchCombo_ = new JComboBox();
+      windowsToStitchCombo_.setPreferredSize(new Dimension(155,23));
+      JPanel row3 = new JPanel(new FlowLayout(FlowLayout.LEFT));
+      row3.add(stitchButton_);
+      row3.add(windowsToStitchCombo_);
+      panel.add(row3);
+   }
 
-      }
-      {
-         pifocPlaceholder_ = new JLabel("");
-         pifocPlaceholder_.setBounds(66, 466, 333, 18);
-         getContentPane().add(pifocPlaceholder_);
-      }
+   private void createGridPanel() {
+      JPanel panel = createPanel("Create multi-position grid", 405, 140, 650, 235);
+      panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 
-      {
-         laser1Placeholder_ = new JLabel("");
-         laser1Placeholder_.setBounds(66, 32, 420, 18);
-         getContentPane().add(laser1Placeholder_);
-      }
-      {
-         laser2Placeholder_ = new JLabel("");
-         laser2Placeholder_.setBounds(66, 53, 420, 18);
-         getContentPane().add(laser2Placeholder_);
-      }
-      {
-         JLabel lblLaser_1 = new JLabel("Laser-2");
-         lblLaser_1.setBounds(10, 55, 46, 14);
-         getContentPane().add(lblLaser_1);
-      }
+      JPanel row1 = new JPanel(new FlowLayout(FlowLayout.LEFT));
+      row1.add(new JLabel("Pixel overlap X "));
+      gridOverlapXSpinner_ = new JSpinner();
+      gridOverlapXSpinner_.setModel(new SpinnerNumberModel(0, -1000, 1000, 1));
+      gridOverlapXSpinner_.setPreferredSize(new Dimension(40, 22));
+      row1.add(gridOverlapXSpinner_);
+      row1.add(new JLabel("  Y  "));
+      gridOverlapYSpinner_ = new JSpinner();
+      gridOverlapYSpinner_.setModel(new SpinnerNumberModel(0, -1000, 1000, 1));
+      gridOverlapYSpinner_.setPreferredSize(new Dimension(40, 22));
+      row1.add(gridOverlapYSpinner_);
+      panel.add(row1);
+      
+      
+      JPanel row2 = new JPanel(new FlowLayout(FlowLayout.LEFT));
+      gridSizeXSpinner_ = new JSpinner();
+      gridSizeXSpinner_.setModel(new SpinnerNumberModel(3, 1, 1000, 1));
+      gridSizeXSpinner_.setPreferredSize(new Dimension(40, 22));
+      row2.add(gridSizeXSpinner_);
+      row2.add(new JLabel("by"));
+      gridSizeYSpinner_ = new JSpinner();
+      gridSizeYSpinner_.setModel(new SpinnerNumberModel(3, 1, 1000, 1));
+      gridSizeYSpinner_.setPreferredSize(new Dimension(40, 22));
+      row2.add(gridSizeYSpinner_);
+      row2.add(new JLabel("grid   "));
+      JButton generateGridButton = new JButton("Generate");
+      generateGridButton.addActionListener(new ActionListener() {
+         public void actionPerformed(ActionEvent e) {
+            onGenerateGrid();
+         }
+      });
+      row2.add(generateGridButton);
+      panel.add(row2);
+   }
 
+   private void createPMTPanel() {    
+      JPanel panel = createPanel("PMT gain (V)", 5, 140, 400, 320);
+      panel.setLayout(new BorderLayout());
+
+      pmtTable_ = new JTable();
+      pmtTable_.setAutoCreateColumnsFromModel(false);
+
+      pmtData_ = new PMTDataModel();
+      pmtTable_.setModel(pmtData_);
+
+      int firstColWidth = 80;
+      pmtTable_.addColumn(new TableColumn(0, firstColWidth, null, null));
+      pmtTable_.addColumn(new TableColumn(1, 309, new SliderCellRenderer(), new SliderCellEditor(this)));
+
+      JScrollPane sp = new JScrollPane();
+      sp.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+      sp.setViewportView(pmtTable_);
+      panel.add(sp, BorderLayout.CENTER);
+
+   }
+
+   private void createZPanel() {
+      JPanel panel = createPanel("Z Position (" + (char) 956  + "m)", 5, 84, 650, 134);
+      panel.setLayout(new BorderLayout());
       pifocSlider_ = new SliderPanel();
-      pifocSlider_.setBounds(pifocPlaceholder_.getBounds());
-      getContentPane().add(pifocSlider_);
-      getContentPane().remove(pifocPlaceholder_);
       pifocSlider_.addEditActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent e) {
             onPifocAction();
@@ -356,403 +449,105 @@ private JCheckBox drawGrid_, drawPosNames_;
       pifocSlider_.addSliderMouseListener(new MouseAdapter() {
 
          public void mouseReleased(MouseEvent e) {
-             onPifocAction();
+            onPifocAction();
          }
-         
-         public void mousePressed(MouseEvent e) {
-         }
-         
+         public void mousePressed(MouseEvent e) {}
       });
-      
-      laserSlider1_ = new SliderPanel();
-      laserSlider1_.setBounds(laser1Placeholder_.getBounds());
-      getContentPane().add(laserSlider1_);
-      getContentPane().remove(laser1Placeholder_);
-      laserSlider1_.setLimits(0, 100);
+      pifocSlider_.setBorder(BorderFactory.createEmptyBorder(1,4,4,4));
+      panel.add(pifocSlider_, BorderLayout.CENTER );
+   }
 
+   private void createExcitationPanel() {
+      JPanel panel = createPanel("Excitation (EOM Voltage)", 5, 5, 650, 86);
+      panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+      
+      JPanel row1 = new JPanel(new BorderLayout());
+      row1.setBorder(BorderFactory.createEmptyBorder(4,4,4,4));
+      row1.add(new JLabel("Laser-1  "), BorderLayout.LINE_START);
+      laserSlider1_ = new SliderPanel();
+      laserSlider1_.setLimits(0, 100);
       laserSlider1_.addEditActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent e) {
             onEOMSliderAction(1);
          }
       });
       laserSlider1_.addSliderMouseListener(new MouseAdapter() {
-
          public void mouseReleased(MouseEvent e) {
             onEOMSliderAction(1);
          }
       });
+      row1.add(laserSlider1_, BorderLayout.CENTER);
+
       
-
+      JPanel row2 = new JPanel(new BorderLayout());
+      row2.setBorder(BorderFactory.createEmptyBorder(4,4,4,4));
+      row2.add(new JLabel("Laser-2  "), BorderLayout.LINE_START);
       laserSlider2_ = new SliderPanel();
-      laserSlider2_.setBounds(laser2Placeholder_.getBounds());
       laserSlider2_.setLimits(0, 100);
-      getContentPane().add(laserSlider2_);
-      getContentPane().remove(laser2Placeholder_);
-
-      {
-         JButton btnRefresh = new JButton("Refresh");
-         btnRefresh.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-               updateLasers();
-            }
-         });
-         btnRefresh.setBounds(521, 550, 89, 23);
-         getContentPane().add(btnRefresh);
-      }
-      {
-         JLabel lblCopyrightxImaging = new JLabel(
-               "Copyright 100X Imaging Inc, 2010");
-         lblCopyrightxImaging.setBounds(438, 582, 172, 14);
-         getContentPane().add(lblCopyrightxImaging);
-      }
-      {
-         depthTable_ = new JTable();
-
-         depthTable_.setAutoCreateColumnsFromModel(false);
-
-         depthData_ = new DepthDataModel();
-         depthTable_.setModel(depthData_);
-
-         int firstColWidth = 100;
-         depthTable_.addColumn(new TableColumn(0, firstColWidth, null, null));
-         depthTable_.addColumn(new TableColumn(1, 100, null, null));
-
-         ListSelectionModel lsm = depthTable_.getSelectionModel();
-         lsm.addListSelectionListener(new SharedListSelectionHandler());
-         depthTable_.setSelectionModel(lsm);
-         
-      }
-      {
-         btnMark_1 = new JButton("Mark");
-         btnMark_1.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-               onDepthMark();
-            }
-         });
-         btnMark_1.setBounds(424, 284, 89, 23);
-         getContentPane().add(btnMark_1);
-      }
-      {
-         btnRemove = new JButton("Remove");
-         btnRemove.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-               onDepthRemove();
-            }
-         });
-         btnRemove.setBounds(424, 310, 89, 23);
-         getContentPane().add(btnRemove);
-      }
-      {
-         btnMark = new JButton("Remove all");
-         btnMark.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-               onDepthRemoveAll();
-            }
-         });
-         btnMark.setBounds(424, 334, 89, 23);
-         getContentPane().add(btnMark);
-      }
-      {
-         JLabel lblDepthControl = new JLabel("Depth (Z) control");
-         lblDepthControl.setFont(new Font("Tahoma", Font.BOLD, 11));
-         lblDepthControl.setBounds(424, 245, 166, 14);
-         getContentPane().add(lblDepthControl);
-      }
-      {
-         chckbxAutoRefresh_ = new JCheckBox("Auto refresh");
-         chckbxAutoRefresh_.addActionListener(new ActionListener() {
-
-            public void actionPerformed(ActionEvent e) {
-               boolean sel = chckbxAutoRefresh_.isSelected();
-               if (!autoRefresh_ && sel && initialized_) {
-                  startTimer();
-               }
-               autoRefresh_ = sel;
-            }
-         });
-         chckbxAutoRefresh_.setBounds(420, 550, 101, 23);
-         getContentPane().add(chckbxAutoRefresh_);
-      }
       laserSlider2_.addEditActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent e) {
             onEOMSliderAction(2);
          }
       });
       laserSlider2_.addSliderMouseListener(new MouseAdapter() {
-
          public void mouseReleased(MouseEvent e) {
             onEOMSliderAction(2);
          }
       });
-
+      row2.add(laserSlider2_, BorderLayout.CENTER);
       
-      {
-         JScrollPane scrollPane = new JScrollPane();
-         scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-         scrollPane.setBounds(420, 367, 190, 171);
-         getContentPane().add(scrollPane);
-         scrollPane.setViewportView(depthTable_);
-      }
-      {
-         JScrollPane sp = new JScrollPane();
-         sp.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-         sp.setBounds(10, 291, 389, 154);
-         sp.setViewportView(pmtTable_);
-         getContentPane().add(sp);
-      }
-
-      {
-         JButton btnNewList = new JButton("Save");
-         btnNewList.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-               onSaveDepthList();
-            }
-         });
-         btnNewList.setBounds(522, 310, 89, 23);
-         getContentPane().add(btnNewList);
-      }
-      {
-         JButton btnSaveAs = new JButton("Save As...");
-         btnSaveAs.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-               onSaveDepthListAs();
-            }
-         });
-         btnSaveAs.setBounds(522, 335, 89, 23);
-         getContentPane().add(btnSaveAs);
-      }
-      {
-         labelListName_ = new JLabel("");
-         labelListName_.setBorder(new LineBorder(new Color(0, 0, 0)));
-         labelListName_.setBounds(424, 265, 186, 14);
-         getContentPane().add(labelListName_);
-      }
-      {
-         JButton btnLoad = new JButton("Load...");
-         btnLoad.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-               onLoadDepthList();
-            }
-         });
-         btnLoad.setBounds(522, 284, 89, 23);
-         getContentPane().add(btnLoad);
-      }
-      {
-         chckbxLockZ_ = new JCheckBox("Lock stage to Z-list");
-         chckbxLockZ_.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-               onLockZ();
-            }
-         });
-         chckbxLockZ_.setBounds(66, 491, 134, 23);
-         chckbxLockZ_.setSelected(lockZ_);
-         getContentPane().add(chckbxLockZ_);
-      }
-      {
-         pixelSizeCombo_ = new JComboBox();
-         pixelSizeListener_ = new ActionListener() {
-             public void actionPerformed(ActionEvent e) {
-                 onPixelSize();
-              }
-           };
-         pixelSizeCombo_.addActionListener(pixelSizeListener_);
-         pixelSizeCombo_.setBounds(66, 553, 184, 20);
-         getContentPane().add(pixelSizeCombo_);
-      }
-      {
-         JLabel lblPixelSize = new JLabel("Pixel size");
-         lblPixelSize.setBounds(10, 556, 59, 14);
-         getContentPane().add(lblPixelSize);
-      }
-
-      //Create grid controls
-      {      
-         gridSizeXSpinner_ = new JSpinner();
-         gridSizeXSpinner_.setModel(new SpinnerNumberModel(3,1,1000,1));
-         gridSizeXSpinner_.setBounds(10, 110, 40, 22);
-         getContentPane().add(gridSizeXSpinner_);
-         JLabel x = new JLabel("by");
-         x.setBounds(60, 110, 25, 22);
-         getContentPane().add(x);
-         gridSizeYSpinner_ = new JSpinner();
-         gridSizeYSpinner_.setModel(new SpinnerNumberModel(3,1,1000,1));
-         gridSizeYSpinner_.setBounds(80, 110, 40, 22);
-         getContentPane().add(gridSizeYSpinner_);
-         JLabel grid = new JLabel("grid");
-         grid.setBounds(130, 110, 25, 22);
-         getContentPane().add(grid);
-      }
-      {
-         JLabel overlapLabel = new JLabel("pixel overlap X");
-         overlapLabel.setBounds(10, 140, 80, 20);
-         getContentPane().add(overlapLabel);
-         gridOverlapXSpinner_ = new JSpinner();
-         gridOverlapXSpinner_.setModel(new SpinnerNumberModel(0, -1000, 1000, 1));
-         gridOverlapXSpinner_.setBounds(85, 140, 50, 22);
-         getContentPane().add(gridOverlapXSpinner_);
-      }
-      {
-         JLabel overlapLabel = new JLabel("Y");
-         overlapLabel.setBounds(140, 140, 20, 20);
-         getContentPane().add(overlapLabel);
-         gridOverlapYSpinner_ = new JSpinner();
-         gridOverlapYSpinner_.setModel(new SpinnerNumberModel(0, -1000, 1000, 1));
-         gridOverlapYSpinner_.setBounds(150, 140, 50, 22);
-         getContentPane().add(gridOverlapYSpinner_);
-
-      }
-      {
-         JButton generateGridButton = new JButton("Generate grid");
-         generateGridButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-               onGenerateGrid();
-            }
-         });
-         generateGridButton.setBounds(10, 170, 150, 23);
-         getContentPane().add(generateGridButton);
-      }
-      {         
-         invertXCheckBox_ = new JCheckBox("Flip in X");
-         invertXCheckBox_.setBounds(280, 110, 80, 22);
-         getContentPane().add(invertXCheckBox_);
-         invertXCheckBox_.setSelected(prefs_.getBoolean(INVERT_X, false));
-      }
-      {
-         invertYCheckBox_ = new JCheckBox("Flip in Y");
-         invertYCheckBox_.setBounds(360, 110, 80, 22);
-         getContentPane().add(invertYCheckBox_);
-         invertYCheckBox_.setSelected(prefs_.getBoolean(INVERT_Y, false));
-      }
-      {
-         swapXandYCheckBox_ = new JCheckBox("Transpose tiling");
-         swapXandYCheckBox_.setBounds(440, 110, 120, 22);
-         getContentPane().add(swapXandYCheckBox_);
-         swapXandYCheckBox_.setSelected(prefs_.getBoolean(SWAP_X_AND_Y, false));
-      }
-      {
-         drawPosNames_ = new JCheckBox("Show position names");
-         drawPosNames_.setBounds(280, 140, 130, 22);
-         getContentPane().add(drawPosNames_);
-      }
-      {
-         drawGrid_ = new JCheckBox("Draw grid");
-         drawGrid_.setBounds(420, 140, 80, 22);
-         getContentPane().add(drawGrid_);
-      }
-      {
-         stitchButton_ = new JButton("Stitch");
-         stitchButton_.setFont(new Font("Tahoma", Font.BOLD, 11));
-         stitchButton_.setBounds(380, 170, 100, 23);
-         getContentPane().add(stitchButton_);
-         stitchButton_.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-               stitcher_.setStitchParameters(invertXCheckBox_.isSelected(), invertYCheckBox_.isSelected(),
-                       swapXandYCheckBox_.isSelected(), drawPosNames_.isSelected(), drawGrid_.isSelected());
-               new Thread(new Runnable() {
-
-                  @Override
-                  public void run() {
-                     stitcher_.createStitchedFromCurrentFrame();
-                  }
-               }).start();
-            }
-         });
-      }
-
-      {
-        	listCombo_ = new JComboBox();
-        	listCombo_.addItem("Depth List 0");
-        	listCombo_.addItem("Depth List 1");
-         listCombo_.setSelectedIndex(0);
-        	listCombo_.addActionListener(new ActionListener() {
-        		public void actionPerformed(ActionEvent arg0) {
-        			onDepthListIndex();
-        		}
-        	});
-        	listCombo_.setBounds(217, 495, 182, 20);
-        	getContentPane().add(listCombo_);
-        }
-      
-      // load previous settings from the registry
-      loadSettings();
-
-      // update dependent gui elements
-      chckbxAutoRefresh_.setSelected(autoRefresh_);
-   }
-
-   protected void onDepthListIndex() {
-      int listIdx = listCombo_.getSelectedIndex();
-      
-      // do list caching
-
-         double v1 = 0.0;
-         double v2 = 0.0;
-         try {
-            v1 = Double.parseDouble(core_.getProperty(LASER_EOM_1, "Volts"));
-            v2 = Double.parseDouble(core_.getProperty(LASER_EOM_2, "Volts"));
-         } catch (NumberFormatException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-         } catch (Exception e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-         }
-         PMTSetting[] pmts = pmtData_.getPMTSettings();
-         
-         // cache values
-         int cacheIdx = listIdx == 0 ? 1 : 0;
-         depthSettingCache[cacheIdx] = new DepthSetting();
-         depthSettingCache[cacheIdx].eomVolts1_ = v1;
-         depthSettingCache[cacheIdx].eomVolts2_ = v2;
-         depthSettingCache[cacheIdx].pmts = pmts;
-         
-         // apply cache
-         if (depthSettingCache[listIdx] != null && lockZ_ == false) {
-            applyDepthSetting(depthSettingCache[listIdx], false);
-         }
-      
-      
-      try {
-         setCurrentListIndexOnDevices(listIdx);
-         disableDepthControl();
-         depthData_.setCurrentListIndex(listIdx);
-         if (lockZ_ && depthData_.getAllDepthSettings().length > 0) {
-            enableDepthControl();
-            onPifocAction();
-         } else {
-            chckbxLockZ_.setSelected(false);
-            lockZ_ = false;
-            disableDepthControl();
-         }
-      } catch (TwoPhotonException e) {
-         handleError(e.getMessage());
-         int idx = depthData_.getCurrentListIndex();
-         listCombo_.setSelectedIndex(idx);
-      }
+      panel.add(row1);
+      panel.add(row2); 
    }
    
-   private void applyDepthListToDevices() {
-      int listIdx = depthData_.getCurrentListIndex();
-      setCurrentListIndexOnDevices(0);
-      enableDepthControl();
-      setCurrentListIndexOnDevices(1);
-      enableDepthControl();
-      if (!lockZ_)
-         disableDepthControl();
-      setCurrentListIndexOnDevices(listIdx);
-   }
+   private JPanel createPanel(String text, int left, int top, int right, int bottom) {
+      LabelPanel thePanel = new LabelPanel(text);
+     
+      thePanel.setTitleFont(new Font("Dialog", Font.BOLD, 12));
+      thePanel.setBounds(left, top, right - left, bottom - top);
+//      dayBorder_ = BorderFactory.createEtchedBorder();
+//      nightBorder_ = BorderFactory.createEtchedBorder(Color.gray, Color.darkGray);
 
-   private void setCurrentListIndexOnDevices(int listIdx) {
-      try {
-         core_.setProperty(LASER_EOM_1, "ListIndex", Integer.toString(listIdx));
-         core_.setProperty(LASER_EOM_2, "ListIndex", Integer.toString(listIdx));
-         pmtData_.setCurrentDepthList(listIdx);
-         core_.setProperty(Z_STAGE, "DepthList", Integer.toString(listIdx));
-      } catch (Exception e) {
-         // TODO Auto-generated catch block
-         e.printStackTrace();
+      //updatePanelBorder(thePanel);
+      thePanel.setLayout(null);
+      getContentPane().add(thePanel);
+      return thePanel;
+   }
+    
+   @Override
+   public void focusReceived(ImageWindow iw) {
+      //change only if number of windows changes?
+      int[] ids = WindowManager.getIDList();
+      availableVADs_ = new ArrayList<VirtualAcquisitionDisplay>();
+      for (int id : ids) {
+         ImagePlus ip = WindowManager.getImage(id);
+         VirtualAcquisitionDisplay vad = VirtualAcquisitionDisplay.getDisplay(ip);
+         if (vad != null && vad.getNumPositions() > 1) {
+            availableVADs_.add(vad);
+         }
       }
+      
+      String[] names = new String[availableVADs_.size()];
+      for (int i = 0; i < names.length; i++) {
+         names[i] = availableVADs_.get(i).getImagePlus().getTitle();
+      }
+      windowsToStitchCombo_.setModel(new DefaultComboBoxModel(names));
+      windowsToStitchCombo_.setSelectedIndex(names.length - 1);
+   }
+   
+   private void initializeDepthListRunnable() {
+      AcquisitionEngine acqEng = MMStudioMainFrame.getInstance().getAcquisitionEngine();
+      acqEng.attachRunnable(-1, -1, -1, -1, new Runnable() {
+         @Override
+         public void run() {
+            //apply depth list settings  
+            if (activateDepthList_.isSelected()) {
+               applyDepthSetting();
+            }
+            //refresh GUI on each image so it reflects depth list changes
+            refreshGUI();          
+         }
+      });
    }
 
    protected void onSaveDepthListAs() {
@@ -786,7 +581,7 @@ private JCheckBox drawGrid_, drawPosNames_;
       try {
          depthData_.save(depthFile_.getAbsolutePath());
          posListDir_ = depthFile_.getParent();
-         labelListName_.setText(depthFile_.getName());
+//         labelListName_.setText(depthFile_.getName());
       } catch (Exception e) {
          handleError(e.getMessage());
       }
@@ -799,7 +594,7 @@ private JCheckBox drawGrid_, drawPosNames_;
       try {
          depthData_.save(depthFile_.getAbsolutePath());
          posListDir_ = depthFile_.getParent();
-         labelListName_.setText(depthFile_.getName());
+//         labelListName_.setText(depthFile_.getName());
       } catch (Exception e) {
          handleError(e.getMessage());
       }
@@ -818,12 +613,11 @@ private JCheckBox drawGrid_, drawPosNames_;
          try {
             depthData_.load(depthFile_.getAbsolutePath());
             posListDir_ = depthFile_.getParent();
-            labelListName_.setText(depthFile_.getName());
          } catch (Exception e) {
             handleError(e.getMessage());
          }
       }
-      applyDepthListToDevices();
+      activateDepthList_.setSelected(true);
    }
 
    protected void onGenerateGrid() {
@@ -928,47 +722,38 @@ private JCheckBox drawGrid_, drawPosNames_;
       }
    }
 
-   public void applyDepthSetting(DepthSetting ds, boolean setZ) {
+   public void applyDepthSetting() {
       try {
-         if (setZ)
-            core_.setPosition(core_.getFocusDevice(), ds.z);
-         
+         DepthSetting ds = depthData_.getInterpolatedDepthSetting(core_.getPosition(core_.getFocusDevice()));
          core_.setProperty(LASER_EOM_1, "Volts", Double.toString(ds.eomVolts1_));
          core_.setProperty(LASER_EOM_2, "Volts", Double.toString(ds.eomVolts2_));
-         for (int i=0; i<ds.pmts.length; i++)
+         for (int i = 0; i < ds.pmts.length; i++) {
             core_.setProperty(ds.pmts[i].name, "Volts", Double.toString(ds.pmts[i].volts));
-         updateLasers();
+         }
+         refreshGUI();
       } catch (Exception e) {
          handleError(e.getMessage());
          return;
-      }     
+      }
    }
 
    protected void onDepthRemoveAll() {
-      chckbxLockZ_.setSelected(false);
-      lockZ_ = false;
-      disableDepthControl();
+      activateDepthList_.setSelected(false);
       depthData_.clear();
    }
 
    protected void onDepthRemove() {
-      chckbxLockZ_.setSelected(false);
-      lockZ_ = false;
-      disableDepthControl();
+      activateDepthList_.setSelected(false);
       int idx = depthTable_.getSelectedRow();
       depthData_.deleteDepthSetting(idx);
    }
 
    private void onDepthMark() {
-      chckbxLockZ_.setSelected(false);
-      lockZ_ = false;
-      disableDepthControl();
+      activateDepthList_.setSelected(false);
       try {
          double z = core_.getPosition(core_.getFocusDevice());
-         double v1 = Double
-               .parseDouble(core_.getProperty(LASER_EOM_1, "Volts"));
-         double v2 = Double
-               .parseDouble(core_.getProperty(LASER_EOM_2, "Volts"));
+         double v1 = Double.parseDouble(core_.getProperty(LASER_EOM_1, "Volts"));
+         double v2 = Double.parseDouble(core_.getProperty(LASER_EOM_2, "Volts"));
          PMTSetting[] pmts = pmtData_.getPMTSettings();
          DepthSetting ds = new DepthSetting();
          ds.z = z;
@@ -988,9 +773,8 @@ private JCheckBox drawGrid_, drawPosNames_;
       try {
          double z = Double.parseDouble(zprop);
          core_.setPosition(core_.getFocusDevice(), z);
-         if (lockZ_) {
-            DepthSetting ds = depthData_.getInterpolatedDepthSetting(z);
-            applyDepthSetting(ds, false);
+         if (activateDepthList_.isSelected()) {
+            applyDepthSetting();
          }
          removeDepthListSelection();
       } catch (NumberFormatException e) {
@@ -1001,16 +785,6 @@ private JCheckBox drawGrid_, drawPosNames_;
          return;
       }
    }
-
-//   private void setEOMShutterState(boolean open) {
-//      if (open) {
-//         tglbtnEOMShutter_.setSelected(true);
-//         tglbtnEOMShutter_.setText("Shutter:Open");
-//      } else {
-//         tglbtnEOMShutter_.setSelected(false);
-//         tglbtnEOMShutter_.setText("Shutter:Closed");
-//      }
-//   }
 
    protected void onEOMSliderAction(int eom) {
       try {
@@ -1032,42 +806,27 @@ private JCheckBox drawGrid_, drawPosNames_;
    
    public void removeDepthListSelection() {
       depthTable_.clearSelection();
-   
 }
 
-   /**
-    * Save settings to registry
-    */
    protected void saveSettings() {
       Rectangle r = getBounds();
       prefs_.putInt(PANEL_X, r.x);
       prefs_.putInt(PANEL_Y, r.y);
-      prefs_.putBoolean(AUTO_REFRESH, autoRefresh_);
       prefs_.putBoolean(INVERT_X, invertXCheckBox_.isSelected());
       prefs_.putBoolean(INVERT_Y, invertYCheckBox_.isSelected());
       prefs_.putBoolean(SWAP_X_AND_Y, swapXandYCheckBox_.isSelected());
       savePosition();
    }
 
-   /**
-    * Load settings from the registry
-    */
    protected void loadSettings() {
       loadPosition(100, 100);
-      autoRefresh_ = prefs_.getBoolean(AUTO_REFRESH, autoRefresh_);
    }
 
-   /**
-    * Provides the interface to the parent application
-    */
    public void setApp(ScriptInterface app) {
       app_ = app;
       initialize();
    }
 
-   /**
-    * Initializes the module.
-    */
    private void initialize() {
       core_ = app_.getMMCore();
       pmtData_.setCore(core_);
@@ -1124,69 +883,24 @@ private JCheckBox drawGrid_, drawPosNames_;
       pixelSizeCombo_.addActionListener(pixelSizeListener_);
       initialized_ = true;
 
-      // start update timer
-      if (autoRefresh_) {
-         startTimer();
-      }
    }
 
-   private void startTimer() {
-      if (statusTimer_ != null)
-         statusTimer_.cancel();
-
-      statusTimer_ = new Timer();
-
-      StatusTimerTask task = new StatusTimerTask();
-      statusTimer_.schedule(task, 0, 5000);
-   }
-
-   public void updateLasers() {
-      System.out.println("updating gui");
+   private void refreshGUI() {
       try {
-
-         // laser 1
+         core_.logMessage("Refreshing Two Photon plugin from hardware", true);
+         //with devices on a separate thread during acquisition
+         
+         pifocSlider_.setText(core_.getProperty(Z_STAGE, "Position"));
          laserSlider1_.setText(core_.getProperty(LASER_EOM_1, "Volts"));
-
-         // laser 2
          laserSlider2_.setText(core_.getProperty(LASER_EOM_2, "Volts"));
+         pixelSizeCombo_.setSelectedItem(core_.getProperty(RESOLUTION, "Label"));
 
          PMTDataModel pmtdata = (PMTDataModel) pmtTable_.getModel();
          pmtdata.refresh();
 
-         // dual shutter
-//         try {
-//            String s = core_.getProperty(SHUTTER, "State");
-//            if (s.compareTo("1") == 0)
-//               setEOMShutterState(true);
-//            else
-//               setEOMShutterState(false);
-//
-//         } catch (Exception e1) {
-//            e1.printStackTrace();
-//            tglbtnEOMShutter_.setEnabled(false);
-//         }
-
-         // Z stage
-         String focusDev = core_.getFocusDevice();
-         if (!focusDev.isEmpty()) {
-            double pos = core_.getPosition(focusDev);
-            pifocSlider_.setText(Double.toString(pos));
-         }
-         
-         String pixSize = core_.getCurrentPixelSizeConfig();
-         pixelSizeCombo_.setSelectedItem(pixSize);
-
-      } catch (Exception e) {
-         // TODO Auto-generated catch block
-         e.printStackTrace();
+      } catch (Exception ex) {
+         ReportingUtils.logError(ex.getMessage());
       }
-   }
-
-   /**
-    * Displays a message in a dialog box
-    */
-   private void displayMessageDialog(String message) {
-      JOptionPane.showMessageDialog(this, message);
    }
 
    /**
@@ -1194,10 +908,6 @@ private JCheckBox drawGrid_, drawPosNames_;
     */
    private void handleError(String message) {
       JOptionPane.showMessageDialog(this, message);
-   }
-
-   private boolean canExit() {
-      return true;
    }
 
    // //////////////////////////////////////////////////////////////////////////
@@ -1220,39 +930,6 @@ private JCheckBox drawGrid_, drawPosNames_;
    }
 
    public void configurationChanged() {
-      // TODO Auto-generated method stub
-
-   }
-  
-   // This function is called whenever a Component or a Container is added to
-   // another Container belonging to this EscapeDialog
-   public void componentAdded(ContainerEvent e) {
-      addKeyAndContainerListenerRecursively(e.getChild());
-   }
-
-   // // This function is called whenever a Component or a Container is removed
-   // // from another Container belonging to this EscapeDialog
-   // public void componentRemoved(ContainerEvent e)
-   // {
-   // removeKeyAndContainerListenerRecursively(e.getChild());
-   // }
-
-   private void addKeyAndContainerListenerRecursively(Component c) {
-      // Add KeyListener to the Component passed as an argument
-      c.addKeyListener(this);
-      // Check if the Component is a Container
-      if (c instanceof Container) {
-         // Component c is a Container. The following cast is safe.
-         Container cont = (Container) c;
-         // Add ContainerListener to the Container.
-         cont.addContainerListener(this);
-         // Get the Container's array of children Components.
-         Component[] children = cont.getComponents();
-         // For every child repeat the above operation.
-         for (int i = 0; i < children.length; i++) {
-            addKeyAndContainerListenerRecursively(children[i]);
-         }
-      }
    }
 
    public void keyTyped(KeyEvent e) {
@@ -1266,73 +943,42 @@ private JCheckBox drawGrid_, drawPosNames_;
    }
 
    public void keyReleased(KeyEvent e) {
-      // TODO Auto-generated method stub
-
    }
+   
+   public class LabelPanel extends JPanel {
 
-   public void componentRemoved(ContainerEvent e) {
-      //System.out.println("component removed");
+      public ComponentTitledBorder compTitledBorder;
+      public boolean borderSet_ = false;
+      public Component titleComponent;
+
+      public LabelPanel(String title) {
+         super();
+         titleComponent = new JLabel(title);
+         JLabel label = (JLabel) titleComponent;
+         label.setOpaque(true);
+         label.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+         compTitledBorder = new ComponentTitledBorder(label, this, BorderFactory.createEtchedBorder());
+         this.setBorder(compTitledBorder);
+         borderSet_ = true;
+      }
       
-   }
-
-   private void onLockZ() {
-      lockZ_ = chckbxLockZ_.isSelected();
-      if (lockZ_) {
-         applyDepthListToDevices();
-         enableDepthControl();
-      } else {
-         disableDepthControl();
-      }
-   }
-
-   private void disableDepthControl() {
-      try {
-         // effectively disable and clear depth interpolation
-//         core_.setProperty(LASER_EOM_1, "DepthIndex", "-1");
-//         core_.setProperty(LASER_EOM_1, "DepthListSize", "0");
-//         core_.setProperty(LASER_EOM_2, "DepthIndex", "-1");
-//         core_.setProperty(LASER_EOM_2, "DepthListSize", "0");
-         core_.setProperty("Z", "DepthControl", "No");
-      } catch (Exception e) {
-         // TODO Auto-generated catch block
-         e.printStackTrace();
-      }
-   }
-
-   private void enableDepthControl() {
-      DepthSetting[] ds = depthData_.getAllDepthSettings();
-      if (ds.length == 0) {
-         disableDepthControl();
-         return;
-      }
-      try {
-         core_.setProperty(LASER_EOM_1, "DepthIndex", "-1");
-         core_.setProperty(LASER_EOM_2, "DepthIndex", "-1");
-         core_.setProperty(LASER_EOM_1, "DepthListSize", Integer.toString(ds.length));
-         core_.setProperty(LASER_EOM_2, "DepthListSize", Integer.toString(ds.length));
-         for (int j=0; j<ds[0].pmts.length; j++) {
-            core_.setProperty(ds[0].pmts[j].name, "DepthIndex", "-1");
-            core_.setProperty(ds[0].pmts[j].name, "DepthListSize", Integer.toString(ds.length));
+      @Override
+      public void setBorder(Border border) {
+         if (compTitledBorder != null && borderSet_) {
+            compTitledBorder.setBorder(border);
+         } else {
+            super.setBorder(border);
          }
-            
-         for (int i=0; i<ds.length; i++) {
-            core_.setProperty(LASER_EOM_1, "DepthIndex", Integer.toString(i));
-            core_.setProperty(LASER_EOM_1, "Z", Double.toString(ds[i].z));
-            core_.setProperty(LASER_EOM_1, "VD", Double.toString(ds[i].eomVolts1_));
-            core_.setProperty(LASER_EOM_2, "DepthIndex", Integer.toString(i));
-            core_.setProperty(LASER_EOM_2, "Z", Double.toString(ds[i].z));
-            core_.setProperty(LASER_EOM_2, "VD", Double.toString(ds[i].eomVolts2_));
-            for (int j=0; j<ds[i].pmts.length; j++) {
-               core_.setProperty(ds[i].pmts[j].name, "DepthIndex", Integer.toString(i));
-               core_.setProperty(ds[i].pmts[j].name, "Z", Double.toString(ds[i].z));
-               core_.setProperty(ds[i].pmts[j].name, "VD", Double.toString(ds[i].pmts[j].volts));
-            }
-         }
-         
-         core_.setProperty(Z_STAGE, "DepthControl", "Yes");
-      } catch (Exception e) {
-         // TODO Auto-generated catch block
-         e.printStackTrace();
+      }
+
+      @Override
+      public Border getBorder() {
+         return compTitledBorder;
+      }
+
+      public void setTitleFont(Font font) {
+         titleComponent.setFont(font);
       }
    }
+   
 }

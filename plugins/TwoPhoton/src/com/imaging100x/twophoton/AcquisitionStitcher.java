@@ -30,7 +30,7 @@ import org.micromanager.utils.*;
  *
  * @author Henry
  */
-public class AcquisitionStitcher implements ImageFocusListener{
+public class AcquisitionStitcher {
    
    private static final String ACQ_NAME = "Stitched";
    
@@ -50,33 +50,20 @@ public class AcquisitionStitcher implements ImageFocusListener{
    
    public AcquisitionStitcher() {
       gui_ = MMStudioMainFrame.getInstance();
-      GUIUtils.registerImageFocusListener(this);
    }
-   
-   public void setStitchParameters(boolean invX, boolean invY, boolean swap, 
-           boolean drawPosNames, boolean showGrid) {
+
+   public void setStitchParameters(boolean invX, boolean invY, boolean swap,
+           boolean drawPosNames, boolean showGrid, VirtualAcquisitionDisplay display) {
       invertX_ = invX;
       invertY_ = invY;
       swapXandY_ = swap;
       drawPosNames_ = drawPosNames;
       showGrid_ = showGrid;
+      display_ = display;
+      cache_ = display_.getImageCache();
    }
 
-   private Object stitchBatch(LinkedList<TaggedImage> batch) {    
-      if (gridSorter_ == null) {
-         gridSorter_ = makeGridSorter();
-      }
-      Collections.sort(batch, gridSorter_);
-      if (batch.getFirst().pix instanceof short[]) {
-         JOptionPane.showMessageDialog(null, "Henry hasn't added support for stitching of images with more than "
-                 + "8 bits per pixel because no one has needed it yet. Go talk to him and he will add this");
-      }
-
-      return stitchPixelsNoOverlap(batch);
-   }
-
-   
-      public void createStitchedFromCurrentFrame() {
+   public void createStitchedFromCurrentFrame() {
       try {
          JSONObject tags = cache_.getLastImageTags();
          int frameIndex = MDUtils.getFrameIndex(tags);
@@ -112,10 +99,10 @@ public class AcquisitionStitcher implements ImageFocusListener{
                      calcGridDimensions(batch);
 
                      gui_.initializeAcquisition(ACQ_NAME, newImageWidth_, newImageHeight_, 1);
-                     gui_.getAcquisition(ACQ_NAME).getAcquisitionWindow().promptToSave(false);                
+                     gui_.getAcquisition(ACQ_NAME).getAcquisitionWindow().promptToSave(false);
                      imageWindow_ = gui_.getAcquisition(ACQ_NAME).getAcquisitionWindow().getHyperImage().getWindow();
 
-                     
+
                      //add windowclosing listener to record zoom and position
                      if (stitchedWindowLocation_ == null) { //only need to add this listener once
                         gui_.getAcquisition(ACQ_NAME).getAcquisitionWindow().getImagePlus().addImageListener(new ImageListener() {
@@ -127,16 +114,16 @@ public class AcquisitionStitcher implements ImageFocusListener{
                            }
 
                            public void imageClosed(ImagePlus ip) {
-                                 stitchedWindowLocation_ = imageWindow_.getLocation();
-                                 stitchedWindowZoom_ = imageWindow_.getCanvas().getMagnification();
-              
+                              stitchedWindowLocation_ = imageWindow_.getLocation();
+                              stitchedWindowZoom_ = imageWindow_.getCanvas().getMagnification();
+
                            }
                         });
                      }
 
 
                      try {
-                        
+
                         if (stitchedWindowLocation_ != null) {
                            ImageWindow win = gui_.getAcquisition(ACQ_NAME).getAcquisitionWindow().getImagePlus().getWindow();
                            win.setLocation(stitchedWindowLocation_);
@@ -151,10 +138,10 @@ public class AcquisitionStitcher implements ImageFocusListener{
                               while (stitchedWindowZoom_ > canvas.getMagnification()) {
                                  canvas.zoomIn(canvas.getWidth() / 2, canvas.getHeight() / 2);
                               }
-                           }        
+                           }
                         }
-                        
-                        
+
+
                      } catch (Exception e) {
                         ReportingUtils.showError("Couldnt re use stitched window settings");
                      }
@@ -180,19 +167,31 @@ public class AcquisitionStitcher implements ImageFocusListener{
                      gui_.getAcquisition(ACQ_NAME).setChannelColor(c, cache_.getChannelColor(c).getRGB());
                      gui_.getAcquisition(ACQ_NAME).setChannelName(c, cache_.getChannelName(c));
                   } catch (MMScriptException ex) {
-                     
                   }
                }
             }
          });
 
 
-         }  catch (Exception e) {
+      } catch (Exception e) {
          ReportingUtils.showError(e);
       }
 
    }
-   
+
+   private Object stitchBatch(LinkedList<TaggedImage> batch) {
+      if (gridSorter_ == null) {
+         gridSorter_ = makeGridSorter();
+      }
+      Collections.sort(batch, gridSorter_);
+      if (batch.getFirst().pix instanceof short[]) {
+         JOptionPane.showMessageDialog(null, "Henry hasn't added support for stitching of images with more than "
+                 + "8 bits per pixel because no one has needed it yet. Go talk to him and he will add this");
+      }
+
+      return stitchPixelsNoOverlap(batch);
+   }
+
    private void addPositionNameAndGridOverlay(LinkedList<TaggedImage> batch) throws MMScriptException, JSONException {
       if (!drawPosNames_ && !showGrid_) {
          return;
@@ -210,38 +209,25 @@ public class AcquisitionStitcher implements ImageFocusListener{
             }
          }
       }
-      
+
       if (showGrid_) {
          //draw vertical lines
          for (int i = 1; i < gridWidth_; i++) {
-            Line l = new Line( oldImageWidth_ * i, 0, oldImageWidth_ * i, newImageHeight_ );
+            Line l = new Line(oldImageWidth_ * i, 0, oldImageWidth_ * i, newImageHeight_);
             overlay.add(l);
          }
          //draw horizontal lines
-         for (int i = 1; i < gridWidth_; i++) {
-            Line l = new Line( 0, oldImageHeight_ * i, newImageWidth_, oldImageHeight_ * i );
+         for (int i = 1; i < gridHeight_; i++) {
+            Line l = new Line(0, oldImageHeight_ * i, newImageWidth_, oldImageHeight_ * i);
             overlay.add(l);
          }
-         
+
       }
       gui_.getAcquisition(ACQ_NAME).getAcquisitionWindow().getImagePlus().setOverlay(overlay);
 
    }
 
-   @Override
-   public void focusReceived(ImageWindow iw) {
-      VirtualAcquisitionDisplay vad = VirtualAcquisitionDisplay.getDisplay(iw.getImagePlus());
-      if (vad != null && vad.getNumPositions() > 1) {
-         ImageCache cache = vad.getImageCache();
-         if (!cache.isFinished() ) {
-            //this is valid for stitching
-            cache_ = cache;
-            display_ = vad;
-         }
-      }
-   }
-
-  private byte[] stitchPixelsNoOverlap(LinkedList<TaggedImage> batch) {
+   private byte[] stitchPixelsNoOverlap(LinkedList<TaggedImage> batch) {
       byte[] newPixels = new byte[oldImageHeight_ * oldImageWidth_ * gridWidth_ * gridHeight_];
       for (int line = 0; line < (gridWidth_ * gridHeight_) * (oldImageHeight_); line++) {
          int gridX = line % gridWidth_;
@@ -275,9 +261,10 @@ public class AcquisitionStitcher implements ImageFocusListener{
       newImageWidth_ = gridWidth_ * oldImageWidth_;
       newImageHeight_ = gridHeight_ * oldImageHeight_;
    }
-   
-    private Comparator<TaggedImage> makeGridSorter() {
+
+   private Comparator<TaggedImage> makeGridSorter() {
       return new Comparator<TaggedImage>() {
+
          @Override
          public int compare(TaggedImage img1, TaggedImage img2) {
             if (swapXandY_) {
@@ -293,7 +280,7 @@ public class AcquisitionStitcher implements ImageFocusListener{
                      return (int) (invertY_ ? (y1 - y2) : (y2 - y1));
                   }
                } catch (JSONException ex) {
-                 ReportingUtils.showError("Couldn't find stage coordinates");
+                  ReportingUtils.showError("Couldn't find stage coordinates");
                }
             } else {
                try {

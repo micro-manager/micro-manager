@@ -41,9 +41,7 @@ import org.json.JSONObject;
 public class DepthDataModel extends AbstractTableModel {
    private static final long serialVersionUID = 1L;
    private String[] columnNames_ = {"Z [um]", "EOM [V]"};
-   //private Vector<DepthSetting> settings_;
-   private Vector<Vector<DepthSetting>> lists_;
-   private int currentList_;
+   private Vector<DepthSetting> settings_;
    
    private static final String SIZE = "SIZE";
    private static final String Z = "Z";
@@ -55,12 +53,7 @@ public class DepthDataModel extends AbstractTableModel {
    private static final String MULTI_LIST = "LISTS";
    
    public DepthDataModel() {
-      lists_ = new Vector<Vector<DepthSetting>>();
-      Vector<DepthSetting> list0 = new Vector<DepthSetting>();
-      Vector<DepthSetting> list1 = new Vector<DepthSetting>();
-      lists_.add(list0);
-      lists_.add(list1);
-      currentList_ = 0;
+      settings_ = new Vector<DepthSetting>();
    }
    
    public void setValueAt(Object value, int row, int col) {
@@ -82,14 +75,14 @@ public class DepthDataModel extends AbstractTableModel {
    }
 
    public int getRowCount() {
-      return lists_.get(currentList_).size();
+      return settings_.size();
    }
 
    public Object getValueAt(int rowIndex, int columnIndex) {
       if (columnIndex == 0) {
-         return Double.toString(lists_.get(currentList_).get(rowIndex).z);
+         return Double.toString(settings_.get(rowIndex).z);
       } else if (columnIndex == 1) {
-         DepthSetting s = lists_.get(currentList_).get(rowIndex);
+         DepthSetting s = settings_.get(rowIndex);
          String eom = new String(Double.toString(s.eomVolts1_));
          eom += ("," + s.eomVolts2_);
          
@@ -116,33 +109,33 @@ public class DepthDataModel extends AbstractTableModel {
    }
    
    public void setDepthSetting(DepthSetting ds) {
-      lists_.get(currentList_).add(ds);
-      Collections.sort(lists_.get(currentList_));
+      settings_.add(ds);
+      Collections.sort(settings_);
       
       // re-calculate deltaZ
-      double minZ = lists_.get(currentList_).lastElement().z;
-      for (int i=0; i<lists_.get(currentList_).size(); i++)
-         lists_.get(currentList_).get(i).deltaZ = lists_.get(currentList_).get(i).z - minZ;
+      double minZ = settings_.lastElement().z;
+      for (int i=0; i<settings_.size(); i++)
+         settings_.get(i).deltaZ = settings_.get(i).z - minZ;
       fireTableDataChanged();    
    }
    
    public void deleteDepthSetting(int idx) {
-      if (idx >= 0 && idx < lists_.get(currentList_).size())
-         lists_.get(currentList_).remove(idx);
+      if (idx >= 0 && idx < settings_.size())
+         settings_.remove(idx);
       fireTableDataChanged();
    }
    
    DepthSetting getDepthSetting(int idx) {
-      return lists_.get(currentList_).get(idx);
+      return settings_.get(idx);
    }
    
    DepthSetting[] getAllDepthSettings() {
       DepthSetting[] da = new DepthSetting[0];
-      return lists_.get(currentList_).toArray(da);
+      return settings_.toArray(da);
    }
 
    public void clear() {
-      lists_.get(currentList_).clear();
+      settings_.clear();
       fireTableDataChanged();
    }
 
@@ -154,26 +147,26 @@ public class DepthDataModel extends AbstractTableModel {
    public DepthSetting getInterpolatedDepthSetting(double z) throws TwoPhotonException {
       // find matching entry in the list
       
-      if (lists_.get(currentList_).size() < 1)
+      if (settings_.size() < 1)
          throw new TwoPhotonException("Depth List Empty!");
       
       DepthSetting ds = new DepthSetting();
       ds.z = z;
       
-      int idx = Collections.binarySearch(lists_.get(currentList_), ds);
+      int idx = Collections.binarySearch(settings_, ds);
    
       System.out.println("Index: " + idx + "Z: " + z);
       
       if (idx >= 0)
-         return lists_.get(currentList_).get(idx);
+         return settings_.get(idx);
       
       else if (idx == -1) {
-         return lists_.get(currentList_).firstElement();
-      } else if (-idx == (lists_.get(currentList_).size() + 1)) {
-         return lists_.get(currentList_).lastElement();
+         return settings_.firstElement();
+      } else if (-idx == (settings_.size() + 1)) {
+         return settings_.lastElement();
       } else {
-         DepthSetting dsLow = lists_.get(currentList_).get(-idx - 1);
-         DepthSetting dsHigh = lists_.get(currentList_).get(-idx - 2);
+         DepthSetting dsLow = settings_.get(-idx - 1);
+         DepthSetting dsHigh = settings_.get(-idx - 2);
          ds.resizePMT(dsLow.pmts.length);
          double zFactor = (z - dsLow.z)/(dsHigh.z - dsLow.z);
          ds.eomVolts1_ = linearInterpolation(dsLow.eomVolts1_, dsHigh.eomVolts1_, zFactor);
@@ -192,43 +185,29 @@ public class DepthDataModel extends AbstractTableModel {
       return vlow + (vhigh - vlow) * zFactor;
    }
    
-   public void setCurrentListIndex(int idx) throws TwoPhotonException {
-      if (!(idx==0 || idx==1))
-         throw new TwoPhotonException("Invalid depth list index:" + idx );
-      
-      currentList_ = idx;
-      fireTableStructureChanged();
-   }
-   
-   public int getCurrentListIndex() {
-      return currentList_;
-   }
-   
    void save(String path) throws TwoPhotonException {
 
       // serialize the settings list
       JSONArray multiList = new JSONArray();
       try {
-         for (int k=0; k<2; k++) {
-            JSONArray depthList = new JSONArray();
-            for (int i = 0; i < lists_.get(k).size(); i++) {
-               DepthSetting ds = lists_.get(k).get(i);
-               JSONObject depthSetting = new JSONObject();
-               depthSetting.put(EOM1, ds.eomVolts1_);
-               depthSetting.put(EOM2, ds.eomVolts2_);
-               depthSetting.put(Z, ds.z);
-               JSONArray pmtList = new JSONArray();
-               for (int j = 0; j < ds.pmts.length; j++) {
-                  JSONObject pmt = new JSONObject();
-                  pmt.put(PMT_NAME, ds.pmts[j].name);
-                  pmt.put(PMT_V, ds.pmts[j].volts);
-                  pmtList.put(pmt);
-               }
-               depthSetting.put(PMT_LIST, pmtList);
-               depthList.put(depthSetting);
+         JSONArray depthList = new JSONArray();
+         for (int i = 0; i < settings_.size(); i++) {
+            DepthSetting ds = settings_.get(i);
+            JSONObject depthSetting = new JSONObject();
+            depthSetting.put(EOM1, ds.eomVolts1_);
+            depthSetting.put(EOM2, ds.eomVolts2_);
+            depthSetting.put(Z, ds.z);
+            JSONArray pmtList = new JSONArray();
+            for (int j = 0; j < ds.pmts.length; j++) {
+               JSONObject pmt = new JSONObject();
+               pmt.put(PMT_NAME, ds.pmts[j].name);
+               pmt.put(PMT_V, ds.pmts[j].volts);
+               pmtList.put(pmt);
             }
-            multiList.put(depthList);
+            depthSetting.put(PMT_LIST, pmtList);
+            depthList.put(depthSetting);
          }
+         multiList.put(depthList);
       } catch (JSONException e) {
          throw new TwoPhotonException(e.getMessage());
       }
@@ -258,32 +237,28 @@ public class DepthDataModel extends AbstractTableModel {
             contents.append(line);
             contents.append(System.getProperty("line.separator"));
          }
-         JSONArray multiList = new JSONArray(contents.toString());
-         if (multiList.length() != 2)
-            throw new TwoPhotonException("Invalid number of depth lists: " + multiList.length());
+         JSONArray multiList = new JSONArray(contents.toString());     
          
          // create new list
-         lists_.get(0).clear();
-         lists_.get(1).clear();
-         
-         for (int k=0; k<2; k++){
-            JSONArray list = multiList.getJSONArray(k);
-            for (int i=0; i<list.length(); i++) {
-               JSONObject setting = list.getJSONObject(i);
-               DepthSetting s = new DepthSetting();
-               s.z = setting.getDouble(Z);
-               s.eomVolts1_ = setting.getDouble(EOM1);
-               s.eomVolts2_ = setting.getDouble(EOM2);
-               JSONArray pmtList = setting.getJSONArray(PMT_LIST);
-               s.resizePMT(pmtList.length());
-               for (int j=0; j<pmtList.length(); j++) {
-                  JSONObject pmt = pmtList.getJSONObject(j);
-                  s.pmts[j].name = pmt.getString(PMT_NAME);
-                  s.pmts[j].volts = pmt.getDouble(PMT_V);
-               }
-               lists_.get(k).add(s);
+         settings_.clear();
+
+         JSONArray list = multiList.getJSONArray(0);
+         for (int i = 0; i < list.length(); i++) {
+            JSONObject setting = list.getJSONObject(i);
+            DepthSetting s = new DepthSetting();
+            s.z = setting.getDouble(Z);
+            s.eomVolts1_ = setting.getDouble(EOM1);
+            s.eomVolts2_ = setting.getDouble(EOM2);
+            JSONArray pmtList = setting.getJSONArray(PMT_LIST);
+            s.resizePMT(pmtList.length());
+            for (int j = 0; j < pmtList.length(); j++) {
+               JSONObject pmt = pmtList.getJSONObject(j);
+               s.pmts[j].name = pmt.getString(PMT_NAME);
+               s.pmts[j].volts = pmt.getDouble(PMT_V);
             }
+            settings_.add(s);
          }
+
          fireTableStructureChanged();
 
       } catch (Exception e) {

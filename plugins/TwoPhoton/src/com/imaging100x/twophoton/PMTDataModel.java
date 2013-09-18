@@ -157,14 +157,4 @@ public class PMTDataModel extends AbstractTableModel {
       return settings;
    }
    
-   public void setCurrentDepthList(int listIdx) {
-      for (int i=0; i<names_.size(); i++) {
-         try {
-            core_.setProperty(names_.get(i), "ListIndex", Integer.toString(listIdx));
-            
-         } catch (Exception e) {
-            handleError(e);
-         }
-      }      
-   }
 }
