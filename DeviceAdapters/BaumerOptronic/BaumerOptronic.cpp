@@ -296,6 +296,8 @@ MMThreadLock BOImplementationThread::imageBufferLock_s;
 
 void BOImplementationThread::Snap(void)
 {
+   // XXX BUG: We can end up grabbing an image whose exposure started before
+   // the SnapImage() call commenced.
    try
    {
       if( Ready == CameraState())
@@ -359,6 +361,11 @@ void BOImplementationThread::Snap(void)
  * of the image is, allocates a buffer and stores a pointer to the buffer
  * (pStatic_g and/or pBuf_) and its size (staticImgSize_g)
  * but if that is true, why was it called "Acquire"?
+ *
+ * -> It's probably named Acquire() because it sets seqactive_g to true, which,
+ *  if I understand correctly, is a signal to grab the next available image.
+ *  (Also compare the Snap() function, which ought to have been written to
+ *  share code with this one.)
  */
 void BOImplementationThread::Acquire(void)
 {
@@ -433,6 +440,7 @@ void* BOImplementationThread::CurrentImage( unsigned short& xDim,  unsigned shor
       }
    }
  
+   // XXX BUG: We never reset seqactive_g if GetImageBuffer() is not called
    seqactive_g = false;
 
    MMThreadGuard* g = new MMThreadGuard(BOImplementationThread::imageBufferLock_s);
@@ -858,6 +866,7 @@ int BOImplementationThread::svc(void)
                Acquire();
 
                // complicated way to wait for one exposure time
+               // XXX BUG: "Exposure() / 1000" is zero unless Exposure > 1000.
                MM::TimeoutMs timerOut(CurrentMMTimeMM(), Exposure() / 1000 );
                for (;;)
                {
@@ -1893,8 +1902,9 @@ int CBaumerOptronic::Initialize()
 */
 int CBaumerOptronic::SnapImage()
 {
-
    pWorkerThread_->Command(SnapCommand);
+
+   // XXX BUG: "Exposure() / 1000" is zero unless Exposure > 1000.
    CDeviceUtils::SleepMs(pWorkerThread_->Exposure() / 1000);
 
    return DEVICE_OK;
