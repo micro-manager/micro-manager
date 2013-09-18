@@ -40,6 +40,23 @@ stored in globals.
 
 Since this function is a global, using this adapter with multiple cameras is not possible.
 
+--
+
+Further notes from Mark Tsuchida, Sep 2013.
+
+To read this code, start by searching for calls to functions named FX_*. These
+are the Baumer library calls. Work back from there to figure out how things happen.
+
+The most central ones are FX_StartDataCapture() and FX_GetImageData().
+
+It would be nice if we could figure out why a spearate thread is used for
+everything, and especially why the decision was made to keep the capture
+constantly running instead of starting and stopping when acquiring snaps or
+sequences.
+
+If any _major_ fix becomes necessary, I'd suggest starting from scratch, as
+there is too much uncommented magic in this code.
+
 */
 
 
@@ -279,16 +296,14 @@ MMThreadLock BOImplementationThread::imageBufferLock_s;
 
 void BOImplementationThread::Snap(void)
 {
-   bool bfalse = false;
    try
    {
       if( Ready == CameraState())
       {
-         do
          {
             MMThreadGuard guard(BOImplementationThread::imageReadyLock_s);
             imageReady_g = false;
-         }while(bfalse);
+         }
 
          MMThreadGuard g( stateMachineLock_);
          WorkerState prevState = cameraState_;
@@ -305,8 +320,6 @@ void BOImplementationThread::Snap(void)
 
          unsigned long sz = dcBoStatus.iNumImgCodeBytes;
 
-
-         do
          {
             // lock access to the static buffer, buffersize
             MMThreadGuard g( BOImplementationThread::imageBufferLock_s);
@@ -326,7 +339,7 @@ void BOImplementationThread::Snap(void)
 
             pStatic_g = pBuf_;
             staticImgSize_g = bufSize_;
-         } while(bfalse);
+         }
 
 
          if( 0 < bufSize_)
@@ -349,14 +362,12 @@ void BOImplementationThread::Snap(void)
  */
 void BOImplementationThread::Acquire(void)
 {
-   bool bfalse = false;
    try
    {
-      do
       {
          MMThreadGuard guard(BOImplementationThread::imageReadyLock_s);
          imageReady_g = false;
-      } while(bfalse);
+      }
 
       tBoCameraType   dcBoType;               // Cameratype struct
       tBoCameraStatus dcBoStatus;             // Camerastatus struct
@@ -367,7 +378,6 @@ void BOImplementationThread::Acquire(void)
 
       unsigned long sz = dcBoStatus.iNumImgCodeBytes;
 
-      do
       {
          // lock access to the static buffer, buffersize
          MMThreadGuard g( BOImplementationThread::imageBufferLock_s);
@@ -387,7 +397,7 @@ void BOImplementationThread::Acquire(void)
 
          pStatic_g = pBuf_;
          staticImgSize_g = bufSize_;
-      } while(bfalse);
+      }
 
 
       if( 0 < bufSize_)
@@ -410,7 +420,7 @@ void* BOImplementationThread::CurrentImage( unsigned short& xDim,  unsigned shor
    *ppImageBufferGuard = NULL;
 
    MM::TimeoutMs timerOut( CurrentMMTimeMM(), (long)(Exposure() + 5000.0) );
-   while( bool btrue = true)
+   for (;;)
    {
       CDeviceUtils::SleepMs(0);
       MMThreadGuard guard(BOImplementationThread::imageReadyLock_s);
@@ -764,11 +774,8 @@ void BOImplementationThread::QueryCameraCurrentFormat(void)
 
 int BOImplementationThread::svc(void)
 {
-   bool bfalse = false;
-   bool btrue = true;
-
    // loop in this working thread until the camera is shutdown.
-   do
+   for (;;)
    {
       if( Exit == Command())
       {
@@ -777,12 +784,11 @@ int BOImplementationThread::svc(void)
             try
             { 
                // kill the acquisition thread
-               do
                {
                   LLogMessage( "Send termination request to BO acquisition thread ", true);
                   MMThreadGuard g(::acquisitionThreadTerminateLock_g);
                   mTerminateFlag_g = true;	
-               } while(bfalse);
+               }
 
                LLogMessage( "sent terminate request to BO acquisition thread ", true);
 		         ::TerminateThread( acquisitionThread_, 0 );
@@ -845,7 +851,6 @@ int BOImplementationThread::svc(void)
             break;
 
          case Acquiring:  // sequence Acquisition processing
-            do 
             {
                int ret = DEVICE_ERR;
 
@@ -854,7 +859,7 @@ int BOImplementationThread::svc(void)
 
                // complicated way to wait for one exposure time
                MM::TimeoutMs timerOut(CurrentMMTimeMM(), Exposure() / 1000 );
-               do
+               for (;;)
                {
                   if( StopSequence == Command())
                   {
@@ -871,7 +876,7 @@ int BOImplementationThread::svc(void)
                      break;
 
                   Sleep(0);
-               } while(btrue);
+               }
 
 
                //if (ret != DEVICE_OK)
@@ -900,7 +905,7 @@ int BOImplementationThread::svc(void)
                {
                   CameraState(Ready);
                }
-            } while(bfalse);
+            }
             break;
 
          default:
@@ -908,7 +913,7 @@ int BOImplementationThread::svc(void)
             break;
       }
       CDeviceUtils::SleepMs(0);
-   } while(btrue);
+   }
 
    Command(Noop);
    LLogMessage( "CCamera acquisition thread is exiting... ", true);
@@ -1558,7 +1563,6 @@ void BOImplementationThread::GetROI( unsigned int & x, unsigned int & y, unsigne
 // waits for the specified image ready event
 unsigned int __stdcall mSeqEventHandler( void* pArguments )
 {
-   bool bfalse = false;
    HANDLE * aHandle = (HANDLE*)pArguments;
    tBoImgDataInfoHeader ImgHeader;   
    memset(&ImgHeader, 0x00, sizeof(ImgHeader));
@@ -1580,11 +1584,11 @@ unsigned int __stdcall mSeqEventHandler( void* pArguments )
             // each operation should only atomically lock the mutex...
 
             bool bufferIsReady = false;
-            do
+
             {
                MMThreadGuard g(BOImplementationThread::imageBufferLock_s);
                bufferIsReady = ( 0 < staticImgSize_g) && ( NULL != pStatic_g);
-            } while(bfalse);
+            }
 
             if( bufferIsReady)
             {
@@ -1601,11 +1605,11 @@ unsigned int __stdcall mSeqEventHandler( void* pArguments )
                nPlanes_g = static_cast<unsigned short> (ImgHeader.sDataCode.iPlanes);
                nCanals_g = static_cast<unsigned short> (ImgHeader.sDataCode.iCanals);
                iCode_g = static_cast<unsigned short> (ImgHeader.sDataCode.iCode);
-               do
+
                {
                   MMThreadGuard guard(BOImplementationThread::imageReadyLock_s);
                   imageReady_g = true;
-               } while(bfalse);
+               }
             }
 			   else 
             {
