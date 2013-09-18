@@ -42,7 +42,19 @@
 #include <map>
 #include <algorithm>
 
+#ifdef _MSC_VER
+// Disable Visual C++ warnings (caused by const fields in a struct)
+#pragma warning(push)
+#pragma warning(disable: 4510)
+#pragma warning(disable: 4512)
+#pragma warning(disable: 4610)
+#endif // _MSC_VER
+
 #include <uEye.h>
+
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif // _MSC_VER
 
 
 
