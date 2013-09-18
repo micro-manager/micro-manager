@@ -1573,8 +1573,8 @@ void BOImplementationThread::GetROI( unsigned int & x, unsigned int & y, unsigne
 unsigned int __stdcall mSeqEventHandler( void* pArguments )
 {
    HANDLE * aHandle = (HANDLE*)pArguments;
-   tBoImgDataInfoHeader ImgHeader;   
-   memset(&ImgHeader, 0x00, sizeof(ImgHeader));
+   tBoImgDataInfoHeader imgHeader;
+   memset(&imgHeader, 0x00, sizeof(imgHeader));
    for( ; mTerminateFlag_g == false; ) 
    {
       Sleep(0);
@@ -1586,9 +1586,9 @@ unsigned int __stdcall mSeqEventHandler( void* pArguments )
       {
          if( seqactive_g ) 
          {
-				ImgHeader.sFlags.fFlipHori  = false;
-				ImgHeader.sFlags.fFlipVert  = true;
-				ImgHeader.sFlags.fSyncStamp = true;
+				imgHeader.sFlags.fFlipHori  = false;
+				imgHeader.sFlags.fFlipVert  = true;
+				imgHeader.sFlags.fSyncStamp = true;
 
             // each operation should only atomically lock the mutex...
 
@@ -1602,18 +1602,18 @@ unsigned int __stdcall mSeqEventHandler( void* pArguments )
             if( bufferIsReady)
             {
                MMThreadGuard g(BOImplementationThread::imageBufferLock_s);
-		         Status = FX_GetImageData( gCameraId[0], &ImgHeader, pStatic_g , staticImgSize_g );
+		         Status = FX_GetImageData( gCameraId[0], &imgHeader, pStatic_g , staticImgSize_g );
             }
 
 		      if( Status == 1 ) 
             {
                MMThreadGuard g(BOImplementationThread::imageBufferLock_s);
-               xDim_g = static_cast<unsigned short> ( ImgHeader.iSizeX);
-               yDim_g = static_cast<unsigned short> ( ImgHeader.iSizeY);
-               bitsInOneColor_g = static_cast<unsigned short> (ImgHeader.sDataCode.iCanalBits);
-               nPlanes_g = static_cast<unsigned short> (ImgHeader.sDataCode.iPlanes);
-               nCanals_g = static_cast<unsigned short> (ImgHeader.sDataCode.iCanals);
-               iCode_g = static_cast<unsigned short> (ImgHeader.sDataCode.iCode);
+               xDim_g = static_cast<unsigned short> (imgHeader.iSizeX);
+               yDim_g = static_cast<unsigned short> (imgHeader.iSizeY);
+               bitsInOneColor_g = static_cast<unsigned short> (imgHeader.sDataCode.iCanalBits);
+               nPlanes_g = static_cast<unsigned short> (imgHeader.sDataCode.iPlanes);
+               nCanals_g = static_cast<unsigned short> (imgHeader.sDataCode.iCanals);
+               iCode_g = static_cast<unsigned short> (imgHeader.sDataCode.iCode);
 
                {
                   MMThreadGuard guard(BOImplementationThread::imageReadyLock_s);
