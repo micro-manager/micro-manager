@@ -1580,9 +1580,8 @@ unsigned int __stdcall mSeqEventHandler( void* pArguments )
       Sleep(0);
       MMThreadGuard g(::acquisitionThreadTerminateLock_g); // have to wait for the event time-out !!
 
-      DWORD Status = WaitForMultipleObjects(1, aHandle, FALSE, imageTimeoutMs_g);
-      Status -= WAIT_OBJECT_0;
-      if( Status == 0 )
+      DWORD waitStatus = WaitForSingleObject(*aHandle, imageTimeoutMs_g);
+      if (waitStatus == WAIT_OBJECT_0)
       {
          if( seqactive_g ) 
          {
@@ -1590,9 +1589,8 @@ unsigned int __stdcall mSeqEventHandler( void* pArguments )
 				imgHeader.sFlags.fFlipVert  = true;
 				imgHeader.sFlags.fSyncStamp = true;
 
-            // each operation should only atomically lock the mutex...
-
             bool bufferIsReady = false;
+            DWORD gotImage = FALSE;
 
             {
                MMThreadGuard g(BOImplementationThread::imageBufferLock_s);
@@ -1602,10 +1600,10 @@ unsigned int __stdcall mSeqEventHandler( void* pArguments )
             if( bufferIsReady)
             {
                MMThreadGuard g(BOImplementationThread::imageBufferLock_s);
-		         Status = FX_GetImageData( gCameraId[0], &imgHeader, pStatic_g , staticImgSize_g );
+		         gotImage = FX_GetImageData(gCameraId[0], &imgHeader, pStatic_g, staticImgSize_g);
             }
 
-		      if( Status == 1 ) 
+            if (gotImage == TRUE)
             {
                MMThreadGuard g(BOImplementationThread::imageBufferLock_s);
                xDim_g = static_cast<unsigned short> (imgHeader.iSizeX);
