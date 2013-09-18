@@ -154,8 +154,8 @@ int ThorlabsDCStage::Initialize()
 	CreateProperty(g_NumberUnitsProp,CDeviceUtils::ConvertToString(plNumUnits),MM::String,true);
 	//Serial Number
 	CreateProperty(g_SerialNumberProp,CDeviceUtils::ConvertToString(plSerialNum[i]),MM::String,true);
-	CreateProperty(g_MaxVelProp,CDeviceUtils::ConvertToString(pfMaxVel),MM::String,true);
-	CreateProperty(g_MaxAccnProp,CDeviceUtils::ConvertToString(pfMaxAccn),MM::String,true);
+	CreateProperty(g_MaxVelProp,CDeviceUtils::ConvertToString(pfMaxVel[i]),MM::String,true);
+	CreateProperty(g_MaxAccnProp,CDeviceUtils::ConvertToString(pfMaxAccn[i]),MM::String,true);
 
 
 	//Action Properties
@@ -167,7 +167,7 @@ int ThorlabsDCStage::Initialize()
    CreateProperty(g_Keyword_Position, "0.0", MM::Float, false, pAct);
    SetPropertyLimits(g_Keyword_Position, 0.0, maxTravelUm_);
 
-   CreateProperty(g_Keyword_Velocity, CDeviceUtils::ConvertToString(pfMaxVel), MM::Float, false, pAct2);
+   CreateProperty(g_Keyword_Velocity, CDeviceUtils::ConvertToString(pfMaxVel[i]), MM::Float, false, pAct2);
    CreateProperty(g_Keyword_Home, "0.0", MM::Float, false, pAct3);
     SetPropertyLimits(g_Keyword_Home, 0.0, 1.0);
 
