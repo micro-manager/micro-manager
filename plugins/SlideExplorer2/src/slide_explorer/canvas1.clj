@@ -537,17 +537,27 @@
     (doseq [action (map :mouse-out out)] (when action (action)))))
     
 (defn activate-dragging! [e reference canvas]
+  (println "activate-dragging!")
   (let [x (.getX e) y (.getY e)]
-    (alter-meta! canvas assoc ::dragging-action
-                 (last (mouse-actions :on-mouse-drag [x y] @reference)))))
+    (alter-meta! canvas assoc
+                 ::dragging-action
+                   (last (triggered-mouse-actions
+                           :on-mouse-drag [x y] @reference))
+                 ::last-drag-position [x y])))
 
 (defn stop-dragging! [canvas]
+  (println "stop-dragging!")
   (alter-meta! canvas dissoc ::dragging-action))
 
 (defn continue-dragging [e canvas]
-  (let [x (.getX e) y (.getY e)]
-    (when-let [action ((meta canvas) ::dragging-action)]
-      (action x y))))
+  (let [x (.getX e) y (.getY e)
+        canvas-meta (meta canvas)
+        [x0 y0] (::last-drag-position canvas-meta)
+        dx (- x x0) dy (- y y0)]
+    (alter-meta! canvas assoc
+                 ::last-drag-position [x y])
+    (when-let [action (canvas-meta ::dragging-action)]
+      (action dx dy))))
 
 (defn interactive-canvas
   [reference]
@@ -561,7 +571,9 @@
           (mouseReleased [e] (stop-dragging! canvas)
                              (run-mouse-actions e :mouse-up reference))
           (mouseMoved [e] (handle-mouse-move e reference canvas))
-          (mouseDragged [e] (continue-dragging e canvas)))]
+          (mouseDragged [e] 
+                        (handle-mouse-move e reference canvas)
+                        (continue-dragging e canvas)))]
     (doto canvas
       (.addMouseListener mouse-adapter)
       (.addMouseMotionListener mouse-adapter))))
@@ -631,9 +643,14 @@
    {:type :arc
     :mouse-in #(swap! grafix assoc-in [2 :fill] :red)
     :mouse-out #(swap! grafix assoc-in [2 :fill] :pink)
+    :on-mouse-drag (fn [dx dy]
+                     (swap! grafix
+                           #(-> %
+                                (update-in [2 :x] + dx)
+                                (update-in [2 :y] + dy))))
     :scale 2
       :mouse-up (fn [x y] (println "coords: " x y))
-     :l 100
+     :x 200
      :y 200
      :w 50
      :h 70
