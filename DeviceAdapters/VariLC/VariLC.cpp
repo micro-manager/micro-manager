@@ -98,8 +98,8 @@ int ClearPort(MM::Device& device, MM::Core& core, std::string port)
 ///////////////////////////////////////////////////////////////////////////////
 
 VariLC::VariLC() :
-  answerTimeoutMs_(1000),
   initialized_(false),
+  answerTimeoutMs_(1000),
   numActiveLCs_(2),
   numTotalLCs_(2),
   numPalEls_(5),
@@ -653,7 +653,7 @@ int VariLC::OnSendToVariLC(MM::PropertyBase* pProp, MM::ActionType eAct)
 	  else if ((std::string)state=="State") {   
 		  	  
 			  std::vector<char> val(len-5);
-			  for (int i=5; i < len; i++) {				  
+			  for (unsigned int i=5; i < len; i++) {				  
 					val[5-i] = sendToVariLC_[i];
 			  }
 			  val[len] = '\0';

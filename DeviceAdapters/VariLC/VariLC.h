@@ -71,24 +71,24 @@ class VariLC : public CGenericBase<VariLC>
    private:
       // Command exchange with MMCore
       std::string command_;
-	  std::string baud_;
       bool initialized_;
       double answerTimeoutMs_;
-	  bool briefModeQ_;
+	   bool briefModeQ_;
       double wavelength_; // the cached value
-      long numTotalLCs_;  // total number of LCs	  
       long numActiveLCs_;  // number of actively controlled LCs (the actively controlled LCs appear first in the list of retardance values in the L-command)
+      long numTotalLCs_;  // total number of LCs	  
       double retardance_[25]; // retardance values of total number of LCs; I made the index 8, a high number unlikely to be exceeded by the variLC hardware
       std::string epilogueL_; // added at the end of every L command to account for uncontrolled LCs
       long numPalEls_;  // total number of palette elements
-	  std::string palEl_[99]; // array of palette elements, index is total number of elements
+	   std::string palEl_[99]; // array of palette elements, index is total number of elements
 //      std::string currRet_;
-	  std::string serialnum_;
+	   std::string serialnum_;
       std::string sendToVariLC_;
       std::string getFromVariLC_;
-	  MM::MMTime changedTime_;
+	   MM::MMTime changedTime_;
+	   std::string baud_;
 	  
-      std::vector<double> getNumbersFromMessage(std::string variLCmessage, bool prefixQ);
+       std::vector<double> getNumbersFromMessage(std::string variLCmessage, bool prefixQ);
 };
 
 
