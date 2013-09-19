@@ -45,11 +45,11 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 
 Cobolt::Cobolt() :
 port_("Undefined"),
-maxPower_(0.00),
 initialized_(false),
 busy_(false),
 answerTimeoutMs_(1000),
 power_(0.00),
+maxPower_(0.00),
 laserOn_("On"),
 laserStatus_("Undefined"),
 interlock_ ("Interlock Open"),
