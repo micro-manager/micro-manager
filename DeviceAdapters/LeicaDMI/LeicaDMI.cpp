@@ -1218,11 +1218,11 @@ int ObjectiveTurret::OnImmersion(MM::PropertyBase* pProp, MM::ActionType eAct)
 ///////////////////////////////////////////////////////////////////////////////
 FastFilterWheel::FastFilterWheel() :
    numPos_(5),
-   filterWheelID_(0),
    initialized_(false),
    name_(g_LeicaFastFilterWheel),
    description_("Fast Filter Wheel"),
-   pos_(1)
+   pos_(1),
+   filterWheelID_(0)
 {
    InitializeDefaultErrorMessages();
 
