@@ -1218,7 +1218,7 @@ int ObjectiveTurret::OnImmersion(MM::PropertyBase* pProp, MM::ActionType eAct)
 ///////////////////////////////////////////////////////////////////////////////
 FastFilterWheel::FastFilterWheel() :
    numPos_(5),
-   filterWheelID_(1),
+   filterWheelID_(0),
    initialized_(false),
    name_(g_LeicaFastFilterWheel),
    description_("Fast Filter Wheel"),
@@ -1238,6 +1238,11 @@ FastFilterWheel::FastFilterWheel() :
    CreateProperty(MM::g_Keyword_Description, description_.c_str(), MM::String, true);
 
    CreatePropertyWithHandler("Filter Wheel ID", "0", MM::Integer, false, &FastFilterWheel::OnFilterWheelID,true);
+   for (int i=0; i<4; ++i) {
+      stringstream ss;
+      ss << i;
+      AddAllowedValue("Filter Wheel ID", ss.str().c_str());
+   }
 
 }
 
@@ -1290,7 +1295,7 @@ int FastFilterWheel::Initialize()
    for (unsigned i=0; i < numPos_; i++)
    {
       std::stringstream ss;
-      ss << "Pos" << i;
+      ss << i << "_" << g_ScopeModel.FastFilterWheel_[filterWheelID_].GetPositionLabel(i+1);
       SetPositionLabel(i, ss.str().c_str());
    }
 

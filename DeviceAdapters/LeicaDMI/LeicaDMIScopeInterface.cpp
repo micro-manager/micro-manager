@@ -889,6 +889,7 @@ int LeicaScopeInterface::GetCondensorInfo(MM::Device& device, MM::Core& core)
 
    return DEVICE_OK;
 }
+
 int LeicaScopeInterface::GetRevolverInfo(MM::Device& device, MM::Core& core)
 {
    std::ostringstream command;
@@ -1419,6 +1420,24 @@ int LeicaScopeInterface::GetFastFilterWheelInfo(MM::Device& device, MM::Core& co
          scopeModel_->FastFilterWheel_[filterWheelIndex].SetMaxPosition(maxPos);
          ts.clear();
          ts.str("");
+
+         // Get filter wheel labels
+         for (int positionIndex = minPos; positionIndex <= maxPos; ++positionIndex) {
+            std::stringstream cmd;
+            std::stringstream text;
+            cmd << g_Fast_Filter_Wheel << "032 " << (filterWheelIndex+1) << " " << positionIndex;
+            ret = GetAnswer(device, core, cmd.str().c_str(), answer);
+            if (ret != DEVICE_OK)
+               return ret;
+            text << answer;
+            std::string ignoreString;
+            for (int i=0; i<5; ++i) {
+               text >> ignoreString;
+            }
+            std::string label;
+            text >> label;
+            scopeModel_->FastFilterWheel_[filterWheelIndex].SetPositionLabel(positionIndex, label);
+         }
       }
    }
    return DEVICE_OK;

@@ -138,9 +138,13 @@ class LeicaFastFilterWheelModel : public LeicaDeviceModel
 {
 public:
    LeicaFastFilterWheelModel();
-   std::vector<std::string> filter_;
+   std::map<int, std::string> positionLabels_;
 
    static const int maxNrFilters_ = 5;
+
+   int SetPositionLabel(int position, std::string label);
+   std::string GetPositionLabel(int position);
+
 
 private:
    long filterWheelID_;

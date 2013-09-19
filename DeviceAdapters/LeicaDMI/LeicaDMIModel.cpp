@@ -199,6 +199,22 @@ LeicaFastFilterWheelModel::LeicaFastFilterWheelModel() :
    position_ = 1;
 }
 
+   int LeicaFastFilterWheelModel::SetPositionLabel(int position, std::string label)
+{
+   MM_THREAD_GUARD_LOCK(&mutex_);
+   positionLabels_[position] = label;
+   MM_THREAD_GUARD_UNLOCK(&mutex_);
+   return DEVICE_OK;
+
+}
+
+std::string LeicaFastFilterWheelModel::GetPositionLabel(int position)
+{
+   MM_THREAD_GUARD_LOCK(&mutex_);
+   std::string label = positionLabels_[position];
+   MM_THREAD_GUARD_UNLOCK(&mutex_);
+   return label;
+}
 
 
 /*
