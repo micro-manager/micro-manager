@@ -191,6 +191,37 @@ private:
    long pos_;
 };
 
+
+class FastFilterWheel : public CStateDeviceBase<FastFilterWheel>
+{
+public:
+   FastFilterWheel();
+   ~FastFilterWheel();
+
+   // MMDevice API
+   int Initialize();
+   int Shutdown();
+    
+   void GetName(char* pszName) const;
+   bool Busy();
+   unsigned long GetNumberOfPositions() const {return numPos_;};
+
+   // action interface
+   int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnFilterWheelID(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+protected:
+   unsigned int numPos_;
+
+private:
+   bool initialized_;
+   std::string name_;
+   std::string description_;
+   long pos_;
+   long filterWheelID_;
+};
+
+
 class ZDrive : public CStageBase<ZDrive>
 {
 public:

@@ -92,6 +92,7 @@ const char* g_LevelProp = "Level";
 const char* g_LeicaDeviceName = "Scope";
 const char* g_LeicaReflector = "IL-Turret";
 const char* g_LeicaNosePiece = "ObjectiveTurret";
+const char* g_LeicaFastFilterWheel = "FastFilterWheel";
 const char* g_LeicaFieldDiaphragmTL = "TL-FieldDiaphragm";
 const char* g_LeicaApertureDiaphragmTL = "TL-ApertureDiaphragm";
 const char* g_LeicaFieldDiaphragmIL = "IL-FieldDiaphragm";
@@ -123,6 +124,7 @@ MODULE_API void InitializeModuleData()
    AddAvailableDeviceName(g_LeicaIncidentLightShutter,"Incident Light Shutter"); 
    AddAvailableDeviceName(g_LeicaReflector,"Reflector Turret (dichroics)"); 
    AddAvailableDeviceName(g_LeicaNosePiece,"Objective Turret");
+   AddAvailableDeviceName(g_LeicaFastFilterWheel,"Fast Filter Wheel");
    AddAvailableDeviceName(g_LeicaFocusAxis,"Z-drive");
    AddAvailableDeviceName(g_LeicaXYStage,"XYStage");
    AddAvailableDeviceName(g_LeicaFieldDiaphragmTL,"Field Diaphragm (Trans)");
@@ -159,6 +161,8 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
         return new ILTurret();
    else if (strcmp(deviceName, g_LeicaNosePiece) == 0)
         return new ObjectiveTurret();
+   else if (strcmp(deviceName, g_LeicaFastFilterWheel) == 0)
+        return new FastFilterWheel();
    else if (strcmp(deviceName, g_LeicaFocusAxis) == 0)
         return new ZDrive();
    else if (strcmp(deviceName, g_LeicaFieldDiaphragmTL) == 0)
@@ -289,6 +293,7 @@ int LeicaScope::GetNumberOfDiscoverableDevices()
 
       AttemptToDiscover(g_IL_Turret, g_LeicaReflector);
       AttemptToDiscover(g_Revolver, g_LeicaNosePiece);
+      AttemptToDiscover(g_Fast_Filter_Wheel, g_LeicaFastFilterWheel);
       AttemptToDiscover(g_Field_Diaphragm_TL, g_LeicaFieldDiaphragmTL);
       AttemptToDiscover(g_Aperture_Diaphragm_TL, g_LeicaApertureDiaphragmTL);
       AttemptToDiscover(g_Field_Diaphragm_IL, g_LeicaFieldDiaphragmIL);
@@ -392,6 +397,7 @@ int LeicaScope::DetectInstalledDevices()
 
    AttemptToDiscover(g_IL_Turret, g_LeicaReflector);
    AttemptToDiscover(g_Revolver, g_LeicaNosePiece);
+   AttemptToDiscover(g_Fast_Filter_Wheel, g_LeicaFastFilterWheel);
    AttemptToDiscover(g_Field_Diaphragm_TL, g_LeicaFieldDiaphragmTL);
    AttemptToDiscover(g_Aperture_Diaphragm_TL, g_LeicaApertureDiaphragmTL);
    AttemptToDiscover(g_Field_Diaphragm_IL, g_LeicaFieldDiaphragmIL);
@@ -1206,6 +1212,146 @@ int ObjectiveTurret::OnImmersion(MM::PropertyBase* pProp, MM::ActionType eAct)
 }
 
 
+
+///////////////////////////////////////////////////////////////////////////////
+// FastFilterWheel.  
+///////////////////////////////////////////////////////////////////////////////
+FastFilterWheel::FastFilterWheel() :
+   numPos_(5),
+   filterWheelID_(1),
+   initialized_(false),
+   name_(g_LeicaFastFilterWheel),
+   description_("Fast Filter Wheel"),
+   pos_(1)
+{
+   InitializeDefaultErrorMessages();
+
+   // Error messages
+   SetErrorText(ERR_SCOPE_NOT_ACTIVE, "Leica Scope is not initialized.  The Fast Filter Wheel cannot work without it");
+   SetErrorText(ERR_SET_POSITION_FAILED, "Unable to set requested position");
+   SetErrorText(ERR_MODULE_NOT_FOUND, "No Fast Filter Wheel installed in this Leica microscope");
+
+   // Name
+   CreateProperty(MM::g_Keyword_Name, name_.c_str(), MM::String, true);
+
+   // Description
+   CreateProperty(MM::g_Keyword_Description, description_.c_str(), MM::String, true);
+
+   CreatePropertyWithHandler("Filter Wheel ID", "0", MM::Integer, false, &FastFilterWheel::OnFilterWheelID,true);
+
+}
+
+FastFilterWheel::~FastFilterWheel()
+{
+   Shutdown();
+}
+
+void FastFilterWheel::GetName(char* name) const
+{
+   CDeviceUtils::CopyLimitedString(name, g_LeicaFastFilterWheel);
+}
+
+int FastFilterWheel::Initialize()
+{
+   if (!g_ScopeInterface.portInitialized_)
+      return ERR_SCOPE_NOT_ACTIVE;
+
+   int ret = DEVICE_OK;
+   if (!g_ScopeInterface.IsInitialized())
+      ret = g_ScopeInterface.Initialize(*this, *GetCoreCallback());
+   if (ret != DEVICE_OK)
+      return ret;
+   
+   // check if this turret exists:
+   if (! g_ScopeModel.IsDeviceAvailable(g_Revolver))
+      return ERR_MODULE_NOT_FOUND;
+
+   // State
+   // -----
+   CPropertyAction* pAct = new CPropertyAction(this, &FastFilterWheel::OnState);
+   ret = CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   // Label
+   // -----
+   pAct = new CPropertyAction(this, &CStateBase::OnLabel);
+   ret = CreateProperty(MM::g_Keyword_Label,  "Undefined", MM::String, false, pAct);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   // create default positions and labels
+   int maxPos;
+   ret = g_ScopeModel.FastFilterWheel_[filterWheelID_].GetMaxPosition(maxPos);
+   if (ret != DEVICE_OK)
+      return ret;
+   numPos_ = maxPos;
+
+   for (unsigned i=0; i < numPos_; i++)
+   {
+      std::stringstream ss;
+      ss << "Pos" << i;
+      SetPositionLabel(i, ss.str().c_str());
+   }
+
+   initialized_ = true;
+
+   return DEVICE_OK;
+   if (ret != DEVICE_OK)
+      return ret;
+
+   return DEVICE_OK;
+}
+
+int FastFilterWheel::Shutdown()
+{
+   if (initialized_) 
+      initialized_ = false;
+   return DEVICE_OK;
+}
+
+bool FastFilterWheel::Busy()
+{
+   bool busy;
+   int ret = g_ScopeModel.FastFilterWheel_[filterWheelID_].GetBusy(busy);
+   if (ret != DEVICE_OK)  // This is bad and should not happen
+      return false;
+
+   return busy;
+}
+
+int FastFilterWheel::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      int pos;
+      int ret = g_ScopeModel.FastFilterWheel_[filterWheelID_].GetPosition(pos);
+      if (ret != DEVICE_OK)
+         return ret;
+      pProp->Set((long) (pos - 1));
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      long pos;
+      pProp->Get(pos);
+      return g_ScopeInterface.SetFastFilterWheelPosition(*this, *GetCoreCallback(), filterWheelID_ + 1, pos + 1);
+   }
+   return DEVICE_OK;
+}
+
+
+int FastFilterWheel::OnFilterWheelID(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(filterWheelID_);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      pProp->Get(filterWheelID_);
+   }
+   return DEVICE_OK;
+}
 
 /*
  * LeicaFocusStage: Micro-Manager implementation of focus drive

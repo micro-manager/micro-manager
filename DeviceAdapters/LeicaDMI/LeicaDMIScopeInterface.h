@@ -65,6 +65,7 @@ class LeicaScopeInterface
       int GetDiaphragmInfo(MM::Device& device, MM::Core& core, LeicaDeviceModel& diaphrahm, int deviceID);
       int GetTLPolarizerInfo(MM::Device& device, MM::Core& core);
       int GetDICTurretInfo(MM::Device& device, MM::Core& core);
+      int LeicaScopeInterface::GetFastFilterWheelInfo(MM::Device& device, MM::Core& core);
       int GetMagChangerInfo(MM::Device& device, MM::Core& core);
       int GetDriveParameters(MM::Device& device, MM::Core& core, int deviceID);
 	   int GetTransmittedLightState(MM::Device& device, MM::Core& core, int & position);
@@ -78,6 +79,7 @@ class LeicaScopeInterface
       int SetTLShutterPosition(MM::Device& device, MM::Core& core, int position);
       int SetILShutterPosition(MM::Device& device, MM::Core& core, int position);
       int SetILTurretPosition(MM::Device& device, MM::Core& core, int position);
+      int SetFastFilterWheelPosition(MM::Device& device, MM::Core& core, int filterID, int position);
       int SetCondensorPosition(MM::Device& device, MM::Core& core, int position);
       int SetRevolverPosition(MM::Device& device, MM::Core& core, int position);
       int SetObjectiveImmersion(MM::Device& device, MM::Core& core, char method);

@@ -132,6 +132,21 @@ public:
 };
 
 /*
+ * Model for Leica Fast Filter Wheel
+ */
+class LeicaFastFilterWheelModel : public LeicaDeviceModel
+{
+public:
+   LeicaFastFilterWheelModel();
+   std::vector<std::string> filter_;
+
+   static const int maxNrFilters_ = 5;
+
+private:
+   long filterWheelID_;
+};
+
+/*
  * Model for Leica Objective Turret
  */
 class LeicaObjectiveTurretModel : public LeicaDeviceModel
@@ -318,6 +333,7 @@ public:
    LeicaILTurretModel ILTurret_;
    LeicaCondensorModel Condensor_;
    LeicaObjectiveTurretModel ObjectiveTurret_;
+   LeicaFastFilterWheelModel FastFilterWheel_[4];
    LeicaDriveModel ZDrive_;
    LeicaDriveModel XDrive_;
    LeicaDriveModel YDrive_;

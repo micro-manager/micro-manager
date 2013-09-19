@@ -191,6 +191,17 @@ int LeicaObjectiveTurretModel::GetImmersion(char & method)
 }
 
 /*
+ * FastFilterWheel model. Inherits from LeicaDeviceModel
+ */
+LeicaFastFilterWheelModel::LeicaFastFilterWheelModel() :
+   LeicaDeviceModel()
+{
+   position_ = 1;
+}
+
+
+
+/*
  * DIC Turret model
  */
 LeicaDICPrismTurretModel::LeicaDICPrismTurretModel() :

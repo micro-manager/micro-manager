@@ -4,6 +4,8 @@ const int g_DMI456 = 0;
 const int g_CTRMIC = 1;
 
 // List of Device numbers (from Leica documentation)
+const int g_AFC = 48; // adaptive focus control / autofocus
+const int g_Fast_Filter_Wheel = 54; // fast filter wheel with 5 positions
 const int g_Mirror_House = 55; // motorized with 2 positions
 const int g_MA4_Mirror = 56; // flapping mirror for MA4
 const int g_TL_Arm = 58; // general settings
@@ -34,7 +36,6 @@ const int g_Field_Diaphragm_IL = 94; // motorized with maximum 12 positions
 const int g_Aperture_Diaphragm_IL = 95; // motorized diaphragm disk with maximum 12 positions
 const int g_Constant_Color_Intensity_Control_TL = 97; // 12 bits
 const int g_TL_Polarizer = 98; // motorizedin the condenser
-const int g_AFC = 48; // adaptive focus control / autofocus
 
 
 //////////////////////////////////////////////////////////////////////////////

@@ -313,6 +313,12 @@ int LeicaScopeInterface::Initialize(MM::Device& device, MM::Core& core)
          return ret;
    }
 
+   if (scopeModel_->IsDeviceAvailable(g_Fast_Filter_Wheel)) {
+      ret = GetFastFilterWheelInfo(device, core);
+      if (ret != DEVICE_OK)
+         return ret;
+   }
+
 	if(scopeModel_->IsDeviceAvailable(g_Side_Port))
 	{
 		ret = GetSidePortInfo(device, core);
@@ -500,6 +506,16 @@ int LeicaScopeInterface::Initialize(MM::Device& device, MM::Core& core)
       if (ret != DEVICE_OK)
          return ret;
       command.str("");
+   }
+
+   for (int filterWheelIndex = 1; filterWheelIndex <= 4; ++filterWheelIndex) {
+      if (scopeModel_->IsDeviceAvailable(g_Fast_Filter_Wheel)) {
+         command << g_IL_Turret << "023" << " " << filterWheelIndex;
+         ret = core.SetSerialCommand(&device, port_.c_str(), command.str().c_str(), "\r");
+         if (ret != DEVICE_OK)
+            return ret;
+         command.str("");
+      }
    }
 
    if (scopeModel_->IsDeviceAvailable(g_ZDrive)) {
@@ -1358,6 +1374,56 @@ int LeicaScopeInterface::GetDICTurretInfo(MM::Device& device, MM::Core& core)
    return DEVICE_OK;
 }
 
+
+int LeicaScopeInterface::GetFastFilterWheelInfo(MM::Device& device, MM::Core& core)
+{
+   std::ostringstream command;
+   std::string answer, token;
+
+   for (int filterWheelIndex = 0; filterWheelIndex < 4; ++filterWheelIndex) {
+      // Get minimum position
+      command << g_Fast_Filter_Wheel << "028 " << (filterWheelIndex+1);
+      int ret = GetAnswer(device, core, command.str().c_str(), answer);
+      if (ret != DEVICE_OK)
+         return ret;
+      command.str("");
+
+      std::stringstream ts(answer);
+      std::string responseCode;
+
+      int ignore;
+      int minPos;
+      ts >> responseCode;
+      if (responseCode[2] != '1') { // '1' indicates filter wheel not present
+         ts >> ignore;
+         ts >> minPos;
+         if ( 0 <= minPos)
+         scopeModel_->FastFilterWheel_[filterWheelIndex].SetMinPosition(minPos);
+         ts.clear();
+         ts.str("");
+
+         // Get maximum position
+         command << g_Fast_Filter_Wheel << "027 " << (filterWheelIndex+1);
+         ret = GetAnswer(device, core, command.str().c_str(), answer);
+         if (ret != DEVICE_OK)
+            return ret;
+         command.str("");
+
+         ts << answer;
+         int maxPos;
+         ts >> ignore;
+         ts >> ignore;
+         ts >> maxPos;
+         if (maxPos < 1 || maxPos >7)
+            maxPos = 7;
+         scopeModel_->FastFilterWheel_[filterWheelIndex].SetMaxPosition(maxPos);
+         ts.clear();
+         ts.str("");
+      }
+   }
+   return DEVICE_OK;
+}
+
 int LeicaScopeInterface::GetMagChangerInfo(MM::Device& device, MM::Core& core)
 {
    std::ostringstream command;
@@ -1552,6 +1618,17 @@ int LeicaScopeInterface::SetILTurretPosition(MM::Device& device, MM::Core& core,
    scopeModel_->ILTurret_.SetBusy(true);
    std::ostringstream os;
    os << g_IL_Turret << "022" << " " << position;
+   return core.SetSerialCommand(&device, port_.c_str(), os.str().c_str(), "\r");
+}
+
+/**
+ * Sets state of a fast filter wheel. FilterID and position are 1-based.
+ */
+int LeicaScopeInterface::SetFastFilterWheelPosition(MM::Device& device, MM::Core& core, int filterID, int position)
+{
+   scopeModel_->FastFilterWheel_[filterID-1].SetBusy(true);
+   std::ostringstream os;
+   os << g_Fast_Filter_Wheel << "022" << " " << filterID << " " << position;
    return core.SetSerialCommand(&device, port_.c_str(), os.str().c_str(), "\r");
 }
 
@@ -2044,13 +2121,6 @@ int LeicaMonitoringThread::svc()
                      break;
                   }
                   break;
-
-
-
-
-
-
-
                case (g_Master) :
                    switch (commandId) {
                       // Set Method command, signals completion of command sends
@@ -2213,6 +2283,23 @@ int LeicaMonitoringThread::svc()
                          }
                          break;
                    }
+                   break;
+               case (g_Fast_Filter_Wheel) :
+                  {
+                   int filterID_raw;
+                   os >> filterID_raw;
+                   int filterID = filterID_raw - 1;
+                   switch (commandId) {
+                      case (22) : // Position set response
+                         {
+                            int pos;
+                            os >> pos;
+                            scopeModel_->FastFilterWheel_[filterID].SetPosition(pos);
+                            scopeModel_->FastFilterWheel_[filterID].SetBusy(false);
+                         }
+                         break;
+                   }
+                  }
                    break;
                case (g_ZDrive) :
                    switch (commandId) {
