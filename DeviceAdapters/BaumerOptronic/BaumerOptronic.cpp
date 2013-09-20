@@ -57,6 +57,13 @@ sequences.
 If any _major_ fix becomes necessary, I'd suggest starting from scratch, as
 there is too much uncommented magic in this code.
 
+I have added a hack (sorry) to avoid returning images whose exposure began
+before the call to SnapImage() or StartSequenceAcquisition(). This is done by
+first setting imageSkipped_g to false, and setting it to true after the first
+image becomes ready (imageReady_g is not set to true unless imageSkipped_g is
+already true). This effectively discards the first image and returns (if
+snapping) or starts with (if a sequence) the second image.
+
 */
 
 
@@ -109,7 +116,9 @@ unsigned long staticImgSize_g = 0; // ditto here
 
 MMThreadLock acquisitionThreadTerminateLock_g;
 bool mTerminateFlag_g = false;
-bool imageReady_g = false;
+
+bool imageSkipped_g = false; // True after discarding one image (guarded by imageReadyLock_s)
+bool imageReady_g = false; // (guarded by imageReadyLock_s, as far as I can tell)
 
 // globals used to store data as reported by the camera
 unsigned short xDim_g;
@@ -133,7 +142,6 @@ unsigned short iCode_g;
 
 
 // turn acquisition on & off
-//MMThreadLock acquisitionSequenceLock_g;
 bool seqactive_g = false;
 
 
@@ -301,6 +309,7 @@ void BOImplementationThread::Snap(void)
       {
          {
             MMThreadGuard guard(BOImplementationThread::imageReadyLock_s);
+            imageSkipped_g = false;
             imageReady_g = false;
          }
 
@@ -421,18 +430,22 @@ void* BOImplementationThread::CurrentImage( unsigned short& xDim,  unsigned shor
    void* bufferToReturn = NULL;
    *ppImageBufferGuard = NULL;
 
-   MM::TimeoutMs timerOut( CurrentMMTimeMM(), (long)(Exposure() + 5000.0) );
-   for (;;)
+   MM::TimeoutMs timerOut(CurrentMMTimeMM(), (long)(2 * Exposure() + 5000));
+   for (;;) // Wait for the image to become ready
    {
-      CDeviceUtils::SleepMs(0);
-      MMThreadGuard guard(BOImplementationThread::imageReadyLock_s);
-      if( imageReady_g)
-         break;
+      {
+         MMThreadGuard guard(BOImplementationThread::imageReadyLock_s);
+         if(imageSkipped_g && imageReady_g)
+            break;
+      }
+
       if( timerOut.expired(CurrentMMTimeMM()))
       {
          PostError(DEVICE_SERIAL_TIMEOUT, "in CurrentImage");
          return NULL;
       }
+
+      CDeviceUtils::SleepMs(1);
    }
  
    // XXX BUG: We never reset seqactive_g if GetImageBuffer() is not called
@@ -832,8 +845,13 @@ int BOImplementationThread::svc(void)
          case Ready: //ready for a operational command
             if( StartSequence == Command())
             {
-                 Command(Noop);
-                 CameraState(Acquiring);
+               {
+                  MMThreadGuard g(imageReadyLock_s);
+                  imageSkipped_g = false;
+               }
+
+               Command(Noop);
+               CameraState(Acquiring);
             } 
             else if ( SnapCommand == Command())
             {
@@ -849,7 +867,6 @@ int BOImplementationThread::svc(void)
                Acquire();
 
                // complicated way to wait for one exposure time
-               // XXX BUG: "Exposure() / 1000" is zero unless Exposure > 1000.
                MM::TimeoutMs timerOut(CurrentMMTimeMM(), Exposure() / 1000 );
                for (;;)
                {
@@ -1453,7 +1470,16 @@ unsigned int __stdcall mSeqEventHandler( void* pArguments )
 
                {
                   MMThreadGuard guard(BOImplementationThread::imageReadyLock_s);
-                  imageReady_g = true;
+                  if (!imageSkipped_g)
+                  {
+                     // Discard the first image, whose capture may have started
+                     // before the MM acquisition started
+                     imageSkipped_g = true;
+                  }
+                  else
+                  {
+                     imageReady_g = true;
+                  }
                }
             }
 			   else 
@@ -1715,10 +1741,33 @@ int CBaumerOptronic::SnapImage()
 {
    pWorkerThread_->Command(SnapCommand);
 
-   // XXX BUG: "Exposure() / 1000" is zero unless Exposure > 1000.
-   CDeviceUtils::SleepMs(pWorkerThread_->Exposure() / 1000);
+   // Wait for image and put it in img_
+   unsigned short xDim;
+   unsigned short yDim;
+   unsigned short bitsInOneColor;
+   unsigned short nPlanes;
+   unsigned long bufSize;
 
-   return DEVICE_OK;
+   MMThreadGuard* pImageBufferGuard = NULL;
+   void* p = pWorkerThread_->CurrentImage(xDim, yDim, bitsInOneColor, nPlanes,
+                                          bufSize, &pImageBufferGuard);
+
+   void* pixBuffer = NULL;
+   if (p)
+   {
+      short bytesInOnePlane = BytesInOneComponent(bitsInOneColor);
+
+      img_.Resize(xDim, yDim, nPlanes * bytesInOnePlane);
+    
+      pixBuffer = const_cast<unsigned char*>(img_.GetPixels());
+      memcpy(pixBuffer, p, bufSize); 
+   }
+
+   // release lock on image buffer
+   if (pImageBufferGuard)
+      delete pImageBufferGuard;
+
+   return p ? DEVICE_OK : DEVICE_ERR;
 }
 
 
@@ -1734,43 +1783,7 @@ int CBaumerOptronic::SnapImage()
 */
 const unsigned char* CBaumerOptronic::GetImageBuffer()
 {
-   // todo :: use start time or time after image is available
-   MM::MMTime curTime = GetCurrentMMTime();
-
-
-   unsigned short xDim;
-   unsigned short yDim;
-   unsigned short bitsInOneColor;
-   unsigned short nPlanes;
-   unsigned long bufSize;
-
-   MMThreadGuard* pImageBufferGuard = NULL;
-   void* p = pWorkerThread_->CurrentImage(xDim,  yDim, bitsInOneColor, nPlanes,  
-                                          bufSize, &pImageBufferGuard);
-
-   void* pixBuffer = NULL;
-   if( NULL!= p)
-   {
-      short bytesInOnePlane = BytesInOneComponent(bitsInOneColor);
-
-      img_.Resize(xDim, yDim, nPlanes * bytesInOnePlane);
-    
-      unsigned long size = GetImageBufferSize();
-      std::ostringstream os;
-      os << "ImageBuffer size is:" << size;
-      LogMessage(os.str().c_str());
-
-      pixBuffer = const_cast<unsigned char*> (img_.GetPixels());
-      memcpy(pixBuffer, p, bufSize); 
-   }
-
-   // release lock on image buffer
-   if( NULL!= pImageBufferGuard)
-      delete pImageBufferGuard;
-
-   // capture complete
-   return (unsigned char*)pixBuffer;
-
+   return img_.GetPixels();
 }
 
 /**
