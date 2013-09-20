@@ -26,11 +26,11 @@ namespace PEAnalyzer {
 
 
 //
-// MappedImage implementation
+// MappedFile implementation
 //
 
-MappedImage::Ptr
-MappedImage::New(const std::string filename)
+MappedFile::Ptr
+MappedFile::New(const std::string filename)
 {
    HANDLE hFile = CreateFileA(filename.c_str(), GENERIC_READ, FILE_SHARE_READ, NULL,
          OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
@@ -55,7 +55,7 @@ MappedImage::New(const std::string filename)
 }
 
 
-MappedImage::MappedImage(HANDLE hFile, HANDLE hFileMapping, void* baseAddress) :
+MappedFile::MappedFile(HANDLE hFile, HANDLE hFileMapping, void* baseAddress) :
    hFile_(hFile),
    hFileMapping_(hFileMapping),
    baseAddress_(baseAddress)
@@ -63,7 +63,7 @@ MappedImage::MappedImage(HANDLE hFile, HANDLE hFileMapping, void* baseAddress) :
 }
 
 
-MappedImage::~MappedImage()
+MappedFile::~MappedFile()
 {
    UnmapViewOfFile(baseAddress_);
    CloseHandle(hFileMapping_);
@@ -72,7 +72,7 @@ MappedImage::~MappedImage()
 
 
 void*
-MappedImage::GetBaseAddress()
+MappedFile::GetBaseAddress()
 {
    return baseAddress_;
 }
@@ -83,7 +83,7 @@ MappedImage::GetBaseAddress()
 //
 
 PEFile::Ptr
-PEFile::New(MappedImage::Ptr image)
+PEFile::New(MappedFile::Ptr image)
 {
    Self headers(image);
 
@@ -98,26 +98,26 @@ PEFile::New(MappedImage::Ptr image)
 
 
 PEFile32::Ptr
-PEFile32::New(MappedImage::Ptr image)
+PEFile32::New(MappedFile::Ptr image)
 {
    return Ptr(new PEFile32(image));
 }
 
 
 PEFile64::Ptr
-PEFile64::New(MappedImage::Ptr image)
+PEFile64::New(MappedFile::Ptr image)
 {
    return Ptr(new PEFile64(image));
 }
 
 
-PEFile::PEFile(MappedImage::Ptr image) : image_(image)
+PEFile::PEFile(MappedFile::Ptr image) : image_(image)
 {
    CheckMagic();
 }
 
 
-PEFile32::PEFile32(MappedImage::Ptr image) : PEFile(image)
+PEFile32::PEFile32(MappedFile::Ptr image) : PEFile(image)
 {
    if (GetNTOptionalHeaderMagic() != IMAGE_NT_OPTIONAL_HDR32_MAGIC) {
       throw PEFormatException("Programming error: not a 32-bit PE file");
@@ -131,7 +131,7 @@ PEFile32::PEFile32(MappedImage::Ptr image) : PEFile(image)
 }
 
 
-PEFile64::PEFile64(MappedImage::Ptr image) : PEFile(image)
+PEFile64::PEFile64(MappedFile::Ptr image) : PEFile(image)
 {
    if (GetNTOptionalHeaderMagic() != IMAGE_NT_OPTIONAL_HDR64_MAGIC) {
       throw PEFormatException("Programming error: not a 64-bit PE file");

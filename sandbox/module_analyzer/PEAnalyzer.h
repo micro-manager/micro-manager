@@ -54,21 +54,21 @@ public:
  * An executable image mapped to memory
  *
  */
-class MappedImage /* final */
+class MappedFile /* final */
 {
 public:
-   typedef MappedImage Self;
+   typedef MappedFile Self;
    typedef boost::shared_ptr<Self> Ptr;
 
    static Ptr New(const std::string filename);
 
-   ~MappedImage();
+   ~MappedFile();
 
    void* GetBaseAddress();
 
 private:
-   MappedImage(HANDLE hFile, HANDLE hFileMapping, void* baseAddress);
-   MappedImage& operator=(const MappedImage&); // Disable
+   MappedFile(HANDLE hFile, HANDLE hFileMapping, void* baseAddress);
+   MappedFile& operator=(const MappedFile&); // Disable
 
    HANDLE hFile_;
    HANDLE hFileMapping_;
@@ -90,7 +90,7 @@ public:
    typedef PEFile Self;
    typedef boost::shared_ptr<Self> Ptr;
 
-   static Ptr New(MappedImage::Ptr image);
+   static Ptr New(MappedFile::Ptr image);
    virtual ~PEFile() {}
 
    /// True if the DLL flag is set in the PE file
@@ -103,7 +103,7 @@ public:
    std::pair<boost::shared_ptr<void>, size_t> GetSectionByName(const std::string& name);
 
 protected:
-   PEFile(MappedImage::Ptr image);
+   PEFile(MappedFile::Ptr image);
 
    void* GetAddressForRVA(DWORD relativeVirtualAddress);
    IMAGE_NT_HEADERS* GetNTHeaders();
@@ -131,7 +131,7 @@ private:
    //
    // Data
    //
-   MappedImage::Ptr image_;
+   MappedFile::Ptr image_;
 };
 
 
@@ -141,10 +141,10 @@ public:
    typedef PEFile32 Self;
    typedef boost::shared_ptr<Self> Ptr;
 
-   static Ptr New(MappedImage::Ptr image);
+   static Ptr New(MappedFile::Ptr image);
 
 private:
-   PEFile32(MappedImage::Ptr image);
+   PEFile32(MappedFile::Ptr image);
    IMAGE_OPTIONAL_HEADER32* GetOptionalHeader();
    virtual IMAGE_DATA_DIRECTORY* GetDataDirectory(size_t index);
 };
@@ -156,10 +156,10 @@ public:
    typedef PEFile64 Self;
    typedef boost::shared_ptr<Self> Ptr;
 
-   static Ptr New(MappedImage::Ptr image);
+   static Ptr New(MappedFile::Ptr image);
 
 private:
-   PEFile64(MappedImage::Ptr image);
+   PEFile64(MappedFile::Ptr image);
    IMAGE_OPTIONAL_HEADER64* GetOptionalHeader();
    virtual IMAGE_DATA_DIRECTORY* GetDataDirectory(size_t index);
 };

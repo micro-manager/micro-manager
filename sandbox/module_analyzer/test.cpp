@@ -16,7 +16,7 @@ int _tmain(int argc, _TCHAR* argv[])
       if (argc >= 2) {
          filename = argv[1];
       }
-      MappedImage::Ptr image = MappedImage::New(argv[1]);
+      MappedFile::Ptr image = MappedFile::New(argv[1]);
       PEFile::Ptr pefile = PEFile::New(image);
 
       std::cout << "File " << (pefile->IsDLL() ? "is" : "is not") << " a DLL\n";
