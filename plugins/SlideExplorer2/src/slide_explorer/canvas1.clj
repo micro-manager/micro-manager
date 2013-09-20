@@ -537,7 +537,6 @@
     (doseq [action (map :mouse-out out)] (when action (action)))))
     
 (defn activate-dragging! [e reference canvas]
-  (println "activate-dragging!")
   (let [x (.getX e) y (.getY e)]
     (alter-meta! canvas assoc
                  ::dragging-action
@@ -546,7 +545,6 @@
                  ::last-drag-position [x y])))
 
 (defn stop-dragging! [canvas]
-  (println "stop-dragging!")
   (alter-meta! canvas dissoc ::dragging-action))
 
 (defn continue-dragging [e canvas]
@@ -572,13 +570,129 @@
                              (run-mouse-actions e :mouse-up reference))
           (mouseMoved [e] (handle-mouse-move e reference canvas))
           (mouseDragged [e] 
-                        (handle-mouse-move e reference canvas)
-                        (continue-dragging e canvas)))]
+                        (continue-dragging e canvas)
+                        (handle-mouse-move e reference canvas)))]
     (doto canvas
       (.addMouseListener mouse-adapter)
       (.addMouseMotionListener mouse-adapter))))
 
+;; animation
 
+(defn now []
+  (System/currentTimeMillis))
+
+(defn animate! [reference value-address duration min max]
+  (let [start-time (now)]
+    (loop []
+      (let [tick (now)
+            value (+ min
+                     (* (- max min)
+                        (/ tick (double duration))))]
+        (swap! reference (fn [data]
+                           (assoc-in data value-address value)))
+        (when (< (now) (+ start-time duration))
+          (Thread/sleep 15)
+          (recur))))))
+  
+;; following and binding
+
+(defn addressify
+  "Prepares argument to be used in assoc-in, get-in, etc.
+   If a keyword, wraps in a vector."
+  [address]
+  (if (sequential? address)
+    address
+    [address]))
+
+(defn empty-address? [ks]
+  (or (nil? ks)
+      (and (sequential? ks) (empty? ks))))
+
+(defn get-at [m ks]
+  (if (empty-address? ks)
+    m
+    (get-in m (addressify ks))))
+
+(defn assoc-at [m ks v]
+  (if (empty-address? ks)
+    v
+    (assoc-in m (addressify ks) v)))
+
+(defn update-at [m ks function & args]
+  (if (empty-address? ks)
+    (apply function m args) 
+    (apply update-in m (addressify ks) function args)))
+
+(defn very-close-numbers? [a b]
+  (when (number? a) (number? b)
+    (let [a (double a) b (double b)]
+      (or (and (zero? a) (zero? b))
+          (> 1.0e-10 (Math/abs (- a b)))))))
+
+(defn handle-change-at
+  "When the value of ref changes at address, run
+   function with the new value at that address.
+   If address is nil, use the whole value of ref."
+  [ref address key function]
+  (add-watch ref [address key]
+             (fn [_ _ old-map new-map]
+               (let [old-val (get-at old-map address)
+                     new-val (get-at new-map address)]
+                 (when-not (or (= old-val new-val)
+                                (very-close-numbers? old-val new-val))
+                   (function new-val))))))
+
+(defn handle-change
+  "When the value of ref changes, run function with
+   the new value of ref as its argument."
+  [ref key function]
+  (handle-change-at ref nil key function))
+
+(defn follow-function
+  "Whenever ref1 changes at address1, the value in ref2
+   at address2 is set to (function v), where v is the
+   value at address1 in ref1."
+  [[ref1 address1] function [ref2 address2]]
+  (handle-change-at ref1 address1 [ref2 address2]
+                    #(swap! ref2 assoc-at address2
+                            (function %))))
+
+(defn follow-linear
+  [[ref1 address1] [factor offset] [ref2 address2]]
+  (follow-function [ref1 address1]
+                   #(+ offset (* factor %))
+                   [ref2 address2]))
+
+(defn follow
+  [[ref1 address1] [ref2 address2]]
+  (follow-function [ref1 address1] identity [ref2 address2]))
+  
+(defn unfollow
+  [[ref1 address1] [ref2 address2]]
+  (remove-watch ref1 [address1 [ref2 address2]]))
+
+(defn bind-linear [[ref1 address1] [factor offset] [ref2 address2]]
+  (follow-linear [ref1 address1] [factor offset] [ref2 address2])
+  (follow-linear [ref2 address2] [(/ factor) (- (/ offset factor))] [ref1 address1]))
+
+(defn bind-range [[ref1 address1 [min1 max1]]
+                  [ref2 address2 [min2 max2]]]
+  (let [delta1 (- max1 min1)
+        delta2 (- max2 min2)
+        factor (/ delta2 delta1)
+        offset (- min2 (* min1 factor))]
+    (bind-linear [ref1 address1]
+                 [factor offset]
+                 [ref2 address2])))
+
+(defn bind [[ref1 address1] [ref2 address2]]
+  (follow [ref1 address1] [ref2 address2])
+  (follow [ref2 address2] [ref1 address1]))
+
+(defn unbind [[ref1 address1] [ref2 address2]]
+  (unfollow [ref1 address1] [ref2 address2])
+  (unfollow [ref2 address2] [ref1 address1]))
+  
 ;; test
 
 (def grafix (atom nil))
@@ -594,15 +708,6 @@
 
 (defn demo-canvas []
   (canvas-frame grafix))
-
-(defn demo-animation [reference]
-  (dotimes [i 200]
-    (Thread/sleep 30)
-    (swap! reference (fn [data]
-                       (-> data
-                           (assoc-in [1 1 :rotate] (* i 15))
-                           ))
-           )))
 
 (defn handle-data-changed [text-area changed-fn]
   (let [doc (.getDocument text-area)]
@@ -637,19 +742,20 @@
     :side 100}
    {:type :text
     :text "hello"
-    :color :cyan
+    :color :red
     :x 100
     :y 100}
-   {:type :arc
+      {:type :arc
+       :fill :pink
     :mouse-in #(swap! grafix assoc-in [2 :fill] :red)
     :mouse-out #(swap! grafix assoc-in [2 :fill] :pink)
     :on-mouse-drag (fn [dx dy]
                      (swap! grafix
-                           #(-> %
-                                (update-in [2 :x] + dx)
-                                (update-in [2 :y] + dy))))
-    :scale 2
-      :mouse-up (fn [x y] (println "coords: " x y))
+                            #(-> %
+                                 (update-in [2 :x] + dx)
+                                 (update-in [2 :y] + dy))))
+    :scale 3
+      :mouse-up (fn [x y] )
      :x 200
      :y 200
      :w 50
