@@ -29,7 +29,7 @@ const char* g_PropertyMinVolts = "MinVolts";
 const char* g_PropertyMaxVolts = "MaxVolts";
 const char* g_PropertyChannel = "IOChannel";
 //used for disabling EOMs temporariliy for laser switching
-const char* g_PropertyDisable = "Disable";
+const char* g_PropertyDisable = "Block voltage";
 
 const char* g_PropertyDemo = "Demo";
 
@@ -267,11 +267,6 @@ AnalogIO::AnalogIO() :
    pAct = new CPropertyAction (this, &AnalogIO::OnMaxVolts);
    nRet = CreateProperty(g_PropertyMaxVolts, "5.0", MM::Float, false, pAct, true);
    assert(nRet == DEVICE_OK);
-
-   //Disable
-   pAct = new CPropertyAction (this, &AnalogIO::OnDisable);
-   nRet = CreateProperty(g_PropertyDisable, "0", MM::Integer, false, pAct, true);
-   assert(nRet == DEVICE_OK);
 }
 
 AnalogIO::~AnalogIO()
@@ -311,6 +306,15 @@ int AnalogIO::Initialize()
 
    nRet = SetPropertyLimits(g_PropertyVolts, minV_, maxV_);
    assert(nRet == DEVICE_OK);
+
+
+    //Disable
+    pAct = new CPropertyAction (this, &AnalogIO::OnDisable);
+	nRet = CreateProperty(g_PropertyDisable, "false", MM::String, false, pAct);
+	AddAllowedValue(g_PropertyDisable, "false");
+    AddAllowedValue(g_PropertyDisable, "true");
+    assert(nRet == DEVICE_OK);
+
 
    // set up task
    // -----------
@@ -471,13 +475,13 @@ int AnalogIO::OnDisable(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
 	if (eAct == MM::BeforeGet)
 	{
-		pProp->Set( (long) (disable_ ? 1 : 0));
+		pProp->Set( (disable_ ? "true" : "false"));
 	}
 	else if (eAct == MM::AfterSet)
 	{
-		long temp;
+		string temp;
 		pProp->Get(temp);
-		disable_ = temp == 1;
+		disable_ = (temp == "true");
 		ApplyVoltage(gatedVolts_);
 	}
 
