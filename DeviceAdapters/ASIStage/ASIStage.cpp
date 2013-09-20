@@ -1541,7 +1541,6 @@ ZStage::ZStage() :
    CreateProperty("RingBufferSize", "50", MM::Integer, false, pAct, true);
    AddAllowedValue("RingBufferSize", "50");
    AddAllowedValue("RingBufferSize", "250");
-
 }
 
 ZStage::~ZStage()
@@ -1924,8 +1923,20 @@ int ZStage::GetControllerInfo()
    std::string token;
    while (getline(iss, token, '\r'))
    {
-      if (token == "RING BUFFER")
+      std::string ringBuffer = "RING BUFFER";
+      if (0 == token.compare(0, ringBuffer.size(), ringBuffer))
+      {
          hasRingBuffer_ = true;
+         if (token.size() > ringBuffer.size()) 
+         {
+            int rsize = atoi(token.substr(ringBuffer.size()).c_str());
+            // untested code, trying to be safe
+            if (rsize > 50) 
+            {
+               nrEvents_ = rsize;
+            }
+         }
+      }
 	   std::string ma = "Motor Axes: ";
 	   if (token.substr(0, ma.length()) == ma)
 	   {
