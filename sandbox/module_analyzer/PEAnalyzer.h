@@ -1,5 +1,5 @@
 //
-// PEAnalyzer - read Windows DLLs.
+// PEAnalyzer - read Windows DLLs (and EXEs).
 //
 
 #pragma once
@@ -51,8 +51,7 @@ public:
 
 
 /**
- * An executable image mapped to memory
- *
+ * A memory-mapped file using Win32 API
  */
 class MappedFile /* final */
 {
@@ -77,7 +76,7 @@ private:
 
 
 /**
- * Interpret a memory-mapped Windows PE (portable executable) file
+ * A memory-mapped Windows PE (portable executable) file
  *
  * This class contains parts of the implementation that are common between
  * 32-bit and 64-bit PE files. Only i386 and amd64 binaries are supported.
@@ -91,6 +90,7 @@ public:
    typedef boost::shared_ptr<Self> Ptr;
 
    static Ptr New(MappedFile::Ptr image);
+
    virtual ~PEFile() {}
 
    /// True if the DLL flag is set in the PE file

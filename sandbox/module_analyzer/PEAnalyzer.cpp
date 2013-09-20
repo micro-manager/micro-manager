@@ -1,5 +1,5 @@
 //
-// PEAnalyzer - read Windows DLLs.
+// PEAnalyzer - read Windows DLLs (and EXEs).
 //
 
 // Disable warning C4996
@@ -20,7 +20,6 @@
 
 
 namespace PEAnalyzer {
-
 
 //
 // MappedFile implementation
@@ -160,7 +159,7 @@ PEFile::SectionEnd()
 IMAGE_SECTION_HEADER*
 PEFile::GetSectionContainingRVA(DWORD relativeVirtualAddress)
 {
-   for (IMAGE_SECTION_HEADER* section = SectionBegin(), * end = SectionEnd();
+   for (PIMAGE_SECTION_HEADER section = SectionBegin(), end = SectionEnd();
          section != end; ++section) {
       DWORD section_start = section->VirtualAddress;
       DWORD section_stop = section_start + section->Misc.VirtualSize;
@@ -292,7 +291,6 @@ IMAGE_IMPORT_DESCRIPTOR*
 PEFile::GetImportDescriptors()
 {
    IMAGE_DATA_DIRECTORY* dir = GetDataDirectory(IMAGE_DIRECTORY_ENTRY_IMPORT);
-   // We ignore the Size field, as the array is null-terminated.
    return reinterpret_cast<IMAGE_IMPORT_DESCRIPTOR*>(GetAddressForRVA(dir->VirtualAddress));
 }
 
@@ -301,6 +299,9 @@ boost::shared_ptr< std::vector<std::string> >
 PEFile::GetImportNames()
 {
    boost::shared_ptr< std::vector<std::string> > names(new std::vector<std::string>());
+
+   // The image import descriptor array is null-terminated (Characteristics is
+   // 0 in sentinel element)
    for (IMAGE_IMPORT_DESCRIPTOR* desc = GetImportDescriptors(); desc->Characteristics; ++desc) {
       char* name = reinterpret_cast<char*>(GetAddressForRVA(desc->Name));
       names->push_back(name);
@@ -340,6 +341,7 @@ PEFile::GetSectionByName(const std::string& name)
          size_t size = section->Misc.VirtualSize;
          size_t nonzeroSize = section->SizeOfRawData;
          if (nonzeroSize > size) {
+            // Truncate any padding in the file
             nonzeroSize = size;
          }
 
@@ -368,6 +370,5 @@ PEFile::GetSectionByName(const std::string& name)
 
    throw DataConsistencyException("No section named \"" + name + "\"");
 }
-
 
 } // namespace PEAnalyzer
