@@ -452,15 +452,16 @@ void* BOImplementationThread::CurrentImage( unsigned short& xDim,  unsigned shor
    // XXX BUG: We never reset seqactive_g if GetImageBuffer() is not called
    seqactive_g = false;
 
-   MMThreadGuard* g = new MMThreadGuard(BOImplementationThread::imageBufferLock_s);
-   bufSize = bufSize_ = staticImgSize_g;
-   xDim =  xDim_ = xDim_g;
-   yDim = yDim_ = yDim_g;
-   bitsInOneColor = bitsInOneColor_ = bitsInOneColor_g;
-   nPlanes_ = nPlanes_g;
-   nCanals = nCanals_g;
-   delete (g);
+   {
+      MMThreadGuard g(BOImplementationThread::imageBufferLock_s);
 
+      bufSize = bufSize_ = staticImgSize_g;
+      xDim =  xDim_ = xDim_g;
+      yDim = yDim_ = yDim_g;
+      bitsInOneColor = bitsInOneColor_ = bitsInOneColor_g;
+      nPlanes_ = nPlanes_g;
+      nCanals = nCanals_g;
+   }
 
    // color images need to be dithered with an empty color for gui
    if (BOIMF_RGB == ImageCode().iCode)
