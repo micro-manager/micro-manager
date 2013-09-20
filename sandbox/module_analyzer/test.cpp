@@ -16,14 +16,23 @@ int _tmain(int argc, _TCHAR* argv[])
       if (argc >= 2) {
          filename = argv[1];
       }
-      MappedFile::Ptr image = MappedFile::New(argv[1]);
+      MappedFile::Ptr image = MappedFile::New(filename);
       PEFile::Ptr pefile = PEFile::New(image);
 
       std::cout << "File " << (pefile->IsDLL() ? "is" : "is not") << " a DLL\n";
 
-      boost::shared_ptr < std::vector<std::string> > imports(pefile->GetImportNames());
+      std::cout << "Dependents:\n";
+      boost::shared_ptr< std::vector<std::string> > imports(pefile->GetImportNames());
       for (std::vector<std::string>::const_iterator it = imports->begin(), end = imports->end(); it != end; ++it) {
          std::cout << *it << '\n';
+      }
+
+      std::cout << "Sections:\n";
+      boost::shared_ptr< std::vector<std::string> > sections(pefile->GetSectionNames());
+      for (std::vector<std::string>::const_iterator it = sections->begin(), end = sections->end(); it != end; ++it) {
+         std::cout << *it << ": ";
+         std::pair<boost::shared_ptr<void>, size_t> section(pefile->GetSectionByName(*it));
+         std::cout << section.second << " bytes\n";
       }
    }
    catch (const std::exception& e) {

@@ -309,18 +309,39 @@ PEFile::GetImportNames()
 }
 
 
+static std::string
+SectionName(IMAGE_SECTION_HEADER* section)
+{
+   char sectionName[9];
+   std::copy(&section->Name[0], &section->Name[8], sectionName);
+   sectionName[8] = '\0';
+   return sectionName;
+}
+
+
+boost::shared_ptr< std::vector<std::string> >
+PEFile::GetSectionNames()
+{
+   boost::shared_ptr< std::vector<std::string> > names(new std::vector<std::string>());
+   for (PIMAGE_SECTION_HEADER section = SectionBegin(), end = SectionEnd();
+         section != end; ++section) {
+      names->push_back(SectionName(section));
+   }
+   return names;
+}
+
+
 std::pair<boost::shared_ptr<void>, size_t>
 PEFile::GetSectionByName(const std::string& name)
 {
-   for (IMAGE_SECTION_HEADER* section = SectionBegin(), * end = SectionEnd();
+   for (PIMAGE_SECTION_HEADER section = SectionBegin(), end = SectionEnd();
          section != end; ++section) {
-      char sectionName[9];
-      std::copy(&section->Name[0], &section->Name[8], sectionName);
-      sectionName[8] = '\0';
-
-      if (sectionName == name) {
+      if (SectionName(section) == name) {
          size_t size = section->Misc.VirtualSize;
          size_t nonzeroSize = section->SizeOfRawData;
+         if (nonzeroSize > size) {
+            nonzeroSize = size;
+         }
 
          struct Deleter
          {

@@ -99,6 +99,9 @@ public:
    /// Returns the list of imported DLLs
    boost::shared_ptr< std::vector<std::string> > GetImportNames();
 
+   /// Returns the list of section names
+   boost::shared_ptr< std::vector<std::string> > GetSectionNames();
+
    /// Returns a copy of the contents of the section with the given name
    std::pair<boost::shared_ptr<void>, size_t> GetSectionByName(const std::string& name);
 
