@@ -8,6 +8,7 @@
 
 #include <exception>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include <boost/shared_ptr.hpp>
@@ -92,9 +93,14 @@ public:
    static Ptr New(MappedImage::Ptr image);
    virtual ~PEFile() {}
 
+   /// True if the DLL flag is set in the PE file
    bool IsDLL();
 
-   virtual boost::shared_ptr< std::vector<std::string> > GetImportNames();
+   /// Returns the list of imported DLLs
+   boost::shared_ptr< std::vector<std::string> > GetImportNames();
+
+   /// Returns a copy of the contents of the section with the given name
+   std::pair<boost::shared_ptr<void>, size_t> GetSectionByName(const std::string& name);
 
 protected:
    PEFile(MappedImage::Ptr image);
@@ -111,6 +117,8 @@ private:
    IMAGE_DOS_HEADER* GetDOSHeader();
    void CheckMagic();
    void* GetAddressForOffset(DWORD fileOffset);
+   IMAGE_SECTION_HEADER* SectionBegin();
+   IMAGE_SECTION_HEADER* SectionEnd();
    IMAGE_SECTION_HEADER* GetSectionContainingRVA(DWORD relativeVirtualAddress);
    IMAGE_IMPORT_DESCRIPTOR* GetImportDescriptors();
 

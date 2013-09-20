@@ -2,12 +2,16 @@
 // PEAnalyzer - read Windows DLLs.
 //
 
+// Disable warning C4996
+#define _SCL_SECURE_NO_WARNINGS
+
 #include "PEAnalyzer.h"
 
 
 // Data structures for PE files are defined in winnt.h
 #include <winnt.h>
 
+#include <algorithm>
 #include <string>
 #include <vector>
 
@@ -142,18 +146,35 @@ PEFile64::PEFile64(MappedImage::Ptr image) : PEFile(image)
 
 
 IMAGE_SECTION_HEADER*
+PEFile::SectionBegin()
+{
+   return IMAGE_FIRST_SECTION(GetNTHeaders());
+}
+
+
+IMAGE_SECTION_HEADER*
+PEFile::SectionEnd()
+{
+   IMAGE_SECTION_HEADER* begin = SectionBegin();
+   return begin + GetFileHeader()->NumberOfSections;
+}
+
+
+IMAGE_SECTION_HEADER*
 PEFile::GetSectionContainingRVA(DWORD relativeVirtualAddress)
 {
-   size_t num_sections = GetFileHeader()->NumberOfSections;
-   IMAGE_SECTION_HEADER* sections = IMAGE_FIRST_SECTION(GetNTHeaders());
-
-   for (size_t i = 0; i < num_sections; i++) {
-      IMAGE_SECTION_HEADER* section = &sections[i];
+   for (IMAGE_SECTION_HEADER* section = SectionBegin(), * end = SectionEnd();
+         section != end; ++section) {
       DWORD section_start = section->VirtualAddress;
       DWORD section_stop = section_start + section->Misc.VirtualSize;
 
       if (relativeVirtualAddress >= section_start &&
             relativeVirtualAddress < section_stop) {
+         if (relativeVirtualAddress - section_start > section->SizeOfRawData) {
+            // The whole section is not stored in the file, and the requested
+            // RVA is in the zero-padded region
+            throw DataConsistencyException("Relative virtual address not contained in file");
+         }
          return section;
       }
    }
@@ -289,5 +310,46 @@ PEFile::GetImportNames()
    }
    return names;
 }
+
+
+std::pair<boost::shared_ptr<void>, size_t>
+PEFile::GetSectionByName(const std::string& name)
+{
+   for (IMAGE_SECTION_HEADER* section = SectionBegin(), * end = SectionEnd();
+         section != end; ++section) {
+      char sectionName[9];
+      std::copy(&section->Name[0], &section->Name[8], sectionName);
+      sectionName[8] = '\0';
+
+      if (sectionName == name) {
+         size_t size = section->Misc.VirtualSize;
+         size_t nonzeroSize = section->SizeOfRawData;
+
+         struct Deleter
+         {
+            void operator()(void* buffer)
+            { delete[] reinterpret_cast<char*>(buffer); }
+         } deleter;
+         boost::shared_ptr<void> contents(new char[size], deleter);
+
+         // Copy the section, and zero-fill any region beyond what is stored in
+         // the file.
+
+         char* srcBegin = reinterpret_cast<char*>(GetAddressForOffset(section->PointerToRawData));
+         char* srcNonzeroEnd = srcBegin + nonzeroSize;
+
+         char* dstBegin = reinterpret_cast<char*>(contents.get());
+         char* dstZeroStart = std::copy(srcBegin, srcNonzeroEnd, dstBegin);
+
+         char* dstEnd = dstBegin + size;
+         std::fill(dstZeroStart, dstEnd, 0);
+
+         return std::make_pair(contents, size);
+      }
+   }
+
+   throw DataConsistencyException("No section named \"" + name + "\"");
+}
+
 
 } // namespace PEAnalyzer
