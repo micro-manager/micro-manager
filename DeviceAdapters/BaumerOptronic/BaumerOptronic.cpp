@@ -59,10 +59,11 @@ there is too much uncommented magic in this code.
 
 I have added a hack (sorry) to avoid returning images whose exposure began
 before the call to SnapImage() or StartSequenceAcquisition(). This is done by
-first setting imageSkipped_g to false, and setting it to true after the first
-image becomes ready (imageReady_g is not set to true unless imageSkipped_g is
-already true). This effectively discards the first image and returns (if
-snapping) or starts with (if a sequence) the second image.
+first setting haveSkippedOneImage_g to false, and setting it to true after the
+first image becomes ready (imageReady_g is not set to true unless
+haveSkippedOneImage_g is already true). This effectively discards the first
+image and returns (if snapping) or starts with (if a sequence) the second
+image.
 
 */
 
@@ -117,7 +118,7 @@ unsigned long staticImgSize_g = 0; // ditto here
 MMThreadLock acquisitionThreadTerminateLock_g;
 bool mTerminateFlag_g = false;
 
-bool imageSkipped_g = false; // True after discarding one image (guarded by imageReadyLock_s)
+bool haveSkippedOneImage_g = false; // True after discarding one image (guarded by imageReadyLock_s)
 bool imageReady_g = false; // (guarded by imageReadyLock_s, as far as I can tell)
 
 // globals used to store data as reported by the camera
@@ -309,7 +310,7 @@ void BOImplementationThread::Snap(void)
       {
          {
             MMThreadGuard guard(BOImplementationThread::imageReadyLock_s);
-            imageSkipped_g = false;
+            haveSkippedOneImage_g = false;
             imageReady_g = false;
          }
 
@@ -435,7 +436,7 @@ void* BOImplementationThread::CurrentImage( unsigned short& xDim,  unsigned shor
    {
       {
          MMThreadGuard guard(BOImplementationThread::imageReadyLock_s);
-         if(imageSkipped_g && imageReady_g)
+         if(haveSkippedOneImage_g && imageReady_g)
             break;
       }
 
@@ -847,7 +848,7 @@ int BOImplementationThread::svc(void)
             {
                {
                   MMThreadGuard g(imageReadyLock_s);
-                  imageSkipped_g = false;
+                  haveSkippedOneImage_g = false;
                }
 
                Command(Noop);
@@ -1470,11 +1471,11 @@ unsigned int __stdcall mSeqEventHandler( void* pArguments )
 
                {
                   MMThreadGuard guard(BOImplementationThread::imageReadyLock_s);
-                  if (!imageSkipped_g)
+                  if (!haveSkippedOneImage_g)
                   {
                      // Discard the first image, whose capture may have started
                      // before the MM acquisition started
-                     imageSkipped_g = true;
+                     haveSkippedOneImage_g = true;
                   }
                   else
                   {
