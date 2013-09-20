@@ -40,10 +40,20 @@ static MCCBoard board;
 const char* g_DeviceNameMCCShutter0 = "MCC-Shutter-0";
 const char* g_DeviceNameMCCShutter1 = "MCC-Shutter-1";
 const char* g_DeviceNameMCCShutter2 = "MCC-Shutter-2";
+const char* g_DeviceNameMCCShutter3 = "MCC-Shutter-3";
+const char* g_DeviceNameMCCShutter4 = "MCC-Shutter-4";
+const char* g_DeviceNameMCCShutter5 = "MCC-Shutter-5";
+const char* g_DeviceNameMCCShutter6 = "MCC-Shutter-6";
+const char* g_DeviceNameMCCShutter7 = "MCC-Shutter-7";
+
 const char* g_DeviceNameMCCDA0 = "MCC-DAC-0";
 const char* g_DeviceNameMCCDA1 = "MCC-DAC-1";
 const char* g_DeviceNameMCCDA2 = "MCC-DAC-2";
 const char* g_DeviceNameMCCDA3 = "MCC-DAC-3";
+const char* g_DeviceNameMCCDA4 = "MCC-DAC-4";
+const char* g_DeviceNameMCCDA5 = "MCC-DAC-5";
+const char* g_DeviceNameMCCDA6 = "MCC-DAC-6";
+const char* g_DeviceNameMCCDA7 = "MCC-DAC-7";
 
 const char* g_volts = "Volts";
 const char* g_PropertyMin = "MinV";
@@ -82,11 +92,20 @@ MODULE_API void InitializeModuleData()
    AddAvailableDeviceName(g_DeviceNameMCCShutter0);
    AddAvailableDeviceName(g_DeviceNameMCCShutter1);
    AddAvailableDeviceName(g_DeviceNameMCCShutter2);
+   AddAvailableDeviceName(g_DeviceNameMCCShutter3);
+   AddAvailableDeviceName(g_DeviceNameMCCShutter4);
+   AddAvailableDeviceName(g_DeviceNameMCCShutter5);
+   AddAvailableDeviceName(g_DeviceNameMCCShutter6);
+   AddAvailableDeviceName(g_DeviceNameMCCShutter7);
 
    AddAvailableDeviceName(g_DeviceNameMCCDA0);
    AddAvailableDeviceName(g_DeviceNameMCCDA1);
    AddAvailableDeviceName(g_DeviceNameMCCDA2);
    AddAvailableDeviceName(g_DeviceNameMCCDA3);
+   AddAvailableDeviceName(g_DeviceNameMCCDA4);
+   AddAvailableDeviceName(g_DeviceNameMCCDA5);
+   AddAvailableDeviceName(g_DeviceNameMCCDA6);
+   AddAvailableDeviceName(g_DeviceNameMCCDA7);
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)
@@ -106,6 +125,27 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
    {
       return new MCCDaqShutter(2, g_DeviceNameMCCShutter2);
    }
+   else if (strcmp(deviceName, g_DeviceNameMCCShutter3) == 0)
+   {
+      return new MCCDaqShutter(2, g_DeviceNameMCCShutter3);
+   }
+   else if (strcmp(deviceName, g_DeviceNameMCCShutter4) == 0)
+   {
+      return new MCCDaqShutter(2, g_DeviceNameMCCShutter4);
+   }
+   else if (strcmp(deviceName, g_DeviceNameMCCShutter5) == 0)
+   {
+      return new MCCDaqShutter(2, g_DeviceNameMCCShutter5);
+   }
+   else if (strcmp(deviceName, g_DeviceNameMCCShutter6) == 0)
+   {
+      return new MCCDaqShutter(2, g_DeviceNameMCCShutter6);
+   }
+   else if (strcmp(deviceName, g_DeviceNameMCCShutter7) == 0)
+   {
+      return new MCCDaqShutter(2, g_DeviceNameMCCShutter7);
+   }
+
    else if (strcmp(deviceName, g_DeviceNameMCCDA0) == 0)
    {
       return new MCCDaqDA(0, g_DeviceNameMCCDA0);
@@ -121,6 +161,22 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
    else if (strcmp(deviceName, g_DeviceNameMCCDA3) == 0)
    {
       return new MCCDaqDA(3, g_DeviceNameMCCDA3);
+   }
+	  else if (strcmp(deviceName, g_DeviceNameMCCDA4) == 0)
+   {
+      return new MCCDaqDA(3, g_DeviceNameMCCDA4);
+   }
+   else if (strcmp(deviceName, g_DeviceNameMCCDA5) == 0)
+   {
+      return new MCCDaqDA(3, g_DeviceNameMCCDA5);
+   }
+	  else if (strcmp(deviceName, g_DeviceNameMCCDA6) == 0)
+   {
+      return new MCCDaqDA(3, g_DeviceNameMCCDA6);
+   }
+   else if (strcmp(deviceName, g_DeviceNameMCCDA7) == 0)
+   {
+      return new MCCDaqDA(3, g_DeviceNameMCCDA7);
    }
 
 
