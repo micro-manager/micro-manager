@@ -96,7 +96,6 @@ public:
    int StartSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow);
    int StopSequenceAcquisition();
    bool IsCapturing();
-   int InsertImage();
    
 
    // action interface
@@ -110,6 +109,8 @@ public:
 
 private:
    int ResizeImageBuffer();
+   int WaitForImageAndCopyToBuffer();
+   int SendImageToCore();
 
    static const double nominalPixelSizeUm_;
    ImgBuffer img_;
@@ -117,7 +118,6 @@ private:
    bool stopOnOverflow_;
 
    BOImplementationThread* pWorkerThread_; // implementation thread
-
 };
 
 

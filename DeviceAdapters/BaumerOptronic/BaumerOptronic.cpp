@@ -449,7 +449,6 @@ void* BOImplementationThread::CurrentImage( unsigned short& xDim,  unsigned shor
       CDeviceUtils::SleepMs(1);
    }
  
-   // XXX BUG: We never reset seqactive_g if GetImageBuffer() is not called
    seqactive_g = false;
 
    {
@@ -892,12 +891,11 @@ int BOImplementationThread::svc(void)
 
                MMThreadGuard g(mmCameraLock_);
                
-               // GetImageBuffer and copy pixels into circular buffer
-               int ret = pCamera_->InsertImage();
+               int ret = pCamera_->SendImageToCore();
                if (ret != DEVICE_OK)
                {
                   ostringstream os;
-                  os << "InsertImage failed with errorcode: " << ret;
+                  os << "SendImageToCore failed with errorcode: " << ret;
                   pCamera_->GetCoreCallback()->PostError(ret, os.str().c_str() );
                   CameraState(Ready);
                   break;
@@ -1706,7 +1704,6 @@ int CBaumerOptronic::Initialize()
    // setup the buffer
    // ----------------
    SnapImage();
-   GetImageBuffer();
    nRet = ResizeImageBuffer();
    if (nRet != DEVICE_OK)
    {
@@ -1743,33 +1740,7 @@ int CBaumerOptronic::SnapImage()
 {
    pWorkerThread_->Command(SnapCommand);
 
-   // Wait for image and put it in img_
-   unsigned short xDim;
-   unsigned short yDim;
-   unsigned short bitsInOneColor;
-   unsigned short nPlanes;
-   unsigned long bufSize;
-
-   MMThreadGuard* pImageBufferGuard = NULL;
-   void* p = pWorkerThread_->CurrentImage(xDim, yDim, bitsInOneColor, nPlanes,
-                                          bufSize, &pImageBufferGuard);
-
-   void* pixBuffer = NULL;
-   if (p)
-   {
-      short bytesInOnePlane = BytesInOneComponent(bitsInOneColor);
-
-      img_.Resize(xDim, yDim, nPlanes * bytesInOnePlane);
-    
-      pixBuffer = const_cast<unsigned char*>(img_.GetPixels());
-      memcpy(pixBuffer, p, bufSize); 
-   }
-
-   // release lock on image buffer
-   if (pImageBufferGuard)
-      delete pImageBufferGuard;
-
-   return p ? DEVICE_OK : DEVICE_ERR;
+   return WaitForImageAndCopyToBuffer();
 }
 
 
@@ -1981,7 +1952,6 @@ int CBaumerOptronic::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
          pWorkerThread_->BinSize(binFactor);
          // needed so that everyone learns about the new image size
          SnapImage();
-         GetImageBuffer();
          unsigned short x,y,bits,colors;
          unsigned long bufs;
          pWorkerThread_->CurrentImageSize(x,y,bits,colors,bufs);
@@ -2189,16 +2159,52 @@ int CBaumerOptronic::StopSequenceAcquisition()
 
 }
 
+int CBaumerOptronic::WaitForImageAndCopyToBuffer()
+{
+   // Wait for image and put it in img_
+   unsigned short xDim;
+   unsigned short yDim;
+   unsigned short bitsInOneColor;
+   unsigned short nPlanes;
+   unsigned long bufSize;
+
+   MMThreadGuard* pImageBufferGuard = NULL;
+   void* p = pWorkerThread_->CurrentImage(xDim, yDim, bitsInOneColor, nPlanes,
+                                          bufSize, &pImageBufferGuard);
+
+   void* pixBuffer = NULL;
+   if (p)
+   {
+      short bytesInOnePlane = BytesInOneComponent(bitsInOneColor);
+
+      img_.Resize(xDim, yDim, nPlanes * bytesInOnePlane);
+
+      pixBuffer = const_cast<unsigned char*>(img_.GetPixels());
+      memcpy(pixBuffer, p, bufSize);
+   }
+
+   // release lock on image buffer
+   if (pImageBufferGuard)
+      delete pImageBufferGuard;
+
+   return p ? DEVICE_OK : DEVICE_ERR;
+}
+
 /**
- * Uses GetImageBuffer to get pixels from camera and inserts 
- * into circular buffer
+ * Puts image into staging buffer (img_), then inserts into curcular buffer
  */
-int CBaumerOptronic::InsertImage()
+int CBaumerOptronic::SendImageToCore()
 {
    char label[MM::MaxStrLength];
    this->GetLabel(label);
    Metadata md;
    md.put("Camera", label);
+
+   int err = WaitForImageAndCopyToBuffer();
+   if (err != DEVICE_OK) {
+      return err;
+   }
+
    const unsigned char* p = GetImageBuffer();
    unsigned w = GetImageWidth();
    unsigned h = GetImageHeight();
