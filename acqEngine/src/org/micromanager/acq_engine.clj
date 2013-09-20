@@ -744,7 +744,7 @@
         (doto gui
           (.enableLiveMode false)
           (.enableRoiButtons false)))
-      (prepare-state state position-list autofocus-device)
+      (prepare-state state (when (:use-position-list settings) position-list) autofocus-device)
       (def last-state state) ; for debugging
       (let [acq-seq (generate-acq-sequence settings @attached-runnables)]
         (def acq-sequence acq-seq)
@@ -774,13 +774,16 @@
               :relativeZSlice          :relative-slices
               :intervalMs              :interval-ms
               :customIntervalsMs       :custom-intervals-ms
+              :usePositionList         :use-position-list 
               :channelGroup            :channel-group
               )
             (assoc :frames (range (.numFrames settings))
                    :channels (vec (filter :use-channel
                                           (map #(ChannelSpec-to-map (.channelGroup settings) %)
                                                (.channels settings))))
-                   :positions (vec (range (.getNumberOfPositions position-list)))
+                   :positions (vec (range (if (.usePositionList settings)
+                                            (.getNumberOfPositions position-list)
+                                            0)))
                    :slices (vec (.slices settings))
                    :default-exposure (core getExposure)
                    :custom-intervals-ms (vec (.customIntervalsMs settings)))
@@ -978,3 +981,4 @@
   (doto (LinkedBlockingQueue.)
     drain-queue))
 
+fu

@@ -332,6 +332,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
          acquisitionSettings.prefix = dirName_;
       }
       acquisitionSettings.comment = comment_;
+      acquisitionSettings.usePositionList = this.useMultiPosition_;
       return acquisitionSettings;
    }
 

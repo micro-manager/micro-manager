@@ -32,4 +32,5 @@ public class SequenceSettings {
    public double zReference = 0;
    public String comment = "";
    public String channelGroup = "";
+   public boolean usePositionList;
 }
