@@ -654,14 +654,19 @@
    value at address1 in ref1."
   [[ref1 address1] function [ref2 address2]]
   (handle-change-at ref1 address1 [ref2 address2]
-                    #(swap! ref2 assoc-at address2
-                            (function %))))
+                    #(let [val (function %)]
+                       (when-not (= val ::?)
+                         (swap! ref2 assoc-at address2 val)))))
 
 (defn follow-linear
   [[ref1 address1] [factor offset] [ref2 address2]]
   (follow-function [ref1 address1]
                    #(+ offset (* factor %))
                    [ref2 address2]))
+
+(defn follow-map
+  [[ref1 address1] m [ref2 address2]]
+  (follow-function [ref1 address1] #(m % ::?) [ref2 address2]))
 
 (defn follow
   [[ref1 address1] [ref2 address2]]
@@ -684,6 +689,11 @@
     (bind-linear [ref1 address1]
                  [factor offset]
                  [ref2 address2])))
+
+(defn bind-map [[ref1 address1] m [ref2 address2]]
+  (let [m-inverse (clojure.set/map-invert m)]
+    (follow-map [ref1 address1] m [ref2 address2])
+    (follow-map [ref2 address2] m-inverse [ref1 address1])))
 
 (defn bind [[ref1 address1] [ref2 address2]]
   (follow [ref1 address1] [ref2 address2])
