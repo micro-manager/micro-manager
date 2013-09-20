@@ -7,10 +7,6 @@
 
 #include "PEAnalyzer.h"
 
-
-// Data structures for PE files are defined in winnt.h
-#include <winnt.h>
-
 #include <algorithm>
 #include <string>
 #include <vector>
@@ -18,6 +14,7 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/shared_ptr.hpp>
 
+// Note: Data structures for PE files are defined in winnt.h
 
 #pragma warning(disable: 4800) // Performance warning, casting to bool
 
