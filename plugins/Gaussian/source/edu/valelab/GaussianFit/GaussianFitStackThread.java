@@ -123,6 +123,7 @@ public class GaussianFitStackThread extends GaussianInfo implements Runnable {
 
             }
          } catch (Exception ex) {
+            ex.printStackTrace();
             ij.IJ.log("Thread run out of memory  " + Thread.currentThread().getName());
             ij.IJ.error("Fitter out of memory", "Out of memory error");
             return;

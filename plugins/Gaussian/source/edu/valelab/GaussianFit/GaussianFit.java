@@ -17,7 +17,9 @@ import org.apache.commons.math.optimization.GoalType;
 import org.apache.commons.math.optimization.fitting.CurveFitter;
 
 import ij.process.ImageProcessor;
+import org.apache.commons.math.optimization.general.ConjugateGradientFormula;
 import org.apache.commons.math.optimization.general.LevenbergMarquardtOptimizer;
+import org.apache.commons.math.optimization.general.NonLinearConjugateGradientOptimizer;
 
 /**
  *
@@ -49,6 +51,8 @@ public class GaussianFit {
    NelderMead nm_;
    SimpleScalarValueChecker convergedChecker_;
    MultiVariateGaussianFunction mGF_;
+   MultiVariateGaussianMLE mGFMLE_;
+   NonLinearConjugateGradientOptimizer nlcgo_;
 
    LevenbergMarquardtOptimizer lMO_;
 
@@ -57,7 +61,8 @@ public class GaussianFit {
     * as 1 (circle), 2 (width varies in x and y), or 3 (ellipse) parameters
     * 
     * @param mode - fit circle (1) ellipse(2), or ellipse with varying angle (3)
-    * @param fitmode - algorithm use: NelderMead (1), or Levenberg Marquard (2)
+    * @param fitmode - algorithm use: NelderMead (1), Levenberg Marquard (2), 
+    *                   NelderMean MLE (3), LevenberMarquard MLE(4)
     */
    public GaussianFit(int mode, int fitMode) {
       super();
@@ -82,8 +87,18 @@ public class GaussianFit {
          convergedChecker_ = new SimpleScalarValueChecker(1e-6,-1);
          mGF_ = new MultiVariateGaussianFunction(mode_);
       }
-      if (fitMode == 2) {
+      if (fitMode_ == 2) {
          lMO_ = new LevenbergMarquardtOptimizer();
+      }
+      if (fitMode_ == 3) {
+         nm_ = new NelderMead();
+         convergedChecker_ = new SimpleScalarValueChecker(1e-6,-1);
+         mGFMLE_ = new MultiVariateGaussianMLE(mode_);
+      }
+      if (fitMode_ == 4) {
+         mGFMLE_ = new MultiVariateGaussianMLE(mode_);
+         nlcgo_ = 
+            new NonLinearConjugateGradientOptimizer(ConjugateGradientFormula.FLETCHER_REEVES);
       }
    }
 
@@ -143,7 +158,40 @@ public class GaussianFit {
             Logger.getLogger(GaussianFit.class.getName()).log(Level.INFO, "Exceeded max number of iterations", ex);
          }
       }
-
+      
+      // Simplex-MLE
+      if (fitMode_ == 3) {
+         nm_.setStartConfiguration(steps_);
+         nm_.setConvergenceChecker(convergedChecker_);
+         nm_.setMaxIterations(maxIterations);
+         mGFMLE_.setImage((short[]) siProc.getPixels(), siProc.getWidth(), siProc.getHeight());
+         try {
+            RealPointValuePair result = nm_.optimize(mGFMLE_, GoalType.MINIMIZE, params0_);
+            paramsOut = result.getPoint();
+         } catch (java.lang.OutOfMemoryError e) {
+            throw(e);
+         } catch (Exception e) {
+            ij.IJ.log(" " + e.toString());
+            //e.printStackTrace();
+         }
+      }
+      
+      // gradient-MLE
+      if (fitMode_ == 4) {
+         
+         nlcgo_.setMaxIterations(maxIterations);
+         mGFMLE_.setImage((short[]) siProc.getPixels(), siProc.getWidth(), siProc.getHeight());
+         try {
+            RealPointValuePair result = nlcgo_.optimize(mGFMLE_, GoalType.MINIMIZE, params0_);
+            paramsOut = result.getPoint();
+         } catch (java.lang.OutOfMemoryError e) {
+            throw(e);
+         } catch (Exception e) {
+            ij.IJ.log(" " + e.toString());
+            //e.printStackTrace();
+         }
+      }
+         
       if (mode_ == 3) {
          if (paramsOut.length > S3) {
             double[] prms = GaussianUtils.ellipseParmConversion(paramsOut[S1], paramsOut[S2], paramsOut[S3]);

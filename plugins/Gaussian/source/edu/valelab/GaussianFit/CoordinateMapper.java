@@ -30,11 +30,14 @@ package edu.valelab.GaussianFit;
 import ags.utils.KdTree;
 import ags.utils.KdTree.Entry;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.apache.commons.math.linear.Array2DRowRealMatrix;
 import org.apache.commons.math.linear.DecompositionSolver;
 import org.apache.commons.math.linear.LUDecompositionImpl;
@@ -256,6 +259,22 @@ public class CoordinateMapper {
       // (the last row should be [0,0,1]):
       DecompositionSolver solver = (new QRDecompositionImpl(u)).getSolver();
       double[][] m = solver.solve(v).transpose().getData();
+      
+      AffineTransform tmp = new AffineTransform(m[0][0], m[1][0], m[0][1], m[1][1], m[0][2], m[1][2]);
+      try {
+         AffineTransform inv = tmp.createInverse();
+         ij.IJ.log (inv.toString());
+      } catch (NoninvertibleTransformException ex) {
+         Logger.getLogger(CoordinateMapper.class.getName()).log(Level.SEVERE, null, ex);
+      }
+      /*
+      double pxSize = 1.0;
+      ij.IJ.log("Affine matrix: " + "\n\r" +
+              m[0][0]/pxSize + "\t" + m[0][1] + "\t0.0\t" + m[0][2] + "\n" + 
+              m[1][0] + "\t" + m[1][1]/pxSize + "\t0.0\t" + m[1][2] + "\n" +
+              0.0 + "\t" + 0.0 + "\t" + 1.0 + "\t" + 0.0 + "\n" +
+              0.0 + "\t" + 0.0 + "\t" + 0.0 + "\t" + 1.0);
+       */
 
       // Create an AffineTransform object from the elements of m
       // (the last row is omitted as specified in AffineTransform class):
