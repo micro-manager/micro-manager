@@ -32,7 +32,7 @@
 
 (defn update-at
   "Like update-in, but if ks is empty, applies function directly
-   to m."
+   to m. A single keyword also can be used."
   [m ks function & args]
   (if (empty-address? ks)
     (apply function m args) 
@@ -100,7 +100,7 @@
 (defn bind-function
   "The value of ref1 at address1 and the value of ref2 at address2
    are linked, so that if one changes, then the other changes to
-   maintain value2 == (function value1)."
+   maintain (== value2 (function value1))."
   [[ref1 address1] function inverse-function [ref2 address2]]
   (follow-function [ref1 address1] function [ref2 address2])
   (follow-function [ref2 address2] inverse-function [ref1 address1]))
@@ -108,7 +108,7 @@
 (defn bind-linear
   "The value of ref1 at address1 and the value of ref2 at address2
    are linked, so that if one changes, then the other chnages to
-   maintain value2 == (+ offset (* factor value1))."
+   maintain (== value2 (+ offset (* factor value1)))."
   [[ref1 address1] [factor offset] [ref2 address2]]
   (follow-linear [ref1 address1] [factor offset] [ref2 address2])
   (follow-linear [ref2 address2] [(/ factor) (- (/ offset factor))] [ref1 address1]))
@@ -128,7 +128,11 @@
                  [factor offset]
                  [ref2 address2])))
 
-(defn bind-map [[ref1 address1] m [ref2 address2]]
+(defn bind-map
+  "The value of ref1 at address1 and the value of ref2 at address2
+   are linked so that if one changes, the other changes
+   to maintain (== value2 (m value1))."
+  [[ref1 address1] m [ref2 address2]]
   (let [m-inverse (clojure.set/map-invert m)]
     (bind-function [ref1 address1] m m-inverse [ref2 address2])))
 
@@ -140,6 +144,9 @@
   (follow [ref1 address1] [ref2 address2])
   (follow [ref2 address2] [ref1 address1]))
 
-(defn unbind [[ref1 address1] [ref2 address2]]
+(defn unbind
+  "The binding relationship between address1 in ref1 and
+   address2 in ref2 is ended."
+  [[ref1 address1] [ref2 address2]]
   (unfollow [ref1 address1] [ref2 address2])
   (unfollow [ref2 address2] [ref1 address1]))
