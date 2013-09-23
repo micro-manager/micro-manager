@@ -11,7 +11,7 @@
 //
 // LICENSE:       This file is distributed under the BSD license.
 //
-// REVISIONS:     
+// REVISIONS:     2013-09-23
 //
 
 #include "Okolab.h"
@@ -75,6 +75,8 @@ int OCSControl::Initialize()
  AddAllowedValue("Status", "On");
 
  initialized_=true;
+ SetStatus(1); // comment this line if you don't want OCS auto start (if non running)
+
  return DEVICE_OK;
 }
 

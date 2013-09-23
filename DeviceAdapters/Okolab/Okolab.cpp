@@ -11,7 +11,7 @@
 //
 // LICENSE:       This file is distributed under the BSD license.
 //
-// LAST REVISION: 2013-09-10
+// LAST REVISION: 2013-09-23
 //
 
 #include "Okolab.h"
@@ -36,7 +36,7 @@
  #pragma comment(lib, "ws2_32.lib") 
 #endif
 
-#if defined(WIN32) || defined(WIN64)
+#if defined(WIN32) || defined(WIN64) || defined(X64)
  #include <windows.h>
  #include <process.h>
  #include <Tlhelp32.h>
@@ -539,7 +539,7 @@ bool OkolabDevice::OCSRunning()
  if(rcv_statuscode!=0) return false;
  bRunning=true;
  */
- #if defined(WIN32) || defined(WIN64)
+ #if defined(WIN32) || defined(WIN64) || defined(X64)
    HANDLE hSnapShot = CreateToolhelp32Snapshot(TH32CS_SNAPALL, NULL);
    PROCESSENTRY32 pEntry;
    pEntry.dwSize = sizeof (pEntry);
@@ -581,6 +581,7 @@ void OkolabDevice::OCSStart()
  TCHAR wvalue[255];
  HKEY hKey;
 
+/*
  #if defined(WIN32)
  if(RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion", 0, KEY_READ | KEY_WOW64_64KEY, &hKey)==ERROR_SUCCESS)
   {
@@ -590,7 +591,7 @@ void OkolabDevice::OCSStart()
   }
  #endif
 
- #if defined(WIN64)
+ #if defined(WIN64) || defined(X64)
  if(RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion", 0, KEY_READ | KEY_WOW64_64KEY, &hKey)==ERROR_SUCCESS)
   {
    DWORD dwret;
@@ -598,16 +599,34 @@ void OkolabDevice::OCSStart()
    RegCloseKey(hKey);
   }
  #endif
+*/
+
+ if(RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\{8AEF906D-2228-4298-B37E-OKOCTRLSERV2}_is1", 0, KEY_READ | KEY_WOW64_64KEY, &hKey)==ERROR_SUCCESS)
+  {
+   DWORD dwret;
+   dwret=RegQueryValueEx(hKey, L"Inno Setup: App Path", NULL, &type, (LPBYTE)wvalue, &size);
+   RegCloseKey(hKey);
+  }
+ else
+ if(RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\{8AEF906D-2228-4298-B37E-OKOCTRLSERV2}_is1", 0, KEY_READ | KEY_WOW64_64KEY, &hKey)==ERROR_SUCCESS)
+  {
+   DWORD dwret;
+   dwret=RegQueryValueEx(hKey, L"Inno Setup: App Path", NULL, &type, (LPBYTE)wvalue, &size);
+   RegCloseKey(hKey);
+  }
 
  char value[400]; 
  WideCharToMultiByte(CP_ACP,0,wvalue,255,value,400,NULL,NULL);
- snprintf(cmdline,500,"\"%s\\OKOlab\\OKO-Control Server\\OKO-Control Server.exe\"",value);
+// snprintf(cmdline,500,"\"%s\\OKOlab\\OKO-Control Server\\OKO-Control Server.exe\"",value);
+ snprintf(cmdline,500,"\"%s\\OKO-Control Server.exe\"",value);
+
 /*
 FILE *fp;
 fp=fopen("registry_log.txt","a");
 fprintf(fp,"cmdline=%s\n",cmdline);
 fclose(fp);
 */
+
  if(OCSRunning()) return;
  TCHAR path[500];
  MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, cmdline, -1, path, 500);
