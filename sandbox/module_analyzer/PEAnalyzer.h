@@ -20,7 +20,7 @@ namespace PEAnalyzer {
 class Exception : public std::exception
 {
 public:
-   Exception(const std::string& message) : message_(message) {}
+   explicit Exception(const std::string& message) : message_(message) {}
    virtual ~Exception() {}
    virtual const char* what() const { return message_.c_str(); }
 
@@ -32,21 +32,21 @@ private:
 class ModuleLoadFailedException : public Exception
 {
 public:
-   ModuleLoadFailedException(const std::string& message) : Exception(message) {}
+   explicit ModuleLoadFailedException(const std::string& message) : Exception(message) {}
 };
 
 
 class PEFormatException : public Exception
 {
 public:
-   PEFormatException(const std::string& message) : Exception(message) {}
+   explicit PEFormatException(const std::string& message) : Exception(message) {}
 };
 
 
 class DataConsistencyException : public Exception
 {
 public:
-   DataConsistencyException(const std::string& message) : Exception(message) {}
+   explicit DataConsistencyException(const std::string& message) : Exception(message) {}
 };
 
 
@@ -106,7 +106,7 @@ public:
    std::pair<boost::shared_ptr<void>, size_t> GetSectionByName(const std::string& name);
 
 protected:
-   PEFile(MappedFile::Ptr image);
+   explicit PEFile(MappedFile::Ptr image);
 
    void* GetAddressForRVA(DWORD relativeVirtualAddress);
    IMAGE_NT_HEADERS* GetNTHeaders();
@@ -147,7 +147,7 @@ public:
    static Ptr New(MappedFile::Ptr image);
 
 private:
-   PEFile32(MappedFile::Ptr image);
+   explicit PEFile32(MappedFile::Ptr image);
    IMAGE_OPTIONAL_HEADER32* GetOptionalHeader();
    virtual IMAGE_DATA_DIRECTORY* GetDataDirectory(size_t index);
 };
@@ -162,7 +162,7 @@ public:
    static Ptr New(MappedFile::Ptr image);
 
 private:
-   PEFile64(MappedFile::Ptr image);
+   explicit PEFile64(MappedFile::Ptr image);
    IMAGE_OPTIONAL_HEADER64* GetOptionalHeader();
    virtual IMAGE_DATA_DIRECTORY* GetDataDirectory(size_t index);
 };
