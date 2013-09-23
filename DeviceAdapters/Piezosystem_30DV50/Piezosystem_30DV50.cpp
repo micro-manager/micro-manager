@@ -233,16 +233,16 @@ void splitString(char * string,char* delimiter,char** dest){
 Stage::Stage():
    initialized_(false),
    stepSizeUm_(0.1),   
+   answerTimeoutMs_(2000),
    stat_(0),
-   pos_(0),
-   rohm_(0),
-   loop_(false),
    min_V_(-20.0),
    max_V_(130.0),
    min_um_(0.0),
    max_um_(80.0),
+   pos_(0),
+   rohm_(0),
+   loop_(false)
    //port_("Undefined"),
-   answerTimeoutMs_(2000)
 {
 	LogMessage ("new Stage");
    InitializeDefaultErrorMessages();
@@ -265,18 +265,18 @@ Stage::Stage():
 
 Stage::Stage(int channel) :
    initialized_(false),
-	channel_(channel),
    stepSizeUm_(0.1),  
+   answerTimeoutMs_(2000),
+	channel_(channel),
    stat_(0),
-   pos_(0),
-   rohm_(0),
-   loop_(false),
    min_V_(0.0),
    max_V_(100.0),
    min_um_(0.0),
    max_um_(50.0),
+   pos_(0),
+   rohm_(0),
+   loop_(false)
    //port_("Undefined"),
-   answerTimeoutMs_(2000)
 {
 	LogMessage ("new Stage");
    InitializeDefaultErrorMessages();
@@ -2544,15 +2544,15 @@ int Stage::OnTriggerType(MM::PropertyBase* pProp, MM::ActionType eAct){
 Shutter::Shutter() : 
    name_(g_Shutter),     
    initialized_(false),
+   answerTimeoutMs_(2000),
 	stat_(0),
-   pos_(0),
-   rohm_(0),
-   loop_(false),
    min_V_(-20.0),
    max_V_(130.0),
    min_um_(0.0),
    max_um_(50.0),
-   answerTimeoutMs_(2000)
+   pos_(0),
+   rohm_(0),
+   loop_(false)
   
 {
 	InitializeDefaultErrorMessages();
@@ -3261,7 +3261,7 @@ int Shutter::OnShutterState(MM::PropertyBase* pProp, MM::ActionType eAct){
     else if (eAct == MM::AfterSet){	  
 		std::string state;
 		long b=0;
-		long l;
+		long l=0;
 		pProp->Get(state);
 		if (state == g_Open){
 			shut_ = false;
