@@ -4,6 +4,12 @@
 
 ;; file dialogs
 
+(defn make-dir [path]
+  (let [f (clojure.java.io/file path)]
+    (if (.isDirectory f)
+      path
+      (.getParent f))))
+
 (def DATA-SET
   (FileDialogs$FileType. "SX2_DATA_SET",
                          "Slide Explorer Data Set",
@@ -19,7 +25,7 @@
   "Shows a file dialog to allow the user to choose a data set
    for opening. Returns the chosen path or nil if canceled."
   []
-  (FileDialogs/openDir nil "Choose a Slide Explorer data set" DATA-SET))
+  (make-dir (FileDialogs/openDir nil "Choose a Slide Explorer data set" DATA-SET)))
 
 (defn save-as
   "Ask the user to choose a new data set location and move an existing

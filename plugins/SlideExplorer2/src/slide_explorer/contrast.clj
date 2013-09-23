@@ -1,11 +1,11 @@
 (ns slide-explorer.contrast
-  (require [slide-explorer.canvas :as canvas]
+  (require [slide-explorer.canvas1 :as canvas1]
            [slide-explorer.image :as image]
            [slide-explorer.reactive :as reactive]
            [slide-explorer.utils :as utils]))
 
 
-(defonce data-atom (atom nil))
+(def data-atom (atom nil))
 
 (def channel-atom (atom {:name "DAPI" :color :red :min 100 :max 200}))
 
@@ -50,24 +50,25 @@
                 :fill {:color 0x303030}}]])
 
 (defn color-slider [id pos fill-color]
-  [:polygon {:id id
-             :vertices [{:x pos :y 0}
-                        {:x (- pos 7) :y 16}
-                        {:x (+ pos 7) :y 16}]
-             :color :gray
-             :stroke {:width 2}
-             :fill {:color fill-color}}])
+  {:type :polygon 
+   :id id
+   :vertices [{:x pos :y 0}
+              {:x (- pos 7) :y 16}
+              {:x (+ pos 7) :y 16}]
+   :color :gray
+   :stroke {:width 2}
+   :fill {:color fill-color}})
       
 (defn update-limit [{:keys [min max] :as channel-map}
                     handle val]
-  (let [val (canvas/clip-value val 0 255)]
+  (let [val (canvas1/clip-value val 0 255)]
     (if (= handle :min)
       (assoc channel-map
              :min val
-             :max (canvas/clip-value (inc val) max 255))
+             :max (canvas1/clip-value (inc val) max 255))
       (assoc channel-map
              :max val
-             :min (canvas/clip-value (dec val) 0 min)))))           
+             :min (canvas1/clip-value (dec val) 0 min)))))           
 
 (defn update-limit! [handle val]
   (swap! channel-atom update-limit handle val))
@@ -75,40 +76,41 @@
 (defn contrast-graph [data width height {:keys [name color min max]}]
   (let [n (count data)
         xmin (* width (/ min n))
-        xmax (* width (/ max n))]
-    [:graphics {:fill :dark-gray}
-     [:compound {:x 100 :y (+ 30 height) :scale-y -1}
-      [:polygon
-       {:id :graph
-        :vertices (bar-graph-vertices data width height)
-        :fill {:gradient
-               {:color1 :black :x1 xmin :y1 0
-                :color2 color :x2 xmax :y2 0}}
-        :color :dark-gray
-        :stroke {:width 0 :cap :butt}}]
-      [:compound {:y height :h 20 :x 0 :w width :scale-y 1
-                  :on-mouse-down (fn [x _] (update-limit! :max (* n (/ x width))))
-                  :on-mouse-drag (fn [x _] (update-limit! :max (* n (/ x width))))}
-       (color-slider :max-handle xmax color)]    
-      [:compound {:y 0 :h 20 :x 0 :w width :scale-y -1
-                  :on-mouse-down (fn [x _] (update-limit! :min (* n (/ x width))))
-                  :on-mouse-drag (fn [x _] (update-limit! :min (* n (/ x width))))}
-       (color-slider :min-handle xmin :black)]]
-     [:text {:text name :l 50 :t 12 :color :white :font {:size 18}}]
-     [:compound {:l 10 :t 50 :w 0 :h 0}
-      [:text {:text (str "Min: " (int min))
-              :l 0 :t 0
-              :color :white :font {:size 12}}]
-      [:text {:text (str "Max: " (int max))
-              :l 0 :t 15
-              :color :white :font {:size 12}}]]
-     [:rect {:l 10 :t 10 :w 30 :h 30 :fill {:color color}
-             :stroke {:width 1 :color :white}
-             :on-mouse-click (fn [_ _] (cycle-color))}]
-      ;(color-picker 30)
-      ]))
+        xmax (* width (/ max n))]    
+    [{:type :compound :t 0 :l 0 :w 100 :h 100 :fill :dark-gray
+     :children
+     [{:type :compound :x 100 :y (+ 30 height) :w 100 :h 100 :scale-y -1
+       :children
+       [{:type :polygon
+         :id :graph
+         :vertices (bar-graph-vertices data width height)
+         :fill {:gradient
+                {:color1 :black :x1 xmin :y1 0
+                 :color2 color :x2 xmax :y2 0}}
+         :color :dark-gray
+         :stroke {:width 0 :cap :butt}}
+        {:type :compound :y height :h 20 :x 0 :w width :scale-y 1
+         :children [(color-slider :max-handle xmax color)]}
+        {:type :compound :y 0 :h 20 :x 0 :w width :scale-y -1
+         :children [(color-slider :min-handle xmin :black)]}]}
+      {:type :text :text name :l 50 :t 12 :color :white :font {:size 18}}
+      {:type :compound :l 10 :t 50 :w 0 :h 0
+       :children
+       [{:type :text :text (str "Min: " (int min))
+         :l 0 :t 0
+         :color :white :font {:size 12}}
+        {:type :text :text (str "Max: " (int max))
+         :l 0 :t 15
+         :color :white :font {:size 12}}]}
+      {:type :rect :l 10 :t 10 :w 30 :h 30 :fill {:color color}
+       :stroke {:width 1 :color :white}}]}]))
 
-(defonce test-graphics (atom nil))
+(def simple 
+  [{:type :text :t 100 :l 100 :w 100 :h 100 
+    :text "Hello"
+    :rotate 0}])
+
+(def test-graphics (atom nil))
 
 (defn test-data []
   (repeatedly 256 #(long (rand 256))))  
@@ -125,7 +127,7 @@
   (reactive/handle-update channel-atom update-contrast-graph)) 
 
 (defn test-frame []
-  (let [panel (canvas/canvas-frame test-graphics)]
+  (let [panel (canvas1/canvas-frame test-graphics)]
     (handle-settings)
     (reset! data-atom (test-data))))
 

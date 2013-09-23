@@ -14,7 +14,8 @@
                           Point2D$Double
                           Rectangle2D$Double
                           RoundRectangle2D$Double))
-    (:require [slide-explorer.widgets :as widgets]))
+    (:require [slide-explorer.widgets :as widgets]
+              [slide-explorer.bind :as bind]))
 
 ; Create a default font render context, that can be rebound.
 ; Used by text-primitive widget to get measurements of strings
@@ -281,7 +282,7 @@
       (.rotate (* degrees-to-radians (or rotate 0.0)))
       (.scale (or scale-x scale 1.0)
               (or scale-y scale 1.0))
-      (.translate (double (/ (or w 0) 2))
+      (.translate (double (/ (or w 0) -2))
                   (double (/ (or h 0) -2))))
     transform))
 
@@ -397,6 +398,10 @@
   [{:keys [side w h] :as m}]
   (let [s (or side w h)]
     (assoc m :type :rect :w s :h s)))
+
+(defmethod widget :compound
+  [m]
+  (assoc m :type :rect :stroke nil))
 
 ;; nested children
 
@@ -581,127 +586,18 @@
 (defn now []
   (System/currentTimeMillis))
 
-(defn animate! [reference value-address duration min max]
+(defn animate! [reference value-address duration min-val max-val]
   (let [start-time (now)]
     (loop []
-      (let [tick (now)
-            value (+ min
-                     (* (- max min)
-                        (/ tick (double duration))))]
+      (let [elapsed (- (now) start-time)
+            value (+ min-val
+                     (* (- max-val min-val)
+                        (min 1.0 (/ elapsed (double duration)))))]
         (swap! reference (fn [data]
                            (assoc-in data value-address value)))
-        (when (< (now) (+ start-time duration))
+        (when (< elapsed duration)
           (Thread/sleep 15)
           (recur))))))
-  
-;; following and binding
-
-(defn addressify
-  "Prepares argument to be used in assoc-in, get-in, etc.
-   If a keyword, wraps in a vector."
-  [address]
-  (if (sequential? address)
-    address
-    [address]))
-
-(defn empty-address? [ks]
-  (or (nil? ks)
-      (and (sequential? ks) (empty? ks))))
-
-(defn get-at [m ks]
-  (if (empty-address? ks)
-    m
-    (get-in m (addressify ks))))
-
-(defn assoc-at [m ks v]
-  (if (empty-address? ks)
-    v
-    (assoc-in m (addressify ks) v)))
-
-(defn update-at [m ks function & args]
-  (if (empty-address? ks)
-    (apply function m args) 
-    (apply update-in m (addressify ks) function args)))
-
-(defn very-close-numbers? [a b]
-  (when (number? a) (number? b)
-    (let [a (double a) b (double b)]
-      (or (and (zero? a) (zero? b))
-          (> 1.0e-10 (Math/abs (- a b)))))))
-
-(defn handle-change-at
-  "When the value of ref changes at address, run
-   function with the new value at that address.
-   If address is nil, use the whole value of ref."
-  [ref address key function]
-  (add-watch ref [address key]
-             (fn [_ _ old-map new-map]
-               (let [old-val (get-at old-map address)
-                     new-val (get-at new-map address)]
-                 (when-not (or (= old-val new-val)
-                                (very-close-numbers? old-val new-val))
-                   (function new-val))))))
-
-(defn handle-change
-  "When the value of ref changes, run function with
-   the new value of ref as its argument."
-  [ref key function]
-  (handle-change-at ref nil key function))
-
-(defn follow-function
-  "Whenever ref1 changes at address1, the value in ref2
-   at address2 is set to (function v), where v is the
-   value at address1 in ref1."
-  [[ref1 address1] function [ref2 address2]]
-  (handle-change-at ref1 address1 [ref2 address2]
-                    #(let [val (function %)]
-                       (when-not (= val ::?)
-                         (swap! ref2 assoc-at address2 val)))))
-
-(defn follow-linear
-  [[ref1 address1] [factor offset] [ref2 address2]]
-  (follow-function [ref1 address1]
-                   #(+ offset (* factor %))
-                   [ref2 address2]))
-
-(defn follow-map
-  [[ref1 address1] m [ref2 address2]]
-  (follow-function [ref1 address1] #(m % ::?) [ref2 address2]))
-
-(defn follow
-  [[ref1 address1] [ref2 address2]]
-  (follow-function [ref1 address1] identity [ref2 address2]))
-  
-(defn unfollow
-  [[ref1 address1] [ref2 address2]]
-  (remove-watch ref1 [address1 [ref2 address2]]))
-
-(defn bind-linear [[ref1 address1] [factor offset] [ref2 address2]]
-  (follow-linear [ref1 address1] [factor offset] [ref2 address2])
-  (follow-linear [ref2 address2] [(/ factor) (- (/ offset factor))] [ref1 address1]))
-
-(defn bind-range [[ref1 address1 [min1 max1]]
-                  [ref2 address2 [min2 max2]]]
-  (let [delta1 (- max1 min1)
-        delta2 (- max2 min2)
-        factor (/ delta2 delta1)
-        offset (- min2 (* min1 factor))]
-    (bind-linear [ref1 address1]
-                 [factor offset]
-                 [ref2 address2])))
-
-(defn bind-map [[ref1 address1] m [ref2 address2]]
-  (let [m-inverse (clojure.set/map-invert m)]
-    (follow-map [ref1 address1] m [ref2 address2])
-    (follow-map [ref2 address2] m-inverse [ref1 address1])))
-
-(defn bind [[ref1 address1] [ref2 address2]]
-  (follow [ref1 address1] [ref2 address2])
-  (follow [ref2 address2] [ref1 address1]))
-
-(defn unbind [[ref1 address1] [ref2 address2]]
-  (unfollow [ref1 address1] [ref2 address2])
-  (unfollow [ref2 address2] [ref1 address1]))
   
 ;; test
 

@@ -102,7 +102,11 @@
         (.setFullScreenWindow screen window)
         (.setBounds window (screen-bounds screen))))
     (.repaint window)
-    (.show window)))
+    (.show window)
+    (when (utils/is-mac) ; OS X Lion Bug workaround
+      (doto window
+        (.setVisible false)
+        (.setVisible true)))))
 
 (defn exit-full-screen!
   "Restore the given full-screened window to its previous
