@@ -297,6 +297,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Piezosystem_dDrive", "..\De
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ASITiger", "..\DeviceAdapters\ASITiger\ASITiger.vcproj", "{7BAC0C19-0280-4CB2-A8FA-A6BF7C2A025E}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Piezosystem_30DV50", "..\DeviceAdapters\Piezosystem_30DV50\Piezosystem_30DV50.vcproj", "{537D636C-29BB-4B81-B020-D8314ECA88CC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -1429,6 +1431,14 @@ Global
 		{7BAC0C19-0280-4CB2-A8FA-A6BF7C2A025E}.Release|Win32.Build.0 = Release|Win32
 		{7BAC0C19-0280-4CB2-A8FA-A6BF7C2A025E}.Release|x64.ActiveCfg = Release|x64
 		{7BAC0C19-0280-4CB2-A8FA-A6BF7C2A025E}.Release|x64.Build.0 = Release|x64
+		{537D636C-29BB-4B81-B020-D8314ECA88CC}.Debug|Win32.ActiveCfg = Debug|Win32
+		{537D636C-29BB-4B81-B020-D8314ECA88CC}.Debug|Win32.Build.0 = Debug|Win32
+		{537D636C-29BB-4B81-B020-D8314ECA88CC}.Debug|x64.ActiveCfg = Debug|x64
+		{537D636C-29BB-4B81-B020-D8314ECA88CC}.Debug|x64.Build.0 = Debug|x64
+		{537D636C-29BB-4B81-B020-D8314ECA88CC}.Release|Win32.ActiveCfg = Release|Win32
+		{537D636C-29BB-4B81-B020-D8314ECA88CC}.Release|Win32.Build.0 = Release|Win32
+		{537D636C-29BB-4B81-B020-D8314ECA88CC}.Release|x64.ActiveCfg = Release|x64
+		{537D636C-29BB-4B81-B020-D8314ECA88CC}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
