@@ -187,4 +187,6 @@ void ASIDevice::InitializeASIErrorMessages()
    deviceASI_->SetErrorText(ERR_FILTER_WHEEL_SPINNING, g_Msg_ERR_FILTER_WHEEL_SPINNING);
    deviceASI_->SetErrorText(ERR_NOT_ENOUGH_AXES, g_Msg_ERR_NOT_ENOUGH_AXES);
    deviceASI_->SetErrorText(ERR_TOO_LARGE_ADDRESSES, g_Msg_ERR_TOO_LARGE_ADDRESSES);
+   deviceASI_->SetErrorText(ERR_CRISP_NOT_CALIBRATED, g_Msg_ERR_CRISP_NOT_CALIBRATED);
+   deviceASI_->SetErrorText(ERR_CRISP_NOT_LOCKED, g_Msg_ERR_CRISP_NOT_LOCKED);
 }

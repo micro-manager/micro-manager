@@ -61,7 +61,7 @@ using namespace std;
 #define ERR_INVALID_STEP_SIZE        10006
 #define ERR_INVALID_MODE             10008
 #define ERR_UNRECOGNIZED_ANSWER      10009
-const char* const g_Msg_ERR_UNRECOGNIZED_ANSWER = "Unrecognized serial answer from device";
+const char* const g_Msg_ERR_UNRECOGNIZED_ANSWER = "Unrecognized serial answer from ASI device";
 #define ERR_UNSPECIFIED_ERROR        10010
 #define ERR_NOT_LOCKED               10011
 #define ERR_NOT_CALIBRATED           10012
@@ -77,6 +77,11 @@ const char* const g_Msg_ERR_FILTER_WHEEL_SPINNING = "Filter wheel cannot be set 
 const char* const g_Msg_ERR_TIGER_DEV_NOT_SUPPORTED = "Device type not yet supported by Tiger";
 #define ERR_TIGER_PAIR_NOT_PRESENT   10041
 const char* const g_Msg_ERR_TIGER_PAIR_NOT_PRESENT = "Axis should be present in pair";
+#define ERR_CRISP_NOT_CALIBRATED     10050
+const char* const g_Msg_ERR_CRISP_NOT_CALIBRATED = "CRISP is not calibrated.  Try focusing close to a coverslip and selecting 'Calibrate'";
+#define ERR_CRISP_NOT_LOCKED         10051
+const char* const g_Msg_ERR_CRISP_NOT_LOCKED = "The CRISP failed to lock";
+
 #define ERR_ASICODE_OFFSET 10100  // offset when reporting error number from controller
 
 
@@ -88,6 +93,7 @@ const char* const g_FSliderDeviceName =  "FilterSlider";
 const char* const g_FWheelDeviceName =  "FilterWheel";
 const char* const g_MMirrorDeviceName =  "MicroMirror";
 const char* const g_PiezoDeviceName = "PiezoStage";
+const char* const g_CRISPDeviceName = "CRISPAFocus";
 
 // corresponding device descriptions
 const char* const g_TigerCommHubDescription = "ASI TigerComm Hub (TG-1000)";
@@ -97,6 +103,7 @@ const char* const g_FSliderDeviceDescription =   "ASI Filter Slider";
 const char* const g_FWheelDeviceDescription =   "ASI Filter Wheel";
 const char* const g_MMirrorDeviceDescription = "ASI 2-axis MicroMirror";
 const char* const g_PiezoDeviceDescription = "ASI Piezo Stage";
+const char* const g_CRISPDeviceDescription = "ASI CRISP AutoFocus";
 
 // constant values
 const double g_StageMinStepSize = 0.001;   // in units of um
@@ -206,6 +213,18 @@ const char* const g_CardVoltagePropertyName = "CardVoltage(V)"; // also used for
 const char* const g_PiezoModePropertyName = "PiezoMode";
 const char* const g_PiezoTravelRangePropertyName = "PiezoTravelRange(um)";
 
+// CRISP property names
+const char* const g_WaitAfterLockPropertyName = "Wait time after Lock(ms)";
+const char* const g_ObjectiveNAPropertyName = "Objective NA";
+const char* const g_LockRangePropertyName = "Lock Range(mm)";
+const char* const g_CalibrationGainPropertyName = "Calibration Gain";
+const char* const g_LEDIntensityPropertyName = "LED Intensity";
+const char* const g_LoopGainMultiplierPropertyName = "LoopGainMultiplier";
+const char* const g_NumberAveragesPropertyName = "Number of Averages";
+const char* const g_SNRPropertyName = "Signal to Noise Ratio";
+const char* const g_DitherErrorPropertyName = "Dither Error";
+
+
 // property descriptions for enums
 // serial terminators for hub
 const char* const g_SerialTerminator_0 = "Tiger+WK Default - \\r\\n";
@@ -265,6 +284,24 @@ const char* const g_AdeptMode_0 = "0 - internal input closed-loop";
 const char* const g_AdeptMode_1 = "1 - external input closed-loop";
 const char* const g_AdeptMode_2 = "2 - internal input open-loop";
 const char* const g_AdeptMode_3 = "3 - external input open-loop";
+
+// CRISP states
+const char* const g_CRISPState = "CRISP State";
+const char* const g_CRISP_I = "Idle";
+const char* const g_CRISP_R = "Ready";
+const char* const g_CRISP_D = "Dim";
+const char* const g_CRISP_K = "Lock";  // enter this state to try to lock, system will move to F when locked
+const char* const g_CRISP_F = "In Focus";  // a "read only" state, don't go to directly but via K state
+const char* const g_CRISP_N = "Inhibit";
+const char* const g_CRISP_E = "Error";
+const char* const g_CRISP_G = "loG_cal";
+const char* const g_CRISP_SG = "gain_Cal";
+const char* const g_CRISP_Cal = "Calibrating";
+const char* const g_CRISP_f = "Dither";
+const char* const g_CRISP_C = "Curve";
+const char* const g_CRISP_B = "Balance";
+const char* const g_CRISP_RFO = "Reset Focus Offset";
+const char* const g_CRISP_SSZ = "Save to Controller";
 
 
 

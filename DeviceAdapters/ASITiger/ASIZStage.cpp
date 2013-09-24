@@ -260,8 +260,8 @@ bool CZStage::Busy()
 {
    // because we're asking for just this device we can't use controller-wide status
    // instead use RS command and parse reply which is given as a decimal of the byte code
-   // bit0 of each reply (LSB) is synonymous with STATUS command
-   // TODO fix firmware so status command works with addressing
+   // bit0 of each reply (LSB) is synonymous with STATUS command for individual axis
+   // in post 2.7 firmware could use RD <axis>? but this is safe for all firmware
    ostringstream command; command.str("");
    command << "RS " << axisLetter_;
    ret_ = hub_->QueryCommandVerify(command.str(),":A");

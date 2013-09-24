@@ -30,9 +30,6 @@
 
 #include "ASITiger.h"
 #include "ASITigerComm.h"
-#include "ASIDevice.h"
-#include "ASIXYStage.h" 
-#include "ASIFSlider.h"  
 #include <cstdio>
 #include <string>
 #include "../../MMDevice/MMDevice.h"
@@ -164,6 +161,7 @@ int CTigerCommHub::DetectInstalledDevices()
    //      Motor Axes: Z F P Q R S X Y V W<CR>
    //      Axis Types: p p u u u u x x z z<CR>
    //      Axis Addr: 1 2 3 3 3 3 4 4 5 5<CR>
+   //      Axis Props:   1   0   0   0   0   0   0   1   0<CR>
 
    // parse the reply into vectors containing axis types, letters, and card addresses (binary and hex)
    vector<string> vReply = hub_->SplitAnswerOnCR();
@@ -179,7 +177,7 @@ int CTigerCommHub::DetectInstalledDevices()
    vector<string> vAxesAddr = hub_->SplitAnswerOnSpace();
    vAxesAddr.erase(vAxesAddr.begin()); vAxesAddr.erase(vAxesAddr.begin());      // remove "Axis Addr:"
    vector<string> vAxesAddrHex;
-   if (vReply.size() > 4) // firmware Sep2013 onward
+   if (vReply.size() > 4) // firmware Sep2013 onward, required for addresses beyond '9' = 0x39
    {
       hub_->SetLastSerialAnswer(vReply[4]);
       vAxesAddrHex = hub_->SplitAnswerOnSpace();
@@ -203,12 +201,10 @@ int CTigerCommHub::DetectInstalledDevices()
    //   because it doesn't matter what description I put here and also because these calls
    //   appear to populate the Peripheral device list of the hub but the InitializeModuleData don't
    MM::Device* pDev;
+   string name;
    for (unsigned int i=0; i<vAxesType.size(); i++)
    {
-      ostringstream debug;
-      string name;
-      char code = vAxesType[i].at(0);
-      switch (code)
+      switch (vAxesType[i].at(0))
       {
          case 'x': // XYMotor type
             if (vAxesType[i+1].at(0) == 'x')  // make sure we have a pair
@@ -292,6 +288,33 @@ int CTigerCommHub::DetectInstalledDevices()
             return ERR_TIGER_DEV_NOT_SUPPORTED;
       }
    }
+
+   // with older firmware then we are done (CRISP not supported)
+   if (vReply.size() <= 5)
+      return DEVICE_OK;
+
+   // now look for CRISP by looking at Axis Props line of BU X output
+   // present in firmware Oct2013 onward, required for CRISP detection
+   vector<string> vAxesProps;
+   hub_->SetLastSerialAnswer(vReply[5]);
+   vAxesProps = hub_->SplitAnswerOnSpace();
+   vAxesProps.erase(vAxesProps.begin()); vAxesProps.erase(vAxesProps.begin());      // remove "Axis Props:"
+   unsigned int props = 0;
+   for (unsigned int i=0; i<vAxesProps.size(); i++)
+   {
+      props = atoi(vAxesProps[i].c_str());
+      if (props & BIT0)  // BIT0 indicates CRISP
+      {
+         name = g_CRISPDeviceName;
+         name.push_back(g_NameInfoDelimiter);
+         name.push_back((char)toupper(vAxesLetter[i].at(0)));
+         name.push_back(g_NameInfoDelimiter);
+         name.append(vAxesAddrHex[i]);
+         pDev = CreateDevice(name.c_str());
+         AddInstalledDevice(pDev);
+      }
+   }
+
    return DEVICE_OK;
 }
 

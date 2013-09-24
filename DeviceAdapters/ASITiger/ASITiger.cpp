@@ -38,6 +38,7 @@
 #include "ASIFWheel.h"
 #include "ASIMMirror.h"
 #include "ASIPiezo.h"
+#include "ASICRISP.h"
 #include <cstdio>
 #include <string>
 #include "../../MMDevice/MMDevice.h"
@@ -49,7 +50,7 @@
 using namespace std;
 
 // TODO add in support for other devices, each time modifying these places
-//    name constant declarations in this file
+//    name constant declarations in the corresponding .h file
 //    MODULE_API MM::Device* CreateDevice(const char* deviceName) in this file
 //    DetectInstalledDevices in TigerComm (or other hub)
 // todo add CRISP
@@ -76,6 +77,7 @@ MODULE_API void InitializeModuleData()
    AddAvailableDeviceName(g_FWheelDeviceName, g_FWheelDeviceDescription);
    AddAvailableDeviceName(g_MMirrorDeviceName, g_MMirrorDeviceDescription);
    AddAvailableDeviceName(g_PiezoDeviceName, g_PiezoDeviceDescription);
+   AddAvailableDeviceName(g_CRISPDeviceName, g_CRISPDeviceDescription);
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)
@@ -97,6 +99,8 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
       return new CMMirror(deviceName);
    else if (deviceStr.compare(0, strlen(g_PiezoDeviceName), (string)g_PiezoDeviceName) == 0)
       return new CPiezo(deviceName);
+   else if (deviceStr.compare(0, strlen(g_CRISPDeviceName), (string)g_CRISPDeviceName) == 0)
+      return new CCRISP(deviceName);
    else
       return 0;
 }
