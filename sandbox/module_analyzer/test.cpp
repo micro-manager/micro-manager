@@ -30,7 +30,7 @@ int _tmain(int argc, _TCHAR* argv[])
       }
       std::cout << "Machine: " << machine << '\n';
 
-      std::cout << "Dependents:\n";
+      std::cout << "Dependencies:\n";
       boost::shared_ptr< std::vector<std::string> > imports(pefile->GetImportNames());
       for (std::vector<std::string>::const_iterator it = imports->begin(), end = imports->end(); it != end; ++it) {
          std::cout << *it << '\n';
