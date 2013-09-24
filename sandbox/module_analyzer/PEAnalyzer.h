@@ -105,6 +105,9 @@ public:
    /// Returns a copy of the contents of the section with the given name
    std::pair<boost::shared_ptr<void>, size_t> GetSectionByName(const std::string& name);
 
+   virtual bool IsMachine_x86() { return false; } // Default impl
+   virtual bool IsMachine_x64() { return false; } // Default impl
+
 protected:
    explicit PEFile(MappedFile::Ptr image);
 
@@ -146,6 +149,8 @@ public:
 
    static Ptr New(MappedFile::Ptr image);
 
+   virtual bool IsMachine_x86() { return true; }
+
 private:
    explicit PEFile32(MappedFile::Ptr image);
    IMAGE_OPTIONAL_HEADER32* GetOptionalHeader();
@@ -160,6 +165,8 @@ public:
    typedef boost::shared_ptr<Self> Ptr;
 
    static Ptr New(MappedFile::Ptr image);
+
+   virtual bool IsMachine_x64() { return true; }
 
 private:
    explicit PEFile64(MappedFile::Ptr image);

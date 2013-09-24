@@ -21,6 +21,15 @@ int _tmain(int argc, _TCHAR* argv[])
 
       std::cout << "File " << (pefile->IsDLL() ? "is" : "is not") << " a DLL\n";
 
+      std::string machine = "Unknown";
+      if (pefile->IsMachine_x86()) {
+         machine = "x86";
+      }
+      else if (pefile->IsMachine_x64()) {
+         machine = "x64";
+      }
+      std::cout << "Machine: " << machine << '\n';
+
       std::cout << "Dependents:\n";
       boost::shared_ptr< std::vector<std::string> > imports(pefile->GetImportNames());
       for (std::vector<std::string>::const_iterator it = imports->begin(), end = imports->end(); it != end; ++it) {

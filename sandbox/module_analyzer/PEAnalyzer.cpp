@@ -269,6 +269,8 @@ PEFile64::GetOptionalHeader()
 IMAGE_DATA_DIRECTORY*
 PEFile::GetDataDirectory(size_t index)
 {
+   // We need an implementation to allow instantiating PEFile; it is private,
+   // so shouldn't be called.
    throw Exception("Programming error: cannot get data directory from PEFile instance");
 }
 
