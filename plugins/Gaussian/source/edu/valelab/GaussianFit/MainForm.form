@@ -665,7 +665,7 @@
             <StringItem index="0" value="Simplex"/>
             <StringItem index="1" value="Levenberg-Marq"/>
             <StringItem index="2" value="Simplex-MLE"/>
-            <StringItem index="3" value="Levenberg-Marq-MLE"/>
+            <StringItem index="3" value="Levenberg-Marq-Weighted"/>
           </StringArray>
         </Property>
       </Properties>

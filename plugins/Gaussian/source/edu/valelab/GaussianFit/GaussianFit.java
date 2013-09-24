@@ -17,7 +17,8 @@ import org.apache.commons.math.optimization.GoalType;
 import org.apache.commons.math.optimization.fitting.CurveFitter;
 
 import ij.process.ImageProcessor;
-import org.apache.commons.math.optimization.general.ConjugateGradientFormula;
+import org.apache.commons.math.optimization.VectorialConvergenceChecker;
+import org.apache.commons.math.optimization.VectorialPointValuePair;
 import org.apache.commons.math.optimization.general.LevenbergMarquardtOptimizer;
 import org.apache.commons.math.optimization.general.NonLinearConjugateGradientOptimizer;
 
@@ -53,7 +54,6 @@ public class GaussianFit {
    MultiVariateGaussianFunction mGF_;
    MultiVariateGaussianMLE mGFMLE_;
    NonLinearConjugateGradientOptimizer nlcgo_;
-
    LevenbergMarquardtOptimizer lMO_;
 
    /**
@@ -87,19 +87,29 @@ public class GaussianFit {
          convergedChecker_ = new SimpleScalarValueChecker(1e-6,-1);
          mGF_ = new MultiVariateGaussianFunction(mode_);
       }
-      if (fitMode_ == 2) {
+      // Levenberg-Marquardt and weighted Levenberg-Marquardt
+      if (fitMode_ == 2 || fitMode == 4) {
          lMO_ = new LevenbergMarquardtOptimizer();
+         LMChecker lmChecker = new LMChecker();
+         lMO_.setConvergenceChecker(lmChecker);
       }
       if (fitMode_ == 3) {
          nm_ = new NelderMead();
          convergedChecker_ = new SimpleScalarValueChecker(1e-6,-1);
          mGFMLE_ = new MultiVariateGaussianMLE(mode_);
       }
+      /*
+       * Gradient MLE, not working very well
+       *
       if (fitMode_ == 4) {
          mGFMLE_ = new MultiVariateGaussianMLE(mode_);
          nlcgo_ = 
             new NonLinearConjugateGradientOptimizer(ConjugateGradientFormula.FLETCHER_REEVES);
+         convergedChecker_ = new SimpleScalarValueChecker(1e-6,-1);
+         nlcgo_.setConvergenceChecker(convergedChecker_);
+         nlcgo_.setInitialStep(0.0000002);
       }
+      */
    }
 
  
@@ -136,14 +146,21 @@ public class GaussianFit {
          }
       }
 
-      if (fitMode_ == 2) {
-         // lMO_.setConvergenceChecker(new VectorialConvergenceChecker());
-
-         lMO_.setMaxIterations(maxIterations);
+      if (fitMode_ == 2 || fitMode_ == 4) {
+         
+         // lMO_.setMaxIterations(maxIterations);
          CurveFitter cF = new CurveFitter(lMO_);
          short[] pixels = (short[]) siProc.getPixels();
-         for (int i=0; i < pixels.length; i++) {
-            cF.addObservedPoint(i, (int) pixels[i] & 0xffff);
+         if (fitMode_ == 2) {
+            for (int i = 0; i < pixels.length; i++) {
+               cF.addObservedPoint(i, (int) pixels[i] & 0xffff);
+            }
+         }
+         if (fitMode_ == 4) {
+            for (int i = 0; i < pixels.length; i++) {
+               double factor = ((int) pixels[i] & 0xffff) ;
+               cF.addObservedPoint(1 / factor, i, (int) pixels[i] & 0xffff);
+            }
          }
          try {
             paramsOut = cF.fit(new ParametricGaussianFunction( mode_, siProc.getWidth(), siProc.getHeight() ),
@@ -176,9 +193,10 @@ public class GaussianFit {
          }
       }
       
+      /*
+       * not working very well....
       // gradient-MLE
       if (fitMode_ == 4) {
-         
          nlcgo_.setMaxIterations(maxIterations);
          mGFMLE_.setImage((short[]) siProc.getPixels(), siProc.getWidth(), siProc.getHeight());
          try {
@@ -188,10 +206,12 @@ public class GaussianFit {
             throw(e);
          } catch (Exception e) {
             ij.IJ.log(" " + e.toString());
-            //e.printStackTrace();
          }
       }
+      */
          
+     
+      
       if (mode_ == 3) {
          if (paramsOut.length > S3) {
             double[] prms = GaussianUtils.ellipseParmConversion(paramsOut[S1], paramsOut[S2], paramsOut[S3]);
@@ -257,6 +277,32 @@ public class GaussianFit {
          steps_[i] = params0_[i] * 0.3;
          if (steps_[i] == 0)
             steps_[i] = 0.1;
+      }
+   }
+   
+   
+   private class LMChecker implements VectorialConvergenceChecker {
+      int iteration_ = 0;
+      boolean lastResult_ = false;
+      public boolean converged(int i, VectorialPointValuePair previous, VectorialPointValuePair current) {
+         if (i == iteration_)
+            return lastResult_;
+         
+         iteration_ = i;
+         double[] p = previous.getPoint();
+         double[] c = current.getPoint();
+         
+         if ( Math.abs(p[INT] - c[INT]) < 10  &&
+                 Math.abs(p[BGR] - c[BGR]) < 2 &&
+                 Math.abs(p[XC] - c[XC]) < 0.1 &&
+                 Math.abs(p[YC] - c[YC]) < 0.1 &&
+                 Math.abs(p[S] - c[S]) < 5 ) {
+            lastResult_ = true;
+            return true;
+         }
+         
+         lastResult_ = false;
+         return false;
       }
    }
 

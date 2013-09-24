@@ -562,7 +562,7 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
       jLabel20.setBounds(90, 220, 76, 20);
 
       fitMethodComboBox1.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
-      fitMethodComboBox1.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Simplex", "Levenberg-Marq", "Simplex-MLE", "Levenberg-Marq-MLE" }));
+      fitMethodComboBox1.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Simplex", "Levenberg-Marq", "Simplex-MLE", "Levenberg-Marq-Weighted" }));
       fitMethodComboBox1.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             fitMethodComboBox1ActionPerformed(evt);
