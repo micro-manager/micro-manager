@@ -107,7 +107,7 @@
 
 (defn bind-linear
   "The value of ref1 at address1 and the value of ref2 at address2
-   are linked, so that if one changes, then the other chnages to
+   are linked, so that if one changes, then the other changes to
    maintain (== value2 (+ offset (* factor value1)))."
   [[ref1 address1] [factor offset] [ref2 address2]]
   (follow-linear [ref1 address1] [factor offset] [ref2 address2])

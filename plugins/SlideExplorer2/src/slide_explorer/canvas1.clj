@@ -639,8 +639,9 @@
 
 (def test-data
   [{:type :square
-    :children [{:type :rect :l 80 :t 70 :w 10 :h 4}]
-    :l 100
+    :fill :green
+    :children [{:type :rect :l 80 :t 70 :w 10 :h 4 :fill :blue}]
+    :l 320
     :t 100
     :arc-radius 5
     :rotate 0
@@ -650,9 +651,11 @@
     :text "hello"
     :color :red
     :x 100
-    :y 100}
+    :y 100
+    }
       {:type :arc
        :fill :pink
+       :alpha 0.6
     :mouse-in #(swap! grafix assoc-in [2 :fill] :red)
     :mouse-out #(swap! grafix assoc-in [2 :fill] :pink)
     :on-mouse-drag (fn [dx dy]
@@ -671,6 +674,18 @@
      :arc-boundary :pie}
    ])
 
+(defn test-binding []
+  (bind/bind [grafix [2 :x]] [grafix [1 :y]])
+  (bind/bind [grafix [2 :y]] [grafix [1 :rotate]])
+  (bind/follow-function [grafix [2 :x]] #(str "x=" %) [grafix [1 :text]])
+  (bind/bind [grafix [2 :fill]] [grafix [1 :color]])
+  (bind/follow-function [grafix [2 :y]] #(/ % 10) [grafix [0 :children 0 :w]])
+    (bind/follow-function [grafix [2 :x]] #(/ % 10) [grafix [0 :scale-y]]))
+  
+
 (defn run-test []
   (reset! grafix test-data)
-  (canvas-frame grafix))
+  (canvas-frame grafix)
+  (test-binding)
+  (add-watch (var test-data) :update (fn [_ _ _ value]
+                                 (reset! grafix test-data))))
