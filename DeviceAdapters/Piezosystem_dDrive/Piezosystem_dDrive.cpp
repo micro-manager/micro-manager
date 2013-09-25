@@ -1045,6 +1045,7 @@ int Hub::DetectInstalledDevices(){
 
 	std::string result="";
 	int c=0;	
+	int s=0;
 	// Look for attached modules
 	const char* cmd = "stat";
 	int ret;	
@@ -1075,8 +1076,10 @@ int Hub::DetectInstalledDevices(){
 		found=type.find("stat");
 		if(found!=std::string::npos){
 			LogMessage ("Modul found",true);
-			c=atoi(dest[1]); //=i			
-			inventoryDeviceAddresses_.push_back((const int)i );			
+			c=atoi(dest[1]); //=i
+			s=atoi(dest[2]); //=statusbits
+			if(s>0)	  //only if there is an actuator
+				inventoryDeviceAddresses_.push_back((const int)i );			
 		}else{
 			//that should never happen
 			LogMessage ("ERROR ",true);
