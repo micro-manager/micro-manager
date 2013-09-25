@@ -69,11 +69,6 @@ ASIHub::ASIHub() :
    hub_ = this;
 }
 
-ASIHub::~ASIHub()
-{
-}
-
-
 int ASIHub::ClearComPort(void)
 {
    return PurgeComPort(port_.c_str());

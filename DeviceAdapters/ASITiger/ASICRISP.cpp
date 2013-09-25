@@ -58,11 +58,6 @@ CCRISP::CCRISP(const char* name) :
    }
 }
 
-CCRISP::~CCRISP()
-{
-   Shutdown();
-}
-
 int CCRISP::Initialize()
 {
    // call generic Initialize first, this gets hub

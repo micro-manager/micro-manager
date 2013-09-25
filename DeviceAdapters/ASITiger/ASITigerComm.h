@@ -39,7 +39,7 @@ class CTigerCommHub : public ASIHub
 {
 public:
    CTigerCommHub();
-   ~CTigerCommHub();
+   ~CTigerCommHub() { Shutdown(); }
 
    // Device API
    int Initialize();

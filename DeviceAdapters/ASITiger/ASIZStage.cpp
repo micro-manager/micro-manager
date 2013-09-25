@@ -59,12 +59,6 @@ CZStage::CZStage(const char* name) :
    }
 }
 
-CZStage::~CZStage()
-{
-   Shutdown();
-}
-
-
 int CZStage::Initialize()
 {
    // call generic Initialize first, this gets hub
@@ -258,17 +252,24 @@ int CZStage::Stop()
 
 bool CZStage::Busy()
 {
-   // because we're asking for just this device we can't use controller-wide status
-   // instead use RS command and parse reply which is given as a decimal of the byte code
-   // bit0 of each reply (LSB) is synonymous with STATUS command for individual axis
-   // in post 2.7 firmware could use RD <axis>? but this is safe for all firmware
    ostringstream command; command.str("");
-   command << "RS " << axisLetter_;
-   ret_ = hub_->QueryCommandVerify(command.str(),":A");
-   if (ret_ != DEVICE_OK)  // say we aren't busy if we can't communicate
-      return false;
-   int i = (int) (hub_->ParseAnswerAfterPosition(2));
-   return (i & (int)BIT0);  // mask everything but LSB
+   if (firmwareVersion_ > 2.7) // can use more accurate RS <axis>?
+   {
+      command << "RS " << axisLetter_ << "?";
+      ret_ = hub_->QueryCommandVerify(command.str(),":A");
+      if (ret_ != DEVICE_OK)  // say we aren't busy if we can't communicate
+         return false;
+      return (hub_->LastSerialAnswer().at(3) == 'B');
+   }
+   else  // use LSB of the status byte as approximate status, not quite equivalent
+   {
+      command << "RS " << axisLetter_;
+      ret_ = hub_->QueryCommandVerify(command.str(),":A");
+      if (ret_ != DEVICE_OK)  // say we aren't busy if we can't communicate
+         return false;
+      int i = (int) (hub_->ParseAnswerAfterPosition(2));
+      return (i & (int)BIT0);  // mask everything but LSB
+   }
 }
 
 int CZStage::SetOrigin()

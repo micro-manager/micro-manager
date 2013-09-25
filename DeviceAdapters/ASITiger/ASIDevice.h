@@ -57,7 +57,7 @@ class ASIDevice
 {
 public:
    ASIDevice(MM::Device *device, const char* name);
-   virtual ~ASIDevice();  // virtual destructor required for abstract class
+   virtual ~ASIDevice() { Shutdown(); }  // virtual destructor required for abstract class
 
    // Device API
    int Initialize(bool skipFirmware = false);       // should be implemented in child class as well as here, similar to a constructor

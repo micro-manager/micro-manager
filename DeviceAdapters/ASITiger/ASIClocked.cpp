@@ -1,9 +1,9 @@
 ///////////////////////////////////////////////////////////////////////////////
-// FILE:          ASIFSlider.cpp
+// FILE:          ASIClocked.cpp
 // PROJECT:       Micro-Manager
 // SUBSYSTEM:     DeviceAdapters
 //-----------------------------------------------------------------------------
-// DESCRIPTION:   ASI filter slider adapter
+// DESCRIPTION:   ASI clocked device adapter (filter slider, turret)
 //
 // COPYRIGHT:     Applied Scientific Instrumentation, Eugene OR
 //
@@ -28,7 +28,7 @@
 #endif
 
 #include "ASITiger.h"
-#include "ASIFSlider.h"
+#include "ASIClocked.h"
 #include "ASIHub.h"
 #include "../../MMDevice/MMDevice.h"
 #include "../../MMDevice/ModuleInterface.h"
@@ -41,9 +41,11 @@ using namespace std;
 
 
 ///////////////////////////////////////////////////////////////////////////////
-// CFSlider
+// CClocked
+// this is a superclass for any clocked devices (except filterwheels which use a different command set)
+//   including turrets and filter sliders
 //
-CFSlider::CFSlider(const char* name) :
+CClocked::CClocked(const char* name) :
    ASIDevice(this, name),
    numPositions_(0),  // will read actual number of positions
    curPosition_(0),   // will read actual position
@@ -56,22 +58,12 @@ CFSlider::CFSlider(const char* name) :
    }
 }
 
-CFSlider::~CFSlider()
-{
-   Shutdown();
-}
-
-int CFSlider::Initialize()
+int CClocked::Initialize()
 {
    // call generic Initialize first, this gets hub
    RETURN_ON_MM_ERROR( ASIDevice::Initialize() );
 
    ostringstream command;
-
-   // create MM description; this doesn't work during hardware configuration wizard but will work afterwards
-   command.str("");
-   command << g_FSliderDeviceDescription << " Axis=" << axisLetter_ << " HexAddr=" << addressString_;
-   CreateProperty(MM::g_Keyword_Description, command.str().c_str(), MM::String, true);
 
    // serial query to find out how many positions we have
    command.str("");
@@ -84,7 +76,7 @@ int CFSlider::Initialize()
    CreateProperty("NumPositions", command.str().c_str(), MM::Integer, true);
 
    // add allowed values to the special state/position property for state devices
-   CPropertyAction* pAct = new CPropertyAction (this, &CFSlider::OnState);
+   CPropertyAction* pAct = new CPropertyAction (this, &CClocked::OnState);
    CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct);
    for (unsigned int i=0; i<numPositions_; i++)
    {
@@ -109,27 +101,33 @@ int CFSlider::Initialize()
    RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
    curPosition_ = (unsigned int) (hub_->ParseAnswerAfterPosition(2) - 1);
 
-   initialized_ = true;
+   // let calling class decide if initialized_ should be set
    return DEVICE_OK;
 }
 
-bool CFSlider::Busy()
+bool CClocked::Busy()
 {
-   // because we're asking for just this device we can't use controller-wide status
-   // instead use RS command and parse reply which is given as a decimal of the byte code
-   // bit2 of each reply (3rd from LSB) is 1 if motor is on
-   // => look at whether floor(result/4) is even (bit2=0) or odd (bit2=1)
-   // TODO fix firmware so status command works with addressing
    ostringstream command; command.str("");
-   command << "RS " << axisLetter_;
-   ret_ = hub_->QueryCommandVerify(command.str(),":A");
-   if (ret_ != DEVICE_OK)  // say we aren't busy if we can't communicate
-      return false;
-   int i = (int) (floor(hub_->ParseAnswerAfterPosition(2))/4);
-   return (i%2 == 1);
+   if (firmwareVersion_ > 2.7) // can use more accurate RS <axis>?
+   {
+      command << "RS " << axisLetter_ << "?";
+      ret_ = hub_->QueryCommandVerify(command.str(),":A");
+      if (ret_ != DEVICE_OK)  // say we aren't busy if we can't communicate
+         return false;
+      return (hub_->LastSerialAnswer().at(3) == 'B');
+   }
+   else  // use LSB of the status byte as approximate status, not quite equivalent
+   {
+      command << "RS " << axisLetter_;
+      ret_ = hub_->QueryCommandVerify(command.str(),":A");
+      if (ret_ != DEVICE_OK)  // say we aren't busy if we can't communicate
+         return false;
+      int i = (int) (hub_->ParseAnswerAfterPosition(2));
+      return (i & (int)BIT0);  // mask everything but LSB
+   }
 }
 
-int CFSlider::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
+int CClocked::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    ostringstream command; command.str("");
    if (eAct == MM::BeforeGet)
@@ -147,7 +145,7 @@ int CFSlider::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
-int CFSlider::OnLabel(MM::PropertyBase* pProp, MM::ActionType eAct)
+int CClocked::OnLabel(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)
    {
@@ -163,5 +161,59 @@ int CFSlider::OnLabel(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    return DEVICE_OK;
 }
+
+
+///////////////////////////////////////////////////////////////////////////////
+// CFSlider
+// mostly just inherits from CClocked, except description
+//
+CFSlider::CFSlider(const char* name) :
+      CClocked(name)
+{
+
+}
+
+int CFSlider::Initialize()
+{
+   RETURN_ON_MM_ERROR( CClocked::Initialize() );
+
+   ostringstream command;
+
+   // create MM description; this doesn't work during hardware configuration wizard but will work afterwards
+   command.str("");
+   command << g_FSliderDeviceDescription << " Axis=" << axisLetter_ << " HexAddr=" << addressString_;
+   CreateProperty(MM::g_Keyword_Description, command.str().c_str(), MM::String, true);
+
+   initialized_ = true;
+   return DEVICE_OK;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// CTurret
+// mostly just inherits from CClocked, except description
+//
+CTurret::CTurret(const char* name) :
+      CClocked(name)
+{
+
+}
+
+int CTurret::Initialize()
+{
+   RETURN_ON_MM_ERROR( CClocked::Initialize() );
+
+   ostringstream command;
+
+   // create MM description; this doesn't work during hardware configuration wizard but will work afterwards
+   command.str("");
+   command << g_TurretDeviceDescription << " Axis=" << axisLetter_ << " HexAddr=" << addressString_;
+   CreateProperty(MM::g_Keyword_Description, command.str().c_str(), MM::String, true);
+
+   initialized_ = true;
+   return DEVICE_OK;
+}
+
+
+
 
 

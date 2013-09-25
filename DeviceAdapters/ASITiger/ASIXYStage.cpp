@@ -65,12 +65,6 @@ CXYStage::CXYStage(const char* name) :
    }
 }
 
-CXYStage::~CXYStage()
-{
-   Shutdown();
-}
-
-
 int CXYStage::Initialize()
 {
    // call generic Initialize first, this gets hub

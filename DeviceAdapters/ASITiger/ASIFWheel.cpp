@@ -57,11 +57,6 @@ CFWheel::CFWheel(const char* name) :
    }
 }
 
-CFWheel::~CFWheel()
-{
-   Shutdown();
-}
-
 int CFWheel::Initialize()
 {
    // call generic Initialize first, this gets hub

@@ -42,7 +42,7 @@ class ASIHub : public HubBase<ASIHub>, public ASIDevice
 {
 public:
 	ASIHub();
-	~ASIHub();
+	~ASIHub() { }
 
 	// Property handlers
 	int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);

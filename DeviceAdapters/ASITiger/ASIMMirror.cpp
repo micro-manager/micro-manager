@@ -66,11 +66,6 @@ CMMirror::CMMirror(const char* name) :
    }
 }
 
-CMMirror::~CMMirror()
-{
-   Shutdown();
-}
-
 int CMMirror::Initialize()
 {
    // call generic Initialize first, this gets hub

@@ -33,7 +33,7 @@ class CMMirror : public CGalvoBase<CMMirror>, ASIDevice
 {
 public:
    CMMirror(const char* name);
-   ~CMMirror();
+   ~CMMirror() { Shutdown(); }
   
    // Device API
    // ----------

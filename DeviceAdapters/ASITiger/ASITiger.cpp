@@ -34,7 +34,7 @@
 #include "ASITigerComm.h"
 #include "ASIXYStage.h"
 #include "ASIZStage.h"
-#include "ASIFSlider.h"
+#include "ASIClocked.h"
 #include "ASIFWheel.h"
 #include "ASIMMirror.h"
 #include "ASIPiezo.h"
@@ -53,8 +53,6 @@ using namespace std;
 //    name constant declarations in the corresponding .h file
 //    MODULE_API MM::Device* CreateDevice(const char* deviceName) in this file
 //    DetectInstalledDevices in TigerComm (or other hub)
-// todo add CRISP
-// todo add turret
 // todo add LED
 // todo add shutter
 
@@ -74,6 +72,7 @@ MODULE_API void InitializeModuleData()
    AddAvailableDeviceName(g_ZStageDeviceName, g_ZStageDeviceDescription);
    AddAvailableDeviceName(g_XYStageDeviceName, g_XYStageDeviceDescription);
    AddAvailableDeviceName(g_FSliderDeviceName, g_FSliderDeviceDescription);
+   AddAvailableDeviceName(g_TurretDeviceName, g_TurretDeviceDescription);
    AddAvailableDeviceName(g_FWheelDeviceName, g_FWheelDeviceDescription);
    AddAvailableDeviceName(g_MMirrorDeviceName, g_MMirrorDeviceDescription);
    AddAvailableDeviceName(g_PiezoDeviceName, g_PiezoDeviceDescription);
@@ -93,6 +92,8 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
          return new CZStage(deviceName);
    else if (deviceStr.compare(0, strlen(g_FSliderDeviceName), (string)g_FSliderDeviceName) == 0)
       return new CFSlider(deviceName);
+   else if (deviceStr.compare(0, strlen(g_TurretDeviceName), (string)g_TurretDeviceName) == 0)
+      return new CTurret(deviceName);
    else if (deviceStr.compare(0, strlen(g_FWheelDeviceName), (string)g_FWheelDeviceName) == 0)
       return new CFWheel(deviceName);
    else if (deviceStr.compare(0, strlen(g_MMirrorDeviceName), (string)g_MMirrorDeviceName) == 0)

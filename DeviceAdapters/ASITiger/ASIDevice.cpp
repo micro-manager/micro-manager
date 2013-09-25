@@ -103,11 +103,6 @@ int ASIDevice::Initialize(bool skipFirmware)
    return DEVICE_OK;
 }
 
-ASIDevice::~ASIDevice()
-{
-   Shutdown();
-}
-
 int ASIDevice::Shutdown()
 {
    initialized_ = false;

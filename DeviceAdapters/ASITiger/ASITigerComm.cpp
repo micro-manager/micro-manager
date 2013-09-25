@@ -49,11 +49,6 @@ CTigerCommHub::CTigerCommHub()
    CreateProperty(MM::g_Keyword_Name, g_TigerCommHubName, MM::String, true);
 }
 
-CTigerCommHub::~CTigerCommHub()
-{
-   // Shutdown() called in ASIDevice class which sets initialized_ to false
-}
-
 int CTigerCommHub::Initialize()
 {
    // call generic Initialize first (getting hub not needed here because we are a hub already)
@@ -202,91 +197,65 @@ int CTigerCommHub::DetectInstalledDevices()
    //   appear to populate the Peripheral device list of the hub but the InitializeModuleData don't
    MM::Device* pDev;
    string name;
+   bool twoaxis = 0;
    for (unsigned int i=0; i<vAxesType.size(); i++)
    {
+      twoaxis = 0;
+      name = "";
       switch (vAxesType[i].at(0))
       {
          case 'x': // XYMotor type
             if (vAxesType[i+1].at(0) == 'x')  // make sure we have a pair
             {
                name = g_XYStageDeviceName;
-               name.push_back(g_NameInfoDelimiter);
-               name.push_back((char)toupper(vAxesLetter[i].at(0)));
-               name.push_back((char)toupper(vAxesLetter[i+1].at(0)));
-               name.push_back(g_NameInfoDelimiter);
-               name.append(vAxesAddrHex[i]);
-               pDev = CreateDevice(name.c_str());
-               AddInstalledDevice(pDev);
+               twoaxis = 1;
                i++; // skip one code because we added two axes in one step
             }
             else
-            {
                return ERR_TIGER_PAIR_NOT_PRESENT;
-            }
             break;
          case 'u': // MMirror type
             if (vAxesType[i+1].at(0) == 'u')  // skip one code because we added two axes in one step
             {
                name = g_MMirrorDeviceName;
-               name.push_back(g_NameInfoDelimiter);
-               name.push_back((char)toupper(vAxesLetter[i].at(0)));
-               name.push_back((char)toupper(vAxesLetter[i+1].at(0)));
-               name.push_back(g_NameInfoDelimiter);
-               name.append(vAxesAddrHex[i]);
-               pDev = CreateDevice(name.c_str());
-               AddInstalledDevice(pDev);
+               twoaxis = 1;
                i++; // skip one code because we added two axes in one step
             }
             else
-            {
                return ERR_TIGER_PAIR_NOT_PRESENT;
-            }
             break;
-         case 'p':
-         case 'a':
+         case 'p':  // piezo focus like ADEPT
+         case 'a':  // generic piezo axis
             name = g_PiezoDeviceName;
-            name.push_back(g_NameInfoDelimiter);
-            name.push_back((char)toupper(vAxesLetter[i].at(0)));
-            name.push_back(g_NameInfoDelimiter);
-            name.append(vAxesAddrHex[i]);
-            pDev = CreateDevice(name.c_str());
-            AddInstalledDevice(pDev);
             break;
-         case 'z':
-         case 'l':
+         case 'z':  // ZMotor like LS50, Z scope focus, etc.
+         case 'l':  // generic linear motorized stage
             name = g_ZStageDeviceName;
-            name.push_back(g_NameInfoDelimiter);
-            name.push_back((char)toupper(vAxesLetter[i].at(0)));
-            name.push_back(g_NameInfoDelimiter);
-            name.append(vAxesAddrHex[i]);
-            pDev = CreateDevice(name.c_str());
-            AddInstalledDevice(pDev);
             break;
-         case 'w':  // filter wheel
+         case 'w':  // filter wheel, uses different command set
             name = g_FWheelDeviceName;
-            name.push_back(g_NameInfoDelimiter);
-            name.push_back((char)toupper(vAxesLetter[i].at(0)));
-            name.push_back(g_NameInfoDelimiter);
-            name.append(vAxesAddrHex[i]);
-            pDev = CreateDevice(name.c_str());
-            AddInstalledDevice(pDev);
             break;
          case 's':  // shutter not yet implemented
             break;
-         case 'o':  // turret not yet implemented
+         case 'o':  // turret, a clocked device
+            name = g_TurretDeviceName;
             break;
-         case 'f': // filter slider type
+         case 'f': // filter slider, a clocked device
             name = g_FSliderDeviceName;
-            name.push_back(g_NameInfoDelimiter);
-            name.push_back((char)toupper(vAxesLetter[i].at(0)));
-            name.push_back(g_NameInfoDelimiter);
-            name.append(vAxesAddrHex[i]);
-            pDev = CreateDevice(name.c_str());
-            AddInstalledDevice(pDev);
             break;
          default:
             return ERR_TIGER_DEV_NOT_SUPPORTED;
       }
+
+      // now form rest of extended name
+      name.push_back(g_NameInfoDelimiter);
+      if (twoaxis)
+         name.push_back((char)toupper(vAxesLetter[i-1].at(0)));
+      name.push_back((char)toupper(vAxesLetter[i].at(0)));
+      name.push_back(g_NameInfoDelimiter);
+      name.append(vAxesAddrHex[i]);
+      pDev = CreateDevice(name.c_str());
+      AddInstalledDevice(pDev);
    }
 
    // with older firmware then we are done (CRISP not supported)

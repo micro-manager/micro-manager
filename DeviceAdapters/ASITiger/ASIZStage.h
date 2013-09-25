@@ -33,7 +33,7 @@ class CZStage : public CStageBase<CZStage>, ASIDevice
 {
 public:
    CZStage(const char* name);
-   ~CZStage();
+   ~CZStage() { Shutdown(); }
   
    // Device API
    // ----------
