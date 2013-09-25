@@ -27,9 +27,9 @@ done
 REPOSITORYROOT=/Users/MM/svn
 BUILDDIR=/Users/MM/MMBuild
 if [ "$FULL" != "full" ]; then
-   UPLOADPLACE=valelab.ucsf.edu:/home/MM/public_html/nightlyBuilds/1.4/Mac/
+   UPLOADPLACE=valelab2.ucsf.edu:/home/MM/public_html/nightlyBuilds/1.4/Mac/
 else
-   UPLOADPLACE=valelab.ucsf.edu:/home/MM/public_html/builds/1.4/Mac/
+   UPLOADPLACE=valelab2.ucsf.edu:/home/MM/public_html/builds/1.4/Mac/
 fi
 
 # No edits should be needed below this line
@@ -52,7 +52,7 @@ mkdir $BUILDDIR
 
 BUILDLOG=$REPOSITORY/MacInstaller/buildlog.txt
 test -f $BUILDLOG && rm $BUILDLOG
-BUILDLOGUPLOADPLACE=valelab.ucsf.edu:/home/MM
+BUILDLOGUPLOADPLACE=valelab2.ucsf.edu:/home/MM
 
 cd $RDPARTYPUBLIC
 svn update
@@ -207,17 +207,17 @@ scp $BUILDLOG $BUILDLOGUPLOADPLACE/MacBuildLog.txt
 # build and upload documentation
 cd $RI386
 make dox
-scp -r doxygen/out/* valelab.ucsf.edu:public_html/doc/
+scp -r doxygen/out/* valelab2.ucsf.edu:public_html/doc/
 cd swig-doc-converter
 ./convert
-scp -r javadoc/* valelab.ucsf.edu:public_html/doc/mmcorej/
+scp -r javadoc/* valelab2.ucsf.edu:public_html/doc/mmcorej/
 cd ../mmstudio
 make javadoc
-scp -r doc/* valelab.ucsf.edu:public_html/doc/mmstudio/
+scp -r doc/* valelab2.ucsf.edu:public_html/doc/mmstudio/
 cd ..
 
 # tag the repository
 if [ "$FULL" == "full" ]; then
-   svn mkdir -m "Making tag $VERSION" https://valelab.ucsf.edu/svn/micromanager2/tags/$VERSION
-   svn copy https://valelab.ucsf.edu/svn/micromanager2/trunk/ https://valelab.ucsf.edu/svn/micromanager2/tags/$VERSION -m "Tagging version $VERSION"
+   svn mkdir -m "Making tag $VERSION" https://valelab2.ucsf.edu/svn/micromanager2/tags/$VERSION
+   svn copy https://valelab2.ucsf.edu/svn/micromanager2/trunk/ https://valelab2.ucsf.edu/svn/micromanager2/tags/$VERSION -m "Tagging version $VERSION"
 fi
