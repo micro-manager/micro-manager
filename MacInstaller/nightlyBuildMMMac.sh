@@ -47,8 +47,9 @@ RI386=$REPOSITORYROOT/micromanager1.4-i386
 RX86_64=$REPOSITORYROOT/micromanager1.4-x86_64
 CLASSEXT=$REPOSITORY/../3rdpartypublic/classext
 
-test -d $BUILDDIR && rm -rf $TARGET*
+test -d $BUILDDIR && rm -rf $BUILDDIR
 mkdir $BUILDDIR
+mkdir $TARGET
 
 BUILDLOG=$REPOSITORY/MacInstaller/buildlog.txt
 test -f $BUILDLOG && rm $BUILDLOG
@@ -177,10 +178,10 @@ cp -r $PPC/mmautofocus $TARGET/
 cp -r $PPC/scripts $TARGET/
 
 # Build devicelist using 32-bit JVM (Set using /Applications/Utilities/Java Preferences)
-cd $I386
-java -cp plugins/Micro-Manager/MMJ_.jar:plugins/Micro-Manager/MMCoreJ.jar DeviceListBuilder notDeviceDiscoveryEnabled
-cp $I386/MMDeviceList.txt $TARGET/MMDeviceList.txt
-java -cp plugins/Micro-Manager/MMJ_.jar:plugins/Micro-Manager/MMCoreJ.jar DeviceListBuilder deviceDiscoveryEnabled
+#cd $I386
+#java -cp plugins/Micro-Manager/MMJ_.jar:plugins/Micro-Manager/MMCoreJ.jar DeviceListBuilder notDeviceDiscoveryEnabled
+#cp $I386/MMDeviceList.txt $TARGET/MMDeviceList.txt
+#java -cp plugins/Micro-Manager/MMJ_.jar:plugins/Micro-Manager/MMCoreJ.jar DeviceListBuilder deviceDiscoveryEnabled
 #cp $I386/MMDeviceListPrime.txt $TARGET/MMDeviceListPrime.txt
 
 #Install Python, only I386
