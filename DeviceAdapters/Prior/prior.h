@@ -203,6 +203,9 @@ public:
    // action interface
    // ----------------
    int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnMaxSpeed(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnAcceleration(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSCurve(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 
 private:
@@ -215,6 +218,7 @@ private:
    double stepSizeUm_;
    long curSteps_;
    double answerTimeoutMs_;
+   bool HasCommand(std::string command);
 };
 
 class NanoZStage : public CStageBase<NanoZStage>

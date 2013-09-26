@@ -1492,6 +1492,28 @@ int ZStage::Initialize()
    if (ret != DEVICE_OK)
       return ret;
 
+   CPropertyAction* pAct;
+   // Max Speed
+   if (HasCommand("SMZ")) {
+	   pAct = new CPropertyAction (this, &ZStage::OnMaxSpeed);
+	   CreateProperty("MaxSpeed", "20", MM::Integer, false, pAct);
+	   SetPropertyLimits("MaxSpeed", 1, 250);
+   }
+
+   // Acceleration
+   if (HasCommand("SAZ")) {
+	   pAct = new CPropertyAction (this, &ZStage::OnAcceleration);
+	   CreateProperty("Acceleration", "20", MM::Integer, false, pAct);
+	   SetPropertyLimits("Acceleration", 1, 150);
+   }
+
+   // SCurve
+   if (HasCommand("SCZ")) {
+      pAct = new CPropertyAction (this, &ZStage::OnSCurve);
+      CreateProperty("SCurve", "20", MM::Integer, false, pAct);
+      SetPropertyLimits("SCurve", 1, 400);
+   }
+
    ret = UpdateStatus();
    if (ret != DEVICE_OK)
       return ret;
@@ -1700,6 +1722,222 @@ int ZStage::OnPort(MM::PropertyBase* pProp, MM::ActionType eAct)
 
    return DEVICE_OK;
 }
+
+/**
+ * Gets and sets the maximum speed with which the Prior Z-stage travels
+ */
+int ZStage::OnMaxSpeed(MM::PropertyBase* pProp, MM::ActionType eAct) 
+{
+   int ret = ClearPort(*this, *GetCoreCallback(), port_);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   if (eAct == MM::BeforeGet) 
+   {
+      // send command
+      ret = SendSerialCommand(port_.c_str(), "SMZ", "\r");
+      if (ret != DEVICE_OK)
+         return ret;
+
+      // block/wait for acknowledge, or until we time out;
+      std::string answer;
+      ret = GetSerialAnswer(port_.c_str(), "\r", answer);
+      if (ret != DEVICE_OK)
+         return ret;
+
+      int maxSpeed = atoi(answer.c_str());
+      if (maxSpeed < 1 || maxSpeed > 250)
+         return  ERR_UNRECOGNIZED_ANSWER;
+
+      pProp->Set((long)maxSpeed);
+
+   } 
+   else if (eAct == MM::AfterSet) 
+   {
+      long maxSpeed;
+      pProp->Get(maxSpeed);
+
+      std::ostringstream os;
+      os << "SMZ," <<  maxSpeed;
+
+      // send command
+      ret = SendSerialCommand(port_.c_str(), os.str().c_str(), "\r");
+      if (ret != DEVICE_OK)
+         return ret;
+
+      // block/wait for acknowledge, or until we time out;
+      std::string answer;
+      ret = GetSerialAnswer(port_.c_str(), "\r", answer);
+      if (ret != DEVICE_OK)
+         return ret;
+
+      if (answer.substr(0,1).compare("0") == 0)
+      {
+         return DEVICE_OK;
+      }
+      else if (answer.substr(0, 1).compare("E") == 0 && answer.length() > 2)
+      {
+         int errNo = atoi(answer.substr(2).c_str());
+         return ERR_OFFSET + errNo;
+      }
+      return ERR_UNRECOGNIZED_ANSWER;
+
+   }
+
+   return DEVICE_OK;
+}
+
+
+/**
+ * Gets and sets the Acceleration of the Prior Z-stage travels
+ */
+int ZStage::OnAcceleration(MM::PropertyBase* pProp, MM::ActionType eAct) 
+{
+   int ret = ClearPort(*this, *GetCoreCallback(), port_);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   if (eAct == MM::BeforeGet) 
+   {
+      // send command
+      ret = SendSerialCommand(port_.c_str(), "SAZ", "\r");
+      if (ret != DEVICE_OK)
+         return ret;
+
+      // block/wait for acknowledge, or until we time out;
+      std::string answer;
+      ret = GetSerialAnswer(port_.c_str(), "\r", answer);
+      if (ret != DEVICE_OK)
+         return ret;
+
+      int acceleration = atoi(answer.c_str());
+      if (acceleration < 1 || acceleration > 150)
+         return  ERR_UNRECOGNIZED_ANSWER;
+
+      pProp->Set((long)acceleration);
+
+   } 
+   else if (eAct == MM::AfterSet) 
+   {
+      long acceleration;
+      pProp->Get(acceleration);
+
+      std::ostringstream os;
+      os << "SAZ," <<  acceleration;
+
+      // send command
+      ret = SendSerialCommand(port_.c_str(), os.str().c_str(), "\r");
+      if (ret != DEVICE_OK)
+         return ret;
+
+      // block/wait for acknowledge, or until we time out;
+      std::string answer;
+      ret = GetSerialAnswer(port_.c_str(), "\r", answer);
+      if (ret != DEVICE_OK)
+         return ret;
+
+      if (answer.substr(0,1).compare("0") == 0)
+      {
+         return DEVICE_OK;
+      }
+      else if (answer.substr(0, 1).compare("E") == 0 && answer.length() > 2)
+      {
+         int errNo = atoi(answer.substr(2).c_str());
+         return ERR_OFFSET + errNo;
+      }
+      return ERR_UNRECOGNIZED_ANSWER;
+
+   }
+
+   return DEVICE_OK;
+}
+
+
+/**
+ * Gets and sets the SCurve of the Prior Z-stage
+ */
+int ZStage::OnSCurve(MM::PropertyBase* pProp, MM::ActionType eAct) 
+{
+   int ret = ClearPort(*this, *GetCoreCallback(), port_);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   if (eAct == MM::BeforeGet) 
+   {
+      // send command
+      ret = SendSerialCommand(port_.c_str(), "SCZ", "\r");
+      if (ret != DEVICE_OK)
+         return ret;
+
+      // block/wait for acknowledge, or until we time out;
+      std::string answer;
+      ret = GetSerialAnswer(port_.c_str(), "\r", answer);
+      if (ret != DEVICE_OK)
+         return ret;
+
+      int sCurve = atoi(answer.c_str());
+      if (sCurve < 1 || sCurve > 400)
+         return  ERR_UNRECOGNIZED_ANSWER;
+
+      pProp->Set((long)sCurve);
+
+   } 
+   else if (eAct == MM::AfterSet) 
+   {
+      long sCurve;
+      pProp->Get(sCurve);
+
+      std::ostringstream os;
+      os << "SCZ," <<  sCurve;
+
+      // send command
+      ret = SendSerialCommand(port_.c_str(), os.str().c_str(), "\r");
+      if (ret != DEVICE_OK)
+         return ret;
+
+      // block/wait for acknowledge, or until we time out;
+      std::string answer;
+      ret = GetSerialAnswer(port_.c_str(), "\r", answer);
+      if (ret != DEVICE_OK)
+         return ret;
+
+      if (answer.substr(0,1).compare("0") == 0)
+      {
+         return DEVICE_OK;
+      }
+      else if (answer.substr(0, 1).compare("E") == 0 && answer.length() > 2)
+      {
+         int errNo = atoi(answer.substr(2).c_str());
+         return ERR_OFFSET + errNo;
+      }
+      return ERR_UNRECOGNIZED_ANSWER;
+
+   }
+
+   return DEVICE_OK;
+}
+
+
+
+bool ZStage::HasCommand(std::string command)
+{
+   int ret = SendSerialCommand(port_.c_str(), command.c_str(), "\r");
+   if (ret != DEVICE_OK)
+      return false;
+
+   // block/wait for acknowledge, or until we time out;
+   std::string answer;
+   ret = GetSerialAnswer(port_.c_str(), "\r", answer);
+   if (ret != DEVICE_OK)
+      return false;
+
+   if (answer.substr(0, 1).compare("E") == 0 && answer.length() > 2)
+   {
+      return false;
+   }
+   return true;
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // NanoZStage
