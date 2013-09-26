@@ -308,8 +308,8 @@
                                  slice-sequence))
           new-seq (not= [z adjusted-slices] @active-slice-sequence)]
       (when new-seq
-        (core loadStageSequence z (double-vector adjusted-slices)))
-      (reset! active-slice-sequence [z adjusted-slices])
+        (core loadStageSequence z (double-vector adjusted-slices))
+        (reset! active-slice-sequence [z adjusted-slices]))
       adjusted-slices)))
 
 (defn start-property-sequences [property-sequences]
@@ -365,11 +365,12 @@
            (last absolute-slices))))
 
 (defn pop-tagged-image []
-  (try (core popNextTaggedImage)
+  (try (. mmc popNextTaggedImage)
        (catch Exception e nil)))
 
 (defn pop-tagged-image-timeout
   [timeout-ms]
+  (log "(pop-tagged-image-timeout" timeout-ms ")")
   (let [start-time (System/currentTimeMillis)]
     (loop []
       (if-let [image (pop-tagged-image)]
@@ -378,7 +379,7 @@
           (throw-exception (str (- (System/currentTimeMillis) start-time)
                                 " Timed out waiting for image\nto arrive from camera."))
           (do 
-            (when (core isBufferOverflowed)
+            (when (. mmc isBufferOverflowed)
                 (println "Circular buffer overflowed")
                 (throw-exception "Circular buffer overflowed."))
             (when (@state :stop)
