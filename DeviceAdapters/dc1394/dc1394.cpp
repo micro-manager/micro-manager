@@ -219,32 +219,10 @@ int Cdc1394::OnMode(MM::PropertyBase* pProp, MM::ActionType eAct)
       if (videoMode == mode_) {
          return DEVICE_OK;
       }
-      mode_ = videoMode;
 
-      // If Mode has changed, we need to update the allowed values for some of the properties.
-
-      LogMessage("Now changing mode...\n", true);
-      LogMessage("STOPPING CAPTURE");
-      CHECK_DC1394_ERROR(dc1394_capture_stop(camera_), DEVICE_ERR, "Failed to stop capture");
-      
-      // stop transmission and make sure it stopped
-      CHECK_MM_ERROR_MSG(StopTransmission(), "Failed to stop transmission");
-
-      // get the new color coding mode:
-      CHECK_DC1394_ERROR(dc1394_get_color_coding_from_video_mode(camera_, mode_, &colorCoding_), DEVICE_ERR,
-            "Failed to get color coding from video mode");
-
-      // Get the new bitdepth
-      CHECK_DC1394_ERROR(dc1394_video_get_data_depth(camera_, &depth_), DEVICE_ERR, "Failed to get bit depth");
-
-      logMsg_.str("");
-      logMsg_ << "In OnMode, bitDepth is now" << depth_;
-      LogMessage(logMsg_.str().c_str(), true);
-
-      // reset the list of framerates allowed:
-      CHECK_MM_ERROR_MSG(SetUpFrameRates(), "Failed to get the list of allowed frame rates");
-
-      return ResizeImageBuffer();
+      CHECK_MM_ERROR(StopCapture());
+      CHECK_MM_ERROR(SetVideoMode(videoMode));
+      CHECK_MM_ERROR(StartCapture());
    }
    else if (eAct == MM::BeforeGet)
    {
@@ -824,8 +802,8 @@ int Cdc1394::Initialize()
          "Failed to get list of supported video modes");
 
    CPropertyAction* pAct = new CPropertyAction(this, &Cdc1394::OnMode);
-   mode_ = modes.modes[0];
-   CHECK_MM_ERROR(CreateProperty(g_Keyword_Modes, StringForVideoMode(mode_).c_str(), MM::String, false, pAct));
+   dc1394video_mode_t videoMode = modes.modes[0];
+   CHECK_MM_ERROR(CreateProperty(g_Keyword_Modes, StringForVideoMode(videoMode).c_str(), MM::String, false, pAct));
    for (unsigned i = 0; i < modes.num; i++) {
       string modeString = StringForVideoMode(modes.modes[i]);
       if (!modeString.empty()) {
@@ -834,34 +812,13 @@ int Cdc1394::Initialize()
       }
    }
 
-   // VideoModeChanged(); XXX See right below.
+   CHECK_MM_ERROR(SetVideoMode(videoMode));
 
-   // XXX Beginning of code that should go in VideoModeChanged()
 
-   // XXX The following should be done in a common function with OnMode
-   CHECK_DC1394_ERROR(dc1394_get_color_coding_from_video_mode(camera_, mode_, &colorCoding_), DEVICE_ERR,
-         "Failed to get color coding from video mode");
-
-   // FrameRate, this is packaged in a function since it will need to be reset whenever the video Mode changes
-   CHECK_MM_ERROR(SetUpFrameRates());
-
-   // Get the new bitdepth
-   CHECK_DC1394_ERROR(dc1394_video_get_data_depth(camera_, &depth_), DEVICE_ERR,
-         "Failed to get bit depth");
-   logMsg_.str("");
-   logMsg_ << "BitDepth is " << depth_;
-   LogMessage(logMsg_.str().c_str(), true);
-
-   // XXX Broken: depth_ may change!
    // Frame integration (Currently only implemented for 8-bit images)
-   if (depth_ == 8)
-   {
-      pAct = new CPropertyAction (this, &Cdc1394::OnIntegration);
-      CHECK_MM_ERROR(CreateProperty("Integration", "1", MM::Integer, false, pAct));
-      // TODO Set allowed range (which needs to be updated when mode changes)
-   }
-
-   // XXX End of code that should go in VideoModeChanged()
+   pAct = new CPropertyAction (this, &Cdc1394::OnIntegration);
+   CHECK_MM_ERROR(CreateProperty("Integration", "1", MM::Integer, false, pAct));
+   // TODO Set allowed range (which needs to be updated when mode changes)
 
 
    //
@@ -1105,10 +1062,7 @@ int Cdc1394::Initialize()
       }
    }
 
-
-   // setup the buffer
-   // XXX Which settings does this depend on? Should this be done here?
-   CHECK_MM_ERROR(ResizeImageBuffer());
+   CHECK_MM_ERROR(StartCapture());
 
    return DEVICE_OK;
 }
@@ -1221,25 +1175,15 @@ int Cdc1394::Shutdown()
    if (camera_)
    {
       acqThread_->Stop();
-
-      bool had_error = false;
-
-      LogMessage("STOPPING CAPTURE");
-      dc1394error_t err = dc1394_capture_stop(camera_);
-      LOG_DC1394_ERROR(err, "Failed to stop capture");
-      had_error = had_error || (err != DC1394_SUCCESS);
-
-      err = dc1394_video_set_transmission(camera_, DC1394_OFF);
-      LOG_DC1394_ERROR(err, "Failed to stop transmission");
-      had_error = had_error || (err != DC1394_SUCCESS);
+      int err = StopCapture();
 
       dc1394_camera_free(camera_);
       camera_ = 0;
 
       LogMessage("Shutdown");
 
-      if (had_error) {
-         return DEVICE_ERR;
+      if (err != DEVICE_OK) {
+         return err;
       }
    }
    return DEVICE_OK;
@@ -1585,11 +1529,7 @@ int Cdc1394::SetROI(unsigned uX, unsigned uY, unsigned uXSize, unsigned uYSize)
 {
    // GJ: Unsupported unless format 7
 	if ( mode_ >= DC1394_VIDEO_MODE_FORMAT7_MIN && mode_ <= DC1394_VIDEO_MODE_FORMAT7_MAX ) {
-		// First thing to do is stop transmission - otherwise we won't be
-		// able to (re)set ROI.
-      LogMessage("STOPPING CAPTURE");
-		CHECK_DC1394_ERROR(dc1394_capture_stop(camera_), DEVICE_ERR, "Failed to stop capture");
-		CHECK_MM_ERROR(StopTransmission());
+      CHECK_MM_ERROR(StopCapture());
 		
        logMsg_.str("");
 		 logMsg_ << "SetROI: Aout to set to  " << uX << "," << uY << "," << uXSize << "," << uYSize ;
@@ -1599,8 +1539,7 @@ int Cdc1394::SetROI(unsigned uX, unsigned uY, unsigned uXSize, unsigned uYSize)
 					(dc1394color_coding_t) DC1394_COLOR_CODING_MONO8 /*color_coding*/,
 					(int) DC1394_USE_MAX_AVAIL /*bytes_per_packet*/, uX, uY, uXSize, uYSize),
             ERR_SET_F7_ROI_FAILED, "Failed to set Format_7 ROI");
-		// This will restart capture	
-		return ResizeImageBuffer();
+		return StartCapture();
 	} else return ERR_ROI_NOT_SUPPORTED;
 }
 
@@ -1633,56 +1572,48 @@ int Cdc1394::ClearROI()
 	return DEVICE_OK;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-// Utility methods
-///////////////////////////////////////////////////////////////////////////////
 
-int Cdc1394::ResizeImageBuffer()
+int Cdc1394::StartCapture()
 {
-   // there are two buffers, 1: DMA buffer that the camera streams into (frame)
-   // 2: buffer for exchange with MicroManager (img_)
-
-   // set up the camera (TODO: implement iso speed control):
+   // TODO This should be a property and we should allow 800.
    CHECK_DC1394_ERROR(dc1394_video_set_iso_speed(camera_, DC1394_ISO_SPEED_400),
          DEVICE_ERR, "Failed to set ISO speed");
 
-   CHECK_DC1394_ERROR(dc1394_video_set_mode(camera_, mode_), ERR_SET_MODE_FAILED,
-         "Failed to set video mode");
-   logMsg_.str("");
-   logMsg_ << "Mode set to " <<  mode_;
-   LogMessage (logMsg_.str().c_str(), true);
-
-   logMsg_.str("");
-   // GJ: check whether the chosen mode is a format 7 mode
-   if ( mode_ >=DC1394_VIDEO_MODE_FORMAT7_MIN && mode_ <= DC1394_VIDEO_MODE_FORMAT7_MAX) {
-	   logMsg_ << "Format_7: Skipping setting of framerate";
-   } else {
-	   // GJ bracket this off - doesn't make sense for format7
-	   CHECK_DC1394_ERROR(dc1394_video_set_framerate(camera_, framerate_), ERR_SET_FRAMERATE_FAILED,
-            "Failed to set framerate");
-		logMsg_ <<  "Framerate set to " << framerate_;
+   if (mode_ >= DC1394_VIDEO_MODE_FORMAT7_MIN && mode_ <= DC1394_VIDEO_MODE_FORMAT7_MAX) {
+      // No need to set frame rate for Format_7 (why?)
    }
-   LogMessage (logMsg_.str().c_str(), true);
-   
-   // Start the image capture
-   LogMessage("STARTING CAPTURE");
+   else {
+      CHECK_DC1394_ERROR(dc1394_video_set_framerate(camera_, framerate_),
+            ERR_SET_FRAMERATE_FAILED, "Failed to set framerate");
+   }
+
+   CHECK_DC1394_ERROR(dc1394_get_image_size_from_video_mode(camera_, mode_, &width_, &height_),
+         ERR_GET_IMAGE_SIZE_FAILED, "Failed to get image size from video mode");
+   CHECK_DC1394_ERROR(dc1394_video_get_data_depth(camera_, &depth_),
+         DEVICE_ERR, "Failed to get bit depth");
+   CHECK_DC1394_ERROR(dc1394_get_color_coding_from_video_mode(camera_, mode_, &colorCoding_),
+         DEVICE_ERR, "Failed to get color coding from video mode");
+
+   img_.Resize(width_, height_, GetBytesPerPixel());
+
    if (dc1394_capture_setup(camera_, dmaBufferSize_, DC1394_CAPTURE_FLAGS_DEFAULT) != DC1394_SUCCESS)
    {
-      CHECK_DC1394_ERROR(dc1394_capture_stop(camera_), DEVICE_ERR,
-            "Failed to stop capture");
+      // Give it one more chance. Was found necessary on OS X with iSight.
+      // (But I think that was just because capture was being started
+      // without stopping the ongoing capture...)
+
+      CHECK_DC1394_ERROR(dc1394_capture_stop(camera_),
+            DEVICE_ERR, "Failed to stop capture after failed start");
       CHECK_DC1394_ERROR(dc1394_capture_setup(camera_, dmaBufferSize_, DC1394_CAPTURE_FLAGS_DEFAULT),
             ERR_CAPTURE_SETUP_FAILED, "Failed to start capture");
    }
 
-   // Set camera trigger mode
-   // if( dc1394_external_trigger_set_mode(camera_, DC1394_TRIGGER_MODE_0) != DC1394_SUCCESS)
-    //  return ERR_SET_TRIGGER_MODE_FAILED;
+   CHECK_DC1394_ERROR(dc1394_video_set_transmission(camera_, DC1394_ON),
+         ERR_SET_TRANSMISSION_FAILED, "Failed to turn on transmission");
 
-   // Have the camera start sending data
-   CHECK_DC1394_ERROR(dc1394_video_set_transmission(camera_, DC1394_ON), ERR_SET_TRANSMISSION_FAILED,
-         "Failed to turn on transmission");
-
-   // Sleep until the camera sent data
+   // Wait until transmission starts. Transmission can take time to start. It
+   // may also not start forever, e.g., if you try to use a camera or video
+   // mode that requires ISO speed 800 and the ISO speed is set to 400.
    dc1394switch_t status = DC1394_OFF;
    for (int i = 0; status == DC1394_OFF && i < 100; i++) {
      CDeviceUtils::SleepMs(50);
@@ -1692,20 +1623,47 @@ int Cdc1394::ResizeImageBuffer()
    if (status == DC1394_OFF)
       return ERR_CAMERA_DOES_NOT_SEND_DATA;
 
-   // Get the image size from the camera:
-   // GJ: nb this is clever and returns current ROI size for format 7 modes
-   CHECK_DC1394_ERROR(dc1394_get_image_size_from_video_mode(camera_, mode_, &width_, &height_),
-         ERR_GET_IMAGE_SIZE_FAILED, "Failed to get image size from video mode");
-
-   img_.Resize(width_, height_, GetBytesPerPixel());
-
-
-   logMsg_.str("");
-   logMsg_ << "Everything OK in ResizeImageBuffer";
-   LogMessage (logMsg_.str().c_str(), true);
-   
    return DEVICE_OK;
 }
+
+
+int Cdc1394::StopCapture()
+{
+   // Stop both capture and transmission, even of one of the calls fails.
+   dc1394error_t stopTransmissionErr = DC1394_SUCCESS;
+   dc1394error_t stopCaptureErr = DC1394_SUCCESS;
+
+   dc1394switch_t transmissionState = DC1394_ON;
+   dc1394error_t err = dc1394_video_get_transmission(camera_, &transmissionState);
+   LOG_DC1394_ERROR(err, "Failed to determine whether transmission is on");
+   if (err == DC1394_SUCCESS && transmissionState == DC1394_OFF) {
+      // Transmission is already stopped.
+   }
+   else {
+      // Either transmission is on, or we already had an error so might as well
+      // attempt to force a switch off.
+      stopTransmissionErr = dc1394_video_set_transmission(camera_, DC1394_OFF);
+      LOG_DC1394_ERROR(stopTransmissionErr, "Failed to turn off transmission");
+      for (int i = 0; transmissionState != DC1394_OFF && i < 100; i++) {
+         CDeviceUtils::SleepMs(50);
+         dc1394error_t err = dc1394_video_get_transmission(camera_, &transmissionState);
+         LOG_DC1394_ERROR(err, "Failed to determine whether transmission is on");
+      }
+      if (transmissionState != DC1394_OFF) {
+         LogMessage("Transmission did not turn OFF after waiting for 5000 ms");
+         return DEVICE_ERR;
+      }
+   }
+
+   stopCaptureErr = dc1394_capture_stop(camera_);
+   LOG_DC1394_ERROR(err, "Failed to stop capture");
+
+   if (stopTransmissionErr != DC1394_SUCCESS || stopCaptureErr != DC1394_SUCCESS) {
+      return DEVICE_ERR;
+   }
+   return DEVICE_OK;
+}
+
 
 /*
  * Set this feature in Manual mode and switch it on
@@ -1790,36 +1748,6 @@ int Cdc1394::GetComponentName(unsigned channel, char* name)
 }
 
 
-int Cdc1394::StopTransmission()
-{
-	// GJ: first check if off
-   dc1394switch_t status;
-	CHECK_DC1394_ERROR(dc1394_video_get_transmission(camera_, &status), ERR_GET_TRANSMISSION_FAILED,
-         "Failed to get on/off state of transmission");
-
-	// Camera already off
-	if(status==DC1394_OFF) return DEVICE_OK;
-	
-	LogMessage("About to stop transmission", true);
-	CHECK_DC1394_ERROR(dc1394_video_set_transmission(camera_, DC1394_OFF), DEVICE_ERR,
-         "Failed to turn off transmission");
-   // wait untill the camera stopped transmitting:
-   int i = 0;
-   while( status == DC1394_ON && i < 50 )
-   {       
-      CDeviceUtils::SleepMs(50);
-      CHECK_DC1394_ERROR(dc1394_video_get_transmission(camera_, &status), ERR_GET_TRANSMISSION_FAILED,
-            "Failed to get on/off state of transmission");
-      i++;
-   }
-   logMsg_.str("");
-   logMsg_ <<  "Waited for " << i << "cycles for transmission to stop"; 
-   LogMessage (logMsg_.str().c_str(), true);
-   if (i == 50)                                                
-      return ERR_CAMERA_DOES_NOT_SEND_DATA;
-   return DEVICE_OK;
-}
-
 int Cdc1394::GetBytesPerPixel() const
 {
    if (depth_ <= 8 && integrateFrameNumber_ == 1) {
@@ -1840,60 +1768,52 @@ int Cdc1394::GetBytesPerPixel() const
 }
 
 
-bool Cdc1394::InArray(dc1394framerate_t *array, int size, uint32_t num)
+// Must be called with capture stopped
+int Cdc1394::SetVideoMode(dc1394video_mode_t newMode)
 {
-   for(int j = 0; j < size; j++)
-      if((uint32_t)array[j] == num)
-         return true;
-   return false;
-}
+   mode_ = newMode;
 
-/*
- * Since the possible framerates are videomode dependend, it needs to be figure out 
- * every time that a videomode is changed
- */
-int Cdc1394::SetUpFrameRates() 
-{
-	if ( mode_ >=DC1394_VIDEO_MODE_FORMAT7_MIN && mode_ <= DC1394_VIDEO_MODE_FORMAT7_MAX) {
-		// GJ Format_7: no specific framerate so just bail out early
-		// framerate = 0;
-		// TODO - delete list of frame rates?
-      logMsg_.str("");
-		logMsg_ << "SetUpFrameRates: Returning early because mode is format 7 (no defined framerate)";
-		LogMessage (logMsg_.str().c_str(), true);
-		// What should I return now?
-		return DEVICE_OK;
+   CHECK_DC1394_ERROR(dc1394_video_set_mode(camera_, mode_),
+         ERR_SET_MODE_FAILED, "Failed to set video mode");
+
+   // Update the pixel depth
+   CHECK_DC1394_ERROR(dc1394_video_get_data_depth(camera_, &depth_),
+         DEVICE_ERR, "Failed to get bit depth");
+
+   // Update the list of available framerates
+	if (mode_ >= DC1394_VIDEO_MODE_FORMAT7_MIN && mode_ <= DC1394_VIDEO_MODE_FORMAT7_MAX) {
+      // Framerate does not apply to Format 7
+      if (frameRatePropDefined_) {
+         vector<string> rateValues;
+         rateValues.push_back("N/A (Format 7)");
+         CHECK_MM_ERROR(SetAllowedValues(g_Keyword_FrameRates, rateValues));
+      }
 	} else {
       CHECK_DC1394_ERROR(dc1394_video_get_supported_framerates(camera_, mode_, &framerates_),
             ERR_GET_FRAMERATES_FAILED, "Failed to get list of supported framerates");
-	}
-		
-	// Default to the first framerate belonging to this mode
-	if (!InArray(framerates_.framerates, framerates_.num, framerate_)) 
-	{
-	   framerate_ = framerates_.framerates[0];
-	}
 
-   // Create the MicroManager Property FrameRates, only when it was not yet defined
-   if (!frameRatePropDefined_)
-   {
-      CPropertyAction *pAct = new CPropertyAction (this, &Cdc1394::OnFrameRate);
-      CHECK_MM_ERROR(CreateProperty(g_Keyword_FrameRates, StringForFramerate(framerates_.framerates[0]).c_str(),
-            MM::String, false, pAct));
-      frameRatePropDefined_ = true;
+      // Default to the first available framerate if the current setting is no
+      // longer available
+      dc1394framerate_t *frBegin = framerates_.framerates, *frEnd = frBegin + framerates_.num;
+      if (find(frBegin, frEnd, framerate_) == frEnd) {
+         framerate_ = framerates_.framerates[0];
+      }
+
+      if (!frameRatePropDefined_) {
+         CPropertyAction *pAct = new CPropertyAction(this, &Cdc1394::OnFrameRate);
+         CHECK_MM_ERROR(CreateProperty(g_Keyword_FrameRates, StringForFramerate(framerate_).c_str(),
+               MM::String, false, pAct));
+         frameRatePropDefined_ = true;
+      }
+
+      vector<string> rateValues;
+      for (unsigned int i=0; i<framerates_.num; i++) {
+         string tmp = StringForFramerate(framerates_.framerates[i]);
+         if (tmp != "")
+            rateValues.push_back(tmp);
+      }   
+      CHECK_MM_ERROR(SetAllowedValues(g_Keyword_FrameRates, rateValues));
    }
-   
-   // set allowed values, this will delete a pre-existing list of allowed values
-   vector<string> rateValues;
-   for (unsigned int i=0; i<framerates_.num; i++) {
-      string tmp = StringForFramerate(framerates_.framerates[i]);
-      if (tmp != "")
-         rateValues.push_back(tmp);
-   }   
-   CHECK_MM_ERROR(SetAllowedValues(g_Keyword_FrameRates, rateValues));
-   logMsg_.str("");
-   logMsg_ << "FrameRate: Changed list of allowed values";
-   LogMessage (logMsg_.str().c_str(), true);
 
    return DEVICE_OK;
 }
@@ -2075,16 +1995,15 @@ int Cdc1394::StartSequenceAcquisition(long numImages, double interval_ms, bool s
    acqThread_->SetInterval(actualIntervalMs);
    SetProperty(MM::g_Keyword_ActualInterval_ms, CDeviceUtils::ConvertToString(actualIntervalMs));
 
+   CHECK_MM_ERROR(StopCapture());
+
    dc1394error_t err = dc1394_video_set_multi_shot(camera_, numImages, DC1394_ON);
    LOG_DC1394_ERROR(err, "Failed to start multi-shot");
    if (err == DC1394_SUCCESS) {
       multi_shot_ = true;
    }
 
-   // XXX Calling ResizeImageBuffer() (which, despite its horrible name,
-   // actually starts a capture sequence) here, without terminating the
-   // existing capture, results in an error, at least on Windows.
-   CHECK_MM_ERROR(ResizeImageBuffer());
+   CHECK_MM_ERROR(StartCapture());
 
    CHECK_MM_ERROR(GetCoreCallback()->PrepareForAcq(this));
 
@@ -2138,10 +2057,8 @@ int Cdc1394::StartSequenceAcquisition(double interval_ms)
    acqThread_->SetInterval(actualIntervalMs);
    SetProperty(MM::g_Keyword_ActualInterval_ms, CDeviceUtils::ConvertToString(actualIntervalMs));
 
-   // XXX Calling ResizeImageBuffer() (which, despite its horrible name,
-   // actually starts a capture sequence) here, without terminating the
-   // existing capture, results in an error, at least on Windows.
-   CHECK_MM_ERROR(ResizeImageBuffer());
+   CHECK_MM_ERROR(StopCapture());
+   CHECK_MM_ERROR(StartCapture());
 
    CHECK_MM_ERROR(GetCoreCallback()->PrepareForAcq(this));
 
@@ -2177,7 +2094,6 @@ int Cdc1394::StartSequenceAcquisition(double interval_ms)
  */
 int Cdc1394::StopSequenceAcquisition()
 {   
-   printf("Stopped camera_ streaming.\n");
    acqThread_->Stop();
    acquiring_ = false;
 
@@ -2197,10 +2113,6 @@ int Cdc1394::StopSequenceAcquisition()
 
 int Cdc1394::PushImage(dc1394video_frame_t *myframe)
 {
-   std::ostringstream logMsg;
-   logMsg << "Pushing image " <<imageCounter_<< endl;
-   LogMessage(logMsg.str().c_str());
-
    imageCounter_++;
    // TODO: call core to finish image snap
 
@@ -2229,10 +2141,6 @@ int Cdc1394::PushImage(dc1394video_frame_t *myframe)
       ret =  GetCoreCallback()->InsertImage(this, buf, width_, height_, GetBytesPerPixel());
    }
 
-   std::ostringstream os;
-   os << "Inserted Image in circular buffer, with result: " << ret;
-   LogMessage (os.str().c_str(), true);
-
    free(buf);
    return ret;
 }
@@ -2258,7 +2166,7 @@ int AcqSequenceThread::svc(void)
          " with timestamp: " <<myframe->timestamp << 
          " ring buffer pos: "<<myframe->id <<
          " frames_behind: "<<myframe->frames_behind<<endl ;
-         camera_->LogMessage(logMsg_.str().c_str());
+         camera_->LogMessage(logMsg.str().c_str(), true);
       }
       int ret = camera_->PushImage(myframe);
       if (ret != DEVICE_OK)
@@ -2282,12 +2190,10 @@ int AcqSequenceThread::svc(void)
 
    if (stop_)
    {
-      printf("Acquisition interrupted by the user\n");
       return 0;
    }
 
    camera_->StopSequenceAcquisition();
-   printf("Acquisition completed.\n");
    return 0;
 }
 

@@ -186,7 +186,9 @@ private:
          int (Cdc1394::*cb_onfeature)(MM::PropertyBase*, MM::ActionType),
          const std::string& overridePropertyName = ""); // if not using the default (feature name string)
 
-   int ResizeImageBuffer();
+   int StartCapture();
+   int StopCapture();
+
    int SetManual(dc1394feature_t feature);
    int ShutdownImageBuffer();
    int SetUpCamera();
@@ -195,8 +197,8 @@ private:
    // Whether the camera is in color mode. NOT whether we return color images to Micro-Manager.
    bool IsColor() const;
 
-   int SetUpFrameRates();
-   int StopTransmission();
+   int SetVideoMode(dc1394video_mode_t newMode);
+
    bool Timeout(MM::MMTime startTime);
 
    int OnFeature(MM::PropertyBase* pProp, MM::ActionType eAct, uint32_t &value, int valueMin, int valueMax, dc1394feature_t feature);
