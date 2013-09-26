@@ -119,11 +119,11 @@
                              (set dll-names))
           (do-not-build))))
 
-(def device-list-page "http://valelab.ucsf.edu/~MM/MMwiki/index.php/Device%20Support")
+(def device-list-page "http://micro-manager.org/wiki/Device_Support")
 
 (defn device-pages []
   (let [index-txt (slurp device-list-page)]
-    (map second (re-seq #"a href=\"/~MM/MMwiki/index.php/(.*?)\"" index-txt))))
+    (map second (re-seq #"a href=\"/wiki/(.*?)\"" index-txt))))
 
 (defn device-links []
   (let [index-txt (slurp device-list-page)]
