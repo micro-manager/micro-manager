@@ -3,7 +3,7 @@
 // PROJECT:       Micro-Manager
 // SUBSYSTEM:     DeviceAdapters
 //-----------------------------------------------------------------------------
-// DESCRIPTION:   Prior ProScan controller adapter
+// DESCRIPTION:   Prior ProScan and OptiScan controller adapter
 // COPYRIGHT:     University of California, San Francisco, 2006
 // LICENSE:       This file is distributed under the BSD license.
 //                License text is included with the source distribution.
@@ -806,18 +806,19 @@ int XYStage::Initialize()
    // Max Speed
    pAct = new CPropertyAction (this, &XYStage::OnMaxSpeed);
    CreateProperty("MaxSpeed", "20", MM::Integer, false, pAct);
-   SetPropertyLimits("MaxSpeed", 1, 250);
+   SetPropertyLimits("MaxSpeed", 1, 100);
 
    // Acceleration
    pAct = new CPropertyAction (this, &XYStage::OnAcceleration);
    CreateProperty("Acceleration", "20", MM::Integer, false, pAct);
-   SetPropertyLimits("Acceleration", 1, 150);
+   // XXX The limits on the OptiScan II is actually 4-100.
+   SetPropertyLimits("Acceleration", 1, 100);
 
    // SCurve
-   if (HasCommand("SCS")) { // OptoScan II does not have the SCS command
+   if (HasCommand("SCS")) { // OptiScan II does not have the SCS command
       pAct = new CPropertyAction (this, &XYStage::OnSCurve);
       CreateProperty("SCurve", "20", MM::Integer, false, pAct);
-      SetPropertyLimits("SCurve", 1, 400);
+      SetPropertyLimits("SCurve", 1, 100);
    }
 
    ret = UpdateStatus();
@@ -1497,21 +1498,22 @@ int ZStage::Initialize()
    if (HasCommand("SMZ")) {
 	   pAct = new CPropertyAction (this, &ZStage::OnMaxSpeed);
 	   CreateProperty("MaxSpeed", "20", MM::Integer, false, pAct);
-	   SetPropertyLimits("MaxSpeed", 1, 250);
+	   SetPropertyLimits("MaxSpeed", 1, 100);
    }
 
    // Acceleration
    if (HasCommand("SAZ")) {
 	   pAct = new CPropertyAction (this, &ZStage::OnAcceleration);
 	   CreateProperty("Acceleration", "20", MM::Integer, false, pAct);
-	   SetPropertyLimits("Acceleration", 1, 150);
+	   // XXX The limits on the OptiScan II is actually 4-100.
+	   SetPropertyLimits("Acceleration", 1, 100);
    }
 
    // SCurve
    if (HasCommand("SCZ")) {
       pAct = new CPropertyAction (this, &ZStage::OnSCurve);
       CreateProperty("SCurve", "20", MM::Integer, false, pAct);
-      SetPropertyLimits("SCurve", 1, 400);
+      SetPropertyLimits("SCurve", 1, 100);
    }
 
    ret = UpdateStatus();
