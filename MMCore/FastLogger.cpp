@@ -32,11 +32,6 @@
 #include "CoreUtils.h"
 #include "../MMDevice/DeviceUtils.h"
 #include "boost/thread/thread.hpp"
-
-#ifdef __linux__
-#include <sys/syscall.h> // for syscall()
-#endif
-
 #include "boost/interprocess/detail/os_thread_functions.hpp" 
 #include "boost/version.hpp"
 #if BOOST_VERSION >= 104800
@@ -456,10 +451,7 @@ void FastLogger::Log(IMMLogger::priority p, const char* format, ...) throw()
       // with debugger, etc.
 #ifdef _WINDOWS_
       percenttReplacement << GetCurrentThreadId();
-#elif defined(__linux__)
-      percenttReplacement << syscall(SYS_gettid);
 #else
-      // TODO Mac OS X syscall(SYS_thread_selfid)?
 		pthread_t pthreadInfo;
 		pthreadInfo = pthread_self();
 		percenttReplacement << pthreadInfo;
