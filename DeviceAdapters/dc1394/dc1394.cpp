@@ -1684,15 +1684,12 @@ int Cdc1394::ResizeImageBuffer()
 
    // Sleep until the camera sent data
    dc1394switch_t status = DC1394_OFF;
-   int i = 0;
-   while( status == DC1394_OFF && i < 10 ) 
-   {
+   for (int i = 0; status == DC1394_OFF && i < 100; i++) {
      CDeviceUtils::SleepMs(50);
      CHECK_DC1394_ERROR(dc1394_video_get_transmission(camera_, &status), ERR_GET_TRANSMISSION_FAILED,
            "Failed to get on/off state of transmission");
-     i++;
    }
-   if (i == 10)
+   if (status == DC1394_OFF)
       return ERR_CAMERA_DOES_NOT_SEND_DATA;
 
    // Get the image size from the camera:
