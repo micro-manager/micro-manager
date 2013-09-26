@@ -126,6 +126,7 @@ public:
    int OnChannel(MM::PropertyBase* pProp, MM::ActionType eAct);
    //int OnIntensity(MM::PropertyBase* pProp, MM::ActionType eAct);
    //int OnVersion(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnDelayBetweenChannels(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
 
@@ -150,7 +151,8 @@ private:
    // version string returned by device
    //std::string version_;
    double answerTimeoutMs_;
-   
+   // milliseconds to wait between the per-channel on/off commands
+   double delayBetweenChannels_;
 };
 
 #endif //_AOTF_H_

@@ -35,7 +35,7 @@ const char* g_Channel_5 = "5";
 const char* g_Channel_6 = "6";			
 const char* g_Channel_7 = "7";			
 const char* g_Channel_8 = "8";			
-
+const char* g_DelayBetweenChannels = "Delay between channels (ms)";
 
 
 using namespace std;
@@ -424,10 +424,11 @@ multiAOTF::multiAOTF() :
    port_("Undefined"),
    state_(0),
    initialized_(false),
-   activeMultiChannels_(1)
+   activeMultiChannels_(1),
    //intensity_(1900)
    /*,*/
    /*version_("Undefined")*/
+   delayBetweenChannels_(0)
 {
    InitializeDefaultErrorMessages();
                                                                              
@@ -482,6 +483,12 @@ int multiAOTF::Initialize()
    AddAllowedValue(MM::g_Keyword_State, "0");
    AddAllowedValue(MM::g_Keyword_State, "1");
 
+   pAct = new CPropertyAction(this, &multiAOTF::OnDelayBetweenChannels);
+   ostringstream dbc; dbc << delayBetweenChannels_;
+   ret = CreateProperty(g_DelayBetweenChannels, dbc.str().c_str(), MM::Float, false, pAct);
+   if (ret != DEVICE_OK)
+      return ret;
+
    // Intensity
    //--------------------
    //pAct = new CPropertyAction(this, &AOTF::OnIntensity);
@@ -513,14 +520,16 @@ int multiAOTF::Initialize()
    if (ret != DEVICE_OK)                                                     
       return ret;
 
-	command.str("");
-	for(i=1;i<=8;i++) {
-		command<< "L" << i << "O0\r";
-	}
-
-	ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
-	if (ret!=DEVICE_OK)
-	   return ret;
+   for (i = 1; i <= 8; i++) {
+      // Use fixed large delay here, since user has not had a chance to set
+      // delayBetweenChannels_.
+      CDeviceUtils::SleepMs(50);
+      command.str("");
+      command << "L" << i << "O0";
+      ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
+      if (ret != DEVICE_OK)
+         return ret;
+   }
 
    initialized_ = true;
 
@@ -563,24 +572,22 @@ int multiAOTF::SetShutterPosition(bool state)
    int i;
    int ret;
 
-   //for(i=1;i<=activeMultiChannels_;i++)
-	  // Beep(500+100*i,500);
-   command.str("");
-   for(i=1;i<=8;i++) {
-		if (activeMultiChannels_ & (1<<(i-1)))
-		{
-			if (state_ == 0)
-				command<< "L" << i << "O1\r";
-			else
-				command<< "L" << i << "O0\r";
-		}
-		else 
-			command<< "L" << i << "O0\r";
-	}
+   for (i = 1; i <= 8; i++) {
+      command.str("");
+      command << "L" << i;
+      int channelBit = 1 << (i - 1);
+      if (state && (activeMultiChannels_ & channelBit))
+         command << "O1";
+      else
+         command << "O0";
 
-   	ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
-	if (ret!=DEVICE_OK)
-		   return ret;
+      ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
+      if (ret != DEVICE_OK)
+         return ret;
+
+      if (delayBetweenChannels_ > 0.0)
+         CDeviceUtils::SleepMs(delayBetweenChannels_);
+   }
 
    state_ = state ? 1 : 0;
    return DEVICE_OK;
@@ -674,3 +681,14 @@ int multiAOTF::OnChannel(MM::PropertyBase* pProp, MM::ActionType eAct)
 }
 
  
+int multiAOTF::OnDelayBetweenChannels(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+      pProp->Set(delayBetweenChannels_);
+   else if (eAct == MM::AfterSet) {
+      double wk;
+      pProp->Get(wk);
+      delayBetweenChannels_ = max(0.0, wk);
+   }
+   return DEVICE_OK;
+}
