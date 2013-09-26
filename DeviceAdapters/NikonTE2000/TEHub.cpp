@@ -873,14 +873,9 @@ int TEHub::ExecuteCommand(MM::Device& device, MM::Core& core, const char* type, 
       return ret;
    }
   
-   // >>
-   core.LogMessage(&device, strCommand.c_str(), true);
-
    // get response
    ret = core.GetSerialAnswer(&device, port_.c_str(), RCV_BUF_LENGTH, rcvBuf_, "\r\n");
    
-   // >>
-   core.LogMessage(&device, rcvBuf_, true);
    if (ret != DEVICE_OK)
    {
       LogError(ret, device, core, "ExecuteCommand-GetSerialAnswer");
@@ -912,7 +907,6 @@ int TEHub::ExecuteCommand(MM::Device& device, MM::Core& core, const char* type, 
          os << "ExecuteCommand-GetSreialAnswer: Failed reading from serial port after trying " << counter << "times.";
 
       core.LogMessage(&device, os.str().c_str(), true);
-      core.LogMessage(&device, rcvBuf_, true);
       return ret;
    }
 
@@ -1007,9 +1001,6 @@ void TEHub::FetchSerialData(MM::Device& device, MM::Core& core)
                // proper command
                answerBuf_[4] = '\0';
                string cmdresp = (char*)(&answerBuf_[1]);
-               // >>
-               //if (read > 0)
-               //   core.LogMessage(&device, cmdresp.c_str(), true);
 
                // remove command from the wait list
                multimap<string, long>::iterator it;
