@@ -33,11 +33,10 @@
 #include "../MMDevice/DeviceUtils.h"
 #include "boost/thread/thread.hpp"
 
-#ifdef _WINDOWS_
-//#include <process.h>
-#pragma 
-#else
+#ifdef __linux__
+#include <sys/syscall.h> // for syscall()
 #endif
+
 #include "boost/interprocess/detail/os_thread_functions.hpp" 
 #include "boost/version.hpp"
 #if BOOST_VERSION >= 104800
@@ -453,13 +452,14 @@ void FastLogger::Log(IMMLogger::priority p, const char* format, ...) throw()
 		}
 
 		std::ostringstream percenttReplacement;
+      // Use the platform thread id where available, so that it can be compared
+      // with debugger, etc.
 #ifdef _WINDOWS_
-      // boost::this_thread::get_id() is the "right" thing to use,
-      // but integer ids are much easier to follow by eye.
-      DWORD tid = GetCurrentThreadId();
-      percenttReplacement << tid;
-
+      percenttReplacement << GetCurrentThreadId();
+#elif defined(__linux__)
+      percenttReplacement << syscall(SYS_gettid);
 #else
+      // TODO Mac OS X syscall(SYS_thread_selfid)?
 		pthread_t pthreadInfo;
 		pthreadInfo = pthread_self();
 		percenttReplacement << pthreadInfo;
