@@ -820,6 +820,8 @@ int Cdc1394::Initialize()
    CHECK_MM_ERROR(CreateProperty("Integration", "1", MM::Integer, false, pAct));
    // TODO Set allowed range (which needs to be updated when mode changes)
 
+   CHECK_MM_ERROR(CreateProperty("Integration Note", "Not implemented for 16-bit mono", MM::String, true));
+
 
    //
    // Binning: unimplemented
@@ -1401,17 +1403,21 @@ int Cdc1394::ProcessImage(dc1394video_frame_t *frame, const unsigned char* desti
 
    else if (colorCoding_==DC1394_COLOR_CODING_MONO8 || colorCoding_==DC1394_COLOR_CODING_MONO16) 
    {
-      if (integrateFrameNumber_==1) 
+      // Frame integration not implemented for 16-bit
+      if (integrateFrameNumber_ <= 1 || colorCoding_ == DC1394_COLOR_CODING_MONO16) 
       {
          void* src = (void *) frame->image;
          uint8_t* pixBuffer = const_cast<unsigned char*> (destination);
-		 // GJ: Deinterlace image if required
-         if (avtInterlaced_) 
-            avtDeinterlaceMono8 (pixBuffer, (uint8_t*) src, width_, height_);
+         if (avtInterlaced_) {
+            if (colorCoding_ == DC1394_COLOR_CODING_RGB8)
+               avtDeinterlaceMono8(pixBuffer, (uint8_t*) src, width_, height_);
+            else
+               avtDeinterlaceMono16((uint16_t*)pixBuffer, (uint16_t*)src, width_, height_);
+         }
 		   else 
             memcpy (pixBuffer, src, GetImageBufferSize());
       }
-      else if (integrateFrameNumber_ > 1)
+      else
       {
          void* src = (void *) frame->image;
          uint8_t* pixBuffer = const_cast<unsigned char*> (destination);
