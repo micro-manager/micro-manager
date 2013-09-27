@@ -134,7 +134,7 @@
 
 (defn acquire-tagged-image-sequence [settings]
   (let [acq-engine (AcquisitionEngine2010. mm/gui)
-        q (engine/run acq-engine settings false)]
+        q (engine/run acq-engine settings false nil nil)]
     (take-while #(not= % TaggedImageQueue/POISON)
                 (repeatedly #(.take q)))))
 
@@ -158,15 +158,20 @@
 
 ;;; channel display settings
 
+(defn apply-to-map-values [f m]
+  (into {}
+        (for [[k v] m] [k (f v)])))
+
+(defn channel-info [tagged-images-in-a-channel]
+  (apply image/intensity-range (map :proc tagged-images-in-a-channel)))  
+
 (defn initial-lut-maps [tagged-image-processors]
-  (merge-with
-    merge
+  (let [colors (stack-colors tagged-image-processors)
+        image-map (group-by #(get-in % [:tags "Channel"]) tagged-image-processors)]
     (into {}
-          (for [[chan color] (stack-colors tagged-image-processors)]
-            [chan {:color color}]))
-    (into {}
-          (for [[chan images] (group-by #(get-in % [:tags "Channel"]) tagged-image-processors)]
-            [(or chan "Default") (assoc (apply image/intensity-range (map :proc images)) :gamma 1.0)]))))
+          (for [[name images] image-map]
+            [name (merge {:color (colors name -1) :gamma 1.0}
+                         (channel-info images))]))))
 
 ;; tile arrangement
 
@@ -253,6 +258,7 @@
   (-> mm/gui .getAcquisitionEngine .getSequenceSettings
       engine/convert-settings
       (assoc :use-autofocus false
+             :use-position-list false
              :frames nil
              :positions nil
              :slices nil
@@ -322,6 +328,7 @@ Would you like to run automatic pixel calibration?"
                               z-origin
                               acq-settings)
         explore-fn #(explore memory-tiles-atom screen-state-atom acquired-images)]
+    (def fs  first-seq)
     (let [width (mm/core getImageWidth)
           height (mm/core getImageHeight)]
       (swap! screen-state-atom merge
@@ -336,6 +343,7 @@ Would you like to run automatic pixel calibration?"
               :tile-dimensions [width height]
               :x (long (/ width 2))
               :y (long (/ height 2))}))
+    (println (:channels @screen-state-atom))
     (double-click-to-navigate screen-state-atom)
     (watch-xy-stages screen-state-atom)
     (positions/handle-positions screen-state-atom)
@@ -389,6 +397,11 @@ Would you like to run automatic pixel calibration?"
   ([]
     (go (io/file (str "tmp" (rand-int 10000000))) true)))
   
+(defn create-data-set
+  []
+  (when-let [dir (persist/create-dir-dialog)]
+    (go (io/file dir) true)))
+
 (defn load-data-set
   []
   (when-let [dir (persist/open-dir-dialog)]

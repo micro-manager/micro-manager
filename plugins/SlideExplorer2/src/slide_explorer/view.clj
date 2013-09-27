@@ -99,7 +99,7 @@
 ;; PAINTING
  
 (defn paint-tiles [^Graphics2D g overlay-tiles-atom screen-state]
-  (time (doseq [tile-index (visible-tile-indices screen-state :overlay)] 
+  (doseq [tile-index (visible-tile-indices screen-state :overlay)] 
     (when-let [image (tile-cache/get-tile
                        overlay-tiles-atom
                        tile-index)]
@@ -107,7 +107,7 @@
                     [(:nx tile-index) (:ny tile-index)]
                     (screen-state :tile-dimensions) 1)]
         (paint/draw-image g image x y)
-        )))))
+        ))))
 
 (defn paint-position [^Graphics2D g
                       {[w h] :tile-dimensions :keys [zoom scale] :as screen-state}

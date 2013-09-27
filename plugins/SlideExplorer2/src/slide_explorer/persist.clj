@@ -19,7 +19,7 @@
 (defn create-dir-dialog
   "Shows a file dialog to allow the user to create a directory."
   []
-  (FileDialogs/save nil "Create Slide Explorer data set" DATA-SET))
+  (FileDialogs/save nil "Please choose a location for the new Slide Explorer data set" DATA-SET))
 
 (defn open-dir-dialog
   "Shows a file dialog to allow the user to choose a data set
@@ -34,4 +34,3 @@
   (when-let [new-location (create-dir-dialog)]
     (when (.renameTo (io/file old-location) new-location)
       new-location)))
-    

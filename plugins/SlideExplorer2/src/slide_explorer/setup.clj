@@ -48,7 +48,7 @@
     (doto
       (.getContentPane frame)
       (.add (widgets/button "Load..." #(main/load-data-set)))
-      (.add (widgets/button "New..." #(main/go)))
+      (.add (widgets/button "New..." #(main/create-data-set)))
       (.add (cheat-sheet)))
     (doto frame
       (.setResizable false)
