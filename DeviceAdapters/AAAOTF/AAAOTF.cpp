@@ -586,7 +586,7 @@ int multiAOTF::SetShutterPosition(bool state)
          return ret;
 
       if (delayBetweenChannels_ > 0.0)
-         CDeviceUtils::SleepMs(delayBetweenChannels_);
+         CDeviceUtils::SleepMs((long)ceil(delayBetweenChannels_));
    }
 
    state_ = state ? 1 : 0;
