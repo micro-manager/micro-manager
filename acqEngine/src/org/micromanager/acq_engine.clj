@@ -760,7 +760,10 @@
 
 ;; generic metadata
 
-(defn convert-settings [^SequenceSettings settings ^PositionList position-list]
+(defn convert-settings
+  ([^SequenceSettings settings]
+    (convert-settings settings nil))
+  ([^SequenceSettings settings ^PositionList position-list]
   (def seqSettings settings)
   (into (sorted-map)
         (-> settings
@@ -782,13 +785,14 @@
                    :channels (vec (filter :use-channel
                                           (map #(ChannelSpec-to-map (.channelGroup settings) %)
                                                (.channels settings))))
-                   :positions (vec (range (if (.usePositionList settings)
-                                            (.getNumberOfPositions position-list)
-                                            0)))
+                   :positions (when position-list
+                                (vec (range (if (.usePositionList settings)
+                                              (.getNumberOfPositions position-list)
+                                              0))))
                    :slices (vec (.slices settings))
                    :default-exposure (core getExposure)
                    :custom-intervals-ms (vec (.customIntervalsMs settings)))
-            )))
+            ))))
 
 (defn get-IJ-type [depth]
   (get {1 ImagePlus/GRAY8 2 ImagePlus/GRAY16 4 ImagePlus/COLOR_RGB 8 64} depth))
