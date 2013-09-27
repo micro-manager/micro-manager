@@ -8,6 +8,11 @@
 // AUTHOR:       Mark Allen Neil, markallenneil@yahoo.com
 //               This code reuses work done by Jannis Uhlendorf, 2010
 //
+//				 Modified by Lon Chu (lonchu@yahoo.com) on September 26, 2013
+//				 add protection from shutter close-open sequence, shutter will be
+//			     dwell an interval after cloased and before opening again
+//				
+//
 // COPYRIGHT:    Mission Bay Imaging, 2010-2011
 //
 // LICENSE:      This file is distributed under the BSD license.
@@ -85,7 +90,9 @@ XCiteExacte::XCiteExacte(const char* name) :
    powerMode_("Intensity"),
    clfMode_("Off"),
    outputPower_(0.0),
-   powerFactor_("100")
+   powerFactor_("100"),
+   shutterDwellTime_(0),	// shutter close setteling time initialized to 0
+   timeShutterClosed_(0)	// shutter closed time
 {
   InitializeDefaultErrorMessages();
 
@@ -144,6 +151,11 @@ int XCiteExacte::Initialize()
    allowedValues.push_back("Closed");
    allowedValues.push_back("Open");
    SetAllowedValues("Shutter-State", allowedValues);
+
+   // Shutter dwell time by Lon Chu added on 9-26-2013
+   pAct = new CPropertyAction(this, &XCiteExacte::OnShutterDwellTime);
+   CreateProperty("Shutter-Dwellg-Time", "0", MM::Integer, false, pAct);
+   SetPropertyLimits("Shutter-Dwell-Time", 0, 5000);
   
    // Front panel state
    pAct = new CPropertyAction(this, &XCiteExacte::OnPanelLock);
@@ -312,6 +324,7 @@ int XCiteExacte::Initialize()
    status = atoi(response.c_str());
    shutterOpen_ = 0 != (status & 4);
    SetProperty("Shutter-State", shutterOpen_ ? "Open" : "Closed");
+   //SetProperty("Shutter-Dwell-Time", shutterDwellTime_);
    lampState_ = 0 != (status & 2) ? "On" : "Off";
    SetProperty("Lamp-State", lampState_.c_str());
    frontPanelLocked_ = 0 != (status & 32) ? "True" : "False";
@@ -320,6 +333,9 @@ int XCiteExacte::Initialize()
    SetProperty("Power-Mode", powerMode_.c_str());
    clfMode_ = 0 != (status & 16384) ? "On" : "Off";
    SetProperty("CLF-Mode", clfMode_.c_str());
+
+   // initialize the shutter closed time to current time
+   timeShutterClosed_ = GetCurrentMMTime();
 
    initialized_ = true;
    return DEVICE_OK;
@@ -359,15 +375,42 @@ bool XCiteExacte::Busy()
 
 int XCiteExacte::SetOpen(bool open)
 {
+
    shutterOpen_ = open;
+
+   char cBuff[20];
+
    if (open)
    {
-      LogMessage("XCiteExacte: Open Shutter");
+      LogMessage("XCite120PC: Open Shutter");
+
+      // before opening the shutter
+      // add these codes to make sure shutter is closed and is dwell
+      // by Lon Chu
+
+	  if (shutterDwellTime_ > 0)
+	  {
+		  // check if shutter is exceeding dwell time 
+		  double timeElapsed = 0.0;
+		  do
+		  {
+			 timeElapsed = (long) (GetCurrentMMTime()-timeShutterClosed_).getMsec();
+			 memset(cBuff, 0, 20);
+			 sprintf(cBuff, "[%.2f]", timeElapsed), 
+			 LogMessage("XCite120PC: Waiting for shuttle dwell before the shutter is reopending..." + string(cBuff));
+		  } while ( timeElapsed < (double)shutterDwellTime_);
+	  }
+
       return ExecuteCommand(cmdOpenShutter);
    }
    else
    {
-      LogMessage("XCiteExacte: Close Shutter");
+      LogMessage("XCite120PC: Close Shutter");
+	  timeShutterClosed_ = this->GetCurrentMMTime();
+	  memset(cBuff, 0, 20);
+	  sprintf(cBuff, "[%.2f]", timeShutterClosed_.getMsec()), 
+	  LogMessage("XCite120PC: Shutter Closed Time..." + string(cBuff));
+
       return ExecuteCommand(cmdCloseShutter);
    }
 }
@@ -458,6 +501,24 @@ int XCiteExacte::OnShutterState(MM::PropertyBase* pProp, MM::ActionType eAct)
       string buff;
       pProp->Get(buff);
       SetOpen(0 == buff.compare("Open"));
+   }
+   return DEVICE_OK;
+}
+
+//
+// action handler for shutter setteling time property  (Lon Chu)
+//
+int XCiteExacte::OnShutterDwellTime(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+      pProp->Set(shutterDwellTime_);
+   else if (eAct == MM::AfterSet)
+   {
+      pProp->Get(shutterDwellTime_);
+      char cBuffer[20];
+	  memset(cBuffer, 0, 20);
+      sprintf(cBuffer, "%ld", shutterDwellTime_);
+      LogMessage("XCiteExacte: Shutter Dwell Time: " + string(cBuffer));
    }
    return DEVICE_OK;
 }

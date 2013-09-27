@@ -8,6 +8,10 @@
 // AUTHOR:       Mark Allen Neil, markallenneil@yahoo.com
 //               This code reuses work done by Jannis Uhlendorf, 2010
 //
+//				 Modified by Lon Chu (lonchu@yahoo.com) on September 26, 2013
+//				 add protection from shutter close-open sequence, shutter will be
+//			     dwell an interval after cloased and before opening again
+//
 // COPYRIGHT:    Mission Bay Imaging, 2010-2011
 //
 // LICENSE:      This file is distributed under the BSD license.
@@ -67,6 +71,7 @@ public:
    int OnUnitStatusHome(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnUnitStatusLampReady(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnUnitStatusFrontPanel(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnShutterDwellTime(MM::PropertyBase* pProp, MM::ActionType eAct);	// inserted delay time between "Close Shutter" and "Open Shutter" sequence
 
 private:
    int GetDeviceStatus(int statusBit,  std::string* retStatus);
@@ -79,6 +84,8 @@ private:
    string frontPanelLocked_;
    string lampIntensity_;
    string lampState_;
+   long shutterDwellTime_;	// delay time between "Close Shutter" and "Open Shutter" sequence
+   MM::MMTime timeShutterClosed_;	// time shutter closed
 
    static const char* cmdConnect;
    static const char* cmdLockFrontPanel;
