@@ -154,7 +154,7 @@ int XCiteExacte::Initialize()
 
    // Shutter dwell time by Lon Chu added on 9-26-2013
    pAct = new CPropertyAction(this, &XCiteExacte::OnShutterDwellTime);
-   CreateProperty("Shutter-Dwellg-Time", "0", MM::Integer, false, pAct);
+   CreateProperty("Shutter-Dwell-Time", "0", MM::Integer, false, pAct);
    SetPropertyLimits("Shutter-Dwell-Time", 0, 5000);
   
    // Front panel state
