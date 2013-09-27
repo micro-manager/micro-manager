@@ -1152,7 +1152,7 @@ int XYStage::OnMaxSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
          return ret;
 
       int maxSpeed = atoi(answer.c_str());
-      if (maxSpeed < 1 || maxSpeed > 250)
+      if (maxSpeed < 1 || maxSpeed > 100)
          return  ERR_UNRECOGNIZED_ANSWER;
 
       pProp->Set((long)maxSpeed);
@@ -1217,7 +1217,7 @@ int XYStage::OnAcceleration(MM::PropertyBase* pProp, MM::ActionType eAct)
          return ret;
 
       int acceleration = atoi(answer.c_str());
-      if (acceleration < 1 || acceleration > 150)
+      if (acceleration < 1 || acceleration > 100)
          return  ERR_UNRECOGNIZED_ANSWER;
 
       pProp->Set((long)acceleration);
@@ -1282,7 +1282,7 @@ int XYStage::OnSCurve(MM::PropertyBase* pProp, MM::ActionType eAct)
          return ret;
 
       int sCurve = atoi(answer.c_str());
-      if (sCurve < 1 || sCurve > 400)
+      if (sCurve < 1 || sCurve > 100)
          return  ERR_UNRECOGNIZED_ANSWER;
 
       pProp->Set((long)sCurve);
@@ -1748,7 +1748,7 @@ int ZStage::OnMaxSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
          return ret;
 
       int maxSpeed = atoi(answer.c_str());
-      if (maxSpeed < 1 || maxSpeed > 250)
+      if (maxSpeed < 1 || maxSpeed > 100)
          return  ERR_UNRECOGNIZED_ANSWER;
 
       pProp->Set((long)maxSpeed);
@@ -1813,7 +1813,7 @@ int ZStage::OnAcceleration(MM::PropertyBase* pProp, MM::ActionType eAct)
          return ret;
 
       int acceleration = atoi(answer.c_str());
-      if (acceleration < 1 || acceleration > 150)
+      if (acceleration < 1 || acceleration > 100)
          return  ERR_UNRECOGNIZED_ANSWER;
 
       pProp->Set((long)acceleration);
@@ -1878,7 +1878,7 @@ int ZStage::OnSCurve(MM::PropertyBase* pProp, MM::ActionType eAct)
          return ret;
 
       int sCurve = atoi(answer.c_str());
-      if (sCurve < 1 || sCurve > 400)
+      if (sCurve < 1 || sCurve > 100)
          return  ERR_UNRECOGNIZED_ANSWER;
 
       pProp->Set((long)sCurve);
