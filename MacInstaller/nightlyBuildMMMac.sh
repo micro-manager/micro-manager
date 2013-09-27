@@ -27,9 +27,9 @@ done
 REPOSITORYROOT=/Users/MM/svn
 BUILDDIR=/Users/MM/MMBuild
 if [ "$FULL" != "full" ]; then
-   UPLOADPLACE=valelab2.ucsf.edu:/home/MM/public_html/nightlyBuilds/1.4/Mac/
+   UPLOADPLACE=valelab2.ucsf.edu:public_html/nightlyBuilds/1.4/Mac/
 else
-   UPLOADPLACE=valelab2.ucsf.edu:/home/MM/public_html/builds/1.4/Mac/
+   UPLOADPLACE=valelab2.ucsf.edu:public_html/builds/1.4/Mac/
 fi
 
 # No edits should be needed below this line
