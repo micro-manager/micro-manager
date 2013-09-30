@@ -256,10 +256,10 @@ int XCite120PC::SetOpen(bool open)
 		  double timeElapsed = 0.0;
 		  do
 		  {
-			 timeElapsed = (GetCurrentMMTime()-shutterDwellTime_).getMsec();
+			 timeElapsed = (GetCurrentMMTime()-timeShutterClosed_).getMsec();
 			 memset(cBuff, 0, 20);
 			 sprintf(cBuff, "[%.2f]", timeElapsed), 
-			 LogMessage("XCite120PC: Waiting for shuttle dwell before the shutter is reopending..." + string(cBuff));
+			 LogMessage("XCite120PC: Waiting for shuttle dwell before the shutter is reopening..." + string(cBuff));
 		  } while ( timeElapsed < (double)shutterDwellTime_);
 	  }
 
