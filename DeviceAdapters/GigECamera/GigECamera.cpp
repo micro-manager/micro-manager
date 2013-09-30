@@ -202,6 +202,8 @@ int CGigECamera::Initialize()
 		return DEVICE_NATIVE_MODULE_FAILED;
 	}
 
+	LogMessage( "found " + boost::lexical_cast<std::string>(nCameras) + " cameras", false );
+
 	// Run through the list of found cameras
 	int8_t sCameraID[J_CAMERA_ID_SIZE];
 	std::string selectedCamera;
@@ -281,6 +283,7 @@ int CGigECamera::Initialize()
 			LogMessage( (std::string) "camera open failed (" + this->cameraName + ")", false );
 			return DEVICE_NATIVE_MODULE_FAILED;
 	}
+	LogMessage( "camera open succeeded", false );
 	cameraOpened = true;
 	this->nodes = new GigENodes( hCamera );
 
