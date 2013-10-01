@@ -86,7 +86,7 @@ template<class T> class Node
 {
 public:
 	Node();
-	Node( const std::string name );
+	Node( const std::string name, CAM_HANDLE camera ); // camera is not stored in node
 	Node( const Node& );
 	virtual ~Node() { }
 	Node<T>& operator=( const Node<T>& rhs );
@@ -112,10 +112,6 @@ public:
 
 	typedef typename T value_type;
 
-	void testAvailability( CAM_HANDLE camera );
-	void testMinMaxInc( CAM_HANDLE camera );
-	void testEnum( CAM_HANDLE camera );
-
 protected:
 	bool available;
 	bool readable;
@@ -126,6 +122,11 @@ protected:
 	bool isEnum;
 	std::string sfncName;
 	T val; 
+
+	// helpers for the constructor
+	void testAvailability( CAM_HANDLE camera );
+	void testMinMaxInc( CAM_HANDLE camera );
+	void testEnum( CAM_HANDLE camera );
 
 	// test the type of the node.  if not the type we expect,
 	// (for instance, if the camera is an older model that isn't
@@ -142,10 +143,6 @@ protected:
 	typedef Node<double> FloatNode;
 	typedef Node<std::string> StringNode;
 
-	typedef std::pair<int, IntNode> IntPairType;
-	typedef std::pair<int, FloatNode> FloatPairType;
-	typedef std::pair<int, StringNode> StringPairType;
-
 	typedef std::map< int, Node<int64_t> > IntMapType;
 	typedef std::map< int, Node<double> > FloatMapType;
 	typedef std::map< int, Node<std::string> > StringMapType;
@@ -154,7 +151,6 @@ protected:
 	FloatMapType floatNodes;
 	StringMapType stringNodes;
 
-	static std::map< int, std::string > sfncNames;
 	CAM_HANDLE camera;
 
 public:
