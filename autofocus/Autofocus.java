@@ -37,12 +37,9 @@ import java.util.Date;
 import java.util.prefs.Preferences;
 
 import mmcorej.CMMCore;
-import mmcorej.MMCoreJ;
 import mmcorej.StrVector;
 
-import org.micromanager.acquisition.AcquisitionData;
 import org.micromanager.api.ScriptInterface;
-import org.micromanager.utils.AutofocusManager;
 import org.micromanager.utils.AutofocusBase;
 import org.micromanager.utils.MMException;
 import org.micromanager.utils.PropertyItem;
@@ -168,7 +165,9 @@ public class Autofocus extends AutofocusBase implements org.micromanager.api.Aut
 
       try{
          IJ.write("Autofocus started.");
+         boolean shutterOpen = core_.getShutterOpen();
          core_.setShutterOpen(true);
+         boolean autoShutter = core_.getAutoShutter();
          core_.setAutoShutter(false);
 
 
@@ -275,8 +274,8 @@ public class Autofocus extends AutofocusBase implements org.micromanager.api.Aut
          // indx =1;
          snapSingleImage();
          // indx =0;  
-         core_.setShutterOpen(false);
-         core_.setAutoShutter(true);
+         core_.setShutterOpen(shutterOpen);
+         core_.setAutoShutter(autoShutter);
 
 
          IJ.write("Total Time: "+ String.valueOf(System.currentTimeMillis()-t0));
