@@ -15,7 +15,7 @@
 #include <string>
 #include <vector>
 #include <map>
-#include <boost/any.hpp>
+#include <boost/function.hpp>
 #include <Jai_Factory.h>
 
 
@@ -86,7 +86,7 @@ template<class T> class Node
 {
 public:
 	Node();
-	Node( const std::string name, CAM_HANDLE camera ); // camera is not stored in node
+	Node( const std::string name, CAM_HANDLE camera, boost::function<void(const std::string&)> logger = 0 );
 	Node( const Node& );
 	virtual ~Node() { }
 	Node<T>& operator=( const Node<T>& rhs );
@@ -124,14 +124,14 @@ protected:
 	T val; 
 
 	// helpers for the constructor
-	void testAvailability( CAM_HANDLE camera );
-	void testMinMaxInc( CAM_HANDLE camera );
-	void testEnum( CAM_HANDLE camera );
+	void testAvailability( CAM_HANDLE camera, boost::function<void(const std::string&)> logger );
+	void testMinMaxInc( CAM_HANDLE camera, boost::function<void(const std::string&)> logger );
+	void testEnum( CAM_HANDLE camera, boost::function<void(const std::string&)> logger );
 
 	// test the type of the node.  if not the type we expect,
 	// (for instance, if the camera is an older model that isn't
 	// completely GenICam-compliant) disable the node
-	void testType( NODE_HANDLE camera );
+	void testType( NODE_HANDLE camera, boost::function<void(const std::string&)> logger );
 };
 
 
@@ -154,7 +154,7 @@ protected:
 	CAM_HANDLE camera;
 
 public:
-	GigENodes( CAM_HANDLE camera );
+	GigENodes( CAM_HANDLE camera, boost::function<void(const std::string&)> logger = 0 );
 	virtual ~GigENodes(void);
 
 	bool isAvailable( InterestingNodeInteger node )

@@ -20,7 +20,7 @@
 #include <algorithm>
 #include <iterator>
 
-#include "boost/lexical_cast.hpp"
+#include <boost/lexical_cast.hpp>
 
 #include <Jai_Factory.h>
 
@@ -285,13 +285,22 @@ int CGigECamera::Initialize()
 	}
 	LogMessage( "camera open succeeded", false );
 	cameraOpened = true;
-	this->nodes = new GigENodes( hCamera );
+
+	struct Logger
+	{
+		CGigECamera* d;
+		Logger( CGigECamera* d ) : d( d ) {}
+		void operator()( const std::string& msg ) { d->LogMessage( msg, true ); }
+	} logger(this);
+	this->nodes = new GigENodes( hCamera, logger );
 
 	// make sure the exposure mode is set to "Timed", if possible.
 	// not an error if we can't set this, since it's only a recommended parameter.
+	LogMessage( "Setting exposure mode to Timed" );
 	retval = J_Camera_SetValueString( hCamera, "ExposureMode", "Timed" );
 	if( retval != J_ST_SUCCESS )
 	{
+		LogMessage( "Failed to set exposure mode; trying shutter mode instead" );
 		// some older cameras (from JAI?) use "ShutterMode" instead of "ExposureMode"
 		retval = J_Camera_SetValueString( hCamera, "ShutterMode", "ExposureTimeAbs" );
 		if( retval != J_ST_SUCCESS )

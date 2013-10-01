@@ -15,6 +15,7 @@
 #include <vector>
 #include <map>
 #include <boost/assign/list_of.hpp>
+#include <boost/lexical_cast.hpp>
 
 namespace {
 
@@ -61,27 +62,31 @@ const std::map< int, std::string > sfncNames
 
 class NodeFactory {
 	CAM_HANDLE camera;
+	boost::function<void(const std::string&)> logger;
 
 public:
-	NodeFactory( CAM_HANDLE camera ) : camera( camera ) {}
+	NodeFactory( CAM_HANDLE camera, boost::function<void(const std::string&)> logger = 0 ) :
+		camera( camera ),
+		logger( logger )
+	{}
 
 	Node<int64_t> IntNode( InterestingNodeInteger node )
-	{ return Node<int64_t>( sfncNames.find( node )->second, camera ); }
+	{ return Node<int64_t>( sfncNames.find( node )->second, camera, logger ); }
 	Node<double> FloatNode( InterestingNodeFloat node )
-	{ return Node<double>( sfncNames.find( node )->second, camera ); }
+	{ return Node<double>( sfncNames.find( node )->second, camera, logger ); }
 	Node<std::string> StringNode( InterestingNodeString node )
-	{ return Node<std::string>( sfncNames.find( node )->second, camera ); }
+	{ return Node<std::string>( sfncNames.find( node )->second, camera, logger ); }
 };
 
 } // anonymous namespace
 
 
-GigENodes::GigENodes( CAM_HANDLE camera )
+GigENodes::GigENodes( CAM_HANDLE camera, boost::function<void(const std::string&)> logger )
 	: camera( camera )
 {
 	// the types of all these nodes is as specified in the GenICam sfnc 1.4
 
-	NodeFactory nf( camera );
+	NodeFactory nf( camera, logger );
 
 	// mandatory nodes
 	intNodes.insert( std::make_pair( WIDTH, nf.IntNode( WIDTH ) ) );
@@ -327,7 +332,7 @@ template< class T > Node<T>::Node( )
 	
 }
 
-template< class T > Node<T>::Node( const std::string name, CAM_HANDLE camera )
+template< class T > Node<T>::Node( const std::string name, CAM_HANDLE camera, boost::function<void(const std::string&)> logger )
 	: sfncName( name ),
 	  available( false ),
 	  readable( false ),
@@ -337,9 +342,9 @@ template< class T > Node<T>::Node( const std::string name, CAM_HANDLE camera )
 	  hasInc( false ),
 	  isEnum( false )
 {
-	testAvailability( camera );
-	testMinMaxInc( camera );
-	testEnum( camera );
+	testAvailability( camera, logger );
+	testMinMaxInc( camera, logger );
+	testEnum( camera, logger );
 }
 
 
@@ -370,26 +375,32 @@ template<class T> Node<T>& Node<T>::operator=( const Node<T>& rhs )
 }
 
 
-template<class T> void Node<T>::testAvailability( CAM_HANDLE camera )
+template<class T> void Node<T>::testAvailability( CAM_HANDLE camera, boost::function<void(const std::string&)> logger )
 {
+	logger( "Getting node: " + sfncName );
 	NODE_HANDLE node;
 	J_STATUS_TYPE retval  = J_Camera_GetNodeByName( camera, const_cast<char*>( this->sfncName.c_str() ), &node );
 	if( retval != J_ST_SUCCESS )
 	{
+		logger( "Failed to get node: " + sfncName );
 		this->available = false;
 		this->readable = false;
 		this->writable = false;
 		return;
 	}
+
+	logger( "Getting node access mode: " + sfncName );
 	J_NODE_ACCESSMODE access;
 	retval = J_Node_GetAccessMode( node, &access );
 	if( retval != J_ST_SUCCESS )
 	{
+		logger( "Failed to get node access mode: " + sfncName );
 		this->available = false;
 		this->readable = false;
 		this->writable = false;
 		return;
 	}
+	logger( "Node " + sfncName + " access mode = " + boost::lexical_cast<std::string>( access ) );
 	switch( access )
 	{
 	case NI:  // not implemented
@@ -415,16 +426,18 @@ template<class T> void Node<T>::testAvailability( CAM_HANDLE camera )
 		this->writable = true;
 		break;
 	}
-	testType( node );
+	testType( node, logger );
 }
 
 
-template<> void Node<int64_t>::testType( NODE_HANDLE node )
+template<> void Node<int64_t>::testType( NODE_HANDLE node, boost::function<void(const std::string&)> logger )
 {
+	logger( "Getting node type: " + sfncName );
 	J_NODE_TYPE type;
 	J_STATUS_TYPE retval = J_Node_GetType( node, &type );
 	if( retval != J_ST_SUCCESS )
 	{
+		logger( "Failed to get node type: " + sfncName );
 		this->available = false;
 		this->readable = false;
 		this->writable = false;
@@ -433,6 +446,7 @@ template<> void Node<int64_t>::testType( NODE_HANDLE node )
 	// disable this node if the camera reports a type different than that expected
 	if( type != J_IInteger && type != J_IEnumeration )
 	{
+		logger( "Unexpected type for node " + sfncName + ": expected integer or enum; got " + boost::lexical_cast<std::string>( type ) );
 		this->available = false;
 		this->readable = false;
 		this->writable = false;
@@ -440,12 +454,14 @@ template<> void Node<int64_t>::testType( NODE_HANDLE node )
 }
 
 
-template<> void Node<double>::testType( NODE_HANDLE node )
+template<> void Node<double>::testType( NODE_HANDLE node, boost::function<void(const std::string&)> logger )
 {
+	logger( "Getting node type: " + sfncName );
 	J_NODE_TYPE type;
 	J_STATUS_TYPE retval = J_Node_GetType( node, &type );
 	if( retval != J_ST_SUCCESS )
 	{
+		logger( "Failed to get node type: " + sfncName );
 		this->available = false;
 		this->readable = false;
 		this->writable = false;
@@ -454,6 +470,7 @@ template<> void Node<double>::testType( NODE_HANDLE node )
 	// disable this node if the camera reports a type different than that expected
 	if( type != J_IFloat )
 	{
+		logger( "Unexpected type for node " + sfncName + ": expected float; got " + boost::lexical_cast<std::string>( type ) );
 		this->available = false;
 		this->readable = false;
 		this->writable = false;
@@ -461,12 +478,14 @@ template<> void Node<double>::testType( NODE_HANDLE node )
 }
 
 
-template<> void Node<std::string>::testType( NODE_HANDLE node )
+template<> void Node<std::string>::testType( NODE_HANDLE node, boost::function<void(const std::string&)> logger )
 {
+	logger( "Getting node type: " + sfncName );
 	J_NODE_TYPE type;
 	J_STATUS_TYPE retval = J_Node_GetType( node, &type );
 	if( retval != J_ST_SUCCESS )
 	{
+		logger( "Failed to get node type: " + sfncName );
 		this->available = false;
 		this->readable = false;
 		this->writable = false;
@@ -475,6 +494,7 @@ template<> void Node<std::string>::testType( NODE_HANDLE node )
 	// disable this node if the camera reports a type different than that expected
 	if( type != J_IStringReg && type != J_IEnumeration )
 	{
+		logger( "Unexpected type for node " + sfncName + ": expected string or enum; got " + boost::lexical_cast<std::string>( type ) );
 		this->available = false;
 		this->readable = false;
 		this->writable = false;
@@ -482,19 +502,24 @@ template<> void Node<std::string>::testType( NODE_HANDLE node )
 }
 
 
-template<class T> void Node<T>::testEnum( CAM_HANDLE camera )
+template<class T> void Node<T>::testEnum( CAM_HANDLE camera, boost::function<void(const std::string&)> logger )
 {
+	logger( "Getting node: " + sfncName );
 	NODE_HANDLE node;
 	J_STATUS_TYPE retval  = J_Camera_GetNodeByName( camera, const_cast<char*>( this->sfncName.c_str() ), &node );
 	if( retval != J_ST_SUCCESS )
 	{
+		logger( "Failed to get node: " + sfncName );
 		this->isEnum = false;
 		return;
 	}
+
+	logger( "Getting node type: " + sfncName );
 	J_NODE_TYPE type;
 	retval = J_Node_GetType( node, &type );
 	if( retval != J_ST_SUCCESS )
 	{
+		logger( "Failed to get node type: " + sfncName );
 		this->isEnum = false;
 		return;
 	}
@@ -506,7 +531,7 @@ template<class T> void Node<T>::testEnum( CAM_HANDLE camera )
 
 
 
-template<> void Node<int64_t>::testMinMaxInc( CAM_HANDLE )
+template<> void Node<int64_t>::testMinMaxInc( CAM_HANDLE, boost::function<void(const std::string&)> logger )
 {
 	this->hasMin = true;
 	this->hasMax = true;
@@ -514,24 +539,31 @@ template<> void Node<int64_t>::testMinMaxInc( CAM_HANDLE )
 }
 
 
-template<> void Node<double>::testMinMaxInc( CAM_HANDLE camera )
+template<> void Node<double>::testMinMaxInc( CAM_HANDLE camera, boost::function<void(const std::string&)> logger )
 {
 	this->hasMin = true;
 	this->hasMax = true;
+	logger( "Getting node: " + sfncName );
 	NODE_HANDLE node;
 	J_STATUS_TYPE retval  = J_Camera_GetNodeByName( camera, const_cast<char*>( this->sfncName.c_str() ), &node );
-	if( retval != J_ST_SUCCESS )
+	if( retval != J_ST_SUCCESS ) {
+		logger( "Failed to get node: " + sfncName );
 		this->hasInc = false;
+		return;
+	}
+	logger( "Getting float node increment flag: " + sfncName );
 	uint32_t i;
 	retval = J_Node_GetFloatHasInc( node, &i );
-	if( retval != J_ST_SUCCESS || i == 0 )
+	if( retval != J_ST_SUCCESS || i == 0 ) {
 		this->hasInc = false;
+		logger( "Failed to get float node increment flag: " + sfncName );
+	}
 	else
 		this->hasInc = true;
 }
 
 
-template<> void Node<std::string>::testMinMaxInc( CAM_HANDLE )
+template<> void Node<std::string>::testMinMaxInc( CAM_HANDLE, boost::function<void(const std::string&)> logger )
 {
 	this->hasMin = false;
 	this->hasMax = false;
