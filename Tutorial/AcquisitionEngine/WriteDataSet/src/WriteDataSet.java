@@ -14,49 +14,13 @@ import org.micromanager.acquisition.MMAcquisition;
 import org.micromanager.acquisition.MMImageCache;
 import org.micromanager.acquisition.TaggedImageStorageDiskDefault;
 import org.micromanager.acquisition.TaggedImageStorageMultipageTiff;
+import org.micromanager.api.MMTags;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.api.TaggedImageStorage;
 import org.micromanager.utils.MMScriptException;
 
 
 public class WriteDataSet {
-
-   /**
-    * Metadata field definitions
-    * NOTE: this should be defined in the micro-manager metadata class
-    */
-   public static final String SUMMARY = "Summary";
-   public static final String WIDTH = "Width";
-   public static final String HEIGHT = "Height";
-   public static final String PIXSIZE = "PixelSize_um";
-   public static final String XUM = "XPositionUm";
-   public static final String YUM = "YPositionUm";
-   public static final String ZUM = "ZPositionUm";
-   public static final String ZUM2 = "Z-Position";
-   public static final String FILE_NAME = "FileName";
-   public static final String PIXEL_ASPECT = "PixelAspect";
-   public static final String SOURCE = "Source";
-   public static final String FRAMES = "Frames";
-   public static final String CHANNELS = "Channels";
-   public static final String SLICES = "Slices";
-   public static final String POSITIONS = "Positions";
-   public static final String COLORS = "ChColors";
-   public static final String NAMES = "ChNames";
-   public static final String CHANNEL = "Channel";
-   public static final String FRAME = "Frame";
-   public static final String SLICE = "Slice";
-   public static final String CHANNEL_INDEX = "ChannelIndex";
-   public static final String SLICE_INDEX = "SliceIndex";
-   public static final String FRAME_INDEX = "FrameIndex";
-   public static final String CHANNEL_NAME = "Channel";
-   public static final String POS_NAME = "PositionName";
-   public static final String POS_INDEX = "PositionIndex";
-   public static final String PIX_TYPE = "PixelType";
-   public static final String BIT_DEPTH = "BitDepth";
-   public static final String SLICES_FIRST = "SlicesFirst";
-   public static final String TIME_FIRST = "TimeFirst";
-   public static final String IJ_TYPE = "IJType";
-   public static final String TIME = "Time";
    
    public static void main(String[] args) {
       taggedWrite();
@@ -96,26 +60,26 @@ public class WriteDataSet {
       try {
          // Create new data set
          JSONObject summary = new JSONObject();
-         summary.put(SLICES, slices);
-         summary.put(POSITIONS, 1);
-         summary.put(CHANNELS, channels.size());
-         summary.put(FRAMES, frames);
-         summary.put(SLICES_FIRST, true);
-         summary.put(TIME_FIRST, false);
+         summary.put(MMTags.Summary.SLICES, slices);
+         summary.put(MMTags.Summary.POSITIONS, 1);
+         summary.put(MMTags.Summary.CHANNELS, channels.size());
+         summary.put(MMTags.Summary.FRAMES, frames);
+         summary.put(MMTags.Summary.SLICES_FIRST, true);
+         summary.put(MMTags.Summary.TIME_FIRST, false);
          
          if (d == 2) {
-            summary.put(PIX_TYPE, "GRAY16");
-            summary.put(IJ_TYPE, ImagePlus.GRAY16);
+            summary.put(MMTags.Summary.PIX_TYPE, "GRAY16");
+            summary.put(MMTags.Summary.IJ_TYPE, ImagePlus.GRAY16);
          } else if (d==1) {
-            summary.put(PIX_TYPE, "GRAY8");
-            summary.put(IJ_TYPE, ImagePlus.GRAY8);
+            summary.put(MMTags.Summary.PIX_TYPE, "GRAY8");
+            summary.put(MMTags.Summary.IJ_TYPE, ImagePlus.GRAY8);
          } else {
             System.out.println("Unsupported pixel type");
             return;
          }
-         summary.put("Width", 512);
-         summary.put("Height", 512);
-         summary.put("Prefix", acqName); // Acquisition name
+         summary.put(MMTags.Summary.WIDTH, 512);
+         summary.put(MMTags.Summary.HEIGHT, 512);
+         summary.put(MMTags.Summary.PREFIX, acqName); // Acquisition name
          
          //these are used to create display settings
          JSONArray chColors = new JSONArray();
@@ -128,10 +92,10 @@ public class WriteDataSet {
             chMins.put(0);
             chMaxs.put(d == 2 ? 65535 : 255);
          }
-         summary.put("ChColors", chColors);
-         summary.put("ChNames", chNames);
-         summary.put("ChMins", chMins);
-         summary.put("ChMaxes", chMaxs);
+         summary.put(MMTags.Summary.COLORS, chColors);
+         summary.put(MMTags.Summary.CHANNELS, chNames);
+         summary.put(MMTags.Summary.CHANNEL_MINS, chMins);
+         summary.put(MMTags.Summary.CHANNEL_MAXES, chMaxs);
          
          TaggedImageStorage storage = null;
          String path = rootName + "/" + acqName;
@@ -177,35 +141,35 @@ public class WriteDataSet {
                   
                   // build metadata
                   JSONObject md = new JSONObject();
-                  md.put(WIDTH, w);
-                  md.put(HEIGHT, h);
+                  md.put(MMTags.Image.WIDTH, w);
+                  md.put(MMTags.Image.HEIGHT, h);
                   
                   
                   // NOTE: are both FRAME and FRAME_INDEX necessary??
-                  md.put(FRAME, fr);
-                  md.put(FRAME_INDEX, fr);
+                  md.put(MMTags.Image.FRAME, fr);
+                  md.put(MMTags.Image.FRAME_INDEX, fr);
 
-                  md.put(SLICE, sl);
-                  md.put(SLICE_INDEX, sl);
+                  md.put(MMTags.Image.SLICE, sl);
+                  md.put(MMTags.Image.SLICE_INDEX, sl);
 
-                  md.put(CHANNEL_INDEX, ch);
-                  md.put(CHANNEL_NAME, channels.get(ch));
-                  md.put(POS_INDEX, 1);
+                  md.put(MMTags.Image.CHANNEL_INDEX, ch);
+                  md.put(MMTags.Image.CHANNEL_NAME, channels.get(ch));
+                  md.put(MMTags.Image.POS_INDEX, 1);
 
-                  md.put(XUM, x[0]);
-                  md.put(YUM, y[0]);
-                  md.put(ZUM, z);
+                  md.put(MMTags.Image.XUM, x[0]);
+                  md.put(MMTags.Image.YUM, y[0]);
+                  md.put(MMTags.Image.ZUM, z);
                   
                   if (d == 2) {
-                     md.put(IJ_TYPE, ImagePlus.GRAY16);
+                     md.put(MMTags.Image.IJ_TYPE, ImagePlus.GRAY16);
                   } else if (d==1) {
-                     md.put(IJ_TYPE, ImagePlus.GRAY8);
+                     md.put(MMTags.Image.IJ_TYPE, ImagePlus.GRAY8);
                   } else {
                      System.out.println("Unsupported pixel type");
                      return;
                   }
 
-                  md.put(TIME, new SimpleDateFormat("yyyyMMdd HHmmss").format(Calendar.getInstance().getTime())); // TIME FORMAT ???
+                  md.put(MMTags.Image.TIME, new SimpleDateFormat("yyyyMMdd HHmmss").format(Calendar.getInstance().getTime())); // TIME FORMAT ???
 
                   TaggedImage ti = new TaggedImage(img, md);
                   imageCache.putImage(ti);
@@ -264,8 +228,8 @@ public class WriteDataSet {
 			// Create new data set
 			app.openAcquisition(acqName, rootName, frames, (int)channels.size(), slices, 1, false, true);
          MMAcquisition a = app.getAcquisition(acqName);
-         app.getAcquisition(acqName).setProperty(SLICES_FIRST, "true");
-         app.getAcquisition(acqName).setProperty(TIME_FIRST, "false");
+         app.getAcquisition(acqName).setProperty(MMTags.Summary.SLICES_FIRST, "true");
+         app.getAcquisition(acqName).setProperty(MMTags.Summary.TIME_FIRST, "false");
 
          app.initializeAcquisition(acqName, (int)w, (int)h, (int)d);
 
@@ -298,31 +262,31 @@ public class WriteDataSet {
 						
 						// build metadata
 						JSONObject md = new JSONObject();
-                  md.put(WIDTH, w);
-                  md.put(HEIGHT, h);
+                  md.put(MMTags.Image.WIDTH, w);
+                  md.put(MMTags.Image.HEIGHT, h);
                   
                   if (d == 2)
-                     md.put(PIX_TYPE, "GRAY16");
+                     md.put(MMTags.Image.PIX_TYPE, "GRAY16");
                   else if (d==1)
-                     md.put(PIX_TYPE, "GRAY8");
+                     md.put(MMTags.Image.PIX_TYPE, "GRAY8");
                   else {
                      System.out.println("Unsupported pixel type");
                      return;
                   }
                   
                   // NOTE: are both FRAME and FRAME_INDEX necessary??
-                  md.put(FRAME, fr);
-                  md.put(FRAME_INDEX, fr);
+                  md.put(MMTags.Image.FRAME, fr);
+                  md.put(MMTags.Image.FRAME_INDEX, fr);
 
-                  md.put(SLICE, sl);
-                  md.put(SLICE_INDEX, sl);
+                  md.put(MMTags.Image.SLICE, sl);
+                  md.put(MMTags.Image.SLICE_INDEX, sl);
 
-                  md.put(CHANNEL_INDEX, ch);
-                  md.put(CHANNEL_NAME, channels.get(ch));
+                  md.put(MMTags.Image.CHANNEL_INDEX, ch);
+                  md.put(MMTags.Image.CHANNEL_NAME, channels.get(ch));
 
-                  md.put(XUM, x[0]);
-                  md.put(YUM, y[0]);
-                  md.put(ZUM, z);
+                  md.put(MMTags.Image.XUM, x[0]);
+                  md.put(MMTags.Image.YUM, y[0]);
+                  md.put(MMTags.Image.ZUM, z);
 
                   TaggedImage ti = new TaggedImage(img, md);
                   app.addImage(acqName, ti);
