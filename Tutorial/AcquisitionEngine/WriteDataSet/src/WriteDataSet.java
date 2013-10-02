@@ -27,7 +27,7 @@ public class WriteDataSet {
    }
    
    /**
-    * Create and write acquisition data set using the legacy API
+    * Create and write acquisition data set using the 'tag' API
     */
    public static void taggedWrite() {
       
