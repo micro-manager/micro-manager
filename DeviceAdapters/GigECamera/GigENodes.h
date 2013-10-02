@@ -85,8 +85,9 @@ enum InterestingNodeString
 template<class T> class Node
 {
 public:
-	Node();
+	// camera is not stored. logger must be valid for lifetime of Node instance.
 	Node( const std::string name, CAM_HANDLE camera, boost::function<void(const std::string&)> logger = 0 );
+	Node();
 	Node( const Node& );
 	virtual ~Node() { }
 	Node<T>& operator=( const Node<T>& rhs );
@@ -122,16 +123,20 @@ protected:
 	bool isEnum;
 	std::string sfncName;
 	T val; 
+	boost::function<void(const std::string&)> logger;
 
 	// helpers for the constructor
-	void testAvailability( CAM_HANDLE camera, boost::function<void(const std::string&)> logger );
-	void testMinMaxInc( CAM_HANDLE camera, boost::function<void(const std::string&)> logger );
-	void testEnum( CAM_HANDLE camera, boost::function<void(const std::string&)> logger );
+	void testAvailability( CAM_HANDLE camera );
+	void testMinMaxInc( CAM_HANDLE camera );
+	void testEnum( CAM_HANDLE camera );
 
 	// test the type of the node.  if not the type we expect,
 	// (for instance, if the camera is an older model that isn't
 	// completely GenICam-compliant) disable the node
-	void testType( NODE_HANDLE camera, boost::function<void(const std::string&)> logger );
+	void testType( NODE_HANDLE camera );
+
+	void LogMessage( const std::string& message ) const
+	{ if (logger) logger(message); }
 };
 
 

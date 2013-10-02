@@ -305,8 +305,16 @@ int CGigECamera::Initialize()
 		retval = J_Camera_SetValueString( hCamera, "ShutterMode", "ExposureTimeAbs" );
 		if( retval != J_ST_SUCCESS )
 		{
-			LogMessage( (std::string) "setupImaging failed to set ExposureMode to Timed and ShutterMode to ExposureTimeAbs" );
+			LogMessage( "Failed to set ExposureMode to Timed and ShutterMode to ExposureTimeAbs" );
 		}
+		else
+		{
+			LogMessage( "Successfully set ShutterMode to ExposureTimeAbs" );
+		}
+	}
+	else
+	{
+		LogMessage( "Successfully set ExposureMode to Timed" );
 	}
 	
 	// set property list
@@ -679,12 +687,14 @@ int CGigECamera::Initialize()
 
 	// synchronize all properties
 	// --------------------------
+	LogMessage( "Synchronizing properties", true );
 	nRet = UpdateStatus();
 	if (nRet != DEVICE_OK)
 		return nRet;
 
 	// setup the buffer
 	// ----------------
+	LogMessage( "Setting up image buffer", true );
 	nRet = ResizeImageBuffer();
 	if (nRet != DEVICE_OK)
 		return nRet;
