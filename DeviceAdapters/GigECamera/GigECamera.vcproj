@@ -44,7 +44,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../../../3rdpartypublic/boost;..\..\..\3rdparty\JAI\SDK\library\CPP\include"
+				AdditionalIncludeDirectories="../../../3rdpartypublic/boost;&quot;..\..\..\3rdparty\JAI\SDK-x64-1.4.1\library\CPP\include&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS;TESTRESOURCELOCKING"
 				MinimalRebuild="true"
 				ExceptionHandling="2"
@@ -70,7 +70,7 @@
 				AdditionalDependencies="Jai_Factory.lib"
 				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="..\..\..\3rdparty\JAI\SDK\library\CPP\lib\Win32_i86"
+				AdditionalLibraryDirectories="&quot;..\..\..\3rdparty\JAI\SDK-x64-1.4.1\library\CPP\lib\Win32_i86&quot;"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)/$(ProjectName).pdb"
 				SubSystem="2"
@@ -127,7 +127,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../../../3rdpartypublic/boost;..\..\..\3rdparty\JAI\SDK\library\CPP\include"
+				AdditionalIncludeDirectories="../../../3rdpartypublic/boost;&quot;..\..\..\3rdparty\JAI\SDK-x64-1.4.1\library\CPP\include&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS;TESTRESOURCELOCKING"
 				MinimalRebuild="true"
 				ExceptionHandling="2"
@@ -153,7 +153,7 @@
 				AdditionalDependencies="Jai_Factory.lib"
 				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="..\..\..\3rdparty\JAI\SDK\library\CPP\lib\Win64_x64"
+				AdditionalLibraryDirectories="&quot;..\..\..\3rdparty\JAI\SDK-x64-1.4.1\library\CPP\lib\Win64_x64&quot;"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)/$(ProjectName).pdb"
 				SubSystem="2"
@@ -208,7 +208,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="../../../3rdpartypublic/boost;..\..\..\3rdparty\JAI\SDK\library\CPP\include"
+				AdditionalIncludeDirectories="../../../3rdpartypublic/boost;&quot;..\..\..\3rdparty\JAI\SDK-x64-1.4.1\library\CPP\include&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS;TESTRESOURCELOCKING"
 				ExceptionHandling="2"
 				RuntimeLibrary="0"
@@ -232,7 +232,7 @@
 				AdditionalDependencies="Jai_Factory.lib"
 				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="..\..\..\3rdparty\JAI\SDK\library\CPP\lib\Win32_i86"
+				AdditionalLibraryDirectories="&quot;..\..\..\3rdparty\JAI\SDK-x64-1.4.1\library\CPP\lib\Win32_i86&quot;"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
@@ -289,7 +289,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="../../../3rdpartypublic/boost;..\..\..\3rdparty\JAI\SDK\library\CPP\include"
+				AdditionalIncludeDirectories="../../../3rdpartypublic/boost;&quot;..\..\..\3rdparty\JAI\SDK-x64-1.4.1\library\CPP\include&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS;TESTRESOURCELOCKING"
 				ExceptionHandling="2"
 				RuntimeLibrary="0"
@@ -313,7 +313,7 @@
 				AdditionalDependencies="Jai_Factory.lib"
 				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="..\..\..\3rdparty\JAI\SDK\library\CPP\lib\Win64_x64"
+				AdditionalLibraryDirectories="&quot;..\..\..\3rdparty\JAI\SDK-x64-1.4.1\library\CPP\lib\Win64_x64&quot;"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
