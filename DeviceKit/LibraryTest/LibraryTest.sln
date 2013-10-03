@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 10.00
-# Visual Studio 2008
+# Visual C++ Express 2008
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LibraryTest", "LibraryTest.vcproj", "{0F35D265-1F9C-4EC0-819F-1347AB378224}"
 	ProjectSection(ProjectDependencies) = postProject
 		{36571628-728C-4ACD-A47F-503BA91C5D43} = {36571628-728C-4ACD-A47F-503BA91C5D43}
@@ -22,13 +22,15 @@ Global
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{0F35D265-1F9C-4EC0-819F-1347AB378224}.Debug|Win32.ActiveCfg = Debug|Win32
 		{0F35D265-1F9C-4EC0-819F-1347AB378224}.Debug|Win32.Build.0 = Debug|Win32
-		{0F35D265-1F9C-4EC0-819F-1347AB378224}.Debug|x64.ActiveCfg = Debug|Win32
+		{0F35D265-1F9C-4EC0-819F-1347AB378224}.Debug|x64.ActiveCfg = Debug|x64
+		{0F35D265-1F9C-4EC0-819F-1347AB378224}.Debug|x64.Build.0 = Debug|x64
 		{0F35D265-1F9C-4EC0-819F-1347AB378224}.Quick|Win32.ActiveCfg = Release|Win32
 		{0F35D265-1F9C-4EC0-819F-1347AB378224}.Quick|Win32.Build.0 = Release|Win32
 		{0F35D265-1F9C-4EC0-819F-1347AB378224}.Quick|x64.ActiveCfg = Release|Win32
 		{0F35D265-1F9C-4EC0-819F-1347AB378224}.Release|Win32.ActiveCfg = Release|Win32
 		{0F35D265-1F9C-4EC0-819F-1347AB378224}.Release|Win32.Build.0 = Release|Win32
-		{0F35D265-1F9C-4EC0-819F-1347AB378224}.Release|x64.ActiveCfg = Release|Win32
+		{0F35D265-1F9C-4EC0-819F-1347AB378224}.Release|x64.ActiveCfg = Release|x64
+		{0F35D265-1F9C-4EC0-819F-1347AB378224}.Release|x64.Build.0 = Release|x64
 		{36571628-728C-4ACD-A47F-503BA91C5D43}.Debug|Win32.ActiveCfg = Debug|Win32
 		{36571628-728C-4ACD-A47F-503BA91C5D43}.Debug|Win32.Build.0 = Debug|Win32
 		{36571628-728C-4ACD-A47F-503BA91C5D43}.Debug|x64.ActiveCfg = Debug|x64

@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 10.00
-# Visual Studio 2008
+# Visual C++ Express 2008
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DeviceTest", "DeviceTest.vcproj", "{7BB87322-B9D7-4D5B-9390-7A1BAC1BAE7E}"
 	ProjectSection(ProjectDependencies) = postProject
 		{36571628-728C-4ACD-A47F-503BA91C5D43} = {36571628-728C-4ACD-A47F-503BA91C5D43}
@@ -22,13 +22,15 @@ Global
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{7BB87322-B9D7-4D5B-9390-7A1BAC1BAE7E}.Debug|Win32.ActiveCfg = Debug|Win32
 		{7BB87322-B9D7-4D5B-9390-7A1BAC1BAE7E}.Debug|Win32.Build.0 = Debug|Win32
-		{7BB87322-B9D7-4D5B-9390-7A1BAC1BAE7E}.Debug|x64.ActiveCfg = Debug|Win32
+		{7BB87322-B9D7-4D5B-9390-7A1BAC1BAE7E}.Debug|x64.ActiveCfg = Debug|x64
+		{7BB87322-B9D7-4D5B-9390-7A1BAC1BAE7E}.Debug|x64.Build.0 = Debug|x64
 		{7BB87322-B9D7-4D5B-9390-7A1BAC1BAE7E}.Quick|Win32.ActiveCfg = Release|Win32
 		{7BB87322-B9D7-4D5B-9390-7A1BAC1BAE7E}.Quick|Win32.Build.0 = Release|Win32
 		{7BB87322-B9D7-4D5B-9390-7A1BAC1BAE7E}.Quick|x64.ActiveCfg = Release|Win32
 		{7BB87322-B9D7-4D5B-9390-7A1BAC1BAE7E}.Release|Win32.ActiveCfg = Release|Win32
 		{7BB87322-B9D7-4D5B-9390-7A1BAC1BAE7E}.Release|Win32.Build.0 = Release|Win32
-		{7BB87322-B9D7-4D5B-9390-7A1BAC1BAE7E}.Release|x64.ActiveCfg = Release|Win32
+		{7BB87322-B9D7-4D5B-9390-7A1BAC1BAE7E}.Release|x64.ActiveCfg = Release|x64
+		{7BB87322-B9D7-4D5B-9390-7A1BAC1BAE7E}.Release|x64.Build.0 = Release|x64
 		{36571628-728C-4ACD-A47F-503BA91C5D43}.Debug|Win32.ActiveCfg = Debug|Win32
 		{36571628-728C-4ACD-A47F-503BA91C5D43}.Debug|Win32.Build.0 = Debug|Win32
 		{36571628-728C-4ACD-A47F-503BA91C5D43}.Debug|x64.ActiveCfg = Debug|x64

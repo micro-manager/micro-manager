@@ -97,6 +97,7 @@ def check_conplat_consistency(configdicts):
                           for configdict in configdicts.values()))
     for setting in sorted(all_settings):
         check_setting_consistency(setting, configdicts, configs, platforms)
+    print()
 
 
 def check_setting_consistency(setting, configdicts, configs, platforms):
@@ -232,7 +233,9 @@ def value_str(value):
 
 
 def main():
-    configdicts = read_vcproj(sys.argv[1])
+    proj = sys.argv[1]
+    print(proj + ":")
+    configdicts = read_vcproj(proj)
     check_conplat_consistency(configdicts)
 
 
