@@ -273,11 +273,11 @@ int CMMirror::GetPosition(double& x, double& y)
    ostringstream command; command.str("");
    command << "W " << axisLetterX_;
    RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
-   x = (long) (hub_->ParseAnswerAfterPosition(2)/unitMultX_);
+   x = hub_->ParseAnswerAfterPosition(2)/unitMultX_;
    command.str("");
    command << "W " << axisLetterY_;
    RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
-   y = (long) (hub_->ParseAnswerAfterPosition(2)/unitMultY_);
+   y = hub_->ParseAnswerAfterPosition(2)/unitMultY_;
    return DEVICE_OK;
 }
 
