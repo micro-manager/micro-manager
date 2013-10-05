@@ -65,7 +65,7 @@ class LeicaScopeInterface
       int GetDiaphragmInfo(MM::Device& device, MM::Core& core, LeicaDeviceModel& diaphrahm, int deviceID);
       int GetTLPolarizerInfo(MM::Device& device, MM::Core& core);
       int GetDICTurretInfo(MM::Device& device, MM::Core& core);
-      int LeicaScopeInterface::GetFastFilterWheelInfo(MM::Device& device, MM::Core& core);
+      int GetFastFilterWheelInfo(MM::Device& device, MM::Core& core);
       int GetMagChangerInfo(MM::Device& device, MM::Core& core);
       int GetDriveParameters(MM::Device& device, MM::Core& core, int deviceID);
 	   int GetTransmittedLightState(MM::Device& device, MM::Core& core, int & position);
