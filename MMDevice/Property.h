@@ -287,14 +287,6 @@ public:
       return DEVICE_OK;  // Return an error instead???
    }
 
-   // virtual API
-   // ~~~~~~~~~~~
-   virtual Property* Clone() const = 0;
-
-   // operators
-   // ~~~~~~~~~
-   Property& operator=(const Property& rhs);
-
 protected:
    bool readOnly_;
    ActionFunctor* fpAction_;
@@ -308,6 +300,9 @@ protected:
    double lowerLimit_;
    double upperLimit_;
    std::map<std::string, long> values_; // allowed values
+
+private:
+   Property& operator=(const Property&);
 };
 
 /**
@@ -332,12 +327,9 @@ public:
 
    bool SetLimits(double /*lowerLimit*/, double /*upperLimit*/) {return false;}
 
-   Property* Clone() const;
-
-   // operators
-   StringProperty& operator=(const StringProperty& rhs);
-
 private:
+   StringProperty& operator=(const StringProperty&);
+
    std::string value_;
 };
 
@@ -361,12 +353,9 @@ public:
    bool Get(long& val) const ;
    bool Get(std::string& val) const;
 
-   Property* Clone() const;
-
-   // operators
-   FloatProperty& operator=(const FloatProperty& rhs);
-
 private:
+   FloatProperty& operator=(const FloatProperty&);
+
    double Truncate(double dVal);
    double value_;
    int decimalPlaces_;
@@ -392,12 +381,9 @@ public:
    bool Get(long& val) const ;
    bool Get(std::string& val) const;
 
-   Property* Clone() const;
-
-   // operators
-   IntegerProperty& operator=(const IntegerProperty& rhs);
-
 private:
+   IntegerProperty& operator=(const IntegerProperty&);
+
    long value_;
 };
 

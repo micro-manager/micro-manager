@@ -86,20 +86,6 @@ void MM::Property::SetSequenceable(long sequenceMaxSize)
    sequenceMaxSize_ = sequenceMaxSize;
 }
 
-MM::Property& MM::Property::operator=(const MM::Property& rhs)
- {
-    readOnly_ = rhs.readOnly_;
-    values_ = rhs.values_;
-    cached_ = rhs.cached_;
-    delete fpAction_; // !!! do not copy actions
-
-    // TODO: do we really nead Clone()?
-    // Since actions are not copied in the equals operator,
-    // the whole issue of cloning properties is suspect
-
-    return *this;
- }
-
 
 ///////////////////////////////////////////////////////////////////////////////
 // MM::StringProperty
@@ -144,23 +130,6 @@ bool MM::StringProperty::Get(std::string& strVal) const
    strVal = value_;
    return true;
 }
-
-MM::Property* MM::StringProperty::Clone() const
-{
-   MM::StringProperty* pProp = new MM::StringProperty();
-   *pProp = *this;
-   return pProp;
-}
-
- MM::StringProperty& MM::StringProperty::operator=(const MM::StringProperty& rhs)
- {
-    if (this == &rhs)
-       return *this;
-
-    MM::Property::operator=(rhs);
-    value_ = rhs.value_;
-    return *this;
- }
 
 ///////////////////////////////////////////////////////////////////////////////
 // MM::FloatProperty
@@ -220,23 +189,6 @@ bool MM::FloatProperty::Get(std::string& strVal) const
    return true;
 }
 
-MM::Property* MM::FloatProperty::Clone() const
-{
-   MM::FloatProperty* pProp = new MM::FloatProperty();
-   *pProp = *this;
-   return pProp;
-}
-
- MM::FloatProperty& MM::FloatProperty::operator=(const MM::FloatProperty& rhs)
- {
-    if (this == &rhs)
-       return *this;
-
-    MM::Property::operator=(rhs);
-    value_ = rhs.value_;
-    return *this;
- }
-
 ///////////////////////////////////////////////////////////////////////////////
 // MM::IntegerProperty
 // ~~~~~~~~~~~~~~~~~~
@@ -282,23 +234,6 @@ bool MM::IntegerProperty::Get(std::string& strVal) const
    strVal = pszBuf;
    return true;
 }
-
-MM::Property* MM::IntegerProperty::Clone() const
-{
-   MM::IntegerProperty* pProp = new MM::IntegerProperty();
-   *pProp = *this;
-   return pProp;
-}
-
- MM::IntegerProperty& MM::IntegerProperty::operator=(const MM::IntegerProperty& rhs)
- {
-    if (this == &rhs)
-       return *this;
-
-    MM::Property::operator=(rhs);
-    value_ = rhs.value_;
-    return *this;
- }
 
 ///////////////////////////////////////////////////////////////////////////////
 // MM::PropertyCollection
