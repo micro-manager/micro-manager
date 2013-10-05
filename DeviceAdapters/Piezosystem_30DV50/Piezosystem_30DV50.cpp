@@ -214,7 +214,7 @@ int clearPort(MM::Device& device, MM::Core& core, const char* port)
    return DEVICE_OK;
 }
 
-void splitString(char * string,char* delimiter,char** dest){
+void splitString(char * string, const char* delimiter,char** dest){
   char * pch; 
   pch = strtok (string,delimiter); 
   int i=0;	
@@ -685,7 +685,7 @@ int Stage::SendServiceCommand(const char* cmd,std::string& result){
       return ret;
 	return DEVICE_OK;
 }
-int Stage::GetCommandValue(char* c,double& d){
+int Stage::GetCommandValue(const char* c,double& d){
 	LogMessage ("Get command value d");
 
 	char str[50]="";
@@ -716,7 +716,7 @@ int Stage::GetCommandValue(char* c,double& d){
 	}		
 	return DEVICE_OK;
 }
-int Stage::GetCommandValue(char* c,int& i){
+int Stage::GetCommandValue(const char* c,int& i){
 	LogMessage ("Get command value i",true);
 	char cmd[50]="";
 	sprintf(cmd,"%s",c);	
@@ -744,7 +744,7 @@ int Stage::GetCommandValue(char* c,int& i){
 	}
 	return ret;
 }
-int Stage::SetCommandValue(char* c,double fkt){
+int Stage::SetCommandValue(const char* c,double fkt){
 	LogMessage ("Set command value d");
 	char str[50]="";
 	sprintf(str,"%s,%lf",c,fkt);	
@@ -759,7 +759,7 @@ int Stage::SetCommandValue(char* c,double fkt){
 	return DEVICE_OK;
 }
 
-int Stage::SetCommandValue(char* c,int fkt){
+int Stage::SetCommandValue(const char* c,int fkt){
 	LogMessage ("Set command value i");
 	char str[50]="";
 	sprintf(str,"%s,%d",c,fkt);	
@@ -3037,7 +3037,7 @@ int Shutter::SendCommand(const char* cmd,std::string &result){
       return ret;
 	return DEVICE_OK;
 }
-int Shutter::GetCommandValue(char* c,double& d){
+int Shutter::GetCommandValue(const char* c,double& d){
 	char str[50]="";
 	sprintf(str,"%s",c);	
 	const char* cmd = str; 	
@@ -3065,7 +3065,7 @@ int Shutter::GetCommandValue(char* c,double& d){
 	}		
 	return DEVICE_OK;
 }
-int Shutter::GetCommandValue(char* c,int& i){	
+int Shutter::GetCommandValue(const char* c,int& i){	
 	char cmd[50]="";
 	sprintf(cmd,"%s",c);	
     int ret;
@@ -3090,7 +3090,7 @@ int Shutter::GetCommandValue(char* c,int& i){
 	}
 	return ret;
 }
-int Shutter::SetCommandValue(char* c,double fkt){
+int Shutter::SetCommandValue(const char* c,double fkt){
 	char str[50]="";
 	sprintf(str,"%s,%lf",c,fkt);	
 	const char* cmd = str; 	
@@ -3102,7 +3102,7 @@ int Shutter::SetCommandValue(char* c,double fkt){
 	//Normally no answer	
 	return DEVICE_OK;
 }
-int Shutter::SetCommandValue(char* c,int fkt){	
+int Shutter::SetCommandValue(const char* c,int fkt){	
 	char str[50]="";
 	sprintf(str,"%s,%d",c,fkt);	
 	const char* cmd = str; 	

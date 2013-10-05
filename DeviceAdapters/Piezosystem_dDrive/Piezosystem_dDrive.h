@@ -221,10 +221,10 @@ protected:
 	EVDDeviceBase *device_;
 	int SendCommand(const char* cmd,std::string &result);
     int SendServiceCommand(const char* cmd,std::string& result);  
-    int GetCommandValue(char* c,int ch,double& d);
-    int GetCommandValue(char* c,int ch,int& d);
-    int SetCommandValue(char* c,int ch,double fkt);
-    int SetCommandValue(char* c,int ch,int fkt);
+    int GetCommandValue(const char* c,int ch,double& d);
+    int GetCommandValue(const char* c,int ch,int& d);
+    int SetCommandValue(const char* c,int ch,double fkt);
+    int SetCommandValue(const char* c,int ch,int fkt);
 	int GetStatus(int& stat, EVD* ch);
     int GetLimitsValues(EVD* struc);
 	int GetActuatorName(char* id,int ch);
@@ -473,10 +473,10 @@ public:
 private:
    int SendCommand(const char* cmd,std::string &result);
    int SendServiceCommand(const char* cmd,std::string& result);  
-   int GetCommandValue(char* c,double& d);
-   int GetCommandValue(char* c,int& d);
-   int SetCommandValue(char* c,double fkt);
-   int SetCommandValue(char* c,int fkt);
+   int GetCommandValue(const char* c,double& d);
+   int GetCommandValue(const char* c,int& d);
+   int SetCommandValue(const char* c,double fkt);
+   int SetCommandValue(const char* c,int fkt);
    int GetLimitsValues();  
    
    bool initialized_;

@@ -289,10 +289,10 @@ private:
    int SendCommand(const char* cmd,std::string &result);
    int SendServiceCommand(const char* cmd,std::string& result);  
    int GetDouble(const char * cmd,double& value );
-   int GetCommandValue(char* c,double& d);
-   int GetCommandValue(char* c,int& d);
-   int SetCommandValue(char* c,double fkt);
-   int SetCommandValue(char* c,int fkt);
+   int GetCommandValue(const char* c,double& d);
+   int GetCommandValue(const char* c,int& d);
+   int SetCommandValue(const char* c,double fkt);
+   int SetCommandValue(const char* c,int fkt);
    int GetLimitsValues();
 
    bool initialized_;
@@ -470,10 +470,10 @@ private:
    //int SetShutterPosition(bool state);
    //int GetShutterPosition(bool& state);
 	int SendCommand(const char* cmd,std::string &result);
-	int GetCommandValue(char* c,double& d);
-   int GetCommandValue(char* c,int& d);
-   int SetCommandValue(char* c,double fkt);
-   int SetCommandValue(char* c,int fkt);
+   int GetCommandValue(const char* c,double& d);
+   int GetCommandValue(const char* c,int& d);
+   int SetCommandValue(const char* c,double fkt);
+   int SetCommandValue(const char* c,int fkt);
 	int GetLimitsValues();
    std::string name_;   
    bool initialized_; 

@@ -538,7 +538,7 @@ int clearPort(MM::Device& device, MM::Core& core, const char* port)
    return DEVICE_OK;
 }
 
-void splitString(char* string,char* delimiter,char** dest){
+void splitString(char* string, const char* delimiter,char** dest){
   char * pch; 
   pch = strtok (string,delimiter); 
   int i=0;	
@@ -590,7 +590,7 @@ int EVDBase::SendServiceCommand(const char* cmd,std::string& result){
       return ret;
 	return DEVICE_OK;
 }
-int EVDBase::GetCommandValue(char* c,int channel,double& d){
+int EVDBase::GetCommandValue(const char* c,int channel,double& d){
 	device_->LogMessage ("Get command value double",true);
 
 	char str[50]="";
@@ -620,7 +620,7 @@ int EVDBase::GetCommandValue(char* c,int channel,double& d){
 	}		
 	return DEVICE_OK;
 }
-int EVDBase::GetCommandValue(char* c,int channel,int& i){
+int EVDBase::GetCommandValue(const char* c,int channel,int& i){
 	device_->LogMessage ("Get command value integer",true);
 	char cmd[50]="";
 	sprintf(cmd,"%s,%d",c,channel);	
@@ -647,7 +647,7 @@ int EVDBase::GetCommandValue(char* c,int channel,int& i){
 	}
 	return ret;
 }
-int EVDBase::SetCommandValue(char* c,int channel,double fkt){
+int EVDBase::SetCommandValue(const char* c,int channel,double fkt){
 	device_->LogMessage ("Set command value double",true);
 	char str[50]="";
 	sprintf(str,"%s,%d,%lf",c,channel,fkt);	
@@ -668,7 +668,7 @@ int EVDBase::SetCommandValue(char* c,int channel,double fkt){
 	//}
 	return DEVICE_OK;
 }
-int EVDBase::SetCommandValue(char* c,int channel,int fkt){
+int EVDBase::SetCommandValue(const char* c,int channel,int fkt){
 	device_->LogMessage ("Set command value integer",true);
 	char str[50]="";
 	sprintf(str,"%s,%d,%d",c,channel,fkt);	
@@ -1861,7 +1861,7 @@ int Stage::SendServiceCommand(const char* cmd,std::string& result){
       return ret;
 	return DEVICE_OK;
 }
-int Stage::GetCommandValue(char* c,double& d){
+int Stage::GetCommandValue(const char* c,double& d){
 	char str[50]="";
 	sprintf(str,"%s,%d",c,chx_.channel_);	
 	const char* cmd = str; 	
@@ -1887,7 +1887,7 @@ int Stage::GetCommandValue(char* c,double& d){
 	}		
 	return DEVICE_OK;
 }
-int Stage::GetCommandValue(char* c,int& i){	
+int Stage::GetCommandValue(const char* c,int& i){	
 	char cmd[50]="";
 	sprintf(cmd,"%s,%d",c,chx_.channel_);	
     int ret;
@@ -1912,7 +1912,7 @@ int Stage::GetCommandValue(char* c,int& i){
 	}
 	return ret;
 }
-int Stage::SetCommandValue(char* c,double fkt){	
+int Stage::SetCommandValue(const char* c,double fkt){	
 	char str[50]="";
 	sprintf(str,"%s,%d,%lf",c,chx_.channel_,fkt);	
 	const char* cmd = str; 	
@@ -1923,7 +1923,7 @@ int Stage::SetCommandValue(char* c,double fkt){
 	}	
 	return DEVICE_OK;
 }
-int Stage::SetCommandValue(char* c,int fkt){	
+int Stage::SetCommandValue(const char* c,int fkt){	
 	char str[50]="";
 	sprintf(str,"%s,%d,%d",c,chx_.channel_,fkt);	
 	const char* cmd = str; 	
