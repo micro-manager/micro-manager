@@ -4037,10 +4037,14 @@ public class MMStudioMainFrame extends JFrame implements
       SwingUtilities.invokeLater(new Runnable() {
          @Override
          public void run() {
-            if (posListDlg_ != null) {
+            if (posListDlg_ != null)
                posListDlg_.setPositionList(posList_);
+            
+            if (engine_ != null)
                engine_.setPositionList(posList_);
-            }
+            
+            if (acqControlWin_ != null)
+               acqControlWin_.updateGUIContents();
          }
       });
    }

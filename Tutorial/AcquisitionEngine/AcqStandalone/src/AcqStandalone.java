@@ -1,9 +1,7 @@
 import ij.ImagePlus;
 
 import java.io.File;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.BlockingQueue;
 
 import mmcorej.CMMCore;
@@ -13,27 +11,21 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.AcquisitionEngine2010;
-import org.micromanager.acquisition.AcquisitionWrapperEngine;
-import org.micromanager.acquisition.DefaultTaggedImagePipeline;
 import org.micromanager.acquisition.DefaultTaggedImageSink;
 import org.micromanager.acquisition.MMImageCache;
-import org.micromanager.acquisition.ProcessorStack;
 import org.micromanager.acquisition.SequenceSettings;
+import org.micromanager.acquisition.TaggedImageQueue;
 import org.micromanager.acquisition.TaggedImageStorageDiskDefault;
-import org.micromanager.api.DataProcessor;
 import org.micromanager.api.IAcquisitionEngine2010;
-import org.micromanager.api.ImageCache;
-import org.micromanager.api.TaggedImageAnalyzer;
 import org.micromanager.api.TaggedImageStorage;
 import org.micromanager.navigation.MultiStagePosition;
 import org.micromanager.navigation.PositionList;
 import org.micromanager.utils.ChannelSpec;
-import org.micromanager.utils.MMScriptException;
 
 
 public class AcqStandalone {
 
-   public static void main(String[] args) {
+   public synchronized static void main(String[] args) {
       String channelGroup = "Channel";
       SequenceSettings s = new SequenceSettings();
 
@@ -66,7 +58,7 @@ public class AcqStandalone {
       File f = new File(path);
       int count = 1;
       while (f.exists()) {
-         actualPath = path + "_" + count;
+         actualPath = path + "_" + count++;
          f = new File(actualPath);
       }
 
@@ -146,7 +138,14 @@ public class AcqStandalone {
          DefaultTaggedImageSink sink = new DefaultTaggedImageSink(taggedImageQueue, imageCache);
          sink.start();
          
-         taggedImageQueue.wait();
+         TaggedImage img = null;
+         do {
+            img = taggedImageQueue.take();
+            if (img.tags != null && img.tags.has("FrameIndex")) {
+               System.out.println("Current frame index " + img.tags.getInt("FrameIndex"));
+            }
+            Thread.sleep(50);
+         } while (img != TaggedImageQueue.POISON);
 
       } catch (InterruptedException e) {
          // TODO Auto-generated catch block
