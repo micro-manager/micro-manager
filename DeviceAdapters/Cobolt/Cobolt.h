@@ -50,8 +50,8 @@ public:
     int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnPowerMax(MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnPowerSetPoint(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int Cobolt::OnPowerSetMax(MM::PropertyBase* pProp, MM::ActionType  eAct);
-	int OnPowerStatus(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnPowerSetMax(MM::PropertyBase* pProp, MM::ActionType  eAct);
+    int OnPowerStatus(MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnHours(MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnLaserOnOff(MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnLaserStatus(MM::PropertyBase* pProp, MM::ActionType eAct);
