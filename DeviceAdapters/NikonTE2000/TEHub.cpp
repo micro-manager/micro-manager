@@ -57,7 +57,7 @@ void TEHub::LogError(int id, MM::Device& device, MM::Core& core, const char* fun
 ///////////////////////////////////////////////////////////////////////////////
 
 
-bool TEHub::IsComponentMounted(MM::Device& device, MM::Core& core, char* deviceCode)
+bool TEHub::IsComponentMounted(MM::Device& device, MM::Core& core, const char* deviceCode)
 {
    ExecuteCommand(device, core, "r", deviceCode);
    string value;
@@ -69,7 +69,7 @@ bool TEHub::IsComponentMounted(MM::Device& device, MM::Core& core, char* deviceC
 
 bool TEHub::DetectPerfectFocus(MM::Device& device, MM::Core& core)
 {
-   char* command = "TRN1rVEN";
+   const char* command = "TRN1rVEN";
    ExecuteCommand(device, core, "c", command);
    string value;
    return DEVICE_OK == ParseResponse(device, core, "TRN", value);

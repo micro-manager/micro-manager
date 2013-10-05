@@ -259,7 +259,7 @@ int Hub::Initialize()
    return DEVICE_OK;
 }
 
-void Hub::InstallIfMounted(std::string deviceName, char* deviceCode)
+void Hub::InstallIfMounted(std::string deviceName, const char* deviceCode)
 {
    if (g_hub.IsComponentMounted(*this, *GetCoreCallback(), deviceCode))
    {

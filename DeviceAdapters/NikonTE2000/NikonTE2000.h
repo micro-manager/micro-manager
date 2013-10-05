@@ -58,7 +58,7 @@ public:
    int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
-   void InstallIfMounted(std::string deviceName, char* deviceCode);
+   void InstallIfMounted(std::string deviceName, const char* deviceCode);
    bool initialized_;
    std::string name_;
    std::string port_;
