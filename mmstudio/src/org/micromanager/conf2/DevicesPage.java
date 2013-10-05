@@ -239,7 +239,7 @@ private JComboBox byLibCombo_;
       setLayout(null);
       prefs_ = prefs;
       setHelpFileName(HELP_FILE_NAME);
-      documentationURLroot_ = "https://valelab.ucsf.edu/~MM/MMwiki/index.php/";
+      documentationURLroot_ = "https://micro-manager.org/wiki/";
 
       installedScrollPane_ = new JScrollPane();
       installedScrollPane_.setBounds(10, 21, 431, 241);

@@ -174,7 +174,7 @@ public class AddDeviceDlg extends MMDialog implements MouseListener,
 
       // put the URL for the documentation for the selected node into a browser
       // control
-      documentationURLroot_ = "https://valelab.ucsf.edu/~MM/MMwiki/index.php/";
+      documentationURLroot_ = "https://micro-manager.org/wiki/";
       final JButton documentationButton = new JButton();
       documentationButton.setText("Help");
       documentationButton.setBounds(490, 68, 93, 23);

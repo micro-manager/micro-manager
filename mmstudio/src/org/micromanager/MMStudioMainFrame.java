@@ -438,7 +438,7 @@ public class MMStudioMainFrame extends JFrame implements
             @Override
             public void actionPerformed(ActionEvent e) {
                 try {
-                    ij.plugin.BrowserLauncher.openURL("http://valelab.ucsf.edu/~MM/MMwiki/index.php/Micro-Manager_User%27s_Guide");
+                    ij.plugin.BrowserLauncher.openURL("http://micro-manager.org/wiki/Micro-Manager_User%27s_Guide");
                 } catch (IOException e1) {
                     ReportingUtils.showError(e1);
                 }
@@ -452,7 +452,7 @@ public class MMStudioMainFrame extends JFrame implements
             @Override
              public void actionPerformed(ActionEvent e) {
                 try {
-                    ij.plugin.BrowserLauncher.openURL("http://valelab.ucsf.edu/~MM/MMwiki/index.php/Micro-Manager_Configuration_Guide");
+                    ij.plugin.BrowserLauncher.openURL("http://micro-manager.org/wiki/Micro-Manager_Configuration_Guide");
                 } catch (IOException e1) {
                     ReportingUtils.showError(e1);
                 }
@@ -1698,7 +1698,7 @@ public class MMStudioMainFrame extends JFrame implements
          @Override
          public void run(){
           try {
-               ij.plugin.BrowserLauncher.openURL("https://valelab.ucsf.edu/~MM/MMwiki/index.php/Citing_Micro-Manager");
+               ij.plugin.BrowserLauncher.openURL("https://micro-manager.org/wiki/Citing_Micro-Manager");
             } catch (IOException e1) {
                ReportingUtils.showError(e1);
             }

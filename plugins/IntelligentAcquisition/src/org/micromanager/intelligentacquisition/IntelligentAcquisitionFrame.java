@@ -839,7 +839,7 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
          @Override
          public void run(){
           try {
-               ij.plugin.BrowserLauncher.openURL("http://valelab.ucsf.edu/~MM/MMwiki/index.php/Intelligent_Acquisition");
+               ij.plugin.BrowserLauncher.openURL("http://micro-manager.org/wiki/Intelligent_Acquisition");
             } catch (IOException e1) {
                ReportingUtils.showError(e1);
             }
