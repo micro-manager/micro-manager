@@ -128,17 +128,17 @@ class Hub :   public CGenericBase<Hub>	 // public HubBase<Hub>
 		int OnEncstcl(MM::PropertyBase* pProp, MM::ActionType eAct);
 		int OnLight(MM::PropertyBase* pProp, MM::ActionType eAct);
 		int OnSoftstart(MM::PropertyBase* pProp, MM::ActionType eAct);
-		int GetCommandValue(char* c,int ch,double& d);
-		int GetCommandValue(char* c,int ch,int& i);
-		int SetCommandValue(char* c,int ch,double fkt);
-		int SetCommandValue(char* c,int ch,int fkt);
+		int GetCommandValue(const char* c,int ch,double& d);
+		int GetCommandValue(const char* c,int ch,int& i);
+		int SetCommandValue(const char* c,int ch,double fkt);
+		int SetCommandValue(const char* c,int ch,int fkt);
    private:      
 		int SendCommand(const char* cmd,std::string &result);
 		int ErrorMessage(int error);
-		int GetCommandValue(char* c,double& d);
-		int GetCommandValue(char* c,int& i);
-		int SetCommandValue(char* c,double fkt);
-		int SetCommandValue(char* c,int fkt);
+		int GetCommandValue(const char* c,double& d);
+		int GetCommandValue(const char* c,int& i);
+		int SetCommandValue(const char* c,double fkt);
+		int SetCommandValue(const char* c,int fkt);
 		int GetDevice(std::string& device);
 		std::string device_;
 		std::string sdate_;

@@ -136,7 +136,7 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
    delete pDevice;
 }
 
-void splitString(char * string,char* delimiter,char** dest){
+void splitString(char* string, const char* delimiter, char** dest){
   char * pch; 
   pch = strtok (string,delimiter); 
   int i=0;	
@@ -625,7 +625,7 @@ int Stage::SendCommand(const char* cmd,std::string &result){
       return ret;
 	return DEVICE_OK;
 }
-int Stage::GetCommandValue(char* c,double& d){
+int Stage::GetCommandValue(const char* c,double& d){
 	LogMessage ("Get command value d");
 
 	char str[50]="";
@@ -656,7 +656,7 @@ int Stage::GetCommandValue(char* c,double& d){
 	}		
 	return DEVICE_OK;
 }		
-int Stage::GetCommandValue(char* c,int& i){
+int Stage::GetCommandValue(const char* c,int& i){
 	LogMessage ("Get command value i");
 
 	char str[50]="";
@@ -688,7 +688,7 @@ int Stage::GetCommandValue(char* c,int& i){
 	return DEVICE_OK;
 }
 
-int Stage::SetCommandValue(char* c,double fkt){
+int Stage::SetCommandValue(const char* c,double fkt){
 	LogMessage ("Set command value d");
 	char str[50]="";
 	sprintf(str,"%s,%.3lf",c,fkt);	

@@ -143,9 +143,9 @@ public:
 	int OnLight(MM::PropertyBase* pProp, MM::ActionType eAct);
 private:
    int SendCommand(const char* cmd,std::string &result);     
-   int GetCommandValue(char* c,double& d);
-   int GetCommandValue(char* c,int& i);
-   int SetCommandValue(char* c,double fkt);
+   int GetCommandValue(const char* c,double& d);
+   int GetCommandValue(const char* c,int& i);
+   int SetCommandValue(const char* c,double fkt);
    //int SetCommandValue(char* c,int fkt);
 	bool initialized_;
 	double answerTimeoutMs_;

@@ -112,10 +112,10 @@ public:
 
 private:
    int SendCommand(const char* cmd,std::string &result);     
-   int GetCommandValue(char* c,double& d);
-   //int GetCommandValue(char* c,int& d);
-   int SetCommandValue(char* c,double fkt);
-   //int SetCommandValue(char* c,int fkt);
+   int GetCommandValue(const char* c,double& d);
+   //int GetCommandValue(const char* c,int& d);
+   int SetCommandValue(const char* c,double fkt);
+   //int SetCommandValue(const char* c,int fkt);
 	bool initialized_;
 	double answerTimeoutMs_;
 	std::string ver_;

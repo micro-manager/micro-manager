@@ -215,7 +215,7 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 }
 
 
-void splitString(char * string,char* delimiter,char** dest){
+void splitString(char* string, const char* delimiter, char** dest){
   char * pch; 
   pch = strtok (string,delimiter); 
   int i=0;	
@@ -624,7 +624,7 @@ int Hub::ErrorMessage(int error){
 
 	return error;
 }
-int Hub::GetCommandValue(char* c,double& d){
+int Hub::GetCommandValue(const char* c,double& d){
 	LogMessage ("Get command value d");
 
 	char str[50]="";
@@ -673,7 +673,7 @@ int Hub::GetCommandValue(char* c,double& d){
 	}		
 	return DEVICE_OK;
 }
-int Hub::SetCommandValue(char* c,double fkt){
+int Hub::SetCommandValue(const char* c,double fkt){
 	LogMessage ("Set command value d");
 	char str[50]="";
 	sprintf(str,"%s,%.3lf",c,fkt);	
@@ -689,7 +689,7 @@ int Hub::SetCommandValue(char* c,double fkt){
 }
 
 
-int Hub::GetCommandValue(char* c,int& i){
+int Hub::GetCommandValue(const char* c,int& i){
 	LogMessage ("Get command value i");
 
 	char str[50]="";
@@ -738,7 +738,7 @@ int Hub::GetCommandValue(char* c,int& i){
 	}		
 	return DEVICE_OK;
 }
-int Hub::SetCommandValue(char* c,int fkt){
+int Hub::SetCommandValue(const char* c,int fkt){
 	LogMessage ("Set command value d");
 	char str[50]="";
 	sprintf(str,"%s,%d",c,fkt);	
@@ -752,7 +752,7 @@ int Hub::SetCommandValue(char* c,int fkt){
 	//Normally no answer	
 	return DEVICE_OK;
 }
-int Hub::GetCommandValue(char* c,int ch,double& d){
+int Hub::GetCommandValue(const char* c,int ch,double& d){
 	LogMessage ("Get command value d");
 
 	char str[50]="";
@@ -786,7 +786,7 @@ int Hub::GetCommandValue(char* c,int ch,double& d){
 	}		
 	return DEVICE_OK;
 }
-int Hub::SetCommandValue(char* c,int ch,double fkt){
+int Hub::SetCommandValue(const char* c,int ch,double fkt){
 	LogMessage ("Set command value d");
 	char str[50]="";
 	sprintf(str,"%s,%d,%.3lf",c,ch,fkt);	
@@ -800,7 +800,7 @@ int Hub::SetCommandValue(char* c,int ch,double fkt){
 	//Normally no answer	
 	return DEVICE_OK;
 }
-int Hub::GetCommandValue(char* c,int ch,int& i){
+int Hub::GetCommandValue(const char* c,int ch,int& i){
 	LogMessage ("Get command value d");
 
 	char str[50]="";
@@ -834,7 +834,7 @@ int Hub::GetCommandValue(char* c,int ch,int& i){
 	}		
 	return DEVICE_OK;
 }
-int Hub::SetCommandValue(char* c,int ch,int fkt){
+int Hub::SetCommandValue(const char* c,int ch,int fkt){
 	LogMessage ("Set command value d");
 	char str[50]="";
 	sprintf(str,"%s,%d,%d",c,ch,fkt);	
