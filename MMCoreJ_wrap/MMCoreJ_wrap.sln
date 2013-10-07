@@ -299,6 +299,12 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ASITiger", "..\DeviceAdapte
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Piezosystem_30DV50", "..\DeviceAdapters\Piezosystem_30DV50\Piezosystem_30DV50.vcproj", "{537D636C-29BB-4B81-B020-D8314ECA88CC}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Piezosystem_NV40_1", "..\DeviceAdapters\Piezosystem_NV40_1\Piezosystem_NV40_1.vcproj", "{971C3730-9CE9-453B-BB79-F792B2E2C017}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Piezosystem_NV40_3", "..\DeviceAdapters\Piezosystem_NV40_3\Piezosystem_NV40_3.vcproj", "{32B89825-3A2D-47D6-A2FC-5792A25E5420}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Piezosystem_NV120_1", "..\DeviceAdapters\Piezosystem_NV120_1\Piezosystem_NV120_1.vcproj", "{B305430A-2CB0-4057-AB7C-F90F52973BC1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -1439,6 +1445,30 @@ Global
 		{537D636C-29BB-4B81-B020-D8314ECA88CC}.Release|Win32.Build.0 = Release|Win32
 		{537D636C-29BB-4B81-B020-D8314ECA88CC}.Release|x64.ActiveCfg = Release|x64
 		{537D636C-29BB-4B81-B020-D8314ECA88CC}.Release|x64.Build.0 = Release|x64
+		{971C3730-9CE9-453B-BB79-F792B2E2C017}.Debug|Win32.ActiveCfg = Debug|Win32
+		{971C3730-9CE9-453B-BB79-F792B2E2C017}.Debug|Win32.Build.0 = Debug|Win32
+		{971C3730-9CE9-453B-BB79-F792B2E2C017}.Debug|x64.ActiveCfg = Debug|x64
+		{971C3730-9CE9-453B-BB79-F792B2E2C017}.Debug|x64.Build.0 = Debug|x64
+		{971C3730-9CE9-453B-BB79-F792B2E2C017}.Release|Win32.ActiveCfg = Release|Win32
+		{971C3730-9CE9-453B-BB79-F792B2E2C017}.Release|Win32.Build.0 = Release|Win32
+		{971C3730-9CE9-453B-BB79-F792B2E2C017}.Release|x64.ActiveCfg = Release|x64
+		{971C3730-9CE9-453B-BB79-F792B2E2C017}.Release|x64.Build.0 = Release|x64
+		{32B89825-3A2D-47D6-A2FC-5792A25E5420}.Debug|Win32.ActiveCfg = Debug|Win32
+		{32B89825-3A2D-47D6-A2FC-5792A25E5420}.Debug|Win32.Build.0 = Debug|Win32
+		{32B89825-3A2D-47D6-A2FC-5792A25E5420}.Debug|x64.ActiveCfg = Debug|x64
+		{32B89825-3A2D-47D6-A2FC-5792A25E5420}.Debug|x64.Build.0 = Debug|x64
+		{32B89825-3A2D-47D6-A2FC-5792A25E5420}.Release|Win32.ActiveCfg = Release|Win32
+		{32B89825-3A2D-47D6-A2FC-5792A25E5420}.Release|Win32.Build.0 = Release|Win32
+		{32B89825-3A2D-47D6-A2FC-5792A25E5420}.Release|x64.ActiveCfg = Release|x64
+		{32B89825-3A2D-47D6-A2FC-5792A25E5420}.Release|x64.Build.0 = Release|x64
+		{B305430A-2CB0-4057-AB7C-F90F52973BC1}.Debug|Win32.ActiveCfg = Debug|Win32
+		{B305430A-2CB0-4057-AB7C-F90F52973BC1}.Debug|Win32.Build.0 = Debug|Win32
+		{B305430A-2CB0-4057-AB7C-F90F52973BC1}.Debug|x64.ActiveCfg = Debug|x64
+		{B305430A-2CB0-4057-AB7C-F90F52973BC1}.Debug|x64.Build.0 = Debug|x64
+		{B305430A-2CB0-4057-AB7C-F90F52973BC1}.Release|Win32.ActiveCfg = Release|Win32
+		{B305430A-2CB0-4057-AB7C-F90F52973BC1}.Release|Win32.Build.0 = Release|Win32
+		{B305430A-2CB0-4057-AB7C-F90F52973BC1}.Release|x64.ActiveCfg = Release|x64
+		{B305430A-2CB0-4057-AB7C-F90F52973BC1}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
