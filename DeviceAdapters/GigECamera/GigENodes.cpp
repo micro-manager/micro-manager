@@ -358,7 +358,8 @@ template< class T > Node<T>::Node( const Node<T>& n )
 	  hasMax( n.hasMax ),
 	  hasInc( n.hasInc ),
 	  isEnum( n.isEnum ),
-	  val( n.val )
+	  val( n.val ),
+     logger( n.logger )
 {
 
 }
