@@ -675,12 +675,13 @@
    ])
 
 (defn test-binding []
-  (bind/bind [grafix [2 :x]] [grafix [1 :y]])
-  (bind/bind [grafix [2 :y]] [grafix [1 :rotate]])
-  (bind/follow-function [grafix [2 :x]] #(str "x=" %) [grafix [1 :text]])
-  (bind/bind [grafix [2 :fill]] [grafix [1 :color]])
+  (bind/bind-range [grafix [2 :x] [100 500]] [grafix [1 :y] [100 300]])
+  (bind/bind-range [grafix [2 :y] [100 300]] [grafix [1 :rotate] [0 180]])
+  (bind/bind-linear [grafix [2 :x]] [0.1 -50] [grafix [0 :rotate]])
+  (bind/follow-function [grafix [2 :x]] #(str "x=" (int (+ 0.5 %))) [grafix [1 :text]])
+  (bind/bind-map [grafix [2 :fill]] {:red :blue :pink :cyan} [grafix [1 :color]])
   (bind/follow-function [grafix [2 :y]] #(/ % 10) [grafix [0 :children 0 :w]])
-    (bind/follow-function [grafix [2 :x]] #(/ % 10) [grafix [0 :scale-y]]))
+  (bind/follow-function [grafix [2 :x]] #(/ % 25) [grafix [0 :scale-y]]))
   
 
 (defn run-test []

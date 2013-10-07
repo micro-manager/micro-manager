@@ -38,6 +38,14 @@
     (apply function m args) 
     (apply update-in m (addressify ks) function args)))
 
+(defn clip-value
+  "Restricts a value so that it is between min-value and
+   max-value."
+  [value min-value max-value]
+  (-> value
+      (min (or max-value Double/POSITIVE_INFINITY))
+      (max (or min-value Double/NEGATIVE_INFINITY))))
+
 (defn very-close-numbers?
   "Are these numbers different by less than 1e-10?"
   [a b]
@@ -75,9 +83,9 @@
 (defn follow-linear
   "When ref1 changes at address1 to value1, then value2, in ref2 at
    address2, is set to (+ offset (* factor value1))."
-  [[ref1 address1] [factor offset] [ref2 address2]]
+  [[ref1 address1] [factor offset] [ref2 address2 [min2 max2]]]
   (follow-function [ref1 address1]
-                   #(+ offset (* factor %))
+                   #(clip-value (+ offset (* factor %)) min2 max2)
                    [ref2 address2]))
 
 (defn follow-map
@@ -109,9 +117,11 @@
   "The value of ref1 at address1 and the value of ref2 at address2
    are linked, so that if one changes, then the other changes to
    maintain (== value2 (+ offset (* factor value1)))."
-  [[ref1 address1] [factor offset] [ref2 address2]]
-  (follow-linear [ref1 address1] [factor offset] [ref2 address2])
-  (follow-linear [ref2 address2] [(/ factor) (- (/ offset factor))] [ref1 address1]))
+  [[ref1 address1 [min1 max1]]
+   [factor offset]
+   [ref2 address2 [min2 max2]]]
+  (follow-linear [ref1 address1] [factor offset] [ref2 address2 [min2 max2]])
+  (follow-linear [ref2 address2] [(/ factor) (- (/ offset factor))] [ref1 address1 [min1 max1]]))
 
 (defn bind-range
   "The value of ref1 at address1 and the value of ref2 at address2
@@ -124,9 +134,9 @@
         delta2 (- max2 min2)
         factor (/ delta2 delta1)
         offset (- min2 (* min1 factor))]
-    (bind-linear [ref1 address1]
+    (bind-linear [ref1 address1 [min1 max1]]
                  [factor offset]
-                 [ref2 address2])))
+                 [ref2 address2 [min2 max2]])))
 
 (defn bind-map
   "The value of ref1 at address1 and the value of ref2 at address2
