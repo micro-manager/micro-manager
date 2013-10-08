@@ -317,26 +317,26 @@ int CDemoCamera::Initialize()
    // -----------------
 
    // Name
-   int nRet = CreateProperty(MM::g_Keyword_Name, g_CameraDeviceName, MM::String, true);
+   int nRet = CreateStringProperty(MM::g_Keyword_Name, g_CameraDeviceName, true);
    if (DEVICE_OK != nRet)
       return nRet;
 
    // Description
-   nRet = CreateProperty(MM::g_Keyword_Description, "Demo Camera Device Adapter", MM::String, true);
+   nRet = CreateStringProperty(MM::g_Keyword_Description, "Demo Camera Device Adapter", true);
    if (DEVICE_OK != nRet)
       return nRet;
 
    // CameraName
-   nRet = CreateProperty(MM::g_Keyword_CameraName, "DemoCamera-MultiMode", MM::String, true);
+   nRet = CreateStringProperty(MM::g_Keyword_CameraName, "DemoCamera-MultiMode", true);
    assert(nRet == DEVICE_OK);
 
    // CameraID
-   nRet = CreateProperty(MM::g_Keyword_CameraID, "V1.0", MM::String, true);
+   nRet = CreateStringProperty(MM::g_Keyword_CameraID, "V1.0", true);
    assert(nRet == DEVICE_OK);
 
    // binning
    CPropertyAction *pAct = new CPropertyAction (this, &CDemoCamera::OnBinning);
-   nRet = CreateProperty(MM::g_Keyword_Binning, "1", MM::Integer, false, pAct);
+   nRet = CreateIntegerProperty(MM::g_Keyword_Binning, 1, false, pAct);
    assert(nRet == DEVICE_OK);
 
    nRet = SetAllowedBinning();
@@ -345,7 +345,7 @@ int CDemoCamera::Initialize()
 
    // pixel type
    pAct = new CPropertyAction (this, &CDemoCamera::OnPixelType);
-   nRet = CreateProperty(MM::g_Keyword_PixelType, g_PixelType_8bit, MM::String, false, pAct);
+   nRet = CreateStringProperty(MM::g_Keyword_PixelType, g_PixelType_8bit, false, pAct);
    assert(nRet == DEVICE_OK);
 
    vector<string> pixelTypeValues;
@@ -361,7 +361,7 @@ int CDemoCamera::Initialize()
 
    // Bit depth
    pAct = new CPropertyAction (this, &CDemoCamera::OnBitDepth);
-   nRet = CreateProperty("BitDepth", "8", MM::Integer, false, pAct);
+   nRet = CreateIntegerProperty("BitDepth", 8, false, pAct);
    assert(nRet == DEVICE_OK);
 
    vector<string> bitDepths;
@@ -376,7 +376,7 @@ int CDemoCamera::Initialize()
       return nRet;
 
    // exposure
-   nRet = CreateProperty(MM::g_Keyword_Exposure, "10.0", MM::Float, false);
+   nRet = CreateFloatProperty(MM::g_Keyword_Exposure, 10.0, false);
    assert(nRet == DEVICE_OK);
    SetPropertyLimits(MM::g_Keyword_Exposure, 0, 10000);
 
@@ -389,7 +389,7 @@ int CDemoCamera::Initialize()
       os<<ij;
       std::string propName = "TestProperty" + os.str();
 		pActX = new CPropertyActionEx(this, &CDemoCamera::OnTestProperty, ij);
-		nRet = CreateProperty(propName.c_str(), "0.", MM::Float, false, pActX);
+      nRet = CreateFloatProperty(propName.c_str(), 0., false, pActX);
       if(0!=(ij%5))
       {
          // try several different limit ranges
@@ -400,76 +400,76 @@ int CDemoCamera::Initialize()
 	}
 
    //pAct = new CPropertyAction(this, &CDemoCamera::OnSwitch);
-   //nRet = CreateProperty("Switch", "0", MM::Integer, false, pAct);
+   //nRet = CreateIntegerProperty("Switch", 0, false, pAct);
    //SetPropertyLimits("Switch", 8, 1004);
 	
 	
 	// scan mode
    pAct = new CPropertyAction (this, &CDemoCamera::OnScanMode);
-   nRet = CreateProperty("ScanMode", "1", MM::Integer, false, pAct);
+   nRet = CreateIntegerProperty("ScanMode", 1, false, pAct);
    assert(nRet == DEVICE_OK);
    AddAllowedValue("ScanMode","1");
    AddAllowedValue("ScanMode","2");
    AddAllowedValue("ScanMode","3");
 
    // camera gain
-   nRet = CreateProperty(MM::g_Keyword_Gain, "0", MM::Integer, false);
+   nRet = CreateIntegerProperty(MM::g_Keyword_Gain, 0, false);
    assert(nRet == DEVICE_OK);
    SetPropertyLimits(MM::g_Keyword_Gain, -5, 8);
 
    // camera offset
-   nRet = CreateProperty(MM::g_Keyword_Offset, "0", MM::Integer, false);
+   nRet = CreateIntegerProperty(MM::g_Keyword_Offset, 0, false);
    assert(nRet == DEVICE_OK);
 
    // camera temperature
    pAct = new CPropertyAction (this, &CDemoCamera::OnCCDTemp);
-   nRet = CreateProperty(MM::g_Keyword_CCDTemperature, "0", MM::Float, false, pAct);
+   nRet = CreateFloatProperty(MM::g_Keyword_CCDTemperature, 0, false, pAct);
    assert(nRet == DEVICE_OK);
    SetPropertyLimits(MM::g_Keyword_CCDTemperature, -100, 10);
 
    // camera temperature RO
    pAct = new CPropertyAction (this, &CDemoCamera::OnCCDTemp);
-   nRet = CreateProperty("CCDTemperature RO", "0", MM::Float, true, pAct);
+   nRet = CreateFloatProperty("CCDTemperature RO", 0, true, pAct);
    assert(nRet == DEVICE_OK);
 
    // readout time
    pAct = new CPropertyAction (this, &CDemoCamera::OnReadoutTime);
-   nRet = CreateProperty(MM::g_Keyword_ReadoutTime, "0", MM::Float, false, pAct);
+   nRet = CreateFloatProperty(MM::g_Keyword_ReadoutTime, 0, false, pAct);
    assert(nRet == DEVICE_OK);
 
    // CCD size of the camera we are modeling
    pAct = new CPropertyAction (this, &CDemoCamera::OnCameraCCDXSize);
-   CreateProperty("OnCameraCCDXSize", "512", MM::Integer, false, pAct);
+   CreateIntegerProperty("OnCameraCCDXSize", 512, false, pAct);
    pAct = new CPropertyAction (this, &CDemoCamera::OnCameraCCDYSize);
-   CreateProperty("OnCameraCCDYSize", "512", MM::Integer, false, pAct);
+   CreateIntegerProperty("OnCameraCCDYSize", 512, false, pAct);
 
    // Trigger device
    pAct = new CPropertyAction (this, &CDemoCamera::OnTriggerDevice);
-   CreateProperty("TriggerDevice","", MM::String, false, pAct);
+   CreateStringProperty("TriggerDevice", "", false, pAct);
 
    pAct = new CPropertyAction (this, &CDemoCamera::OnDropPixels);
-	CreateProperty("DropPixels", "0", MM::Integer, false, pAct);
+   CreateIntegerProperty("DropPixels", 0, false, pAct);
    AddAllowedValue("DropPixels", "0");
    AddAllowedValue("DropPixels", "1");
 
 	pAct = new CPropertyAction (this, &CDemoCamera::OnSaturatePixels);
-	CreateProperty("SaturatePixels", "0", MM::Integer, false, pAct);
+   CreateIntegerProperty("SaturatePixels", 0, false, pAct);
    AddAllowedValue("SaturatePixels", "0");
    AddAllowedValue("SaturatePixels", "1");
 
    pAct = new CPropertyAction (this, &CDemoCamera::OnFastImage);
-	CreateProperty("FastImage", "0", MM::Integer, false, pAct);
+   CreateIntegerProperty("FastImage", 0, false, pAct);
    AddAllowedValue("FastImage", "0");
    AddAllowedValue("FastImage", "1");
 
    pAct = new CPropertyAction (this, &CDemoCamera::OnFractionOfPixelsToDropOrSaturate);
-	CreateProperty("FractionOfPixelsToDropOrSaturate", "0.002", MM::Float, false, pAct);
+   CreateFloatProperty("FractionOfPixelsToDropOrSaturate", 0.002, false, pAct);
 	SetPropertyLimits("FractionOfPixelsToDropOrSaturate", 0., 0.1);
 
    // Whether or not to use exposure time sequencing
    pAct = new CPropertyAction (this, &CDemoCamera::OnIsSequenceable);
    std::string propName = "UseExposureSequences";
-   CreateProperty(propName.c_str(), "No", MM::String, false, pAct);
+   CreateStringProperty(propName.c_str(), "No", false, pAct);
    AddAllowedValue(propName.c_str(), "Yes");
    AddAllowedValue(propName.c_str(), "No");
 
@@ -1974,12 +1974,12 @@ int CDemoFilterWheel::Initialize()
    // -----------------
 
    // Name
-   int ret = CreateProperty(MM::g_Keyword_Name, g_WheelDeviceName, MM::String, true);
+   int ret = CreateStringProperty(MM::g_Keyword_Name, g_WheelDeviceName, true);
    if (DEVICE_OK != ret)
       return ret;
 
    // Description
-   ret = CreateProperty(MM::g_Keyword_Description, "Demo filter wheel driver", MM::String, true);
+   ret = CreateStringProperty(MM::g_Keyword_Description, "Demo filter wheel driver", true);
    if (DEVICE_OK != ret)
       return ret;
 
@@ -1987,7 +1987,7 @@ int CDemoFilterWheel::Initialize()
    changedTime_ = GetCurrentMMTime();   
 
    // Gate Closed Position
-   ret = CreateProperty(MM::g_Keyword_Closed_Position,"", MM::Integer, false);
+   ret = CreateIntegerProperty(MM::g_Keyword_Closed_Position, 0, false);
    if (ret != DEVICE_OK)
       return ret;
 
@@ -2005,14 +2005,14 @@ int CDemoFilterWheel::Initialize()
    // State
    // -----
    CPropertyAction* pAct = new CPropertyAction (this, &CDemoFilterWheel::OnState);
-   ret = CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct);
+   ret = CreateIntegerProperty(MM::g_Keyword_State, 0, false, pAct);
    if (ret != DEVICE_OK)
       return ret;
 
    // Label
    // -----
    pAct = new CPropertyAction (this, &CStateBase::OnLabel);
-   ret = CreateProperty(MM::g_Keyword_Label, "", MM::String, false, pAct);
+   ret = CreateStringProperty(MM::g_Keyword_Label, "", false, pAct);
    if (ret != DEVICE_OK)
       return ret;
 
@@ -2101,7 +2101,7 @@ position_(0)
    // Number of positions
    // -----
    CPropertyAction* pAct = new CPropertyAction (this, &CDemoStateDevice::OnNumberOfStates);
-   CreateProperty("Number of positions", "0", MM::Integer, false, pAct, true);
+   CreateIntegerProperty("Number of positions", 0, false, pAct, true);
 
    // parent ID display
    CreateHubIDProperty();
@@ -2140,12 +2140,12 @@ int CDemoStateDevice::Initialize()
    // -----------------
 
    // Name
-   int ret = CreateProperty(MM::g_Keyword_Name, g_StateDeviceName, MM::String, true);
+   int ret = CreateStringProperty(MM::g_Keyword_Name, g_StateDeviceName, true);
    if (DEVICE_OK != ret)
       return ret;
 
    // Description
-   ret = CreateProperty(MM::g_Keyword_Description, "Demo state device driver", MM::String, true);
+   ret = CreateStringProperty(MM::g_Keyword_Description, "Demo state device driver", true);
    if (DEVICE_OK != ret)
       return ret;
 
@@ -2153,7 +2153,7 @@ int CDemoStateDevice::Initialize()
    changedTime_ = GetCurrentMMTime();   
 
    // Gate Closed Position
-   ret = CreateProperty(MM::g_Keyword_Closed_Position,"", MM::String, false);
+   ret = CreateStringProperty(MM::g_Keyword_Closed_Position, "", false);
 
    // create default positions and labels
    const int bufSize = 1024;
@@ -2168,14 +2168,14 @@ int CDemoStateDevice::Initialize()
    // State
    // -----
    CPropertyAction* pAct = new CPropertyAction (this, &CDemoStateDevice::OnState);
-   ret = CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct);
+   ret = CreateIntegerProperty(MM::g_Keyword_State, 0, false, pAct);
    if (ret != DEVICE_OK)
       return ret;
 
    // Label
    // -----
    pAct = new CPropertyAction (this, &CStateBase::OnLabel);
-   ret = CreateProperty(MM::g_Keyword_Label, "", MM::String, false, pAct);
+   ret = CreateStringProperty(MM::g_Keyword_Label, "", false, pAct);
    if (ret != DEVICE_OK)
       return ret;
 
@@ -2312,12 +2312,12 @@ int CDemoLightPath::Initialize()
    // -----------------
 
    // Name
-   int ret = CreateProperty(MM::g_Keyword_Name, g_LightPathDeviceName, MM::String, true);
+   int ret = CreateStringProperty(MM::g_Keyword_Name, g_LightPathDeviceName, true);
    if (DEVICE_OK != ret)
       return ret;
 
    // Description
-   ret = CreateProperty(MM::g_Keyword_Description, "Demo light-path driver", MM::String, true);
+   ret = CreateStringProperty(MM::g_Keyword_Description, "Demo light-path driver", true);
    if (DEVICE_OK != ret)
       return ret;
 
@@ -2333,14 +2333,14 @@ int CDemoLightPath::Initialize()
    // State
    // -----
    CPropertyAction* pAct = new CPropertyAction (this, &CDemoLightPath::OnState);
-   ret = CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct);
+   ret = CreateIntegerProperty(MM::g_Keyword_State, 0, false, pAct);
    if (ret != DEVICE_OK)
       return ret;
 
    // Label
    // -----
    pAct = new CPropertyAction (this, &CStateBase::OnLabel);
-   ret = CreateProperty(MM::g_Keyword_Label, "", MM::String, false, pAct);
+   ret = CreateStringProperty(MM::g_Keyword_Label, "", false, pAct);
    if (ret != DEVICE_OK)
       return ret;
 
@@ -2445,12 +2445,12 @@ int CDemoObjectiveTurret::Initialize()
    // -----------------
 
    // Name
-   int ret = CreateProperty(MM::g_Keyword_Name, g_ObjectiveDeviceName, MM::String, true);
+   int ret = CreateStringProperty(MM::g_Keyword_Name, g_ObjectiveDeviceName, true);
    if (DEVICE_OK != ret)
       return ret;
 
    // Description
-   ret = CreateProperty(MM::g_Keyword_Description, "Demo objective turret driver", MM::String, true);
+   ret = CreateStringProperty(MM::g_Keyword_Description, "Demo objective turret driver", true);
    if (DEVICE_OK != ret)
       return ret;
 
@@ -2466,20 +2466,20 @@ int CDemoObjectiveTurret::Initialize()
    // State
    // -----
    CPropertyAction* pAct = new CPropertyAction (this, &CDemoObjectiveTurret::OnState);
-   ret = CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct);
+   ret = CreateIntegerProperty(MM::g_Keyword_State, 0, false, pAct);
    if (ret != DEVICE_OK)
       return ret;
 
    // Label
    // -----
    pAct = new CPropertyAction (this, &CStateBase::OnLabel);
-   ret = CreateProperty(MM::g_Keyword_Label, "", MM::String, false, pAct);
+   ret = CreateStringProperty(MM::g_Keyword_Label, "", false, pAct);
    if (ret != DEVICE_OK)
       return ret;
 
    // Triggers to test sequence capabilities
    pAct = new CPropertyAction (this, &CDemoObjectiveTurret::OnTrigger);
-   ret = CreateProperty("Trigger", "-", MM::String, false, pAct);
+   ret = CreateStringProperty("Trigger", "-", false, pAct);
    AddAllowedValue("Trigger", "-");
    AddAllowedValue("Trigger", "+");
 
@@ -2645,26 +2645,26 @@ int CDemoStage::Initialize()
    // -----------------
 
    // Name
-   int ret = CreateProperty(MM::g_Keyword_Name, g_StageDeviceName, MM::String, true);
+   int ret = CreateStringProperty(MM::g_Keyword_Name, g_StageDeviceName, true);
    if (DEVICE_OK != ret)
       return ret;
 
    // Description
-   ret = CreateProperty(MM::g_Keyword_Description, "Demo stage driver", MM::String, true);
+   ret = CreateStringProperty(MM::g_Keyword_Description, "Demo stage driver", true);
    if (DEVICE_OK != ret)
       return ret;
 
    // Position
    // --------
    CPropertyAction* pAct = new CPropertyAction (this, &CDemoStage::OnPosition);
-   ret = CreateProperty(MM::g_Keyword_Position, "0", MM::Float, false, pAct);
+   ret = CreateFloatProperty(MM::g_Keyword_Position, 0, false, pAct);
    if (ret != DEVICE_OK)
       return ret;
 
    // Sequenceability
    // --------
    pAct = new CPropertyAction (this, &CDemoStage::OnSequence);
-   ret = CreateProperty("UseSequences", "No", MM::String, false, pAct);
+   ret = CreateStringProperty("UseSequences", "No", false, pAct);
    AddAllowedValue("UseSequences", "No");
    AddAllowedValue("UseSequences", "Yes");
    if (ret != DEVICE_OK)
@@ -2819,12 +2819,12 @@ int CDemoXYStage::Initialize()
    // -----------------
 
    // Name
-   int ret = CreateProperty(MM::g_Keyword_Name, g_XYStageDeviceName, MM::String, true);
+   int ret = CreateStringProperty(MM::g_Keyword_Name, g_XYStageDeviceName, true);
    if (DEVICE_OK != ret)
       return ret;
 
    // Description
-   ret = CreateProperty(MM::g_Keyword_Description, "Demo XY stage driver", MM::String, true);
+   ret = CreateStringProperty(MM::g_Keyword_Description, "Demo XY stage driver", true);
    if (DEVICE_OK != ret)
       return ret;
 
@@ -2898,12 +2898,12 @@ int DemoShutter::Initialize()
    // -----------------
 
    // Name
-   int ret = CreateProperty(MM::g_Keyword_Name, g_ShutterDeviceName, MM::String, true);
+   int ret = CreateStringProperty(MM::g_Keyword_Name, g_ShutterDeviceName, true);
    if (DEVICE_OK != ret)
       return ret;
 
    // Description
-   ret = CreateProperty(MM::g_Keyword_Description, "Demo shutter driver", MM::String, true);
+   ret = CreateStringProperty(MM::g_Keyword_Description, "Demo shutter driver", true);
    if (DEVICE_OK != ret)
       return ret;
 
@@ -2911,7 +2911,7 @@ int DemoShutter::Initialize()
 
    // state
    CPropertyAction* pAct = new CPropertyAction (this, &DemoShutter::OnState);
-   ret = CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct); 
+   ret = CreateIntegerProperty(MM::g_Keyword_State, 0, false, pAct);
    if (ret != DEVICE_OK) 
       return ret; 
 
@@ -2981,7 +2981,7 @@ DemoMagnifier::DemoMagnifier () :
       highMag_ (1.6) 
 {
    CPropertyAction* pAct = new CPropertyAction (this, &DemoMagnifier::OnHighMag);
-   CreateProperty("High Position Magnification", "1.6", MM::Float, false, pAct, true);
+   CreateFloatProperty("High Position Magnification", 1.6, false, pAct, true);
 
    // parent ID display
    CreateHubIDProperty();
@@ -3007,7 +3007,7 @@ int DemoMagnifier::Initialize()
       LogMessage(NoHubError);
 
    CPropertyAction* pAct = new CPropertyAction (this, &DemoMagnifier::OnPosition);
-   int ret = CreateProperty("Position", "1x", MM::String, false, pAct); 
+   int ret = CreateStringProperty("Position", "1x", false, pAct);
    if (ret != DEVICE_OK) 
       return ret; 
 
@@ -3119,16 +3119,16 @@ int DemoDA::Initialize()
 
    // Triggers to test sequence capabilities
    CPropertyAction* pAct = new CPropertyAction (this, &DemoDA::OnTrigger);
-   CreateProperty("Trigger", "-", MM::String, false, pAct);
+   CreateStringProperty("Trigger", "-", false, pAct);
    AddAllowedValue("Trigger", "-");
    AddAllowedValue("Trigger", "+");
 
    pAct = new CPropertyAction(this, &DemoDA::OnVoltage);
-   CreateProperty("Voltage", "0", MM::Float, false, pAct);
+   CreateFloatProperty("Voltage", 0, false, pAct);
    SetPropertyLimits("Voltage", 0.0, 10.0);
 
    pAct = new CPropertyAction(this, &DemoDA::OnRealVoltage);
-   CreateProperty("Real Voltage", "0", MM::Float, true, pAct);
+   CreateFloatProperty("Real Voltage", 0, true, pAct);
 
    return DEVICE_OK;
 }
@@ -3303,12 +3303,12 @@ int DemoAutoFocus::Initialize()
    // -----------------
 
    // Name
-   int ret = CreateProperty(MM::g_Keyword_Name, g_AutoFocusDeviceName, MM::String, true);
+   int ret = CreateStringProperty(MM::g_Keyword_Name, g_AutoFocusDeviceName, true);
    if (DEVICE_OK != ret)
       return ret;
 
    // Description
-   ret = CreateProperty(MM::g_Keyword_Description, "Demo auto-focus adapter", MM::String, true);
+   ret = CreateStringProperty(MM::g_Keyword_Description, "Demo auto-focus adapter", true);
    if (DEVICE_OK != ret)
       return ret;
 
@@ -3345,7 +3345,7 @@ int TransposeProcessor::Initialize()
       this->tempSize_ = 0;
    }
     CPropertyAction* pAct = new CPropertyAction (this, &TransposeProcessor::OnInPlaceAlgorithm);
-   (void)CreateProperty("InPlaceAlgorithm", "0", MM::Integer, false, pAct); 
+   (void)CreateIntegerProperty("InPlaceAlgorithm", 0, false, pAct);
    return DEVICE_OK;
 }
 
@@ -3445,7 +3445,7 @@ int TransposeProcessor::Process(unsigned char *pBuffer, unsigned int width, unsi
 int ImageFlipY::Initialize()
 {
     CPropertyAction* pAct = new CPropertyAction (this, &ImageFlipY::OnPerformanceTiming);
-    (void)CreateProperty("PeformanceTiming (microseconds)", "0", MM::Float, true, pAct); 
+    (void)CreateFloatProperty("PeformanceTiming (microseconds)", 0, true, pAct);
    return DEVICE_OK;
 }
 
@@ -3516,7 +3516,7 @@ int ImageFlipY::Process(unsigned char *pBuffer, unsigned int width, unsigned int
 int ImageFlipX::Initialize()
 {
     CPropertyAction* pAct = new CPropertyAction (this, &ImageFlipX::OnPerformanceTiming);
-    (void)CreateProperty("PeformanceTiming (microseconds)", "0", MM::Float, true, pAct); 
+    (void)CreateFloatProperty("PeformanceTiming (microseconds)", 0, true, pAct);
    return DEVICE_OK;
 }
 
@@ -3581,8 +3581,8 @@ int ImageFlipX::Process(unsigned char *pBuffer, unsigned int width, unsigned int
 int MedianFilter::Initialize()
 {
     CPropertyAction* pAct = new CPropertyAction (this, &MedianFilter::OnPerformanceTiming);
-    (void)CreateProperty("PeformanceTiming (microseconds)", "0", MM::Float, true, pAct); 
-    (void)CreateProperty("BEWARE", "THIS FILTER MODIFIES DATA, EACH PIXEL IS REPLACED BY 3X3 NEIGHBORHOOD MEDIAN", MM::String, true); 
+    (void)CreateFloatProperty("PeformanceTiming (microseconds)", 0, true, pAct);
+    (void)CreateStringProperty("BEWARE", "THIS FILTER MODIFIES DATA, EACH PIXEL IS REPLACED BY 3X3 NEIGHBORHOOD MEDIAN", true);
    return DEVICE_OK;
 }
 
@@ -3652,7 +3652,7 @@ int DemoHub::Initialize()
 
    SetErrorText(SIMULATED_ERROR, "Simulated Error");
 	CPropertyAction *pAct = new CPropertyAction (this, &DemoHub::OnErrorRate);
-	CreateProperty("SimulatedErrorRate", "0.0", MM::Float, false, pAct);
+   CreateFloatProperty("SimulatedErrorRate", 0.0, false, pAct);
 	AddAllowedValue("SimulatedErrorRate", "0.0000");
 	AddAllowedValue("SimulatedErrorRate", "0.0001");
    AddAllowedValue("SimulatedErrorRate", "0.0010");
@@ -3663,9 +3663,7 @@ int DemoHub::Initialize()
 	AddAllowedValue("SimulatedErrorRate", "1.0000");
 
    pAct = new CPropertyAction (this, &DemoHub::OnDivideOneByMe);
-   std::ostringstream os;
-   os<<this->divideOneByMe_;
-   CreateProperty("DivideOneByMe", os.str().c_str(), MM::Integer, false, pAct);
+   CreateIntegerProperty("DivideOneByMe", this->divideOneByMe_, false, pAct);
 
   	initialized_ = true;
  
