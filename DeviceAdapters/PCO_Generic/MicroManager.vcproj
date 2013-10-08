@@ -24,7 +24,6 @@
 			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="2"
-			UseOfMFC="0"
 			CharacterSet="2"
 			>
 			<Tool
@@ -107,7 +106,6 @@
 			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="2"
-			UseOfMFC="0"
 			CharacterSet="2"
 			>
 			<Tool
@@ -191,7 +189,6 @@
 			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="2"
-			UseOfMFC="0"
 			CharacterSet="2"
 			>
 			<Tool
@@ -272,7 +269,6 @@
 			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="2"
-			UseOfMFC="0"
 			CharacterSet="2"
 			>
 			<Tool

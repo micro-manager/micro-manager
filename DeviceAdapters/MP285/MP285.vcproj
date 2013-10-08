@@ -24,7 +24,6 @@
 			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="2"
-			UseOfMFC="0"
 			CharacterSet="2"
 			ManagedExtensions="0"
 			>
@@ -106,7 +105,6 @@
 			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="2"
-			UseOfMFC="0"
 			CharacterSet="2"
 			ManagedExtensions="0"
 			>
@@ -189,7 +187,6 @@
 			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="2"
-			UseOfMFC="0"
 			CharacterSet="2"
 			ManagedExtensions="0"
 			>
@@ -270,7 +267,6 @@
 			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="2"
-			UseOfMFC="0"
 			CharacterSet="2"
 			ManagedExtensions="0"
 			>
