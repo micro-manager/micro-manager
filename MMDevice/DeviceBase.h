@@ -34,8 +34,6 @@
 #include "ModuleInterface.h"
 #include "DeviceThreads.h"
 
-#include <boost/lexical_cast.hpp>
-
 #include <math.h>
 #include <assert.h>
 
@@ -606,7 +604,9 @@ public:
    {
       // Note: in theory, we can avoid converting to string and back. At this
       // moment, it is not worth the trouble.
-      return CreateProperty(name, boost::lexical_cast<std::string>(value).c_str(), MM::Integer, readOnly, pAct, isPreInitProperty);
+      std::ostringstream oss;
+      oss << value;
+      return CreateProperty(name, oss.str().c_str(), MM::Integer, readOnly, pAct, isPreInitProperty);
    }
 
    /**
@@ -617,13 +617,14 @@ public:
       // Note: in theory, we can avoid converting to string and back. At this
       // moment, it is not worth the trouble.
       //
-      // However, note the following assumtion being made here:
-      // boost::lexical_cast, which uses the default settings of std::ostream,
-      // will return strings with a decimal precision of 6 digits. When this
-      // eventually gets passed to MM::FloatProperty::Set(double), it gets
-      // truncated to 4 digits before being stored. Thus, we do not loose any
-      // information by using boost::lexical_cast here.
-      return CreateProperty(name, boost::lexical_cast<std::string>(value).c_str(), MM::Float, readOnly, pAct, isPreInitProperty);
+      // However, note the following assumtion being made here: the default
+      // settings of std::ostream will return strings with a decimal precision
+      // of 6 digits. When this eventually gets passed to
+      // MM::FloatProperty::Set(double), it gets truncated to 4 digits before
+      // being stored. Thus, we do not loose any information.
+      std::ostringstream oss;
+      oss << value;
+      return CreateProperty(name, oss.str().c_str(), MM::Float, readOnly, pAct, isPreInitProperty);
    }
 
    /**
