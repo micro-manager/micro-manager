@@ -17,6 +17,7 @@ import org.micromanager.acquisition.SequenceSettings;
 import org.micromanager.acquisition.TaggedImageQueue;
 import org.micromanager.acquisition.TaggedImageStorageDiskDefault;
 import org.micromanager.api.IAcquisitionEngine2010;
+import org.micromanager.api.MMTags;
 import org.micromanager.api.TaggedImageStorage;
 import org.micromanager.navigation.MultiStagePosition;
 import org.micromanager.navigation.PositionList;
@@ -79,26 +80,26 @@ public class AcqStandalone {
       // create summary metadata
       JSONObject summary = new JSONObject();
       try {
-         summary.put("Slices", s.slices.size());
-         summary.put("Positions", 1);
-         summary.put("Channels", s.channels.size());
-         summary.put("Frames", s.numFrames);
-         summary.put("SlicesFirst", true);
-         summary.put("TimeFirst", false);
+         summary.put(MMTags.Summary.SLICES, s.slices.size());
+         summary.put(MMTags.Summary.POSITIONS, 1);
+         summary.put(MMTags.Summary.CHANNELS, s.channels.size());
+         summary.put(MMTags.Summary.FRAMES, s.numFrames);
+         summary.put(MMTags.Summary.SLICES_FIRST, true);
+         summary.put(MMTags.Summary.TIME_FIRST, false);
 
          if (d == 2) {
-            summary.put("PixelType", "GRAY16");
-            summary.put("IJType", ImagePlus.GRAY16);
+            summary.put(MMTags.Summary.PIX_TYPE, "GRAY16");
+            summary.put(MMTags.Summary.IJ_TYPE, ImagePlus.GRAY16);
          } else if (d==1) {
-            summary.put("PixelType", "GRAY8");
-            summary.put("IJType", ImagePlus.GRAY8);
+            summary.put(MMTags.Summary.PIX_TYPE, "GRAY8");
+            summary.put(MMTags.Summary.IJ_TYPE, ImagePlus.GRAY8);
          } else {
             System.out.println("Unsupported pixel type");
             return;
          }
-         summary.put("Width", 512);
-         summary.put("Height", 512);
-         summary.put("Prefix", s.prefix); // Acquisition name
+         summary.put(MMTags.Summary.WIDTH, w);
+         summary.put(MMTags.Summary.HEIGHT, h);
+         summary.put(MMTags.Summary.PREFIX, s.prefix); // Acquisition name
 
          //these are used to create display settings
          JSONArray chColors = new JSONArray();
@@ -111,10 +112,10 @@ public class AcqStandalone {
             chMins.put(0);
             chMaxs.put(d == 2 ? 65535 : 255);
          }
-         summary.put("ChColors", chColors);
-         summary.put("ChNames", chNames);
-         summary.put("ChMins", chMins);
-         summary.put("ChMaxes", chMaxs);
+         summary.put(MMTags.Summary.COLORS, chColors);
+         summary.put(MMTags.Summary.NAMES, chNames);
+         summary.put(MMTags.Summary.CHANNEL_MINS, chMins);
+         summary.put(MMTags.Summary.CHANNEL_MAXES, chMaxs);
 
       } catch (JSONException e2) {
          // TODO Auto-generated catch block
@@ -141,8 +142,8 @@ public class AcqStandalone {
          TaggedImage img = null;
          do {
             img = taggedImageQueue.take();
-            if (img.tags != null && img.tags.has("FrameIndex")) {
-               System.out.println("Current frame index " + img.tags.getInt("FrameIndex"));
+            if (img.tags != null && img.tags.has(MMTags.Image.FRAME_INDEX)) {
+               System.out.println("Current frame index " + img.tags.getInt(MMTags.Image.FRAME_INDEX));
             }
             Thread.sleep(50);
          } while (img != TaggedImageQueue.POISON);
