@@ -608,17 +608,21 @@ template<> int64_t Node<int64_t>::getMaximum( CAM_HANDLE camera )
 
 template<> int64_t Node<int64_t>::getIncrement( CAM_HANDLE camera )
 {
-	int64_t i = 0;
+	int64_t i = 1;
 	NODE_HANDLE node;
 	J_STATUS_TYPE retval  = J_Camera_GetNodeByName( camera, const_cast<char*>( this->sfncName.c_str() ), &node );
 	if( retval != J_ST_SUCCESS )
-		return 0;
+		return 1; // Unlikely to get here, but return a safe value
 	LogMessage( "Getting increment for " + sfncName );
 	retval = J_Node_GetInc( node, &i );
 	if( retval == J_ST_SUCCESS )
 		return i;
-	else
-		return 0;
+	else {
+		// Returning zero here could cause infinite loops if the calling
+		// code assumes it to be a valid increment
+		LogMessage( "Cannot get increment; forcing to 1" );
+		return 1;
+	}
 }
 
 

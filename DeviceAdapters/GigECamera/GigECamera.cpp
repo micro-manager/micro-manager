@@ -857,6 +857,9 @@ int CGigECamera::SetAllowedBinning()
 		min = nodes->getMin( BINNING_VERTICAL );
 		max = nodes->getMax( BINNING_VERTICAL );
 		inc = nodes->getIncrement( BINNING_VERTICAL );
+		LogMessage("Vertical Binning min = " + boost::lexical_cast<std::string>(min) +
+				"; max = " + boost::lexical_cast<std::string>(max) +
+				"; increment = " + boost::lexical_cast<std::string>(inc), true);
 		for( int64_t i = min; i <= max; i += inc )
 			vValues.push_back( boost::lexical_cast<std::string>( i ) );
 		SetAllowedValues( g_Keyword_Binning_Vertical, vValues );
@@ -868,6 +871,9 @@ int CGigECamera::SetAllowedBinning()
 		min = nodes->getMin( BINNING_HORIZONTAL );
 		max = nodes->getMax( BINNING_HORIZONTAL );
 		inc = nodes->getIncrement( BINNING_HORIZONTAL );
+		LogMessage("Horizontal Binning min = " + boost::lexical_cast<std::string>(min) +
+				"; max = " + boost::lexical_cast<std::string>(max) +
+				"; increment = " + boost::lexical_cast<std::string>(inc), true);
 		for( int64_t i = min; i <= max; i += inc )
 			hValues.push_back( boost::lexical_cast<std::string>( i ) );
 		SetAllowedValues( g_Keyword_Binning_Horizontal, hValues );
