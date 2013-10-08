@@ -417,10 +417,6 @@
 				>
 			</File>
 			<File
-				RelativePath="MMDevice\ModuleInterface.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\MMDevice\ModuleInterface.h"
 				>
 			</File>
@@ -430,10 +426,6 @@
 			</File>
 			<File
 				RelativePath=".\resource.h"
-				>
-			</File>
-			<File
-				RelativePath=".\stdafx.h"
 				>
 			</File>
 		</Filter>
