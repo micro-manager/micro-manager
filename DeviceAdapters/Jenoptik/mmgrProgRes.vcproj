@@ -44,7 +44,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\..\..\3rdparty\Jenoptik\sdk;..\..\..\3rdparty\Jenoptik;&quot;..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\include&quot;;..\..\..\3rdpartypublic\boost"
+				AdditionalIncludeDirectories="..\..\..\3rdparty\Jenoptik\sdk;..\..\..\3rdparty\Jenoptik;..\..\..\3rdpartypublic\boost"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS;USBCAMERAS"
 				MinimalRebuild="true"
 				ExceptionHandling="2"
@@ -70,7 +70,7 @@
 				AdditionalDependencies="shlwapi.lib"
 				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="&quot;..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\lib&quot;"
+				AdditionalLibraryDirectories=""
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)/$(ProjectName).pdb"
 				SubSystem="2"
@@ -127,7 +127,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\..\..\3rdparty\Jenoptik\sdk;..\..\..\3rdparty\Jenoptik;&quot;..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\include&quot;;..\..\..\3rdpartypublic\boost"
+				AdditionalIncludeDirectories="..\..\..\3rdparty\Jenoptik\sdk;..\..\..\3rdparty\Jenoptik;..\..\..\3rdpartypublic\boost"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS;USBCAMERAS"
 				MinimalRebuild="true"
 				ExceptionHandling="2"
@@ -153,7 +153,7 @@
 				AdditionalDependencies="shlwapi.lib"
 				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="&quot;..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\lib&quot;"
+				AdditionalLibraryDirectories=""
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)/$(ProjectName).pdb"
 				SubSystem="2"
@@ -208,7 +208,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="..\..\..\3rdparty\Jenoptik\sdk;..\..\..\3rdparty\Jenoptik;&quot;..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\include&quot;;..\..\..\3rdpartypublic\boost"
+				AdditionalIncludeDirectories="..\..\..\3rdparty\Jenoptik\sdk;..\..\..\3rdparty\Jenoptik;..\..\..\3rdpartypublic\boost"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS;USBCAMERAS"
 				ExceptionHandling="2"
 				RuntimeLibrary="0"
@@ -232,7 +232,7 @@
 				AdditionalDependencies="shlwapi.lib"
 				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="&quot;..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\lib&quot;"
+				AdditionalLibraryDirectories=""
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
@@ -289,7 +289,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="..\..\..\3rdparty\Jenoptik\sdk;..\..\..\3rdparty\Jenoptik;&quot;..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\include&quot;;..\..\..\3rdpartypublic\boost"
+				AdditionalIncludeDirectories="..\..\..\3rdparty\Jenoptik\sdk;..\..\..\3rdparty\Jenoptik;..\..\..\3rdpartypublic\boost"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS;USBCAMERAS"
 				ExceptionHandling="2"
 				RuntimeLibrary="0"
@@ -313,7 +313,7 @@
 				AdditionalDependencies="shlwapi.lib"
 				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="&quot;..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\lib&quot;"
+				AdditionalLibraryDirectories=""
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
@@ -434,10 +434,6 @@
 			Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx"
 			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}"
 			>
-			<File
-				RelativePath=".\mmgrProgRes.rc"
-				>
-			</File>
 		</Filter>
 	</Files>
 	<Globals>

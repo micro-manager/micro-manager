@@ -26,7 +26,14 @@
 #include <math.h>
 #include "../../MMDevice/ModuleInterface.h"
 #include <sstream>
+
+// ATLTRACE disabled to avoid dependency on ATL (which is not included in VS Express)
+#if 0
 #include <atltrace.h>
+#else
+#define ATLTRACE
+#endif
+
 #include "sdk/MexExl.h"
 #include "resource.h"
 using namespace std;
