@@ -20,7 +20,8 @@
   [^Graphics2D graphics ^String text x y]
   (let [context (.getFontRenderContext graphics)
         height (.. graphics
-                   getFont (createGlyphVector context text)
+                   getFont
+                   (createGlyphVector context text)
                    getVisualBounds
                    getHeight)
         width (.. graphics
@@ -37,6 +38,14 @@
   [^Graphics2D g image x y]
   (.drawImage g image x y nil))
 
+(def last-frame (atom 0))
+
+(defn print-frame-time []
+  (let [last-time @last-frame
+        now (System/currentTimeMillis)]
+    (reset! last-frame now)
+    (println (- now last-time))))
+
 (defn repaint-on-change 
   "Adds a watch such that panel is repainted whenever
    the values in reference have changed."
@@ -46,4 +55,34 @@
       (fn [old-state new-state]
         (when (.getParent panel)
           (when-not (identical? old-state new-state)
+            (reset! last-change (System/currentTimeMillis))
             (.repaint panel)))))))
+
+(defn graphics-buffer-image
+  "Create an image that can be rapdily rendered to screen."
+  [w h]
+  (.. java.awt.GraphicsEnvironment
+      getLocalGraphicsEnvironment
+      getDefaultScreenDevice
+      getDefaultConfiguration
+      (createCompatibleImage w h java.awt.Transparency/TRANSLUCENT)))
+
+;(def graphics-buffer-image-memo (memoize graphics-buffer-image))
+
+(defn paint-buffered
+  "Instead of calling (paint-function graphics), run the
+   painting offscreen and then draw the resulting image
+   to graphics."
+  [^Graphics graphics paint-function]
+  (let [clip-rect (.getClipRect graphics)
+        x (.x clip-rect)
+        y (.y clip-rect)
+        w (.width clip-rect)
+        h (.height clip-rect)
+        buffer-image (graphics-buffer-image w h)
+        buffer-graphics (.getGraphics buffer-image)
+        ]
+    ;(print-frame-time)
+    (paint-function buffer-graphics)
+    (.drawImage graphics buffer-image x y nil)
+    ))

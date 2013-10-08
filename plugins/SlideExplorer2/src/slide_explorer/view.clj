@@ -135,6 +135,12 @@
 
 (def bar-widget-memo (memo/memo-lru scale-bar/bar-widget 500))
 
+(defn scale-graphics
+  "Rescale subsequent drawing in a graphics object."
+  [graphics scale]
+  (when (not= scale 1.0)
+    (.scale graphics scale scale)))
+
 (defn paint-screen
   "Paints a slide explorer screen, with tiles, scale bar, and when appropriate,
    current stage position and positions from XY-list."
@@ -149,7 +155,7 @@
       (.setClip 0 0 (:width screen-state) (:height screen-state))
       (.translate (- x-center (int (* (:x screen-state) zoom scale)))
                   (- y-center (int (* (:y screen-state) zoom scale))))
-      (.scale scale scale)
+      (scale-graphics scale)
       (paint-tiles overlay-tiles-atom screen-state)
       (paint-position-list screen-state)
       (paint-stage-position screen-state)
@@ -192,12 +198,19 @@
   
 ;; MAIN WINDOW AND PANEL
 
+(defn paint-screen-buffered [graphics screen-state-atom overlay-tiles-atom]
+  ;(paint-screen graphics @screen-state-atom overlay-tiles-atom)
+  (paint/paint-buffered graphics
+                       #(paint-screen %
+                                      @screen-state-atom
+                                      overlay-tiles-atom)))
+
 (defn create-panel [screen-state-atom overlay-tiles-atom]
   (doto
     (proxy [JPanel] []
       (paintComponent [^Graphics graphics]
         (proxy-super paintComponent graphics)
-        (paint-screen graphics @screen-state-atom overlay-tiles-atom)))
+        (paint-screen-buffered graphics screen-state-atom overlay-tiles-atom)))
     (.setBackground Color/BLACK)))
     
 (defn main-frame
