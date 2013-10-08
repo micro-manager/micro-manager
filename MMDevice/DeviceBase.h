@@ -96,12 +96,12 @@ public:
    /**
    * Returns the library handle (for use only by the calling code).
    */
-   HDEVMODULE GetModuleHandle() const {return module_;}
+   virtual HDEVMODULE GetModuleHandle() const {return module_;}
 
    /**
    * Assigns a name for the module (for use only by the calling code).
    */
-   void SetModuleName(const char* name)
+   virtual void SetModuleName(const char* name)
    {
       moduleName_ = name;
    }
@@ -109,7 +109,7 @@ public:
    /**
    * Returns the module name (for use only by the calling code).
    */
-   void GetModuleName(char* name) const
+   virtual void GetModuleName(char* name) const
    {
       CDeviceUtils::CopyLimitedString(name, moduleName_.c_str());
    }
@@ -117,7 +117,7 @@ public:
    /**
    * Assigns description string for a device (for use only by the calling code).
    */
-   void SetDescription(const char* descr)
+   virtual void SetDescription(const char* descr)
    {
       description_ = descr;
    }
@@ -125,7 +125,7 @@ public:
    /**
    * Returns device description (for use only by the calling code).
    */
-   void GetDescription(char* name) const
+   virtual void GetDescription(char* name) const
    {
       CDeviceUtils::CopyLimitedString(name, description_.c_str());
    }
@@ -133,14 +133,14 @@ public:
    /**
    * Sets the library handle (for use only by the calling code).
    */
-   void SetModuleHandle(HDEVMODULE hModule) {module_ = hModule;}
+   virtual void SetModuleHandle(HDEVMODULE hModule) {module_ = hModule;}
 
    /**
    * Sets the device label (for use only by the calling code).
    * Labels are usually manipulated by the parent application and used
    * for high-level programming.
    */
-   void SetLabel(const char* label)
+   virtual void SetLabel(const char* label)
    {
       label_ = label;
    }
@@ -150,7 +150,7 @@ public:
    * Labels are usually manipulated by the parent application and used
    * for high-level programming.
    */
-   void GetLabel(char* name) const
+   virtual void GetLabel(char* name) const
    {
       CDeviceUtils::CopyLimitedString(name, label_.c_str());
    }
@@ -160,37 +160,37 @@ public:
    * Delay of 0 means that the device should be synchronized by polling with the
    * Busy() method.
    */
-   double GetDelayMs() const {return delayMs_;}
+   virtual double GetDelayMs() const {return delayMs_;}
 
    /**
    * Returns the device delay used for synchronization by the calling code.
    * Delay of 0 means that the device should be synchronized by polling with the
    * Busy() method.
    */
-   void SetDelayMs(double delay) {delayMs_ = delay;}
+   virtual void SetDelayMs(double delay) {delayMs_ = delay;}
 
    /**
    * Sets the callback for accessing parent functionality (used only by the calling code).
    */
-   void SetCallback(MM::Core* cbk) {callback_ = cbk;}
+   virtual void SetCallback(MM::Core* cbk) {callback_ = cbk;}
 
    /**
    * Signals if the device responds to different delay settings.
    * Default device behavior is to ignore delays and use busy signals instead.
    */
-   bool UsesDelay() {return usesDelay_;}
+   virtual bool UsesDelay() {return usesDelay_;}
 
    /**
    * Returns the number of properties.
    */
-   unsigned GetNumberOfProperties() const {return (unsigned)properties_.GetSize();}
+   virtual unsigned GetNumberOfProperties() const {return (unsigned)properties_.GetSize();}
 
    /**
    * Obtains the value of the property.
    * @param name - property identifier (name)
    * @param value - the value of the property
    */
-   int GetProperty(const char* name, char* value) const
+   virtual int GetProperty(const char* name, char* value) const
    {
       std::string strVal;
       // additional information for reporting invalid properties.
@@ -250,7 +250,7 @@ public:
    * @param name - property identifier (name)
    * @param readOnly - read-only or not
    */
-   int GetPropertyReadOnly(const char* name, bool& readOnly) const
+   virtual int GetPropertyReadOnly(const char* name, bool& readOnly) const
    {
       MM::Property* pProp = properties_.Find(name);
       if (!pProp)
@@ -269,7 +269,7 @@ public:
    * @param name - property identifier (name)
    * @param readOnly - read-only or not
    */
-   int GetPropertyInitStatus(const char* name, bool& preInit) const
+   virtual int GetPropertyInitStatus(const char* name, bool& preInit) const
    {
       MM::Property* pProp = properties_.Find(name);
       if (!pProp)
@@ -283,7 +283,7 @@ public:
       return DEVICE_OK;
    }
 
-   int HasPropertyLimits(const char* name, bool& hasLimits) const
+   virtual int HasPropertyLimits(const char* name, bool& hasLimits) const
    {
       MM::Property* pProp = properties_.Find(name);
       if (!pProp)
@@ -301,7 +301,7 @@ public:
     * @param name - property identifier (name)
     * @param lowLimit - returns lower limit
     */
-   int GetPropertyLowerLimit(const char* name, double& lowLimit) const
+   virtual int GetPropertyLowerLimit(const char* name, double& lowLimit) const
    {
       MM::Property* pProp = properties_.Find(name);
       if (!pProp)
@@ -319,7 +319,7 @@ public:
     * @param name - property identifier (name)
     * @param hiLimit - returns upper limit
     */
-   int GetPropertyUpperLimit(const char* name, double& hiLimit) const
+   virtual int GetPropertyUpperLimit(const char* name, double& hiLimit) const
    {
       MM::Property* pProp = properties_.Find(name);
       if (!pProp)
@@ -337,7 +337,7 @@ public:
    * @param name - property identifier (name)
    * @param sequenceable - sequenceable or not
    */
-   int IsPropertySequenceable(const char* name, bool& sequenceable) const
+   virtual int IsPropertySequenceable(const char* name, bool& sequenceable) const
    {
       MM::Property* pProp = properties_.Find(name);
       if (!pProp)
@@ -356,7 +356,7 @@ public:
    * @param name - property identifier (name)
    * @param nrEvents - maximum number of events that can be handles by the device
    */
-   int GetPropertySequenceMaxLength(const char* name, long& nrEvents) const
+   virtual int GetPropertySequenceMaxLength(const char* name, long& nrEvents) const
    {
       MM::Property* pProp = properties_.Find(name);
       if (!pProp)
@@ -384,7 +384,7 @@ public:
     * Should be overridden by the device adapter (when a sequence is implemented)
     * @param  name - property for which the sequence should be started
     */
-   int StartPropertySequence(const char* name)
+   virtual int StartPropertySequence(const char* name)
    {
       MM::Property* pProp = properties_.Find(name);
       if (!pProp)
@@ -410,7 +410,7 @@ public:
     * Should be overridden by the device adapter (when a sequence is implemented)
     * @param  name - property for which the sequence should be started
     */
-   int StopPropertySequence(const char* name)
+   virtual int StopPropertySequence(const char* name)
    {
       MM::Property* pProp = properties_.Find(name);
       if (!pProp)
@@ -434,7 +434,7 @@ public:
     * This function is used by the Core to communicate a sequence to the device
     * @param name - name of the sequenceable property
     */
-   int ClearPropertySequence(const char* name)
+   virtual int ClearPropertySequence(const char* name)
    {
       MM::Property* pProp;
       int ret = GetSequenceableProperty(&pProp, name);
@@ -448,7 +448,7 @@ public:
     * This function is used by the Core to communicate a sequence to the device
     * @param name - name of the sequenceable property
     */
-   int AddToPropertySequence(const char* name, const char* value)
+   virtual int AddToPropertySequence(const char* name, const char* value)
    {
       MM::Property* pProp;
       int ret = GetSequenceableProperty(&pProp, name);
@@ -463,7 +463,7 @@ public:
     * Sends the sequence to the device by calling the properties functor 
     * @param name - name of the sequenceable property
     */
-   int SendPropertySequence(const char* name)
+   virtual int SendPropertySequence(const char* name)
    {
       MM::Property* pProp;
       int ret = GetSequenceableProperty(&pProp, name);
@@ -479,7 +479,7 @@ public:
    * @param idx - property index
    * @param name - property name
    */
-   bool GetPropertyName(unsigned uIdx, char* name) const
+   virtual bool GetPropertyName(unsigned uIdx, char* name) const
    {
       std::string strName;
       if (!properties_.GetName(uIdx, strName))
@@ -492,7 +492,7 @@ public:
    /**
    * Obtain property type (string, float or integer)
    */
-   int GetPropertyType(const char* name, MM::PropertyType& pt) const
+   virtual int GetPropertyType(const char* name, MM::PropertyType& pt) const
    {
       MM::Property* pProp = properties_.Find(name);
       if (!pProp)
@@ -507,7 +507,7 @@ public:
    * @param name - property name
    * @param value - propery value
    */
-   int SetProperty(const char* name, const char* value)
+   virtual int SetProperty(const char* name, const char* value)
    {
       int ret = properties_.Set(name, value);
       if( DEVICE_OK != ret)
@@ -522,7 +522,7 @@ public:
    /**
    * Checks if device supports a given property.
    */
-   bool HasProperty(const char* name) const
+   virtual bool HasProperty(const char* name) const
    {
       MM::Property* pProp = properties_.Find(name);
       if (pProp)
@@ -536,7 +536,7 @@ public:
    * If the set of property values is not defined, not bounded,
    * or property does not exist, the call returns 0.
    */
-   unsigned GetNumberOfPropertyValues(const char* propertyName) const
+   virtual unsigned GetNumberOfPropertyValues(const char* propertyName) const
    {
       MM::Property* pProp = properties_.Find(propertyName);
       if (!pProp)
@@ -552,7 +552,7 @@ public:
    * @param index
    * @param value
    */
-   bool GetPropertyValueAt(const char* propertyName, unsigned index, char* value) const
+   virtual bool GetPropertyValueAt(const char* propertyName, unsigned index, char* value) const
    {
       MM::Property* pProp = properties_.Find(propertyName);
       if (!pProp)
@@ -706,7 +706,7 @@ public:
    /**
    * Obtains the error text associated with the error code.
    */
-   bool GetErrorText(int errorCode, char* text) const
+   virtual bool GetErrorText(int errorCode, char* text) const
    {
       std::map<int, std::string>::const_iterator it;
       it = messages_.find(errorCode);
@@ -736,20 +736,20 @@ public:
 
    // acq context api
    // NOTE: experimental feature, do not count on these methods
-   int AcqBefore() {return DEVICE_OK;}
-   int AcqAfter() {return DEVICE_OK;}
-   int AcqBeforeFrame() {return DEVICE_OK;}
-   int AcqAfterFrame() {return DEVICE_OK;}
-   int AcqBeforeStack() {return DEVICE_OK;}
-   int AcqAfterStack() {return DEVICE_OK;}
+   virtual int AcqBefore() {return DEVICE_OK;}
+   virtual int AcqAfter() {return DEVICE_OK;}
+   virtual int AcqBeforeFrame() {return DEVICE_OK;}
+   virtual int AcqAfterFrame() {return DEVICE_OK;}
+   virtual int AcqBeforeStack() {return DEVICE_OK;}
+   virtual int AcqAfterStack() {return DEVICE_OK;}
 
    // device discovery (auto-configuration)
-   MM::DeviceDetectionStatus DetectDevice(void){ 
+   virtual MM::DeviceDetectionStatus DetectDevice(void){ 
       return  MM::Unimplemented;
    };
 
    // hub - peripheral relationship
-   void SetParentID(const char* parentId)
+   virtual void SetParentID(const char* parentId)
    {
       parentID_ = parentId;
 
@@ -763,7 +763,7 @@ public:
       }
    }
    
-   void GetParentID(char* parentID) const
+   virtual void GetParentID(char* parentID) const
    {
       CDeviceUtils::CopyLimitedString(parentID, parentID_.c_str());
    }
@@ -900,7 +900,7 @@ protected:
       SetErrorText(DEVICE_DUPLICATE_LIBRARY, g_Msg_DEVICE_DUPLICATE_LIBRARY);
       SetErrorText(DEVICE_PROPERTY_NOT_SEQUENCEABLE, g_Msg_DEVICE_PROPERTY_NOT_SEQUENCEABLE);
       SetErrorText(DEVICE_SEQUENCE_TOO_LARGE, g_Msg_DEVICE_SEQUENCE_TOO_LARGE);
-	  SetErrorText(DEVICE_NOT_YET_IMPLEMENTED, g_Msg_DEVICE_NOT_YET_IMPLEMENTED);
+      SetErrorText(DEVICE_NOT_YET_IMPLEMENTED, g_Msg_DEVICE_NOT_YET_IMPLEMENTED);
    }
 
    /**
@@ -1000,7 +1000,7 @@ protected:
    }
 
    /**
-   * Reads the current contents of Rx serial buffer.
+   * Not to be confused with MM::PortType MM::Serial::GetPortType() const.
    */
    MM::PortType GetPortType(const char* portLabel)
    {
@@ -1136,7 +1136,7 @@ protected:
     * Can be called anywhere in the device code, but the most logical place is the constructor.
     * Use is optional, to provide useful info.
     */
-	void CreateHubIDProperty()
+   void CreateHubIDProperty()
    {
       char pid[MM::MaxStrLength];
       this->GetParentID(pid);
@@ -1225,7 +1225,7 @@ private:
 template <class U>
 class CGenericBase : public CDeviceBase<MM::Device, U>
 {
-   MM::DeviceType GetType() const {return Type;}
+   virtual MM::DeviceType GetType() const { return Type; }
    static const MM::DeviceType Type = MM::GenericDevice;
 };
 
@@ -1590,7 +1590,7 @@ protected:
       void UpdateActualDuration() {actualDuration_ = camera_->GetCurrentMMTime() - startTime_;}
 
    private:
-      int svc(void) throw()
+      virtual int svc(void) throw()
       {
          int ret=DEVICE_ERR;
          try 
@@ -1648,7 +1648,7 @@ class CStageBase : public CDeviceBase<MM::Stage, U>
    */
    using CDeviceBase<MM::Stage, U>::GetPositionUm;
    using CDeviceBase<MM::Stage, U>::SetPositionUm;
-   int SetRelativePositionUm(double d)
+   virtual int SetRelativePositionUm(double d)
    {
       double pos;
       int ret = GetPositionUm(pos);
@@ -1657,12 +1657,12 @@ class CStageBase : public CDeviceBase<MM::Stage, U>
       return SetPositionUm(pos + d);
    }
 
-   int SetAdapterOriginUm(double /*d*/)
+   virtual int SetAdapterOriginUm(double /*d*/)
    {
       return DEVICE_UNSUPPORTED_COMMAND;
    }
 
-   int Move(double /*velocity*/)
+   virtual int Move(double /*velocity*/)
    {
       return DEVICE_UNSUPPORTED_COMMAND;
    }
@@ -1724,7 +1724,7 @@ public:
    }
 
 
-   int SetPositionUm(double x, double y)
+   virtual int SetPositionUm(double x, double y)
    {
       bool mirrorX, mirrorY;
       GetOrientation(mirrorX, mirrorY);
@@ -1755,7 +1755,7 @@ public:
    /**
    * Default implementation for relative motion
    */
-   int SetRelativePositionUm(double dx, double dy)
+   virtual int SetRelativePositionUm(double dx, double dy)
    {
       bool mirrorX, mirrorY;
       GetOrientation(mirrorX, mirrorY);
@@ -1780,7 +1780,7 @@ public:
    * Defines position x,y (relative to current position) as the origin of our coordinate system
    * Get the current (stage-native) XY position
    */
-   int SetAdapterOriginUm(double x, double y)
+   virtual int SetAdapterOriginUm(double x, double y)
    {
       bool mirrorX, mirrorY;
       GetOrientation(mirrorX, mirrorY);
@@ -1802,7 +1802,7 @@ public:
       return DEVICE_OK;                                                         
    }                                                                            
 
-   int GetPositionUm(double& x, double& y)
+   virtual int GetPositionUm(double& x, double& y)
    {
       bool mirrorX, mirrorY;
       GetOrientation(mirrorX, mirrorY);
@@ -1833,7 +1833,7 @@ public:
    * The actual stage adapter should override it with the more
    * efficient implementation
    */ 
-   int SetRelativePositionSteps(long x, long y)
+   virtual int SetRelativePositionSteps(long x, long y)
    {
       long xSteps, ySteps;
       int ret = this->GetPositionSteps(xSteps, ySteps);
@@ -1843,7 +1843,7 @@ public:
       return this->SetPositionSteps(xSteps+x, ySteps+y);
    }
 
-   int Move(double /*vx*/, double /*vy*/)
+   virtual int Move(double /*vx*/, double /*vy*/)
    {
       return DEVICE_UNSUPPORTED_COMMAND;
    }
@@ -2024,7 +2024,7 @@ class HubBase : public CDeviceBase<MM::Hub, U>
 {
 public:
    HubBase() {}
-   ~HubBase()
+   virtual ~HubBase()
    {
       ClearInstalledDevices();
    }
@@ -2036,25 +2036,25 @@ public:
    * If this method is not overridden, it will do nothing
    * and return DEVICE_OK.
    */
-   int DetectInstalledDevices() {return DEVICE_OK;}
+   virtual int DetectInstalledDevices() {return DEVICE_OK;}
 
    /**
    * Returns the number of child devices after DetectInstalledDevices was called.
    * (Don't override this method.)
    */
-   unsigned GetNumberOfInstalledDevices() {return (unsigned)installedDevices.size();}
+   virtual unsigned GetNumberOfInstalledDevices() {return (unsigned)installedDevices.size();}
 
    /**
    * Returns a pointer to the device with index devIdx. 0 <= devIdx < GetNumberOfInstalledDevices().
    * (Don't override this method.)
    */
-   MM::Device* GetInstalledDevice(int devIdx) {return installedDevices[devIdx];}
+   virtual MM::Device* GetInstalledDevice(int devIdx) {return installedDevices[devIdx];}
 
    /**
    * Removes all installed devices that were created by DetectInstalledDevices()
    * (Don't override this method.)
    */
-   void ClearInstalledDevices()
+   virtual void ClearInstalledDevices()
    {
       for (unsigned i=0; i<installedDevices.size(); i++)
          delete installedDevices[i];
@@ -2091,7 +2091,7 @@ public:
    * Sets the state (position) of the device based on the state index.
    * Assumes that "State" property is implemented for the device.
    */
-   int SetPosition(long pos)
+   virtual int SetPosition(long pos)
    {
       return this->SetProperty(MM::g_Keyword_State, CDeviceUtils::ConvertToString(pos));
    }
@@ -2100,7 +2100,7 @@ public:
    * Sets the state (position) of the device based on the state label.
    * Assumes that "State" property is implemented for the device.
    */
-   int SetPosition(const char* label)
+   virtual int SetPosition(const char* label)
    {
       std::map<std::string, long>::const_iterator it;
       it = labels_.find(label);
@@ -2116,7 +2116,7 @@ public:
    * The gate needs to be implemented in the adapter's 'OnState function
    * (which is called through SetPosition)
    */
-   int SetGateOpen(bool open)
+   virtual int SetGateOpen(bool open)
    {  
       if (gateOpen_ != open) {
          gateOpen_ = open;
@@ -2129,7 +2129,7 @@ public:
       return DEVICE_OK;
    }
 
-   int GetGateOpen(bool& open) 
+   virtual int GetGateOpen(bool& open)
    {
       open = gateOpen_; 
       return DEVICE_OK;
@@ -2139,7 +2139,7 @@ public:
    * Obtains the state (position) index of the device.
    * Assumes that "State" property is implemented for the device.
    */
-   int GetPosition(long& pos) const
+   virtual int GetPosition(long& pos) const
    {
       char buf[MM::MaxStrLength];
       assert(this->HasProperty(MM::g_Keyword_State));
@@ -2157,7 +2157,7 @@ public:
    * Obtains the state (position) label of the device.
    * Assumes that "State" property is implemented for the device.
    */
-   int GetPosition(char* label) const
+   virtual int GetPosition(char* label) const
    {
       long pos;
       int ret = GetPosition(pos);
@@ -2170,7 +2170,7 @@ public:
    /**
    * Obtains the label associated with the position (state).
    */
-   int GetPositionLabel(long pos, char* label) const
+   virtual int GetPositionLabel(long pos, char* label) const
    {
       std::map<std::string, long>::const_iterator it;
       for (it=labels_.begin(); it!=labels_.end(); it++)
@@ -2191,7 +2191,7 @@ public:
    /**
    * Creates new label for the given position, or overrides the existing one.
    */
-   int SetPositionLabel(long pos, const char* label)
+   virtual int SetPositionLabel(long pos, const char* label)
    {
       // first test if the label already exists with different position defined
       std::map<std::string, long>::iterator it;
@@ -2227,7 +2227,7 @@ public:
    /**
    * Obtains the position associated with a label.
    */
-   int GetLabelPosition(const char* label, long& pos) const 
+   virtual int GetLabelPosition(const char* label, long& pos) const 
    {
       std::map<std::string, long>::const_iterator it;
       it = labels_.find(label);

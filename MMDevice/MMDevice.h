@@ -349,7 +349,7 @@ namespace MM {
       Camera() {}
       virtual ~Camera() {}
 
-      DeviceType GetType() const {return Type;}
+      virtual DeviceType GetType() const {return Type;}
       static const DeviceType Type = CameraDevice;
 
       // Camera API
@@ -664,7 +664,7 @@ namespace MM {
       virtual int SetRelativePositionSteps(long x, long y) = 0;
       virtual int Home() = 0;
       virtual int Stop() = 0;
-	   virtual int SetOrigin() = 0;//jizhen, 4/12/2007
+      virtual int SetOrigin() = 0;//jizhen, 4/12/2007
       virtual int GetStepLimits(long& xMin, long& xMax, long& yMin, long& yMax) = 0;
       virtual double GetStepSizeXUm() = 0;
       virtual double GetStepSizeYUm() = 0;
@@ -981,7 +981,7 @@ namespace MM {
       SLM() {}
       virtual ~SLM() {}
 
-      DeviceType GetType() const {return Type;}
+      virtual DeviceType GetType() const {return Type;}
       static const DeviceType Type = SLMDevice;
 
       // SLM API
@@ -1041,12 +1041,12 @@ namespace MM {
       Galvo() {}
       virtual ~Galvo() {}
 
-      DeviceType GetType() const {return Type;}
+      virtual DeviceType GetType() const {return Type;}
       static const DeviceType Type = GalvoDevice;
       
    //Galvo API:
       virtual int PointAndFire(double x, double y, double time_us) = 0;
-	  virtual int SetSpotInterval(double pulseInterval_us) = 0;
+      virtual int SetSpotInterval(double pulseInterval_us) = 0;
       virtual int SetPosition(double x, double y) = 0;
       virtual int GetPosition(double& x, double& y) = 0;
       virtual int SetIlluminationState(bool on) = 0;
@@ -1059,7 +1059,7 @@ namespace MM {
       virtual int SetPolygonRepetitions(int repetitions) = 0;
       virtual int RunPolygons() = 0;
       virtual int StopSequence() = 0;
-	  virtual int GetChannel(char* channelName) = 0;
+      virtual int GetChannel(char* channelName) = 0;
    };
 
    /**
