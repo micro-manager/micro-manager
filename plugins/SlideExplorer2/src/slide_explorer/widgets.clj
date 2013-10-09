@@ -4,7 +4,6 @@
            (javax.swing AbstractAction JButton JCheckBox JFrame JComponent KeyStroke))
   (:require [slide-explorer.utils :as utils]))
 
-;; key binding
 
 (defn can-eval? [form]
   (try
@@ -17,6 +16,8 @@
                   (import com.apple.eawt.FullScreenAdapter))))
 
 (def fullscreen-windows (atom #{}))
+
+;; key binding
 
 (defn bind-key
   "Maps an input-key on a swing component to an action,
@@ -100,9 +101,12 @@
 
 (def old-bounds (atom {}))
 
-(defn mac-new-toggle-full-screen [window]
-  (.requestToggleFullScreen
-    (eval `(Application/getApplication)) window))
+(def mac-new-toggle-full-screen
+  (attempt-eval
+    '(fn [window]
+       (.requestToggleFullScreen
+         (eval `(Application/getApplication)) window))
+    (constantly nil)))
 
 (defn full-screen!
   "Make the given window/frame full-screen."
@@ -151,29 +155,30 @@
       (exit-full-screen! window)
       (full-screen! window))))
 
-(defmacro new-mac-enable-full-screen [window]
-  `(do (FullScreenUtilities/setWindowCanFullScreen ~window true)
-       (FullScreenUtilities/addFullScreenListenerTo ~window
-           (proxy [FullScreenAdapter] []
-             (windowEnteringFullScreen [_#]
-               (.setBounds ~window 100 100 400 400))
-             (windowEnteredFullScreen [_#]
-               (swap! fullscreen-windows conj ~window))
-             (windowExitingFullScreen [_#]
-               (println "exiting"))
-             (windowExitedFullScreen [_#]
-               (swap! fullscreen-windows disj ~window))))))    
+(defn attempt-eval [form default]
+  (try
+    (eval form)
+    (catch Throwable _ default)))
 
-(defmacro compile-when [test & body]
-  (when test
-    `(do @~body)))
+(def new-mac-enable-full-screen
+  (attempt-eval
+    '(fn [window]
+       (FullScreenUtilities/setWindowCanFullScreen window true)
+       (FullScreenUtilities/addFullScreenListenerTo window
+         (proxy [FullScreenAdapter] []
+         (windowEnteringFullScreen [_])
+         (windowEnteredFullScreen [_]
+           (swap! fullscreen-windows conj window))
+         (windowExitingFullScreen [_])
+         (windowExitedFullScreen [_]
+           (swap! fullscreen-windows disj window)))))
+    (constantly nil)))
 
 (defn setup-fullscreen
   "Endows the given window with the ability to enter and exit full screen.
    Key commands are F for enter/exit and ESCAPE also for exit." 
   [window]
-  (compile-when new-mac-full-screen
-    (new-mac-enable-full-screen window))
+  (new-mac-enable-full-screen window)
   (bind-window-keys window ["F"] #(toggle-full-screen! window))
   (bind-window-keys window ["ESCAPE"] #(exit-full-screen! window)))
 
