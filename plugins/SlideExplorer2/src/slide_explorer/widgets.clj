@@ -6,6 +6,18 @@
 
 ;; key binding
 
+(defn can-eval? [form]
+  (try
+    (do (eval form) true)
+    (catch Throwable _ false)))
+
+(def new-mac-full-screen
+  (can-eval? '(do (import com.apple.eawt.FullScreenUtilities)
+                  (import com.apple.eawt.Application)
+                  (import com.apple.eawt.FullScreenAdapter))))
+
+(def fullscreen-windows (atom #{}))
+
 (defn bind-key
   "Maps an input-key on a swing component to an action,
   such that action-fn is executed when key is pressed."
@@ -88,54 +100,77 @@
 
 (def old-bounds (atom {}))
 
+(defn mac-new-toggle-full-screen [window]
+  (.requestToggleFullScreen
+    (eval `(Application/getApplication)) window))
+
 (defn full-screen!
   "Make the given window/frame full-screen."
   [window]
-  (when (and window (not (@old-bounds window)))
-    (when-not (@old-bounds window)
-      (swap! old-bounds assoc window (.getBounds window)))
-    (.dispose window)
-    (.setUndecorated window true)
-    (let [screen (window-screen window)]
-      (if (and (utils/is-mac)
-               (= screen (default-screen-device)))
-        (.setFullScreenWindow screen window)
-        (.setBounds window (screen-bounds screen))))
-    (.repaint window)
-    (.show window)
-    (when (utils/is-mac) ; OS X Lion Bug workaround
-      (doto window
-        (.setVisible false)
-        (.setVisible true)))))
+  (if new-mac-full-screen
+    (when-not (@fullscreen-windows window)
+      (mac-new-toggle-full-screen window))
+    (when (and window (not (@old-bounds window)))
+      (when-not (@old-bounds window)
+        (swap! old-bounds assoc window (.getBounds window)))
+      (.dispose window)
+      (.setUndecorated window true)
+      (let [screen (window-screen window)]
+        (if (and (utils/is-mac)
+                 (= screen (default-screen-device)))
+          (.setFullScreenWindow screen window)
+          (.setBounds window (screen-bounds screen))))
+      (.repaint window)
+      (.show window)
+      )))
 
 (defn exit-full-screen!
   "Restore the given full-screened window to its previous
    (non-full-screen) bounds."
   [window]
-  (when (and window (@old-bounds window))
-    (.dispose window)
-    (.setUndecorated window false)
-    (let [screen (window-screen window)]
-      (when (= window (.getFullScreenWindow screen))
-        (.setFullScreenWindow screen nil)))
-    (when-let [bounds (@old-bounds window)]
-      (.setBounds window bounds)
-      (swap! old-bounds dissoc window))
-    (.repaint window)
-    (.show window)))
+  (if new-mac-full-screen
+    (when (@fullscreen-windows window)
+      (mac-new-toggle-full-screen window))
+    (when (and window (@old-bounds window))
+      (.dispose window)
+      (.setUndecorated window false)
+      (let [screen (window-screen window)]
+        (when (= window (.getFullScreenWindow screen))
+          (.setFullScreenWindow screen nil)))
+      (when-let [bounds (@old-bounds window)]
+        (.setBounds window bounds)
+        (swap! old-bounds dissoc window))
+      (.repaint window)
+      (.show window))))
 
 (defn toggle-full-screen!
   "Turn full screen mode on and off for a given window."
   [window]
   (when window
-    (if (@old-bounds window)
+    (if (or (@old-bounds window) (@fullscreen-windows window))
       (exit-full-screen! window)
       (full-screen! window))))
+
+(defmacro new-mac-enable-full-screen [window]
+  `(do (FullScreenUtilities/setWindowCanFullScreen ~window true)
+       (FullScreenUtilities/addFullScreenListenerTo ~window
+           (proxy [FullScreenAdapter] []
+             (windowEnteringFullScreen [_#]
+                (.setBounds ~window 10 10 400 400))
+             (windowEnteredFullScreen [_#]
+               (swap! fullscreen-windows conj ~window))
+             (windowExitingFullScreen [_#]
+                (println "exiting"))
+             (windowExitedFullScreen [_#]
+               (swap! fullscreen-windows disj ~window))))))
+        
 
 (defn setup-fullscreen
   "Endows the given window with the ability to enter and exit full screen.
    Key commands are F for enter/exit and ESCAPE also for exit." 
   [window]
+  (when new-mac-full-screen
+    (new-mac-enable-full-screen window))
   (bind-window-keys window ["F"] #(toggle-full-screen! window))
   (bind-window-keys window ["ESCAPE"] #(exit-full-screen! window)))
 

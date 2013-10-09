@@ -55,7 +55,6 @@
       (fn [old-state new-state]
         (when (.getParent panel)
           (when-not (identical? old-state new-state)
-            (reset! last-change (System/currentTimeMillis))
             (.repaint panel)))))))
 
 (defn graphics-buffer-image
