@@ -613,38 +613,41 @@ bool FastLogger::Open(const std::string specifiedFile)
 
 }
 
-void FastLogger::LogContents(char**  ppContents, unsigned long& len)
+void FastLogger::LogContents(char** ppContents, unsigned long& len)
 {
-	std::string ret;
-   std::ifstream::pos_type pos;
-   pos = 0;
-   
    *ppContents = 0;
+   len = 0;
+
    MMThreadGuard guard(logFileLock_g);
+
    if (plogFile_g->is_open())
-	{
-		plogFile_g->close();
+   {
+      plogFile_g->close();
    }
-	// open to read, and position at the end of the file
-   std::ifstream ifile( logFileName_.c_str(), ios::in|ios::binary|ios::ate);
+
+   // open to read, and position at the end of the file
+   // XXX We simply return NULL if cannot open file or size is too large!
+   std::ifstream ifile(logFileName_.c_str(), ios::in | ios::binary | ios::ate);
    if (ifile.is_open())
    {
-      pos = ifile.tellg();
-      *ppContents = new char [pos];
-      if( 0 != *ppContents)
+      std::ifstream::pos_type pos = ifile.tellg();
+      if (pos < SIZE_MAX)
       {
-         ifile.seekg (0, ios::beg);
-         ifile.read (*ppContents, pos);
-         ifile.close();
+         len = static_cast<std::size_t>(pos);
+         *ppContents = new char[len];
+         if (0 != *ppContents)
+         {
+            ifile.seekg(0, ios::beg);
+            ifile.read(*ppContents, len);
+            ifile.close();
+         }
       }
    }
 
-	// re-open for logging
-	plogFile_g->open(logFileName_.c_str(), ios_base::app);
+   // re-open for logging
+   plogFile_g->open(logFileName_.c_str(), ios_base::app);
 
-   len = static_cast<unsigned long>(pos);
    return;
-
 }
 
 
