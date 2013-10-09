@@ -10,6 +10,17 @@
     (do (eval form) true)
     (catch Throwable _ false)))
 
+(defn attempt-eval
+  [form default]
+  (try
+    (eval form)
+    (catch Throwable _ default)))
+
+(defmacro attempt-defn [& body]
+  `(attempt-eval
+     '(defn ~@body)
+     (def ~(first body) (constantly nil))))
+
 (def new-mac-full-screen
   (can-eval? '(do (import com.apple.eawt.FullScreenUtilities)
                   (import com.apple.eawt.Application)
@@ -101,12 +112,10 @@
 
 (def old-bounds (atom {}))
 
-(def mac-new-toggle-full-screen
-  (attempt-eval
-    '(fn [window]
-       (.requestToggleFullScreen
-         (eval `(Application/getApplication)) window))
-    (constantly nil)))
+(attempt-defn mac-new-toggle-full-screen
+  [window]
+  (.requestToggleFullScreen
+    (Application/getApplication) window))
 
 (defn full-screen!
   "Make the given window/frame full-screen."
@@ -155,14 +164,7 @@
       (exit-full-screen! window)
       (full-screen! window))))
 
-(defn attempt-eval [form default]
-  (try
-    (eval form)
-    (catch Throwable _ default)))
-
-(def new-mac-enable-full-screen
-  (attempt-eval
-    '(fn [window]
+(attempt-defn new-mac-enable-full-screen [window]
        (FullScreenUtilities/setWindowCanFullScreen window true)
        (FullScreenUtilities/addFullScreenListenerTo window
          (proxy [FullScreenAdapter] []
@@ -172,7 +174,6 @@
          (windowExitingFullScreen [_])
          (windowExitedFullScreen [_]
            (swap! fullscreen-windows disj window)))))
-    (constantly nil)))
 
 (defn setup-fullscreen
   "Endows the given window with the ability to enter and exit full screen.
