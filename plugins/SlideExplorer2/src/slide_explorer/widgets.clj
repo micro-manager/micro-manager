@@ -156,20 +156,23 @@
        (FullScreenUtilities/addFullScreenListenerTo ~window
            (proxy [FullScreenAdapter] []
              (windowEnteringFullScreen [_#]
-                (.setBounds ~window 10 10 400 400))
+               (.setBounds ~window 100 100 400 400))
              (windowEnteredFullScreen [_#]
                (swap! fullscreen-windows conj ~window))
              (windowExitingFullScreen [_#]
-                (println "exiting"))
+               (println "exiting"))
              (windowExitedFullScreen [_#]
-               (swap! fullscreen-windows disj ~window))))))
-        
+               (swap! fullscreen-windows disj ~window))))))    
+
+(defmacro compile-when [test & body]
+  (when test
+    `(do @~body)))
 
 (defn setup-fullscreen
   "Endows the given window with the ability to enter and exit full screen.
    Key commands are F for enter/exit and ESCAPE also for exit." 
   [window]
-  (when new-mac-full-screen
+  (compile-when new-mac-full-screen
     (new-mac-enable-full-screen window))
   (bind-window-keys window ["F"] #(toggle-full-screen! window))
   (bind-window-keys window ["ESCAPE"] #(exit-full-screen! window)))
