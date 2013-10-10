@@ -6,11 +6,23 @@
 # log written by Ant is not very structured.
 
 
+import html
 import os.path
 import re
 import sys
 import traceback
 from xml.etree import ElementTree
+
+import genreport_MSBuild
+
+
+def tag(t, content, is_html=False, attrs=None):
+    if not is_html:
+        content = html.escape(content, quote=False)
+    attrlist = ("".join(" {}={}".format(k, html.escape(v))
+                        for k, v in attrs.items())
+                if attrs else "")
+    return "<{}{}>{}</{}>".format(t, attrlist, content, t)
 
 
 def build_status_report(section_sink, log_filename, build):
@@ -24,39 +36,13 @@ def build_status_report(section_sink, log_filename, build):
     else:
         is_error = False
         text += "Build completed without fatal error"
-    section_sink.send((is_error, title, text))
+    section_sink.send((is_error, title, False, text))
 
 
-def cpp_build_report(section_sink, build_cpp_target, architecture):
-    build_cpp_task = build_cpp_target.findall("./task[@name='buildcpp']")[0]
-    cpp_info_messages = build_cpp_task.findall("./message[@priority='info']")
-    cpp_info_lines = (e.findtext(".") for e in cpp_info_messages)
-
-    # TODO With VS2010 and MSBuild, all lines will have the build order prefix
-    # (\d+>), and all will be from a single call to MSBuild. With that
-    # arrangement, it will be easy to extract the error messages.
-    errors, warnings = list(), list()
-    for line in cpp_info_lines:
-        m = re.match(r"(\d+>)?([^ ]+) - (\d+) error\(s\), (\d+) warning\(s\)$", line)
-        if m:
-            order, project, n_errors, n_warnings = m.groups()
-            n_errors, n_warnings = int(n_errors), int(n_warnings)
-            if n_errors:
-                errors.append((project, n_errors, n_warnings))
-            elif n_warnings:
-                warnings.append((project, n_warnings))
-    if errors:
-        title = "C++ Errors ({})".format(architecture)
-        text = "\n".join("{}: {} error(s)".format(project, n_errors)
-                         for project, n_errors, n_warnings
-                         in sorted(errors, key=lambda x: x[0]))
-        section_sink.send((True, title, text))
-    if warnings:
-        title = "C++ Warnings ({})".format(architecture)
-        text = "\n".join("{}: {} warning(s)".format(project, n_warnings)
-                         for project, n_warnings
-                         in sorted(warnings, key=lambda x: x[0]))
-        section_sink.send((False, title, text))
+def cpp_build_report(section_sink, architecture):
+    genreport_MSBuild.report("build/Release/{}/msbuild-micromanager.log".format(architecture),
+                             "C++ " + architecture + " ",
+                             section_sink)
 
 
 def java_build_report(section_sink, stage_target, architecture):
@@ -93,7 +79,7 @@ def java_build_report(section_sink, stage_target, architecture):
                 title = "Java warnings (during {} build)".format(architecture)
             else:
                 assert False, "Unexpected javac message format"
-            section_sink.send((is_error, title, text))
+            section_sink.send((is_error, title, False, text))
 
 
 def clojure_build_report(section_sink, stage_target, architecture):
@@ -116,7 +102,7 @@ def clojure_build_report(section_sink, stage_target, architecture):
         text = "\n".join(lines_before_stacktrace).strip()
         if is_error and text:
             title = "Clojure errors (during {} build)".format(architecture)
-            section_sink.send((True, title, text))
+            section_sink.send((True, title, False, text))
 
 
 def generate_report(section_sink, log_filename, build):
@@ -134,8 +120,6 @@ def generate_report(section_sink, log_filename, build):
     for task in sequential_tasks:
         targets = task.findall("./target")
         target_names = list(target.attrib["name"] for target in targets)
-        if "unstage-all" in target_names or "clean-all" in target_names:
-            continue
         if "build-cpp" in target_names:
             assert not seen_cpp_Win32
             if seen_cpp_x64:
@@ -145,9 +129,7 @@ def generate_report(section_sink, log_filename, build):
                 arch = "x64"
                 seen_cpp_x64 = True
 
-            cpp_build_report(section_sink,
-                             task.findall("./target[@name='build-cpp']")[0],
-                             arch)
+            cpp_build_report(section_sink, arch)
         if "stage" in target_names:
             if seen_cpp_Win32:
                 arch = "Win32"
@@ -164,15 +146,12 @@ def generate_report(section_sink, log_filename, build):
 
 
 def section_writer(file):
-    any_critical = False
     while True:
-        is_critical, title, text = yield
-        any_critical = any_critical or is_critical
-        if is_critical:
-            print("<p><i><b>{}</b></i></p>".format(title), file=file)
-        else:
-            print("<p><i>{}</i></p>".format(title), file=file)
-        print("<pre>{}</pre>".format(text), file=file)
+        is_critical, title, is_html, text = yield
+        title = (tag("span", title, attrs=dict(style="color:red"))
+                 if is_critical else tag("span", title))
+        print(tag("h3", title, True), file=file)
+        print(text if is_html else tag("pre", text), file=file)
 
 
 def main(src_root, log_filename, output_filename):
