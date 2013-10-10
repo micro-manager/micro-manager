@@ -56,7 +56,7 @@
 #include <string>
 #include <sstream>
 #include <iomanip>
-#include <cstdint>
+#include <stdint.h>
 
 using namespace std;
 unsigned Universal::refCount_ = 0;
