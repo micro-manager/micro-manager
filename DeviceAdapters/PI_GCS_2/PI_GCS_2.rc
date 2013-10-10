@@ -51,8 +51,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,0,1,1
- PRODUCTVERSION 1,0,1,1
+ FILEVERSION 1,0,4,0
+ PRODUCTVERSION 1,0,4,0
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -62,19 +62,24 @@ VS_VERSION_INFO VERSIONINFO
  FILEOS 0x4L
  FILETYPE 0x2L
  FILESUBTYPE 0x0L
+
 BEGIN
     BLOCK "StringFileInfo"
     BEGIN
         BLOCK "040704b0"
         BEGIN
             VALUE "CompanyName", "Physik Instrumente (PI) GmbH & Co. KG"
-            VALUE "FileDescription", "PI_GCS2 micro-manager device adapter for PI stages"
-            VALUE "FileVersion", "1.0.1.1"
+#ifdef x64
+			VALUE "FileDescription", "PI_GCS2 micro-manager device adapter for PI stages (64bit)"
+#else
+			VALUE "FileDescription", "PI_GCS2 micro-manager device adapter for PI stages"
+#endif
+            VALUE "FileVersion", "1.0.4.0"
             VALUE "InternalName", "PI_GCS_2"
-            VALUE "LegalCopyright", "(c) 2010-2011 by Physik Instrumente (PI) GmbH & Co. KG"
+            VALUE "LegalCopyright", "(c) 2010-2013 by Physik Instrumente (PI) GmbH & Co. KG"
             VALUE "OriginalFilename", "PI_GCS_2.dll"
             VALUE "ProductName", "PI_GCS_2 Dynamic Link Library"
-            VALUE "ProductVersion", "1.0.1.1"
+            VALUE "ProductVersion", "1.0.4.0"
         END
     END
     BLOCK "VarFileInfo"

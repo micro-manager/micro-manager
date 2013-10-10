@@ -68,23 +68,23 @@ public:
    // Sequence functions
    int IsStageSequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
    int GetStageSequenceMaxLength(long& nrEvents) const  {nrEvents = 0; return DEVICE_OK;}
-   int StartStageSequence() {return DEVICE_OK;}
-   int StopStageSequence() {return DEVICE_OK;}
-   int LoadStageSequence(std::vector<double> positions) {return DEVICE_OK;}
+   int StartStageSequence() const {return DEVICE_OK;}
+   int StopStageSequence() const {return DEVICE_OK;}
+   int LoadStageSequence(std::vector<double> positions) const {return DEVICE_OK;}
 
    bool IsContinuousFocusDrive() const {return false;}
 
 
 private:
+   std::string axisName_;
    double stepSizeUm_;
    bool initialized_;
    double axisLimitUm_;
-   std::string axisName_;
    std::string stageType_;
-   PIController* ctrl_;
-   std::string controllerName_;
    // homing not (yet) implemented in micro-manager
    //std::string homingMode_;
+   std::string controllerName_;
+   PIController* ctrl_;
 };
 
 

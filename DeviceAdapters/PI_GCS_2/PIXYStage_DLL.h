@@ -89,7 +89,10 @@ private:
    double stepSize_um_;
    double originX_;
    double originY_;
+   //bool busy_;
    bool initialized_;
+   //double lowerLimit_;
+   //double upperLimit_;
 };
 
 

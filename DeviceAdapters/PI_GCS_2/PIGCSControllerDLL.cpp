@@ -19,7 +19,7 @@
 //                IN NO EVENT SHALL THE COPYRIGHT OWNER OR
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
-// CVS:           $Id: PIGCSControllerDLL.cpp,v 1.11, 2010-12-09 14:37:03Z, Rachel Bach$
+// CVS:           $Id: PIGCSControllerDLL.cpp,v 1.14, 2012-01-09 15:25:33Z, Steffen Rau$
 //
 
 #ifndef __APPLE__
@@ -145,7 +145,7 @@ int PIGCSControllerDLLDevice::Initialize()
 
 	char szLabel[MM::MaxStrLength];
 	GetLabel(szLabel);
-	ctrl_ = new PIGCSControllerDLL(szLabel); 
+	ctrl_ = new PIGCSControllerDLL(szLabel, this, GetCoreCallback()); 
 
    int ret = ctrl_->LoadDLL(dllName_);
    if (ret != DEVICE_OK)
@@ -274,12 +274,14 @@ int PIGCSControllerDLLDevice::OnJoystick4(MM::PropertyBase* pProp, MM::ActionTyp
 	return ctrl_->OnJoystick(pProp, eAct, 4);
 }
 
-PIGCSControllerDLL::PIGCSControllerDLL(const std::string& label):
+PIGCSControllerDLL::PIGCSControllerDLL(const std::string& label, PIGCSControllerDLLDevice* proxy, MM::Core* logsink):
 PIController(label),
 module_(NULL),
 ID_(-1),
 needResetStages_(false)
 {
+	PIController::logsink_ = logsink;
+	PIController::logdevice_= proxy;
 }
 
 PIGCSControllerDLL::~PIGCSControllerDLL()

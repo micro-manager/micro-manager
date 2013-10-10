@@ -19,7 +19,7 @@
 //                IN NO EVENT SHALL THE COPYRIGHT OWNER OR
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
-// CVS:           $Id: Controller.h,v 1.7, 2010-12-09 12:04:30Z, Rachel Bach$
+// CVS:           $Id: Controller.h,v 1.10, 2012-01-09 15:25:33Z, Steffen Rau$
 //
 
 #ifndef _PI_CONTROLLER_H_
@@ -126,12 +126,15 @@ public:
    int OnJoystick(MM::PropertyBase* pProp, MM::ActionType eAct, int joystick);
    int GetNrOutputChannels();
 
+   MM::Core* logsink_;
+   MM::Device* logdevice_;
 protected:
-
+	void LogMessage(const std::string& msg) const;
 	bool gcs2_;
 	std::string label_;
    bool onlyIDSTAGEvalid_;
 	static std::map<std::string, PIController*> allControllersByLabel_;
+	bool referenceMoveActive_;
 };
 
 

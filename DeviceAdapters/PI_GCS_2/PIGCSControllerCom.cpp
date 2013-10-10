@@ -19,7 +19,7 @@
 //                IN NO EVENT SHALL THE COPYRIGHT OWNER OR
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
-// CVS:           $Id: PIGCSControllerCom.cpp,v 1.8, 2010-12-09 13:54:01Z, Rachel Bach$
+// CVS:           $Id: PIGCSControllerCom.cpp,v 1.9, 2012-01-09 15:25:33Z, Steffen Rau$
 //
 
 #ifdef WIN32
@@ -37,11 +37,11 @@
 const char* PIGCSControllerComDevice::DeviceName_ = "PI_GCSController";
 const char* PIGCSControllerComDevice::UmToDefaultUnitName_ = "um in default unit";
 
-PIGCSControllerComDevice::PIGCSControllerComDevice() :
-umToDefaultUnit_(0.001),
-port_(""),
+PIGCSControllerComDevice::PIGCSControllerComDevice()
+: port_(""),
 initialized_(false),
 lastError_(DEVICE_OK),
+umToDefaultUnit_(0.001),
 bShowProperty_UmToDefaultUnit_(true),
 ctrl_(NULL)
 {
@@ -131,7 +131,7 @@ int PIGCSControllerComDevice::Initialize()
 
 	char szLabel[MM::MaxStrLength];
 	GetLabel(szLabel);
-	ctrl_ = new PIGCSControllerCom(szLabel, this); 
+	ctrl_ = new PIGCSControllerCom(szLabel, this, GetCoreCallback()); 
 
    int ret = ctrl_->Connect();
    if (ret != DEVICE_OK)
@@ -171,7 +171,8 @@ int PIGCSControllerComDevice::Initialize()
       {
          std::vector<int> outputChannels(nrOutputChannels);
          std::vector<int> values(nrOutputChannels, 1);
-         for (int i = 0; i < nrOutputChannels; i++)
+         size_t i = 0;
+         for (; i<size_t(nrOutputChannels); i++)
          {
             outputChannels[i] = i+1;
          }
@@ -256,7 +257,7 @@ bool PIGCSControllerComDevice::ReadGCSAnswer(std::vector<std::string>& answer, i
 	   }
 	   answer.push_back(line);
    } while( !line.empty() && line[line.length()-1] == ' ' );
-   if ((unsigned) nExpectedLines >=0 && answer.size() != (unsigned ) nExpectedLines)
+   if (nExpectedLines >=0 && answer.size() != nExpectedLines)
 	   return false;
 	return true;
 }
@@ -283,17 +284,19 @@ int PIGCSControllerComDevice::OnJoystick4(MM::PropertyBase* pProp, MM::ActionTyp
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////
-PIGCSControllerCom::PIGCSControllerCom(const std::string& label, PIGCSControllerComDevice* proxy):
+PIGCSControllerCom::PIGCSControllerCom(const std::string& label, PIGCSControllerComDevice* proxy, MM::Core* logsink):
 PIController(label),
 deviceProxy_(proxy),
 hasCST_(true),
-hasSVO_(true),
 hasINI_(true),
+hasSVO_(true),
 hasJON_(true),
 hasVEL_(true),
 has_qTPC_(true),
 hasONL_(true)
 {
+	PIController::logsink_ = logsink;
+	PIController::logdevice_= proxy;
 }
 
 PIGCSControllerCom::~PIGCSControllerCom()
@@ -380,10 +383,7 @@ bool PIGCSControllerCom::SVO(const std::string& axis, BOOL svo)
 		return false;
 	}
 	std::ostringstream command;
-   std:: string n = "0";
-   if (svo == TRUE)
-      n = "1";
-	command << "SVO " << axis<<" "<< n;
+	command << "SVO " << axis<<" "<< (svo==TRUE)?"1":"0";
 	if (!deviceProxy_->SendGCSCommand( command.str() ))
 	{
 		return false;

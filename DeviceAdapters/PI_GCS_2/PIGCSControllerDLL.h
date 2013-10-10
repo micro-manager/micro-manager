@@ -19,7 +19,7 @@
 //                IN NO EVENT SHALL THE COPYRIGHT OWNER OR
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
-// CVS:           $Id: PIGCSControllerDLL.h,v 1.9, 2010-12-09 14:37:03Z, Rachel Bach$
+// CVS:           $Id: PIGCSControllerDLL.h,v 1.10, 2012-01-09 15:25:33Z, Steffen Rau$
 //
 
 #ifndef _PI_GCS_CONTROLLER_DLL_H_
@@ -79,7 +79,7 @@ private:
 class PIGCSControllerDLL: public PIController
 {
 public:
-	PIGCSControllerDLL(const std::string& label);
+	PIGCSControllerDLL(const std::string& label, PIGCSControllerDLLDevice* proxy, MM::Core* logsink);
 	~PIGCSControllerDLL();
 
 	virtual bool qIDN(std::string& sIDN);

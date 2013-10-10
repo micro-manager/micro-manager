@@ -19,7 +19,7 @@
 //                IN NO EVENT SHALL THE COPYRIGHT OWNER OR
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
-// CVS:           $Id: PIXYStage_DLL.cpp,v 1.10, 2011-08-05 05:35:45Z, Steffen Rau$
+// CVS:           $Id: PIXYStage_DLL.cpp,v 1.11, 2011-12-20 09:09:47Z, Steffen Rau$
 //
 
 #ifdef WIN32
@@ -61,11 +61,13 @@ PIXYStage::PIXYStage() :
    axisYHomingMode_("REF"),
    controllerName_(""),
    controllerNameYAxis_(""),
-   ctrl_(NULL),
    stepSize_um_(0.01),
+   initialized_(false),
    originX_(0.0),
    originY_(0.0),
-   initialized_(false)
+   ctrl_(NULL)
+   //answerTimeoutMs_(1000),
+   //axisLimitUm_(500.0)
 {
    InitializeDefaultErrorMessages();
 
@@ -205,6 +207,7 @@ bool PIXYStage::Busy()
    bool busy = ctrl_->IsBusy();
    if (ctrlYAxis_ != NULL)
    {
+	   // different controller is used for Y axis, so busy state of this one needs to be asked also
 	   busy |= ctrlYAxis_->IsBusy();
    }
    return busy;
@@ -281,10 +284,10 @@ int PIXYStage::Home()
 		&&	(ctrlYAxis_ == NULL)
 		)
 	{
+		// same mode for both axes, both axes on same controller
 		int err = ctrl_->Home( ctrl_->MakeAxesString(axisXName_, axisYName_), axisXHomingMode_ );
 		if (err != DEVICE_OK)
 			return err;
-		//while( Busy() ) {};
 		return DEVICE_OK;
 	}
 
@@ -305,15 +308,11 @@ int PIXYStage::Home()
 	if (ret != DEVICE_OK)
 		return ret;
 
-	//while( Busy() ) {};
-
 	return DEVICE_OK;
 }
 
 int PIXYStage::Stop()
 {
-	//if (ctrl_->STP_ == NULL)
-	//	return DEVICE_UNSUPPORTED_COMMAND;
 	bool bStop1 = ctrl_->STP();
 	bool bStop2 = true;
 	if (ctrlYAxis_ != NULL)
@@ -327,7 +326,7 @@ int PIXYStage::Stop()
 
 int PIXYStage::SetOrigin()
 {
-	// Todo: use DFH() is possible
+	// Todo: use DFH() if possible
 	double pos[2];
 	if (ctrlYAxis_ == NULL)
 	{

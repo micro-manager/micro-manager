@@ -19,7 +19,7 @@
 //                IN NO EVENT SHALL THE COPYRIGHT OWNER OR
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
-// CVS:           $Id: PIGCSControllerCom.h,v 1.5, 2010-12-09 13:54:01Z, Rachel Bach$
+// CVS:           $Id: PIGCSControllerCom.h,v 1.6, 2012-01-09 15:25:33Z, Steffen Rau$
 //
 
 #ifndef _PI_GCS_CONTROLLER_H_
@@ -71,8 +71,8 @@ private:
 	int OnJoystick4(MM::PropertyBase* pProp, MM::ActionType eAct);
 
    std::string port_;
-   bool initialized_;
    int lastError_;
+   bool initialized_;
    bool bShowProperty_UmToDefaultUnit_;
    PIGCSControllerCom* ctrl_;
 };
@@ -81,7 +81,7 @@ private:
 class PIGCSControllerCom : public PIController
 {
 public:
-	PIGCSControllerCom(const std::string& label, PIGCSControllerComDevice* proxy);
+	PIGCSControllerCom(const std::string& label, PIGCSControllerComDevice* proxy, MM::Core* logsink);
 	~PIGCSControllerCom();
 
 	int Connect();

@@ -19,7 +19,7 @@
 //                IN NO EVENT SHALL THE COPYRIGHT OWNER OR
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
-// CVS:           $Id: Controller.cpp,v 1.7, 2010-12-09 12:04:30Z, Rachel Bach$
+// CVS:           $Id: Controller.cpp,v 1.10, 2013-09-11 14:38:49Z, Richard Montbrun$
 //
 
 #ifdef WIN32
@@ -38,16 +38,26 @@ const char* g_msg_CNTR_AXIS_UNDER_JOYSTICK_CONTROL = "Selected axis is controlle
 std::map<std::string, PIController*> PIController::allControllersByLabel_;
 
 PIController::PIController(const std::string& label):
-umToDefaultUnit_(0.001),
 gcs2_(true),
 label_(label),
-onlyIDSTAGEvalid_(false)
+umToDefaultUnit_(0.001),
+onlyIDSTAGEvalid_(false),
+referenceMoveActive_(false),
+logsink_(NULL),
+logdevice_(NULL)
 {
 	allControllersByLabel_[label_] = this;
 }
 
 PIController::~PIController()
 {
+}
+
+void PIController::LogMessage(const std::string& msg) const
+{
+	if (logsink_==NULL ||logdevice_==NULL)
+		return;
+	logsink_->LogMessage(logdevice_, msg.c_str(), true);
 }
 
 PIController* PIController::GetByLabel(const std::string& label)
@@ -96,25 +106,39 @@ int PIController::InitStage(const std::string& axisName, const std::string& stag
 
 bool PIController::IsBusy()
 {
-	BOOL BUSY;
-	if (HasIsReferencing() && IsReferencing("", &BUSY))
-	{	
-		if (BUSY)
-			return true;
-	}
-	if (HasIsControllerReady() && IsControllerReady(&BUSY))
-	{	
-		if (!BUSY)
-			return true;
+	BOOL BUSY = FALSE;
+	if (referenceMoveActive_)
+	{
+	    LogMessage(std::string("PIController::IsBusy(): active referenceMoveActive_"));
+		if (HasIsReferencing() && IsReferencing("", &BUSY))
+		{	
+			if (BUSY)
+			{
+			    LogMessage(std::string("PIController::IsBusy(): IsReferencing ->BUSY"));
+				return true;
+			}
+		}
+		BOOL BREADY = TRUE;
+		if (HasIsControllerReady() && IsControllerReady(&BREADY))
+		{	
+			if (!BREADY)
+			{
+			    LogMessage(std::string("PIController::IsBusy(): IsControllerReady -> not READY"));
+				return true;
+			}
+		}
 	}
 	if (HasIsMoving() && IsMoving("", &BUSY))
 	{	
 		if (BUSY)
+		{
+		    LogMessage(std::string("PIController::IsBusy(): IsMoving ->BUSY"));
 			return true;
+		}
 	}
 
+	referenceMoveActive_ = false;
 	return false;
-
 }
 
 std::string PIController::MakeAxesString(const std::string &axis1Name, const std::string &axis2Name)
@@ -135,14 +159,20 @@ int PIController::Home(const std::string &axesNames, const std::string &homingMo
 		if (HasFRF())
 		{
 			if (FRF(axesNames))
+			{
+				referenceMoveActive_ = true;
 				return DEVICE_OK;
+			}
 			else
 				return DEVICE_ERR;
 		}
 		else if (HasREF())
 		{
 			if (REF(axesNames))
+			{
+				referenceMoveActive_ = true;
 				return DEVICE_OK;
+			}
 			else
 				return DEVICE_ERR;
 		}
@@ -154,14 +184,20 @@ int PIController::Home(const std::string &axesNames, const std::string &homingMo
 		if (HasFNL())
 		{
 			if (FNL(axesNames))
+			{
+				referenceMoveActive_ = true;
 				return DEVICE_OK;
+			}
 			else
 				return DEVICE_ERR;
 		}
 		else if (HasMNL())
 		{
 			if (MNL(axesNames))
+			{
+				referenceMoveActive_ = true;
 				return DEVICE_OK;
+			}
 			else
 				return DEVICE_ERR;
 		}
@@ -173,14 +209,20 @@ int PIController::Home(const std::string &axesNames, const std::string &homingMo
 		if (HasFPL())
 		{
 			if (FPL(axesNames))
+			{
+				referenceMoveActive_ = true;
 				return DEVICE_OK;
+			}
 			else
 				return DEVICE_ERR;
 		}
 		else if (HasMPL())
 		{
 			if (MPL(axesNames))
+			{
+				referenceMoveActive_ = true;
 				return DEVICE_OK;
+			}
 			else
 				return DEVICE_ERR;
 		}
@@ -243,7 +285,7 @@ int PIController::FindNrJoysticks()
 
 	int nrJoysticks = 0;
 	int state;
-	while (qJON(nrJoysticks + 1, state))
+	while (qJON(nrJoysticks + 1, state) && nrJoysticks < 5)
 	{
 		nrJoysticks++;
 	}

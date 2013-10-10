@@ -19,7 +19,7 @@
 //                IN NO EVENT SHALL THE COPYRIGHT OWNER OR
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
-// CVS:           $Id: PI_GCS_2.h,v 1.7, 2010-08-31 07:35:34Z, Steffen Rau$
+// CVS:           $Id: PI_GCS_2.h,v 1.8, 2011-12-20 09:43:41Z, Steffen Rau$
 //
 
 #ifndef _PI_GCS_DLL_H_
