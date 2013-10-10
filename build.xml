@@ -8,23 +8,6 @@
 		<condition><not><os family="winnt"/></not></condition>
 	</fail>
 
-	<presetdef name="buildcpp">
-		<exec executable="cmd" failonerror="${mm.build.failonerror}">
-			<arg value="/c"/>
-			<arg file="${mm.basedir}/buildscripts/buildCpp.bat"/>
-			<arg value="${mm.architecture}"/>
-		</exec>
-	</presetdef>
-
-	<presetdef name="cleancpp">
-		<exec executable="cmd" failonerror="${mm.build.failonerror}">
-			<arg value="/c"/>
-			<arg file="${mm.basedir}/buildscripts/buildCpp.bat"/>
-			<arg value="${mm.architecture}"/>
-			<arg value="clean"/>
-		</exec>
-	</presetdef>
-
 	<macrodef name="run-all-java-projects">
 		<attribute name="target"/>
 		<sequential>
@@ -42,21 +25,24 @@
 	</macrodef>
 
 	<target name="build-cpp" description="Build all C++ components">
-		<mkdir dir="${mm.cpp.intdir}"/>
-		<mkdir dir="${mm.cpp.outdir}"/>
-		<buildcpp/>
+		<mm-msbuild project="micromanager.sln" target="Build" failonerror="${mm.build.failonerror}"
+			logbasename="msbuild-micromanager${mm.build.logsuffix}"/>
+	</target>
+
+	<target name="build-java" description="Build all Java components (requires MMCoreJ_wrap to be built)">
+		<run-all-java-projects target="jar"/>
 	</target>
 
 	<target name="stage-deviceadapters">
 		<copy todir="${mm.dll.installdir}">
-			<!-- TODO Avoid using wildcard -->
 			<fileset dir="${mm.cpp.outdir}" includes="mmgr_dal_*.dll"/>
 		</copy>
 		<ant antfile="DeviceAdapters/build.xml" useNativeBasedir="true" target="install"/>
 	</target>
 
-	<target name="build" depends="set-version,build-cpp" description="Build all components">
-		<run-all-java-projects target="jar"/>
+	<target name="build" depends="set-version" description="Build all components">
+		<antcall target="build-cpp"/>
+		<antcall target="build-java"/>
 	</target>
 
 	<target name="stage" depends="set-version,build-cpp" description="Assemble files to install">

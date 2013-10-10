@@ -5,11 +5,20 @@
 	     definitions but no targets. Everything defined in this file should
 	     have the "mm" prefix. -->
 
+	<!-- Import OS environment variables -->
+	<property environment="mm.env"/>
+
 	<!-- Whether to skip nonessential components that don't build -->
 	<property name="mm.build.failonerror" value="true"/>
 
+	<!-- Whether to run (C++) builds in parallel -->
+	<property name="mm.build.parallel" value="true"/>
+
 	<!-- Path of repository root, from the project basedir -->
 	<dirname property="mm.basedir" file="${ant.file.mm.props}/.."/>
+
+	<!-- Logging (override with e.g. build id) -->
+	<property name="mm.build.logsuffix" value=""/>
 
 	<!-- Default build settings; can be overridden on command line -->
 	<!-- TODO Provide reasonable defaults on Unix -->
@@ -89,6 +98,54 @@
 		<pathelement location="${mm.java.lib.swing-layout}"/>
 	</path>
 
+	<!-- Build a Visual Studio project or solution -->
+	<!-- We generate separate logs because it is hard to parse MSBuild
+	     output out of the Ant log -->
+	<macrodef name="mm-msbuild">
+		<attribute name="project"/> <!-- Can also be a solution file -->
+		<attribute name="target" default="Build"/>
+		<attribute name="logdir" default="${mm.cpp.outdir}"/>
+		<attribute name="logbasename" default="msbuild"/>
+		<attribute name="parallel" default="${mm.build.parallel}"/>
+		<attribute name="failonerror" default="true"/>
+		<sequential>
+			<!-- MSBuild will fail if log dir does not exist -->
+			<mkdir dir="@{logdir}"/>
+			<local name="msbuild.log"/>
+			<property name="msbuild.log" location="@{logdir}/@{logbasename}.log"/>
+
+			<local name="msbuild.flag.parallel"/>
+			<condition property="msbuild.flag.parallel" value="/m" else="">
+				<istrue value="@{parallel}"/>
+			</condition>
+
+			<local name="msbuild.params"/>
+			<property name="msbuild.params"
+				value="@{project} /t:@{target} /p:Configuration=${mm.configuration} /p:Platform=${mm.architecture} /flp:LogFile=${msbuild.log} ${msbuild.flag.parallel}"/>
+
+			<local name="vs.commontools.dir"/>
+			<property name="vs.commontools.dir" location="${mm.env.VS100COMNTOOLS}"/>
+			<local name="vsvars32"/>
+			<property name="vsvars32" location="${vs.commontools.dir}/vsvars32.bat"/>
+			<fail message="Cannot locate vsvars32.bat for Visual Studio 2010">
+				<condition> <not> <available file="${vsvars32}"/> </not> </condition>
+			</fail>
+
+			<local name="temp.bat"/>
+			<tempfile property="temp.bat" prefix="msbuild" suffix=".bat" destdir="${mm.intdir}"/>
+			<echo file="${temp.bat}">@echo off
+				call "${vsvars32}"
+				if errorlevel 1 exit /b
+				msbuild ${msbuild.params}
+			</echo>
+			<exec executable="cmd" failonerror="@{failonerror}">
+				<arg value="/c"/>
+				<arg value="${temp.bat}"/>
+			</exec>
+			<delete file="${temp.bat}"/>
+		</sequential>
+	</macrodef>
+
 	<!-- Compiling Java -->
 	<presetdef name="mm-javac">
 		<javac debug="on" debuglevel="lines,vars,source"
@@ -143,7 +200,7 @@
 				</filterchain>
 			</loadresource>
 
-			<tempfile property="genclass.tmpdir"/>
+			<tempfile property="genclass.tmpdir" destdir="${mm.intdir}" prefix="cljc"/>
 			<mkdir dir="${genclass.tmpdir}"/>
 
 			<mm-cljc namespace="@{namespace}" srcdir="@{srcdir}"
