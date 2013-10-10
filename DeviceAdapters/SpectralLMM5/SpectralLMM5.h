@@ -28,9 +28,6 @@
 #include <stdint.h>
 #include <cstdio>
 #include <string>
-#if WIN32
-#include <stdint.h>
-#endif
 
 //////////////////////////////////////////////////////////////////////////////
 // Error codes
