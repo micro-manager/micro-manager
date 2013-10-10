@@ -27,7 +27,7 @@ License along with this software.  If not, see
 #include <time.h>
 #include <fstream>
 
-#define SCOPELED_DEBUGLOG
+//#define SCOPELED_DEBUGLOG
 
 #define DICON_USB_VID_NEW 0x24C2
 #define DICON_USB_VID_OLD 0xC251
