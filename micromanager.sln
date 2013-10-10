@@ -1,334 +1,310 @@
-Microsoft Visual Studio Solution File, Format Version 10.00
-# Visual C++ Express 2008
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MMCore", "MMCore\MMCore.vcproj", "{36571628-728C-4ACD-A47F-503BA91C5D43}"
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual C++ Express 2010
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MMCore", "MMCore\MMCore.vcxproj", "{36571628-728C-4ACD-A47F-503BA91C5D43}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MMCoreJ_wrap", "MMCoreJ_wrap\MMCoreJ_wrap.vcproj", "{EFA68887-8A97-49D7-BAB4-768E15A4E597}"
-	ProjectSection(ProjectDependencies) = postProject
-		{36571628-728C-4ACD-A47F-503BA91C5D43} = {36571628-728C-4ACD-A47F-503BA91C5D43}
-	EndProjectSection
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MMCoreJ_wrap", "MMCoreJ_wrap\MMCoreJ_wrap.vcxproj", "{EFA68887-8A97-49D7-BAB4-768E15A4E597}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DemoCamera", "DeviceAdapters\DemoCamera\DemoCamera.vcproj", "{806A629B-7EAA-4265-A4C0-8A0EC03B104F}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DemoCamera", "DeviceAdapters\DemoCamera\DemoCamera.vcxproj", "{806A629B-7EAA-4265-A4C0-8A0EC03B104F}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ParallelPort", "DeviceAdapters\ParallelPort\ParallelPort.vcproj", "{1FCA5DD9-57F4-45A4-9141-8AE392E2AFE8}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ParallelPort", "DeviceAdapters\ParallelPort\ParallelPort.vcxproj", "{1FCA5DD9-57F4-45A4-9141-8AE392E2AFE8}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PVCAM", "DeviceAdapters\PVCAM\PVCAM.vcproj", "{A28DEB4E-E645-4990-A91D-4A7FF6762239}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PVCAM", "DeviceAdapters\PVCAM\PVCAM.vcxproj", "{A28DEB4E-E645-4990-A91D-4A7FF6762239}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SutterLambda", "DeviceAdapters\SutterLambda\SutterLambda.vcproj", "{3645AD5B-44B8-4121-81FE-808067EFEA2A}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SutterLambda", "DeviceAdapters\SutterLambda\SutterLambda.vcxproj", "{3645AD5B-44B8-4121-81FE-808067EFEA2A}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Ludl", "DeviceAdapters\Ludl\Ludl.vcproj", "{8A82B822-DA7A-464B-AE6F-8EFB5EDA2C19}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Ludl", "DeviceAdapters\Ludl\Ludl.vcxproj", "{8A82B822-DA7A-464B-AE6F-8EFB5EDA2C19}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Vincent", "DeviceAdapters\Vincent\Vincent.vcproj", "{19B83E51-446A-41DC-8899-ED2D59675933}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Vincent", "DeviceAdapters\Vincent\Vincent.vcxproj", "{19B83E51-446A-41DC-8899-ED2D59675933}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AOTF", "DeviceAdapters\AOTF\AOTF.vcproj", "{6626896D-CA91-457B-9B78-242797B88FCF}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AOTF", "DeviceAdapters\AOTF\AOTF.vcxproj", "{6626896D-CA91-457B-9B78-242797B88FCF}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Sensicam", "DeviceAdapters\Sensicam\Sensicam.vcproj", "{A7A33BC0-0FEB-416F-8310-5C3ECF6BEAB6}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Sensicam", "DeviceAdapters\Sensicam\Sensicam.vcxproj", "{A7A33BC0-0FEB-416F-8310-5C3ECF6BEAB6}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NikonTE2000", "DeviceAdapters\NikonTE2000\NikonTE2000.vcproj", "{AC358657-0C2B-41B6-97C1-1EFB8481D82A}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NikonTE2000", "DeviceAdapters\NikonTE2000\NikonTE2000.vcxproj", "{AC358657-0C2B-41B6-97C1-1EFB8481D82A}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Prior", "DeviceAdapters\Prior\Prior.vcproj", "{A7148F42-8EE8-48B4-BFC9-F61AB8A3800D}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Prior", "DeviceAdapters\Prior\Prior.vcxproj", "{A7148F42-8EE8-48B4-BFC9-F61AB8A3800D}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DTOpenLayer", "DeviceAdapters\DTOpenLayer\DTOpenLayer.vcproj", "{D29861C1-D0A2-44EB-BAD9-3808165609D8}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DTOpenLayer", "DeviceAdapters\DTOpenLayer\DTOpenLayer.vcxproj", "{D29861C1-D0A2-44EB-BAD9-3808165609D8}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Andor", "DeviceAdapters\Andor\Andor.vcproj", "{91CCB72B-852D-47D8-82FA-0E19A300A025}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Andor", "DeviceAdapters\Andor\Andor.vcxproj", "{91CCB72B-852D-47D8-82FA-0E19A300A025}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Nikon", "DeviceAdapters\Nikon\Nikon.vcproj", "{85D14FAC-12F1-42BF-8E32-DD2DD62A6AC9}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Nikon", "DeviceAdapters\Nikon\Nikon.vcxproj", "{85D14FAC-12F1-42BF-8E32-DD2DD62A6AC9}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ASIFW1000", "DeviceAdapters\ASIFW1000\ASIFW1000.vcproj", "{E69C9F0E-2608-4EAD-9AB1-75E8DEF7E053}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ASIFW1000", "DeviceAdapters\ASIFW1000\ASIFW1000.vcxproj", "{E69C9F0E-2608-4EAD-9AB1-75E8DEF7E053}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ASIStage", "DeviceAdapters\ASIStage\ASIStage.vcproj", "{5D1758C4-147E-4E06-9BF3-F4DDF23B5B97}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ASIStage", "DeviceAdapters\ASIStage\ASIStage.vcxproj", "{5D1758C4-147E-4E06-9BF3-F4DDF23B5B97}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Yokogawa", "DeviceAdapters\Yokogawa\Yokogawa.vcproj", "{ED4BAD61-62D4-4407-9A40-E0DE686F5419}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Yokogawa", "DeviceAdapters\Yokogawa\Yokogawa.vcxproj", "{ED4BAD61-62D4-4407-9A40-E0DE686F5419}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ZeissCAN", "DeviceAdapters\ZeissCAN\ZeissCAN.vcproj", "{E2900E6C-549B-46D2-AB40-8656280F7C53}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ZeissCAN", "DeviceAdapters\ZeissCAN\ZeissCAN.vcxproj", "{E2900E6C-549B-46D2-AB40-8656280F7C53}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "USBManager", "DeviceAdapters\USBManager\USBManager.vcproj", "{2F7AA48D-2A51-436E-A6F2-6C36EDD1A1A1}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "USBManager", "DeviceAdapters\USBManager\USBManager.vcxproj", "{2F7AA48D-2A51-436E-A6F2-6C36EDD1A1A1}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "K8055", "DeviceAdapters\K8055\K8055.vcproj", "{5E687DA5-2842-4661-AAB4-FEE4D192EBB9}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "K8055", "DeviceAdapters\K8055\K8055.vcxproj", "{5E687DA5-2842-4661-AAB4-FEE4D192EBB9}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SpectralLMM5", "DeviceAdapters\SpectralLMM5\SpectralLMM5.vcproj", "{AEA99C48-1A7A-4265-BAF6-28D734EE61E8}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SpectralLMM5", "DeviceAdapters\SpectralLMM5\SpectralLMM5.vcxproj", "{AEA99C48-1A7A-4265-BAF6-28D734EE61E8}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Conix", "DeviceAdapters\Conix\Conix.vcproj", "{FB00F98E-4A2C-4888-A11F-29E5A1CA3E10}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Conix", "DeviceAdapters\Conix\Conix.vcxproj", "{FB00F98E-4A2C-4888-A11F-29E5A1CA3E10}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "K8061", "DeviceAdapters\K8061\K8061.vcproj", "{CF60E682-EF19-4FDD-8060-DE80188C827C}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "K8061", "DeviceAdapters\K8061\K8061.vcxproj", "{CF60E682-EF19-4FDD-8060-DE80188C827C}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PI_GCS", "DeviceAdapters\PI_GCS\PI_GCS.vcproj", "{3FCCE846-C82F-437A-A9B9-3CCEC02250EA}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PI_GCS", "DeviceAdapters\PI_GCS\PI_GCS.vcxproj", "{3FCCE846-C82F-437A-A9B9-3CCEC02250EA}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PI", "DeviceAdapters\PI\PI.vcproj", "{3FCCE846-C82F-437A-A9B9-6ABDA34403AE}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PI", "DeviceAdapters\PI\PI.vcxproj", "{3FCCE846-C82F-437A-A9B9-6ABDA34403AE}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CSUX", "DeviceAdapters\Yokogawa\CSUX\CSUX.vcproj", "{0E350120-8D1B-4E44-8B21-DADAEBC02217}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CSUX", "DeviceAdapters\Yokogawa\CSUX\CSUX.vcxproj", "{0E350120-8D1B-4E44-8B21-DADAEBC02217}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Pecon", "DeviceAdapters\Pecon\Pecon.vcproj", "{24FF0DE6-E201-46C1-ACFB-E4B6B4527C84}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Pecon", "DeviceAdapters\Pecon\Pecon.vcxproj", "{24FF0DE6-E201-46C1-ACFB-E4B6B4527C84}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NikonTI", "SecretDeviceAdapters\NikonTI\NikonTI.vcproj", "{A9146B8A-A700-40BB-B018-4FAD6F8E79EC}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NikonTI", "SecretDeviceAdapters\NikonTI\NikonTI.vcxproj", "{A9146B8A-A700-40BB-B018-4FAD6F8E79EC}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NikonAZ100", "SecretDeviceAdapters\NikonAZ100\NikonAZ100.vcproj", "{B6FEC6DD-A94F-435C-B8BD-BEE8931F0E57}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NikonAZ100", "SecretDeviceAdapters\NikonAZ100\NikonAZ100.vcxproj", "{B6FEC6DD-A94F-435C-B8BD-BEE8931F0E57}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Utilities", "DeviceAdapters\Utilities\Utilities.vcproj", "{E68C2689-7D9F-4B7B-9100-FAB4CF5B08FD}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Utilities", "DeviceAdapters\Utilities\Utilities.vcxproj", "{E68C2689-7D9F-4B7B-9100-FAB4CF5B08FD}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Arduino", "DeviceAdapters\Arduino\Arduino.vcproj", "{2067D4A8-8C32-40D3-BA9F-6B388ECCD714}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Arduino", "DeviceAdapters\Arduino\Arduino.vcxproj", "{2067D4A8-8C32-40D3-BA9F-6B388ECCD714}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Olympus", "SecretDeviceAdapters\Olympus\Olympus.vcproj", "{3BFC5BBD-6C7D-44A7-8361-F9D6E03C98AB}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Olympus", "SecretDeviceAdapters\Olympus\Olympus.vcxproj", "{3BFC5BBD-6C7D-44A7-8361-F9D6E03C98AB}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LeicaDMI", "DeviceAdapters\LeicaDMI\LeicaDMI.vcproj", "{31FE7D1C-8B0F-4E6C-9A50-F63596606764}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LeicaDMI", "DeviceAdapters\LeicaDMI\LeicaDMI.vcxproj", "{31FE7D1C-8B0F-4E6C-9A50-F63596606764}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PrecisExcite", "DeviceAdapters\PrecisExcite\PrecisExcite.vcproj", "{DCAF2299-3620-40FB-9E55-62A860FD67F2}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PrecisExcite", "DeviceAdapters\PrecisExcite\PrecisExcite.vcxproj", "{DCAF2299-3620-40FB-9E55-62A860FD67F2}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ASIwptr", "DeviceAdapters\ASIWPTR\wptr.vcproj", "{399E0E5D-DF7F-4747-A448-5116E7534955}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ASIwptr", "DeviceAdapters\ASIWPTR\wptr.vcxproj", "{399E0E5D-DF7F-4747-A448-5116E7534955}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ThorlabsFilterWheel", "DeviceAdapters\ThorlabsFilterWheel\ThorlabsFilterWheel.vcproj", "{DEE8AF34-2F99-4AA8-AFDA-848DE44F1DB2}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ThorlabsFilterWheel", "DeviceAdapters\ThorlabsFilterWheel\ThorlabsFilterWheel.vcxproj", "{DEE8AF34-2F99-4AA8-AFDA-848DE44F1DB2}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MCL_MicroDrive", "DeviceAdapters\MCL_MicroDrive\Microdrive_Device_Adapter.vcproj", "{A6FA70EC-5358-4837-A8E0-EB02B702F6A8}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MCL_MicroDrive", "DeviceAdapters\MCL_MicroDrive\Microdrive_Device_Adapter.vcxproj", "{A6FA70EC-5358-4837-A8E0-EB02B702F6A8}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MCL_NanoDrive", "DeviceAdapters\MCL_NanoDrive\NanoDrive_Device_Adapter.vcproj", "{06A4A3EA-9461-4780-B6EA-81004B3F3D56}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MCL_NanoDrive", "DeviceAdapters\MCL_NanoDrive\NanoDrive_Device_Adapter.vcxproj", "{06A4A3EA-9461-4780-B6EA-81004B3F3D56}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PCO_Camera", "DeviceAdapters\PCO_Generic\MicroManager.vcproj", "{391502E7-BAAF-42DF-9327-2114B73FF8DF}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PCO_Camera", "DeviceAdapters\PCO_Generic\MicroManager.vcxproj", "{391502E7-BAAF-42DF-9327-2114B73FF8DF}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Piper", "DeviceAdapters\Piper\PiperMmAdapter.vcproj", "{8FDA6D04-7C5D-4061-8467-AE0C104A2C83}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Piper", "DeviceAdapters\Piper\PiperMmAdapter.vcxproj", "{8FDA6D04-7C5D-4061-8467-AE0C104A2C83}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ThorlabsSC10", "DeviceAdapters\ThorlabsSC10\ThorlabsSC10.vcproj", "{DEE8AF34-2F99-4AA8-AFDA-848DE44F1DB3}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ThorlabsSC10", "DeviceAdapters\ThorlabsSC10\ThorlabsSC10.vcxproj", "{DEE8AF34-2F99-4AA8-AFDA-848DE44F1DB3}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LeicaDMR", "DeviceAdapters\LeicaDMR\LeicaDMR.vcproj", "{EB02D0C4-F80E-4C5A-9B8E-C5760E02F8BE}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LeicaDMR", "DeviceAdapters\LeicaDMR\LeicaDMR.vcxproj", "{EB02D0C4-F80E-4C5A-9B8E-C5760E02F8BE}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ZeissCAN29", "DeviceAdapters\ZeissCAN29\ZeissCAN29.vcproj", "{CFD4836D-3BA0-4CFE-B986-A4B34D23CDA6}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ZeissCAN29", "DeviceAdapters\ZeissCAN29\ZeissCAN29.vcxproj", "{CFD4836D-3BA0-4CFE-B986-A4B34D23CDA6}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TwainCamera", "DeviceAdapters\TwainCamera\TwainCamera.vcproj", "{AD2E2778-836C-11DE-9828-78A156D89593}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TwainCamera", "DeviceAdapters\TwainCamera\TwainCamera.vcxproj", "{AD2E2778-836C-11DE-9828-78A156D89593}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CoherentCube", "DeviceAdapters\CoherentCube\CoherentCube.vcproj", "{3A83E7A0-34A5-4304-8D88-148D933EACCD}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CoherentCube", "DeviceAdapters\CoherentCube\CoherentCube.vcxproj", "{3A83E7A0-34A5-4304-8D88-148D933EACCD}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Neos", "DeviceAdapters\Neos\Neos.vcproj", "{19B83E51-446A-41DC-8899-ED2D59679999}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Neos", "DeviceAdapters\Neos\Neos.vcxproj", "{19B83E51-446A-41DC-8899-ED2D59679999}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ScionCam", "DeviceAdapters\ScionCam\ScionCamera.vcproj", "{799C21D4-0B94-4F88-8F16-243134A07346}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ScionCam", "DeviceAdapters\ScionCam\ScionCamera.vcxproj", "{799C21D4-0B94-4F88-8F16-243134A07346}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DLP4000", "SecretDeviceAdapters\DLP4000\DLP4000.vcproj", "{5B9F9B2A-3E14-401E-8194-0E4442B0B0CB}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DLP4000", "SecretDeviceAdapters\DLP4000\DLP4000.vcxproj", "{5B9F9B2A-3E14-401E-8194-0E4442B0B0CB}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Apogee", "DeviceAdapters\Apogee\Apogee.vcproj", "{0F47459C-3A45-4A07-AF18-FC7E5CD5A220}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Apogee", "DeviceAdapters\Apogee\Apogee.vcxproj", "{0F47459C-3A45-4A07-AF18-FC7E5CD5A220}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "QCam", "DeviceAdapters\QCam\QCam.vcproj", "{43250DC7-A5AB-4795-9A54-7BF048465D00}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "QCam", "DeviceAdapters\QCam\QCam.vcxproj", "{43250DC7-A5AB-4795-9A54-7BF048465D00}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GenericSLM", "DeviceAdapters\GenericSLM\GenericSLM.vcproj", "{E3DA287B-6861-49E2-8484-B08DBA020F7D}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GenericSLM", "DeviceAdapters\GenericSLM\GenericSLM.vcxproj", "{E3DA287B-6861-49E2-8484-B08DBA020F7D}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AndorLaserCombiner", "DeviceAdapters\AndorLaserCombiner\AndorLaserCombiner.vcproj", "{489AF9AB-7A0E-43DE-8483-3E4B8CCCBFCD}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AndorLaserCombiner", "DeviceAdapters\AndorLaserCombiner\AndorLaserCombiner.vcxproj", "{489AF9AB-7A0E-43DE-8483-3E4B8CCCBFCD}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ProgRes", "DeviceAdapters\Jenoptik\mmgrProgRes.vcproj", "{9D891399-2C51-4BDA-8F44-3A8A506657BA}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ProgRes", "DeviceAdapters\Jenoptik\mmgrProgRes.vcxproj", "{9D891399-2C51-4BDA-8F44-3A8A506657BA}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Marzhauser", "DeviceAdapters\Marzhauser\Marzhauser.vcproj", "{2B522528-9660-4B78-8E2A-BC296C9B9937}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Marzhauser", "DeviceAdapters\Marzhauser\Marzhauser.vcxproj", "{2B522528-9660-4B78-8E2A-BC296C9B9937}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Corvus", "DeviceAdapters\Corvus\Corvus.vcproj", "{2B522528-9660-4B78-8E2A-BC296C9BC0C0}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Corvus", "DeviceAdapters\Corvus\Corvus.vcxproj", "{2B522528-9660-4B78-8E2A-BC296C9BC0C0}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SimpleAutofocus", "DeviceAdapters\SimpleAutofocus\SimpleAutoFocus.vcproj", "{AF83E7A0-34A5-4304-8D88-148D933EAFAF}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SimpleAutoFocus", "DeviceAdapters\SimpleAutofocus\SimpleAutoFocus.vcxproj", "{AF83E7A0-34A5-4304-8D88-148D933EAFAF}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SerialManager", "DeviceAdapters\SerialManager\SerialManager.vcproj", "{2EF7ACDC-F742-4CB6-B301-A242F52BE5C3}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SerialManager", "DeviceAdapters\SerialManager\SerialManager.vcxproj", "{2EF7ACDC-F742-4CB6-B301-A242F52BE5C3}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PrincetonInstruments", "DeviceAdapters\PrincetonInstruments\PrincetonInstruments.vcproj", "{A28DEB4E-E645-4990-A91D-4A7FF6762240}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PrincetonInstruments", "DeviceAdapters\PrincetonInstruments\PrincetonInstruments.vcxproj", "{A28DEB4E-E645-4990-A91D-4A7FF6762240}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TIScam", "DeviceAdapters\TISCam\TIScamera.vcproj", "{205D835F-D939-4E0D-9516-061AB141480F}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TIScam", "DeviceAdapters\TISCam\TIScamera.vcxproj", "{205D835F-D939-4E0D-9516-061AB141480F}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AgilentLaserCombiner", "DeviceAdapters\AgilentLaserCombiner\AgilentLaserCombiner.vcproj", "{CF60E682-EF19-4FDD-8060-DE80256C827C}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AgilentLaserCombiner", "DeviceAdapters\AgilentLaserCombiner\AgilentLaserCombiner.vcxproj", "{CF60E682-EF19-4FDD-8060-DE80256C827C}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AAAOTF", "DeviceAdapters\AAAOTF\AAAOTF.vcproj", "{2B522528-9660-4B78-8E2A-000000AAA03F}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AAAOTF", "DeviceAdapters\AAAOTF\AAAOTF.vcxproj", "{2B522528-9660-4B78-8E2A-000000AAA03F}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MaestroServo", "DeviceAdapters\MaestroServo\MaestroServo.vcproj", "{19B83E51-446A-41DC-8899-ED2D59680000}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MaestroServo", "DeviceAdapters\MaestroServo\MaestroServo.vcxproj", "{19B83E51-446A-41DC-8899-ED2D59680000}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FreeSerialPort", "DeviceAdapters\FreeSerialPort\FreeSerialPort.vcproj", "{F7EE5E71-A1B0-7DF7-EE5E-71A1B07DF7EE}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FreeSerialPort", "DeviceAdapters\FreeSerialPort\FreeSerialPort.vcxproj", "{F7EE5E71-A1B0-7DF7-EE5E-71A1B07DF7EE}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "XCite120PC_Exacte", "DeviceAdapters\XCite120PC_Exacte\XCite120PC_Exacte.vcproj", "{4B9E78C0-C365-11DF-9539-E01BDFD72085}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "XCite120PC_Exacte", "DeviceAdapters\XCite120PC_Exacte\XCite120PC_Exacte.vcxproj", "{4B9E78C0-C365-11DF-9539-E01BDFD72085}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "KDV", "DeviceAdapters\kdv\KDV.vcproj", "{95CE7E3D-1E0D-4C5B-AF9B-B8343A8724FB}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "KDV", "DeviceAdapters\kdv\KDV.vcxproj", "{95CE7E3D-1E0D-4C5B-AF9B-B8343A8724FB}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DSLRRemoteCamera", "DeviceAdapters\TetheredCam\DSLRRemoteCamera.vcproj", "{7D8848FB-2C9B-48B3-8156-AA08B6AC6034}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DSLRRemoteCamera", "DeviceAdapters\TetheredCam\DSLRRemoteCamera.vcxproj", "{7D8848FB-2C9B-48B3-8156-AA08B6AC6034}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NKRemoteCamera", "DeviceAdapters\TetheredCam\NKRemoteCamera.vcproj", "{5B2CC024-EC22-4460-8DE7-FFB70C3F8922}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NKRemoteCamera", "DeviceAdapters\TetheredCam\NKRemoteCamera.vcxproj", "{5B2CC024-EC22-4460-8DE7-FFB70C3F8922}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PSRemoteCamera", "DeviceAdapters\TetheredCam\PSRemoteCamera.vcproj", "{43FAA548-FAF6-4F58-8F24-C78C41820E27}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PSRemoteCamera", "DeviceAdapters\TetheredCam\PSRemoteCamera.vcxproj", "{43FAA548-FAF6-4F58-8F24-C78C41820E27}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MT20", "DeviceAdapters\MT20\MT20.vcproj", "{E5ABCDE7-03F1-4683-98C3-8F5F79E1A473}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MT20", "DeviceAdapters\MT20\MT20.vcxproj", "{E5ABCDE7-03F1-4683-98C3-8F5F79E1A473}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GigECamera", "DeviceAdapters\GigECamera\GigECamera.vcproj", "{7DFCF21B-1F90-4444-B2AF-27212A52BA44}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GigECamera", "DeviceAdapters\GigECamera\GigECamera.vcxproj", "{7DFCF21B-1F90-4444-B2AF-27212A52BA44}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Sapphire", "DeviceAdapters\Sapphire\Sapphire.vcproj", "{3A83E7A0-34A5-4304-8D88-00005A99712E}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Sapphire", "DeviceAdapters\Sapphire\Sapphire.vcxproj", "{3A83E7A0-34A5-4304-8D88-00005A99712E}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ImageProcessorChain", "DeviceAdapters\ImageProcessorChain\ImageProcessorChain.vcproj", "{806A629B-7EAA-4265-A4C0-000000000000}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ImageProcessorChain", "DeviceAdapters\ImageProcessorChain\ImageProcessorChain.vcxproj", "{806A629B-7EAA-4265-A4C0-000000000000}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NNLC", "SecretDeviceAdapters\NNLC\NNLC.vcproj", "{3BFC5BBD-6C7D-44A7-8381-F9D6E03C98AB}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NNLC", "SecretDeviceAdapters\NNLC\NNLC.vcxproj", "{3BFC5BBD-6C7D-44A7-8381-F9D6E03C98AB}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SpotCamera", "DeviceAdapters\Spot(Windows)\Spot.vcproj", "{59EBAD3C-A6C7-11DE-8344-1C9455D89593}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SpotCamera", "DeviceAdapters\Spot(Windows)\Spot.vcxproj", "{59EBAD3C-A6C7-11DE-8344-1C9455D89593}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Thorlabs", "DeviceAdapters\Thorlabs\Thorlabs.vcproj", "{308AA3EE-4053-47E0-9004-A57E9572C7A6}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Thorlabs", "DeviceAdapters\Thorlabs\Thorlabs.vcxproj", "{308AA3EE-4053-47E0-9004-A57E9572C7A6}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Hamamatsu", "SecretDeviceAdapters\Hamamatsu\Hamamatsu.vcproj", "{E0369FA6-1D4C-4FF7-AF9E-FFFFFFF00C5F}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Hamamatsu", "SecretDeviceAdapters\Hamamatsu\Hamamatsu.vcxproj", "{E0369FA6-1D4C-4FF7-AF9E-FFFFFFF00C5F}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "HamamatsuHam", "SecretDeviceAdapters\HamamatsuHam\HamamatsuHam.vcproj", "{1B4CC156-6C0B-4571-AC6D-E6173512684F}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "HamamatsuHam", "SecretDeviceAdapters\HamamatsuHam\HamamatsuHam.vcxproj", "{1B4CC156-6C0B-4571-AC6D-E6173512684F}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Stradus", "DeviceAdapters\Vortran\Stradus.vcproj", "{3A83E7A0-34A5-4304-8D88-00000572AD05}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Stradus", "DeviceAdapters\Vortran\Stradus.vcxproj", "{3A83E7A0-34A5-4304-8D88-00000572AD05}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ThorlabsDCxxxx", "DeviceAdapters\ThorlabsDCxxxx\ThorlabsDCxxxx.vcproj", "{DEE8AF34-2F99-4AA8-AFDA-948DE44F1DB2}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ThorlabsDCxxxx", "DeviceAdapters\ThorlabsDCxxxx\ThorlabsDCxxxx.vcxproj", "{DEE8AF34-2F99-4AA8-AFDA-948DE44F1DB2}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "OpenCVgrabber", "DeviceAdapters\OpenCVgrabber\OpenCVgrabber.vcproj", "{028283B8-4E29-457E-9A78-AB6154A0F9D4}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "OpenCVgrabber", "DeviceAdapters\OpenCVgrabber\OpenCVgrabber.vcxproj", "{028283B8-4E29-457E-9A78-AB6154A0F9D4}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AndorSDK3", "DeviceAdapters\AndorSDK3\AndorSDK3.vcproj", "{A9E3F2DD-8B71-4FA3-9AFE-DC2040D2CDDD}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AndorSDK3", "DeviceAdapters\AndorSDK3\AndorSDK3.vcxproj", "{A9E3F2DD-8B71-4FA3-9AFE-DC2040D2CDDD}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CARVII", "DeviceAdapters\CARVII\CARVII.vcproj", "{AA9B1613-8359-4944-B08D-B96639D0998E}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CARVII", "DeviceAdapters\CARVII\CARVII.vcxproj", "{AA9B1613-8359-4944-B08D-B96639D0998E}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Scientifica", "DeviceAdapters\Scientifica\Scientifica.vcproj", "{20B38F93-934F-4022-9507-72693315AF6E}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Scientifica", "DeviceAdapters\Scientifica\Scientifica.vcxproj", "{20B38F93-934F-4022-9507-72693315AF6E}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PI_GCS_2", "DeviceAdapters\PI_GCS_2\PI_GCS_2.vcproj", "{35FD34A9-3076-4DD9-8B51-174F94FA2248}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PI_GCS_2", "DeviceAdapters\PI_GCS_2\PI_GCS_2.vcxproj", "{35FD34A9-3076-4DD9-8B51-174F94FA2248}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Aquinas", "DeviceAdapters\Aquinas\Aquinas.vcproj", "{00B6552D-65F7-4412-BF78-E72F34152AB9}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Aquinas", "DeviceAdapters\Aquinas\Aquinas.vcxproj", "{00B6552D-65F7-4412-BF78-E72F34152AB9}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ABSCamera", "DeviceAdapters\ABS\ABSCamera.vcproj", "{AA828D40-0B3D-484C-BAB9-C72018D7760E}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ABSCamera", "DeviceAdapters\ABS\ABSCamera.vcxproj", "{AA828D40-0B3D-484C-BAB9-C72018D7760E}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "XCiteLed", "DeviceAdapters\XCiteLed\XCiteLed.vcproj", "{5A692627-8FBA-4DAB-911D-75E88B96F99F}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "XCiteLed", "DeviceAdapters\XCiteLed\XCiteLed.vcxproj", "{5A692627-8FBA-4DAB-911D-75E88B96F99F}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NPointC400", "DeviceAdapters\nPoint\nPC400.vcproj", "{52A0BB2A-0A16-40F8-86D4-99E0379F6E55}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NPointC400", "DeviceAdapters\nPoint\nPC400.vcxproj", "{52A0BB2A-0A16-40F8-86D4-99E0379F6E55}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "VariLC", "DeviceAdapters\VariLC\VariLC.vcproj", "{2B522528-9660-4B78-8E2A-000000000000}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "VariLC", "DeviceAdapters\VariLC\VariLC.vcxproj", "{2B522528-9660-4B78-8E2A-000000000000}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Aladdin", "DeviceAdapters\Aladdin\Aladdin.vcproj", "{8BAA30B8-F062-42F3-A89C-D9E5A0912957}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Aladdin", "DeviceAdapters\Aladdin\Aladdin.vcxproj", "{8BAA30B8-F062-42F3-A89C-D9E5A0912957}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ESIOImagingControllers", "SecretDeviceAdapters\ESImagingIOControllers\ESImagingIOControllers.vcproj", "{6C5DBBEC-8688-4B68-9928-118BB3891FD5}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ESIOImagingControllers", "SecretDeviceAdapters\ESImagingIOControllers\ESImagingIOControllers.vcxproj", "{6C5DBBEC-8688-4B68-9928-118BB3891FD5}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Cobolt", "DeviceAdapters\Cobolt\Cobolt.vcproj", "{7EEA4183-1A52-4DC7-8839-9BEF31B59F98}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Cobolt", "DeviceAdapters\Cobolt\Cobolt.vcxproj", "{7EEA4183-1A52-4DC7-8839-9BEF31B59F98}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "XIMEACamera", "DeviceAdapters\Ximea\XIMEACamera.vcproj", "{7AF13550-B80D-11E2-9E96-0800200C9A66}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "XIMEACamera", "DeviceAdapters\Ximea\XIMEACamera.vcxproj", "{7AF13550-B80D-11E2-9E96-0800200C9A66}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LumencorSpectra", "DeviceAdapters\LumencorSpectra\Spectra.vcproj", "{B1058311-C336-4961-8F0D-9702B809FCF7}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LumencorSpectra", "DeviceAdapters\LumencorSpectra\Spectra.vcxproj", "{B1058311-C336-4961-8F0D-9702B809FCF7}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Micropix", "SecretDeviceAdapters\Micropix\Micropix.vcproj", "{C621764B-8634-4EE9-BC2F-436EE81202F0}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Micropix", "SecretDeviceAdapters\Micropix\Micropix.vcxproj", "{C621764B-8634-4EE9-BC2F-436EE81202F0}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NIMotionStage", "DeviceAdapters\NiMotionStageController\NiMotionControl.vcproj", "{936F8694-2A0F-44BC-A71B-8D2CF196F927}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NIMotionStage", "DeviceAdapters\NiMotionStageController\NiMotionControl.vcxproj", "{936F8694-2A0F-44BC-A71B-8D2CF196F927}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ITC18", "DeviceAdapters\ITC18\ITC18.vcproj", "{04E18499-E876-4952-8E23-AB72E8558BA2}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ITC18", "DeviceAdapters\ITC18\ITC18.vcxproj", "{04E18499-E876-4952-8E23-AB72E8558BA2}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PriorLegacy", "DeviceAdapters\PriorLegacy\PriorLegacy.vcproj", "{4BB973FE-D080-4B86-A453-61CB32673787}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PriorLegacy", "DeviceAdapters\PriorLegacy\PriorLegacy.vcxproj", "{4BB973FE-D080-4B86-A453-61CB32673787}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Xcite", "DeviceAdapters\Xcite\Xcite.vcproj", "{A35BDDC1-60C9-4F86-9658-7D28928D4866}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Xcite", "DeviceAdapters\Xcite\Xcite.vcxproj", "{A35BDDC1-60C9-4F86-9658-7D28928D4866}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LudlLow", "DeviceAdapters\LudlLow\LudlLow.vcproj", "{22E07B2E-036A-46B8-BAF9-2C8F956A500E}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LudlLow", "DeviceAdapters\LudlLow\LudlLow.vcxproj", "{22E07B2E-036A-46B8-BAF9-2C8F956A500E}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DECamera", "DeviceAdapters\DirectElectron\vsprojects\DECamera.vcproj", "{E206DB83-E348-4E32-AA0F-B7E05E3D8F51}"
-	ProjectSection(ProjectDependencies) = postProject
-		{823879D7-A915-4CEA-8365-09BA70FDAF2C} = {823879D7-A915-4CEA-8365-09BA70FDAF2C}
-	EndProjectSection
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DECamera", "DeviceAdapters\DirectElectron\vsprojects\DECamera.vcxproj", "{E206DB83-E348-4E32-AA0F-B7E05E3D8F51}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DEMessaging", "DeviceAdapters\DirectElectron\vsprojects\DEMessaging.vcproj", "{0BD4B2B9-5FDA-4D1A-A7F8-B66C7C49FFF7}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DEMessaging", "DeviceAdapters\DirectElectron\vsprojects\DEMessaging.vcxproj", "{0BD4B2B9-5FDA-4D1A-A7F8-B66C7C49FFF7}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DEClientLib", "DeviceAdapters\DirectElectron\vsprojects\DEClientLib.vcproj", "{823879D7-A915-4CEA-8365-09BA70FDAF2C}"
-	ProjectSection(ProjectDependencies) = postProject
-		{0BD4B2B9-5FDA-4D1A-A7F8-B66C7C49FFF7} = {0BD4B2B9-5FDA-4D1A-A7F8-B66C7C49FFF7}
-	EndProjectSection
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DEClientLib", "DeviceAdapters\DirectElectron\vsprojects\DEClientLib.vcxproj", "{823879D7-A915-4CEA-8365-09BA70FDAF2C}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MoticCamera", "DeviceAdapters\Motic\MoticCamera.vcproj", "{E8FCC396-C0C5-4D1A-B6A7-A570FB948D24}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MoticCamera", "DeviceAdapters\Motic\MoticCamera.vcxproj", "{E8FCC396-C0C5-4D1A-B6A7-A570FB948D24}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SutterStage", "DeviceAdapters\SutterStage\SutterStage.vcproj", "{5772F2FA-DBB1-4ABD-A94D-A320CB2E8FC9}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SutterStage", "DeviceAdapters\SutterStage\SutterStage.vcxproj", "{5772F2FA-DBB1-4ABD-A94D-A320CB2E8FC9}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Omicron", "DeviceAdapters\Omicron\Omicron.vcproj", "{FFF4637C-DD40-4E3F-BDAF-6D0C102CBC7D}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Omicron", "DeviceAdapters\Omicron\Omicron.vcxproj", "{FFF4637C-DD40-4E3F-BDAF-6D0C102CBC7D}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MP285", "DeviceAdapters\MP285\MP285.vcproj", "{FEC6A7E8-6DB2-4DB0-9DB4-B568D0C1E521}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MP285", "DeviceAdapters\MP285\MP285.vcxproj", "{FEC6A7E8-6DB2-4DB0-9DB4-B568D0C1E521}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Mightex", "DeviceAdapters\Mightex\Mightex.vcproj", "{22B180B5-9E3C-455A-80D8-00387EE0A274}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Mightex", "DeviceAdapters\Mightex\Mightex.vcxproj", "{22B180B5-9E3C-455A-80D8-00387EE0A274}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Rapp", "DeviceAdapters\Rapp\Rapp.vcproj", "{C613608D-C4D0-4FC2-AA44-9D0098AAFDD8}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Rapp", "DeviceAdapters\Rapp\Rapp.vcxproj", "{C613608D-C4D0-4FC2-AA44-9D0098AAFDD8}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MarzhauserLStep", "DeviceAdapters\Marzhauser-LStep\LStep.vcproj", "{5D42D76C-B076-4045-A03E-1DF101583C39}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MarzhauserLStep", "DeviceAdapters\Marzhauser-LStep\LStep.vcxproj", "{5D42D76C-B076-4045-A03E-1DF101583C39}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Mightex_BLS", "DeviceAdapters\Mightex_BLS\Mightex_BLS.vcproj", "{992E35D6-47AF-44DC-8A59-1F369BF1836C}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Mightex_BLS", "DeviceAdapters\Mightex_BLS\Mightex_BLS.vcxproj", "{992E35D6-47AF-44DC-8A59-1F369BF1836C}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ScopeLED", "DeviceAdapters\ScopeLED\ScopeLED.VS2008.vcproj", "{3366ED2E-3283-4F30-9F77-55391129489C}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ScopeLED", "DeviceAdapters\ScopeLED\ScopeLED.VS2008.vcxproj", "{3366ED2E-3283-4F30-9F77-55391129489C}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PolychromeV", "SecretDeviceAdapters\Polychrome5000\Polychrome5000.vcproj", "{FDEFF75C-41F4-45CA-A704-05A46D9A2FAB}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PolychromeV", "SecretDeviceAdapters\Polychrome5000\Polychrome5000.vcxproj", "{FDEFF75C-41F4-45CA-A704-05A46D9A2FAB}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NI100X", "DeviceAdapters\NI100X\NI100X.vcproj", "{A25A294D-A3AC-4349-8EA6-24A83C5CD0B7}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NI100X", "DeviceAdapters\NI100X\NI100X.vcxproj", "{A25A294D-A3AC-4349-8EA6-24A83C5CD0B7}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Tofra", "DeviceAdapters\Tofra\Tofra.vcproj", "{8D1E58FA-AD04-43A1-8BDF-0457103F8DE1}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Tofra", "DeviceAdapters\Tofra\Tofra.vcxproj", "{8D1E58FA-AD04-43A1-8BDF-0457103F8DE1}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BaumerOptronic", "DeviceAdapters\BaumerOptronic\BaumerOptronic.vcproj", "{B06A629B-7EAA-4265-A4C0-8A0EC03B00B0}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BaumerOptronic", "DeviceAdapters\BaumerOptronic\BaumerOptronic.vcxproj", "{B06A629B-7EAA-4265-A4C0-8A0EC03B00B0}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LeicaDMSTC", "DeviceAdapters\LeicaDMSTC\LeicaDMSTC.vcproj", "{A41C689F-E343-4BDA-8132-FE2ADB166249}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LeicaDMSTC", "DeviceAdapters\LeicaDMSTC\LeicaDMSTC.vcxproj", "{A41C689F-E343-4BDA-8132-FE2ADB166249}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LumencorCIA", "DeviceAdapters\LumencorCIA\LumencorCIA.vcproj", "{2C362B1C-80C9-4867-AD96-2482535190D1}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LumencorCIA", "DeviceAdapters\LumencorCIA\LumencorCIA.vcxproj", "{2C362B1C-80C9-4867-AD96-2482535190D1}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CSUW1", "DeviceAdapters\CSUW1\CSUW1.vcproj", "{7C767DFF-87E6-4FE0-9557-2FF656ED1E57}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CSUW1", "DeviceAdapters\CSUW1\CSUW1.vcxproj", "{7C767DFF-87E6-4FE0-9557-2FF656ED1E57}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TSI", "DeviceAdapters\TSI\TSI.vcproj", "{98510FB2-2BD3-4A6D-9BB0-48EB5FD4C445}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TSI", "DeviceAdapters\TSI\TSI.vcxproj", "{98510FB2-2BD3-4A6D-9BB0-48EB5FD4C445}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MoticMicroscope", "DeviceAdapters\MoticMicroscope\MoticMicroscope.vcproj", "{F61EE788-E229-43F1-9E05-DAE2AB60B882}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MoticMicroscope", "DeviceAdapters\MoticMicroscope\MoticMicroscope.vcxproj", "{F61EE788-E229-43F1-9E05-DAE2AB60B882}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RaptorEPIX", "SecretDeviceAdapters\RaptorEPIX\RaptorEPIX.vcproj", "{805A53D5-1E00-42D7-96F0-661AC7D042A6}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RaptorEPIX", "SecretDeviceAdapters\RaptorEPIX\RaptorEPIX.vcxproj", "{805A53D5-1E00-42D7-96F0-661AC7D042A6}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SutterMPC", "SecretDeviceAdapters\SutterMPC\SutterMPC.vcproj", "{41F88027-BC30-4949-B407-42C2BCB34C60}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SutterMPC", "SecretDeviceAdapters\SutterMPC\SutterMPC.vcxproj", "{41F88027-BC30-4949-B407-42C2BCB34C60}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dc1394", "DeviceAdapters\dc1394\dc1394.vcproj", "{D557C94D-4D26-48D0-B522-B314DC28800D}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dc1394", "DeviceAdapters\dc1394\dc1394.vcxproj", "{D557C94D-4D26-48D0-B522-B314DC28800D}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MicroPoint", "DeviceAdapters\MicroPoint\MicroPoint.vcproj", "{36651F00-C01D-461B-A8BA-BE4826D7130E}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MicroPoint", "DeviceAdapters\MicroPoint\MicroPoint.vcxproj", "{36651F00-C01D-461B-A8BA-BE4826D7130E}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ThorlabsUSBCamera", "DeviceAdapters\ThorlabsUSBCamera\ThorlabsUSBCamera.vcproj", "{A356B8C0-0897-4BAA-9DD1-8D210988155C}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ThorlabsUSBCamera", "DeviceAdapters\ThorlabsUSBCamera\ThorlabsUSBCamera.vcxproj", "{A356B8C0-0897-4BAA-9DD1-8D210988155C}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ThorlabsDCStage", "DeviceAdapters\ThorlabsDCStage\ThorlabsDCStage.vcproj", "{9440F1ED-DA8C-48CB-A3AD-42D373D5E4E1}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ThorlabsDCStage", "DeviceAdapters\ThorlabsDCStage\ThorlabsDCStage.vcxproj", "{9440F1ED-DA8C-48CB-A3AD-42D373D5E4E1}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Toptica_iChrome_MLE", "SecretDeviceAdapters\Toptica_iChrome_MLE\Toptica_iChrome_MLE.vcproj", "{86BB3621-D40C-4731-8838-842A925E0615}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Toptica_iChrome_MLE", "SecretDeviceAdapters\Toptica_iChrome_MLE\Toptica_iChrome_MLE.vcxproj", "{86BB3621-D40C-4731-8838-842A925E0615}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Toptica_iChrome_MLE_TCP", "SecretDeviceAdapters\Toptica_iChrome_MLE\Toptica_iChrome_MLE_TCP.vcproj", "{2A68B908-9C46-4D8D-A5AA-662787137BB0}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Toptica_iChrome_MLE_TCP", "SecretDeviceAdapters\Toptica_iChrome_MLE\Toptica_iChrome_MLE_TCP.vcxproj", "{2A68B908-9C46-4D8D-A5AA-662787137BB0}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AxioCam", "SecretDeviceAdapters\AxioCam\AxioCam.vcproj", "{91CCB72B-852D-47D8-82FA-0E19A300A125}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AxioCam", "SecretDeviceAdapters\AxioCam\AxioCam.vcxproj", "{91CCB72B-852D-47D8-82FA-0E19A300A125}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SigmaKoki", "SecretDeviceAdapters\SigmaKoki\SigmaKoki.vcproj", "{AC1AF894-E294-4A99-B8D1-1D7F5073B758}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SigmaKoki", "SecretDeviceAdapters\SigmaKoki\SigmaKoki.vcxproj", "{AC1AF894-E294-4A99-B8D1-1D7F5073B758}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Standa", "DeviceAdapters\Standa\Standa.vcproj", "{1995D553-BABB-4987-A0AC-84496297DDE5}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Standa", "DeviceAdapters\Standa\Standa.vcxproj", "{1995D553-BABB-4987-A0AC-84496297DDE5}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FLICamera", "DeviceAdapters\FLICamera\FLICamera.vcproj", "{4FFC5AC3-7A59-40C2-B155-AA3EA5D391AE}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FLICamera", "DeviceAdapters\FLICamera\FLICamera.vcxproj", "{4FFC5AC3-7A59-40C2-B155-AA3EA5D391AE}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "IDS_uEye", "DeviceAdapters\IDS_uEye\IDS_uEye.vcproj", "{AFC831A1-1946-43A5-BCA9-1B4618703C20}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "IDS_uEye", "DeviceAdapters\IDS_uEye\IDS_uEye.vcxproj", "{AFC831A1-1946-43A5-BCA9-1B4618703C20}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Oxxius", "DeviceAdapters\Oxxius\Oxxius.vcproj", "{70ADDFBB-1216-412E-B326-51A146C3B8A4}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Oxxius", "DeviceAdapters\Oxxius\Oxxius.vcxproj", "{70ADDFBB-1216-412E-B326-51A146C3B8A4}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "HIDManager", "DeviceAdapters\HIDManager\HIDManager.vcproj", "{349B37AE-AB50-410E-A445-6C4A29522434}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "HIDManager", "DeviceAdapters\HIDManager\HIDManager.vcxproj", "{349B37AE-AB50-410E-A445-6C4A29522434}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "VersaLase", "DeviceAdapters\Vortran\VersaLase.vcproj", "{6D793C18-411A-4D31-B186-636817767C86}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "VersaLase", "DeviceAdapters\Vortran\VersaLase.vcxproj", "{6D793C18-411A-4D31-B186-636817767C86}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "OlympusIX83", "SecretDeviceAdapters\OlympusIX83\OlympusIX83.vcproj", "{849D7396-9AD9-4C0E-A0FD-F6126FBA2CAB}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "OlympusIX83", "SecretDeviceAdapters\OlympusIX83\OlympusIX83.vcxproj", "{849D7396-9AD9-4C0E-A0FD-F6126FBA2CAB}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "OlympusIX3Control", "SecretDeviceAdapters\OlympusIX83\OlympusIX3Control\OlympusIX83Control.vcproj", "{2D7CE355-8831-40EE-9B43-E60866A45D7D}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "OlympusIX3Control", "SecretDeviceAdapters\OlympusIX83\OlympusIX3Control\OlympusIX83Control.vcxproj", "{2D7CE355-8831-40EE-9B43-E60866A45D7D}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MCCDAQ", "DeviceAdapters\MCCDAQ\MCCDAQ.vcproj", "{8F66F808-6E8C-46D5-B9D1-DE50811030D4}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MCCDAQ", "DeviceAdapters\MCCDAQ\MCCDAQ.vcxproj", "{8F66F808-6E8C-46D5-B9D1-DE50811030D4}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Okolab", "DeviceAdapters\Okolab\Okolab.vcproj", "{49E0167C-FF14-42F2-BEB4-EDBA568640A5}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Okolab", "DeviceAdapters\Okolab\Okolab.vcxproj", "{49E0167C-FF14-42F2-BEB4-EDBA568640A5}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Piezosystem_dDrive", "DeviceAdapters\Piezosystem_dDrive\Piezosystem_dDrive.vcproj", "{23F9BA69-3FBF-419F-AD60-F06E1AC0706B}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Piezosystem_dDrive", "DeviceAdapters\Piezosystem_dDrive\Piezosystem_dDrive.vcxproj", "{23F9BA69-3FBF-419F-AD60-F06E1AC0706B}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ASITiger", "DeviceAdapters\ASITiger\ASITiger.vcproj", "{7BAC0C19-0280-4CB2-A8FA-A6BF7C2A025E}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ASITiger", "DeviceAdapters\ASITiger\ASITiger.vcxproj", "{7BAC0C19-0280-4CB2-A8FA-A6BF7C2A025E}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Piezosystem_30DV50", "DeviceAdapters\Piezosystem_30DV50\Piezosystem_30DV50.vcproj", "{537D636C-29BB-4B81-B020-D8314ECA88CC}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Piezosystem_30DV50", "DeviceAdapters\Piezosystem_30DV50\Piezosystem_30DV50.vcxproj", "{537D636C-29BB-4B81-B020-D8314ECA88CC}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Piezosystem_NV40_1", "DeviceAdapters\Piezosystem_NV40_1\Piezosystem_NV40_1.vcproj", "{971C3730-9CE9-453B-BB79-F792B2E2C017}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Piezosystem_NV40_1", "DeviceAdapters\Piezosystem_NV40_1\Piezosystem_NV40_1.vcxproj", "{971C3730-9CE9-453B-BB79-F792B2E2C017}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Piezosystem_NV40_3", "DeviceAdapters\Piezosystem_NV40_3\Piezosystem_NV40_3.vcproj", "{32B89825-3A2D-47D6-A2FC-5792A25E5420}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Piezosystem_NV40_3", "DeviceAdapters\Piezosystem_NV40_3\Piezosystem_NV40_3.vcxproj", "{32B89825-3A2D-47D6-A2FC-5792A25E5420}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Piezosystem_NV120_1", "DeviceAdapters\Piezosystem_NV120_1\Piezosystem_NV120_1.vcproj", "{B305430A-2CB0-4057-AB7C-F90F52973BC1}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Piezosystem_NV120_1", "DeviceAdapters\Piezosystem_NV120_1\Piezosystem_NV120_1.vcxproj", "{B305430A-2CB0-4057-AB7C-F90F52973BC1}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MMCorePy_wrap", "MMCorePy_wrap\MMCorePy_wrap.vcproj", "{3BBF25B0-B80B-11E2-9E96-0800200C9A66}"
-	ProjectSection(ProjectDependencies) = postProject
-		{36571628-728C-4ACD-A47F-503BA91C5D43} = {36571628-728C-4ACD-A47F-503BA91C5D43}
-	EndProjectSection
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MMCorePy_wrap", "MMCorePy_wrap\MMCorePy_wrap.vcxproj", "{3BBF25B0-B80B-11E2-9E96-0800200C9A66}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MMCoreTest", "DeviceKit\CoreTest\MMCoreTest.vcproj", "{2CA3F8DF-8D73-47D4-AF43-4AE5064F9B12}"
-	ProjectSection(ProjectDependencies) = postProject
-		{36571628-728C-4ACD-A47F-503BA91C5D43} = {36571628-728C-4ACD-A47F-503BA91C5D43}
-	EndProjectSection
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MMCoreTest", "DeviceKit\CoreTest\MMCoreTest.vcxproj", "{2CA3F8DF-8D73-47D4-AF43-4AE5064F9B12}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DeviceTest", "DeviceKit\DeviceTest\DeviceTest.vcproj", "{7BB87322-B9D7-4D5B-9390-7A1BAC1BAE7E}"
-	ProjectSection(ProjectDependencies) = postProject
-		{36571628-728C-4ACD-A47F-503BA91C5D43} = {36571628-728C-4ACD-A47F-503BA91C5D43}
-	EndProjectSection
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DeviceTest", "DeviceKit\DeviceTest\DeviceTest.vcxproj", "{7BB87322-B9D7-4D5B-9390-7A1BAC1BAE7E}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LibraryTest", "DeviceKit\LibraryTest\LibraryTest.vcproj", "{0F35D265-1F9C-4EC0-819F-1347AB378224}"
-	ProjectSection(ProjectDependencies) = postProject
-		{36571628-728C-4ACD-A47F-503BA91C5D43} = {36571628-728C-4ACD-A47F-503BA91C5D43}
-	EndProjectSection
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LibraryTest", "DeviceKit\LibraryTest\LibraryTest.vcxproj", "{0F35D265-1F9C-4EC0-819F-1347AB378224}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MultiThreadTest", "DeviceKit\MultiThreadTest\MultiThreadTest.vcproj", "{C8ADF958-CB16-4A2F-94D0-39086E7E0F6D}"
-	ProjectSection(ProjectDependencies) = postProject
-		{36571628-728C-4ACD-A47F-503BA91C5D43} = {36571628-728C-4ACD-A47F-503BA91C5D43}
-	EndProjectSection
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MultiThreadTest", "DeviceKit\MultiThreadTest\MultiThreadTest.vcxproj", "{C8ADF958-CB16-4A2F-94D0-39086E7E0F6D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -1,0 +1,95 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Micro Manager 1.3">
+      <UniqueIdentifier>{f1e453b0-8a69-4c0e-8d11-7e482dd98cbe}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Micro Manager 1.3  Headers">
+      <UniqueIdentifier>{80bcf84c-ddd6-4cba-9264-98f4470f1f9f}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="handle_list_if.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="HandleListType.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="heap.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MCL_NanoDrive.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MCL_NanoDrive_XYStage.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MCL_NanoDrive_ZStage.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\MMDevice\DeviceUtils.cpp">
+      <Filter>Micro Manager 1.3</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\MMDevice\ModuleInterface.cpp">
+      <Filter>Micro Manager 1.3</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\MMDevice\Property.cpp">
+      <Filter>Micro Manager 1.3</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="device_list.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="handle_list_if.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="HandleListType.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="heap.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Madlib.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MCL_NanoDrive.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MCL_NanoDrive_XYStage.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MCL_NanoDrive_ZStage.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\MMDevice\DeviceBase.h">
+      <Filter>Micro Manager 1.3  Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\MMDevice\DeviceUtils.h">
+      <Filter>Micro Manager 1.3  Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\MMDevice\ImgBuffer.h">
+      <Filter>Micro Manager 1.3  Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\MMDevice\MMDevice.h">
+      <Filter>Micro Manager 1.3  Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\MMDevice\MMDeviceConstants.h">
+      <Filter>Micro Manager 1.3  Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\MMDevice\ModuleInterface.h">
+      <Filter>Micro Manager 1.3  Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\MMDevice\Property.h">
+      <Filter>Micro Manager 1.3  Headers</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
