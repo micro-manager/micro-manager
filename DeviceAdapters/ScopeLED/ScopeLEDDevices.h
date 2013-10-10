@@ -40,11 +40,11 @@ public:
     int GetOpen(bool& open);
 
     // action interface
-    int OnChannelBrightness(int index, MM::PropertyBase* pProp, MM::ActionType eAct);
-    int OnChannel1Brightness(MM::PropertyBase* pProp, MM::ActionType eAct);
-    int OnChannel2Brightness(MM::PropertyBase* pProp, MM::ActionType eAct);
-    int OnChannel3Brightness(MM::PropertyBase* pProp, MM::ActionType eAct);
-    int OnChannel4Brightness(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnChannelIntensity(int index, MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnIntensityChannel1(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnIntensityChannel2(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnIntensityChannel3(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnIntensityChannel4(MM::PropertyBase* pProp, MM::ActionType eAct);
     
     static const char* DeviceName;
     static const char* DeviceDescription;
@@ -53,7 +53,7 @@ protected:
     int SetIntensity();
     
 private:
-    double brightness[SCOPELED_ILLUMINATOR_CHANNELS_MAX];
+    double intensity[SCOPELED_ILLUMINATOR_CHANNELS_MAX];
 };
 
 #define SCOPELED_ILLUMINATOR_MSM_PRESET_CHANNELS_MAX 6
@@ -72,19 +72,19 @@ public:
     int GetOpen(bool& open);
 
 // action interface
-    int OnChannelBrightness(int index, MM::PropertyBase* pProp, MM::ActionType eAct);
-    int OnChannel1Brightness(MM::PropertyBase* pProp, MM::ActionType eAct);
-    int OnChannel2Brightness(MM::PropertyBase* pProp, MM::ActionType eAct);
-    int OnChannel3Brightness(MM::PropertyBase* pProp, MM::ActionType eAct);
-    int OnChannel4Brightness(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnChannelIntensity(int index, MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnIntensityChannel1(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnIntensityChannel2(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnIntensityChannel3(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnIntensityChannel4(MM::PropertyBase* pProp, MM::ActionType eAct);
 
-    int OnPresetModeBrightness(int index, MM::PropertyBase* pProp, MM::ActionType eAct);
-    int OnPresetMode1Brightness(MM::PropertyBase* pProp, MM::ActionType eAct);
-    int OnPresetMode2Brightness(MM::PropertyBase* pProp, MM::ActionType eAct);
-    int OnPresetMode3Brightness(MM::PropertyBase* pProp, MM::ActionType eAct);
-    int OnPresetMode4Brightness(MM::PropertyBase* pProp, MM::ActionType eAct);
-    int OnPresetMode5Brightness(MM::PropertyBase* pProp, MM::ActionType eAct);
-    int OnPresetMode6Brightness(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnPresetModeIntensity(int index, MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnPresetMode1Intensity(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnPresetMode2Intensity(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnPresetMode3Intensity(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnPresetMode4Intensity(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnPresetMode5Intensity(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnPresetMode6Intensity(MM::PropertyBase* pProp, MM::ActionType eAct);
 
     int OnActiveColor(MM::PropertyBase* pProp, MM::ActionType eAct);
 
@@ -94,8 +94,8 @@ protected:
     void ClearOpticalState();
 
 private:
-    double brightnessRawChannel[SCOPELED_ILLUMINATOR_CHANNELS_MAX];
-    double brightnessPresetMode[SCOPELED_ILLUMINATOR_MSM_PRESET_CHANNELS_MAX];
+    double intensityRawChannel[SCOPELED_ILLUMINATOR_CHANNELS_MAX];
+    double intensityPresetMode[SCOPELED_ILLUMINATOR_MSM_PRESET_CHANNELS_MAX];
     long activePresetModeIndex;
     static const char* const s_PresetModeStrings[];
 
@@ -138,8 +138,8 @@ private:
 
     int GetChannelWavelength(long channel, long& wavelength);
     
-    int SetChannelBrightness(long channel, double brightness);
-    int GetChannelBrightness(long channel, double& brightness);
+    int SetChannelIntensity(long channel, double intensity);
+    int GetChannelIntensity(long channel, double& intensity);
 
     int SetActiveChannel(long channel);
     int GetActiveChannel(long& channel);

@@ -1,4 +1,4 @@
 * Update documentation 
-* Standardize Brightness vs Intensity language
-
+* Fix property sequencing problems. Might need FW help.
+* Improve support for 5600K B-Series (it has only one present mode).
 * Split code for FMI and MSB/MSP illuminators into separate files
