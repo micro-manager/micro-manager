@@ -102,8 +102,6 @@
 		<property name="mm.installer.basename" value="MMSetup_${mm.architecture.bits}bit"/>
 		<property name="mm.installer" value="${mm.installer.basename}.exe"/>
 
-		<!-- TODO Generate installer script from single copy -->
-
 		<mkdir dir="${mm.distdir}"/>
 		<delete file="${mm.distdir}/${mm.installer}"/>
 		<exec dir="${mm.basedir}" executable="${mm.basedir}/../3rdparty/Inno_Setup_5/iscc.exe"
@@ -115,14 +113,7 @@
 	</target>
 
 	<target name="clean">
-		<!-- Until we have the C++ output going to the proper
-		     directories, use vcbuild and 'delete' to clean -->
-		<cleancpp/>
-		<delete failonerror="false">
-			<fileset dir="${mm.cpp.outdir}" includes="*.dll"/>
-		</delete>
-
-		<!-- <delete dir="${mm.cpp.outdir}"/> -->
+		<delete dir="${mm.cpp.outdir}"/>
 		<delete dir="${mm.cpp.intdir}"/>
 		<run-all-java-projects target="clean"/>
 	</target>
@@ -130,18 +121,6 @@
 	<target name="clean-all">
 		<delete dir="${mm.outdir}"/>
 		<delete dir="${mm.intdir}"/>
-
-		<!-- Until all C++ output goes to the proper dirs, we need
-		     these messy calls (they are not perfect, but good enough
-		     for the time being) -->
-		<antcall target="clean">
-			<param name="mm.architecture" value="Win32"/>
-			<param name="mm.cpp.outdir" value="${mm.basedir}/bin_Win32"/>
-		</antcall>
-		<antcall target="clean">
-			<param name="mm.architecture" value="x64"/>
-			<param name="mm.cpp.outdir" value="${mm.basedir}/bin_x64"/>
-		</antcall>
 	</target>
 
 	<target name="unstage">

@@ -28,10 +28,6 @@
 	<!-- Root of build intermediates directory -->
 	<property name="mm.intdir" location="${mm.basedir}/build/intermediates"/>
 
-	<!-- XXX Override the C++ output dir until we update the Visual Studio
-	     projects -->
-	<property name="mm.cpp.outdir" location="${mm.basedir}/bin_${mm.architecture}"/>
-
 	<!-- Root of build products directory -->
 	<property name="mm.outdir" location="${mm.basedir}/build"/>
 

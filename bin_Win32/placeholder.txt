@@ -1,7 +1,0 @@
-This directory must exist before running a Visual Studio build, until we get
-rid of the copy command in the post-build event. Otherwise, the first DLL build
-will end up being copied to a file named "bin_Win32".
-
-This directory should be removed from the repository once we migrate to
-specifying the Visual Studio OutDir via a default in a property sheet (i.e.
-when Mark merges the VS2010 branch).

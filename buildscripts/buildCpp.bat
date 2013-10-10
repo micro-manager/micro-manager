@@ -20,13 +20,13 @@ if "%1"=="x64" (
 
 set CONFIGURATION=Release
 
-set BUILDSWITCH=
+set BUILDSWITCH=/t:Build
 if "%1"=="rebuild" (
-    set BUILDSWITCH=/rebuild
+    set BUILDSWITCH=/t:Rebuild
     shift
 )
 if "%1"=="clean" (
-    set BUILDSWITCH=/clean
+    set BUILDSWITCH=/t:Clean
     shift
 )
 
@@ -66,9 +66,9 @@ set LIBPATH=
 
 set BOOT_DRIVE=%windir:~0,2%
 if "%BOOT_DRIVE%"=="" set BOOT_DRIVE=C:
-set VC_PATH=%BOOT_DRIVE%\Program Files (x86)\Microsoft Visual Studio 9.0\VC\
+set VC_PATH=%BOOT_DRIVE%\Program Files (x86)\Microsoft Visual Studio 10.0\VC
 if not exist "%VC_PATH%" (
-    set VC_PATH=%BOOT_DRIVE%\Program Files\Microsoft Visual Studio 9.0\VC\
+    set VC_PATH=%BOOT_DRIVE%\Program Files\Microsoft Visual Studio 10.0\VC
 )
 
 pushd "%VC_PATH%"
@@ -83,14 +83,7 @@ goto :EOF
 :DO_BUILD
 @echo building C++ libraries...
 pushd %SRC_ROOT%
-for %%I in (
-    .\MMCore\MMCore.vcproj
-    .\MMCoreJ_wrap\MMCoreJ_wrap.sln
-    .\MMCorePy_wrap\MMCorePy_wrap.sln
-) do (
-    @echo building %%I...
-    vcbuild /M%NPROCS% %BUILDSWITCH% %%I "%CONFIGURATION%|%PLATFORM%"
-)
+msbuild %BUILDSWITCH% /m /p:Configuration=%CONFIGURATION% /p:Platform=%PLATFORM% micromanager.sln
 popd
 
 rem End of subroutine DO_BUILD
