@@ -56,6 +56,7 @@
 		</copy>
 
 		<!-- MMCorePy files -->
+		<!-- For staging purposes, MMCorePy is optional -->
 		<copy todir="${mm.installdir}" failonerror="${mm.build.failonerror}">
 			<filelist dir="${mm.cpp.outdir}" files="_MMCorePy.pyd"/>
 			<filelist dir="${mm.swig.pysrcdir}" files="MMCorePy.py"/>
