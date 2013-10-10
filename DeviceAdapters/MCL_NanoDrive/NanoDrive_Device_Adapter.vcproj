@@ -20,8 +20,6 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="2"
 			CharacterSet="2"
 			>
@@ -63,7 +61,6 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="Madlib.lib"
-				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				AdditionalLibraryDirectories=""
 				GenerateDebugInformation="true"
 				RandomizedBaseAddress="1"
@@ -95,8 +92,6 @@
 		</Configuration>
 		<Configuration
 			Name="Debug|x64"
-			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="2"
 			CharacterSet="2"
 			>
@@ -139,7 +134,6 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="Madlib64.lib"
-				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				AdditionalLibraryDirectories=""
 				GenerateDebugInformation="true"
 				RandomizedBaseAddress="1"
@@ -171,8 +165,6 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="2"
 			CharacterSet="2"
 			>
@@ -211,7 +203,6 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="Madlib.lib"
-				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				AdditionalLibraryDirectories=""
 				GenerateDebugInformation="false"
 				OptimizeReferences="0"
@@ -245,8 +236,6 @@
 		</Configuration>
 		<Configuration
 			Name="Release|x64"
-			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="2"
 			CharacterSet="2"
 			>
@@ -286,7 +275,6 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="Madlib64.lib"
-				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				AdditionalLibraryDirectories=""
 				GenerateDebugInformation="false"
 				OptimizeReferences="0"

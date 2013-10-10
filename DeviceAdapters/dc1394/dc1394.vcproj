@@ -21,8 +21,6 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="2"
 			CharacterSet="2"
 			>
@@ -68,7 +66,6 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="libdc1394.a lib1394camera.a libgcc.a libsetupapi.a"
-				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="&quot;..\..\..\3rdpartypublic\dc1394-drivers\cmu1394\Debug&quot;;&quot;..\..\..\3rdpartypublic\dc1394-drivers\dc1394\lib\Debug&quot;"
 				GenerateDebugInformation="true"
@@ -103,8 +100,6 @@
 		</Configuration>
 		<Configuration
 			Name="Debug|x64"
-			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="2"
 			CharacterSet="2"
 			>
@@ -151,7 +146,6 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="libdc1394.a lib1394camera.a libgcc.a libsetupapi.a"
-				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="&quot;..\..\..\3rdpartypublic\dc1394-drivers\cmu1394\Debug&quot;;&quot;..\..\..\3rdpartypublic\dc1394-drivers\dc1394\lib\Debug&quot;"
 				GenerateDebugInformation="true"
@@ -186,8 +180,6 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="2"
 			CharacterSet="2"
 			>
@@ -230,7 +222,6 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="libdc1394.a lib1394camera.a libgcc.a libsetupapi.a"
-				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="&quot;..\..\..\3rdpartypublic\dc1394-drivers\cmu1394&quot;;&quot;..\..\..\3rdpartypublic\dc1394-drivers\dc1394\lib&quot;"
 				GenerateDebugInformation="true"
@@ -266,8 +257,6 @@
 		</Configuration>
 		<Configuration
 			Name="Release|x64"
-			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="2"
 			CharacterSet="2"
 			>
@@ -311,7 +300,6 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="libdc1394.a lib1394camera.a libgcc.a libsetupapi.a"
-				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="&quot;..\..\..\3rdpartypublic\dc1394-drivers\cmu1394&quot;;&quot;..\..\..\3rdpartypublic\dc1394-drivers\dc1394\lib&quot;"
 				GenerateDebugInformation="true"

@@ -18,8 +18,6 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="2"
 			CharacterSet="2"
 			>
@@ -65,7 +63,6 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="itcmm.lib"
-				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="..\..\..\3rdparty\ITC18\ITC18-lib\$(ConfigurationName)"
 				GenerateDebugInformation="true"
@@ -100,8 +97,6 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="2"
 			CharacterSet="2"
 			>
@@ -148,7 +143,6 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="itcmm.lib"
-				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="..\..\..\3rdparty\ITC18\ITC18-lib\$(ConfigurationName)"
 				GenerateDebugInformation="true"

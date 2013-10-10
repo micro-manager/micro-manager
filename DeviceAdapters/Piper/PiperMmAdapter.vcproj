@@ -21,8 +21,6 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="2"
 			UseOfMFC="2"
 			CharacterSet="2"
@@ -68,7 +66,6 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="PiperAPI.lib"
-				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="&quot;..\..\..\3rdparty\PiperAPI\Lib\$(PlatformName)&quot;;&quot;..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\lib&quot;"
 				UACExecutionLevel="1"
@@ -105,8 +102,6 @@
 		</Configuration>
 		<Configuration
 			Name="Debug|x64"
-			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="2"
 			UseOfMFC="2"
 			CharacterSet="2"
@@ -153,7 +148,6 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="PiperAPI.lib"
-				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="&quot;..\..\..\3rdparty\PiperAPI\Lib\$(PlatformName)&quot;;&quot;..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\lib\x64&quot;"
 				UACExecutionLevel="1"
@@ -190,8 +184,6 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="2"
 			UseOfMFC="2"
 			CharacterSet="2"
@@ -235,7 +227,6 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="PiperAPI.lib"
-				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="&quot;..\..\..\3rdparty\PiperAPI\Lib\$(PlatformName)&quot;;&quot;..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\lib&quot;"
 				UACExecutionLevel="1"
@@ -273,8 +264,6 @@
 		</Configuration>
 		<Configuration
 			Name="Release|x64"
-			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="2"
 			UseOfMFC="2"
 			CharacterSet="2"
@@ -319,7 +308,6 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="PiperAPI.lib"
-				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="&quot;..\..\..\3rdparty\PiperAPI\Lib\$(PlatformName)&quot;;&quot;..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\lib\x64&quot;"
 				UACExecutionLevel="1"

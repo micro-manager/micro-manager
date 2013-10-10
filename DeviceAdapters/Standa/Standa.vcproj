@@ -21,8 +21,6 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="2"
 			CharacterSet="1"
 			ManagedExtensions="0"
@@ -63,7 +61,6 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="USMCDLL.lib"
-				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="../../../3rdparty/Standa/MicroSMC/MicroSMC"
 				GenerateDebugInformation="true"
@@ -94,8 +91,6 @@
 		</Configuration>
 		<Configuration
 			Name="Debug|x64"
-			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="2"
 			CharacterSet="1"
 			ManagedExtensions="0"
@@ -136,7 +131,6 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="USMCDLL.lib"
-				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="../../../3rdparty/Standa/MicroSMC/MicroSMCx64"
 				GenerateDebugInformation="true"
@@ -167,8 +161,6 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="2"
 			CharacterSet="1"
 			ManagedExtensions="0"
@@ -209,7 +201,6 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="USMCDLL.lib"
-				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="../../../3rdparty/Standa/MicroSMC/MicroSMC"
 				GenerateDebugInformation="true"
@@ -240,8 +231,6 @@
 		</Configuration>
 		<Configuration
 			Name="Release|x64"
-			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="2"
 			CharacterSet="1"
 			ManagedExtensions="0"
@@ -282,7 +271,6 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="USMCDLL.lib"
-				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="../../../3rdparty/Standa/MicroSMC/MicroSMCx64"
 				GenerateDebugInformation="true"

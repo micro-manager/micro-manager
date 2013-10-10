@@ -21,8 +21,6 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="2"
 			CharacterSet="1"
 			>
@@ -65,7 +63,6 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="Cid.lib BFEr.lib BFD.lib"
-				OutputFile="$(OutDir)\mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="&quot;..\..\..\3rdparty\bitflow\SDK_5.70\lib;C:\Program Files\Microsoft SDKs\Windows\v7.1\Lib\x64&quot;"
 				GenerateDebugInformation="true"
@@ -97,8 +94,6 @@
 		</Configuration>
 		<Configuration
 			Name="Debug|x64"
-			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="2"
 			CharacterSet="1"
 			>
@@ -142,7 +137,6 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="Cid.lib BFEr.lib BFD.lib"
-				OutputFile="$(OutDir)\mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="..\..\..\3rdparty\bitflow\SDK_5.30\lib"
 				GenerateDebugInformation="true"
@@ -174,8 +168,6 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="2"
 			CharacterSet="1"
 			WholeProgramOptimization="1"
@@ -220,7 +212,6 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="Cid.lib BFEr.lib BFD.lib"
-				OutputFile="$(OutDir)\mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="..\..\..\3rdparty\bitflow\SDK_5.20\lib"
 				GenerateDebugInformation="true"
@@ -254,8 +245,6 @@
 		</Configuration>
 		<Configuration
 			Name="Release|x64"
-			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="2"
 			CharacterSet="1"
 			WholeProgramOptimization="1"
@@ -301,7 +290,6 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="Cid.lib BFEr.lib BFD.lib"
-				OutputFile="$(OutDir)\mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="..\..\..\3rdparty\bitflow\SDK_5.70\Lib64"
 				GenerateDebugInformation="true"

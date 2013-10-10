@@ -21,8 +21,6 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory="$(PlatformName)\$(ConfigurationName)\x64"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)\x64"
 			ConfigurationType="2"
 			CharacterSet="2"
 			>
@@ -64,7 +62,6 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)/$(ProjectName).pdb"
@@ -98,8 +95,6 @@
 		</Configuration>
 		<Configuration
 			Name="Debug|x64"
-			OutputDirectory="$(PlatformName)\$(ConfigurationName)\x64"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)\x64"
 			ConfigurationType="2"
 			CharacterSet="2"
 			>
@@ -142,7 +137,6 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)/$(ProjectName).pdb"
@@ -176,8 +170,6 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="$(PlatformName)\$(ConfigurationName)\x64"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)\x64"
 			ConfigurationType="2"
 			CharacterSet="2"
 			WholeProgramOptimization="0"
@@ -220,7 +212,6 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="1"
 				GenerateDebugInformation="true"
 				SubSystem="2"
@@ -255,8 +246,6 @@
 		</Configuration>
 		<Configuration
 			Name="Release|x64"
-			OutputDirectory="$(PlatformName)\$(ConfigurationName)\x64"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)\x64"
 			ConfigurationType="2"
 			CharacterSet="2"
 			WholeProgramOptimization="0"
@@ -300,7 +289,6 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="$(OutDir)/mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="1"
 				GenerateDebugInformation="true"
 				SubSystem="2"

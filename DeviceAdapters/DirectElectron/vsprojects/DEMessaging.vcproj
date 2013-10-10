@@ -21,8 +21,6 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory="$(SolutionDir)$(PlatformName).VS2008\$(ConfigurationName)\"
-			IntermediateDirectory="$(OutDir)\$(ProjectName)\"
 			ConfigurationType="4"
 			InheritedPropertySheets=".\buildProps2008.vsprops"
 			CharacterSet="1"
@@ -85,8 +83,6 @@
 		</Configuration>
 		<Configuration
 			Name="Debug|x64"
-			OutputDirectory="$(SolutionDir)$(PlatformName).VS2008\$(ConfigurationName)\"
-			IntermediateDirectory="$(OutDir)\$(ProjectName)\"
 			ConfigurationType="4"
 			InheritedPropertySheets=".\buildProps2008.vsprops"
 			CharacterSet="1"
@@ -150,8 +146,6 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="$(SolutionDir)$(PlatformName).VS2008\$(ConfigurationName)\"
-			IntermediateDirectory="$(OutDir)\$(ProjectName)\"
 			ConfigurationType="4"
 			InheritedPropertySheets=".\buildProps2008.vsprops"
 			CharacterSet="1"
@@ -211,8 +205,6 @@
 		</Configuration>
 		<Configuration
 			Name="Release|x64"
-			OutputDirectory="$(SolutionDir)$(PlatformName).VS2008\$(ConfigurationName)\"
-			IntermediateDirectory="$(OutDir)\$(ProjectName)\"
 			ConfigurationType="4"
 			InheritedPropertySheets=".\buildProps2008.vsprops"
 			CharacterSet="1"

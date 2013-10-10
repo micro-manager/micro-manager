@@ -21,8 +21,6 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="2"
 			CharacterSet="1"
 			>
@@ -65,7 +63,6 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="uEye_api.lib"
-				OutputFile="$(OutDir)\mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="..\..\..\3rdparty\IDS\uEye-4.22.00\Develop\Lib"
 				GenerateDebugInformation="true"
@@ -97,8 +94,6 @@
 		</Configuration>
 		<Configuration
 			Name="Debug|x64"
-			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="2"
 			CharacterSet="1"
 			>
@@ -142,7 +137,6 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="uEye_api_64.lib"
-				OutputFile="$(OutDir)\mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="..\..\..\3rdparty\IDS\uEye-4.22.00\Develop\Lib"
 				GenerateDebugInformation="true"
@@ -174,8 +168,6 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="2"
 			CharacterSet="1"
 			WholeProgramOptimization="1"
@@ -219,7 +211,6 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="uEye_api.lib"
-				OutputFile="$(OutDir)\mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="..\..\..\3rdparty\IDS\uEye-4.22.00\Develop\Lib"
 				GenerateDebugInformation="true"
@@ -253,8 +244,6 @@
 		</Configuration>
 		<Configuration
 			Name="Release|x64"
-			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="2"
 			CharacterSet="1"
 			WholeProgramOptimization="1"
@@ -299,7 +288,6 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="uEye_api_64.lib"
-				OutputFile="$(OutDir)\mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="..\..\..\3rdparty\IDS\uEye-4.22.00\Develop\Lib"
 				GenerateDebugInformation="true"
