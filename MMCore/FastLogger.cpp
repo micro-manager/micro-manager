@@ -27,7 +27,12 @@
 #include <string>
 #include <iostream>
 #include <fstream>
-#include <stdint.h>
+
+#include <stdint.h> // For SIZE_MAX (std::numeric_limits::max is broken on Windows)
+#ifndef SIZE_MAX // But some versions of Apple GCC have no SIZE_MAX
+#include <limits>
+#define SIZE_MAX (std::numeric_limits<std::size_t>::max())
+#endif
 
 #include "FastLogger.h"
 #include "CoreUtils.h"
