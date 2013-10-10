@@ -16,7 +16,8 @@
 #include <vector>
 #include <map>
 #include <boost/function.hpp>
-#include <Jai_Factory.h>
+
+#include "JAISDK.h"
 
 
 // based on GenICam Standard Features Naming Convention 1.4

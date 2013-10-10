@@ -22,8 +22,6 @@
 
 #include <boost/lexical_cast.hpp>
 
-#include <Jai_Factory.h>
-
 
 double g_IntensityFactor_ = 1.0;
 
@@ -177,16 +175,16 @@ int CGigECamera::Initialize()
 	J_STATUS_TYPE retval;
 	int nRet;
 
-	retval = J_Factory_Open("" , &hFactory);
+	retval = J_Factory_Open(cstr2cjai("") , &hFactory);
 	if( retval != J_ST_SUCCESS )
 	{
 		LogMessage( "JAI GigE factory failed", false );
 		return DEVICE_NATIVE_MODULE_FAILED;
 	}
 
-	int8_t sVersion[J_FACTORY_INFO_SIZE];
+	char sVersion[J_FACTORY_INFO_SIZE];
 	uint32_t size = sizeof(sVersion);
-	retval = J_Factory_GetInfo(FAC_INFO_VERSION, sVersion, &size);
+	retval = J_Factory_GetInfo(FAC_INFO_VERSION, str2jai(sVersion), &size);
 	if( retval != J_ST_SUCCESS )
 	{
 		LogMessage( "JAI GigE factory (info) failed", false );
@@ -205,7 +203,7 @@ int CGigECamera::Initialize()
 	LogMessage( "found " + boost::lexical_cast<std::string>(nCameras) + " cameras", false );
 
 	// Run through the list of found cameras
-	int8_t sCameraID[J_CAMERA_ID_SIZE];
+	char sCameraID[J_CAMERA_ID_SIZE];
 	std::string selectedCamera;
 	if( nCameras == 0 )
 	{
@@ -218,7 +216,7 @@ int CGigECamera::Initialize()
 		for( int index = 0; index <= (int) nCameras - 1; index++ )
 		{
 			size = sizeof(sCameraID);
-			retval = J_Factory_GetCameraIDByIndex(hFactory, index, sCameraID, &size); 
+			retval = J_Factory_GetCameraIDByIndex(hFactory, index, str2jai(sCameraID), &size); 
 			if( retval != J_ST_SUCCESS )
 			{
 				LogMessage( (std::string) "camera ID failed (" + CDeviceUtils::ConvertToString( index ) + ")", false );
@@ -277,7 +275,7 @@ int CGigECamera::Initialize()
 		return DEVICE_NATIVE_MODULE_FAILED;
 	this->cameraName = (*i).second;
 	LogMessage( (std::string) "Opening camera:  " + this->cameraName );
-	retval = J_Camera_Open( hFactory, const_cast<char*>(this->cameraName.c_str()), &hCamera );
+	retval = J_Camera_Open( hFactory, cstr2jai(this->cameraName.c_str()), &hCamera );
 	if( retval != J_ST_SUCCESS )
 	{
 			LogMessage( (std::string) "camera open failed (" + this->cameraName + ")", false );
@@ -297,12 +295,12 @@ int CGigECamera::Initialize()
 	// make sure the exposure mode is set to "Timed", if possible.
 	// not an error if we can't set this, since it's only a recommended parameter.
 	LogMessage( "Setting exposure mode to Timed" );
-	retval = J_Camera_SetValueString( hCamera, "ExposureMode", "Timed" );
+	retval = J_Camera_SetValueString( hCamera, cstr2jai("ExposureMode"), cstr2jai("Timed") );
 	if( retval != J_ST_SUCCESS )
 	{
 		LogMessage( "Failed to set exposure mode; trying shutter mode instead" );
 		// some older cameras (from JAI?) use "ShutterMode" instead of "ExposureMode"
-		retval = J_Camera_SetValueString( hCamera, "ShutterMode", "ExposureTimeAbs" );
+		retval = J_Camera_SetValueString( hCamera, cstr2jai("ShutterMode"), cstr2jai("ExposureTimeAbs") );
 		if( retval != J_ST_SUCCESS )
 		{
 			LogMessage( "Failed to set ExposureMode to Timed and ShutterMode to ExposureTimeAbs" );
@@ -929,7 +927,7 @@ void CGigECamera::enumerateAllNodesToLog()
 	uint32_t nNodes;
 	J_STATUS_TYPE retval;
 	NODE_HANDLE hNode;
-	int8_t sNodeName[256];
+	char sNodeName[256];
 	uint32_t size;
 	J_NODE_ACCESSMODE access;
 	// Get the number of nodes
@@ -947,12 +945,12 @@ void CGigECamera::enumerateAllNodesToLog()
 			{
 				// Get node name
 				size = sizeof(sNodeName);
-				retval = J_Node_GetName(hNode, sNodeName, &size, 0);
+				retval = J_Node_GetName(hNode, str2jai(sNodeName), &size, 0);
 				J_Node_GetAccessMode( hNode, &access );
 				if (retval == J_ST_SUCCESS)
 				{
 					// Print out the name
-					LogMessage( (std::string) "-- (node " + boost::lexical_cast<std::string>( index ) + ") " + (std::string) sNodeName 
+					LogMessage( (std::string) "-- (node " + boost::lexical_cast<std::string>( index ) + ") " + sNodeName 
 								+ " access:  " + boost::lexical_cast<std::string>( access ) );
 				}
 			}

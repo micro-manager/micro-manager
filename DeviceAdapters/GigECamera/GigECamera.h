@@ -19,7 +19,7 @@
 #include <string>
 #include <map>
 
-#include <Jai_Factory.h>
+#include "JAISDK.h"
 
 #include "GigENodes.h"
 

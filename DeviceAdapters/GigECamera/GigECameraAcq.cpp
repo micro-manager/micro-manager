@@ -66,7 +66,7 @@ void CGigECamera::SnapImageCallback( J_tIMAGE_INFO* imageInfo )
 	// in the case of snapImage-style acquisition, stop
 	if( this->snapOneImageOnly || this->stopContinuousAcquisition )
 	{
-		J_STATUS_TYPE retval = J_Camera_ExecuteCommand( hCamera, "AcquisitionStop" ); 
+		J_STATUS_TYPE retval = J_Camera_ExecuteCommand( hCamera, cstr2jai( "AcquisitionStop" ) ); 
 		if( retval != J_ST_SUCCESS )
 		{
 			LogMessage( (std::string) "SnapImageCallback:  failed to stop acquisition" );
@@ -123,7 +123,7 @@ int CGigECamera::StartSequenceAcquisition( long numImages, double interval_ms, b
 	stopOnOverflow_ = stopOnOverflow;
 
 	setupImaging();
-	J_STATUS_TYPE retval = J_Camera_ExecuteCommand( hCamera, "AcquisitionStart" );
+	J_STATUS_TYPE retval = J_Camera_ExecuteCommand( hCamera, cstr2jai( "AcquisitionStart" ) );
 	if( retval != J_ST_SUCCESS )
 	{
 		LogMessage( (std::string) "SnapImage failed to start acquisition" );
@@ -152,7 +152,7 @@ int CGigECamera::StopSequenceAcquisition()
 	if( !continuousAcquisitionDone ) // didn't stop in time
 	{
 		LogMessage( (std::string) "StopSequenceAcquisition stopped the acquisition early because the JAI factory didn't stop soon enough" );
-		retval = J_Camera_ExecuteCommand( hCamera, "AcquisitionStop" ); 
+		retval = J_Camera_ExecuteCommand( hCamera, cstr2jai( "AcquisitionStop" ) ); 
 		if( retval != J_ST_SUCCESS )
 		{
 			LogMessage( (std::string) "StopSequenceAcquisition failed to stop acquisition" );
@@ -188,7 +188,7 @@ int CGigECamera::SnapImage()
 
 	setupImaging();
 	
-	J_STATUS_TYPE retval = J_Camera_ExecuteCommand( hCamera, "AcquisitionStart" );
+	J_STATUS_TYPE retval = J_Camera_ExecuteCommand( hCamera, cstr2jai( "AcquisitionStart" ) );
 	if( retval != J_ST_SUCCESS )
 	{
 		LogMessage( (std::string) "SnapImage failed to start acquisition" );
@@ -216,7 +216,7 @@ int CGigECamera::SnapImage()
 		if( !snapImageDone ) // something happened and we didn't get an image
 		{
 			LogMessage( (std::string) "SnapImage stopped the acquisition because no image had been returned after " + boost::lexical_cast<std::string>(waitTimeMs) + " ms" );
-			retval = J_Camera_ExecuteCommand( hCamera, "AcquisitionStop" ); 
+			retval = J_Camera_ExecuteCommand( hCamera, cstr2jai( "AcquisitionStop" ) ); 
 			if( retval != J_ST_SUCCESS )
 			{
 				LogMessage( (std::string) "SnapImage failed to stop acquisition" );

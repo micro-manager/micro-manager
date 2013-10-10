@@ -382,7 +382,7 @@ template<class T> void Node<T>::testAvailability( CAM_HANDLE camera )
 {
 	LogMessage( "Getting node: " + sfncName );
 	NODE_HANDLE node;
-	J_STATUS_TYPE retval  = J_Camera_GetNodeByName( camera, const_cast<char*>( this->sfncName.c_str() ), &node );
+	J_STATUS_TYPE retval  = J_Camera_GetNodeByName( camera, cstr2jai( this->sfncName.c_str() ), &node );
 	if( retval != J_ST_SUCCESS )
 	{
 		LogMessage( "Failed to get node: " + sfncName );
@@ -509,7 +509,7 @@ template<class T> void Node<T>::testEnum( CAM_HANDLE camera )
 {
 	LogMessage( "Getting node: " + sfncName );
 	NODE_HANDLE node;
-	J_STATUS_TYPE retval  = J_Camera_GetNodeByName( camera, const_cast<char*>( this->sfncName.c_str() ), &node );
+	J_STATUS_TYPE retval  = J_Camera_GetNodeByName( camera, cstr2jai( this->sfncName.c_str() ), &node );
 	if( retval != J_ST_SUCCESS )
 	{
 		LogMessage( "Failed to get node: " + sfncName );
@@ -548,7 +548,7 @@ template<> void Node<double>::testMinMaxInc( CAM_HANDLE camera )
 	this->hasMax = true;
 	LogMessage( "Getting node: " + sfncName );
 	NODE_HANDLE node;
-	J_STATUS_TYPE retval  = J_Camera_GetNodeByName( camera, const_cast<char*>( this->sfncName.c_str() ), &node );
+	J_STATUS_TYPE retval  = J_Camera_GetNodeByName( camera, cstr2jai( this->sfncName.c_str() ), &node );
 	if( retval != J_ST_SUCCESS ) {
 		LogMessage( "Failed to get node: " + sfncName );
 		this->hasInc = false;
@@ -578,7 +578,7 @@ template<> int64_t Node<int64_t>::getMinimum( CAM_HANDLE camera )
 {
 	int64_t i = 0;
 	NODE_HANDLE node;
-	J_STATUS_TYPE retval  = J_Camera_GetNodeByName( camera, const_cast<char*>( this->sfncName.c_str() ), &node );
+	J_STATUS_TYPE retval  = J_Camera_GetNodeByName( camera, cstr2jai( this->sfncName.c_str() ), &node );
 	if( retval != J_ST_SUCCESS )
 		return 0;
 	LogMessage( "Getting min int64 for " + sfncName );
@@ -594,7 +594,7 @@ template<> int64_t Node<int64_t>::getMaximum( CAM_HANDLE camera )
 {
 	int64_t i = 0;
 	NODE_HANDLE node;
-	J_STATUS_TYPE retval  = J_Camera_GetNodeByName( camera, const_cast<char*>( this->sfncName.c_str() ), &node );
+	J_STATUS_TYPE retval  = J_Camera_GetNodeByName( camera, cstr2jai( this->sfncName.c_str() ), &node );
 	if( retval != J_ST_SUCCESS )
 		return 0;
 	LogMessage( "Getting max int64 for " + sfncName );
@@ -610,7 +610,7 @@ template<> int64_t Node<int64_t>::getIncrement( CAM_HANDLE camera )
 {
 	int64_t i = 1;
 	NODE_HANDLE node;
-	J_STATUS_TYPE retval  = J_Camera_GetNodeByName( camera, const_cast<char*>( this->sfncName.c_str() ), &node );
+	J_STATUS_TYPE retval  = J_Camera_GetNodeByName( camera, cstr2jai( this->sfncName.c_str() ), &node );
 	if( retval != J_ST_SUCCESS )
 		return 1; // Unlikely to get here, but return a safe value
 	LogMessage( "Getting increment for " + sfncName );
@@ -630,7 +630,7 @@ template<> double Node<double>::getMinimum( CAM_HANDLE camera )
 {
 	double i = 0;
 	NODE_HANDLE node;
-	J_STATUS_TYPE retval  = J_Camera_GetNodeByName( camera, const_cast<char*>( this->sfncName.c_str() ), &node );
+	J_STATUS_TYPE retval  = J_Camera_GetNodeByName( camera, cstr2jai( this->sfncName.c_str() ), &node );
 	if( retval != J_ST_SUCCESS )
 		return 0;
 	LogMessage( "Getting min double for " + sfncName );
@@ -646,7 +646,7 @@ template<> double Node<double>::getMaximum( CAM_HANDLE camera )
 {
 	double i = 0;
 	NODE_HANDLE node;
-	J_STATUS_TYPE retval  = J_Camera_GetNodeByName( camera, const_cast<char*>( this->sfncName.c_str() ), &node );
+	J_STATUS_TYPE retval  = J_Camera_GetNodeByName( camera, cstr2jai( this->sfncName.c_str() ), &node );
 	if( retval != J_ST_SUCCESS )
 		return 0;
 	LogMessage( "Getting max double for " + sfncName );
@@ -663,7 +663,7 @@ template<> double Node<double>::getIncrement( CAM_HANDLE camera )
 	double i = 0;
 	if( !(this->hasInc ) ) return 0;
 	NODE_HANDLE node;
-	J_STATUS_TYPE retval  = J_Camera_GetNodeByName( camera, const_cast<char*>( this->sfncName.c_str() ), &node );
+	J_STATUS_TYPE retval  = J_Camera_GetNodeByName( camera, cstr2jai( this->sfncName.c_str() ), &node );
 	if( retval != J_ST_SUCCESS )
 		return 0;
 	LogMessage( "Getting float increment for " + sfncName );
@@ -699,7 +699,7 @@ template<> std::string Node<std::string>::getIncrement( CAM_HANDLE )
 template<> J_STATUS_TYPE Node<int64_t>::get( CAM_HANDLE camera, int64_t& a )
 {
 	NODE_HANDLE node;
-	J_STATUS_TYPE retval  = J_Camera_GetNodeByName( camera, const_cast<char*>( this->sfncName.c_str() ), &node );
+	J_STATUS_TYPE retval  = J_Camera_GetNodeByName( camera, cstr2jai( this->sfncName.c_str() ), &node );
 	if( retval != J_ST_SUCCESS )
 		return retval;
 	int64_t i;
@@ -714,7 +714,7 @@ template<> J_STATUS_TYPE Node<int64_t>::get( CAM_HANDLE camera, int64_t& a )
 template<> J_STATUS_TYPE Node<double>::get( CAM_HANDLE camera, double& a )
 {
 	NODE_HANDLE node;
-	J_STATUS_TYPE retval  = J_Camera_GetNodeByName( camera, const_cast<char*>( this->sfncName.c_str() ), &node );
+	J_STATUS_TYPE retval  = J_Camera_GetNodeByName( camera, cstr2jai( this->sfncName.c_str() ), &node );
 	if( retval != J_ST_SUCCESS )
 		return retval;
 	double i;
@@ -729,13 +729,13 @@ template<> J_STATUS_TYPE Node<double>::get( CAM_HANDLE camera, double& a )
 template<> J_STATUS_TYPE Node<std::string>::get( CAM_HANDLE camera, std::string& a )
 {
 	NODE_HANDLE node;
-	J_STATUS_TYPE retval  = J_Camera_GetNodeByName( camera, const_cast<char*>( this->sfncName.c_str() ), &node );
+	J_STATUS_TYPE retval  = J_Camera_GetNodeByName( camera, cstr2jai( this->sfncName.c_str() ), &node );
 	if( retval != J_ST_SUCCESS )
 		return retval;
 	uint32_t size = 512;
-	int8_t s[512];
+	char s[512];
 	LogMessage( "Getting string value for " + sfncName );
-	retval = J_Node_GetValueString( node, false, s, &size );
+	retval = J_Node_GetValueString( node, false, str2jai( s ), &size );
 	if( retval == J_ST_SUCCESS )
 		a = s;
 	return retval;
@@ -745,7 +745,7 @@ template<> J_STATUS_TYPE Node<std::string>::get( CAM_HANDLE camera, std::string&
 template<> J_STATUS_TYPE Node<int64_t>::set( CAM_HANDLE camera, const int64_t& a )
 {
 	NODE_HANDLE node;
-	J_STATUS_TYPE retval  = J_Camera_GetNodeByName( camera, const_cast<char*>( this->sfncName.c_str() ), &node );
+	J_STATUS_TYPE retval  = J_Camera_GetNodeByName( camera, cstr2jai( this->sfncName.c_str() ), &node );
 	if( retval != J_ST_SUCCESS )
 		return retval;
 	LogMessage( "Setting int64 value for " + sfncName );
@@ -757,7 +757,7 @@ template<> J_STATUS_TYPE Node<int64_t>::set( CAM_HANDLE camera, const int64_t& a
 template<> J_STATUS_TYPE Node<double>::set( CAM_HANDLE camera, const double& a )
 {
 	NODE_HANDLE node;
-	J_STATUS_TYPE retval  = J_Camera_GetNodeByName( camera, const_cast<char*>( this->sfncName.c_str() ), &node );
+	J_STATUS_TYPE retval  = J_Camera_GetNodeByName( camera, cstr2jai( this->sfncName.c_str() ), &node );
 	if( retval != J_ST_SUCCESS )
 		return retval;
 	LogMessage( "Setting double value for " + sfncName );
@@ -769,11 +769,11 @@ template<> J_STATUS_TYPE Node<double>::set( CAM_HANDLE camera, const double& a )
 template<> J_STATUS_TYPE Node<std::string>::set( CAM_HANDLE camera, const std::string& a )
 {
 	NODE_HANDLE node;
-	J_STATUS_TYPE retval = J_Camera_GetNodeByName( camera, const_cast<char*>( this->sfncName.c_str() ), &node );
+	J_STATUS_TYPE retval = J_Camera_GetNodeByName( camera, cstr2jai( this->sfncName.c_str() ), &node );
 	if( retval != J_ST_SUCCESS )
 		return retval;
 	LogMessage( "Setting string value for " + sfncName );
-	retval = J_Node_SetValueString( node, true, const_cast<char*>( a.c_str() ) );
+	retval = J_Node_SetValueString( node, true, cstr2jai( a.c_str() ) );
 	return retval;
 }
 
@@ -782,7 +782,7 @@ template<class T> J_STATUS_TYPE Node<T>::getNumEnumEntries( CAM_HANDLE camera, u
 {
 	NODE_HANDLE node;
 	LogMessage( "Getting enum entries for " + sfncName );
-	J_STATUS_TYPE retval = J_Camera_GetNodeByName( camera, const_cast<char*>( this->sfncName.c_str() ), &node );
+	J_STATUS_TYPE retval = J_Camera_GetNodeByName( camera, cstr2jai( this->sfncName.c_str() ), &node );
 	if( retval != J_ST_SUCCESS )
 		return retval;
 	retval = J_Node_GetNumOfEnumEntries( node, &i );
@@ -793,7 +793,7 @@ template<class T> J_STATUS_TYPE Node<T>::getNumEnumEntries( CAM_HANDLE camera, u
 template<class T> J_STATUS_TYPE Node<T>::getEnumEntry( CAM_HANDLE camera, uint32_t index, std::string& entry )
 {
 	NODE_HANDLE node;
-	J_STATUS_TYPE retval = J_Camera_GetNodeByName( camera, const_cast<char*>( this->sfncName.c_str() ), &node );
+	J_STATUS_TYPE retval = J_Camera_GetNodeByName( camera, cstr2jai( this->sfncName.c_str() ), &node );
 	if( retval != J_ST_SUCCESS )
 		return retval;
 	NODE_HANDLE enumEntry;
@@ -804,7 +804,7 @@ template<class T> J_STATUS_TYPE Node<T>::getEnumEntry( CAM_HANDLE camera, uint32
 	uint32_t len = 512;
 	char a[512];
 	LogMessage( "Getting enum entry name" );
-	retval = J_Node_GetName( enumEntry, a, &len );
+	retval = J_Node_GetName( enumEntry, str2jai( a ), &len );
 	if( retval != J_ST_SUCCESS )
 		return retval;
 
@@ -830,7 +830,7 @@ template<class T> J_STATUS_TYPE Node<T>::getEnumEntry( CAM_HANDLE camera, uint32
 template<class T> J_STATUS_TYPE Node<T>::getEnumDisplayName( CAM_HANDLE camera, uint32_t index, std::string& name )
 {
 	NODE_HANDLE node;
-	J_STATUS_TYPE retval = J_Camera_GetNodeByName( camera, const_cast<char*>( this->sfncName.c_str() ), &node );
+	J_STATUS_TYPE retval = J_Camera_GetNodeByName( camera, cstr2jai( this->sfncName.c_str() ), &node );
 	if( retval != J_ST_SUCCESS )
 		return retval;
 	NODE_HANDLE enumEntry;
@@ -841,7 +841,7 @@ template<class T> J_STATUS_TYPE Node<T>::getEnumDisplayName( CAM_HANDLE camera, 
 	uint32_t len = 512;
 	char a[512];
 	LogMessage( "Getting enum entry display name" );
-	retval = J_Node_GetDisplayName( enumEntry, a, &len );
+	retval = J_Node_GetDisplayName( enumEntry, str2jai( a ), &len );
 	if( retval != J_ST_SUCCESS )
 		return retval;
 	name = a;

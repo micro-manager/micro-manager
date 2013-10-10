@@ -441,7 +441,7 @@ int CGigECamera::OnCameraChoice( MM::PropertyBase* pProp, MM::ActionType eAct )
 		{
 			LogMessage( (std::string) "Opening camera:  " + realName );
 			J_STATUS_TYPE retval = J_Camera_Close( hCamera );				
-			retval = J_Camera_Open( hFactory, const_cast<char*>(realName.c_str()), &hCamera );
+			retval = J_Camera_Open( hFactory, cstr2jai( realName.c_str() ), &hCamera );
 			// XXX this should really refresh all the camera parameters after opening a new camera,
 			// possibly enabling or removing some properties.
 			if( retval != J_ST_SUCCESS )
