@@ -73,6 +73,12 @@ int CCRISP::Initialize()
 
    CPropertyAction* pAct;
 
+   // refresh properties from controller every time - default is not to refresh (speeds things up by not redoing so much serial comm)
+   pAct = new CPropertyAction (this, &CCRISP::OnRefreshProperties);
+   CreateProperty(g_RefreshPropValsPropertyName, g_NoState, MM::String, false, pAct);
+   AddAllowedValue(g_RefreshPropValsPropertyName, g_NoState);
+   AddAllowedValue(g_RefreshPropValsPropertyName, g_YesState);
+
    pAct = new CPropertyAction(this, &CCRISP::OnFocusState);
    CreateProperty (g_CRISPState, g_CRISP_I, MM::String, false, pAct);
    AddAllowedValue(g_CRISPState, g_CRISP_I, 79);
@@ -92,34 +98,43 @@ int CCRISP::Initialize()
 
    pAct = new CPropertyAction(this, &CCRISP::OnWaitAfterLock);
    CreateProperty(g_WaitAfterLockPropertyName, "1000", MM::Integer, false, pAct);
+   UpdateProperty(g_WaitAfterLockPropertyName);
 
    pAct = new CPropertyAction(this, &CCRISP::OnNA);
    CreateProperty(g_ObjectiveNAPropertyName, "0.8", MM::Float, false, pAct);
+   UpdateProperty(g_ObjectiveNAPropertyName);
    SetPropertyLimits(g_ObjectiveNAPropertyName, 0, 1.65);
 
    pAct = new CPropertyAction(this, &CCRISP::OnLockRange);
    CreateProperty(g_LockRangePropertyName, "0.05", MM::Float, false, pAct);
+   UpdateProperty(g_LockRangePropertyName);
 
    pAct = new CPropertyAction(this, &CCRISP::OnCalGain);
    CreateProperty(g_CalibrationGainPropertyName, "0", MM::Float, false, pAct);
+   UpdateProperty(g_CalibrationGainPropertyName);
 
    pAct = new CPropertyAction(this, &CCRISP::OnLEDIntensity);
    CreateProperty(g_LEDIntensityPropertyName, "50", MM::Integer, false, pAct);
+   UpdateProperty(g_LEDIntensityPropertyName);
    SetPropertyLimits(g_LEDIntensityPropertyName, 0, 100);
 
    pAct = new CPropertyAction(this, &CCRISP::OnLoopGainMultiplier);
    CreateProperty(g_LoopGainMultiplierPropertyName, "10", MM::Integer, false, pAct);
+   UpdateProperty(g_LoopGainMultiplierPropertyName);
    SetPropertyLimits(g_LoopGainMultiplierPropertyName, 0, 100);
 
    pAct = new CPropertyAction(this, &CCRISP::OnNumAvg);
    CreateProperty(g_NumberAveragesPropertyName, "1", MM::Integer, false, pAct);
+   UpdateProperty(g_NumberAveragesPropertyName);
    SetPropertyLimits(g_NumberAveragesPropertyName, 0, 8);
 
    pAct = new CPropertyAction(this, &CCRISP::OnSNR);
    CreateProperty(g_SNRPropertyName, "", MM::Float, true, pAct);
+   UpdateProperty(g_SNRPropertyName);
 
    pAct = new CPropertyAction(this, &CCRISP::OnDitherError);
    CreateProperty(g_DitherErrorPropertyName, "", MM::Integer, true, pAct);
+   UpdateProperty(g_DitherErrorPropertyName);
 
    initialized_ = true;
    return DEVICE_OK;
@@ -293,7 +308,21 @@ int CCRISP::SetFocusState(string focusState)
 ////////////////
 // action handlers
 
+int CCRISP::OnRefreshProperties(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   string tmpstr;
+   if (eAct == MM::AfterSet) {
+      pProp->Get(tmpstr);
+      if (tmpstr.compare(g_YesState) == 0)
+         refreshProps_ = true;
+      else
+         refreshProps_ = false;
+   }
+   return DEVICE_OK;
+}
+
 int CCRISP::OnFocusState(MM::PropertyBase* pProp, MM::ActionType eAct)
+// read this every time
 {
    if (eAct == MM::BeforeGet)
    {
@@ -310,6 +339,7 @@ int CCRISP::OnFocusState(MM::PropertyBase* pProp, MM::ActionType eAct)
 }
 
 int CCRISP::OnWaitAfterLock(MM::PropertyBase* pProp, MM::ActionType eAct)
+// property value set in MM only, not read from nor written to controller
 {
    if (eAct == MM::BeforeGet)
    {
@@ -329,6 +359,8 @@ int CCRISP::OnNA(MM::PropertyBase* pProp, MM::ActionType eAct)
    double tmp = 0;
    if (eAct == MM::BeforeGet)
    {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
       command << addressChar_ << "LR Y?";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A Y="));
       tmp = hub_->ParseAnswerAfterEquals();
@@ -350,6 +382,8 @@ int CCRISP::OnCalGain(MM::PropertyBase* pProp, MM::ActionType eAct)
    double tmp = 0;
    if (eAct == MM::BeforeGet)
    {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
       command << addressChar_ << "LR X?";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A X="));
       tmp = hub_->ParseAnswerAfterEquals();
@@ -371,6 +405,8 @@ int CCRISP::OnLockRange(MM::PropertyBase* pProp, MM::ActionType eAct)
    double tmp = 0;
    if (eAct == MM::BeforeGet)
    {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
       command << addressChar_ << "LR Z?";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A Z="));
       tmp = hub_->ParseAnswerAfterEquals();
@@ -392,6 +428,8 @@ int CCRISP::OnLEDIntensity(MM::PropertyBase* pProp, MM::ActionType eAct)
    double tmp = 0;
    if (eAct == MM::BeforeGet)
    {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
       command << addressChar_ << "UL X?";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A X="));
       tmp = hub_->ParseAnswerAfterEquals();
@@ -413,6 +451,8 @@ int CCRISP::OnLoopGainMultiplier(MM::PropertyBase* pProp, MM::ActionType eAct)
    long tmp = 0;
    if (eAct == MM::BeforeGet)
    {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
       command << addressChar_ << "KA " << axisLetter_ << "?";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
       tmp = (long) hub_->ParseAnswerAfterEquals();
@@ -434,6 +474,8 @@ int CCRISP::OnNumAvg(MM::PropertyBase* pProp, MM::ActionType eAct)
    long tmp = 0;
    if (eAct == MM::BeforeGet)
    {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
       command << addressChar_ << "RT F?";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A F="));
       tmp = (long) hub_->ParseAnswerAfterEquals();
@@ -455,6 +497,8 @@ int CCRISP::OnSNR(MM::PropertyBase* pProp, MM::ActionType eAct)
    double tmp = 0;
    if (eAct == MM::BeforeGet)
    {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
       command << addressChar_ << "EXTRA Y?";
       RETURN_ON_MM_ERROR( hub_->QueryCommand(command.str()) );
       tmp = hub_->ParseAnswerAfterPosition(0);
@@ -469,6 +513,8 @@ int CCRISP::OnDitherError(MM::PropertyBase* pProp, MM::ActionType eAct)
    ostringstream command; command.str("");
    if (eAct == MM::BeforeGet)
    {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
       command << addressChar_ << "EXTRA X?";
       RETURN_ON_MM_ERROR( hub_->QueryCommand(command.str()) );
       vector<string> vReply = hub_->SplitAnswerOnSpace();

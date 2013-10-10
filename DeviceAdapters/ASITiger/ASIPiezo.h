@@ -70,6 +70,8 @@ public:
 
    // action interface
    // ----------------
+   int OnSaveCardSettings     (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnRefreshProperties    (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnLowerLim             (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnUpperLim             (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnPiezoMode            (MM::PropertyBase* pProp, MM::ActionType eAct);

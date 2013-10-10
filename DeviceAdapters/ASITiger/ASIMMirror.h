@@ -66,6 +66,8 @@ public:
 
    // action interface
    // ----------------
+   int OnSaveCardSettings     (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnRefreshProperties    (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnLowerLimX            (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnLowerLimY            (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnUpperLimX            (MM::PropertyBase* pProp, MM::ActionType eAct);

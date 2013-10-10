@@ -42,6 +42,7 @@
 //
 ASIDevice::ASIDevice(MM::Device *device, const char* name) :
       initialized_(false),
+      refreshProps_(false),
       firmwareVersion_(0.0),
       hub_(NULL),
       ret_(DEVICE_OK),

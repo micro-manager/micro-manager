@@ -50,6 +50,8 @@ public:
 
    // action interface
    // ----------------
+   int OnSaveCardSettings(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnRefreshProperties(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnState       (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnLabel       (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSpin        (MM::PropertyBase* pProp, MM::ActionType eAct);

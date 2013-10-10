@@ -95,11 +95,27 @@ int CPiezo::Initialize()
 
    CPropertyAction* pAct;
 
+   // refresh properties from controller every time - default is not to refresh (speeds things up by not redoing so much serial comm)
+   pAct = new CPropertyAction (this, &CPiezo::OnRefreshProperties);
+   CreateProperty(g_RefreshPropValsPropertyName, g_NoState, MM::String, false, pAct);
+   AddAllowedValue(g_RefreshPropValsPropertyName, g_NoState);
+   AddAllowedValue(g_RefreshPropValsPropertyName, g_YesState);
+
+   // save settings to controller if requested
+   pAct = new CPropertyAction (this, &CPiezo::OnSaveCardSettings);
+   CreateProperty(g_SaveSettingsPropertyName, g_SaveSettingsOrig, MM::String, false, pAct);
+   AddAllowedValue(g_SaveSettingsPropertyName, g_SaveSettingsX);
+   AddAllowedValue(g_SaveSettingsPropertyName, g_SaveSettingsY);
+   AddAllowedValue(g_SaveSettingsPropertyName, g_SaveSettingsZ);
+   AddAllowedValue(g_SaveSettingsPropertyName, g_SaveSettingsOrig);
+
    // upper and lower limits (SU and SL)
    pAct = new CPropertyAction (this, &CPiezo::OnLowerLim);
    CreateProperty(g_LowerLimPropertyName, "0", MM::Float, false, pAct);
+   UpdateProperty(g_LowerLimPropertyName);
    pAct = new CPropertyAction (this, &CPiezo::OnUpperLim);
    CreateProperty(g_UpperLimPropertyName, "0", MM::Float, false, pAct);
+   UpdateProperty(g_UpperLimPropertyName);
 
    // high voltage reading for diagnostics
    command.str("");
@@ -110,6 +126,7 @@ int CPiezo::Initialize()
    command.str("");
    command << hub_->ParseAnswerAfterColon();
    CreateProperty(g_CardVoltagePropertyName, command.str().c_str(), MM::Float, true);
+   UpdateProperty(g_CardVoltagePropertyName);
 
    // piezo range
    command.str("");
@@ -128,10 +145,12 @@ int CPiezo::Initialize()
       default: command << "0"; break;
    }
    CreateProperty(g_PiezoTravelRangePropertyName, command.str().c_str(), MM::Integer, true);
+   UpdateProperty(g_PiezoTravelRangePropertyName);
 
    // operational mode: closed vs. open loop, internal vs. external input
    pAct = new CPropertyAction (this, &CPiezo::OnPiezoMode);
    CreateProperty(g_PiezoModePropertyName, g_AdeptMode_0, MM::String, false, pAct);
+   UpdateProperty(g_PiezoModePropertyName);
    AddAllowedValue(g_PiezoModePropertyName, g_AdeptMode_0);
    AddAllowedValue(g_PiezoModePropertyName, g_AdeptMode_1);
    AddAllowedValue(g_PiezoModePropertyName, g_AdeptMode_2);
@@ -140,28 +159,33 @@ int CPiezo::Initialize()
    // Motor enable/disable (MC)
    pAct = new CPropertyAction (this, &CPiezo::OnMotorControl);
    CreateProperty(g_MotorControlPropertyName, g_OnState, MM::String, false, pAct);
+   UpdateProperty(g_MotorControlPropertyName);
    AddAllowedValue(g_MotorControlPropertyName, g_OnState);
    AddAllowedValue(g_MotorControlPropertyName, g_OffState);
 
    // joystick fast speed (JS X=) (per-card, not per-axis)
    pAct = new CPropertyAction (this, &CPiezo::OnJoystickFastSpeed);
    CreateProperty(g_JoystickFastSpeedPropertyName, "100", MM::Integer, false, pAct);
+   UpdateProperty(g_JoystickFastSpeedPropertyName);
    SetPropertyLimits(g_JoystickFastSpeedPropertyName, 0, 100);
 
    // joystick slow speed (JS Y=) (per-card, not per-axis)
    pAct = new CPropertyAction (this, &CPiezo::OnJoystickSlowSpeed);
    CreateProperty(g_JoystickSlowSpeedPropertyName, "10", MM::Integer, false, pAct);
+   UpdateProperty(g_JoystickSlowSpeedPropertyName);
    SetPropertyLimits(g_JoystickSlowSpeedPropertyName, 0, 100);
 
    // joystick mirror (changes joystick fast/slow speeds to negative) (per-card, not per-axis)
    pAct = new CPropertyAction (this, &CPiezo::OnJoystickMirror);
    CreateProperty(g_JoystickMirrorPropertyName, g_NoState, MM::String, false, pAct);
+   UpdateProperty(g_JoystickMirrorPropertyName);
    AddAllowedValue(g_JoystickMirrorPropertyName, g_NoState);
    AddAllowedValue(g_JoystickMirrorPropertyName, g_YesState);
 
    // joystick disable and select which knob
    pAct = new CPropertyAction (this, &CPiezo::OnJoystickSelect);
    CreateProperty(g_JoystickSelectPropertyName, g_JSCode_0, MM::String, false, pAct);
+   UpdateProperty(g_JoystickSelectPropertyName);
    AddAllowedValue(g_JoystickSelectPropertyName, g_JSCode_0);
    AddAllowedValue(g_JoystickSelectPropertyName, g_JSCode_2);
    AddAllowedValue(g_JoystickSelectPropertyName, g_JSCode_3);
@@ -266,6 +290,39 @@ int CPiezo::SetOrigin()
 ////////////////
 // action handlers
 
+int CPiezo::OnSaveCardSettings(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   string tmpstr;
+   ostringstream command; command.str("");
+   if (eAct == MM::AfterSet) {
+      command << addressChar_ << "SS ";
+      pProp->Get(tmpstr);
+      if (tmpstr.compare(g_SaveSettingsOrig) == 0)
+         return DEVICE_OK;
+      if (tmpstr.compare(g_SaveSettingsX) == 0)
+         command << 'X';
+      else if (tmpstr.compare(g_SaveSettingsY) == 0)
+         command << 'X';
+      else if (tmpstr.compare(g_SaveSettingsZ) == 0)
+         command << 'Z';
+      RETURN_ON_MM_ERROR (hub_->QueryCommandVerify(command.str(), ":A"));
+   }
+   return DEVICE_OK;
+}
+
+int CPiezo::OnRefreshProperties(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   string tmpstr;
+   if (eAct == MM::AfterSet) {
+      pProp->Get(tmpstr);
+      if (tmpstr.compare(g_YesState) == 0)
+         refreshProps_ = true;
+      else
+         refreshProps_ = false;
+   }
+   return DEVICE_OK;
+}
+
 int CPiezo::OnLowerLim(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    ostringstream command; command.str("");
@@ -273,6 +330,8 @@ int CPiezo::OnLowerLim(MM::PropertyBase* pProp, MM::ActionType eAct)
    double tmp = 0;
    if (eAct == MM::BeforeGet)
    {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
       command << "SL " << axisLetter_ << "?";
       response << ":A " << axisLetter_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
@@ -295,6 +354,8 @@ int CPiezo::OnUpperLim(MM::PropertyBase* pProp, MM::ActionType eAct)
    double tmp = 0;
    if (eAct == MM::BeforeGet)
    {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
       command << "SU " << axisLetter_ << "?";
       response << ":A " << axisLetter_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
@@ -316,6 +377,8 @@ int CPiezo::OnPiezoMode(MM::PropertyBase* pProp, MM::ActionType eAct)
    long tmp = 0;
    if (eAct == MM::BeforeGet)
    {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
       command << "PM " << axisLetter_ << "?";
       ostringstream response; response.str(""); response << axisLetter_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
@@ -358,6 +421,8 @@ int CPiezo::OnMotorControl(MM::PropertyBase* pProp, MM::ActionType eAct)
    long tmp = 0;
    if (eAct == MM::BeforeGet)
    {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
       command << "MC " << axisLetter_ << "?";
       response << ":A ";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
@@ -392,6 +457,8 @@ int CPiezo::OnJoystickFastSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
    double tmp = 0;
    if (eAct == MM::BeforeGet)
    {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
       command << addressChar_ << "JS X?";
       response << ":A X=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
@@ -422,6 +489,8 @@ int CPiezo::OnJoystickSlowSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
    double tmp = 0;
    if (eAct == MM::BeforeGet)
    {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
       command << addressChar_ << "JS Y?";
       response << ":A Y=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
@@ -452,6 +521,8 @@ int CPiezo::OnJoystickMirror(MM::PropertyBase* pProp, MM::ActionType eAct)
    double tmp = 0;
    if (eAct == MM::BeforeGet)
    {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
       command << addressChar_ << "JS X?";  // query only the fast setting to see if already mirrored
       response << ":A X=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
@@ -487,6 +558,8 @@ int CPiezo::OnJoystickSelect(MM::PropertyBase* pProp, MM::ActionType eAct)
    long tmp = 0;
    if (eAct == MM::BeforeGet)
    {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
       command << "J " << axisLetter_ << "?";
       response << ":A " << axisLetter_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));

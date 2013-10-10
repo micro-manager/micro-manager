@@ -106,19 +106,38 @@ int CMMirror::Initialize()
    // now create properties
    CPropertyAction* pAct;
 
+   // refresh properties from controller every time - default is not to refresh (speeds things up by not redoing so much serial comm)
+   pAct = new CPropertyAction (this, &CMMirror::OnRefreshProperties);
+   CreateProperty(g_RefreshPropValsPropertyName, g_NoState, MM::String, false, pAct);
+   AddAllowedValue(g_RefreshPropValsPropertyName, g_NoState);
+   AddAllowedValue(g_RefreshPropValsPropertyName, g_YesState);
+
+   // save settings to controller if requested
+   pAct = new CPropertyAction (this, &CMMirror::OnSaveCardSettings);
+   CreateProperty(g_SaveSettingsPropertyName, g_SaveSettingsOrig, MM::String, false, pAct);
+   AddAllowedValue(g_SaveSettingsPropertyName, g_SaveSettingsX);
+   AddAllowedValue(g_SaveSettingsPropertyName, g_SaveSettingsY);
+   AddAllowedValue(g_SaveSettingsPropertyName, g_SaveSettingsZ);
+   AddAllowedValue(g_SaveSettingsPropertyName, g_SaveSettingsOrig);
+
    // upper and lower limits (SU and SL) (limits not as useful for micromirror as for stage but they work)
    pAct = new CPropertyAction (this, &CMMirror::OnLowerLimX);
    CreateProperty(g_MMirrorLowerLimXPropertyName, "0", MM::Float, false, pAct);
+   UpdateProperty(g_MMirrorLowerLimXPropertyName);
    pAct = new CPropertyAction (this, &CMMirror::OnLowerLimY);
    CreateProperty(g_MMirrorLowerLimYPropertyName, "0", MM::Float, false, pAct);
+   UpdateProperty(g_MMirrorLowerLimYPropertyName);
    pAct = new CPropertyAction (this, &CMMirror::OnUpperLimX);
    CreateProperty(g_MMirrorUpperLimXPropertyName, "0", MM::Float, false, pAct);
+   UpdateProperty(g_MMirrorUpperLimXPropertyName);
    pAct = new CPropertyAction (this, &CMMirror::OnUpperLimY);
    CreateProperty(g_MMirrorUpperLimYPropertyName, "0", MM::Float, false, pAct);
+   UpdateProperty(g_MMirrorUpperLimYPropertyName);
 
    // mode, currently just changes between internal and external input
    pAct = new CPropertyAction (this, &CMMirror::OnMode);
    CreateProperty(g_MMirrorModePropertyName, "0", MM::String, false, pAct);
+   UpdateProperty(g_MMirrorModePropertyName);
    AddAllowedValue(g_MMirrorModePropertyName, g_MMirrorMode_0);
    AddAllowedValue(g_MMirrorModePropertyName, g_MMirrorMode_1);
 
@@ -126,38 +145,46 @@ int CMMirror::Initialize()
    // decided to implement separately for X and Y axes so can have one fast and other slow
    pAct = new CPropertyAction (this, &CMMirror::OnCutoffFreqX);
    CreateProperty(g_MMirrorCutoffFilterXPropertyName, "0", MM::Float, false, pAct);
+   UpdateProperty(g_MMirrorCutoffFilterXPropertyName);
    SetPropertyLimits(g_MMirrorCutoffFilterXPropertyName, 0.1, 650);
    pAct = new CPropertyAction (this, &CMMirror::OnCutoffFreqY);
    CreateProperty(g_MMirrorCutoffFilterYPropertyName, "0", MM::Float, false, pAct);
+   UpdateProperty(g_MMirrorCutoffFilterYPropertyName);
    SetPropertyLimits(g_MMirrorCutoffFilterYPropertyName, 0.1, 650);
 
    // attenuation factor for movement
    pAct = new CPropertyAction (this, &CMMirror::OnScaleTiltX);
    CreateProperty(g_MMirrorScaleTiltXPropertyName, "0", MM::Float, false, pAct);
+   UpdateProperty(g_MMirrorScaleTiltXPropertyName);
    SetPropertyLimits(g_MMirrorScaleTiltXPropertyName, 0, 1);
    pAct = new CPropertyAction (this, &CMMirror::OnScaleTiltY);
    CreateProperty(g_MMirrorScaleTiltYPropertyName, "0", MM::Float, false, pAct);
+   UpdateProperty(g_MMirrorScaleTiltYPropertyName);
    SetPropertyLimits(g_MMirrorScaleTiltYPropertyName, 0, 1);
 
    // joystick fast speed (JS X=) (per-card, not per-axis)
    pAct = new CPropertyAction (this, &CMMirror::OnJoystickFastSpeed);
    CreateProperty(g_JoystickFastSpeedPropertyName, "100", MM::Integer, false, pAct);
+   UpdateProperty(g_JoystickFastSpeedPropertyName);
    SetPropertyLimits(g_JoystickFastSpeedPropertyName, 0, 100);
 
    // joystick slow speed (JS Y=) (per-card, not per-axis)
    pAct = new CPropertyAction (this, &CMMirror::OnJoystickSlowSpeed);
    CreateProperty(g_JoystickSlowSpeedPropertyName, "10", MM::Integer, false, pAct);
+   UpdateProperty(g_JoystickSlowSpeedPropertyName);
    SetPropertyLimits(g_JoystickSlowSpeedPropertyName, 0, 100);
 
    // joystick mirror (changes joystick fast/slow speeds to negative) (per-card, not per-axis)
    pAct = new CPropertyAction (this, &CMMirror::OnJoystickMirror);
    CreateProperty(g_JoystickMirrorPropertyName, g_NoState, MM::String, false, pAct);
+   UpdateProperty(g_JoystickMirrorPropertyName);
    AddAllowedValue(g_JoystickMirrorPropertyName, g_NoState);
    AddAllowedValue(g_JoystickMirrorPropertyName, g_YesState);
 
    // joystick disable and select which knob
    pAct = new CPropertyAction (this, &CMMirror::OnJoystickSelectX);
    CreateProperty(g_JoystickSelectXPropertyName, g_JSCode_0, MM::String, false, pAct);
+   UpdateProperty(g_JoystickSelectXPropertyName);
    AddAllowedValue(g_JoystickSelectXPropertyName, g_JSCode_0);
    AddAllowedValue(g_JoystickSelectXPropertyName, g_JSCode_2);
    AddAllowedValue(g_JoystickSelectXPropertyName, g_JSCode_3);
@@ -165,6 +192,7 @@ int CMMirror::Initialize()
    AddAllowedValue(g_JoystickSelectXPropertyName, g_JSCode_23);
    pAct = new CPropertyAction (this, &CMMirror::OnJoystickSelectY);
    CreateProperty(g_JoystickSelectYPropertyName, g_JSCode_0, MM::String, false, pAct);
+   UpdateProperty(g_JoystickSelectYPropertyName);
    AddAllowedValue(g_JoystickSelectYPropertyName, g_JSCode_0);
    AddAllowedValue(g_JoystickSelectYPropertyName, g_JSCode_2);
    AddAllowedValue(g_JoystickSelectYPropertyName, g_JSCode_3);
@@ -172,74 +200,92 @@ int CMMirror::Initialize()
    AddAllowedValue(g_JoystickSelectYPropertyName, g_JSCode_23);
 
    // single-axis mode settings
-   // todo ask Vik to fix firmware TTL initialization problem where SAM p=2 triggers by itself 1st time
+   // todo fix firmware TTL initialization problem where SAM p=2 triggers by itself 1st time
    pAct = new CPropertyAction (this, &CMMirror::OnSAAmplitudeX);
    CreateProperty(g_MMirrorSAAmplitudeXPropertyName, "0", MM::Float, false, pAct);
+   UpdateProperty(g_MMirrorSAAmplitudeXPropertyName);
    pAct = new CPropertyAction (this, &CMMirror::OnSAPeriodX);
-   CreateProperty(g_MMirrorSAPeriodXPropertyName, "0", MM::Float, false, pAct);
+   CreateProperty(g_MMirrorSAPeriodXPropertyName, "0", MM::Integer, false, pAct);
+   UpdateProperty(g_MMirrorSAPeriodXPropertyName);
    pAct = new CPropertyAction (this, &CMMirror::OnSAModeX);
    CreateProperty(g_MMirrorSAModeXPropertyName, g_SAMode_0, MM::String, false, pAct);
+   UpdateProperty(g_MMirrorSAModeXPropertyName);
    AddAllowedValue(g_MMirrorSAModeXPropertyName, g_SAMode_0);
    AddAllowedValue(g_MMirrorSAModeXPropertyName, g_SAMode_1);
    AddAllowedValue(g_MMirrorSAModeXPropertyName, g_SAMode_2);
    AddAllowedValue(g_MMirrorSAModeXPropertyName, g_SAMode_3);
    pAct = new CPropertyAction (this, &CMMirror::OnSAPatternX);
    CreateProperty(g_MMirrorSAPatternXPropertyName, g_SAPattern_0, MM::String, false, pAct);
+   UpdateProperty(g_MMirrorSAPatternXPropertyName);
    AddAllowedValue(g_MMirrorSAPatternXPropertyName, g_SAPattern_0);
    AddAllowedValue(g_MMirrorSAPatternXPropertyName, g_SAPattern_1);
    AddAllowedValue(g_MMirrorSAPatternXPropertyName, g_SAPattern_2);
    pAct = new CPropertyAction (this, &CMMirror::OnSAPatternByteX);
    CreateProperty(g_MMirrorSAPatternModeXPropertyName, "0", MM::Integer, false, pAct);
+   UpdateProperty(g_MMirrorSAPatternModeXPropertyName);
    SetPropertyLimits(g_MMirrorSAPatternModeXPropertyName, 0, 255);
    pAct = new CPropertyAction (this, &CMMirror::OnSAAmplitudeY);
    CreateProperty(g_MMirrorSAAmplitudeYPropertyName, "0", MM::Float, false, pAct);
+   UpdateProperty(g_MMirrorSAAmplitudeYPropertyName);
    pAct = new CPropertyAction (this, &CMMirror::OnSAPeriodY);
-   CreateProperty(g_MMirrorSAPeriodYPropertyName, "0", MM::Float, false, pAct);
+   CreateProperty(g_MMirrorSAPeriodYPropertyName, "0", MM::Integer, false, pAct);
+   UpdateProperty(g_MMirrorSAPeriodYPropertyName);
    pAct = new CPropertyAction (this, &CMMirror::OnSAModeY);
    CreateProperty(g_MMirrorSAModeYPropertyName, g_SAMode_0, MM::String, false, pAct);
+   UpdateProperty(g_MMirrorSAModeYPropertyName);
    AddAllowedValue(g_MMirrorSAModeYPropertyName, g_SAMode_0);
    AddAllowedValue(g_MMirrorSAModeYPropertyName, g_SAMode_1);
    AddAllowedValue(g_MMirrorSAModeYPropertyName, g_SAMode_2);
    AddAllowedValue(g_MMirrorSAModeYPropertyName, g_SAMode_3);
    pAct = new CPropertyAction (this, &CMMirror::OnSAPatternY);
    CreateProperty(g_MMirrorSAPatternYPropertyName, g_SAPattern_0, MM::String, false, pAct);
+   UpdateProperty(g_MMirrorSAPatternYPropertyName);
    AddAllowedValue(g_MMirrorSAPatternYPropertyName, g_SAPattern_0);
    AddAllowedValue(g_MMirrorSAPatternYPropertyName, g_SAPattern_1);
    AddAllowedValue(g_MMirrorSAPatternYPropertyName, g_SAPattern_2);
    pAct = new CPropertyAction (this, &CMMirror::OnSAClkSrcX);
    CreateProperty(g_MMirrorSAClkSrcXPropertyName, g_SAClkSrc_0, MM::String, false, pAct);
+   UpdateProperty(g_MMirrorSAClkSrcXPropertyName);
    AddAllowedValue(g_MMirrorSAClkSrcXPropertyName, g_SAClkSrc_0);
    AddAllowedValue(g_MMirrorSAClkSrcXPropertyName, g_SAClkSrc_1);
    pAct = new CPropertyAction (this, &CMMirror::OnSAClkSrcY);
    CreateProperty(g_MMirrorSAClkSrcYPropertyName, g_SAClkSrc_0, MM::String, false, pAct);
+   UpdateProperty(g_MMirrorSAClkSrcYPropertyName);
    AddAllowedValue(g_MMirrorSAClkSrcYPropertyName, g_SAClkSrc_0);
    AddAllowedValue(g_MMirrorSAClkSrcYPropertyName, g_SAClkSrc_1);
    pAct = new CPropertyAction (this, &CMMirror::OnSAClkPolX);
    CreateProperty(g_MMirrorSAClkPolXPropertyName, g_SAClkPol_0, MM::String, false, pAct);
+   UpdateProperty(g_MMirrorSAClkPolXPropertyName);
    AddAllowedValue(g_MMirrorSAClkPolXPropertyName, g_SAClkPol_0);
    AddAllowedValue(g_MMirrorSAClkPolXPropertyName, g_SAClkPol_1);
    pAct = new CPropertyAction (this, &CMMirror::OnSAClkPolY);
    CreateProperty(g_MMirrorSAClkPolYPropertyName, g_SAClkPol_0, MM::String, false, pAct);
+   UpdateProperty(g_MMirrorSAClkPolYPropertyName);
    AddAllowedValue(g_MMirrorSAClkPolYPropertyName, g_SAClkPol_0);
    AddAllowedValue(g_MMirrorSAClkPolYPropertyName, g_SAClkPol_1);
    pAct = new CPropertyAction (this, &CMMirror::OnSATTLOutX);
    CreateProperty(g_MMirrorSATTLOutXPropertyName, g_SATTLOut_0, MM::String, false, pAct);
+   UpdateProperty(g_MMirrorSATTLOutXPropertyName);
    AddAllowedValue(g_MMirrorSATTLOutXPropertyName, g_SATTLOut_0);
    AddAllowedValue(g_MMirrorSATTLOutXPropertyName, g_SATTLOut_1);
    pAct = new CPropertyAction (this, &CMMirror::OnSATTLOutY);
    CreateProperty(g_MMirrorSATTLOutYPropertyName, g_SATTLOut_0, MM::String, false, pAct);
+   UpdateProperty(g_MMirrorSATTLOutYPropertyName);
    AddAllowedValue(g_MMirrorSATTLOutYPropertyName, g_SATTLOut_0);
    AddAllowedValue(g_MMirrorSATTLOutYPropertyName, g_SATTLOut_1);
    pAct = new CPropertyAction (this, &CMMirror::OnSATTLPolX);
    CreateProperty(g_MMirrorSATTLPolXPropertyName, g_SATTLPol_0, MM::String, false, pAct);
+   UpdateProperty(g_MMirrorSATTLPolXPropertyName);
    AddAllowedValue(g_MMirrorSATTLPolXPropertyName, g_SATTLPol_0);
    AddAllowedValue(g_MMirrorSATTLPolXPropertyName, g_SATTLPol_1);
    pAct = new CPropertyAction (this, &CMMirror::OnSATTLPolY);
    CreateProperty(g_MMirrorSATTLPolYPropertyName, g_SATTLPol_0, MM::String, false, pAct);
+   UpdateProperty(g_MMirrorSATTLPolYPropertyName);
    AddAllowedValue(g_MMirrorSATTLPolYPropertyName, g_SATTLPol_0);
    AddAllowedValue(g_MMirrorSATTLPolYPropertyName, g_SATTLPol_1);
    pAct = new CPropertyAction (this, &CMMirror::OnSAPatternByteY);
    CreateProperty(g_MMirrorSAPatternModeYPropertyName, "0", MM::Integer, false, pAct);
+   UpdateProperty(g_MMirrorSAPatternModeYPropertyName);
    SetPropertyLimits(g_MMirrorSAPatternModeYPropertyName, 0, 255);
 
    initialized_ = true;
@@ -248,7 +294,36 @@ int CMMirror::Initialize()
 
 bool CMMirror::Busy()
 {
-   return false;
+   ostringstream command; command.str("");
+   if (firmwareVersion_ > 2.7) // can use more accurate RS <axis>?
+   {
+      command << "RS " << axisLetterX_ << "?";
+      ret_ = hub_->QueryCommandVerify(command.str(),":A");
+      if (ret_ != DEVICE_OK)  // say we aren't busy if we can't communicate
+         return false;
+      if (hub_->LastSerialAnswer().at(3) == 'B')
+         return true;
+      command.str("");
+      command << "RS " << axisLetterY_ << "?";
+      return (hub_->LastSerialAnswer().at(3) == 'B');
+   }
+   else  // use LSB of the status byte as approximate status, not quite equivalent
+   {
+      command << "RS " << axisLetterX_;
+      ret_ = hub_->QueryCommandVerify(command.str(),":A");
+      if (ret_ != DEVICE_OK)  // say we aren't busy if we can't communicate
+         return false;
+      int i = (int) (hub_->ParseAnswerAfterPosition(2));
+      if (i & (int)BIT0)  // mask everything but LSB
+         return true; // don't bother checking other axis
+      command.str("");
+      command << "RS " << axisLetterY_;
+      ret_ = hub_->QueryCommandVerify(command.str(),":A");
+      if (ret_ != DEVICE_OK)  // say we aren't busy if we can't communicate
+         return false;
+      i = (int) (hub_->ParseAnswerAfterPosition(2));
+      return (i & (int)BIT0);  // mask everything but LSB
+   }
 }
 
 int CMMirror::SetPosition(double x, double y)
@@ -335,6 +410,39 @@ int CMMirror::RunPolygons()
 ////////////////
 // action handlers
 
+int CMMirror::OnSaveCardSettings(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   string tmpstr;
+   ostringstream command; command.str("");
+   if (eAct == MM::AfterSet) {
+      command << addressChar_ << "SS ";
+      pProp->Get(tmpstr);
+      if (tmpstr.compare(g_SaveSettingsOrig) == 0)
+         return DEVICE_OK;
+      if (tmpstr.compare(g_SaveSettingsX) == 0)
+         command << 'X';
+      else if (tmpstr.compare(g_SaveSettingsY) == 0)
+         command << 'X';
+      else if (tmpstr.compare(g_SaveSettingsZ) == 0)
+         command << 'Z';
+      RETURN_ON_MM_ERROR (hub_->QueryCommandVerify(command.str(), ":A"));
+   }
+   return DEVICE_OK;
+}
+
+int CMMirror::OnRefreshProperties(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   string tmpstr;
+   if (eAct == MM::AfterSet) {
+      pProp->Get(tmpstr);
+      if (tmpstr.compare(g_YesState) == 0)
+         refreshProps_ = true;
+      else
+         refreshProps_ = false;
+   }
+   return DEVICE_OK;
+}
+
 int CMMirror::OnLowerLimX(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    ostringstream command; command.str("");
@@ -342,6 +450,8 @@ int CMMirror::OnLowerLimX(MM::PropertyBase* pProp, MM::ActionType eAct)
    double tmp = 0;
    if (eAct == MM::BeforeGet)
    {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
       command << "SL " << axisLetterX_ << "?";
       response << ":A " << axisLetterX_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
@@ -364,6 +474,8 @@ int CMMirror::OnLowerLimY(MM::PropertyBase* pProp, MM::ActionType eAct)
    double tmp = 0;
    if (eAct == MM::BeforeGet)
    {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
       command << "SL " << axisLetterY_ << "?";
       response << ":A " << axisLetterY_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
@@ -386,6 +498,8 @@ int CMMirror::OnUpperLimX(MM::PropertyBase* pProp, MM::ActionType eAct)
    double tmp = 0;
    if (eAct == MM::BeforeGet)
    {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
       command << "SU " << axisLetterX_ << "?";
       response << ":A " << axisLetterX_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
@@ -409,6 +523,8 @@ int CMMirror::OnUpperLimY(MM::PropertyBase* pProp, MM::ActionType eAct)
    double tmp = 0;
    if (eAct == MM::BeforeGet)
    {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
       command << "SU " << axisLetterY_ << "?";
       response << ":A " << axisLetterY_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
@@ -432,6 +548,8 @@ int CMMirror::OnMode(MM::PropertyBase* pProp, MM::ActionType eAct)
    long tmp = 0;
    if (eAct == MM::BeforeGet)
    {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
       command << "MA " << axisLetterX_ << "?";
       ostringstream response; response.str(""); response << ":A " << axisLetterX_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
@@ -468,13 +586,14 @@ int CMMirror::OnCutoffFreqX(MM::PropertyBase* pProp, MM::ActionType eAct)
    double tmp = 0;
    if (eAct == MM::BeforeGet)
    {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
       command << "B " << axisLetterX_ << "?";
       response << ":" << axisLetterX_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
       tmp = hub_->ParseAnswerAfterEquals();
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
-      limitY_ = tmp;
    }
    else if (eAct == MM::AfterSet) {
       pProp->Get(tmp);
@@ -491,13 +610,14 @@ int CMMirror::OnCutoffFreqY(MM::PropertyBase* pProp, MM::ActionType eAct)
    double tmp = 0;
    if (eAct == MM::BeforeGet)
    {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
       command << "B " << axisLetterY_ << "?";
       response << ":" << axisLetterY_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
       tmp = hub_->ParseAnswerAfterEquals();
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
-      limitY_ = tmp;
    }
    else if (eAct == MM::AfterSet) {
       pProp->Get(tmp);
@@ -514,13 +634,14 @@ int CMMirror::OnScaleTiltX(MM::PropertyBase* pProp, MM::ActionType eAct)
    double tmp = 0;
    if (eAct == MM::BeforeGet)
    {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
       command << "D " << axisLetterX_ << "?";
       response << ":A " << axisLetterX_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
       tmp = hub_->ParseAnswerAfterEquals();
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
-      limitY_ = tmp;
    }
    else if (eAct == MM::AfterSet) {
       pProp->Get(tmp);
@@ -537,13 +658,14 @@ int CMMirror::OnScaleTiltY(MM::PropertyBase* pProp, MM::ActionType eAct)
    double tmp = 0;
    if (eAct == MM::BeforeGet)
    {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
       command << "D " << axisLetterY_ << "?";
       response << ":A " << axisLetterY_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
       tmp = hub_->ParseAnswerAfterEquals();
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
-      limitY_ = tmp;
    }
    else if (eAct == MM::AfterSet) {
       pProp->Get(tmp);
@@ -560,6 +682,8 @@ int CMMirror::OnSAAmplitudeX(MM::PropertyBase* pProp, MM::ActionType eAct)
    double tmp = 0;
    if (eAct == MM::BeforeGet)
    {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
       command << "SAA " << axisLetterX_ << "?";
       response << ":A " << axisLetterX_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
@@ -579,13 +703,15 @@ int CMMirror::OnSAPeriodX(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    ostringstream command; command.str("");
    ostringstream response; response.str("");
-   double tmp = 0;
+   long tmp = 0;
    if (eAct == MM::BeforeGet)
    {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
       command << "SAF " << axisLetterX_ << "?";
       response << ":A " << axisLetterX_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      tmp = hub_->ParseAnswerAfterEquals();
+      tmp = (long) hub_->ParseAnswerAfterEquals();
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
@@ -604,6 +730,8 @@ int CMMirror::OnSAModeX(MM::PropertyBase* pProp, MM::ActionType eAct)
    long tmp = 0;
    if (eAct == MM::BeforeGet)
    {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
       command << "SAM " << axisLetterX_ << "?";
       response << ":A " << axisLetterX_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
@@ -646,6 +774,8 @@ int CMMirror::OnSAPatternX(MM::PropertyBase* pProp, MM::ActionType eAct)
    long tmp = 0;
    if (eAct == MM::BeforeGet)
    {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
       command << "SAP " << axisLetterX_ << "?";
       response << ":A " << axisLetterX_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
@@ -694,6 +824,8 @@ int CMMirror::OnSAAmplitudeY(MM::PropertyBase* pProp, MM::ActionType eAct)
    double tmp = 0;
    if (eAct == MM::BeforeGet)
    {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
       command << "SAA " << axisLetterY_ << "?";
       response << ":A " << axisLetterY_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
@@ -713,13 +845,15 @@ int CMMirror::OnSAPeriodY(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    ostringstream command; command.str("");
    ostringstream response; response.str("");
-   double tmp = 0;
+   long tmp = 0;
    if (eAct == MM::BeforeGet)
    {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
       command << "SAF " << axisLetterY_ << "?";
       response << ":A " << axisLetterY_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      tmp = hub_->ParseAnswerAfterEquals();
+      tmp = (long) hub_->ParseAnswerAfterEquals();
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
@@ -738,6 +872,8 @@ int CMMirror::OnSAModeY(MM::PropertyBase* pProp, MM::ActionType eAct)
    long tmp = 0;
    if (eAct == MM::BeforeGet)
    {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
       command << "SAM " << axisLetterY_ << "?";
       response << ":A " << axisLetterY_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
@@ -780,6 +916,8 @@ int CMMirror::OnSAPatternY(MM::PropertyBase* pProp, MM::ActionType eAct)
    long tmp = 0;
    if (eAct == MM::BeforeGet)
    {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
       command << "SAP " << axisLetterY_ << "?";
       response << ":A " << axisLetterY_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
@@ -822,6 +960,7 @@ int CMMirror::OnSAPatternY(MM::PropertyBase* pProp, MM::ActionType eAct)
 }
 
 int CMMirror::OnSAPatternByteX(MM::PropertyBase* pProp, MM::ActionType eAct)
+// get every single time
 {
    ostringstream command; command.str("");
    ostringstream response; response.str("");
@@ -844,6 +983,7 @@ int CMMirror::OnSAPatternByteX(MM::PropertyBase* pProp, MM::ActionType eAct)
 }
 
 int CMMirror::OnSAPatternByteY(MM::PropertyBase* pProp, MM::ActionType eAct)
+// get every single time
 {
    ostringstream command; command.str("");
    ostringstream response; response.str("");
@@ -871,6 +1011,8 @@ int CMMirror::OnSAClkSrcX(MM::PropertyBase* pProp, MM::ActionType eAct)
    long tmp = 0;
    if (eAct == MM::BeforeGet)
    {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
       command << "SAP " << axisLetterX_ << "?";
       response << ":A " << axisLetterX_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
@@ -916,6 +1058,8 @@ int CMMirror::OnSAClkSrcY(MM::PropertyBase* pProp, MM::ActionType eAct)
    long tmp = 0;
    if (eAct == MM::BeforeGet)
    {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
       command << "SAP " << axisLetterY_ << "?";
       response << ":A " << axisLetterY_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
@@ -961,6 +1105,8 @@ int CMMirror::OnSAClkPolX(MM::PropertyBase* pProp, MM::ActionType eAct)
    long tmp = 0;
    if (eAct == MM::BeforeGet)
    {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
       command << "SAP " << axisLetterX_ << "?";
       response << ":A " << axisLetterX_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
@@ -1006,6 +1152,8 @@ int CMMirror::OnSAClkPolY(MM::PropertyBase* pProp, MM::ActionType eAct)
    long tmp = 0;
    if (eAct == MM::BeforeGet)
    {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
       command << "SAP " << axisLetterY_ << "?";
       response << ":A " << axisLetterY_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
@@ -1051,6 +1199,8 @@ int CMMirror::OnSATTLOutX(MM::PropertyBase* pProp, MM::ActionType eAct)
    long tmp = 0;
    if (eAct == MM::BeforeGet)
    {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
       command << "SAP " << axisLetterX_ << "?";
       response << ":A " << axisLetterX_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
@@ -1096,6 +1246,8 @@ int CMMirror::OnSATTLOutY(MM::PropertyBase* pProp, MM::ActionType eAct)
    long tmp = 0;
    if (eAct == MM::BeforeGet)
    {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
       command << "SAP " << axisLetterY_ << "?";
       response << ":A " << axisLetterY_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
@@ -1141,6 +1293,8 @@ int CMMirror::OnSATTLPolX(MM::PropertyBase* pProp, MM::ActionType eAct)
    long tmp = 0;
    if (eAct == MM::BeforeGet)
    {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
       command << "SAP " << axisLetterX_ << "?";
       response << ":A " << axisLetterX_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
@@ -1186,6 +1340,8 @@ int CMMirror::OnSATTLPolY(MM::PropertyBase* pProp, MM::ActionType eAct)
    long tmp = 0;
    if (eAct == MM::BeforeGet)
    {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
       command << "SAP " << axisLetterY_ << "?";
       response << ":A " << axisLetterY_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
@@ -1236,6 +1392,8 @@ int CMMirror::OnJoystickFastSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
    double tmp = 0;
    if (eAct == MM::BeforeGet)
    {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
       command << addressChar_ << "JS X?";
       response << ":A X=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
@@ -1267,6 +1425,8 @@ int CMMirror::OnJoystickSlowSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
    double tmp = 0;
    if (eAct == MM::BeforeGet)
    {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
       command << addressChar_ << "JS Y?";
       response << ":A Y=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
@@ -1298,6 +1458,8 @@ int CMMirror::OnJoystickMirror(MM::PropertyBase* pProp, MM::ActionType eAct)
    double tmp = 0;
    if (eAct == MM::BeforeGet)
    {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
       command << addressChar_ << "JS X?";  // query only the fast setting to see if already mirrored
       response << ":A X=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
@@ -1333,6 +1495,8 @@ int CMMirror::OnJoystickSelectX(MM::PropertyBase* pProp, MM::ActionType eAct)
    long tmp = 0;
    if (eAct == MM::BeforeGet)
    {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
       command << "J " << axisLetterX_ << "?";
       response << ":A " << axisLetterX_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
@@ -1380,6 +1544,8 @@ int CMMirror::OnJoystickSelectY(MM::PropertyBase* pProp, MM::ActionType eAct)
    long tmp = 0;
    if (eAct == MM::BeforeGet)
    {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
       command << "J " << axisLetterY_ << "?";
       response << ":A " << axisLetterY_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
@@ -1419,3 +1585,4 @@ int CMMirror::OnJoystickSelectY(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    return DEVICE_OK;
 }
+

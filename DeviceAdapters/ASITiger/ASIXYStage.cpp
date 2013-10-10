@@ -121,40 +121,63 @@ int CXYStage::Initialize()
    // if user wants different ones for X and Y then he/she should set outside MM (using terminal program)
    //    and then not change in MM (and realize that Y isn't being shown by MM)
    // parameters exposed for user to set easily: SL, SU, PC, E, S, AC, WT, MA, JS X=, JS Y=, JS mirror
-   // parameters maybe exposed with some hurdle to user: B, OS, AA, AZ, KP, KI, KD, AZ (in OnAdvancedProperties())
+   // parameters maybe exposed with some hurdle to user: B, OS, AA, AZ, KP, KI, KD, AZ, CCA Y (in OnAdvancedProperties())
 
    CPropertyAction* pAct;
+
+   // refresh properties from controller every time - default is not to refresh (speeds things up by not redoing so much serial comm)
+   pAct = new CPropertyAction (this, &CXYStage::OnRefreshProperties);
+   CreateProperty(g_RefreshPropValsPropertyName, g_NoState, MM::String, false, pAct);
+   AddAllowedValue(g_RefreshPropValsPropertyName, g_NoState);
+   AddAllowedValue(g_RefreshPropValsPropertyName, g_YesState);
+
+   // save settings to controller if requested
+   pAct = new CPropertyAction (this, &CXYStage::OnSaveCardSettings);
+   CreateProperty(g_SaveSettingsPropertyName, g_SaveSettingsOrig, MM::String, false, pAct);
+   AddAllowedValue(g_SaveSettingsPropertyName, g_SaveSettingsX);
+   AddAllowedValue(g_SaveSettingsPropertyName, g_SaveSettingsY);
+   AddAllowedValue(g_SaveSettingsPropertyName, g_SaveSettingsZ);
+   AddAllowedValue(g_SaveSettingsPropertyName, g_SaveSettingsOrig);
 
    // Motor speed (S)
    pAct = new CPropertyAction (this, &CXYStage::OnSpeed);
    CreateProperty(g_MotorSpeedPropertyName, "1", MM::Float, false, pAct);
+   UpdateProperty(g_MotorSpeedPropertyName);
    SetPropertyLimits(g_MotorSpeedPropertyName, 0, maxSpeed);
 
    // drift error (E)
    pAct = new CPropertyAction (this, &CXYStage::OnDriftError);
    CreateProperty(g_DriftErrorPropertyName, "0", MM::Float, false, pAct);
+   UpdateProperty(g_DriftErrorPropertyName);
 
    // finish error (PC)
    pAct = new CPropertyAction (this, &CXYStage::OnFinishError);
    CreateProperty(g_FinishErrorPropertyName, "0", MM::Float, false, pAct);
+   UpdateProperty(g_FinishErrorPropertyName);
 
    // acceleration (AC)
    pAct = new CPropertyAction (this, &CXYStage::OnAcceleration);
    CreateProperty(g_AccelerationPropertyName, "0", MM::Integer, false, pAct);
+   UpdateProperty(g_AccelerationPropertyName);
 
    // upper and lower limits (SU and SL)
    pAct = new CPropertyAction (this, &CXYStage::OnLowerLimX);
    CreateProperty(g_LowerLimXPropertyName, "0", MM::Float, false, pAct);
+   UpdateProperty(g_LowerLimXPropertyName);
    pAct = new CPropertyAction (this, &CXYStage::OnLowerLimY);
    CreateProperty(g_LowerLimYPropertyName, "0", MM::Float, false, pAct);
+   UpdateProperty(g_LowerLimYPropertyName);
    pAct = new CPropertyAction (this, &CXYStage::OnUpperLimX);
    CreateProperty(g_UpperLimXPropertyName, "0", MM::Float, false, pAct);
+   UpdateProperty(g_UpperLimXPropertyName);
    pAct = new CPropertyAction (this, &CXYStage::OnUpperLimY);
    CreateProperty(g_UpperLimYPropertyName, "0", MM::Float, false, pAct);
+   UpdateProperty(g_UpperLimYPropertyName);
 
    // maintain behavior (MA)
    pAct = new CPropertyAction (this, &CXYStage::OnMaintainState);
    CreateProperty(g_MaintainStatePropertyName, g_StageMaintain_0, MM::String, false, pAct);
+   UpdateProperty(g_MaintainStatePropertyName);
    AddAllowedValue(g_MaintainStatePropertyName, g_StageMaintain_0);
    AddAllowedValue(g_MaintainStatePropertyName, g_StageMaintain_1);
    AddAllowedValue(g_MaintainStatePropertyName, g_StageMaintain_2);
@@ -163,27 +186,32 @@ int CXYStage::Initialize()
    // Wait cycles, default is 0 (WT)
    pAct = new CPropertyAction (this, &CXYStage::OnWait);
    CreateProperty(g_StageWaitTimePropertyName, "0", MM::Integer, false, pAct);
+   UpdateProperty(g_StageWaitTimePropertyName);
    SetPropertyLimits(g_StageWaitTimePropertyName, 0, 250);  // don't let the user set too high, though there is no actual limit
 
    // joystick fast speed (JS X=)
    pAct = new CPropertyAction (this, &CXYStage::OnJoystickFastSpeed);
    CreateProperty(g_JoystickFastSpeedPropertyName, "100", MM::Integer, false, pAct);
+   UpdateProperty(g_JoystickFastSpeedPropertyName);
    SetPropertyLimits(g_JoystickFastSpeedPropertyName, 0, 100);
 
    // joystick slow speed (JS Y=)
    pAct = new CPropertyAction (this, &CXYStage::OnJoystickSlowSpeed);
    CreateProperty(g_JoystickSlowSpeedPropertyName, "10", MM::Integer, false, pAct);
+   UpdateProperty(g_JoystickSlowSpeedPropertyName);
    SetPropertyLimits(g_JoystickSlowSpeedPropertyName, 0, 100);
 
    // joystick mirror (changes joystick fast/slow speeds to negative)
    pAct = new CPropertyAction (this, &CXYStage::OnJoystickMirror);
    CreateProperty(g_JoystickMirrorPropertyName, g_NoState, MM::String, false, pAct);
+   UpdateProperty(g_JoystickMirrorPropertyName);
    AddAllowedValue(g_JoystickMirrorPropertyName, g_NoState);
    AddAllowedValue(g_JoystickMirrorPropertyName, g_YesState);
 
    // joystick enable/disable
    pAct = new CPropertyAction (this, &CXYStage::OnJoystickEnableDisable);
    CreateProperty(g_JoystickEnabledPropertyName, g_YesState, MM::String, false, pAct);
+   UpdateProperty(g_JoystickEnabledPropertyName);
    AddAllowedValue(g_JoystickEnabledPropertyName, g_NoState);
    AddAllowedValue(g_JoystickEnabledPropertyName, g_YesState);
 
@@ -191,15 +219,9 @@ int CXYStage::Initialize()
    // generates a set of additional advanced properties that are rarely used
    pAct = new CPropertyAction (this, &CXYStage::OnAdvancedProperties);
    CreateProperty(g_AdvancedPropertiesPropertyName, g_NoState, MM::String, false, pAct);
+   UpdateProperty(g_AdvancedPropertiesPropertyName);
    AddAllowedValue(g_AdvancedPropertiesPropertyName, g_NoState);
    AddAllowedValue(g_AdvancedPropertiesPropertyName, g_YesState);
-
-
-   // number of extra move repetitions
-   pAct = new CPropertyAction (this, &CXYStage::OnNrExtraMoveReps);
-   CreateProperty(g_NrExtraMoveRepsPropertyName, "0", MM::Integer, false, pAct);
-   SetPropertyLimits(g_NrExtraMoveRepsPropertyName, 0, 3);  // don't let the user set too high, though there is no actual limit
-
 
    initialized_ = true;
    return DEVICE_OK;
@@ -264,25 +286,36 @@ int CXYStage::Stop()
 
 bool CXYStage::Busy()
 {
-   // because we're asking for just this device we can't use controller-wide status
-   // instead use RS command and parse reply which is given as a decimal of the byte code
-   // bit0 of each reply (LSB) is synonymous with STATUS command for individual axis
-   // in post 2.7 firmware could use RD <axis>? but this is safe for all firmware
    ostringstream command; command.str("");
-   command << "RS " << axisLetterX_;
-   ret_ = hub_->QueryCommandVerify(command.str(),":A");
-   if (ret_ != DEVICE_OK)  // say we aren't busy if we can't communicate
-      return false;
-   int i = (int) (hub_->ParseAnswerAfterPosition(2));
-   if (i & (int)BIT0)  // mask everything but LSB
-      return true; // don't bother checking other axis
-   command.str("");
-   command << "RS " << axisLetterY_;
-   ret_ = hub_->QueryCommandVerify(command.str(),":A");
-   if (ret_ != DEVICE_OK)  // say we aren't busy if we can't communicate
-      return false;
-   i = (int) (hub_->ParseAnswerAfterPosition(2));
-   return (i & (int)BIT0);  // mask everything but LSB
+   if (firmwareVersion_ > 2.7) // can use more accurate RS <axis>?
+   {
+      command << "RS " << axisLetterX_ << "?";
+      ret_ = hub_->QueryCommandVerify(command.str(),":A");
+      if (ret_ != DEVICE_OK)  // say we aren't busy if we can't communicate
+         return false;
+      if (hub_->LastSerialAnswer().at(3) == 'B')
+         return true;
+      command.str("");
+      command << "RS " << axisLetterY_ << "?";
+      return (hub_->LastSerialAnswer().at(3) == 'B');
+   }
+   else  // use LSB of the status byte as approximate status, not quite equivalent
+   {
+      command << "RS " << axisLetterX_;
+      ret_ = hub_->QueryCommandVerify(command.str(),":A");
+      if (ret_ != DEVICE_OK)  // say we aren't busy if we can't communicate
+         return false;
+      int i = (int) (hub_->ParseAnswerAfterPosition(2));
+      if (i & (int)BIT0)  // mask everything but LSB
+         return true; // don't bother checking other axis
+      command.str("");
+      command << "RS " << axisLetterY_;
+      ret_ = hub_->QueryCommandVerify(command.str(),":A");
+      if (ret_ != DEVICE_OK)  // say we aren't busy if we can't communicate
+         return false;
+      i = (int) (hub_->ParseAnswerAfterPosition(2));
+      return (i & (int)BIT0);  // mask everything but LSB
+   }
 }
 
 int CXYStage::SetOrigin()
@@ -295,6 +328,40 @@ int CXYStage::SetOrigin()
 
 ////////////////
 // action handlers
+
+int CXYStage::OnSaveCardSettings(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   string tmpstr;
+   ostringstream command; command.str("");
+   if (eAct == MM::AfterSet) {
+      command << addressChar_ << "SS ";
+      pProp->Get(tmpstr);
+      if (tmpstr.compare(g_SaveSettingsOrig) == 0)
+         return DEVICE_OK;
+      if (tmpstr.compare(g_SaveSettingsX) == 0)
+         command << 'X';
+      else if (tmpstr.compare(g_SaveSettingsY) == 0)
+         command << 'X';
+      else if (tmpstr.compare(g_SaveSettingsZ) == 0)
+         command << 'Z';
+      RETURN_ON_MM_ERROR (hub_->QueryCommandVerify(command.str(), ":A"));
+   }
+   return DEVICE_OK;
+}
+
+int CXYStage::OnRefreshProperties(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   string tmpstr;
+   if (eAct == MM::AfterSet) {
+      pProp->Get(tmpstr);
+      if (tmpstr.compare(g_YesState) == 0)
+         refreshProps_ = true;
+      else
+         refreshProps_ = false;
+   }
+   return DEVICE_OK;
+}
+
 
 int CXYStage::OnAdvancedProperties(MM::PropertyBase* pProp, MM::ActionType eAct)
 // special property, when set to "yes" it creates a set of little-used properties that can be manipulated thereafter
@@ -314,38 +381,52 @@ int CXYStage::OnAdvancedProperties(MM::PropertyBase* pProp, MM::ActionType eAct)
          // Backlash (B)
          pAct = new CPropertyAction (this, &CXYStage::OnBacklash);
          CreateProperty(g_BacklashPropertyName, "0", MM::Float, false, pAct);
+         UpdateProperty(g_BacklashPropertyName);
 
          // overshoot (OS)
          pAct = new CPropertyAction (this, &CXYStage::OnOvershoot);
          CreateProperty(g_OvershootPropertyName, "0", MM::Float, false, pAct);
+         UpdateProperty(g_OvershootPropertyName);
 
          // servo integral term (KI)
          pAct = new CPropertyAction (this, &CXYStage::OnKIntegral);
          CreateProperty(g_KIntegralPropertyName, "0", MM::Integer, false, pAct);
+         UpdateProperty(g_KIntegralPropertyName);
 
          // servo proportional term (KP)
          pAct = new CPropertyAction (this, &CXYStage::OnKProportional);
          CreateProperty(g_KProportionalPropertyName, "0", MM::Integer, false, pAct);
+         UpdateProperty(g_KProportionalPropertyName);
 
          // servo derivative term (KD)
          pAct = new CPropertyAction (this, &CXYStage::OnKDerivative);
          CreateProperty(g_KDerivativePropertyName, "0", MM::Integer, false, pAct);
+         UpdateProperty(g_KDerivativePropertyName);
 
          // Align calibration/setting for pot in drive electronics (AA)
          pAct = new CPropertyAction (this, &CXYStage::OnAAlign);
          CreateProperty(g_AAlignPropertyName, "0", MM::Integer, false, pAct);
+         UpdateProperty(g_AAlignPropertyName);
 
          // Autozero drive electronics (AZ)
          pAct = new CPropertyAction (this, &CXYStage::OnAZeroX);
          CreateProperty(g_AZeroXPropertyName, "0", MM::String, false, pAct);
          pAct = new CPropertyAction (this, &CXYStage::OnAZeroY);
          CreateProperty(g_AZeroYPropertyName, "0", MM::String, false, pAct);
+         UpdateProperty(g_AZeroYPropertyName);
 
          // Motor enable/disable (MC)
          pAct = new CPropertyAction (this, &CXYStage::OnMotorControl);
          CreateProperty(g_MotorControlPropertyName, g_OnState, MM::String, false, pAct);
          AddAllowedValue(g_MotorControlPropertyName, g_OnState);
          AddAllowedValue(g_MotorControlPropertyName, g_OffState);
+         UpdateProperty(g_MotorControlPropertyName);
+
+         // number of extra move repetitions
+         pAct = new CPropertyAction (this, &CXYStage::OnNrExtraMoveReps);
+         CreateProperty(g_NrExtraMoveRepsPropertyName, "0", MM::Integer, false, pAct);
+         UpdateProperty(g_NrExtraMoveRepsPropertyName);
+         SetPropertyLimits(g_NrExtraMoveRepsPropertyName, 0, 3);  // don't let the user set too high, though there is no actual limit
       }
    }
    return DEVICE_OK;
@@ -358,6 +439,8 @@ int CXYStage::OnWait(MM::PropertyBase* pProp, MM::ActionType eAct)
    long tmp = 0;
    if (eAct == MM::BeforeGet)
    {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
       command << "WT " << axisLetterX_ << "?";
       response << ":" << axisLetterX_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
@@ -380,6 +463,8 @@ int CXYStage::OnSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
    double tmp = 0;
    if (eAct == MM::BeforeGet)
    {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
       command << "S " << axisLetterX_ << "?";
       response << ":A " << axisLetterX_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
@@ -403,6 +488,8 @@ int CXYStage::OnDriftError(MM::PropertyBase* pProp, MM::ActionType eAct)
    double tmp = 0;
    if (eAct == MM::BeforeGet)
    {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
       command << "E " << axisLetterX_ << "?";
       response << ":" << axisLetterX_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
@@ -426,6 +513,8 @@ int CXYStage::OnFinishError(MM::PropertyBase* pProp, MM::ActionType eAct)
    double tmp = 0;
    if (eAct == MM::BeforeGet)
    {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
       command << "PC " << axisLetterX_ << "?";
       response << ":A " << axisLetterX_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
@@ -448,6 +537,8 @@ int CXYStage::OnLowerLimX(MM::PropertyBase* pProp, MM::ActionType eAct)
    double tmp = 0;
    if (eAct == MM::BeforeGet)
    {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
       command << "SL " << axisLetterX_ << "?";
       response << ":A " << axisLetterX_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
@@ -470,6 +561,8 @@ int CXYStage::OnLowerLimY(MM::PropertyBase* pProp, MM::ActionType eAct)
    double tmp = 0;
    if (eAct == MM::BeforeGet)
    {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
       command << "SL " << axisLetterY_ << "?";
       response << ":A " << axisLetterY_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
@@ -492,6 +585,8 @@ int CXYStage::OnUpperLimX(MM::PropertyBase* pProp, MM::ActionType eAct)
    double tmp = 0;
    if (eAct == MM::BeforeGet)
    {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
       command << "SU " << axisLetterX_ << "?";
       response << ":A " << axisLetterX_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
@@ -514,6 +609,8 @@ int CXYStage::OnUpperLimY(MM::PropertyBase* pProp, MM::ActionType eAct)
    double tmp = 0;
    if (eAct == MM::BeforeGet)
    {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
       command << "SU " << axisLetterY_ << "?";
       response << ":A " << axisLetterY_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
@@ -535,6 +632,8 @@ int CXYStage::OnAcceleration(MM::PropertyBase* pProp, MM::ActionType eAct)
    long tmp = 0;
    if (eAct == MM::BeforeGet)
    {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
       command << "AC " << axisLetterX_ << "?";
       ostringstream response; response.str(""); response << ":" << axisLetterX_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
@@ -556,6 +655,8 @@ int CXYStage::OnMaintainState(MM::PropertyBase* pProp, MM::ActionType eAct)
    long tmp = 0;
    if (eAct == MM::BeforeGet)
    {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
       command << "MA " << axisLetterX_ << "?";
       ostringstream response; response.str(""); response << ":A " << axisLetterX_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
@@ -599,6 +700,8 @@ int CXYStage::OnBacklash(MM::PropertyBase* pProp, MM::ActionType eAct)
    double tmp = 0;
    if (eAct == MM::BeforeGet)
    {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
       command << "B " << axisLetterX_ << "?";
       response << ":" << axisLetterX_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
@@ -621,6 +724,8 @@ int CXYStage::OnOvershoot(MM::PropertyBase* pProp, MM::ActionType eAct)
    double tmp = 0;
    if (eAct == MM::BeforeGet)
    {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
       command << "OS " << axisLetterX_ << "?";
       response << ":A " << axisLetterX_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
@@ -643,6 +748,8 @@ int CXYStage::OnKIntegral(MM::PropertyBase* pProp, MM::ActionType eAct)
    long tmp = 0;
    if (eAct == MM::BeforeGet)
    {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
       command << "KI " << axisLetterX_ << "?";
       response << ":A " << axisLetterX_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
@@ -665,6 +772,8 @@ int CXYStage::OnKProportional(MM::PropertyBase* pProp, MM::ActionType eAct)
    long tmp = 0;
    if (eAct == MM::BeforeGet)
    {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
       command << "KP " << axisLetterX_ << "?";
       response << ":A " << axisLetterX_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
@@ -687,6 +796,8 @@ int CXYStage::OnKDerivative(MM::PropertyBase* pProp, MM::ActionType eAct)
    long tmp = 0;
    if (eAct == MM::BeforeGet)
    {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
       command << "KD " << axisLetterX_ << "?";
       response << ":A " << axisLetterX_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
@@ -709,6 +820,8 @@ int CXYStage::OnAAlign(MM::PropertyBase* pProp, MM::ActionType eAct)
    long tmp = 0;
    if (eAct == MM::BeforeGet)
    {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
       command << "AA " << axisLetterX_ << "?";
       response << ":A " << axisLetterX_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
@@ -771,6 +884,8 @@ int CXYStage::OnMotorControl(MM::PropertyBase* pProp, MM::ActionType eAct)
    long tmp = 0;
    if (eAct == MM::BeforeGet)
    {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
       command << "MC " << axisLetterX_ << "?";
       response << ":A ";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
@@ -804,6 +919,8 @@ int CXYStage::OnJoystickFastSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
    double tmp = 0;
    if (eAct == MM::BeforeGet)
    {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
       command << addressChar_ << "JS X?";
       response << ":A X=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
@@ -833,6 +950,8 @@ int CXYStage::OnJoystickSlowSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
    double tmp = 0;
    if (eAct == MM::BeforeGet)
    {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
       command << addressChar_ << "JS Y?";
       response << ":A Y=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
@@ -862,6 +981,8 @@ int CXYStage::OnJoystickMirror(MM::PropertyBase* pProp, MM::ActionType eAct)
    double tmp = 0;
    if (eAct == MM::BeforeGet)
    {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
       command << addressChar_ << "JS X?";  // query only the fast setting to see if already mirrored
       response << ":A X=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
@@ -897,6 +1018,8 @@ int CXYStage::OnJoystickEnableDisable(MM::PropertyBase* pProp, MM::ActionType eA
    long tmp = 0;
    if (eAct == MM::BeforeGet)
    {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
       command << "J " << axisLetterX_ << "?";
       response << ":A " << axisLetterX_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
@@ -927,6 +1050,8 @@ int CXYStage::OnNrExtraMoveReps(MM::PropertyBase* pProp, MM::ActionType eAct)
    long tmp = 0;
    if (eAct == MM::BeforeGet)
    {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
       command << addressChar_ << "CCA Y?";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
       tmp = (long) (hub_->ParseAnswerAfterEquals());

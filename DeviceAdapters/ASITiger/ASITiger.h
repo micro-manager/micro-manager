@@ -120,6 +120,11 @@ const char g_NameInfoDelimiter = ':';
 
 // general device property names
 const char* const g_FirmwareVersionPropertyName = "FirmwareVersion";
+const char* const g_SaveSettingsPropertyName = "SaveCardSettings";
+const char* const g_RefreshPropValsPropertyName = "RefreshPropertyValues";
+const char* const g_AxisLetterXPropertyName = "AxisLetterX";
+const char* const g_AxisLetterYPropertyName = "AxisLetterY";
+const char* const g_AxisLetterPropertyName = "AxisLetter";
 
 // Hub property names
 const char* const g_HubDevicePropertyName = "HubDeviceName";
@@ -129,11 +134,9 @@ const char* const g_SerialResponsePropertyName = "SerialResponse";
 const char* const g_SerialTerminatorPropertyName = "SerialResponseTerminator";
 
 // XY stage property names
-const char* const g_AxisLetterXPropertyName = "AxisLetterX";
-const char* const g_AxisLetterYPropertyName = "AxisLetterY";
 const char* const g_StepSizeXPropertyName = "StepSizeX(um)";
 const char* const g_StepSizeYPropertyName = "StepSizeY(um)";
-const char* const g_StageWaitTimePropertyName = "WaitTime(ms)_when_MaintainState==3";
+const char* const g_StageWaitTimePropertyName = "WaitTime_when_MaintainState=3(ms)";
 const char* const g_NrExtraMoveRepsPropertyName = "ExtraMoveRepetitions";
 const char* const g_MotorSpeedPropertyName = "MotorSpeed-S(mm/s)";
 const char* const g_MaxMotorSpeedPropertyName = "MotorSpeedMaximum(mm/s)";
@@ -161,7 +164,6 @@ const char* const g_JoystickFastSpeedPropertyName = "JoystickFastSpeed";
 const char* const g_JoystickEnabledPropertyName = "JoystickEnabled";
 
 // Z stage property names
-const char* const g_AxisLetterPropertyName = "AxisLetter";
 const char* const g_StepSizePropertyName = "StepSize(um)";
 const char* const g_LowerLimPropertyName =  "LowerLim(mm)";
 const char* const g_UpperLimPropertyName =  "UpperLim(mm)";
@@ -286,6 +288,11 @@ const char* const g_AdeptMode_0 = "0 - internal input closed-loop";
 const char* const g_AdeptMode_1 = "1 - external input closed-loop";
 const char* const g_AdeptMode_2 = "2 - internal input open-loop";
 const char* const g_AdeptMode_3 = "3 - external input open-loop";
+// save settings options
+const char* const g_SaveSettingsX = "X - reload factory defaults on startup to card";
+const char* const g_SaveSettingsY = "Y - restore last saved settings from card";
+const char* const g_SaveSettingsZ = "Z - save settings to card (partial)";
+const char* const g_SaveSettingsOrig = "no action";
 
 // CRISP states
 const char* const g_CRISPState = "CRISP State";

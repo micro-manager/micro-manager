@@ -117,6 +117,20 @@ int CFWheel::Initialize()
       SetPositionLabel(i, command.str().c_str());
    }
 
+   // refresh properties from controller every time - default is not to refresh (speeds things up by not redoing so much serial comm)
+   pAct = new CPropertyAction (this, &CFWheel::OnRefreshProperties);
+   CreateProperty(g_RefreshPropValsPropertyName, g_NoState, MM::String, false, pAct);
+   AddAllowedValue(g_RefreshPropValsPropertyName, g_NoState);
+   AddAllowedValue(g_RefreshPropValsPropertyName, g_YesState);
+
+   // save settings to controller if requested
+   pAct = new CPropertyAction (this, &CFWheel::OnSaveCardSettings);
+   CreateProperty(g_SaveSettingsPropertyName, g_SaveSettingsOrig, MM::String, false, pAct);
+   AddAllowedValue(g_SaveSettingsPropertyName, g_SaveSettingsX);
+   AddAllowedValue(g_SaveSettingsPropertyName, g_SaveSettingsY);
+   AddAllowedValue(g_SaveSettingsPropertyName, g_SaveSettingsZ);
+   AddAllowedValue(g_SaveSettingsPropertyName, g_SaveSettingsOrig);
+
    // get current position and cache in curPosition_
    RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify("MP", "MP ", g_SerialTerminatorFW) );
    curPosition_ = (unsigned int) (hub_->ParseAnswerAfterPosition(3));
@@ -124,22 +138,26 @@ int CFWheel::Initialize()
    // property for spinning or not
    pAct = new CPropertyAction (this, &CFWheel::OnSpin);
    CreateProperty(g_FWSpinStatePropertyName, g_OffState, MM::String, false, pAct);
+   UpdateProperty(g_FWSpinStatePropertyName);
    AddAllowedValue(g_FWSpinStatePropertyName, g_OffState);
    AddAllowedValue(g_FWSpinStatePropertyName, g_OnState);
 
    // max velocity
    pAct = new CPropertyAction (this, &CFWheel::OnVelocity);
    CreateProperty(g_FWVelocityRunPropertyName, "0", MM::Integer, false, pAct);
+   UpdateProperty(g_FWVelocityRunPropertyName);
    SetPropertyLimits(g_FWVelocityRunPropertyName, 0, 12500);
 
    // preset speed settings from 0 to 9
    pAct = new CPropertyAction (this, &CFWheel::OnSpeedSetting);
    CreateProperty(g_FWSpeedSettingPropertyName, "0", MM::Integer, false, pAct);
+   UpdateProperty(g_FWSpeedSettingPropertyName);
    SetPropertyLimits(g_FWSpeedSettingPropertyName, 0, 9);
 
    // lock mode
    pAct = new CPropertyAction (this, &CFWheel::OnLockMode);
    CreateProperty(g_FWLockModePropertyName, g_OffState, MM::String, false, pAct);
+   UpdateProperty(g_FWLockModePropertyName);
    AddAllowedValue(g_FWLockModePropertyName, g_OffState);
    AddAllowedValue(g_FWLockModePropertyName, g_OnState);
 
@@ -214,12 +232,50 @@ int CFWheel::SelectWheel()
    return DEVICE_OK;
 }
 
+////////////////
+// action handlers
+
+int CFWheel::OnSaveCardSettings(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   string tmpstr;
+   ostringstream command; command.str("");
+   if (eAct == MM::AfterSet) {
+      RETURN_ON_MM_ERROR ( SelectWheel() );
+      pProp->Get(tmpstr);
+      if (tmpstr.compare(g_SaveSettingsOrig) == 0)
+         return DEVICE_OK;
+      if (tmpstr.compare(g_SaveSettingsX) == 0)
+         command << "RD";
+      else if (tmpstr.compare(g_SaveSettingsY) == 0)
+         command << "RR";
+      else if (tmpstr.compare(g_SaveSettingsZ) == 0)
+         command << "RW";
+      RETURN_ON_MM_ERROR ( hub_->QueryCommand(command.str(), g_SerialTerminatorFW) );
+   }
+   return DEVICE_OK;
+}
+
+int CFWheel::OnRefreshProperties(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   string tmpstr;
+   if (eAct == MM::AfterSet) {
+      pProp->Get(tmpstr);
+      if (tmpstr.compare(g_YesState) == 0)
+         refreshProps_ = true;
+      else
+         refreshProps_ = false;
+   }
+   return DEVICE_OK;
+}
+
 int CFWheel::OnSpin(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    ostringstream command; command.str("");
    long tmp = 0;
    if (eAct == MM::BeforeGet)
    {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
       RETURN_ON_MM_ERROR ( SelectWheel() );
       RETURN_ON_MM_ERROR ( hub_->QueryCommand("SF ", g_SerialTerminatorFW) );
       tmp = (long) hub_->ParseAnswerAfterPosition(3);
@@ -259,6 +315,8 @@ int CFWheel::OnVelocity(MM::PropertyBase* pProp, MM::ActionType eAct)
    long tmp = 0;
    if (eAct == MM::BeforeGet)
    {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
       RETURN_ON_MM_ERROR ( SelectWheel() );
       RETURN_ON_MM_ERROR ( hub_->QueryCommand("VR", g_SerialTerminatorFW) );
       tmp = (long) hub_->ParseAnswerAfterPosition(3);
@@ -281,6 +339,8 @@ int CFWheel::OnSpeedSetting(MM::PropertyBase* pProp, MM::ActionType eAct)
    long tmp = 0;
    if (eAct == MM::BeforeGet)
    {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
       RETURN_ON_MM_ERROR ( SelectWheel() );
       RETURN_ON_MM_ERROR ( hub_->QueryCommand("SV", g_SerialTerminatorFW) );
       tmp = (long) hub_->ParseAnswerAfterPosition(3);
@@ -304,6 +364,8 @@ int CFWheel::OnLockMode(MM::PropertyBase* pProp, MM::ActionType eAct)
    long tmp = 0;
    if (eAct == MM::BeforeGet)
    {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
       RETURN_ON_MM_ERROR ( SelectWheel() );
       RETURN_ON_MM_ERROR ( hub_->QueryCommand("LM ", g_SerialTerminatorFW) );
       tmp = (long) hub_->ParseAnswerAfterPosition(3);

@@ -56,6 +56,7 @@ public:
 
    // action interface
    // ----------------
+   int OnRefreshProperties (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnFocusState        (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnWaitAfterLock     (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnNA                (MM::PropertyBase* pProp, MM::ActionType eAct);

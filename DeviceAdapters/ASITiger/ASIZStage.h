@@ -70,8 +70,9 @@ public:
 
    // action interface
    // ----------------
+   int OnSaveCardSettings     (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnRefreshProperties    (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnWait                 (MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnNrExtraMoveReps      (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnMaxSpeed             (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSpeed                (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnBacklash             (MM::PropertyBase* pProp, MM::ActionType eAct);

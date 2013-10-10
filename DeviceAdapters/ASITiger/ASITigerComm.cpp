@@ -303,11 +303,13 @@ int CTigerCommHub::TalkToTiger()
 bool CTigerCommHub::Busy()
 {
    // this is a query that the MM core can make of our device, i.e. it's a required part of our public API
-   // we choose to define it as equivalent of issuing the STATUS command or /
-   //    which reports whether any of the motors are moving by replying "B" or "N"
-   int ret = QueryCommand("/");
-   // not sure how to answer if there was a comm error; let's say we are not busy
-   if (ret != DEVICE_OK)
-      return false;
-   return (LastSerialAnswer().substr(0,1).compare("B") == 0);
+   // define the hub to never be busy, i.e. it can always accept a new command or query
+   return false;
+//   // we choose to define it as equivalent of issuing the STATUS command or /
+//   //       which reports whether any of the motors are moving by replying "B" or "N"
+//   int ret = QueryCommand("/");
+//   // not sure how to answer if there was a comm error; let's say we are not busy
+//   if (ret != DEVICE_OK)
+//      return false;
+//   return (LastSerialAnswer().substr(0,1).compare("B") == 0);
 }

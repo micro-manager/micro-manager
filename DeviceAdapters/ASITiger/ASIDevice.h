@@ -70,6 +70,7 @@ protected:
    string addressChar_;    // address within hub, in single character (possibly extended ASCII)
 
    bool initialized_;
+   bool refreshProps_;
    double firmwareVersion_;
    ASIHub *hub_;           // used for serial communication
    int ret_;               // return code for use with Micro-manager functions
