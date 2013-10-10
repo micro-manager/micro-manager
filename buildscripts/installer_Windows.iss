@@ -78,8 +78,8 @@ Source: ..\stage\Release\x64\LaserCombinerSDK64.dll; DestDir: {app}; Flags: igno
 Source: ..\stage\Release\x64\OlympusIX3Control\*; DestDir: {app}\OlympusIX3Control; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: ..\stage\Release\x64\PCO_Kamlib64.dll; DestDir: {app}; Flags: ignoreversion
 Source: ..\stage\Release\x64\SysInfo.dll; DestDir: {app}; Flags: ignoreversion
-Source: ..\stage\Release\x64\TIS_DShowLib09_x64.dll; DestDir: {app}; Flags: ignoreversion
-Source: ..\stage\Release\x64\TIS_UDSHL09_vc9_x64.dll; DestDir: {app}; Flags: ignoreversion
+Source: ..\stage\Release\x64\TIS_DShowLib10_x64.dll; DestDir: {app}; Flags: ignoreversion
+Source: ..\stage\Release\x64\TIS_UDSHL10_x64.dll; DestDir: {app}; Flags: ignoreversion
 Source: ..\stage\Release\x64\XCLIBW64.dll; DestDir: {app}; Flags: ignoreversion
 Source: ..\stage\Release\x64\atmcd64d.dll; DestDir: {app}; Flags: ignoreversion
 Source: ..\stage\Release\x64\hrfw64.dll; DestDir: {app}; Flags: ignoreversion
@@ -104,8 +104,8 @@ Source: ..\stage\Release\Win32\PCO_Kamlib.dll; DestDir: {app}; Flags: ignorevers
 Source: ..\stage\Release\Win32\PSRemoteLib.dll; DestDir: {app}; Flags: ignoreversion
 Source: ..\stage\Release\Win32\ProcessLib.dll; DestDir: {app}; Flags: ignoreversion
 Source: ..\stage\Release\Win32\SysInfo.dll; DestDir: {app}; Flags: ignoreversion
-Source: ..\stage\Release\Win32\TIS_DShowLib09.dll; DestDir: {app}; Flags: ignoreversion
-Source: ..\stage\Release\Win32\TIS_UDSHL09_vc9.dll; DestDir: {app}; Flags: ignoreversion
+Source: ..\stage\Release\Win32\TIS_DShowLib10.dll; DestDir: {app}; Flags: ignoreversion
+Source: ..\stage\Release\Win32\TIS_UDSHL10.dll; DestDir: {app}; Flags: ignoreversion
 Source: ..\stage\Release\Win32\XCLIBWNT.dll; DestDir: {app}; Flags: ignoreversion
 Source: ..\stage\Release\Win32\atmcd32d.dll; DestDir: {app}; Flags: ignoreversion
 Source: ..\stage\Release\Win32\camconj.dll; DestDir: {app}; Flags: ignoreversion

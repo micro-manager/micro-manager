@@ -724,7 +724,7 @@ int CTIScamera::OnSelectDevice(MM::PropertyBase* pProp, MM::ActionType eAct)
 	{
 		if( pGrabber->isDevValid() )
 		{
-			string Text = pGrabber->getDev() + " ";
+			string Text = pGrabber->getDev().toString() + " ";
 			Text += pGrabber->getVideoFormat().c_str();
 			pProp->Set(Text.c_str());
 		}

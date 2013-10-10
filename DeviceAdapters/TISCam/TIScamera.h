@@ -44,7 +44,7 @@
 #include <sstream>
 #include <map>
 
-#include "..\..\..\3rdparty\TheImagingSource\classlib\include\tisudshl.h"
+#include "tisudshl.h"
 #include <algorithm>
 #include "SimplePropertyAccess.h"
 

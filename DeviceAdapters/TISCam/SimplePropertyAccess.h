@@ -2,7 +2,7 @@
 #ifndef SIMPLEPROPERTYACCESS_H_INC_
 #define SIMPLEPROPERTYACCESS_H_INC_
 
-#include "..\..\..\3rdparty\TheImagingSource\classlib\include\tisudshl.h"
+#include "tisudshl.h"
 
 class CSimplePropertyAccess
 {
