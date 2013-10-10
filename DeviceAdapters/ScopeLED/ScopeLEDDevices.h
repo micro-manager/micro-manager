@@ -1,6 +1,6 @@
 /*
 ScopeLED Device Adapters for Micro-Manager. 
-Copyright (C) 2011-2012 ScopeLED
+Copyright (C) 2011-2013 ScopeLED
 
 This adapter is free software: you can redistribute it and/or modify
 it under the terms of the GNU Lesser General Public License as
@@ -50,6 +50,7 @@ public:
     static const char* DeviceDescription;
 protected:
     void ClearOpticalState();
+    int SetIntensity();
     
 private:
     double brightness[SCOPELED_ILLUMINATOR_CHANNELS_MAX];
@@ -85,7 +86,7 @@ public:
     int OnPresetMode5Brightness(MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnPresetMode6Brightness(MM::PropertyBase* pProp, MM::ActionType eAct);
 
-    int OnActivePresetMode(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnActiveColor(MM::PropertyBase* pProp, MM::ActionType eAct);
 
     static const char* DeviceName;
     static const char* DeviceDescription;
@@ -96,21 +97,17 @@ private:
     double brightnessRawChannel[SCOPELED_ILLUMINATOR_CHANNELS_MAX];
     double brightnessPresetMode[SCOPELED_ILLUMINATOR_MSM_PRESET_CHANNELS_MAX];
     long activePresetModeIndex;
+    static const char* const s_PresetModeStrings[];
 
     int SetManualColor();
     int PlayPresetMode();
 };
 
-#define MIN_FMI_LED_GROUP 0
-#define MAX_FMI_LED_GROUP 9
-#define NUM_FMI_LED_GROUPS (MAX_FMI_LED_GROUP+1)
+#define NUM_FMI_CHANNELS 4
 class ScopeLEDFluorescenceIlluminator : public ScopeLEDBasicIlluminator<ScopeLEDFluorescenceIlluminator>
 {
-    bool led_group_channels_initialized[NUM_FMI_LED_GROUPS];
-    long led_group_channels[NUM_FMI_LED_GROUPS];
-    
-    bool channel_wavelengths_initialized[4];
-    long channel_wavelengths[4];
+    bool channel_wavelengths_initialized[NUM_FMI_CHANNELS];
+    long channel_wavelengths[NUM_FMI_CHANNELS];
     
 public:
     ScopeLEDFluorescenceIlluminator(); 
@@ -125,69 +122,29 @@ public:
     int GetOpen(bool& open);
 
     // action interface
-    int OnChannelBrightness(int index, MM::PropertyBase* pProp, MM::ActionType eAct);
-    int OnChannel1Brightness(MM::PropertyBase* pProp, MM::ActionType eAct);
-    int OnChannel2Brightness(MM::PropertyBase* pProp, MM::ActionType eAct);
-    int OnChannel3Brightness(MM::PropertyBase* pProp, MM::ActionType eAct);
-    int OnChannel4Brightness(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnIntensity(MM::PropertyBase* pProp, MM::ActionType eAct);
     
-    int OnLEDGroup(MM::PropertyBase* pProp, MM::ActionType eAct);
-
-    int OnLEDGroup1Channels(MM::PropertyBase* pProp, MM::ActionType eAct);
-    int OnLEDGroup2Channels(MM::PropertyBase* pProp, MM::ActionType eAct);
-    int OnLEDGroup3Channels(MM::PropertyBase* pProp, MM::ActionType eAct);
-    int OnLEDGroup4Channels(MM::PropertyBase* pProp, MM::ActionType eAct);
-    int OnLEDGroup5Channels(MM::PropertyBase* pProp, MM::ActionType eAct);
-    int OnLEDGroup6Channels(MM::PropertyBase* pProp, MM::ActionType eAct);
-    int OnLEDGroup7Channels(MM::PropertyBase* pProp, MM::ActionType eAct);
-    int OnLEDGroup8Channels(MM::PropertyBase* pProp, MM::ActionType eAct);
-    int OnLEDGroup9Channels(MM::PropertyBase* pProp, MM::ActionType eAct);
-
-    int OnChannel1Wavelength(MM::PropertyBase* pProp, MM::ActionType eAct);
-    int OnChannel2Wavelength(MM::PropertyBase* pProp, MM::ActionType eAct);
-    int OnChannel3Wavelength(MM::PropertyBase* pProp, MM::ActionType eAct);
-    int OnChannel4Wavelength(MM::PropertyBase* pProp, MM::ActionType eAct);
-
-    int OnActiveChannelString(MM::PropertyBase* pProp, MM::ActionType eAct);
-    int OnActiveWavelengthString(MM::PropertyBase* pProp, MM::ActionType eAct);
-    int OnOptimalPositionString(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnActiveWavelength(MM::PropertyBase* pProp, MM::ActionType eAct);
 
     static const char* DeviceName;
     static const char* DeviceDescription;
 
-    static bool CheckGroupValid(long group);
-    long m_CachedLEDGroup;
     long m_NumChannels;
-
-    std::string StatusDescription;
-
-    struct
-    {
-        long led_group;
-        std::string info;
-    } m_ActiveWavelengths, m_ActiveChannels;
 
 protected:
     void ClearOpticalState();
     
 private:
 
-    int GetChannelWavelength(int channel, long& wavelength);
+    int GetChannelWavelength(long channel, long& wavelength);
     
-    int SetChannelBrightness(int channel, double brightness);
-    int GetChannelBrightness(int channel, double& brightness);
+    int SetChannelBrightness(long channel, double brightness);
+    int GetChannelBrightness(long channel, double& brightness);
 
-    int SetLEDGroup(long group);
-    int GetLEDGroup(long& group);
+    int SetActiveChannel(long channel);
+    int GetActiveChannel(long& channel);
     int GetNumChannels(long& count);
 
-    int GetLEDGroupChannels(int group, long& channels);
-    int OnLEDGroupChannels(int group, MM::PropertyBase* pProp, MM::ActionType eAct);
-    int OnChannelWavelength(int index, MM::PropertyBase* pProp, MM::ActionType eAct);
-
-    int UpdateActiveChannelString();
-    int UpdateActiveWavelengthString();
-    int GetOptimalPositionString(std::string& str);
 };
 
 #endif

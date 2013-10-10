@@ -1,6 +1,6 @@
 /*
 ScopeLED Device Adapters for Micro-Manager. 
-Copyright (C) 2011-2012 ScopeLED
+Copyright (C) 2011-2013 ScopeLED
 
 This adapter is free software: you can redistribute it and/or modify
 it under the terms of the GNU Lesser General Public License as

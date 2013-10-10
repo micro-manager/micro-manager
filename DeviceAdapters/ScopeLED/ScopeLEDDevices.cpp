@@ -1,6 +1,6 @@
 /*
 ScopeLED Device Adapters for Micro-Manager. 
-Copyright (C) 2011-2012 ScopeLED
+Copyright (C) 2011-2013 ScopeLED
 
 This adapter is free software: you can redistribute it and/or modify
 it under the terms of the GNU Lesser General Public License as
@@ -21,6 +21,7 @@ License along with this software.  If not, see
 #include "ScopeLEDDevices.h"
 #include "../../MMDevice/ModuleInterface.h"
 #include "../../MMCore/Error.h"
+#include <sstream>
 
 #define round(x) ((int)(x+0.5))
 
@@ -95,8 +96,8 @@ const char* ScopeLEDMSBMicroscopeIlluminator::DeviceDescription = "ScopeLED Fibe
 
 void ScopeLEDMSBMicroscopeIlluminator::ClearOpticalState()
 {
-    m_state = false;
-    for (int i=0; i < SCOPELED_ILLUMINATOR_CHANNELS_MAX; i++)
+    m_state = true;
+    for (long i=0; i < SCOPELED_ILLUMINATOR_CHANNELS_MAX; i++)
     {
         brightness[i] = 0.0;
     }
@@ -104,7 +105,9 @@ void ScopeLEDMSBMicroscopeIlluminator::ClearOpticalState()
 
 ScopeLEDMSBMicroscopeIlluminator::ScopeLEDMSBMicroscopeIlluminator()
 {
-    m_pid = 0x1303;
+#ifdef SCOPELED_DEBUGLOG
+    m_LogFile << "+ScopeLEDMSBMicroscopeIlluminator::ScopeLEDMSBMicroscopeIlluminator ctor" << std::endl;
+#endif
     ClearOpticalState();
 
     // Name
@@ -112,16 +115,17 @@ ScopeLEDMSBMicroscopeIlluminator::ScopeLEDMSBMicroscopeIlluminator()
 
     // Description
     CreateProperty(MM::g_Keyword_Description, DeviceDescription, MM::String, true);
-    
-    CPropertyAction* pAct = new CPropertyAction (this, &ScopeLEDMSBMicroscopeIlluminator::OnVendorID);
-    CreateProperty("VendorID", "0", MM::Integer, false, pAct, true);
-    SetPropertyLimits("VendorID", 0x0, 0xFFFF);
 
-    pAct = new CPropertyAction (this, &ScopeLEDMSBMicroscopeIlluminator::OnProductID);
-    CreateProperty("ProductID", "0", MM::Integer, false, pAct, true);
+    CreateProperty("VendorID", STR(DICON_USB_VID_OLD), MM::String, false, NULL, true);
+    AddAllowedValue("VendorID", STR(DICON_USB_VID_NEW), DICON_USB_VID_NEW);
+    AddAllowedValue("VendorID", STR(DICON_USB_VID_OLD), DICON_USB_VID_OLD);
+
+    std::stringstream strm;
+    strm << std::dec << 0x1303;
+    CreateProperty("ProductID", strm.str().c_str(), MM::Integer, false, NULL, true);
     SetPropertyLimits("ProductID", 0x0, 0xFFFF);
 
-    pAct = new CPropertyAction (this, &ScopeLEDMSBMicroscopeIlluminator::OnLastError);
+    CPropertyAction* pAct = new CPropertyAction (this, &ScopeLEDMSBMicroscopeIlluminator::OnLastError);
     CreateProperty("LastError", "0", MM::Integer, true, pAct);
 
     pAct = new CPropertyAction (this, &ScopeLEDMSBMicroscopeIlluminator::OnLastDeviceResult);
@@ -132,9 +136,13 @@ ScopeLEDMSBMicroscopeIlluminator::ScopeLEDMSBMicroscopeIlluminator()
 
     // state
     pAct = new CPropertyAction (this, &ScopeLEDMSBMicroscopeIlluminator::OnState);
-    CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct);
+    CreateProperty(MM::g_Keyword_State, "1", MM::Integer, false, pAct);
     AddAllowedValue(MM::g_Keyword_State, "0"); // Closed
     AddAllowedValue(MM::g_Keyword_State, "1"); // Open
+
+#ifdef SCOPELED_DEBUGLOG
+    m_LogFile << "-ScopeLEDMSBMicroscopeIlluminator::ScopeLEDMSBMicroscopeIlluminator ctor" << std::endl;
+#endif
 }
 
 ScopeLEDMSBMicroscopeIlluminator::~ScopeLEDMSBMicroscopeIlluminator()
@@ -149,40 +157,53 @@ void ScopeLEDMSBMicroscopeIlluminator::GetName(char* name) const
 
 int ScopeLEDMSBMicroscopeIlluminator::Initialize()
 {
+#ifdef SCOPELED_DEBUGLOG
+    m_LogFile << "+ScopeLEDMSBMicroscopeIlluminator::Initialize" << std::endl;
+#endif
+    
     if (NULL != m_hDevice)
         return DEVICE_OK;
 
+    long vid = 0;
+    int nRet = GetCurrentPropertyData("VendorID", vid);
+    if (nRet != DEVICE_OK) return nRet;
+
+    long pid = 0;
+    nRet = GetProperty("ProductID", pid);
+    if (nRet != DEVICE_OK) return nRet;
+
     char serial[MM::MaxStrLength];
     memset(serial, '\0', sizeof(serial));
-    GetProperty("InitSerialNumber", serial);
+    nRet = GetProperty("InitSerialNumber", serial);
+    if (nRet != DEVICE_OK) return nRet;
     bool no_serial = 0 == strlen(serial);
 
     if (no_serial)
     {
-        m_hDevice = g_USBCommAdapter.OpenFirstDevice((unsigned short)m_vid, (unsigned short)m_pid);
+        m_hDevice = g_USBCommAdapter.OpenFirstDevice((unsigned short)vid, (unsigned short)pid);
     }
     else
     {
-        m_hDevice = g_USBCommAdapter.OpenDevice((unsigned short)m_vid, (unsigned short)m_pid, serial);
+        m_hDevice = g_USBCommAdapter.OpenDevice((unsigned short)vid, (unsigned short)pid, serial);
     }
-    
+
     if (NULL == m_hDevice) return DEVICE_NOT_CONNECTED;
 
-    InitSerialNumber();
     ClearOpticalState();
+    InitSerialNumber();
 
     // set property list
     // -----------------
 
-    CPropertyAction* pAct = new CPropertyAction (this, &ScopeLEDMSBMicroscopeIlluminator::OnVersion);
-    int nRet = CreateProperty("Version", "0", MM::Integer, true, pAct);
+    std::stringstream strm;
+    strm << std::dec << GetVersion();
+    nRet = CreateProperty("Version", strm.str().c_str(), MM::Integer, true, NULL);
     if (nRet != DEVICE_OK) return nRet;
 
-    pAct = new CPropertyAction (this, &ScopeLEDMSBMicroscopeIlluminator::OnSerialNumber);
-    nRet = CreateProperty("SerialNumber", "", MM::String, true, pAct);
+    nRet = CreateProperty("SerialNumber", m_SerialNumber.c_str(), MM::String, true, NULL);
     if (nRet != DEVICE_OK) return nRet;
 
-    pAct = new CPropertyAction (this, &ScopeLEDMSBMicroscopeIlluminator::OnChannel1Brightness);
+    CPropertyAction* pAct = new CPropertyAction (this, &ScopeLEDMSBMicroscopeIlluminator::OnChannel1Brightness);
     nRet = CreateProperty("Channel1Brightness", "0.0", MM::Float, false, pAct);
     if (nRet != DEVICE_OK) return nRet;
     SetPropertyLimits("Channel1Brightness", 0.0, 100.0);
@@ -203,6 +224,10 @@ int ScopeLEDMSBMicroscopeIlluminator::Initialize()
     SetPropertyLimits("Channel4Brightness", 0.0, 100.0);
     
     nRet = UpdateStatus();
+
+#ifdef SCOPELED_DEBUGLOG
+    m_LogFile << "-ScopeLEDMSBMicroscopeIlluminator::Initialize" << std::endl;
+#endif
     return nRet;
 }
 
@@ -212,8 +237,11 @@ int ScopeLEDMSBMicroscopeIlluminator::GetOpen(bool& open)
     return DEVICE_OK;
 }
 
-int ScopeLEDMSBMicroscopeIlluminator::SetOpen (bool open)
+int ScopeLEDMSBMicroscopeIlluminator::SetIntensity()
 {
+#ifdef SCOPELED_DEBUGLOG
+    m_LogFile << "+ScopeLEDMSBMicroscopeIlluminator::SetIntensity. Open=" << std::dec << m_state << "." << std::endl;
+#endif
     unsigned char cmdbuf[10];
     memset(cmdbuf, 0, sizeof(cmdbuf));
     cmdbuf[0] = 0xA9;  // Start Byte
@@ -225,25 +253,34 @@ int ScopeLEDMSBMicroscopeIlluminator::SetOpen (bool open)
     unsigned char* const pChecksum = &cmdbuf[8];
     unsigned char* const pStart = &cmdbuf[1];
 
-    m_state = open;
     if (m_state)
     {
-        for (int i=0; i < SCOPELED_ILLUMINATOR_CHANNELS_MAX; i++)
+        for (long i=0; i < SCOPELED_ILLUMINATOR_CHANNELS_MAX; i++)
         {
             cmdbuf[i+3] = (unsigned char) round((brightness[i] * (unsigned)0xFF) / 100);
         }
     }
     else
     {
-        for (int i=0; i < SCOPELED_ILLUMINATOR_CHANNELS_MAX; i++)
+        for (long i=0; i < SCOPELED_ILLUMINATOR_CHANNELS_MAX; i++)
         {
             cmdbuf[i+3] = 0;
         }
     }
 
     *pChecksum = g_USBCommAdapter.CalculateChecksum(pStart, *pStart);
-    
-    return Transact(cmdbuf, sizeof(cmdbuf));
+
+    const int result = Transact(cmdbuf, sizeof(cmdbuf));
+#ifdef SCOPELED_DEBUGLOG
+    m_LogFile << "+ScopeLEDMSBMicroscopeIlluminator::SetIntensity. Result=" << std::dec << result << "." << std::endl;
+#endif
+    return result;
+}
+
+int ScopeLEDMSBMicroscopeIlluminator::SetOpen (bool open)
+{
+    m_state = open;
+    return SetIntensity();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -259,6 +296,7 @@ int ScopeLEDMSBMicroscopeIlluminator::OnChannelBrightness(int index, MM::Propert
     else if (eAct == MM::AfterSet)
     {
         pProp->Get(brightness[index]);
+        SetIntensity();
     }
     return DEVICE_OK;
 }
@@ -286,6 +324,16 @@ int ScopeLEDMSBMicroscopeIlluminator::OnChannel4Brightness(MM::PropertyBase* pPr
 
 const char* ScopeLEDMSMMicroscopeIlluminator::DeviceName = "ScopeLED-B";
 const char* ScopeLEDMSMMicroscopeIlluminator::DeviceDescription = "ScopeLED Brightfield Microscope Illuminator";
+const char* const ScopeLEDMSMMicroscopeIlluminator::s_PresetModeStrings[] =
+{
+    "Manual",
+    "3000K",
+    "4500K",
+    "6500K",
+    "Red",
+    "Green",
+    "Blue"
+};
 
 void ScopeLEDMSMMicroscopeIlluminator::ClearOpticalState()
 {
@@ -303,7 +351,6 @@ void ScopeLEDMSMMicroscopeIlluminator::ClearOpticalState()
 
 ScopeLEDMSMMicroscopeIlluminator::ScopeLEDMSMMicroscopeIlluminator()
 {
-    m_pid = 0x130A;
     ClearOpticalState();
 
     // Name
@@ -312,15 +359,16 @@ ScopeLEDMSMMicroscopeIlluminator::ScopeLEDMSMMicroscopeIlluminator()
     // Description
     CreateProperty(MM::g_Keyword_Description, DeviceDescription, MM::String, true);
 
-    CPropertyAction* pAct = new CPropertyAction (this, &ScopeLEDMSMMicroscopeIlluminator::OnVendorID);
-    CreateProperty("VendorID", "0", MM::Integer, false, pAct, true);
-    SetPropertyLimits("VendorID", 0x0, 0xFFFF);
+    CreateProperty("VendorID", STR(DICON_USB_VID_NEW), MM::String, false, NULL, true);
+    AddAllowedValue("VendorID", STR(DICON_USB_VID_NEW), DICON_USB_VID_NEW);
+    AddAllowedValue("VendorID", STR(DICON_USB_VID_OLD), DICON_USB_VID_OLD);
 
-    pAct = new CPropertyAction (this, &ScopeLEDMSMMicroscopeIlluminator::OnProductID);
-    CreateProperty("ProductID", "0", MM::Integer, false, pAct, true);
+    std::stringstream strm;
+    strm << std::dec << 0x130A;
+    CreateProperty("ProductID", strm.str().c_str(), MM::Integer, false, NULL, true);
     SetPropertyLimits("ProductID", 0x0, 0xFFFF);
 
-    pAct = new CPropertyAction (this, &ScopeLEDMSMMicroscopeIlluminator::OnLastError);
+    CPropertyAction* pAct = new CPropertyAction (this, &ScopeLEDMSMMicroscopeIlluminator::OnLastError);
     CreateProperty("LastError", "0", MM::Integer, true, pAct);
 
     pAct = new CPropertyAction (this, &ScopeLEDMSMMicroscopeIlluminator::OnLastDeviceResult);
@@ -339,102 +387,128 @@ void ScopeLEDMSMMicroscopeIlluminator::GetName(char* name) const
 
 int ScopeLEDMSMMicroscopeIlluminator::Initialize()
 {
+#ifdef SCOPELED_DEBUGLOG
+    m_LogFile << "ScopeLEDMSMMicroscopeIlluminator::Initialize" << std::endl;
+#endif
+    
     if (NULL != m_hDevice)
         return DEVICE_OK;
 
+    long vid = 0;
+    int nRet = GetCurrentPropertyData("VendorID", vid);
+    if (nRet != DEVICE_OK) return nRet;
+
+    long pid = 0;
+    nRet = GetProperty("ProductID", pid);
+    if (nRet != DEVICE_OK) return nRet;
+
     char serial[MM::MaxStrLength];
     memset(serial, '\0', sizeof(serial));
-    GetProperty("InitSerialNumber", serial);
+    nRet = GetProperty("InitSerialNumber", serial);
+    if (nRet != DEVICE_OK) return nRet;
     bool no_serial = 0 == strlen(serial);
 
     if (no_serial)
     {
-        m_hDevice = g_USBCommAdapter.OpenFirstDevice((unsigned short)m_vid, (unsigned short)m_pid);
+        m_hDevice = g_USBCommAdapter.OpenFirstDevice((unsigned short)vid, (unsigned short)pid);
     }
     else
     {
-        m_hDevice = g_USBCommAdapter.OpenDevice((unsigned short)m_vid, (unsigned short)m_pid, serial);
+        m_hDevice = g_USBCommAdapter.OpenDevice((unsigned short)vid, (unsigned short)pid, serial);
     }
 
     if (NULL == m_hDevice) return DEVICE_NOT_CONNECTED;
 
-    InitSerialNumber();
     ClearOpticalState();
+    InitSerialNumber();
 
     // set property list
     // -----------------
 
-    CPropertyAction* pAct = new CPropertyAction (this, &ScopeLEDMSMMicroscopeIlluminator::OnVersion);
-    int nRet = CreateProperty("Version", "0", MM::Integer, true, pAct);
+    std::stringstream strm;
+    strm << std::dec << GetVersion();
+    nRet = CreateProperty("Version", strm.str().c_str(), MM::Integer, true, NULL);
     if (nRet != DEVICE_OK) return nRet;
 
-    pAct = new CPropertyAction (this, &ScopeLEDMSMMicroscopeIlluminator::OnSerialNumber);
-    nRet = CreateProperty("SerialNumber", "", MM::String, true, pAct);
+    nRet = CreateProperty("SerialNumber", m_SerialNumber.c_str(), MM::String, true, NULL);
     if (nRet != DEVICE_OK) return nRet;
 
-    pAct = new CPropertyAction (this, &ScopeLEDMSMMicroscopeIlluminator::OnChannel1Brightness);
-    nRet = CreateProperty("Channel1Brightness", "0.0", MM::Float, false, pAct);
+    CPropertyAction* pAct = new CPropertyAction (this, &ScopeLEDMSMMicroscopeIlluminator::OnChannel1Brightness);
+    nRet = CreateProperty("ManualBrightnessChannel1", "0.0", MM::Float, false, pAct);
     if (nRet != DEVICE_OK) return nRet;
-    SetPropertyLimits("Channel1Brightness", 0.0, 100.0);
+    SetPropertyLimits("ManualBrightnessChannel1", 0.0, 100.0);
 
     pAct = new CPropertyAction (this, &ScopeLEDMSMMicroscopeIlluminator::OnChannel2Brightness);
-    nRet = CreateProperty("Channel2Brightness", "0.0", MM::Float, false, pAct);
+    nRet = CreateProperty("ManualBrightnessChannel2", "0.0", MM::Float, false, pAct);
     if (nRet != DEVICE_OK) return nRet;
-    SetPropertyLimits("Channel2Brightness", 0.0, 100.0);
+    SetPropertyLimits("ManualBrightnessChannel2", 0.0, 100.0);
 
     pAct = new CPropertyAction (this, &ScopeLEDMSMMicroscopeIlluminator::OnChannel3Brightness);
-    nRet = CreateProperty("Channel3Brightness", "0.0", MM::Float, false, pAct);
+    nRet = CreateProperty("ManualBrightnessChannel3", "0.0", MM::Float, false, pAct);
     if (nRet != DEVICE_OK) return nRet;
-    SetPropertyLimits("Channel3Brightness", 0.0, 100.0);
+    SetPropertyLimits("ManualBrightnessChannel3", 0.0, 100.0);
 
     pAct = new CPropertyAction (this, &ScopeLEDMSMMicroscopeIlluminator::OnChannel4Brightness);
-    nRet = CreateProperty("Channel4Brightness", "0.0", MM::Float, false, pAct);
+    nRet = CreateProperty("ManualBrightnessChannel4", "0.0", MM::Float, false, pAct);
     if (nRet != DEVICE_OK) return nRet;
-    SetPropertyLimits("Channel4Brightness", 0.0, 100.0);
+    SetPropertyLimits("ManualBrightnessChannel4", 0.0, 100.0);
 
+    /*
     pAct = new CPropertyAction (this, &ScopeLEDMSMMicroscopeIlluminator::OnActivePresetMode);
     nRet = CreateProperty("ActivePresetMode", "0", MM::Integer, false, pAct);
     if (nRet != DEVICE_OK) return nRet;
     SetPropertyLimits("ActivePresetMode", 0, SCOPELED_ILLUMINATOR_MSM_PRESET_CHANNELS_MAX);
+    */
 
-    pAct = new CPropertyAction (this, &ScopeLEDMSMMicroscopeIlluminator::OnPresetMode1Brightness);
-    nRet = CreateProperty("PresetMode1Brightness", "0.0", MM::Float, false, pAct);
+    long color = 0;
+    pAct = new CPropertyAction (this, &ScopeLEDMSMMicroscopeIlluminator::OnActiveColor);
+    nRet = CreateProperty("ActiveColor", s_PresetModeStrings[color], MM::String, false, pAct);
     if (nRet != DEVICE_OK) return nRet;
-    SetPropertyLimits("PresetMode1Brightness", 0.0, 100.0);
+    for (color=0; color <= SCOPELED_ILLUMINATOR_MSM_PRESET_CHANNELS_MAX; color++)
+    {
+        AddAllowedValue("ActiveColor", s_PresetModeStrings[color], color);
+    }
+    
+    pAct = new CPropertyAction (this, &ScopeLEDMSMMicroscopeIlluminator::OnPresetMode1Brightness);
+    nRet = CreateProperty("Brightness3000K", "0.0", MM::Float, false, pAct);
+    if (nRet != DEVICE_OK) return nRet;
+    SetPropertyLimits("Brightness3000K", 0.0, 100.0);
 
     pAct = new CPropertyAction (this, &ScopeLEDMSMMicroscopeIlluminator::OnPresetMode2Brightness);
-    nRet = CreateProperty("PresetMode2Brightness", "0.0", MM::Float, false, pAct);
+    nRet = CreateProperty("Brightness4500K", "0.0", MM::Float, false, pAct);
     if (nRet != DEVICE_OK) return nRet;
-    SetPropertyLimits("PresetMode2Brightness", 0.0, 100.0);
+    SetPropertyLimits("Brightness4500K", 0.0, 100.0);
 
     pAct = new CPropertyAction (this, &ScopeLEDMSMMicroscopeIlluminator::OnPresetMode3Brightness);
-    nRet = CreateProperty("PresetMode3Brightness", "0.0", MM::Float, false, pAct);
+    nRet = CreateProperty("Brightness6500K", "0.0", MM::Float, false, pAct);
     if (nRet != DEVICE_OK) return nRet;
-    SetPropertyLimits("PresetMode3Brightness", 0.0, 100.0);
+    SetPropertyLimits("Brightness6500K", 0.0, 100.0);
 
     pAct = new CPropertyAction (this, &ScopeLEDMSMMicroscopeIlluminator::OnPresetMode4Brightness);
-    nRet = CreateProperty("PresetMode4Brightness", "0.0", MM::Float, false, pAct);
+    nRet = CreateProperty("BrightnessRed", "0.0", MM::Float, false, pAct);
     if (nRet != DEVICE_OK) return nRet;
-    SetPropertyLimits("PresetMode4Brightness", 0.0, 100.0);
+    SetPropertyLimits("BrightnessRed", 0.0, 100.0);
 
     pAct = new CPropertyAction (this, &ScopeLEDMSMMicroscopeIlluminator::OnPresetMode5Brightness);
-    nRet = CreateProperty("PresetMode5Brightness", "0.0", MM::Float, false, pAct);
+    nRet = CreateProperty("BrightnessGreen", "0.0", MM::Float, false, pAct);
     if (nRet != DEVICE_OK) return nRet;
-    SetPropertyLimits("PresetMode5Brightness", 0.0, 100.0);
+    SetPropertyLimits("BrightnessGreen", 0.0, 100.0);
 
     pAct = new CPropertyAction (this, &ScopeLEDMSMMicroscopeIlluminator::OnPresetMode6Brightness);
-    nRet = CreateProperty("PresetMode6Brightness", "0.0", MM::Float, false, pAct);
+    nRet = CreateProperty("BrightnessBlue", "0.0", MM::Float, false, pAct);
     if (nRet != DEVICE_OK) return nRet;
-    SetPropertyLimits("PresetMode6Brightness", 0.0, 100.0);
+    SetPropertyLimits("BrightnessBlue", 0.0, 100.0);
 
+    long mode;
+    nRet = GetControlMode(mode);
+    if (nRet != DEVICE_OK) return nRet;
     pAct = new CPropertyAction (this, &ScopeLEDMSMMicroscopeIlluminator::OnControlMode);
-    nRet = CreateProperty("ControlMode", "1", MM::Integer, false, pAct);
+    nRet = CreateProperty("ControlMode", s_ControModeStrings[mode], MM::String, false, pAct);
     if (nRet != DEVICE_OK) return nRet;
-    SetPropertyLimits("ControlMode", 1, 3);
-
-    pAct = new CPropertyAction (this, &ScopeLEDMSMMicroscopeIlluminator::OnControlModeString);
-    nRet = CreateProperty("ControlModeDescription", "", MM::String, true, pAct);
-    if (nRet != DEVICE_OK) return nRet;
+    for (mode=1; mode < MAX_CONTROL_MODE; mode++)
+    {
+        AddAllowedValue("ControlMode", s_ControModeStrings[mode], mode);
+    }
 
     // state
     pAct = new CPropertyAction (this, &ScopeLEDMSMMicroscopeIlluminator::OnState);
@@ -500,7 +574,7 @@ int ScopeLEDMSMMicroscopeIlluminator::GetPresetMode(unsigned char mode)
     unsigned char RxBuffer[16];
     unsigned long cbRxBuffer = sizeof(RxBuffer);
     int result = Transact(cmdbuf, sizeof(cmdbuf), RxBuffer, &cbRxBuffer);
-    if ((DEVICE_OK == result) && (cbRxBuffer >= 8))
+    if ((DEVICE_OK == result) && (cbRxBuffer >= 8) && (0==RxBuffer[3]))
     {
 #ifdef SCOPELED_DEBUGLOG
         m_LogFile << "GetPresetMode " << (int) mode;
@@ -581,25 +655,31 @@ int ScopeLEDMSMMicroscopeIlluminator::OnChannel4Brightness(MM::PropertyBase* pPr
     return OnChannelBrightness(3, pProp, eAct);
 }
 
-int ScopeLEDMSMMicroscopeIlluminator::OnActivePresetMode(MM::PropertyBase* pProp, MM::ActionType eAct)
+int ScopeLEDMSMMicroscopeIlluminator::OnActiveColor(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-    if (eAct == MM::BeforeGet)
+    int result = DEVICE_OK;
+    if (eAct == MM::AfterSet)
     {
-        pProp->Set(activePresetModeIndex);
-    }
-    else if (eAct == MM::AfterSet)
-    {
-        pProp->Get(activePresetModeIndex);
-        if (0L == activePresetModeIndex)
+        std::string strColor;        
+        if (pProp->Get(strColor))
         {
-            SetManualColor();
+            /*pProp->GetData(strColor.c_str(), mode))*/
+            result = GetPropertyData("ActiveColor", strColor.c_str(), activePresetModeIndex);
+            if (DEVICE_OK == result)
+            {
+                if (0L == activePresetModeIndex)
+                {
+                    SetManualColor();
+                }
+                else
+                {
+                    PlayPresetMode();
+                }
+            }
         }
-        else
-        {
-            PlayPresetMode();
-        }
+        else result = DEVICE_NO_PROPERTY_DATA;
     }
-    return DEVICE_OK;
+    return result;
 }
 
 int ScopeLEDMSMMicroscopeIlluminator::OnPresetModeBrightness(int index, MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -654,16 +734,20 @@ const char* ScopeLEDFluorescenceIlluminator::DeviceDescription = "ScopeLED Fluor
 
 void ScopeLEDFluorescenceIlluminator::ClearOpticalState()
 {
-    m_CachedLEDGroup = 0;
+#ifdef SCOPELED_DEBUGLOG
+    m_LogFile << "ScopeLEDFluorescenceIlluminator::ClearOpticalState" << std::endl;
+#endif
     m_NumChannels = 0;
 
-    memset(led_group_channels_initialized, false, NUM_FMI_LED_GROUPS);
-    memset(channel_wavelengths_initialized, false, 4);
+    memset(channel_wavelengths_initialized, false, NUM_FMI_CHANNELS);
 }
 
 ScopeLEDFluorescenceIlluminator::ScopeLEDFluorescenceIlluminator()
 {
-    m_pid = 0x1305;
+#ifdef SCOPELED_DEBUGLOG
+    m_LogFile << "+ScopeLEDFluorescenceIlluminator::ctor" << std::endl;
+#endif
+    
     ClearOpticalState();
 
     // Name
@@ -672,27 +756,31 @@ ScopeLEDFluorescenceIlluminator::ScopeLEDFluorescenceIlluminator()
     // Description
     CreateProperty(MM::g_Keyword_Description, DeviceDescription, MM::String, true);
 
-    CPropertyAction* pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnVendorID);
-    CreateProperty("VendorID", "0", MM::Integer, false, pAct, true);
-    SetPropertyLimits("VendorID", 0x0, 0xFFFF);
+    CreateProperty("VendorID", STR(DICON_USB_VID_NEW), MM::String, false, NULL, true);
+    AddAllowedValue("VendorID", STR(DICON_USB_VID_NEW), DICON_USB_VID_NEW);
+    AddAllowedValue("VendorID", STR(DICON_USB_VID_OLD), DICON_USB_VID_OLD);
 
-    pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnProductID);
-    CreateProperty("ProductID", "0", MM::Integer, false, pAct, true);
+    std::stringstream strm;
+    strm << std::dec << 0x1305;
+    CreateProperty("ProductID", strm.str().c_str(), MM::Integer, false, NULL, true);
     SetPropertyLimits("ProductID", 0x0, 0xFFFF);
 
-    pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnLastError);
+    CPropertyAction* pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnLastError);
     CreateProperty("LastError", "0", MM::Integer, true, pAct);
 
     pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnLastDeviceResult);
     CreateProperty("LastDeviceResult", "0", MM::Integer, true, pAct);
-
-    //pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnTransactionTime);
-    //CreateProperty("TxnTime", "0", MM::Integer, true, pAct);
+    
+#ifdef SCOPELED_DEBUGLOG
+    m_LogFile << "-ScopeLEDFluorescenceIlluminator::ctor" << std::endl;
+#endif
 }
 
 ScopeLEDFluorescenceIlluminator::~ScopeLEDFluorescenceIlluminator()
 {
-
+#ifdef SCOPELED_DEBUGLOG
+    m_LogFile << "ScopeLEDFluorescenceIlluminator::dtor" << std::endl;
+#endif
 }
 
 void ScopeLEDFluorescenceIlluminator::GetName(char* name) const
@@ -702,162 +790,114 @@ void ScopeLEDFluorescenceIlluminator::GetName(char* name) const
 
 int ScopeLEDFluorescenceIlluminator::Initialize()
 {
+#ifdef SCOPELED_DEBUGLOG
+    m_LogFile << "+ScopeLEDFluorescenceIlluminator::Initialize" << std::endl;
+#endif
+    
     if (NULL != m_hDevice)
         return DEVICE_OK;
 
+    long vid = 0;
+    int nRet = GetCurrentPropertyData("VendorID", vid);
+    if (nRet != DEVICE_OK) return nRet;
+
+    long pid = 0;
+    nRet = GetProperty("ProductID", pid);
+    if (nRet != DEVICE_OK) return nRet;
+
     char serial[MM::MaxStrLength];
     memset(serial, '\0', sizeof(serial));
-    GetProperty("InitSerialNumber", serial);
+    nRet = GetProperty("InitSerialNumber", serial);
+    if (nRet != DEVICE_OK) return nRet;
     bool no_serial = 0 == strlen(serial);
 
     if (no_serial)
     {
-        m_hDevice = g_USBCommAdapter.OpenFirstDevice((unsigned short)m_vid, (unsigned short)m_pid);
+        m_hDevice = g_USBCommAdapter.OpenFirstDevice((unsigned short)vid, (unsigned short)pid);
     }
     else
     {
-        m_hDevice = g_USBCommAdapter.OpenDevice((unsigned short)m_vid, (unsigned short)m_pid, serial);
+        m_hDevice = g_USBCommAdapter.OpenDevice((unsigned short)vid, (unsigned short)pid, serial);
     }
 
     if (NULL == m_hDevice) return DEVICE_NOT_CONNECTED;
 
+    ClearOpticalState();
     InitSerialNumber();
-    ClearOpticalState();    
 
-    int nRet = GetNumChannels(m_NumChannels);
+    nRet = GetNumChannels(m_NumChannels);
     if (nRet != DEVICE_OK) return nRet;
+
+#ifdef SCOPELED_DEBUGLOG
+    m_LogFile << "ScopeLEDFluorescenceIlluminator::Initialize> NumChannels = " << m_NumChannels << std::endl;
+#endif
 
     // set property list
     // -----------------
-    CPropertyAction* pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnVersion);
-    nRet = CreateProperty("Version", "0", MM::Integer, true, pAct);
+
+    std::stringstream strm;
+    strm << std::dec << GetVersion();
+    nRet = CreateProperty("Version", strm.str().c_str(), MM::Integer, true, NULL);
     if (nRet != DEVICE_OK) return nRet;
 
-    pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnSerialNumber);
-    nRet = CreateProperty("SerialNumber", "", MM::String, true, pAct);
+    nRet = CreateProperty("SerialNumber", m_SerialNumber.c_str(), MM::String, true, NULL);
     if (nRet != DEVICE_OK) return nRet;
 
-    pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnChannel1Brightness);
-    nRet = CreateProperty("Channel1Brightness", "0.0", MM::Float, false, pAct);
+    long ActiveChannel;
+    nRet = GetActiveChannel(ActiveChannel);
     if (nRet != DEVICE_OK) return nRet;
-    SetPropertyLimits("Channel1Brightness", 0.0, 100.0);
 
-    if (m_NumChannels > 1)
+    long wavelength = 0;    
+    strm.str("");
+    if ((ActiveChannel > 0) && (ActiveChannel <= m_NumChannels))
     {
-        pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnChannel2Brightness);
-        nRet = CreateProperty("Channel2Brightness", "0.0", MM::Float, false, pAct);
+        nRet = GetChannelWavelength(ActiveChannel, wavelength);
         if (nRet != DEVICE_OK) return nRet;
-        SetPropertyLimits("Channel2Brightness", 0.0, 100.0);
-
-        if (m_NumChannels > 2)
+        
+        if (wavelength > 0)
         {
-            pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnChannel3Brightness);
-            nRet = CreateProperty("Channel3Brightness", "0.0", MM::Float, false, pAct);
-            if (nRet != DEVICE_OK) return nRet;
-            SetPropertyLimits("Channel3Brightness", 0.0, 100.0);
-
-            pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnChannel4Brightness);
-            nRet = CreateProperty("Channel4Brightness", "0.0", MM::Float, false, pAct);
-            if (nRet != DEVICE_OK) return nRet;
-            SetPropertyLimits("Channel4Brightness", 0.0, 100.0);
+            strm << std::dec << wavelength << "nm";
         }
-
-        /*
-        pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnLEDGroup);
-        nRet = CreateProperty("LEDGroup", "0", MM::Integer, false, pAct);
-        if (nRet != DEVICE_OK) return nRet;
-        if (m_NumChannels == 2)
+    }
+    else strm << "None";
+    
+    CPropertyAction* pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnActiveWavelength);
+    nRet = CreateProperty("ActiveWavelength", strm.str().c_str(), MM::String, false, pAct);
+    if (nRet != DEVICE_OK) return nRet;
+    for (long channel=1; channel <= m_NumChannels; channel++)
+    {
+        if (DEVICE_OK == GetChannelWavelength(channel, wavelength))
         {
-            AddAllowedValue("LEDGroup", "0"); // State Not Set
-            AddAllowedValue("LEDGroup", "1"); // WL1
-            AddAllowedValue("LEDGroup", "2"); // WL2
-            AddAllowedValue("LEDGroup", "5"); // WL1+WL2
+            strm.str("");
+            strm << std::dec << wavelength << "nm";
+            AddAllowedValue("ActiveWavelength", strm.str().c_str(), channel);
         }
-        else
-        {
-            SetPropertyLimits("LEDGroup", MIN_FMI_LED_GROUP, MAX_FMI_LED_GROUP);
-        }
-        */
     }
 
-    pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnLEDGroup);
-    nRet = CreateProperty("LEDGroup", "0", MM::Integer, false, pAct);
+    double CurrentIntensity = 0.0;
+    if ((ActiveChannel > 0) && (ActiveChannel <= m_NumChannels))
+    {
+        nRet = GetChannelBrightness(ActiveChannel, CurrentIntensity);
+        if (nRet != DEVICE_OK) return nRet;
+    }
+    strm.str("");
+    strm << std::fixed << std::setprecision(3) << CurrentIntensity;
+    pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnIntensity);
+    nRet = CreateProperty("Intensity", strm.str().c_str(), MM::Float, false, pAct);
     if (nRet != DEVICE_OK) return nRet;
-    SetPropertyLimits("LEDGroup", MIN_FMI_LED_GROUP, m_NumChannels);
+    SetPropertyLimits("Intensity", 0.0, 100.0);
 
-    pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnLEDGroup1Channels);
-    nRet = CreateProperty("LEDGroup1Channels", "0", MM::Integer, true, pAct);
+    long mode;
+    nRet = GetControlMode(mode);
     if (nRet != DEVICE_OK) return nRet;
-
-    pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnLEDGroup2Channels);
-    nRet = CreateProperty("LEDGroup2Channels", "0", MM::Integer, true, pAct);
-    if (nRet != DEVICE_OK) return nRet;
-
-    pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnLEDGroup3Channels);
-    nRet = CreateProperty("LEDGroup3Channels", "0", MM::Integer, true, pAct);
-    if (nRet != DEVICE_OK) return nRet;
-
-    pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnLEDGroup4Channels);
-    nRet = CreateProperty("LEDGroup4Channels", "0", MM::Integer, true, pAct);
-    if (nRet != DEVICE_OK) return nRet;
-
-    pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnLEDGroup5Channels);
-    nRet = CreateProperty("LEDGroup5Channels", "0", MM::Integer, true, pAct);
-    if (nRet != DEVICE_OK) return nRet;
-
-    pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnLEDGroup6Channels);
-    nRet = CreateProperty("LEDGroup6Channels", "0", MM::Integer, true, pAct);
-    if (nRet != DEVICE_OK) return nRet;
-
-    pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnLEDGroup7Channels);
-    nRet = CreateProperty("LEDGroup7Channels", "0", MM::Integer, true, pAct);
-    if (nRet != DEVICE_OK) return nRet;
-
-    pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnLEDGroup8Channels);
-    nRet = CreateProperty("LEDGroup8Channels", "0", MM::Integer, true, pAct);
-    if (nRet != DEVICE_OK) return nRet;
-
-    pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnLEDGroup9Channels);
-    nRet = CreateProperty("LEDGroup9Channels", "0", MM::Integer, true, pAct);
-    if (nRet != DEVICE_OK) return nRet;
-
-    pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnChannel1Wavelength);
-    nRet = CreateProperty("Channel1Wavelength", "0", MM::Integer, true, pAct);
-    if (nRet != DEVICE_OK) return nRet;
-
-    pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnChannel2Wavelength);
-    nRet = CreateProperty("Channel2Wavelength", "0", MM::Integer, true, pAct);
-    if (nRet != DEVICE_OK) return nRet;
-
-    pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnChannel3Wavelength);
-    nRet = CreateProperty("Channel3Wavelength", "0", MM::Integer, true, pAct);
-    if (nRet != DEVICE_OK) return nRet;
-
-    pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnChannel4Wavelength);
-    nRet = CreateProperty("Channel4Wavelength", "0", MM::Integer, true, pAct);
-    if (nRet != DEVICE_OK) return nRet;
-
     pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnControlMode);
-    nRet = CreateProperty("ControlMode", "1", MM::Integer, false, pAct);
+    nRet = CreateProperty("ControlMode", s_ControModeStrings[mode], MM::String, false, pAct);
     if (nRet != DEVICE_OK) return nRet;
-    SetPropertyLimits("ControlMode", 1, 3);
-
-    pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnControlModeString);
-    nRet = CreateProperty("ControlModeDescription", "", MM::String, true, pAct);
-    if (nRet != DEVICE_OK) return nRet;
-
-    pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnActiveChannelString);
-    nRet = CreateProperty("ActiveChannels", "", MM::String, true, pAct);
-    if (nRet != DEVICE_OK) return nRet;
-
-    pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnActiveWavelengthString);
-    nRet = CreateProperty("ActiveWavelengths", "", MM::String, true, pAct);
-    if (nRet != DEVICE_OK) return nRet;
-
-    pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnOptimalPositionString);
-    nRet = CreateProperty("OptimalStagePosition", "", MM::String, true, pAct);
-    if (nRet != DEVICE_OK) return nRet;
-    
+    for (mode=1; mode < MAX_CONTROL_MODE; mode++)
+    {
+        AddAllowedValue("ControlMode", s_ControModeStrings[mode], mode);
+    }
+        
     // state
     pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnState);
     nRet = CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct);
@@ -866,6 +906,11 @@ int ScopeLEDFluorescenceIlluminator::Initialize()
     AddAllowedValue(MM::g_Keyword_State, "1"); // Open
 
     nRet = UpdateStatus();
+
+#ifdef SCOPELED_DEBUGLOG
+    m_LogFile << "-ScopeLEDFluorescenceIlluminator::Initialize" << std::endl;
+#endif
+    
     return nRet;
 }
 
@@ -877,11 +922,6 @@ int ScopeLEDFluorescenceIlluminator::SetOpen(bool open)
 int ScopeLEDFluorescenceIlluminator::GetOpen(bool& open)
 {
     return GetShutter(open);
-}
-
-bool ScopeLEDFluorescenceIlluminator::CheckGroupValid(long group)
-{
-    return (group >= MIN_FMI_LED_GROUP) && (group <= MAX_FMI_LED_GROUP);
 }
 
 int ScopeLEDFluorescenceIlluminator::GetNumChannels(long& count)
@@ -902,7 +942,7 @@ int ScopeLEDFluorescenceIlluminator::GetNumChannels(long& count)
     unsigned long cbRxBuffer = sizeof(RxBuffer);
     int result = Transact(cmdbuf, sizeof(cmdbuf), RxBuffer, &cbRxBuffer);
 
-    if ((DEVICE_OK == result) && (cbRxBuffer >= 5))
+    if ((DEVICE_OK == result) && (cbRxBuffer == 7) && (0==RxBuffer[3]))
     {
         count = RxBuffer[4];
     }
@@ -914,14 +954,21 @@ int ScopeLEDFluorescenceIlluminator::GetNumChannels(long& count)
 }
 
 
-int ScopeLEDFluorescenceIlluminator::SetChannelBrightness(int channel, double brightness)
+int ScopeLEDFluorescenceIlluminator::SetChannelBrightness(long channel, double brightness)
 {
+#ifdef SCOPELED_DEBUGLOG
+    m_LogFile << "+ScopeLEDFluorescenceIlluminator::SetChannelBrightness. Channel="
+            << std::dec << channel
+            << ". Intensity=" << std::fixed << std::setprecision(2) << brightness
+            << std::endl;
+#endif
+    
     unsigned char cmdbuf[8];
     memset(cmdbuf, 0, sizeof(cmdbuf));
     cmdbuf[0] = 0xA9;  // Start Byte
     cmdbuf[1] = 0x05;  // Length Byte
     cmdbuf[2] =   28;  // Command Byte - MSG_SET_BRIGHTNESS
-    cmdbuf[3] = (unsigned char) (channel+1);  // Channel
+    cmdbuf[3] = (unsigned char) channel;  // Channel
     cmdbuf[7] = 0x5C;  // End Byte
 
     unsigned char* const pChecksum = &cmdbuf[6];
@@ -933,21 +980,30 @@ int ScopeLEDFluorescenceIlluminator::SetChannelBrightness(int channel, double br
 
     *pChecksum = g_USBCommAdapter.CalculateChecksum(pStart, *pStart);
 
-    return Transact(cmdbuf, sizeof(cmdbuf));
+    const int result = Transact(cmdbuf, sizeof(cmdbuf));
+#ifdef SCOPELED_DEBUGLOG
+    m_LogFile << "+ScopeLEDFluorescenceIlluminator::SetChannelBrightness. Result=" << std::dec << result << "." << std::endl;
+#endif
+    return result;
 }
 
-int ScopeLEDFluorescenceIlluminator::GetChannelBrightness(int channel, double& brightness)
+int ScopeLEDFluorescenceIlluminator::GetChannelBrightness(long channel, double& brightness)
 {
+#ifdef SCOPELED_DEBUGLOG
+    m_LogFile << "+ScopeLEDFluorescenceIlluminator::GetChannelBrightness. Channel=" << std::dec << channel
+            << "." << std::endl;
+#endif
+    
     unsigned char cmdbuf[6];
     memset(cmdbuf, 0, sizeof(cmdbuf));
     cmdbuf[0] = 0xA9;  // Start Byte
     cmdbuf[1] = 0x03;  // Length Byte
     cmdbuf[2] =   27;  // Command Byte - MSG_GET_BRIGHTNESS
-    cmdbuf[3] = (unsigned char) (channel+1);  // Channel
+    cmdbuf[3] = (unsigned char) channel;  // Channel
     cmdbuf[5] = 0x5C;  // End Byte
 
     unsigned char* const pChecksum = &cmdbuf[4];
-    unsigned char* const pStart = &cmdbuf[1];    
+    unsigned char* const pStart = &cmdbuf[1];
 
     *pChecksum = g_USBCommAdapter.CalculateChecksum(pStart, *pStart);
 
@@ -955,7 +1011,7 @@ int ScopeLEDFluorescenceIlluminator::GetChannelBrightness(int channel, double& b
     unsigned long cbRxBuffer = sizeof(RxBuffer);
     int result = Transact(cmdbuf, sizeof(cmdbuf), RxBuffer, &cbRxBuffer);
 
-    if ((DEVICE_OK == result) && (cbRxBuffer >= 6))
+    if ((DEVICE_OK == result) && (cbRxBuffer == 8) && (0==RxBuffer[3]))
     {
         unsigned short b = (RxBuffer[4] << 8) | RxBuffer[5];
         brightness = b / 10.0;
@@ -964,54 +1020,59 @@ int ScopeLEDFluorescenceIlluminator::GetChannelBrightness(int channel, double& b
     {
         brightness = 0.0;
     }
+#ifdef SCOPELED_DEBUGLOG
+    m_LogFile << "-ScopeLEDFluorescenceIlluminator::GetChannelBrightness. Channel=" << std::dec << channel
+            << ". Brightness=" << std::fixed << std::setprecision(2) << brightness
+            << ". Result=" << std::dec << result << "." << std::endl;
+#endif
     return result;
 }
 
-int ScopeLEDFluorescenceIlluminator::OnChannelBrightness(int index, MM::PropertyBase* pProp, MM::ActionType eAct)
+int ScopeLEDFluorescenceIlluminator::OnIntensity(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-    double brightness = 0.0;
+#ifdef SCOPELED_DEBUGLOG
+    m_LogFile << "+ScopeLEDFluorescenceIlluminator::OnIntensity" << std::endl;
+#endif
+    
     int result = DEVICE_OK;
-    if (eAct == MM::BeforeGet)
+    if (eAct == MM::AfterSet)
     {
-        result = GetChannelBrightness(index, brightness);
-        if (DEVICE_OK == result)
+        double intensity = 0.0;
+        if (pProp->Get(intensity))
         {
-            pProp->Set(brightness);
+#ifdef SCOPELED_DEBUGLOG
+            m_LogFile << "ScopeLEDFluorescenceIlluminator::OnIntensity. Intensity=" << std::fixed << std::setprecision(2) << intensity << std::endl;
+#endif
+            long channel;
+            result = GetCurrentPropertyData("ActiveWavelength", channel);
+            if (DEVICE_OK == result)
+            {
+#ifdef SCOPELED_DEBUGLOG
+                m_LogFile << "ScopeLEDFluorescenceIlluminator::OnIntensity. Channel=" << std::dec << channel << std::endl;
+#endif
+                result = SetChannelBrightness(channel, intensity);
+            }
         }
+        else result = DEVICE_NO_PROPERTY_DATA;
     }
-    else if (eAct == MM::AfterSet)
-    {
-        pProp->Get(brightness);
-        result = SetChannelBrightness(index, brightness);
-    }
+#ifdef SCOPELED_DEBUGLOG
+    m_LogFile << "-ScopeLEDFluorescenceIlluminator::OnIntensity. Result=" << std::dec << result << std::endl;
+#endif
     return result;
 }
 
-int ScopeLEDFluorescenceIlluminator::OnChannel1Brightness(MM::PropertyBase* pProp, MM::ActionType eAct)
+int ScopeLEDFluorescenceIlluminator::SetActiveChannel(long channel)
 {
-    return OnChannelBrightness(0, pProp, eAct);
-}
-int ScopeLEDFluorescenceIlluminator::OnChannel2Brightness(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-    return OnChannelBrightness(1, pProp, eAct);
-}
-int ScopeLEDFluorescenceIlluminator::OnChannel3Brightness(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-    return OnChannelBrightness(2, pProp, eAct);
-}
-int ScopeLEDFluorescenceIlluminator::OnChannel4Brightness(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-    return OnChannelBrightness(3, pProp, eAct);
-}
-
-int ScopeLEDFluorescenceIlluminator::SetLEDGroup(long group)
-{
+#ifdef SCOPELED_DEBUGLOG
+    m_LogFile << "ScopeLEDFluorescenceIlluminator::SetActiveChannel" << std::endl;
+#endif
+    
     unsigned char cmdbuf[6];
     memset(cmdbuf, 0, sizeof(cmdbuf));
     cmdbuf[0] = 0xA9;  // Start Byte
     cmdbuf[1] = 0x03;  // Length Byte
     cmdbuf[2] =   70;  // Command Byte - MSG_SET_LED_GROUP_STATE
-    cmdbuf[3] = (unsigned char) group;
+    cmdbuf[3] = (unsigned char) channel;
     cmdbuf[5] = 0x5C;  // End Byte
 
     unsigned char* const pChecksum = &cmdbuf[4];
@@ -1023,14 +1084,20 @@ int ScopeLEDFluorescenceIlluminator::SetLEDGroup(long group)
 
     if (DEVICE_OK == result)
     {
-        m_CachedLEDGroup = group;
+        long intensity;
+        GetProperty("Intensity", intensity);
+        result = SetChannelBrightness(channel, intensity);
     }
 
     return result;
 }
 
-int ScopeLEDFluorescenceIlluminator::GetLEDGroup(long& group)
+int ScopeLEDFluorescenceIlluminator::GetActiveChannel(long& channel)
 {
+#ifdef SCOPELED_DEBUGLOG
+    m_LogFile << "ScopeLEDFluorescenceIlluminator::GetActiveChannel" << std::endl;
+#endif
+    
     unsigned char cmdbuf[5];
     memset(cmdbuf, 0, sizeof(cmdbuf));
     cmdbuf[0] = 0xA9;  // Start Byte
@@ -1047,140 +1114,67 @@ int ScopeLEDFluorescenceIlluminator::GetLEDGroup(long& group)
     unsigned long cbRxBuffer = sizeof(RxBuffer);
     int result = Transact(cmdbuf, sizeof(cmdbuf), RxBuffer, &cbRxBuffer);
 
-    if ((DEVICE_OK == result) && (cbRxBuffer >= 5))
+    if ((DEVICE_OK == result) && (cbRxBuffer == 7) && (0==RxBuffer[3]))
     {
-        group = RxBuffer[4];
-        m_CachedLEDGroup = group;
+        channel = RxBuffer[4];
     }
     else
     {
-        group = 0;
+        channel = 0;
     }    
     return result;
 }
 
-int ScopeLEDFluorescenceIlluminator::OnLEDGroup(MM::PropertyBase* pProp, MM::ActionType eAct)
+int ScopeLEDFluorescenceIlluminator::OnActiveWavelength(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-    long group = 0;
+#ifdef SCOPELED_DEBUGLOG
+    m_LogFile << "+ScopeLEDFluorescenceIlluminator::OnActiveWavelength" << std::endl;
+#endif
+    
     int result = DEVICE_OK;
-    if (eAct == MM::BeforeGet)
+    if (eAct == MM::AfterSet)
     {
-        result = GetLEDGroup(group);
-        if (DEVICE_OK == result)
+        std::string strWavelength;        
+        if (pProp->Get(strWavelength))
         {
-            pProp->Set(group);
+            long channel;
+            /*pProp->GetData(strWavelength.c_str(), channel))*/
+            result = GetPropertyData("ActiveWavelength", strWavelength.c_str(), channel);
+            if (DEVICE_OK == result)
+            {
+                result = SetActiveChannel(channel);
+            }
         }
+        else result = DEVICE_NO_PROPERTY_DATA;
     }
-    else if (eAct == MM::AfterSet)
-    {
-        pProp->Get(group);
-        result = SetLEDGroup(group);
-    }
+#ifdef SCOPELED_DEBUGLOG
+    m_LogFile << "-ScopeLEDFluorescenceIlluminator::OnActiveWavelength. Result=" << std::dec << result << std::endl;
+#endif
     return result;
 }
 
-int ScopeLEDFluorescenceIlluminator::GetLEDGroupChannels(int group, long& channels)
-{
-   int result = DEVICE_OK;
-    
-    if (!led_group_channels_initialized[group])
-    {
-        unsigned char cmdbuf[6];
-        memset(cmdbuf, 0, sizeof(cmdbuf));
-        cmdbuf[0] = 0xA9;  // Start Byte
-        cmdbuf[1] = 0x03;  // Length Byte
-        cmdbuf[2] =   72;  // Command Byte - MSG_GET_LED_GROUP_STATE_CHANNELS
-        cmdbuf[3] = (unsigned char) group;
-        cmdbuf[5] = 0x5C;  // End Byte
-
-        unsigned char* const pChecksum = &cmdbuf[4];
-        unsigned char* const pStart = &cmdbuf[1];
-
-        *pChecksum = g_USBCommAdapter.CalculateChecksum(pStart, *pStart);
-
-        unsigned char RxBuffer[16];
-        unsigned long cbRxBuffer = sizeof(RxBuffer);
-        int result = Transact(cmdbuf, sizeof(cmdbuf), RxBuffer, &cbRxBuffer);
-
-        if ((DEVICE_OK == result) && (cbRxBuffer >= 5))
-        {
-            led_group_channels[group] = RxBuffer[4];
-            led_group_channels_initialized[group] = true;
-        }
-        else
-        {
-            led_group_channels[group] = 0;
-        }
-    }
-    channels = led_group_channels[group];
-    
-    return result;
-}
-
-int ScopeLEDFluorescenceIlluminator::OnLEDGroupChannels(int group, MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-    int result = DEVICE_CAN_NOT_SET_PROPERTY;
-    if (eAct == MM::BeforeGet)
-    {
-        long channels = 0;
-        result = GetLEDGroupChannels(group, channels);
-        if (DEVICE_OK == result)
-        {
-            pProp->Set(channels);
-        }
-    }
-    return result;
-}
-
-int ScopeLEDFluorescenceIlluminator::OnLEDGroup1Channels(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-    return OnLEDGroupChannels(1, pProp, eAct);
-}
-int ScopeLEDFluorescenceIlluminator::OnLEDGroup2Channels(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-    return OnLEDGroupChannels(2, pProp, eAct);
-}
-int ScopeLEDFluorescenceIlluminator::OnLEDGroup3Channels(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-    return OnLEDGroupChannels(3, pProp, eAct);
-}
-int ScopeLEDFluorescenceIlluminator::OnLEDGroup4Channels(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-    return OnLEDGroupChannels(4, pProp, eAct);
-}
-int ScopeLEDFluorescenceIlluminator::OnLEDGroup5Channels(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-    return OnLEDGroupChannels(5, pProp, eAct);
-}
-int ScopeLEDFluorescenceIlluminator::OnLEDGroup6Channels(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-    return OnLEDGroupChannels(6, pProp, eAct);
-}
-int ScopeLEDFluorescenceIlluminator::OnLEDGroup7Channels(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-    return OnLEDGroupChannels(7, pProp, eAct);
-}
-int ScopeLEDFluorescenceIlluminator::OnLEDGroup8Channels(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-    return OnLEDGroupChannels(8, pProp, eAct);
-}
-int ScopeLEDFluorescenceIlluminator::OnLEDGroup9Channels(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-    return OnLEDGroupChannels(9, pProp, eAct);
-}
-
-int ScopeLEDFluorescenceIlluminator::GetChannelWavelength(int channel, long& wavelength)
+int ScopeLEDFluorescenceIlluminator::GetChannelWavelength(long channel, long& wavelength)
 {
     int result = DEVICE_OK;
 
-    if (!channel_wavelengths_initialized[channel])
+#ifdef SCOPELED_DEBUGLOG
+    m_LogFile << "+ScopeLEDFluorescenceIlluminator::GetChannelWavelength" << std::endl;
+#endif
+
+    wavelength = 0;
+    const long index = channel - 1;
+    if ((index < 0) || (index >= m_NumChannels))
+    {
+        return DEVICE_INVALID_INPUT_PARAM;
+    }
+    if (!channel_wavelengths_initialized[index])
     {
         unsigned char cmdbuf[6];
         memset(cmdbuf, 0, sizeof(cmdbuf));
         cmdbuf[0] = 0xA9;  // Start Byte
         cmdbuf[1] = 0x03;  // Length Byte
         cmdbuf[2] =   30;  // Command Byte - MSG_GET_CHANNEL_WAVELENGTH
-        cmdbuf[3] = (unsigned char) (channel+1);  // Channel
+        cmdbuf[3] = (unsigned char) channel;  // Channel
         cmdbuf[5] = 0x5C;  // End Byte
 
         unsigned char* const pChecksum = &cmdbuf[4];
@@ -1190,294 +1184,21 @@ int ScopeLEDFluorescenceIlluminator::GetChannelWavelength(int channel, long& wav
 
         unsigned char RxBuffer[16];
         unsigned long cbRxBuffer = sizeof(RxBuffer);
-        int result = Transact(cmdbuf, sizeof(cmdbuf), RxBuffer, &cbRxBuffer);
+        result = Transact(cmdbuf, sizeof(cmdbuf), RxBuffer, &cbRxBuffer);
 
-        if ((DEVICE_OK == result) && (cbRxBuffer >= 6))
+        if ((DEVICE_OK == result) && (cbRxBuffer == 8) && (0==RxBuffer[3]))
         {
-            channel_wavelengths[channel] = (RxBuffer[4] << 8) | RxBuffer[5];
+            channel_wavelengths[index] = (RxBuffer[4] << 8) | RxBuffer[5];
+            channel_wavelengths_initialized[index] = true;
         }
         else
         {
-            channel_wavelengths[channel] = 0;
+            channel_wavelengths[index] = 0;
         }
     }
-    wavelength = channel_wavelengths[channel];
+    wavelength = channel_wavelengths[index];
+#ifdef SCOPELED_DEBUGLOG
+    m_LogFile << "-ScopeLEDFluorescenceIlluminator::GetChannelWavelength index=" << index << ", wavelength=" << std::dec << wavelength << std::endl;
+#endif
     return result;
-}
-
-int ScopeLEDFluorescenceIlluminator::OnChannelWavelength(int index, MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-    long wavelength = 0;
-    int result = DEVICE_CAN_NOT_SET_PROPERTY;
-    if (eAct == MM::BeforeGet)
-    {
-        result = GetChannelWavelength(index, wavelength);
-        if (DEVICE_OK == result)
-        {
-            pProp->Set(wavelength);
-        }
-    }
-    return result;
-}
-
-int ScopeLEDFluorescenceIlluminator::OnChannel1Wavelength(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-    return OnChannelWavelength(0, pProp, eAct);
-}
-int ScopeLEDFluorescenceIlluminator::OnChannel2Wavelength(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-    return OnChannelWavelength(1, pProp, eAct);
-}
-int ScopeLEDFluorescenceIlluminator::OnChannel3Wavelength(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-    return OnChannelWavelength(2, pProp, eAct);
-}
-int ScopeLEDFluorescenceIlluminator::OnChannel4Wavelength(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-    return OnChannelWavelength(3, pProp, eAct);
-}
-
-int ScopeLEDFluorescenceIlluminator::UpdateActiveChannelString()
-{
-    int result = DEVICE_OK;
-    bool ok = CheckGroupValid(m_CachedLEDGroup);
-
-    if (!ok)
-    {
-        long group = 0;
-        result = GetLEDGroup(group);
-    }
-
-    ok = DEVICE_OK == result;
-    if (ok)
-    {
-        ok = CheckGroupValid(m_CachedLEDGroup);
-        if (ok)
-        {
-            if (m_ActiveChannels.led_group != m_CachedLEDGroup)
-            {
-                std::stringstream strm;
-                long channels = 0;
-                result = GetLEDGroupChannels(m_CachedLEDGroup, channels);
-                ok = DEVICE_OK == result;
-                if (ok)
-                {
-                    bool first = true;
-                    int i=1;
-                    while (channels)
-                    {
-                        if (channels & 0x1)
-                        {
-                            if (!first)
-                            {
-                                strm << ",";
-                            }
-                            strm << "Ch" << i;
-                            first = false;
-                        }
-                        channels = channels >> 1;
-                        i++;
-                    }
-                    m_ActiveChannels.led_group = m_CachedLEDGroup;
-                    m_ActiveChannels.info = strm.str();
-                }
-            }
-        }
-        else
-        {
-            result = DEVICE_INTERNAL_INCONSISTENCY;
-        }
-    }
-
-    if (!ok)
-    {
-        m_ActiveChannels.led_group = 0;
-        m_ActiveChannels.info.clear();
-    }
-    return result;
-}
-
-int ScopeLEDFluorescenceIlluminator::OnActiveChannelString(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-    long mode = 0;
-    if (eAct == MM::BeforeGet)
-    {
-        int result = UpdateActiveChannelString();
-        if (DEVICE_OK == result)
-        {
-            pProp->Set(m_ActiveChannels.info.c_str());
-        }
-        return result;                       
-    }                                           
-    return DEVICE_CAN_NOT_SET_PROPERTY;
-}
-
-int ScopeLEDFluorescenceIlluminator::UpdateActiveWavelengthString()
-{
-    int result = DEVICE_OK;
-    bool ok = CheckGroupValid(m_CachedLEDGroup);
-
-    if (!ok)
-    {
-        long group = 0;
-        result = GetLEDGroup(group);
-    }
-
-    ok = DEVICE_OK == result;
-    if (ok)
-    {
-        ok = CheckGroupValid(m_CachedLEDGroup);
-        if (ok)
-        {
-            if (m_ActiveWavelengths.led_group != m_CachedLEDGroup)
-            {
-                std::stringstream strm;
-                long channels = 0;
-                result = GetLEDGroupChannels(m_CachedLEDGroup, channels);
-                ok = DEVICE_OK == result;
-                if (ok)
-                {
-                    bool first = true;
-                    int i=1;
-                    while (channels)
-                    {
-                        if (channels & 0x1)
-                        {
-                            long wavelength = 0;
-                            result = GetChannelWavelength(i-1, wavelength);
-                            if ((DEVICE_OK == result) && (wavelength > 0))
-                            {
-                                if (!first)
-                                {
-                                    strm << ",";
-                                }                        
-                                strm << wavelength << "nm";
-                                first = false;
-                            }
-                        }
-                        channels = channels >> 1;
-                        i++;
-                    }
-                    m_ActiveWavelengths.led_group = m_CachedLEDGroup;
-                    m_ActiveWavelengths.info = strm.str();
-                }
-            }
-        }
-        else
-        {
-            result = DEVICE_INTERNAL_INCONSISTENCY;
-        }
-    }
-
-    if (!ok)
-    {
-        m_ActiveWavelengths.led_group = 0;
-        m_ActiveWavelengths.info.clear();
-    }
-    return result;
-}
-
-int ScopeLEDFluorescenceIlluminator::OnActiveWavelengthString(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-    long mode = 0;
-    if (eAct == MM::BeforeGet)
-    {
-        int result = UpdateActiveWavelengthString();
-        if (DEVICE_OK == result)
-        {
-            pProp->Set(m_ActiveWavelengths.info.c_str());
-        }
-        return result;                       
-    }                                           
-    return DEVICE_CAN_NOT_SET_PROPERTY;
-}
-
-
-int ScopeLEDFluorescenceIlluminator::GetOptimalPositionString(std::string& str)
-{
-    static const char* OptimalPositions_4WL[] =
-    {
-        "",
-        "X1,Y1",
-        "X3,Y1",
-        "X3,Y3",
-        "X1,Y3",
-        "X2,Y1",
-        "X3,Y2",
-        "X2,Y3",
-        "X1,Y2",
-        "X2,Y2"
-    };
-
-    static const char* OptimalPositions_2WL[] =
-    {
-        "",
-        "X1",
-        "X3",
-        "",
-        "",
-        "X2"
-    };
-    
-    int result = DEVICE_OK;
-    bool ok = CheckGroupValid(m_CachedLEDGroup);
-
-    if (!ok)
-    {
-        long group = 0;
-        result = GetLEDGroup(group);
-    }
-
-    str.clear();
-
-    ok = DEVICE_OK == result;
-    if (ok)
-    {
-        ok = CheckGroupValid(m_CachedLEDGroup);
-        if (ok)
-        {
-            switch (m_NumChannels)
-            {
-            case 1:
-                // There is no position adjustment necessary.
-                break;
-            case 2:
-                if (m_CachedLEDGroup <= 5)
-                {
-                    str = OptimalPositions_2WL[m_CachedLEDGroup];
-                }
-                break;
-            case 4:
-                if (m_CachedLEDGroup <= 9)
-                {
-                    str = OptimalPositions_4WL[m_CachedLEDGroup];
-                }
-                break;
-            default:
-                // Device is probably not configured. Just leave this property blank.
-                break;
-            }
-        }
-        else
-        {
-            result = DEVICE_INTERNAL_INCONSISTENCY;
-        }
-    }
-    return result;
-}
-
-int ScopeLEDFluorescenceIlluminator::OnOptimalPositionString(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-    long mode = 0;
-    if (eAct == MM::BeforeGet)
-    {
-        std::string str;
-        int result = GetOptimalPositionString(str);
-        if (DEVICE_OK == result)
-        {
-            pProp->Set(str.c_str());
-        }
-        return result;                       
-    }                                           
-    return DEVICE_CAN_NOT_SET_PROPERTY;
 }

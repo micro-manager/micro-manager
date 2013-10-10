@@ -1,6 +1,6 @@
 /*
 ScopeLED Device Adapters for Micro-Manager. 
-Copyright (C) 2011-2012 ScopeLED
+Copyright (C) 2011-2013 ScopeLED
 
 This adapter is free software: you can redistribute it and/or modify
 it under the terms of the GNU Lesser General Public License as
@@ -27,7 +27,12 @@ License along with this software.  If not, see
 #include <time.h>
 #include <fstream>
 
-//#define SCOPELED_DEBUGLOG
+#define SCOPELED_DEBUGLOG
+
+#define DICON_USB_VID_NEW 0x24C2
+#define DICON_USB_VID_OLD 0xC251
+#define QUOTE(str) #str
+#define STR(str) QUOTE(str)
 
 template <class T> class ScopeLEDBasicIlluminator : public CShutterBase<T>
 {
@@ -42,10 +47,11 @@ protected:
     long m_TxnTime;
     long m_lastDeviceResult;
 
-    long m_vid,m_pid;
     HANDLE m_evAbortRx;
 
     std::string m_SerialNumber;
+    static const char* const s_ControModeStrings[];
+    static const long MAX_CONTROL_MODE;
 
     static unsigned long DefaultTimeoutRx()
     {
@@ -135,6 +141,9 @@ protected:
 
     void InitSerialNumber()
     {
+#ifdef SCOPELED_DEBUGLOG
+        m_LogFile << "+ScopeLEDBasicIlluminator::InitSerialNumber" << std::endl;
+#endif
         char* pBuffer = NULL;
         unsigned long cbBuffer = 0;
         g_USBCommAdapter.GetSerialNumber(m_hDevice, NULL, &cbBuffer);
@@ -154,7 +163,7 @@ protected:
 #ifdef SCOPELED_DEBUGLOG
             else
             {
-                m_LogFile << "ScopeLEDBasicIlluminator InitSerialNumber Failed B, " << result << std::endl;
+                m_LogFile << "ScopeLEDBasicIlluminator InitSerialNumber Failed B, " << std::dec << result << std::endl;
             }
 #endif
             delete [] pBuffer;
@@ -164,6 +173,9 @@ protected:
         {
             m_LogFile << "ScopeLEDBasicIlluminator InitSerialNumber Failed A, " << cbBuffer << std::endl;
         }
+#endif
+#ifdef SCOPELED_DEBUGLOG
+        m_LogFile << "-ScopeLEDBasicIlluminator::InitSerialNumber" << std::endl;
 #endif
     }
 
@@ -199,6 +211,9 @@ protected:
                 }
             }
         }
+#ifdef SCOPELED_DEBUGLOG
+        m_LogFile << "ScopeLEDBasicIlluminator GetVersion, version=" << m_version << std::endl;
+#endif
         return m_version;
     }
 
@@ -218,7 +233,7 @@ protected:
         *pChecksum = g_USBCommAdapter.CalculateChecksum(pStart, *pStart);
         int result = Transact(cmdbuf, sizeof(cmdbuf));
 #ifdef SCOPELED_DEBUGLOG
-        m_LogFile << "ScopeLEDBasicIlluminator SetShutter, " << result << std::endl;
+        m_LogFile << "ScopeLEDBasicIlluminator SetShutter. Result=" << std::dec << result << std::endl;
 #endif
         return result;
     }
@@ -241,7 +256,7 @@ protected:
         unsigned long cbRxBuffer = sizeof(RxBuffer);
         int result = Transact(cmdbuf, sizeof(cmdbuf), RxBuffer, &cbRxBuffer);
 
-        if ((DEVICE_OK == result) && (cbRxBuffer >= 5))
+        if ((DEVICE_OK == result) && (cbRxBuffer == 7) && (0==RxBuffer[3]))
         {
             open = 0 != RxBuffer[4];
         }
@@ -250,7 +265,7 @@ protected:
             open = false;
         }
 #ifdef SCOPELED_DEBUGLOG
-        m_LogFile << "ScopeLEDBasicIlluminator GetShutter, " << result << std::endl;
+        m_LogFile << "ScopeLEDBasicIlluminator GetShutter. Open=" << std::dec << open << ". Result=" << std::dec << result << std::endl;
 #endif
         return result;
     }
@@ -269,11 +284,20 @@ protected:
         unsigned char* const pStart = &cmdbuf[1];
 
         *pChecksum = g_USBCommAdapter.CalculateChecksum(pStart, *pStart);
-        return Transact(cmdbuf, sizeof(cmdbuf));
+        const int result = Transact(cmdbuf, sizeof(cmdbuf));
+
+#ifdef SCOPELED_DEBUGLOG
+        m_LogFile << "ScopeLEDBasicIlluminator SetControlMode, mode=" << mode << ". Result=" << std::dec << result << "." << std::endl;
+#endif
+        return result;
     }
 
     int GetControlMode(long& mode)
     {
+#ifdef SCOPELED_DEBUGLOG
+        m_LogFile << "+ScopeLEDBasicIlluminator GetControlMode" << std::endl;
+#endif
+
         unsigned char cmdbuf[5];
         memset(cmdbuf, 0, sizeof(cmdbuf));
         cmdbuf[0] = 0xA9;  // Start Byte
@@ -290,7 +314,7 @@ protected:
         unsigned long cbRxBuffer = sizeof(RxBuffer);
         int result = Transact(cmdbuf, sizeof(cmdbuf), RxBuffer, &cbRxBuffer);
 
-        if ((DEVICE_OK == result) && (cbRxBuffer >= 5))
+        if ((DEVICE_OK == result) && (cbRxBuffer == 7) && (0==RxBuffer[3]))
         {
             mode = RxBuffer[4];
         }
@@ -298,6 +322,9 @@ protected:
         {
             mode = 0;
         }
+#ifdef SCOPELED_DEBUGLOG
+        m_LogFile << "-ScopeLEDBasicIlluminator GetControlMode, mode=" << std::dec << mode << ". Result=" << std::dec << result << std::endl;
+#endif
         return result;
     }
 
@@ -309,8 +336,7 @@ protected:
 public:
     ScopeLEDBasicIlluminator() :
         m_hDevice(NULL),
-        m_TxnTime(0), m_lastDeviceResult(-1), 
-        m_vid(0x24C2), m_pid(0), m_version(0),
+        m_TxnTime(0), m_lastDeviceResult(-1), m_version(0),
         m_evAbortRx(CreateEvent(NULL, TRUE, FALSE, NULL))
 #ifdef SCOPELED_DEBUGLOG
         ,m_LogFile("c:\\mmlog.txt"/* std::ios_base::out | std::ios_base::app*/)
@@ -356,40 +382,6 @@ public:
         return DEVICE_UNSUPPORTED_COMMAND;
     }
 
-    // action interface
-    int OnVendorID(MM::PropertyBase* pProp, MM::ActionType eAct)
-    {
-        if (eAct == MM::BeforeGet)
-        {
-            pProp->Set(m_vid);
-        }
-        else if (eAct == MM::AfterSet)
-        {
-            pProp->Get(m_vid);
-        }
-        return DEVICE_OK;
-    }
-    int OnProductID(MM::PropertyBase* pProp, MM::ActionType eAct)
-    {
-        if (eAct == MM::BeforeGet)
-        {
-            pProp->Set(m_pid);
-        }
-        else if (eAct == MM::AfterSet)
-        {
-            pProp->Get(m_pid);
-        }
-        return DEVICE_OK;
-    }
-    int OnSerialNumber(MM::PropertyBase* pProp, MM::ActionType eAct)
-    {
-        if (eAct == MM::BeforeGet)
-        {
-            pProp->Set(m_SerialNumber.c_str());
-            return DEVICE_OK;
-        }
-        return DEVICE_CAN_NOT_SET_PROPERTY;
-    }    
     int OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
     {
         int result = DEVICE_OK;
@@ -453,58 +445,35 @@ public:
 
     int OnControlMode(MM::PropertyBase* pProp, MM::ActionType eAct)
     {
+#ifdef SCOPELED_DEBUGLOG
+        m_LogFile << "+ScopeLEDBasicIlluminator::OnControlMode" << std::endl;
+#endif
         int result = DEVICE_OK;
-        long mode = 0;
-        if (eAct == MM::BeforeGet)
+        if (eAct == MM::AfterSet)
         {
-            result = GetControlMode(mode);
-            if (DEVICE_OK == result)
+            std::string strMode;
+            if (pProp->Get(strMode))
             {
-                pProp->Set(mode);
-            }
-        }
-        else if (eAct == MM::AfterSet)
-        {
-            pProp->Get(mode);
-            result = SetControlMode(mode);
-        }
-        return result;
-    }
-
-    int OnControlModeString(MM::PropertyBase* pProp, MM::ActionType eAct)
-    {
-        int result = DEVICE_CAN_NOT_SET_PROPERTY;   
-        if (eAct == MM::BeforeGet)
-        {
-            long mode = 0;
-            std::string mode_str;
-            result = GetControlMode(mode);
-            if (DEVICE_OK == result)
-            {
-                switch (mode)
+                long mode;
+                /*pProp->GetData(strMode.c_str(), mode))*/
+                result = GetPropertyData("ControlMode", strMode.c_str(), mode);
+                if (DEVICE_OK == result)
                 {
-                    case 0:
-                        mode_str = "";
-                        break;
-                    case 1:
-                        mode_str = "Normal Control Mode";
-                        break;
-                    case 2:
-                        mode_str = "Analog Control Mode";
-                        break;
-                    case 3:
-                        mode_str = "TTL Control Mode";
-                        break;
-                    default:
-                        mode_str = "Unrecognized Control Mode";
-                        break;
+                    result = SetControlMode(mode);
                 }
-                pProp->Set(mode_str.c_str());
             }
+            else result = DEVICE_NO_PROPERTY_DATA;
         }
+#ifdef SCOPELED_DEBUGLOG
+        m_LogFile << "-ScopeLEDBasicIlluminator::OnControlMode" << std::endl;
+#endif
         return result;
     }
 };
+
+
+template <class T> const char* const ScopeLEDBasicIlluminator<T>::s_ControModeStrings[] = { "", "Normal", "Analog", "TTL" };
+template <class T> const long ScopeLEDBasicIlluminator<T>::MAX_CONTROL_MODE = 4L;
 
 #endif
 
