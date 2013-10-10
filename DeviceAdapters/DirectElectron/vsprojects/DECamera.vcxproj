@@ -49,25 +49,25 @@
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="buildProps2008.props" />
+    <Import Project="buildProps.props" />
     <Import Project="..\..\..\buildscripts\VisualStudio\MMCommon.props" />
     <Import Project="..\..\..\buildscripts\VisualStudio\MMDeviceAdapter.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="buildProps2008.props" />
+    <Import Project="buildProps.props" />
     <Import Project="..\..\..\buildscripts\VisualStudio\MMCommon.props" />
     <Import Project="..\..\..\buildscripts\VisualStudio\MMDeviceAdapter.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="buildProps2008.props" />
+    <Import Project="buildProps.props" />
     <Import Project="..\..\..\buildscripts\VisualStudio\MMCommon.props" />
     <Import Project="..\..\..\buildscripts\VisualStudio\MMDeviceAdapter.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="buildProps2008.props" />
+    <Import Project="buildProps.props" />
     <Import Project="..\..\..\buildscripts\VisualStudio\MMCommon.props" />
     <Import Project="..\..\..\buildscripts\VisualStudio\MMDeviceAdapter.props" />
   </ImportGroup>
