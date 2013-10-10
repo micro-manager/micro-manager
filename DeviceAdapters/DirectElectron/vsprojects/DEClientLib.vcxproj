@@ -74,7 +74,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\src\DEMessaging;$(THIRDPARTYLIBS)\google\protocolbuffers_build\VS2008\include;$(THIRDPARTYLIBS)\boost;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\src\DEMessaging;$(THIRDPARTYLIBS)\google\protobuf-2.5.0_build\VS2010\include;$(THIRDPARTYLIBS)\boost;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WIN32_WINNT=0x0501;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -84,7 +84,7 @@
     </ClCompile>
     <Lib>
       <AdditionalDependencies>libprotobuf.lib;DEMessaging.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(THIRDPARTYLIBS)\boost\stage_$(Platform)\lib;$(THIRDPARTYLIBS)\google\protocolbuffers_build\VS2008\$(Platform)\$(Configuration);$(TargetDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(THIRDPARTYLIBS)\boost\stage_$(Platform)\lib;$(THIRDPARTYLIBS)\google\protobuf-2.5.0_build\VS2010\lib\$(Configuration)\$(Platform);$(TargetDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -93,7 +93,7 @@
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\src\DEMessaging;$(THIRDPARTYLIBS)\google\protocolbuffers_build\VS2008\include;$(THIRDPARTYLIBS)\boost;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\src\DEMessaging;$(THIRDPARTYLIBS)\google\protobuf-2.5.0_build\VS2010\include;$(THIRDPARTYLIBS)\boost;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WIN32_WINNT=0x0501;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -103,12 +103,12 @@
     </ClCompile>
     <Lib>
       <AdditionalDependencies>libprotobuf.lib;DEMessaging.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(THIRDPARTYLIBS)\boost\stage_$(Platform)\lib;$(THIRDPARTYLIBS)\google\protocolbuffers_build\VS2008\$(Platform)\$(Configuration);$(TargetDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(THIRDPARTYLIBS)\boost\stage_$(Platform)\lib;$(THIRDPARTYLIBS)\google\protobuf-2.5.0_build\VS2010\lib\$(Configuration)\$(Platform);$(TargetDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>..\src\DEMessaging;$(THIRDPARTYLIBS)\google\protocolbuffers_build\VS2008\include;$(THIRDPARTYLIBS)\boost;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\src\DEMessaging;$(THIRDPARTYLIBS)\google\protobuf-2.5.0_build\VS2010\include;$(THIRDPARTYLIBS)\boost;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WIN32_WINNT=0x0501;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <PrecompiledHeader>
@@ -116,7 +116,7 @@
     </ClCompile>
     <Lib>
       <AdditionalDependencies>libprotobuf.lib;DEMessaging.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(THIRDPARTYLIBS)\boost\stage_$(Platform)\lib;$(THIRDPARTYLIBS)\google\protocolbuffers_build\VS2008\$(Platform)\$(Configuration);$(TargetDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(THIRDPARTYLIBS)\boost\stage_$(Platform)\lib;$(THIRDPARTYLIBS)\google\protobuf-2.5.0_build\VS2010\lib\$(Configuration)\$(Platform);$(TargetDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -124,7 +124,7 @@
       <TargetEnvironment>X64</TargetEnvironment>
     </Midl>
     <ClCompile>
-      <AdditionalIncludeDirectories>..\src\DEMessaging;$(THIRDPARTYLIBS)\google\protocolbuffers_build\VS2008\include;$(THIRDPARTYLIBS)\boost;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\src\DEMessaging;$(THIRDPARTYLIBS)\google\protobuf-2.5.0_build\VS2010\include;$(THIRDPARTYLIBS)\boost;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WIN32_WINNT=0x0501;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <PrecompiledHeader>
@@ -132,7 +132,7 @@
     </ClCompile>
     <Lib>
       <AdditionalDependencies>libprotobuf.lib;DEMessaging.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(THIRDPARTYLIBS)\boost\stage_$(Platform)\lib;$(THIRDPARTYLIBS)\google\protocolbuffers_build\VS2008\$(Platform)\$(Configuration);$(TargetDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(THIRDPARTYLIBS)\boost\stage_$(Platform)\lib;$(THIRDPARTYLIBS)\google\protobuf-2.5.0_build\VS2010\lib\$(Configuration)\$(Platform);$(TargetDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>

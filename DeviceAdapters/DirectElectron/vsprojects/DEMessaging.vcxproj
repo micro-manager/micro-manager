@@ -74,7 +74,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>$(THIRDPARTYLIBS)\google\protocolbuffers_build\VS2008\include;$(THIRDPARTYLIBS)\boost;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(THIRDPARTYLIBS)\google\protobuf-2.5.0_build\VS2010\include;$(THIRDPARTYLIBS)\boost;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WIN32_WINNT=0x0501;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -83,7 +83,7 @@
       </PrecompiledHeader>
     </ClCompile>
     <Lib>
-      <AdditionalLibraryDirectories>$(THIRDPARTYLIBS)\google\protocolbuffers_build\VS2008\$(Platform)\$(Configuration);$(THIRDPARTYLIBS)\boost\stage_$(Platform)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(THIRDPARTYLIBS)\google\protobuf-2.5.0_build\VS2010\lib\$(Configuration)\$(Platform);$(THIRDPARTYLIBS)\boost\stage_$(Platform)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -92,7 +92,7 @@
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>$(THIRDPARTYLIBS)\google\protocolbuffers_build\VS2008\include;$(THIRDPARTYLIBS)\boost;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(THIRDPARTYLIBS)\google\protobuf-2.5.0_build\VS2010\include;$(THIRDPARTYLIBS)\boost;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WIN32_WINNT=0x0501;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -101,19 +101,19 @@
       </PrecompiledHeader>
     </ClCompile>
     <Lib>
-      <AdditionalLibraryDirectories>$(THIRDPARTYLIBS)\google\protocolbuffers_build\VS2008\$(Platform)\$(Configuration);$(THIRDPARTYLIBS)\boost\stage_$(Platform)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(THIRDPARTYLIBS)\google\protobuf-2.5.0_build\VS2010\lib\$(Configuration)\$(Platform);$(THIRDPARTYLIBS)\boost\stage_$(Platform)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(THIRDPARTYLIBS)\google\protocolbuffers_build\VS2008\include;$(THIRDPARTYLIBS)\boost;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(THIRDPARTYLIBS)\google\protobuf-2.5.0_build\VS2010\include;$(THIRDPARTYLIBS)\boost;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WIN32_WINNT=0x0501;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <PrecompiledHeader>
       </PrecompiledHeader>
     </ClCompile>
     <Lib>
-      <AdditionalLibraryDirectories>$(THIRDPARTYLIBS)\google\protocolbuffers_build\VS2008\$(Platform)\$(Configuration);$(THIRDPARTYLIBS)\boost\stage_$(Platform)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(THIRDPARTYLIBS)\google\protobuf-2.5.0_build\VS2010\lib\$(Configuration)\$(Platform);$(THIRDPARTYLIBS)\boost\stage_$(Platform)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -121,14 +121,14 @@
       <TargetEnvironment>X64</TargetEnvironment>
     </Midl>
     <ClCompile>
-      <AdditionalIncludeDirectories>$(THIRDPARTYLIBS)\google\protocolbuffers_build\VS2008\include;$(THIRDPARTYLIBS)\boost;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(THIRDPARTYLIBS)\google\protobuf-2.5.0_build\VS2010\include;$(THIRDPARTYLIBS)\boost;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WIN32_WINNT=0x0501;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <PrecompiledHeader>
       </PrecompiledHeader>
     </ClCompile>
     <Lib>
-      <AdditionalLibraryDirectories>$(THIRDPARTYLIBS)\google\protocolbuffers_build\VS2008\$(Platform)\$(Configuration);$(THIRDPARTYLIBS)\boost\stage_$(Platform)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(THIRDPARTYLIBS)\google\protobuf-2.5.0_build\VS2010\lib\$(Configuration)\$(Platform);$(THIRDPARTYLIBS)\boost\stage_$(Platform)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -153,16 +153,16 @@
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="DEServer.proto">
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(THIRDPARTYLIBS)\google\protocolbuffers_build\VS2008\bin\protoc --proto_path=$(ProjectDir)..\src\DEMessaging\ --cpp_out=$(ProjectDir)..\src\DEMessaging\ $(ProjectDir)..\src\DEMessaging\DEServer.proto
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(THIRDPARTYLIBS)\google\protobuf-2.5.0_build\VS2010\bin\protoc --proto_path=$(ProjectDir)..\src\DEMessaging\ --cpp_out=$(ProjectDir)..\src\DEMessaging\ $(ProjectDir)..\src\DEMessaging\DEServer.proto
 </Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\src\DEMessaging\DEServer.pb.h;..\src\DEMessaging\DEServer.pb.cc;%(Outputs)</Outputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(THIRDPARTYLIBS)\google\protocolbuffers_build\VS2008\bin\protoc --proto_path=$(ProjectDir)..\src\DEMessaging\ --cpp_out=$(ProjectDir)..\src\DEMessaging\ $(ProjectDir)..\src\DEMessaging\DEServer.proto
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(THIRDPARTYLIBS)\google\protobuf-2.5.0_build\VS2010\bin\protoc --proto_path=$(ProjectDir)..\src\DEMessaging\ --cpp_out=$(ProjectDir)..\src\DEMessaging\ $(ProjectDir)..\src\DEMessaging\DEServer.proto
 </Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">..\src\DEMessaging\DEServer.pb.h;..\src\DEMessaging\DEServer.pb.cc;%(Outputs)</Outputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(THIRDPARTYLIBS)\google\protocolbuffers_build\VS2008\bin\protoc --proto_path=$(ProjectDir)..\src\DEMessaging\ --cpp_out=$(ProjectDir)..\src\DEMessaging\ $(ProjectDir)..\src\DEMessaging\DEServer.proto
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(THIRDPARTYLIBS)\google\protobuf-2.5.0_build\VS2010\bin\protoc --proto_path=$(ProjectDir)..\src\DEMessaging\ --cpp_out=$(ProjectDir)..\src\DEMessaging\ $(ProjectDir)..\src\DEMessaging\DEServer.proto
 </Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">..\src\DEMessaging\DEServer.pb.h;..\src\DEMessaging\DEServer.pb.cc;%(Outputs)</Outputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(THIRDPARTYLIBS)\google\protocolbuffers_build\VS2008\bin\protoc --proto_path=$(ProjectDir)..\src\DEMessaging\ --cpp_out=$(ProjectDir)..\src\DEMessaging\ $(ProjectDir)..\src\DEMessaging\DEServer.proto
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(THIRDPARTYLIBS)\google\protobuf-2.5.0_build\VS2010\bin\protoc --proto_path=$(ProjectDir)..\src\DEMessaging\ --cpp_out=$(ProjectDir)..\src\DEMessaging\ $(ProjectDir)..\src\DEMessaging\DEServer.proto
 </Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">..\src\DEMessaging\DEServer.pb.h;..\src\DEMessaging\DEServer.pb.cc;%(Outputs)</Outputs>
     </CustomBuild>
