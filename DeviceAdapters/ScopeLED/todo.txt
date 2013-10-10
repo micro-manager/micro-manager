@@ -1,5 +1,4 @@
 * Update documentation 
-* Use new Create Property functions that accept appropriate parameter type
 * Standardize Brightness vs Intensity language
 
 * Split code for FMI and MSB/MSP illuminators into separate files

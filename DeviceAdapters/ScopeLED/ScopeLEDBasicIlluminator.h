@@ -345,7 +345,7 @@ public:
 #ifdef SCOPELED_DEBUGLOG
         m_LogFile << "ScopeLEDBasicIlluminator ctor" << std::endl;
 #endif
-        CreateProperty("InitSerialNumber", "", MM::String, false, NULL, true);
+        CreateStringProperty("InitSerialNumber", "", false, NULL, true);
     }
     ~ScopeLEDBasicIlluminator()
     {

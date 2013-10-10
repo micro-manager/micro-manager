@@ -111,32 +111,30 @@ ScopeLEDMSBMicroscopeIlluminator::ScopeLEDMSBMicroscopeIlluminator()
     ClearOpticalState();
 
     // Name
-    CreateProperty(MM::g_Keyword_Name, DeviceName, MM::String, true);
+    CreateStringProperty(MM::g_Keyword_Name, DeviceName, true);
 
     // Description
-    CreateProperty(MM::g_Keyword_Description, DeviceDescription, MM::String, true);
+    CreateStringProperty(MM::g_Keyword_Description, DeviceDescription, true);
 
-    CreateProperty("VendorID", STR(DICON_USB_VID_OLD), MM::String, false, NULL, true);
+    CreateStringProperty("VendorID", STR(DICON_USB_VID_OLD), false, NULL, true);
     AddAllowedValue("VendorID", STR(DICON_USB_VID_NEW), DICON_USB_VID_NEW);
     AddAllowedValue("VendorID", STR(DICON_USB_VID_OLD), DICON_USB_VID_OLD);
 
-    std::stringstream strm;
-    strm << std::dec << 0x1303;
-    CreateProperty("ProductID", strm.str().c_str(), MM::Integer, false, NULL, true);
+    CreateIntegerProperty("ProductID", 0x1303, false, NULL, true);
     SetPropertyLimits("ProductID", 0x0, 0xFFFF);
 
     CPropertyAction* pAct = new CPropertyAction (this, &ScopeLEDMSBMicroscopeIlluminator::OnLastError);
-    CreateProperty("LastError", "0", MM::Integer, true, pAct);
+    CreateIntegerProperty("LastError", 0, true, pAct);
 
     pAct = new CPropertyAction (this, &ScopeLEDMSBMicroscopeIlluminator::OnLastDeviceResult);
-    CreateProperty("LastDeviceResult", "0", MM::Integer, true, pAct);
+    CreateIntegerProperty("LastDeviceResult", 0, true, pAct);
 
     //pAct = new CPropertyAction (this, &ScopeLEDMSBMicroscopeIlluminator::OnTransactionTime);
-    //nRet = CreateProperty("TxnTime", "0", MM::Integer, true, pAct);
+    //nRet = CreateIntegerProperty("TxnTime", 0, true, pAct);
 
     // state
     pAct = new CPropertyAction (this, &ScopeLEDMSBMicroscopeIlluminator::OnState);
-    CreateProperty(MM::g_Keyword_State, "1", MM::Integer, false, pAct);
+    CreateIntegerProperty(MM::g_Keyword_State, 1, false, pAct);
     AddAllowedValue(MM::g_Keyword_State, "0"); // Closed
     AddAllowedValue(MM::g_Keyword_State, "1"); // Open
 
@@ -195,31 +193,29 @@ int ScopeLEDMSBMicroscopeIlluminator::Initialize()
     // set property list
     // -----------------
 
-    std::stringstream strm;
-    strm << std::dec << GetVersion();
-    nRet = CreateProperty("Version", strm.str().c_str(), MM::Integer, true, NULL);
+    nRet = CreateIntegerProperty("Version", GetVersion(), true, NULL);
     if (nRet != DEVICE_OK) return nRet;
 
-    nRet = CreateProperty("SerialNumber", m_SerialNumber.c_str(), MM::String, true, NULL);
+    nRet = CreateStringProperty("SerialNumber", m_SerialNumber.c_str(), true, NULL);
     if (nRet != DEVICE_OK) return nRet;
 
     CPropertyAction* pAct = new CPropertyAction (this, &ScopeLEDMSBMicroscopeIlluminator::OnChannel1Brightness);
-    nRet = CreateProperty("Channel1Brightness", "0.0", MM::Float, false, pAct);
+    nRet = CreateFloatProperty("Channel1Brightness", 0.0, false, pAct);
     if (nRet != DEVICE_OK) return nRet;
     SetPropertyLimits("Channel1Brightness", 0.0, 100.0);
 
     pAct = new CPropertyAction (this, &ScopeLEDMSBMicroscopeIlluminator::OnChannel2Brightness);
-    nRet = CreateProperty("Channel2Brightness", "0.0", MM::Float, false, pAct);
+    nRet = CreateFloatProperty("Channel2Brightness", 0.0, false, pAct);
     if (nRet != DEVICE_OK) return nRet;
     SetPropertyLimits("Channel2Brightness", 0.0, 100.0);
 
     pAct = new CPropertyAction (this, &ScopeLEDMSBMicroscopeIlluminator::OnChannel3Brightness);
-    nRet = CreateProperty("Channel3Brightness", "0.0", MM::Float, false, pAct);
+    nRet = CreateFloatProperty("Channel3Brightness", 0.0, false, pAct);
     if (nRet != DEVICE_OK) return nRet;
     SetPropertyLimits("Channel3Brightness", 0.0, 100.0);
 
     pAct = new CPropertyAction (this, &ScopeLEDMSBMicroscopeIlluminator::OnChannel4Brightness);
-    nRet = CreateProperty("Channel4Brightness", "0.0", MM::Float, false, pAct);
+    nRet = CreateFloatProperty("Channel4Brightness", 0.0, false, pAct);
     if (nRet != DEVICE_OK) return nRet;
     SetPropertyLimits("Channel4Brightness", 0.0, 100.0);
     
@@ -354,25 +350,23 @@ ScopeLEDMSMMicroscopeIlluminator::ScopeLEDMSMMicroscopeIlluminator()
     ClearOpticalState();
 
     // Name
-    CreateProperty(MM::g_Keyword_Name, DeviceName, MM::String, true);
+    CreateStringProperty(MM::g_Keyword_Name, DeviceName, true);
 
     // Description
-    CreateProperty(MM::g_Keyword_Description, DeviceDescription, MM::String, true);
+    CreateStringProperty(MM::g_Keyword_Description, DeviceDescription, true);
 
-    CreateProperty("VendorID", STR(DICON_USB_VID_NEW), MM::String, false, NULL, true);
+    CreateStringProperty("VendorID", STR(DICON_USB_VID_NEW), false, NULL, true);
     AddAllowedValue("VendorID", STR(DICON_USB_VID_NEW), DICON_USB_VID_NEW);
     AddAllowedValue("VendorID", STR(DICON_USB_VID_OLD), DICON_USB_VID_OLD);
 
-    std::stringstream strm;
-    strm << std::dec << 0x130A;
-    CreateProperty("ProductID", strm.str().c_str(), MM::Integer, false, NULL, true);
+    CreateIntegerProperty("ProductID", 0x130A, false, NULL, true);
     SetPropertyLimits("ProductID", 0x0, 0xFFFF);
 
     CPropertyAction* pAct = new CPropertyAction (this, &ScopeLEDMSMMicroscopeIlluminator::OnLastError);
-    CreateProperty("LastError", "0", MM::Integer, true, pAct);
+    CreateIntegerProperty("LastError", 0, true, pAct);
 
     pAct = new CPropertyAction (this, &ScopeLEDMSMMicroscopeIlluminator::OnLastDeviceResult);
-    CreateProperty("LastDeviceResult", "0", MM::Integer, true, pAct);
+    CreateIntegerProperty("LastDeviceResult", 0, true, pAct);
 }
 
 ScopeLEDMSMMicroscopeIlluminator::~ScopeLEDMSMMicroscopeIlluminator()
@@ -425,44 +419,42 @@ int ScopeLEDMSMMicroscopeIlluminator::Initialize()
     // set property list
     // -----------------
 
-    std::stringstream strm;
-    strm << std::dec << GetVersion();
-    nRet = CreateProperty("Version", strm.str().c_str(), MM::Integer, true, NULL);
+    nRet = CreateIntegerProperty("Version", GetVersion(), true, NULL);
     if (nRet != DEVICE_OK) return nRet;
 
-    nRet = CreateProperty("SerialNumber", m_SerialNumber.c_str(), MM::String, true, NULL);
+    nRet = CreateStringProperty("SerialNumber", m_SerialNumber.c_str(), true, NULL);
     if (nRet != DEVICE_OK) return nRet;
 
     CPropertyAction* pAct = new CPropertyAction (this, &ScopeLEDMSMMicroscopeIlluminator::OnChannel1Brightness);
-    nRet = CreateProperty("ManualBrightnessChannel1", "0.0", MM::Float, false, pAct);
+    nRet = CreateFloatProperty("ManualBrightnessChannel1", 0.0, false, pAct);
     if (nRet != DEVICE_OK) return nRet;
     SetPropertyLimits("ManualBrightnessChannel1", 0.0, 100.0);
 
     pAct = new CPropertyAction (this, &ScopeLEDMSMMicroscopeIlluminator::OnChannel2Brightness);
-    nRet = CreateProperty("ManualBrightnessChannel2", "0.0", MM::Float, false, pAct);
+    nRet = CreateFloatProperty("ManualBrightnessChannel2", 0.0, false, pAct);
     if (nRet != DEVICE_OK) return nRet;
     SetPropertyLimits("ManualBrightnessChannel2", 0.0, 100.0);
 
     pAct = new CPropertyAction (this, &ScopeLEDMSMMicroscopeIlluminator::OnChannel3Brightness);
-    nRet = CreateProperty("ManualBrightnessChannel3", "0.0", MM::Float, false, pAct);
+    nRet = CreateFloatProperty("ManualBrightnessChannel3", 0.0, false, pAct);
     if (nRet != DEVICE_OK) return nRet;
     SetPropertyLimits("ManualBrightnessChannel3", 0.0, 100.0);
 
     pAct = new CPropertyAction (this, &ScopeLEDMSMMicroscopeIlluminator::OnChannel4Brightness);
-    nRet = CreateProperty("ManualBrightnessChannel4", "0.0", MM::Float, false, pAct);
+    nRet = CreateFloatProperty("ManualBrightnessChannel4", 0.0, false, pAct);
     if (nRet != DEVICE_OK) return nRet;
     SetPropertyLimits("ManualBrightnessChannel4", 0.0, 100.0);
 
     /*
     pAct = new CPropertyAction (this, &ScopeLEDMSMMicroscopeIlluminator::OnActivePresetMode);
-    nRet = CreateProperty("ActivePresetMode", "0", MM::Integer, false, pAct);
+    nRet = CreateIntegerProperty("ActivePresetMode", 0, false, pAct);
     if (nRet != DEVICE_OK) return nRet;
     SetPropertyLimits("ActivePresetMode", 0, SCOPELED_ILLUMINATOR_MSM_PRESET_CHANNELS_MAX);
     */
 
     long color = 0;
     pAct = new CPropertyAction (this, &ScopeLEDMSMMicroscopeIlluminator::OnActiveColor);
-    nRet = CreateProperty("ActiveColor", s_PresetModeStrings[color], MM::String, false, pAct);
+    nRet = CreateStringProperty("ActiveColor", s_PresetModeStrings[color], false, pAct);
     if (nRet != DEVICE_OK) return nRet;
     for (color=0; color <= SCOPELED_ILLUMINATOR_MSM_PRESET_CHANNELS_MAX; color++)
     {
@@ -470,32 +462,32 @@ int ScopeLEDMSMMicroscopeIlluminator::Initialize()
     }
     
     pAct = new CPropertyAction (this, &ScopeLEDMSMMicroscopeIlluminator::OnPresetMode1Brightness);
-    nRet = CreateProperty("Brightness3000K", "0.0", MM::Float, false, pAct);
+    nRet = CreateFloatProperty("Brightness3000K", 0.0, false, pAct);
     if (nRet != DEVICE_OK) return nRet;
     SetPropertyLimits("Brightness3000K", 0.0, 100.0);
 
     pAct = new CPropertyAction (this, &ScopeLEDMSMMicroscopeIlluminator::OnPresetMode2Brightness);
-    nRet = CreateProperty("Brightness4500K", "0.0", MM::Float, false, pAct);
+    nRet = CreateFloatProperty("Brightness4500K", 0.0, false, pAct);
     if (nRet != DEVICE_OK) return nRet;
     SetPropertyLimits("Brightness4500K", 0.0, 100.0);
 
     pAct = new CPropertyAction (this, &ScopeLEDMSMMicroscopeIlluminator::OnPresetMode3Brightness);
-    nRet = CreateProperty("Brightness6500K", "0.0", MM::Float, false, pAct);
+    nRet = CreateFloatProperty("Brightness6500K", 0.0, false, pAct);
     if (nRet != DEVICE_OK) return nRet;
     SetPropertyLimits("Brightness6500K", 0.0, 100.0);
 
     pAct = new CPropertyAction (this, &ScopeLEDMSMMicroscopeIlluminator::OnPresetMode4Brightness);
-    nRet = CreateProperty("BrightnessRed", "0.0", MM::Float, false, pAct);
+    nRet = CreateFloatProperty("BrightnessRed", 0.0, false, pAct);
     if (nRet != DEVICE_OK) return nRet;
     SetPropertyLimits("BrightnessRed", 0.0, 100.0);
 
     pAct = new CPropertyAction (this, &ScopeLEDMSMMicroscopeIlluminator::OnPresetMode5Brightness);
-    nRet = CreateProperty("BrightnessGreen", "0.0", MM::Float, false, pAct);
+    nRet = CreateFloatProperty("BrightnessGreen", 0.0, false, pAct);
     if (nRet != DEVICE_OK) return nRet;
     SetPropertyLimits("BrightnessGreen", 0.0, 100.0);
 
     pAct = new CPropertyAction (this, &ScopeLEDMSMMicroscopeIlluminator::OnPresetMode6Brightness);
-    nRet = CreateProperty("BrightnessBlue", "0.0", MM::Float, false, pAct);
+    nRet = CreateFloatProperty("BrightnessBlue", 0.0, false, pAct);
     if (nRet != DEVICE_OK) return nRet;
     SetPropertyLimits("BrightnessBlue", 0.0, 100.0);
 
@@ -503,7 +495,7 @@ int ScopeLEDMSMMicroscopeIlluminator::Initialize()
     nRet = GetControlMode(mode);
     if (nRet != DEVICE_OK) return nRet;
     pAct = new CPropertyAction (this, &ScopeLEDMSMMicroscopeIlluminator::OnControlMode);
-    nRet = CreateProperty("ControlMode", s_ControModeStrings[mode], MM::String, false, pAct);
+    nRet = CreateStringProperty("ControlMode", s_ControModeStrings[mode], false, pAct);
     if (nRet != DEVICE_OK) return nRet;
     for (mode=1; mode < MAX_CONTROL_MODE; mode++)
     {
@@ -512,7 +504,7 @@ int ScopeLEDMSMMicroscopeIlluminator::Initialize()
 
     // state
     pAct = new CPropertyAction (this, &ScopeLEDMSMMicroscopeIlluminator::OnState);
-    CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct);
+    CreateIntegerProperty(MM::g_Keyword_State, 0, false, pAct);
     AddAllowedValue(MM::g_Keyword_State, "0"); // Closed
     AddAllowedValue(MM::g_Keyword_State, "1"); // Open
 
@@ -751,25 +743,23 @@ ScopeLEDFluorescenceIlluminator::ScopeLEDFluorescenceIlluminator()
     ClearOpticalState();
 
     // Name
-    CreateProperty(MM::g_Keyword_Name, DeviceName, MM::String, true);
+    CreateStringProperty(MM::g_Keyword_Name, DeviceName, true);
 
     // Description
-    CreateProperty(MM::g_Keyword_Description, DeviceDescription, MM::String, true);
+    CreateStringProperty(MM::g_Keyword_Description, DeviceDescription, true);
 
-    CreateProperty("VendorID", STR(DICON_USB_VID_NEW), MM::String, false, NULL, true);
+    CreateStringProperty("VendorID", STR(DICON_USB_VID_NEW), false, NULL, true);
     AddAllowedValue("VendorID", STR(DICON_USB_VID_NEW), DICON_USB_VID_NEW);
     AddAllowedValue("VendorID", STR(DICON_USB_VID_OLD), DICON_USB_VID_OLD);
 
-    std::stringstream strm;
-    strm << std::dec << 0x1305;
-    CreateProperty("ProductID", strm.str().c_str(), MM::Integer, false, NULL, true);
+    CreateIntegerProperty("ProductID", 0x1305, false, NULL, true);
     SetPropertyLimits("ProductID", 0x0, 0xFFFF);
 
     CPropertyAction* pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnLastError);
-    CreateProperty("LastError", "0", MM::Integer, true, pAct);
+    CreateIntegerProperty("LastError", 0, true, pAct);
 
     pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnLastDeviceResult);
-    CreateProperty("LastDeviceResult", "0", MM::Integer, true, pAct);
+    CreateIntegerProperty("LastDeviceResult", 0, true, pAct);
     
 #ifdef SCOPELED_DEBUGLOG
     m_LogFile << "-ScopeLEDFluorescenceIlluminator::ctor" << std::endl;
@@ -835,12 +825,10 @@ int ScopeLEDFluorescenceIlluminator::Initialize()
     // set property list
     // -----------------
 
-    std::stringstream strm;
-    strm << std::dec << GetVersion();
-    nRet = CreateProperty("Version", strm.str().c_str(), MM::Integer, true, NULL);
+    nRet = CreateIntegerProperty("Version", GetVersion(), true, NULL);
     if (nRet != DEVICE_OK) return nRet;
 
-    nRet = CreateProperty("SerialNumber", m_SerialNumber.c_str(), MM::String, true, NULL);
+    nRet = CreateStringProperty("SerialNumber", m_SerialNumber.c_str(), true, NULL);
     if (nRet != DEVICE_OK) return nRet;
 
     long ActiveChannel;
@@ -848,7 +836,7 @@ int ScopeLEDFluorescenceIlluminator::Initialize()
     if (nRet != DEVICE_OK) return nRet;
 
     long wavelength = 0;    
-    strm.str("");
+    std::stringstream strm;
     if ((ActiveChannel > 0) && (ActiveChannel <= m_NumChannels))
     {
         nRet = GetChannelWavelength(ActiveChannel, wavelength);
@@ -862,7 +850,7 @@ int ScopeLEDFluorescenceIlluminator::Initialize()
     else strm << "None";
     
     CPropertyAction* pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnActiveWavelength);
-    nRet = CreateProperty("ActiveWavelength", strm.str().c_str(), MM::String, false, pAct);
+    nRet = CreateStringProperty("ActiveWavelength", strm.str().c_str(), false, pAct);
     if (nRet != DEVICE_OK) return nRet;
     for (long channel=1; channel <= m_NumChannels; channel++)
     {
@@ -880,10 +868,9 @@ int ScopeLEDFluorescenceIlluminator::Initialize()
         nRet = GetChannelBrightness(ActiveChannel, CurrentIntensity);
         if (nRet != DEVICE_OK) return nRet;
     }
-    strm.str("");
-    strm << std::fixed << std::setprecision(3) << CurrentIntensity;
+
     pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnIntensity);
-    nRet = CreateProperty("Intensity", strm.str().c_str(), MM::Float, false, pAct);
+    nRet = CreateFloatProperty("Intensity", CurrentIntensity, false, pAct);
     if (nRet != DEVICE_OK) return nRet;
     SetPropertyLimits("Intensity", 0.0, 100.0);
 
@@ -891,7 +878,7 @@ int ScopeLEDFluorescenceIlluminator::Initialize()
     nRet = GetControlMode(mode);
     if (nRet != DEVICE_OK) return nRet;
     pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnControlMode);
-    nRet = CreateProperty("ControlMode", s_ControModeStrings[mode], MM::String, false, pAct);
+    nRet = CreateStringProperty("ControlMode", s_ControModeStrings[mode], false, pAct);
     if (nRet != DEVICE_OK) return nRet;
     for (mode=1; mode < MAX_CONTROL_MODE; mode++)
     {
@@ -900,7 +887,7 @@ int ScopeLEDFluorescenceIlluminator::Initialize()
         
     // state
     pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnState);
-    nRet = CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct);
+    nRet = CreateIntegerProperty(MM::g_Keyword_State, 0, false, pAct);
     if (nRet != DEVICE_OK) return nRet;
     AddAllowedValue(MM::g_Keyword_State, "0"); // Closed
     AddAllowedValue(MM::g_Keyword_State, "1"); // Open
