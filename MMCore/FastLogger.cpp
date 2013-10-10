@@ -27,6 +27,7 @@
 #include <string>
 #include <iostream>
 #include <fstream>
+#include <limits>
 
 #include "FastLogger.h"
 #include "CoreUtils.h"
@@ -631,7 +632,7 @@ void FastLogger::LogContents(char** ppContents, unsigned long& len)
    if (ifile.is_open())
    {
       std::ifstream::pos_type pos = ifile.tellg();
-      if (pos < SIZE_MAX)
+      if (pos < std::numeric_limits<std::size_t>::max())
       {
          len = static_cast<std::size_t>(pos);
          *ppContents = new char[len];
