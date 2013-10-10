@@ -257,6 +257,7 @@ private:
   int   apiToMMErrorCode( unsigned long apiErrorNumber ) const;
   int   mmToApiErrorCode( unsigned long mmErrorNumber ) const;
   string getFramerateString( void ) const;
+  string getDeviceNameString( void ) const;
 
   static volatile int staticDeviceNo;
   string                    cameraDeviceID_;

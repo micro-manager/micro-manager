@@ -405,7 +405,7 @@ int CABSCamera::Initialize()
   { goto Initialize_Done; }
 
   // CameraName
-  nRet = CreateProperty(MM::g_Keyword_CameraName, string( (const char*)cameraVersion_.szDeviceName ).c_str() , MM::String, true);
+  nRet = CreateProperty(MM::g_Keyword_CameraName, getDeviceNameString().c_str() , MM::String, true);
   assert(nRet == DEVICE_OK);
 
   // CameraID
@@ -3952,6 +3952,14 @@ string CABSCamera::getFramerateString( void ) const
   return framerate;
 }
 
+// ----------------------------------------------------------------------------
+
+string CABSCamera::getDeviceNameString( void ) const
+{
+  string deviceName( (const char*)cameraVersion_.szDeviceName, CNT_ELEMENTS(cameraVersion_.szDeviceName) );
+  str::ResizeByZeroTermination( deviceName );
+  return deviceName;
+}
 // ----------------------------------------------------------------------------
 
 double CABSCamera::getFramerate() const
