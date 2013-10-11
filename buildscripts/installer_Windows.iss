@@ -80,8 +80,15 @@ Filename: "{app}\vcredist_{#MMArch_x86x64}_2010SP1.exe"; Parameters: "/q"; Descr
 
 [Files]
 
-; Java Runtime
-Source: {#MMStageDir}\jre\*; DestDir: {app}\jre; Flags: ignoreversion recursesubdirs createallsubdirs
+; ImageJ files
+Source: {#MMStageDir}\ImageJ.exe; DestDir: {app}; Flags: ignoreversion
+Source: {#MMStageDir}\ij.jar; DestDir: {app}; Flags: ignoreversion
+Source: {#MMStageDir}\ImageJ.cfg; DestDir: {app}; Flags: onlyifdoesntexist; Permissions: users-modify
+Source: {#MMStageDir}\IJ_Prefs.txt; DestDir: {app}; Flags: onlyifdoesntexist; Permissions: users-modify
+Source: {#MMStageDir}\macros\*; DestDir: {app}\macros; Flags: ignoreversion recursesubdirs createallsubdirs
+
+; ImageJ plugins, including Micro-Manager jars
+Source: {#MMStageDir}\plugins\*; DestDir: {app}\plugins; Flags: ignoreversion recursesubdirs createallsubdirs
 
 ; DLLs (Java wrapper, device adapters, and vendor DLLs)
 ; (Note: *.dll covers it all, but the separate patterns result in a cleaner install order)
@@ -92,10 +99,9 @@ Source: {#MMStageDir}\*.dll; DestDir: {app}; Flags: ignoreversion
 ; Olympus IX*3 control module
 Source: {#MMStageDir}\OlympusIX3Control\*; DestDir: {app}\OlympusIX3Control; Flags: ignoreversion recursesubdirs createallsubdirs
 
-; Python wrapper
-Source: {#MMStageDir}\_MMCorePy.pyd; DestDir: {app}; Flags: ignoreversion
-Source: {#MMStageDir}\MMCorePy.py; DestDir: {app}; Flags: ignoreversion
-Source: {#MMStageDir}\MMCoreWrapDemo.py; DestDir: {app}; Flags: ignoreversion
+; Micro-Manager plugins
+Source: {#MMStageDir}\mmplugins\*; DestDir: {app}\mmplugins; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: {#MMStageDir}\mmautofocus\*; DestDir: {app}\mmautofocus; Flags: ignoreversion recursesubdirs createallsubdirs
 
 ; BeanShell scripts
 Source: {#MMStageDir}\scripts\*; DestDir: {app}\scripts; Flags: ignoreversion
@@ -103,17 +109,13 @@ Source: {#MMStageDir}\scripts\*; DestDir: {app}\scripts; Flags: ignoreversion
 ; Configuration files
 Source: {#MMStageDir}\MMConfig_demo.cfg; DestDir: {app}; Flags: ignoreversion
 
-; ImageJ files
-Source: {#MMStageDir}\ImageJ.exe; DestDir: {app}; Flags: ignoreversion
-Source: {#MMStageDir}\ImageJ.cfg; DestDir: {app}; Flags: onlyifdoesntexist; Permissions: users-modify
-Source: {#MMStageDir}\ij.jar; DestDir: {app}; Flags: ignoreversion
-Source: {#MMStageDir}\IJ_Prefs.txt; DestDir: {app}; Flags: onlyifdoesntexist
-Source: {#MMStageDir}\macros\*; DestDir: {app}\macros; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: {#MMStageDir}\plugins\*; DestDir: {app}\plugins; Flags: ignoreversion recursesubdirs createallsubdirs
+; Python wrapper
+Source: {#MMStageDir}\_MMCorePy.pyd; DestDir: {app}; Flags: ignoreversion
+Source: {#MMStageDir}\MMCorePy.py; DestDir: {app}; Flags: ignoreversion
+Source: {#MMStageDir}\MMCoreWrapDemo.py; DestDir: {app}; Flags: ignoreversion
 
-; Plugins
-Source: {#MMStageDir}\mmplugins\*; DestDir: {app}\mmplugins; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: {#MMStageDir}\mmautofocus\*; DestDir: {app}\mmautofocus; Flags: ignoreversion recursesubdirs createallsubdirs
+; Java Runtime
+Source: {#MMStageDir}\jre\*; DestDir: {app}\jre; Flags: ignoreversion recursesubdirs createallsubdirs
 
 
 ;;
@@ -122,7 +124,6 @@ Source: {#MMStageDir}\mmautofocus\*; DestDir: {app}\mmautofocus; Flags: ignoreve
 
 [Dirs]
 Name: "{app}"; Permissions: users-modify
-; TODO Test if subdir permissions really need to be set here.
 Name: "{app}\macros"; Permissions: users-modify
 Name: "{app}\plugins"; Permissions: users-modify
 Name: "{app}\mmplugins"; Permissions: users-modify
