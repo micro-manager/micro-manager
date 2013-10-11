@@ -45,12 +45,12 @@ const char* g_PI_ZStageControllerName = "Controller Name";
 // PIZStage
 
 PIZStage::PIZStage() :
+   axisName_("A"),
    stepSizeUm_(0.1),
    initialized_(false),
-    controllerName_(""),
-    axisLimitUm_(500.0),
-   axisName_("A"),
+   axisLimitUm_(500.0),
    stageType_("DEFAULT_STAGE"),
+   controllerName_(""),
    ctrl_(NULL)
    //homingMode_("REF")
 {
