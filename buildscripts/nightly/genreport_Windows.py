@@ -39,9 +39,10 @@ def build_status_report(section_sink, log_filename, build):
     section_sink.send((is_error, title, False, text))
 
 
-def cpp_build_report(section_sink, architecture):
-    genreport_MSBuild.report("build/Release/{}/msbuild-micromanager.log".format(architecture),
-                             "C++ " + architecture + " ",
+def cpp_build_report(section_sink, architecture, src_root):
+    log = ("{}/build/Release/{}/msbuild-micromanager.log".
+           format(src_root, architecture))
+    genreport_MSBuild.report(log, "C++ " + architecture + " ",
                              section_sink)
 
 
@@ -105,7 +106,7 @@ def clojure_build_report(section_sink, stage_target, architecture):
             section_sink.send((True, title, False, text))
 
 
-def generate_report(section_sink, log_filename, build):
+def generate_report(section_sink, log_filename, build, src_root):
     build_status_report(section_sink, log_filename, build)
 
     # At the top level, there are task[@name='ant'] elements for unstage-all,
@@ -129,7 +130,7 @@ def generate_report(section_sink, log_filename, build):
                 arch = "x64"
                 seen_cpp_x64 = True
 
-            cpp_build_report(section_sink, arch)
+            cpp_build_report(section_sink, arch, src_root)
         if "stage" in target_names:
             if seen_cpp_Win32:
                 arch = "Win32"
@@ -161,7 +162,8 @@ def main(src_root, log_filename, output_filename):
 
         generate_report(section_sink,
                         log_filename,
-                        ElementTree.parse(log_filename))
+                        ElementTree.parse(log_filename),
+                        src_root)
 
 
 if __name__ == "__main__":
