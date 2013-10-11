@@ -89,6 +89,15 @@
 		</copy>
 	</target>
 
+	<target name="run" description="Run the staged application">
+		<exec executable="${mm.installdir}/ImageJ.exe"/>
+	</target>
+
+	<target name="stage-and-run" description="Build, stage, and run the application">
+		<antcall target="stage"/>
+		<antcall target="run"/>
+	</target>
+
 	<target name="package" depends="stage" description="Create installer from staged files">
 		<!-- Default name, if not set -->
 		<property name="mm.installer.basename" value="MMSetup_${mm.architecture.bits}bit"/>
