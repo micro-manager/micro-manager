@@ -45,7 +45,7 @@
 		<antcall target="build-java"/>
 	</target>
 
-	<target name="stage" depends="set-version,build-cpp" description="Assemble files to install">
+	<target name="stage" depends="set-version,build-cpp" description="Gather files to be installed">
 		<antcall target="stage-deviceadapters"/>
 		<run-all-java-projects target="install"/>
 
@@ -89,7 +89,7 @@
 		</copy>
 	</target>
 
-	<target name="run" description="Run the staged application">
+	<target name="run" description="Run the staged application (without building or staging)">
 		<exec executable="${mm.installdir}/ImageJ.exe"/>
 	</target>
 
@@ -98,7 +98,7 @@
 		<antcall target="run"/>
 	</target>
 
-	<target name="package" depends="stage" description="Create installer from staged files">
+	<target name="package" depends="stage" description="Create installer">
 		<!-- Default name, if not set -->
 		<property name="mm.installer.basename" value="MMSetup_${mm.architecture.bits}bit"/>
 		<property name="mm.installer" value="${mm.installer.basename}.exe"/>
@@ -113,22 +113,22 @@
 		</exec>
 	</target>
 
-	<target name="clean">
+	<target name="clean" description="Delete build intermediate and output files">
 		<delete dir="${mm.cpp.outdir}"/>
 		<delete dir="${mm.cpp.intdir}"/>
 		<run-all-java-projects target="clean"/>
 	</target>
 
-	<target name="clean-all">
+	<target name="clean-all" description="Delete build files for all configurations and architectures">
 		<delete dir="${mm.outdir}"/>
 		<delete dir="${mm.intdir}"/>
 	</target>
 
-	<target name="unstage">
+	<target name="unstage" description="Delete staged files">
 		<delete dir="${mm.installdir}"/>
 	</target>
 
-	<target name="unstage-all">
+	<target name="unstage-all" description="Delete stage files for all configurations and architectures">
 		<delete dir="${mm.stagedir}"/>
 	</target>
 </project>
