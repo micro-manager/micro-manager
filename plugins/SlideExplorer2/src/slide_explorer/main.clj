@@ -366,7 +366,7 @@ Would you like to run automatic pixel calibration?"
 ; resulting tiles are added to memory-tiles-atom. Tiles
 ; added are automatically asynchronously saved to disk, and the indices
 ; are added to disk-tiles.
-; memory-tiles and overlay-tiles are limited to 200 images each,
+; memory-tiles and display-tiles-atom are limited to 200 images each,
 ; using an LRU eviction policy.
 ; When view-state viewing area is adjusted, tiles needed for the
 ; new viewing area are loaded back into memory-tiles. If we are
@@ -375,7 +375,7 @@ Would you like to run automatic pixel calibration?"
 ; Overlay tiles are generated whenever memory tiles are added
 ; or the contrast is changed.
 ; The view redraws tiles inside viewing area whenever view-state
-; has been adjusted or a new image appears in overlay-tiles.
+; has been adjusted or a new image appears in display-tiles-atom.
 
 (defn go
   "The main function that starts a slide explorer window."
