@@ -70,7 +70,7 @@
 		</copy>
 
 		<!-- XXX Remaining files to copy; should put elsewhere -->
-		<copy todir="${mm.installdir}" file="${mm.basedir}/../3rdpartypublic/JavaLauncher/ImageJ.exe"/>
+		<copy todir="${mm.installdir}" file="${mm.thirdpartypublic}/JavaLauncher/ImageJ.exe"/>
 		<copy todir="${mm.installdir}" file="${mm.java.lib.imagej}"/>
 		<copy todir="${mm.java.installdir}">
 			<!-- XXX Should limit to the Jars that are actually
@@ -81,6 +81,11 @@
 		<mkdir dir="${mm.scripts.installdir}"/>
 		<copy todir="${mm.scripts.installdir}">
 			<fileset dir="${mm.scripts.srcdir}" includes="*.bsh"/>
+		</copy>
+
+		<!-- Java runtime -->
+		<copy todir="${mm.installdir}/jre">
+			<fileset dir="${mm.java.runtime}"/>
 		</copy>
 	</target>
 

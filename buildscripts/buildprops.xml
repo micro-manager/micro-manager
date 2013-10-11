@@ -82,9 +82,12 @@
 	<property name="mm.java.lib.mmstudio" location="${mm.java.outdir}/MMJ_.jar"/>
 	<property name="mm.java.lib.acq-engine" location="${mm.java.outdir}/MMAcqEngine.jar"/>
 
-  <!-- Other directories -->
-  <property name="mm.scripts.srcdir" location="${mm.basedir}/scripts"/>
-  <property name="mm.scripts.installdir" location="${mm.installdir}/scripts"/>
+	<!-- Other directories -->
+	<property name="mm.scripts.srcdir" location="${mm.basedir}/scripts"/>
+	<property name="mm.scripts.installdir" location="${mm.installdir}/scripts"/>
+
+	<!-- Items not in source tree but at fixed location -->
+	<property name="mm.thirdpartypublic" location="${mm.basedir}/../3rdpartypublic"/>
 
 	<!-- Third-party lib paths -->
 	<include file="javalibs.xml"/>
@@ -97,6 +100,14 @@
 		<pathelement location="${mm.java.lib.mmstudio}"/>
 		<pathelement location="${mm.java.lib.swing-layout}"/>
 	</path>
+
+    <!-- Location of Java Runtime to package -->
+    <condition property="mm.java.runtime" value="${mm.basedir}/../3rdparty/jre6_32">
+        <equals arg1="${mm.architecture}" arg2="Win32"/>
+    </condition>
+    <condition property="mm.java.runtime" value="${mm.basedir}/../3rdparty/jre">
+        <equals arg1="${mm.architecture}" arg2="x64"/>
+    </condition>
 
 	<!-- Build a Visual Studio project or solution -->
 	<!-- We generate separate logs because it is hard to parse MSBuild

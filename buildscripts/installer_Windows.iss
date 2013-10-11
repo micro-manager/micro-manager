@@ -60,30 +60,25 @@ Filename: "{app}\vcredist_{#MMArch_x86x64}_2010SP1.exe"; Parameters: "/q"; Descr
 
 [Files]
 
-#if MMArch == "x64"
-Source: ..\..\3rdparty\jre\* ; DestDir: {app}\jre; Flags: ignoreversion recursesubdirs createallsubdirs
-#else
-Source: ..\..\3rdparty\jre6_32\* ; DestDir: {app}\jre; Flags: ignoreversion recursesubdirs createallsubdirs
-#endif
-
+; Java Runtime
+Source: ..\stage\Release\{#MMArch}\jre\*; DestDir: {app}\jre; Flags: ignoreversion recursesubdirs createallsubdirs
 
 ; Vendor DLLs
 ; Please keep in ASCII lexical order!
 ; TODO Include these from a separate file
 #if MMArch == "x64"
-Source: ..\..\3rdpartypublic\hidapi\hidapi-0.7.0\windows\x64\Release\hidapi.dll; DestDir: {app}; Flags: ignoreversion
-Source: ..\drivers\K8061\amd64\libusb0.dll; DestDir: {app}; DestName: libusb0.dll; Flags: ignoreversion
 Source: ..\stage\Release\x64\FxLib.dll; DestDir: {app}; Flags: ignoreversion
 Source: ..\stage\Release\x64\LaserCombinerSDK64.dll; DestDir: {app}; Flags: ignoreversion
-Source: ..\stage\Release\x64\OlympusIX3Control\*; DestDir: {app}\OlympusIX3Control; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: ..\stage\Release\x64\PCO_Kamlib64.dll; DestDir: {app}; Flags: ignoreversion
 Source: ..\stage\Release\x64\SysInfo.dll; DestDir: {app}; Flags: ignoreversion
 Source: ..\stage\Release\x64\TIS_DShowLib10_x64.dll; DestDir: {app}; Flags: ignoreversion
 Source: ..\stage\Release\x64\TIS_UDSHL10_x64.dll; DestDir: {app}; Flags: ignoreversion
 Source: ..\stage\Release\x64\XCLIBW64.dll; DestDir: {app}; Flags: ignoreversion
 Source: ..\stage\Release\x64\atmcd64d.dll; DestDir: {app}; Flags: ignoreversion
+Source: ..\stage\Release\x64\hidapi.dll; DestDir: {app}; Flags: ignoreversion
 Source: ..\stage\Release\x64\hrfw64.dll; DestDir: {app}; Flags: ignoreversion
 Source: ..\stage\Release\x64\inpoutx64.dll; DestDir: {app}; Flags: ignoreversion
+Source: ..\stage\Release\x64\libusb0.dll; DestDir: {app}; Flags: ignoreversion
 Source: ..\stage\Release\x64\mcam64.dll; DestDir: {app}; Flags: ignoreversion
 Source: ..\stage\Release\x64\mcammr64.dll; DestDir: {app}; Flags: ignoreversion
 Source: ..\stage\Release\x64\mrc564.dll; DestDir: {app}; Flags: ignoreversion
@@ -91,15 +86,12 @@ Source: ..\stage\Release\x64\mrfw64.dll; DestDir: {app}; Flags: ignoreversion
 Source: ..\stage\Release\x64\opencv_core231.dll; DestDir: {app}; Flags: ignoreversion
 Source: ..\stage\Release\x64\opencv_highgui231.dll; DestDir: {app}; Flags: ignoreversion
 #else
-Source: ..\..\3rdpartypublic\hidapi\hidapi-0.7.0\windows\Win32\Release\hidapi.dll; DestDir: {app}; Flags: ignoreversion
-Source: ..\drivers\K8061\x86\libusb0_x86.dll; DestDir: {app}; DestName: libusb0.dll; Flags: ignoreversion
 Source: ..\stage\Release\Win32\DSLRRemoteLib.dll; DestDir: {app}; Flags: ignoreversion
 Source: ..\stage\Release\Win32\FireCamJ.dll; DestDir: {app}; Flags: ignoreversion
 Source: ..\stage\Release\Win32\FxLib.dll; DestDir: {app}; Flags: ignoreversion
 Source: ..\stage\Release\Win32\LaserCombinerSDK.dll; DestDir: {app}; Flags: ignoreversion
 Source: ..\stage\Release\Win32\MexJCam.dll; DestDir: {app}; Flags: ignoreversion
 Source: ..\stage\Release\Win32\NKRemoteLib.dll; DestDir: {app}; Flags: ignoreversion
-Source: ..\stage\Release\Win32\OlympusIX3Control\*; DestDir: {app}\OlympusIX3Control; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: ..\stage\Release\Win32\PCO_Kamlib.dll; DestDir: {app}; Flags: ignoreversion
 Source: ..\stage\Release\Win32\PSRemoteLib.dll; DestDir: {app}; Flags: ignoreversion
 Source: ..\stage\Release\Win32\ProcessLib.dll; DestDir: {app}; Flags: ignoreversion
@@ -109,8 +101,10 @@ Source: ..\stage\Release\Win32\TIS_UDSHL10.dll; DestDir: {app}; Flags: ignorever
 Source: ..\stage\Release\Win32\XCLIBWNT.dll; DestDir: {app}; Flags: ignoreversion
 Source: ..\stage\Release\Win32\atmcd32d.dll; DestDir: {app}; Flags: ignoreversion
 Source: ..\stage\Release\Win32\camconj.dll; DestDir: {app}; Flags: ignoreversion
+Source: ..\stage\Release\Win32\hidapi.dll; DestDir: {app}; Flags: ignoreversion
 Source: ..\stage\Release\Win32\hrfw.dll; DestDir: {app}; Flags: ignoreversion
 Source: ..\stage\Release\Win32\inpout32.dll; DestDir: {app}; Flags: ignoreversion
+Source: ..\stage\Release\Win32\libusb0.dll; DestDir: {app}; Flags: ignoreversion
 Source: ..\stage\Release\Win32\mcam.dll; DestDir: {app}; Flags: ignoreversion
 Source: ..\stage\Release\Win32\mcammr.dll; DestDir: {app}; Flags: ignoreversion
 Source: ..\stage\Release\Win32\mrc5.dll; DestDir: {app}; Flags: ignoreversion
@@ -120,6 +114,10 @@ Source: ..\stage\Release\Win32\opencv_highgui231.dll; DestDir: {app}; Flags: ign
 Source: ..\stage\Release\Win32\usb_main.bin; DestDir: {app}; Flags: ignoreversion
 #endif
 
+; Olympus IX*3 control module
+Source: ..\stage\Release\{#MMArch}\OlympusIX3Control\*; DestDir: {app}\OlympusIX3Control; Flags: ignoreversion recursesubdirs createallsubdirs
+
+; Java wrapper
 Source: ..\stage\Release\{#MMArch}\MMCoreJ_wrap.dll; DestDir: {app}; Flags: ignoreversion
 
 ; device adapters
@@ -131,7 +129,7 @@ Source: ..\stage\Release\{#MMArch}\MMCorePy.py; DestDir: {app}; Flags: ignorever
 Source: ..\stage\Release\{#MMArch}\MMCoreWrapDemo.py; DestDir: {app}; Flags: ignoreversion
 
 ; beanshell scripts
-Source: ..\scripts\*; DestDir: {app}\scripts; Flags: ignoreversion
+Source: ..\stage\Release\{#MMArch}\scripts\*; DestDir: {app}\scripts; Flags: ignoreversion
 
 ; configuration files
 Source: ..\stage\Release\{#MMArch}\MMConfig_demo.cfg; DestDir: {app}; Flags: ignoreversion
@@ -139,7 +137,7 @@ Source: ..\stage\Release\{#MMArch}\MMConfig_demo.cfg; DestDir: {app}; Flags: ign
 ; ImageJ files
 Source: ..\stage\Release\{#MMArch}\ImageJ.exe; DestDir: {app}; Flags: ignoreversion
 Source: ..\stage\Release\{#MMArch}\ImageJ.cfg; DestDir: {app}; Flags: onlyifdoesntexist; Permissions: users-modify
-Source: ..\..\3rdpartypublic\classext\ij.jar; DestDir: {app}; Flags: ignoreversion
+Source: ..\stage\Release\{#MMArch}\ij.jar; DestDir: {app}; Flags: ignoreversion
 Source: ..\stage\Release\{#MMArch}\IJ_Prefs.txt; DestDir: {app}; Flags: onlyifdoesntexist
 Source: ..\stage\Release\{#MMArch}\macros\*; DestDir: {app}\macros; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: ..\stage\Release\{#MMArch}\plugins\*; DestDir: {app}\plugins; Flags: ignoreversion recursesubdirs createallsubdirs

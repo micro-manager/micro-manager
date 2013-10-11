@@ -1,0 +1,14 @@
+<project name="USBManager">
+	<import file="../../buildscripts/deviceadapter.xml"/>
+
+	<!-- It is ugly that the generic libusb DLL is copied from the K8061
+	     directory. What would be a better arrangement? -->
+
+	<target name="install-Win32">
+		<copy tofile="${mm.dll.installdir}/libusb0.dll" file="${mm.basedir}/drivers/K8061/x86/libusb0_x86.dll"/>
+	</target>
+
+	<target name="install-x64">
+		<copy tofile="${mm.dll.installdir}/libusb0.dll" file="${mm.basedir}/drivers/K8061/amd64/libusb0.dll"/>
+	</target>
+</project>
