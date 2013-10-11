@@ -137,19 +137,22 @@
 
 ; 5.9 ms
 
-(defn insert-half-tile
-  [tile [left? upper?] mosaic]
-  (let [test-img (or mosaic tile)
-        w (.getWidth test-img)
-        h (.getHeight test-img)
+(defn insert-half-tile!
+  "Creates a new ImageProcessor with the old
+   ImageProcessor, tile, inserted into a dest."
+  [dest tile [left? upper?]]
+  (let [w (.getWidth dest)
+        h (.getHeight dest)
         x (if left? 0 (/ w 2))
-        y (if upper? 0 (/ h 2))
-        dest (if mosaic
-               (.duplicate mosaic)
-               (.createProcessor test-img w h))]
+        y (if upper? 0 (/ h 2))]
     (doto dest
       (.setInterpolationMethod ImageProcessor/BILINEAR)
       (insert-image! (half-size tile) x y))))
+
+(defn insert-half-tile
+  [tile [left? upper?] mosaic]
+  (let [dest (black-processor-like mosaic)]
+    (insert-half-tile! dest tile [left? upper?])))
 
 ;; stats
  
@@ -306,10 +309,25 @@
         (ImagePlus. "" proc2))
       .getProcessor))
 
-(defn pixel [proc x y]
+(defn multiply
+  "Multiply an image processor by a factor."
+  [processor factor]
+  (doto (.duplicate processor)
+    (.multiply factor)))
+
+(def add-processors
+  "Arithmetically add two processors, pixel by pixel."
+  (partial combine-processors :add))
+
+(defn pixel
+  "Returns the intensity value of a pixel at x,y."
+  [proc x y]
   (.getPixelValue proc x y)) 
 
-(defn center-pixel [proc]
+(defn center-pixel
+  "Returns the intensity value of a pixel at the center of
+   the image."
+  [proc]
   (let [x (long (/ (.getWidth proc) 2))
         y (long (/ (.getHeight proc) 2))]
     (pixel proc x y)))    
