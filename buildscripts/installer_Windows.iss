@@ -83,65 +83,14 @@ Filename: "{app}\vcredist_{#MMArch_x86x64}_2010SP1.exe"; Parameters: "/q"; Descr
 ; Java Runtime
 Source: {#MMStageDir}\jre\*; DestDir: {app}\jre; Flags: ignoreversion recursesubdirs createallsubdirs
 
-; Vendor DLLs
-; Please keep in ASCII lexical order!
-; TODO Include these from a separate file
-#if MMArch == "x64"
-Source: {#MMStageDir}\FxLib.dll; DestDir: {app}; Flags: ignoreversion
-Source: {#MMStageDir}\LaserCombinerSDK64.dll; DestDir: {app}; Flags: ignoreversion
-Source: {#MMStageDir}\PCO_Kamlib64.dll; DestDir: {app}; Flags: ignoreversion
-Source: {#MMStageDir}\SysInfo.dll; DestDir: {app}; Flags: ignoreversion
-Source: {#MMStageDir}\TIS_DShowLib10_x64.dll; DestDir: {app}; Flags: ignoreversion
-Source: {#MMStageDir}\TIS_UDSHL10_x64.dll; DestDir: {app}; Flags: ignoreversion
-Source: {#MMStageDir}\XCLIBW64.dll; DestDir: {app}; Flags: ignoreversion
-Source: {#MMStageDir}\atmcd64d.dll; DestDir: {app}; Flags: ignoreversion
-Source: {#MMStageDir}\hidapi.dll; DestDir: {app}; Flags: ignoreversion
-Source: {#MMStageDir}\hrfw64.dll; DestDir: {app}; Flags: ignoreversion
-Source: {#MMStageDir}\inpoutx64.dll; DestDir: {app}; Flags: ignoreversion
-Source: {#MMStageDir}\libusb0.dll; DestDir: {app}; Flags: ignoreversion
-Source: {#MMStageDir}\mcam64.dll; DestDir: {app}; Flags: ignoreversion
-Source: {#MMStageDir}\mcammr64.dll; DestDir: {app}; Flags: ignoreversion
-Source: {#MMStageDir}\mrc564.dll; DestDir: {app}; Flags: ignoreversion
-Source: {#MMStageDir}\mrfw64.dll; DestDir: {app}; Flags: ignoreversion
-Source: {#MMStageDir}\opencv_core231.dll; DestDir: {app}; Flags: ignoreversion
-Source: {#MMStageDir}\opencv_highgui231.dll; DestDir: {app}; Flags: ignoreversion
-#else
-Source: {#MMStageDir}\DSLRRemoteLib.dll; DestDir: {app}; Flags: ignoreversion
-Source: {#MMStageDir}\FireCamJ.dll; DestDir: {app}; Flags: ignoreversion
-Source: {#MMStageDir}\FxLib.dll; DestDir: {app}; Flags: ignoreversion
-Source: {#MMStageDir}\LaserCombinerSDK.dll; DestDir: {app}; Flags: ignoreversion
-Source: {#MMStageDir}\MexJCam.dll; DestDir: {app}; Flags: ignoreversion
-Source: {#MMStageDir}\NKRemoteLib.dll; DestDir: {app}; Flags: ignoreversion
-Source: {#MMStageDir}\PCO_Kamlib.dll; DestDir: {app}; Flags: ignoreversion
-Source: {#MMStageDir}\PSRemoteLib.dll; DestDir: {app}; Flags: ignoreversion
-Source: {#MMStageDir}\ProcessLib.dll; DestDir: {app}; Flags: ignoreversion
-Source: {#MMStageDir}\SysInfo.dll; DestDir: {app}; Flags: ignoreversion
-Source: {#MMStageDir}\TIS_DShowLib10.dll; DestDir: {app}; Flags: ignoreversion
-Source: {#MMStageDir}\TIS_UDSHL10.dll; DestDir: {app}; Flags: ignoreversion
-Source: {#MMStageDir}\XCLIBWNT.dll; DestDir: {app}; Flags: ignoreversion
-Source: {#MMStageDir}\atmcd32d.dll; DestDir: {app}; Flags: ignoreversion
-Source: {#MMStageDir}\camconj.dll; DestDir: {app}; Flags: ignoreversion
-Source: {#MMStageDir}\hidapi.dll; DestDir: {app}; Flags: ignoreversion
-Source: {#MMStageDir}\hrfw.dll; DestDir: {app}; Flags: ignoreversion
-Source: {#MMStageDir}\inpout32.dll; DestDir: {app}; Flags: ignoreversion
-Source: {#MMStageDir}\libusb0.dll; DestDir: {app}; Flags: ignoreversion
-Source: {#MMStageDir}\mcam.dll; DestDir: {app}; Flags: ignoreversion
-Source: {#MMStageDir}\mcammr.dll; DestDir: {app}; Flags: ignoreversion
-Source: {#MMStageDir}\mrc5.dll; DestDir: {app}; Flags: ignoreversion
-Source: {#MMStageDir}\mrfw.dll; DestDir: {app}; Flags: ignoreversion
-Source: {#MMStageDir}\opencv_core231.dll; DestDir: {app}; Flags: ignoreversion
-Source: {#MMStageDir}\opencv_highgui231.dll; DestDir: {app}; Flags: ignoreversion
-Source: {#MMStageDir}\usb_main.bin; DestDir: {app}; Flags: ignoreversion
-#endif
+; DLLs (Java wrapper, device adapters, and vendor DLLs)
+; (Note: *.dll covers it all, but the separate patterns result in a cleaner install order)
+Source: {#MMStageDir}\MMCoreJ_wrap.dll; DestDir: {app}; Flags: ignoreversion
+Source: {#MMStageDir}\mmgr_dal_*.dll; DestDir: {app}; Flags: ignoreversion
+Source: {#MMStageDir}\*.dll; DestDir: {app}; Flags: ignoreversion
 
 ; Olympus IX*3 control module
 Source: {#MMStageDir}\OlympusIX3Control\*; DestDir: {app}\OlympusIX3Control; Flags: ignoreversion recursesubdirs createallsubdirs
-
-; Java wrapper
-Source: {#MMStageDir}\MMCoreJ_wrap.dll; DestDir: {app}; Flags: ignoreversion
-
-; Device adapters
-Source: {#MMStageDir}\mmgr_dal_*.dll; DestDir: {app}; Flags: ignoreversion
 
 ; Python wrapper
 Source: {#MMStageDir}\_MMCorePy.pyd; DestDir: {app}; Flags: ignoreversion
