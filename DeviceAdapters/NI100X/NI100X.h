@@ -126,5 +126,6 @@ private:
    long numPos_;
    std::string channel_;
    TaskHandle task_;
+   bool open_;
    int state_;
 };

@@ -98,7 +98,7 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 // DigitalIO implementation
 // ~~~~~~~~~~~~~~~~~~~~~~~~
 
-DigitalIO::DigitalIO() : numPos_(16), busy_(false), channel_("undef"), task_(0), state_(0)
+DigitalIO::DigitalIO() : numPos_(16), busy_(false), channel_("undef"), task_(0), open_(false), state_(0)
 {
    InitializeDefaultErrorMessages();
 
@@ -156,6 +156,11 @@ int DigitalIO::Initialize()
    if (nRet != DEVICE_OK)
       return nRet;
 
+   // Gate Closed Position
+   nRet = CreateProperty(MM::g_Keyword_Closed_Position, "0", MM::Integer, false);
+   if (nRet != DEVICE_OK)
+      return nRet;
+
    // set up task
    // -----------
    long niRet = DAQmxCreateTask("", &task_);
@@ -166,7 +171,9 @@ int DigitalIO::Initialize()
    if (niRet != DAQmxSuccess)
       return (int)niRet;
 
-	niRet = DAQmxStartTask(task_);
+   niRet = DAQmxStartTask(task_);
+
+   GetGateOpen(open_);
 
    nRet = UpdateStatus();
    if (nRet != DEVICE_OK)
@@ -199,15 +206,38 @@ int DigitalIO::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    else if (eAct == MM::AfterSet)
    {
-      long s;
-      pProp->Get(s);
-      uInt32 data;
-      int32 written;
-      data = s;
-      long niRet = DAQmxWriteDigitalU32(task_, 1, 1, 10.0, DAQmx_Val_GroupByChannel,&data, &written, NULL);
-      if (niRet != DAQmxSuccess)
-         return (int)niRet;
-      state_ = (int)data;
+      bool gateOpen;
+      GetGateOpen(gateOpen);
+
+      long state;
+      pProp->Get(state);
+
+      if ((state == state_) && (open_ == gateOpen))
+         return DEVICE_OK;
+
+      if (gateOpen) {
+         uInt32 data;
+         int32 written;
+         data = state;
+         long niRet = DAQmxWriteDigitalU32(task_, 1, 1, 10.0, DAQmx_Val_GroupByChannel, &data, &written, NULL);
+         if (niRet != DAQmxSuccess)
+            return (int)niRet;
+            state_ = (int)data;
+      }
+      else {
+         long closed_state;
+         GetProperty(MM::g_Keyword_Closed_Position, closed_state);
+
+         uInt32 data;
+         int32 written;
+         data = closed_state;
+         long niRet = DAQmxWriteDigitalU32(task_, 1, 1, 10.0, DAQmx_Val_GroupByChannel, &data, &written, NULL);
+         if (niRet != DAQmxSuccess)
+            return (int)niRet;
+      }
+
+      open_ = gateOpen;
+      pProp->Set((long)state_);
    }
 
    return DEVICE_OK;
