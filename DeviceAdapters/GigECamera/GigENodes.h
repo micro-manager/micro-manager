@@ -100,9 +100,9 @@ public:
 	bool hasMinimum() { return hasMin; }
 	bool hasMaximum() { return hasMax; }
 	bool hasIncrement() { return hasInc; }
-	T getMinimum( CAM_HANDLE camera );
-	T getMaximum( CAM_HANDLE camera );
-	T getIncrement( CAM_HANDLE camera );
+	bool getMinimum( CAM_HANDLE camera, T& value );
+	bool getMaximum( CAM_HANDLE camera, T& value );
+	bool getIncrement( CAM_HANDLE camera, T& value );
 	J_STATUS_TYPE get( CAM_HANDLE camera, T& );
 	J_STATUS_TYPE set( CAM_HANDLE camera, const T& );
 	
@@ -196,14 +196,14 @@ public:
 	// - GenICam integer nodes always have a min, max and increment
 	// - float (double) nodes always have min and max, and may have increment
 	// - string nodes never have min, max or increment
-	int64_t getMin( InterestingNodeInteger node );
-	int64_t getMax( InterestingNodeInteger node );
-	int64_t getIncrement( InterestingNodeInteger node );
+	bool getMin( InterestingNodeInteger node, int64_t& value );
+	bool getMax( InterestingNodeInteger node, int64_t& value );
+	bool getIncrement( InterestingNodeInteger node, int64_t& value );
 
-	double getMin( InterestingNodeFloat node );
-	double getMax( InterestingNodeFloat node );
+	bool getMin( InterestingNodeFloat node, double& value );
+	bool getMax( InterestingNodeFloat node, double& value );
 	bool hasIncrement( InterestingNodeFloat node );
-	double getIncrement( InterestingNodeFloat node );
+	bool getIncrement( InterestingNodeFloat node, double& value );
 
 	// per the JAI library documentation, only integer and string nodes can be enumerated
 	bool isEnum( InterestingNodeInteger node );
@@ -216,8 +216,4 @@ public:
 	bool getEnumDisplayName( std::string& name, uint32_t index, InterestingNodeString node );
 	//bool getEnumEntryFromDisplayName( std::string& entry, const std::string displayName, InterestingNodeInteger node );
 	//bool getEnumEntryFromDisplayName( std::string& entry, const std::string displayName, InterestingNodeString node );
-	
 };
-
-
-

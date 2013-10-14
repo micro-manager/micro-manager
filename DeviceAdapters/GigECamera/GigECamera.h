@@ -210,6 +210,11 @@ protected:
 	std::map< std::string, std::string > pixelFormatMap;
 	std::map< std::string, std::string > acqModeMap;
 
+	// which node to use for Exposure property
+	bool useExposureTime;
+	bool useExposureTimeAbs;
+	bool useExposureTimeAbsInt;
+
 	// other members
 	GigENodes* nodes;
 	unsigned char* buffer;
@@ -217,7 +222,6 @@ protected:
 
 	void SnapImageCallback( J_tIMAGE_INFO* );
 	J_STATUS_TYPE setupImaging();
-
 };
 
 #endif //_GigECAMERA_H_

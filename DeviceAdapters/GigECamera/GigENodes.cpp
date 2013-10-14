@@ -200,33 +200,43 @@ bool GigENodes::set( const std::string i, InterestingNodeString node )
 }
 
 
-int64_t GigENodes::getMin( InterestingNodeInteger node )
+bool GigENodes::getMin( InterestingNodeInteger node, int64_t& value )
 {
-	return intNodes[node].getMinimum( camera );
+	if( !intNodes[node].hasMinimum() )
+		return false;
+	return intNodes[node].getMinimum( camera, value );
 }
 
 
-int64_t GigENodes::getMax( InterestingNodeInteger node )
+bool GigENodes::getMax( InterestingNodeInteger node, int64_t& value )
 {
-	return intNodes[node].getMaximum( camera );
+	if( !intNodes[node].hasMaximum() )
+		return false;
+	return intNodes[node].getMaximum( camera, value );
 }
 
 
-int64_t GigENodes::getIncrement( InterestingNodeInteger node )
+bool GigENodes::getIncrement( InterestingNodeInteger node, int64_t& value )
 {
-	return intNodes[node].getIncrement( camera );
+	if( !intNodes[node].hasIncrement() )
+		return false;
+	return intNodes[node].getIncrement( camera, value );
 }
 
 
-double GigENodes::getMin( InterestingNodeFloat node )
+bool GigENodes::getMin( InterestingNodeFloat node, double& value )
 {
-	return floatNodes[node].getMinimum( camera );
+	if( !floatNodes[node].hasMinimum() )
+		return false;
+	return floatNodes[node].getMinimum( camera, value );
 }
 
 
-double GigENodes::getMax( InterestingNodeFloat node )
+bool GigENodes::getMax( InterestingNodeFloat node, double& value )
 {
-	return floatNodes[node].getMaximum( camera );
+	if( !floatNodes[node].hasMaximum() )
+		return false;
+	return floatNodes[node].getMaximum( camera, value );
 }
 
 
@@ -236,9 +246,11 @@ bool GigENodes::hasIncrement( InterestingNodeFloat node )
 }
 
 
-double GigENodes::getIncrement( InterestingNodeFloat node )
+bool GigENodes::getIncrement( InterestingNodeFloat node, double& value )
 {
-	return floatNodes[node].getIncrement( camera );
+	if( !floatNodes[node].hasIncrement() )
+		return false;
+	return floatNodes[node].getIncrement( camera, value );
 }
 
 
@@ -574,125 +586,102 @@ template<> void Node<std::string>::testMinMaxInc( CAM_HANDLE )
 }
 
 
-template<> int64_t Node<int64_t>::getMinimum( CAM_HANDLE camera )
+template<> bool Node<int64_t>::getMinimum( CAM_HANDLE camera, int64_t& value )
 {
-	int64_t i = 0;
+	if( !( this->hasMin ) ) return false;
 	NODE_HANDLE node;
 	J_STATUS_TYPE retval  = J_Camera_GetNodeByName( camera, cstr2jai( this->sfncName.c_str() ), &node );
 	if( retval != J_ST_SUCCESS )
-		return 0;
+		return false;
 	LogMessage( "Getting min int64 for " + sfncName );
-	retval = J_Node_GetMinInt64( node, &i );
-	if( retval == J_ST_SUCCESS )
-		return i;
-	else
-		return 0;
+	retval = J_Node_GetMinInt64( node, &value );
+	return retval == J_ST_SUCCESS;
 }
 
 
-template<> int64_t Node<int64_t>::getMaximum( CAM_HANDLE camera )
+template<> bool Node<int64_t>::getMaximum( CAM_HANDLE camera, int64_t& value )
 {
-	int64_t i = 0;
+	if( !( this->hasMax ) ) return false;
 	NODE_HANDLE node;
 	J_STATUS_TYPE retval  = J_Camera_GetNodeByName( camera, cstr2jai( this->sfncName.c_str() ), &node );
 	if( retval != J_ST_SUCCESS )
-		return 0;
+		return false;
 	LogMessage( "Getting max int64 for " + sfncName );
-	retval = J_Node_GetMaxInt64( node, &i );
-	if( retval == J_ST_SUCCESS )
-		return i;
-	else
-		return 0;
+	retval = J_Node_GetMaxInt64( node, &value );
+	return retval == J_ST_SUCCESS;
 }
 
 
-template<> int64_t Node<int64_t>::getIncrement( CAM_HANDLE camera )
+template<> bool Node<int64_t>::getIncrement( CAM_HANDLE camera, int64_t& value )
 {
-	int64_t i = 1;
+	if( !( this->hasInc ) ) return false;
 	NODE_HANDLE node;
 	J_STATUS_TYPE retval  = J_Camera_GetNodeByName( camera, cstr2jai( this->sfncName.c_str() ), &node );
 	if( retval != J_ST_SUCCESS )
-		return 1; // Unlikely to get here, but return a safe value
+		return false;
 	LogMessage( "Getting increment for " + sfncName );
-	retval = J_Node_GetInc( node, &i );
-	if( retval == J_ST_SUCCESS )
-		return i;
-	else {
-		// Returning zero here could cause infinite loops if the calling
-		// code assumes it to be a valid increment
-		LogMessage( "Cannot get increment; forcing to 1" );
-		return 1;
-	}
+	retval = J_Node_GetInc( node, &value );
+	return retval == J_ST_SUCCESS;
 }
 
 
-template<> double Node<double>::getMinimum( CAM_HANDLE camera )
+template<> bool Node<double>::getMinimum( CAM_HANDLE camera, double& value )
 {
-	double i = 0;
+	if( !( this->hasMin ) ) return false;
 	NODE_HANDLE node;
 	J_STATUS_TYPE retval  = J_Camera_GetNodeByName( camera, cstr2jai( this->sfncName.c_str() ), &node );
 	if( retval != J_ST_SUCCESS )
-		return 0;
+		return false;
 	LogMessage( "Getting min double for " + sfncName );
-	retval = J_Node_GetMinDouble( node, &i );
-	if( retval == J_ST_SUCCESS )
-		return i;
-	else
-		return 0;
+	retval = J_Node_GetMinDouble( node, &value );
+	return retval == J_ST_SUCCESS;
 }
 
 
-template<> double Node<double>::getMaximum( CAM_HANDLE camera )
+template<> bool Node<double>::getMaximum( CAM_HANDLE camera, double& value )
 {
-	double i = 0;
+	if( !( this->hasMax ) ) return false;
 	NODE_HANDLE node;
 	J_STATUS_TYPE retval  = J_Camera_GetNodeByName( camera, cstr2jai( this->sfncName.c_str() ), &node );
 	if( retval != J_ST_SUCCESS )
-		return 0;
+		return false;
 	LogMessage( "Getting max double for " + sfncName );
-	retval = J_Node_GetMaxDouble( node, &i );
-	if( retval == J_ST_SUCCESS )
-		return i;
-	else
-		return 0;
+	retval = J_Node_GetMaxDouble( node, &value );
+	return retval == J_ST_SUCCESS;
 }
 
 
-template<> double Node<double>::getIncrement( CAM_HANDLE camera )
+template<> bool Node<double>::getIncrement( CAM_HANDLE camera, double& value )
 {
-	double i = 0;
-	if( !(this->hasInc ) ) return 0;
+	if( !( this->hasInc ) ) return false;
 	NODE_HANDLE node;
 	J_STATUS_TYPE retval  = J_Camera_GetNodeByName( camera, cstr2jai( this->sfncName.c_str() ), &node );
 	if( retval != J_ST_SUCCESS )
-		return 0;
+		return false;
 	LogMessage( "Getting float increment for " + sfncName );
-	retval = J_Node_GetFloatInc( node, &i );
-	if( retval == J_ST_SUCCESS )
-		return i;
-	else
-		return 0;
+	retval = J_Node_GetFloatInc( node, &value );
+	return retval == J_ST_SUCCESS;
 }
 
 
-template<> std::string Node<std::string>::getMinimum( CAM_HANDLE )
+template<> bool Node<std::string>::getMinimum( CAM_HANDLE, std::string& )
 {
-	// strings never have a min, so return an empty string
-	return (std::string)"";
+	// strings never have a min
+	return false;
 }
 
 
-template<> std::string Node<std::string>::getMaximum( CAM_HANDLE )
+template<> bool Node<std::string>::getMaximum( CAM_HANDLE, std::string& )
 {
-	// strings never have a max, so return an empty string
-	return (std::string)"";
+	// strings never have a max
+	return false;
 }
 
 
-template<> std::string Node<std::string>::getIncrement( CAM_HANDLE )
+template<> bool Node<std::string>::getIncrement( CAM_HANDLE, std::string& )
 {
-	// strings never have an increment, so return an empty string
-	return (std::string)"";
+	// strings never have an increment
+	return false;
 }
 
 

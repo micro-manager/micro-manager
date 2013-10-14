@@ -34,9 +34,9 @@ int CGigECamera::OnBinning( MM::PropertyBase* pProp, MM::ActionType eAct )
 			// try to set the vertical and horizontal binning
 			long binFactor;
 			pProp->Get( binFactor );
-			if( nodes->isAvailable( BINNING_VERTICAL ) )
+			if( HasProperty( g_Keyword_Binning_Vertical ) )
 				ret |= SetProperty( g_Keyword_Binning_Vertical, CDeviceUtils::ConvertToString( binFactor ) );
-			if( nodes->isAvailable( BINNING_HORIZONTAL ) )
+			if( HasProperty( g_Keyword_Binning_Horizontal ) )
 				ret |= SetProperty( g_Keyword_Binning_Horizontal, CDeviceUtils::ConvertToString( binFactor ) );
 		}
 		break;
@@ -81,27 +81,31 @@ int CGigECamera::OnBinningV( MM::PropertyBase* pProp, MM::ActionType eAct )
 				else
 				{
 					// new limits
-					int64_t high, low;
-					high = nodes->getMax( HEIGHT );
-					low = nodes->getMin( HEIGHT );
-					SetPropertyLimits( g_Keyword_Image_Height, (double) low, (double) high );
-
-					// new height
-					int64_t dim;
-					nodes->get( dim, HEIGHT );
-					if( dim == oldh ) // this camera doesn't auto-adjust its height w/ binning change
+					if( HasProperty( g_Keyword_Image_Height ) )
 					{
-						dim = dim * oldBin / binFactor;
-					}
-					SetProperty( g_Keyword_Image_Height, CDeviceUtils::ConvertToString( (long) dim ) );
-					UpdateProperty( g_Keyword_Image_Height );
-					LogMessage( (std::string) "setting v bin to " + boost::lexical_cast<std::string>( binFactor ) 
-								+ " and height to " + boost::lexical_cast<std::string>( dim ) 
-								+ " (oldBin:  " + boost::lexical_cast<std::string>( oldBin ) + ")  " 
-								+ " new limits (" + boost::lexical_cast<std::string>( low ) + 
-								+ " " + boost::lexical_cast<std::string>( high ) + ")", true );
+						int64_t high, low;
+						// Assuming getMin(), getMax() won't fail if they worked previously
+						nodes->getMax( HEIGHT, high );
+						nodes->getMin( HEIGHT, low );
+						SetPropertyLimits( g_Keyword_Image_Height, (double) low, (double) high );
 
-					if( nodes->isAvailable( HEIGHT_MAX ) )
+						// new height
+						int64_t dim;
+						nodes->get( dim, HEIGHT );
+						if( dim == oldh ) // this camera doesn't auto-adjust its height w/ binning change
+						{
+							dim = dim * oldBin / binFactor;
+						}
+						SetProperty( g_Keyword_Image_Height, CDeviceUtils::ConvertToString( (long) dim ) );
+						UpdateProperty( g_Keyword_Image_Height );
+						LogMessage( (std::string) "setting v bin to " + boost::lexical_cast<std::string>( binFactor ) 
+									+ " and height to " + boost::lexical_cast<std::string>( dim ) 
+									+ " (oldBin:  " + boost::lexical_cast<std::string>( oldBin ) + ")  " 
+									+ " new limits (" + boost::lexical_cast<std::string>( low ) + 
+									+ " " + boost::lexical_cast<std::string>( high ) + ")", true );
+					}
+
+					if( HasProperty( g_Keyword_Image_Height_Max ) )
 					{
 						UpdateProperty( g_Keyword_Image_Height_Max );
 					}
@@ -154,24 +158,32 @@ int CGigECamera::OnBinningH( MM::PropertyBase* pProp, MM::ActionType eAct )
 				}
 				else
 				{
-					int64_t dim;
-					nodes->get( dim, WIDTH );
-					if( dim == oldw )
+					// new limits
+					if( HasProperty( g_Keyword_Image_Width ) )
 					{
-						dim = dim * oldBin / binFactor;
+						int64_t high, low;
+						// Assuming getMin(), getMax() won't fail if they worked previously
+						nodes->getMax( WIDTH, high );
+						nodes->getMin( WIDTH, low );
+						SetPropertyLimits( g_Keyword_Image_Width, (double) low, (double) high );
+
+						int64_t dim;
+						nodes->get( dim, WIDTH );
+						if( dim == oldw )
+						{
+							dim = dim * oldBin / binFactor;
+						}
+						SetProperty( g_Keyword_Image_Width, CDeviceUtils::ConvertToString( (long) dim ) );
+						SetPropertyLimits( g_Keyword_Image_Width, (double) low, (double) high );
+						UpdateProperty( g_Keyword_Image_Width );
+						LogMessage( (std::string) "setting h bin to " + boost::lexical_cast<std::string>( binFactor ) 
+									+ " and width to " + boost::lexical_cast<std::string>( dim ) 
+									+ " (oldBin:  " + boost::lexical_cast<std::string>( oldBin ) + ")  " 
+									+ " new limits (" + boost::lexical_cast<std::string>( low ) + 
+									+ " " + boost::lexical_cast<std::string>( high ) + ")", true );
 					}
-					SetProperty( g_Keyword_Image_Width, CDeviceUtils::ConvertToString( (long) dim ) );
-					int64_t high, low;
-					high = nodes->getMax( WIDTH );
-					low = nodes->getMin( WIDTH );
-					SetPropertyLimits( g_Keyword_Image_Width, (double) low, (double) high );
-					UpdateProperty( g_Keyword_Image_Width );
-					LogMessage( (std::string) "setting h bin to " + boost::lexical_cast<std::string>( binFactor ) 
-								+ " and width to " + boost::lexical_cast<std::string>( dim ) 
-								+ " (oldBin:  " + boost::lexical_cast<std::string>( oldBin ) + ")  " 
-								+ " new limits (" + boost::lexical_cast<std::string>( low ) + 
-								+ " " + boost::lexical_cast<std::string>( high ) + ")", true );
-					if( nodes->isAvailable( WIDTH_MAX ) )
+
+					if( HasProperty( g_Keyword_Image_Width_Max ) )
 					{
 						UpdateProperty( g_Keyword_Image_Width_Max );
 					}
@@ -589,28 +601,28 @@ int CGigECamera::OnExposure( MM::PropertyBase* pProp, MM::ActionType eAct )
 
 void CGigECamera::UpdateExposureRange()
 {
-	if( nodes->isAvailable( EXPOSURE_TIME ) )
+	if( useExposureTime )
 	{
-		double low, high;
-		high = nodes->getMax( EXPOSURE_TIME ) / 1000.0; // us to ms
-		low = nodes->getMin( EXPOSURE_TIME ) / 1000.0; // us to ms
-		SetPropertyLimits( MM::g_Keyword_Exposure, low, high );
+		double lowUs, highUs;
+		nodes->getMin( EXPOSURE_TIME, lowUs );
+		nodes->getMax( EXPOSURE_TIME, highUs );
+		SetPropertyLimits( MM::g_Keyword_Exposure, lowUs / 1000.0, highUs / 1000.0 );
 		OnPropertiesChanged();
 	}
-	else if( nodes->isAvailable( EXPOSURE_TIME_ABS ) )
+	else if( useExposureTimeAbs )
 	{
-		double low, high;
-		high = nodes->getMax( EXPOSURE_TIME_ABS ) / 1000.0; // us to ms
-		low = nodes->getMin( EXPOSURE_TIME_ABS ) / 1000.0; // us to ms
-		SetPropertyLimits( MM::g_Keyword_Exposure, low, high );
+		double lowUs, highUs;
+		nodes->getMax( EXPOSURE_TIME_ABS, lowUs );
+		nodes->getMin( EXPOSURE_TIME_ABS, highUs );
+		SetPropertyLimits( MM::g_Keyword_Exposure, lowUs / 1000.0, highUs / 1000.0 );
 		OnPropertiesChanged();
 	}
-	else if( nodes->isAvailable( EXPOSURE_TIME_ABS_INT ) )
+	else if( useExposureTimeAbsInt )
 	{
-		double low, high;
-		high = nodes->getMax( EXPOSURE_TIME_ABS_INT ) / 1000.0; // us to ms
-		low = nodes->getMin( EXPOSURE_TIME_ABS_INT ) / 1000.0; // us to ms
-		SetPropertyLimits( MM::g_Keyword_Exposure, low, high );
+		int64_t lowUs, highUs;
+		nodes->getMax( EXPOSURE_TIME_ABS_INT, lowUs );
+		nodes->getMin( EXPOSURE_TIME_ABS_INT, highUs );
+		SetPropertyLimits( MM::g_Keyword_Exposure, static_cast<double>( lowUs ) / 1000.0, static_cast<double>( highUs ) / 1000.0 );
 		OnPropertiesChanged();
 	}
 }

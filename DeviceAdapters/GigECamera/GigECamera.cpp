@@ -374,28 +374,32 @@ int CGigECamera::Initialize()
 	int64_t dim;
 	if( nodes->get( dim, WIDTH ) )
 	{
-		pAct = new CPropertyAction( this, &CGigECamera::OnImageWidth );
-		nRet = CreateProperty( g_Keyword_Image_Width, CDeviceUtils::ConvertToString( (long) dim ), MM::Integer, !nodes->isWritable( WIDTH ), pAct );
-		if( nRet != DEVICE_OK )
-			return nRet;
-		int64_t low = nodes->getMin( WIDTH );
-		int64_t high = nodes->getMax( WIDTH );
-		nRet = SetPropertyLimits( g_Keyword_Image_Width, (double) low, (double) high );
-		if( nRet != DEVICE_OK )
-			return nRet;
+		int64_t low, high;
+		if( nodes->getMin( WIDTH, low ) && nodes->getMax( WIDTH, high ) )
+		{
+			pAct = new CPropertyAction( this, &CGigECamera::OnImageWidth );
+			nRet = CreateProperty( g_Keyword_Image_Width, CDeviceUtils::ConvertToString( (long) dim ), MM::Integer, !nodes->isWritable( WIDTH ), pAct );
+			if( nRet != DEVICE_OK )
+				return nRet;
+			nRet = SetPropertyLimits( g_Keyword_Image_Width, (double) low, (double) high );
+			if( nRet != DEVICE_OK )
+				return nRet;
+		}
 	}
 
 	if( nodes->get( dim, HEIGHT ) )
 	{
-		pAct = new CPropertyAction( this, &CGigECamera::OnImageHeight );
-		nRet = CreateProperty( g_Keyword_Image_Height, CDeviceUtils::ConvertToString( (long) dim ), MM::Integer, !nodes->isWritable( HEIGHT ), pAct );
-		if( nRet != DEVICE_OK )
-			return nRet;
-		int64_t low = nodes->getMin( HEIGHT );
-		int64_t high = nodes->getMax( HEIGHT );
-		nRet = SetPropertyLimits( g_Keyword_Image_Height, (double) low, (double) high );
-		if( nRet != DEVICE_OK )
-			return nRet;
+		int64_t low, high;
+		if( nodes->getMin( HEIGHT, low ) && nodes->getMax( HEIGHT, high ) )
+		{
+			pAct = new CPropertyAction( this, &CGigECamera::OnImageHeight );
+			nRet = CreateProperty( g_Keyword_Image_Height, CDeviceUtils::ConvertToString( (long) dim ), MM::Integer, !nodes->isWritable( HEIGHT ), pAct );
+			if( nRet != DEVICE_OK )
+				return nRet;
+			nRet = SetPropertyLimits( g_Keyword_Image_Height, (double) low, (double) high );
+			if( nRet != DEVICE_OK )
+				return nRet;
+		}
 	}
 
 	// width max and height max
@@ -533,50 +537,58 @@ int CGigECamera::Initialize()
 		return nRet;
 
 	// exposure
+	useExposureTime = useExposureTimeAbs = useExposureTimeAbsInt = false;
 	// note that exposure in GenICam has units of us; umanager has units of ms
-	if( nodes->isAvailable( EXPOSURE_TIME ) )
+	double exposureLowUs, exposureHighUs;
+	if( nodes->isAvailable( EXPOSURE_TIME ) && nodes->getMin( EXPOSURE_TIME, exposureLowUs ) && nodes->getMax( EXPOSURE_TIME, exposureHighUs ) )
 	{
+		useExposureTime = true;
+		LogMessage( "Using ExposureTime (double) for Exposure", true );
 		pAct = new CPropertyAction( this, &CGigECamera::OnExposure );
 		double e;
 		nodes->get( e, EXPOSURE_TIME );
 		nRet = CreateProperty( MM::g_Keyword_Exposure, CDeviceUtils::ConvertToString( e / 1000.0 ), MM::Float, !nodes->isWritable( EXPOSURE_TIME ), pAct );
 		if (nRet != DEVICE_OK)
 			return nRet;
-		double low, high;
-		low = nodes->getMin( EXPOSURE_TIME ) / 1000.0;
-		high = nodes->getMax( EXPOSURE_TIME ) / 1000.0;
-		SetPropertyLimits( MM::g_Keyword_Exposure, low, high );
+		SetPropertyLimits( MM::g_Keyword_Exposure, exposureLowUs / 1000.0, exposureHighUs / 1000.0 );
 	}
-	else if( nodes->isAvailable( EXPOSURE_TIME_ABS ) )
+	else if( nodes->isAvailable( EXPOSURE_TIME_ABS ) && nodes->getMin( EXPOSURE_TIME_ABS, exposureLowUs ) && nodes->getMax( EXPOSURE_TIME_ABS, exposureHighUs ) )
 	{
+		useExposureTimeAbs = true;
+		LogMessage( "Using ExposureTimeAbs (double) for Exposure", true );
 		pAct = new CPropertyAction( this, &CGigECamera::OnExposure );
 		double e;
 		nodes->get( e, EXPOSURE_TIME_ABS );
 		nRet = CreateProperty( MM::g_Keyword_Exposure, CDeviceUtils::ConvertToString( (double) e / 1000.0 ), MM::Float, !nodes->isWritable( EXPOSURE_TIME_ABS ), pAct );
 		if (nRet != DEVICE_OK)
 			return nRet;
-		double low, high;
-		low = nodes->getMin( EXPOSURE_TIME_ABS ) / 1000.0;
-		high = nodes->getMax( EXPOSURE_TIME_ABS ) / 1000.0;
-		SetPropertyLimits( MM::g_Keyword_Exposure, low, high );
+		SetPropertyLimits( MM::g_Keyword_Exposure, exposureLowUs / 1000.0, exposureHighUs / 1000.0 );
 	}
 	else if( nodes->isAvailable( EXPOSURE_TIME_ABS_INT ) )
 	{
-		pAct = new CPropertyAction( this, &CGigECamera::OnExposure );
-		int64_t e;
-		nodes->get( e, EXPOSURE_TIME_ABS_INT );
-		// create this as a float variable since GenICam has units of us
-		nRet = CreateProperty( MM::g_Keyword_Exposure, CDeviceUtils::ConvertToString( (double) e / 1000.0 ), MM::Float, !nodes->isWritable( EXPOSURE_TIME_ABS_INT ), pAct );
-		if (nRet != DEVICE_OK)
-			return nRet;
-		double low, high;
-		low = nodes->getMin( EXPOSURE_TIME_ABS_INT ) / 1000.0;
-		high = nodes->getMax( EXPOSURE_TIME_ABS_INT ) / 1000.0;
-		SetPropertyLimits( MM::g_Keyword_Exposure, low, high );
+		int64_t exposureLowUs, exposureHighUs;
+		if( nodes->getMin( EXPOSURE_TIME_ABS_INT, exposureLowUs ) && nodes->getMax( EXPOSURE_TIME_ABS_INT, exposureHighUs ) )
+		{
+			useExposureTimeAbsInt = true;
+			LogMessage( "Using ExposureTimeAbs (int) for Exposure", true );
+			pAct = new CPropertyAction( this, &CGigECamera::OnExposure );
+			int64_t e;
+			nodes->get( e, EXPOSURE_TIME_ABS_INT );
+			// create this as a float variable since GenICam has units of us
+			nRet = CreateProperty( MM::g_Keyword_Exposure, CDeviceUtils::ConvertToString( (double) e / 1000.0 ), MM::Float, !nodes->isWritable( EXPOSURE_TIME_ABS_INT ), pAct );
+			if (nRet != DEVICE_OK)
+				return nRet;
+			SetPropertyLimits( MM::g_Keyword_Exposure, static_cast<double>( exposureLowUs ) / 1000.0, static_cast<double>( exposureHighUs ) / 1000.0 );
+		}
+	}
+	if( !HasProperty( MM::g_Keyword_Exposure ) )
+	{
+		LogMessage( "No known method to set exposure available, cannot create Exposure property." );
 	}
 
 	// camera gain
-	if( nodes->isAvailable( GAIN ) )
+	double gainLow, gainHigh;
+	if( nodes->isAvailable( GAIN ) && nodes->getMin( GAIN, gainLow ) && nodes->getMax( GAIN, gainHigh ) )
 	{
 		pAct = new CPropertyAction( this, &CGigECamera::OnGain );
 		double d = 0;
@@ -584,42 +596,42 @@ int CGigECamera::Initialize()
 		nRet = CreateProperty( MM::g_Keyword_Gain,  CDeviceUtils::ConvertToString( d ), MM::Float, !nodes->isWritable( GAIN ), pAct );
 		if (nRet != DEVICE_OK)
 			return nRet;
-		double low, high;
-		low = nodes->getMin( GAIN );
-		high = nodes->getMax( GAIN );
-		SetPropertyLimits( MM::g_Keyword_Gain, low, high );
+		SetPropertyLimits( MM::g_Keyword_Gain, gainLow, gainHigh );
 	}
 	else if( nodes->isAvailable( GAIN_RAW ) )
 	{
-		pAct = new CPropertyAction( this, &CGigECamera::OnGain );
-		int64_t d = 0;
-		nodes->get( d, GAIN_RAW );
-		nRet = CreateProperty( MM::g_Keyword_Gain,  CDeviceUtils::ConvertToString( (long) d ), MM::Integer, !nodes->isWritable( GAIN_RAW ), pAct );
-		if (nRet != DEVICE_OK)
-			return nRet;
-		int64_t low, high;
-		low = nodes->getMin( GAIN_RAW );
-		high = nodes->getMax( GAIN_RAW );
-		SetPropertyLimits( MM::g_Keyword_Gain, (double) low, (double) high );
+		int64_t gainLow, gainHigh;
+		if( nodes->getMin( GAIN_RAW, gainLow ) && nodes->getMax( GAIN_RAW, gainHigh ) )
+		{
+			pAct = new CPropertyAction( this, &CGigECamera::OnGain );
+			int64_t d = 0;
+			nodes->get( d, GAIN_RAW );
+			nRet = CreateProperty( MM::g_Keyword_Gain,  CDeviceUtils::ConvertToString( (long) d ), MM::Integer, !nodes->isWritable( GAIN_RAW ), pAct );
+			if (nRet != DEVICE_OK)
+				return nRet;
+			SetPropertyLimits( MM::g_Keyword_Gain, static_cast<double>( gainLow ), static_cast<double>( gainHigh ) );
+		}
 	}
 
 	// camera temperature
 	if( nodes->isAvailable( TEMPERATURE ) )
 	{
-		pAct = new CPropertyAction( this, &CGigECamera::OnTemperature );
-		double d = 0;
-		nodes->get( d, TEMPERATURE );
-		nRet = CreateProperty( MM::g_Keyword_CCDTemperature, CDeviceUtils::ConvertToString( d ), MM::Float, !nodes->isWritable( TEMPERATURE ), pAct );
-		if (nRet != DEVICE_OK)
-			return nRet;
 		double low, high;
-		low = nodes->getMin( TEMPERATURE );
-		high = nodes->getMax( TEMPERATURE );
-		SetPropertyLimits( MM::g_Keyword_CCDTemperature, low, high );
+		if ( nodes->getMin( TEMPERATURE, low ) && nodes->getMax( TEMPERATURE, high ) )
+		{
+			pAct = new CPropertyAction( this, &CGigECamera::OnTemperature );
+			double d = 0;
+			nodes->get( d, TEMPERATURE );
+			nRet = CreateProperty( MM::g_Keyword_CCDTemperature, CDeviceUtils::ConvertToString( d ), MM::Float, !nodes->isWritable( TEMPERATURE ), pAct );
+			if (nRet != DEVICE_OK)
+				return nRet;
+			SetPropertyLimits( MM::g_Keyword_CCDTemperature, low, high );
+		}
 	}
 
 	// acquisition frame rate
-	if( nodes->isAvailable( ACQUISITION_FRAME_RATE ) )
+	double framerateLow, framerateHigh;
+	if( nodes->isAvailable( ACQUISITION_FRAME_RATE ) && nodes->getMin( ACQUISITION_FRAME_RATE, framerateLow ) && nodes->getMax( ACQUISITION_FRAME_RATE, framerateHigh ) )
 	{
 		pAct = new CPropertyAction( this, &CGigECamera::OnFrameRate );
 		double d = 0;
@@ -628,10 +640,7 @@ int CGigECamera::Initialize()
 								!nodes->isWritable( ACQUISITION_FRAME_RATE ), pAct );
 		if( nRet != DEVICE_OK )
 			return nRet;
-		double low, high;
-		low = nodes->getMin( ACQUISITION_FRAME_RATE );
-		high = nodes->getMax( ACQUISITION_FRAME_RATE );
-		SetPropertyLimits( g_Keyword_Frame_Rate, low, high );
+		SetPropertyLimits( g_Keyword_Frame_Rate, framerateLow, framerateHigh );
 	}
 	else if( nodes->isAvailable( ACQUISITION_FRAME_RATE_STR ) )
 	{
@@ -829,11 +838,9 @@ int CGigECamera::SetAllowedBinning()
 	std::vector<std::string> vValues, hValues, binValues;
 
 	// vertical binning
-	if( nodes->isAvailable( BINNING_VERTICAL ) )
+	if( nodes->isAvailable( BINNING_VERTICAL ) && nodes->getMin( BINNING_VERTICAL, min ) &&
+		nodes->getMax( BINNING_VERTICAL, max ) && nodes->getIncrement( BINNING_VERTICAL, inc ) )
 	{
-		min = nodes->getMin( BINNING_VERTICAL );
-		max = nodes->getMax( BINNING_VERTICAL );
-		inc = nodes->getIncrement( BINNING_VERTICAL );
 		LogMessage("Vertical Binning min = " + boost::lexical_cast<std::string>(min) +
 				"; max = " + boost::lexical_cast<std::string>(max) +
 				"; increment = " + boost::lexical_cast<std::string>(inc), true);
@@ -843,11 +850,9 @@ int CGigECamera::SetAllowedBinning()
 	}
 
 	// horizontal binning
-	if( nodes->isAvailable( BINNING_HORIZONTAL ) )
+	if( nodes->isAvailable( BINNING_HORIZONTAL ) && nodes->getMin( BINNING_HORIZONTAL, min ) &&
+		nodes->getMax( BINNING_HORIZONTAL, max ) && nodes->getIncrement( BINNING_HORIZONTAL, inc ) )
 	{
-		min = nodes->getMin( BINNING_HORIZONTAL );
-		max = nodes->getMax( BINNING_HORIZONTAL );
-		inc = nodes->getIncrement( BINNING_HORIZONTAL );
 		LogMessage("Horizontal Binning min = " + boost::lexical_cast<std::string>(min) +
 				"; max = " + boost::lexical_cast<std::string>(max) +
 				"; increment = " + boost::lexical_cast<std::string>(inc), true);
