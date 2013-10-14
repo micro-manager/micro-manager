@@ -60,23 +60,19 @@
     (filter #(.. % getName (endsWith ending))
             (mapcat file-seq parent-dirs))))
 
-(defn missing-vcproj []
+(defn missing-vcxproj []
   (let [device-adapter-dirs (device-adapter-dirs)
-        directories-without-vcproj
+        directories-without-vcxproj
         (filter identity
                 (for [device-adapter-dir device-adapter-dirs]
-                  (when (empty? (filter #(.. % getName (endsWith ".vcproj"))
+                  (when (empty? (filter #(.. % getName (endsWith ".vcxproj"))
                                         (file-seq device-adapter-dir)))
                     device-adapter-dir)))]
         (sort
           (clojure.set/difference
-            (set (map #(.getName %) directories-without-vcproj))
+            (set (map #(.getName %) directories-without-vcxproj))
             (do-not-build)
             non-windows-device-adapters))))
-
-(defn device-vcproj-files []
-    (filter #(.. % getName (endsWith ".vcproj"))
-            (mapcat file-seq device-adapter-parent-dirs)))
 
 (defn device-vcxproj-files []
     (filter #(.. % getName (endsWith ".vcxproj"))
@@ -85,10 +81,10 @@
 (defn dll-name [file]
   (second (re-find #"mmgr_dal_(.*?).dll" (.getName file))))
 
-(defn project-name [vcproj-file]
+(defn project-name [vcxproj-file]
   (try
-    (-> vcproj-file clojure.xml/parse :attrs :Name)
-    (catch Exception e (println vcproj-file))))
+    (-> vcxproj-file clojure.xml/parse :attrs :Name)
+    (catch Exception e (println vcxproj-file))))
 
 (defn dll-dir [bits]
   (File. micromanager
@@ -99,23 +95,23 @@
 (defn get-dll-names [bits]
   (map dll-name (device-adapter-dlls (dll-dir bits))))
 
-(def helper-vcprojs #{"DEClientLib" "DEMessaging"})
+(def helper-vcxprojs #{"DEClientLib" "DEMessaging"})
 
 (defn missing-device-adapters [bits]
   (let [dll-names (get-dll-names bits)
         project-names (map project-name (filter #(not (.. % getAbsolutePath (contains "_ATTIC")))
-                                          (device-vcproj-files)))]
+                                          (device-vcxproj-files)))]
     (sort (clojure.set/difference (set project-names)
                                   #{nil}
                                   (set dll-names)
                                   (do-not-build)
-                                  helper-vcprojs))))
+                                  helper-vcxprojs))))
 
 (defn all-devices []
   (let [dll-names (get-dll-names 32)]
         (clojure.set/difference
           (clojure.set/union (set non-windows-device-adapters)
-                             (missing-vcproj)
+                             (missing-vcxproj)
                              (set dll-names))
           (do-not-build))))
 
@@ -155,13 +151,13 @@
   (let [installer32-ok (exe-on-server? 32 today-token)
         installer64-ok (exe-on-server? 64 today-token)
         mac-ok (mac-build-on-server? today-token)
-        missing-vcproj-files (missing-vcproj)
+        missing-vcxproj-files (missing-vcxproj)
         missing-links (missing-device-links)]
     (when-not (and (not testmode)
                    installer32-ok
                    installer64-ok
                    mac-ok
-                   (empty? missing-vcproj-files)
+                   (empty? missing-vcxproj-files)
                    (empty? missing-links))
       (str
         "MICROMANAGER BUILD STATUS REPORT\n"
@@ -171,7 +167,7 @@
         (if installer64-ok "Yes." "No. (build missing)\n")
         "\n\nIs Mac installer download available on website?\n"
         (if mac-ok "Yes." "No. (build missing)\n")
-        (report-segment "Missing .vcproj files" missing-vcproj-files)
+        (report-segment "Missing .vcxproj files" missing-vcxproj-files)
         (report-segment "Uncompiled device adapters (Win32)" (missing-device-adapters 32))
         (report-segment "Uncompiled device adapters (x64)" (missing-device-adapters 64))
         (report-segment "Missing device links" missing-links)
@@ -217,29 +213,29 @@
   (dorun (map #(replace-in-file! % pat new-val) files)))
 
 (defn fix-output-file-tags!
-  "Fix the dll output path specified in all vcproj files."
+  "Fix the dll output path specified in all vcxproj files."
   []
-  (replace-in-files! (device-vcproj-files)
+  (replace-in-files! (device-vcxproj-files)
                     #"\$\(OutDir\)/.+?\.dll" "\\$(OutDir)/mmgr_dal_\\$(ProjectName).dll"))
     
-(defn find-copy-step [vcproj]
-  (re-find #"\"copy .+?\"" (slurp vcproj)))
+(defn find-copy-step [vcxproj]
+  (re-find #"\"copy .+?\"" (slurp vcxproj)))
 
-(defn bad-copy-step [vcproj]
-  (not (.contains (or (find-copy-step vcproj) "PlatformName") "PlatformName")))
+(defn bad-copy-step [vcxproj]
+  (not (.contains (or (find-copy-step vcxproj) "PlatformName") "PlatformName")))
 
 (defn all-bad-copy-steps
-  "Find all vcproj files with a bad post-build copy step"
+  "Find all vcxproj files with a bad post-build copy step"
   []
-  (filter bad-copy-step (device-vcproj-files)))
+  (filter bad-copy-step (device-vcxproj-files)))
 
-(defn find-pdb [vcproj]
-  (re-find #"\".*?\.pdb\"" (slurp vcproj)))
+(defn find-pdb [vcxproj]
+  (re-find #"\".*?\.pdb\"" (slurp vcxproj)))
 
 (defn fix-pdb-file-tags!
-  "Fix the pdb file path specified in all vcproj files."
+  "Fix the pdb file path specified in all vcxproj files."
   []
-  (replace-in-files! (device-vcproj-files)
+  (replace-in-files! (device-vcxproj-files)
                     #"\".*?\.pdb\"" "\"\\$(OutDir)/\\$(ProjectName).pdb\""))
 
 
