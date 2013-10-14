@@ -2199,8 +2199,17 @@ int Universal::StopSequenceAcquisition()
    {
       if ( isUsingCallbacks_ )
       {
-         pl_exp_abort( hPVCAM_, CCS_HALT );
+         g_pvcamLock.Lock();
+         if (!pl_exp_stop_cont( hPVCAM_, CCS_CLEAR ))
+         {
+            nRet = DEVICE_ERR;
+            LogCamError( __LINE__, "pl_exp_stop_cont failed" );
+         }
+         g_pvcamLock.Unlock();
          sequenceModeReady_ = false;
+         // Inform the core that the acquisition has finished
+         // (this also closes the shutter if used)
+         GetCoreCallback()->AcqFinished(this, nRet );
       }
       else
       {
@@ -2312,13 +2321,7 @@ int Universal::FrameDone()
       {
          if ( curImageCnt_ >= numImages_ )
          {
-            g_pvcamLock.Lock();
-            if (!pl_exp_abort(hPVCAM_, CCS_HALT)) 
-               LogCamError(__LINE__, "pl_exp_stop_cont");
-            g_pvcamLock.Unlock();
-            GetCoreCallback()->AcqFinished( this, 0 );
-            sequenceModeReady_ = false;
-            isAcquiring_ = false;
+            StopSequenceAcquisition();
          }
       }
    }
