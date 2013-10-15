@@ -448,7 +448,7 @@ int Universal::Initialize()
    }
 
    /// EXPOSURE RESOLUTION
-   uns16 expResCount = 0;
+   uns32 expResCount = 0;
    int32 expResVal;
    uns32 const expResDescLen = 200;
    char expResDesc[expResDescLen];
