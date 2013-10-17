@@ -203,6 +203,7 @@ private:
    int roiYMaxFull_;
    int m_iGain;
    int m_iEMGain;
+   int m_iGainSensiCam;
    int m_iOffset;
    int m_iTimestamp;
    unsigned int m_uiFlags;

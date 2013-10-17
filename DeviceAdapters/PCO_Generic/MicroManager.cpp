@@ -111,6 +111,7 @@ CPCOCam::CPCOCam() :
   m_nVBin = 0;
   m_iGain = 0;
   m_iEMGain = 1;
+  m_iGainSensiCam = 0;
   m_iOffset = 0;
   m_uiFlags = 0;
   m_nCCDType = 0; // read-only
@@ -572,7 +573,6 @@ int CPCOCam::SetupCamera()
 
   iOffsPxr = m_iOffset;
 
-
   m_nTimesLen = MMSENSICAM_MAX_STRLEN;
   nErr = m_pCamera->testcoc(&m_nMode, &m_nTrig, &m_nRoiXMin, &m_nRoiXMax, &m_nRoiYMin, &m_nRoiYMax,
                             &m_nHBin, &m_nVBin, m_pszTimes, &m_nTimesLen, &m_iGain, &iOffsPxr, &m_uiFlags);
@@ -639,13 +639,13 @@ int CPCOCam::OnGain(MM::PropertyBase* pProp, MM::ActionType eAct)
   {
     if (eAct == MM::BeforeGet)
     {
-      if(m_iGain == 0)
+      if(m_iGainSensiCam == 0)
         pProp->Set("normal");
       else
-      if(m_iGain == 1)
+      if(m_iGainSensiCam == 1)
         pProp->Set("extended");
       else
-      if(m_iGain == 3)
+      if(m_iGainSensiCam == 3)
         pProp->Set("low light mode");
     }
     else if (eAct == MM::AfterSet)
@@ -657,11 +657,11 @@ int CPCOCam::OnGain(MM::PropertyBase* pProp, MM::ActionType eAct)
       pProp->Get(tmp);
       ((MM::Property *) pProp)->GetData(tmp.c_str(), ihelp);
       ihelp = igains[ihelp];
-      if(ihelp != m_iGain)
+      if(ihelp != m_iGainSensiCam)
       {
-        m_iGain = ihelp;
+        m_iGainSensiCam = ihelp;
         ihelp = m_nMode & 0xFF;
-        m_nMode = ihelp + (m_nSubMode << 16) + (m_iGain << 8);
+        m_nMode = ihelp + (m_nSubMode << 16) + (m_iGainSensiCam << 8);
         nErr = SetupCamera();
       }
 
@@ -829,7 +829,7 @@ int CPCOCam::Initialize()
       case 1: // Fast Shutter
         m_nMode = 1;//M_FAST;
         m_nSubMode = 0;//NORMALFAST;
-        m_iGain = 0;
+        m_iGainSensiCam = 0;
         m_nTrig = 0;
         //1ms exposure time
         m_dExposure = 1;
@@ -841,7 +841,7 @@ int CPCOCam::Initialize()
         // Long exposure 2; Long exposure QE 7
         m_nMode = 0;//M_LONG;
         m_nSubMode = 0;//NORMALLONG;
-        m_iGain = 0;
+        m_iGainSensiCam = 0;
         m_nTrig = 0;
         //10ms exposure time
 
@@ -863,7 +863,7 @@ int CPCOCam::Initialize()
       case 8://FASTEXPQE
         m_nMode = 0;//M_LONG;
         m_nSubMode = 0;//NORMALLONG;
-        m_iGain = 0;
+        m_iGainSensiCam = 0;
         m_nTrig = 0;
         //10ms exposure time
         snprintf(m_pszTimes, m_nTimesLen, "0,%.0f,-1,-1", m_dExposure);
@@ -1013,18 +1013,18 @@ int CPCOCam::Initialize()
     }
     else
     {
-      pAct = new CPropertyAction (this, &CPCOCam::OnGain);
-      nRet = CreateProperty("Gain", "normal", MM::String, false, pAct);
-      if (nRet != DEVICE_OK)
-        return nRet;
-      nRet = AddAllowedValue("Gain","normal",0);
-      if (nRet != DEVICE_OK)
-        return nRet;
-      nRet = AddAllowedValue("Gain","extended",1);
-      if (nRet != DEVICE_OK)
-        return nRet;
       if(m_nCameraType == 7)
       {
+        pAct = new CPropertyAction (this, &CPCOCam::OnGain);
+        nRet = CreateProperty("Gain", "normal", MM::String, false, pAct);
+        if (nRet != DEVICE_OK)
+          return nRet;
+        nRet = AddAllowedValue("Gain","normal",0);
+        if (nRet != DEVICE_OK)
+          return nRet;
+        nRet = AddAllowedValue("Gain","extended",1);
+        if (nRet != DEVICE_OK)
+          return nRet;
         nRet = AddAllowedValue("Gain","low light mode",2);
         if (nRet != DEVICE_OK)
           return nRet;
