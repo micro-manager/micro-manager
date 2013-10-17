@@ -59,6 +59,7 @@ const char * const g_CameraDeviceDescription = "SDK3 Device Adapter for sCMOS ca
 const char * const g_Keyword_FirmwareVersion = "CameraFirmware";
 const char * const g_Keyword_CameraModel = "CameraModel";
 const char * const g_Keyword_SoftwareVersion = "CurrentSoftware";
+const char * const g_Keyword_ExtTrigTimeout = "Ext (Exp) Trigger Timeout[ms]";
 
 const char * const g_CameraDefaultBinning = "1x1";
 
@@ -373,6 +374,8 @@ int CAndorSDK3Camera::Initialize()
    wcstombs(p_cameraInfoString, temp_ws.c_str(), temp_ws.size());
    cameraDevice->Release(cameraModel);
    ret = CreateProperty(g_Keyword_CameraModel, p_cameraInfoString, MM::String, true);
+   assert(DEVICE_OK == ret);
+   ret = CreateProperty(g_Keyword_ExtTrigTimeout, "5000", MM::Integer, false);
    assert(DEVICE_OK == ret);
 
    delete [] p_cameraInfoString;
@@ -1187,6 +1190,12 @@ bool CAndorSDK3Camera::waitForData(unsigned char *& return_buffer, int & buffer_
 
    //else just wait on frame (1st trigger sent at Acq start)
    int timeout_ms = currentSeqExposure_ + SnapShotControl::WAIT_DATA_TIMEOUT_BUFFER_MILLISECONDS;
+   if (snapShotController_->isExternal() && 0 == thd_->GetImageCounter())
+   {
+     long extTrigTimeoutValue = 0;
+     GetProperty(g_Keyword_ExtTrigTimeout, extTrigTimeoutValue);
+     timeout_ms += extTrigTimeoutValue;
+   }
    got_image = bufferControl->Wait(return_buffer, buffer_size, timeout_ms);
    //if NO events supported, send next SW trigger
    if (softwareTrigger && !eventsManager_->IsEventRegistered(CEventsManager::EV_EXPOSURE_END_EVENT) )
