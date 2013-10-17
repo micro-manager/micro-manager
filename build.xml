@@ -90,7 +90,7 @@
 	</target>
 
 	<target name="run" description="Run the staged application (without building or staging)">
-		<exec executable="${mm.installdir}/ImageJ.exe"/>
+		<exec dir="${mm.installdir}" executable="${mm.installdir}/ImageJ.exe"/>
 	</target>
 
 	<target name="stage-and-run" description="Build, stage, and run the application">
