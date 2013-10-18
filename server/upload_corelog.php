@@ -53,7 +53,7 @@ else
            $line = fgets($rhandle);
            $username_tag = "#User Name:";
            if (strcmp(substr($line, 0, strlen($username_tag)), $username_tag) == 0)
-              $username = substr($line, strlen($username_tag), 36);
+              $username = trim(substr($line, strlen($username_tag), 36));
            $user_email_tag = "#User e-mail:";
            if (strcmp(substr($line, 0, strlen($user_email_tag)), $user_email_tag) == 0)
               $user_email = trim(substr($line, strlen($user_email_tag), 256));
