@@ -52,6 +52,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="DEServer.proto" />
+    <CustomBuild Include="..\src\DEMessaging\DEServer.proto" />
   </ItemGroup>
 </Project>

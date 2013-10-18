@@ -152,19 +152,20 @@
     <ClInclude Include="..\src\DEMessaging\VariableBuffer.h" />
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="DEServer.proto">
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(THIRDPARTYLIBS)\google\protobuf-2.5.0_build\VS2010\bin\protoc --proto_path=$(ProjectDir)..\src\DEMessaging\ --cpp_out=$(ProjectDir)..\src\DEMessaging\ $(ProjectDir)..\src\DEMessaging\DEServer.proto
-</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\src\DEMessaging\DEServer.pb.h;..\src\DEMessaging\DEServer.pb.cc;%(Outputs)</Outputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(THIRDPARTYLIBS)\google\protobuf-2.5.0_build\VS2010\bin\protoc --proto_path=$(ProjectDir)..\src\DEMessaging\ --cpp_out=$(ProjectDir)..\src\DEMessaging\ $(ProjectDir)..\src\DEMessaging\DEServer.proto
-</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">..\src\DEMessaging\DEServer.pb.h;..\src\DEMessaging\DEServer.pb.cc;%(Outputs)</Outputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(THIRDPARTYLIBS)\google\protobuf-2.5.0_build\VS2010\bin\protoc --proto_path=$(ProjectDir)..\src\DEMessaging\ --cpp_out=$(ProjectDir)..\src\DEMessaging\ $(ProjectDir)..\src\DEMessaging\DEServer.proto
-</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">..\src\DEMessaging\DEServer.pb.h;..\src\DEMessaging\DEServer.pb.cc;%(Outputs)</Outputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(THIRDPARTYLIBS)\google\protobuf-2.5.0_build\VS2010\bin\protoc --proto_path=$(ProjectDir)..\src\DEMessaging\ --cpp_out=$(ProjectDir)..\src\DEMessaging\ $(ProjectDir)..\src\DEMessaging\DEServer.proto
-</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">..\src\DEMessaging\DEServer.pb.h;..\src\DEMessaging\DEServer.pb.cc;%(Outputs)</Outputs>
+    <CustomBuild Include="..\src\DEMessaging\DEServer.proto">
+      <FileType>Document</FileType>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(THIRDPARTYLIBS)\google\protobuf-2.5.0_build\VS2010\bin\protoc --proto_path=%(RelativeDir) --cpp_out=%(RelativeDir) %(Identity)</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(THIRDPARTYLIBS)\google\protobuf-2.5.0_build\VS2010\bin\protoc --proto_path=%(RelativeDir) --cpp_out=%(RelativeDir) %(Identity)</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(THIRDPARTYLIBS)\google\protobuf-2.5.0_build\VS2010\bin\protoc --proto_path=%(RelativeDir) --cpp_out=%(RelativeDir) %(Identity)</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(THIRDPARTYLIBS)\google\protobuf-2.5.0_build\VS2010\bin\protoc --proto_path=%(RelativeDir) --cpp_out=%(RelativeDir) %(Identity)</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(RelativeDir)\%(Filename).pb.h;%(RelativeDir)\%(Filename).pb.cc;%(Outputs)</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(RelativeDir)\%(Filename).pb.h;%(RelativeDir)\%(Filename).pb.cc;%(Outputs)</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(RelativeDir)\%(Filename).pb.h;%(RelativeDir)\%(Filename).pb.cc;%(Outputs)</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(RelativeDir)\%(Filename).pb.h;%(RelativeDir)\%(Filename).pb.cc;%(Outputs)</Outputs>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Running protoc on %(Identity)</Message>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Running protoc on %(Identity)</Message>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Running protoc on %(Identity)</Message>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Running protoc on %(Identity)</Message>
     </CustomBuild>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
