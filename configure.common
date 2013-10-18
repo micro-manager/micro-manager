@@ -65,7 +65,6 @@ case $host in
    *-*-linux*)
    LPTHREAD="-lpthread"
    DEVICEADAPTERPATH="\${libdir}/micro-manager"
-   JARPATH="/usr/share/java"
    ;;
 esac
 AC_MSG_RESULT($LPTHREAD)
