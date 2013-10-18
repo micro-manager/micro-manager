@@ -34,37 +34,48 @@ public class StageControl implements MMPlugin {
    private ScriptInterface gui_;
    private StageControlFrame myFrame_;
 
+   @Override
    public void setApp(ScriptInterface app) {
       gui_ = app;                                        
       core_ = app.getMMCore();
-      if (myFrame_ == null)
+      if (myFrame_ == null) {
          myFrame_ = new StageControlFrame(gui_);
+         myFrame_.setBackground(gui_.getBackgroundColor());
+         gui_.addMMBackgroundListener(myFrame_);
+      }
       myFrame_.setVisible(true);
    }
 
+   @Override
    public void dispose() {
       // nothing todo:
    }
 
+   @Override
    public void show() {
          String ig = "Stage Control";
    }
 
+   @Override
    public void configurationChanged() {
    }
 
+   @Override
    public String getInfo () {
       return "Stage Control Plugin";
    }
 
+   @Override
    public String getDescription() {
       return tooltipDescription;
    }
    
+   @Override
    public String getVersion() {
       return "First version";
    }
    
+   @Override
    public String getCopyright() {
       return "University of California, 2010";
    }
