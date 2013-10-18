@@ -174,10 +174,10 @@
 rem Stage output within IntDir so that it will be cleaned.
 set swig_out_dir=$(IntDir)Swig
 set java_src_dir=..\build\intermediates\Swig\MMCoreJ
-
+rem
 mkdir %swig_out_dir%
 %swig% -c++ -java -package mmcorej -module MMCoreJ -outdir %swig_out_dir% %(FullPath)
-
+rem
 mkdir %java_src_dir%
 copy %swig_out_dir%\*.java %java_src_dir%\</Command>
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(AdditionalInputs)</AdditionalInputs>
@@ -187,10 +187,10 @@ copy %swig_out_dir%\*.java %java_src_dir%\</Command>
 rem Stage output within IntDir so that it will be cleaned.
 set swig_out_dir=$(IntDir)Swig
 set java_src_dir=..\build\intermediates\Swig\MMCoreJ
-
+rem
 mkdir %swig_out_dir%
 %swig% -c++ -java -package mmcorej -module MMCoreJ -outdir %swig_out_dir% %(FullPath)
-
+rem
 mkdir %java_src_dir%
 copy %swig_out_dir%\*.java %java_src_dir%\</Command>
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(AdditionalInputs)</AdditionalInputs>
@@ -200,10 +200,10 @@ copy %swig_out_dir%\*.java %java_src_dir%\</Command>
 rem Stage output within IntDir so that it will be cleaned.
 set swig_out_dir=$(IntDir)Swig
 set java_src_dir=..\build\intermediates\Swig\MMCoreJ
-
+rem
 mkdir %swig_out_dir%
 %swig% -c++ -java -package mmcorej -module MMCoreJ -outdir %swig_out_dir% %(FullPath)
-
+rem
 mkdir %java_src_dir%
 copy %swig_out_dir%\*.java %java_src_dir%\</Command>
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(AdditionalInputs)</AdditionalInputs>
@@ -213,10 +213,10 @@ copy %swig_out_dir%\*.java %java_src_dir%\</Command>
 rem Stage output within IntDir so that it will be cleaned.
 set swig_out_dir=$(IntDir)Swig
 set java_src_dir=..\build\intermediates\Swig\MMCoreJ
-
+rem
 mkdir %swig_out_dir%
 %swig% -c++ -java -package mmcorej -module MMCoreJ -outdir %swig_out_dir% %(FullPath)
-
+rem
 mkdir %java_src_dir%
 copy %swig_out_dir%\*.java %java_src_dir%\</Command>
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(AdditionalInputs)</AdditionalInputs>
