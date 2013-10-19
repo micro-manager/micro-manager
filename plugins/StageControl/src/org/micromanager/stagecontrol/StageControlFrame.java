@@ -19,7 +19,6 @@
 
 package org.micromanager.stagecontrol;
 
-import org.micromanager.stagecontrol.utils.NumberUtils;
 import mmcorej.CMMCore;
 
 import java.text.NumberFormat;
@@ -90,9 +89,23 @@ public class StageControlFrame extends javax.swing.JFrame {
       currentZDrive_ = prefs_.get(CURRENTZDRIVE, currentZDrive_);
 
       initComponents();
+      
+      zDriveGUIElements_ = new javax.swing.JComponent[] {
+         jLabel8, jLabel9, jLabel10, zDriveSelect_, mediumZUpButton_, 
+         smallZUpButton_, mediumZDownButton_, smallZDownButton_, zPositionLabel_,
+         smallZTextField_, mediumZTextField_
+      };
 
       setLocation(frameXPos_, frameYPos_);
 
+   }
+   
+   /**
+    * Initialized GUI components based on current hardware configuration
+    * Can be called at any time to adjust display (for instance after hardware
+    * configuration change
+    */
+   public final void initialize() {
       smallXYTextField_.setText(nf_.format(smallMovement_));
       mediumXYTextField_.setText(nf_.format(mediumMovement_));
       largeXYTextField_.setText(nf_.format(largeMovement_));
@@ -100,9 +113,22 @@ public class StageControlFrame extends javax.swing.JFrame {
       StrVector zDrives = core_.getLoadedDevicesOfType(DeviceType.StageDevice);
 
       if (zDrives.isEmpty()) {
+         for (javax.swing.JComponent guiElement : zDriveGUIElements_) {
+            guiElement.setVisible(false);
+         }
+         this.setSize(287, 369);
+         
          return;
+      } else {
+         for (javax.swing.JComponent guiElement : zDriveGUIElements_) {
+            guiElement.setVisible(true);
+         }
+         this.setSize(387, 369);
       }
 
+      if (zDrives.size() == 1)
+         zDriveSelect_.setVisible(false);
+      
       boolean zDriveFound = false;
       for (int i = 0; i < zDrives.size(); i++) {
          String drive = zDrives.get(i);
@@ -534,40 +560,36 @@ public class StageControlFrame extends javax.swing.JFrame {
                .add(jLabel3))
             .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
             .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+               .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                .add(layout.createSequentialGroup()
-                  .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                     .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                  .add(2, 2, 2)
+                  .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
+                     .add(jButton20, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 16, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                     .add(jButton21, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 23, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                     .add(jButton22, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 28, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                  .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                  .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
+                     .add(smallXYTextField_, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 63, Short.MAX_VALUE)
+                     .add(mediumXYTextField_)
+                     .add(largeXYTextField_))
+                  .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                  .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
                      .add(layout.createSequentialGroup()
-                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
-                           .add(layout.createSequentialGroup()
-                              .add(14, 14, 14)
-                              .add(jButton20, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 16, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                           .add(jButton21, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 23, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                           .add(jButton22, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 28, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
-                           .add(smallXYTextField_, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 63, Short.MAX_VALUE)
-                           .add(mediumXYTextField_)
-                           .add(largeXYTextField_))
+                        .add(jLabel6, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
-                           .add(layout.createSequentialGroup()
-                              .add(jLabel6, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                              .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                              .add(getFieldButton_, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                           .add(layout.createSequentialGroup()
-                              .add(jLabel5, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                              .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                              .add(getPartFieldButton_, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                           .add(layout.createSequentialGroup()
-                              .add(jLabel4, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                              .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                              .add(get1PixellXYButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 93, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))))
-                  .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 24, Short.MAX_VALUE))
-               .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
-                  .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 59, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                  .add(jLabel7, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 96, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                  .add(85, 85, 85)))
+                        .add(getFieldButton_, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                     .add(layout.createSequentialGroup()
+                        .add(jLabel5, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(getPartFieldButton_, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                     .add(layout.createSequentialGroup()
+                        .add(jLabel4, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(get1PixellXYButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 93, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))))
+               .add(layout.createSequentialGroup()
+                  .add(73, 73, 73)
+                  .add(jLabel7, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 79, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
+            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 24, Short.MAX_VALUE)
             .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
                   .add(org.jdesktop.layout.GroupLayout.LEADING, zDriveSelect_, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -604,30 +626,31 @@ public class StageControlFrame extends javax.swing.JFrame {
                      .add(jLabel10))
                   .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                   .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                  .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                  .add(0, 0, Short.MAX_VALUE)
-                  .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                     .add(smallXYTextField_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                     .add(jLabel4, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                     .add(get1PixellXYButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                  .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                  .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                   .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                      .add(layout.createSequentialGroup()
-                        .add(jButton21, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 20, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                           .add(smallXYTextField_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                           .add(jLabel4, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                           .add(get1PixellXYButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                           .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                              .add(jLabel6, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                              .add(largeXYTextField_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                           .add(jButton22, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 20, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
-                     .add(layout.createSequentialGroup()
-                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                           .add(org.jdesktop.layout.GroupLayout.TRAILING, getPartFieldButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 20, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                           .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                              .add(mediumXYTextField_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                              .add(jLabel5, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(getFieldButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
+                           .add(layout.createSequentialGroup()
+                              .add(jButton21, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 20, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                              .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                              .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                                    .add(jLabel6, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                    .add(largeXYTextField_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                                 .add(jButton22, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 20, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
+                           .add(layout.createSequentialGroup()
+                              .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                                 .add(mediumXYTextField_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                 .add(jLabel5, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                 .add(getPartFieldButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                              .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                              .add(getFieldButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))))
+                     .add(jButton20, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 26, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                   .addContainerGap())
                .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
                   .add(32, 32, 32)
@@ -655,10 +678,8 @@ public class StageControlFrame extends javax.swing.JFrame {
             .add(259, 259, 259)
             .add(jLabel1)
             .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-            .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-               .add(jButton20, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 26, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-               .add(jLabel2))
-            .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .add(jLabel2)
+            .addContainerGap(104, Short.MAX_VALUE))
       );
 
       pack();
@@ -686,8 +707,7 @@ public class StageControlFrame extends javax.swing.JFrame {
 
    private void updateZPosLabel() throws Exception {
       double zPos = core_.getPosition(currentZDrive_);
-      zPositionLabel_.setText(NumberUtils.doubleToDisplayString(zPos) + 
-              " \u00B5m");
+      zPositionLabel_.setText(nf_.format(zPos) + " \u00B5m" );
    }
 
     private void smallLeftButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_smallLeftButton_ActionPerformed
@@ -890,16 +910,15 @@ public class StageControlFrame extends javax.swing.JFrame {
     }
    private void zDriveSelect_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_zDriveSelect_ActionPerformed
       currentZDrive_ = (String) zDriveSelect_.getSelectedItem(); 
-      if (initialized_)
+      if (initialized_) {
          prefs_.put(CURRENTZDRIVE, currentZDrive_);
-     // if (initialized_) {
          updateZMovements();   // Sets the small and medium Z movement to whatever we had for this new drive
          try {
             updateZPosLabel();
          } catch (Exception ex) {
             // ignore for now...
          }
-      //}
+      }
    }//GEN-LAST:event_zDriveSelect_ActionPerformed
 
    private void jButton20ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton20ActionPerformed
@@ -958,4 +977,6 @@ public class StageControlFrame extends javax.swing.JFrame {
    private javax.swing.JLabel zPositionLabel_;
    // End of variables declaration//GEN-END:variables
 
+   private javax.swing.JComponent zDriveGUIElements_[];
+  
 }
