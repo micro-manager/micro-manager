@@ -19,6 +19,7 @@
 
 package org.micromanager.stagecontrol;
 
+import edu.valelab.GaussianFit.utils.NumberUtils;
 import mmcorej.CMMCore;
 
 import java.text.NumberFormat;
@@ -78,18 +79,23 @@ public class StageControlFrame extends javax.swing.JFrame {
       frameYPos_ = prefs_.getInt(FRAMEYPOS, frameYPos_);
       double pixelSize = core_.getPixelSizeUm();
       long nrPixelsX = core_.getImageWidth();
-      smallMovement_ = prefs_.getDouble(SMALLMOVEMENT, pixelSize);
-      mediumMovement_ = prefs_.getDouble(MEDIUMMOVEMENT, pixelSize * nrPixelsX * 0.1);
-      largeMovement_ = prefs_.getDouble(LARGEMOVEMENT, pixelSize * nrPixelsX);
+      if (pixelSize != 0) {
+         smallMovement_ = pixelSize;
+         mediumMovement_ = pixelSize * nrPixelsX * 0.1;
+         largeMovement_ = pixelSize * nrPixelsX;
+      }
+      smallMovement_ = prefs_.getDouble(SMALLMOVEMENT, smallMovement_);
+      mediumMovement_ = prefs_.getDouble(MEDIUMMOVEMENT, mediumMovement_);
+      largeMovement_ = prefs_.getDouble(LARGEMOVEMENT, largeMovement_);
       currentZDrive_ = prefs_.get(CURRENTZDRIVE, currentZDrive_);
 
       initComponents();
 
       setLocation(frameXPos_, frameYPos_);
 
-      jTextField1.setText(nf_.format(smallMovement_));
-      jTextField2.setText(nf_.format(mediumMovement_));
-      jTextField3.setText(nf_.format(largeMovement_));
+      smallXYTextField_.setText(nf_.format(smallMovement_));
+      mediumXYTextField_.setText(nf_.format(mediumMovement_));
+      largeXYTextField_.setText(nf_.format(largeMovement_));
 
       StrVector zDrives = core_.getLoadedDevicesOfType(DeviceType.StageDevice);
 
@@ -100,9 +106,9 @@ public class StageControlFrame extends javax.swing.JFrame {
       boolean zDriveFound = false;
       for (int i = 0; i < zDrives.size(); i++) {
          String drive = zDrives.get(i);
-         zDriveSelect_.addItem(drive);
          smallMovementZ_.put(drive, prefs_.getDouble(SMALLMOVEMENTZ + drive, 1.0) );
          mediumMovementZ_.put(drive, prefs_.getDouble(MEDIUMMOVEMENTZ + drive, 10.0) );
+         zDriveSelect_.addItem(drive);
          if (currentZDrive_.equals(zDrives.get(i))) {
             zDriveFound = true;
          }
@@ -115,8 +121,8 @@ public class StageControlFrame extends javax.swing.JFrame {
    }
    
    private void updateZMovements() {
-      jTextField4.setText(nf_.format(smallMovementZ_.get(currentZDrive_)));
-      jTextField5.setText(nf_.format(mediumMovementZ_.get(currentZDrive_)));
+      smallZTextField_.setText(nf_.format(smallMovementZ_.get(currentZDrive_)));
+      mediumZTextField_.setText(nf_.format(mediumMovementZ_.get(currentZDrive_)));
    }
 
     /** This method is called from within the constructor to
@@ -129,41 +135,45 @@ public class StageControlFrame extends javax.swing.JFrame {
    private void initComponents() {
 
       jPanel1 = new javax.swing.JPanel();
-      jButton1 = new javax.swing.JButton();
-      jButton10 = new javax.swing.JButton();
-      jButton2 = new javax.swing.JButton();
-      jButton3 = new javax.swing.JButton();
-      jButton7 = new javax.swing.JButton();
-      jButton11 = new javax.swing.JButton();
-      jButton8 = new javax.swing.JButton();
-      jButton4 = new javax.swing.JButton();
-      jButton12 = new javax.swing.JButton();
-      jButton5 = new javax.swing.JButton();
-      jButton9 = new javax.swing.JButton();
-      jButton6 = new javax.swing.JButton();
-      jTextField1 = new javax.swing.JTextField();
-      jTextField2 = new javax.swing.JTextField();
-      jTextField3 = new javax.swing.JTextField();
+      smallLeftButton_ = new javax.swing.JButton();
+      smallXYDownButton_ = new javax.swing.JButton();
+      largeLeftButton_ = new javax.swing.JButton();
+      mediumLeftButton_ = new javax.swing.JButton();
+      smallXYUpButton_ = new javax.swing.JButton();
+      mediumXYDownButton_ = new javax.swing.JButton();
+      largXYUpButton_ = new javax.swing.JButton();
+      smallRightButton_ = new javax.swing.JButton();
+      largeXYDownButton_ = new javax.swing.JButton();
+      largeRightButton_ = new javax.swing.JButton();
+      mediumXYUpButton_ = new javax.swing.JButton();
+      mediumRightButton_ = new javax.swing.JButton();
+      smallXYTextField_ = new javax.swing.JTextField();
+      mediumXYTextField_ = new javax.swing.JTextField();
+      largeXYTextField_ = new javax.swing.JTextField();
       jLabel1 = new javax.swing.JLabel();
       jLabel2 = new javax.swing.JLabel();
       jLabel3 = new javax.swing.JLabel();
       jLabel4 = new javax.swing.JLabel();
       jLabel5 = new javax.swing.JLabel();
       jLabel6 = new javax.swing.JLabel();
-      jButton13 = new javax.swing.JButton();
-      jButton14 = new javax.swing.JButton();
-      jButton15 = new javax.swing.JButton();
+      get1PixellXYButton_ = new javax.swing.JButton();
+      getPartFieldButton_ = new javax.swing.JButton();
+      getFieldButton_ = new javax.swing.JButton();
       jLabel7 = new javax.swing.JLabel();
-      jButton16 = new javax.swing.JButton();
-      jButton17 = new javax.swing.JButton();
-      jButton18 = new javax.swing.JButton();
-      jButton19 = new javax.swing.JButton();
-      jTextField4 = new javax.swing.JTextField();
-      jTextField5 = new javax.swing.JTextField();
+      mediumZUpButton_ = new javax.swing.JButton();
+      smallZUpButton_ = new javax.swing.JButton();
+      smallZDownButton_ = new javax.swing.JButton();
+      mediumZDownButton_ = new javax.swing.JButton();
+      smallZTextField_ = new javax.swing.JTextField();
+      mediumZTextField_ = new javax.swing.JTextField();
       jLabel8 = new javax.swing.JLabel();
       jLabel9 = new javax.swing.JLabel();
       jLabel10 = new javax.swing.JLabel();
       zDriveSelect_ = new javax.swing.JComboBox();
+      zPositionLabel_ = new javax.swing.JLabel();
+      jButton20 = new javax.swing.JButton();
+      jButton21 = new javax.swing.JButton();
+      jButton22 = new javax.swing.JButton();
 
       setTitle("Stage Control");
       setLocationByPlatform(true);
@@ -174,111 +184,111 @@ public class StageControlFrame extends javax.swing.JFrame {
          }
       });
 
-      jButton1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-sl.png"))); // NOI18N
-      jButton1.setBorderPainted(false);
-      jButton1.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-slp.png"))); // NOI18N
-      jButton1.addActionListener(new java.awt.event.ActionListener() {
+      smallLeftButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-sl.png"))); // NOI18N
+      smallLeftButton_.setBorderPainted(false);
+      smallLeftButton_.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-slp.png"))); // NOI18N
+      smallLeftButton_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            jButton1ActionPerformed(evt);
+            smallLeftButton_ActionPerformed(evt);
          }
       });
 
-      jButton10.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-sd.png"))); // NOI18N
-      jButton10.setBorderPainted(false);
-      jButton10.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-sdp.png"))); // NOI18N
-      jButton10.addActionListener(new java.awt.event.ActionListener() {
+      smallXYDownButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-sd.png"))); // NOI18N
+      smallXYDownButton_.setBorderPainted(false);
+      smallXYDownButton_.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-sdp.png"))); // NOI18N
+      smallXYDownButton_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            jButton10ActionPerformed(evt);
+            smallXYDownButton_ActionPerformed(evt);
          }
       });
 
-      jButton2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-tl.png"))); // NOI18N
-      jButton2.setBorderPainted(false);
-      jButton2.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-tlp.png"))); // NOI18N
-      jButton2.addActionListener(new java.awt.event.ActionListener() {
+      largeLeftButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-tl.png"))); // NOI18N
+      largeLeftButton_.setBorderPainted(false);
+      largeLeftButton_.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-tlp.png"))); // NOI18N
+      largeLeftButton_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            jButton2ActionPerformed(evt);
+            largeLeftButton_ActionPerformed(evt);
          }
       });
 
-      jButton3.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-dl.png"))); // NOI18N
-      jButton3.setBorderPainted(false);
-      jButton3.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-dlp.png"))); // NOI18N
-      jButton3.addActionListener(new java.awt.event.ActionListener() {
+      mediumLeftButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-dl.png"))); // NOI18N
+      mediumLeftButton_.setBorderPainted(false);
+      mediumLeftButton_.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-dlp.png"))); // NOI18N
+      mediumLeftButton_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            jButton3ActionPerformed(evt);
+            mediumLeftButton_ActionPerformed(evt);
          }
       });
 
-      jButton7.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-su.png"))); // NOI18N
-      jButton7.setBorderPainted(false);
-      jButton7.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-sup.png"))); // NOI18N
-      jButton7.addActionListener(new java.awt.event.ActionListener() {
+      smallXYUpButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-su.png"))); // NOI18N
+      smallXYUpButton_.setBorderPainted(false);
+      smallXYUpButton_.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-sup.png"))); // NOI18N
+      smallXYUpButton_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            jButton7ActionPerformed(evt);
+            smallXYUpButton_ActionPerformed(evt);
          }
       });
 
-      jButton11.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-dd.png"))); // NOI18N
-      jButton11.setBorderPainted(false);
-      jButton11.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-ddp.png"))); // NOI18N
-      jButton11.addActionListener(new java.awt.event.ActionListener() {
+      mediumXYDownButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-dd.png"))); // NOI18N
+      mediumXYDownButton_.setBorderPainted(false);
+      mediumXYDownButton_.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-ddp.png"))); // NOI18N
+      mediumXYDownButton_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            jButton11ActionPerformed(evt);
+            mediumXYDownButton_ActionPerformed(evt);
          }
       });
 
-      jButton8.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-tu.png"))); // NOI18N
-      jButton8.setBorderPainted(false);
-      jButton8.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-tup.png"))); // NOI18N
-      jButton8.addActionListener(new java.awt.event.ActionListener() {
+      largXYUpButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-tu.png"))); // NOI18N
+      largXYUpButton_.setBorderPainted(false);
+      largXYUpButton_.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-tup.png"))); // NOI18N
+      largXYUpButton_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            jButton8ActionPerformed(evt);
+            largXYUpButton_ActionPerformed(evt);
          }
       });
 
-      jButton4.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-sr.png"))); // NOI18N
-      jButton4.setBorderPainted(false);
-      jButton4.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-srp.png"))); // NOI18N
-      jButton4.addActionListener(new java.awt.event.ActionListener() {
+      smallRightButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-sr.png"))); // NOI18N
+      smallRightButton_.setBorderPainted(false);
+      smallRightButton_.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-srp.png"))); // NOI18N
+      smallRightButton_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            jButton4ActionPerformed(evt);
+            smallRightButton_ActionPerformed(evt);
          }
       });
 
-      jButton12.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-td.png"))); // NOI18N
-      jButton12.setBorderPainted(false);
-      jButton12.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-tdp.png"))); // NOI18N
-      jButton12.addActionListener(new java.awt.event.ActionListener() {
+      largeXYDownButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-td.png"))); // NOI18N
+      largeXYDownButton_.setBorderPainted(false);
+      largeXYDownButton_.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-tdp.png"))); // NOI18N
+      largeXYDownButton_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            jButton12ActionPerformed(evt);
+            largeXYDownButton_ActionPerformed(evt);
          }
       });
 
-      jButton5.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-tr.png"))); // NOI18N
-      jButton5.setBorderPainted(false);
-      jButton5.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-trp.png"))); // NOI18N
-      jButton5.addActionListener(new java.awt.event.ActionListener() {
+      largeRightButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-tr.png"))); // NOI18N
+      largeRightButton_.setBorderPainted(false);
+      largeRightButton_.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-trp.png"))); // NOI18N
+      largeRightButton_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            jButton5ActionPerformed(evt);
+            largeRightButton_ActionPerformed(evt);
          }
       });
 
-      jButton9.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-du.png"))); // NOI18N
-      jButton9.setBorderPainted(false);
-      jButton9.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-dup.png"))); // NOI18N
-      jButton9.addActionListener(new java.awt.event.ActionListener() {
+      mediumXYUpButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-du.png"))); // NOI18N
+      mediumXYUpButton_.setBorderPainted(false);
+      mediumXYUpButton_.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-dup.png"))); // NOI18N
+      mediumXYUpButton_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            jButton9ActionPerformed(evt);
+            mediumXYUpButton_ActionPerformed(evt);
          }
       });
 
-      jButton6.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-dr.png"))); // NOI18N
-      jButton6.setBorderPainted(false);
-      jButton6.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-drp.png"))); // NOI18N
-      jButton6.addActionListener(new java.awt.event.ActionListener() {
+      mediumRightButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-dr.png"))); // NOI18N
+      mediumRightButton_.setBorderPainted(false);
+      mediumRightButton_.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-drp.png"))); // NOI18N
+      mediumRightButton_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            jButton6ActionPerformed(evt);
+            mediumRightButton_ActionPerformed(evt);
          }
       });
 
@@ -288,81 +298,81 @@ public class StageControlFrame extends javax.swing.JFrame {
          jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
          .add(jPanel1Layout.createSequentialGroup()
             .addContainerGap()
-            .add(jButton2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 28, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+            .add(largeLeftButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 28, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
             .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-            .add(jButton3, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 23, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+            .add(mediumLeftButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 23, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
             .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
             .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
-               .add(jButton12, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-               .add(org.jdesktop.layout.GroupLayout.LEADING, jButton11, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-               .add(jButton10, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-               .add(org.jdesktop.layout.GroupLayout.LEADING, jButton8, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-               .add(org.jdesktop.layout.GroupLayout.LEADING, jButton9, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-               .add(jButton7, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+               .add(largeXYDownButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+               .add(org.jdesktop.layout.GroupLayout.LEADING, mediumXYDownButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+               .add(smallXYDownButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+               .add(org.jdesktop.layout.GroupLayout.LEADING, largXYUpButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+               .add(org.jdesktop.layout.GroupLayout.LEADING, mediumXYUpButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+               .add(smallXYUpButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
                .add(jPanel1Layout.createSequentialGroup()
-                  .add(jButton1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 16, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                  .add(smallLeftButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 16, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                   .add(28, 28, 28)
-                  .add(jButton4, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 16, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
+                  .add(smallRightButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 16, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
             .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-            .add(jButton6, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 23, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+            .add(mediumRightButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 23, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
             .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-            .add(jButton5, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 28, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+            .add(largeRightButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 28, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
             .addContainerGap())
       );
       jPanel1Layout.setVerticalGroup(
          jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
          .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel1Layout.createSequentialGroup()
             .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .add(jButton8, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 26, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+            .add(largXYUpButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 26, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
             .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-            .add(jButton9, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 24, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+            .add(mediumXYUpButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 24, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
             .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-            .add(jButton7, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 16, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+            .add(smallXYUpButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 16, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
             .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
             .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-               .add(jButton4, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 26, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-               .add(jButton1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 26, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-               .add(jButton3, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 26, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-               .add(jButton2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 26, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-               .add(jButton6, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 26, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-               .add(jButton5, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 26, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+               .add(smallRightButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 26, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+               .add(smallLeftButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 26, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+               .add(mediumLeftButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 26, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+               .add(largeLeftButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 26, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+               .add(mediumRightButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 26, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+               .add(largeRightButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 26, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
             .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-            .add(jButton10, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 16, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+            .add(smallXYDownButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 16, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
             .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-            .add(jButton11, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 24, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+            .add(mediumXYDownButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 24, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
             .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-            .add(jButton12, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 33, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+            .add(largeXYDownButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 33, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
       );
 
-      jTextField1.setHorizontalAlignment(javax.swing.JTextField.LEFT);
-      jTextField1.addActionListener(new java.awt.event.ActionListener() {
+      smallXYTextField_.setHorizontalAlignment(javax.swing.JTextField.LEFT);
+      smallXYTextField_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            jTextField1ActionPerformed(evt);
+            smallXYTextField_ActionPerformed(evt);
          }
       });
-      jTextField1.addFocusListener(new java.awt.event.FocusAdapter() {
+      smallXYTextField_.addFocusListener(new java.awt.event.FocusAdapter() {
          public void focusLost(java.awt.event.FocusEvent evt) {
             focusLostHandlerJTF1(evt);
          }
       });
 
-      jTextField2.addActionListener(new java.awt.event.ActionListener() {
+      mediumXYTextField_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            jTextField2ActionPerformed(evt);
+            mediumXYTextField_ActionPerformed(evt);
          }
       });
-      jTextField2.addFocusListener(new java.awt.event.FocusAdapter() {
+      mediumXYTextField_.addFocusListener(new java.awt.event.FocusAdapter() {
          public void focusLost(java.awt.event.FocusEvent evt) {
             focusLostHandlerJTF2(evt);
          }
       });
 
-      jTextField3.addActionListener(new java.awt.event.ActionListener() {
+      largeXYTextField_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            jTextField3ActionPerformed(evt);
+            largeXYTextField_ActionPerformed(evt);
          }
       });
-      jTextField3.addFocusListener(new java.awt.event.FocusAdapter() {
+      largeXYTextField_.addFocusListener(new java.awt.event.FocusAdapter() {
          public void focusLost(java.awt.event.FocusEvent evt) {
             focusLostHandlerJTF3(evt);
          }
@@ -374,98 +384,98 @@ public class StageControlFrame extends javax.swing.JFrame {
 
       jLabel6.setText("<html>&#956;m</html>");
 
-      jButton13.setFont(new java.awt.Font("Arial", 0, 10)); // NOI18N
-      jButton13.setText("1 pixel");
-      jButton13.setIconTextGap(6);
-      jButton13.setMaximumSize(new java.awt.Dimension(0, 0));
-      jButton13.setMinimumSize(new java.awt.Dimension(0, 0));
-      jButton13.setPreferredSize(new java.awt.Dimension(35, 20));
-      jButton13.addActionListener(new java.awt.event.ActionListener() {
+      get1PixellXYButton_.setFont(new java.awt.Font("Arial", 0, 10)); // NOI18N
+      get1PixellXYButton_.setText("1 pixel");
+      get1PixellXYButton_.setIconTextGap(6);
+      get1PixellXYButton_.setMaximumSize(new java.awt.Dimension(0, 0));
+      get1PixellXYButton_.setMinimumSize(new java.awt.Dimension(0, 0));
+      get1PixellXYButton_.setPreferredSize(new java.awt.Dimension(35, 20));
+      get1PixellXYButton_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            jButton13ActionPerformed(evt);
+            get1PixellXYButton_ActionPerformed(evt);
          }
       });
 
-      jButton14.setFont(new java.awt.Font("Arial", 0, 10)); // NOI18N
-      jButton14.setText("0.1 field");
-      jButton14.setMaximumSize(new java.awt.Dimension(35, 20));
-      jButton14.setMinimumSize(new java.awt.Dimension(0, 0));
-      jButton14.setPreferredSize(new java.awt.Dimension(35, 20));
-      jButton14.addActionListener(new java.awt.event.ActionListener() {
+      getPartFieldButton_.setFont(new java.awt.Font("Arial", 0, 10)); // NOI18N
+      getPartFieldButton_.setText("0.1 field");
+      getPartFieldButton_.setMaximumSize(new java.awt.Dimension(35, 20));
+      getPartFieldButton_.setMinimumSize(new java.awt.Dimension(0, 0));
+      getPartFieldButton_.setPreferredSize(new java.awt.Dimension(35, 20));
+      getPartFieldButton_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            jButton14ActionPerformed(evt);
+            getPartFieldButton_ActionPerformed(evt);
          }
       });
 
-      jButton15.setFont(new java.awt.Font("Arial", 0, 10)); // NOI18N
-      jButton15.setText("1 field");
-      jButton15.setMaximumSize(new java.awt.Dimension(35, 20));
-      jButton15.setMinimumSize(new java.awt.Dimension(0, 0));
-      jButton15.setPreferredSize(new java.awt.Dimension(35, 20));
-      jButton15.addActionListener(new java.awt.event.ActionListener() {
+      getFieldButton_.setFont(new java.awt.Font("Arial", 0, 10)); // NOI18N
+      getFieldButton_.setText("1 field");
+      getFieldButton_.setMaximumSize(new java.awt.Dimension(35, 20));
+      getFieldButton_.setMinimumSize(new java.awt.Dimension(0, 0));
+      getFieldButton_.setPreferredSize(new java.awt.Dimension(35, 20));
+      getFieldButton_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            jButton15ActionPerformed(evt);
+            getFieldButton_ActionPerformed(evt);
          }
       });
 
       jLabel7.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
       jLabel7.setText("XY Stage");
 
-      jButton16.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-du.png"))); // NOI18N
-      jButton16.setBorderPainted(false);
-      jButton16.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-dup.png"))); // NOI18N
-      jButton16.addActionListener(new java.awt.event.ActionListener() {
+      mediumZUpButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-du.png"))); // NOI18N
+      mediumZUpButton_.setBorderPainted(false);
+      mediumZUpButton_.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-dup.png"))); // NOI18N
+      mediumZUpButton_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            jButton16ActionPerformed(evt);
+            mediumZUpButton_ActionPerformed(evt);
          }
       });
 
-      jButton17.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-su.png"))); // NOI18N
-      jButton17.setBorderPainted(false);
-      jButton17.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-sup.png"))); // NOI18N
-      jButton17.addActionListener(new java.awt.event.ActionListener() {
+      smallZUpButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-su.png"))); // NOI18N
+      smallZUpButton_.setBorderPainted(false);
+      smallZUpButton_.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-sup.png"))); // NOI18N
+      smallZUpButton_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            jButton17ActionPerformed(evt);
+            smallZUpButton_ActionPerformed(evt);
          }
       });
 
-      jButton18.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-sd.png"))); // NOI18N
-      jButton18.setBorderPainted(false);
-      jButton18.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-sdp.png"))); // NOI18N
-      jButton18.addActionListener(new java.awt.event.ActionListener() {
+      smallZDownButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-sd.png"))); // NOI18N
+      smallZDownButton_.setBorderPainted(false);
+      smallZDownButton_.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-sdp.png"))); // NOI18N
+      smallZDownButton_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            jButton18ActionPerformed(evt);
+            smallZDownButton_ActionPerformed(evt);
          }
       });
 
-      jButton19.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-dd.png"))); // NOI18N
-      jButton19.setBorderPainted(false);
-      jButton19.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-ddp.png"))); // NOI18N
-      jButton19.addActionListener(new java.awt.event.ActionListener() {
+      mediumZDownButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-dd.png"))); // NOI18N
+      mediumZDownButton_.setBorderPainted(false);
+      mediumZDownButton_.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-ddp.png"))); // NOI18N
+      mediumZDownButton_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            jButton19ActionPerformed(evt);
+            mediumZDownButton_ActionPerformed(evt);
          }
       });
 
-      jTextField4.addActionListener(new java.awt.event.ActionListener() {
+      smallZTextField_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            jTextField4ActionPerformed(evt);
+            smallZTextField_ActionPerformed(evt);
          }
       });
-      jTextField4.addFocusListener(new java.awt.event.FocusAdapter() {
+      smallZTextField_.addFocusListener(new java.awt.event.FocusAdapter() {
          public void focusLost(java.awt.event.FocusEvent evt) {
-            jTextField4focusLostHandlerJTF1(evt);
+            smallZTextField_focusLostHandlerJTF1(evt);
          }
       });
 
-      jTextField5.addActionListener(new java.awt.event.ActionListener() {
+      mediumZTextField_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            jTextField5ActionPerformed(evt);
+            mediumZTextField_ActionPerformed(evt);
          }
       });
-      jTextField5.addFocusListener(new java.awt.event.FocusAdapter() {
+      mediumZTextField_.addFocusListener(new java.awt.event.FocusAdapter() {
          public void focusLost(java.awt.event.FocusEvent evt) {
-            jTextField5focusLostHandlerJTF2(evt);
+            mediumZTextField_focusLostHandlerJTF2(evt);
          }
       });
 
@@ -482,114 +492,173 @@ public class StageControlFrame extends javax.swing.JFrame {
          }
       });
 
+      zPositionLabel_.setText("0.00");
+
+      jButton20.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-sr.png"))); // NOI18N
+      jButton20.setBorderPainted(false);
+      jButton20.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-srp.png"))); // NOI18N
+      jButton20.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            jButton20ActionPerformed(evt);
+         }
+      });
+
+      jButton21.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-dr.png"))); // NOI18N
+      jButton21.setBorderPainted(false);
+      jButton21.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-drp.png"))); // NOI18N
+      jButton21.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            jButton21ActionPerformed(evt);
+         }
+      });
+
+      jButton22.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-tr.png"))); // NOI18N
+      jButton22.setBorderPainted(false);
+      jButton22.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-trp.png"))); // NOI18N
+      jButton22.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            jButton22ActionPerformed(evt);
+         }
+      });
+
       org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
       getContentPane().setLayout(layout);
       layout.setHorizontalGroup(
          layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
          .add(layout.createSequentialGroup()
+            .addContainerGap()
+            .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
+               .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                  .add(jLabel1)
+                  .add(jLabel2))
+               .add(jLabel3))
+            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
             .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                .add(layout.createSequentialGroup()
-                  .addContainerGap()
                   .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                     .add(layout.createSequentialGroup()
-                        .add(21, 21, 21)
-                        .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                     .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                      .add(layout.createSequentialGroup()
                         .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
-                           .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                              .add(jLabel1)
-                              .add(jLabel2))
-                           .add(jLabel3))
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
-                           .add(org.jdesktop.layout.GroupLayout.LEADING, jTextField3, 0, 1, Short.MAX_VALUE)
-                           .add(org.jdesktop.layout.GroupLayout.LEADING, jTextField2, 0, 1, Short.MAX_VALUE)
-                           .add(org.jdesktop.layout.GroupLayout.LEADING, jTextField1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 55, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                           .add(layout.createSequentialGroup()
+                              .add(14, 14, 14)
+                              .add(jButton20, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 16, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                           .add(jButton21, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 23, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                           .add(jButton22, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 28, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
+                           .add(smallXYTextField_, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 63, Short.MAX_VALUE)
+                           .add(mediumXYTextField_)
+                           .add(largeXYTextField_))
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
                            .add(layout.createSequentialGroup()
                               .add(jLabel6, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                               .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                              .add(jButton15, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                              .add(getFieldButton_, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                            .add(layout.createSequentialGroup()
                               .add(jLabel5, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                               .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                              .add(jButton14, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                              .add(getPartFieldButton_, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                            .add(layout.createSequentialGroup()
                               .add(jLabel4, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                               .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                              .add(jButton13, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 93, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))))
-                  .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 22, Short.MAX_VALUE))
+                              .add(get1PixellXYButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 93, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))))
+                  .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 24, Short.MAX_VALUE))
                .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
-                  .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                  .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 59, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                   .add(jLabel7, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 96, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                   .add(85, 85, 85)))
-            .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
-               .add(org.jdesktop.layout.GroupLayout.LEADING, zDriveSelect_, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-               .add(jButton19, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-               .add(jButton18, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-               .add(jButton17, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+               .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
+                  .add(org.jdesktop.layout.GroupLayout.LEADING, zDriveSelect_, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                  .add(mediumZDownButton_, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                  .add(smallZDownButton_, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                  .add(smallZUpButton_, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                  .add(org.jdesktop.layout.GroupLayout.LEADING, mediumZUpButton_, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                  .add(jLabel10, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 96, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                .add(layout.createSequentialGroup()
+                  .add(28, 28, 28)
+                  .add(zPositionLabel_))
+               .add(layout.createSequentialGroup()
+                  .add(10, 10, 10)
                   .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
-                     .add(org.jdesktop.layout.GroupLayout.LEADING, jTextField5, 0, 1, Short.MAX_VALUE)
-                     .add(org.jdesktop.layout.GroupLayout.LEADING, jTextField4, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 55, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                     .add(org.jdesktop.layout.GroupLayout.LEADING, mediumZTextField_, 0, 1, Short.MAX_VALUE)
+                     .add(org.jdesktop.layout.GroupLayout.LEADING, smallZTextField_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 55, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                   .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                   .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
                      .add(jLabel8, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                     .add(jLabel9, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                  .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 3, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-               .add(org.jdesktop.layout.GroupLayout.LEADING, jButton16, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 96, Short.MAX_VALUE)
-               .add(jLabel10, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-            .add(10, 10, 10))
+                     .add(jLabel9, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))))
+            .add(25, 25, 25))
       );
       layout.setVerticalGroup(
          layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
          .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
+            .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .add(jLabel3))
+         .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
             .addContainerGap()
-            .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
+            .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                .add(layout.createSequentialGroup()
                   .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                      .add(jLabel7)
                      .add(jLabel10))
-                  .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 11, Short.MAX_VALUE)
+                  .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                   .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                   .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                  .add(0, 0, Short.MAX_VALUE)
                   .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                     .add(jTextField1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                     .add(jLabel1)
+                     .add(smallXYTextField_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                      .add(jLabel4, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                     .add(jButton13, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                     .add(get1PixellXYButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                   .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                  .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                     .add(jTextField2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                     .add(jLabel2)
-                     .add(jLabel5, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                     .add(jButton14, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 20, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
-               .add(layout.createSequentialGroup()
+                  .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                     .add(layout.createSequentialGroup()
+                        .add(jButton21, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 20, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                           .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                              .add(jLabel6, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                              .add(largeXYTextField_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                           .add(jButton22, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 20, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
+                     .add(layout.createSequentialGroup()
+                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                           .add(org.jdesktop.layout.GroupLayout.TRAILING, getPartFieldButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 20, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                           .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                              .add(mediumXYTextField_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                              .add(jLabel5, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(getFieldButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
+                  .addContainerGap())
+               .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
                   .add(32, 32, 32)
                   .add(zDriveSelect_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                  .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                  .add(jButton16, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 24, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                  .add(29, 29, 29)
+                  .add(mediumZUpButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 24, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                   .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                  .add(jButton17, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 16, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                  .add(30, 30, 30)
-                  .add(jButton18, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 16, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                  .add(smallZUpButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 16, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                  .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                  .add(zPositionLabel_)
+                  .add(10, 10, 10)
+                  .add(smallZDownButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 16, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                   .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                  .add(jButton19, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 24, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                  .add(49, 49, 49)
+                  .add(mediumZDownButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 24, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                  .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 45, Short.MAX_VALUE)
                   .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                     .add(jTextField4, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                     .add(smallZTextField_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                      .add(jLabel9, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                   .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                   .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                     .add(jTextField5, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                     .add(jLabel8, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))))
-            .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-               .add(jTextField3, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-               .add(jLabel3)
-               .add(jLabel6, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-               .add(jButton15, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-            .addContainerGap())
+                     .add(mediumZTextField_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                     .add(jLabel8, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                  .add(38, 38, 38))))
+         .add(layout.createSequentialGroup()
+            .add(259, 259, 259)
+            .add(jLabel1)
+            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+            .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+               .add(jButton20, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 26, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+               .add(jLabel2))
+            .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
       );
 
       pack();
@@ -608,111 +677,117 @@ public class StageControlFrame extends javax.swing.JFrame {
       try {
          if (!core_.deviceBusy(currentZDrive_)) {
             core_.setRelativePosition(currentZDrive_, z);
+            updateZPosLabel();
          }
       } catch (Exception e) {
          gui_.logError(e);
       }
    }
 
+   private void updateZPosLabel() throws Exception {
+      double zPos = core_.getPosition(currentZDrive_);
+      zPositionLabel_.setText(NumberUtils.doubleToDisplayString(zPos) + 
+              " \u00B5m");
+   }
 
-    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+    private void smallLeftButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_smallLeftButton_ActionPerformed
        setRelativeXYStagePosition(-smallMovement_, 0.0);
-    }//GEN-LAST:event_jButton1ActionPerformed
+    }//GEN-LAST:event_smallLeftButton_ActionPerformed
 
-    private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
+    private void largeLeftButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_largeLeftButton_ActionPerformed
        setRelativeXYStagePosition(-largeMovement_, 0.0);
-    }//GEN-LAST:event_jButton2ActionPerformed
+    }//GEN-LAST:event_largeLeftButton_ActionPerformed
 
-    private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
+    private void mediumLeftButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mediumLeftButton_ActionPerformed
        setRelativeXYStagePosition(-mediumMovement_, 0.0);
-    }//GEN-LAST:event_jButton3ActionPerformed
+    }//GEN-LAST:event_mediumLeftButton_ActionPerformed
 
-    private void jButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton4ActionPerformed
+    private void smallRightButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_smallRightButton_ActionPerformed
       setRelativeXYStagePosition(smallMovement_, 0.0);
-    }//GEN-LAST:event_jButton4ActionPerformed
+    }//GEN-LAST:event_smallRightButton_ActionPerformed
 
-    private void jButton5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton5ActionPerformed
+    private void largeRightButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_largeRightButton_ActionPerformed
        setRelativeXYStagePosition(largeMovement_, 0.0);
-    }//GEN-LAST:event_jButton5ActionPerformed
+    }//GEN-LAST:event_largeRightButton_ActionPerformed
 
-    private void jButton6ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton6ActionPerformed
+    private void mediumRightButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mediumRightButton_ActionPerformed
        setRelativeXYStagePosition(mediumMovement_, 0.0);
-    }//GEN-LAST:event_jButton6ActionPerformed
+    }//GEN-LAST:event_mediumRightButton_ActionPerformed
 
-    private void jButton7ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton7ActionPerformed
+    private void smallXYUpButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_smallXYUpButton_ActionPerformed
        setRelativeXYStagePosition(0.0, -smallMovement_);
-    }//GEN-LAST:event_jButton7ActionPerformed
+    }//GEN-LAST:event_smallXYUpButton_ActionPerformed
 
-    private void jButton8ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton8ActionPerformed
+    private void largXYUpButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_largXYUpButton_ActionPerformed
        setRelativeXYStagePosition(0.0, -largeMovement_);
-    }//GEN-LAST:event_jButton8ActionPerformed
+    }//GEN-LAST:event_largXYUpButton_ActionPerformed
 
-    private void jButton9ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton9ActionPerformed
+    private void mediumXYUpButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mediumXYUpButton_ActionPerformed
        setRelativeXYStagePosition(0.0, -mediumMovement_);
-    }//GEN-LAST:event_jButton9ActionPerformed
+    }//GEN-LAST:event_mediumXYUpButton_ActionPerformed
 
-    private void jButton10ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton10ActionPerformed
+    private void smallXYDownButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_smallXYDownButton_ActionPerformed
        setRelativeXYStagePosition(0.0, smallMovement_);
-    }//GEN-LAST:event_jButton10ActionPerformed
+    }//GEN-LAST:event_smallXYDownButton_ActionPerformed
 
-    private void jButton11ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton11ActionPerformed
+    private void mediumXYDownButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mediumXYDownButton_ActionPerformed
        setRelativeXYStagePosition(0.0, mediumMovement_);
-    }//GEN-LAST:event_jButton11ActionPerformed
+    }//GEN-LAST:event_mediumXYDownButton_ActionPerformed
 
-    private void jButton12ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton12ActionPerformed
+    private void largeXYDownButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_largeXYDownButton_ActionPerformed
        setRelativeXYStagePosition(0.0, largeMovement_);
-    }//GEN-LAST:event_jButton12ActionPerformed
+    }//GEN-LAST:event_largeXYDownButton_ActionPerformed
 
-    private void jTextField2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jTextField2ActionPerformed
+    private void mediumXYTextField_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mediumXYTextField_ActionPerformed
        try {
-         mediumMovement_ = nf_.parse(jTextField2.getText()).doubleValue();
+         mediumMovement_ = nf_.parse(mediumXYTextField_.getText()).doubleValue();
          nf_.setMaximumFractionDigits(2);
-         jTextField2.setText(nf_.format(mediumMovement_));
+         mediumXYTextField_.setText(nf_.format(mediumMovement_));
        } catch(ParseException e) {
           // ignore if parsing fails
        }
-    }//GEN-LAST:event_jTextField2ActionPerformed
+    }//GEN-LAST:event_mediumXYTextField_ActionPerformed
 
-    private void jButton14ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton14ActionPerformed
+    private void getPartFieldButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_getPartFieldButton_ActionPerformed
        long nrPixelsX = core_.getImageWidth();
        double pixelSize = core_.getPixelSizeUm();
        nf_.setMaximumFractionDigits(2);
-       jTextField2.setText(nf_.format(pixelSize * nrPixelsX * 0.1));
-    }//GEN-LAST:event_jButton14ActionPerformed
+       mediumXYTextField_.setText(nf_.format(pixelSize * nrPixelsX * 0.1));
+    }//GEN-LAST:event_getPartFieldButton_ActionPerformed
 
-    private void jTextField3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jTextField3ActionPerformed
+    private void largeXYTextField_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_largeXYTextField_ActionPerformed
        try {
-          largeMovement_ = nf_.parse(jTextField3.getText()).doubleValue();
+          largeMovement_ = nf_.parse(largeXYTextField_.getText()).doubleValue();
           nf_.setMaximumFractionDigits(1);
-          jTextField3.setText(nf_.format(largeMovement_));
+          largeXYTextField_.setText(nf_.format(largeMovement_));
        } catch(ParseException e) {
            // ignore if parsing fails
        }
-    }//GEN-LAST:event_jTextField3ActionPerformed
+    }//GEN-LAST:event_largeXYTextField_ActionPerformed
 
-    private void jTextField1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jTextField1ActionPerformed
+    private void smallXYTextField_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_smallXYTextField_ActionPerformed
        try {
-         smallMovement_ = nf_.parse(jTextField1.getText()).doubleValue();
+         smallMovement_ = nf_.parse(smallXYTextField_.getText()).doubleValue();
          nf_.setMaximumFractionDigits(3);
-         jTextField1.setText(nf_.format(smallMovement_));
+         smallXYTextField_.setText(nf_.format(smallMovement_));
        } catch(ParseException e) {
           // ignore if parsing fails
        }
-    }//GEN-LAST:event_jTextField1ActionPerformed
+    }//GEN-LAST:event_smallXYTextField_ActionPerformed
 
-    private void jButton13ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton13ActionPerformed
+    private void get1PixellXYButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_get1PixellXYButton_ActionPerformed
        double pixelSize = core_.getPixelSizeUm();
-       jTextField1.setText(nf_.format(pixelSize));
+       smallXYTextField_.setText(nf_.format(pixelSize));
        smallMovement_ = pixelSize;nf_.setMaximumFractionDigits(3);
-       jTextField1.setText(nf_.format(smallMovement_));  
-    }//GEN-LAST:event_jButton13ActionPerformed
+       smallXYTextField_.setText(nf_.format(smallMovement_));  
+    }//GEN-LAST:event_get1PixellXYButton_ActionPerformed
 
-    private void jButton15ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton15ActionPerformed
+    private void getFieldButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_getFieldButton_ActionPerformed
        long nrPixelsX = core_.getImageWidth();
        double pixelSize = core_.getPixelSizeUm();
        nf_.setMaximumFractionDigits(1);
-       jTextField3.setText(nf_.format(pixelSize * nrPixelsX));
-    }//GEN-LAST:event_jButton15ActionPerformed
+       largeXYTextField_.setText(nf_.format(pixelSize * nrPixelsX));
+    }//GEN-LAST:event_getFieldButton_ActionPerformed
 
     private void onWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_onWindowClosing
        prefs_.putInt(FRAMEXPOS, (int) getLocation().getX());
@@ -724,7 +799,7 @@ public class StageControlFrame extends javax.swing.JFrame {
 
     private void focusLostHandlerJTF1(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_focusLostHandlerJTF1
        try {
-         smallMovement_ = nf_.parse(jTextField1.getText()).doubleValue();
+         smallMovement_ = nf_.parse(smallXYTextField_.getText()).doubleValue();
        } catch(ParseException e) {
           // ignore if parsing fails
        }
@@ -732,7 +807,7 @@ public class StageControlFrame extends javax.swing.JFrame {
 
     private void focusLostHandlerJTF2(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_focusLostHandlerJTF2
        try {
-         mediumMovement_ = nf_.parse(jTextField2.getText()).doubleValue();
+         mediumMovement_ = nf_.parse(mediumXYTextField_.getText()).doubleValue();
        } catch(ParseException e) {
           // ignore if parsing fails
        }
@@ -740,55 +815,55 @@ public class StageControlFrame extends javax.swing.JFrame {
 
     private void focusLostHandlerJTF3(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_focusLostHandlerJTF3
        try {
-         largeMovement_ = nf_.parse(jTextField3.getText()).doubleValue();
+         largeMovement_ = nf_.parse(largeXYTextField_.getText()).doubleValue();
        } catch(ParseException e) {
           // ignore if parsing fails
        }
     }//GEN-LAST:event_focusLostHandlerJTF3
 
-    private void jButton16ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton16ActionPerformed
+    private void mediumZUpButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mediumZUpButton_ActionPerformed
        try {
-          setRelativeStagePosition(nf_.parse(jTextField5.getText()).doubleValue());
+          setRelativeStagePosition(nf_.parse(mediumZTextField_.getText()).doubleValue());
        } catch(ParseException e) {
           // ignore if parsing fails
        }
-    }//GEN-LAST:event_jButton16ActionPerformed
+    }//GEN-LAST:event_mediumZUpButton_ActionPerformed
 
-    private void jButton17ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton17ActionPerformed
+    private void smallZUpButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_smallZUpButton_ActionPerformed
        try {
-         setRelativeStagePosition(nf_.parse(jTextField4.getText()).doubleValue());
+         setRelativeStagePosition(nf_.parse(smallZTextField_.getText()).doubleValue());
        } catch(ParseException e) {
           // ignore if parsing fails
        }
-    }//GEN-LAST:event_jButton17ActionPerformed
+    }//GEN-LAST:event_smallZUpButton_ActionPerformed
 
-    private void jButton18ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton18ActionPerformed
+    private void smallZDownButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_smallZDownButton_ActionPerformed
        try {
-         setRelativeStagePosition( - nf_.parse(jTextField4.getText()).doubleValue());
+         setRelativeStagePosition( - nf_.parse(smallZTextField_.getText()).doubleValue());
        } catch(ParseException e) {
           // ignore if parsing fails
        }
-    }//GEN-LAST:event_jButton18ActionPerformed
+    }//GEN-LAST:event_smallZDownButton_ActionPerformed
 
-    private void jButton19ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton19ActionPerformed
+    private void mediumZDownButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mediumZDownButton_ActionPerformed
        try {
-          setRelativeStagePosition( - nf_.parse(jTextField5.getText()).doubleValue());
+          setRelativeStagePosition( - nf_.parse(mediumZTextField_.getText()).doubleValue());
        } catch(ParseException e) {
           // ignore if parsing fails
        }
-    }//GEN-LAST:event_jButton19ActionPerformed
+    }//GEN-LAST:event_mediumZDownButton_ActionPerformed
 
-    private void jTextField4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jTextField4ActionPerformed
+    private void smallZTextField_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_smallZTextField_ActionPerformed
        updateSmallZMove();
-    }//GEN-LAST:event_jTextField4ActionPerformed
+    }//GEN-LAST:event_smallZTextField_ActionPerformed
 
-    private void jTextField4focusLostHandlerJTF1(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_jTextField4focusLostHandlerJTF1
+    private void smallZTextField_focusLostHandlerJTF1(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_smallZTextField_focusLostHandlerJTF1
       updateSmallZMove();
-    }//GEN-LAST:event_jTextField4focusLostHandlerJTF1
+    }//GEN-LAST:event_smallZTextField_focusLostHandlerJTF1
 
    private void updateSmallZMove() {
       try {
-         double smallZMove = nf_.parse(jTextField4.getText()).doubleValue();
+         double smallZMove = nf_.parse(smallZTextField_.getText()).doubleValue();
          smallMovementZ_.put(currentZDrive_, smallZMove);
          prefs_.putDouble(SMALLMOVEMENTZ + currentZDrive_, smallZMove);
       } catch (ParseException e) {
@@ -796,17 +871,17 @@ public class StageControlFrame extends javax.swing.JFrame {
       }
    }
 
-    private void jTextField5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jTextField5ActionPerformed
+    private void mediumZTextField_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mediumZTextField_ActionPerformed
        updateMediumZMove();
-    }//GEN-LAST:event_jTextField5ActionPerformed
+    }//GEN-LAST:event_mediumZTextField_ActionPerformed
 
-    private void jTextField5focusLostHandlerJTF2(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_jTextField5focusLostHandlerJTF2
+    private void mediumZTextField_focusLostHandlerJTF2(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_mediumZTextField_focusLostHandlerJTF2
        updateMediumZMove();
-    }//GEN-LAST:event_jTextField5focusLostHandlerJTF2
+    }//GEN-LAST:event_mediumZTextField_focusLostHandlerJTF2
 
     private void updateMediumZMove() {
     try {
-          double mediumZMove = nf_.parse(jTextField5.getText()).doubleValue();
+          double mediumZMove = nf_.parse(mediumZTextField_.getText()).doubleValue();
           mediumMovementZ_.put(currentZDrive_, mediumZMove);
           prefs_.putDouble(MEDIUMMOVEMENTZ + currentZDrive_, mediumZMove);
        } catch(ParseException e) {
@@ -814,32 +889,39 @@ public class StageControlFrame extends javax.swing.JFrame {
        }
     }
    private void zDriveSelect_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_zDriveSelect_ActionPerformed
-      currentZDrive_ = (String) zDriveSelect_.getSelectedItem();
+      currentZDrive_ = (String) zDriveSelect_.getSelectedItem(); 
       if (initialized_)
+         prefs_.put(CURRENTZDRIVE, currentZDrive_);
+     // if (initialized_) {
          updateZMovements();   // Sets the small and medium Z movement to whatever we had for this new drive
+         try {
+            updateZPosLabel();
+         } catch (Exception ex) {
+            // ignore for now...
+         }
+      //}
    }//GEN-LAST:event_zDriveSelect_ActionPerformed
+
+   private void jButton20ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton20ActionPerformed
+      // TODO add your handling code here:
+   }//GEN-LAST:event_jButton20ActionPerformed
+
+   private void jButton21ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton21ActionPerformed
+      // TODO add your handling code here:
+   }//GEN-LAST:event_jButton21ActionPerformed
+
+   private void jButton22ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton22ActionPerformed
+      // TODO add your handling code here:
+   }//GEN-LAST:event_jButton22ActionPerformed
 
  
    // Variables declaration - do not modify//GEN-BEGIN:variables
-   private javax.swing.JButton jButton1;
-   private javax.swing.JButton jButton10;
-   private javax.swing.JButton jButton11;
-   private javax.swing.JButton jButton12;
-   private javax.swing.JButton jButton13;
-   private javax.swing.JButton jButton14;
-   private javax.swing.JButton jButton15;
-   private javax.swing.JButton jButton16;
-   private javax.swing.JButton jButton17;
-   private javax.swing.JButton jButton18;
-   private javax.swing.JButton jButton19;
-   private javax.swing.JButton jButton2;
-   private javax.swing.JButton jButton3;
-   private javax.swing.JButton jButton4;
-   private javax.swing.JButton jButton5;
-   private javax.swing.JButton jButton6;
-   private javax.swing.JButton jButton7;
-   private javax.swing.JButton jButton8;
-   private javax.swing.JButton jButton9;
+   private javax.swing.JButton get1PixellXYButton_;
+   private javax.swing.JButton getFieldButton_;
+   private javax.swing.JButton getPartFieldButton_;
+   private javax.swing.JButton jButton20;
+   private javax.swing.JButton jButton21;
+   private javax.swing.JButton jButton22;
    private javax.swing.JLabel jLabel1;
    private javax.swing.JLabel jLabel10;
    private javax.swing.JLabel jLabel2;
@@ -851,12 +933,29 @@ public class StageControlFrame extends javax.swing.JFrame {
    private javax.swing.JLabel jLabel8;
    private javax.swing.JLabel jLabel9;
    private javax.swing.JPanel jPanel1;
-   private javax.swing.JTextField jTextField1;
-   private javax.swing.JTextField jTextField2;
-   private javax.swing.JTextField jTextField3;
-   private javax.swing.JTextField jTextField4;
-   private javax.swing.JTextField jTextField5;
+   private javax.swing.JButton largXYUpButton_;
+   private javax.swing.JButton largeLeftButton_;
+   private javax.swing.JButton largeRightButton_;
+   private javax.swing.JButton largeXYDownButton_;
+   private javax.swing.JTextField largeXYTextField_;
+   private javax.swing.JButton mediumLeftButton_;
+   private javax.swing.JButton mediumRightButton_;
+   private javax.swing.JButton mediumXYDownButton_;
+   private javax.swing.JTextField mediumXYTextField_;
+   private javax.swing.JButton mediumXYUpButton_;
+   private javax.swing.JButton mediumZDownButton_;
+   private javax.swing.JTextField mediumZTextField_;
+   private javax.swing.JButton mediumZUpButton_;
+   private javax.swing.JButton smallLeftButton_;
+   private javax.swing.JButton smallRightButton_;
+   private javax.swing.JButton smallXYDownButton_;
+   private javax.swing.JTextField smallXYTextField_;
+   private javax.swing.JButton smallXYUpButton_;
+   private javax.swing.JButton smallZDownButton_;
+   private javax.swing.JTextField smallZTextField_;
+   private javax.swing.JButton smallZUpButton_;
    private javax.swing.JComboBox zDriveSelect_;
+   private javax.swing.JLabel zPositionLabel_;
    // End of variables declaration//GEN-END:variables
 
 }
