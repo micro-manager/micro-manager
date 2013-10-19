@@ -19,7 +19,7 @@
 
 package org.micromanager.stagecontrol;
 
-import edu.valelab.GaussianFit.utils.NumberUtils;
+import org.micromanager.stagecontrol.utils.NumberUtils;
 import mmcorej.CMMCore;
 
 import java.text.NumberFormat;
