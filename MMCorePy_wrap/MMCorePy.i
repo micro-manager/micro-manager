@@ -49,7 +49,7 @@ import_array();
 %}
 
 %{
-#include "arrayobject.h"
+#include "numpy/arrayobject.h"
 #include "string.h"
 %}
 

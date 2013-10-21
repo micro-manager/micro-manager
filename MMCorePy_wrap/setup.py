@@ -5,6 +5,7 @@ setup.py file for SWIG example
 """
 
 from distutils.core import setup, Extension
+import numpy.distutils.misc_util
 import os
 
 os.environ['CC'] = 'g++'
@@ -27,13 +28,13 @@ mmcorepy_module = Extension('_MMCorePy',
 			'../MMCore/PluginManager.cpp'],
 			language = "c++",
 			extra_objects = [],
-                        include_dirs = ["/Developer/SDKs/MacOSX10.5.sdk/System/Library/Frameworks/Python.framework/Versions/2.5/Extras/lib/python/numpy/core/include/numpy"]
+                            include_dirs=numpy.distutils.misc_util.get_numpy_include_dirs(),
                            )
 
 setup (name = 'MMCorePy',
        version = '0.1',
-       author      = "SWIG Docs",
-       description = """Simple swig example from docs""",
+       author      = "Micro-Manager",
+       description = "Micro-Manager Core Python wrapper",
        ext_modules = [mmcorepy_module],
        py_modules = ["MMCorePy"],
        )
