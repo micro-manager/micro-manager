@@ -94,6 +94,7 @@ const int MAX_PIX_TIME = 1000;
 // Circular buffer default values
 const int CIRC_BUF_FRAME_CNT_DEF = 8;
 const int CIRC_BUF_FRAME_CNT_MIN = 3;
+const int CIRC_BUF_FRAME_CNT_MAX = 32;
 
 // global constants
 extern const char* g_ReadoutRate;
@@ -126,6 +127,8 @@ const char* g_OFF                     = "OFF";
 const char* g_Keyword_AcqMethod           = "AcquisitionMethod";
 const char* g_Keyword_AcqMethod_Callbacks = "Callbacks";
 const char* g_Keyword_AcqMethod_Polling   = "Polling";
+const char* g_Keyword_OutputTriggerFirstMissing = "OutputTriggerFirstMissing";
+const char* g_Keyword_CircBufFrameCnt     = "CircularBufferFrameCount";
 
 // Universal parameters
 // These parameters, their ranges or allowed values are read out from the camera automatically.
@@ -510,16 +513,17 @@ int Universal::Initialize()
    // The _outputTriggerFirstMissing does not seem to be used anywhere, we may
    // want to remove it later.
    pAct = new CPropertyAction (this, &Universal::OnOutputTriggerFirstMissing);
-   nRet = CreateProperty("OutputTriggerFirstMissing", "0", MM::Integer, false, pAct);
-   AddAllowedValue("OutputTriggerFirstMissing", "0");
-   AddAllowedValue("OutputTriggerFirstMissing", "1");
+   nRet = CreateProperty(g_Keyword_OutputTriggerFirstMissing, "0", MM::Integer, false, pAct);
+   AddAllowedValue(g_Keyword_OutputTriggerFirstMissing, "0");
+   AddAllowedValue(g_Keyword_OutputTriggerFirstMissing, "1");
 
    // Circular buffer size. This allows the user to set how many frames we want to allocate the PVCAM
    // PVCAM circular buffer for. The default value is fine for most cases, however chaning this value
    // may help in some cases (e.g. lowering it down to 3 helped to resolve ICX-674 image tearing issues)
    pAct = new CPropertyAction(this, &Universal::OnCircBufferFrameCount);
-   nRet = CreateProperty("CircularBufferFrameCount",
+   nRet = CreateProperty( g_Keyword_CircBufFrameCnt,
       CDeviceUtils::ConvertToString(CIRC_BUF_FRAME_CNT_DEF), MM::Integer, false, pAct);
+   SetPropertyLimits( g_Keyword_CircBufFrameCnt, CIRC_BUF_FRAME_CNT_MIN, CIRC_BUF_FRAME_CNT_MAX );
 
 
    initializeUniversalParams();
@@ -1058,10 +1062,12 @@ int Universal::OnGain(MM::PropertyBase* pProp, MM::ActionType eAct)
    START_ONPROPERTY("Universal::OnGain", eAct);
    if (eAct == MM::AfterSet)
    {
-      singleFrameModeReady_=false;
       long gain;
       pProp->Get(gain);
       int16 pvGain = (int16)gain;
+
+      if (IsCapturing())
+         StopSequenceAcquisition();
 
       prmGainIndex_->Set(pvGain);
       prmGainIndex_->Apply();
@@ -1071,6 +1077,7 @@ int Universal::OnGain(MM::PropertyBase* pProp, MM::ActionType eAct)
       {
           prmActualGain_->Update();
       }
+      singleFrameModeReady_ = false;
    }
    else if (eAct == MM::BeforeGet)
    {
@@ -1091,6 +1098,9 @@ int Universal::OnMultiplierGain(MM::PropertyBase* pProp, MM::ActionType eAct)
       long gain;
       pProp->Get(gain);
       uns16 pvGain = (uns16)gain;
+
+      if (IsCapturing())
+         StopSequenceAcquisition();
 
       prmGainMultFactor_->Set(pvGain);
       prmGainMultFactor_->Apply();
@@ -1131,7 +1141,10 @@ int Universal::OnTemperatureSetPoint(MM::PropertyBase* pProp, MM::ActionType eAc
       double temp;
       pProp->Get(temp);
       int16 pvTemp = (int16)(temp * 100);
-      
+
+      if (IsCapturing())
+         StopSequenceAcquisition();
+
       // Set the value to desired one
       prmTempSetpoint_->Set( pvTemp );
       prmTempSetpoint_->Apply();
@@ -2457,6 +2470,10 @@ int Universal::OnColorMode(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       string val;
       pProp->Get(val);
+
+      if (IsCapturing())
+         StopSequenceAcquisition();
+
       val.compare(g_ON) == 0 ? rgbaColor_ = true : rgbaColor_ = false;
       ResizeImageBufferSingle();
    }
@@ -2521,6 +2538,9 @@ int Universal::OnResetPostProcProperties(MM::PropertyBase* pProp, MM::ActionType
       pProp->Get(choice);
       if (choice.compare(g_Keyword_Yes) == 0)
       {
+         if (IsCapturing())
+            StopSequenceAcquisition();
+
          if(!pl_pp_reset(hPVCAM_))
          {
              LogCamError(__LINE__, "pl_pp_reset");
@@ -2606,6 +2626,9 @@ int Universal::OnPostProcProperties(MM::PropertyBase* pProp, MM::ActionType eAct
 
    if (eAct == MM::AfterSet)
    {
+      if (IsCapturing())
+         StopSequenceAcquisition();
+
       // The user just set a new value, find out what is the desired value,
       // convert it to PVCAM PP value and send it to the camera.
       ppIndx = (int16)PostProc_[index].GetppIndex();
