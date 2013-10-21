@@ -171,8 +171,6 @@ import_array();
 // __str__ method gets printed in the traceback, so it should contain the core error message string.
 
 %extend CMMError {
-  std::string const message;
-  
   std::string __getitem__(int n) {
 	return $self->getMsg();
   }
@@ -180,12 +178,9 @@ import_array();
   std::string __str__() {
     return $self->getMsg();
   }
-
 }
 
 %extend MetadataKeyError {
-  std::string const message;
-  
   std::string __getitem__(int n) {
 	return $self->getMsg();
   }
@@ -193,13 +188,10 @@ import_array();
   std::string __str__() {
     return $self->getMsg();
   }
-
 }
 
 
 %extend MetadataIndexError {
-  std::string const message;
-  
   std::string __getitem__(int n) {
 	return $self->getMsg();
   }
@@ -207,26 +199,7 @@ import_array();
   std::string __str__() {
     return $self->getMsg();
   }
-
 }
-
-
-%{
-std::string const CMMError_message_get(CMMError * err) {
-	return err->getMsg();
-}
-
-std::string const MetadataKeyError_message_get(MetadataKeyError * err) {
-	return err->getMsg();
-}
-
-std::string const MetadataIndexError_message_get(MetadataIndexError * err) {
-	return err->getMsg();
-}
-
-%}
-
-
 
 
 // instantiate STL mappings
