@@ -259,6 +259,7 @@ public class StageControlFrame extends javax.swing.JFrame {
       });
 
       mediumZUpButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-du.png"))); // NOI18N
+      mediumZUpButton_.setBorder(null);
       mediumZUpButton_.setBorderPainted(false);
       mediumZUpButton_.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-dup.png"))); // NOI18N
       mediumZUpButton_.addActionListener(new java.awt.event.ActionListener() {
@@ -294,6 +295,7 @@ public class StageControlFrame extends javax.swing.JFrame {
       });
 
       mediumZDownButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-dd.png"))); // NOI18N
+      mediumZDownButton_.setBorder(null);
       mediumZDownButton_.setBorderPainted(false);
       mediumZDownButton_.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-ddp.png"))); // NOI18N
       mediumZDownButton_.addActionListener(new java.awt.event.ActionListener() {
@@ -303,6 +305,7 @@ public class StageControlFrame extends javax.swing.JFrame {
       });
 
       smallZDownButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-sd.png"))); // NOI18N
+      smallZDownButton_.setBorder(null);
       smallZDownButton_.setBorderPainted(false);
       smallZDownButton_.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-sdp.png"))); // NOI18N
       smallZDownButton_.addActionListener(new java.awt.event.ActionListener() {
@@ -314,6 +317,7 @@ public class StageControlFrame extends javax.swing.JFrame {
       zPositionLabel_.setText("0.00");
 
       smallZUpButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-su.png"))); // NOI18N
+      smallZUpButton_.setBorder(null);
       smallZUpButton_.setBorderPainted(false);
       smallZUpButton_.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-sup.png"))); // NOI18N
       smallZUpButton_.addActionListener(new java.awt.event.ActionListener() {
@@ -323,6 +327,7 @@ public class StageControlFrame extends javax.swing.JFrame {
       });
 
       jButton23.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-sr.png"))); // NOI18N
+      jButton23.setBorder(null);
       jButton23.setBorderPainted(false);
       jButton23.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-srp.png"))); // NOI18N
       jButton23.addActionListener(new java.awt.event.ActionListener() {
@@ -332,6 +337,7 @@ public class StageControlFrame extends javax.swing.JFrame {
       });
 
       jButton24.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-dr.png"))); // NOI18N
+      jButton24.setBorder(null);
       jButton24.setBorderPainted(false);
       jButton24.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-drp.png"))); // NOI18N
       jButton24.addActionListener(new java.awt.event.ActionListener() {
@@ -344,14 +350,8 @@ public class StageControlFrame extends javax.swing.JFrame {
       zPanel_.setLayout(zPanel_Layout);
       zPanel_Layout.setHorizontalGroup(
          zPanel_Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-         .add(org.jdesktop.layout.GroupLayout.CENTER, zPanel_Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.CENTER)
-            .add(smallZUpButton_, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .add(zPositionLabel_))
+         .add(org.jdesktop.layout.GroupLayout.CENTER, smallZUpButton_, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
          .add(org.jdesktop.layout.GroupLayout.TRAILING, smallZDownButton_, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-         .add(zPanel_Layout.createSequentialGroup()
-            .addContainerGap()
-            .add(jLabel10, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 96, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-            .add(0, 0, Short.MAX_VALUE))
          .add(zPanel_Layout.createSequentialGroup()
             .add(filler3, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
             .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -376,6 +376,13 @@ public class StageControlFrame extends javax.swing.JFrame {
                .add(jLabel8, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                .add(jLabel9, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
             .addContainerGap())
+         .add(zPanel_Layout.createSequentialGroup()
+            .add(zPanel_Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+               .add(org.jdesktop.layout.GroupLayout.CENTER, zPositionLabel_)
+               .add(zPanel_Layout.createSequentialGroup()
+                  .addContainerGap()
+                  .add(jLabel10, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 96, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
+            .add(0, 0, Short.MAX_VALUE))
       );
       zPanel_Layout.setVerticalGroup(
          zPanel_Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -418,6 +425,7 @@ public class StageControlFrame extends javax.swing.JFrame {
       jLabel7.setText("XY Stage");
 
       largeXYUpButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-tu.png"))); // NOI18N
+      largeXYUpButton_.setBorder(null);
       largeXYUpButton_.setBorderPainted(false);
       largeXYUpButton_.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-tup.png"))); // NOI18N
       largeXYUpButton_.addActionListener(new java.awt.event.ActionListener() {
@@ -427,6 +435,7 @@ public class StageControlFrame extends javax.swing.JFrame {
       });
 
       mediumXYUpButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-du.png"))); // NOI18N
+      mediumXYUpButton_.setBorder(null);
       mediumXYUpButton_.setBorderPainted(false);
       mediumXYUpButton_.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-dup.png"))); // NOI18N
       mediumXYUpButton_.addActionListener(new java.awt.event.ActionListener() {
@@ -436,6 +445,7 @@ public class StageControlFrame extends javax.swing.JFrame {
       });
 
       smallXYUpButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-su.png"))); // NOI18N
+      smallXYUpButton_.setBorder(null);
       smallXYUpButton_.setBorderPainted(false);
       smallXYUpButton_.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-sup.png"))); // NOI18N
       smallXYUpButton_.addActionListener(new java.awt.event.ActionListener() {
@@ -445,6 +455,7 @@ public class StageControlFrame extends javax.swing.JFrame {
       });
 
       smallXYDownButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-sd.png"))); // NOI18N
+      smallXYDownButton_.setBorder(null);
       smallXYDownButton_.setBorderPainted(false);
       smallXYDownButton_.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-sdp.png"))); // NOI18N
       smallXYDownButton_.addActionListener(new java.awt.event.ActionListener() {
@@ -454,6 +465,7 @@ public class StageControlFrame extends javax.swing.JFrame {
       });
 
       mediumXYDownButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-dd.png"))); // NOI18N
+      mediumXYDownButton_.setBorder(null);
       mediumXYDownButton_.setBorderPainted(false);
       mediumXYDownButton_.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-ddp.png"))); // NOI18N
       mediumXYDownButton_.addActionListener(new java.awt.event.ActionListener() {
@@ -463,6 +475,7 @@ public class StageControlFrame extends javax.swing.JFrame {
       });
 
       largeXYDownButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-td.png"))); // NOI18N
+      largeXYDownButton_.setBorder(null);
       largeXYDownButton_.setBorderPainted(false);
       largeXYDownButton_.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-tdp.png"))); // NOI18N
       largeXYDownButton_.addActionListener(new java.awt.event.ActionListener() {
@@ -472,6 +485,7 @@ public class StageControlFrame extends javax.swing.JFrame {
       });
 
       largeLeftButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-tl.png"))); // NOI18N
+      largeLeftButton_.setBorder(null);
       largeLeftButton_.setBorderPainted(false);
       largeLeftButton_.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-tlp.png"))); // NOI18N
       largeLeftButton_.addActionListener(new java.awt.event.ActionListener() {
@@ -481,6 +495,7 @@ public class StageControlFrame extends javax.swing.JFrame {
       });
 
       mediumLeftButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-dl.png"))); // NOI18N
+      mediumLeftButton_.setBorder(null);
       mediumLeftButton_.setBorderPainted(false);
       mediumLeftButton_.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-dlp.png"))); // NOI18N
       mediumLeftButton_.addActionListener(new java.awt.event.ActionListener() {
@@ -490,6 +505,7 @@ public class StageControlFrame extends javax.swing.JFrame {
       });
 
       smallLeftButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-sl.png"))); // NOI18N
+      smallLeftButton_.setBorder(null);
       smallLeftButton_.setBorderPainted(false);
       smallLeftButton_.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-slp.png"))); // NOI18N
       smallLeftButton_.addActionListener(new java.awt.event.ActionListener() {
@@ -499,6 +515,7 @@ public class StageControlFrame extends javax.swing.JFrame {
       });
 
       smallRightButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-sr.png"))); // NOI18N
+      smallRightButton_.setBorder(null);
       smallRightButton_.setBorderPainted(false);
       smallRightButton_.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-srp.png"))); // NOI18N
       smallRightButton_.addActionListener(new java.awt.event.ActionListener() {
@@ -508,6 +525,7 @@ public class StageControlFrame extends javax.swing.JFrame {
       });
 
       mediumRightButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-dr.png"))); // NOI18N
+      mediumRightButton_.setBorder(null);
       mediumRightButton_.setBorderPainted(false);
       mediumRightButton_.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-drp.png"))); // NOI18N
       mediumRightButton_.addActionListener(new java.awt.event.ActionListener() {
@@ -517,6 +535,7 @@ public class StageControlFrame extends javax.swing.JFrame {
       });
 
       largeRightButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-tr.png"))); // NOI18N
+      largeRightButton_.setBorder(null);
       largeRightButton_.setBorderPainted(false);
       largeRightButton_.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-trp.png"))); // NOI18N
       largeRightButton_.addActionListener(new java.awt.event.ActionListener() {
@@ -526,6 +545,7 @@ public class StageControlFrame extends javax.swing.JFrame {
       });
 
       jButton20.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-sr.png"))); // NOI18N
+      jButton20.setBorder(null);
       jButton20.setBorderPainted(false);
       jButton20.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-srp.png"))); // NOI18N
       jButton20.addActionListener(new java.awt.event.ActionListener() {
@@ -535,6 +555,7 @@ public class StageControlFrame extends javax.swing.JFrame {
       });
 
       jButton21.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-dr.png"))); // NOI18N
+      jButton21.setBorder(null);
       jButton21.setBorderPainted(false);
       jButton21.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-drp.png"))); // NOI18N
       jButton21.addActionListener(new java.awt.event.ActionListener() {
@@ -544,6 +565,7 @@ public class StageControlFrame extends javax.swing.JFrame {
       });
 
       jButton22.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-tr.png"))); // NOI18N
+      jButton22.setBorder(null);
       jButton22.setBorderPainted(false);
       jButton22.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-trp.png"))); // NOI18N
       jButton22.addActionListener(new java.awt.event.ActionListener() {
@@ -721,15 +743,13 @@ public class StageControlFrame extends javax.swing.JFrame {
                         .add(xyPanel_Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                            .add(xyPanel_Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                               .add(jLabel6, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                              .add(largeXYTextField_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                              .add(largeXYTextField_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                              .add(getFieldButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                            .add(jButton22, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 20, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
-                     .add(xyPanel_Layout.createSequentialGroup()
-                        .add(xyPanel_Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                           .add(mediumXYTextField_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                           .add(jLabel5, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                           .add(getPartFieldButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(getFieldButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))))
+                     .add(xyPanel_Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                        .add(mediumXYTextField_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .add(jLabel5, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .add(getPartFieldButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))))
                .add(jButton20, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 26, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
             .addContainerGap())
       );
@@ -827,19 +847,21 @@ public class StageControlFrame extends javax.swing.JFrame {
       }
    }
 
-    private void updateMediumZMove() {
-    try {
-          double mediumZMove = nf_.parse(mediumZTextField_.getText()).doubleValue();
-          mediumMovementZ_.put(currentZDrive_, mediumZMove);
-          prefs_.putDouble(MEDIUMMOVEMENTZ + currentZDrive_, mediumZMove);
-       } catch(ParseException e) {
-          // ignore if parsing fails
-       }
-    }
+   private void updateMediumZMove() {
+      try {
+         double mediumZMove = nf_.parse(mediumZTextField_.getText()).doubleValue();
+         mediumMovementZ_.put(currentZDrive_, mediumZMove);
+         prefs_.putDouble(MEDIUMMOVEMENTZ + currentZDrive_, mediumZMove);
+      } catch (ParseException e) {
+         // ignore if parsing fails
+      }
+   }
+   
    private void get1PixelButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_get1PixelButton_ActionPerformed
       double pixelSize = core_.getPixelSizeUm();
       smallXYTextField_.setText(nf_.format(pixelSize));
-      smallMovement_ = pixelSize;nf_.setMaximumFractionDigits(3);
+      smallMovement_ = pixelSize;
+      nf_.setMaximumFractionDigits(3);
       smallXYTextField_.setText(nf_.format(smallMovement_));
    }//GEN-LAST:event_get1PixelButton_ActionPerformed
 
@@ -847,14 +869,16 @@ public class StageControlFrame extends javax.swing.JFrame {
       long nrPixelsX = core_.getImageWidth();
       double pixelSize = core_.getPixelSizeUm();
       nf_.setMaximumFractionDigits(2);
-      mediumXYTextField_.setText(nf_.format(pixelSize * nrPixelsX * 0.1));
+      mediumMovement_ = pixelSize * nrPixelsX * 0.1;
+      mediumXYTextField_.setText(nf_.format(mediumMovement_));
    }//GEN-LAST:event_getPartFieldButton_ActionPerformed
 
    private void getFieldButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_getFieldButton_ActionPerformed
       long nrPixelsX = core_.getImageWidth();
       double pixelSize = core_.getPixelSizeUm();
       nf_.setMaximumFractionDigits(1);
-      largeXYTextField_.setText(nf_.format(pixelSize * nrPixelsX));
+      largeMovement_ = pixelSize * nrPixelsX;
+      largeXYTextField_.setText(nf_.format(largeMovement_));
    }//GEN-LAST:event_getFieldButton_ActionPerformed
 
    private void focusLostHandlerJTF1(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_focusLostHandlerJTF1
