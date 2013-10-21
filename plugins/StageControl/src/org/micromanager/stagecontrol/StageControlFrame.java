@@ -19,7 +19,8 @@
 
 package org.micromanager.stagecontrol;
 
-import java.awt.Point;
+import java.awt.BorderLayout;
+import java.awt.LayoutManager;
 import mmcorej.CMMCore;
 
 import java.text.NumberFormat;
@@ -27,9 +28,9 @@ import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.swing.JComponent;
 
 import java.util.prefs.Preferences;
+import javax.swing.BorderFactory;
 import mmcorej.DeviceType;
 import mmcorej.StrVector;
 
@@ -55,6 +56,8 @@ public class StageControlFrame extends javax.swing.JFrame {
 
    private int frameXPos_ = 100;
    private int frameYPos_ = 100;
+   
+   private LayoutManager frameLayout_;
 
    private static final String FRAMEXPOS = "FRAMEXPOS";
    private static final String FRAMEYPOS = "FRAMEYPOS";
@@ -93,20 +96,7 @@ public class StageControlFrame extends javax.swing.JFrame {
 
       initComponents();
       
-      zDriveGUIElements_ = new javax.swing.JComponent[] {
-         jLabel8, jLabel9, jLabel10, zDriveSelect_, mediumZUpButton_, 
-         smallZUpButton_, mediumZDownButton_, smallZDownButton_, zPositionLabel_,
-         smallZTextField_, mediumZTextField_
-      };
-      
-      xyStageGUIElements_ = new javax.swing.JComponent[] {
-         jLabel4, jLabel5, jLabel6, jLabel7, get1PixelButton_, getPartFieldButton_,
-         getFieldButton_, jButton20, jButton21, jButton22, smallXYDownButton_,
-         mediumXYDownButton_, largeXYDownButton_, smallXYUpButton_, mediumXYUpButton_,
-         largeXYUpButton_, smallLeftButton_, mediumLeftButton_, largeLeftButton_,
-         smallRightButton_, mediumRightButton_, largeRightButton_, smallXYTextField_,
-         mediumXYTextField_, largeXYTextField_
-      };
+      frameLayout_ = this.getContentPane().getLayout();
 
       setLocation(frameXPos_, frameYPos_);
 
@@ -115,7 +105,7 @@ public class StageControlFrame extends javax.swing.JFrame {
    /**
     * Initialized GUI components based on current hardware configuration
     * Can be called at any time to adjust display (for instance after hardware
-    * configuration change
+    * configuration change)
     */
    public final void initialize() {
       smallXYTextField_.setText(nf_.format(smallMovement_));
@@ -125,8 +115,11 @@ public class StageControlFrame extends javax.swing.JFrame {
       StrVector zDrives = core_.getLoadedDevicesOfType(DeviceType.StageDevice);
       StrVector xyDrives = core_.getLoadedDevicesOfType(DeviceType.XYStageDevice);
       
-      
+      // start with a clean slate
       this.getContentPane().removeAll();
+      // The no-drive display changes the layout. Switch back here.
+      this.getContentPane().setLayout(frameLayout_);
+      
       int width = 0;
       if (!xyDrives.isEmpty()) {       
          xyPanel_.setLocation(0,0);
@@ -160,8 +153,24 @@ public class StageControlFrame extends javax.swing.JFrame {
          updateZMovements();
       } 
       
-      if (!zDrives.isEmpty() && !xyDrives.isEmpty()) {
-         // TODO: put a message in the window
+      // Provide a friendly message when there are no drives in the device list
+      if (zDrives.isEmpty() && xyDrives.isEmpty()) {
+         javax.swing.JLabel noDriveLabel = new javax.swing.JLabel(
+                 "No XY or Z drive found.  Nothing to control.");
+         noDriveLabel.setOpaque(true);
+         
+         javax.swing.JPanel panel = new javax.swing.JPanel();
+         panel.setLayout(new BorderLayout());        
+         panel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+         panel.add(noDriveLabel, BorderLayout.CENTER);
+         panel.revalidate();
+         
+         this.getContentPane().setLayout(new BorderLayout());
+         this.getContentPane().add(panel, BorderLayout.CENTER);
+         this.pack();
+         this.setVisible(true);
+         this.repaint();
+         return;
       }
       
       this.setSize(width, 349);
@@ -1081,7 +1090,4 @@ public class StageControlFrame extends javax.swing.JFrame {
    private javax.swing.JLabel zPositionLabel_;
    // End of variables declaration//GEN-END:variables
 
-   private javax.swing.JComponent zDriveGUIElements_[];
-   private javax.swing.JComponent xyStageGUIElements_[];
-  
 }
