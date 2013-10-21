@@ -114,8 +114,6 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay,
    private Component zAnimationIcon_, pIcon_, tAnimationIcon_, cIcon_;
    private Component zLockIcon_, cLockIcon_, pLockIcon_, tLockIcon_;
    private Timer resetToLockedTimer_;
-   private HashMap<Integer, Integer> zStackMins_;
-   private HashMap<Integer, Integer> zStackMaxes_;
    private Histograms histograms_;
    private HistogramControlsState histogramControlsState_;
    private boolean albumSaved_ = false;
@@ -477,8 +475,6 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay,
       eng_ = eng;
       pSelector_ = createPositionScrollbar();
       mda_ = eng != null;
-      zStackMins_ = new HashMap<Integer, Integer>();
-      zStackMaxes_ = new HashMap<Integer, Integer>();
       this.albumSaved_ = imageCache.isFinished();
    }
 
@@ -493,7 +489,6 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay,
    }
 
    private void startup(JSONObject firstImageMetadata) {
-//      EDTProfiler edtp = new EDTProfiler();
       mdPanel_ = MMStudioMainFrame.getInstance().getMetadataPanel();
       JSONObject summaryMetadata = getSummaryMetadata();
       int numSlices = 1;
@@ -553,13 +548,16 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay,
             ReportingUtils.logError(ex);
          }
       }
-      if (simple_) {
-         controls_ = new SimpleWindowControls(this);
-      } else {
-         controls_ = new HyperstackControls(this);
+      //Hack: only add controls if null to allow overriding classes to implement custom controls
+      if (controls_ == null) {
+         if (simple_) {
+            controls_ = new SimpleWindowControls(this);
+         } else {
+            controls_ = new HyperstackControls(this);
+         }
       }
       hyperImage_ = createHyperImage(createMMImagePlus(virtualStack_),
-              numGrayChannels, numSlices, numFrames, virtualStack_, controls_);
+              numGrayChannels, numSlices, numFrames, virtualStack_);
 
       applyPixelSizeCalibration(hyperImage_);
 
@@ -1817,8 +1815,7 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay,
    }
 
    final public ImagePlus createHyperImage(MMImagePlus mmIP, int channels, int slices,
-           int frames, final AcquisitionVirtualStack virtualStack,
-           DisplayControls hc) {
+           int frames, final AcquisitionVirtualStack virtualStack) {
       final ImagePlus hyperImage;
       mmIP.setNChannelsUnverified(channels);
       mmIP.setNFramesUnverified(frames);
