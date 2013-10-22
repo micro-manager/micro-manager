@@ -736,6 +736,13 @@ public class MMStudioMainFrame extends JFrame implements
          } catch (Exception e) {
          }
       }
+      
+      @Override
+      public void onSystemConfigurationLoaded() {
+         for (MMListenerInterface mmIntf:MMListeners_) {
+            mmIntf.systemConfigurationLoaded();
+         }
+      }
 
       @Override
       public void onPixelSizeChanged(double newPixelSizeUm) {

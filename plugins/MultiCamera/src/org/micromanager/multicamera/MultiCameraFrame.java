@@ -911,6 +911,9 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
    @Override
    public void configGroupChangedAlert(String groupName, String newConfig) {
    }
+   
+   public void systemConfigurationLoaded() {
+   }
 
    @Override
    public void pixelSizeChangedAlert(double newPixelSizeUm) {

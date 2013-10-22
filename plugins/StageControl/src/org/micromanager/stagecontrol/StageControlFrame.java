@@ -34,13 +34,15 @@ import javax.swing.BorderFactory;
 import mmcorej.DeviceType;
 import mmcorej.StrVector;
 
+import org.micromanager.api.MMListenerInterface;
 import org.micromanager.api.ScriptInterface;
 
 /**
  *
  * @author nico
  */
-public class StageControlFrame extends javax.swing.JFrame {
+public class StageControlFrame extends javax.swing.JFrame 
+implements MMListenerInterface {
    private final ScriptInterface gui_;
    private final CMMCore core_;
    private Preferences prefs_;
@@ -1113,5 +1115,30 @@ public class StageControlFrame extends javax.swing.JFrame {
    private javax.swing.JPanel zPanel_;
    private javax.swing.JLabel zPositionLabel_;
    // End of variables declaration//GEN-END:variables
+
+   public void propertiesChangedAlert() {
+   }
+
+   public void propertyChangedAlert(String device, String property, String value) {
+   }
+
+   public void configGroupChangedAlert(String groupName, String newConfig) {
+   }
+
+   public void systemConfigurationLoaded() {
+      initialize();
+   }
+
+   public void pixelSizeChangedAlert(double newPixelSizeUm) {
+   }
+
+   public void stagePositionChangedAlert(String deviceName, double pos) {
+   }
+
+   public void xyStagePositionChanged(String deviceName, double xPos, double yPos) {
+   }
+
+   public void exposureChanged(String cameraName, double newExposureTime) {
+   }
 
 }

@@ -60,6 +60,8 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
    private JComboBox overlapUnitsCombo_;
 
    
+
+   
    private enum OverlapUnitEnum {UM, PX, PERCENT};
    private OverlapUnitEnum overlapUnit_ = OverlapUnitEnum.UM;
    private int centeredFrames_ = 0;
@@ -697,7 +699,7 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
       double maxX = Double.NEGATIVE_INFINITY;
       double maxY = Double.NEGATIVE_INFINITY; 
       double meanZ = 0.0;
-      StagePosition sp = new StagePosition();
+      StagePosition sp;
       for (int i=0; i<4; i++) {
           if (endPositionSet_[i]) {
               sp = endPosition_[i].get(endPosition_[i].getDefaultXYStage());
@@ -958,6 +960,9 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
    }
 
    public void configGroupChangedAlert(String groupName, String newConfig) {
+   }
+   
+   public void systemConfigurationLoaded() {
    }
 
    public void pixelSizeChangedAlert(double newPixelSizeUm) {

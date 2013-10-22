@@ -28,8 +28,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 import java.util.prefs.BackingStoreException;
 
@@ -378,7 +376,7 @@ public class JavaUtils {
          //FileReader always assumes default encoding is OK!
          BufferedReader input = new BufferedReader(new FileReader(filepath));
          try {
-            String line = null; //not declared within while loop
+            String line; //not declared within while loop
              /*
              * readLine is a bit quirky :
              * it returns the content of a line MINUS the newline.

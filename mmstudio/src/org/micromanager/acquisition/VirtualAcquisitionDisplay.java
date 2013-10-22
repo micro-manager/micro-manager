@@ -130,6 +130,9 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay,
    public void propertyChangedAlert(String device, String property, String value) {
       //throw new UnsupportedOperationException("Not supported yet.");
    }
+   
+   public void systemConfigurationLoaded() {
+   }
 
    public void configGroupChangedAlert(String groupName, String newConfig) {
       //throw new UnsupportedOperationException("Not supported yet.");

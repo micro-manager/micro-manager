@@ -119,7 +119,6 @@ public class CenterAndDragListener implements MouseListener,
 	            transposeXY_ = true;
 	      } catch(Exception exc) {
 	         ReportingUtils.showError(exc);
-	         return;
 	      }
 	   }
 

@@ -32,6 +32,8 @@ public class MMListenerAdapter implements MMListenerInterface {
    };
    public void configGroupChangedAlert(String groupName, String newConfig){
    };
+   public void systemConfigurationLoaded() {
+   }
    public void pixelSizeChangedAlert(double newPixelSizeUm){
    };
    public void stagePositionChangedAlert(String deviceName, double pos){

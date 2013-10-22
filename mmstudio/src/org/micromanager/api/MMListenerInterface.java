@@ -43,6 +43,14 @@ public interface MMListenerInterface{
     */
    public void configGroupChangedAlert(String groupName, String newConfig);
 
+   /**
+    * This function will be called when a configuration file is loaded
+    * It can be used to stay informed of changes in the hardware configuration
+    * Note that devices can be loaded an unloaded individually, in which case
+    * this function will not be called
+    */
+   public void systemConfigurationLoaded();
+   
    /*
     * Implement this callback to be informed when the current pixel size
     * changes.

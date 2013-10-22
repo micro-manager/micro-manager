@@ -5787,6 +5787,8 @@ void CMMCore::loadSystemConfiguration(const char* fileName) throw (CMMError)
 
    if (errorCount > 0)
    {
+      if (externalCallback_)
+         externalCallback_->onSystemConfigurationLoaded();
       throw CMMError(summaryErrorText.str().c_str(), MMERR_InvalidConfigurationFile);
    }
 
@@ -5800,6 +5802,9 @@ void CMMCore::loadSystemConfiguration(const char* fileName) throw (CMMError)
 
    // update the system cache
    updateSystemStateCache();
+
+   if (externalCallback_)
+         externalCallback_->onSystemConfigurationLoaded();
 }
 
 

@@ -47,6 +47,12 @@ public:
       std::cout << std:: endl; 
    }
 
+   virtual void onSystemConfigurationLoaded()
+   {
+      std::cout << "onSystemConfigurationLoaded() ";
+      std::cout << std::endl;
+   }
+
    virtual void onPixelSizeChanged(double newPixelSizeUm)
    {
       std::cout << "onPixelSizeChanged() " << newPixelSizeUm << std::endl;
