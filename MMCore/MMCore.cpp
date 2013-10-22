@@ -2563,6 +2563,9 @@ long CMMCore::getBufferFreeCapacity()
    return cbuf_->GetFreeSize();
 }
 
+/**
+ * Deprecated and broken. Do not call.
+ */
 double CMMCore::getBufferIntervalMs() const
 {
    return cbuf_->GetAverageIntervalMs();
