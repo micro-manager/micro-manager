@@ -1133,6 +1133,9 @@ implements MMListenerInterface {
    }
 
    public void stagePositionChangedAlert(String deviceName, double pos) {
+      if (deviceName.equals(currentZDrive_)) {
+         zPositionLabel_.setText(nf_.format(pos) + " \u00B5m" );
+      }
    }
 
    public void xyStagePositionChanged(String deviceName, double xPos, double yPos) {
