@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 
 """
-setup.py file for SWIG example
+This setup.py is intended for use from the Autoconf/Automake build system.
+It makes a number of assumtions, including that the SWIG sources have already
+been generated.
 """
 
 from distutils.core import setup, Extension
@@ -15,27 +17,26 @@ os.environ['CC'] = 'g++'
 
 
 mmcorepy_module = Extension('_MMCorePy',
-                           sources=['MMCorePy_wrap.cxx',
-			'../MMDevice/DeviceUtils.cpp',
-			'../MMDevice/ImgBuffer.cpp', 
-			'../MMDevice/Property.cpp', 
-			'../MMCore/CircularBuffer.cpp',
-			'../MMCore/Configuration.cpp',
-			'../MMCore/CoreCallback.cpp',
-			'../MMCore/CoreProperty.cpp',
-			'../MMCore/FastLogger.cpp',
-			'../MMCore/MMCore.cpp',
-			'../MMCore/PluginManager.cpp'],
-			language = "c++",
-			extra_objects = [],
+                            sources=['MMCorePy_wrap.cxx',
+                                     '../MMCore/CircularBuffer.cpp',
+                                     '../MMCore/Configuration.cpp',
+                                     '../MMCore/CoreCallback.cpp',
+                                     '../MMCore/CoreProperty.cpp',
+                                     '../MMCore/FastLogger.cpp',
+                                     '../MMCore/Host.cpp',
+                                     '../MMCore/MMCore.cpp',
+                                     '../MMCore/PluginManager.cpp',
+                                     '../MMDevice/DeviceUtils.cpp',
+                                     '../MMDevice/ImgBuffer.cpp',
+                                    ],
+                            language="c++",
                             include_dirs=numpy.distutils.misc_util.get_numpy_include_dirs(),
                            )
 
-setup (name = 'MMCorePy',
-       version = '0.1',
-       author      = "Micro-Manager",
-       description = "Micro-Manager Core Python wrapper",
-       ext_modules = [mmcorepy_module],
-       py_modules = ["MMCorePy"],
-       )
-
+setup(name='MMCorePy',
+      version='0.1',
+      author="Micro-Manager",
+      description="Micro-Manager Core Python wrapper",
+      ext_modules=[mmcorepy_module],
+      py_modules=["MMCorePy"],
+     )
