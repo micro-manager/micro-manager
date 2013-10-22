@@ -176,7 +176,7 @@ public:
 	int onAcquisitionMode( MM::PropertyBase* pProp, MM::ActionType eAct );
 
 protected:
-	int SetAllowedBinning();
+	int SetUpBinningProperties();
 	void GenerateSyntheticImage(ImgBuffer& img, double exp);
 	int ResizeImageBuffer();
 	void UpdateExposureRange();

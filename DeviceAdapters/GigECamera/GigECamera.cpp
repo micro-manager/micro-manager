@@ -440,34 +440,7 @@ int CGigECamera::Initialize()
 
 
 	// binning.  
-	// note that the GenICam spec separates vertical and horizontal binning and does
-	// not provide a single, unified binning property.  the various OnBinning methods
-	// will do their best to provide this illusion of a unified binning when possible.
-	pAct = new CPropertyAction( this, &CGigECamera::OnBinning );
-	nRet = CreateProperty( MM::g_Keyword_Binning, "1", MM::Integer, false, pAct );
-	if (DEVICE_OK != nRet)
-		return nRet;
-
-	int64_t bin;
-	if( nodes->isAvailable( BINNING_VERTICAL ) )
-	{
-		nodes->get( bin, BINNING_VERTICAL );
-		pAct = new CPropertyAction( this, &CGigECamera::OnBinningV );
-		nRet = CreateProperty( g_Keyword_Binning_Vertical, CDeviceUtils::ConvertToString( (long) bin ), MM::Integer, !nodes->isWritable( BINNING_VERTICAL ), pAct );
-		if (DEVICE_OK != nRet)
-			return nRet;
-	}
-
-	if( nodes->isAvailable( BINNING_HORIZONTAL ) )
-	{
-		nodes->get( bin, BINNING_HORIZONTAL );
-		pAct = new CPropertyAction( this, &CGigECamera::OnBinningH );
-		nRet = CreateProperty( g_Keyword_Binning_Horizontal, CDeviceUtils::ConvertToString( (long) bin ), MM::Integer, !nodes->isWritable( BINNING_HORIZONTAL ), pAct );
-		if (DEVICE_OK != nRet)
-			return nRet;
-	}
-
-	nRet = SetAllowedBinning();
+	nRet = SetUpBinningProperties();
 	if (nRet != DEVICE_OK)
 		return nRet;
 
@@ -832,15 +805,31 @@ int CGigECamera::GetBinning() const
 // Private CGigECamera methods
 ///////////////////////////////////////////////////////////////////////////////
 
-int CGigECamera::SetAllowedBinning() 
+int CGigECamera::SetUpBinningProperties()
 {
-	int64_t min, max, inc;
+	// note that the GenICam spec separates vertical and horizontal binning and does
+	// not provide a single, unified binning property.  the various OnBinning methods
+	// will do their best to provide this illusion of a unified binning when possible.
+
+	// We always provide the Binning property, regardless of support for non-unity binnings.
+	CPropertyAction *pAct = new CPropertyAction( this, &CGigECamera::OnBinning );
+	int nRet = CreateProperty( MM::g_Keyword_Binning, "1", MM::Integer, false, pAct );
+	if (DEVICE_OK != nRet)
+		return nRet;
+
+	int64_t bin, min, max, inc;
 	std::vector<std::string> vValues, hValues, binValues;
 
 	// vertical binning
 	if( nodes->isAvailable( BINNING_VERTICAL ) && nodes->getMin( BINNING_VERTICAL, min ) &&
 		nodes->getMax( BINNING_VERTICAL, max ) && nodes->getIncrement( BINNING_VERTICAL, inc ) )
 	{
+		nodes->get( bin, BINNING_VERTICAL );
+		pAct = new CPropertyAction( this, &CGigECamera::OnBinningV );
+		nRet = CreateProperty( g_Keyword_Binning_Vertical, CDeviceUtils::ConvertToString( (long) bin ), MM::Integer, !nodes->isWritable( BINNING_VERTICAL ), pAct );
+		if (DEVICE_OK != nRet)
+			return nRet;
+
 		LogMessage("Vertical Binning min = " + boost::lexical_cast<std::string>(min) +
 				"; max = " + boost::lexical_cast<std::string>(max) +
 				"; increment = " + boost::lexical_cast<std::string>(inc), true);
@@ -853,6 +842,12 @@ int CGigECamera::SetAllowedBinning()
 	if( nodes->isAvailable( BINNING_HORIZONTAL ) && nodes->getMin( BINNING_HORIZONTAL, min ) &&
 		nodes->getMax( BINNING_HORIZONTAL, max ) && nodes->getIncrement( BINNING_HORIZONTAL, inc ) )
 	{
+		nodes->get( bin, BINNING_HORIZONTAL );
+		pAct = new CPropertyAction( this, &CGigECamera::OnBinningH );
+		nRet = CreateProperty( g_Keyword_Binning_Horizontal, CDeviceUtils::ConvertToString( (long) bin ), MM::Integer, !nodes->isWritable( BINNING_HORIZONTAL ), pAct );
+		if (DEVICE_OK != nRet)
+			return nRet;
+
 		LogMessage("Horizontal Binning min = " + boost::lexical_cast<std::string>(min) +
 				"; max = " + boost::lexical_cast<std::string>(max) +
 				"; increment = " + boost::lexical_cast<std::string>(inc), true);
@@ -860,6 +855,9 @@ int CGigECamera::SetAllowedBinning()
 			hValues.push_back( boost::lexical_cast<std::string>( i ) );
 		SetAllowedValues( g_Keyword_Binning_Horizontal, hValues );
 	}
+
+	// Now that we have the vertical and horizontal binning value ranges,
+	// we can determine the possible uniform binning values.
 
 	if( vValues.empty() && hValues.empty() )
 		binValues.push_back( "1" );
