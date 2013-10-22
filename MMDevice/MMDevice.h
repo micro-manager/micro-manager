@@ -34,8 +34,18 @@
 // Header version
 // If any of the class declarations changes, the interface version
 // must be incremented
-#define DEVICE_INTERFACE_VERSION 53
+#define DEVICE_INTERFACE_VERSION 54
 ///////////////////////////////////////////////////////////////////////////////
+
+
+// N.B.
+//
+// Never add parameters or return values that are not POD
+// (http://stackoverflow.com/a/146454) to any method of class Device and its
+// derived classes declared in this file. For example, a std::string parameter
+// is not acceptable (use const char*). This is to prevent inter-DLL
+// incompatibilities.
+
 
 #pragma once
 #ifndef MMMMDEVICE_H
@@ -523,7 +533,7 @@ namespace MM {
        * change often, create an instance of metadata yourself and add to one of 
        * the versions of the InsertImage function
        */
-      virtual void AddTag(const char* key, std::string deviceLabel, const char* value) = 0;
+      virtual void AddTag(const char* key, const char* deviceLabel, const char* value) = 0;
 
       /**
        * Removes an existing tag from the metadata assoicated with this device

@@ -1453,7 +1453,7 @@ public:
 
    virtual bool IsCapturing(){return !thd_->IsStopped();}
    
-   virtual void AddTag(const char* key, std::string deviceLabel, const char* value)
+   virtual void AddTag(const char* key, const char* deviceLabel, const char* value)
    {
       metadata_.PutTag(key, deviceLabel, value);
    }

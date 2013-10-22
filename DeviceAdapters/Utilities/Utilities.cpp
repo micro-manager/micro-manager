@@ -628,9 +628,9 @@ int MultiCamera::StartSequenceAcquisition(double interval)
       {
          std::ostringstream os;
          os << i;
-         physicalCameras_[i]->AddTag(MM::g_Keyword_CameraChannelName, usedCameras_[i], 
+         physicalCameras_[i]->AddTag(MM::g_Keyword_CameraChannelName, usedCameras_[i].c_str(),
                  usedCameras_[i].c_str());
-         physicalCameras_[i]->AddTag(MM::g_Keyword_CameraChannelIndex, usedCameras_[i], 
+         physicalCameras_[i]->AddTag(MM::g_Keyword_CameraChannelIndex, usedCameras_[i].c_str(),
                  os.str().c_str());
          
          int ret = physicalCameras_[i]->StartSequenceAcquisition(interval);
@@ -668,9 +668,9 @@ int MultiCamera::StopSequenceAcquisition()
             return ret;
          std::ostringstream os;
          os << 0;
-         physicalCameras_[i]->AddTag(MM::g_Keyword_CameraChannelName, usedCameras_[i], 
+         physicalCameras_[i]->AddTag(MM::g_Keyword_CameraChannelName, usedCameras_[i].c_str(),
                  "");
-         physicalCameras_[i]->AddTag(MM::g_Keyword_CameraChannelIndex, usedCameras_[i], 
+         physicalCameras_[i]->AddTag(MM::g_Keyword_CameraChannelIndex, usedCameras_[i].c_str(),
                  os.str().c_str());
       }
    }
