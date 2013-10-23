@@ -93,15 +93,16 @@ int CMMirror::Initialize()
    command << g_MMirrorDeviceDescription << " Xaxis=" << axisLetterX_ << " Yaxis=" << axisLetterY_ << " HexAddr=" << addressString_;
    CreateProperty(MM::g_Keyword_Description, command.str().c_str(), MM::String, true);
 
-   // high voltage reading for diagnostics
-   command.str("");
-   command << addressChar_ << "PZINFO";
-   RETURN_ON_MM_ERROR( hub_->QueryCommand(command.str()));
-   vector<string> vReply = hub_->SplitAnswerOnCR();
-   hub_->SetLastSerialAnswer(vReply[0]);  // 1st line has the HV info for micromirror vs. 3rd for piezo
-   command.str("");
-   command << hub_->ParseAnswerAfterColon();
-   CreateProperty(g_CardVoltagePropertyName, command.str().c_str(), MM::Float, true);
+   // remove for now because of bug in PZINFO, will replace by RDADC command later (Jon 23-Oct-13)
+//   // high voltage reading for diagnostics
+//   command.str("");
+//   command << addressChar_ << "PZINFO";
+//   RETURN_ON_MM_ERROR( hub_->QueryCommand(command.str()));
+//   vector<string> vReply = hub_->SplitAnswerOnCR();
+//   hub_->SetLastSerialAnswer(vReply[0]);  // 1st line has the HV info for micromirror vs. 3rd for piezo
+//   command.str("");
+//   command << hub_->ParseAnswerAfterColon();
+//   CreateProperty(g_CardVoltagePropertyName, command.str().c_str(), MM::Float, true);
 
    // now create properties
    CPropertyAction* pAct;

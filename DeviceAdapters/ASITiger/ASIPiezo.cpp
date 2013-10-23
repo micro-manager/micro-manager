@@ -117,16 +117,17 @@ int CPiezo::Initialize()
    CreateProperty(g_UpperLimPropertyName, "0", MM::Float, false, pAct);
    UpdateProperty(g_UpperLimPropertyName);
 
-   // high voltage reading for diagnostics
-   command.str("");
-   command << addressChar_ << "PZINFO";
-   RETURN_ON_MM_ERROR( hub_->QueryCommand(command.str()));
-   vector<string> vReply = hub_->SplitAnswerOnCR();
-   hub_->SetLastSerialAnswer(vReply[2]);  // 3rd line has the HV info
-   command.str("");
-   command << hub_->ParseAnswerAfterColon();
-   CreateProperty(g_CardVoltagePropertyName, command.str().c_str(), MM::Float, true);
-   UpdateProperty(g_CardVoltagePropertyName);
+   // remove for now because of bug in PZINFO, will replace by RDADC command later (Jon 23-Oct-13)
+//   // high voltage reading for diagnostics
+//   command.str("");
+//   command << addressChar_ << "PZINFO";
+//   RETURN_ON_MM_ERROR( hub_->QueryCommand(command.str()));
+//   vector<string> vReply = hub_->SplitAnswerOnCR();
+//   hub_->SetLastSerialAnswer(vReply[2]);  // 3rd line has the HV info
+//   command.str("");
+//   command << hub_->ParseAnswerAfterColon();
+//   CreateProperty(g_CardVoltagePropertyName, command.str().c_str(), MM::Float, true);
+//   UpdateProperty(g_CardVoltagePropertyName);
 
    // piezo range
    command.str("");
