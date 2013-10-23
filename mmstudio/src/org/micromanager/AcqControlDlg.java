@@ -110,6 +110,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener, Acq
    private File acqFile_;
    private String acqDir_;
    private int zVals_ = 0;
+   private JButton acquireButton_;
    private JButton setBottomButton_;
    private JButton setTopButton_;
    protected JComboBox displayModeCombo_;
@@ -1447,10 +1448,10 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener, Acq
       closeButton.setBounds(432, 10, 80, 22);
       getContentPane().add(closeButton);
 
-      final JButton acquireButton = new JButton();
-      acquireButton.setMargin(new Insets(-9, -9, -9, -9));
-      acquireButton.setFont(new Font("Arial", Font.BOLD, 12));
-      acquireButton.addActionListener(new ActionListener() {
+      acquireButton_ = new JButton();
+      acquireButton_.setMargin(new Insets(-9, -9, -9, -9));
+      acquireButton_.setFont(new Font("Arial", Font.BOLD, 12));
+      acquireButton_.addActionListener(new ActionListener() {
 
          public void actionPerformed(ActionEvent e) {
             AbstractCellEditor ae = (AbstractCellEditor) channelTable_.getCellEditor();
@@ -1460,9 +1461,9 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener, Acq
             runAcquisition();
          }
       });
-      acquireButton.setText("Acquire!");
-      acquireButton.setBounds(432, 44, 80, 22);
-      getContentPane().add(acquireButton);
+      acquireButton_.setText("Acquire!");
+      acquireButton_.setBounds(432, 44, 80, 22);
+      getContentPane().add(acquireButton_);
 
 
       final JButton stopButton = new JButton();
