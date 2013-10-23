@@ -597,7 +597,7 @@ public class ProjectorController {
       final AcquisitionEngine acq = gui.getAcquisitionEngine();
       acq.clearRunnables();
       if (repeat) {
-         for (int i = frameOn; i < acq.getNumFrames(); i += repeatInterval) {
+         for (int i = frameOn; i < acq.getNumFrames()*10; i += repeatInterval) {
             acq.attachRunnable(i, -1, 0, 0, runPolygons);
          }
       } else {

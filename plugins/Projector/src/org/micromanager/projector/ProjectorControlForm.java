@@ -11,6 +11,9 @@
 package org.micromanager.projector;
 
 import ij.IJ;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowFocusListener;
@@ -19,6 +22,7 @@ import java.util.prefs.Preferences;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
+import javax.swing.event.ChangeListener;
 import mmcorej.CMMCore;
 import org.micromanager.utils.GUIUtils;
 
@@ -51,6 +55,26 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
               populateChannelComboBox(null);
           }
       });
+      /*
+      listenForSpinnerKeyPress(this.pointAndShootIntervalSpinner);
+      listenForSpinnerKeyPress(this.spotDwellTimeSpinner);
+      listenForSpinnerKeyPress(this.startFrameSpinner);
+      listenForSpinnerKeyPress(this.repeatEveryFrameSpinner);
+      listenForSpinnerKeyPress(roiLoopSpinner);
+      * */
+   }
+   
+   private void listenForSpinnerKeyPress(final JSpinner spinner) {
+      ((JSpinner.DefaultEditor)spinner.getEditor()).getTextField()
+              .addKeyListener(new KeyAdapter() {
+         @Override
+         public void keyTyped(KeyEvent e) {
+            // Cause stateChanged event to be fired.
+           for (ChangeListener listener:spinner.getChangeListeners()) {
+              listener.stateChanged(null);
+           }
+         }
+              });
    }
 
    /**
@@ -646,6 +670,7 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
       framesLabel.setEnabled(repeatInMDA);
       
       if (useInMDAcheckBox.isSelected()) {
+         controller_.removeFromMDA();
          controller_.attachToMDA(getSpinnerValue(this.startFrameSpinner) - 1,
             this.repeatCheckBox.isSelected(),
             getSpinnerValue(this.repeatEveryFrameSpinner));
@@ -726,4 +751,5 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
     public void calibrationDone() {
         calibrateButton.setText("Calibrate");
     }
+
 }
