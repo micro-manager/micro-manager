@@ -142,37 +142,14 @@ public:
    double GetPixelSizeUm() const {return nominalPixelSizeUm_ * GetBinning();}
    int GetBinning() const;
    int SetBinning(int bS);
-   int IsExposureSequenceable(bool& isSequenceable) const 
-   {
-      isSequenceable = isSequenceable_;
-      return DEVICE_OK;
-   }
-   int GetExposureSequenceMaxLength(long& nrEvents) 
-   {
-      nrEvents = sequenceMaxLength_;
-      return DEVICE_OK;
-   }
-   int StartExposureSequence() 
-   {
-      // may need thread lock
-      sequenceRunning_ = true;
-      return DEVICE_OK;
-   }
-   int StopExposureSequence() 
-   {
-      // may need thread lock
-      sequenceRunning_ = false; 
-      sequenceIndex_ = 0;
-      return DEVICE_OK;
-   }
-   // Remove all values in the sequence                                   
+
+   int IsExposureSequenceable(bool& isSequenceable) const;
+   int GetExposureSequenceMaxLength(long& nrEvents);
+   int StartExposureSequence();
+   int StopExposureSequence();
    int ClearExposureSequence();
-   // Add one value to the sequence                                       
    int AddToExposureSequence(double exposureTime_ms);
-   // Signal that we are done sending sequence values so that the adapter can send the whole sequence to the device
-   int SendExposureSequence() const {
-      return DEVICE_OK;
-   }
+   int SendExposureSequence() const;
 
    unsigned  GetNumberOfComponents() const { return nComponents_;};
 
@@ -477,26 +454,13 @@ public:
    int OnSequence(MM::PropertyBase* pProp, MM::ActionType eAct);
 
    // Sequence functions
-   int IsStageSequenceable(bool& isSequenceable) const {
-      isSequenceable = sequenceable_;
-      return DEVICE_OK;
-   }
-   int GetStageSequenceMaxLength(long& nrEvents) const 
-   {
-      nrEvents = 2000; 
-      return DEVICE_OK;
-   }
-   int StartStageSequence() 
-   {
-      return DEVICE_OK;
-   }
-   int StopStageSequence() 
-   {  
-      return DEVICE_OK;
-   }
-   int ClearStageSequence() {return DEVICE_OK;}
-   int AddToStageSequence(double /* position */) {return DEVICE_OK;}
-   int SendStageSequence()  {return DEVICE_OK;}
+   int IsStageSequenceable(bool& isSequenceable) const;
+   int GetStageSequenceMaxLength(long& nrEvents) const;
+   int StartStageSequence();
+   int StopStageSequence();
+   int ClearStageSequence();
+   int AddToStageSequence(double /* position */);
+   int SendStageSequence();
 
 private:
    void SetIntensityFactor(double pos);

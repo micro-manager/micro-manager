@@ -805,11 +805,54 @@ int CDemoCamera::SetBinning(int binF)
    return SetProperty(MM::g_Keyword_Binning, CDeviceUtils::ConvertToString(binF));
 }
 
+int CDemoCamera::IsExposureSequenceable(bool& isSequenceable) const
+{
+   isSequenceable = isSequenceable_;
+   return DEVICE_OK;
+}
+
+int CDemoCamera::GetExposureSequenceMaxLength(long& nrEvents)
+{
+   if (!isSequenceable_) {
+      return DEVICE_UNSUPPORTED_COMMAND;
+   }
+
+   nrEvents = sequenceMaxLength_;
+   return DEVICE_OK;
+}
+
+int CDemoCamera::StartExposureSequence()
+{
+   if (!isSequenceable_) {
+      return DEVICE_UNSUPPORTED_COMMAND;
+   }
+
+   // may need thread lock
+   sequenceRunning_ = true;
+   return DEVICE_OK;
+}
+
+int CDemoCamera::StopExposureSequence()
+{
+   if (!isSequenceable_) {
+      return DEVICE_UNSUPPORTED_COMMAND;
+   }
+
+   // may need thread lock
+   sequenceRunning_ = false;
+   sequenceIndex_ = 0;
+   return DEVICE_OK;
+}
+
 /**
  * Clears the list of exposures used in sequences
  */
 int CDemoCamera::ClearExposureSequence()
 {
+   if (!isSequenceable_) {
+      return DEVICE_UNSUPPORTED_COMMAND;
+   }
+
    exposureSequence_.clear();
    return DEVICE_OK;
 }
@@ -819,7 +862,19 @@ int CDemoCamera::ClearExposureSequence()
  */
 int CDemoCamera::AddToExposureSequence(double exposureTime_ms) 
 {
+   if (!isSequenceable_) {
+      return DEVICE_UNSUPPORTED_COMMAND;
+   }
+
    exposureSequence_.push_back(exposureTime_ms);
+   return DEVICE_OK;
+}
+
+int CDemoCamera::SendExposureSequence() const {
+   if (!isSequenceable_) {
+      return DEVICE_UNSUPPORTED_COMMAND;
+   }
+
    return DEVICE_OK;
 }
 
@@ -2711,6 +2766,67 @@ void CDemoStage::SetIntensityFactor(double pos)
       g_IntensityFactor_ = 1.0;
    else
       g_IntensityFactor_ = pos/10.0;
+}
+
+int CDemoStage::IsStageSequenceable(bool& isSequenceable) const
+{
+   isSequenceable = sequenceable_;
+   return DEVICE_OK;
+}
+
+int CDemoStage::GetStageSequenceMaxLength(long& nrEvents) const
+{
+   if (!sequenceable_) {
+      return DEVICE_UNSUPPORTED_COMMAND;
+   }
+
+   nrEvents = 2000;
+   return DEVICE_OK;
+}
+
+int CDemoStage::StartStageSequence()
+{
+   if (!sequenceable_) {
+      return DEVICE_UNSUPPORTED_COMMAND;
+   }
+
+   return DEVICE_OK;
+}
+
+int CDemoStage::StopStageSequence()
+{
+   if (!sequenceable_) {
+      return DEVICE_UNSUPPORTED_COMMAND;
+   }
+
+   return DEVICE_OK;
+}
+
+int CDemoStage::ClearStageSequence()
+{
+   if (!sequenceable_) {
+      return DEVICE_UNSUPPORTED_COMMAND;
+   }
+
+   return DEVICE_OK;
+}
+
+int CDemoStage::AddToStageSequence(double /* position */)
+{
+   if (!sequenceable_) {
+      return DEVICE_UNSUPPORTED_COMMAND;
+   }
+
+   return DEVICE_OK;
+}
+
+int CDemoStage::SendStageSequence()
+{
+   if (!sequenceable_) {
+      return DEVICE_UNSUPPORTED_COMMAND;
+   }
+
+   return DEVICE_OK;
 }
 
 
