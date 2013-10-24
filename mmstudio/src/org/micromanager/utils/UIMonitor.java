@@ -85,7 +85,7 @@ public class UIMonitor {
                if (!text.isEmpty()) {
                   text = "\"" + text + "\" ";
                }
-               identifier = "\n" + source.getClass().getSimpleName() + " " + text;
+               identifier = source.getClass().getSimpleName() + " " + text;
                if (eventID == MouseEvent.MOUSE_CLICKED) {
                   action = getClickAction(component);
                }
@@ -95,7 +95,7 @@ public class UIMonitor {
             }
             if (identifier != null && action != null) {
                try {
-                  String message = identifier + action + " in " + ((Window) SwingUtilities.getAncestorOfClass(Window.class, (Component) source)).getClass().getSimpleName() + ".";
+                  String message = "[UI] " + identifier + action + " in " + ((Window) SwingUtilities.getAncestorOfClass(Window.class, (Component) source)).getClass().getSimpleName() + ".";
                   ReportingUtils.logMessage(message);
                } catch (NullPointerException npe) {}
             }
