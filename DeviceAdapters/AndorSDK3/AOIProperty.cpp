@@ -1,35 +1,10 @@
 #include "AOIProperty.h"
 #include "CallBackManager.h"
 #include "atcore++.h"
+#include "AOIStrings.h"
 
 using namespace andor;
 using namespace std;
-
-static const unsigned int NUMBER_PREDEFINED_AOIS = 6;
-static const unsigned int NUMBER_R2_PREDEFINED_AOIS = 9;
-
-static const char * const AOI_R2LIST[NUMBER_R2_PREDEFINED_AOIS] =
-{
-   "Full Image",
-   "2544x2160",
-   "2064x2048",
-   "1920x1080",
-   "1776x1760",
-   "1392x1040",
-   " 528x512",
-   " 240x256",
-   " 144x128"
-};
-
-static const char * const AOI_LIST[NUMBER_PREDEFINED_AOIS] =
-{
-   "Full Image",
-   "2048x2048",
-   "1920x1080",
-   "1392x1040",
-   " 512x512",
-   " 128x128"
-};
 
 
 TAOIProperty::TAOIProperty(const std::string & MM_name, ICallBackManager * callback, bool readOnly)
@@ -46,7 +21,7 @@ TAOIProperty::TAOIProperty(const std::string & MM_name, ICallBackManager * callb
 
    // Create the Micro-Manager property
    CPropertyAction * pAct = new CPropertyAction (this, &TAOIProperty::OnAOI);
-   callback->CPCCreateProperty(MM_name.c_str(), AOI_LIST[0], MM::String, readOnly, pAct);
+   callback->CPCCreateProperty(MM_name.c_str(), TAOIStrings::FULLIMAGE_AOI.c_str(), MM::String, readOnly, pAct);
 
    IBool * full_aoi_control(NULL);
    try
@@ -67,22 +42,23 @@ TAOIProperty::TAOIProperty(const std::string & MM_name, ICallBackManager * callb
       callback->CPCLog(e.what());
    }
 
-   // Set the list of valid AIOs
+   // Set the list of valid AOIs
    populateWidthMaps(fullAoiControl_);
    populateLeftTopVectors();
 
    if (fullAoiControl_)
    {
-      for (unsigned int ui = 0; ui < NUMBER_PREDEFINED_AOIS; ++ui)
+      TMapAOIGUIListType::iterator iter = aoiGUIList_.begin();
+      for (; iter != aoiGUIList_.end(); ++iter)
       {
-         callback->CPCAddAllowedValueWithData(MM_name.c_str(), AOI_LIST[ui], ui);
+         callback->CPCAddAllowedValueWithData(MM_name.c_str(), iter->first.c_str(), iter->second);
       }
    }
    else
    {
-      for (unsigned int ui = 0; ui < NUMBER_R2_PREDEFINED_AOIS; ++ui)
+      for (unsigned int ui = 0; ui < TAOIStrings::NUMBER_R2_PREDEFINED_AOIS; ++ui)
       {
-         callback->CPCAddAllowedValueWithData(MM_name.c_str(), AOI_R2LIST[ui], ui);
+         callback->CPCAddAllowedValueWithData(MM_name.c_str(), TAOIStrings::AOI_R2LIST[ui], ui);
       }
    }
 }
@@ -154,6 +130,11 @@ void TAOIProperty::populateLeftTopVectors()
    TMapAOIIndexType::iterator iterEnd = aoiWidthIndexMap_.end();
    for (; iter != iterEnd; ++iter)
    {
+      if (iter->first > i64_sensorWidth)
+      {
+         continue;
+      }
+      
       AT_64 i64_TargetLeft = (i64_sensorWidth - iter->first) / 2 + 1;
       AT_64 i64_TargetTop = (i64_sensorHeight - aoiWidthHeightMap_[iter->first]) / 2 + 1;
       try
@@ -164,12 +145,31 @@ void TAOIProperty::populateLeftTopVectors()
          aoi_top_->Set(i64_TargetTop);
          leftX_[iter->second] = i64_TargetLeft;
          topY_[iter->second] = i64_TargetTop;
+         populateAOIGUIList(iter, aoiWidthHeightMap_.find(iter->first), i64_sensorWidth);
       }
       catch (OutOfRangeException & e)
       {
          callback_->CPCLog(e.what());
          findBestR2AOICoords(iter, i64_sensorWidth, i64_sensorHeight);
       }
+   }
+}
+
+void TAOIProperty::populateAOIGUIList(TMapAOIIndexType::iterator iterIndex, TMapAOIWidthHeightType::iterator iter, AT_64 i64_sensorWidth)
+{
+   if (iter->first == i64_sensorWidth)
+   {
+      aoiGUIList_[TAOIStrings::FULLIMAGE_AOI] = iterIndex->second;
+   }
+   else
+   {
+      stringstream ss;
+      if (iter->first < 1000)
+      {
+         ss << " ";
+      }
+      ss << iter->first << "x" << iter->second;
+      aoiGUIList_[ss.str()] = iterIndex->second;
    }
 }
 
@@ -302,13 +302,11 @@ AT_64 TAOIProperty::GetWidth()
 
 AT_64 TAOIProperty::GetLeftOffset()
 {
-   //Micro-Manager image dims are zero based
    return aoi_left_->Get();
 }
 
 AT_64 TAOIProperty::GetTopOffset()
 {
-   //Micro-Manager image dims are zero based
    return aoi_top_->Get();
 }
 
@@ -401,13 +399,13 @@ const char* TAOIProperty::ResetToFullImage()
    SetReadOnly(false);
    if (pbProp_ != NULL)
    {
-      pbProp_->Set(AOI_LIST[0]);
+      pbProp_->Set(TAOIStrings::FULLIMAGE_AOI.c_str());
       MM::StringProperty * strProp = dynamic_cast<MM::StringProperty *>(pbProp_);
       if (strProp)
       {
          strProp->Apply();
       }
    }
-   return AOI_LIST[0];
+   return TAOIStrings::FULLIMAGE_AOI.c_str();
 }
 

@@ -795,6 +795,8 @@ int CAndorSDK3Camera::GetROI(unsigned & x, unsigned & y, unsigned & xSize, unsig
    int binning = GetBinning();
    x = static_cast<unsigned>(aoi_property_->GetLeftOffset() / binning);
    y = static_cast<unsigned>(aoi_property_->GetTopOffset() / binning);
+
+   //Micro-Manager image dims are zero based
    x -= 1;
    y -= 1;
 

@@ -39,10 +39,12 @@ public:
 private:
    typedef std::map<long long, int> TMapAOIIndexType;
    typedef std::map<long long, long long> TMapAOIWidthHeightType;
+   typedef std::map<std::string, int> TMapAOIGUIListType;
    typedef std::vector<long long> TVectorXYType;
 
    void populateWidthMaps(bool fullAoiControl);
    void populateLeftTopVectors();
+   void populateAOIGUIList(TMapAOIIndexType::iterator iterIndex, TMapAOIWidthHeightType::iterator iter, AT_64 i64_sensorWidth);
    void findBestR2AOICoords(TMapAOIIndexType::iterator iter, AT_64 i64_sensorWidth, AT_64 i64_sensorHeight);
    void setFeature(long data);
 
@@ -57,6 +59,7 @@ private:
 
    TMapAOIIndexType aoiWidthIndexMap_;
    TMapAOIWidthHeightType aoiWidthHeightMap_;
+   TMapAOIGUIListType aoiGUIList_;
    TVectorXYType leftX_;
    TVectorXYType topY_;
    bool fullAoiControl_;

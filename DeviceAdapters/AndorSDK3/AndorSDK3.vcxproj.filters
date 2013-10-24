@@ -110,5 +110,8 @@
     <ClInclude Include="triggerremapper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="AOIStrings.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

@@ -186,6 +186,7 @@
     <ClInclude Include="AndorSDK3.h" />
     <ClInclude Include="AndorSDK3Strings.h" />
     <ClInclude Include="AOIProperty.h" />
+    <ClInclude Include="AOIStrings.h" />
     <ClInclude Include="atunpacker.h" />
     <ClInclude Include="BooleanProperty.h" />
     <ClInclude Include="CallBackManager.h" />
