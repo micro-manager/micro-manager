@@ -169,6 +169,12 @@ HDEVMODULE CPluginManager::LoadPluginLibrary(const char* shortName)
    }
 
    GetSystemError(errorText);
+#ifdef WIN32
+   // This message can be misleading.
+   if (errorText == "The specified module could not be found.") {
+      errorText = "The module, or a module it depends upon, could not be found. (\"" + errorText + "\")";
+   }
+#endif
    errorText = "Failed to load library \"" + name + "\" (for \"" +
          shortName + "\") [" + errorText + "]";
    throw CMMError(errorText.c_str(), MMERR_LoadLibraryFailed);
