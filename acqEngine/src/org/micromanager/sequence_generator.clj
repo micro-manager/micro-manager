@@ -403,20 +403,31 @@
         num-positions (count positions)
         property-sequences (make-property-sequences (map :properties channels))]
     (println slices-first)
-    (if (and (or (< 1 numFrames) (< 1 (count slices)) (< 1 (count channels)))
-             (or time-first
-                 (> 2 num-positions))
-             (or (and (> 2 (count slices))
-                      (> 2 (count channels)))
-                 (and (channels-sequenceable property-sequences channels)
-                      (all-equal? 0 (map :skip-frames channels))
-                      (all-equal? true (map :use-z-stack channels))
-                      (or (not slices-first))))
-             (or (not use-autofocus)
-                 (>= autofocus-skip (dec numFrames)))
-             (zero? (count runnables))
-             (not (first custom-intervals-ms))
-             (> default-exposure interval-ms))
+    (if
+      (and
+        (or
+          (< 1 numFrames)
+          (< 1 (count slices))
+          (< 1 (count channels)))
+        (or
+          time-first
+          (> 2 num-positions))
+        (or
+          (and
+            (> 2 (count slices))
+            (> 2 (count channels)))
+          (and
+            (channels-sequenceable property-sequences channels)
+            (all-equal? 0 (map :skip-frames channels))
+            (all-equal? true (map :use-z-stack channels))
+            (or
+              (not slices-first))))
+        (or
+          (not use-autofocus)
+          (>= autofocus-skip (dec numFrames)))
+        (zero? (count runnables))
+        (not (first custom-intervals-ms))
+        (> default-exposure interval-ms))
       (let [triggers {:properties (select-triggerable-sequences property-sequences)}]
         (if (< 1 num-positions)
           (generate-multiposition-bursts
