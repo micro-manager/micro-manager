@@ -400,27 +400,33 @@
   (let [{:keys [numFrames time-first positions slices channels
                 use-autofocus default-exposure interval-ms
                 autofocus-skip custom-intervals-ms slices-first]} settings
-        num-positions (count positions)
-        property-sequences (make-property-sequences (map :properties channels))]
+        property-sequences (make-property-sequences (map :properties channels))
+        have-multiple-frames (< 1 numFrames)
+        have-multiple-positions (< 1 (count positions))
+        have-multiple-slices (< 1 (count slices))
+        have-multiple-channels (< 1 (count channels))
+        channel-properties-sequenceable (channels-sequenceable property-sequences channels)
+        no-channel-skips-frames (all-equal? 0 (map :skip-frames channels))
+        all-channels-do-z-stack (all-equal? true (map :use-z-stack channels))]
     (println slices-first)
     (if
       (and
         (or
-          (< 1 numFrames)
-          (< 1 (count slices))
-          (< 1 (count channels)))
+          have-multiple-frames
+          have-multiple-slices
+          have-multiple-channels)
         (or
-          time-first
-          (> 2 num-positions))
+          time-first ; time points at each position
+          (not have-multiple-positions))
         (or
           (and
-            (> 2 (count slices))
-            (> 2 (count channels)))
+            (not have-multiple-slices)
+            (not have-multiple-channels))
           (and
-            (channels-sequenceable property-sequences channels)
-            (all-equal? 0 (map :skip-frames channels))
-            (all-equal? true (map :use-z-stack channels))
-            (not slices-first)))
+            channel-properties-sequenceable
+            no-channel-skips-frames
+            all-channels-do-z-stack
+            (not slices-first))) ; channels at each slice
         (or
           (not use-autofocus)
           (>= autofocus-skip (dec numFrames)))
@@ -428,7 +434,7 @@
         (not (first custom-intervals-ms))
         (> default-exposure interval-ms))
       (let [triggers {:properties (select-triggerable-sequences property-sequences)}]
-        (if (< 1 num-positions)
+        (if have-multiple-positions
           (generate-multiposition-bursts
             positions numFrames use-autofocus channels slices
             default-exposure triggers)
