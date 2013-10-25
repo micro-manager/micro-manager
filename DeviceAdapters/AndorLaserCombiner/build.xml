@@ -1,0 +1,16 @@
+<project name="AndorLaserCombiner">
+	<import file="../../buildscripts/deviceadapter.xml"/>
+
+	<target name="install-Win32">
+		<copy todir="${mm.dll.installdir}" file="lib/AB_ALC_REV.dll"/>
+	</target>
+
+	<target name="install-x64">
+		<copy todir="${mm.dll.installdir}">
+			<filelist dir="lib">
+				<file name="AB_ALC_REV64.dll"/>
+				<file name="usbi2cio64.dll"/>
+			</filelist>
+		</copy>
+	</target>
+</project>
