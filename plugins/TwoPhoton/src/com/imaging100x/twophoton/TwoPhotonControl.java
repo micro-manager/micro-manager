@@ -27,6 +27,7 @@
 
 package com.imaging100x.twophoton;
 
+import MMCustomization.AcquisitionEngineOverride;
 import ij.ImagePlus;
 import ij.WindowManager;
 import ij.gui.ImageWindow;
@@ -41,13 +42,12 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Timer;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.prefs.Preferences;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.table.TableColumn;
 
@@ -57,18 +57,11 @@ import mmcorej.StrVector;
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.acquisition.ComponentTitledBorder;
 import org.micromanager.acquisition.VirtualAcquisitionDisplay;
-import org.micromanager.api.AcquisitionEngine;
-
-import org.micromanager.api.MMPlugin;
-import org.micromanager.api.ScriptInterface;
+import org.micromanager.api.*;
 import org.micromanager.navigation.MultiStagePosition;
 import org.micromanager.navigation.PositionList;
 import org.micromanager.navigation.StagePosition;
-import org.micromanager.utils.GUIUtils;
-import org.micromanager.utils.ImageFocusListener;
-import org.micromanager.utils.MMFrame;
-import org.micromanager.utils.MMScriptException;
-import org.micromanager.utils.ReportingUtils;
+import org.micromanager.utils.*;
 
 public class TwoPhotonControl extends MMFrame implements MMPlugin, KeyListener, 
          ImageFocusListener {
@@ -89,9 +82,6 @@ public class TwoPhotonControl extends MMFrame implements MMPlugin, KeyListener,
    // preference keys and other string constants
    static private final String PANEL_X = "panel_x";
    static private final String PANEL_Y = "panel_y";
-   static private final String INVERT_X = "Invert_x";
-   static private final String INVERT_Y = "Invert_y";
-   static private final String SWAP_X_AND_Y = "SwapXandY";
    static private final String VERSION_INFO = "3.0";
    static private final String COPYRIGHT_NOTICE = "Copyright by 100X, 2011";
    static private final String DESCRIPTION = "Two Photon control module";
@@ -104,9 +94,6 @@ public class TwoPhotonControl extends MMFrame implements MMPlugin, KeyListener,
    private JTable depthTable_;
    private DepthDataModel depthData_;
 
-   private Timer statusTimer_;
-   private boolean initialized_;
-
    private SliderPanel laserSlider2_;
    private SliderPanel laserSlider1_;
    private JSpinner gridOverlapYSpinner_, gridOverlapXSpinner_;
@@ -118,6 +105,7 @@ public class TwoPhotonControl extends MMFrame implements MMPlugin, KeyListener,
    private JButton removeAllButton;
    private JCheckBox activateDepthList_;
    private JComboBox pixelSizeCombo_;
+   private static JLabel hdfQueueSize_;
    
    private File depthFile_;
 
@@ -127,15 +115,10 @@ public class TwoPhotonControl extends MMFrame implements MMPlugin, KeyListener,
 
 private ActionListener pixelSizeListener_;
 
-private JComboBox listCombo_;
-
-private DepthSetting depthSettingCache[];
-
 private AcquisitionStitcher stitcher_ = new AcquisitionStitcher();
 private JButton stitchButton_;
 private JComboBox windowsToStitchCombo_;
 private ArrayList<VirtualAcquisitionDisplay> availableVADs_;
-private JCheckBox invertXCheckBox_, invertYCheckBox_, swapXandYCheckBox_;
 private JCheckBox drawGrid_, drawPosNames_;
    
    /**
@@ -184,7 +167,6 @@ private JCheckBox drawGrid_, drawPosNames_;
       super();
       
       setLocation(-3, -31);
-      initialized_ = false;
 
       // load preferences
       Preferences root = Preferences.userNodeForPackage(this.getClass());
@@ -203,9 +185,6 @@ private JCheckBox drawGrid_, drawPosNames_;
          }
 
          public void windowClosed(WindowEvent arg0) {
-            if (statusTimer_ != null)
-               statusTimer_.cancel();
-            // saveSettings();
          }
       });
 
@@ -231,25 +210,55 @@ private JCheckBox drawGrid_, drawPosNames_;
          }
       };
       pixelSizeCombo_.addActionListener(pixelSizeListener_);
-      pixelSizeCombo_.setBounds(460, 380 , 184, 20);
+      pixelSizeCombo_.setBounds(460, 350 , 184, 20);
       getContentPane().add(pixelSizeCombo_);
       JLabel lblPixelSize = new JLabel("Pixel size");
-      lblPixelSize.setBounds(410, 383, 59, 14);
+      lblPixelSize.setBounds(410, 353, 59, 14);
       getContentPane().add(lblPixelSize);
       
+      //HDFQueue size
+      hdfQueueSize_ = new JLabel("HDF Queue size: ");
+      getContentPane().add(hdfQueueSize_);
+      hdfQueueSize_.setBounds(450, 400, 140, 25 );
+      
+      //add settings button
+      JButton settings = new JButton("Settings");
+      getContentPane().add(settings);
+      settings.setBounds(485, 480, 80, 25);
+      settings.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            new SettingsDialog(prefs_);
+         }   
+      });
       
       //Add credit
       JLabel lblCopyrightxImaging = new JLabel("Copyright 100X Imaging Inc, 2010");
       lblCopyrightxImaging.setBounds(438, 510, 172, 14);
       getContentPane().add(lblCopyrightxImaging);
-
+      JLabel henry = new JLabel("Version 3.0 by Henry Pinkard, 2012-2013");
+      henry.setBounds(438, 530, 205, 14);
+      getContentPane().add(henry);
+      
+      
       // load previous settings from the registry
       loadSettings();
 
       GUIUtils.registerImageFocusListener(this);
-      initializeDepthListRunnable();
+      
+      if (prefs_.getBoolean(SettingsDialog.REAL_TIME_STITCH, false)) {          
+         clearSpaceInStitchingCache();
+         new AcquisitionEngineOverride(getDepthListRunnable(),prefs_);
+      } else {
+         MMStudioMainFrame.getInstance().getAcquisitionEngine().attachRunnable(-1, -1, -1, -1, getDepthListRunnable());
+      }
    }
 
+   public static void updateHDFQueueSize(int n) {
+      hdfQueueSize_.setText("HDF queue size: " + n);
+      hdfQueueSize_.repaint();
+   }
+   
    private void createDepthPanel() {
       JPanel panel = createPanel("Vary excitation with Z position", 5, 320, 400, 545);
       panel.setLayout(new BorderLayout());
@@ -325,25 +334,14 @@ private JCheckBox drawGrid_, drawPosNames_;
    }
    
    private void createStitchPanel() {
-      JPanel panel = createPanel("Stitch last time point", 405, 235, 650, 365);
+      JPanel panel = createPanel("Stitch last time point", 405, 235, 650, 330);
       panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-      
-      JPanel row1 = new JPanel(new FlowLayout(FlowLayout.LEFT));      
-      row1.add(new JLabel("Layout:"));
-      invertXCheckBox_ = new JCheckBox("Flip X");
-      invertXCheckBox_.setSelected(prefs_.getBoolean(INVERT_X, false));
-      invertYCheckBox_ = new JCheckBox("Flip Y");
-      invertYCheckBox_.setSelected(prefs_.getBoolean(INVERT_Y, false));
-      swapXandYCheckBox_ = new JCheckBox("Transpose");
-      swapXandYCheckBox_.setSelected(prefs_.getBoolean(SWAP_X_AND_Y, false));
-      row1.add(invertXCheckBox_);
-      row1.add(invertYCheckBox_);
-      row1.add(swapXandYCheckBox_);
-      panel.add(row1);
 
       JPanel row2 = new JPanel(new FlowLayout(FlowLayout.LEFT));
       drawPosNames_ = new JCheckBox("Show position names");
       drawGrid_ = new JCheckBox("Draw grid");
+      drawPosNames_.setSelected(true);
+      drawGrid_.setSelected(true); 
       row2.add(drawPosNames_);
       row2.add(drawGrid_);
       panel.add(row2);
@@ -351,14 +349,16 @@ private JCheckBox drawGrid_, drawPosNames_;
       stitchButton_ = new JButton("Stitch: ");
       stitchButton_.addActionListener(new ActionListener() {
          @Override
-         public void actionPerformed(ActionEvent e) {
+         public void actionPerformed(ActionEvent e) {           
             VirtualAcquisitionDisplay vadToStitch = null;
             int index = windowsToStitchCombo_.getSelectedIndex();
             if (index < availableVADs_.size()) {
                vadToStitch = availableVADs_.get(index);
             }
-            stitcher_.setStitchParameters(invertXCheckBox_.isSelected(), invertYCheckBox_.isSelected(),
-                    swapXandYCheckBox_.isSelected(), drawPosNames_.isSelected(), drawGrid_.isSelected(),
+            stitcher_.setStitchParameters(prefs_.getBoolean(SettingsDialog.INVERT_X, false), 
+                    prefs_.getBoolean(SettingsDialog.INVERT_Y, false),
+                    prefs_.getBoolean(SettingsDialog.SWAP_X_AND_Y, false), 
+                    drawPosNames_.isSelected(), drawGrid_.isSelected(),
                     vadToStitch);
             new Thread(new Runnable() {
 
@@ -513,7 +513,7 @@ private JCheckBox drawGrid_, drawPosNames_;
       getContentPane().add(thePanel);
       return thePanel;
    }
-    
+      
    @Override
    public void focusReceived(ImageWindow iw) {
       //change only if number of windows changes?
@@ -529,15 +529,59 @@ private JCheckBox drawGrid_, drawPosNames_;
       
       String[] names = new String[availableVADs_.size()];
       for (int i = 0; i < names.length; i++) {
-         names[i] = availableVADs_.get(i).getImagePlus().getTitle();
+         names[i] = availableVADs_.get(i).getImagePlus().getWindow().getTitle();
       }
       windowsToStitchCombo_.setModel(new DefaultComboBoxModel(names));
       windowsToStitchCombo_.setSelectedIndex(names.length - 1);
    }
    
-   private void initializeDepthListRunnable() {
-      AcquisitionEngine acqEng = MMStudioMainFrame.getInstance().getAcquisitionEngine();
-      acqEng.attachRunnable(-1, -1, -1, -1, new Runnable() {
+   private void clearSpaceInStitchingCache() {
+      new Thread(new Runnable() {
+         @Override
+         public void run() {
+            //delete oldest directories first until enough space is cleared
+            String path = prefs_.get(SettingsDialog.STITCHED_DATA_DIRECTORY, "");
+            if (path.equals("")) {
+               return;
+            }
+            File topDir = new File(path);
+            File[] subDirs = topDir.listFiles();
+
+            Arrays.sort(subDirs, new Comparator<File>() {
+
+               @Override
+               public int compare(File f1, File f2) {
+                  return new Long(f1.lastModified()).compareTo(f2.lastModified());
+               }
+            });
+            long bytesPerGig = 1024 * 1024 * 1024;
+            int index = 0;
+            ProgressBar progressBar = new ProgressBar("Clearing space in stitched data cache", 0, subDirs.length);
+            progressBar.setProgress(index);
+            progressBar.setVisible(true);
+            if (subDirs != null && subDirs.length > 0) {
+               while (topDir.getFreeSpace() / bytesPerGig
+                       < prefs_.getLong(SettingsDialog.FREE_GB__MIN_IN_STITCHED_DATA, 200)) {
+                  for (File f : subDirs[index].listFiles()) {
+                     f.delete();
+                  }
+                  subDirs[index].delete();
+                  subDirs[index] = null;
+                  index++;
+                  progressBar.setProgress(index);
+                  if (index == subDirs.length) {
+                     //all directories deleted
+                     break;
+                  }
+               }
+            }
+            progressBar.setVisible(false);
+         }
+      }).start();
+   }
+   
+   private Runnable getDepthListRunnable() {
+      return new Runnable() {
          @Override
          public void run() {
             //apply depth list settings  
@@ -547,7 +591,7 @@ private JCheckBox drawGrid_, drawPosNames_;
             //refresh GUI on each image so it reflects depth list changes
             refreshGUI();          
          }
-      });
+      };
    }
 
    protected void onSaveDepthListAs() {
@@ -812,9 +856,6 @@ private JCheckBox drawGrid_, drawPosNames_;
       Rectangle r = getBounds();
       prefs_.putInt(PANEL_X, r.x);
       prefs_.putInt(PANEL_Y, r.y);
-      prefs_.putBoolean(INVERT_X, invertXCheckBox_.isSelected());
-      prefs_.putBoolean(INVERT_Y, invertYCheckBox_.isSelected());
-      prefs_.putBoolean(SWAP_X_AND_Y, swapXandYCheckBox_.isSelected());
       savePosition();
    }
 
@@ -881,8 +922,6 @@ private JCheckBox drawGrid_, drawPosNames_;
       }
       
       pixelSizeCombo_.addActionListener(pixelSizeListener_);
-      initialized_ = true;
-
    }
 
    private void refreshGUI() {
