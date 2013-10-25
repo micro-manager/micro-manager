@@ -37,7 +37,7 @@ libMMCoreJ_wrap_la_SOURCES = $(SWIGLIB_SOURCES) \
 	$(top_srcdir)/MMCore/PluginManager.cpp \
 	$(top_srcdir)/MMCore/Host.cpp
  
-#not sure if Boost linking is needed
+libMMCoreJ_wrap_la_LIBADD = $(BOOST_SYSTEM_LIB)
 libMMCoreJ_wrap_la_LDFLAGS = -Wl, -module -ldl $(BOOST_LDFLAGS)
 
 $(srcdir)/MMCoreJ.jar:  MMCoreJ_wrap.cxx \
