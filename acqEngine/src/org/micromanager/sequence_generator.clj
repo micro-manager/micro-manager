@@ -420,8 +420,7 @@
             (channels-sequenceable property-sequences channels)
             (all-equal? 0 (map :skip-frames channels))
             (all-equal? true (map :use-z-stack channels))
-            (or
-              (not slices-first))))
+            (not slices-first)))
         (or
           (not use-autofocus)
           (>= autofocus-skip (dec numFrames)))
