@@ -406,6 +406,7 @@
         have-multiple-slices (< 1 (count slices))
         have-multiple-channels (< 1 (count channels))
         channel-properties-sequenceable (channels-sequenceable property-sequences channels)
+        slices-sequenceable (. mmc isStageSequenceable (. mmc getFocusDevice))
         no-channel-skips-frames (all-equal? 0 (map :skip-frames channels))
         all-channels-do-z-stack (all-equal? true (map :use-z-stack channels))]
     (println slices-first)
@@ -418,15 +419,23 @@
         (or
           time-first ; time points at each position
           (not have-multiple-positions))
-        (or
-          (and
-            (not have-multiple-slices)
-            (not have-multiple-channels))
-          (and
-            channel-properties-sequenceable
-            no-channel-skips-frames
-            all-channels-do-z-stack
-            (not slices-first))) ; channels at each slice
+        (not (and
+               have-multiple-slices
+               (not slices-sequenceable)))
+        (not (and
+               have-multiple-channels
+               (not channel-properties-sequenceable)))
+        (not (and
+               have-multiple-channels
+               (not no-channel-skips-frames)))
+        (not (and
+               have-multiple-slices
+               have-multiple-channels
+               (not all-channels-do-z-stack)))
+        (not (and
+               have-multiple-slices
+               have-multiple-channels
+               slices-first))
         (or
           (not use-autofocus)
           (>= autofocus-skip (dec numFrames)))
