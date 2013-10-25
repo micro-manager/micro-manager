@@ -13,20 +13,27 @@ TFloatProperty::TFloatProperty(const string & MM_name, IFloat * float_feature, I
   callback_(callback),
   callbackRegistered_(needsCallBack)
 {
-   CPropertyAction * pAct = new CPropertyAction (this, &TFloatProperty::OnFloat);
-   callback->CPCCreateProperty(MM_name.c_str(), "", MM::Float, readOnly, pAct);
-
-   try 
+   if (float_feature->IsImplemented())
    {
-      if (needsCallBack)
+      CPropertyAction * pAct = new CPropertyAction (this, &TFloatProperty::OnFloat);
+      callback->CPCCreateProperty(MM_name.c_str(), "", MM::Float, readOnly, pAct);
+
+      try 
       {
-         float_feature_->Attach(this);
+         if (needsCallBack)
+         {
+            float_feature_->Attach(this);
+         }
+      }
+      catch (exception & e)
+      {
+         // SDK3 Callback not implemented for this feature
+         callback->CPCLog(e.what());
       }
    }
-   catch (exception & e)
+   else
    {
-      // SDK3 Callback not implemented for this feature
-      callback->CPCLog(e.what());
+      callbackRegistered_ = false;
    }
 }
 

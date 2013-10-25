@@ -17,24 +17,31 @@ TEnumProperty::TEnumProperty(const string & MM_name, IEnum * enum_feature, CAndo
   snapShotController_(snapShotController),
   callBackRegistered_(needsCallBack)
 {
-   CPropertyAction * pAct = new CPropertyAction (this, &TEnumProperty::OnEnum);
-   camera_->CreateProperty(MM_name_.c_str(), "", MM::String, readOnly, pAct);
-
-   try
+   if (enum_feature->IsImplemented())
    {
-      if (needsCallBack)
+      CPropertyAction * pAct = new CPropertyAction (this, &TEnumProperty::OnEnum);
+      camera_->CreateProperty(MM_name_.c_str(), "", MM::String, readOnly, pAct);
+
+      try
       {
-         enum_feature_->Attach(this);
+         if (needsCallBack)
+         {
+            enum_feature_->Attach(this);
+         }
+         else
+         {
+            Update(NULL);
+         }
       }
-      else
+      catch (exception & e)
       {
-         Update(NULL);
+         // Callback not implemented for this feature
+         camera_->LogMessage(e.what());
       }
    }
-   catch (exception & e)
+   else
    {
-      // Callback not implemented for this feature
-      camera_->LogMessage(e.what());
+      callBackRegistered_ = false;
    }
 }
 

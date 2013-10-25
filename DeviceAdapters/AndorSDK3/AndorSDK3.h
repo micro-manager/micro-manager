@@ -172,6 +172,7 @@ private:
    TEnumProperty* triggerMode_property;
    TEnumProperty* fanSpeed_property;
    TBooleanProperty* spuriousNoiseFilter_property;
+   TBooleanProperty* rollingShutterGlobalClear_property;
    TFloatProperty* exposureTime_property;
    TFloatProperty* frameRate_property;
    TFloatStringProperty* frameRateLimits_property;

@@ -22,6 +22,7 @@ public:
    static const std::string FRAME_RATE_LIMITS;
    static const std::string TRIGGER_MODE;
    static const std::string GAIN_TEXT;
+   static const std::string GLOBAL_CLEAR;
 };
 
 
@@ -41,6 +42,7 @@ const std::string TAndorSDK3Strings::FRAME_RATE("FrameRate");
 const std::string TAndorSDK3Strings::FRAME_RATE_LIMITS("FrameRateLimits");
 const std::string TAndorSDK3Strings::TRIGGER_MODE("TriggerMode");
 const std::string TAndorSDK3Strings::GAIN_TEXT("Sensitivity/DynamicRange");
+const std::string TAndorSDK3Strings::GLOBAL_CLEAR("RollingShutterGlobalClear");
 
 #endif //include only once
 

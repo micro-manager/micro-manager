@@ -1,6 +1,5 @@
 #include "BooleanProperty.h"
 #include "CallBackManager.h"
-#include "atcore++.h"
 
 
 using namespace andor;
@@ -15,19 +14,47 @@ TBooleanProperty::TBooleanProperty(const string & MM_name, IBool * boolean_featu
 : boolean_feature_(boolean_feature),
   callback_(callback)
 {
-   CPropertyAction * pAct = new CPropertyAction (this, &TBooleanProperty::OnBoolean);
-   callback->CPCCreateProperty(MM_name.c_str(), g_StatusON, MM::String, readOnly, pAct);
+   if (boolean_feature->IsImplemented())
+   {
+      CPropertyAction * pAct = new CPropertyAction (this, &TBooleanProperty::OnBoolean);
+      callback->CPCCreateProperty(MM_name.c_str(), g_StatusON, MM::String, readOnly, pAct);
 
-   vector<string> values;
-   values.push_back(g_StatusOFF);
-   values.push_back(g_StatusON);
-   callback->CPCSetAllowedValues(MM_name.c_str(), values);
+      vector<string> values;
+      values.push_back(g_StatusOFF);
+      values.push_back(g_StatusON);
+      callback->CPCSetAllowedValues(MM_name.c_str(), values);
+      try 
+      {
+         boolean_feature->Attach(this);
+      }
+      catch (exception & e)
+      {
+         // SDK3 Callback not implemented for this feature
+         callback->CPCLog(e.what());
+      }
+   }
 }
 
 TBooleanProperty::~TBooleanProperty()
 {
+   if (boolean_feature_->IsImplemented())
+   {
+      try 
+      {
+         boolean_feature_->Detach(this);
+      }
+      catch (exception & e)
+      {
+         // SDK3 Callback not implemented for this feature
+         callback_->CPCLog(e.what());
+      }
+   }
    //Clean up memory, created as passed in
    callback_->GetCameraDevice()->Release(boolean_feature_);
+}
+
+void TBooleanProperty::Update(ISubject * /*Subject*/)
+{
 }
 
 void TBooleanProperty::setFeature(const string & value)

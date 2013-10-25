@@ -14,7 +14,7 @@ class TIntegerProperty : public andor::IObserver
 public:
    TIntegerProperty(const std::string & MM_name, andor::IInteger* integer_feature,
                     CAndorSDK3Camera* camera, MySequenceThread* thd,
-                    SnapShotControl* snapShotController, bool readOnly, bool limited_);
+                    SnapShotControl* snapShotController, bool readOnly, bool needsCallBack);
    ~TIntegerProperty();
 
    void Update(andor::ISubject* Subject);
@@ -28,7 +28,7 @@ private:
    std::string MM_name_;
    MySequenceThread * thd_;
    SnapShotControl* snapShotController_;
-   bool limited_;
+   bool callBackRegistered_;
 };
 
 #endif // _INTEGERPROPERTY_H_

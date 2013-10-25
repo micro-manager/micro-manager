@@ -434,6 +434,9 @@ int CAndorSDK3Camera::Initialize()
    sensorCooling_property = new TBooleanProperty(TAndorSDK3Strings::SENSOR_COOLING, 
                                                  cameraDevice->GetBool(L"SensorCooling"), callbackManager_, false);
 
+   rollingShutterGlobalClear_property = new TBooleanProperty(TAndorSDK3Strings::GLOBAL_CLEAR, 
+                                                 cameraDevice->GetBool(L"RollingShutterGlobalClear"), callbackManager_, false);
+
    triggerMode_Enum = cameraDevice->GetEnum(L"TriggerMode");
    triggerMode_remapper = new TTriggerRemapper(snapShotController_, triggerMode_Enum);
    std::map<std::wstring, std::wstring> triggerMode_map;
@@ -497,6 +500,7 @@ int CAndorSDK3Camera::Shutdown()
       delete accumulationLength_property;
       delete readTemperature_property;
       delete temperatureStatus_property;
+      delete rollingShutterGlobalClear_property;
       delete sensorCooling_property;
       delete overlap_property;
       delete frameRate_property;
