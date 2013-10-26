@@ -173,11 +173,14 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    }
 
    private int getNumSlices() {
-      int numSlices = useSlices_ ? (int) (1 + Math.abs(sliceZTopUm_ - sliceZBottomUm_) / sliceZStepUm_) : 1;
       if (!useSlices_) {
-         numSlices = 1;
+         return 1;
       }
-      return numSlices;
+      if (sliceZStepUm_ == 0) {
+         // XXX How should this be handled?
+         return Integer.MAX_VALUE;
+      }
+      return 1 + (int)Math.abs((sliceZTopUm_ - sliceZBottomUm_) / sliceZStepUm_);
    }
 
    private int getTotalImages() {
@@ -280,18 +283,20 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
          acquisitionSettings.numFrames = 0;
       }
 
-
-
       // Slices
       if (useSlices_) {
-         if (sliceZTopUm_ > sliceZBottomUm_) {
-            for (double z = sliceZBottomUm_; z <= sliceZTopUm_; z += sliceZStepUm_) {
-               acquisitionSettings.slices.add(z);
-            }
-         } else {
-            for (double z = sliceZBottomUm_; z >= sliceZTopUm_; z -= sliceZStepUm_) {
-               acquisitionSettings.slices.add(z);
-            }
+         double start = sliceZBottomUm_;
+         double stop = sliceZTopUm_;
+         double step = Math.abs(sliceZStepUm_);
+         if (step == 0.0) {
+            throw new UnsupportedOperationException("zero Z step size");
+         }
+         int count = getNumSlices();
+         if (start > stop) {
+            step = -step;
+         }
+         for (int i = 0; i < count; i++) {
+            acquisitionSettings.slices.add(start + i * step);
          }
       }
 
