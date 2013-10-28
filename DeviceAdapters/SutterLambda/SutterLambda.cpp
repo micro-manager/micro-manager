@@ -211,9 +211,9 @@ int SutterUtils::GetControllerType(MM::Device& device, MM::Core& core, std::stri
    std::vector<unsigned char> command;
    command.push_back((unsigned char)253);
 
-   if( DEVICE_OK != SutterUtils::SetCommandNoCR(device, core, 
-      port, command, emptyv, answerTimeoutMs, ans, true))
-      return false;
+   ret = SutterUtils::SetCommandNoCR(device, core, port, command, emptyv, answerTimeoutMs, ans, true);
+   if (ret != DEVICE_OK)
+      return ret;
 
    char ans2[128];
    ret = core.GetSerialAnswer(&device, port.c_str(), 128, ans2, "\r");
