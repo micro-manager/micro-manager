@@ -82,7 +82,7 @@
                           </Group>
                           <Component id="jLabel3" min="-2" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace pref="103" max="32767" attributes="0"/>
+                      <EmptySpace pref="182" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -103,7 +103,7 @@
                           <Component id="pointAndShootIntervalSpinner" alignment="3" min="-2" pref="20" max="-2" attributes="0"/>
                           <Component id="closeShutterLabel" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace pref="221" max="32767" attributes="0"/>
+                      <EmptySpace pref="205" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -316,7 +316,7 @@
                               </Group>
                           </Group>
                       </Group>
-                      <EmptySpace pref="66" max="32767" attributes="0"/>
+                      <EmptySpace max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -468,7 +468,7 @@
                           <Component id="centerButton" alignment="0" min="-2" max="-2" attributes="0"/>
                           <Component id="allPixelsButton" alignment="0" min="-2" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace pref="150" max="32767" attributes="0"/>
+                      <EmptySpace pref="235" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -486,7 +486,7 @@
                       <Component id="centerButton" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="allPixelsButton" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace pref="38" max="32767" attributes="0"/>
+                      <EmptySpace max="32767" attributes="0"/>
                       <Group type="103" groupAlignment="3" attributes="0">
                           <Component id="jLabel4" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="channelComboBox" alignment="3" min="-2" max="-2" attributes="0"/>

@@ -19,10 +19,9 @@ import java.awt.event.WindowEvent;
 import java.awt.event.WindowFocusListener;
 import java.util.ArrayList;
 import java.util.prefs.Preferences;
-import javax.swing.JSpinner;
-import javax.swing.SpinnerNumberModel;
-import javax.swing.SwingUtilities;
+import javax.swing.*;
 import javax.swing.event.ChangeListener;
+import javax.swing.text.DefaultFormatter;
 import mmcorej.CMMCore;
 import org.micromanager.utils.GUIUtils;
 
@@ -55,28 +54,25 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
               populateChannelComboBox(null);
           }
       });
-      /*
-      listenForSpinnerKeyPress(this.pointAndShootIntervalSpinner);
-      listenForSpinnerKeyPress(this.spotDwellTimeSpinner);
-      listenForSpinnerKeyPress(this.startFrameSpinner);
-      listenForSpinnerKeyPress(this.repeatEveryFrameSpinner);
-      listenForSpinnerKeyPress(roiLoopSpinner);
-      * */
-   }
-   
-   private void listenForSpinnerKeyPress(final JSpinner spinner) {
-      ((JSpinner.DefaultEditor)spinner.getEditor()).getTextField()
-              .addKeyListener(new KeyAdapter() {
-         @Override
-         public void keyTyped(KeyEvent e) {
-            // Cause stateChanged event to be fired.
-           for (ChangeListener listener:spinner.getChangeListeners()) {
-              listener.stateChanged(null);
-           }
-         }
-              });
+      
+      commitSpinnerOnValidEdit(pointAndShootIntervalSpinner);
+      commitSpinnerOnValidEdit(spotDwellTimeSpinner);
+      commitSpinnerOnValidEdit(startFrameSpinner);
+      commitSpinnerOnValidEdit(repeatEveryFrameSpinner);
+      commitSpinnerOnValidEdit(roiLoopSpinner);
    }
 
+   /*
+    * Makes a JSpinner fire a change event reflecting the new value
+    * whenver user types a valid entry. Why the hell isn't that the default setting?
+    */
+   private static void commitSpinnerOnValidEdit(final JSpinner spinner) {
+      final JSpinner.DefaultEditor editor = (JSpinner.DefaultEditor) spinner.getEditor();
+      final JFormattedTextField field = (JFormattedTextField) editor.getTextField();
+      final DefaultFormatter formatter = (DefaultFormatter) field.getFormatter();
+      formatter.setCommitsOnValidEdit(true);
+   }
+   
    /**
     * This method is called from within the constructor to initialize the form.
     * WARNING: Do NOT modify this code. The content of this method is always
