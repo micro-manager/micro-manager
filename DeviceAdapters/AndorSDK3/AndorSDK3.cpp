@@ -1150,7 +1150,7 @@ int CAndorSDK3Camera::InsertImage()
    unsigned int h = img_.Height();
    unsigned int b = img_.Depth();
 
-   int ret = GetCoreCallback()->InsertImage(this, pData, w, h, b, md.Serialize().c_str(), false);
+   int ret = GetCoreCallback()->InsertImage(this, pData, w, h, b, md.Serialize().c_str());
    if (!stopOnOverflow_ && ret == DEVICE_BUFFER_OVERFLOW)
    {
       // do not stop on overflow - just reset the buffer
