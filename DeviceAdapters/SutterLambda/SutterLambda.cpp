@@ -206,33 +206,6 @@ int SutterUtils::GetControllerType(MM::Device& device, MM::Core& core, std::stri
    core.PurgeSerial(&device, port.c_str());
    int ret = DEVICE_OK;
 
-#define USE_SETCOMMAND
-#ifndef USE_SETCOMMAND
-
-   unsigned char msg[1];
-   msg[0]  = 253;
-   // send command
-   ret = core.WriteToSerial(&device, port.c_str(), msg, 1);
-   if (ret != DEVICE_OK)
-      return ret;
-
-   unsigned char ans = 0;
-   bool responseReceived = false;
-   unsigned long read;
-   MM::MMTime startTime = core.GetCurrentMMTime();
-   do {
-      if (DEVICE_OK != core.ReadFromSerial(&device, port.c_str(), &ans, 1, read))
-         return false;
-      if (read > 0)
-         printf("Read char: %x", ans);
-      if (ans == 253)
-         responseReceived = true;
-      CDeviceUtils::SleepMs(2);
-   }
-   while( !responseReceived && (core.GetCurrentMMTime() - startTime) < (answerTimeoutMs * 1000.0) );
-   if (!responseReceived)
-      return ERR_NO_ANSWER;
-#else
    std::vector<unsigned char> ans;
    std::vector<unsigned char> emptyv;
    std::vector<unsigned char> command;
@@ -241,14 +214,9 @@ int SutterUtils::GetControllerType(MM::Device& device, MM::Core& core, std::stri
    if( DEVICE_OK != SutterUtils::SetCommandNoCR(device, core, 
       port, command, emptyv, answerTimeoutMs, ans, true))
       return false;
-#endif
 
    char ans2[128];
    ret = core.GetSerialAnswer(&device, port.c_str(), 128, ans2, "\r");
-
-
-
-
 
    std::string answer = ans2;
    if (ret != DEVICE_OK || answer.length() == 0 ) {
@@ -355,21 +323,7 @@ int SutterUtils::SetCommand(MM::Device& device, MM::Core& core,
    MMThreadGuard g(*(::gplocks_[port]));
    if( ::g_Busy[port])
       core.LogMessage(&device, "busy entering SetCommand", false);
-   /*   
-   // todo put this timeout in thread lock
-   MM::MMTime startmmTime = GetCurrentMMTime();
-   while (::g_Busy[port] && (GetCurrentMMTime() - startmmTime) < (g_busyTimeoutMs * 1000.0) )
-   {
-   CDeviceUtils::SleepMs(10);
-   }
-   */
-   if( ! alternateEcho.empty())
-   {
-#ifdef EXTRADEBUG
-      core.LogMessage(&device, ("command " + CDeviceUtils::HexRep(command) + 
-         " expected echo "+ CDeviceUtils::HexRep(alternateEcho)).c_str(), true);
-#endif
-   }
+
    if(!::g_Busy[port] )
    {
       g_Busy[port] = true;
@@ -761,142 +715,6 @@ bool Wheel::SetWheelPosition(unsigned pos)
 
 }
 
-
-
-
-
-#if 0
-bool Wheel::SetWheelPosition(unsigned pos)
-{
-
-
-   // wait if the device is busy
-   MMThreadGuard g(*(::gplocks_[port_]));
-
-   if( ::g_Busy[port_])
-      LogMessage("busy entering SetWheelPosition",true);
-
-   MM::MMTime startmmTime = GetCurrentMMTime();
-   while (::g_Busy[port_] && (GetCurrentMMTime() - startmmTime) < (g_busyTimeoutMs * 1000.0) )
-   {
-      CDeviceUtils::SleepMs(10);
-   }
-
-   if(g_Busy[port_] )
-      LogMessage(std::string("Sequence error, port ") + port_ + std::string(" was busy!"), false);
-
-   g_Busy[port_] = true;
-
-
-   unsigned char command = 0;
-   if (id_==0 || id_==2)
-      command = (unsigned char) (speed_ * 16 + pos);
-   else if (id_==1)
-      command = (unsigned char)(128 + speed_ * 16 + pos);
-
-   unsigned char msg[2];
-   msg[0] = (unsigned char)252; // used for filter C
-   msg[1] = command;
-   // msg[2] = 13; // CR
-
-   PurgeComPort(port_.c_str());
-
-
-   // send command
-   if (id_==0 || id_==1)
-   {
-      // filters A and B
-      if (DEVICE_OK != WriteToComPort(port_.c_str(), msg+1, 1))
-
-      {
-         this->LogMessage("WriteToComPort failed",false);
-         return false;
-      }
-   }
-   else if (id_==2)
-   {
-      // filter C
-      if (DEVICE_OK != WriteToComPort(port_.c_str(), msg, 2))
-      {
-         this->LogMessage("WriteToComPort (id 2) failed",false);
-         return false;
-      }
-   }
-
-   // block/wait for acknowledge, or until we time out;
-   unsigned char answer = 0;
-   unsigned long read;
-   MM::MMTime startTime = GetClockTicksUs();
-
-   bool ret = false;
-
-   // read the response
-   for(;;)
-   {
-      if (DEVICE_OK != ReadFromComPort(port_.c_str(), &answer, 1, read))
-      {
-         LogMessage("ReadFromComPort failed", false);
-         return false;
-      }
-      if (answer == command)
-      {
-         ret = true;
-         break;
-      }
-      else if (answer == 13) // CR
-      {
-         LogMessage("error, command was not echoed!", false);
-         break;
-      }
-      else if( answer != 0)
-      {
-         std::ostringstream bufff;
-         bufff << answer;
-         LogMessage("unexpected response: " + bufff.str(), false);
-      }
-      if( 1000.0 * answerTimeoutMs_ < (GetCurrentMMTime() - startTime).getUsec())
-      {
-         std::ostringstream bufff;
-         bufff << answerTimeoutMs_ << " msec";
-         LogMessage("answer timeout after " + bufff.str(),false);
-         break;
-      }
-   }
-
-
-   startTime = GetCurrentMMTime();
-   answer = 0;
-   // now look for a 13
-   for(;;){
-      if (DEVICE_OK != ReadFromComPort(port_.c_str(), &answer, 1, read))
-      {
-         LogMessage("ReadFromComPort failed", false);
-         return false;
-      }
-      if (answer == 13) // CR
-      {
-         ret = true;
-         break;
-      }
-      if( 0 < read)
-      {
-         LogMessage("error, extraneous response " + std::string((char*)&answer), false);
-      }
-      if( 1000.0 * answerTimeoutMs_ < (GetCurrentMMTime() - startTime).getUsec())
-      {
-         std::ostringstream bufff;
-         bufff << answerTimeoutMs_*2. << " msec";
-         LogMessage("answer timeout after " + bufff.str(),false);
-         break;
-      }
-   }
-
-   g_Busy[port_] = false;
-
-   return ret;
-}
-
-#endif
 
 ///////////////////////////////////////////////////////////////////////////////
 // Action handlers
@@ -1332,36 +1150,6 @@ bool Shutter::ControllerBusy()
 
 bool Shutter::SetShutterMode(const char* mode)
 {
-
-#if 0
-   const int maxNrChars = 2;
-   int nrChars = maxNrChars;
-   unsigned char msg[maxNrChars];
-
-   if (strcmp(mode, g_NDMode) == 0)
-      return SetND(nd_);
-
-   if (strcmp(mode, g_FastMode) == 0)
-      msg[0] = 220;
-   else if (strcmp(mode, g_SoftMode) == 0)
-      msg[0] = 221;
-   else if (strcmp(mode, g_NDMode) == 0)
-      return SetND(nd_);
-   else
-      return false;
-
-   msg[1] = (unsigned char)id_ + 1;
-
-   // Shutter number is not needed for SC controller
-   if (controllerType_ == "SC")
-      nrChars = 1;
-
-   // send command
-   if (DEVICE_OK != WriteToComPort(port_.c_str(), msg, nrChars))
-      return false;
-#endif
-
-
    if (strcmp(mode, g_NDMode) == 0)
       return SetND(nd_);
 
@@ -1386,26 +1174,6 @@ bool Shutter::SetShutterMode(const char* mode)
 
 bool Shutter::SetND(unsigned int nd)
 {
-#if 0
-   const int maxNrChars = 3;
-   int nrchars = maxNrChars;
-   unsigned char msg[maxNrChars];
-
-   msg[0] = 222;
-   if (controllerType_ == "SC") {
-      msg[1] = (unsigned char)nd;
-      nrchars = 2;
-   } else {
-      msg[1] = (unsigned char)id_ + 1;
-      msg[2] = (unsigned char)nd;
-   }
-
-   // send command
-   if (DEVICE_OK != WriteToComPort(port_.c_str(), msg, nrchars))
-      return false;
-#endif
-
-
    std::vector<unsigned char> command;
    std::vector<unsigned char> alternateEcho;
 
