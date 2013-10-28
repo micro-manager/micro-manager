@@ -219,16 +219,26 @@ int SutterUtils::GetControllerType(MM::Device& device, MM::Core& core, std::stri
    ret = core.GetSerialAnswer(&device, port.c_str(), 128, ans2, "\r");
 
    std::string answer = ans2;
-   if (ret != DEVICE_OK || answer.length() == 0 ) {
+   if (ret != DEVICE_OK) {
+      std::ostringstream errOss;
+      errOss << "Could not get answer from 253 command (GetSerialAnswer returned " << ret << "). Assuming a 10-2";
+      core.LogMessage(&device, errOss.str().c_str(), true);
       type = "10-2";
       id = "10-2";
-   } else {
+   }
+   else if (answer.length() == 0 ) {
+      core.LogMessage(&device, "Answer from 253 command was empty. Assuming a 10-2", true);
+      type = "10-2";
+      id = "10-2";
+   }
+   else {
       if (answer.substr(0, 2) == "SC") {
          type = "SC";
       } else if (answer.substr(0, 4) == "10-3") {
          type = "10-3";
       }
       id = answer.substr(0, answer.length() - 2);
+      core.LogMessage(&device, ("Controller type is " + std::string(type)).c_str(), true);
    }
 
    return DEVICE_OK;
