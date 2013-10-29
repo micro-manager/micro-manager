@@ -32,6 +32,7 @@
 
 %module (directors="1") MMCorePy
 %feature("director") MMEventCallback;
+%feature("autodoc", "3");
 
 %include std_string.i
 %include std_vector.i
