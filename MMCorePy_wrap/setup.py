@@ -3,7 +3,8 @@
 """
 This setup.py is intended for use from the Autoconf/Automake build system.
 It makes a number of assumtions, including that the SWIG sources have already
-been generated.
+been generated. Yet it also ignores settings detected by the configure script -
+so it should probably be replaced with rules in the Makefile.am.
 """
 
 from distutils.core import setup, Extension
@@ -31,6 +32,7 @@ mmcorepy_module = Extension('_MMCorePy',
                                     ],
                             language="c++",
                             include_dirs=numpy.distutils.misc_util.get_numpy_include_dirs(),
+                            libraries=['boost_system'],
                            )
 
 setup(name='MMCorePy',
