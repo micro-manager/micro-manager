@@ -144,8 +144,9 @@ private:
    boost::thread* pThread_;
    bool verbose_; // if false, turn off LogBinaryMessage even in Debug Log
 
-   void LogBinaryMessage(bool isInput, const unsigned char* pdata, std::size_t length, bool debugOnly);
-   void LogBinaryMessage(bool isInput, const std::vector<unsigned char>& data, bool debugOnly);
+   void LogBinaryMessage(const char* prefix, bool isInput, const std::string& data, bool debugOnly);
+   void LogBinaryMessage(const char* prefix, bool isInput, const unsigned char* pdata, std::size_t length, bool debugOnly);
+   void LogBinaryMessage(const char* prefix, bool isInput, const std::vector<unsigned char>& data, bool debugOnly);
 
 };
 

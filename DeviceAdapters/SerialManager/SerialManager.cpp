@@ -595,33 +595,27 @@ int SerialPort::SetCommand(const char* command, const char* term)
    if (!initialized_)
       return ERR_PORT_NOTINITIALIZED;
 
-   int retv = DEVICE_OK;
    std::string sendText(command);
    if (term != 0)
       sendText += term;
 
-   // send characters one by one to accomodate slow devices
-   size_t written = 0;
-
    if (transmitCharWaitMs_ < 0.001)
    {
       pPort_->WriteCharactersAsynchronously(sendText.c_str(), (int) sendText.length() );
-      written = sendText.length();
    }
    else
    {
       for( std::string::iterator jj = sendText.begin(); jj != sendText.end(); ++jj)
       {
          const MM::MMTime maxTime (5, 0);
-         MM::MMTime startTime (GetCurrentMMTime());
          pPort_->WriteOneCharacterAsynchronously(*jj );
          CDeviceUtils::SleepMs((long)(0.5+transmitCharWaitMs_));         
-         ++written;
       }
    }
-   if( DEVICE_OK == retv)
-      LogMessage( (std::string("SetCommand -> ") + sendText.substr(0,written)).c_str(), true);
-   return retv;
+
+   LogBinaryMessage("SetCommand", false, sendText, true);
+
+   return DEVICE_OK;
 }
 
 int SerialPort::GetAnswer(char* answer, unsigned bufLen, const char* term)
@@ -675,37 +669,37 @@ int SerialPort::GetAnswer(char* answer, unsigned bufLen, const char* term)
          CDeviceUtils::SleepMs(1);
          ++retryCounter;
       }
-      // look for the terminator
-      if( 0 != term)
+
+      // look for the terminator, if any
+      if (term && term[0])
       {
          // check for terminating sequence
          char* termPos = strstr(answer, term);
          if (termPos != 0)
          {
             // found the terminator!!
-            // erase the terminator from the answer;
-            for( unsigned int iterm = 1; iterm <= strlen(term); ++iterm)
-            {
-               char *pAnswer = answer + answerOffset - iterm;
-               if( answer <= pAnswer)
-                  pAnswer[0] =  '\0';
-            }
+
             if( 2 < retryCounter )
-               LogMessage((std::string("GetAnswer # retries = ") + 
-                  boost::lexical_cast<std::string,int>(retryCounter)).c_str(), true);
-            LogMessage(( std::string("GetAnswer <- ") + std::string(answer)).c_str(), true);
+               LogMessage(("GetAnswer # retries = " +
+                  boost::lexical_cast<std::string>(retryCounter)).c_str(), true);
+
+            LogBinaryMessage("GetAnswer", true, answer, true);
+
+            // erase the terminator from the answer:
+            *termPos = '\0';
+
             return DEVICE_OK;
          }
       }
       else
       {
-         // a formatted answer without a terminator.
-         LogMessage((std::string("GetAnswer without terminator returned after ") + 
-            boost::lexical_cast<std::string,long>((long)((GetCurrentMMTime() - startTime).getMsec())) +
-            std::string("msec")).c_str(), true);
+         // XXX Shouldn't it be an error to not have a terminator?
          if( 4 < retryCounter)
          {
-            LogMessage(( std::string("GetAnswer <- ") + std::string(answer)).c_str(), true);
+            LogMessage(("GetAnswer without terminator returned after " + 
+               boost::lexical_cast<std::string>((long)((GetCurrentMMTime() - startTime).getMsec())) +
+               "msec").c_str(), true);
+            LogBinaryMessage("GetAnswer", true, answer, true);
             return DEVICE_OK;
          }
       }
@@ -741,7 +735,7 @@ int SerialPort::Write(const unsigned char* buf, unsigned long bufLen)
    if( 0 < i)
    {
       if (verbose_)
-         LogBinaryMessage(false, buf, i, true);
+         LogBinaryMessage("Write", false, buf, i, true);
    }
 
    return ret;
@@ -782,7 +776,7 @@ int SerialPort::Read(unsigned char* buf, unsigned long bufLen, unsigned long& ch
       if( 0 < charsRead)
       {
          if(verbose_)
-            LogBinaryMessage(true, buf, charsRead, true);
+            LogBinaryMessage("Read", true, buf, charsRead, true);
       }
    }
    else
@@ -931,21 +925,40 @@ int SerialPort::OnDelayBetweenCharsMs(MM::PropertyBase* pProp, MM::ActionType eA
    return DEVICE_OK;
 }
 
-void SerialPort::LogBinaryMessage(bool isInput, const unsigned char* pdata, std::size_t length, bool debugOnly)
+void SerialPort::LogBinaryMessage(const char* prefix, bool isInput, const std::string& data, bool debugOnly)
 {
-   const std::vector<unsigned char> data(pdata, pdata + length);
-   LogBinaryMessage(isInput, data, debugOnly);
+   LogBinaryMessage(prefix, isInput, reinterpret_cast<const unsigned char*>(data.c_str()), data.size(), debugOnly);
 }
 
-void SerialPort::LogBinaryMessage(bool isInput, const std::vector<unsigned char>& data, bool debugOnly)
+void SerialPort::LogBinaryMessage(const char* prefix, bool isInput, const unsigned char* pdata, std::size_t length, bool debugOnly)
+{
+   const std::vector<unsigned char> data(pdata, pdata + length);
+   LogBinaryMessage(prefix, isInput, data, debugOnly);
+}
+
+void SerialPort::LogBinaryMessage(const char* prefix, bool isInput, const std::vector<unsigned char>& data, bool debugOnly)
 {
    std::ostringstream oss;
-   oss << (isInput ? "<- " : "-> ");
+   oss << prefix;
+   oss << (isInput ? " <- " : " -> ");
+
+   // We log the data in an unambiguous format free of control characters and
+   // spaces. The format used is a valid C escaped string (without the quotes),
+   // although not all escape sequences are used (e.g. \a and \t are not used).
 
    std::vector<unsigned char>::const_iterator end = data.end();
    for (std::vector<unsigned char>::const_iterator ii = data.begin(); ii != end; ++ii) {
-      if (*ii < 0x80 && std::isgraph(*ii) && *ii != '\\') { // ASCII and graphical and not backslash
+      if (*ii == '\\') {
+         oss << "\\\\";
+      }
+      else if (*ii < 0x80 && std::isgraph(*ii)) { // ASCII and graphical (but not backslash)
          oss << static_cast<char>(*ii);
+      }
+      else if (*ii == '\r') {
+         oss << "\\r";
+      }
+      else if (*ii == '\n') {
+         oss << "\\n";
       }
       else {
          // boost::format doesn't work with %02hhx. Also note that the
