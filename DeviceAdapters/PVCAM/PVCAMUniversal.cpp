@@ -111,6 +111,7 @@ const char* g_Keyword_CCDSerSize      = "X-dimension";
 const char* g_Keyword_CCDParSize      = "Y-dimension";
 const char* g_Keyword_FWellCapacity   = "FullWellCapacity";
 const char* g_Keyword_TriggerMode     = "TriggerMode";
+const char* g_Keyword_ColorMode       = "ColorMode";
 const char* g_Keyword_TriggerTimeout  = "Trigger Timeout (secs)";
 const char* g_Keyword_ActualGain      = "Actual Gain e/ADU";
 const char* g_Keyword_ReadNoise       = "Current Read Noise";
@@ -182,6 +183,9 @@ exposure_(10),
 binSize_(1),
 binXSize_(1),
 binYSize_(1),
+newBinSize_(1),
+newBinXSize_(1),
+newBinYSize_(1),
 rgbaColor_(false)
 #ifdef PVCAM_FRAME_INFO_SUPPORTED
 ,pFrameInfo_(0)
@@ -204,7 +208,7 @@ rgbaColor_(false)
    prmActualGain_     = NULL;
    prmTriggerMode_    = NULL;
    prmReadoutPort_    = NULL;
-
+   prmColorMode_      = NULL;
 }
 
 
@@ -240,6 +244,8 @@ Universal::~Universal()
        delete prmTriggerMode_;
    if ( prmReadoutPort_ )
        delete prmReadoutPort_;
+   if ( prmColorMode_ )
+       delete prmColorMode_;
    // Delete universal parameters
    for ( unsigned i = 0; i < universalParams_.size(); i++ )
        delete universalParams_[i];
@@ -332,9 +338,17 @@ int Universal::Initialize()
    LogMessage( "Initializing Dynamic Camera Properties" );
 
    /// COLOR MODE
+   bool isColorCcd = false;
+   prmColorMode_ = new PvEnumParam( g_Keyword_ColorMode, PARAM_COLOR_MODE, this );
+   if ( prmColorMode_->IsAvailable() )
+   {
+       if ( prmColorMode_->Current() == COLOR_RGGB )
+          isColorCcd = true;
+   }
    // the camera can interpret pixels as color data with the Bayer pattern
    pAct = new CPropertyAction (this, &Universal::OnColorMode);
-   CreateProperty(g_Keyword_RGB32, g_OFF, MM::String, false, pAct);
+   // If not color CCD then make the property OFF and read-only (grayed out)
+   CreateProperty(g_Keyword_RGB32, g_OFF, MM::String, !isColorCcd, pAct);
    AddAllowedValue(g_Keyword_RGB32, g_ON);
    AddAllowedValue(g_Keyword_RGB32, g_OFF);
 
@@ -453,19 +467,19 @@ int Universal::Initialize()
    /// EXPOSURE RESOLUTION
    uns32 expResCount = 0;
    int32 expResVal;
-   uns32 const expResDescLen = 200;
+   const uns32 expResDescLen = 64;
    char expResDesc[expResDescLen];
    
    microsecResSupported_ = false;
 
    if (!pl_get_param(hPVCAM_, PARAM_EXP_RES_INDEX, ATTR_COUNT, (void *)&expResCount))
       return LogCamError(__LINE__, "pl_get_param(PARAM_EXP_RES_INDEX)" );
-   	  
+
    for (uns32 i = 0; i < expResCount; i++)
    {
-      pl_get_enum_param(hPVCAM_, PARAM_EXP_RES, i, &expResVal, expResDesc, expResDescLen);
-      if ( strstr(expResDesc, "Micro") != 0 || strstr(expResDesc, "micro") != 0 || strstr(expResDesc, "MICRO") != 0)
-         microsecResSupported_ = true;
+      if ( pl_get_enum_param(hPVCAM_, PARAM_EXP_RES, i, &expResVal, expResDesc, expResDescLen) )
+         if ( expResVal == EXP_RES_ONE_MICROSEC )
+            microsecResSupported_ = true;
    }
 
    /// MULTIPLIER GAIN
@@ -748,12 +762,24 @@ int Universal::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
    if (eAct == MM::AfterSet)
    {
       pProp->Get(bin);
-      binSize_ = bin;
-      // Setting the symmetric bin resets the assymetric bin
-      binXSize_= bin;
-      binYSize_= bin;
-
-      ClearROI();
+      if (!IsCapturing())
+      {
+         // If not capturing then change the bin immediately so it gets
+         // reflected in the UI.
+         binSize_ = bin;
+         // Setting the symmetric bin resets the assymetric bin
+         binXSize_= bin;
+         binYSize_= bin;
+         SetROI( 0, 0, camSerSize_, camParSize_ );
+      }
+      // If we are in the live mode, we just store the new values
+      // and resize the buffer once the acquisition is started again.
+      // (this fixes a crash that occured when switching binning during live mode)
+      newBinSize_ = bin;
+      newBinXSize_ = bin;
+      newBinYSize_ = bin;
+      sequenceModeReady_ = false;
+      singleFrameModeReady_ = false;
    }
    else if (eAct == MM::BeforeGet)
    {
@@ -785,10 +811,14 @@ int Universal::OnBinningX(MM::PropertyBase* pProp, MM::ActionType eAct)
       }
       else
       {
-
-         binXSize_ = binX;
-
-         ClearROI();
+         if (!IsCapturing())
+         {
+            binXSize_= binX;
+            SetROI( 0, 0, camSerSize_, camParSize_ );
+         }
+         newBinXSize_ = binX;
+         sequenceModeReady_ = false;
+         singleFrameModeReady_ = false;
       }
    }
    else if (eAct == MM::BeforeGet)
@@ -820,9 +850,14 @@ int Universal::OnBinningY(MM::PropertyBase* pProp, MM::ActionType eAct)
       }
       else
       {
-         binYSize_ = binY;
-
-         ClearROI();
+         if (!IsCapturing())
+         {
+            binYSize_= binY;
+            SetROI( 0, 0, camSerSize_, camParSize_ );
+         }
+         newBinYSize_ = binY;
+         sequenceModeReady_ = false;
+         singleFrameModeReady_ = false;
       }
    }
    else if (eAct == MM::BeforeGet)
@@ -1530,7 +1565,7 @@ bool Universal::WaitForExposureDone()throw()
    START_METHOD("Universal::WaitForExposureDone");
 
    MM::MMTime startTime = GetCurrentMMTime();
-  bool bRet = false;
+   bool bRet = false;
    rs_bool rsbRet = 0;
 
    try
@@ -1704,22 +1739,38 @@ int Universal::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize)
       return ERR_ROI_SIZE_NOT_SUPPORTED;
    }
    
-   // The acquisition must be stopped, and will be
-   // automatically started again by MMCore
+   // The acquisition must be stopped, and will be automatically started again by MMCore
    if (IsCapturing())
       StopSequenceAcquisition();
 
-   // request reconfiguration of acquisition before next use
+   // Request reconfiguration of acquisition before next use
    singleFrameModeReady_ = false;
-   sequenceModeReady_ = false;
+   sequenceModeReady_    = false;
 
-   roi_.PVCAMRegion( (uns16) x, (uns16) y, (uns16) xSize, (uns16) ySize, (uns16) binXSize_, (uns16) binYSize_, camRegion_ );
+   // This is a workaround for strange behavior of ROI in MicroManager (1.4.15)
+   // When ROI is drawn and applied on a binned image the MM sends the ROI in image coordinates, 
+   // e.g. 256x256 for 512x512 CCD with bin 2.
+   // However, when user clicks the full ROI button, the coordinates are suddenly sent in
+   // CCD coordinates, e.g. 512x512 for the same image (which is displayed as 256x256 image)
+   // Here we simply decide what is MicroManager trying to send us and handle the ROI accordingly.
+   // This might be a bug in the adapter code that makes the MM behave this way but I haven't found where.
+   if ( x == 0 && y == 0 && xSize == camSerSize_ && ySize == camParSize_ )
+   {
+      roi_.PVCAMRegion( (uns16)x, (uns16)y, (uns16)xSize, (uns16)ySize,
+                        (uns16)binXSize_, (uns16)binYSize_, camRegion_ );
+   }
+   else
+   {
+      roi_.PVCAMRegion( (uns16)(x*binXSize_), (uns16)(y*binYSize_),
+                        (uns16)(xSize*binXSize_), (uns16)(ySize*binYSize_),
+                        (uns16)binXSize_, (uns16)binYSize_, camRegion_ );
+   }
 
    // after a parameter is set, micromanager checks the size of the image,
    //  so we must make sure to update the size of the img_ buffer,
    //  before this function exits, also we don't want to configure a sequence
    //  when the initialized_ flag isn't set, because that simply isn't needed.
-   img_ = ImgBuffer( roi_.newXSize, roi_.newYSize, 2 );
+   img_.Resize(roi_.newXSize, roi_.newYSize, 2);
    colorImg_.Resize(roi_.newXSize, roi_.newYSize, 4);
 
    return DEVICE_OK;
@@ -2134,13 +2185,19 @@ int Universal::PrepareSequenceAcqusition()
    }
    else if (!sequenceModeReady_)
    {
+      if ( binSize_ != newBinSize_ || binXSize_ != newBinXSize_ || binYSize_ != newBinYSize_ )
+      {
+         // Binning has changed so we need to reset the ROI
+         roi_.PVCAMRegion( 0, 0, camSerSize_, camParSize_, (uns16)newBinXSize_,(uns16)newBinYSize_, camRegion_ );
+      }
+      binSize_ = newBinSize_;
+      binXSize_ = newBinXSize_;
+      binYSize_ = newBinYSize_;
       // reconfigure anything that has to do with pl_exp_setup_cont
       ResizeImageBufferContinuous();
 
-      // start thread
-      // prepare the core
+      GetCoreCallback()->InitializeImageBuffer( 1, 1, GetImageWidth(), GetImageHeight(), GetImageBytesPerPixel() );
       GetCoreCallback()->PrepareForAcq(this);
-
       sequenceModeReady_ = true;
    }
 
@@ -2161,7 +2218,7 @@ int Universal::StartSequenceAcquisition(long numImages, double interval_ms, bool
 
    stopOnOverflow_  = stopOnOverflow;
    numImages_       = numImages;
-   curImageCnt_    = 0;
+   curImageCnt_     = 0;
 
    MM::MMTime start = GetCurrentMMTime();
    g_pvcamLock.Lock();
@@ -2385,21 +2442,20 @@ int Universal::PushImage(const unsigned char* pixBuffer, Metadata* pMd )
    START_METHOD("Universal::PushImage");
 
    int nRet = DEVICE_ERR;
-
+   MM::Core* pCore = GetCoreCallback();
    // This method inserts a new image into the circular buffer (residing in MMCore)
-   nRet = GetCoreCallback()->InsertMultiChannel(this,
+   nRet = pCore->InsertMultiChannel(this,
       pixBuffer,
       1,
       GetImageWidth(),
       GetImageHeight(),
       GetImageBytesPerPixel(),
       pMd); // Inserting the md causes crash in debug builds
-
    if (!stopOnOverflow_ && nRet == DEVICE_BUFFER_OVERFLOW)
    {
       // do not stop on overflow - just reset the buffer
-      GetCoreCallback()->ClearImageBuffer(this);
-      nRet = GetCoreCallback()->InsertMultiChannel(this,
+      pCore->ClearImageBuffer(this);
+      nRet = pCore->InsertMultiChannel(this,
          pixBuffer,
          1,
          GetImageWidth(),

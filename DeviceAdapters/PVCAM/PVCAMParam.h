@@ -233,15 +233,38 @@ public:
         return mEnumStrings;
     }
 
+    std::vector<int32>& GetEnumValues()
+    {
+        return mEnumValues;
+    }
+
     /***
     * Sets the enumerable PVCAM parameter from string. The string agrument must be exactly the
     * same as obtained from ToString() or GetEnumStrings().
     */
-    int Set(std::string aValue)
+    int Set(const std::string& aValue)
     {
-        for ( unsigned i = 0; i < mEnumStrings.size(); i++)
+        for ( unsigned i = 0; i < mEnumStrings.size(); ++i)
         {
             if ( mEnumStrings[i].compare( aValue ) == 0 )
+            {
+                mCurrent = mEnumValues[i];
+                return DEVICE_OK;
+            }
+        }
+        mCamera->LogCamError(__LINE__, "PvEnumParam::Set() invalid argument");
+        return DEVICE_CAN_NOT_SET_PROPERTY;
+    }
+
+    /***
+    * Sets the enumerable PVCAM parameter from value. The value agrument must be exactly the
+    * same as obtained from GetEnumValues().
+    */
+    int Set(const int32 aValue)
+    {
+        for ( unsigned i = 0; i < mEnumValues.size(); ++i)
+        {
+            if ( mEnumValues[i] == aValue )
             {
                 mCurrent = mEnumValues[i];
                 return DEVICE_OK;
@@ -256,7 +279,7 @@ private:
 
    // Enum values and their corresponding names
    std::vector<std::string> mEnumStrings;
-   std::vector<int>         mEnumValues;
+   std::vector<int32>       mEnumValues;
 
 };
 

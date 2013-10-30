@@ -343,6 +343,12 @@ private:
    unsigned        binSize_;              // Symmetric binning value
    unsigned        binXSize_;             // Asymmetric binning value
    unsigned        binYSize_;             // Asymmetric binning value
+
+   // These are cached values for binning. Used when changing binning during live mode
+   unsigned        newBinSize_;
+   unsigned        newBinXSize_;
+   unsigned        newBinYSize_;
+
    char            camName_[CAM_NAME_LEN];
    char            camChipName_[CCD_NAME_LEN];
    PvParam<int16>* prmTemp_;              // CCD temperature
@@ -353,6 +359,7 @@ private:
    PvParam<uns16>* prmActualGain_;
    PvEnumParam*    prmTriggerMode_;
    PvEnumParam*    prmReadoutPort_;
+   PvEnumParam*    prmColorMode_;
 
    // color mode
    bool rgbaColor_;
