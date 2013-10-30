@@ -43,10 +43,6 @@ public class MultiCamera implements MMPlugin {
    }
 
     @Override
-   public void configurationChanged() {
-   }
-
-    @Override
    public String getInfo () {
       return "Multi Camera Plugin";
    }

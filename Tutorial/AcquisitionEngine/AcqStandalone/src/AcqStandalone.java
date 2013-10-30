@@ -141,12 +141,11 @@ public class AcqStandalone {
          
          TaggedImage img = null;
          do {
-            img = taggedImageQueue.take();
-            if (img.tags != null && img.tags.has(MMTags.Image.FRAME_INDEX)) {
-               System.out.println("Current frame index " + img.tags.getInt(MMTags.Image.FRAME_INDEX));
-            }
+            long lf = imageCache.lastAcquiredFrame();
+            if (lf >= 0)
+               System.out.println("Last frame " + lf);
             Thread.sleep(50);
-         } while (img != TaggedImageQueue.POISON);
+         } while (!imageCache.isFinished());
 
       } catch (InterruptedException e) {
          // TODO Auto-generated catch block

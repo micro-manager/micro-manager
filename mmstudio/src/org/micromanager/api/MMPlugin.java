@@ -57,14 +57,7 @@ package org.micromanager.api;
     * Open the module window
     */
    public void show();
-   
-   /**
-    * The main app calls this method when hardware settings change.
-    * This call signals to the module that it needs to update whatever
-    * information it needs from the MMCore.
-    */
-   public void configurationChanged();
-   
+      
    /**
     * Returns a very short (few words) description of the module.
     */

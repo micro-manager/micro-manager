@@ -69,10 +69,6 @@ public class SplitView implements MMPlugin {
    }
 
    @Override
-   public void configurationChanged() {
-   }
-
-   @Override
    public String getInfo () {
       return "SplitView Plugin";
    }

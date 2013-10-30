@@ -59,10 +59,6 @@ public class StageControl implements MMPlugin {
    }
 
    @Override
-   public void configurationChanged() {
-   }
-
-   @Override
    public String getInfo () {
       return "Stage Control Plugin";
    }

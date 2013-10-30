@@ -49,10 +49,6 @@ public class CRISP implements MMPlugin {
    }
 
     @Override
-   public void configurationChanged() {
-   }
-
-    @Override
    public String getInfo () {
       return "ASI CRISP Plugin";
    }
