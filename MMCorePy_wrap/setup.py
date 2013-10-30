@@ -32,7 +32,6 @@ mmcorepy_module = Extension('_MMCorePy',
                                     ],
                             language="c++",
                             include_dirs=numpy.distutils.misc_util.get_numpy_include_dirs(),
-                            libraries=['boost_system'],
                            )
 
 setup(name='MMCorePy',
