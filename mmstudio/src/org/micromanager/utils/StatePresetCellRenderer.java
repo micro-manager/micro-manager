@@ -7,6 +7,7 @@ package org.micromanager.utils;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Font;
+import java.text.ParseException;
 import javax.swing.JLabel;
 import javax.swing.JTable;
 import javax.swing.table.TableCellRenderer;
@@ -27,6 +28,7 @@ public class StatePresetCellRenderer implements TableCellRenderer {
     // using this renderer needs to be rendered.
     StateItem stateItem_;
 
+    @Override
     public Component getTableCellRendererComponent(JTable table, Object value,
             boolean isSelected, boolean hasFocus, int rowIndex, int colIndex) {
 
@@ -44,7 +46,11 @@ public class StatePresetCellRenderer implements TableCellRenderer {
             } else {
                 slider.setLimits(stateItem_.lowerLimit, stateItem_.upperLimit);
             }
-            slider.setText((String) value);
+           try {
+              slider.setText((String) value);
+           } catch (ParseException ex) {
+              ReportingUtils.logError(ex);
+           }
             slider.setToolTipText((String) value);
             comp = slider;
 

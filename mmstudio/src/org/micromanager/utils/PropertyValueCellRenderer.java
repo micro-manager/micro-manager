@@ -2,6 +2,7 @@ package org.micromanager.utils;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.text.ParseException;
 
 import javax.swing.JLabel;
 import javax.swing.JTable;
@@ -24,6 +25,7 @@ public class PropertyValueCellRenderer implements TableCellRenderer {
       this(false);
    }
 
+   @Override
    public Component getTableCellRendererComponent(JTable table, Object value,
            boolean isSelected, boolean hasFocus, int rowIndex, int colIndex) {
 
@@ -42,7 +44,11 @@ public class PropertyValueCellRenderer implements TableCellRenderer {
          } else {
             slider.setLimits(item_.lowerLimit, item_.upperLimit);
          }
-         slider.setText((String) value);
+         try {
+            slider.setText((String) value);
+         } catch (ParseException ex) {
+            ReportingUtils.logError(ex);
+         }
          slider.setToolTipText(item_.value);
          comp = slider;
       } else {

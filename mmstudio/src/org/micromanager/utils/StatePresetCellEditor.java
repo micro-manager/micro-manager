@@ -15,6 +15,7 @@ import javax.swing.table.TableCellEditor;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.text.ParseException;
 import java.util.Arrays;
 import javax.swing.JTable;
 import org.micromanager.ConfigGroupPad.StateTableData;
@@ -44,6 +45,7 @@ public class StatePresetCellEditor extends AbstractCellEditor implements TableCe
         super();
         slider_.addEditActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 fireEditingStopped();
             }
@@ -59,6 +61,7 @@ public class StatePresetCellEditor extends AbstractCellEditor implements TableCe
     }
 
 // This method is called when a cell value is edited by the user.
+    @Override
     public Component getTableCellEditorComponent(JTable table, Object value,
             boolean isSelected, int rowIndex, int vColIndex) {
 
@@ -84,7 +87,11 @@ public class StatePresetCellEditor extends AbstractCellEditor implements TableCe
                     } else {
                         slider_.setLimits(item_.lowerLimit, item_.upperLimit);
                     }
-                    slider_.setText((String) value);
+                   try {
+                      slider_.setText((String) value);
+                   } catch (ParseException ex) {
+                      ReportingUtils.logError(ex);
+                   }
                     return slider_;
 
                 } else if (item_.singlePropAllowed != null && item_.singlePropAllowed.length > 0) {
@@ -145,6 +152,7 @@ public class StatePresetCellEditor extends AbstractCellEditor implements TableCe
         // end editing on selection change
         combo_.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 fireEditingStopped();
             }
@@ -154,6 +162,7 @@ public class StatePresetCellEditor extends AbstractCellEditor implements TableCe
 
 // This method is called when editing is completed.
 // It must return the new value to be stored in the cell.
+    @Override
     public Object getCellEditorValue() {
         if (item_.allowed.length == 1) {
             if (item_.singleProp && item_.hasLimits) {

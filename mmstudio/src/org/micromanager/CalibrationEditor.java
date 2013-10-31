@@ -28,6 +28,7 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.*;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.prefs.Preferences;
@@ -923,7 +924,11 @@ public class CalibrationEditor extends MMDialog {
                         ReportingUtils.logError(e);
                      }
                   }
-                  slider_.setText((String)value);
+                  try {
+                     slider_.setText((String)value);
+                  } catch (ParseException ex) {
+                     ReportingUtils.logError(ex);
+                  }
                   return slider_;
                } else {
                   text_.setText((String)value);
@@ -1014,7 +1019,11 @@ public class CalibrationEditor extends MMDialog {
                } catch (Exception e) {
                   ReportingUtils.logError(e);
                }
-               slider.setText((String)value);
+               try {
+                  slider.setText((String)value);
+               } catch (ParseException ex) {
+                 ReportingUtils.logError(ex);
+               }
                slider.setToolTipText((String)value);
                comp = slider;
             } else {

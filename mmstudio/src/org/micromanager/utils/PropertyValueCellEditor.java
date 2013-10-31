@@ -9,6 +9,7 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.text.ParseException;
 
 import javax.swing.AbstractCellEditor;
 import javax.swing.JComboBox;
@@ -99,7 +100,11 @@ public class PropertyValueCellEditor extends AbstractCellEditor implements Table
                     } else {
                         slider_.setLimits(item_.lowerLimit, item_.upperLimit);
                     }
-                    slider_.setText((String) value);
+                   try {
+                      slider_.setText((String) value);
+                   } catch (ParseException ex) {
+                      ReportingUtils.logError(ex);
+                   }
                     return slider_;
                 } else {
                     text_.setText((String) value);
