@@ -33,6 +33,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.text.ParseException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -63,6 +65,7 @@ public class SliderPanel extends JPanel {
       textField_ = new JTextField();
       textField_.setFont(new Font("", Font.PLAIN, 10));
       textField_.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(final ActionEvent arg0) {
             onEditChange();
          }
@@ -91,8 +94,14 @@ public class SliderPanel extends JPanel {
 
 
    public String getText() {
-      // implicitly enforce limits
-      setText(textField_.getText());
+      try {
+         // implicitly enforce limits
+         setText(textField_.getText());
+      } catch (ParseException ex) {
+            ReportingUtils.logError(
+                    "Asked to convert an empty variable into a number in SliderPanel.java.  " 
+                    + "This indicates a faulty Device Adapter.");
+      }
       return textField_.getText();
    }
 
@@ -154,22 +163,20 @@ public class SliderPanel extends JPanel {
       }
    }
 
-   public void setText(String txt) {
+   public void setText(String txt) throws ParseException {
       double val;
-      try {
-         if (integer_) {
-            val = enforceLimits(NumberUtils.displayStringToInt(txt));
-            textField_.setText(NumberUtils.intToDisplayString((int) val));
-         } else {
-            val = enforceLimits(NumberUtils.displayStringToDouble(txt));
-            textField_.setText(NumberUtils.doubleToDisplayString(val));
-         }
-         slider_.getModel().removeChangeListener(sliderChangeListener_);
-         setSliderValue(val);
-         slider_.getModel().addChangeListener(sliderChangeListener_);
-      } catch (ParseException p) {
-         handleException (p);
+      if (integer_) {
+         val = enforceLimits(NumberUtils.displayStringToInt(txt));
+         textField_.setText(NumberUtils.intToDisplayString((int) val));
+      } else {
+         val = enforceLimits(NumberUtils.displayStringToDouble(txt));
+         textField_.setText(NumberUtils.doubleToDisplayString(val));
       }
+      slider_.getModel().removeChangeListener(sliderChangeListener_);
+      setSliderValue(val);
+      slider_.getModel().addChangeListener(sliderChangeListener_);
+
+
    }
 
    private double enforceLimits(double value) {

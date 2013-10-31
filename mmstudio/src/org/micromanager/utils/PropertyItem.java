@@ -62,7 +62,7 @@ public class PropertyItem {
 		   else
 			   value = coreValue;
 	   } catch (Exception e) {
-           ReportingUtils.logError(e);
+         ReportingUtils.logError(e);
 		   value = coreValue;
 	   }
    }
@@ -100,7 +100,7 @@ public class PropertyItem {
 
          sort();
 
-         String coreVal = "";
+         String coreVal;
          if (cached)
             coreVal = core.getPropertyFromCache(deviceName,propertyName);
          else

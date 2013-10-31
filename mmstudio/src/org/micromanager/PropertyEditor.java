@@ -166,6 +166,7 @@ public class PropertyEditor extends MMFrame{
       springLayout.putConstraint(SpringLayout.SOUTH, refreshButton, 32, SpringLayout.NORTH, getContentPane());
       springLayout.putConstraint(SpringLayout.NORTH, refreshButton, 9, SpringLayout.NORTH, getContentPane());
       refreshButton.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent e) {
             refresh();
          }
@@ -175,6 +176,7 @@ public class PropertyEditor extends MMFrame{
       showReadonlyCheckBox_ = new JCheckBox();
       showReadonlyCheckBox_.setFont(new Font("Arial", Font.PLAIN, 10));
       showReadonlyCheckBox_.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent e) {
             // show/hide read-only properties
             data_.setShowReadOnly(showReadonlyCheckBox_.isSelected());
@@ -196,6 +198,7 @@ public class PropertyEditor extends MMFrame{
       showCamerasCheckBox_ = new JCheckBox();
       showCamerasCheckBox_.setFont(new Font("", Font.PLAIN, 10));
       showCamerasCheckBox_.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent arg0) {
             flags_.cameras_ = showCamerasCheckBox_.isSelected();
             data_.update(false);
@@ -210,6 +213,7 @@ public class PropertyEditor extends MMFrame{
       showShuttersCheckBox_ = new JCheckBox();
       showShuttersCheckBox_.setFont(new Font("", Font.PLAIN, 10));
       showShuttersCheckBox_.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent arg0) {
             flags_.shutters_ = showShuttersCheckBox_.isSelected();
             data_.update(false);
@@ -224,6 +228,7 @@ public class PropertyEditor extends MMFrame{
       showStagesCheckBox_ = new JCheckBox();
       showStagesCheckBox_.setFont(new Font("", Font.PLAIN, 10));
       showStagesCheckBox_.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent arg0) {
             flags_.stages_ = showStagesCheckBox_.isSelected();
             data_.update(false);
@@ -239,6 +244,7 @@ public class PropertyEditor extends MMFrame{
       showStateDevicesCheckBox_ = new JCheckBox();
       showStateDevicesCheckBox_.setFont(new Font("", Font.PLAIN, 10));
       showStateDevicesCheckBox_.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent arg0) {
             flags_.state_ = showStateDevicesCheckBox_.isSelected();
             data_.update(false);
@@ -254,6 +260,7 @@ public class PropertyEditor extends MMFrame{
       showOtherCheckBox_ = new JCheckBox();
       showOtherCheckBox_.setFont(new Font("", Font.PLAIN, 10));
       showOtherCheckBox_.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent arg0) {
             flags_.other_ = showOtherCheckBox_.isSelected();
             data_.update(false);
