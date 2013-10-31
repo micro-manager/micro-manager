@@ -37,25 +37,25 @@ public class SequenceSettings {
    public static final double Version = 1.0;
 
    // acquisition protocol
-   public int numFrames = 1;   
-   public double intervalMs = 0.0;
-   public ArrayList<Double> customIntervalsMs = null;
-   public ArrayList<ChannelSpec> channels = new ArrayList<ChannelSpec>();
-   public ArrayList<Double> slices = new ArrayList<Double>();
-   public boolean relativeZSlice = false;
-   public boolean slicesFirst = false;
-   public boolean timeFirst = false;
-   public boolean keepShutterOpenSlices = false;
-   public boolean keepShutterOpenChannels = false;
-   public boolean useAutofocus = false;
-   public int skipAutofocusCount = 0;
-   public boolean save = false;
-   public String root = null;
-   public String prefix = null;
-   public double zReference = 0;
-   public String comment = "";
-   public String channelGroup = "";
-   public boolean usePositionList = false;
+   public int numFrames = 1;                                                 // number of frames
+   public double intervalMs = 0.0;                                           // frame interval
+   public ArrayList<Double> customIntervalsMs = null;                        // sequence of custom intervals or null
+   public ArrayList<ChannelSpec> channels = new ArrayList<ChannelSpec>();    // an array of ChannelSpec settings (one for each channel)
+   public ArrayList<Double> slices = new ArrayList<Double>();                // slice Z coordinates
+   public boolean relativeZSlice = false;                                    // are Z coordinates relative or absolute
+   public boolean slicesFirst = false;                                       // slice coordinate changes first
+   public boolean timeFirst = false;                                         // frame coordinate changes first
+   public boolean keepShutterOpenSlices = false;                             // do we keep shutter open during slice changes
+   public boolean keepShutterOpenChannels = false;                           // do we keep shutter open channel changes
+   public boolean useAutofocus = false;                                      // are we going to run autofocus before acquiring each position/frame
+   public int skipAutofocusCount = 0;                                        // how many af opportunities to skip                          
+   public boolean save = false;                                              // save to disk?
+   public String root = null;                                                // root directory name
+   public String prefix = null;                                              // acquisition name
+   public double zReference = 0.0;                                           // referent z position for relative moves                                            
+   public String comment = "";                                               // comment text
+   public String channelGroup = "";                                          // which group is used to define fluorescence channels
+   public boolean usePositionList = false;                                   // true if we want to have multiple positions
       
    public static String toJSONStream(SequenceSettings settings) {
       Gson gson = new GsonBuilder().setPrettyPrinting().create();
