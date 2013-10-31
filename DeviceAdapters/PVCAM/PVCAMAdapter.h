@@ -355,8 +355,6 @@ private:
    PvParam<int16>* prmTempSetpoint_;      // Desired CCD temperature
    PvParam<int16>* prmGainIndex_;
    PvParam<uns16>* prmGainMultFactor_;
-   PvParam<uns16>* prmReadNoise_;
-   PvParam<uns16>* prmActualGain_;
    PvEnumParam*    prmTriggerMode_;
    PvEnumParam*    prmReadoutPort_;
    PvEnumParam*    prmColorMode_;

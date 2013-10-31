@@ -204,8 +204,6 @@ rgbaColor_(false)
    prmTempSetpoint_   = NULL;
    prmGainIndex_      = NULL;
    prmGainMultFactor_ = NULL;
-   prmReadNoise_      = NULL;
-   prmActualGain_     = NULL;
    prmTriggerMode_    = NULL;
    prmReadoutPort_    = NULL;
    prmColorMode_      = NULL;
@@ -236,10 +234,6 @@ Universal::~Universal()
        delete prmGainIndex_;
    if ( prmGainMultFactor_ )
        delete prmGainMultFactor_;
-   if ( prmReadNoise_ )
-       delete prmReadNoise_;
-   if ( prmActualGain_ )
-       delete prmActualGain_;
    if ( prmTriggerMode_ )
        delete prmTriggerMode_;
    if ( prmReadoutPort_ )
@@ -1107,11 +1101,6 @@ int Universal::OnGain(MM::PropertyBase* pProp, MM::ActionType eAct)
       prmGainIndex_->Set(pvGain);
       prmGainIndex_->Apply();
 
-      // The actual gain changes with Gain so we need to update the value
-      if (prmActualGain_ && prmActualGain_->IsAvailable())
-      {
-          prmActualGain_->Update();
-      }
       singleFrameModeReady_ = false;
    }
    else if (eAct == MM::BeforeGet)
@@ -1333,25 +1322,6 @@ int Universal::initializePostProcessing()
 
    rs_bool bAvail;
    CPropertyAction *pAct;
-   // PARAM_ACTUAL_GAIN changes with PARAM_GAIN
-   prmActualGain_ = new PvParam<uns16>( g_Keyword_ActualGain, PARAM_ACTUAL_GAIN, this );
-   if ( prmActualGain_->IsAvailable() )
-   {
-      pAct = new CPropertyAction (this, &Universal::OnActGainProperties);
-      nRet = CreateProperty(g_Keyword_ActualGain, 
-          CDeviceUtils::ConvertToString(prmActualGain_->Current()), MM::Float, true, pAct);
-      assert(nRet == DEVICE_OK);
-   }
-
-   // PARAM_READ_NOISE changes with speed
-   prmReadNoise_ = new PvParam<uns16>( g_Keyword_ReadNoise, PARAM_READ_NOISE, this );
-   if ( prmReadNoise_->IsAvailable() )
-   {
-      pAct = new CPropertyAction (this, &Universal::OnReadNoiseProperties);
-      nRet = CreateProperty(g_Keyword_ReadNoise,
-          CDeviceUtils::ConvertToString(prmReadNoise_->Current()), MM::Float, true, pAct);
-      assert(nRet == DEVICE_OK);
-   }
 
    if (pl_get_param(hPVCAM_, PARAM_PP_INDEX, ATTR_AVAIL, &bAvail) && bAvail)
    {
@@ -1854,13 +1824,6 @@ int Universal::speedChanged()
         SetAllowedValues(MM::g_Keyword_Gain, gainChoices);
     }
     SetProperty( MM::g_Keyword_Gain, CDeviceUtils::ConvertToString(camCurrentSpeed_.gainMin) );
-
-    // Different gains have different read noise
-    if ( prmReadNoise_ && prmReadNoise_->IsAvailable() )
-    {
-        prmReadNoise_->Update();
-        SetProperty( g_Keyword_ReadNoise, CDeviceUtils::ConvertToString(prmReadNoise_->Current()));
-    }
        
     return DEVICE_OK;
 }
@@ -2766,38 +2729,6 @@ int Universal::OnPostProcProperties(MM::PropertyBase* pProp, MM::ActionType eAct
       }
    }
 
-   return DEVICE_OK;
-}
-
-// This changes with gain.
-int Universal::OnActGainProperties(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-   START_ONPROPERTY("Universal::OnActGainProperties", eAct);
-   if (eAct == MM::AfterSet)
-   {
-      // PARAM_ACTUAL_GAIN is read only and changes with PARAM_GAIN so the
-      // camActualGain_ should be updated after setting the gain.
-   }
-   else if (eAct == MM::BeforeGet)
-   {
-      pProp->Set((double)prmActualGain_->Current()/100.0);
-   }
-   return DEVICE_OK;
-}
-
-
-// The PARAM_READ_NOISE changes with speed
-int Universal::OnReadNoiseProperties(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-   START_ONPROPERTY("Universal::OnReadNoiseProperties", eAct);
-   if (eAct == MM::AfterSet)
-   {
-      // PARAM_READ_NOISE is read only and changes with speed
-   }
-   else if (eAct == MM::BeforeGet)
-   {
-      pProp->Set((double)prmReadNoise_->Current()/100.0);
-   }
    return DEVICE_OK;
 }
 
