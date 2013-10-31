@@ -17,6 +17,7 @@ import org.micromanager.acquisition.SequenceSettings;
 import org.micromanager.acquisition.TaggedImageQueue;
 import org.micromanager.acquisition.TaggedImageStorageDiskDefault;
 import org.micromanager.api.IAcquisitionEngine2010;
+import org.micromanager.api.ImageCacheListener;
 import org.micromanager.api.MMTags;
 import org.micromanager.api.TaggedImageStorage;
 import org.micromanager.navigation.MultiStagePosition;
@@ -24,13 +25,13 @@ import org.micromanager.navigation.PositionList;
 import org.micromanager.utils.ChannelSpec;
 
 
-public class AcqStandalone {
-
+public class AcqStandalone implements ImageCacheListener {
+   
    public synchronized static void main(String[] args) {
       String channelGroup = "Channel";
       SequenceSettings s = new SequenceSettings();
 
-      s.numFrames = 3;
+      s.numFrames = 20;
 
       s.slices = new ArrayList<Double>();
       s.slices.add(-1.0);
@@ -124,6 +125,7 @@ public class AcqStandalone {
 
       IAcquisitionEngine2010 acqEng = null;
       acqEng = new AcquisitionEngine2010(core);
+      AcqStandalone listener = new AcqStandalone();
 
       try {
          // Start up the acquisition engine
@@ -134,16 +136,13 @@ public class AcqStandalone {
          // create storage
          TaggedImageStorage storage = new TaggedImageStorageDiskDefault(actualPath, true, summary);
          MMImageCache imageCache = new MMImageCache(storage);
+         imageCache.addImageCacheListener(listener);
          
          // Start pumping images into the ImageCache
          DefaultTaggedImageSink sink = new DefaultTaggedImageSink(taggedImageQueue, imageCache);
          sink.start();
          
-         TaggedImage img = null;
          do {
-            long lf = imageCache.lastAcquiredFrame();
-            if (lf >= 0)
-               System.out.println("Last frame " + lf);
             Thread.sleep(50);
          } while (!imageCache.isFinished());
 
@@ -155,6 +154,26 @@ public class AcqStandalone {
          e.printStackTrace();
       }
 
+   }
+   
+   @Override
+   public void imageReceived(TaggedImage taggedImage) {
+     try {
+      int frame = taggedImage.tags.getInt(MMTags.Image.FRAME);
+      String channel = taggedImage.tags.getString(MMTags.Image.CHANNEL);
+      int slice = taggedImage.tags.getInt(MMTags.Image.SLICE_INDEX);
+      int position = taggedImage.tags.getInt(MMTags.Image.POS_INDEX);
+      System.out.println("Acquired " + position + ", " + channel + ", " + frame + ", " + slice);
+   } catch (JSONException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+   }
+      
+   }
+
+   @Override
+   public void imagingFinished(String path) {
+      System.out.println("Acqusition finished: " + path);
    }
 
 }
