@@ -4,14 +4,13 @@
 #include <algorithm>
 #include <iterator>
 
-#define _LOG_OUT_
+//#define _LOG_OUT_
 const char* g_CameraName = "MoticCam";
 
 const char* g_PixelType_8bit = "8bit";
+const char* g_PixelType_16bit = "16bit";
 const char* g_PixelType_32bitRGB = "32bitRGB";
-//const char* g_PixelType_32bitRGB = "32bitRGB";
-//const char* g_PixelType_64bitRGB = "64bitRGB";
-
+const char* g_PixelType_64bitRGB = "64bitRGB";
 
 // windows DLL entry code
 #ifdef WIN32
@@ -102,7 +101,8 @@ CMoticCamera::CMoticCamera() :
    m_iRoiY(0),
    //m_thd(0),
    m_bShow(false),
-   m_pBuffer(NULL),
+   m_pBuffer(0),
+   m_iBufferSize(0),
    m_iBitCounts(24),
    m_bROI(false),
    m_iCurDeviceIdx(-1),
@@ -138,6 +138,12 @@ CMoticCamera::~CMoticCamera()
 
    StopSequenceAcquisition();
    //delete m_thd;
+   if(m_pBuffer)
+   {
+     delete[]m_pBuffer;
+     m_pBuffer = 0;
+   }
+   m_iBufferSize = 0;
 }
 
 /**
@@ -445,15 +451,29 @@ int CMoticCamera::SnapImage()
 #ifdef _LOG_OUT_
   OutputDebugString("SnapImage");
 #endif
+long x,y, bits, channel;
+ if(MIDP_GetFormat(&x,&y, &bits, &channel) == 0)
+ {   
+   ReAllocalBuffer(channel*bits*x*y/8);
+ }
+#ifdef _LOG_OUT_
+  OutputDebugString("MIDP_GetFrameEx");
+#endif
   int w = m_img.Width();
   int h = m_img.Height();  
   int iTry = 0;
   while( 0 != MIDP_GetFrameEx((unsigned char*)m_pBuffer, m_iRoiX, m_iRoiY, w, h, w*m_iBitCounts/8, true))
   {
+#ifdef _LOG_OUT_
+    OutputDebugString("MIDP_GetFrameEx-ERR");
+#endif
     Sleep(100);
     if(+iTry > 10)
       break;
   }
+#ifdef _LOG_OUT_
+  OutputDebugString("Convert Image");
+#endif
   BYTE* pDest = m_img.GetPixelsRW(); 
   int size = w*h;
   switch(m_iBitCounts)
@@ -508,9 +528,9 @@ const unsigned char* CMoticCamera::GetImageBuffer()
 */
 unsigned CMoticCamera::GetImageWidth() const
 {
-#ifdef _LOG_OUT_
-  OutputDebugString("GetImageWidth");
-#endif
+// #ifdef _LOG_OUT_
+//   OutputDebugString("GetImageWidth");
+// #endif
    return m_img.Width();
 }
 
@@ -520,9 +540,9 @@ unsigned CMoticCamera::GetImageWidth() const
 */
 unsigned CMoticCamera::GetImageHeight() const
 {
-#ifdef _LOG_OUT_
-  OutputDebugString("GetImageHeight");
-#endif
+// #ifdef _LOG_OUT_
+//   OutputDebugString("GetImageHeight");
+// #endif
    return m_img.Height();
 }
 
@@ -532,9 +552,9 @@ unsigned CMoticCamera::GetImageHeight() const
 */
 unsigned CMoticCamera::GetImageBytesPerPixel() const
 {
-#ifdef _LOG_OUT_
-  OutputDebugString("GetImageBytes");
-#endif
+// #ifdef _LOG_OUT_
+//   OutputDebugString("GetImageBytes");
+// #endif
    return m_img.Depth();
 } 
 
@@ -546,10 +566,13 @@ unsigned CMoticCamera::GetImageBytesPerPixel() const
 */
 unsigned CMoticCamera::GetBitDepth() const
 {
-#ifdef _LOG_OUT_
-  OutputDebugString("GetBitDepth");
-#endif
+// #ifdef _LOG_OUT_
+//   OutputDebugString("GetBitDepth");
+// #endif
+  if(m_iBytesPerPixel == 1 || m_iBytesPerPixel == 4)
    return 8;
+  else
+    return 16;
 }
 
 /**
@@ -558,9 +581,9 @@ unsigned CMoticCamera::GetBitDepth() const
 */
 long CMoticCamera::GetImageBufferSize() const
 {
-#ifdef _LOG_OUT_
-  OutputDebugString("GetImageBufferSize");
-#endif
+// #ifdef _LOG_OUT_
+//   OutputDebugString("GetImageBufferSize");
+// #endif
    return m_img.Width() * m_img.Height() * GetImageBytesPerPixel();
 }
 
@@ -580,9 +603,9 @@ long CMoticCamera::GetImageBufferSize() const
 */
 int CMoticCamera::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize)
 {
-#ifdef _LOG_OUT_
-  OutputDebugString("SetROI");
-#endif
+// #ifdef _LOG_OUT_
+//   OutputDebugString("SetROI");
+// #endif
    if (xSize == 0 && ySize == 0)
    {   
       // effectively clear ROI
@@ -600,9 +623,9 @@ int CMoticCamera::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize)
      m_iRoiY = y;
       
    }
-#ifdef _LOG_OUT_
-   OutputDebugString("SetROI OK");
-#endif
+// #ifdef _LOG_OUT_
+//    OutputDebugString("SetROI OK");
+// #endif
    return DEVICE_OK;
 }
 
@@ -612,17 +635,17 @@ int CMoticCamera::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize)
 */
 int CMoticCamera::GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySize)
 {
-#ifdef _LOG_OUT_
-  OutputDebugString("GetROI");
-#endif
+// #ifdef _LOG_OUT_
+//   OutputDebugString("GetROI");
+// #endif
    x = m_iRoiX;
    y = m_iRoiY;
 
    xSize = m_img.Width();
    ySize = m_img.Height();
-#ifdef _LOG_OUT_
-   OutputDebugString("GetROI OK");
-#endif
+// #ifdef _LOG_OUT_
+//    OutputDebugString("GetROI OK");
+// #endif
    return DEVICE_OK;
 }
 
@@ -666,7 +689,9 @@ void CMoticCamera::SetExposure(double exp)
 #ifdef _LOG_OUT_
   OutputDebugString("SetExposure");
 #endif
-   m_dExposurems = exp;   
+   m_dExposurems = exp;  
+   long curExp = (long)(m_dExposurems*100);
+   MIDP_SetExposureTime(curExp);
 }
 
 /**
@@ -690,7 +715,9 @@ int CMoticCamera::SetBinning(int binF)
 #ifdef _LOG_OUT_
   OutputDebugString("SetBinning");
 #endif
-   return SetProperty(MM::g_Keyword_Binning, CDeviceUtils::ConvertToString(binF));
+  MIDP_SelectResByIndex(m_iBinning);
+  ResizeImageBuffer();
+  return SetProperty(MM::g_Keyword_Binning, CDeviceUtils::ConvertToString(binF));
 }
 
 int CMoticCamera::PrepareSequenceAcqusition()
@@ -836,14 +863,14 @@ bool CMoticCamera::IsCapturing()
 */
 int CMoticCamera::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-#ifdef _LOG_OUT_
-  OutputDebugString("OnBinning");
-#endif
+// #ifdef _LOG_OUT_
+//   OutputDebugString("OnBinning");
+// #endif
    if (eAct == MM::AfterSet)
    {
-#ifdef _LOG_OUT_
-     OutputDebugString("AfterSet");
-#endif
+// #ifdef _LOG_OUT_
+//      OutputDebugString("AfterSet");
+// #endif
       long binSize;
       pProp->Get(binSize);
       m_iBinning = (int)binSize;
@@ -852,15 +879,15 @@ int CMoticCamera::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    else if (eAct == MM::BeforeGet)
    {
-#ifdef _LOG_OUT_
-     OutputDebugString("BeforeGet");
-#endif
+// #ifdef _LOG_OUT_
+//      OutputDebugString("BeforeGet");
+// #endif
      m_iBinning = MIDP_GetCurResolutionIndex();
       pProp->Set((long)m_iBinning);
    }
-#ifdef _LOG_OUT_
-   OutputDebugString("OnBinning OK");
-#endif
+// #ifdef _LOG_OUT_
+//    OutputDebugString("OnBinning OK");
+// #endif
    return DEVICE_OK;
 }
 
@@ -878,20 +905,113 @@ int CMoticCamera::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
        string val;
        pProp->Get(val);
        if (val.compare(g_PixelType_8bit) == 0)
+       {
+         MIDP_SetBitCount(8);
+         Sleep(1000);
           m_iBytesPerPixel = 1;
+          m_iBitCounts = 8;
+       }
+       else if(val.compare(g_PixelType_16bit) == 0)
+       {
+         MIDP_SetBitCount(16);
+         Sleep(1000);
+         m_iBytesPerPixel = 2;
+         m_iBitCounts = 16;
+       }      
        else if (val.compare(g_PixelType_32bitRGB) == 0)
-          m_iBytesPerPixel = 4;
+       {
+         MIDP_SetBitCount(8);
+          Sleep(1000);
+         m_iBytesPerPixel = 4;
+         m_iBitCounts = 24;
+       }
+       else if(val.compare(g_PixelType_64bitRGB) == 0)
+       {
+         MIDP_SetBitCount(16);
+          Sleep(1000);
+         m_iBytesPerPixel = 8;
+         m_iBitCounts = 48;
+       }
        else
           assert(false);
- 
+
+       //////////////////////////////////////////////////////////////////////////
+       char buf[MM::MaxStrLength];
+       GetProperty(MM::g_Keyword_PixelType, buf);
+       std::string pixelType(buf);
+       unsigned int bytesPerPixel = 1;
+       if (pixelType.compare(g_PixelType_8bit) == 0)
+       {
+         if(m_iBytesPerPixel == 2)
+         {
+           SetProperty(MM::g_Keyword_PixelType, g_PixelType_16bit);           
+         }
+         else if(m_iBytesPerPixel == 4)
+         {
+           SetProperty(MM::g_Keyword_PixelType, g_PixelType_32bitRGB);
+         }
+         else if(m_iBytesPerPixel == 8)
+         {
+           SetProperty(MM::g_Keyword_PixelType, g_PixelType_64bitRGB);
+         }
+       }
+       else if (pixelType.compare(g_PixelType_16bit) == 0)
+       {
+         if(m_iBytesPerPixel == 1)
+         {
+           SetProperty(MM::g_Keyword_PixelType, g_PixelType_8bit);
+         }
+         else if(m_iBytesPerPixel == 4)
+         {
+           SetProperty(MM::g_Keyword_PixelType, g_PixelType_32bitRGB);
+         }
+         else if(m_iBytesPerPixel == 8)
+         {
+           SetProperty(MM::g_Keyword_PixelType, g_PixelType_64bitRGB);
+         }
+       }
+       else if (pixelType.compare(g_PixelType_32bitRGB) == 0)
+       {
+         if(m_iBytesPerPixel == 1)
+         {
+           SetProperty(MM::g_Keyword_PixelType, g_PixelType_8bit);
+         }
+         else if(m_iBytesPerPixel == 2)
+         {
+           SetProperty(MM::g_Keyword_PixelType, g_PixelType_16bit);
+         }        
+         else if(m_iBytesPerPixel == 8)
+         {
+           SetProperty(MM::g_Keyword_PixelType, g_PixelType_64bitRGB);
+         }
+       }
+       else if (pixelType.compare(g_PixelType_64bitRGB) == 0)
+       {
+         if(m_iBytesPerPixel == 1)
+         {
+           SetProperty(MM::g_Keyword_PixelType, g_PixelType_8bit);
+         }
+         else if(m_iBytesPerPixel == 2)
+         {
+           SetProperty(MM::g_Keyword_PixelType, g_PixelType_16bit);
+         }
+         else if(m_iBytesPerPixel == 4)
+         {
+           SetProperty(MM::g_Keyword_PixelType, g_PixelType_32bitRGB);
+         }        
+       }
        ResizeImageBuffer();
     }
     else if (eAct == MM::BeforeGet)
     {
        if (m_iBytesPerPixel == 1)
           pProp->Set(g_PixelType_8bit);
+       else if(m_iBytesPerPixel == 2)
+         pProp->Set(g_PixelType_16bit);
        else if (m_iBytesPerPixel == 4)
           pProp->Set(g_PixelType_32bitRGB);
+       else if(m_iBytesPerPixel == 8)
+         pProp->Set(g_PixelType_64bitRGB);
        else
           assert(false); // this should never happen
     }
@@ -940,12 +1060,10 @@ int CMoticCamera::ResizeImageBuffer()
 #ifdef _LOG_OUT_
   OutputDebugString("ResizeImageBuffer");
 #endif
-   m_img.Resize(m_vBinning[2*m_iBinning], m_vBinning[2*m_iBinning + 1], m_iBytesPerPixel);
-   if(m_pBuffer)
-   {
-     delete[] m_pBuffer;
-   }
-   m_pBuffer = new BYTE[m_img.Width()*m_img.Height()*m_iBitCounts/8];
+  int w = m_vBinning[2*m_iBinning];
+  int h = m_vBinning[2*m_iBinning + 1];
+   m_img.Resize(w, h, m_iBytesPerPixel);
+   ReAllocalBuffer(w*h*m_iBitCounts/8);
 #ifdef _LOG_OUT_
    char cOut[100];
    wsprintf(cOut, "%d--%d-%d", m_img.Width(), m_img.Height(), m_iBitCounts);
@@ -1095,6 +1213,7 @@ void CMoticCamera::InitPixelType()
     OutputDebugString("MIDP_GetFormat Okay");
 #endif
     m_iBitCounts = bits*channels;//8->1,16->2,24->3(32->4),48->6(64->16)
+
   }  
  // pixel type
   CPropertyAction*pAct = new CPropertyAction (this, &CMoticCamera::OnPixelType);
@@ -1102,17 +1221,25 @@ void CMoticCamera::InitPixelType()
   vector<string> pixelTypeValues;
   if(channels == 1)
   {
-    ret = CreateProperty(MM::g_Keyword_PixelType, "8bit", MM::String, false, pAct);   
+    ret = CreateProperty(MM::g_Keyword_PixelType, g_PixelType_8bit, MM::String, false, pAct);   
     pixelTypeValues.push_back(g_PixelType_8bit); 
     m_iBytesPerPixel = 1;
+   // if(MIDP_Has16Bits() == 0)
+    {
+      pixelTypeValues.push_back(g_PixelType_16bit);
+    }
   }
   else if(channels == 3)
   {
-    ret = CreateProperty(MM::g_Keyword_PixelType, "32bitRGB", MM::String, false, pAct);
+    ret = CreateProperty(MM::g_Keyword_PixelType, g_PixelType_32bitRGB, MM::String, false, pAct);
     pixelTypeValues.push_back(g_PixelType_8bit);
     pixelTypeValues.push_back(g_PixelType_32bitRGB);
+   // if(MIDP_Has16Bits() == 0)
+    {
+      pixelTypeValues.push_back(g_PixelType_16bit);
+      pixelTypeValues.push_back(g_PixelType_64bitRGB);
+    }
     m_iBytesPerPixel = 4;
-   
   }
   ret = SetAllowedValues(MM::g_Keyword_PixelType, pixelTypeValues);  
 #ifdef _LOG_OUT_
@@ -1140,16 +1267,16 @@ void CMoticCamera::InitExposure()
 #ifdef _LOG_OUT_
   OutputDebugString("InitExposure");
 #endif
-  MIDP_GetExposureValueRange(&m_lMinExposure, &m_lMaxExposure);
+  MIDP_GetExposureTimeRange(&m_lMinExposure, &m_lMaxExposure);
   long curExp = 0;
-  MIDP_GetExposureValue(&curExp); 
-  m_dExposurems = curExp;
+  MIDP_GetExposureTime(&curExp); 
+  m_dExposurems = curExp/100.0;
   char buf[10];
   sprintf(buf, "%0.1f\0", m_dExposurems);
   CPropertyAction *pAct = new CPropertyAction (this, &CMoticCamera::OnExposure);
    int ret = CreateProperty(MM::g_Keyword_Exposure, buf, MM::Float, false, pAct);
    //assert(ret == DEVICE_OK);
-   SetPropertyLimits(MM::g_Keyword_Exposure, (double)m_lMinExposure, (double)m_lMaxExposure);
+   SetPropertyLimits(MM::g_Keyword_Exposure, (double)m_lMinExposure/100.0, (double)m_lMaxExposure/100.0);
   // m_dExposurems = 10.0;
 }
 
@@ -1164,8 +1291,8 @@ int CMoticCamera::OnExposure( MM::PropertyBase* pProp, MM::ActionType eAct )
     OutputDebugString("AfterSet");
 #endif
     pProp->Get(m_dExposurems);
-    long curExp = (long)(m_dExposurems);
-    MIDP_SetExposureValue(curExp);
+    long curExp = (long)(m_dExposurems*100);
+    MIDP_SetExposureTime(curExp);
   }
   else if (eAct == MM::BeforeGet)
   {
@@ -1173,8 +1300,8 @@ int CMoticCamera::OnExposure( MM::PropertyBase* pProp, MM::ActionType eAct )
     OutputDebugString("m_dExposurems");
 #endif
     long curExp;
-    MIDP_GetExposureValue(&curExp);
-    m_dExposurems = curExp;
+    MIDP_GetExposureTime(&curExp);
+    m_dExposurems = curExp/100.0;
     pProp->Set(m_dExposurems);
   }
 #ifdef _LOG_OUT_
@@ -1210,4 +1337,15 @@ int CMoticCamera::InitDevice()
 
   
    return DEVICE_OK;
+}
+
+void CMoticCamera::ReAllocalBuffer(int size)
+{
+  if(size <= m_iBufferSize)return;
+  if(m_pBuffer)
+  {
+    delete[] m_pBuffer;
+  }   
+  m_iBufferSize = size;
+  m_pBuffer = new BYTE[size];
 }

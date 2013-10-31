@@ -66,12 +66,17 @@ public:
   //////////////////////////////////////////////////////////////////////////
   unsigned GetNumberOfComponents() const 
   {
-    return m_iBytesPerPixel;    
+    if(m_iBytesPerPixel == 1 || m_iBytesPerPixel == 2)return 1;
+    return 4;
   }
 
   int GetComponentName(unsigned channel, char* name)
   {
-    if(channel == 0)
+    if(m_iBytesPerPixel == 1 || m_iBytesPerPixel == 2)
+    {
+       CDeviceUtils::CopyLimitedString(name, "Grayscale");
+    }
+    else if(channel == 0)
     {
       CDeviceUtils::CopyLimitedString(name, "Blue");
     }
@@ -167,15 +172,18 @@ private:
   int m_iCurDeviceIdx;
   bool stopOnOverflow;
 
+  int m_iBufferSize;
+
 private:
   int ResizeImageBuffer();
+  void ReAllocalBuffer(int size);
  // void GenerateImage();
   int InsertImage();
   void InitBinning();
   void InitPixelType();
   void InitGain();
   void InitExposure();
-  int InitDevice( );
+  int InitDevice( );  
 };
 /*
 class SequenceThread : public MMDeviceThreadBase
