@@ -41,14 +41,12 @@ public class AcqStandalone implements ImageCacheListener {
 
       s.channels = new ArrayList<ChannelSpec>();
       ChannelSpec ch1 = new ChannelSpec();
-      ch1.config_ = "DAPI";
-      ch1.name_ = "DAPI"; // what is the difference between 'name' and 'config'?
-      ch1.exposure_ = 5.0;
+      ch1.config = "DAPI";
+      ch1.exposure = 5.0;
       s.channels.add(ch1);
       ChannelSpec ch2 = new ChannelSpec();
-      ch2.config_ = "FITC";
-      ch2.name_ = "FITC";
-      ch2.exposure_ = 15.0;
+      ch2.config = "FITC";
+      ch2.exposure = 15.0;
       s.channels.add(ch2);
 
       s.prefix = "ACQ-TEST-B";

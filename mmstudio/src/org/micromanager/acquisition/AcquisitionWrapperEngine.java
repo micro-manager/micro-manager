@@ -146,7 +146,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       int numChannels = 0;
       if (useChannels_) {
          for (ChannelSpec channel : channels_) {
-            if (channel.useChannel_) {
+            if (channel.useChannel) {
                ++numChannels;
             }
          }
@@ -196,7 +196,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
 
    private void updateChannelCameras() {
       for (ChannelSpec channel : channels_) {
-         channel.camera_ = getSource(channel);
+         channel.camera = getSource(channel);
       }
    }
 
@@ -220,7 +220,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    private String getSource(ChannelSpec channel) {
       PropertySetting setting;
       try {
-         Configuration state = core_.getConfigState(core_.getChannelGroup(), channel.config_);
+         Configuration state = core_.getConfigState(core_.getChannelGroup(), channel.config);
          if (state.isPropertyIncluded("Core", "Camera")) {
             return state.getSetting("Core", "Camera").getPropertyValue();
          } else {
@@ -312,7 +312,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
 
       if (this.useChannels_) {
          for (ChannelSpec channel : channels_) {
-            if (channel.useChannel_) {
+            if (channel.useChannel) {
                acquisitionSettings.channels.add(channel);
             }
          }
@@ -637,14 +637,14 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    public boolean addChannel(String config, double exp, Boolean doZStack, double zOffset, ContrastSettings con, int skip, Color c, boolean use) {
       if (isConfigAvailable(config)) {
          ChannelSpec channel = new ChannelSpec();
-         channel.config_ = config;
-         channel.useChannel_ = use;
-         channel.exposure_ = exp;
-         channel.doZStack_ = doZStack;
-         channel.zOffset_ = zOffset;
-         channel.contrast_ = con;
-         channel.color_ = c;
-         channel.skipFactorFrame_ = skip;
+         channel.config = config;
+         channel.useChannel = use;
+         channel.exposure = exp;
+         channel.doZStack = doZStack;
+         channel.zOffset = zOffset;
+         channel.contrast = con;
+         channel.color = c;
+         channel.skipFactorFrame = skip;
          channels_.add(channel);
          return true;
       } else {
