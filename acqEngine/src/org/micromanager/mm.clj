@@ -357,15 +357,15 @@
         (-> chan
             (data-object-to-map)
             (select-and-rekey
-              :config_                 :name
-              :exposure_               :exposure
-              :zOffset_                :z-offset
-              :doZStack_               :use-z-stack
-              :skipFactorFrame_        :skip-frames
-              :useChannel_             :use-channel
-              :color_                  :color
+              :config                 :name
+              :exposure               :exposure
+              :zOffset                :z-offset
+              :doZStack               :use-z-stack
+              :skipFactorFrame        :skip-frames
+              :useChannel             :use-channel
+              :color                  :color
               )
-            (assoc :properties (get-config channel-group (.config_ chan))))))
+            (assoc :properties (get-config channel-group (.config chan))))))
 
 (defn MultiStagePosition-to-map
   "Convert a Micro-Manager MultiStagePosition object to a clojure data map."
