@@ -3947,7 +3947,9 @@ public class MMStudioMainFrame extends JFrame implements
       }
    }
 
-   @Override
+   /**
+    * @deprecated - used to be in api/AcquisitionEngine
+    */
    public void startAcquisition() throws MMScriptException {
       testForAbortRequests();
       SwingUtilities.invokeLater(new ExecuteAcq());
@@ -4081,8 +4083,8 @@ public class MMStudioMainFrame extends JFrame implements
    /**
     * @deprecated -- this function was never implemented. getAcquisition(String name) should
     * be used instead
+    * @deprecated - Removed from api/AcquisitionEngine
     */
-   @Override
    public MMAcquisition getCurrentAcquisition() {
       return null; // if none available
    }
@@ -4222,8 +4224,8 @@ public class MMStudioMainFrame extends JFrame implements
 
    /**
     * @deprecated  use closeAcquisitionWindow instead
+    * @deprecated - used to be in api/AcquisitionEngine
     */
-   @Override
    public void closeAcquisitionImage5D(String acquisitionName) throws MMScriptException {
       acqMgr_.closeImageWindow(acquisitionName);
    }
@@ -4234,12 +4236,12 @@ public class MMStudioMainFrame extends JFrame implements
    }
 
    /**
+    * @deprecated - used to be in api/AcquisitionEngine
     * Since Burst and normal acquisition are now carried out by the same engine,
     * loadBurstAcquistion simply calls loadAcquisition
     * t
     * @param path - path to file specifying acquisition settings
     */
-   @Override
    public void loadBurstAcquisition(String path) throws MMScriptException {
       this.loadAcquisition(path);
    }
