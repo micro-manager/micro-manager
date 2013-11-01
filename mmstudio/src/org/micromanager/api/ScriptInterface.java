@@ -35,6 +35,7 @@ import mmcorej.TaggedImage;
 import org.json.JSONObject;
 import org.micromanager.AcqControlDlg;
 import org.micromanager.PositionListDlg;
+import org.micromanager.acquisition.MMAcquisition;
 import org.micromanager.navigation.PositionList;
 import org.micromanager.utils.AutofocusManager;
 import org.micromanager.utils.MMScriptException;
@@ -976,13 +977,6 @@ public interface ScriptInterface {
 //    */
 //   public void closeAcquisitionImage5D(String acquisitionName) throws MMScriptException;
 //   
-//   /**
-//    * Show an image with the pixel array pix in the snap/live window (uses 
-//    * current camera settings to figure out the shape of the image)
-//    * @param pix Array with pixel data.  pixeldata should match current camera settings.
-//    * @deprecated use displayImage(TaggedImage img) instead
-//    */
-//   public boolean displayImage(Object pix);
 //
 //   /**
 //    * Returns the ImageJ ImageWindow instance that is used for Snap and Live display.
@@ -1059,34 +1053,45 @@ public interface ScriptInterface {
 //    * @deprecated getAcquisition(String name) should be used instead of this function
 //    */
 //   public MMAcquisition getCurrentAcquisition();
-//
-//   /**
-//    * Return the acquisition engine that carries out the MDA acquistion.
-//    * You can get access to its functionality through this function.
-//    * @return acquisition engine
-//    * @deprecated
-//    */
-//   public AcquisitionEngine getAcquisitionEngine();
-//   
-//   /**
-//    * Inserts image into the acquisition handle. 
-//    * @param name Name of the acquisition.
-//    * @param img Pixel data that will be inserted.  Pixel data should match the image dimensions used in this acquisition.
-//    * @param frame Frame number (time point, 0-based) in which this image should be inserted.
-//    * @param channel Channel number (0-based) in which this image should be inserted.
-//    * @param z Slice number (0-based) in which this image should be inserted.
-//    * @throws MMScriptException
-//    * @deprecated
-//    */
-//   public void addImage(String name, Object img, int frame, int channel, int z) throws MMScriptException;
-//   
-//   /**
-//    * Gets a reference to the MMAcquisition object associated with the specified acquisition name.
-//    * @param name name of the requested acquisition
-//    * @return MMAcquisition object
-//    * @deprecated
-//    */
-//   public MMAcquisition getAcquisition(String name) throws MMScriptException;
+//  
+   // TODO: remove this method
+   /**
+    * Inserts image into the acquisition handle. 
+    * @param name Name of the acquisition.
+    * @param img Pixel data that will be inserted.  Pixel data should match the image dimensions used in this acquisition.
+    * @param frame Frame number (time point, 0-based) in which this image should be inserted.
+    * @param channel Channel number (0-based) in which this image should be inserted.
+    * @param z Slice number (0-based) in which this image should be inserted.
+    * @throws MMScriptException
+    * @deprecated
+    */
+   public void addImage(String name, Object img, int frame, int channel, int z) throws MMScriptException;
+   
+   /**
+    * Gets a reference to the MMAcquisition object associated with the specified acquisition name.
+    * @param name name of the requested acquisition
+    * @return MMAcquisition object
+    * @deprecated
+    */
+   // TODO: remove this method
+   public MMAcquisition getAcquisition(String name) throws MMScriptException;
 
+   /**
+    * Return the acquisition engine that carries out the MDA acquistion.
+    * You can get access to its functionality through this function.
+    * @return acquisition engine
+    * @deprecated
+    */
+   // TODO: remove this method
+   public AcquisitionEngine getAcquisitionEngine();
+   
+   /**
+    * Show an image with the pixel array pix in the snap/live window (uses 
+    * current camera settings to figure out the shape of the image)
+    * @param pix Array with pixel data.  pixeldata should match current camera settings.
+    * @deprecated use displayImage(TaggedImage img) instead
+    */
+   // TODO: remove this method
+   public boolean displayImage(Object pix);
 
 }
