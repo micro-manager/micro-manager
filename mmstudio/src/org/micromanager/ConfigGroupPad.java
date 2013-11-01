@@ -226,7 +226,7 @@ public class ConfigGroupPad extends JScrollPane{
                   refreshStatus();
                   repaint();
                   if (parentGUI_ != null)
-                     parentGUI_.updateGUI(false);
+                     parentGUI_.refreshGUI();
                   
                   if (restartLive)
                        parentGUI_.enableLiveMode(true);

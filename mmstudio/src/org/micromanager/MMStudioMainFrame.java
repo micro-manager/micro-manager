@@ -4012,7 +4012,9 @@ public class MMStudioMainFrame extends JFrame implements
       }
    }
 
-   @Override
+   /**
+    * @deprecated used to be part of api
+    */
    public String runAcqusition(String name, String root) throws MMScriptException {
       return runAcquisition(name, root);
    }

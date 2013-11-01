@@ -607,7 +607,7 @@ public class CalibrationEditor extends MMDialog {
                refresh();
 
                if (parentGUI_ != null)
-                  parentGUI_.updateGUI(true);              
+                  parentGUI_.refreshGUI();              
                fireTableCellUpdated(row, col);
             } catch (Exception e) {
                ReportingUtils.showError(e);
