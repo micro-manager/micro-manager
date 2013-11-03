@@ -99,6 +99,16 @@ public class NewImageFlippingProcessor extends DataProcessor<TaggedImage> {
 
       int width = MDUtils.getWidth(nextImage.tags);
       int height = MDUtils.getHeight(nextImage.tags);
+      // Since the Micro-Manager ImageCache can not handle images of differing sizes
+      // make sure that the produced image has the same width and height as the 
+      // original.
+      if ( (width != height) && (rotation == Rotation.R90 ||
+              rotation == Rotation.R270) ) {
+         throw new MMScriptException("NewImageFlipper: Flipping would produce"
+                 + " image of different size which can not be handled by Micro-Manager");
+      }
+      
+      
       String type = MDUtils.getPixelType(nextImage.tags);
       int ijType = ImagePlus.GRAY8;
       if (type.equals("GRAY16")) {
@@ -127,6 +137,13 @@ public class NewImageFlippingProcessor extends DataProcessor<TaggedImage> {
       JSONObject newTags = nextImage.tags;
       newTags.put("ImageFlipper-Rotation", rotationTag);
       newTags.put("ImageFlipper-Mirror", mirror ? "On" : "Off");
+      
+      // make sure that the produced image has the same width and height as the 
+      // original.
+      if ( (width != proc.getWidth()) || (height != proc.getHeight()) ) { 
+         throw new MMScriptException("NewImageFlipper: Flipping would produce"
+                 + " image of different size which can not be handled by Micro-Manager");
+      }
       MDUtils.setWidth(newTags, proc.getWidth()); 
       MDUtils.setHeight(newTags, proc.getHeight());
 

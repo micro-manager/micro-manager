@@ -59,8 +59,9 @@ public class NewTaggedImageFlipper implements MMPlugin {
          ctls_ = new NewImageFlipperControls();
          MMStudioMainFrame.getInstance().addMMBackgroundListener(ctls_);
       }
-      else
+      else {
          ctls_.updateCameras();
+      }
       AcquisitionEngine eng = gui_.getAcquisitionEngine();
       eng.addImageProcessor(ctls_.getProcessor());
       ctls_.setVisible(true);
