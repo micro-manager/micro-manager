@@ -258,7 +258,9 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    }
 
    public void addImageProcessor(DataProcessor<TaggedImage> taggedImageProcessor) {
-      taggedImageProcessors_.add(taggedImageProcessor);
+      if (!taggedImageProcessors_.contains(taggedImageProcessor)) {
+         taggedImageProcessors_.add(taggedImageProcessor);
+      }
    }
 
    public void removeImageProcessor(DataProcessor<TaggedImage> taggedImageProcessor) {
