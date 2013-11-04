@@ -67,8 +67,8 @@
              (or (all-equal? s)
                  (and (core isPropertySequenceable d p)
                       (<= (count s) (core getPropertySequenceMaxLength d p)))))))
-    (all-equal?(map :exposure channels))))
- 
+    (all-equal? (map :exposure channels))))
+
 (defn select-triggerable-sequences
   "Select only those sequences that can and must be triggered."
   [property-sequences]
@@ -221,10 +221,10 @@
     (and
       (channels-sequenceable (make-property-sequences props) channels)
       (or (= (e1 :slice) (e2 :slice))
-          (let [z-drive (. mmc getFocusDevice)]
+          (when-let [z-drive (. mmc getFocusDevice)]
             (and
-              (. mmc isStageSequenceable z-drive)
-              (< n (. mmc getStageSequenceMaxLength z-drive))
+              (.isStageSequenceable mmc z-drive)
+              (< n (.getStageSequenceMaxLength mmc z-drive))
               (<= (Math/abs (- (e1 :slice) (e2 :slice))) MAX-Z-TRIGGER-DIST)
               (<= (e1 :slice-index) (e2 :slice-index))))))))
   
@@ -406,7 +406,8 @@
         have-multiple-slices (< 1 (count slices))
         have-multiple-channels (< 1 (count channels))
         channel-properties-sequenceable (channels-sequenceable property-sequences channels)
-        slices-sequenceable (. mmc isStageSequenceable (. mmc getFocusDevice))
+        slices-sequenceable (when-let [z-drive (.getFocusDevice mmc)]
+                              (.isStageSequenceable mmc z-drive))
         no-channel-skips-frames (all-equal? 0 (map :skip-frames channels))
         all-channels-do-z-stack (all-equal? true (map :use-z-stack channels))]
     (println slices-first)
