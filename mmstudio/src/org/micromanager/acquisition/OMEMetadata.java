@@ -23,12 +23,12 @@ package org.micromanager.acquisition;
 
 import java.nio.ByteOrder;
 import java.util.TreeMap;
-import java.util.TreeSet;
 import loci.common.DateTools;
 import loci.common.services.ServiceFactory;
 import loci.formats.MetadataTools;
 import loci.formats.meta.IMetadata;
 import loci.formats.services.OMEXMLService;
+import mmcorej.TaggedImage;
 import ome.xml.model.primitives.*;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -41,21 +41,22 @@ public class OMEMetadata {
 
    private IMetadata metadata_;
    private TaggedImageStorageMultipageTiff mptStorage_;
-   private TreeMap<Integer, Indices> series_ = new TreeMap<Integer, Indices>();
+   private TreeMap<Integer, Indices> seriesIndices_ = new TreeMap<Integer, Indices>();
    private int omeXMLBaseLength_ = -1;
    private int omeXMLImageLength_ = -1;
-
+   private int numSlices_, numChannels_;
+   private TreeMap<String, Integer> tiffDataIndexMap_;
+   
    private class Indices {
       //specific to each series independent of file
       int tiffDataIndex_ = -1;
-      //count for each tiffData
-      int tiffDataPlaneCount_ = 0;
       //specific to each series indpeendent of file
       int planeIndex_ = 0;
    }
    
    public OMEMetadata(TaggedImageStorageMultipageTiff mpt) {
       mptStorage_ = mpt;
+      tiffDataIndexMap_ = new TreeMap<String,Integer>();
       metadata_ = MetadataTools.createOMEXMLMetadata();
    }
 
@@ -83,14 +84,18 @@ public class OMEMetadata {
 
    private void startSeriesMetadata(JSONObject firstImageTags, int seriesIndex, String baseFileName) 
            throws JSONException, MMScriptException {
-      series_.put(seriesIndex, new Indices());  
+      Indices indices = new Indices();
+      indices.planeIndex_ = 0;
+      indices.tiffDataIndex_ = 0;
+      seriesIndices_.put(seriesIndex, indices);  
       //Last one is samples per pixel
       JSONObject summaryMD = mptStorage_.getSummaryMetadata();
+      numSlices_ = MDUtils.getNumSlices(summaryMD);
+      numChannels_ = MDUtils.getNumChannels(summaryMD);
       MetadataTools.populateMetadata(metadata_, seriesIndex, baseFileName, MultipageTiffWriter.BYTE_ORDER.equals(ByteOrder.LITTLE_ENDIAN),
               mptStorage_.slicesFirst() ? "XYZCT" : "XYCZT", "uint" + (MDUtils.isGRAY8(summaryMD) ? "8" : "16"),
               MDUtils.getWidth(summaryMD), MDUtils.getHeight(summaryMD),
-              MDUtils.getNumSlices(summaryMD), MDUtils.getNumChannels(summaryMD),
-              MDUtils.getNumFrames(summaryMD), 1);
+              numSlices_, MDUtils.getNumChannels(summaryMD), MDUtils.getNumFrames(summaryMD), 1);
 
       if (summaryMD.has("PixelSize_um") && !summaryMD.isNull("PixelSize_um")) {
          double pixelSize = summaryMD.getDouble("PixelSize_um");
@@ -141,30 +146,101 @@ public class OMEMetadata {
          }
       }
    }
+   
+   /*
+    * Method called when numC*numZ*numT != total number of planes
+    */
+   public void fillInMissingTiffDatas(int frame, int position) {
+      try {
+      for (int slice = 0; slice < numSlices_; slice++) {
+         for (int channel = 0; channel < numChannels_; channel++) {
+            //make sure each tiffdata entry is present. If it is missing, link Tiffdata entry
+            //to a a preveious IFD
+            Integer tiffDataIndex =  tiffDataIndexMap_.get(MDUtils.generateLabel(channel, slice, frame, position));
+            if (tiffDataIndex == null) {
+               //this plane was never added, so link to another IFD
+               //find substitute channel, frame, slice
+               int s = slice;
+               int backIndex = slice - 1, forwardIndex = slice + 1;
+               int frameSearchIndex = frame;
+               //If some but not all channels have z stacks, find the closest slice for the given
+               //channel that has an image.  Also if time point missing, go back until image is found
+               while (tiffDataIndex == null) {
+                  
+                              
+                  tiffDataIndex = tiffDataIndexMap_.get(MDUtils.generateLabel(channel, s, frameSearchIndex, position));
+                  if (tiffDataIndex != null) {
+                     break;
+                  }
+
+                  if (backIndex >= 0) {
+                     tiffDataIndex = tiffDataIndexMap_.get(MDUtils.generateLabel(channel, backIndex, frameSearchIndex, position));
+                     if (tiffDataIndex != null) {                   
+                        break;
+                     }
+                     backIndex--;
+                  }
+                  if (forwardIndex < numSlices_) {
+                     tiffDataIndex = tiffDataIndexMap_.get(MDUtils.generateLabel(channel, forwardIndex, frameSearchIndex, position));
+                     if (tiffDataIndex != null) {                  
+                        break;
+                     }
+                     forwardIndex++;
+                  }
+
+                  if (backIndex < 0 && forwardIndex >= numSlices_) {
+                     frameSearchIndex--;
+                     backIndex = slice - 1;
+                     forwardIndex = slice + 1;
+                     if (frameSearchIndex < 0) {
+                        break;
+                     }
+                  }
+               }
+               NonNegativeInteger ifd = metadata_.getTiffDataIFD(position, tiffDataIndex);
+               String filename = metadata_.getUUIDFileName(position, tiffDataIndex);
+               Indices indices = seriesIndices_.get(position);
+
+               metadata_.setTiffDataFirstZ(new NonNegativeInteger(slice), position, indices.tiffDataIndex_);
+               metadata_.setTiffDataFirstC(new NonNegativeInteger(channel), position, indices.tiffDataIndex_);
+               metadata_.setTiffDataFirstT(new NonNegativeInteger(frame), position, indices.tiffDataIndex_);
+
+               metadata_.setTiffDataIFD(ifd, position, indices.tiffDataIndex_);
+               metadata_.setUUIDFileName(filename, position, indices.tiffDataIndex_);
+               metadata_.setTiffDataPlaneCount(new NonNegativeInteger(1), position, indices.tiffDataIndex_);
+
+               indices.tiffDataIndex_++;
+            }
+         }
+      }
+      } catch (Exception e) {
+         ReportingUtils.logError("Couldn't fill in missing tiffdata entries in ome metadata");
+      }
+   }
 
    public void addImageTagsToOME(JSONObject tags, int ifdCount, String baseFileName, String currentFileName)
            throws JSONException, MMScriptException {
-      int seriesIndex;
+      int position;
       try {
-         seriesIndex = MDUtils.getPositionIndex(tags);
+         position = MDUtils.getPositionIndex(tags);
       } catch (Exception e) {
-         seriesIndex = 0;
+         position = 0;
       }
-      if (!series_.containsKey(seriesIndex)) {
-         startSeriesMetadata(tags, seriesIndex, baseFileName);
+      if (!seriesIndices_.containsKey(position)) {
+         startSeriesMetadata(tags, position, baseFileName);
          try {
             //Add these tags in only once, but need to get them from image rather than summary metadata
             setOMEDetectorMetadata(tags);
             if (tags.has("Time") && !tags.isNull("Time")) {
                metadata_.setImageAcquisitionDate(new Timestamp(
-                       DateTools.formatDate(tags.getString("Time"), "yyyy-MM-dd HH:mm:ss")), seriesIndex);
+                       DateTools.formatDate(tags.getString("Time"), "yyyy-MM-dd HH:mm:ss")), position);
             }
          } catch (Exception e) {
             ReportingUtils.logError("Problem adding System state cahce metadata to OME Metadata");
          }
       }
 
-      Indices indices = series_.get(seriesIndex);
+      Indices indices = seriesIndices_.get(position);
 
       //Required tags: Channel, slice, and frame index
       try {
@@ -172,28 +248,18 @@ public class OMEMetadata {
          int frame = MDUtils.getFrameIndex(tags);
          int channel = MDUtils.getChannelIndex(tags);
 
-         //New tiff data if unexpected index, or new file
-         boolean newTiffData = !mptStorage_.hasExpectedImageOrder() || ifdCount == 0 || 
-                 indices.tiffDataPlaneCount_ == 0;
          // ifdCount is 0 when a new file started, tiff data plane count is 0 at a new position
-         if (newTiffData ) {   //create new tiff data element
-            indices.tiffDataIndex_++;
-            metadata_.setTiffDataFirstZ(new NonNegativeInteger(slice), seriesIndex, indices.tiffDataIndex_);
-            metadata_.setTiffDataFirstC(new NonNegativeInteger(channel), seriesIndex, indices.tiffDataIndex_);
-            metadata_.setTiffDataFirstT(new NonNegativeInteger(frame), seriesIndex, indices.tiffDataIndex_);
-            metadata_.setTiffDataIFD(new NonNegativeInteger(ifdCount), seriesIndex, indices.tiffDataIndex_);
-            metadata_.setUUIDFileName(currentFileName, seriesIndex, indices.tiffDataIndex_);
-            indices.tiffDataPlaneCount_ = 1;
-         } else {   //continue adding to previous tiffdata element
-            indices.tiffDataPlaneCount_++;
-         }
-         metadata_.setTiffDataPlaneCount(new NonNegativeInteger(indices.tiffDataPlaneCount_),
-                 seriesIndex, indices.tiffDataIndex_);
+         metadata_.setTiffDataFirstZ(new NonNegativeInteger(slice), position, indices.tiffDataIndex_);         
+         metadata_.setTiffDataFirstC(new NonNegativeInteger(channel), position, indices.tiffDataIndex_);
+         metadata_.setTiffDataFirstT(new NonNegativeInteger(frame), position, indices.tiffDataIndex_);
+         metadata_.setTiffDataIFD(new NonNegativeInteger(ifdCount), position, indices.tiffDataIndex_);
+         metadata_.setUUIDFileName(currentFileName, position, indices.tiffDataIndex_);
+         tiffDataIndexMap_.put(MDUtils.generateLabel(channel, slice, frame, position), indices.tiffDataIndex_);
+         metadata_.setTiffDataPlaneCount(new NonNegativeInteger(1), position, indices.tiffDataIndex_);
 
-
-         metadata_.setPlaneTheZ(new NonNegativeInteger(slice), seriesIndex, indices.planeIndex_);
-         metadata_.setPlaneTheC(new NonNegativeInteger(channel), seriesIndex, indices.planeIndex_);
-         metadata_.setPlaneTheT(new NonNegativeInteger(frame), seriesIndex, indices.planeIndex_);
+         metadata_.setPlaneTheZ(new NonNegativeInteger(slice), position, indices.planeIndex_);
+         metadata_.setPlaneTheC(new NonNegativeInteger(channel), position, indices.planeIndex_);
+         metadata_.setPlaneTheT(new NonNegativeInteger(frame), position, indices.planeIndex_);
       } catch (JSONException ex) {
          ReportingUtils.showError("Image Metadata missing ChannelIndex, SliceIndex, or FrameIndex");
       } catch (Exception e) {
@@ -204,25 +270,25 @@ public class OMEMetadata {
       try {
 
          if (tags.has("Exposure-ms") && !tags.isNull("Exposure-ms")) {
-            metadata_.setPlaneExposureTime(tags.getDouble("Exposure-ms") / 1000.0, seriesIndex, indices.planeIndex_);
+            metadata_.setPlaneExposureTime(tags.getDouble("Exposure-ms") / 1000.0, position, indices.planeIndex_);
          }
          if (tags.has("XPositionUm") && !tags.isNull("XPositionUm")) {
-            metadata_.setPlanePositionX(tags.getDouble("XPositionUm"), seriesIndex, indices.planeIndex_);
+            metadata_.setPlanePositionX(tags.getDouble("XPositionUm"), position, indices.planeIndex_);
             if (indices.planeIndex_ == 0) { //should be set at start, but dont have position coordinates then
-               metadata_.setStageLabelX(tags.getDouble("XPositionUm"), seriesIndex);
+               metadata_.setStageLabelX(tags.getDouble("XPositionUm"), position);
             }
          }
          if (tags.has("YPositionUm") && !tags.isNull("YPositionUm")) {
-            metadata_.setPlanePositionY(tags.getDouble("YPositionUm"), seriesIndex, indices.planeIndex_);
+            metadata_.setPlanePositionY(tags.getDouble("YPositionUm"), position, indices.planeIndex_);
             if (indices.planeIndex_ == 0) {
-               metadata_.setStageLabelY(tags.getDouble("YPositionUm"), seriesIndex);
+               metadata_.setStageLabelY(tags.getDouble("YPositionUm"), position);
             }
          }
          if (tags.has("ZPositionUm") && !tags.isNull("ZPositionUm")) {
-            metadata_.setPlanePositionZ(tags.getDouble("ZPositionUm"), seriesIndex, indices.planeIndex_);
+            metadata_.setPlanePositionZ(tags.getDouble("ZPositionUm"), position, indices.planeIndex_);
          }
          if (tags.has("ElapsedTime-ms") && !tags.isNull("ElapsedTime-ms")) {
-            metadata_.setPlaneDeltaT(tags.getDouble("ElapsedTime-ms") / 1000.0, seriesIndex, indices.planeIndex_);
+            metadata_.setPlaneDeltaT(tags.getDouble("ElapsedTime-ms") / 1000.0, position, indices.planeIndex_);
          }
 
       } catch (JSONException e) {
@@ -230,6 +296,7 @@ public class OMEMetadata {
       }
 
       indices.planeIndex_++;
+      indices.tiffDataIndex_++;
 
       //This code is used is estimating the length of OME XML to be added in, so
       //images arent written into file space reserved for it

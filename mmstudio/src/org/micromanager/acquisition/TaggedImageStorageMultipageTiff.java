@@ -24,10 +24,7 @@ package org.micromanager.acquisition;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.util.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -59,6 +56,7 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
    private int lastFrame_ = 0;
    private boolean fixIndexMap_ = false;
    private final boolean fastStorageMode_;
+   private int lastAcquiredPosition_ = 0;
   
    //used for estimating total length of ome xml
    private int totalNumImagePlanes_ = 0;
@@ -440,7 +438,8 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
    }
    
    public boolean hasExpectedImageOrder() {
-      return expectedImageOrder_;
+      return false;
+//      return expectedImageOrder_;
    }
 
    //Class encapsulating a single File (or series of files)
@@ -455,6 +454,7 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
       private int ifdCount_ = 0;
       private TaggedImageStorageMultipageTiff mpTiff_;
       int nextExpectedChannel_ = 0, nextExpectedSlice_ = 0, nextExpectedFrame_ = 0;
+      int currentFrame_ = 0;
 
       
       public FileSet(JSONObject firstImageTags, TaggedImageStorageMultipageTiff mpt) {
@@ -481,7 +481,12 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
          if (finished_) {
             return;
          }
+         //fill in missing tiffdata tags for OME
+         for (int p = 0; p <= lastAcquiredPosition_; p++) {
+            omeMetadata_.fillInMissingTiffDatas(lastAcquiredFrame(), p);
+         }
 
+         
          try {
             if (separateMetadataFile_) {
                finishMetadataFile();
@@ -524,7 +529,7 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
 
          //write image
          tiffWriters_.getLast().writeImage(img);  
-
+                         
          if (expectedImageOrder_) {
             if (splitByXYPosition_) {
                checkForExpectedImageOrder(img.tags);
@@ -536,6 +541,21 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
          //write metadata
          if (omeTiff_) {
             try {
+               //Check if missing planes need to be added OME metadata
+               int frame = MDUtils.getFrameIndex(img.tags);
+               int position;
+               try {
+                  position = MDUtils.getPositionIndex(img.tags);
+               } catch (Exception e) {
+                  position = 0;
+               }
+               if (frame > currentFrame_) {
+                  //check previous frame for missing IFD's in OME metadata
+                  omeMetadata_.fillInMissingTiffDatas(frame, position);
+               }
+               //reset in case acquisitin order is position then time and all files not split by position
+               currentFrame_ = frame;
+               
                omeMetadata_.addImageTagsToOME(img.tags, ifdCount_, baseFilename_, currentTiffFilename_);
             } catch (Exception ex) {
                ReportingUtils.logError("Problem writing OME metadata");
@@ -547,7 +567,14 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
             lastFrame_ = Math.max(frame, lastFrame_);
          } catch (JSONException ex) {
             ReportingUtils.showError("Couldn't find frame index in image tags");
-         }       
+         }   
+         try {
+            int pos = MDUtils.getPositionIndex(img.tags);
+            lastAcquiredPosition_ = Math.max(pos, lastAcquiredPosition_);
+         } catch (JSONException ex) {
+            ReportingUtils.showError("Couldn't find position index in image tags");
+         }  
+         
          
          try {
             if (separateMetadataFile_) {
