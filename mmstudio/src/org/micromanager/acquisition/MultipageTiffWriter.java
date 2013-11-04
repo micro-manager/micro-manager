@@ -496,8 +496,16 @@ public class MultipageTiffWriter {
             byte[] pix = new byte[originalPix.length * 3 / 4];
             int count = 0;
             for (int i = 0; i < originalPix.length; i++) {
+               //skip alpha channel
                if ((i + 1) % 4 != 0) {
-                  pix[count] = originalPix[i];
+                  //swap R and B for correct format
+                  if ((i + 1) % 4 == 1 ) {
+                     pix[count] = originalPix[i + 2];
+                  } else if ((i + 1) % 4 == 3) {
+                     pix[count] = originalPix[i - 2];
+                  } else {                      
+                     pix[count] = originalPix[i];
+                  }
                   count++;
                }
             }
@@ -508,7 +516,14 @@ public class MultipageTiffWriter {
             int count = 0;
             for (int i = 0; i < originalPix.length; i++) {
                if ((i + 1) % 4 != 0) {
-                  pix[count] = originalPix[i];
+                  //swap R and B for correct format
+                  if ((i + 1) % 4 == 1 ) {
+                     pix[count] = originalPix[i + 2];
+                  } else if ((i + 1) % 4 == 3) {
+                     pix[count] = originalPix[i - 2];
+                  } else {                      
+                     pix[count] = originalPix[i];
+                  }
                   count++;
                }
             }
