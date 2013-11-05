@@ -41,7 +41,6 @@ public class MMTags {
 
       public static final String SLICES_FIRST = "SlicesFirst";
       public static final String TIME_FIRST = "TimeFirst";
-
    }
    
    public class Image {
@@ -62,6 +61,11 @@ public class MMTags {
       public static final String IJ_TYPE = "IJType";
       public static final String TIME = "Time";
       public static final String PIX_TYPE = "PixelType";
+   }
+   
+   public class Values {
+      public static final String PIX_TYPE_GRAY_16 = "GRAY16";
+      public static final String PIX_TYPE_GRAY_8 = "GRAY8";
    }
 
 }
