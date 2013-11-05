@@ -396,6 +396,11 @@
              (generate-simple-burst-sequence
                num-frames use-autofocus channels slices default-exposure triggers pos-index))))))
 
+(defn stage-sequenceable? []
+  (let [z-drive (.getFocusDevice mmc)]
+    (when-not (empty? z-drive)
+      (.isStageSequenceable mmc z-drive))))
+
 (defn generate-acq-sequence [settings runnables]
   (let [{:keys [numFrames time-first positions slices channels
                 use-autofocus default-exposure interval-ms
@@ -406,8 +411,7 @@
         have-multiple-slices (< 1 (count slices))
         have-multiple-channels (< 1 (count channels))
         channel-properties-sequenceable (channels-sequenceable property-sequences channels)
-        slices-sequenceable (when-let [z-drive (.getFocusDevice mmc)]
-                              (.isStageSequenceable mmc z-drive))
+        slices-sequenceable (stage-sequenceable?)
         no-channel-skips-frames (all-equal? 0 (map :skip-frames channels))
         all-channels-do-z-stack (all-equal? true (map :use-z-stack channels))]
     (println slices-first)
