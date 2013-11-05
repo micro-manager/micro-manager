@@ -66,6 +66,9 @@ public class MMStudioPlugin implements PlugIn, CommandListener {
 
 
                   // create and display control panel frame
+                  // warn user about old ImageJ version, but do not stop
+                  IJ.versionLessThan("1.48g");
+                  
                   if (!IJ.versionLessThan("1.46e")) {
                      Executer.addCommandListener(MMStudioPlugin.this);
                   }

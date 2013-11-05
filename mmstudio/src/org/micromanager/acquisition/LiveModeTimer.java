@@ -40,7 +40,6 @@ import org.micromanager.utils.ReportingUtils;
  */
 public class LiveModeTimer {
 
-   //private static final String CCHANNELINDEX = "CameraChannelIndex";
    private static final String ACQ_NAME = MMStudioMainFrame.SIMPLE_ACQ;
    private VirtualAcquisitionDisplay win_;
    private CMMCore core_;
@@ -49,7 +48,6 @@ public class LiveModeTimer {
    private long fpsTimer_;
    private long fpsCounter_;
    private long imageNumber_;
-   private long lastImageNumber_;
    private long oldImageNumber_;
    private long fpsInterval_ = 5000;
    private final NumberFormat format_;
@@ -67,9 +65,12 @@ public class LiveModeTimer {
       displayImageRoutine_ = new MMStudioMainFrame.DisplayImageRoutine() {
          public void show(final TaggedImage ti) {
             try {
-               gui_.normalizeTags(ti);
-               gui_.addImage(ACQ_NAME, ti, true, true);
-               gui_.updateLineProfile();
+              if (!gui_.getImageWin().getCanvas().getPaintPending()) {
+                  gui_.getImageWin().getCanvas().setPaintPending(true);
+                  gui_.normalizeTags(ti);
+                  gui_.addImage(ACQ_NAME, ti, true, true);
+                  gui_.updateLineProfile();
+               }
             } catch (Exception e) {
                ReportingUtils.logError(e);
             }
@@ -144,7 +145,6 @@ public class LiveModeTimer {
          fpsCounter_ = 0;
          fpsTimer_ = System.currentTimeMillis();
          imageNumber_ = timg.tags.getLong("ImageNumber");
-         lastImageNumber_ = imageNumber_ - 1;
          oldImageNumber_ = imageNumber_;
 
          imageQueue_ = new LinkedBlockingQueue();
@@ -254,8 +254,6 @@ public class LiveModeTimer {
                gui_.enableLiveMode(false);
             } else {
                try {
-
-                  
                   TaggedImage ti = core_.getLastTaggedImage();
                   // if we have already shown this image, do not do it again.
                   setImageNumber(ti.tags.getLong("ImageNumber"));
@@ -314,36 +312,4 @@ public class LiveModeTimer {
       };
    }
 
-   /*
-   private void addTags(TaggedImage ti, int channel) throws JSONException {
-      MDUtils.setChannelIndex(ti.tags, channel);
-      MDUtils.setFrameIndex(ti.tags, 0);
-      MDUtils.setPositionIndex(ti.tags, 0);
-      MDUtils.setSliceIndex(ti.tags, 0);
-      try {
-         ti.tags.put("Summary", MMStudioMainFrame.getInstance().getAcquisition(ACQ_NAME).getSummaryMetadata());
-      } catch (MMScriptException ex) {
-         ReportingUtils.logError("Error adding summary metadata to tags");
-      }
-      gui_.addStagePositionToTags(ti);
-   }
-   
-   
-   private TaggedImage makeTaggedImage(Object pixels) throws JSONException, MMScriptException {
-       TaggedImage ti = ImageUtils.makeTaggedImage(pixels,
-                    0, 0, 0, 0,
-                    gui_.getAcquisitionImageWidth(ACQ_NAME),
-                    gui_.getAcquisitionImageHeight(ACQ_NAME),
-                    gui_.getAcquisitionImageByteDepth(ACQ_NAME));
-      try {
-         ti.tags.put("Summary", gui_.getAcquisition(ACQ_NAME).getSummaryMetadata());
-
-      } catch (MMScriptException ex) {
-         ReportingUtils.logError("Error adding summary metadata to tags");
-      }
-      gui_.addStagePositionToTags(ti);
-      return ti;
-   }
-    * 
-    */
 }
