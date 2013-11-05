@@ -34,6 +34,10 @@
   (/ (-> processor .duplicate (doto .sharpen .findEdges) mean)
      (mean processor)))
 
+(defn edges-std-dev
+  [processor]
+  (-> processor .duplicate (doto .findEdges) std-dev))
+
 ;; data and printout
 
 (defn diff

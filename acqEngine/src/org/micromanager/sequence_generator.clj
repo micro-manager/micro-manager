@@ -210,6 +210,11 @@
                                    (nth interval (:frame-index e2))
                                    interval)))))
 
+(defn stage-sequenceable? []
+  (let [z-drive (.getFocusDevice mmc)]
+    (when-not (empty? z-drive)
+      (.isStageSequenceable mmc z-drive))))
+
 (defn event-triggerable
   "Returns true if an event can be added to a burst."
   [burst event]
@@ -223,7 +228,7 @@
       (or (= (e1 :slice) (e2 :slice))
           (when-let [z-drive (. mmc getFocusDevice)]
             (and
-              (.isStageSequenceable mmc z-drive)
+              (stage-sequenceable?)
               (< n (.getStageSequenceMaxLength mmc z-drive))
               (<= (Math/abs (- (e1 :slice) (e2 :slice))) MAX-Z-TRIGGER-DIST)
               (<= (e1 :slice-index) (e2 :slice-index))))))))
@@ -395,11 +400,6 @@
                      :position (nth positions pos-index))
              (generate-simple-burst-sequence
                num-frames use-autofocus channels slices default-exposure triggers pos-index))))))
-
-(defn stage-sequenceable? []
-  (let [z-drive (.getFocusDevice mmc)]
-    (when-not (empty? z-drive)
-      (.isStageSequenceable mmc z-drive))))
 
 (defn generate-acq-sequence [settings runnables]
   (let [{:keys [numFrames time-first positions slices channels
