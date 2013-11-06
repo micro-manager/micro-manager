@@ -1342,8 +1342,6 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay,
       showImage(taggedImg.tags, waitForDisplay);
    }
    
-   public GUIUpdater showImageUpdater = new GUIUpdater();
-
    public void showImage(final JSONObject tags, boolean waitForDisplay) throws InterruptedException, InvocationTargetException {
       Runnable run = new Runnable() {
          public void run() {
@@ -1470,7 +1468,6 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay,
             }
          }
       };
-      showImageUpdater.post(run);
    }
 
    private void initializeContrast() {
