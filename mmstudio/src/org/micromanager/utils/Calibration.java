@@ -35,12 +35,12 @@ public class Calibration {
    private static DecimalFormat fmt = new DecimalFormat("#0.000");
    
    public Calibration() {
-      calibrationName_ = new String("Undefined");
+      calibrationName_ = "Undefined";
       pixelSize_ = 0.0;
    }
    
    public String getVerbose() {
-      return new String(calibrationName_ + "(" + fmt.format(pixelSize_) + ")");
+      return calibrationName_ + "(" + fmt.format(pixelSize_) + ")";
    }
 
    public void setLabel(String name) {

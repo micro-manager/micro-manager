@@ -42,7 +42,7 @@ public class CalibrationList {
    
    public CalibrationList(CMMCore core) {
       calibrationList_ = new ArrayList<Calibration>();
-      label_ = new String("Undefined");
+      label_ = "Undefined";
       properties_ = new Hashtable<String, String>();
       core_ = core;
    }

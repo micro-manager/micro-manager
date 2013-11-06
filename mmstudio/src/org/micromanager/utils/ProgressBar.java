@@ -24,14 +24,12 @@
 package org.micromanager.utils;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 
 import javax.swing.BorderFactory;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
-import javax.swing.SwingUtilities;
 
 
 public class ProgressBar extends JPanel {
@@ -66,6 +64,7 @@ public class ProgressBar extends JPanel {
       progressBar.repaint();
    }
 
+   @Override
    public void setVisible(boolean visible) {
       frame.setVisible(visible);
    }

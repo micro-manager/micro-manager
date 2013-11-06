@@ -36,11 +36,11 @@ public class DisplayMode {
    @Override
    public String toString() {
       if (id_ == ALL)
-         return new String("All");
+         return "All";
       else if (id_ == LAST_FRAME)
-         return new String("Last Frame");
+         return "Last Frame";
       else if (id_ == SINGLE_WINDOW)
-         return new String("Single Window");
+         return "Single Window";
 
       return "undefined";
    }

@@ -4,10 +4,10 @@
 //SUBSYSTEM:      mmstudio
 //-----------------------------------------------------------------------------
 
-//AUTHOR:         Nico Stuurman, nico@cmp.ucsf.edu., Novemeber 2009
-//                Algorithm provided by Bob Brown
+//AUTHOR:         Nico Stuurman, nico@cmp.ucsf.edu., November 2009
+//                Algorithm thought up by Bob Brown (Loveland, CO)
 
-//COPYRIGHT:      Univercity of California, San Francisco
+//COPYRIGHT:      University of California, San Francisco
 
 //LICENSE:        This file is distributed under the BSD license.
 //License text is included with the source distribution.

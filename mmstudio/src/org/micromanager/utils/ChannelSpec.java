@@ -24,8 +24,6 @@
 package org.micromanager.utils;
 import java.awt.Color;
 
-import org.json.JSONObject;
-
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 

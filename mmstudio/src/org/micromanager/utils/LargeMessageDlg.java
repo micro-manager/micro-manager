@@ -51,6 +51,7 @@ public class LargeMessageDlg extends JDialog {
    public LargeMessageDlg(String title, String message) {
       super();
       addWindowListener(new WindowAdapter() {
+         @Override
          public void windowOpened(WindowEvent e) {
             scrollPane_.getVerticalScrollBar().setValue(0);
          }

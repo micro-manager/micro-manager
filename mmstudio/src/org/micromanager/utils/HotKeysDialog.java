@@ -201,12 +201,10 @@ public final class HotKeysDialog extends MMDialog {
     private void readKeys() {
        keys_.clear();
        actions_.clear();
-       Iterator it = HotKeys.keys_.entrySet().iterator();
-       while (it.hasNext()) {
-           Map.Entry pairs = (Map.Entry)it.next();
-           keys_.add((Integer)pairs.getKey());
-           actions_.add((HotKeyAction) pairs.getValue());
-       }
+      for (Map.Entry pairs : HotKeys.keys_.entrySet()) {
+         keys_.add((Integer)pairs.getKey());
+         actions_.add((HotKeyAction) pairs.getValue());
+      }
     }
 
     public void updateComboBox() {
@@ -223,9 +221,11 @@ public final class HotKeysDialog extends MMDialog {
          possibleActions_.add(i, new HotKeyAction(i));
        }
 
-       for (int i = 0; i < scriptList.size(); i++) {
+       if (scriptList != null) {
+          for (int i = 0; i < scriptList.size(); i++) {
              possibleActions_.add(i + HotKeyAction.NRGUICOMMANDS, new HotKeyAction(scriptList.get(i)));
              possibleActionsAsString_[i + HotKeyAction.NRGUICOMMANDS] = scriptList.get(i).getName();
+          }
        }
 
        DefaultComboBoxModel model = new DefaultComboBoxModel(possibleActionsAsString_);

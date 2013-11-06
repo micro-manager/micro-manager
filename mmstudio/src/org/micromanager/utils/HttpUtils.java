@@ -18,7 +18,7 @@ import java.net.URL;
 public class HttpUtils {
 
     public void upload(URL url, File f) throws Exception {
-        final String boundary = new String(HttpBoundaryString());
+        final String boundary = HttpBoundaryString();
         HttpURLConnection anURLConnection = (HttpURLConnection) url.openConnection();
         anURLConnection.setDoOutput(true);
         anURLConnection.setDoInput(true);
