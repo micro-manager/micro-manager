@@ -204,7 +204,7 @@ public class ContrastPanel extends JPanel {
             ci.getActiveChannels()[i] = active[i];
          }
          ci.updateAndDraw();
-         currentDisplay_.updateAndDraw();
+         currentDisplay_.updateAndDraw(true);
       } else {
          displayModeCombo_.setSelectedIndex(1);
       }
@@ -523,7 +523,7 @@ public class ContrastPanel extends JPanel {
          ci.setMode(mode);
          ci.updateAndDraw();
       }
-      currentDisplay_.updateAndDraw();
+      currentDisplay_.updateAndDraw(true);
       saveCheckBoxStates();
    }
 

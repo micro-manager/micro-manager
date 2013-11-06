@@ -798,7 +798,7 @@ public class MMAcquisition {
             imageCache_.getSummaryMetadata().getJSONArray("ChColors").put(channel, rgb);
             if (show_) {
                virtAcq_.updateChannelNamesAndColors();
-               virtAcq_.updateAndDraw();
+               virtAcq_.updateAndDraw(true);
             }
          } catch (JSONException ex) {
             throw new MMScriptException(ex);
