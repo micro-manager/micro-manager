@@ -135,7 +135,6 @@ import org.micromanager.acquisition.TaggedImageQueue;
 import org.micromanager.acquisition.TaggedImageStorageDiskDefault;
 import org.micromanager.acquisition.TaggedImageStorageMultipageTiff;
 import org.micromanager.acquisition.VirtualAcquisitionDisplay;
-import org.micromanager.api.DeviceControlGUI;
 import org.micromanager.api.IAcquisitionEngine2010;
 import org.micromanager.graph.HistogramSettings;
 import org.micromanager.utils.DragDropUtil;
@@ -153,9 +152,7 @@ import org.micromanager.utils.UIMonitor;
 /*
  * Main panel and application class for the MMStudio.
  */
-public class MMStudioMainFrame extends JFrame implements 
-        ScriptInterface, 
-        DeviceControlGUI {
+public class MMStudioMainFrame extends JFrame implements ScriptInterface {
 
    private static final String MICRO_MANAGER_TITLE = "Micro-Manager";
    private static final long serialVersionUID = 3556500289598574541L;
@@ -3481,12 +3478,12 @@ public class MMStudioMainFrame extends JFrame implements
 
    }
 
-   @Override
+   //TODO: deprecated @Override
    public boolean okToAcquire() {
       return !isLiveModeOn();
    }
 
-   @Override
+   //TODO: deprecated @Override
    public void stopAllActivity() {
         if (this.acquisitionEngine2010 != null) {
             this.acquisitionEngine2010.stop();
@@ -3695,7 +3692,7 @@ public class MMStudioMainFrame extends JFrame implements
                  contrast16.min, contrast16.max, contrast16.gamma);
    }
 
-   @Override
+   //TODO: deprecated @Override
    public ContrastSettings getContrastSettings() {
       ImagePlus img = WindowManager.getCurrentImage();
       if (img == null || VirtualAcquisitionDisplay.getDisplay(img) == null )

@@ -24,7 +24,6 @@ import mmcorej.DeviceType;
 import mmcorej.StrVector;
 
 import org.micromanager.api.ScriptInterface;
-import org.micromanager.api.DeviceControlGUI;
 import org.micromanager.api.MMListenerInterface;
 import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.ReportingUtils;
@@ -34,16 +33,12 @@ import org.micromanager.utils.ReportingUtils;
  * @author Nico Stuurman
  */
 public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerInterface {
-
+   private static final long serialVersionUID = 1L;
    private final ScriptInterface gui_;
-   private final DeviceControlGUI dGui_;
    private final CMMCore core_;
    private Preferences prefs_;
-   private NumberFormat nf_;
    private int frameXPos_ = 100;
    private int frameYPos_ = 100;
-   private long imageWidth_ = 512;
-   private long imageHeight_ = 512;
    private int EMGainMin_ = 4;
    private int EMGainMax_ = 1000;
    private String[] cameras_;
@@ -80,9 +75,7 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
    /** Creates new form MultiCameraFrame */
    public MultiCameraFrame(ScriptInterface gui) throws Exception {
       gui_ = gui;
-      dGui_ = (DeviceControlGUI) gui_;
       core_ = gui_.getMMCore();
-      nf_ = NumberFormat.getInstance();
       prefs_ = Preferences.userNodeForPackage(this.getClass());
 
       mmcorej.StrVector cameras = core_.getLoadedDevicesOfType(DeviceType.CameraDevice);
@@ -96,8 +89,8 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
       String currentCamera = core_.getCameraDevice();
       updateCamerasInUse(currentCamera);
 
-      imageWidth_ = core_.getImageWidth();
-      imageHeight_ = core_.getImageHeight();
+      core_.getImageWidth();
+      core_.getImageHeight();
 
       if (cameras_.length < 1) {
          gui_.showError("This plugin needs at least one camera");
@@ -497,7 +490,7 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
             setPropertyIfPossible(camera, EMGAIN, NumberUtils.intToCoreString(val));
          }
          gui_.enableLiveMode(liveRunning);
-         dGui_.updateGUI(false);
+         gui_.refreshGUI();
       } catch (Exception ex) {
          ReportingUtils.showError(ex, MultiCameraFrame.class.getName() + " encountered an error.");
       }
@@ -619,7 +612,7 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
 
     private void EMGainSliderMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_EMGainSliderMouseReleased
        setEMGain();
-       dGui_.updateGUI(false);
+       gui_.refreshGUI();
     }//GEN-LAST:event_EMGainSliderMouseReleased
 
     private void tempButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_tempButtonActionPerformed
@@ -665,7 +658,7 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
           updateItems(speedComboBox, SPEED);
 
           gui_.enableLiveMode(liveRunning);
-          dGui_.updateGUI(false);
+          gui_.refreshGUI();
        } catch (Exception ex) {
           ReportingUtils.showError(ex, MultiCameraFrame.class.getName() + " encountered an error.");
        }
@@ -676,7 +669,7 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
           return;
        }
        setComboSelection(gainComboBox, AMPGAIN);
-       dGui_.updateGUI(false);
+       gui_.refreshGUI();
     }//GEN-LAST:event_gainComboBoxItemStateChanged
 
     private void speedComboBoxItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_speedComboBoxItemStateChanged
@@ -684,7 +677,7 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
           return;
        }
        setComboSelection(speedComboBox, SPEED);
-       dGui_.updateGUI(false);
+       gui_.refreshGUI();
     }//GEN-LAST:event_speedComboBoxItemStateChanged
 
     private void frameTransferComboBoxItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_frameTransferComboBoxItemStateChanged
@@ -692,7 +685,7 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
           return;
        }
        setComboSelection(frameTransferComboBox, FRAMETRANSFER);
-       dGui_.updateGUI(false);
+       gui_.refreshGUI();
     }//GEN-LAST:event_frameTransferComboBoxItemStateChanged
 
     private void triggerComboBoxItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_triggerComboBoxItemStateChanged
@@ -700,7 +693,7 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
           return;
        }
        setComboSelection(triggerComboBox, TRIGGER);
-       dGui_.updateGUI(false);
+       gui_.refreshGUI();
     }//GEN-LAST:event_triggerComboBoxItemStateChanged
 
    private void updateCamerasInUse(String camera) {
@@ -785,7 +778,7 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
           ReportingUtils.showError(ex, MultiCameraFrame.class.getName() + " encountered an error.");
        }
 
-       dGui_.updateGUI(false);
+       gui_.refreshGUI();
     }//GEN-LAST:event_cameraSelectComboBoxItemStateChanged
 
     private void modeComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_modeComboBoxActionPerformed
