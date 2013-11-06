@@ -1343,7 +1343,7 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay,
    }
    
    public void showImage(final JSONObject tags, boolean waitForDisplay) throws InterruptedException, InvocationTargetException {
-      Runnable run = new Runnable() {
+      SwingUtilities.invokeLater( new Runnable() {
          public void run() {
 
             updateWindowTitleAndStatus();
@@ -1467,7 +1467,7 @@ public final class VirtualAcquisitionDisplay implements AcquisitionDisplay,
                initializeContrast();
             }
          }
-      };
+      });
    }
 
    private void initializeContrast() {
