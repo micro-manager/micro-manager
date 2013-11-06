@@ -5,10 +5,13 @@ MMJ_.jar:  \
 	$(srcdir)/src/DeviceListBuilder.java \
 	$(srcdir)/src/MMImage5DReaderPlugin_.java \
 	$(srcdir)/src/org/micromanager/AcqControlDlg.java \
-	$(srcdir)/src/org/micromanager/CalibrationListDlg.java \
+	$(srcdir)/src/org/micromanager/AdvancedOptionsDialog.java \
 	$(srcdir)/src/org/micromanager/CalibrationEditor.java \
+	$(srcdir)/src/org/micromanager/CalibrationListDlg.java \
+	$(srcdir)/src/org/micromanager/ConfigDialog.java \
 	$(srcdir)/src/org/micromanager/ConfigGroupPad.java \
 	$(srcdir)/src/org/micromanager/ConfigPadButtonPanel.java \
+	$(srcdir)/src/org/micromanager/GroupEditor.java \
 	$(srcdir)/src/org/micromanager/MMAboutDlg.java \
 	$(srcdir)/src/org/micromanager/MMIntroDlg.java \
 	$(srcdir)/src/org/micromanager/MMOptions.java \
@@ -19,29 +22,37 @@ MMJ_.jar:  \
 	$(srcdir)/src/org/micromanager/PresetEditor.java \
 	$(srcdir)/src/org/micromanager/PropertyEditor.java \
 	$(srcdir)/src/org/micromanager/RegistrationDlg.java \
+	$(srcdir)/src/org/micromanager/ReportProblemDialog.java \
 	$(srcdir)/src/org/micromanager/ScriptPanel.java \
 	$(srcdir)/src/org/micromanager/TileCreatorDlg.java \
 	$(srcdir)/src/org/micromanager/license.txt \
+	$(srcdir)/src/org/micromanager/acquisition/AcquisitionData.java \
 	$(srcdir)/src/org/micromanager/acquisition/AcquisitionManager.java \
 	$(srcdir)/src/org/micromanager/acquisition/AcquisitionVirtualStack.java \
 	$(srcdir)/src/org/micromanager/acquisition/AcquisitionWrapperEngine.java \
 	$(srcdir)/src/org/micromanager/acquisition/ComponentTitledBorder.java \
-	$(srcdir)/src/org/micromanager/acquisition/HyperstackControls.java \
+	$(srcdir)/src/org/micromanager/acquisition/DefaultTaggedImagePipeline.java \
 	$(srcdir)/src/org/micromanager/acquisition/DefaultTaggedImageSink.java \
+	$(srcdir)/src/org/micromanager/acquisition/HyperstackControls.java \
+	$(srcdir)/src/org/micromanager/acquisition/LiveModeTimer.java \
 	$(srcdir)/src/org/micromanager/acquisition/MMAcquisition.java \
 	$(srcdir)/src/org/micromanager/acquisition/MMImageCache.java \
-	$(srcdir)/src/org/micromanager/acquisition/VirtualAcquisitionDisplay.java \
 	$(srcdir)/src/org/micromanager/acquisition/MetadataPanel.java \
+	$(srcdir)/src/org/micromanager/acquisition/MultipageTiffReader.java \
+	$(srcdir)/src/org/micromanager/acquisition/MultipageTiffWriter.java \
+	$(srcdir)/src/org/micromanager/acquisition/OMEMetadata.java \
+	$(srcdir)/src/org/micromanager/acquisition/ProcessorStack.java \
+	$(srcdir)/src/org/micromanager/acquisition/SWCTester.java \
+	$(srcdir)/src/org/micromanager/acquisition/SequenceSettings.java \
+	$(srcdir)/src/org/micromanager/acquisition/SimpleWindowControls.java \
 	$(srcdir)/src/org/micromanager/acquisition/TaggedImageQueue.java \
 	$(srcdir)/src/org/micromanager/acquisition/TaggedImageStorageDiskDefault.java \
-	$(srcdir)/src/org/micromanager/acquisition/TaggedImageStorageRam.java \
 	$(srcdir)/src/org/micromanager/acquisition/TaggedImageStorageMultipageTiff.java \
-	$(srcdir)/src/org/micromanager/acquisition/MultipageTiffReader.java \
-	$(srcdir)/src/org/micromanager/acquisition/ProcessorStack.java \
-	$(srcdir)/src/org/micromanager/acquisition/SequenceSettings.java \
+	$(srcdir)/src/org/micromanager/acquisition/TaggedImageStorageRam.java \
+	$(srcdir)/src/org/micromanager/acquisition/TaggedImageStorageRamFast.java \
+	$(srcdir)/src/org/micromanager/acquisition/VirtualAcquisitionDisplay.java \
 	$(srcdir)/src/org/micromanager/api/Autofocus.java \
 	$(srcdir)/src/org/micromanager/api/AcquisitionEngine.java \
-	$(srcdir)/src/org/micromanager/api/DeviceControlGUI.java \
 	$(srcdir)/src/org/micromanager/api/MMWindow.java \
 	$(srcdir)/src/org/micromanager/api/ScriptInterface.java \
 	$(srcdir)/src/org/micromanager/conf2/*.html \
