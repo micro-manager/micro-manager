@@ -27,22 +27,31 @@
 package org.micromanager.splitview;
 
 import com.swtdesigner.SwingResourceManager;
+
 import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
+
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+
 import javax.swing.Timer;
+
 import java.text.NumberFormat;
 import java.util.prefs.Preferences;
+
 import javax.swing.JColorChooser;
+
 import mmcorej.CMMCore;
+import mmcorej.TaggedImage;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.micromanager.MMStudioMainFrame;
+import org.micromanager.api.MMTags;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ReportingUtils;
@@ -284,11 +293,11 @@ public class SplitViewFrame extends javax.swing.JFrame {
    }
 
    private void addSnapToImage() {
-      Object img;
+     TaggedImage img;
       ImageProcessor tmpImg;
       try {
          core_.snapImage();
-         img = core_.getImage();
+         img = core_.getTaggedImage();
          if (imgDepth_ == 1) {
             tmpImg = new ByteProcessor(width_, height_);
          } else if (imgDepth_ == 2) {
@@ -297,7 +306,7 @@ public class SplitViewFrame extends javax.swing.JFrame {
          {
             return;
          }
-         tmpImg.setPixels(img);
+         tmpImg.setPixels(img.pix);
 
          if (!gui_.acquisitionExists(ACQNAME)) {
             enableLiveMode(false);
@@ -312,14 +321,20 @@ public class SplitViewFrame extends javax.swing.JFrame {
 
          tmpImg.setRoi(0, 0, newWidth_, newHeight_);
          // first channel
-         gui_.addImage(ACQNAME, tmpImg.crop().getPixels(), 0, 0, 0);
+         TaggedImage firstChannel = new TaggedImage(tmpImg.crop().getPixels(), img.tags);
+         firstChannel.tags.put(MMTags.Image.WIDTH, newWidth_);
+         firstChannel.tags.put(MMTags.Image.HEIGHT, newHeight_);
+         gui_.addImage(ACQNAME, firstChannel, 0, 0, 0, 0);
          // second channel
          if (orientation_.equals(LR)) {
             tmpImg.setRoi(newWidth_, 0, newWidth_, height_);
          } else if (orientation_.equals(TB)) {
             tmpImg.setRoi(0, newHeight_, newWidth_, newHeight_);
          }
-         gui_.addImage(ACQNAME, tmpImg.crop().getPixels(), 0, 1, 0);
+         TaggedImage secondChannel = new TaggedImage(tmpImg.crop().getPixels(), img.tags);
+         secondChannel.tags.put(MMTags.Image.WIDTH, newWidth_);
+         secondChannel.tags.put(MMTags.Image.HEIGHT, newHeight_);
+         gui_.addImage(ACQNAME, secondChannel, 0, 1, 0, 0);
 
       } catch (Exception e) {
          if (gui_.isLiveModeOn())

@@ -288,7 +288,7 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
          double z = core.getPosition(core.getFocusDevice());
          core.waitForDevice(core.getCameraDevice());
          core.snapImage();
-         Object img = core.getImage();
+         TaggedImage img = core.getTaggedImage();
          if (show.contentEquals("Yes")) {
             app_.displayImage(img);
          }
