@@ -4713,6 +4713,12 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
 		   return null;
 	   return engine_.getImageCache().getDiskLocation();
    }
+   
+   @Override
+   public void promptToSaveAcqusition(String name, boolean prompt) throws MMScriptException {
+	   MMAcquisition acq = getAcquisition(name);
+	   getAcquisition(name).promptToSave(prompt);
+   }
 
 
    public void snapAndAddToImage5D() {

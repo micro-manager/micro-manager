@@ -892,7 +892,7 @@ public interface ScriptInterface {
    public void clearRunnables();
    
    /**
-    * Return current acqusition settings
+    * Return current acquisition settings
     */ 
     SequenceSettings getAcqusitionSettings();
     
@@ -900,6 +900,11 @@ public interface ScriptInterface {
      * Return the current acquisition path, or null if not applicable
      */
     public String getAcquisitionPath();
+
+    /**
+     * Display dialog to save data for one of the currently open acquisitions
+     */
+    public void promptToSaveAcqusition(String name, boolean prompt) throws MMScriptException;
 
    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
    // DEPRECATED INTERFACE
@@ -914,13 +919,4 @@ public interface ScriptInterface {
    // TODO: remove this method
    public MMAcquisition getAcquisition(String name) throws MMScriptException;
 
-   /**
-    * Return the acquisition engine that carries out the MDA acquistion.
-    * You can get access to its functionality through this function.
-    * @return acquisition engine
-    * @deprecated
-    */
-   // TODO: remove this method
-   // public AcquisitionEngine getAcquisitionEngine();
-   
 }
