@@ -52,7 +52,6 @@ MMJ_.jar:  \
 	$(srcdir)/src/org/micromanager/acquisition/TaggedImageStorageRamFast.java \
 	$(srcdir)/src/org/micromanager/acquisition/VirtualAcquisitionDisplay.java \
 	$(srcdir)/src/org/micromanager/api/Autofocus.java \
-	$(srcdir)/src/org/micromanager/api/AcquisitionEngine.java \
 	$(srcdir)/src/org/micromanager/api/MMWindow.java \
 	$(srcdir)/src/org/micromanager/api/ScriptInterface.java \
 	$(srcdir)/src/org/micromanager/conf2/*.html \
