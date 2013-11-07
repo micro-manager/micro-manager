@@ -29,8 +29,7 @@
                                                     make-property-sequences]])
   (:require [clojure.set]
             [org.micromanager.mm :as mm])
-  (:import [org.micromanager.api AcquisitionEngine]
-           [org.micromanager.acquisition MMAcquisition
+  (:import [org.micromanager.acquisition MMAcquisition
                                          SequenceSettings
                                          TaggedImageQueue]
            [org.micromanager.navigation PositionList]
