@@ -65,12 +65,9 @@ public class LiveModeTimer {
       displayImageRoutine_ = new MMStudioMainFrame.DisplayImageRoutine() {
          public void show(final TaggedImage ti) {
             try {
-              if (!gui_.getImageWin().getCanvas().getPaintPending()) {
-                  gui_.getImageWin().getCanvas().setPaintPending(true);
-                  gui_.normalizeTags(ti);
-                  gui_.addImage(ACQ_NAME, ti, true, true);
-                  gui_.updateLineProfile();
-               }
+               gui_.normalizeTags(ti);
+               gui_.addImage(ACQ_NAME, ti, true, true);
+               gui_.updateLineProfile();
             } catch (Exception e) {
                ReportingUtils.logError(e);
             }
