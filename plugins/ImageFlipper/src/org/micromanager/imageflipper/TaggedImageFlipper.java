@@ -21,7 +21,7 @@
 
 package org.micromanager.imageflipper;
 
-import org.micromanager.api.AcquisitionEngine;
+import org.micromanager.acquisition.AcquisitionEngine;
 import org.micromanager.api.MMPlugin;
 import org.micromanager.api.ScriptInterface;
 
@@ -56,8 +56,7 @@ public class TaggedImageFlipper implements MMPlugin {
          ctls_ = new ImageFlipperControls();
       else
          ctls_.updateCameras();
-      AcquisitionEngine eng = gui_.getAcquisitionEngine();
-      eng.addImageProcessor(ctls_.getProcessor());
+      gui_.addImageProcessor(ctls_.getProcessor());
       ctls_.setVisible(true);
    }
 

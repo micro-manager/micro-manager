@@ -21,7 +21,7 @@
 //
 // CVS:          $Id: AcquisitionEngine.java 318 2007-07-02 22:29:55Z nenad $
 //
-package org.micromanager.api;
+package org.micromanager.acquisition;
 
 import java.awt.Color;
 import java.text.DecimalFormat;
@@ -30,9 +30,12 @@ import java.util.List;
 
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
-import org.json.JSONObject;
-import org.micromanager.internalinterfaces.AcqSettingsListener;
 
+import org.json.JSONObject;
+import org.micromanager.api.DataProcessor;
+import org.micromanager.api.ImageCache;
+import org.micromanager.api.ScriptInterface;
+import org.micromanager.internalinterfaces.AcqSettingsListener;
 import org.micromanager.navigation.PositionList;
 import org.micromanager.utils.AutofocusManager;
 import org.micromanager.utils.ChannelSpec;

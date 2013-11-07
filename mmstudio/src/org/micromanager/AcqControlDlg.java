@@ -24,6 +24,7 @@
 package org.micromanager;
 
 import com.swtdesigner.SwingResourceManager;
+
 import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
@@ -37,6 +38,7 @@ import java.util.Iterator;
 import java.util.Vector;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
+
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.EtchedBorder;
@@ -46,11 +48,13 @@ import javax.swing.event.ChangeListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.*;
+
 import mmcorej.CMMCore;
+
+import org.micromanager.acquisition.AcquisitionEngine;
 import org.micromanager.acquisition.ComponentTitledBorder;
 import org.micromanager.acquisition.TaggedImageStorageDiskDefault;
 import org.micromanager.acquisition.TaggedImageStorageMultipageTiff;
-import org.micromanager.api.AcquisitionEngine;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.internalinterfaces.AcqSettingsListener;
 import org.micromanager.utils.AcqOrderMode;

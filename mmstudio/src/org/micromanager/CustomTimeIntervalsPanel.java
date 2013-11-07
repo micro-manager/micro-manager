@@ -8,7 +8,6 @@ import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.ParseException;
@@ -39,7 +38,7 @@ import javax.swing.event.TableModelListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 
-import org.micromanager.api.AcquisitionEngine;
+import org.micromanager.acquisition.AcquisitionEngine;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.MMDialog;
 import org.micromanager.utils.TooltipTextMaker;

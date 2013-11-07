@@ -15,6 +15,7 @@ import ij.io.RoiEncoder;
 import ij.plugin.filter.GaussianBlur;
 import ij.plugin.frame.RoiManager;
 import ij.process.ImageProcessor;
+
 import java.awt.AWTEvent;
 import java.awt.Point;
 import java.awt.Polygon;
@@ -43,12 +44,15 @@ import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+
 import javax.swing.JOptionPane;
+
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
 import mmcorej.TaggedImage;
+
+import org.micromanager.acquisition.AcquisitionEngine;
 import org.micromanager.acquisition.VirtualAcquisitionDisplay;
-import org.micromanager.api.AcquisitionEngine;
 import org.micromanager.api.ImageCache;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.ImageUtils;
@@ -485,13 +489,12 @@ public class ProjectorController {
     public Configuration prepareChannel() {
         Configuration originalConfig = null;
         String channelGroup = mmc.getChannelGroup();
-        AcquisitionEngine eng = gui.getAcquisitionEngine();
         try {
             if (targetingChannel_.length() > 0) {
                 originalConfig = mmc.getConfigGroupState(channelGroup);
                 if (!originalConfig.isConfigurationIncluded(mmc.getConfigData(channelGroup,targetingChannel_))) {
-                    if (eng.isAcquisitionRunning()) {
-                        eng.setPause(true);
+                    if (gui.isAcquisitionRunning()) {
+                        gui.setPause(true);
                     }
                     mmc.setConfig(channelGroup, targetingChannel_);
                 }
@@ -504,13 +507,11 @@ public class ProjectorController {
 
     // Should be called with the value returned by prepareChannel.
     public void returnChannel(Configuration originalConfig) {
-        String channelGroup = mmc.getChannelGroup();
-        if (originalConfig != null) {
+         if (originalConfig != null) {
             try {
                 mmc.setSystemState(originalConfig);
-                final AcquisitionEngine eng = gui.getAcquisitionEngine();
-                if (eng.isAcquisitionRunning() && eng.isPaused()) {
-                    eng.setPause(false);
+                if (gui.isAcquisitionRunning() && gui.isPaused()) {
+                    gui.setPause(false);
                 }
             } catch (Exception ex) {
                 ReportingUtils.logError(ex);
@@ -594,19 +595,18 @@ public class ProjectorController {
          }
       };
 
-      final AcquisitionEngine acq = gui.getAcquisitionEngine();
-      acq.clearRunnables();
+      gui.clearRunnables();
       if (repeat) {
-         for (int i = frameOn; i < acq.getNumFrames()*10; i += repeatInterval) {
-            acq.attachRunnable(i, -1, 0, 0, runPolygons);
+         for (int i = frameOn; i < gui.getAcqusitionSettings().numFrames * 10; i += repeatInterval) {
+            gui.attachRunnable(i, -1, 0, 0, runPolygons);
          }
       } else {
-         acq.attachRunnable(frameOn, -1, 0, 0, runPolygons);
+         gui.attachRunnable(frameOn, -1, 0, 0, runPolygons);
       }
    }
 
    public void removeFromMDA() {
-      gui.getAcquisitionEngine().clearRunnables();
+      gui.clearRunnables();
    }
 
    public void setPointAndShootInterval(double intervalUs) {
@@ -645,23 +645,19 @@ public class ProjectorController {
     }
 
     private void recordPolygons() {
-        if (gui.getAcquisitionEngine().isAcquisitionRunning()) {
-            ImageCache cache = gui.getAcquisitionEngine().getImageCache();
-            if (cache != null) {
-                String location = cache.getDiskLocation();
-                if (location != null) {
-                    try {
-                        File f = new File(location, "ProjectorROIs.zip");
-                        if (!f.exists()) {
-                            saveROIs(f);
-                        }
-                    } catch (Exception ex) {
-                        ReportingUtils.logError(ex);
-                    }
-
-                }
-            }
-        }
+    	if (gui.isAcquisitionRunning()) {
+    		String location = gui.getAcquisitionPath();
+    		if (location != null) {
+    			try {
+    				File f = new File(location, "ProjectorROIs.zip");
+    				if (!f.exists()) {
+    					saveROIs(f);
+    				}
+    			} catch (Exception ex) {
+    				ReportingUtils.logError(ex);
+    			}
+    		}
+    	}
     }
     
     private String getROILabel(ImagePlus imp, Roi roi, int n) {

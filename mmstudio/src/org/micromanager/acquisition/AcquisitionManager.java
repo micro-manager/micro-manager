@@ -2,6 +2,7 @@ package org.micromanager.acquisition;
 
 import ij.CompositeImage;
 import ij.gui.ImageWindow;
+
 import java.awt.Point;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -9,15 +10,15 @@ import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Set;
 import java.util.prefs.Preferences;
+
 import mmcorej.TaggedImage;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.micromanager.api.AcquisitionEngine;
 import org.micromanager.api.ImageCache;
 import org.micromanager.utils.GUIUtils;
 import org.micromanager.utils.MDUtils;
-
 import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ReportingUtils;
 

@@ -24,7 +24,9 @@ package org.micromanager.acquisition;
 
 import org.micromanager.internalinterfaces.DisplayControls;
 import org.micromanager.internalinterfaces.Histograms;
+
 import java.lang.reflect.InvocationTargetException;
+
 import ij.ImageStack;
 import ij.process.LUT;
 import ij.CompositeImage;
@@ -38,6 +40,7 @@ import ij.gui.Toolbar;
 import ij.io.FileInfo;
 import ij.measure.Calibration;
 import ij.plugin.frame.ContrastAdjuster;
+
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
@@ -48,12 +51,15 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.prefs.Preferences;
+
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
+
 import mmcorej.TaggedImage;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;

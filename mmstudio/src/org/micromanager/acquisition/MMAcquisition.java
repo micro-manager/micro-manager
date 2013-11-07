@@ -22,6 +22,7 @@
 package org.micromanager.acquisition;
 
 import ij.ImagePlus;
+
 import java.awt.Color;
 import java.io.File;
 import java.net.InetAddress;
@@ -33,8 +34,8 @@ import java.util.UUID;
 import java.util.prefs.Preferences;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import mmcorej.CMMCore;
 
+import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 
 import org.json.JSONArray;
@@ -42,9 +43,7 @@ import org.json.JSONObject;
 import org.json.JSONException;
 import org.micromanager.AcqControlDlg;
 import org.micromanager.MMStudioMainFrame;
-import org.micromanager.api.AcquisitionEngine;
 import org.micromanager.api.ImageCache;
-
 import org.micromanager.api.TaggedImageStorage;
 import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.JavaUtils;

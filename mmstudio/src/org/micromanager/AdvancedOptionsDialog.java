@@ -12,7 +12,8 @@ import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 
 
-import org.micromanager.api.AcquisitionEngine;
+
+import org.micromanager.acquisition.AcquisitionEngine;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.MMDialog;
 

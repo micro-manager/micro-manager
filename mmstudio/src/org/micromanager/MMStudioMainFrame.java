@@ -41,10 +41,8 @@ import java.awt.event.FocusEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.geom.Point2D;
-
 import java.io.File;
 import java.io.IOException;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.prefs.Preferences;
@@ -76,8 +74,8 @@ import mmcorej.StrVector;
 
 import org.json.JSONObject;
 import org.micromanager.acquisition.AcquisitionManager;
-import org.micromanager.api.AcquisitionEngine;
 import org.micromanager.api.Autofocus;
+import org.micromanager.api.DataProcessor;
 import org.micromanager.api.MMPlugin;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.api.MMListenerInterface;
@@ -103,13 +101,20 @@ import org.micromanager.utils.TooltipTextMaker;
 import org.micromanager.utils.WaitDialog;
 
 
+
+
+
+
+
 import bsh.EvalError;
 import bsh.Interpreter;
 
 import com.swtdesigner.SwingResourceManager;
+
 import ij.gui.ImageCanvas;
 import ij.gui.ImageWindow;
 import ij.gui.Toolbar;
+
 import java.awt.Cursor;
 import java.awt.KeyboardFocusManager;
 import java.awt.dnd.DropTarget;
@@ -118,19 +123,23 @@ import java.awt.event.MouseEvent;
 import java.util.Collections;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+
 import javax.swing.BorderFactory;
 import javax.swing.JPanel;
 import javax.swing.JSplitPane;
 import javax.swing.event.AncestorListener;
-import mmcorej.TaggedImage;
-import org.json.JSONException;
 
+import mmcorej.TaggedImage;
+
+import org.json.JSONException;
 import org.micromanager.acquisition.AcquisitionWrapperEngine;
 import org.micromanager.acquisition.LiveModeTimer;
 import org.micromanager.acquisition.MMAcquisition;
 import org.micromanager.api.ImageCache;
+import org.micromanager.acquisition.AcquisitionEngine;
 import org.micromanager.acquisition.MetadataPanel;
 import org.micromanager.acquisition.ProcessorStack;
+import org.micromanager.acquisition.SequenceSettings;
 import org.micromanager.acquisition.TaggedImageQueue;
 import org.micromanager.acquisition.TaggedImageStorageDiskDefault;
 import org.micromanager.acquisition.TaggedImageStorageMultipageTiff;
@@ -232,7 +241,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
 
    // MMcore
    private CMMCore core_;
-   private AcquisitionEngine engine_;
+   private AcquisitionWrapperEngine engine_;
    private PositionList posList_;
    private PositionListDlg posListDlg_;
    private String openAcqDirectory_ = "";
@@ -4543,7 +4552,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       }
    }
 
-   public AcquisitionEngine getAcquisitionEngine() {
+   public AcquisitionWrapperEngine getAcquisitionEngine() {
       return engine_;
    }
 
@@ -4647,6 +4656,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       return core_;
    }
 
+   @Override
    public IAcquisitionEngine2010 getAcquisitionEngine2010() {
       try {
          acquisitionEngine2010LoadingThread.join();
@@ -4659,6 +4669,51 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
          return null;
       }
    }
+   
+   @Override
+   public void addImageProcessor(DataProcessor<TaggedImage> processor) {
+	   getAcquisitionEngine().addImageProcessor(processor);
+   }
+
+   @Override
+   public void removeImageProcessor(DataProcessor<TaggedImage> processor) {
+	   getAcquisitionEngine().removeImageProcessor(processor);
+   }
+
+   @Override
+   public void setPause(boolean state) {
+	   getAcquisitionEngine().setPause(state);
+   }
+
+   @Override
+   public boolean isPaused() {
+	   return getAcquisitionEngine().isPaused();
+   }
+   
+   @Override
+   public void attachRunnable(int frame, int position, int channel, int slice, Runnable runnable) {
+	   getAcquisitionEngine().attachRunnable(frame, position, channel, slice, runnable);
+   }
+
+   @Override
+   public void clearRunnables() {
+	   getAcquisitionEngine().clearRunnables();
+   }
+   
+   @Override
+   public SequenceSettings getAcqusitionSettings() {
+	   if (engine_ == null)
+		   return new SequenceSettings();
+	   return engine_.getSequenceSettings();
+   }
+   
+   @Override
+   public String getAcquisitionPath() {
+	   if (engine_ == null)
+		   return null;
+	   return engine_.getImageCache().getDiskLocation();
+   }
+
 
    public void snapAndAddToImage5D() {
       if (core_.getCameraDevice().length() == 0) {
@@ -4676,7 +4731,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       }
    }
 
-   public void setAcquisitionEngine(AcquisitionEngine eng) {
+   public void setAcquisitionEngine(AcquisitionWrapperEngine eng) {
       engine_ = eng;
    }
    
@@ -4878,7 +4933,9 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
          ReportingUtils.showError(e);
       }
    }
+
 }
+
 class BooleanLock extends Object {
 
    private boolean value;

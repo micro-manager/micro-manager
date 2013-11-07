@@ -562,11 +562,11 @@ public class SplitViewFrame extends javax.swing.JFrame {
       if (applyToMDACheckBox_.isSelected() && !appliedToMDA_) {
          mmImageProcessor_ = new SplitViewProcessor(this);
          mmImageProcessor_.setName("SplitView");
-         gui_.getAcquisitionEngine().addImageProcessor(mmImageProcessor_);
+         gui_.addImageProcessor(mmImageProcessor_);
          appliedToMDA_ = true;
       } else if (!applyToMDACheckBox_.isSelected() && appliedToMDA_) {
          if (mmImageProcessor_ != null)
-            gui_.getAcquisitionEngine().removeImageProcessor(mmImageProcessor_);
+            gui_.removeImageProcessor(mmImageProcessor_);
          appliedToMDA_ = false;
       }
    }//GEN-LAST:event_applyToMDACheckBox_StateChanged

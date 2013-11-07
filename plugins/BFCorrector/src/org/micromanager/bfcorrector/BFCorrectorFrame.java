@@ -22,10 +22,11 @@
 package org.micromanager.bfcorrector;
 
 import ij.ImagePlus;
+
 import java.io.File;
 import java.util.prefs.Preferences;
 
-import org.micromanager.api.AcquisitionEngine;
+import org.micromanager.acquisition.AcquisitionEngine;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.FileDialogs;
 import org.micromanager.utils.FileDialogs.FileType;
@@ -96,15 +97,12 @@ public class BFCorrectorFrame extends javax.swing.JFrame {
 
     }
     
-    
     private void attachProcessor() {
-       AcquisitionEngine eng = gui_.getAcquisitionEngine();
-       eng.addImageProcessor(processor_);
+       gui_.addImageProcessor(processor_);
     }
     
     private void dettachProcessor() {
-       AcquisitionEngine eng = gui_.getAcquisitionEngine();
-       eng.removeImageProcessor(processor_);
+       gui_.removeImageProcessor(processor_);
     }
      
     private void processFlatFieldImage(String fileName) {

@@ -36,6 +36,7 @@ import org.json.JSONObject;
 import org.micromanager.AcqControlDlg;
 import org.micromanager.PositionListDlg;
 import org.micromanager.acquisition.MMAcquisition;
+import org.micromanager.acquisition.SequenceSettings;
 import org.micromanager.navigation.PositionList;
 import org.micromanager.utils.AutofocusManager;
 import org.micromanager.utils.MMScriptException;
@@ -567,12 +568,10 @@ public interface ScriptInterface {
     */
    public void setXYOrigin(double x, double y) throws MMScriptException;
    
-   
    /**
     * Save current configuration
     */
    public void saveConfigPresets();
-
 
    /**
     * Returns the ImageJ ImageWindow instance that is used for Snap and Live display.
@@ -859,7 +858,49 @@ public interface ScriptInterface {
     */
    public boolean getHideMDADisplayOption();
    
+   /**
+    * Adds an image processor to the DataProcessor pipeline.
+    */
+   public void addImageProcessor(DataProcessor<TaggedImage> processor);
+
+   /**
+    * Removes an image processor from the DataProcessor pipeline.
+    */
+   public void removeImageProcessor(DataProcessor<TaggedImage> taggedImageProcessor);
    
+   /**
+    * Pause/Unpause a running acquistion
+    */
+   public void setPause(boolean state);
+   
+   /**
+    * Returns true if the acquisition is currently paused.
+    */
+   public boolean isPaused();
+
+   /**
+    * Attach a runnable to the acquisition engine. Each index (f, p, c, s) can
+    * be specified. Passing a value of -1 should result in the runnable being attached
+    * at all values of that index. For example, if the first argument is -1,
+    * then the runnable should execute at every frame.
+    */
+   public void attachRunnable(int frame, int position, int channel, int slice, Runnable runnable);
+
+   /**
+    * Remove runnables from the acquisition engine
+    */
+   public void clearRunnables();
+   
+   /**
+    * Return current acqusition settings
+    */ 
+    SequenceSettings getAcqusitionSettings();
+    
+    /**
+     * Return the current acquisition path, or null if not applicable
+     */
+    public String getAcquisitionPath();
+
    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
    // DEPRECATED INTERFACE
    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -880,6 +921,6 @@ public interface ScriptInterface {
     * @deprecated
     */
    // TODO: remove this method
-   public AcquisitionEngine getAcquisitionEngine();
+   // public AcquisitionEngine getAcquisitionEngine();
    
 }

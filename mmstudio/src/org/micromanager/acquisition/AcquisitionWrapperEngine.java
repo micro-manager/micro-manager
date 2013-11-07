@@ -11,14 +11,16 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.prefs.Preferences;
+
 import javax.swing.JOptionPane;
+
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
 import mmcorej.PropertySetting;
 import mmcorej.StrVector;
 import mmcorej.TaggedImage;
+
 import org.json.JSONObject;
-import org.micromanager.api.AcquisitionEngine;
 import org.micromanager.api.DataProcessor;
 import org.micromanager.api.ImageCache;
 import org.micromanager.api.IAcquisitionEngine2010;
