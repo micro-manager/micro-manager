@@ -79,9 +79,6 @@ MMJ_.jar:  \
 	$(srcdir)/src/org/micromanager/graph/GraphFrame.java \
 	$(srcdir)/src/org/micromanager/graph/GraphPanel.java \
 	$(srcdir)/src/org/micromanager/graph/HistogramPanel.java \
-	$(srcdir)/src/org/micromanager/navigation/MultiStagePosition.java \
-	$(srcdir)/src/org/micromanager/navigation/PositionList.java \
-	$(srcdir)/src/org/micromanager/navigation/StagePosition.java \
 	$(srcdir)/src/org/micromanager/navigation/CenterAndDragListener.java \
 	$(srcdir)/src/org/micromanager/navigation/XYZKeyListener.java \
 	$(srcdir)/src/org/micromanager/navigation/ZWheelListener.java \
