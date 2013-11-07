@@ -906,17 +906,4 @@ public interface ScriptInterface {
      */
     public void promptToSaveAcqusition(String name, boolean prompt) throws MMScriptException;
 
-   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-   // DEPRECATED INTERFACE
-   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-   
-   /**
-    * Gets a reference to the MMAcquisition object associated with the specified acquisition name.
-    * @param name name of the requested acquisition
-    * @return MMAcquisition object
-    * @deprecated
-    */
-   // TODO: remove this method
-   public MMAcquisition getAcquisition(String name) throws MMScriptException;
-
 }

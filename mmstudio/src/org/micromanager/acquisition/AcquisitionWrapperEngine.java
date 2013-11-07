@@ -74,16 +74,18 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    protected JSONObject summaryMetadata_;
    protected ImageCache imageCache_;
    private ArrayList<AcqSettingsListener> settingsListeners_;
+   private AcquisitionManager acqManager_;
 
-   public AcquisitionWrapperEngine() {
+   public AcquisitionWrapperEngine(AcquisitionManager mgr) {
       imageRequestProcessors_ = new ArrayList<Class>();
       taggedImageProcessors_ = new ArrayList<DataProcessor<TaggedImage>>();
       useCustomIntervals_ = false;
       settingsListeners_ = new ArrayList<AcqSettingsListener>();
+      acqManager_ = mgr;
    }
 
    public String acquire() throws MMException {
-      return runAcquisition(getSequenceSettings());
+      return runAcquisition(getSequenceSettings(), acqManager_);
    }
 
    public void addSettingsListener(AcqSettingsListener listener) {
@@ -107,7 +109,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       return acquisitionEngine2010;
    }
 
-   protected String runAcquisition(SequenceSettings acquisitionSettings) {
+   protected String runAcquisition(SequenceSettings acquisitionSettings, AcquisitionManager acqManager) {
       //Make sure computer can write to selected location and that there is enough space to do so
       if (saveFiles_) {
          File root = new File(rootName_);
@@ -129,12 +131,21 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
          }
       }
       try {
+    	  // open acquisition
+         String acqName = gui_.createAcquisition(summaryMetadata_, acquisitionSettings.save, gui_.getHideMDADisplayOption());
+         VirtualAcquisitionDisplay display = acqManager.getAcquisition(acqName).getAcquisitionWindow();
+
+         // create the pipeline
          DefaultTaggedImagePipeline taggedImagePipeline = new DefaultTaggedImagePipeline(
                  getAcquisitionEngine2010(),
                  acquisitionSettings,
                  taggedImageProcessors_,
+                 display,
+                 imageCache_,
+                 acqName,
                  gui_,
                  acquisitionSettings.save);
+         
          summaryMetadata_ = taggedImagePipeline.summaryMetadata_;
          imageCache_ = taggedImagePipeline.imageCache_;
          return taggedImagePipeline.acqName_;

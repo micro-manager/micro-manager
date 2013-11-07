@@ -1762,7 +1762,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
             shutterLabel_ = "";
             zStageLabel_ = "";
             xyStageLabel_ = "";
-            engine_ = new AcquisitionWrapperEngine();
+            engine_ = new AcquisitionWrapperEngine(acqMgr_);
 
             // register callback for MMCore notifications, this is a global
             // to avoid garbage collection
@@ -4088,15 +4088,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       return acqMgr_.getUniqueAcquisitionName(stub);
    }
    
-   /**
-    * @deprecated -- this function was never implemented. getAcquisition(String name) should
-    * be used instead
-    * @deprecated - Removed from api/AcquisitionEngine
-    */
-   public MMAcquisition getCurrentAcquisition() {
-      return null; // if none available
-   }
-
    @Override
    public void openAcquisition(String name, String rootDir, int nrFrames,
          int nrChannels, int nrSlices, int nrPositions) throws MMScriptException {
