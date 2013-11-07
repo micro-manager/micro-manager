@@ -25,8 +25,8 @@ import java.util.Hashtable;
 
 import javax.swing.JPanel;
 
+import org.micromanager.api.PositionList;
 import org.micromanager.api.ScriptInterface;
-import org.micromanager.navigation.PositionList;
 import org.micromanager.utils.MMScriptException;
 
 

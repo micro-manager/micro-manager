@@ -20,20 +20,24 @@ import javax.swing.SpringLayout;
 import javax.swing.UIManager;
 
 import org.micromanager.api.MMPlugin;
+import org.micromanager.api.MultiStagePosition;
+import org.micromanager.api.PositionList;
 import org.micromanager.api.ScriptInterface;
-import org.micromanager.navigation.MultiStagePosition;
-import org.micromanager.navigation.PositionList;
-import org.micromanager.navigation.StagePosition;
+import org.micromanager.api.StagePosition;
 import org.micromanager.utils.MMFrame;
 import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.TextUtils;
 
 import com.swtdesigner.SwingResourceManager;
+
 import javax.swing.border.LineBorder;
+
 import java.awt.Color;
 import java.awt.Component;
+
 import javax.swing.JRadioButton;
 import javax.swing.ButtonGroup;
+
 import java.awt.Dimension;
 
 /**

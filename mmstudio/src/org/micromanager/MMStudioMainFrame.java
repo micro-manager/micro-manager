@@ -77,15 +77,16 @@ import org.micromanager.acquisition.AcquisitionManager;
 import org.micromanager.api.Autofocus;
 import org.micromanager.api.DataProcessor;
 import org.micromanager.api.MMPlugin;
+import org.micromanager.api.PositionList;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.api.MMListenerInterface;
+import org.micromanager.api.SequenceSettings;
 import org.micromanager.conf2.ConfiguratorDlg2;
 import org.micromanager.conf2.MMConfigFileException;
 import org.micromanager.conf2.MicroscopeModel;
 import org.micromanager.graph.GraphData;
 import org.micromanager.graph.GraphFrame;
 import org.micromanager.navigation.CenterAndDragListener;
-import org.micromanager.navigation.PositionList;
 import org.micromanager.navigation.XYZKeyListener;
 import org.micromanager.navigation.ZWheelListener;
 import org.micromanager.utils.AutofocusManager;
@@ -99,6 +100,8 @@ import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.TextUtils;
 import org.micromanager.utils.TooltipTextMaker;
 import org.micromanager.utils.WaitDialog;
+
+
 
 
 
@@ -139,7 +142,6 @@ import org.micromanager.api.ImageCache;
 import org.micromanager.acquisition.AcquisitionEngine;
 import org.micromanager.acquisition.MetadataPanel;
 import org.micromanager.acquisition.ProcessorStack;
-import org.micromanager.acquisition.SequenceSettings;
 import org.micromanager.acquisition.TaggedImageQueue;
 import org.micromanager.acquisition.TaggedImageStorageDiskDefault;
 import org.micromanager.acquisition.TaggedImageStorageMultipageTiff;

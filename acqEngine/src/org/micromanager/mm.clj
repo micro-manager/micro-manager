@@ -14,11 +14,11 @@
 ;               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
 (ns org.micromanager.mm
-  (:import [org.micromanager.navigation MultiStagePosition]
+  (:import [org.micromanager.api MultiStagePosition]
            [mmcorej Configuration DoubleVector Metadata StrVector] ;; load mmcorej.DeviceType at runtime only
            [org.json JSONArray JSONObject]
            [java.text SimpleDateFormat]
-           [org.micromanager.navigation MultiStagePosition StagePosition]
+           [org.micromanager.api MultiStagePosition StagePosition]
            [org.micromanager.utils ChannelSpec]
            [java.util Date]
            [ij IJ]

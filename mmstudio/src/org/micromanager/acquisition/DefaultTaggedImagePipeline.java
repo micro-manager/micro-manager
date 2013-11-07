@@ -2,12 +2,15 @@ package org.micromanager.acquisition;
 
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
+
 import mmcorej.TaggedImage;
+
 import org.json.JSONObject;
 import org.micromanager.api.DataProcessor;
 import org.micromanager.api.IAcquisitionEngine2010;
 import org.micromanager.api.ImageCache;
 import org.micromanager.api.ScriptInterface;
+import org.micromanager.api.SequenceSettings;
 import org.micromanager.utils.MMScriptException;
 
 /**

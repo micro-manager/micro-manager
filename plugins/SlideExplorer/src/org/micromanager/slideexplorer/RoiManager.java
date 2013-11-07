@@ -30,22 +30,24 @@ import java.awt.geom.Point2D;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import mmcorej.CMMCore;
 
+import org.micromanager.api.MultiStagePosition;
+import org.micromanager.api.PositionList;
 import org.micromanager.api.ScriptInterface;
-import org.micromanager.navigation.PositionList;
-import org.micromanager.navigation.MultiStagePosition;
+import org.micromanager.api.StagePosition;
 //import org.micromanager.slideexplorer.SlideExplorer.CoordinateMap;
 import org.micromanager.utils.MMScriptException;
 
 import ij.gui.Roi;
 import ij.gui.ShapeRoi;
+
 import java.awt.Shape;
 import java.awt.geom.AffineTransform;
-import org.micromanager.navigation.StagePosition;
+
 import org.micromanager.utils.JavaUtils;
 import org.micromanager.utils.ReportingUtils;
 

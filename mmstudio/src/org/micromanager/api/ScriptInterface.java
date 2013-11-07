@@ -36,8 +36,6 @@ import org.json.JSONObject;
 import org.micromanager.AcqControlDlg;
 import org.micromanager.PositionListDlg;
 import org.micromanager.acquisition.MMAcquisition;
-import org.micromanager.acquisition.SequenceSettings;
-import org.micromanager.navigation.PositionList;
 import org.micromanager.utils.AutofocusManager;
 import org.micromanager.utils.MMScriptException;
 
@@ -905,5 +903,12 @@ public interface ScriptInterface {
      * Display dialog to save data for one of the currently open acquisitions
      */
     public void promptToSaveAcqusition(String name, boolean prompt) throws MMScriptException;
+    
+    /**
+     * OBSOLETE!!!
+     * TO BE REMOVED
+     * @return
+     */
+    public MMAcquisition getAcquisition(String name) throws MMScriptException;
 
 }

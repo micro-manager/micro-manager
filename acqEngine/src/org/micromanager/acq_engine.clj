@@ -29,10 +29,10 @@
                                                     make-property-sequences]])
   (:require [clojure.set]
             [org.micromanager.mm :as mm])
-  (:import [org.micromanager.acquisition MMAcquisition
-                                         SequenceSettings
-                                         TaggedImageQueue]
-           [org.micromanager.navigation PositionList]
+  (:import [org.micromanager.acquisition TaggedImageQueue]
+  		   [org.micromanager.acquisition MMAcquisition]
+           [org.micromanager.api SequenceSettings]
+           [org.micromanager.api PositionList]
            [org.micromanager.utils ReportingUtils]
            [mmcorej TaggedImage Configuration Metadata]
            (java.util.concurrent Executors TimeUnit)

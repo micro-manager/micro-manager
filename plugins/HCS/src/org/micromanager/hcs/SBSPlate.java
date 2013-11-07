@@ -29,9 +29,9 @@ import java.util.Hashtable;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.micromanager.navigation.MultiStagePosition;
-import org.micromanager.navigation.PositionList;
-import org.micromanager.navigation.StagePosition;
+import org.micromanager.api.MultiStagePosition;
+import org.micromanager.api.PositionList;
+import org.micromanager.api.StagePosition;
 
 public class SBSPlate {
 

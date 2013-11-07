@@ -1,6 +1,6 @@
 package org.micromanager.hcs;
 
-import org.micromanager.navigation.PositionList;
+import org.micromanager.api.PositionList;
 
 public class WellPositionList {
    private String label_;

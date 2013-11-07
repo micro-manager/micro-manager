@@ -43,8 +43,8 @@ import mmcorej.MMCoreJ;
 import mmcorej.StrVector;
 
 import org.micromanager.api.MMListenerInterface;
-import org.micromanager.navigation.MultiStagePosition;
-import org.micromanager.navigation.StagePosition;
+import org.micromanager.api.MultiStagePosition;
+import org.micromanager.api.StagePosition;
 import org.micromanager.utils.MMDialog;
 import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.ReportingUtils;

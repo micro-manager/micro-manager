@@ -57,16 +57,18 @@ import mmcorej.CMMCore;
 import mmcorej.DeviceType;
 import mmcorej.StrVector;
 
-import org.micromanager.navigation.MultiStagePosition;
-import org.micromanager.navigation.PositionList;
-import org.micromanager.navigation.StagePosition;
 import org.micromanager.utils.GUIColors;
 import org.micromanager.utils.MMDialog;
 
 import com.swtdesigner.SwingResourceManager;
+
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+
+import org.micromanager.api.MultiStagePosition;
+import org.micromanager.api.PositionList;
 import org.micromanager.api.ScriptInterface;
+import org.micromanager.api.StagePosition;
 import org.micromanager.utils.FileDialogs;
 import org.micromanager.utils.FileDialogs.FileType;
 import org.micromanager.utils.GUIUtils;
