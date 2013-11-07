@@ -23,7 +23,6 @@
 package org.micromanager.newimageflipper;
 
 import ij.ImagePlus;
-import ij.Prefs;
 import ij.process.ByteProcessor;
 import java.util.prefs.Preferences;
 import javax.swing.ImageIcon;
@@ -31,7 +30,6 @@ import mmcorej.StrVector;
 import mmcorej.TaggedImage;
 import org.json.JSONObject;
 import org.micromanager.MMStudioMainFrame;
-import org.micromanager.api.AcquisitionEngine;
 import org.micromanager.api.DataProcessor;
 import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.MDUtils;
@@ -240,8 +238,7 @@ public class NewImageFlipperControls extends javax.swing.JFrame {
    }//GEN-LAST:event_cameraComboBox_ActionPerformed
 
    private void formWindowClosed(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosed
-      AcquisitionEngine eng = MMStudioMainFrame.getInstance().getAcquisitionEngine();
-      eng.removeImageProcessor(getProcessor());
+      MMStudioMainFrame.getInstance().removeImageProcessor(getProcessor());
    }//GEN-LAST:event_formWindowClosed
 
    /**
