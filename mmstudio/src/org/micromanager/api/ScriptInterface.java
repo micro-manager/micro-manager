@@ -53,6 +53,7 @@ public interface ScriptInterface {
     * Script can be aborted during sleep.
     * @throws MMScriptException 
     */
+	// TODO: not used
    public void sleep(long ms) throws MMScriptException;
    
    /**
@@ -257,29 +258,6 @@ public interface ScriptInterface {
     * @return Arrays with names of all acquisitions that are currently open
     */
    public String[] getAcquisitionNames();
-      
-   /**
-    * Snaps an image with current settings and moves pixels into the specified layer of the MDA viewer.
-    * @param name Name of the acquisition.
-    * @param frame Frame number (time point, 0-based) in which this image should be inserted.
-    * @param channel Channel number (0-based) in which this image should be inserted.
-    * @param z Slice number (0-based) in which this image should be inserted.
-    * @throws MMScriptException 
-    */
-   public void snapAndAddImage(String name, int frame, int channel, int z) throws MMScriptException;
-
-   /**
-    * Snaps an image with the current settings and places pixels in the specified position
-    * of the Micro-Manager Image viewer
-    * @param name Name of the acquisition.
-    * @param frame Frame number (time point, 0-based) in which this image should be inserted.
-    * @param channel Channel number (0-based) in which this image should be inserted.
-    * @param z Slice number (0-based) in which this image should be inserted.
-    * @param position Position number (0-based) in which this image should be inserted. 
-    * @throws MMScriptException
-    */
-   public void snapAndAddImage(String name, int frame, int channel, int z, int position) throws MMScriptException;
-
 
    /**
     * Inserts image into the acquisition handle.
@@ -906,9 +884,36 @@ public interface ScriptInterface {
     
     /**
      * OBSOLETE!!!
-     * TO BE REMOVED
+     * TO BE REMOVED >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
      * @return
      */
     public MMAcquisition getAcquisition(String name) throws MMScriptException;
+    
+    /**
+     * Snaps an image with current settings and moves pixels into the specified layer of the MDA viewer.
+     * @param name Name of the acquisition.
+     * @param frame Frame number (time point, 0-based) in which this image should be inserted.
+     * @param channel Channel number (0-based) in which this image should be inserted.
+     * @param z Slice number (0-based) in which this image should be inserted.
+     * @throws MMScriptException 
+     */
+    // public void snapAndAddImage(String name, int frame, int channel, int z) throws MMScriptException;
+    // replace with:
+    // gui.addImage(acqName, mmc.getTaggedImage());
+
+    /**
+     * Snaps an image with the current settings and places pixels in the specified position
+     * of the Micro-Manager Image viewer
+     * @param name Name of the acquisition.
+     * @param frame Frame number (time point, 0-based) in which this image should be inserted.
+     * @param channel Channel number (0-based) in which this image should be inserted.
+     * @param z Slice number (0-based) in which this image should be inserted.
+     * @param position Position number (0-based) in which this image should be inserted. 
+     * @throws MMScriptException
+     */
+    // public void snapAndAddImage(String name, int frame, int channel, int z, int position) throws MMScriptException;
+    // replace with:
+    // gui.addImage(acqName, mmc.getTaggedImage());
+
 
 }
