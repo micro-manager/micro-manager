@@ -10,15 +10,15 @@ Author: Nico Stuurman: nico at cmp.ucsf.edu
  */
 package org.micromanager.multicamera;
 
-import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.prefs.Preferences;
 
 import javax.swing.DefaultComboBoxModel;
 
 import java.awt.event.ItemEvent;
+import java.awt.event.KeyEvent;
+import java.util.ArrayList;
 
-import java.util.Vector;
 import mmcorej.CMMCore;
 import mmcorej.DeviceType;
 import mmcorej.StrVector;
@@ -36,13 +36,13 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
    private static final long serialVersionUID = 1L;
    private final ScriptInterface gui_;
    private final CMMCore core_;
-   private Preferences prefs_;
+   final private Preferences prefs_;
    private int frameXPos_ = 100;
    private int frameYPos_ = 100;
    private int EMGainMin_ = 4;
    private int EMGainMax_ = 1000;
-   private String[] cameras_;
-   private Vector<String> camerasInUse_;
+   private final String[] cameras_;
+   private ArrayList<String> camerasInUse_;
    private String coreCamera_;
    private boolean initialized_ = false;
    private static final String MIXED = "";
@@ -72,7 +72,10 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
    private static final String PHYSCAM2 = "Physical Camera 2";
    private static final String PHYSCAM3 = "Physical Camera 3";
 
-   /** Creates new form MultiCameraFrame */
+   /** Creates new form MultiCameraFrame
+     * @param gui - handle to instance of the ScriptInterface
+     * @throws java.lang.Exception 
+     */
    public MultiCameraFrame(ScriptInterface gui) throws Exception {
       gui_ = gui;
       core_ = gui_.getMMCore();
@@ -197,8 +200,6 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
       updateTemp();
 
       initialized(true, true);
-      
-      gui_.addMMListener(this);
 
       core_.setCameraDevice(currentCamera);
    }
@@ -212,9 +213,8 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
    private synchronized boolean initialized(boolean set, boolean value) {
       if (set) {
          initialized_ = value;
-      } else {
-         value = initialized_;
-      }
+      } 
+      
       return initialized_;
    }
 
@@ -267,6 +267,11 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
                 EMGainTextFieldActionPerformed(evt);
             }
         });
+        EMGainTextField.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyReleased(java.awt.event.KeyEvent evt) {
+                EMGainTextFieldKeyReleased(evt);
+            }
+        });
 
         modeComboBox.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
         modeComboBox.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "EM", "Conventional" }));
@@ -281,16 +286,16 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
             }
         });
 
-        jLabel4.setFont(new java.awt.Font("Lucida Grande", 0, 10));
+        jLabel4.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
         jLabel4.setText("EM Gain");
 
         jLabel5.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
         jLabel5.setText("Mode");
 
-        GainLabel.setFont(new java.awt.Font("Lucida Grande", 0, 10));
+        GainLabel.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
         GainLabel.setText("Gain");
 
-        speedComboBox.setFont(new java.awt.Font("Lucida Grande", 0, 10));
+        speedComboBox.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
         speedComboBox.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "1MHz", "3MHz", "5MHz", "10MHz" }));
         speedComboBox.addItemListener(new java.awt.event.ItemListener() {
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
@@ -298,10 +303,10 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
             }
         });
 
-        SpeedLabel.setFont(new java.awt.Font("Lucida Grande", 0, 10));
+        SpeedLabel.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
         SpeedLabel.setText("Speed");
 
-        EMCheckBox.setFont(new java.awt.Font("Lucida Grande", 0, 10));
+        EMCheckBox.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
         EMCheckBox.setText("Use");
         EMCheckBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -309,7 +314,7 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
             }
         });
 
-        gainComboBox.setFont(new java.awt.Font("Lucida Grande", 0, 10));
+        gainComboBox.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
         gainComboBox.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "1", "2", "3", "4", "5" }));
         gainComboBox.addItemListener(new java.awt.event.ItemListener() {
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
@@ -320,7 +325,7 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
         FrameTransferLabel.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
         FrameTransferLabel.setText("FrameTransfer");
 
-        frameTransferComboBox.setFont(new java.awt.Font("Lucida Grande", 0, 10));
+        frameTransferComboBox.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
         frameTransferComboBox.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "On", "Off" }));
         frameTransferComboBox.addItemListener(new java.awt.event.ItemListener() {
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
@@ -328,21 +333,22 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
             }
         });
 
-        jLabel9.setFont(new java.awt.Font("Lucida Grande", 0, 10));
+        jLabel9.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
         jLabel9.setText("Active Camera");
 
         cameraSelectComboBox.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
         cameraSelectComboBox.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "1", "2", "4", "8" }));
+        cameraSelectComboBox.setBorder(null);
         cameraSelectComboBox.addItemListener(new java.awt.event.ItemListener() {
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
                 cameraSelectComboBoxItemStateChanged(evt);
             }
         });
 
-        TriggerLabel.setFont(new java.awt.Font("Lucida Grande", 0, 10));
+        TriggerLabel.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
         TriggerLabel.setText("Trigger");
 
-        triggerComboBox.setFont(new java.awt.Font("Lucida Grande", 0, 10));
+        triggerComboBox.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
         triggerComboBox.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "On", "Off" }));
         triggerComboBox.addItemListener(new java.awt.event.ItemListener() {
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
@@ -350,7 +356,7 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
             }
         });
 
-        tempButton.setFont(new java.awt.Font("Tahoma", 0, 10));
+        tempButton.setFont(new java.awt.Font("Tahoma", 0, 10)); // NOI18N
         tempButton.setText("Temp");
         tempButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -450,7 +456,7 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
                     .add(tempButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 17, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(tempLabel)
                     .add(jLabel1))
-                .addContainerGap(12, Short.MAX_VALUE))
+                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         pack();
@@ -520,23 +526,7 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
    }
 
     private void EMGainTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_EMGainTextFieldActionPerformed
-       if (!initialized(false, false)) {
-          return;
-       }
-       try {
-          int val = NumberUtils.displayStringToInt(EMGainTextField.getText());
-          if (val > EMGainMax_) {
-             val = EMGainMax_;
-          }
-          if (val < EMGainMin_) {
-             val = EMGainMin_;
-          }
-          EMGainSlider.setEnabled(true);
-          EMGainSlider.setValue(val);
-          setEMGain();
-       } catch (ParseException e) {
-          // ignore if the user types garbage
-       }
+
     }//GEN-LAST:event_EMGainTextFieldActionPerformed
 
     private void EMCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_EMCheckBoxActionPerformed
@@ -697,7 +687,7 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
     }//GEN-LAST:event_triggerComboBoxItemStateChanged
 
    private void updateCamerasInUse(String camera) {
-      camerasInUse_ = new Vector<String>();
+      camerasInUse_ = new ArrayList<String>();
       if (core_.getNumberOfCameraChannels() == 1) {
          camerasInUse_.add(camera);
       } else if (core_.getNumberOfCameraChannels() > 1) {
@@ -784,6 +774,31 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
     private void modeComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_modeComboBoxActionPerformed
        // TODO add your handling code here:
     }//GEN-LAST:event_modeComboBoxActionPerformed
+
+    private void EMGainTextFieldKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_EMGainTextFieldKeyReleased
+       if (!initialized(false, false)) {
+          return;
+       }
+        try {
+            char key = evt.getKeyChar();
+            int keyCode = evt.getKeyCode();
+            if ( (key >= '0' && key <= '9') || keyCode == KeyEvent.VK_DELETE ||
+                    keyCode == KeyEvent.VK_BACK_SPACE ) {
+                int val = NumberUtils.displayStringToInt(EMGainTextField.getText());
+                if (val > EMGainMax_) {
+                    val = EMGainMax_;
+                }
+                if (val < EMGainMin_) {
+                    val = EMGainMin_;
+                }
+                EMGainSlider.setEnabled(true);
+                EMGainSlider.setValue(val);
+                setEMGain();
+            }
+       } catch (ParseException e) {
+          // ignore if the user types garbage
+       }
+    }//GEN-LAST:event_EMGainTextFieldKeyReleased
 
    private void updateTemp() {
       String tempText = "";
@@ -905,6 +920,7 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
    public void configGroupChangedAlert(String groupName, String newConfig) {
    }
    
+   @Override
    public void systemConfigurationLoaded() {
    }
 
@@ -921,6 +937,7 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
    public void xyStagePositionChanged(String deviceName, double xPos, double yPos) {
    }
    
+   @Override
    public void exposureChanged(String string, double d) { 
    }
 

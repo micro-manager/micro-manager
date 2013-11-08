@@ -155,6 +155,7 @@
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="EMGainTextFieldActionPerformed"/>
+        <EventHandler event="keyReleased" listener="java.awt.event.KeyListener" parameters="java.awt.event.KeyEvent" handler="EMGainTextFieldKeyReleased"/>
       </Events>
     </Component>
     <Component class="javax.swing.JComboBox" name="modeComboBox">
@@ -298,6 +299,9 @@
             <StringItem index="2" value="4"/>
             <StringItem index="3" value="8"/>
           </StringArray>
+        </Property>
+        <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
+          <Border info="null"/>
         </Property>
       </Properties>
       <Events>

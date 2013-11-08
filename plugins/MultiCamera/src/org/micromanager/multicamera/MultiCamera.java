@@ -3,6 +3,7 @@ package org.micromanager.multicamera;
 import mmcorej.CMMCore;
 import org.micromanager.api.MMPlugin;
 import org.micromanager.api.ScriptInterface;
+import org.micromanager.utils.ReportingUtils;
 
 
 public class MultiCamera implements MMPlugin {
@@ -22,9 +23,10 @@ public class MultiCamera implements MMPlugin {
       if (myFrame_ == null) {
          try {
             myFrame_ = new MultiCameraFrame(gui_);
+            gui_.addMMListener(myFrame_);
             gui_.addMMBackgroundListener(myFrame_);
          } catch (Exception e) {
-            e.printStackTrace();
+            ReportingUtils.showError(e);
             return;
          }
       }
