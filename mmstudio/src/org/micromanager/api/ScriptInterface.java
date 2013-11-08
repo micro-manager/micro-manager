@@ -899,6 +899,7 @@ public interface ScriptInterface {
      */
     // public void snapAndAddImage(String name, int frame, int channel, int z) throws MMScriptException;
     // replace with:
+    // mmc.snapImage();
     // gui.addImage(acqName, mmc.getTaggedImage());
 
     /**
@@ -913,6 +914,7 @@ public interface ScriptInterface {
      */
     // public void snapAndAddImage(String name, int frame, int channel, int z, int position) throws MMScriptException;
     // replace with:
+    // mmc.snapImage();
     // gui.addImage(acqName, mmc.getTaggedImage());
 
 
