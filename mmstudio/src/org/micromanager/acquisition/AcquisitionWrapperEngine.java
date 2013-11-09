@@ -132,24 +132,16 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
          }
       }
       try {
-    	  // open acquisition
-         String acqName = gui_.createAcquisition(summaryMetadata_, acquisitionSettings.save, gui_.getHideMDADisplayOption());
-         VirtualAcquisitionDisplay display = acqManager.getAcquisition(acqName).getAcquisitionWindow();
-
-         // create the pipeline
          DefaultTaggedImagePipeline taggedImagePipeline = new DefaultTaggedImagePipeline(
-                 getAcquisitionEngine2010(),
-                 acquisitionSettings,
-                 taggedImageProcessors_,
-                 display,
-                 imageCache_,
-                 acqName,
-                 gui_,
-                 acquisitionSettings.save);
-         
-         summaryMetadata_ = taggedImagePipeline.summaryMetadata_;
-         imageCache_ = taggedImagePipeline.imageCache_;
-         return taggedImagePipeline.acqName_;
+               getAcquisitionEngine2010(),
+               acquisitionSettings,
+               taggedImageProcessors_,
+               gui_,
+               acquisitionSettings.save);
+       summaryMetadata_ = taggedImagePipeline.summaryMetadata_;
+       imageCache_ = taggedImagePipeline.imageCache_;
+       return taggedImagePipeline.acqName_;
+       
       } catch (Throwable ex) {
          ReportingUtils.showError(ex);
          return null;

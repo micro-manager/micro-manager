@@ -38,9 +38,6 @@ public class DefaultTaggedImagePipeline {
            IAcquisitionEngine2010 acqEngine,
            SequenceSettings sequenceSettings,
            List<DataProcessor<TaggedImage>> imageProcessors,
-           VirtualAcquisitionDisplay display,
-           ImageCache imgCache,
-           String acqName,
            ScriptInterface gui,
            boolean diskCached) throws ClassNotFoundException, InstantiationException, IllegalAccessException, MMScriptException {
 
@@ -52,9 +49,10 @@ public class DefaultTaggedImagePipeline {
       BlockingQueue<TaggedImage> procStackOutputQueue = ProcessorStack.run(engineOutputQueue, imageProcessors);
 
       // Create the default display
-      acqName_ = acqName;
-      display_ = display;
-      imageCache_ = imgCache;
+      acqName_ = gui.createAcquisition(summaryMetadata_, diskCached, gui.getHideMDADisplayOption());
+      MMAcquisition acq = gui.getAcquisition(acqName_);
+      display_ = acq.getAcquisitionWindow();
+      imageCache_ = acq.getImageCache();
 
       // Start pumping images into the ImageCache
       DefaultTaggedImageSink sink = new DefaultTaggedImageSink(procStackOutputQueue, imageCache_);
