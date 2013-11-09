@@ -41,6 +41,7 @@ import org.micromanager.api.MMPlugin;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.acquisition.TaggedImageQueue;
+import org.micromanager.api.MMTags;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ReportingUtils;
@@ -52,7 +53,7 @@ public class RecallPlugin implements MMPlugin {
    public static String menuName = "Live Replay";
    public static String tooltipDescription = "Recalls live images remaining in internal"
 		   +" buffer.  The size of Micromanager's internal buffer can be changed" +
-		   "in options (under Tools menu)";
+		   " in options (under Tools menu)";
    private CMMCore core_;
    private MMStudioMainFrame gui_;
    private MMStudioMainFrame.DisplayImageRoutine displayImageRoutine_;
@@ -108,7 +109,7 @@ public class RecallPlugin implements MMPlugin {
 
          gui_.runDisplayThread(imageQueue_, displayImageRoutine_);
          
-         if (multiChannelCameraNrCh_ == 0) {                    
+         if (multiChannelCameraNrCh_ == 1) {                    
             int frameCounter = 0;
             try {
                for (int i = 0; i < remaining; i++) {
@@ -121,7 +122,7 @@ public class RecallPlugin implements MMPlugin {
             } catch (Exception ex) {
                ReportingUtils.logError(ex, "Error in Live Replay");
             }
-         } else if (multiChannelCameraNrCh_ > 0) {
+         } else if (multiChannelCameraNrCh_ > 1) {
             int[] frameCounters = new int[multiChannelCameraNrCh_];
             try {
                for (int i = 0; i < remaining; i++) {
@@ -160,10 +161,10 @@ public class RecallPlugin implements MMPlugin {
             } else if (ti.tags.has("ChannelIndex")) {
                channel = MDUtils.getChannelIndex(ti.tags);
             }
-            ti.tags.put("ChannelIndex", channel);
-            ti.tags.put("PositionIndex", 0);
-            ti.tags.put("SliceIndex", 0);
-            ti.tags.put("FrameIndex", frameIndex);
+            ti.tags.put(MMTags.Image.CHANNEL_INDEX, channel);
+            ti.tags.put(MMTags.Image.POS_INDEX, 0);
+            ti.tags.put(MMTags.Image.SLICE_INDEX, 0);          
+            ti.tags.put(MMTags.Image.FRAME, frameIndex);
 
          } catch (JSONException ex) {
             ReportingUtils.logError(ex);
