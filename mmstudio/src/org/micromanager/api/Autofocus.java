@@ -21,8 +21,6 @@
 
 package org.micromanager.api;
 
-import mmcorej.CMMCore;
-
 import org.micromanager.utils.MMException;
 import org.micromanager.utils.PropertyItem;
 

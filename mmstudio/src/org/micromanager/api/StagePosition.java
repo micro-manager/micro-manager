@@ -37,7 +37,7 @@ public class StagePosition {
    public int numAxes;
    
    public StagePosition() {
-      stageName = new String("Undefined");
+      stageName = "Undefined";
       x = 0.0;
       y = 0.0;
       z = 0.0;
@@ -50,20 +50,20 @@ public class StagePosition {
       sp.y = aPos.y;
       sp.z = aPos.z;
       sp.numAxes = aPos.numAxes;
-      sp.stageName = new String(aPos.stageName);
+      sp.stageName = aPos.stageName;
       return sp;
    }
    
    public String getVerbose() {
       if (numAxes == 1)
-         return new String(stageName + "(" + NumberUtils.doubleToDisplayString(x) + ")");
+         return stageName + "(" + NumberUtils.doubleToDisplayString(x) + ")";
       else if (numAxes == 2)
-         return new String(stageName + "(" + NumberUtils.doubleToDisplayString(x) +
-                 "," + NumberUtils.doubleToDisplayString(y) + ")");
+         return stageName + "(" + NumberUtils.doubleToDisplayString(x) +
+      "," + NumberUtils.doubleToDisplayString(y) + ")";
       else
-         return new String(stageName + "(" + NumberUtils.doubleToDisplayString(x) +
-                 "," + NumberUtils.doubleToDisplayString(y) +
-                 "," + NumberUtils.doubleToDisplayString(z) + ")");
+         return stageName + "(" + NumberUtils.doubleToDisplayString(x) +
+      "," + NumberUtils.doubleToDisplayString(y) +
+      "," + NumberUtils.doubleToDisplayString(z) + ")";
 
    }
 }
