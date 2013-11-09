@@ -30,6 +30,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.micromanager.MMStudioMainFrame;
+import org.micromanager.utils.CanvasPaintPending;
 import org.micromanager.utils.ReportingUtils;
 
 /**
@@ -65,9 +66,16 @@ public class LiveModeTimer {
       displayImageRoutine_ = new MMStudioMainFrame.DisplayImageRoutine() {
          public void show(final TaggedImage ti) {
             try {
-               gui_.normalizeTags(ti);
-               gui_.addImage(ACQ_NAME, ti, true, true);
-               gui_.updateLineProfile();
+              // if (!gui_.getImageWin().getCanvas().getPaintPending()) {
+              //    gui_.getImageWin().getCanvas().setPaintPending(true);
+               if (!CanvasPaintPending.isMyPaintPending(
+                     gui_.getImageWin().getCanvas(), this) ) {
+                  CanvasPaintPending.setPaintPending(
+                          gui_.getImageWin().getCanvas(), this);
+                  gui_.normalizeTags(ti);
+                  gui_.addImage(ACQ_NAME, ti, true, true);
+                  gui_.updateLineProfile();
+               }
             } catch (Exception e) {
                ReportingUtils.logError(e);
             }

@@ -81,6 +81,7 @@ import org.micromanager.graph.MultiChannelHistograms;
 import org.micromanager.graph.SingleChannelHistogram;
 import org.micromanager.internalinterfaces.DisplayControls;
 import org.micromanager.internalinterfaces.Histograms;
+import org.micromanager.utils.CanvasPaintPending;
 import org.micromanager.utils.ContrastSettings;
 import org.micromanager.utils.FileDialogs;
 import org.micromanager.utils.GUIUtils;
@@ -207,6 +208,8 @@ public final class VirtualAcquisitionDisplay implements
 
    public class MMCompositeImage extends CompositeImage implements IMMImagePlus {
             
+      boolean paintPendingSetByMe_ = false;
+      
       MMCompositeImage(ImagePlus imgp, int type) {
          super(imgp, type);
       }
@@ -309,12 +312,11 @@ public final class VirtualAcquisitionDisplay implements
          }
          super.updateImage();
       }
-
       
       public void updateAndDraw(boolean forceUpdateAndPaint) {
          if (forceUpdateAndPaint) {
             //there may be a paint pending, but we want to make sure this update gets called regardless
-            hyperImage_.getCanvas().setPaintPending(false);
+            CanvasPaintPending.removePaintPending(hyperImage_.getCanvas(), this);
             updateAndDraw();
          } else {    
             updateAndDraw();
@@ -326,10 +328,11 @@ public final class VirtualAcquisitionDisplay implements
        */
       @Override
       public void updateAndDraw() {
-         if (hyperImage_.getCanvas().getPaintPending()) {
+         if (CanvasPaintPending.isMyPaintPending(
+                 hyperImage_.getCanvas(), this) ) {
             return;
          }
-         hyperImage_.getCanvas().setPaintPending(true);
+         CanvasPaintPending.setPaintPending(hyperImage_.getCanvas(), this);
          superUpdateImage(); 
          imageChangedUpdate(); //updates histograms, metadata panel, calculates LUTS and applies to image
          try {
