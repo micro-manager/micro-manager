@@ -1380,22 +1380,8 @@ public final class VirtualAcquisitionDisplay implements
             }
 
             if (hyperImage_ == null) {
-               try {
-                  GUIUtils.invokeAndWait(new Runnable() {
-                     @Override
-                     public void run() {
-                        try {
-                           startup(tags);
-                        } catch (Exception e) {
-                           ReportingUtils.logError(e);
-                        }
-                     }
-                  });
-               } catch (InterruptedException ex) {
-                  ReportingUtils.logError(ex);
-               } catch (InvocationTargetException ex) {
-                  ReportingUtils.logError(ex);
-               }
+               // this has to run on the EDT
+               startup(tags);
             }
 
             int channel = 0, frame = 0, slice = 0, position = 0, superChannel = 0;
@@ -1463,6 +1449,10 @@ public final class VirtualAcquisitionDisplay implements
                setPosition(position);
                hyperImage_.setPosition(1 + superChannel, 1 + slice, 1 + frame);
             }
+            
+            if (frame == 0) {
+               initializeContrast();
+            }
 
             //dont't force an update with live win
             boolean forceUpdate = ! simple_;
@@ -1490,9 +1480,7 @@ public final class VirtualAcquisitionDisplay implements
                   }
                }
             }
-            if (frame == 0) {
-               initializeContrast();
-            }
+
          }
       });
    }
@@ -1520,7 +1508,7 @@ public final class VirtualAcquisitionDisplay implements
    public void storeChannelHistogramSettings(int channelIndex, int min, int max, 
            double gamma, int histMax, int displayMode) {
      if (!contrastInitialized_ ) {
-        return; //don't erroneously initialize contrast
+        return; //don't erroneously initialize c   ontrast
      }
       //store for this dataset
       imageCache_.storeChannelDisplaySettings(channelIndex, min, max, gamma, histMax, displayMode);
