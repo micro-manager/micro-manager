@@ -239,7 +239,6 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener, Acq
 
       public ChannelTableModel(AcquisitionEngine eng) {
          acqEng_ = eng;
-         addTableModelListener(this);
       }
 
       public int getRowCount() {
@@ -262,7 +261,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener, Acq
       public Object getValueAt(int rowIndex, int columnIndex) {
          if (channels_ != null && rowIndex < channels_.size()) {
             if (columnIndex == 0) {
-               return new Boolean(channels_.get(rowIndex).useChannel);
+               return channels_.get(rowIndex).useChannel;
             } else if (columnIndex == 1) {
                return channels_.get(rowIndex).config;
             } else if (columnIndex == 2) {
@@ -270,7 +269,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener, Acq
             } else if (columnIndex == 3) {
                return new Double(channels_.get(rowIndex).zOffset);
             } else if (columnIndex == 4) {
-               return new Boolean(channels_.get(rowIndex).doZStack);
+               return channels_.get(rowIndex).doZStack;
             } else if (columnIndex == 5) {
                return new Integer(channels_.get(rowIndex).skipFactorFrame);
             } else if (columnIndex == 6) {
@@ -707,6 +706,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener, Acq
 
    public final void createChannelTable() {
       model_ = new ChannelTableModel(acqEng_);
+      model_.addTableModelListener(model_);
 
       channelTable_ = new JTable() {
 
@@ -714,6 +714,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener, Acq
          protected JTableHeader createDefaultTableHeader() {
             return new JTableHeader(columnModel) {
 
+               @Override
                public String getToolTipText(MouseEvent e) {
                   String tip = null;
                   java.awt.Point p = e.getPoint();
@@ -2032,7 +2033,9 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener, Acq
       int numPositions = 1;
       try {
          numPositions = Math.max(1, gui_.getPositionList().getNumberOfPositions());
-      } catch (MMScriptException ex) {}
+      } catch (MMScriptException ex) {
+         ReportingUtils.showError(ex);
+      }
       
       int numImages;
       
@@ -2365,8 +2368,10 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener, Acq
          // TODO: throw error
       }
 
-      acqEng_.setSaveFiles(savePanel_.isSelected());
-      acqEng_.setDirName(nameField_.getText());
+      acqEng_.setSaveFiles(savePanel_.isSelected());    
+      // avoid dangerous characters in the name that will be used as a directory name
+      String name = nameField_.getText().replaceAll("[/\\*!']", "-");
+      acqEng_.setDirName(name);
       acqEng_.setRootName(rootField_.getText());
 
       // update summary
