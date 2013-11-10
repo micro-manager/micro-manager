@@ -56,6 +56,7 @@ public class PresetEditor extends ConfigDialog {
 
    }
 
+   @Override
    public void okChosen() {
       String newName = nameField_.getText();
       if (writePreset(initName_,newName)) {

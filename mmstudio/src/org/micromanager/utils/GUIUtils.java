@@ -46,7 +46,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.prefs.Preferences;
 import javax.swing.DefaultCellEditor;
 import javax.swing.JComboBox;
-import javax.swing.JFrame;
 
 import javax.swing.JTable;
 import javax.swing.SwingUtilities;
