@@ -47,15 +47,12 @@ import org.micromanager.utils.MMScriptException;
  * Most functions throw MMScriptException
  */
 public interface ScriptInterface {
-      
-   /**
-    * Blocks the script execution for the specified number of milliseconds.
-    * Script can be aborted during sleep.
-    * @throws MMScriptException 
-    */
-	// TODO: not used
+	
+	/**
+	 * Pauses the script for the specified number of milliseconds
+	 */
    public void sleep(long ms) throws MMScriptException;
-   
+         
    /**
     * Displays text in the scripting console output window.
     * @throws MMScriptException 
@@ -86,98 +83,6 @@ public interface ScriptInterface {
     * Micro-manager GUI
     */
    public void snapSingleImage();
-
-   /**
-    * Opens a new acquisition context with explicit image physical parameters.
-    * This command will determine the recorded date and time of the acquisition.
-    * All relative (elapsed) time stamps will be determined with respect to this time.
-    * @param name Name of the new acquisition context.
-    * @param rootDir Place in the file system where data may be stored.
-    * @param nrFrames Nunmber of Frames (time points) in this acquisition.  This number can grow dynamically.
-    * @param nrChannels Number of Channels in this acquisition.  This number is fixed.
-    * @param nrSlices Number of Slices (Z-positions) in this acquisition.
-    * @throws MMScriptException 
-    */
-   public void openAcquisition(String name, String rootDir, int nrFrames, int nrChannels, int nrSlices) throws MMScriptException;
-
-   /**
-    * Opens a new acquisition context with explicit image physical parameters.
-    * This command will determine the recorded date and time of the acquisition.
-    * All relative (elapsed) time stamps will be determined with respect to this time.
-    * @param name Name of the new acquisition context.
-    * @param rootDir Place in the file system where data may be stored.
-    * @param nrFrames Nunmber of Frames (time points) in this acquisition.  This number can grow dynamically.
-    * @param nrChannels Number of Channels in this acquisition.  This number is fixed.
-    * @param nrSlices Number of Slices (Z-positions) in this acquisition.
-    * @param nrPositions Number of (XY) Positions in this acquisition.
-    * @throws MMScriptException
-    */
-   public void openAcquisition(String name, String rootDir, int nrFrames, int nrChannels, int nrSlices, int nrPositions) throws MMScriptException;
-
-   /**
-    * Opens a new acquisition context with explicit image physical parameters.
-    * Makes it possible to run acquisition without displaying a window
-    * @param name Name of the new acquisition context.
-    * @param rootDir Place in the file system where data may be stored.
-    * @param nrFrames Nunmber of Frames (time points) in this acquisition.  This number can grow dynamically.
-    * @param nrChannels Number of Channels in this acquisition.  This number is fixed.
-    * @param nrSlices Number of Slices (Z-positions) in this acquisition.
-    * @param nrPositions Number of (XY) Positions in this acquisition.
-    * @param show Whether or not to show this acquisition.
-    * @throws MMScriptException 
-    */
-
-   public void openAcquisition(String name, String rootDir, int nrFrames, int nrChannels, int nrSlices, int nrPositions, boolean show) throws MMScriptException;
-
-   /**
-    * Variant of openAcquisition that allows specifying whether or not the data should be saved during acquisition.
-    * @param name Name of the new acquisition context.
-    * @param rootDir Place in the file system where data may be stored.
-    * @param nrFrames Nunmber of Frames (time points) in this acquisition.  This number can grow dynamically.
-    * @param nrChannels Number of Channels in this acquisition.  This number is fixed.
-    * @param nrSlices Number of Slices (Z-positions) in this acquisition.
-    * @param nrPositions Number of (XY) Positions in this acquisition.
-    * @param show Whether or not to show this acquisition.
-    * @param save Whether or not save data during acquisition.
-    * @throws MMScriptException
-    */
-   public void openAcquisition(String name, String rootDir, int nrFrames, int nrChannels, int nrSlices, int nrPositions, boolean show, boolean save) throws MMScriptException;
-
-
-   /**
-    * Single position variant of openAcquisition that allows specifying whether or not to show data during acquisition.  
-    * @param name Name of the new acquisition context.
-    * @param rootDir Place in the file system where data may be stored.
-    * @param nrFrames Nunmber of Frames (time points) in this acquisition.  This number can grow dynamically.
-    * @param nrChannels Number of Channels in this acquisition.  This number is fixed.
-    * @param nrSlices Number of Slices (Z-positions) in this acquisition.
-    * @param show Whether or not to show this acquisition.
-    * @throws MMScriptException
-    */
-   public void openAcquisition(String name, String rootDir, int nrFrames, int nrChannels, int nrSlices, boolean show) throws MMScriptException;
-
-
-   /**
-    * Single position variant of openAcquisition that allows specifying whether or not to show and save data during acquisition.  
-    * @param name Name of the new acquisition context.
-    * @param rootDir Place in the file system where data may be stored.
-    * @param nrFrames Nunmber of Frames (time points) in this acquisition.  This number can grow dynamically.
-    * @param nrChannels Number of Channels in this acquisition.  This number is fixed.
-    * @param nrSlices Number of Slices (Z-positions) in this acquisition.
-    * @param show Whether or not to show this acquisition.
-    * @throws MMScriptException
-    */
-   public void openAcquisition(String name, String rootDir, int nrFrames, int nrChannels, int nrSlices, boolean show, boolean save) throws MMScriptException;
-
-
-   /**
-    * Opens and initializes an acquisition according to summaryMetadata
-    * (as typically generated by acquisition dialog).
-    * @param summaryMetadata The metadata describing the acquisition parameters
-    * @param diskCached True if images are cached on disk; false if they are kept in RAM only.
-    * @throws MMScriptException
-    */
-   public String createAcquisition(JSONObject summaryMetadata, boolean diskCached);
    
    /**
     * Opens and initializes an acquisition according to summaryMetadata
@@ -188,6 +93,9 @@ public interface ScriptInterface {
     * @throws MMScriptException
     */
    public String createAcquisition(JSONObject summaryMetadata, boolean diskCached, boolean displayOff);
+   // TODO: Replace with:
+   // public String createDataSet(String root, String name, boolean diskCached, boolean displayOff);
+   // TODO: add data set format specifier (multi-file or single file) to the parameter list
    
    /**
     * Returns a name beginning with stem that is not yet used.
@@ -212,27 +120,6 @@ public interface ScriptInterface {
     * the "--> Album" button on the snap/live window
     */
    public void addToAlbum(TaggedImage image) throws MMScriptException;
-
-   /**
-    * Set up a Simple Acquisition that has already been opened
-    * Simple Acquisitions are used in Live and Snap modes.  They
-    * only store a single image at a time, and automatically store
-    * this image in RAM, regardless of whether the conserve RAM
-    * option in tools-options is checked
-    */
-   public void initializeSimpleAcquisition(String name, int width, int height, 
-           int byteDepth, int bitDepth, int multiCamNumCh) throws MMScriptException;
-   
-   /**
-    * Set up an acquisition that has already been opened.
-    */
-   public void initializeAcquisition(String name, int width, int height, int byteDepth) throws MMScriptException;
-   
-   /**
-    * Set up an acquisition that has already been opened.
-    */
-   public void initializeAcquisition(String name, int width, int height, int byteDepth, int bitDepth) throws MMScriptException;
-   
    
    /**
     * Checks whether an acquisition with the given name already exists.
@@ -267,7 +154,6 @@ public interface ScriptInterface {
     * @throws MMScriptException
     */
    public void addImage(String name, TaggedImage taggedImg) throws MMScriptException;
-
 
    /**
     * Inserts image into the acquisition handle and gives option whether or not to update the display.
@@ -916,6 +802,116 @@ public interface ScriptInterface {
     // replace with:
     // mmc.snapImage();
     // gui.addImage(acqName, mmc.getTaggedImage());
+
+    /**
+     * Opens a new acquisition context with explicit image physical parameters.
+     * This command will determine the recorded date and time of the acquisition.
+     * All relative (elapsed) time stamps will be determined with respect to this time.
+     * @param name Name of the new acquisition context.
+     * @param rootDir Place in the file system where data may be stored.
+     * @param nrFrames Nunmber of Frames (time points) in this acquisition.  This number can grow dynamically.
+     * @param nrChannels Number of Channels in this acquisition.  This number is fixed.
+     * @param nrSlices Number of Slices (Z-positions) in this acquisition.
+     * @throws MMScriptException 
+     */
+    public void openAcquisition(String name, String rootDir, int nrFrames, int nrChannels, int nrSlices) throws MMScriptException;
+
+    /**
+     * Opens a new acquisition context with explicit image physical parameters.
+     * This command will determine the recorded date and time of the acquisition.
+     * All relative (elapsed) time stamps will be determined with respect to this time.
+     * @param name Name of the new acquisition context.
+     * @param rootDir Place in the file system where data may be stored.
+     * @param nrFrames Nunmber of Frames (time points) in this acquisition.  This number can grow dynamically.
+     * @param nrChannels Number of Channels in this acquisition.  This number is fixed.
+     * @param nrSlices Number of Slices (Z-positions) in this acquisition.
+     * @param nrPositions Number of (XY) Positions in this acquisition.
+     * @throws MMScriptException
+     */
+    public void openAcquisition(String name, String rootDir, int nrFrames, int nrChannels, int nrSlices, int nrPositions) throws MMScriptException;
+
+    /**
+     * Opens a new acquisition context with explicit image physical parameters.
+     * Makes it possible to run acquisition without displaying a window
+     * @param name Name of the new acquisition context.
+     * @param rootDir Place in the file system where data may be stored.
+     * @param nrFrames Nunmber of Frames (time points) in this acquisition.  This number can grow dynamically.
+     * @param nrChannels Number of Channels in this acquisition.  This number is fixed.
+     * @param nrSlices Number of Slices (Z-positions) in this acquisition.
+     * @param nrPositions Number of (XY) Positions in this acquisition.
+     * @param show Whether or not to show this acquisition.
+     * @throws MMScriptException 
+     */
+
+    public void openAcquisition(String name, String rootDir, int nrFrames, int nrChannels, int nrSlices, int nrPositions, boolean show) throws MMScriptException;
+
+    /**
+     * Variant of openAcquisition that allows specifying whether or not the data should be saved during acquisition.
+     * @param name Name of the new acquisition context.
+     * @param rootDir Place in the file system where data may be stored.
+     * @param nrFrames Nunmber of Frames (time points) in this acquisition.  This number can grow dynamically.
+     * @param nrChannels Number of Channels in this acquisition.  This number is fixed.
+     * @param nrSlices Number of Slices (Z-positions) in this acquisition.
+     * @param nrPositions Number of (XY) Positions in this acquisition.
+     * @param show Whether or not to show this acquisition.
+     * @param save Whether or not save data during acquisition.
+     * @throws MMScriptException
+     */
+    public void openAcquisition(String name, String rootDir, int nrFrames, int nrChannels, int nrSlices, int nrPositions, boolean show, boolean save) throws MMScriptException;
+
+
+    /**
+     * Single position variant of openAcquisition that allows specifying whether or not to show data during acquisition.  
+     * @param name Name of the new acquisition context.
+     * @param rootDir Place in the file system where data may be stored.
+     * @param nrFrames Nunmber of Frames (time points) in this acquisition.  This number can grow dynamically.
+     * @param nrChannels Number of Channels in this acquisition.  This number is fixed.
+     * @param nrSlices Number of Slices (Z-positions) in this acquisition.
+     * @param show Whether or not to show this acquisition.
+     * @throws MMScriptException
+     */
+    public void openAcquisition(String name, String rootDir, int nrFrames, int nrChannels, int nrSlices, boolean show) throws MMScriptException;
+
+
+    /**
+     * Single position variant of openAcquisition that allows specifying whether or not to show and save data during acquisition.  
+     * @param name Name of the new acquisition context.
+     * @param rootDir Place in the file system where data may be stored.
+     * @param nrFrames Nunmber of Frames (time points) in this acquisition.  This number can grow dynamically.
+     * @param nrChannels Number of Channels in this acquisition.  This number is fixed.
+     * @param nrSlices Number of Slices (Z-positions) in this acquisition.
+     * @param show Whether or not to show this acquisition.
+     * @throws MMScriptException
+     */
+    public void openAcquisition(String name, String rootDir, int nrFrames, int nrChannels, int nrSlices, boolean show, boolean save) throws MMScriptException;
+    /**
+     * Set up a Simple Acquisition that has already been opened
+     * Simple Acquisitions are used in Live and Snap modes.  They
+     * only store a single image at a time, and automatically store
+     * this image in RAM, regardless of whether the conserve RAM
+     * option in tools-options is checked
+     */
+    public void initializeSimpleAcquisition(String name, int width, int height, 
+            int byteDepth, int bitDepth, int multiCamNumCh) throws MMScriptException;
+    
+    /**
+     * Set up an acquisition that has already been opened.
+     */
+    public void initializeAcquisition(String name, int width, int height, int byteDepth) throws MMScriptException;
+    
+    /**
+     * Set up an acquisition that has already been opened.
+     */
+    public void initializeAcquisition(String name, int width, int height, int byteDepth, int bitDepth) throws MMScriptException;
+    
+    /**
+     * Opens and initializes an acquisition according to summaryMetadata
+     * (as typically generated by acquisition dialog).
+     * @param summaryMetadata The metadata describing the acquisition parameters
+     * @param diskCached True if images are cached on disk; false if they are kept in RAM only.
+     * @throws MMScriptException
+     */
+    public String createAcquisition(JSONObject summaryMetadata, boolean diskCached);
 
 
 }
