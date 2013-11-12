@@ -5,17 +5,19 @@
            (java.awt.event ComponentAdapter KeyEvent KeyAdapter
                             WindowAdapter)
            (ij.process ByteProcessor ImageProcessor))
-  (:require [slide-explorer.reactive :as reactive]
-            [slide-explorer.tile-cache :as tile-cache]
-            [slide-explorer.tiles :as tiles]
-            [slide-explorer.canvas :as canvas]
-            [slide-explorer.scale-bar :as scale-bar]
-            [slide-explorer.image :as image]
-            [slide-explorer.user-controls :as user-controls]
-            [slide-explorer.paint :as paint]
-            [slide-explorer.utils :as utils]
-            [slide-explorer.widgets :as widgets]
-            [clojure.core.memoize :as memo]))
+  (:require 
+    [slide-explorer.flatfield :as flatfield]
+    [slide-explorer.reactive :as reactive]
+    [slide-explorer.tile-cache :as tile-cache]
+    [slide-explorer.tiles :as tiles]
+    [slide-explorer.canvas :as canvas]
+    [slide-explorer.scale-bar :as scale-bar]
+    [slide-explorer.image :as image]
+    [slide-explorer.user-controls :as user-controls]
+    [slide-explorer.paint :as paint]
+    [slide-explorer.utils :as utils]
+    [slide-explorer.widgets :as widgets]
+    [clojure.core.memoize :as memo]))
 
 ; Order of operations:
 ;  Stitch (not done)
@@ -88,22 +90,28 @@
 
 (def overlay-memo (memo/memo-lru image/overlay 100))
 
-(defn multi-color-tile
+(def flatfield-memo (memo/memo-lru flatfield/correct-indexed-image 100))
+
+(defn display-tile
   "Loads the set of tiles specified by tile-indices from 
    memory-tiles-atom, and combines them according to channels-map,
    returning a single display tile as a BufferedImage."
   [memory-tiles-atom tile-indices channels-map]
-  (let [channel-names (keys channels-map)
-        procs (for [chan channel-names]
-                (let [tile-index (assoc tile-indices :nc chan)]
-                  (tile-cache/load-tile memory-tiles-atom tile-index)))
+  (let [corrections (flatfield/get-flatfield-corrections memory-tiles-atom)
+        channel-names (keys channels-map)
+        flattened-tiles (for [channel-name channel-names]
+                          (let [tile-index (assoc tile-indices :nc channel-name)
+                                raw-tile (tile-cache/load-tile memory-tiles-atom tile-index)]
+                            ;(println tile-index)
+                            (flatfield-memo tile-index raw-tile corrections)))
         lut-maps (map channels-map channel-names)]
-    (overlay-memo procs lut-maps)))
+    ;(println (count flattened-tiles) lut-maps)
+    (overlay-memo flattened-tiles lut-maps)))
 
 ;; PAINTING
  
 (defn paint-tiles [^Graphics2D g display-tiles-atom screen-state]
-  (doseq [tile-index (visible-tile-indices screen-state :overlay)] 
+  (doseq [tile-index (visible-tile-indices screen-state :overlay)]
     (when-let [image (tile-cache/get-tile
                        display-tiles-atom
                        tile-index)]
@@ -177,7 +185,7 @@
   (doseq [tile (needed-tile-indices @screen-state-atom :overlay)]
     (tile-cache/add-tile display-tiles-atom
                          tile
-                         (multi-color-tile memory-tile-atom tile
+                         (display-tile memory-tile-atom tile
                                            (:channels @screen-state-atom)))))
 
 (defn load-visible-tiles
@@ -286,3 +294,6 @@
       (def ss2 screen-state-atom2)
       (def mt memory-tile-atom))
     screen-state-atom))
+
+(defn ae1 []
+  (.printStackTrace (agent-error agent1)))

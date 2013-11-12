@@ -287,21 +287,21 @@
     (.blurGaussian (GaussianBlur.) new-proc radius radius 0.0002)
     new-proc))
 
-(defn normalize
+(defn divide
   [processor value]
-  (let [float-proc (.convertToFloat processor)]
-    (.multiply processor (/ 1 value))
-    float-proc))
+  (doto (.convertToFloat processor)
+    (.multiply (/ value))))
 
 (defn normalize-to-max
   "Rescale intensities so the max value of processor is 1.0."
   [processor]
-  (normalize processor (.max (.getStatistics processor))))
+  (divide processor (.max (.getStatistics processor))))
 
 (defn combine-processors
   "Arithmetically combine processor 1 with processor 2, where op
    is :add, :subtract, :multiply, :divide."
   [op proc1 proc2]
+  (println proc1 proc2)
   (-> (ImageCalculator.)
       (.run 
         (str (name op) " float")
