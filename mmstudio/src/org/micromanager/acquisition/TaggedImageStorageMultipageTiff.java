@@ -449,6 +449,7 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
       private FileWriter mdWriter_;
       private String baseFilename_;
       private String currentTiffFilename_;
+      private String currentTiffUUID_;;
       private String metadataFileFullPath_;
       private boolean finished_ = false;
       private int ifdCount_ = 0;
@@ -464,6 +465,7 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
          //get file path and name
          baseFilename_ = createBaseFilename(firstImageTags);
          currentTiffFilename_ = baseFilename_ + (omeTiff_ ? ".ome.tif" : ".tif");
+         currentTiffUUID_ = "urn:uuid:" + UUID.randomUUID().toString();
          //make first writer
          tiffWriters_.add(new MultipageTiffWriter(directory_, currentTiffFilename_, summaryMetadata_, mpt,
                  fastStorageMode_));
@@ -483,6 +485,8 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
          }
          //fill in missing tiffdata tags for OME
          for (int p = 0; p <= lastAcquiredPosition_; p++) {
+            //set sizeT in case of aborted acq
+            omeMetadata_.setNumFrames(p, currentFrame_ + 1);
             omeMetadata_.fillInMissingTiffDatas(lastAcquiredFrame(), p);
          }
 
@@ -515,6 +519,7 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
             tiffWriters_.getLast().finish();          
             
             currentTiffFilename_ = baseFilename_ + "_" + tiffWriters_.size() + (omeTiff_ ? ".ome.tif" : ".tif");
+            currentTiffUUID_ = "urn:uuid:" + UUID.randomUUID().toString();
             ifdCount_ = 0;
             tiffWriters_.add(new MultipageTiffWriter(directory_ ,currentTiffFilename_, summaryMetadata_, mpTiff_,
                     fastStorageMode_));
@@ -551,12 +556,12 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
                }
                if (frame > currentFrame_) {
                   //check previous frame for missing IFD's in OME metadata
-                  omeMetadata_.fillInMissingTiffDatas(frame, position);
+                  omeMetadata_.fillInMissingTiffDatas(currentFrame_, position);
                }
                //reset in case acquisitin order is position then time and all files not split by position
                currentFrame_ = frame;
                
-               omeMetadata_.addImageTagsToOME(img.tags, ifdCount_, baseFilename_, currentTiffFilename_);
+               omeMetadata_.addImageTagsToOME(img.tags, ifdCount_, baseFilename_, currentTiffFilename_, currentTiffUUID_);
             } catch (Exception ex) {
                ReportingUtils.logError("Problem writing OME metadata");
             }
@@ -707,7 +712,7 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
                      MDUtils.setChannelIndex(dummyTags, channel);
                      MDUtils.setFrameIndex(dummyTags, frame);
                      MDUtils.setSliceIndex(dummyTags, slice);
-                     omeMetadata_.addImageTagsToOME(dummyTags, ifdCount_, baseFilename_, currentTiffFilename_);
+                     omeMetadata_.addImageTagsToOME(dummyTags, ifdCount_, baseFilename_, currentTiffFilename_, currentTiffUUID_);
                   }
                }
             } catch (IOException ex) {

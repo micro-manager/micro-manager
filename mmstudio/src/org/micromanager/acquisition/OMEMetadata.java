@@ -111,6 +111,13 @@ public class OMEMetadata {
          }
       }
 
+      if (summaryMD.has("Interval_ms")) {
+         double interval = summaryMD.getDouble("Interval_ms");
+         if (interval > 0) { //don't write it for burst mode because it won't be true
+            metadata_.setPixelsTimeIncrement(interval, seriesIndex);
+         }
+      }
+      
       String positionName;
       try {
          positionName = MDUtils.getPositionName(firstImageTags);
@@ -199,6 +206,7 @@ public class OMEMetadata {
                }
                NonNegativeInteger ifd = metadata_.getTiffDataIFD(position, tiffDataIndex);
                String filename = metadata_.getUUIDFileName(position, tiffDataIndex);
+               String uuid = metadata_.getUUIDValue(position, tiffDataIndex);
                Indices indices = seriesIndices_.get(position);
 
                metadata_.setTiffDataFirstZ(new NonNegativeInteger(slice), position, indices.tiffDataIndex_);
@@ -207,6 +215,7 @@ public class OMEMetadata {
 
                metadata_.setTiffDataIFD(ifd, position, indices.tiffDataIndex_);
                metadata_.setUUIDFileName(filename, position, indices.tiffDataIndex_);
+               metadata_.setUUIDValue(uuid, position, indices.tiffDataIndex_);
                metadata_.setTiffDataPlaneCount(new NonNegativeInteger(1), position, indices.tiffDataIndex_);
 
                indices.tiffDataIndex_++;
@@ -218,7 +227,8 @@ public class OMEMetadata {
       }
    }
 
-   public void addImageTagsToOME(JSONObject tags, int ifdCount, String baseFileName, String currentFileName)
+   public void addImageTagsToOME(JSONObject tags, int ifdCount, String baseFileName, String currentFileName,
+           String uuid)
            throws JSONException, MMScriptException {
       int position;
       try {
@@ -254,6 +264,7 @@ public class OMEMetadata {
          metadata_.setTiffDataFirstT(new NonNegativeInteger(frame), position, indices.tiffDataIndex_);
          metadata_.setTiffDataIFD(new NonNegativeInteger(ifdCount), position, indices.tiffDataIndex_);
          metadata_.setUUIDFileName(currentFileName, position, indices.tiffDataIndex_);
+         metadata_.setUUIDValue(uuid, position, indices.tiffDataIndex_);
          tiffDataIndexMap_.put(MDUtils.generateLabel(channel, slice, frame, position), indices.tiffDataIndex_);
          metadata_.setTiffDataPlaneCount(new NonNegativeInteger(1), position, indices.tiffDataIndex_);
 
