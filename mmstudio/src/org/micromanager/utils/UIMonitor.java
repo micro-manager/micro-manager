@@ -82,7 +82,7 @@ public class UIMonitor {
             Component component = (Component) source;
             if (component.isEnabled()) {
                String text = getComponentName(component);
-               if (!text.isEmpty()) {
+               if (text != null && !text.isEmpty()) {
                   text = "\"" + text + "\" ";
                }
                identifier = source.getClass().getSimpleName() + " " + text;
