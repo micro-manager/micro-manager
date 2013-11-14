@@ -3,7 +3,7 @@
   <PropertyGroup Label="UserMacros">
     <PythonInstallRoot>C:</PythonInstallRoot>
     <PythonTwoDigitVersion>27</PythonTwoDigitVersion>
-    <PythonDir>$(PythonInstallRoot)\Python$(PythonTwoDigitVersion)-$(Platform)</PythonDir>
+    <PythonDir>$(PythonInstallRoot)\Python$(PythonTwoDigitVersion)</PythonDir>
   </PropertyGroup>
   <PropertyGroup>
     <_ProjectFileVersion>10.0.40219.1</_ProjectFileVersion>
