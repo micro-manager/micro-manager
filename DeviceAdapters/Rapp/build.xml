@@ -1,0 +1,21 @@
+<project name="Rapp">
+	<import file="../../buildscripts/deviceadapter.xml"/>
+
+	<target name="install-Win32">
+		<copy todir="${mm.dll.installdir}">
+			<filelist dir="lib/x86">
+				<file name="obsROE_Device.dll"/>
+				<file name="ROEobsTools.dll"/>
+			</filelist>
+		</copy>
+	</target>
+
+	<target name="install-x64">
+		<copy todir="${mm.dll.installdir}">
+			<filelist dir="lib/x64">
+                                <file name="obsROE_Device.dll"/>
+                                <file name="ROEobsTools.dll"/>
+			</filelist>
+		</copy>
+	</target>
+</project>
