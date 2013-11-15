@@ -101,14 +101,6 @@ import org.micromanager.utils.TextUtils;
 import org.micromanager.utils.TooltipTextMaker;
 import org.micromanager.utils.WaitDialog;
 
-
-
-
-
-
-
-
-
 import bsh.EvalError;
 import bsh.Interpreter;
 
@@ -139,7 +131,6 @@ import org.micromanager.acquisition.AcquisitionWrapperEngine;
 import org.micromanager.acquisition.LiveModeTimer;
 import org.micromanager.acquisition.MMAcquisition;
 import org.micromanager.api.ImageCache;
-import org.micromanager.acquisition.AcquisitionEngine;
 import org.micromanager.acquisition.MetadataPanel;
 import org.micromanager.acquisition.ProcessorStack;
 import org.micromanager.acquisition.TaggedImageQueue;
@@ -3629,7 +3620,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
          if (core_ != null) {
             core_.logMessage("MMStudioMainFrame::closeSequence called while running_ is false");
          }
-         this.dispose();
          return true;
       }
       
