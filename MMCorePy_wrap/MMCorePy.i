@@ -69,42 +69,38 @@ import_array();
    npy_intp dims[2];
    dims[0] = (arg1)->getImageHeight();
    dims[1] = (arg1)->getImageWidth();
-   //unsigned numChannels = (arg1)->getNumberOfComponents();
+   npy_intp pixelCount = dims[0] * dims[1];
 
    if ((arg1)->getBytesPerPixel() == 1)
    {
-	  // create new numpy array object
       PyObject * numpyArray = PyArray_SimpleNew(2, dims, NPY_UINT8);
-
-      // copy the data to the numpy array data buffer.
-      memcpy(PyArray_DATA((PyArrayObject *) numpyArray), result, dims[0]*dims[1]);
-
+      memcpy(PyArray_DATA((PyArrayObject *) numpyArray), result, pixelCount);
       $result = numpyArray;
    }
    else if ((arg1)->getBytesPerPixel() == 2)
    {
-	  // create new numpy array object
       PyObject * numpyArray = PyArray_SimpleNew(2, dims, NPY_UINT16);
-
-      // copy the data to the numpy array data buffer.
-      memcpy(PyArray_DATA((PyArrayObject *) numpyArray), result, dims[0]*dims[1]*2);
-
+      memcpy(PyArray_DATA((PyArrayObject *) numpyArray), result, pixelCount * 2);
       $result = numpyArray;
    }
    else if ((arg1)->getBytesPerPixel() == 4)
    {
-	  // create new numpy array object
       PyObject * numpyArray = PyArray_SimpleNew(2, dims, NPY_UINT32);
-
-      // copy the data to the numpy array data buffer.
-      memcpy(PyArray_DATA((PyArrayObject *) numpyArray), result, dims[0]*dims[1]*4);
-
+      memcpy(PyArray_DATA((PyArrayObject *) numpyArray), result, pixelCount * 4);
+      $result = numpyArray;
+   }
+   else if ((arg1)->getBytesPerPixel() == 8)
+   {
+      PyObject * numpyArray = PyArray_SimpleNew(2, dims, NPY_UINT64);
+      memcpy(PyArray_DATA((PyArrayObject *) numpyArray), result, pixelCount * 8);
       $result = numpyArray;
    }
    else
    {
       // don't know how to map
       // TODO: thow exception?
+      // XXX Must do something, as returning NULL without setting error results
+      // in an opaque error.
       $result = 0;
    }
 }
