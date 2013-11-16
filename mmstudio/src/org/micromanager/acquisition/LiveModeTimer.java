@@ -57,21 +57,36 @@ public class LiveModeTimer {
    private TimerTask task_;
    private MMStudioMainFrame.DisplayImageRoutine displayImageRoutine_;
    private LinkedBlockingQueue imageQueue_;
+   private static int mCamImageCounter_ = 0;
+   private boolean multiCam_ = false;
    
    public LiveModeTimer() {
       gui_ = MMStudioMainFrame.getInstance();
       core_ = gui_.getCore();
       format_ = NumberFormat.getInstance();
       format_.setMaximumFractionDigits(0x1);
+      mCamImageCounter_ = 0;
       displayImageRoutine_ = new MMStudioMainFrame.DisplayImageRoutine() {
          public void show(final TaggedImage ti) {
             try {
-              // if (!gui_.getImageWin().getCanvas().getPaintPending()) {
-              //    gui_.getImageWin().getCanvas().setPaintPending(true);
+               // The multiCamLiveTask needs synchronization at this point
+               // The multiCamLiveTask generates tagged images in groups of
+               // multiChannelCameraNrCh_, however, we only want to update
+               // the display (which is costly) when we have the whole group
+               if (multiCam_) {
+                  mCamImageCounter_++;
+                  if (mCamImageCounter_ < multiChannelCameraNrCh_) {
+                     gui_.normalizeTags(ti);
+                     gui_.addImage(ACQ_NAME, ti, false, false);
+                     return;
+                  } else { // completes the set
+                     mCamImageCounter_ = 0;
+                  }              
+               }
                if (!CanvasPaintPending.isMyPaintPending(
-                     gui_.getImageWin().getCanvas(), this) ) {
+                        gui_.getImageWin().getCanvas(), this) ) {
                   CanvasPaintPending.setPaintPending(
-                          gui_.getImageWin().getCanvas(), this);
+                        gui_.getImageWin().getCanvas(), this);
                   gui_.normalizeTags(ti);
                   gui_.addImage(ACQ_NAME, ti, true, true);
                   gui_.updateLineProfile();
@@ -108,8 +123,10 @@ public class LiveModeTimer {
       multiChannelCameraNrCh_ = (int) core_.getNumberOfCameraChannels();
       if (multiChannelCameraNrCh_ == 1) {
          task_ = singleCameraLiveTask();
+         multiCam_ = false;
       } else {
          task_ = multiCamLiveTask();
+         multiCam_ = true;
       }
    }
 
@@ -289,15 +306,16 @@ public class LiveModeTimer {
                   Set<String> cameraChannelsAcquired = new HashSet<String>();
                   for (int i = 0; i < 2 * multiChannelCameraNrCh_; ++i) {
                      TaggedImage ti = core_.getNBeforeLastTaggedImage(i);
-                     if (i == 0) {
-                        setImageNumber(ti.tags.getLong("ImageNumber"));
-                     }
                      String channelName;
                      if (ti.tags.has(camera + "-CameraChannelName")) {
                         channelName = ti.tags.getString(camera + "-CameraChannelName");
                         if (!cameraChannelsAcquired.contains(channelName)) {
                            ti.tags.put("Channel", channelName);
-                           ti.tags.put("ChannelIndex", ti.tags.getInt(camera + "-CameraChannelIndex"));
+                           int ccIndex = ti.tags.getInt(camera + "-CameraChannelIndex");
+                           ti.tags.put("ChannelIndex", ccIndex);
+                           if (ccIndex == 0) {
+                              setImageNumber(ti.tags.getLong("ImageNumber"));
+                           }
                            imageQueue_.put(ti);
                            cameraChannelsAcquired.add(channelName);
                         }
