@@ -597,13 +597,11 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    }
 
    public void runBurstAcquisition(int nr, String name, String root) throws MMScriptException {
-      //String originalName = engine_.getDirName();
       String originalRoot = engine_.getRootName();
       engine_.setDirName(name);
       engine_.setRootName(root);
       this.runBurstAcquisition(nr);
       engine_.setRootName(originalRoot);
-      //engine_.setDirName(originalDirName);
    }
 
    /**
@@ -653,7 +651,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    }
 
    
-   /*
+   /**
     * Shows images as they appear in the default display window. Uses
     * the default processor stack to process images as they arrive on
     * the rawImageQueue.
