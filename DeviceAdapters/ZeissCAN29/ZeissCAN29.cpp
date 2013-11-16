@@ -97,6 +97,7 @@ const char* g_ZeissFocusAxis = "ZeissFocusAxis";
 const char* g_ZeissTubeLens = "ZeissTubeLens";
 const char* g_ZeissTubeLensShutter = "ZeissTubeLensShutter";
 const char* g_ZeissSidePort = "ZeissSidePort";
+const char* g_ZeissExcitationSwitcher = "ZeissExcitationSwitcher";
 const char* g_ZeissReflectedLightShutter = "ZeissReflectedLightShutter";
 const char* g_ZeissTransmittedLightShutter = "ZeissTransmittedLightShutter";
 const char* g_ZeissHalogenLightSwitch = "ZeissHalogenLightSwitch";
@@ -138,6 +139,7 @@ ZeissUByte g_StageXAxis = 0x26;
 ZeissUByte g_StageYAxis = 0x27;
 ZeissUByte g_HBOLampServo = 0x28;
 ZeissUByte g_HalogenLampServo = 0x29; 
+ZeissUByte g_ExcitationChanger = 0x2B;
 ZeissUByte g_LSMPortChanger = 0x2B;  // RearPort, reflected light
 ZeissUByte g_2TVTubePrism = 0x2E;  
 ZeissUByte g_2TVTubeSlider = 0x2F;  
@@ -169,6 +171,7 @@ MODULE_API void InitializeModuleData()
    AddAvailableDeviceName(g_ZeissTubeLens,"Tube Lens (optovar)");
    AddAvailableDeviceName(g_ZeissTubeLensShutter,"Tube Lens Shutter");
    AddAvailableDeviceName(g_ZeissSidePort,"Side Port");
+   AddAvailableDeviceName(g_ZeissExcitationSwitcher,"Excitation Switcher");
    AddAvailableDeviceName(g_ZeissReflectedLightShutter,"Reflected Light Shutter"); 
    AddAvailableDeviceName(g_ZeissTransmittedLightShutter,"Transmitted Light Shutter"); 
    AddAvailableDeviceName(g_ZeissRLFLAttenuator,"Reflected (fluorescence) light attenuator");
@@ -220,6 +223,8 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
         return new Shutter(g_TubeShutter, g_ZeissTubeLensShutter, "Tube Lens Shutter");
    else if (strcmp(deviceName, g_ZeissSidePort) == 0)
         return new SidePortTurret(g_SidePortChanger, g_ZeissSidePort, "Side Port");
+   else if (strcmp(deviceName, g_ZeissExcitationSwitcher) == 0)
+        return new Turret(g_ExcitationChanger, g_ZeissExcitationSwitcher, "Excitation Switcher");
    else if (strcmp(deviceName, g_ZeissReflectedLightShutter) == 0)
         return new  Shutter(g_ReflectedLightShutter, g_ZeissReflectedLightShutter, "Zeiss Reflected Light Shutter");
    else if (strcmp(deviceName, g_ZeissTransmittedLightShutter) == 0)
