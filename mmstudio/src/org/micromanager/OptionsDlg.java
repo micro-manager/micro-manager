@@ -66,15 +66,12 @@ public class OptionsDlg extends MMDialog {
    private JComboBox comboDisplayBackground_;
    private ScriptInterface parent_;
    private GUIColors guiColors_;
-   private String currentCfgPath_;
-   private JComboBox windowZoomCombo_;
 
    /**
     * Create the dialog
     */
-   public OptionsDlg(MMOptions opts, CMMCore core, Preferences mainPrefs, ScriptInterface parent, String cfgPath) {
+   public OptionsDlg(MMOptions opts, CMMCore core, Preferences mainPrefs, ScriptInterface parent) {
       super();
-      currentCfgPath_ = cfgPath;
       parent_ = parent;
       addWindowListener(new WindowAdapter() {
 

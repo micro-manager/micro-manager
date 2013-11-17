@@ -37,7 +37,6 @@ public class MMOptions {
    private static final String DISPLAY_BACKGROUND = "displayBackground";
    private static final String STARTUP_SCRIPT_FILE = "startupScript";
    private static final String AUTORELOAD_DEVICES = "autoreloadDevices";
-   private static final String ENABLE_DEVICE_DISCOVERY = "enableDeviceDiscovery";
    private static final String PREF_WINDOW_MAG = "windowMag";
    private static final String MPTIFF_METADATA_FILE = "MakeMetadataFileWithMultipageTiff";
    private static final String MPTIFF_SEPARATE_FILES_FOR_POSITIONS = "SplitXYPostionsInFilesMPTiff";
@@ -88,7 +87,6 @@ public class MMOptions {
       startupScript_ = prefs.get(STARTUP_SCRIPT_FILE, startupScript_);
       autoreloadDevices_ = prefs.getBoolean(AUTORELOAD_DEVICES, autoreloadDevices_);
       windowMag_ = prefs.getDouble(PREF_WINDOW_MAG, windowMag_);
-      // enableDeviceDiscovery_ = prefs.getBoolean(ENABLE_DEVICE_DISCOVERY, enableDeviceDiscovery_);
       mpTiffMetadataFile_ = prefs.getBoolean(MPTIFF_METADATA_FILE, mpTiffMetadataFile_);
       mpTiffSeparateFilesForPositions_ = prefs.getBoolean(MPTIFF_SEPARATE_FILES_FOR_POSITIONS, mpTiffSeparateFilesForPositions_);
       syncExposureMainAndMDA_ = prefs.getBoolean(SYNCEXPOSUREMAINANDMDA, syncExposureMainAndMDA_);

@@ -1453,7 +1453,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
             int oldBufsize = options_.circularBufferSizeMB_;
 
             OptionsDlg dlg = new OptionsDlg(options_, core_, mainPrefs_,
-                  thisInstance, sysConfigFile_);
+                  thisInstance);
             dlg.setVisible(true);
             // adjust memory footprint if necessary
             if (oldBufsize != options_.circularBufferSizeMB_) {
