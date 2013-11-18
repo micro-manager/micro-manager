@@ -986,7 +986,7 @@ int Spectra::OnWhiteEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
 	}
 	if (eAct == MM::BeforeGet)
 	{
-		if (enableMask_ & 0x2f)
+		if (enableMask_ & 0x6f)
 			pProp->Set(0L);
 		else
 			pProp->Set(1L);
