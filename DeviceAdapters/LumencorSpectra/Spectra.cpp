@@ -808,11 +808,11 @@ int Spectra::OnWhiteValue(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 int Spectra::OnRedEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-	string State;
 	if (eAct == MM::AfterSet)
 	{
+		long State;
 		pProp->Get(State);
-		if (State == "1")
+		if (State)
 		{
 			enableMask_ &= 0x7E;
 		}
@@ -825,9 +825,9 @@ int Spectra::OnRedEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
 	if (eAct == MM::BeforeGet)
 	{
 		if ( (enableMask_ & 0x01) > 0)
-			pProp->Set("0");
+			pProp->Set(0L);
 		else
-			pProp->Set("1");
+			pProp->Set(1L);
 
 	}
 	return DEVICE_OK;
@@ -835,11 +835,11 @@ int Spectra::OnRedEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 int Spectra::OnGreenEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-	string State;
 	if (eAct == MM::AfterSet)
 	{
+		long State;
 		pProp->Get(State);
-		if (State == "1")
+		if (State)
 		{
 			enableMask_ &= 0x7D;
 		}
@@ -852,9 +852,9 @@ int Spectra::OnGreenEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
 	if (eAct == MM::BeforeGet)
 	{
 		if ( (enableMask_ & 0x02) > 0)
-			pProp->Set("0");
+			pProp->Set(0L);
 		else
-			pProp->Set("1");
+			pProp->Set(1L);
 	}
 	return DEVICE_OK;
 }
@@ -862,11 +862,11 @@ int Spectra::OnGreenEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 int Spectra::OnCyanEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-	string State;
 	if (eAct == MM::AfterSet)
 	{
+		long State;
 		pProp->Get(State);
-		if (State == "1")
+		if (State)
 		{
 			enableMask_ &= 0x7B;
 		}
@@ -879,9 +879,9 @@ int Spectra::OnCyanEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
 	if (eAct == MM::BeforeGet)
 	{
 		if ( (enableMask_ & 0x04) > 0)
-			pProp->Set("0");
+			pProp->Set(0L);
 		else
-			pProp->Set("1");
+			pProp->Set(1L);
 	}
 
 
@@ -891,11 +891,11 @@ int Spectra::OnCyanEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 int Spectra::OnVioletEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-	string State;
 	if (eAct == MM::AfterSet)
 	{
+		long State;
 		pProp->Get(State);
-		if (State == "1")
+		if (State)
 		{
 			enableMask_ &= 0x77;
 		}
@@ -908,9 +908,9 @@ int Spectra::OnVioletEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
 	if (eAct == MM::BeforeGet) 
 	{
 		if ( (enableMask_ & 0x08) > 0)
-			pProp->Set("0");
+			pProp->Set(0L);
 		else
-			pProp->Set("1");
+			pProp->Set(1L);
 	}
 
 	return DEVICE_OK;
@@ -918,11 +918,11 @@ int Spectra::OnVioletEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 int Spectra::OnTealEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-	string State;
 	if (eAct == MM::AfterSet)
 	{
+		long State;
 		pProp->Get(State);
-		if (State == "1")
+		if (State)
 		{
 			enableMask_ &= 0x3F;
 		}
@@ -935,20 +935,20 @@ int Spectra::OnTealEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
 	if (eAct == MM::BeforeGet) 
 	{
 		if ( (enableMask_ & 0x40) > 0)
-			pProp->Set("0");
+			pProp->Set(0L);
 		else
-			pProp->Set("1");
+			pProp->Set(1L);
 	}
 	return DEVICE_OK;
 }
 
 int Spectra::OnBlueEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-	string State;
 	if (eAct == MM::AfterSet)
 	{
+		long State;
 		pProp->Get(State);
-		if (State == "1")
+		if (State)
 		{
 			enableMask_ &= 0x5F;
 		}
@@ -961,20 +961,20 @@ int Spectra::OnBlueEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
 	if (eAct == MM::BeforeGet)
 	{	
 		if ( (enableMask_ & 0x20) > 0)
-			pProp->Set("0");
+			pProp->Set(0L);
 		else
-			pProp->Set("1");
+			pProp->Set(1L);
 	}
 	return DEVICE_OK;
 }
 
 int Spectra::OnWhiteEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-	string State;
 	if (eAct == MM::AfterSet)
 	{
+		long State;
 		pProp->Get(State);
-		if (State == "1")
+		if (State)
 		{
 			enableMask_ &= 0x50;
 		}
@@ -987,9 +987,9 @@ int Spectra::OnWhiteEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
 	if (eAct == MM::BeforeGet)
 	{
 		if (enableMask_ & 0x2f)
-			pProp->Set("0");
+			pProp->Set(0L);
 		else
-			pProp->Set("1");
+			pProp->Set(1L);
 	}
 	return DEVICE_OK;
 }
@@ -997,11 +997,11 @@ int Spectra::OnWhiteEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 int Spectra::OnYGFilterEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-	string State;
 	if (eAct == MM::AfterSet)
 	{
+		long State;
 		pProp->Get(State);
-		if (State == "1")
+		if (State)
 		{
 			enableMask_ &= 0x6F;
 		}
@@ -1014,9 +1014,9 @@ int Spectra::OnYGFilterEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
 	if (eAct == MM::BeforeGet)
 	{	
 		if ( (enableMask_ & 0x10) > 0)
-			pProp->Set("0");
+			pProp->Set(0L);
 		else
-			pProp->Set("1");
+			pProp->Set(1L);
 	}
 
 	return DEVICE_OK;
