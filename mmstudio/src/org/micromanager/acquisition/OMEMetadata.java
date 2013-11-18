@@ -114,7 +114,7 @@ public class OMEMetadata {
       if (summaryMD.has("Interval_ms")) {
          double interval = summaryMD.getDouble("Interval_ms");
          if (interval > 0) { //don't write it for burst mode because it won't be true
-            metadata_.setPixelsTimeIncrement(interval, seriesIndex);
+            metadata_.setPixelsTimeIncrement(interval / 1000.0, seriesIndex);
          }
       }
       
