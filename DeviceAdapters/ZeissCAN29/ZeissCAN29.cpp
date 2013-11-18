@@ -98,6 +98,7 @@ const char* g_ZeissTubeLens = "ZeissTubeLens";
 const char* g_ZeissTubeLensShutter = "ZeissTubeLensShutter";
 const char* g_ZeissSidePort = "ZeissSidePort";
 const char* g_ZeissExcitationSwitcher = "ZeissExcitationSwitcher";
+const char* g_ZeissExternalLampMirror = "ZeissExternalLampMirror";
 const char* g_ZeissReflectedLightShutter = "ZeissReflectedLightShutter";
 const char* g_ZeissTransmittedLightShutter = "ZeissTransmittedLightShutter";
 const char* g_ZeissHalogenLightSwitch = "ZeissHalogenLightSwitch";
@@ -144,6 +145,7 @@ ZeissUByte g_LSMPortChanger = 0x2B;  // RearPort, reflected light
 ZeissUByte g_2TVTubePrism = 0x2E;  
 ZeissUByte g_2TVTubeSlider = 0x2F;  
 ZeissUByte g_2TVTubeShutter = 0x30;  
+ZeissUByte g_ExternalLampMirror = 0x32;  
 ZeissUByte g_HXPShutter = 0x36;
 ZeissUByte g_BasePortChanger = 0x40;
 ZeissUByte g_UniblitzShutter = 0x41;
@@ -181,6 +183,7 @@ MODULE_API void InitializeModuleData()
    AddAvailableDeviceName(g_ZeissHalogenLamp,"Halogen Lamp"); 
    AddAvailableDeviceName(g_ZeissLSMPort,"LSM Port (rearPort)"); 
    AddAvailableDeviceName(g_ZeissBasePort,"Base Port switcher"); 
+   AddAvailableDeviceName(g_ZeissExternalLampMirror,"External Lamp Mirror"); 
    AddAvailableDeviceName(g_ZeissUniblitz,"Uniblitz Shutter"); 
    AddAvailableDeviceName(g_ZeissFilterWheel,"Filter Wheel"); 
    AddAvailableDeviceName(g_ZeissDefiniteFocus,"Definite Focus"); 
@@ -243,6 +246,8 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
         return new Turret(g_LSMPortChanger, g_ZeissLSMPort, "LSM Port (rear port)");
    else if (strcmp(deviceName, g_ZeissBasePort) == 0)
         return new Turret(g_BasePortChanger, g_ZeissBasePort, "Base Port");
+   else if (strcmp(deviceName, g_ZeissExternalLampMirror) == 0)
+        return new Turret(g_ExternalLampMirror, g_ZeissExternalLampMirror, "External Lamp Mirror");
    else if (strcmp(deviceName, g_ZeissUniblitz) == 0)
         return new Shutter(g_UniblitzShutter, g_ZeissUniblitz, "Uniblitz Shutter");
    else if (strcmp(deviceName, g_ZeissFilterWheel) == 0)
