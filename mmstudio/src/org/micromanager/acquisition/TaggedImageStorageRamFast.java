@@ -5,18 +5,12 @@
 
 package org.micromanager.acquisition;
 
-import java.io.UnsupportedEncodingException;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.IntBuffer;
-import java.nio.ShortBuffer;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -100,17 +94,19 @@ public class TaggedImageStorageRamFast implements TaggedImageStorage {
         } 
    }
    
+   @Override
    public void putImage(final TaggedImage taggedImage) throws MMException {
       String label = MDUtils.getLabel(taggedImage.tags);
       try {
          lruCache_.put(label, taggedImage);
          imageMap_.put(label, taggedImageToDirectTaggedImage(taggedImage));
-        lastFrame_ = Math.max(lastFrame_, MDUtils.getFrameIndex(taggedImage.tags));
+         lastFrame_ = Math.max(lastFrame_, MDUtils.getFrameIndex(taggedImage.tags));
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
       }
    }
 
+   @Override
     public TaggedImage getImage(int channel, int slice, int frame, int position) {
         if (imageMap_ == null) {
             return null;
@@ -124,22 +120,27 @@ public class TaggedImageStorageRamFast implements TaggedImageStorage {
         }
     }
 
+   @Override
    public JSONObject getImageTags(int channelIndex, int sliceIndex, int frameIndex, int positionIndex) {
       return this.getImage(channelIndex, sliceIndex, frameIndex, positionIndex).tags;
    }
 
+   @Override
    public Set<String> imageKeys() {
       return imageMap_.keySet();
    }
 
+   @Override
    public void finished() {
       finished_ = true;
    }
 
+   @Override
    public boolean isFinished() {
       return finished_;
    }
 
+   @Override
    public void setSummaryMetadata(JSONObject md) {
       summaryMetadata_ = md;
       if (summaryMetadata_ != null) {
@@ -155,18 +156,22 @@ public class TaggedImageStorageRamFast implements TaggedImageStorage {
       }  
    }
 
+   @Override
    public JSONObject getSummaryMetadata() {
       return summaryMetadata_;
    }
 
+   @Override
    public void setDisplayAndComments(JSONObject settings) {
       displaySettings_ = settings;
    }
 
+   @Override
    public JSONObject getDisplayAndComments() {
       return displaySettings_;
    }
 
+   @Override
    public void close() {
       imageMap_.clear();
       lruCache_.clear();
@@ -175,14 +180,17 @@ public class TaggedImageStorageRamFast implements TaggedImageStorage {
       // do nothing for now.
    }
 
+   @Override
    public String getDiskLocation() {
       return null;
    }
 
+   @Override
    public int lastAcquiredFrame() {
       return lastFrame_;
    }
 
+   @Override
    public long getDataSetSize() {
       throw new UnsupportedOperationException("Not supported yet.");
    }

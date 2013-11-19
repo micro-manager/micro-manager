@@ -65,10 +65,12 @@ public class TaggedImageStorageRam implements TaggedImageStorage {
       finished_ = true;
    }
 
+   @Override
    public boolean isFinished() {
       return finished_;
    }
 
+   @Override
    public void setSummaryMetadata(JSONObject md) {
       summaryMetadata_ = md;
       if (summaryMetadata_ != null) {
