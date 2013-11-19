@@ -77,6 +77,7 @@ import org.micromanager.acquisition.AcquisitionManager;
 import org.micromanager.api.Autofocus;
 import org.micromanager.api.DataProcessor;
 import org.micromanager.api.MMPlugin;
+import org.micromanager.api.MMTags;
 import org.micromanager.api.PositionList;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.api.MMListenerInterface;
@@ -4130,7 +4131,18 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       return acqMgr_.createAcquisition(summaryMetadata, diskCached, engine_, displayOff);
    }
 
-
+   @Override
+   public String createDataSet(String root, String name, boolean diskCached, boolean displayOff) throws MMScriptException {
+	   JSONObject summary = new JSONObject();
+	   try {
+		   summary.put(MMTags.Summary.PREFIX, name);
+		   summary.put(MMTags.Summary.DIRECTORY, root);
+	   } catch (JSONException e) {
+		   throw new MMScriptException(e.getMessage());
+	   }
+	   return acqMgr_.createAcquisition(summary, diskCached, engine_, displayOff);
+   }
+   
    private void openAcquisitionSnap(String name, String rootDir, boolean show)
          throws MMScriptException {
       /*
@@ -4345,6 +4357,15 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
 
    public void addImage(String name, TaggedImage taggedImg) throws MMScriptException {
       acqMgr_.getAcquisition(name).insertImage(taggedImg);
+   }
+   
+   @Override
+   public void addImageToDataSet(String name, int frame, String channel, int slice, String position, TaggedImage taggedImg) throws MMScriptException {
+	   // TODO: complete the tag set and initialize the acquisition
+	   MMAcquisition a = acqMgr_.getAcquisition(name);
+	   //if (!a.isInitialized())
+	   // initialize
+	   a.insertImage(taggedImg);
    }
 
    public void addImage(String name, TaggedImage taggedImg, boolean updateDisplay) throws MMScriptException {

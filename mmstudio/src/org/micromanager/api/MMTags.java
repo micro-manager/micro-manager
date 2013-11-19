@@ -17,6 +17,7 @@ public class MMTags {
     */
    public class Summary {
       public static final String PREFIX = "Prefix"; // Acquisition name
+      public static final String DIRECTORY = "Directory"; // Acquisition directory
 
       public static final String WIDTH = "Width"; // image width
       public static final String HEIGHT = "Height"; // image height
@@ -41,6 +42,7 @@ public class MMTags {
 
       public static final String SLICES_FIRST = "SlicesFirst";
       public static final String TIME_FIRST = "TimeFirst";
+
    }
    
    public class Image {
