@@ -56,12 +56,15 @@ public class ClassesUpToDate extends Task {
    private AbstractCollection<File> findClassFiles(File directory) {
       AbstractCollection<File> classFiles = new ArrayList<File>();
 
-      for (File f : directory.listFiles()) {
-         if (f.isFile() && f.getName().endsWith(".class")) {
-            classFiles.add(f);
-         }
-         else if (f.isDirectory()) {
-            classFiles.addAll(findClassFiles(f));
+      File[] files = directory.listFiles();
+      if (files != null) {
+         for (File f : directory.listFiles()) {
+            if (f.isFile() && f.getName().endsWith(".class")) {
+               classFiles.add(f);
+            }
+            else if (f.isDirectory()) {
+               classFiles.addAll(findClassFiles(f));
+            }
          }
       }
 
