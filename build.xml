@@ -45,13 +45,14 @@
 		<ant antfile="DeviceAdapters/build.xml" useNativeBasedir="true" target="install"/>
 	</target>
 
-	<target name="build" depends="set-version" description="Build all components">
-		<antcall target="build-cpp"/>
-		<antcall target="build-java"/>
-	</target>
+	<target name="build" depends="set-version,build-cpp,build-java" description="Build all components"/>
 
-	<target name="stage" depends="set-version,build-cpp" description="Gather files to be installed">
+	<target name="stage" depends="build-buildtools,set-version,build-cpp" description="Gather files to be installed">
 		<antcall target="stage-deviceadapters"/>
+
+		<!-- We need to run the 'install' target of each Java project,
+		     without calling our 'build' or 'build-java' target, in
+		     order to avoid running the same targets twice. -->
 		<run-all-java-projects target="install"/>
 
 		<!-- MMCoreJ DLL -->
@@ -98,8 +99,7 @@
 		<exec dir="${mm.installdir}" executable="${mm.installdir}/ImageJ.exe"/>
 	</target>
 
-	<target name="stage-and-run" description="Build, stage, and run the application">
-		<antcall target="stage"/>
+	<target name="stage-and-run" depends="stage" description="Build, stage, and run the application">
 		<antcall target="run"/>
 	</target>
 
