@@ -1,5 +1,5 @@
 <project name="mm.autofocusbuild">
-  <include file="../../buildscripts/buildprops.xml"/>
+	<include file="../../buildscripts/buildprops.xml"/>
 
 	<property name="srcdir" location=".."/>
 	<property name="installdir" location="${mm.java.autofocus.installdir}"/>
