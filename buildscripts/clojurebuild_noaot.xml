@@ -8,7 +8,7 @@
 	<import file="javabuild.xml"/>
 
 	<!-- Override just the 'compile' target -->
-	<target name="compile" description="Compile Clojure generated class">
+	<target name="compile" depends="prepare" description="Compile Clojure generated class">
 		<mkdir dir="${intdir}"/>
 		<mm-clj-genclass namespace="${namespace}" genclass="${genclass}"
 			srcdir="${srcdir}" destdir="${intdir}">

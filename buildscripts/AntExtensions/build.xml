@@ -1,0 +1,14 @@
+<project name="AntExtensions" basedir="." default="jar">
+	<import file="../javabuild.xml"/>
+
+	<!-- Override the 'compile' target to include the Ant runtime in the classpath -->
+	<target name="compile" description="Compile Java sources">
+		<mkdir dir="${intdir}"/>
+		<mm-ant-javac srcdir="${srcdir}" destdir="${intdir}">
+			<classpath refid="project.classpath"/>
+		</mm-ant-javac>
+	</target>
+
+	<!-- Override the 'install' target to prevent installation of the JAR -->
+	<target name="install"/>
+</project>

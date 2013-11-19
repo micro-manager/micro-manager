@@ -7,7 +7,7 @@
 	<import file="javabuild.xml"/>
 
 	<!-- Override just the 'compile' target -->
-	<target name="compile" description="Compile Clojure sources">
+	<target name="compile" depends="prepare" description="Compile Clojure sources">
 		<mkdir dir="${intdir}"/>
 		<mm-cljc namespace="${namespace}" srcdir="${srcdir}" destdir="${intdir}">
 			<clj-classpath>

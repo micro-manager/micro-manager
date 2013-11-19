@@ -16,6 +16,11 @@
 		<pathelement location="${mm.java.lib.swing-layout}"/>
 	</path>
 
+	<path id="project.linked.jars">
+		<pathelement location="${mm.java.lib.imagej}"/>
+		<pathelement location="${mm.java.lib.mmcorej}"/>
+	</path>
+
 	<!-- Override javabuild.xml's 'copy-files' target -->
 	<property name="src.pkgroot" location="${srcdir}/org/micromanager"/>
 	<property name="int.pkgroot" location="${intdir}/org/micromanager"/>

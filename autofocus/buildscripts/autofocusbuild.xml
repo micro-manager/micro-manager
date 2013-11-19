@@ -13,7 +13,13 @@
 		<pathelement location="${mm.java.lib.mmstudio}"/>
 	</path>
 
-	<target name="compile" depends="prerequisites" description="Compile Java source">
+	<path id="project.linked.jars">
+		<pathelement location="${mm.java.lib.imagej}"/>
+		<pathelement location="${mm.java.lib.mmcorej}"/>
+		<pathelement location="${mm.java.lib.mmstudio}"/>
+	</path>
+
+	<target name="compile" depends="prepare" description="Compile Java source">
 		<mkdir dir="${intdir}"/>
 		<mm-javac srcdir="${srcdir}" destdir="${intdir}">
 			<include name="${sourcefile}"/>

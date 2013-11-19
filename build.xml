@@ -24,12 +24,17 @@
 		</sequential>
 	</macrodef>
 
+	<target name="build-buildtools">
+		<ant antfile="buildscripts/AntExtensions/build.xml" useNativeBasedir="true" target="jar"/>
+	</target>
+
 	<target name="build-cpp" description="Build all C++ components">
 		<mm-msbuild project="micromanager.sln" target="Build" failonerror="${mm.build.failonerror}"
 			logbasename="msbuild-micromanager${mm.build.logsuffix}"/>
 	</target>
 
-	<target name="build-java" description="Build all Java components (requires MMCoreJ_wrap DLL to have been built)">
+	<target name="build-java" depends="build-buildtools"
+		description="Build all Java components (requires MMCoreJ_wrap DLL to have been built)">
 		<run-all-java-projects target="jar"/>
 	</target>
 

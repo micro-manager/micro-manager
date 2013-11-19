@@ -6,7 +6,7 @@
 	<import file="../buildscripts/javabuild.xml"/>
 
 	<!-- Override mm.javabuild.compile -->
-	<target name="compile" depends="prerequisites" description="Compile Java sources">
+	<target name="compile" depends="prepare" description="Compile Java sources">
 		<mkdir dir="${intdir}"/>
 
 		<mm-javac destdir="${intdir}">
