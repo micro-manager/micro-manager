@@ -147,6 +147,7 @@ public final class VirtualAcquisitionDisplay implements
    private int simpleWinImagesReceived_ = 0;
    private AtomicBoolean updatePixelSize_ = new AtomicBoolean(false);
    private AtomicLong newPixelSize_ = new AtomicLong();
+   private final Object imageReceivedObject_ = new Object();
 
    public void propertiesChangedAlert() {
       //throw new UnsupportedOperationException("Not supported yet.");
@@ -1005,21 +1006,20 @@ public final class VirtualAcquisitionDisplay implements
          }
       });
 
-      if (pSelector != null) {
-         try {
-            Component icon = (Component) JavaUtils.getRestrictedFieldValue(
-                    pSelector, ScrollbarWithLabel.class, "icon");
-            pSelector.remove(icon);
-         } catch (NoSuchFieldException ex) {
-            ReportingUtils.logError(ex);
-         }
-
-         pIcon_ = new ScrollbarAnimateIcon('p', this);
-         pSelector.add(pIcon_, BorderLayout.WEST);
-         addSelectorLockIcon(pSelector, "p");
-         pSelector.invalidate();
-         pSelector.validate();
+      try {
+         Component icon = (Component) JavaUtils.getRestrictedFieldValue(
+                 pSelector, ScrollbarWithLabel.class, "icon");
+         pSelector.remove(icon);
+      } catch (NoSuchFieldException ex) {
+         ReportingUtils.logError(ex);
       }
+
+      pIcon_ = new ScrollbarAnimateIcon('p', this);
+      pSelector.add(pIcon_, BorderLayout.WEST);
+      addSelectorLockIcon(pSelector, "p");
+      pSelector.invalidate();
+      pSelector.validate();
+
 
       return pSelector;
    }
@@ -1035,15 +1035,21 @@ public final class VirtualAcquisitionDisplay implements
       promptToSave_ = promptToSave;
    }
 
-   /*
+   /**
     * Method required by ImageCacheListener
     */
    @Override
-   public synchronized void imageReceived(final TaggedImage taggedImage) {    
-      updateDisplay(taggedImage, false);
+   public synchronized void imageReceived(final TaggedImage taggedImage) {
+      if (hyperImage_ == null
+              || !CanvasPaintPending.isMyPaintPending(hyperImage_.getCanvas(), imageReceivedObject_)) {
+         if (hyperImage_ != null) {
+            CanvasPaintPending.setPaintPending(hyperImage_.getCanvas(), imageReceivedObject_);
+         }
+         updateDisplay(taggedImage, false);
+      }
    }
 
-   /*
+   /**
     * Method required by ImageCacheListener
     */
    @Override
@@ -1057,6 +1063,7 @@ public final class VirtualAcquisitionDisplay implements
 
    private void updateDisplay(TaggedImage taggedImage, boolean finalUpdate) {
       try {
+
          long t = System.currentTimeMillis();
          JSONObject tags;
          if (taggedImage != null) {
@@ -1094,7 +1101,7 @@ public final class VirtualAcquisitionDisplay implements
             lastSliceShown_ = slice;
             lastPositionShown_ = position;
             lastDisplayTime_ = t;
-         }
+         }  
       } catch (Exception e) {
          ReportingUtils.logError(e);
       }
