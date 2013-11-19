@@ -173,7 +173,7 @@
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">set swig=..\..\3rdpartypublic\swig\swig
 rem Stage output within IntDir so that it will be cleaned.
 set swig_out_dir=$(IntDir)Swig
-set java_src_dir=..\build\intermediates\Swig\MMCoreJ
+set java_src_dir=..\build\intermediates\Swig\mmcorej
 rem
 mkdir %swig_out_dir%
 %swig% -c++ -java -package mmcorej -module MMCoreJ -outdir %swig_out_dir% %(FullPath)
@@ -186,7 +186,7 @@ copy %swig_out_dir%\*.java %java_src_dir%\</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">set swig=..\..\3rdpartypublic\swig\swig
 rem Stage output within IntDir so that it will be cleaned.
 set swig_out_dir=$(IntDir)Swig
-set java_src_dir=..\build\intermediates\Swig\MMCoreJ
+set java_src_dir=..\build\intermediates\Swig\mmcorej
 rem
 mkdir %swig_out_dir%
 %swig% -c++ -java -package mmcorej -module MMCoreJ -outdir %swig_out_dir% %(FullPath)
@@ -199,7 +199,7 @@ copy %swig_out_dir%\*.java %java_src_dir%\</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">set swig=..\..\3rdpartypublic\swig\swig
 rem Stage output within IntDir so that it will be cleaned.
 set swig_out_dir=$(IntDir)Swig
-set java_src_dir=..\build\intermediates\Swig\MMCoreJ
+set java_src_dir=..\build\intermediates\Swig\mmcorej
 rem
 mkdir %swig_out_dir%
 %swig% -c++ -java -package mmcorej -module MMCoreJ -outdir %swig_out_dir% %(FullPath)
@@ -212,7 +212,7 @@ copy %swig_out_dir%\*.java %java_src_dir%\</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">set swig=..\..\3rdpartypublic\swig\swig
 rem Stage output within IntDir so that it will be cleaned.
 set swig_out_dir=$(IntDir)Swig
-set java_src_dir=..\build\intermediates\Swig\MMCoreJ
+set java_src_dir=..\build\intermediates\Swig\mmcorej
 rem
 mkdir %swig_out_dir%
 %swig% -c++ -java -package mmcorej -module MMCoreJ -outdir %swig_out_dir% %(FullPath)

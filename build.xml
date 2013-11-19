@@ -29,7 +29,7 @@
 			logbasename="msbuild-micromanager${mm.build.logsuffix}"/>
 	</target>
 
-	<target name="build-java" description="Build all Java components (requires MMCoreJ_wrap to be built)">
+	<target name="build-java" description="Build all Java components (requires MMCoreJ_wrap DLL to have been built)">
 		<run-all-java-projects target="jar"/>
 	</target>
 

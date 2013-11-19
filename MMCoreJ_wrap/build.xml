@@ -1,8 +1,7 @@
 <project name="MMCoreJ" basedir="." default="jar">
 	<include file="../buildscripts/buildprops.xml"/>
 	<property name="srcdir" value="."/>
-	<property name="swig.javasrcdir" value="${mm.swig.javasrcdir}/MMCoreJ"/>
-	<property name="json.srcdir" value="${mm.basedir}/mmstudio/src/org/json"/>
+	<property name="json.srcdir" value="${mm.basedir}/mmstudio/src"/>
 
 	<import file="../buildscripts/javabuild.xml"/>
 
@@ -10,19 +9,13 @@
 	<target name="compile" depends="prerequisites" description="Compile Java sources">
 		<mkdir dir="${intdir}"/>
 
-		<mm-javac srcdir="${json.srcdir}" destdir="${intdir}"/>
+		<mm-javac destdir="${intdir}">
+			<src path="${json.srcdir}"/>
+			<include name="org/json/**"/>
 
-		<mm-javac srcdir="${srcdir}" destdir="${intdir}">
-			<include name="TaggedImage.java"/>
-			<classpath>
-				<pathelement location="${intdir}"/>
-			</classpath>
-		</mm-javac>
-
-		<mm-javac srcdir="${swig.javasrcdir}" destdir="${intdir}">
-			<classpath>
-				<pathelement location="${intdir}"/>
-			</classpath>
+			<src path="${srcdir}"/>
+			<src path="${mm.swig.javasrcdir}"/>
+			<include name="mmcorej/**"/>
 		</mm-javac>
 	</target>
 </project>
