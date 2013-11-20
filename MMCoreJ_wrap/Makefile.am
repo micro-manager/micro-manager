@@ -41,9 +41,7 @@ libMMCoreJ_wrap_la_LIBADD = $(BOOST_SYSTEM_LIB)
 libMMCoreJ_wrap_la_LDFLAGS = -Wl, -module -ldl $(BOOST_LDFLAGS)
 
 $(srcdir)/MMCoreJ.jar:  MMCoreJ_wrap.cxx \
-	libMMCoreJ_wrap.la \
-	TaggedImage.java
-	cp TaggedImage.java mmcorej/
+	libMMCoreJ_wrap.la 
 	$(JAVAC) -source 1.5 -target 1.5 ../mmstudio/src/org/json/*.java mmcorej/*.java
 	$(JAR) cvf MMCoreJ.jar mmcorej/*.class
 
