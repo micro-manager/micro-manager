@@ -34,6 +34,12 @@
 		</or>
 	</condition>
 
+	<!-- The JVM architecture on which the build is running -->
+	<condition property="mm.build.architecture" value="x64" else="Win32">
+		<!-- XXX Only Windows implemented -->
+		<equals arg1="${os.arch}" arg2="amd64"/>
+	</condition>
+
 	<!-- Root of build intermediates directory -->
 	<property name="mm.intdir" location="${mm.basedir}/build/intermediates"/>
 
@@ -60,6 +66,9 @@
 	<property name="mm.cpp.intdir" location="${mm.intdir}/${mm.configuration}/${mm.architecture}"/>
 	<property name="mm.cpp.outdir" location="${mm.outdir}/${mm.configuration}/${mm.architecture}"/>
 	<property name="mm.dll.installdir" location="${mm.installdir}"/>
+
+	<!-- C++ DLLs matching the build system architecture -->
+	<property name="mm.build.cpp.outdir" location="${mm.outdir}/${mm.configuration}/${mm.build.architecture}"/>
 
 	<!-- Swig output -->
 	<property name="mm.swig.javasrcdir" location="${mm.intdir}/Swig"/>
@@ -183,7 +192,7 @@
 			<java classname="clojure.lang.Compile" fork="true" failonerror="true">
 				<arg value="@{namespace}"/>
 				<sysproperty key="clojure.compile.path" value="@{destdir}"/>
-				<sysproperty key="java.library.path" value="${mm.cpp.outdir}"/>
+				<sysproperty key="java.library.path" value="${mm.build.cpp.outdir}"/>
 				<classpath>
 					<pathelement location="@{destdir}"/>
 					<pathelement location="@{srcdir}"/>
