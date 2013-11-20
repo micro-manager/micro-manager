@@ -58,21 +58,21 @@ BUILDLOGUPLOADPLACE=valelab2.ucsf.edu:/home/MM
 cd $RDPARTYPUBLIC
 svn update
 cd $REPOSITORY
-svn update --accept theirs-conflict
+svn --force update --accept theirs-conflict
 cd $REPOSITORY/SecretDeviceAdapters
-svn update --accept theirs-conflict
+svn --force update --accept theirs-conflict
 cd $RPPC
-svn update --accept theirs-conflict
+svn --force update --accept theirs-conflict
 cd $RPPC/SecretDeviceAdapters
-svn update --accept theirs-conflict
+svn --force update --accept theirs-conflict
 cd $RI386
-svn update --accept theirs-conflict
+svn --force update --accept theirs-conflict
 cd $RI386/SecretDeviceAdapters
-svn update --accept theirs-conflict
+svn --force update --accept theirs-conflict
 cd $RX86_64
-svn update --accept theirs-conflict
+svn --force update --accept theirs-conflict
 cd $RX86_64/SecretDeviceAdapters
-svn update --accept theirs-conflict
+svn --force update --accept theirs-conflict
 cd $RPPC
 
 cp -r $REPOSITORY/bindist/any-platform/* $TARGET
