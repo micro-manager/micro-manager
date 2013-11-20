@@ -90,7 +90,7 @@ import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ReportingUtils;
 
-public final class VirtualAcquisitionDisplay implements 
+public class VirtualAcquisitionDisplay implements 
         ImageCacheListener, MMListenerInterface {
 
    public static VirtualAcquisitionDisplay getDisplay(ImagePlus imgp) {
