@@ -9,6 +9,6 @@
 		</mm-ant-javac>
 	</target>
 
-	<!-- Override the 'install' target to prevent installation of the JAR -->
-	<target name="install"/>
+	<!-- Override the 'install' targets to prevent installation of the JAR -->
+	<target name="install-only"/>
 </project>

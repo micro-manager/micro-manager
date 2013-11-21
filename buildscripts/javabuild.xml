@@ -61,10 +61,12 @@
 		<mm-jar basedir="${intdir}" destfile="${jarfile}"/>
 	</target>
 
-	<target name="install" depends="jar" description="Install Jar file">
+	<target name="install-only" description="Like 'install', but skip the build">
 		<mkdir dir="${installdir}"/>
 		<copy todir="${installdir}" file="${jarfile}"/>
 	</target>
+
+	<target name="install" depends="jar,install-only" description="Install Jar file"/>
 
 	<target name="clean" description="Delete build product and intermediates">
 		<delete file="${jarfile}"/>

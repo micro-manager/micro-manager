@@ -24,6 +24,10 @@
 		<run-all target="jar" failonerror="${mm.build.failonerror}"/>
 	</target>
 
+	<target name="install-only">
+		<run-all target="install-only" failonerror="${mm.build.failonerror}"/>
+	</target>
+
 	<target name="install">
 		<run-all target="install" failonerror="${mm.build.failonerror}"/>
 	</target>

@@ -38,6 +38,8 @@
 		<run-all-java-projects target="jar"/>
 	</target>
 
+	<target name="build" depends="set-version,build-cpp,build-java" description="Build all components"/>
+
 	<target name="stage-deviceadapters">
 		<copy todir="${mm.dll.installdir}">
 			<fileset dir="${mm.cpp.outdir}" includes="mmgr_dal_*.dll"/>
@@ -45,15 +47,10 @@
 		<ant antfile="DeviceAdapters/build.xml" useNativeBasedir="true" target="install"/>
 	</target>
 
-	<target name="build" depends="set-version,build-cpp,build-java" description="Build all components"/>
-
-	<target name="stage" depends="build-buildtools,set-version,build-cpp" description="Gather files to be installed">
+	<target name="stage-only" description="Like 'stage', but skip the build">
 		<antcall target="stage-deviceadapters"/>
 
-		<!-- We need to run the 'install' target of each Java project,
-		     without calling our 'build' or 'build-java' target, in
-		     order to avoid running the same targets twice. -->
-		<run-all-java-projects target="install"/>
+		<run-all-java-projects target="install-only"/>
 
 		<!-- MMCoreJ DLL -->
 		<!-- XXX Should be staged by MMCoreJ_wrap/build.xml -->
@@ -94,6 +91,9 @@
 			<fileset dir="${mm.java.runtime}"/>
 		</copy>
 	</target>
+
+	<target name="stage" depends="build-buildtools,set-version,build-cpp,build-java,stage-only"
+		description="Gather files to be installed"/>
 
 	<target name="run" description="Run the staged application (without building or staging)">
 		<exec dir="${mm.installdir}" executable="${mm.installdir}/ImageJ.exe"/>
