@@ -326,7 +326,13 @@ void CMMCore::logMessage(const char* msg, bool debugOnly)
 void CMMCore::enableDebugLog(bool enable)
 {
    debugLog_ = enable;
-   getLoggerInstance()->SetPriorityLevel(debugLog_?IMMLogger::debug:IMMLogger::info);
+   IMMLogger::priority loggingMask;
+   if (debugLog_)
+      loggingMask = IMMLogger::any;
+   else
+      loggingMask = (IMMLogger::priority)(IMMLogger::any & ~(IMMLogger::trace & IMMLogger::debug));
+
+   getLoggerInstance()->SetPriorityLevel(loggingMask);
 
    CORE_LOG1("Debug logging %s\n", enable ? "enabled" : "disabled");
 }
