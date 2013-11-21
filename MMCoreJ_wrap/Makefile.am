@@ -41,7 +41,10 @@ libMMCoreJ_wrap_la_LIBADD = $(BOOST_SYSTEM_LIB)
 libMMCoreJ_wrap_la_LDFLAGS = -Wl, -module -ldl $(BOOST_LDFLAGS)
 
 $(srcdir)/MMCoreJ.jar:  MMCoreJ_wrap.cxx \
-	libMMCoreJ_wrap.la 
+	libMMCoreJ_wrap.la \
+	TaggedImage.java
+	mkdir -p mmcorej
+	cp TaggedImage.java mmcorej/
 	$(JAVAC) -source 1.5 -target 1.5 ../mmstudio/src/org/json/*.java mmcorej/*.java
 	$(JAR) cvf MMCoreJ.jar mmcorej/*.class
 
@@ -65,7 +68,7 @@ EXTRA_DIST = license.txt MMCoreJ_wrap.vcproj
 
 clean:
 	test -z "libMMCoreJ_wrap.la" || rm -f libMMCoreJ_wrap.la
-	rm -rf mmcorej/*.java mmcorej/*.class
+	rm -rf mmcorej/
 	rm -f MMCoreJ_wrap.cxx
 	rm -f "./so_locations"
 	rm -rf .libs _libs
