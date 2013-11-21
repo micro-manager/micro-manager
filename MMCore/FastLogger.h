@@ -25,55 +25,6 @@
 #include "IMMLogger.h"
 #include "../MMDevice/DeviceThreads.h"
 
-enum Fast_Log_Priorities
-{
-  // = Note, this first argument *must* start at 1!
-
-  /// Shutdown the logger (decimal 1).
-  FL_SHUTDOWN = 01,
-
-  /// Messages indicating function-calling sequence (decimal 2).
-  FL_TRACE = 02,
-
-  /// Messages that contain information normally of use only when
-  /// debugging a program (decimal 4).
-  FL_DEBUG = 04,
-
-  /// Informational messages (decimal 8).
-  FL_INFO = 010,
-
-  /// Conditions that are not error conditions, but that may require
-  /// special handling (decimal 16).
-  FL_NOTICE = 020,
-
-  /// Warning messages (decimal 32).
-  FL_WARNING = 040,
-
-  /// Initialize the logger (decimal 64).
-  FL_STARTUP = 0100,
-
-  /// Error messages (decimal 128).
-  FL_ERROR = 0200,
-
-  /// Critical conditions, such as hard device errors (decimal 256).
-  FL_CRITICAL = 0400,
-
-  /// A condition that should be corrected immediately, such as a
-  /// corrupted system database (decimal 512).
-  FL_ALERT = 01000,
-
-  /// A panic condition.  This is normally broadcast to all users
-  /// (decimal 1024).
-  FL_EMERGENCY = 02000,
-
-  /// The maximum logging priority.
-  FL_MAX = FL_EMERGENCY,
-
-  /// Do not use!!  This enum value ensures that the underlying
-  /// integral type for this enum is at least 32 bits.
-  FL_ENSURE_32_BITS = 0x7FFFFFFF
-};
-
 
   enum
   {
@@ -137,18 +88,11 @@ public:
 	void clr_flags( unsigned long bits_a) { fast_log_flags_ &=(~bits_a);};
 
 private:
-   //helpers
-   //void InitializeInCurrentThread();
-   const char * GetFormatPrefix(Fast_Log_Priorities p);
+   const char * GetFormatPrefix(IMMLogger::priority p);
    void ReportLogFailure()throw();
-   //to support legacy 2-level implementation:
-   //returns FL_DEBUG or FL_INFO
-
-	Fast_Log_Priorities MatchACEPriority(IMMLogger::priority p);
 
 private:
    priority       level_;
-   priority       timestamp_level_;
    unsigned long  fast_log_flags_;
    std::string    logFileName_;
    std::ofstream * plogFile_;

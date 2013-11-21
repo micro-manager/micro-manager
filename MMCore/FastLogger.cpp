@@ -98,7 +98,6 @@ LoggerThread* pLogThread_g = NULL;
 
 FastLogger::FastLogger()
 :level_(any)
-,timestamp_level_(any)
 ,fast_log_flags_(any)
 ,plogFile_(NULL)
 ,failureReported(false),
@@ -133,7 +132,6 @@ bool FastLogger::Initialize(std::string logFileName, std::string logInstanceName
 		{
 			MMThreadGuard guard(logFileLock_g);
          bRet = Open(logFileName);
-			fast_log_flags_ = flags();
 			if(bRet)
 			{
 				fast_log_flags_ |= OSTREAM;
@@ -208,27 +206,9 @@ bool FastLogger::Reset()throw(IMMLogger::runtime_exception)
    return bRet;
 };
 
-void FastLogger::SetPriorityLevel(IMMLogger::priority level_flag)throw()
+void FastLogger::SetPriorityLevel(IMMLogger::priority level) throw()
 {
-   unsigned long ACE_Process_priority_mask = 0;
-   switch(level_flag)
-   {
-   case  trace:
-      ACE_Process_priority_mask |= FL_TRACE; 
-   case debug:
-      ACE_Process_priority_mask |= FL_DEBUG; 
-   default:
-   case info:
-      ACE_Process_priority_mask |=(FL_INFO|FL_NOTICE); 
-   case warning:
-      ACE_Process_priority_mask |= FL_WARNING; 
-   case error:
-      ACE_Process_priority_mask |= FL_ERROR; 
-   case alert:
-      ACE_Process_priority_mask |=(FL_ALERT|FL_EMERGENCY|FL_CRITICAL); 
-   }
-
-   level_ = (priority)ACE_Process_priority_mask;
+   level_ = level;
 }
 
 bool FastLogger::EnableLogToStderr(bool enable)throw()
@@ -280,14 +260,12 @@ void FastLogger::Log(IMMLogger::priority p, const char* format, ...) throw()
 
 	try
 	{
-		Fast_Log_Priorities ace_p = MatchACEPriority(p);
-
 		// filter by current priority
-		if( 0 == ( ace_p & level_))
+      if (!(p & level_))
 			return;
 
 		std::string workingString;
-		std::string formatPrefix = GetFormatPrefix(ace_p);
+		std::string formatPrefix = GetFormatPrefix(p);
 		//InitializeInCurrentThread();
 		// Start of variable args section
 		va_list argp;
@@ -487,44 +465,15 @@ void FastLogger::ReportLogFailure()throw()
    }
 };
 
-#define CORE_DEBUG_PREFIX_T "%D p:%P t:%t [dbg] "
-#define CORE_LOG_PREFIX_T "%D p:%P t:%t [LOG] "
 #define CORE_DEBUG_PREFIX "%D p:%P t:%t [dbg] "
 #define CORE_LOG_PREFIX "%D p:%P t:%t [LOG] "
 
-const char * FastLogger::GetFormatPrefix(Fast_Log_Priorities p)
+const char * FastLogger::GetFormatPrefix(IMMLogger::priority p)
 {
-   const char * ret = CORE_DEBUG_PREFIX_T;
-   if(MatchACEPriority(timestamp_level_) & p)
-   {
-      if (p== FL_DEBUG) 
-         ret = CORE_DEBUG_PREFIX_T;
-      else
-         ret = CORE_LOG_PREFIX_T;
-   } else
-   {
-      if (p== FL_DEBUG) 
-         ret = CORE_DEBUG_PREFIX;
-      else
-         ret = CORE_LOG_PREFIX;
-   }
-   return ret;
+   if (p == debug)
+      return CORE_DEBUG_PREFIX;
+   return CORE_LOG_PREFIX;
 }
-
-//to support legacy 2-level implementation:
-//returns FL_DEBUG or FL_INFO
-Fast_Log_Priorities FastLogger::MatchACEPriority(IMMLogger::priority p)
-{
-   return p <= debug? FL_DEBUG : FL_INFO; 
-}
-
-/*
-void FastLogger::InitializeInCurrentThread()
-{
-   //msg_ostream (NULL != plogFile_ && plogFile_->is_open()?plogFile_:0, 0);
-   set_flags (fast_log_flags_);
-}
-*/
 
 
 bool FastLogger::Open(const std::string specifiedFile)
