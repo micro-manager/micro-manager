@@ -45,14 +45,6 @@ public:
    };
 
    /**
-   * IsValid
-   * returns bool if the instance of IMMLogger is valid to use
-   * Reentrance from multiple threads is not guarded 
-   * Must not throw exceptions
-   */
-   virtual bool IsValid()throw() = 0;
-
-   /**
    * enum priority
    * This enum type defines the relative priorities of the
    *    messages sent to the log, lowest to highest priority.
@@ -113,7 +105,7 @@ public:
    * Must guaranty safe reentrance
    * Must not throw exceptions
    */
-   virtual IMMLogger::priority SetPriorityLevel(IMMLogger::priority level)throw() = 0;
+   virtual void SetPriorityLevel(IMMLogger::priority level)throw() = 0;
 
    /**
    * EnableLogToStderr
@@ -123,28 +115,6 @@ public:
    * Must not throw exceptions
    */
    virtual bool EnableLogToStderr(bool enable)throw() = 0;
-
-   /**
-   * TimeStamp
-   * Writes a single timeStamp record to the log 
-   * with a specified priority level
-   * Parameter priority - indicates priority level of the time stamp
-   * Must guaranty safe reentrance
-   * Must not throw exceptions
-   */
-   virtual void TimeStamp(IMMLogger::priority level = IMMLogger::info)throw() = 0;
-
-   /**
-   * EnableLogToStderr
-   * Enable or disable timestamp in the log records
-   * Parameter flags defines the set of priorities 
-   *              for which timestamping is enabled 
-   * Returns previous value of the priority flags 
-   *             for which timestamping is enabled
-   * Must guaranty safe reentrance
-   * Must not throw exceptions
-   */
-   virtual IMMLogger::priority  EnableTimeStamp(IMMLogger::priority flags)throw() = 0;
 
    /**
    * Log
@@ -157,17 +127,6 @@ public:
    * Must not throw exceptions
    */
    virtual void Log(IMMLogger::priority p, const char*, ...) throw() = 0;
-   /**
-   * SystemLog
-   * Sends message to the log if current priority level is equal or higher than
-   * priority level of this message
-   * Parameter priority - indicates priority of this message
-   * Parameter format - printf-stile format string
-   * Parameters arg1..argN - values used as specified by the paremeter "format" 
-   * Must guaranty safe reentrance
-   * Must not throw exceptions
-   */
-   virtual void SystemLog(std::string format)throw() = 0;
 
    virtual void LogContents(char**  /*ppContents*/, unsigned long& /*len*/) = 0;
    virtual std::string LogPath(void) = 0;
@@ -190,4 +149,3 @@ public:
 #define CORE_LOG3(FMT, arg1, arg2, arg3)        getLoggerInstance()->Log(IMMLogger::info, FMT, arg1, arg2, arg3)
 #define CORE_LOG4(FMT, arg1, arg2, arg3, arg4)  getLoggerInstance()->Log(IMMLogger::info, FMT, arg1, arg2, arg3, arg4)
 #define CORE_LOG5(FMT, arg1, arg2, arg3, arg4, arg5)  getLoggerInstance()->Log(IMMLogger::info, FMT, arg1, arg2, arg3, arg4, arg5)
-#define CORE_TIMESTAMP                          getLoggerInstance()->TimeStamp()

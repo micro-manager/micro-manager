@@ -119,17 +119,12 @@ public:
    * refere to IMMLogger declaration
    */
    bool Initialize(std::string logFileName, std::string logInstanceName)throw(IMMLogger::runtime_exception);
-   bool IsValid()throw();
    void Shutdown()throw(IMMLogger::runtime_exception);
    bool Reset()throw(IMMLogger::runtime_exception);
    bool Open(const std::string f_a);
-   priority SetPriorityLevel(priority level)throw();
+   void SetPriorityLevel(priority level)throw();
    bool EnableLogToStderr(bool enable)throw();
-   IMMLogger::priority  EnableTimeStamp(IMMLogger::priority flags)throw();
-   void TimeStamp(IMMLogger::priority level = IMMLogger::info)throw();
-	// TODO replace this with boost::format !!!!
    void Log(IMMLogger::priority p, const char*, ...) throw();
-   void SystemLog(std::string format)throw();
 
    // read the current log into memory ( for automated trouble report )
    // since the log file can be extremely large, pass back exactly the buffer that was read

@@ -123,13 +123,6 @@ FastLogger::~FastLogger()
 */
 
 
-
-bool FastLogger::IsValid()throw()
-{
-   return NULL != plogFile_g && plogFile_g->is_open();
-};
-
-
 bool FastLogger::Initialize(std::string logFileName, std::string logInstanceName)throw(IMMLogger::runtime_exception)
 {
    bool bRet =false;
@@ -215,11 +208,8 @@ bool FastLogger::Reset()throw(IMMLogger::runtime_exception)
    return bRet;
 };
 
-IMMLogger::priority FastLogger::SetPriorityLevel(IMMLogger::priority level_flag)throw()
+void FastLogger::SetPriorityLevel(IMMLogger::priority level_flag)throw()
 {
- 
-	//IMMLogger::priority old_level = level_;
-
    unsigned long ACE_Process_priority_mask = 0;
    switch(level_flag)
    {
@@ -239,10 +229,6 @@ IMMLogger::priority FastLogger::SetPriorityLevel(IMMLogger::priority level_flag)
    }
 
    level_ = (priority)ACE_Process_priority_mask;
-
-	
-   return    level_;;
-
 }
 
 bool FastLogger::EnableLogToStderr(bool enable)throw()
@@ -266,28 +252,6 @@ bool FastLogger::EnableLogToStderr(bool enable)throw()
    return bRet;
 };
 
-IMMLogger::priority  FastLogger::EnableTimeStamp(IMMLogger::priority level_flags)throw()
-{
-   priority old_timestamp_level = timestamp_level_;
-   timestamp_level_ = level_flags;
-   return old_timestamp_level;
-};
-
-//
-//Writes a single time stamp record
-void FastLogger::TimeStamp(IMMLogger::priority level)throw()
-{
-   try
-   {
-      //MMThreadGuard guard(logFileLock_g);
-      //InitializeInCurrentThread();
-      Log(level, "%D\n");
-   }
-   catch(...)
-   {
-      ReportLogFailure();
-   }
-};
 
 const int MaxBuf = 32767;
 
@@ -508,25 +472,18 @@ void FastLogger::Log(IMMLogger::priority p, const char* format, ...) throw()
 
 };
 
-void FastLogger::SystemLog(std::string message)throw()
-{
-   MMThreadGuard guard(logFileLock_g);
-   try
-   {
-      std::cerr<<message;
-   }
-   catch(...)
-   {
-      //nothing to do if cerr filed
-   }
-};
-
 void FastLogger::ReportLogFailure()throw()
 {
    if(!failureReported)
    {
       failureReported=true;
-      SystemLog(g_textLogIniFiled);
+
+      MMThreadGuard guard(logFileLock_g);
+      try {
+         std::cerr << g_textLogIniFiled;
+      }
+      catch (...) {
+      }
    }
 };
 
