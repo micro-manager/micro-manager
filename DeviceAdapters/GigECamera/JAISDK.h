@@ -8,3 +8,4 @@
 inline int8_t* str2jai(char* s) { return reinterpret_cast<int8_t*>(s); }
 inline int8_t* cstr2jai(const char* s) { return const_cast<int8_t*>(reinterpret_cast<const int8_t*>(s)); }
 inline const int8_t* cstr2cjai(const char* s) { return reinterpret_cast<const int8_t*>(s); }
+inline const char* cjai2cstr(const int8_t* s) { return reinterpret_cast<const char*>(s); }

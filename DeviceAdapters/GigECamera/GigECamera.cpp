@@ -263,7 +263,8 @@ int CGigECamera::Initialize()
 	LogMessage( "camera open succeeded", false );
 	cameraOpened = true;
 
-   enumerateAllNodesToLog();
+   // EnumerateAllNodesToLog();
+   EnumerateAllFeaturesToLog();
 
 	struct Logger
 	{
@@ -906,7 +907,7 @@ int CGigECamera::ResizeImageBuffer()
 }
 
 
-void CGigECamera::enumerateAllNodesToLog()
+void CGigECamera::EnumerateAllNodesToLog()
 {
 	uint32_t nNodes;
 	J_STATUS_TYPE retval;
@@ -918,7 +919,7 @@ void CGigECamera::enumerateAllNodesToLog()
 	retval = J_Camera_GetNumOfNodes(hCamera, &nNodes);
 	if (retval == J_ST_SUCCESS)
 	{
-		LogMessage( (std::string) "All nodes:" + CDeviceUtils::ConvertToString( (long) nNodes ) + " nodes found" );
+		LogMessage( (std::string) "All nodes:" + CDeviceUtils::ConvertToString( (long) nNodes ) + " nodes found", true );
 
 		// Run through the list of nodes and print out the names
 		for (uint32_t index = 0; index < nNodes; ++index)
@@ -934,14 +935,164 @@ void CGigECamera::enumerateAllNodesToLog()
 				if (retval == J_ST_SUCCESS)
 				{
 					// Print out the name
-					LogMessage( (std::string) "-- (node " + boost::lexical_cast<std::string>( index ) + ") " + sNodeName 
-								+ " access:  " + boost::lexical_cast<std::string>( access ) );
+					LogMessage( (std::string) "(" + boost::lexical_cast<std::string>( index ) + ") node " + sNodeName 
+								+ ": access = " + boost::lexical_cast<std::string>( access ), true );
 				}
 			}
 		}
 
-      LogMessage("End of list of all nodes.");
+      LogMessage( "End of list of all nodes.", true );
 	}
 }
 
 
+void CGigECamera::EnumerateAllFeaturesToLog()
+{
+   LogMessage( "Listing all feature nodes, hierarchically", true );
+   EnumerateAllFeaturesToLog( cstr2jai( J_ROOT_NODE ), 0 );
+   LogMessage( "End of feature node listing", true );
+}
+
+
+void CGigECamera::EnumerateAllFeaturesToLog( int8_t* parentNodeName, int indentCount )
+{
+   // Not all GenICam nodes are controllable features. A typical camera may
+   // have thousands of nodes, and we are usually only interested in the
+   // subset that represent controllable features.
+
+   const std::string indent( indentCount, ' ' );
+
+   uint32_t nSubNodes;
+   J_STATUS_TYPE retval = J_Camera_GetNumOfSubFeatures( hCamera, parentNodeName, &nSubNodes );
+   if ( retval != J_ST_SUCCESS )
+   {
+      LogMessage( indent + "Cannot get number of subnodes under node " + cjai2cstr( parentNodeName ), true );
+      return;
+   }
+
+   LogMessage( indent + "List of feature nodes under node " + cjai2cstr( parentNodeName ) +
+      ": " + boost::lexical_cast<std::string>( nSubNodes ) + " nodes found", true );
+
+   for ( uint32_t index = 0; index < nSubNodes; ++index )
+   {
+      NODE_HANDLE hNode;
+      J_STATUS_TYPE retval = J_Camera_GetSubFeatureByIndex( hCamera, parentNodeName, index, &hNode );
+      if ( retval != J_ST_SUCCESS )
+      {
+         LogMessage( indent + "Cannot get node at index " + boost::lexical_cast<std::string>( index ), true );
+         continue;
+      }
+
+      int8_t nodeName[256];
+      uint32_t size = sizeof( nodeName );
+      retval = J_Node_GetName( hNode, nodeName, &size, 0 );
+      if ( retval != J_ST_SUCCESS )
+      {
+         LogMessage( indent + "Cannot get name of node at index " + boost::lexical_cast<std::string>( index ), true );
+         continue;
+      }
+
+      J_NODE_TYPE nodeType;
+      retval = J_Node_GetType( hNode, &nodeType );
+      if ( retval != J_ST_SUCCESS )
+      {
+         LogMessage( indent + "Cannot get type of node " + cjai2cstr( nodeName ), true );
+         continue;
+      }
+
+      J_NODE_ACCESSMODE accessMode;
+      retval = J_Node_GetAccessMode( hNode, &accessMode );
+      if ( retval != J_ST_SUCCESS )
+      {
+         LogMessage( indent + "Cannot get access mode of node " + cjai2cstr( nodeName ) + " (type = " +
+            StringForNodeType( nodeType ) + ")", true );
+      }
+
+      std::string extraInfo;
+
+      uint32_t nProperties;
+      retval = J_Node_GetNumOfProperties( hNode, &nProperties );
+      if ( retval == J_ST_SUCCESS )
+      {
+         extraInfo += ", n_properties = " + boost::lexical_cast<std::string>( nProperties );
+      }
+
+      uint32_t isSelector;
+      retval = J_Node_GetIsSelector( hNode, &isSelector );
+      if ( retval == J_ST_SUCCESS )
+      {
+         extraInfo += ", is_selector = ";
+         extraInfo += ( isSelector ? "true" : "false" );
+      }
+
+      LogMessage( indent + "(" + boost::lexical_cast<std::string>( index ) + ") node " + cjai2cstr( nodeName ) +
+         ": type = " + StringForNodeType( nodeType ) + ", access mode = " + StringForAccessMode( accessMode ) +
+         extraInfo, true );
+
+      int8_t nodeDesc[1024];
+      size = sizeof( nodeDesc );
+      retval = J_Node_GetDescription( hNode, nodeDesc, &size );
+      if ( retval == J_ST_SUCCESS )
+      {
+         LogMessage( indent + "  Description: " + cjai2cstr( nodeDesc ), true );
+      }
+
+      if ( nodeType == J_ICategory )
+      {
+         EnumerateAllFeaturesToLog( nodeName, indentCount + 2 );
+      }
+   }
+}
+
+
+std::string CGigECamera::StringForNodeType( J_NODE_TYPE nodeType )
+{
+   switch ( nodeType )
+   {
+      case J_UnknowNodeType: return "UnknowNodeType";
+      case J_INode: return "INode";
+      case J_ICategory: return "ICategory";
+      case J_IInteger: return "IInteger";
+      case J_IEnumeration: return "IEnumeration";
+      case J_IEnumEntry: return "IEnumEntry";
+      case J_IMaskedIntReg: return "IMaskedIntReg";
+      case J_IRegister: return "IRegister";
+      case J_IIntReg: return "IIntReg";
+      case J_IFloat: return "IFloat";
+      case J_IFloatReg: return "IFloatReg";
+      case J_ISwissKnife: return "ISwissKnife";
+      case J_IIntSwissKnife: return "IIntSwissKnife";
+      case J_IIntKey: return "IIntKey";
+      case J_ITextDesc: return "ITextDesc";
+      case J_IPort: return "IPort";
+      case J_IConfRom: return "IConfRom";
+      case J_IAdvFeatureLock: return "IAdvFeatureLock";
+      case J_ISmartFeature: return "ISmartFeature";
+      case J_IStringReg: return "IStringReg";
+      case J_IBoolean: return "IBoolean";
+      case J_ICommand: return "ICommand";
+      case J_IConverter: return "IConverter";
+      case J_IIntConverter: return "IIntConverter";
+      case J_IChunkPort: return "IChunkPort";
+      case J_INodeMap: return "INodeMap";
+      case J_INodeMapDyn: return "INodeMapDyn";
+      case J_IDeviceInfo: return "IDeviceInfo";
+      case J_ISelector: return "ISelector";
+      case J_IPortConstruct: return "IPortConstruct";
+      default: return "(Unexpected node type " + boost::lexical_cast<std::string>( nodeType ) + ")";
+   }
+}
+
+
+std::string CGigECamera::StringForAccessMode( J_NODE_ACCESSMODE accessMode )
+{
+   switch ( accessMode )
+   {
+      case NI: return "not implemented";
+      case NA: return "not available";
+      case WO: return "write only";
+      case RO: return "read only";
+      case RW: return "read and write";
+      default: return "(Unexpected access mode " + boost::lexical_cast<std::string>( accessMode ) + ")";
+   }
+}

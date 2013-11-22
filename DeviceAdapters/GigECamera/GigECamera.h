@@ -181,7 +181,11 @@ protected:
 	int ResizeImageBuffer();
 	void UpdateExposureRange();
 
-	void enumerateAllNodesToLog();
+	void EnumerateAllNodesToLog();
+   void EnumerateAllFeaturesToLog();
+   void EnumerateAllFeaturesToLog( int8_t* parentNodeName, int indentCount );
+   std::string StringForNodeType( J_NODE_TYPE nodeType );
+   std::string StringForAccessMode( J_NODE_ACCESSMODE accessMode );
 
 	// members from umanager
 	ImgBuffer img_;
