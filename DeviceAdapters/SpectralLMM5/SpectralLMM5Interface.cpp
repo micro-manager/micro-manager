@@ -73,10 +73,6 @@ int SpectralLMM5Interface::ExecuteCommand(MM::Device& device, MM::Core& core, un
       if (ret != DEVICE_OK)
          return ret;
       
-      std::ostringstream os;
-      os << "LMM5 answered: " << strAnswer << " Port status: " << ret;
-      core.LogMessage(&device, os.str().c_str(), true);
-   
       // 'translate' back into numbers:
       std::string tmp = strAnswer;
       for (unsigned int i=0; i < tmp.length()/2; i++) {
@@ -91,15 +87,6 @@ int SpectralLMM5Interface::ExecuteCommand(MM::Device& device, MM::Core& core, un
       ret = core.ReadFromSerial(&device, port_.c_str(), answer, answerLen, read);
       if (ret != DEVICE_OK)
          return ret;
-
-      /* 
-       // Uncomment for debugging (although port should give the same info)
-      std::ostringstream os;
-      os << "LMM5 answered: " << std::hex << std::setfill('0');
-      for (unsigned int i=0; i < read; i++)
-         os << std::setw(2) << (unsigned int) answer[i] << " ";
-      core.LogMessage(&device, os.str().c_str(), true);
-      */
    }
    return DEVICE_OK;
 }
