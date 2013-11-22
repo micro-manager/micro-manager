@@ -22,6 +22,9 @@
 #include "SpectralLMM5Interface.h"
 #include "SpectralLMM5.h"
 
+#include <sstream>
+#include <iomanip>
+
 #ifdef WIN32
 #include <winsock.h>
 #else
@@ -334,3 +337,31 @@ int SpectralLMM5Interface::GetTriggerOutConfig(MM::Device& device, MM::Core& cor
 }
 
 
+int SpectralLMM5Interface::GetFirmwareVersion(MM::Device& device, MM::Core& core, std::string& version)
+{
+   version.clear();
+
+   const unsigned long bufLen = 1;
+   unsigned char buf[bufLen];
+   buf[0] = 0x14;
+   const unsigned long answerLen = 256;
+   unsigned char answer[answerLen];
+   unsigned long read;
+   int ret = ExecuteCommand(device, core, buf, bufLen, answer, answerLen, read);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   if (answer[0] != 0x14)
+      return ERR_UNEXPECTED_ANSWER;
+
+   // The observed firmware version is a two-byte word. Make it variable-length, just in case.
+   std::ostringstream hex_oss;
+   hex_oss << "0x";
+   for (unsigned long i = 1; i < read; i++) {
+      unsigned char byte = answer[i];
+      hex_oss << std::setfill('0') << std::setw(2) << std::hex << static_cast<unsigned int>(byte);
+   }
+   version = hex_oss.str();
+
+   return DEVICE_OK;
+}

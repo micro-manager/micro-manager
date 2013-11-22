@@ -115,6 +115,15 @@ int LMM5Hub::Initialize()
    if (DEVICE_OK != ret)
       return ret;
 
+   // Firmware version
+   std::string version;
+   ret = g_Interface->GetFirmwareVersion(*this, *GetCoreCallback(), version);
+   if (ret != DEVICE_OK)
+      return ret;
+   ret = CreateStringProperty("Firmware Version", version.c_str(), true);
+   if (ret != DEVICE_OK)
+      return ret;
+
    // Power monitor
    /*
    CPropertyAction* pAct = new CPropertyAction(this, &LMM5Hub::OnPowerMonitor);
