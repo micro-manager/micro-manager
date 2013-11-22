@@ -263,6 +263,8 @@ int CGigECamera::Initialize()
 	LogMessage( "camera open succeeded", false );
 	cameraOpened = true;
 
+   enumerateAllNodesToLog();
+
 	struct Logger
 	{
 		CGigECamera* d;
@@ -937,6 +939,8 @@ void CGigECamera::enumerateAllNodesToLog()
 				}
 			}
 		}
+
+      LogMessage("End of list of all nodes.");
 	}
 }
 
