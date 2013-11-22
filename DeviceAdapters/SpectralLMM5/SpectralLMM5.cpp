@@ -143,27 +143,30 @@ int LMM5Hub::Initialize()
    CreateProperty("ExposureConfig", "", MM::String, false, pAct);
    */
 
-   // Trigger configuration
-   CPropertyAction *pAct = new CPropertyAction(this, &LMM5Hub::OnTriggerOutConfig);
-   CreateProperty("TriggerOutConfig", "", MM::String, false, pAct);
-   std::vector<std::string> triggerConfigs;
-   triggerConfigs.push_back("Enable-State");
-   triggerConfigMap_["Enable-State"] = 256;
-   triggerConfigs.push_back("Enable-Clock");
-   triggerConfigMap_["Enable-Clock"] = 257;
-   triggerConfigs.push_back("Disable-State");
-   triggerConfigMap_["Disable-State"] = 0;
-   triggerConfigs.push_back("Disable-Clock");
-   triggerConfigMap_["Disable-Clock"] = 1;
-   SetAllowedValues("TriggerOutConfig", triggerConfigs);
-
-   // Trigger Exposure Time
-   pAct = new CPropertyAction(this, &LMM5Hub::OnTriggerOutExposureTime);
-   CreateProperty("TriggerExpTime(0.1ms)", "", MM::Integer, false, pAct);
-
+   // Some versions of the firmware, when trigger-out is unavailable, fail to
+   // respond correctly when querying the trigger-out config. Only provide the
+   // trigger-out properties when it appears to be working.
    unsigned char dummy[5];
-   if (DEVICE_OK != g_Interface->GetTriggerOutConfig(*this, *GetCoreCallback(), dummy))
-      g_Interface->setReadWriteSame(true);
+   ret = g_Interface->GetTriggerOutConfig(*this, *GetCoreCallback(), dummy);
+   if (ret == DEVICE_OK) {
+      // Trigger configuration
+      CPropertyAction *pAct = new CPropertyAction(this, &LMM5Hub::OnTriggerOutConfig);
+      CreateProperty("TriggerOutConfig", "", MM::String, false, pAct);
+      std::vector<std::string> triggerConfigs;
+      triggerConfigs.push_back("Enable-State");
+      triggerConfigMap_["Enable-State"] = 256;
+      triggerConfigs.push_back("Enable-Clock");
+      triggerConfigMap_["Enable-Clock"] = 257;
+      triggerConfigs.push_back("Disable-State");
+      triggerConfigMap_["Disable-State"] = 0;
+      triggerConfigs.push_back("Disable-Clock");
+      triggerConfigMap_["Disable-Clock"] = 1;
+      SetAllowedValues("TriggerOutConfig", triggerConfigs);
+
+      // Trigger Exposure Time
+      pAct = new CPropertyAction(this, &LMM5Hub::OnTriggerOutExposureTime);
+      CreateProperty("TriggerExpTime(0.1ms)", "", MM::Integer, false, pAct);
+   }
 
    ret = UpdateStatus();
    if (DEVICE_OK != ret)
