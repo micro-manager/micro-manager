@@ -196,7 +196,6 @@ Cdc1394::Cdc1394() :
 Cdc1394::~Cdc1394()
 {
    Shutdown();
-   delete acqThread_;
 }
 
 
@@ -1174,20 +1173,23 @@ int Cdc1394::InitManualFeatureProperty(const dc1394feature_info_t& featureInfo,
 
 int Cdc1394::Shutdown()
 {
+   if (acqThread_)
+   {
+      LogMessage("Will stop acquisition thread");
+      acqThread_->Stop();
+      delete acqThread_;
+      acqThread_ = 0;
+      LogMessage("Did stop acquisition thread");
+   }
+
    if (camera_)
    {
-      acqThread_->Stop();
-      int err = StopCapture();
-
+      LogMessage("Will release camera");
       dc1394_camera_free(camera_);
       camera_ = 0;
-
-      LogMessage("Shutdown");
-
-      if (err != DEVICE_OK) {
-         return err;
-      }
+      LogMessage("Did release camera");
    }
+
    return DEVICE_OK;
 }
 
