@@ -146,8 +146,11 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
 }
 
 
-boost::weak_ptr<DC1394Context::Singleton> DC1394Context::s_singleton_instance =
-   boost::weak_ptr<DC1394Context::Singleton>();
+boost::weak_ptr<DC1394Context::Singleton> DC1394Context::s_singleton_instance;
+
+#ifdef WIN32
+boost::shared_ptr<DC1394Context::Singleton> DC1394Context::s_retained_singleton;
+#endif
 
 
 ///////////////////////////////////////////////////////////////////////////////

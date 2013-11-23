@@ -21,6 +21,7 @@
 #include <dc1394/control.h>
 #include <string>
 #include <map>
+#include <boost/make_shared.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/weak_ptr.hpp>
 
@@ -75,8 +76,12 @@ public:
 
       singleton_ = s_singleton_instance.lock();
       if (!singleton_) {
-         singleton_ = boost::shared_ptr<Singleton>(new Singleton());
+         singleton_ = boost::make_shared<Singleton>();
          s_singleton_instance = singleton_;
+
+#ifdef WIN32
+         s_retained_singleton = singleton_;
+#endif
       }
    }
 
@@ -93,6 +98,14 @@ private:
    };
 
    static boost::weak_ptr<Singleton> s_singleton_instance;
+
+#ifdef WIN32
+   // On Windows calling dc1394_free() appears to crash, at least in
+   // some cases, so hold on to it while the DLL is loaded (may still
+   // crash upon DLL unload).
+   static boost::shared_ptr<Singleton> s_retained_singleton;
+#endif
+
    boost::shared_ptr<Singleton> singleton_;
 };
 
