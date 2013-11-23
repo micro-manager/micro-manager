@@ -27,6 +27,7 @@ import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.micromanager.MMStudioMainFrame;
@@ -59,8 +60,22 @@ public class LiveModeTimer {
    private LinkedBlockingQueue imageQueue_;
    private static int mCamImageCounter_ = 0;
    private boolean multiCam_ = false;
+   private AtomicBoolean timerLock_;
+   
+   
+   /**
+    * The LivemodeTimer constructor defines a DisplayImageRoutine that 
+    * synchronizes image display with the "paint" function (currently execute
+    * by the ImageCanvas of ImageJ).  
+    * 
+    * The multiCamLiveTask needs extra synchronization at this point.
+    * The multiCamLiveTask generates tagged images in groups of
+    * multiChannelCameraNrCh_, however, we only want to update
+    * the display (which is costly) when we have the whole group.
+    */
    
    public LiveModeTimer() {
+      timerLock_ = new AtomicBoolean(false);
       gui_ = MMStudioMainFrame.getInstance();
       core_ = gui_.getCore();
       format_ = NumberFormat.getInstance();
@@ -69,10 +84,6 @@ public class LiveModeTimer {
       displayImageRoutine_ = new MMStudioMainFrame.DisplayImageRoutine() {
          public void show(final TaggedImage ti) {
             try {
-               // The multiCamLiveTask needs synchronization at this point
-               // The multiCamLiveTask generates tagged images in groups of
-               // multiChannelCameraNrCh_, however, we only want to update
-               // the display (which is costly) when we have the whole group
                if (multiCam_) {
                   mCamImageCounter_++;
                   if (mCamImageCounter_ < multiChannelCameraNrCh_) {
@@ -90,6 +101,7 @@ public class LiveModeTimer {
                   gui_.normalizeTags(ti);
                   gui_.addImage(ACQ_NAME, ti, true, true);
                   gui_.updateLineProfile();
+                  updateFPS();
                }
             } catch (Exception e) {
                ReportingUtils.logError(e);
@@ -169,7 +181,7 @@ public class LiveModeTimer {
          imageNumber_ = timg.tags.getLong("ImageNumber");
          oldImageNumber_ = imageNumber_;
 
-         imageQueue_ = new LinkedBlockingQueue();
+         imageQueue_ = new LinkedBlockingQueue(10);
          timer_.schedule(task_, 0, delay);
          win_.liveModeEnabled(true);
          
@@ -184,16 +196,22 @@ public class LiveModeTimer {
    }
    
    private void stop(boolean firstAttempt) {
-        try {
-           if (imageQueue_ != null)
-               imageQueue_.put(TaggedImageQueue.POISON);
-        } catch (InterruptedException ex) {
-           ReportingUtils.logError(ex);
-        }
+      ReportingUtils.logMessage("Stop called in LivemodeTimer, " + firstAttempt);
+      // Before putting the poison image in the queue, we have to be sure that 
+      // no new images will be inserted after the Poison
+      // doing so results in a very bad state with hanging image processors
       if (timer_ != null) {
          timer_.cancel();
       }
-      
+      // wait for timer to exit
+      while (timerLock_.get()) {
+      }
+      try {
+         if (imageQueue_ != null)
+            imageQueue_.put(TaggedImageQueue.POISON);
+      } catch (InterruptedException ex) {
+           ReportingUtils.logError(ex); 
+      }      
       try {
          if (core_.isSequenceRunning())
             core_.stopSequenceAcquisition();
@@ -276,6 +294,7 @@ public class LiveModeTimer {
                gui_.enableLiveMode(false);
             } else {
                try {
+                  timerLock_.set(true);
                   TaggedImage ti = core_.getLastTaggedImage();
                   // if we have already shown this image, do not do it again.
                   setImageNumber(ti.tags.getLong("ImageNumber"));
@@ -284,6 +303,8 @@ public class LiveModeTimer {
                   ReportingUtils.logMessage("Stopping live mode because of error...");
                   gui_.enableLiveMode(false);
                   ReportingUtils.showError(ex);
+               } finally {
+                  timerLock_.set(false);
                }
             }
          }
@@ -302,6 +323,7 @@ public class LiveModeTimer {
                gui_.enableLiveMode(false);  //disable live if user closed window
             } else {
                try {
+                  timerLock_.set(true);
                   String camera = core_.getCameraDevice();
                   Set<String> cameraChannelsAcquired = new HashSet<String>();
                   for (int i = 0; i < 2 * multiChannelCameraNrCh_; ++i) {
@@ -328,7 +350,8 @@ public class LiveModeTimer {
                   ReportingUtils.logMessage("Stopping live mode because of error...");
                   gui_.enableLiveMode(false);
                   ReportingUtils.showError(exc);
-
+               } finally {
+                  timerLock_.set(false);
                }
             }
          }

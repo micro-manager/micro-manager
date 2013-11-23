@@ -345,7 +345,6 @@ public class VirtualAcquisitionDisplay implements
                   } catch (Exception ex) {
                   }
                   superDraw();
-                  MMStudioMainFrame.getInstance().getLiveModeTimer().updateFPS();
                }
             });
          } catch (Exception e) {
@@ -367,7 +366,6 @@ public class VirtualAcquisitionDisplay implements
       public void draw() {
          imageChangedUpdate(); //updates histograms, metadata panel, calculates LUTS and applies to image
          superDraw();
-         MMStudioMainFrame.getInstance().getLiveModeTimer().updateFPS();
       }
 
       /*
@@ -446,7 +444,6 @@ public class VirtualAcquisitionDisplay implements
          imageChangedUpdate();
          getWindow().getCanvas().setImageUpdated();
          superDraw();
-         MMStudioMainFrame.getInstance().getLiveModeTimer().updateFPS();
       }
 
       @Override
