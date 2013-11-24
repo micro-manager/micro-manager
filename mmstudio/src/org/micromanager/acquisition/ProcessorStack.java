@@ -1,7 +1,22 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
+///////////////////////////////////////////////////////////////////////////////
+//FILE:          ProcessorStack.java
+//PROJECT:       Micro-Manager
+//SUBSYSTEM:     mmstudio
+//-----------------------------------------------------------------------------
+//
+// AUTHOR:       Arthur Edelstein
+// COPYRIGHT:    University of California, San Francisco, 2010
+//
+// LICENSE:      This file is distributed under the BSD license.
+//               License text is included with the source distribution.
+//
+//               This file is distributed in the hope that it will be useful,
+//               but WITHOUT ANY WARRANTY; without even the implied warranty
+//               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+//               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
 package org.micromanager.acquisition;
 
@@ -12,6 +27,11 @@ import org.micromanager.api.DataProcessor;
 import org.micromanager.utils.ReportingUtils;
 
 /**
+ * Sets up a queue of DataProcessors
+ * The static method "run" will chain the given list of DataProcessors to 
+ * inputqueue, and return an output queue.  The net result is that each 
+ * DataProcessor will modify the image and pass it along to the next 
+ * DataProcessor
  *
  * @author arthur
  */

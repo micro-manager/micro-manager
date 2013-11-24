@@ -1,7 +1,23 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
+///////////////////////////////////////////////////////////////////////////////
+//FILE:          MMImageCache.java
+//PROJECT:       Micro-Manager
+//SUBSYSTEM:     mmstudio
+//-----------------------------------------------------------------------------
+//
+// AUTHOR:       Arthur Edelstein
+// COPYRIGHT:    University of California, San Francisco, 2010
+//
+// LICENSE:      This file is distributed under the BSD license.
+//               License text is included with the source distribution.
+//
+//               This file is distributed in the hope that it will be useful,
+//               but WITHOUT ANY WARRANTY; without even the implied warranty
+//               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+//               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+
 package org.micromanager.acquisition;
 
 import ij.CompositeImage;
@@ -29,13 +45,17 @@ import org.micromanager.utils.ProgressBar;
 import org.micromanager.utils.ReportingUtils;
 
 /**
- *
+ * MMImageCache: central repository of Images
+ * Holds pixels and metadata to be used for display or save on disk
+ * 
+ * 
  * @author arthur
  */
 public class MMImageCache implements ImageCache {
 
    public static String menuName_ = null;
-   public final List<ImageCacheListener> imageStorageListeners_ = Collections.synchronizedList(new ArrayList<ImageCacheListener>());
+   public final List<ImageCacheListener> imageStorageListeners_ = 
+           Collections.synchronizedList(new ArrayList<ImageCacheListener>());
    private TaggedImageStorage imageStorage_;
    private Set<String> changingKeys_;
    private JSONObject firstTags_;
@@ -68,6 +88,7 @@ public class MMImageCache implements ImageCache {
 
    }
 
+   /*
    private void preloadImages() {
       new Thread() {
          @Override
@@ -78,6 +99,7 @@ public class MMImageCache implements ImageCache {
          }
       }.start();
    }
+   */
 
 
    public void finished() {
@@ -375,7 +397,7 @@ public class MMImageCache implements ImageCache {
             //expand size
             array.put(channel, new JSONObject(array.getJSONObject(0).toString()));
          }
-         if (array != null && !array.isNull(channel)) {
+         if (!array.isNull(channel)) {
             return array.getJSONObject(channel);
          } else {
             return null;
