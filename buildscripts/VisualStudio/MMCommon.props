@@ -12,6 +12,7 @@
     <ClCompile>
       <WarningLevel>Level4</WarningLevel>
       <DisableSpecificWarnings>4127;4290;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <ExceptionHandling>Sync</ExceptionHandling>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
