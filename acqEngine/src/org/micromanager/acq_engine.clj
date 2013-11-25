@@ -883,7 +883,7 @@
     (let [out-queue (LinkedBlockingQueue. 10)
           acq-thread (Thread. #(binding [state (.state this)]
                                  (run-acquisition settings out-queue cleanup? position-list autofocus-device))
-                              "AcquisitionSequence2010 Thread (Clojure)")]
+                              "AcquisitionEngine2010 Thread (Clojure)")]
       (reset! (.state this)
               {:stop false
                :pause false
