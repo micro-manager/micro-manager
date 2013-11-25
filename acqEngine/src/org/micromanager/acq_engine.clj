@@ -828,7 +828,24 @@
     (map #(. MMAcquisition getMultiCamDefaultChannelColor % (channel-names %))
          (range (count super-channels)))))
 
-(defn make-summary-metadata [settings]
+(defn summarize-position-list [position-list]
+  (let [positions (seq (.getPositions position-list))]
+    (JSONArray.
+      (for [msp positions
+            :let [label (.getLabel msp)
+                  grid-row (.getGridRow msp)
+                  grid-col (.getGridColumn msp)
+                  device-positions (:axes (MultiStagePosition-to-map msp))]]
+        (let [json-positions (JSONObject.
+                               (into {}
+                                     (for [[device coords] device-positions]
+                                       [device (JSONArray. coords)])))]
+          (JSONObject. {"Label" label
+                        "GridRowIndex" grid-row
+                        "GridColumnIndex" grid-col
+                        "CoordinatesUm" json-positions}))))))
+
+(defn make-summary-metadata [settings position-list]
   (let [depth (core getBytesPerPixel)
         channels (:channels settings)
         num-camera-channels (core getNumberOfCameraChannels)
@@ -853,6 +870,7 @@
       "GridColumn" 0
       "GridRow" 0
       "Height" (core getImageHeight)
+      "InitialPositionList" (when (:use-position-list settings) (summarize-position-list position-list))
       "Interval_ms" (:interval-ms settings)
       "CustomIntervals_ms" (JSONArray. (or (:custom-intervals-ms settings) []))
       "IJType" (get-IJ-type depth)
@@ -889,7 +907,7 @@
                :pause false
                :finished false
                :acq-thread acq-thread
-               :summary-metadata (make-summary-metadata settings)})
+               :summary-metadata (make-summary-metadata settings position-list)})
       (def outq out-queue) ; for debugging
       (when-not (:stop @(.state this))
         (.start acq-thread)
