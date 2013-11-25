@@ -843,7 +843,7 @@
           (JSONObject. {"Label" label
                         "GridRowIndex" grid-row
                         "GridColumnIndex" grid-col
-                        "CoordinatesUm" json-positions}))))))
+                        "DeviceCoordinatesUm" json-positions}))))))
 
 (defn make-summary-metadata [settings position-list]
   (let [depth (core getBytesPerPixel)
