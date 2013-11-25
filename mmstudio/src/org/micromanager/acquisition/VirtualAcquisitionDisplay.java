@@ -144,26 +144,30 @@ public class VirtualAcquisitionDisplay implements
    private boolean albumSaved_ = false;
    private static double snapWinMag_ = -1;
    private JPopupMenu saveTypePopup_;
-   private int simpleWinImagesReceived_ = 0;
    private AtomicBoolean updatePixelSize_ = new AtomicBoolean(false);
    private AtomicLong newPixelSize_ = new AtomicLong();
    private final Object imageReceivedObject_ = new Object();
 
+   @Override
    public void propertiesChangedAlert() {
       //throw new UnsupportedOperationException("Not supported yet.");
    }
 
+   @Override
    public void propertyChangedAlert(String device, String property, String value) {
       //throw new UnsupportedOperationException("Not supported yet.");
    }
    
+   @Override
    public void systemConfigurationLoaded() {
    }
 
+   @Override
    public void configGroupChangedAlert(String groupName, String newConfig) {
       //throw new UnsupportedOperationException("Not supported yet.");
    }
 
+   @Override
    public void pixelSizeChangedAlert(double newPixelSizeUm) {    
       // Signal that pixel size has changed so that the next image will update
       // metadata and scale bar
@@ -171,14 +175,17 @@ public class VirtualAcquisitionDisplay implements
       updatePixelSize_.set(true);
    }
 
+   @Override
    public void stagePositionChangedAlert(String deviceName, double pos) {
       //throw new UnsupportedOperationException("Not supported yet.");
    }
 
+   @Override
    public void xyStagePositionChanged(String deviceName, double xPos, double yPos) {
       //throw new UnsupportedOperationException("Not supported yet.");
    }
 
+   @Override
    public void exposureChanged(String cameraName, double newExposureTime) {
       //throw new UnsupportedOperationException("Not supported yet.");
    }
@@ -342,12 +349,17 @@ public class VirtualAcquisitionDisplay implements
                public void run() {
                   try {
                      JavaUtils.invokeRestrictedMethod(this, ImagePlus.class, "notifyListeners", 2);
-                  } catch (Exception ex) {
+                  } catch (NoSuchMethodException ex) {
+                  } catch (IllegalAccessException ex) {
+                  } catch (IllegalArgumentException ex) {
+                  } catch (InvocationTargetException ex) {
                   }
                   superDraw();
                }
             });
-         } catch (Exception e) {
+         } catch (InterruptedException e) {
+            ReportingUtils.logError(e);
+         } catch (InvocationTargetException e) {
             ReportingUtils.logError(e);
          }
       }
@@ -467,6 +479,7 @@ public class VirtualAcquisitionDisplay implements
    }
 
    //used for snap and live
+   @SuppressWarnings("LeakingThisInConstructor")
    public VirtualAcquisitionDisplay(ImageCache imageCache, String name) throws MMScriptException {
       simple_ = true;
       imageCache_ = imageCache;
@@ -488,26 +501,30 @@ public class VirtualAcquisitionDisplay implements
       int height = 0;
       int numComponents = 1;
       try {
+         int imageChannelIndex;
          if (firstImageMetadata != null) {
             width = MDUtils.getWidth(firstImageMetadata);
             height = MDUtils.getHeight(firstImageMetadata);
+            try {
+               imageChannelIndex = MDUtils.getChannelIndex(firstImageMetadata);
+            } catch (JSONException e) {
+               imageChannelIndex = -1;
+            }
          } else {
             width = MDUtils.getWidth(summaryMetadata);
             height = MDUtils.getHeight(summaryMetadata);
+            imageChannelIndex = -1;
          }
          numSlices = Math.max(summaryMetadata.getInt("Slices"), 1);
          numFrames = Math.max(summaryMetadata.getInt("Frames"), 1);
-         int imageChannelIndex;
-         try {
-            imageChannelIndex = MDUtils.getChannelIndex(firstImageMetadata);
-         } catch (Exception e) {
-            imageChannelIndex = -1;
-         }
+
          numChannels = Math.max(1 + imageChannelIndex,
                  Math.max(summaryMetadata.getInt("Channels"), 1));
          numPositions = Math.max(summaryMetadata.getInt("Positions"), 1);
          numComponents = Math.max(MDUtils.getNumberOfComponents(summaryMetadata), 1);
-      } catch (Exception e) {
+      } catch (JSONException e) {
+         ReportingUtils.showError(e);
+      } catch (MMScriptException e) {
          ReportingUtils.showError(e);
       }
       numComponents_ = numComponents;
@@ -524,7 +541,9 @@ public class VirtualAcquisitionDisplay implements
          } else {
             type = MDUtils.getSingleChannelType(summaryMetadata);
          }
-      } catch (Exception ex) {
+      } catch (JSONException ex) {
+         ReportingUtils.showError(ex, "Unable to determine acquisition type.");
+      } catch (MMScriptException ex) {
          ReportingUtils.showError(ex, "Unable to determine acquisition type.");
       }
       virtualStack_ = new AcquisitionVirtualStack(width, height, type, null,
@@ -532,7 +551,7 @@ public class VirtualAcquisitionDisplay implements
       if (summaryMetadata.has("PositionIndex")) {
          try {
             virtualStack_.setPositionIndex(MDUtils.getPositionIndex(summaryMetadata));
-         } catch (Exception ex) {
+         } catch (JSONException ex) {
             ReportingUtils.logError(ex);
          }
       }
@@ -626,7 +645,9 @@ public class VirtualAcquisitionDisplay implements
 
       try {
          GUIUtils.invokeAndWait(forcePaint);
-      } catch (Exception ex) {
+      } catch (InterruptedException ex) {
+         ReportingUtils.logError(ex);
+      } catch (InvocationTargetException ex) {
          ReportingUtils.logError(ex);
       }
    }
@@ -725,12 +746,17 @@ public class VirtualAcquisitionDisplay implements
    private void configureAnimationControls() {
       if (zAnimationIcon_ != null) {
          zAnimationIcon_.addMouseListener(new MouseListener() {
+            @Override
             public void mousePressed(MouseEvent e) {
                animateSlices(!zAnimated_);
             }
+            @Override
             public void mouseClicked(MouseEvent e) {}
+            @Override
             public void mouseReleased(MouseEvent e) {}
+            @Override
             public void mouseEntered(MouseEvent e) {}
+            @Override
             public void mouseExited(MouseEvent e) {}
          });
       }
@@ -741,9 +767,13 @@ public class VirtualAcquisitionDisplay implements
             public void mousePressed(MouseEvent e) {
                animateFrames(!tAnimated_);
             }
+            @Override
             public void mouseClicked(MouseEvent e) {}
+            @Override
             public void mouseReleased(MouseEvent e) {}
+            @Override
             public void mouseEntered(MouseEvent e) {}
+            @Override
             public void mouseExited(MouseEvent e) {}
          });
       }
@@ -924,6 +954,7 @@ public class VirtualAcquisitionDisplay implements
       
       icon.addMouseListener(new MouseListener() {
 
+         @Override
          public void mouseClicked(MouseEvent e) {
             if (label.equals("p")) {
                if (lockedPosition_ == -1) {
@@ -956,9 +987,13 @@ public class VirtualAcquisitionDisplay implements
             resumeLocksAndAnimationAfterImageArrival();
             refreshScrollbarIcons();
          }
+         @Override
          public void mousePressed(MouseEvent e) {}
-         public void mouseReleased(MouseEvent e) { }
+         @Override
+         public void mouseReleased(MouseEvent e) {}
+         @Override
          public void mouseEntered(MouseEvent e) {}
+         @Override
          public void mouseExited(MouseEvent e) {}  
       }); 
    }
@@ -1033,7 +1068,8 @@ public class VirtualAcquisitionDisplay implements
    }
 
    /**
-    * Method required by ImageCacheListener
+    * required by ImageCacheListener
+    * @param taggedImage 
     */
    @Override
    public synchronized void imageReceived(final TaggedImage taggedImage) {
@@ -1048,6 +1084,7 @@ public class VirtualAcquisitionDisplay implements
 
    /**
     * Method required by ImageCacheListener
+    * @param path
     */
    @Override
    public void imagingFinished(String path) {
@@ -1099,7 +1136,11 @@ public class VirtualAcquisitionDisplay implements
             lastPositionShown_ = position;
             lastDisplayTime_ = t;
          }  
-      } catch (Exception e) {
+      } catch (JSONException e) {
+         ReportingUtils.logError(e);
+      } catch (InterruptedException e) {
+         ReportingUtils.logError(e);
+      } catch (InvocationTargetException e) {
          ReportingUtils.logError(e);
       }
    }
@@ -1110,7 +1151,10 @@ public class VirtualAcquisitionDisplay implements
             return channelIndex * 3;
          }
          return channelIndex;
-      } catch (Exception ex) {
+      } catch (MMScriptException ex) {
+         ReportingUtils.logError(ex);
+         return 0;
+      } catch (JSONException ex) {
          ReportingUtils.logError(ex);
          return 0;
       }
@@ -1125,7 +1169,10 @@ public class VirtualAcquisitionDisplay implements
             }
          }
          return grayIndex;
-      } catch (Exception ex) {
+      } catch (MMScriptException ex) {
+         ReportingUtils.logError(ex);
+         return 0;
+      } catch (JSONException ex) {
          ReportingUtils.logError(ex);
          return 0;
       }
@@ -1165,7 +1212,7 @@ public class VirtualAcquisitionDisplay implements
             int rgbChannelBitDepth;
             try {
                rgbChannelBitDepth = MDUtils.getBitDepth(summaryMetadata);
-            } catch (Exception e) {
+            } catch (JSONException e) {
                 rgbChannelBitDepth = summaryMetadata.getString("PixelType").endsWith("32") ? 8 : 16;
             }
             for (int k = 0; k < 3; k++) {
@@ -1211,7 +1258,10 @@ public class VirtualAcquisitionDisplay implements
          comments.put("Summary", summary);
          displaySettings.put("Comments", comments);
          return displaySettings;
-      } catch (Exception e) {
+      } catch (JSONException e) {
+         ReportingUtils.showError("Summary metadata not found or corrupt.  Is this a Micro-Manager dataset?");
+         return null;
+      } catch (MMScriptException e) {
          ReportingUtils.showError("Summary metadata not found or corrupt.  Is this a Micro-Manager dataset?");
          return null;
       }
@@ -1366,8 +1416,10 @@ public class VirtualAcquisitionDisplay implements
     * Displays tagged image in the multi-D viewer
     * Optionally waits for the display to draw the image
     *     * 
-    * @param taggedImg
-    * @throws Exception 
+    * @param taggedImg 
+    * @param waitForDisplay 
+    * @throws java.lang.InterruptedException 
+    * @throws java.lang.reflect.InvocationTargetException 
     */
    public void showImage(TaggedImage taggedImg, boolean waitForDisplay) throws InterruptedException, InvocationTargetException {
       showImage(taggedImg.tags, waitForDisplay);
@@ -1375,6 +1427,7 @@ public class VirtualAcquisitionDisplay implements
    
    public void showImage(final JSONObject tags, boolean waitForDisplay) throws InterruptedException, InvocationTargetException {
       SwingUtilities.invokeLater( new Runnable() {
+         @Override
          public void run() {
 
             updateWindowTitleAndStatus();
@@ -1396,7 +1449,7 @@ public class VirtualAcquisitionDisplay implements
                position = MDUtils.getPositionIndex(tags);
                superChannel = VirtualAcquisitionDisplay.this.rgbToGrayChannel(
                        MDUtils.getChannelIndex(tags));
-            } catch (Exception ex) {
+            } catch (JSONException ex) {
                ReportingUtils.logError(ex);
             }
 
@@ -1751,7 +1804,19 @@ public class VirtualAcquisitionDisplay implements
          }
 
          imageCache_.saveAs(newFileManager, pointToNewStorage);
-      } catch (Exception ex) {
+      } catch (IllegalAccessException ex) {
+         ReportingUtils.showError(ex, "Failed to save file");
+      } catch (IllegalArgumentException ex) {
+         ReportingUtils.showError(ex, "Failed to save file");
+      } catch (InstantiationException ex) {
+         ReportingUtils.showError(ex, "Failed to save file");
+      } catch (NoSuchMethodException ex) {
+         ReportingUtils.showError(ex, "Failed to save file");
+      } catch (SecurityException ex) {
+         ReportingUtils.showError(ex, "Failed to save file");
+      } catch (InvocationTargetException ex) {
+         ReportingUtils.showError(ex, "Failed to save file");
+      } catch (JSONException ex) {
          ReportingUtils.showError(ex, "Failed to save file");
       }
       MMStudioMainFrame.getInstance().setAcqDirectory(root);
@@ -1946,7 +2011,7 @@ public class VirtualAcquisitionDisplay implements
    public void setComment(String comment) throws MMScriptException {
       try {
          getSummaryMetadata().put("Comment", comment);
-      } catch (Exception ex) {
+      } catch (JSONException ex) {
          ReportingUtils.logError(ex);
       }
    }
@@ -2068,7 +2133,9 @@ public class VirtualAcquisitionDisplay implements
                   startup(null);
                }
             });
-         } catch (Exception ex) {
+         } catch (InterruptedException ex) {
+            ReportingUtils.logError(ex);
+         } catch (InvocationTargetException ex) {
             ReportingUtils.logError(ex);
          }
 
@@ -2152,9 +2219,7 @@ public class VirtualAcquisitionDisplay implements
    public boolean isActiveDisplay() {
       if (hyperImage_ == null || hyperImage_.getWindow() == null)
            return false;
-       if (hyperImage_.getWindow() == mdPanel_.getCurrentWindow()  )
-           return true;
-       return false;
+       return hyperImage_.getWindow() == mdPanel_.getCurrentWindow();
    }
 
    /*
@@ -2283,7 +2348,7 @@ public class VirtualAcquisitionDisplay implements
                if (gui.getAcquisition(name).getAcquisitionWindow() == VirtualAcquisitionDisplay.this) {
                   gui.closeAcquisition(name);
                }
-            } catch (Exception ex) {
+            } catch (MMScriptException ex) {
                ReportingUtils.logError(ex);
             }
          }
