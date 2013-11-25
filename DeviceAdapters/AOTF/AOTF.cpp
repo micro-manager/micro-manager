@@ -78,7 +78,7 @@ void _stdcall Out32(short PortAddress, short data);
 
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(g_DeviceNameAOTFSwitch, "TLL digital out AOTF wavelength selector");
+   AddAvailableDeviceName(g_DeviceNameAOTFSwitch, "TTL digital out AOTF wavelength selector");
    AddAvailableDeviceName(g_DeviceNameAOTFShutter, "TTL digital out AOTF shutter");
 }
 
