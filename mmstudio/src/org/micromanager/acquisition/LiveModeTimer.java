@@ -32,6 +32,7 @@ import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.utils.CanvasPaintPending;
+import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ReportingUtils;
 
 /**
@@ -56,7 +57,7 @@ public class LiveModeTimer {
    private boolean running_ = false;
    private Timer timer_;
    private TimerTask task_;
-   private MMStudioMainFrame.DisplayImageRoutine displayImageRoutine_;
+   private final MMStudioMainFrame.DisplayImageRoutine displayImageRoutine_;
    private LinkedBlockingQueue imageQueue_;
    private static int mCamImageCounter_ = 0;
    private boolean multiCam_ = false;
@@ -82,6 +83,7 @@ public class LiveModeTimer {
       format_.setMaximumFractionDigits(0x1);
       mCamImageCounter_ = 0;
       displayImageRoutine_ = new MMStudioMainFrame.DisplayImageRoutine() {
+         @Override
          public void show(final TaggedImage ti) {
             try {
                if (multiCam_) {
@@ -103,7 +105,7 @@ public class LiveModeTimer {
                   gui_.updateLineProfile();
                   updateFPS();
                }
-            } catch (Exception e) {
+            } catch (MMScriptException e) {
                ReportingUtils.logError(e);
             }
          }
@@ -146,6 +148,7 @@ public class LiveModeTimer {
       return running_;
    }
 
+   @SuppressWarnings("SleepWhileInLoop")
    public void begin() throws Exception {
          if(running_) {
             return;
