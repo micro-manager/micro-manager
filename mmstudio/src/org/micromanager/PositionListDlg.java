@@ -72,6 +72,7 @@ import org.micromanager.api.StagePosition;
 import org.micromanager.utils.FileDialogs;
 import org.micromanager.utils.FileDialogs.FileType;
 import org.micromanager.utils.GUIUtils;
+import org.micromanager.utils.MMException;
 import org.micromanager.utils.ReportingUtils;
 
 
@@ -79,11 +80,12 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
    private static final long serialVersionUID = 1L;
    private String posListDir_;
    private File curFile_;
-   @SuppressWarnings("unused")
+   private static final String POS = "pos";
+   // @SuppressWarnings("unused")
    private static FileType POSITION_LIST_FILE =
            new FileType("POSITION_LIST_FILE","Position list file",
                         System.getProperty("user.home") + "/PositionList.pos",
-                        true,"pos");
+                        true, POS);
 
    private JTable posTable_;
    private JTable axisTable_;
@@ -116,9 +118,11 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
          return posList_;
       }
 
+      @Override
       public int getRowCount() {
          return posList_.getNumberOfPositions() + 1;
       }
+      @Override
       public int getColumnCount() {
          return COLUMN_NAMES.length;
       }
@@ -126,42 +130,51 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       public String getColumnName(int columnIndex) {
          return COLUMN_NAMES[columnIndex];
       }
+      @Override
       public Object getValueAt(int rowIndex, int columnIndex) {
          MultiStagePosition msp;
-         if (rowIndex == 0)
+         if (rowIndex == 0) {
             msp = curMsp_;
-         else
+         }
+         else {
             msp = posList_.getPosition(rowIndex -1);
+         }
          if (columnIndex == 0) {
-            if (rowIndex == 0)
+            if (rowIndex == 0) {
                return ("Current");
+            }
             return msp.getLabel();
          } else if (columnIndex == 1) {
             StringBuilder sb = new StringBuilder();
             for (int i=0; i<msp.size(); i++) {
                StagePosition sp = msp.get(i);
-               if (i!=0)
+               if (i!=0) {
                   sb.append(";");
+               }
                sb.append(sp.getVerbose());
             }
             return sb.toString();
-         } else
+         } else {
             return null;
+         }
       }
       @Override
       public boolean isCellEditable(int rowIndex, int columnIndex) {
-         if (rowIndex == 0)
+         if (rowIndex == 0) {
             return false;
-         if (columnIndex == 0)
+         }
+         if (columnIndex == 0) {
             return true;
+         }
          return false;
       }
       @Override
       public void setValueAt(Object value, int rowIndex, int columnIndex) {
          if (columnIndex == 0) {
             MultiStagePosition msp = posList_.getPosition(rowIndex - 1);
-            if (msp != null)
+            if (msp != null) {
                msp.setLabel(((String) value).replaceAll("[^0-9a-zA-Z_]", "-"));
+            }
          }
       }
    }
@@ -202,8 +215,9 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
          }
       }
       public AxisData get(int i) {
-         if (i >=0 && i < axisList_.size())
+         if (i >=0 && i < axisList_.size()) {
             return ((AxisData) axisList_.get(i));
+         }
          return null;
       }
       public int getNumberOfPositions() {
@@ -211,8 +225,9 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       }
       public boolean use(String axisName) {
          for (int i=0; i< axisList_.size(); i++) {
-            if (axisName.equals(get(i).getAxisName()))
-                  return get(i).getUse();
+            if (axisName.equals(get(i).getAxisName())) {
+               return get(i).getUse();
+            }
          }
          // not in the list??  It might be time to refresh the list.  
          return true;
@@ -230,9 +245,11 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
             "Axis"
       };
       
+      @Override
       public int getRowCount() {
          return axisList_.getNumberOfPositions();
       }
+      @Override
       public int getColumnCount() {
          return COLUMN_NAMES.length;
       }
@@ -240,6 +257,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       public String getColumnName(int columnIndex) {
          return COLUMN_NAMES[columnIndex];
       }
+      @Override
       public Object getValueAt(int rowIndex, int columnIndex) {
          AxisData aD = axisList_.get(rowIndex);
          if (aD != null) {
@@ -257,8 +275,9 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       }
       @Override
       public boolean isCellEditable(int rowIndex, int columnIndex) {
-         if (columnIndex == 0)
+         if (columnIndex == 0) {
             return true;
+         }
          return false;
       }
       @Override
@@ -283,6 +302,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
           setOpaque(true);
        }
 
+      @Override
        public Component getTableCellRendererComponent(
                             JTable table, Object text,
                             boolean isSelected, boolean hasFocus,
@@ -339,8 +359,9 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
 
       @Override
       public TableCellRenderer getCellRenderer(int row, int column) {
-            if (row == 0)
-               return firstRowRenderer;
+            if (row == 0) {
+            return firstRowRenderer;
+         }
             return super.getCellRenderer(row, column);
          }
       };
@@ -375,6 +396,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       markButton.setFont(new Font("Arial", Font.PLAIN, 10));
       markButton.setMaximumSize(new Dimension(0,0));
       markButton.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent arg0) {
             markPosition();
             posTable_.clearSelection();
@@ -418,6 +440,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       final JButton upButton = new JButton();
       upButton.setFont(new Font("Arial", Font.PLAIN, 10));
       upButton.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent arg0) {
             incrementOrderOfSelectedPosition(-1);
          }
@@ -436,6 +459,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       final JButton downButton = new JButton();
       downButton.setFont(new Font("Arial", Font.PLAIN, 10));
       downButton.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent arg0) {
             incrementOrderOfSelectedPosition(1);
          }
@@ -457,6 +481,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       final JButton gotoButton = new JButton();
       gotoButton.setFont(new Font("Arial", Font.PLAIN, 10));
       gotoButton.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent arg0) {
             goToCurrentPosition();
          }
@@ -473,6 +498,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       final JButton refreshButton = new JButton();
       refreshButton.setFont(new Font("Arial", Font.PLAIN, 10));
       refreshButton.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent arg0) {
             refreshCurrentPosition();
          }
@@ -490,6 +516,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       final JButton removeButton = new JButton();
       removeButton.setFont(new Font("Arial", Font.PLAIN, 10));
       removeButton.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent arg0) {
             removeCurrentPosition();
          }
@@ -507,6 +534,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       final JButton setOriginButton = new JButton();
       setOriginButton.setFont(new Font("Arial", Font.PLAIN, 10));
       setOriginButton.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent arg0) {
             calibrate(); //setOrigin();
          }
@@ -529,10 +557,12 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       final JButton removeAllButton = new JButton();
       removeAllButton.setFont(new Font("Arial", Font.PLAIN, 10));
       removeAllButton.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent arg0) {
             int ret = JOptionPane.showConfirmDialog(null, "Are you sure you want to erase\nall positions from the position list?", "Clear all positions?", JOptionPane.YES_NO_OPTION);
-            if (ret == JOptionPane.YES_OPTION)
+            if (ret == JOptionPane.YES_OPTION) {
                clearAllPositions();
+            }
          }
       });
       removeAllButton.setIcon(SwingResourceManager.getIcon(PositionListDlg.class, "icons/delete.png"));
@@ -549,6 +579,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       final JButton closeButton = new JButton();
       closeButton.setFont(new Font("Arial", Font.PLAIN, 10));
       closeButton.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent arg0) {
             dispose();
          }
@@ -564,6 +595,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       final JButton tileButton = new JButton();
       tileButton.setFont(new Font("Arial", Font.PLAIN, 10));
       tileButton.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent arg0) {
             showCreateTileDlg();
          }
@@ -580,6 +612,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       final JButton saveAsButton = new JButton();
       saveAsButton.setFont(new Font("Arial", Font.PLAIN, 10));
       saveAsButton.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent arg0) {
             savePositionListAs();
          }
@@ -617,6 +650,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
     public void stateChanged(ChangeEvent e) {
         try {
             GUIUtils.invokeLater(new Runnable() {
+               @Override
                 public void run() {
                     posTable_.revalidate();
                     axisTable_.revalidate();
@@ -658,10 +692,20 @@ public void addPosition(MultiStagePosition msp, String label) {
       File f = FileDialogs.save(this, "Save the position list", POSITION_LIST_FILE);
       if (f != null) {
          curFile_ = f;
+         
+         String fileName = curFile_.getAbsolutePath();
+         int i = fileName.lastIndexOf('.');
+         int j = fileName.lastIndexOf(File.separatorChar);
+         if (i <= 0 || i < j) {
+            i = fileName.length();
+         }
+         fileName = fileName.substring(0, i);
+         fileName += "." + POS;
+
          try {
-            getPositionList().save(curFile_.getAbsolutePath());
+            getPositionList().save(fileName);
             posListDir_ = curFile_.getParent();
-         } catch (Exception e) {
+         } catch (MMException e) {
             handleError(e);
             return false;
          }
@@ -678,7 +722,7 @@ public void addPosition(MultiStagePosition msp, String label) {
          try {
             getPositionList().load(curFile_.getAbsolutePath());
             posListDir_ = curFile_.getParent();
-         } catch (Exception e) {
+         } catch (MMException e) {
             handleError(e);
          } finally {
             updatePositionData();            
@@ -816,15 +860,18 @@ public void addPosition(MultiStagePosition msp, String label) {
          text_.addFocusListener(this);
       }
 
+      @Override
       public void focusLost(FocusEvent e) {
          fireEditingStopped();
       }
 
+      @Override
       public void focusGained(FocusEvent e) {
  
       }
 
       // This method is called when a cell value is edited by the user.
+      @Override
       public Component getTableCellEditorComponent(JTable table, Object value,
             boolean isSelected, int rowIndex, int colIndex) {
 
