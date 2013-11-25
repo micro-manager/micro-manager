@@ -456,6 +456,7 @@ AC_CONFIG_FILES(
 	[XCiteLed/Makefile:XCiteLed/Makefile.in:MMDEVAPI.rules]
 	[Xcite/Makefile:Xcite/Makefile.in:MMDEVAPI.rules]
 	[Yokogawa/Makefile:Yokogawa/Makefile.in:MMDEVAPI.rules]
+	[Zaber/Makefile:Zaber/Makefile.in:MMDEVAPI.rules]
 	[ZeissCAN/Makefile:ZeissCAN/Makefile.in:MMDEVAPI.rules]
 	[ZeissCAN29/Makefile:ZeissCAN29/Makefile.in:MMDEVAPI.rules]
 	[dc1394/Makefile:dc1394/Makefile.in:MMDEVAPI.rules]
