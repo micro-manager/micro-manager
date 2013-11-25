@@ -62,11 +62,14 @@ public class UIMonitor {
 
    private static String getReleaseAction(Component component) {
       if (component instanceof JList) {
-         final JList list = (JList) component;
-         return "set to " + "\"" + list.getSelectedValue().toString() + "\"";
-      } else {
-         return null;
+         try {
+            final JList list = (JList) component;
+            return "set to " + "\"" + list.getSelectedValue().toString() + "\"";
+         } catch (NullPointerException npe) {
+            ReportingUtils.logError("NullPOinterException in UIMonitor-getReleaseAction");
+         }
       }
+      return null;
    }
    
 
@@ -81,16 +84,20 @@ public class UIMonitor {
          if (source instanceof Component) {
             Component component = (Component) source;
             if (component.isEnabled()) {
-               String text = getComponentName(component);
-               if (text != null && !text.isEmpty()) {
-                  text = "\"" + text + "\" ";
-               }
-               identifier = source.getClass().getSimpleName() + " " + text;
-               if (eventID == MouseEvent.MOUSE_CLICKED) {
-                  action = getClickAction(component);
-               }
-               if (eventID == MouseEvent.MOUSE_RELEASED) {
-                  action = getReleaseAction(component);
+               try {
+                  String text = getComponentName(component);
+                  if (text != null && !text.isEmpty()) {
+                     text = "\"" + text + "\" ";
+                  }
+                  identifier = source.getClass().getSimpleName() + " " + text;
+                  if (eventID == MouseEvent.MOUSE_CLICKED) {
+                     action = getClickAction(component);
+                  }
+                  if (eventID == MouseEvent.MOUSE_RELEASED) {
+                     action = getReleaseAction(component);
+                  }
+               } catch (NullPointerException npe) {
+                  ReportingUtils.logError("Null pointer Exception in UIMonitor-handleAWTEvent");
                }
             }
             if (identifier != null && action != null) {
