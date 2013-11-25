@@ -738,7 +738,7 @@
 
 (defn run-acquisition [settings out-queue cleanup? position-list autofocus-device]
     (try
-      (def acq-settings settings)
+      (def acq-settings settings) ; for debugging
       (log "Starting MD Acquisition: " settings)
       (when gui
         (doto gui
@@ -747,7 +747,7 @@
       (prepare-state state (when (:use-position-list settings) position-list) autofocus-device)
       (def last-state state) ; for debugging
       (let [acq-seq (generate-acq-sequence settings @attached-runnables)]
-        (def acq-sequence acq-seq)
+        (def acq-sequence acq-seq) ; for debugging
         (execute (mapcat #(make-event-fns % out-queue) acq-seq)))
       (catch Throwable t
              (def acq-error t)
@@ -878,9 +878,9 @@
 
 (defn run [this settings cleanup? position-list autofocus-device]
   (def last-acq this)
-  (def last-state (.state this))
+  (def last-state (.state this)) ; for debugging
     (reset! (.state this) {:stop false :pause false :finished false})
-    (let [out-queue (LinkedBlockingQueue. 10)
+    (let [out-queue (LinkedBlockingQueue. 10) ; Q: Why 10?
           acq-thread (Thread. #(binding [state (.state this)]
                                  (run-acquisition settings out-queue cleanup? position-list autofocus-device))
                               "AcquisitionEngine2010 Thread (Clojure)")]
@@ -890,7 +890,7 @@
                :finished false
                :acq-thread acq-thread
                :summary-metadata (make-summary-metadata settings)})
-      (def outq out-queue)
+      (def outq out-queue) ; for debugging
       (when-not (:stop @(.state this))
         (.start acq-thread)
         out-queue)))
