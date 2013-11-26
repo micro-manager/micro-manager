@@ -188,6 +188,8 @@ const char* const g_JoystickMirrorXPropertyName = "JoystickReverseX";
 const char* const g_JoystickMirrorYPropertyName = "JoystickReverseY";
 const char* const g_JoystickSelectXPropertyName = "JoystickInputX";
 const char* const g_JoystickSelectYPropertyName = "JoystickInputY";
+const char* const g_AdvancedSAPropertiesXPropertyName = "SingleAxisAdvancedXPropertiesEnable";
+const char* const g_AdvancedSAPropertiesYPropertyName = "SingleAxisAdvancedYPropertiesEnable";
 const char* const g_MMirrorSAAmplitudeXPropertyName = "SingleAxisXAmplitude(deg)";
 const char* const g_MMirrorSAPeriodXPropertyName = "SingleAxisXPeriod(ms)";
 const char* const g_MMirrorSAModeXPropertyName = "SingleAxisXMode";
@@ -209,8 +211,9 @@ const char* const g_MMirrorSAPatternModeYPropertyName = "SingleAxisYPatternByte"
 const char* const g_MMirrorModePropertyName = "InputMode";
 const char* const g_MMirrorCutoffFilterXPropertyName = "FilterCutoffFreqX(kHz)";
 const char* const g_MMirrorCutoffFilterYPropertyName = "FilterCutoffFreqY(kHz)";
-const char* const g_MMirrorScaleTiltXPropertyName = "TiltScaleX(0..1)";
-const char* const g_MMirrorScaleTiltYPropertyName = "TiltScaleY(0..1)";
+const char* const g_MMirrorAttenuateXPropertyName = "AttenuateX(0..1)";
+const char* const g_MMirrorAttenuateYPropertyName = "AttenuateY(0..1)";
+const char* const g_MMirrorBeamEnabledPropertyName = "BeamEnabled";
 
 // pizeo property names
 const char* const g_CardVoltagePropertyName = "CardVoltage(V)"; // also used for micromirror

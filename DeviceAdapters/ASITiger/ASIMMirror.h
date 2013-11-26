@@ -75,31 +75,35 @@ public:
    int OnMode                 (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnCutoffFreqX          (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnCutoffFreqY          (MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnScaleTiltX           (MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnScaleTiltY           (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnAttenuateTravelX     (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnAttenuateTravelY     (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnJoystickFastSpeed    (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnJoystickSlowSpeed    (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnJoystickMirror       (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnJoystickSelectX      (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnJoystickSelectY      (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnBeamEnabled          (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSAAmplitudeX         (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSAPeriodX            (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSAModeX              (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSAPatternX           (MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnSAClkSrcX            (MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnSAClkPolX            (MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnSATTLOutX            (MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnSATTLPolX            (MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnSAPatternByteX       (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSAAdvancedX          (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSAAmplitudeY         (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSAPeriodY            (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSAModeY              (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSAPatternY           (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSAAdvancedY          (MM::PropertyBase* pProp, MM::ActionType eAct);
+   // "advanced" single axis properties
    int OnSAClkSrcY            (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSAClkPolY            (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSATTLOutY            (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSATTLPolY            (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSAPatternByteY       (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSAClkSrcX            (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSAClkPolX            (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSATTLOutX            (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSATTLPolX            (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSAPatternByteX       (MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    string axisLetterX_;
@@ -108,6 +112,8 @@ private:
    double unitMultY_;  // units per degree
    double limitX_;   // positive limit only (on power-up things are symmetric about 0)
    double limitY_;   // positive limit only (on power-up things are symmetric about 0)
+   double shutterX_; // home position, used to turn beam off
+   double shutterY_;  // home position, used to turn beam off
    double lastX_;   // used to cache position
    double lastY_;   // used to cache position
 

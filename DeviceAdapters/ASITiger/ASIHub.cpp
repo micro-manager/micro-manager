@@ -206,11 +206,17 @@ int ASIHub::OnSerialCommand(MM::PropertyBase* pProp, MM::ActionType eAct)
       // do nothing
    }
    else if (eAct == MM::AfterSet) {
+      static string last_command;
       string tmpstr;
       pProp->Get(tmpstr);
       tmpstr =   UnescapeControlCharacters(tmpstr);
-      RETURN_ON_MM_ERROR ( QueryCommand(tmpstr, serialTerminator_) );
-      SetProperty(g_SerialResponsePropertyName, EscapeControlCharacters(LastSerialAnswer()).c_str());
+      // only send the command if it has been updated
+      if (tmpstr.compare(last_command) != 0)
+      {
+         last_command = tmpstr;
+         RETURN_ON_MM_ERROR ( QueryCommand(tmpstr, serialTerminator_) );
+         SetProperty(g_SerialResponsePropertyName, EscapeControlCharacters(LastSerialAnswer()).c_str());
+      }
    }
    return DEVICE_OK;
 }

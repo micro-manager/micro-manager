@@ -69,7 +69,7 @@ protected:
    ASIDeviceBase *deviceASI_;    // used to call functions in CDeviceBase (e.g. property methods)
    string addressChar_;    // address within hub, in single character (possibly extended ASCII)
 
-   bool initialized_;
+   bool initialized_;      // used to signal that device properties have been read from controller
    bool refreshProps_;
    double firmwareVersion_;
    ASIHub *hub_;           // used for serial communication

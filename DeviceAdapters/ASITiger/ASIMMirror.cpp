@@ -53,6 +53,8 @@ CMMirror::CMMirror(const char* name) :
    unitMultY_(g_MicromirrorDefaultUnitMult),  // later will try to read actual setting
    limitX_(0),   // later will try to read actual setting
    limitY_(0),   // later will try to read actual setting
+   shutterX_(0), // home position, used to turn beam off
+   shutterY_(0), // home position, used to turn beam off
    lastX_(0),    // cached position, used for SetIlluminationState
    lastY_(0),    // cached position, used for SetIlluminationState
    polygonRepetitions_(0)
@@ -82,6 +84,16 @@ int CMMirror::Initialize()
    command << "UM " << axisLetterY_ << "? ";
    RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":") );
    unitMultY_ = hub_->ParseAnswerAfterEquals();
+
+   // read the home position (used for beam shuttering)
+   command.str("");
+   command << "HM " << axisLetterX_ << "? ";
+   RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":") );
+   shutterX_ = hub_->ParseAnswerAfterEquals();
+   command.str("");
+   command << "HM " << axisLetterY_ << "? ";
+   RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":") );
+   shutterY_ = hub_->ParseAnswerAfterEquals();
 
    // set controller card to return positions with 3 decimal places (max allowed currently)
    command.str("");
@@ -154,14 +166,14 @@ int CMMirror::Initialize()
    SetPropertyLimits(g_MMirrorCutoffFilterYPropertyName, 0.1, 650);
 
    // attenuation factor for movement
-   pAct = new CPropertyAction (this, &CMMirror::OnScaleTiltX);
-   CreateProperty(g_MMirrorScaleTiltXPropertyName, "0", MM::Float, false, pAct);
-   UpdateProperty(g_MMirrorScaleTiltXPropertyName);
-   SetPropertyLimits(g_MMirrorScaleTiltXPropertyName, 0, 1);
-   pAct = new CPropertyAction (this, &CMMirror::OnScaleTiltY);
-   CreateProperty(g_MMirrorScaleTiltYPropertyName, "0", MM::Float, false, pAct);
-   UpdateProperty(g_MMirrorScaleTiltYPropertyName);
-   SetPropertyLimits(g_MMirrorScaleTiltYPropertyName, 0, 1);
+   pAct = new CPropertyAction (this, &CMMirror::OnAttenuateTravelX);
+   CreateProperty(g_MMirrorAttenuateXPropertyName, "0", MM::Float, false, pAct);
+   UpdateProperty(g_MMirrorAttenuateXPropertyName);
+   SetPropertyLimits(g_MMirrorAttenuateXPropertyName, 0, 1);
+   pAct = new CPropertyAction (this, &CMMirror::OnAttenuateTravelY);
+   CreateProperty(g_MMirrorAttenuateYPropertyName, "0", MM::Float, false, pAct);
+   UpdateProperty(g_MMirrorAttenuateYPropertyName);
+   SetPropertyLimits(g_MMirrorAttenuateYPropertyName, 0, 1);
 
    // joystick fast speed (JS X=) (per-card, not per-axis)
    pAct = new CPropertyAction (this, &CMMirror::OnJoystickFastSpeed);
@@ -200,6 +212,12 @@ int CMMirror::Initialize()
    AddAllowedValue(g_JoystickSelectYPropertyName, g_JSCode_22);
    AddAllowedValue(g_JoystickSelectYPropertyName, g_JSCode_23);
 
+   // turn the beam on and off
+   pAct = new CPropertyAction (this, &CMMirror::OnBeamEnabled);
+   CreateProperty(g_MMirrorBeamEnabledPropertyName, g_YesState, MM::String, false, pAct);
+   AddAllowedValue(g_MMirrorBeamEnabledPropertyName, g_NoState);
+   AddAllowedValue(g_MMirrorBeamEnabledPropertyName, g_YesState);
+
    // single-axis mode settings
    // todo fix firmware TTL initialization problem where SAM p=2 triggers by itself 1st time
    pAct = new CPropertyAction (this, &CMMirror::OnSAAmplitudeX);
@@ -221,10 +239,6 @@ int CMMirror::Initialize()
    AddAllowedValue(g_MMirrorSAPatternXPropertyName, g_SAPattern_0);
    AddAllowedValue(g_MMirrorSAPatternXPropertyName, g_SAPattern_1);
    AddAllowedValue(g_MMirrorSAPatternXPropertyName, g_SAPattern_2);
-   pAct = new CPropertyAction (this, &CMMirror::OnSAPatternByteX);
-   CreateProperty(g_MMirrorSAPatternModeXPropertyName, "0", MM::Integer, false, pAct);
-   UpdateProperty(g_MMirrorSAPatternModeXPropertyName);
-   SetPropertyLimits(g_MMirrorSAPatternModeXPropertyName, 0, 255);
    pAct = new CPropertyAction (this, &CMMirror::OnSAAmplitudeY);
    CreateProperty(g_MMirrorSAAmplitudeYPropertyName, "0", MM::Float, false, pAct);
    UpdateProperty(g_MMirrorSAAmplitudeYPropertyName);
@@ -244,50 +258,18 @@ int CMMirror::Initialize()
    AddAllowedValue(g_MMirrorSAPatternYPropertyName, g_SAPattern_0);
    AddAllowedValue(g_MMirrorSAPatternYPropertyName, g_SAPattern_1);
    AddAllowedValue(g_MMirrorSAPatternYPropertyName, g_SAPattern_2);
-   pAct = new CPropertyAction (this, &CMMirror::OnSAClkSrcX);
-   CreateProperty(g_MMirrorSAClkSrcXPropertyName, g_SAClkSrc_0, MM::String, false, pAct);
-   UpdateProperty(g_MMirrorSAClkSrcXPropertyName);
-   AddAllowedValue(g_MMirrorSAClkSrcXPropertyName, g_SAClkSrc_0);
-   AddAllowedValue(g_MMirrorSAClkSrcXPropertyName, g_SAClkSrc_1);
-   pAct = new CPropertyAction (this, &CMMirror::OnSAClkSrcY);
-   CreateProperty(g_MMirrorSAClkSrcYPropertyName, g_SAClkSrc_0, MM::String, false, pAct);
-   UpdateProperty(g_MMirrorSAClkSrcYPropertyName);
-   AddAllowedValue(g_MMirrorSAClkSrcYPropertyName, g_SAClkSrc_0);
-   AddAllowedValue(g_MMirrorSAClkSrcYPropertyName, g_SAClkSrc_1);
-   pAct = new CPropertyAction (this, &CMMirror::OnSAClkPolX);
-   CreateProperty(g_MMirrorSAClkPolXPropertyName, g_SAClkPol_0, MM::String, false, pAct);
-   UpdateProperty(g_MMirrorSAClkPolXPropertyName);
-   AddAllowedValue(g_MMirrorSAClkPolXPropertyName, g_SAClkPol_0);
-   AddAllowedValue(g_MMirrorSAClkPolXPropertyName, g_SAClkPol_1);
-   pAct = new CPropertyAction (this, &CMMirror::OnSAClkPolY);
-   CreateProperty(g_MMirrorSAClkPolYPropertyName, g_SAClkPol_0, MM::String, false, pAct);
-   UpdateProperty(g_MMirrorSAClkPolYPropertyName);
-   AddAllowedValue(g_MMirrorSAClkPolYPropertyName, g_SAClkPol_0);
-   AddAllowedValue(g_MMirrorSAClkPolYPropertyName, g_SAClkPol_1);
-   pAct = new CPropertyAction (this, &CMMirror::OnSATTLOutX);
-   CreateProperty(g_MMirrorSATTLOutXPropertyName, g_SATTLOut_0, MM::String, false, pAct);
-   UpdateProperty(g_MMirrorSATTLOutXPropertyName);
-   AddAllowedValue(g_MMirrorSATTLOutXPropertyName, g_SATTLOut_0);
-   AddAllowedValue(g_MMirrorSATTLOutXPropertyName, g_SATTLOut_1);
-   pAct = new CPropertyAction (this, &CMMirror::OnSATTLOutY);
-   CreateProperty(g_MMirrorSATTLOutYPropertyName, g_SATTLOut_0, MM::String, false, pAct);
-   UpdateProperty(g_MMirrorSATTLOutYPropertyName);
-   AddAllowedValue(g_MMirrorSATTLOutYPropertyName, g_SATTLOut_0);
-   AddAllowedValue(g_MMirrorSATTLOutYPropertyName, g_SATTLOut_1);
-   pAct = new CPropertyAction (this, &CMMirror::OnSATTLPolX);
-   CreateProperty(g_MMirrorSATTLPolXPropertyName, g_SATTLPol_0, MM::String, false, pAct);
-   UpdateProperty(g_MMirrorSATTLPolXPropertyName);
-   AddAllowedValue(g_MMirrorSATTLPolXPropertyName, g_SATTLPol_0);
-   AddAllowedValue(g_MMirrorSATTLPolXPropertyName, g_SATTLPol_1);
-   pAct = new CPropertyAction (this, &CMMirror::OnSATTLPolY);
-   CreateProperty(g_MMirrorSATTLPolYPropertyName, g_SATTLPol_0, MM::String, false, pAct);
-   UpdateProperty(g_MMirrorSATTLPolYPropertyName);
-   AddAllowedValue(g_MMirrorSATTLPolYPropertyName, g_SATTLPol_0);
-   AddAllowedValue(g_MMirrorSATTLPolYPropertyName, g_SATTLPol_1);
-   pAct = new CPropertyAction (this, &CMMirror::OnSAPatternByteY);
-   CreateProperty(g_MMirrorSAPatternModeYPropertyName, "0", MM::Integer, false, pAct);
-   UpdateProperty(g_MMirrorSAPatternModeYPropertyName);
-   SetPropertyLimits(g_MMirrorSAPatternModeYPropertyName, 0, 255);
+
+   // generates a set of additional advanced properties that are rarely used
+   pAct = new CPropertyAction (this, &CMMirror::OnSAAdvancedX);
+   CreateProperty(g_AdvancedSAPropertiesXPropertyName, g_NoState, MM::String, false, pAct);
+   UpdateProperty(g_AdvancedSAPropertiesXPropertyName);
+   AddAllowedValue(g_AdvancedSAPropertiesXPropertyName, g_NoState);
+   AddAllowedValue(g_AdvancedSAPropertiesXPropertyName, g_YesState);
+   pAct = new CPropertyAction (this, &CMMirror::OnSAAdvancedY);
+   CreateProperty(g_AdvancedSAPropertiesYPropertyName, g_NoState, MM::String, false, pAct);
+   UpdateProperty(g_AdvancedSAPropertiesYPropertyName);
+   AddAllowedValue(g_AdvancedSAPropertiesYPropertyName, g_NoState);
+   AddAllowedValue(g_AdvancedSAPropertiesYPropertyName, g_YesState);
 
    initialized_ = true;
    return DEVICE_OK;
@@ -334,7 +316,7 @@ int CMMirror::SetPosition(double x, double y)
    ret_ = hub_->QueryCommandVerify(command.str(),":A");
    if (ret_ == DEVICE_OK)
    {
-      // cache the position if it worked for SetIlluminationState
+      // cache the position (if it worked) for SetIlluminationState
       lastX_ = x;
       lastY_ = y;
       return DEVICE_OK;
@@ -362,12 +344,13 @@ int CMMirror::SetIlluminationState(bool on)
 {
    if (!on)
    {
-      GetPosition(lastX_, lastY_);  // cache position so we can undo
-      return SetPosition(limitX_, limitY_);
+//      GetPosition(lastX_, lastY_);  // cache position so we can undo
+      return SetPosition(shutterX_, shutterY_);
    }
    else
    {
-      SetPosition(lastX_, lastY_);  // move to where it was when last turned off
+//      SetPosition(lastX_, lastY_);  // move to where it was when last turned off
+      SetPosition(0,0);
       return DEVICE_OK;
    }
 }
@@ -544,6 +527,7 @@ int CMMirror::OnUpperLimY(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 int CMMirror::OnMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 // assume X axis's mode is for both, and then set mode for both axes together just like XYStage properties
+// todo change to using PM for v2.8 and above
 {
    ostringstream command; command.str("");
    long tmp = 0;
@@ -628,7 +612,7 @@ int CMMirror::OnCutoffFreqY(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
-int CMMirror::OnScaleTiltX(MM::PropertyBase* pProp, MM::ActionType eAct)
+int CMMirror::OnAttenuateTravelX(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    ostringstream command; command.str("");
    ostringstream response; response.str("");
@@ -652,7 +636,7 @@ int CMMirror::OnScaleTiltX(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
-int CMMirror::OnScaleTiltY(MM::PropertyBase* pProp, MM::ActionType eAct)
+int CMMirror::OnAttenuateTravelY(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    ostringstream command; command.str("");
    ostringstream response; response.str("");
@@ -672,6 +656,113 @@ int CMMirror::OnScaleTiltY(MM::PropertyBase* pProp, MM::ActionType eAct)
       pProp->Get(tmp);
       command << "D " << axisLetterY_ << "=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}
+
+int CMMirror::OnBeamEnabled(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   string tmpstr;
+   if (eAct == MM::AfterSet) {
+      pProp->Get(tmpstr);
+      if (tmpstr.compare(g_YesState) == 0)
+         SetIlluminationState(true);
+      else
+         SetIlluminationState(false);
+   }
+   return DEVICE_OK;
+}
+
+int CMMirror::OnSAAdvancedX(MM::PropertyBase* pProp, MM::ActionType eAct)
+// special property, when set to "yes" it creates a set of little-used properties that can be manipulated thereafter
+{
+   if (eAct == MM::BeforeGet)
+   {
+      return DEVICE_OK; // do nothing
+   }
+   else if (eAct == MM::AfterSet) {
+      string tmpstr;
+      pProp->Get(tmpstr);
+      if (tmpstr.compare(g_YesState) == 0)
+      {
+         CPropertyAction* pAct;
+
+         pAct = new CPropertyAction (this, &CMMirror::OnSAClkSrcX);
+         CreateProperty(g_MMirrorSAClkSrcXPropertyName, g_SAClkSrc_0, MM::String, false, pAct);
+         UpdateProperty(g_MMirrorSAClkSrcXPropertyName);
+         AddAllowedValue(g_MMirrorSAClkSrcXPropertyName, g_SAClkSrc_0);
+         AddAllowedValue(g_MMirrorSAClkSrcXPropertyName, g_SAClkSrc_1);
+
+         pAct = new CPropertyAction (this, &CMMirror::OnSAClkPolX);
+         CreateProperty(g_MMirrorSAClkPolXPropertyName, g_SAClkPol_0, MM::String, false, pAct);
+         UpdateProperty(g_MMirrorSAClkPolXPropertyName);
+         AddAllowedValue(g_MMirrorSAClkPolXPropertyName, g_SAClkPol_0);
+         AddAllowedValue(g_MMirrorSAClkPolXPropertyName, g_SAClkPol_1);
+
+         pAct = new CPropertyAction (this, &CMMirror::OnSATTLOutX);
+         CreateProperty(g_MMirrorSATTLOutXPropertyName, g_SATTLOut_0, MM::String, false, pAct);
+         UpdateProperty(g_MMirrorSATTLOutXPropertyName);
+         AddAllowedValue(g_MMirrorSATTLOutXPropertyName, g_SATTLOut_0);
+         AddAllowedValue(g_MMirrorSATTLOutXPropertyName, g_SATTLOut_1);
+
+         pAct = new CPropertyAction (this, &CMMirror::OnSATTLPolX);
+         CreateProperty(g_MMirrorSATTLPolXPropertyName, g_SATTLPol_0, MM::String, false, pAct);
+         UpdateProperty(g_MMirrorSATTLPolXPropertyName);
+         AddAllowedValue(g_MMirrorSATTLPolXPropertyName, g_SATTLPol_0);
+         AddAllowedValue(g_MMirrorSATTLPolXPropertyName, g_SATTLPol_1);
+
+         pAct = new CPropertyAction (this, &CMMirror::OnSAPatternByteX);
+         CreateProperty(g_MMirrorSAPatternModeXPropertyName, "0", MM::Integer, false, pAct);
+         UpdateProperty(g_MMirrorSAPatternModeXPropertyName);
+         SetPropertyLimits(g_MMirrorSAPatternModeXPropertyName, 0, 255);
+      }
+   }
+   return DEVICE_OK;
+}
+
+int CMMirror::OnSAAdvancedY(MM::PropertyBase* pProp, MM::ActionType eAct)
+// special property, when set to "yes" it creates a set of little-used properties that can be manipulated thereafter
+{
+   if (eAct == MM::BeforeGet)
+   {
+      return DEVICE_OK; // do nothing
+   }
+   else if (eAct == MM::AfterSet) {
+      string tmpstr;
+      pProp->Get(tmpstr);
+      if (tmpstr.compare(g_YesState) == 0)
+      {
+         CPropertyAction* pAct;
+
+         pAct = new CPropertyAction (this, &CMMirror::OnSAClkSrcY);
+         CreateProperty(g_MMirrorSAClkSrcYPropertyName, g_SAClkSrc_0, MM::String, false, pAct);
+         UpdateProperty(g_MMirrorSAClkSrcYPropertyName);
+         AddAllowedValue(g_MMirrorSAClkSrcYPropertyName, g_SAClkSrc_0);
+         AddAllowedValue(g_MMirrorSAClkSrcYPropertyName, g_SAClkSrc_1);
+
+         pAct = new CPropertyAction (this, &CMMirror::OnSAClkPolY);
+         CreateProperty(g_MMirrorSAClkPolYPropertyName, g_SAClkPol_0, MM::String, false, pAct);
+         UpdateProperty(g_MMirrorSAClkPolYPropertyName);
+         AddAllowedValue(g_MMirrorSAClkPolYPropertyName, g_SAClkPol_0);
+         AddAllowedValue(g_MMirrorSAClkPolYPropertyName, g_SAClkPol_1);
+
+         pAct = new CPropertyAction (this, &CMMirror::OnSATTLOutY);
+         CreateProperty(g_MMirrorSATTLOutYPropertyName, g_SATTLOut_0, MM::String, false, pAct);
+         UpdateProperty(g_MMirrorSATTLOutYPropertyName);
+         AddAllowedValue(g_MMirrorSATTLOutYPropertyName, g_SATTLOut_0);
+         AddAllowedValue(g_MMirrorSATTLOutYPropertyName, g_SATTLOut_1);
+
+         pAct = new CPropertyAction (this, &CMMirror::OnSATTLPolY);
+         CreateProperty(g_MMirrorSATTLPolYPropertyName, g_SATTLPol_0, MM::String, false, pAct);
+         UpdateProperty(g_MMirrorSATTLPolYPropertyName);
+         AddAllowedValue(g_MMirrorSATTLPolYPropertyName, g_SATTLPol_0);
+         AddAllowedValue(g_MMirrorSATTLPolYPropertyName, g_SATTLPol_1);
+
+         pAct = new CPropertyAction (this, &CMMirror::OnSAPatternByteY);
+         CreateProperty(g_MMirrorSAPatternModeYPropertyName, "0", MM::Integer, false, pAct);
+         UpdateProperty(g_MMirrorSAPatternModeYPropertyName);
+         SetPropertyLimits(g_MMirrorSAPatternModeYPropertyName, 0, 255);
+      }
    }
    return DEVICE_OK;
 }
@@ -726,12 +817,13 @@ int CMMirror::OnSAPeriodX(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 int CMMirror::OnSAModeX(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
+   static bool justSet = false;
    ostringstream command; command.str("");
    ostringstream response; response.str("");
    long tmp = 0;
    if (eAct == MM::BeforeGet)
    {
-      if (!refreshProps_ && initialized_)
+      if (!refreshProps_ && initialized_ && !justSet)
          return DEVICE_OK;
       command << "SAM " << axisLetterX_ << "?";
       response << ":A " << axisLetterX_ << "=";
@@ -748,6 +840,7 @@ int CMMirror::OnSAModeX(MM::PropertyBase* pProp, MM::ActionType eAct)
       }
       if (!success)
          return DEVICE_INVALID_PROPERTY_VALUE;
+      justSet = false;
    }
    else if (eAct == MM::AfterSet) {
       string tmpstr;
@@ -764,6 +857,9 @@ int CMMirror::OnSAModeX(MM::PropertyBase* pProp, MM::ActionType eAct)
          return DEVICE_INVALID_PROPERTY_VALUE;
       command << "SAM " << axisLetterX_ << "=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+      // get the updated value right away
+      justSet = true;
+      return OnSAModeX(pProp, MM::BeforeGet);
    }
    return DEVICE_OK;
 }
@@ -868,12 +964,13 @@ int CMMirror::OnSAPeriodY(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 int CMMirror::OnSAModeY(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
+   static bool justSet = false;
    ostringstream command; command.str("");
    ostringstream response; response.str("");
    long tmp = 0;
    if (eAct == MM::BeforeGet)
    {
-      if (!refreshProps_ && initialized_)
+      if (!refreshProps_ && initialized_ && !justSet)
          return DEVICE_OK;
       command << "SAM " << axisLetterY_ << "?";
       response << ":A " << axisLetterY_ << "=";
@@ -890,6 +987,7 @@ int CMMirror::OnSAModeY(MM::PropertyBase* pProp, MM::ActionType eAct)
       }
       if (!success)
          return DEVICE_INVALID_PROPERTY_VALUE;
+      justSet = false;
    }
    else if (eAct == MM::AfterSet) {
       string tmpstr;
@@ -906,6 +1004,9 @@ int CMMirror::OnSAModeY(MM::PropertyBase* pProp, MM::ActionType eAct)
          return DEVICE_INVALID_PROPERTY_VALUE;
       command << "SAM " << axisLetterY_ << "=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+      // get the updated value right away
+      justSet = true;
+      return OnSAModeY(pProp, MM::BeforeGet);
    }
    return DEVICE_OK;
 }
