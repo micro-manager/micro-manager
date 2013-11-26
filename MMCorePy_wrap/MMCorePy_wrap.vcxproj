@@ -138,7 +138,7 @@
   <ItemGroup>
     <CustomBuild Include="MMCorePy.i">
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Running Swig on %(Filename)%(Extension)</Message>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">set swig=..\..\3rdpartypublic\swig\swig
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">set swig=$(MM_SWIG)
 rem Stage output within IntDir so that it will be cleaned.
 set swig_out_dir=$(IntDir)Swig
 set py_src_dir=..\build\Swig
@@ -150,7 +150,7 @@ mkdir %py_src_dir%
 copy %swig_out_dir%\*.py %py_src_dir%\</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(Filename)_wrap.h;%(Filename)_wrap.cxx;%(Outputs)</Outputs>
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Running Swig on %(Filename)%(Extension)</Message>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">set swig=..\..\3rdpartypublic\swig\swig
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">set swig=$(MM_SWIG)
 rem Stage output within IntDir so that it will be cleaned.
 set swig_out_dir=$(IntDir)Swig
 set py_src_dir=..\build\Swig
@@ -162,7 +162,7 @@ mkdir %py_src_dir%
 copy %swig_out_dir%\*.py %py_src_dir%\</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(Filename)_wrap.h;%(Filename)_wrap.cxx;%(Outputs)</Outputs>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Running Swig on %(Filename)%(Extension)</Message>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">set swig=..\..\3rdpartypublic\swig\swig
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">set swig=$(MM_SWIG)
 rem Stage output within IntDir so that it will be cleaned.
 set swig_out_dir=$(IntDir)Swig
 set py_src_dir=..\build\Swig
@@ -174,7 +174,7 @@ mkdir %py_src_dir%
 copy %swig_out_dir%\*.py %py_src_dir%\</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(Filename)_wrap.h;%(Filename)_wrap.cxx;%(Outputs)</Outputs>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Running Swig on %(Filename)%(Extension)</Message>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">set swig=..\..\3rdpartypublic\swig\swig
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">set swig=$(MM_SWIG)
 rem Stage output within IntDir so that it will be cleaned.
 set swig_out_dir=$(IntDir)Swig
 set py_src_dir=..\build\Swig
