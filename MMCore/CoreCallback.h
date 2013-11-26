@@ -214,12 +214,7 @@ public:
 
    MM::AutoFocus* GetAutoFocus(const MM::Device* /* caller */)
    {
-      try {
-         return core_->autoFocus_;
-      } catch(...) {
-         //trap all exceptions
-         return 0;
-      }
+      return core_->autoFocus_;
    }
 
    MM::Hub* GetParentHub(const MM::Device* caller) const
