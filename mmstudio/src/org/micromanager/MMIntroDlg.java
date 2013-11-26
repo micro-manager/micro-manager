@@ -109,6 +109,7 @@ public class MMIntroDlg extends JDialog {
       final JButton okButton = new JButton();
       okButton.setFont(new Font("Arial", Font.PLAIN, 10));
       okButton.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent e) {
             setVisible(false);
          }
@@ -141,6 +142,7 @@ public class MMIntroDlg extends JDialog {
 
       final JButton browseButton = new JButton();
       browseButton.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent e) {
             loadConfigFile();
          }
@@ -156,6 +158,7 @@ public class MMIntroDlg extends JDialog {
 
 
       welcomeTextArea_ = new JTextArea() {
+         @Override
          public Insets getInsets() {
             return new Insets(10,10,10,10);
          }
@@ -176,11 +179,13 @@ public class MMIntroDlg extends JDialog {
 
 
    private class IOcfgFileFilter implements java.io.FileFilter {
-    public boolean accept(File f) {
-        String name = f.getName().toLowerCase();
-        return name.endsWith("cfg");
-    }//end accept
-}//end class cfgFileFilter
+
+      @Override
+      public boolean accept(File f) {
+         String name = f.getName().toLowerCase();
+         return name.endsWith("cfg");
+      }//end accept
+   }//end class cfgFileFilter
 
    public void setConfigFile(String path) {
       // using the provided path, setup the drop down list of config files in the same directory
@@ -238,8 +243,8 @@ public class MMIntroDlg extends JDialog {
    }
    
    public String getConfigFile() {
-       String tvalue = new String(cfgFileDropperDown_.getSelectedItem().toString());
-       String nvalue = new String("(none)");
+       String tvalue = cfgFileDropperDown_.getSelectedItem().toString();
+       String nvalue = "(none)";
        if( nvalue.equals(tvalue))
            tvalue = "";
 
@@ -247,7 +252,7 @@ public class MMIntroDlg extends JDialog {
    }
    
    public String getScriptFile() {
-      return new String("");
+      return "";
    }
    
    protected void loadConfigFile() {

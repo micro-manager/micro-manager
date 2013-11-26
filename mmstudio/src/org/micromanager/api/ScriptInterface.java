@@ -193,6 +193,8 @@ public interface ScriptInterface {
     * Executes Acquisition with current settings
     * Will open the Acquisition Dialog when it is not open yet
     * Returns after Acquisition finishes
+    * Note that this function should not be executed on the EDT (which is the
+    * thread running the UI).  
     * @return The name of the acquisition created.
     * @throws MMScriptException
     */
@@ -202,6 +204,8 @@ public interface ScriptInterface {
     * Executes Acquisition with current settings but allows for changing the data path.
     * Will open the Acquisition Dialog when it is not open yet.
     * Returns after Acquisition finishes.
+    * Note that this function should not be executed on the EDT (which is the
+    * thread running the UI).
     * @param name Name of this acquisition.
     * @param root Place in the file system where data can be stored.
     * @return The name of the acquisition created

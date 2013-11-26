@@ -241,6 +241,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener, Acq
          acqEng_ = eng;
       }
 
+      @Override
       public int getRowCount() {
          if (channels_ == null) {
             return 0;
@@ -249,6 +250,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener, Acq
          }
       }
 
+      @Override
       public int getColumnCount() {
          return COLUMN_NAMES.length;
       }
@@ -258,6 +260,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener, Acq
          return COLUMN_NAMES[columnIndex];
       }
 
+      @Override
       public Object getValueAt(int rowIndex, int columnIndex) {
          if (channels_ != null && rowIndex < channels_.size()) {
             if (columnIndex == 0) {
@@ -335,6 +338,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener, Acq
        * Catched events thrown by the ColorEditor
        * Will write the new color into the Color Prefs
        */
+      @Override
       public void tableChanged(TableModelEvent e) {
          int row = e.getFirstRow();
          if (row < 0) {
@@ -499,6 +503,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener, Acq
       ChannelSpec channel_ = null;
 
       // This method is called when a cell value is edited by the user.
+      @Override
       public Component getTableCellEditorComponent(JTable table, Object value,
               boolean isSelected, int rowIndex, int colIndex) {
 
@@ -550,6 +555,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener, Acq
             // end editing on selection change
             combo_.addActionListener(new ActionListener() {
 
+               @Override
                public void actionPerformed(ActionEvent e) {
                   channel_.color = new Color(colorPrefs_.getInt(
                           "Color_" + acqEng_.getChannelGroup() + "_" + 
@@ -621,6 +627,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener, Acq
          acqEng_ = acqEng;
       }
 
+      @Override
       public Component getTableCellRendererComponent(JTable table, Object value,
               boolean isSelected, boolean hasFocus, int rowIndex, int colIndex) {
 
@@ -927,6 +934,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener, Acq
 
       framesPanel_.addActionListener(new ActionListener() {
 
+         @Override
          public void actionPerformed(ActionEvent e) {
             applySettings();
          }
@@ -953,6 +961,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener, Acq
       numFrames_.setBounds(60, 0, 70, 24);
       numFrames_.addChangeListener(new ChangeListener() {
 
+         @Override
          public void stateChanged(ChangeEvent e) {
             applySettings();
          }
@@ -976,6 +985,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener, Acq
       timeUnitCombo_ = new JComboBox();
       timeUnitCombo_.addActionListener(new ActionListener() {
 
+         @Override
          public void actionPerformed(final ActionEvent e) {
             //interval_.setText(NumberUtils.doubleToDisplayString(convertMsToTime(acqEng_.getFrameIntervalMs(), timeUnitCombo_.getSelectedIndex())));
          }
@@ -992,6 +1002,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener, Acq
       listButton_ = new JButton();
       listButton_.addActionListener(new ActionListener() {
 
+         @Override
          public void actionPerformed(ActionEvent e) {
             gui_.showXYPositionList();
          }
@@ -1008,6 +1019,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener, Acq
 
       slicesPanel_.addActionListener(new ActionListener() {
 
+         @Override
          public void actionPerformed(final ActionEvent e) {
             // enable disable all related contrtols
             applySettings();
@@ -1030,6 +1042,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener, Acq
       setBottomButton_ = new JButton();
       setBottomButton_.addActionListener(new ActionListener() {
 
+         @Override
          public void actionPerformed(final ActionEvent e) {
             setBottomPosition();
          }
@@ -1057,6 +1070,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener, Acq
       setTopButton_ = new JButton();
       setTopButton_.addActionListener(new ActionListener() {
 
+         @Override
          public void actionPerformed(final ActionEvent e) {
             setTopPosition();
          }
@@ -1085,6 +1099,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener, Acq
       zValCombo_.setFont(new Font("Arial", Font.PLAIN, 10));
       zValCombo_.addActionListener(new ActionListener() {
 
+         @Override
          public void actionPerformed(final ActionEvent e) {
             zValCalcChanged();
          }
@@ -1098,6 +1113,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener, Acq
       stackKeepShutterOpenCheckBox_.setFont(new Font("Arial", Font.PLAIN, 10));
       stackKeepShutterOpenCheckBox_.addActionListener(new ActionListener() {
 
+         @Override
          public void actionPerformed(final ActionEvent e) {
             applySettings();
          }
@@ -1138,6 +1154,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener, Acq
 
       afPanel_.addActionListener(new ActionListener() {
 
+         @Override
          public void actionPerformed(ActionEvent arg0) {
             applySettings();
          }
@@ -1147,6 +1164,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener, Acq
       afButton_.setToolTipText("Set autofocus options");
       afButton_.addActionListener(new ActionListener() {
 
+         @Override
          public void actionPerformed(ActionEvent arg0) {
             afOptions();
          }
@@ -1177,6 +1195,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener, Acq
       afSkipInterval_.setValue(new Integer(acqEng_.getAfSkipInterval()));
       afSkipInterval_.addChangeListener(new ChangeListener() {
 
+         @Override
          public void stateChanged(ChangeEvent e) {
             applySettings();
             afSkipInterval_.setValue(new Integer(acqEng_.getAfSkipInterval()));
@@ -1188,6 +1207,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener, Acq
       // Channels panel
       channelsPanel_.addActionListener(new ActionListener() {
 
+         @Override
          public void actionPerformed(ActionEvent e) {
             applySettings();
          }
@@ -1206,6 +1226,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener, Acq
 
       channelGroupCombo_.addActionListener(new ActionListener() {
 
+         @Override
          public void actionPerformed(ActionEvent arg0) {
             String newGroup = (String) channelGroupCombo_.getSelectedItem();
 
@@ -1237,6 +1258,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener, Acq
       addButton.setMargin(new Insets(0, 0, 0, 0));
       addButton.addActionListener(new ActionListener() {
 
+         @Override
          public void actionPerformed(ActionEvent e) {
             applySettings();
             model_.addNewChannel();
@@ -1253,6 +1275,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener, Acq
       removeButton.setMargin(new Insets(-5, -5, -5, -5));
       removeButton.addActionListener(new ActionListener() {
 
+         @Override
          public void actionPerformed(ActionEvent e) {
             int sel = channelTable_.getSelectedRow();
             if (sel > -1) {
@@ -1275,6 +1298,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener, Acq
       upButton.setMargin(new Insets(0, 0, 0, 0));
       upButton.addActionListener(new ActionListener() {
 
+         @Override
          public void actionPerformed(ActionEvent e) {
             int sel = channelTable_.getSelectedRow();
             if (sel > -1) {
@@ -1297,6 +1321,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener, Acq
       downButton.setMargin(new Insets(0, 0, 0, 0));
       downButton.addActionListener(new ActionListener() {
 
+         @Override
          public void actionPerformed(ActionEvent e) {
             int sel = channelTable_.getSelectedRow();
             if (sel > -1) {
@@ -1319,6 +1344,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener, Acq
       chanKeepShutterOpenCheckBox_.setFont(new Font("Arial", Font.PLAIN, 10));
       chanKeepShutterOpenCheckBox_.addActionListener(new ActionListener() {
 
+         @Override
          public void actionPerformed(final ActionEvent e) {
             applySettings();
          }
@@ -1332,6 +1358,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener, Acq
 
       savePanel_.addActionListener(new ActionListener() {
 
+         @Override
          public void actionPerformed(final ActionEvent e) {
             if (!savePanel_.isSelected()) {
                displayModeCombo_.setSelectedIndex(0);
@@ -1370,6 +1397,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener, Acq
       browseRootButton_ = new JButton();
       browseRootButton_.addActionListener(new ActionListener() {
 
+         @Override
          public void actionPerformed(final ActionEvent e) {
             setRootDirectory();
          }
@@ -1442,6 +1470,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener, Acq
       closeButton.setFont(new Font("Arial", Font.PLAIN, 10));
       closeButton.addActionListener(new ActionListener() {
 
+         @Override
          public void actionPerformed(ActionEvent e) {
             saveSettings();
             saveAcqSettings();
@@ -1458,6 +1487,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener, Acq
       acquireButton_.setFont(new Font("Arial", Font.BOLD, 12));
       acquireButton_.addActionListener(new ActionListener() {
 
+         @Override
          public void actionPerformed(ActionEvent e) {
             AbstractCellEditor ae = (AbstractCellEditor) channelTable_.getCellEditor();
             if (ae != null) {
@@ -1474,6 +1504,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener, Acq
       final JButton stopButton = new JButton();
       stopButton.addActionListener(new ActionListener() {
 
+         @Override
          public void actionPerformed(final ActionEvent e) {
             acqEng_.abortRequest();
          }
@@ -1490,6 +1521,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener, Acq
       loadButton.setMargin(new Insets(-5, -5, -5, -5));
       loadButton.addActionListener(new ActionListener() {
 
+         @Override
          public void actionPerformed(ActionEvent e) {
             loadAcqSettingsFromFile();
          }
@@ -1504,6 +1536,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener, Acq
       saveAsButton.setFont(new Font("Arial", Font.PLAIN, 10));
       saveAsButton.addActionListener(new ActionListener() {
 
+         @Override
          public void actionPerformed(ActionEvent e) {
             saveAsAcqSettingsToFile();
          }
@@ -1518,6 +1551,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener, Acq
       advancedButton.setFont(new Font("Arial", Font.PLAIN, 10));
       advancedButton.addActionListener(new ActionListener() {
 
+         @Override
          public void actionPerformed(ActionEvent e) {
             showAdvancedDialog();
             updateGUIContents();
@@ -1548,18 +1582,21 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener, Acq
       // add update event listeners
       positionsPanel_.addActionListener(new ActionListener() {
 
+         @Override
          public void actionPerformed(ActionEvent arg0) {
             applySettings();
          }
       });
       displayModeCombo_.addActionListener(new ActionListener() {
 
+         @Override
          public void actionPerformed(ActionEvent e) {
             applySettings();
          }
       });
       acqOrderBox_.addActionListener(new ActionListener() {
 
+         @Override
          public void actionPerformed(ActionEvent e) {
             applySettings();
          }
@@ -1586,6 +1623,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener, Acq
     * Called when a field's "value" property changes. 
     * Causes the Summary to be updated
     */
+   @Override
    public void propertyChange(PropertyChangeEvent e) {
       // update summary
       applySettings();

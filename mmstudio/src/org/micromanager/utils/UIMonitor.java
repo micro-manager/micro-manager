@@ -131,6 +131,7 @@ public class UIMonitor {
    public static void enable(final boolean on) {
       SwingUtilities.invokeLater(
               new Runnable() {
+                 @Override
                  public void run() {
                     if (on) {
                        enable();

@@ -56,6 +56,7 @@ public class CustomTimeIntervalsPanel extends JPanel {
     private JCheckBox useIntervalsCheckBox_;
     private JTabbedPane window_;
 
+    @SuppressWarnings("LeakingThisInConstructor")
     public CustomTimeIntervalsPanel(AcquisitionEngine acqEng, JTabbedPane window, ScriptInterface gui) {
         super();
         window_ = window;
@@ -65,8 +66,8 @@ public class CustomTimeIntervalsPanel extends JPanel {
         createInfoPanel();
         configureLayout();
         if (gui != null) {
-        	setBackground(gui.getBackgroundColor());
-        	gui.addMMBackgroundListener(this);
+        	  setBackground(gui.getBackgroundColor());
+        	  gui.addMMBackgroundListener(this);
         }
 
     }
@@ -111,6 +112,7 @@ public class CustomTimeIntervalsPanel extends JPanel {
         removeAllButton.setFont(new Font("Arial", Font.PLAIN, 10));
         buttonsPanel_.add(removeAllButton);
         removeAllButton.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent arg0) {
                 intervalTableModel_.removeAll();
             } });
@@ -121,6 +123,7 @@ public class CustomTimeIntervalsPanel extends JPanel {
         removeButton.setFont(new Font("Arial", Font.PLAIN, 10));
         buttonsPanel_.add(removeButton);
         removeButton.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent arg0) {
                 int[] selectedRows = timeIntervalTable_.getSelectedRows();
                 if (selectedRows.length == 0) {
@@ -141,6 +144,7 @@ public class CustomTimeIntervalsPanel extends JPanel {
         addButton.setFont(new Font("Arial", Font.PLAIN, 10));
         buttonsPanel_.add(addButton);
         addButton.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent arg0) {               
                 int selectedRow = timeIntervalTable_.getSelectedRow();
                 if (selectedRow == -1) {
@@ -159,6 +163,7 @@ public class CustomTimeIntervalsPanel extends JPanel {
         createLinearTimePointsButton.setFont(new Font("Arial", Font.PLAIN, 10));
         buttonsPanel_.add(createLinearTimePointsButton);
         createLinearTimePointsButton.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 if (linearTimeDialog_ == null) 
                     linearTimeDialog_ = new LinearTimeDialog();     
@@ -172,6 +177,7 @@ public class CustomTimeIntervalsPanel extends JPanel {
         createLogTimePointsButton.setFont(new Font("Arial", Font.PLAIN, 10));
         buttonsPanel_.add(createLogTimePointsButton);
         createLogTimePointsButton.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 if (logTimeDialog_ == null) 
                     logTimeDialog_ = new LogTimeDialog();         
@@ -187,6 +193,7 @@ public class CustomTimeIntervalsPanel extends JPanel {
         useIntervalsCheckBox_.setSelected(acqEng_.customTimeIntervalsEnabled());
         buttonsPanel_.add(useIntervalsCheckBox_);
         useIntervalsCheckBox_.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 acqEng_.enableCustomTimeIntervals(useIntervalsCheckBox_.isSelected());
                 setTabTitle();
@@ -359,6 +366,7 @@ public class CustomTimeIntervalsPanel extends JPanel {
             row4.add(nCheck_);
             
             ActionListener boxesListener = new ActionListener() {
+                @Override
                 public void actionPerformed(ActionEvent e) {
                     int checkCount = 0;
                     if( aCheck_.isSelected() )
@@ -435,6 +443,7 @@ public class CustomTimeIntervalsPanel extends JPanel {
             
            
             ActionListener dynamicUpdater = new ActionListener() {
+                @Override
                 public void actionPerformed(ActionEvent e) {
                         updateParameterValues();
                 }};
@@ -442,26 +451,31 @@ public class CustomTimeIntervalsPanel extends JPanel {
             aCombo_.addActionListener(dynamicUpdater);
             tCombo_.addActionListener(dynamicUpdater);
             aValue_.addCaretListener(new CaretListener() {
+             @Override
              public void caretUpdate(CaretEvent e) {
                   if (aValue_.isEnabled())
                     updateParameterValues();
              }});
             tValue_.addCaretListener(new CaretListener() {
+             @Override
              public void caretUpdate(CaretEvent e) {
                   if (tValue_.isEnabled())
                     updateParameterValues();
              }});
             rValue_.addCaretListener(new CaretListener() {
+             @Override
              public void caretUpdate(CaretEvent e) {
                   if (rValue_.isEnabled())
                     updateParameterValues();
              }});
             nValue_.addChangeListener(new ChangeListener() {
+                @Override
                 public void stateChanged(ChangeEvent e) {                  
                     if(nValue_.isEnabled()) 
                         updateParameterValues();
                 } });
             ((JSpinner.DefaultEditor) nValue_.getEditor()).getTextField().addCaretListener(new CaretListener() {
+             @Override
              public void caretUpdate(CaretEvent e) {
                   if (nValue_.isEnabled())
                     if (((Integer) nValue_.getValue()) >= 3 )
@@ -557,6 +571,7 @@ public class CustomTimeIntervalsPanel extends JPanel {
             cancelButton.setFont(new Font("Arial", Font.PLAIN, 14));
             buttonsRow.add(cancelButton);
             cancelButton.addActionListener(new ActionListener() {
+                @Override
                 public void actionPerformed(ActionEvent arg0) {
                     closeLogDialog();
                 }});
@@ -568,6 +583,7 @@ public class CustomTimeIntervalsPanel extends JPanel {
             createButton.setFont(new Font("Arial", Font.PLAIN, 14));
             buttonsRow.add(createButton);
             createButton.addActionListener(new ActionListener() {
+                @Override
                 public void actionPerformed(ActionEvent arg0) {
                     createButtonAction();
                 }});
@@ -653,6 +669,7 @@ public class CustomTimeIntervalsPanel extends JPanel {
             row4.add(cancelButton);
             cancelButton.addActionListener(new ActionListener() {
 
+                @Override
                 public void actionPerformed(ActionEvent arg0) {
                     closeLinearDialog();
                 }
@@ -666,6 +683,7 @@ public class CustomTimeIntervalsPanel extends JPanel {
             row4.add(createButton);
             createButton.addActionListener(new ActionListener() {
 
+                @Override
                 public void actionPerformed(ActionEvent arg0) {
                     int numFrames = (Integer) numFrames_.getValue();
                     double interval = ((Number) interval_.getValue()).doubleValue();
@@ -749,6 +767,7 @@ public class CustomTimeIntervalsPanel extends JPanel {
             timeIntervals_ = new ArrayList<Double>();
             syncIntervalsFromAcqEng();
             this.addTableModelListener(new TableModelListener() {
+                @Override
                 public void tableChanged(TableModelEvent e) {
                     syncCheckBoxFromAcqEng();
                 }
@@ -768,7 +787,7 @@ public class CustomTimeIntervalsPanel extends JPanel {
            fireTableDataChanged();
         }
         
-        public void syncIntervalsFromAcqEng() {
+        public final void syncIntervalsFromAcqEng() {
             timeIntervals_.clear();
             double[] existingCustomIntervals = acqEng_.getCustomTimeIntervals();
             if (existingCustomIntervals != null) {
@@ -802,14 +821,17 @@ public class CustomTimeIntervalsPanel extends JPanel {
             sendIntervalsToAcqEng();
         }
 
+        @Override
         public String getColumnName(int column) {
             return COLUMN_NAMES[column];
         }
 
+        @Override
         public int getColumnCount() {
             return COLUMN_NAMES.length;
         }
 
+        @Override
         public int getRowCount() {
             return timeIntervals_.size();
         }
@@ -835,6 +857,7 @@ public class CustomTimeIntervalsPanel extends JPanel {
 
         }
 
+        @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
             if (columnIndex == 0) {
                 return rowIndex;
@@ -846,6 +869,7 @@ public class CustomTimeIntervalsPanel extends JPanel {
             return null;
         }
 
+        @Override
         public void setValueAt(Object value, int rowIndex, int colIndex) {
             if (isCellEditable(rowIndex, colIndex)) {
                 String str = (String) value;
@@ -853,14 +877,13 @@ public class CustomTimeIntervalsPanel extends JPanel {
                     timeIntervals_.set(rowIndex, 0.0);
                 } else {
                     Double number = Double.parseDouble(str);
-                    if (number != null) {
-                        timeIntervals_.set(rowIndex, number);
-                    }
+                    timeIntervals_.set(rowIndex, number);
                 }
             }
             sendIntervalsToAcqEng();
         }
 
+        @Override
         public boolean isCellEditable(int row, int col) {
             if (col == 1 && row < timeIntervals_.size()) {
                 return true;

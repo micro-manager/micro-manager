@@ -102,6 +102,7 @@ public class MMAboutDlg extends JDialog {
       final JButton okButton = new JButton();
       okButton.setFont(new Font("Arial", Font.PLAIN, 10));
       okButton.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent e) {
             dispose();
          }

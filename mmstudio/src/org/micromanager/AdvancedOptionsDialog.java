@@ -37,6 +37,7 @@ public class AdvancedOptionsDialog extends MMDialog {
         acqEng_ = acqEng;
         loadPosition(0,0,600,500);
         addWindowListener(new WindowAdapter() {
+            @Override
             public void windowClosing(WindowEvent arg0) {
                 savePosition();
             }});
@@ -55,6 +56,7 @@ public class AdvancedOptionsDialog extends MMDialog {
         JButton closeButton = new JButton("Close");
         closeButton.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 close();
             }

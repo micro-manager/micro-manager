@@ -168,10 +168,12 @@ public class ConfigGroupPad extends JScrollPane{
          updateStatus(false);
          configDirty_ = false;
       }
+      @Override
       public int getRowCount() {
          return groupList_.size();
       }
 
+      @Override
       public int getColumnCount() {
          return columnNames_.length;
       }
@@ -180,6 +182,7 @@ public class ConfigGroupPad extends JScrollPane{
          return groupList_.get(row);
       }
 
+      @Override
       public Object getValueAt(int row, int col) {
          StateItem item = groupList_.get(row);
          if (col == 0)

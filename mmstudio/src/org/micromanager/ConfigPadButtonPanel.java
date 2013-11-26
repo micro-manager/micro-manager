@@ -108,6 +108,7 @@ public final class ConfigPadButtonPanel extends JPanel {
       theButton.setMargin(new Insets(-50,-50,-50,-50));
       format(theButton);
       theButton.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent e) {
             handleButtonPress(e);
          }
@@ -140,6 +141,7 @@ public final class ConfigPadButtonPanel extends JPanel {
       gui_.refreshGUI();
    }
 
+   @SuppressWarnings("ResultOfObjectAllocationIgnored")
    public void addGroup() {
       new GroupEditor("", "", gui_, core_, true);
    }
@@ -164,6 +166,7 @@ public final class ConfigPadButtonPanel extends JPanel {
       }
    }
    
+   @SuppressWarnings("ResultOfObjectAllocationIgnored")
    public void editGroup() {
       String groupName = configPad_.getGroup();
       if (groupName.length() ==0)
@@ -173,6 +176,7 @@ public final class ConfigPadButtonPanel extends JPanel {
    }
    
    
+   @SuppressWarnings("ResultOfObjectAllocationIgnored")
    public void addPreset() {
       String groupName = configPad_.getGroup();
       if (groupName.length()==0)
@@ -226,6 +230,7 @@ public final class ConfigPadButtonPanel extends JPanel {
                     presets[0]);
    }
 
+   @SuppressWarnings("ResultOfObjectAllocationIgnored")
    public void editPreset() {
       final String presetName = configPad_.getPreset();
       final String groupName = configPad_.getGroup();
