@@ -87,7 +87,7 @@ bool DENetwork::send(void* data, std::size_t size, unsigned long timeout)
 	optional<boost::system::error_code> timeout_result;
 	optional<boost::system::error_code> write_result;
 
-	deadline_timer timer(this->write->io_service());
+	deadline_timer timer(this->write->get_io_service());
 
 	timer.expires_from_now(seconds(timeout));
 	if (!debugMode)
@@ -98,8 +98,8 @@ bool DENetwork::send(void* data, std::size_t size, unsigned long timeout)
 		boost::bind(&DENetwork::setResult, this, &write_result, boost::asio::placeholders::error,
 		 		boost::asio::placeholders::bytes_transferred));
 
-	this->write->io_service().reset();
-	while ( this->write->io_service().run_one() )
+	this->write->get_io_service().reset();
+	while ( this->write->get_io_service().run_one() )
 	{
 		// Normal result.
 		if (write_result)
@@ -137,7 +137,7 @@ bool DENetwork::receive(void* data, std::size_t size, unsigned long timeout)
 	optional<boost::system::error_code> timeout_result;
 	optional<boost::system::error_code> read_result;
 
-	deadline_timer timer(this->read->io_service());
+	deadline_timer timer(this->read->get_io_service());
 	timer.expires_from_now(seconds(timeout));
 	if (!debugMode)
 		timer.async_wait(boost::bind(&DENetwork::setResult, this, &timeout_result, _1, 0));
@@ -147,9 +147,9 @@ bool DENetwork::receive(void* data, std::size_t size, unsigned long timeout)
 		boost::bind(&DENetwork::setResult, this, &read_result, boost::asio::placeholders::error,
 		 		boost::asio::placeholders::bytes_transferred));
 
-	this->read->io_service().reset();
+	this->read->get_io_service().reset();
 
-	while ( this->read->io_service().run_one() )
+	while ( this->read->get_io_service().run_one() )
 	{
 		// Normal result.
 		if (read_result)
