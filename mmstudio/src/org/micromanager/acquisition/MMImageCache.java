@@ -63,18 +63,21 @@ public class MMImageCache implements ImageCache {
    private JSONObject lastTags_;
    private final ExecutorService listenerExecutor_;
 
+   @Override
    public void addImageCacheListener(ImageCacheListener l) {
       synchronized (imageStorageListeners_) {
          imageStorageListeners_.add(l);
       }
    }
 
+   @Override
    public ImageCacheListener[] getImageCacheListeners() {
       synchronized (imageStorageListeners_) {
          return (ImageCacheListener[]) imageStorageListeners_.toArray();
       }
    }
 
+   @Override
    public void removeImageCacheListener(ImageCacheListener l) {
       synchronized (imageStorageListeners_) {
          imageStorageListeners_.remove(l);
@@ -102,6 +105,7 @@ public class MMImageCache implements ImageCache {
    */
 
 
+   @Override
    public void finished() {
       imageStorage_.finished();
       String path = getDiskLocation();
@@ -113,10 +117,12 @@ public class MMImageCache implements ImageCache {
       listenerExecutor_.shutdown();
    }
 
+   @Override
    public boolean isFinished() {
       return imageStorage_.isFinished();
    }
 
+   @Override
    public int lastAcquiredFrame() {
       synchronized (this) {
          lastFrame_ = Math.max(imageStorage_.lastAcquiredFrame(), lastFrame_);
@@ -124,22 +130,27 @@ public class MMImageCache implements ImageCache {
       }
    }
 
+   @Override
    public String getDiskLocation() {
       return imageStorage_.getDiskLocation();
    }
 
+   @Override
    public void setDisplayAndComments(JSONObject settings) {
       imageStorage_.setDisplayAndComments(settings);
    }
 
+   @Override
    public JSONObject getDisplayAndComments() {
       return imageStorage_.getDisplayAndComments();
    }
    
+   @Override
    public void writeDisplaySettings() {
       imageStorage_.writeDisplaySettings();
    }
 
+   @Override
    public void close() {
       imageStorage_.close();
       synchronized (imageStorageListeners_) {
@@ -147,11 +158,13 @@ public class MMImageCache implements ImageCache {
       }
    }
 
+   @Override
    public void saveAs(TaggedImageStorage newImageFileManager) {
       saveAs(newImageFileManager, true);
       this.finished();
    }
           
+   @Override
    public void saveAs(final TaggedImageStorage newImageFileManager, final boolean useNewStorage) {
       if (newImageFileManager == null) {
          return;
@@ -176,6 +189,7 @@ public class MMImageCache implements ImageCache {
                   ReportingUtils.logError(ex);
                }
                   SwingUtilities.invokeLater(new Runnable() {
+                     @Override
                      public void run() {
                         progressBar.setProgress(i1);
                      }
@@ -189,6 +203,7 @@ public class MMImageCache implements ImageCache {
       
    }
 
+   @Override
    public void putImage(final TaggedImage taggedImg) {
       try {
          
@@ -216,6 +231,7 @@ public class MMImageCache implements ImageCache {
             for (final ImageCacheListener l : imageStorageListeners_) {
                listenerExecutor_.submit(
                        new Runnable() {
+                          @Override
                           public void run() {
                              l.imageReceived(taggedImg);
                           }
@@ -227,12 +243,14 @@ public class MMImageCache implements ImageCache {
       }
    }
 
+   @Override
    public JSONObject getLastImageTags() {
       synchronized (this) {
          return lastTags_;
       }
    }
 
+   @Override
    public TaggedImage getImage(int channel, int slice, int frame, int position) {
       TaggedImage taggedImg = null;
       if (taggedImg == null) {
@@ -244,6 +262,7 @@ public class MMImageCache implements ImageCache {
       return taggedImg;
    }
 
+   @Override
    public JSONObject getImageTags(int channel, int slice, int frame, int position) {
       String label = MDUtils.generateLabel(channel, slice, frame, position);
       JSONObject tags = null;
@@ -295,6 +314,7 @@ public class MMImageCache implements ImageCache {
       return comments;
    }
 
+   @Override
    public void setComment(String text) {
       JSONObject comments = getCommentsJSONObject();
       try {
@@ -304,6 +324,7 @@ public class MMImageCache implements ImageCache {
       }
    }
 
+   @Override
    public void setImageComment(String comment, JSONObject tags) {
       JSONObject comments = getCommentsJSONObject();
       String label = MDUtils.getLabel(tags);
@@ -315,6 +336,7 @@ public class MMImageCache implements ImageCache {
 
    }
 
+   @Override
    public String getImageComment(JSONObject tags) {
       if (tags == null) {
          return "";
@@ -327,6 +349,7 @@ public class MMImageCache implements ImageCache {
       }
    }
 
+   @Override
    public String getComment() {
       try {
          return getCommentsJSONObject().getString("Summary");
@@ -335,6 +358,7 @@ public class MMImageCache implements ImageCache {
       }
    }
 
+   @Override
    public JSONObject getSummaryMetadata() {
       if (imageStorage_ == null) {
          ReportingUtils.logError("imageStorage_ is null in getSummaryMetadata");
@@ -343,6 +367,7 @@ public class MMImageCache implements ImageCache {
       return imageStorage_.getSummaryMetadata();
    }
 
+   @Override
    public void setSummaryMetadata(JSONObject tags) {
       if (imageStorage_ == null) {
          ReportingUtils.logError("imageStorage_ is null in setSummaryMetadata");
@@ -351,10 +376,12 @@ public class MMImageCache implements ImageCache {
       imageStorage_.setSummaryMetadata(tags);
    }
 
+   @Override
    public Set<String> getChangingKeys() {
       return changingKeys_;
    }
 
+   @Override
    public Set<String> imageKeys() {
      return imageStorage_.imageKeys();
    }
@@ -363,6 +390,7 @@ public class MMImageCache implements ImageCache {
       return MDUtils.isRGB(getSummaryMetadata());
    }
 
+   @Override
    public String getPixelType() {
       try {
          return MDUtils.getPixelType(getSummaryMetadata());
@@ -376,6 +404,7 @@ public class MMImageCache implements ImageCache {
    /*
     * this function gets called whenever contrast settings are changed 
     */
+   @Override
    public void storeChannelDisplaySettings(int channelIndex, int min, int max, 
            double gamma, int histMax, int displayMode) {
       try {
@@ -390,6 +419,7 @@ public class MMImageCache implements ImageCache {
       }
    }
   
+   @Override
    public JSONObject getChannelSetting(int channel) {
       try {
          JSONArray array = getDisplayAndComments().getJSONArray("Channels");
@@ -408,6 +438,7 @@ public class MMImageCache implements ImageCache {
       }
    }
 
+   @Override
    public int getBitDepth() {
       try {
          return imageStorage_.getSummaryMetadata().getInt("BitDepth");
@@ -417,6 +448,7 @@ public class MMImageCache implements ImageCache {
       return 16;
    }
 
+   @Override
    public Color getChannelColor(int channelIndex) {
       try {
          if (isRGB()) {
@@ -428,6 +460,7 @@ public class MMImageCache implements ImageCache {
       }
    }
 
+   @Override
    public void setChannelColor(int channel, int rgb) {
       JSONObject chan = getChannelSetting(channel);
       try {
@@ -440,6 +473,7 @@ public class MMImageCache implements ImageCache {
       }
    }
 
+   @Override
    public String getChannelName(int channelIndex) {
       try {
          if (isRGB()) {
@@ -474,6 +508,7 @@ public class MMImageCache implements ImageCache {
 
    }
    
+   @Override
    public int getDisplayMode() {
       try {
          return getChannelSetting(0).getInt("DisplayMode");
@@ -482,6 +517,7 @@ public class MMImageCache implements ImageCache {
       }
    }
 
+   @Override
    public int getChannelMin(int channelIndex) {
       try {
          return getChannelSetting(channelIndex).getInt("Min");
@@ -490,6 +526,7 @@ public class MMImageCache implements ImageCache {
       }
    }
 
+   @Override
    public int getChannelMax(int channelIndex) {
       try {
          return getChannelSetting(channelIndex).getInt("Max");
@@ -498,6 +535,7 @@ public class MMImageCache implements ImageCache {
       }
    }
 
+   @Override
    public double getChannelGamma(int channelIndex) {
       try {
          return getChannelSetting(channelIndex).getDouble("Gamma");
@@ -506,6 +544,7 @@ public class MMImageCache implements ImageCache {
       }
    }
    
+   @Override
    public int getChannelHistogramMax(int channelIndex) {
       try {
          return getChannelSetting(channelIndex).getInt("HistogramMax");
@@ -514,6 +553,7 @@ public class MMImageCache implements ImageCache {
       }
    }
 
+   @Override
    public int getNumDisplayChannels() {
       JSONArray array;
       try {
@@ -525,6 +565,7 @@ public class MMImageCache implements ImageCache {
       return array.length();
    }
 
+   @Override
    public long getDataSetSize() {
       throw new UnsupportedOperationException("Not supported yet.");
    }
