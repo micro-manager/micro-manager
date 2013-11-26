@@ -78,7 +78,6 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;_WIN32_WINNT=0x0501;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
-      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <PrecompiledHeader>
       </PrecompiledHeader>
     </ClCompile>
@@ -96,7 +95,6 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;_WIN32_WINNT=0x0501;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
-      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <PrecompiledHeader>
       </PrecompiledHeader>
     </ClCompile>
@@ -108,7 +106,6 @@
     <ClCompile>
       <AdditionalIncludeDirectories>$(THIRDPARTYLIBS)\google\protobuf-2.5.0_build\VS2010\include;$(THIRDPARTYLIBS)\boost;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WIN32_WINNT=0x0501;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <PrecompiledHeader>
       </PrecompiledHeader>
     </ClCompile>
@@ -123,7 +120,6 @@
     <ClCompile>
       <AdditionalIncludeDirectories>$(THIRDPARTYLIBS)\google\protobuf-2.5.0_build\VS2010\include;$(THIRDPARTYLIBS)\boost;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WIN32_WINNT=0x0501;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <PrecompiledHeader>
       </PrecompiledHeader>
     </ClCompile>
