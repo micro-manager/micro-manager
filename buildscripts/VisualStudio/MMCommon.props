@@ -6,6 +6,9 @@
     <MM_3RDPARTYPUBLIC>$(MM_SRCROOT)\..\3rdpartypublic</MM_3RDPARTYPUBLIC>
     <MM_BOOST_INCLUDEDIR>$(MM_3RDPARTYPUBLIC)\boost</MM_BOOST_INCLUDEDIR>
     <MM_BOOST_LIBDIR>$(MM_3RDPARTYPUBLIC)\boost\stage_$(Platform)\lib</MM_BOOST_LIBDIR>
+    <MM_ZLIB_INCLUDEDIR>$(MM_3RDPARTYPUBLIC)\zlib\zlib-1.2.8</MM_ZLIB_INCLUDEDIR>
+    <MM_ZLIB_LIBDIR>$(MM_3RDPARTYPUBLIC)\zlib\zlib-1.2.8-bin\VS2008\$(Platform)\$(Configuration)</MM_ZLIB_LIBDIR>
+    <MM_ZLIB_LIBADD>zlibstat.lib</MM_ZLIB_LIBADD>
   </PropertyGroup>
   <PropertyGroup>
     <OutDir>$(SolutionDir)build\$(Configuration)\$(Platform)\</OutDir>
@@ -39,6 +42,15 @@
     </BuildMacro>
     <BuildMacro Include="MM_BOOST_LIBDIR">
       <Value>$(MM_BOOST_LIBDIR)</Value>
+    </BuildMacro>
+    <BuildMacro Include="MM_ZLIB_INCLUDEDIR">
+      <Value>$(MM_ZLIB_INCLUDEDIR)</Value>
+    </BuildMacro>
+    <BuildMacro Include="MM_ZLIB_LIBDIR">
+      <Value>$(MM_ZLIB_LIBDIR)</Value>
+    </BuildMacro>
+    <BuildMacro Include="MM_ZLIB_LIBADD">
+      <Value>$(MM_ZLIB_LIBADD)</Value>
     </BuildMacro>
   </ItemGroup>
 </Project>
