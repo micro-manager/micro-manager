@@ -28,11 +28,7 @@
 #include <iostream>
 #include <fstream>
 
-#include <stdint.h> // For SIZE_MAX (std::numeric_limits::max is broken on Windows)
-#ifndef SIZE_MAX // But some versions of Apple GCC have no SIZE_MAX
-#include <limits>
-#define SIZE_MAX (std::numeric_limits<std::size_t>::max())
-#endif
+#include <limits.h>
 
 #include "FastLogger.h"
 #include "CoreUtils.h"
@@ -543,9 +539,14 @@ void FastLogger::LogContents(char** ppContents, unsigned long& len)
    if (ifile.is_open())
    {
       std::ifstream::pos_type pos = ifile.tellg();
-      if (pos < SIZE_MAX)
+
+      // XXX This is broken (sort of): on 64-bit Windows, we artificially
+      // limit ourselves to 4 GB. But it is probably okay since we don't
+      // expect the log contents to be > 4 GB. Fixing would require changing
+      // the signature of this function.
+      if (pos < ULONG_MAX)
       {
-         len = static_cast<std::size_t>(pos);
+         len = static_cast<unsigned long>(pos);
          *ppContents = new char[len];
          if (0 != *ppContents)
          {
