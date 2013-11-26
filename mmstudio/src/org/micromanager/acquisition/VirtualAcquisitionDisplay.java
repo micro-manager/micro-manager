@@ -1073,13 +1073,13 @@ public class VirtualAcquisitionDisplay implements
     */
    @Override
    public synchronized void imageReceived(final TaggedImage taggedImage) {
-      if (hyperImage_ == null
-              || !CanvasPaintPending.isMyPaintPending(hyperImage_.getCanvas(), imageReceivedObject_)) {
-         if (hyperImage_ != null) {
-            CanvasPaintPending.setPaintPending(hyperImage_.getCanvas(), imageReceivedObject_);
-         }
+    //  if (hyperImage_ == null
+    //          || !CanvasPaintPending.isMyPaintPending(hyperImage_.getCanvas(), imageReceivedObject_)) {
+    //     if (hyperImage_ != null) {
+    //        CanvasPaintPending.setPaintPending(hyperImage_.getCanvas(), imageReceivedObject_);
+    //     }
          updateDisplay(taggedImage, false);
-      }
+    //  }
    }
 
    /**
@@ -1878,7 +1878,11 @@ public class VirtualAcquisitionDisplay implements
          //updates the histogram after an ROI is drawn
          @Override
          public void mouseReleased(MouseEvent me) {
+            if (hyperImage_ instanceof MMCompositeImage) {
             ((MMCompositeImage) hyperImage_).updateAndDraw(true);
+            } else {
+               hyperImage_.updateAndDraw();
+            }
          }
 
          @Override
