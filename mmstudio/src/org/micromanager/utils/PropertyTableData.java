@@ -114,10 +114,12 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
       return core_.getAvailableConfigGroups();
    }
 
+   @Override
    public int getRowCount() {
       return propListVisible_.size();
    }
 
+   @Override
    public int getColumnCount() {
       return columnNames_.length;
    }
@@ -126,10 +128,12 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
       return true;
    }
 
+   @Override
    public PropertyItem getPropertyItem(int row) {
       return propListVisible_.get(row);
    }
 
+   @Override
    public Object getValueAt(int row, int col) {
 
       PropertyItem item = propListVisible_.get(row);
@@ -138,7 +142,7 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
       } else if (col == PropertyValueColumn_) {
          return item.value;
       } else if (col == PropertyUsedColumn_) {
-         return new Boolean(item.confInclude);
+         return item.confInclude;
       }
 
       return null;
