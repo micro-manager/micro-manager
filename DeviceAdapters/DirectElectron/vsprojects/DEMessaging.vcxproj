@@ -74,7 +74,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>$(THIRDPARTYLIBS)\google\protobuf-2.5.0_build\VS2010\include;$(THIRDPARTYLIBS)\boost;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(THIRDPARTYLIBS)\google\protobuf-2.5.0_build\VS2010\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WIN32_WINNT=0x0501;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -82,7 +82,7 @@
       </PrecompiledHeader>
     </ClCompile>
     <Lib>
-      <AdditionalLibraryDirectories>$(THIRDPARTYLIBS)\google\protobuf-2.5.0_build\VS2010\lib\$(Configuration)\$(Platform);$(THIRDPARTYLIBS)\boost\stage_$(Platform)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(THIRDPARTYLIBS)\google\protobuf-2.5.0_build\VS2010\lib\$(Configuration)\$(Platform);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -91,7 +91,7 @@
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>$(THIRDPARTYLIBS)\google\protobuf-2.5.0_build\VS2010\include;$(THIRDPARTYLIBS)\boost;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(THIRDPARTYLIBS)\google\protobuf-2.5.0_build\VS2010\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WIN32_WINNT=0x0501;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -99,18 +99,18 @@
       </PrecompiledHeader>
     </ClCompile>
     <Lib>
-      <AdditionalLibraryDirectories>$(THIRDPARTYLIBS)\google\protobuf-2.5.0_build\VS2010\lib\$(Configuration)\$(Platform);$(THIRDPARTYLIBS)\boost\stage_$(Platform)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(THIRDPARTYLIBS)\google\protobuf-2.5.0_build\VS2010\lib\$(Configuration)\$(Platform);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(THIRDPARTYLIBS)\google\protobuf-2.5.0_build\VS2010\include;$(THIRDPARTYLIBS)\boost;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(THIRDPARTYLIBS)\google\protobuf-2.5.0_build\VS2010\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WIN32_WINNT=0x0501;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>
       </PrecompiledHeader>
     </ClCompile>
     <Lib>
-      <AdditionalLibraryDirectories>$(THIRDPARTYLIBS)\google\protobuf-2.5.0_build\VS2010\lib\$(Configuration)\$(Platform);$(THIRDPARTYLIBS)\boost\stage_$(Platform)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(THIRDPARTYLIBS)\google\protobuf-2.5.0_build\VS2010\lib\$(Configuration)\$(Platform);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -118,13 +118,13 @@
       <TargetEnvironment>X64</TargetEnvironment>
     </Midl>
     <ClCompile>
-      <AdditionalIncludeDirectories>$(THIRDPARTYLIBS)\google\protobuf-2.5.0_build\VS2010\include;$(THIRDPARTYLIBS)\boost;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(THIRDPARTYLIBS)\google\protobuf-2.5.0_build\VS2010\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WIN32_WINNT=0x0501;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>
       </PrecompiledHeader>
     </ClCompile>
     <Lib>
-      <AdditionalLibraryDirectories>$(THIRDPARTYLIBS)\google\protobuf-2.5.0_build\VS2010\lib\$(Configuration)\$(Platform);$(THIRDPARTYLIBS)\boost\stage_$(Platform)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(THIRDPARTYLIBS)\google\protobuf-2.5.0_build\VS2010\lib\$(Configuration)\$(Platform);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>

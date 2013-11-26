@@ -80,7 +80,7 @@
       <Optimization>Disabled</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
-      <AdditionalIncludeDirectories>../../../3rdpartypublic/boost;..\..\..\3rdparty\Thorlabs\DCx_SDK_4_20\Develop\include;..\..\MMDevice;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\3rdparty\Thorlabs\DCx_SDK_4_20\Develop\include;..\..\MMDevice;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -89,7 +89,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>uc480.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\..\..\3rdpartypublic\boost\stage_$(Platform)\lib;..\..\..\3rdparty\Thorlabs\DCx_SDK_4_20\Develop\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\..\..\3rdparty\Thorlabs\DCx_SDK_4_20\Develop\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Windows</SubSystem>
       <DataExecutionPrevention>
       </DataExecutionPrevention>
@@ -103,7 +103,7 @@
       <Optimization>Disabled</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
-      <AdditionalIncludeDirectories>../../../3rdpartypublic/boost;..\..\..\3rdparty\Thorlabs\DCx_SDK_4_20\Develop\include;..\..\MMDevice;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\3rdparty\Thorlabs\DCx_SDK_4_20\Develop\include;..\..\MMDevice;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -112,7 +112,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>uc480_64.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\..\..\3rdpartypublic\boost\stage_$(Platform)\lib;..\..\..\3rdparty\Thorlabs\DCx_SDK_4_20\Develop\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\..\..\3rdparty\Thorlabs\DCx_SDK_4_20\Develop\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Windows</SubSystem>
       <DataExecutionPrevention>
       </DataExecutionPrevention>
@@ -123,14 +123,14 @@
       <Optimization>MaxSpeed</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
-      <AdditionalIncludeDirectories>../../../3rdpartypublic/boost;..\..\..\3rdparty\Thorlabs\DCx_SDK_4_20\Develop\include;..\..\MMDevice;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\3rdparty\Thorlabs\DCx_SDK_4_20\Develop\include;..\..\MMDevice;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <DisableSpecificWarnings>4290;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <AdditionalDependencies>uc480.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\..\..\3rdpartypublic\boost\stage_$(Platform)\lib;..\..\..\3rdparty\Thorlabs\DCx_SDK_4_20\Develop\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\..\..\3rdparty\Thorlabs\DCx_SDK_4_20\Develop\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Windows</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -146,14 +146,14 @@
       <Optimization>MaxSpeed</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
-      <AdditionalIncludeDirectories>../../../3rdpartypublic/boost;..\..\..\3rdparty\Thorlabs\DCx_SDK_4_20\Develop\include;..\..\MMDevice;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\3rdparty\Thorlabs\DCx_SDK_4_20\Develop\include;..\..\MMDevice;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <DisableSpecificWarnings>4290;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <AdditionalDependencies>uc480_64.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\..\..\3rdpartypublic\boost\stage_$(Platform)\lib;..\..\..\3rdparty\Thorlabs\DCx_SDK_4_20\Develop\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\..\..\3rdparty\Thorlabs\DCx_SDK_4_20\Develop\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Windows</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>

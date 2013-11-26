@@ -84,7 +84,6 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>Iphlpapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\..\..\3rdpartypublic\boost\stage_$(Platform)\lib;..\..\lib_$(Platform);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Console</SubSystem>
     </Link>
   </ItemDefinitionGroup>
@@ -102,7 +101,6 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>Iphlpapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\..\..\3rdpartypublic\boost\stage_$(Platform)\lib;..\..\lib_$(Platform);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Console</SubSystem>
     </Link>
   </ItemDefinitionGroup>
@@ -117,7 +115,6 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>Iphlpapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\..\..\3rdpartypublic\boost\stage_$(Platform)\lib;..\..\lib_$(Platform);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Console</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -137,7 +134,6 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>Iphlpapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\..\..\3rdpartypublic\boost\stage_$(Platform)\lib;..\..\lib_$(Platform);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Console</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>

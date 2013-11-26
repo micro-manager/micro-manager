@@ -86,7 +86,6 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;MMCOREPY_WRAP_EXPORTS;__WIN32__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <PrecompiledHeader>
@@ -94,7 +93,6 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>Iphlpapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\MMCore\$(Platform)\$(Configuration);..\..\3rdpartypublic\boost\stage_$(Platform)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Windows</SubSystem>
       <OptimizeReferences>
       </OptimizeReferences>
@@ -103,7 +101,6 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;MMCOREPY_WRAP_EXPORTS;__WIN32__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <PrecompiledHeader>
@@ -111,7 +108,6 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>Iphlpapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\MMCore\$(Platform)\$(Configuration);..\..\3rdpartypublic\boost\stage_$(Platform)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Windows</SubSystem>
       <OptimizeReferences>
       </OptimizeReferences>
@@ -119,7 +115,6 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;MMCOREPY_WRAP_EXPORTS;__WIN32__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <PrecompiledHeader>
@@ -127,14 +122,12 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>Iphlpapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\MMCore\$(Platform)\$(Configuration);..\..\3rdpartypublic\boost\stage_$(Platform)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Windows</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;MMCOREPY_WRAP_EXPORTS;__WIN32__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <PrecompiledHeader>
@@ -142,7 +135,6 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>Iphlpapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\MMCore\$(Platform)\$(Configuration);..\..\3rdpartypublic\boost\stage_$(Platform)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Windows</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
     </Link>

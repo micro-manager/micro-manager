@@ -71,7 +71,7 @@
     <ClCompile>
       <AdditionalOptions>/D "_CRT_SECURE_NO_WARNINGS" %(AdditionalOptions)</AdditionalOptions>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>../../3rdpartypublic/boost;../../3rdpartypublic\boost\boost;../../3rdpartypublic/zlib/zlib-1.2.8;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../3rdpartypublic/zlib/zlib-1.2.8;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -83,7 +83,7 @@
     <Lib>
       <AdditionalDependencies>zlibstat.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)MMCore.lib</OutputFile>
-      <AdditionalLibraryDirectories>..\..\3rdpartypublic\boost\stage_$(Platform)\lib;..\..\3rdpartypublic\zlib\zlib-1.2.8-bin\VS2008\$(Platform)\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\..\3rdpartypublic\zlib\zlib-1.2.8-bin\VS2008\$(Platform)\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -93,7 +93,7 @@
     <ClCompile>
       <AdditionalOptions>/D "_CRT_SECURE_NO_WARNINGS" %(AdditionalOptions)</AdditionalOptions>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>../../3rdpartypublic/boost;../../3rdpartypublic\boost\boost;../../3rdpartypublic/zlib/zlib-1.2.8;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../3rdpartypublic/zlib/zlib-1.2.8;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -105,13 +105,13 @@
     <Lib>
       <AdditionalDependencies>zlibstat.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)MMCore.lib</OutputFile>
-      <AdditionalLibraryDirectories>..\..\3rdpartypublic\boost\stage_$(Platform)\lib;..\..\3rdpartypublic\zlib\zlib-1.2.8-bin\VS2008\$(Platform)\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\..\3rdpartypublic\zlib\zlib-1.2.8-bin\VS2008\$(Platform)\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
       <AdditionalOptions>/D "_CRT_SECURE_NO_WARNINGS" %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalIncludeDirectories>../../3rdpartypublic/boost;../../3rdpartypublic\boost\boost;../../3rdpartypublic/zlib/zlib-1.2.8;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../3rdpartypublic/zlib/zlib-1.2.8;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <PrecompiledHeader>
@@ -121,7 +121,7 @@
     <Lib>
       <AdditionalDependencies>zlibstat.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)MMCore.lib</OutputFile>
-      <AdditionalLibraryDirectories>..\..\3rdpartypublic\boost\stage_$(Platform)\lib;..\..\3rdpartypublic\zlib\zlib-1.2.8-bin\VS2008\$(Platform)\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\..\3rdpartypublic\zlib\zlib-1.2.8-bin\VS2008\$(Platform)\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -130,7 +130,7 @@
     </Midl>
     <ClCompile>
       <AdditionalOptions>/D "_CRT_SECURE_NO_WARNINGS" %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalIncludeDirectories>../../3rdpartypublic/boost;../../3rdpartypublic\boost\boost;../../3rdpartypublic/zlib/zlib-1.2.8;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../3rdpartypublic/zlib/zlib-1.2.8;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <PrecompiledHeader>
@@ -140,7 +140,7 @@
     <Lib>
       <AdditionalDependencies>zlibstat.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)MMCore.lib</OutputFile>
-      <AdditionalLibraryDirectories>..\..\3rdpartypublic\boost\stage_$(Platform)\lib;..\..\3rdpartypublic\zlib\zlib-1.2.8-bin\VS2008\$(Platform)\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\..\3rdpartypublic\zlib\zlib-1.2.8-bin\VS2008\$(Platform)\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>

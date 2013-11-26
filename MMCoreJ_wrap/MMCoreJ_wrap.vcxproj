@@ -74,7 +74,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>../../3rdpartypublic/boost;$(JAVA_HOME)\include\win32;$(JAVA_HOME)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(JAVA_HOME)\include\win32;$(JAVA_HOME)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;MMCOREJ_WRAP_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -86,7 +86,6 @@
     <Link>
       <AdditionalDependencies>Iphlpapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)MMCoreJ_wrap.dll</OutputFile>
-      <AdditionalLibraryDirectories>..\..\3rdpartypublic\boost\stage_$(Platform)\lib;..\lib_$(Platform);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Windows</SubSystem>
       <DataExecutionPrevention>
       </DataExecutionPrevention>
@@ -98,7 +97,7 @@
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>../../3rdpartypublic/boost;$(JAVA_HOME)\include\win32;$(JAVA_HOME)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(JAVA_HOME)\include\win32;$(JAVA_HOME)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;MMCOREJ_WRAP_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -110,7 +109,6 @@
     <Link>
       <AdditionalDependencies>Iphlpapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)MMCoreJ_wrap.dll</OutputFile>
-      <AdditionalLibraryDirectories>..\..\3rdpartypublic\boost\stage_$(Platform)\lib;..\lib_$(Platform);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Windows</SubSystem>
       <DataExecutionPrevention>
       </DataExecutionPrevention>
@@ -118,7 +116,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>../../3rdpartypublic/boost;$(JAVA_HOME)\include\win32;$(JAVA_HOME)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(JAVA_HOME)\include\win32;$(JAVA_HOME)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;MMCOREJ_WRAP_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <PrecompiledHeader>
@@ -128,7 +126,6 @@
     <Link>
       <AdditionalDependencies>Iphlpapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)MMCoreJ_wrap.dll</OutputFile>
-      <AdditionalLibraryDirectories>..\..\3rdpartypublic\boost\stage_$(Platform)\lib;..\lib_$(Platform);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Windows</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -141,7 +138,7 @@
       <TargetEnvironment>X64</TargetEnvironment>
     </Midl>
     <ClCompile>
-      <AdditionalIncludeDirectories>../../3rdpartypublic/boost;$(JAVA_HOME)\include\win32;$(JAVA_HOME)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(JAVA_HOME)\include\win32;$(JAVA_HOME)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;MMCOREJ_WRAP_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <PrecompiledHeader>
@@ -151,7 +148,6 @@
     <Link>
       <AdditionalDependencies>Iphlpapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)MMCoreJ_wrap.dll</OutputFile>
-      <AdditionalLibraryDirectories>..\..\3rdpartypublic\boost\stage_$(Platform)\lib;..\lib_$(Platform);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Windows</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
