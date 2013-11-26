@@ -293,6 +293,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       return getSnapLiveWin();
    }
 
+   @Override
    public ImageWindow getSnapLiveWin() {
       return simpleDisplay_.getHyperImage().getWindow();
    }
@@ -404,8 +405,10 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       return new Color(defaultColor);
    }
   
+   @Override
    public void enableRoiButtons(final boolean enabled) {
        SwingUtilities.invokeLater(new Runnable() {
+           @Override
            public void run() {
                setRoiButton_.setEnabled(enabled);
                clearRoiButton_.setEnabled(enabled);
@@ -464,6 +467,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
             final JMenuItem registerMenuItem = new JMenuItem();
             registerMenuItem.addActionListener(new ActionListener() {
 
+                @Override
                 public void actionPerformed(ActionEvent e) {
                     try {
                         RegistrationDlg regDlg = new RegistrationDlg(systemPrefs_);
@@ -480,6 +484,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
         final JMenuItem reportProblemMenuItem = new JMenuItem();
         reportProblemMenuItem.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 if (null == reportProblemDialog_) {
                     reportProblemDialog_ = new ReportProblemDialog(core_, thisFrame, options_);
@@ -494,6 +499,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
         final JMenuItem aboutMenuItem = new JMenuItem();
         aboutMenuItem.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 MMAboutDlg dlg = new MMAboutDlg();
                 String versionInfo = "MM Studio version: " + MMVersion.VERSION_STRING;
@@ -518,6 +524,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
             configMenuItem.setText(configFile);
             configMenuItem.addActionListener(new ActionListener() {
                String theConfigFile = configFile;
+               @Override
                public void actionPerformed(ActionEvent e) {
                   sysConfigFile_ = theConfigFile;
                   loadSystemConfiguration();
@@ -532,6 +539,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    /**
     * Allows MMListeners to register themselves
     */
+   @Override
    public void addMMListener(MMListenerInterface newL) {
       if (MMListeners_.contains(newL))
          return;
@@ -541,6 +549,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    /**
     * Allows MMListeners to remove themselves
     */
+   @Override
    public void removeMMListener(MMListenerInterface oldL) {
       if (!MMListeners_.contains(oldL))
          return;
@@ -551,6 +560,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
     * Lets JComponents register themselves so that their background can be
     * manipulated
     */
+   @Override
    public void addMMBackgroundListener(Component comp) {
       if (MMFrames_.contains(comp))
          return;
@@ -561,6 +571,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
     * Lets JComponents remove themselves from the list whose background gets
     * changes
     */
+   @Override
    public void removeMMBackgroundListener(Component comp) {
       if (!MMFrames_.contains(comp))
          return;
@@ -608,6 +619,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    /**
     * Inserts version info for various components in the Corelog
     */
+   @Override
    public void logStartupProperties() {
       core_.enableDebugLog(options_.debugLogEnabled_);
       core_.logMessage("MM Studio version: " + getVersion());
@@ -647,6 +659,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       acquisitionEngine2010LoadingThread.start();
    }
 
+   @Override
    public ImageCache getAcquisitionImageCache(String acquisitionName) throws MMScriptException {
       return getAcquisition(acquisitionName).getImageCache();
    }
@@ -848,6 +861,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       }
    }
 
+   @SuppressWarnings("LeakingThisInConstructor")
    public MMStudioMainFrame(boolean pluginStatus) {
       super();
 
@@ -965,11 +979,14 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
 
       class ListeningJPanel extends JPanel implements AncestorListener {
 
+         @Override
          public void ancestorMoved(AncestorEvent event) {
             //System.out.println("moved!");
          }
 
+         @Override
          public void ancestorRemoved(AncestorEvent event) {}
+         @Override
          public void ancestorAdded(AncestorEvent event) {}
 
       }
@@ -998,6 +1015,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       buttonSnap_.setMaximumSize(new Dimension(0, 0));
       buttonSnap_.addActionListener(new ActionListener() {
 
+         @Override
          public void actionPerformed(ActionEvent e) {
             doSnap();
          }
@@ -1043,6 +1061,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       textFieldExp_.setFont(new Font("Arial", Font.PLAIN, 10));
       textFieldExp_.addActionListener(new ActionListener() {
 
+         @Override
          public void actionPerformed(ActionEvent e) {
             setExposure();
          }
@@ -1071,6 +1090,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       toggleButtonLive_.setFont(new Font("Arial", Font.PLAIN, 10));
       toggleButtonLive_.addActionListener(new ActionListener() {
 
+         @Override
          public void actionPerformed(ActionEvent e) {            
             enableLiveMode(!isLiveModeOn());
          }
@@ -1100,6 +1120,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       toAlbumButton_.setFont(new Font("Arial", Font.PLAIN, 10));
       toAlbumButton_.addActionListener(new ActionListener() {
 
+         @Override
          public void actionPerformed(ActionEvent e) {
             snapAndAddToImage5D();
          }
@@ -1122,6 +1143,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       toggleButtonShutter_ = new JToggleButton();
       toggleButtonShutter_.addActionListener(new ActionListener() {
 
+         @Override
          public void actionPerformed(final ActionEvent e) {
             toggleShutter();
          }
@@ -1161,6 +1183,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       shutterComboBox_.setName("Shutter");
       shutterComboBox_.addActionListener(new ActionListener() {
 
+         @Override
          public void actionPerformed(ActionEvent arg0) {
             try {
                if (shutterComboBox_.getSelectedItem() != null) {
@@ -1195,6 +1218,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       final JMenuItem openMenuItem = new JMenuItem();
       openMenuItem.addActionListener(new ActionListener() {
 
+         @Override
          public void actionPerformed(final ActionEvent e) {
             new Thread() {
                @Override
@@ -1210,6 +1234,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       final JMenuItem openInRamMenuItem = new JMenuItem();
       openInRamMenuItem.addActionListener(new ActionListener() {
 
+         @Override
          public void actionPerformed(final ActionEvent e) {
             new Thread() {
                @Override
@@ -1227,6 +1252,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       final JMenuItem exitMenuItem = new JMenuItem();
       exitMenuItem.addActionListener(new ActionListener() {
 
+         @Override
          public void actionPerformed(ActionEvent e) {
             closeSequence(false);
          }
@@ -1246,6 +1272,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
             MMStudioMainFrame.class, "icons/arrow_refresh.png"));
       refreshMenuItem.addActionListener(new ActionListener() {
 
+         @Override
          public void actionPerformed(ActionEvent e) {
             core_.updateSystemStateCache();
             updateGUI(true);
@@ -1258,6 +1285,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       final JMenuItem rebuildGuiMenuItem = new JMenuItem();
       rebuildGuiMenuItem.addActionListener(new ActionListener() {
 
+         @Override
          public void actionPerformed(ActionEvent e) {
             initializeGUI();
             core_.updateSystemStateCache(); 
@@ -1341,6 +1369,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       centerAndDragMenuItem_ = new JCheckBoxMenuItem();     
       
       centerAndDragMenuItem_.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent e) {
             updateCenterAndDragListener();
             IJ.setTool(Toolbar.HAND);
@@ -1501,7 +1530,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       comboBinning_.setFont(new Font("Arial", Font.PLAIN, 10));
       comboBinning_.setMaximumRowCount(4);
       comboBinning_.addActionListener(new ActionListener() {
-
          @Override
          public void actionPerformed(ActionEvent e) {
             changeBinning();
@@ -1595,6 +1623,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       buttonAcqSetup.setFont(new Font("Arial", Font.PLAIN, 10));
       buttonAcqSetup.addActionListener(new ActionListener() {
 
+         @Override
          public void actionPerformed(ActionEvent e) {
             openAcqControlDialog();
          }
@@ -2300,6 +2329,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
     * @param defaultExp - default value
     * @return exposure time
     */
+   @Override
    public double getChannelExposureTime(String channelGroup, String channel,
            double defaultExp) {
       return exposurePrefs_.getDouble("Exposure_" + channelGroup
@@ -2316,6 +2346,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
     * @param channel - preset for which to change exposure time
     * @param exposure - desired exposure time
     */
+   @Override
    public void setChannelExposureTime(String channelGroup, String channel,
            double exposure) {
       try {
@@ -2351,6 +2382,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       return options_.mpTiffSeparateFilesForPositions_;
    }
    
+   @Override
    public boolean getHideMDADisplayOption() {
       return options_.hideMDADisplay_;
    }
@@ -2618,6 +2650,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       }
    }
 
+   @Override
    public String openAcquisitionData(String dir, boolean inRAM, boolean show) 
            throws MMScriptException {
       String rootDir = new File(dir).getAbsolutePath();
@@ -2638,6 +2671,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
     * Opens an existing data set. Shows the acquisition in a window.
     * @return The acquisition object.
     */
+   @Override
    public String openAcquisitionData(String dir, boolean inRam) throws MMScriptException {
       return openAcquisitionData(dir, inRam, true);
    }
@@ -2870,6 +2904,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    // //////////////////////////////////////////////////////////////////////////
    // public interface available for scripting access
    // //////////////////////////////////////////////////////////////////////////
+   @Override
    public void snapSingleImage() {
       doSnap();
    }
@@ -2928,6 +2963,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
     * Opens the XYPositionList when it is not opened
     * Adds the current position to the list (same as pressing the "Mark" button)
     */
+   @Override
    public void markCurrentPosition() {
       if (posListDlg_ == null) {
          showXYPositionList();
@@ -2940,6 +2976,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    /**
     * Implements ScriptInterface
     */
+   @Override
    public AcqControlDlg getAcqDlg() {
       return acqControlWin_;
    }
@@ -2947,6 +2984,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    /**
     * Implements ScriptInterface
     */
+   @Override
    public PositionListDlg getXYPosListDlg() {
       if (posListDlg_ == null)
          posListDlg_ = new PositionListDlg(core_, this, posList_, options_);
@@ -2956,6 +2994,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    /**
     * Implements ScriptInterface
     */
+   @Override
    public boolean isAcquisitionRunning() {
       if (engine_ == null)
          return false;
@@ -2965,6 +3004,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    /**
     * Implements ScriptInterface
     */
+   @Override
    public boolean versionLessThan(String version) throws MMScriptException {
       try {
          String[] v = MMVersion.VERSION_STRING.split(" ", 2);
@@ -2997,6 +3037,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       }
    } 
 
+   @Override
     public boolean isLiveModeOn() {
         return liveModeTimer_ != null && liveModeTimer_.isRunning();
    }
@@ -3008,6 +3049,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       return liveModeTimer_;
    }
    
+   @Override
    public void enableLiveMode(boolean enable) {
       if (core_ == null) {
          return;
@@ -3179,6 +3221,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
          core_.snapImage();
          long c = core_.getNumberOfCameraChannels();
          runDisplayThread(snapImageQueue, new DisplayImageRoutine() {
+            @Override
             public void show(final TaggedImage image) {
                   if (album) {
                      try {
@@ -3240,6 +3283,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    }
 
 
+   @Override
    public boolean displayImage(TaggedImage ti) {
       normalizeTags(ti);
       return displayTaggedImage(ti, true);
@@ -3353,6 +3397,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       }
    }
 
+   @Override
    public String getVersion() {
       return MMVersion.VERSION_STRING;
    }
@@ -3363,6 +3408,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       final JMenuItem newMenuItem = new JMenuItem();
       newMenuItem.addActionListener(new ActionListener() {
 
+         @Override
          public void actionPerformed(final ActionEvent e) {
             ReportingUtils.logMessage("Plugin command: "
                   + e.getActionCommand());
@@ -4123,10 +4169,12 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       this.openAcquisition(name, rootDir, nrFrames, nrChannels, nrSlices, 0, show, virtual);
    }
 
+   @Override
    public String createAcquisition(JSONObject summaryMetadata, boolean diskCached) {
       return createAcquisition(summaryMetadata, diskCached, false);
    }
    
+   @Override
    public String createAcquisition(JSONObject summaryMetadata, boolean diskCached, boolean displayOff) {
       return acqMgr_.createAcquisition(summaryMetadata, diskCached, engine_, displayOff);
    }
@@ -4257,6 +4305,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       updateGUI(true, true);
    }
 
+   @Override
    public void setAcquisitionProperty(String acqName, String propertyName,
          String value) throws MMScriptException {
       MMAcquisition acq = acqMgr_.getAcquisition(acqName);
@@ -4268,10 +4317,12 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       setAcquisitionSummary(acqName, md);
    }
 
+   @Override
    public void setAcquisitionSummary(String acqName, JSONObject md) throws MMScriptException {
       acqMgr_.getAcquisition(acqName).setSummaryProperties(md);
    }
 
+   @Override
    public void setImageProperty(String acqName, int frame, int channel,
          int slice, String propName, String value) throws MMScriptException {
       MMAcquisition acq = acqMgr_.getAcquisition(acqName);
@@ -4321,6 +4372,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       }
    }
 
+   @Override
    public String getCurrentAlbum() {
       return acqMgr_.getCurrentAlbum();
    }
@@ -4340,6 +4392,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       acq.insertTaggedImage(taggedImg, f, 0, 0);
    }
 
+   @Override
    public void addToAlbum(TaggedImage taggedImg) throws MMScriptException {
       addToAlbum(taggedImg, null);
    }
@@ -4355,6 +4408,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       acq.insertImage(img, frame, channel, slice);
    }
 
+   @Override
    public void addImage(String name, TaggedImage taggedImg) throws MMScriptException {
       acqMgr_.getAcquisition(name).insertImage(taggedImg);
    }
@@ -4368,16 +4422,19 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
 	   a.insertImage(taggedImg);
    }
 
+   @Override
    public void addImage(String name, TaggedImage taggedImg, boolean updateDisplay) throws MMScriptException {
       acqMgr_.getAcquisition(name).insertImage(taggedImg, updateDisplay);
    }
    
+   @Override
    public void addImage(String name, TaggedImage taggedImg, 
            boolean updateDisplay,
            boolean waitForDisplay) throws MMScriptException {
-   acqMgr_.getAcquisition(name).insertImage(taggedImg, updateDisplay, waitForDisplay);
-}
+      acqMgr_.getAcquisition(name).insertImage(taggedImg, updateDisplay, waitForDisplay);
+   }
    
+   @Override
    public void addImage(String name, TaggedImage taggedImg, int frame, int channel, 
            int slice, int position) throws MMScriptException {
       try {
@@ -4387,6 +4444,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       }
    }
 
+   @Override
    public void addImage(String name, TaggedImage taggedImg, int frame, int channel, 
            int slice, int position, boolean updateDisplay) throws MMScriptException {
       try {
@@ -4396,6 +4454,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       }  
    }
 
+   @Override
    public void addImage(String name, TaggedImage taggedImg, int frame, int channel,
            int slice, int position, boolean updateDisplay, boolean waitForDisplay) throws MMScriptException {
       try {
@@ -4408,15 +4467,18 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    /**
     * Closes all acquisitions
     */
+   @Override
    public void closeAllAcquisitions() {
       acqMgr_.closeAll();
    }
 
+   @Override
    public String[] getAcquisitionNames()
    {
       return acqMgr_.getAcqusitionNames();
    }
    
+   @Override
    public MMAcquisition getAcquisition(String name) throws MMScriptException {
       return acqMgr_.getAcquisition(name);
    }
@@ -4429,12 +4491,14 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
          msg_ = text;
       }
 
+      @Override
       public void run() {
          if (scriptPanel_ != null)
             scriptPanel_.message(msg_);
       }
    }
 
+   @Override
    public void message(String text) throws MMScriptException {
       if (scriptPanel_ != null) {
          if (scriptPanel_.stopRequestPending()) {
@@ -4445,6 +4509,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       }
    }
 
+   @Override
    public void clearMessageWindow() throws MMScriptException {
       if (scriptPanel_ != null) {
          if (scriptPanel_.stopRequestPending()) {
@@ -4462,12 +4527,14 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       clearMessageWindow();
    }
 
+   @Override
    public void setChannelContrast(String title, int channel, int min, int max)
          throws MMScriptException {
       MMAcquisition acq = acqMgr_.getAcquisition(title);
       acq.setChannelContrast(channel, min, max);
    }
 
+   @Override
    public void setChannelName(String title, int channel, String name)
          throws MMScriptException {
       MMAcquisition acq = acqMgr_.getAcquisition(title);
@@ -4475,18 +4542,21 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
 
    }
 
+   @Override
    public void setChannelColor(String title, int channel, Color color)
          throws MMScriptException {
       MMAcquisition acq = acqMgr_.getAcquisition(title);
       acq.setChannelColor(channel, color.getRGB());
    }
-
+   
+   @Override
    public void setContrastBasedOnFrame(String title, int frame, int slice)
          throws MMScriptException {
       MMAcquisition acq = acqMgr_.getAcquisition(title);
       acq.setContrastBasedOnFrame(frame, slice);
    }
 
+   @Override
    public void setStagePosition(double z) throws MMScriptException {
       try {
          core_.setPosition(core_.getFocusDevice(),z);
@@ -4496,6 +4566,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       }
    }
 
+   @Override
    public void setRelativeStagePosition(double z) throws MMScriptException {
       try {
          core_.setRelativePosition(core_.getFocusDevice(), z);
@@ -4506,6 +4577,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    }
 
 
+   @Override
    public void setXYStagePosition(double x, double y) throws MMScriptException {
       try {
          core_.setXYPosition(core_.getXYStageDevice(), x, y);
@@ -4515,6 +4587,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       }
    }
 
+   @Override
       public void setRelativeXYStagePosition(double x, double y) throws MMScriptException {
       try {
          core_.setRelativeXYPosition(core_.getXYStageDevice(), x, y);
@@ -4524,6 +4597,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       }
    }
 
+   @Override
    public Point2D.Double getXYStagePosition() throws MMScriptException {
       String stage = core_.getXYStageDevice();
       if (stage.length() == 0) {
@@ -4541,10 +4615,12 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       }
    }
 
+   @Override
    public String getXYStageName() {
       return core_.getXYStageDevice();
    }
 
+   @Override
    public void setXYOrigin(double x, double y) throws MMScriptException {
       String xyStage = core_.getXYStageDevice();
       try {
@@ -4595,6 +4671,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
          final Class<?> cl2 = cl;
          SwingUtilities.invokeLater(
             new Runnable() {
+               @Override
                public void run() {
                   addPluginToMenu(pi2, cl2);
                }
@@ -4617,6 +4694,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       return msg;
    }
 
+   @Override
    public String installPlugin(String className) {
       try {
          Class clazz = Class.forName(className);
@@ -4628,6 +4706,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       }
    }
 
+   @Override
    public String installAutofocusPlugin(String className) {
       try {
          return installAutofocusPlugin(Class.forName(className));
@@ -4754,16 +4833,19 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       }
    }
 
+   @Override
    public Autofocus getAutofocus() {
       return afMgr_.getDevice();
    }
 
+   @Override
    public void showAutofocusDialog() {
       if (afMgr_.getDevice() != null) {
          afMgr_.showOptionsDialog();
       }
    }
 
+   @Override
    public AutofocusManager getAutofocusManager() {
       return afMgr_;
    }
@@ -4783,6 +4865,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
             return resultFile.toString();
    }
    
+   @Override
    public void setImageSavingFormat(Class imageSavingClass) throws MMScriptException {
       if (! (imageSavingClass.equals(TaggedImageStorageDiskDefault.class) || 
               imageSavingClass.equals(TaggedImageStorageMultipageTiff.class))) {
@@ -4852,34 +4935,42 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
 
    }
 
+   @Override
    public void logMessage(String msg) {
       ReportingUtils.logMessage(msg);
    }
 
+   @Override
    public void showMessage(String msg) {
       ReportingUtils.showMessage(msg);
    }
 
+   @Override
    public void logError(Exception e, String msg) {
       ReportingUtils.logError(e, msg);
    }
 
+   @Override
    public void logError(Exception e) {
       ReportingUtils.logError(e);
    }
 
+   @Override
    public void logError(String msg) {
       ReportingUtils.logError(msg);
    }
 
+   @Override
    public void showError(Exception e, String msg) {
       ReportingUtils.showError(e, msg);
    }
 
+   @Override
    public void showError(Exception e) {
       ReportingUtils.showError(e);
    }
 
+   @Override
    public void showError(String msg) {
       ReportingUtils.showError(msg);
    }
