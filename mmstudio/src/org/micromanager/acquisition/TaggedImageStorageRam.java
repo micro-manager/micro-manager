@@ -1,7 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 
 package org.micromanager.acquisition;
 
@@ -37,6 +33,7 @@ public class TaggedImageStorageRam implements TaggedImageStorage {
       displaySettings_ = new JSONObject();
    }
 
+   @Override
    public void putImage(TaggedImage taggedImage) throws MMException {
       String label = MDUtils.getLabel(taggedImage.tags);
       imageMap_.put(label, taggedImage);
@@ -47,20 +44,24 @@ public class TaggedImageStorageRam implements TaggedImageStorage {
       }
    }
 
+   @Override
    public TaggedImage getImage(int channel, int slice, int frame, int position) {
       if (imageMap_ == null)
          return null;
       return imageMap_.get(MDUtils.generateLabel(channel, slice, frame, position));
    }
 
+   @Override
    public JSONObject getImageTags(int channelIndex, int sliceIndex, int frameIndex, int positionIndex) {
       return this.getImage(channelIndex, sliceIndex, frameIndex, positionIndex).tags;
    }
 
+   @Override
    public Set<String> imageKeys() {
       return imageMap_.keySet();
    }
 
+   @Override
    public void finished() {
       finished_ = true;
    }
@@ -71,7 +72,7 @@ public class TaggedImageStorageRam implements TaggedImageStorage {
    }
 
    @Override
-   public void setSummaryMetadata(JSONObject md) {
+   public final void setSummaryMetadata(JSONObject md) {
       summaryMetadata_ = md;
       if (summaryMetadata_ != null) {
          try {
@@ -86,18 +87,22 @@ public class TaggedImageStorageRam implements TaggedImageStorage {
       }  
    }
 
+   @Override
    public JSONObject getSummaryMetadata() {
       return summaryMetadata_;
    }
 
+   @Override
    public void setDisplayAndComments(JSONObject settings) {
       displaySettings_ = settings;
    }
 
+   @Override
    public JSONObject getDisplayAndComments() {
       return displaySettings_;
    }
 
+   @Override
    public void close() {
       imageMap_ = null;
       summaryMetadata_ = null;
@@ -105,14 +110,17 @@ public class TaggedImageStorageRam implements TaggedImageStorage {
       // do nothing for now.
    }
 
+   @Override
    public String getDiskLocation() {
       return null;
    }
 
+   @Override
    public int lastAcquiredFrame() {
       return lastFrame_;
    }
 
+   @Override
    public long getDataSetSize() {
       throw new UnsupportedOperationException("Not supported yet.");
    }

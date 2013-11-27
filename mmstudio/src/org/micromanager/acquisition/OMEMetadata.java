@@ -28,7 +28,6 @@ import loci.common.services.ServiceFactory;
 import loci.formats.MetadataTools;
 import loci.formats.meta.IMetadata;
 import loci.formats.services.OMEXMLService;
-import mmcorej.TaggedImage;
 import ome.xml.model.primitives.*;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -60,6 +59,7 @@ public class OMEMetadata {
       metadata_ = MetadataTools.createOMEXMLMetadata();
    }
 
+   @Override
    public String toString() {
       try {
          OMEXMLService service = new ServiceFactory().getInstance(OMEXMLService.class);

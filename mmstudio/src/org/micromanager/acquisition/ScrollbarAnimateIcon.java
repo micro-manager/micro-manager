@@ -1,14 +1,10 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
+
 package org.micromanager.acquisition;
 
 import java.awt.BasicStroke;
 import java.awt.Canvas;
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.Event;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -35,10 +31,12 @@ public class ScrollbarAnimateIcon extends Canvas implements MouseListener {
 		}
 		
 		/** Overrides Component getPreferredSize(). */
+      @Override
 		public Dimension getPreferredSize() {
 			return new Dimension(WIDTH, HEIGHT);
 		}
 		
+      @Override
 		public void paint(Graphics g) {
 			g.setColor(Color.white);
 			g.fillRect(0, 0, WIDTH, HEIGHT);
@@ -82,13 +80,18 @@ public class ScrollbarAnimateIcon extends Canvas implements MouseListener {
 			}
 		}
 		
+      @Override
 		public void mousePressed(MouseEvent e) {
 			
 		}
 		
+      @Override
 		public void mouseReleased(MouseEvent e) {}
+      @Override
 		public void mouseExited(MouseEvent e) {}
+      @Override
 		public void mouseClicked(MouseEvent e) {}
+      @Override
 		public void mouseEntered(MouseEvent e) {}
 	
 	}

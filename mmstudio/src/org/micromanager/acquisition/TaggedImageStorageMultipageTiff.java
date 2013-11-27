@@ -418,6 +418,7 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
       }
    }
 
+   @Override
    public long getDataSetSize() {
       File dir = new File (directory_);
       LinkedList<File> list = new LinkedList<File>();

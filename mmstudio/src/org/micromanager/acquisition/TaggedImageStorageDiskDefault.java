@@ -1,7 +1,4 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
+
 package org.micromanager.acquisition;
 
 import org.micromanager.api.TaggedImageStorage;
@@ -78,6 +75,7 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
 
    }
 
+   @Override
    public int lastAcquiredFrame() {
       return lastFrame_;
    }
@@ -99,6 +97,7 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
       }
    }
 
+   @Override
    public void putImage(TaggedImage taggedImg) throws MMException {
       try {
          if (!newDataSet_) {
@@ -115,10 +114,9 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
          Object img = taggedImg.pix;
          String tiffFileName = createFileName(md);
          MDUtils.setFileName(md, tiffFileName);
-         String posName = "";
+         String posName;
          String fileName = tiffFileName;
          try {
-
             posName = positionNames_.get(MDUtils.getPositionIndex(md));
             if (posName != null && posName.length() > 0 && !posName.contentEquals("null")) {
                JavaUtils.createDirectory(dir_ + "/" + posName);
@@ -146,6 +144,7 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
       }
    }
 
+   @Override
    public TaggedImage getImage(int channel, int slice, int frame, int position) {
       String label = MDUtils.generateLabel(channel, slice, frame, position);
       if (filenameTable_.get(label) == null) {
@@ -196,6 +195,7 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
       }
    }
 
+   @Override
    public JSONObject getImageTags(int channel, int slice, int frame, int position) {
       String label = MDUtils.generateLabel(channel, slice, frame, position);
       TiffDecoder td = new TiffDecoder(dir_, filenameTable_.get(label));
@@ -207,6 +207,7 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
       }
    }
 
+   @Override
    public Set<String> imageKeys() {
       return filenameTable_.keySet();
    }
@@ -377,11 +378,13 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
       writeMetadata(pos, summaryMetadata, "Summary");
    }
 
+   @Override
    public void finished() {
       closeMetadataStreams();
       newDataSet_ = false;
    }
 
+   @Override
    public boolean isFinished() {
       return !newDataSet_;
    }
@@ -468,7 +471,7 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
    private int getChannelIndex(String channelName) {
       try {
          JSONArray channelNames;
-         Object tmp = null;
+         Object tmp;
          try {
             tmp = getSummaryMetadata().get("ChNames");
             if (tmp instanceof String) {
@@ -498,6 +501,7 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
 
    private Iterable<String> makeJsonIterableKeys(final JSONObject data) {
       return new Iterable<String>() {
+            @Override
             public Iterator<String> iterator() {
                return data.keys();
             }
@@ -532,6 +536,7 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
    /**
     * @return the summaryMetadata_
     */
+   @Override
    public JSONObject getSummaryMetadata() {
       return summaryMetadata_;
    }
@@ -539,6 +544,7 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
    /**
     * @param summaryMetadata the summaryMetadata to set
     */
+   @Override
    public final void setSummaryMetadata(JSONObject summaryMetadata) {
       summaryMetadata_ = summaryMetadata;
       if (summaryMetadata_ != null) {
@@ -554,14 +560,17 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
       }
    }
 
+   @Override
    public void setDisplayAndComments(JSONObject settings) {
       displaySettings_ = settings;
    }
 
+   @Override
    public JSONObject getDisplayAndComments() {
       return displaySettings_;
    }
 
+   @Override
    public void writeDisplaySettings() {
       if (displaySettings_ == null)
          return;
@@ -600,6 +609,7 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
       }
    }
 
+   @Override
    public void close() {
       try {
          writeDisplaySettings();
@@ -618,6 +628,7 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
        */
    }
 
+   @Override
    public String getDiskLocation() {
       return dir_;
    }
@@ -628,8 +639,10 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
       super.finalize();
    }
 
+   @Override
    public long getDataSetSize() {
       File[] files = new File(dir_).listFiles(new FileFilter() {
+         @Override
          public boolean accept(File pathname) {
             return pathname.getName().toLowerCase().endsWith(".tif");
          }

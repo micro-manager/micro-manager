@@ -34,7 +34,6 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import org.json.JSONObject;
 import org.micromanager.MMStudioMainFrame;
-import org.micromanager.api.ImageCache;
 import org.micromanager.utils.ReportingUtils;
 
 
@@ -73,6 +72,7 @@ public class SimpleWindowControls extends DisplayControls {
       showFolderButton_.setPreferredSize(new java.awt.Dimension(30, 28));
       showFolderButton_.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
       showFolderButton_.addActionListener(new java.awt.event.ActionListener() {
+         @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             showFolderButtonActionPerformed();
          }
@@ -89,6 +89,7 @@ public class SimpleWindowControls extends DisplayControls {
       saveButton.setPreferredSize(new Dimension(30, 28));
       saveButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
       saveButton.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent evt) {
             saveButtonActionPerformed();
          }
@@ -127,6 +128,7 @@ public class SimpleWindowControls extends DisplayControls {
       liveButton_.setToolTipText("Continuous live view");
       liveButton_.setFont(new Font("Arial", Font.PLAIN, 10));
       liveButton_.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent e) {            
             liveButtonAction();
          }
@@ -143,6 +145,7 @@ public class SimpleWindowControls extends DisplayControls {
       addToSeriesButton.setPreferredSize(new Dimension(90, 28));
       addToSeriesButton.setFont(new Font("Arial", Font.PLAIN, 10));
       addToSeriesButton.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent evt) {
             addToSeriesButtonActionPerformed();
          }});
@@ -205,6 +208,7 @@ public class SimpleWindowControls extends DisplayControls {
         //showFolderButton_.setEnabled(true);
    }
      
+   @Override
    public void newImageUpdate(JSONObject tags) {
       //showFolderButton_.setEnabled(false);
    }

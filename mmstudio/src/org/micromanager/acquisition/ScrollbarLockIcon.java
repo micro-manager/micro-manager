@@ -1,17 +1,12 @@
 package org.micromanager.acquisition;
 
-import java.awt.BasicStroke;
-import java.awt.Canvas;
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.Event;
-import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.awt.geom.GeneralPath;
 import javax.swing.JComponent;
 import org.micromanager.utils.TooltipTextMaker;
 
@@ -33,20 +28,25 @@ public class ScrollbarLockIcon extends JComponent   {
       this.setToolTipText(TooltipTextMaker.addHTMLBreaksForTooltip(
               "Lock the scrollbar to its current postion"));
       this.addMouseListener(new MouseListener() {
+         @Override
          public void mouseClicked(MouseEvent e) {
          }
 
+         @Override
          public void mousePressed(MouseEvent e) {
          }
 
+         @Override
          public void mouseReleased(MouseEvent e) {
          }
 
+         @Override
          public void mouseEntered(MouseEvent e) {
             foreground_ = Color.blue;
             repaint();
          }
 
+         @Override
          public void mouseExited(MouseEvent e) {
             foreground_ = Color.black;
             repaint();
@@ -59,18 +59,22 @@ public class ScrollbarLockIcon extends JComponent   {
    /**
     * Overrides Component getPreferredSize().
     */
+   @Override
    public Dimension getPreferredSize() {
       return new Dimension(WIDTH, HEIGHT);
    }
    
+   @Override
    public Dimension getMinimumSize() {
        return new Dimension(WIDTH, HEIGHT);
    }
    
+   @Override
     public Dimension getMaximumSize() {
        return new Dimension(WIDTH, HEIGHT);
    }
 
+   @Override
    public void paint(Graphics g) {
       if (g == null) {
          return;

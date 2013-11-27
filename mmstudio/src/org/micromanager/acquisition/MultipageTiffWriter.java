@@ -146,6 +146,7 @@ public class MultipageTiffWriter {
             raFile_.setLength(fileSize);
          } catch (IOException e) {       
           new Thread(new Runnable() {
+                @Override
                 public void run() {
                     try {
                         Thread.sleep(1000);
@@ -204,6 +205,7 @@ public class MultipageTiffWriter {
    private void fileChannelWrite(final ByteBuffer buffer, final long position) {
       executeWritingTask(
         new Runnable() {
+           @Override
            public void run() {
              try {
                 buffer.rewind();
@@ -221,6 +223,7 @@ public class MultipageTiffWriter {
    private void fileChannelWrite(final ByteBuffer[] buffers) {
       executeWritingTask(
         new Runnable() {
+           @Override
            public void run() {
              try {
                 fileChannel_.write(buffers);
@@ -294,7 +297,7 @@ public class MultipageTiffWriter {
       String summaryComment = "";
       try 
       {
-         JSONObject comments = masterMPTiffStorage_.getDisplayAndComments().getJSONObject("Comments");;
+         JSONObject comments = masterMPTiffStorage_.getDisplayAndComments().getJSONObject("Comments");
          if (comments.has("Summary") && !comments.isNull("Summary")) {
             summaryComment = comments.getString("Summary");
          }    
@@ -316,6 +319,7 @@ public class MultipageTiffWriter {
       writeComments();
 
       executeWritingTask(new Runnable() {
+         @Override
          public void run() {
             try {
                //extra byte of space, just to make sure nothing gets cut off
@@ -717,13 +721,13 @@ public class MultipageTiffWriter {
       StringBuffer sb = new StringBuffer();
       sb.append("ImageJ=" + ImageJ.VERSION + "\n");
       if (numChannels_ > 1) {
-         sb.append("channels=" + numChannels_ + "\n");
+         sb.append("channels=").append(numChannels_).append("\n");
       }
       if (numSlices_ > 1) {
-         sb.append("slices=" + numSlices_ + "\n");
+         sb.append("slices=").append(numSlices_).append("\n");
       }
       if (numFrames_ > 1) {
-         sb.append("frames=" + numFrames_ + "\n");
+         sb.append("frames=").append(numFrames_).append("\n");
       }
       if (numFrames_ > 1 || numSlices_ > 1 || numChannels_ > 1) {
          sb.append("hyperstack=true\n");
@@ -734,7 +738,7 @@ public class MultipageTiffWriter {
       //cm so calibration unit is consistent with units used in Tiff tags
       sb.append("unit=um\n");
       if (numSlices_ > 1) {
-         sb.append("spacing=" + zStepUm_ + "\n");
+         sb.append("spacing=").append(zStepUm_).append("\n");
       }
       //write single channel contrast settings or display mode if multi channel
       try {             
@@ -742,8 +746,8 @@ public class MultipageTiffWriter {
          if (numChannels_ == 1) {
             double min = channel0setting.getInt("Min");
             double max = channel0setting.getInt("Max");
-            sb.append("min=" + min + "\n");
-            sb.append("max=" + max + "\n");
+            sb.append("min=").append(min).append("\n");
+            sb.append("max=").append(max).append("\n");
          } else {
             int displayMode = channel0setting.getInt("DisplayMode");
             //COMPOSITE=1, COLOR=2, GRAYSCALE=3

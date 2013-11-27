@@ -29,14 +29,10 @@ import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
-import loci.formats.FormatException;
 import mmcorej.TaggedImage;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -527,7 +523,7 @@ public class MultipageTiffReader {
       progressBar.setProgress(0);
       progressBar.setVisible(true);
       long nextIFDOffsetLocation = 0;
-      IFDData data = null;
+      IFDData data;
       while (filePosition > 0) {
          try {
             data = readIFD(filePosition);
@@ -540,7 +536,7 @@ public class MultipageTiffReader {
                nextIFDOffsetLocation = data.nextIFDOffsetLocation;
                continue;
             }
-            String label = null;
+            String label;
             label = MDUtils.getLabel(ti.tags);
             if (label == null ) {
                break;
@@ -549,6 +545,7 @@ public class MultipageTiffReader {
             
             final int progress = (int) (filePosition/2L);
             SwingUtilities.invokeLater(new Runnable() {
+               @Override
                public void run() {
                   progressBar.setProgress(progress);
                }

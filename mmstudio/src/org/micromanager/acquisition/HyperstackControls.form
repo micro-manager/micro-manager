@@ -1,4 +1,4 @@
-<?xml version="1.1" encoding="UTF-8" ?>
+<?xml version="1.0" encoding="UTF-8" ?>
 
 <Form version="1.2" maxVersion="1.7" type="org.netbeans.modules.form.forminfo.PanelFormInfo">
   <AuxValues>
@@ -40,7 +40,7 @@
     </DimensionLayout>
     <DimensionLayout dim="1">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Component id="statusLineLabel" alignment="0" pref="28" max="32767" attributes="1"/>
+          <Component id="statusLineLabel" alignment="0" max="32767" attributes="1"/>
           <Component id="showFolderButton" alignment="0" max="32767" attributes="1"/>
           <Component id="saveButton" alignment="0" max="32767" attributes="1"/>
           <Group type="103" alignment="0" groupAlignment="3" attributes="0">

@@ -1,7 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 
 package org.micromanager.acquisition;
 
@@ -141,7 +137,7 @@ public class TaggedImageStorageRamFast implements TaggedImageStorage {
    }
 
    @Override
-   public void setSummaryMetadata(JSONObject md) {
+   public final void setSummaryMetadata(JSONObject md) {
       summaryMetadata_ = md;
       if (summaryMetadata_ != null) {
          try {

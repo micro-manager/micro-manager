@@ -1,7 +1,4 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
+
 
 /*
  * HyperstackControls.java
@@ -189,6 +186,7 @@ public class HyperstackControls extends DisplayControls {
 
    private void saveButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveButtonActionPerformed
       new Thread() {
+         @Override
          public void run() {
             acq_.saveAs();
          }
@@ -212,6 +210,7 @@ public class HyperstackControls extends DisplayControls {
    private javax.swing.JLabel statusLineLabel;
    // End of variables declaration//GEN-END:variables
 
+   @Override
    public synchronized void setStatusLabel(String text) {
       statusLineLabel.setText(text);
    }
@@ -264,6 +263,7 @@ public class HyperstackControls extends DisplayControls {
 
    }
 
+   @Override
    public void newImageUpdate(JSONObject tags) {
       if (tags == null) {
          return;
@@ -276,6 +276,7 @@ public class HyperstackControls extends DisplayControls {
                final Timer timer = new Timer("Next frame display");
                TimerTask task = new TimerTask() {
 
+                  @Override
                   public void run() {
                      double timeRemainingS = (nextImageTime - System.nanoTime() / 1000000) / 1000;
                      if (timeRemainingS > 0 && acq_.acquisitionIsRunning()) {
@@ -296,11 +297,13 @@ public class HyperstackControls extends DisplayControls {
    }
 
 
+   @Override
    public void acquiringImagesUpdate(boolean state) {
       abortButton.setEnabled(state);
       pauseAndResumeToggleButton.setEnabled(state);
    }
 
+   @Override
    public void imagesOnDiskUpdate(boolean enabled) {
       showFolderButton.setEnabled(enabled);
    }
