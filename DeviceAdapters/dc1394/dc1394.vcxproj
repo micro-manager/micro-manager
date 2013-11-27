@@ -58,7 +58,6 @@
       <PrecompiledHeader>
       </PrecompiledHeader>
       <DisableSpecificWarnings>4290;%(DisableSpecificWarnings)</DisableSpecificWarnings>
-      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <AdditionalDependencies>libdc1394.a;lib1394camera.a;libgcc.a;libsetupapi.a;%(AdditionalDependencies)</AdditionalDependencies>
