@@ -57,6 +57,8 @@ import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 
 import javax.swing.JMenuItem;
@@ -1073,13 +1075,20 @@ public class VirtualAcquisitionDisplay implements
     */
    @Override
    public synchronized void imageReceived(final TaggedImage taggedImage) {
-    //  if (hyperImage_ == null
-    //          || !CanvasPaintPending.isMyPaintPending(hyperImage_.getCanvas(), imageReceivedObject_)) {
-    //     if (hyperImage_ != null) {
-    //        CanvasPaintPending.setPaintPending(hyperImage_.getCanvas(), imageReceivedObject_);
-    //     }
+      if (hyperImage_ == null) {
          updateDisplay(taggedImage, false);
-    //  }
+         return;
+      }
+      if (!CanvasPaintPending.isMyPaintPending(hyperImage_.getCanvas(), imageReceivedObject_)) {
+         try {
+            Thread.sleep(25);
+         } catch (InterruptedException ex) {
+            Logger.getLogger(VirtualAcquisitionDisplay.class.getName()).log(Level.SEVERE, null, ex);
+         }
+         CanvasPaintPending.setPaintPending(hyperImage_.getCanvas(), imageReceivedObject_);
+         updateDisplay(taggedImage, false);
+         
+      }
    }
 
    /**
