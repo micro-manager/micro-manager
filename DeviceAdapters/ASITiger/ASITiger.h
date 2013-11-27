@@ -129,7 +129,7 @@ const char* const g_AxisLetterPropertyName = "AxisLetter";
 // Hub property names
 const char* const g_HubDevicePropertyName = "HubDeviceName";
 const char* const g_TigerHexAddrPropertyName = "TigerHexAddress";
-const char* const g_SerialCommandPropertyName = "SerialCommand";
+const char* const g_SerialCommandPropertyName = "SerialCommand(sent_only_on_change)";
 const char* const g_SerialResponsePropertyName = "SerialResponse";
 const char* const g_SerialTerminatorPropertyName = "SerialResponseTerminator";
 const char* const g_SerialCommandRepeatDurationPropertyName = "SerialCommandRepeatDuration(s)";
@@ -225,6 +225,17 @@ const char* const g_PiezoModePropertyName = "PiezoMode";
 const char* const g_PiezoTravelRangePropertyName = "PiezoTravelRange(um)";
 const char* const g_PiezoModeFourOvershoot = "PiezoModeFourOvershoot(percent)";
 const char* const g_PiezoModeFourMaxTime = "PiezoModeFourMaxTime(ms)";
+const char* const g_AdvancedSAPropertiesPropertyName = "SingleAxisAdvancedPropertiesEnable";
+const char* const g_MMirrorSAAmplitudePropertyName = "SingleAxisAmplitude(um)";
+const char* const g_MMirrorSAOffsetPropertyName = "SingleAxisOffset(um)";
+const char* const g_MMirrorSAPeriodPropertyName = "SingleAxisPeriod(ms)";
+const char* const g_MMirrorSAModePropertyName = "SingleAxisMode";
+const char* const g_MMirrorSAPatternPropertyName = "SingleAxisPattern";
+const char* const g_MMirrorSAClkSrcPropertyName = "SingleAxisClockSource";
+const char* const g_MMirrorSAClkPolPropertyName = "SingleAxisClockPolarity";
+const char* const g_MMirrorSATTLOutPropertyName = "SingleAxisTTLOut";
+const char* const g_MMirrorSATTLPolPropertyName = "SingleAxisTTLPolarity";
+const char* const g_MMirrorSAPatternModePropertyName = "SingleAxisPatternByte";
 
 // CRISP property names
 const char* const g_WaitAfterLockPropertyName = "Wait time after Lock(ms)";
@@ -322,6 +333,21 @@ const char* const g_CRISP_B = "Balance";
 const char* const g_CRISP_RFO = "Reset Focus Offset";
 const char* const g_CRISP_SSZ = "Save to Controller";
 
+
+struct build_info_type
+{
+   string buildname;
+   unsigned char numAxes;
+   vector<char> vAxesLetter;
+   vector<char> vAxesType;
+   vector<string> vAxesAddr;  // string to handle unprintable characters
+   vector<string> vAxesAddrHex;  // string for simplicity, logically it should be int though
+   vector<int> vAxesProps;
+   vector<string> defines;
+};
+
+// define names
+const char* const g_Define_SINGLEAXIS_FUNCTION = "SINGLEAXIS_FUNCTION";
 
 
 #endif //_ASITiger_H_

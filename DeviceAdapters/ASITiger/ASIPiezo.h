@@ -82,6 +82,18 @@ public:
    int OnMotorControl         (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnModeFourOvershoot    (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnModeFourMaxTime      (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSAAmplitude          (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSAOffset             (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSAPeriod             (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSAMode               (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSAPattern            (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSAAdvanced           (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSAClkSrc             (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSAClkPol             (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSATTLOut             (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSATTLPol             (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSAPatternByte        (MM::PropertyBase* pProp, MM::ActionType eAct);
+
 
 private:
    double unitMult_;

@@ -41,6 +41,7 @@
 
 using namespace std;
 
+
 ///////////////////////////////////////////////////////////////////////////////
 // CTigerHub implementation
 //
@@ -148,48 +149,11 @@ int CTigerCommHub::DetectInstalledDevices()
    ClearInstalledDevices();
    InitializeModuleData();
 
-   RETURN_ON_MM_ERROR ( QueryCommandVerify("BU X", "TIGER_COMM") );
+   build_info_type build;
+   RETURN_ON_MM_ERROR ( GetBuildInfo("", build) );
 
-   // get the axis letters, types, and addresses from BU X reply
-   //   example reply:
-   //      TIGER_COMM<CR>
-   //      Motor Axes: Z F P Q R S X Y V W<CR>
-   //      Axis Types: p p u u u u x x z z<CR>
-   //      Axis Addr: 1 2 3 3 3 3 4 4 5 5<CR>
-   //      Axis Props:   1   0   0   0   0   0   0   1   0<CR>
-
-   // parse the reply into vectors containing axis types, letters, and card addresses (binary and hex)
-   vector<string> vReply = hub_->SplitAnswerOnCR();
-   hub_->SetLastSerialAnswer(vReply[2]);
-   vector<string> vAxesType = hub_->SplitAnswerOnSpace();
-   if (vAxesType.size() < 3)
-      return ERR_NOT_ENOUGH_AXES;
-   vAxesType.erase(vAxesType.begin()); vAxesType.erase(vAxesType.begin());  // remove "Axis Types:"
-   hub_->SetLastSerialAnswer(vReply[1]);
-   vector<string> vAxesLetter = hub_->SplitAnswerOnSpace();
-   vAxesLetter.erase(vAxesLetter.begin()); vAxesLetter.erase(vAxesLetter.begin()); // remove "Motor Axes:"
-   hub_->SetLastSerialAnswer(vReply[3]);
-   vector<string> vAxesAddr = hub_->SplitAnswerOnSpace();
-   vAxesAddr.erase(vAxesAddr.begin()); vAxesAddr.erase(vAxesAddr.begin());      // remove "Axis Addr:"
-   vector<string> vAxesAddrHex;
-   if (vReply.size() > 4) // firmware Sep2013 onward, required for addresses beyond '9' = 0x39
-   {
-      hub_->SetLastSerialAnswer(vReply[4]);
-      vAxesAddrHex = hub_->SplitAnswerOnSpace();
-      vAxesAddrHex.erase(vAxesAddrHex.begin()); vAxesAddrHex.erase(vAxesAddrHex.begin());      // remove "Hex Addr:"
-   }
-   else // old firmware doesn't have hex addresses so we create them here
-   {
-      string hex = "3x";
-      for(unsigned int i=0; i<vAxesAddr.size(); i++)
-      {
-         char c = vAxesAddr[i].at(0);
-         if (c < '1' || c > '9')
-            return ERR_TOO_LARGE_ADDRESSES;
-         hex.replace(1,1,vAxesAddr[i]);
-         vAxesAddrHex.push_back(hex.c_str());
-      }
-   }
+   if (build.buildname.compare("TIGER_COMM") != 0)
+      return ERR_UNRECOGNIZED_ANSWER;
 
    // go through the Axis Type reply one at a time to assign the correct MM device type
    // these calls to AddAvailableDeviceName seem to be different than those in InitializeModuleData
@@ -198,14 +162,14 @@ int CTigerCommHub::DetectInstalledDevices()
    MM::Device* pDev;
    string name;
    bool twoaxis = 0;
-   for (unsigned int i=0; i<vAxesType.size(); i++)
+   for (unsigned int i=0; i<build.numAxes; i++)
    {
       twoaxis = 0;
       name = "";
-      switch (vAxesType[i].at(0))
+      switch (build.vAxesType[i])
       {
          case 'x': // XYMotor type
-            if (vAxesType[i+1].at(0) == 'x')  // make sure we have a pair
+            if (build.vAxesType[i+1] == 'x')  // make sure we have a pair
             {
                name = g_XYStageDeviceName;
                twoaxis = 1;
@@ -215,7 +179,7 @@ int CTigerCommHub::DetectInstalledDevices()
                return ERR_TIGER_PAIR_NOT_PRESENT;
             break;
          case 'u': // MMirror type
-            if (vAxesType[i+1].at(0) == 'u')  // skip one code because we added two axes in one step
+            if (build.vAxesType[i+1] == 'u')  // skip one code because we added two axes in one step
             {
                name = g_MMirrorDeviceName;
                twoaxis = 1;
@@ -250,35 +214,24 @@ int CTigerCommHub::DetectInstalledDevices()
       // now form rest of extended name
       name.push_back(g_NameInfoDelimiter);
       if (twoaxis)
-         name.push_back((char)toupper(vAxesLetter[i-1].at(0)));
-      name.push_back((char)toupper(vAxesLetter[i].at(0)));
+         name.push_back(build.vAxesLetter[i-1]);
+      name.push_back(build.vAxesLetter[i]);
       name.push_back(g_NameInfoDelimiter);
-      name.append(vAxesAddrHex[i]);
+      name.append(build.vAxesAddrHex[i]);
       pDev = CreateDevice(name.c_str());
       AddInstalledDevice(pDev);
    }
 
-   // with older firmware then we are done (CRISP not supported)
-   if (vReply.size() <= 5)
-      return DEVICE_OK;
-
-   // now look for CRISP by looking at Axis Props line of BU X output
-   // present in firmware Oct2013 onward, required for CRISP detection
-   vector<string> vAxesProps;
-   hub_->SetLastSerialAnswer(vReply[5]);
-   vAxesProps = hub_->SplitAnswerOnSpace();
-   vAxesProps.erase(vAxesProps.begin()); vAxesProps.erase(vAxesProps.begin());      // remove "Axis Props:"
-   unsigned int props = 0;
-   for (unsigned int i=0; i<vAxesProps.size(); i++)
+   // now look for CRISP
+   for (unsigned int i=0; i<build.numAxes; i++)
    {
-      props = atoi(vAxesProps[i].c_str());
-      if (props & BIT0)  // BIT0 indicates CRISP
+      if (build.vAxesProps[i] & BIT0)  // BIT0 indicates CRISP
       {
          name = g_CRISPDeviceName;
          name.push_back(g_NameInfoDelimiter);
-         name.push_back((char)toupper(vAxesLetter[i].at(0)));
+         name.push_back(build.vAxesLetter[i]);
          name.push_back(g_NameInfoDelimiter);
-         name.append(vAxesAddrHex[i]);
+         name.append(build.vAxesAddrHex[i]);
          pDev = CreateDevice(name.c_str());
          AddInstalledDevice(pDev);
       }

@@ -204,6 +204,42 @@ int CPiezo::Initialize()
       CreateProperty(g_PiezoModeFourMaxTime, "10", MM::Integer, false, pAct);
       UpdateProperty(g_PiezoModeFourMaxTime);
       SetPropertyLimits(g_PiezoModeFourMaxTime, 0, 30);
+
+      // add single-axis functions if supported
+      build_info_type build;
+      RETURN_ON_MM_ERROR( hub_->GetBuildInfo(addressChar_, build) );
+      if(hub_->IsDefinePresent(build, g_Define_SINGLEAXIS_FUNCTION))
+      {
+         // copied from ASIMMirror.cpp
+         pAct = new CPropertyAction (this, &CPiezo::OnSAAmplitude);
+         CreateProperty(g_MMirrorSAAmplitudePropertyName, "0", MM::Float, false, pAct);
+         UpdateProperty(g_MMirrorSAAmplitudePropertyName);
+         pAct = new CPropertyAction (this, &CPiezo::OnSAOffset);
+         CreateProperty(g_MMirrorSAOffsetPropertyName, "0", MM::Float, false, pAct);
+         UpdateProperty(g_MMirrorSAOffsetPropertyName);
+         pAct = new CPropertyAction (this, &CPiezo::OnSAPeriod);
+         CreateProperty(g_MMirrorSAPeriodPropertyName, "0", MM::Integer, false, pAct);
+         UpdateProperty(g_MMirrorSAPeriodPropertyName);
+         pAct = new CPropertyAction (this, &CPiezo::OnSAMode);
+         CreateProperty(g_MMirrorSAModePropertyName, g_SAMode_0, MM::String, false, pAct);
+         UpdateProperty(g_MMirrorSAModePropertyName);
+         AddAllowedValue(g_MMirrorSAModePropertyName, g_SAMode_0);
+         AddAllowedValue(g_MMirrorSAModePropertyName, g_SAMode_1);
+         AddAllowedValue(g_MMirrorSAModePropertyName, g_SAMode_2);
+         AddAllowedValue(g_MMirrorSAModePropertyName, g_SAMode_3);
+         pAct = new CPropertyAction (this, &CPiezo::OnSAPattern);
+         CreateProperty(g_MMirrorSAPatternPropertyName, g_SAPattern_0, MM::String, false, pAct);
+         UpdateProperty(g_MMirrorSAPatternPropertyName);
+         AddAllowedValue(g_MMirrorSAPatternPropertyName, g_SAPattern_0);
+         AddAllowedValue(g_MMirrorSAPatternPropertyName, g_SAPattern_1);
+         AddAllowedValue(g_MMirrorSAPatternPropertyName, g_SAPattern_2);
+         // generates a set of additional advanced properties that are rarely used
+         pAct = new CPropertyAction (this, &CPiezo::OnSAAdvanced);
+         CreateProperty(g_AdvancedSAPropertiesPropertyName, g_NoState, MM::String, false, pAct);
+         UpdateProperty(g_AdvancedSAPropertiesPropertyName);
+         AddAllowedValue(g_AdvancedSAPropertiesPropertyName, g_NoState);
+         AddAllowedValue(g_AdvancedSAPropertiesPropertyName, g_YesState);
+      }
    }
 
    initialized_ = true;
@@ -662,4 +698,431 @@ int CPiezo::OnModeFourMaxTime(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
+int CPiezo::OnSAAdvanced(MM::PropertyBase* pProp, MM::ActionType eAct)
+// special property, when set to "yes" it creates a set of little-used properties that can be manipulated thereafter
+{
+   if (eAct == MM::BeforeGet)
+   {
+      return DEVICE_OK; // do nothing
+   }
+   else if (eAct == MM::AfterSet) {
+      string tmpstr;
+      pProp->Get(tmpstr);
+      if (tmpstr.compare(g_YesState) == 0)
+      {
+         CPropertyAction* pAct;
 
+         pAct = new CPropertyAction (this, &CPiezo::OnSAClkSrc);
+         CreateProperty(g_MMirrorSAClkSrcPropertyName, g_SAClkSrc_0, MM::String, false, pAct);
+         UpdateProperty(g_MMirrorSAClkSrcPropertyName);
+         AddAllowedValue(g_MMirrorSAClkSrcPropertyName, g_SAClkSrc_0);
+         AddAllowedValue(g_MMirrorSAClkSrcPropertyName, g_SAClkSrc_1);
+
+         pAct = new CPropertyAction (this, &CPiezo::OnSAClkPol);
+         CreateProperty(g_MMirrorSAClkPolPropertyName, g_SAClkPol_0, MM::String, false, pAct);
+         UpdateProperty(g_MMirrorSAClkPolPropertyName);
+         AddAllowedValue(g_MMirrorSAClkPolPropertyName, g_SAClkPol_0);
+         AddAllowedValue(g_MMirrorSAClkPolPropertyName, g_SAClkPol_1);
+
+         pAct = new CPropertyAction (this, &CPiezo::OnSATTLOut);
+         CreateProperty(g_MMirrorSATTLOutPropertyName, g_SATTLOut_0, MM::String, false, pAct);
+         UpdateProperty(g_MMirrorSATTLOutPropertyName);
+         AddAllowedValue(g_MMirrorSATTLOutPropertyName, g_SATTLOut_0);
+         AddAllowedValue(g_MMirrorSATTLOutPropertyName, g_SATTLOut_1);
+
+         pAct = new CPropertyAction (this, &CPiezo::OnSATTLPol);
+         CreateProperty(g_MMirrorSATTLPolPropertyName, g_SATTLPol_0, MM::String, false, pAct);
+         UpdateProperty(g_MMirrorSATTLPolPropertyName);
+         AddAllowedValue(g_MMirrorSATTLPolPropertyName, g_SATTLPol_0);
+         AddAllowedValue(g_MMirrorSATTLPolPropertyName, g_SATTLPol_1);
+
+         pAct = new CPropertyAction (this, &CPiezo::OnSAPatternByte);
+         CreateProperty(g_MMirrorSAPatternModePropertyName, "0", MM::Integer, false, pAct);
+         UpdateProperty(g_MMirrorSAPatternModePropertyName);
+         SetPropertyLimits(g_MMirrorSAPatternModePropertyName, 0, 255);
+      }
+   }
+   return DEVICE_OK;
+}
+
+int CPiezo::OnSAAmplitude(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   ostringstream response; response.str("");
+   double tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << "SAA " << axisLetter_ << "?";
+      response << ":A " << axisLetter_ << "=";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
+      tmp = hub_->ParseAnswerAfterEquals()/unitMult_;
+      if (!pProp->Set(tmp))
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      pProp->Get(tmp);
+      command << "SAA " << axisLetter_ << "=" << tmp*unitMult_;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}
+
+int CPiezo::OnSAOffset(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   ostringstream response; response.str("");
+   double tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << "SAO " << axisLetter_ << "?";
+      response << ":A " << axisLetter_ << "=";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
+      tmp = hub_->ParseAnswerAfterEquals()/unitMult_;
+      if (!pProp->Set(tmp))
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      pProp->Get(tmp);
+      command << "SAO " << axisLetter_ << "=" << tmp*unitMult_;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}
+
+int CPiezo::OnSAPeriod(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   ostringstream response; response.str("");
+   long tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << "SAF " << axisLetter_ << "?";
+      response << ":A " << axisLetter_ << "=";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
+      tmp = (long) hub_->ParseAnswerAfterEquals();
+      if (!pProp->Set(tmp))
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      pProp->Get(tmp);
+      command << "SAF " << axisLetter_ << "=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}
+
+int CPiezo::OnSAMode(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   static bool justSet = false;
+   ostringstream command; command.str("");
+   ostringstream response; response.str("");
+   long tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_ && !justSet)
+         return DEVICE_OK;
+      command << "SAM " << axisLetter_ << "?";
+      response << ":A " << axisLetter_ << "=";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
+      tmp = (long) hub_->ParseAnswerAfterEquals();
+      bool success;
+      switch (tmp)
+      {
+         case 0: success = pProp->Set(g_SAMode_0); break;
+         case 1: success = pProp->Set(g_SAMode_1); break;
+         case 2: success = pProp->Set(g_SAMode_2); break;
+         case 3: success = pProp->Set(g_SAMode_3); break;
+         default:success = 0;                      break;
+      }
+      if (!success)
+         return DEVICE_INVALID_PROPERTY_VALUE;
+      justSet = false;
+   }
+   else if (eAct == MM::AfterSet) {
+      string tmpstr;
+      pProp->Get(tmpstr);
+      if (tmpstr.compare(g_SAMode_0) == 0)
+         tmp = 0;
+      else if (tmpstr.compare(g_SAMode_1) == 0)
+         tmp = 1;
+      else if (tmpstr.compare(g_SAMode_2) == 0)
+         tmp = 2;
+      else if (tmpstr.compare(g_SAMode_3) == 0)
+         tmp = 3;
+      else
+         return DEVICE_INVALID_PROPERTY_VALUE;
+      command << "SAM " << axisLetter_ << "=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+      // get the updated value right away
+      justSet = true;
+      return OnSAMode(pProp, MM::BeforeGet);
+   }
+   return DEVICE_OK;
+}
+
+int CPiezo::OnSAPattern(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   ostringstream response; response.str("");
+   long tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << "SAP " << axisLetter_ << "?";
+      response << ":A " << axisLetter_ << "=";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
+      tmp = (long) hub_->ParseAnswerAfterEquals();
+      bool success;
+      tmp = tmp & ((long)(BIT2|BIT1|BIT0));  // zero all but the lowest 3 bits
+      switch (tmp)
+      {
+         case 0: success = pProp->Set(g_SAPattern_0); break;
+         case 1: success = pProp->Set(g_SAPattern_1); break;
+         case 2: success = pProp->Set(g_SAPattern_2); break;
+         default:success = 0;                      break;
+      }
+      if (!success)
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      string tmpstr;
+      pProp->Get(tmpstr);
+      if (tmpstr.compare(g_SAPattern_0) == 0)
+         tmp = 0;
+      else if (tmpstr.compare(g_SAPattern_1) == 0)
+         tmp = 1;
+      else if (tmpstr.compare(g_SAPattern_2) == 0)
+         tmp = 2;
+      else
+         return DEVICE_INVALID_PROPERTY_VALUE;
+      // have to get current settings and then modify bits 0-2 from there
+      command << "SAP " << axisLetter_ << "?";
+      response << ":A " << axisLetter_ << "=";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
+      long current = (long) hub_->ParseAnswerAfterEquals();
+      current = current & (~(long)(BIT2|BIT1|BIT0));  // set lowest 3 bits to zero
+      tmp += current;
+      command.str("");
+      command << "SAP " << axisLetter_ << "=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}
+
+int CPiezo::OnSAPatternByte(MM::PropertyBase* pProp, MM::ActionType eAct)
+// get every single time
+{
+   ostringstream command; command.str("");
+   ostringstream response; response.str("");
+   long tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      command << "SAP " << axisLetter_ << "?";
+      response << ":A " << axisLetter_ << "=";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
+      tmp = (long) hub_->ParseAnswerAfterEquals();
+      if (!pProp->Set(tmp))
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      pProp->Get(tmp);
+      command << "SAP " << axisLetter_ << "=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}
+
+int CPiezo::OnSAClkSrc(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   ostringstream response; response.str("");
+   long tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << "SAP " << axisLetter_ << "?";
+      response << ":A " << axisLetter_ << "=";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
+      tmp = (long) hub_->ParseAnswerAfterEquals();
+      bool success;
+      tmp = tmp & ((long)(BIT7));  // zero all but bit 7
+      switch (tmp)
+      {
+         case 0: success = pProp->Set(g_SAClkSrc_0); break;
+         case BIT7: success = pProp->Set(g_SAClkSrc_1); break;
+         default:success = 0;                      break;
+      }
+      if (!success)
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      string tmpstr;
+      pProp->Get(tmpstr);
+      if (tmpstr.compare(g_SAClkSrc_0) == 0)
+         tmp = 0;
+      else if (tmpstr.compare(g_SAClkSrc_1) == 0)
+         tmp = BIT7;
+      else
+         return DEVICE_INVALID_PROPERTY_VALUE;
+      // have to get current settings and then modify bit 7 from there
+      command << "SAP " << axisLetter_ << "?";
+      response << ":A " << axisLetter_ << "=";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
+      long current = (long) hub_->ParseAnswerAfterEquals();
+      current = current & (~(long)(BIT7));  // clear bit 7
+      tmp += current;
+      command.str("");
+      command << "SAP " << axisLetter_ << "=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}
+
+int CPiezo::OnSAClkPol(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   ostringstream response; response.str("");
+   long tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << "SAP " << axisLetter_ << "?";
+      response << ":A " << axisLetter_ << "=";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
+      tmp = (long) hub_->ParseAnswerAfterEquals();
+      bool success;
+      tmp = tmp & ((long)(BIT6));  // zero all but bit 6
+      switch (tmp)
+      {
+         case 0: success = pProp->Set(g_SAClkPol_0); break;
+         case BIT6: success = pProp->Set(g_SAClkPol_1); break;
+         default:success = 0;                      break;
+      }
+      if (!success)
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      string tmpstr;
+      pProp->Get(tmpstr);
+      if (tmpstr.compare(g_SAClkPol_0) == 0)
+         tmp = 0;
+      else if (tmpstr.compare(g_SAClkPol_1) == 0)
+         tmp = BIT6;
+      else
+         return DEVICE_INVALID_PROPERTY_VALUE;
+      // have to get current settings and then modify bit 6 from there
+      command << "SAP " << axisLetter_ << "?";
+      response << ":A " << axisLetter_ << "=";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
+      long current = (long) hub_->ParseAnswerAfterEquals();
+      current = current & (~(long)(BIT6));  // clear bit 6
+      tmp += current;
+      command.str("");
+      command << "SAP " << axisLetter_ << "=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}
+
+int CPiezo::OnSATTLOut(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   ostringstream response; response.str("");
+   long tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << "SAP " << axisLetter_ << "?";
+      response << ":A " << axisLetter_ << "=";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
+      tmp = (long) hub_->ParseAnswerAfterEquals();
+      bool success;
+      tmp = tmp & ((long)(BIT5));  // zero all but bit 5
+      switch (tmp)
+      {
+         case 0: success = pProp->Set(g_SATTLOut_0); break;
+         case BIT5: success = pProp->Set(g_SATTLOut_1); break;
+         default:success = 0;                      break;
+      }
+      if (!success)
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      string tmpstr;
+      pProp->Get(tmpstr);
+      if (tmpstr.compare(g_SATTLOut_0) == 0)
+         tmp = 0;
+      else if (tmpstr.compare(g_SATTLOut_1) == 0)
+         tmp = BIT5;
+      else
+         return DEVICE_INVALID_PROPERTY_VALUE;
+      // have to get current settings and then modify bit 5 from there
+      command << "SAP " << axisLetter_ << "?";
+      response << ":A " << axisLetter_ << "=";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
+      long current = (long) hub_->ParseAnswerAfterEquals();
+      current = current & (~(long)(BIT5));  // clear bit 5
+      tmp += current;
+      command.str("");
+      command << "SAP " << axisLetter_ << "=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}
+
+int CPiezo::OnSATTLPol(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   ostringstream response; response.str("");
+   long tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << "SAP " << axisLetter_ << "?";
+      response << ":A " << axisLetter_ << "=";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
+      tmp = (long) hub_->ParseAnswerAfterEquals();
+      bool success;
+      tmp = tmp & ((long)(BIT4));  // zero all but bit 4
+      switch (tmp)
+      {
+         case 0: success = pProp->Set(g_SATTLPol_0); break;
+         case BIT4: success = pProp->Set(g_SATTLPol_1); break;
+         default:success = 0;                      break;
+      }
+      if (!success)
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      string tmpstr;
+      pProp->Get(tmpstr);
+      if (tmpstr.compare(g_SATTLPol_0) == 0)
+         tmp = 0;
+      else if (tmpstr.compare(g_SATTLPol_1) == 0)
+         tmp = BIT4;
+      else
+         return DEVICE_INVALID_PROPERTY_VALUE;
+      // have to get current settings and then modify bit 4 from there
+      command << "SAP " << axisLetter_ << "?";
+      response << ":A " << axisLetter_ << "=";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
+      long current = (long) hub_->ParseAnswerAfterEquals();
+      current = current & (~(long)(BIT4));  // clear bit 4
+      tmp += current;
+      command.str("");
+      command << "SAP " << axisLetter_ << "=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}

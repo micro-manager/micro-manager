@@ -82,6 +82,12 @@ public:
 	vector<string> SplitAnswerOnCR() const { return SplitAnswerOnDelim("\r"); }
    vector<string> SplitAnswerOnSpace() const { return SplitAnswerOnDelim(" "); }
 
+   // function to grab all the build info from BU X command
+   int GetBuildInfo(const string addressLetter, build_info_type &build);
+
+   // look to see if particular define is present
+   bool IsDefinePresent(const build_info_type build, const string defineToLookFor);
+
    // action/property handlers
    int OnSerialTerminator           (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSerialCommand              (MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -95,6 +101,8 @@ private:
 	int ParseErrorReply() const;
 	string EscapeControlCharacters(const string v ) const;
 	string UnescapeControlCharacters(const string v0 ) const;
+	vector<char> ConvertStringVector2CharVector(const vector<string> v) const;
+	vector<int> ConvertStringVector2IntVector(const vector<string> v) const;
 
    string serialAnswer_;      // the last answer received
    string serialCommand_;     // the last command sent, or can be set for calling commands without args

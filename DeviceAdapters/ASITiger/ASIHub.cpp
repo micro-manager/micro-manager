@@ -35,6 +35,8 @@
 #include "../../MMDevice/DeviceBase.h"
 #include "../../MMDevice/DeviceUtils.h"
 #include <string>
+#include <vector>
+#include <algorithm>
 
 
 using namespace std;
@@ -151,6 +153,106 @@ vector<string> ASIHub::SplitAnswerOnDelim(string delim) const
    vector<string> elems;
    CDeviceUtils::Tokenize(serialAnswer_, elems, delim);
    return elems;
+}
+
+int ASIHub::GetBuildInfo(const string addressLetter, build_info_type &build)
+// original use is in DetectInstalledDevices addressed to comm card
+// made as separate function that could be used to query other cards, including defines
+{
+   ostringstream command; command.str("");
+   command << addressLetter << "BU X";
+   RETURN_ON_MM_ERROR ( QueryCommand(command.str()) );
+
+   // get the axis letters, types, and addresses from BU X reply
+   //   example reply:
+   //      TIGER_COMM<CR>
+   //      Motor Axes: Z F P Q R S X Y V W<CR>
+   //      Axis Types: p p u u u u x x z z<CR>
+   //      Axis Addr: 1 2 3 3 3 3 4 4 5 5<CR>
+   //      Axis Props:   1   0   0   0   0   0   0   1   0<CR>
+
+   // parse the reply into vectors containing axis types, letters, and card addresses (binary and hex)
+   vector<string> vReply = hub_->SplitAnswerOnCR();
+
+   // get buildname
+   build.buildname = vReply[0];
+
+   // get axis letters "Motor Axes:"
+   hub_->SetLastSerialAnswer(vReply[1]);
+   vector<string> vAxesLetter = hub_->SplitAnswerOnSpace();
+   if (vAxesLetter.size() < 3)
+      return ERR_NOT_ENOUGH_AXES;
+   vAxesLetter.erase(vAxesLetter.begin()); vAxesLetter.erase(vAxesLetter.begin()); // remove "Motor Axes:"
+   build.numAxes = (unsigned char)vAxesLetter.size();
+   build.vAxesLetter = ConvertStringVector2CharVector(vAxesLetter);
+   // make everything upper case
+   for(unsigned int i=0; i<build.numAxes; i++)
+   {
+      build.vAxesLetter[i] = (char)toupper((int)build.vAxesLetter[i]);
+   }
+
+   // get axis types "Axis Types:"
+   hub_->SetLastSerialAnswer(vReply[2]);
+   vector<string> vAxesType = hub_->SplitAnswerOnSpace();
+   vAxesType.erase(vAxesType.begin()); vAxesType.erase(vAxesType.begin()); // remove "Axis Types:"
+   build.vAxesType = ConvertStringVector2CharVector(vAxesType);
+
+   hub_->SetLastSerialAnswer(vReply[3]);
+   vector<string> vAxesAddr = hub_->SplitAnswerOnSpace();
+   vAxesAddr.erase(vAxesAddr.begin()); vAxesAddr.erase(vAxesAddr.begin());      // remove "Axis Addr:"
+   build.vAxesAddr = vAxesAddr;
+
+   // get hex addresses of cards "Hex Addr:"
+   vector<string> vAxesAddrHex;
+   if (vReply.size() > 4) // firmware Sep2013 onward, required for addresses beyond '9' = 0x39
+   {
+      hub_->SetLastSerialAnswer(vReply[4]);
+      vAxesAddrHex = hub_->SplitAnswerOnSpace();
+      vAxesAddrHex.erase(vAxesAddrHex.begin()); vAxesAddrHex.erase(vAxesAddrHex.begin());      // remove "Hex Addr:"
+   }
+   else // old firmware doesn't have hex addresses so we create them here
+   {
+      string hex = "3x";
+      for(unsigned int i=0; i<build.numAxes; i++)
+      {
+         char c = vAxesAddr[i].at(0);
+         if (c < '1' || c > '9')
+            return ERR_TOO_LARGE_ADDRESSES;
+         hex.replace(1,1,vAxesAddr[i]);
+         vAxesAddrHex.push_back(hex.c_str());
+      }
+   }
+   build.vAxesAddrHex = vAxesAddrHex;
+
+   // get properties of cards "Axis Props:"
+   vector<string> vAxesProps;
+   if (vReply.size() > 5)   // present in firmware Oct2013 onward, required for CRISP detection and SPIM
+   {
+      hub_->SetLastSerialAnswer(vReply[5]);
+      vAxesProps = hub_->SplitAnswerOnSpace();
+      vAxesProps.erase(vAxesProps.begin()); vAxesProps.erase(vAxesProps.begin());      // remove "Axis Props:"
+   }
+   else  // with older firmware then we are done, just leave a blank vector (CRISP, SPIM, etc. not supported)
+   {
+      for(unsigned int i=0; i<build.numAxes; i++)
+      {
+         vAxesProps.push_back("0");
+      }
+   }
+   build.vAxesProps = ConvertStringVector2IntVector(vAxesProps);
+
+   // copy lines 6 through the end to "defines"
+   vector<string> tmp(vReply.begin()+6, vReply.end());
+   build.defines = tmp;
+
+   return DEVICE_OK;
+}
+
+bool ASIHub::IsDefinePresent(const build_info_type build, const string defineToLookFor)
+{
+   vector<string>::const_iterator it;
+   it = find(build.defines.begin(), build.defines.end(), defineToLookFor);
+   return (it != build.defines.end());
 }
 
 int ASIHub::OnPort(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -375,6 +477,25 @@ string ASIHub::UnescapeControlCharacters(const string v0 ) const
       detokenized.push_back(*jj);
    }
    return detokenized;
+}
 
+vector<char> ASIHub::ConvertStringVector2CharVector(const vector<string> v) const
+{
+   vector<char> result;
+   result.reserve(v.size());
+   for(unsigned int i=0; i<v.size(); i++) {
+      result.push_back(v[i].at(0));
+   }
+   return result;
+}
+
+vector<int> ASIHub::ConvertStringVector2IntVector(const vector<string> v) const
+{
+   vector<int> result;
+   result.reserve(v.size());
+   for(unsigned int i=0; i<v.size(); i++) {
+      result.push_back(atoi(v[i].c_str()));
+   }
+   return result;
 }
 
