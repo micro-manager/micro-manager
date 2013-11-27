@@ -308,6 +308,10 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BiostepEagleIce", "DeviceAd
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Zaber", "DeviceAdapters\Zaber\Zaber.vcxproj", "{16385D50-05B1-454D-9F0B-AC2C9D6BD9AB}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MMDevice-SharedRuntime", "MMDevice\MMDevice-SharedRuntime.vcxproj", "{B8C95F39-54BF-40A9-807B-598DF2821D55}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MMDevice-StaticRuntime", "MMDevice\MMDevice-StaticRuntime.vcxproj", "{AF3143A4-5529-4C78-A01A-9F2A8977ED64}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -1518,6 +1522,22 @@ Global
 		{16385D50-05B1-454D-9F0B-AC2C9D6BD9AB}.Release|Win32.Build.0 = Release|Win32
 		{16385D50-05B1-454D-9F0B-AC2C9D6BD9AB}.Release|x64.ActiveCfg = Release|x64
 		{16385D50-05B1-454D-9F0B-AC2C9D6BD9AB}.Release|x64.Build.0 = Release|x64
+		{B8C95F39-54BF-40A9-807B-598DF2821D55}.Debug|Win32.ActiveCfg = Debug|Win32
+		{B8C95F39-54BF-40A9-807B-598DF2821D55}.Debug|Win32.Build.0 = Debug|Win32
+		{B8C95F39-54BF-40A9-807B-598DF2821D55}.Debug|x64.ActiveCfg = Debug|x64
+		{B8C95F39-54BF-40A9-807B-598DF2821D55}.Debug|x64.Build.0 = Debug|x64
+		{B8C95F39-54BF-40A9-807B-598DF2821D55}.Release|Win32.ActiveCfg = Release|Win32
+		{B8C95F39-54BF-40A9-807B-598DF2821D55}.Release|Win32.Build.0 = Release|Win32
+		{B8C95F39-54BF-40A9-807B-598DF2821D55}.Release|x64.ActiveCfg = Release|x64
+		{B8C95F39-54BF-40A9-807B-598DF2821D55}.Release|x64.Build.0 = Release|x64
+		{AF3143A4-5529-4C78-A01A-9F2A8977ED64}.Debug|Win32.ActiveCfg = Debug|Win32
+		{AF3143A4-5529-4C78-A01A-9F2A8977ED64}.Debug|Win32.Build.0 = Debug|Win32
+		{AF3143A4-5529-4C78-A01A-9F2A8977ED64}.Debug|x64.ActiveCfg = Debug|x64
+		{AF3143A4-5529-4C78-A01A-9F2A8977ED64}.Debug|x64.Build.0 = Debug|x64
+		{AF3143A4-5529-4C78-A01A-9F2A8977ED64}.Release|Win32.ActiveCfg = Release|Win32
+		{AF3143A4-5529-4C78-A01A-9F2A8977ED64}.Release|Win32.Build.0 = Release|Win32
+		{AF3143A4-5529-4C78-A01A-9F2A8977ED64}.Release|x64.ActiveCfg = Release|x64
+		{AF3143A4-5529-4C78-A01A-9F2A8977ED64}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
