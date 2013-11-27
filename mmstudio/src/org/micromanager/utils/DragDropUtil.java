@@ -46,18 +46,22 @@ import org.micromanager.MMStudioMainFrame;
  */
 public class DragDropUtil implements DropTargetListener {
 
+   @Override
    public void dragEnter(DropTargetDragEvent dtde) {
       //throw new UnsupportedOperationException("Not supported yet.");
    }
 
+   @Override
    public void dragOver(DropTargetDragEvent dtde) {
       //throw new UnsupportedOperationException("Not supported yet.");
    }
 
+   @Override
    public void dropActionChanged(DropTargetDragEvent dtde) {
       //throw new UnsupportedOperationException("Not supported yet.");
    }
 
+   @Override
    public void dragExit(DropTargetEvent dte) {
       //throw new UnsupportedOperationException("Not supported yet.");
    }
@@ -65,6 +69,7 @@ public class DragDropUtil implements DropTargetListener {
    /**
     * This function does the actual work
     */
+   @Override
    public void drop(final DropTargetDropEvent dtde) {
 
       try {

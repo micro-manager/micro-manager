@@ -69,6 +69,7 @@ public class LargeMessageDlg extends JDialog {
 
       final JButton okButton = new JButton();
       okButton.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent arg0) {
             dispose();
          }

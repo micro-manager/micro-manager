@@ -1,9 +1,4 @@
-/**
- * Class to manage calls to ImageJ Canvas.PaintPending
- * Micro-Manager has several classes that need to know whether a paint to 
- * a specific Canvas is pending, but they can easily deadlock.
- * This class keeps track of whom set the PaintPending and will only tell
- * whomever set PaintPending that a Paint is indeed pending
+/*
  * 
  */
 package org.micromanager.utils;
@@ -15,7 +10,11 @@ import java.util.List;
 import java.util.Map;
 
 /**
- *
+ * Class to manage calls to ImageJ Canvas.PaintPending
+ * Micro-Manager has several classes that need to know whether a paint to 
+ * a specific Canvas is pending, but they can easily deadlock.
+ * This class keeps track of whom set the PaintPending and will only tell
+ * whomever set PaintPending that a Paint is indeed pending
  * @author nico
  */
 public class CanvasPaintPending {

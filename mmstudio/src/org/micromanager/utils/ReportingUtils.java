@@ -156,6 +156,7 @@ public class ReportingUtils {
          optionPane.addPropertyChangeListener(
                  new PropertyChangeListener() {
 
+                    @Override
                     public void propertyChange(PropertyChangeEvent e) {
                        String prop = e.getPropertyName();
                        if (dialog.isVisible() && (e.getSource() == optionPane) && (prop.equals(JOptionPane.VALUE_PROPERTY))) {

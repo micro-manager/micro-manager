@@ -47,9 +47,9 @@ public class HotKeys {
          return;
 
       int j = 0;
-      int key = STOP;
-      int type = HotKeyAction.GUICOMMAND;
-      int guiCommand = HotKeyAction.SNAP;
+      int key;
+      int type;
+      int guiCommand;
       File file;
       do {
          key = prefs_.getInt(KEY + j, STOP);
@@ -104,10 +104,9 @@ public class HotKeys {
          while (in.available() > 0) {
             int key = in.readInt();
             int type = in.readInt();
-            int guiCommand = 0;
             String filePath = "";
             if (type == HotKeyAction.GUICOMMAND) {
-               guiCommand = in.readInt();
+               int guiCommand = in.readInt();
                HotKeyAction action = new HotKeyAction(guiCommand);
                keys_.put(key, action);
             }

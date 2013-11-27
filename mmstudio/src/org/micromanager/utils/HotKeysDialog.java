@@ -33,7 +33,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.prefs.Preferences;
 import javax.swing.AbstractCellEditor;
@@ -72,12 +71,14 @@ public final class HotKeysDialog extends MMDialog {
 
       private static final int columnCount_ = 2;
 
+      @Override
       public int getRowCount() {
          if (keys_ != null)
             return keys_.size();
          return 0;
       }
 
+      @Override
       public int getColumnCount() {
          return columnCount_;
       }
@@ -89,6 +90,7 @@ public final class HotKeysDialog extends MMDialog {
          return "HotKey";
       }
 
+      @Override
       public Object getValueAt(int row, int column) {
          if (column == 0) {
             if (row > actions_.size())
@@ -264,9 +266,11 @@ public final class HotKeysDialog extends MMDialog {
           label_ = label;
        }
 
+       @Override
        public void keyTyped(KeyEvent ke) {
        }
 
+       @Override
        public void keyPressed(KeyEvent ke) {
           Integer value = ke.getKeyCode();
 
@@ -277,6 +281,7 @@ public final class HotKeysDialog extends MMDialog {
           }
        }
 
+       @Override
        public void keyReleased(KeyEvent ke) {      
        }
     }
@@ -285,6 +290,7 @@ public final class HotKeysDialog extends MMDialog {
        JLabel keyLabel = new JLabel();
 
        // This method is called when a cell value is edited by the user.
+       @Override
        public Component getTableCellEditorComponent(javax.swing.JTable table, Object value,
                boolean isSelected, int rowIndex, int colIndex) {
            // 'value' is value contained in the cell located at (rowIndex, colIndex)
@@ -304,6 +310,7 @@ public final class HotKeysDialog extends MMDialog {
 
        // This method is called when editing is completed.
        // It must return the new value to be stored in the cell.
+       @Override
        public Object getCellEditorValue() {
            return (Integer) lastTypedKey_;
        }

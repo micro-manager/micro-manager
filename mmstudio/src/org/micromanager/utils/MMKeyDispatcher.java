@@ -73,6 +73,7 @@ public class MMKeyDispatcher implements KeyEventDispatcher{
    /*
     * 
     */
+   @Override
    public boolean dispatchKeyEvent(KeyEvent ke) {
       if (!HotKeys.active_)
          return false;

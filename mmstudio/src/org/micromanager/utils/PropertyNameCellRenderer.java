@@ -36,6 +36,7 @@ public class PropertyNameCellRenderer implements TableCellRenderer {
 
     PropertyItem item_;
 
+    @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int rowIndex, int column) {
        MMPropertyTableModel data = (MMPropertyTableModel) table.getModel();
        item_ = data.getPropertyItem(rowIndex);

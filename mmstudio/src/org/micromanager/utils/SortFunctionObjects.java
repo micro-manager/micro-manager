@@ -10,6 +10,7 @@ public class SortFunctionObjects
  */
 // Comparators for sorting of the possible values
 public static class IntStringComp implements Comparator<String>{
+ @Override
  public int compare(String strA, String strB)
  {
 	 int valA = 0;
@@ -25,6 +26,7 @@ public static class IntStringComp implements Comparator<String>{
  }
 }
 public static class DoubleStringComp implements Comparator<String>{
+ @Override
  public int compare(String strA, String strB)
  {
 	 double valA = 0.;
@@ -51,6 +53,7 @@ public static class NumericPrefixStringComp implements Comparator<String>{
 		return ret;
 		
 	}
+   @Override
 	 public int compare(String strA, String strB) {
 	     return NumericPrefix(strA) - NumericPrefix(strB) ;
 	 }

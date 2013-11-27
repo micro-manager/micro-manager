@@ -26,20 +26,28 @@ import org.micromanager.api.MMListenerInterface;
 
 
 public class MMListenerAdapter implements MMListenerInterface {
+   @Override
    public void propertiesChangedAlert(){
    };
+   @Override
    public void propertyChangedAlert(String device, String property, String value){
    };
+   @Override
    public void configGroupChangedAlert(String groupName, String newConfig){
    };
+   @Override
    public void systemConfigurationLoaded() {
    }
+   @Override
    public void pixelSizeChangedAlert(double newPixelSizeUm){
    };
+   @Override
    public void stagePositionChangedAlert(String deviceName, double pos){
    };
+   @Override
    public void xyStagePositionChanged(String deviceName, double xPos, double yPos){
    };
+   @Override
    public void exposureChanged(String cameraName, double newExposure){
    };
 }

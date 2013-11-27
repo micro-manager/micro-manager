@@ -43,6 +43,7 @@ public class GUIUpdater {
    public void post(Runnable task) {
       if (latestTask.getAndSet(task) == null) {
          SwingUtilities.invokeLater(new Runnable() {
+            @Override
             public void run() {
                latestTask.getAndSet(null).run();
             }

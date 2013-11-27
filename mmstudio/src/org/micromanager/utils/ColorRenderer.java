@@ -46,6 +46,7 @@ public class ColorRenderer extends JLabel implements TableCellRenderer {
         setOpaque(true); //MUST do this for background to show up.
     }
 
+   @Override
     public Component getTableCellRendererComponent(
                             JTable table, Object color,
                             boolean isSelected, boolean hasFocus,

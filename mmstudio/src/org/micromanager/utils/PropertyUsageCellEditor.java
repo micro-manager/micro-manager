@@ -1,7 +1,4 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
+
 
 package org.micromanager.utils;
 
@@ -25,6 +22,7 @@ public class PropertyUsageCellEditor extends AbstractCellEditor implements Table
         super();
         check_.setSelected(false);
         check_.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 fireEditingStopped();
             }
@@ -32,6 +30,7 @@ public class PropertyUsageCellEditor extends AbstractCellEditor implements Table
     }
 
     // This method is called when a cell value is edited by the user.
+    @Override
     public Component getTableCellEditorComponent(JTable table, Object value,
             boolean isSelected, int rowIndex, int colIndex) {
 
@@ -42,6 +41,7 @@ public class PropertyUsageCellEditor extends AbstractCellEditor implements Table
         return check_;
     }
 
+    @Override
     public Object getCellEditorValue() {
         return check_.isSelected();
     }

@@ -1,7 +1,4 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
+
 
 package org.micromanager.utils;
 
@@ -19,6 +16,7 @@ public class PropertyUsageCellRenderer implements TableCellRenderer {
    PropertyItem item_;
    JCheckBox cb_ = new JCheckBox();
 
+   @Override
    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int rowIndex, int column) {
       PropertyTableData data = (PropertyTableData) table.getModel();
       item_ = data.getPropertyItem(rowIndex);

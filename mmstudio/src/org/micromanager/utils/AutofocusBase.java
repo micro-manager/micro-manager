@@ -54,6 +54,7 @@ public abstract class AutofocusBase implements Autofocus{
     * @return - an array of property names
     * @throws MMException
     */
+   @Override
    public String[] getPropertyNames() {
       String[] propName = new String[properties_.size()];
       for (int i=0; i<properties_.size(); i++) {
@@ -68,6 +69,7 @@ public abstract class AutofocusBase implements Autofocus{
    /**
     * Get value for a given property name.
     */
+   @Override
    public String getPropertyValue(String name) throws MMException {
       for (int i=0; i<properties_.size(); i++) {
          if (name.equals(properties_.get(i).name)) {
@@ -80,6 +82,7 @@ public abstract class AutofocusBase implements Autofocus{
    /**
     * Get property for a given property name.
     */
+   @Override
    public PropertyItem getProperty(String name) throws MMException {
       for (int i=0; i<properties_.size(); i++) {
          if (name.equals(properties_.get(i).name)) {
@@ -90,6 +93,7 @@ public abstract class AutofocusBase implements Autofocus{
 
    }
 
+   @Override
    public void setProperty(PropertyItem p) throws MMException {
       for (int i=0; i<properties_.size(); i++) {
          if (p.name.equals(properties_.get(i).name)) {
@@ -107,6 +111,7 @@ public abstract class AutofocusBase implements Autofocus{
     * It is assumed that the caller will take care of that using appropriate
     * property information (see Property class)
     */
+   @Override
    public void setPropertyValue(String name, String value) throws MMException {
       for (int i=0; i<properties_.size(); i++) {
          if (name.equals(properties_.get(i).name)) {
@@ -117,10 +122,12 @@ public abstract class AutofocusBase implements Autofocus{
       throw new MMException("Unknown property: " + name);
    }
 
+   @Override
    public PropertyItem[] getProperties() {
       return properties_.toArray(new PropertyItem[properties_.size()]);
    }
 
+   @Override
    public void saveSettings() {
       for (int i=0; i<properties_.size(); i++) {
          prefs_.put(properties_.get(i).name, properties_.get(i).value);
@@ -145,14 +152,17 @@ public abstract class AutofocusBase implements Autofocus{
       */
    }
 
+   @Override
    public void enableContinuousFocus(boolean enable) throws MMException {
       throw new MMException(AF_UNIMPLEMENTED_FUNCTION);
    }
 
+   @Override
    public boolean isContinuousFocusEnabled() throws MMException {
       return false;
    }
 
+   @Override
    public boolean isContinuousFocusLocked() throws MMException {
       return false;
    }

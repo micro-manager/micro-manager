@@ -189,6 +189,7 @@ public class GUIUtils {
    public static void registerImageFocusListener(final ImageFocusListener listener) {
       AWTEventListener awtEventListener = new AWTEventListener() {
          private ImageWindow currentImageWindow_ = null;
+         @Override
          public void eventDispatched(AWTEvent event) {
             if (event instanceof WindowEvent) {
                if (0 != (event.getID() & WindowEvent.WINDOW_GAINED_FOCUS)) {

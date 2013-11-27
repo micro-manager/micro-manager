@@ -27,6 +27,7 @@ public class BeanshellEngine implements ScriptingEngine {
          errorText_ = new String();
       }
 
+      @Override
       public void run() {
          stop_ = false;
          running_ = true;
@@ -56,11 +57,13 @@ public class BeanshellEngine implements ScriptingEngine {
    }
 
    
+   @Override
    public void setInterpreter(Interpreter interp) {
 	   interp_old_ = interp_;
 	   interp_ = interp;
    }
    
+   @Override
    public void resetInterpreter() {
 	   interp_ = interp_old_;
    }
@@ -72,6 +75,7 @@ public class BeanshellEngine implements ScriptingEngine {
       gui_ = gui;
    }
 
+   @Override
    public void evaluate(String script) throws MMScriptException {
       try {
          interp_.eval(script);
@@ -83,6 +87,7 @@ public class BeanshellEngine implements ScriptingEngine {
 
    
    
+   @Override
    public void evaluateAsync(String script) throws MMScriptException {
       if (evalThd_.isAlive())
          throw new MMScriptException("Another script execution in progress!");
@@ -91,6 +96,7 @@ public class BeanshellEngine implements ScriptingEngine {
       evalThd_.start();
    }
 
+   @Override
    public void insertGlobalObject(String name, Object obj) throws MMScriptException {
       try {
          interp_.set(name, obj);
@@ -100,6 +106,7 @@ public class BeanshellEngine implements ScriptingEngine {
    }
 
    @SuppressWarnings("deprecation")
+   @Override
    public void stopRequest() {
 	  // Thread.stop() is deprecated, but I use it here
 	  // because it is apparently the only way to actually interrupt
@@ -111,6 +118,7 @@ public class BeanshellEngine implements ScriptingEngine {
       
    }
 
+   @Override
    public boolean stopRequestPending() {
       if (evalThd_.isAlive() && stop_)
          return stop_;
@@ -121,16 +129,17 @@ public class BeanshellEngine implements ScriptingEngine {
    private String formatBeanshellError(EvalError e, int line) {
       if (e instanceof TargetError) {
          Throwable t = ((TargetError)e).getTarget();
-         return new String("Line " + line + ": run-time error : " + (t != null ? t.getMessage() : e.getErrorText()));       
+         return "Line " + line + ": run-time error : " + (t != null ? t.getMessage() : e.getErrorText());       
       } else if (e instanceof ParseException) {
-         return new String("Line " + line + ": syntax error : " + e.getErrorText());         
+         return "Line " + line + ": syntax error : " + e.getErrorText();         
       } else {
          Throwable t = e.getCause();
-         return new String("Line " + line + ": general error : " + (t != null ? t.getMessage() : e.getErrorText()));
+         return "Line " + line + ": general error : " + (t != null ? t.getMessage() : e.getErrorText());
       }
       
    }
 
+   @Override
    public void sleep(long ms) throws MMScriptException {
       try {
          Thread.sleep(ms);

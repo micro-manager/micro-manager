@@ -1,7 +1,5 @@
 package org.micromanager.utils;
 
-import javax.swing.JComponent;
-
 
 public class TooltipTextMaker 
 {

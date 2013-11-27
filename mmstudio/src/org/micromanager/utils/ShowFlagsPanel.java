@@ -66,6 +66,7 @@ public class ShowFlagsPanel extends JLayeredPane {
 		showCamerasCheckBox_ = new JCheckBox();
 		showCamerasCheckBox_.setFont(new Font("", Font.PLAIN, 10));
 		showCamerasCheckBox_.addActionListener(new ActionListener() {
+         @Override
 			public void actionPerformed(ActionEvent arg0) {
 				flags_.cameras_ = showCamerasCheckBox_.isSelected();
 				data_.updateRowVisibility(flags_);
@@ -78,6 +79,7 @@ public class ShowFlagsPanel extends JLayeredPane {
 		showShuttersCheckBox_ = new JCheckBox();
 		showShuttersCheckBox_.setFont(new Font("", Font.PLAIN, 10));
 		showShuttersCheckBox_.addActionListener(new ActionListener() {
+         @Override
 			public void actionPerformed(ActionEvent arg0) {
 				flags_.shutters_ = showShuttersCheckBox_.isSelected();
 				data_.updateRowVisibility(flags_);
@@ -90,6 +92,7 @@ public class ShowFlagsPanel extends JLayeredPane {
 		showStagesCheckBox_ = new JCheckBox();
 		showStagesCheckBox_.setFont(new Font("", Font.PLAIN, 10));
 		showStagesCheckBox_.addActionListener(new ActionListener() {
+         @Override
 			public void actionPerformed(ActionEvent arg0) {
 				flags_.stages_ = showStagesCheckBox_.isSelected();
 				data_.updateRowVisibility(flags_);
@@ -102,6 +105,7 @@ public class ShowFlagsPanel extends JLayeredPane {
 		showStateDevicesCheckBox_ = new JCheckBox();
 		showStateDevicesCheckBox_.setFont(new Font("", Font.PLAIN, 10));
 		showStateDevicesCheckBox_.addActionListener(new ActionListener() {
+         @Override
 			public void actionPerformed(ActionEvent arg0) {
 				flags_.state_ = showStateDevicesCheckBox_.isSelected();
 				data_.updateRowVisibility(flags_);
@@ -114,6 +118,7 @@ public class ShowFlagsPanel extends JLayeredPane {
 		showOtherCheckBox_ = new JCheckBox();
 		showOtherCheckBox_.setFont(new Font("", Font.PLAIN, 10));
 		showOtherCheckBox_.addActionListener(new ActionListener() {
+         @Override
 			public void actionPerformed(ActionEvent arg0) {
 				flags_.other_ = showOtherCheckBox_.isSelected();
 				data_.updateRowVisibility(flags_);

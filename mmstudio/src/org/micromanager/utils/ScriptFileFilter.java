@@ -40,6 +40,7 @@ public class ScriptFileFilter extends FileFilter {
       DESCRIPTION = new String("BeanShell files (*.bsh)");
    }
    
+   @Override
    public boolean accept(File f){
       if (f.isDirectory())
          return true;
