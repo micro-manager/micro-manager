@@ -35,15 +35,6 @@
     <ClCompile Include="MCL_NanoDrive_ZStage.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\MMDevice\DeviceUtils.cpp">
-      <Filter>Micro Manager 1.3</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\MMDevice\ModuleInterface.cpp">
-      <Filter>Micro Manager 1.3</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\MMDevice\Property.cpp">
-      <Filter>Micro Manager 1.3</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="device_list.h">

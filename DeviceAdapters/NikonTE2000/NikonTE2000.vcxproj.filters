@@ -15,16 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\MMDevice\DeviceUtils.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\MMDevice\ModuleInterface.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="NikonTE2000.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\MMDevice\Property.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="TEHub.cpp">
@@ -32,12 +23,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\MMDevice\DeviceUtils.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\MMDevice\ModuleInterface.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="NikonTE2000.h">
       <Filter>Header Files</Filter>
     </ClInclude>

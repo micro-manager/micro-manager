@@ -150,9 +150,6 @@
   <ItemGroup>
     <ClCompile Include="MCL_MicroDrive.cpp" />
     <ClCompile Include="MicroDriveXYStage.cpp" />
-    <ClCompile Include="..\..\MMDevice\DeviceUtils.cpp" />
-    <ClCompile Include="..\..\MMDevice\ModuleInterface.cpp" />
-    <ClCompile Include="..\..\MMDevice\Property.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MCL_MicroDrive.h" />

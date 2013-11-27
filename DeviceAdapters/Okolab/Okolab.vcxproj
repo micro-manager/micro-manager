@@ -155,31 +155,22 @@
     <ClCompile Include="CO2BLControl.cpp" />
     <ClCompile Include="CO2O2BL13Control.cpp" />
     <ClCompile Include="CO2O2BLControl.cpp" />
-    <ClCompile Include="..\..\MMDevice\DeviceUtils.cpp" />
     <ClCompile Include="H201BLControl.cpp" />
     <ClCompile Include="H301BLControl.cpp" />
-    <ClCompile Include="..\..\MMDevice\ModuleInterface.cpp" />
     <ClCompile Include="O2BLControl.cpp" />
     <ClCompile Include="OCSControl.cpp" />
     <ClCompile Include="Okolab.cpp" />
-    <ClCompile Include="..\..\MMDevice\Property.cpp" />
     <ClCompile Include="TestControl.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CO2BLControl.h" />
     <ClInclude Include="CO2O2BL13Control.h" />
     <ClInclude Include="CO2O2BLControl.h" />
-    <ClInclude Include="..\..\MMDevice\DeviceBase.h" />
-    <ClInclude Include="..\..\MMDevice\DeviceUtils.h" />
     <ClInclude Include="H201BLControl.h" />
     <ClInclude Include="H301BLControl.h" />
-    <ClInclude Include="..\..\MMDevice\MMDevice.h" />
-    <ClInclude Include="..\..\MMDevice\MMDeviceConstants.h" />
-    <ClInclude Include="..\..\MMDevice\ModuleInterface.h" />
     <ClInclude Include="O2BLControl.h" />
     <ClInclude Include="OCSControl.h" />
     <ClInclude Include="Okolab.h" />
-    <ClInclude Include="..\..\MMDevice\Property.h" />
     <ClInclude Include="TestControl.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

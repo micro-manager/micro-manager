@@ -149,22 +149,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\MMDevice\DeviceUtils.cpp" />
-    <ClCompile Include="..\..\MMDevice\ModuleInterface.cpp" />
     <ClCompile Include="nPC400.cpp" />
     <ClCompile Include="nPC400Channel.cpp" />
     <ClCompile Include="nPC400Ctrl.cpp" />
-    <ClCompile Include="..\..\MMDevice\Property.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\MMDevice\DeviceBase.h" />
-    <ClInclude Include="..\..\MMDevice\DeviceUtils.h" />
-    <ClInclude Include="..\..\MMDevice\MMDevice.h" />
-    <ClInclude Include="..\..\MMDevice\ModuleInterface.h" />
     <ClInclude Include="nPC400.h" />
     <ClInclude Include="nPC400Channel.h" />
     <ClInclude Include="nPC400Ctrl.h" />
-    <ClInclude Include="..\..\MMDevice\Property.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>

@@ -128,17 +128,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\MMDevice\DeviceUtils.cpp" />
-    <ClCompile Include="..\..\MMDevice\ModuleInterface.cpp" />
-    <ClCompile Include="..\..\MMDevice\Property.cpp" />
     <ClCompile Include="Standa.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\MMDevice\DeviceBase.h" />
-    <ClInclude Include="..\..\MMDevice\DeviceUtils.h" />
-    <ClInclude Include="..\..\MMDevice\MMDevice.h" />
-    <ClInclude Include="..\..\MMDevice\ModuleInterface.h" />
-    <ClInclude Include="..\..\MMDevice\Property.h" />
     <ClInclude Include="Standa.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

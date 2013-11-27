@@ -159,16 +159,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Cobolt.cpp" />
-    <ClCompile Include="..\..\MMDevice\DeviceUtils.cpp" />
-    <ClCompile Include="..\..\MMDevice\ModuleInterface.cpp" />
-    <ClCompile Include="..\..\MMDevice\Property.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Cobolt.h" />
-    <ClInclude Include="..\..\MMDevice\DeviceBase.h" />
-    <ClInclude Include="..\..\MMDevice\MMDevice.h" />
-    <ClInclude Include="..\..\MMDevice\ModuleInterface.h" />
-    <ClInclude Include="..\..\MMDevice\Property.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

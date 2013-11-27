@@ -139,24 +139,17 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\MMDevice\DeviceUtils.cpp" />
-    <ClCompile Include="..\..\MMDevice\ModuleInterface.cpp" />
     <ClCompile Include="MT20.cpp" />
     <ClCompile Include="MT20hub.cpp" />
-    <ClCompile Include="..\..\MMDevice\Property.cpp" />
     <ClCompile Include="tinystr.cpp" />
     <ClCompile Include="tinyxml.cpp" />
     <ClCompile Include="tinyxmlerror.cpp" />
     <ClCompile Include="tinyxmlparser.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\MMDevice\DeviceBase.h" />
-    <ClInclude Include="..\..\MMDevice\DeviceUtils.h" />
-    <ClInclude Include="..\..\MMDevice\ModuleInterface.h" />
     <ClInclude Include="msg_lib.h" />
     <ClInclude Include="MT20.h" />
     <ClInclude Include="MT20hub.h" />
-    <ClInclude Include="..\..\MMDevice\Property.h" />
     <ClInclude Include="tinystr.h" />
     <ClInclude Include="tinyxml.h" />
   </ItemGroup>

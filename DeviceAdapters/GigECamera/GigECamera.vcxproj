@@ -164,24 +164,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\MMDevice\DeviceUtils.cpp" />
     <ClCompile Include="GigECamera.cpp" />
     <ClCompile Include="GigECameraAcq.cpp" />
     <ClCompile Include="GigECameraAction.cpp" />
     <ClCompile Include="GigENodes.cpp" />
-    <ClCompile Include="..\..\MMDevice\ImgBuffer.cpp" />
-    <ClCompile Include="..\..\MMDevice\ModuleInterface.cpp" />
-    <ClCompile Include="..\..\MMDevice\Property.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\MMDevice\DeviceBase.h" />
-    <ClInclude Include="..\..\MMDevice\DeviceUtils.h" />
     <ClInclude Include="GigECamera.h" />
     <ClInclude Include="GigENodes.h" />
-    <ClInclude Include="..\..\MMDevice\ImgBuffer.h" />
-    <ClInclude Include="..\..\MMDevice\MMDevice.h" />
-    <ClInclude Include="..\..\MMDevice\ModuleInterface.h" />
-    <ClInclude Include="..\..\MMDevice\Property.h" />
     <ClInclude Include="JAISDK.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

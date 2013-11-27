@@ -148,27 +148,18 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\MMDevice\DeviceUtils.cpp" />
     <ClCompile Include="IntegratedFilterWheel.cpp" />
-    <ClCompile Include="..\..\MMDevice\ModuleInterface.cpp" />
     <ClCompile Include="MotorStage.cpp" />
     <ClCompile Include="MotorZStage.cpp" />
     <ClCompile Include="PiezoZStage.cpp" />
-    <ClCompile Include="..\..\MMDevice\Property.cpp" />
     <ClCompile Include="Thorlabs.cpp" />
     <ClCompile Include="XYStage.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\MMDevice\DeviceBase.h" />
-    <ClInclude Include="..\..\MMDevice\DeviceUtils.h" />
     <ClInclude Include="IntegratedFilterWheel.h" />
-    <ClInclude Include="..\..\MMDevice\MMDevice.h" />
-    <ClInclude Include="..\..\MMDevice\MMDeviceConstants.h" />
-    <ClInclude Include="..\..\MMDevice\ModuleInterface.h" />
     <ClInclude Include="MotorStage.h" />
     <ClInclude Include="MotorZStage.h" />
     <ClInclude Include="PiezoZStage.h" />
-    <ClInclude Include="..\..\MMDevice\Property.h" />
     <ClInclude Include="Thorlabs.h" />
     <ClInclude Include="XYStage.h" />
   </ItemGroup>

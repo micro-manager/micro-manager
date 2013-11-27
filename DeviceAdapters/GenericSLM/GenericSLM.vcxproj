@@ -160,18 +160,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\MMDevice\DeviceUtils.cpp" />
     <ClCompile Include="DisplayAdapters.cpp" />
     <ClCompile Include="GenericSLM.cpp" />
-    <ClCompile Include="..\..\MMDevice\ModuleInterface.cpp" />
-    <ClCompile Include="..\..\MMDevice\Property.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\MMDevice\DeviceUtils.h" />
     <ClInclude Include="DisplayAdapters.h" />
     <ClInclude Include="GenericSLM.h" />
-    <ClInclude Include="..\..\MMDevice\ModuleInterface.h" />
-    <ClInclude Include="..\..\MMDevice\Property.h" />
     <ClInclude Include="WinStuff.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

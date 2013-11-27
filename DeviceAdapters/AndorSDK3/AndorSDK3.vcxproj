@@ -172,14 +172,10 @@
     <ClCompile Include="AOIProperty.cpp" />
     <ClCompile Include="BooleanProperty.cpp" />
     <ClCompile Include="CallBackManager.cpp" />
-    <ClCompile Include="..\..\MMDevice\DeviceUtils.cpp" />
     <ClCompile Include="EnumProperty.cpp" />
     <ClCompile Include="EventsManager.cpp" />
     <ClCompile Include="FloatProperty.cpp" />
-    <ClCompile Include="..\..\MMDevice\ImgBuffer.cpp" />
     <ClCompile Include="IntegerProperty.cpp" />
-    <ClCompile Include="..\..\MMDevice\ModuleInterface.cpp" />
-    <ClCompile Include="..\..\MMDevice\Property.cpp" />
     <ClCompile Include="SnapShotControl.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -190,16 +186,10 @@
     <ClInclude Include="atunpacker.h" />
     <ClInclude Include="BooleanProperty.h" />
     <ClInclude Include="CallBackManager.h" />
-    <ClInclude Include="..\..\MMDevice\DeviceBase.h" />
-    <ClInclude Include="..\..\MMDevice\DeviceUtils.h" />
     <ClInclude Include="EnumProperty.h" />
     <ClInclude Include="EventsManager.h" />
     <ClInclude Include="FloatProperty.h" />
-    <ClInclude Include="..\..\MMDevice\ImgBuffer.h" />
     <ClInclude Include="IntegerProperty.h" />
-    <ClInclude Include="..\..\MMDevice\MMDevice.h" />
-    <ClInclude Include="..\..\MMDevice\ModuleInterface.h" />
-    <ClInclude Include="..\..\MMDevice\Property.h" />
     <ClInclude Include="SnapShotControl.h" />
     <ClInclude Include="triggerremapper.h" />
   </ItemGroup>

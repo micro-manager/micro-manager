@@ -24,16 +24,10 @@
     <ClCompile Include="CO2O2BLControl.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\MMDevice\DeviceUtils.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="H201BLControl.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="H301BLControl.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\MMDevice\ModuleInterface.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="O2BLControl.cpp">
@@ -43,9 +37,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Okolab.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\MMDevice\Property.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="TestControl.cpp">
@@ -62,25 +53,10 @@
     <ClInclude Include="CO2O2BLControl.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\MMDevice\DeviceBase.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\MMDevice\DeviceUtils.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="H201BLControl.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="H301BLControl.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\MMDevice\MMDevice.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\MMDevice\MMDeviceConstants.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\MMDevice\ModuleInterface.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="O2BLControl.h">
@@ -90,9 +66,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Okolab.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\MMDevice\Property.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="TestControl.h">

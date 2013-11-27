@@ -171,20 +171,11 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="AgilentLaserCombiner.cpp" />
-    <ClCompile Include="..\..\MMDevice\DeviceUtils.cpp" />
-    <ClCompile Include="..\..\MMDevice\ModuleInterface.cpp" />
-    <ClCompile Include="..\..\MMDevice\Property.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AgilentLaserCombiner.h" />
-    <ClInclude Include="..\..\MMDevice\DeviceBase.h" />
-    <ClInclude Include="..\..\MMDevice\DeviceUtils.h" />
     <ClInclude Include="..\..\..\100xImaging\LaserCombinerSDK\LaserCombinerSDK\ErrorCodes.h" />
     <ClInclude Include="..\..\..\LaserCombiner\LaserCombinerSDK\LaserCombinerSDK.h" />
-    <ClInclude Include="..\..\MMDevice\MMDevice.h" />
-    <ClInclude Include="..\..\MMDevice\MMDeviceConstants.h" />
-    <ClInclude Include="..\..\MMDevice\ModuleInterface.h" />
-    <ClInclude Include="..\..\MMDevice\Property.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -159,11 +159,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="dbgbox.cpp" />
-    <ClCompile Include="..\..\MMDevice\DeviceUtils.cpp" />
-    <ClCompile Include="..\..\MMDevice\ImgBuffer.cpp" />
-    <ClCompile Include="..\..\MMDevice\ModuleInterface.cpp" />
     <ClCompile Include="PerformanceTimer.cpp" />
-    <ClCompile Include="..\..\MMDevice\Property.cpp" />
     <ClCompile Include="SaveBmpImage.cpp" />
     <ClCompile Include="TwainCamera.cpp" />
     <ClCompile Include="TwainDevice.cpp" />
@@ -172,15 +168,7 @@
   <ItemGroup>
     <ClInclude Include="CameraSequenceThread.h" />
     <ClInclude Include="dbgbox.h" />
-    <ClInclude Include="..\..\MMDevice\DeviceBase.h" />
-    <ClInclude Include="..\..\MMDevice\DeviceThreads.h" />
-    <ClInclude Include="..\..\MMDevice\DeviceUtils.h" />
-    <ClInclude Include="..\..\MMDevice\ImgBuffer.h" />
-    <ClInclude Include="..\..\MMDevice\MMDevice.h" />
-    <ClInclude Include="..\..\MMDevice\MMDeviceConstants.h" />
-    <ClInclude Include="..\..\MMDevice\ModuleInterface.h" />
     <ClInclude Include="PerformanceTimer.h" />
-    <ClInclude Include="..\..\MMDevice\Property.h" />
     <ClInclude Include="SaveBmpImage.h" />
     <ClInclude Include="twain.h" />
     <ClInclude Include="TwainCamera.h" />

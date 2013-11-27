@@ -166,27 +166,18 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\MMDevice\DeviceBase.h" />
-    <ClInclude Include="..\..\MMDevice\DeviceUtils.h" />
-    <ClInclude Include="..\..\MMDevice\MMDevice.h" />
-    <ClInclude Include="..\..\MMDevice\MMDeviceConstants.h" />
-    <ClInclude Include="..\..\MMDevice\ModuleInterface.h" />
     <ClInclude Include="MP285.h" />
     <ClInclude Include="MP285Ctrl.h" />
     <ClInclude Include="MP285Error.h" />
     <ClInclude Include="MP285XYStage.h" />
     <ClInclude Include="MP285ZStage.h" />
-    <ClInclude Include="..\..\MMDevice\Property.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\MMDevice\DeviceUtils.cpp" />
-    <ClCompile Include="..\..\MMDevice\ModuleInterface.cpp" />
     <ClCompile Include="MP285.cpp" />
     <ClCompile Include="MP285Ctrl.cpp" />
     <ClCompile Include="MP285Error.cpp" />
     <ClCompile Include="MP285XYStage.cpp" />
     <ClCompile Include="MP285ZStage.cpp" />
-    <ClCompile Include="..\..\MMDevice\Property.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

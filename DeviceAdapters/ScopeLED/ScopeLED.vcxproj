@@ -150,9 +150,6 @@
     <ClInclude Include="USBCommDLL\USBCommDLL.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\MMDevice\DeviceUtils.cpp" />
-    <ClCompile Include="..\..\MMDevice\ModuleInterface.cpp" />
-    <ClCompile Include="..\..\MMDevice\Property.cpp" />
     <ClCompile Include="ScopeLEDDevices.cpp" />
     <ClCompile Include="USBCommAdapter.cpp" />
   </ItemGroup>

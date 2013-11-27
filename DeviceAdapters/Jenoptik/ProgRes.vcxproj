@@ -165,24 +165,15 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\MMDevice\DeviceUtils.cpp" />
     <ClCompile Include="ExpCtrl.cpp" />
     <ClCompile Include="FocusCallback.cpp" />
-    <ClCompile Include="..\..\MMDevice\ImgBuffer.cpp" />
     <ClCompile Include="ImgFinalProc.cpp" />
     <ClCompile Include="MexExlImplement.c" />
     <ClCompile Include="mmgrProgRes.cpp" />
-    <ClCompile Include="..\..\MMDevice\ModuleInterface.cpp" />
-    <ClCompile Include="..\..\MMDevice\Property.cpp" />
     <ClCompile Include="TriggerWaitProc.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\MMDevice\DeviceBase.h" />
-    <ClInclude Include="..\..\MMDevice\DeviceUtils.h" />
-    <ClInclude Include="..\..\MMDevice\ImgBuffer.h" />
     <ClInclude Include="mmgrProgRes.h" />
-    <ClInclude Include="..\..\MMDevice\ModuleInterface.h" />
-    <ClInclude Include="..\..\MMDevice\Property.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

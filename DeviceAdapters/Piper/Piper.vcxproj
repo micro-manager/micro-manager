@@ -176,10 +176,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="CameraAdapter.cpp" />
-    <ClCompile Include="..\..\MMDevice\DeviceUtils.cpp" />
-    <ClCompile Include="..\..\MMDevice\ModuleInterface.cpp" />
     <ClCompile Include="PiperMmAdapter.cpp" />
-    <ClCompile Include="..\..\MMDevice\Property.cpp" />
     <ClCompile Include="stdafx.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -187,8 +184,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CameraAdapter.h" />
-    <ClInclude Include="..\..\MMDevice\DeviceBase.h" />
-    <ClInclude Include="..\..\MMDevice\MMDevice.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="stdafx.h" />
   </ItemGroup>

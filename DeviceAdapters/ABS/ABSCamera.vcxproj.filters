@@ -42,18 +42,6 @@
     <ClCompile Include="TimeSpanPC.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\MMDevice\DeviceUtils.cpp">
-      <Filter>Base</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\MMDevice\ImgBuffer.cpp">
-      <Filter>Base</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\MMDevice\ModuleInterface.cpp">
-      <Filter>Base</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\MMDevice\Property.cpp">
-      <Filter>Base</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ABSCamera.h">
@@ -79,33 +67,6 @@
     </ClInclude>
     <ClInclude Include="TimeSpanPC.h">
       <Filter>Headerdateien</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\MMDevice\DeviceBase.h">
-      <Filter>Base</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\MMDevice\DeviceThreads.h">
-      <Filter>Base</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\MMDevice\DeviceUtils.h">
-      <Filter>Base</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\MMDevice\ImageMetadata.h">
-      <Filter>Base</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\MMDevice\ImgBuffer.h">
-      <Filter>Base</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\MMDevice\MMDevice.h">
-      <Filter>Base</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\MMDevice\MMDeviceConstants.h">
-      <Filter>Base</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\MMDevice\ModuleInterface.h">
-      <Filter>Base</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\MMDevice\Property.h">
-      <Filter>Base</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

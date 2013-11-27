@@ -177,13 +177,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="DeviceOperate.cpp" />
-    <ClCompile Include="..\..\MMDevice\DeviceUtils.cpp" />
     <ClCompile Include="HID.cpp" />
     <ClCompile Include="hiddll.cpp" />
     <ClCompile Include="Mightex.cpp" />
     <ClCompile Include="Mightex_LEDDriver_SDK.cpp" />
-    <ClCompile Include="..\..\MMDevice\ModuleInterface.cpp" />
-    <ClCompile Include="..\..\MMDevice\Property.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="HID.h" />

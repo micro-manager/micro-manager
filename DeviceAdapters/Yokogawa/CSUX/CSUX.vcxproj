@@ -141,16 +141,10 @@
   <ItemGroup>
     <ClCompile Include="..\CSUX.cpp" />
     <ClCompile Include="..\CSUXHub.cpp" />
-    <ClCompile Include="..\..\..\MMDevice\DeviceUtils.cpp" />
-    <ClCompile Include="..\..\..\MMDevice\ModuleInterface.cpp" />
-    <ClCompile Include="..\..\..\MMDevice\Property.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\CSU22Hub.h" />
     <ClInclude Include="..\CSUXHub.h" />
-    <ClInclude Include="..\..\..\MMDevice\DeviceBase.h" />
-    <ClInclude Include="..\..\..\MMDevice\MMDevice.h" />
-    <ClInclude Include="..\..\..\MMDevice\ModuleInterface.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
