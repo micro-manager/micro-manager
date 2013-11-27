@@ -122,6 +122,7 @@ public class CenterAndDragListener implements MouseListener,
 	      }
 	   }
 
+      @Override
 	   public void mouseClicked(MouseEvent e) {
          if (Toolbar.getInstance() != null) {
             if (Toolbar.getToolId() == Toolbar.HAND) {
@@ -180,6 +181,7 @@ public class CenterAndDragListener implements MouseListener,
 
 
 	   // Mouse listener implementation
+      @Override
 	   public void mousePressed(MouseEvent e) {
 	      // Get the starting coordinate for the dragging
 	      int x = e.getX();
@@ -188,6 +190,7 @@ public class CenterAndDragListener implements MouseListener,
 	      lastY_ = canvas_.offScreenY(y);
 	   }
 
+      @Override
 	   public void mouseDragged(MouseEvent e) {
 	      if ((e.getModifiers() & Event.META_MASK) != 0) // right click: ignore
 	         return;
@@ -254,30 +257,41 @@ public class CenterAndDragListener implements MouseListener,
 
 	   } 
 
+      @Override
 	   public void mouseReleased(MouseEvent e) {}
+      @Override
 	   public void mouseExited(MouseEvent e) {}
+      @Override
 	   public void mouseEntered(MouseEvent e) {}
+      @Override
 	   public void mouseMoved(MouseEvent e) {}
 
+      @Override
    public void windowOpened(WindowEvent we) {
    }
 
+      @Override
    public void windowClosing(WindowEvent we) {
    }
 
+      @Override
    public void windowClosed(WindowEvent we) {
       stop();
    }
 
+      @Override
    public void windowIconified(WindowEvent we) {
    }
 
+      @Override
    public void windowDeiconified(WindowEvent we) {
    }
 
+      @Override
    public void windowActivated(WindowEvent we) {
    }
 
+      @Override
    public void windowDeactivated(WindowEvent we) {
    }
 

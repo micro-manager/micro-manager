@@ -28,7 +28,6 @@ import ij.gui.ImageWindow;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 
-import javax.swing.JOptionPane;
 
 import org.micromanager.MMStudioMainFrame;
 import mmcorej.CMMCore;
@@ -87,6 +86,7 @@ public class ZWheelListener implements MouseWheelListener {
       //images_.addElement(id);
    }
 
+   @Override
    public void mouseWheelMoved(MouseWheelEvent e) {
 	  synchronized(this) {
 		  // Get needed info from core

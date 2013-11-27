@@ -63,6 +63,7 @@ public final class XYZKeyListener implements KeyListener {
       gui_ = gui;
 	}
 
+   @Override
 	public void keyPressed(KeyEvent e) {
 
 		core_.logMessage(Integer.toString(e.getKeyCode()));
@@ -122,9 +123,11 @@ public final class XYZKeyListener implements KeyListener {
 		}
 	}
 
+   @Override
 	public void keyReleased(KeyEvent arg0) {
 	}
 
+   @Override
 	public void keyTyped(KeyEvent arg0) {
 	}
 
@@ -238,7 +241,6 @@ public final class XYZKeyListener implements KeyListener {
 			core_.setRelativePosition(zStage, moveIncrement * step);
 		} catch (Exception ex) {
 			ReportingUtils.showError(ex);
-			return;
 		}
 
 	}
@@ -276,7 +278,6 @@ public final class XYZKeyListener implements KeyListener {
 				transposeXY_ = true;
 		} catch (Exception exc) {
 			ReportingUtils.showError(exc);
-			return;
 		}
 	}
 

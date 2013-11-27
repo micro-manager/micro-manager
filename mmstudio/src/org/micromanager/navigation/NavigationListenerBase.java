@@ -78,7 +78,6 @@ public abstract class NavigationListenerBase {
 				transposeXY_ = true;
 		} catch (Exception exc) {
 			ReportingUtils.logError(exc);
-			return;
 		}
 
 	}
