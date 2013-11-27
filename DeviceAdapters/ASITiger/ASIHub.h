@@ -83,8 +83,10 @@ public:
    vector<string> SplitAnswerOnSpace() const { return SplitAnswerOnDelim(" "); }
 
    // action/property handlers
-   int OnSerialTerminator(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnSerialCommand   (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSerialTerminator           (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSerialCommand              (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSerialCommandRepeatDuration(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSerialCommandRepeatPeriod  (MM::PropertyBase* pProp, MM::ActionType eAct);
 
 protected:
    string port_;         // port to use for communication
@@ -97,6 +99,8 @@ private:
    string serialAnswer_;      // the last answer received
    string serialCommand_;     // the last command sent, or can be set for calling commands without args
    string serialTerminator_;  // only used when parsing command sent via OnSerialCommand action handler
+   long serialRepeatDuration_; // for how long total time the command is repeatedly sent
+   long serialRepeatPeriod_;  // how often in ms the command is sent
 };
 
 

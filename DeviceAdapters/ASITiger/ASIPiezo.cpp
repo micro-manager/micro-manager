@@ -156,6 +156,7 @@ int CPiezo::Initialize()
    AddAllowedValue(g_PiezoModePropertyName, g_AdeptMode_1);
    AddAllowedValue(g_PiezoModePropertyName, g_AdeptMode_2);
    AddAllowedValue(g_PiezoModePropertyName, g_AdeptMode_3);
+   if (firmwareVersion_ > 2.7) AddAllowedValue(g_PiezoModePropertyName, g_AdeptMode_4);
 
    // Motor enable/disable (MC)
    pAct = new CPropertyAction (this, &CPiezo::OnMotorControl);
@@ -192,6 +193,18 @@ int CPiezo::Initialize()
    AddAllowedValue(g_JoystickSelectPropertyName, g_JSCode_3);
    AddAllowedValue(g_JoystickSelectPropertyName, g_JSCode_22);
    AddAllowedValue(g_JoystickSelectPropertyName, g_JSCode_23);
+
+   if (firmwareVersion_ > 2.7) {
+      // overshoot and max time applicable to mode 4
+      pAct = new CPropertyAction (this, &CPiezo::OnModeFourOvershoot);
+      CreateProperty(g_PiezoModeFourOvershoot, "100", MM::Integer, false, pAct);
+      UpdateProperty(g_PiezoModeFourOvershoot);
+      SetPropertyLimits(g_PiezoModeFourOvershoot, 0, 400);
+      pAct = new CPropertyAction (this, &CPiezo::OnModeFourMaxTime);
+      CreateProperty(g_PiezoModeFourMaxTime, "10", MM::Integer, false, pAct);
+      UpdateProperty(g_PiezoModeFourMaxTime);
+      SetPropertyLimits(g_PiezoModeFourMaxTime, 0, 30);
+   }
 
    initialized_ = true;
    return DEVICE_OK;
@@ -596,6 +609,54 @@ int CPiezo::OnJoystickSelect(MM::PropertyBase* pProp, MM::ActionType eAct)
       else
          return DEVICE_INVALID_PROPERTY_VALUE;
       command << "J " << axisLetter_ << "=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}
+
+int CPiezo::OnModeFourOvershoot(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   ostringstream response; response.str("");
+   long tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << addressChar_ << "PZ T?";
+      response << "T=";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
+      tmp = (long) hub_->ParseAnswerAfterEquals();
+      if (!pProp->Set(tmp))
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      pProp->Get(tmp);
+      command << addressChar_ << "PZ T=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}
+
+int CPiezo::OnModeFourMaxTime(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   ostringstream response; response.str("");
+   long tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << addressChar_ << "PZ F?";
+      response << "F=";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
+      tmp = (long) hub_->ParseAnswerAfterEquals();
+      if (!pProp->Set(tmp))
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      pProp->Get(tmp);
+      command << addressChar_ << "PZ F=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
    }
    return DEVICE_OK;

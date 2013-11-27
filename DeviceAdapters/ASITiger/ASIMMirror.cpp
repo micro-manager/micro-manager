@@ -223,6 +223,9 @@ int CMMirror::Initialize()
    pAct = new CPropertyAction (this, &CMMirror::OnSAAmplitudeX);
    CreateProperty(g_MMirrorSAAmplitudeXPropertyName, "0", MM::Float, false, pAct);
    UpdateProperty(g_MMirrorSAAmplitudeXPropertyName);
+   pAct = new CPropertyAction (this, &CMMirror::OnSAOffsetX);
+   CreateProperty(g_MMirrorSAOffsetXPropertyName, "0", MM::Float, false, pAct);
+   UpdateProperty(g_MMirrorSAOffsetXPropertyName);
    pAct = new CPropertyAction (this, &CMMirror::OnSAPeriodX);
    CreateProperty(g_MMirrorSAPeriodXPropertyName, "0", MM::Integer, false, pAct);
    UpdateProperty(g_MMirrorSAPeriodXPropertyName);
@@ -242,6 +245,9 @@ int CMMirror::Initialize()
    pAct = new CPropertyAction (this, &CMMirror::OnSAAmplitudeY);
    CreateProperty(g_MMirrorSAAmplitudeYPropertyName, "0", MM::Float, false, pAct);
    UpdateProperty(g_MMirrorSAAmplitudeYPropertyName);
+   pAct = new CPropertyAction (this, &CMMirror::OnSAOffsetY);
+   CreateProperty(g_MMirrorSAOffsetYPropertyName, "0", MM::Float, false, pAct);
+   UpdateProperty(g_MMirrorSAOffsetYPropertyName);
    pAct = new CPropertyAction (this, &CMMirror::OnSAPeriodY);
    CreateProperty(g_MMirrorSAPeriodYPropertyName, "0", MM::Integer, false, pAct);
    UpdateProperty(g_MMirrorSAPeriodYPropertyName);
@@ -791,6 +797,30 @@ int CMMirror::OnSAAmplitudeX(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
+int CMMirror::OnSAOffsetX(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   ostringstream response; response.str("");
+   double tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << "SAO " << axisLetterX_ << "?";
+      response << ":A " << axisLetterX_ << "=";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
+      tmp = hub_->ParseAnswerAfterEquals()/unitMultX_;
+      if (!pProp->Set(tmp))
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      pProp->Get(tmp);
+      command << "SAO " << axisLetterX_ << "=" << tmp*unitMultX_;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}
+
 int CMMirror::OnSAPeriodX(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    ostringstream command; command.str("");
@@ -933,6 +963,30 @@ int CMMirror::OnSAAmplitudeY(MM::PropertyBase* pProp, MM::ActionType eAct)
    else if (eAct == MM::AfterSet) {
       pProp->Get(tmp);
       command << "SAA " << axisLetterY_ << "=" << tmp*unitMultY_;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}
+
+int CMMirror::OnSAOffsetY(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   ostringstream response; response.str("");
+   double tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << "SAO " << axisLetterY_ << "?";
+      response << ":A " << axisLetterY_ << "=";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
+      tmp = hub_->ParseAnswerAfterEquals()/unitMultX_;
+      if (!pProp->Set(tmp))
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      pProp->Get(tmp);
+      command << "SAO " << axisLetterY_ << "=" << tmp*unitMultY_;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
    }
    return DEVICE_OK;

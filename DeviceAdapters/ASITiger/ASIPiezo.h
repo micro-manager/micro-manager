@@ -80,6 +80,8 @@ public:
    int OnJoystickMirror       (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnJoystickSelect       (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnMotorControl         (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnModeFourOvershoot    (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnModeFourMaxTime      (MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    double unitMult_;

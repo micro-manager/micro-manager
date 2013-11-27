@@ -84,11 +84,13 @@ public:
    int OnJoystickSelectY      (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnBeamEnabled          (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSAAmplitudeX         (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSAOffsetX            (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSAPeriodX            (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSAModeX              (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSAPatternX           (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSAAdvancedX          (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSAAmplitudeY         (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSAOffsetY            (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSAPeriodY            (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSAModeY              (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSAPatternY           (MM::PropertyBase* pProp, MM::ActionType eAct);

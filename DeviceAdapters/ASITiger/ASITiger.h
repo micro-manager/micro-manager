@@ -132,6 +132,8 @@ const char* const g_TigerHexAddrPropertyName = "TigerHexAddress";
 const char* const g_SerialCommandPropertyName = "SerialCommand";
 const char* const g_SerialResponsePropertyName = "SerialResponse";
 const char* const g_SerialTerminatorPropertyName = "SerialResponseTerminator";
+const char* const g_SerialCommandRepeatDurationPropertyName = "SerialCommandRepeatDuration(s)";
+const char* const g_SerialCommandRepeatPeriodPropertyName = "SerialCommandRepeatPeriod(ms)";
 
 // XY stage property names
 const char* const g_StepSizeXPropertyName = "StepSizeX(um)";
@@ -191,6 +193,7 @@ const char* const g_JoystickSelectYPropertyName = "JoystickInputY";
 const char* const g_AdvancedSAPropertiesXPropertyName = "SingleAxisAdvancedXPropertiesEnable";
 const char* const g_AdvancedSAPropertiesYPropertyName = "SingleAxisAdvancedYPropertiesEnable";
 const char* const g_MMirrorSAAmplitudeXPropertyName = "SingleAxisXAmplitude(deg)";
+const char* const g_MMirrorSAOffsetXPropertyName = "SingleAxisXOffset(deg)";
 const char* const g_MMirrorSAPeriodXPropertyName = "SingleAxisXPeriod(ms)";
 const char* const g_MMirrorSAModeXPropertyName = "SingleAxisXMode";
 const char* const g_MMirrorSAPatternXPropertyName = "SingleAxisXPattern";
@@ -200,6 +203,7 @@ const char* const g_MMirrorSATTLOutXPropertyName = "SingleAxisXTTLOut";
 const char* const g_MMirrorSATTLPolXPropertyName = "SingleAxisXTTLPolarity";
 const char* const g_MMirrorSAPatternModeXPropertyName = "SingleAxisXPatternByte";
 const char* const g_MMirrorSAAmplitudeYPropertyName = "SingleAxisYAmplitude(deg)";
+const char* const g_MMirrorSAOffsetYPropertyName = "SingleAxisYOffset(deg)";
 const char* const g_MMirrorSAPeriodYPropertyName = "SingleAxisYPeriod(ms)";
 const char* const g_MMirrorSAModeYPropertyName = "SingleAxisYMode";
 const char* const g_MMirrorSAPatternYPropertyName = "SingleAxisYPattern";
@@ -219,6 +223,8 @@ const char* const g_MMirrorBeamEnabledPropertyName = "BeamEnabled";
 const char* const g_CardVoltagePropertyName = "CardVoltage(V)"; // also used for micromirror
 const char* const g_PiezoModePropertyName = "PiezoMode";
 const char* const g_PiezoTravelRangePropertyName = "PiezoTravelRange(um)";
+const char* const g_PiezoModeFourOvershoot = "PiezoModeFourOvershoot(percent)";
+const char* const g_PiezoModeFourMaxTime = "PiezoModeFourMaxTime(ms)";
 
 // CRISP property names
 const char* const g_WaitAfterLockPropertyName = "Wait time after Lock(ms)";
@@ -291,6 +297,7 @@ const char* const g_AdeptMode_0 = "0 - internal input closed-loop";
 const char* const g_AdeptMode_1 = "1 - external input closed-loop";
 const char* const g_AdeptMode_2 = "2 - internal input open-loop";
 const char* const g_AdeptMode_3 = "3 - external input open-loop";
+const char* const g_AdeptMode_4 = "4 - internal input closed-loop, speedup";
 // save settings options
 const char* const g_SaveSettingsX = "X - reload factory defaults on startup to card";
 const char* const g_SaveSettingsY = "Y - restore last saved settings from card";

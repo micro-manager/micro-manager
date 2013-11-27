@@ -48,12 +48,29 @@ ASIHub::ASIHub() :
       port_("Undefined"),
       serialAnswer_(""),
       serialCommand_(""),
-      serialTerminator_(g_SerialTerminatorDefault)
+      serialTerminator_(g_SerialTerminatorDefault),
+      serialRepeatDuration_(0),
+      serialRepeatPeriod_(500)
 {
    CPropertyAction* pAct = new CPropertyAction(this, &ASIHub::OnPort);
    CreateProperty(MM::g_Keyword_Port, "Undefined", MM::String, false, pAct, true);
 
    // property to allow sending arbitrary serial commands and receiving response
+   pAct = new CPropertyAction (this, &ASIHub::OnSerialCommand);
+   CreateProperty(g_SerialCommandPropertyName, "", MM::String, false, pAct);
+   // this is only changed programmatically, never by user
+   CreateProperty(g_SerialResponsePropertyName, "", MM::String, false);
+
+   // property to allow repeated sending of same command; 0 disables repeat sending
+   pAct = new CPropertyAction (this, &ASIHub::OnSerialCommandRepeatDuration);
+   CreateProperty(g_SerialCommandRepeatDurationPropertyName, "0", MM::Integer, false, pAct);
+
+   // how often to send the same command
+   pAct = new CPropertyAction (this, &ASIHub::OnSerialCommandRepeatPeriod);
+   CreateProperty(g_SerialCommandRepeatPeriodPropertyName, "500", MM::Integer, false, pAct);
+
+
+   // change serial terminator, mainly useful for direct communication with filter wheel card
    pAct = new CPropertyAction (this, &ASIHub::OnSerialTerminator);
    CreateProperty(g_SerialTerminatorPropertyName, g_SerialTerminator_0, MM::String, false, pAct);
    AddAllowedValue(g_SerialTerminatorPropertyName, g_SerialTerminator_0);
@@ -61,10 +78,6 @@ ASIHub::ASIHub() :
    AddAllowedValue(g_SerialTerminatorPropertyName, g_SerialTerminator_2);
    AddAllowedValue(g_SerialTerminatorPropertyName, g_SerialTerminator_3);
    AddAllowedValue(g_SerialTerminatorPropertyName, g_SerialTerminator_4);
-   pAct = new CPropertyAction (this, &ASIHub::OnSerialCommand);
-   CreateProperty(g_SerialCommandPropertyName, "", MM::String, false, pAct);
-   // this is only changed programmatically, never by user
-   CreateProperty(g_SerialResponsePropertyName, "", MM::String, false);
 
    hub_ = this;
 }
@@ -75,13 +88,10 @@ int ASIHub::ClearComPort(void)
 }
 
 int ASIHub::SendCommand(const char *command)
+// changed from early implementation
 {
-   // had problems with repeated calls to this that were solved by doing QueryCommand instead
-   RETURN_ON_MM_ERROR ( ClearComPort() );
-   RETURN_ON_MM_ERROR ( SendSerialCommand(port_.c_str(), command, "\r") );
-   serialCommand_ = command;
-   // if in debug mode then echo serialCommand_ to log file
-   LogMessage("SerialCommand:\t" + serialCommand_, true);
+   RETURN_ON_MM_ERROR ( QueryCommand(command, serialTerminator_) );
+   SetProperty(g_SerialResponsePropertyName, EscapeControlCharacters(LastSerialAnswer()).c_str());
    return DEVICE_OK;
 }
 
@@ -214,9 +224,56 @@ int ASIHub::OnSerialCommand(MM::PropertyBase* pProp, MM::ActionType eAct)
       if (tmpstr.compare(last_command) != 0)
       {
          last_command = tmpstr;
-         RETURN_ON_MM_ERROR ( QueryCommand(tmpstr, serialTerminator_) );
-         SetProperty(g_SerialResponsePropertyName, EscapeControlCharacters(LastSerialAnswer()).c_str());
+         SendCommand(tmpstr);
       }
+   }
+   return DEVICE_OK;
+}
+
+int ASIHub::OnSerialCommandRepeatDuration(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      // do nothing
+   }
+   else if (eAct == MM::AfterSet) {
+      char command[MM::MaxStrLength];
+      MM::MMTime startTime = GetCurrentMMTime();
+
+      long tmp = 0;
+      pProp->Get(tmp);
+      if (tmp < 0) tmp = 0;
+      serialRepeatDuration_ = tmp;
+      MM::MMTime duration(serialRepeatDuration_, 0);  // needed for compare statement with other MMTime objects, this constructor takes (sec, usec)
+
+      // in case anything else has used the serial port get the SerialCommand property value
+      GetProperty(g_SerialCommandPropertyName, command);
+
+      // keep repeating for the requested duration
+      while ( (GetCurrentMMTime() - startTime) < duration ) {
+         SendCommand(command);
+         CDeviceUtils::SleepMs(serialRepeatPeriod_);
+      }
+
+      // set the repeat time back to 0
+      serialRepeatDuration_ = 0;
+      pProp->Set(serialRepeatDuration_);
+   }
+   return DEVICE_OK;
+}
+
+int ASIHub::OnSerialCommandRepeatPeriod(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      // do nothing
+   }
+   else if (eAct == MM::AfterSet) {
+      MM::MMTime startTime = GetCurrentMMTime();
+      long tmp = 0;
+      pProp->Get(tmp);
+      if (tmp < 0) tmp = 0;
+      serialRepeatPeriod_ = tmp;
    }
    return DEVICE_OK;
 }
