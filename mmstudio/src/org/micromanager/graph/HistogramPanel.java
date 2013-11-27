@@ -30,13 +30,10 @@ import java.awt.geom.GeneralPath;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Point2D.Float;
-import java.text.DecimalFormat;
 import java.util.ArrayList;
 import javax.swing.JPanel;
-import javax.swing.JTextField;
 import javax.swing.UIManager;
 import org.micromanager.utils.JavaUtils;
-import org.micromanager.utils.ReportingUtils;
 
 /**
  * Histogram view. 
@@ -130,9 +127,7 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
     * position.  Not sure if this is useful
     */
    public void drawCursor(Graphics2D g, Rectangle box, float xPos) {
-      // set scaling
-      float xUnit = 1.0f;
-      float yUnit = 1.0f;
+
 
       // correct if Y range is zero
       if (bounds_.getRangeY() == 0.0) {
@@ -148,8 +143,9 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
          return; // invalid range data
       }
 
-      xUnit = (float) (box.width / bounds_.getRangeX());
-      yUnit = (float) (box.height / bounds_.getRangeY());
+      // set scaling
+      float xUnit = (float) (box.width / bounds_.getRangeX());
+      float yUnit = (float) (box.height / bounds_.getRangeY());
 
       Point2D.Float ptPosBottom = new Point2D.Float(xPos, (float)bounds_.yMax);
       Point2D.Float ptDevBottom = getDevicePoint(ptPosBottom, box, xUnit, yUnit);
@@ -174,11 +170,7 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
     * intensity on the screen. 
     */
    public void drawMapping(Graphics2D g, Rectangle box, float xStart, float xEnd, double gamma) {
-
-         // set scaling
-      float xUnit = 1.0f;
-      float yUnit = 1.0f;
-
+       
       // correct if Y range is zero
       if (bounds_.getRangeY() == 0.0) {
          if (bounds_.yMax > 0.0)
@@ -193,8 +185,9 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
          return; // invalid range data
       }
 
-      xUnit = (float) (box.width / bounds_.getRangeX());
-      yUnit = (float) (box.height / bounds_.getRangeY());
+      // set scaling
+      float xUnit = (float) (box.width / bounds_.getRangeX());
+      float yUnit = (float) (box.height / bounds_.getRangeY());
 
       Point2D.Float ptPosBottom = new Point2D.Float(xStart, (float)bounds_.yMin);
       ptDevBottom_ = getDevicePoint(ptPosBottom, box, xUnit, yUnit);
@@ -431,6 +424,7 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
             currentHandle_ = 0;
          }
          
+         @Override
          public void mouseClicked(MouseEvent e) {
             if (e.getClickCount() >= 2 && clickLocation_ == 1) {
                applyContrastValues();
@@ -603,9 +597,6 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
       Color oldColor = g.getColor();
       g.setColor(traceColor_);
       
-      // set scaling
-      float xUnit = 1.0f;
-      float yUnit = 1.0f;
       
       // correct if Y range is zero
       if (bounds_.getRangeY() == 0.0) {
@@ -620,9 +611,10 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
       if (bounds_.getRangeX() <= 0.0 || bounds_.getRangeY() <= 1.e-10) {
          return; // invalid range data
       }
-            
-      xUnit = (float) (box.width / bounds_.getRangeX());
-      yUnit = (float) (box.height / bounds_.getRangeY());
+          
+      // set scaling
+      float xUnit = (float) (box.width / bounds_.getRangeX());
+      float yUnit = (float) (box.height / bounds_.getRangeY());
       
       GeneralPath trace = new GeneralPath(GeneralPath.WIND_EVEN_ODD, data_.getSize() + 1);
       // we need to start and end at y=0 to avoid strange display issues

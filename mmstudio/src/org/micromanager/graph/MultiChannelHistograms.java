@@ -53,6 +53,7 @@ public final class MultiChannelHistograms extends JPanel implements Histograms {
       setupChannelControls(cache_);
    }
 
+   @Override
    public synchronized void setupChannelControls(ImageCache cache) {
       this.removeAll();
       this.invalidate();
@@ -119,6 +120,7 @@ public final class MultiChannelHistograms extends JPanel implements Histograms {
       display_.drawWithoutUpdate();
    }
 
+   @Override
    public ContrastSettings getChannelContrastSettings(int channel) {
       if (ccpList_ == null || ccpList_.size() - 1 > channel) {
          return null;
@@ -170,6 +172,7 @@ public final class MultiChannelHistograms extends JPanel implements Histograms {
       ccpList_.get(channelIndex).setDisplayComboIndex(index);
    }
 
+   @Override
    public void applyLUTToImage() {
       if (ccpList_ == null) {
          return;
@@ -230,6 +233,7 @@ public final class MultiChannelHistograms extends JPanel implements Histograms {
       display_.setDisplayMode(mode);
    }
 
+   @Override
    public void autoscaleAllChannels() {
       if (ccpList_ != null && ccpList_.size() > 0) {
          for (ChannelControlPanel c : ccpList_) {
@@ -238,6 +242,7 @@ public final class MultiChannelHistograms extends JPanel implements Histograms {
       }
    }
 
+   @Override
    public void rejectOutliersChangeAction() {
       if (ccpList_ != null && ccpList_.size() > 0) {
          for (ChannelControlPanel c : ccpList_) {
@@ -247,6 +252,7 @@ public final class MultiChannelHistograms extends JPanel implements Histograms {
       }
    }
 
+   @Override
    public void calcAndDisplayHistAndStats(boolean drawHist) {
       if (ccpList_ != null) {
          for (ChannelControlPanel c : ccpList_) {
@@ -264,6 +270,7 @@ public final class MultiChannelHistograms extends JPanel implements Histograms {
       }
    }
 
+   @Override
    public int getNumberOfChannels() {
       return ccpList_.size();
    }

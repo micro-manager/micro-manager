@@ -137,6 +137,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       fullButton_.setPreferredSize(new java.awt.Dimension(75, 30));
       fullButton_.addActionListener(new java.awt.event.ActionListener() {
 
+         @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             fullButtonAction();
          }
@@ -154,6 +155,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       autoButton_.setPreferredSize(new java.awt.Dimension(75, 30));
       autoButton_.addActionListener(new java.awt.event.ActionListener() {
 
+         @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             autoButtonAction();
          }
@@ -175,6 +177,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       channelNameCheckbox_.setToolTipText("Show/hide this channel in the multi-dimensional viewer");
       channelNameCheckbox_.addActionListener(new java.awt.event.ActionListener() {
 
+         @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             channelNameCheckboxAction();
          }
@@ -195,6 +198,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       histRangeComboBox_.setFont(new Font("", Font.PLAIN, 10));
       histRangeComboBox_.addActionListener(new ActionListener() {
 
+         @Override
          public void actionPerformed(final ActionEvent e) {
             if (display_.getHistogramControlsState().syncChannels) {
                mcHistograms_.updateOtherDisplayCombos(histRangeComboBox_.getSelectedIndex());
@@ -214,11 +218,13 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       zoomOutButton_.setIcon(SwingResourceManager.getIcon(MMStudioMainFrame.class,
             "/org/micromanager/icons/zoom_out.png"));   
       zoomInButton_.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent e) {
             zoomInAction();
          }
       });
       zoomOutButton_.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent e) {
             zoomOutAction();
          }
@@ -772,6 +778,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       }
    }
    
+   @Override
    public void contrastMinInput(int min) {    
       display_.disableAutoStretchCheckBox();
       contrastMin_ = min;
@@ -807,6 +814,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       }
    }
 
+   @Override
    public void onRightCursor(double pos) {
       display_.disableAutoStretchCheckBox();
       contrastMax_ = (int) (Math.min(NUM_BINS - 1, pos) * binSize_);
@@ -824,6 +832,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       }
    }
 
+   @Override
    public void onGammaCurve(double gamma) {
       if (gamma != 0) {
          if (gamma > 0.9 & gamma < 1.1) {

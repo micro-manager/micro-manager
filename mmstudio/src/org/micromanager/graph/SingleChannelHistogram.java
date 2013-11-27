@@ -104,6 +104,7 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
 
       histogramPanel_ = new HistogramPanel() {
 
+         @Override
          public void paint(Graphics g) {
             super.paint(g);
             //For drawing max label
@@ -126,6 +127,7 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
       JButton fullScaleButton = new JButton();
       fullScaleButton.addActionListener(new ActionListener() {
 
+         @Override
          public void actionPerformed(final ActionEvent e) {
             fullButtonAction();
          }
@@ -137,6 +139,7 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
       final JButton autoScaleButton = new JButton();
       autoScaleButton.addActionListener(new ActionListener() {
 
+         @Override
          public void actionPerformed(final ActionEvent e) {
             autoButtonAction();
          }
@@ -163,12 +166,14 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
               "/org/micromanager/icons/zoom_out.png"));
       zoomInButton.addActionListener(new ActionListener() {
 
+         @Override
          public void actionPerformed(ActionEvent e) {
             zoomInAction();
          }
       });
       zoomOutButton.addActionListener(new ActionListener() {
 
+         @Override
          public void actionPerformed(ActionEvent e) {
             zoomOutAction();
          }
@@ -189,6 +194,7 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
       histRangeComboBox_.setFont(new Font("", Font.PLAIN, 10));
       histRangeComboBox_.addActionListener(new ActionListener() {
 
+         @Override
          public void actionPerformed(final ActionEvent e) {
             histRangeComboAction();
          }
@@ -296,15 +302,18 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
       calcAndDisplayHistAndStats(true);
    }
 
+   @Override
    public void rejectOutliersChangeAction() {
       calcAndDisplayHistAndStats(true);
       autoButtonAction();
    }
 
+   @Override
    public void autoscaleAllChannels() {
       autoButtonAction();
    }
 
+   @Override
    public void applyLUTToImage() {
       if (img_ == null) {
          return;
@@ -338,6 +347,7 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
       display_.storeChannelHistogramSettings(0, (int) contrastMin_, (int) contrastMax_, gamma_, histMax, 1);
    }
 
+   @Override
    public void setChannelHistogramDisplayMax(int channelIndex, int histMax) {
       if (channelIndex != 0) {
          return;
@@ -388,7 +398,10 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
       saveDisplaySettings();
    }
 
-   //Calculates autostretch, doesnt apply or redraw
+   /**
+    * Calculates autostretch, doesnt apply or redraw
+    */
+   @Override
    public void autostretch() {
       contrastMin_ = pixelMin_;
       contrastMax_ = pixelMax_;
@@ -425,6 +438,7 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
       contrastMax_ = histMax_;
    }
 
+   @Override
     public void imageChanged() {
         boolean update = true;
         if ( display_.acquisitionIsRunning()
@@ -448,6 +462,7 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
         }
     }
 
+   @Override
    public void calcAndDisplayHistAndStats(boolean drawHist) {
        if (img_ == null || img_.getProcessor() == null) {
          return;
@@ -518,6 +533,7 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
 
    }
 
+   @Override
    public void setChannelContrast(int channelIndex, int min, int max, double gamma) {
       if (channelIndex != 0) {
          return;
@@ -527,6 +543,7 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
       gamma_ = gamma;
    }
    
+   @Override
    public void contrastMinInput(int min) {     
       display_.disableAutoStretchCheckBox();
       
@@ -544,6 +561,7 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
       display_.drawWithoutUpdate();
    }
    
+   @Override
    public void contrastMaxInput(int max) {     
       display_.disableAutoStretchCheckBox();
       contrastMax_ = max;
@@ -560,6 +578,7 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
       display_.drawWithoutUpdate();
    }
 
+   @Override
    public void onLeftCursor(double pos) {
       display_.disableAutoStretchCheckBox();
       
@@ -574,6 +593,7 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
       display_.drawWithoutUpdate();
    }
 
+   @Override
    public void onRightCursor(double pos) {
       display_.disableAutoStretchCheckBox();
 
@@ -588,6 +608,7 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
       display_.drawWithoutUpdate();
    }
 
+   @Override
    public void onGammaCurve(double gamma) {
       if (gamma != 0) {
          if (gamma > 0.9 & gamma < 1.1) {
@@ -600,9 +621,11 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
       }
    }
 
+   @Override
    public void setupChannelControls(ImageCache cache) {
    }
 
+   @Override
    public ContrastSettings getChannelContrastSettings(int channel) {
       if (channel != 0) {
          return null;
@@ -610,6 +633,7 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
       return new ContrastSettings(contrastMin_, contrastMax_, gamma_);
    }
 
+   @Override
    public int getNumberOfChannels() {
       return 1;
    }

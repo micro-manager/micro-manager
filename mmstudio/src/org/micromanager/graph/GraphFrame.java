@@ -128,6 +128,7 @@ public class GraphFrame extends MMFrame {
       
       setFont(new Font("Arial", Font.PLAIN, 10));
       addWindowListener(new WindowAdapter() {
+         @Override
          public void windowClosing(WindowEvent e) {
             savePosition();
          }
@@ -213,6 +214,7 @@ public class GraphFrame extends MMFrame {
       final JButton btnAutoscale = new JButton();
       btnAutoscale.setFont(new Font("Arial", Font.PLAIN, 10));
       btnAutoscale.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent e) {
             setAutoScale();
          }
@@ -226,6 +228,7 @@ public class GraphFrame extends MMFrame {
       final JButton btnRefresh = new JButton();
       btnRefresh.setFont(new Font("Arial", Font.PLAIN, 10));
       btnRefresh.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent e) {
             MMStudioMainFrame.getInstance().updateLineProfile();
          }

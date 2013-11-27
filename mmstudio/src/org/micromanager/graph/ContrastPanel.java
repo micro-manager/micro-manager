@@ -258,6 +258,7 @@ public class ContrastPanel extends JPanel {
       displayModeCombo_.setSelectedIndex(2);
       displayModeCombo_.addActionListener(new java.awt.event.ActionListener() {
 
+         @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             displayModeComboActionPerformed();
          }
@@ -267,6 +268,7 @@ public class ContrastPanel extends JPanel {
       autostretchCheckBox_.setText("Autostretch");
       autostretchCheckBox_.addChangeListener(new ChangeListener() {
 
+         @Override
          public void stateChanged(ChangeEvent evt) {
             autostretchCheckBoxStateChanged();
          }
@@ -274,6 +276,7 @@ public class ContrastPanel extends JPanel {
       rejectOutliersCheckBox_.setText("ignore %");
       rejectOutliersCheckBox_.addActionListener(new java.awt.event.ActionListener() {
 
+         @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             rejectOutliersCheckBoxAction();
          }
@@ -282,12 +285,14 @@ public class ContrastPanel extends JPanel {
       rejectPercentSpinner_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
       rejectPercentSpinner_.addChangeListener(new ChangeListener() {
 
+         @Override
          public void stateChanged(ChangeEvent evt) {
             rejectPercentageChanged();
          }
       });
       rejectPercentSpinner_.addKeyListener(new java.awt.event.KeyAdapter() {
 
+         @Override
          public void keyPressed(java.awt.event.KeyEvent evt) {
             rejectPercentageChanged();
          }
@@ -298,6 +303,7 @@ public class ContrastPanel extends JPanel {
       logHistCheckBox_.setText("Log hist");
       logHistCheckBox_.addActionListener(new java.awt.event.ActionListener() {
 
+         @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             logScaleCheckBoxActionPerformed();
          }
@@ -313,6 +319,7 @@ public class ContrastPanel extends JPanel {
       sizeBarCheckBox_.setText("Scale Bar");
       sizeBarCheckBox_.addActionListener(new java.awt.event.ActionListener() {
 
+         @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             sizeBarCheckBoxActionPerformed();
          }
@@ -321,6 +328,7 @@ public class ContrastPanel extends JPanel {
       sizeBarComboBox_.setModel(new DefaultComboBoxModel(new String[]{"Top-Left", "Top-Right", "Bottom-Left", "Bottom-Right"}));
       sizeBarComboBox_.addActionListener(new java.awt.event.ActionListener() {
 
+         @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             sizeBarComboBoxActionPerformed();
          }
@@ -329,6 +337,7 @@ public class ContrastPanel extends JPanel {
       sizeBarColorComboBox_.setModel(new DefaultComboBoxModel(new String[]{"White", "Black", "Yellow", "Gray"}));
       sizeBarColorComboBox_.addActionListener(new java.awt.event.ActionListener() {
 
+         @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             overlayColorComboBox_ActionPerformed();
          }
@@ -337,6 +346,7 @@ public class ContrastPanel extends JPanel {
       syncChannelsCheckBox_ = new JCheckBox("Sync channels");
       syncChannelsCheckBox_.addChangeListener(new ChangeListener() {
 
+         @Override
          public void stateChanged(ChangeEvent e) {
             syncChannelsCheckboxAction();
          }
@@ -345,6 +355,7 @@ public class ContrastPanel extends JPanel {
       slowHistCheckBox_ = new JCheckBox("Slow hist");
       slowHistCheckBox_.addChangeListener(new ChangeListener() {
 
+         @Override
          public void stateChanged(ChangeEvent e) {
             slowHistCheckboxAction();
          }
@@ -352,6 +363,7 @@ public class ContrastPanel extends JPanel {
       
       slowDispCheckBox_ = new JCheckBox("Slow display");
       slowDispCheckBox_.addChangeListener(new ChangeListener() {
+         @Override
          public void stateChanged(ChangeEvent e) {
             slowDispCheckBoxAction();
          }
@@ -415,33 +427,32 @@ public class ContrastPanel extends JPanel {
       }
       if (show) {
          MMScaleBar sizeBar = new MMScaleBar(ip);
-         if (sizeBar != null) {
-            Overlay ol = ip.getOverlay();
-            if (ol != null) {
+         Overlay ol = ip.getOverlay();
+         if (ol != null) {
             //see if there is an old scale bar and remove it if so
-               removeScaleBarFromOverlay(ol);
-            } else {
-               ol = new Overlay();
-            }
-            //ol.setFillColor(Color.white); // this causes the text to get a white background!
-            ol.setStrokeColor(overlayColor_);
-            String selected = (String) sizeBarComboBox_.getSelectedItem();
-            if (selected.equals("Top-Right")) {
-               sizeBar.setPosition(MMScaleBar.Position.TOPRIGHT);
-            }
-            if (selected.equals("Top-Left")) {
-               sizeBar.setPosition(MMScaleBar.Position.TOPLEFT);
-            }
-            if (selected.equals("Bottom-Right")) {
-               sizeBar.setPosition(MMScaleBar.Position.BOTTOMRIGHT);
-            }
-            if (selected.equals("Bottom-Left")) {
-               sizeBar.setPosition(MMScaleBar.Position.BOTTOMLEFT);
-            }
-            sizeBar.addToOverlay(ol);
-            ol.setStrokeColor(overlayColor_);
-            ip.setOverlay(ol);
+            removeScaleBarFromOverlay(ol);
+         } else {
+            ol = new Overlay();
          }
+         //ol.setFillColor(Color.white); // this causes the text to get a white background!
+         ol.setStrokeColor(overlayColor_);
+         String selected = (String) sizeBarComboBox_.getSelectedItem();
+         if (selected.equals("Top-Right")) {
+            sizeBar.setPosition(MMScaleBar.Position.TOPRIGHT);
+         }
+         if (selected.equals("Top-Left")) {
+            sizeBar.setPosition(MMScaleBar.Position.TOPLEFT);
+         }
+         if (selected.equals("Bottom-Right")) {
+            sizeBar.setPosition(MMScaleBar.Position.BOTTOMRIGHT);
+         }
+         if (selected.equals("Bottom-Left")) {
+            sizeBar.setPosition(MMScaleBar.Position.BOTTOMLEFT);
+         }
+         sizeBar.addToOverlay(ol);
+         ol.setStrokeColor(overlayColor_);
+         ip.setOverlay(ol);
+
       } else {
          //remove scale bar (don't just hide) so other elements of overlay will persist
          Overlay ol = ip.getOverlay();

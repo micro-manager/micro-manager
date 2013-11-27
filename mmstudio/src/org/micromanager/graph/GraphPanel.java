@@ -140,10 +140,7 @@ public class GraphPanel extends JPanel {
 
       Color oldColor = g.getColor();
       g.setColor(traceColor_);
-      
-      // set scaling
-      float xUnit = 1.0f;
-      float yUnit = 1.0f;
+
       
       // correct if Y range is zero
       if (bounds_.getRangeY() == 0.0) {
@@ -158,9 +155,10 @@ public class GraphPanel extends JPanel {
       if (bounds_.getRangeX() <= 0.0 || bounds_.getRangeY() <= 1.e-10) {
          return; // invalid range data
       }
-            
-      xUnit = (float) (box.width / bounds_.getRangeX());
-      yUnit = (float) (box.height / bounds_.getRangeY());
+             
+      // set scaling
+      float xUnit = (float) (box.width / bounds_.getRangeX());
+      float yUnit = (float) (box.height / bounds_.getRangeY());
       
       GeneralPath trace = new GeneralPath(GeneralPath.WIND_EVEN_ODD, data_.getSize() + 1);
       // we need to start and end at y=0 to avoid strange display issues
