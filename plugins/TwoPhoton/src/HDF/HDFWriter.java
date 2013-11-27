@@ -87,7 +87,7 @@ public class HDFWriter {
       }
       finished_ = true;
       } catch (Exception e) {
-         ReportingUtils.showError("Couldn't finish HDF file");
+         ReportingUtils.showError("Couldn't finish Imaris file");
          e.printStackTrace();
       }
    }
@@ -97,7 +97,6 @@ public class HDFWriter {
          //close file
          H5.H5Fclose(fileID_);
       } catch (Exception e) {
-         IJ.log(e+"");
          e.printStackTrace();
       }
    }

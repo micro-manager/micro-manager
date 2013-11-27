@@ -63,9 +63,6 @@ public class HDFPreprocessor   {
       for (int i = 0; i < numSlicesInChunk; i++) {
          pixelsToWrite[0][i] = slices.get(i).pix;
          if (pixelsToWrite[0][i] == null ) {
-            if (IJ.debugMode) {
-               IJ.log("null pixels at slice " + (MDUtils.getSliceIndex( slices.getFirst().tags )+ i) );
-            }
             break;
             //only occurs if incomplete set of slices gets sent to fill out a frame
          }

@@ -27,7 +27,7 @@
 
 package com.imaging100x.twophoton;
 
-import MMCustomization.AcquisitionEngineOverride;
+import MMCustomization.AcquisitionWrapperEngineAdapter;
 import ij.ImagePlus;
 import ij.WindowManager;
 import ij.gui.ImageWindow;
@@ -44,6 +44,8 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 
 import javax.swing.*;
@@ -58,9 +60,6 @@ import org.micromanager.MMStudioMainFrame;
 import org.micromanager.acquisition.ComponentTitledBorder;
 import org.micromanager.acquisition.VirtualAcquisitionDisplay;
 import org.micromanager.api.*;
-import org.micromanager.navigation.MultiStagePosition;
-import org.micromanager.navigation.PositionList;
-import org.micromanager.navigation.StagePosition;
 import org.micromanager.utils.*;
 
 public class TwoPhotonControl extends MMFrame implements MMPlugin, KeyListener, 
@@ -248,7 +247,11 @@ private JCheckBox drawGrid_, drawPosNames_;
       
       if (prefs_.getBoolean(SettingsDialog.REAL_TIME_STITCH, false)) {          
          clearSpaceInStitchingCache();
-         new AcquisitionEngineOverride(getDepthListRunnable(),prefs_);
+         try {
+            new AcquisitionWrapperEngineAdapter(getDepthListRunnable(),prefs_);
+         } catch (NoSuchFieldException ex) {
+            ReportingUtils.showError("Couldn't substitute acquisition engine");
+         }
       } else {
          MMStudioMainFrame.getInstance().getAcquisitionEngine().attachRunnable(-1, -1, -1, -1, getDepthListRunnable());
       }
@@ -409,7 +412,7 @@ private JCheckBox drawGrid_, drawPosNames_;
       JButton generateGridButton = new JButton("Generate");
       generateGridButton.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent e) {
-            onGenerateGrid();
+            generateGrid();
          }
       });
       row2.add(generateGridButton);
@@ -664,13 +667,7 @@ private JCheckBox drawGrid_, drawPosNames_;
       activateDepthList_.setSelected(true);
    }
 
-   protected void onGenerateGrid() {
-      double pixSize = core_.getPixelSizeUm();
-      if (pixSize == 0.0)
-         pixSize = 1.0;
-      
-      long height = core_.getImageHeight();
-      long width = core_.getImageWidth();
+   protected void generateGrid() {
       String xyStage = core_.getXYStageDevice();
       
       if (xyStage.isEmpty()) {
@@ -707,22 +704,52 @@ private JCheckBox drawGrid_, drawPosNames_;
          return;
       }
 
-      ArrayList<MultiStagePosition> positions = new ArrayList<MultiStagePosition>();
-
       int pixelOverlapX = (Integer) gridOverlapXSpinner_.getValue();
       int pixelOverlapY = (Integer) gridOverlapYSpinner_.getValue();
       int xSize = (Integer) gridSizeXSpinner_.getValue();
       int ySize = (Integer) gridSizeYSpinner_.getValue();
+
       
+     createGrid(x[0], y[0], xSize, ySize, pixelOverlapX, pixelOverlapY);
       
+   }
+   
+   public static void createGrid(double xCenter, double yCenter, int xSize, int ySize, int pixelOverlapX, int pixelOverlapY) {
+      MMStudioMainFrame gui = MMStudioMainFrame.getInstance();
+      double pixSize = gui.getCore().getPixelSizeUm();
+      if (pixSize == 0.0) {
+         pixSize = 0.1;
+      }
+
+      String camera = gui.getCore().getCameraDevice();
+      if (camera.isEmpty()) {
+         ReportingUtils.showError("No camera available.");
+         return;
+      }
+      boolean swapXY = false;
+      try {
+         String swapProp = gui.getCore().getProperty(camera, MMCoreJ.getG_Keyword_Transpose_SwapXY());
+         if (swapProp.equals("1")) {
+            swapXY = true;
+         }
+      } catch (Exception e) {
+         ReportingUtils.showError(e.getMessage());
+         return;
+      }
+      
+      long height = gui.getCore().getImageHeight();
+      long width = gui.getCore().getImageWidth();
+
+      
+      ArrayList<MultiStagePosition> positions = new ArrayList<MultiStagePosition>();
       for (int gridX = 0; gridX < xSize; gridX++) {
-         double xPos = x[0] + (gridX - (xSize - 1) / 2.0) * (width - pixelOverlapX) * pixSize;
+         double xPos = xCenter + (gridX - (xSize - 1) / 2.0) * (width - pixelOverlapX) * pixSize;
          for (int gridY = 0; gridY < ySize; gridY++) {
-            double yPos = y[0] + (gridY - (ySize - 1) / 2.0) * (height - pixelOverlapY) * pixSize;
+            double yPos = yCenter + (gridY - (ySize - 1) / 2.0) * (height - pixelOverlapY) * pixSize;
             MultiStagePosition mpl = new MultiStagePosition();
             StagePosition sp = new StagePosition();
             sp.numAxes = 2;
-            sp.stageName = xyStage;
+            sp.stageName = gui.getCore().getXYStageDevice();
             if (swapXY) {
                sp.y = xPos;
                sp.x = yPos;
@@ -735,22 +762,21 @@ private JCheckBox drawGrid_, drawPosNames_;
             int col = swapXY ? gridX : gridY;
             String lab = new String("Grid_" + row + "_" + col);
             mpl.setLabel(lab);
-            mpl.setGridCoordinates(row, col);
+            mpl.setGridCoordinates(xSize, ySize);
             positions.add(mpl);
          }
       }
    
       try {
-         PositionList list = app_.getPositionList();
+         PositionList list = gui.getPositionList();
          list.clearAllPositions();
          for (MultiStagePosition p : positions) {
             list.addPosition(p);
          }
          list.notifyChangeListeners();
       } catch (MMScriptException e) {
-         handleError(e.getMessage());
+         ReportingUtils.showError(e.getMessage());
       }
-      
    }
 
    protected void onPixelSize() {
