@@ -132,6 +132,7 @@ public class MetadataPanel extends JPanel
       tabbedPane.setPreferredSize(new java.awt.Dimension(400, 640));
       tabbedPane.addChangeListener(new ChangeListener() {
 
+         @Override
          public void stateChanged(ChangeEvent evt) {
             tabbedPaneStateChanged(evt);
          }
@@ -172,6 +173,7 @@ public class MetadataPanel extends JPanel
       showUnchangingPropertiesCheckbox.setToolTipText("Show/hide properties that are the same for all images in the acquisition");
       showUnchangingPropertiesCheckbox.addActionListener(new java.awt.event.ActionListener() {
 
+         @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             showUnchangingPropertiesCheckboxActionPerformed(evt);
          }
@@ -316,14 +318,17 @@ public class MetadataPanel extends JPanel
                writeSummaryComments();
          }
 
+         @Override
          public void insertUpdate(DocumentEvent e) {
             handleChange();
          }
 
+         @Override
          public void removeUpdate(DocumentEvent e) {
             handleChange();
          }
 
+         @Override
          public void changedUpdate(DocumentEvent e) {
             handleChange();
          }
@@ -336,14 +341,17 @@ public class MetadataPanel extends JPanel
                writeImageComments();
          }
 
+         @Override
          public void insertUpdate(DocumentEvent e) {
             handleChange();
          }
 
+         @Override
          public void removeUpdate(DocumentEvent e) {
             handleChange();
          }
 
+         @Override
          public void changedUpdate(DocumentEvent e) {
             handleChange();
          }
@@ -358,6 +366,7 @@ public class MetadataPanel extends JPanel
          data_ = new Vector<Vector<String>>();
       }
 
+      @Override
       public int getRowCount() {
          return data_.size();
       }
@@ -366,10 +375,12 @@ public class MetadataPanel extends JPanel
          data_.add(rowData);
       }
 
+      @Override
       public int getColumnCount() {
          return 2;
       }
 
+      @Override
       public synchronized Object getValueAt(int rowIndex, int columnIndex) {
          if (data_.size() > rowIndex) {
             Vector<String> row = data_.get(rowIndex);
@@ -478,6 +489,7 @@ public class MetadataPanel extends JPanel
       imageChangedUpdate(currentDisplay_);
    }
 
+   @Override
    public void focusReceived(ImageWindow focusedWindow) {
       displayChanged(focusedWindow);
    }

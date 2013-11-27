@@ -34,144 +34,144 @@ import org.json.JSONObject;
  */
 public interface ImageCache extends TaggedImageStorage {
 
-   /*
+   /**
     * Adds the provided cache listener. The listener will be notified
     * whenever an image is added or finished() has been called.
     */
    void addImageCacheListener(ImageCacheListener l);
 
-   /*
+   /**
     * Get a list of keys that are not identical for every TaggedImage.
     * The Set returns changes over time as new images are loaded
     * or received.
     */
    Set<String> getChangingKeys();
 
-   /*
-    * Gets the overal comment string for this data set.
+   /**
+    * Gets the overall comment string for this data set.
     */
    String getComment();
 
-   /*
+   /**
     * Gets a list of image cache listeners.
     */
    ImageCacheListener[] getImageCacheListeners();
 
-   /*
+   /**
     * Returns the image tags for the last received image.
     */
    JSONObject getLastImageTags();
 
-   /*
+   /**
     * Removes an imageCacheListener so that it will no longer be notified
     * of relevant events.
     */
    void removeImageCacheListener(ImageCacheListener l);
 
-   /*
+   /**
     * Save a new copy of a TaggedImage data set, stored in a TaggedImageStorage
     * object. The new data set will be used by this cache in the future.
     */
    void saveAs(TaggedImageStorage newImageFileManager);
 
-   /*
+   /**
     * Save a new copy of a TaggedImage data set, stored in a TaggedImageStorage
     * object. The data set will be use by this cache in the future if
     * moveToNewStorage is true.
     */
    void saveAs(TaggedImageStorage newImageFileManager, boolean moveToNewStorage);
 
-   /*
+   /**
     * Set the data set's comment string for this image cache.
     */
    void setComment(String text);
 
-   /*
+   /**
     * Set the comment string for an individual image. The image is specified
     * by indices given in tags.
     */
    void setImageComment(String comment, JSONObject tags);
 
-   /*
+   /**
     * Returns the image comment for a particular image. The image is specified
     * by indices given in tags.
     */
    String getImageComment(JSONObject tags);
 
-   /*
+   /**
     * Store the display settings for a particular channel.
     * @channelIndex - The channel index for which settings are being specified
     * @min - The minimum display intensity value (shown as black)
     * @max - The maximum display intensity value (shown as full-intensity color)
     * @gamma - The gamma value (curvature of the value-to-display curve)
-    * @histMax - The prefered maximum value at which the histogram is displayed.
-    * @displayMode - Composite, Color, or Grayscale
+    * @histMax - The preferred maximum value at which the histogram is displayed.
+    * @displayMode - Composite, Color, or Gray-scale
     */
    public void storeChannelDisplaySettings(int channelIndex, int min, int max, 
            double gamma, int histMax, int displayMode);
 
-   /*
+   /**
     * Returns a JSONObject with channel settings for the channel whose index
     * is the argument.
     */
    public JSONObject getChannelSetting(int channel);
 
-   /*
+   /**
     * Returns the bit depth of all images in the image cache.
     */
    public int getBitDepth();
-   //public int getChannelBitDepth(int channelIndex);
 
-   /*
+   /**
     * Returns the display mode used by the CompositeImage (composite, color, or grayscale)
     */
    public int getDisplayMode(); 
-   /*
+   
+   /**
     * Returns the preferred display color for a channel, specified by channelIndex.
     */
    public Color getChannelColor(int channelIndex);
 
-   /*
+   /**
     * Sets the preferred display color for a channel
     * @channel - The channel index
-    * @rgb - A 6-byteinteger specifying the color: e.g., 0xFFFFFF is white.
+    * @rgb - A 6-byte integer specifying the color: e.g., 0xFFFFFF is white.
     */
    public void setChannelColor(int channel, int rgb);
 
-   /*
+   /**
     * Returns the name of a channel specified by channelIndex.
     */
    public String getChannelName(int channelIndex);
 
-   /*
+   /**
     * Gets the minimum intensity value for a channel display (typically shown
     * as black).
     */
    public int getChannelMin(int channelIndex);
 
-   /*
+   /**
     * Gets the maximum intensity value for a channel display (typically shown
     * as full intensity color).
     */
    public int getChannelMax(int channelIndex) ;
 
-   /*
+   /**
     * Returns the gamma for the channel display.
     */
    public double getChannelGamma(int channelIndex);
 
-   /*
+   /**
     * Returns the preferred maximum value for the channel's histogram.
     */
    public int getChannelHistogramMax(int channelIndex);
 
-   /*
+   /**
     * Returns the number of channels in the ImageCache. More channels
     * may appear if more images are received with new channel indices.
     */
    public int getNumDisplayChannels();
 
-   /*
+   /**
     * Returns the pixel type for images in this image cache.
     */
    public String getPixelType();
