@@ -204,12 +204,14 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
          return scriptFileArray_;
       }
 
+      @Override
       public int getRowCount() {
          if (scriptFileArray_ != null)
             return (int) Math.ceil (((double)scriptFileArray_.size() / (double) columnCount_));
          return 0;
       }
 
+      @Override
       public int getColumnCount() {
          return columnCount_;
       }
@@ -219,6 +221,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
          return "Script-Shortcuts";
       }
 
+      @Override
       public Object getValueAt(int rowIndex, int columnIndex) {
          if (rowIndex >= 0 && (isScriptAvailable(rowIndex, columnIndex) )) {
             return scriptFileArray_.get((rowIndex * columnCount_) + columnIndex).getName();
@@ -239,6 +242,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
        SelectionListener(JTable table) {
            this.table_ = table;
        }
+       @Override
        public void valueChanged(ListSelectionEvent e) {
            // we might get two events when both column and row are changed.  Repsond only to the second one 
            if (e.getValueIsAdjusting() && !multipleStarted_) {
@@ -380,6 +384,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
       final JButton addButton = new JButton();
       addButton.setFont(new Font("", Font.PLAIN, 10));
       addButton.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent arg0) {
             addScript();
          }
@@ -395,6 +400,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
       removeButton.setMargin(new Insets(0,0,0,0));
       removeButton.setFont(new Font("", Font.PLAIN, 10));
       removeButton.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent arg0) {
             removeScript();
          }
@@ -411,9 +417,9 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
       hotkeyButton.setMargin(new Insets(0,0,0,0));
       hotkeyButton.setFont(new Font("", Font.PLAIN, 10));
       hotkeyButton.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent arg0) {
             HotKeysDialog hk = new HotKeysDialog(getBackground());
-            //hk.setBackground(getBackground());
          }
       });
       hotkeyButton.setText("ShortCuts");
@@ -520,6 +526,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
       topRightPanel.add(runPaneButton);
       runPaneButton.setFont(new Font("", Font.PLAIN, 10));
       runPaneButton.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent arg0) {
              runPane();
          }
@@ -533,6 +540,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
       topRightPanel.add(stopButton);
       stopButton.setFont(new Font("", Font.PLAIN, 10));
       stopButton.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent arg0) {
             stopScript();
          }
@@ -546,6 +554,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
       topRightPanel.add(newButton);
       newButton.setFont(new Font("", Font.PLAIN, 10));
       newButton.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent arg0) {
             newPane();
          }
@@ -559,6 +568,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
       topRightPanel.add(openButton);
       openButton.setFont(new Font("", Font.PLAIN, 10));
       openButton.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent arg0) {
             openScriptInPane();
          }
@@ -572,6 +582,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
       topRightPanel.add(saveButton);
       saveButton.setFont(new Font("", Font.PLAIN, 10));
       saveButton.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent arg0) {
             saveScript(-1);
          }
@@ -586,6 +597,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
       topRightPanel.add(saveAsButton);
       saveAsButton.setFont(new Font("", Font.PLAIN, 10));
       saveAsButton.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent arg0) {
              saveScriptAs();
          }
@@ -601,6 +613,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
       topRightPanel.add(helpButton);
       helpButton.setFont(new Font("", Font.PLAIN, 10));
       helpButton.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent e) {
             try {
                ij.plugin.BrowserLauncher.openURL("https://micro-manager.org/wiki/Script_Panel_GUI");
@@ -641,12 +654,15 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
 
    protected class MyDocumentListener
                     implements DocumentListener {
+       @Override
        public void insertUpdate(DocumentEvent e) {
           scriptPaneSaved_ = false;
        }
+       @Override
        public void removeUpdate(DocumentEvent e) {
           scriptPaneSaved_ = false;
        }
+       @Override
        public void changedUpdate(DocumentEvent e) {
           scriptPaneSaved_ = false;
        }
@@ -901,7 +917,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
         }
     }
     catch (IOException ex){
-      ex.printStackTrace();
+      ReportingUtils.logError(ex);
     }
 
     return contents.toString();
@@ -1154,24 +1170,30 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
     * MouseListener implementation
     * @param  e MouseEvent to listen to
     */
+   @Override
    public void mouseClicked(MouseEvent e) {
       if (e.getClickCount() >= 2)
          runPane();
    }  
             
+   @Override
    public void mousePressed(MouseEvent e) { 
    }
                                                                              
+   @Override
    public void mouseReleased(MouseEvent e) {                                 
    }                                                                         
                                                                              
+   @Override
    public void mouseEntered(MouseEvent e) {                                  
    }                                                                         
                                                                              
+   @Override
    public void mouseExited(MouseEvent e) {                                   
    } 
 
    class immediatePaneListener implements ActionListener {
+      @Override
       public void actionPerformed(ActionEvent evt) {
          runImmediatePane();
       }
@@ -1200,6 +1222,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
          msg_ = txt;
       }
       
+      @Override
       public void run() {
          if (error_)
             messageException(msg_, lineNumber_);
@@ -1209,16 +1232,19 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
       }
    }
    
+   @Override
    public void displayMessage(String message) {
       SwingUtilities.invokeLater(new ExecuteDisplayMessage(message));
       ReportingUtils.logMessage(message);
    }
 
+   @Override
    public void displayError(String text) {
       SwingUtilities.invokeLater(new ExecuteDisplayMessage(text, true));
       ReportingUtils.logError(text);
    }
    
+   @Override
    public void displayError(String text, int lineNumber) {
       SwingUtilities.invokeLater(new ExecuteDisplayMessage(text, true, lineNumber));
       ReportingUtils.logError(text);

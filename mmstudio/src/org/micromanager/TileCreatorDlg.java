@@ -111,6 +111,7 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
       goToLeftButton.setBounds(20, 89, 93, 23);
       getContentPane().add(goToLeftButton);
       goToLeftButton.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent arg0) {
             if (endPositionSet_[3])
                goToPosition(endPosition_[3]);
@@ -127,6 +128,7 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
       setLeftButton.setBounds(20, 66, 93, 23);
       setLeftButton.setFont(new Font("", Font.PLAIN, 10));
       setLeftButton.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent arg0) {
             markPosition(3);
             labelLeft_.setText(thisPosition());
@@ -148,6 +150,7 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
       goToTopButton.setBounds(129, 28, 93, 23);
       getContentPane().add(goToTopButton);
       goToTopButton.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent arg0) {
             if (endPositionSet_[0])
             goToPosition(endPosition_[0]);
@@ -156,6 +159,7 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
 
       final JButton setTopButton = new JButton();
       setTopButton.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent arg0) {
             markPosition(0);
             labelTop_.setText(thisPosition());
@@ -174,6 +178,7 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
 
       final JButton setRightButton = new JButton();
       setRightButton.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent arg0) {
             markPosition(1);
             labelRight_.setText(thisPosition());
@@ -192,6 +197,7 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
 
       final JButton setBottomButton = new JButton();
       setBottomButton.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent arg0) {
             markPosition(2);
             labelBottom_.setText(thisPosition());
@@ -208,6 +214,7 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
       goToRightButton.setBounds(234, 89, 93, 23);
       getContentPane().add(goToRightButton);
       goToRightButton.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent arg0) {
             if (endPositionSet_[1])
                goToPosition(endPosition_[1]);
@@ -220,6 +227,7 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
       goToBottomButton.setBounds(129, 149, 93, 23);
       getContentPane().add(goToBottomButton);
       goToBottomButton.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent arg0) {
             if (endPositionSet_[2])
                goToPosition(endPosition_[2]);
@@ -231,6 +239,7 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
       gridCenteredHereButton.setText("Center Here");
       gridCenteredHereButton.setBounds(129, 66, 93, 23);
       gridCenteredHereButton.addActionListener(new ActionListener() {
+          @Override
           public void actionPerformed(ActionEvent arg0) {
               centerGridHere();
               savePosition();
@@ -244,6 +253,7 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
       centeredPlusButton.setText("+");
       centeredPlusButton.setBounds(184, 89, 38, 19);
       centeredPlusButton.addActionListener(new ActionListener() {
+          @Override
           public void actionPerformed(ActionEvent arg0) {
               ++centeredFrames_;
               labelWidth_.setText(Integer.toString(centeredFrames_));
@@ -264,6 +274,7 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
       centeredMinusButton.setText("-");
       centeredMinusButton.setBounds(129, 89, 38, 19);
       centeredMinusButton.addActionListener(new ActionListener() {
+          @Override
           public void actionPerformed(ActionEvent arg0) {
               --centeredFrames_;
               if(centeredFrames_ < 1)
@@ -291,6 +302,7 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
       overlapField_.setFont(new Font("", Font.PLAIN, 10));
       overlapField_.setText("0");
       overlapField_.addActionListener(new ActionListener() {
+          @Override
           public void actionPerformed(ActionEvent arg0) {
               updateCenteredSizeLabel();
           }
@@ -302,6 +314,7 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
       overlapUnitsCombo_ = new JComboBox(unitStrings);
       overlapUnitsCombo_.setSelectedIndex(0);
       overlapUnitsCombo_.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent arg0) {
              JComboBox cb = (JComboBox)arg0.getSource();
              overlapUnit_ = OverlapUnitEnum.values()[cb.getSelectedIndex()];
@@ -322,6 +335,7 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
       pixelSizeField_.setBounds(280, 186, 50, 20);
       pixelSizeField_.setText(NumberUtils.doubleToDisplayString(core_.getPixelSizeUm()));
       pixelSizeField_.addActionListener(new ActionListener() {
+          @Override
           public void actionPerformed(ActionEvent arg0) {
               updateCenteredSizeLabel();
           }
@@ -332,6 +346,7 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
       okButton.setFont(new Font("", Font.PLAIN, 10));
       okButton.setText("OK");
       okButton.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent arg0) {
             savePosition();
             addToPositionList();
@@ -344,6 +359,7 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
       cancelButton.setBounds(129, 216, 93, 23);
       cancelButton.setFont(new Font("", Font.PLAIN, 10));
       cancelButton.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent arg0) {
             savePosition();
             dispose();
@@ -356,6 +372,7 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
       resetButton.setBounds(234, 216, 93, 23);
       resetButton.setFont(new Font("", Font.PLAIN, 10));
       resetButton.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent arg0) {
             reset();
          }
@@ -953,29 +970,37 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
    
    // Implementation of MMListenerInterface
    
+   @Override
    public void propertiesChangedAlert() {
    }
 
+   @Override
    public void propertyChangedAlert(String device, String property, String value) {
    }
 
+   @Override
    public void configGroupChangedAlert(String groupName, String newConfig) {
    }
    
+   @Override
    public void systemConfigurationLoaded() {
    }
 
+   @Override
    public void pixelSizeChangedAlert(double newPixelSizeUm) {
       pixelSizeField_.setText(NumberUtils.doubleToDisplayString(newPixelSizeUm));
       updateCenteredSizeLabel();
    }
 
+   @Override
    public void stagePositionChangedAlert(String deviceName, double pos) {
    }
 
+   @Override
    public void xyStagePositionChanged(String deviceName, double xPos, double yPos) {
    }
 
+   @Override
    public void exposureChanged(String cameraName, double newExposureTime) {
    }
 

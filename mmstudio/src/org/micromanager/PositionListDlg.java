@@ -629,6 +629,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       final JButton loadButton = new JButton();
       loadButton.setFont(new Font("Arial", Font.PLAIN, 10));
       loadButton.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent arg0) {
             loadPositionList();
          }
@@ -888,6 +889,7 @@ public void addPosition(MultiStagePosition msp, String label) {
                                                                              
       // This method is called when editing is completed.
       // It must return the new value to be stored in the cell. 
+      @Override
       public Object getCellEditorValue() {
          if (editingCol_ == 0) {
                return text_.getText();
@@ -1231,15 +1233,20 @@ public void addPosition(MultiStagePosition msp, String label) {
     * Implementation of MouseListener
     * Sole purpose is to be able to unselect rows in the positionlist table
     */
+   @Override
    public void mousePressed (MouseEvent e) {}
+   @Override
    public void mouseReleased (MouseEvent e) {}
+   @Override
    public void mouseEntered (MouseEvent e) {}
+   @Override
    public void mouseExited (MouseEvent e) {}
    /*
     * This event is fired after the table sets its selection
     * Remember where was clicked previously so as to allow for toggling the selected row
     */
    private static int lastRowClicked_;
+   @Override
    public void mouseClicked (MouseEvent e) {
       java.awt.Point p = e.getPoint();
       int rowIndex = posTable_.rowAtPoint(p);

@@ -116,15 +116,15 @@ class ProblemReportSender extends Thread {
             } catch (Throwable t) {
             }
             // try ensure valid and convenient UNIX file name
-            qualifiedArchiveFileName.replace(' ', '_');
-            qualifiedArchiveFileName.replace('*', '_');
-            qualifiedArchiveFileName.replace('|', '_');
-            qualifiedArchiveFileName.replace('>', '_');
-            qualifiedArchiveFileName.replace('<', '_');
-            qualifiedArchiveFileName.replace('(', '_');
-            qualifiedArchiveFileName.replace(')', '_');
-            qualifiedArchiveFileName.replace(':', '_');
-            qualifiedArchiveFileName.replace(';', '_');
+            qualifiedArchiveFileName = qualifiedArchiveFileName.replace(' ', '_');
+            qualifiedArchiveFileName = qualifiedArchiveFileName.replace('*', '_');
+            qualifiedArchiveFileName = qualifiedArchiveFileName.replace('|', '_');
+            qualifiedArchiveFileName = qualifiedArchiveFileName.replace('>', '_');
+            qualifiedArchiveFileName = qualifiedArchiveFileName.replace('<', '_');
+            qualifiedArchiveFileName = qualifiedArchiveFileName.replace('(', '_');
+            qualifiedArchiveFileName = qualifiedArchiveFileName.replace(')', '_');
+            qualifiedArchiveFileName = qualifiedArchiveFileName.replace(':', '_');
+            qualifiedArchiveFileName = qualifiedArchiveFileName.replace(';', '_');
             qualifiedArchiveFileName += ".log";
             MMUUEncoder uuec = new MMUUEncoder();
             InputStream reader = new FileInputStream(archiveFile);

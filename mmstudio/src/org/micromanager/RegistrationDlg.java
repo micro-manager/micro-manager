@@ -111,6 +111,7 @@ public class RegistrationDlg extends JDialog {
       final JButton okButton = new JButton();
       okButton.setFont(new Font("", Font.BOLD, 12));
       okButton.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent arg0) {
             if (name_.getText().length() == 0 || email_.getText().length() == 0) {
                JOptionPane.showMessageDialog(RegistrationDlg.this, "Name and email fields can't be empty.");
@@ -192,6 +193,7 @@ public class RegistrationDlg extends JDialog {
 
       final JButton skipButton = new JButton();
       skipButton.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent arg0) {
             JOptionPane.showMessageDialog(RegistrationDlg.this, "You choose to postpone registration.\n" +
                   "This prompt will appear again next time you start the application.");
@@ -204,9 +206,10 @@ public class RegistrationDlg extends JDialog {
       getContentPane().add(skipButton);
       //
       
-      if (getRegistrationAttempts()>1) {        // Don't show "never" button the first time
+      if (getRegistrationAttempts() > 1) {        // Don't show "never" button the first time
          final JButton neverButton = new JButton();
          neverButton.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent arg0) {
                JOptionPane.showMessageDialog(RegistrationDlg.this, "You have chosen never to register. \n" +
                      "If you change your mind in the future, please\nchoose the \"Register\" option in the Help menu.");
@@ -229,7 +232,7 @@ public class RegistrationDlg extends JDialog {
       return attempts;
    }
    
-   public int getRegistrationAttempts() {
+   public final int getRegistrationAttempts() {
       return prefs_.getInt(REGISTRATION_ATTEMPTS,0);
    }
 

@@ -108,6 +108,7 @@ public class OptionsDlg extends MMDialog {
       debugLogEnabledCheckBox.setToolTipText("Set extra verbose logging for debugging purposes");
       debugLogEnabledCheckBox.addActionListener(new ActionListener() {
 
+         @Override
          public void actionPerformed(final ActionEvent e) {
             opts_.debugLogEnabled_ = debugLogEnabledCheckBox.isSelected();
             core_.enableDebugLog(opts_.debugLogEnabled_);
@@ -124,6 +125,7 @@ public class OptionsDlg extends MMDialog {
 
       final JCheckBox doNotAskForConfigFileCheckBox = new JCheckBox();
       doNotAskForConfigFileCheckBox.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent arg0) {
             opts_.doNotAskForConfigFile_ = doNotAskForConfigFileCheckBox.isSelected();
          }
@@ -140,6 +142,7 @@ public class OptionsDlg extends MMDialog {
       clearLogFileButton.setToolTipText("Erases all entries in the current log file (recommended)");
       clearLogFileButton.addActionListener(new ActionListener() {
 
+         @Override
          public void actionPerformed(final ActionEvent e) {
             core_.clearLog();
             parent_.logStartupProperties();
@@ -157,6 +160,7 @@ public class OptionsDlg extends MMDialog {
       clearRegistryButton.setToolTipText("Clears all persistent settings and returns to defaults");
       clearRegistryButton.addActionListener(new ActionListener() {
 
+         @Override
          public void actionPerformed(final ActionEvent e) {
             try {
                boolean previouslyRegistered = mainPrefs_.getBoolean(RegistrationDlg.REGISTRATION, false);
@@ -184,6 +188,7 @@ public class OptionsDlg extends MMDialog {
       final JButton okButton = new JButton();
       okButton.addActionListener(new ActionListener() {
 
+         @Override
          public void actionPerformed(final ActionEvent e) {
             try {
                opts_.circularBufferSizeMB_ = NumberUtils.displayStringToInt(bufSizeField_.getText());
@@ -234,6 +239,7 @@ public class OptionsDlg extends MMDialog {
       comboDisplayBackground_.setSelectedItem(opts_.displayBackground_);
       comboDisplayBackground_.addActionListener(new ActionListener() {
 
+         @Override
          public void actionPerformed(ActionEvent e) {
             changeBackground();
          }
@@ -265,6 +271,7 @@ public class OptionsDlg extends MMDialog {
 
       final JCheckBox autoreloadDevicesCheckBox = new JCheckBox();
       autoreloadDevicesCheckBox.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent arg0) {
             opts_.autoreloadDevices_ = autoreloadDevicesCheckBox.isSelected();
          }
@@ -277,6 +284,7 @@ public class OptionsDlg extends MMDialog {
 
       final JCheckBox closeOnExitCheckBox = new JCheckBox();
       closeOnExitCheckBox.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent arg0) {
             opts_.closeOnExit_ = closeOnExitCheckBox.isSelected();
             MMStudioMainFrame.getInstance().setExitStrategy(opts_.closeOnExit_);
@@ -389,6 +397,7 @@ public class OptionsDlg extends MMDialog {
       
       final JCheckBox metadataFileWithMultipageTiffCheckBox = new JCheckBox();
       metadataFileWithMultipageTiffCheckBox.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent arg0) {
             opts_.mpTiffMetadataFile_ = metadataFileWithMultipageTiffCheckBox.isSelected();
          }
@@ -401,6 +410,7 @@ public class OptionsDlg extends MMDialog {
       
       final JCheckBox separateFilesForPositionsMPTiffCheckBox = new JCheckBox();
       separateFilesForPositionsMPTiffCheckBox.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent arg0) {
             opts_.mpTiffSeparateFilesForPositions_ = separateFilesForPositionsMPTiffCheckBox.isSelected();
          }
@@ -413,6 +423,7 @@ public class OptionsDlg extends MMDialog {
   
       final JCheckBox syncExposureMainAndMDA = new JCheckBox();
       syncExposureMainAndMDA.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent arg0) {
             opts_.syncExposureMainAndMDA_ = syncExposureMainAndMDA.isSelected();
          }
@@ -426,6 +437,7 @@ public class OptionsDlg extends MMDialog {
       
       final JCheckBox hideMDAdisplay = new JCheckBox();
       hideMDAdisplay.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent arg0) {
             opts_.hideMDADisplay_ = hideMDAdisplay.isSelected();
          }
@@ -438,6 +450,7 @@ public class OptionsDlg extends MMDialog {
       
       final JCheckBox fastStorage = new JCheckBox();
       fastStorage.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent arg0) {
             opts_.fastStorage_ = fastStorage.isSelected();
          }
