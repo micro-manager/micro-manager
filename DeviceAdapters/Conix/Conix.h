@@ -225,11 +225,11 @@ public:
 	int Stop();
 	int SetOrigin();
 	int SetAdapterOriginUm(double z) {posZ_um_ = z; return DEVICE_OK;}
-	int GetLimits(double& lower, double& upper)
+	int GetLimits(double& /*lower*/, double& /*upper*/)
 	{
 		return DEVICE_UNSUPPORTED_COMMAND;
 	}
-	int GetLimitsUm(double& zMin, double& zMax)
+	int GetLimitsUm(double& /*zMin*/, double& /*zMax*/)
 	{
 		return DEVICE_UNSUPPORTED_COMMAND;
 	}
