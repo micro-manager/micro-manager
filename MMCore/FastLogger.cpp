@@ -234,6 +234,10 @@ bool FastLogger::EnableLogToStderr(bool enable)throw()
 };
 
 
+const size_t MaxBuf = 32767;
+struct BigBuffer { char buffer[MaxBuf]; };
+
+
 void FastLogger::Log(IMMLogger::priority p, const char* format, ...) throw()
 {
 	{
@@ -253,8 +257,6 @@ void FastLogger::Log(IMMLogger::priority p, const char* format, ...) throw()
 
 		std::string entryPrefix = GetEntryPrefix(p);
 
-      const size_t MaxBuf = 32767;
-      struct BigBuffer { char buffer[MaxBuf]; };
 		std::auto_ptr<BigBuffer> pB (new BigBuffer());
 
 		va_list argp;
@@ -264,7 +266,7 @@ void FastLogger::Log(IMMLogger::priority p, const char* format, ...) throw()
 #else
       int n = vsnprintf(pB->buffer, MaxBuf - 1, format, argp);
 #endif
-      va_end(argp, format);
+      va_end(argp);
       if (n <= -1) {
          ReportLogFailure();
          return;
