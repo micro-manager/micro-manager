@@ -80,7 +80,7 @@ int CARVIIHub::SetExFilterPosition(MM::Device& device, MM::Core& core, int pos) 
     os << "A" << posCommand;
     bool succeeded = false;
     int counter = 0;
-    int ret;
+    int ret = DEVICE_OK;
 
     // try up to 10 times
     while (!succeeded && counter < 10) {
@@ -119,7 +119,7 @@ int CARVIIHub::SetEmFilterPosition(MM::Device& device, MM::Core& core, int pos) 
     os << "B" << posCommand;
     bool succeeded = false;
     int counter = 0;
-    int ret;
+    int ret = DEVICE_OK;
 
     // try up to 10 times
     while (!succeeded && counter < 10) {
@@ -158,7 +158,7 @@ int CARVIIHub::SetDichroicPosition(MM::Device& device, MM::Core& core, int pos) 
     os << "C" << posCommand;
     bool succeeded = false;
     int counter = 0;
-    int ret;
+    int ret = DEVICE_OK;
 
     // try up to 10 times
     while (!succeeded && counter < 10) {
@@ -197,7 +197,7 @@ int CARVIIHub::SetFRAPIrisPosition(MM::Device& device, MM::Core& core, int pos) 
     bool succeeded = false;
     int counter = 0;
 
-    int ret;
+    int ret = DEVICE_OK;
 
     // try up to 10 times
     while (!succeeded && counter < 10) {
@@ -240,7 +240,7 @@ int CARVIIHub::SetIntensityIrisPosition(MM::Device& device, MM::Core& core, int 
     bool succeeded = false;
     int counter = 0;
 
-    int ret;
+    int ret = DEVICE_OK;
 
     // try up to 10 times
     while (!succeeded && counter < 10) {
@@ -283,7 +283,7 @@ int CARVIIHub::SetSpinMotorState(MM::Device& device, MM::Core& core, int state) 
     bool succeeded = false;
     int counter = 0;
 
-    int ret;
+    int ret = DEVICE_OK;
 
     // try up to 10 times
     while (!succeeded && counter < 10) {
@@ -322,7 +322,7 @@ int CARVIIHub::SetTouchScreenState(MM::Device& device, MM::Core& core, int state
     bool succeeded = false;
     int counter = 0;
 
-    int ret;
+    int ret = DEVICE_OK;
 
     // try up to 10 times, wait 50 ms in between tries
     while (!succeeded && counter < 10) {
@@ -357,7 +357,7 @@ int CARVIIHub::SetDiskSliderPosition(MM::Device& device, MM::Core& core, int pos
     bool succeeded = false;
     int counter = 0;
 
-    int ret;
+    int ret = DEVICE_OK;
 
     // try up to 10 times
     while (!succeeded && counter < 10) {
@@ -396,7 +396,7 @@ int CARVIIHub::SetPrismSliderPosition(MM::Device& device, MM::Core& core, int po
     bool succeeded = false;
     int counter = 0;
 
-    int ret;
+    int ret = DEVICE_OK;
 
     // try up to 10 times
     while (!succeeded && counter < 10) {
