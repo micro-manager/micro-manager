@@ -689,9 +689,11 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
       switch (result) {
          case JOptionPane.YES_OPTION:
             saveScript(row);
+            break;
          case JOptionPane.NO_OPTION:
             // avoid prompting again:
             scriptPaneSaved_ = true;
+            break;
       }                                                                      
 
       return true;                                                           
