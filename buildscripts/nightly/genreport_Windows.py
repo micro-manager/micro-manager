@@ -59,9 +59,17 @@ def java_build_report(section_sink, stage_target, architecture):
                 n_errors = int(m.group(1))
                 filtered_lines.append(line)
                 continue
+            elif re.match("1 error", line):
+                n_errors = 1
+                filterd_lines.append(line)
+                continue
             m = re.match(r"(\d+) warnings$", line)
             if m:
                 n_warnings = int(m.group(1))
+                filtered_lines.append(line)
+                continue
+            elif re.match("1 warning$", line):
+                n_warnings = 1
                 filtered_lines.append(line)
                 continue
             m = re.match(r"Note: ", line)
@@ -139,10 +147,10 @@ def generate_report(section_sink, log_filename, build, src_root):
                 arch = "x64"
 
             java_build_report(section_sink,
-                              task.findall("./target[@name='stage']")[0],
+                              task.findall("./target[@name='build-java']")[0],
                               arch)
             clojure_build_report(section_sink,
-                                 task.findall("./target[@name='stage']")[0],
+                                 task.findall("./target[@name='build-java']")[0],
                                  arch)
 
 

@@ -110,7 +110,12 @@ def read_entry(line, target):
 @subcoroutine
 def read_entries(line, target):
     while True:
-        if not re.match(r"^[ :0-9]{6}>", line):
+        # The ordinal prefix is 6 columns (excluding the '>'). However, when a
+        # colon-separated suffix (repeat count) is appended, the primary
+        # ordinal is given 3 columns; when the repeat count reaches 100, the
+        # whole prefix can occupy 7 columns.
+        if not (re.match(r"^[ :0-9]{6}>", line) or
+                re.match(r"^[ 0-9]{3}:[0-9]{3}>", line)):
             return line
         line = yield from read_entry(line, target)
 
