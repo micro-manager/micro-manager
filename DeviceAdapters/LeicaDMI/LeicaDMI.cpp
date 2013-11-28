@@ -320,9 +320,14 @@ int LeicaScope::GetNumberOfDiscoverableDevices()
 }
 
 void LeicaScope::GetDiscoverableDevice(int deviceNum, char *deviceName,
-                                      unsigned int maxLength)
+                                       unsigned int maxLength)
 {
-    strcpy(deviceName, discoveredDevices_[deviceNum].c_str());
+   if (0 <= deviceNum && deviceNum < static_cast<int>(discoveredDevices_.size()))
+   {
+      strncpy(deviceName, discoveredDevices_[deviceNum].c_str(), maxLength - 1);
+      deviceName[maxLength - 1] = 0;
+   }
+   return;
 }
 
 int LeicaScope::Initialize() 

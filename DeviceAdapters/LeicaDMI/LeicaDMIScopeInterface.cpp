@@ -1961,7 +1961,7 @@ int LeicaScopeInterface::GetTransmittedLightManual(MM::Device& device, MM::Core&
 }
 
 
-int LeicaScopeInterface::GetTransmittedLightShutterPosition(MM::Device &device, MM::Core &core, int & position)
+int LeicaScopeInterface::GetTransmittedLightShutterPosition(MM::Device & /*device*/, MM::Core & /*core*/, int & position)
 {
 	return scopeModel_->TransmittedLight_.GetPosition(position);
 }
@@ -2040,11 +2040,6 @@ LeicaMonitoringThread::LeicaMonitoringThread(MM::Device& device, MM::Core& core,
 LeicaMonitoringThread::~LeicaMonitoringThread()
 {
    core_.LogMessage (&device_, "Destructing MonitoringThread", true);
-}
-
-void LeicaMonitoringThread::interpretMessage(unsigned char* message)
-{
-
 }
 
 int LeicaMonitoringThread::svc() 

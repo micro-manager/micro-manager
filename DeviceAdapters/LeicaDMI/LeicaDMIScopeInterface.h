@@ -134,7 +134,6 @@ class LeicaMonitoringThread : public MMDeviceThreadBase
 
    private:
       std::string port_;
-      void interpretMessage(unsigned char* message);
       MM::Device& device_;
       MM::Core& core_;
       bool stop_;
