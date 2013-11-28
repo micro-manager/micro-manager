@@ -88,7 +88,7 @@ public:
 	void clr_flags( unsigned long bits_a) { fast_log_flags_ &=(~bits_a);};
 
 private:
-   const char * GetFormatPrefix(IMMLogger::priority p);
+   std::string GetEntryPrefix(IMMLogger::priority p);
    void ReportLogFailure()throw();
 
 private:

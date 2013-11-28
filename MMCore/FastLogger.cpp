@@ -34,6 +34,8 @@
 #include "CoreUtils.h"
 #include "../MMDevice/DeviceUtils.h"
 #include "boost/thread/thread.hpp"
+#include <boost/lexical_cast.hpp>
+
 #include "boost/interprocess/detail/os_thread_functions.hpp" 
 #include "boost/version.hpp"
 #if BOOST_VERSION >= 104800
@@ -229,22 +231,8 @@ bool FastLogger::EnableLogToStderr(bool enable)throw()
 };
 
 
-const int MaxBuf = 32767;
-
-typedef struct 
-	{
-		char buffer[MaxBuf];
-} BigBuffer;
-
-
 void FastLogger::Log(IMMLogger::priority p, const char* format, ...) throw()
 {
-
-#ifdef _WINDOWS
-	// let snprintf be OK
-#pragma warning (disable:4996)  
-#endif
-
 	{
 		MMThreadGuard guard(logFileLock_g);
 		if( NULL == plogFile_g) 
@@ -260,166 +248,29 @@ void FastLogger::Log(IMMLogger::priority p, const char* format, ...) throw()
       if (!(p & level_))
 			return;
 
-		std::string workingString;
-		std::string formatPrefix = GetFormatPrefix(p);
-		//InitializeInCurrentThread();
-		// Start of variable args section
-		va_list argp;
+		std::string entryPrefix = GetEntryPrefix(p);
 
-		va_start (argp, format);
-		// build the string specfied by the variable argument list
-
-
+      const size_t MaxBuf = 32767;
+      struct BigBuffer { char buffer[MaxBuf]; };
 		std::auto_ptr<BigBuffer> pB (new BigBuffer());
-		//char buffer[MaxBuf];
-		unsigned int flen = (unsigned int)strlen(format);
 
-		// N.B. this loop increments the string iterator in two diffent conditions!
-		for (unsigned int i = 0; format[i] != 0; ++i)
-		{
-			pB->buffer[0] = 0;
-			
-			if ('%' == format[i] ) // we found a printf format element
-			{
-				if( 0 == argp)
-					break;
-				// iterate over the format specifier
-				char curc = format[++i];
-				switch(curc) 
-				{
-					int n;
-					float f;
-					char c;
-					char* s;
-
-					case 'd':
-						n = va_arg(argp, int);
-						snprintf(pB->buffer, MaxBuf, "%d", n);
-						break;
-
-					case 'f':
-						f = static_cast<float>(va_arg(argp, double));
-						snprintf(pB->buffer, MaxBuf,"%f", f);
-						break;
-
-               case 'e':
-						f = static_cast<float>(va_arg(argp, double));
-						snprintf(pB->buffer, MaxBuf,"%e", f);
-						break;
-
-               case 'g':
-						f = static_cast<float>(va_arg(argp, double));
-						snprintf(pB->buffer, MaxBuf,"%g", f);
-						break;
-
-					case 'c':
-#ifdef _WINDOWS
-						c = va_arg(argp, char);
+		va_list argp;
+      va_start(argp, format);
+#ifdef WIN32
+      int n = vsnprintf_s(pB->buffer, MaxBuf, MaxBuf - 1, format, argp);
 #else
-						c = va_arg(argp, int);
+      int n = vsnprintf(pB->buffer, MaxBuf - 1, format, argp);
 #endif
-						snprintf(pB->buffer, MaxBuf, "%c", c);
-						break;
+      va_end(argp, format);
+      if (n <= -1) {
+         ReportLogFailure();
+         return;
+      }
 
-					case 's':
-						s = va_arg(argp, char *);
-						snprintf(pB->buffer, MaxBuf, "%s", s );
-						break;
+      std::string workingString = entryPrefix + pB->buffer;
 
-					case '.':   // width  (assume it's a floating point) TODO - other uses of width field
-						f = static_cast<float>(va_arg(argp, double));
-						{
-							std::string newformat = "%";
-							if( i < flen-1)
-							{
-								//char specwidth = '0';
-								newformat += '.';
-								newformat += format[i+1];
-								newformat += 'f';
-								i += 2;
-							}
-							snprintf( pB->buffer, MaxBuf, newformat.c_str(), f);
-						}
-						break;
-
-					// process ID descriptor info ala ACE
-					case 't':
-					case 'D':
-					case 'P':
-						snprintf(pB->buffer, 2, "%s", "%");
-						workingString += std::string(pB->buffer);
-						snprintf(pB->buffer, 2, "%c", curc);
-						break;
-
-					default:
-					break;
-				}
-				workingString += std::string(pB->buffer);
-			}
-			else
-			{
-				workingString+=format[i];
-
-			}
-			if( 0 == format[i]) // the format specifier was at the end of the format string
-				break;
-		}
-
-
-
-		va_end(argp);
-
-		workingString = formatPrefix + workingString;
-		// the string specified on the argument list can also have the ACE %D tokens inside it
-		//workingString += std::string(pB->buffer);
-		
-		///put the three replacements into a loop!
-		// replace all %D with Date/Time
-		// repleace all %t thread id
-		// replacee all %P process id
-
-		boost::posix_time::ptime bt = boost::posix_time::microsec_clock::local_time();
-
-		std::string todaysDate = boost::posix_time::to_iso_extended_string(bt);
-
-
-		size_t ifind = workingString.find("%D");
-		while(std::string::npos != ifind)
-		{
-			workingString.replace(ifind,2,todaysDate);
-			ifind =  workingString.find("%D");
-		}
-
-		std::ostringstream percenttReplacement;
-      // Use the platform thread id where available, so that it can be compared
-      // with debugger, etc.
-#ifdef _WINDOWS_
-      percenttReplacement << GetCurrentThreadId();
-#else
-		pthread_t pthreadInfo;
-		pthreadInfo = pthread_self();
-		percenttReplacement << pthreadInfo;
-#endif
-
-		ifind = workingString.find("%t");
-		while(std::string::npos != ifind)
-		{
-			workingString.replace(ifind,2,percenttReplacement.str());
-			ifind =  workingString.find("%t");
-		}
-
-		// display the process id
-		BOOST_IPC_DETAIL::OS_process_id_t pidd = BOOST_IPC_DETAIL::get_current_process_id();
-
-		std::ostringstream percentPReplacement;
-		percentPReplacement << pidd;
-		ifind = workingString.find("%P");
-		while(std::string::npos != ifind)
-		{
-			workingString.replace(ifind,2,percentPReplacement.str());
-			ifind =  workingString.find("%P");
-		}
-
+      // Remove trailing newlines
+      // TODO Fix: Probably a source of leftover CRs on Windows.
 		if( '\n' == workingString.at(workingString.length()-1))
 			workingString.replace(workingString.length()-1,1,"");
 
@@ -439,11 +290,6 @@ void FastLogger::Log(IMMLogger::priority p, const char* format, ...) throw()
    {
       ReportLogFailure();
    }
-#ifdef _WINDOWS
-	// default for the warnings...
-#pragma warning (default:4996  )
-#endif
-
 };
 
 void FastLogger::ReportLogFailure()throw()
@@ -461,14 +307,41 @@ void FastLogger::ReportLogFailure()throw()
    }
 };
 
-#define CORE_DEBUG_PREFIX "%D p:%P t:%t [dbg] "
-#define CORE_LOG_PREFIX "%D p:%P t:%t [LOG] "
 
-const char * FastLogger::GetFormatPrefix(IMMLogger::priority p)
+std::string FastLogger::GetEntryPrefix(IMMLogger::priority p)
 {
+   // date, pid, tid, and log level
+   std::string entryPrefix;
+   entryPrefix.reserve(100);
+
+   // Date
+   boost::posix_time::ptime bt = boost::posix_time::microsec_clock::local_time();
+   std::string todaysDate = boost::posix_time::to_iso_extended_string(bt);
+   entryPrefix += todaysDate;
+
+   // PID
+   // XXX Avoid using Boost 'detail' classes!
+   BOOST_IPC_DETAIL::OS_process_id_t pidd = BOOST_IPC_DETAIL::get_current_process_id();
+   entryPrefix += " p:";
+   entryPrefix += boost::lexical_cast<std::string>(pidd);
+
+   // TID
+   entryPrefix += " t:";
+   // Use the platform thread id where available, so that it can be compared
+   // with debugger, etc.
+#ifdef WIN32
+   entryPrefix += boost::lexical_cast<std::string>(GetCurrentThreadId());
+#else
+   entryPrefix += boost::lexical_cast<std::string>(pthread_self());
+#endif
+
+   // Log level
    if (p == debug)
-      return CORE_DEBUG_PREFIX;
-   return CORE_LOG_PREFIX;
+      entryPrefix += " [dbg]: ";
+   else
+      entryPrefix += " [LOG]: ";
+
+   return entryPrefix;
 }
 
 
