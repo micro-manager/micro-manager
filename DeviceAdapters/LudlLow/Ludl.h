@@ -70,7 +70,6 @@ std::string port_;
 bool initialized_ = false;
 
 int clearPort(MM::Device& device, MM::Core& core, const char* port);
-int getResult(MM::Device& device, MM::Core& core, const char* port);
 int changeCommandLevel(MM::Device& device, MM::Core& core, const char* commandLevel);
 const int nrShuttersPerDevice = 3;
 const int nrWheelsPerDevice = 2;
@@ -136,7 +135,7 @@ private:
    long pos_;
    bool initialized_;
    unsigned deviceNumber_;
-   unsigned moduleId_;
+   unsigned char moduleId_;
    unsigned wheelNumber_;
    int numPos_;
 };
@@ -173,7 +172,7 @@ private:
    unsigned shutterNumber_;
    bool initialized_;
    unsigned deviceNumber_;
-   unsigned moduleId_;
+   unsigned char moduleId_;
    long openTimeUs_;
 };
   

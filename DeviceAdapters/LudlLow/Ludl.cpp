@@ -131,43 +131,13 @@ int clearPort(MM::Device& device, MM::Core& core, const char* port)
    }
    return DEVICE_OK;
 }
-      
-/*
- * Returns DEVICE_OK upon receiving ':A'
- * Returns Error Nr upon receiving ':N x'
- * Otherwise returns ERR_COMMAND_FAILED
- */
-int getResult(MM::Device& device, MM::Core& core, const char* port)
-{ 
-   const int bufSize = 255;
-   char rec[bufSize];
-   string result;
-   int ret = core.GetSerialAnswer(&device, port_.c_str(), bufSize, rec, "\n");
-   if (ret != DEVICE_OK) 
-      return ret;
-   result = rec;
-   if ( (result.length() < 1) || (result[0] != ':') )
-      return ERR_NO_ANSWER;
-   if (result[1] == 'A') 
-      return DEVICE_OK;
-   if (result[1] == 'N')
-   {
-      int errorNr = atoi(result.substr(2,64).c_str());
-      if (errorNr > 0)
-         return errorNr;
-      else
-         return ERR_COMMAND_FAILED;
-   }
-   // We should never get here
-   return ERR_UNRECOGNIZED_ANSWER;
-}
 
 /*
  * Change command level, 65 = high command set, 66 = low command set
  */
 int changeCommandLevel(MM::Device& device, MM::Core& core, const char* commandLevel)
 {
-   int level;
+   unsigned char level;
    if (strcmp(commandLevel, g_CommandLevelHigh) == 0)
       level = 65;
    else if (strcmp(commandLevel, g_CommandLevelLow) == 0)
@@ -751,7 +721,7 @@ int Wheel::OnID(MM::PropertyBase* pProp, MM::ActionType eAct)
       long id;
       pProp->Get(id);
       if (id >= 17 && id <= 21)
-         moduleId_ = (unsigned) id;
+         moduleId_ = (unsigned char) id;
       else 
          return ERR_INVALID_ID;
 
@@ -1100,7 +1070,7 @@ int Shutter::OnID(MM::PropertyBase* pProp, MM::ActionType eAct)
       long id;
       pProp->Get(id);
       if (id >= 0 && id <= 20)
-         moduleId_ = (unsigned) id;
+         moduleId_ = (unsigned char) id;
       else 
          return ERR_INVALID_ID;
 
@@ -1563,7 +1533,7 @@ int XYStage::Stop()
  * Returns the stage position limits in um.
  * TODO: implement!!!
  */
-int XYStage::GetLimits(double& xMin, double& xMax, double& yMin, double& yMax)
+int XYStage::GetLimits(double& /*xMin*/, double& /*xMax*/, double& /*yMin*/, double& /*yMax*/)
 {
    return DEVICE_UNSUPPORTED_COMMAND;
 }
@@ -2053,7 +2023,7 @@ int Stage::SetOrigin()
    return DEVICE_UNSUPPORTED_COMMAND;
 }
  
-int Stage::GetLimits(double& min, double& max)
+int Stage::GetLimits(double& /*min*/, double& /*max*/)
 {
    return DEVICE_UNSUPPORTED_COMMAND;
 }
