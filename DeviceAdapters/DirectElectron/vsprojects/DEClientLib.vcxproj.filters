@@ -18,9 +18,6 @@
     <ClCompile Include="..\src\DEClientLib\DENetwork.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\DEClientLib\DEProperty.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\DEClientLib\DEProtoProxy.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

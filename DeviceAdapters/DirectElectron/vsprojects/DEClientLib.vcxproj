@@ -133,7 +133,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\src\DEClientLib\DENetwork.cpp" />
-    <ClCompile Include="..\src\DEClientLib\DEProperty.cpp" />
     <ClCompile Include="..\src\DEClientLib\DEProtoProxy.cpp" />
     <ClCompile Include="..\src\DEClientLib\PropertyHelper.cpp" />
   </ItemGroup>
