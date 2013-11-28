@@ -12,6 +12,7 @@ import org.micromanager.internalinterfaces.DisplayControls;
 import java.text.ParseException;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.TimeUnit;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.utils.MDUtils;
@@ -229,8 +230,8 @@ public class HyperstackControls extends DisplayControls {
          }
 
          try {
-            String time = NumberUtils.doubleToDisplayString(tags.getDouble("ElapsedTime-ms") / 1000);
-            status += time + " s";
+            double seconds = tags.getDouble("ElapsedTime-ms") / 1000;
+            status += elapsedTimeDisplayString(seconds);
          } catch (JSONException ex) {
             ReportingUtils.logError("MetaData did not contain ElapsedTime-ms field");
          }
@@ -261,6 +262,38 @@ public class HyperstackControls extends DisplayControls {
          ReportingUtils.logError(ex);
       }
 
+   }
+
+   public static String elapsedTimeDisplayString(double seconds) {
+      // Use "12.3456s" up to 60 s; "12m 34.5678s" up to 1 h, and
+      // "1h 23m 45s" beyond that.
+
+      long wholeSeconds = (long) Math.floor(seconds);
+      double fraction = seconds - wholeSeconds;
+
+      long hours = TimeUnit.SECONDS.toHours(wholeSeconds);
+      wholeSeconds -= TimeUnit.HOURS.toSeconds(hours);
+      String hoursString = "";
+      if (hours > 0) {
+         hoursString = hours + "h ";
+      }
+
+      long minutes = TimeUnit.SECONDS.toMinutes(wholeSeconds);
+      wholeSeconds -= TimeUnit.MINUTES.toSeconds(minutes);
+      String minutesString = "";
+      if (minutes > 0) {
+         minutesString = minutes + "m ";
+      }
+
+      String secondsString = "";
+      if (hours == 0 && fraction > 0.0001) {
+         secondsString = NumberUtils.doubleToDisplayString(wholeSeconds + fraction) + "s";
+      }
+      else {
+         secondsString = wholeSeconds + "s";
+      }
+
+      return hoursString + minutesString + secondsString;
    }
 
    @Override
