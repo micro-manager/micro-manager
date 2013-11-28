@@ -1,4 +1,5 @@
 @echo off
+setlocal enableextensions enabledelayedexpansion
 
 rem This batch file is not actually used for the nightly build, but performs
 rem similar steps and is handy for testing the build with similar settings.
@@ -18,6 +19,9 @@ set report_filename=%src_root%\buildreport.html
 if exist %log_filename% (
   del %log_filename%
 )
+
+rem Prevent 'only one logger' error.
+set ANT_ARGS=
 
 call ant -f %src_root%\buildscripts\nightly\nightlybuild_Windows.xml ^
   -listener org.apache.tools.ant.XmlLogger ^
