@@ -166,6 +166,9 @@
     <ClInclude Include="..\src\DECamera\DECamera.h" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\..\MMDevice\MMDevice-SharedRuntime.vcxproj">
+      <Project>{b8c95f39-54bf-40a9-807b-598df2821d55}</Project>
+    </ProjectReference>
     <ProjectReference Include="DEClientLib.vcxproj">
       <Project>{823879d7-a915-4cea-8365-09ba70fdaf2c}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
