@@ -90,6 +90,7 @@ public:
 	std::string SetAttenuatorState(long state);
 
 private:
+   MT20hub& operator=(const MT20hub&); // Hide to prevent warnings
 
 /////////////////////////////////////////////////////////////////////////
 //	Private variables

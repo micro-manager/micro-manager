@@ -121,7 +121,7 @@ public:
 	// Shutter API
 	int SetOpen(bool open = true);
 	int GetOpen(bool& open);
-	int Fire(double deltaT) {return DEVICE_UNSUPPORTED_COMMAND;}
+	int Fire(double /*deltaT*/) {return DEVICE_UNSUPPORTED_COMMAND;}
 
 	// action interface
 	int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -154,6 +154,7 @@ public:
 	int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
+   MT20Filterwheel& operator=(const MT20Filterwheel&); // Hide to prevent warnings
 
 	const unsigned long numPos_;
 	bool busy_;
@@ -183,6 +184,8 @@ public:
 	int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
+   MT20Attenuator& operator=(const MT20Attenuator&); // Hide to prevent warnings
+
 	const unsigned long numPos_;
 	bool busy_;
 	bool initialized_;
