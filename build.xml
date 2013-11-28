@@ -114,10 +114,13 @@
 		</exec>
 	</target>
 
-	<target name="clean" description="Delete build intermediate and output files">
+	<target name="clean-java" description="Clean only the Java components">
+		<run-all-java-projects target="clean"/>
+	</target>
+
+	<target name="clean" depends="clean-java" description="Delete build intermediate and output files">
 		<delete dir="${mm.cpp.outdir}"/>
 		<delete dir="${mm.cpp.intdir}"/>
-		<run-all-java-projects target="clean"/>
 	</target>
 
 	<target name="clean-all" description="Delete build files for all configurations and architectures">
