@@ -175,7 +175,7 @@
 	</presetdef>
 	<presetdef name="mm-javac">
 		<javac debug="on" debuglevel="lines,vars,source"
-			optimize="on" deprecation="off"
+			optimize="on" deprecation="on"
 			source="1.5" target="1.5" includeAntRuntime="false"/>
 	</presetdef>
 
