@@ -165,7 +165,7 @@ CMMCore::CMMCore() :
 
    initializeLogging();
    CORE_LOG("-------->>\n");
-   CORE_LOG2("Core session started on %D by %s on %s\n", getUserId().c_str(), getHostName().c_str());
+   CORE_LOG2("Core session started by %s on %s\n", getUserId().c_str(), getHostName().c_str());
    enableDebugLog(false);
 
 	try
@@ -273,7 +273,7 @@ CMMCore::~CMMCore()
       CORE_LOG("Exception occurred in MMCore destructor.\n");
       ; // don't let any exceptions leak through
    }
-   CORE_LOG("Core session ended on %D\n");
+   CORE_LOG("Core session ended\n");
 
    pluginManager_.DeleteModuleLocks();
 
@@ -293,7 +293,7 @@ void CMMCore::clearLog()
 {
    getLoggerInstance()->Reset();
    CORE_LOG("-------->>\n");
-   CORE_LOG2("\nLog cleared and re-started on %D by %s on %s\n", getUserId().c_str(), getHostName().c_str());
+   CORE_LOG2("\nLog cleared and re-started by %s on %s\n", getUserId().c_str(), getHostName().c_str());
 }
 
 /**
@@ -857,7 +857,7 @@ void CMMCore::reset() throw (CMMError)
 
    properties_->Refresh();
 
-   CORE_LOG("System reset at %D.\n");
+   CORE_LOG("System reset.\n");
 }
 
 
@@ -1946,7 +1946,7 @@ void CMMCore::snapImage() throw (CMMError)
          throw CMMError(getDeviceErrorText(ret, camera_).c_str(), MMERR_DEVICE_GENERIC);
       }
 
-      CORE_DEBUG("Image acquired at %D\n");
+      CORE_DEBUG("Image acquired\n");
    }
    else
       throw CMMError(getCoreErrorText(MMERR_CameraNotAvailable).c_str(), MMERR_CameraNotAvailable);
