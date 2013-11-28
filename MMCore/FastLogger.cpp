@@ -33,9 +33,12 @@
 #include "FastLogger.h"
 #include "CoreUtils.h"
 #include "../MMDevice/DeviceUtils.h"
-#include "boost/thread/thread.hpp"
-#include <boost/lexical_cast.hpp>
 
+#include <boost/algorithm/string.hpp>
+#include <boost/lexical_cast.hpp>
+#include <boost/thread/thread.hpp>
+
+// TODO Stop relying on Boost internals
 #include "boost/interprocess/detail/os_thread_functions.hpp" 
 #include "boost/version.hpp"
 #if BOOST_VERSION >= 104800
@@ -267,24 +270,15 @@ void FastLogger::Log(IMMLogger::priority p, const char* format, ...) throw()
          return;
       }
 
-      std::string workingString = entryPrefix + pB->buffer;
-
-      // Remove trailing newlines
-      // TODO Fix: Probably a source of leftover CRs on Windows.
-		if( '\n' == workingString.at(workingString.length()-1))
-			workingString.replace(workingString.length()-1,1,"");
-
-
+      std::string entryString = entryPrefix + pB->buffer;
+      boost::algorithm::trim_right(entryString);
 
 		{
 			MMThreadGuard stringGuard(logStringLock_g);
 			if ( 0 <stringToWrite_g.size())
 				stringToWrite_g += '\n';
-			stringToWrite_g += workingString;
+			stringToWrite_g += entryString;
 		}
-
-
-
    }
    catch(...)
    {
