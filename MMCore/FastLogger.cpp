@@ -333,9 +333,9 @@ std::string FastLogger::GetEntryPrefix(IMMLogger::priority p)
 
    // Log level
    if (p == debug)
-      entryPrefix += " [dbg]: ";
+      entryPrefix += " [dbg] ";
    else
-      entryPrefix += " [LOG]: ";
+      entryPrefix += " [LOG] ";
 
    return entryPrefix;
 }
