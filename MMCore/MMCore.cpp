@@ -96,6 +96,13 @@ const int MMCore_versionMajor = 2;
 const int MMCore_versionMinor = 3;
 const int MMCore_versionBuild = 2;
 
+
+// Legacy macros for logging.
+// (Note: the '##' before the __VA_ARGS__ is required for GCC, though not for MSVC.)
+#define CORE_DEBUG(FMT, ...) (this->getLoggerInstance()->Log(IMMLogger::debug, (FMT), ## __VA_ARGS__))
+#define CORE_LOG(FMT, ...)   (this->getLoggerInstance()->Log(IMMLogger::info,  (FMT), ## __VA_ARGS__))
+
+
 ///////////////////////////////////////////////////////////////////////////////
 // CMMcore class
 // -------------
@@ -165,7 +172,7 @@ CMMCore::CMMCore() :
 
    initializeLogging();
    CORE_LOG("-------->>\n");
-   CORE_LOG2("Core session started by %s on %s\n", getUserId().c_str(), getHostName().c_str());
+   CORE_LOG("Core session started by %s on %s\n", getUserId().c_str(), getHostName().c_str());
    enableDebugLog(false);
 
 	try
@@ -251,13 +258,13 @@ CMMCore::CMMCore() :
 		catch(CMMError& err)
 		{
 			// trap exceptions and just log the message
-			CORE_LOG1("Error in the core constructor\n%s\n", err.getMsg().c_str());
+			CORE_LOG("Error in the core constructor\n%s\n", err.getMsg().c_str());
 		}
 	}
 	catch(bad_alloc& memex)
 	{
       // trap exceptions and just log the message
-      CORE_LOG1("Error in the core constructor\n%s\n", memex.what() );
+      CORE_LOG("Error in the core constructor\n%s\n", memex.what() );
 	}
 }
 
@@ -293,7 +300,7 @@ void CMMCore::clearLog()
 {
    getLoggerInstance()->Reset();
    CORE_LOG("-------->>\n");
-   CORE_LOG2("\nLog cleared and re-started by %s on %s\n", getUserId().c_str(), getHostName().c_str());
+   CORE_LOG("\nLog cleared and re-started by %s on %s\n", getUserId().c_str(), getHostName().c_str());
 }
 
 /**
@@ -301,7 +308,7 @@ void CMMCore::clearLog()
  */
 void CMMCore::logMessage(const char* msg)
 {
-   CORE_LOG1("> %s\n", msg);
+   CORE_LOG("> %s\n", msg);
 }
 
 
@@ -311,9 +318,9 @@ void CMMCore::logMessage(const char* msg)
 void CMMCore::logMessage(const char* msg, bool debugOnly)
 {
   if (debugOnly) {
-    CORE_DEBUG1("> %s\n", msg);
+    CORE_DEBUG("> %s\n", msg);
   } else {
-    CORE_LOG1("> %s\n", msg);
+    CORE_LOG("> %s\n", msg);
   }
 }
 
@@ -334,7 +341,7 @@ void CMMCore::enableDebugLog(bool enable)
 
    getLoggerInstance()->SetPriorityLevel(loggingMask);
 
-   CORE_LOG1("Debug logging %s\n", enable ? "enabled" : "disabled");
+   CORE_LOG("Debug logging %s\n", enable ? "enabled" : "disabled");
 }
 
 /**
@@ -582,9 +589,9 @@ void CMMCore::setSystemState(const Configuration& conf)
          }
          catch (CMMError& err)
          {
-            CORE_LOG3("Property setting failed: %s-%s-%s\n",
+            CORE_LOG("Property setting failed: %s-%s-%s\n",
             s.getDeviceLabel().c_str(), s.getPropertyName().c_str(), s.getPropertyValue().c_str());
-            CORE_LOG1("%s\n", err.getMsg().c_str());
+            CORE_LOG("%s\n", err.getMsg().c_str());
          }
       }
    }
@@ -630,7 +637,7 @@ void CMMCore::loadDevice(const char* label, const char* library, const char* dev
    try
    {
       MM::Device* pDevice = pluginManager_.LoadDevice(label, library, device);
-      CORE_LOG3("Device %s loaded from %s and labeled as %s\n", device, library, label);
+      CORE_LOG("Device %s loaded from %s and labeled as %s\n", device, library, label);
       pDevice->SetCallback(callback_);
    }
    catch (CMMError& err)
@@ -658,7 +665,7 @@ void CMMCore::assignDefaultRole(MM::Device* pDevice)
          assert(camera_);
          */
          camera_ = static_cast<MM::Camera*>(pDevice);
-         CORE_LOG1("Device %s set as default camera.\n", label);
+         CORE_LOG("Device %s set as default camera.\n", label);
       break;
 
       case MM::StateDevice:
@@ -668,32 +675,32 @@ void CMMCore::assignDefaultRole(MM::Device* pDevice)
       case MM::ShutterDevice:
          shutter_ = static_cast<MM::Shutter*>(pDevice);
          //assignImageSynchro(label);
-         CORE_LOG1("Device %s set as default shutter.\n", label);
+         CORE_LOG("Device %s set as default shutter.\n", label);
       break;
 
       case MM::XYStageDevice:
          xyStage_ = static_cast<MM::XYStage*>(pDevice);
-         CORE_LOG1("Device %s set as default xyStage.\n", label);
+         CORE_LOG("Device %s set as default xyStage.\n", label);
       break;
 
       case MM::AutoFocusDevice:
          autoFocus_ = static_cast<MM::AutoFocus*>(pDevice);
-         CORE_LOG1("Device %s set as default auto-focus.\n", label);
+         CORE_LOG("Device %s set as default auto-focus.\n", label);
       break;
 
       case MM::SLMDevice:
          slm_ = static_cast<MM::SLM*>(pDevice);
-         CORE_LOG1("Device %s set as default SLM.\n", label);
+         CORE_LOG("Device %s set as default SLM.\n", label);
       break;
 
       case MM::GalvoDevice:
          galvo_ = static_cast<MM::Galvo*>(pDevice);
-         CORE_LOG1("Device %s set as default Galvo.\n", label);
+         CORE_LOG("Device %s set as default Galvo.\n", label);
       break;
 
       default:
          // no action on unrecognized device
-         //CORE_LOG1("%s: unknown device type\n", label);
+         //CORE_LOG("%s: unknown device type\n", label);
      break;
    }
 }
@@ -869,7 +876,7 @@ void CMMCore::reset() throw (CMMError)
 void CMMCore::initializeAllDevices() throw (CMMError)
 {
    vector<string> devices = pluginManager_.GetDeviceList();
-   CORE_LOG1("Starting initialization sequence for %d devices...\n", devices.size());
+   CORE_LOG("Starting initialization sequence for %d devices...\n", devices.size());
 
    for (size_t i=0; i<devices.size(); i++)
    {
@@ -890,7 +897,7 @@ void CMMCore::initializeAllDevices() throw (CMMError)
          throw CMMError(getDeviceErrorText(nRet, pDevice).c_str(), MMERR_DEVICE_GENERIC);
       }
       assignDefaultRole(pDevice);
-      CORE_LOG1("Device %s initialized.\n", devices[i].c_str());
+      CORE_LOG("Device %s initialized.\n", devices[i].c_str());
    }
 
    updateCoreProperties();
@@ -939,7 +946,7 @@ void CMMCore::initializeDevice(const char* label ///< the device to initialize
    
    updateCoreProperties();
 
-   CORE_LOG1("Device %s initialized.\n", label);
+   CORE_LOG("Device %s initialized.\n", label);
 }
 
 
@@ -1182,7 +1189,7 @@ void CMMCore::waitForDevice(const char* label) throw (CMMError)
  */
 void CMMCore::waitForDevice(MM::Device* pDev) throw (CMMError)
 {
-   CORE_DEBUG1("Waiting for device %s...\n", pluginManager_.GetDeviceLabel(*pDev).c_str());
+   CORE_DEBUG("Waiting for device %s...\n", pluginManager_.GetDeviceLabel(*pDev).c_str());
 
    MM::TimeoutMs timeout(GetMMTimeNow(),timeoutMs_);
    MMThreadGuard guard(pluginManager_.getModuleLock(pDev));
@@ -1302,7 +1309,7 @@ void CMMCore::setPosition(const char* label, double position) throw (CMMError)
    // TODO: insert system lock
 
    MM::Stage* pStage = getSpecificDevice<MM::Stage>(label);
-   CORE_DEBUG2("attempt to set %s  to %.5g um\n", label, position);
+   CORE_DEBUG("attempt to set %s  to %.5g um\n", label, position);
 
    MMThreadGuard guard(pluginManager_.getModuleLock(pStage));
    int ret = pStage->SetPositionUm(position);
@@ -1325,7 +1332,7 @@ void CMMCore::setRelativePosition(const char* label, double d) throw (CMMError)
 {
 
    MM::Stage* pStage = getSpecificDevice<MM::Stage>(label);
-   CORE_DEBUG2("attempt to move %s relative %.5g um\n", label, d);
+   CORE_DEBUG("attempt to move %s relative %.5g um\n", label, d);
    MMThreadGuard guard(pluginManager_.getModuleLock(pStage));
 
    int ret = pStage->SetRelativePositionUm(d);
@@ -1378,7 +1385,7 @@ void CMMCore::setXYPosition(const char* deviceName, double x, double y) throw (C
       logError(name, getDeviceErrorText(ret, pXYStage).c_str());
       throw CMMError(getDeviceErrorText(ret, pXYStage).c_str(), MMERR_DEVICE_GENERIC);
    }
-   CORE_DEBUG3("%s set to %g.3 %g.3 um\n", deviceName, x, y);
+   CORE_DEBUG("%s set to %g.3 %g.3 um\n", deviceName, x, y);
 }
 
 /**
@@ -1389,7 +1396,7 @@ void CMMCore::setXYPosition(const char* deviceName, double x, double y) throw (C
  */
 void CMMCore::setRelativeXYPosition(const char* deviceName, double dx, double dy) throw (CMMError)
 {
-   CORE_DEBUG3("Attempt relative move of %s to %g ,  %g um\n", deviceName, dx, dy);
+   CORE_DEBUG("Attempt relative move of %s to %g ,  %g um\n", deviceName, dx, dy);
 
    MM::XYStage* pXYStage = getSpecificDevice<MM::XYStage>(deviceName);
    MMThreadGuard guard(pluginManager_.getModuleLock(pXYStage));
@@ -1481,7 +1488,7 @@ void CMMCore::stop(const char* deviceName) throw (CMMError)
       logError(deviceName, getDeviceErrorText(ret, pXYStage).c_str());
       throw CMMError(getDeviceErrorText(ret, pXYStage).c_str(), MMERR_DEVICE_GENERIC);
    }
-   CORE_LOG1("Device %s stopped!\n", deviceName);
+   CORE_LOG("Device %s stopped!\n", deviceName);
 }
 
 /**
@@ -1498,7 +1505,7 @@ void CMMCore::home(const char* deviceName) throw (CMMError)
       logError(deviceName, getDeviceErrorText(ret, pXYStage).c_str());
       throw CMMError(getDeviceErrorText(ret, pXYStage).c_str(), MMERR_DEVICE_GENERIC);
    }
-   CORE_LOG1("Stage %s moved to the HOME position.\n", deviceName);
+   CORE_LOG("Stage %s moved to the HOME position.\n", deviceName);
 }
 
 //jizhen, 4/12/2007
@@ -1516,7 +1523,7 @@ void CMMCore::setOriginXY(const char* deviceName) throw (CMMError)
       logError(deviceName, getDeviceErrorText(ret, pXYStage).c_str());
       throw CMMError(getDeviceErrorText(ret, pXYStage).c_str(), MMERR_DEVICE_GENERIC);
    }
-   CORE_LOG1("Stage %s's current position was zeroed.\n", deviceName);
+   CORE_LOG("Stage %s's current position was zeroed.\n", deviceName);
 }
 
 /**
@@ -1533,7 +1540,7 @@ void CMMCore::setOrigin(const char* deviceName) throw (CMMError)
       logError(deviceName, getDeviceErrorText(ret, pStage).c_str());
       throw CMMError(getDeviceErrorText(ret, pStage).c_str(), MMERR_DEVICE_GENERIC);
    }
-   CORE_LOG1("Stage %s's current position was zeroed.\n", deviceName);
+   CORE_LOG("Stage %s's current position was zeroed.\n", deviceName);
 }
 
 /**
@@ -1551,7 +1558,7 @@ void CMMCore::setAdapterOrigin(const char* deviceName, double d) throw (CMMError
       logError(deviceName, getDeviceErrorText(ret, pStage).c_str());
       throw CMMError(getDeviceErrorText(ret, pStage).c_str(), MMERR_DEVICE_GENERIC);
    }
-   CORE_LOG2("Stage %s's position %.2f um was set to 0.\n", deviceName, d);
+   CORE_LOG("Stage %s's position %.2f um was set to 0.\n", deviceName, d);
 }
 
 
@@ -1571,7 +1578,7 @@ void CMMCore::setAdapterOriginXY(const char* deviceName, double x, double y) thr
       logError(deviceName, getDeviceErrorText(ret, pXYStage).c_str());
       throw CMMError(getDeviceErrorText(ret, pXYStage).c_str(), MMERR_DEVICE_GENERIC);
    }
-   CORE_LOG3("Stage %s's current position was set as %.2f,%.2f um.\n", deviceName, x, y);
+   CORE_LOG("Stage %s's current position was set as %.2f,%.2f um.\n", deviceName, x, y);
 }
 
 
@@ -1961,7 +1968,7 @@ void CMMCore::snapImage() throw (CMMError)
 void CMMCore::assignImageSynchro(const char* label) throw (CMMError)
 {
    imageSynchro_.push_back(getDevice(label));
-   CORE_LOG1("Image acquisition synchronized with %s\n", label);
+   CORE_LOG("Image acquisition synchronized with %s\n", label);
 }
 
 /**
@@ -1975,10 +1982,10 @@ void CMMCore::removeImageSynchro(const char* label) throw (CMMError)
    if(it != imageSynchro_.end())
    {
       imageSynchro_.erase(it);
-      CORE_LOG1("Device %s removed from the image synchro list.\n", label);
+      CORE_LOG("Device %s removed from the image synchro list.\n", label);
    }
    else
-      CORE_DEBUG1("Device %s requested for removal was not in the image synchro list.\n", label);
+      CORE_DEBUG("Device %s requested for removal was not in the image synchro list.\n", label);
       //throw CMMError(getCoreErrorText(MMERR_NotInImageSynchro).c_str(), MMERR_NotInImageSynchro);
 }
 
@@ -2001,7 +2008,7 @@ void CMMCore::setAutoShutter(bool state)
    properties_->Set(MM::g_Keyword_CoreAutoShutter, state ? "1" : "0");
    autoShutter_ = state;
    stateCache_.addSetting(PropertySetting(MM::g_Keyword_CoreDevice, MM::g_Keyword_CoreAutoShutter, state ? "1" : "0"));
-   CORE_LOG1("Auto shutter %s.\n", state ? "ON" : "OFF");
+   CORE_LOG("Auto shutter %s.\n", state ? "ON" : "OFF");
 }
 
 /**
@@ -2251,7 +2258,7 @@ void CMMCore::startSequenceAcquisition(const char* label, long numImages, double
    if (nRet != DEVICE_OK)
       throw CMMError(getDeviceErrorText(nRet, pCam).c_str(), MMERR_DEVICE_GENERIC);
 
-   CORE_DEBUG1("Sequence acquisition started on %s.\n", label);
+   CORE_DEBUG("Sequence acquisition started on %s.\n", label);
 }
 
 /**
@@ -2270,7 +2277,7 @@ void CMMCore::prepareSequenceAcquisition(const char* label) throw (CMMError)
    if (nRet != DEVICE_OK)
       throw CMMError(getDeviceErrorText(nRet, pCam).c_str(), MMERR_DEVICE_GENERIC);
 
-   CORE_DEBUG1("Sequence acquisition prepared on %s.\n", label);
+   CORE_DEBUG("Sequence acquisition prepared on %s.\n", label);
 }
 
 
@@ -2312,7 +2319,7 @@ void CMMCore::stopSequenceAcquisition(const char* label) throw (CMMError)
       throw CMMError(getDeviceErrorText(nRet, camera_).c_str(), MMERR_DEVICE_GENERIC);
    }
 
-   CORE_DEBUG1("Sequence acquisition stopped on %.\n", label);
+   CORE_DEBUG("Sequence acquisition stopped on %.\n", label);
 }
 
 /**
@@ -2541,7 +2548,7 @@ void CMMCore::setCircularBufferMemoryFootprint(unsigned sizeMB ///< n megabytes
 				throw CMMError(getCoreErrorText(MMERR_CircularBufferFailedToInitialize).c_str(), MMERR_CircularBufferFailedToInitialize);
 		}
 
-		CORE_DEBUG1("Circular buffer set to %d MB.\n", sizeMB);
+		CORE_DEBUG("Circular buffer set to %d MB.\n", sizeMB);
 	}
 	catch(bad_alloc& ex)
 	{
@@ -2597,7 +2604,7 @@ string CMMCore::getCameraDevice()
       {
          // trap the error and ignore it in this case.
          // This happens only if the system is in the inconsistent internal state
-         CORE_DEBUG1("Internal error: plugin manager does not recognize device reference. %s\n", err.getMsg().c_str());
+         CORE_DEBUG("Internal error: plugin manager does not recognize device reference. %s\n", err.getMsg().c_str());
       }
    return deviceName;
 }
@@ -2617,7 +2624,7 @@ string CMMCore::getShutterDevice()
       {
          // trap the error and ignore it in this case.
          // This happens only if the system is in the inconistent internal state
-         CORE_DEBUG1("Internal error: plugin manager does not recognize device reference. %s\n", err.getMsg().c_str());
+         CORE_DEBUG("Internal error: plugin manager does not recognize device reference. %s\n", err.getMsg().c_str());
       }
    return deviceName;
 }
@@ -2637,7 +2644,7 @@ string CMMCore::getFocusDevice()
       {
          // trap the error and ignore it in this case.
          // This happens only if the system is in the inconistent internal state
-         CORE_DEBUG1("Internal error: plugin manager does not recognize device reference. %s\n", err.getMsg().c_str());
+         CORE_DEBUG("Internal error: plugin manager does not recognize device reference. %s\n", err.getMsg().c_str());
       }
    return deviceName;
 }
@@ -2656,7 +2663,7 @@ string CMMCore::getXYStageDevice()
       {
          // trap the error and ignore it in this case.
          // This happens only if the system is in the inconistent internal state
-         CORE_DEBUG1("Internal error: plugin manager does not recognize device reference. %s\n", err.getMsg().c_str());
+         CORE_DEBUG("Internal error: plugin manager does not recognize device reference. %s\n", err.getMsg().c_str());
       }
    return deviceName;
 }
@@ -2675,7 +2682,7 @@ string CMMCore::getAutoFocusDevice()
       {
          // trap the error and ignore it in this case.
          // This happens only if the system is in the inconistent internal state
-         CORE_DEBUG1("Internal error: plugin manager does not recognize device reference. %s\n", err.getMsg().c_str());
+         CORE_DEBUG("Internal error: plugin manager does not recognize device reference. %s\n", err.getMsg().c_str());
       }
    return deviceName;
 }
@@ -2688,7 +2695,7 @@ void CMMCore::setAutoFocusDevice(const char* autofocusLabel) throw (CMMError)
    if (autofocusLabel && strlen(autofocusLabel)>0)
    {
       autoFocus_ = getSpecificDevice<MM::AutoFocus>(autofocusLabel);
-      CORE_LOG1("Auto-focus device set to %s\n", autofocusLabel);
+      CORE_LOG("Auto-focus device set to %s\n", autofocusLabel);
    }
    else
    {
@@ -2713,7 +2720,7 @@ string CMMCore::getImageProcessorDevice()
       {
          // trap the error and ignore it in this case.
          // This happens only if the system is in the inconistent internal state
-         CORE_DEBUG1("Internal error: plugin manager does not recognize device reference. %s\n", err.getMsg().c_str());
+         CORE_DEBUG("Internal error: plugin manager does not recognize device reference. %s\n", err.getMsg().c_str());
       }
    return deviceName;
 }
@@ -2733,7 +2740,7 @@ string CMMCore::getSLMDevice()
       {
          // trap the error and ignore it in this case.
          // This happens only if the system is in the inconsistent internal state
-         CORE_DEBUG1("Internal error: plugin manager does not recognize device reference. %s\n", err.getMsg().c_str());
+         CORE_DEBUG("Internal error: plugin manager does not recognize device reference. %s\n", err.getMsg().c_str());
       }
    return deviceName;
 }
@@ -2753,7 +2760,7 @@ string CMMCore::getGalvoDevice()
       {
          // trap the error and ignore it in this case.
          // This happens only if the system is in the inconsistent internal state
-         CORE_DEBUG1("Internal error: plugin manager does not recognize device reference. %s\n", err.getMsg().c_str());
+         CORE_DEBUG("Internal error: plugin manager does not recognize device reference. %s\n", err.getMsg().c_str());
       }
    return deviceName;
 }
@@ -2767,7 +2774,7 @@ void CMMCore::setImageProcessorDevice(const char* procLabel) throw (CMMError)
    if (procLabel && strlen(procLabel)>0)
    {
       imageProcessor_ = getSpecificDevice<MM::ImageProcessor>(procLabel);
-      CORE_LOG1("Image processor device set to %s\n", procLabel);
+      CORE_LOG("Image processor device set to %s\n", procLabel);
    }
    else
    {
@@ -2786,7 +2793,7 @@ void CMMCore::setSLMDevice(const char* slmLabel) throw (CMMError)
    if (slmLabel && strlen(slmLabel)>0)
    {
       slm_ = getSpecificDevice<MM::SLM>(slmLabel);
-      CORE_LOG1("Image processor device set to %s\n", slmLabel);
+      CORE_LOG("Image processor device set to %s\n", slmLabel);
    }
    else
    {
@@ -2806,7 +2813,7 @@ void CMMCore::setGalvoDevice(const char* galvoLabel) throw (CMMError)
    if (galvoLabel && strlen(galvoLabel)>0)
    {
       galvo_ = getSpecificDevice<MM::Galvo>(galvoLabel);
-      CORE_LOG1("Image processor device set to %s\n", galvoLabel);
+      CORE_LOG("Image processor device set to %s\n", galvoLabel);
    }
    else
    {
@@ -2825,7 +2832,7 @@ void CMMCore::setChannelGroup(const char* chGroup) throw (CMMError)
    if (chGroup && strlen(chGroup)>0)
    {
       channelGroup_ = chGroup;
-      CORE_LOG1("Channel group set to %s\n", chGroup);
+      CORE_LOG("Channel group set to %s\n", chGroup);
    }
    else
    {
@@ -2873,7 +2880,7 @@ void CMMCore::setShutterDevice(const char* shutterLabel) throw (CMMError)
       if (shutterOpen)
          setShutterOpen(true);
       //assignImageSynchro(shutterLabel);
-      CORE_LOG1("Shutter device set to %s\n", shutterLabel);
+      CORE_LOG("Shutter device set to %s\n", shutterLabel);
    }
    else
    {
@@ -2897,7 +2904,7 @@ void CMMCore::setFocusDevice(const char* focusLabel) throw (CMMError)
    if (focusLabel && strlen(focusLabel)>0)
    {
       focusStage_ = getSpecificDevice<MM::Stage>(focusLabel);
-      CORE_LOG1("Focus device set to %s\n", focusLabel);
+      CORE_LOG("Focus device set to %s\n", focusLabel);
    }
    else
    {
@@ -2916,7 +2923,7 @@ void CMMCore::setXYStageDevice(const char* xyDeviceLabel) throw (CMMError)
    if (xyDeviceLabel && strlen(xyDeviceLabel)>0)
    {
       xyStage_ = getSpecificDevice<MM::XYStage>(xyDeviceLabel);
-      CORE_LOG1("XYStage device set to %s\n", xyDeviceLabel);
+      CORE_LOG("XYStage device set to %s\n", xyDeviceLabel);
    }
    else
    {
@@ -2935,7 +2942,7 @@ void CMMCore::setCameraDevice(const char* cameraLabel) throw (CMMError)
    if (cameraLabel && strlen(cameraLabel) > 0)
    {
       camera_ = getSpecificDevice<MM::Camera>(cameraLabel);
-      CORE_LOG1("Camera device set to %s\n", cameraLabel);
+      CORE_LOG("Camera device set to %s\n", cameraLabel);
    }
    else
    {
@@ -3163,7 +3170,7 @@ void CMMCore::setProperty(const char* label, const char* propName,
       stateCache_.addSetting(PropertySetting(label, propName, propValue));
    }
 
-   CORE_DEBUG3("Property set: device=%s, name=%s, value=%s\n", label, propName, propValue);
+   CORE_DEBUG("Property set: device=%s, name=%s, value=%s\n", label, propName, propValue);
 }
 
 /**
@@ -3733,7 +3740,7 @@ void CMMCore::setExposure(const char* label, double dExp) throw (CMMError)
    else
       throw CMMError(getCoreErrorText(MMERR_CameraNotAvailable).c_str(), MMERR_CameraNotAvailable);
 
-   CORE_DEBUG1("Exposure set to %.3f ms\n", dExp);
+   CORE_DEBUG("Exposure set to %.3f ms\n", dExp);
 }
 
 /**
@@ -3773,7 +3780,7 @@ void CMMCore::setROI(int x, int y, int xSize, int ySize) throw (CMMError)
    else
       throw CMMError(getCoreErrorText(MMERR_CameraNotAvailable).c_str(), MMERR_CameraNotAvailable);
 
-   CORE_DEBUG4("ROI set to (%d, %d, %d, %d)\n", x, y, xSize, ySize);
+   CORE_DEBUG("ROI set to (%d, %d, %d, %d)\n", x, y, xSize, ySize);
 }
 
 /**
@@ -3845,7 +3852,7 @@ void CMMCore::setState(const char* deviceLabel, long state) throw (CMMError)
       stateCache_.addSetting(PropertySetting(deviceLabel, MM::g_Keyword_Label, posLbl));
    }
 
-   CORE_DEBUG2("%s set to state %d\n", deviceLabel, (int)state);
+   CORE_DEBUG("%s set to state %d\n", deviceLabel, (int)state);
 }
 
 /**
@@ -3902,7 +3909,7 @@ void CMMCore::setStateLabel(const char* deviceLabel, const char* stateLabel) thr
                              CDeviceUtils::ConvertToString(getStateFromLabel(deviceLabel, stateLabel))));
    }
 
-   CORE_DEBUG2("%s set to state label %s\n", deviceLabel, stateLabel);
+   CORE_DEBUG("%s set to state label %s\n", deviceLabel, stateLabel);
 }
 
 /**
@@ -3973,7 +3980,7 @@ void CMMCore::defineStateLabel(const char* deviceLabel, long state, const char* 
       }
    }
 
-   CORE_DEBUG3("State %d for device %s defined as label %s\n", (int)state, deviceLabel, label);
+   CORE_DEBUG("State %d for device %s defined as label %s\n", (int)state, deviceLabel, label);
 }
 
 /**
@@ -4057,7 +4064,7 @@ void CMMCore::defineConfiguration(const char* configName, const char* deviceLabe
    PropertySetting setting(deviceLabel, propName, value);
    pConf->addSetting(setting);
 
-   CORE_DEBUG4("Configuration %s: new setting for device %s defined as %s=%s\n", configName, deviceLabel, propName, value);
+   CORE_DEBUG("Configuration %s: new setting for device %s defined as %s=%s\n", configName, deviceLabel, propName, value);
 }
 
 /**
@@ -4083,7 +4090,7 @@ void CMMCore::setConfiguration(const char* configName) throw (CMMError)
       throw;
    }
 
-   CORE_DEBUG1("Configuration %s applied.\n", configName);
+   CORE_DEBUG("Configuration %s applied.\n", configName);
 }
 
 /**
@@ -4102,7 +4109,7 @@ void CMMCore::deleteConfiguration(const char* configName) throw (CMMError)
    if (it == configs_.end())
       throw CMMError(configName, getCoreErrorText(MMERR_NoConfiguration).c_str(), MMERR_NoConfiguration);
    configs_.erase(configName);
-   CORE_LOG1("Configuration %s deleted.\n", configName);
+   CORE_LOG("Configuration %s deleted.\n", configName);
 }
 
 
@@ -4194,7 +4201,7 @@ void CMMCore::defineConfigGroup(const char* groupName) throw (CMMError)
       throw CMMError(groupName, getCoreErrorText(MMERR_DuplicateConfigGroup).c_str(), MMERR_DuplicateConfigGroup);
 
    updateAllowedChannelGroups();
-   CORE_LOG1("Configuration group %s created.\n", groupName);
+   CORE_LOG("Configuration group %s created.\n", groupName);
 }
 
 /**
@@ -4210,7 +4217,7 @@ void CMMCore::deleteConfigGroup(const char* groupName) throw (CMMError)
 
    updateAllowedChannelGroups();
 
-   CORE_LOG1("Configuration group %s deleted.\n", groupName);
+   CORE_LOG("Configuration group %s deleted.\n", groupName);
 }
 
 /**
@@ -4220,7 +4227,7 @@ void CMMCore::renameConfigGroup(const char* oldGroupName, const char* newGroupNa
 {
    if (!configGroups_->RenameGroup(oldGroupName, newGroupName))
       throw CMMError(oldGroupName, getCoreErrorText(MMERR_NoConfigGroup).c_str(), MMERR_NoConfigGroup);
-   CORE_LOG2("Configuration group %s renamed to %s.\n", oldGroupName, newGroupName);
+   CORE_LOG("Configuration group %s renamed to %s.\n", oldGroupName, newGroupName);
 
    updateAllowedChannelGroups();
 
@@ -4243,7 +4250,7 @@ void CMMCore::defineConfig(const char* groupName, const char* configName) throw 
    configGroups_->Define(groupName, configName);
    ostringstream txt;
    txt << groupName << "/" << configName;
-   CORE_LOG1("Configuration %s defined.\n", txt.str().c_str());
+   CORE_LOG("Configuration %s defined.\n", txt.str().c_str());
 }
 
 /**
@@ -4267,7 +4274,7 @@ void CMMCore::defineConfig(const char* groupName, const char* configName, const 
    configGroups_->Define(groupName, configName, deviceLabel, propName, value);
    ostringstream txt;
    txt << groupName << "/" << configName;
-   CORE_LOG4("Configuration %s: new setting for device %s defined as %s=%s\n", txt.str().c_str(), deviceLabel, propName, value);
+   CORE_LOG("Configuration %s: new setting for device %s defined as %s=%s\n", txt.str().c_str(), deviceLabel, propName, value);
 }
 
 
@@ -4289,7 +4296,7 @@ void CMMCore::defineConfig(const char* groupName, const char* configName, const 
 void CMMCore::definePixelSizeConfig(const char* resolutionID, const char* deviceLabel, const char* propName, const char* value)
 {
    pixelSizeGroup_->Define(resolutionID, deviceLabel, propName, value);
-   CORE_LOG4("Resolution ID %s: for device %s defined as %s=%s\n", resolutionID, deviceLabel, propName, value);
+   CORE_LOG("Resolution ID %s: for device %s defined as %s=%s\n", resolutionID, deviceLabel, propName, value);
 }
 
 /**
@@ -4299,7 +4306,7 @@ void CMMCore::definePixelSizeConfig(const char* resolutionID, const char* device
 void CMMCore::definePixelSizeConfig(const char* resolutionID)
 {
    pixelSizeGroup_->Define(resolutionID);
-   CORE_LOG1("Empty Resolution ID %s defined", resolutionID);
+   CORE_LOG("Empty Resolution ID %s defined", resolutionID);
 }
 
 /**
@@ -4321,7 +4328,7 @@ void CMMCore::setPixelSizeUm(const char* resolutionID, double pixSize)  throw (C
    if (psc == 0)
       throw CMMError(resolutionID, getCoreErrorText(MMERR_NoConfigGroup).c_str(), MMERR_NoConfigGroup);
    psc->setPixelSizeUm(pixSize);
-   CORE_LOG2("Pixel size %f um set for resolution ID: %s\n", pixSize, resolutionID);
+   CORE_LOG("Pixel size %f um set for resolution ID: %s\n", pixSize, resolutionID);
 }
 
 /**
@@ -4349,7 +4356,7 @@ void CMMCore::setPixelSizeConfig(const char* resolutionID) throw (CMMError)
       throw;
    }
 
-   CORE_DEBUG1("Pixel Size Configuration %s applied.\n", os.str().c_str());
+   CORE_DEBUG("Pixel Size Configuration %s applied.\n", os.str().c_str());
 }
 
 /**
@@ -4386,7 +4393,7 @@ void CMMCore::setConfig(const char* groupName, const char* configName) throw (CM
       throw;
    }
 
-   CORE_DEBUG1("Configuration %s applied.\n", os.str().c_str());
+   CORE_DEBUG("Configuration %s applied.\n", os.str().c_str());
 }
 
 /**
@@ -4403,7 +4410,7 @@ void CMMCore::renameConfig(const char* groupName, const char* oldConfigName, con
       logError("renameConfig", getCoreErrorText(MMERR_NoConfiguration).c_str());
       throw CMMError(os1.str().c_str(), getCoreErrorText(MMERR_NoConfiguration).c_str(), MMERR_NoConfiguration);
    }
-   CORE_LOG2("Configuration %s renamed to %s.\n", os1.str().c_str(), os2.str().c_str());
+   CORE_LOG("Configuration %s renamed to %s.\n", os1.str().c_str(), os2.str().c_str());
 }
 
 /**
@@ -4419,7 +4426,7 @@ void CMMCore::deleteConfig(const char* groupName, const char* configName) throw 
       logError("deleteConfig", getCoreErrorText(MMERR_NoConfiguration).c_str());
       throw CMMError(os.str().c_str(), getCoreErrorText(MMERR_NoConfiguration).c_str(), MMERR_NoConfiguration);
    }
-   CORE_LOG1("Configuration %s deleted.\n", os.str().c_str());
+   CORE_LOG("Configuration %s deleted.\n", os.str().c_str());
 }
 
 /**
@@ -4435,7 +4442,7 @@ void CMMCore::deleteConfig(const char* groupName, const char* configName, const 
       logError("deleteConfig", getCoreErrorText(MMERR_NoConfiguration).c_str());
       throw CMMError(os.str().c_str(), getCoreErrorText(MMERR_NoConfiguration).c_str(), MMERR_NoConfiguration);
    }
-   CORE_LOG1("Configuration property %s deleted.\n", os.str().c_str());
+   CORE_LOG("Configuration property %s deleted.\n", os.str().c_str());
 }
 
 
@@ -4586,7 +4593,7 @@ void CMMCore::renamePixelSizeConfig(const char* oldConfigName, const char* newCo
       logError("renamePixelSizeConfig", getCoreErrorText(MMERR_NoConfiguration).c_str());
       throw CMMError(os1.str().c_str(), getCoreErrorText(MMERR_NoConfiguration).c_str(), MMERR_NoConfiguration);
    }
-   CORE_LOG2("Pixel Size Configuration %s renamed to %s.\n", os1.str().c_str(), os2.str().c_str());
+   CORE_LOG("Pixel Size Configuration %s renamed to %s.\n", os1.str().c_str(), os2.str().c_str());
 }
 
 /**
@@ -4602,7 +4609,7 @@ void CMMCore::deletePixelSizeConfig(const char* configName) throw (CMMError)
       logError("deletePixelSizeConfig", getCoreErrorText(MMERR_NoConfiguration).c_str());
       throw CMMError(os.str().c_str(), getCoreErrorText(MMERR_NoConfiguration).c_str(), MMERR_NoConfiguration);
    }
-   CORE_LOG1("Pixel Size Configuration %s deleted.\n", os.str().c_str());
+   CORE_LOG("Pixel Size Configuration %s deleted.\n", os.str().c_str());
 }
 
 /**
@@ -4781,7 +4788,7 @@ void CMMCore::definePropertyBlock(const char* blockName, const char* propertyNam
    PropertyPair pair(propertyName, propertyValue);
    pBlock->addPair(pair);
 
-   CORE_DEBUG3("Property block %s defined as %s=%s\n", blockName, propertyName, propertyValue);
+   CORE_DEBUG("Property block %s defined as %s=%s\n", blockName, propertyName, propertyValue);
 }
 
 /**
@@ -5425,9 +5432,9 @@ void CMMCore::loadSystemState(const char* fileName) throw (CMMError)
             catch (CMMError& err)
             {
                // log the failure but continue parsing
-               CORE_LOG3("Property setting failed: %s-%s-%s\n",
+               CORE_LOG("Property setting failed: %s-%s-%s\n",
                          tokens[1].c_str(), tokens[2].c_str(), tokens[3].c_str());
-               CORE_LOG1("%s\n", err.getMsg().c_str());
+               CORE_LOG("%s\n", err.getMsg().c_str());
             }
          }
       }
@@ -5717,7 +5724,7 @@ void CMMCore::loadSystemConfiguration(const char* fileName) throw (CMMError)
                if (tokens.size() != 5)
                   throw CMMError(line, getCoreErrorText(MMERR_InvalidCFGEntry).c_str(), MMERR_InvalidCFGEntry);
                defineConfiguration(tokens[1].c_str(), tokens[2].c_str(), tokens[3].c_str(), tokens[4].c_str());
-               CORE_LOG1("Obsolete command %s used in configuration file.\n", MM::g_CFGCommand_Configuration);
+               CORE_LOG("Obsolete command %s used in configuration file.\n", MM::g_CFGCommand_Configuration);
             }
             else if(tokens[0].compare(MM::g_CFGCommand_ConfigGroup) == 0)
             {
@@ -6238,9 +6245,9 @@ void CMMCore::logError(const char* device, const char* msg, const char* fileName
    ostringstream os;
    os << "Device " << device << ". " << msg << endl;
    if (fileName == 0)
-      CORE_LOG1("Error occurred. %s\n", os.str().c_str());
+      CORE_LOG("Error occurred. %s\n", os.str().c_str());
    else
-      CORE_LOG3("Error occurred. %s, file %s, line %d\n", os.str().c_str(), fileName, line);
+      CORE_LOG("Error occurred. %s, file %s, line %d\n", os.str().c_str(), fileName, line);
 }
 
 string CMMCore::getDeviceName(MM::Device* pDev)

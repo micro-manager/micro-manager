@@ -132,20 +132,3 @@ public:
    virtual std::string LogPath(void) = 0;
 
 };
-
-/**
- * Legacy macros used in MMCore
- * Work only within MMCore code
- */
-#define CORE_DEBUG(FMT)                         getLoggerInstance()->Log(IMMLogger::debug, FMT)
-#define CORE_DEBUG1(FMT, arg1)                  getLoggerInstance()->Log(IMMLogger::debug, FMT, arg1)
-#define CORE_DEBUG2(FMT, arg1, arg2)            getLoggerInstance()->Log(IMMLogger::debug, FMT, arg1, arg2)
-#define CORE_DEBUG3(FMT, arg1, arg2, arg3)      getLoggerInstance()->Log(IMMLogger::debug, FMT, arg1, arg2, arg3)
-#define CORE_DEBUG4(FMT, arg1, arg2, arg3, arg4) getLoggerInstance()->Log(IMMLogger::debug, FMT, arg1, arg2, arg3, arg4)
-
-#define CORE_LOG(FMT)                           getLoggerInstance()->Log(IMMLogger::info, FMT)
-#define CORE_LOG1(FMT, arg1)                    getLoggerInstance()->Log(IMMLogger::info, FMT, arg1)
-#define CORE_LOG2(FMT, arg1, arg2)              getLoggerInstance()->Log(IMMLogger::info, FMT, arg1, arg2)
-#define CORE_LOG3(FMT, arg1, arg2, arg3)        getLoggerInstance()->Log(IMMLogger::info, FMT, arg1, arg2, arg3)
-#define CORE_LOG4(FMT, arg1, arg2, arg3, arg4)  getLoggerInstance()->Log(IMMLogger::info, FMT, arg1, arg2, arg3, arg4)
-#define CORE_LOG5(FMT, arg1, arg2, arg3, arg4, arg5)  getLoggerInstance()->Log(IMMLogger::info, FMT, arg1, arg2, arg3, arg4, arg5)
