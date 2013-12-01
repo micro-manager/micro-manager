@@ -93,7 +93,8 @@ public class RecallPlugin implements MMPlugin {
             return;
          }       
          
-         LinkedBlockingQueue imageQueue_ = new LinkedBlockingQueue();
+         LinkedBlockingQueue<TaggedImage> imageQueue_ = 
+                 new LinkedBlockingQueue<TaggedImage>();
          
          multiChannelCameraNrCh_ = (int) core_.getNumberOfCameraChannels();
          

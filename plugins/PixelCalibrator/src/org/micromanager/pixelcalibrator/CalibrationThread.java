@@ -1,7 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 
 package org.micromanager.pixelcalibrator;
 
@@ -132,7 +128,7 @@ public class CalibrationThread extends Thread {
    Point2D.Double measureDisplacement(double x1, double y1, Point2D.Double d, boolean display, boolean sim) throws InterruptedException {
          if (CalibrationThread.interrupted())
             throw new InterruptedException();
-         ImageProcessor snap = (ImageProcessor) snapImageAt(x1,y1,sim);
+         ImageProcessor snap = snapImageAt(x1,y1,sim);
          Rectangle guessRect = new Rectangle((int) ((w-side_small)/2-d.x),(int) ((h-side_small)/2-d.y),side_small,side_small);
          ImageProcessor foundImage = getSubImage(snap,guessRect.x, guessRect.y, guessRect.width, guessRect.height);
          liveWin_.getImagePlus().setRoi(guessRect);
@@ -215,7 +211,8 @@ public class CalibrationThread extends Thread {
       int h_small = smallestPowerOf2LessThanOrEqualTo(h/4);
       side_small = Math.min(w_small, h_small);
 
-      referenceImage_ = getSubImage(baseImage,(int) (-side_small/2+w/2),(int) (-side_small/2+h/2),side_small,side_small);
+      referenceImage_ = getSubImage(baseImage, (-side_small/2+w/2),
+              (-side_small/2+h/2),side_small,side_small);
 
       pointPairs_.clear();
       pointPairs_.put(new Point2D.Double(0.,0.),new Point2D.Double(x,y));
@@ -270,7 +267,7 @@ public class CalibrationThread extends Thread {
    double pixelSize;
 
    public AffineTransform runCalibration(boolean sim) throws MMScriptException, InterruptedException {
-         pointPairs_ = new Hashtable();
+         pointPairs_ = new Hashtable<Point2D.Double, Point2D.Double>();
          Point2D.Double xy0 = app_.getXYStagePosition();
          firstApprox = getFirstApprox(sim);
          setProgress(20);
