@@ -50,8 +50,8 @@ implements MMListenerInterface {
    private double smallMovement_ = 1.0;
    private double mediumMovement_ = 10.0;
    private double largeMovement_ = 100.0;
-   private Map<String, Double> smallMovementZ_ = new HashMap();
-   private Map<String, Double> mediumMovementZ_ = new HashMap();
+   private Map<String, Double> smallMovementZ_ = new HashMap<String, Double>();
+   private Map<String, Double> mediumMovementZ_ = new HashMap<String, Double>();
    private NumberFormat nf_;
    private String currentZDrive_ = "";
    private boolean initialized_ = false;
