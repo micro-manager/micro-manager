@@ -99,7 +99,7 @@ public class CalibrationListDlg extends MMDialog {
          Calibration cal = calibrationList.get(rowIndex);
          if (columnIndex == 1) {
             try {
-               double val = Double.parseDouble((String)value.toString());
+               double val = Double.parseDouble(value.toString());
                core_.setPixelSizeUm(cal.getLabel(), val);
                cal.setPixelSizeUm(val);
                parentGUI_.setConfigChanged(true);

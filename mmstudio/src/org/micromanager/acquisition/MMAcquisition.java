@@ -121,7 +121,6 @@ public class MMAcquisition {
             } catch (Exception e) {
                ReportingUtils.showError(e, "Unable to create directory for saving images.");
                eng.stop(true);
-               imageFileManager = null;
                imageCache_ = null;
             }
          } else {
@@ -274,9 +273,8 @@ public class MMAcquisition {
 
       if (virtual_ && existing_) {
          String dirName = rootDirectory_ + File.separator + name;
-         boolean multipageTiff = false;
          try {
-            multipageTiff = MultipageTiffReader.isMMMultipageTiff(dirName);
+            boolean multipageTiff = MultipageTiffReader.isMMMultipageTiff(dirName);
             if (multipageTiff) {
                imageFileManager = new TaggedImageStorageMultipageTiff(dirName, false, null);
             } else {
@@ -509,7 +507,7 @@ public class MMAcquisition {
    }
 
    /**
-    * @deprecated transition towards the use of TaggedImaged rather than raw pixel data
+    * @Deprecated transition towards the use of TaggedImaged rather than raw pixel data
     */
    public void insertImage(Object pixels, int frame, int channel, int slice)
            throws MMScriptException {
@@ -517,7 +515,7 @@ public class MMAcquisition {
    }
 
    /**
-    * @deprecated transition towards the use of TaggedImaged rather than raw pixel data
+    * @Deprecated transition towards the use of TaggedImaged rather than raw pixel data
     */
    public void insertImage(Object pixels, int frame, int channel, int slice, int position) throws MMScriptException {
       if (!initialized_) {
@@ -723,7 +721,7 @@ public class MMAcquisition {
    }
 
    /**
-    * @deprecated 
+    * @Deprecated 
     * @return AcquisitionData
     */
    public AcquisitionData getAcqData() {
@@ -748,17 +746,16 @@ public class MMAcquisition {
 
    public String getChannelName(int channel) {
       if (isInitialized()) {
-         String name = "";
          try {
             JSONArray chNames =  getSummaryMetadata().getJSONArray("ChNames");
             if (chNames == null || channel >= chNames.length() )
                return "";
-            name = chNames.getString(channel);
+            String name = chNames.getString(channel);
+            return name;
          } catch (JSONException e) {
             ReportingUtils.logError(e);
             return "";
          }
-         return name;
       } else {
          try {
             return channelNames_.getString(channel);

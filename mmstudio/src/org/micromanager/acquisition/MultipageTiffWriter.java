@@ -116,7 +116,6 @@ public class MultipageTiffWriter {
    private long blankPixelsOffset_ = -1;
    private String summaryMDString_;
    private boolean fastStorageMode_;
-   private int imageCount_ = 0;
    
    public MultipageTiffWriter(String directory, String filename, 
            JSONObject summaryMD, TaggedImageStorageMultipageTiff mpTiffStorage,
@@ -158,7 +157,8 @@ public class MultipageTiffWriter {
          fileChannel_ = raFile_.getChannel();
          if (writingExecutor_ == null) {
             writingExecutor_ = fastStorageMode_
-                    ? new ThreadPoolExecutor(1, 1, 0, TimeUnit.NANOSECONDS, new LinkedBlockingQueue())
+                    ? new ThreadPoolExecutor(1, 1, 0, TimeUnit.NANOSECONDS, 
+                    new LinkedBlockingQueue<java.lang.Runnable>())
                     : null;
          }
          indexMap_ = new HashMap<String, Long>();
@@ -363,7 +363,6 @@ public class MultipageTiffWriter {
    }
         
    public void writeImage(TaggedImage img) throws IOException {
-      imageCount_++;
       if (writingExecutor_ != null) {
          int queueSize = writingExecutor_.getQueue().size();
          int attemptCount = 0;
@@ -394,7 +393,7 @@ public class MultipageTiffWriter {
    }
 
    private void writeIFD(TaggedImage img) throws IOException {
-      char numEntries = (char) ((firstIFD_  ? ENTRIES_PER_IFD + 4 : ENTRIES_PER_IFD));
+      char numEntries = ((firstIFD_  ? ENTRIES_PER_IFD + 4 : ENTRIES_PER_IFD));
       if (img.tags.has("Summary")) {
          img.tags.remove("Summary");
       }

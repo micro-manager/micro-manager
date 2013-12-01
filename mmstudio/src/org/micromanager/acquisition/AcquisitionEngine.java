@@ -215,7 +215,7 @@ public interface AcquisitionEngine {
 
    /*
     * This value is not used.
-    * @deprecated
+    * @Deprecated
     */
    public double getMinZStepUm();
 
@@ -333,7 +333,7 @@ public interface AcquisitionEngine {
 
 
    /**
-    * @deprecated
+    * @Deprecated
     */
    public void setCameraConfig(String config);
 
@@ -352,7 +352,7 @@ public interface AcquisitionEngine {
 
    
    /**
-    * @deprecated
+    * @Deprecated
     */
    public boolean addChannel(String name, double exp, double offset, 
            ContrastSettings s8, ContrastSettings s16, int skip, Color c);
@@ -404,12 +404,12 @@ public interface AcquisitionEngine {
    public boolean getSaveFiles();
 
    /**
-    * @deprecated
+    * @Deprecated
     */
    public int getDisplayMode();
 
    /**
-    * @deprecated
+    * @Deprecated
     */
    public void setDisplayMode(int mode);
 
@@ -450,17 +450,17 @@ public interface AcquisitionEngine {
    public void setAfSkipInterval (int interval);
 
    /*
-    * @deprecated
+    * @Deprecated
     */
    public void setSingleFrame(boolean selected);
 
    /*
-    * @deprecated
+    * @Deprecated
     */
    public void setSingleWindow(boolean selected);
 
    /*
-    * @deprecated
+    * @Deprecated
     */
    public String installAutofocusPlugin(String className);
    
@@ -471,7 +471,7 @@ public interface AcquisitionEngine {
    public boolean isConfigAvailable(String config_);
 
    /*
-    * @deprecated
+    * @Deprecated
     * Returns available configurations for the camera group.
     */
    public String[] getCameraConfigs();
@@ -494,11 +494,11 @@ public interface AcquisitionEngine {
 
 
    /**
-    * @deprecated
+    * @Deprecated
     */
    public void addImageProcessor(Class processor);
    /**
-    * @deprecated
+    * @Deprecated
     */
    public void removeImageProcessor(Class processor);
    

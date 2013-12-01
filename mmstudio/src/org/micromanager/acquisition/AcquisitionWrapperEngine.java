@@ -240,7 +240,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    }
 
    /**
-    * @deprecated
+    * @Deprecated
     */
    @Override
    public void addImageProcessor(Class taggedImageProcessorClass) {
@@ -255,7 +255,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    }
 
    /**
-    * @deprecated
+    * @Deprecated
     */
    @Override
    public void removeImageProcessor(Class taggedImageProcessorClass) {
@@ -726,7 +726,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
     * @param c16
     * @param c
     * @return - true if successful
-    * @deprecated
+    * @Deprecated
     */
    @Override
    public boolean addChannel(String config, double exp, double zOffset, ContrastSettings c8, ContrastSettings c16, int skip, Color c) {

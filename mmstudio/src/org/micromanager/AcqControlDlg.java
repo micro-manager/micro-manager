@@ -1687,7 +1687,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener, Acq
       return false;
    }
    
-   public void updateSavingTypeButtons() {
+   public final void updateSavingTypeButtons() {
       if (ImageUtils.getImageStorageClass().equals(TaggedImageStorageDiskDefault.class)) {
          singleButton_.setSelected(true);
       } else if (ImageUtils.getImageStorageClass().equals(TaggedImageStorageMultipageTiff.class)) {
