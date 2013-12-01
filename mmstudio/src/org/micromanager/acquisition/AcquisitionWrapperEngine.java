@@ -225,7 +225,6 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    }
 
    private String getSource(ChannelSpec channel) {
-      PropertySetting setting;
       try {
          Configuration state = core_.getConfigState(core_.getChannelGroup(), channel.config);
          if (state.isPropertyIncluded("Core", "Camera")) {
@@ -243,8 +242,9 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
     * @Deprecated
     */
    @Override
+   @SuppressWarnings("unchecked")
    public void addImageProcessor(Class taggedImageProcessorClass) {
-      try {
+      try {        
          taggedImageProcessors_.add(
                  (DataProcessor<TaggedImage>) taggedImageProcessorClass.newInstance());
       } catch (InstantiationException ex) {

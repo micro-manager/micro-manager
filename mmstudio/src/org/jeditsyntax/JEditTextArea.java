@@ -1836,7 +1836,7 @@ public class JEditTextArea extends JComponent
 			Enumeration<Component> status = leftOfScrollBar.elements();
 			while(status.hasMoreElements())
 			{
-				Component comp = (Component)status.nextElement();
+				Component comp = status.nextElement();
 				Dimension dim = comp.getPreferredSize();
 				comp.setBounds(ileft,
 					itop + centerHeight,

@@ -108,7 +108,7 @@ public class SwingResourceManager {
 	 */
 	public static void clearImages(String section) {
 		for (Iterator<String> I = m_ClassImageMap.keySet().iterator(); I.hasNext();) {
-			String key = (String) I.next();
+			String key = I.next();
 			if (!key.startsWith(section + '|'))
 				continue;
 			Image image = m_ClassImageMap.get(key);

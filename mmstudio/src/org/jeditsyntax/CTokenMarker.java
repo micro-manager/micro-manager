@@ -187,9 +187,9 @@ loop:		for(int i = offset; i < length; i++)
 			addToken(length - lastOffset,token);
 			if(!backslash)
 				token = Token.NULL;
+			break;
 		default:
 			addToken(length - lastOffset,token);
-			break;
 		}
 
 		return token;

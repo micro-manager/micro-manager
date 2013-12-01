@@ -123,7 +123,7 @@ public abstract class DataProcessor<E> extends Thread {
    protected E poll() {
       while (!stopRequested()) {
          try {
-            E datum = (E) input_.poll(100, TimeUnit.MILLISECONDS);
+            E datum = input_.poll(100, TimeUnit.MILLISECONDS);
             if (datum != null) {
                return datum;
             }

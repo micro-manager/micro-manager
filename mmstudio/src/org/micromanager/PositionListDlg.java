@@ -216,7 +216,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       }
       public AxisData get(int i) {
          if (i >=0 && i < axisList_.size()) {
-            return ((AxisData) axisList_.get(i));
+            return axisList_.get(i);
          }
          return null;
       }

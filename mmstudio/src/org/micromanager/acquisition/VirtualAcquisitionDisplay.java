@@ -1768,7 +1768,7 @@ public class VirtualAcquisitionDisplay implements
       return saveAs(null, pointToNewStorage);
    }
 
-   private boolean saveAs(Class storageClass, boolean pointToNewStorage) {
+   private boolean saveAs(Class<?> storageClass, boolean pointToNewStorage) {
       if (eng_ != null && eng_.isAcquisitionRunning()) {
          JOptionPane.showMessageDialog(null, 
                  "Data can not be saved while acquisition is running.");

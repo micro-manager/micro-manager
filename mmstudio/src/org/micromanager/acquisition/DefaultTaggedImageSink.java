@@ -14,11 +14,10 @@ import org.micromanager.utils.ReportingUtils;
  */
 public class DefaultTaggedImageSink  {
 
-   private static int untitledID_ = 0;
    private final BlockingQueue<TaggedImage> imageProducingQueue_;
    private ImageCache imageCache_ = null;
 
-   public DefaultTaggedImageSink(BlockingQueue imageProducingQueue,
+   public DefaultTaggedImageSink(BlockingQueue<TaggedImage> imageProducingQueue,
                   ImageCache imageCache) throws MMScriptException {
       imageProducingQueue_ = imageProducingQueue;
          imageCache_ = imageCache;

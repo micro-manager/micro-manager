@@ -60,7 +60,7 @@ public class MMScaleBar {
       if (pixelSize > 0) {
          int width = ip_.getWidth();
          int height = ip_.getHeight();
-         barHeight_ = (int) (height / 75);
+         barHeight_ = (height / 75);
          int minBarWidth = width / 20;
          int maxBarWidth = width / 4;
          double pixsPerUnit = 1.0 / pixelSize;

@@ -902,7 +902,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
          //FileReader always assumes default encoding is OK!
          BufferedReader input =  new BufferedReader(new FileReader(aFile));
          try {
-           String line = null; //not declared within while loop
+           String line; //not declared within while loop
            /*
            * readLine is a bit quirky :
            * it returns the content of a line MINUS the newline.
@@ -1006,8 +1006,10 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
    {
       if (immediatePaneHistoryIndex_ > 0)
          immediatePaneHistoryIndex_--;
-      if (immediatePaneHistoryIndex_ >= 0 && immediatePaneHistoryIndex_ < immediatePaneHistory_.size())
-         immediatePane_.setText((String) immediatePaneHistory_.elementAt(immediatePaneHistoryIndex_));
+      if (immediatePaneHistoryIndex_ >= 0 && 
+              immediatePaneHistoryIndex_ < immediatePaneHistory_.size())
+         immediatePane_.setText(
+                 immediatePaneHistory_.elementAt(immediatePaneHistoryIndex_));
    }
 
    private void doImmediatePaneHistoryDown()
@@ -1015,7 +1017,8 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
       if (immediatePaneHistoryIndex_ < immediatePaneHistory_.size())
          immediatePaneHistoryIndex_++;
       if (immediatePaneHistoryIndex_ < immediatePaneHistory_.size())
-         immediatePane_.setText((String) immediatePaneHistory_.elementAt(immediatePaneHistoryIndex_));
+         immediatePane_.setText(
+                 immediatePaneHistory_.elementAt(immediatePaneHistoryIndex_));
       else
          immediatePane_.setText("");
    }

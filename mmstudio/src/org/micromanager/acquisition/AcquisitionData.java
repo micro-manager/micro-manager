@@ -2,6 +2,6 @@ package org.micromanager.acquisition;
 
 /**
  * Deprecated. Do not use.
- * @deprecated
+ * @Deprecated
  */
 public class AcquisitionData {}

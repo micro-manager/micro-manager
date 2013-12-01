@@ -330,7 +330,7 @@ public class PositionList {
             
             // get properties
             JSONObject props = mspData.getJSONObject(PROPERTIES_KEY);
-            for (Iterator<String> it = (Iterator<String>)props.keys(); it.hasNext();) {
+            for (Iterator<String> it = props.keys(); it.hasNext();) {
                String key = it.next();
                msp.setProperty(key, props.getString(key));
             }

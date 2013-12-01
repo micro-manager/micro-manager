@@ -410,7 +410,7 @@ public class MetadataPanel extends JPanel
             Arrays.sort(keys);
             for (String key : keys) {
                Vector<String> rowData = new Vector<String>();
-               rowData.add((String) key);
+               rowData.add(key);
                try {
                   rowData.add(md.getString(key));
                } catch (JSONException ex) {
