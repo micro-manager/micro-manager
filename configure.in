@@ -280,6 +280,7 @@ case $host in
     ;;
 esac
 
+JAVACFLAGS='-Xlint:all,-serial -source 1.5 -target 1.5'
 
 # Export variables to Makefile
 AC_SUBST(JAVAINC)
