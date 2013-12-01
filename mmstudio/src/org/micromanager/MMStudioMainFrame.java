@@ -206,11 +206,9 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    private JMenu pluginMenu_;
    private ArrayList<PluginItem> plugins_;
    private List<MMListenerInterface> MMListeners_
-           = (List<MMListenerInterface>)
-           Collections.synchronizedList(new ArrayList<MMListenerInterface>());
+           = Collections.synchronizedList(new ArrayList<MMListenerInterface>());
    private List<Component> MMFrames_
-           = (List<Component>)
-           Collections.synchronizedList(new ArrayList<Component>());
+           = Collections.synchronizedList(new ArrayList<Component>());
    private AutofocusManager afMgr_;
    private final static String DEFAULT_CONFIG_FILE_NAME = "MMConfig_demo.cfg";
    private ArrayList<String> MRUConfigFiles_;
@@ -279,7 +277,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
                  System.getProperty("user.home") + "/Untitled",
                  false, (String[]) null);
    private Thread acquisitionEngine2010LoadingThread = null;
-   private Class acquisitionEngine2010Class = null;
+   private Class<?> acquisitionEngine2010Class = null;
    private IAcquisitionEngine2010 acquisitionEngine2010 = null;
    private final JSplitPane splitPane_;
    private volatile boolean ignorePropertyChanges_; 
@@ -630,7 +628,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    }
 
    /**
-    * @deprecated
+    * @Deprecated
     * @throws MMScriptException
     */
    public void startBurstAcquisition() throws MMScriptException {
@@ -670,17 +668,19 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
     * the default processor stack to process images as they arrive on
     * the rawImageQueue.
     */
-    public void runDisplayThread(BlockingQueue rawImageQueue, 
+    public void runDisplayThread(BlockingQueue<TaggedImage> rawImageQueue, 
             final DisplayImageRoutine displayImageRoutine) {
-        final BlockingQueue processedImageQueue = 
-                ProcessorStack.run(rawImageQueue, getAcquisitionEngine().getImageProcessors());
+        final BlockingQueue<TaggedImage> processedImageQueue = 
+                ProcessorStack.run(rawImageQueue, 
+                getAcquisitionEngine().getImageProcessors());
+        
         new Thread("Display thread") {
          @Override
             public void run() {
                 try {
                     TaggedImage image;
                     do {
-                        image = (TaggedImage) processedImageQueue.take();
+                        image = processedImageQueue.take();
                         if (image != TaggedImageQueue.POISON) {
                             displayImageRoutine.show(image);
                         }
@@ -2519,7 +2519,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
             return;
          }
 
-         Rectangle r = roi.getBoundingRect();
+         Rectangle r = roi.getBounds();
          // if we already had an ROI defined, correct for the offsets
          Rectangle cameraR =  getROI();
          r.x += cameraR.x;
@@ -3215,7 +3215,8 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
          return;
       }
 
-      BlockingQueue snapImageQueue = new LinkedBlockingQueue();
+      BlockingQueue<TaggedImage> snapImageQueue = 
+              new LinkedBlockingQueue<TaggedImage>();
       
       try {
          core_.snapImage();
@@ -3525,12 +3526,12 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
 
    }
 
-   //TODO: deprecated @Override
+   //TODO: Deprecated @Override
    public boolean okToAcquire() {
       return !isLiveModeOn();
    }
 
-   //TODO: deprecated @Override
+   //TODO: Deprecated @Override
    public void stopAllActivity() {
         if (this.acquisitionEngine2010 != null) {
             this.acquisitionEngine2010.stop();
@@ -3602,7 +3603,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
 
       // dispose plugins
       for (int i = 0; i < plugins_.size(); i++) {
-         MMPlugin plugin = (MMPlugin) plugins_.get(i).plugin;
+         MMPlugin plugin = plugins_.get(i).plugin;
          if (plugin != null) {
             plugin.dispose();
          }
@@ -3738,7 +3739,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
                  contrast16.min, contrast16.max, contrast16.gamma);
    }
 
-   //TODO: deprecated @Override
+   //TODO: Deprecated @Override
    public ContrastSettings getContrastSettings() {
       ImagePlus img = WindowManager.getCurrentImage();
       if (img == null || VirtualAcquisitionDisplay.getDisplay(img) == null )
@@ -3991,7 +3992,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    }
 
    /**
-    * @deprecated - used to be in api/AcquisitionEngine
+    * @Deprecated - used to be in api/AcquisitionEngine
     */
    public void startAcquisition() throws MMScriptException {
       testForAbortRequests();
@@ -4056,7 +4057,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    }
 
    /**
-    * @deprecated used to be part of api
+    * @Deprecated used to be part of api
     */
    public String runAcqusition(String name, String root) throws MMScriptException {
       return runAcquisition(name, root);
@@ -4272,8 +4273,8 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    }
 
    /**
-    * @deprecated  use closeAcquisitionWindow instead
-    * @deprecated - used to be in api/AcquisitionEngine
+    * @Deprecated  use closeAcquisitionWindow instead
+    * @Deprecated - used to be in api/AcquisitionEngine
     */
    public void closeAcquisitionImage5D(String acquisitionName) throws MMScriptException {
       acqMgr_.closeImageWindow(acquisitionName);
@@ -4285,7 +4286,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    }
 
    /**
-    * @deprecated - used to be in api/AcquisitionEngine
+    * @Deprecated - used to be in api/AcquisitionEngine
     * Since Burst and normal acquisition are now carried out by the same engine,
     * loadBurstAcquistion simply calls loadAcquisition
     * t
@@ -4688,7 +4689,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    }
 
    public String installPlugin(String className, String menuName) {
-      String msg = "installPlugin(String className, String menuName) is deprecated. Use installPlugin(String className) instead.";
+      String msg = "installPlugin(String className, String menuName) is Deprecated. Use installPlugin(String className) instead.";
       core_.logMessage(msg);
       installPlugin(className);
       return msg;

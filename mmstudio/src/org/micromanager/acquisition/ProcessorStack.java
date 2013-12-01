@@ -83,7 +83,8 @@ public class ProcessorStack<E> {
     * @param imageProcessors
     * @return 
     */
-   public static BlockingQueue run(BlockingQueue<TaggedImage> inputTaggedImageQueue, 
+   public static BlockingQueue<TaggedImage> run(
+           BlockingQueue<TaggedImage> inputTaggedImageQueue, 
            List<DataProcessor<TaggedImage>> imageProcessors) {
       ProcessorStack<TaggedImage> processorStack = 
               new ProcessorStack<TaggedImage>(inputTaggedImageQueue, imageProcessors);
