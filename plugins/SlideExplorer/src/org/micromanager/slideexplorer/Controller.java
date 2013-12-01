@@ -36,8 +36,8 @@ public class Controller {
     }
 
     public synchronized Dimension getTileDimensions() {
-        return new Dimension((int) ((slideexplorerROI_.width - trimx) / 2) * 2,
-                (int) ((slideexplorerROI_.height - trimy) / 2) * 2);
+        return new Dimension( ((slideexplorerROI_.width - trimx) / 2) * 2,
+                ((slideexplorerROI_.height - trimy) / 2) * 2);
     }
 
     public synchronized Dimension getCurrentRoiDimensions() {

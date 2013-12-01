@@ -113,7 +113,7 @@ public class RoiManager extends ij.plugin.frame.RoiManager{
         ArrayList<Point> minAcqTraj = new ArrayList<Point>();
         for (Point pt : acqTraj) {
             Roi tileRoi = new Roi(pt.x-frameDimensions.width/2, pt.y-frameDimensions.height/2, frameDimensions.width, frameDimensions.height);
-            Rectangle br = (new ShapeRoi(acqRoiOnMap)).and(new ShapeRoi(tileRoi)).getBoundingRect();
+            Rectangle br = (new ShapeRoi(acqRoiOnMap)).and(new ShapeRoi(tileRoi)).getBounds();
             if (br.width > 0 || br.height > 0) {
                 minAcqTraj.add(pt);
             }

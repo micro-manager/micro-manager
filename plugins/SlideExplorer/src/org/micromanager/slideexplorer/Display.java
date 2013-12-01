@@ -123,7 +123,7 @@ public class Display {
 
     protected void panRoi(Roi roi, int dx, int dy) {
 		if (roi != null) {
-			Rectangle rect = roi.getBoundingRect();
+			Rectangle rect = roi.getBounds();
 			roi.setLocation(rect.x-dx, rect.y-dy);
 		}
 	}
@@ -253,7 +253,8 @@ public class Display {
     void clearRois() {
         imgp_.killRoi();
         roiManager_.getROIs().clear();
-        roiManager_.getList().removeAll();
+        // Not sure why this was there - remove if nothing bad happens
+        // roiManager_.getList().removeAll();
         cvs_.setShowAllROIs(false);
         cvs_.repaint();
     }

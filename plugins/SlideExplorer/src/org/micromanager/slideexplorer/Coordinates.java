@@ -248,9 +248,9 @@ public class Coordinates {
         if (roi == null)
             return null;
         
-        ReportingUtils.logMessage("prev bounding rect: " + roi.getBoundingRect());
+        ReportingUtils.logMessage("prev bounding rect: " + roi.getBounds());
         ShapeRoi shapeRoi = new ShapeRoi(roi);
-        Rectangle rect = shapeRoi.getBoundingRect();
+        Rectangle rect = shapeRoi.getBounds();
         Point ulCorner = offScreenToMap(new Point(rect.x-viewDimensionsOffScreen_.width/2, rect.y-viewDimensionsOffScreen_.height/2));
         rect.x = ulCorner.x;
         rect.y = ulCorner.y;

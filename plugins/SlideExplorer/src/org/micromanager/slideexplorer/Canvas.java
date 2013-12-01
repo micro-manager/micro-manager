@@ -29,8 +29,8 @@ public class Canvas extends ImageCanvas {
     }
 
     protected void scroll(int sx, int sy) {
-        int ox = xSrcStart + (int) (sx);  //convert to offscreen coordinates
-        int oy = ySrcStart + (int) (sy);
+        int ox = xSrcStart + sx;  //convert to offscreen coordinates
+        int oy = ySrcStart + sy;
         int newx = xSrcStart + (xMouseStart - ox);
         int newy = ySrcStart + (yMouseStart - oy);
         srcRect.x = newx;
