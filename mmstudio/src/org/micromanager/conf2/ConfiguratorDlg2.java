@@ -221,7 +221,7 @@ public class ConfiguratorDlg2 extends MMDialog {
             }
         }
 
-        int newPage = 0;
+        int newPage;
         if (i < 0) {
             newPage = 0;
         } else if (i >= pages_.length) {
@@ -325,8 +325,8 @@ public class ConfiguratorDlg2 extends MMDialog {
 
                 // can raw IP address have :'s in them? (ipv6??)
                 // try ensure valid and convenient UNIX file name
-                qualifiedConfigFileName.replace(':', '_');
-                qualifiedConfigFileName.replace(';', '_');
+                qualifiedConfigFileName = qualifiedConfigFileName.replace(':', '_');
+                qualifiedConfigFileName = qualifiedConfigFileName.replace(';', '_');
 
                 File fileToSend = new File(qualifiedConfigFileName);
 
@@ -351,7 +351,7 @@ public class ConfiguratorDlg2 extends MMDialog {
 
                     URL url = new URL("http://valelab.ucsf.edu/~MM/upload_file.php");
 
-                    List flist = new ArrayList<File>();
+                    List<File> flist = new ArrayList<File>();
                     flist.add(fileToSend);
                     // for each of a colleciton of files to send...
                     for (Object o0 : flist) {

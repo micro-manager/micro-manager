@@ -334,7 +334,7 @@ import org.micromanager.utils.ReportingUtils;
    }
    
    public Label getSetupLabelByState(int j) {
-      return (Label) setupLabels_.get(new Integer(j));
+      return setupLabels_.get(new Integer(j));
    }
    
    public void setSetupLabel(int pos, String label) {
@@ -416,7 +416,7 @@ import org.micromanager.utils.ReportingUtils;
             return p.value;
          }
       }
-      return new String("");
+      return "";
    }
 
    public Label[] getAllSetupLabels() {

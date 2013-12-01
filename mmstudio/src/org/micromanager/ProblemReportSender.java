@@ -137,7 +137,7 @@ class ProblemReportSender extends Thread {
             File fileToSend = new File(qualifiedArchiveFileName);
             try {
                 URL url = new URL("http://valelab.ucsf.edu/~MM/upload_corelog.php");
-                List flist = new ArrayList<File>();
+                List<File> flist = new ArrayList<File>();
                 flist.add(fileToSend);
                 // for each of a colleciton of files to send...
                 for (Object o0 : flist) {

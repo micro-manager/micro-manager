@@ -312,7 +312,7 @@ public final class HotKeysDialog extends MMDialog {
        // It must return the new value to be stored in the cell.
        @Override
        public Object getCellEditorValue() {
-           return (Integer) lastTypedKey_;
+           return lastTypedKey_;
        }
    }
 

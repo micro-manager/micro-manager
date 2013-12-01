@@ -424,7 +424,9 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       updateChannelNameAndColorFromCache();
 
       //if multicamera, save color
-      saveColorPreference(cache_, newColor.getRGB());
+      if (newColor != null) {
+         saveColorPreference(cache_, newColor.getRGB());
+      }
    }
 
    /*
@@ -438,8 +440,9 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       if (core == null || summary == null) {
          return;
       }
-      int numMultiCamChannels = (int) core.getNumberOfCameraChannels(), numDataChannels = -1;
-      JSONArray dataNames = null;
+      int numMultiCamChannels = (int) core.getNumberOfCameraChannels();
+      int numDataChannels;
+      JSONArray dataNames;
       String[] cameraNames = new String[numMultiCamChannels];
       try {
          numDataChannels = MDUtils.getNumChannels(summary);
@@ -460,7 +463,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
             colorPrefs.putInt("Color_Camera_" + cameraNames[channelIndex_], color);
          }
       } catch (Exception ex) {
-         return;
+         
       }
    }
 
@@ -646,7 +649,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       if (img_ == null || img_.getProcessor() == null) {
          return;
       }
-      ImageProcessor ip = null;
+      ImageProcessor ip;
       if (img_.getMode() == CompositeImage.COMPOSITE) {
          ip = img_.getProcessor(channelIndex_ + 1);
          if (ip != null) {
@@ -750,12 +753,12 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          hp_.setAutoScale();
          hp_.repaint();
 
-         minMaxLabel_.setText("Min: " + NumberUtils.intToDisplayString((int) pixelMin_) + "   "
-                 + "Max: " + NumberUtils.intToDisplayString((int) pixelMax_));
+         minMaxLabel_.setText("Min: " + NumberUtils.intToDisplayString( pixelMin_) + "   "
+                 + "Max: " + NumberUtils.intToDisplayString( pixelMax_));
       } else {
           hp_.setVisible(false);        
       }
-      return;
+      
    }
    
    public void contrastMaxInput(int max) {

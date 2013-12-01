@@ -23,6 +23,7 @@ package org.micromanager.acquisition;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import mmcorej.TaggedImage;
 import org.micromanager.api.DataProcessor;
 import org.micromanager.utils.ReportingUtils;
 
@@ -82,9 +83,10 @@ public class ProcessorStack<E> {
     * @param imageProcessors
     * @return 
     */
-   public static BlockingQueue run(BlockingQueue inputTaggedImageQueue, List imageProcessors) {
-      ProcessorStack processorStack = 
-              new ProcessorStack((BlockingQueue) inputTaggedImageQueue, imageProcessors);
+   public static BlockingQueue run(BlockingQueue<TaggedImage> inputTaggedImageQueue, 
+           List<DataProcessor<TaggedImage>> imageProcessors) {
+      ProcessorStack<TaggedImage> processorStack = 
+              new ProcessorStack<TaggedImage>(inputTaggedImageQueue, imageProcessors);
       return processorStack.begin();
    }
    

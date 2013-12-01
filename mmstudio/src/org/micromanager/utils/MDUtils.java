@@ -400,7 +400,7 @@ public class MDUtils {
       String [] keyArray = new String[n];
       Iterator<String> keys = md.keys();
       for (int i=0; i<n; ++i) {
-         keyArray[i] = (String) keys.next();
+         keyArray[i] = keys.next();
       }
       return keyArray;
    }

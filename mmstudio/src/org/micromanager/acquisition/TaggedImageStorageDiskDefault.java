@@ -272,7 +272,7 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
    private void saveImageFile(Object img, JSONObject md, String path, String tiffFileName) {
       ImagePlus imp;
       try {
-         ImageProcessor ip = null;
+         ImageProcessor ip;
          int width = MDUtils.getWidth(md);
          int height = MDUtils.getHeight(md);
          String pixelType = MDUtils.getPixelType(md);
@@ -513,7 +513,7 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
       try {
          Iterable<String> keys = makeJsonIterableKeys(data);
          for (String key:keys) {
-            md.put((String) key, (String) data.getString(key));
+            md.put(key, data.getString(key));
          }
       } catch (JSONException ex) {
          ReportingUtils.showError(ex);

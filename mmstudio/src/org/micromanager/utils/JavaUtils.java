@@ -176,7 +176,7 @@ public class JavaUtils {
     * Invoked a method of a private or protected field.
     * Pass a null first argument for static methods.
     */
-   public static Object invokeRestrictedMethod(Object obj, Class theClass, String methodName, Object[] params, Class[] paramTypes) throws NoSuchMethodException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+   public static Object invokeRestrictedMethod(Object obj, Class<?> theClass, String methodName, Object[] params, Class[] paramTypes) throws NoSuchMethodException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
       Method method = theClass.getDeclaredMethod(methodName, paramTypes);
       Object result;
 
@@ -474,7 +474,7 @@ public class JavaUtils {
       Map<Thread, StackTraceElement[]> liveThreads = Thread.getAllStackTraces();
       for (Thread key : liveThreads.keySet()) {
          System.err.println("Thread " + key.getName());
-         StackTraceElement[] trace = (StackTraceElement[]) liveThreads.get(key);
+         StackTraceElement[] trace = liveThreads.get(key);
          for (int j = 0; j < trace.length; j++) {
             System.err.println("\tat " + trace[j]);
          }

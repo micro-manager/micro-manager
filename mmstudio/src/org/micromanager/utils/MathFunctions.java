@@ -123,7 +123,7 @@ public class MathFunctions {
    }
 
    public static int clip(int min, int val, int max) {
-      return (int) Math.min(Math.max(min, val), max);
+      return Math.min(Math.max(min, val), max);
    }
 
    public static void runAffineTest() {

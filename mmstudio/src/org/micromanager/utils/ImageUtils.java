@@ -18,7 +18,7 @@ import org.micromanager.acquisition.TaggedImageStorageDiskDefault;
 import org.micromanager.api.TaggedImageStorage;
 
 public class ImageUtils {
-   private static Class storageClass_ = TaggedImageStorageDiskDefault.class;
+   private static Class<?> storageClass_ = TaggedImageStorageDiskDefault.class;
 
    public static int BppToImageType(long Bpp) {
       int BppInt = (int) Bpp;
@@ -418,7 +418,7 @@ public class ImageUtils {
       try {
         return (TaggedImageStorage) storageClass_
                  .getConstructor(String.class, Boolean.class, JSONObject.class)
-                 .newInstance(acqPath, new Boolean(newDataSet), summaryMetadata);
+                 .newInstance(acqPath, newDataSet, summaryMetadata);
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
       }

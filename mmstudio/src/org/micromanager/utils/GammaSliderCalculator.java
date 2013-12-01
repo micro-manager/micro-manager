@@ -53,13 +53,13 @@ public class GammaSliderCalculator {
       }
       low_ = low;
       high_ = high;
-      min_ = (Double) gammas_.get(low);
-      max_ = (Double) gammas_.get(high);
+      min_ = gammas_.get(low);
+      max_ = gammas_.get(high);
    }
 
    public double sliderToGamma(int sliderSetting) {
       // TODO: catch problems not finding these values
-      return (Double) gammas_.get(sliderSetting);
+      return gammas_.get(sliderSetting);
    }
 
    public int gammaToSlider(double gamma) {
@@ -69,7 +69,7 @@ public class GammaSliderCalculator {
          gamma = max_;
       try {
          gamma = NumberUtils.displayStringToDouble(NumberUtils.doubleToDisplayString(gamma));
-         Integer test = (Integer) values_.get(gamma);
+         Integer test = values_.get(gamma);
          if (test != null)
             return test;
       } catch (ParseException p) {
@@ -82,7 +82,7 @@ public class GammaSliderCalculator {
       while (diff > 1 && i < 10) {
          diff = Math.abs(guess - lastGuess);
          lastGuess = guess;
-         if (gamma > (Double) gammas_.get(guess))
+         if (gamma > gammas_.get(guess))
              guess += diff/2;
          else
             guess -= diff/2;

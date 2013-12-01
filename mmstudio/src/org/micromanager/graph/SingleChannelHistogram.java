@@ -328,7 +328,7 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
       byte[] g = new byte[256];
       byte[] b = new byte[256];
       for (int i = 0; i < 256; i++) {
-         double val = Math.pow((double) i / maxValue, gamma_) * (double) maxValue;
+         double val = Math.pow((double) i / maxValue, gamma_) * maxValue;
          r[i] = (byte) val;
          g[i] = (byte) val;
          b[i] = (byte) val;
@@ -344,7 +344,7 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
 
    public void saveDisplaySettings() {
       int histMax = histRangeComboBox_.getSelectedIndex() == 0 ? histMax = -1 : histMax_;
-      display_.storeChannelHistogramSettings(0, (int) contrastMin_, (int) contrastMax_, gamma_, histMax, 1);
+      display_.storeChannelHistogramSettings(0,  contrastMin_, contrastMax_, gamma_, histMax, 1);
    }
 
    @Override
@@ -523,8 +523,8 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
          histogramPanel_.setAutoScale();
          histogramPanel_.setToolTipText("Click and drag curve to adjust gamma");
 
-         maxLabel_.setText("Max: " + NumberUtils.intToDisplayString((int) pixelMax_));
-         minLabel_.setText("Min: " + NumberUtils.intToDisplayString((int) pixelMin_));
+         maxLabel_.setText("Max: " + NumberUtils.intToDisplayString(pixelMax_));
+         minLabel_.setText("Min: " + NumberUtils.intToDisplayString(pixelMin_));
          meanLabel_.setText("Mean: " + NumberUtils.intToDisplayString((int) mean_));
          stdDevLabel_.setText("Std Dev: " + NumberUtils.intToDisplayString((int) stdDev_));
 

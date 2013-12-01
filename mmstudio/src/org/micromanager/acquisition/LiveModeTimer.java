@@ -58,7 +58,7 @@ public class LiveModeTimer {
    private Timer timer_;
    private TimerTask task_;
    private final MMStudioMainFrame.DisplayImageRoutine displayImageRoutine_;
-   private LinkedBlockingQueue imageQueue_;
+   private LinkedBlockingQueue<TaggedImage> imageQueue_;
    private static int mCamImageCounter_ = 0;
    private boolean multiCam_ = false;
    private AtomicBoolean timerLock_;
@@ -184,7 +184,7 @@ public class LiveModeTimer {
          imageNumber_ = timg.tags.getLong("ImageNumber");
          oldImageNumber_ = imageNumber_;
 
-         imageQueue_ = new LinkedBlockingQueue(10);
+         imageQueue_ = new LinkedBlockingQueue<TaggedImage>(10);
          timer_.schedule(task_, 0, delay);
          win_.liveModeEnabled(true);
          
