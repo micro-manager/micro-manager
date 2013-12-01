@@ -141,7 +141,7 @@ public class GaussianInfo {
       maxIterations_ = maxIter;
    }
    public void setBoxSize(int boxSize) {
-      halfSize_ = (int) boxSize / 2;
+      halfSize_ = boxSize / 2;
    }
    public void setShape(int shape) {
       shape_ = shape;

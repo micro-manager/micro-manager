@@ -54,8 +54,8 @@ public class FindLocalMaxima {
             // TODO: if there is an ROI, we only need to filter_ in the ROI
             ImageProcessor iProcG1 = iProc.duplicate();
             ImageProcessor iProcG5 = iProc.duplicate();
-            filter_.blur(iProcG1, 1);
-            filter_.blur(iProcG5, 5);
+            filter_.blurGaussian(iProcG1, 0.4, 0.4, 0.01); 
+            filter_.blurGaussian(iProcG5, 2.0, 2.0, 0.01);
             ImagePlus p1 = new ImagePlus("G1", iProcG1);
             ImagePlus p5 = new ImagePlus("G5", iProcG5);
             ic_.run("subtract", p1, p5);

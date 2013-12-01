@@ -208,8 +208,8 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
       }
 
       dcForm.addSpotData(siPlus.getWindow().getTitle(), siPlus.getTitle(), "",
-              siPlus.getWidth(), siPlus.getHeight(), (float) pixelSize_,
-              (float) zStackStepSize_, shape_, halfSize_,
+              siPlus.getWidth(), siPlus.getHeight(), pixelSize_,
+              zStackStepSize_, shape_, halfSize_,
               nrChannels, nrFrames, nrSlices, nrPositions, resultList_.size(),
               resultList_, timePoints, false, DataCollectionForm.Coordinates.NM,
               DataCollectionForm.zc_.hasFitFunctions(),
@@ -228,6 +228,7 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
       running_ = false;
    }
 
+   @SuppressWarnings("unchecked")
    private int analyzeImagePlus(ImagePlus siPlus, int position, int nrThreads, Roi originalRoi) {
 
       int nrSpots = 0;
@@ -330,6 +331,7 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
                      sC[j][1] = p.ypoints[j];
                   }
 
+                  
                   Arrays.sort(sC, new SpotSortComparator());
 
                   for (int j = 0; j < sC.length; j++) {

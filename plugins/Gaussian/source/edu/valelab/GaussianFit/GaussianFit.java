@@ -242,20 +242,20 @@ public class GaussianFit {
       int n = 0;
       int lastRowOffset = (siProc.getHeight() - 1) * siProc.getWidth();
       for (int i = 0; i < siProc.getWidth(); i++) {
-         bg += (int) (imagePixels[i] & 0xffff);
-         bg += (int) (imagePixels[i + lastRowOffset] & 0xffff);
+         bg += (imagePixels[i] & 0xffff);
+         bg += (imagePixels[i + lastRowOffset] & 0xffff);
          n += 2;
       }
       for (int i = 1; i < siProc.getHeight() - 1; i++) {
-         bg += (int) (imagePixels[i * siProc.getWidth()] & 0xffff);
-         bg += (int) (imagePixels[(i + 1) * siProc.getWidth() - 1] & 0xffff);
+         bg += (imagePixels[i * siProc.getWidth()] & 0xffff);
+         bg += (imagePixels[(i + 1) * siProc.getWidth() - 1] & 0xffff);
          n += 2;
       }
       params0_[BGR] = bg / n;
       // estimate signal by subtracting background from total intensity
       double mt = 0.0;
       for (int i = 0; i < siProc.getHeight() * siProc.getWidth(); i++) {
-         mt += (int) (imagePixels[i] & 0xffff);
+         mt += (imagePixels[i] & 0xffff);
       }
       double ti = mt - ((bg / n) * siProc.getHeight() * siProc.getWidth());
       params0_[INT] = ti / (2 * Math.PI * params0_[S] * params0_[S]);
@@ -266,8 +266,8 @@ public class GaussianFit {
       for (int i = 0; i < siProc.getHeight() * siProc.getWidth(); i++) {
          //mx += (imagePixels[i] - params0_[4]) * (i % siProc.getWidth() );
          //my += (imagePixels[i] - params0_[4]) * (Math.floor (i / siProc.getWidth()));
-         mx += ((int) (imagePixels[i] & 0xffff)) * (i % siProc.getWidth());
-         my += ((int) (imagePixels[i] & 0xffff)) * (Math.floor(i / siProc.getWidth()));
+         mx += ((imagePixels[i] & 0xffff)) * (i % siProc.getWidth());
+         my += ((imagePixels[i] & 0xffff)) * (Math.floor(i / siProc.getWidth()));
       }
       params0_[XC] = mx / mt;
       params0_[YC] = my / mt;

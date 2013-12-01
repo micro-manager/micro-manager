@@ -41,10 +41,7 @@ public class SubRange {
       RowData output = new RowData(input);
       output.spotList_.clear();
       
-      int start = desiredFrames.get(0);
-      List<GaussianSpotData> spots = (List<GaussianSpotData>) 
-              input.spotList_;
-      boolean found = false;
+      List<GaussianSpotData> spots =  input.spotList_;
 
       boolean endReached = false;
       int i = 0;

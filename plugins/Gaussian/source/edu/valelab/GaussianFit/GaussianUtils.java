@@ -226,7 +226,7 @@ public class GaussianUtils {
          yAxis.setAutoRangeIncludesZero(false);
          yAxis.setRangeWithMargins(minY, maxY);
 
-         ValueAxis xAxis = (ValueAxis) plot.getDomainAxis();
+         ValueAxis xAxis = plot.getDomainAxis();
          xAxis.setRangeWithMargins(minX, maxX);
       }
       

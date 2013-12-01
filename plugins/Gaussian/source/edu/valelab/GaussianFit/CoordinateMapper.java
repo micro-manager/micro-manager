@@ -95,6 +95,8 @@ public class CoordinateMapper {
    public static class EnhancedKDTree extends KdTree.SqrEuclid {
       final Point2D.Double[] points_;
 
+      
+      @SuppressWarnings("unchecked")
       EnhancedKDTree(Point2D.Double[] points) {
          super(2, Integer.MAX_VALUE);
          points_ = points;
@@ -106,8 +108,9 @@ public class CoordinateMapper {
 
       public List<Point2D.Double> nearestNeighbor(Point2D.Double testPoint,
               int size, boolean ordered) {
-         List<Entry<Integer>> neighbors = super.nearestNeighbor(new double[] {testPoint.x, testPoint.y},
-                 size, ordered);
+         @SuppressWarnings("unchecked")
+         List<Entry<Integer>> neighbors = super.nearestNeighbor(
+                 new double[] {testPoint.x, testPoint.y}, size, ordered);
          List<Point2D.Double> neighborList = new ArrayList<Point2D.Double>();
          for (int i=0; i<neighbors.size(); ++i) {
             neighborList.add(points_[neighbors.get(i).value]);
@@ -157,7 +160,7 @@ public class CoordinateMapper {
 
    public static PolynomialCoefficients fitPolynomial(ExponentPairs exponentPairs,
            Map<Point2D.Double, Point2D.Double> pointPairs) {
-      final List<Point2D.Double> srcPoints = new ArrayList(pointPairs.keySet());
+      final List<Point2D.Double> srcPoints = new ArrayList<Point2D.Double>(pointPairs.keySet());
       final RealMatrix matrix = new Array2DRowRealMatrix(srcPoints.size(), exponentPairs.size());
       for (int i=0; i<srcPoints.size(); ++i) {
          matrix.setRow(i, powerTerms(srcPoints.get(i).x, srcPoints.get(i).y, exponentPairs));

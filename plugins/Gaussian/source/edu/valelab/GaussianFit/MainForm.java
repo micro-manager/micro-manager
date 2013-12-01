@@ -766,7 +766,7 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
        // Find maximum in Roi, might not be needed....
       try {
          int val = Integer.parseInt(noiseToleranceTextField_.getText());
-         int halfSize = (int) Integer.parseInt(boxSizeTextField.getText()) / 2;
+         int halfSize = Integer.parseInt(boxSizeTextField.getText()) / 2;
          Polygon pol = FindLocalMaxima.FindMax(siPlus, 2* halfSize, val, preFilterType_);
          // pol = FindLocalMaxima.noiseFilter(siPlus.getProcessor(), pol, val);
          Overlay ov = new Overlay();
@@ -976,7 +976,7 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
       Runnable MTracker = new Runnable() {
          public void run() {
             int val = Integer.parseInt(noiseToleranceTextField_.getText());
-            int halfSize = (int) Integer.parseInt(boxSizeTextField.getText()) / 2;
+            int halfSize = Integer.parseInt(boxSizeTextField.getText()) / 2;
 
             // If ROI manager is used, use RoiManager Rois
             //  may be dangerous if the user is not aware

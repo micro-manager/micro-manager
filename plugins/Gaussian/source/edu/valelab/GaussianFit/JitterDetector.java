@@ -71,9 +71,9 @@ public class JitterDetector {
 
       int height = m.getHeight();
       int width = m.getWidth();
-      int halfHeight = (int) (height / 2);
-      int halfWidth = (int) (width / 2);
-      int halfSearchSize = (int) (searchSize / 2);
+      int halfHeight = (height / 2);
+      int halfWidth = (width / 2);
+      int halfSearchSize = (searchSize / 2);
     
       double max = pixels[halfHeight * width + halfWidth];
       brightPix.x = halfWidth;

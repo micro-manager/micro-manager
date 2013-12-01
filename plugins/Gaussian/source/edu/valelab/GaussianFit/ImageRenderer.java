@@ -60,7 +60,7 @@ public class ImageRenderer {
       int endx = rect.x + rect.width;
       int endy = rect.y + rect.height;
       final int size = width * height;
-      double factor = (double) magnification / rowData.pixelSizeNm_;
+      double factor = magnification / rowData.pixelSizeNm_;
 
 
       try {
@@ -194,10 +194,10 @@ public class ImageRenderer {
                         counter++;
                         spotsUsed++;
                         double totalInt = 0.0;
-                        int xStart = (int) xc - halfWidth;
-                        int xEnd = (int) xc + halfWidth;
-                        int yStart = (int) yc - halfWidth;
-                        int yEnd = (int) yc + halfWidth;
+                        int xStart = xc - halfWidth;
+                        int xEnd = xc + halfWidth;
+                        int yStart = yc - halfWidth;
+                        int yEnd = yc + halfWidth;
                         float[][] boxPixels = new float[xEnd - xStart][yEnd - yStart];
                         for (int x = xStart; x < xEnd; x++) {
                            for (int y = yStart; y < yEnd; y++) {
@@ -297,7 +297,7 @@ public class ImageRenderer {
       int endx = rect.x + rect.width;
       int endy = rect.y + rect.height;
       final int size = width * height;
-      double factor = (double) magnification / rowData.pixelSizeNm_;
+      double factor = magnification / rowData.pixelSizeNm_;
 
       ImageStack is = new ImageStack(width, height);
       ImageProcessor[] ip = new ImageProcessor[nrZs];

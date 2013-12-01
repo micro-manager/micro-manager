@@ -11,7 +11,6 @@ import ags.utils.KdTree.Entry;
 import ags.utils.KdTree.SqrEuclid;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 
@@ -61,7 +60,7 @@ public class NearestPointGsSpotPair {
          Integer index = result.get(0).value;
          double distance = result.get(0).distance;
 
-         GsSpotPair ret = (GsSpotPair) theList_.get(index).copy();
+         GsSpotPair ret = theList_.get(index).copy();
 
          if (distance < maxDistanceSquared_) {
             return ret;
@@ -81,9 +80,7 @@ public class NearestPointGsSpotPair {
    public GsSpotPair findBF(Point2D.Double input) {
       GsSpotPair closestPoint = theList_.get(0);
       double minDist2 = Double.MAX_VALUE;
-      Iterator it = theList_.iterator();
-      while (it.hasNext()) {
-         GsSpotPair p = (GsSpotPair) it.next();
+      for (GsSpotPair p : theList_) {
          double dist2 = NearestPoint2D.distance2(input, p.getfp());
          if (dist2 < minDist2) {
             minDist2 = dist2;
