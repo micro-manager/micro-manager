@@ -48,7 +48,7 @@
 #define ERR_OFFSET 10100
 #define ERR_Lumencor_OFFSET 10200
 
-enum ColorNameT {VIOLET,CYAN,GREEN,RED,BLUE,TEAL,WHITE,ALL,YGFILTER,SHUTTER};
+enum ColorNameT {VIOLET,CYAN,GREEN,RED,BLUE,TEAL,WHITE,YGFILTER};
 enum LEType {Aura_Type,Sola_Type,Spectra_Type,SpectraX_Type};
 
 class Spectra : public CShutterBase<Spectra>
@@ -97,6 +97,7 @@ public:
    int OnWhiteValue(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
+   int SendColorEnableMask(unsigned char mask);
    int SetShutterPosition(bool state);
    int GetVersion();
    int SendColorLevelCmd(ColorNameT ColorName, int ColorLevel);

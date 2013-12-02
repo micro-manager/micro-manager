@@ -348,6 +348,14 @@ int Spectra::Initialize()
    return DEVICE_OK;
 }
 
+
+int Spectra::SendColorEnableMask(unsigned char mask)
+{
+   unsigned char command[] = { 0x4f, mask, 0x50 };
+   return WriteToComPort(port_.c_str(), command, sizeof(command));
+}
+
+
 int Spectra::SetOpen(bool open)
 {
    if (open == open_)
@@ -359,7 +367,12 @@ int Spectra::SetOpen(bool open)
    else
       newShutteredEnableMask = SetAllOff(enableMask_, lightEngine_);
 
-   SetShutterPosition(open);
+   int ret = SendColorEnableMask(newShutteredEnableMask);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   open_ = open;
+
    return DEVICE_OK;
 } 
 
@@ -369,15 +382,6 @@ int Spectra::GetOpen(bool& open)
    return DEVICE_OK;                                                         
 }
 
-/**
- * Here we set the shutter to open or close
- */
-int Spectra::SetShutterPosition(bool open)                              
-{   
-   SendColorEnableCmd(SHUTTER, open);
-   open_ = open;
-   return DEVICE_OK;
-}
 
 // *****************************************************************************
 // Sends color level command to Lumencor LightEngine
@@ -394,7 +398,7 @@ int Spectra::SendColorLevelCmd(ColorNameT ColorName,int ColorLevel)
 	ColorValue = (ColorLevel == 0) ? 0xFF : ColorValue;  // coherce to correct values at limits
 	if(lightEngine_ == Sola_Type)
 	{
-		ColorName = ALL;
+		ColorName = WHITE;
 	}
 	switch(ColorName)
 	{
@@ -422,7 +426,6 @@ int Spectra::SendColorLevelCmd(ColorNameT ColorName,int ColorLevel)
 			DACSetupArray[3] = 0x02;
 			DACSetupArray[1] = 0x1A;
 			break;
-		case ALL:
 		case WHITE:
 			DACSetupArray[4] = (unsigned char) ((ColorValue >> 4) & 0x0F) | 0xF0;
 			DACSetupArray[5] = (unsigned char) (ColorValue << 4) & 0xF0;
@@ -437,7 +440,7 @@ int Spectra::SendColorLevelCmd(ColorNameT ColorName,int ColorLevel)
 		default:
 			break;		
 	}
-	if(ColorName != ALL && ColorName != WHITE)
+	if (ColorName != WHITE)
 	{
 		DACSetupArray[4] = (unsigned char) ((ColorValue >> 4) & 0x0F) | 0xF0;
 		DACSetupArray[5] = (unsigned char) (ColorValue << 4) & 0xF0;
@@ -449,7 +452,6 @@ int Spectra::SendColorLevelCmd(ColorNameT ColorName,int ColorLevel)
 }
 
 
-
 // *****************************************************************************
 // Sends color Enable/Disable command to Lumencor LightEngine
 //
@@ -457,41 +459,23 @@ int Spectra::SendColorLevelCmd(ColorNameT ColorName,int ColorLevel)
 // newState) the color given by colorName. Afterwards, sets enableMask_ to
 // match the new state. If the shutter is open, or the switch is for the YG
 // filter, send the new state to the device.
-//
-// If colorName equals SHUTTER (TODO this should really be a separate
-// function), apply enableMask_ to the device (if newState is true) or switch
-// off all lines (if State == false), but do not modify enableMask_ in either
-// case.
 // *****************************************************************************
 int Spectra::SendColorEnableCmd(ColorNameT colorName, bool newState)
 {
    unsigned char previousEnableMask = enableMask_;
-   bool shutterOpen;
-   GetOpen(shutterOpen);
 
    unsigned char previousShutteredEnableMask;
-   if (shutterOpen)
+   if (open_)
       previousShutteredEnableMask = previousEnableMask;
    else
       previousShutteredEnableMask = SetAllOff(previousEnableMask, lightEngine_);
 
    // The enableMask_ we will switch to (initialize to no change).
    unsigned char newEnableMask = previousEnableMask;
-   // The actual (shuttered) device state we will switch to (initialize to no change).
-   unsigned char newShutteredEnableMask = previousShutteredEnableMask;
 
-   if (colorName == SHUTTER)
-   {
-      if (newState)
-         newShutteredEnableMask = newEnableMask;
-      else
-         newShutteredEnableMask = SetAllOff(newEnableMask, lightEngine_);
-   }
-   else if (colorName == WHITE || colorName == ALL)
+   if (colorName == WHITE)
    {
       newEnableMask = SetAll(previousEnableMask, lightEngine_, newState);
-      if (shutterOpen)
-         newShutteredEnableMask = newEnableMask;
    }
    else if (lightEngine_ != Sola_Type)
    {
@@ -521,20 +505,18 @@ int Spectra::SendColorEnableCmd(ColorNameT colorName, bool newState)
                newEnableMask = SetBit(previousEnableMask, BIT_TEAL, newState);
             break;
       }
-      // We want the YG filter to switch even if the shutter is closed
-      if (shutterOpen || colorName == YGFILTER)
-         newShutteredEnableMask = newEnableMask;
    }
 
    enableMask_ = newEnableMask;
 
-   if (newShutteredEnableMask != previousShutteredEnableMask)
-   {
-      unsigned char command[] = { 0x4f, newShutteredEnableMask, 0x50 };
-      WriteToComPort(port_.c_str(), command, sizeof(command));
-   }
+   if (!open_ && colorName != YGFILTER)
+      // No change in device necessary.
+      return DEVICE_OK;
 
-   return DEVICE_OK;
+   // The actual (shuttered) device state we will switch to.
+   unsigned char newShutteredEnableMask = newEnableMask;
+
+   return SendColorEnableMask(newShutteredEnableMask);
 }
 
 // Lumencor Initialization Info
@@ -701,7 +683,7 @@ int Spectra::OnSetLE_Type(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 
 // *****************************************************************************
-//                  Color Value Change Handlers
+// Color Value Change Handlers
 // *****************************************************************************
 
 int Spectra::OnRedValue(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -781,9 +763,10 @@ int Spectra::OnWhiteValue(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    return DEVICE_OK;
 }
-//
+
+
 // *****************************************************************************
-//						Color Enable Change Handlers
+// Color Enable Change Handlers
 // *****************************************************************************
 
 int Spectra::OnRedEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
