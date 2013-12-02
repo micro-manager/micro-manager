@@ -86,7 +86,7 @@ public class Galvo implements ProjectionDevice {
 
             public Double call() {
                try {
-                  return (double) mmc_.getGalvoXRange(galvo_);
+                  return mmc_.getGalvoXRange(galvo_);
                } catch (Exception ex) {
                   return 0.0;
                }
@@ -108,7 +108,7 @@ public class Galvo implements ProjectionDevice {
 
             public Double call() {
                try {
-                  return (double) mmc_.getGalvoYRange(galvo_);
+                  return mmc_.getGalvoYRange(galvo_);
                } catch (Exception ex) {
                   return 0.0;
                }

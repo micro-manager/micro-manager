@@ -68,7 +68,7 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
     */
    private static void commitSpinnerOnValidEdit(final JSpinner spinner) {
       final JSpinner.DefaultEditor editor = (JSpinner.DefaultEditor) spinner.getEditor();
-      final JFormattedTextField field = (JFormattedTextField) editor.getTextField();
+      final JFormattedTextField field = editor.getTextField();
       final DefaultFormatter formatter = (DefaultFormatter) field.getFormatter();
       formatter.setCommitsOnValidEdit(true);
    }

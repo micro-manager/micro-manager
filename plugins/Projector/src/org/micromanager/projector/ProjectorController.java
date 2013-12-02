@@ -76,7 +76,7 @@ public class ProjectorController {
    private Roi[] individualRois_ = {};
    private int reps_ = 1;
    private long interval_us_ = 500000;
-   private Map mapping_ = null;
+   private Map<Polygon, AffineTransform> mapping_ = null;
    private String mappingNode_ = null;
    private String targetingChannel_;
    AtomicBoolean stopRequested_ = new AtomicBoolean(false);
@@ -153,7 +153,7 @@ public class ProjectorController {
                       ReportingUtils.logError(ex);
                   }
                   if (!stopRequested_.get()) {
-                      saveMapping((HashMap<Polygon, AffineTransform>) mapping);
+                      saveMapping(mapping);
                   }
                   //saveAffineTransform(affineTransform);
                   gui.enableLiveMode(liveModeRunning);
@@ -209,7 +209,7 @@ public class ProjectorController {
    }
       
    public Point measureSpot(Point dmdPt) {
-      if ((boolean) stopRequested_.get()) {
+      if (stopRequested_.get()) {
           return null;
       }
       
@@ -237,7 +237,7 @@ public class ProjectorController {
    }
 
    private Point findPeak(ImageProcessor proc) {
-      ImageProcessor blurImage = ((ImageProcessor) proc.duplicate());
+      ImageProcessor blurImage = ( proc.duplicate() );
       blurImage.setRoi((Roi) null);
       GaussianBlur blur = new GaussianBlur();
       blur.blurGaussian(blurImage, 10, 10, 0.01);
@@ -247,14 +247,16 @@ public class ProjectorController {
       return x;
    }
    
-   public void mapSpot(Map spotMap, Point ptSLM) {
+   public void mapSpot(Map<Point2D.Double, Point2D.Double> spotMap, 
+         Point ptSLM) {
       Point2D.Double ptSLMDouble = new Point2D.Double(ptSLM.x, ptSLM.y);
       Point ptCam = measureSpot(ptSLM);
       Point2D.Double ptCamDouble = new Point2D.Double(ptCam.x, ptCam.y);
       spotMap.put(ptCamDouble, ptSLMDouble);
    }
 
-   public void mapSpot(Map spotMap, Point2D.Double ptSLM) {
+   public void mapSpot(Map<Point2D.Double, Point2D.Double> spotMap, 
+         Point2D.Double ptSLM) {
        if (!stopRequested_.get()) {
             mapSpot(spotMap, new Point((int) ptSLM.x, (int) ptSLM.y));
        }
@@ -265,14 +267,15 @@ public class ProjectorController {
       double y = dev.getHeight() / 2;
 
       int s = 50;
-      Map spotMap = new HashMap();
+      Map<Point2D.Double, Point2D.Double> spotMap = 
+         new HashMap<Point2D.Double, Point2D.Double>();
 
       mapSpot(spotMap, new Point2D.Double(x, y));
       mapSpot(spotMap, new Point2D.Double(x, y + s));
       mapSpot(spotMap, new Point2D.Double(x + s, y));
       mapSpot(spotMap, new Point2D.Double(x, y - s));
       mapSpot(spotMap, new Point2D.Double(x - s, y));
-      if ((boolean) stopRequested_.get()) {
+      if ( stopRequested_.get() ) {
           return null;
       }
       return MathFunctions.generateAffineTransformFromPointPairs(spotMap);
@@ -301,7 +304,7 @@ public class ProjectorController {
        return new Point2D.Double(pt.x, pt.y);
    }
    
-   public Map getMapping(AffineTransform firstApprox) {
+   public Map<Polygon, AffineTransform> getMapping(AffineTransform firstApprox) {
        if (firstApprox == null) {
            return null;
        }
@@ -340,7 +343,8 @@ public class ProjectorController {
           return null;
       }
       
-      Map bigMap = new HashMap();
+      Map<Polygon, AffineTransform> bigMap = 
+         new HashMap<Polygon, AffineTransform>();
       for (int i=0; i<=n-1; ++i) {
           for (int j=0; j<=n-1; ++j) {
               Polygon poly = new Polygon();
@@ -349,7 +353,8 @@ public class ProjectorController {
               addVertex(poly, toIntPoint(resultPoint[i+1][j+1]));
               addVertex(poly, toIntPoint(resultPoint[i+1][j]));
               
-              Map map = new HashMap();
+              Map<Point2D.Double, Point2D.Double> map = 
+                 new HashMap<Point2D.Double, Point2D.Double>();
               map.put(resultPoint[i][j], dmdPoint[i][j]);
               map.put(resultPoint[i][j+1], dmdPoint[i][j+1]);
               map.put(resultPoint[i+1][j], dmdPoint[i+1][j]);
@@ -397,7 +402,7 @@ public class ProjectorController {
             roiList.add(roi);
          }
       }
-      return (Roi[]) roiList.toArray(rois);
+      return roiList.toArray(rois);
    }
    
     public int setRois(int reps, ImagePlus imgp) {
@@ -461,7 +466,7 @@ public class ProjectorController {
             break;
          }
       }
-      return (Polygon[]) transformedROIs.toArray(new Polygon[0]);
+      return  transformedROIs.toArray(new Polygon[0]);
    }
 
    private void sendRoiData(ImagePlus imgp) {
