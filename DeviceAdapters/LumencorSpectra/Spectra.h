@@ -75,7 +75,6 @@ public:
    // ----------------
    int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnChannel(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnVersion(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSetLE_Type(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnInitLE(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -120,14 +119,11 @@ private:
    // byte used to indicate which LEDs should be switched on
    char enableMask_;
    bool initialized_;
-   // channel that we are currently working on 
-   std::string activeChannel_;
    // version string returned by device
    std::string version_;
    double answerTimeoutMs_;
    // Current Color Selected
    std::string ActiveColor_;
-   
 };
 
 

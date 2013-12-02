@@ -30,9 +30,6 @@ using namespace std;
 
 
 const char* g_LumencorController = "Lumencor";
-const char* g_Channel_1 =	"1";
-const char* g_Channel_2 =	"2";
-const char* g_Channel_3 =	"3";
 const char* g_Aura = "Aura";
 const char* g_Sola = "Sola";
 const char* g_Spectra = "Spectra";
@@ -94,7 +91,6 @@ Spectra::Spectra() :
    lightEngine_(Spectra_Type),
    enableMask_(0x7f),
    initialized_(false),
-   activeChannel_(g_Channel_1),
    version_("Undefined")
 {
    InitializeDefaultErrorMessages();
@@ -153,19 +149,6 @@ int Spectra::Initialize()
    AddAllowedValue(MM::g_Keyword_State, "0");                                
    AddAllowedValue(MM::g_Keyword_State, "1");                                
                                               
-   // The Channel we will act on
-   // ----
-   pAct = new CPropertyAction (this, &Spectra::OnChannel);
-   ret=CreateProperty("Channel", g_Channel_1, MM::String, false, pAct);  
-
-   vector<string> commands;                                                  
-   commands.push_back(g_Channel_1);                                           
-   commands.push_back(g_Channel_2);                                            
-   commands.push_back(g_Channel_3);                                         
-   ret = SetAllowedValues("Channel", commands);        
-   if (ret != DEVICE_OK)                                                    
-      return ret;
-
    // get the version number
    pAct = new CPropertyAction(this,&Spectra::OnVersion);
 
@@ -625,28 +608,6 @@ int Spectra::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
-int Spectra::OnChannel(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-   if (eAct == MM::BeforeGet)
-   {
-      pProp->Set(activeChannel_.c_str());
-   }
-   else if (eAct == MM::AfterSet)
-   {
-      // if there is a channel change and the shutter was open, re-open in the new position
-      std::string tmpChannel;
-      pProp->Get(tmpChannel);
-      if (tmpChannel != activeChannel_) {
-         activeChannel_ = tmpChannel;
-         if (open_)
-            SetShutterPosition(true);
-      }
-      // It might be a good idea to close the shutter at this point...
-   }
-   return DEVICE_OK;
-}
-
- 
 int Spectra::OnVersion(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet && version_ == "Undefined")
