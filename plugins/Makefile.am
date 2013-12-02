@@ -1,4 +1,11 @@
 ## Process this file with automake to produce Makefile.in
+ASIdiSPIM.jar:  \
+	$(srcdir)/ASIdiSPIM/src/org/micromanager/asidispim/*.java
+	test -d build || mkdir build
+	rm -rf build/*
+	$(JAVAC) $(JAVACFLAGS) -sourcepath $(srcdir):. -classpath $(IJJARPATH):$(BSHJARPATH):$(COMMONSMATHJARPATH):$(SWINGLAYOUTJARPATH):$(JFREECHARTJARPATH):$(CLASSEXT)/miglayout-4.0-swing.jar:../mmstudio/MMJ_.jar:. $(srcdir)/ASIdiSPIM/src/org/micromanager/asidispim/*.java -d build
+	cd build && jar cf ../ASIdiSPIM.jar * 
+
 IntelligentAcquisition.jar:  \
 	$(srcdir)/IntelligentAcquisition/src/org/micromanager/intelligentacquisition/*.java
 	test -d build || mkdir build

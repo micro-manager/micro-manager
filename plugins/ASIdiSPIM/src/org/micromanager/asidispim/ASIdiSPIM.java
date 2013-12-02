@@ -1,6 +1,5 @@
 package org.micromanager.asidispim;
 
-import java.awt.Frame;
 import mmcorej.CMMCore;
 import org.micromanager.api.MMPlugin;
 import org.micromanager.api.ScriptInterface;
@@ -12,23 +11,22 @@ public class ASIdiSPIM implements MMPlugin {
    public static String tooltipDescription = "Control the ASI diSPIM ";
    private CMMCore core_;
    private ScriptInterface gui_;
-   private Frame myFrame_;
+   private ASIdiSPIMFrame myFrame_;
 
     @Override
    public void setApp(ScriptInterface app) {
       gui_ = app;                                        
       core_ = app.getMMCore();
-      if (myFrame_ == null) {
+     // if (myFrame_ == null) {
          try {
-            //myFrame_ = new MultiCameraFrame(gui_);
-            //gui_.addMMListener(myFrame_);
-            //gui_.addMMBackgroundListener(myFrame_);
+            myFrame_ = new ASIdiSPIMFrame(gui_);
+            gui_.addMMListener(myFrame_);
+            gui_.addMMBackgroundListener(myFrame_);
          } catch (Exception e) {
             ReportingUtils.showError(e);
-            return;
          }
-      }
-      //myFrame_.setVisible(true);
+      //}
+      myFrame_.setVisible(true);
    }
 
     @Override
