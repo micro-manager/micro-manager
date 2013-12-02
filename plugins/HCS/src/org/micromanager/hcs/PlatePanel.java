@@ -373,8 +373,8 @@ public class PlatePanel extends JPanel {
       activeRect_ = getBounds();
 
       // shrink drawing area by the margin amount
-      activeRect_.x = (int)xMargin_;
-      activeRect_.y = (int)yMargin_;
+      activeRect_.x = xMargin_;
+      activeRect_.y = yMargin_;
       activeRect_.height -= 2*yMargin_;
       activeRect_.width -= 2*xMargin_;
       
