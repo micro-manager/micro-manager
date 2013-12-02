@@ -68,6 +68,13 @@ inline unsigned char SetBit(unsigned char mask, ControlBitPosition bit, bool sta
    return state ? SetBitOn(mask, bit) : SetBitOff(mask, bit);
 }
 
+inline bool GetBitOn(unsigned char mask, ControlBitPosition bit)
+{
+   bool level = (mask & (1 << bit)) != 0;
+   bool logic = !level;
+   return logic;
+}
+
 // Return a mask where the shuttered bits are all high.
 inline unsigned char AllOffMask(LEType leType)
 {
@@ -781,217 +788,125 @@ int Spectra::OnWhiteValue(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 int Spectra::OnRedEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-	if (eAct == MM::AfterSet)
-	{
-		long State;
-		pProp->Get(State);
-		if (State)
-		{
-			enableMask_ &= 0x7E;
-		}
-		else
-		{
-			enableMask_ = enableMask_ | 0x01;
-		}
-		SetShutterPosition(open_);
-	}
-	if (eAct == MM::BeforeGet)
-	{
-		if ( (enableMask_ & 0x01) > 0)
-			pProp->Set(0L);
-		else
-			pProp->Set(1L);
-
-	}
-	return DEVICE_OK;
+   if (eAct == MM::AfterSet)
+   {
+      long State;
+      pProp->Get(State);
+      SendColorEnableCmd(RED, (State != 0));
+   }
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(GetBitOn(enableMask_, BIT_RED) ? 1L : 0L);
+   }
+   return DEVICE_OK;
 }
 
 int Spectra::OnGreenEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-	if (eAct == MM::AfterSet)
-	{
-		long State;
-		pProp->Get(State);
-		if (State)
-		{
-			enableMask_ &= 0x7D;
-		}
-		else
-		{
-			enableMask_ |= 0x02;;
-		}
-		SetShutterPosition(open_);
-	}
-	if (eAct == MM::BeforeGet)
-	{
-		if ( (enableMask_ & 0x02) > 0)
-			pProp->Set(0L);
-		else
-			pProp->Set(1L);
-	}
-	return DEVICE_OK;
+   if (eAct == MM::AfterSet)
+   {
+      long State;
+      pProp->Get(State);
+      SendColorEnableCmd(GREEN, (State != 0));
+   }
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(GetBitOn(enableMask_, BIT_GREEN) ? 1L : 0L);
+   }
+   return DEVICE_OK;
 }
 
 
 int Spectra::OnCyanEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-	if (eAct == MM::AfterSet)
-	{
-		long State;
-		pProp->Get(State);
-		if (State)
-		{
-			enableMask_ &= 0x7B;
-		}
-		else
-		{
-			enableMask_ |= 0x04;
-		}
-		SetShutterPosition(open_);
-	}
-	if (eAct == MM::BeforeGet)
-	{
-		if ( (enableMask_ & 0x04) > 0)
-			pProp->Set(0L);
-		else
-			pProp->Set(1L);
-	}
-
-
-	return DEVICE_OK;
+   if (eAct == MM::AfterSet)
+   {
+      long State;
+      pProp->Get(State);
+      SendColorEnableCmd(CYAN, (State != 0));
+   }
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(GetBitOn(enableMask_, BIT_CYAN) ? 1L : 0L);
+   }
+   return DEVICE_OK;
 }
 
 
 int Spectra::OnVioletEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-	if (eAct == MM::AfterSet)
-	{
-		long State;
-		pProp->Get(State);
-		if (State)
-		{
-			enableMask_ &= 0x77;
-		}
-		else
-		{
-			enableMask_ |= 0x08;
-		}
-		SetShutterPosition(open_);
-	}
-	if (eAct == MM::BeforeGet) 
-	{
-		if ( (enableMask_ & 0x08) > 0)
-			pProp->Set(0L);
-		else
-			pProp->Set(1L);
-	}
-
-	return DEVICE_OK;
+   if (eAct == MM::AfterSet)
+   {
+      long State;
+      pProp->Get(State);
+      SendColorEnableCmd(VIOLET, (State != 0));
+   }
+   if (eAct == MM::BeforeGet) 
+   {
+      pProp->Set(GetBitOn(enableMask_, BIT_VIOLET) ? 1L : 0L);
+   }
+   return DEVICE_OK;
 }
 
 int Spectra::OnTealEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-	if (eAct == MM::AfterSet)
-	{
-		long State;
-		pProp->Get(State);
-		if (State)
-		{
-			enableMask_ &= 0x3F;
-		}
-		else
-		{
-			enableMask_ |= 0x40;
-		}
-		SetShutterPosition(open_);
-	}
-	if (eAct == MM::BeforeGet) 
-	{
-		if ( (enableMask_ & 0x40) > 0)
-			pProp->Set(0L);
-		else
-			pProp->Set(1L);
-	}
-	return DEVICE_OK;
+   if (eAct == MM::AfterSet)
+   {
+      long State;
+      pProp->Get(State);
+      SendColorEnableCmd(TEAL, (State != 0));
+   }
+   if (eAct == MM::BeforeGet) 
+   {
+      pProp->Set(GetBitOn(enableMask_, BIT_TEAL) ? 1L : 0L);
+   }
+   return DEVICE_OK;
 }
 
 int Spectra::OnBlueEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-	if (eAct == MM::AfterSet)
-	{
-		long State;
-		pProp->Get(State);
-		if (State)
-		{
-			enableMask_ &= 0x5F;
-		}
-		else
-		{
-			enableMask_ |= 0x20;
-		}
-		SetShutterPosition(open_);
-	}
-	if (eAct == MM::BeforeGet)
-	{	
-		if ( (enableMask_ & 0x20) > 0)
-			pProp->Set(0L);
-		else
-			pProp->Set(1L);
-	}
-	return DEVICE_OK;
+   if (eAct == MM::AfterSet)
+   {
+      long State;
+      pProp->Get(State);
+      SendColorEnableCmd(BLUE, (State != 0));
+   }
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(GetBitOn(enableMask_, BIT_BLUE) ? 1L : 0L);
+   }
+   return DEVICE_OK;
 }
 
 int Spectra::OnWhiteEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-	if (eAct == MM::AfterSet)
-	{
-		long State;
-		pProp->Get(State);
-		if (State)
-		{
-			enableMask_ &= 0x10;
-		}
-		else
-		{
-			enableMask_ |= 0x6f;
-		}
-		SetShutterPosition(open_);
-	}
-	if (eAct == MM::BeforeGet)
-	{
-		if (enableMask_ & 0x6f)
-			pProp->Set(0L);
-		else
-			pProp->Set(1L);
-	}
-	return DEVICE_OK;
+   if (eAct == MM::AfterSet)
+   {
+      long State;
+      pProp->Get(State);
+      SendColorEnableCmd(WHITE, (State != 0));
+   }
+   if (eAct == MM::BeforeGet)
+   {
+      unsigned char whiteMask = SetAllOn(enableMask_, lightEngine_);
+      pProp->Set((enableMask_ == whiteMask) ? 1L : 0L);
+   }
+   return DEVICE_OK;
 }
 
 
 int Spectra::OnYGFilterEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-	if (eAct == MM::AfterSet)
-	{
-		long State;
-		pProp->Get(State);
-		if (State)
-		{
-			enableMask_ &= 0x6F;
-		}
-		else
-		{
-			enableMask_ |= 0x10;
-		}
-		SetShutterPosition(open_);
-	}
-	if (eAct == MM::BeforeGet)
-	{	
-		if ( (enableMask_ & 0x10) > 0)
-			pProp->Set(0L);
-		else
-			pProp->Set(1L);
-	}
-
-	return DEVICE_OK;
+   if (eAct == MM::AfterSet)
+   {
+      long State;
+      pProp->Get(State);
+      SendColorEnableCmd(YGFILTER, (State != 0));
+   }
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(GetBitOn(enableMask_, BIT_YG_FILTER) ? 1L : 0L);
+   }
+   return DEVICE_OK;
 }
 
