@@ -152,8 +152,10 @@ int Spectra::Initialize()
    // get the version number
    pAct = new CPropertyAction(this,&Spectra::OnVersion);
 
-   // If GetVersion fails we are not talking to the Lumencor
-   // Note that GetVersion will also call the InitLE function
+   ret = InitLE();
+   if (ret != DEVICE_OK)
+      return ret;
+
    ret = GetVersion();
    if (ret != DEVICE_OK)                                                     
       return ret;                                                            
@@ -162,11 +164,6 @@ int Spectra::Initialize()
 
    // switch all channels off on startup instead of querying which one is open
    SetProperty(MM::g_Keyword_State, "0");
-
-   // There does not seem to be a need for the user to call InitLE after initialization...
-   // pAct = new CPropertyAction(this,&Spectra::OnInitLE);
-   // CreateProperty("Init_LE",    "0", MM::Integer, false, pAct, false);  
-   // SetPropertyLimits("Init_LE",       0, 1);
 
    // All light engines appear to have White
    pAct = new CPropertyAction(this,&Spectra::OnWhiteEnable);
@@ -265,7 +262,7 @@ int Spectra::GetOpen(bool& open)
    if (ret != DEVICE_OK)                                                     
       return ret;                                                            
    long pos = atol(buf);                                                     
-   pos == 1 ? open = true : open = false;                                    
+   open = (pos != 0);
    return DEVICE_OK;                                                         
 } 
 
@@ -274,10 +271,7 @@ int Spectra::GetOpen(bool& open)
  */
 int Spectra::SetShutterPosition(bool open)                              
 {   
-	if(open)
-		SendColorEnableCmd(SHUTTER, true, &enableMask_);  // If on then Set
-	else
-		SendColorEnableCmd(SHUTTER, false, &enableMask_);  // close
+   SendColorEnableCmd(SHUTTER, open, &enableMask_);
    open_ = open;
    return DEVICE_OK;
 }
@@ -518,8 +512,6 @@ int Spectra::SendColorEnableCmd(ColorNameT ColorName, bool State, char* enableMa
 
 int Spectra::GetVersion()
 {
-    int ret;
-	 ret = InitLE();
     version_ = "092712"; // this is the software build date for now.. return real version when hardware supports it
     return DEVICE_OK;  // debug only 
 }
@@ -650,19 +642,7 @@ int Spectra::OnSetLE_Type(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
-int Spectra::OnInitLE(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-   long State;
-   pProp->Get(State); 
-                                                                      
-   if (eAct == MM::AfterSet && State == 1)
-   {  
-	  State = 0; 
-      pProp->Set(State); // reset button
-      InitLE();
-   }
-   return DEVICE_OK;
-}
+
 // *****************************************************************************
 //                  Color Value Change Handlers
 // *****************************************************************************

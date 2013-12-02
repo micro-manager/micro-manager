@@ -77,7 +77,6 @@ public:
    int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnVersion(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSetLE_Type(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnInitLE(MM::PropertyBase* pProp, MM::ActionType eAct);
 
    int OnRedEnable(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnGreenEnable(MM::PropertyBase* pProp, MM::ActionType eAct);
