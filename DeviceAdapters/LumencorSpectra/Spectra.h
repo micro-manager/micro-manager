@@ -101,7 +101,7 @@ private:
    int SetShutterPosition(bool state);
    int GetVersion();
    int SendColorLevelCmd(ColorNameT ColorName, int ColorLevel);
-   int SendColorEnableCmd(ColorNameT ColorName, bool State);
+   int SetColorEnabled(ColorNameT colorName, bool newState);
    int InitLE();
 
    // MMCore name of serial port

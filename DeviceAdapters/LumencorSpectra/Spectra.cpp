@@ -460,7 +460,7 @@ int Spectra::SendColorLevelCmd(ColorNameT ColorName,int ColorLevel)
 // match the new state. If the shutter is open, or the switch is for the YG
 // filter, send the new state to the device.
 // *****************************************************************************
-int Spectra::SendColorEnableCmd(ColorNameT colorName, bool newState)
+int Spectra::SetColorEnabled(ColorNameT colorName, bool newState)
 {
    unsigned char previousEnableMask = enableMask_;
 
@@ -775,7 +775,7 @@ int Spectra::OnRedEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       long State;
       pProp->Get(State);
-      SendColorEnableCmd(RED, (State != 0));
+      SetColorEnabled(RED, (State != 0));
    }
    if (eAct == MM::BeforeGet)
    {
@@ -790,7 +790,7 @@ int Spectra::OnGreenEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       long State;
       pProp->Get(State);
-      SendColorEnableCmd(GREEN, (State != 0));
+      SetColorEnabled(GREEN, (State != 0));
    }
    if (eAct == MM::BeforeGet)
    {
@@ -806,7 +806,7 @@ int Spectra::OnCyanEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       long State;
       pProp->Get(State);
-      SendColorEnableCmd(CYAN, (State != 0));
+      SetColorEnabled(CYAN, (State != 0));
    }
    if (eAct == MM::BeforeGet)
    {
@@ -822,7 +822,7 @@ int Spectra::OnVioletEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       long State;
       pProp->Get(State);
-      SendColorEnableCmd(VIOLET, (State != 0));
+      SetColorEnabled(VIOLET, (State != 0));
    }
    if (eAct == MM::BeforeGet) 
    {
@@ -837,7 +837,7 @@ int Spectra::OnTealEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       long State;
       pProp->Get(State);
-      SendColorEnableCmd(TEAL, (State != 0));
+      SetColorEnabled(TEAL, (State != 0));
    }
    if (eAct == MM::BeforeGet) 
    {
@@ -852,7 +852,7 @@ int Spectra::OnBlueEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       long State;
       pProp->Get(State);
-      SendColorEnableCmd(BLUE, (State != 0));
+      SetColorEnabled(BLUE, (State != 0));
    }
    if (eAct == MM::BeforeGet)
    {
@@ -867,7 +867,7 @@ int Spectra::OnWhiteEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       long State;
       pProp->Get(State);
-      SendColorEnableCmd(WHITE, (State != 0));
+      SetColorEnabled(WHITE, (State != 0));
    }
    if (eAct == MM::BeforeGet)
    {
@@ -884,7 +884,7 @@ int Spectra::OnYGFilterEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       long State;
       pProp->Get(State);
-      SendColorEnableCmd(YGFILTER, (State != 0));
+      SetColorEnabled(YGFILTER, (State != 0));
    }
    if (eAct == MM::BeforeGet)
    {
