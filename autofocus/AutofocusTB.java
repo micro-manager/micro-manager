@@ -181,7 +181,7 @@ public class AutofocusTB extends AutofocusBase implements Autofocus {
       //######################## START THE ROUTINE ###########
 
       try {
-         IJ.write("Autofocus TB started.");
+         IJ.log("Autofocus TB started.");
          //########System setup##########
          if (!CHANNEL1.equals(NOCHANNEL) && channelGroup_ != null) 
             core_.setConfig(channelGroup_,CHANNEL1); 
@@ -212,7 +212,7 @@ public class AutofocusTB extends AutofocusBase implements Autofocus {
          //core_.setShutterOpen(true);
          //core_.setAutoShutter(false);
 
-         IJ.write("Before rough search: " + String.valueOf(curDist));
+         IJ.log("Before rough search: " + String.valueOf(curDist));
 
          //Rough search
          for (int i = 0; i < 2 * NUM_FIRST + 1; i++) {
@@ -278,7 +278,7 @@ public class AutofocusTB extends AutofocusBase implements Autofocus {
             //===IJ.write(String.valueOf(curDist)+" "+String.valueOf(curSh)+" "+String.valueOf(tcur));
          }
 
-         IJ.write("BEST_DIST_SECOND= " + String.valueOf(bestDist) + " BEST_SH_SECOND= " + String.valueOf(bestSh));
+         IJ.log("BEST_DIST_SECOND= " + String.valueOf(bestDist) + " BEST_SH_SECOND= " + String.valueOf(bestSh));
 
          core_.setPosition(core_.getFocusDevice(), bestDist);
          // indx =1;
@@ -287,7 +287,7 @@ public class AutofocusTB extends AutofocusBase implements Autofocus {
          //core_.setShutterOpen(false);
          //core_.setAutoShutter(true);
 
-         IJ.write("Total Time: " + String.valueOf(System.currentTimeMillis() - t0));
+         IJ.log("Total Time: " + String.valueOf(System.currentTimeMillis() - t0));
       } catch (Exception e) {
          IJ.error(e.getMessage());
       }
@@ -311,7 +311,7 @@ public class AutofocusTB extends AutofocusBase implements Autofocus {
          implus.getProcessor().setPixels(img);
          ipCurrent_ = implus.getProcessor();
       } catch (Exception e) {
-         IJ.write(e.getMessage());
+         IJ.log(e.getMessage());
          IJ.error(e.getMessage());
          return false;
       }

@@ -153,7 +153,7 @@ public class AutofocusDuo extends AutofocusBase implements Autofocus  {
       // use default dialog
             
       String afDevices[] = MMStudioPlugin.getAutofocusManager().getAfDevices();
-      String allowedAfDevices[] = new String[(int)afDevices.length - 1];
+      String allowedAfDevices[] = new String[afDevices.length - 1];
 
       try {
          PropertyItem p1 = getProperty(KEY_AUTOFOCUS1);
