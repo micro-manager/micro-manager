@@ -327,8 +327,8 @@ int Spectra::SendColorLevelCmd(ColorNameT ColorName,int ColorLevel)
 			break;
 		case ALL:
 		case WHITE:
-			DACSetupArray[4] = (char) ((ColorValue >> 4) & 0x0F) | 0xF0;
-			DACSetupArray[5] = (char) (ColorValue << 4) & 0xF0;
+			DACSetupArray[4] = (unsigned char) ((ColorValue >> 4) & 0x0F) | 0xF0;
+			DACSetupArray[5] = (unsigned char) (ColorValue << 4) & 0xF0;
 			DACSetupArray[3] = 0x0F; // setup for RGCV 
 			DACSetupArray[1] = 0x18;
 			WriteToComPort(port_.c_str(),DACSetupArray, 7); // Write Event Data to device
@@ -342,8 +342,8 @@ int Spectra::SendColorLevelCmd(ColorNameT ColorName,int ColorLevel)
 	}
 	if(ColorName != ALL && ColorName != WHITE)
 	{
-		DACSetupArray[4] = (char) ((ColorValue >> 4) & 0x0F) | 0xF0;
-		DACSetupArray[5] = (char) (ColorValue << 4) & 0xF0;
+		DACSetupArray[4] = (unsigned char) ((ColorValue >> 4) & 0x0F) | 0xF0;
+		DACSetupArray[5] = (unsigned char) (ColorValue << 4) & 0xF0;
 		WriteToComPort(port_.c_str(),DACSetupArray, 7); // Write Event Data to device
 	}
 	// block/wait no acknowledge so just give it time                      
@@ -374,7 +374,7 @@ int Spectra::SendColorLevelCmd(ColorNameT ColorName,int ColorLevel)
 // sending a 0xCF or 0x7F (not sure if both of these work; at least one or the
 // other appears to work) can turn off the SOLA (not surprising).
 // *****************************************************************************
-int Spectra::SendColorEnableCmd(ColorNameT ColorName, bool State, char* enableMask)
+int Spectra::SendColorEnableCmd(ColorNameT ColorName, bool State, unsigned char* enableMask)
 {
 	enum StateValue {OFF=0, ON=1};
 	unsigned char DACSetupArray[]= "\x4F\x00\x50\x00";
@@ -526,23 +526,29 @@ int Spectra::GetVersion()
 // and must be done any time the LE is powered off then on again
 int Spectra::InitLE()
 {
-   int ret;
-   char DACCtl[] = "\x4f\x7F\x50";  // Disable All Colors
+   // Initialization sequence:
+   unsigned char GPIO0to3[] = { 0x57, 0x02, 0xff, 0x50 };
+   unsigned char GPIO5to7[] = { 0x57, 0x03, 0xab, 0x50 };
+
+   // Disable all colors:
+   unsigned char DACCtl[] = { 0x4f, 0x7f, 0x50 };
    if(lightEngine_ == Aura_Type)
    {
-		DACCtl[1] = 0x5f;  // set all off and Dac Control if an Aura
+      DACCtl[1] = 0x5f;  // set all off and Dac Control on if an Aura
    }
-   char GPIO0to3[] = "\x57\x02\xff\x50";
-   char GPIO5to7[] = "\x57\x03\xAB\x50"; // Write to the uart register
 
-   std::string cmd =  GPIO5to7;
-   std::string cmd1 = GPIO0to3;	
-   std::string cmd2 = DACCtl;
-	// Send GPIO Commands
-   ret = SendSerialCommand(port_.c_str(), cmd.c_str(), ""); // send command to write register
-   ret = SendSerialCommand(port_.c_str(), cmd1.c_str(), "");  // Set GIPO 0-3
-   ret = SendSerialCommand(port_.c_str(), cmd2.c_str(), "");  // setup for DAC control for Aura Only
-   return DEVICE_OK;  // We dont get a response for these commands so just set to normal return 
+   int ret;
+   ret = WriteToComPort(port_.c_str(), GPIO0to3, sizeof(GPIO0to3));
+   if (ret != DEVICE_OK)
+      return ret;
+   ret = WriteToComPort(port_.c_str(), GPIO5to7, sizeof(GPIO5to7));
+   if (ret != DEVICE_OK)
+      return ret;
+   ret = WriteToComPort(port_.c_str(), DACCtl, sizeof(DACCtl));
+   if (ret != DEVICE_OK)
+      return ret;
+
+   return DEVICE_OK;
 }
 
 int Spectra::Shutdown()                                                

@@ -100,7 +100,7 @@ private:
    int SetShutterPosition(bool state);
    int GetVersion();
    int SendColorLevelCmd(ColorNameT ColorName, int ColorLevel);
-   int SendColorEnableCmd(ColorNameT ColorName, bool State, char* EnableMask);
+   int SendColorEnableCmd(ColorNameT ColorName, bool State, unsigned char* EnableMask);
    int InitLE();
 
    // MMCore name of serial port
@@ -116,7 +116,7 @@ private:
    // LightEngine identifier
    LEType lightEngine_;
    // byte used to indicate which LEDs should be switched on
-   char enableMask_;
+   unsigned char enableMask_;
    bool initialized_;
    // version string returned by device
    std::string version_;
