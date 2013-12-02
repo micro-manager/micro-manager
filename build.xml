@@ -99,6 +99,13 @@
 		<exec dir="${mm.installdir}" executable="${mm.installdir}/ImageJ.exe"/>
 	</target>
 
+	<target name="run-nolauncher" description="Run the staged application without using the ImageJ launcher">
+		<java classname="ij.ImageJ"
+			classpath="${mm.installdir}/ij.jar"
+			fork="yes" maxmemory="1000M"
+			dir="${mm.installdir}"/>
+	</target>
+
 	<target name="package" depends="stage" description="Create installer">
 		<!-- Default name, if not set -->
 		<property name="mm.installer.basename" value="MMSetup_${mm.architecture.bits}bit"/>
