@@ -250,15 +250,6 @@ int Spectra::Initialize()
    AddAllowedValue(MM::g_Keyword_State, "0");                                
    AddAllowedValue(MM::g_Keyword_State, "1");                                
                                               
-   // get the version number
-   pAct = new CPropertyAction(this,&Spectra::OnVersion);
-
-   ret = GetVersion();
-   if (ret != DEVICE_OK)                                                     
-      return ret;                                                            
-
-   CreateProperty("Version", version_.c_str(), MM::String,true,pAct); 
-
    // switch all channels off on startup instead of querying which one is open
    SetProperty(MM::g_Keyword_State, "0");
 
@@ -542,11 +533,6 @@ int Spectra::SetColorEnabled(ColorNameT colorName, bool newState)
 // 4F 3E 50- Enables Red and Teal, Disables all others.
 //
 
-int Spectra::GetVersion()
-{
-    version_ = "092712"; // this is the software build date for now.. return real version when hardware supports it
-    return DEVICE_OK;  // debug only 
-}
 
 // This function Inits the GPIO on the 
 // and must be done any time the LE is powered off then on again
@@ -635,18 +621,6 @@ int Spectra::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
       long pos;
       pProp->Get(pos);
       return SetOpen(pos != 0);
-   }
-   return DEVICE_OK;
-}
-
-int Spectra::OnVersion(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-   if (eAct == MM::BeforeGet && version_ == "Undefined")
-   {
-      int ret = GetVersion();
-      if (ret != DEVICE_OK) 
-         return ret;
-      pProp->Set(version_.c_str());
    }
    return DEVICE_OK;
 }

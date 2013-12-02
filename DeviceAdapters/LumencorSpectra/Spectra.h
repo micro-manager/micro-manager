@@ -75,7 +75,6 @@ public:
    // ----------------
    int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnVersion(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSetLE_Type(MM::PropertyBase* pProp, MM::ActionType eAct);
 
    int OnRedEnable(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -99,7 +98,6 @@ public:
 private:
    int SendColorEnableMask(unsigned char mask);
    int SetShutterPosition(bool state);
-   int GetVersion();
    int SendColorLevelCmd(ColorNameT ColorName, int ColorLevel);
    int SetColorEnabled(ColorNameT colorName, bool newState);
    int InitLE();
