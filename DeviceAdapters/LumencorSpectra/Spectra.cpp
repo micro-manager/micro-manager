@@ -410,6 +410,24 @@ int Spectra::SendColorLevelCmd(ColorNameT ColorName,int ColorLevel)
 
 // *****************************************************************************
 // Sends color Enable/Disable command to Lumencor LightEngine
+//
+// Assumes current state matches *enableMask; turns on or off (based on State)
+// the color given by ColorName. Afterwards, sets *enableMask to match the new
+// state. If the shutter is closed, do nothing. XXX BUG: Even if shutter is
+// open, do nothing if close is requested (State == false). (Bug is currently
+// inconsequential because this function is always called with ColorName ==
+// SHUTTER (see below), except in the case of the SOLA, where ColorName = ALL
+// is forced.)
+//
+// If ColorName equals SHUTTER, apply *enableMask to the device (if State ==
+// true) or switch off all lines (if State == false), but do not modify
+// *enableMask even in the latter case. XXX BUG: When shutter is closed and
+// opening is requested (State == true), the command for closing is sent
+// instead.
+//
+// A SOLA user has reported that closing the shutter works, suggesting that
+// sending a 0xCF or 0x7F (not sure if both of these work; at least one or the
+// other appears to work) can turn off the SOLA (not surprising).
 // *****************************************************************************
 int Spectra::SendColorEnableCmd(ColorNameT ColorName, bool State, char* enableMask)
 {
@@ -428,6 +446,8 @@ int Spectra::SendColorEnableCmd(ColorNameT ColorName, bool State, char* enableMa
 		}
 		if(lightEngine_ == Sola_Type)
 		{
+         // XXX BUG: If ColorName is SHUTTER, we don't want the (intended)
+         // behavior of ALL!
 			 ColorName = ALL;
 		}
 		switch (ColorName)
@@ -476,10 +496,10 @@ int Spectra::SendColorEnableCmd(ColorNameT ColorName, bool State, char* enableMa
 				break;
 			case ALL:
 			case WHITE:
+            // XXX BUG: Why is this checking for the TEAL bit? It is switching
+            // only if TEAL is off...
 				if(State==ON && open)
-				{
 					DACSetupArray[1] = ((*enableMask & 0x40) == 0x40) ? 0x40 : 0x00;
-				}
 				else
 					DACSetupArray[1] = ((*enableMask & 0x40) == 0x40) ? 0x7F : 0xCF; // dont toggle YG filter if not needed
 				break;
