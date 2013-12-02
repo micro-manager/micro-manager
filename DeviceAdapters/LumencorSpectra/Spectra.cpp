@@ -376,6 +376,13 @@ int Spectra::GetOpen(bool& open)
 
 // *****************************************************************************
 // Sends color level command to Lumencor LightEngine
+//
+// TODO This still needs work:
+// - For the Aura and Spectra, it is not clear that the WHITE behavior is
+//   correct (or should we hide the White_Level property for all but SOLA?)
+// - For the Aura and Spectra, the levels for all colors should be updated when
+//   the WHITE level is set. It is not clear what should happen to the WHITE
+//   level when different colors have different levels.
 // *****************************************************************************
 int Spectra::SendColorLevelCmd(ColorNameT ColorName,int ColorLevel)
 {
