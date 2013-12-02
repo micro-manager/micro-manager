@@ -27,7 +27,7 @@
 
 package com.imaging100x.twophoton;
 
-import MMCustomization.AcquisitionWrapperEngineAdapter;
+//import MMCustomization.AcquisitionWrapperEngineAdapter;
 import ij.ImagePlus;
 import ij.WindowManager;
 import ij.gui.ImageWindow;
@@ -44,8 +44,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 
 import javax.swing.*;
@@ -60,6 +58,9 @@ import org.micromanager.MMStudioMainFrame;
 import org.micromanager.acquisition.ComponentTitledBorder;
 import org.micromanager.acquisition.VirtualAcquisitionDisplay;
 import org.micromanager.api.*;
+import org.micromanager.navigation.MultiStagePosition;
+import org.micromanager.navigation.PositionList;
+import org.micromanager.navigation.StagePosition;
 import org.micromanager.utils.*;
 
 public class TwoPhotonControl extends MMFrame implements MMPlugin, KeyListener, 
@@ -74,18 +75,18 @@ public class TwoPhotonControl extends MMFrame implements MMPlugin, KeyListener,
    public static String Z_STAGE = "Z";
    public static String RESOLUTION = "Objective Res";
 
-   public static final String menuName = "100X | 2Photon...";
+   public static final String menuName = "100X | 2Photon....";
    public static final String tooltipDescription = "2Photon control panel";
 
    
    // preference keys and other string constants
    static private final String PANEL_X = "panel_x";
    static private final String PANEL_Y = "panel_y";
-   static private final String VERSION_INFO = "3.0";
+   static private final String VERSION_INFO = "3.1";
    static private final String COPYRIGHT_NOTICE = "Copyright by 100X, 2011";
    static private final String DESCRIPTION = "Two Photon control module";
    static private final String INFO = "Not available";
-   private Preferences prefs_;
+   private static Preferences prefs_;
    private CMMCore core_;
    private ScriptInterface app_;
    private JTable pmtTable_;
@@ -163,7 +164,7 @@ private JCheckBox drawGrid_, drawPosNames_;
     * Constructor
     */
    public TwoPhotonControl() {
-      super();
+       super();
       
       setLocation(-3, -31);
 
@@ -219,6 +220,7 @@ private JCheckBox drawGrid_, drawPosNames_;
       hdfQueueSize_ = new JLabel("HDF Queue size: ");
       getContentPane().add(hdfQueueSize_);
       hdfQueueSize_.setBounds(450, 400, 140, 25 );
+      hdfQueueSize_.setVisible(prefs_.getBoolean(SettingsDialog.REAL_TIME_STITCH, rootPaneCheckingEnabled));
       
       //add settings button
       JButton settings = new JButton("Settings");
@@ -245,16 +247,16 @@ private JCheckBox drawGrid_, drawPosNames_;
 
       GUIUtils.registerImageFocusListener(this);
       
-      if (prefs_.getBoolean(SettingsDialog.REAL_TIME_STITCH, false)) {          
-         clearSpaceInStitchingCache();
-         try {
-            new AcquisitionWrapperEngineAdapter(getDepthListRunnable(),prefs_);
-         } catch (NoSuchFieldException ex) {
-            ReportingUtils.showError("Couldn't substitute acquisition engine");
-         }
-      } else {
+//      if (prefs_.getBoolean(SettingsDialog.REAL_TIME_STITCH, false)) {          
+//         clearSpaceInStitchingCache();
+//         try {
+//            new AcquisitionWrapperEngineAdapter(getDepthListRunnable(),prefs_);
+//         } catch (NoSuchFieldException ex) {
+//            ReportingUtils.showError("Couldn't substitute acquisition engine");
+//         }
+//      } else {
          MMStudioMainFrame.getInstance().getAcquisitionEngine().attachRunnable(-1, -1, -1, -1, getDepthListRunnable());
-      }
+//      }
    }
 
    public static void updateHDFQueueSize(int n) {
@@ -358,10 +360,7 @@ private JCheckBox drawGrid_, drawPosNames_;
             if (index < availableVADs_.size()) {
                vadToStitch = availableVADs_.get(index);
             }
-            stitcher_.setStitchParameters(prefs_.getBoolean(SettingsDialog.INVERT_X, false), 
-                    prefs_.getBoolean(SettingsDialog.INVERT_Y, false),
-                    prefs_.getBoolean(SettingsDialog.SWAP_X_AND_Y, false), 
-                    drawPosNames_.isSelected(), drawGrid_.isSelected(),
+            stitcher_.setStitchParameters(drawPosNames_.isSelected(), drawGrid_.isSelected(),
                     vadToStitch);
             new Thread(new Runnable() {
 
@@ -726,12 +725,11 @@ private JCheckBox drawGrid_, drawPosNames_;
          ReportingUtils.showError("No camera available.");
          return;
       }
-      boolean swapXY = false;
+      boolean swapXY = false, invertX = false, invertY = false;
       try {
-         String swapProp = gui.getCore().getProperty(camera, MMCoreJ.getG_Keyword_Transpose_SwapXY());
-         if (swapProp.equals("1")) {
-            swapXY = true;
-         }
+         swapXY = gui.getCore().getProperty(camera, MMCoreJ.getG_Keyword_Transpose_SwapXY()).equals("1");
+         invertX = gui.getCore().getProperty(camera, MMCoreJ.getG_Keyword_Transpose_MirrorX()).equals("1");
+         invertY = gui.getCore().getProperty(camera, MMCoreJ.getG_Keyword_Transpose_MirrorY()).equals("1");
       } catch (Exception e) {
          ReportingUtils.showError(e.getMessage());
          return;
@@ -740,12 +738,19 @@ private JCheckBox drawGrid_, drawPosNames_;
       long height = gui.getCore().getImageHeight();
       long width = gui.getCore().getImageWidth();
 
-      
+      //get image stage offset in degrees
+      double theta = prefs_.getDouble(SettingsDialog.STAGE_IMAGE_ANGLE_OFFSET, 0.0) / 360.0 * 2 * Math.PI;
       ArrayList<MultiStagePosition> positions = new ArrayList<MultiStagePosition>();
       for (int gridX = 0; gridX < xSize; gridX++) {
-         double xPos = xCenter + (gridX - (xSize - 1) / 2.0) * (width - pixelOverlapX) * pixSize;
+         double xDistFromCenter =  (gridX - (xSize - 1) / 2.0) * (width - pixelOverlapX) * pixSize;
          for (int gridY = 0; gridY < ySize; gridY++) {
-            double yPos = yCenter + (gridY - (ySize - 1) / 2.0) * (height - pixelOverlapY) * pixSize;
+            double yDistFromCenter =  (gridY - (ySize - 1) / 2.0) * (height - pixelOverlapY) * pixSize;
+            //account for angle between stage axes and image axes
+            double xPos = xCenter - Math.cos(theta) * xDistFromCenter 
+                    +  Math.sin(theta) * yDistFromCenter;
+            double yPos = yCenter +  Math.sin(theta) * xDistFromCenter 
+                    +  Math.cos(theta) * yDistFromCenter;
+            
             MultiStagePosition mpl = new MultiStagePosition();
             StagePosition sp = new StagePosition();
             sp.numAxes = 2;
@@ -758,8 +763,8 @@ private JCheckBox drawGrid_, drawPosNames_;
                sp.y = yPos;
             }
             mpl.add(sp);
-            int row = swapXY ? gridY : gridX;
-            int col = swapXY ? gridX : gridY;
+            int col = gridX;
+            int row = gridY;
             String lab = new String("Grid_" + row + "_" + col);
             mpl.setLabel(lab);
             mpl.setGridCoordinates(xSize, ySize);

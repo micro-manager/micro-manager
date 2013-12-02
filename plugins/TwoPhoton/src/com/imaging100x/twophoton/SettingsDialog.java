@@ -21,10 +21,8 @@ import org.micromanager.utils.ReportingUtils;
  * @author Henry
  */
 public class SettingsDialog extends JDialog {
-   
-   static public final String INVERT_X = "Invert_x";
-   static public final String INVERT_Y = "Invert_y";
-   static public final String SWAP_X_AND_Y = "SwapXandY";
+
+   static public final String STAGE_IMAGE_ANGLE_OFFSET = "Theta";
    static public final String REAL_TIME_STITCH = "Realtimestitching";
    static public final String STITCHED_DATA_DIRECTORY = "Stitched data location";
    static public final String FREE_GB__MIN_IN_STITCHED_DATA = "Free GB minimum in stitched data dir";
@@ -38,21 +36,13 @@ public class SettingsDialog extends JDialog {
       this.add(panel, BorderLayout.CENTER);
       panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
       
-      
       JPanel row1 = new JPanel(new FlowLayout(FlowLayout.LEFT));
-      row1.add(new JLabel("Stitching tile layout:"));
-      final JCheckBox invertXCheckBox = new JCheckBox("Flip X");
-      invertXCheckBox.setSelected(prefs.getBoolean(INVERT_X, false));
-      final JCheckBox invertYCheckBox = new JCheckBox("Flip Y");
-      invertYCheckBox.setSelected(prefs.getBoolean(INVERT_Y, false));
-      final JCheckBox swapXandYCheckBox = new JCheckBox("Transpose");
-      swapXandYCheckBox.setSelected(prefs.getBoolean(SWAP_X_AND_Y, false));
-      row1.add(invertXCheckBox);
-      row1.add(invertYCheckBox);
-      row1.add(swapXandYCheckBox);
-      panel.add(row1);
+      final JSpinner theta = new JSpinner(new SpinnerNumberModel(prefs.getDouble(STAGE_IMAGE_ANGLE_OFFSET, 0),-45,45,0.1));
+      row1.add(new JLabel("Stage-Image angle offset"));
+      row1.add(theta);
+      row1.add(new JLabel("degrees"));
+      panel.add(row1);      
       
-            
       JPanel row2 = new JPanel(new FlowLayout(FlowLayout.LEFT));
       final JCheckBox realTimeStitch = new JCheckBox("Activate real time stitching");
       row2.add(realTimeStitch);
@@ -96,17 +86,12 @@ public class SettingsDialog extends JDialog {
       final ActionListener saveSettings = new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            prefs.putBoolean(INVERT_X, invertXCheckBox.isSelected());
-            prefs.putBoolean(INVERT_Y, invertYCheckBox.isSelected());
-            prefs.putBoolean(SWAP_X_AND_Y, swapXandYCheckBox.isSelected());
             prefs.putBoolean(REAL_TIME_STITCH, realTimeStitch.isSelected());
             prefs.put(STITCHED_DATA_DIRECTORY, location.getText());
             prefs.putInt(FREE_GB__MIN_IN_STITCHED_DATA, (Integer) freeGig.getValue());
+            prefs.putDouble(STAGE_IMAGE_ANGLE_OFFSET, (Double) theta.getValue());
          }
       };
-      invertXCheckBox.addActionListener(saveSettings);
-      invertYCheckBox.addActionListener(saveSettings);
-      swapXandYCheckBox.addActionListener(saveSettings);
       realTimeStitch.addActionListener(saveSettings);
       location.getDocument().addDocumentListener(new DocumentListener() {
          @Override 
@@ -123,6 +108,13 @@ public class SettingsDialog extends JDialog {
          }
       });
       freeGig.addChangeListener(new ChangeListener() {
+
+         @Override
+         public void stateChanged(ChangeEvent e) {
+            saveSettings.actionPerformed(null);
+         }
+      });
+      theta.addChangeListener(new ChangeListener() {
 
          @Override
          public void stateChanged(ChangeEvent e) {

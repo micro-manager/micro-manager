@@ -17,6 +17,7 @@ import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JOptionPane;
+import mmcorej.MMCoreJ;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -34,7 +35,7 @@ public class AcquisitionStitcher {
    
    private static final String ACQ_NAME = "Stitched";
    
-   private ScriptInterface gui_;
+   private MMStudioMainFrame gui_;
    private ImageCache cache_;
    private VirtualAcquisitionDisplay display_;
    private ImageWindow imageWindow_;
@@ -43,20 +44,25 @@ public class AcquisitionStitcher {
    private boolean drawPosNames_, showGrid_;
    private int gridWidth_, gridHeight_;
    private int oldImageWidth_, oldImageHeight_, newImageWidth_ = -1, newImageHeight_ = -1;
+   private double pixelSize_ = 0;
    private Comparator gridSorter_;
    private double stitchedWindowZoom_ = 1;
    private Point stitchedWindowLocation_ = null;
 
    
-   public AcquisitionStitcher() {
-      gui_ = MMStudioMainFrame.getInstance();
-   }
+    public AcquisitionStitcher() {
+       try {
+           gui_ = MMStudioMainFrame.getInstance();
+           String camera = gui_.getCore().getCameraDevice();
+           swapXandY_ = gui_.getCore().getProperty(camera, MMCoreJ.getG_Keyword_Transpose_SwapXY()).equals("1");
+           invertX_ = gui_.getCore().getProperty(camera, MMCoreJ.getG_Keyword_Transpose_MirrorX()).equals("1");
+           invertY_ = gui_.getCore().getProperty(camera, MMCoreJ.getG_Keyword_Transpose_MirrorY()).equals("1");
+       } catch (Exception ex) {
+           ReportingUtils.showError(ex.toString());
+       }
+    }
 
-   public void setStitchParameters(boolean invX, boolean invY, boolean swap,
-           boolean drawPosNames, boolean showGrid, VirtualAcquisitionDisplay display) {
-      invertX_ = invX;
-      invertY_ = invY;
-      swapXandY_ = swap;
+   public void setStitchParameters(boolean drawPosNames, boolean showGrid, VirtualAcquisitionDisplay display) {
       drawPosNames_ = drawPosNames;
       showGrid_ = showGrid;
       display_ = display;
@@ -243,40 +249,41 @@ public class AcquisitionStitcher {
       return newPixels;
    }
 
-   private void calcGridDimensions(LinkedList<TaggedImage> batch) throws JSONException {
-      TreeSet<Double> xPositions = new TreeSet<Double>(), yPositions = new TreeSet<Double>();
-      for (TaggedImage img : batch) {
-         xPositions.add(img.tags.getDouble("XPositionUm"));
-         yPositions.add(img.tags.getDouble("YPositionUm"));
-      }
-      oldImageWidth_ = MDUtils.getWidth(batch.getFirst().tags);
-      oldImageHeight_ = MDUtils.getHeight(batch.getFirst().tags);
-      if (swapXandY_) {
-         gridWidth_ = yPositions.size();
-         gridHeight_ = xPositions.size();
-      } else {
-         gridWidth_ = xPositions.size();
-         gridHeight_ = yPositions.size();
-      }
-      newImageWidth_ = gridWidth_ * oldImageWidth_;
-      newImageHeight_ = gridHeight_ * oldImageHeight_;
-   }
+    private void calcGridDimensions(LinkedList<TaggedImage> batch) throws JSONException {
+        oldImageWidth_ = MDUtils.getWidth(batch.getFirst().tags);
+        oldImageHeight_ = MDUtils.getHeight(batch.getFirst().tags);
+        pixelSize_ = batch.getFirst().tags.getDouble("PixelSizeUm");
+        try {
+            gridWidth_ = MMStudioMainFrame.getInstance().getPositionList().getPosition(0).getGridColumn();
+            gridHeight_ = MMStudioMainFrame.getInstance().getPositionList().getPosition(0).getGridRow();
+            if (swapXandY_) {
+                int temp = gridHeight_;
+                gridHeight_ = gridWidth_;
+                gridWidth_ = temp;
+            }
+        } catch (MMScriptException ex) {
+            ReportingUtils.showError("Couldn't get grid size position list");
+        }
+        newImageWidth_ = gridWidth_ * oldImageWidth_;
+        newImageHeight_ = gridHeight_ * oldImageHeight_;
+    }
 
-   private Comparator<TaggedImage> makeGridSorter() {
+    private Comparator<TaggedImage> makeGridSorter() {
       return new Comparator<TaggedImage>() {
 
          @Override
          public int compare(TaggedImage img1, TaggedImage img2) {
+
             if (swapXandY_) {
                try {
                   double x1 = img1.tags.getDouble("XPositionUm");
                   double x2 = img2.tags.getDouble("XPositionUm");
-                  if (x1 != x2) {
+                  if ( Math.abs( (x1-x2)/pixelSize_ / (double) oldImageHeight_ ) > 0.5 ) {                   
                      return (int) (invertX_ ? (x1 - x2) : (x2 - x1));
                   }
                   double y1 = img1.tags.getDouble("YPositionUm");
                   double y2 = img2.tags.getDouble("YPositionUm");
-                  if (y1 != y2) {
+                  if (Math.abs( (y1-y2)/pixelSize_ / (double) oldImageWidth_ ) > 0.5 ) {
                      return (int) (invertY_ ? (y1 - y2) : (y2 - y1));
                   }
                } catch (JSONException ex) {
@@ -286,12 +293,12 @@ public class AcquisitionStitcher {
                try {
                   double y1 = img1.tags.getDouble("YPositionUm");
                   double y2 = img2.tags.getDouble("YPositionUm");
-                  if (y1 != y2) {
+                  if (Math.abs( (y1-y2)/pixelSize_ / (double) oldImageHeight_ ) > 0.5) {
                      return (int) (invertY_ ? (y1 - y2) : (y2 - y1));
                   }
                   double x1 = img1.tags.getDouble("XPositionUm");
                   double x2 = img2.tags.getDouble("XPositionUm");
-                  if (x1 != x2) {
+                  if (Math.abs( (x1-x2)/pixelSize_ / (double) oldImageWidth_ ) > 0.5) {
                      return (int) (invertX_ ? (x1 - x2) : (x2 - x1));
                   }
                } catch (JSONException ex) {
