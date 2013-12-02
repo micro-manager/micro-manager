@@ -36,6 +36,96 @@ const char* g_Spectra = "Spectra";
 const char* g_SpectraX = "SpectraX";
 
 
+// On/off control bits. On is low, off is high.
+// Note that the Aura may have different colors installed, but the bits to
+// control the available channels are (presumably) the same.
+enum ControlBitPosition {
+   BIT_RED = 0,
+   BIT_GREEN, // Turning on turns off other channels
+   BIT_CYAN,
+   BIT_VIOLET,
+   BIT_YG_FILTER,
+   BIT_BLUE, // Different meaning in Aura
+   BIT_AURA_DAC = BIT_BLUE, // Low activates intensity control from computer
+   BIT_TEAL, // Not used for Aura (keep high)
+   BIT_UNUSED, // Keep low for Aura and Spectra
+};
+
+inline unsigned char SetBitOn(unsigned char mask, ControlBitPosition bit)
+{
+   // Set the bit to low without changing other bits
+   return mask & ~(1 << bit);
+}
+
+inline unsigned char SetBitOff(unsigned char mask, ControlBitPosition bit)
+{
+   // Set the bit to high without changing other bits
+   return mask | (1 << bit);
+}
+
+inline unsigned char SetBit(unsigned char mask, ControlBitPosition bit, bool state)
+{
+   return state ? SetBitOn(mask, bit) : SetBitOff(mask, bit);
+}
+
+// Return a mask where the shuttered bits are all high.
+inline unsigned char AllOffMask(LEType leType)
+{
+   switch (leType)
+   {
+      case Aura_Type:
+         return (1 << BIT_RED) | (1 << BIT_GREEN) | (1 << BIT_CYAN) | (1 << BIT_VIOLET);
+      case Sola_Type:
+         return 0xff;
+      case Spectra_Type:
+      case SpectraX_Type:
+         // All except YG filter bit and unused high bit
+         return 0xff & ~((1 << BIT_YG_FILTER) | (1 << BIT_UNUSED));
+      default:
+         // Unimplemented device; make no changes
+         return 0x00;
+   }
+}
+
+inline unsigned char SetAllOn(unsigned char mask, LEType leType)
+{
+   // Set the shuttered bits low.
+   return mask & ~AllOffMask(leType);
+}
+
+inline unsigned char SetAllOff(unsigned char mask, LEType leType)
+{
+   // Set the shuttered bits high.
+   return mask | AllOffMask(leType);
+}
+
+inline unsigned char SetAll(unsigned char mask, LEType leType, bool state)
+{
+   return state ? SetAllOn(mask, leType) : SetAllOff(mask, leType);
+}
+
+// Mask to set on initialization (turn everything off)
+inline unsigned char InitialEnableMask(LEType leType)
+{
+   switch (leType)
+   {
+      case Aura_Type:
+         // All off; turn on DAC.
+         return (1 << BIT_RED) | (1 << BIT_GREEN) | (1 << BIT_CYAN) | (1 << BIT_VIOLET) |
+            (1 << BIT_YG_FILTER) | (1 << BIT_TEAL);
+      case Sola_Type:
+         // Off.
+         return 0xff;
+      case Spectra_Type:
+      case SpectraX_Type:
+         // All off.
+         return 0xff & ~(1 << BIT_UNUSED);
+      default:
+         // Unimplemented device; should not reach here.
+         return 0x7f;
+   }
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // Exported MMDevice API
@@ -89,7 +179,7 @@ Spectra::Spectra() :
    port_("Undefined"),
    open_(false),
    lightEngine_(Spectra_Type),
-   enableMask_(0x7f),
+   enableMask_(InitialEnableMask(lightEngine_)),
    initialized_(false),
    version_("Undefined")
 {
@@ -135,14 +225,18 @@ int Spectra::Initialize()
 {
    if (initialized_)
       return DEVICE_OK;
-      
+
+   int ret = InitLE();
+   if (ret != DEVICE_OK)
+      return ret;
+
    // set property list
    // -----------------
 
    // State
    // -----
    CPropertyAction* pAct = new CPropertyAction (this, &Spectra::OnState);
-   int ret = CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct);
+   ret = CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct);
    if (ret != DEVICE_OK)
       return ret;                                                            
                                                                              
@@ -151,10 +245,6 @@ int Spectra::Initialize()
                                               
    // get the version number
    pAct = new CPropertyAction(this,&Spectra::OnVersion);
-
-   ret = InitLE();
-   if (ret != DEVICE_OK)
-      return ret;
 
    ret = GetVersion();
    if (ret != DEVICE_OK)                                                     
@@ -252,32 +342,32 @@ int Spectra::Initialize()
 }
 
 int Spectra::SetOpen(bool open)
-{  
-   long pos;
+{
+   if (open == open_)
+      return DEVICE_OK;
+
+   unsigned char newShutteredEnableMask;
    if (open)
-      pos = 1;
+      newShutteredEnableMask = enableMask_;
    else
-      pos = 0;
-   return SetProperty(MM::g_Keyword_State, CDeviceUtils::ConvertToString(pos));
+      newShutteredEnableMask = SetAllOff(enableMask_, lightEngine_);
+
+   SetShutterPosition(open);
+   return DEVICE_OK;
 } 
 
 int Spectra::GetOpen(bool& open)
-{     
-   char buf[MM::MaxStrLength];
-   int ret = GetProperty(MM::g_Keyword_State, buf);
-   if (ret != DEVICE_OK)                                                     
-      return ret;                                                            
-   long pos = atol(buf);                                                     
-   open = (pos != 0);
+{
+   open = open_;
    return DEVICE_OK;                                                         
-} 
+}
 
 /**
  * Here we set the shutter to open or close
  */
 int Spectra::SetShutterPosition(bool open)                              
 {   
-   SendColorEnableCmd(SHUTTER, open, &enableMask_);
+   SendColorEnableCmd(SHUTTER, open);
    open_ = open;
    return DEVICE_OK;
 }
@@ -356,141 +446,88 @@ int Spectra::SendColorLevelCmd(ColorNameT ColorName,int ColorLevel)
 // *****************************************************************************
 // Sends color Enable/Disable command to Lumencor LightEngine
 //
-// Assumes current state matches *enableMask; turns on or off (based on State)
-// the color given by ColorName. Afterwards, sets *enableMask to match the new
-// state. If the shutter is closed, do nothing. XXX BUG: Even if shutter is
-// open, do nothing if close is requested (State == false). (Bug is currently
-// inconsequential because this function is always called with ColorName ==
-// SHUTTER (see below), except in the case of the SOLA, where ColorName = ALL
-// is forced.)
+// Assumes current state matches enableMask_; turns on or off (based on
+// newState) the color given by colorName. Afterwards, sets enableMask_ to
+// match the new state. If the shutter is open, or the switch is for the YG
+// filter, send the new state to the device.
 //
-// If ColorName equals SHUTTER, apply *enableMask to the device (if State ==
-// true) or switch off all lines (if State == false), but do not modify
-// *enableMask even in the latter case. XXX BUG: When shutter is closed and
-// opening is requested (State == true), the command for closing is sent
-// instead.
-//
-// A SOLA user has reported that closing the shutter works, suggesting that
-// sending a 0xCF or 0x7F (not sure if both of these work; at least one or the
-// other appears to work) can turn off the SOLA (not surprising).
+// If colorName equals SHUTTER (TODO this should really be a separate
+// function), apply enableMask_ to the device (if newState is true) or switch
+// off all lines (if State == false), but do not modify enableMask_ in either
+// case.
 // *****************************************************************************
-int Spectra::SendColorEnableCmd(ColorNameT ColorName, bool State, unsigned char* enableMask)
+int Spectra::SendColorEnableCmd(ColorNameT colorName, bool newState)
 {
-	enum StateValue {OFF=0, ON=1};
-	unsigned char DACSetupArray[]= "\x4F\x00\x50\x00";
-	bool open; 
-	int ret = GetOpen(open);
-	if (ret == DEVICE_OK) // only set enable if shuttern 
-	{
-		if(lightEngine_ == Aura_Type)
-		{
-			if(ColorName == BLUE || ColorName == CYAN)
-			{	
-				return DEVICE_OK;  // we exit here as the Aura does not support these colors
-			}
-		}
-		if(lightEngine_ == Sola_Type)
-		{
-         // XXX BUG: If ColorName is SHUTTER, we don't want the (intended)
-         // behavior of ALL!
-			 ColorName = ALL;
-		}
-		switch (ColorName)
-		{	
-			case  RED:
-				if(State==ON && open)
-					DACSetupArray[1] = *enableMask & 0x7E;
-				else
-					DACSetupArray[1] = *enableMask | 0x01;
-				break;
-			case  GREEN:
-				if(State==ON && open)
-					DACSetupArray[1] = *enableMask & 0x7D;
-				else
-					DACSetupArray[1] = *enableMask | 0x02;
-				break;
-			case  VIOLET:
-				if(State==ON && open)
-					DACSetupArray[1] = *enableMask & 0x77;
-				else
-					DACSetupArray[1] = *enableMask | 0x08;
-				break;
-			case  CYAN:
-				if(State==ON && open)
-					DACSetupArray[1] = *enableMask & 0x7B;
-				else
-					DACSetupArray[1] = *enableMask | 0x04;
-				break;
-			case  BLUE:
-				if(State==ON && open)
-					DACSetupArray[1] = *enableMask & 0x5F;
-				else
-					DACSetupArray[1] = *enableMask | 0x20;
-				break;
-			case  TEAL:
-				if(State==ON && open)
-					DACSetupArray[1] = *enableMask & 0x3F;
-				else
-					DACSetupArray[1] = *enableMask | 0x40;
-				break;
-			case  YGFILTER:
-				if(State==ON && open)
-					DACSetupArray[1] = *enableMask & 0x6F;
-				else
-					DACSetupArray[1] = *enableMask | 0x10;
-				break;
-			case ALL:
-			case WHITE:
-            // XXX BUG: Why is this checking for the TEAL bit? It is switching
-            // only if TEAL is off...
-				if(State==ON && open)
-					DACSetupArray[1] = ((*enableMask & 0x40) == 0x40) ? 0x40 : 0x00;
-				else
-					DACSetupArray[1] = ((*enableMask & 0x40) == 0x40) ? 0x7F : 0xCF; // dont toggle YG filter if not needed
-				break;
-			case SHUTTER:
-				if(State== ON && open)
-				{
-					DACSetupArray[1] = *enableMask;  // set enabled channels on
-					// DACSetupArray[1] = 0x00 | (*enableMask & 0x10);  // Enable All Channels and YGFIlter if was on
-				}
-				else
-				{
-					if((*enableMask & 0x10) == 0x10){  //if YGFilter is disabled
-						DACSetupArray[1] = 0x7F; // all off
-					}
-					else {
-						DACSetupArray[1] = 0x6F; // all off except YGFilter so we dont toggle it
-					}
-				}
-			default:
-				break;		
-		}
-		if (lightEngine_ == Aura_Type)
-		{
-			// See Aura TTL IF Doc: Front Panel Control/DAC for more detail
-			// DACSetupArray[1] = DACSetupArray[1] | 0x20; // Mask for Aura to be sure DACs are Enabled
-			// Byte 1 bit 5 Selects either DAC or Pot control on the Aura so we want to set this
-			// to a zero for DAC control.
-			// Examples:
-			// 4f 70 50  sets Pot intensity control and all channels ON.
-			// 4F 50 50  sets DAC intensity control and all channels ON.
-			DACSetupArray[1] = DACSetupArray[1] & 0x5F; // Mask for Aura to be sure DACs are Enabled 
-		}
+   unsigned char previousEnableMask = enableMask_;
+   bool shutterOpen;
+   GetOpen(shutterOpen);
 
-		if(ColorName != SHUTTER) // shutter is a unique case were we dont want to change our mask
-		{
-			*enableMask = DACSetupArray[1]; // Sets the Mask to current state
-		}
-      if ( (ColorName == SHUTTER) || open_)
+   unsigned char previousShutteredEnableMask;
+   if (shutterOpen)
+      previousShutteredEnableMask = previousEnableMask;
+   else
+      previousShutteredEnableMask = SetAllOff(previousEnableMask, lightEngine_);
+
+   // The enableMask_ we will switch to (initialize to no change).
+   unsigned char newEnableMask = previousEnableMask;
+   // The actual (shuttered) device state we will switch to (initialize to no change).
+   unsigned char newShutteredEnableMask = previousShutteredEnableMask;
+
+   if (colorName == SHUTTER)
+   {
+      if (newState)
+         newShutteredEnableMask = newEnableMask;
+      else
+         newShutteredEnableMask = SetAllOff(newEnableMask, lightEngine_);
+   }
+   else if (colorName == WHITE || colorName == ALL)
+   {
+      newEnableMask = SetAll(previousEnableMask, lightEngine_, newState);
+      if (shutterOpen)
+         newShutteredEnableMask = newEnableMask;
+   }
+   else if (lightEngine_ != Sola_Type)
+   {
+      switch (colorName)
       {
-		   WriteToComPort(port_.c_str(),DACSetupArray, 3); // Write Event Data to device
+         case RED:
+            newEnableMask = SetBit(previousEnableMask, BIT_RED, newState);
+            break;
+         case GREEN:
+            newEnableMask = SetBit(previousEnableMask, BIT_GREEN, newState);
+            break;
+         case CYAN:
+            newEnableMask = SetBit(previousEnableMask, BIT_CYAN, newState);
+            break;
+         case VIOLET:
+            newEnableMask = SetBit(previousEnableMask, BIT_VIOLET, newState);
+            break;
+         case YGFILTER:
+            newEnableMask = SetBit(previousEnableMask, BIT_YG_FILTER, newState);
+            break;
+         case BLUE:
+            if (lightEngine_ != Aura_Type)
+               newEnableMask = SetBit(previousEnableMask, BIT_BLUE, newState);
+            break;
+         case TEAL:
+            if (lightEngine_ != Aura_Type)
+               newEnableMask = SetBit(previousEnableMask, BIT_TEAL, newState);
+            break;
       }
+      // We want the YG filter to switch even if the shutter is closed
+      if (shutterOpen || colorName == YGFILTER)
+         newShutteredEnableMask = newEnableMask;
+   }
 
-		// block/wait no acknowledge so just give it time                     
-		// CDeviceUtils::SleepMs(200);
-	}
-	return DEVICE_OK;  // debug only
+   enableMask_ = newEnableMask;
+
+   if (newShutteredEnableMask != previousShutteredEnableMask)
+   {
+      unsigned char command[] = { 0x4f, newShutteredEnableMask, 0x50 };
+      WriteToComPort(port_.c_str(), command, sizeof(command));
+   }
+
+   return DEVICE_OK;
 }
 
 // Lumencor Initialization Info
@@ -530,12 +567,12 @@ int Spectra::InitLE()
    unsigned char GPIO0to3[] = { 0x57, 0x02, 0xff, 0x50 };
    unsigned char GPIO5to7[] = { 0x57, 0x03, 0xab, 0x50 };
 
-   // Disable all colors:
-   unsigned char DACCtl[] = { 0x4f, 0x7f, 0x50 };
-   if(lightEngine_ == Aura_Type)
-   {
-      DACCtl[1] = 0x5f;  // set all off and Dac Control on if an Aura
-   }
+   // Initialize our channel mask: all channels off, except for the DAC
+   // computer control in the case of the Aura.
+   enableMask_ = InitialEnableMask(lightEngine_);
+
+   // Sync state to device:
+   unsigned char DACCtl[] = { 0x4f, enableMask_, 0x50 };
 
    int ret;
    ret = WriteToComPort(port_.c_str(), GPIO0to3, sizeof(GPIO0to3));
@@ -595,19 +632,20 @@ int Spectra::OnPort(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 int Spectra::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-   enum statevalue {open = 1, closed = 0};
    if (eAct == MM::BeforeGet)
-   {                                                                         
-      // instead of relying on stored state we could actually query the device
-      // pProp->Set((long)state_);
-   }                                                                         
+   {
+      bool open;
+      int ret = GetOpen(open);
+      if (ret != DEVICE_OK)
+         return ret;
+      pProp->Set(open ? 1L : 0L);
+      return DEVICE_OK;
+   }
    else if (eAct == MM::AfterSet)
    {
       long pos;
-	  pProp->Get(pos);
-      int ret = SetShutterPosition(pos == open ? open : closed);
-      if (ret != DEVICE_OK)
-         return ret;
+      pProp->Get(pos);
+      return SetOpen(pos != 0);
    }
    return DEVICE_OK;
 }
