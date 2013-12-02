@@ -20,20 +20,14 @@
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 
-#ifdef WIN32
-   #include <windows.h>
-   #define snprintf _snprintf 
-   #include <iostream>
-
-#endif
-
 #include "Spectra.h"
-#include <string>
-#include <math.h>
 
 #include "../../MMDevice/ModuleInterface.h"
 
-#include <sstream>
+#include <cstdlib> // atol()
+
+using namespace std;
+
 
 const char* g_LumencorController = "Lumencor";
 const char* g_Channel_1 =	"1";
@@ -44,7 +38,6 @@ const char* g_Sola = "Sola";
 const char* g_Spectra = "Spectra";
 const char* g_SpectraX = "SpectraX";
 
-using namespace std;
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -91,38 +84,7 @@ int ClearPort(MM::Device& device, MM::Core& core, std::string port)
    return DEVICE_OK;                                                           
 } 
  
-/****************************************************************************
-* DBGprintf
-*
-* This debugging function prints out a string to the debug output.
-* An optional set of substitutional parameters can be specified,
-* and the final output will be the processed result of these combined
-* with the format string, just like printf.  A newline is always
-* output after every call to this function.
-*
-* Arguments:
-*   LPTSTR fmt - Format string (printf style).
-*   ...        - Variable number of arguments.
-* Returns:
-*    VOID
-\****************************************************************************/
 
-#ifdef Win32
-void DbgPrintf(LPTSTR fmt,...    )
-{
-    va_list marker;
-    char szBuf[256];
- 
-    va_start(marker, fmt);
-    //wvsprintf(szBuf, fmt, marker);
-    //vswprintf(szBuf, fmt, marker);
-	vsprintf(szBuf, fmt, marker);
-	va_end(marker);
- 
-    //OutputDebugString(szBuf);
-    //OutputDebugString(TEXT("\r\n"));
-}
-#endif
 ///////////////////////////////////////////////////////////////////////////////
 // Lumencor
 
