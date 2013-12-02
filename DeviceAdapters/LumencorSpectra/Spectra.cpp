@@ -190,11 +190,13 @@ int Spectra::Initialize()
       pAct = new CPropertyAction(this,&Spectra::OnVioletValue);
       CreateProperty("Violet_Level", "100", MM::Integer, false, pAct, false);
 
-      pAct = new CPropertyAction(this,&Spectra::OnTealValue);
-      CreateProperty("Teal_Level",   "100", MM::Integer, false, pAct, false);
+      if (lightEngine_ != Aura_Type) {
+         pAct = new CPropertyAction(this,&Spectra::OnBlueValue);
+         CreateProperty("Blue_Level",   "100", MM::Integer, false, pAct, false);
 
-      pAct = new CPropertyAction(this,&Spectra::OnBlueValue);
-      CreateProperty("Blue_Level",   "100", MM::Integer, false, pAct, false);
+         pAct = new CPropertyAction(this,&Spectra::OnTealValue);
+         CreateProperty("Teal_Level",   "100", MM::Integer, false, pAct, false);
+      }
 
       //
       // Declare action functions for color Enable changes
@@ -211,11 +213,13 @@ int Spectra::Initialize()
       pAct = new CPropertyAction(this,&Spectra::OnVioletEnable);
       CreateProperty("Violet_Enable", "0", MM::Integer, false, pAct, false);
 
-      pAct = new CPropertyAction(this,&Spectra::OnTealEnable);
-      CreateProperty("Teal_Enable",   "0", MM::Integer, false, pAct, false);
+      if (lightEngine_ != Aura_Type) {
+         pAct = new CPropertyAction(this,&Spectra::OnBlueEnable);
+         CreateProperty("Blue_Enable",   "0", MM::Integer, false, pAct, false);
 
-      pAct = new CPropertyAction(this,&Spectra::OnBlueEnable);
-      CreateProperty("Blue_Enable",   "0", MM::Integer, false, pAct, false);
+         pAct = new CPropertyAction(this,&Spectra::OnTealEnable);
+         CreateProperty("Teal_Enable",   "0", MM::Integer, false, pAct, false);
+      }
 
 
       // Yellow Green Filter
@@ -228,22 +232,24 @@ int Spectra::Initialize()
       SetPropertyLimits("Green_Level",  0, 100);
       SetPropertyLimits("Cyan_Level",   0, 100);
       SetPropertyLimits("Violet_Level", 0, 100);
-      SetPropertyLimits("Teal_Level",   0, 100);
-      SetPropertyLimits("Blue_Level",   0, 100);
+      if (lightEngine_ != Aura_Type) {
+         SetPropertyLimits("Blue_Level",   0, 100);
+         SetPropertyLimits("Teal_Level",   0, 100);
+      }
 
       SetPropertyLimits("Red_Enable",    0, 1);
       SetPropertyLimits("Green_Enable",  0, 1);
       SetPropertyLimits("Cyan_Enable",   0, 1);
       SetPropertyLimits("Violet_Enable", 0, 1);
-      SetPropertyLimits("Teal_Enable",   0, 1);
-      SetPropertyLimits("Blue_Enable",   0, 1);
-
+      if (lightEngine_ != Aura_Type) {
+         SetPropertyLimits("Blue_Enable",   0, 1);
+         SetPropertyLimits("Teal_Enable",   0, 1);
+      }
    }
-   // ret = UpdateStatus();
-                                                                                                                                     
-   initialized_ = true;                                                      
-   return DEVICE_OK;                                                         
-}  
+
+   initialized_ = true;
+   return DEVICE_OK;
+}
 
 int Spectra::SetOpen(bool open)
 {  
