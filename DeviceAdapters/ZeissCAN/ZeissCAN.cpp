@@ -538,7 +538,14 @@ int ZeissScope::Initialize()
       if (ret != DEVICE_OK)
          ret = g_hub.GetVersion(*this, *GetCoreCallback(), version);
       if (DEVICE_OK != ret)
-         return ret;
+      {
+         // We have not detected the CAN microscope stand. However, there may
+         // be an MCU 28 connected directly to the computer.
+         int mcu28Status = GetMCU28Version(version);
+         if (mcu28Status != DEVICE_OK)
+            return ret;
+      }
+
       ret = CreateProperty("Microscope Version", version.c_str(), MM::String, true);
       if (DEVICE_OK != ret)
          return ret;
@@ -585,6 +592,27 @@ bool ZeissScope::IsMCU28Present()
       return true; // got the right answer
    else
       return false;
+}
+
+int ZeissScope::GetMCU28Version(std::string& ver)
+{
+   // get firmware info
+   const char * command = "NPTv0";
+   int ret = g_hub.ExecuteCommand(*this, *GetCoreCallback(),  command);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   // first two chars should read 'PN'
+   string response;
+   ret = g_hub.GetAnswer(*this, *GetCoreCallback(), response);
+   if (ret != DEVICE_OK)
+      return ret;
+   if (response.substr(0,2).compare("PN") == 0) 
+      ver = "Application version: " + response.substr(2);
+   else
+      return ERR_UNEXPECTED_ANSWER;
+
+   return DEVICE_OK;
 }
 
 MM::DeviceDetectionStatus ZeissScope::DetectDevice(void)

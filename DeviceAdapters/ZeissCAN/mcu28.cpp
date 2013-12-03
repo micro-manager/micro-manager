@@ -341,7 +341,7 @@ int XYStage::GetXYFirmwareVersion()
    if (ret != DEVICE_OK)
       return ret;
 
-   // first two chars should read 'PF'
+   // first two chars should read 'PN'
    string response;
    ret = g_hub.GetAnswer(*this, *GetCoreCallback(), response);
    if (ret != DEVICE_OK)
