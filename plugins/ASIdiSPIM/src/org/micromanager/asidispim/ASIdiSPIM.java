@@ -21,7 +21,6 @@
 
 package org.micromanager.asidispim;
 
-import mmcorej.CMMCore;
 import org.micromanager.api.MMPlugin;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.ReportingUtils;
@@ -30,14 +29,13 @@ import org.micromanager.utils.ReportingUtils;
 public class ASIdiSPIM implements MMPlugin {
    public static String menuName = "ASI diSPIM";
    public static String tooltipDescription = "Control the ASI diSPIM ";
-   private CMMCore core_;
+   
    private ScriptInterface gui_;
    private ASIdiSPIMFrame myFrame_;
 
     @Override
    public void setApp(ScriptInterface app) {
-      gui_ = app;                                        
-      core_ = app.getMMCore();
+      gui_ = app;     
      // if (myFrame_ == null) {
          try {
             myFrame_ = new ASIdiSPIMFrame(gui_);
