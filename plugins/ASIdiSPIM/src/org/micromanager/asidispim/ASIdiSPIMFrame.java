@@ -2,10 +2,13 @@
 package org.micromanager.asidispim;
 
 import java.awt.GridLayout;
+import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
+import mmcorej.CMMCore;
+import mmcorej.StrVector;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.api.MMListenerInterface;
 import org.micromanager.api.ScriptInterface;
@@ -18,6 +21,7 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
       implements MMListenerInterface {
    
    private ScriptInterface gui_;
+   private CMMCore core_;
    
    /**
     * Creates the ASIdiSPIM plugin frame
@@ -25,6 +29,7 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
     */
    public ASIdiSPIMFrame(ScriptInterface gui)  {
       gui_ = gui;
+      core_ = gui_.getMMCore();
       
       JTabbedPane tabbedPane = new JTabbedPane();
            
@@ -33,8 +38,15 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
               "[]15"));
       p1.add(new JLabel(" ", null, JLabel.CENTER));
       p1.add(new JLabel("Side A", null, JLabel.CENTER));
-      p1.add(new JLabel("Side B", null, JLabel.CENTER));
+      p1.add(new JLabel("Side B", null, JLabel.CENTER), "wrap");
+      
       p1.add(new JLabel("Camera: ", null, JLabel.RIGHT));
+      p1.add(makeDeviceBox(mmcorej.DeviceType.CameraDevice));
+      p1.add(makeDeviceBox(mmcorej.DeviceType.CameraDevice), "wrap");
+      
+      p1.add(new JLabel("Imaging Piezo: ", null, JLabel.RIGHT));
+      p1.add(makeDeviceBox(mmcorej.DeviceType.StageDevice));
+      p1.add(makeDeviceBox(mmcorej.DeviceType.StageDevice), "wrap");
       
       JComponent p2 = makeTextPanel("hello");
       
@@ -46,6 +58,15 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
       pack();
    }
    
+   
+   private JComboBox makeDeviceBox(mmcorej.DeviceType deviceType) {
+      StrVector strvDevices = core_.getLoadedDevicesOfType(deviceType);
+      String[] devices = strvDevices.toArray();
+      
+      JComboBox deviceBox = new JComboBox(devices);
+      
+      return deviceBox;
+   }
    
    protected JComponent makeTextPanel(String text) {
         JPanel panel = new JPanel(false);
