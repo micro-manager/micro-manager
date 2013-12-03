@@ -764,6 +764,11 @@ int ZeissScope::DetectInstalledDevices()
    std::map<int,std::string>& turrr = turretIDMap();
    std::map<int, std::string>::iterator iii;
 
+   // It is possible to use an MCU 28 XY stage connected directly to the computer.
+   // In that case, all checks for the other devices (with HP* commands) will
+   // time out, and we don't want to wait for all of them. So, we skip all of
+   // those checks in the case where the first one times out.
+   bool couldNotCommunicateWithStandDevice = false;
 
    for( iii = turrr.begin(); turrr.end() != iii; ++iii)
    {
@@ -777,28 +782,37 @@ int ZeissScope::DetectInstalledDevices()
                AddInstalledDevice(pDev);
          }
       }
+      else if (ret != ERR_UNEXPECTED_ANSWER) // Serial communication failed (e.g. timed out)
+      {
+         // Skip further checks for stand-attached devices
+         couldNotCommunicateWithStandDevice = true;
+         break;
+      }
    }
 
-   CreateAndAddDevice(g_ZeissHalogenLamp);
-
-   std::string response;
-   Query("HPCk1,0", response);
-   if (0 != response.compare("0"))
+   if (!couldNotCommunicateWithStandDevice)
    {
-      CreateAndAddDevice(g_ZeissShutter);
-   }
+      CreateAndAddDevice(g_ZeissHalogenLamp);
 
-   Query("HPCk1,0", response);
-   if (0 != response.compare("1F"))
-   {
-      CreateAndAddDevice(g_ZeissFocusName);
-   }
+      std::string response;
+      Query("HPCk1,0", response);
+      if (0 != response.compare("0"))
+      {
+         CreateAndAddDevice(g_ZeissShutter);
+      }
 
-   Query("HPCm1,0", response);
-   if (!(  (0 == response.compare("0"))
-           ||(0 == response.compare("55"))  ))
-   {
-      CreateAndAddDevice(g_ZeissShutter);
+      Query("HPCk1,0", response);
+      if (0 != response.compare("1F"))
+      {
+         CreateAndAddDevice(g_ZeissFocusName);
+      }
+
+      Query("HPCm1,0", response);
+      if (!(  (0 == response.compare("0"))
+              ||(0 == response.compare("55"))  ))
+      {
+         CreateAndAddDevice(g_ZeissShutter);
+      }
    }
 
    // finally check if MCU28 is installed
@@ -808,6 +822,7 @@ int ZeissScope::DetectInstalledDevices()
       if (pDev)
          AddInstalledDevice(pDev);
    }
+
    return DEVICE_OK;
 }
 
