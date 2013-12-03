@@ -11,6 +11,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import mmcorej.MMCoreJ;
 import mmcorej.TaggedImage;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.MMStudioMainFrame;
@@ -33,8 +34,8 @@ public class DynamicStitchingImageStorage {
     private JSONObject summaryMetadata_;
     private int numPositions_, width_, height_, tileWidth_, tileHeight_;
     private boolean invertX_, invertY_, swapXandY_;
-    private int tilesPerRow_, tilesPerColumn_;
     private TreeSet<String> imageKeys_;
+    private JSONArray positionList_;
 
     public DynamicStitchingImageStorage(JSONObject summaryMetadata, String savingDir) {
         imageKeys_ = new TreeSet<String>();
@@ -57,15 +58,22 @@ public class DynamicStitchingImageStorage {
 
 
         try {
-            //TODO: change this to read position coordinates from metadata
-            tilesPerRow_ = MMStudioMainFrame.getInstance().getPositionList().getPosition(0).getGridRow();
-            tilesPerColumn_ = MMStudioMainFrame.getInstance().getPositionList().getPosition(0).getGridColumn();
-            numPositions_ = tilesPerRow_ * tilesPerColumn_;
-            ////////////////////////////////////////////////////
+            positionList_ = summaryMetadata.getJSONArray("InitialPositionList");
+            int numRows = 0, numCols = 0;
+            for (int i = 0; i < positionList_.length(); i++) {
+                long colInd = positionList_.getJSONObject(i).getLong("GridColumnIndex");
+                long rowInd = positionList_.getJSONObject(i).getLong("GridRowIndex");
+                if (colInd >= numCols) {
+                    numCols = (int) (colInd + 1) ;
+                }
+                if (rowInd >= numRows) {
+                    numRows = (int) (rowInd + 1);
+                }
+            }
             tileHeight_ = MDUtils.getHeight(summaryMetadata);
             tileWidth_ = MDUtils.getWidth(summaryMetadata);
-            height_ = tilesPerColumn_ * tileHeight_;
-            width_ = tilesPerRow_ * tileWidth_;
+            height_ = numCols * tileHeight_;
+            width_ = numRows * tileWidth_;
             //change summary metadata fields
             summaryMetadata_.put("Positions", 1);
             summaryMetadata_.put("Width", width_);
@@ -101,19 +109,16 @@ public class DynamicStitchingImageStorage {
          TaggedImage tile = storage_.getImage(channelIndex, sliceIndex, frameIndex, positionIndex);
          if (tile != null) {
             tags = tile.tags;
-            int xTileIndex = positionIndex % tilesPerRow_;
-            int yTileIndex = positionIndex / tilesPerRow_;
-            if (swapXandY_) {
-               int temp = xTileIndex;
-               xTileIndex = yTileIndex;
-               yTileIndex = temp;
-            }
-            if (invertX_) {
-               xTileIndex = tilesPerRow_ - xTileIndex - 1;
-            }
-            if (invertY_) {
-               yTileIndex = tilesPerColumn_ - yTileIndex - 1;
-            }
+            JSONObject posInfo;
+            int xTileIndex = 0, yTileIndex = 0;
+             try {
+                 posInfo = positionList_.getJSONObject(positionIndex);
+                 xTileIndex = (int) posInfo.getLong("GridColumnIndex");
+                 yTileIndex = (int) posInfo.getLong("GridRowIndex");
+             } catch (JSONException ex) {
+                 ReportingUtils.showError("Couldnt find tile indices");
+             }
+      
             for (int y = 0; y < tileHeight_; y++) {
                int destinationIndex = width_ * (tileHeight_ * yTileIndex + y) + xTileIndex * tileWidth_;
                System.arraycopy(tile.pix, y * tileWidth_, pixels, destinationIndex, tileWidth_);

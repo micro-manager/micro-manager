@@ -762,24 +762,34 @@ private JCheckBox drawGrid_, drawPosNames_;
       
       long height = gui.getCore().getImageHeight();
       long width = gui.getCore().getImageWidth();
-
-      //get image stage offset in degrees
+ //get image stage offset in degrees
       double theta = prefs_.getDouble(SettingsDialog.STAGE_IMAGE_ANGLE_OFFSET, 0.0) / 360.0 * 2 * Math.PI;
+      
       ArrayList<MultiStagePosition> positions = new ArrayList<MultiStagePosition>();
-      for (int gridX = 0; gridX < xSize; gridX++) {
-         double xDistFromCenter =  (gridX - (xSize - 1) / 2.0) * (width - pixelOverlapX) * pixSize;
-         for (int gridY = 0; gridY < ySize; gridY++) {
-            double yDistFromCenter =  (gridY - (ySize - 1) / 2.0) * (height - pixelOverlapY) * pixSize;
+      for (int xIndex = 0; xIndex < xSize; xIndex++) {
+         double xDistFromCenter =  (xIndex - (xSize - 1) / 2.0) * (width - pixelOverlapX) * pixSize;
+         for (int yIndex = 0; yIndex < ySize; yIndex++) {
+            double yDistFromCenter =  (yIndex - (ySize - 1) / 2.0) * (height - pixelOverlapY) * pixSize;
             //account for angle between stage axes and image axes
-            double xPos = xCenter - Math.cos(theta) * xDistFromCenter 
-                    +  Math.sin(theta) * yDistFromCenter;
-            double yPos = yCenter +  Math.sin(theta) * xDistFromCenter 
-                    +  Math.cos(theta) * yDistFromCenter;
+            double xPos, yPos;
+             if (swapXY) {
+                 //if axes swapped apply invertX and invertY to opposite
+                  xPos = xCenter + (invertY ? -1 : 1)* Math.cos(theta) * xDistFromCenter + 
+                         (invertX ? -1 : 1)* Math.sin(theta) * yDistFromCenter;
+                  yPos = yCenter + (invertY ? -1 : 1)* Math.sin(theta) * xDistFromCenter + 
+                         (invertX ? -1 : 1)* Math.cos(theta) * yDistFromCenter;
+             } else {
+                  xPos = xCenter + (invertX ? -1 : 1) * Math.cos(theta) * xDistFromCenter
+                         + (invertY ? -1 : 1) * Math.sin(theta) * yDistFromCenter;
+                  yPos = yCenter + (invertX ? -1 : 1) * Math.sin(theta) * xDistFromCenter
+                         + (invertY ? -1 : 1)* Math.cos(theta) * yDistFromCenter;
+             }
             
             MultiStagePosition mpl = new MultiStagePosition();
             StagePosition sp = new StagePosition();
             sp.numAxes = 2;
             sp.stageName = gui.getCore().getXYStageDevice();
+            //Only effect of swapping x and y should be telling the stage coordinates and reading them out
             if (swapXY) {
                sp.y = xPos;
                sp.x = yPos;
@@ -788,11 +798,12 @@ private JCheckBox drawGrid_, drawPosNames_;
                sp.y = yPos;
             }
             mpl.add(sp);
-            int col = gridX;
-            int row = gridY;
+            int col = xIndex;
+            int row = yIndex;
+            //label should be Grid_(x index of tile)_(y index of tile)
             String lab = new String("Grid_" + row + "_" + col);
             mpl.setLabel(lab);
-            mpl.setGridCoordinates(xSize, ySize);
+            mpl.setGridCoordinates(yIndex, xIndex);
             positions.add(mpl);
          }
       }
