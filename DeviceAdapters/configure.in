@@ -181,6 +181,23 @@ else
    AC_MSG_RESULT([not found])
 fi
 
+
+
+# check for IDS_uEye header file and library
+AC_MSG_CHECKING(for IDS_uEye header file and library)
+AC_CHECK_HEADERS(ueye.h,
+	[AC_CHECK_LIB(ueye_api,is_GetDLLVersion,IDSUEYE_PRESENT=true,IDSUEYE_PRESENT=false)],
+	IDSUEYE_PRESENT=false)
+AM_CONDITIONAL(BUILD_IDSUEYE, $IDSUEYE_PRESENT)
+
+if [$IDSUEYE_PRESENT]; then
+   AC_MSG_NOTICE([IDS_uEye present])
+else
+   AC_MSG_NOTICE([IDS_uEye not present])
+fi
+
+
+
 PKG_PROG_PKG_CONFIG
 PKG_CHECK_MODULES([GPHOTO2], [libgphoto2 >= 2.5.1], [have_libgphoto2=yes], [have_libgphoto2=no])
 
@@ -391,6 +408,7 @@ AC_CONFIG_FILES(
 	[DemoCamera/Makefile:DemoCamera/Makefile.in:MMDEVAPI.rules]
 	[FreeSerialPort/Makefile:FreeSerialPort/Makefile.in:MMDEVAPI.rules]
 	[FocalPoint/Makefile:FocalPoint/Makefile.in:MMDEVAPI.rules]
+	[IDS_uEye/Makefile:IDS_uEye/Makefile.in:MMDEVAPI.rules]
 	[ITC18/Makefile:ITC18/Makefile.in:MMDEVAPI.rules]
 	[ImageProcessorChain/Makefile:ImageProcessorChain/Makefile.in:MMDEVAPI.rules]
 	[K8055/Makefile:K8055/Makefile.in:MMDEVAPI.rules]
