@@ -30,17 +30,22 @@ package org.micromanager.api;
    public interface MMPlugin {
    
    /**
-	 * The menu name is stored in a static string, so Micro-Manager
-	 * can obtain it without instantiating the plugin
-	 */
-   public static String menuName = null;
-
-   /*
+    * The menu name is stored in a static string, so Micro-Manager
+    * can obtain it without instantiating the plugin
+    * Implement this member in your plugin
+	 
+      public static String menuName;
+     
+   */
+      
+   /**
     * A tool-tip description can also be in a static string. This tool-tip
     * will appear on the Micro-Manager plugin menu item.
-    */
-   public static String tooltipDescription = null;
-	
+    * Implement this member in your plugin
+   
+        public static String tooltipDescription = null;
+   */
+      
    /**
     * The main app calls this method to remove the module window
     */
