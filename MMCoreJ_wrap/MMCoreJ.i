@@ -320,9 +320,12 @@
    return $null;
 }
 
-%typemap(javabase) CMMError "java.lang.Exception"
-//%typemap(javabase) MetadataKeyError "java.lang.Exception"
-//%typemap(javabase) MetadataIndexError "java.lang.Exception"
+// We've translated exceptions to java.lang.Exception, so don't wrap the unused
+// C++ exception classes.
+%ignore CMMError;
+%ignore MetadataKeyError;
+%ignore MetadataIndexError;
+
 
 %typemap(javaimports) CMMCore %{
    import org.json.JSONObject;
@@ -511,24 +514,6 @@
 %}
 
 
-%typemap(javacode) CMMError %{
-   public String getMessage() {
-      return getMsg();
-   }
-%}
-
-%typemap(javacode) MetadataKeyError %{
-   public String getMessage() {
-      return getMsg();
-   }
-%}
-
-%typemap(javacode) MetadataIndexError %{
-   public String getMessage() {
-      return getMsg();
-   }
-%}
-
 %pragma(java) jniclassimports=%{
    import java.io.File;
 
@@ -619,7 +604,6 @@
 
 %{
 #include "../MMDevice/MMDeviceConstants.h"
-#include "../MMCore/Error.h"
 #include "../MMCore/Configuration.h"
 #include "../MMDevice/ImageMetadata.h"
 #include "../MMCore/MMEventCallback.h"
@@ -750,7 +734,6 @@ namespace std {
 
 
 %include "../MMDevice/MMDeviceConstants.h"
-%include "../MMCore/Error.h"
 %include "../MMCore/Configuration.h"
 %include "../MMCore/MMCore.h"
 %include "../MMDevice/ImageMetadata.h"
