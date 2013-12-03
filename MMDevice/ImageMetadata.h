@@ -29,6 +29,8 @@
 #pragma warning( disable : 4290 )
 #endif
 
+#include "MMDeviceConstants.h"
+
 #include <string>
 #include <vector>
 #include <map>
