@@ -6,16 +6,17 @@ package com.imaging100x.twophoton;
 
 import ij.ImageListener;
 import ij.ImagePlus;
-import ij.gui.*;
+import ij.gui.ImageCanvas;
+import ij.gui.ImageWindow;
+import ij.gui.Line;
+import ij.gui.Overlay;
+import ij.gui.TextRoi;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Point;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedList;
-import java.util.TreeSet;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 import mmcorej.MMCoreJ;
 import mmcorej.TaggedImage;
@@ -24,8 +25,12 @@ import org.json.JSONObject;
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.acquisition.VirtualAcquisitionDisplay;
 import org.micromanager.api.ImageCache;
-import org.micromanager.api.ScriptInterface;
-import org.micromanager.utils.*;
+import org.micromanager.utils.GUIUtils;
+import org.micromanager.utils.MDUtils;
+import org.micromanager.utils.MMScriptException;
+import org.micromanager.utils.ReportingUtils;
+
+
 
 /**
  *

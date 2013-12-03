@@ -9,12 +9,22 @@ import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.prefs.Preferences;
-import javax.swing.*;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JSpinner;
+import javax.swing.JTextField;
+import javax.swing.SpinnerNumberModel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import org.micromanager.utils.ReportingUtils;
+
+
 
 /**
  *
@@ -26,6 +36,7 @@ public class SettingsDialog extends JDialog {
    static public final String REAL_TIME_STITCH = "Realtimestitching";
    static public final String STITCHED_DATA_DIRECTORY = "Stitched data location";
    static public final String FREE_GB__MIN_IN_STITCHED_DATA = "Free GB minimum in stitched data dir";
+   static public final String CREATE_IMS_FILE = "Create Imaris file";
    
    
    public SettingsDialog(final Preferences prefs) {
@@ -54,6 +65,12 @@ public class SettingsDialog extends JDialog {
             ReportingUtils.showMessage("Restart Micro-Manager for changes to take effect");
          }
       });
+      
+      JPanel rowskis = new JPanel (new FlowLayout(FlowLayout.LEFT));
+      final JCheckBox saveIMS = new JCheckBox("Create Imaris file during acquisition");
+      rowskis.add(saveIMS);
+      saveIMS.setSelected(prefs.getBoolean(CREATE_IMS_FILE, false));
+      panel.add(rowskis);
       
       
       JPanel row3 = new JPanel(new FlowLayout(FlowLayout.LEFT));
@@ -90,6 +107,7 @@ public class SettingsDialog extends JDialog {
             prefs.put(STITCHED_DATA_DIRECTORY, location.getText());
             prefs.putInt(FREE_GB__MIN_IN_STITCHED_DATA, (Integer) freeGig.getValue());
             prefs.putDouble(STAGE_IMAGE_ANGLE_OFFSET, (Double) theta.getValue());
+            prefs.putBoolean(CREATE_IMS_FILE, saveIMS.isSelected());
          }
       };
       realTimeStitch.addActionListener(saveSettings);
@@ -121,6 +139,7 @@ public class SettingsDialog extends JDialog {
             saveSettings.actionPerformed(null);
          }
       });
+      saveIMS.addActionListener(saveSettings);
       
       this.pack();
       this.setTitle("Settings");

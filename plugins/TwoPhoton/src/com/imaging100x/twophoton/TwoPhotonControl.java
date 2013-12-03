@@ -27,11 +27,16 @@
 
 package com.imaging100x.twophoton;
 
-//import MMCustomization.AcquisitionWrapperEngineAdapter;
+import MMCustomization.AcquisitionWrapperEngineAdapter;
 import ij.ImagePlus;
 import ij.WindowManager;
 import ij.gui.ImageWindow;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Font;
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
@@ -45,23 +50,43 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.prefs.Preferences;
-
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.BoxLayout;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JFileChooser;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JSpinner;
+import javax.swing.JTable;
+import javax.swing.ScrollPaneConstants;
+import javax.swing.SpinnerNumberModel;
 import javax.swing.border.Border;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.table.TableColumn;
-
 import mmcorej.CMMCore;
 import mmcorej.MMCoreJ;
 import mmcorej.StrVector;
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.acquisition.ComponentTitledBorder;
 import org.micromanager.acquisition.VirtualAcquisitionDisplay;
-import org.micromanager.api.*;
-import org.micromanager.navigation.MultiStagePosition;
-import org.micromanager.navigation.PositionList;
-import org.micromanager.navigation.StagePosition;
-import org.micromanager.utils.*;
+import org.micromanager.api.MMPlugin;
+import org.micromanager.api.MultiStagePosition;
+import org.micromanager.api.PositionList;
+import org.micromanager.api.ScriptInterface;
+import org.micromanager.api.StagePosition;
+import org.micromanager.utils.GUIUtils;
+import org.micromanager.utils.ImageFocusListener;
+import org.micromanager.utils.MMFrame;
+import org.micromanager.utils.MMScriptException;
+import org.micromanager.utils.ProgressBar;
+import org.micromanager.utils.ReportingUtils;
+
+
 
 public class TwoPhotonControl extends MMFrame implements MMPlugin, KeyListener, 
          ImageFocusListener {
@@ -75,7 +100,7 @@ public class TwoPhotonControl extends MMFrame implements MMPlugin, KeyListener,
    public static String Z_STAGE = "Z";
    public static String RESOLUTION = "Objective Res";
 
-   public static final String menuName = "100X | 2Photon....";
+   public static final String menuName = "100X | 2Photon";
    public static final String tooltipDescription = "2Photon control panel";
 
    
@@ -165,7 +190,7 @@ private JCheckBox drawGrid_, drawPosNames_;
     */
    public TwoPhotonControl() {
        super();
-      
+ 
       setLocation(-3, -31);
 
       // load preferences
@@ -247,16 +272,16 @@ private JCheckBox drawGrid_, drawPosNames_;
 
       GUIUtils.registerImageFocusListener(this);
       
-//      if (prefs_.getBoolean(SettingsDialog.REAL_TIME_STITCH, false)) {          
-//         clearSpaceInStitchingCache();
-//         try {
-//            new AcquisitionWrapperEngineAdapter(getDepthListRunnable(),prefs_);
-//         } catch (NoSuchFieldException ex) {
-//            ReportingUtils.showError("Couldn't substitute acquisition engine");
-//         }
-//      } else {
+      if (prefs_.getBoolean(SettingsDialog.REAL_TIME_STITCH, false)) {          
+         clearSpaceInIMSFileCache();
+         try {
+            new AcquisitionWrapperEngineAdapter(getDepthListRunnable(),prefs_);
+         } catch (NoSuchFieldException ex) {
+            ReportingUtils.showError("Couldn't substitute acquisition engine");
+         }
+      } else {
          MMStudioMainFrame.getInstance().getAcquisitionEngine().attachRunnable(-1, -1, -1, -1, getDepthListRunnable());
-//      }
+      }
    }
 
    public static void updateHDFQueueSize(int n) {
@@ -537,7 +562,7 @@ private JCheckBox drawGrid_, drawPosNames_;
       windowsToStitchCombo_.setSelectedIndex(names.length - 1);
    }
    
-   private void clearSpaceInStitchingCache() {
+   private void clearSpaceInIMSFileCache() {
       new Thread(new Runnable() {
          @Override
          public void run() {
