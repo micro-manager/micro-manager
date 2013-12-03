@@ -1,3 +1,24 @@
+///////////////////////////////////////////////////////////////////////////////
+//FILE:          ASIdiSPIM.java
+//PROJECT:       Micro-Manager 
+//SUBSYSTEM:     ASIdiSPIM plugin
+//-----------------------------------------------------------------------------
+//
+// AUTHOR:       Nico Stuurman, Jon Daniels
+//
+// COPYRIGHT:    University of California, San Francisco, & ASI, 2013
+//
+// LICENSE:      This file is distributed under the BSD license.
+//               License text is included with the source distribution.
+//
+//               This file is distributed in the hope that it will be useful,
+//               but WITHOUT ANY WARRANTY; without even the implied warranty
+//               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+//               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+
 package org.micromanager.asidispim;
 
 import mmcorej.CMMCore;
@@ -20,6 +41,7 @@ public class ASIdiSPIM implements MMPlugin {
      // if (myFrame_ == null) {
          try {
             myFrame_ = new ASIdiSPIMFrame(gui_);
+            myFrame_.setBackground(gui_.getBackgroundColor());
             gui_.addMMListener(myFrame_);
             gui_.addMMBackgroundListener(myFrame_);
          } catch (Exception e) {
@@ -31,8 +53,8 @@ public class ASIdiSPIM implements MMPlugin {
 
     @Override
    public void dispose() {
-      //if (myFrame_ != null)
-         //myFrame_.safePrefs();
+      if (myFrame_ != null)
+         myFrame_.dispose();
    }
 
     @Override
