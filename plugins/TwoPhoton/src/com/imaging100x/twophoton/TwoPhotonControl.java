@@ -759,11 +759,13 @@ private JCheckBox drawGrid_, drawPosNames_;
  //get image stage offset in degrees
       double theta = prefs_.getDouble(SettingsDialog.STAGE_IMAGE_ANGLE_OFFSET, 0.0) / 360.0 * 2 * Math.PI;
       
+      //Y axis --> more positive stage coordinate = up on image
+      //X axis --> more positive stage coordinate = right on image
       ArrayList<MultiStagePosition> positions = new ArrayList<MultiStagePosition>();
       for (int xIndex = 0; xIndex < xSize; xIndex++) {
          double xDistFromCenter =  (xIndex - (xSize - 1) / 2.0) * (width - pixelOverlapX) * pixSize;
          for (int yIndex = 0; yIndex < ySize; yIndex++) {
-            double yDistFromCenter =  (yIndex - (ySize - 1) / 2.0) * (height - pixelOverlapY) * pixSize;
+            double yDistFromCenter =  - (yIndex - (ySize - 1) / 2.0) * (height - pixelOverlapY) * pixSize;
             //account for angle between stage axes and image axes
             double xPos, yPos;
              if (swapXY) {
@@ -792,8 +794,14 @@ private JCheckBox drawGrid_, drawPosNames_;
                sp.y = yPos;
             }
             mpl.add(sp);
-            int col = xIndex;
-            int row = yIndex;
+            int col =0, row = 0;
+            if (swapXY) {
+                row = invertY ? xSize - xIndex - 1 : xIndex;
+                col = invertX ? ySize - yIndex - 1 : yIndex;
+            } else {
+                col = invertX ? xSize - xIndex - 1 : xIndex;
+                row = invertY ? ySize - yIndex - 1 : yIndex;
+            }
             //label should be Grid_(x index of tile)_(y index of tile)
             String lab = new String("Grid_" + row + "_" + col);
             mpl.setLabel(lab);
