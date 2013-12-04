@@ -6,8 +6,14 @@
 //
 // COPYRIGHT:     University of California, San Francisco, 2013.
 //
-// LICENSE:       This file is distributed under the BSD license.
-//                License text is included with the source distribution.
+// LICENSE:       This library is free software; you can redistribute it and/or
+//                modify it under the terms of the GNU Lesser General Public
+//                License as published by the Free Software Foundation.
+//
+//                You should have received a copy of the GNU Lesser General Public
+//                License along with the source distribution; if not, write to
+//                the Free Software Foundation, Inc., 59 Temple Place, Suite 330,
+//                Boston, MA  02111-1307  USA
 //
 //                This file is distributed in the hope that it will be useful,
 //                but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -16,6 +22,8 @@
 //                IN NO EVENT SHALL THE COPYRIGHT OWNER OR
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+//
+// AUTHOR:        Mark Tsuchida
 
 #include "Logger.h"
 
