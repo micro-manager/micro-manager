@@ -21,7 +21,6 @@
 
 package org.micromanager.asidispim;
 
-import edu.valelab.GaussianFit.utils.ReportingUtils;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -35,6 +34,7 @@ import mmcorej.CMMCore;
 import mmcorej.StrVector;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.api.ScriptInterface;
+import org.micromanager.utils.ReportingUtils;
 
 /**
  * Draws the Devices tab in the ASI diSPIM GUI
