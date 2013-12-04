@@ -130,6 +130,7 @@ int CFWheel::Initialize()
    AddAllowedValue(g_SaveSettingsPropertyName, g_SaveSettingsY);
    AddAllowedValue(g_SaveSettingsPropertyName, g_SaveSettingsZ);
    AddAllowedValue(g_SaveSettingsPropertyName, g_SaveSettingsOrig);
+   AddAllowedValue(g_SaveSettingsPropertyName, g_SaveSettingsDone);
 
    // get current position and cache in curPosition_
    RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify("MP", "MP ", g_SerialTerminatorFW) );
@@ -244,13 +245,16 @@ int CFWheel::OnSaveCardSettings(MM::PropertyBase* pProp, MM::ActionType eAct)
       pProp->Get(tmpstr);
       if (tmpstr.compare(g_SaveSettingsOrig) == 0)
          return DEVICE_OK;
+      if (tmpstr.compare(g_SaveSettingsDone) == 0)
+         return DEVICE_OK;
       if (tmpstr.compare(g_SaveSettingsX) == 0)
          command << "RD";
       else if (tmpstr.compare(g_SaveSettingsY) == 0)
          command << "RR";
       else if (tmpstr.compare(g_SaveSettingsZ) == 0)
          command << "RW";
-      RETURN_ON_MM_ERROR ( hub_->QueryCommand(command.str(), g_SerialTerminatorFW) );
+      RETURN_ON_MM_ERROR ( hub_->QueryCommand(command.str(), g_SerialTerminatorFW, (long)200) );  // note added 200ms delay
+      pProp->Set(g_SaveSettingsDone);
    }
    return DEVICE_OK;
 }

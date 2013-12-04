@@ -132,6 +132,7 @@ int CMMirror::Initialize()
    AddAllowedValue(g_SaveSettingsPropertyName, g_SaveSettingsY);
    AddAllowedValue(g_SaveSettingsPropertyName, g_SaveSettingsZ);
    AddAllowedValue(g_SaveSettingsPropertyName, g_SaveSettingsOrig);
+   AddAllowedValue(g_SaveSettingsPropertyName, g_SaveSettingsDone);
 
    // upper and lower limits (SU and SL) (limits not as useful for micromirror as for stage but they work)
    pAct = new CPropertyAction (this, &CMMirror::OnLowerLimX);
@@ -151,8 +152,8 @@ int CMMirror::Initialize()
    pAct = new CPropertyAction (this, &CMMirror::OnMode);
    CreateProperty(g_MMirrorModePropertyName, "0", MM::String, false, pAct);
    UpdateProperty(g_MMirrorModePropertyName);
-   AddAllowedValue(g_MMirrorModePropertyName, g_MMirrorMode_0);
-   AddAllowedValue(g_MMirrorModePropertyName, g_MMirrorMode_1);
+   AddAllowedValue(g_MMirrorModePropertyName, g_MMirrorMode_internal);
+   AddAllowedValue(g_MMirrorModePropertyName, g_MMirrorMode_external);
 
    // filter cut-off frequency
    // decided to implement separately for X and Y axes so can have one fast and other slow
@@ -409,13 +410,16 @@ int CMMirror::OnSaveCardSettings(MM::PropertyBase* pProp, MM::ActionType eAct)
       pProp->Get(tmpstr);
       if (tmpstr.compare(g_SaveSettingsOrig) == 0)
          return DEVICE_OK;
+      if (tmpstr.compare(g_SaveSettingsDone) == 0)
+         return DEVICE_OK;
       if (tmpstr.compare(g_SaveSettingsX) == 0)
          command << 'X';
       else if (tmpstr.compare(g_SaveSettingsY) == 0)
          command << 'X';
       else if (tmpstr.compare(g_SaveSettingsZ) == 0)
          command << 'Z';
-      RETURN_ON_MM_ERROR (hub_->QueryCommandVerify(command.str(), ":A"));
+      RETURN_ON_MM_ERROR (hub_->QueryCommandVerify(command.str(), ":A", (long)200));  // note 200ms delay added
+      pProp->Set(g_SaveSettingsDone);
    }
    return DEVICE_OK;
 }
@@ -541,16 +545,37 @@ int CMMirror::OnMode(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       if (!refreshProps_ && initialized_)
          return DEVICE_OK;
-      command << "MA " << axisLetterX_ << "?";
-      ostringstream response; response.str(""); response << ":A " << axisLetterX_ << "=";
+      ostringstream response; response.str("");
+      if (firmwareVersion_ > 2.7)
+      {
+         command << "PM " << axisLetterX_ << "?";
+         response << axisLetterX_ << "=";
+      }
+      else
+      {
+         command << "MA " << axisLetterX_ << "?";
+         response << ":A " << axisLetterX_ << "=";
+      }
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
       tmp = (long) hub_->ParseAnswerAfterEquals();
       bool success = 0;
-      switch (tmp)
+      if (firmwareVersion_ > 2.7)  // using PM command
       {
-         case 0: success = pProp->Set(g_MMirrorMode_0); break;
-         case 1: success = pProp->Set(g_MMirrorMode_1); break;
-         default: success = 0;                        break;
+         switch (tmp)
+         {
+            case 0: success = pProp->Set(g_MMirrorMode_internal); break;
+            case 1: success = pProp->Set(g_MMirrorMode_external); break;
+            default: success = 0;                        break;
+         }
+      }
+      else
+      {
+         switch (tmp)
+         {
+            case 0: success = pProp->Set(g_MMirrorMode_external); break;
+            case 1: success = pProp->Set(g_MMirrorMode_internal); break;
+            default: success = 0;                        break;
+         }
       }
       if (!success)
          return DEVICE_INVALID_PROPERTY_VALUE;
@@ -558,14 +583,28 @@ int CMMirror::OnMode(MM::PropertyBase* pProp, MM::ActionType eAct)
    else if (eAct == MM::AfterSet) {
       string tmpstr;
       pProp->Get(tmpstr);
-      if (tmpstr.compare(g_MMirrorMode_0) == 0)
-         tmp = 0;
-      else if (tmpstr.compare(g_MMirrorMode_1) == 0)
-         tmp = 1;
+      if (firmwareVersion_ > 2.7)  // using PM command
+      {
+         if (tmpstr.compare(g_MMirrorMode_internal) == 0)
+            tmp = 0;
+         else if (tmpstr.compare(g_MMirrorMode_external) == 0)
+            tmp = 1;
+         else
+            return DEVICE_INVALID_PROPERTY_VALUE;
+         command << "PM " << axisLetterX_ << "=" << tmp << " " << axisLetterY_ << "=" << tmp;
+         RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+      }
       else
-         return DEVICE_INVALID_PROPERTY_VALUE;
-      command << "MA " << axisLetterX_ << "=" << tmp << " " << axisLetterY_ << "=" << tmp;
-      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+      {
+         if (tmpstr.compare(g_MMirrorMode_external) == 0)
+            tmp = 0;
+         else if (tmpstr.compare(g_MMirrorMode_internal) == 0)
+            tmp = 1;
+         else
+            return DEVICE_INVALID_PROPERTY_VALUE;
+         command << "MA " << axisLetterX_ << "=" << tmp << " " << axisLetterY_ << "=" << tmp;
+         RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+      }
    }
    return DEVICE_OK;
 }

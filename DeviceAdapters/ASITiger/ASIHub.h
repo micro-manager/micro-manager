@@ -54,20 +54,29 @@ public:
 	int SendCommand(const char *command);
    int SendCommand(const string &command) { return SendCommand(command.c_str()); }
 
-   // QueryCommand also gets the response (optional 2nd parameter is the response's termination string)
-   int QueryCommand(const char *command, const char *replyTerminator); // all variants call this
-   int QueryCommand(const char *command) { return QueryCommand(command, g_SerialTerminatorDefault); }
-   int QueryCommand(const string &command) { return QueryCommand(command.c_str(), g_SerialTerminatorDefault); }
-   int QueryCommand(const string &command, const string &replyTerminator) { return QueryCommand(command.c_str(), replyTerminator.c_str()); }
+   // QueryCommand also gets the response (optional 2nd parameter is the response's termination string) (optional 3rd parameter is delay between sending and reading response)
+   int QueryCommand(const char *command, const char *replyTerminator, const long delayMs); // all variants call this
+   int QueryCommand(const char *command) { return QueryCommand(command, g_SerialTerminatorDefault, (long)0); }
+   int QueryCommand(const string &command) { return QueryCommand(command.c_str(), g_SerialTerminatorDefault, (long)0); }
+   int QueryCommand(const string &command, const string &replyTerminator) { return QueryCommand(command.c_str(), replyTerminator.c_str(), (long)0); }
+   int QueryCommand(const char *command, const long delayMs) { return QueryCommand(command, g_SerialTerminatorDefault, delayMs); }
+   int QueryCommand(const string &command, const long delayMs) { return QueryCommand(command.c_str(), g_SerialTerminatorDefault, delayMs); }
+   int QueryCommand(const string &command, const string &replyTerminator, const long delayMs) { return QueryCommand(command.c_str(), replyTerminator.c_str(), delayMs); }
 
    // QueryCommandVerify gets the response and makes sure the first characters match expectedReplyPrefix
-   int QueryCommandVerify(const char *command, const char *expectedReplyPrefix, const char *replyTerminator); // all variants call this
+   int QueryCommandVerify(const char *command, const char *expectedReplyPrefix, const char *replyTerminator, const long delayMs); // all variants call this
    int QueryCommandVerify(const char *command, const char *expectedReplyPrefix)
-      { return QueryCommandVerify(command, expectedReplyPrefix, g_SerialTerminatorDefault); }
+      { return QueryCommandVerify(command, expectedReplyPrefix, g_SerialTerminatorDefault, (long)0); }
    int QueryCommandVerify(const string &command, const string &expectedReplyPrefix)
-      { return QueryCommandVerify(command.c_str(), expectedReplyPrefix.c_str(), g_SerialTerminatorDefault); }
+      { return QueryCommandVerify(command.c_str(), expectedReplyPrefix.c_str(), g_SerialTerminatorDefault, (long)0); }
    int QueryCommandVerify(const string &command, const string &expectedReplyPrefix, const string &replyTerminator)
-      { return QueryCommandVerify(command.c_str(), expectedReplyPrefix.c_str(), replyTerminator.c_str()); }
+      { return QueryCommandVerify(command.c_str(), expectedReplyPrefix.c_str(), replyTerminator.c_str(), (long)0); }
+   int QueryCommandVerify(const char *command, const char *expectedReplyPrefix, const long delayMs)
+      { return QueryCommandVerify(command, expectedReplyPrefix, g_SerialTerminatorDefault, delayMs); }
+   int QueryCommandVerify(const string &command, const string &expectedReplyPrefix, const long delayMs)
+      { return QueryCommandVerify(command.c_str(), expectedReplyPrefix.c_str(), g_SerialTerminatorDefault, delayMs); }
+   int QueryCommandVerify(const string &command, const string &expectedReplyPrefix, const string &replyTerminator, const long delayMs)
+      { return QueryCommandVerify(command.c_str(), expectedReplyPrefix.c_str(), replyTerminator.c_str(), delayMs); }
 
    // accessing serial commands and answers
    string LastSerialAnswer() const { return serialAnswer_; }

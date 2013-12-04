@@ -108,6 +108,7 @@ int CPiezo::Initialize()
    AddAllowedValue(g_SaveSettingsPropertyName, g_SaveSettingsY);
    AddAllowedValue(g_SaveSettingsPropertyName, g_SaveSettingsZ);
    AddAllowedValue(g_SaveSettingsPropertyName, g_SaveSettingsOrig);
+   AddAllowedValue(g_SaveSettingsPropertyName, g_SaveSettingsDone);
 
    // upper and lower limits (SU and SL)
    pAct = new CPropertyAction (this, &CPiezo::OnLowerLim);
@@ -349,13 +350,16 @@ int CPiezo::OnSaveCardSettings(MM::PropertyBase* pProp, MM::ActionType eAct)
       pProp->Get(tmpstr);
       if (tmpstr.compare(g_SaveSettingsOrig) == 0)
          return DEVICE_OK;
+      if (tmpstr.compare(g_SaveSettingsDone) == 0)
+         return DEVICE_OK;
       if (tmpstr.compare(g_SaveSettingsX) == 0)
          command << 'X';
       else if (tmpstr.compare(g_SaveSettingsY) == 0)
          command << 'X';
       else if (tmpstr.compare(g_SaveSettingsZ) == 0)
          command << 'Z';
-      RETURN_ON_MM_ERROR (hub_->QueryCommandVerify(command.str(), ":A"));
+      RETURN_ON_MM_ERROR (hub_->QueryCommandVerify(command.str(), ":A", (long)200));  // note 200ms delay added
+      pProp->Set(g_SaveSettingsDone);
    }
    return DEVICE_OK;
 }

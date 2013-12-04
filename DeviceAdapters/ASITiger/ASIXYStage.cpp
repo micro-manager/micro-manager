@@ -138,6 +138,7 @@ int CXYStage::Initialize()
    AddAllowedValue(g_SaveSettingsPropertyName, g_SaveSettingsY);
    AddAllowedValue(g_SaveSettingsPropertyName, g_SaveSettingsZ);
    AddAllowedValue(g_SaveSettingsPropertyName, g_SaveSettingsOrig);
+   AddAllowedValue(g_SaveSettingsPropertyName, g_SaveSettingsDone);
 
    // Motor speed (S)
    pAct = new CPropertyAction (this, &CXYStage::OnSpeed);
@@ -338,13 +339,16 @@ int CXYStage::OnSaveCardSettings(MM::PropertyBase* pProp, MM::ActionType eAct)
       pProp->Get(tmpstr);
       if (tmpstr.compare(g_SaveSettingsOrig) == 0)
          return DEVICE_OK;
+      if (tmpstr.compare(g_SaveSettingsDone) == 0)
+         return DEVICE_OK;
       if (tmpstr.compare(g_SaveSettingsX) == 0)
          command << 'X';
       else if (tmpstr.compare(g_SaveSettingsY) == 0)
          command << 'X';
       else if (tmpstr.compare(g_SaveSettingsZ) == 0)
          command << 'Z';
-      RETURN_ON_MM_ERROR (hub_->QueryCommandVerify(command.str(), ":A"));
+      RETURN_ON_MM_ERROR (hub_->QueryCommandVerify(command.str(), ":A", (long)200));  // note added 200ms delay
+      pProp->Set(g_SaveSettingsDone);
    }
    return DEVICE_OK;
 }

@@ -213,8 +213,8 @@ const char* const g_MMirrorSATTLOutYPropertyName = "SingleAxisYTTLOut";
 const char* const g_MMirrorSATTLPolYPropertyName = "SingleAxisYTTLPolarity";
 const char* const g_MMirrorSAPatternModeYPropertyName = "SingleAxisYPatternByte";
 const char* const g_MMirrorModePropertyName = "InputMode";
-const char* const g_MMirrorCutoffFilterXPropertyName = "FilterCutoffFreqX(kHz)";
-const char* const g_MMirrorCutoffFilterYPropertyName = "FilterCutoffFreqY(kHz)";
+const char* const g_MMirrorCutoffFilterXPropertyName = "FilterFreqX(kHz)";
+const char* const g_MMirrorCutoffFilterYPropertyName = "FilterFreqY(kHz)";
 const char* const g_MMirrorAttenuateXPropertyName = "AttenuateX(0..1)";
 const char* const g_MMirrorAttenuateYPropertyName = "AttenuateY(0..1)";
 const char* const g_MMirrorBeamEnabledPropertyName = "BeamEnabled";
@@ -301,8 +301,8 @@ const char* const g_SATTLOut_1 = g_YesState;
 const char* const g_SATTLPol_0 = "active high";
 const char* const g_SATTLPol_1 = "active low";
 // micromirror input modes
-const char* const g_MMirrorMode_0 = "0 - external input";
-const char* const g_MMirrorMode_1 = "1 - internal input";
+const char* const g_MMirrorMode_external = "external input";
+const char* const g_MMirrorMode_internal = "internal input";
 // piezo control modes
 const char* const g_AdeptMode_0 = "0 - internal input closed-loop";
 const char* const g_AdeptMode_1 = "1 - external input closed-loop";
@@ -314,6 +314,7 @@ const char* const g_SaveSettingsX = "X - reload factory defaults on startup to c
 const char* const g_SaveSettingsY = "Y - restore last saved settings from card";
 const char* const g_SaveSettingsZ = "Z - save settings to card (partial)";
 const char* const g_SaveSettingsOrig = "no action";
+const char* const g_SaveSettingsDone = "save settings done";
 
 // CRISP states
 const char* const g_CRISPState = "CRISP State";

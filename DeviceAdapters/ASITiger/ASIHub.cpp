@@ -97,22 +97,23 @@ int ASIHub::SendCommand(const char *command)
    return DEVICE_OK;
 }
 
-int ASIHub::QueryCommand(const char *command, const char *replyTerminator)
+int ASIHub::QueryCommand(const char *command, const char *replyTerminator, const long delayMs)
 {
    RETURN_ON_MM_ERROR ( ClearComPort() );
    RETURN_ON_MM_ERROR ( SendSerialCommand(port_.c_str(), command, "\r") );
    serialCommand_ = command;
    // if in debug mode then echo serialCommand_ to log file
    LogMessage("SerialCommand:\t" + serialCommand_, true);
+   if (delayMs >= 0)  CDeviceUtils::SleepMs(delayMs);
    RETURN_ON_MM_ERROR ( GetSerialAnswer(port_.c_str(), replyTerminator, serialAnswer_) );
    // if in debug mode then echo serialCommand_ to log file
    LogMessage("SerialReponse:\t" + serialAnswer_, true);
    return DEVICE_OK;
 }
 
-int ASIHub::QueryCommandVerify(const char *command, const char *expectedReplyPrefix, const char *replyTerminator)
+int ASIHub::QueryCommandVerify(const char *command, const char *expectedReplyPrefix, const char *replyTerminator, const long delayMs)
 {
-   RETURN_ON_MM_ERROR ( QueryCommand(command, replyTerminator) );
+   RETURN_ON_MM_ERROR ( QueryCommand(command, replyTerminator, delayMs) );
    // if doesn't match expected prefix, then look for ASI error code
    if (serialAnswer_.substr(0, strlen(expectedReplyPrefix)).compare(expectedReplyPrefix) != 0)
    {
