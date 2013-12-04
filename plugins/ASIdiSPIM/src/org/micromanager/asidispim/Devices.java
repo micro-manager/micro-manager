@@ -44,6 +44,7 @@ public class Devices {
    
    public static final String CAMERAA = "CameraA";
    public static final String CAMERAB = "CameraB";
+   public static final String DUALCAMERA = "DualCamera";
    public static final String PIEZOA = "PiezoA";
    public static final String PIEZOB = "PiezoB";
    public static final String GALVOA = "GalvoA";
@@ -51,7 +52,7 @@ public class Devices {
    public static final String GALVOC = "GalvoC";
    public static final String GALVOD = "GalvoD";
    private static final String[] DEVICES = {
-      CAMERAA, CAMERAB, PIEZOA, PIEZOB, GALVOA, GALVOB, GALVOC, GALVOD};
+      CAMERAA, CAMERAB, DUALCAMERA, PIEZOA, PIEZOB, GALVOA, GALVOB, GALVOC, GALVOD};
    
    public static final String FASTAXISAREV = "FastAxisARev";
    public static final String FASTAXISBREV = "FastAxisBRev";

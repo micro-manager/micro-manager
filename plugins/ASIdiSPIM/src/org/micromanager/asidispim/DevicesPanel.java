@@ -21,14 +21,17 @@
 
 package org.micromanager.asidispim;
 
+import edu.valelab.GaussianFit.utils.ReportingUtils;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import mmcorej.CMMCore;
 import mmcorej.StrVector;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.api.ScriptInterface;
@@ -49,7 +52,7 @@ public class DevicesPanel extends JPanel {
    public DevicesPanel(ScriptInterface gui, Devices devices) {
       super (new MigLayout(
               "", 
-              "[right]8[]8[]",
+              "[right]8[align center]8[align center]",
               "[]8[]"));
        devices_ = devices;
        gui_ = gui;
@@ -64,6 +67,9 @@ public class DevicesPanel extends JPanel {
       add(makeDeviceBox(
               mmcorej.DeviceType.CameraDevice, Devices.CAMERAB), 
               "wrap");
+      
+      add(new JLabel("Dual Camera: ", null, JLabel.RIGHT));
+      add(makeDualCameraDeviceBox(Devices.DUALCAMERA), "span 2, center, wrap");
       
       add(new JLabel("Imaging Piezo: ", null, JLabel.RIGHT));
       add(makeDeviceBox(
@@ -132,8 +138,38 @@ public class DevicesPanel extends JPanel {
       JComboBox deviceBox = new JComboBox(devices.toArray());
       deviceBox.setSelectedItem(devices_.getDeviceInfo(deviceName));
       deviceBox.addActionListener(new DevicesPanel.DeviceBoxListener(deviceName, deviceBox));
-      
+
       return deviceBox;
+   }
+
+   private JComboBox makeDualCameraDeviceBox(String deviceName) {
+      List<String> multiCameras = new ArrayList<String>();
+      multiCameras.add("");
+      try {
+         CMMCore core = gui_.getMMCore();
+         StrVector strvDevices = core.getLoadedDevicesOfType(
+                 mmcorej.DeviceType.CameraDevice);
+
+         String originalCamera = core.getProperty("Core", "Camera");
+         
+         for (int i = 0; i < strvDevices.size(); i++) {
+            String test = strvDevices.get(i);
+            core.setProperty("Core", "Camera", test);
+            if (core.getNumberOfCameraChannels() > 1) {
+               multiCameras.add(test);
+            }
+         }
+         core.setProperty("Core", "Camera", originalCamera);
+
+      } catch (Exception ex) {
+         ReportingUtils.showError("Error detecting multiCamera devices");
+      }
+
+      JComboBox deviceBox = new JComboBox(multiCameras.toArray());
+      deviceBox.setSelectedItem(devices_.getDeviceInfo(deviceName));
+      deviceBox.addActionListener(new DevicesPanel.DeviceBoxListener(deviceName, deviceBox));
+      return deviceBox;
+
    }
 
    /**
@@ -153,7 +189,7 @@ public class DevicesPanel extends JPanel {
       public void actionPerformed(ActionEvent ae) {
          devices_.putAxisDirInfo(axis_, (String) box_.getSelectedItem());
       }
-   };
+   }
    
    /**
     * Constructs a DropDown box containing X/Y.
