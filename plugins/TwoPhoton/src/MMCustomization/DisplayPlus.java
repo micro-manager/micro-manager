@@ -7,10 +7,8 @@ import com.imaging100x.twophoton.SettingsDialog;
 import com.imaging100x.twophoton.TwoPhotonControl;
 import ij.IJ;
 import ij.ImagePlus;
-import ij.gui.ImageCanvas;
-import ij.gui.Overlay;
-import ij.gui.Roi;
-import ij.gui.Toolbar;
+import ij.Prefs;
+import ij.gui.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.Rectangle2D;
@@ -101,12 +99,40 @@ public class DisplayPlus implements ImageCacheListener  {
         vad_.show();
         //Zoom to 100%
         vad_.getImagePlus().getWindow().getCanvas().unzoom();
-
+              
+        addNavigationControls();
+        
+        
         //add mouse listeners for moving grids
         addMouseListeners();
 
         stitchedCache.addImageCacheListener(this);
     }
+    
+    private void addNavigationControls() {
+      //Experiement with manipulating image window
+      ImageWindow window = vad_.getImagePlus().getWindow();
+      Component[] components = window.getComponents();
+      LayoutManager layout = window.getLayout();
+      window.removeAll();
+      window.setLayout(new BorderLayout());
+      JPanel canvasPanel = new JPanel(layout);
+      for (Component c : components) {
+         canvasPanel.add(c);
+      }
+      window.add(canvasPanel, BorderLayout.CENTER);
+      JPanel test = new JPanel(new GridLayout(3,1));
+      test.add(new JLabel("Henry"));
+      test.add(new JLabel("Henry"));
+      test.add(new JLabel("Henry"));
+      
+      test.setPreferredSize(new Dimension(200,500));
+      
+      window.add(test, BorderLayout.LINE_START);
+      //diable border draw around images
+      Prefs.noBorder = true;
+   }
+
 
     private void addMouseListeners() {
         vad_.getImagePlus().getCanvas().addMouseMotionListener(new MouseMotionListener() {

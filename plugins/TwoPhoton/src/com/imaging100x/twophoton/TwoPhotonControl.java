@@ -760,10 +760,10 @@ private JCheckBox drawGrid_, drawPosNames_;
       double theta = prefs_.getDouble(SettingsDialog.STAGE_IMAGE_ANGLE_OFFSET, 0.0) / 360.0 * 2 * Math.PI;
       
       //Y axis --> more positive stage coordinate = up on image
-      //X axis --> more positive stage coordinate = right on image
+      //X axis --> more positive stage coordinate = left on image
       ArrayList<MultiStagePosition> positions = new ArrayList<MultiStagePosition>();
       for (int xIndex = 0; xIndex < xSize; xIndex++) {
-         double xDistFromCenter =  (xIndex - (xSize - 1) / 2.0) * (width - pixelOverlapX) * pixSize;
+         double xDistFromCenter =  - (xIndex - (xSize - 1) / 2.0) * (width - pixelOverlapX) * pixSize;
          for (int yIndex = 0; yIndex < ySize; yIndex++) {
             double yDistFromCenter =  - (yIndex - (ySize - 1) / 2.0) * (height - pixelOverlapY) * pixSize;
             //account for angle between stage axes and image axes
