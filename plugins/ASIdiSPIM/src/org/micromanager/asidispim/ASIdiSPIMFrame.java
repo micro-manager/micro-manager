@@ -50,7 +50,7 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
       prefs_ = Preferences.userNodeForPackage(this.getClass());
       devices_ = new Devices();
       spimParams_ = new SpimParams(gui_, devices_);
-      
+      devices_.addListener(spimParams_);
       
       JTabbedPane tabbedPane = new JTabbedPane();
    

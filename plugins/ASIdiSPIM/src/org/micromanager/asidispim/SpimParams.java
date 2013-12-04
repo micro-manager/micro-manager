@@ -21,7 +21,9 @@
 
 package org.micromanager.asidispim;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.prefs.Preferences;
 import mmcorej.CMMCore;
 import org.micromanager.api.ScriptInterface;
@@ -33,7 +35,7 @@ import org.micromanager.utils.ReportingUtils;
  *
  * @author nico
  */
-public class SpimParams {
+public class SpimParams implements DevicesListenerInterface {
    private Devices devices_;
    private ScriptInterface gui_;
    private CMMCore core_;
@@ -41,6 +43,7 @@ public class SpimParams {
    private final HashMap<String, Integer> integerInfo_;
    private final HashMap<String, String> sidesInfo_;
    private final HashMap<String, Float> floatInfo_;
+   private final List<SpimParamsListenerInterface> listeners_;
    private Preferences prefs_;
    
    public static final String NSIDES = "NSides";
@@ -69,6 +72,7 @@ public class SpimParams {
       gui_ = gui;
       core_ = gui_.getMMCore();
       devices_ = devices;
+      listeners_ = new ArrayList<SpimParamsListenerInterface>();
       
       prefs_ = Preferences.userNodeForPackage(this.getClass());
       
@@ -76,29 +80,27 @@ public class SpimParams {
       sidesInfo_ = new HashMap<String, String>();
       floatInfo_ = new HashMap<String, Float>();
    
-      for  (String iInfo : INTS) {
+      updateInfo();
+   }
+   
+   /**
+    * Updates SpimParams information.  Reads it first from Preferences,
+    * then reads it from data (where possible)
+    */
+   private void updateInfo() {
+      for (String iInfo : INTS) {
          integerInfo_.put(iInfo, prefs_.getInt(iInfo, 1));
-         int res;
-         String device = null;
-         try {
+         
          if (iInfo.equals(LINESCANPERIODA)) {
-             device = Devices.GALVOA;
-             res = getLineScanProp(device, devices_.getAxisDirInfo(Devices.FASTAXISADIR));
-             integerInfo_.put(iInfo, res);
+            getLineScanProp(Devices.GALVOA, iInfo,
+                    devices_.getAxisDirInfo(Devices.FASTAXISADIR));
          }
          if (iInfo.equals(LINESCANPERIODB)) {
-             device = Devices.GALVOB;
-             res = getLineScanProp(device, devices_.getAxisDirInfo(Devices.FASTAXISBDIR));
-             integerInfo_.put(iInfo, res);
+            getLineScanProp(Devices.GALVOB, iInfo,
+                    devices_.getAxisDirInfo(Devices.FASTAXISBDIR));
          }
-            
-         } catch (Exception ex) {
-            ReportingUtils.showError("Problem communicating with device: " + 
-                    devices_.getDeviceInfo(device));
-         }
-           
+
       }
-      
       sidesInfo_.put(FIRSTSIDE, prefs_.get(FIRSTSIDE, "A"));
    }
    
@@ -129,12 +131,19 @@ public class SpimParams {
       }
    }
 
-   private int getLineScanProp(String deviceName, String fastAxis) throws Exception {
+   private void getLineScanProp(String deviceName, String iInfo, String fastAxis) {
       String mm = devices_.getDeviceInfo(deviceName);
-      String propName = "SingleAxis"
-              + fastAxis + "Period(ms)";
-      String result =  core_.getProperty(mm, propName);
-      return NumberUtils.coreStringToInt(result);
+      if (!mm.equals("")) {
+         try {
+            String propName = "SingleAxis"
+                    + fastAxis + "Period(ms)";
+            String result = core_.getProperty(mm, propName);
+            integerInfo_.put(iInfo, NumberUtils.coreStringToInt(result));
+         } catch (Exception ex) {
+            ReportingUtils.showError("Problem communicating with device: "
+                    + devices_.getDeviceInfo(mm));
+         }
+      }
    }
    
    public int getIntInfo(String key) {
@@ -179,6 +188,26 @@ public class SpimParams {
          prefs_.putInt(myI, integerInfo_.get(myI));
       }
       prefs_.put(FIRSTSIDE, sidesInfo_.get(FIRSTSIDE));
+   }
+
+   @Override
+   public void devicesChangedAlert() {
+      updateInfo();
+      callListeners();
+   }
+
+   public void addListener(SpimParamsListenerInterface listener) {
+      listeners_.add(listener);
+   }
+   
+   public void removeListener(SpimParamsListenerInterface listener) {
+      listeners_.remove(listener);
+   }
+   
+   private void callListeners() {
+      for (SpimParamsListenerInterface listener: listeners_) {
+         listener.spimParamsChangedAlert();
+      }
    }
    
 }

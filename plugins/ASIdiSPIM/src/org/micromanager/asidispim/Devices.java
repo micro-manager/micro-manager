@@ -21,7 +21,9 @@
 
 package org.micromanager.asidispim;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.prefs.Preferences;
 
 /**
@@ -37,6 +39,7 @@ public class Devices {
    private HashMap<String, String> deviceInfo_;
    private HashMap<String, Boolean> axisRevs_;
    private HashMap<String, String> axisDirs_;
+   private List<DevicesListenerInterface> listeners_;
    private Preferences prefs_;
    
    public static final String CAMERAA = "CameraA";
@@ -70,6 +73,7 @@ public class Devices {
       deviceInfo_ = new HashMap<String, String>();
       axisRevs_ = new HashMap<String, Boolean>();
       axisDirs_ = new HashMap<String, String>();
+      listeners_ = new ArrayList<DevicesListenerInterface>();
       
       for  (String device : DEVICES) {
          deviceInfo_.put(device, prefs_.get(device, ""));
@@ -94,6 +98,7 @@ public class Devices {
    public synchronized void putDeviceInfo(String key, String value) {
       if (deviceInfo_.containsKey(key)) {
          deviceInfo_.put(key, value);
+         callListeners();
       }
    }
    
@@ -116,6 +121,7 @@ public class Devices {
    public synchronized void putFastAxisRevInfo(String key, boolean value) {
       if (axisRevs_.containsKey(key)) {
          axisRevs_.put(key, value);
+         callListeners();
       }
    }
    
@@ -142,6 +148,7 @@ public class Devices {
       if (value.equals(X) || value.equals(Y)) {
          if (axisDirs_.containsKey(key)) {
             axisDirs_.put(key, value);
+            callListeners();
          }
       }
    }
@@ -170,6 +177,20 @@ public class Devices {
             
       for (String axisDir : FASTAXISDIRS) {
          prefs_.put(axisDir, axisDirs_.get(axisDir));
+      }
+   }
+   
+   public void addListener(DevicesListenerInterface listener) {
+      listeners_.add(listener);
+   }
+   
+   public void removeListener(DevicesListenerInterface listener) {
+      listeners_.remove(listener);
+   }
+   
+   private void callListeners() {
+      for (DevicesListenerInterface listener : listeners_) {
+         listener.devicesChangedAlert();
       }
    }
    
