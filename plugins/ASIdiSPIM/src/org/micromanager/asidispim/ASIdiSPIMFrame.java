@@ -40,6 +40,7 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
    
    private static final String XLOC = "xloc";
    private static final String YLOC = "yloc";
+   private static final String TABINDEX = "tabIndex";
    
    /**
     * Creates the ASIdiSPIM plugin frame
@@ -52,14 +53,19 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
       spimParams_ = new SpimParams(gui_, devices_);
       devices_.addListener(spimParams_);
       
-      JTabbedPane tabbedPane = new JTabbedPane();
+      final JTabbedPane tabbedPane = new JTabbedPane();
    
       tabbedPane.addTab("Devices", new DevicesPanel(gui_, devices_));
       tabbedPane.addTab("SPIM Params", new SpimParamsPanel(spimParams_, devices_));
-      
+      tabbedPane.addTab("Select Region-A", new RegionPanel(
+              gui_, devices_, spimParams_, RegionPanel.Sides.A) );
+      tabbedPane.addTab("Select Region-B", new RegionPanel(
+              gui_, devices_, spimParams_, RegionPanel.Sides.B) );
+            
       add(tabbedPane);
          
       setLocation(prefs_.getInt(XLOC, 100), prefs_.getInt(YLOC, 100));
+      tabbedPane.setSelectedIndex(prefs_.getInt(TABINDEX, 0));
       
       addWindowListener(new java.awt.event.WindowAdapter() {
          @Override
@@ -68,6 +74,7 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
             spimParams_.saveSettings();
             prefs_.putInt(XLOC, evt.getWindow().getX());
             prefs_.putInt(YLOC, evt.getWindow().getY());
+            prefs_.putInt(TABINDEX, tabbedPane.getSelectedIndex());
          }
       });
       
@@ -78,7 +85,7 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
       setResizable(false);
           
    }
-   
+    
    
 
    // MMListener mandated member functions

@@ -117,9 +117,9 @@ public class SpimParams implements DevicesListenerInterface {
                   core_.setProperty(mma, propName, val);
                }
                if (key.equals(LINESCANPERIODB)) {
-                  mma = devices_.getDeviceInfo(Devices.FASTAXISBDIR);
+                  mma = devices_.getDeviceInfo(Devices.GALVOB);
                   propName = "SingleAxis"
-                          + devices_.getAxisDirInfo(Devices.GALVOB) + "Period(ms)";
+                          + devices_.getAxisDirInfo(Devices.FASTAXISBDIR) + "Period(ms)";
                   core_.setProperty(mma, propName, val);
                }
                integerInfo_.put(key, val);

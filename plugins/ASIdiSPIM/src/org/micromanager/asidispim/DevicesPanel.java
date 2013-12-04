@@ -50,51 +50,50 @@ public class DevicesPanel extends JPanel {
     * @param devices - instance of class that holds information about devices
     */
    public DevicesPanel(ScriptInterface gui, Devices devices) {
-      super (new MigLayout(
-              "", 
+      super(new MigLayout(
+              "",
               "[right]8[align center]8[align center]",
               "[]8[]"));
-       devices_ = devices;
-       gui_ = gui;
-      
-      add(new JLabel(" ", null, JLabel.CENTER));
-      add(new JLabel("Side A"), "align center");
-      add(new JLabel("Side B"),  "align center, wrap");
-      
-      add(new JLabel("Camera: ", null, JLabel.RIGHT));
+      devices_ = devices;
+      gui_ = gui;
+
+      add(new JLabel("Side A"), "skip 1");
+      add(new JLabel("Side B"), "wrap");
+
+      add(new JLabel("Camera:", null, JLabel.RIGHT));
       add(makeDeviceBox(
               mmcorej.DeviceType.CameraDevice, Devices.CAMERAA));
       add(makeDeviceBox(
-              mmcorej.DeviceType.CameraDevice, Devices.CAMERAB), 
+              mmcorej.DeviceType.CameraDevice, Devices.CAMERAB),
               "wrap");
-      
-      add(new JLabel("Dual Camera: ", null, JLabel.RIGHT));
+
+      add(new JLabel("Dual Camera:", null, JLabel.RIGHT));
       add(makeDualCameraDeviceBox(Devices.DUALCAMERA), "span 2, center, wrap");
-      
-      add(new JLabel("Imaging Piezo: ", null, JLabel.RIGHT));
+
+      add(new JLabel("Imaging Piezo:", null, JLabel.RIGHT));
       add(makeDeviceBox(
               mmcorej.DeviceType.StageDevice, Devices.PIEZOA));
       add(makeDeviceBox(
               mmcorej.DeviceType.StageDevice, Devices.PIEZOB), "wrap");
-      
-      add(new JLabel("Sheet MicroMirror: ", null, JLabel.RIGHT));
+
+      add(new JLabel("Sheet MicroMirror:", null, JLabel.RIGHT));
       add(makeDeviceBox(
               mmcorej.DeviceType.GalvoDevice, Devices.GALVOA));
       add(makeDeviceBox(
               mmcorej.DeviceType.GalvoDevice, Devices.GALVOB),
               "wrap");
-      
-      add(new JLabel("Fast axis: "));
+
+      add(new JLabel("Fast axis:"));
       add(makeXYBox(Devices.FASTAXISADIR), "split 2");
       add(makeReverseCheckBox(Devices.FASTAXISAREV));
       add(makeXYBox(Devices.FASTAXISBDIR), "split 2");
       add(makeReverseCheckBox(Devices.FASTAXISBREV), "wrap");
-      
-      add(new JLabel("Anti-striping MicroMirror: ", null, JLabel.RIGHT));
+
+      add(new JLabel("Anti-striping MicroMirror:", null, JLabel.RIGHT));
       add(makeDeviceBox(mmcorej.DeviceType.GalvoDevice, Devices.GALVOC));
       add(makeDeviceBox(mmcorej.DeviceType.GalvoDevice, Devices.GALVOD), "wrap");
-      
-      add(new JLabel("Anti-striping axis: "));
+
+      add(new JLabel("Anti-striping axis:"));
       add(makeXYBox(Devices.FASTAXISCDIR));
       add(makeXYBox(Devices.FASTAXISDDIR), "wrap");
 
