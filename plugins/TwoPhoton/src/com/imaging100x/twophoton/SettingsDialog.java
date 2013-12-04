@@ -38,6 +38,8 @@ public class SettingsDialog extends JDialog {
    static public final String FREE_GB__MIN_IN_STITCHED_DATA = "Free GB minimum in stitched data dir";
    static public final String CREATE_IMS_FILE = "Create Imaris file";
    
+   public static int xOverlap_ = 0, yOverlap_ = 0;
+   
    
    public SettingsDialog(final Preferences prefs) {
       super();
@@ -66,6 +68,28 @@ public class SettingsDialog extends JDialog {
          }
       });
       
+      JPanel rowSquaw = new JPanel(new FlowLayout(FlowLayout.LEFT));
+      final JSpinner xOverlap = new JSpinner(new SpinnerNumberModel(0,0,500,1));  
+      final JSpinner yOverlap = new JSpinner(new SpinnerNumberModel(0,0,500,1));
+      rowSquaw.add(new JLabel("            Pixel overlap x: "));
+      rowSquaw.add(xOverlap);
+      rowSquaw.add(new JLabel("  y:"));
+      rowSquaw.add(yOverlap);
+      xOverlap.addChangeListener(new ChangeListener() {
+         @Override
+         public void stateChanged(ChangeEvent e) {
+            xOverlap_ = (Integer) xOverlap.getValue();
+         }
+      });
+      yOverlap.addChangeListener(new ChangeListener() {
+         @Override
+         public void stateChanged(ChangeEvent e) {
+            yOverlap_ = (Integer) yOverlap.getValue();
+         }
+      });
+      panel.add(rowSquaw);
+      
+      
       JPanel rowskis = new JPanel (new FlowLayout(FlowLayout.LEFT));
       final JCheckBox saveIMS = new JCheckBox("Create Imaris file during acquisition");
       rowskis.add(saveIMS);
@@ -74,7 +98,7 @@ public class SettingsDialog extends JDialog {
       
       
       JPanel row3 = new JPanel(new FlowLayout(FlowLayout.LEFT));
-      JLabel dir = new JLabel("Stitched saving location");
+      JLabel dir = new JLabel("            Saving location");
       row3.add(dir);
       final JTextField location = new JTextField(60);
       location.setText(prefs.get(STITCHED_DATA_DIRECTORY, ""));
@@ -84,7 +108,7 @@ public class SettingsDialog extends JDialog {
       JPanel row4 = new JPanel(new FlowLayout(FlowLayout.LEFT));
       final JSpinner freeGig = new JSpinner(new SpinnerNumberModel(prefs.getInt(
               FREE_GB__MIN_IN_STITCHED_DATA,100),10,10000,1));
-      row4.add(new JLabel("Minimum number of free GB to maintain in stitched data directory at application startup: "));
+      row4.add(new JLabel("            Minimum number of free GB to maintain in saving directory at application startup: "));
       row4.add(freeGig);
       panel.add(row4);
       

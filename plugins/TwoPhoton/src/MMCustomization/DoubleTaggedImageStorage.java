@@ -155,7 +155,7 @@ public class DoubleTaggedImageStorage implements TaggedImageStorage {
          try {
             PipelineImage img = hdfPreprocessor_.process(batch);
             hdfWriter_.writeImage(img);
-            TwoPhotonControl.updateHDFQueueSize(hdfQueue_.size());
+            TwoPhotonControl.updateHDFQueueSize(hdfQueue_.size(), (int) (numChannels_ * numSlices_ * 2.5));
          } catch (Exception ex) {
             ReportingUtils.showError("HDF writing error");
             ex.printStackTrace();

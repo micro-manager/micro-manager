@@ -3,6 +3,7 @@
  */
 package MMCustomization;
 
+import com.imaging100x.twophoton.SettingsDialog;
 import com.imaging100x.twophoton.TwoPhotonControl;
 import ij.IJ;
 import ij.ImagePlus;
@@ -15,7 +16,9 @@ import java.awt.event.*;
 import java.awt.geom.Rectangle2D;
 import java.lang.reflect.InvocationTargetException;
 import java.text.ParseException;
+import java.util.LinkedList;
 import java.util.TimerTask;
+import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.*;
@@ -23,6 +26,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import mmcorej.MMCoreJ;
 import mmcorej.TaggedImage;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.MMStudioMainFrame;
@@ -48,7 +52,6 @@ public class DisplayPlus implements ImageCacheListener  {
    private int tileWidth_, tileHeight_;
    private Point clickStart_;
    private Point gridStart_;
-   private double pos0x_, pos0y_;
     private boolean invertX_, invertY_, swapXY_;
 
     public DisplayPlus(final ImageCache stitchedCache, AcquisitionEngine eng, JSONObject summaryMD) {
@@ -63,9 +66,6 @@ public class DisplayPlus implements ImageCacheListener  {
             ReportingUtils.showError(ex.toString());
         }
         try {
-            StagePosition pos0 = MMStudioMainFrame.getInstance().getPositionList().getPosition(0).get(0);
-            pos0x_ = pos0.x;
-            pos0y_ = pos0.y;
             tileWidth_ = MDUtils.getHeight(summaryMD);
             tileHeight_ = MDUtils.getWidth(summaryMD);
         } catch (Exception e) {
@@ -158,41 +158,67 @@ public class DisplayPlus implements ImageCacheListener  {
     }
 
    private void createGrid() {
-      //Assume that image is stitched propoerly and pixels are calibrated properly
-         //
+      try {
+         //Assume that image is stitched propoerly and pixels are calibrated properly
          double pixelSize = MMStudioMainFrame.getInstance().getCore().getPixelSizeUm();
+         String xyStage = MMStudioMainFrame.getInstance().getCore().getXYStageDevice();
 
-         //get coordinates of grid 0, 0, 
-         double cornerX, cornerY;
-         if (swapXY_) {
-            cornerX = pos0x_ - (invertY_ ? -1 : 1) * tileHeight_ / 2 * pixelSize;                    
-            cornerY = pos0y_  - (invertX_ ? -1 : 1) * tileWidth_ / 2 * pixelSize;
+         
+         //get coordinates of center of exisitng grid
+         TreeMap<Integer,Double> xCoords = new TreeMap<Integer,Double>(), 
+                 yCoords = new TreeMap<Integer,Double>();
+         JSONArray PositionList = vad_.getSummaryMetadata().getJSONArray("InitialPositionList");
+         for (int i = 0; i < PositionList.length(); i++) {
+            int colInd = (int) PositionList.getJSONObject(i).getLong("GridColumnIndex");
+            int rowInd = (int) PositionList.getJSONObject(i).getLong("GridRowIndex");            
+            xCoords.put(colInd, PositionList.getJSONObject(i)
+                    .getJSONObject("DeviceCoordinatesUm").getJSONArray(xyStage).getDouble(0));
+            yCoords.put(rowInd, PositionList.getJSONObject(i).getJSONObject("DeviceCoordinatesUm").getJSONArray(xyStage).getDouble(1));
+         }
+         
+         double currentCenterX, currentCenterY;
+         if (xCoords.keySet().size() % 2 == 0) {
+            //even number
+            currentCenterX = (xCoords.get(xCoords.size() / 2) + xCoords.get(xCoords.size() / 2 - 1)) / 2.0;
          } else {
-            cornerX = pos0x_ - (invertX_ ? -1 : 1) * tileWidth_ / 2 * pixelSize;
-            cornerY = pos0y_ - (invertY_ ? -1 : 1) * tileHeight_ / 2 * pixelSize;
+            currentCenterX = xCoords.get(xCoords.size() / 2);
+         }
+         if (yCoords.keySet().size() % 2 == 0) {
+            //even number
+            currentCenterY = (yCoords.get(yCoords.size() / 2) + yCoords.get(yCoords.size() / 2 - 1)) / 2.0;
+         } else {
+            currentCenterY = yCoords.get(yCoords.size() / 2);
          }
 
-         double rectCenterX = vad_.getImagePlus().getOverlay().get(0).getFloatBounds().getCenterX();
-         double rectCenterY = vad_.getImagePlus().getOverlay().get(0).getFloatBounds().getCenterY();
+         //get displacements of center of rectangle from center of stitched image
+         double rectCenterXDisp = (vad_.getImagePlus().getOverlay().get(0).getFloatBounds().getCenterX()
+                 - vad_.getImagePlus().getWidth() / 2) * pixelSize;
+         double rectCenterYDisp = (vad_.getImagePlus().getOverlay().get(0).getFloatBounds().getCenterY()
+                 - vad_.getImagePlus().getHeight() / 2) * pixelSize;
+
+         //TODO: add adjustments for angle of stage relative to image
+
          
+         int xOverlap = SettingsDialog.xOverlap_, yOverlap = SettingsDialog.yOverlap_;
          if (swapXY_) {
-            
-            
-            
+            TwoPhotonControl.createGrid(currentCenterY + rectCenterXDisp, currentCenterX + rectCenterYDisp,
+                    (Integer) gridXSpinner_.getValue(), (Integer) gridYSpinner_.getValue(), 
+                    xOverlap, yOverlap);
+         } else {
+            TwoPhotonControl.createGrid(currentCenterX + rectCenterXDisp, currentCenterY + rectCenterYDisp,
+                    (Integer) gridXSpinner_.getValue(), (Integer) gridYSpinner_.getValue(),
+                    xOverlap, yOverlap);
          }
          
-         {
-            TwoPhotonControl.createGrid(rectCenterY, rectCenterY, tileWidth_, tileWidth_, tileHeight_, tileHeight_);
-         }
-         
-         
-
+      } catch (Exception e) {
+         ReportingUtils.showError("Couldnt create grid");
+      }
    }
-   
+
    private void makeGridOverlay(int centerX, int centerY) {
       IJ.setTool(Toolbar.SPARE2);
       Overlay overlay = vad_.getImagePlus().getOverlay();
-      if(overlay == null || overlay.size() == 0) {
+      if (overlay == null || overlay.size() == 0) {
          overlay = new Overlay();
       } else {
          overlay.clear();
@@ -202,20 +228,20 @@ public class DisplayPlus implements ImageCacheListener  {
       int gridHeight = (Integer) gridYSpinner_.getValue();
       int roiWidth = gridWidth * tileWidth_;
       int roiHeight = gridHeight * tileHeight_;
-      
-      Roi rectangle = new Roi(centerX - roiWidth / 2, centerY - roiHeight / 2, roiWidth, roiHeight);  
+
+      Roi rectangle = new Roi(centerX - roiWidth / 2, centerY - roiHeight / 2, roiWidth, roiHeight);
       rectangle.setStrokeWidth(20f);
       overlay.add(rectangle);
       vad_.getImagePlus().setOverlay(overlay);
    }
-   
+
    private void gridSizeChanged() {
       //resize exisiting grid but keep centered on same area
       Overlay overlay = vad_.getImagePlus().getOverlay();
-      if(overlay == null || overlay.get(0) ==  null) {
+      if (overlay == null || overlay.get(0) == null) {
          return;
       }
-      Rectangle2D oldBounds = overlay.get(0).getFloatBounds();  
+      Rectangle2D oldBounds = overlay.get(0).getFloatBounds();
       int centerX = (int) oldBounds.getCenterX();
       int centerY = (int) oldBounds.getCenterY();
       makeGridOverlay(centerX, centerY);

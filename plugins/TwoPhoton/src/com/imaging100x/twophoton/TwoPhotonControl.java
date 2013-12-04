@@ -32,6 +32,7 @@ import ij.ImagePlus;
 import ij.WindowManager;
 import ij.gui.ImageWindow;
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
@@ -50,21 +51,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.prefs.Preferences;
-import javax.swing.BorderFactory;
-import javax.swing.BoxLayout;
-import javax.swing.DefaultComboBoxModel;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
-import javax.swing.JFileChooser;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JSpinner;
-import javax.swing.JTable;
-import javax.swing.ScrollPaneConstants;
-import javax.swing.SpinnerNumberModel;
+import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.table.TableColumn;
@@ -130,7 +117,8 @@ public class TwoPhotonControl extends MMFrame implements MMPlugin, KeyListener,
    private JButton removeAllButton;
    private JCheckBox activateDepthList_;
    private JComboBox pixelSizeCombo_;
-   private static JLabel hdfQueueSize_;
+   private static JProgressBar hdfProgressBar_;
+   private static JPanel hdfQueuePanel_;
    
    private File depthFile_;
 
@@ -226,6 +214,7 @@ private JCheckBox drawGrid_, drawPosNames_;
       createPMTPanel();
       createGridPanel();
       createStitchPanel();
+      createIMSProgressPanel();
       createDepthPanel();
 
       pixelSizeCombo_ = new JComboBox();
@@ -235,17 +224,11 @@ private JCheckBox drawGrid_, drawPosNames_;
          }
       };
       pixelSizeCombo_.addActionListener(pixelSizeListener_);
-      pixelSizeCombo_.setBounds(460, 350 , 184, 20);
+      pixelSizeCombo_.setBounds(460, 390 , 184, 20);
       getContentPane().add(pixelSizeCombo_);
       JLabel lblPixelSize = new JLabel("Pixel size");
-      lblPixelSize.setBounds(410, 353, 59, 14);
+      lblPixelSize.setBounds(410, 394, 59, 14);
       getContentPane().add(lblPixelSize);
-      
-      //HDFQueue size
-      hdfQueueSize_ = new JLabel("HDF Queue size: ");
-      getContentPane().add(hdfQueueSize_);
-      hdfQueueSize_.setBounds(450, 400, 140, 25 );
-      hdfQueueSize_.setVisible(prefs_.getBoolean(SettingsDialog.REAL_TIME_STITCH, rootPaneCheckingEnabled));
       
       //add settings button
       JButton settings = new JButton("Settings");
@@ -284,9 +267,9 @@ private JCheckBox drawGrid_, drawPosNames_;
       }
    }
 
-   public static void updateHDFQueueSize(int n) {
-      hdfQueueSize_.setText("HDF queue size: " + n);
-      hdfQueueSize_.repaint();
+   public static void updateHDFQueueSize(int n, int max) {
+      hdfProgressBar_.setMaximum(max);
+      hdfProgressBar_.setValue(n);
    }
    
    private void createDepthPanel() {
@@ -361,6 +344,14 @@ private JCheckBox drawGrid_, drawPosNames_;
       });
       buttonPanel.add(row2);
       panel.add(buttonPanel,BorderLayout.PAGE_END);
+   }
+   
+   private void createIMSProgressPanel() {
+      JPanel panel = createPanel("Imaris file writing queue", 405, 330, 650, 378);
+      panel.setLayout(new BorderLayout());
+      hdfProgressBar_ = new JProgressBar(0,1);
+      panel.add(hdfProgressBar_, BorderLayout.CENTER);
+      panel.setVisible(prefs_.getBoolean(SettingsDialog.REAL_TIME_STITCH, rootPaneCheckingEnabled));
    }
    
    private void createStitchPanel() {
@@ -546,6 +537,9 @@ private JCheckBox drawGrid_, drawPosNames_;
       //change only if number of windows changes?
       int[] ids = WindowManager.getIDList();
       availableVADs_ = new ArrayList<VirtualAcquisitionDisplay>();
+      if (ids == null) {
+         return;
+      }
       for (int id : ids) {
          ImagePlus ip = WindowManager.getImage(id);
          VirtualAcquisitionDisplay vad = VirtualAcquisitionDisplay.getDisplay(ip);

@@ -32,7 +32,7 @@ public class DynamicStitchingImageStorage {
     private TaggedImageStorage storage_;
     //local copy of summary MD with different info about positions than underlying storage
     private JSONObject summaryMetadata_;
-    private int numPositions_, width_, height_, tileWidth_, tileHeight_;
+    private int width_, height_, tileWidth_, tileHeight_;
     private boolean invertX_, invertY_, swapXandY_;
     private TreeSet<String> imageKeys_;
     private JSONArray positionList_;
@@ -105,7 +105,7 @@ public class DynamicStitchingImageStorage {
       //read as many tiles from underlying storage as available, fill in the rest blank      
       JSONObject tags = null;
       byte[] pixels = new byte[width_*height_];
-      for (int positionIndex = 0; positionIndex < numPositions_; positionIndex++) {
+      for (int positionIndex = 0; positionIndex < positionList_.length(); positionIndex++) {
          TaggedImage tile = storage_.getImage(channelIndex, sliceIndex, frameIndex, positionIndex);
          if (tile != null) {
             tags = tile.tags;

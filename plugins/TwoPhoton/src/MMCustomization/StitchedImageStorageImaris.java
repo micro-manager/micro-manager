@@ -246,7 +246,7 @@ public class StitchedImageStorageImaris implements TaggedImageStorage{
          try {
             PipelineImage img = hdfPreprocessor_.process(batch);
             hdfWriter_.writeImage(img);
-            TwoPhotonControl.updateHDFQueueSize(hdfQueue_.size());
+//            TwoPhotonControl.updateHDFQueueSize(hdfQueue_.size(), 1);
          } catch (Exception ex) {
             ReportingUtils.showError("HDF writing error");
             ex.printStackTrace();
