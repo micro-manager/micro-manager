@@ -108,6 +108,7 @@ public class DevicesPanel extends JPanel {
          box_ = box;
       }
 
+      @Override
       public void actionPerformed(ActionEvent ae) {
          devices_.putDeviceInfo(device_, (String) box_.getSelectedItem());
       }
@@ -148,6 +149,7 @@ public class DevicesPanel extends JPanel {
          box_ = box;
       }
 
+      @Override
       public void actionPerformed(ActionEvent ae) {
          devices_.putAxisDirInfo(axis_, (String) box_.getSelectedItem());
       }
@@ -159,7 +161,7 @@ public class DevicesPanel extends JPanel {
     * a Listener
     * 
     * @param axis - Name under which this axis is known in the Device class
-    * @return constrcuted JComboBox
+    * @return constructed JComboBox
     */
    private JComboBox makeXYBox(String axis) {
       String[] xy = {"X", "Y"};
@@ -183,6 +185,7 @@ public class DevicesPanel extends JPanel {
          box_ = box;
       }
 
+      @Override
       public void actionPerformed(ActionEvent ae) {
          devices_.putFastAxisRevInfo(axis_, box_.isSelected());
       }

@@ -40,13 +40,15 @@ import net.miginfocom.swing.MigLayout;
 public class SpimParamsPanel extends JPanel {
 
    SpimParams params_;
+   Devices devices_;
 
-   public SpimParamsPanel(SpimParams params) {
+   public SpimParamsPanel(SpimParams params, Devices devices) {
       super(new MigLayout(
               "",
               "[right]8[center]8[center]",
               "[]8[]"));
       params_ = params;
+      devices_ = devices;
 
       add(new JLabel("Number of sides:"), "split 2");
       add(makeSpinner(SpimParams.NSIDES, 1, 2));

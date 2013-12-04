@@ -21,11 +21,7 @@
 
 package org.micromanager.asidispim;
 
-import java.awt.GridLayout;
 import java.util.prefs.Preferences;
-import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 import org.micromanager.api.MMListenerInterface;
 import org.micromanager.api.ScriptInterface;
@@ -53,17 +49,16 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
       gui_ = gui;
       prefs_ = Preferences.userNodeForPackage(this.getClass());
       devices_ = new Devices();
-      spimParams_ = new SpimParams();
+      spimParams_ = new SpimParams(gui_, devices_);
       
       
       JTabbedPane tabbedPane = new JTabbedPane();
    
       tabbedPane.addTab("Devices", new DevicesPanel(gui_, devices_));
-      tabbedPane.addTab("SPIM Params", new SpimParamsPanel(spimParams_));
+      tabbedPane.addTab("SPIM Params", new SpimParamsPanel(spimParams_, devices_));
       
       add(tabbedPane);
-      
-     
+         
       setLocation(prefs_.getInt(XLOC, 100), prefs_.getInt(YLOC, 100));
       
       addWindowListener(new java.awt.event.WindowAdapter() {
@@ -84,16 +79,6 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
           
    }
    
-    
-   private JComponent makeTextPanel(String text) {
-      JPanel panel = new JPanel(false);
-      JLabel filler = new JLabel(text);
-      filler.setHorizontalAlignment(JLabel.CENTER);
-      panel.setLayout(new GridLayout(1, 1));
-      panel.add(filler);
-      return panel;
-   }
-
    
 
    // MMListener mandated member functions
