@@ -65,7 +65,7 @@ public class SpimParams implements DevicesListenerInterface {
 
    public static final String FIRSTSIDE = "FirstSide";
    public static final String A = "A";
-   public static final String B = "B";
+   public static final String B = "B";  
    
 
    public SpimParams (ScriptInterface gui, Devices devices) {
@@ -183,9 +183,11 @@ public class SpimParams implements DevicesListenerInterface {
   /**
     * Writes info_ back to Preferences
     */
-   public  void saveSettings() {
-      for (String myI : INTS) {
-         prefs_.putInt(myI, integerInfo_.get(myI));
+   public void saveSettings() {
+      synchronized (integerInfo_) {
+         for (String myI : INTS) {
+            prefs_.putInt(myI, integerInfo_.get(myI));
+         }
       }
       prefs_.put(FIRSTSIDE, sidesInfo_.get(FIRSTSIDE));
    }
