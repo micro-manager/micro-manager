@@ -147,8 +147,6 @@ static kern_return_t FindEthernetInterfaces(io_iterator_t *matchingServices)
 // In this sample the iterator should contain just the primary interface.
 static kern_return_t GetMACAddress(io_iterator_t intfIterator, UInt8 *MACAddress, UInt8 bufferSize)
 {
-    io_object_t     intfService;
-    io_object_t     controllerService;
     kern_return_t   kernResult = KERN_FAILURE;
     
     // Make sure the caller provided enough buffer space. Protect against buffer overflow problems.
@@ -160,8 +158,9 @@ static kern_return_t GetMACAddress(io_iterator_t intfIterator, UInt8 *MACAddress
     bzero(MACAddress, bufferSize);
     
     // IOIteratorNext retains the returned object, so release it when we're done with it.
-    while (intfService = IOIteratorNext(intfIterator))
+    while (io_object_t intfService = IOIteratorNext(intfIterator))
     {
+        io_object_t controllerService;
         CFTypeRef   MACAddressAsCFData;        
  
         // IONetworkControllers can't be found directly by the IOServiceGetMatchingServices call, 
