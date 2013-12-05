@@ -727,7 +727,7 @@ unsigned MultiCamera::GetNumberOfChannels() const
 int MultiCamera::GetChannelName(unsigned channel, char* name)
 {
    CDeviceUtils::CopyLimitedString(name, "");
-   unsigned int ch = Logical2Physical(channel);
+   int ch = Logical2Physical(channel);
    if (ch >= 0 && ch < usedCameras_.size())
    {
       CDeviceUtils::CopyLimitedString(name, usedCameras_[ch].c_str());
