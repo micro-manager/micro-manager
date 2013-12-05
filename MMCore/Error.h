@@ -20,9 +20,7 @@
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 // AUTHOR:        Nenad Amodaj, nenad@amodaj.com, 09/19/2005
-// 
-// CVS:           $Id$
-//
+//                Mark Tsuchida, 12/04/2013 (made chainable)
 
 #ifndef _ERROR_H_
 #define _ERROR_H_
@@ -36,26 +34,34 @@
 #include <string>
 
 
+/// Core error class. Exceptions thrown by the Core public API are of this type.
 /**
- * Core error class. Exceptions thrown by the Core public API are of this type.
- *
  * Exceptions can be "chained" to express underlying causes of errors.
  *
  * There are no methods to modify error objects. This is intentional, to keep
- * it easy to determine the source of information. Use chaining to augment
- * error messages with higher-level information.
+ * it easy to determine the source of information. Use chaining if you want to
+ * augment error messages with higher-level information.
  *
- * Error codes are used to distinguish between well known errors by calling
- * code.
+ * The main information contained in an instance is the error message and the
+ * error code. The message is required and should be concise but should try to
+ * provide complete information (including, e.g., parameter values) about the
+ * error.
  *
- * Although, strictly speaking, exception class constructors are not supposed
- * to throw, we relax this rule and ignore the possibility of a std::bad_alloc.
- * If memory is low enough that error message strings cannot be copied, we're
- * not going to get very far anyway.
+ * Error codes are optional and are used to distinguish between well known
+ * errors by calling code. They are only useful if it is important that the
+ * calling code can determine the type of error and take appropriate action.
+ *
+ * Note: Although, strictly speaking, exception class constructors are not
+ * supposed to throw, we relax this rule and ignore the possibility of a
+ * std::bad_alloc. If memory is low enough that error message strings cannot be
+ * copied, we're not going to get very far anyway.
  */
 class CMMError : public std::exception
 {
 public:
+   /// Error code type.
+   typedef int Code;
+
    // Constructors: we consider msg to be a required argument.
    //
    // Both std::string versions and const char* versions are provided, so that
@@ -63,93 +69,78 @@ public:
    // don't have to worry about segfaulting if a null pointer is passed (even
    // though that would be a bug).
 
-   explicit CMMError(const std::string& msg, int code = MMERR_GENERIC) :
-      message_(msg),
-      code_(code),
-      underlying_(0)
-   {}
+   /// Construct with error message and optionally an error code.
+   /**
+    * code should not be MMERR_OK (0).
+    */
+   explicit CMMError(const std::string& msg, Code code = MMERR_GENERIC);
 
-   explicit CMMError(const char* msg, int code = MMERR_GENERIC) :
-      message_(msg ? msg : "(null message)"),
-      code_(code),
-      underlying_(0)
-   {}
+   /// Construct with error message and optionally an error code.
+   /**
+    * msg should not be null. code should not be MMERR_OK (0).
+    */
+   explicit CMMError(const char* msg, Code code = MMERR_GENERIC);
 
-   CMMError(const std::string& msg, int code, const CMMError& underlyingError) :
-      message_(msg),
-      code_(code),
-      underlying_(new CMMError(underlyingError))
-   {}
+   /// Construct with an underlying (chained/wrapped) error.
+   /**
+    * Use this form of the constructor when adding information and rethrowing
+    * the exception.
+    *
+    * code should not be MMERR_OK (0).
+    */
+   CMMError(const std::string& msg, Code code, const CMMError& underlyingError);
 
-   CMMError(const char* msg, int code, const CMMError& underlyingError) :
-      message_(msg ? msg : "(null message)"),
-      code_(code),
-      underlying_(new CMMError(underlyingError))
-   {}
+   /// Construct with an underlying (chained/wrapped) error.
+   /**
+    * Use this form of the constructor when adding information and rethrowing
+    * the exception.
+    *
+    * msg should not be null. code should not be MMERR_OK (0).
+    */
+   CMMError(const char* msg, Code code, const CMMError& underlyingError);
 
-   // Copy constructor (do a deep copy)
-   CMMError(const CMMError& other) :
-      message_(other.message_),
-      code_(other.code_),
-      underlying_(0)
-   {
-      if (other.getUnderlyingError())
-         underlying_.reset(new CMMError(*(other.getUnderlyingError())));
-   }
+   /// Copy constructor (perform a deep copy).
+   CMMError(const CMMError& other);
 
-   CMMError& operator=(const CMMError& rhs)
-   {
-      // No attempt made at exception safety (if bad_alloc, so be it).
-      message_ = rhs.message_;
-      code_ = rhs.code_;
-      if (rhs.getUnderlyingError())
-         underlying_.reset(new CMMError(*(rhs.getUnderlyingError())));
-      else
-         underlying_.reset();
-      return *this;
-   }
+   /// Copy assignment operator (perform a deep copy).
+   CMMError& operator=(const CMMError& rhs);
 
    virtual ~CMMError() {}
 
+   /// Implements std::exception interface.
    virtual const char* what() const { return message_.c_str(); }
 
-   virtual std::string getMsg() const
-   {
-      if (message_.empty())
-         return "Error (code " + boost::lexical_cast<std::string>(code_) + ")";
-      return message_;
-   }
+   /// Get the error message for this error.
+   virtual std::string getMsg() const;
 
-   virtual std::string getFullMsg() const
-   {
-      if (getUnderlyingError())
-         return getMsg() + " [ " + underlying_->getFullMsg() + " ]";
-      return getMsg();
-   }
+   /// Get a message containing the messages from all chained errors.
+   virtual std::string getFullMsg() const;
 
-   virtual int getCode() const { return code_; }
+   /// Get the error code for this error.
+   virtual Code getCode() const { return code_; }
 
-   // Search underlying error chain for the first specific error code.
-   virtual int getSpecificCode() const
-   {
-      if (code_ == MMERR_OK || code_ == MMERR_GENERIC)
-      {
-         if (getUnderlyingError())
-            return getUnderlyingError()->getSpecificCode();
-         else
-            return MMERR_GENERIC;
-      }
-      return code_;
-   }
+   /// Search the chain of underlying errors for the first specific error code.
+   /**
+    * The chained errors are searched in order and the first code that is not
+    * MMERR_GENERIC (1) is returned. If none of the chained errors have a
+    * specific code, MMERR_GENERIC is returned.
+    */
+   virtual Code getSpecificCode() const;
 
-   // Access the underlying error, if any. Returned pointer is valid until the
-   // instance from which it was obtained is destroyed.
-   virtual const CMMError* getUnderlyingError() const
-   { return underlying_.get(); }
+   /// Access the underlying error.
+   /**
+    * This is intended for code that wants to perform custum formatting or
+    * analysis of the chained errors.
+    *
+    * The returned pointer is valid until the instance on which this method was
+    * called is destroyed. If there is no underlying error (i.e. if this
+    * instance is at the end of the chain), a null pointer is returned.
+    */
+   virtual const CMMError* getUnderlyingError() const;
 
 private:
    std::string message_;
-   int code_;
+   Code code_;
    std::auto_ptr<CMMError> underlying_;
 };
 

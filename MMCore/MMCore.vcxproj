@@ -153,6 +153,7 @@
     <ClCompile Include="CoreCallback.cpp" />
     <ClCompile Include="CoreProperty.cpp" />
     <ClCompile Include="..\MMDevice\DeviceUtils.cpp" />
+    <ClCompile Include="Error.cpp" />
     <ClCompile Include="FastLogger.cpp" />
     <ClCompile Include="Host.cpp" />
     <ClCompile Include="..\MMDevice\ImgBuffer.cpp" />
