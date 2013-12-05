@@ -3138,6 +3138,8 @@ void CMMCore::setProperty(const char* label, const char* propName,
   if (label == NULL || propName == NULL || propValue == NULL)
      throw CMMError(MMERR_NullPointerException);
 
+   CORE_DEBUG("Will set property: \"%s\"-\"%s\" = \"%s\"", label, propName, propValue);
+
   // check for forbiden characters
    string val(propValue);
    if (std::string::npos != val.find_first_of(MM::g_FieldDelimiters, 0))
@@ -3171,7 +3173,7 @@ void CMMCore::setProperty(const char* label, const char* propName,
       stateCache_.addSetting(PropertySetting(label, propName, propValue));
    }
 
-   CORE_DEBUG("Property set: device=%s, name=%s, value=%s\n", label, propName, propValue);
+   CORE_DEBUG("Did set property: \"%s\"-\"%s\" = \"%s\"", label, propName, propValue);
 }
 
 /**
