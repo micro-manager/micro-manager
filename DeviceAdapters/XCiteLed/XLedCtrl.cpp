@@ -349,7 +349,7 @@ char* XLedCtrl::GetXLedStatus(unsigned char* sResp, char* sXLedStatus)
 
     if ((sResp == NULL) || (sXLedStatus == NULL)) return NULL;
 
-    std::size_t nIndx = strlen((const char*)sResp) - 1;
+    int nIndx = static_cast<int>(strlen((const char*)sResp)) - 1;
 
     while ((nIndx >= 0) && (sResp[nIndx] != ',')) nIndx--;
 
