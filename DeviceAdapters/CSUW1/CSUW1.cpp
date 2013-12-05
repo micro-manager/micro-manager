@@ -26,7 +26,7 @@
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.  
 
-// AUTHOR: Nico Stuurman, 02/02/2007
+// Based on CSUX1 adapter by Nico Stuurman
 //
 // Based on NikonTE2000 controller adapter by Nenad Amodaj
 //
@@ -331,13 +331,25 @@ bool FilterWheel::Busy()
    MM::MMTime now = GetCurrentMMTime();
    // each position moved takes ?? msec
    if (speed_ == 3)
-      if ((now - lastMoveTime_) < (posMoved_ * 40)) return true;
+   {
+      if ((now - lastMoveTime_) < (posMoved_ * 40))
+         return true;
+   }
    else if (speed_ == 2)
-      if ((now - lastMoveTime_) < (posMoved_ * 66)) return true;
+   {
+      if ((now - lastMoveTime_) < (posMoved_ * 66))
+         return true;
+   }
    else if (speed_ == 1)
-      if ((now - lastMoveTime_) < (posMoved_ * 100)) return true;
+   {
+      if ((now - lastMoveTime_) < (posMoved_ * 100))
+         return true;
+   }
    else
-      if ((now - lastMoveTime_) < (posMoved_ * 400)) return true;
+   {
+      if ((now - lastMoveTime_) < (posMoved_ * 400))
+         return true;
+   }
 
    return false;
 }
