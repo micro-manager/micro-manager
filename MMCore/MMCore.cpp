@@ -468,6 +468,7 @@ Configuration CMMCore::getSystemState()
    for (i=devices.begin(); i!=devices.end(); i++)
    {
       MM::Device* pDev = getDevice(i->c_str());
+      MMThreadGuard guard(pluginManager_.getModuleLock(pDev));
       for (unsigned j=0; j<pDev->GetNumberOfProperties(); j++)
       {
          char name[MM::MaxStrLength]="";
