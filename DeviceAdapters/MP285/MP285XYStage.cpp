@@ -933,7 +933,7 @@ int XYStage::WriteCommand(unsigned char* sCommand, int nLength)
 	{
 		osMessage.str("");
 		osMessage << "<XYStage::WriteCommand> (Command=";
-		char sHex[4] = { NULL, NULL, NULL, NULL };
+		char sHex[4] = { '\0', '\0', '\0', '\0' };
 		for (int n=0; n < nLength; n++)
 		{
 			MP285::Instance()->Byte2Hex((const unsigned char)sCommand[n], sHex);
@@ -968,7 +968,7 @@ int XYStage::ReadMessage(unsigned char* sResponse, int nBytesRead)
 
     ostringstream osMessage;
 
-    char sHex[4] = { NULL, NULL, NULL, NULL };
+    char sHex[4] = { '\0', '\0', '\0', '\0' };
     int ret = DEVICE_OK;
     bool yRead = false;
     bool yTimeout = false;

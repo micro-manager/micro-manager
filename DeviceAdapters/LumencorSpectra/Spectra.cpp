@@ -502,6 +502,8 @@ int Spectra::SetColorEnabled(ColorNameT colorName, bool newState)
             if (lightEngine_ != Aura_Type)
                newEnableMask = SetBit(previousEnableMask, BIT_TEAL, newState);
             break;
+	 case WHITE: // Prevent compiler warning.
+	    break;
       }
    }
 

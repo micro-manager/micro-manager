@@ -801,7 +801,7 @@ int ZStage::WriteCommand(unsigned char* sCommand, int nLength)
 	{
 		osMessage.str("");
 		osMessage << "<ZStage::WriteCommand> (Command=";
-		char sHex[4] = { NULL, NULL, NULL, NULL };
+		char sHex[4] = { '\0', '\0', '\0', '\0' };
 		for (int n = 0; n < nLength && ret == DEVICE_OK; n++)
 		{
 			MP285::Instance()->Byte2Hex((const unsigned char)sCommand[n], sHex);
@@ -834,7 +834,7 @@ int ZStage::ReadMessage(unsigned char* sResponse, int nBytesRead)
     unsigned long lStartTime = GetClockTicksUs();
 
     ostringstream osMessage;
-    char sHex[4] = { NULL, NULL, NULL, NULL };
+    char sHex[4] = { '\0', '\0', '\0', '\0' };
     int ret = DEVICE_OK;
     bool yRead = false;
     bool yTimeout = false;

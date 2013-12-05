@@ -947,7 +947,7 @@ int MP285Ctrl::WriteCommand(unsigned char* sCommand, int nLength)
     {
 		osMessage.str("");
 		osMessage << "<MP285Ctrl::WriteCommand> (Command=";
-		char sHex[4] = { NULL, NULL, NULL, NULL };
+		char sHex[4] = { '\0', '\0', '\0', '\0' };
 		for (int n=0; n < nLength; n++)
 		{
 			MP285::Instance()->Byte2Hex((const unsigned char)sCommand[n], sHex);
@@ -981,7 +981,7 @@ int MP285Ctrl::ReadMessage(unsigned char* sResponse, int nBytesRead)
     unsigned long lStartTime = GetClockTicksUs();
 
     ostringstream osMessage;
-    char sHex[4] = { NULL, NULL, NULL, NULL };
+    char sHex[4] = { '\0', '\0', '\0', '\0' };
     int ret = DEVICE_OK;
     bool yRead = false;
     bool yTimeout = false;

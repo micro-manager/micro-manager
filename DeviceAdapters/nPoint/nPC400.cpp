@@ -398,7 +398,7 @@ int nPC400::ByteCopy(unsigned char* bDst, const unsigned char* bSrc, int nLength
 void nPC400::Byte2Hex(const unsigned char bByte, char* sHex)
 {
     char sHexDigit[16] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
-    sHex[2] =  NULL;
+    sHex[2] = '\0';
     sHex[1] = sHexDigit[(int)(bByte & 0xF)];
     sHex[0] = sHexDigit[(int)(bByte / 0x10)];
     return;

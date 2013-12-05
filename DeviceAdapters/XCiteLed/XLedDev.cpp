@@ -756,7 +756,7 @@ int XLedDev::GetLedParmVal(unsigned char* sResp, char* sParm)
     if (sValue != NULL) 
     {
         char* sNext = strchr(sValue, ',');
-        if (sNext != NULL) *sNext = NULL;
+        if (sNext != NULL) *sNext = '\0';;
     }
 
     if (sValue != NULL) strcpy(sParm, sValue);
