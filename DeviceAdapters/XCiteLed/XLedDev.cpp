@@ -729,7 +729,7 @@ int XLedDev::GetLedParmVal(unsigned char* sResp, char* sParm)
     std::ostringstream osMessage;
     char sData[60];
 
-    if (sResp == NULL || sParm == NULL) return NULL;
+    if (sResp == NULL || sParm == NULL) return DEVICE_ERR;
 
     memset(sData, 0, 60);
 
@@ -778,12 +778,12 @@ int XLedDev::GetLedParmVal(unsigned char* sResp, char* sParm)
 int XLedDev::GetLedParm(unsigned char* sCmd, unsigned char* sResp, char* sParm)
 {
     // check input paramter
-    if (sCmd == NULL || sResp == NULL) return NULL;
+    if (sCmd == NULL || sResp == NULL) return DEVICE_ERR;
 
     // call serial I/O to get message
     int ret = XLedSerialIO(sCmd, sResp);
 
-    if (ret != DEVICE_OK) return NULL;
+    if (ret != DEVICE_OK) return ret;
 
     if (sParm !=NULL)
     {
