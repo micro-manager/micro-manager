@@ -273,13 +273,12 @@ private:
    // for asynchronous write operations:
    void DoWrite(const char msg) 
    { // callback to handle write call from outside this class 
-      std::auto_ptr<MMThreadGuard> apwg( new MMThreadGuard(writeBufferLock_));
-      bool write_in_progress = !write_msgs_.empty(); // is there anything currently being written? 
-      write_msgs_.push_back(msg); // store in write buffer 
-
-      // unlock the thread guard here
-      MMThreadGuard* pg = apwg.release();
-      delete pg;
+      bool write_in_progress;
+      {
+         MMThreadGuard writeBufferGuard(writeBufferLock_);
+         write_in_progress = !write_msgs_.empty(); // is there anything currently being written?
+         write_msgs_.push_back(msg); // store in write buffer
+      }
 
       if (!write_in_progress) // if nothing is currently being written, then start 
          WriteStart(); 
@@ -299,14 +298,13 @@ private:
    { // the asynchronous read operation has now completed or failed and returned an error 
       if (!error) 
       { // write completed, so send next write data 
-         std::auto_ptr<MMThreadGuard> apwg( new MMThreadGuard(writeBufferLock_));
-         if ( 0 < write_msgs_.size())
-            write_msgs_.pop_front(); // remove the completed data 
-         bool anythingThere = !write_msgs_.empty();
-
-         // unlock the thread guard here
-         MMThreadGuard* pg = apwg.release();
-         delete pg;
+         bool anythingThere;
+         {
+            MMThreadGuard writeBufferGuard(writeBufferLock_);
+            if ( 0 < write_msgs_.size())
+               write_msgs_.pop_front(); // remove the completed data
+            anythingThere = !write_msgs_.empty();
+         }
 
          if (anythingThere) // if there is anthing left to be written 
             WriteStart(); // then start sending the next item in the buffer 
