@@ -214,7 +214,7 @@ int Cdc1394::OnMode(MM::PropertyBase* pProp, MM::ActionType eAct)
       string modeString;
       pProp->Get(modeString);
       dc1394video_mode_t videoMode = VideoModeForString(modeString);
-      if (videoMode == -1) {
+      if (videoMode < DC1394_VIDEO_MODE_MIN || videoMode > DC1394_VIDEO_MODE_MAX) {
          return DEVICE_INVALID_PROPERTY_VALUE;
       }
 
@@ -242,7 +242,7 @@ int Cdc1394::OnFrameRate(MM::PropertyBase* pProp, MM::ActionType eAct)
       string framerateString;
       pProp->Get(framerateString);
       dc1394framerate_t framerate = FramerateForString(framerateString);
-      if (framerate == -1) {
+      if (framerate < DC1394_FRAMERATE_MIN || framerate > DC1394_FRAMERATE_MAX) {
          return DEVICE_INVALID_PROPERTY_VALUE;
       }
 
@@ -1894,7 +1894,7 @@ dc1394video_mode_t Cdc1394::VideoModeForString(const string& str)
          return it->first;
       }
    }
-   return (dc1394video_mode_t)-1;
+   return (dc1394video_mode_t)(DC1394_VIDEO_MODE_MAX + 1);
 }
 
 
@@ -1939,7 +1939,7 @@ dc1394framerate_t Cdc1394::FramerateForString(const string& str)
          return it->first;
       }
    }
-   return (dc1394framerate_t)-1;
+   return (dc1394framerate_t)(DC1394_FRAMERATE_MAX + 1);
 }
 
 
