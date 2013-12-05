@@ -2572,7 +2572,7 @@ int Colibri::Initialize()
 
    ZeissULong status;
    ZeissHub::colibriModel_.GetStatus(status);
-   if ((status && 1) != 1)
+   if ((status & 1) != 1)
       return ERR_MODULE_NOT_FOUND;
 
    // Name
