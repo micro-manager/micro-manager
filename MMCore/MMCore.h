@@ -505,10 +505,7 @@ public:
          if (pDevice->GetType() != T::Type)
             throw CMMError(deviceLabel, MMERR_InvalidSpecificDevice);
 
-         pSpecDev = static_cast<T*>(pDevice);                                                                             
-      } catch (CMMError& err) {                                                 
-         err.setCoreMsg(getCoreErrorText(err.getCode()).c_str());               
-         throw;                                                                 
+         pSpecDev = static_cast<T*>(pDevice);
       } catch (...) {                                                           
          throw CMMError(getCoreErrorText(MMERR_UnhandledException).c_str(), MMERR_UnhandledException);
       }                                                                         

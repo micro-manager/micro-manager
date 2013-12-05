@@ -34,9 +34,11 @@
    #include <dirent.h>
 #endif // WIN32
 
-#include "../MMDevice/ModuleInterface.h"
-#include "../MMCore/Error.h"
 #include "PluginManager.h"
+
+#include "../MMDevice/ModuleInterface.h"
+#include "CoreUtils.h"
+#include "Error.h"
 
 #include <assert.h>
 #include <sstream>
@@ -345,7 +347,7 @@ void CPluginManager::UnloadDevice(MM::Device* pDevice)
 
    HDEVMODULE hLib = pDevice->GetModuleHandle();
    if (hLib == 0)
-      throw CMMError(MMERR_UnknownModule); // can't get the handle to the device module
+      throw CMMError("Device cannot be unloaded: using unknown library", MMERR_UnknownModule);
 
    // obtain handle to the DeleteDevice method
    // we are assuming here that the current device module is already loaded
@@ -408,11 +410,12 @@ MM::Device* CPluginManager::LoadDevice(const char* label, const char* moduleName
    if (it != devices_.end())
    {
       if( NULL != it->second)
-         throw CMMError(label, MMERR_DuplicateLabel);
+         throw CMMError("The specified label " + ToQuotedString(label) + " is already in use",
+               MMERR_DuplicateLabel);
    }
 
    if (strlen(label) == 0)
-      throw CMMError(label, MMERR_InvalidLabel);
+      throw CMMError("Invalid label (empty string)", MMERR_InvalidLabel);
    
    // always attempt to load the plugin module
    // this should work fine even if the same module was previously loaded
@@ -428,17 +431,17 @@ MM::Device* CPluginManager::LoadDevice(const char* label, const char* moduleName
    }
    catch (CMMError& err)
    {
-      string msg = string("Failed to load device \"") + deviceName + "\" from module \"" +
-            moduleName + "\" as \"" + label + "\" [" + err.getMsg() + "]";
-
-      CMMError newErr(msg.c_str(), err.getCode());
-      throw newErr;
+      string msg = "Failed to load device " + ToQuotedString(deviceName) +
+         " from module " + ToQuotedString(moduleName) +
+         " as " + ToQuotedString(label);
+      throw CMMError(msg, MMERR_GENERIC, err);
    }
    
    // instantiate the new device
    MM::Device* pDevice = hCreateDeviceFunc(deviceName);
    if (pDevice == 0)
-      throw CMMError(deviceName, MMERR_CreateFailed);
+      throw CMMError("CreateDevice() failed for device " + ToQuotedString(deviceName),
+            MMERR_CreateFailed);
 
    char descr[MM::MaxStrLength] = "N/A";
    hGetDeviceDescription(deviceName, descr, MM::MaxStrLength);
@@ -492,7 +495,7 @@ string CPluginManager::GetDeviceLabel(const MM::Device& device) const
       }
    }
    
-   throw CMMError(MMERR_UnexpectedDevice);
+   throw CMMError("Unexpected device instance encountered", MMERR_UnexpectedDevice);
 }
 
 /**
@@ -726,11 +729,8 @@ vector<string> CPluginManager::GetAvailableDevices(const char* moduleName) throw
    }
    catch (CMMError& err)
    {
-      std::ostringstream o;
-      o << " module " << moduleName;
-
-      CMMError newErr( o.str().c_str(), err.getCoreMsg().c_str(), err.getCode());
-      throw newErr;
+      throw CMMError("Cannot get available devices from module " + ToString(moduleName),
+            MMERR_GENERIC, err);
    }
    
    return devices;
@@ -779,11 +779,8 @@ vector<string> CPluginManager::GetAvailableDeviceDescriptions(const char* module
    }
    catch (CMMError& err)
    {
-      std::ostringstream o;
-      o << " module " << moduleName ;
-
-      CMMError newErr( o.str().c_str(), err.getCoreMsg().c_str(), err.getCode());
-      throw newErr;
+      throw CMMError("Cannot get device descriptions from module " + ToString(moduleName),
+            MMERR_GENERIC, err);
    }
    
    return descriptions;
@@ -847,11 +844,8 @@ vector<long> CPluginManager::GetAvailableDeviceTypes(const char* moduleName) thr
    }
    catch (CMMError& err)
    {
-      std::ostringstream o;
-      o << " module " << moduleName;
-
-      CMMError newErr( o.str().c_str(), err.getCoreMsg().c_str(), err.getCode());
-      throw newErr;
+      throw CMMError("Cannot get device types from module " + ToString(moduleName),
+            MMERR_GENERIC, err);
    }
    
    return types;

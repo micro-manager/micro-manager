@@ -40,11 +40,33 @@
 #pragma warning( pop )
 #endif
 
+#include <boost/lexical_cast.hpp>
+#include <string>
 
-///////////////////////////////////////////////////////////////////////////////
-// Utility classes
-// ---------------
 
+template <typename T>
+inline std::string ToString(const T& d)
+{ return boost::lexical_cast<std::string>(d); }
+
+template <>
+inline std::string ToString<const char*>(char const* const& d)
+{
+   if (!d) 
+      return "(null)";
+   return d;
+}
+
+template <typename T>
+inline std::string ToQuotedString(const T& d)
+{ return "\"" + ToString(d) + "\""; }
+
+template <>
+inline std::string ToQuotedString<const char*>(char const* const& d)
+{
+   if (!d) // Don't quote if null
+      return ToString(d);
+   return "\"" + ToString(d) + "\"";
+}
 
 
 //NB we are starting the 'epoch' on 2000 01 01

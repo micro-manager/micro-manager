@@ -300,7 +300,7 @@
 %typemap(throws, throws="java.lang.Exception") CMMError {
    jclass excep = jenv->FindClass("java/lang/Exception");
    if (excep)
-     jenv->ThrowNew(excep, $1.getMsg().c_str());
+     jenv->ThrowNew(excep, $1.getFullMsg().c_str());
    return $null;
 }
 

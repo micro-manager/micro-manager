@@ -169,11 +169,11 @@ import_array();
 
 %extend CMMError {
   std::string __getitem__(int n) {
-	return $self->getMsg();
+	return $self->getFullMsg();
   }
   
   std::string __str__() {
-    return $self->getMsg();
+    return $self->getFullMsg();
   }
 }
 
