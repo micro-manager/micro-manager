@@ -42,6 +42,11 @@ public class Devices {
    private List<DevicesListenerInterface> listeners_;
    private Preferences prefs_;
    
+   public static enum abstractDevices {
+      CAMERAA, CAMERAB, DUALCAMERA, PIEZOA, PIEZOB, GALVOA, GALVOB, GALVOC,
+      GALVOD, XYSTAGE, LOWERZDRIVE, UPPERZDRIVE };
+   
+   
    public static final String CAMERAA = "CameraA";
    public static final String CAMERAB = "CameraB";
    public static final String DUALCAMERA = "DualCamera";

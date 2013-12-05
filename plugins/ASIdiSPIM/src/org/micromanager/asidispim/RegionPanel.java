@@ -21,10 +21,6 @@
 
 package org.micromanager.asidispim;
 
-import java.util.EnumMap;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -44,10 +40,8 @@ public class RegionPanel extends JPanel{
    ScriptInterface gui_;
    Devices devices_;
    SpimParams spimParams_;
-   
    Labels.Sides side_;
-   
-   
+    
    
    public RegionPanel(ScriptInterface gui, Devices devices, 
            SpimParams spimParams, Labels.Sides side) {
