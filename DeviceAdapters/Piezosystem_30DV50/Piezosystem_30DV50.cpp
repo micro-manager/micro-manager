@@ -1541,7 +1541,9 @@ int Stage::SetPidDefault(){
 	std::string result;
 	ret = GetSerialAnswer(port_.c_str(), g_Mesg_Receive_term, result);  
 	if (ret != DEVICE_OK){
-		LogMessage ("PID Error "+ret);
+		char msg[50]="PID Error ";
+		sprintf(msg,"PID Error %d",ret);
+		LogMessage (msg);
 		return ret;
 	}
 	LogMessage (result);
