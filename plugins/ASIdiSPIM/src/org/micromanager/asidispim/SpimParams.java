@@ -60,7 +60,8 @@ public class SpimParams implements DevicesListenerInterface {
    private static final String[] INTS = {
          NR_SIDES, NR_REPEATS, NR_SLICES, NR_LINESCANS_PER_SLICE_A, 
          NR_LINESCANS_PER_SHEET_B, LINE_SCAN_PERIOD_A, LINESCAN_PERIOD_B,
-         DELAY_BEFORE_SHEET_A, DELAY_BEFORE_SHEET_B, DELAY_BEFORE_SIDE_A, DELAY_BEFORE_SIDE_B};
+         DELAY_BEFORE_SHEET_A, DELAY_BEFORE_SHEET_B, DELAY_BEFORE_SIDE_A, 
+         DELAY_BEFORE_SIDE_B};
 
    public static final String FIRSTSIDE = "FirstSide";
    public static final String A = "A";

@@ -53,15 +53,23 @@ public class Knobs {
       }
    }
    
+   private Map<Controller, String> controlMap_;
+   
+   
    public Knobs() {
+      controlMap_ = new EnumMap<Controller, String>(Controller.class);
    }
    
    public void setController(Controller control, String device) {
+      // TODO: write code talking to controller  
+      controlMap_.put(control, device);
    }
    
-   public String getControlledDevice(Controller control) {
-      
-      return "";
+   
+   public String getControlledDevice(Controller control) {   
+      return controlMap_.get(control);
    }
+   
+   
    
 }

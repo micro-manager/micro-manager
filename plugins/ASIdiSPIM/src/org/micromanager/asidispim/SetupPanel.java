@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-//FILE:          RegionPanel.java
+//FILE:          SetupPanel.java
 //PROJECT:       Micro-Manager 
 //SUBSYSTEM:     ASIdiSPIM plugin
 //-----------------------------------------------------------------------------
@@ -36,14 +36,14 @@ import org.micromanager.api.ScriptInterface;
  *
  * @author Nico
  */
-public class RegionPanel extends JPanel{
+public class SetupPanel extends JPanel{
    ScriptInterface gui_;
    Devices devices_;
    SpimParams spimParams_;
    Labels.Sides side_;
     
    
-   public RegionPanel(ScriptInterface gui, Devices devices, 
+   public SetupPanel(ScriptInterface gui, Devices devices, 
            SpimParams spimParams, Labels.Sides side) {
       super (new MigLayout(
               "", 

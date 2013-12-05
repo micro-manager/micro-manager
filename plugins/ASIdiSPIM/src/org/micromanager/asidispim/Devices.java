@@ -42,22 +42,32 @@ public class Devices {
    private List<DevicesListenerInterface> listeners_;
    private Preferences prefs_;
    
-   public static enum abstractDevices {
+   /*
+   public static enum AbstractDevices {
       CAMERAA, CAMERAB, DUALCAMERA, PIEZOA, PIEZOB, GALVOA, GALVOB, GALVOC,
       GALVOD, XYSTAGE, LOWERZDRIVE, UPPERZDRIVE };
-   
+   public static final Map<AbstractDevices, String> DEVICEMAP = 
+           new EnumMap<AbstractDevices, String>(AbstractDevices.class);
+   static {
+      DEVICEMAP.put(AbstractDevices.CAMERAA,"CameraA");
+   }
+   * */
    
    public static final String CAMERAA = "CameraA";
    public static final String CAMERAB = "CameraB";
-   public static final String DUALCAMERA = "DualCamera";
+   public static final String DUALCAMERA = "Dual Camera";
    public static final String PIEZOA = "PiezoA";
    public static final String PIEZOB = "PiezoB";
    public static final String GALVOA = "GalvoA";
    public static final String GALVOB = "GalvoB";
    public static final String GALVOC = "GalvoC";
    public static final String GALVOD = "GalvoD";
+   public static final String XYSTAGE = "XY Stage";
+   public static final String LOWERZDRIVE = "Lower Z Drive";
+   public static final String UPPERZDRIVE = "Upper Z Drive";
    private static final String[] DEVICES = {
-      CAMERAA, CAMERAB, DUALCAMERA, PIEZOA, PIEZOB, GALVOA, GALVOB, GALVOC, GALVOD};
+      CAMERAA, CAMERAB, DUALCAMERA, PIEZOA, PIEZOB, GALVOA, GALVOB, GALVOC, 
+      GALVOD, XYSTAGE, LOWERZDRIVE, UPPERZDRIVE};
    
    public static final String FASTAXISAREV = "FastAxisARev";
    public static final String FASTAXISBREV = "FastAxisBRev";

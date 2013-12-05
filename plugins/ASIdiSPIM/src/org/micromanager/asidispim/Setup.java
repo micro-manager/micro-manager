@@ -26,7 +26,7 @@ package org.micromanager.asidispim;
  * Class containing data pertaining to acquisition settings
  * @author nico
  */
-public class Regions {
+public class Setup {
    
    
 }

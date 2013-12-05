@@ -53,10 +53,26 @@ public class DevicesPanel extends JPanel {
       super(new MigLayout(
               "",
               "[right]8[align center]8[align center]",
-              "[]8[]"));
+              "[]2[]"));
       devices_ = devices;
       gui_ = gui;
 
+      
+      add(new JLabel(Devices.XYSTAGE + ":", null, JLabel.RIGHT));
+      add(makeDeviceBox(mmcorej.DeviceType.XYStageDevice, Devices.XYSTAGE), 
+              "span 2, center, wrap");
+      
+      add(new JLabel(Devices.LOWERZDRIVE + ":", null, JLabel.RIGHT));
+      add(makeDeviceBox(mmcorej.DeviceType.StageDevice, Devices.LOWERZDRIVE), 
+              "span 2, center, wrap");
+      
+      add(new JLabel(Devices.UPPERZDRIVE + ":", null, JLabel.RIGHT));
+      add(makeDeviceBox(mmcorej.DeviceType.StageDevice, Devices.UPPERZDRIVE), 
+              "span 2, center, wrap");
+            
+      add(new JLabel(Devices.DUALCAMERA + ":", null, JLabel.RIGHT));
+      add(makeDualCameraDeviceBox(Devices.DUALCAMERA), "span 2, center, wrap");
+      
       add(new JLabel("Side A"), "skip 1");
       add(new JLabel("Side B"), "wrap");
 
@@ -66,9 +82,6 @@ public class DevicesPanel extends JPanel {
       add(makeDeviceBox(
               mmcorej.DeviceType.CameraDevice, Devices.CAMERAB),
               "wrap");
-
-      add(new JLabel("Dual Camera:", null, JLabel.RIGHT));
-      add(makeDualCameraDeviceBox(Devices.DUALCAMERA), "span 2, center, wrap");
 
       add(new JLabel("Imaging Piezo:", null, JLabel.RIGHT));
       add(makeDeviceBox(
@@ -168,9 +181,8 @@ public class DevicesPanel extends JPanel {
       deviceBox.setSelectedItem(devices_.getDeviceInfo(deviceName));
       deviceBox.addActionListener(new DevicesPanel.DeviceBoxListener(deviceName, deviceBox));
       return deviceBox;
-
    }
-
+   
    /**
     * Listener for the Axis directions combox boxes
     * Updates the model in the Devices class with any GUI changes
