@@ -167,7 +167,7 @@ bool CircularBuffer::InsertMultiChannel(const unsigned char* pixArray, unsigned 
          estimatedIntervalMs_ = 0;
 
       // check image dimensions
-      if (width != width_ || height_ != height || byteDepth != byteDepth)
+      if (width != width_ || height != height_ || byteDepth != pixDepth_)
          throw CMMError("Incompatible image dimensions in the circular buffer", MMERR_CircularBufferIncompatibleImage);
 
 
