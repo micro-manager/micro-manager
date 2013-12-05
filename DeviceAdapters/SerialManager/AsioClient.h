@@ -273,20 +273,17 @@ private:
    // for asynchronous write operations:
    void DoWrite(const char msg) 
    { // callback to handle write call from outside this class 
-      bool write_in_progress;
-      {
-         MMThreadGuard writeBufferGuard(writeBufferLock_);
-         write_in_progress = !write_msgs_.empty(); // is there anything currently being written?
-         write_msgs_.push_back(msg); // store in write buffer
-      }
+      MMThreadGuard writeBufferGuard(writeBufferLock_);
+      bool write_in_progress = !write_msgs_.empty(); // is there anything currently being written?
+      write_msgs_.push_back(msg); // store in write buffer
 
       if (!write_in_progress) // if nothing is currently being written, then start 
          WriteStart(); 
    } 
 
+   // Must be called with writeBufferLock_ acquired!
    void WriteStart(void) 
    { // Start an asynchronous write and call WriteComplete when it completes or fails 
-      MMThreadGuard g(writeBufferLock_);
       boost::asio::async_write(serialPortImplementation_, 
          boost::asio::buffer(&write_msgs_.front(), 1), 
          boost::bind(&AsioClient::WriteComplete, 
@@ -298,15 +295,10 @@ private:
    { // the asynchronous read operation has now completed or failed and returned an error 
       if (!error) 
       { // write completed, so send next write data 
-         bool anythingThere;
-         {
-            MMThreadGuard writeBufferGuard(writeBufferLock_);
-            if ( 0 < write_msgs_.size())
-               write_msgs_.pop_front(); // remove the completed data
-            anythingThere = !write_msgs_.empty();
-         }
-
-         if (anythingThere) // if there is anthing left to be written 
+         MMThreadGuard writeBufferGuard(writeBufferLock_);
+         if (0 < write_msgs_.size()) // Should always be true, unless purged
+            write_msgs_.pop_front(); // remove the completed data
+         if (!write_msgs_.empty()) // if there is anthing left to be written
             WriteStart(); // then start sending the next item in the buffer 
       } 
       else 
