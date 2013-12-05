@@ -57,9 +57,9 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
    
       tabbedPane.addTab("Devices", new DevicesPanel(gui_, devices_));
       tabbedPane.addTab("SPIM Params", new SpimParamsPanel(spimParams_, devices_));
-      tabbedPane.addTab("Select Region-A", new RegionPanel(
+      tabbedPane.addTab("Setup Side A", new RegionPanel(
               gui_, devices_, spimParams_, Labels.Sides.A) );
-      tabbedPane.addTab("Select Region-B", new RegionPanel(
+      tabbedPane.addTab("Setup Side B", new RegionPanel(
               gui_, devices_, spimParams_, Labels.Sides.B) );
             
       add(tabbedPane);

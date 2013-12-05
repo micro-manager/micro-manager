@@ -46,22 +46,21 @@ public class SpimParams implements DevicesListenerInterface {
    private final List<SpimParamsListenerInterface> listeners_;
    private Preferences prefs_;
    
-   public static final String NSIDES = "NSides";
-   public static final String NREPEATS = "NRepeats";
-   public static final String NSHEETSA = "NSheetsA";
-   public static final String NSHEETSB = "NSHeetsB";
-   public static final String NLINESCANSPERSHEETA = "NLinesScansPerSheetA";
-   public static final String NLINESCANSPERSHEETB = "NLinesScansPerSheetB";
-   public static final String LINESCANPERIODA = "LineScanPeriodA";
-   public static final String LINESCANPERIODB = "LineScanPeriodB";
-   public static final String DELAYBEFORESHEETA = "DelayBeforeSheetA";
-   public static final String DELAYBEFORESHEETB = "DelayBeforeSheetB";
-   public static final String DELAYBEFORESIDEA = "DelayBeforeSideA";
-   public static final String DELAYBEFORESIDEB = "DelayBeforeSideB";
+   public static final String NR_SIDES = "NSides";
+   public static final String NR_REPEATS = "NRepeats";
+   public static final String NR_SLICES = "NSlices";
+   public static final String NR_LINESCANS_PER_SLICE_A = "NLinesScansPerSheetA";
+   public static final String NR_LINESCANS_PER_SHEET_B = "NLinesScansPerSheetB";
+   public static final String LINE_SCAN_PERIOD_A = "LineScanPeriodA";
+   public static final String LINESCAN_PERIOD_B = "LineScanPeriodB";
+   public static final String DELAY_BEFORE_SHEET_A = "DelayBeforeSheetA";
+   public static final String DELAY_BEFORE_SHEET_B = "DelayBeforeSheetB";
+   public static final String DELAY_BEFORE_SIDE_A = "DelayBeforeSideA";
+   public static final String DELAY_BEFORE_SIDE_B = "DelayBeforeSideB";
    private static final String[] INTS = {
-         NSIDES, NREPEATS, NSHEETSA, NSHEETSB, NLINESCANSPERSHEETA, 
-         NLINESCANSPERSHEETB, LINESCANPERIODA, LINESCANPERIODB,
-         DELAYBEFORESHEETA, DELAYBEFORESHEETB, DELAYBEFORESIDEA, DELAYBEFORESIDEB};
+         NR_SIDES, NR_REPEATS, NR_SLICES, NR_LINESCANS_PER_SLICE_A, 
+         NR_LINESCANS_PER_SHEET_B, LINE_SCAN_PERIOD_A, LINESCAN_PERIOD_B,
+         DELAY_BEFORE_SHEET_A, DELAY_BEFORE_SHEET_B, DELAY_BEFORE_SIDE_A, DELAY_BEFORE_SIDE_B};
 
    public static final String FIRSTSIDE = "FirstSide";
    public static final String A = "A";
@@ -91,11 +90,11 @@ public class SpimParams implements DevicesListenerInterface {
       for (String iInfo : INTS) {
          integerInfo_.put(iInfo, prefs_.getInt(iInfo, 1));
          
-         if (iInfo.equals(LINESCANPERIODA)) {
+         if (iInfo.equals(LINE_SCAN_PERIOD_A)) {
             getLineScanProp(Devices.GALVOA, iInfo,
                     devices_.getAxisDirInfo(Devices.FASTAXISADIR));
          }
-         if (iInfo.equals(LINESCANPERIODB)) {
+         if (iInfo.equals(LINESCAN_PERIOD_B)) {
             getLineScanProp(Devices.GALVOB, iInfo,
                     devices_.getAxisDirInfo(Devices.FASTAXISBDIR));
          }
@@ -110,13 +109,13 @@ public class SpimParams implements DevicesListenerInterface {
             String mma = null;
             String propName = null;
             try {
-               if (key.equals(LINESCANPERIODA)) {
+               if (key.equals(LINE_SCAN_PERIOD_A)) {
                   mma = devices_.getDeviceInfo(Devices.GALVOA);
                   propName = "SingleAxis"
                           + devices_.getAxisDirInfo(Devices.FASTAXISADIR) + "Period(ms)";
                   core_.setProperty(mma, propName, val);
                }
-               if (key.equals(LINESCANPERIODB)) {
+               if (key.equals(LINESCAN_PERIOD_B)) {
                   mma = devices_.getDeviceInfo(Devices.GALVOB);
                   propName = "SingleAxis"
                           + devices_.getAxisDirInfo(Devices.FASTAXISBDIR) + "Period(ms)";

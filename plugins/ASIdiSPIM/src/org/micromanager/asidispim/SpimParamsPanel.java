@@ -51,7 +51,7 @@ public class SpimParamsPanel extends JPanel {
       devices_ = devices;
 
       add(new JLabel("Number of sides:"), "split 2");
-      add(makeSpinner(SpimParams.NSIDES, 1, 2));
+      add(makeSpinner(SpimParams.NR_SIDES, 1, 2));
       
       add(new JLabel("First side:"), "align right");
       add(makeABBox(SpimParams.FIRSTSIDE), "wrap");
@@ -59,25 +59,24 @@ public class SpimParamsPanel extends JPanel {
       add(new JLabel("Side A"), "cell 1 2");
       add(new JLabel("Side B"), "wrap");
       
-      add(new JLabel("Number of Sheets:"));
-      add(makeSpinner(SpimParams.NSHEETSA, 1, 99));
-      add(makeSpinner(SpimParams.NSHEETSB, 1, 99), "wrap");
+      add(new JLabel("Number of slices:"));
+      add(makeSpinner(SpimParams.NR_SLICES, 1, 99), "span 2, wrap");
       
-      add(new JLabel("Lines scans per Sheet:"));
-      add(makeSpinner(SpimParams.NLINESCANSPERSHEETA, 1, 20));
-      add(makeSpinner(SpimParams.NLINESCANSPERSHEETB, 1, 20), "wrap");
+      add(new JLabel("Lines scans per slice:"));
+      add(makeSpinner(SpimParams.NR_LINESCANS_PER_SLICE_A, 1, 20));
+      add(makeSpinner(SpimParams.NR_LINESCANS_PER_SHEET_B, 1, 20), "wrap");
       
       add(new JLabel("Line scan period (ms):"));
-      add(makeSpinner(SpimParams.LINESCANPERIODA, 1, 10000));
-      add(makeSpinner(SpimParams.LINESCANPERIODB, 1, 10000), "wrap");
+      add(makeSpinner(SpimParams.LINE_SCAN_PERIOD_A, 1, 10000));
+      add(makeSpinner(SpimParams.LINESCAN_PERIOD_B, 1, 10000), "wrap");
       
-      add(new JLabel("Delay before each sheet (ms):"));
-      add(makeSpinner(SpimParams.DELAYBEFORESHEETA, 0, 10000));
-      add(makeSpinner(SpimParams.DELAYBEFORESHEETB, 0, 10000), "wrap");
+      add(new JLabel("Delay before each slice (ms):"));
+      add(makeSpinner(SpimParams.DELAY_BEFORE_SHEET_A, 0, 10000));
+      add(makeSpinner(SpimParams.DELAY_BEFORE_SHEET_B, 0, 10000), "wrap");
       
       add(new JLabel("Delay before each side (ms):"));
-      add(makeSpinner(SpimParams.DELAYBEFORESIDEA, 0, 10000));
-      add(makeSpinner(SpimParams.DELAYBEFORESIDEB, 0, 10000), "wrap");
+      add(makeSpinner(SpimParams.DELAY_BEFORE_SIDE_A, 0, 10000));
+      add(makeSpinner(SpimParams.DELAY_BEFORE_SIDE_B, 0, 10000), "wrap");
       
    }
 
