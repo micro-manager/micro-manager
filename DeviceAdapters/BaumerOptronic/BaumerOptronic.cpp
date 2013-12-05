@@ -68,31 +68,24 @@ image.
 */
 
 
-#include <cstdio>
-#include <string>
-#include <math.h>
-#include <process.h>
+#include "BaumerOptronic.h"
+
 #include "../../MMDevice/ModuleInterface.h"
-#include "../../MMCore/Error.h"
-#include "../../MMCore/CoreUtils.h"
+#include "../../MMDevice/MMDeviceConstants.h"
 
+#include <algorithm>
+#include <cmath>
+#include <cstdio>
 #include <sstream>
+#include <string>
 
+#include <boost/lexical_cast.hpp>
 
-#pragma warning(push)
-#pragma warning(disable: 4245)  // bunch of nonsense in the B.O. library.
-#pragma warning(disable: 4996)
-#include "FxApi.h"
-#include "FxError.h"
-#pragma warning(pop)
+#include <process.h>
 
 // Disable warning for unused BOMSG(), defined in BoMsg.h (via FxApi.h).
 // This warning is generated at the end of compilation, so cannot be disabled within push/pop.
 #pragma warning(disable: 4505)
-
-
-#include "BaumerOptronic.h"
-
 
 using namespace std;
 
@@ -771,7 +764,7 @@ void BOImplementationThread::QueryCameraCurrentFormat(void)
    ::iCode_g = static_cast<unsigned short>(dcBoStatus.eCurImgCode.iCode); 
    if( CE_SUCCESS != fxRet)
    {
-      PostError(MMERR_GENERIC, IntelligentErrorString(fxRet).c_str());
+      PostError(DEVICE_ERR, IntelligentErrorString(fxRet).c_str());
    }
    else
    {
@@ -1121,7 +1114,7 @@ tBoImgCode BOImplementationThread::ImageCode(void)
    ::iCode_g = static_cast<unsigned short>(dcBoStatus.eCurImgCode.iCode); 
 
    if( 1 != fxRet)
-      PostError(MMERR_GENERIC, IntelligentErrorString(fxRet).c_str());
+      PostError(DEVICE_ERR, IntelligentErrorString(fxRet).c_str());
 
    return dcBoStatus.eCurImgCode;
 
@@ -1214,12 +1207,12 @@ void BOImplementationThread::BinSize(const int v)
       {
          std::ostringstream oss;
          oss << " in BinSize can not set bins to " << v;
-         PostError(MMERR_GENERIC, oss.str().c_str());
+         PostError(DEVICE_ERR, oss.str().c_str());
       }
    }
 }
 
-void BOImplementationThread::BitsInOneColor( const int bits)
+int BOImplementationThread::SetBitsInOneColor(const int bits)
 {
 
    MMThreadGuard g( stateMachineLock_);
@@ -1268,12 +1261,11 @@ void BOImplementationThread::BitsInOneColor( const int bits)
       if( ! foundMatch)
       {
          cameraState_ = prevState;
-         std::ostringstream oss;
-         oss << " in BitsInOneColor can not set bits to " << bits;
-         throw CMMError(oss.str().c_str(), MMERR_GENERIC);
+         return DEVICE_ERR;
       }
    }
    cameraState_=prevState;
+   return DEVICE_OK;
 }
 
 
@@ -1794,7 +1786,7 @@ unsigned CBaumerOptronic::GetImageBytesPerPixel() const
 */
 unsigned CBaumerOptronic::GetBitDepth() const
 {
-   return pWorkerThread_->BitsInOneColor();
+   return pWorkerThread_->GetBitsInOneColor();
 }
 
 /**
@@ -2004,36 +1996,29 @@ int CBaumerOptronic::OnBitDepth(MM::PropertyBase* pProp, MM::ActionType eAct)
    if (Ready != pWorkerThread_->CameraState())
       return DEVICE_CAMERA_BUSY_ACQUIRING;
 
-   int ret = DEVICE_ERR;
-   try
+   switch (eAct)
    {
-      switch(eAct)
+   case MM::AfterSet:    // property was written -> apply value to hardware
       {
-      case MM::AfterSet:    // property was written -> apply value to hardware
-         {
-            long bitDepth;
-            pProp->Get(bitDepth);
-           // if (GetNumberOfComponents() == 4)
-            //   bitDepth = 8; // We can not yet handle 64bitRGB
-            pWorkerThread_->BitsInOneColor(bitDepth);
-            bitsInOneColor_g = (unsigned short)bitDepth;
-            int bytesPerPixel = BytesInOneComponent(bitsInOneColor_g);
-            //todo is color image selected at this time?
-			   img_.Resize(img_.Width(), img_.Height(), bytesPerPixel * GetNumberOfComponents() );
-            ret=DEVICE_OK;
-         } break;
-      case MM::BeforeGet: // property will be read -> update property with value from hardware
-         {
-            pProp->Set((long)pWorkerThread_->BitsInOneColor());
-            ret=DEVICE_OK;
-         }break;
+         long bitDepth;
+         pProp->Get(bitDepth);
+         // if (GetNumberOfComponents() == 4)
+         //    bitDepth = 8; // We can not yet handle 64bitRGB
+         int ret = pWorkerThread_->SetBitsInOneColor(bitDepth);
+         if (ret != DEVICE_OK)
+            return ret;
+         bitsInOneColor_g = (unsigned short)bitDepth;
+         int bytesPerPixel = BytesInOneComponent(bitsInOneColor_g);
+         //todo is color image selected at this time?
+         img_.Resize(img_.Width(), img_.Height(), bytesPerPixel * GetNumberOfComponents());
       }
+      break;
+
+   case MM::BeforeGet: // property will be read -> update property with value from hardware
+      pProp->Set((long)pWorkerThread_->GetBitsInOneColor());
+      break;
    }
-   catch(CMMError& e)
-   {
-      ret = e.getCode();
-   }
-   return ret; 
+   return DEVICE_OK;
 }
 
 

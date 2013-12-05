@@ -29,8 +29,17 @@
 #include "../../MMDevice/DeviceBase.h"
 #include "../../MMDevice/ImgBuffer.h"
 #include "../../MMDevice/DeviceThreads.h"
+
+#pragma warning(push)
+#pragma warning(disable: 4245)
+//#pragma warning(disable: 4996)
+#include "FxApi.h"
+#include "FxError.h"
+#pragma warning(pop)
+
 #include <string>
 #include <map>
+#include <vector>
 
 
 enum WorkerCommand { Noop = 0, 
@@ -198,8 +207,8 @@ class BOImplementationThread : public MMDeviceThreadBase
       bool MonoChrome(void);
       bool Color(void);
 
-      void BitsInOneColor( const int bits);
-      int BitsInOneColor(void) { return bitsInOneColor_;};
+      int SetBitsInOneColor(const int bits);
+      int GetBitsInOneColor() { return bitsInOneColor_; }
       void PostError(const int errorCode_a, const char* pMessage_a);
 
       typedef std::pair< std::string, tBoImgFormat >  NamedFormat;
