@@ -103,10 +103,10 @@ public:
    /// Copy constructor (perform a deep copy).
    CMMError(const CMMError& other);
 
-   virtual ~CMMError() {}
+   virtual ~CMMError() throw() {}
 
    /// Implements std::exception interface.
-   virtual const char* what() const { return message_.c_str(); }
+   virtual const char* what() const throw() { return message_.c_str(); }
 
    /// Get the error message for this error.
    virtual std::string getMsg() const;
