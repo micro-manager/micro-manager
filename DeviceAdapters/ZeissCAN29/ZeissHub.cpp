@@ -178,8 +178,8 @@ int ZeissHub::Initialize(MM::Device& device, MM::Core& core)
             GetMeasuringOrigin(device, core, commandGroup_[devId], devId, deviceInfo_[devId]);
       }
       deviceInfo_[devId].busy = false;
-      deviceInfo_[devId].lastRequestTime == core.GetCurrentMMTime();
-      deviceInfo_[devId].lastUpdateTime == core.GetCurrentMMTime();
+      deviceInfo_[devId].lastRequestTime = core.GetCurrentMMTime();
+      deviceInfo_[devId].lastUpdateTime = core.GetCurrentMMTime();
 
       os << "Device " << std::hex << (unsigned int) devId << " has ";
       os << std::dec << maxPosition << " positions and is now at position "<< position;
