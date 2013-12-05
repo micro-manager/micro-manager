@@ -38,9 +38,10 @@
 /**
  * Exceptions can be "chained" to express underlying causes of errors.
  *
- * There are no methods to modify error objects. This is intentional, to keep
- * it easy to determine the source of information. Use chaining if you want to
- * augment error messages with higher-level information.
+ * There are no methods to modify error objects after construction. This is
+ * intentional, to keep it easy to determine the source of information. Use
+ * chaining if you want to augment error messages with higher-level
+ * information.
  *
  * The main information contained in an instance is the error message and the
  * error code. The message is required and should be concise but should try to
@@ -102,9 +103,6 @@ public:
    /// Copy constructor (perform a deep copy).
    CMMError(const CMMError& other);
 
-   /// Copy assignment operator (perform a deep copy).
-   CMMError& operator=(const CMMError& rhs);
-
    virtual ~CMMError() {}
 
    /// Implements std::exception interface.
@@ -139,6 +137,9 @@ public:
    virtual const CMMError* getUnderlyingError() const;
 
 private:
+   // Prohibit assignment.
+   CMMError& operator=(const CMMError&);
+
    std::string message_;
    Code code_;
    std::auto_ptr<CMMError> underlying_;

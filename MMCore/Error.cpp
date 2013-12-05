@@ -64,20 +64,6 @@ CMMError::CMMError(const CMMError& other) :
 }
 
 
-CMMError&
-CMMError::operator=(const CMMError& rhs)
-{
-   // No attempt made at exception safety (if bad_alloc, so be it).
-   message_ = rhs.message_;
-   code_ = rhs.code_;
-   if (rhs.getUnderlyingError())
-      underlying_.reset(new CMMError(*(rhs.getUnderlyingError())));
-   else
-      underlying_.reset();
-   return *this;
-}
-
-
 std::string
 CMMError::getMsg() const
 {
