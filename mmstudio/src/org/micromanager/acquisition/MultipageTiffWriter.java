@@ -255,8 +255,8 @@ public class MultipageTiffWriter {
       if (summaryMD.has("Comment")) {
          summaryMD.remove("Comment");
       }
-      String summaryMDString = summaryMD.toString();
-      int mdLength = summaryMDString.length();
+      byte[] summaryMDBytes = getBytesFromString(summaryMD.toString());
+      int mdLength = summaryMDBytes.length;
       ByteBuffer buffer = allocateByteBuffer(40);
       if (BYTE_ORDER.equals(ByteOrder.BIG_ENDIAN)) {
          buffer.asCharBuffer().put(0,(char) 0x4d4d);
@@ -270,12 +270,12 @@ public class MultipageTiffWriter {
       //8 bytes for display settings offset header and display settings offset
       //8 bytes for comments offset header and comments offset
       //8 bytes for summaryMD header  summary md length + 
-      //1 byte for each character of summary md     
+      //1 byte for each byte of UTF-8-encoded summary md
       buffer.putInt(32,SUMMARY_MD_HEADER);
       buffer.putInt(36,mdLength);
       ByteBuffer[] buffers = new ByteBuffer[2];
       buffers[0] = buffer;
-      buffers[1] = ByteBuffer.wrap(getBytesFromString(summaryMDString));
+      buffers[1] = ByteBuffer.wrap(summaryMDBytes);
       fileChannelWrite(buffers);
       filePosition_ += buffer.capacity() + mdLength;
    }
@@ -397,12 +397,12 @@ public class MultipageTiffWriter {
       if (img.tags.has("Summary")) {
          img.tags.remove("Summary");
       }
-      String mdString = img.tags.toString() + " ";
+      byte[] mdBytes = getBytesFromString(img.tags.toString() + " ");
 
       //2 bytes for number of directory entries, 12 bytes per directory entry, 4 byte offset of next IFD
      //6 bytes for bits per sample if RGB, 16 bytes for x and y resolution, 1 byte per character of MD string
      //number of bytes for pixels
-     int totalBytes = 2 + numEntries*12 + 4 + (rgb_?6:0) + 16 + mdString.length() + bytesPerImagePixels_;
+     int totalBytes = 2 + numEntries*12 + 4 + (rgb_?6:0) + 16 + mdBytes.length + bytesPerImagePixels_;
      int IFDandBitDepthBytes = 2+ numEntries*12 + 4 + (rgb_?6:0);
      
      ByteBuffer ifdBuffer = allocateByteBuffer(IFDandBitDepthBytes);
@@ -446,8 +446,8 @@ public class MultipageTiffWriter {
          ijMetadataTagPosition_ = filePosition_ + bufferPosition_;
          writeIFDEntry(ifdBuffer,charView,IJ_METADATA,(char)1,0,0);
       }
-      writeIFDEntry(ifdBuffer,charView,MM_METADATA,(char)2,mdString.length(),tagDataOffset);
-      tagDataOffset += mdString.length();
+      writeIFDEntry(ifdBuffer,charView,MM_METADATA,(char)2,mdBytes.length,tagDataOffset);
+      tagDataOffset += mdBytes.length;
       //NextIFDOffset
       ifdBuffer.putInt(bufferPosition_, (int)tagDataOffset);
       bufferPosition_ += 4;
@@ -460,7 +460,7 @@ public class MultipageTiffWriter {
       buffers_.add(ifdBuffer);
       buffers_.add(getPixelBuffer(img));
       buffers_.add(getResolutionValuesBuffer());   
-      buffers_.add(ByteBuffer.wrap(getBytesFromString(mdString)));
+      buffers_.add(ByteBuffer.wrap(mdBytes));
       
       filePosition_ += totalBytes;
       firstIFD_ = false;
@@ -598,10 +598,13 @@ public class MultipageTiffWriter {
     * expanded to write ROIs, file info, slice labels, and overlays
     */
    private void writeImageJMetadata(int numChannels, String summaryComment) throws IOException {
-      String info = summaryMDString_;
+      String infoString = summaryMDString_;
       if (summaryComment != null && summaryComment.length() > 0) {
-         info = "Acquisition comments: \n" + summaryComment + "\n\n\n" + summaryMDString_;
+         infoString = "Acquisition comments: \n" + summaryComment + "\n\n\n" + summaryMDString_;
       }
+      char[] infoChars = infoString.toCharArray();
+      int infoSize = 2 * infoChars.length;
+
       //size entry (4 bytes) + 4 bytes file info size + 4 bytes for channel display 
       //ranges length + 4 bytes per channel LUT
       int mdByteCountsBufferSize = 4 + 4 + 4 + 4 * numChannels;
@@ -619,9 +622,9 @@ public class MultipageTiffWriter {
       bufferPosition += 4;
 
       //2 bytes per a character of file info
-      mdByteCountsBuffer.putInt(bufferPosition, 2*info.length() );
+      mdByteCountsBuffer.putInt(bufferPosition, infoSize);
       bufferPosition += 4;
-      mdBufferSize += info.length()*2;
+      mdBufferSize += infoSize;
       
       //display ranges written as array of doubles (min, max, min, max, etc)
       mdByteCountsBuffer.putInt(bufferPosition, numChannels * 2 * 8);
@@ -677,7 +680,7 @@ public class MultipageTiffWriter {
 
       //write actual metadata
       //FileInfo
-      for (char c : info.toCharArray()) {
+      for (char c : infoChars) {
          mdBuffer.putChar(bufferPosition, c);
          bufferPosition += 2;
       }
@@ -800,11 +803,11 @@ public class MultipageTiffWriter {
       } catch (JSONException ex) {
          comments = new JSONObject();
       }
-      String commentsString = comments.toString();
+      byte[] commentsBytes = getBytesFromString(comments.toString());
       ByteBuffer header = allocateByteBuffer(8);
       header.putInt(0, COMMENTS_HEADER);
-      header.putInt(4, commentsString.length());
-      ByteBuffer buffer = ByteBuffer.wrap(getBytesFromString(commentsString));
+      header.putInt(4, commentsBytes.length);
+      ByteBuffer buffer = ByteBuffer.wrap(commentsBytes);
       fileChannelWrite(header, filePosition_);
       fileChannelWrite(buffer, filePosition_ + 8);
 
@@ -812,7 +815,7 @@ public class MultipageTiffWriter {
       offsetHeader.putInt(0, COMMENTS_OFFSET_HEADER);
       offsetHeader.putInt(4, (int) filePosition_);
       fileChannelWrite(offsetHeader, 24);
-      filePosition_ += 8 + commentsString.length();
+      filePosition_ += 8 + commentsBytes.length;
    }
 
    private void writeIndexMap() throws IOException {
@@ -869,12 +872,12 @@ public class MultipageTiffWriter {
       char numEntries = (char) (((firstIFD_ && omeTiff_) ? ENTRIES_PER_IFD + 2 : ENTRIES_PER_IFD)
               + (firstIFD_ ? 2 : 0));
      
-      String mdString = "NULL ";
+      byte[] mdBytes = getBytesFromString("NULL ");
 
       //2 bytes for number of directory entries, 12 bytes per directory entry, 4 byte offset of next IFD
      //6 bytes for bits per sample if RGB, 16 bytes for x and y resolution, 1 byte per character of MD string
      //number of bytes for pixels
-     int totalBytes = 2 + numEntries*12 + 4 + (rgb_?6:0) + 16 + mdString.length() 
+     int totalBytes = 2 + numEntries*12 + 4 + (rgb_?6:0) + 16 + mdBytes.length
              + (blankPixelsAlreadyWritten ? 0 : bytesPerImagePixels_);
      int IFDandBitDepthBytes = 2+ numEntries*12 + 4 + (rgb_?6:0);
      
@@ -927,8 +930,8 @@ public class MultipageTiffWriter {
          ijMetadataTagPosition_ = filePosition_ + bufferPosition_;
          writeIFDEntry(ifdBuffer,charView,IJ_METADATA,(char)1,0,0);
       }
-      writeIFDEntry(ifdBuffer,charView,MM_METADATA,(char)2,mdString.length(),tagDataOffset);
-      tagDataOffset += mdString.length();
+      writeIFDEntry(ifdBuffer,charView,MM_METADATA,(char)2,mdBytes.length,tagDataOffset);
+      tagDataOffset += mdBytes.length;
       //NextIFDOffset
       ifdBuffer.putInt(bufferPosition_, (int)tagDataOffset);
       bufferPosition_ += 4;
@@ -943,7 +946,7 @@ public class MultipageTiffWriter {
          buffers_.add(ByteBuffer.wrap(new byte[bytesPerImagePixels_]));
       }
       buffers_.add(getResolutionValuesBuffer());   
-      buffers_.add(ByteBuffer.wrap(getBytesFromString(mdString)));
+      buffers_.add(ByteBuffer.wrap(mdBytes));
       
       filePosition_ += totalBytes;
       firstIFD_ = false;
