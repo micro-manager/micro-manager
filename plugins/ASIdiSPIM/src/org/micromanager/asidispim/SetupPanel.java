@@ -21,8 +21,6 @@
 
 package org.micromanager.asidispim;
 
-import java.util.ArrayList;
-import java.util.List;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;

@@ -47,20 +47,20 @@ public class Devices {
    public static enum JoystickDevice {
       JOYSTICK, RIGHT_KNOB, LEFT_KNOB
    };
-   public static final Map<JoystickDevice, String> JOYSTICKMAP =
+   public static final Map<JoystickDevice, String> JOYSTICKS =
            new EnumMap<JoystickDevice, String>(JoystickDevice.class);
    static {
-      JOYSTICKMAP.put(JoystickDevice.JOYSTICK, "Joystick");
-      JOYSTICKMAP.put(JoystickDevice.RIGHT_KNOB, "Right Knob");
-      JOYSTICKMAP.put(JoystickDevice.LEFT_KNOB, "Left Know");
+      JOYSTICKS.put(JoystickDevice.JOYSTICK, "Joystick");
+      JOYSTICKS.put(JoystickDevice.RIGHT_KNOB, "Right Knob");
+      JOYSTICKS.put(JoystickDevice.LEFT_KNOB, "Left Know");
    }
-   public static final Map<String, JoystickDevice> REVJOYSTICKMAP =
+   public static final Map<String, JoystickDevice> INV_JOYSTICKS =
            new HashMap<String, JoystickDevice>();
    static {
-      Iterator<JoystickDevice> it = JOYSTICKMAP.keySet().iterator();
+      Iterator<JoystickDevice> it = JOYSTICKS.keySet().iterator();
       while (it.hasNext()) {
          JoystickDevice term = it.next();
-         REVJOYSTICKMAP.put(JOYSTICKMAP.get(term), term);
+         INV_JOYSTICKS.put(JOYSTICKS.get(term), term);
       }
    }
    
@@ -328,7 +328,7 @@ public class Devices {
    }
 
    /**
-    * Writes deviceInfo_ back to Preferences
+    * Write deviceInfo_ back to Preferences
     */
    public synchronized void saveSettings() {
       for (String device : DEVICES) {
@@ -343,14 +343,24 @@ public class Devices {
       }
    }
 
+   /**
+    * Used to add classes implementing DeviceListenerInterface as listeners
+    */
    public void addListener(DevicesListenerInterface listener) {
       listeners_.add(listener);
    }
 
+   /**
+    * Remove classes implementing the DeviceListener interface from the listers
+    * @param listener 
+    */
    public void removeListener(DevicesListenerInterface listener) {
       listeners_.remove(listener);
    }
 
+   /**
+    * Call each listener in succession to alert them that something changed
+    */
    private void callListeners() {
       for (DevicesListenerInterface listener : listeners_) {
          listener.devicesChangedAlert();

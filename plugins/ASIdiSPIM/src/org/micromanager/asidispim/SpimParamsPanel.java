@@ -137,7 +137,7 @@ public class SpimParamsPanel extends JPanel {
    
    
   /**
-    * Constructs a DropDown box containing X/Y.
+    * Constructs a DropDown box containing A/B.
     * Sets selection based on info in the Devices class and attaches
     * a Listener
     * 
