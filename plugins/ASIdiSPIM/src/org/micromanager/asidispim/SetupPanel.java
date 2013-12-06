@@ -21,6 +21,8 @@
 
 package org.micromanager.asidispim;
 
+import java.util.ArrayList;
+import java.util.List;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -54,28 +56,20 @@ public class SetupPanel extends JPanel{
        side_ = side;
        
        add(new JLabel("Joystick:"));
-       String[] joystickChoises = {
-            Labels.TERMSMAP.get(Labels.Terms.MICROMIRROR), 
-            Labels.TERMSMAP.get(Labels.Terms.XYSTAGE)};
-       add(makeSelectionBox(joystickChoises));
+       add(makeSelectionBox(getMoveableTigerDevices()));
        add(new JLabel("Imaging piezo:"));
        add(new JLabel("Pos"));
        add(new JButton("Set start"));
        add(new JButton("Set end"), "wrap");
        
        add(new JLabel("Right knob:"));
-       String[] knobSelection = {
-            Labels.TERMSMAP.get(Labels.Terms.IMAGINGPIEZO), 
-            Labels.TERMSMAP.get(Labels.Terms.ILLUMINATIONPIEZO), 
-            Labels.TERMSMAP.get(Labels.Terms.SHEETPOSITION),
-            Labels.TERMSMAP.get(Labels.Terms.SHEETOFFSET) };
-       add(makeSelectionBox(knobSelection));
+       add(makeSelectionBox(getMoveableTigerDevices()));
        add(new JLabel("Illumination piezo:"));
        add(new JLabel("Pos"));
        add(new JButton("Set position"), "span 2, center, wrap");
        
        add(new JLabel("Left knob:"));
-       add(makeSelectionBox(knobSelection));
+       add(makeSelectionBox(getMoveableTigerDevices()));
        add(new JLabel("Scan amplitude:"));
        add(new JLabel("Pos"));
        add(makeSlider("scanAmplitude", 0, 8, 4), "span 2, center, wrap");
@@ -102,6 +96,21 @@ public class SetupPanel extends JPanel{
        add(singleButton, "center");
        add(dualButton, "center");
        
+   }
+   
+   private String[] getMoveableTigerDevices() {
+      List<String> res = new ArrayList<String>();
+      for (String dev : Devices.ONEAXISTIGERDEVICES) {
+         if (devices_.getMMDevice(dev) != null) {
+            res.add(dev);
+         }
+      }
+      for (String dev : Devices.TWOAXISTIGERDEVICES) {
+         if (devices_.getMMDevice(dev) != null) {
+            res.add(dev);
+         }
+      }
+      return (String[]) res.toArray(new String[0]);
    }
    
    private JComboBox makeSelectionBox(String[] selections) {

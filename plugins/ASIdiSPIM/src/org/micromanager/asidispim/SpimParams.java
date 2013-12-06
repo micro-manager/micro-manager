@@ -111,13 +111,13 @@ public class SpimParams implements DevicesListenerInterface {
             String propName = null;
             try {
                if (key.equals(LINE_SCAN_PERIOD_A)) {
-                  mma = devices_.getDeviceInfo(Devices.GALVOA);
+                  mma = devices_.getMMDevice(Devices.GALVOA);
                   propName = "SingleAxis"
                           + devices_.getAxisDirInfo(Devices.FASTAXISADIR) + "Period(ms)";
                   core_.setProperty(mma, propName, val);
                }
                if (key.equals(LINESCAN_PERIOD_B)) {
-                  mma = devices_.getDeviceInfo(Devices.GALVOB);
+                  mma = devices_.getMMDevice(Devices.GALVOB);
                   propName = "SingleAxis"
                           + devices_.getAxisDirInfo(Devices.FASTAXISBDIR) + "Period(ms)";
                   core_.setProperty(mma, propName, val);
@@ -132,7 +132,7 @@ public class SpimParams implements DevicesListenerInterface {
    }
 
    private void getLineScanProp(String deviceName, String iInfo, String fastAxis) {
-      String mm = devices_.getDeviceInfo(deviceName);
+      String mm = devices_.getMMDevice(deviceName);
       if (!mm.equals("")) {
          try {
             String propName = "SingleAxis"
@@ -141,7 +141,7 @@ public class SpimParams implements DevicesListenerInterface {
             integerInfo_.put(iInfo, NumberUtils.coreStringToInt(result));
          } catch (Exception ex) {
             ReportingUtils.showError("Problem communicating with device: "
-                    + devices_.getDeviceInfo(mm));
+                    + devices_.getMMDevice(mm));
          }
       }
    }

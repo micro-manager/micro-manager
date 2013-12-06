@@ -43,6 +43,24 @@ public class Labels {
       SIDESMAP.put(Sides.B, "B");
    }
    
+   public static enum Directions {
+      X("X"), Y("Y");
+      private final String text;
+      Directions(String text) {
+         this.text = text;
+      }
+      public String toString(Object... o) {
+         return String.format(text, o);
+      }
+   };
+   
+   public static final Map<Directions, String> DIRECTIONSMAP = 
+           new EnumMap<Directions, String>(Directions.class);
+   static {
+      DIRECTIONSMAP.put(Directions.X, "X");
+      DIRECTIONSMAP.put(Directions.Y, "Y");
+   }
+   
    public static enum Terms {MICROMIRROR, XYSTAGE, IMAGINGPIEZO, 
       ILLUMINATIONPIEZO, SHEETPOSITION, SHEETOFFSET};
    public static final Map<Terms, String> TERMSMAP = 

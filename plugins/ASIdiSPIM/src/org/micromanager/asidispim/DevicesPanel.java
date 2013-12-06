@@ -148,7 +148,7 @@ public class DevicesPanel extends JPanel {
       devices.add(0, "");
       
       JComboBox deviceBox = new JComboBox(devices.toArray());
-      deviceBox.setSelectedItem(devices_.getDeviceInfo(deviceName));
+      deviceBox.setSelectedItem(devices_.getMMDevice(deviceName));
       deviceBox.addActionListener(new DevicesPanel.DeviceBoxListener(deviceName, deviceBox));
 
       return deviceBox;
@@ -178,7 +178,7 @@ public class DevicesPanel extends JPanel {
       }
 
       JComboBox deviceBox = new JComboBox(multiCameras.toArray());
-      deviceBox.setSelectedItem(devices_.getDeviceInfo(deviceName));
+      deviceBox.setSelectedItem(devices_.getMMDevice(deviceName));
       deviceBox.addActionListener(new DevicesPanel.DeviceBoxListener(deviceName, deviceBox));
       return deviceBox;
    }
