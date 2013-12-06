@@ -21,7 +21,6 @@
 
 package org.micromanager.asidispim;
 
-import edu.valelab.GaussianFit.utils.ReportingUtils;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.HashMap;
@@ -31,6 +30,7 @@ import java.util.Map;
 import java.util.prefs.Preferences;
 import mmcorej.CMMCore;
 import org.micromanager.MMStudioMainFrame;
+import org.micromanager.utils.ReportingUtils;
 
 /**
  * Class that holds information about the selected devices
