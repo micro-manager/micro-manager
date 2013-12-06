@@ -1019,7 +1019,6 @@ char* SpotDevice::GetNextSequentialImage(unsigned int& imheight, unsigned int& i
 	const short color_NOCHANGE [] = {-1}; // Default for bit-depths other than 24bit
 	const short *colorOrder = color_NOCHANGE; // default to NOCHANGE, colorOrder will be one of the above
 
-	int nloops;
 	int bytesToTransfer = sizeofbuf_;
 	if( bytesToTransfer < 1)
 		bytesToTransfer = 17000000;
@@ -1030,7 +1029,7 @@ char* SpotDevice::GetNextSequentialImage(unsigned int& imheight, unsigned int& i
 
 
 #ifdef USE_SPOTWAITFORSTATUSCHANGE
-		nloops = 0;
+   int nloops = 0;
 
 	while( !WaitForStatusChanged(SPOT_STATUSSEQIMAGEREADY ))
 	{
@@ -1046,23 +1045,19 @@ char* SpotDevice::GetNextSequentialImage(unsigned int& imheight, unsigned int& i
 	{
 		MMThreadGuard guard(imageReadyFlagLock_s);
 
-		nloops = 0;
       // rough estimate of milliseconds to wait for the image
-		int maxdelayloop = (int)(.5+ExposureTime()) + approxTransferTime + 200;
-		maxdelayloop /= 8;
-		if( maxdelayloop < 1) maxdelayloop = 1;
-
-		while(!imageReady_s)
-		{
-			if ( maxdelayloop < nloops++)
-			{
-            std::ostringstream stringStreamMessage;
-      		double elapsed = pMMCamera_->GetCurrentMMTime().getMsec() - time0;
-            stringStreamMessage << " invalid acquistion sequence - waited " << (float)elapsed << " ms for image ready";
-            throw SpotBad(stringStreamMessage.str().c_str());
-			}
+      double maxWait = ExposureTime() + approxTransferTime + 2000.0;
+      while (pMMCamera_->GetCurrentMMTime().getMsec() < time0 + maxWait && !imageReady_s)
+      {
 			CDeviceUtils::SleepMs(10);
 		}
+      if (!imageReady_s)
+      {
+         std::ostringstream stringStreamMessage;
+         double elapsed = pMMCamera_->GetCurrentMMTime().getMsec() - time0;
+         stringStreamMessage << " invalid acquistion sequence - waited " << (float)elapsed << " ms for image ready";
+         throw SpotBad(stringStreamMessage.str().c_str());
+      }
 
 		double elapsed = pMMCamera_->GetCurrentMMTime().getMsec() - time0;
 		std::ostringstream  mezzz;
