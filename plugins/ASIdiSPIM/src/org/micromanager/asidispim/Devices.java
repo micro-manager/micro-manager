@@ -184,6 +184,37 @@ public class Devices {
       }
       return (String[]) tigerDevices.toArray();
    }
+   
+   /**
+    * Creates and array with the abstract names of the drives in the 
+    * tiger controller
+    * @return 
+    */
+   public String[] getTigerDrives() {
+      List<String> res = new ArrayList<String>();
+      for (String dev : Devices.ONEAXISTIGERDEVICES) {
+         if (getMMDevice(dev) != null) {
+            res.add(dev);
+         }
+      }
+      for (String dev : Devices.TWOAXISTIGERDEVICES) {
+         if (getMMDevice(dev) != null) {
+            res.add(dev + "-X");
+            res.add(dev + "-Y");
+         }
+      }
+      return (String[]) res.toArray(new String[0]);
+   }
+   
+   public String[] getTwoAxisTigerDrives() {
+      List<String> res = new ArrayList<String>();
+      for (String dev : Devices.TWOAXISTIGERDEVICES) {
+         if (getMMDevice(dev) != null) {
+            res.add(dev);
+         }
+      }
+      return (String[]) res.toArray(new String[0]);
+   }
 
    /**
     * TODO: throw exception when key is not found

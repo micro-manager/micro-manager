@@ -56,20 +56,20 @@ public class SetupPanel extends JPanel{
        side_ = side;
        
        add(new JLabel("Joystick:"));
-       add(makeSelectionBox(getMoveableTigerDevices()));
+       add(makeSelectionBox(devices_.getTwoAxisTigerDrives()));
        add(new JLabel("Imaging piezo:"));
        add(new JLabel("Pos"));
        add(new JButton("Set start"));
        add(new JButton("Set end"), "wrap");
        
        add(new JLabel("Right knob:"));
-       add(makeSelectionBox(getMoveableTigerDevices()));
+       add(makeSelectionBox(devices_.getTigerDrives()));
        add(new JLabel("Illumination piezo:"));
        add(new JLabel("Pos"));
        add(new JButton("Set position"), "span 2, center, wrap");
        
        add(new JLabel("Left knob:"));
-       add(makeSelectionBox(getMoveableTigerDevices()));
+       add(makeSelectionBox(devices_.getTigerDrives()));
        add(new JLabel("Scan amplitude:"));
        add(new JLabel("Pos"));
        add(makeSlider("scanAmplitude", 0, 8, 4), "span 2, center, wrap");
@@ -97,21 +97,7 @@ public class SetupPanel extends JPanel{
        add(dualButton, "center");
        
    }
-   
-   private String[] getMoveableTigerDevices() {
-      List<String> res = new ArrayList<String>();
-      for (String dev : Devices.ONEAXISTIGERDEVICES) {
-         if (devices_.getMMDevice(dev) != null) {
-            res.add(dev);
-         }
-      }
-      for (String dev : Devices.TWOAXISTIGERDEVICES) {
-         if (devices_.getMMDevice(dev) != null) {
-            res.add(dev);
-         }
-      }
-      return (String[]) res.toArray(new String[0]);
-   }
+    
    
    private JComboBox makeSelectionBox(String[] selections) {
       JComboBox jcb = new JComboBox(selections);
