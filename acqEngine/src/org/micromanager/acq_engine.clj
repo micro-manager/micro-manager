@@ -375,8 +375,7 @@
       (if-let [image (pop-tagged-image)]
         image
         (if (< timeout-ms (- (System/currentTimeMillis) start-time))
-          (throw-exception (str (- (System/currentTimeMillis) start-time)
-                                " Timed out waiting for image\nto arrive from camera."))
+          (throw-exception "Timed out waiting for image to arrive from camera.")
           (do 
             (when (. mmc isBufferOverflowed)
                 (println "Circular buffer overflowed")
