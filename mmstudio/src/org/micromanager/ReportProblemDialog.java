@@ -278,6 +278,7 @@ public class ReportProblemDialog extends javax.swing.JDialog {
       // before the start and check for differences at appropriate check points
       // (including just before sending report).
       core_.logMessage("Java system properties:");
+      String pathSep = System.getProperty("path.separator");
       java.util.Properties sysProps = System.getProperties();
       java.util.List<String> propKeys = new java.util.ArrayList<String>();
       java.util.Enumeration<Object> e = sysProps.keys();
@@ -286,7 +287,18 @@ public class ReportProblemDialog extends javax.swing.JDialog {
       }
       java.util.Collections.sort(propKeys);
       for (String k : propKeys) {
-         core_.logMessage("  " + k + " = " + sysProps.getProperty(k));
+         if ((k.equals("java.class.path") || k.equals("java.library.path") ||
+               k.equals("sun.boot.class.path") || k.equals("sun.boot.library.path") &&
+               pathSep != null && !pathSep.equals(""))) {
+            core_.logMessage("  " + k  + " (split at \'" + pathSep + "\') =");
+            String[] paths = sysProps.getProperty(k).split(pathSep);
+            for (String path : paths) {
+               core_.logMessage("    " + path);
+            }
+         }
+         else {
+            core_.logMessage("  " + k + " = " + sysProps.getProperty(k));
+         }
       }
       core_.logMessage("(End Java system properties)");
 
@@ -335,7 +347,7 @@ public class ReportProblemDialog extends javax.swing.JDialog {
       java.util.Arrays.sort(tids);
       ThreadInfo[] threadInfos = threadMXB.getThreadInfo(tids);
       for (ThreadInfo tInfo : threadInfos) {
-         core_.logMessage("Thread id " + tInfo.getThreadId() +
+         core_.logMessage("  id " + tInfo.getThreadId() +
                  " (\"" + tInfo.getThreadName() + "\"): " +
                  tInfo.getThreadState().name());
       }
