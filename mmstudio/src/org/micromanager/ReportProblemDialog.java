@@ -6,6 +6,8 @@
  */
 package org.micromanager;
 
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadInfo;
 import javax.swing.JOptionPane;
 import mmcorej.CMMCore;
 import org.micromanager.api.ScriptInterface;
@@ -232,7 +234,7 @@ public class ReportProblemDialog extends javax.swing.JDialog {
 
  */
 
-   private void BuildAndSendReport() {
+   private void buildAndSendReport() {
       reportPreamble_ = "#User Name: " + name_.getText();
       reportPreamble_ += ("\n#Organization: " + organization_.getText());
       reportPreamble_ += ("\n#User e-mail: " + emailText_.getText());
@@ -241,6 +243,23 @@ public class ReportProblemDialog extends javax.swing.JDialog {
       descriptionPane_.setEditable(false);
       sendButton_.setEnabled(false);
       stepInstructions_.setText("Sending...");
+
+      core_.logMessage("User requested to send problem report");
+      logExtraInformation(false);
+      core_.logMessage("Now sending problem report, after a delay of 200 ms");
+
+      // Hack: The end of the logged info gets truncated, presumably due to the
+      // behavior of the Core logger. For now, just wait a bit to remedy.
+      for (;;) {
+         try {
+            Thread.sleep(200);
+            break;
+         }
+         catch (InterruptedException e) {
+            // In the unlikely event of being interrupted, we wait again.
+         }
+      }
+
       ProblemReportSender p = new ProblemReportSender(reportPreamble_, core_);
       String result = p.Send();
       if (0 < result.length()) {
@@ -250,6 +269,149 @@ public class ReportProblemDialog extends javax.swing.JDialog {
          stepInstructions_.setText("The report was successfully submitted to micro-manager.org");
       }
 
+   }
+
+   private void logExtraInformation(boolean includeConstantInfo) {
+      // I'm a little tempted to suppress the system properties when
+      // !includeConstantInfo, but they can be changed, and we don't want to
+      // miss it if they do. The best solution would be to record the values
+      // before the start and check for differences at appropriate check points
+      // (including just before sending report).
+      core_.logMessage("Java system properties:");
+      java.util.Properties sysProps = System.getProperties();
+      java.util.List<String> propKeys = new java.util.ArrayList<String>();
+      java.util.Enumeration<Object> e = sysProps.keys();
+      while (e.hasMoreElements()) {
+         propKeys.add((String) e.nextElement());
+      }
+      java.util.Collections.sort(propKeys);
+      for (String k : propKeys) {
+         core_.logMessage("  " + k + " = " + sysProps.getProperty(k));
+      }
+      core_.logMessage("(End Java system properties)");
+
+      if (includeConstantInfo) {
+         java.lang.management.RuntimeMXBean rtMXB = ManagementFactory.getRuntimeMXBean();
+         core_.logMessage("JVM arguments:");
+         java.util.List<String> args = rtMXB.getInputArguments();
+         for (String a : args) {
+            core_.logMessage("  " + a);
+         }
+         core_.logMessage("(End JVM args)");
+      }
+
+      java.lang.management.OperatingSystemMXBean osMXB = ManagementFactory.getOperatingSystemMXBean();
+      if (includeConstantInfo) {
+         core_.logMessage("Processors available to JVM: " + osMXB.getAvailableProcessors());
+      }
+      try { // Use HotSpot extensions if available
+         Class<?> sunOSMXBClass = Class.forName("com.sun.management.OperatingSystemMXBean");
+
+         java.lang.reflect.Method totalMemMethod = sunOSMXBClass.getMethod("getTotalPhysicalMemorySize");
+         if (includeConstantInfo) {
+            long totalRAM = ((Long) totalMemMethod.invoke(osMXB)).longValue();
+            core_.logMessage("Total physical memory (4 GB max if JVM is 32-bit): " +
+                    totalRAM + " (" + (totalRAM / 1024 / 1024) + "M)");
+         }
+
+         java.lang.reflect.Method freeMemMethod = sunOSMXBClass.getMethod("getFreePhysicalMemorySize");
+         long freeRAM = ((Long) freeMemMethod.invoke(osMXB)).longValue();
+         core_.logMessage("Free physical memory (4 GB max if JVM is 32-bit): " +
+                 freeRAM + " (" + (freeRAM / 1024 / 1024) + "M)");
+      } catch (ClassNotFoundException exc) {
+      } catch (NoSuchMethodException exc) {
+      } catch (IllegalAccessException exc) {
+      } catch (java.lang.reflect.InvocationTargetException exc) {
+      }
+
+      java.lang.management.MemoryMXBean memMXB = ManagementFactory.getMemoryMXBean();
+      core_.logMessage("JVM heap memory usage: " + memMXB.getHeapMemoryUsage());
+      core_.logMessage("JVM non-heap memory usage: " + memMXB.getNonHeapMemoryUsage());
+
+      java.lang.management.ThreadMXBean threadMXB = ManagementFactory.getThreadMXBean();
+
+      core_.logMessage("All Java threads:");
+      long[] tids = threadMXB.getAllThreadIds();
+      java.util.Arrays.sort(tids);
+      ThreadInfo[] threadInfos = threadMXB.getThreadInfo(tids);
+      for (ThreadInfo tInfo : threadInfos) {
+         core_.logMessage("Thread id " + tInfo.getThreadId() +
+                 " (\"" + tInfo.getThreadName() + "\"): " +
+                 tInfo.getThreadState().name());
+      }
+      core_.logMessage("(End all Java threads)");
+
+      /* Uncomment to see an example of a pair of deadlocked threads
+       * which will be detected below. TODO Remove this test code.
+      final Object a = new Object();
+      final Object b = new Object();
+      Thread th0 = new Thread("DeadLockTestThread0") {
+         public void run() {
+            try {
+               synchronized (a) {
+                  Thread.sleep(100);
+                  synchronized (b) {
+                     Thread.sleep(1);
+                  }
+               }
+            } catch (InterruptedException e) {
+            }
+         }
+      };
+      Thread th1 = new Thread("DeadLockTestThread1") {
+         public void run() {
+            try {
+               synchronized (b) {
+                  Thread.sleep(100);
+                  synchronized (a) {
+                     Thread.sleep(1);
+                  }
+               }
+            } catch (InterruptedException e) {
+            }
+         }
+      };
+      th0.start();
+      th1.start();
+
+      try {
+         Thread.sleep(200);
+      } catch (InterruptedException exc) {
+      }
+      */
+
+      // Analyze deadlocked threads. TODO This is generally useful and should
+      // be put in its own method somewhere. It should also be dumped just
+      // before sending the report.
+      long[] deadlockedThreadIds = threadMXB.findDeadlockedThreads();
+
+      java.util.Arrays.sort(deadlockedThreadIds);
+      ThreadInfo[] deadlockedInfos = threadMXB.getThreadInfo(deadlockedThreadIds, true, true);
+      for (ThreadInfo tInfo : deadlockedInfos) {
+         core_.logMessage("Deadlocked thread " + tInfo.getThreadId() +
+                 " (\"" + tInfo.getThreadName() + "\"):");
+         java.lang.management.LockInfo blockingLock = tInfo.getLockInfo();
+         core_.logMessage("  Blocked waiting to lock " + blockingLock.getClassName() +
+                 " " + blockingLock.getIdentityHashCode());
+
+         java.lang.management.MonitorInfo[] monitors = tInfo.getLockedMonitors();
+         java.lang.management.LockInfo[] synchronizers = tInfo.getLockedSynchronizers();
+         StackTraceElement[] trace = tInfo.getStackTrace();
+         for (StackTraceElement frame : trace) {
+            core_.logMessage("    at " + frame.toString());
+            for (java.lang.management.MonitorInfo monitor : monitors) {
+               if (monitor.getLockedStackFrame().equals(frame)) {
+                  core_.logMessage("      where monitor was locked: " +
+                          monitor.getClassName() + " " +
+                          monitor.getIdentityHashCode());
+               }
+            }
+         }
+         for (java.lang.management.LockInfo sync : synchronizers) {
+            core_.logMessage("  Ownable synchronizer is locked: " +
+                    sync.getClassName() + " " + sync.getIdentityHashCode());
+         }
+      }
    }
 
     private void cancelButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cancelButton_ActionPerformed
@@ -265,12 +427,10 @@ public class ReportProblemDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_name_PropertyChange
 
     private void clearButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_clearButton_ActionPerformed
-       // user wishes to clear the log file..
        core_.clearLog();
-       core_.logMessage("MM Studio version: " + parent_.getVersion());
-       core_.logMessage(core_.getVersionInfo());
-       core_.logMessage(core_.getAPIVersionInfo());
-       core_.logMessage("Operating System: " + System.getProperty("os.name") + " " + System.getProperty("os.version"));
+       core_.logMessage("CoreLog cleared by problem reporter");
+       parent_.logStartupProperties();
+       logExtraInformation(true);
 
        stepInstructions_.setText("The system is now capturing a 'debug' level log file. Operate the system until you've duplicated the problem. When you're successful, "
                + " press Send to send your information, problem description, system configuration, and log to micro-manager.org.");
@@ -300,7 +460,7 @@ public class ReportProblemDialog extends javax.swing.JDialog {
                 int result = JOptionPane.showConfirmDialog(null, "Did you restart the log and reproduce the problem?",
                         "Really send?", JOptionPane.YES_NO_OPTION);
                 if (result == JOptionPane.YES_OPTION) {
-                   BuildAndSendReport();
+                   buildAndSendReport();
                 }
              } else {
                 ReportingUtils.showMessage("Please provide your Organization name.");

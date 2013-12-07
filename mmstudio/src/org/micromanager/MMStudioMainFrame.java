@@ -623,8 +623,11 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       core_.logMessage("MM Studio version: " + getVersion());
       core_.logMessage(core_.getVersionInfo());
       core_.logMessage(core_.getAPIVersionInfo());
-      core_.logMessage("Operating System: " + System.getProperty("os.name") + " " + System.getProperty("os.version"));
-      core_.logMessage("JVM: " + System.getProperty("java.vm.name") + ", version " + System.getProperty("java.version") + "; " + System.getProperty("sun.arch.data.model") + " bit");
+      core_.logMessage("Operating System: " + System.getProperty("os.name") +
+              " (" + System.getProperty("os.arch") + ") " + System.getProperty("os.version"));
+      core_.logMessage("JVM: " + System.getProperty("java.vm.name") +
+              ", version " + System.getProperty("java.version") + ", " +
+              System.getProperty("sun.arch.data.model") + "-bit");
    }
 
    /**
