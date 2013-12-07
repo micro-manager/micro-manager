@@ -21,6 +21,7 @@
 
 package org.micromanager.asidispim.Data;
 
+import java.awt.geom.Point2D;
 import org.micromanager.asidispim.Utils.DevicesListenerInterface;
 import org.micromanager.asidispim.Utils.Labels;
 import java.util.ArrayList;
@@ -38,9 +39,11 @@ import org.micromanager.utils.ReportingUtils;
 /**
  * Class that holds information about the selected devices
  * This should always be the only source of device information
- * The GUI should update this class and use this information
+ * The GUI should update this class and use its information
  * 
  * This could be implemented more elegantly using templates
+ * 
+ * This is the only class in the plugin directly communicating with the hardware
  * 
  * @author nico
  */
@@ -54,8 +57,8 @@ public class Devices {
            new EnumMap<JoystickDevice, String>(JoystickDevice.class);
    static {
       JOYSTICKS.put(JoystickDevice.JOYSTICK, "Joystick");
-      JOYSTICKS.put(JoystickDevice.RIGHT_KNOB, "Right Knob");
-      JOYSTICKS.put(JoystickDevice.LEFT_KNOB, "Left Know");
+      JOYSTICKS.put(JoystickDevice.RIGHT_KNOB, "Right Wheel");
+      JOYSTICKS.put(JoystickDevice.LEFT_KNOB, "Left Wheel");
    }
    public static final Map<String, JoystickDevice> INV_JOYSTICKS =
            new HashMap<String, JoystickDevice>();
@@ -102,12 +105,12 @@ public class Devices {
    
    public static final String FASTAXISAREV = "FastAxisARev";
    public static final String FASTAXISBREV = "FastAxisBRev";
-   private static final String[] FASTAXISREVS = {FASTAXISAREV, FASTAXISBREV};
+   public static final String[] FASTAXISREVS = {FASTAXISAREV, FASTAXISBREV};
    public static final String FASTAXISADIR = "FastAxisADir";
    public static final String FASTAXISBDIR = "FastAxisBDir";
    public static final String FASTAXISCDIR = "FastAxisCDir";
    public static final String FASTAXISDDIR = "FastAxisDDir";
-   private static final String[] FASTAXISDIRS = {FASTAXISADIR, FASTAXISBDIR,
+   public static final String[] FASTAXISDIRS = {FASTAXISADIR, FASTAXISBDIR,
       FASTAXISCDIR, FASTAXISDDIR};
    public static final String X = "X";
    public static final String Y = "Y";
@@ -128,6 +131,8 @@ public class Devices {
    private HashMap<String, String> deviceInfo_;
    private HashMap<String, Boolean> axisRevs_;
    private HashMap<String, String> axisDirs_;
+   private HashMap<String, Double> oneAxisDrivePositions_;
+   private HashMap<String, Point2D.Double> twoAxisDrivePositions_;
    private Map<JoystickDevice, DirectionalDevice> controllerMap_;
    private List<DevicesListenerInterface> listeners_;
    private Preferences prefs_;
@@ -140,6 +145,8 @@ public class Devices {
       deviceInfo_ = new HashMap<String, String>();
       axisRevs_ = new HashMap<String, Boolean>();
       axisDirs_ = new HashMap<String, String>();
+      oneAxisDrivePositions_ = new HashMap<String, Double>();
+      twoAxisDrivePositions_ = new HashMap<String, Point2D.Double>();
       controllerMap_ = new EnumMap<JoystickDevice, DirectionalDevice>(JoystickDevice.class);
       listeners_ = new ArrayList<DevicesListenerInterface>();
 
@@ -173,11 +180,15 @@ public class Devices {
    /**
     * Gets the name under which Micro-Manager knows the device
     *
-    * @param deviceType - DeviceType as defined in this class
+    * @param abstractName - DeviceType as defined in this class
     * @return Micro-Manager deviceName, or null when not found
     */
-   public synchronized String getMMDevice(String deviceType) {
-      return deviceInfo_.get(deviceType);
+   public synchronized String getMMDevice(String abstractName) {
+      String mmDevice = deviceInfo_.get(abstractName);
+      if (mmDevice == null || mmDevice.equals("")) {
+         return null;
+      }
+      return mmDevice;
    }
 
    /**
@@ -336,7 +347,7 @@ public class Devices {
          
          
       } catch (Exception ex) {
-         ReportingUtils.showError("Failed to communiocate with tiger controller");
+         ReportingUtils.showError("Failed to communicate with Tiger controller");
          return false;
       }
       
@@ -345,6 +356,39 @@ public class Devices {
 
    public DirectionalDevice getControlledDevice(JoystickDevice control) {
       return controllerMap_.get(control);
+   }
+   
+   private void updateSingleAxisStagePositions() {
+      String[] drives = getTigerDrives();
+      for (String drive : drives) {
+         String mmDevice = getMMDevice(drive);
+         if (mmDevice != null) {
+            try {
+               this.oneAxisDrivePositions_.put(drive, core_.getPosition(mmDevice));
+            } catch (Exception ex) {
+               ReportingUtils.logError("Problem getting position of " + mmDevice);
+            }
+         }
+      }
+   }
+   
+   private void updateTwoAxisStagePositions() {
+      String[] drives = getTwoAxisTigerDrives();
+      for (String drive : drives) {
+         String mmDevice = this.getMMDevice(drive);
+         if (mmDevice != null) {
+            try {
+               twoAxisDrivePositions_.put(drive, core_.getXYStagePosition(mmDevice));
+            } catch (Exception ex) {
+               ReportingUtils.logError("Problem getting position of " + mmDevice);
+            }
+         }
+      }
+   }
+   
+   public void updateStagePositions() {
+      updateSingleAxisStagePositions();
+      updateTwoAxisStagePositions();
    }
 
    /**

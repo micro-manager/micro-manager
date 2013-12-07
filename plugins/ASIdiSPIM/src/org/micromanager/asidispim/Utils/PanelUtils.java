@@ -23,6 +23,7 @@ package org.micromanager.asidispim.Utils;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.prefs.Preferences;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JSlider;
@@ -41,12 +42,16 @@ public class PanelUtils {
       Devices.JoystickDevice joystickDevice_;
       JComboBox jc_;
       Devices devices_;
+      Preferences prefs_;
+      String prefName_;
 
       public StageSelectionBoxListener(Devices.JoystickDevice joyStickDevice, 
-              JComboBox jc, Devices devices) {
+              JComboBox jc, Devices devices, Preferences prefs, String prefName) {
          joystickDevice_ = joyStickDevice;
          jc_ = jc;
          devices_ = devices;
+         prefs_ = prefs;
+         prefName_ = prefName;
       }    
 
       public void actionPerformed(ActionEvent ae) {
@@ -60,6 +65,7 @@ public class PanelUtils {
             dd = new DirectionalDevice(items[0], Labels.Directions.X);
          }
          devices_.setJoystickOutput(joystickDevice_, dd);
+         prefs_.put(prefName_, stage);
       }
 
       public void devicesChangedAlert() {
@@ -78,13 +84,12 @@ public class PanelUtils {
    
    
    public JComboBox makeJoystickSelectionBox(Devices.JoystickDevice joystickDevice, 
-           String[] selections, Devices devices_) {
+           String[] selections, String selectedItem, Devices devices_, 
+           Preferences prefs, String prefName) {
       JComboBox jcb = new JComboBox(selections);
+      jcb.setSelectedItem(selectedItem);
       jcb.addActionListener(new StageSelectionBoxListener(joystickDevice , jcb, 
-              devices_));
-      
-      //jcb.setSelectedItem(devices_.getAxisDirInfo(axis));
-     // jcb.addActionListener(new DevicesPanel.AxisDirBoxListener(axis, jcb));
+              devices_, prefs, prefName));      
  
       return jcb;
    }

@@ -21,11 +21,14 @@
 
 package org.micromanager.asidispim;
 
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import org.micromanager.asidispim.Data.SpimParams;
 import org.micromanager.asidispim.Data.Devices;
 import org.micromanager.asidispim.Utils.ListeningJPanel;
 import org.micromanager.asidispim.Utils.Labels;
 import java.util.prefs.Preferences;
+import javax.swing.Timer;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.micromanager.api.MMListenerInterface;
@@ -82,11 +85,23 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
       setLocation(prefs_.getInt(XLOC, 100), prefs_.getInt(YLOC, 100));
       tabbedPane.setSelectedIndex(prefs_.getInt(TABINDEX, 0));
       
+      final Timer stagePosUpdater = new Timer(1000, new ActionListener() {
+         public void actionPerformed(ActionEvent ae) {
+            // update stage positions in devices
+            devices_.updateStagePositions();
+            // notify listeners that positions are updated
+            
+         }
+      });
+      stagePosUpdater.start();
+      
       addWindowListener(new java.awt.event.WindowAdapter() {
          @Override
          public void windowClosing(java.awt.event.WindowEvent evt) {
+            stagePosUpdater.stop();
             devices_.saveSettings();
             spimParams_.saveSettings();
+
             prefs_.putInt(XLOC, evt.getWindow().getX());
             prefs_.putInt(YLOC, evt.getWindow().getY());
             prefs_.putInt(TABINDEX, tabbedPane.getSelectedIndex());

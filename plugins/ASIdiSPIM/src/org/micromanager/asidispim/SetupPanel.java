@@ -21,6 +21,7 @@
 
 package org.micromanager.asidispim;
 
+import java.util.prefs.Preferences;
 import org.micromanager.asidispim.Data.SpimParams;
 import org.micromanager.asidispim.Data.Devices;
 import org.micromanager.asidispim.Utils.ListeningJPanel;
@@ -43,10 +44,15 @@ public class SetupPanel extends ListeningJPanel{
    Devices devices_;
    SpimParams spimParams_;
    Labels.Sides side_;
+   Preferences prefs_;
    
    JComboBox joystickBox_;
    JComboBox rightWheelBox_;
    JComboBox leftWheelBox_;
+   
+   final String JOYSTICK = Devices.JOYSTICKS.get(Devices.JoystickDevice.JOYSTICK);
+   final String RIGHTWHEEL = Devices.JOYSTICKS.get(Devices.JoystickDevice.RIGHT_KNOB);
+   final String LEFTWHEEL = Devices.JOYSTICKS.get(Devices.JoystickDevice.LEFT_KNOB);
     
    
    public SetupPanel(ScriptInterface gui, Devices devices, 
@@ -58,29 +64,43 @@ public class SetupPanel extends ListeningJPanel{
        devices_ = devices;
        gui_ = gui;
        side_ = side;
+       prefs_ = Preferences.userNodeForPackage(this.getClass());
+       
+       String joystickPrefName = JOYSTICK + side_.toString();
+       String rightWheelPrefName = RIGHTWHEEL + side_.toString();
+       String leftWheelPrefName = LEFTWHEEL + side_.toString();
+       String joystickSelection = prefs_.get(joystickPrefName, 
+               devices_.getTwoAxisTigerDrives()[0]);
+       String rightWheelSelection = prefs_.get(rightWheelPrefName, 
+               devices_.getTigerDrives()[0]);
+       String leftWheelSelection = prefs_.get(leftWheelPrefName, 
+               devices_.getTigerDrives()[0]);
        
        PanelUtils pu = new PanelUtils();
        
-       add(new JLabel("Joystick:"));
+       add(new JLabel(JOYSTICK + ":"));
        joystickBox_ = pu.makeJoystickSelectionBox(Devices.JoystickDevice.JOYSTICK, 
-               devices_.getTwoAxisTigerDrives(), devices_);
+               devices_.getTwoAxisTigerDrives(), joystickSelection, devices_,
+               prefs_, joystickPrefName);
        add(joystickBox_);
        add(new JLabel("Imaging piezo:"));
        add(new JLabel("Pos"));
        add(new JButton("Set start"));
        add(new JButton("Set end"), "wrap");
        
-       add(new JLabel("Right knob:"));
+       add(new JLabel(RIGHTWHEEL + ":"));
        rightWheelBox_ = pu.makeJoystickSelectionBox(Devices.JoystickDevice.RIGHT_KNOB, 
-               devices_.getTigerDrives(), devices_);
+               devices_.getTigerDrives(), rightWheelSelection, devices_, prefs_,
+               rightWheelPrefName);
        add(rightWheelBox_);
        add(new JLabel("Illumination piezo:"));
        add(new JLabel("Pos"));
        add(new JButton("Set position"), "span 2, center, wrap");
        
-       add(new JLabel("Left knob:"));
+       add(new JLabel(LEFTWHEEL + ":"));
        leftWheelBox_ = pu.makeJoystickSelectionBox(Devices.JoystickDevice.LEFT_KNOB,
-               devices_.getTigerDrives(), devices_);
+               devices_.getTigerDrives(), leftWheelSelection, devices_, prefs_,
+               leftWheelPrefName);
        add(leftWheelBox_);
        add(new JLabel("Scan amplitude:"));
        add(new JLabel("Pos"));
@@ -108,6 +128,18 @@ public class SetupPanel extends ListeningJPanel{
        add(singleButton, "center");
        add(dualButton, "center");  
        
+   
+       
+   }
+   
+   @Override
+   public void saveSettings() {
+      prefs_.put(JOYSTICK + side_.toString(), 
+              (String) joystickBox_.getSelectedItem());
+      prefs_.put(RIGHTWHEEL + side_.toString(), 
+              (String) rightWheelBox_.getSelectedItem());
+      prefs_.put(LEFTWHEEL + side_.toString(), 
+              (String) leftWheelBox_.getSelectedItem());
    }
    
    /**

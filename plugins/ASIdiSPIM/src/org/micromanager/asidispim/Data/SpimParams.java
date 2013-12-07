@@ -135,7 +135,7 @@ public class SpimParams implements DevicesListenerInterface {
 
    private void getLineScanProp(String deviceName, String iInfo, String fastAxis) {
       String mm = devices_.getMMDevice(deviceName);
-      if (!mm.equals("")) {
+      if (mm!= null && !mm.equals("")) {
          try {
             String propName = "SingleAxis"
                     + fastAxis + "Period(ms)";
