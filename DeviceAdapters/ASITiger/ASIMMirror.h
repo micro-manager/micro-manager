@@ -106,6 +106,12 @@ public:
    int OnSATTLOutX            (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSATTLPolX            (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSAPatternByteX       (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSPIMScansPerSlice    (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSPIMNumSlices        (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSPIMNumSides         (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSPIMFirstSide        (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSPIMNumRepeats       (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSPIMState            (MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    string axisLetterX_;

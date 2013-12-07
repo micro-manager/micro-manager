@@ -93,6 +93,8 @@ public:
    int OnSATTLOut             (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSATTLPol             (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSAPatternByte        (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSetHomeHere          (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSPIMNumSlices        (MM::PropertyBase* pProp, MM::ActionType eAct);
 
 
 private:

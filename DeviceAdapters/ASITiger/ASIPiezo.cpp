@@ -195,8 +195,27 @@ int CPiezo::Initialize()
    AddAllowedValue(g_JoystickSelectPropertyName, g_JSCode_22);
    AddAllowedValue(g_JoystickSelectPropertyName, g_JSCode_23);
 
-   if (firmwareVersion_ > 2.7) {
-      // overshoot and max time applicable to mode 4
+   // get build info so we can add optional properties
+   build_info_type build;
+   RETURN_ON_MM_ERROR( hub_->GetBuildInfo(addressChar_, build) );
+
+   // add SPIM properties if supported
+   if (build.vAxesProps[0] & BIT4)
+   {
+      pAct = new CPropertyAction (this, &CPiezo::OnSPIMNumSlices);
+      CreateProperty(g_SPIMNumSlicesPropertyName, "0", MM::Integer, false, pAct);
+      UpdateProperty(g_SPIMNumSlicesPropertyName);
+      SetPropertyLimits(g_SPIMNumSlicesPropertyName, 1, 100);
+
+      // todo add state for SPIM
+
+   }
+
+   // add functionality supported in firmware 2.8 and above
+   // single-axis and SPIM function only supported in Micromanager with firmware 2.8 and above for simplicity
+   if (firmwareVersion_ > 2.7)
+   {
+      // overshoot and max time applicable to mode 4, which became available in firmware 2.8
       pAct = new CPropertyAction (this, &CPiezo::OnModeFourOvershoot);
       CreateProperty(g_PiezoModeFourOvershoot, "100", MM::Integer, false, pAct);
       UpdateProperty(g_PiezoModeFourOvershoot);
@@ -206,10 +225,18 @@ int CPiezo::Initialize()
       UpdateProperty(g_PiezoModeFourMaxTime);
       SetPropertyLimits(g_PiezoModeFourMaxTime, 0, 30);
 
-      // add single-axis functions if supported
-      build_info_type build;
-      RETURN_ON_MM_ERROR( hub_->GetBuildInfo(addressChar_, build) );
-      if(hub_->IsDefinePresent(build, g_Define_SINGLEAXIS_FUNCTION))
+      // "do it" property to set home position
+      pAct = new CPropertyAction (this, &CPiezo::OnSetHomeHere);
+      CreateProperty(g_SetHomeHerePropertyName, g_IdleState, MM::String, false, pAct);
+      UpdateProperty(g_SetHomeHerePropertyName);
+      AddAllowedValue(g_SetHomeHerePropertyName, g_IdleState, 0);
+      AddAllowedValue(g_SetHomeHerePropertyName, g_DoItState, 1);
+      AddAllowedValue(g_SetHomeHerePropertyName, g_DoneState, 2);
+
+      // add single-axis properties if supported
+      // (single-axis support existed prior in firmware, but now we have easier way to tell if it's present using axis properties
+      //   and it wasn't used very much before SPIM)
+      if(build.vAxesProps[0] & BIT5)//      if(hub_->IsDefinePresent(build, g_Define_SINGLEAXIS_FUNCTION))
       {
          // copied from ASIMMirror.cpp
          pAct = new CPropertyAction (this, &CPiezo::OnSAAmplitude);
@@ -310,24 +337,25 @@ int CPiezo::Stop()
 
 bool CPiezo::Busy()
 {
-   ostringstream command; command.str("");
-   if (firmwareVersion_ > 2.7) // can use more accurate RS <axis>?
-   {
-      command << "RS " << axisLetter_ << "?";
-      ret_ = hub_->QueryCommandVerify(command.str(),":A");
-      if (ret_ != DEVICE_OK)  // say we aren't busy if we can't communicate
-         return false;
-      return (hub_->LastSerialAnswer().at(3) == 'B');
-   }
-   else  // use LSB of the status byte as approximate status, not quite equivalent
-   {
-      command << "RS " << axisLetter_;
-      ret_ = hub_->QueryCommandVerify(command.str(),":A");
-      if (ret_ != DEVICE_OK)  // say we aren't busy if we can't communicate
-         return false;
-      int i = (int) (hub_->ParseAnswerAfterPosition(2));
-      return (i & (int)BIT0);  // mask everything but LSB
-   }
+//   ostringstream command; command.str("");
+//   if (firmwareVersion_ > 2.7) // can use more accurate RS <axis>?
+//   {
+//      command << "RS " << axisLetter_ << "?";
+//      ret_ = hub_->QueryCommandVerify(command.str(),":A");
+//      if (ret_ != DEVICE_OK)  // say we aren't busy if we can't communicate
+//         return false;
+//      return (hub_->LastSerialAnswer().at(3) == 'B');
+//   }
+//   else  // use LSB of the status byte as approximate status, not quite equivalent
+//   {
+//      command << "RS " << axisLetter_;
+//      ret_ = hub_->QueryCommandVerify(command.str(),":A");
+//      if (ret_ != DEVICE_OK)  // say we aren't busy if we can't communicate
+//         return false;
+//      int i = (int) (hub_->ParseAnswerAfterPosition(2));
+//      return (i & (int)BIT0);  // mask everything but LSB
+//   }
+   return false;
 }
 
 int CPiezo::SetOrigin()
@@ -1130,3 +1158,43 @@ int CPiezo::OnSATTLPol(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    return DEVICE_OK;
 }
+
+int CPiezo::OnSetHomeHere(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   if (eAct == MM::AfterSet) {
+      string tmpstr;
+      pProp->Get(tmpstr);
+      if (tmpstr.compare(g_DoItState) == 0)
+      {
+         command << "HM " << axisLetter_ << "+";
+         RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+         pProp->Set(g_DoneState);
+      }
+   }
+   return DEVICE_OK;
+}
+
+int CPiezo::OnSPIMNumSlices(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   long tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << addressChar_ << "NR Y?";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A Y="));
+      tmp = (long) hub_->ParseAnswerAfterEquals();
+      if (!pProp->Set(tmp))
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      pProp->Get(tmp);
+      command << addressChar_ << "NR Y=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}
+
+

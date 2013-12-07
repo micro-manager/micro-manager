@@ -125,6 +125,7 @@ const char* const g_RefreshPropValsPropertyName = "RefreshPropertyValues";
 const char* const g_AxisLetterXPropertyName = "AxisLetterX";
 const char* const g_AxisLetterYPropertyName = "AxisLetterY";
 const char* const g_AxisLetterPropertyName = "AxisLetter";
+const char* const g_SetHomeHerePropertyName = "SetHomeToCurrentPosition";
 
 // Hub property names
 const char* const g_HubDevicePropertyName = "HubDeviceName";
@@ -248,6 +249,30 @@ const char* const g_NumberAveragesPropertyName = "Number of Averages";
 const char* const g_SNRPropertyName = "Signal to Noise Ratio";
 const char* const g_DitherErrorPropertyName = "Dither Error";
 
+// SPIM property names
+const char* const g_SPIMNumSlicesPropertyName = "SPIMNumSlices"; // used by both piezos and micromirror
+const char* const g_SPIMNumScansPerSlicePropertyName = "SPIMNumScansPerSlice";
+const char* const g_SPIMNumSidesPropertyName = "SPIMNumSides";
+const char* const g_SPIMFirstSidePropertyName = "SPIMFirstSide";
+const char* const g_SPIMNumRepeatsPropertyName = "SPIMNumRepeats";
+const char* const g_SPIMArmForTTLPropertyName = "SPIMArm";
+const char* const g_SPIMStatePropertyName = "SPIMState";
+
+// SPIM enums
+// which side first
+const char* const g_SPIMSideAFirst = "SideA";
+const char* const g_SPIMSideBFirst = "SideB";
+// SPIM state for micro-manager
+const char* const g_SPIMStateIdle = "Idle";
+const char* const g_SPIMStateArmed = "Armed";
+const char* const g_SPIMStateRunning = "Running";
+// SPIM state on micromirror card
+const char g_SPIMStateCode_Idle = 'I';
+const char g_SPIMStateCode_Stop = 'P';
+const char g_SPIMStateCode_Start = 'S';
+const char g_SPIMStateCode_Arm =  'a';
+const char g_SPIMStateCode_Armed ='A';
+
 
 // property descriptions for enums
 // serial terminators for hub
@@ -315,6 +340,10 @@ const char* const g_SaveSettingsY = "Y - restore last saved settings from card";
 const char* const g_SaveSettingsZ = "Z - save settings to card (partial)";
 const char* const g_SaveSettingsOrig = "no action";
 const char* const g_SaveSettingsDone = "save settings done";
+// command execute settings
+const char* const g_IdleState = "Not done";
+const char* const g_DoItState = "Do it";
+const char* const g_DoneState = "Done";
 
 // CRISP states
 const char* const g_CRISPState = "CRISP State";

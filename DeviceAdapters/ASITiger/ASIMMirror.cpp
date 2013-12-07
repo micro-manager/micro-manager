@@ -278,42 +278,85 @@ int CMMirror::Initialize()
    AddAllowedValue(g_AdvancedSAPropertiesYPropertyName, g_NoState);
    AddAllowedValue(g_AdvancedSAPropertiesYPropertyName, g_YesState);
 
+   // get build info so we can add optional properties
+   build_info_type build;
+   RETURN_ON_MM_ERROR( hub_->GetBuildInfo(addressChar_, build) );
+
+   // add SPIM properties if supported
+   if (build.vAxesProps[0] & BIT4)
+   {
+      pAct = new CPropertyAction (this, &CMMirror::OnSPIMScansPerSlice);
+      CreateProperty(g_SPIMNumScansPerSlicePropertyName, "1", MM::Integer, false, pAct);
+      UpdateProperty(g_SPIMNumScansPerSlicePropertyName);
+      SetPropertyLimits(g_SPIMNumScansPerSlicePropertyName, 1, 100);
+
+      pAct = new CPropertyAction (this, &CMMirror::OnSPIMNumSlices);
+      CreateProperty(g_SPIMNumSlicesPropertyName, "1", MM::Integer, false, pAct);
+      UpdateProperty(g_SPIMNumSlicesPropertyName);
+      SetPropertyLimits(g_SPIMNumSlicesPropertyName, 1, 100);
+
+      pAct = new CPropertyAction (this, &CMMirror::OnSPIMNumRepeats);
+      CreateProperty(g_SPIMNumRepeatsPropertyName, "1", MM::Integer, false, pAct);
+      UpdateProperty(g_SPIMNumRepeatsPropertyName);
+      SetPropertyLimits(g_SPIMNumRepeatsPropertyName, 1, 100);
+
+      pAct = new CPropertyAction (this, &CMMirror::OnSPIMNumSides);
+      CreateProperty(g_SPIMNumSidesPropertyName, "1", MM::Integer, false, pAct);
+      UpdateProperty(g_SPIMNumSidesPropertyName);
+      SetPropertyLimits(g_SPIMNumSidesPropertyName, 1, 2);
+
+      pAct = new CPropertyAction (this, &CMMirror::OnSPIMFirstSide);
+      CreateProperty(g_SPIMFirstSidePropertyName, g_SPIMSideAFirst, MM::String, false, pAct);
+      UpdateProperty(g_SPIMFirstSidePropertyName);
+      AddAllowedValue(g_SPIMFirstSidePropertyName, g_SPIMSideAFirst);
+      AddAllowedValue(g_SPIMFirstSidePropertyName, g_SPIMSideBFirst);
+
+      pAct = new CPropertyAction (this, &CMMirror::OnSPIMState);
+      CreateProperty(g_SPIMStatePropertyName, g_SPIMStateIdle, MM::String, false, pAct);
+      UpdateProperty(g_SPIMStatePropertyName);
+      AddAllowedValue(g_SPIMStatePropertyName, g_SPIMStateIdle);
+      AddAllowedValue(g_SPIMStatePropertyName, g_SPIMStateArmed);
+      AddAllowedValue(g_SPIMStatePropertyName, g_SPIMStateRunning);
+
+   }
+
    initialized_ = true;
    return DEVICE_OK;
 }
 
 bool CMMirror::Busy()
 {
-   ostringstream command; command.str("");
-   if (firmwareVersion_ > 2.7) // can use more accurate RS <axis>?
-   {
-      command << "RS " << axisLetterX_ << "?";
-      ret_ = hub_->QueryCommandVerify(command.str(),":A");
-      if (ret_ != DEVICE_OK)  // say we aren't busy if we can't communicate
-         return false;
-      if (hub_->LastSerialAnswer().at(3) == 'B')
-         return true;
-      command.str("");
-      command << "RS " << axisLetterY_ << "?";
-      return (hub_->LastSerialAnswer().at(3) == 'B');
-   }
-   else  // use LSB of the status byte as approximate status, not quite equivalent
-   {
-      command << "RS " << axisLetterX_;
-      ret_ = hub_->QueryCommandVerify(command.str(),":A");
-      if (ret_ != DEVICE_OK)  // say we aren't busy if we can't communicate
-         return false;
-      int i = (int) (hub_->ParseAnswerAfterPosition(2));
-      if (i & (int)BIT0)  // mask everything but LSB
-         return true; // don't bother checking other axis
-      command.str("");
-      command << "RS " << axisLetterY_;
-      ret_ = hub_->QueryCommandVerify(command.str(),":A");
-      if (ret_ != DEVICE_OK)  // say we aren't busy if we can't communicate
-         return false;
-      i = (int) (hub_->ParseAnswerAfterPosition(2));
-      return (i & (int)BIT0);  // mask everything but LSB
-   }
+//   ostringstream command; command.str("");
+//   if (firmwareVersion_ > 2.7) // can use more accurate RS <axis>?
+//   {
+//      command << "RS " << axisLetterX_ << "?";
+//      ret_ = hub_->QueryCommandVerify(command.str(),":A");
+//      if (ret_ != DEVICE_OK)  // say we aren't busy if we can't communicate
+//         return false;
+//      if (hub_->LastSerialAnswer().at(3) == 'B')
+//         return true;
+//      command.str("");
+//      command << "RS " << axisLetterY_ << "?";
+//      return (hub_->LastSerialAnswer().at(3) == 'B');
+//   }
+//   else  // use LSB of the status byte as approximate status, not quite equivalent
+//   {
+//      command << "RS " << axisLetterX_;
+//      ret_ = hub_->QueryCommandVerify(command.str(),":A");
+//      if (ret_ != DEVICE_OK)  // say we aren't busy if we can't communicate
+//         return false;
+//      int i = (int) (hub_->ParseAnswerAfterPosition(2));
+//      if (i & (int)BIT0)  // mask everything but LSB
+//         return true; // don't bother checking other axis
+//      command.str("");
+//      command << "RS " << axisLetterY_;
+//      ret_ = hub_->QueryCommandVerify(command.str(),":A");
+//      if (ret_ != DEVICE_OK)  // say we aren't busy if we can't communicate
+//         return false;
+//      i = (int) (hub_->ParseAnswerAfterPosition(2));
+//      return (i & (int)BIT0);  // mask everything but LSB
+//   }
+   return false;
 }
 
 int CMMirror::SetPosition(double x, double y)
@@ -349,16 +392,16 @@ int CMMirror::GetPosition(double& x, double& y)
 int CMMirror::SetIlluminationState(bool on)
 // we can't turn off beam but we can steer beam to corner where hopefully it is blocked internally
 {
-   if (!on)
+   if (on)
    {
-//      GetPosition(lastX_, lastY_);  // cache position so we can undo
-      return SetPosition(shutterX_, shutterY_);
+      return SetPosition(lastX_, lastY_);  // move to where it was when last turned off
    }
    else
    {
-//      SetPosition(lastX_, lastY_);  // move to where it was when last turned off
-      SetPosition(0,0);
-      return DEVICE_OK;
+      GetPosition(lastX_, lastY_);  // cache position so we can undo
+      ostringstream command; command.str("");
+      command << "! " << axisLetterX_ << " " << axisLetterY_;
+      return hub_->QueryCommandVerify(command.str(),":A");
    }
 }
 
@@ -1781,3 +1824,216 @@ int CMMirror::OnJoystickSelectY(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
+int CMMirror::OnSPIMScansPerSlice(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   long tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << addressChar_ << "NR X?";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A X="));
+      tmp = (long) hub_->ParseAnswerAfterEquals();
+      if (!pProp->Set(tmp))
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      pProp->Get(tmp);
+      command << addressChar_ << "NR X=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}
+
+int CMMirror::OnSPIMNumSlices(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   long tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << addressChar_ << "NR Y?";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A Y="));
+      tmp = (long) hub_->ParseAnswerAfterEquals();
+      if (!pProp->Set(tmp))
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      pProp->Get(tmp);
+      command << addressChar_ << "NR Y=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}
+
+int CMMirror::OnSPIMNumSides(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   long tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << addressChar_ << "NR Z?";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A Z="));
+      tmp = (long) hub_->ParseAnswerAfterEquals();
+      if (tmp==3)   tmp = 2;  // 3 means two-sided but opposite side
+      if (tmp==0)   tmp = 1;  // 0 means one-sided but opposite side
+      if (!pProp->Set(tmp))
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      char FirstSideVal[MM::MaxStrLength];
+      pProp->Get(tmp);
+      RETURN_ON_MM_ERROR ( GetProperty(g_SPIMFirstSidePropertyName, FirstSideVal) );
+      if (strcmp(FirstSideVal, g_SPIMSideBFirst) == 0)
+      {
+         if (tmp==1)   tmp = 0;
+         if (tmp==2)   tmp = 3;
+      }
+      command << addressChar_ << "NR Z=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}
+
+int CMMirror::OnSPIMFirstSide(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   long tmp = 0;
+   bool success;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << addressChar_ << "NR Z?";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A Z="));
+      tmp = (long) hub_->ParseAnswerAfterEquals();
+      if (tmp==3 || tmp==0)  // if opposite side
+      {
+         success = pProp->Set(g_SPIMSideBFirst);
+      }
+      else
+      {
+         success = pProp->Set(g_SPIMSideAFirst);
+      }
+      if (!success)
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      long NumSides;
+      string tmpstr;
+      pProp->Get(tmpstr);
+      RETURN_ON_MM_ERROR ( GetProperty(g_SPIMNumSidesPropertyName, NumSides) );
+      if (tmpstr.compare(g_SPIMSideAFirst) == 0)
+      {
+         tmp = NumSides;
+      }
+      else
+      {
+         if (NumSides==1)   tmp = 0;
+         if (NumSides==2)   tmp = 3;
+      }
+      command << addressChar_ << "NR Z=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}
+
+int CMMirror::OnSPIMNumRepeats(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   long tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << addressChar_ << "NR F?";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A F="));
+      tmp = (long) hub_->ParseAnswerAfterEquals();
+      if (!pProp->Set(tmp))
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      pProp->Get(tmp);
+      command << addressChar_ << "NR F=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}
+
+int CMMirror::OnSPIMState(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << addressChar_ << "SN X?";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
+      bool success;
+      switch ( hub_->LastSerialAnswer().at(3) )
+      {
+         case g_SPIMStateCode_Idle:  success = pProp->Set(g_SPIMStateIdle); break;
+         case g_SPIMStateCode_Arm:   success = pProp->Set(g_SPIMStateArmed); break;
+         case g_SPIMStateCode_Armed: success = pProp->Set(g_SPIMStateArmed); break;
+         default:                    success = pProp->Set(g_SPIMStateRunning); break;  // a bunch of different letter codes are possible while running
+      }
+      if (!success)
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      string tmpstr;
+      pProp->Get(tmpstr);
+      if (tmpstr.compare(g_SPIMStateIdle) == 0)
+      {
+         // check status and stop if it's not idle already
+         command << addressChar_ << "SN X?";
+         RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
+         if (hub_->LastSerialAnswer().at(3) != g_SPIMStateCode_Idle)
+         {
+            // this will stop state machine if it's running, if we do SN without args we run the risk of it stopping itself before we send the next command
+            // after we stop it, it will automatically go to idle state
+            command.str("");
+            command << addressChar_ << "SN X=" << g_SPIMStateCode_Stop;
+            RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
+         }
+      }
+      else if (tmpstr.compare(g_SPIMStateArmed) == 0)
+      {
+         // stop it if we need to, then change to armed state
+         command << addressChar_ << "SN X?";
+         RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
+         if (hub_->LastSerialAnswer().at(3) == g_SPIMStateCode_Idle)
+         {
+            // this will stop state machine if it's running, if we do SN without args we run the risk of it stopping itself (e.g. finishing) before we send the next command
+            command.str("");
+            command << addressChar_ << "SN X=" << g_SPIMStateCode_Stop;
+            RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
+         }
+         // now change to armed state
+         command.str("");
+         command << addressChar_ << "SN X=" << g_SPIMStateCode_Arm;
+         RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
+      }
+      else if (tmpstr.compare(g_SPIMStateRunning) == 0)
+      {
+         // check status and start if it's idle or armed
+         command << addressChar_ << "SN X?";
+         RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
+         if ((hub_->LastSerialAnswer().at(3) == g_SPIMStateCode_Idle) || (hub_->LastSerialAnswer().at(3) == g_SPIMStateCode_Armed))
+         {
+            // if we are idle or armed then start it
+            // assume that nothing else could have started it since our query moments ago
+            command.str("");
+            command << addressChar_ << "SN";
+            RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
+         }
+      }
+      else
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   return DEVICE_OK;
+}
