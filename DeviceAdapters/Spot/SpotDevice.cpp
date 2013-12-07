@@ -1045,8 +1045,8 @@ char* SpotDevice::GetNextSequentialImage(unsigned int& imheight, unsigned int& i
 	{
 		MMThreadGuard guard(imageReadyFlagLock_s);
 
-      // rough estimate of milliseconds to wait for the image
-      double maxWait = ExposureTime() + approxTransferTime + 2000.0;
+      // rough estimate of milliseconds to wait for the image (extra 10 s)
+      double maxWait = ExposureTime() + approxTransferTime + 10000.0;
       while (pMMCamera_->GetCurrentMMTime().getMsec() < time0 + maxWait && !imageReady_s)
       {
 			CDeviceUtils::SleepMs(10);
