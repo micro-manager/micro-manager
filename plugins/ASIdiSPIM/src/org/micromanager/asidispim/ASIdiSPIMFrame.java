@@ -21,10 +21,16 @@
 
 package org.micromanager.asidispim;
 
+import org.micromanager.asidispim.Data.SpimParams;
+import org.micromanager.asidispim.Data.Devices;
+import org.micromanager.asidispim.Utils.ListeningJPanel;
+import org.micromanager.asidispim.Utils.Labels;
 import java.util.prefs.Preferences;
-import javax.swing.JTabbedPane;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import org.micromanager.api.MMListenerInterface;
 import org.micromanager.api.ScriptInterface;
+import org.micromanager.asidispim.Utils.ListeningJTabbedPane;
 
 /**
  *
@@ -53,14 +59,23 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
       spimParams_ = new SpimParams(gui_, devices_);
       devices_.addListener(spimParams_);
       
-      final JTabbedPane tabbedPane = new JTabbedPane();
-   
-      tabbedPane.addTab("Devices", new DevicesPanel(gui_, devices_));
-      tabbedPane.addTab("SPIM Params", new SpimParamsPanel(spimParams_, devices_));
-      tabbedPane.addTab("Setup Side A", new SetupPanel(
+      final ListeningJTabbedPane tabbedPane = new ListeningJTabbedPane();
+        
+      // all added tabs must be of type ListeningJPanel
+      // only use addLTab, not addTab to guarantee this
+      tabbedPane.addLTab("Devices", new DevicesPanel(gui_, devices_));
+      tabbedPane.addLTab("SPIM Params", new SpimParamsPanel(spimParams_, devices_));
+      tabbedPane.addLTab("Setup Side A", new SetupPanel(
               gui_, devices_, spimParams_, Labels.Sides.A) );
-      tabbedPane.addTab("Setup Side B", new SetupPanel(
+      tabbedPane.addLTab("Setup Side B", new SetupPanel(
               gui_, devices_, spimParams_, Labels.Sides.B) );
+      tabbedPane.addLTab("Navigate", new NavigationPanel(devices_));
+      
+      tabbedPane.addChangeListener(new ChangeListener() {
+         public void stateChanged(ChangeEvent e) {
+            ((ListeningJPanel) tabbedPane.getSelectedComponent()).gotSelected();
+         }
+      });
             
       add(tabbedPane);
          

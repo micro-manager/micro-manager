@@ -21,11 +21,14 @@
 
 package org.micromanager.asidispim;
 
+import org.micromanager.asidispim.Data.SpimParams;
+import org.micromanager.asidispim.Data.Devices;
+import org.micromanager.asidispim.Utils.ListeningJPanel;
+import org.micromanager.asidispim.Utils.SpimParamsListenerInterface;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
-import javax.swing.JPanel;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerModel;
 import javax.swing.SpinnerNumberModel;
@@ -37,7 +40,7 @@ import net.miginfocom.swing.MigLayout;
  *
  * @author nico
  */
-public class SpimParamsPanel extends JPanel {
+public class SpimParamsPanel extends ListeningJPanel {
 
    SpimParams params_;
    Devices devices_;

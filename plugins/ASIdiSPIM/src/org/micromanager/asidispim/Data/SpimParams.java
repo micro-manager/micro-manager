@@ -19,8 +19,10 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager.asidispim;
+package org.micromanager.asidispim.Data;
 
+import org.micromanager.asidispim.Utils.SpimParamsListenerInterface;
+import org.micromanager.asidispim.Utils.DevicesListenerInterface;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;

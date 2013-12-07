@@ -21,14 +21,16 @@
 
 package org.micromanager.asidispim;
 
+import org.micromanager.asidispim.Data.SpimParams;
+import org.micromanager.asidispim.Data.Devices;
+import org.micromanager.asidispim.Utils.ListeningJPanel;
+import org.micromanager.asidispim.Utils.Labels;
+import org.micromanager.asidispim.Utils.PanelUtils;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
-import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
-import javax.swing.JPanel;
 import javax.swing.JRadioButton;
-import javax.swing.JSlider;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.api.ScriptInterface;
 
@@ -36,11 +38,15 @@ import org.micromanager.api.ScriptInterface;
  *
  * @author Nico
  */
-public class SetupPanel extends JPanel{
+public class SetupPanel extends ListeningJPanel{
    ScriptInterface gui_;
    Devices devices_;
    SpimParams spimParams_;
    Labels.Sides side_;
+   
+   JComboBox joystickBox_;
+   JComboBox rightWheelBox_;
+   JComboBox leftWheelBox_;
     
    
    public SetupPanel(ScriptInterface gui, Devices devices, 
@@ -53,31 +59,39 @@ public class SetupPanel extends JPanel{
        gui_ = gui;
        side_ = side;
        
+       PanelUtils pu = new PanelUtils();
+       
        add(new JLabel("Joystick:"));
-       add(makeSelectionBox(devices_.getTwoAxisTigerDrives()));
+       joystickBox_ = pu.makeJoystickSelectionBox(Devices.JoystickDevice.JOYSTICK, 
+               devices_.getTwoAxisTigerDrives(), devices_);
+       add(joystickBox_);
        add(new JLabel("Imaging piezo:"));
        add(new JLabel("Pos"));
        add(new JButton("Set start"));
        add(new JButton("Set end"), "wrap");
        
        add(new JLabel("Right knob:"));
-       add(makeSelectionBox(devices_.getTigerDrives()));
+       rightWheelBox_ = pu.makeJoystickSelectionBox(Devices.JoystickDevice.RIGHT_KNOB, 
+               devices_.getTigerDrives(), devices_);
+       add(rightWheelBox_);
        add(new JLabel("Illumination piezo:"));
        add(new JLabel("Pos"));
        add(new JButton("Set position"), "span 2, center, wrap");
        
        add(new JLabel("Left knob:"));
-       add(makeSelectionBox(devices_.getTigerDrives()));
+       leftWheelBox_ = pu.makeJoystickSelectionBox(Devices.JoystickDevice.LEFT_KNOB,
+               devices_.getTigerDrives(), devices_);
+       add(leftWheelBox_);
        add(new JLabel("Scan amplitude:"));
        add(new JLabel("Pos"));
-       add(makeSlider("scanAmplitude", 0, 8, 4), "span 2, center, wrap");
+       add(pu.makeSlider("scanAmplitude", 0, 8, 4), "span 2, center, wrap");
  
        add(new JLabel("Scan enabled:"));
-       add(makeCheckBox("name", Labels.Sides.A), "split 2");
-       add(makeCheckBox("name", Labels.Sides.B));
+       add(pu.makeCheckBox("name", Labels.Sides.A), "split 2");
+       add(pu.makeCheckBox("name", Labels.Sides.B));
        add(new JLabel("Scan offset:"));
        add(new JLabel("pos"));
-       add(makeSlider("scanOffset", -4, 4, 0), "span 2, center, wrap");
+       add(pu.makeSlider("scanOffset", -4, 4, 0), "span 2, center, wrap");
        
        add(new JButton("Toggle scan"), "skip 1");
        add(new JLabel("Sheet position:"));
@@ -92,41 +106,19 @@ public class SetupPanel extends JPanel{
        singleDualGroup.add(dualButton);
        singleDualGroup.add(singleButton);
        add(singleButton, "center");
-       add(dualButton, "center");
+       add(dualButton, "center");  
        
    }
-    
    
-   private JComboBox makeSelectionBox(String[] selections) {
-      JComboBox jcb = new JComboBox(selections);
-      
-      //jcb.setSelectedItem(devices_.getAxisDirInfo(axis));
-     // jcb.addActionListener(new DevicesPanel.AxisDirBoxListener(axis, jcb));
- 
-      return jcb;
-   }
-   
-   private JSlider makeSlider(String name, int min, int max, int init) {
-      JSlider js = new JSlider(JSlider.HORIZONTAL, min, max, init);
-      js.setMajorTickSpacing(max - min);
-      js.setMinorTickSpacing(1);
-      js.setPaintTicks(true);
-      js.setPaintLabels(true);
-
-      return js;
-   }
-
    /**
-    * Constructs the JCheckBox through which the user can select sides
-    * @param fastAxisDir name under which this axis is known in the Devices class
-    * @return constructed JCheckBox
+    * Gets called when this tab gets focus.  Sets the physical UI in the Tiger
+    * controller to what was selected in this pane
     */
-   private JCheckBox makeCheckBox(String name, Labels.Sides side) {
-      JCheckBox jc = new JCheckBox("Side " + Labels.SIDESMAP.get(side));
-      //jc.setSelected(devices_.getFastAxisRevInfo(fastAxisDir));
-      //jc.addActionListener(new DevicesPanel.ReverseCheckBoxListener(fastAxisDir, jc));
-      
-      return jc;
+   @Override
+   public void gotSelected() {
+      joystickBox_.setSelectedItem(joystickBox_.getSelectedItem());
+      rightWheelBox_.setSelectedItem(joystickBox_.getSelectedItem());      
+      leftWheelBox_.setSelectedItem(joystickBox_.getSelectedItem());
    }
 
 }

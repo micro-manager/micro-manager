@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-//FILE:          DevicesListenerInterface.java
+//FILE:          RegionPanel.java
 //PROJECT:       Micro-Manager 
 //SUBSYSTEM:     ASIdiSPIM plugin
 //-----------------------------------------------------------------------------
@@ -19,17 +19,14 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager.asidispim;
+package org.micromanager.asidispim.Data;
+
 
 /**
- *
+ * Class containing data pertaining to acquisition settings
  * @author nico
  */
-public interface DevicesListenerInterface {
-   /**
-    * This function will be called when anything in the Devices setup has 
-    * changed
-    */
-   public void devicesChangedAlert();
-
+public class Setup {
+   
+   
 }

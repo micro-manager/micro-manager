@@ -19,7 +19,9 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager.asidispim;
+package org.micromanager.asidispim.Utils;
+
+import org.micromanager.asidispim.Data.Devices;
 
 /**
  * Simple class that holds information about the name of the device
@@ -53,8 +55,16 @@ public class DirectionalDevice {
       }
    }
    
-   public String getName() {
+   public String getDeviceName() {
       return deviceName_;
+   }
+   
+   /**
+    * Appends "-X" or "-Y" to the devicename
+    * @return 
+    */
+   public String getFancyName() {
+      return deviceName_ + "-" + dir_.toString();
    }
    
    public Labels.Directions getDir() {

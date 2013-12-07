@@ -21,6 +21,8 @@
 
 package org.micromanager.asidispim;
 
+import org.micromanager.asidispim.Data.Devices;
+import org.micromanager.asidispim.Utils.ListeningJPanel;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -29,7 +31,6 @@ import java.util.List;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
-import javax.swing.JPanel;
 import mmcorej.CMMCore;
 import mmcorej.StrVector;
 import net.miginfocom.swing.MigLayout;
@@ -40,7 +41,7 @@ import org.micromanager.utils.ReportingUtils;
  * Draws the Devices tab in the ASI diSPIM GUI
  * @author nico
  */
-public class DevicesPanel extends JPanel {
+public class DevicesPanel extends ListeningJPanel {
    Devices devices_;
    ScriptInterface gui_;
    

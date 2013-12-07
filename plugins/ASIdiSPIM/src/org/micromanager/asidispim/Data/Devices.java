@@ -19,8 +19,10 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager.asidispim;
+package org.micromanager.asidispim.Data;
 
+import org.micromanager.asidispim.Utils.DevicesListenerInterface;
+import org.micromanager.asidispim.Utils.Labels;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.HashMap;
@@ -30,6 +32,7 @@ import java.util.Map;
 import java.util.prefs.Preferences;
 import mmcorej.CMMCore;
 import org.micromanager.MMStudioMainFrame;
+import org.micromanager.asidispim.Utils.DirectionalDevice;
 import org.micromanager.utils.ReportingUtils;
 
 /**
@@ -109,12 +112,23 @@ public class Devices {
    public static final String X = "X";
    public static final String Y = "Y";
    
+   public static final HashMap<String, DirectionalDevice> STAGES;
+   static {
+      STAGES = new HashMap<String, DirectionalDevice>();
+      for (String dd : ONEAXISTIGERDEVICES) {
+         STAGES.put(dd, new DirectionalDevice(dd, Labels.Directions.X));
+      }
+      for (String dd : TWOAXISTIGERDEVICES) {
+         STAGES.put(dd, new DirectionalDevice(dd, Labels.Directions.X));
+         STAGES.put(dd, new DirectionalDevice(dd, Labels.Directions.Y));
+      }
+   }
    
    // Non-static variables
    private HashMap<String, String> deviceInfo_;
    private HashMap<String, Boolean> axisRevs_;
    private HashMap<String, String> axisDirs_;
-   private Map<JoystickDevice, DirectionalDevice[]> controllerMap_;
+   private Map<JoystickDevice, DirectionalDevice> controllerMap_;
    private List<DevicesListenerInterface> listeners_;
    private Preferences prefs_;
    private CMMCore core_;
@@ -126,7 +140,7 @@ public class Devices {
       deviceInfo_ = new HashMap<String, String>();
       axisRevs_ = new HashMap<String, Boolean>();
       axisDirs_ = new HashMap<String, String>();
-      controllerMap_ = new EnumMap<JoystickDevice, DirectionalDevice[]>(JoystickDevice.class);
+      controllerMap_ = new EnumMap<JoystickDevice, DirectionalDevice>(JoystickDevice.class);
       listeners_ = new ArrayList<DevicesListenerInterface>();
 
       for (String device : DEVICES) {
@@ -182,12 +196,13 @@ public class Devices {
             tigerDevices.add(deviceInfo_.get(d));
          }
       }
-      return (String[]) tigerDevices.toArray();
+      return tigerDevices.toArray(new String[0]);
    }
    
    /**
-    * Creates and array with the abstract names of the drives in the 
-    * tiger controller
+    * Creates an array with the abstract names of the drives present in the 
+    * tiger controller.
+    * X and Y of XY drive and MicroMirror devices will be listed separately
     * @return 
     */
    public String[] getTigerDrives() {
@@ -199,13 +214,18 @@ public class Devices {
       }
       for (String dev : Devices.TWOAXISTIGERDEVICES) {
          if (getMMDevice(dev) != null) {
-            res.add(dev + "-X");
-            res.add(dev + "-Y");
+            res.add(new DirectionalDevice(dev, Labels.Directions.X).getFancyName());
+            res.add(new DirectionalDevice(dev, Labels.Directions.Y).getFancyName());
          }
       }
-      return (String[]) res.toArray(new String[0]);
+      return res.toArray(new String[0]);
    }
    
+   /**
+    * Creates an array with the abstract names of the two axis drives 
+    * present in the tiger controller
+    * @return 
+    */
    public String[] getTwoAxisTigerDrives() {
       List<String> res = new ArrayList<String>();
       for (String dev : Devices.TWOAXISTIGERDEVICES) {
@@ -213,7 +233,7 @@ public class Devices {
             res.add(dev);
          }
       }
-      return (String[]) res.toArray(new String[0]);
+      return res.toArray(new String[0]);
    }
 
    /**
@@ -276,54 +296,54 @@ public class Devices {
     *
     * @param control Joystick, left or right knob
     * @param devices A combination of a Tiger device and direction
+    * @return true on success, false on failure
     */
-   public void setJoystickOutput(JoystickDevice joystickDevice,
-           DirectionalDevice[] devices) {
+   public boolean setJoystickOutput(JoystickDevice joystickDevice,
+           DirectionalDevice device) {
       // first clear whatever associations are present
       String[] oneAxisTigerDevices = getMMDevices(ONEAXISTIGERDEVICES);
       String propName = "JoystickInput";
       String noInput = "0 - none";
-      for (String device : oneAxisTigerDevices) {
-         try {
-            core_.setProperty(device, propName, noInput);
-         } catch (Exception ex) {
-            ReportingUtils.showError("Failed to communicate with Tiger controller");
-         }
-      }
-      String[] twoAxisTigerDevices = getMMDevices(TWOAXISTIGERDEVICES);
-      for (String device : twoAxisTigerDevices) {
-         try {
-            core_.setProperty(device, propName + "X", noInput);
-            core_.setProperty(device, propName + "Y", noInput);
-         } catch (Exception ex) {
-            ReportingUtils.showError("Failed to communicate with tiger controller");
-         }
-      }
 
       try {
-         // default to joystick device
+         for (String dev : oneAxisTigerDevices) {
+            core_.setProperty(dev, propName, noInput);
+         }
+
+         String[] twoAxisTigerDevices = getMMDevices(TWOAXISTIGERDEVICES);
+         for (String dev : twoAxisTigerDevices) {
+            core_.setProperty(dev, propName + "X", noInput);
+            core_.setProperty(dev, propName + "Y", noInput);
+         }
+
+         // for joystick device
          String setting = "2 - joystick X";
          if (joystickDevice.equals(JoystickDevice.LEFT_KNOB)) {
             setting = "23 - left wheel";
          } else if (joystickDevice.equals(JoystickDevice.RIGHT_KNOB)) {
             setting = "22 - right wheel";
-         } 
-         
-         String mmDevice = getMMDevice(devices[0].getName());
-         if (devices[0].getNrOfAxis() == DirectionalDevice.NumberOfAxis.ONE) {
+         }
+
+         String mmDevice = getMMDevice(device.getDeviceName());
+         if (device.getNrOfAxis() == DirectionalDevice.NumberOfAxis.ONE) {
             core_.setProperty(mmDevice, propName, setting);
-         } else if (devices[0].getNrOfAxis() == DirectionalDevice.NumberOfAxis.TWO) {
-            core_.setProperty(mmDevice, propName + devices[0].getDir().toString(), 
+         } else if (device.getNrOfAxis() == DirectionalDevice.NumberOfAxis.TWO) {
+            core_.setProperty(mmDevice, propName + device.getDeviceName(),
                     propName);
          }
+         
+         controllerMap_.put(joystickDevice, device);
+         
+         
       } catch (Exception ex) {
-            ReportingUtils.showError("Failed to communiocate with tiger controller");
-         }
-      controllerMap_.put(joystickDevice, devices);
-      // TODO: write code talking to controller  
+         ReportingUtils.showError("Failed to communiocate with tiger controller");
+         return false;
+      }
+      
+      return true;
    }
 
-   public DirectionalDevice[] getControlledDevice(JoystickDevice control) {
+   public DirectionalDevice getControlledDevice(JoystickDevice control) {
       return controllerMap_.get(control);
    }
 

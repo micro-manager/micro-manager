@@ -19,7 +19,7 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager.asidispim;
+package org.micromanager.asidispim.Utils;
 
 import java.util.EnumMap;
 import java.util.HashMap;
@@ -54,11 +54,18 @@ public class Labels {
       }
    };
    
-   public static final Map<Directions, String> DIRECTIONSMAP = 
+   public static final Map<Directions, String> DIRECTIONS = 
            new EnumMap<Directions, String>(Directions.class);
    static {
-      DIRECTIONSMAP.put(Directions.X, "X");
-      DIRECTIONSMAP.put(Directions.Y, "Y");
+      DIRECTIONS.put(Directions.X, "X");
+      DIRECTIONS.put(Directions.Y, "Y");
+   }
+   
+   public static final Map<String, Directions> REVDIRECTIONS = 
+           new HashMap<String, Directions>();
+   static {
+      REVDIRECTIONS.put("X", Directions.X);
+      REVDIRECTIONS.put("Y", Directions.Y);
    }
    
    public static enum Terms {MICROMIRROR, XYSTAGE, IMAGINGPIEZO, 
