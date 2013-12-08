@@ -50,10 +50,17 @@ public class SetupPanel extends ListeningJPanel{
    JComboBox rightWheelBox_;
    JComboBox leftWheelBox_;
    
+   JLabel imagingPiezoPositionLabel_;
+   JLabel illuminationPiezoPositionLabel_;
+   
+   String imagingPiezo_;
+   String illuminationPiezo_;
+   
    final String JOYSTICK = Devices.JOYSTICKS.get(Devices.JoystickDevice.JOYSTICK);
    final String RIGHTWHEEL = Devices.JOYSTICKS.get(Devices.JoystickDevice.RIGHT_KNOB);
    final String LEFTWHEEL = Devices.JOYSTICKS.get(Devices.JoystickDevice.LEFT_KNOB);
     
+   
    
    public SetupPanel(ScriptInterface gui, Devices devices, 
            SpimParams spimParams, Labels.Sides side) {
@@ -70,36 +77,47 @@ public class SetupPanel extends ListeningJPanel{
        String rightWheelPrefName = RIGHTWHEEL + side_.toString();
        String leftWheelPrefName = LEFTWHEEL + side_.toString();
        String joystickSelection = prefs_.get(joystickPrefName, 
-               devices_.getTwoAxisTigerDrives()[0]);
+               devices_.getTwoAxisTigerStages()[0]);
        String rightWheelSelection = prefs_.get(rightWheelPrefName, 
-               devices_.getTigerDrives()[0]);
+               devices_.getTigerStages()[0]);
        String leftWheelSelection = prefs_.get(leftWheelPrefName, 
-               devices_.getTigerDrives()[0]);
+               devices_.getTigerStages()[0]);
+       
+       imagingPiezo_ = Devices.PIEZOA;
+       illuminationPiezo_ = Devices.PIEZOB;
+       if (side_ == Labels.Sides.B) {
+          imagingPiezo_ = Devices.PIEZOB;
+          illuminationPiezo_ = Devices.PIEZOA;
+       }
        
        PanelUtils pu = new PanelUtils();
        
        add(new JLabel(JOYSTICK + ":"));
        joystickBox_ = pu.makeJoystickSelectionBox(Devices.JoystickDevice.JOYSTICK, 
-               devices_.getTwoAxisTigerDrives(), joystickSelection, devices_,
+               devices_.getTwoAxisTigerStages(), joystickSelection, devices_,
                prefs_, joystickPrefName);
        add(joystickBox_);
        add(new JLabel("Imaging piezo:"));
-       add(new JLabel("Pos"));
+       imagingPiezoPositionLabel_ = new JLabel(Devices.posToDisplayString(
+               devices_.getStagePosition(imagingPiezo_)));
+       add(imagingPiezoPositionLabel_);
        add(new JButton("Set start"));
        add(new JButton("Set end"), "wrap");
        
        add(new JLabel(RIGHTWHEEL + ":"));
        rightWheelBox_ = pu.makeJoystickSelectionBox(Devices.JoystickDevice.RIGHT_KNOB, 
-               devices_.getTigerDrives(), rightWheelSelection, devices_, prefs_,
+               devices_.getTigerStages(), rightWheelSelection, devices_, prefs_,
                rightWheelPrefName);
        add(rightWheelBox_);
-       add(new JLabel("Illumination piezo:"));
-       add(new JLabel("Pos"));
+       add(new JLabel("Illumination Piezo:"));
+       illuminationPiezoPositionLabel_ = new JLabel(Devices.posToDisplayString(
+               devices_.getStagePosition(illuminationPiezo_)));
+       add(illuminationPiezoPositionLabel_);
        add(new JButton("Set position"), "span 2, center, wrap");
        
        add(new JLabel(LEFTWHEEL + ":"));
        leftWheelBox_ = pu.makeJoystickSelectionBox(Devices.JoystickDevice.LEFT_KNOB,
-               devices_.getTigerDrives(), leftWheelSelection, devices_, prefs_,
+               devices_.getTigerStages(), leftWheelSelection, devices_, prefs_,
                leftWheelPrefName);
        add(leftWheelBox_);
        add(new JLabel("Scan amplitude:"));
@@ -151,6 +169,14 @@ public class SetupPanel extends ListeningJPanel{
       joystickBox_.setSelectedItem(joystickBox_.getSelectedItem());
       rightWheelBox_.setSelectedItem(joystickBox_.getSelectedItem());      
       leftWheelBox_.setSelectedItem(joystickBox_.getSelectedItem());
+   }
+   
+   @Override
+   public void updateStagePositions() {
+      imagingPiezoPositionLabel_.setText(Devices.posToDisplayString(
+               devices_.getStagePosition(imagingPiezo_)));
+      illuminationPiezoPositionLabel_.setText(Devices.posToDisplayString(
+              devices_.getStagePosition(illuminationPiezo_)));
    }
 
 }

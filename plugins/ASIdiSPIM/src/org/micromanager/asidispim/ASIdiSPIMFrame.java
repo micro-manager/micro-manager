@@ -66,13 +66,17 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
         
       // all added tabs must be of type ListeningJPanel
       // only use addLTab, not addTab to guarantee this
+
       tabbedPane.addLTab("Devices", new DevicesPanel(gui_, devices_));
       tabbedPane.addLTab("SPIM Params", new SpimParamsPanel(spimParams_, devices_));
-      tabbedPane.addLTab("Setup Side A", new SetupPanel(
-              gui_, devices_, spimParams_, Labels.Sides.A) );
-      tabbedPane.addLTab("Setup Side B", new SetupPanel(
-              gui_, devices_, spimParams_, Labels.Sides.B) );
-      tabbedPane.addLTab("Navigate", new NavigationPanel(devices_));
+      final ListeningJPanel setupPanelA = new SetupPanel(
+              gui_, devices_, spimParams_, Labels.Sides.A);
+      tabbedPane.addLTab("Setup Side A",  setupPanelA);
+      final ListeningJPanel setupPanelB = new SetupPanel(
+              gui_, devices_, spimParams_, Labels.Sides.B);
+      tabbedPane.addLTab("Setup Side B",  setupPanelB);
+      final ListeningJPanel navigationPanel = new NavigationPanel(devices_);
+      tabbedPane.addLTab("Navigate", navigationPanel);
       
       tabbedPane.addChangeListener(new ChangeListener() {
          public void stateChanged(ChangeEvent e) {
@@ -90,7 +94,9 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
             // update stage positions in devices
             devices_.updateStagePositions();
             // notify listeners that positions are updated
-            
+            setupPanelA.updateStagePositions();
+            setupPanelB.updateStagePositions();
+            navigationPanel.updateStagePositions();
          }
       });
       stagePosUpdater.start();

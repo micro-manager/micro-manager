@@ -72,9 +72,9 @@ public class PanelUtils {
          jc_.removeAllItems();
          String[] devices;
          if (joystickDevice_ == Devices.JoystickDevice.JOYSTICK) { 
-            devices = devices_.getTwoAxisTigerDrives();
+            devices = devices_.getTwoAxisTigerStages();
          } else {
-            devices = devices_.getTigerDrives();
+            devices = devices_.getTigerStages();
          }
          for (String device : devices) {
             jc_.addItem(device);

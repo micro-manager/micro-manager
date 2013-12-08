@@ -21,6 +21,7 @@
 
 package org.micromanager.asidispim;
 
+import java.awt.geom.Point2D;
 import java.util.prefs.Preferences;
 import javax.swing.JComboBox;
 import org.micromanager.asidispim.Data.Devices;
@@ -28,6 +29,7 @@ import org.micromanager.asidispim.Utils.ListeningJPanel;
 import org.micromanager.asidispim.Utils.PanelUtils;
 import javax.swing.JLabel;
 import net.miginfocom.swing.MigLayout;
+import org.micromanager.asidispim.Utils.Labels;
 
 /**
  *
@@ -40,6 +42,11 @@ public class NavigationPanel extends ListeningJPanel {
    JComboBox joystickBox_;
    JComboBox rightWheelBox_;
    JComboBox leftWheelBox_;
+   
+   JLabel xPositionLabel_;
+   JLabel yPositionLabel_;
+   JLabel upperZPositionLabel_;
+   JLabel lowerZPositionLabel_;
    
    final String JOYSTICK = Devices.JOYSTICKS.get(Devices.JoystickDevice.JOYSTICK);
    final String RIGHTWHEEL = Devices.JOYSTICKS.get(Devices.JoystickDevice.RIGHT_KNOB);
@@ -65,29 +72,44 @@ public class NavigationPanel extends ListeningJPanel {
        
       
       String joystickSelection = prefs_.get(JOYSTICK, 
-              devices_.getTwoAxisTigerDrives()[0]);
+              devices_.getTwoAxisTigerStages()[0]);
       String rightWheelSelection = prefs_.get(RIGHTWHEEL, 
-              devices_.getTigerDrives()[0]);
+              devices_.getTigerStages()[0]);
       String leftWheelSelection = prefs_.get(LEFTWHEEL, 
-              devices_.getTigerDrives()[0]);
+              devices_.getTigerStages()[0]);
        
       add(new JLabel(JOYSTICK + ":"));
       joystickBox_ = pu.makeJoystickSelectionBox(Devices.JoystickDevice.JOYSTICK, 
-               devices_.getTwoAxisTigerDrives(), joystickSelection, devices_,
+               devices_.getTwoAxisTigerStages(), joystickSelection, devices_,
                prefs_, JOYSTICK);
-      add(joystickBox_, "wrap");
+      add(joystickBox_);
+      add(new JLabel("X:"));
+      xPositionLabel_ = new JLabel(getTwoAxisStagePosition(Devices.XYSTAGE, 
+              Labels.Directions.X));
+      add(xPositionLabel_, "wrap");
        
       add(new JLabel(RIGHTWHEEL + ":"));
       rightWheelBox_ = pu.makeJoystickSelectionBox(Devices.JoystickDevice.RIGHT_KNOB, 
-               devices_.getTigerDrives(), rightWheelSelection, devices_, prefs_,
+               devices_.getTigerStages(), rightWheelSelection, devices_, prefs_,
                RIGHTWHEEL);
-      add(rightWheelBox_, "wrap");
+      add(rightWheelBox_);
+      add(new JLabel("Y:"));
+      yPositionLabel_ = new JLabel(getTwoAxisStagePosition(Devices.XYSTAGE, 
+              Labels.Directions.Y));
+      add(yPositionLabel_, "wrap");
        
       add(new JLabel(LEFTWHEEL + ":"));
       leftWheelBox_ = pu.makeJoystickSelectionBox(Devices.JoystickDevice.LEFT_KNOB,
-               devices_.getTigerDrives(), leftWheelSelection, devices_, prefs_,
+               devices_.getTigerStages(), leftWheelSelection, devices_, prefs_,
                LEFTWHEEL);
-      add(leftWheelBox_, "wrap");
+      add(leftWheelBox_);
+      add(new JLabel("Lower Z Stage:"));
+      lowerZPositionLabel_ = new JLabel(getStagePosition(Devices.LOWERZDRIVE));
+      add(lowerZPositionLabel_, "wrap");
+      
+      add(new JLabel("Upper Z Stage:"), "skip 2");
+      upperZPositionLabel_ = new JLabel(getStagePosition(Devices.UPPERZDRIVE));
+      add(upperZPositionLabel_, "wrap");
       
    }
    
@@ -107,6 +129,37 @@ public class NavigationPanel extends ListeningJPanel {
       joystickBox_.setSelectedItem(joystickBox_.getSelectedItem());
       rightWheelBox_.setSelectedItem(joystickBox_.getSelectedItem());      
       leftWheelBox_.setSelectedItem(joystickBox_.getSelectedItem());
+   }
+   
+   private String getTwoAxisStagePosition(String stage, Labels.Directions dir) {
+      Point2D.Double xyPos = devices_.getTwoAxisStagePosition(stage);
+      if (xyPos != null) {
+         if (dir == Labels.Directions.X) {
+            return Devices.posToDisplayString(xyPos.x);
+         } else {
+            return Devices.posToDisplayString(xyPos.y);
+         }
+      }
+      return "       ";
+   }
+   
+   private String getStagePosition(String stage) {
+      Double pos = devices_.getStagePosition(stage);
+      if (pos != null) {
+         return Devices.posToDisplayString(pos);
+      }
+      return "       ";
+   }
+
+   @Override
+   public void updateStagePositions() {
+      xPositionLabel_.setText(getTwoAxisStagePosition(Devices.XYSTAGE, 
+              Labels.Directions.X));   
+      yPositionLabel_.setText(getTwoAxisStagePosition(Devices.XYSTAGE, 
+              Labels.Directions.Y));
+      upperZPositionLabel_.setText(getStagePosition(Devices.UPPERZDRIVE));
+      lowerZPositionLabel_.setText(getStagePosition(Devices.LOWERZDRIVE));
+
    }
    
 }

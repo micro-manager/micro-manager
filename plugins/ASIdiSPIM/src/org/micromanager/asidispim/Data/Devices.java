@@ -34,6 +34,7 @@ import java.util.prefs.Preferences;
 import mmcorej.CMMCore;
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.asidispim.Utils.DirectionalDevice;
+import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.ReportingUtils;
 
 /**
@@ -127,6 +128,13 @@ public class Devices {
       }
    }
    
+   public static String posToDisplayString(Double pos) {
+      if (pos != null) {
+         return NumberUtils.doubleToDisplayString(pos) + "\u00B5"+"m";
+      }
+      return "";
+   }
+   
    // Non-static variables
    private HashMap<String, String> deviceInfo_;
    private HashMap<String, Boolean> axisRevs_;
@@ -161,6 +169,8 @@ public class Devices {
       for (String axisDir : FASTAXISDIRS) {
          axisDirs_.put(axisDir, prefs_.get(axisDir, X));
       }
+      
+      updateStagePositions();
 
    }
 
@@ -211,12 +221,12 @@ public class Devices {
    }
    
    /**
-    * Creates an array with the abstract names of the drives present in the 
+    * Creates an array with the abstract names of the stages present in the 
     * tiger controller.
     * X and Y of XY drive and MicroMirror devices will be listed separately
     * @return 
     */
-   public String[] getTigerDrives() {
+   public String[] getTigerStages() {
       List<String> res = new ArrayList<String>();
       for (String dev : Devices.ONEAXISTIGERDEVICES) {
          if (getMMDevice(dev) != null) {
@@ -237,7 +247,7 @@ public class Devices {
     * present in the tiger controller
     * @return 
     */
-   public String[] getTwoAxisTigerDrives() {
+   public String[] getTwoAxisTigerStages() {
       List<String> res = new ArrayList<String>();
       for (String dev : Devices.TWOAXISTIGERDEVICES) {
          if (getMMDevice(dev) != null) {
@@ -245,6 +255,14 @@ public class Devices {
          }
       }
       return res.toArray(new String[0]);
+   }
+   
+   public Double getStagePosition(String abstractDeviceName) {
+      return oneAxisDrivePositions_.get(abstractDeviceName);
+   }
+   
+   public Point2D.Double getTwoAxisStagePosition(String abstractDeviceName) {
+      return twoAxisDrivePositions_.get(abstractDeviceName);
    }
 
    /**
@@ -359,7 +377,7 @@ public class Devices {
    }
    
    private void updateSingleAxisStagePositions() {
-      String[] drives = getTigerDrives();
+      String[] drives = getTigerStages();
       for (String drive : drives) {
          String mmDevice = getMMDevice(drive);
          if (mmDevice != null) {
@@ -373,7 +391,7 @@ public class Devices {
    }
    
    private void updateTwoAxisStagePositions() {
-      String[] drives = getTwoAxisTigerDrives();
+      String[] drives = getTwoAxisTigerStages();
       for (String drive : drives) {
          String mmDevice = this.getMMDevice(drive);
          if (mmDevice != null) {
