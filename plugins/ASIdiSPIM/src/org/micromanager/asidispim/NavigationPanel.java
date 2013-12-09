@@ -70,13 +70,19 @@ public class NavigationPanel extends ListeningJPanel {
       
       prefs_ = Preferences.userNodeForPackage(this.getClass());
        
-      
-      String joystickSelection = prefs_.get(JOYSTICK, 
-              devices_.getTwoAxisTigerStages()[0]);
-      String rightWheelSelection = prefs_.get(RIGHTWHEEL, 
-              devices_.getTigerStages()[0]);
-      String leftWheelSelection = prefs_.get(LEFTWHEEL, 
-              devices_.getTigerStages()[0]);
+      String jcs = "";
+       if (devices_.getTwoAxisTigerStages() != null && 
+               devices_.getTwoAxisTigerStages().length > 0) {
+          jcs = devices_.getTwoAxisTigerStages()[0];
+       }
+      String joystickSelection = prefs_.get(JOYSTICK,jcs);
+       String ws = "";
+       if (devices_.getTigerStages() != null &&  
+               devices_.getTigerStages().length > 0) {
+          ws = devices_.getTigerStages()[0];
+       }
+      String rightWheelSelection = prefs_.get(RIGHTWHEEL, ws);
+      String leftWheelSelection = prefs_.get(LEFTWHEEL,ws);
        
       add(new JLabel(JOYSTICK + ":"));
       joystickBox_ = pu.makeJoystickSelectionBox(Devices.JoystickDevice.JOYSTICK, 

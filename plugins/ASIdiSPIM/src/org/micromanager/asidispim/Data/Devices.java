@@ -213,8 +213,8 @@ public class Devices {
       List<String> tigerDevices = new ArrayList<String>();
       for (String device : devices) {
          String d = deviceInfo_.get(device);
-         if (d != null) {
-            tigerDevices.add(deviceInfo_.get(d));
+         if (d != null && d.length() > 0) {
+            tigerDevices.add(d);
          }
       }
       return tigerDevices.toArray(new String[0]);
@@ -332,21 +332,29 @@ public class Devices {
       // first clear whatever associations are present
       String[] oneAxisTigerDevices = getMMDevices(ONEAXISTIGERDEVICES);
       String propName = "JoystickInput";
+      String xyStagePropName = "JoystickEnabled";
       String noInput = "0 - none";
+      String yes = "Yes";
+      String no = "No";
 
       try {
          for (String dev : oneAxisTigerDevices) {
-            core_.setProperty(dev, propName, noInput);
+               core_.setProperty(dev, propName, noInput);
          }
 
          String[] twoAxisTigerDevices = getMMDevices(TWOAXISTIGERDEVICES);
          for (String dev : twoAxisTigerDevices) {
-            core_.setProperty(dev, propName + "X", noInput);
-            core_.setProperty(dev, propName + "Y", noInput);
+            if (core_.getDeviceType(dev) == mmcorej.DeviceType.XYStageDevice) {
+               core_.setProperty(dev, xyStagePropName, no);
+            } else { // Galvo device
+               core_.setProperty(dev, propName + "X", noInput);
+               core_.setProperty(dev, propName + "Y", noInput);
+            }
          }
 
          // for joystick device
          String setting = "2 - joystick X";
+         String settingY = "3 - joystick Y";
          if (joystickDevice.equals(JoystickDevice.LEFT_KNOB)) {
             setting = "23 - left wheel";
          } else if (joystickDevice.equals(JoystickDevice.RIGHT_KNOB)) {
@@ -357,8 +365,12 @@ public class Devices {
          if (device.getNrOfAxis() == DirectionalDevice.NumberOfAxis.ONE) {
             core_.setProperty(mmDevice, propName, setting);
          } else if (device.getNrOfAxis() == DirectionalDevice.NumberOfAxis.TWO) {
-            core_.setProperty(mmDevice, propName + device.getDeviceName(),
-                    propName);
+            if (core_.getDeviceType(mmDevice) == mmcorej.DeviceType.XYStageDevice) {
+               core_.setProperty(mmDevice, xyStagePropName, yes);
+            } else {
+               core_.setProperty(mmDevice, propName + "X", setting);
+               core_.setProperty(mmDevice, propName + "Y", settingY);
+            }
          }
          
          controllerMap_.put(joystickDevice, device);
@@ -404,7 +416,7 @@ public class Devices {
       }
    }
    
-   public void updateStagePositions() {
+   public final void updateStagePositions() {
       updateSingleAxisStagePositions();
       updateTwoAxisStagePositions();
    }

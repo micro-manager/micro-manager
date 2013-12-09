@@ -76,12 +76,19 @@ public class SetupPanel extends ListeningJPanel{
        String joystickPrefName = JOYSTICK + side_.toString();
        String rightWheelPrefName = RIGHTWHEEL + side_.toString();
        String leftWheelPrefName = LEFTWHEEL + side_.toString();
-       String joystickSelection = prefs_.get(joystickPrefName, 
-               devices_.getTwoAxisTigerStages()[0]);
-       String rightWheelSelection = prefs_.get(rightWheelPrefName, 
-               devices_.getTigerStages()[0]);
-       String leftWheelSelection = prefs_.get(leftWheelPrefName, 
-               devices_.getTigerStages()[0]);
+       String jcs = "";
+       if (devices_.getTwoAxisTigerStages() != null && 
+               devices_.getTwoAxisTigerStages().length > 0) {
+          jcs = devices_.getTwoAxisTigerStages()[0];
+       }
+       String joystickSelection = prefs_.get(joystickPrefName, jcs);
+       String ws = "";
+       if (devices_.getTigerStages() != null &&  
+               devices_.getTigerStages().length > 0) {
+          ws = devices_.getTigerStages()[0];
+       }
+       String rightWheelSelection = prefs_.get(rightWheelPrefName, ws);
+       String leftWheelSelection = prefs_.get(leftWheelPrefName, ws);
        
        imagingPiezo_ = Devices.PIEZOA;
        illuminationPiezo_ = Devices.PIEZOB;
