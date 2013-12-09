@@ -23,6 +23,7 @@ MMCOREPYSOURCES = $(SWIGLIBSOURCES) \
 	$(top_srcdir)/MMCore/Configuration.cpp \
 	$(top_srcdir)/MMCore/CoreCallback.cpp \
 	$(top_srcdir)/MMCore/CoreProperty.cpp \
+	$(top_srcdir)/MMCore/Error.cpp \
 	$(top_srcdir)/MMCore/FastLogger.cpp \
 	$(top_srcdir)/MMCore/Host.cpp \
 	$(top_srcdir)/MMCore/MMCore.cpp \
