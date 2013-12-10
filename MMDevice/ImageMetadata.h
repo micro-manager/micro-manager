@@ -369,6 +369,7 @@ public:
       PutImageTag(key, value);
    }
 
+#ifndef SWIG
    Metadata& operator=(const Metadata& rhs)
    {
       Clear();
@@ -380,6 +381,7 @@ public:
 
       return *this;
    }
+#endif
 
    void Merge(const Metadata& newTags)
    {     
