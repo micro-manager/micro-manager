@@ -203,7 +203,6 @@ int PIZStage::GetLimits(double& min, double& max)
 	min = 0;
 	max = axisLimitUm_;
 	return DEVICE_OK;
-   return DEVICE_UNSUPPORTED_COMMAND;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

@@ -253,7 +253,6 @@ int PIController::TranslateError( int err /*= PI_CNTR_NO_ERROR*/ )
 	default:
 		return DEVICE_ERR;
 	}
-	return DEVICE_ERR;
 }
 
 std::vector<std::string> PIController::tokenize(const std::string& lines)
