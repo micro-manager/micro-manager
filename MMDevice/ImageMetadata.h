@@ -423,10 +423,10 @@ public:
       return os.str();
    }
 
-   std::string readLine(std::istringstream &is)
+   std::string readLine(std::istringstream &iss)
    {
 		char str[MM::MaxStrLength];
-		is.getline(str, MM::MaxStrLength);
+		iss.getline(str, MM::MaxStrLength);
 		return std::string(str);
    }
 
