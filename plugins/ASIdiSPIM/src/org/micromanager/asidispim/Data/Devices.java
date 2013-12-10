@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.prefs.Preferences;
 import mmcorej.CMMCore;
+import mmcorej.StrVector;
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.asidispim.Utils.DirectionalDevice;
 import org.micromanager.utils.NumberUtils;
@@ -86,10 +87,10 @@ public class Devices {
    public static final String DUALCAMERA = "Dual Camera";
    public static final String PIEZOA = "PiezoA";
    public static final String PIEZOB = "PiezoB";
-   public static final String GALVOA = "GalvoA";
-   public static final String GALVOB = "GalvoB";
-   public static final String GALVOC = "GalvoC";
-   public static final String GALVOD = "GalvoD";
+   public static final String GALVOA = "MicroMirrorA";
+   public static final String GALVOB = "MicroMirrorB";
+   public static final String GALVOC = "MicroMirrorC";
+   public static final String GALVOD = "MicroMirrorD";
    public static final String XYSTAGE = "XY Stage";
    public static final String LOWERZDRIVE = "Lower Z Drive";
    public static final String UPPERZDRIVE = "Upper Z Drive";
@@ -142,6 +143,7 @@ public class Devices {
    private HashMap<String, Point2D.Double> twoAxisDrivePositions_;
    private Map<JoystickDevice, DirectionalDevice> controllerMap_;
    private List<DevicesListenerInterface> listeners_;
+   private List<String>loadedDevices_;
    private Preferences prefs_;
    private CMMCore core_;
 
@@ -156,9 +158,16 @@ public class Devices {
       twoAxisDrivePositions_ = new HashMap<String, Point2D.Double>();
       controllerMap_ = new EnumMap<JoystickDevice, DirectionalDevice>(JoystickDevice.class);
       listeners_ = new ArrayList<DevicesListenerInterface>();
+      loadedDevices_ = new ArrayList<String>();
+      
+      DetectLoadedDevices();
 
       for (String device : DEVICES) {
-         deviceInfo_.put(device, prefs_.get(device, ""));
+         String mmDevice = prefs_.get(device, "");
+         if (!loadedDevices_.contains(mmDevice)) {
+            mmDevice = "";
+         }
+         deviceInfo_.put(device, mmDevice);
       }
 
       for (String axisRev : FASTAXISREVS) {
@@ -453,6 +462,14 @@ public class Devices {
    public DirectionalDevice getControlledDevice(JoystickDevice control) {
       return controllerMap_.get(control);
    }
+   
+   public final void DetectLoadedDevices() {
+      loadedDevices_.clear();
+      StrVector strv = core_.getLoadedDevices();
+      for (int i =0; i < strv.size(); i++) {
+         loadedDevices_.add(strv.get(i));
+      }
+   }
 
    private void updateSingleAxisStagePositions() {
       String[] drives = getTigerStages();
@@ -481,6 +498,7 @@ public class Devices {
          }
       }
    }
+   
 
    public final void updateStagePositions() {
       updateSingleAxisStagePositions();

@@ -55,25 +55,29 @@ public class PanelUtils {
       }    
 
       /**
-       * This will be called whenever the user selects a new item, but also
-       * when the tab to which this selectionbox belongs is selected
-       * @param ae 
+       * This will be called whenever the user selects a new item, but also when
+       * the tab to which this selectionbox belongs is selected
+       *
+       * @param ae
        */
       public void actionPerformed(ActionEvent ae) {
-                  String stage = (String) jc_.getSelectedItem();
-         String[] items = stage.split("-");
-         DirectionalDevice dd;
-         if (items.length > 1) {
-            dd = new DirectionalDevice(items[0], 
-                    Labels.REVDIRECTIONS.get(items[1]));
-         } else {
-            dd = new DirectionalDevice(items[0], Labels.Directions.X);
+         String stage = (String) jc_.getSelectedItem();
+         if (stage != null) {
+            String[] items = stage.split("-");
+            DirectionalDevice dd;
+            if (items.length > 1) {
+               dd = new DirectionalDevice(items[0],
+                       Labels.REVDIRECTIONS.get(items[1]));
+            } else {
+               dd = new DirectionalDevice(items[0], Labels.Directions.X);
+            }
+            devices_.setJoystickOutput(joystickDevice_, dd);
+            prefs_.put(prefName_, stage);
          }
-         devices_.setJoystickOutput(joystickDevice_, dd);
-         prefs_.put(prefName_, stage);
       }
 
       public void devicesChangedAlert() {
+         String selectedItem = (String) jc_.getSelectedItem();
          jc_.removeAllItems();
          String[] devices;
          if (joystickDevice_ == Devices.JoystickDevice.JOYSTICK) { 
@@ -83,9 +87,21 @@ public class PanelUtils {
          }
          for (String device : devices) {
             jc_.addItem(device);
-         }              
+         }
+         if (inArray(devices, selectedItem)) {
+            jc_.setSelectedItem(selectedItem);
+         }
       }
 
+   }
+   
+   private boolean inArray (String[] array, String val) {
+      for (String test : array) {
+         if (val.equals(test)) {
+            return true;
+         }
+      }
+      return false;
    }
    
    
@@ -94,8 +110,10 @@ public class PanelUtils {
            Preferences prefs, String prefName) {
       JComboBox jcb = new JComboBox(selections);
       jcb.setSelectedItem(selectedItem);  
-      jcb.addActionListener(new StageSelectionBoxListener(joystickDevice , jcb, 
-              devices_, prefs, prefName));
+      StageSelectionBoxListener ssbl = new StageSelectionBoxListener(
+              joystickDevice , jcb, devices_, prefs, prefName);
+      jcb.addActionListener(ssbl);
+      devices_.addListener(ssbl);
  
       return jcb;
    }
