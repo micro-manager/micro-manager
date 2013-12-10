@@ -150,7 +150,7 @@ del /s/q %swig_out_dir% &gt; NUL
 mkdir %swig_out_dir% &gt; NUL
 $(MM_SWIG) -c++ -python -outdir %swig_out_dir% %(FullPath)
 rem
-del /s/q %java_src_dir% &gt; NUL
+del /s/q %py_src_dir% &gt; NUL
 mkdir %py_src_dir% &gt; NUL
 copy %swig_out_dir%\*.py %py_src_dir%\ &gt; NUL</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(Filename)_wrap.h;%(Filename)_wrap.cxx;%(Outputs)</Outputs>
@@ -163,7 +163,7 @@ del /s/q %swig_out_dir% &gt; NUL
 mkdir %swig_out_dir% &gt; NUL
 $(MM_SWIG) -c++ -python -outdir %swig_out_dir% %(FullPath)
 rem
-del /s/q %java_src_dir% &gt; NUL
+del /s/q %py_src_dir% &gt; NUL
 mkdir %py_src_dir% &gt; NUL
 copy %swig_out_dir%\*.py %py_src_dir%\ &gt; NUL</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(Filename)_wrap.h;%(Filename)_wrap.cxx;%(Outputs)</Outputs>
@@ -176,7 +176,7 @@ del /s/q %swig_out_dir% &gt; NUL
 mkdir %swig_out_dir% &gt; NUL
 $(MM_SWIG) -c++ -python -outdir %swig_out_dir% %(FullPath)
 rem
-del /s/q %java_src_dir% &gt; NUL
+del /s/q %py_src_dir% &gt; NUL
 mkdir %py_src_dir% &gt; NUL
 copy %swig_out_dir%\*.py %py_src_dir%\ &gt; NUL</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(Filename)_wrap.h;%(Filename)_wrap.cxx;%(Outputs)</Outputs>
@@ -189,7 +189,7 @@ del /s/q %swig_out_dir% &gt; NUL
 mkdir %swig_out_dir% &gt; NUL
 $(MM_SWIG) -c++ -python -outdir %swig_out_dir% %(FullPath)
 rem
-del /s/q %java_src_dir% &gt; NUL
+del /s/q %py_src_dir% &gt; NUL
 mkdir %py_src_dir% &gt; NUL
 copy %swig_out_dir%\*.py %py_src_dir%\ &gt; NUL</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(Filename)_wrap.h;%(Filename)_wrap.cxx;%(Outputs)</Outputs>
