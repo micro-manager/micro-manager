@@ -887,7 +887,6 @@ int XIMEACamera::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize)
 int XIMEACamera::GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySize)
 {
 	int width = 0, height = 0, offx = 0, offy = 0;
-	int ret = DEVICE_ERR;
 	xiGetParamInt( handle, XI_PRM_WIDTH, &width);
 	xiGetParamInt( handle, XI_PRM_HEIGHT, &height);
 	xiGetParamInt( handle, XI_PRM_OFFSET_X, &offx);
@@ -959,7 +958,7 @@ int XIMEACamera::GetBinning() const
 */
 int XIMEACamera::SetBinning(int binF)
 {
-	int ret = xiSetParamInt( handle, XI_PRM_DOWNSAMPLING, binF);
+	(void)xiSetParamInt( handle, XI_PRM_DOWNSAMPLING, binF);
 	ResizeImageBuffer();
 	return SetProperty(MM::g_Keyword_Binning, CDeviceUtils::ConvertToString(binF));
 }
@@ -1686,7 +1685,6 @@ int XIMEACamera::OnCcMatrix(MM::PropertyBase* pProp, MM::ActionType eAct)
 	{
 		char buf[32] = "";
 		char * pch;
-		int cnt = 1;
 		
 		string val = "";
 		pProp->Get(val);
