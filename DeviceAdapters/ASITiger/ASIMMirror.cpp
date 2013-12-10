@@ -119,7 +119,7 @@ int CMMirror::Initialize()
    // now create properties
    CPropertyAction* pAct;
 
-   // refresh properties from controller every time - default is not to refresh (speeds things up by not redoing so much serial comm)
+   // refresh properties from controller every time; default is false = no refresh (speeds things up by not redoing so much serial comm)
    pAct = new CPropertyAction (this, &CMMirror::OnRefreshProperties);
    CreateProperty(g_RefreshPropValsPropertyName, g_NoState, MM::String, false, pAct);
    AddAllowedValue(g_RefreshPropValsPropertyName, g_NoState);
@@ -278,11 +278,20 @@ int CMMirror::Initialize()
    AddAllowedValue(g_AdvancedSAPropertiesYPropertyName, g_NoState);
    AddAllowedValue(g_AdvancedSAPropertiesYPropertyName, g_YesState);
 
+   // end now if we are pre-2.8 firmware
+   if (firmwareVersion_ < 2.8)
+   {
+      initialized_ = true;
+      return DEVICE_OK;
+   }
+
+   // everything below only supported in firmware 2.8 and prior
+
    // get build info so we can add optional properties
    build_info_type build;
    RETURN_ON_MM_ERROR( hub_->GetBuildInfo(addressChar_, build) );
 
-   // add SPIM properties if supported
+   // add SPIM properties if SPIM is supported
    if (build.vAxesProps[0] & BIT4)
    {
       pAct = new CPropertyAction (this, &CMMirror::OnSPIMScansPerSlice);
@@ -311,13 +320,22 @@ int CMMirror::Initialize()
       AddAllowedValue(g_SPIMFirstSidePropertyName, g_SPIMSideAFirst);
       AddAllowedValue(g_SPIMFirstSidePropertyName, g_SPIMSideBFirst);
 
+      pAct = new CPropertyAction (this, &CMMirror::OnSPIMDelayBeforeSide);
+      CreateProperty(g_SPIMDelayBeforeSidePropertyName, "0", MM::Float, false, pAct);
+      UpdateProperty(g_SPIMDelayBeforeSidePropertyName);
+      SetPropertyLimits(g_SPIMDelayBeforeSidePropertyName, 0, 100);
+
+      pAct = new CPropertyAction (this, &CMMirror::OnSPIMDelayBeforeSheet);
+      CreateProperty(g_SPIMDelayBeforeSheetPropertyName, "0", MM::Float, false, pAct);
+      UpdateProperty(g_SPIMDelayBeforeSheetPropertyName);
+      SetPropertyLimits(g_SPIMDelayBeforeSheetPropertyName, 0, 100);
+
       pAct = new CPropertyAction (this, &CMMirror::OnSPIMState);
       CreateProperty(g_SPIMStatePropertyName, g_SPIMStateIdle, MM::String, false, pAct);
       UpdateProperty(g_SPIMStatePropertyName);
       AddAllowedValue(g_SPIMStatePropertyName, g_SPIMStateIdle);
       AddAllowedValue(g_SPIMStatePropertyName, g_SPIMStateArmed);
       AddAllowedValue(g_SPIMStatePropertyName, g_SPIMStateRunning);
-
    }
 
    initialized_ = true;
@@ -1964,6 +1982,50 @@ int CMMirror::OnSPIMNumRepeats(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
+int CMMirror::OnSPIMDelayBeforeSide(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   double tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << addressChar_ << "NV Y?";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A Y="));
+      tmp = hub_->ParseAnswerAfterEquals();
+      if (!pProp->Set(tmp))
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      pProp->Get(tmp);
+      command << addressChar_ << "NV Y=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}
+
+int CMMirror::OnSPIMDelayBeforeSheet(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   double tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << addressChar_ << "NV X?";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A X="));
+      tmp = hub_->ParseAnswerAfterEquals();
+      if (!pProp->Set(tmp))
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      pProp->Get(tmp);
+      command << addressChar_ << "NV X=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}
+
 int CMMirror::OnSPIMState(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    ostringstream command; command.str("");
@@ -1997,7 +2059,7 @@ int CMMirror::OnSPIMState(MM::PropertyBase* pProp, MM::ActionType eAct)
             // this will stop state machine if it's running, if we do SN without args we run the risk of it stopping itself before we send the next command
             // after we stop it, it will automatically go to idle state
             command.str("");
-            command << addressChar_ << "SN X=" << g_SPIMStateCode_Stop;
+            command << addressChar_ << "SN X=" << (int)g_SPIMStateCode_Stop;
             RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
          }
       }
@@ -2010,12 +2072,12 @@ int CMMirror::OnSPIMState(MM::PropertyBase* pProp, MM::ActionType eAct)
          {
             // this will stop state machine if it's running, if we do SN without args we run the risk of it stopping itself (e.g. finishing) before we send the next command
             command.str("");
-            command << addressChar_ << "SN X=" << g_SPIMStateCode_Stop;
+            command << addressChar_ << "SN X=" << (int)g_SPIMStateCode_Stop;
             RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
          }
          // now change to armed state
          command.str("");
-         command << addressChar_ << "SN X=" << g_SPIMStateCode_Arm;
+         command << addressChar_ << "SN X=" << (int)g_SPIMStateCode_Arm;
          RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
       }
       else if (tmpstr.compare(g_SPIMStateRunning) == 0)

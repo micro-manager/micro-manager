@@ -195,6 +195,34 @@ int CPiezo::Initialize()
    AddAllowedValue(g_JoystickSelectPropertyName, g_JSCode_22);
    AddAllowedValue(g_JoystickSelectPropertyName, g_JSCode_23);
 
+   // end now if we are pre-2.8 firmware
+   if (firmwareVersion_ < 2.8)
+   {
+      initialized_ = true;
+      return DEVICE_OK;
+   }
+
+   // everything below only supported in firmware 2.8 and prior
+   // single-axis and SPIM function only supported in Micromanager with firmware 2.8 and above for simplicity
+
+   // overshoot and max time applicable to mode 4, which became available in firmware 2.8
+   pAct = new CPropertyAction (this, &CPiezo::OnModeFourOvershoot);
+   CreateProperty(g_PiezoModeFourOvershoot, "100", MM::Integer, false, pAct);
+   UpdateProperty(g_PiezoModeFourOvershoot);
+   SetPropertyLimits(g_PiezoModeFourOvershoot, 0, 400);
+   pAct = new CPropertyAction (this, &CPiezo::OnModeFourMaxTime);
+   CreateProperty(g_PiezoModeFourMaxTime, "10", MM::Integer, false, pAct);
+   UpdateProperty(g_PiezoModeFourMaxTime);
+   SetPropertyLimits(g_PiezoModeFourMaxTime, 0, 30);
+
+   // "do it" property to set home position
+   pAct = new CPropertyAction (this, &CPiezo::OnSetHomeHere);
+   CreateProperty(g_SetHomeHerePropertyName, g_IdleState, MM::String, false, pAct);
+   UpdateProperty(g_SetHomeHerePropertyName);
+   AddAllowedValue(g_SetHomeHerePropertyName, g_IdleState, 0);
+   AddAllowedValue(g_SetHomeHerePropertyName, g_DoItState, 1);
+   AddAllowedValue(g_SetHomeHerePropertyName, g_DoneState, 2);
+
    // get build info so we can add optional properties
    build_info_type build;
    RETURN_ON_MM_ERROR( hub_->GetBuildInfo(addressChar_, build) );
@@ -207,67 +235,48 @@ int CPiezo::Initialize()
       UpdateProperty(g_SPIMNumSlicesPropertyName);
       SetPropertyLimits(g_SPIMNumSlicesPropertyName, 1, 100);
 
-      // todo add state for SPIM
-
+      pAct = new CPropertyAction (this, &CPiezo::OnSPIMState);
+      CreateProperty(g_SPIMStatePropertyName, g_SPIMStateIdle, MM::String, false, pAct);
+      UpdateProperty(g_SPIMStatePropertyName);
+      AddAllowedValue(g_SPIMStatePropertyName, g_SPIMStateIdle);
+      AddAllowedValue(g_SPIMStatePropertyName, g_SPIMStateArmed);
    }
 
-   // add functionality supported in firmware 2.8 and above
-   // single-axis and SPIM function only supported in Micromanager with firmware 2.8 and above for simplicity
-   if (firmwareVersion_ > 2.7)
+
+   // add single-axis properties if supported
+   // (single-axis support existed prior pre-2.8 firmware, but now we have easier way to tell if it's present using axis properties
+   //   and it wasn't used very much before SPIM)
+   if(build.vAxesProps[0] & BIT5)//      if(hub_->IsDefinePresent(build, g_Define_SINGLEAXIS_FUNCTION))
    {
-      // overshoot and max time applicable to mode 4, which became available in firmware 2.8
-      pAct = new CPropertyAction (this, &CPiezo::OnModeFourOvershoot);
-      CreateProperty(g_PiezoModeFourOvershoot, "100", MM::Integer, false, pAct);
-      UpdateProperty(g_PiezoModeFourOvershoot);
-      SetPropertyLimits(g_PiezoModeFourOvershoot, 0, 400);
-      pAct = new CPropertyAction (this, &CPiezo::OnModeFourMaxTime);
-      CreateProperty(g_PiezoModeFourMaxTime, "10", MM::Integer, false, pAct);
-      UpdateProperty(g_PiezoModeFourMaxTime);
-      SetPropertyLimits(g_PiezoModeFourMaxTime, 0, 30);
-
-      // "do it" property to set home position
-      pAct = new CPropertyAction (this, &CPiezo::OnSetHomeHere);
-      CreateProperty(g_SetHomeHerePropertyName, g_IdleState, MM::String, false, pAct);
-      UpdateProperty(g_SetHomeHerePropertyName);
-      AddAllowedValue(g_SetHomeHerePropertyName, g_IdleState, 0);
-      AddAllowedValue(g_SetHomeHerePropertyName, g_DoItState, 1);
-      AddAllowedValue(g_SetHomeHerePropertyName, g_DoneState, 2);
-
-      // add single-axis properties if supported
-      // (single-axis support existed prior in firmware, but now we have easier way to tell if it's present using axis properties
-      //   and it wasn't used very much before SPIM)
-      if(build.vAxesProps[0] & BIT5)//      if(hub_->IsDefinePresent(build, g_Define_SINGLEAXIS_FUNCTION))
-      {
-         // copied from ASIMMirror.cpp
-         pAct = new CPropertyAction (this, &CPiezo::OnSAAmplitude);
-         CreateProperty(g_MMirrorSAAmplitudePropertyName, "0", MM::Float, false, pAct);
-         UpdateProperty(g_MMirrorSAAmplitudePropertyName);
-         pAct = new CPropertyAction (this, &CPiezo::OnSAOffset);
-         CreateProperty(g_MMirrorSAOffsetPropertyName, "0", MM::Float, false, pAct);
-         UpdateProperty(g_MMirrorSAOffsetPropertyName);
-         pAct = new CPropertyAction (this, &CPiezo::OnSAPeriod);
-         CreateProperty(g_MMirrorSAPeriodPropertyName, "0", MM::Integer, false, pAct);
-         UpdateProperty(g_MMirrorSAPeriodPropertyName);
-         pAct = new CPropertyAction (this, &CPiezo::OnSAMode);
-         CreateProperty(g_MMirrorSAModePropertyName, g_SAMode_0, MM::String, false, pAct);
-         UpdateProperty(g_MMirrorSAModePropertyName);
-         AddAllowedValue(g_MMirrorSAModePropertyName, g_SAMode_0);
-         AddAllowedValue(g_MMirrorSAModePropertyName, g_SAMode_1);
-         AddAllowedValue(g_MMirrorSAModePropertyName, g_SAMode_2);
-         AddAllowedValue(g_MMirrorSAModePropertyName, g_SAMode_3);
-         pAct = new CPropertyAction (this, &CPiezo::OnSAPattern);
-         CreateProperty(g_MMirrorSAPatternPropertyName, g_SAPattern_0, MM::String, false, pAct);
-         UpdateProperty(g_MMirrorSAPatternPropertyName);
-         AddAllowedValue(g_MMirrorSAPatternPropertyName, g_SAPattern_0);
-         AddAllowedValue(g_MMirrorSAPatternPropertyName, g_SAPattern_1);
-         AddAllowedValue(g_MMirrorSAPatternPropertyName, g_SAPattern_2);
-         // generates a set of additional advanced properties that are rarely used
-         pAct = new CPropertyAction (this, &CPiezo::OnSAAdvanced);
-         CreateProperty(g_AdvancedSAPropertiesPropertyName, g_NoState, MM::String, false, pAct);
-         UpdateProperty(g_AdvancedSAPropertiesPropertyName);
-         AddAllowedValue(g_AdvancedSAPropertiesPropertyName, g_NoState);
-         AddAllowedValue(g_AdvancedSAPropertiesPropertyName, g_YesState);
-      }
+      // copied from ASIMMirror.cpp
+      pAct = new CPropertyAction (this, &CPiezo::OnSAAmplitude);
+      CreateProperty(g_MMirrorSAAmplitudePropertyName, "0", MM::Float, false, pAct);
+      UpdateProperty(g_MMirrorSAAmplitudePropertyName);
+      pAct = new CPropertyAction (this, &CPiezo::OnSAOffset);
+      CreateProperty(g_MMirrorSAOffsetPropertyName, "0", MM::Float, false, pAct);
+      UpdateProperty(g_MMirrorSAOffsetPropertyName);
+      pAct = new CPropertyAction (this, &CPiezo::OnSAPeriod);
+      CreateProperty(g_MMirrorSAPeriodPropertyName, "0", MM::Integer, false, pAct);
+      UpdateProperty(g_MMirrorSAPeriodPropertyName);
+      pAct = new CPropertyAction (this, &CPiezo::OnSAMode);
+      CreateProperty(g_MMirrorSAModePropertyName, g_SAMode_0, MM::String, false, pAct);
+      UpdateProperty(g_MMirrorSAModePropertyName);
+      AddAllowedValue(g_MMirrorSAModePropertyName, g_SAMode_0);
+      AddAllowedValue(g_MMirrorSAModePropertyName, g_SAMode_1);
+      AddAllowedValue(g_MMirrorSAModePropertyName, g_SAMode_2);
+      AddAllowedValue(g_MMirrorSAModePropertyName, g_SAMode_3);
+      pAct = new CPropertyAction (this, &CPiezo::OnSAPattern);
+      CreateProperty(g_MMirrorSAPatternPropertyName, g_SAPattern_0, MM::String, false, pAct);
+      UpdateProperty(g_MMirrorSAPatternPropertyName);
+      AddAllowedValue(g_MMirrorSAPatternPropertyName, g_SAPattern_0);
+      AddAllowedValue(g_MMirrorSAPatternPropertyName, g_SAPattern_1);
+      AddAllowedValue(g_MMirrorSAPatternPropertyName, g_SAPattern_2);
+      // generates a set of additional advanced properties that are rarely used
+      pAct = new CPropertyAction (this, &CPiezo::OnSAAdvanced);
+      CreateProperty(g_AdvancedSAPropertiesPropertyName, g_NoState, MM::String, false, pAct);
+      UpdateProperty(g_AdvancedSAPropertiesPropertyName);
+      AddAllowedValue(g_AdvancedSAPropertiesPropertyName, g_NoState);
+      AddAllowedValue(g_AdvancedSAPropertiesPropertyName, g_YesState);
    }
 
    initialized_ = true;
@@ -1196,5 +1205,53 @@ int CPiezo::OnSPIMNumSlices(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    return DEVICE_OK;
 }
+
+int CPiezo::OnSPIMState(MM::PropertyBase* pProp, MM::ActionType eAct)
+// somewhat similar to same function for MicroMirror, but changed codes that are sent/compared like g_SPIMStateCode_Idle for g_PZSPIMStateCode_Idle
+// see other marked differences
+{
+   ostringstream command; command.str("");
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << addressChar_ << "SN X?";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
+      bool success;
+      switch ( hub_->LastSerialAnswer().at(3) )
+      {
+         case g_PZSPIMStateCode_Idle:  success = pProp->Set(g_SPIMStateIdle); break;
+         case g_PZSPIMStateCode_Arm:   success = pProp->Set(g_SPIMStateArmed); break;
+         case g_PZSPIMStateCode_Armed: success = pProp->Set(g_SPIMStateArmed); break;
+         default:                      success = false;                        break;
+      }
+      if (!success)
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      string tmpstr;
+      pProp->Get(tmpstr);
+      if (tmpstr.compare(g_SPIMStateIdle) == 0)
+      {
+         // can stop directly for piezo, don't have to go through special stop state and it can't stop by itself like micromirror card
+         // don't worry about seeing if it is already idle or not
+         command.str("");
+         command << addressChar_ << "SN X=" << (int)g_PZSPIMStateCode_Idle;
+         RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
+      }
+      else if (tmpstr.compare(g_SPIMStateArmed) == 0)
+      {
+         // can arm directly for piezo, don't have to go through special stop state and it can't stop itself like micromirror card
+         // don't worry about whether it is already armed or not
+         command.str("");
+         command << addressChar_ << "SN X=" << (int)g_PZSPIMStateCode_Arm;
+         RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
+      }
+      else
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   return DEVICE_OK;
+}
+
 
 

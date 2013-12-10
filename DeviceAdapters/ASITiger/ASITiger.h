@@ -257,6 +257,8 @@ const char* const g_SPIMFirstSidePropertyName = "SPIMFirstSide";
 const char* const g_SPIMNumRepeatsPropertyName = "SPIMNumRepeats";
 const char* const g_SPIMArmForTTLPropertyName = "SPIMArm";
 const char* const g_SPIMStatePropertyName = "SPIMState";
+const char* const g_SPIMDelayBeforeSheetPropertyName = "SPIMDelayBeforeSheet(ms)";
+const char* const g_SPIMDelayBeforeSidePropertyName = "SPIMDelayBeforeSide(ms)";
 
 // SPIM enums
 // which side first
@@ -272,6 +274,11 @@ const char g_SPIMStateCode_Stop = 'P';
 const char g_SPIMStateCode_Start = 'S';
 const char g_SPIMStateCode_Arm =  'a';
 const char g_SPIMStateCode_Armed ='A';
+// SPIM state on piezo card
+const char g_PZSPIMStateCode_Idle = 'I';
+const char g_PZSPIMStateCode_Arm =  'a';
+const char g_PZSPIMStateCode_Armed ='A';
+const char g_PZSPIMStateCode_TimingPulse ='P';
 
 
 // property descriptions for enums

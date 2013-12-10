@@ -70,7 +70,7 @@ protected:
    string addressChar_;    // address within hub, in single character (possibly extended ASCII)
 
    bool initialized_;      // used to signal that device properties have been read from controller
-   bool refreshProps_;
+   bool refreshProps_;     // true when property values should be read anew from controller each time
    double firmwareVersion_;
    ASIHub *hub_;           // used for serial communication
    int ret_;               // return code for use with Micro-manager functions
