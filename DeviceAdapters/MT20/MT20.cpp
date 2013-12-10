@@ -28,7 +28,6 @@
 
 #include "MT20.h"
 #include "../../MMDevice/ModuleInterface.h"
-#include "../../MMCore/Error.h"
 
 const char* g_MT20HUB = "MT20-HUB";
 const char* g_MT20Burner = "MT20-Burner";

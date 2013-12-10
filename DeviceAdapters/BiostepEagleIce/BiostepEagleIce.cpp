@@ -14,7 +14,6 @@
 #include <string>
 #include "MMDeviceConstants.h"
 #include <sstream>
-#include "../../MMCore/Error.h"
 
 using namespace std;
 /////////////////////////////////////////////////////////////////////////////
@@ -397,10 +396,6 @@ int biThread::svc(void) throw()
 		} while (DEVICE_OK == ret && !stop_);
 		if (stop_)
 			camera_->LogMessage("SeqAcquisition interrupted by the user\n");
-
-	}catch( CMMError& e){
-		camera_->LogMessage(e.getMsg(), false);
-		ret = e.getCode();
 	}catch(...){
 		camera_->LogMessage(g_Msg_EXCEPTION_IN_THREAD, false);
 	}

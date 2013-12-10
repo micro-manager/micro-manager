@@ -26,7 +26,6 @@
 
 #include "AndorSDK3.h"
 #include "../../MMDevice/ModuleInterface.h"
-#include "../../MMCore/Error.h"
 #include <map>
 #include <string>
 #include <sstream>
@@ -1286,13 +1285,6 @@ void CAndorSDK3Camera::OnThreadExiting() throw()
       LogMessage(g_Msg_SEQUENCE_ACQUISITION_THREAD_EXITING);
       GetCoreCallback() ? GetCoreCallback()->AcqFinished(this, 0) : DEVICE_OK;
    }
-
-   catch (CMMError & e)
-   {
-      std::ostringstream oss;
-      oss << g_Msg_EXCEPTION_IN_ON_THREAD_EXITING << " " << e.getMsg() << " " << e.getCode();
-      LogMessage(oss.str().c_str(), false);
-   }
    catch (...)
    {
       LogMessage(g_Msg_EXCEPTION_IN_ON_THREAD_EXITING, false);
@@ -1393,11 +1385,6 @@ int MySequenceThread::svc(void) throw()
    catch (exception & e)
    {
       camera_->LogMessage(e.what());
-   }
-   catch (CMMError & e)
-   {
-      camera_->LogMessage(e.getMsg(), false);
-      ret = e.getCode();
    }
    catch (...)
    {

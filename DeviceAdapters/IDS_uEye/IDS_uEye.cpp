@@ -39,7 +39,6 @@
 #include <iostream>
 
 #include "../../MMDevice/ModuleInterface.h"
-#include "../../MMCore/Error.h"
 
 #include "IDS_uEye.h"
 
@@ -1216,12 +1215,6 @@ void CIDS_uEye::OnThreadExiting() throw()
       LogMessage(g_Msg_SEQUENCE_ACQUISITION_THREAD_EXITING);
       GetCoreCallback()?GetCoreCallback()->AcqFinished(this,0):DEVICE_OK;
    }
-
-   catch( CMMError& e){
-      std::ostringstream oss;
-      oss << g_Msg_EXCEPTION_IN_ON_THREAD_EXITING << " " << e.getMsg() << " " << e.getCode();
-      LogMessage(oss.str().c_str(), false);
-   }
    catch(...)
    {
       LogMessage(g_Msg_EXCEPTION_IN_ON_THREAD_EXITING, false);
@@ -1296,10 +1289,6 @@ int MySequenceThread::svc(void) throw()
       } while (DEVICE_OK == ret && !IsStopped() && imageCounter_++ < numImages_-1);
       if (IsStopped())
          camera_->LogMessage("SeqAcquisition interrupted by the user\n");
-
-   }catch( CMMError& e){
-      camera_->LogMessage(e.getMsg(), false);
-      ret = e.getCode();
    }catch(...){
       camera_->LogMessage(g_Msg_EXCEPTION_IN_THREAD, false);
    }

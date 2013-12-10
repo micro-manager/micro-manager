@@ -6,7 +6,6 @@
 #include <algorithm>
 #include <iostream>
 #include <map>
-#include "../../MMCore/Error.h"
 
 #include "shlwapi.h"
 #pragma comment( lib, "shlwapi.lib")
@@ -1396,10 +1395,6 @@ int CABSCameraSequenceThread::svc(void) throw()
 
     if (IsStopped())
       absCam->LogMessage("SeqAcquisition interrupted by the user\n");
-
-  } catch( CMMError& e){
-    absCam->LogMessage(e.getMsg(), false);
-    ret = e.getCode();
   }catch(...){
     absCam->LogMessage(g_Msg_EXCEPTION_IN_THREAD, false);
   }

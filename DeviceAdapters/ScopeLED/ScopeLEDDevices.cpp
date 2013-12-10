@@ -20,7 +20,6 @@ License along with this software.  If not, see
 
 #include "ScopeLEDDevices.h"
 #include "../../MMDevice/ModuleInterface.h"
-#include "../../MMCore/Error.h"
 #include <sstream>
 
 #define round(x) ((int)(x+0.5))

@@ -37,7 +37,6 @@
 
 
 #include "../../MMDevice/ModuleInterface.h"
-#include "../../MMCore/Error.h"
 #include "boost/lexical_cast.hpp"
 #include "boost/tuple/tuple.hpp"
 #include <set>

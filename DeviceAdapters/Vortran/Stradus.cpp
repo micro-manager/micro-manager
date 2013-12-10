@@ -31,7 +31,6 @@
 #include <string>
 #include <math.h>
 #include "../../MMDevice/ModuleInterface.h"
-#include "../../MMCore/Error.h"
 #include <sstream>
 
 const char* DEVICE_NAME = "VLTStradus";

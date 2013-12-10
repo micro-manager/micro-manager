@@ -13,7 +13,6 @@
 #include <iostream>
 #include <math.h>
 #include "MMDevice/ModuleInterface.h"
-#include "MMCore/Error.h"
 #include "DEExceptions.h"
 #include <sstream>
 #include <boost/exception/all.hpp>
