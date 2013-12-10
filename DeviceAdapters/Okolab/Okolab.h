@@ -51,7 +51,7 @@ class OkolabDevice
 	void SetDeviceId(int id);
 
 
-    bool OCSConnectionOpen(int PortNo, char* IPAddress);
+    bool OCSConnectionOpen(unsigned short PortNo, char* IPAddress);
     void OCSConnectionClose();
     bool OCSSendRcvdCommand(char *cmd, char *par1, char *par2, char *par3);
 	int  OCSGetLastAnswerError();
@@ -80,7 +80,7 @@ class OkolabDevice
 
 	SOCKET s; 
 	char* ipaddress_;
-    int ipport_;
+    unsigned short ipport_;
 
 	int rcv_statuscode;
     char rcv_answer[51];

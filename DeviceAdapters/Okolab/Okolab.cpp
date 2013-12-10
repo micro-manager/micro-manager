@@ -191,7 +191,7 @@ void OkolabDevice::SetDeviceId(int id)
 }
 
 
-bool OkolabDevice::OCSConnectionOpen(int PortNo, char* IPAddress)
+bool OkolabDevice::OCSConnectionOpen(unsigned short PortNo, char* IPAddress)
 {
  int err;
  SOCKADDR_IN target; 
