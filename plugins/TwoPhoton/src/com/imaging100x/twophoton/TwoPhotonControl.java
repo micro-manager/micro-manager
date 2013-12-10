@@ -53,6 +53,8 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -755,8 +757,8 @@ private JCheckBox drawGrid_, drawPosNames_;
          gui.getCore().getXYPosition(gui.getCore().getXYStageDevice(), stageX, stageY);
          double[] matrix = new double[6];
          transform.getMatrix(matrix);
-         matrix[4] = stageX[1];
-         matrix[5] = stageY[1];
+         matrix[4] = stageX[0];
+         matrix[5] = stageY[0];
          transform = new AffineTransform(matrix);
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
@@ -766,10 +768,11 @@ private JCheckBox drawGrid_, drawPosNames_;
       long height = gui.getCore().getImageHeight();
       long width = gui.getCore().getImageWidth();
       ArrayList<MultiStagePosition> positions = new ArrayList<MultiStagePosition>();
+      //due to affine transform, xindex and yindex correspond to image space
       for (int xIndex = 0; xIndex < xSize; xIndex++) {
          double xPixelOffset = (xIndex - (xSize - 1) / 2.0) * (width - pixelOverlapX) ;
          for (int yIndex = 0; yIndex < ySize; yIndex++) {
-            double yPixelOffset = -(yIndex - (ySize - 1) / 2.0) * (height - pixelOverlapY);
+            double yPixelOffset = (yIndex - (ySize - 1) / 2.0) * (height - pixelOverlapY);
             //account for angle between stage axes and image axes
             Point2D.Double pixelPos = new Point2D.Double(xPixelOffset, yPixelOffset);      
             Point2D.Double stagePos = new Point2D.Double();
@@ -783,11 +786,15 @@ private JCheckBox drawGrid_, drawPosNames_;
             sp.x = stagePos.x;
             sp.y = stagePos.y;
             mpl.add(sp);
+             
+            int row = yIndex, col = xIndex;
 
-            //label should be Grid_(x index of tile)_(y index of tile)
-            String lab = new String("Grid_" + yIndex + "_" + xIndex);
+            //label should be Grid_(x index of tile)_(y index of tile) (in image space)
+            String lab = new String("Grid_" + col + "_" + row);
+ 
             mpl.setLabel(lab);
-            mpl.setGridCoordinates(yIndex, xIndex);
+            //row, column (in image space)
+            mpl.setGridCoordinates(row, col);
             positions.add(mpl);
          }
       }

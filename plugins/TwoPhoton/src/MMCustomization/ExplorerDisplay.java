@@ -31,7 +31,7 @@ import org.micromanager.api.ImageCache;
 import org.micromanager.api.ImageCacheListener;
 
 
-import org.micromanager.internalinterfaces.ExploreControls;
+import org.micromanager.internalinterfaces.DisplayControls;
 import org.micromanager.utils.*;
 
 public class ExplorerDisplay implements ImageCacheListener  {
@@ -100,7 +100,7 @@ public class ExplorerDisplay implements ImageCacheListener  {
                 }
             }
         };
-        ExploreControls controls = new ExplorerDisplay.Controls();
+        Controls controls = new ExplorerDisplay.Controls();
 
         //Add in custom controls
         try {
@@ -401,7 +401,7 @@ public class ExplorerDisplay implements ImageCacheListener  {
    }
    
    
-   class Controls extends ExploreControls {
+   class Controls extends DisplayControls {
 
       private JButton pauseButton_, abortButton_;
       private JTextField fpsField_;

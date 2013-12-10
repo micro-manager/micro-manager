@@ -17,9 +17,12 @@ import java.awt.Point;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 import mmcorej.MMCoreJ;
 import mmcorej.TaggedImage;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.MMStudioMainFrame;
@@ -47,12 +50,13 @@ public class AcquisitionStitcher {
 
    private boolean invertX_, invertY_, swapXandY_;
    private boolean drawPosNames_, showGrid_;
-   private int gridWidth_, gridHeight_;
+   private int numCols_, numRows_;
    private int oldImageWidth_, oldImageHeight_, newImageWidth_ = -1, newImageHeight_ = -1;
    private double pixelSize_ = 0;
    private Comparator gridSorter_;
    private double stitchedWindowZoom_ = 1;
    private Point stitchedWindowLocation_ = null;
+   private JSONArray posList_;
 
    
     public AcquisitionStitcher() {
@@ -107,7 +111,7 @@ public class AcquisitionStitcher {
                }
                if (channel == 0 && slice == 0) {
                   try {
-                     calcGridDimensions(batch);
+                     calcGridDimensions(batch, cache_.getSummaryMetadata());
 
                      gui_.initializeAcquisition(ACQ_NAME, newImageWidth_, newImageHeight_, 1);
                      gui_.getAcquisition(ACQ_NAME).getAcquisitionWindow().promptToSave(false);
@@ -211,11 +215,11 @@ public class AcquisitionStitcher {
       if (drawPosNames_) {
          TextRoi.setFont(Font.SANS_SERIF, 30, Font.BOLD);
          TextRoi.setColor(Color.white);
-         for (int x = 0; x < gridWidth_; x++) {
-            for (int y = 0; y < gridHeight_; y++) {
-               String posName = batch.get(x + y * gridWidth_).tags.getString("PositionName");
-               TextRoi text = new TextRoi(newImageWidth_ / gridWidth_ * x + 0.4 * oldImageWidth_,
-                       newImageHeight_ / gridHeight_ * y + 0.45 * oldImageHeight_, posName);
+         for (int x = 0; x < numCols_; x++) {
+            for (int y = 0; y < numRows_; y++) {
+               String posName = batch.get(x + y * numCols_).tags.getString("PositionName");
+               TextRoi text = new TextRoi(newImageWidth_ / numCols_ * x + 0.4 * oldImageWidth_,
+                       newImageHeight_ / numRows_ * y + 0.45 * oldImageHeight_, posName);
                overlay.add(text);
             }
          }
@@ -223,12 +227,12 @@ public class AcquisitionStitcher {
 
       if (showGrid_) {
          //draw vertical lines
-         for (int i = 1; i < gridWidth_; i++) {
+         for (int i = 1; i < numCols_; i++) {
             Line l = new Line(oldImageWidth_ * i, 0, oldImageWidth_ * i, newImageHeight_);
             overlay.add(l);
          }
          //draw horizontal lines
-         for (int i = 1; i < gridHeight_; i++) {
+         for (int i = 1; i < numRows_; i++) {
             Line l = new Line(0, oldImageHeight_ * i, newImageWidth_, oldImageHeight_ * i);
             overlay.add(l);
          }
@@ -239,12 +243,12 @@ public class AcquisitionStitcher {
    }
 
    private byte[] stitchPixelsNoOverlap(LinkedList<TaggedImage> batch) {
-      byte[] newPixels = new byte[oldImageHeight_ * oldImageWidth_ * gridWidth_ * gridHeight_];
-      for (int line = 0; line < (gridWidth_ * gridHeight_) * (oldImageHeight_); line++) {
-         int gridX = line % gridWidth_;
-         int gridY = (line / gridWidth_) / oldImageHeight_;
-         int oldImageLineNumber = (line / gridWidth_) % oldImageHeight_;
-         int tileIndex = gridY * gridWidth_ + gridX;
+      byte[] newPixels = new byte[oldImageHeight_ * oldImageWidth_ * numCols_ * numRows_];
+      for (int line = 0; line < (numCols_ * numRows_) * (oldImageHeight_); line++) {
+         int gridX = line % numCols_;
+         int gridY = (line / numCols_) / oldImageHeight_;
+         int oldImageLineNumber = (line / numCols_) % oldImageHeight_;
+         int tileIndex = gridY * numCols_ + gridX;
          if (batch.get(tileIndex).pix == null) {
             return null;
          }
@@ -254,64 +258,105 @@ public class AcquisitionStitcher {
       return newPixels;
    }
 
-    private void calcGridDimensions(LinkedList<TaggedImage> batch) throws JSONException {
+    private void calcGridDimensions(LinkedList<TaggedImage> batch, JSONObject summaryMD) throws JSONException {
+        numCols_ = 0;
+        numRows_ = 0;
         oldImageWidth_ = MDUtils.getWidth(batch.getFirst().tags);
         oldImageHeight_ = MDUtils.getHeight(batch.getFirst().tags);
         pixelSize_ = batch.getFirst().tags.getDouble("PixelSizeUm");
         try {
-            gridWidth_ = MMStudioMainFrame.getInstance().getPositionList().getPosition(0).getGridColumn();
-            gridHeight_ = MMStudioMainFrame.getInstance().getPositionList().getPosition(0).getGridRow();
-            if (swapXandY_) {
-                int temp = gridHeight_;
-                gridHeight_ = gridWidth_;
-                gridWidth_ = temp;
-            }
-        } catch (MMScriptException ex) {
+            posList_ = summaryMD.getJSONArray("InitialPositionList");
+           //get grid parameters
+           for (int i = 0; i < posList_.length(); i++) {
+              long colInd = posList_.getJSONObject(i).getLong("GridColumnIndex");
+              long rowInd = posList_.getJSONObject(i).getLong("GridRowIndex");
+              if (colInd >= numCols_) {
+                 numCols_ = (int) (colInd + 1);
+              }
+              if (rowInd >= numRows_) {
+                 numRows_ = (int) (rowInd + 1);
+              }
+           }
+            
+//            if (swapXandY_) {
+//                int temp = numRows_;
+//                numRows_ = numCols_;
+//                numCols_ = temp;
+//            }
+        } catch (Exception ex) {
             ReportingUtils.showError("Couldn't get grid size position list");
         }
-        newImageWidth_ = gridWidth_ * oldImageWidth_;
-        newImageHeight_ = gridHeight_ * oldImageHeight_;
+        newImageWidth_ = numCols_ * oldImageWidth_;
+        newImageHeight_ = numRows_ * oldImageHeight_;
     }
 
+    //sort left to right, top to bottom
     private Comparator<TaggedImage> makeGridSorter() {
-      return new Comparator<TaggedImage>() {
+        return new Comparator<TaggedImage>() {
+            @Override
+            public int compare(TaggedImage img1, TaggedImage img2) {
+                try {
+                    int pos1 = MDUtils.getPositionIndex(img1.tags);
+                    int pos2 = MDUtils.getPositionIndex(img2.tags);
 
-         @Override
-         public int compare(TaggedImage img1, TaggedImage img2) {
+                    int row1 = (int) posList_.getJSONObject(pos1).getLong("GridRowIndex");
+                    int row2 = (int) posList_.getJSONObject(pos2).getLong("GridRowIndex");
+                    int col1 = (int) posList_.getJSONObject(pos1).getLong("GridColumnIndex");
+                    int col2 = (int) posList_.getJSONObject(pos2).getLong("GridColumnIndex");
 
-            if (swapXandY_) {
-               try {
-                  double x1 = img1.tags.getDouble("XPositionUm");
-                  double x2 = img2.tags.getDouble("XPositionUm");
-                  if ( Math.abs( (x1-x2)/pixelSize_ / (double) oldImageHeight_ ) > 0.5 ) {                   
-                     return (int) (invertX_ ? (x1 - x2) : (x2 - x1));
-                  }
-                  double y1 = img1.tags.getDouble("YPositionUm");
-                  double y2 = img2.tags.getDouble("YPositionUm");
-                  if (Math.abs( (y1-y2)/pixelSize_ / (double) oldImageWidth_ ) > 0.5 ) {
-                     return (int) (invertY_ ? (y1 - y2) : (y2 - y1));
-                  }
-               } catch (JSONException ex) {
-                  ReportingUtils.showError("Couldn't find stage coordinates");
-               }
-            } else {
-               try {
-                  double y1 = img1.tags.getDouble("YPositionUm");
-                  double y2 = img2.tags.getDouble("YPositionUm");
-                  if (Math.abs( (y1-y2)/pixelSize_ / (double) oldImageHeight_ ) > 0.5) {
-                     return (int) (invertY_ ? (y1 - y2) : (y2 - y1));
-                  }
-                  double x1 = img1.tags.getDouble("XPositionUm");
-                  double x2 = img2.tags.getDouble("XPositionUm");
-                  if (Math.abs( (x1-x2)/pixelSize_ / (double) oldImageWidth_ ) > 0.5) {
-                     return (int) (invertX_ ? (x1 - x2) : (x2 - x1));
-                  }
-               } catch (JSONException ex) {
-                  ReportingUtils.showError("Couldn't find stage coordinates");
-               }
+                    if (row1 != row2) {
+                        return row1 - row2;
+                    }
+                    return col1 - col2;
+
+                } catch (JSONException ex) {
+                    ReportingUtils.showError("couldnt sort tile coordinates");
+                    return 0;
+                }
             }
-            return 0;
-         }
-      };
-   }
+        };
+    }
+
+    
+//    private Comparator<TaggedImage> makeGridSorter() {
+//      return new Comparator<TaggedImage>() {
+//
+//         @Override
+//         public int compare(TaggedImage img1, TaggedImage img2) {
+//
+//            if (swapXandY_) {
+//               try {
+//                  double x1 = img1.tags.getDouble("XPositionUm");
+//                  double x2 = img2.tags.getDouble("XPositionUm");
+//                  if ( Math.abs( (x1-x2)/pixelSize_ / (double) oldImageHeight_ ) > 0.5 ) {                   
+//                     return (int) (invertX_ ? (x1 - x2) : (x2 - x1));
+//                  }
+//                  double y1 = img1.tags.getDouble("YPositionUm");
+//                  double y2 = img2.tags.getDouble("YPositionUm");
+//                  if (Math.abs( (y1-y2)/pixelSize_ / (double) oldImageWidth_ ) > 0.5 ) {
+//                     return (int) (invertY_ ? (y1 - y2) : (y2 - y1));
+//                  }
+//               } catch (JSONException ex) {
+//                  ReportingUtils.showError("Couldn't find stage coordinates");
+//               }
+//            } else {
+//               try {
+//                  double y1 = img1.tags.getDouble("YPositionUm");
+//                  double y2 = img2.tags.getDouble("YPositionUm");
+//                  if (Math.abs( (y1-y2)/pixelSize_ / (double) oldImageHeight_ ) > 0.5) {
+//                     return (int) (invertY_ ? (y1 - y2) : (y2 - y1));
+//                  }
+//                  double x1 = img1.tags.getDouble("XPositionUm");
+//                  double x2 = img2.tags.getDouble("XPositionUm");
+//                  if (Math.abs( (x1-x2)/pixelSize_ / (double) oldImageWidth_ ) > 0.5) {
+//                     return (int) (invertX_ ? (x1 - x2) : (x2 - x1));
+//                  }
+//               } catch (JSONException ex) {
+//                  ReportingUtils.showError("Couldn't find stage coordinates");
+//               }
+//            }
+//            return 0;
+//         }
+//      };
+//   }
 }
