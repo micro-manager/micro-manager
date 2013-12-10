@@ -23,6 +23,7 @@
 
 #pragma once
 #include <assert.h>
+#include <boost/utility.hpp>
 
 #ifdef WIN32
    #define WIN32_LEAN_AND_MEAN
@@ -66,7 +67,7 @@
 /**
  * Base class for threads in MM devices
  */
-class MMDeviceThreadBase
+class MMDeviceThreadBase : boost::noncopyable
 {
 public:
    MMDeviceThreadBase() : thread_(0) {}
@@ -98,7 +99,7 @@ private:
 /**
  * Critical section lock.
  */
-class MMThreadLock
+class MMThreadLock : boost::noncopyable
 {
 public:
    MMThreadLock()
@@ -119,7 +120,7 @@ private:
    MM_THREAD_GUARD lock_;
 };
 
-class MMThreadGuard
+class MMThreadGuard : boost::noncopyable
 {
 public:
    MMThreadGuard(MMThreadLock& lock) : lock_(&lock)
