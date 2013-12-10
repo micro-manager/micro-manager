@@ -158,63 +158,59 @@
   <ItemGroup>
     <CustomBuild Include="MMCoreJ.i">
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Running Swig on %(Filename)%(Extension)</Message>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">set swig=$(MM_SWIG)
-rem Stage output within IntDir so that it will be cleaned.
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">rem Stage output within IntDir so that it will be cleaned.
 set swig_out_dir=$(IntDir)Swig
 set java_src_dir=..\build\intermediates\Swig\mmcorej
 rem
-del /s/q %swig_out_dir%
-mkdir %swig_out_dir%
-%swig% -c++ -java -package mmcorej -module MMCoreJ -outdir %swig_out_dir% %(FullPath)
+del /s/q %swig_out_dir% &gt; NUL
+mkdir %swig_out_dir% &gt; NUL
+$(MM_SWIG) -c++ -java -package mmcorej -module MMCoreJ -outdir %swig_out_dir% %(FullPath)
 rem
-del /s/q %java_src_dir%
-mkdir %java_src_dir%
-copy %swig_out_dir%\*.java %java_src_dir%\</Command>
+del /s/q %java_src_dir% &gt; NUL
+mkdir %java_src_dir% &gt; NUL
+copy %swig_out_dir%\*.java %java_src_dir%\ &gt; NUL</Command>
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(AdditionalInputs)</AdditionalInputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(Filename)_wrap.h;%(Filename)_wrap.cxx;%(Outputs)</Outputs>
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Running Swig on %(Filename)%(Extension)</Message>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">set swig=$(MM_SWIG)
-rem Stage output within IntDir so that it will be cleaned.
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">rem Stage output within IntDir so that it will be cleaned.
 set swig_out_dir=$(IntDir)Swig
 set java_src_dir=..\build\intermediates\Swig\mmcorej
 rem
-del /s/q %swig_out_dir%
-mkdir %swig_out_dir%
-%swig% -c++ -java -package mmcorej -module MMCoreJ -outdir %swig_out_dir% %(FullPath)
+del /s/q %swig_out_dir% &gt; NUL
+mkdir %swig_out_dir% &gt; NUL
+$(MM_SWIG) -c++ -java -package mmcorej -module MMCoreJ -outdir %swig_out_dir% %(FullPath)
 rem
-del /s/q %java_src_dir%
-mkdir %java_src_dir%
-copy %swig_out_dir%\*.java %java_src_dir%\</Command>
+del /s/q %java_src_dir% &gt; NUL
+mkdir %java_src_dir% &gt; NUL
+copy %swig_out_dir%\*.java %java_src_dir%\ &gt; NUL</Command>
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(AdditionalInputs)</AdditionalInputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(Filename)_wrap.h;%(Filename)_wrap.cxx;%(Outputs)</Outputs>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Running Swig on %(Filename)%(Extension)</Message>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">set swig=$(MM_SWIG)
-rem Stage output within IntDir so that it will be cleaned.
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">rem Stage output within IntDir so that it will be cleaned.
 set swig_out_dir=$(IntDir)Swig
 set java_src_dir=..\build\intermediates\Swig\mmcorej
 rem
-del /s/q %swig_out_dir%
-mkdir %swig_out_dir%
-%swig% -c++ -java -package mmcorej -module MMCoreJ -outdir %swig_out_dir% %(FullPath)
+del /s/q %swig_out_dir% &gt; NUL
+mkdir %swig_out_dir% &gt; NUL
+$(MM_SWIG) -c++ -java -package mmcorej -module MMCoreJ -outdir %swig_out_dir% %(FullPath)
 rem
-del /s/q %java_src_dir%
-mkdir %java_src_dir%
-copy %swig_out_dir%\*.java %java_src_dir%\</Command>
+del /s/q %java_src_dir% &gt; NUL
+mkdir %java_src_dir% &gt; NUL
+copy %swig_out_dir%\*.java %java_src_dir%\ &gt; NUL</Command>
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(AdditionalInputs)</AdditionalInputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(Filename)_wrap.h;%(Filename)_wrap.cxx;%(Outputs)</Outputs>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Running Swig on %(Filename)%(Extension)</Message>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">set swig=$(MM_SWIG)
-rem Stage output within IntDir so that it will be cleaned.
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">rem Stage output within IntDir so that it will be cleaned.
 set swig_out_dir=$(IntDir)Swig
 set java_src_dir=..\build\intermediates\Swig\mmcorej
 rem
-del /s/q %swig_out_dir%
-mkdir %swig_out_dir%
-%swig% -c++ -java -package mmcorej -module MMCoreJ -outdir %swig_out_dir% %(FullPath)
+del /s/q %swig_out_dir% &gt; NUL
+mkdir %swig_out_dir% &gt; NUL
+$(MM_SWIG) -c++ -java -package mmcorej -module MMCoreJ -outdir %swig_out_dir% %(FullPath)
 rem
-del /s/q %java_src_dir%
-mkdir %java_src_dir%
-copy %swig_out_dir%\*.java %java_src_dir%\</Command>
+del /s/q %java_src_dir% &gt; NUL
+mkdir %java_src_dir% &gt; NUL
+copy %swig_out_dir%\*.java %java_src_dir%\ &gt; NUL</Command>
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(AdditionalInputs)</AdditionalInputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(Filename)_wrap.h;%(Filename)_wrap.cxx;%(Outputs)</Outputs>
     </CustomBuild>
