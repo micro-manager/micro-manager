@@ -141,7 +141,6 @@ public class Devices {
    private HashMap<String, String> axisDirs_;
    private HashMap<String, Double> oneAxisDrivePositions_;
    private HashMap<String, Point2D.Double> twoAxisDrivePositions_;
-   private Map<JoystickDevice, DirectionalDevice> controllerMap_;
    private List<DevicesListenerInterface> listeners_;
    private List<String>loadedDevices_;
    private Preferences prefs_;
@@ -156,7 +155,6 @@ public class Devices {
       axisDirs_ = new HashMap<String, String>();
       oneAxisDrivePositions_ = new HashMap<String, Double>();
       twoAxisDrivePositions_ = new HashMap<String, Point2D.Double>();
-      controllerMap_ = new EnumMap<JoystickDevice, DirectionalDevice>(JoystickDevice.class);
       listeners_ = new ArrayList<DevicesListenerInterface>();
       loadedDevices_ = new ArrayList<String>();
       
@@ -355,10 +353,16 @@ public class Devices {
          String[] twoAxisTigerDevices = getMMDevices(TWOAXISTIGERDEVICES);
          for (String dev : twoAxisTigerDevices) {
             if (core_.getDeviceType(dev) == mmcorej.DeviceType.XYStageDevice) {
+               if (core_.hasProperty(dev, xyStagePropName)) {
                core_.setProperty(dev, xyStagePropName, no);
+               }
             } else { // Galvo device
-               core_.setProperty(dev, propName + "X", noInput);
-               core_.setProperty(dev, propName + "Y", noInput);
+               if (core_.hasProperty(dev, propName + "X")) {
+                  core_.setProperty(dev, propName + "X", noInput);
+               }
+               if (core_.hasProperty(dev, propName + "Y")) {
+                  core_.setProperty(dev, propName + "Y", noInput);
+               }
             }
          }
       } catch (Exception ex) {
@@ -381,9 +385,6 @@ public class Devices {
     */
    public boolean setJoystickOutput(JoystickDevice joystickDevice,
            DirectionalDevice device) {
-     // if (controllerMap_.get(joystickDevice) != null) {
-     //    unsetJoystickOutput(joystickDevice, controllerMap_.get(joystickDevice));
-      //}
       String propName = "JoystickInput";
       String xyStagePropName = "JoystickEnabled";
       String yes = "Yes";
@@ -400,18 +401,21 @@ public class Devices {
       try {
          String mmDevice = getMMDevice(device.getDeviceName());
          if (device.getNrOfAxis() == DirectionalDevice.NumberOfAxis.ONE) {
-            core_.setProperty(mmDevice, propName, setting);
+            if (core_.hasProperty(mmDevice, propName)) {
+               core_.setProperty(mmDevice, propName, setting);
+            }
          } else if (device.getNrOfAxis() == DirectionalDevice.NumberOfAxis.TWO) {
-            if (core_.getDeviceType(mmDevice) == mmcorej.DeviceType.XYStageDevice) {
+            if (core_.hasProperty(mmDevice, xyStagePropName)) {
                core_.setProperty(mmDevice, xyStagePropName, yes);
-            } else {
-               core_.setProperty(mmDevice, propName + "X", setting);
-               core_.setProperty(mmDevice, propName + "Y", settingY);
+            } else { // Micro-Mirror Device
+               if (core_.hasProperty(mmDevice, propName + "X")) {
+                  core_.setProperty(mmDevice, propName + "X", setting);
+               }
+               if (core_.hasProperty(mmDevice, propName + "Y")) {
+                  core_.setProperty(mmDevice, propName + "Y", settingY);
+               }
             }
          }
-
-         controllerMap_.put(joystickDevice, device);
-
       } catch (Exception ex) {
          ReportingUtils.showError("Failed to communicate with Tiger controller");
          return false;
@@ -440,17 +444,20 @@ public class Devices {
       try {
          String mmDevice = getMMDevice(device.getDeviceName());
          if (device.getNrOfAxis() == DirectionalDevice.NumberOfAxis.ONE) {
-            core_.setProperty(mmDevice, propName, setting);
+            if (core_.hasProperty(mmDevice, propName)) {
+               core_.setProperty(mmDevice, propName, setting);
+            }
          } else if (device.getNrOfAxis() == DirectionalDevice.NumberOfAxis.TWO) {
-            if (core_.getDeviceType(mmDevice) == mmcorej.DeviceType.XYStageDevice) {
+            if (core_.hasProperty(mmDevice, xyStagePropName)) {
                core_.setProperty(mmDevice, xyStagePropName, no);
             } else {
-               core_.setProperty(mmDevice, propName + "X", setting);
-               core_.setProperty(mmDevice, propName + "Y", setting);
+               for (String prop : new String[]{propName + "X", propName + "Y"}) {
+                  if (core_.hasProperty(mmDevice, prop)) {
+                     core_.setProperty(mmDevice, prop, setting);
+                  }
+               }
             }
          }
-         controllerMap_.remove(joystickDevice);
-
       } catch (Exception ex) {
          ReportingUtils.showError("Failed to communicate with Tiger controller");
          return false;
@@ -459,9 +466,6 @@ public class Devices {
       return true;
    }
 
-   public DirectionalDevice getControlledDevice(JoystickDevice control) {
-      return controllerMap_.get(control);
-   }
    
    public final void DetectLoadedDevices() {
       loadedDevices_.clear();
