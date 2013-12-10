@@ -59,12 +59,12 @@ public:
    int GetSignal(double& /*volts*/) {return DEVICE_UNSUPPORTED_COMMAND;}
    int GetLimits(double& minVolts, double& maxVolts) {minVolts = minV_; maxVolts = maxV_; return DEVICE_OK;}
    int IsDASequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
-   int GetDASequenceMaxLength(long& nrEvents) const {return 0;}
+   int GetDASequenceMaxLength(long&) const {return 0;}
    int StartDASequence() {return DEVICE_UNSUPPORTED_COMMAND;}
    int StopDASequence() {return DEVICE_OK;}
-   int LoadDASequence(std::vector<double> voltages) const {return DEVICE_UNSUPPORTED_COMMAND;}
+   int LoadDASequence(std::vector<double>) const {return DEVICE_UNSUPPORTED_COMMAND;}
    int ClearDASequence(){return DEVICE_UNSUPPORTED_COMMAND;}
-   int AddToDASequence(double voltage) {return DEVICE_UNSUPPORTED_COMMAND;}
+   int AddToDASequence(double) {return DEVICE_UNSUPPORTED_COMMAND;}
    int SendDASequence() {return DEVICE_UNSUPPORTED_COMMAND;}
 
    // action interface

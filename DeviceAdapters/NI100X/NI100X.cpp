@@ -109,7 +109,7 @@ DigitalIO::DigitalIO() : numPos_(16), busy_(false), channel_("undef"), task_(0),
    SetErrorText(ERR_CLOSE_FAILED, "Failed closing the device");
 
    CPropertyAction* pAct = new CPropertyAction (this, &DigitalIO::OnChannel);
-   int nRet = CreateProperty(g_PropertyChannel, "devname", MM::String, false, pAct, true);
+   CreateProperty(g_PropertyChannel, "devname", MM::String, false, pAct, true);
    assert(nRet == DEVICE_OK);
 
 }
