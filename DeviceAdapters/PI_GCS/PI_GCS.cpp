@@ -289,7 +289,7 @@ int PIZStage::SetOrigin()
    return DEVICE_UNSUPPORTED_COMMAND;
 }
 
-int PIZStage::GetLimits(double& min, double& max)
+int PIZStage::GetLimits(double&, double&)
 {
    return DEVICE_UNSUPPORTED_COMMAND;
 }
