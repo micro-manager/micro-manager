@@ -173,9 +173,10 @@ public class SetupPanel extends ListeningJPanel{
     */
    @Override
    public void gotSelected() {
+      devices_.clearJoystickBindings();
       joystickBox_.setSelectedItem(joystickBox_.getSelectedItem());
-      rightWheelBox_.setSelectedItem(joystickBox_.getSelectedItem());      
-      leftWheelBox_.setSelectedItem(joystickBox_.getSelectedItem());
+      rightWheelBox_.setSelectedItem(rightWheelBox_.getSelectedItem());      
+      leftWheelBox_.setSelectedItem(leftWheelBox_.getSelectedItem());
    }
    
    @Override

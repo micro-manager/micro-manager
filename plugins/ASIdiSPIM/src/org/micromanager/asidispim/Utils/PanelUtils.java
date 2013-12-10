@@ -23,6 +23,8 @@ package org.micromanager.asidispim.Utils;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.util.prefs.Preferences;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -38,7 +40,7 @@ public class PanelUtils {
    /**
     * Listener for Selection boxes that attach joysticks to drives
     */
-   public class StageSelectionBoxListener implements ActionListener, DevicesListenerInterface {
+   public class StageSelectionBoxListener implements ItemListener, ActionListener, DevicesListenerInterface {
       Devices.JoystickDevice joystickDevice_;
       JComboBox jc_;
       Devices devices_;
@@ -54,6 +56,7 @@ public class PanelUtils {
          prefName_ = prefName;
       }    
 
+      // use Map to remember last attached device and remove it
       public void actionPerformed(ActionEvent ae) {
                   String stage = (String) jc_.getSelectedItem();
          String[] items = stage.split("-");
@@ -80,7 +83,26 @@ public class PanelUtils {
             jc_.addItem(device);
          }              
       }
-   };
+
+      // Should be removed
+      public void itemStateChanged(ItemEvent e) {
+         String stage = (String)e.getItem();
+         String[] items = stage.split("-");
+         DirectionalDevice dd;
+         if (items.length > 1) {
+            dd = new DirectionalDevice(items[0],
+                    Labels.REVDIRECTIONS.get(items[1]));
+         } else {
+            dd = new DirectionalDevice(items[0], Labels.Directions.X);
+         }
+         if (e.getStateChange() == ItemEvent.SELECTED) {
+            devices_.setJoystickOutput(joystickDevice_, dd);
+            prefs_.put(prefName_, stage);
+         } else if (e.getStateChange() == ItemEvent.DESELECTED) {
+            devices_.unsetJoystickOutput(joystickDevice_, dd);
+         }
+      }
+   }
    
    
    public JComboBox makeJoystickSelectionBox(Devices.JoystickDevice joystickDevice, 
@@ -88,8 +110,10 @@ public class PanelUtils {
            Preferences prefs, String prefName) {
       JComboBox jcb = new JComboBox(selections);
       jcb.setSelectedItem(selectedItem);
+      jcb.addItemListener(new StageSelectionBoxListener(joystickDevice , jcb, 
+              devices_, prefs, prefName));   
       jcb.addActionListener(new StageSelectionBoxListener(joystickDevice , jcb, 
-              devices_, prefs, prefName));      
+              devices_, prefs, prefName));
  
       return jcb;
    }

@@ -317,6 +317,37 @@ public class Devices {
    }
 
    /**
+    * Clears all device settings that associate devices with joystick inputs
+    *
+    */
+   public void clearJoystickBindings() {
+      String[] oneAxisTigerDevices = getMMDevices(ONEAXISTIGERDEVICES);
+      String propName = "JoystickInput";
+      String xyStagePropName = "JoystickEnabled";
+      String noInput = "0 - none";
+      String yes = "Yes";
+      String no = "No";
+
+      try {
+         for (String dev : oneAxisTigerDevices) {
+            core_.setProperty(dev, propName, noInput);
+         }
+
+         String[] twoAxisTigerDevices = getMMDevices(TWOAXISTIGERDEVICES);
+         for (String dev : twoAxisTigerDevices) {
+            if (core_.getDeviceType(dev) == mmcorej.DeviceType.XYStageDevice) {
+               core_.setProperty(dev, xyStagePropName, no);
+            } else { // Galvo device
+               core_.setProperty(dev, propName + "X", noInput);
+               core_.setProperty(dev, propName + "Y", noInput);
+            }
+         }
+      } catch (Exception ex) {
+         ReportingUtils.showError("Failed to communicate with Tiger controller");
+      }
+   }
+
+   /**
     * Associates the given input device (knob or joystick) to the desired device
     * Each device specifies its direction (usually X or Y) as a
     * DirectionalDevice Two devices can be associated with a Joystick (first one
@@ -329,38 +360,22 @@ public class Devices {
     */
    public boolean setJoystickOutput(JoystickDevice joystickDevice,
            DirectionalDevice device) {
-      // first clear whatever associations are present
-      String[] oneAxisTigerDevices = getMMDevices(ONEAXISTIGERDEVICES);
+
+
       String propName = "JoystickInput";
       String xyStagePropName = "JoystickEnabled";
-      String noInput = "0 - none";
       String yes = "Yes";
-      String no = "No";
+
+      // for joystick device
+      String setting = "2 - joystick X";
+      String settingY = "3 - joystick Y";
+      if (joystickDevice.equals(JoystickDevice.LEFT_KNOB)) {
+         setting = "23 - left wheel";
+      } else if (joystickDevice.equals(JoystickDevice.RIGHT_KNOB)) {
+         setting = "22 - right wheel";
+      }
 
       try {
-         for (String dev : oneAxisTigerDevices) {
-               core_.setProperty(dev, propName, noInput);
-         }
-
-         String[] twoAxisTigerDevices = getMMDevices(TWOAXISTIGERDEVICES);
-         for (String dev : twoAxisTigerDevices) {
-            if (core_.getDeviceType(dev) == mmcorej.DeviceType.XYStageDevice) {
-               core_.setProperty(dev, xyStagePropName, no);
-            } else { // Galvo device
-               core_.setProperty(dev, propName + "X", noInput);
-               core_.setProperty(dev, propName + "Y", noInput);
-            }
-         }
-
-         // for joystick device
-         String setting = "2 - joystick X";
-         String settingY = "3 - joystick Y";
-         if (joystickDevice.equals(JoystickDevice.LEFT_KNOB)) {
-            setting = "23 - left wheel";
-         } else if (joystickDevice.equals(JoystickDevice.RIGHT_KNOB)) {
-            setting = "22 - right wheel";
-         }
-
          String mmDevice = getMMDevice(device.getDeviceName());
          if (device.getNrOfAxis() == DirectionalDevice.NumberOfAxis.ONE) {
             core_.setProperty(mmDevice, propName, setting);
@@ -372,22 +387,54 @@ public class Devices {
                core_.setProperty(mmDevice, propName + "Y", settingY);
             }
          }
-         
+
          controllerMap_.put(joystickDevice, device);
-         
-         
+
+
       } catch (Exception ex) {
          ReportingUtils.showError("Failed to communicate with Tiger controller");
          return false;
       }
-      
+
+      return true;
+   }
+   
+    public boolean unsetJoystickOutput(JoystickDevice joystickDevice,
+           DirectionalDevice device) {
+
+      String propName = "JoystickInput";
+      String xyStagePropName = "JoystickEnabled";
+      String no = "No";
+
+      // for joystick device
+      String setting = "0 - none";
+
+      try {
+         String mmDevice = getMMDevice(device.getDeviceName());
+         if (device.getNrOfAxis() == DirectionalDevice.NumberOfAxis.ONE) {
+            core_.setProperty(mmDevice, propName, setting);
+         } else if (device.getNrOfAxis() == DirectionalDevice.NumberOfAxis.TWO) {
+            if (core_.getDeviceType(mmDevice) == mmcorej.DeviceType.XYStageDevice) {
+               core_.setProperty(mmDevice, xyStagePropName, no);
+            } else {
+               core_.setProperty(mmDevice, propName + "X", setting);
+               core_.setProperty(mmDevice, propName + "Y", setting);
+            }
+         }
+         controllerMap_.remove(joystickDevice);
+
+      } catch (Exception ex) {
+         ReportingUtils.showError("Failed to communicate with Tiger controller");
+         return false;
+      }
+
       return true;
    }
 
    public DirectionalDevice getControlledDevice(JoystickDevice control) {
       return controllerMap_.get(control);
    }
-   
+
    private void updateSingleAxisStagePositions() {
       String[] drives = getTigerStages();
       for (String drive : drives) {
@@ -401,7 +448,7 @@ public class Devices {
          }
       }
    }
-   
+
    private void updateTwoAxisStagePositions() {
       String[] drives = getTwoAxisTigerStages();
       for (String drive : drives) {
@@ -415,7 +462,7 @@ public class Devices {
          }
       }
    }
-   
+
    public final void updateStagePositions() {
       updateSingleAxisStagePositions();
       updateTwoAxisStagePositions();
@@ -446,7 +493,8 @@ public class Devices {
 
    /**
     * Remove classes implementing the DeviceListener interface from the listers
-    * @param listener 
+    *
+    * @param listener
     */
    public void removeListener(DevicesListenerInterface listener) {
       listeners_.remove(listener);
