@@ -348,7 +348,7 @@ inline void CoverImage24( BYTE* pSour, BYTE* pDest, int sz, int m_iBytesPerPixel
     {
       for(int i = 0; i < sz; i++)
       {
-        *pDest++ = (pSour[0]*299 + pSour[1]*587 + pSour[3]*114)/1000;
+        *pDest++ = static_cast<BYTE>((pSour[0]*299 + pSour[1]*587 + pSour[3]*114)/1000);
         pSour += 3;
       }
     }
@@ -939,7 +939,6 @@ int CMoticCamera::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
        char buf[MM::MaxStrLength];
        GetProperty(MM::g_Keyword_PixelType, buf);
        std::string pixelType(buf);
-       unsigned int bytesPerPixel = 1;
        if (pixelType.compare(g_PixelType_8bit) == 0)
        {
          if(m_iBytesPerPixel == 2)
