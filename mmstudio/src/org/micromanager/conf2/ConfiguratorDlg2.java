@@ -99,7 +99,7 @@ public class ConfiguratorDlg2 extends MMDialog {
         super();
         core_ = core;
         defaultPath_ = defFile;
-        setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+        setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
         setModal(true);
         initialize();
     }
