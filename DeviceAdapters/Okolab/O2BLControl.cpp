@@ -406,7 +406,7 @@ int O2BLControl_RefreshThread::svc()
   {
    if(okoDevice_.IsConnected()==1)
     {
-     int ret=okoDevice_.GetValue(v);
+     (void)okoDevice_.GetValue(v);
      snprintf(strVal,20,"%.02f",v);
      okoDevice_.UpdatePropertyGui("O2 Concentration",strVal);  
 //     CDeviceUtils::SleepMs(sleepmillis_);

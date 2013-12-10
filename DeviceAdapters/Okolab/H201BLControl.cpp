@@ -295,7 +295,7 @@ int H201BLControl::GetCommPort(char *strcommport)
 /*
  *  Set com port (1=COM1, 2=COM2 and so on...)
  */
-int H201BLControl::SetCommPort(long& commport)
+int H201BLControl::SetCommPort(long& /*commport*/)
 {
  if(!WakeUp()) return DEVICE_SERIAL_INVALID_RESPONSE;
  return DEVICE_OK;     
@@ -423,7 +423,7 @@ int H201BLControl_RefreshThread::svc()
   {
    if(okoDevice_.IsConnected()==1)
     {
-     int ret=okoDevice_.GetValue(v);
+     (void)okoDevice_.GetValue(v);
      snprintf(strVal,20,"%.02f",v);
      okoDevice_.UpdatePropertyGui("Temperature",strVal);
     }

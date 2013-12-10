@@ -342,7 +342,7 @@ int CO2O2BL13Control::GetCommPort(char *strcommport)
 /*
  *  Set com port (1=COM1, 2=COM2 and so on...)
  */
-int CO2O2BL13Control::SetCommPort(long& commport)
+int CO2O2BL13Control::SetCommPort(long& /*commport*/)
 {
  if(!WakeUp()) return DEVICE_SERIAL_INVALID_RESPONSE;
  return DEVICE_OK;     

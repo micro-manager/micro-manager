@@ -156,7 +156,7 @@ int TestControl::GetRand(double& rndnum)
 
 
 
-int TestControl::OnTestAction(MM::PropertyBase* pProp, MM::ActionType eAct)
+int TestControl::OnTestAction(MM::PropertyBase* /*pProp*/, MM::ActionType eAct)
 {
  if(eAct==MM::BeforeGet)
   {
@@ -173,7 +173,7 @@ int TestControl::OnTestAction(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 
 
-int TestControl::TestAction(char *straction)
+int TestControl::TestAction(char * /*straction*/)
 {
  #if defined(WIN32) || defined(WIN64)
 
@@ -282,7 +282,7 @@ int TestRefreshThread::svc()
   {
    double v=0;
 
-   int ret=okoDevice_.GetRand(v);
+   (void)okoDevice_.GetRand(v);
    okoDevice_.UpdatePropertyGui(v);
 /*
 FILE *fp;

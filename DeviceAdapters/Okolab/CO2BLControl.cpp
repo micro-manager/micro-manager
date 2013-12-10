@@ -295,7 +295,7 @@ int CO2BLControl::GetCommPort(char *strcommport)
 /*
  *  Set com port (1=COM1, 2=COM2 and so on...)
  */
-int CO2BLControl::SetCommPort(long& commport)
+int CO2BLControl::SetCommPort(long& /*commport*/)
 {
  if(!WakeUp()) return DEVICE_SERIAL_INVALID_RESPONSE;
  return DEVICE_OK;     
@@ -423,7 +423,7 @@ int CO2BLControl_RefreshThread::svc()
   {
    if(okoDevice_.IsConnected()==1)
     {
-     int ret=okoDevice_.GetValue(v);
+     (void)okoDevice_.GetValue(v);
      snprintf(strVal,20,"%.02f",v);
      okoDevice_.UpdatePropertyGui("CO2 Concentration",strVal);  
     }
