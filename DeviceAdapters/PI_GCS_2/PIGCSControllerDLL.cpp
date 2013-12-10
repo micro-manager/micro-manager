@@ -43,14 +43,7 @@ const char* PIGCSControllerDLLDevice::PropName_ = "DLL Name";
 const char* PIGCSControllerDLLDevice::PropInterfaceType_ = "Interface Type";
 const char* PIGCSControllerDLLDevice::PropInterfaceParameter_ = "Interface Parameter";
 
-struct ToUpper
-{
-	ToUpper (std::locale const& l) : loc(l) {;}
-	char operator() (char c) const { return std::toupper(c,loc); }
-private:
-	std::locale const& loc;
-};
-
+int toupper_classic_locale(int c) { return std::toupper(c, std::locale::classic()); }
 
 PIGCSControllerDLLDevice::PIGCSControllerDLLDevice() :
    dllName_("GCS_DLL.dll"),
@@ -543,9 +536,8 @@ int PIGCSControllerDLL::ConnectUSB(const std::string&  interfaceParameter)
 std::string PIGCSControllerDLL::FindDeviceNameInUSBList(char* szDevices, std::string interfaceParameter)
 {
 	std::string sDevices(szDevices);
-	static ToUpper up(std::locale::classic());
-	std::transform(interfaceParameter.begin(), interfaceParameter.end(), interfaceParameter.begin(), up);
-	std::transform(sDevices.begin(), sDevices.end(), sDevices.begin(), up);
+	std::transform(interfaceParameter.begin(), interfaceParameter.end(), interfaceParameter.begin(), toupper_classic_locale);
+	std::transform(sDevices.begin(), sDevices.end(), sDevices.begin(), toupper_classic_locale);
 
 	std::vector<std::string> lines = tokenize(sDevices);
 	std::vector<std::string>::iterator line;
