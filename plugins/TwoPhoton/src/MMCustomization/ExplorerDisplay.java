@@ -34,7 +34,7 @@ import org.micromanager.api.ImageCacheListener;
 import org.micromanager.internalinterfaces.ExploreControls;
 import org.micromanager.utils.*;
 
-public class DisplayPlus implements ImageCacheListener  {
+public class ExplorerDisplay implements ImageCacheListener  {
 
    public static final String WINDOW_TITLE = "Stitched overview";
    
@@ -52,7 +52,7 @@ public class DisplayPlus implements ImageCacheListener  {
     private JSONArray positionList_;
     private int numRows_ = 0, numCols_ = 0;
 
-    public DisplayPlus(final ImageCache stitchedCache, AcquisitionEngine eng, JSONObject summaryMD) {
+    public ExplorerDisplay(final ImageCache stitchedCache, AcquisitionEngine eng, JSONObject summaryMD) {
         eng_ = eng;
         try {
             MMStudioMainFrame gui = MMStudioMainFrame.getInstance();
@@ -100,7 +100,7 @@ public class DisplayPlus implements ImageCacheListener  {
                 }
             }
         };
-        ExploreControls controls = new Controls();
+        ExploreControls controls = new ExplorerDisplay.Controls();
 
         //Add in custom controls
         try {
@@ -122,6 +122,12 @@ public class DisplayPlus implements ImageCacheListener  {
         stitchedCache.addImageCacheListener(this);
    }
 
+    
+    private void acquireTile(int row, int col) {
+       
+    }
+    
+    
    private Point getCanvasSelection(Point p) {
       final ImageCanvas canvas = vad_.getImagePlus().getCanvas();
       boolean left = p.x < canvas.getSize().width / numCols_ / 2;
@@ -202,6 +208,19 @@ public class DisplayPlus implements ImageCacheListener  {
       canvas.addMouseListener(new MouseListener() {
          @Override
          public void mouseClicked(MouseEvent e) {
+            Point coords = getCanvasSelection(e.getPoint());
+             if (coords.x == -1) {
+               //left
+            } else if (coords.x == numCols_) {
+               //right
+            } else if (coords.y == -1) {
+               //top              
+            } else if (coords.y == numRows_) {
+               //bottom      
+            } else {
+               //acquire or reacquire a tile
+               acquireTile(coords.x,coords.y);
+            }
          }
 
          @Override

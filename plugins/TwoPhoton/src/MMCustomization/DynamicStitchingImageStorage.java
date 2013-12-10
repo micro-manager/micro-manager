@@ -33,70 +33,59 @@ public class DynamicStitchingImageStorage {
     //local copy of summary MD with different info about positions than underlying storage
     private JSONObject summaryMetadata_;
     private int width_, height_, tileWidth_, tileHeight_;
-    private boolean invertX_, invertY_, swapXandY_;
     private TreeSet<String> imageKeys_;
     private JSONArray positionList_;
 
-    public DynamicStitchingImageStorage(JSONObject summaryMetadata, String savingDir) {
-        imageKeys_ = new TreeSet<String>();
-        try {
-            summaryMetadata_ = new JSONObject(summaryMetadata.toString());
-        } catch (JSONException ex) {
-            ReportingUtils.showError("Couldn't copy summary MD");
-        }
+   public DynamicStitchingImageStorage(JSONObject summaryMetadata, String savingDir) {
+      imageKeys_ = new TreeSet<String>();
+      try {
+         summaryMetadata_ = new JSONObject(summaryMetadata.toString());
+      } catch (JSONException ex) {
+         ReportingUtils.showError("Couldn't copy summary MD");
+      }
 
-        try {
-            if (savingDir == null) {
-                //RAM storage
-                storage_ = new TaggedImageStorageRam(summaryMetadata);
-            } else {
-                storage_ = new TaggedImageStorageMultipageTiff(savingDir, true, summaryMetadata, false, true, false);
+      try {
+         if (savingDir == null) {
+            //RAM storage
+            storage_ = new TaggedImageStorageRam(summaryMetadata);
+         } else {
+            storage_ = new TaggedImageStorageMultipageTiff(savingDir, true, summaryMetadata, false, true, false);
+         }
+      } catch (IOException ex) {
+         ReportingUtils.showError("Unable to create disk storage");
+      }
+
+
+      try {
+         positionList_ = summaryMetadata.getJSONArray("InitialPositionList");
+         int numRows = 0, numCols = 0;
+         for (int i = 0; i < positionList_.length(); i++) {
+            long colInd = positionList_.getJSONObject(i).getLong("GridColumnIndex");
+            long rowInd = positionList_.getJSONObject(i).getLong("GridRowIndex");
+            if (colInd >= numCols) {
+               numCols = (int) (colInd + 1);
             }
-        } catch (IOException ex) {
-            ReportingUtils.showError("Unable to create disk storage");
-        }
-
-
-        try {
-            positionList_ = summaryMetadata.getJSONArray("InitialPositionList");
-            int numRows = 0, numCols = 0;
-            for (int i = 0; i < positionList_.length(); i++) {
-                long colInd = positionList_.getJSONObject(i).getLong("GridColumnIndex");
-                long rowInd = positionList_.getJSONObject(i).getLong("GridRowIndex");
-                if (colInd >= numCols) {
-                    numCols = (int) (colInd + 1) ;
-                }
-                if (rowInd >= numRows) {
-                    numRows = (int) (rowInd + 1);
-                }
+            if (rowInd >= numRows) {
+               numRows = (int) (rowInd + 1);
             }
-            tileHeight_ = MDUtils.getHeight(summaryMetadata);
-            tileWidth_ = MDUtils.getWidth(summaryMetadata);
-            height_ = numCols * tileHeight_;
-            width_ = numRows * tileWidth_;
-            //change summary metadata fields
-            summaryMetadata_.put("Positions", 1);
-            summaryMetadata_.put("Width", width_);
-            summaryMetadata_.put("Height", height_);
-        } catch (Exception ex) {
-            ReportingUtils.showError("Couldn't get number of positions from summary metadata");
-        }
+         }
+         tileHeight_ = MDUtils.getHeight(summaryMetadata);
+         tileWidth_ = MDUtils.getWidth(summaryMetadata);
+         height_ = numCols * tileHeight_;
+         width_ = numRows * tileWidth_;
+         //change summary metadata fields
+         summaryMetadata_.put("Positions", 1);
+         summaryMetadata_.put("Width", width_);
+         summaryMetadata_.put("Height", height_);
+      } catch (Exception ex) {
+         ReportingUtils.showError("Couldn't get number of positions from summary metadata");
+      }
+   }
 
-        try {
-            MMStudioMainFrame gui = MMStudioMainFrame.getInstance();
-            String camera = gui.getCore().getCameraDevice();
-            swapXandY_ = gui.getCore().getProperty(camera, MMCoreJ.getG_Keyword_Transpose_SwapXY()).equals("1");
-            invertX_ = gui.getCore().getProperty(camera, MMCoreJ.getG_Keyword_Transpose_MirrorX()).equals("1");
-            invertY_ = gui.getCore().getProperty(camera, MMCoreJ.getG_Keyword_Transpose_MirrorY()).equals("1");
-        } catch (Exception ex) {
-            ReportingUtils.showError(ex.toString());
-        }
-    }
-   
    public int getWidth() {
       return width_;
    }
-   
+
    public int getHeight() {
       return height_;
    }

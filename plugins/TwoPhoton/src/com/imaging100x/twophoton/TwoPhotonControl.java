@@ -28,6 +28,7 @@
 package com.imaging100x.twophoton;
 
 import MMCustomization.AcquisitionWrapperEngineAdapter;
+import MMCustomization.ExplorerManager;
 import ij.ImagePlus;
 import ij.WindowManager;
 import ij.gui.ImageWindow;
@@ -46,6 +47,8 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Point2D;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -66,12 +69,7 @@ import org.micromanager.api.MultiStagePosition;
 import org.micromanager.api.PositionList;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.api.StagePosition;
-import org.micromanager.utils.GUIUtils;
-import org.micromanager.utils.ImageFocusListener;
-import org.micromanager.utils.MMFrame;
-import org.micromanager.utils.MMScriptException;
-import org.micromanager.utils.ProgressBar;
-import org.micromanager.utils.ReportingUtils;
+import org.micromanager.utils.*;
 
 
 
@@ -229,6 +227,18 @@ private JCheckBox drawGrid_, drawPosNames_;
       JLabel lblPixelSize = new JLabel("Pixel size");
       lblPixelSize.setBounds(410, 394, 59, 14);
       getContentPane().add(lblPixelSize);
+      
+      
+      JButton exploreButton = new JButton("Explore");
+      getContentPane().add(exploreButton);
+      exploreButton.setBounds(410, 430, 130, 20);
+      exploreButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            new ExplorerManager();
+         }
+      });
+      
       
       //add settings button
       JButton settings = new JButton("Settings");
@@ -728,17 +738,79 @@ private JCheckBox drawGrid_, drawPosNames_;
       int ySize = (Integer) gridSizeYSpinner_.getValue();
 
       
-     createGrid(x[0], y[0], xSize, ySize, pixelOverlapX, pixelOverlapY);
+     createGridAffine(x[0], y[0], xSize, ySize, pixelOverlapX, pixelOverlapY);
       
    }
+  
+   public static void createGridAffine(double xCenter, double yCenter, int xSize, int ySize, int pixelOverlapX, int pixelOverlapY) {      
+      MMStudioMainFrame gui = MMStudioMainFrame.getInstance();
+      //Get affine transform
+      Preferences prefs = Preferences.userNodeForPackage(MMStudioMainFrame.class);
+
+      AffineTransform transform = null;
+      try {
+         transform = (AffineTransform) JavaUtils.getObjectFromPrefs(prefs, "affine_transform_" + gui.getCore().getCurrentPixelSizeConfig(), null);
+         //set map origin to current stage position
+         double[] stageX = new double[1], stageY = new double[1];
+         gui.getCore().getXYPosition(gui.getCore().getXYStageDevice(), stageX, stageY);
+         double[] matrix = new double[6];
+         transform.getMatrix(matrix);
+         matrix[4] = stageX[1];
+         matrix[5] = stageY[1];
+         transform = new AffineTransform(matrix);
+      } catch (Exception ex) {
+         ReportingUtils.logError(ex);
+         ReportingUtils.showError("Couldnt get affine transform");
+      }
+
+      long height = gui.getCore().getImageHeight();
+      long width = gui.getCore().getImageWidth();
+      ArrayList<MultiStagePosition> positions = new ArrayList<MultiStagePosition>();
+      for (int xIndex = 0; xIndex < xSize; xIndex++) {
+         double xPixelOffset = (xIndex - (xSize - 1) / 2.0) * (width - pixelOverlapX) ;
+         for (int yIndex = 0; yIndex < ySize; yIndex++) {
+            double yPixelOffset = -(yIndex - (ySize - 1) / 2.0) * (height - pixelOverlapY);
+            //account for angle between stage axes and image axes
+            Point2D.Double pixelPos = new Point2D.Double(xPixelOffset, yPixelOffset);      
+            Point2D.Double stagePos = new Point2D.Double();
+
+            transform.transform(pixelPos, stagePos);
+                
+            MultiStagePosition mpl = new MultiStagePosition();
+            StagePosition sp = new StagePosition();
+            sp.numAxes = 2;
+            sp.stageName = gui.getCore().getXYStageDevice();
+            sp.x = stagePos.x;
+            sp.y = stagePos.y;
+            mpl.add(sp);
+
+            //label should be Grid_(x index of tile)_(y index of tile)
+            String lab = new String("Grid_" + yIndex + "_" + xIndex);
+            mpl.setLabel(lab);
+            mpl.setGridCoordinates(yIndex, xIndex);
+            positions.add(mpl);
+         }
+      }
    
+      try {
+         PositionList list = gui.getPositionList();
+         list.clearAllPositions();
+         for (MultiStagePosition p : positions) {
+            list.addPosition(p);
+         }
+         list.notifyChangeListeners();
+      } catch (MMScriptException e) {
+         ReportingUtils.showError(e.getMessage());
+      }
+   }
+
    public static void createGrid(double xCenter, double yCenter, int xSize, int ySize, int pixelOverlapX, int pixelOverlapY) {
       MMStudioMainFrame gui = MMStudioMainFrame.getInstance();
       double pixSize = gui.getCore().getPixelSizeUm();
       if (pixSize == 0.0) {
          pixSize = 0.1;
       }
-
+      
       String camera = gui.getCore().getCameraDevice();
       if (camera.isEmpty()) {
          ReportingUtils.showError("No camera available.");
@@ -756,9 +828,9 @@ private JCheckBox drawGrid_, drawPosNames_;
       
       long height = gui.getCore().getImageHeight();
       long width = gui.getCore().getImageWidth();
- //get image stage offset in degrees
-      double theta = prefs_.getDouble(SettingsDialog.STAGE_IMAGE_ANGLE_OFFSET, 0.0) / 360.0 * 2 * Math.PI;
       
+      //get image stage offset in degrees
+      double theta = prefs_.getDouble(SettingsDialog.STAGE_IMAGE_ANGLE_OFFSET, 0.0) / 360.0 * 2 * Math.PI;
       //Y axis --> more positive stage coordinate = up on image
       //X axis --> more positive stage coordinate = left on image
       ArrayList<MultiStagePosition> positions = new ArrayList<MultiStagePosition>();
