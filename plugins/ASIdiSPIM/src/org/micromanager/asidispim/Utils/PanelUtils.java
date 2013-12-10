@@ -23,6 +23,8 @@ package org.micromanager.asidispim.Utils;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.util.prefs.Preferences;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -38,7 +40,8 @@ public class PanelUtils {
    /**
     * Listener for Selection boxes that attach joysticks to drives
     */
-   public class StageSelectionBoxListener implements ActionListener, DevicesListenerInterface {
+   public class StageSelectionBoxListener implements ItemListener,
+           ActionListener, DevicesListenerInterface {
       Devices.JoystickDevice joystickDevice_;
       JComboBox jc_;
       Devices devices_;
@@ -93,6 +96,26 @@ public class PanelUtils {
          }
       }
 
+      public void itemStateChanged(ItemEvent e) {
+         String stage = (String) jc_.getSelectedItem();
+         if (stage != null) {
+            
+            String[] items = stage.split("-");
+            DirectionalDevice dd;
+            if (items.length > 1) {
+               dd = new DirectionalDevice(items[0],
+                       Labels.REVDIRECTIONS.get(items[1]));
+            } else {
+               dd = new DirectionalDevice(items[0], Labels.Directions.X);
+            }
+            if (e.getStateChange() == ItemEvent.SELECTED) {
+               // do not need to respond, will be done in ActionEvent
+            } else if (e.getStateChange() == ItemEvent.DESELECTED) {
+               devices_.unsetJoystickOutput(joystickDevice_, dd);
+            }
+         }
+      }
+
    }
    
    private boolean inArray (String[] array, String val) {
@@ -113,6 +136,7 @@ public class PanelUtils {
       StageSelectionBoxListener ssbl = new StageSelectionBoxListener(
               joystickDevice , jcb, devices_, prefs, prefName);
       jcb.addActionListener(ssbl);
+      jcb.addItemListener(ssbl);
       devices_.addListener(ssbl);
  
       return jcb;

@@ -381,9 +381,9 @@ public class Devices {
     */
    public boolean setJoystickOutput(JoystickDevice joystickDevice,
            DirectionalDevice device) {
-      if (controllerMap_.get(joystickDevice) != null) {
-         unsetJoystickOutput(joystickDevice, controllerMap_.get(joystickDevice));
-      }
+     // if (controllerMap_.get(joystickDevice) != null) {
+     //    unsetJoystickOutput(joystickDevice, controllerMap_.get(joystickDevice));
+      //}
       String propName = "JoystickInput";
       String xyStagePropName = "JoystickEnabled";
       String yes = "Yes";
