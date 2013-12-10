@@ -44,7 +44,6 @@ import org.micromanager.utils.ReportingUtils;
  * 
  * This could be implemented more elegantly using templates
  * 
- * This is the only class in the plugin directly communicating with the hardware
  * 
  * @author nico
  */
@@ -257,10 +256,22 @@ public class Devices {
       return res.toArray(new String[0]);
    }
    
+   /**
+    * Return cached position of given abstract stage
+    * 
+    * @param abstractDeviceName
+    * @return stage position
+    */
    public Double getStagePosition(String abstractDeviceName) {
       return oneAxisDrivePositions_.get(abstractDeviceName);
    }
    
+   /**
+    * return cached positon of given abstract XY stage or Micro-Mirror
+    * 
+    * @param abstractDeviceName
+    * @return 
+    */
    public Point2D.Double getTwoAxisStagePosition(String abstractDeviceName) {
       return twoAxisDrivePositions_.get(abstractDeviceName);
    }
@@ -325,7 +336,6 @@ public class Devices {
       String propName = "JoystickInput";
       String xyStagePropName = "JoystickEnabled";
       String noInput = "0 - none";
-      String yes = "Yes";
       String no = "No";
 
       try {
@@ -350,9 +360,11 @@ public class Devices {
    /**
     * Associates the given input device (knob or joystick) to the desired device
     * Each device specifies its direction (usually X or Y) as a
-    * DirectionalDevice Two devices can be associated with a Joystick (first one
+    * DirectionalDevice. Two devices can be associated with a Joystick (first one
     * will be linked to the Joystick X, second one to the Joystick Y) A knob can
-    * have only one directional device associated
+    * have only one directional device associated.
+    * 
+    * The stored association for this input device will be removed first
     *
     * @param control Joystick, left or right knob
     * @param devices A combination of a Tiger device and direction
@@ -360,8 +372,9 @@ public class Devices {
     */
    public boolean setJoystickOutput(JoystickDevice joystickDevice,
            DirectionalDevice device) {
-
-
+      if (controllerMap_.get(joystickDevice) != null) {
+         unsetJoystickOutput(joystickDevice, controllerMap_.get(joystickDevice));
+      }
       String propName = "JoystickInput";
       String xyStagePropName = "JoystickEnabled";
       String yes = "Yes";
@@ -390,7 +403,6 @@ public class Devices {
 
          controllerMap_.put(joystickDevice, device);
 
-
       } catch (Exception ex) {
          ReportingUtils.showError("Failed to communicate with Tiger controller");
          return false;
@@ -399,9 +411,16 @@ public class Devices {
       return true;
    }
    
-    public boolean unsetJoystickOutput(JoystickDevice joystickDevice,
+   /**
+    * Removes the association between an input (joystick) device and a stage
+    * both in hardware and in the internal model of this association
+    * 
+    * @param joystickDevice
+    * @param device
+    * @return true on success, false on failure
+    */
+   public boolean unsetJoystickOutput(JoystickDevice joystickDevice,
            DirectionalDevice device) {
-
       String propName = "JoystickInput";
       String xyStagePropName = "JoystickEnabled";
       String no = "No";

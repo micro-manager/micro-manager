@@ -66,7 +66,7 @@ public class SetupPanel extends ListeningJPanel{
            SpimParams spimParams, Labels.Sides side) {
       super (new MigLayout(
               "", 
-              "[right]8[align center]16[right]8[center]8[center]8[center]",
+              "[right]8[align center]16[right]8[60px,center]8[center]8[center]",
               "[]16[]"));
        devices_ = devices;
        gui_ = gui;
@@ -128,19 +128,19 @@ public class SetupPanel extends ListeningJPanel{
                leftWheelPrefName);
        add(leftWheelBox_);
        add(new JLabel("Scan amplitude:"));
-       add(new JLabel("Pos"));
+       add(new JLabel(""));
        add(pu.makeSlider("scanAmplitude", 0, 8, 4), "span 2, center, wrap");
  
        add(new JLabel("Scan enabled:"));
        add(pu.makeCheckBox("name", Labels.Sides.A), "split 2");
        add(pu.makeCheckBox("name", Labels.Sides.B));
        add(new JLabel("Scan offset:"));
-       add(new JLabel("pos"));
+       add(new JLabel(""));
        add(pu.makeSlider("scanOffset", -4, 4, 0), "span 2, center, wrap");
        
        add(new JButton("Toggle scan"), "skip 1");
        add(new JLabel("Sheet position:"));
-       add(new JLabel("pos"));
+       add(new JLabel(""));
        add(new JButton("Set start"));
        add(new JButton("Set end"), "wrap");
        
