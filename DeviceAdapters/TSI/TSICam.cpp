@@ -134,8 +134,7 @@ TsiCam::TsiCam() :
    roiBinData.XPixels = 0;
 
    // this identifies which camera we want to access
-   int ret = CreateProperty(MM::g_Keyword_CameraID, "0", MM::Integer, false, 0, true);
-   assert(ret == DEVICE_OK);
+   CreateProperty(MM::g_Keyword_CameraID, "0", MM::Integer, false, 0, true);
    liveAcqThd_ = new AcqSequenceThread(this);
 }
 
@@ -502,15 +501,14 @@ int TsiCam::SetBinning(int binSize)
 double TsiCam::GetExposure() const
 {
    uint32_t exp(0);
-   bool bret = camHandle_->GetParameter(TSI_PARAM_ACTUAL_EXPOSURE_TIME, sizeof(uint32_t), (void*)&exp);
+   (void)camHandle_->GetParameter(TSI_PARAM_ACTUAL_EXPOSURE_TIME, sizeof(uint32_t), (void*)&exp);
    return (double)exp / 1000.0; // exposure is expressed always in ms
 }
 
 void TsiCam::SetExposure(double dExpMs)
 {
    uint32_t exp      = (uint32_t)(dExpMs + 0.5);
-   bool bret = camHandle_->SetParameter(TSI_PARAM_EXPOSURE_TIME, (void*)&exp);
-   assert(bret);
+   (void)camHandle_->SetParameter(TSI_PARAM_EXPOSURE_TIME, (void*)&exp);
 }
 
 int TsiCam::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize)
@@ -676,7 +674,7 @@ int TsiCam::ResizeImageBuffer(TSI_ROI_BIN& roiBin)
    return DEVICE_OK;
 }
 
-void TsiCam::ReadoutComplete(int callback_type_id, TsiImage *tsiImg, void *context)
+void TsiCam::ReadoutComplete(int /*callback_type_id*/, TsiImage *tsiImg, void *context)
 {
    //assert(callback_type_id == TSI_CALLBACK_CAMERA_FRAME_READOUT_COMPLETE);
    TsiCam* cam = static_cast<TsiCam*>(context);

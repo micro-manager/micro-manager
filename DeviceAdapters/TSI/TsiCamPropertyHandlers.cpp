@@ -97,7 +97,7 @@ int TsiCam::OnTaps(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
-int TsiCam::OnTriggerMode(MM::PropertyBase* pProp, MM::ActionType eAct)
+int TsiCam::OnTriggerMode(MM::PropertyBase* /*pProp*/, MM::ActionType eAct)
 {
    if (eAct == MM::AfterSet)
    {
@@ -108,7 +108,7 @@ int TsiCam::OnTriggerMode(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
-int TsiCam::OnFps(MM::PropertyBase* pProp, MM::ActionType eAct)
+int TsiCam::OnFps(MM::PropertyBase* /*pProp*/, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)
    {
@@ -154,7 +154,7 @@ int TsiCam::OnGain(MM::PropertyBase* pProp, MM::ActionType eAct)
 }
 
 
-int TsiCam::OnTemperature(MM::PropertyBase* pProp, MM::ActionType eAct)
+int TsiCam::OnTemperature(MM::PropertyBase* /*pProp*/, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)
    {
@@ -162,7 +162,7 @@ int TsiCam::OnTemperature(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
-int TsiCam::OnTemperatureSetPoint(MM::PropertyBase* pProp, MM::ActionType eAct)
+int TsiCam::OnTemperatureSetPoint(MM::PropertyBase* /*pProp*/, MM::ActionType eAct)
 {
    if (eAct == MM::AfterSet)
    {
