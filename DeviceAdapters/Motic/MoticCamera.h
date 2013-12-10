@@ -179,10 +179,10 @@ private:
   void ReAllocalBuffer(int size);
  // void GenerateImage();
   int InsertImage();
-  void InitBinning();
-  void InitPixelType();
-  void InitGain();
-  void InitExposure();
+  int InitBinning();
+  int InitPixelType();
+  int InitGain();
+  int InitExposure();
   int InitDevice( );  
 };
 /*

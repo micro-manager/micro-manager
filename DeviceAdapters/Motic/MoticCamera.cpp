@@ -1118,7 +1118,7 @@ int CMoticCamera::OnDevice( MM::PropertyBase* pProp, MM::ActionType eAct )
   return DEVICE_OK;
 }
 
-void CMoticCamera::InitBinning()
+int CMoticCamera::InitBinning()
 {
 #ifdef _LOG_OUT_
   OutputDebugString("InitBinning");
@@ -1138,7 +1138,8 @@ void CMoticCamera::InitBinning()
   // binning
   CPropertyAction *pAct = new CPropertyAction (this, &CMoticCamera::OnBinning);
   int ret = CreateProperty(MM::g_Keyword_Binning, itoa(m_iBinning,bin, 10), MM::Integer, false, pAct);
-  //assert(ret == DEVICE_OK);
+  if (ret != DEVICE_OK)
+     return ret;
 
   vector<string> binningValues;
   for(int i = 0; i < c; i++)
@@ -1147,10 +1148,12 @@ void CMoticCamera::InitBinning()
   }  
 
   ret = SetAllowedValues(MM::g_Keyword_Binning, binningValues);
+  if (ret != DEVICE_OK)
+     return ret;
 #ifdef _LOG_OUT_
   OutputDebugString("InitBinning OK");
 #endif
-  assert(ret == DEVICE_OK);
+  return DEVICE_OK;
 }
 
 int CMoticCamera::OnShowUI( MM::PropertyBase* pProp, MM::ActionType eAct )
@@ -1200,7 +1203,7 @@ int CMoticCamera::OnShowUI( MM::PropertyBase* pProp, MM::ActionType eAct )
   return DEVICE_OK;
 }
 
-void CMoticCamera::InitPixelType()
+int CMoticCamera::InitPixelType()
 {
 #ifdef _LOG_OUT_
   OutputDebugString("InitPixelType");
@@ -1220,7 +1223,9 @@ void CMoticCamera::InitPixelType()
   vector<string> pixelTypeValues;
   if(channels == 1)
   {
-    ret = CreateProperty(MM::g_Keyword_PixelType, g_PixelType_8bit, MM::String, false, pAct);   
+    ret = CreateProperty(MM::g_Keyword_PixelType, g_PixelType_8bit, MM::String, false, pAct);
+    if (ret != DEVICE_OK)
+       return ret;
     pixelTypeValues.push_back(g_PixelType_8bit); 
     m_iBytesPerPixel = 1;
    // if(MIDP_Has16Bits() == 0)
@@ -1231,6 +1236,8 @@ void CMoticCamera::InitPixelType()
   else if(channels == 3)
   {
     ret = CreateProperty(MM::g_Keyword_PixelType, g_PixelType_32bitRGB, MM::String, false, pAct);
+    if (ret != DEVICE_OK)
+       return ret;
     pixelTypeValues.push_back(g_PixelType_8bit);
     pixelTypeValues.push_back(g_PixelType_32bitRGB);
    // if(MIDP_Has16Bits() == 0)
@@ -1240,28 +1247,32 @@ void CMoticCamera::InitPixelType()
     }
     m_iBytesPerPixel = 4;
   }
-  ret = SetAllowedValues(MM::g_Keyword_PixelType, pixelTypeValues);  
+  ret = SetAllowedValues(MM::g_Keyword_PixelType, pixelTypeValues);
+  if (ret != DEVICE_OK)
+     return ret;
 #ifdef _LOG_OUT_
   OutputDebugString("InitPixelType OK");
 #endif
-  assert(ret == DEVICE_OK);
+  return DEVICE_OK;
 }
 
-void CMoticCamera::InitGain()
+int CMoticCamera::InitGain()
 {
 #ifdef _LOG_OUT_
   OutputDebugString("InitGain");
 #endif
   
-  MIDP_GetGainRange(&m_dMinGain, &m_dMaxGain);
-  CPropertyAction *pAct = new CPropertyAction (this, &CMoticCamera::OnGain);
+   MIDP_GetGainRange(&m_dMinGain, &m_dMaxGain);
+   CPropertyAction *pAct = new CPropertyAction (this, &CMoticCamera::OnGain);
    int ret = CreateProperty(MM::g_Keyword_Gain, "1.0", MM::Float, false, pAct);
-   //assert(ret == DEVICE_OK);
+   if (ret != DEVICE_OK)
+      return ret;
    SetPropertyLimits(MM::g_Keyword_Gain, m_dMinGain, m_dMaxGain);
    m_dGain = 1.0;
+   return DEVICE_OK;
 }
 
-void CMoticCamera::InitExposure()
+int CMoticCamera::InitExposure()
 {
 #ifdef _LOG_OUT_
   OutputDebugString("InitExposure");
@@ -1274,9 +1285,11 @@ void CMoticCamera::InitExposure()
   sprintf(buf, "%0.1f\0", m_dExposurems);
   CPropertyAction *pAct = new CPropertyAction (this, &CMoticCamera::OnExposure);
    int ret = CreateProperty(MM::g_Keyword_Exposure, buf, MM::Float, false, pAct);
-   //assert(ret == DEVICE_OK);
+   if (ret != DEVICE_OK)
+      return ret;
    SetPropertyLimits(MM::g_Keyword_Exposure, (double)m_lMinExposure/100.0, (double)m_lMaxExposure/100.0);
   // m_dExposurems = 10.0;
+   return DEVICE_OK;
 }
 
 int CMoticCamera::OnExposure( MM::PropertyBase* pProp, MM::ActionType eAct )
@@ -1311,20 +1324,29 @@ int CMoticCamera::OnExposure( MM::PropertyBase* pProp, MM::ActionType eAct )
 
 int CMoticCamera::InitDevice()
 { 
-   //Bining
-   InitBinning();
+   int ret;
 
-   InitPixelType();  
+   ret = InitBinning();
+   if (ret != DEVICE_OK)
+      return ret;
 
-   InitGain();
+   ret = InitPixelType();  
+   if (ret != DEVICE_OK)
+      return ret;
 
-   InitExposure();
+   ret = InitGain();
+   if (ret != DEVICE_OK)
+      return ret;
+
+   ret = InitExposure();
+   if (ret != DEVICE_OK)
+      return ret;
 
 
    // synchronize all properties
    // --------------------------
  
-   int ret = UpdateStatus();
+   ret = UpdateStatus();
    if (ret != DEVICE_OK)
      return ret;
 
