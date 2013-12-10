@@ -108,7 +108,7 @@ public class CalibrationThread extends Thread {
             app_.setXYStagePosition(x, y);
             core_.waitForDevice(core_.getXYStageDevice());
             core_.snapImage();
-            Object pix = core_.getImage();
+            Object pix = core_.getTaggedImage().pix;
             app_.displayImage(pix);
             if (liveWin_ == null)
                liveWin_ = app_.getImageWin();
