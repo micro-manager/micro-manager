@@ -345,12 +345,12 @@ int PIXYStage::SetOrigin()
 	return DEVICE_OK;
 }
 
-int PIXYStage::GetLimitsUm(double& xMin, double& xMax, double& yMin, double& yMax)
+int PIXYStage::GetLimitsUm(double&, double&, double&, double&)
 {
 	return DEVICE_UNSUPPORTED_COMMAND;
 }
 
-int PIXYStage::GetStepLimits(long& xMin, long& xMax, long& yMin, long& yMax)
+int PIXYStage::GetStepLimits(long&, long&, long&, long&)
 {
 	return DEVICE_UNSUPPORTED_COMMAND;
 }

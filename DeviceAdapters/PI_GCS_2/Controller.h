@@ -57,6 +57,11 @@ extern const char* g_msg_CNTR_AXIS_UNDER_JOYSTICK_CONTROL;
 #define FALSE 0
 #endif
 
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable: 4100) // unreferenced formal parameter
+#endif
+
 size_t ci_find(const std::string& str1, const std::string& str2);
 
 class PIController
@@ -138,5 +143,8 @@ protected:
 };
 
 
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
 #endif //_PI_CONTROLLER_H_

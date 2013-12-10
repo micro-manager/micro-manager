@@ -429,7 +429,7 @@ bool PIGCSControllerCom::IsControllerReady( BOOL* ready)
 	return true;
 }
 
-bool PIGCSControllerCom::IsMoving(const std::string& axes, BOOL* moving)
+bool PIGCSControllerCom::IsMoving(const std::string& /*axes*/, BOOL* moving)
 {
 	std::vector<std::string> answer;
 	if (!deviceProxy_->GCSCommandWithAnswer( (unsigned char)(5), answer, 1))
