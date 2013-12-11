@@ -342,6 +342,14 @@ public class VirtualAcquisitionDisplay implements
             return;
          }
          CanvasPaintPending.setPaintPending(hyperImage_.getCanvas(), this);
+         /*  // this sleep may help in some circumstances
+         try {
+            Thread.sleep(25);
+         } catch (InterruptedException ex) {
+            ReportingUtils.logError(ex, "Sleeping Thread was woken");
+         }
+         */
+         
          superUpdateImage(); 
          imageChangedUpdate(); //updates histograms, metadata panel, calculates LUTS and applies to image
          try {
@@ -1122,22 +1130,13 @@ public class VirtualAcquisitionDisplay implements
          int ch = MDUtils.getChannelIndex(tags);
          int slice = MDUtils.getSliceIndex(tags);
          int position = MDUtils.getPositionIndex(tags);
-         boolean slowUpdates;
-         if (histogramControlsState_ == null) {
-            slowUpdates = false;
-         } else {
-            slowUpdates = histogramControlsState_.slowDisplayUpdates;
-         }
-         int updateTime = slowUpdates ? SLOW_UPDATE_TIME : 30;
+
+         int updateTime = 30;
          //update display if: final update, frame is 0, more than 30 ms since last update, 
          //last channel for given frame/slice/position, or final slice and channel for first frame and position
          boolean show = finalUpdate || frame == 0 || (Math.abs(t - lastDisplayTime_) > updateTime)
-                 || (!slowUpdates && ch == getNumChannels() - 1 && lastFrameShown_ == frame && lastSliceShown_ == slice && lastPositionShown_ == position)
+                 || (ch == getNumChannels() - 1 && lastFrameShown_ == frame && lastSliceShown_ == slice && lastPositionShown_ == position)
                  || (slice == getNumSlices() - 1 && frame == 0 && position == 0 && ch == getNumChannels() - 1);
-         if (slowUpdates && ch != getNumChannels() - 1) {
-            //only do slowupdates when all channels present
-            show = false;
-         }
 
          if (show) {
             showImage(tags, true);
