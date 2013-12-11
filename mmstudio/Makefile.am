@@ -42,7 +42,6 @@ MMJ_.jar:  \
 	$(srcdir)/src/org/micromanager/acquisition/MultipageTiffWriter.java \
 	$(srcdir)/src/org/micromanager/acquisition/OMEMetadata.java \
 	$(srcdir)/src/org/micromanager/acquisition/ProcessorStack.java \
-	$(srcdir)/src/org/micromanager/acquisition/SWCTester.java \
 	$(srcdir)/src/org/micromanager/acquisition/SimpleWindowControls.java \
 	$(srcdir)/src/org/micromanager/acquisition/TaggedImageQueue.java \
 	$(srcdir)/src/org/micromanager/acquisition/TaggedImageStorageDiskDefault.java \
