@@ -18,7 +18,11 @@ files in pco_generic.zip (library and header files) to the following folder:
 <somewhere>..\3rdparty\pco\windows.
 
 Please copy the following files into the MicroManager folder:
-  pco_conv.dll, pco_cdlg.dll
+  pco_conv.dll, pco_cdlg.dll and pco_cryptdll.dll
+  
+pco_conv.dll: Image conversion dll
+pco_cdlg.dll: Image conversion dialog dll
+pco_cryptdll.dll: Software protection dll for conversion
 
 With a PixelFly or SensiCam you're ready to go.
 

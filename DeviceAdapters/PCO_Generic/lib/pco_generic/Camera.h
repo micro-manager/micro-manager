@@ -38,7 +38,7 @@
 #ifndef CAMERA_H
 #define CAMERA_H
 
-#define KAMLIBVERSION           228
+#define KAMLIBVERSION           230
 
 typedef unsigned char byte;     /* 8-bit  */
 typedef unsigned short word;    /* 16-bit */
@@ -51,6 +51,7 @@ typedef unsigned long dword;    /* 32-bit */
 #define PCO_ERRT_H_CREATE_OBJECT
 #include "PCO_err.h"
 #include "PCO_errt.h"
+#include "sc2_SDKStructures.h"
 
 extern void InitLib(unsigned char, char*, int, char*);
 #define MMIJ 5
@@ -93,16 +94,17 @@ public:
 
 // Image buffer related functions:
 
-  word * const GetPic12(WORD* wmean, double* dsigma, DWORD dwflags);
+  word * const GetPic12(WORD* wmean, double* dsigma, DWORD dwflags) const;
   byte * GetPic8();
   byte * GetPic8c();
+  word * GetBuffer(int ibufnum);
 
   bool ReloadSize();
-  int  WaitForImage();
+  int  WaitForImage(int *ilastbuffer, int *icurrentbuffer);
   int GetBitsPerPixel();
 
 // Convert functions:
-  void Convert();
+  void Convert(int ibufnum);
   void SetViewMode(bool bFlip, bool bMirror, bool bRotLeft, bool bRotRight);
   void GetViewMode(bool *bFlip, bool *bMirror, bool *bRotLeft, bool *bRotRight);
   void SetConvertBWCol(bool bBW, bool bCol);
@@ -123,6 +125,10 @@ public:
   int getsettings(int* mode, int* trig, int* roix1, int* roix2, int* roiy1, int* roiy2, int* hbin, int* vbin, char* table, int *gain, int *offset, unsigned int* flags);
   int testcoc(int* mode, int* trig, int* roix1, int* roix2, int* roiy1, int* roiy2, int* hbin, int* vbin, char* table,int* size, int *gain, int *offset, unsigned int* flags);
   int getccdsize(int*, int*, int*);
+
+  PCO_Camera strCam;
+  int GetCameraStruct(PCO_Camera *strCamera);
+  int SetCameraStruct(PCO_Camera *strCamera);
 
 // Dialog related functions:
 
