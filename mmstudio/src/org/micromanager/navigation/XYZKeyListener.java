@@ -33,13 +33,14 @@ import mmcorej.CMMCore;
 import mmcorej.MMCoreJ;
 
 import org.micromanager.MMStudioMainFrame;
+import org.micromanager.internalinterfaces.LiveModeListener;
 import org.micromanager.utils.ReportingUtils;
 
 /**
  * @author OD
  *
  */
-public final class XYZKeyListener implements KeyListener {
+public final class XYZKeyListener implements KeyListener, LiveModeListener {
 	private CMMCore core_;
    private MMStudioMainFrame gui_;
 	private ImageCanvas canvas_;
@@ -280,5 +281,13 @@ public final class XYZKeyListener implements KeyListener {
 			ReportingUtils.showError(exc);
 		}
 	}
+
+   public void liveModeEnabled(boolean enabled) {
+      if (enabled) {
+         this.start(gui_.getImageWin());
+      } else {
+         this.stop();
+      }
+   }
 
 }

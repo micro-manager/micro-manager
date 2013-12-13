@@ -114,7 +114,7 @@ public class LiveModeTimer {
 
    /**
     * Determines the optimum interval for the live mode timer task to happen
-    * As a side effect, also sets variable fpsInterval_
+    * Also sets variable fpsInterval_
     */
    private long getInterval() {
       double interval = 20;

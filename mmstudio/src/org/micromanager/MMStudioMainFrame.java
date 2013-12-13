@@ -140,6 +140,7 @@ import org.micromanager.acquisition.TaggedImageStorageMultipageTiff;
 import org.micromanager.acquisition.VirtualAcquisitionDisplay;
 import org.micromanager.api.IAcquisitionEngine2010;
 import org.micromanager.graph.HistogramSettings;
+import org.micromanager.internalinterfaces.LiveModeListener;
 import org.micromanager.utils.DragDropUtil;
 import org.micromanager.utils.FileDialogs;
 import org.micromanager.utils.FileDialogs.FileType;
@@ -207,6 +208,8 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    private ArrayList<PluginItem> plugins_;
    private List<MMListenerInterface> MMListeners_
            = Collections.synchronizedList(new ArrayList<MMListenerInterface>());
+   private List<LiveModeListener> liveModeListeners_
+           = Collections.synchronizedList(new ArrayList<LiveModeListener>());
    private List<Component> MMFrames_
            = Collections.synchronizedList(new ArrayList<Component>());
    private AutofocusManager afMgr_;
@@ -554,6 +557,24 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       MMListeners_.remove(oldL);
    }
 
+   
+   public final void addLiveModeListener (LiveModeListener listener) {
+      if (liveModeListeners_.contains(listener)) {
+         return;
+      }
+      liveModeListeners_.add(listener);
+   }
+   
+   public void removeLiveModeListener(LiveModeListener listener) {
+      liveModeListeners_.remove(listener);
+   }
+   
+   public void callLiveModeListeners(boolean enable) {
+      for (LiveModeListener listener : liveModeListeners_) {
+         listener.liveModeEnabled(enable);
+      }
+   }
+   
    /**
     * Lets JComponents register themselves so that their background can be
     * manipulated
@@ -903,7 +924,8 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       }
 
       ReportingUtils.SetContainingFrame(gui_);
-
+      
+           
       // set the location for app preferences
       try {
          mainPrefs_ = Preferences.userNodeForPackage(this.getClass());
@@ -1875,9 +1897,13 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
                   ReportingUtils.showError(e1);
                }
             }
-                        
+
             centerAndDragListener_ = new CenterAndDragListener(gui_);
-             
+            zWheelListener_ = new ZWheelListener(core_, gui_);
+            gui_.addLiveModeListener(zWheelListener_);
+            xyzKeyListener_ = new XYZKeyListener(core_, gui_);
+            gui_.addLiveModeListener(xyzKeyListener_);
+
             // switch error reporting back on
             ReportingUtils.showErrorOn(true);
          }
@@ -2181,44 +2207,9 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(mmKD);
 
       dt_ = new DropTarget(this, new DragDropUtil());
-      
-      overrideImageJMenu();
+
    }
    
-   private void overrideImageJMenu() {
-//      final Menu colorMenu = ((Menu) Menus.getMenuBar().getMenu(2).getItem(5));
-//      MenuItem stackToRGB = colorMenu.getItem(4);
-//      final ActionListener ij = stackToRGB.getActionListeners()[0];
-//      stackToRGB.removeActionListener(ij);
-//      stackToRGB.addActionListener(new ActionListener() {
-//         @Override
-//         public void actionPerformed(ActionEvent e) {
-//            ImagePlus img = WindowManager.getCurrentImage();
-//            if (img != null && img instanceof VirtualAcquisitionDisplay.MMCompositeImage) {
-//               int selection = JOptionPane.showConfirmDialog(img.getWindow(),
-//                       "Because of the way Micro-Manager internally handles Color images, this command may\n"
-//                       + "not work correctly.  An RGB Image/Stack can be created by splitting all channels\n"
-//                       + "and then merging them.  Would you like Micro-Manager to perform this operation\n"
-//                       + "automatically?\n\n"
-//                       + "Yes--Split and merge channels to create RGB image/stack\n"
-//                       + "No--Proceed with Stack to RGB command (may have unexpected effects on pixel data) ",
-//                       "Convert Stack to RGB", JOptionPane.YES_NO_CANCEL_OPTION);
-//               if (selection == 0) { //yes
-//                  IJ.run("Split Channels");
-//                  WindowManager.getCurrentImage().setTitle("BlueChannel");
-//                  WindowManager.getImage(WindowManager.getNthImageID(2)).setTitle("GreenChannel");
-//                  WindowManager.getImage(WindowManager.getNthImageID(1)).setTitle("RedChannel");
-//                  
-//                  IJ.run("Merge Channels...", "red=[RedChannel] green=[GreenChannel] blue=[BlueChannel] gray=*None*");
-//               } else if (selection == 1) { //no
-//                   ij.actionPerformed(e);
-//               }
-//            } else {
-//               //If not an MM CompositImage, do the normal command
-//               ij.actionPerformed(e);
-//            }           
-//         }});
-   }
 
    private void handleException(Exception e, String msg) {
       String errText = "Exception occurred: ";
@@ -3071,17 +3062,17 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
                liveModeTimer_ = new LiveModeTimer();
             }
             liveModeTimer_.begin();
-            enableLiveModeListeners(enable);
+            callLiveModeListeners(enable);
          } catch (Exception e) {
             ReportingUtils.showError(e);
             liveModeTimer_.stop();
-            enableLiveModeListeners(false);
+            callLiveModeListeners(false);
             updateButtonsForLiveMode(false);
             return;
          }
       } else {
          liveModeTimer_.stop();
-         enableLiveModeListeners(enable);
+         callLiveModeListeners(enable);
       }
       updateButtonsForLiveMode(enable);
    }
@@ -3100,24 +3091,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       toggleButtonLive_.setSelected(false);
       toggleButtonLive_.setText(enable ? "Stop Live" : "Live");
       
-   }
-
-   private void enableLiveModeListeners(boolean enable) {
-      if (enable) {
-         // attach mouse wheel listener to control focus:
-         if (zWheelListener_ == null) 
-            zWheelListener_ = new ZWheelListener(core_, this);         
-         zWheelListener_.start(getImageWin());
-         // attach key listener to control the stage and focus:
-         if (xyzKeyListener_ == null) 
-            xyzKeyListener_ = new XYZKeyListener(core_, this);
-         xyzKeyListener_.start(getImageWin());
-      } else {
-         if (zWheelListener_ != null) 
-            zWheelListener_.stop();
-         if (xyzKeyListener_ != null) 
-            xyzKeyListener_.stop();
-      }
    }
 
    public boolean getLiveMode() {

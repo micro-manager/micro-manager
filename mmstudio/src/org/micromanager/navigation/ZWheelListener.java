@@ -31,11 +31,12 @@ import java.awt.event.MouseWheelListener;
 
 import org.micromanager.MMStudioMainFrame;
 import mmcorej.CMMCore;
+import org.micromanager.internalinterfaces.LiveModeListener;
 import org.micromanager.utils.ReportingUtils;
 
 /**
 */
-public class ZWheelListener implements MouseWheelListener {
+public class ZWheelListener implements MouseWheelListener, LiveModeListener {
    private CMMCore core_;
    private MMStudioMainFrame gui_;
    private ImageCanvas canvas_;
@@ -114,5 +115,13 @@ public class ZWheelListener implements MouseWheelListener {
 	  }
 
    } 
+   
+   public void liveModeEnabled(boolean enabled) {
+      if (enabled) {
+         this.start(gui_.getImageWin());
+      } else {
+         this.stop();
+      }
+   }
 
 }
