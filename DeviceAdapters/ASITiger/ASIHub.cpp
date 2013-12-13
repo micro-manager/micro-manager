@@ -103,11 +103,11 @@ int ASIHub::QueryCommand(const char *command, const char *replyTerminator, const
    RETURN_ON_MM_ERROR ( SendSerialCommand(port_.c_str(), command, "\r") );
    serialCommand_ = command;
    // if in debug mode then echo serialCommand_ to log file
-   LogMessage("SerialCommand:\t" + serialCommand_, true);
+//   LogMessage("SerialCommand:\t" + serialCommand_, true);  // already done by COM port
    if (delayMs >= 0)  CDeviceUtils::SleepMs(delayMs);
    RETURN_ON_MM_ERROR ( GetSerialAnswer(port_.c_str(), replyTerminator, serialAnswer_) );
    // if in debug mode then echo serialCommand_ to log file
-   LogMessage("SerialReponse:\t" + serialAnswer_, true);
+//   LogMessage("SerialReponse:\t" + serialAnswer_, true);  // already done by COM port
    return DEVICE_OK;
 }
 

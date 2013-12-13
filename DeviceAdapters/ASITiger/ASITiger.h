@@ -257,7 +257,7 @@ const char* const g_SPIMFirstSidePropertyName = "SPIMFirstSide";
 const char* const g_SPIMNumRepeatsPropertyName = "SPIMNumRepeats";
 const char* const g_SPIMArmForTTLPropertyName = "SPIMArm";
 const char* const g_SPIMStatePropertyName = "SPIMState";
-const char* const g_SPIMDelayBeforeSheetPropertyName = "SPIMDelayBeforeSheet(ms)";
+const char* const g_SPIMDelayBeforeSlicePropertyName = "SPIMDelayBeforeSlice(ms)";
 const char* const g_SPIMDelayBeforeSidePropertyName = "SPIMDelayBeforeSide(ms)";
 
 // SPIM enums

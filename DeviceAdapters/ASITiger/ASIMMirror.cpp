@@ -325,10 +325,10 @@ int CMMirror::Initialize()
       UpdateProperty(g_SPIMDelayBeforeSidePropertyName);
       SetPropertyLimits(g_SPIMDelayBeforeSidePropertyName, 0, 100);
 
-      pAct = new CPropertyAction (this, &CMMirror::OnSPIMDelayBeforeSheet);
-      CreateProperty(g_SPIMDelayBeforeSheetPropertyName, "0", MM::Float, false, pAct);
-      UpdateProperty(g_SPIMDelayBeforeSheetPropertyName);
-      SetPropertyLimits(g_SPIMDelayBeforeSheetPropertyName, 0, 100);
+      pAct = new CPropertyAction (this, &CMMirror::OnSPIMDelayBeforeSlice);
+      CreateProperty(g_SPIMDelayBeforeSlicePropertyName, "0", MM::Float, false, pAct);
+      UpdateProperty(g_SPIMDelayBeforeSlicePropertyName);
+      SetPropertyLimits(g_SPIMDelayBeforeSlicePropertyName, 0, 100);
 
       pAct = new CPropertyAction (this, &CMMirror::OnSPIMState);
       CreateProperty(g_SPIMStatePropertyName, g_SPIMStateIdle, MM::String, false, pAct);
@@ -2004,7 +2004,7 @@ int CMMirror::OnSPIMDelayBeforeSide(MM::PropertyBase* pProp, MM::ActionType eAct
    return DEVICE_OK;
 }
 
-int CMMirror::OnSPIMDelayBeforeSheet(MM::PropertyBase* pProp, MM::ActionType eAct)
+int CMMirror::OnSPIMDelayBeforeSlice(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    ostringstream command; command.str("");
    double tmp = 0;

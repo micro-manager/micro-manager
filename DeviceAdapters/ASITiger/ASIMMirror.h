@@ -112,7 +112,7 @@ public:
    int OnSPIMFirstSide        (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSPIMNumRepeats       (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSPIMState            (MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnSPIMDelayBeforeSheet (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSPIMDelayBeforeSlice (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSPIMDelayBeforeSide  (MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
