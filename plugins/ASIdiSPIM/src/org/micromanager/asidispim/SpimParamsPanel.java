@@ -25,8 +25,12 @@ import org.micromanager.asidispim.Data.SpimParams;
 import org.micromanager.asidispim.Data.Devices;
 import org.micromanager.asidispim.Utils.ListeningJPanel;
 import org.micromanager.asidispim.Utils.SpimParamsListenerInterface;
+import org.micromanager.utils.ReportingUtils;
+
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.text.ParseException;
+
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JSpinner;
@@ -34,11 +38,13 @@ import javax.swing.SpinnerModel;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+
 import net.miginfocom.swing.MigLayout;
 
 /**
  *
  * @author nico
+ * @author Jon
  */
 public class SpimParamsPanel extends ListeningJPanel {
 
@@ -52,34 +58,43 @@ public class SpimParamsPanel extends ListeningJPanel {
               "[]12[]"));
       params_ = params;
       devices_ = devices;
+      
+      try {
 
-      add(new JLabel("Number of sides:"), "split 2");
-      add(makeSpinner(SpimParams.NR_SIDES, 1, 2));
-      
-      add(new JLabel("First side:"), "align right");
-      add(makeABBox(SpimParams.FIRSTSIDE), "wrap");
-      
-      add(new JLabel("Side A"), "cell 1 2");
-      add(new JLabel("Side B"), "wrap");
-      
-      add(new JLabel("Number of slices:"));
-      add(makeSpinner(SpimParams.NR_SLICES, 1, 99), "span 2, wrap");
-      
-      add(new JLabel("Lines scans per slice:"));
-      add(makeSpinner(SpimParams.NR_LINESCANS_PER_SLICE_A, 1, 20));
-      add(makeSpinner(SpimParams.NR_LINESCANS_PER_SHEET_B, 1, 20), "wrap");
-      
-      add(new JLabel("Line scan period (ms):"));
-      add(makeSpinner(SpimParams.LINE_SCAN_PERIOD_A, 1, 10000));
-      add(makeSpinner(SpimParams.LINESCAN_PERIOD_B, 1, 10000), "wrap");
-      
-      add(new JLabel("Delay before each slice (ms):"));
-      add(makeSpinner(SpimParams.DELAY_BEFORE_SHEET_A, 0, 10000));
-      add(makeSpinner(SpimParams.DELAY_BEFORE_SHEET_B, 0, 10000), "wrap");
-      
-      add(new JLabel("Delay before each side (ms):"));
-      add(makeSpinner(SpimParams.DELAY_BEFORE_SIDE_A, 0, 10000));
-      add(makeSpinner(SpimParams.DELAY_BEFORE_SIDE_B, 0, 10000), "wrap");
+    	  add(new JLabel("Number of sides:"), "split 2");
+    	  add(makeSpinnerInteger(SpimParams.NR_SIDES, 1, 2));
+
+    	  add(new JLabel("First side:"), "align right");
+    	  add(makeABBox(SpimParams.FIRSTSIDE), "wrap");
+
+    	  add(new JLabel("Side A"), "cell 1 2");
+    	  add(new JLabel("Side B"), "wrap");
+
+    	  add(new JLabel("Number of slices:"));
+    	  add(makeSpinnerInteger(SpimParams.NR_SLICES, 1, 99), "span 2, wrap");
+
+    	  add(new JLabel("Lines scans per slice:"));
+    	  add(makeSpinnerInteger(SpimParams.NR_LINESCANS_PER_SLICE, 1, 1000), "span 2, wrap");
+
+    	  add(new JLabel("Line scan period (ms):"));
+    	  add(makeSpinnerInteger(SpimParams.LINE_SCAN_PERIOD_A, 1, 10000));
+    	  add(makeSpinnerInteger(SpimParams.LINE_SCAN_PERIOD_B, 1, 10000), "wrap");
+
+    	  add(new JLabel("Delay before each slice (ms):"));
+//    	  add(makeSpinnerFloat(SpimParams.DELAY_BEFORE_SLICE_A, 0.0, 10000.0, 0.25));
+//    	  add(makeSpinnerFloat(SpimParams.DELAY_BEFORE_SLICE_B, 0.0, 10000.0, 0.25), "wrap");
+    	  add(makeSpinnerInteger(SpimParams.DELAY_BEFORE_SLICE_A, 0, 10000));
+    	  add(makeSpinnerInteger(SpimParams.DELAY_BEFORE_SLICE_B, 0, 10000), "wrap");
+
+    	  add(new JLabel("Delay before each side (ms):"));
+//    	  add(makeSpinnerFloat(SpimParams.DELAY_BEFORE_SIDE_A, 0.0, 10000.0, 0.25));
+//    	  add(makeSpinnerFloat(SpimParams.DELAY_BEFORE_SIDE_B, 0.0, 10000.0, 0.25), "wrap");
+    	  add(makeSpinnerInteger(SpimParams.DELAY_BEFORE_SIDE_A, 0, 10000));
+    	  add(makeSpinnerInteger(SpimParams.DELAY_BEFORE_SIDE_B, 0, 10000), "wrap");
+    	  
+      } catch (Exception ex) {
+    	  ReportingUtils.showError("Error creating spinners, probably a type mismatch");
+      }
       
    }
 
@@ -108,15 +123,22 @@ public class SpimParamsPanel extends ListeningJPanel {
       }
    };
    
-   private JSpinner makeSpinner(String spimParamName, int min, int max) {
-      SpinnerModel jspm = new SpinnerNumberModel(
-              params_.getIntInfo(spimParamName), min, max, 1);
-      JSpinner jsp = new JSpinner(jspm);
-      IntSpinnerListener ispl = new IntSpinnerListener(spimParamName, jsp);
-      jsp.addChangeListener(ispl);
-      params_.addListener(ispl);
- 
-      return jsp;
+   private JSpinner makeSpinnerInteger(String spimParamName, int min, int max) throws ParseException {
+	   SpinnerModel jspm = new SpinnerNumberModel(params_.getPropValueInteger(spimParamName), min, max, 1);
+	   JSpinner jsp = new JSpinner(jspm);
+	   IntSpinnerListener ispl = new IntSpinnerListener(spimParamName, jsp);
+	   jsp.addChangeListener(ispl);
+	   params_.addListener(ispl);		   
+	   return jsp;
+   }
+   
+   private JSpinner makeSpinnerFloat(String spimParamName, double min, double max, double step) throws ParseException {
+	   SpinnerModel jspm = new SpinnerNumberModel((double)params_.getPropValueFloat(spimParamName), min, max, step);
+	   JSpinner jsp = new JSpinner(jspm);
+	   IntSpinnerListener ispl = new IntSpinnerListener(spimParamName, jsp);
+	   jsp.addChangeListener(ispl);
+	   params_.addListener(ispl);		   
+	   return jsp;
    }
    
    

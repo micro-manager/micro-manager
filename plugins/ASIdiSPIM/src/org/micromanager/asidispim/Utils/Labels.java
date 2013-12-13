@@ -32,6 +32,7 @@ import java.util.Map;
  * Mappings can be looked up either way by statically defined (final) Maps
  * 
  * @author nico
+ * @author Jon
  */
 public class Labels {
    public static enum Sides {A, B};
@@ -88,5 +89,36 @@ public class Labels {
          Terms term = it.next();
          REVTERMSMAP.put(TERMSMAP.get(term), term);
       }
+   }
+   
+   /**
+    * types of properties that Micro-Manager supports 
+    * @author Jon
+    */
+   public static enum PropTypes { STRING, FLOAT, INTEGER };
+   
+   /**
+    * associative class to store information about MicroManager properties
+    * @author Jon
+    */
+   public static class Property {
+	   public String pluginName;
+	   public String adapterName;
+	   public String pluginDevice;
+	   public PropTypes propType;
+	   
+	   /**
+	    * 
+	    * @param pluginName property name in Java; used as key to hashmap
+	    * @param adapterName property name in ASITiger.h
+	    * @param pluginDevice device name in Java
+	    * @param propType STRING, FLOAT, or INTEGER
+	    */
+	   public Property(String pluginName, String adapterName, String pluginDevice, PropTypes propType) {
+		   this.pluginName = pluginName;
+		   this.adapterName = adapterName;
+		   this.pluginDevice = pluginDevice;
+		   this.propType = propType;
+	   }
    }
 }

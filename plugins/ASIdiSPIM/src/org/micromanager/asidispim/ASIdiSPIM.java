@@ -57,7 +57,8 @@ public class ASIdiSPIM implements MMPlugin {
 
     @Override
    public void show() {
-         String ig = "ASI diSPIM";
+    	@SuppressWarnings("unused")
+		String ig = "ASI diSPIM";
    }
 
     @Override

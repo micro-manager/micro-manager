@@ -89,7 +89,7 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
       setLocation(prefs_.getInt(XLOC, 100), prefs_.getInt(YLOC, 100));
       tabbedPane.setSelectedIndex(prefs_.getInt(TABINDEX, 0));
       
-      final Timer stagePosUpdater = new Timer(1000, new ActionListener() {
+      final Timer stagePosUpdater = new Timer(100000000, new ActionListener() {  // was 1000
          public void actionPerformed(ActionEvent ae) {
             // update stage positions in devices
             devices_.updateStagePositions();
