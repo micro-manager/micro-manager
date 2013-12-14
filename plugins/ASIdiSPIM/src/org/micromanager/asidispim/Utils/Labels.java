@@ -111,7 +111,7 @@ public class Labels {
 	    * 
 	    * @param pluginName property name in Java; used as key to hashmap
 	    * @param adapterName property name in ASITiger.h
-	    * @param pluginDevice device name in Java
+	    * @param pluginDevice device name in Java, usually in Devices class
 	    * @param propType STRING, FLOAT, or INTEGER
 	    */
 	   public Property(String pluginName, String adapterName, String pluginDevice, PropTypes propType) {

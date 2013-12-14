@@ -106,7 +106,6 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
          public void windowClosing(java.awt.event.WindowEvent evt) {
             stagePosUpdater.stop();
             devices_.saveSettings();
-            spimParams_.saveSettings();
 
             prefs_.putInt(XLOC, evt.getWindow().getX());
             prefs_.putInt(YLOC, evt.getWindow().getY());

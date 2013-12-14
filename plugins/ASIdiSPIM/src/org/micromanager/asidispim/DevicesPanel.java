@@ -90,7 +90,9 @@ public class DevicesPanel extends ListeningJPanel {
       add(makeDeviceBox(
               mmcorej.DeviceType.StageDevice, Devices.PIEZOB), "wrap");
 
-      add(new JLabel("Sheet MicroMirror:", null, JLabel.RIGHT));
+      JLabel label = new JLabel("Sheet MicroMirror:", null, JLabel.RIGHT);
+      label.setToolTipText("Should be the first two axes on the MicroMirror card, usually AB");
+      add (label);
       add(makeDeviceBox(
               mmcorej.DeviceType.GalvoDevice, Devices.GALVOA));
       add(makeDeviceBox(
@@ -98,9 +100,7 @@ public class DevicesPanel extends ListeningJPanel {
               "wrap");
 
       add(new JLabel("Fast axis:"));
-      add(makeXYBox(Devices.FASTAXISADIR), "split 2");
       add(makeReverseCheckBox(Devices.FASTAXISAREV));
-      add(makeXYBox(Devices.FASTAXISBDIR), "split 2");
       add(makeReverseCheckBox(Devices.FASTAXISBREV), "wrap");
 
       add(new JLabel("Anti-striping MicroMirror:", null, JLabel.RIGHT));
@@ -141,7 +141,7 @@ public class DevicesPanel extends ListeningJPanel {
     * 
     * @param deviceType - Micro-Manager device type
     * @param deviceName - ASi diSPIM device type (see Devices class)
-    * @return final JCOmboBox
+    * @return final JComboBox
     */
    private JComboBox makeDeviceBox(mmcorej.DeviceType deviceType, String deviceName) {
       StrVector strvDevices = gui_.getMMCore().getLoadedDevicesOfType(deviceType);
