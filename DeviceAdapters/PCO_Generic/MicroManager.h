@@ -34,9 +34,9 @@
 
 #if !defined KAMLIBVERSION
 #pragma message ("*****************************************************************************************")
-#pragma message ("* Please upgrade Kamlib library in ./3rdparty/PCO/Windows/pco_generic to current version!")
-#pragma message ("* Copy the content of the pco_generic.zip file to the corresponding 3rdparty folder.")
-#error Missing current pco 3rdparty library (in camera.h). Please copy pco lib into 3rdparty folder. See pco_generic.zip in DeviceAdapters/pco_generic.
+#pragma message ("* Please upgrade Kamlib library to current version!")
+#pragma message ("* Copy the content of the pco_generic.zip file to the correct library/include folder.")
+#error Missing current pco library (in camera.h). Please copy pco lib into correct library/include folder.
 #endif
 
 #define KAMLIBVERSION_MM 230  // Will be incremented by pco when a new Kamlib is present (do not change)
@@ -44,8 +44,8 @@
 #define STRING2(x) #x
 #define STRING(x) STRING2(x)
 #pragma message ("*****************************************************************************************")
-#pragma message ("* Please upgrade Kamlib library in ./3rdparty/PCO/Windows/pco_generic to current version!")
-#pragma message ("* Copy the content of the pco_generic.zip file to the corresponding 3rdparty folder.")
+#pragma message ("* Please upgrade Kamlib library to current version!")
+#pragma message ("* Copy the content of the pco_generic.zip file to the correct library/include folder.")
 #pragma message ("* Current kamblib version:" STRING(KAMLIBVERSION))
 #pragma message ("*    This kamblib version:" STRING(KAMLIBVERSION_MM))
 #pragma message ("*****************************************************************************************")
