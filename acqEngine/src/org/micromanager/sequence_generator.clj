@@ -351,7 +351,8 @@
 
 (defn generate-simple-burst-sequence [numFrames use-autofocus
                                       channels slices default-exposure
-                                      property-triggers position-index]
+                                      property-triggers position-index
+                                      relative-slices]
   (println "simple")
   (let [numChannels (max 1 (count channels))
         numSlices (max 1 (count slices))
@@ -387,24 +388,28 @@
                   :task :burst
                   :burst-data events
                   :burst-length (count events)
+                  :relative-z relative-slices
                   :trigger-sequence (merge (make-triggers events) property-triggers)))
          partitioned-events)))
   
 
 (defn generate-multiposition-bursts [positions num-frames use-autofocus
-                                     channels slices default-exposure triggers]
+                                     channels slices default-exposure triggers
+                                     relative-slices]
   (process-new-position
     (flatten
       (for [pos-index (range (count positions))]
         (map #(assoc % :position-index pos-index
                      :position (nth positions pos-index))
              (generate-simple-burst-sequence
-               num-frames use-autofocus channels slices default-exposure triggers pos-index))))))
+               num-frames use-autofocus channels slices
+               default-exposure triggers pos-index relative-slices))))))
 
 (defn generate-acq-sequence [settings runnables]
   (let [{:keys [numFrames time-first positions slices channels
                 use-autofocus default-exposure interval-ms
-                autofocus-skip custom-intervals-ms slices-first]} settings
+                autofocus-skip custom-intervals-ms slices-first
+                relative-slices]} settings
         property-sequences (make-property-sequences (map :properties channels))
         have-multiple-frames (< 1 numFrames)
         have-multiple-positions (< 1 (count positions))
@@ -451,9 +456,9 @@
         (if have-multiple-positions
           (generate-multiposition-bursts
             positions numFrames use-autofocus channels slices
-            default-exposure triggers)
+            default-exposure triggers relative-slices)
           (generate-simple-burst-sequence
             numFrames use-autofocus channels slices
-            default-exposure triggers 0)))
+            default-exposure triggers 0 relative-slices)))
       (generate-default-acq-sequence settings runnables))))
 
