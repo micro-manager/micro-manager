@@ -355,7 +355,7 @@
     (apply-to-map-vals offset-if-extra-trigger (:properties trigger-sequence)))
   (let [absolute-slices (load-slice-sequence
                           (compensate-for-extra-trigger (:slices trigger-sequence))
-                           relative-z)]
+                          relative-z)]
     (start-property-sequences (:properties trigger-sequence))
     (when absolute-slices
       (start-slice-sequence (:slices trigger-sequence)))
