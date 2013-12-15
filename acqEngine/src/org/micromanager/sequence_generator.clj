@@ -215,6 +215,9 @@
     (when-not (empty? z-drive)
       (.isStageSequenceable mmc z-drive))))
 
+(defn sequence-fits-stage? [z-drive n-slices]
+  (<= n-slices (.getStageSequenceMaxLength mmc z-drive)))
+
 (defn event-triggerable
   "Returns true if an event can be added to a burst."
   [burst event]
@@ -229,7 +232,7 @@
           (when-let [z-drive (. mmc getFocusDevice)]
             (and
               (stage-sequenceable?)
-              (< n (.getStageSequenceMaxLength mmc z-drive))
+              (sequence-fits-stage? z-drive (inc n))
               (<= (Math/abs (- (e1 :slice) (e2 :slice))) MAX-Z-TRIGGER-DIST)
               (<= (e1 :slice-index) (e2 :slice-index))))))))
   
@@ -411,12 +414,14 @@
                 autofocus-skip custom-intervals-ms slices-first
                 relative-slices]} settings
         property-sequences (make-property-sequences (map :properties channels))
+        n-slices (count slices)
         have-multiple-frames (< 1 numFrames)
         have-multiple-positions (< 1 (count positions))
-        have-multiple-slices (< 1 (count slices))
+        have-multiple-slices (< 1 n-slices)
         have-multiple-channels (< 1 (count channels))
         channel-properties-sequenceable (channels-sequenceable property-sequences channels)
-        slices-sequenceable (stage-sequenceable?)
+        slices-sequenceable (and (stage-sequenceable?)
+                                 (sequence-fits-stage? (.getFocusDevice mmc) n-slices))
         no-channel-skips-frames (all-equal? 0 (map :skip-frames channels))
         all-channels-do-z-stack (all-equal? true (map :use-z-stack channels))]
     (println slices-first)
