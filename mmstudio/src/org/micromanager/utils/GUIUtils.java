@@ -23,6 +23,7 @@
 
 package org.micromanager.utils;
 
+import com.swtdesigner.SwingResourceManager;
 import ij.WindowManager;
 import ij.gui.ImageWindow;
 import java.awt.AWTEvent;
@@ -35,20 +36,10 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.Window;
-import java.awt.event.AWTEventListener;
-import java.awt.event.ActionListener;
-
-import java.awt.event.FocusAdapter;
-import java.awt.event.FocusEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.awt.event.*;
 import java.lang.reflect.InvocationTargetException;
 import java.util.prefs.Preferences;
-import javax.swing.DefaultCellEditor;
-import javax.swing.JComboBox;
-
-import javax.swing.JTable;
-import javax.swing.SwingUtilities;
+import javax.swing.*;
 
 
 
@@ -234,4 +225,100 @@ public class GUIUtils {
          SwingUtilities.invokeLater(r);
       }
    }
+   
+   
+   
+       
+   /* 
+    * Attach properly formatted tooltip text to the specified
+    * JComponent.
+    */
+   public static void setToolTipText(JComponent component,
+            String toolTipText) {
+      if (JavaUtils.isMac()) {// running on a mac
+         component.setToolTipText(toolTipText);
+      }
+      else {
+         component.setToolTipText(TooltipTextMaker.addHTMLBreaksForTooltip(toolTipText));
+      }
+    }
+    
+   /*
+    * Add an icon from the "org/micromanager/icons/ folder with
+    * given file name, to specified the button or menu.
+    */
+   public static void setIcon(AbstractButton component, String iconFileName) {
+      component.setIcon(SwingResourceManager.getIcon(
+              "/org/micromanager/icons/" + iconFileName));
+   }
+   
+      
+   /////////////////////// MENU ITEM UTILITY METHODS ///////////
+   
+   /*
+    * Add a menu to the specified menu bar.
+    */
+   public static JMenu createMenuInMenuBar(final JMenuBar menuBar, final String menuName) {
+      final JMenu menu = new JMenu();
+      menu.setText(menuName);
+      menuBar.add(menu);
+      return menu;
+   }
+
+    /*
+     * Add a menu item to the specified parent menu.
+     */
+   public static JMenuItem addMenuItem(final JMenu parentMenu,
+            JMenuItem menuItem,
+            final String menuItemToolTip,
+           final Runnable menuActionRunnable) {
+      if (menuItemToolTip != null) {
+         setToolTipText(menuItem, menuItemToolTip);
+      }
+      if (menuActionRunnable != null) {
+         menuItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent ignoreEvent) {
+               menuActionRunnable.run();
+            }
+         });
+      }
+      parentMenu.add(menuItem);
+      return menuItem;
+   }
+   
+   public static JMenuItem addMenuItem(final JMenu parentMenu,
+           final String menuItemText,
+           final String menuItemToolTip,
+           final Runnable menuActionRunnable) {
+      return addMenuItem(parentMenu, new JMenuItem(menuItemText),
+              menuItemToolTip, menuActionRunnable);      
+   }
+   
+   public static JMenuItem addMenuItem(final JMenu parentMenu,
+           final String menuItemText,
+           final String menuItemToolTip,
+           final Runnable menuActionRunnable,
+           final String iconFileName) {
+      final JMenuItem menuItem = addMenuItem(parentMenu,
+              menuItemText, menuItemToolTip, menuActionRunnable);
+      setIcon(menuItem, iconFileName);
+      return menuItem;
+   }
+  
+   public static JCheckBoxMenuItem addCheckBoxMenuItem(final JMenu parentMenu,
+           final String menuItemText,
+           final String menuItemToolTip,
+           final Runnable menuActionRunnable,
+           final boolean initState) {
+      final JCheckBoxMenuItem menuItem = (JCheckBoxMenuItem)
+              addMenuItem(parentMenu, new JCheckBoxMenuItem(menuItemText),
+              menuItemToolTip, menuActionRunnable);
+      menuItem.setSelected(initState);
+      return menuItem;
+   }
+   
+   ////////////// END MENU ITEM UTILITY METHODS ////////////////
+   
+   
+   
 }

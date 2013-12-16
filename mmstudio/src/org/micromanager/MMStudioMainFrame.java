@@ -309,6 +309,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    public static void createSimpleDisplay(String name, ImageCache cache) throws MMScriptException {
       simpleDisplay_ = new VirtualAcquisitionDisplay(cache, name); 
    }
+
    
  public void checkSimpleAcquisition() {
       if (core_.getCameraDevice().length() == 0) {
@@ -435,9 +436,9 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    }
 
    private void initializeFileMenu() {
-      JMenu fileMenu = createMenuInMenuBar(menuBar_, "File");
+      JMenu fileMenu = GUIUtils.createMenuInMenuBar(menuBar_, "File");
 
-      addMenuItem(fileMenu, "Open (Virtual)...", null,
+      GUIUtils.addMenuItem(fileMenu, "Open (Virtual)...", null,
               new Runnable() {
                  public void run() {
                     new Thread() {
@@ -449,7 +450,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
                  }
               });
 
-      addMenuItem(fileMenu, "Open (RAM)...", null,
+      GUIUtils.addMenuItem(fileMenu, "Open (RAM)...", null,
               new Runnable() {
                  public void run() {
                     new Thread() {
@@ -463,7 +464,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
 
       fileMenu.addSeparator();
 
-      addMenuItem(fileMenu, "Exit", null,
+      GUIUtils.addMenuItem(fileMenu, "Exit", null,
               new Runnable() {
                  public void run() {
                     closeSequence(false);
@@ -473,9 +474,9 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    
     private void initializeHelpMenu() {
         // add help menu item
-        final JMenu helpMenu = createMenuInMenuBar(menuBar_, "Help");
+        final JMenu helpMenu = GUIUtils.createMenuInMenuBar(menuBar_, "Help");
         
-        addMenuItem(helpMenu, "User's Guide", null,
+        GUIUtils.addMenuItem(helpMenu, "User's Guide", null,
                 new Runnable() {
                    public void run() {
                 try {
@@ -486,7 +487,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
             }
         });
         
-       addMenuItem(helpMenu, "Configuration Guide", null,
+       GUIUtils.addMenuItem(helpMenu, "Configuration Guide", null,
                new Runnable() {
                   public void run() {
                      try {
@@ -498,7 +499,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
                });        
         
        if (!systemPrefs_.getBoolean(RegistrationDlg.REGISTRATION, false)) {
-          addMenuItem(helpMenu, "Register your copy of Micro-Manager...", null,
+          GUIUtils.addMenuItem(helpMenu, "Register your copy of Micro-Manager...", null,
                   new Runnable() {
                      public void run() {
                         try {
@@ -512,7 +513,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
        }
 
        final MMStudioMainFrame thisFrame = this;
-       addMenuItem(helpMenu, "Report Problem...", null,
+       GUIUtils.addMenuItem(helpMenu, "Report Problem...", null,
                new Runnable() {
                   public void run() {
                      if (null == reportProblemDialog_) {
@@ -525,7 +526,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
                });
         
 
-       addMenuItem(helpMenu, "About Micromanager", null,
+       GUIUtils.addMenuItem(helpMenu, "About Micromanager", null,
                new Runnable() {
                   public void run() {
                      MMAboutDlg dlg = new MMAboutDlg();
@@ -546,9 +547,9 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    private void initializeToolsMenu() {
       // Tools menu
       
-      final JMenu toolsMenu = createMenuInMenuBar(menuBar_, "Tools");
+      final JMenu toolsMenu = GUIUtils.createMenuInMenuBar(menuBar_, "Tools");
 
-      addMenuItem(toolsMenu,
+      GUIUtils.addMenuItem(toolsMenu,
               "Refresh GUI",
               "Refresh all GUI controls directly from the hardware",
               new Runnable() {
@@ -559,7 +560,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
               },
               "arrow_refresh.png");
 
-      addMenuItem(toolsMenu,
+      GUIUtils.addMenuItem(toolsMenu,
               "Rebuild GUI",
               "Regenerate Micro-Manager user interface",
               new Runnable() {
@@ -571,7 +572,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       
       toolsMenu.addSeparator();
       
-      addMenuItem(toolsMenu, "Script Panel...",
+      GUIUtils.addMenuItem(toolsMenu, "Script Panel...",
               "Open Micro-Manager script editor window",
               new Runnable() {
                  public void run() {
@@ -579,7 +580,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
                  }
               });
 
-      addMenuItem(toolsMenu, "Shortcuts...",
+      GUIUtils.addMenuItem(toolsMenu, "Shortcuts...",
               "Create keyboard shortcuts to activate image acquisition, mark positions, or run custom scripts",
               new Runnable() {
                  public void run() {
@@ -588,7 +589,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
                  }
               });
 
-      addMenuItem(toolsMenu, "Device/Property Browser...",
+      GUIUtils.addMenuItem(toolsMenu, "Device/Property Browser...",
               "Open new window to view and edit property values in current configuration",
               new Runnable() {
                  public void run() {
@@ -598,7 +599,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       
       toolsMenu.addSeparator();
 
-      addMenuItem(toolsMenu, "XY List...",
+      GUIUtils.addMenuItem(toolsMenu, "XY List...",
               "Open position list manager window",
               new Runnable() {
                  public void run() {
@@ -607,7 +608,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
               },
               "application_view_list.png");
 
-      addMenuItem(toolsMenu, "Multi-Dimensional Acquisition...",
+      GUIUtils.addMenuItem(toolsMenu, "Multi-Dimensional Acquisition...",
               "Open multi-dimensional acquisition setup window",
               new Runnable() {
                  public void run() {
@@ -617,24 +618,20 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
               "film.png");
       
       
-      centerAndDragMenuItem_ = new JCheckBoxMenuItem();     
+      centerAndDragMenuItem_ = GUIUtils.addCheckBoxMenuItem(toolsMenu,
+              "Mouse Moves Stage (use Hand Tool)",
+              "When enabled, double clicking or dragging in the snap/live\n"
+              + "window moves the XY-stage. Requires the hand tool.",
+              new Runnable() {
+                 public void run() {
+                    updateCenterAndDragListener();
+                    IJ.setTool(Toolbar.HAND);
+                    mainPrefs_.putBoolean(MOUSE_MOVES_STAGE, centerAndDragMenuItem_.isSelected());
+                 }
+              },
+              mainPrefs_.getBoolean(MOUSE_MOVES_STAGE, false));
       
-      centerAndDragMenuItem_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            updateCenterAndDragListener();
-            IJ.setTool(Toolbar.HAND);
-            mainPrefs_.putBoolean(MOUSE_MOVES_STAGE, centerAndDragMenuItem_.isSelected());
-         }
-      });
-
-      centerAndDragMenuItem_.setText("Mouse Moves Stage (use Hand Tool)");
-      centerAndDragMenuItem_.setSelected(mainPrefs_.getBoolean(MOUSE_MOVES_STAGE, false));
-      centerAndDragMenuItem_.setToolTipText("When enabled, double clicking or dragging in the snap/live\n"
-                                          + "window moves the XY-stage. Requires the hand tool.");
-      toolsMenu.add(centerAndDragMenuItem_);
-      
-      addMenuItem(toolsMenu, "Pixel Size Calibration...",
+      GUIUtils.addMenuItem(toolsMenu, "Pixel Size Calibration...",
               "Define size calibrations specific to each objective lens.  "
               + "When the objective in use has a calibration defined, "
               + "micromanager will automatically use it when "
@@ -647,7 +644,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
 
       toolsMenu.addSeparator();
 
-      addMenuItem(toolsMenu,
+      GUIUtils.addMenuItem(toolsMenu,
               "Hardware Configuration Wizard...",
               "Open wizard to create new hardware configuration",
               new Runnable() {
@@ -656,7 +653,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
                  }
               });
 
-      addMenuItem(toolsMenu, "Load Hardware Configuration...",
+      GUIUtils.addMenuItem(toolsMenu, "Load Hardware Configuration...",
               "Un-initialize current configuration and initialize new one",
               new Runnable() {
                  public void run() {
@@ -665,7 +662,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
                  }
               });
 
-      addMenuItem(toolsMenu, "Reload Hardware Configuration",
+      GUIUtils.addMenuItem(toolsMenu, "Reload Hardware Configuration",
               "Shutdown current configuration and initialize most recently loaded configuration",
               new Runnable() {
                  public void run() {
@@ -686,24 +683,19 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       toolsMenu.add(switchConfigurationMenu_);
       switchConfigurationMenu_.setToolTipText("Switch between recently used configurations");
 
-      final JMenuItem saveConfigurationPresetsMenuItem = new JMenuItem();
-      saveConfigurationPresetsMenuItem.addActionListener(new ActionListener() {
-
-         @Override
-         public void actionPerformed(ActionEvent arg0) {
-            saveConfigPresets();
-            updateChannelCombos();
-         }
-      });
-      saveConfigurationPresetsMenuItem.setText("Save Configuration Settings as...");
-      toolsMenu.add(saveConfigurationPresetsMenuItem);
-      saveConfigurationPresetsMenuItem.setToolTipText("Save current configuration settings as new configuration file");
-
+      GUIUtils.addMenuItem(toolsMenu, "Save Configuration Settings as...",
+              "Save current configuration settings as new configuration file",
+              new Runnable() {
+                 public void run() {
+                    saveConfigPresets();
+                    updateChannelCombos();
+                 }
+              });
 
       toolsMenu.addSeparator();
 
       final MMStudioMainFrame thisInstance = this;
-      addMenuItem(toolsMenu, "Options...",
+      GUIUtils.addMenuItem(toolsMenu, "Options...",
               "Set a variety of Micro-Manager configuration options",
               new Runnable() {
                  public void run() {
@@ -922,76 +914,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
             }
         }.start();
     }
-
-   /*
-    * Add a menu to the specified menu bar.
-    */
-   public JMenu createMenuInMenuBar(final JMenuBar menuBar, final String menuName) {
-      final JMenu menu = new JMenu();
-      menu.setText(menuName);
-      menuBar_.add(menu);
-      return menu;
-   }
-    
-   /* 
-    * Attach properly formatted tooltip text to the specified
-    * JComponent.
-    */
-    private static void setToolTipText(JComponent component,
-            String toolTipText) {
-      if (JavaUtils.isMac()) {// running on a mac
-         component.setToolTipText(toolTipText);
-      }
-      else {
-         component.setToolTipText(TooltipTextMaker.addHTMLBreaksForTooltip(toolTipText));
-      }
-    }
-    
-   /*
-    * Add an icon from the "org/micromanager/icons/ folder with
-    * given file name, to specified the button or menu.
-    */
-   private static void setIcon(AbstractButton component, String iconFileName) {
-      component.setIcon(SwingResourceManager.getIcon(
-              MMStudioMainFrame.class, "icons/" + iconFileName));
-   }
    
-    /*
-     * Add a menu item to the specified parent menu.
-     */
-   private static JMenuItem addMenuItem(final JMenu parentMenu,
-           final String menuItemText,
-           final String menuItemToolTip,
-           final Runnable menuActionRunnable) {
-      final JMenuItem menuItem = new JMenuItem();
-      if (menuActionRunnable != null) {
-         menuItem.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent ignoreEvent) {
-               menuActionRunnable.run();
-            }
-         });
-      }
-      menuItem.setText(menuItemText);
-      if (menuItemToolTip != null) {
-         setToolTipText(menuItem, menuItemToolTip);
-      }
-      parentMenu.add(menuItem);
-      return menuItem;
-   }
-
-   
-   private static JMenuItem addMenuItem(final JMenu parentMenu,
-           final String menuItemText,
-           final String menuItemToolTip,
-           final Runnable menuActionRunnable,
-           final String iconFileName) {
-      final JMenuItem menuItem = addMenuItem(parentMenu,
-              menuItemText, menuItemToolTip, menuActionRunnable);
-      setIcon(menuItem, iconFileName);
-      return menuItem;
-   }
-  
-
    public interface DisplayImageRoutine {
       public void show(TaggedImage image);
    }
@@ -1898,7 +1821,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
          }
 
          private Thread initializePlugins() {
-            pluginMenu_ = createMenuInMenuBar(menuBar_, "Plugins");
+            pluginMenu_ = GUIUtils.createMenuInMenuBar(menuBar_, "Plugins");
             Thread myThread = new ThreadPluginLoading("Plugin loading");
             myThread.start();
             return myThread;
