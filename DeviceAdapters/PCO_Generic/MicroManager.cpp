@@ -825,9 +825,9 @@ void EnableConvert(bool benable)
     hcrypt = LoadLibrary("PCO_CryptDll");
     if(hcrypt != NULL)
     {
-      PCO_SetAppNameHandle = (int (*)(const unsigned char szname[], HMODULE hlib))
+      PCO_SetAppNameHandle = (int (__stdcall *)(const unsigned char szname[], HMODULE hlib))
         GetProcAddress(hcrypt, "PCO_SetAppNameHandle");
-      PCO_RemoveAppName = (int (*)(int inum))
+      PCO_RemoveAppName = (int (__stdcall *)(int inum))
         GetProcAddress(hcrypt, "PCO_RemoveAppName");
       if((PCO_SetAppNameHandle != NULL) && (PCO_RemoveAppName != NULL))
       {
