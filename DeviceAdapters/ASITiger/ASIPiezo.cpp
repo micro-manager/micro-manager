@@ -70,9 +70,11 @@ int CPiezo::Initialize()
    // we store the micron-based unit multiplier for MM use, not the mm-based one ASI uses
    ostringstream command;
    command.str("");
+   double tmp;
    command << "UM " << axisLetter_ << "? ";
    RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":") );
-   unitMult_ = hub_->ParseAnswerAfterEquals()/1000;
+   RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
+   unitMult_ = tmp/1000;
    command.str("");
 
    // set controller card to return positions with 3 decimal places (max allowed currently)
@@ -135,7 +137,9 @@ int CPiezo::Initialize()
    command << "PR " << axisLetter_ << "?";
    RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
    command.str("");
-   switch ((long) hub_->ParseAnswerAfterEquals())
+   long piezorange;
+   RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(piezorange) );
+   switch (piezorange)
    {
       case 1: command << "50"; break;
       case 2: command << "100"; break;
@@ -288,7 +292,8 @@ int CPiezo::GetPositionUm(double& pos)
    ostringstream command; command.str("");
    command << "W " << axisLetter_;
    RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
-   pos = hub_->ParseAnswerAfterPosition(2)/unitMult_;
+   RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterPosition2(pos) );
+   pos = pos/unitMult_;
    return DEVICE_OK;
 }
 
@@ -304,7 +309,9 @@ int CPiezo::GetPositionSteps(long& steps)
    ostringstream command; command.str("");
    command << "W " << axisLetter_;
    RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
-   steps = (long) (hub_->ParseAnswerAfterPosition(2)/unitMult_/stepSizeUm_);
+   double tmp;
+   RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterPosition2(tmp) );
+   steps = (long)(tmp/unitMult_/stepSizeUm_);
    return DEVICE_OK;
 }
 
@@ -327,12 +334,15 @@ int CPiezo::GetLimits(double& min, double& max)
    // ASI limits are always returned in terms of mm, independent of unit multiplier
    ostringstream command; command.str("");
    command << "SL " << axisLetter_ << "? ";
+   double tmp;
    RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
-   min = hub_->ParseAnswerAfterEquals()*1000;
+   RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
+   min = tmp*1000;
    command.str("");
    command << "SU " << axisLetter_ << "? ";
    RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
-   max = hub_->ParseAnswerAfterEquals()*1000;
+   RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
+   max = tmp*1000;
    return DEVICE_OK;
 }
 
@@ -426,7 +436,7 @@ int CPiezo::OnLowerLim(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << "SL " << axisLetter_ << "?";
       response << ":A " << axisLetter_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      tmp = hub_->ParseAnswerAfterEquals();
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
@@ -450,7 +460,7 @@ int CPiezo::OnUpperLim(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << "SU " << axisLetter_ << "?";
       response << ":A " << axisLetter_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      tmp = hub_->ParseAnswerAfterEquals();
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
@@ -473,7 +483,7 @@ int CPiezo::OnPiezoMode(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << "PM " << axisLetter_ << "?";
       ostringstream response; response.str(""); response << axisLetter_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      tmp = (long) hub_->ParseAnswerAfterEquals();
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
       bool success = 0;
       switch (tmp)
       {
@@ -517,7 +527,7 @@ int CPiezo::OnMotorControl(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << "MC " << axisLetter_ << "?";
       response << ":A ";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      tmp = (long) hub_->ParseAnswerAfterPosition(3);
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterPosition3(tmp) );
       bool success = 0;
       if (tmp)
          success = pProp->Set(g_OnState);
@@ -553,7 +563,8 @@ int CPiezo::OnJoystickFastSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << addressChar_ << "JS X?";
       response << ":A X=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      tmp = abs(hub_->ParseAnswerAfterEquals());
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
+      tmp = abs(tmp);
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
@@ -585,7 +596,8 @@ int CPiezo::OnJoystickSlowSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << addressChar_ << "JS Y?";
       response << ":A Y=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      tmp = abs(hub_->ParseAnswerAfterEquals());
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
+      tmp = abs(tmp);
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
@@ -617,7 +629,7 @@ int CPiezo::OnJoystickMirror(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << addressChar_ << "JS X?";  // query only the fast setting to see if already mirrored
       response << ":A X=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      tmp = hub_->ParseAnswerAfterEquals();
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
       bool success = 0;
       if (tmp < 0) // speed negative <=> mirrored
          success = pProp->Set(g_YesState);
@@ -654,7 +666,7 @@ int CPiezo::OnJoystickSelect(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << "J " << axisLetter_ << "?";
       response << ":A " << axisLetter_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      tmp = (long) hub_->ParseAnswerAfterEquals();
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
       bool success = 0;
       switch (tmp)
       {
@@ -703,7 +715,7 @@ int CPiezo::OnModeFourOvershoot(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << addressChar_ << "PZ T?";
       response << "T=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      tmp = (long) hub_->ParseAnswerAfterEquals();
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
@@ -727,7 +739,7 @@ int CPiezo::OnModeFourMaxTime(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << addressChar_ << "PZ F?";
       response << "F=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      tmp = (long) hub_->ParseAnswerAfterEquals();
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
@@ -798,7 +810,8 @@ int CPiezo::OnSAAmplitude(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << "SAA " << axisLetter_ << "?";
       response << ":A " << axisLetter_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      tmp = hub_->ParseAnswerAfterEquals()/unitMult_;
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
+      tmp = tmp/unitMult_;
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
@@ -822,7 +835,8 @@ int CPiezo::OnSAOffset(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << "SAO " << axisLetter_ << "?";
       response << ":A " << axisLetter_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      tmp = hub_->ParseAnswerAfterEquals()/unitMult_;
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
+      tmp = tmp/unitMult_;
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
@@ -846,7 +860,7 @@ int CPiezo::OnSAPeriod(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << "SAF " << axisLetter_ << "?";
       response << ":A " << axisLetter_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      tmp = (long) hub_->ParseAnswerAfterEquals();
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
@@ -871,7 +885,7 @@ int CPiezo::OnSAMode(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << "SAM " << axisLetter_ << "?";
       response << ":A " << axisLetter_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      tmp = (long) hub_->ParseAnswerAfterEquals();
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
       bool success;
       switch (tmp)
       {
@@ -919,7 +933,7 @@ int CPiezo::OnSAPattern(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << "SAP " << axisLetter_ << "?";
       response << ":A " << axisLetter_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      tmp = (long) hub_->ParseAnswerAfterEquals();
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
       bool success;
       tmp = tmp & ((long)(BIT2|BIT1|BIT0));  // zero all but the lowest 3 bits
       switch (tmp)
@@ -947,7 +961,8 @@ int CPiezo::OnSAPattern(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << "SAP " << axisLetter_ << "?";
       response << ":A " << axisLetter_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      long current = (long) hub_->ParseAnswerAfterEquals();
+      long current;
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(current) );
       current = current & (~(long)(BIT2|BIT1|BIT0));  // set lowest 3 bits to zero
       tmp += current;
       command.str("");
@@ -968,7 +983,7 @@ int CPiezo::OnSAPatternByte(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << "SAP " << axisLetter_ << "?";
       response << ":A " << axisLetter_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      tmp = (long) hub_->ParseAnswerAfterEquals();
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
@@ -992,7 +1007,7 @@ int CPiezo::OnSAClkSrc(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << "SAP " << axisLetter_ << "?";
       response << ":A " << axisLetter_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      tmp = (long) hub_->ParseAnswerAfterEquals();
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
       bool success;
       tmp = tmp & ((long)(BIT7));  // zero all but bit 7
       switch (tmp)
@@ -1017,7 +1032,8 @@ int CPiezo::OnSAClkSrc(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << "SAP " << axisLetter_ << "?";
       response << ":A " << axisLetter_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      long current = (long) hub_->ParseAnswerAfterEquals();
+      long current;
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(current) );
       current = current & (~(long)(BIT7));  // clear bit 7
       tmp += current;
       command.str("");
@@ -1039,7 +1055,7 @@ int CPiezo::OnSAClkPol(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << "SAP " << axisLetter_ << "?";
       response << ":A " << axisLetter_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      tmp = (long) hub_->ParseAnswerAfterEquals();
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
       bool success;
       tmp = tmp & ((long)(BIT6));  // zero all but bit 6
       switch (tmp)
@@ -1064,7 +1080,8 @@ int CPiezo::OnSAClkPol(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << "SAP " << axisLetter_ << "?";
       response << ":A " << axisLetter_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      long current = (long) hub_->ParseAnswerAfterEquals();
+      long current;
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(current) );
       current = current & (~(long)(BIT6));  // clear bit 6
       tmp += current;
       command.str("");
@@ -1086,7 +1103,7 @@ int CPiezo::OnSATTLOut(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << "SAP " << axisLetter_ << "?";
       response << ":A " << axisLetter_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      tmp = (long) hub_->ParseAnswerAfterEquals();
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
       bool success;
       tmp = tmp & ((long)(BIT5));  // zero all but bit 5
       switch (tmp)
@@ -1111,7 +1128,8 @@ int CPiezo::OnSATTLOut(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << "SAP " << axisLetter_ << "?";
       response << ":A " << axisLetter_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      long current = (long) hub_->ParseAnswerAfterEquals();
+      long current;
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(current) );
       current = current & (~(long)(BIT5));  // clear bit 5
       tmp += current;
       command.str("");
@@ -1133,7 +1151,7 @@ int CPiezo::OnSATTLPol(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << "SAP " << axisLetter_ << "?";
       response << ":A " << axisLetter_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      tmp = (long) hub_->ParseAnswerAfterEquals();
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
       bool success;
       tmp = tmp & ((long)(BIT4));  // zero all but bit 4
       switch (tmp)
@@ -1158,7 +1176,8 @@ int CPiezo::OnSATTLPol(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << "SAP " << axisLetter_ << "?";
       response << ":A " << axisLetter_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      long current = (long) hub_->ParseAnswerAfterEquals();
+      long current;
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(current) );
       current = current & (~(long)(BIT4));  // clear bit 4
       tmp += current;
       command.str("");
@@ -1194,7 +1213,7 @@ int CPiezo::OnSPIMNumSlices(MM::PropertyBase* pProp, MM::ActionType eAct)
          return DEVICE_OK;
       command << addressChar_ << "NR Y?";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A Y="));
-      tmp = (long) hub_->ParseAnswerAfterEquals();
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
@@ -1218,7 +1237,9 @@ int CPiezo::OnSPIMState(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << addressChar_ << "SN X?";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
       bool success;
-      switch ( hub_->LastSerialAnswer().at(3) )
+      char c;
+      RETURN_ON_MM_ERROR( hub_->GetAnswerCharAtPosition3(c) );
+      switch ( c )
       {
          case g_PZSPIMStateCode_Idle:  success = pProp->Set(g_SPIMStateIdle); break;
          case g_PZSPIMStateCode_Arm:   success = pProp->Set(g_SPIMStateArmed); break;

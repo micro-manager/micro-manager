@@ -208,8 +208,7 @@ int CCRISP::GetLastFocusScore(double& score)
    ostringstream command; command.str("");
    command << addressChar_ << "LK Y?";
    RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
-   score = hub_->ParseAnswerAfterPosition(3);
-   return DEVICE_OK;
+   return hub_->ParseAnswerAfterPosition3(score);
 }
 
 int CCRISP::GetCurrentFocusScore(double& score)
@@ -222,8 +221,7 @@ int CCRISP::GetOffset(double& offset)
    ostringstream command; command.str("");
    command << addressChar_ << "LK Z?";
    RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
-   offset = hub_->ParseAnswerAfterPosition(3);
-   return DEVICE_OK;
+   return hub_->ParseAnswerAfterPosition3(offset);
 }
 
 int CCRISP::SetOffset(double offset)
@@ -240,10 +238,10 @@ int CCRISP::UpdateFocusState()
    command << addressChar_ << "LK X?";
    RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
 
-   if(hub_->LastSerialAnswer().size() <= 3)
-      return ERR_UNRECOGNIZED_ANSWER;
+   char c;
+   RETURN_ON_MM_ERROR( hub_->GetAnswerCharAtPosition3(c) );
 
-   switch (hub_->LastSerialAnswer().at(3))
+   switch (c)
    {
       case 'I': focusState_ = g_CRISP_I; break;
       case 'R': focusState_ = g_CRISP_R; break;
@@ -333,7 +331,7 @@ int CCRISP::OnFocusState(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       string focusState;
       pProp->Get(focusState);
-      RETURN_ON_MM_ERROR ( SetFocusState(focusState) );
+      RETURN_ON_MM_ERROR( SetFocusState(focusState) );
    }
    return DEVICE_OK;
 }
@@ -363,7 +361,7 @@ int CCRISP::OnNA(MM::PropertyBase* pProp, MM::ActionType eAct)
          return DEVICE_OK;
       command << addressChar_ << "LR Y?";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A Y="));
-      tmp = hub_->ParseAnswerAfterEquals();
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
@@ -386,7 +384,7 @@ int CCRISP::OnCalGain(MM::PropertyBase* pProp, MM::ActionType eAct)
          return DEVICE_OK;
       command << addressChar_ << "LR X?";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A X="));
-      tmp = hub_->ParseAnswerAfterEquals();
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
@@ -409,7 +407,7 @@ int CCRISP::OnLockRange(MM::PropertyBase* pProp, MM::ActionType eAct)
          return DEVICE_OK;
       command << addressChar_ << "LR Z?";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A Z="));
-      tmp = hub_->ParseAnswerAfterEquals();
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
@@ -432,7 +430,7 @@ int CCRISP::OnLEDIntensity(MM::PropertyBase* pProp, MM::ActionType eAct)
          return DEVICE_OK;
       command << addressChar_ << "UL X?";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A X="));
-      tmp = hub_->ParseAnswerAfterEquals();
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
@@ -455,7 +453,7 @@ int CCRISP::OnLoopGainMultiplier(MM::PropertyBase* pProp, MM::ActionType eAct)
          return DEVICE_OK;
       command << addressChar_ << "KA " << axisLetter_ << "?";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
-      tmp = (long) hub_->ParseAnswerAfterEquals();
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
@@ -478,7 +476,7 @@ int CCRISP::OnNumAvg(MM::PropertyBase* pProp, MM::ActionType eAct)
          return DEVICE_OK;
       command << addressChar_ << "RT F?";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A F="));
-      tmp = (long) hub_->ParseAnswerAfterEquals();
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
@@ -501,7 +499,7 @@ int CCRISP::OnSNR(MM::PropertyBase* pProp, MM::ActionType eAct)
          return DEVICE_OK;
       command << addressChar_ << "EXTRA Y?";
       RETURN_ON_MM_ERROR( hub_->QueryCommand(command.str()) );
-      tmp = hub_->ParseAnswerAfterPosition(0);
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterPosition(0, tmp));
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
    }

@@ -69,8 +69,7 @@ int CClocked::Initialize()
    command.str("");
    command << "SU " << axisLetter_ << "?";
    RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
-   long ans = (long) hub_->ParseAnswerAfterEquals();
-   numPositions_ = (unsigned int) ans;
+   RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(numPositions_) );
    command.str("");
    command << numPositions_;
    CreateProperty("NumPositions", command.str().c_str(), MM::Integer, true);
@@ -99,7 +98,8 @@ int CClocked::Initialize()
    command.str("");
    command << "W " << axisLetter_;
    RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
-   curPosition_ = (unsigned int) (hub_->ParseAnswerAfterPosition(2) - 1);
+   RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterPosition2(curPosition_) );
+   curPosition_--;  // make it 0-indexed
 
    // let calling class decide if initialized_ should be set
    return DEVICE_OK;
@@ -114,7 +114,11 @@ bool CClocked::Busy()
       ret_ = hub_->QueryCommandVerify(command.str(),":A");
       if (ret_ != DEVICE_OK)  // say we aren't busy if we can't communicate
          return false;
-      return (hub_->LastSerialAnswer().at(3) == 'B');
+      char c;
+      ret_ = hub_->GetAnswerCharAtPosition3(c);
+      if (ret_ != DEVICE_OK)
+         return false;
+      return (c == 'B');
    }
    else  // use LSB of the status byte as approximate status, not quite equivalent
    {
@@ -122,8 +126,11 @@ bool CClocked::Busy()
       ret_ = hub_->QueryCommandVerify(command.str(),":A");
       if (ret_ != DEVICE_OK)  // say we aren't busy if we can't communicate
          return false;
-      int i = (int) (hub_->ParseAnswerAfterPosition(2));
-      return (i & (int)BIT0);  // mask everything but LSB
+      unsigned int i;
+      ret_ = hub_->ParseAnswerAfterPosition2(i);
+      if (ret_ != DEVICE_OK)  // say we aren't busy if we can't parse
+         return false;
+      return (i & (unsigned int)BIT0);  // mask everything but LSB
    }
 }
 

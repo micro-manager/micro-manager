@@ -73,7 +73,7 @@ int CFWheel::Initialize()
 
    // get the firmware version and expose that as property plus store it
    RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify("VN","VN Version: v", g_SerialTerminatorFW) );
-   firmwareVersion_ = hub_->ParseAnswerAfterPosition(13);
+   RETURN_ON_MM_ERROR (hub_->ParseAnswerAfterPosition(13, firmwareVersion_ ));
    command.str("");
    command << firmwareVersion_;
    CreateProperty(g_FirmwareVersionPropertyName, command.str().c_str(), MM::Float, true);
@@ -91,8 +91,7 @@ int CFWheel::Initialize()
 
    // serial query to find out how many positions we have
    RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify("NF", "NF ", g_SerialTerminatorFW) );
-   long ans = (long) hub_->ParseAnswerAfterPosition(3);
-   numPositions_ = (unsigned int) ans;
+   RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterPosition3(numPositions_) );
    command.str("");
    command << numPositions_;
    CreateProperty("NumPositions", command.str().c_str(), MM::Integer, true);
@@ -134,7 +133,7 @@ int CFWheel::Initialize()
 
    // get current position and cache in curPosition_
    RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify("MP", "MP ", g_SerialTerminatorFW) );
-   curPosition_ = (unsigned int) (hub_->ParseAnswerAfterPosition(3));
+   RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterPosition3(curPosition_) );
 
    // property for spinning or not
    pAct = new CPropertyAction (this, &CFWheel::OnSpin);
@@ -176,7 +175,10 @@ bool CFWheel::Busy()
    ret_ = hub_->QueryCommand("?", g_SerialTerminatorFW);
    if (ret_ != DEVICE_OK)  // say we aren't busy if we can't communicate
       return false;
-   unsigned int i = (unsigned int) (hub_->ParseAnswerAfterPosition(0));
+   unsigned int i;
+   ret_ = hub_->ParseAnswerAfterPosition(0, i);
+   if (ret_ != DEVICE_OK)  // say we aren't busy if we can't parse
+      return false;
    // ASI documentation seems to be out of date here, but we'll take codes 1-3 or 12 as moving
    return (i==12 || (i>=1 && i<=3));
 }
@@ -282,7 +284,7 @@ int CFWheel::OnSpin(MM::PropertyBase* pProp, MM::ActionType eAct)
          return DEVICE_OK;
       RETURN_ON_MM_ERROR ( SelectWheel() );
       RETURN_ON_MM_ERROR ( hub_->QueryCommand("SF ", g_SerialTerminatorFW) );
-      tmp = (long) hub_->ParseAnswerAfterPosition(3);
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterPosition3(tmp) );
       bool success = 0;
       if (tmp)
       {
@@ -323,7 +325,7 @@ int CFWheel::OnVelocity(MM::PropertyBase* pProp, MM::ActionType eAct)
          return DEVICE_OK;
       RETURN_ON_MM_ERROR ( SelectWheel() );
       RETURN_ON_MM_ERROR ( hub_->QueryCommand("VR", g_SerialTerminatorFW) );
-      tmp = (long) hub_->ParseAnswerAfterPosition(3);
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterPosition3(tmp) );
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
@@ -347,7 +349,7 @@ int CFWheel::OnSpeedSetting(MM::PropertyBase* pProp, MM::ActionType eAct)
          return DEVICE_OK;
       RETURN_ON_MM_ERROR ( SelectWheel() );
       RETURN_ON_MM_ERROR ( hub_->QueryCommand("SV", g_SerialTerminatorFW) );
-      tmp = (long) hub_->ParseAnswerAfterPosition(3);
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterPosition3(tmp) );
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
@@ -372,7 +374,7 @@ int CFWheel::OnLockMode(MM::PropertyBase* pProp, MM::ActionType eAct)
          return DEVICE_OK;
       RETURN_ON_MM_ERROR ( SelectWheel() );
       RETURN_ON_MM_ERROR ( hub_->QueryCommand("LM ", g_SerialTerminatorFW) );
-      tmp = (long) hub_->ParseAnswerAfterPosition(3);
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterPosition3(tmp) );
       bool success = 0;
       if (tmp)
          success = pProp->Set(g_OnState);

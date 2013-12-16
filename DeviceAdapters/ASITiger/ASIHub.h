@@ -79,14 +79,28 @@ public:
       { return QueryCommandVerify(command.c_str(), expectedReplyPrefix.c_str(), replyTerminator.c_str(), delayMs); }
 
    // accessing serial commands and answers
-   string LastSerialAnswer() const { return serialAnswer_; }
+   string LastSerialAnswer() const { return serialAnswer_; } // use with caution!; crashes to access something that doesn't exist!
    string LastSerialCommand() const { return serialCommand_; }
    void SetLastSerialAnswer(string s) { serialAnswer_ = s; }  // used to parse subsets of full answer for commands like PZINFO using "Split" functions
 
 	// Interpreting serial response
-	double ParseAnswerAfterEquals() const;  // finds next number after equals sign and returns as float
-   double ParseAnswerAfterColon() const;  // finds next number after colon and returns as float
-	double ParseAnswerAfterPosition(unsigned int pos) const;  // finds next number after character position specified and returns as float
+	int ParseAnswerAfterEquals(double &val);  // finds next number after equals sign and returns as float
+	int ParseAnswerAfterEquals(long &val);  // finds next number after equals sign and returns as long int
+	int ParseAnswerAfterEquals(unsigned int &val);  // finds next number after equals sign and returns as long int
+   int ParseAnswerAfterColon(double &val);  // finds next number after colon and returns as float
+   int ParseAnswerAfterColon(long &val);  // finds next number after colon and returns as long int
+	int ParseAnswerAfterPosition(unsigned int pos, double &val);  // finds next number after character position specified and returns as float
+	int ParseAnswerAfterPosition(unsigned int pos, long &val);    // finds next number after character position specified and returns as long int
+   int ParseAnswerAfterPosition(unsigned int pos, unsigned int &val);    // finds next number after character position specified and returns as unsigned int
+   int ParseAnswerAfterPosition2(double &val);  // finds next number after character position 2 and returns as float
+	int ParseAnswerAfterPosition2(long &val);    // finds next number after character position 2 and returns as long int
+	int ParseAnswerAfterPosition2(unsigned int &val);    // finds next number after character position 2 and returns as unsigned int
+   int ParseAnswerAfterPosition3(double &val);  // finds next number after character position 3 and returns as float
+   int ParseAnswerAfterPosition3(long &val);    // finds next number after character position 3 and returns as long int
+   int ParseAnswerAfterPosition3(unsigned int &val);    // finds next number after character position 3 and returns as unsigned int
+   int GetAnswerCharAtPosition(unsigned int pos, char &val);  // returns the character at specified position, a safer version of LastSerialAnswer().at(pos)
+   int GetAnswerCharAtPosition3(char &val);                   // returns the character at position 3, a safer version of LastSerialAnswer().at(3)
+
    vector<string> SplitAnswerOnDelim(string delim) const;  // splits answer on arbitrary delimeter list (any of included characters will split)
 	vector<string> SplitAnswerOnCR() const { return SplitAnswerOnDelim("\r"); }
    vector<string> SplitAnswerOnSpace() const { return SplitAnswerOnDelim(" "); }

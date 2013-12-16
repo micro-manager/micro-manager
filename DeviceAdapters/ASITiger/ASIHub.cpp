@@ -133,20 +133,172 @@ int ASIHub::ParseErrorReply() const
     return ERR_UNRECOGNIZED_ANSWER;
 }
 
-double ASIHub::ParseAnswerAfterEquals() const
+int ASIHub::ParseAnswerAfterEquals(double &val)
 {
-   return atof(serialAnswer_.substr(serialAnswer_.find("=")+1).c_str());
+   size_t pos = serialAnswer_.find("=");
+   if ((pos == string::npos) || ((pos+1) >= serialAnswer_.length()))
+   {
+      return ERR_UNRECOGNIZED_ANSWER;
+   }
+   val = atof(serialAnswer_.substr(serialAnswer_.find("=")+1).c_str());
+   return DEVICE_OK;
 }
 
-double ASIHub::ParseAnswerAfterColon() const
+int ASIHub::ParseAnswerAfterEquals(long &val)
 {
-   return atof(serialAnswer_.substr(serialAnswer_.find(":")+1).c_str());
+   size_t pos = serialAnswer_.find("=");
+   if ((pos == string::npos) || ((pos+1) >= serialAnswer_.length()))
+   {
+      return ERR_UNRECOGNIZED_ANSWER;
+   }
+   val = atol(serialAnswer_.substr(serialAnswer_.find("=")+1).c_str());
+   return DEVICE_OK;
 }
 
-double ASIHub::ParseAnswerAfterPosition(unsigned int pos) const
+int ASIHub::ParseAnswerAfterEquals(unsigned int &val)
+{
+   size_t pos = serialAnswer_.find("=");
+   if ((pos == string::npos) || ((pos+1) >= serialAnswer_.length()))
+   {
+      return ERR_UNRECOGNIZED_ANSWER;
+   }
+   val = atol(serialAnswer_.substr(serialAnswer_.find("=")+1).c_str());
+   return DEVICE_OK;
+}
+
+int ASIHub::ParseAnswerAfterColon(double &val)
+{
+   size_t pos = serialAnswer_.find(":");
+   if ((pos == string::npos) || ((pos+1) >= serialAnswer_.length()))
+   {
+      return ERR_UNRECOGNIZED_ANSWER;
+   }
+   val = atof(serialAnswer_.substr(serialAnswer_.find(":")+1).c_str());
+   return DEVICE_OK;
+}
+
+int ASIHub::ParseAnswerAfterColon(long& val)
+{
+   size_t pos = serialAnswer_.find(":");
+   if ((pos == string::npos) || ((pos+1) >= serialAnswer_.length()))
+   {
+      return ERR_UNRECOGNIZED_ANSWER;
+   }
+   val = atol(serialAnswer_.substr(serialAnswer_.find(":")+1).c_str());
+   return DEVICE_OK;
+}
+
+int ASIHub::ParseAnswerAfterPosition(unsigned int pos, double &val)
 {
    // specify position as 3 to parse skipping the first 3 characters, e.g. for ":A 45.1"
-   return atof(serialAnswer_.substr(pos).c_str());
+   if (pos >= serialAnswer_.length())
+   {
+      return ERR_UNRECOGNIZED_ANSWER;
+   }
+   val = atof(serialAnswer_.substr(pos).c_str());
+   return DEVICE_OK;
+}
+
+int ASIHub::ParseAnswerAfterPosition(unsigned int pos, long &val)
+{
+   // specify position as 3 to parse skipping the first 3 characters, e.g. for ":A 45.1"
+   if (pos >= serialAnswer_.length())
+   {
+      return ERR_UNRECOGNIZED_ANSWER;
+   }
+   val = atol(serialAnswer_.substr(pos).c_str());
+   return DEVICE_OK;
+}
+
+int ASIHub::ParseAnswerAfterPosition(unsigned int pos, unsigned int &val)
+{
+   // specify position as 3 to parse skipping the first 3 characters, e.g. for ":A 45.1"
+   if (pos >= serialAnswer_.length())
+   {
+      return ERR_UNRECOGNIZED_ANSWER;
+   }
+   val = (unsigned int)atol(serialAnswer_.substr(pos).c_str());
+   return DEVICE_OK;
+}
+
+int ASIHub::ParseAnswerAfterPosition2(double &val)
+{
+   if (2 >= serialAnswer_.length())
+   {
+      return ERR_UNRECOGNIZED_ANSWER;
+   }
+   val = atof(serialAnswer_.substr(2).c_str());
+   return DEVICE_OK;
+}
+
+int ASIHub::ParseAnswerAfterPosition2(long &val)
+{
+   if (2 >= serialAnswer_.length())
+   {
+      return ERR_UNRECOGNIZED_ANSWER;
+   }
+   val = atol(serialAnswer_.substr(2).c_str());
+   return DEVICE_OK;
+}
+
+int ASIHub::ParseAnswerAfterPosition2(unsigned int &val)
+{
+   if (2 >= serialAnswer_.length())
+   {
+      return ERR_UNRECOGNIZED_ANSWER;
+   }
+   val = (unsigned int)atol(serialAnswer_.substr(2).c_str());
+   return DEVICE_OK;
+}
+
+int ASIHub::ParseAnswerAfterPosition3(double &val)
+{
+   if (3 >= serialAnswer_.length())
+   {
+      return ERR_UNRECOGNIZED_ANSWER;
+   }
+   val = atof(serialAnswer_.substr(3).c_str());
+   return DEVICE_OK;
+}
+
+int ASIHub::ParseAnswerAfterPosition3(long &val)
+{
+   if (3 >= serialAnswer_.length())
+   {
+      return ERR_UNRECOGNIZED_ANSWER;
+   }
+   val = atol(serialAnswer_.substr(3).c_str());
+   return DEVICE_OK;
+}
+
+int ASIHub::ParseAnswerAfterPosition3(unsigned int &val)
+{
+   if (3 >= serialAnswer_.length())
+   {
+      return ERR_UNRECOGNIZED_ANSWER;
+   }
+   val = (unsigned int)atol(serialAnswer_.substr(3).c_str());
+   return DEVICE_OK;
+}
+
+int ASIHub::GetAnswerCharAtPosition(unsigned int pos, char &val)
+{
+   if (pos >= serialAnswer_.length())
+   {
+      return ERR_UNRECOGNIZED_ANSWER;
+   }
+   val = serialAnswer_.at(pos);
+   return DEVICE_OK;
+}
+
+int ASIHub::GetAnswerCharAtPosition3(char &val)
+{
+   if (3 >= serialAnswer_.length())
+   {
+      return ERR_UNRECOGNIZED_ANSWER;
+   }
+   val = serialAnswer_.at(3);
+   return DEVICE_OK;
 }
 
 vector<string> ASIHub::SplitAnswerOnDelim(string delim) const

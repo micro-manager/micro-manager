@@ -79,21 +79,21 @@ int CMMirror::Initialize()
    command.str("");
    command << "UM " << axisLetterX_ << "? ";
    RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":") );
-   unitMultX_ = hub_->ParseAnswerAfterEquals();
+   RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(unitMultX_) );
    command.str("");
    command << "UM " << axisLetterY_ << "? ";
    RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":") );
-   unitMultY_ = hub_->ParseAnswerAfterEquals();
+   RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(unitMultY_) );
 
    // read the home position (used for beam shuttering)
    command.str("");
    command << "HM " << axisLetterX_ << "? ";
    RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":") );
-   shutterX_ = hub_->ParseAnswerAfterEquals();
+   RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(shutterX_) );
    command.str("");
    command << "HM " << axisLetterY_ << "? ";
    RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":") );
-   shutterY_ = hub_->ParseAnswerAfterEquals();
+   RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(shutterY_) );
 
    // set controller card to return positions with 3 decimal places (max allowed currently)
    command.str("");
@@ -399,11 +399,13 @@ int CMMirror::GetPosition(double& x, double& y)
    ostringstream command; command.str("");
    command << "W " << axisLetterX_;
    RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
-   x = hub_->ParseAnswerAfterPosition(2)/unitMultX_;
+   RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterPosition2(x) );
+   x = x/unitMultX_;
    command.str("");
    command << "W " << axisLetterY_;
    RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
-   y = hub_->ParseAnswerAfterPosition(2)/unitMultY_;
+   RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterPosition2(y) );
+   y = y/unitMultY_;
    return DEVICE_OK;
 }
 
@@ -510,7 +512,7 @@ int CMMirror::OnLowerLimX(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << "SL " << axisLetterX_ << "?";
       response << ":A " << axisLetterX_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      tmp = hub_->ParseAnswerAfterEquals();
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
@@ -534,7 +536,7 @@ int CMMirror::OnLowerLimY(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << "SL " << axisLetterY_ << "?";
       response << ":A " << axisLetterY_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      tmp = hub_->ParseAnswerAfterEquals();
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
@@ -558,7 +560,7 @@ int CMMirror::OnUpperLimX(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << "SU " << axisLetterX_ << "?";
       response << ":A " << axisLetterX_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      tmp = hub_->ParseAnswerAfterEquals();
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
       limitX_ = tmp;
@@ -583,7 +585,7 @@ int CMMirror::OnUpperLimY(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << "SU " << axisLetterY_ << "?";
       response << ":A " << axisLetterY_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      tmp = hub_->ParseAnswerAfterEquals();
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
       limitY_ = tmp;
@@ -618,7 +620,7 @@ int CMMirror::OnMode(MM::PropertyBase* pProp, MM::ActionType eAct)
          response << ":A " << axisLetterX_ << "=";
       }
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      tmp = (long) hub_->ParseAnswerAfterEquals();
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
       bool success = 0;
       if (firmwareVersion_ > 2.7)  // using PM command
       {
@@ -682,7 +684,7 @@ int CMMirror::OnCutoffFreqX(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << "B " << axisLetterX_ << "?";
       response << ":" << axisLetterX_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      tmp = hub_->ParseAnswerAfterEquals();
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
@@ -706,7 +708,7 @@ int CMMirror::OnCutoffFreqY(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << "B " << axisLetterY_ << "?";
       response << ":" << axisLetterY_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      tmp = hub_->ParseAnswerAfterEquals();
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
@@ -730,7 +732,7 @@ int CMMirror::OnAttenuateTravelX(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << "D " << axisLetterX_ << "?";
       response << ":A " << axisLetterX_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      tmp = hub_->ParseAnswerAfterEquals();
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
@@ -754,7 +756,7 @@ int CMMirror::OnAttenuateTravelY(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << "D " << axisLetterY_ << "?";
       response << ":A " << axisLetterY_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      tmp = hub_->ParseAnswerAfterEquals();
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
@@ -885,7 +887,8 @@ int CMMirror::OnSAAmplitudeX(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << "SAA " << axisLetterX_ << "?";
       response << ":A " << axisLetterX_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      tmp = hub_->ParseAnswerAfterEquals()/unitMultX_;
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
+      tmp = tmp/unitMultX_;
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
@@ -909,7 +912,8 @@ int CMMirror::OnSAOffsetX(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << "SAO " << axisLetterX_ << "?";
       response << ":A " << axisLetterX_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      tmp = hub_->ParseAnswerAfterEquals()/unitMultX_;
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
+      tmp = tmp/unitMultX_;
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
@@ -933,7 +937,7 @@ int CMMirror::OnSAPeriodX(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << "SAF " << axisLetterX_ << "?";
       response << ":A " << axisLetterX_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      tmp = (long) hub_->ParseAnswerAfterEquals();
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
@@ -958,7 +962,7 @@ int CMMirror::OnSAModeX(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << "SAM " << axisLetterX_ << "?";
       response << ":A " << axisLetterX_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      tmp = (long) hub_->ParseAnswerAfterEquals();
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
       bool success;
       switch (tmp)
       {
@@ -1006,7 +1010,9 @@ int CMMirror::OnSAPatternX(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << "SAP " << axisLetterX_ << "?";
       response << ":A " << axisLetterX_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      tmp = (long) hub_->ParseAnswerAfterEquals();
+
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
+
       bool success;
       tmp = tmp & ((long)(BIT2|BIT1|BIT0));  // zero all but the lowest 3 bits
       switch (tmp)
@@ -1034,7 +1040,8 @@ int CMMirror::OnSAPatternX(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << "SAP " << axisLetterX_ << "?";
       response << ":A " << axisLetterX_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      long current = (long) hub_->ParseAnswerAfterEquals();
+      long current;
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(current) );
       current = current & (~(long)(BIT2|BIT1|BIT0));  // set lowest 3 bits to zero
       tmp += current;
       command.str("");
@@ -1056,7 +1063,8 @@ int CMMirror::OnSAAmplitudeY(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << "SAA " << axisLetterY_ << "?";
       response << ":A " << axisLetterY_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      tmp = hub_->ParseAnswerAfterEquals()/unitMultX_;
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
+      tmp = tmp/unitMultX_;
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
@@ -1080,7 +1088,8 @@ int CMMirror::OnSAOffsetY(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << "SAO " << axisLetterY_ << "?";
       response << ":A " << axisLetterY_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      tmp = hub_->ParseAnswerAfterEquals()/unitMultX_;
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
+      tmp = tmp/unitMultX_;
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
@@ -1104,7 +1113,7 @@ int CMMirror::OnSAPeriodY(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << "SAF " << axisLetterY_ << "?";
       response << ":A " << axisLetterY_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      tmp = (long) hub_->ParseAnswerAfterEquals();
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
@@ -1129,7 +1138,7 @@ int CMMirror::OnSAModeY(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << "SAM " << axisLetterY_ << "?";
       response << ":A " << axisLetterY_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      tmp = (long) hub_->ParseAnswerAfterEquals();
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
       bool success;
       switch (tmp)
       {
@@ -1177,7 +1186,7 @@ int CMMirror::OnSAPatternY(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << "SAP " << axisLetterY_ << "?";
       response << ":A " << axisLetterY_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      tmp = (long) hub_->ParseAnswerAfterEquals();
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
       bool success;
       tmp = tmp & ((long)(BIT2|BIT1|BIT0));  // zero all but the lowest 3 bits
       switch (tmp)
@@ -1205,7 +1214,8 @@ int CMMirror::OnSAPatternY(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << "SAP " << axisLetterY_ << "?";
       response << ":A " << axisLetterY_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      long current = (long) hub_->ParseAnswerAfterEquals();
+      long current;
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(current) );
       current = current & (~(long)(BIT2|BIT1|BIT0));  // set lowest 3 bits to zero
       tmp += current;
       command.str("");
@@ -1226,7 +1236,7 @@ int CMMirror::OnSAPatternByteX(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << "SAP " << axisLetterX_ << "?";
       response << ":A " << axisLetterX_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      tmp = (long) hub_->ParseAnswerAfterEquals();
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
@@ -1272,7 +1282,7 @@ int CMMirror::OnSAClkSrcX(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << "SAP " << axisLetterX_ << "?";
       response << ":A " << axisLetterX_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      tmp = (long) hub_->ParseAnswerAfterEquals();
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
       bool success;
       tmp = tmp & ((long)(BIT7));  // zero all but bit 7
       switch (tmp)
@@ -1297,7 +1307,8 @@ int CMMirror::OnSAClkSrcX(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << "SAP " << axisLetterX_ << "?";
       response << ":A " << axisLetterX_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      long current = (long) hub_->ParseAnswerAfterEquals();
+      long current;
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(current) );
       current = current & (~(long)(BIT7));  // clear bit 7
       tmp += current;
       command.str("");
@@ -1319,7 +1330,9 @@ int CMMirror::OnSAClkSrcY(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << "SAP " << axisLetterY_ << "?";
       response << ":A " << axisLetterY_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      tmp = (long) hub_->ParseAnswerAfterEquals();
+
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
+
       bool success;
       tmp = tmp & ((long)(BIT7));  // zero all but bit 7
       switch (tmp)
@@ -1344,7 +1357,8 @@ int CMMirror::OnSAClkSrcY(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << "SAP " << axisLetterY_ << "?";
       response << ":A " << axisLetterY_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      long current = (long) hub_->ParseAnswerAfterEquals();
+      long current;
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(current) );
       current = current & (~(long)(BIT7));  // clear bit 7
       tmp += current;
       command.str("");
@@ -1366,7 +1380,7 @@ int CMMirror::OnSAClkPolX(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << "SAP " << axisLetterX_ << "?";
       response << ":A " << axisLetterX_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      tmp = (long) hub_->ParseAnswerAfterEquals();
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
       bool success;
       tmp = tmp & ((long)(BIT6));  // zero all but bit 6
       switch (tmp)
@@ -1391,7 +1405,8 @@ int CMMirror::OnSAClkPolX(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << "SAP " << axisLetterX_ << "?";
       response << ":A " << axisLetterX_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      long current = (long) hub_->ParseAnswerAfterEquals();
+      long current;
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(current) );
       current = current & (~(long)(BIT6));  // clear bit 6
       tmp += current;
       command.str("");
@@ -1413,7 +1428,7 @@ int CMMirror::OnSAClkPolY(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << "SAP " << axisLetterY_ << "?";
       response << ":A " << axisLetterY_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      tmp = (long) hub_->ParseAnswerAfterEquals();
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
       bool success;
       tmp = tmp & ((long)(BIT6));  // zero all but bit 6
       switch (tmp)
@@ -1438,7 +1453,8 @@ int CMMirror::OnSAClkPolY(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << "SAP " << axisLetterY_ << "?";
       response << ":A " << axisLetterY_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      long current = (long) hub_->ParseAnswerAfterEquals();
+      long current;
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(current) );
       current = current & (~(long)(BIT6));  // clear bit 6
       tmp += current;
       command.str("");
@@ -1460,7 +1476,7 @@ int CMMirror::OnSATTLOutX(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << "SAP " << axisLetterX_ << "?";
       response << ":A " << axisLetterX_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      tmp = (long) hub_->ParseAnswerAfterEquals();
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
       bool success;
       tmp = tmp & ((long)(BIT5));  // zero all but bit 5
       switch (tmp)
@@ -1485,7 +1501,8 @@ int CMMirror::OnSATTLOutX(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << "SAP " << axisLetterX_ << "?";
       response << ":A " << axisLetterX_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      long current = (long) hub_->ParseAnswerAfterEquals();
+      long current;
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(current) );
       current = current & (~(long)(BIT5));  // clear bit 5
       tmp += current;
       command.str("");
@@ -1507,7 +1524,7 @@ int CMMirror::OnSATTLOutY(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << "SAP " << axisLetterY_ << "?";
       response << ":A " << axisLetterY_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      tmp = (long) hub_->ParseAnswerAfterEquals();
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
       bool success;
       tmp = tmp & ((long)(BIT5));  // zero all but bit 5
       switch (tmp)
@@ -1532,7 +1549,8 @@ int CMMirror::OnSATTLOutY(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << "SAP " << axisLetterY_ << "?";
       response << ":A " << axisLetterY_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      long current = (long) hub_->ParseAnswerAfterEquals();
+      long current;
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(current) );
       current = current & (~(long)(BIT5));  // clear bit 5
       tmp += current;
       command.str("");
@@ -1554,7 +1572,7 @@ int CMMirror::OnSATTLPolX(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << "SAP " << axisLetterX_ << "?";
       response << ":A " << axisLetterX_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      tmp = (long) hub_->ParseAnswerAfterEquals();
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
       bool success;
       tmp = tmp & ((long)(BIT4));  // zero all but bit 4
       switch (tmp)
@@ -1579,7 +1597,8 @@ int CMMirror::OnSATTLPolX(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << "SAP " << axisLetterX_ << "?";
       response << ":A " << axisLetterX_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      long current = (long) hub_->ParseAnswerAfterEquals();
+      long current;
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(current) );
       current = current & (~(long)(BIT4));  // clear bit 4
       tmp += current;
       command.str("");
@@ -1601,7 +1620,7 @@ int CMMirror::OnSATTLPolY(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << "SAP " << axisLetterY_ << "?";
       response << ":A " << axisLetterY_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      tmp = (long) hub_->ParseAnswerAfterEquals();
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
       bool success;
       tmp = tmp & ((long)(BIT4));  // zero all but bit 4
       switch (tmp)
@@ -1626,7 +1645,8 @@ int CMMirror::OnSATTLPolY(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << "SAP " << axisLetterY_ << "?";
       response << ":A " << axisLetterY_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      long current = (long) hub_->ParseAnswerAfterEquals();
+      long current;
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(current) );
       current = current & (~(long)(BIT4));  // clear bit 4
       tmp += current;
       command.str("");
@@ -1653,7 +1673,8 @@ int CMMirror::OnJoystickFastSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << addressChar_ << "JS X?";
       response << ":A X=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      tmp = abs(hub_->ParseAnswerAfterEquals());
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
+      tmp = abs(tmp);
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
@@ -1686,7 +1707,8 @@ int CMMirror::OnJoystickSlowSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << addressChar_ << "JS Y?";
       response << ":A Y=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      tmp = abs(hub_->ParseAnswerAfterEquals());
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
+      tmp = abs(tmp);
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
@@ -1719,7 +1741,7 @@ int CMMirror::OnJoystickMirror(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << addressChar_ << "JS X?";  // query only the fast setting to see if already mirrored
       response << ":A X=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      tmp = hub_->ParseAnswerAfterEquals();
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
       bool success = 0;
       if (tmp < 0) // speed negative <=> mirrored
          success = pProp->Set(g_YesState);
@@ -1756,7 +1778,7 @@ int CMMirror::OnJoystickSelectX(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << "J " << axisLetterX_ << "?";
       response << ":A " << axisLetterX_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      tmp = (long) hub_->ParseAnswerAfterEquals();
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
       bool success = 0;
       switch (tmp)
       {
@@ -1805,7 +1827,7 @@ int CMMirror::OnJoystickSelectY(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << "J " << axisLetterY_ << "?";
       response << ":A " << axisLetterY_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      tmp = (long) hub_->ParseAnswerAfterEquals();
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
       bool success = 0;
       switch (tmp)
       {
@@ -1852,7 +1874,7 @@ int CMMirror::OnSPIMScansPerSlice(MM::PropertyBase* pProp, MM::ActionType eAct)
          return DEVICE_OK;
       command << addressChar_ << "NR X?";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A X="));
-      tmp = (long) hub_->ParseAnswerAfterEquals();
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
@@ -1874,7 +1896,7 @@ int CMMirror::OnSPIMNumSlices(MM::PropertyBase* pProp, MM::ActionType eAct)
          return DEVICE_OK;
       command << addressChar_ << "NR Y?";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A Y="));
-      tmp = (long) hub_->ParseAnswerAfterEquals();
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
@@ -1896,7 +1918,7 @@ int CMMirror::OnSPIMNumSides(MM::PropertyBase* pProp, MM::ActionType eAct)
          return DEVICE_OK;
       command << addressChar_ << "NR Z?";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A Z="));
-      tmp = (long) hub_->ParseAnswerAfterEquals();
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
       if (tmp==3)   tmp = 2;  // 3 means two-sided but opposite side
       if (tmp==0)   tmp = 1;  // 0 means one-sided but opposite side
       if (!pProp->Set(tmp))
@@ -1928,7 +1950,7 @@ int CMMirror::OnSPIMFirstSide(MM::PropertyBase* pProp, MM::ActionType eAct)
          return DEVICE_OK;
       command << addressChar_ << "NR Z?";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A Z="));
-      tmp = (long) hub_->ParseAnswerAfterEquals();
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
       if (tmp==3 || tmp==0)  // if opposite side
       {
          success = pProp->Set(g_SPIMSideBFirst);
@@ -1970,7 +1992,7 @@ int CMMirror::OnSPIMNumRepeats(MM::PropertyBase* pProp, MM::ActionType eAct)
          return DEVICE_OK;
       command << addressChar_ << "NR F?";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A F="));
-      tmp = (long) hub_->ParseAnswerAfterEquals();
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
@@ -1992,7 +2014,7 @@ int CMMirror::OnSPIMDelayBeforeSide(MM::PropertyBase* pProp, MM::ActionType eAct
          return DEVICE_OK;
       command << addressChar_ << "NV Y?";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A Y="));
-      tmp = hub_->ParseAnswerAfterEquals();
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
@@ -2014,7 +2036,7 @@ int CMMirror::OnSPIMDelayBeforeSlice(MM::PropertyBase* pProp, MM::ActionType eAc
          return DEVICE_OK;
       command << addressChar_ << "NV X?";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A X="));
-      tmp = hub_->ParseAnswerAfterEquals();
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
@@ -2036,7 +2058,9 @@ int CMMirror::OnSPIMState(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << addressChar_ << "SN X?";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
       bool success;
-      switch ( hub_->LastSerialAnswer().at(3) )
+      char c;
+      RETURN_ON_MM_ERROR( hub_->GetAnswerCharAtPosition3(c) );
+      switch ( c )
       {
          case g_SPIMStateCode_Idle:  success = pProp->Set(g_SPIMStateIdle); break;
          case g_SPIMStateCode_Arm:   success = pProp->Set(g_SPIMStateArmed); break;
@@ -2049,12 +2073,14 @@ int CMMirror::OnSPIMState(MM::PropertyBase* pProp, MM::ActionType eAct)
    else if (eAct == MM::AfterSet) {
       string tmpstr;
       pProp->Get(tmpstr);
+      char c;
       if (tmpstr.compare(g_SPIMStateIdle) == 0)
       {
          // check status and stop if it's not idle already
          command << addressChar_ << "SN X?";
          RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
-         if (hub_->LastSerialAnswer().at(3) != g_SPIMStateCode_Idle)
+         RETURN_ON_MM_ERROR( hub_->GetAnswerCharAtPosition3(c) );
+         if (c!=g_SPIMStateCode_Idle)
          {
             // this will stop state machine if it's running, if we do SN without args we run the risk of it stopping itself before we send the next command
             // after we stop it, it will automatically go to idle state
@@ -2068,7 +2094,8 @@ int CMMirror::OnSPIMState(MM::PropertyBase* pProp, MM::ActionType eAct)
          // stop it if we need to, then change to armed state
          command << addressChar_ << "SN X?";
          RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
-         if (hub_->LastSerialAnswer().at(3) == g_SPIMStateCode_Idle)
+         RETURN_ON_MM_ERROR( hub_->GetAnswerCharAtPosition3(c) );
+         if (c==g_SPIMStateCode_Idle)
          {
             // this will stop state machine if it's running, if we do SN without args we run the risk of it stopping itself (e.g. finishing) before we send the next command
             command.str("");
@@ -2085,7 +2112,8 @@ int CMMirror::OnSPIMState(MM::PropertyBase* pProp, MM::ActionType eAct)
          // check status and start if it's idle or armed
          command << addressChar_ << "SN X?";
          RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
-         if ((hub_->LastSerialAnswer().at(3) == g_SPIMStateCode_Idle) || (hub_->LastSerialAnswer().at(3) == g_SPIMStateCode_Armed))
+         RETURN_ON_MM_ERROR( hub_->GetAnswerCharAtPosition3(c) );
+         if ((c==g_SPIMStateCode_Idle) || (c==g_SPIMStateCode_Armed))
          {
             // if we are idle or armed then start it
             // assume that nothing else could have started it since our query moments ago

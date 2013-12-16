@@ -95,7 +95,7 @@ int ASIDevice::Initialize(bool skipFirmware)
       ostringstream command; command.str("");
       command << addressChar_ << "V";
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A v") );
-      firmwareVersion_ = hub_->ParseAnswerAfterPosition(4);
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterPosition(4, firmwareVersion_ ));
       command.str("");
       command << firmwareVersion_;
       RETURN_ON_MM_ERROR ( deviceASI_->CreateProperty(g_FirmwareVersionPropertyName, command.str().c_str(), MM::Float, true) );

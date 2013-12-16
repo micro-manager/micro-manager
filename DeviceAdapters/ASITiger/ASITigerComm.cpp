@@ -64,7 +64,7 @@ int CTigerCommHub::Initialize()
    if(ret_ == ERR_UNRECOGNIZED_ANSWER)
       ret_ = DEVICE_NOT_SUPPORTED;
    RETURN_ON_MM_ERROR (ret_);
-   firmwareVersion_ = hub_->ParseAnswerAfterPosition(4);
+   RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterPosition(4, firmwareVersion_) );
    stringstream command; command.str("");
    command << firmwareVersion_;
    RETURN_ON_MM_ERROR ( CreateProperty(g_FirmwareVersionPropertyName, command.str().c_str(), MM::Float, true) );

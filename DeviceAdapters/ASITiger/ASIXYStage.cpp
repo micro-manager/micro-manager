@@ -75,13 +75,16 @@ int CXYStage::Initialize()
    // we store the micron-based unit multiplier for MM use, not the mm-based one ASI uses
    ostringstream command;
    command.str("");
+   double tmp;
    command << "UM " << axisLetterX_ << "? ";
    RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":") );
-   unitMultX_ = hub_->ParseAnswerAfterEquals()/1000;
+   RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
+   unitMultX_ = tmp/1000;
    command.str("");
    command << "UM " << axisLetterY_ << "? ";
    RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":") );
-   unitMultY_ = hub_->ParseAnswerAfterEquals()/1000;
+   RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
+   unitMultY_ = tmp/1000;
 
    // set controller card to return positions with 3 decimal places (max allowed currently)
    command.str("");
@@ -103,12 +106,14 @@ int CXYStage::Initialize()
    command.str("");
    command << "S " << axisLetterX_ << "?";
    RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
-   double origSpeed = hub_->ParseAnswerAfterEquals();
+   double origSpeed;
+   RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(origSpeed) );
    ostringstream command2; command2.str("");
    command2 << "S " << axisLetterX_ << "=10000";
    RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command2.str(), ":A")); // set too high
    RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));  // read actual max
-   double maxSpeed = hub_->ParseAnswerAfterEquals();
+   double maxSpeed;
+   RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(maxSpeed) );
    command2.str("");
    command2 << "S " << axisLetterX_ << "=" << origSpeed;
    RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command2.str(), ":A")); // restore
@@ -233,11 +238,14 @@ int CXYStage::GetPositionSteps(long& x, long& y)
    ostringstream command; command.str("");
    command << "W " << axisLetterX_;
    RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
-   x = (long) (hub_->ParseAnswerAfterPosition(2)/unitMultX_/stepSizeXUm_);
+   double tmp;
+   RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterPosition2(tmp) );
+   x = (long)(tmp/unitMultX_/stepSizeXUm_);
    command.str("");
    command << "W " << axisLetterY_;
    RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
-   y = (long) (hub_->ParseAnswerAfterPosition(2)/unitMultY_/stepSizeYUm_);
+   RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterPosition2(tmp) );
+   y = (long)(tmp/unitMultY_/stepSizeYUm_);
    return DEVICE_OK;
 }
 
@@ -260,20 +268,25 @@ int CXYStage::GetStepLimits(long& xMin, long& xMax, long& yMin, long& yMax)
    // limits are always represented in terms of mm, independent of unit multiplier
    ostringstream command; command.str("");
    command << "SL " << axisLetterX_ << "? ";
+   double tmp;
    RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
-   xMin = (long) (hub_->ParseAnswerAfterEquals()*1000/stepSizeXUm_);
+   RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
+   xMin = (long) (tmp*1000/stepSizeXUm_);
    command.str("");
    command << "SU " << axisLetterX_ << "? ";
    RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
-   xMax = (long) (hub_->ParseAnswerAfterEquals()*1000/stepSizeXUm_);
+   RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
+   xMax = (long) (tmp*1000/stepSizeXUm_);
    command.str("");
    command << "SL " << axisLetterY_ << "? ";
    RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
-   yMin = (long) (hub_->ParseAnswerAfterEquals()*1000/stepSizeYUm_);
+   RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
+   yMin = (long) (tmp*1000/stepSizeYUm_);
    command.str("");
    command << "SU " << axisLetterY_ << "? ";
    RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
-   yMax = (long) (hub_->ParseAnswerAfterEquals()*1000/stepSizeYUm_);
+   RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
+   yMax = (long) (tmp*1000/stepSizeYUm_);
    return DEVICE_OK;
 }
 
@@ -294,11 +307,18 @@ bool CXYStage::Busy()
       ret_ = hub_->QueryCommandVerify(command.str(),":A");
       if (ret_ != DEVICE_OK)  // say we aren't busy if we can't communicate
          return false;
-      if (hub_->LastSerialAnswer().at(3) == 'B')
+      char c;
+      ret_ = hub_->GetAnswerCharAtPosition3(c);
+      if (ret_ != DEVICE_OK)
+         return false;
+      if (c == 'B')
          return true;
       command.str("");
       command << "RS " << axisLetterY_ << "?";
-      return (hub_->LastSerialAnswer().at(3) == 'B');
+      ret_ = hub_->GetAnswerCharAtPosition3(c);
+      if (ret_ != DEVICE_OK)
+         return false;
+      return (c == 'B');
    }
    else  // use LSB of the status byte as approximate status, not quite equivalent
    {
@@ -306,16 +326,21 @@ bool CXYStage::Busy()
       ret_ = hub_->QueryCommandVerify(command.str(),":A");
       if (ret_ != DEVICE_OK)  // say we aren't busy if we can't communicate
          return false;
-      int i = (int) (hub_->ParseAnswerAfterPosition(2));
-      if (i & (int)BIT0)  // mask everything but LSB
+      unsigned int i;
+      ret_ = hub_->ParseAnswerAfterPosition2(i);
+      if (ret_ != DEVICE_OK)  // say we aren't busy if we can't communicate
+         return false;
+      if (i & (unsigned int)BIT0)  // mask everything but LSB
          return true; // don't bother checking other axis
       command.str("");
       command << "RS " << axisLetterY_;
       ret_ = hub_->QueryCommandVerify(command.str(),":A");
       if (ret_ != DEVICE_OK)  // say we aren't busy if we can't communicate
          return false;
-      i = (int) (hub_->ParseAnswerAfterPosition(2));
-      return (i & (int)BIT0);  // mask everything but LSB
+      ret_ = hub_->ParseAnswerAfterPosition2(i);
+      if (ret_ != DEVICE_OK)  // say we aren't busy if we can't communicate
+         return false;
+      return (i & (unsigned int)BIT0);  // mask everything but LSB
    }
 }
 
@@ -448,7 +473,7 @@ int CXYStage::OnWait(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << "WT " << axisLetterX_ << "?";
       response << ":" << axisLetterX_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      tmp = (long) (hub_->ParseAnswerAfterEquals());
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
       // don't complain if value is larger than MM's "artificial" limits, it just won't be set
       pProp->Set(tmp);
    }
@@ -472,7 +497,7 @@ int CXYStage::OnSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << "S " << axisLetterX_ << "?";
       response << ":A " << axisLetterX_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      tmp = hub_->ParseAnswerAfterEquals();
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
@@ -497,7 +522,8 @@ int CXYStage::OnDriftError(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << "E " << axisLetterX_ << "?";
       response << ":" << axisLetterX_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      tmp = 1000*hub_->ParseAnswerAfterEquals();
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
+      tmp = 1000*tmp;
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
@@ -522,7 +548,8 @@ int CXYStage::OnFinishError(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << "PC " << axisLetterX_ << "?";
       response << ":A " << axisLetterX_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      tmp = 1000*hub_->ParseAnswerAfterEquals();
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
+      tmp = 1000*tmp;
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
@@ -546,7 +573,7 @@ int CXYStage::OnLowerLimX(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << "SL " << axisLetterX_ << "?";
       response << ":A " << axisLetterX_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      tmp = hub_->ParseAnswerAfterEquals();
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
@@ -570,7 +597,7 @@ int CXYStage::OnLowerLimY(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << "SL " << axisLetterY_ << "?";
       response << ":A " << axisLetterY_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      tmp = hub_->ParseAnswerAfterEquals();
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
@@ -594,7 +621,7 @@ int CXYStage::OnUpperLimX(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << "SU " << axisLetterX_ << "?";
       response << ":A " << axisLetterX_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      tmp = hub_->ParseAnswerAfterEquals();
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
@@ -618,7 +645,7 @@ int CXYStage::OnUpperLimY(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << "SU " << axisLetterY_ << "?";
       response << ":A " << axisLetterY_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      tmp = hub_->ParseAnswerAfterEquals();
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
@@ -641,7 +668,7 @@ int CXYStage::OnAcceleration(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << "AC " << axisLetterX_ << "?";
       ostringstream response; response.str(""); response << ":" << axisLetterX_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      tmp = (long) hub_->ParseAnswerAfterEquals();
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
@@ -664,7 +691,7 @@ int CXYStage::OnMaintainState(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << "MA " << axisLetterX_ << "?";
       ostringstream response; response.str(""); response << ":A " << axisLetterX_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      tmp = (long) hub_->ParseAnswerAfterEquals();
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
       bool success = 0;
       switch (tmp)
       {
@@ -709,7 +736,8 @@ int CXYStage::OnBacklash(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << "B " << axisLetterX_ << "?";
       response << ":" << axisLetterX_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      tmp = 1000*hub_->ParseAnswerAfterEquals();
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
+      tmp = 1000*tmp;
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
@@ -733,7 +761,8 @@ int CXYStage::OnOvershoot(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << "OS " << axisLetterX_ << "?";
       response << ":A " << axisLetterX_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      tmp = 1000*hub_->ParseAnswerAfterEquals();
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
+      tmp = 1000*tmp;
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
@@ -757,7 +786,7 @@ int CXYStage::OnKIntegral(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << "KI " << axisLetterX_ << "?";
       response << ":A " << axisLetterX_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      tmp = (long) hub_->ParseAnswerAfterEquals();
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
@@ -781,7 +810,7 @@ int CXYStage::OnKProportional(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << "KP " << axisLetterX_ << "?";
       response << ":A " << axisLetterX_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      tmp = (long) hub_->ParseAnswerAfterEquals();
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
@@ -805,7 +834,7 @@ int CXYStage::OnKDerivative(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << "KD " << axisLetterX_ << "?";
       response << ":A " << axisLetterX_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      tmp = (long) hub_->ParseAnswerAfterEquals();
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
@@ -829,7 +858,7 @@ int CXYStage::OnAAlign(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << "AA " << axisLetterX_ << "?";
       response << ":A " << axisLetterX_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      tmp = (long) hub_->ParseAnswerAfterEquals();
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
@@ -893,7 +922,7 @@ int CXYStage::OnMotorControl(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << "MC " << axisLetterX_ << "?";
       response << ":A ";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      tmp = (long) hub_->ParseAnswerAfterPosition(3);
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterPosition3(tmp) );
       bool success = 0;
       if (tmp)
          success = pProp->Set(g_OnState);
@@ -928,7 +957,8 @@ int CXYStage::OnJoystickFastSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << addressChar_ << "JS X?";
       response << ":A X=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      tmp = abs(hub_->ParseAnswerAfterEquals());
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
+      tmp = abs(tmp);
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
@@ -959,7 +989,7 @@ int CXYStage::OnJoystickSlowSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << addressChar_ << "JS Y?";
       response << ":A Y=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      tmp = abs(hub_->ParseAnswerAfterEquals());
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
@@ -990,7 +1020,7 @@ int CXYStage::OnJoystickMirror(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << addressChar_ << "JS X?";  // query only the fast setting to see if already mirrored
       response << ":A X=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      tmp = hub_->ParseAnswerAfterEquals();
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
       bool success = 0;
       if (tmp < 0) // speed negative <=> mirrored
          success = pProp->Set(g_YesState);
@@ -1027,7 +1057,7 @@ int CXYStage::OnJoystickEnableDisable(MM::PropertyBase* pProp, MM::ActionType eA
       command << "J " << axisLetterX_ << "?";
       response << ":A " << axisLetterX_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      tmp = (long) hub_->ParseAnswerAfterEquals();
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
       bool success = 0;
       if (tmp) // treat anything nozero as enabled when reading
          success = pProp->Set(g_YesState);
@@ -1058,7 +1088,7 @@ int CXYStage::OnNrExtraMoveReps(MM::PropertyBase* pProp, MM::ActionType eAct)
          return DEVICE_OK;
       command << addressChar_ << "CCA Y?";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
-      tmp = (long) (hub_->ParseAnswerAfterEquals());
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
       // don't complain if value is larger than MM's "artificial" limits, it just won't be set
       pProp->Set(tmp);
    }

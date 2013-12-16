@@ -262,8 +262,8 @@ const char* const g_SPIMDelayBeforeSidePropertyName = "SPIMDelayBeforeSide(ms)";
 
 // SPIM enums
 // which side first
-const char* const g_SPIMSideAFirst = "SideA";
-const char* const g_SPIMSideBFirst = "SideB";
+const char* const g_SPIMSideAFirst = "A";
+const char* const g_SPIMSideBFirst = "B";
 // SPIM state for micro-manager
 const char* const g_SPIMStateIdle = "Idle";
 const char* const g_SPIMStateArmed = "Armed";
