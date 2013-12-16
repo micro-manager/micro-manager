@@ -814,8 +814,8 @@ int CPCOCam::OnEMGain(MM::PropertyBase* pProp, MM::ActionType eAct)
 HMODULE hcrypt;
 HMODULE hmodule;
 int icryptnum = -1;
-int (__stdcall *PCO_SetAppNameHandle)(const unsigned char szname[], HMODULE hlib);
-int (__stdcall *PCO_RemoveAppName)(int inum);
+int (*PCO_SetAppNameHandle)(const unsigned char szname[], HMODULE hlib);
+int (*PCO_RemoveAppName)(int inum);
 void EnableConvert(bool benable)
 {
   if(benable)
@@ -825,9 +825,9 @@ void EnableConvert(bool benable)
     hcrypt = LoadLibrary("PCO_CryptDll");
     if(hcrypt != NULL)
     {
-      PCO_SetAppNameHandle = (int (__stdcall *)(const unsigned char szname[], HMODULE hlib))
+      PCO_SetAppNameHandle = (int (*)(const unsigned char szname[], HMODULE hlib))
         GetProcAddress(hcrypt, "PCO_SetAppNameHandle");
-      PCO_RemoveAppName = (int (__stdcall *)(int inum))
+      PCO_RemoveAppName = (int (*)(int inum))
         GetProcAddress(hcrypt, "PCO_RemoveAppName");
       if((PCO_SetAppNameHandle != NULL) && (PCO_RemoveAppName != NULL))
       {
@@ -983,52 +983,52 @@ int CPCOCam::Initialize()
     m_nHBin = m_nVBin = 1;
     switch(m_nCameraType)
     {
-    case 1: // Fast Shutter
-      m_nMode = 1;//M_FAST;
-      m_nSubMode = 0;//NORMALFAST;
-      m_iGainCam = 0;
-      m_nTrig = 0;
-      //1ms exposure time
-      m_dExposure = 1;
-      snprintf(m_pszTimes, m_nTimesLen, "0,%.0f,-1,-1", m_dExposure * 1.0e06);
+      case 1: // Fast Shutter
+        m_nMode = 1;//M_FAST;
+        m_nSubMode = 0;//NORMALFAST;
+        m_iGainCam = 0;
+        m_nTrig = 0;
+        //1ms exposure time
+        m_dExposure = 1;
+        snprintf(m_pszTimes, m_nTimesLen, "0,%.0f,-1,-1", m_dExposure * 1.0e06);
       break;
 
-    case 2:
-    case 7:
-      // Long exposure 2; Long exposure QE 7
-      m_nMode = 0;//M_LONG;
-      m_nSubMode = 0;//NORMALLONG;
-      m_iGainCam = 0;
-      m_nTrig = 0;
-      //10ms exposure time
+      case 2:
+      case 7:
+        // Long exposure 2; Long exposure QE 7
+        m_nMode = 0;//M_LONG;
+        m_nSubMode = 0;//NORMALLONG;
+        m_iGainCam = 0;
+        m_nTrig = 0;
+        //10ms exposure time
 
-      if(m_nCCDType == 0x21)
-        snprintf(m_pszTimes, m_nTimesLen, "0,%.0f,-1,-1\r\nmg%d", m_dExposure, m_iEMGain);
-      else
+        if(m_nCCDType == 0x21)
+          snprintf(m_pszTimes, m_nTimesLen, "0,%.0f,-1,-1\r\nmg%d", m_dExposure, m_iEMGain);
+        else
+          snprintf(m_pszTimes, m_nTimesLen, "0,%.0f,-1,-1", m_dExposure);
+      break;
+
+      case 3:
+        // Long exposure OEM
+        m_nMode = 0;//M_LONG;
+        m_nSubMode = 0;//NORMALLONG;
+        m_nTrig = 0;
+        //10ms exposure time
         snprintf(m_pszTimes, m_nTimesLen, "0,%.0f,-1,-1", m_dExposure);
       break;
 
-    case 3:
-      // Long exposure OEM
-      m_nMode = 0;//M_LONG;
-      m_nSubMode = 0;//NORMALLONG;
-      m_nTrig = 0;
-      //10ms exposure time
-      snprintf(m_pszTimes, m_nTimesLen, "0,%.0f,-1,-1", m_dExposure);
+      case 8://FASTEXPQE
+        m_nMode = 0;//M_LONG;
+        m_nSubMode = 0;//NORMALLONG;
+        m_iGainCam = 0;
+        m_nTrig = 0;
+        //10ms exposure time
+        snprintf(m_pszTimes, m_nTimesLen, "0,%.0f,-1,-1", m_dExposure);
       break;
 
-    case 8://FASTEXPQE
-      m_nMode = 0;//M_LONG;
-      m_nSubMode = 0;//NORMALLONG;
-      m_iGainCam = 0;
-      m_nTrig = 0;
-      //10ms exposure time
-      snprintf(m_pszTimes, m_nTimesLen, "0,%.0f,-1,-1", m_dExposure);
-      break;
-
-    default:
-      // invalid type
-      return ERR_UNKNOWN_CAMERA_TYPE;
+      default:
+        // invalid type
+        return ERR_UNKNOWN_CAMERA_TYPE;
       break;
     }
   }
@@ -1104,13 +1104,9 @@ int CPCOCam::Initialize()
   pixTypes.push_back(g_PixelType_16bit);
   pixTypes.push_back(g_PixelType_8bit);
 
-  // FRE / 09.02.09
-  // This is beta state up to now and will work with versions >=30
-#if DEVICE_INTERFACE_VERSION >= 30
-
   if(m_pCamera->GetCCDCol(0))
     pixTypes.push_back(g_PixelType_RGB32bit);
-#endif
+
   nRet = SetAllowedValues(MM::g_Keyword_PixelType, pixTypes);
   if (nRet != DEVICE_OK)
     return nRet;

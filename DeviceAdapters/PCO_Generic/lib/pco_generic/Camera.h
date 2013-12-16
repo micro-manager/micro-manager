@@ -38,7 +38,7 @@
 #ifndef CAMERA_H
 #define CAMERA_H
 
-#define KAMLIBVERSION           230
+#define KAMLIBVERSION           231
 
 typedef unsigned char byte;     /* 8-bit  */
 typedef unsigned short word;    /* 16-bit */
