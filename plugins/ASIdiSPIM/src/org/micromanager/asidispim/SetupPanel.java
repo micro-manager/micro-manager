@@ -25,7 +25,6 @@ import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.prefs.Preferences;
-import org.micromanager.asidispim.Data.SpimParams;
 import org.micromanager.asidispim.Data.Devices;
 import org.micromanager.asidispim.Utils.ListeningJPanel;
 import org.micromanager.asidispim.Utils.Labels;
@@ -48,7 +47,6 @@ public class SetupPanel extends ListeningJPanel {
 
    ScriptInterface gui_;
    Devices devices_;
-   SpimParams spimParams_;
    Labels.Sides side_;
    Preferences prefs_;
    JComboBox joystickBox_;
@@ -63,8 +61,7 @@ public class SetupPanel extends ListeningJPanel {
    final String RIGHTWHEEL = Devices.JOYSTICKS.get(Devices.JoystickDevice.RIGHT_KNOB);
    final String LEFTWHEEL = Devices.JOYSTICKS.get(Devices.JoystickDevice.LEFT_KNOB);
 
-   public SetupPanel(ScriptInterface gui, Devices devices,
-           SpimParams spimParams, Labels.Sides side) {
+   public SetupPanel(ScriptInterface gui, Devices devices, Labels.Sides side) {
       super(new MigLayout(
               "",
               "[right]8[align center]16[right]8[60px,center]8[center]8[center]",

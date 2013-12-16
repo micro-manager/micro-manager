@@ -112,11 +112,11 @@ public class SpimParamsPanel extends ListeningJPanel {
       }
 
       public void stateChanged(ChangeEvent ce) {
-         params_.setPropValue(spimParamName_, ((Integer)sp_.getValue()).intValue());
+         params_.props_.setPropValue(spimParamName_, ((Integer)sp_.getValue()).intValue());
       }
 
       public void spimParamsChangedAlert() {
-         sp_.setValue(params_.getPropValueInteger(spimParamName_));
+         sp_.setValue(params_.props_.getPropValueInteger(spimParamName_));
       }
    };
 
@@ -139,16 +139,16 @@ public class SpimParamsPanel extends ListeningJPanel {
       }
 
       public void stateChanged(ChangeEvent ce) {
-         params_.setPropValue(spimParamName_, (float)((Double)sp_.getValue()).doubleValue());
+         params_.props_.setPropValue(spimParamName_, (float)((Double)sp_.getValue()).doubleValue());
       }
 
       public void spimParamsChangedAlert() {
-         sp_.setValue(params_.getPropValueFloat(spimParamName_));
+         sp_.setValue(params_.props_.getPropValueFloat(spimParamName_));
       }
    };
 
    private JSpinner makeSpinnerInteger(String spimParamName, int min, int max) throws ParseException {
-      SpinnerModel jspm = new SpinnerNumberModel(params_.getPropValueInteger(spimParamName), min, max, 1);
+      SpinnerModel jspm = new SpinnerNumberModel(params_.props_.getPropValueInteger(spimParamName), min, max, 1);
       JSpinner jsp = new JSpinner(jspm);
       SpinnerListenerInt ispl = new SpinnerListenerInt(spimParamName, jsp);
       jsp.addChangeListener(ispl);
@@ -157,7 +157,7 @@ public class SpimParamsPanel extends ListeningJPanel {
    }
 
    private JSpinner makeSpinnerFloat(String spimParamName, double min, double max, double step) throws ParseException {
-      SpinnerModel jspm = new SpinnerNumberModel((double)params_.getPropValueFloat(spimParamName), min, max, step);
+      SpinnerModel jspm = new SpinnerNumberModel((double)params_.props_.getPropValueFloat(spimParamName), min, max, step);
       JSpinner jsp = new JSpinner(jspm);
       SpinnerListenerFloat ispl = new SpinnerListenerFloat(spimParamName, jsp);
       jsp.addChangeListener(ispl);
@@ -179,7 +179,7 @@ public class SpimParamsPanel extends ListeningJPanel {
       }
 
       public void actionPerformed(ActionEvent ae) {
-         params_.setPropValue(key_, (String) box_.getSelectedItem());
+         params_.props_.setPropValue(key_, (String) box_.getSelectedItem());
       }
    };
 
@@ -193,7 +193,7 @@ public class SpimParamsPanel extends ListeningJPanel {
     */
    private JComboBox makeDropDownBox(String key, String[] vals) {
       JComboBox jcb = new JComboBox(vals);
-      jcb.setSelectedItem(params_.getPropValueString(key));
+      jcb.setSelectedItem(params_.props_.getPropValueString(key));
       jcb.addActionListener(new StringBoxListener (key, jcb));
       return jcb;
    }

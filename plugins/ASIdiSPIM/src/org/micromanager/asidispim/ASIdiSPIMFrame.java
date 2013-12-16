@@ -70,10 +70,10 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
       tabbedPane.addLTab("Devices", new DevicesPanel(gui_, devices_));
       tabbedPane.addLTab("SPIM Params", new SpimParamsPanel(spimParams_, devices_));
       final ListeningJPanel setupPanelA = new SetupPanel(
-              gui_, devices_, spimParams_, Labels.Sides.A);
+              gui_, devices_, Labels.Sides.A);
       tabbedPane.addLTab("Setup Side A",  setupPanelA);
       final ListeningJPanel setupPanelB = new SetupPanel(
-              gui_, devices_, spimParams_, Labels.Sides.B);
+              gui_, devices_, Labels.Sides.B);
       tabbedPane.addLTab("Setup Side B",  setupPanelB);
       final ListeningJPanel navigationPanel = new NavigationPanel(devices_);
       tabbedPane.addLTab("Navigate", navigationPanel);
