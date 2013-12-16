@@ -38,6 +38,8 @@ import org.micromanager.asidispim.Utils.DirectionalDevice;
 import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.ReportingUtils;
 
+// TODO implement fast axis checkbox (may need device adapter change and possibly even firmware-level change)
+
 /**
  * Class that holds information about the selected devices
  * This should always be the only source of device information
@@ -115,6 +117,7 @@ public class Devices {
       FASTAXISCDIR, FASTAXISDDIR};
    public static final String X = "X";
    public static final String Y = "Y";
+   public static final String NONE = "None";
    
    public static final HashMap<String, DirectionalDevice> STAGES;
    static {
@@ -234,6 +237,7 @@ public class Devices {
     */
    public String[] getTigerStages() {
       List<String> res = new ArrayList<String>();
+      res.add(NONE);
       for (String dev : Devices.ONEAXISTIGERDEVICES) {
          if (getMMDevice(dev) != null) {
             res.add(dev);
@@ -255,6 +259,7 @@ public class Devices {
     */
    public String[] getTwoAxisTigerStages() {
       List<String> res = new ArrayList<String>();
+      res.add(NONE);
       for (String dev : Devices.TWOAXISTIGERDEVICES) {
          if (getMMDevice(dev) != null) {
             res.add(dev);
