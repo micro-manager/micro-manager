@@ -286,6 +286,9 @@ public class GUIUtils {
       return menuItem;
    }
    
+   /*
+    * Add a menu item with given text to the specified parent menu.
+    */
    public static JMenuItem addMenuItem(final JMenu parentMenu,
            final String menuItemText,
            final String menuItemToolTip,
@@ -305,6 +308,10 @@ public class GUIUtils {
       return menuItem;
    }
   
+   /*
+    * Add a menu item that can be checked or unchecked to the specified
+    * parent menu.
+    */
    public static JCheckBoxMenuItem addCheckBoxMenuItem(final JMenu parentMenu,
            final String menuItemText,
            final String menuItemToolTip,
@@ -319,6 +326,22 @@ public class GUIUtils {
    
    ////////////// END MENU ITEM UTILITY METHODS ////////////////
    
-   
+    /* Add a component to the parent panel, set positions of the edges of
+     * component relative to panel. If edges are negative, then they 
+     * are positioned relative to south and east edges of parent panel.
+     * Assumes parent panel uses SpringLayout.
+     */
+   public static void addWithEdges(JPanel parentPanel, JComponent component, int west, int north, int east, int south) {
+      parentPanel.add(component);
+      SpringLayout topLayout = (SpringLayout) parentPanel.getLayout();
+      topLayout.putConstraint(SpringLayout.EAST, component, east,
+              (east > 0) ? SpringLayout.WEST : SpringLayout.EAST, parentPanel);
+      topLayout.putConstraint(SpringLayout.WEST, component, west,
+              (west >= 0) ? SpringLayout.WEST : SpringLayout.EAST, parentPanel);
+      topLayout.putConstraint(SpringLayout.SOUTH, component, south,
+              (south > 0) ? SpringLayout.NORTH : SpringLayout.SOUTH, parentPanel);
+      topLayout.putConstraint(SpringLayout.NORTH, component, north,
+              (north >= 0) ? SpringLayout.NORTH : SpringLayout.SOUTH, parentPanel);
+   }
    
 }

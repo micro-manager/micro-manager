@@ -115,8 +115,7 @@ import ij.gui.ImageCanvas;
 import ij.gui.ImageWindow;
 import ij.gui.Toolbar;
 
-import java.awt.Cursor;
-import java.awt.KeyboardFocusManager;
+import java.awt.*;
 import java.awt.dnd.DropTarget;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -908,7 +907,8 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
             }
         }.start();
     }
-   
+
+
    public interface DisplayImageRoutine {
       public void show(TaggedImage image);
    }
@@ -1236,15 +1236,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
             doSnap();
          }
       });
-      topPanel.add(buttonSnap_);
-      topLayout.putConstraint(SpringLayout.SOUTH, buttonSnap_, 25,
-            SpringLayout.NORTH, topPanel);
-      topLayout.putConstraint(SpringLayout.NORTH, buttonSnap_, 4,
-            SpringLayout.NORTH, topPanel);
-      topLayout.putConstraint(SpringLayout.EAST, buttonSnap_, 95,
-            SpringLayout.WEST, topPanel);
-      topLayout.putConstraint(SpringLayout.WEST, buttonSnap_, 7,
-            SpringLayout.WEST, topPanel);
+      GUIUtils.addWithEdges(topPanel, buttonSnap_, 7, 4, 95, 25);
 
       // Initialize
       // ----------
@@ -1254,15 +1246,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       final JLabel label_1 = new JLabel();
       label_1.setFont(new Font("Arial", Font.PLAIN, 10));
       label_1.setText("Exposure [ms]");
-      topPanel.add(label_1);
-      topLayout.putConstraint(SpringLayout.EAST, label_1, 198,
-            SpringLayout.WEST, topPanel);
-      topLayout.putConstraint(SpringLayout.WEST, label_1, 111,
-            SpringLayout.WEST, topPanel);
-      topLayout.putConstraint(SpringLayout.SOUTH, label_1, 39,
-            SpringLayout.NORTH, topPanel);
-      topLayout.putConstraint(SpringLayout.NORTH, label_1, 23,
-            SpringLayout.NORTH, topPanel);
+      GUIUtils.addWithEdges(topPanel, label_1, 111, 23, 198, 39);
 
       textFieldExp_ = new JTextField();
       textFieldExp_.addFocusListener(new FocusAdapter() {
@@ -1282,15 +1266,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
             setExposure();
          }
       });
-      topPanel.add(textFieldExp_);
-      topLayout.putConstraint(SpringLayout.SOUTH, textFieldExp_, 40,
-            SpringLayout.NORTH, topPanel);
-      topLayout.putConstraint(SpringLayout.NORTH, textFieldExp_, 21,
-            SpringLayout.NORTH, topPanel);
-      topLayout.putConstraint(SpringLayout.EAST, textFieldExp_, 276,
-            SpringLayout.WEST, topPanel);
-      topLayout.putConstraint(SpringLayout.WEST, textFieldExp_, 203,
-            SpringLayout.WEST, topPanel);
+      GUIUtils.addWithEdges(topPanel, textFieldExp_, 203, 21, 276, 40);
 
       // Live button
       // -----------
@@ -1313,15 +1289,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       });
 
       toggleButtonLive_.setText("Live");
-      topPanel.add(toggleButtonLive_);
-      topLayout.putConstraint(SpringLayout.SOUTH, toggleButtonLive_, 47,
-            SpringLayout.NORTH, topPanel);
-      topLayout.putConstraint(SpringLayout.NORTH, toggleButtonLive_, 26,
-            SpringLayout.NORTH, topPanel);
-      topLayout.putConstraint(SpringLayout.EAST, toggleButtonLive_, 95,
-            SpringLayout.WEST, topPanel);
-      topLayout.putConstraint(SpringLayout.WEST, toggleButtonLive_, 7,
-            SpringLayout.WEST, topPanel);
+      GUIUtils.addWithEdges(topPanel, toggleButtonLive_, 7, 26, 95, 47);
 
       // Acquire button
       // -----------
@@ -1341,17 +1309,8 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
             snapAndAddToImage5D();
          }
       });
-
       toAlbumButton_.setText("Album");
-      topPanel.add(toAlbumButton_);
-      topLayout.putConstraint(SpringLayout.SOUTH, toAlbumButton_, 69,
-            SpringLayout.NORTH, topPanel);
-      topLayout.putConstraint(SpringLayout.NORTH, toAlbumButton_, 48,
-            SpringLayout.NORTH, topPanel);
-      topLayout.putConstraint(SpringLayout.EAST, toAlbumButton_, 95,
-            SpringLayout.WEST, topPanel);
-      topLayout.putConstraint(SpringLayout.WEST, toAlbumButton_, 7,
-            SpringLayout.WEST, topPanel);
+      GUIUtils.addWithEdges(topPanel, toAlbumButton_, 7, 48, 95, 69);
 
       // Shutter button
       // --------------
@@ -1370,29 +1329,13 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       toggleButtonShutter_.setIconTextGap(6);
       toggleButtonShutter_.setFont(new Font("Arial", Font.BOLD, 10));
       toggleButtonShutter_.setText("Open");
-      topPanel.add(toggleButtonShutter_);
-      topLayout.putConstraint(SpringLayout.EAST, toggleButtonShutter_,
-            275, SpringLayout.WEST, topPanel);
-      topLayout.putConstraint(SpringLayout.WEST, toggleButtonShutter_,
-            203, SpringLayout.WEST, topPanel);
-      topLayout.putConstraint(SpringLayout.SOUTH, toggleButtonShutter_,
-            138 - 21, SpringLayout.NORTH, topPanel);
-      topLayout.putConstraint(SpringLayout.NORTH, toggleButtonShutter_,
-            117 - 21, SpringLayout.NORTH, topPanel);
+      GUIUtils.addWithEdges(topPanel, toggleButtonShutter_, 203, 96, 275, 117);
 
       // Active shutter label
       final JLabel activeShutterLabel = new JLabel();
       activeShutterLabel.setFont(new Font("Arial", Font.PLAIN, 10));
       activeShutterLabel.setText("Shutter");
-      topPanel.add(activeShutterLabel);
-      topLayout.putConstraint(SpringLayout.SOUTH, activeShutterLabel,
-            108 - 22, SpringLayout.NORTH, topPanel);
-      topLayout.putConstraint(SpringLayout.NORTH, activeShutterLabel,
-            95 - 22, SpringLayout.NORTH, topPanel);
-      topLayout.putConstraint(SpringLayout.EAST, activeShutterLabel,
-            160 - 2, SpringLayout.WEST, topPanel);
-      topLayout.putConstraint(SpringLayout.WEST, activeShutterLabel,
-            113 - 2, SpringLayout.WEST, topPanel);
+      GUIUtils.addWithEdges(topPanel, activeShutterLabel, 111, 73, 158, 86);
 
       // Active shutter Combo Box
       shutterComboBox_ = new JComboBox();
@@ -1410,16 +1353,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
             }
          }
       });
-      
-      topPanel.add(shutterComboBox_);
-      topLayout.putConstraint(SpringLayout.SOUTH, shutterComboBox_,
-            114 - 22, SpringLayout.NORTH, topPanel);
-      topLayout.putConstraint(SpringLayout.NORTH, shutterComboBox_,
-            92 - 22, SpringLayout.NORTH, topPanel);
-      topLayout.putConstraint(SpringLayout.EAST, shutterComboBox_, 275,
-            SpringLayout.WEST, topPanel);
-      topLayout.putConstraint(SpringLayout.WEST, shutterComboBox_, 170,
-            SpringLayout.WEST, topPanel);
+      GUIUtils.addWithEdges(topPanel, shutterComboBox_, 170, 70, 275, 92);
 
       menuBar_ = new JMenuBar();
       switchConfigurationMenu_ = new JMenu();
@@ -1432,26 +1366,10 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       final JLabel binningLabel = new JLabel();
       binningLabel.setFont(new Font("Arial", Font.PLAIN, 10));
       binningLabel.setText("Binning");
-      topPanel.add(binningLabel);
-      topLayout.putConstraint(SpringLayout.SOUTH, binningLabel, 64,
-            SpringLayout.NORTH, topPanel);
-      topLayout.putConstraint(SpringLayout.NORTH, binningLabel, 43,
-            SpringLayout.NORTH, topPanel);
-      topLayout.putConstraint(SpringLayout.EAST, binningLabel, 200 - 1,
-            SpringLayout.WEST, topPanel);
-      topLayout.putConstraint(SpringLayout.WEST, binningLabel, 112 - 1,
-            SpringLayout.WEST, topPanel);
+      GUIUtils.addWithEdges(topPanel, binningLabel, 111, 43, 199, 64);
 
       metadataPanel_ = new MetadataPanel();
-      bottomPanel.add(metadataPanel_);
-      topLayout.putConstraint(SpringLayout.SOUTH, metadataPanel_, 0,
-            SpringLayout.SOUTH, bottomPanel);
-      topLayout.putConstraint(SpringLayout.NORTH, metadataPanel_, 0,
-            SpringLayout.NORTH, bottomPanel);
-      topLayout.putConstraint(SpringLayout.EAST, metadataPanel_, 0,
-            SpringLayout.EAST, bottomPanel);
-      topLayout.putConstraint(SpringLayout.WEST, metadataPanel_, 0,
-            SpringLayout.WEST, bottomPanel);
+      GUIUtils.addWithEdges(bottomPanel, metadataPanel_, 0, 0, 0, 0);
       metadataPanel_.setBorder(BorderFactory.createEmptyBorder());
 
 
@@ -1466,42 +1384,16 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
             changeBinning();
          }
       });
-      topPanel.add(comboBinning_);
-      topLayout.putConstraint(SpringLayout.EAST, comboBinning_, 275,
-            SpringLayout.WEST, topPanel);
-      topLayout.putConstraint(SpringLayout.WEST, comboBinning_, 200,
-            SpringLayout.WEST, topPanel);
-      topLayout.putConstraint(SpringLayout.SOUTH, comboBinning_, 66,
-            SpringLayout.NORTH, topPanel);
-      topLayout.putConstraint(SpringLayout.NORTH, comboBinning_, 43,
-            SpringLayout.NORTH, topPanel);
-
-
-
+      GUIUtils.addWithEdges(topPanel, comboBinning_, 200, 43, 275, 66);
+ 
       final JLabel cameraSettingsLabel = new JLabel();
       cameraSettingsLabel.setFont(new Font("Arial", Font.BOLD, 11));
       cameraSettingsLabel.setText("Camera settings");
-      topPanel.add(cameraSettingsLabel);
-      topLayout.putConstraint(SpringLayout.EAST, cameraSettingsLabel,
-            211, SpringLayout.WEST, topPanel);
-      topLayout.putConstraint(SpringLayout.NORTH, cameraSettingsLabel, 6,
-            SpringLayout.NORTH, topPanel);
-      topLayout.putConstraint(SpringLayout.WEST, cameraSettingsLabel,
-            109, SpringLayout.WEST, topPanel);
-
+      GUIUtils.addWithEdges(topPanel, cameraSettingsLabel, 109, 2, 211, 22);
       
       labelImageDimensions_ = new JLabel();
       labelImageDimensions_.setFont(new Font("Arial", Font.PLAIN, 10));
-      topPanel.add(labelImageDimensions_);
-      topLayout.putConstraint(SpringLayout.SOUTH, labelImageDimensions_,
-            0, SpringLayout.SOUTH, topPanel);
-      topLayout.putConstraint(SpringLayout.NORTH, labelImageDimensions_,
-            -20, SpringLayout.SOUTH, topPanel);
-      topLayout.putConstraint(SpringLayout.EAST, labelImageDimensions_,
-            0, SpringLayout.EAST, topPanel);
-      topLayout.putConstraint(SpringLayout.WEST, labelImageDimensions_,
-            5, SpringLayout.WEST, topPanel);
-      
+      GUIUtils.addWithEdges(topPanel, labelImageDimensions_, 5, -20, 0, 0);
       
       configPad_ = new ConfigGroupPad();
       configPadButtonPanel_ = new ConfigPadButtonPanel();
@@ -1509,40 +1401,15 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       configPadButtonPanel_.setGUI(MMStudioMainFrame.getInstance());
       
       configPad_.setFont(new Font("", Font.PLAIN, 10));
-      topPanel.add(configPad_);
-      topLayout.putConstraint(SpringLayout.EAST, configPad_, -4,
-            SpringLayout.EAST, topPanel);
-      topLayout.putConstraint(SpringLayout.WEST, configPad_, 5,
-            SpringLayout.EAST, comboBinning_);
-      topLayout.putConstraint(SpringLayout.SOUTH, configPad_, -4,
-            SpringLayout.NORTH, configPadButtonPanel_);
-      topLayout.putConstraint(SpringLayout.NORTH, configPad_, 21,
-            SpringLayout.NORTH, topPanel);
-
-
-      topPanel.add(configPadButtonPanel_);
-      topLayout.putConstraint(SpringLayout.EAST, configPadButtonPanel_, -4,
-            SpringLayout.EAST, topPanel);
-      topLayout.putConstraint(SpringLayout.WEST, configPadButtonPanel_, 5,
-            SpringLayout.EAST, comboBinning_);
-      topLayout.putConstraint(SpringLayout.NORTH, configPadButtonPanel_, -40,
-            SpringLayout.SOUTH, topPanel);
-      topLayout.putConstraint(SpringLayout.SOUTH, configPadButtonPanel_, -20,
-            SpringLayout.SOUTH, topPanel);
-
+      
+      GUIUtils.addWithEdges(topPanel, configPad_, 280, 21, -4, -44);
+      GUIUtils.addWithEdges(topPanel, configPadButtonPanel_, 280, -40, -4, -20);
+      
 
       final JLabel stateDeviceLabel = new JLabel();
       stateDeviceLabel.setFont(new Font("Arial", Font.BOLD, 11));
       stateDeviceLabel.setText("Configuration settings");
-      topPanel.add(stateDeviceLabel);
-      topLayout.putConstraint(SpringLayout.SOUTH, stateDeviceLabel, 0,
-            SpringLayout.SOUTH, cameraSettingsLabel);
-      topLayout.putConstraint(SpringLayout.NORTH, stateDeviceLabel, 0,
-            SpringLayout.NORTH, cameraSettingsLabel);
-      topLayout.putConstraint(SpringLayout.EAST, stateDeviceLabel, 150,
-            SpringLayout.WEST, configPad_);
-      topLayout.putConstraint(SpringLayout.WEST, stateDeviceLabel, 0,
-            SpringLayout.WEST, configPad_);
+      GUIUtils.addWithEdges(topPanel, stateDeviceLabel, 280, 2, 430, 22);
 
 
       final JButton buttonAcqSetup = new JButton();
@@ -1560,15 +1427,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
          }
       });
       buttonAcqSetup.setText("Multi-D Acq.");
-      topPanel.add(buttonAcqSetup);
-      topLayout.putConstraint(SpringLayout.SOUTH, buttonAcqSetup, 91,
-            SpringLayout.NORTH, topPanel);
-      topLayout.putConstraint(SpringLayout.NORTH, buttonAcqSetup, 70,
-            SpringLayout.NORTH, topPanel);
-      topLayout.putConstraint(SpringLayout.EAST, buttonAcqSetup, 95,
-            SpringLayout.WEST, topPanel);
-      topLayout.putConstraint(SpringLayout.WEST, buttonAcqSetup, 7,
-            SpringLayout.WEST, topPanel);
+      GUIUtils.addWithEdges(topPanel, buttonAcqSetup, 7, 70, 95, 91);
 
       autoShutterCheckBox_ = new JCheckBox();
       autoShutterCheckBox_.setFont(new Font("Arial", Font.PLAIN, 10));
@@ -1606,16 +1465,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       autoShutterCheckBox_.setIconTextGap(6);
       autoShutterCheckBox_.setHorizontalTextPosition(SwingConstants.LEADING);
       autoShutterCheckBox_.setText("Auto shutter");
-      topPanel.add(autoShutterCheckBox_);
-      topLayout.putConstraint(SpringLayout.EAST, autoShutterCheckBox_,
-            202 - 3, SpringLayout.WEST, topPanel);
-      topLayout.putConstraint(SpringLayout.WEST, autoShutterCheckBox_,
-            110 - 3, SpringLayout.WEST, topPanel);
-      topLayout.putConstraint(SpringLayout.SOUTH, autoShutterCheckBox_,
-            141 - 22, SpringLayout.NORTH, topPanel);
-      topLayout.putConstraint(SpringLayout.NORTH, autoShutterCheckBox_,
-            118 - 22, SpringLayout.NORTH, topPanel);
-
+      GUIUtils.addWithEdges(topPanel, autoShutterCheckBox_, 107, 96, 199, 119);
     
       final JButton refreshButton = new JButton();
       refreshButton.setMargin(new Insets(2, 2, 2, 2));
@@ -1634,27 +1484,11 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
          }
       });
       refreshButton.setText("Refresh");
-      topPanel.add(refreshButton);
-      topLayout.putConstraint(SpringLayout.SOUTH, refreshButton, 113,
-            SpringLayout.NORTH, topPanel);
-      topLayout.putConstraint(SpringLayout.NORTH, refreshButton, 92,
-            SpringLayout.NORTH, topPanel);
-      topLayout.putConstraint(SpringLayout.EAST, refreshButton, 95,
-            SpringLayout.WEST, topPanel);
-      topLayout.putConstraint(SpringLayout.WEST, refreshButton, 7,
-            SpringLayout.WEST, topPanel);
+      GUIUtils.addWithEdges(topPanel, refreshButton, 7, 92, 95, 113);
 
       JLabel citePleaLabel = new JLabel("<html>Please <a href=\"http://micro-manager.org\">cite Micro-Manager</a> so funding will continue!</html>");
-      topPanel.add(citePleaLabel);
       citePleaLabel.setFont(new Font("Arial", Font.PLAIN, 11));
-      topLayout.putConstraint(SpringLayout.SOUTH, citePleaLabel, 139,
-              SpringLayout.NORTH, topPanel);
-      topLayout.putConstraint(SpringLayout.NORTH, citePleaLabel, 119,
-            SpringLayout.NORTH, topPanel);
-      topLayout.putConstraint(SpringLayout.EAST, citePleaLabel, 270,
-            SpringLayout.WEST, topPanel);
-      topLayout.putConstraint(SpringLayout.WEST, citePleaLabel, 7,
-            SpringLayout.WEST, topPanel);
+      GUIUtils.addWithEdges(topPanel, citePleaLabel, 7, 119, 270, 139);
 
       class Pleader extends Thread{
          Pleader(){
@@ -1852,15 +1686,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
             setROI();
          }
       });
-      topPanel.add(setRoiButton_);
-      topLayout.putConstraint(SpringLayout.EAST, setRoiButton_, 37,
-            SpringLayout.WEST, topPanel);
-      topLayout.putConstraint(SpringLayout.WEST, setRoiButton_, 7,
-            SpringLayout.WEST, topPanel);
-      topLayout.putConstraint(SpringLayout.SOUTH, setRoiButton_, 174,
-            SpringLayout.NORTH, topPanel);
-      topLayout.putConstraint(SpringLayout.NORTH, setRoiButton_, 154,
-            SpringLayout.NORTH, topPanel);
+      GUIUtils.addWithEdges(topPanel, setRoiButton_, 7, 154, 37, 174);
 
       clearRoiButton_ = new JButton();
       clearRoiButton_.setName("clearRoiButton");
@@ -1870,50 +1696,22 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       clearRoiButton_.setFont(new Font("Arial", Font.PLAIN, 10));
       clearRoiButton_.setToolTipText("Reset Region of Interest to full frame");
       clearRoiButton_.addActionListener(new ActionListener() {
-
          @Override
          public void actionPerformed(ActionEvent e) {
             clearROI();
          }
       });
-      topPanel.add(clearRoiButton_);
-      topLayout.putConstraint(SpringLayout.EAST, clearRoiButton_, 70,
-            SpringLayout.WEST, topPanel);
-      topLayout.putConstraint(SpringLayout.WEST, clearRoiButton_, 40,
-            SpringLayout.WEST, topPanel);
-      topLayout.putConstraint(SpringLayout.SOUTH, clearRoiButton_, 174,
-            SpringLayout.NORTH, topPanel);
-      topLayout.putConstraint(SpringLayout.NORTH, clearRoiButton_, 154,
-            SpringLayout.NORTH, topPanel);
+      GUIUtils.addWithEdges(topPanel, clearRoiButton_, 40, 154, 70, 174);
 
       final JLabel regionOfInterestLabel = new JLabel();
       regionOfInterestLabel.setFont(new Font("Arial", Font.BOLD, 11));
       regionOfInterestLabel.setText("ROI");
-      topPanel.add(regionOfInterestLabel);
-      topLayout.putConstraint(SpringLayout.SOUTH, regionOfInterestLabel,
-            154, SpringLayout.NORTH, topPanel);
-      topLayout.putConstraint(SpringLayout.NORTH, regionOfInterestLabel,
-            140, SpringLayout.NORTH, topPanel);
-      topLayout.putConstraint(SpringLayout.EAST, regionOfInterestLabel,
-            71, SpringLayout.WEST, topPanel);
-      topLayout.putConstraint(SpringLayout.WEST, regionOfInterestLabel,
-            8, SpringLayout.WEST, topPanel);
-   
+      GUIUtils.addWithEdges(topPanel, regionOfInterestLabel, 8, 140, 71, 154);
 
       final JLabel regionOfInterestLabel_1 = new JLabel();
       regionOfInterestLabel_1.setFont(new Font("Arial", Font.BOLD, 11));
       regionOfInterestLabel_1.setText("Zoom");
-      topPanel.add(regionOfInterestLabel_1);
-      topLayout.putConstraint(SpringLayout.SOUTH,
-            regionOfInterestLabel_1, 154, SpringLayout.NORTH,
-            topPanel);
-      topLayout.putConstraint(SpringLayout.NORTH,
-            regionOfInterestLabel_1, 140, SpringLayout.NORTH,
-            topPanel);
-      topLayout.putConstraint(SpringLayout.EAST, regionOfInterestLabel_1,
-            139, SpringLayout.WEST, topPanel);
-      topLayout.putConstraint(SpringLayout.WEST, regionOfInterestLabel_1,
-            81, SpringLayout.WEST, topPanel);
+      GUIUtils.addWithEdges(topPanel, regionOfInterestLabel_1, 81, 140, 139, 154);
 
       final JButton zoomInButton = new JButton();
       zoomInButton.addActionListener(new ActionListener() {
@@ -1928,15 +1726,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       zoomInButton.setName("zoomInButton");
       zoomInButton.setToolTipText("Zoom in");
       zoomInButton.setFont(new Font("Arial", Font.PLAIN, 10));
-      topPanel.add(zoomInButton);
-      topLayout.putConstraint(SpringLayout.SOUTH, zoomInButton, 174,
-            SpringLayout.NORTH, topPanel);
-      topLayout.putConstraint(SpringLayout.NORTH, zoomInButton, 154,
-            SpringLayout.NORTH, topPanel);
-      topLayout.putConstraint(SpringLayout.EAST, zoomInButton, 110,
-            SpringLayout.WEST, topPanel);
-      topLayout.putConstraint(SpringLayout.WEST, zoomInButton, 80,
-            SpringLayout.WEST, topPanel);
+      GUIUtils.addWithEdges(topPanel, zoomInButton, 80, 154, 110, 174);
 
       final JButton zoomOutButton = new JButton();
       zoomOutButton.setName("zoomOutButton");
@@ -1951,31 +1741,15 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
             "/org/micromanager/icons/zoom_out.png"));
       zoomOutButton.setToolTipText("Zoom out");
       zoomOutButton.setFont(new Font("Arial", Font.PLAIN, 10));
-      topPanel.add(zoomOutButton);
-      topLayout.putConstraint(SpringLayout.SOUTH, zoomOutButton, 174,
-            SpringLayout.NORTH, topPanel);
-      topLayout.putConstraint(SpringLayout.NORTH, zoomOutButton, 154,
-            SpringLayout.NORTH, topPanel);
-      topLayout.putConstraint(SpringLayout.EAST, zoomOutButton, 143,
-            SpringLayout.WEST, topPanel);
-      topLayout.putConstraint(SpringLayout.WEST, zoomOutButton, 113,
-            SpringLayout.WEST, topPanel);
+      GUIUtils.addWithEdges(topPanel, zoomOutButton, 113, 154, 143, 174);
 
       // Profile
       // -------
 
-      final JLabel profileLabel_ = new JLabel();
-      profileLabel_.setFont(new Font("Arial", Font.BOLD, 11));
-      profileLabel_.setText("Profile");
-      topPanel.add(profileLabel_);
-      topLayout.putConstraint(SpringLayout.SOUTH, profileLabel_, 154,
-            SpringLayout.NORTH, topPanel);
-      topLayout.putConstraint(SpringLayout.NORTH, profileLabel_, 140,
-            SpringLayout.NORTH, topPanel);
-      topLayout.putConstraint(SpringLayout.EAST, profileLabel_, 217,
-            SpringLayout.WEST, topPanel);
-      topLayout.putConstraint(SpringLayout.WEST, profileLabel_, 154,
-            SpringLayout.WEST, topPanel);
+      final JLabel profileLabel = new JLabel();
+      profileLabel.setFont(new Font("Arial", Font.BOLD, 11));
+      profileLabel.setText("Profile");
+      GUIUtils.addWithEdges(topPanel, profileLabel, 154, 140, 217, 154);
 
       final JButton lineProfileButton = new JButton();
       lineProfileButton.setName("lineProfileButton");
@@ -1992,15 +1766,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
          }
       });
       // buttonProf.setText("Profile");
-      topPanel.add(lineProfileButton);
-      topLayout.putConstraint(SpringLayout.SOUTH, lineProfileButton, 174,
-            SpringLayout.NORTH, topPanel);
-      topLayout.putConstraint(SpringLayout.NORTH, lineProfileButton, 154,
-            SpringLayout.NORTH, topPanel);
-      topLayout.putConstraint(SpringLayout.EAST, lineProfileButton, 183,
-            SpringLayout.WEST, topPanel);
-      topLayout.putConstraint(SpringLayout.WEST, lineProfileButton, 153,
-            SpringLayout.WEST, topPanel);
+      GUIUtils.addWithEdges(topPanel, lineProfileButton, 153, 154, 183, 174);
 
       // Autofocus
       // -------
@@ -2008,15 +1774,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       final JLabel autofocusLabel_ = new JLabel();
       autofocusLabel_.setFont(new Font("Arial", Font.BOLD, 11));
       autofocusLabel_.setText("Autofocus");
-      topPanel.add(autofocusLabel_);
-      topLayout.putConstraint(SpringLayout.SOUTH, autofocusLabel_, 154,
-            SpringLayout.NORTH, topPanel);
-      topLayout.putConstraint(SpringLayout.NORTH, autofocusLabel_, 140,
-            SpringLayout.NORTH, topPanel);
-      topLayout.putConstraint(SpringLayout.EAST, autofocusLabel_, 274,
-            SpringLayout.WEST, topPanel);
-      topLayout.putConstraint(SpringLayout.WEST, autofocusLabel_, 194,
-            SpringLayout.WEST, topPanel);
+      GUIUtils.addWithEdges(topPanel, autofocusLabel_, 194, 140, 276, 154);
 
       autofocusNowButton_ = new JButton();
       autofocusNowButton_.setName("autofocusNowButton");
@@ -2049,15 +1807,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
             }
          }
       });
-      topPanel.add(autofocusNowButton_);
-      topLayout.putConstraint(SpringLayout.SOUTH, autofocusNowButton_, 174,
-            SpringLayout.NORTH, topPanel);
-      topLayout.putConstraint(SpringLayout.NORTH, autofocusNowButton_, 154,
-            SpringLayout.NORTH, topPanel);
-      topLayout.putConstraint(SpringLayout.EAST, autofocusNowButton_, 223,
-            SpringLayout.WEST, topPanel);
-      topLayout.putConstraint(SpringLayout.WEST, autofocusNowButton_, 193,
-            SpringLayout.WEST, topPanel);
+      GUIUtils.addWithEdges(topPanel, autofocusNowButton_, 193, 154, 223, 174);
 
       autofocusConfigureButton_ = new JButton();
       autofocusConfigureButton_.setName("autofocusConfigureButton_");
@@ -2073,17 +1823,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
             showAutofocusDialog();
          }
       });
-      topPanel.add(autofocusConfigureButton_);
-      topLayout.putConstraint(SpringLayout.SOUTH, autofocusConfigureButton_, 174,
-            SpringLayout.NORTH, topPanel);
-      topLayout.putConstraint(SpringLayout.NORTH, autofocusConfigureButton_, 154,
-            SpringLayout.NORTH, topPanel);
-      topLayout.putConstraint(SpringLayout.EAST, autofocusConfigureButton_, 256,
-            SpringLayout.WEST, topPanel);
-      topLayout.putConstraint(SpringLayout.WEST, autofocusConfigureButton_, 226,
-            SpringLayout.WEST, topPanel);
-      
-  
+      GUIUtils.addWithEdges(topPanel, autofocusConfigureButton_, 226, 154, 256, 174);
 
       saveConfigButton_ = new JButton();
       saveConfigButton_.addActionListener(new ActionListener() {
@@ -2096,15 +1836,8 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       saveConfigButton_.setToolTipText("Save current presets to the configuration file");
       saveConfigButton_.setText("Save");
       saveConfigButton_.setEnabled(false);
-      topPanel.add(saveConfigButton_);
-      topLayout.putConstraint(SpringLayout.SOUTH, saveConfigButton_, 20,
-            SpringLayout.NORTH, topPanel);
-      topLayout.putConstraint(SpringLayout.NORTH, saveConfigButton_, 2,
-            SpringLayout.NORTH, topPanel);
-      topLayout.putConstraint(SpringLayout.EAST, saveConfigButton_, -5,
-            SpringLayout.EAST, topPanel);
-      topLayout.putConstraint(SpringLayout.WEST, saveConfigButton_, -80,
-            SpringLayout.EAST, topPanel);
+
+      GUIUtils.addWithEdges(topPanel, saveConfigButton_, -80, 2, -5, 20);
 
       // Add our own keyboard manager that handles Micro-Manager shortcuts
       MMKeyDispatcher mmKD = new MMKeyDispatcher(gui_);
