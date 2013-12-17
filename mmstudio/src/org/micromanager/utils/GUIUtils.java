@@ -249,6 +249,7 @@ public class GUIUtils {
     */
    public static void setIcon(AbstractButton component, String iconFileName) {
       component.setIcon(SwingResourceManager.getIcon(
+              org.micromanager.MMStudioMainFrame.class,
               "/org/micromanager/icons/" + iconFileName));
    }
    
