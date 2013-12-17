@@ -32,7 +32,6 @@ import org.micromanager.utils.ReportingUtils;
  */
 public class SettingsDialog extends JDialog {
 
-   static public final String STAGE_IMAGE_ANGLE_OFFSET = "Theta";
    static public final String DYNAMIC_STITCH = "Realtimestitching";
    static public final String STITCHED_DATA_DIRECTORY = "Stitched data location";
    static public final String FREE_GB__MIN_IN_STITCHED_DATA = "Free GB minimum in stitched data dir";
@@ -47,14 +46,7 @@ public class SettingsDialog extends JDialog {
       this.setLayout(new BorderLayout());
       JPanel panel = new JPanel();
       this.add(panel, BorderLayout.CENTER);
-      panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-      
-      JPanel row1 = new JPanel(new FlowLayout(FlowLayout.LEFT));
-      final JSpinner theta = new JSpinner(new SpinnerNumberModel(prefs.getDouble(STAGE_IMAGE_ANGLE_OFFSET, 0),-45,45,0.1));
-      row1.add(new JLabel("Stage-Image angle offset"));
-      row1.add(theta);
-      row1.add(new JLabel("degrees"));
-      panel.add(row1);      
+      panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS)); 
       
       JPanel row2 = new JPanel(new FlowLayout(FlowLayout.LEFT));
       final JCheckBox realTimeStitch = new JCheckBox("Activate dynamic stitching");
@@ -134,7 +126,6 @@ public class SettingsDialog extends JDialog {
 //            prefs.putBoolean(DYNAMIC_STITCH, realTimeStitch.isSelected());
             prefs.put(STITCHED_DATA_DIRECTORY, location.getText());
             prefs.putInt(FREE_GB__MIN_IN_STITCHED_DATA, (Integer) freeGig.getValue());
-            prefs.putDouble(STAGE_IMAGE_ANGLE_OFFSET, (Double) theta.getValue());
             prefs.putBoolean(CREATE_IMS_FILE, saveIMS.isSelected());
          }
       };
@@ -154,13 +145,6 @@ public class SettingsDialog extends JDialog {
          }
       });
       freeGig.addChangeListener(new ChangeListener() {
-
-         @Override
-         public void stateChanged(ChangeEvent e) {
-            saveSettings.actionPerformed(null);
-         }
-      });
-      theta.addChangeListener(new ChangeListener() {
 
          @Override
          public void stateChanged(ChangeEvent e) {

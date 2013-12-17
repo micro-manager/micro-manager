@@ -736,15 +736,12 @@ private JCheckBox drawGrid_, drawPosNames_;
       
       double x[] = new double[1];
       double y[] = new double[1];
-      try {
-         if (swapXY)
-            core_.getXYPosition(xyStage, y, x);
-         else
-            core_.getXYPosition(xyStage, x, y);
-      } catch (Exception e) {
-         handleError(e.getMessage());
-         return;
-      }
+       try {
+           core_.getXYPosition(xyStage, x, y);
+       } catch (Exception ex) {
+           ReportingUtils.showError("Get current stage position");
+       }
+
 
       int pixelOverlapX = (Integer) gridOverlapXSpinner_.getValue();
       int pixelOverlapY = (Integer) gridOverlapYSpinner_.getValue();
@@ -752,11 +749,11 @@ private JCheckBox drawGrid_, drawPosNames_;
       int ySize = (Integer) gridSizeYSpinner_.getValue();
 
       
-     createGridAffine(x[0], y[0], xSize, ySize, pixelOverlapX, pixelOverlapY);
+     createGrid(x[0], y[0], xSize, ySize, pixelOverlapX, pixelOverlapY);
       
    }
   
-   public static void createGridAffine(double xCenter, double yCenter, int xSize, int ySize, int pixelOverlapX, int pixelOverlapY) {      
+   public static void createGrid(double xCenter, double yCenter, int xSize, int ySize, int pixelOverlapX, int pixelOverlapY) {      
       MMStudioMainFrame gui = MMStudioMainFrame.getInstance();
       //Get affine transform
       Preferences prefs = Preferences.userNodeForPackage(MMStudioMainFrame.class);
@@ -765,12 +762,10 @@ private JCheckBox drawGrid_, drawPosNames_;
       try {
          transform = (AffineTransform) JavaUtils.getObjectFromPrefs(prefs, "affine_transform_" + gui.getCore().getCurrentPixelSizeConfig(), null);
          //set map origin to current stage position
-         double[] stageX = new double[1], stageY = new double[1];
-         gui.getCore().getXYPosition(gui.getCore().getXYStageDevice(), stageX, stageY);
          double[] matrix = new double[6];
          transform.getMatrix(matrix);
-         matrix[4] = stageX[0];
-         matrix[5] = stageY[0];
+         matrix[4] = xCenter;
+         matrix[5] = yCenter;
          transform = new AffineTransform(matrix);
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
@@ -823,95 +818,95 @@ private JCheckBox drawGrid_, drawPosNames_;
       }
    }
 
-   public static void createGrid(double xCenter, double yCenter, int xSize, int ySize, int pixelOverlapX, int pixelOverlapY) {
-      MMStudioMainFrame gui = MMStudioMainFrame.getInstance();
-      double pixSize = gui.getCore().getPixelSizeUm();
-      if (pixSize == 0.0) {
-         pixSize = 0.1;
-      }
-      
-      String camera = gui.getCore().getCameraDevice();
-      if (camera.isEmpty()) {
-         ReportingUtils.showError("No camera available.");
-         return;
-      }
-      boolean swapXY = false, invertX = false, invertY = false;
-      try {
-         swapXY = gui.getCore().getProperty(camera, MMCoreJ.getG_Keyword_Transpose_SwapXY()).equals("1");
-         invertX = gui.getCore().getProperty(camera, MMCoreJ.getG_Keyword_Transpose_MirrorX()).equals("1");
-         invertY = gui.getCore().getProperty(camera, MMCoreJ.getG_Keyword_Transpose_MirrorY()).equals("1");
-      } catch (Exception e) {
-         ReportingUtils.showError(e.getMessage());
-         return;
-      }
-      
-      long height = gui.getCore().getImageHeight();
-      long width = gui.getCore().getImageWidth();
-      
-      //get image stage offset in degrees
-      double theta = prefs_.getDouble(SettingsDialog.STAGE_IMAGE_ANGLE_OFFSET, 0.0) / 360.0 * 2 * Math.PI;
-      //Y axis --> more positive stage coordinate = up on image
-      //X axis --> more positive stage coordinate = left on image
-      ArrayList<MultiStagePosition> positions = new ArrayList<MultiStagePosition>();
-      for (int xIndex = 0; xIndex < xSize; xIndex++) {
-         double xDistFromCenter =  - (xIndex - (xSize - 1) / 2.0) * (width - pixelOverlapX) * pixSize;
-         for (int yIndex = 0; yIndex < ySize; yIndex++) {
-            double yDistFromCenter =  - (yIndex - (ySize - 1) / 2.0) * (height - pixelOverlapY) * pixSize;
-            //account for angle between stage axes and image axes
-            double xPos, yPos;
-             if (swapXY) {
-                 //if axes swapped apply invertX and invertY to opposite
-                  xPos = xCenter + (invertY ? -1 : 1)* Math.cos(theta) * xDistFromCenter + 
-                         (invertX ? -1 : 1)* Math.sin(theta) * yDistFromCenter;
-                  yPos = yCenter + (invertY ? -1 : 1)* Math.sin(theta) * xDistFromCenter + 
-                         (invertX ? -1 : 1)* Math.cos(theta) * yDistFromCenter;
-             } else {
-                  xPos = xCenter + (invertX ? -1 : 1) * Math.cos(theta) * xDistFromCenter
-                         + (invertY ? -1 : 1) * Math.sin(theta) * yDistFromCenter;
-                  yPos = yCenter + (invertX ? -1 : 1) * Math.sin(theta) * xDistFromCenter
-                         + (invertY ? -1 : 1)* Math.cos(theta) * yDistFromCenter;
-             }
-            
-            MultiStagePosition mpl = new MultiStagePosition();
-            StagePosition sp = new StagePosition();
-            sp.numAxes = 2;
-            sp.stageName = gui.getCore().getXYStageDevice();
-            //Only effect of swapping x and y should be telling the stage coordinates and reading them out
-            if (swapXY) {
-               sp.y = xPos;
-               sp.x = yPos;
-            } else {
-               sp.x = xPos;
-               sp.y = yPos;
-            }
-            mpl.add(sp);
-            int col =0, row = 0;
-            if (swapXY) {
-                row = invertY ? xSize - xIndex - 1 : xIndex;
-                col = invertX ? ySize - yIndex - 1 : yIndex;
-            } else {
-                col = invertX ? xSize - xIndex - 1 : xIndex;
-                row = invertY ? ySize - yIndex - 1 : yIndex;
-            }
-            //label should be Grid_(x index of tile)_(y index of tile)
-            String lab = new String("Grid_" + row + "_" + col);
-            mpl.setLabel(lab);
-            mpl.setGridCoordinates(yIndex, xIndex);
-            positions.add(mpl);
-         }
-      }
-   
-      try {
-         PositionList list = gui.getPositionList();
-         list.clearAllPositions();
-         for (MultiStagePosition p : positions) {
-            list.addPosition(p);
-         }
-         list.notifyChangeListeners();
-      } catch (MMScriptException e) {
-         ReportingUtils.showError(e.getMessage());
-      }
-   }
+//   public static void createGrid(double xCenter, double yCenter, int xSize, int ySize, int pixelOverlapX, int pixelOverlapY) {
+//      MMStudioMainFrame gui = MMStudioMainFrame.getInstance();
+//      double pixSize = gui.getCore().getPixelSizeUm();
+//      if (pixSize == 0.0) {
+//         pixSize = 0.1;
+//      }
+//      
+//      String camera = gui.getCore().getCameraDevice();
+//      if (camera.isEmpty()) {
+//         ReportingUtils.showError("No camera available.");
+//         return;
+//      }
+//      boolean swapXY = false, invertX = false, invertY = false;
+//      try {
+//         swapXY = gui.getCore().getProperty(camera, MMCoreJ.getG_Keyword_Transpose_SwapXY()).equals("1");
+//         invertX = gui.getCore().getProperty(camera, MMCoreJ.getG_Keyword_Transpose_MirrorX()).equals("1");
+//         invertY = gui.getCore().getProperty(camera, MMCoreJ.getG_Keyword_Transpose_MirrorY()).equals("1");
+//      } catch (Exception e) {
+//         ReportingUtils.showError(e.getMessage());
+//         return;
+//      }
+//      
+//      long height = gui.getCore().getImageHeight();
+//      long width = gui.getCore().getImageWidth();
+//      
+//      //get image stage offset in degrees
+//      double theta = prefs_.getDouble(SettingsDialog.STAGE_IMAGE_ANGLE_OFFSET, 0.0) / 360.0 * 2 * Math.PI;
+//      //Y axis --> more positive stage coordinate = up on image
+//      //X axis --> more positive stage coordinate = left on image
+//      ArrayList<MultiStagePosition> positions = new ArrayList<MultiStagePosition>();
+//      for (int xIndex = 0; xIndex < xSize; xIndex++) {
+//         double xDistFromCenter =  - (xIndex - (xSize - 1) / 2.0) * (width - pixelOverlapX) * pixSize;
+//         for (int yIndex = 0; yIndex < ySize; yIndex++) {
+//            double yDistFromCenter =  - (yIndex - (ySize - 1) / 2.0) * (height - pixelOverlapY) * pixSize;
+//            //account for angle between stage axes and image axes
+//            double xPos, yPos;
+//             if (swapXY) {
+//                 //if axes swapped apply invertX and invertY to opposite
+//                  xPos = xCenter + (invertY ? -1 : 1)* Math.cos(theta) * xDistFromCenter + 
+//                         (invertX ? -1 : 1)* Math.sin(theta) * yDistFromCenter;
+//                  yPos = yCenter + (invertY ? -1 : 1)* Math.sin(theta) * xDistFromCenter + 
+//                         (invertX ? -1 : 1)* Math.cos(theta) * yDistFromCenter;
+//             } else {
+//                  xPos = xCenter + (invertX ? -1 : 1) * Math.cos(theta) * xDistFromCenter
+//                         + (invertY ? -1 : 1) * Math.sin(theta) * yDistFromCenter;
+//                  yPos = yCenter + (invertX ? -1 : 1) * Math.sin(theta) * xDistFromCenter
+//                         + (invertY ? -1 : 1)* Math.cos(theta) * yDistFromCenter;
+//             }
+//            
+//            MultiStagePosition mpl = new MultiStagePosition();
+//            StagePosition sp = new StagePosition();
+//            sp.numAxes = 2;
+//            sp.stageName = gui.getCore().getXYStageDevice();
+//            //Only effect of swapping x and y should be telling the stage coordinates and reading them out
+//            if (swapXY) {
+//               sp.y = xPos;
+//               sp.x = yPos;
+//            } else {
+//               sp.x = xPos;
+//               sp.y = yPos;
+//            }
+//            mpl.add(sp);
+//            int col =0, row = 0;
+//            if (swapXY) {
+//                row = invertY ? xSize - xIndex - 1 : xIndex;
+//                col = invertX ? ySize - yIndex - 1 : yIndex;
+//            } else {
+//                col = invertX ? xSize - xIndex - 1 : xIndex;
+//                row = invertY ? ySize - yIndex - 1 : yIndex;
+//            }
+//            //label should be Grid_(x index of tile)_(y index of tile)
+//            String lab = new String("Grid_" + row + "_" + col);
+//            mpl.setLabel(lab);
+//            mpl.setGridCoordinates(yIndex, xIndex);
+//            positions.add(mpl);
+//         }
+//      }
+//   
+//      try {
+//         PositionList list = gui.getPositionList();
+//         list.clearAllPositions();
+//         for (MultiStagePosition p : positions) {
+//            list.addPosition(p);
+//         }
+//         list.notifyChangeListeners();
+//      } catch (MMScriptException e) {
+//         ReportingUtils.showError(e.getMessage());
+//      }
+//   }
 
    protected void onPixelSize() {
       String pixSizeName = (String)pixelSizeCombo_.getSelectedItem();

@@ -7,14 +7,10 @@ package MMCustomization;
 import java.io.IOException;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import mmcorej.MMCoreJ;
 import mmcorej.TaggedImage;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.micromanager.MMStudioMainFrame;
 import org.micromanager.acquisition.TaggedImageStorageMultipageTiff;
 import org.micromanager.acquisition.TaggedImageStorageRam;
 import org.micromanager.api.TaggedImageStorage;
@@ -58,7 +54,7 @@ public class DynamicStitchingImageStorage {
 
       try {
          positionList_ = summaryMetadata.getJSONArray("InitialPositionList");
-         int numRows = 0, numCols = 0;
+         int numRows = 1, numCols = 1;
          for (int i = 0; i < positionList_.length(); i++) {
             long colInd = positionList_.getJSONObject(i).getLong("GridColumnIndex");
             long rowInd = positionList_.getJSONObject(i).getLong("GridRowIndex");
@@ -71,8 +67,8 @@ public class DynamicStitchingImageStorage {
          }
          tileHeight_ = MDUtils.getHeight(summaryMetadata);
          tileWidth_ = MDUtils.getWidth(summaryMetadata);
-         height_ = numCols * tileHeight_;
-         width_ = numRows * tileWidth_;
+         height_ = numRows * tileHeight_;
+         width_ = numCols * tileWidth_;
          //change summary metadata fields
          summaryMetadata_.put("Positions", 1);
          summaryMetadata_.put("Width", width_);
@@ -91,7 +87,11 @@ public class DynamicStitchingImageStorage {
    }
 
    public TaggedImage getImage(int channelIndex, int sliceIndex, int frameIndex, int p) {
-      //read as many tiles from underlying storage as available, fill in the rest blank      
+      if (width_ == tileWidth_ && height_ == tileHeight_) {
+          //one position, no stitching
+          return storage_.getImage(channelIndex, sliceIndex, frameIndex, 0);
+      }
+       //read as many tiles from underlying storage as available, fill in the rest blank      
       JSONObject tags = null;
       byte[] pixels = new byte[width_*height_];
       for (int positionIndex = 0; positionIndex < positionList_.length(); positionIndex++) {

@@ -10,11 +10,14 @@ import ij.ImagePlus;
 import ij.gui.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.lang.reflect.InvocationTargetException;
 import java.text.ParseException;
 import java.util.TimerTask;
 import java.util.TreeMap;
+import java.util.prefs.Preferences;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -38,8 +41,6 @@ public class DisplayPlus implements ImageCacheListener  {
 
    public static final String WINDOW_TITLE = "Stitched overview";
    
-   private static final Color TRANSPARENT_BLUE = new Color(0,0,255,60);
-   private static final Color TRANSPARENT_GREEN = new Color(0,255,0,60);
    //VirtualAcquisitionDisplay on top of which this display is built
    private VirtualAcquisitionDisplay vad_;
    private AcquisitionEngine eng_;
@@ -48,24 +49,15 @@ public class DisplayPlus implements ImageCacheListener  {
    private int tileWidth_, tileHeight_;
    private Point clickStart_;
    private Point gridStart_;
-    private boolean invertX_, invertY_, swapXY_;
     private JSONArray positionList_;
     private int numRows_ = 0, numCols_ = 0;
 
     public DisplayPlus(final ImageCache stitchedCache, AcquisitionEngine eng, JSONObject summaryMD) {
         eng_ = eng;
+
         try {
-            MMStudioMainFrame gui = MMStudioMainFrame.getInstance();
-            String camera = gui.getCore().getCameraDevice();
-            swapXY_ = gui.getCore().getProperty(camera, MMCoreJ.getG_Keyword_Transpose_SwapXY()).equals("1");
-            invertX_ = gui.getCore().getProperty(camera, MMCoreJ.getG_Keyword_Transpose_MirrorX()).equals("1");
-            invertY_ = gui.getCore().getProperty(camera, MMCoreJ.getG_Keyword_Transpose_MirrorY()).equals("1");
-        } catch (Exception ex) {
-            ReportingUtils.showError(ex.toString());
-        }
-        try {
-           tileWidth_ = MDUtils.getHeight(summaryMD);
-           tileHeight_ = MDUtils.getWidth(summaryMD);
+           tileWidth_ = MDUtils.getWidth(summaryMD);
+           tileHeight_ = MDUtils.getHeight(summaryMD);
            positionList_ = summaryMD.getJSONArray("InitialPositionList");
            //get grid parameters
            for (int i = 0; i < positionList_.length(); i++) {
@@ -110,8 +102,6 @@ public class DisplayPlus implements ImageCacheListener  {
         }
         vad_.show();
 
-        addNavigationControls();
-
         
         //Zoom to 100%
         vad_.getImagePlus().getWindow().getCanvas().unzoom();
@@ -121,108 +111,6 @@ public class DisplayPlus implements ImageCacheListener  {
 
         stitchedCache.addImageCacheListener(this);
    }
-
-   private Point getCanvasSelection(Point p) {
-      final ImageCanvas canvas = vad_.getImagePlus().getCanvas();
-      boolean left = p.x < canvas.getSize().width / numCols_ / 2;
-      boolean right = p.x > canvas.getSize().width - canvas.getSize().width / numCols_ / 2;
-      boolean top = p.y < canvas.getSize().height / numRows_ / 2;
-      boolean bottom = p.y > canvas.getSize().height - canvas.getSize().height / numRows_ / 2;
-      int canvasHeight = canvas.getSize().height, canvasWidth = canvas.getSize().width;
-      int tileHeight = canvasHeight / numRows_;
-      int tileWidth = canvasWidth / numCols_;
-
-      if (left
-              && (!top || ((double) p.y) / ((double) p.x) > ((double) tileHeight_) / ((double) tileWidth_))
-              && (!bottom || ((double) (canvasHeight - p.y)) / ((double) p.x) > ((double) tileHeight_) / ((double) tileWidth_))) {
-         int row = p.y / tileHeight;
-         return new Point(-1, row);
-      } else if (right
-              && (!top
-              || ((double) p.y) / ((double) (canvasWidth - p.x)) > ((double) tileHeight_) / ((double) tileWidth_))
-              && (!bottom
-              || ((double) (canvasHeight)) / (double) ((canvasWidth - p.x))
-              > ((double) tileHeight_) / ((double) tileWidth_))) {
-         int row = p.y / tileHeight;
-         return new Point(numCols_,row);
-      } else if (top) {
-         int col = p.x / tileWidth;
-         return new Point(col, -1);
-      } else if (bottom) {
-         int col = p.x / tileWidth;
-         return new Point(col,numRows_);
-      } else {
-        return new Point(p.x / tileWidth, p.y / tileHeight);
-      }
-   }
-
-    private void addExploreOverlay(int x, int y, int width, int height, Color color) {
-      //need to convert from canvas coordinates to pixel coordinates
-       final ImageCanvas canvas = vad_.getImagePlus().getCanvas();
-      Roi rect = new Roi(x , y, width , height );
-      rect.setFillColor(color);
-      Overlay overlay = new Overlay();
-      overlay.add(rect);
-      //      Arrow arrow = new Arrow(40, 10, 10, 10);
-//      overlay.add(arrow);
-      canvas.setOverlay(overlay);
-   }
-
-   private void addNavigationControls() {
-      //Experiement with manipulating image window
-      final ImageCanvas canvas = vad_.getImagePlus().getCanvas();
-      canvas.addMouseMotionListener(new MouseMotionListener() {
-         @Override
-         public void mouseDragged(MouseEvent e) {}
-
-         @Override
-         public void mouseMoved(MouseEvent e) {
-            Point coords = getCanvasSelection(e.getPoint());
-            if (coords.x == -1) {
-               //left
-               addExploreOverlay(0, coords.y * tileHeight_, tileWidth_ / 2, tileHeight_, TRANSPARENT_BLUE);
-            } else if (coords.x == numCols_) {
-               //right
-               addExploreOverlay((int)(tileWidth_*(numCols_ - 0.5)), coords.y * tileHeight_, 
-                       tileWidth_ / 2, tileHeight_, TRANSPARENT_BLUE);
-            } else if (coords.y == -1) {
-               //top              
-               addExploreOverlay(coords.x * tileWidth_, 0, tileWidth_ , tileHeight_ / 2, TRANSPARENT_BLUE );
-            } else if (coords.y == numRows_) {
-               //bottom      
-               addExploreOverlay(coords.x * tileWidth_, (int)(tileHeight_*(numRows_ - 0.5)), tileWidth_ , 
-                       tileHeight_ / 2, TRANSPARENT_BLUE );
-            } else {
-               //highlight a tile
-               addExploreOverlay(coords.x*tileWidth_, coords.y*tileHeight_, tileWidth_, 
-                       tileHeight_, TRANSPARENT_GREEN);
-            }
-         }
-      });
-      canvas.addMouseListener(new MouseListener() {
-         @Override
-         public void mouseClicked(MouseEvent e) {
-         }
-
-         @Override
-         public void mousePressed(MouseEvent e) {
-         }
-
-         @Override
-         public void mouseReleased(MouseEvent e) {
-         }
-
-         @Override
-         public void mouseEntered(MouseEvent e) {
-         }
-
-         @Override
-         public void mouseExited(MouseEvent e) {
-            canvas.setOverlay(null);
-         }
-      });
-   }
-
 
     private void addMouseListeners() {
         vad_.getImagePlus().getCanvas().addMouseMotionListener(new MouseMotionListener() {
@@ -272,159 +160,176 @@ public class DisplayPlus implements ImageCacheListener  {
         });
     }
 
-   private void createGrid() {
-      try {
-         //Assume that image is stitched propoerly and pixels are calibrated properly
-         double pixelSize = MMStudioMainFrame.getInstance().getCore().getPixelSizeUm();
-         String xyStage = MMStudioMainFrame.getInstance().getCore().getXYStageDevice();
+    private void createGrid() {
+        try {
+            //get coordinates of center of exisitng grid
+            String xyStage = MMStudioMainFrame.getInstance().getCore().getXYStageDevice();
+            MMStudioMainFrame gui = MMStudioMainFrame.getInstance();
+            String camera = gui.getCore().getCameraDevice();
 
-         
-         //get coordinates of center of exisitng grid
-         TreeMap<Integer,Double> xCoords = new TreeMap<Integer,Double>(), 
-                 yCoords = new TreeMap<Integer,Double>();
-         JSONArray PositionList = vad_.getSummaryMetadata().getJSONArray("InitialPositionList");
-         for (int i = 0; i < PositionList.length(); i++) {
-            int colInd = (int) PositionList.getJSONObject(i).getLong("GridColumnIndex");
-            int rowInd = (int) PositionList.getJSONObject(i).getLong("GridRowIndex");            
-            xCoords.put(colInd, PositionList.getJSONObject(i)
-                    .getJSONObject("DeviceCoordinatesUm").getJSONArray(xyStage).getDouble(0));
-            yCoords.put(rowInd, PositionList.getJSONObject(i).getJSONObject("DeviceCoordinatesUm").getJSONArray(xyStage).getDouble(1));
-         }
-         
-         double currentCenterX, currentCenterY;
-         if (xCoords.keySet().size() % 2 == 0) {
-            //even number
-            currentCenterX = (xCoords.get(xCoords.size() / 2) + xCoords.get(xCoords.size() / 2 - 1)) / 2.0;
-         } else {
-            currentCenterX = xCoords.get(xCoords.size() / 2);
-         }
-         if (yCoords.keySet().size() % 2 == 0) {
-            //even number
-            currentCenterY = (yCoords.get(yCoords.size() / 2) + yCoords.get(yCoords.size() / 2 - 1)) / 2.0;
-         } else {
-            currentCenterY = yCoords.get(yCoords.size() / 2);
-         }
 
-         //get displacements of center of rectangle from center of stitched image
-         double rectCenterXDisp = (vad_.getImagePlus().getOverlay().get(0).getFloatBounds().getCenterX()
-                 - vad_.getImagePlus().getWidth() / 2) * pixelSize;
-         double rectCenterYDisp = (vad_.getImagePlus().getOverlay().get(0).getFloatBounds().getCenterY()
-                 - vad_.getImagePlus().getHeight() / 2) * pixelSize;
+            //row column map to coordinates
+            Point2D.Double[][] coordinates = new Point2D.Double[numCols_][numRows_];
+            for (int i = 0; i < positionList_.length(); i++) {
+                int colInd = (int) positionList_.getJSONObject(i).getLong("GridColumnIndex");
+                int rowInd = (int) positionList_.getJSONObject(i).getLong("GridRowIndex");
+                JSONArray coords = positionList_.getJSONObject(i).getJSONObject("DeviceCoordinatesUm").getJSONArray(xyStage);
+                coordinates[colInd][rowInd] = new Point2D.Double(coords.getDouble(0), coords.getDouble(1));
+            }
 
-         //TODO: add adjustments for angle of stage relative to image
+            double currentCenterX, currentCenterY;
+            if (coordinates.length % 2 == 0 && coordinates[0].length % 2 == 0) {
+                //even number of tiles in both directions
+                currentCenterX = 0.25 * coordinates[numCols_ / 2 - 1][numRows_ / 2 - 1].x + 0.25 * coordinates[numCols_ / 2 - 1][numRows_ / 2].x
+                        + 0.25 * coordinates[numCols_ / 2][numRows_ / 2 - 1].x + 0.25 * coordinates[numCols_ / 2][numRows_ / 2].x;
+                currentCenterY = 0.25 * coordinates[numCols_ / 2 - 1][numRows_ / 2 - 1].y + 0.25 * coordinates[numCols_ / 2 - 1][numRows_ / 2].y
+                        + 0.25 * coordinates[numCols_ / 2][numRows_ / 2 - 1].y + 0.25 * coordinates[numCols_ / 2][numRows_ / 2].y;
+            } else if (coordinates.length % 2 == 0) {
+                //even number of columns
+                currentCenterX = 0.5 * coordinates[numCols_ / 2 - 1][numRows_ / 2].x + 0.5 * coordinates[numCols_ / 2][numRows_ / 2].x;
+                currentCenterY = 0.5 * coordinates[numCols_ / 2 - 1][numRows_ / 2].y + 0.5 * coordinates[numCols_ / 2][numRows_ / 2].y;
+            } else if (coordinates[0].length % 2 == 0) {
+                //even number of rows
+                currentCenterX = 0.5 * coordinates[numCols_ / 2][numRows_ / 2 - 1].x + 0.5 * coordinates[numCols_ / 2][numRows_ / 2].x;
+                currentCenterY = 0.5 * coordinates[numCols_ / 2][numRows_ / 2 - 1].y + 0.5 * coordinates[numCols_ / 2][numRows_ / 2].y;
+            } else {
+                //odd number of both
+                currentCenterX = coordinates[numCols_ / 2][numRows_ / 2].x;
+                currentCenterY = coordinates[numCols_ / 2][numRows_ / 2].y;
+            }
 
-         
-         int xOverlap = SettingsDialog.xOverlap_, yOverlap = SettingsDialog.yOverlap_;
-         if (swapXY_) {
-            TwoPhotonControl.createGrid(currentCenterY + rectCenterXDisp, currentCenterX + rectCenterYDisp,
-                    (Integer) gridXSpinner_.getValue(), (Integer) gridYSpinner_.getValue(), 
-                    xOverlap, yOverlap);
-         } else {
-            TwoPhotonControl.createGrid(currentCenterX + rectCenterXDisp, currentCenterY + rectCenterYDisp,
+            //get displacements of center of rectangle from center of stitched image
+            double rectCenterXDisp = vad_.getImagePlus().getOverlay().get(0).getFloatBounds().getCenterX()
+                    - vad_.getImagePlus().getWidth() / 2;
+            double rectCenterYDisp = vad_.getImagePlus().getOverlay().get(0).getFloatBounds().getCenterY()
+                    - vad_.getImagePlus().getHeight() / 2;
+
+
+            //use affine transform to convert to stage coordinate of center of new grid
+            AffineTransform transform = null;           
+            Preferences prefs = Preferences.userNodeForPackage(MMStudioMainFrame.class);
+            try {
+                transform = (AffineTransform) JavaUtils.getObjectFromPrefs(prefs, "affine_transform_" + 
+                        MMStudioMainFrame.getInstance().getCore().getCurrentPixelSizeConfig(), null);
+                //set map origin to current stage position
+                double[] matrix = new double[6];
+                transform.getMatrix(matrix);
+                matrix[4] = currentCenterX;
+                matrix[5] = currentCenterY;
+                transform = new AffineTransform(matrix);
+            } catch (Exception ex) {
+                ReportingUtils.logError(ex);
+                ReportingUtils.showError("Couldnt get affine transform");
+            }
+                   
+            //convert pixel displacement of center of new grid to new center stage position
+            Point2D.Double pixelPos = new Point2D.Double(rectCenterXDisp, rectCenterYDisp);      
+            Point2D.Double stagePos = new Point2D.Double();
+            transform.transform(pixelPos, stagePos);
+            
+            int xOverlap = SettingsDialog.xOverlap_, yOverlap = SettingsDialog.yOverlap_;
+            TwoPhotonControl.createGrid(stagePos.x , stagePos.y,
                     (Integer) gridXSpinner_.getValue(), (Integer) gridYSpinner_.getValue(),
                     xOverlap, yOverlap);
-         }
-         
-      } catch (Exception e) {
-         ReportingUtils.showError("Couldnt create grid");
-      }
-   }
+            //cancel
+            newGridButton_.doClick();
 
-   private void makeGridOverlay(int centerX, int centerY) {
-      IJ.setTool(Toolbar.SPARE2);
-      Overlay overlay = vad_.getImagePlus().getOverlay();
-      if (overlay == null || overlay.size() == 0) {
-         overlay = new Overlay();
-      } else {
-         overlay.clear();
-      }
+        } catch (Exception e) {
+            ReportingUtils.showError("Couldnt create grid");
+        }
+    }
 
-      int gridWidth = (Integer) gridXSpinner_.getValue();
-      int gridHeight = (Integer) gridYSpinner_.getValue();
-      int roiWidth = gridWidth * tileWidth_;
-      int roiHeight = gridHeight * tileHeight_;
+    private void makeGridOverlay(int centerX, int centerY) {
+        IJ.setTool(Toolbar.SPARE2);
+        Overlay overlay = vad_.getImagePlus().getOverlay();
+        if (overlay == null || overlay.size() == 0) {
+            overlay = new Overlay();
+        } else {
+            overlay.clear();
+        }
 
-      Roi rectangle = new Roi(centerX - roiWidth / 2, centerY - roiHeight / 2, roiWidth, roiHeight);
-      rectangle.setStrokeWidth(20f);
-      overlay.add(rectangle);
-      vad_.getImagePlus().setOverlay(overlay);
-   }
+        int gridWidth = (Integer) gridXSpinner_.getValue();
+        int gridHeight = (Integer) gridYSpinner_.getValue();
+        int roiWidth = gridWidth * tileWidth_;
+        int roiHeight = gridHeight * tileHeight_;
 
-   private void gridSizeChanged() {
-      //resize exisiting grid but keep centered on same area
-      Overlay overlay = vad_.getImagePlus().getOverlay();
-      if (overlay == null || overlay.get(0) == null) {
-         return;
-      }
-      Rectangle2D oldBounds = overlay.get(0).getFloatBounds();
-      int centerX = (int) oldBounds.getCenterX();
-      int centerY = (int) oldBounds.getCenterY();
-      makeGridOverlay(centerX, centerY);
-   }
+        Roi rectangle = new Roi(centerX - roiWidth / 2, centerY - roiHeight / 2, roiWidth, roiHeight);
+        rectangle.setStrokeWidth(20f);
+        overlay.add(rectangle);
+        vad_.getImagePlus().setOverlay(overlay);
+    }
 
-   @Override
-   public void imageReceived(TaggedImage taggedImage) {
-      try {
-         //duplicate so image storage doesnt see incorrect tags
-         JSONObject newTags = new JSONObject(taggedImage.tags.toString());
-         MDUtils.setPositionIndex(newTags, 0);
-         taggedImage = new TaggedImage(taggedImage.pix,newTags);
-      } catch (JSONException ex) {
-         ReportingUtils.showError("Couldn't manipulate image tags for display");
-      }
-      
-      vad_.imageReceived(taggedImage);
-   }
+    private void gridSizeChanged() {
+        //resize exisiting grid but keep centered on same area
+        Overlay overlay = vad_.getImagePlus().getOverlay();
+        if (overlay == null || overlay.get(0) == null) {
+            return;
+        }
+        Rectangle2D oldBounds = overlay.get(0).getFloatBounds();
+        int centerX = (int) oldBounds.getCenterX();
+        int centerY = (int) oldBounds.getCenterY();
+        makeGridOverlay(centerX, centerY);
+    }
 
-   @Override
-   public void imagingFinished(String path) {
-      vad_.imagingFinished(path);
-   }
-   
-   
-   class Controls extends DisplayControls {
+    @Override
+    public void imageReceived(TaggedImage taggedImage) {
+        try {
+            //duplicate so image storage doesnt see incorrect tags
+            JSONObject newTags = new JSONObject(taggedImage.tags.toString());
+            MDUtils.setPositionIndex(newTags, 0);
+            taggedImage = new TaggedImage(taggedImage.pix, newTags);
+        } catch (JSONException ex) {
+            ReportingUtils.showError("Couldn't manipulate image tags for display");
+        }
 
-      private JButton pauseButton_, abortButton_;
-      private JTextField fpsField_;
-      private int startS_ = -1, startMin_ = -1, startHour_ = -1;
-      
-      private JLabel zPosLabel_, timeStampLabel_;
+        vad_.imageReceived(taggedImage);
+    }
 
-      public Controls() {
-         initComponents();
+    @Override
+    public void imagingFinished(String path) {
+        vad_.imagingFinished(path);
+    }
 
-         
-      }
-      
-           
-      public void acquiringImagesUpdate(boolean state) {
-         abortButton_.setEnabled(state);
-         pauseButton_.setEnabled(state);
-      }
-      
-      private void updateFPS() {
-         try {
-            double fps = NumberUtils.displayStringToDouble(fpsField_.getText());
-            vad_.setPlaybackFPS(fps);
-         } catch (ParseException ex) {
-         }
-      }
+    class Controls extends DisplayControls {
 
-      @Override
-      public void imagesOnDiskUpdate(boolean bln) {
-         abortButton_.setEnabled(bln);
-         pauseButton_.setEnabled(bln);
-      }
+        private JButton pauseButton_, abortButton_;
+        private JTextField fpsField_;
+        private int startS_ = -1, startMin_ = -1, startHour_ = -1;
+        private JLabel zPosLabel_, timeStampLabel_;
+
+        public Controls() {
+            initComponents();
 
 
-      @Override
-      public void setStatusLabel(String string) {
-      }
-      
-      private void updateLabels(JSONObject tags) {
-         //Z position label
-         String zPosition = "";
-         try {
+        }
+
+        public void acquiringImagesUpdate(boolean state) {
+            abortButton_.setEnabled(state);
+            pauseButton_.setEnabled(state);
+        }
+
+        private void updateFPS() {
+            try {
+                double fps = NumberUtils.displayStringToDouble(fpsField_.getText());
+                vad_.setPlaybackFPS(fps);
+            } catch (ParseException ex) {
+            }
+        }
+
+        @Override
+        public void imagesOnDiskUpdate(boolean bln) {
+            abortButton_.setEnabled(bln);
+            pauseButton_.setEnabled(bln);
+        }
+
+        @Override
+        public void setStatusLabel(String string) {
+        }
+
+        private void updateLabels(JSONObject tags) {
+            //Z position label
+            String zPosition = "";
+            try {
             zPosition = NumberUtils.doubleStringCoreToDisplay(tags.getString("ZPositionUm"));
          } catch (Exception e) {
             try {
