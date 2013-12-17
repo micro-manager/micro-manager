@@ -199,7 +199,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    private JButton snapButton_;
    private JButton autofocusNowButton_;
    private JButton autofocusConfigureButton_;
-   private JToggleButton toggleButtonShutter_;
+   private JToggleButton toggleShutterButton_;
    private GUIColors guiColors_;
    private GraphFrame profileWin_;
    private PropertyEditor propertyBrowser_;
@@ -435,11 +435,43 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       }
    }
 
-   private void createCameraSettingsWidgets(JPanel topPanel) {
-      createLabel("Camera settings", true, topPanel, 109, 2, 211, 22);
+   private void createActiveShutterChooser(JPanel topPanel) {
+      createLabel("Shutter", false, topPanel, 111, 73, 158, 86); 
 
-      // Exposure field
-      
+      shutterComboBox_ = new JComboBox();
+      shutterComboBox_.setName("Shutter");
+      shutterComboBox_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent arg0) {
+            try {
+               if (shutterComboBox_.getSelectedItem() != null) {
+                  core_.setShutterDevice((String) shutterComboBox_.getSelectedItem());
+               }
+            } catch (Exception e) {
+               ReportingUtils.showError(e);
+            }
+         }
+      });
+      GUIUtils.addWithEdges(topPanel, shutterComboBox_, 170, 70, 275, 92);
+   }
+
+   private void createBinningChooser(JPanel topPanel) {
+      createLabel("Binning", false, topPanel, 111, 43, 199, 64);
+
+      comboBinning_ = new JComboBox();
+      comboBinning_.setName("Binning");
+      comboBinning_.setFont(new Font("Arial", Font.PLAIN, 10));
+      comboBinning_.setMaximumRowCount(4);
+      comboBinning_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            changeBinning();
+         }
+      });
+      GUIUtils.addWithEdges(topPanel, comboBinning_, 200, 43, 275, 66);
+   }
+
+   private void createExposureField(JPanel topPanel) {
       createLabel("Exposure [ms]", false, topPanel, 111, 23, 198, 39);
 
       textFieldExp_ = new JTextField();
@@ -460,95 +492,65 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
          }
       });
       GUIUtils.addWithEdges(topPanel, textFieldExp_, 203, 21, 276, 40);
+   }
 
-      // Shutter button
-      // --------------
-      toggleButtonShutter_ = new JToggleButton();
-      toggleButtonShutter_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(final ActionEvent e) {
-            toggleShutter();
-         }
-      });
-      toggleButtonShutter_.setToolTipText("Open/close the shutter");
-      toggleButtonShutter_.setIconTextGap(6);
-      toggleButtonShutter_.setFont(new Font("Arial", Font.BOLD, 10));
-      toggleButtonShutter_.setText("Open");
-      GUIUtils.addWithEdges(topPanel, toggleButtonShutter_, 203, 96, 275, 117);
-
-      // Binning combo box
-      createLabel("Binning", false, topPanel, 111, 43, 199, 64);
-
-      comboBinning_ = new JComboBox();
-      comboBinning_.setName("Binning");
-      comboBinning_.setFont(new Font("Arial", Font.PLAIN, 10));
-      comboBinning_.setMaximumRowCount(4);
-      comboBinning_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            changeBinning();
-         }
-      });
-      GUIUtils.addWithEdges(topPanel, comboBinning_, 200, 43, 275, 66);
- 
-      // Active shutter label
-      createLabel("Shutter", false, topPanel, 111, 73, 158, 86);
-
-      // Active shutter Combo Box
-      shutterComboBox_ = new JComboBox();
-      shutterComboBox_.setName("Shutter");
-      shutterComboBox_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent arg0) {
+   private void toggleAutoShutter() {
+      shutterLabel_ = core_.getShutterDevice();
+      if (shutterLabel_.length() == 0) {
+         toggleShutterButton_.setEnabled(false);
+      } else {
+         if (autoShutterCheckBox_.isSelected()) {
             try {
-               if (shutterComboBox_.getSelectedItem() != null) {
-                  core_.setShutterDevice((String) shutterComboBox_.getSelectedItem());
-               }
-            } catch (Exception e) {
-               ReportingUtils.showError(e);
+               core_.setAutoShutter(true);
+               core_.setShutterOpen(false);
+               toggleShutterButton_.setSelected(false);
+               toggleShutterButton_.setText("Open");
+               toggleShutterButton_.setEnabled(false);
+            } catch (Exception e2) {
+               ReportingUtils.logError(e2);
+            }
+         } else {
+            try {
+               core_.setAutoShutter(false);
+               core_.setShutterOpen(false);
+               toggleShutterButton_.setEnabled(true);
+               toggleShutterButton_.setText("Open");
+            } catch (Exception exc) {
+               ReportingUtils.logError(exc);
             }
          }
-      });
-      GUIUtils.addWithEdges(topPanel, shutterComboBox_, 170, 70, 275, 92);
-      
-            
+      }
+   }
+   
+   private void createShutterControls(JPanel topPanel) {
       autoShutterCheckBox_ = new JCheckBox();
       autoShutterCheckBox_.setFont(new Font("Arial", Font.PLAIN, 10));
       autoShutterCheckBox_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-             shutterLabel_ = core_.getShutterDevice();
-             if (shutterLabel_.length() == 0) {
-                toggleButtonShutter_.setEnabled(false);
-                return;
-             }
-            if (autoShutterCheckBox_.isSelected()) {
-               try {
-                  core_.setAutoShutter(true);
-                  core_.setShutterOpen(false);
-                  toggleButtonShutter_.setSelected(false);
-                  toggleButtonShutter_.setText("Open");
-                  toggleButtonShutter_.setEnabled(false);
-               } catch (Exception e2) {
-                  ReportingUtils.logError(e2);
-               }
-            } else {
-               try {
-               core_.setAutoShutter(false);
-               core_.setShutterOpen(false);
-               toggleButtonShutter_.setEnabled(true);
-               toggleButtonShutter_.setText("Open");
-               } catch (Exception exc) {
-                  ReportingUtils.logError(exc);
-               }
-            }
-          
+            toggleAutoShutter();
          }
       });
       autoShutterCheckBox_.setIconTextGap(6);
       autoShutterCheckBox_.setHorizontalTextPosition(SwingConstants.LEADING);
       autoShutterCheckBox_.setText("Auto shutter");
       GUIUtils.addWithEdges(topPanel, autoShutterCheckBox_, 107, 96, 199, 119);
+
+      toggleShutterButton_ = (JToggleButton) createButton(true, "toggleShutterButton", "Open",
+              "Open/close the shutter",
+              new Runnable() {
+                 public void run() {
+                    toggleShutter();
+                 }
+              }, null, topPanel, 203, 96, 275, 117);      // Shutter button
+   }
+
+   private void createCameraSettingsWidgets(JPanel topPanel) {
+      createLabel("Camera settings", true, topPanel, 109, 2, 211, 22);
+      createExposureField(topPanel);
+      createBinningChooser(topPanel);
+      createActiveShutterChooser(topPanel);
+      createShutterControls(topPanel);
    }
 
    private void createConfigurationControls(JPanel topPanel) {
@@ -1033,6 +1035,23 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
                     }
                  }
               });
+   }
+
+   private void showRegistrationDialogMaybe() {
+      // show registration dialog if not already registered
+      // first check user preferences (for legacy compatibility reasons)
+      boolean userReg = mainPrefs_.getBoolean(RegistrationDlg.REGISTRATION,
+            false) || mainPrefs_.getBoolean(RegistrationDlg.REGISTRATION_NEVER, false);
+
+      if (!userReg) {
+         boolean systemReg = systemPrefs_.getBoolean(
+               RegistrationDlg.REGISTRATION, false) || systemPrefs_.getBoolean(RegistrationDlg.REGISTRATION_NEVER, false);
+         if (!systemReg) {
+            // prompt for registration info
+            RegistrationDlg dlg = new RegistrationDlg(systemPrefs_);
+            dlg.setVisible(true);
+         }
+      }
    }
 
    private void updateSwitchConfigurationMenu() {
@@ -1661,21 +1680,8 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       } catch (Exception e) {
          ReportingUtils.logError(e);
       }
-
-      // show registration dialog if not already registered
-      // first check user preferences (for legacy compatibility reasons)
-      boolean userReg = mainPrefs_.getBoolean(RegistrationDlg.REGISTRATION,
-            false) || mainPrefs_.getBoolean(RegistrationDlg.REGISTRATION_NEVER, false);
-
-      if (!userReg) {
-         boolean systemReg = systemPrefs_.getBoolean(
-               RegistrationDlg.REGISTRATION, false) || systemPrefs_.getBoolean(RegistrationDlg.REGISTRATION_NEVER, false);
-         if (!systemReg) {
-            // prompt for registration info
-            RegistrationDlg dlg = new RegistrationDlg(systemPrefs_);
-            dlg.setVisible(true);
-         }
-      }
+      
+      showRegistrationDialogMaybe();
 
       // load application preferences
       // NOTE: only window size and position preferences are loaded,
@@ -2383,10 +2389,10 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
 
    public void toggleShutter() {
       try {
-         if (!toggleButtonShutter_.isEnabled())
+         if (!toggleShutterButton_.isEnabled())
             return;
-         toggleButtonShutter_.requestFocusInWindow();
-         if (toggleButtonShutter_.getText().equals("Open")) {
+         toggleShutterButton_.requestFocusInWindow();
+         if (toggleShutterButton_.getText().equals("Open")) {
             setShutterButton(true);
             core_.setShutterOpen(true);
          } else {
@@ -2408,9 +2414,9 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    
    private void setShutterButton(boolean state) {
       if (state) {
-         toggleButtonShutter_.setText("Close");
+         toggleShutterButton_.setText("Close");
       } else {
-         toggleButtonShutter_.setText("Open");
+         toggleShutterButton_.setText("Open");
       }
    }
 
@@ -2599,7 +2605,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    public void updateButtonsForLiveMode(boolean enable) {
       autoShutterCheckBox_.setEnabled(!enable);
       if (core_.getAutoShutter()) {
-         toggleButtonShutter_.setText(enable ? "Close" : "Open" );
+         toggleShutterButton_.setText(enable ? "Close" : "Open" );
       }
       snapButton_.setEnabled(!enable);
       //toAlbumButton_.setEnabled(!enable);
@@ -2963,9 +2969,9 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
             boolean shutterOpen = core_.getShutterOpen();
             setShutterButton(shutterOpen);
             if (autoShutterCheckBox_.isSelected()) {
-               toggleButtonShutter_.setEnabled(false);
+               toggleShutterButton_.setEnabled(false);
             } else {
-               toggleButtonShutter_.setEnabled(true);
+               toggleShutterButton_.setEnabled(true);
             }
          }
 
