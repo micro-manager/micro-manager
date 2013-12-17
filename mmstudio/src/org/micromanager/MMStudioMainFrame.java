@@ -661,6 +661,29 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       }
    }
 
+   private JSplitPane createSplitPane(int dividerPos) {
+      JPanel topPanel = new JPanel();
+      JPanel bottomPanel = new JPanel();
+      topPanel.setLayout(new SpringLayout());
+      topPanel.setMinimumSize(new Dimension(580, 195));
+      bottomPanel.setLayout(new SpringLayout());
+      JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, true,
+              topPanel, bottomPanel);
+      splitPane.setBorder(BorderFactory.createEmptyBorder());
+      splitPane.setDividerLocation(dividerPos);
+      splitPane.setResizeWeight(0.0);
+      return splitPane;
+   }
+
+   private void createTopPanelWidgets(JPanel topPanel) {
+      createMainButtons(topPanel);
+      createCameraSettingsWidgets(topPanel);
+      createPleaLabel(topPanel);
+      createUtilityButtons(topPanel);
+      createConfigurationControls(topPanel);
+      labelImageDimensions_ = createLabel("", false, topPanel, 5, -20, 0, 0);
+   }
+
    private void createUtilityButtons(JPanel topPanel) {
       // ROI
       
@@ -1403,187 +1426,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    }
    private StaticInfo staticInfo_ = new StaticInfo();
 
-   /**
-    * Main procedure for stand alone operation.
-    */
-   public static void main(String args[]) {
-      try {
-         UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-         MMStudioMainFrame frame = new MMStudioMainFrame(false);
-         frame.setVisible(true);
-         frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-      } catch (Throwable e) {
-         ReportingUtils.showError(e, "A java error has caused Micro-Manager to exit.");
-         System.exit(1);
-      }
-   }
-
-   @SuppressWarnings("LeakingThisInConstructor")
-   public MMStudioMainFrame(boolean pluginStatus) {
-      super();
-
-      startLoadingPipelineClass();
-
-      options_ = new MMOptions();
-      try {
-         options_.loadSettings();
-      } catch (NullPointerException ex) {
-         ReportingUtils.logError(ex);
-      }
-
-      UIMonitor.enable(options_.debugLogEnabled_);
-      
-      guiColors_ = new GUIColors();
-
-      plugins_ = new ArrayList<PluginItem>();
-
-      gui_ = this;
-
-      runsAsPlugin_ = pluginStatus;
-      setIconImage(SwingResourceManager.getImage(MMStudioMainFrame.class,
-            "icons/microscope.gif"));
-      running_ = true;
-
-      acqMgr_ = new AcquisitionManager();
-      
-      sysConfigFile_ = System.getProperty("user.dir") + "/"
-            + DEFAULT_CONFIG_FILE_NAME;
-
-      if (options_.startupScript_.length() > 0) {
-         startupScriptFile_ = System.getProperty("user.dir") + "/"
-                 + options_.startupScript_;
-      } else {
-         startupScriptFile_ = "";
-      }
-
-      ReportingUtils.SetContainingFrame(gui_);
-      
-           
-      // set the location for app preferences
-      try {
-         mainPrefs_ = Preferences.userNodeForPackage(this.getClass());
-      } catch (Exception e) {
-         ReportingUtils.logError(e);
-      }
-      systemPrefs_ = mainPrefs_;
-      
-      colorPrefs_ = mainPrefs_.node(mainPrefs_.absolutePath() + "/" + 
-              AcqControlDlg.COLOR_SETTINGS_NODE);
-      exposurePrefs_ = mainPrefs_.node(mainPrefs_.absolutePath() + "/" + 
-              EXPOSURE_SETTINGS_NODE);
-      contrastPrefs_ = mainPrefs_.node(mainPrefs_.absolutePath() + "/" +
-              CONTRAST_SETTINGS_NODE);
-      
-      // check system preferences
-      try {
-         Preferences p = Preferences.systemNodeForPackage(this.getClass());
-         if (null != p) {
-            // if we can not write to the systemPrefs, use AppPrefs instead
-            if (JavaUtils.backingStoreAvailable(p)) {
-               systemPrefs_ = p;
-            }
-         }
-      } catch (Exception e) {
-         ReportingUtils.logError(e);
-      }
-
-      // show registration dialog if not already registered
-      // first check user preferences (for legacy compatibility reasons)
-      boolean userReg = mainPrefs_.getBoolean(RegistrationDlg.REGISTRATION,
-            false) || mainPrefs_.getBoolean(RegistrationDlg.REGISTRATION_NEVER, false);
-
-      if (!userReg) {
-         boolean systemReg = systemPrefs_.getBoolean(
-               RegistrationDlg.REGISTRATION, false) || systemPrefs_.getBoolean(RegistrationDlg.REGISTRATION_NEVER, false);
-         if (!systemReg) {
-            // prompt for registration info
-            RegistrationDlg dlg = new RegistrationDlg(systemPrefs_);
-            dlg.setVisible(true);
-         }
-      }
-
-      // load application preferences
-      // NOTE: only window size and position preferences are loaded,
-      // not the settings for the camera and live imaging -
-      // attempting to set those automatically on startup may cause problems
-      // with the hardware
-      int x = mainPrefs_.getInt(MAIN_FRAME_X, 100);
-      int y = mainPrefs_.getInt(MAIN_FRAME_Y, 100);
-      int width = mainPrefs_.getInt(MAIN_FRAME_WIDTH, 644);
-      int height = mainPrefs_.getInt(MAIN_FRAME_HEIGHT, 570);
-      int dividerPos = mainPrefs_.getInt(MAIN_FRAME_DIVIDER_POS, 200);    
-      openAcqDirectory_ = mainPrefs_.get(OPEN_ACQ_DIR, "");
-      try {
-         ImageUtils.setImageStorageClass(Class.forName (mainPrefs_.get(MAIN_SAVE_METHOD,
-                 ImageUtils.getImageStorageClass().getName()) ) );
-      } catch (ClassNotFoundException ex) {
-         ReportingUtils.logError(ex, "Class not found error.  Should never happen");
-      }
-
-      ToolTipManager ttManager = ToolTipManager.sharedInstance();
-      ttManager.setDismissDelay(TOOLTIP_DISPLAY_DURATION_MILLISECONDS);
-      ttManager.setInitialDelay(TOOLTIP_DISPLAY_INITIAL_DELAY_MILLISECONDS);
-      
-      setBounds(x, y, width, height);
-      setExitStrategy(options_.closeOnExit_);
-      setTitle(MICRO_MANAGER_TITLE + " " + MMVersion.VERSION_STRING);
-      setBackground(guiColors_.background.get((options_.displayBackground_)));
-      SpringLayout topLayout = new SpringLayout();
-      
-      this.setMinimumSize(new Dimension(605,480));
-      JPanel topPanel = new JPanel();
-      topPanel.setLayout(topLayout);
-      topPanel.setMinimumSize(new Dimension(580, 195));
-
-      class ListeningJPanel extends JPanel implements AncestorListener {
-
-         @Override
-         public void ancestorMoved(AncestorEvent event) {
-            //System.out.println("moved!");
-         }
-
-         @Override
-         public void ancestorRemoved(AncestorEvent event) {}
-         @Override
-         public void ancestorAdded(AncestorEvent event) {}
-
-      }
-
-      menuBar_ = new JMenuBar();
-      switchConfigurationMenu_ = new JMenu();
-
-      setJMenuBar(menuBar_);
-
-      initializeFileMenu();
-      initializeToolsMenu();
-
-      
-      ListeningJPanel bottomPanel = new ListeningJPanel();
-      bottomPanel.setLayout(topLayout);
-      
-      splitPane_ = new JSplitPane(JSplitPane.VERTICAL_SPLIT, true,
-              topPanel, bottomPanel);
-      splitPane_.setBorder(BorderFactory.createEmptyBorder());
-      splitPane_.setDividerLocation(dividerPos);
-      splitPane_.setResizeWeight(0.0);
-      splitPane_.addAncestorListener(bottomPanel);
-      getContentPane().add(splitPane_);
-   
-      createMainButtons(topPanel);
-      
-      createCameraSettingsWidgets(topPanel);
-      
-      createPleaLabel(topPanel);
-
-      createUtilityButtons(topPanel);
-      
-      createConfigurationControls(topPanel);
-
-      labelImageDimensions_ = createLabel("", false, topPanel, 5, -20, 0, 0);
-      
-      metadataPanel_ = createMetadataPanel(bottomPanel);
-
-      
+   private void setupWindowHandlers() {
       // add window listeners
       addWindowListener(new WindowAdapter() {
          @Override
@@ -1731,6 +1574,152 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
          }
   
       });
+      
+      
+   }
+   
+   /**
+    * Main procedure for stand alone operation.
+    */
+   public static void main(String args[]) {
+      try {
+         UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+         MMStudioMainFrame frame = new MMStudioMainFrame(false);
+         frame.setVisible(true);
+         frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+      } catch (Throwable e) {
+         ReportingUtils.showError(e, "A java error has caused Micro-Manager to exit.");
+         System.exit(1);
+      }
+   }
+
+   @SuppressWarnings("LeakingThisInConstructor")
+   public MMStudioMainFrame(boolean pluginStatus) {
+      super();
+
+      startLoadingPipelineClass();
+
+      options_ = new MMOptions();
+      try {
+         options_.loadSettings();
+      } catch (NullPointerException ex) {
+         ReportingUtils.logError(ex);
+      }
+
+      UIMonitor.enable(options_.debugLogEnabled_);
+      
+      guiColors_ = new GUIColors();
+
+      plugins_ = new ArrayList<PluginItem>();
+
+      gui_ = this;
+
+      runsAsPlugin_ = pluginStatus;
+      setIconImage(SwingResourceManager.getImage(MMStudioMainFrame.class,
+            "icons/microscope.gif"));
+      running_ = true;
+
+      acqMgr_ = new AcquisitionManager();
+      
+      sysConfigFile_ = System.getProperty("user.dir") + "/"
+            + DEFAULT_CONFIG_FILE_NAME;
+
+      if (options_.startupScript_.length() > 0) {
+         startupScriptFile_ = System.getProperty("user.dir") + "/"
+                 + options_.startupScript_;
+      } else {
+         startupScriptFile_ = "";
+      }
+
+      ReportingUtils.SetContainingFrame(gui_);
+      
+           
+      // set the location for app preferences
+      try {
+         mainPrefs_ = Preferences.userNodeForPackage(this.getClass());
+      } catch (Exception e) {
+         ReportingUtils.logError(e);
+      }
+      systemPrefs_ = mainPrefs_;
+      
+      colorPrefs_ = mainPrefs_.node(mainPrefs_.absolutePath() + "/" + 
+              AcqControlDlg.COLOR_SETTINGS_NODE);
+      exposurePrefs_ = mainPrefs_.node(mainPrefs_.absolutePath() + "/" + 
+              EXPOSURE_SETTINGS_NODE);
+      contrastPrefs_ = mainPrefs_.node(mainPrefs_.absolutePath() + "/" +
+              CONTRAST_SETTINGS_NODE);
+      
+      // check system preferences
+      try {
+         Preferences p = Preferences.systemNodeForPackage(this.getClass());
+         if (null != p) {
+            // if we can not write to the systemPrefs, use AppPrefs instead
+            if (JavaUtils.backingStoreAvailable(p)) {
+               systemPrefs_ = p;
+            }
+         }
+      } catch (Exception e) {
+         ReportingUtils.logError(e);
+      }
+
+      // show registration dialog if not already registered
+      // first check user preferences (for legacy compatibility reasons)
+      boolean userReg = mainPrefs_.getBoolean(RegistrationDlg.REGISTRATION,
+            false) || mainPrefs_.getBoolean(RegistrationDlg.REGISTRATION_NEVER, false);
+
+      if (!userReg) {
+         boolean systemReg = systemPrefs_.getBoolean(
+               RegistrationDlg.REGISTRATION, false) || systemPrefs_.getBoolean(RegistrationDlg.REGISTRATION_NEVER, false);
+         if (!systemReg) {
+            // prompt for registration info
+            RegistrationDlg dlg = new RegistrationDlg(systemPrefs_);
+            dlg.setVisible(true);
+         }
+      }
+
+      // load application preferences
+      // NOTE: only window size and position preferences are loaded,
+      // not the settings for the camera and live imaging -
+      // attempting to set those automatically on startup may cause problems
+      // with the hardware
+      int x = mainPrefs_.getInt(MAIN_FRAME_X, 100);
+      int y = mainPrefs_.getInt(MAIN_FRAME_Y, 100);
+      int width = mainPrefs_.getInt(MAIN_FRAME_WIDTH, 644);
+      int height = mainPrefs_.getInt(MAIN_FRAME_HEIGHT, 570);
+      openAcqDirectory_ = mainPrefs_.get(OPEN_ACQ_DIR, "");
+      try {
+         ImageUtils.setImageStorageClass(Class.forName (mainPrefs_.get(MAIN_SAVE_METHOD,
+                 ImageUtils.getImageStorageClass().getName()) ) );
+      } catch (ClassNotFoundException ex) {
+         ReportingUtils.logError(ex, "Class not found error.  Should never happen");
+      }
+
+      ToolTipManager ttManager = ToolTipManager.sharedInstance();
+      ttManager.setDismissDelay(TOOLTIP_DISPLAY_DURATION_MILLISECONDS);
+      ttManager.setInitialDelay(TOOLTIP_DISPLAY_INITIAL_DELAY_MILLISECONDS);
+      
+      setBounds(x, y, width, height);
+      setExitStrategy(options_.closeOnExit_);
+      setTitle(MICRO_MANAGER_TITLE + " " + MMVersion.VERSION_STRING);
+      setBackground(guiColors_.background.get((options_.displayBackground_)));
+      setMinimumSize(new Dimension(605,480));
+      
+      menuBar_ = new JMenuBar();
+      switchConfigurationMenu_ = new JMenu();
+
+      setJMenuBar(menuBar_);
+
+      initializeFileMenu();
+      initializeToolsMenu();
+
+      splitPane_ = createSplitPane(mainPrefs_.getInt(MAIN_FRAME_DIVIDER_POS, 200));
+      getContentPane().add(splitPane_);
+
+      createTopPanelWidgets((JPanel) splitPane_.getComponent(0));
+      
+      metadataPanel_ = createMetadataPanel((JPanel) splitPane_.getComponent(1));
+      
+      setupWindowHandlers();
       
       // Add our own keyboard manager that handles Micro-Manager shortcuts
       MMKeyDispatcher mmKD = new MMKeyDispatcher(gui_);
