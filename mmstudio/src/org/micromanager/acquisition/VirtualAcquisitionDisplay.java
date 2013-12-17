@@ -1271,7 +1271,6 @@ public class VirtualAcquisitionDisplay implements
             if (summary.has(zStepUm))
                cal.pixelDepth = summary.getDouble(zStepUm);
             hyperImage.setCalibration(cal);
-            hyperImage.repaintWindow();
          }
       } catch (JSONException ex) {
          // no pixelsize defined.  Nothing to do
