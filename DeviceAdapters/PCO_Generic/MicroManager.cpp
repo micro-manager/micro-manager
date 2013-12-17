@@ -135,6 +135,7 @@ pictime_(0.0)
   dIntervall = 0.0;
 
   m_bSettingsChanged = TRUE;
+  m_bDoAutoBalance = TRUE;
   // DemoMode (pre-initialization property)
   CPropertyAction* pAct = new CPropertyAction (this, &CPCOCam::OnDemoMode);
   CreateProperty("DemoMode", "Off", MM::String, false, pAct, true);
@@ -1409,6 +1410,11 @@ const unsigned char* CPCOCam::GetBuffer(int ibufnum)
   {
     unsigned char *pchar;
     unsigned char *ppic8;
+    if(m_bDoAutoBalance)
+    {
+      m_pCamera->SetLutMinMax(TRUE, TRUE);
+      m_bDoAutoBalance = FALSE;
+    }
     m_pCamera->Convert(ibufnum);
     iw = img_.Width();
     ih = img_.Height();
@@ -1429,6 +1435,12 @@ const unsigned char* CPCOCam::GetBuffer(int ibufnum)
   }
   else if (img_.Depth() == 4)
   {
+    if(m_bDoAutoBalance)
+    {
+      m_pCamera->SetLutMinMax(TRUE, TRUE);
+      m_pCamera->AutoBalance(0,0,0,0,0);
+      m_bDoAutoBalance = FALSE;
+    }
     m_pCamera->Convert(ibufnum);
     iw = img_.Width();
     ih = img_.Height();
@@ -1701,6 +1713,7 @@ int CPCOCam::StartSequenceAcquisition(long numImages, double interval_ms, bool s
   m_bSequenceRunning = true;
   m_iNumImages = numImages;
   dIntervall = interval_ms;
+  m_bDoAutoBalance = TRUE;
 
   sthd_->SetLength(numImages);
   SetSizes(GetImageWidth(), GetImageHeight(), GetImageBytesPerPixel());

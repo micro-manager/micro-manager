@@ -108,6 +108,8 @@ public:
   void SetViewMode(bool bFlip, bool bMirror, bool bRotLeft, bool bRotRight);
   void GetViewMode(bool *bFlip, bool *bMirror, bool *bRotLeft, bool *bRotRight);
   void SetConvertBWCol(bool bBW, bool bCol);
+  int  AutoBalance(int x1, int y1, int x2, int y2, int iAB);
+  int  SetLutMinMax(bool bSmall, bool both);
 
 // Camera related functions:
   int PreStartCam(unsigned int uiMode, int iFirstPic, int iStartPic, int iEndPic);// Aufruf zum Vorbereiten des live Preview

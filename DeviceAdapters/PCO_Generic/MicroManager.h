@@ -187,6 +187,7 @@ private:
   int    m_iDoubleShutterMode;
   bool m_bBusy;
   bool m_bInitialized;
+  bool m_bDoAutoBalance;
 
   // pco generic data
   int m_iCameraNum;
