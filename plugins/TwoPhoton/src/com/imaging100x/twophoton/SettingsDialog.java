@@ -33,7 +33,7 @@ import org.micromanager.utils.ReportingUtils;
 public class SettingsDialog extends JDialog {
 
    static public final String STAGE_IMAGE_ANGLE_OFFSET = "Theta";
-   static public final String REAL_TIME_STITCH = "Realtimestitching";
+   static public final String DYNAMIC_STITCH = "Realtimestitching";
    static public final String STITCHED_DATA_DIRECTORY = "Stitched data location";
    static public final String FREE_GB__MIN_IN_STITCHED_DATA = "Free GB minimum in stitched data dir";
    static public final String CREATE_IMS_FILE = "Create Imaris file";
@@ -41,7 +41,7 @@ public class SettingsDialog extends JDialog {
    public static int xOverlap_ = 0, yOverlap_ = 0;
    
    
-   public SettingsDialog(final Preferences prefs) {
+   public SettingsDialog(final Preferences prefs, final TwoPhotonControl twoP) {
       super();
       this.setModal(true);
       this.setLayout(new BorderLayout());
@@ -57,14 +57,18 @@ public class SettingsDialog extends JDialog {
       panel.add(row1);      
       
       JPanel row2 = new JPanel(new FlowLayout(FlowLayout.LEFT));
-      final JCheckBox realTimeStitch = new JCheckBox("Activate real time stitching");
+      final JCheckBox realTimeStitch = new JCheckBox("Activate dynamic stitching");
       row2.add(realTimeStitch);
-      realTimeStitch.setSelected(prefs.getBoolean(REAL_TIME_STITCH, false));
+      realTimeStitch.setSelected(prefs.getBoolean(DYNAMIC_STITCH, false));
       panel.add(row2);
       realTimeStitch.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            ReportingUtils.showMessage("Restart Micro-Manager for changes to take effect");
+            if (!realTimeStitch.isSelected()) {
+               ReportingUtils.showMessage("Restart Micro-Manager for changes to take effect");
+            } else {
+               twoP.acitvateDynamicStitching();
+            }
          }
       });
       
@@ -127,7 +131,7 @@ public class SettingsDialog extends JDialog {
       final ActionListener saveSettings = new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            prefs.putBoolean(REAL_TIME_STITCH, realTimeStitch.isSelected());
+//            prefs.putBoolean(DYNAMIC_STITCH, realTimeStitch.isSelected());
             prefs.put(STITCHED_DATA_DIRECTORY, location.getText());
             prefs.putInt(FREE_GB__MIN_IN_STITCHED_DATA, (Integer) freeGig.getValue());
             prefs.putDouble(STAGE_IMAGE_ANGLE_OFFSET, (Double) theta.getValue());

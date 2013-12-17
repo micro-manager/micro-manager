@@ -118,7 +118,7 @@ public class TwoPhotonControl extends MMFrame implements MMPlugin, KeyListener,
    private JCheckBox activateDepthList_;
    private JComboBox pixelSizeCombo_;
    private static JProgressBar hdfProgressBar_;
-   private static JPanel hdfQueuePanel_;
+   private JPanel imarisPanel_, stitchPanel_;
    
    private File depthFile_;
 
@@ -213,8 +213,6 @@ private JCheckBox drawGrid_, drawPosNames_;
       createZPanel();
       createPMTPanel();
       createGridPanel();
-      createStitchPanel();
-      createIMSProgressPanel();
       createDepthPanel();
 
       pixelSizeCombo_ = new JComboBox();
@@ -230,18 +228,12 @@ private JCheckBox drawGrid_, drawPosNames_;
       lblPixelSize.setBounds(410, 394, 59, 14);
       getContentPane().add(lblPixelSize);
       
-      
-      JButton exploreButton = new JButton("Explore");
-      getContentPane().add(exploreButton);
-      exploreButton.setBounds(410, 430, 130, 20);
-      exploreButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            new ExplorerManager();
-         }
-      });
-      
-      
+      if (prefs_.getBoolean(SettingsDialog.DYNAMIC_STITCH, false)) {
+         addDynamicStitchControls();
+      } else {
+         createStitchPanel();
+      }
+ 
       //add settings button
       JButton settings = new JButton("Settings");
       getContentPane().add(settings);
@@ -249,7 +241,7 @@ private JCheckBox drawGrid_, drawPosNames_;
       settings.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            new SettingsDialog(prefs_);
+            new SettingsDialog(prefs_, TwoPhotonControl.this);
          }   
       });
       
@@ -257,7 +249,7 @@ private JCheckBox drawGrid_, drawPosNames_;
       JLabel lblCopyrightxImaging = new JLabel("Copyright 100X Imaging Inc, 2010");
       lblCopyrightxImaging.setBounds(438, 510, 172, 14);
       getContentPane().add(lblCopyrightxImaging);
-      JLabel henry = new JLabel("Version 3.0 by Henry Pinkard, 2012-2013");
+      JLabel henry = new JLabel("Improved by Henry Pinkard, 2012-2014");
       henry.setBounds(438, 530, 205, 14);
       getContentPane().add(henry);
       
@@ -266,19 +258,39 @@ private JCheckBox drawGrid_, drawPosNames_;
       loadSettings();
 
       GUIUtils.registerImageFocusListener(this);
-      
-      if (prefs_.getBoolean(SettingsDialog.REAL_TIME_STITCH, false)) {          
-         clearSpaceInIMSFileCache();
-         try {
-            new AcquisitionWrapperEngineAdapter(getDepthListRunnable(),prefs_);
-         } catch (NoSuchFieldException ex) {
-            ReportingUtils.showError("Couldn't substitute acquisition engine");
+      MMStudioMainFrame.getInstance().getAcquisitionEngine().attachRunnable(-1, -1, -1, -1, getDepthListRunnable());
+   }
+   
+   private void addDynamicStitchControls() {
+      createIMSProgressPanel();
+      JButton exploreButton = new JButton("Explore");
+      getContentPane().add(exploreButton);
+      exploreButton.setBounds(410, 290, 130, 20);
+      exploreButton.addActionListener(new ActionListener() {
+
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            new ExplorerManager();
          }
-      } else {
-         MMStudioMainFrame.getInstance().getAcquisitionEngine().attachRunnable(-1, -1, -1, -1, getDepthListRunnable());
-      }
+      });
    }
 
+   public void acitvateDynamicStitching() {
+      getContentPane().remove(stitchPanel_);
+      addDynamicStitchControls();
+      clearSpaceInIMSFileCache();
+      try {
+         new AcquisitionWrapperEngineAdapter(getDepthListRunnable(), prefs_);
+      } catch (NoSuchFieldException ex) {
+         ReportingUtils.showError("Couldn't substitute acquisition engine");
+      }
+      
+      getContentPane().invalidate();
+      getContentPane().validate();
+      getContentPane().paint(getContentPane().getGraphics());
+      
+   }
+   
    public static void updateHDFQueueSize(int n, int max) {
       hdfProgressBar_.setMaximum(max);
       hdfProgressBar_.setValue(n);
@@ -359,16 +371,16 @@ private JCheckBox drawGrid_, drawPosNames_;
    }
    
    private void createIMSProgressPanel() {
-      JPanel panel = createPanel("Imaris file writing queue", 405, 330, 650, 378);
-      panel.setLayout(new BorderLayout());
+      imarisPanel_ = createPanel("Imaris file writing queue", 405, 235, 650, 285);
+      imarisPanel_.setLayout(new BorderLayout());
       hdfProgressBar_ = new JProgressBar(0,1);
-      panel.add(hdfProgressBar_, BorderLayout.CENTER);
-      panel.setVisible(prefs_.getBoolean(SettingsDialog.REAL_TIME_STITCH, rootPaneCheckingEnabled));
+      imarisPanel_.add(hdfProgressBar_, BorderLayout.CENTER);
+      imarisPanel_.setVisible(true);
    }
    
    private void createStitchPanel() {
-      JPanel panel = createPanel("Stitch last time point", 405, 235, 650, 330);
-      panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+      stitchPanel_ = createPanel("Stitch last time point", 405, 235, 650, 330);
+      stitchPanel_.setLayout(new BoxLayout(stitchPanel_, BoxLayout.Y_AXIS));
 
       JPanel row2 = new JPanel(new FlowLayout(FlowLayout.LEFT));
       drawPosNames_ = new JCheckBox("Show position names");
@@ -377,7 +389,7 @@ private JCheckBox drawGrid_, drawPosNames_;
       drawGrid_.setSelected(true); 
       row2.add(drawPosNames_);
       row2.add(drawGrid_);
-      panel.add(row2);
+      stitchPanel_.add(row2);
       
       stitchButton_ = new JButton("Stitch: ");
       stitchButton_.addActionListener(new ActionListener() {
@@ -404,7 +416,7 @@ private JCheckBox drawGrid_, drawPosNames_;
       JPanel row3 = new JPanel(new FlowLayout(FlowLayout.LEFT));
       row3.add(stitchButton_);
       row3.add(windowsToStitchCombo_);
-      panel.add(row3);
+      stitchPanel_.add(row3);
    }
 
    private void createGridPanel() {
