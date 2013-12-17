@@ -173,17 +173,20 @@ private:
   bool stopOnOverflow;
 
   int m_iBufferSize;
-
+  bool m_bNeedPush;
 private:
   int ResizeImageBuffer();
   void ReAllocalBuffer(int size);
  // void GenerateImage();
   int InsertImage();
-  int InitBinning();
-  int InitPixelType();
-  int InitGain();
-  int InitExposure();
+  void InitBinning();
+  void InitPixelType();
+  void InitGain();
+  void InitExposure();
   int InitDevice( );  
+  void SaveToReg( int pixelsize );
+  int ReadFromReg();
+  void NeedToPush();
 };
 /*
 class SequenceThread : public MMDeviceThreadBase
