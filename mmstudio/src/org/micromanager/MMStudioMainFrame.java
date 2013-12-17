@@ -549,8 +549,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       
       final JMenu toolsMenu = GUIUtils.createMenuInMenuBar(menuBar_, "Tools");
 
-      GUIUtils.addMenuItem(toolsMenu,
-              "Refresh GUI",
+      GUIUtils.addMenuItem(toolsMenu, "Refresh GUI",
               "Refresh all GUI controls directly from the hardware",
               new Runnable() {
                  public void run() {
@@ -560,8 +559,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
               },
               "arrow_refresh.png");
 
-      GUIUtils.addMenuItem(toolsMenu,
-              "Rebuild GUI",
+      GUIUtils.addMenuItem(toolsMenu, "Rebuild GUI",
               "Regenerate Micro-Manager user interface",
               new Runnable() {
                  public void run() {
@@ -644,8 +642,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
 
       toolsMenu.addSeparator();
 
-      GUIUtils.addMenuItem(toolsMenu,
-              "Hardware Configuration Wizard...",
+      GUIUtils.addMenuItem(toolsMenu, "Hardware Configuration Wizard...",
               "Open wizard to create new hardware configuration",
               new Runnable() {
                  public void run() {
@@ -719,19 +716,16 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    private void updateSwitchConfigurationMenu() {
       switchConfigurationMenu_.removeAll();
       for (final String configFile : MRUConfigFiles_) {
-         if (! configFile.equals(sysConfigFile_)) {
-            JMenuItem configMenuItem = new JMenuItem();
-            configMenuItem.setText(configFile);
-            configMenuItem.addActionListener(new ActionListener() {
-               String theConfigFile = configFile;
-               @Override
-               public void actionPerformed(ActionEvent e) {
-                  sysConfigFile_ = theConfigFile;
-                  loadSystemConfiguration();
-                  mainPrefs_.put(SYSTEM_CONFIG_FILE, sysConfigFile_);
-               }
-            });
-            switchConfigurationMenu_.add(configMenuItem);
+         if (!configFile.equals(sysConfigFile_)) {
+            GUIUtils.addMenuItem(switchConfigurationMenu_,
+                    configFile, null,
+                    new Runnable() {
+                       public void run() {
+                          sysConfigFile_ = configFile;
+                          loadSystemConfiguration();
+                          mainPrefs_.put(SYSTEM_CONFIG_FILE, sysConfigFile_);
+                       }
+                    });
          }
       }
    }
@@ -3291,21 +3285,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
 
    private void addPluginToMenu(final PluginItem plugin, Class<?> cl) {
       // add plugin menu items
-
-      final JMenuItem newMenuItem = new JMenuItem();
-      newMenuItem.addActionListener(new ActionListener() {
-
-         @Override
-         public void actionPerformed(final ActionEvent e) {
-            ReportingUtils.logMessage("Plugin command: "
-                  + e.getActionCommand());
-                  plugin.instantiate();
-                  plugin.plugin.show();
-         }
-      });
-      newMenuItem.setText(plugin.menuItem);
-      
-      
       String toolTipDescription = "";
       try {
           // Get this static field from the class implementing MMPlugin.
@@ -3321,15 +3300,16 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
        } catch (IllegalAccessException e) {
           ReportingUtils.logError(e);
        }
+
+      GUIUtils.addMenuItem(pluginMenu_, plugin.menuItem, toolTipDescription,
+              new Runnable() {
+                 public void run() {
+                    ReportingUtils.logMessage("Plugin command: " + plugin.menuItem);
+                    plugin.instantiate();
+                    plugin.plugin.show();
+                 }
+              });
       
-      String mrjProp = System.getProperty("mrj.version");
-      if (mrjProp != null) // running on a mac
-          newMenuItem.setToolTipText(toolTipDescription);
-      else      
-          newMenuItem.setToolTipText( TooltipTextMaker.addHTMLBreaksForTooltip(toolTipDescription) );
-      
-    	  
-      pluginMenu_.add(newMenuItem);
       pluginMenu_.validate();
       menuBar_.validate();
    }
