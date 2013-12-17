@@ -155,6 +155,7 @@ import org.micromanager.utils.UIMonitor;
 
 
 
+
 /*
  * Main panel and application class for the MMStudio.
  */
@@ -189,13 +190,13 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    private JComboBox shutterComboBox_;
    private JTextField textFieldExp_;
    private JLabel labelImageDimensions_;
-   private JToggleButton toggleButtonLive_;
+   private JToggleButton liveButton_;
    private JButton toAlbumButton_;
    private JCheckBox autoShutterCheckBox_;
    private MMOptions options_;
    private boolean runsAsPlugin_;
    private JCheckBoxMenuItem centerAndDragMenuItem_;
-   private JButton buttonSnap_;
+   private JButton snapButton_;
    private JButton autofocusNowButton_;
    private JButton autofocusConfigureButton_;
    private JToggleButton toggleButtonShutter_;
@@ -434,6 +435,307 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       }
    }
 
+   private void createCameraSettingsWidgets(JPanel topPanel) {
+      createLabel("Camera settings", true, topPanel, 109, 2, 211, 22);
+
+      // Exposure field
+      
+      createLabel("Exposure [ms]", false, topPanel, 111, 23, 198, 39);
+
+      textFieldExp_ = new JTextField();
+      textFieldExp_.addFocusListener(new FocusAdapter() {
+         @Override
+         public void focusLost(FocusEvent fe) {
+            synchronized(shutdownLock_) {
+            if (core_ != null)
+               setExposure();
+            }
+         }
+      });
+      textFieldExp_.setFont(new Font("Arial", Font.PLAIN, 10));
+      textFieldExp_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            setExposure();
+         }
+      });
+      GUIUtils.addWithEdges(topPanel, textFieldExp_, 203, 21, 276, 40);
+
+      // Shutter button
+      // --------------
+      toggleButtonShutter_ = new JToggleButton();
+      toggleButtonShutter_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(final ActionEvent e) {
+            toggleShutter();
+         }
+      });
+      toggleButtonShutter_.setToolTipText("Open/close the shutter");
+      toggleButtonShutter_.setIconTextGap(6);
+      toggleButtonShutter_.setFont(new Font("Arial", Font.BOLD, 10));
+      toggleButtonShutter_.setText("Open");
+      GUIUtils.addWithEdges(topPanel, toggleButtonShutter_, 203, 96, 275, 117);
+
+      // Binning combo box
+      createLabel("Binning", false, topPanel, 111, 43, 199, 64);
+
+      comboBinning_ = new JComboBox();
+      comboBinning_.setName("Binning");
+      comboBinning_.setFont(new Font("Arial", Font.PLAIN, 10));
+      comboBinning_.setMaximumRowCount(4);
+      comboBinning_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            changeBinning();
+         }
+      });
+      GUIUtils.addWithEdges(topPanel, comboBinning_, 200, 43, 275, 66);
+ 
+      // Active shutter label
+      createLabel("Shutter", false, topPanel, 111, 73, 158, 86);
+
+      // Active shutter Combo Box
+      shutterComboBox_ = new JComboBox();
+      shutterComboBox_.setName("Shutter");
+      shutterComboBox_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent arg0) {
+            try {
+               if (shutterComboBox_.getSelectedItem() != null) {
+                  core_.setShutterDevice((String) shutterComboBox_.getSelectedItem());
+               }
+            } catch (Exception e) {
+               ReportingUtils.showError(e);
+            }
+         }
+      });
+      GUIUtils.addWithEdges(topPanel, shutterComboBox_, 170, 70, 275, 92);
+      
+            
+      autoShutterCheckBox_ = new JCheckBox();
+      autoShutterCheckBox_.setFont(new Font("Arial", Font.PLAIN, 10));
+      autoShutterCheckBox_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+             shutterLabel_ = core_.getShutterDevice();
+             if (shutterLabel_.length() == 0) {
+                toggleButtonShutter_.setEnabled(false);
+                return;
+             }
+            if (autoShutterCheckBox_.isSelected()) {
+               try {
+                  core_.setAutoShutter(true);
+                  core_.setShutterOpen(false);
+                  toggleButtonShutter_.setSelected(false);
+                  toggleButtonShutter_.setText("Open");
+                  toggleButtonShutter_.setEnabled(false);
+               } catch (Exception e2) {
+                  ReportingUtils.logError(e2);
+               }
+            } else {
+               try {
+               core_.setAutoShutter(false);
+               core_.setShutterOpen(false);
+               toggleButtonShutter_.setEnabled(true);
+               toggleButtonShutter_.setText("Open");
+               } catch (Exception exc) {
+                  ReportingUtils.logError(exc);
+               }
+            }
+          
+         }
+      });
+      autoShutterCheckBox_.setIconTextGap(6);
+      autoShutterCheckBox_.setHorizontalTextPosition(SwingConstants.LEADING);
+      autoShutterCheckBox_.setText("Auto shutter");
+      GUIUtils.addWithEdges(topPanel, autoShutterCheckBox_, 107, 96, 199, 119);
+   }
+
+   private void createConfigurationControls(JPanel topPanel) {
+      createLabel("Configuration settings", true, topPanel, 280, 2, 430, 22);
+
+      saveConfigButton_ = (JButton) createButton(false, "saveConfigureButton", "Save",
+              "Save current presets to the configuration file",
+              new Runnable() {
+                 public void run() {
+                  saveConfigPresets();
+                 }
+              }, null, topPanel, -80, 2, -5, 20);
+      
+      configPad_ = new ConfigGroupPad();
+      configPadButtonPanel_ = new ConfigPadButtonPanel();
+      configPadButtonPanel_.setConfigPad(configPad_);
+      configPadButtonPanel_.setGUI(MMStudioMainFrame.getInstance());
+      
+      configPad_.setFont(new Font("", Font.PLAIN, 10));
+      
+      GUIUtils.addWithEdges(topPanel, configPad_, 280, 21, -4, -44);
+      GUIUtils.addWithEdges(topPanel, configPadButtonPanel_, 280, -40, -4, -20);
+   }
+
+   private void createMainButtons(JPanel topPanel) {
+      snapButton_ = (JButton) createButton(false, "Snap", "Snap",
+              "Snap single image",
+              new Runnable() {
+                 public void run() {
+                    doSnap();
+                 }
+              }, "camera.png", topPanel, 7, 4, 95, 25);
+
+      liveButton_ = (JToggleButton) createButton(true, "Live", "Live",
+              "Continuous live view",
+              new Runnable() {
+                 public void run() {
+                    enableLiveMode(!isLiveModeOn());
+                 }
+              }, "camera_go.png", topPanel, 7, 26, 95, 47);
+
+      toAlbumButton_ = (JButton) createButton(false, "Album", "Album",
+              "Acquire single frame and add to an album",
+              new Runnable() {
+                 public void run() {
+                    snapAndAddToImage5D();
+                 }
+              }, "camera_plus_arrow.png", topPanel, 7, 48, 95, 69);
+
+      /* MDA Button = */ createButton(false, "Multi-D Acq.", "Multi-D Acq.",
+              "Open multi-dimensional acquisition window",
+              new Runnable() {
+                 public void run() {
+                    openAcqControlDialog();
+                 }
+              }, "film.png", topPanel, 7, 70, 95, 91);
+
+      /* Refresh = */ createButton(false, "Refresh", "Refresh",
+              "Refresh all GUI controls directly from the hardware",
+              new Runnable() {
+                 public void run() {
+                    core_.updateSystemStateCache();
+                    updateGUI(true);
+                 }
+              }, "arrow_refresh.png", topPanel, 7, 92, 95, 113);
+   }
+
+   private static MetadataPanel createMetadataPanel(JPanel bottomPanel) {
+      MetadataPanel metadataPanel = new MetadataPanel();
+      GUIUtils.addWithEdges(bottomPanel, metadataPanel, 0, 0, 0, 0);
+      metadataPanel.setBorder(BorderFactory.createEmptyBorder());
+      return metadataPanel;
+   }
+
+   private void createPleaLabel(JPanel topPanel) {
+      JLabel citePleaLabel = new JLabel("<html>Please <a href=\"http://micro-manager.org\">cite Micro-Manager</a> so funding will continue!</html>");
+      citePleaLabel.setFont(new Font("Arial", Font.PLAIN, 11));
+      GUIUtils.addWithEdges(topPanel, citePleaLabel, 7, 119, 270, 139);
+
+      class Pleader extends Thread{
+         Pleader(){
+            super("pleader");
+         }
+         @Override
+         public void run(){
+          try {
+               ij.plugin.BrowserLauncher.openURL("https://micro-manager.org/wiki/Citing_Micro-Manager");
+            } catch (IOException e1) {
+               ReportingUtils.showError(e1);
+            }
+         }
+
+      }
+      citePleaLabel.addMouseListener(new MouseAdapter() {
+         @Override
+          public void mousePressed(MouseEvent e) {
+             Pleader p = new Pleader();
+             p.start();
+          }
+      });
+
+      // add a listener to the main ImageJ window to catch it quitting out on us
+      if (ij.IJ.getInstance() != null) {
+         ij.IJ.getInstance().addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+               closeSequence(true);
+            };
+         });
+      }
+   }
+
+   private void createUtilityButtons(JPanel topPanel) {
+      // ROI
+      
+      createLabel("ROI", true, topPanel, 8, 140, 71, 154);
+      
+      createButton(false, "setRoiButton", null,
+              "Set Region Of Interest to selected rectangle",
+              new Runnable() {
+                 public void run() {
+                    setROI();
+                 }
+              }, "shape_handles.png", topPanel, 7, 154, 37, 174);
+
+      createButton(false, "clearRoiButton", null,
+              "Reset Region of Interest to full frame",
+              new Runnable() {
+                 public void run() {
+                    clearROI();
+                 }
+              }, "arrow_out.png", topPanel, 40, 154, 70, 174);
+      
+      // Zoom
+      
+      createLabel("Zoom", true, topPanel, 81, 140, 139, 154);
+
+      createButton(false, "zoomInButton", null,
+              "Zoom in",
+              new Runnable() {
+                 public void run() {
+                    zoomIn();
+                 }
+              }, "zoom_in.png", topPanel, 80, 154, 110, 174);
+
+      createButton(false, "zoomOutButton", null,
+              "Zoom out",
+              new Runnable() {
+                 public void run() {
+                    zoomOut();
+                 }
+              }, "zoom_out.png", topPanel, 113, 154, 143, 174);
+
+      // Profile
+      
+      createLabel("Profile", true, topPanel, 154, 140, 217, 154);
+
+      createButton(false, "lineProfileButton", null,
+              "Open line profile window (requires line selection)",
+              new Runnable() {
+                 public void run() {
+                    openLineProfileWindow();
+                 }
+              }, "chart_curve.png", topPanel, 153, 154, 183, 174);
+
+      // Autofocus
+
+      createLabel("Autofocus", true, topPanel, 194, 140, 276, 154);
+
+      autofocusNowButton_ = (JButton) createButton(false, "autofocusNowButton", null,
+              "Autofocus now",
+              new Runnable() {
+                 public void run() {
+                    autofocusNow();
+                 }
+              }, "find.png", topPanel, 193, 154, 223, 174);
+
+
+      autofocusConfigureButton_ = (JButton) createButton(false, "autofocusConfigureButton", null,
+              "Set autofocus options",
+              new Runnable() {
+                 public void run() {
+                    showAutofocusDialog();
+                 }
+              }, "wrench_orange.png", topPanel, 226, 154, 256, 174);
+   }
+
    private void initializeFileMenu() {
       JMenu fileMenu = GUIUtils.createMenuInMenuBar(menuBar_, "File");
 
@@ -472,7 +774,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    }
    
     private void initializeHelpMenu() {
-        // add help menu item
         final JMenu helpMenu = GUIUtils.createMenuInMenuBar(menuBar_, "Help");
         
         GUIUtils.addMenuItem(helpMenu, "User's Guide", null,
@@ -511,13 +812,12 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
                   });
        }
 
-       final MMStudioMainFrame thisFrame = this;
        GUIUtils.addMenuItem(helpMenu, "Report Problem...", null,
                new Runnable() {
                   public void run() {
                      if (null == reportProblemDialog_) {
-                        reportProblemDialog_ = new ReportProblemDialog(core_, thisFrame, options_);
-                        thisFrame.addMMBackgroundListener(reportProblemDialog_);
+                        reportProblemDialog_ = new ReportProblemDialog(core_, MMStudioMainFrame.this, options_);
+                        MMStudioMainFrame.this.addMMBackgroundListener(reportProblemDialog_);
                         reportProblemDialog_.setBackground(guiColors_.background.get(options_.displayBackground_));
                      }
                      reportProblemDialog_.setVisible(true);
@@ -908,6 +1208,48 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
         }.start();
     }
 
+   private static AbstractButton createButton(final boolean isToggleButton,
+           final String name,
+           final String text,
+           final String toolTipText,
+           final Runnable buttonActionRunnable,
+           final String iconFileName,
+           final JPanel parentPanel,
+           int west, int north, int east, int south) {
+      AbstractButton button = isToggleButton ? new JToggleButton() : new JButton();
+      button.setFont(new Font("Arial", Font.PLAIN, 10));
+      button.setMargin(new Insets(0, 0, 0, 0));
+      button.setName(name);
+      if (text != null) {
+         button.setText(text);
+      }
+      if (iconFileName != null) {
+         button.setIconTextGap(4);
+         GUIUtils.setIcon(button, iconFileName);
+      }
+      if (toolTipText != null) {
+         button.setToolTipText(toolTipText);
+      }
+      button.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            buttonActionRunnable.run();
+         }
+      });
+      GUIUtils.addWithEdges(parentPanel, button, west, north, east, south);
+      return button;
+   }
+
+   private static JLabel createLabel(String text, boolean big,
+           JPanel parentPanel, int west, int north, int east, int south) {
+            final JLabel label = new JLabel();
+      label.setFont(new Font("Arial",
+              big ? Font.BOLD : Font.PLAIN,
+              big ? 11 : 10));
+      label.setText(text);
+      GUIUtils.addWithEdges(parentPanel, label, west, north, east, south);
+      return label;
+   }
 
    public interface DisplayImageRoutine {
       public void show(TaggedImage image);
@@ -1207,6 +1549,15 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
 
       }
 
+      menuBar_ = new JMenuBar();
+      switchConfigurationMenu_ = new JMenu();
+
+      setJMenuBar(menuBar_);
+
+      initializeFileMenu();
+      initializeToolsMenu();
+
+      
       ListeningJPanel bottomPanel = new ListeningJPanel();
       bottomPanel.setLayout(topLayout);
       
@@ -1217,312 +1568,22 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       splitPane_.setResizeWeight(0.0);
       splitPane_.addAncestorListener(bottomPanel);
       getContentPane().add(splitPane_);
-
-
-      // Snap button
-      // -----------
-      buttonSnap_ = new JButton();
-      buttonSnap_.setIconTextGap(6);
-      buttonSnap_.setText("Snap");
-      buttonSnap_.setIcon(SwingResourceManager.getIcon(
-            MMStudioMainFrame.class, "/org/micromanager/icons/camera.png"));
-      buttonSnap_.setFont(new Font("Arial", Font.PLAIN, 10));
-      buttonSnap_.setToolTipText("Snap single image");
-      buttonSnap_.setMaximumSize(new Dimension(0, 0));
-      buttonSnap_.addActionListener(new ActionListener() {
-
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            doSnap();
-         }
-      });
-      GUIUtils.addWithEdges(topPanel, buttonSnap_, 7, 4, 95, 25);
-
-      // Initialize
-      // ----------
-
-      // Exposure field
-      // ---------------
-      final JLabel label_1 = new JLabel();
-      label_1.setFont(new Font("Arial", Font.PLAIN, 10));
-      label_1.setText("Exposure [ms]");
-      GUIUtils.addWithEdges(topPanel, label_1, 111, 23, 198, 39);
-
-      textFieldExp_ = new JTextField();
-      textFieldExp_.addFocusListener(new FocusAdapter() {
-         @Override
-         public void focusLost(FocusEvent fe) {
-            synchronized(shutdownLock_) {
-            if (core_ != null)
-               setExposure();
-            }
-         }
-      });
-      textFieldExp_.setFont(new Font("Arial", Font.PLAIN, 10));
-      textFieldExp_.addActionListener(new ActionListener() {
-
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            setExposure();
-         }
-      });
-      GUIUtils.addWithEdges(topPanel, textFieldExp_, 203, 21, 276, 40);
-
-      // Live button
-      // -----------
-      toggleButtonLive_ = new JToggleButton();
-      toggleButtonLive_.setName("Live");
-      toggleButtonLive_.setMargin(new Insets(2, 2, 2, 2));
-      toggleButtonLive_.setIconTextGap(1);
-      toggleButtonLive_.setIcon(SwingResourceManager.getIcon(
-            MMStudioMainFrame.class,
-            "/org/micromanager/icons/camera_go.png"));
-      toggleButtonLive_.setIconTextGap(6);
-      toggleButtonLive_.setToolTipText("Continuous live view");
-      toggleButtonLive_.setFont(new Font("Arial", Font.PLAIN, 10));
-      toggleButtonLive_.addActionListener(new ActionListener() {
-
-         @Override
-         public void actionPerformed(ActionEvent e) {            
-            enableLiveMode(!isLiveModeOn());
-         }
-      });
-
-      toggleButtonLive_.setText("Live");
-      GUIUtils.addWithEdges(topPanel, toggleButtonLive_, 7, 26, 95, 47);
-
-      // Acquire button
-      // -----------
-      toAlbumButton_ = new JButton();
-      toAlbumButton_.setMargin(new Insets(2, 2, 2, 2));
-      toAlbumButton_.setIconTextGap(1);
-      toAlbumButton_.setIcon(SwingResourceManager.getIcon(
-            MMStudioMainFrame.class,
-            "/org/micromanager/icons/camera_plus_arrow.png"));
-      toAlbumButton_.setIconTextGap(6);
-      toAlbumButton_.setToolTipText("Acquire single frame and add to an album");
-      toAlbumButton_.setFont(new Font("Arial", Font.PLAIN, 10));
-      toAlbumButton_.addActionListener(new ActionListener() {
-
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            snapAndAddToImage5D();
-         }
-      });
-      toAlbumButton_.setText("Album");
-      GUIUtils.addWithEdges(topPanel, toAlbumButton_, 7, 48, 95, 69);
-
-      // Shutter button
-      // --------------
-
-      toggleButtonShutter_ = new JToggleButton();
-      toggleButtonShutter_.addActionListener(new ActionListener() {
-
-         @Override
-         public void actionPerformed(final ActionEvent e) {
-            toggleShutter();
-         }
-
-
-      });
-      toggleButtonShutter_.setToolTipText("Open/close the shutter");
-      toggleButtonShutter_.setIconTextGap(6);
-      toggleButtonShutter_.setFont(new Font("Arial", Font.BOLD, 10));
-      toggleButtonShutter_.setText("Open");
-      GUIUtils.addWithEdges(topPanel, toggleButtonShutter_, 203, 96, 275, 117);
-
-      // Active shutter label
-      final JLabel activeShutterLabel = new JLabel();
-      activeShutterLabel.setFont(new Font("Arial", Font.PLAIN, 10));
-      activeShutterLabel.setText("Shutter");
-      GUIUtils.addWithEdges(topPanel, activeShutterLabel, 111, 73, 158, 86);
-
-      // Active shutter Combo Box
-      shutterComboBox_ = new JComboBox();
-      shutterComboBox_.setName("Shutter");
-      shutterComboBox_.addActionListener(new ActionListener() {
-
-         @Override
-         public void actionPerformed(ActionEvent arg0) {
-            try {
-               if (shutterComboBox_.getSelectedItem() != null) {
-                  core_.setShutterDevice((String) shutterComboBox_.getSelectedItem());
-               }
-            } catch (Exception e) {
-               ReportingUtils.showError(e);
-            }
-         }
-      });
-      GUIUtils.addWithEdges(topPanel, shutterComboBox_, 170, 70, 275, 92);
-
-      menuBar_ = new JMenuBar();
-      switchConfigurationMenu_ = new JMenu();
-
-      setJMenuBar(menuBar_);
-
-      initializeFileMenu();
-      initializeToolsMenu();
-
-      final JLabel binningLabel = new JLabel();
-      binningLabel.setFont(new Font("Arial", Font.PLAIN, 10));
-      binningLabel.setText("Binning");
-      GUIUtils.addWithEdges(topPanel, binningLabel, 111, 43, 199, 64);
-
-      metadataPanel_ = new MetadataPanel();
-      GUIUtils.addWithEdges(bottomPanel, metadataPanel_, 0, 0, 0, 0);
-      metadataPanel_.setBorder(BorderFactory.createEmptyBorder());
-
-
-
-      comboBinning_ = new JComboBox();
-      comboBinning_.setName("Binning");
-      comboBinning_.setFont(new Font("Arial", Font.PLAIN, 10));
-      comboBinning_.setMaximumRowCount(4);
-      comboBinning_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            changeBinning();
-         }
-      });
-      GUIUtils.addWithEdges(topPanel, comboBinning_, 200, 43, 275, 66);
- 
-      final JLabel cameraSettingsLabel = new JLabel();
-      cameraSettingsLabel.setFont(new Font("Arial", Font.BOLD, 11));
-      cameraSettingsLabel.setText("Camera settings");
-      GUIUtils.addWithEdges(topPanel, cameraSettingsLabel, 109, 2, 211, 22);
+   
+      createMainButtons(topPanel);
       
-      labelImageDimensions_ = new JLabel();
-      labelImageDimensions_.setFont(new Font("Arial", Font.PLAIN, 10));
-      GUIUtils.addWithEdges(topPanel, labelImageDimensions_, 5, -20, 0, 0);
+      createCameraSettingsWidgets(topPanel);
       
-      configPad_ = new ConfigGroupPad();
-      configPadButtonPanel_ = new ConfigPadButtonPanel();
-      configPadButtonPanel_.setConfigPad(configPad_);
-      configPadButtonPanel_.setGUI(MMStudioMainFrame.getInstance());
+      createPleaLabel(topPanel);
+
+      createUtilityButtons(topPanel);
       
-      configPad_.setFont(new Font("", Font.PLAIN, 10));
+      createConfigurationControls(topPanel);
+
+      labelImageDimensions_ = createLabel("", false, topPanel, 5, -20, 0, 0);
       
-      GUIUtils.addWithEdges(topPanel, configPad_, 280, 21, -4, -44);
-      GUIUtils.addWithEdges(topPanel, configPadButtonPanel_, 280, -40, -4, -20);
+      metadataPanel_ = createMetadataPanel(bottomPanel);
+
       
-
-      final JLabel stateDeviceLabel = new JLabel();
-      stateDeviceLabel.setFont(new Font("Arial", Font.BOLD, 11));
-      stateDeviceLabel.setText("Configuration settings");
-      GUIUtils.addWithEdges(topPanel, stateDeviceLabel, 280, 2, 430, 22);
-
-
-      final JButton buttonAcqSetup = new JButton();
-      buttonAcqSetup.setMargin(new Insets(2, 2, 2, 2));
-      buttonAcqSetup.setIconTextGap(1);
-      buttonAcqSetup.setIcon(SwingResourceManager.getIcon(
-            MMStudioMainFrame.class, "/org/micromanager/icons/film.png"));
-      buttonAcqSetup.setToolTipText("Open multi-dimensional acquisition window");
-      buttonAcqSetup.setFont(new Font("Arial", Font.PLAIN, 10));
-      buttonAcqSetup.addActionListener(new ActionListener() {
-
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            openAcqControlDialog();
-         }
-      });
-      buttonAcqSetup.setText("Multi-D Acq.");
-      GUIUtils.addWithEdges(topPanel, buttonAcqSetup, 7, 70, 95, 91);
-
-      autoShutterCheckBox_ = new JCheckBox();
-      autoShutterCheckBox_.setFont(new Font("Arial", Font.PLAIN, 10));
-      autoShutterCheckBox_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-             shutterLabel_ = core_.getShutterDevice();
-             if (shutterLabel_.length() == 0) {
-                toggleButtonShutter_.setEnabled(false);
-                return;
-             }
-            if (autoShutterCheckBox_.isSelected()) {
-               try {
-                  core_.setAutoShutter(true);
-                  core_.setShutterOpen(false);
-                  toggleButtonShutter_.setSelected(false);
-                  toggleButtonShutter_.setText("Open");
-                  toggleButtonShutter_.setEnabled(false);
-               } catch (Exception e2) {
-                  ReportingUtils.logError(e2);
-               }
-            } else {
-               try {
-               core_.setAutoShutter(false);
-               core_.setShutterOpen(false);
-               toggleButtonShutter_.setEnabled(true);
-               toggleButtonShutter_.setText("Open");
-               } catch (Exception exc) {
-                  ReportingUtils.logError(exc);
-               }
-            }
-          
-         }
-      });
-      autoShutterCheckBox_.setIconTextGap(6);
-      autoShutterCheckBox_.setHorizontalTextPosition(SwingConstants.LEADING);
-      autoShutterCheckBox_.setText("Auto shutter");
-      GUIUtils.addWithEdges(topPanel, autoShutterCheckBox_, 107, 96, 199, 119);
-    
-      final JButton refreshButton = new JButton();
-      refreshButton.setMargin(new Insets(2, 2, 2, 2));
-      refreshButton.setIconTextGap(1);
-      refreshButton.setIcon(SwingResourceManager.getIcon(
-            MMStudioMainFrame.class,
-            "/org/micromanager/icons/arrow_refresh.png"));
-      refreshButton.setFont(new Font("Arial", Font.PLAIN, 10));
-      refreshButton.setToolTipText("Refresh all GUI controls directly from the hardware");
-      refreshButton.addActionListener(new ActionListener() {
-
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            core_.updateSystemStateCache(); 
-            updateGUI(true);
-         }
-      });
-      refreshButton.setText("Refresh");
-      GUIUtils.addWithEdges(topPanel, refreshButton, 7, 92, 95, 113);
-
-      JLabel citePleaLabel = new JLabel("<html>Please <a href=\"http://micro-manager.org\">cite Micro-Manager</a> so funding will continue!</html>");
-      citePleaLabel.setFont(new Font("Arial", Font.PLAIN, 11));
-      GUIUtils.addWithEdges(topPanel, citePleaLabel, 7, 119, 270, 139);
-
-      class Pleader extends Thread{
-         Pleader(){
-            super("pleader");
-         }
-         @Override
-         public void run(){
-          try {
-               ij.plugin.BrowserLauncher.openURL("https://micro-manager.org/wiki/Citing_Micro-Manager");
-            } catch (IOException e1) {
-               ReportingUtils.showError(e1);
-            }
-         }
-
-      }
-      citePleaLabel.addMouseListener(new MouseAdapter() {
-         @Override
-          public void mousePressed(MouseEvent e) {
-             Pleader p = new Pleader();
-             p.start();
-          }
-      });
-
-      // add a listener to the main ImageJ window to catch it quitting out on us
-      if (ij.IJ.getInstance() != null) {
-         ij.IJ.getInstance().addWindowListener(new WindowAdapter() {
-            @Override
-            public void windowClosing(WindowEvent e) {
-               closeSequence(true);
-            };
-         });
-      }
-
-
       // add window listeners
       addWindowListener(new WindowAdapter() {
          @Override
@@ -1668,177 +1729,9 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
                loadPlugins();
             }
          }
-
-        
+  
       });
-
-      setRoiButton_ = new JButton();
-      setRoiButton_.setName("setRoiButton");
-      setRoiButton_.setIcon(SwingResourceManager.getIcon(
-            MMStudioMainFrame.class,
-            "/org/micromanager/icons/shape_handles.png"));
-      setRoiButton_.setFont(new Font("Arial", Font.PLAIN, 10));
-      setRoiButton_.setToolTipText("Set Region Of Interest to selected rectangle");
-      setRoiButton_.addActionListener(new ActionListener() {
-
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            setROI();
-         }
-      });
-      GUIUtils.addWithEdges(topPanel, setRoiButton_, 7, 154, 37, 174);
-
-      clearRoiButton_ = new JButton();
-      clearRoiButton_.setName("clearRoiButton");
-      clearRoiButton_.setIcon(SwingResourceManager.getIcon(
-            MMStudioMainFrame.class,
-            "/org/micromanager/icons/arrow_out.png"));
-      clearRoiButton_.setFont(new Font("Arial", Font.PLAIN, 10));
-      clearRoiButton_.setToolTipText("Reset Region of Interest to full frame");
-      clearRoiButton_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            clearROI();
-         }
-      });
-      GUIUtils.addWithEdges(topPanel, clearRoiButton_, 40, 154, 70, 174);
-
-      final JLabel regionOfInterestLabel = new JLabel();
-      regionOfInterestLabel.setFont(new Font("Arial", Font.BOLD, 11));
-      regionOfInterestLabel.setText("ROI");
-      GUIUtils.addWithEdges(topPanel, regionOfInterestLabel, 8, 140, 71, 154);
-
-      final JLabel regionOfInterestLabel_1 = new JLabel();
-      regionOfInterestLabel_1.setFont(new Font("Arial", Font.BOLD, 11));
-      regionOfInterestLabel_1.setText("Zoom");
-      GUIUtils.addWithEdges(topPanel, regionOfInterestLabel_1, 81, 140, 139, 154);
-
-      final JButton zoomInButton = new JButton();
-      zoomInButton.addActionListener(new ActionListener() {
-
-         @Override
-         public void actionPerformed(final ActionEvent e) {
-            zoomIn();
-         }
-      });
-      zoomInButton.setIcon(SwingResourceManager.getIcon(MMStudioMainFrame.class,
-            "/org/micromanager/icons/zoom_in.png"));
-      zoomInButton.setName("zoomInButton");
-      zoomInButton.setToolTipText("Zoom in");
-      zoomInButton.setFont(new Font("Arial", Font.PLAIN, 10));
-      GUIUtils.addWithEdges(topPanel, zoomInButton, 80, 154, 110, 174);
-
-      final JButton zoomOutButton = new JButton();
-      zoomOutButton.setName("zoomOutButton");
-      zoomOutButton.addActionListener(new ActionListener() {
-
-            @Override
-         public void actionPerformed(final ActionEvent e) {
-            zoomOut();
-         }
-      });
-      zoomOutButton.setIcon(SwingResourceManager.getIcon(MMStudioMainFrame.class,
-            "/org/micromanager/icons/zoom_out.png"));
-      zoomOutButton.setToolTipText("Zoom out");
-      zoomOutButton.setFont(new Font("Arial", Font.PLAIN, 10));
-      GUIUtils.addWithEdges(topPanel, zoomOutButton, 113, 154, 143, 174);
-
-      // Profile
-      // -------
-
-      final JLabel profileLabel = new JLabel();
-      profileLabel.setFont(new Font("Arial", Font.BOLD, 11));
-      profileLabel.setText("Profile");
-      GUIUtils.addWithEdges(topPanel, profileLabel, 154, 140, 217, 154);
-
-      final JButton lineProfileButton = new JButton();
-      lineProfileButton.setName("lineProfileButton");
-      lineProfileButton.setIcon(SwingResourceManager.getIcon(
-            MMStudioMainFrame.class,
-            "/org/micromanager/icons/chart_curve.png"));
-      lineProfileButton.setFont(new Font("Arial", Font.PLAIN, 10));
-      lineProfileButton.setToolTipText("Open line profile window (requires line selection)");
-      lineProfileButton.addActionListener(new ActionListener() {
-
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            openLineProfileWindow();
-         }
-      });
-      // buttonProf.setText("Profile");
-      GUIUtils.addWithEdges(topPanel, lineProfileButton, 153, 154, 183, 174);
-
-      // Autofocus
-      // -------
-
-      final JLabel autofocusLabel_ = new JLabel();
-      autofocusLabel_.setFont(new Font("Arial", Font.BOLD, 11));
-      autofocusLabel_.setText("Autofocus");
-      GUIUtils.addWithEdges(topPanel, autofocusLabel_, 194, 140, 276, 154);
-
-      autofocusNowButton_ = new JButton();
-      autofocusNowButton_.setName("autofocusNowButton");
-      autofocusNowButton_.setIcon(SwingResourceManager.getIcon(
-            MMStudioMainFrame.class,
-            "/org/micromanager/icons/find.png"));
-      autofocusNowButton_.setFont(new Font("Arial", Font.PLAIN, 10));
-      autofocusNowButton_.setToolTipText("Autofocus now");
-      autofocusNowButton_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            if (afMgr_.getDevice() != null) {
-               new Thread() {
-                  @Override
-                  public void run() {
-                     try {
-                        boolean lmo = isLiveModeOn();
-                        if (lmo) {
-                           enableLiveMode(false);
-                        }
-                        afMgr_.getDevice().fullFocus();
-                        if (lmo) {
-                           enableLiveMode(true);
-                        }
-                     } catch (MMException ex) {
-                        ReportingUtils.logError(ex);
-                     }
-                  }
-               }.start(); // or any other method from Autofocus.java API
-            }
-         }
-      });
-      GUIUtils.addWithEdges(topPanel, autofocusNowButton_, 193, 154, 223, 174);
-
-      autofocusConfigureButton_ = new JButton();
-      autofocusConfigureButton_.setName("autofocusConfigureButton_");
-      autofocusConfigureButton_.setIcon(SwingResourceManager.getIcon(
-            MMStudioMainFrame.class,
-            "/org/micromanager/icons/wrench_orange.png"));
-      autofocusConfigureButton_.setFont(new Font("Arial", Font.PLAIN, 10));
-      autofocusConfigureButton_.setToolTipText("Set autofocus options");
-      autofocusConfigureButton_.addActionListener(new ActionListener() {
-
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            showAutofocusDialog();
-         }
-      });
-      GUIUtils.addWithEdges(topPanel, autofocusConfigureButton_, 226, 154, 256, 174);
-
-      saveConfigButton_ = new JButton();
-      saveConfigButton_.addActionListener(new ActionListener() {
-
-         @Override
-         public void actionPerformed(ActionEvent arg0) {
-            saveConfigPresets();
-         }
-      });
-      saveConfigButton_.setToolTipText("Save current presets to the configuration file");
-      saveConfigButton_.setText("Save");
-      saveConfigButton_.setEnabled(false);
-
-      GUIUtils.addWithEdges(topPanel, saveConfigButton_, -80, 2, -5, 20);
-
+      
       // Add our own keyboard manager that handles Micro-Manager shortcuts
       MMKeyDispatcher mmKD = new MMKeyDispatcher(gui_);
       KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(mmKD);
@@ -2719,14 +2612,14 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       if (core_.getAutoShutter()) {
          toggleButtonShutter_.setText(enable ? "Close" : "Open" );
       }
-      buttonSnap_.setEnabled(!enable);
+      snapButton_.setEnabled(!enable);
       //toAlbumButton_.setEnabled(!enable);
-      toggleButtonLive_.setIcon(enable ? SwingResourceManager.getIcon(MMStudioMainFrame.class,
+      liveButton_.setIcon(enable ? SwingResourceManager.getIcon(MMStudioMainFrame.class,
               "/org/micromanager/icons/cancel.png")
               : SwingResourceManager.getIcon(MMStudioMainFrame.class,
               "/org/micromanager/icons/camera_go.png"));
-      toggleButtonLive_.setSelected(false);
-      toggleButtonLive_.setText(enable ? "Stop Live" : "Live");
+      liveButton_.setSelected(false);
+      liveButton_.setText(enable ? "Stop Live" : "Live");
       
    }
 
@@ -4633,6 +4526,29 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       }
    }
 
+   private void autofocusNow() {
+      if (afMgr_.getDevice() != null) {
+         new Thread() {
+
+            @Override
+            public void run() {
+               try {
+                  boolean lmo = isLiveModeOn();
+                  if (lmo) {
+                     enableLiveMode(false);
+                  }
+                  afMgr_.getDevice().fullFocus();
+                  if (lmo) {
+                     enableLiveMode(true);
+                  }
+               } catch (MMException ex) {
+                  ReportingUtils.logError(ex);
+               }
+            }
+         }.start(); // or any other method from Autofocus.java API
+      }
+   }
+   
 }
 class BooleanLock extends Object {
 
