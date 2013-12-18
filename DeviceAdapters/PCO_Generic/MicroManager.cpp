@@ -131,6 +131,7 @@ pictime_(0.0)
   m_iPixelRate = 0;
   m_iTimestamp = 0;
   m_iDoubleShutterMode = 0;
+  m_iIRMode = 0;
   m_iNumImages = -1;
   dIntervall = 0.0;
 
@@ -432,6 +433,51 @@ int CPCOCam::OnDoubleShutterMode(MM::PropertyBase* pProp, MM::ActionType eAct)
       if(m_pCamera->iCamClass == 3)// pco.camera
       {
         m_pCamera->strCam.strSensor.wDoubleImage = (WORD)m_iDoubleShutterMode;
+      }
+
+      nErr = SetupCamera();
+    }
+
+    if (nErr != 0)
+      return nErr;
+  }
+  return DEVICE_OK;
+}
+
+int CPCOCam::OnIRMode(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+  if (eAct == MM::BeforeGet)
+  {
+    if(m_pCamera->iCamClass == 3)// pco.camera
+    {
+      m_iIRMode = m_pCamera->strCam.strSensor.wIR;
+    }
+
+    if(m_iIRMode == 0)
+      pProp->Set("Off");
+    else
+      pProp->Set("On");
+  }
+  else if (eAct == MM::AfterSet)
+  {
+    int nErr = 0;
+    string tmp;
+    long irModeTmp;
+    int ihelp;
+    pProp->Get(tmp);
+    ((MM::Property *) pProp)->GetData(tmp.c_str(), irModeTmp);
+    ihelp = (irModeTmp == 1);
+
+    if(ihelp != m_iIRMode)
+    {
+      m_iIRMode = ihelp;
+      if(m_iIRMode == 0)
+        m_nMode &= 0xFFFFFFBF;
+      else
+        m_nMode |= 0x40;
+      if(m_pCamera->iCamClass == 3)// pco.camera
+      {
+        m_pCamera->strCam.strSensor.wIR = (WORD)m_iIRMode;
       }
 
       nErr = SetupCamera();
@@ -970,6 +1016,8 @@ int CPCOCam::Initialize()
     m_nSubMode = 0;//NORMALLONG;
     //m_nTrig = 0;
     snprintf(m_pszTimes, m_nTimesLen, "0,%.0f,-1,-1", m_dExposure);
+    m_iDoubleShutterMode = m_pCamera->strCam.strSensor.wDoubleImage;
+    m_iIRMode            = m_pCamera->strCam.strSensor.wIR;
   }
   if(m_pCamera->iCamClass == 2)
   {
@@ -1223,6 +1271,19 @@ int CPCOCam::Initialize()
       if (nRet != DEVICE_OK)
         return nRet;
       nRet = AddAllowedValue("Double Shutter Mode","On",1);
+      if (nRet != DEVICE_OK)
+        return nRet;
+    }
+    if(m_pCamera->strCam.strSensor.strDescription.wIRDESC >= 1)
+    {
+      pAct = new CPropertyAction (this, &CPCOCam::OnIRMode);
+      nRet = CreateProperty("IR Mode", "Off", MM::String, false, pAct);
+      if (nRet != DEVICE_OK)
+        return nRet;
+      nRet = AddAllowedValue("IR Mode","Off",0);
+      if (nRet != DEVICE_OK)
+        return nRet;
+      nRet = AddAllowedValue("IR Mode","On",1);
       if (nRet != DEVICE_OK)
         return nRet;
     }

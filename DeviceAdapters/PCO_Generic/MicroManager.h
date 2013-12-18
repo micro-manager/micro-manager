@@ -119,6 +119,7 @@ public:
   int OnDemoMode(MM::PropertyBase* pProp, MM::ActionType eAct);
   int OnTimestampMode( MM::PropertyBase* pProp, MM::ActionType eAct );
   int OnDoubleShutterMode( MM::PropertyBase* pProp, MM::ActionType eAct );
+  int OnIRMode( MM::PropertyBase* pProp, MM::ActionType eAct );
   /*
   int OnMode(CPropertyBase* pProp, ActionType eAct);
   int OnSubMode(CPropertyBase* pProp, ActionType eAct);
@@ -185,6 +186,7 @@ private:
   int    m_iNoiseFilterMode;
   int    m_iPixelRate;
   int    m_iDoubleShutterMode;
+  int    m_iIRMode;
   bool m_bBusy;
   bool m_bInitialized;
   bool m_bDoAutoBalance;
