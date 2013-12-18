@@ -21,21 +21,27 @@
 package org.micromanager.asidispim;
 
 import com.swtdesigner.SwingResourceManager;
+
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.prefs.Preferences;
+
 import org.micromanager.asidispim.Data.Devices;
+import org.micromanager.asidispim.Data.Properties;
 import org.micromanager.asidispim.Utils.ListeningJPanel;
 import org.micromanager.asidispim.Utils.Labels;
 import org.micromanager.asidispim.Utils.PanelUtils;
+
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JRadioButton;
 import javax.swing.JToggleButton;
+
 import net.miginfocom.swing.MigLayout;
+
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.api.ScriptInterface;
 
@@ -61,7 +67,8 @@ public class SetupPanel extends ListeningJPanel {
    final String RIGHTWHEEL = Devices.JOYSTICKS.get(Devices.JoystickDevice.RIGHT_KNOB);
    final String LEFTWHEEL = Devices.JOYSTICKS.get(Devices.JoystickDevice.LEFT_KNOB);
 
-   public SetupPanel(ScriptInterface gui, Devices devices, Labels.Sides side) {
+   // TODO actually use properties class
+   public SetupPanel(ScriptInterface gui, Properties props, Devices devices, Labels.Sides side) {
       super(new MigLayout(
               "",
               "[right]8[align center]16[right]8[60px,center]8[center]8[center]",

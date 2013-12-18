@@ -32,7 +32,9 @@ import org.micromanager.utils.ReportingUtils;
 
 
 /**
- *
+ * Contains data and methods related to getting and setting device properties.  Ideally this is the single
+ * place where properties are read and set, but currently this also happens other places.
+ * One instance of this class exists in the top-level code, and is passed as a parameter anywhere it's needed.
  * @author Jon
  * @author nico
  */
@@ -75,18 +77,19 @@ public class Properties {
    }
 
    /**
-    * Constructor
+    * Constructor.  Creates HashMap but does not populate it; that should be done
+    * by calling addPropertyData() method
     * @param gui
     * @param devices
+    * @author Jon
     */
    public Properties (ScriptInterface gui, Devices devices) {
       gui_ = gui;
       core_ = gui_.getMMCore();
       devices_ = devices;
-
-      // populate the map the property keys from Java with the associated information stored in Property type
-      // this includes the device adapter's name for the property, the device adapter (via the Devices class), and integer/string/float
-      // TODO if there are two different cards for A and B then have 2 separate values for numSides, etc.
+      
+      // only create a blank hashmap to store the information now
+      // other constructors should call addPropertyData() method
       propInfo_ = new HashMap<String, PropertyData>();
    }
 
@@ -94,7 +97,18 @@ public class Properties {
       propInfo_.put(prop.pluginName, prop);
    }
    
+   /**
+    * adds an entry with property information; overwrites any previous entry under the identical name
+    * no enforcement is done to prevent the same underlying property from being added multiple times
+    * @param pluginName property name in Java; used as key to hashmap
+    * @param adapterName property name in ASITiger.h
+    * @param pluginDevice device name in Java, usually in Devices class
+    * @param propType STRING, FLOAT, or INTEGER
+    */
    public void addPropertyData(String pluginName, String adapterName, String pluginDevice, PropTypes propType) {
+      if (propInfo_.containsKey(pluginName)) {
+         propInfo_.remove(pluginDevice);
+      }
       PropertyData prop = new PropertyData(pluginName, adapterName, pluginDevice, propType);
       propInfo_.put(pluginName, prop);
    }

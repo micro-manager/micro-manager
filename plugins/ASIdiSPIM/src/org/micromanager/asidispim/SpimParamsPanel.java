@@ -23,13 +23,13 @@ package org.micromanager.asidispim;
 
 import org.micromanager.asidispim.Data.SpimParams;
 import org.micromanager.asidispim.Data.Devices;
+import org.micromanager.asidispim.Data.Properties;
 import org.micromanager.asidispim.Utils.ListeningJPanel;
 import org.micromanager.asidispim.Utils.SpimParamsListenerInterface;
 import org.micromanager.utils.ReportingUtils;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.text.ParseException;
 
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
@@ -48,15 +48,17 @@ import net.miginfocom.swing.MigLayout;
  */
 public class SpimParamsPanel extends ListeningJPanel {
 
-   SpimParams params_;
+   SpimParams spimParams_;
+   Properties props_;
    Devices devices_;
 
-   public SpimParamsPanel(SpimParams params, Devices devices) {
+   public SpimParamsPanel(SpimParams spimParams, Properties props, Devices devices) {
       super(new MigLayout(
             "",
             "[right]16[center]16[center]",
             "[]12[]"));
-      params_ = params;
+      spimParams_ = spimParams;
+      props_ = props;
       devices_ = devices;
 
       try {
@@ -112,11 +114,11 @@ public class SpimParamsPanel extends ListeningJPanel {
       }
 
       public void stateChanged(ChangeEvent ce) {
-         params_.props_.setPropValue(spimParamName_, ((Integer)sp_.getValue()).intValue());
+         props_.setPropValue(spimParamName_, ((Integer)sp_.getValue()).intValue());
       }
 
       public void spimParamsChangedAlert() {
-         sp_.setValue(params_.props_.getPropValueInteger(spimParamName_));
+         sp_.setValue(props_.getPropValueInteger(spimParamName_));
       }
    };
 
@@ -139,29 +141,29 @@ public class SpimParamsPanel extends ListeningJPanel {
       }
 
       public void stateChanged(ChangeEvent ce) {
-         params_.props_.setPropValue(spimParamName_, (float)((Double)sp_.getValue()).doubleValue());
+         props_.setPropValue(spimParamName_, (float)((Double)sp_.getValue()).doubleValue());
       }
 
       public void spimParamsChangedAlert() {
-         sp_.setValue(params_.props_.getPropValueFloat(spimParamName_));
+         sp_.setValue(props_.getPropValueFloat(spimParamName_));
       }
    };
 
-   private JSpinner makeSpinnerInteger(String spimParamName, int min, int max) throws ParseException {
-      SpinnerModel jspm = new SpinnerNumberModel(params_.props_.getPropValueInteger(spimParamName), min, max, 1);
+   private JSpinner makeSpinnerInteger(String spimParamName, int min, int max) {
+      SpinnerModel jspm = new SpinnerNumberModel(props_.getPropValueInteger(spimParamName), min, max, 1);
       JSpinner jsp = new JSpinner(jspm);
       SpinnerListenerInt ispl = new SpinnerListenerInt(spimParamName, jsp);
       jsp.addChangeListener(ispl);
-      params_.addListener(ispl);		   
+      spimParams_.addListener(ispl);		   
       return jsp;
    }
 
-   private JSpinner makeSpinnerFloat(String spimParamName, double min, double max, double step) throws ParseException {
-      SpinnerModel jspm = new SpinnerNumberModel((double)params_.props_.getPropValueFloat(spimParamName), min, max, step);
+   private JSpinner makeSpinnerFloat(String spimParamName, double min, double max, double step) {
+      SpinnerModel jspm = new SpinnerNumberModel((double)props_.getPropValueFloat(spimParamName), min, max, step);
       JSpinner jsp = new JSpinner(jspm);
       SpinnerListenerFloat ispl = new SpinnerListenerFloat(spimParamName, jsp);
       jsp.addChangeListener(ispl);
-      params_.addListener(ispl);		   
+      spimParams_.addListener(ispl);		   
       return jsp;
    }
 
@@ -179,7 +181,7 @@ public class SpimParamsPanel extends ListeningJPanel {
       }
 
       public void actionPerformed(ActionEvent ae) {
-         params_.props_.setPropValue(key_, (String) box_.getSelectedItem());
+         props_.setPropValue(key_, (String) box_.getSelectedItem());
       }
    };
 
@@ -193,7 +195,7 @@ public class SpimParamsPanel extends ListeningJPanel {
     */
    private JComboBox makeDropDownBox(String key, String[] vals) {
       JComboBox jcb = new JComboBox(vals);
-      jcb.setSelectedItem(params_.props_.getPropValueString(key));
+      jcb.setSelectedItem(props_.getPropValueString(key));
       jcb.addActionListener(new StringBoxListener (key, jcb));
       return jcb;
    }

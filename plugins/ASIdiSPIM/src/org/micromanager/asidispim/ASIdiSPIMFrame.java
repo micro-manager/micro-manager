@@ -23,7 +23,9 @@ package org.micromanager.asidispim;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import org.micromanager.asidispim.Data.Properties;
 import org.micromanager.asidispim.Data.SpimParams;
+import org.micromanager.asidispim.Data.Operation;
 import org.micromanager.asidispim.Data.Devices;
 import org.micromanager.asidispim.Utils.ListeningJPanel;
 import org.micromanager.asidispim.Utils.Labels;
@@ -46,6 +48,8 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
    private Preferences prefs_;
    private Devices devices_;
    private SpimParams spimParams_;
+   private Operation oper_;
+   private Properties props_;
    
    private static final String XLOC = "xloc";
    private static final String YLOC = "yloc";
@@ -59,24 +63,27 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
       gui_ = gui;
       prefs_ = Preferences.userNodeForPackage(this.getClass());
       devices_ = new Devices();
-      spimParams_ = new SpimParams(gui_, devices_);
+      props_ = new Properties(gui_, devices_);  // doesn't have its own frame, but is an (un-enforced) singleton object used by other classes
+      spimParams_ = new SpimParams(props_);
       devices_.addListener(spimParams_);
+      oper_ = new Operation(props_);
       
       final ListeningJTabbedPane tabbedPane = new ListeningJTabbedPane();
         
       // all added tabs must be of type ListeningJPanel
       // only use addLTab, not addTab to guarantee this
-
       tabbedPane.addLTab("Devices", new DevicesPanel(gui_, devices_));
-      tabbedPane.addLTab("SPIM Params", new SpimParamsPanel(spimParams_, devices_));
+      tabbedPane.addLTab("SPIM Params", new SpimParamsPanel(spimParams_, props_, devices_));
       final ListeningJPanel setupPanelA = new SetupPanel(
-              gui_, devices_, Labels.Sides.A);
+              gui_, props_, devices_, Labels.Sides.A);
       tabbedPane.addLTab("Setup Side A",  setupPanelA);
       final ListeningJPanel setupPanelB = new SetupPanel(
-              gui_, devices_, Labels.Sides.B);
+              gui_, props_, devices_, Labels.Sides.B);
       tabbedPane.addLTab("Setup Side B",  setupPanelB);
-      final ListeningJPanel navigationPanel = new NavigationPanel(devices_);
+      final ListeningJPanel navigationPanel = new NavigationPanel(props_, devices_);
       tabbedPane.addLTab("Navigate", navigationPanel);
+      final ListeningJPanel operationPanel = new OperationPanel(oper_, props_, devices_);
+      tabbedPane.addLTab("Operate", operationPanel);
       
       tabbedPane.addChangeListener(new ChangeListener() {
          public void stateChanged(ChangeEvent e) {

@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-//FILE:          Setup.java
+//FILE:          Operation.java
 //PROJECT:       Micro-Manager 
 //SUBSYSTEM:     ASIdiSPIM plugin
 //-----------------------------------------------------------------------------
@@ -21,12 +21,31 @@
 
 package org.micromanager.asidispim.Data;
 
+import org.micromanager.asidispim.Data.Properties.PropTypes;
+
 
 /**
  * Class containing data pertaining to acquisition settings
- * @author nico
+ * @author Jon
  */
-public class Setup {
+public class Operation {
+
+   // list of strings used as keys in the Property class
+   // initialized with corresponding property name in the constructor
+   public static final String MM_SPIM_STATE = "MMSPIMState";
+   public static final String PZ_SPIM_STATE_A = "PZSPIMStateA";
+   public static final String PZ_SPIM_STATE_B = "PZSPIMStateB";
    
-   
+   private final Properties props_;
+
+   public Operation(Properties props) {
+      props_ = props;
+      
+      // initialize any property values
+      props_.addPropertyData(MM_SPIM_STATE, "SPIMState", Devices.GALVOA, PropTypes.STRING);
+      props_.addPropertyData(PZ_SPIM_STATE_A, "SPIMState", Devices.PIEZOA, PropTypes.STRING);
+      props_.addPropertyData(PZ_SPIM_STATE_A, "SPIMState", Devices.PIEZOB, PropTypes.STRING);
+
+   }
+
 }

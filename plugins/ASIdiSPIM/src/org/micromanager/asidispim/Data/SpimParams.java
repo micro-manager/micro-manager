@@ -23,7 +23,6 @@ package org.micromanager.asidispim.Data;
 
 import java.util.ArrayList;
 
-import org.micromanager.api.ScriptInterface;
 import org.micromanager.asidispim.Data.Properties;
 import org.micromanager.asidispim.Data.Properties.PropTypes;
 import org.micromanager.asidispim.Utils.SpimParamsListenerInterface;
@@ -41,7 +40,9 @@ import java.util.List;
  */
 public class SpimParams implements DevicesListenerInterface {
    
-   // a list of strings used as keys to the propInfo_ hashmap
+   // list of strings used as keys in the Property class
+   // initialized with corresponding property name in the constructor
+   // TODO add A/B, only use A unless there are 2 cards installed
    public static final String NR_REPEATS = "NRepeats";
    public static final String NR_SIDES = "NSides";
    public static final String NR_SLICES = "NSlices";
@@ -52,16 +53,17 @@ public class SpimParams implements DevicesListenerInterface {
    public static final String DELAY_BEFORE_SIDE = "DelayBeforeSideA";
    public static final String FIRSTSIDE = "FirstSide";
    public static final String FIRSTSIDE_A_VAL = "A";
-   public static final String FIRSTSIDE_B_VAL = "B";  
+   public static final String FIRSTSIDE_B_VAL = "B";
    
    private final List<SpimParamsListenerInterface> listeners_;
-   public final Properties props_;  // note this is public! so we can call get/set methods on properties 
+   private final Properties props_;
    
-   public SpimParams(ScriptInterface gui, Devices devices) {
+   public SpimParams(Properties props) {
       listeners_ = new ArrayList<SpimParamsListenerInterface>();
-      props_ = new Properties(gui, devices);
+      props_ = props;
       
       // initialize the relevant properties
+      // TODO if there are two different cards for A and B then have 2 separate values for numSides, etc.
       props_.addPropertyData(FIRSTSIDE, "SPIMFirstSide", Devices.GALVOA, PropTypes.STRING);
       props_.addPropertyData(NR_REPEATS, "SPIMNumRepeats", Devices.GALVOA, PropTypes.INTEGER);
       props_.addPropertyData(NR_SIDES, "SPIMNumSides", Devices.GALVOA, PropTypes.INTEGER);
