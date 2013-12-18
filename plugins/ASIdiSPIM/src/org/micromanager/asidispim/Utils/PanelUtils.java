@@ -34,6 +34,7 @@ import org.micromanager.asidispim.Data.Devices;
 /**
  *
  * @author nico
+ * @author Jon
  */
 public class PanelUtils {
    
@@ -116,7 +117,7 @@ public class PanelUtils {
          }
       }
 
-   }
+   }//class StageSelectionBoxListener
    
    private boolean inArray (String[] array, String val) {
       for (String test : array) {
