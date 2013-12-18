@@ -219,13 +219,10 @@ bool BFCamera::WaitForImage()
 
 const unsigned char* BFCamera::GetImageCont()
 {
-	core_->LogMessage(caller_,"ContImage1",true);
 	if (!initialized_ || boards_.empty())
 		return 0;
-	core_->LogMessage(caller_,"ContImage2",true);
 
 	BFRC ret = CiSignalNextWait(boards_[0], &eofSignal_, timeoutMs_);
-	core_->LogMessage(caller_,"ContImage3",true);
 	if (ret != BF_OK) {
 		if (ret == BF_BAD_SIGNAL) {
 			core_->LogMessage(caller_,"BF Get image error: Bad signal--invalid board handle passed to function ",true);
@@ -241,7 +238,6 @@ const unsigned char* BFCamera::GetImageCont()
 
    // wait for transfer to complete
    //Sleep(5);
-	core_->LogMessage(caller_,"ContImage4",true);
    return buf_;
 }
 
@@ -313,22 +309,17 @@ int BFCamera::StartSequence()
    if (!initialized_ || boards_.empty())
       return BF_NOT_INITIALIZED;
 
-   core_->LogMessage(caller_,"StartSequence1",true);
    // create a signal
    BFRC ret = CiSignalCreate(boards_[0], CiIntTypeEOD, &eofSignal_);
-      core_->LogMessage(caller_,"StartSequence2",true);
    if (ret != BF_OK)
       return ret;
 
    // start acquiring
    for (unsigned i=0; i<boards_.size(); i++)
    {
-	  core_->LogMessage(caller_,"StartSequence3",true);
       BFRC ret = CiAqCommand(boards_[i], CiConGrab, CiConWait, CiQTabBank0, AqEngJ);
-         core_->LogMessage(caller_,"StartSequence4",true);
 	  if (ret != BF_OK)
       {
-	        core_->LogMessage(caller_,"StartSequence5",true);
          CiSignalFree(boards_[0], &eofSignal_);
          return ret;
       }
@@ -339,22 +330,16 @@ int BFCamera::StartSequence()
 
 int BFCamera::StopSequence()
 {
-	   core_->LogMessage(caller_,"StopSequence1",true);
    for (unsigned i=0; i<boards_.size(); i++)
    {
-      core_->LogMessage(caller_,"StopSequence i",true);
       core_->LogMessage(caller_,CDeviceUtils::ConvertToString((int)i),true);
       BFRC ret = CiAqCommand(boards_[i], CiConFreeze, CiConWait, CiQTabBank0, AqEngJ);
-	  core_->LogMessage(caller_,"StopSequence i2",true);
       if (ret != BF_OK)
       {
-		  core_->LogMessage(caller_,"StopSequence i3",true);
          return ret; // returning immediately, but what about remaining boards?
       }
    }
-   core_->LogMessage(caller_,"StopSequence2",true);
    CiSignalFree(boards_[0], &eofSignal_);
-   core_->LogMessage(caller_,"StopSequence3",true);
    return DEVICE_OK;
 }
 
