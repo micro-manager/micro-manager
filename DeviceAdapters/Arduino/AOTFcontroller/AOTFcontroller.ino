@@ -129,9 +129,9 @@
    byte currentPattern_ = 0;
    const unsigned long timeOut_ = 1000;
    bool blanking_ = false;
-   bool blankOnHigh_ = true;
+   bool blankOnHigh_ = false;
    bool triggerMode_ = false;
-   int triggerState_ = 0;
+   boolean triggerState_ = false;
  
  void setup() {
    // Higher speeds do not appear to be reliable
@@ -242,7 +242,7 @@
          if (patternLength_ > 0) {
            sequenceNr_ = 0;
            triggerNr_ = -skipTriggers_;
-           triggerState_ = digitalRead(inPin_);
+           triggerState_ = digitalRead(inPin_) == HIGH;
            PORTB = B00000000;
            Serial.write( byte(8));
            triggerMode_ = true;           
@@ -376,14 +376,15 @@
 
        }
     }
+    
     // In trigger mode, we will blank even if blanking is not on..
     if (triggerMode_) {
-      int tmp = PIND & inPinBit_;
+      boolean tmp = PIND & inPinBit_;
       if (tmp != triggerState_) {
-        if (blankOnHigh_ && (tmp == HIGH) ) {
+        if (blankOnHigh_ && tmp ) {
           PORTB = 0;
         }
-        else if (!blankOnHigh_ && (tmp == LOW) ) {
+        else if (!blankOnHigh_ && !tmp ) {
           PORTB = 0;
         }
         else { 
@@ -404,11 +405,11 @@
           PORTB = currentPattern_;
         else
           PORTB = 0;
-      } else {
+      }  else {
         if (! (PIND & inPinBit_))
           PORTB = 0;
-        else     
-          PORTB = currentPattern_; 
+        else  
+          PORTB = currentPattern_;
       }
     }
 }
