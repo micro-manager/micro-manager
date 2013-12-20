@@ -23,13 +23,15 @@ package org.micromanager.asidispim.Data;
 
 import java.util.ArrayList;
 
-import org.micromanager.asidispim.Data.Properties;
 import org.micromanager.asidispim.Data.Properties.PropTypes;
-import org.micromanager.asidispim.Utils.SpimParamsListenerInterface;
 import org.micromanager.asidispim.Utils.DevicesListenerInterface;
+import org.micromanager.asidispim.Utils.UpdateFromPropertyListenerInterface;
+import org.micromanager.asidispim.ASIdiSPIMFrame;
 
-import java.util.ArrayList;
 import java.util.List;
+
+import javax.swing.JSpinner;
+import javax.swing.event.ChangeListener;
 
 
 
@@ -55,44 +57,55 @@ public class SpimParams implements DevicesListenerInterface {
    public static final String FIRSTSIDE_A_VAL = "A";
    public static final String FIRSTSIDE_B_VAL = "B";
    
-   private final List<SpimParamsListenerInterface> listeners_;
-   private final Properties props_;
+   private final List<UpdateFromPropertyListenerInterface> listeners_;
    
-   public SpimParams(Properties props) {
-      listeners_ = new ArrayList<SpimParamsListenerInterface>();
-      props_ = props;
+   public SpimParams() {
+      listeners_ = new ArrayList<UpdateFromPropertyListenerInterface>();
       
       // initialize the relevant properties
       // TODO if there are two different cards for A and B then have 2 separate values for numSides, etc.
-      props_.addPropertyData(FIRSTSIDE, "SPIMFirstSide", Devices.GALVOA, PropTypes.STRING);
-      props_.addPropertyData(NR_REPEATS, "SPIMNumRepeats", Devices.GALVOA, PropTypes.INTEGER);
-      props_.addPropertyData(NR_SIDES, "SPIMNumSides", Devices.GALVOA, PropTypes.INTEGER);
-      props_.addPropertyData(NR_REPEATS, "SPIMNumRepeats", Devices.GALVOA, PropTypes.INTEGER);
-      props_.addPropertyData(NR_SLICES, "SPIMNumSlices", Devices.GALVOA, PropTypes.INTEGER);
-      props_.addPropertyData(NR_LINESCANS_PER_SLICE, "SPIMNumScansPerSlice", Devices.GALVOA, PropTypes.INTEGER);
-      props_.addPropertyData(LINE_SCAN_PERIOD, "SingleAxisXPeriod(ms)", Devices.GALVOA, PropTypes.INTEGER);
-      props_.addPropertyData(LINE_SCAN_PERIOD_B, "SingleAxisXPeriod(ms)", Devices.GALVOB, PropTypes.INTEGER);
-      props_.addPropertyData(DELAY_BEFORE_SLICE, "SPIMDelayBeforeSlice(ms)", Devices.GALVOA, PropTypes.INTEGER);
-      props_.addPropertyData(DELAY_BEFORE_SIDE, "SPIMDelayBeforeSide(ms)", Devices.GALVOA, PropTypes.INTEGER);
+      ASIdiSPIMFrame.props_.addPropertyData(FIRSTSIDE, "SPIMFirstSide", Devices.GALVOA, PropTypes.STRING);
+      ASIdiSPIMFrame.props_.addPropertyData(NR_REPEATS, "SPIMNumRepeats", Devices.GALVOA, PropTypes.INTEGER);
+      ASIdiSPIMFrame.props_.addPropertyData(NR_SIDES, "SPIMNumSides", Devices.GALVOA, PropTypes.INTEGER);
+      ASIdiSPIMFrame.props_.addPropertyData(NR_REPEATS, "SPIMNumRepeats", Devices.GALVOA, PropTypes.INTEGER);
+      ASIdiSPIMFrame.props_.addPropertyData(NR_SLICES, "SPIMNumSlices", Devices.GALVOA, PropTypes.INTEGER);
+      ASIdiSPIMFrame.props_.addPropertyData(NR_LINESCANS_PER_SLICE, "SPIMNumScansPerSlice", Devices.GALVOA, PropTypes.INTEGER);
+      ASIdiSPIMFrame.props_.addPropertyData(LINE_SCAN_PERIOD, "SingleAxisXPeriod(ms)", Devices.GALVOA, PropTypes.INTEGER);
+      ASIdiSPIMFrame.props_.addPropertyData(LINE_SCAN_PERIOD_B, "SingleAxisXPeriod(ms)", Devices.GALVOB, PropTypes.INTEGER);
+      ASIdiSPIMFrame.props_.addPropertyData(DELAY_BEFORE_SLICE, "SPIMDelayBeforeSlice(ms)", Devices.GALVOA, PropTypes.INTEGER);
+      ASIdiSPIMFrame.props_.addPropertyData(DELAY_BEFORE_SIDE, "SPIMDelayBeforeSide(ms)", Devices.GALVOA, PropTypes.INTEGER);
    }
    
    @Override
    public void devicesChangedAlert() {
-      callListeners();
+      callAllListeners();
    }
 
-   public void addListener(SpimParamsListenerInterface listener) {
+   public void addListener(UpdateFromPropertyListenerInterface listener) {
       listeners_.add(listener);
    }
-
-   public void removeListener(SpimParamsListenerInterface listener) {
+   
+   public void addListener(JSpinner jsp) {
+      ChangeListener[] cl = jsp.getChangeListeners();
+      for (int i=0; i<cl.length; i++) {
+         try {
+            // this will only work some of the time, for the listener we added
+            // the rest of the calls will throw exceptions, which we catch and do nothing with
+            listeners_.add((UpdateFromPropertyListenerInterface)cl[i]);
+         } catch (Exception ex) {
+            // do nothing here
+         }
+      }
+   }
+   
+   public void removeListener(UpdateFromPropertyListenerInterface listener) {
       listeners_.remove(listener);
    }
 
-   private void callListeners() {
-      for (SpimParamsListenerInterface listener: listeners_) {
-         listener.spimParamsChangedAlert();
+   public void callAllListeners() {
+      for (UpdateFromPropertyListenerInterface listener: listeners_) {
+         listener.updateFromProperty();
       }
    }
-
+   
 }

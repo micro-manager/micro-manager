@@ -28,6 +28,7 @@ import javax.swing.JTabbedPane;
  * of the component being added to the master frame
  * @author nico
  */
+@SuppressWarnings("serial")
 public class ListeningJTabbedPane extends JTabbedPane {
    public void addLTab(String name, ListeningJPanel panel) {
       addTab(name, panel);

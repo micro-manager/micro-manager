@@ -25,40 +25,45 @@ import com.swtdesigner.SwingResourceManager;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.geom.Point2D;
 import java.util.prefs.Preferences;
 
+import org.micromanager.asidispim.ASIdiSPIMFrame;
 import org.micromanager.asidispim.Data.Devices;
-import org.micromanager.asidispim.Data.Properties;
+import org.micromanager.asidispim.Data.Setup;
 import org.micromanager.asidispim.Utils.ListeningJPanel;
 import org.micromanager.asidispim.Utils.Labels;
 import org.micromanager.asidispim.Utils.PanelUtils;
 
-import javax.swing.ButtonGroup;
-import javax.swing.JButton;
-import javax.swing.JComboBox;
-import javax.swing.JLabel;
-import javax.swing.JRadioButton;
-import javax.swing.JToggleButton;
+import mmcorej.CMMCore;
+
+import javax.swing.*;
 
 import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.api.ScriptInterface;
+import org.micromanager.utils.ReportingUtils;
 
 /**
  *
  * @author Nico
+ * @author Jon
  */
+@SuppressWarnings("serial")
 public class SetupPanel extends ListeningJPanel {
 
    ScriptInterface gui_;
    Devices devices_;
+   Setup setup_;
    Labels.Sides side_;
    Preferences prefs_;
    JComboBox joystickBox_;
    JComboBox rightWheelBox_;
    JComboBox leftWheelBox_;
    JToggleButton toggleButtonLive_;
+   JCheckBox sheetABox_;
+   JCheckBox sheetBBox_;
    JLabel imagingPiezoPositionLabel_;
    JLabel illuminationPiezoPositionLabel_;
    String imagingPiezo_;
@@ -68,12 +73,13 @@ public class SetupPanel extends ListeningJPanel {
    final String LEFTWHEEL = Devices.JOYSTICKS.get(Devices.JoystickDevice.LEFT_KNOB);
 
    // TODO actually use properties class
-   public SetupPanel(ScriptInterface gui, Properties props, Devices devices, Labels.Sides side) {
+   public SetupPanel(Setup setup, ScriptInterface gui, Devices devices, Labels.Sides side) {
       super(new MigLayout(
               "",
               "[right]8[align center]16[right]8[60px,center]8[center]8[center]",
               "[]16[]"));
       devices_ = devices;
+      setup_ = setup;
       gui_ = gui;
       side_ = side;
       prefs_ = Preferences.userNodeForPackage(this.getClass());
@@ -95,11 +101,13 @@ public class SetupPanel extends ListeningJPanel {
       String rightWheelSelection = prefs_.get(rightWheelPrefName, ws);
       String leftWheelSelection = prefs_.get(leftWheelPrefName, ws);
 
-      imagingPiezo_ = Devices.PIEZOA;
-      illuminationPiezo_ = Devices.PIEZOB;
       if (side_ == Labels.Sides.B) {
          imagingPiezo_ = Devices.PIEZOB;
          illuminationPiezo_ = Devices.PIEZOA;
+      }
+      else {
+         imagingPiezo_ = Devices.PIEZOA;
+         illuminationPiezo_ = Devices.PIEZOB;         
       }
 
       PanelUtils pu = new PanelUtils();
@@ -113,8 +121,46 @@ public class SetupPanel extends ListeningJPanel {
       imagingPiezoPositionLabel_ = new JLabel(Devices.posToDisplayString(
               devices_.getStagePosition(imagingPiezo_)));
       add(imagingPiezoPositionLabel_);
-      add(new JButton("Set start"));
-      add(new JButton("Set end"), "wrap");
+      
+      JButton tmp_but = new JButton("Set start");
+      tmp_but.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            // TODO clean this up, it's ugly and easily broken!!
+            // but need better way of accessing devices I think
+            String mmDevice = devices_.getMMDevice("Piezo"+side_.toString());
+            if (mmDevice == null || mmDevice == "")
+               return;
+            CMMCore core_ = MMStudioMainFrame.getInstance().getCore();
+            try {
+               setup_.imagingStartPos_ = core_.getPosition(mmDevice);
+            } catch (Exception ex) {
+               ReportingUtils.showError(ex);
+            }
+            setup_.updateImagingSAParams(side_.toString());
+         }
+      });
+      add(tmp_but);
+      
+      tmp_but = new JButton("Set end");
+      tmp_but.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            // TODO clean this up, it's ugly and easily broken!!
+            // but need better way of accessing devices I think
+            String mmDevice = devices_.getMMDevice("Piezo"+side_.toString());
+            if (mmDevice == null || mmDevice == "")
+               return;
+            CMMCore core_ = MMStudioMainFrame.getInstance().getCore();
+            try {
+               setup_.imagingEndPos_ = core_.getPosition(mmDevice);
+            } catch (Exception ex) {
+               ReportingUtils.showError(ex);
+            }
+            setup_.updateImagingSAParams(side_.toString());
+         }
+      });
+      add(tmp_but, "wrap");
 
       add(new JLabel(RIGHTWHEEL + ":"));
       rightWheelBox_ = pu.makeJoystickSelectionBox(Devices.JoystickDevice.RIGHT_KNOB,
@@ -125,29 +171,123 @@ public class SetupPanel extends ListeningJPanel {
       illuminationPiezoPositionLabel_ = new JLabel(Devices.posToDisplayString(
               devices_.getStagePosition(illuminationPiezo_)));
       add(illuminationPiezoPositionLabel_);
-      add(new JButton("Set position"), "span 2, center, wrap");
+      
+      tmp_but = new JButton("Set position");
+      tmp_but.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            CMMCore core = gui_.getMMCore();
+            String letter = "";
+            String mmDevice = "";
+            try {
+               mmDevice = devices_.getMMDevice(illuminationPiezo_);
+               if (mmDevice == null || mmDevice == "")
+                  return;
+               letter = core.getProperty(mmDevice, "AxisLetter");
+               core.setSerialPortCommand("COM2", "HM "+letter+"+", "\r");
+            } catch (Exception ex) {
+               ReportingUtils.showError("could not execute core function set home for axis " + letter);
+            }
+            
+         }
+      });
+      
+      add(tmp_but, "span 2, center, wrap");
 
       add(new JLabel(LEFTWHEEL + ":"));
       leftWheelBox_ = pu.makeJoystickSelectionBox(Devices.JoystickDevice.LEFT_KNOB,
               devices_.getTigerStages(), leftWheelSelection, devices_, prefs_,
               leftWheelPrefName);
       add(leftWheelBox_);
+      
       add(new JLabel("Scan amplitude:"));
       add(new JLabel(""));
-      add(pu.makeSlider("scanAmplitude", 0, 8, 4), "span 2, center, wrap");
+      
+      JSlider tmp_sl = pu.makeSlider(Setup.SHEET_AMPLITUDE+side_.toString(), 0, // 0 is min amplitude
+            ASIdiSPIMFrame.props_.getPropValueFloat(Setup.MAX_SHEET_VAL+side_.toString())-ASIdiSPIMFrame.props_.getPropValueFloat(Setup.MIN_SHEET_VAL+side_.toString()),  // max value minus min value is max amplitude
+            ASIdiSPIMFrame.props_.getPropValueFloat(Setup.SHEET_AMPLITUDE+side_.toString()),  // initialize to current value
+            1000);  // Slider value (int)(1000*property value)
+      setup_.addListener(tmp_sl);
+      add(tmp_sl, "span 2, center, wrap");
 
       add(new JLabel("Scan enabled:"));
-      add(pu.makeCheckBox("name", Labels.Sides.A), "split 2");
-      add(pu.makeCheckBox("name", Labels.Sides.B));
+      sheetABox_ = pu.makeCheckBox(Setup.SHEET_ENABLED_A, "Side A", "0 - Disabled", "1 - Enabled");
+      setup_.addListener(sheetABox_);
+      add(sheetABox_, "split 2");
+      
+      sheetBBox_ = pu.makeCheckBox(Setup.SHEET_ENABLED_B, "Side B", "0 - Disabled", "1 - Enabled");
+      setup_.addListener(sheetBBox_);
+      add(sheetBBox_);
+      
       add(new JLabel("Scan offset:"));
       add(new JLabel(""));
-      add(pu.makeSlider("scanOffset", -4, 4, 0), "span 2, center, wrap");
+      
+      tmp_sl = pu.makeSlider(Setup.SHEET_OFFSET+side_.toString(), 
+            ASIdiSPIMFrame.props_.getPropValueFloat(Setup.MIN_SHEET_VAL+side_.toString()),  // min value
+            ASIdiSPIMFrame.props_.getPropValueFloat(Setup.MAX_SHEET_VAL+side_.toString()),  // max value
+            ASIdiSPIMFrame.props_.getPropValueFloat(Setup.SHEET_OFFSET+side_.toString()),   // initialize to current value
+            1000);  // Slider value (int)(1000*property value)
+      setup_.addListener(tmp_sl);
+      add(tmp_sl, "span 2, center, wrap");
 
-      add(new JButton("Toggle scan"), "skip 1");
+      tmp_but = new JButton("Toggle scan");
+      tmp_but.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            boolean a = sheetABox_.isSelected();
+            boolean b = sheetBBox_.isSelected();
+            sheetABox_.setSelected(!a);
+            sheetBBox_.setSelected(!b);
+         }
+      });
+      
+      add(tmp_but, "skip 1");
+      
+      
       add(new JLabel("Sheet position:"));
       add(new JLabel(""));
-      add(new JButton("Set start"));
-      add(new JButton("Set end"), "wrap");
+      
+      tmp_but = new JButton("Set start");
+      tmp_but.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            // TODO clean this up, it's ugly and easily broken!!
+            // but need better way of accessing devices I think
+            String mmDevice = devices_.getMMDevice("MicroMirror"+side_.toString());
+            if (mmDevice == null || mmDevice == "")
+               return;
+            CMMCore core_ = MMStudioMainFrame.getInstance().getCore();
+            try {
+                Point2D.Double pt = core_.getGalvoPosition(mmDevice);
+                setup_.sheetStartPos_ = pt.y;
+            } catch (Exception ex) {
+               ReportingUtils.showError(ex);
+            }
+            setup_.updateSheetSAParams(side_.toString());
+         }
+      });
+      add(tmp_but);
+      
+      tmp_but = new JButton("Set end");
+      tmp_but.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            // TODO clean this up, it's ugly and easily broken!!
+            // but need better way of accessing devices I think
+            String mmDevice = devices_.getMMDevice("MicroMirror"+side_.toString());
+            if (mmDevice == null || mmDevice == "")
+               return;
+            CMMCore core_ = MMStudioMainFrame.getInstance().getCore();
+            try {
+               Point2D.Double pt = core_.getGalvoPosition(mmDevice);
+               setup_.sheetEndPos_ = pt.y;
+            } catch (Exception ex) {
+               ReportingUtils.showError(ex);
+            }
+            setup_.updateSheetSAParams(side_.toString());
+         }
+      });
+      add(tmp_but, "wrap");
 
       toggleButtonLive_ = new JToggleButton();
       toggleButtonLive_.setMargin(new Insets(0, 10, 0, 10));
@@ -203,7 +343,23 @@ public class SetupPanel extends ListeningJPanel {
       joystickBox_.setSelectedItem(joystickBox_.getSelectedItem());
       rightWheelBox_.setSelectedItem(rightWheelBox_.getSelectedItem());
       leftWheelBox_.setSelectedItem(leftWheelBox_.getSelectedItem());
+      setup_.callListeners();
       setLiveButton(gui_.isLiveModeOn());
+
+      // moves illumination piezo to correct place for this side
+      // TODO do this more elegantly (ideally MM API would add Home() function)
+      CMMCore core = gui_.getMMCore();
+      String letter = "";
+      String mmDevice = "";
+      try {
+         mmDevice = devices_.getMMDevice(illuminationPiezo_);
+         if (mmDevice == null || mmDevice == "")
+            return;
+         letter = core.getProperty(mmDevice, "AxisLetter");
+         core.setSerialPortCommand("COM2", "! "+letter, "\r");
+      } catch (Exception ex) {
+         ReportingUtils.showError("could not execute core function move to home for axis " + letter);
+      }
    }
 
    @Override

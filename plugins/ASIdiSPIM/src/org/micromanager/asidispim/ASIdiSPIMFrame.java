@@ -23,16 +23,21 @@ package org.micromanager.asidispim;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+
 import org.micromanager.asidispim.Data.Properties;
+import org.micromanager.asidispim.Data.Setup;
 import org.micromanager.asidispim.Data.SpimParams;
 import org.micromanager.asidispim.Data.Operation;
 import org.micromanager.asidispim.Data.Devices;
 import org.micromanager.asidispim.Utils.ListeningJPanel;
 import org.micromanager.asidispim.Utils.Labels;
+
 import java.util.prefs.Preferences;
+
 import javax.swing.Timer;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+
 import org.micromanager.api.MMListenerInterface;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.asidispim.Utils.ListeningJTabbedPane;
@@ -41,15 +46,18 @@ import org.micromanager.asidispim.Utils.ListeningJTabbedPane;
  *
  * @author nico
  */
+@SuppressWarnings("serial")
 public class ASIdiSPIMFrame extends javax.swing.JFrame  
       implements MMListenerInterface {
+   
+   public static Properties props_;  // using like global variable so I don't have to pass object all the way down to event handlers
    
    private ScriptInterface gui_;
    private Preferences prefs_;
    private Devices devices_;
    private SpimParams spimParams_;
    private Operation oper_;
-   private Properties props_;
+   private Setup setup_;
    
    private static final String XLOC = "xloc";
    private static final String YLOC = "yloc";
@@ -63,26 +71,27 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
       gui_ = gui;
       prefs_ = Preferences.userNodeForPackage(this.getClass());
       devices_ = new Devices();
-      props_ = new Properties(gui_, devices_);  // doesn't have its own frame, but is an (un-enforced) singleton object used by other classes
-      spimParams_ = new SpimParams(props_);
+      props_ = new Properties(gui_, devices_);  // doesn't have its own frame, but is an object used by other classes
+      spimParams_ = new SpimParams();
       devices_.addListener(spimParams_);
-      oper_ = new Operation(props_);
+      oper_ = new Operation();
+      setup_ = new Setup();  // this data is shared between the instances of SetupPanel
       
       final ListeningJTabbedPane tabbedPane = new ListeningJTabbedPane();
         
       // all added tabs must be of type ListeningJPanel
       // only use addLTab, not addTab to guarantee this
       tabbedPane.addLTab("Devices", new DevicesPanel(gui_, devices_));
-      tabbedPane.addLTab("SPIM Params", new SpimParamsPanel(spimParams_, props_, devices_));
+      tabbedPane.addLTab("SPIM Params", new SpimParamsPanel(spimParams_, devices_));
       final ListeningJPanel setupPanelA = new SetupPanel(
-              gui_, props_, devices_, Labels.Sides.A);
+              setup_, gui_, devices_, Labels.Sides.A);
       tabbedPane.addLTab("Setup Side A",  setupPanelA);
       final ListeningJPanel setupPanelB = new SetupPanel(
-              gui_, props_, devices_, Labels.Sides.B);
+              setup_, gui_, devices_, Labels.Sides.B);
       tabbedPane.addLTab("Setup Side B",  setupPanelB);
-      final ListeningJPanel navigationPanel = new NavigationPanel(props_, devices_);
+      final ListeningJPanel navigationPanel = new NavigationPanel(devices_);
       tabbedPane.addLTab("Navigate", navigationPanel);
-      final ListeningJPanel operationPanel = new OperationPanel(oper_, props_, devices_);
+      final ListeningJPanel operationPanel = new OperationPanel(oper_, devices_);
       tabbedPane.addLTab("Operate", operationPanel);
       
       tabbedPane.addChangeListener(new ChangeListener() {
@@ -96,7 +105,8 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
       setLocation(prefs_.getInt(XLOC, 100), prefs_.getInt(YLOC, 100));
       tabbedPane.setSelectedIndex(prefs_.getInt(TABINDEX, 0));
       
-      final Timer stagePosUpdater = new Timer(100000000, new ActionListener() {  // was 1000
+      // TODO move this to Navigation panel
+      final Timer stagePosUpdater = new Timer(100000000, new ActionListener() { // was 1000
          public void actionPerformed(ActionEvent ae) {
             // update stage positions in devices
             devices_.updateStagePositions();

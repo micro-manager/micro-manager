@@ -49,6 +49,9 @@ public class ASIdiSPIM implements MMPlugin {
       myFrame_.setVisible(true);
    }
 
+    /**
+     * The main app calls this method to remove the module window
+     */
     @Override
    public void dispose() {
       if (myFrame_ != null)
@@ -64,6 +67,7 @@ public class ASIdiSPIM implements MMPlugin {
     @Override
    public String getInfo () {
       return "ASI diSPIM";
+      // TODO add more
    }
 
     @Override

@@ -21,6 +21,7 @@
 
 package org.micromanager.asidispim.Data;
 
+import org.micromanager.asidispim.ASIdiSPIMFrame;
 import org.micromanager.asidispim.Data.Properties.PropTypes;
 
 
@@ -36,15 +37,12 @@ public class Operation {
    public static final String PZ_SPIM_STATE_A = "PZSPIMStateA";
    public static final String PZ_SPIM_STATE_B = "PZSPIMStateB";
    
-   private final Properties props_;
-
-   public Operation(Properties props) {
-      props_ = props;
+   public Operation() {
       
       // initialize any property values
-      props_.addPropertyData(MM_SPIM_STATE, "SPIMState", Devices.GALVOA, PropTypes.STRING);
-      props_.addPropertyData(PZ_SPIM_STATE_A, "SPIMState", Devices.PIEZOA, PropTypes.STRING);
-      props_.addPropertyData(PZ_SPIM_STATE_A, "SPIMState", Devices.PIEZOB, PropTypes.STRING);
+      ASIdiSPIMFrame.props_.addPropertyData(MM_SPIM_STATE, "SPIMState", Devices.GALVOA, PropTypes.STRING);
+      ASIdiSPIMFrame.props_.addPropertyData(PZ_SPIM_STATE_A, "SPIMState", Devices.PIEZOA, PropTypes.STRING);
+      ASIdiSPIMFrame.props_.addPropertyData(PZ_SPIM_STATE_A, "SPIMState", Devices.PIEZOB, PropTypes.STRING);
 
    }
 

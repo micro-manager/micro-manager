@@ -23,22 +23,26 @@ package org.micromanager.asidispim;
 
 import java.awt.geom.Point2D;
 import java.util.prefs.Preferences;
+
 import javax.swing.JComboBox;
-import org.micromanager.asidispim.Data.Properties;
+
 import org.micromanager.asidispim.Data.Devices;
 import org.micromanager.asidispim.Utils.ListeningJPanel;
 import org.micromanager.asidispim.Utils.PanelUtils;
+
 import javax.swing.JLabel;
+
 import net.miginfocom.swing.MigLayout;
+
 import org.micromanager.asidispim.Utils.Labels;
 
 /**
  *
  * @author nico
  */
+@SuppressWarnings("serial")
 public class NavigationPanel extends ListeningJPanel {
    Devices devices_;
-   Properties props_;
    Preferences prefs_;
    
    JComboBox joystickBox_;
@@ -61,13 +65,12 @@ public class NavigationPanel extends ListeningJPanel {
     * This could/should be factored out
     * @param devices the (single) instance of the Devices class
     */
-   public NavigationPanel(Properties props, Devices devices) {    
+   public NavigationPanel(Devices devices) {    
       super (new MigLayout(
               "", 
               "[right]8[align center]16[right]8[center]8[center]8[center]",
               "[]16[]"));
       devices_ = devices;
-      props_ = props;
        
       PanelUtils pu = new PanelUtils();
       

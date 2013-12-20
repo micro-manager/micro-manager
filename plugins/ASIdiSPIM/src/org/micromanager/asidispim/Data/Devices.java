@@ -49,6 +49,7 @@ import org.micromanager.utils.ReportingUtils;
  * 
  * 
  * @author nico
+ * @author Jon
  */
 public class Devices {
    // useful static constants 
@@ -134,6 +135,7 @@ public class Devices {
    public static String posToDisplayString(Double pos) {
       if (pos != null) {
          return NumberUtils.doubleToDisplayString(pos) + "\u00B5"+"m";
+//         return NumberUtils.doubleToDisplayString(Math.round(100*pos)/100) + "\u00B5"+"m";  // rounds to two decimal places
       }
       return "";
    }

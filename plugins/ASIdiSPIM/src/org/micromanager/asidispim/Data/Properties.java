@@ -34,7 +34,7 @@ import org.micromanager.utils.ReportingUtils;
 /**
  * Contains data and methods related to getting and setting device properties.  Ideally this is the single
  * place where properties are read and set, but currently this also happens other places.
- * One instance of this class exists in the top-level code, and is passed as a parameter anywhere it's needed.
+ * One static instance of this class exists in the top-level class.
  * @author Jon
  * @author nico
  */

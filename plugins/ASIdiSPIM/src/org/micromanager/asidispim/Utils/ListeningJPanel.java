@@ -22,6 +22,7 @@
 package org.micromanager.asidispim.Utils;
 
 import java.awt.LayoutManager;
+
 import javax.swing.JPanel;
 
 /**
@@ -29,6 +30,7 @@ import javax.swing.JPanel;
  * enclosing frame to easily inform tabs of events
  * @author nico
  */
+@SuppressWarnings("serial")
 public class ListeningJPanel extends JPanel {
    public ListeningJPanel(LayoutManager l) {
       super (l);

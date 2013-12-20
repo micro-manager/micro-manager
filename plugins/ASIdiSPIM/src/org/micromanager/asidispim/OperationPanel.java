@@ -28,9 +28,7 @@ import java.util.prefs.Preferences;
 import javax.swing.JButton;
 
 import org.micromanager.asidispim.Data.Operation;
-import org.micromanager.asidispim.Data.Properties;
 import org.micromanager.asidispim.Data.Devices;
-import org.micromanager.asidispim.Data.Properties.PropTypes;
 import org.micromanager.asidispim.Utils.ListeningJPanel;
 
 import net.miginfocom.swing.MigLayout;
@@ -39,6 +37,7 @@ import net.miginfocom.swing.MigLayout;
  *
  * @author Jon
  */
+@SuppressWarnings("serial")
 public class OperationPanel extends ListeningJPanel {
    // list of strings used as keys in the Property class
    // initialized with corresponding property name in the constructor
@@ -46,7 +45,6 @@ public class OperationPanel extends ListeningJPanel {
    
    Operation oper_;
    Devices devices_;
-   Properties props_;
    Preferences prefs_;
    JButton buttonStart_;
    
@@ -56,14 +54,13 @@ public class OperationPanel extends ListeningJPanel {
     * 
     * @param devices the (single) instance of the Devices class
     */
-   public OperationPanel(Operation oper, Properties props, Devices devices) {    
+   public OperationPanel(Operation oper, Devices devices) {    
       super (new MigLayout(
               "", 
               "[right]8[align center]16[right]8[center]8[center]8[center]",
               "[]16[]"));
       oper_ = oper;
       devices_ = devices;
-      props_ = props;
 
       // TODO add selector for piezo mode (step/sweep), XYstage mode, etc.
        
@@ -73,9 +70,9 @@ public class OperationPanel extends ListeningJPanel {
       buttonStart_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            props_.setPropValue(Operation.PZ_SPIM_STATE_A, "Armed");
-            props_.setPropValue(Operation.PZ_SPIM_STATE_B, "Armed");
-            props_.setPropValue(Operation.MM_SPIM_STATE, "Running");
+            ASIdiSPIMFrame.props_.setPropValue(Operation.PZ_SPIM_STATE_A, "Armed");
+            ASIdiSPIMFrame.props_.setPropValue(Operation.PZ_SPIM_STATE_B, "Armed");
+            ASIdiSPIMFrame.props_.setPropValue(Operation.MM_SPIM_STATE, "Running");
             // TODO generalize this
          }
       });
