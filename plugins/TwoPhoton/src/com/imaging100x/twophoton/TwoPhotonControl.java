@@ -976,6 +976,7 @@ private JCheckBox drawGrid_, drawPosNames_;
             applyDepthSetting();
          }
          removeDepthListSelection();
+         MMStudioMainFrame.getInstance().updateZPos(z);
       } catch (NumberFormatException e) {
          handleError(e.getMessage());
          return;

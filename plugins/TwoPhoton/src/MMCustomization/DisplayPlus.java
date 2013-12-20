@@ -17,6 +17,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.text.ParseException;
 import java.util.TimerTask;
 import java.util.TreeMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -50,26 +52,33 @@ public class DisplayPlus implements ImageCacheListener  {
    private Point clickStart_;
    private Point gridStart_;
     private JSONArray positionList_;
-    private int numRows_ = 0, numCols_ = 0;
+    private int numRows_ = 1, numCols_ = 1;
 
     public DisplayPlus(final ImageCache stitchedCache, AcquisitionEngine eng, JSONObject summaryMD) {
         eng_ = eng;
-
-        try {
+       try {
            tileWidth_ = MDUtils.getWidth(summaryMD);
            tileHeight_ = MDUtils.getHeight(summaryMD);
-           positionList_ = summaryMD.getJSONArray("InitialPositionList");
-           //get grid parameters
-           for (int i = 0; i < positionList_.length(); i++) {
-              long colInd = positionList_.getJSONObject(i).getLong("GridColumnIndex");
-              long rowInd = positionList_.getJSONObject(i).getLong("GridRowIndex");
-              if (colInd >= numCols_) {
-                 numCols_ = (int) (colInd + 1);
-              }
-              if (rowInd >= numRows_) {
-                 numRows_ = (int) (rowInd + 1);
-              }
-           }
+
+       } catch (JSONException ex) {
+           ReportingUtils.showError("Width and height missing form summary MD");
+       }
+
+        try {
+            if (summaryMD.has("InitialPositionList") && !summaryMD.isNull("InitialPositionList")) {
+                positionList_ = summaryMD.getJSONArray("InitialPositionList");
+                //get grid parameters
+                for (int i = 0; i < positionList_.length(); i++) {
+                    long colInd = positionList_.getJSONObject(i).getLong("GridColumnIndex");
+                    long rowInd = positionList_.getJSONObject(i).getLong("GridRowIndex");
+                    if (colInd >= numCols_) {
+                        numCols_ = (int) (colInd + 1);
+                    }
+                    if (rowInd >= numRows_) {
+                        numRows_ = (int) (rowInd + 1);
+                    }
+                }
+            }
         } catch (Exception e) {
             ReportingUtils.showError("Couldnt get grid info");
         }

@@ -14,6 +14,7 @@ import java.util.prefs.Preferences;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.swing.JOptionPane;
+import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -149,10 +150,12 @@ public class AcquisitionWrapperEngineAdapter extends AcquisitionWrapperEngine {
    }
    
    
-   protected String runAcquisition(SequenceSettings acquisitionSettings, AcquisitionManager acqManager) {            
-      if (acquisitionSettings.save) {
-         File root = new File(acquisitionSettings.root);
-         if (!root.canWrite()) {
+   protected String runAcquisition(SequenceSettings acquisitionSettings, AcquisitionManager acqManager) {
+       //refresh GUI so that z returns to original position after acq
+       MMStudioMainFrame.getInstance().refreshGUI();
+       if (acquisitionSettings.save) {
+            File root = new File(acquisitionSettings.root);
+            if (!root.canWrite()) {
             int result = JOptionPane.showConfirmDialog(null, "The specified root directory\n" + root.getAbsolutePath() +"\ndoes not exist. Create it?", "Directory not found.", JOptionPane.YES_NO_OPTION);
             if (result == JOptionPane.YES_OPTION) {
                root.mkdirs();

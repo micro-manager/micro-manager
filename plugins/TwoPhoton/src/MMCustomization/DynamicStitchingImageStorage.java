@@ -52,29 +52,32 @@ public class DynamicStitchingImageStorage {
       }
 
 
-      try {
-         positionList_ = summaryMetadata.getJSONArray("InitialPositionList");
-         int numRows = 1, numCols = 1;
-         for (int i = 0; i < positionList_.length(); i++) {
-            long colInd = positionList_.getJSONObject(i).getLong("GridColumnIndex");
-            long rowInd = positionList_.getJSONObject(i).getLong("GridRowIndex");
-            if (colInd >= numCols) {
-               numCols = (int) (colInd + 1);
-            }
-            if (rowInd >= numRows) {
-               numRows = (int) (rowInd + 1);
-            }
-         }
-         tileHeight_ = MDUtils.getHeight(summaryMetadata);
-         tileWidth_ = MDUtils.getWidth(summaryMetadata);
-         height_ = numRows * tileHeight_;
-         width_ = numCols * tileWidth_;
-         //change summary metadata fields
-         summaryMetadata_.put("Positions", 1);
-         summaryMetadata_.put("Width", width_);
-         summaryMetadata_.put("Height", height_);
-      } catch (Exception ex) {
-         ReportingUtils.showError("Couldn't get number of positions from summary metadata");
+       try {
+           int numRows = 1, numCols = 1;
+           if (summaryMetadata.has("InitialPositionList") && !summaryMetadata.isNull("InitialPositionList")) {
+               positionList_ = summaryMetadata.getJSONArray("InitialPositionList");
+               for (int i = 0; i < positionList_.length(); i++) {
+                   long colInd = positionList_.getJSONObject(i).getLong("GridColumnIndex");
+                   long rowInd = positionList_.getJSONObject(i).getLong("GridRowIndex");
+                   if (colInd >= numCols) {
+                       numCols = (int) (colInd + 1);
+                   }
+                   if (rowInd >= numRows) {
+                       numRows = (int) (rowInd + 1);
+                   }
+               }
+           }
+
+           tileHeight_ = MDUtils.getHeight(summaryMetadata);
+           tileWidth_ = MDUtils.getWidth(summaryMetadata);
+           height_ = numRows * tileHeight_;
+           width_ = numCols * tileWidth_;
+           //change summary metadata fields
+           summaryMetadata_.put("Positions", 1);
+           summaryMetadata_.put("Width", width_);
+           summaryMetadata_.put("Height", height_);
+       } catch (Exception ex) {
+           ReportingUtils.showError("Couldn't get number of positions from summary metadata");
       }
    }
 
