@@ -354,14 +354,16 @@ public class Devices {
 
       try {
          for (String dev : oneAxisTigerDevices) {
-            core_.setProperty(dev, propName, noInput);
+            if (core_.hasProperty(dev, propName)) {
+               core_.setProperty(dev, propName, noInput);
+            }
          }
 
          String[] twoAxisTigerDevices = getMMDevices(TWOAXISTIGERDEVICES);
          for (String dev : twoAxisTigerDevices) {
             if (core_.getDeviceType(dev) == mmcorej.DeviceType.XYStageDevice) {
                if (core_.hasProperty(dev, xyStagePropName)) {
-               core_.setProperty(dev, xyStagePropName, no);
+                  core_.setProperty(dev, xyStagePropName, no);
                }
             } else { // Galvo device
                if (core_.hasProperty(dev, propName + "X")) {
@@ -502,7 +504,12 @@ public class Devices {
          String mmDevice = this.getMMDevice(drive);
          if (mmDevice != null) {
             try {
-               twoAxisDrivePositions_.put(drive, core_.getXYStagePosition(mmDevice));
+               if (core_.getDeviceType(mmDevice) == mmcorej.DeviceType.XYStageDevice) {
+                  twoAxisDrivePositions_.put(drive, core_.getXYStagePosition(mmDevice));
+               } 
+               if (core_.getDeviceType(mmDevice) == mmcorej.DeviceType.GalvoDevice) {
+                  twoAxisDrivePositions_.put(drive, core_.getGalvoPosition(mmDevice));
+               }
             } catch (Exception ex) {
                ReportingUtils.logError("Problem getting position of " + mmDevice);
             }

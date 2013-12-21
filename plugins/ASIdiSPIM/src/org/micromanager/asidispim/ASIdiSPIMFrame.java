@@ -37,10 +37,12 @@ import java.util.prefs.Preferences;
 import javax.swing.Timer;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import org.micromanager.MMStudioMainFrame;
 
 import org.micromanager.api.MMListenerInterface;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.asidispim.Utils.ListeningJTabbedPane;
+import org.micromanager.internalinterfaces.LiveModeListener;
 
 /**
  *
@@ -86,9 +88,11 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
       final ListeningJPanel setupPanelA = new SetupPanel(
               setup_, gui_, devices_, Labels.Sides.A);
       tabbedPane.addLTab("Setup Side A",  setupPanelA);
+      MMStudioMainFrame.getInstance().addLiveModeListener((LiveModeListener) setupPanelA);
       final ListeningJPanel setupPanelB = new SetupPanel(
               setup_, gui_, devices_, Labels.Sides.B);
-      tabbedPane.addLTab("Setup Side B",  setupPanelB);
+      tabbedPane.addLTab("Setup Side B",  setupPanelB);      
+      MMStudioMainFrame.getInstance().addLiveModeListener((LiveModeListener) setupPanelB);
       final ListeningJPanel navigationPanel = new NavigationPanel(devices_);
       tabbedPane.addLTab("Navigate", navigationPanel);
       final ListeningJPanel operationPanel = new OperationPanel(oper_, devices_);

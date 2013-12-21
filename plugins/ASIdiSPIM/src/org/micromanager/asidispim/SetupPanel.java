@@ -66,18 +66,24 @@ public class SetupPanel extends ListeningJPanel {
    JCheckBox sheetBBox_;
    JLabel imagingPiezoPositionLabel_;
    JLabel illuminationPiezoPositionLabel_;
+   JRadioButton singleCameraButton_;
+   JRadioButton dualCameraButton_;
    String imagingPiezo_;
    String illuminationPiezo_;
+   boolean isMultiCamera_;
+   final String MULTICAMERAPREF = "IsMultiCamera";
    final String JOYSTICK = Devices.JOYSTICKS.get(Devices.JoystickDevice.JOYSTICK);
    final String RIGHTWHEEL = Devices.JOYSTICKS.get(Devices.JoystickDevice.RIGHT_KNOB);
    final String LEFTWHEEL = Devices.JOYSTICKS.get(Devices.JoystickDevice.LEFT_KNOB);
-
+   
+   
    // TODO actually use properties class
    public SetupPanel(Setup setup, ScriptInterface gui, Devices devices, Labels.Sides side) {
       super(new MigLayout(
               "",
               "[right]8[align center]16[right]8[60px,center]8[center]8[center]",
               "[]16[]"));
+
       devices_ = devices;
       setup_ = setup;
       gui_ = gui;
@@ -87,6 +93,7 @@ public class SetupPanel extends ListeningJPanel {
       String joystickPrefName = JOYSTICK + side_.toString();
       String rightWheelPrefName = RIGHTWHEEL + side_.toString();
       String leftWheelPrefName = LEFTWHEEL + side_.toString();
+
       String jcs = "";
       if (devices_.getTwoAxisTigerStages() != null
               && devices_.getTwoAxisTigerStages().length > 0) {
@@ -297,20 +304,36 @@ public class SetupPanel extends ListeningJPanel {
       toggleButtonLive_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            setLiveButton(!gui_.isLiveModeOn());          
+            //setLiveButton(!gui_.isLiveModeOn());
             gui_.enableLiveMode(!gui_.isLiveModeOn());
          }
       });
-      
-
       add(toggleButtonLive_, "span, split 3, center, width 110px");
-      JRadioButton dualButton = new JRadioButton("Dual Camera");
-      JRadioButton singleButton = new JRadioButton("Single Camera");
-      ButtonGroup singleDualGroup = new ButtonGroup();
-      singleDualGroup.add(dualButton);
-      singleDualGroup.add(singleButton);
-      add(singleButton, "center");
-      add(dualButton, "center");
+
+
+      String isMultiCameraPrefName = MULTICAMERAPREF + side_.toString();
+      prefs_.getBoolean(isMultiCameraPrefName, isMultiCamera_);
+      dualCameraButton_ = new JRadioButton("Dual Camera");
+      singleCameraButton_ = new JRadioButton("Single Camera");
+      ButtonGroup singleDualCameraButtonGroup = new ButtonGroup();
+      singleDualCameraButtonGroup.add(dualCameraButton_);
+      singleDualCameraButtonGroup.add(singleCameraButton_);
+      if (isMultiCamera_) {
+         dualCameraButton_.setSelected(true);
+      } else {
+         singleCameraButton_.setSelected(true);
+      }
+      ActionListener radioButtonListener = new ActionListener() {
+         public void actionPerformed(ActionEvent ae) {
+            JRadioButton myButton = (JRadioButton) ae.getSource();
+            handleCameraButton(myButton);          
+         }
+      };
+      dualCameraButton_.addActionListener(radioButtonListener);
+      singleCameraButton_.addActionListener(radioButtonListener);
+      add(singleCameraButton_, "center");
+      add(dualCameraButton_, "center");
+      
 
    }
 
@@ -321,6 +344,42 @@ public class SetupPanel extends ListeningJPanel {
               "/org/micromanager/icons/camera_go.png"));
       toggleButtonLive_.setSelected(false);
       toggleButtonLive_.setText(enable ? "Stop Live" : "Live");
+   }
+
+   /**
+    * Implements the ActionEventLister for the Camera selection Radio Buttons
+    * @param myButton 
+    */
+   private void handleCameraButton(JRadioButton myButton) {
+      if (myButton != null && myButton.isSelected()) {
+         String mmDevice = devices_.getMMDevice(Devices.DUALCAMERA);
+         if (myButton.equals(singleCameraButton_)) {
+            if (side_ == Labels.Sides.A) {
+               mmDevice = devices_.getMMDevice(Devices.CAMERAA);
+            } else {
+               if (side_ == Labels.Sides.B) {
+                  mmDevice = devices_.getMMDevice(Devices.CAMERAB);
+               }
+            }
+         }
+         if (mmDevice != null) {
+            try {
+
+               boolean liveEnabled = gui_.isLiveModeOn();
+               if (liveEnabled) {
+                  gui_.enableLiveMode(false);
+               }
+               MMStudioMainFrame.getInstance().getCore().setProperty(
+                       "Core", "Camera", mmDevice);
+               gui_.refreshGUIFromCache();
+               if (liveEnabled) {
+                  gui_.enableLiveMode(true);
+               }
+            } catch (Exception ex) {
+               ReportingUtils.showError("Failed to set Core Camera property");
+            }
+         }
+      }
    }
 
    @Override
@@ -335,7 +394,8 @@ public class SetupPanel extends ListeningJPanel {
 
    /**
     * Gets called when this tab gets focus. Sets the physical UI in the Tiger
-    * controller to what was selected in this pane
+    * controller to what was selected in this pane.
+    * Uses the ActionListeners of the UI components 
     */
    @Override
    public void gotSelected() {
@@ -368,5 +428,9 @@ public class SetupPanel extends ListeningJPanel {
               devices_.getStagePosition(imagingPiezo_)));
       illuminationPiezoPositionLabel_.setText(Devices.posToDisplayString(
               devices_.getStagePosition(illuminationPiezo_)));
+   }
+
+   public void liveModeEnabled(boolean enable) {
+      setLiveButton(enable);
    }
 }
