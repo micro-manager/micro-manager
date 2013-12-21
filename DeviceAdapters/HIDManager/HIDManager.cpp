@@ -397,7 +397,7 @@ int MDHIDDevice::Write(const unsigned char* buf, unsigned long bufLen)
    int res = hid_write(handle_, reportBuf, bufLen + 1);
    if (-1 == res)
       return ERR_WRITE_FAILED;
-   delete reportBuf;
+   delete[] reportBuf;
 
    // logging
    if (verbose_) 
