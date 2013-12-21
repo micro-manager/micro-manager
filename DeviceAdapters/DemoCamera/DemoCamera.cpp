@@ -3155,9 +3155,13 @@ int DemoMagnifier::OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct)
       std::string pos;
       pProp->Get(pos);
       if (pos == "1x")
+      {
          position_ = 0;
-      else
+      }
+      else {
          position_ = 1;
+      }
+      OnMagnifierChanged();
    }
 
    return DEVICE_OK;

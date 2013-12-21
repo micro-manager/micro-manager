@@ -1111,6 +1111,15 @@ protected:
    }
 
    /**
+    */
+   int OnMagnifierChanged()
+   {
+      if (callback_)
+         return callback_->OnMagnifierChanged(this);
+      return DEVICE_NO_CALLBACK_REGISTERED;
+   }
+
+   /**
     * Device finished a task
     * Not implemented in Core and callback
     */

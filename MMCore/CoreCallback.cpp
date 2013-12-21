@@ -349,6 +349,29 @@ int CoreCallback::OnExposureChanged(const MM::Device* device, double newExposure
    return DEVICE_OK;
 }
 
+/**
+ * Handler for magnifier changer
+ * 
+ */
+int CoreCallback::OnMagnifierChanged(const MM::Device* device)
+{
+   if (core_->externalCallback_) 
+   {
+      double pixSizeUm;
+      try 
+      {
+         // update pixel size from cache
+         pixSizeUm = core_->getPixelSizeUm(true);
+      }
+      catch (CMMError ) {
+         pixSizeUm = 0.0;
+      }
+      OnPixelSizeChanged(pixSizeUm);
+   }
+   return DEVICE_OK;
+}
+
+
 
 int CoreCallback::SetSerialProperties(const char* portName,
                                       const char* answerTimeout,

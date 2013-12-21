@@ -34,7 +34,7 @@
 // Header version
 // If any of the class declarations changes, the interface version
 // must be incremented
-#define DEVICE_INTERFACE_VERSION 54
+#define DEVICE_INTERFACE_VERSION 55
 ///////////////////////////////////////////////////////////////////////////////
 
 
@@ -1177,6 +1177,10 @@ namespace MM {
        * When the exposure time has changed, use this callback to inform the UI
        */
       virtual int OnExposureChanged(const Device* caller, double newExposure) = 0;
+      /**
+       * Magnifiers can use this to signal changes in magnification
+       */
+      virtual int OnMagnifierChanged(const Device* caller) = 0;
 
       virtual unsigned long GetClockTicksUs(const Device* caller) = 0;
       virtual MM::MMTime GetCurrentMMTime() = 0;
