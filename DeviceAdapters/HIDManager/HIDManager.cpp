@@ -49,21 +49,21 @@
 
 using namespace std;
 
-HIDManager g_hidManager;
-std::vector<std::string> g_deviceList;
-MM::MMTime g_deviceListLastUpdated = MM::MMTime(0);
+static HIDManager g_hidManager;
+static std::vector<std::string> g_deviceList;
+static MM::MMTime g_deviceListLastUpdated = MM::MMTime(0);
 
 /*
  * Struct containing device name, vendor ID, device ID, ports for sending and receiving and data length
  */
-HIDDeviceInfo g_knownDevices[] = {
+static HIDDeviceInfo g_knownDevices[] = {
    {"K8055-0-HID", 0x10cf, 0x5500},
    {"K8055-1-HID", 0x10cf, 0x5501},
    {"K8055-2-HID", 0x10cf, 0x5502},
    {"K8055-3-HID", 0x10cf, 0x5503},
    {"LMM5-HID", 0x1bdb, 0x0300}
 };
-int g_numberKnownDevices = sizeof(g_knownDevices) / sizeof(HIDDeviceInfo);
+static int g_numberKnownDevices = sizeof(g_knownDevices) / sizeof(HIDDeviceInfo);
 
 ///////////////////////////////////////////////////////////////////////////////
 // Exported MMDevice API
