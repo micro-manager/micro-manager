@@ -28,9 +28,9 @@
 #include <string>
 
 typedef std::pair<std::string, std::string> DeviceInfo; 
-std::vector<DeviceInfo> g_availableDevices;
+static std::vector<DeviceInfo> g_availableDevices;
 
-int FindDeviceIndex(const char* deviceName)
+static int FindDeviceIndex(const char* deviceName)
 {
    for (unsigned i=0; i<g_availableDevices.size(); i++)
       if (g_availableDevices[i].first.compare(deviceName) == 0)
@@ -89,9 +89,4 @@ void AddAvailableDeviceName(const char* name, const char* descr)
 
    // add to the list
    g_availableDevices.push_back(std::make_pair(name, descr));   
-}
-
-unsigned GetNumberOfDevicesInternal()
-{
-   return (unsigned) g_availableDevices.size();
 }
