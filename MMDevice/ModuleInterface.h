@@ -81,7 +81,6 @@ typedef long (*fnGetDeviceInterfaceVersion) ();
 typedef unsigned (*fnGetNumberOfDevices)();
 typedef bool (*fnGetDeviceName)(unsigned, char*, unsigned);
 typedef bool (*fnGetDeviceDescription)(const char*, char*, unsigned);
-typedef bool (*fnGetDeviceIsDiscoverable)(char* , bool* );
 typedef void (*fnInitializeModuleData)();
 
 // functions for internal use within the module
