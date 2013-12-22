@@ -419,7 +419,7 @@ int MDHIDDevice::Write(const unsigned char* buf, unsigned long bufLen)
 */
 int MDHIDDevice::Read(unsigned char* buf, unsigned long bufLen, unsigned long& charsRead)
 {
-   int res = hid_read(handle_, buf, bufLen + 1);
+   int res = hid_read(handle_, buf, bufLen);
    if (res == -1) 
       return ERR_RECEIVE_FAILED;
    charsRead = res;
