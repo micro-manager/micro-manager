@@ -1,7 +1,7 @@
 <project name="HIDManager">
 	<import file="../../buildscripts/deviceadapter.xml"/>
 
-	<property name="hidapi.libs" location="${mm.thirdpartypublic}/hidapi/hidapi-0.7.0/windows"/>
+	<property name="hidapi.libs" location="${mm.thirdpartypublic}/hidapi/build-3a66d4e513-patched/windows"/>
 
 	<target name="install-Win32">
 		<copy todir="${mm.dll.installdir}" file="${hidapi.libs}/Win32/Release/hidapi.dll"/>
