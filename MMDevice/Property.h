@@ -30,10 +30,6 @@
 #include <vector>
 #include <map>
 
-#ifdef WIN32
-#pragma warning(disable : 4996) // disable warning for deprecated CRT functions on Windows 
-#endif
-
 namespace MM {
 
 /**
