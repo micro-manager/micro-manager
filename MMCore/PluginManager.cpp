@@ -819,6 +819,8 @@ vector<long> CPluginManager::GetAvailableDeviceTypes(const char* moduleName) thr
       assert(hCreateDeviceFunc);
       fnGetDeviceName hGetDeviceName = (fnGetDeviceName) GetModuleFunction(hLib, "GetDeviceName");
       assert(hGetDeviceName);
+      fnGetDeviceType hGetDeviceType = (fnGetDeviceType) GetModuleFunction(hLib, "GetDeviceType");
+      assert(hGetDeviceType);
       
       unsigned numDev = hGetNumberOfDevices();
 
@@ -828,6 +830,14 @@ vector<long> CPluginManager::GetAvailableDeviceTypes(const char* moduleName) thr
          if (!hGetDeviceName(i, deviceName, MM::MaxStrLength))
          {
             types.push_back((long)MM::AnyType);
+            continue;
+         }
+
+         int typeInt = static_cast<int>(MM::UnknownType);
+         if (hGetDeviceType(deviceName, &typeInt) &&
+               static_cast<MM::DeviceType>(typeInt) != MM::UnknownType)
+         {
+            types.push_back(typeInt);
             continue;
          }
 
