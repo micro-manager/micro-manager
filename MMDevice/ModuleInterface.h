@@ -88,13 +88,17 @@ typedef void (*fnInitializeModuleData)();
 
 // AddAvailableDeviceName is deprecated. Device adapters should now use RegisterDevice.
 #ifdef _MSC_VER
-__declspec(deprecated)
+__declspec(deprecated("Use RegisterDevice() instead"))
 #endif
 void AddAvailableDeviceName(const char* deviceName, const char* description = "Description N/A")
 #ifdef __GNUC__
-__attribute__((deprecated))
+__attribute__((deprecated("Use RegisterDevice() instead")))
 #endif
 ;
+// (Note: the MODULE_INTERFACE_VERSION should be incremented when
+// AddAvailableDeviceName() is removed, or, more accurately, when the
+// instantiation-based type determination is removed from the Core, to ensure
+// that device adapters always register device types.)
 
 // Register a device class provided by the device adapter library.
 void RegisterDevice(const char* deviceName, MM::DeviceType deviceType, const char* description);
