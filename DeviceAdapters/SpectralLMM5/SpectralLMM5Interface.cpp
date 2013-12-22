@@ -43,8 +43,16 @@ SpectralLMM5Interface::SpectralLMM5Interface(std::string port, MM::PortType port
 SpectralLMM5Interface::~SpectralLMM5Interface(){};
 
 /*
- * The Spectral LMM5 has a silly difference between USB and serial communication:
- * Commands can be sent straight to USB.  Commands to the serial port need to converted in some kind of weird ASCI:  The command "0x1A0xFF0x000x12<CR>" becomes "1AFF0012<CR>".  Presumably, the same weird conversion takes place on the way back.  We handle this translation in this function
+ * The LMM5 USB HID commands are a sequence of binary bytes with no terminator.
+ * The serial commands are the same bytes formatted as an ASCII hex string, two
+ * characters per byte, and terminated with a CR; e.g.:
+ *   USB:    "\x1a\xff\x00\x12" (4 bytes)
+ *   RS-232: "1AFF0012\r" (9 bytes)
+ * The opposite transformation takes place for the reply.
+ *
+ * This function abstracts these differences. Note that the exact answerLen is
+ * important for USB HID: reading excess bytes can result in garbage being
+ * appended to the reply (at least on Windows).
  */
 int SpectralLMM5Interface::ExecuteCommand(MM::Device& device, MM::Core& core, unsigned char* buf, unsigned long bufLen, unsigned char* answer, unsigned long answerLen, unsigned long& read) 
 {
@@ -344,17 +352,17 @@ int SpectralLMM5Interface::GetFirmwareVersion(MM::Device& device, MM::Core& core
    const unsigned long bufLen = 1;
    unsigned char buf[bufLen];
    buf[0] = 0x14;
-   const unsigned long answerLen = 256;
+   const unsigned long answerLen = 3;
    unsigned char answer[answerLen];
    unsigned long read;
    int ret = ExecuteCommand(device, core, buf, bufLen, answer, answerLen, read);
    if (ret != DEVICE_OK)
       return ret;
 
-   if (answer[0] != 0x14)
+   if (answer[0] != 0x14 || read < answerLen)
       return ERR_UNEXPECTED_ANSWER;
 
-   // The observed firmware version is a two-byte word. Make it variable-length, just in case.
+   // The firmware version is a two-byte word.
    std::ostringstream hex_oss;
    hex_oss << "0x";
    for (unsigned long i = 1; i < read; i++) {
