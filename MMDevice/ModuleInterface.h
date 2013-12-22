@@ -50,8 +50,7 @@
 // header version
 // NOTE: If any of the exported module API calls changes, the interface version
 // must be incremented
-// new version 5 supports device discoverability
-#define MODULE_INTERFACE_VERSION 7
+#define MODULE_INTERFACE_VERSION 8
 
 #include "MMDevice.h"
 
@@ -65,6 +64,7 @@ extern "C" {
    MODULE_API long GetDeviceInterfaceVersion();
    MODULE_API unsigned GetNumberOfDevices();
    MODULE_API bool GetDeviceName(unsigned deviceIndex, char* name, unsigned bufferLength);
+   MODULE_API bool GetDeviceType(const char* deviceName, int* type);
    MODULE_API bool GetDeviceDescription(const char* deviceName, char* name, unsigned bufferLength);
    /**
     * Intializes the list of available devices and perhaps other global initialization tasks.
@@ -80,10 +80,26 @@ typedef long (*fnGetModuleVersion)();
 typedef long (*fnGetDeviceInterfaceVersion) ();
 typedef unsigned (*fnGetNumberOfDevices)();
 typedef bool (*fnGetDeviceName)(unsigned, char*, unsigned);
+typedef bool (*fnGetDeviceType)(const char*, int*);
 typedef bool (*fnGetDeviceDescription)(const char*, char*, unsigned);
 typedef void (*fnInitializeModuleData)();
 
 // functions for internal use within the module
-void AddAvailableDeviceName(const char* deviceName, const char* description = "Description N/A");
+
+// AddAvailableDeviceName is deprecated. Device adapters should now use RegisterDevice.
+#ifdef _MSC_VER
+__declspec(deprecated)
+#endif
+void AddAvailableDeviceName(const char* deviceName, const char* description = "Description N/A")
+#ifdef __GNUC__
+__attribute__((deprecated))
+#endif
+;
+
+// Register a device class provided by the device adapter library.
+void RegisterDevice(const char* deviceName, MM::DeviceType deviceType, const char* description);
+// (Note: the MODULE_INTERFACE_VERSION need not be incremented when DeviceType
+// values are added, because that is taken care of by the
+// DEVICE_INTERFACE_VERSION.)
 
 #endif //_MODULE_INTERFACE_H_

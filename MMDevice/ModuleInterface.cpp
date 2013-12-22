@@ -20,24 +20,45 @@
 //                IN NO EVENT SHALL THE COPYRIGHT OWNER OR
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
-// CVS:           $Id$
-//
+
 #define _CRT_SECURE_NO_DEPRECATE
 #include "ModuleInterface.h"
-#include <vector>
+
+#include <algorithm>
 #include <string>
+#include <vector>
 
-typedef std::pair<std::string, std::string> DeviceInfo; 
-static std::vector<DeviceInfo> g_availableDevices;
 
-static int FindDeviceIndex(const char* deviceName)
+namespace {
+
+struct DeviceInfo
 {
-   for (unsigned i=0; i<g_availableDevices.size(); i++)
-      if (g_availableDevices[i].first.compare(deviceName) == 0)
-         return i;
+   std::string name_;
+   MM::DeviceType type_;
+   std::string description_;
 
-   return -1;
-}
+   DeviceInfo(const char* name, MM::DeviceType type, const char* description) :
+      name_(name),
+      type_(type),
+      description_(description)
+   {}
+};
+
+// Predicate for searching by name
+class DeviceNameMatches
+{
+   std::string name_;
+public:
+   explicit DeviceNameMatches(const std::string& deviceName) : name_(deviceName) {}
+   bool operator()(const DeviceInfo& info) { return info.name_ == name_; }
+};
+
+} // anonymous namespace
+
+
+// Registered devices in this module (device adapter library)
+static std::vector<DeviceInfo> g_registeredDevices;
+
 
 MODULE_API long GetModuleVersion()
 {
@@ -51,42 +72,72 @@ MODULE_API long GetDeviceInterfaceVersion()
 
 MODULE_API unsigned GetNumberOfDevices()
 {
-   return (unsigned) g_availableDevices.size();
+   return static_cast<unsigned>(g_registeredDevices.size());
 }
 
 MODULE_API bool GetDeviceName(unsigned deviceIndex, char* name, unsigned bufLen)
 {
-   if (deviceIndex >= g_availableDevices.size())
+   if (deviceIndex >= g_registeredDevices.size())
       return false;
-   
-   if (g_availableDevices[deviceIndex].first.length() >= bufLen)
+
+   const std::string& deviceName = g_registeredDevices[deviceIndex].name_;
+
+   if (deviceName.size() >= bufLen)
       return false; // buffer too small, can't truncate the name
 
-   strcpy(name, g_availableDevices[deviceIndex].first.c_str());
+   strcpy(name, deviceName.c_str());
+   return true;
+}
+
+MODULE_API bool GetDeviceType(const char* deviceName, int* type)
+{
+   std::vector<DeviceInfo>::const_iterator it =
+      std::find_if(g_registeredDevices.begin(), g_registeredDevices.end(),
+            DeviceNameMatches(deviceName));
+   if (it == g_registeredDevices.end())
+   {
+      *type = MM::UnknownType;
+      return false;
+   }
+
+   // Prefer int over enum across DLL boundary so that the module ABI does not
+   // change (somewhat pedantic, but let's be safe).
+   *type = static_cast<int>(it->type_);
+
    return true;
 }
 
 MODULE_API bool GetDeviceDescription(const char* deviceName, char* description, unsigned bufLen)
 {
-   int idx = FindDeviceIndex(deviceName);
-   if (idx < 0)
-      return false; // device name not found
-   else
-      strncpy(description, g_availableDevices[idx].second.c_str(), bufLen-1);
+   std::vector<DeviceInfo>::const_iterator it =
+      std::find_if(g_registeredDevices.begin(), g_registeredDevices.end(),
+            DeviceNameMatches(deviceName));
+   if (it == g_registeredDevices.end())
+      return false;
+
+   strncpy(description, it->description_.c_str(), bufLen - 1);
 
    return true;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-// Functions for internal use (inside the Module)
-//
 void AddAvailableDeviceName(const char* name, const char* descr)
 {
-   std::vector<DeviceInfo>::const_iterator it;
-   for (it=g_availableDevices.begin(); it!=g_availableDevices.end(); ++it)
-      if (it->first.compare(name) == 0)
-         return; // already there
+   RegisterDevice(name, MM::UnknownType, descr);
+}
 
-   // add to the list
-   g_availableDevices.push_back(std::make_pair(name, descr));   
+void RegisterDevice(const char* deviceName, MM::DeviceType deviceType, const char* deviceDescription)
+{
+   if (!deviceName)
+      return;
+
+   if (!deviceDescription)
+      // This is a bug; let the programmer know by displaying an ugly string
+      deviceDescription = "(Null description)";
+
+   if (std::find_if(g_registeredDevices.begin(), g_registeredDevices.end(),
+            DeviceNameMatches(deviceName)) != g_registeredDevices.end())
+      // Device with this name already registered
+      return;
+
+   g_registeredDevices.push_back(DeviceInfo(deviceName, deviceType, deviceDescription));
 }
