@@ -53,12 +53,6 @@
 // new version 5 supports device discoverability
 #define MODULE_INTERFACE_VERSION 7
 
-#ifdef WIN32
-const char* const LIB_NAME_PREFIX = "mmgr_dal_";
-#else
-const char* const LIB_NAME_PREFIX = "libmmgr_dal_";
-#endif
-
 #include "MMDevice.h"
 
 ///////////////////////////////////////////////////////////////////////////////

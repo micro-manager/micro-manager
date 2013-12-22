@@ -49,10 +49,16 @@ using namespace std;
 
 #include <boost/algorithm/string.hpp>
 
-#ifdef linux
-#define LIB_NAME_SUFFIX ".so.0"
+#ifdef WIN32
+const char* const LIB_NAME_PREFIX = "mmgr_dal_";
 #else
-#define LIB_NAME_SUFFIX ""
+const char* const LIB_NAME_PREFIX = "libmmgr_dal_";
+#endif
+
+#ifdef linux
+const char* const LIB_NAME_SUFFIX = ".so.0";
+#else
+const char* const LIB_NAME_SUFFIX = "";
 #endif
 
 ///////////////////////////////////////////////////////////////////////////////
