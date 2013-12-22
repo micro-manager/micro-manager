@@ -428,11 +428,15 @@ MM::Device* CPluginManager::LoadDevice(const char* label, const char* moduleName
    HDEVMODULE hLib = LoadPluginLibrary(moduleName);
 
    fnCreateDevice hCreateDeviceFunc(0);
+   fnDeleteDevice hDeleteDeviceFunc(0);
+   fnGetDeviceType hGetDeviceType(0);
    fnGetDeviceDescription hGetDeviceDescription(0);
    try
    {
       CheckVersion(hLib);
       hCreateDeviceFunc = (fnCreateDevice) GetModuleFunction(hLib, "CreateDevice");
+      hDeleteDeviceFunc = (fnDeleteDevice) GetModuleFunction(hLib, "DeleteDevice");
+      hGetDeviceType = (fnGetDeviceType) GetModuleFunction(hLib, "GetDeviceType");
       hGetDeviceDescription = (fnGetDeviceDescription) GetModuleFunction(hLib, "GetDeviceDescription");
    }
    catch (CMMError& err)
@@ -448,6 +452,24 @@ MM::Device* CPluginManager::LoadDevice(const char* label, const char* moduleName
    if (pDevice == 0)
       throw CMMError("CreateDevice() failed for device " + ToQuotedString(deviceName),
             MMERR_CreateFailed);
+
+   // Since it is up to the module to advertise the device with the correct
+   // device type, we check that the created device is in fact of the expected
+   // type.
+   int typeInt = MM::UnknownType;
+   hGetDeviceType(deviceName, &typeInt);
+   if (typeInt != MM::UnknownType)
+   {
+      MM::DeviceType actualType = pDevice->GetType();
+      if (actualType != static_cast<MM::DeviceType>(typeInt))
+      {
+         hDeleteDeviceFunc(pDevice);
+         throw CMMError("Tried to load device " + ToQuotedString(deviceName) +
+               " of type " + ToString(typeInt) +
+               " from module " + ToQuotedString(moduleName) +
+               " but got a device of type " + ToString(actualType));
+      }
+   }
 
    char descr[MM::MaxStrLength] = "N/A";
    hGetDeviceDescription(deviceName, descr, MM::MaxStrLength);
