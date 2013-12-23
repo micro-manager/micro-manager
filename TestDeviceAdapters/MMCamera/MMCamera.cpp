@@ -64,7 +64,7 @@ BOOL APIENTRY DllMain(  HANDLE /*hModule*/,
  */
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(g_CameraName, "Micro-manager example camera");
+   RegisterDevice(g_CameraName, MM::CameraDevice, "Micro-manager example camera");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)
