@@ -37,22 +37,6 @@ const char* g_MT20Attenuator = "MT20-Attenuator";
 
 #ifdef WIN32
 	#define snprintf _snprintf
-
-	BOOL APIENTRY DllMain( HANDLE /*hModule*/,
-							DWORD ul_reason_for_call,
-							LPVOID /*lpReserved*/
-							)
-	{
-		switch (ul_reason_for_call)
-		{
-		case DLL_PROCESS_ATTACH:
-		case DLL_THREAD_ATTACH:
-		case DLL_THREAD_DETACH:
-		case DLL_PROCESS_DETACH:
-			break;
-		}
-		return TRUE;
-	}
 #endif
 
 // instantiate MT20hub object, which will handle communication with device

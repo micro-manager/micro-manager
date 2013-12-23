@@ -57,29 +57,19 @@ const char* g_ColorMode_RGB = "RGB-32bit";
 
 HINSTANCE g_hinstDLL;
 
-// windows DLL entry code
-#ifdef WIN32
-BOOL APIENTRY DllMain( HINSTANCE hinstDLL, 
-                      DWORD  ul_reason_for_call, 
-                      LPVOID /*lpReserved*/
-                      )
+BOOL APIENTRY DllMain(HINSTANCE hinstDLL,
+                      DWORD ul_reason_for_call,
+                      LPVOID /*lpReserved*/)
 {
    switch (ul_reason_for_call)
    {
-   case DLL_PROCESS_ATTACH:
-   	g_hinstDLL = hinstDLL;
-
-      break;
-   case DLL_THREAD_ATTACH:
-      break;
-   case DLL_THREAD_DETACH:
-      break;
-   case DLL_PROCESS_DETACH:
-      break;
+      case DLL_PROCESS_ATTACH:
+         g_hinstDLL = hinstDLL;
+         break;
    }
    return TRUE;
 }
-#endif
+
 
 // mutex
 static MMThreadLock g_lock;

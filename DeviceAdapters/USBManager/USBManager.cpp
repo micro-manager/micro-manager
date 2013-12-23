@@ -32,41 +32,33 @@
 
 #include <usb.h>
 
-// Note that this only works with gcc (which we should be testing for)
+
 #ifdef __GNUC__
-void __attribute__ ((constructor)) my_init(void)
+void __attribute__((constructor)) my_init(void)
 {
    usb_init();
 }
-void __attribute__ ((destructor)) my_fini(void)
+#elif defined(WIN32)
+BOOL APIENTRY DllMain(HANDLE /*hModule*/,
+                      DWORD  ul_reason_for_call,
+                      LPVOID /*lpReserved*/)
 {
-   // presumably not needed to shut down the usb library?
+   switch (ul_reason_for_call)
+   {
+      case DLL_PROCESS_ATTACH:
+         usb_init();
+         break;
+   }
+   return TRUE;
 }
+#else
+#error A call to usb_init() must be implemented.
 #endif
 
-// windows dll entry code                                                    
+
 #ifdef WIN32    
 #include <time.h>
 #pragma warning(disable : 4290)
-BOOL APIENTRY DllMain( HANDLE /*hModule*/,                                
-                      DWORD  ul_reason_for_call,                         
-                      LPVOID /*lpReserved*/                              
-                      )                                                         
-{                                                                         
-   switch (ul_reason_for_call)                                            
-   {                                                                      
-   case DLL_PROCESS_ATTACH:                                               
-      usb_init();
-      break;                                                                 
-   case DLL_THREAD_ATTACH:                                                
-      break;                                                                 
-   case DLL_THREAD_DETACH:                                                
-      break;                                                                 
-   case DLL_PROCESS_DETACH:                                               
-      break;                                                                 
-   }                                                                      
-   return TRUE;                                                          
-}
 #else
 #include <sys/time.h>
 #endif

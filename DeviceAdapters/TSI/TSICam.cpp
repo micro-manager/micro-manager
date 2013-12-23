@@ -58,33 +58,6 @@ TsiSDK* TsiCam::tsiSdk = 0;
 static const WORD MAX_CONSOLE_LINES = 500;
 
 
-
-#ifdef WIN32
-   /**
-    * Windows DLL entry code
-    * Dynamically loads TSI SDK and instantiates the API
-    */
-   BOOL APIENTRY DllMain( HANDLE /*hModule*/, 
-                          DWORD  ul_reason_for_call, 
-                          LPVOID /*lpReserved*/
-		   			 )
-   {
-   	switch (ul_reason_for_call)
-   	{
-   	case DLL_PROCESS_ATTACH:
-      break;
-  	   case DLL_THREAD_ATTACH:
-      break;
-   	case DLL_THREAD_DETACH:
-      break;
-   	case DLL_PROCESS_DETACH:
-   	break;
-   	}
-      return TRUE;
-   }
-#endif
-
-
 ///////////////////////////////////////////////////////////////////////////////
 // Exported MMDevice API
 ///////////////////////////////////////////////////////////////////////////////

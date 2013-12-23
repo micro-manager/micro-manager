@@ -46,40 +46,6 @@
 #include <math.h>
 #include <sstream>
 
-// TODO: linux entry code
-// Note that this only works with gcc (which we should be testing for)
-#ifdef __GNUC__
-void __attribute__ ((constructor)) my_init(void)
-{
-}
-void __attribute__ ((destructor)) my_fini(void)
-{
-}
-#endif
-
-// windows dll entry code
-#ifdef WIN32
-   BOOL APIENTRY DllMain( HANDLE /*hModule*/,                                
-                          DWORD  ul_reason_for_call,                         
-                          LPVOID /*lpReserved*/                              
-                   )                                                         
-   {                                                                         
-      switch (ul_reason_for_call)                                            
-      {                                                                      
-      case DLL_PROCESS_ATTACH:                                               
-      break;                                                                 
-      case DLL_THREAD_ATTACH:    
-      break;                                                                 
-      case DLL_THREAD_DETACH:
-      break;
-      case DLL_PROCESS_DETACH:
-      break;
-      }
-       return TRUE;
-   }
-#endif
-
-//using namespace std;
 
 ZeissHub g_hub;
 

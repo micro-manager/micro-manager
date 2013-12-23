@@ -28,22 +28,6 @@ const char* PROP_XYSPEED = "XYSpeed(um/s)";
 const char* PROP_ZSPEED = "ZSpeed(um/s)";
 const char* PROP_ILLUMINATION_INTENSITY = "Intensity";
 
-#ifdef WIN32
-
-BOOL APIENTRY DllMain(HANDLE, DWORD ul_reason_for_call, LPVOID)
-{
-	switch(ul_reason_for_call)
-	{
-   case DLL_PROCESS_ATTACH:
-   case DLL_THREAD_ATTACH:
-   case DLL_THREAD_DETACH:
-   case DLL_PROCESS_DETACH:
-      break;
-	}
-	return TRUE;
-}
-
-#endif
 
 // Module export
 MODULE_API void InitializeModuleData()

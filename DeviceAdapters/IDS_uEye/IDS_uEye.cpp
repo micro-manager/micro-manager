@@ -63,29 +63,6 @@ const char* g_PixelType_32bit = "32bit";        // floating point greyscale
 */
 
 
-// TODO: linux entry code
-
-// windows DLL entry code
-#ifdef WIN32
-BOOL APIENTRY DllMain( HANDLE /*hModule*/, 
-                      DWORD  ul_reason_for_call, 
-                      LPVOID /*lpReserved*/
-                      )
-{
-   switch (ul_reason_for_call)
-   {
-   case DLL_PROCESS_ATTACH:
-   case DLL_THREAD_ATTACH:
-   case DLL_THREAD_DETACH:
-   case DLL_PROCESS_DETACH:
-      break;
-   }
-   return TRUE;
-}
-#endif
-
-
-
 //definitions
 #define ACQ_TIMEOUT 200                             //timeout for image acquisition (in 10ms)
 

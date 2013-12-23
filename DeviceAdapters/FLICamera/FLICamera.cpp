@@ -70,36 +70,23 @@ const char* g_Keyword_CameraSerial = "CameraSerial";
 		ret = DEVICE_ERR; \
 		if (a != false) break; } }
 
-// TODO: linux entry code
 
-#ifdef WIN32
-BOOL APIENTRY DllMain( HANDLE /*hModule*/, 
-                      DWORD  ul_reason_for_call, 
-                      LPVOID /*lpReserved*/
-                      )
+BOOL APIENTRY DllMain(HANDLE /*hModule*/,
+                      DWORD ul_reason_for_call,
+                      LPVOID /*lpReserved*/)
 {
 	switch(ul_reason_for_call)
 	{
 		case DLL_PROCESS_ATTACH:
 			FLILibAttach();
-		break;
-
-		case DLL_THREAD_ATTACH:
-		break;
-
-		case DLL_THREAD_DETACH:
-		break;
-
+			break;
 		case DLL_PROCESS_DETACH:
 			FLILibDetach();
-		break;
-
-		default:
-		break;
+			break;
 	}
 	return TRUE;
 }
-#endif
+
 
 MODULE_API void InitializeModuleData()
 {

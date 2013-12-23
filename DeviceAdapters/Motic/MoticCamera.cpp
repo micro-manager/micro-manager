@@ -11,24 +11,6 @@ const char* g_PixelType_16bit = "16bit";
 const char* g_PixelType_32bitRGB = "32bitRGB";
 const char* g_PixelType_64bitRGB = "64bitRGB";
 
-// windows DLL entry code
-#ifdef WIN32
-BOOL APIENTRY DllMain(  HANDLE /*hModule*/, 
-                        DWORD  ul_reason_for_call, 
-                        LPVOID /*lpReserved*/ )
-{
-   switch (ul_reason_for_call)
-   {
-   case DLL_PROCESS_ATTACH:
-   case DLL_THREAD_ATTACH:
-   case DLL_THREAD_DETACH:
-   case DLL_PROCESS_DETACH:
-      break;
-   }
-   return TRUE;
-}
-#endif
-
 
 ///////////////////////////////////////////////////////////////////////////////
 // Exported MMDevice API

@@ -75,23 +75,6 @@ static const unsigned int CID_FIELD_SIZE = 4;
 static const unsigned int NUMBER_MDA_BUFFERS = 10;
 static const unsigned int NUMBER_LIVE_BUFFERS = 2;
 
-// TODO: linux entry code
-
-// windows DLL entry code
-#ifdef WIN32
-BOOL APIENTRY DllMain(HANDLE/*hModule*/, DWORD ul_reason_for_call, LPVOID/*lpReserved*/)
-{
-   switch (ul_reason_for_call)
-   {
-   case DLL_PROCESS_ATTACH:
-   case DLL_THREAD_ATTACH:
-   case DLL_THREAD_DETACH:
-   case DLL_PROCESS_DETACH:
-      break;
-   }
-   return TRUE;
-}
-#endif
 
 ///////////////////////////////////////////////////////////////////////////////
 // Exported MMDevice API

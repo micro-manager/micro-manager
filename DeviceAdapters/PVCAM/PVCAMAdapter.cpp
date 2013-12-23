@@ -72,28 +72,6 @@ const char* g_ReadoutPort_Multiplier = "EM";
 const char* g_ReadoutPort_LowNoise = "LowNoise";
 const char* g_ReadoutPort_HighCap = "HighCap";
 
-// windows DLL entry code
-#ifdef WIN32
-   BOOL APIENTRY DllMain( HANDLE /*hModule*/, 
-                          DWORD  ul_reason_for_call, 
-                          LPVOID /*lpReserved*/
-		   			 )
-   {
-   	switch (ul_reason_for_call)
-   	{
-   	case DLL_PROCESS_ATTACH:
-      break;
-  	   case DLL_THREAD_ATTACH:
-      break;
-   	case DLL_THREAD_DETACH:
-      break;
-   	case DLL_PROCESS_DETACH:
-   	break;
-   	}
-       return TRUE;
-   }
-#endif
-
 
 ///////////////////////////////////////////////////////////////////////////////
 // Exported MMDevice API

@@ -153,23 +153,7 @@ unsigned int AndorCamera::refCount_ = 0;
 // global Andor driver thread lock
 MMThreadLock g_AndorDriverLock;
 
-// kdb 2/27/2009
-#ifdef WIN32
-// Windows dll entry routine
-bool APIENTRY DllMain( HANDLE /*hModule*/, 
-                      DWORD  ul_reason_for_call, 
-                      LPVOID /*lpReserved*/ ) {
-                         switch (ul_reason_for_call) {
-     case DLL_PROCESS_ATTACH:
-        break;
-     case DLL_THREAD_ATTACH:
-     case DLL_THREAD_DETACH:
-     case DLL_PROCESS_DETACH:
-        break;
-                         }
-                         return TRUE;
-}
-#else 
+#ifndef WIN32
 #include <sys/times.h>
 #define WORD ushort 
 long GetTickCount()

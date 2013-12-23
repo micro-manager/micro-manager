@@ -9,30 +9,20 @@ License:	Distributed under the BSD license.
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
-BOOL APIENTRY DllMain( HANDLE /*hModule*/, 
-                      DWORD  ul_reason_for_call, 
-                      LPVOID /*lpReserved*/
-	   			 )
+BOOL APIENTRY DllMain(HANDLE /*hModule*/,
+                      DWORD ul_reason_for_call,
+                      LPVOID /*lpReserved*/)
 {
    	switch (ul_reason_for_call)
    	{
    		case DLL_PROCESS_ATTACH:
-
 			if(!MCL_InitLibrary())
 				return false;
-
-			break;
-  		case DLL_THREAD_ATTACH:
-			break;
-   		case DLL_THREAD_DETACH:
 			break;
    		case DLL_PROCESS_DETACH:
-
 			MCL_ReleaseLibrary();
-
    			break;
    	}
-    
 	return TRUE;
 }
 
