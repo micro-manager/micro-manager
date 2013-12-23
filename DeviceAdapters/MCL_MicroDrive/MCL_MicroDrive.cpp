@@ -38,7 +38,7 @@ BOOL APIENTRY DllMain( HANDLE /*hModule*/,
 
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(g_XYStageDeviceName, "XY positioning");
+   RegisterDevice(g_XYStageDeviceName, MM::XYStageDevice, "XY positioning");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

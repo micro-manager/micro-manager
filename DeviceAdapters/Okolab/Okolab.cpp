@@ -91,15 +91,15 @@ bool SockSetup()
 MODULE_API void InitializeModuleData()
 {
  #ifdef _DEBUG_
- AddAvailableDeviceName(g_TestControl, "Okolab Test Control");
+ RegisterDevice(g_TestControl, MM::GenericDevice, "Okolab Test Control");
  #endif
- AddAvailableDeviceName(g_OCSControl, "Okolab OKO Control Server");
- AddAvailableDeviceName(g_CO2BLControl, "Okolab CO2 Unit-BL");
- AddAvailableDeviceName(g_O2BLControl, "Okolab O2 Unit-BL");
- AddAvailableDeviceName(g_H201BLControl, "Okolab H201 T Unit-BL");
- AddAvailableDeviceName(g_CO2O2BLControl, "Okolab CO2-O2 Unit-BL [0-10;1-18]");
- AddAvailableDeviceName(g_CO2O2BL13Control, "Okolab CO2-O2 Unit-BL [0-20;1-95]");
- AddAvailableDeviceName(g_H301BLControl, "Okolab H301 T Unit-BL");
+ RegisterDevice(g_OCSControl, MM::GenericDevice, "Okolab OKO Control Server");
+ RegisterDevice(g_CO2BLControl, MM::GenericDevice, "Okolab CO2 Unit-BL");
+ RegisterDevice(g_O2BLControl, MM::GenericDevice, "Okolab O2 Unit-BL");
+ RegisterDevice(g_H201BLControl, MM::GenericDevice, "Okolab H201 T Unit-BL");
+ RegisterDevice(g_CO2O2BLControl, MM::GenericDevice, "Okolab CO2-O2 Unit-BL [0-10;1-18]");
+ RegisterDevice(g_CO2O2BL13Control, MM::GenericDevice, "Okolab CO2-O2 Unit-BL [0-20;1-95]");
+ RegisterDevice(g_H301BLControl, MM::GenericDevice, "Okolab H301 T Unit-BL");
  SockSetup();
 }
 

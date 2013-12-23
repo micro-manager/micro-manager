@@ -45,10 +45,10 @@ const char* g_DeviceSiriusBLSUSBName = "Mightex_BLS(USB)";
 ---------------------------------------------------------------------------*/
 MODULE_API void InitializeModuleData()
 {
-	AddAvailableDeviceName(g_DeviceSiriusSLCUSBName, "Mightex Sirius SLC LED Driver(USB)");
-//	AddAvailableDeviceName(g_DeviceSiriusSLCRS232Name, "Mightex Sirius SLC LED Driver(RS-232)");
-	AddAvailableDeviceName(g_DeviceSiriusBLSUSBName, "Mightex Sirius BLS Control Module(USB)");
-//	AddAvailableDeviceName(g_DeviceSiriusBLSRS232Name, "Mightex Sirius BLS LED Driver(RS-232)");
+	RegisterDevice(g_DeviceSiriusSLCUSBName, MM::ShutterDevice, "Mightex Sirius SLC LED Driver(USB)");
+//	RegisterDevice(g_DeviceSiriusSLCRS232Name, MM::ShutterDevice, "Mightex Sirius SLC LED Driver(RS-232)");
+	RegisterDevice(g_DeviceSiriusBLSUSBName, MM::ShutterDevice, "Mightex Sirius BLS Control Module(USB)");
+//	RegisterDevice(g_DeviceSiriusBLSRS232Name, MM::ShutterDevice, "Mightex Sirius BLS LED Driver(RS-232)");
 }
 
 

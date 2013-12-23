@@ -47,11 +47,11 @@ const char* g_invertedLogicString = "Inverted";
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(g_DeviceNameK8061Hub, "Hub");
-   AddAvailableDeviceName(g_DeviceNameK8061Switch, "Switch");
-   AddAvailableDeviceName(g_DeviceNameK8061Shutter, "Shutter");
-   AddAvailableDeviceName(g_DeviceNameK8061DA, "DA");
-   AddAvailableDeviceName(g_DeviceNameK8061Input, "Input");
+   RegisterDevice(g_DeviceNameK8061Hub, MM::GenericDevice, "Hub");
+   RegisterDevice(g_DeviceNameK8061Switch, MM::StateDevice, "Switch");
+   RegisterDevice(g_DeviceNameK8061Shutter, MM::ShutterDevice, "Shutter");
+   RegisterDevice(g_DeviceNameK8061DA, MM::SignalIODevice, "DA");
+   RegisterDevice(g_DeviceNameK8061Input, MM::GenericDevice, "Input");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

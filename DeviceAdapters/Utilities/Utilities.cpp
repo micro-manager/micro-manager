@@ -52,14 +52,14 @@ const char* g_PropertyMaxUm = "Stage High Position(um)";
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(g_DeviceNameMultiShutter, "Combine multiple physical shutters into a single logical shutter");
-   AddAvailableDeviceName(g_DeviceNameMultiCamera, "Combine multiple physical cameras into a single logical camera");
-   AddAvailableDeviceName(g_DeviceNameDAShutter, "DA used as a shutter");
-   AddAvailableDeviceName(g_DeviceNameDAMonochromator, "DA used to control a monochromator");
-   AddAvailableDeviceName(g_DeviceNameDAZStage, "DA-controlled Z-stage");
-   AddAvailableDeviceName(g_DeviceNameDAXYStage, "DA-controlled XY-stage");
-   AddAvailableDeviceName(g_DeviceNameAutoFocusStage, "AutoFocus offset acting as a Z-stage");
-   AddAvailableDeviceName(g_DeviceNameStateDeviceShutter, "State device used as a shutter");
+   RegisterDevice(g_DeviceNameMultiShutter, MM::ShutterDevice, "Combine multiple physical shutters into a single logical shutter");
+   RegisterDevice(g_DeviceNameMultiCamera, MM::CameraDevice, "Combine multiple physical cameras into a single logical camera");
+   RegisterDevice(g_DeviceNameDAShutter, MM::ShutterDevice, "DA used as a shutter");
+   RegisterDevice(g_DeviceNameDAMonochromator, MM::ShutterDevice, "DA used to control a monochromator");
+   RegisterDevice(g_DeviceNameDAZStage, MM::StageDevice, "DA-controlled Z-stage");
+   RegisterDevice(g_DeviceNameDAXYStage, MM::XYStageDevice, "DA-controlled XY-stage");
+   RegisterDevice(g_DeviceNameAutoFocusStage, MM::StageDevice, "AutoFocus offset acting as a Z-stage");
+   RegisterDevice(g_DeviceNameStateDeviceShutter, MM::ShutterDevice, "State device used as a shutter");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)                  

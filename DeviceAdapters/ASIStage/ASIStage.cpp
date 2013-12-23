@@ -90,12 +90,12 @@ using namespace std;
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(g_ZStageDeviceName, "Add-on Z-stage");
-   AddAvailableDeviceName(g_XYStageDeviceName, "XY Stage");
-   AddAvailableDeviceName(g_CRIFDeviceName, "CRIF");
-   AddAvailableDeviceName(g_CRISPDeviceName, "CRISP");
-   AddAvailableDeviceName(g_AZ100TurretName, "AZ100 Turret");
-   AddAvailableDeviceName(g_LEDName, "LED");
+   RegisterDevice(g_ZStageDeviceName, MM::StageDevice, "Add-on Z-stage");
+   RegisterDevice(g_XYStageDeviceName, MM::XYStageDevice, "XY Stage");
+   RegisterDevice(g_CRIFDeviceName, MM::AutoFocusDevice, "CRIF");
+   RegisterDevice(g_CRISPDeviceName, MM::AutoFocusDevice, "CRISP");
+   RegisterDevice(g_AZ100TurretName, MM::StateDevice, "AZ100 Turret");
+   RegisterDevice(g_LEDName, MM::ShutterDevice, "LED");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

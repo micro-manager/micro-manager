@@ -72,8 +72,8 @@ BOOL APIENTRY DllMain( HANDLE, // hModule
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(g_XCite120PC_Name, g_XCite120PC_Desc);
-   AddAvailableDeviceName(g_XCiteExacte_Name, g_XCiteExacte_Desc);
+   RegisterDevice(g_XCite120PC_Name, MM::ShutterDevice, g_XCite120PC_Desc);
+   RegisterDevice(g_XCiteExacte_Name, MM::ShutterDevice, g_XCiteExacte_Desc);
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

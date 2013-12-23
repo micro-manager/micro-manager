@@ -57,9 +57,9 @@ ASIFW1000Hub g_hub;
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(g_ASIFW1000Hub,"ASIFW1000 Controller");
-   AddAvailableDeviceName(g_ASIFW1000FilterWheel,"ASI FilterWheel");   
-   AddAvailableDeviceName(g_ASIFW1000Shutter,"ASI Shutter"); 
+   RegisterDevice(g_ASIFW1000Hub, MM::GenericDevice, "ASIFW1000 Controller");
+   RegisterDevice(g_ASIFW1000FilterWheel, MM::StateDevice, "ASI FilterWheel");   
+   RegisterDevice(g_ASIFW1000Shutter, MM::ShutterDevice, "ASI Shutter"); 
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

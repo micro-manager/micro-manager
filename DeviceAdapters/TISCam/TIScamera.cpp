@@ -150,7 +150,7 @@ BOOL APIENTRY DllMain( HANDLE /*hModule*/, DWORD  ul_reason_for_call, LPVOID /*l
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(g_DeviceName, "The Imaging Source");
+   RegisterDevice(g_DeviceName, MM::CameraDevice, "The Imaging Source");
 }
 
 MODULE_API void DeleteDevice(MM::Device* pDevice)

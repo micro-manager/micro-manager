@@ -67,12 +67,12 @@ int InitializeTheBoard()
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(g_DeviceNameK8055Hub, "Hub");
-   AddAvailableDeviceName(g_DeviceNameK8055Switch, "Switch");
-   AddAvailableDeviceName(g_DeviceNameK8055Shutter, "Shutter" );
-   AddAvailableDeviceName(g_DeviceNameK8055DA1, "DA-1");
-   AddAvailableDeviceName(g_DeviceNameK8055DA2, "DA-2");
-   AddAvailableDeviceName(g_DeviceNameK8055Input, "Digital Input");
+   RegisterDevice(g_DeviceNameK8055Hub, MM::GenericDevice, "Hub");
+   RegisterDevice(g_DeviceNameK8055Switch, MM::StateDevice, "Switch");
+   RegisterDevice(g_DeviceNameK8055Shutter, MM::ShutterDevice, "Shutter");
+   RegisterDevice(g_DeviceNameK8055DA1, MM::SignalIODevice, "DA-1");
+   RegisterDevice(g_DeviceNameK8055DA2, MM::SignalIODevice, "DA-2");
+   RegisterDevice(g_DeviceNameK8055Input, MM::GenericDevice, "Digital Input");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

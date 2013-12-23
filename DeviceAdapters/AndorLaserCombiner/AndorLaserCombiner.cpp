@@ -166,9 +166,8 @@ MMThreadLock ImplLock_s;
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(g_ControllerName, "AndorLaserCombiner");
-   AddAvailableDeviceName(g_PiezoStageName, "PiezoStage");
-   
+   RegisterDevice(g_ControllerName, MM::ShutterDevice, "AndorLaserCombiner");
+   RegisterDevice(g_PiezoStageName, MM::StageDevice, "PiezoStage");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

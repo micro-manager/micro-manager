@@ -39,7 +39,7 @@ const char* DEVICE_NAME = "VLTStradus";
 //Required Micro-Manager API Functions&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(DEVICE_NAME, "VLTStradus");
+   RegisterDevice(DEVICE_NAME, MM::ShutterDevice, "VLTStradus");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

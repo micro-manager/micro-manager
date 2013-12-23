@@ -90,8 +90,7 @@ static MMThreadLock g_lock;
 
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(g_CameraDeviceName, "Twain camera");
-  
+   RegisterDevice(g_CameraDeviceName, MM::CameraDevice, "Twain camera");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

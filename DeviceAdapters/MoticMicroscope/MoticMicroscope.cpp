@@ -48,10 +48,11 @@ BOOL APIENTRY DllMain(HANDLE, DWORD ul_reason_for_call, LPVOID)
 // Module export
 MODULE_API void InitializeModuleData()
 {
-	for(int i = 0; i < MoticDevCount; i++)
-	{
-		AddAvailableDeviceName(g_devlist[i][0], g_devlist[i][1]);
-	}
+	RegisterDevice(g_devlist[MoticHub][0], MM::HubDevice, g_devlist[MoticHub][1]);
+	RegisterDevice(g_devlist[MoticXYStage][0], MM::XYStageDevice, g_devlist[MoticXYStage][1]);
+	RegisterDevice(g_devlist[MoticZ][0], MM::StageDevice, g_devlist[MoticZ][1]);
+	RegisterDevice(g_devlist[MoticObjectives][0], MM::StateDevice, g_devlist[MoticObjectives][1]);
+	RegisterDevice(g_devlist[MoticIllumination][0], MM::GenericDevice, g_devlist[MoticIllumination][1]);
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

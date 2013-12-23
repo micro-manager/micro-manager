@@ -81,10 +81,10 @@ int ClearPort(MM::Device& device, MM::Core& core, std::string port)
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(g_XYStageDeviceName, "Thorlabs BD102 XY Stage");
-   AddAvailableDeviceName(g_PiezoZStageDeviceName, "Thorlabs piezo Z Stage");
-   AddAvailableDeviceName(g_MotorZStageDeviceName, "Thorlabs Motor Z Stage");
-   AddAvailableDeviceName(g_WheelDeviceName, "Integrated filter wheel");
+   RegisterDevice(g_XYStageDeviceName, MM::XYStageDevice, "Thorlabs BD102 XY Stage");
+   RegisterDevice(g_PiezoZStageDeviceName, MM::StageDevice, "Thorlabs piezo Z Stage");
+   RegisterDevice(g_MotorZStageDeviceName, MM::StageDevice, "Thorlabs Motor Z Stage");
+   RegisterDevice(g_WheelDeviceName, MM::StateDevice, "Integrated filter wheel");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

@@ -100,7 +100,7 @@ BOOL APIENTRY DllMain( HANDLE /*hModule*/,
  */
 MODULE_API void InitializeModuleData()
 {
-	AddAvailableDeviceName(g_CameraDeviceName, "Direct Electron Camera");
+	RegisterDevice(g_CameraDeviceName, MM::CameraDevice, "Direct Electron Camera");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

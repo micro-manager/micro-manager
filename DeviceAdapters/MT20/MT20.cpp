@@ -64,11 +64,11 @@ MT20hub mt20;
 
 MODULE_API void InitializeModuleData()
 {
-	AddAvailableDeviceName(g_MT20HUB, "Olympus MT20 hub device");
-	AddAvailableDeviceName(g_MT20Burner, "Olympus MT20 burner");
-	AddAvailableDeviceName(g_MT20Shutter, "Olympus MT20 shutter");
-	AddAvailableDeviceName(g_MT20Filterwheel, "Olympus MT20 filterwheel");
-	AddAvailableDeviceName(g_MT20Attenuator, "Olympus MT20 attenuator");
+	RegisterDevice(g_MT20HUB, MM::GenericDevice, "Olympus MT20 hub device");
+	RegisterDevice(g_MT20Burner, MM::StateDevice, "Olympus MT20 burner");
+	RegisterDevice(g_MT20Shutter, MM::ShutterDevice, "Olympus MT20 shutter");
+	RegisterDevice(g_MT20Filterwheel, MM::StateDevice, "Olympus MT20 filterwheel");
+	RegisterDevice(g_MT20Attenuator, MM::StateDevice, "Olympus MT20 attenuator");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

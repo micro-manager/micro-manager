@@ -78,8 +78,8 @@ void _stdcall Out32(short PortAddress, short data);
 
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(g_DeviceNameAOTFSwitch, "TTL digital out AOTF wavelength selector");
-   AddAvailableDeviceName(g_DeviceNameAOTFShutter, "TTL digital out AOTF shutter");
+   RegisterDevice(g_DeviceNameAOTFSwitch, MM::StateDevice, "TTL digital out AOTF wavelength selector");
+   RegisterDevice(g_DeviceNameAOTFShutter, MM::ShutterDevice, "TTL digital out AOTF shutter");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

@@ -49,8 +49,8 @@ const char* g_LegacyZStageDeviceName = "ZStage"; // LIN 01/01/2012 CHANGED FROM 
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(g_LegacyZStageDeviceName, "Legacy Z stage"); // LIN 01/01/2012 CHANGED 
-   AddAvailableDeviceName(g_LegacyXYStageDeviceName, "Legacy XY Stage"); // LIN 01/01/2012 CHANGED 
+   RegisterDevice(g_LegacyZStageDeviceName, MM::StageDevice, "Legacy Z stage"); // LIN 01/01/2012 CHANGED
+   RegisterDevice(g_LegacyXYStageDeviceName, MM::XYStageDevice, "Legacy XY Stage"); // LIN 01/01/2012 CHANGED
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

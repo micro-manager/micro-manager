@@ -68,9 +68,9 @@ using namespace std;
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(g_DeviceNameDigitalIO, "NI digital IO");
-   AddAvailableDeviceName(g_DeviceNameAnalogIO, "NI analog IO");
-   //AddAvailableDeviceName(g_DeviceNameShutter);
+   RegisterDevice(g_DeviceNameDigitalIO, MM::StateDevice, "NI digital IO");
+   RegisterDevice(g_DeviceNameAnalogIO, MM::SignalIODevice, "NI analog IO");
+   //RegisterDevice(g_DeviceNameShutter, MM::ShutterDevice, "");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

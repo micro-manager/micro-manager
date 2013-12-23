@@ -113,9 +113,9 @@ using namespace std;
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {		
-	//AddAvailableDeviceName(g_NV120_1, "Piezosystem Jena NV120");		
-	AddAvailableDeviceName(g_StageDeviceName, "Single Axis Stage Ch1");		 
-	//AddAvailableDeviceName(g_Shutter, "PSJ Shutter");
+	//RegisterDevice(g_NV120_1, MM::HubDevice, "Piezosystem Jena NV120");
+	RegisterDevice(g_StageDeviceName, MM::StageDevice, "Single Axis Stage Ch1");
+	//RegisterDevice(g_Shutter, MM::ShutterDevice, "PSJ Shutter");
 }             
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)                  

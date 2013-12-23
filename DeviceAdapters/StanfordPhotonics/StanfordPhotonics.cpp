@@ -84,7 +84,7 @@ BOOL APIENTRY DllMain( HANDLE /*hModule*/,
 MODULE_API void InitializeModuleData()
 {
    // >>> do not declare any devices, since this adapter does not work properly
-   // AddAvailableDeviceName(g_MegaZName);
+   // RegisterDevice(g_MegaZName, MM::CameraDevice, "Stanford Photonics MegaZ camera");
 }
 
 MODULE_API void DeleteDevice(MM::Device* pDevice)

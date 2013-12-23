@@ -39,7 +39,7 @@ BOOL APIENTRY DllMain(  HANDLE /*hModule*/,
  */
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(g_CameraName, "Motic Camera Adapter");
+   RegisterDevice(g_CameraName, MM::CameraDevice, "Motic Camera Adapter");
 #ifdef _LOG_OUT_
    OutputDebugString("InitializeModuleData");
 #endif

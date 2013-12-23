@@ -29,9 +29,9 @@ const char* g_DeviceNameNIDAQDPattern = "NI-DAQ-Digital-Pattern";
 
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(g_DeviceNameNIDAQDO, "NI-DAQ DIO");
-   AddAvailableDeviceName(g_DeviceNameNIDAQAO, "NI-DAQ AO");
-   AddAvailableDeviceName(g_DeviceNameNIDAQDPattern, "NI-DAQ Triggered digital patterns");
+   RegisterDevice(g_DeviceNameNIDAQDO, MM::ShutterDevice, "NI-DAQ DIO");
+   RegisterDevice(g_DeviceNameNIDAQAO, MM::SignalIODevice, "NI-DAQ AO");
+   RegisterDevice(g_DeviceNameNIDAQDPattern, MM::GenericDevice, "NI-DAQ Triggered digital patterns");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

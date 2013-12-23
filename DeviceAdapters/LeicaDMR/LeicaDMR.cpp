@@ -80,14 +80,14 @@ LeicaDMRHub g_hub;
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(g_LeicaDMRHub,"LeicaDMR (DM RXA, DM RME, RD RBE, DM RXA, DM RA, DM IRBE) Controller");
-   AddAvailableDeviceName(g_LeicaDMRRLModule,"Reflected Light LModule");   
-   AddAvailableDeviceName(g_LeicaDMRLamp,"Halogen Lamp"); 
-   AddAvailableDeviceName(g_LeicaDMRShutter, "Reflected Light Shutter"); 
-   AddAvailableDeviceName(g_LeicaDMRZDrive, "Z Drive"); 
-   AddAvailableDeviceName(g_LeicaDMRObjNosepiece, "Objective Nosepiece"); 
-   AddAvailableDeviceName(g_LeicaDMRApertureDiaphragm, "Aperture Diaphragm");
-   AddAvailableDeviceName(g_LeicaDMRFieldDiaphragm, "Field Diaphragm");
+   RegisterDevice(g_LeicaDMRHub, MM::GenericDevice, "LeicaDMR (DM RXA, DM RME, RD RBE, DM RXA, DM RA, DM IRBE) Controller");
+   RegisterDevice(g_LeicaDMRRLModule, MM::StateDevice, "Reflected Light LModule");
+   RegisterDevice(g_LeicaDMRLamp, MM::ShutterDevice, "Halogen Lamp");
+   RegisterDevice(g_LeicaDMRShutter, MM::ShutterDevice, "Reflected Light Shutter");
+   RegisterDevice(g_LeicaDMRZDrive, MM::StageDevice, "Z Drive");
+   RegisterDevice(g_LeicaDMRObjNosepiece, MM::StateDevice, "Objective Nosepiece");
+   RegisterDevice(g_LeicaDMRApertureDiaphragm, MM::GenericDevice, "Aperture Diaphragm");
+   RegisterDevice(g_LeicaDMRFieldDiaphragm, MM::GenericDevice, "Field Diaphragm");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

@@ -173,12 +173,12 @@ int InitializeTheBoard()
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(g_DeviceNameDTOLSwitch);
-   AddAvailableDeviceName(g_DeviceNameDTOLShutter);
-   AddAvailableDeviceName(g_DeviceNameDTOLDA0);
-   AddAvailableDeviceName(g_DeviceNameDTOLDA1);
-   AddAvailableDeviceName(g_DeviceNameDTOLDA2);
-   AddAvailableDeviceName(g_DeviceNameDTOLDA3);
+   RegisterDevice(g_DeviceNameDTOLSwitch, MM::StateDevice, "DTOL Switch");
+   RegisterDevice(g_DeviceNameDTOLShutter, MM::ShutterDevice, "DTOL Shutter");
+   RegisterDevice(g_DeviceNameDTOLDA0, MM::SignalIODevice, "DTOL DAC 0");
+   RegisterDevice(g_DeviceNameDTOLDA1, MM::SignalIODevice, "DTOL DAC 1");
+   RegisterDevice(g_DeviceNameDTOLDA2, MM::SignalIODevice, "DTOL DAC 2");
+   RegisterDevice(g_DeviceNameDTOLDA3, MM::SignalIODevice, "DTOL DAC 3");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

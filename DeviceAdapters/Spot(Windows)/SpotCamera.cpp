@@ -55,8 +55,7 @@ static bool bApiAvailable_s;
 
 MODULE_API void InitializeModuleData()
 {
-	// could query driver and load up all cameras present on the system
-   AddAvailableDeviceName(g_DeviceName, "SpotCam");
+   RegisterDevice(g_DeviceName, MM::CameraDevice, "SPOT camera");
 }
 
 // the device name will contain the name specified by the spot driver

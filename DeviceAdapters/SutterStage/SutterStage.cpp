@@ -61,9 +61,9 @@ using namespace std;
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(g_Controller, "SutterStage Controller");             
-   AddAvailableDeviceName(g_XYStageDeviceName, "XY Stage");
-   // AddAvailableDeviceName(g_StageDeviceName, "Single Axis Stage");
+   RegisterDevice(g_Controller, MM::GenericDevice, "SutterStage Controller");
+   RegisterDevice(g_XYStageDeviceName, MM::XYStageDevice, "XY Stage");
+   // RegisterDevice(g_StageDeviceName, MM::StageDevice, "Single Axis Stage");
 }                                                                            
                                                                              
 MODULE_API MM::Device* CreateDevice(const char* deviceName)                  

@@ -124,7 +124,7 @@ const char* g_Keyword_FrameRates = "Frame Rates";
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(g_DeviceName, "FireWire camera (IIDC/DCAM compatible)");
+   RegisterDevice(g_DeviceName, MM::CameraDevice, "FireWire camera (IIDC/DCAM compatible)");
 }
 
 MODULE_API void DeleteDevice(MM::Device* pDevice)

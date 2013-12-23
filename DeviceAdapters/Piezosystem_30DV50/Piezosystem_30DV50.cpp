@@ -174,9 +174,9 @@ using namespace std;
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {	 
-	//AddAvailableDeviceName(g_30DV50, "Piezosystem 30DV50 Controller");
-	AddAvailableDeviceName(g_StageDeviceName, "Single Axis Stage");
-	AddAvailableDeviceName(g_Shutter, "PSJ Shutter");	
+	//RegisterDevice(g_30DV50, MM::HubDevice, "Piezosystem 30DV50 Controller");
+	RegisterDevice(g_StageDeviceName, MM::StageDevice, "Single Axis Stage");
+	RegisterDevice(g_Shutter, MM::ShutterDevice, "PSJ Shutter");
 }             
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)                  

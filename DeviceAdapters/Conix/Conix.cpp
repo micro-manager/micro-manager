@@ -39,10 +39,10 @@ using namespace std;
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-	AddAvailableDeviceName(g_ConixQuadFilterName,"External Filter Cube Switcher");
-	AddAvailableDeviceName(g_ConixHexFilterName,"External Filter Cube Switcher(6)");
-	AddAvailableDeviceName(g_ConixXYStageName, "Conix XY stage");
-	AddAvailableDeviceName(g_ConixZStageName, "Conix Z stage");
+	RegisterDevice(g_ConixQuadFilterName, MM::StateDevice, "External Filter Cube Switcher");
+	RegisterDevice(g_ConixHexFilterName, MM::StateDevice, "External Filter Cube Switcher(6)");
+	RegisterDevice(g_ConixXYStageName, MM::XYStageDevice, "Conix XY stage");
+	RegisterDevice(g_ConixZStageName, MM::StageDevice, "Conix Z stage");
 }
 
 

@@ -39,7 +39,7 @@ const char* DEVICE_NAME = "VLT_VersaLase";
 //Required Micro-Manager API Functions&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(DEVICE_NAME, "VLT_VersaLase");
+   RegisterDevice(DEVICE_NAME, MM::ShutterDevice, "VLT_VersaLase");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

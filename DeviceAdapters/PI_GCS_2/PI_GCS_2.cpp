@@ -153,25 +153,25 @@ std::string ExtractValue(const std::string& sMessage)
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(PIZStage::DeviceName_, "PI GCS Z-stage");
-   AddAvailableDeviceName(PIXYStage::DeviceName_, "PI GCS XY-stage");
+   RegisterDevice(PIZStage::DeviceName_, MM::StageDevice, "PI GCS Z-stage");
+   RegisterDevice(PIXYStage::DeviceName_, MM::XYStageDevice, "PI GCS XY-stage");
 #ifndef __APPLE__
-   AddAvailableDeviceName(PIGCSControllerDLLDevice::DeviceName_, "PI GCS DLL Controller");
+   RegisterDevice(PIGCSControllerDLLDevice::DeviceName_, MM::GenericDevice, "PI GCS DLL Controller");
 #endif
-   AddAvailableDeviceName(PIGCSControllerComDevice::DeviceName_, "PI GCS Controller");
+   RegisterDevice(PIGCSControllerComDevice::DeviceName_, MM::GenericDevice, "PI GCS Controller");
 
 #ifndef __APPLE__
-   AddAvailableDeviceName("C-843", "PI C-843 Controller");
+   RegisterDevice("C-843", MM::GenericDevice, "PI C-843 Controller");
 #endif
-   AddAvailableDeviceName("C-663.11", "PI C-663.11 Controller");
-   AddAvailableDeviceName("C-863.11", "PI C-863.11 Controller");
-   AddAvailableDeviceName("C-867", "PI C-867 Controller");
-   AddAvailableDeviceName("E-517/E-545", "PI E-517/E-545 Controller");
+   RegisterDevice("C-663.11", MM::GenericDevice, "PI C-663.11 Controller");
+   RegisterDevice("C-863.11", MM::GenericDevice, "PI C-863.11 Controller");
+   RegisterDevice("C-867", MM::GenericDevice, "PI C-867 Controller");
+   RegisterDevice("E-517/E-545", MM::GenericDevice, "PI E-517/E-545 Controller");
 #ifndef __APPLE__
-   AddAvailableDeviceName("E-710", "PI E-710 Controller");
+   RegisterDevice("E-710", MM::GenericDevice, "PI E-710 Controller");
 #endif
-   AddAvailableDeviceName("E-712", "PI E-712 Controller");
-   AddAvailableDeviceName("E-753", "PI E-753 Controller");
+   RegisterDevice("E-712", MM::GenericDevice, "PI E-712 Controller");
+   RegisterDevice("E-753", MM::GenericDevice, "PI E-753 Controller");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

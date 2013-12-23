@@ -43,8 +43,8 @@ BOOL APIENTRY DllMain( HANDLE /*hModule*/,
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(g_DeviceOxxLBXLDName, "Oxxius LBX-LD Laser Controller");
-   AddAvailableDeviceName(g_DeviceOxxLBXDPSSName, "Oxxius LBX-DPSS Laser Controller");
+   RegisterDevice(g_DeviceOxxLBXLDName, MM::GenericDevice, "Oxxius LBX-LD Laser Controller");
+   RegisterDevice(g_DeviceOxxLBXDPSSName, MM::GenericDevice, "Oxxius LBX-DPSS Laser Controller");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

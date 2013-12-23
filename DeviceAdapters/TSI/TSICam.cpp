@@ -90,7 +90,7 @@ static const WORD MAX_CONSOLE_LINES = 500;
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(g_DeviceTsiCam, "Thorlabs Scientific Imaging camera");
+   RegisterDevice(g_DeviceTsiCam, MM::CameraDevice, "Thorlabs Scientific Imaging camera");
 }
 
 MODULE_API void DeleteDevice(MM::Device* pDevice)

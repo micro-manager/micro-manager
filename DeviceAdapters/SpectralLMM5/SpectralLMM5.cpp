@@ -51,8 +51,8 @@ SpectralLMM5Interface* g_Interface = NULL;
 ////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(g_DeviceNameLMM5Hub);
-   AddAvailableDeviceName(g_DeviceNameLMM5Shutter);
+   RegisterDevice(g_DeviceNameLMM5Hub, MM::GenericDevice, "LMM5 Hub");
+   RegisterDevice(g_DeviceNameLMM5Shutter, MM::ShutterDevice, "LMM5 Shutter");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

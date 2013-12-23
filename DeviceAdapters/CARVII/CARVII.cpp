@@ -56,17 +56,17 @@ CARVIIHub g_hub;
 ///////////////////////////////////////////////////////////////////////////////
 
 MODULE_API void InitializeModuleData() {
-    AddAvailableDeviceName(g_CARVIIHub, "Hub (Needed for CARVII)");
-    AddAvailableDeviceName(g_CARVIIShutter, "Confocal shutter");
-    AddAvailableDeviceName(g_CARVIIExFilter, "Confocal excitation filter wheel");
-    AddAvailableDeviceName(g_CARVIIEmFilter, "Confocal emission filter wheel");
-    AddAvailableDeviceName(g_CARVIIDichroicFilter, "Confocal dichroic wheel");
-    AddAvailableDeviceName(g_CARVIIFRAPIris, "Confocal field aperture");
-    AddAvailableDeviceName(g_CARVIIIntensityIris, "Confocal \"Condenser\" illumination aperture");
-    AddAvailableDeviceName(g_CARVIIDiskSlider, "Spinning disk slider");
-    AddAvailableDeviceName(g_CARVIISpinMotor, "Spinning disk motor");
-    AddAvailableDeviceName(g_CARVIIPrismSlider, "Light path slider");
-    AddAvailableDeviceName(g_CARVIITouchScreen, "Touchscreen lockout control");
+    RegisterDevice(g_CARVIIHub, MM::GenericDevice, "Hub (Needed for CARVII)");
+    RegisterDevice(g_CARVIIShutter, MM::ShutterDevice, "Confocal shutter");
+    RegisterDevice(g_CARVIIExFilter, MM::StateDevice, "Confocal excitation filter wheel");
+    RegisterDevice(g_CARVIIEmFilter, MM::StateDevice, "Confocal emission filter wheel");
+    RegisterDevice(g_CARVIIDichroicFilter, MM::StateDevice, "Confocal dichroic wheel");
+    RegisterDevice(g_CARVIIFRAPIris, MM::GenericDevice, "Confocal field aperture");
+    RegisterDevice(g_CARVIIIntensityIris, MM::GenericDevice, "Confocal \"Condenser\" illumination aperture");
+    RegisterDevice(g_CARVIIDiskSlider, MM::StateDevice, "Spinning disk slider");
+    RegisterDevice(g_CARVIISpinMotor, MM::StateDevice, "Spinning disk motor");
+    RegisterDevice(g_CARVIIPrismSlider, MM::StateDevice, "Light path slider");
+    RegisterDevice(g_CARVIITouchScreen, MM::StateDevice, "Touchscreen lockout control");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName) {

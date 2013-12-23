@@ -38,8 +38,8 @@ const char* g_MaestroShutterName = "MaestroServoAsShutter";
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(g_MaestroServoName, "Pololu MaestroServo controller" );
-   AddAvailableDeviceName(g_MaestroShutterName, "Pololu MaestroServo as shutter" );
+   RegisterDevice(g_MaestroServoName, MM::GenericDevice, "Pololu MaestroServo controller");
+   RegisterDevice(g_MaestroShutterName, MM::ShutterDevice, "Pololu MaestroServo as shutter");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

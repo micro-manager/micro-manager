@@ -58,9 +58,9 @@ bool APIENTRY DllMain( HANDLE /*hModule*/,
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(g_DeviceNameLCShutter, "Shutter");
-   AddAvailableDeviceName(g_DeviceNameLCSafetyShutter, "SafetyShutter");
-   AddAvailableDeviceName(g_DeviceNameLCDA, "DA");
+   RegisterDevice(g_DeviceNameLCShutter, MM::ShutterDevice, "Shutter");
+   RegisterDevice(g_DeviceNameLCSafetyShutter, MM::ShutterDevice, "SafetyShutter");
+   RegisterDevice(g_DeviceNameLCDA, MM::SignalIODevice, "DA");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

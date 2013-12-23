@@ -77,7 +77,7 @@ BOOL APIENTRY DllMain( HANDLE /*hModule*/,
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName("Sensicam", "PCO Sensicam camera adapter");
+   RegisterDevice("Sensicam", MM::CameraDevice, "PCO Sensicam camera adapter");
 }
 
 MODULE_API void DeleteDevice(MM::Device* pDevice)

@@ -106,7 +106,7 @@ BOOL APIENTRY DllMain(HANDLE /*hModule*/, DWORD  ul_reason_for_call,
 
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(g_CameraDeviceName, "QImaging universal camera adapter");
+   RegisterDevice(g_CameraDeviceName, MM::CameraDevice, "QImaging universal camera adapter");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

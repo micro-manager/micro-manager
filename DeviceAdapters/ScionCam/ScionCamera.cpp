@@ -156,30 +156,30 @@ const char* g_PixelType_16bit = "16bit";
 MODULE_API void InitializeModuleData()
 {
 	// generic open for scion cameras
-	AddAvailableDeviceName(g_CameraDeviceName, "Scion 1394 Camera");
+	RegisterDevice(g_CameraDeviceName, MM::CameraDevice, "Scion 1394 Camera");
 
 	// get list of available cameras - then advertise the interface
    /*
-	AddAvailableDeviceName(g_CameraCFW1308M, "Scion CFW-1308 1394 Grayscale Camera");
-	AddAvailableDeviceName(g_CameraCFW1308C, "Scion CFW-1308 1394 Color Camera");
-	AddAvailableDeviceName(g_CameraCFW1310M, "Scion CFW-1310 1394 Grayscale Camera");
-	AddAvailableDeviceName(g_CameraCFW1310C, "Scion CFW-1310 1394 Color Camera");
-	AddAvailableDeviceName(g_CameraCFW1312M, "Scion CFW-1312 1394 Grayscale Camera");
-	AddAvailableDeviceName(g_CameraCFW1312C, "Scion CFW-1312 1394 Color Camera");
+	RegisterDevice(g_CameraCFW1308M, MM::CameraDevice, "Scion CFW-1308 1394 Grayscale Camera");
+	RegisterDevice(g_CameraCFW1308C, MM::CameraDevice, "Scion CFW-1308 1394 Color Camera");
+	RegisterDevice(g_CameraCFW1310M, MM::CameraDevice, "Scion CFW-1310 1394 Grayscale Camera");
+	RegisterDevice(g_CameraCFW1310C, MM::CameraDevice, "Scion CFW-1310 1394 Color Camera");
+	RegisterDevice(g_CameraCFW1312M, MM::CameraDevice, "Scion CFW-1312 1394 Grayscale Camera");
+	RegisterDevice(g_CameraCFW1312C, MM::CameraDevice, "Scion CFW-1312 1394 Color Camera");
 
-	AddAvailableDeviceName(g_CameraCFW1608M, "Scion CFW-1608 1394 Grayscale Camera");
-	AddAvailableDeviceName(g_CameraCFW1608C, "Scion CFW-1608 1394 Color Camera");
-	AddAvailableDeviceName(g_CameraCFW1610M, "Scion CFW-1610 1394 Grayscale Camera");
-	AddAvailableDeviceName(g_CameraCFW1610C, "Scion CFW-1610 1394 Color Camera");
-	AddAvailableDeviceName(g_CameraCFW1612M, "Scion CFW-1612 1394 Grayscale Camera");
-	AddAvailableDeviceName(g_CameraCFW1612C, "Scion CFW-1612 1394 Color Camera");
+	RegisterDevice(g_CameraCFW1608M, MM::CameraDevice, "Scion CFW-1608 1394 Grayscale Camera");
+	RegisterDevice(g_CameraCFW1608C, MM::CameraDevice, "Scion CFW-1608 1394 Color Camera");
+	RegisterDevice(g_CameraCFW1610M, MM::CameraDevice, "Scion CFW-1610 1394 Grayscale Camera");
+	RegisterDevice(g_CameraCFW1610C, MM::CameraDevice, "Scion CFW-1610 1394 Color Camera");
+	RegisterDevice(g_CameraCFW1612M, MM::CameraDevice, "Scion CFW-1612 1394 Grayscale Camera");
+	RegisterDevice(g_CameraCFW1612C, MM::CameraDevice, "Scion CFW-1612 1394 Color Camera");
 
-	AddAvailableDeviceName(g_CameraCFW1008M, "Scion CFW-1008 1394 Grayscale Camera");
-	AddAvailableDeviceName(g_CameraCFW1008C, "Scion CFW-1008 1394 Color Camera");
-	AddAvailableDeviceName(g_CameraCFW1010M, "Scion CFW-1010 1394 Grayscale Camera");
-	AddAvailableDeviceName(g_CameraCFW1010C, "Scion CFW-1010 1394 Color Camera");
-	AddAvailableDeviceName(g_CameraCFW1012M, "Scion CFW-1012 1394 Grayscale Camera");
-	AddAvailableDeviceName(g_CameraCFW1012C, "Scion CFW-1012 1394 Color Camera");
+	RegisterDevice(g_CameraCFW1008M, MM::CameraDevice, "Scion CFW-1008 1394 Grayscale Camera");
+	RegisterDevice(g_CameraCFW1008C, MM::CameraDevice, "Scion CFW-1008 1394 Color Camera");
+	RegisterDevice(g_CameraCFW1010M, MM::CameraDevice, "Scion CFW-1010 1394 Grayscale Camera");
+	RegisterDevice(g_CameraCFW1010C, MM::CameraDevice, "Scion CFW-1010 1394 Color Camera");
+	RegisterDevice(g_CameraCFW1012M, MM::CameraDevice, "Scion CFW-1012 1394 Grayscale Camera");
+	RegisterDevice(g_CameraCFW1012C, MM::CameraDevice, "Scion CFW-1012 1394 Color Camera");
    */
 }
 

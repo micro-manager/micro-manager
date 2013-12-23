@@ -33,7 +33,7 @@ bool liveView_;
 // Module Interface
 MODULE_API void InitializeModuleData()
 {
-	AddAvailableDeviceName(g_CameraDeviceName, "biostep EagleIce");
+	RegisterDevice(g_CameraDeviceName, MM::CameraDevice, "biostep EagleIce");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

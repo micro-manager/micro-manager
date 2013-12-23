@@ -93,44 +93,24 @@ const char* g_Keyword_LoadSample = "Load Position";
 
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(g_ZeissDeviceName,"Zeiss Axiovert 200m controlled through serial interface");
-   AddAvailableDeviceName(g_ZeissShutter,"Shutter"); 
-   AddAvailableDeviceName(g_ZeissShutterMF,"ShutterMFFirmware"); 
-   AddAvailableDeviceName(g_ZeissReflector,"Reflector Turret (dichroics)"); 
-   AddAvailableDeviceName(g_ZeissSidePort,"SidePort switcher"); 
-   AddAvailableDeviceName(g_ZeissBasePort,"BasePort Slider"); 
-   AddAvailableDeviceName(g_ZeissObjectives,"Objective Turret"); 
-   AddAvailableDeviceName(g_ZeissCondenser,"Condenser Turret"); 
-   AddAvailableDeviceName(g_ZeissOptovar,"Optovar"); 
-   AddAvailableDeviceName(g_ZeissTubelens,"Tubelens"); 
-   AddAvailableDeviceName(g_ZeissLampMirror,"Lamp Switcher"); 
-   AddAvailableDeviceName(g_ZeissHalogenLamp,"Halogen Lamp"); 
-   AddAvailableDeviceName(g_ZeissFocusName,"Z-Drive"); 
-   AddAvailableDeviceName(g_ZeissExtFilterWheel,"External FilterWheel"); 
-   AddAvailableDeviceName(g_ZeissFilterWheel1,"FilterWheel 1"); 
-   AddAvailableDeviceName(g_ZeissFilterWheel2,"FilterWheel 2"); 
-   AddAvailableDeviceName(g_ZeissXYStage,"XY Stage (MCU 28)"); 
-   AddAvailableDeviceName(g_ZStage,"Z Stage on Axioskop 2"); 
-
-   // TODO: remove when finished with revision
-/*
-   if( DiscoverabilityTest())
-   {
-      // only the 'turrets' implment isPresent??
-      SetDeviceIsDiscoverable(g_ZeissReflector,true);
-      SetDeviceIsDiscoverable(g_ZeissObjectives,true);
-      SetDeviceIsDiscoverable(g_ZeissExtFilterWheel,true);
-      SetDeviceIsDiscoverable(g_ZeissOptovar,true);
-      SetDeviceIsDiscoverable(g_ZeissFilterWheel1,true);;
-      SetDeviceIsDiscoverable(g_ZeissFilterWheel2,true);
-      SetDeviceIsDiscoverable(g_ZeissCondenser,true);
-      //SetDeviceIsDiscoverable(g_CondenserFrontlens,true);
-      SetDeviceIsDiscoverable(g_ZeissTubelens,true);
-      SetDeviceIsDiscoverable(g_ZeissBasePort,true);
-      SetDeviceIsDiscoverable(g_ZeissSidePort,true);
-      SetDeviceIsDiscoverable(g_ZeissLampMirror,true);
-   }
-*/
+   RegisterDevice(g_ZeissDeviceName, MM::HubDevice, "Zeiss Axiovert 200m controlled through serial interface");
+   RegisterDevice(g_ZeissShutter, MM::ShutterDevice, "Shutter");
+   RegisterDevice(g_ZeissShutterMF, MM::ShutterDevice, "ShutterMFFirmware");
+   RegisterDevice(g_ZeissReflector, MM::StateDevice, "Reflector Turret (dichroics)");
+   RegisterDevice(g_ZeissSidePort, MM::StateDevice, "SidePort switcher");
+   RegisterDevice(g_ZeissBasePort, MM::StateDevice, "BasePort Slider");
+   RegisterDevice(g_ZeissObjectives, MM::StateDevice, "Objective Turret");
+   RegisterDevice(g_ZeissCondenser, MM::StateDevice, "Condenser Turret");
+   RegisterDevice(g_ZeissOptovar, MM::StateDevice, "Optovar");
+   RegisterDevice(g_ZeissTubelens, MM::StateDevice, "Tubelens");
+   RegisterDevice(g_ZeissLampMirror, MM::StateDevice, "Lamp Switcher");
+   RegisterDevice(g_ZeissHalogenLamp, MM::ShutterDevice, "Halogen Lamp");
+   RegisterDevice(g_ZeissFocusName, MM::StageDevice, "Z-Drive");
+   RegisterDevice(g_ZeissExtFilterWheel, MM::StateDevice, "External FilterWheel");
+   RegisterDevice(g_ZeissFilterWheel1, MM::StateDevice, "FilterWheel 1");
+   RegisterDevice(g_ZeissFilterWheel2, MM::StateDevice, "FilterWheel 2");
+   RegisterDevice(g_ZeissXYStage, MM::XYStageDevice, "XY Stage (MCU 28)");
+   RegisterDevice(g_ZStage, MM::StageDevice, "Z Stage on Axioskop 2");
 }
 
 using namespace std;

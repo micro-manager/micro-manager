@@ -48,8 +48,8 @@ LeicaDMSTCHub g_hub;
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(g_LeicaDMSTCHub,"LeicaDMSTC Controller");
-   AddAvailableDeviceName(g_LeicaDMSTCXYDrive, "XY Drive");
+   RegisterDevice(g_LeicaDMSTCHub, MM::GenericDevice, "LeicaDMSTC Controller");
+   RegisterDevice(g_LeicaDMSTCXYDrive, MM::XYStageDevice, "XY Drive");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

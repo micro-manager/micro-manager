@@ -91,10 +91,10 @@ BOOL APIENTRY DllMain( HANDLE /*hModule*/,
 
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(g_BitFlowCameraDeviceName, "BitFlow frame grabber");
-   AddAvailableDeviceName(g_BitFlowCameraDeviceName2, "BitFlow dual frame grabber");
-   AddAvailableDeviceName(g_VShutterDeviceName, "Virtual dual shutter");
-   // AddAvailableDeviceName(g_TwoPhotonFilterDeviceName, "2-photon filter wheel");
+   RegisterDevice(g_BitFlowCameraDeviceName, MM::CameraDevice, "BitFlow frame grabber");
+   RegisterDevice(g_BitFlowCameraDeviceName2, MM::CameraDevice, "BitFlow dual frame grabber");
+   RegisterDevice(g_VShutterDeviceName, MM::ShutterDevice, "Virtual dual shutter");
+   // RegisterDevice(g_TwoPhotonFilterDeviceName, MM::StateDevice, "2-photon filter wheel");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

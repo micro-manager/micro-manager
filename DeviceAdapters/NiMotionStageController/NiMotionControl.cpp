@@ -69,8 +69,8 @@ const char* g_ZStageDeviceName = "NI_Motion_ZStage";
 
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(g_XYStageDeviceName, "NI Motion XY stage");
-   AddAvailableDeviceName(g_ZStageDeviceName,"NI Motion Z or single axis stage");
+   RegisterDevice(g_XYStageDeviceName, MM::XYStageDevice, "NI Motion XY stage");
+   RegisterDevice(g_ZStageDeviceName, MM::StageDevice, "NI Motion Z or single axis stage");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

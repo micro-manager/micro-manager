@@ -40,7 +40,7 @@ const char* g_Modulate = "Modulate";
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(g_NeosName, "Neos controller with USB" );
+   RegisterDevice(g_NeosName, MM::ShutterDevice, "Neos controller with USB" );
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

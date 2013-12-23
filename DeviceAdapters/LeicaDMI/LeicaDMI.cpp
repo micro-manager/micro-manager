@@ -119,26 +119,25 @@ const char* g_LeicaAFC = "Adaptive Focus Control";
 
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(g_LeicaDeviceName,"Leica DMI microscope controlled through serial interface");
-   AddAvailableDeviceName(g_LeicaTransmittedLightShutter,"Transmitted Light Shutter"); 
-   AddAvailableDeviceName(g_LeicaIncidentLightShutter,"Incident Light Shutter"); 
-   AddAvailableDeviceName(g_LeicaReflector,"Reflector Turret (dichroics)"); 
-   AddAvailableDeviceName(g_LeicaNosePiece,"Objective Turret");
-   AddAvailableDeviceName(g_LeicaFastFilterWheel,"Fast Filter Wheel");
-   AddAvailableDeviceName(g_LeicaFocusAxis,"Z-drive");
-   AddAvailableDeviceName(g_LeicaXYStage,"XYStage");
-   AddAvailableDeviceName(g_LeicaFieldDiaphragmTL,"Field Diaphragm (Trans)");
-   AddAvailableDeviceName(g_LeicaApertureDiaphragmTL,"Aperture Diaphragm (Condensor)");
-   AddAvailableDeviceName(g_LeicaFieldDiaphragmIL,"Field Diaphragm (Fluorescence)");
-   AddAvailableDeviceName(g_LeicaApertureDiaphragmIL,"Aperture Diaphragm (Fluorescence)");
-   AddAvailableDeviceName(g_LeicaMagChanger,"Tube Lens (magnification changer)");
-   AddAvailableDeviceName(g_LeicaTLPolarizer, "Transmitted light Polarizer");
-   AddAvailableDeviceName(g_LeicaDICTurret, "DIC Turret");
-   AddAvailableDeviceName(g_LeicaCondensorTurret, "Condensor Turret");
-   AddAvailableDeviceName(g_LeicaTransmittedLight,"Transmitted Light");
-   AddAvailableDeviceName(g_LeicaAFC,"Adaptive Focus Control");
-
-	AddAvailableDeviceName(::g_LeicaSidePort,"Side Port");
+   RegisterDevice(g_LeicaDeviceName, MM::HubDevice, "Leica DMI microscope controlled through serial interface");
+   RegisterDevice(g_LeicaTransmittedLightShutter, MM::ShutterDevice, "Transmitted Light Shutter");
+   RegisterDevice(g_LeicaIncidentLightShutter, MM::ShutterDevice, "Incident Light Shutter");
+   RegisterDevice(g_LeicaReflector, MM::StateDevice, "Reflector Turret (dichroics)");
+   RegisterDevice(g_LeicaNosePiece, MM::StateDevice, "Objective Turret");
+   RegisterDevice(g_LeicaFastFilterWheel, MM::StateDevice, "Fast Filter Wheel");
+   RegisterDevice(g_LeicaFocusAxis, MM::StageDevice, "Z-drive");
+   RegisterDevice(g_LeicaXYStage, MM::XYStageDevice, "XYStage");
+   RegisterDevice(g_LeicaFieldDiaphragmTL, MM::GenericDevice, "Field Diaphragm (Trans)");
+   RegisterDevice(g_LeicaApertureDiaphragmTL, MM::GenericDevice, "Aperture Diaphragm (Condensor)");
+   RegisterDevice(g_LeicaFieldDiaphragmIL, MM::GenericDevice, "Field Diaphragm (Fluorescence)");
+   RegisterDevice(g_LeicaApertureDiaphragmIL, MM::GenericDevice, "Aperture Diaphragm (Fluorescence)");
+   RegisterDevice(g_LeicaMagChanger, MM::MagnifierDevice, "Tube Lens (magnification changer)");
+   RegisterDevice(g_LeicaTLPolarizer, MM::StateDevice, "Transmitted light Polarizer");
+   RegisterDevice(g_LeicaDICTurret, MM::StateDevice, "DIC Turret");
+   RegisterDevice(g_LeicaCondensorTurret, MM::StateDevice, "Condensor Turret");
+   RegisterDevice(g_LeicaTransmittedLight, MM::ShutterDevice, "Transmitted Light");
+   RegisterDevice(g_LeicaAFC, MM::AutoFocusDevice, "Adaptive Focus Control");
+   RegisterDevice(g_LeicaSidePort, MM::StateDevice, "Side Port");
 }
 using namespace std;
 

@@ -53,8 +53,7 @@ const char * line_feed = "\n";
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(g_ControllerName, "PrecisExcite LED illuminator");
-   
+   RegisterDevice(g_ControllerName, MM::ShutterDevice, "PrecisExcite LED illuminator");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

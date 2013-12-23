@@ -45,8 +45,8 @@ using namespace std;
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-     AddAvailableDeviceName(g_AOTF, "AAAOTF");
-	 AddAvailableDeviceName(g_mAOTF, "multiAAAOTF");
+   RegisterDevice(g_AOTF, MM::ShutterDevice, "AAAOTF");
+   RegisterDevice(g_mAOTF, MM::ShutterDevice, "multiAAAOTF");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

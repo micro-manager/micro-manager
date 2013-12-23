@@ -60,11 +60,11 @@ CSU22Hub g_hub;
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-      AddAvailableDeviceName(g_CSU22Hub,"CSU22 Hub (Needed for CSU22)");
-      AddAvailableDeviceName(g_CSU22NDFilter,"Neutral Density Filter");   
-      AddAvailableDeviceName(g_CSU22FilterSet,"Filter Set (Dichroics)");   
-      AddAvailableDeviceName(g_CSU22Shutter,"Shutter");   
-      AddAvailableDeviceName(g_CSU22DriveSpeed,"DriveSpeed");   
+   RegisterDevice(g_CSU22Hub, MM::GenericDevice, "CSU22 Hub (Needed for CSU22)");
+   RegisterDevice(g_CSU22NDFilter, MM::StateDevice, "Neutral Density Filter");
+   RegisterDevice(g_CSU22FilterSet, MM::StateDevice, "Filter Set (Dichroics)");
+   RegisterDevice(g_CSU22Shutter, MM::ShutterDevice, "Shutter");
+   RegisterDevice(g_CSU22DriveSpeed, MM::StateDevice, "DriveSpeed");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

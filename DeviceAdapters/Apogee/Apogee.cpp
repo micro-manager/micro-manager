@@ -77,7 +77,7 @@ BOOL APIENTRY DllMain( HANDLE /*hModule*/,
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-    AddAvailableDeviceName(g_CameraDeviceName,    "Apogee Alta camera adapter");
+    RegisterDevice(g_CameraDeviceName, MM::CameraDevice, "Apogee Alta camera adapter");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

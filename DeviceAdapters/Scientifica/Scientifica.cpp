@@ -44,8 +44,8 @@ const char* g_ZStageDeviceName = "ZStage";
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(g_ZStageDeviceName, "Z Stage");
-   AddAvailableDeviceName(g_XYStageDeviceName, "XY Stage");;
+   RegisterDevice(g_ZStageDeviceName, MM::StageDevice, "Z Stage");
+   RegisterDevice(g_XYStageDeviceName, MM::XYStageDevice, "XY Stage");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

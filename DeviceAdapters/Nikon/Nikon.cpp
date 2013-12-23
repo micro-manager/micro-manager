@@ -53,9 +53,9 @@ using namespace std;
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(g_ZStageDeviceName, "Remote accessory Z-stage");
-   AddAvailableDeviceName(g_TIRFShutterController, "TIRF Laser Shutter controller T-LUSU(2)");
-   AddAvailableDeviceName(g_IntensiLightShutter, "IntensiLight Shutter");
+   RegisterDevice(g_ZStageDeviceName, MM::StageDevice, "Remote accessory Z-stage");
+   RegisterDevice(g_TIRFShutterController, MM::ShutterDevice, "TIRF Laser Shutter controller T-LUSU(2)");
+   RegisterDevice(g_IntensiLightShutter, MM::ShutterDevice, "IntensiLight Shutter");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

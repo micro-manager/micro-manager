@@ -140,7 +140,7 @@ BOOL APIENTRY DllMain( HANDLE /*hModule*/,
 
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(g_CameraDeviceName, "Jenoptik_ProgRes_Camera");
+   RegisterDevice(g_CameraDeviceName, MM::CameraDevice, "Jenoptik_ProgRes_Camera");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

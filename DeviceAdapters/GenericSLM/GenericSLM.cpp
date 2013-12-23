@@ -54,8 +54,7 @@ const char* g_Keyword_MonochromeColor = "MonochromeColor";
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(g_GenericSLMName, "Spatial Light Modulator controlled through computer graphics output");
-   
+   RegisterDevice(g_GenericSLMName, MM::SLMDevice, "Spatial Light Modulator controlled through computer graphics output");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

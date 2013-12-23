@@ -68,11 +68,11 @@ using namespace std;
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(g_Controller, "Ludl Controller");             
-   AddAvailableDeviceName(g_Shutter, "Ludl Shutter");             
-   AddAvailableDeviceName(g_Wheel, "Ludl Filter Wheel");
-   AddAvailableDeviceName(g_XYStageDeviceName, "XY Stage");
-   AddAvailableDeviceName(g_StageDeviceName, "Single Axis Stage");
+   RegisterDevice(g_Controller, MM::GenericDevice, "Ludl Controller");
+   RegisterDevice(g_Shutter, MM::ShutterDevice, "Ludl Shutter");
+   RegisterDevice(g_Wheel, MM::StateDevice, "Ludl Filter Wheel");
+   RegisterDevice(g_XYStageDeviceName, MM::XYStageDevice, "XY Stage");
+   RegisterDevice(g_StageDeviceName, MM::StageDevice, "Single Axis Stage");
 }                                                                            
                                                                              
 MODULE_API MM::Device* CreateDevice(const char* deviceName)                  

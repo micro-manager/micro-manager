@@ -85,18 +85,18 @@ bool g_PFSinstalled = false;
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(g_HubName, "TE2000 controller - required for all other devices");
-   AddAvailableDeviceName(g_NosepieceName, "Nosepiece (objective turret)");
-   AddAvailableDeviceName(g_FocusName, "Z-stage");
-   AddAvailableDeviceName(g_OpticalPathName, "Optical path switch - camera, eyepiece, etc.");
-   AddAvailableDeviceName(g_AnalyzerName, "Analyzer control");
-   AddAvailableDeviceName(g_FilterBlockName, "Filter changer");
-   AddAvailableDeviceName(g_LampName, "Halogen lamp");
-   AddAvailableDeviceName(g_EpiShutterName, "Epi-fluorescence shutter");
-   AddAvailableDeviceName(g_UniblitzShutterName, "Uniblitz shutter");
-   AddAvailableDeviceName(g_AutoFocusName,  "PFS autofocus device");
-   AddAvailableDeviceName(g_PFSOffsetName,  "PFS Offset Lens");
-   AddAvailableDeviceName(g_ExcitationFilterWheelName, "Nikon excitation side filter changer");
+   RegisterDevice(g_HubName, MM::HubDevice, "TE2000 controller - required for all other devices");
+   RegisterDevice(g_NosepieceName, MM::StateDevice, "Nosepiece (objective turret)");
+   RegisterDevice(g_FocusName, MM::StageDevice, "Z-stage");
+   RegisterDevice(g_OpticalPathName, MM::StateDevice, "Optical path switch - camera, eyepiece, etc.");
+   RegisterDevice(g_AnalyzerName, MM::StateDevice, "Analyzer control");
+   RegisterDevice(g_FilterBlockName, MM::StateDevice, "Filter changer");
+   RegisterDevice(g_LampName, MM::ShutterDevice, "Halogen lamp");
+   RegisterDevice(g_EpiShutterName, MM::ShutterDevice, "Epi-fluorescence shutter");
+   RegisterDevice(g_UniblitzShutterName, MM::ShutterDevice, "Uniblitz shutter");
+   RegisterDevice(g_AutoFocusName, MM::AutoFocusDevice, "PFS autofocus device");
+   RegisterDevice(g_PFSOffsetName, MM::StageDevice, "PFS Offset Lens");
+   RegisterDevice(g_ExcitationFilterWheelName, MM::StateDevice, "Nikon excitation side filter changer");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

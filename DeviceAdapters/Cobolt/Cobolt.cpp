@@ -19,7 +19,7 @@ const char* g_DeviceCoboltName = "Cobolt";
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-    AddAvailableDeviceName(g_DeviceCoboltName, "Cobolt Laser Controller");
+    RegisterDevice(g_DeviceCoboltName, MM::ShutterDevice, "Cobolt Laser Controller");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

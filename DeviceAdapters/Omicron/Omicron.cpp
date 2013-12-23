@@ -25,7 +25,7 @@ const char* g_DeviceOmicronName = "Omicron";
 
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(g_DeviceOmicronName, "Omicron Laser Controller");
+   RegisterDevice(g_DeviceOmicronName, MM::GenericDevice, "Omicron Laser Controller");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

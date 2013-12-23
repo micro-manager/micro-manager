@@ -56,20 +56,20 @@ const char* g_TTL3Name="TTL-3";
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(g_Shutter1Name, "Pro Scan shutter 1");
-   AddAvailableDeviceName(g_Shutter2Name, "Pro Scan shutter 2");
-   AddAvailableDeviceName(g_Shutter3Name, "Pro Scan shutter 3");
-   AddAvailableDeviceName(g_LumenName, "Lumen 200Pro lamp shutter");
-   AddAvailableDeviceName(g_Wheel1Name, "Pro Scan filter wheel 1");
-   AddAvailableDeviceName(g_Wheel2Name, "Pro Scan filter wheel 2");
-   AddAvailableDeviceName(g_Wheel3Name, "Pro Scan filter wheel 3");
-   AddAvailableDeviceName(g_ZStageDeviceName, "Add-on Z-stage");
-   AddAvailableDeviceName(g_NanoStageDeviceName, "NanoScanZ");
-   AddAvailableDeviceName(g_XYStageDeviceName, "XY Stage");
-   AddAvailableDeviceName(g_TTL0Name, "Pro Scan TTL 0");
-   AddAvailableDeviceName(g_TTL1Name, "Pro Scan TTL 1");
-   AddAvailableDeviceName(g_TTL2Name, "Pro Scan TTL 2");
-   AddAvailableDeviceName(g_TTL3Name, "Pro Scan TTL 3");
+   RegisterDevice(g_Shutter1Name, MM::ShutterDevice, "Pro Scan shutter 1");
+   RegisterDevice(g_Shutter2Name, MM::ShutterDevice, "Pro Scan shutter 2");
+   RegisterDevice(g_Shutter3Name, MM::ShutterDevice, "Pro Scan shutter 3");
+   RegisterDevice(g_LumenName, MM::ShutterDevice, "Lumen 200Pro lamp shutter");
+   RegisterDevice(g_Wheel1Name, MM::StateDevice, "Pro Scan filter wheel 1");
+   RegisterDevice(g_Wheel2Name, MM::StateDevice, "Pro Scan filter wheel 2");
+   RegisterDevice(g_Wheel3Name, MM::StateDevice, "Pro Scan filter wheel 3");
+   RegisterDevice(g_ZStageDeviceName, MM::StageDevice, "Add-on Z-stage");
+   RegisterDevice(g_NanoStageDeviceName, MM::StageDevice, "NanoScanZ");
+   RegisterDevice(g_XYStageDeviceName, MM::XYStageDevice, "XY Stage");
+   RegisterDevice(g_TTL0Name, MM::ShutterDevice, "Pro Scan TTL 0");
+   RegisterDevice(g_TTL1Name, MM::ShutterDevice, "Pro Scan TTL 1");
+   RegisterDevice(g_TTL2Name, MM::ShutterDevice, "Pro Scan TTL 2");
+   RegisterDevice(g_TTL3Name, MM::ShutterDevice, "Pro Scan TTL 3");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

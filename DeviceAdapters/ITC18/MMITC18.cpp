@@ -93,11 +93,11 @@ bool APIENTRY DllMain( HANDLE /*hModule*/,
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-    AddAvailableDeviceName(g_DeviceNameITC18Hub, "Hub");
-    AddAvailableDeviceName(g_DeviceNameITC18Shutter, "Shutter");
-    AddAvailableDeviceName(g_DeviceNameITC18DAC, "DAC");
-    AddAvailableDeviceName(g_DeviceNameITC18ADC, "ADC");
-    AddAvailableDeviceName(g_DeviceNameITC18Protocol, "Protocol");
+    RegisterDevice(g_DeviceNameITC18Hub, MM::GenericDevice, "Hub");
+    RegisterDevice(g_DeviceNameITC18Shutter, MM::ShutterDevice, "Shutter");
+    RegisterDevice(g_DeviceNameITC18DAC, MM::SignalIODevice, "DAC");
+    RegisterDevice(g_DeviceNameITC18ADC, MM::SignalIODevice, "ADC");
+    RegisterDevice(g_DeviceNameITC18Protocol, MM::GenericDevice, "Protocol");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

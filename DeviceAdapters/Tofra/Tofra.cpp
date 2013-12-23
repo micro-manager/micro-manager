@@ -50,11 +50,11 @@ const char* g_rgbLEDDeviceName = "TOFRA RGB LED";
 
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(g_WheelDeviceName, "TOFRA Filter Wheel with Integrated Controller");
-   AddAvailableDeviceName(g_ZStageDeviceName, "TOFRA Z-Drive with Integrated Controller");
-   AddAvailableDeviceName(g_XYStageDeviceName, "TOFRA XYStage with Integrated Controller");
-   AddAvailableDeviceName(g_SliderDeviceName, "TOFRA Filter Cube Slider with Integrated Controller");
-   AddAvailableDeviceName(g_rgbLEDDeviceName, "TOFRA RGB LED Light Source");
+   RegisterDevice(g_WheelDeviceName, MM::StateDevice, "TOFRA Filter Wheel with Integrated Controller");
+   RegisterDevice(g_ZStageDeviceName, MM::StageDevice, "TOFRA Z-Drive with Integrated Controller");
+   RegisterDevice(g_XYStageDeviceName, MM::XYStageDevice, "TOFRA XYStage with Integrated Controller");
+   RegisterDevice(g_SliderDeviceName, MM::StateDevice, "TOFRA Filter Cube Slider with Integrated Controller");
+   RegisterDevice(g_rgbLEDDeviceName, MM::StateDevice, "TOFRA RGB LED Light Source");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

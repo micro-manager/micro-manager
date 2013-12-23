@@ -80,7 +80,7 @@ MODULE_API void InitializeModuleData()
    vector<string>::iterator iter = availableDevices.begin();                  
    while (iter != availableDevices.end()) {                                   
       deviceName = *iter;
-      AddAvailableDeviceName(deviceName.c_str(),"HID device");
+      RegisterDevice(deviceName.c_str(), MM::SerialDevice, "HID device");
       ++iter;                                                                
    }
 }

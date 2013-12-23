@@ -36,7 +36,7 @@ const char* g_CameraDeviceName = "Canon SLR";
 
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(g_CameraDeviceName, "Canon SLR");
+   RegisterDevice(g_CameraDeviceName, MM::CameraDevice, "Canon SLR");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

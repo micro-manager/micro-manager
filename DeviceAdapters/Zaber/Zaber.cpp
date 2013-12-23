@@ -40,7 +40,7 @@ using namespace std;
 //////////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(XYStageName, "Zaber XY Stage");
+   RegisterDevice(XYStageName, MM::XYStageDevice, "Zaber XY Stage");
 }                                                            
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)                  

@@ -105,7 +105,7 @@ BOOL APIENTRY DllMain(HANDLE/*hModule*/, DWORD ul_reason_for_call, LPVOID/*lpRes
  */
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(g_CameraName, g_CameraDeviceDescription);
+   RegisterDevice(g_CameraName, MM::CameraDevice, g_CameraDeviceDescription);
 }
 
 MODULE_API MM::Device * CreateDevice(const char * deviceName)

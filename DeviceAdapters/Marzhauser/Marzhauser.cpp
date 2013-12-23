@@ -62,14 +62,14 @@ using namespace std;
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(g_XYStageDeviceName, "Tango XY Stage");
-   AddAvailableDeviceName(g_ZStageDeviceName,  "Tango Z Axis");
-   AddAvailableDeviceName(g_AStageDeviceName,  "Tango A Axis");
-   AddAvailableDeviceName(g_ShutterName,       "Tango TTL Shutter");
-   AddAvailableDeviceName(g_LED1Name,          "Tango LED100-1 [0..100%]"); 
-   AddAvailableDeviceName(g_LED2Name,          "Tango LED100-2 [0..100%]"); 
-   AddAvailableDeviceName(g_DACName,           "Tango DAC [0..10V]"); 
-   AddAvailableDeviceName(g_ADCName,           "Tango ADC [0..5V]"); 
+   RegisterDevice(g_XYStageDeviceName, MM::XYStageDevice,  "Tango XY Stage");
+   RegisterDevice(g_ZStageDeviceName,  MM::StageDevice,    "Tango Z Axis");
+   RegisterDevice(g_AStageDeviceName,  MM::StageDevice,    "Tango A Axis");
+   RegisterDevice(g_ShutterName,       MM::ShutterDevice,  "Tango TTL Shutter");
+   RegisterDevice(g_LED1Name,          MM::ShutterDevice,  "Tango LED100-1 [0..100%]");
+   RegisterDevice(g_LED2Name,          MM::ShutterDevice,  "Tango LED100-2 [0..100%]");
+   RegisterDevice(g_DACName,           MM::SignalIODevice, "Tango DAC [0..10V]");
+   RegisterDevice(g_ADCName,           MM::SignalIODevice, "Tango ADC [0..5V]");
 }                                                                            
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)                  

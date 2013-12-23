@@ -60,11 +60,11 @@ CSUXHub g_hub;
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-      AddAvailableDeviceName(g_CSUXHub,"CSUX Hub (Needed for CSUX)");
-      AddAvailableDeviceName(g_CSUXFilterWheel,"Filter Wheel");   
-      AddAvailableDeviceName(g_CSUXDichroic,"Dichroic Mirror");   
-      AddAvailableDeviceName(g_CSUXShutter,"Shutter");   
-      AddAvailableDeviceName(g_CSUXDriveSpeed,"DriveSpeed");   
+   RegisterDevice(g_CSUXHub, MM::GenericDevice, "CSUX Hub (Needed for CSUX)");
+   RegisterDevice(g_CSUXFilterWheel, MM::StateDevice, "Filter Wheel");
+   RegisterDevice(g_CSUXDichroic, MM::StateDevice, "Dichroic Mirror");
+   RegisterDevice(g_CSUXShutter, MM::ShutterDevice, "Shutter");
+   RegisterDevice(g_CSUXDriveSpeed, MM::StateDevice, "DriveSpeed");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

@@ -170,7 +170,7 @@ BOOL APIENTRY DllMain( HANDLE /*hModule*/,
  */
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(g_CameraDeviceName, "Baumer Optronic driver for Leica Cameras");
+   RegisterDevice(g_CameraDeviceName, MM::CameraDevice, "Baumer Optronic driver for Leica Cameras");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

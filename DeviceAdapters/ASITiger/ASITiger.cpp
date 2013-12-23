@@ -68,15 +68,15 @@ using namespace std;
  */
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(g_TigerCommHubName, g_TigerCommHubDescription);
-   AddAvailableDeviceName(g_ZStageDeviceName, g_ZStageDeviceDescription);
-   AddAvailableDeviceName(g_XYStageDeviceName, g_XYStageDeviceDescription);
-   AddAvailableDeviceName(g_FSliderDeviceName, g_FSliderDeviceDescription);
-   AddAvailableDeviceName(g_TurretDeviceName, g_TurretDeviceDescription);
-   AddAvailableDeviceName(g_FWheelDeviceName, g_FWheelDeviceDescription);
-   AddAvailableDeviceName(g_MMirrorDeviceName, g_MMirrorDeviceDescription);
-   AddAvailableDeviceName(g_PiezoDeviceName, g_PiezoDeviceDescription);
-   AddAvailableDeviceName(g_CRISPDeviceName, g_CRISPDeviceDescription);
+   RegisterDevice(g_TigerCommHubName, MM::HubDevice, g_TigerCommHubDescription);
+   RegisterDevice(g_ZStageDeviceName, MM::StageDevice, g_ZStageDeviceDescription);
+   RegisterDevice(g_XYStageDeviceName, MM::XYStageDevice, g_XYStageDeviceDescription);
+   RegisterDevice(g_FSliderDeviceName, MM::StateDevice, g_FSliderDeviceDescription);
+   RegisterDevice(g_TurretDeviceName, MM::StateDevice, g_TurretDeviceDescription);
+   RegisterDevice(g_FWheelDeviceName, MM::StateDevice, g_FWheelDeviceDescription);
+   RegisterDevice(g_MMirrorDeviceName, MM::GalvoDevice, g_MMirrorDeviceDescription);
+   RegisterDevice(g_PiezoDeviceName, MM::StageDevice, g_PiezoDeviceDescription);
+   RegisterDevice(g_CRISPDeviceName, MM::AutoFocusDevice, g_CRISPDeviceDescription);
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

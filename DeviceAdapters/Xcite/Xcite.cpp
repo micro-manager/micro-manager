@@ -64,7 +64,7 @@ const char* g_XciteRetERR                   = "e";
 
 MODULE_API void InitializeModuleData()
 {
-  AddAvailableDeviceName(g_Xcite120PCName, "EXFO X-Cite 120 PC" );
+   RegisterDevice(g_Xcite120PCName, MM::ShutterDevice, "EXFO X-Cite 120 PC");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

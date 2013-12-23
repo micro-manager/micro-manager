@@ -20,7 +20,7 @@ const char* g_DeviceAquinasName = "Aquinas Controller";
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(g_DeviceAquinasName, g_DeviceAquinasName);
+   RegisterDevice(g_DeviceAquinasName, MM::GenericDevice, g_DeviceAquinasName);
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)   

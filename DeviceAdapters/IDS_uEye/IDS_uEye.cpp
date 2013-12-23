@@ -106,8 +106,7 @@ BOOL APIENTRY DllMain( HANDLE /*hModule*/,
  */
 MODULE_API void InitializeModuleData()
 {
-  AddAvailableDeviceName(g_CameraDeviceName, "uEye Camera");
-  
+  RegisterDevice(g_CameraDeviceName, MM::CameraDevice, "uEye Camera");
 }
 
 

@@ -56,8 +56,8 @@ using namespace std;
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(g_XYStageDeviceName, "LStep XY Stage");
-   AddAvailableDeviceName(g_ZStageDeviceName,  "LStep Z Axis");
+   RegisterDevice(g_XYStageDeviceName, MM::XYStageDevice, "LStep XY Stage");
+   RegisterDevice(g_ZStageDeviceName,  MM::StageDevice,   "LStep Z Axis");
 }                                                                            
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)                  

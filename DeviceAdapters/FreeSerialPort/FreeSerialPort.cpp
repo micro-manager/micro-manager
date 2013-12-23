@@ -66,7 +66,7 @@ BOOL APIENTRY DllMain( HANDLE /*hModule*/,
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-	AddAvailableDeviceName(g_DeviceName, "Free-form communication Serial Port.");
+   RegisterDevice(g_DeviceName, MM::GenericDevice, "Free-form communication Serial Port.");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

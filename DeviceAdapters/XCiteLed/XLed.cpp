@@ -80,49 +80,49 @@ MODULE_API void InitializeModuleData()
     //}
 
 	// initialize the controller device name
-	AddAvailableDeviceName( XLed::Instance()->GetXLedStr(XLed::XL_CtrlBoardName).c_str(),  XLed::Instance()->GetXLedStr(XLed::XL_CtrlBoardName).c_str());
+	RegisterDevice(XLed::Instance()->GetXLedStr(XLed::XL_CtrlBoardName).c_str(), MM::GenericDevice, XLed::Instance()->GetXLedStr(XLed::XL_CtrlBoardName).c_str());
 
     //if (ofsLogfile.is_open())
     //{
     //    ofsLogfile << "[" << tmNewTime.tm_year << "::" << tmNewTime.tm_mon << "::" << tmNewTime.tm_mday << "::" << tmNewTime.tm_hour << "::" << tmNewTime.tm_min << "::" << tmNewTime.tm_sec << "]   ";
-    //    ofsLogfile << "<XLed::AddAvailableDeviceName> :: XLedCtrl = (" << XLed::Instance()->GetXLedStr(XLed::XL_CtrlBoardName).c_str() << ")\n" << flush;
+    //    ofsLogfile << "<XLed::RegisterDevice> :: XLedCtrl = (" << XLed::Instance()->GetXLedStr(XLed::XL_CtrlBoardName).c_str() << ")\n" << flush;
     //    ofsLogfile.close();
     //}
 
 	// initialize the W LED device name
-	AddAvailableDeviceName(XLed::Instance()->GetXLedStr(XLed::XL_WLedDevName).c_str(), XLed::Instance()->GetXLedStr(XLed::XL_WLedDevName).c_str());
+	RegisterDevice(XLed::Instance()->GetXLedStr(XLed::XL_WLedDevName).c_str(), MM::ShutterDevice, XLed::Instance()->GetXLedStr(XLed::XL_WLedDevName).c_str());
 
     //if (ofsLogfile.is_open())
     //{
     //    ofsLogfile << "[" << tmNewTime.tm_year << "::" << tmNewTime.tm_mon << "::" << tmNewTime.tm_mday << "::" << tmNewTime.tm_hour << "::" << tmNewTime.tm_min << "::" << tmNewTime.tm_sec << "]   ";
-    //    ofsLogfile << "<XLed::AddAvailableDeviceName> :: XLedDevW = (" << XLed::Instance()->GetXLedStr(XLed::XL_WLedDevName).c_str() << ")\n" << flush;
+    //    ofsLogfile << "<XLed::RegisterDevice> :: XLedDevW = (" << XLed::Instance()->GetXLedStr(XLed::XL_WLedDevName).c_str() << ")\n" << flush;
     //}
 
 	// initialize the X LED device name
-	AddAvailableDeviceName(XLed::Instance()->GetXLedStr(XLed::XL_XLedDevName).c_str(), XLed::Instance()->GetXLedStr(XLed::XL_XLedDevName).c_str());
+	RegisterDevice(XLed::Instance()->GetXLedStr(XLed::XL_XLedDevName).c_str(), MM::ShutterDevice, XLed::Instance()->GetXLedStr(XLed::XL_XLedDevName).c_str());
 
     //if (ofsLogfile.is_open())
     //{
     //    ofsLogfile << "[" << tmNewTime.tm_year << "::" << tmNewTime.tm_mon << "::" << tmNewTime.tm_mday << "::" << tmNewTime.tm_hour << "::" << tmNewTime.tm_min << "::" << tmNewTime.tm_sec << "]   ";
-    //    ofsLogfile << "<XLed::AddAvailableDeviceName> :: XLedDevX = (" << XLed::Instance()->GetXLedStr(XLed::XL_XLedDevName).c_str() << ")\n" << flush;
+    //    ofsLogfile << "<XLed::RegisterDevice> :: XLedDevX = (" << XLed::Instance()->GetXLedStr(XLed::XL_XLedDevName).c_str() << ")\n" << flush;
     //}
 
 	// initialize the Y LED device name
-	AddAvailableDeviceName(XLed::Instance()->GetXLedStr(XLed::XL_YLedDevName).c_str(), XLed::Instance()->GetXLedStr(XLed::XL_YLedDevName).c_str());
+	RegisterDevice(XLed::Instance()->GetXLedStr(XLed::XL_YLedDevName).c_str(), MM::ShutterDevice, XLed::Instance()->GetXLedStr(XLed::XL_YLedDevName).c_str());
 
     //if (ofsLogfile.is_open())
     //{
     //    ofsLogfile << "[" << tmNewTime.tm_year << "::" << tmNewTime.tm_mon << "::" << tmNewTime.tm_mday << "::" << tmNewTime.tm_hour << "::" << tmNewTime.tm_min << "::" << tmNewTime.tm_sec << "]   ";
-    //    ofsLogfile << "<XLed::AddAvailableDeviceName> :: XLedDevY = (" << XLed::Instance()->GetXLedStr(XLed::XL_YLedDevName).c_str() << ")\n" << flush;
+    //    ofsLogfile << "<XLed::RegisterDevice> :: XLedDevY = (" << XLed::Instance()->GetXLedStr(XLed::XL_YLedDevName).c_str() << ")\n" << flush;
     //}
 
 	// initialize the Z LED device name
-	AddAvailableDeviceName(XLed::Instance()->GetXLedStr(XLed::XL_ZLedDevName).c_str(), XLed::Instance()->GetXLedStr(XLed::XL_ZLedDevName).c_str());
+	RegisterDevice(XLed::Instance()->GetXLedStr(XLed::XL_ZLedDevName).c_str(), MM::ShutterDevice, XLed::Instance()->GetXLedStr(XLed::XL_ZLedDevName).c_str());
 
     //if (ofsLogfile.is_open())
     //{
     //    ofsLogfile << "[" << tmNewTime.tm_year << "::" << tmNewTime.tm_mon << "::" << tmNewTime.tm_mday << "::" << tmNewTime.tm_hour << "::" << tmNewTime.tm_min << "::" << tmNewTime.tm_sec << "]   ";
-    //    ofsLogfile << "<XLed::AddAvailableDeviceName> :: XLedDevZ = (" << XLed::Instance()->GetXLedStr(XLed::XL_ZLedDevName).c_str() << ")\n" << flush;
+    //    ofsLogfile << "<XLed::RegisterDevice> :: XLedDevZ = (" << XLed::Instance()->GetXLedStr(XLed::XL_ZLedDevName).c_str() << ")\n" << flush;
     //    ofsLogfile.close();
    // }
 }

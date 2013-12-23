@@ -156,7 +156,7 @@ void UpdateDevList()
 		mmGetDevice(i, &deviceId);
 		sprintf(buf, "%8X", deviceId);
 		avail_devs.push_back(buf);
-		AddAvailableDeviceName(buf,"XIMEA camera adapter");
+		RegisterDevice(buf, MM::CameraDevice, "XIMEA camera adapter");
 	}
 }
 

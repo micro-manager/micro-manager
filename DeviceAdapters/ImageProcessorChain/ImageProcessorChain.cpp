@@ -62,7 +62,7 @@ BOOL APIENTRY DllMain( HANDLE /*hModule*/,
  */
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName("ImageProcessorChain", "ImageProcessorChain");
+   RegisterDevice("ImageProcessorChain", MM::ImageProcessorDevice, "ImageProcessorChain");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

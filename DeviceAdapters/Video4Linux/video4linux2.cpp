@@ -494,7 +494,7 @@ private:
 
 MODULE_API void InitializeModuleData()
 {
-  AddAvailableDeviceName(gName,gDescription);
+  RegisterDevice(gName, MM::CameraDevice, gDescription);
 }
 
 MODULE_API MM::Device* CreateDevice(const char*deviceName)

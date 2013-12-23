@@ -100,10 +100,10 @@ const char* g_ReadoutPort_HighCap = "HighCap";
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(g_DeviceUniversal_1, "Universal PVCAM interface - camera slot 1");
-   AddAvailableDeviceName(g_DeviceUniversal_2, "Universal PVCAM interface - camera slot 2");
-   AddAvailableDeviceName(g_DeviceUniversal_3, "Universal PVCAM interface - camera slot 3");
-   AddAvailableDeviceName(g_DeviceUniversal_4, "Universal PVCAM interface - camera slot 4");
+   RegisterDevice(g_DeviceUniversal_1, MM::CameraDevice, "Universal PVCAM interface - camera slot 1");
+   RegisterDevice(g_DeviceUniversal_2, MM::CameraDevice, "Universal PVCAM interface - camera slot 2");
+   RegisterDevice(g_DeviceUniversal_3, MM::CameraDevice, "Universal PVCAM interface - camera slot 3");
+   RegisterDevice(g_DeviceUniversal_4, MM::CameraDevice, "Universal PVCAM interface - camera slot 4");
 }
 
 MODULE_API void DeleteDevice(MM::Device* pDevice)

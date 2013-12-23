@@ -52,7 +52,7 @@ const char* g_MicroPointScannerName = "MicroPoint";
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(g_MicroPointScannerName, "MicroPoint");
+   RegisterDevice(g_MicroPointScannerName, MM::GalvoDevice, "MicroPoint");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

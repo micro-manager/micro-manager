@@ -139,7 +139,7 @@ inline unsigned char InitialEnableMask(LEType leType)
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(g_Spectra, "Lumencor Spectra Light Engine");
+   RegisterDevice(g_Spectra, MM::ShutterDevice, "Lumencor Spectra Light Engine");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

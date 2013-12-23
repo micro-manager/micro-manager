@@ -50,7 +50,7 @@ using namespace std;
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(g_ZStageDeviceName, "Focus drive for Meiji Techno EMZ");
+   RegisterDevice(g_ZStageDeviceName, MM::StageDevice, "Focus drive for Meiji Techno EMZ");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

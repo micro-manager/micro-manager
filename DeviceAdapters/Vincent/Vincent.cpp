@@ -51,8 +51,8 @@ using namespace std;
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(g_VincentD1Name, "Vincent controller VMM-D1/T1 and D122" );
-   AddAvailableDeviceName(g_VincentD3Name, "Vincent controller VMM-D3/D4" );
+   RegisterDevice(g_VincentD1Name, MM::ShutterDevice, "Vincent controller VMM-D1/T1 and D122");
+   RegisterDevice(g_VincentD3Name, MM::ShutterDevice, "Vincent controller VMM-D3/D4");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

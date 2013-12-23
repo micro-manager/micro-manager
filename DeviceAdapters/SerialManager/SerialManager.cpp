@@ -301,7 +301,7 @@ MODULE_API void InitializeModuleData()
       /*  work-around for spurious duplicate device names on OS X
       if( std::string::npos == (*it).find("KeySerial"))
       */
-           AddAvailableDeviceName((*it).c_str(), "Serial communication port");
+         RegisterDevice((*it).c_str(), MM::SerialDevice, "Serial communication port");
       it++;
    }
 

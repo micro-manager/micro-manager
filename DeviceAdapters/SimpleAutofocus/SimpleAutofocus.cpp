@@ -141,9 +141,9 @@ public:
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(g_ControllerName, "SimpleAutofocus Finder");
-   AddAvailableDeviceName(g_FocusMonitorDeviceName, "Focus score monitor - 100XImaging Inc.");
-   AddAvailableDeviceName(g_TPFocusDeviceName, "Three point focus - 100XImaging Inc.");
+   RegisterDevice(g_ControllerName, MM::AutoFocusDevice, "SimpleAutofocus Finder");
+   RegisterDevice(g_FocusMonitorDeviceName, MM::ImageProcessorDevice, "Focus score monitor - 100XImaging Inc.");
+   RegisterDevice(g_TPFocusDeviceName, MM::AutoFocusDevice, "Three point focus - 100XImaging Inc.");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

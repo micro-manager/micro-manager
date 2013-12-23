@@ -59,7 +59,7 @@ const char* g_RemoteCommand = "remote";
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(g_FocalPointDeviceName, "FocalPoint");
+   RegisterDevice(g_FocalPointDeviceName, MM::AutoFocusDevice, "FocalPoint");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

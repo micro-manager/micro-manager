@@ -99,22 +99,22 @@ BOOL APIENTRY DllMain( HANDLE /*hModule*/,
  */
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(g_CameraDeviceName, "Demo camera");
-   AddAvailableDeviceName(g_WheelDeviceName, "Demo filter wheel");
-   AddAvailableDeviceName(g_StateDeviceName, "Demo State Device");
-   AddAvailableDeviceName(g_ObjectiveDeviceName, "Demo objective turret");
-   AddAvailableDeviceName(g_StageDeviceName, "Demo stage");
-   AddAvailableDeviceName(g_XYStageDeviceName, "Demo XY stage");
-   AddAvailableDeviceName(g_LightPathDeviceName, "Demo light path");
-   AddAvailableDeviceName(g_AutoFocusDeviceName, "Demo auto focus");
-   AddAvailableDeviceName(g_ShutterDeviceName, "Demo shutter");
-   AddAvailableDeviceName(g_DADeviceName, "Demo DA");
-   AddAvailableDeviceName(g_MagnifierDeviceName, "Demo Optovar");
-   AddAvailableDeviceName("TransposeProcessor", "TransposeProcessor");
-   AddAvailableDeviceName("ImageFlipX", "ImageFlipX");
-   AddAvailableDeviceName("ImageFlipY", "ImageFlipY");
-   AddAvailableDeviceName("MedianFilter", "MedianFilter");
-   AddAvailableDeviceName(g_HubDeviceName, "DHub");
+   RegisterDevice(g_CameraDeviceName, MM::CameraDevice, "Demo camera");
+   RegisterDevice(g_WheelDeviceName, MM::StateDevice, "Demo filter wheel");
+   RegisterDevice(g_StateDeviceName, MM::StateDevice, "Demo State Device");
+   RegisterDevice(g_ObjectiveDeviceName, MM::StateDevice, "Demo objective turret");
+   RegisterDevice(g_StageDeviceName, MM::StageDevice, "Demo stage");
+   RegisterDevice(g_XYStageDeviceName, MM::XYStageDevice, "Demo XY stage");
+   RegisterDevice(g_LightPathDeviceName, MM::StateDevice, "Demo light path");
+   RegisterDevice(g_AutoFocusDeviceName, MM::AutoFocusDevice, "Demo auto focus");
+   RegisterDevice(g_ShutterDeviceName, MM::ShutterDevice, "Demo shutter");
+   RegisterDevice(g_DADeviceName, MM::SignalIODevice, "Demo DA");
+   RegisterDevice(g_MagnifierDeviceName, MM::MagnifierDevice, "Demo Optovar");
+   RegisterDevice("TransposeProcessor", MM::ImageProcessorDevice, "TransposeProcessor");
+   RegisterDevice("ImageFlipX", MM::ImageProcessorDevice, "ImageFlipX");
+   RegisterDevice("ImageFlipY", MM::ImageProcessorDevice, "ImageFlipY");
+   RegisterDevice("MedianFilter", MM::ImageProcessorDevice, "MedianFilter");
+   RegisterDevice(g_HubDeviceName, MM::HubDevice, "DHub");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

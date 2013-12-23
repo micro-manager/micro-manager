@@ -88,7 +88,7 @@ DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
 
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName( sc_pszCameraDeviceName, "Stanford Photonics cameras" );
+   RegisterDevice(sc_pszCameraDeviceName, MM::CameraDevice, "Stanford Photonics cameras");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

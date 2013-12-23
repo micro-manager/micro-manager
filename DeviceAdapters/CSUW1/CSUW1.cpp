@@ -67,18 +67,18 @@ CSUW1Hub g_hub;
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-      AddAvailableDeviceName(g_CSUW1Hub,"CSUW1 Hub (Needed for CSUW1. 115200bps)");
-      AddAvailableDeviceName(g_CSUW1FilterWheel,"Filter Wheel");   
-      AddAvailableDeviceName(g_CSUW1Dichroic,"Dichroic Mirror");   
-      AddAvailableDeviceName(g_CSUW1Shutter,"Shutter");   
-      AddAvailableDeviceName(g_CSUW1DriveSpeed,"Drive Speed");   
-      AddAvailableDeviceName(g_CSUW1BrightField,"Bright Field");   
-      AddAvailableDeviceName(g_CSUW1Disk,"Disk");   
-      AddAvailableDeviceName(g_CSUW1Port,"Port");   
-      AddAvailableDeviceName(g_CSUW1Aperture,"Aperture");   
-      AddAvailableDeviceName(g_CSUW1Frap,"FRAP");   
-      AddAvailableDeviceName(g_CSUW1Magnifier,"Magnifier");   
-      AddAvailableDeviceName(g_CSUW1NIRShutter,"NIR Shutter");   
+   RegisterDevice(g_CSUW1Hub, MM::GenericDevice, "CSUW1 Hub (Needed for CSUW1. 115200bps)");
+   RegisterDevice(g_CSUW1FilterWheel, MM::StateDevice, "Filter Wheel");
+   RegisterDevice(g_CSUW1Dichroic, MM::StateDevice, "Dichroic Mirror");
+   RegisterDevice(g_CSUW1Shutter, MM::ShutterDevice, "Shutter");
+   RegisterDevice(g_CSUW1DriveSpeed, MM::StateDevice, "Drive Speed");
+   RegisterDevice(g_CSUW1BrightField, MM::StateDevice, "Bright Field");
+   RegisterDevice(g_CSUW1Disk, MM::StateDevice, "Disk");
+   RegisterDevice(g_CSUW1Port, MM::StateDevice, "Port");
+   RegisterDevice(g_CSUW1Aperture, MM::StateDevice, "Aperture");
+   RegisterDevice(g_CSUW1Frap, MM::StateDevice, "FRAP");
+   RegisterDevice(g_CSUW1Magnifier, MM::StateDevice, "Magnifier");
+   RegisterDevice(g_CSUW1NIRShutter, MM::ShutterDevice, "NIR Shutter");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

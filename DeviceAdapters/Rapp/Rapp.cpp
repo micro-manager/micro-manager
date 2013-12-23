@@ -52,7 +52,7 @@ const char* g_RappScannerName = "RappScanner";
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(g_RappScannerName, "RappScanner");
+   RegisterDevice(g_RappScannerName, MM::GalvoDevice, "Rapp UGA-40 Scanner");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

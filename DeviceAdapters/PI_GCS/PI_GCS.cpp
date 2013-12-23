@@ -47,7 +47,7 @@ using namespace std;
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(g_PI_ZStageDeviceName, "PI GCS Z-stage");
+   RegisterDevice(g_PI_ZStageDeviceName, MM::StageDevice, "PI GCS Z-stage");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

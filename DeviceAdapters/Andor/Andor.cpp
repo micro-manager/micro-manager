@@ -185,8 +185,7 @@ long GetTickCount()
 
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(g_AndorName, "Generic Andor Camera Adapter");
-
+   RegisterDevice(g_AndorName, MM::CameraDevice, "Generic Andor Camera Adapter");
 }
 
 char deviceName[64]; // jizhen 05.16.2007

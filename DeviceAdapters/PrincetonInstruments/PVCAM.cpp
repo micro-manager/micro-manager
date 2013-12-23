@@ -101,8 +101,8 @@ const char* g_ReadoutPort_HighCap = "HighCap";
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(g_DeviceUniversal_1, "Princeton Instruments interface - camera slot 1");
-   AddAvailableDeviceName(g_DeviceUniversal_2, "Princeton Instruments interface - camera slot 2");
+   RegisterDevice(g_DeviceUniversal_1, MM::CameraDevice, "Princeton Instruments interface - camera slot 1");
+   RegisterDevice(g_DeviceUniversal_2, MM::CameraDevice, "Princeton Instruments interface - camera slot 2");
 }
 
 MODULE_API void DeleteDevice(MM::Device* pDevice)

@@ -51,9 +51,9 @@ const char* g_DeviceDC4100Name = "Thorlabs DC4100";
 ---------------------------------------------------------------------------*/
 MODULE_API void InitializeModuleData()
 {
-	AddAvailableDeviceName(g_DeviceDC2xxxName, "DC2010/DC2100 High Power LED Driver");
-	AddAvailableDeviceName(g_DeviceDC3100Name, "DC3100 FLIM LED Driver");
-	AddAvailableDeviceName(g_DeviceDC4100Name, "DC4100 Four channel LED Driver");
+	RegisterDevice(g_DeviceDC2xxxName, MM::ShutterDevice, "DC2010/DC2100 High Power LED Driver");
+	RegisterDevice(g_DeviceDC3100Name, MM::ShutterDevice, "DC3100 FLIM LED Driver");
+	RegisterDevice(g_DeviceDC4100Name, MM::ShutterDevice, "DC4100 Four channel LED Driver");
 }
 
 

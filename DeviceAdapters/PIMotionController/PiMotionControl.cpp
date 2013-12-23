@@ -68,9 +68,7 @@ const char* g_StageDeviceName = "PI_Mercury_Stage";
 
 MODULE_API void InitializeModuleData()
 {
- 
-   AddAvailableDeviceName(g_StageDeviceName, "PI Mercury Step stage");
-   
+   RegisterDevice(g_StageDeviceName, MM::StageDevice, "PI Mercury Step stage");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

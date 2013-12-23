@@ -54,9 +54,9 @@ using namespace std;
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-	AddAvailableDeviceName(g_TempControl, "Temperature controller 37-2 digital");
-	AddAvailableDeviceName(g_CTIControl, "CTI controller 3700 digital");
-	AddAvailableDeviceName(g_CO2Control, "CO2 controller");
+	RegisterDevice(g_TempControl, MM::GenericDevice, "Temperature controller 37-2 digital");
+	RegisterDevice(g_CTIControl, MM::GenericDevice, "CTI controller 3700 digital");
+	RegisterDevice(g_CO2Control, MM::GenericDevice, "CO2 controller");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

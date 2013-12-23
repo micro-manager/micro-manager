@@ -51,9 +51,9 @@ BOOL APIENTRY DllMain( HANDLE /*hModule*/,
 
 MODULE_API void InitializeModuleData()
 {
-    AddAvailableDeviceName(ScopeLEDMSBMicroscopeIlluminator::DeviceName, ScopeLEDMSBMicroscopeIlluminator::DeviceDescription);
-    AddAvailableDeviceName(ScopeLEDMSMMicroscopeIlluminator::DeviceName, ScopeLEDMSMMicroscopeIlluminator::DeviceDescription);
-    AddAvailableDeviceName(ScopeLEDFluorescenceIlluminator::DeviceName, ScopeLEDFluorescenceIlluminator::DeviceDescription);
+    RegisterDevice(ScopeLEDMSBMicroscopeIlluminator::DeviceName, MM::ShutterDevice, ScopeLEDMSBMicroscopeIlluminator::DeviceDescription);
+    RegisterDevice(ScopeLEDMSMMicroscopeIlluminator::DeviceName, MM::ShutterDevice, ScopeLEDMSMMicroscopeIlluminator::DeviceDescription);
+    RegisterDevice(ScopeLEDFluorescenceIlluminator::DeviceName, MM::ShutterDevice, ScopeLEDFluorescenceIlluminator::DeviceDescription);
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

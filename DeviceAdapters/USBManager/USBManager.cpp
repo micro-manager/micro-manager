@@ -123,7 +123,7 @@ MODULE_API void InitializeModuleData()
    vector<string>::iterator iter = availableDevices.begin();                  
    while (iter != availableDevices.end()) {                                   
       deviceName = *iter;
-      AddAvailableDeviceName(deviceName.c_str(),"USB device");
+      RegisterDevice(deviceName.c_str(), MM::SerialDevice, "USB device");
       ++iter;                                                                
    }
 }

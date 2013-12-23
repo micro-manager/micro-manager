@@ -54,7 +54,7 @@ using namespace std;
 
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(g_ThorlabsDCStageDeviceName, "Thorlabs DC Stage");
+   RegisterDevice(g_ThorlabsDCStageDeviceName, MM::StageDevice, "Thorlabs DC Stage");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

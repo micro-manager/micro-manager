@@ -56,7 +56,7 @@ using namespace std;
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(g_ControllerName,    "VariLC");
+   RegisterDevice(g_ControllerName, MM::GenericDevice, "VariLC");
 }                                                                            
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)                  

@@ -48,8 +48,7 @@ const char* g_WPTRobotName = "WPTRobot";
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-  
-   AddAvailableDeviceName(g_WPTRobotName, "WPTRobot");
+   RegisterDevice(g_WPTRobotName, MM::GenericDevice, "WPTRobot");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

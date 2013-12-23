@@ -194,7 +194,7 @@ inline void SafeRelease(T *&p)
  */
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(g_CameraDeviceName, g_CameraDeviceDescription);
+   RegisterDevice(g_CameraDeviceName, MM::CameraDevice, g_CameraDeviceDescription);
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

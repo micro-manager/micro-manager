@@ -38,7 +38,7 @@ static USMC_Devices deviceList;
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(StandaZStage::DeviceName_, "Standa Z Stage");
+   RegisterDevice(StandaZStage::DeviceName_, MM::StageDevice, "Standa Z Stage");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

@@ -52,8 +52,7 @@ const char * line_feed = "\n";
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(g_ControllerName, "Aladdin Syringe Pump");
-   
+   RegisterDevice(g_ControllerName, MM::GenericDevice, "Aladdin Syringe Pump");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

@@ -75,9 +75,9 @@ int  g_NumberOfAxes = 0;
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(g_ControllerName,    "ITK Corvus Controller");             
-   AddAvailableDeviceName(g_XYStageDeviceName, "XY Stage");
-   AddAvailableDeviceName(g_ZStageDeviceName,  "Z Axis");
+   RegisterDevice(g_ControllerName, MM::GenericDevice, "ITK Corvus Controller");
+   RegisterDevice(g_XYStageDeviceName, MM::XYStageDevice, "XY Stage");
+   RegisterDevice(g_ZStageDeviceName, MM::StageDevice, "Z Axis");
 }                                                                            
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)                  

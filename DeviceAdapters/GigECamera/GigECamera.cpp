@@ -52,7 +52,7 @@ const char* g_PixelType_16bit = "Mono16";
 */
 MODULE_API void InitializeModuleData()
 {
-	AddAvailableDeviceName(g_CameraDeviceName, "GigE camera");
+	RegisterDevice(g_CameraDeviceName, MM::CameraDevice, "GigE camera");
 
 }
 

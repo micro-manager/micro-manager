@@ -367,24 +367,24 @@ using namespace std;
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {		
-	AddAvailableDeviceName(g_dDrive, "Piezosystem Jena dDrive");		
-	AddAvailableDeviceName(g_StageDeviceName1, "Single Axis Stage Ch1");
-	AddAvailableDeviceName(g_StageDeviceName2, "Single Axis Stage Ch2");
-	AddAvailableDeviceName(g_StageDeviceName3, "Single Axis Stage Ch3");
-	AddAvailableDeviceName(g_StageDeviceName4, "Single Axis Stage Ch4");
-	AddAvailableDeviceName(g_StageDeviceName5, "Single Axis Stage Ch5");
-	AddAvailableDeviceName(g_StageDeviceName6, "Single Axis Stage Ch6");  
-	AddAvailableDeviceName(g_XYStageDeviceName1, "Two Axis XY Stage1");
-	AddAvailableDeviceName(g_XYStageDeviceName2, "Two Axis XY Stage2");
-	AddAvailableDeviceName(g_XYStageDeviceName3, "Two Axis XY Stage3"); 
-	AddAvailableDeviceName(g_Shutter1, "PSJ Shutter");
-	AddAvailableDeviceName(g_Shutter2, "PSJ Shutter");
-	AddAvailableDeviceName(g_Shutter3, "PSJ Shutter");
-	AddAvailableDeviceName(g_Shutter4, "PSJ Shutter");
-	AddAvailableDeviceName(g_Shutter5, "PSJ Shutter");
-	AddAvailableDeviceName(g_Shutter6, "PSJ Shutter"); 	    
-	AddAvailableDeviceName(g_Tritor1, "PSJ Tritor");
-	AddAvailableDeviceName(g_Tritor2, "PSJ Tritor");
+	RegisterDevice(g_dDrive, MM::HubDevice, "Piezosystem Jena dDrive");
+	RegisterDevice(g_StageDeviceName1, MM::StageDevice, "Single Axis Stage Ch1");
+	RegisterDevice(g_StageDeviceName2, MM::StageDevice, "Single Axis Stage Ch2");
+	RegisterDevice(g_StageDeviceName3, MM::StageDevice, "Single Axis Stage Ch3");
+	RegisterDevice(g_StageDeviceName4, MM::StageDevice, "Single Axis Stage Ch4");
+	RegisterDevice(g_StageDeviceName5, MM::StageDevice, "Single Axis Stage Ch5");
+	RegisterDevice(g_StageDeviceName6, MM::StageDevice, "Single Axis Stage Ch6");
+	RegisterDevice(g_XYStageDeviceName1, MM::XYStageDevice, "Two Axis XY Stage1");
+	RegisterDevice(g_XYStageDeviceName2, MM::XYStageDevice, "Two Axis XY Stage2");
+	RegisterDevice(g_XYStageDeviceName3, MM::XYStageDevice, "Two Axis XY Stage3");
+	RegisterDevice(g_Shutter1, MM::ShutterDevice, "PSJ Shutter");
+	RegisterDevice(g_Shutter2, MM::ShutterDevice, "PSJ Shutter");
+	RegisterDevice(g_Shutter3, MM::ShutterDevice, "PSJ Shutter");
+	RegisterDevice(g_Shutter4, MM::ShutterDevice, "PSJ Shutter");
+	RegisterDevice(g_Shutter5, MM::ShutterDevice, "PSJ Shutter");
+	RegisterDevice(g_Shutter6, MM::ShutterDevice, "PSJ Shutter");
+	RegisterDevice(g_Tritor1, MM::GenericDevice, "PSJ Tritor");
+	RegisterDevice(g_Tritor2, MM::GenericDevice, "PSJ Tritor");
 }             
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)                  

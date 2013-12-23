@@ -81,19 +81,17 @@ void newGlobals(std::string p)
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(g_WheelAName, "Lambda 10 filter wheel A");
-   AddAvailableDeviceName(g_WheelBName, "Lambda 10 filter wheel B");
-   AddAvailableDeviceName(g_WheelCName, "Lambda 10 wheel C (10-3 only)");
-   AddAvailableDeviceName(g_ShutterAName, "Lambda 10 shutter A");
-   AddAvailableDeviceName(g_ShutterBName, "Lambda 10 shutter B");
+   RegisterDevice(g_WheelAName, MM::StateDevice, "Lambda 10 filter wheel A");
+   RegisterDevice(g_WheelBName, MM::StateDevice, "Lambda 10 filter wheel B");
+   RegisterDevice(g_WheelCName, MM::StateDevice, "Lambda 10 wheel C (10-3 only)");
+   RegisterDevice(g_ShutterAName, MM::ShutterDevice, "Lambda 10 shutter A");
+   RegisterDevice(g_ShutterBName, MM::ShutterDevice, "Lambda 10 shutter B");
 #ifdef DefineShutterOnTenDashTwo
-
-   AddAvailableDeviceName(g_ShutterAName10dash2, "Lambda 10-2 shutter A");
-   AddAvailableDeviceName(g_ShutterBName10dash2, "Lambda 10-2 shutter B");
+   RegisterDevice(g_ShutterAName10dash2, MM::ShutterDevice, "Lambda 10-2 shutter A");
+   RegisterDevice(g_ShutterBName10dash2, MM::ShutterDevice, "Lambda 10-2 shutter B");
 #endif
-
-   AddAvailableDeviceName(g_DG4ShutterName, "DG4 shutter");
-   AddAvailableDeviceName(g_DG4WheelName, "DG4 filter changer");
+   RegisterDevice(g_DG4ShutterName, MM::ShutterDevice, "DG4 shutter");
+   RegisterDevice(g_DG4WheelName, MM::StateDevice, "DG4 filter changer");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

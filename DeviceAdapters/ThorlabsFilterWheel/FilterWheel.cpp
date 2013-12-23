@@ -69,9 +69,7 @@ const char* g_WheelDeviceName = "Thorlabs Filter Wheel";
 
 MODULE_API void InitializeModuleData()
 {
-   
-   AddAvailableDeviceName(g_WheelDeviceName, "Thorlabs filter wheel");
-  
+   RegisterDevice(g_WheelDeviceName, MM::StateDevice, "Thorlabs filter wheel");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

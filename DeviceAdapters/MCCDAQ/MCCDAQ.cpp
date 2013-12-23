@@ -89,23 +89,23 @@ int InitializeTheBoard()
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(g_DeviceNameMCCShutter0);
-   AddAvailableDeviceName(g_DeviceNameMCCShutter1);
-   AddAvailableDeviceName(g_DeviceNameMCCShutter2);
-   AddAvailableDeviceName(g_DeviceNameMCCShutter3);
-   AddAvailableDeviceName(g_DeviceNameMCCShutter4);
-   AddAvailableDeviceName(g_DeviceNameMCCShutter5);
-   AddAvailableDeviceName(g_DeviceNameMCCShutter6);
-   AddAvailableDeviceName(g_DeviceNameMCCShutter7);
+   RegisterDevice(g_DeviceNameMCCShutter0, MM::ShutterDevice, "MCC DAQ Shutter 0");
+   RegisterDevice(g_DeviceNameMCCShutter1, MM::ShutterDevice, "MCC DAQ Shutter 1");
+   RegisterDevice(g_DeviceNameMCCShutter2, MM::ShutterDevice, "MCC DAQ Shutter 2");
+   RegisterDevice(g_DeviceNameMCCShutter3, MM::ShutterDevice, "MCC DAQ Shutter 3");
+   RegisterDevice(g_DeviceNameMCCShutter4, MM::ShutterDevice, "MCC DAQ Shutter 4");
+   RegisterDevice(g_DeviceNameMCCShutter5, MM::ShutterDevice, "MCC DAQ Shutter 5");
+   RegisterDevice(g_DeviceNameMCCShutter6, MM::ShutterDevice, "MCC DAQ Shutter 6");
+   RegisterDevice(g_DeviceNameMCCShutter7, MM::ShutterDevice, "MCC DAQ Shutter 7");
 
-   AddAvailableDeviceName(g_DeviceNameMCCDA0);
-   AddAvailableDeviceName(g_DeviceNameMCCDA1);
-   AddAvailableDeviceName(g_DeviceNameMCCDA2);
-   AddAvailableDeviceName(g_DeviceNameMCCDA3);
-   AddAvailableDeviceName(g_DeviceNameMCCDA4);
-   AddAvailableDeviceName(g_DeviceNameMCCDA5);
-   AddAvailableDeviceName(g_DeviceNameMCCDA6);
-   AddAvailableDeviceName(g_DeviceNameMCCDA7);
+   RegisterDevice(g_DeviceNameMCCDA0, MM::SignalIODevice, "MCC DAQ DA 0");
+   RegisterDevice(g_DeviceNameMCCDA1, MM::SignalIODevice, "MCC DAQ DA 1");
+   RegisterDevice(g_DeviceNameMCCDA2, MM::SignalIODevice, "MCC DAQ DA 2");
+   RegisterDevice(g_DeviceNameMCCDA3, MM::SignalIODevice, "MCC DAQ DA 3");
+   RegisterDevice(g_DeviceNameMCCDA4, MM::SignalIODevice, "MCC DAQ DA 4");
+   RegisterDevice(g_DeviceNameMCCDA5, MM::SignalIODevice, "MCC DAQ DA 5");
+   RegisterDevice(g_DeviceNameMCCDA6, MM::SignalIODevice, "MCC DAQ DA 6");
+   RegisterDevice(g_DeviceNameMCCDA7, MM::SignalIODevice, "MCC DAQ DA 7");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

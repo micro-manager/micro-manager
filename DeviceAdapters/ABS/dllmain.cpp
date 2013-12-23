@@ -37,7 +37,7 @@ extern const char* g_CameraName;
  */
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(g_CameraName, "ABS camera");
+   RegisterDevice(g_CameraName, MM::CameraDevice, "ABS camera");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

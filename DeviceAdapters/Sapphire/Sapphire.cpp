@@ -54,8 +54,7 @@ const char * line_feed = "\n";
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(g_ControllerName, "Sapphire Laser");
-   
+   RegisterDevice(g_ControllerName, MM::ShutterDevice, "Sapphire Laser");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

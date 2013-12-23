@@ -89,7 +89,7 @@ BOOL APIENTRY DllMain( HANDLE /*hModule*/,
  */
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(g_CameraDeviceName, "Thorlabs DCx USB Camera");
+   RegisterDevice(g_CameraDeviceName, MM::CameraDevice, "Thorlabs DCx USB Camera");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

@@ -51,12 +51,12 @@ MMThreadLock CArduinoHub::lock_;
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(g_DeviceNameArduinoHub, "Hub (required)");
-   AddAvailableDeviceName(g_DeviceNameArduinoSwitch, "Digital out 8-bit");
-   AddAvailableDeviceName(g_DeviceNameArduinoShutter, "Shutter");
-   AddAvailableDeviceName(g_DeviceNameArduinoDA1, "DAC channel 1");
-   AddAvailableDeviceName(g_DeviceNameArduinoDA2, "DAC channel 2");
-   AddAvailableDeviceName(g_DeviceNameArduinoInput, "ADC");
+   RegisterDevice(g_DeviceNameArduinoHub, MM::HubDevice, "Hub (required)");
+   RegisterDevice(g_DeviceNameArduinoSwitch, MM::StateDevice, "Digital out 8-bit");
+   RegisterDevice(g_DeviceNameArduinoShutter, MM::ShutterDevice, "Shutter");
+   RegisterDevice(g_DeviceNameArduinoDA1, MM::SignalIODevice, "DAC channel 1");
+   RegisterDevice(g_DeviceNameArduinoDA2, MM::SignalIODevice, "DAC channel 2");
+   RegisterDevice(g_DeviceNameArduinoInput, MM::GenericDevice, "ADC");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

@@ -75,7 +75,7 @@ using namespace std;
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(g_CIA, "Lumencor Camera Interface Adapter");
+   RegisterDevice(g_CIA, MM::ShutterDevice, "Lumencor Camera Interface Adapter");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

@@ -58,7 +58,7 @@ int g_iPFCount = 0;
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-  AddAvailableDeviceName(g_CameraDeviceName, "PCO generic camera adapter");
+  RegisterDevice(g_CameraDeviceName, MM::CameraDevice, "PCO generic camera adapter");
 }
 
 MODULE_API void DeleteDevice(MM::Device* pDevice)
