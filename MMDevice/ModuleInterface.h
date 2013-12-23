@@ -142,7 +142,7 @@ __declspec(deprecated("Use RegisterDevice() instead"))
 #endif
 void AddAvailableDeviceName(const char* deviceName, const char* description = "Description N/A")
 #ifdef __GNUC__
-__attribute__((deprecated("Use RegisterDevice() instead")))
+__attribute__((deprecated()))
 #endif
 ;
 
