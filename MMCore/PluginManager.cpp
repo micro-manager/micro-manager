@@ -73,7 +73,7 @@ CPluginManager::~CPluginManager()
 
 
 std::vector<std::string> CPluginManager::searchPaths_;
-std::map< std::string, boost::shared_ptr<LoadedModule> > CPluginManager::moduleMap_;
+std::map< std::string, boost::shared_ptr<LoadedDeviceAdapter> > CPluginManager::moduleMap_;
 std::map<std::string, MMThreadLock*> CPluginManager::moduleLocks_;
 
 /**
@@ -138,10 +138,10 @@ string CPluginManager::FindInSearchPath(string filename)
  * @param shortName Simple module name without path, prefix, or suffix.
  * @return Module handle if successful, throws exception if not
  */
-boost::shared_ptr<LoadedModule>
+boost::shared_ptr<LoadedDeviceAdapter>
 CPluginManager::LoadPluginLibrary(const char* shortName)
 {
-   std::map< std::string, boost::shared_ptr<LoadedModule> >::iterator it =
+   std::map< std::string, boost::shared_ptr<LoadedDeviceAdapter> >::iterator it =
       moduleMap_.find(shortName);
    if (it != moduleMap_.end())
       return it->second;
@@ -151,10 +151,10 @@ CPluginManager::LoadPluginLibrary(const char* shortName)
    name += LIB_NAME_SUFFIX;
    name = FindInSearchPath(name);
 
-   boost::shared_ptr<LoadedModule> mod;
+   boost::shared_ptr<LoadedDeviceAdapter> mod;
    try
    {
-      mod = boost::make_shared<LoadedModule>(name);
+      mod = boost::make_shared<LoadedDeviceAdapter>(name);
    }
    catch (const CMMError& e)
    {
@@ -171,7 +171,7 @@ CPluginManager::LoadPluginLibrary(const char* shortName)
  */
 void CPluginManager::UnloadPluginLibrary(const char* moduleName)
 {
-   std::map< std::string, boost::shared_ptr<LoadedModule> >::iterator it =
+   std::map< std::string, boost::shared_ptr<LoadedDeviceAdapter> >::iterator it =
       moduleMap_.find(moduleName);
    if (it == moduleMap_.end())
       throw CMMError("No device adapter named " + ToQuotedString(moduleName));
@@ -191,12 +191,9 @@ void CPluginManager::UnloadPluginLibrary(const char* moduleName)
  * Verifies that plugin interface/device version matches the core version expectations.
  * Throws if there is a mismatch or if the version info is not available.
 */
-void CPluginManager::CheckVersion(boost::shared_ptr<LoadedModule> module)
+void CPluginManager::CheckVersion(boost::shared_ptr<LoadedDeviceAdapter> module)
 {
-   // module version
-   fnGetModuleVersion hGetModuleVersionFunc = (fnGetModuleVersion) module->GetFunction("GetModuleVersion");
-
-   long moduleVersion = hGetModuleVersionFunc();
+   long moduleVersion = module->GetModuleVersion();
    if (moduleVersion != MODULE_INTERFACE_VERSION)
    {
       ostringstream errTxt;
@@ -204,9 +201,7 @@ void CPluginManager::CheckVersion(boost::shared_ptr<LoadedModule> module)
       throw CMMError(errTxt.str().c_str(), MMERR_ModuleVersionMismatch);
    }
 
-   // device version
-   fnGetDeviceInterfaceVersion hGetDeviceInterfaceVersionFunc = (fnGetDeviceInterfaceVersion) module->GetFunction("GetDeviceInterfaceVersion");
-   long deviceVersion = hGetDeviceInterfaceVersionFunc();
+   long deviceVersion = module->GetDeviceInterfaceVersion();
    if (deviceVersion != DEVICE_INTERFACE_VERSION)
    {
       ostringstream errTxt;
@@ -255,16 +250,12 @@ void CPluginManager::UnloadDevice(MM::Device* pDevice)
       devVector_ = newDevVector;
    }
 
-   boost::shared_ptr<LoadedModule> module = deviceModules_[pDevice];
-
-   // obtain handle to the DeleteDevice method
-   fnDeleteDevice hDeleteDeviceFunc = (fnDeleteDevice) module->GetFunction("DeleteDevice");
-
    // release device resources
    pDevice->Shutdown();
 
    // delete device
-   hDeleteDeviceFunc(pDevice);
+   boost::shared_ptr<LoadedDeviceAdapter> module = deviceModules_[pDevice];
+   module->DeleteDevice(pDevice);
 
    deviceModules_.erase(pDevice);
 }
@@ -326,19 +317,11 @@ MM::Device* CPluginManager::LoadDevice(const char* label, const char* moduleName
    if (strlen(label) == 0)
       throw CMMError("Invalid label (empty string)", MMERR_InvalidLabel);
    
-   boost::shared_ptr<LoadedModule> module = LoadPluginLibrary(moduleName);
+   boost::shared_ptr<LoadedDeviceAdapter> module = LoadPluginLibrary(moduleName);
 
-   fnCreateDevice hCreateDeviceFunc(0);
-   fnDeleteDevice hDeleteDeviceFunc(0);
-   fnGetDeviceType hGetDeviceType(0);
-   fnGetDeviceDescription hGetDeviceDescription(0);
    try
    {
       CheckVersion(module);
-      hCreateDeviceFunc = (fnCreateDevice) module->GetFunction("CreateDevice");
-      hDeleteDeviceFunc = (fnDeleteDevice) module->GetFunction("DeleteDevice");
-      hGetDeviceType = (fnGetDeviceType) module->GetFunction("GetDeviceType");
-      hGetDeviceDescription = (fnGetDeviceDescription) module->GetFunction("GetDeviceDescription");
    }
    catch (const CMMError& e)
    {
@@ -347,7 +330,7 @@ MM::Device* CPluginManager::LoadDevice(const char* label, const char* moduleName
    }
 
    // instantiate the new device
-   MM::Device* pDevice = hCreateDeviceFunc(deviceName);
+   MM::Device* pDevice = module->CreateDevice(deviceName);
    if (pDevice == 0)
       throw CMMError("CreateDevice() failed for device " + ToQuotedString(deviceName),
             MMERR_CreateFailed);
@@ -356,13 +339,13 @@ MM::Device* CPluginManager::LoadDevice(const char* label, const char* moduleName
    // device type, we check that the created device is in fact of the expected
    // type.
    int typeInt = MM::UnknownType;
-   hGetDeviceType(deviceName, &typeInt);
+   module->GetDeviceType(deviceName, &typeInt);
    if (typeInt != MM::UnknownType)
    {
       MM::DeviceType actualType = pDevice->GetType();
       if (actualType != static_cast<MM::DeviceType>(typeInt))
       {
-         hDeleteDeviceFunc(pDevice);
+         module->DeleteDevice(pDevice);
          throw CMMError("Tried to load device " + ToQuotedString(deviceName) +
                " of type " + ToString(typeInt) +
                " from module " + ToQuotedString(moduleName) +
@@ -371,7 +354,7 @@ MM::Device* CPluginManager::LoadDevice(const char* label, const char* moduleName
    }
 
    char descr[MM::MaxStrLength] = "N/A";
-   hGetDeviceDescription(deviceName, descr, MM::MaxStrLength);
+   module->GetDeviceDescription(deviceName, descr, MM::MaxStrLength);
 
    // make sure that each device carries a reference to the module it belongs to!!!
    deviceModules_[pDevice] = module;
@@ -627,27 +610,19 @@ vector<string> CPluginManager::GetModules()
 vector<string> CPluginManager::GetAvailableDevices(const char* moduleName) throw (CMMError)
 {
    vector<string> devices;
-   boost::shared_ptr<LoadedModule> module = LoadPluginLibrary(moduleName);
+   boost::shared_ptr<LoadedDeviceAdapter> module = LoadPluginLibrary(moduleName);
    CheckVersion(module);
-
-   fnGetNumberOfDevices hGetNumberOfDevices(0);
-   fnGetDeviceName hGetDeviceName(0);
-   fnInitializeModuleData hInitializeModuleData(0);
 
    try
    {
       // initalize module data
-      hInitializeModuleData = (fnInitializeModuleData) module->GetFunction("InitializeModuleData");
-      hInitializeModuleData();
+      module->InitializeModuleData();
 
-      hGetNumberOfDevices = (fnGetNumberOfDevices) module->GetFunction("GetNumberOfDevices");
-      hGetDeviceName = (fnGetDeviceName) module->GetFunction("GetDeviceName");
-
-      unsigned numDev = hGetNumberOfDevices();
+      unsigned numDev = module->GetNumberOfDevices();
       for (unsigned i=0; i<numDev; i++)
       {
          char deviceName[MM::MaxStrLength];
-         if (hGetDeviceName(i, deviceName, MM::MaxStrLength))
+         if (module->GetDeviceName(i, deviceName, MM::MaxStrLength))
             devices.push_back(deviceName);
       }
    }
@@ -666,31 +641,21 @@ vector<string> CPluginManager::GetAvailableDevices(const char* moduleName) throw
 vector<string> CPluginManager::GetAvailableDeviceDescriptions(const char* moduleName) throw (CMMError)
 {
    vector<string> descriptions;
-   boost::shared_ptr<LoadedModule> module = LoadPluginLibrary(moduleName);
+   boost::shared_ptr<LoadedDeviceAdapter> module = LoadPluginLibrary(moduleName);
    CheckVersion(module);
-
-   fnGetNumberOfDevices hGetNumberOfDevices(0);
-   fnGetDeviceDescription hGetDeviceDescription(0);
-   fnInitializeModuleData hInitializeModuleData(0);
-   fnGetDeviceName hGetDeviceName(0);
 
    try
    {
-      hInitializeModuleData = (fnInitializeModuleData) module->GetFunction("InitializeModuleData");
-      hInitializeModuleData();
+      module->InitializeModuleData();
 
-      hGetNumberOfDevices = (fnGetNumberOfDevices) module->GetFunction("GetNumberOfDevices");
-      hGetDeviceDescription = (fnGetDeviceDescription) module->GetFunction("GetDeviceDescription");
-      hGetDeviceName = (fnGetDeviceName) module->GetFunction("GetDeviceName");
-
-      unsigned numDev = hGetNumberOfDevices();
+      unsigned numDev = module->GetNumberOfDevices();
       for (unsigned i=0; i<numDev; i++)
       {
          char deviceName[MM::MaxStrLength];
-         if (hGetDeviceName(i, deviceName, MM::MaxStrLength))
+         if (module->GetDeviceName(i, deviceName, MM::MaxStrLength))
          {
             char deviceDescr[MM::MaxStrLength];
-            if (hGetDeviceDescription(deviceName, deviceDescr, MM::MaxStrLength))
+            if (module->GetDeviceDescription(deviceName, deviceDescr, MM::MaxStrLength))
                descriptions.push_back(deviceDescr);
             else
                descriptions.push_back("N/A");
@@ -712,37 +677,26 @@ vector<string> CPluginManager::GetAvailableDeviceDescriptions(const char* module
 vector<long> CPluginManager::GetAvailableDeviceTypes(const char* moduleName) throw (CMMError)
 {
    vector<long> types;
-   boost::shared_ptr<LoadedModule> module = LoadPluginLibrary(moduleName);
+   boost::shared_ptr<LoadedDeviceAdapter> module = LoadPluginLibrary(moduleName);
    CheckVersion(module);
-
-   fnGetNumberOfDevices hGetNumberOfDevices(0);
-   fnInitializeModuleData hInitializeModuleData(0);
 
    try
    {
-      hInitializeModuleData = (fnInitializeModuleData) module->GetFunction("InitializeModuleData");
-      hInitializeModuleData();
+      module->InitializeModuleData();
 
-      hGetNumberOfDevices = (fnGetNumberOfDevices) module->GetFunction("GetNumberOfDevices");
-
-      fnDeleteDevice hDeleteDeviceFunc = (fnDeleteDevice) module->GetFunction("DeleteDevice");
-      fnCreateDevice hCreateDeviceFunc = (fnCreateDevice) module->GetFunction("CreateDevice");
-      fnGetDeviceName hGetDeviceName = (fnGetDeviceName) module->GetFunction("GetDeviceName");
-      fnGetDeviceType hGetDeviceType = (fnGetDeviceType) module->GetFunction("GetDeviceType");
-      
-      unsigned numDev = hGetNumberOfDevices();
+      unsigned numDev = module->GetNumberOfDevices();
 
       for (unsigned i=0; i<numDev; i++)
       {
          char deviceName[MM::MaxStrLength];
-         if (!hGetDeviceName(i, deviceName, MM::MaxStrLength))
+         if (!module->GetDeviceName(i, deviceName, MM::MaxStrLength))
          {
             types.push_back((long)MM::AnyType);
             continue;
          }
 
          int typeInt = static_cast<int>(MM::UnknownType);
-         if (hGetDeviceType(deviceName, &typeInt) &&
+         if (module->GetDeviceType(deviceName, &typeInt) &&
                static_cast<MM::DeviceType>(typeInt) != MM::UnknownType)
          {
             types.push_back(typeInt);
@@ -750,7 +704,7 @@ vector<long> CPluginManager::GetAvailableDeviceTypes(const char* moduleName) thr
          }
 
          // instantiate the device
-         MM::Device* pDevice = hCreateDeviceFunc(deviceName);
+         MM::Device* pDevice = module->CreateDevice(deviceName);
          if (pDevice == 0)
             types.push_back((long)MM::AnyType);
          else
@@ -762,7 +716,7 @@ vector<long> CPluginManager::GetAvailableDeviceTypes(const char* moduleName) thr
             //pDevice->Shutdown();
             
             // delete device
-            hDeleteDeviceFunc(pDevice);
+            module->DeleteDevice(pDevice);
          }
       }
    }

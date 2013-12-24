@@ -30,7 +30,7 @@
 #pragma warning( disable : 4290 )
 #endif
 
-#include "LoadableModules/LoadedModule.h"
+#include "LoadableModules/LoadedDeviceAdapter.h"
 
 #include <string>
 #include <cstring>
@@ -81,8 +81,8 @@ public:
 
 private:
    static void GetModules(std::vector<std::string> &modules, const char *path);
-   static boost::shared_ptr<LoadedModule> LoadPluginLibrary(const char* libName);
-   static void CheckVersion(boost::shared_ptr<LoadedModule> libHandle);
+   static boost::shared_ptr<LoadedDeviceAdapter> LoadPluginLibrary(const char* libName);
+   static void CheckVersion(boost::shared_ptr<LoadedDeviceAdapter> libHandle);
    static std::string FindInSearchPath(std::string filename);
 
    typedef std::map<std::string, MMThreadLock*> CModuleLockMap;
@@ -94,13 +94,13 @@ private:
    CDeviceMap devices_;
    DeviceVector devVector_;
    static std::map<std::string, MMThreadLock*> moduleLocks_;
-   static std::map< std::string, boost::shared_ptr<LoadedModule> > moduleMap_;
+   static std::map< std::string, boost::shared_ptr<LoadedDeviceAdapter> > moduleMap_;
 
-   // This is a temporary kludge. I've factored out LoadedModule from
+   // This is a temporary kludge. I've factored out LoadedDeviceAdapter from
    // PluginManager, but can't store a shared_ptr in MM::Device, so I need a
    // way to get the module from the device ptr, until we have a wrapper class
    // for attached ("loaded") devices. - Mark
-   std::map< MM::Device*, boost::shared_ptr<LoadedModule> > deviceModules_;
+   std::map< MM::Device*, boost::shared_ptr<LoadedDeviceAdapter> > deviceModules_;
 };
 
 #endif //_PLUGIN_MANAGER_H_

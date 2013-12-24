@@ -157,6 +157,7 @@
     <ClCompile Include="FastLogger.cpp" />
     <ClCompile Include="Host.cpp" />
     <ClCompile Include="..\MMDevice\ImgBuffer.cpp" />
+    <ClCompile Include="LoadableModules\LoadedDeviceAdapter.cpp" />
     <ClCompile Include="LoadableModules\LoadedModule.cpp" />
     <ClCompile Include="LoadableModules\LoadedModuleImpl.cpp" />
     <ClCompile Include="LoadableModules\LoadedModuleImplWindows.cpp" />
@@ -178,6 +179,7 @@
     <ClInclude Include="..\MMDevice\ImageMetadata.h" />
     <ClInclude Include="..\MMDevice\ImgBuffer.h" />
     <ClInclude Include="IMMLogger.h" />
+    <ClInclude Include="LoadableModules\LoadedDeviceAdapter.h" />
     <ClInclude Include="LoadableModules\LoadedModule.h" />
     <ClInclude Include="LoadableModules\LoadedModuleImpl.h" />
     <ClInclude Include="LoadableModules\LoadedModuleImplWindows.h" />
