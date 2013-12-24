@@ -21,10 +21,14 @@
 
 #include "LoadedDeviceAdapter.h"
 
+#include "../CoreUtils.h"
+#include "../Error.h"
+
 #include <boost/make_shared.hpp>
 
 
-LoadedDeviceAdapter::LoadedDeviceAdapter(const std::string& filename) :
+LoadedDeviceAdapter::LoadedDeviceAdapter(const std::string& label, const std::string& filename) :
+   label_(label),
    module_(boost::make_shared<LoadedModule>(filename)),
    useLock_(true),
    InitializeModuleData_(0),
@@ -36,7 +40,16 @@ LoadedDeviceAdapter::LoadedDeviceAdapter(const std::string& filename) :
    GetDeviceName_(0),
    GetDeviceType_(0),
    GetDeviceDescription_(0)
-{}
+{
+   try
+   {
+      module_ = boost::make_shared<LoadedModule>(filename);
+   }
+   catch (const CMMError& e)
+   {
+      throw CMMError("Failed to load device adapter " + ToQuotedString(label_), e);
+   }
+}
 
 
 MMThreadLock*

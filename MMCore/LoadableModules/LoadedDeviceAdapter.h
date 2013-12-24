@@ -34,7 +34,7 @@
 class LoadedDeviceAdapter /* final */ : boost::noncopyable
 {
 public:
-   explicit LoadedDeviceAdapter(const std::string& filename);
+   LoadedDeviceAdapter(const std::string& label, const std::string& filename);
 
    // TODO Unload() should mark the instance invalid (or require instance
    // deletion to unload)
@@ -57,6 +57,7 @@ public:
    bool GetDeviceDescription(const char* deviceName, char* buf, unsigned bufLen);
 
 private:
+   const std::string label_;
    boost::shared_ptr<LoadedModule> module_;
 
    MMThreadLock lock_;

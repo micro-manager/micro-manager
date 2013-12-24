@@ -139,6 +139,11 @@ string CPluginManager::FindInSearchPath(string filename)
 boost::shared_ptr<LoadedDeviceAdapter>
 CPluginManager::LoadPluginLibrary(const char* shortName)
 {
+   if (!shortName)
+      throw CMMError("Cannot load device adapter (null name)");
+   if (shortName[0] == '\0')
+      throw CMMError("Cannot load device adapter (empty name)");
+
    std::map< std::string, boost::shared_ptr<LoadedDeviceAdapter> >::iterator it =
       moduleMap_.find(shortName);
    if (it != moduleMap_.end())
@@ -149,18 +154,10 @@ CPluginManager::LoadPluginLibrary(const char* shortName)
    name += LIB_NAME_SUFFIX;
    name = FindInSearchPath(name);
 
-   boost::shared_ptr<LoadedDeviceAdapter> mod;
-   try
-   {
-      mod = boost::make_shared<LoadedDeviceAdapter>(name);
-   }
-   catch (const CMMError& e)
-   {
-      throw CMMError("Cannot load device adapter " + ToQuotedString(shortName), e);
-   }
-
-   moduleMap_[shortName] = mod;
-   return mod;
+   boost::shared_ptr<LoadedDeviceAdapter> module =
+      boost::make_shared<LoadedDeviceAdapter>(shortName, name);
+   moduleMap_[shortName] = module;
+   return module;
 }
 
 /** 
