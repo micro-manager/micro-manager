@@ -61,6 +61,8 @@ LoadedDeviceAdapter::LoadedDeviceAdapter(const std::string& label, const std::st
       throw CMMError("Failed to load device adapter " + ToQuotedString(label_) +
             " from " + ToQuotedString(filename), e);
    }
+
+   InitializeModuleData();
 }
 
 

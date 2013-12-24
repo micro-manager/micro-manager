@@ -46,7 +46,6 @@ public:
    void RemoveLock(); // XXX I'm not sure it is a good idea to expose this.
 
    // TODO Make these private and provide higher-level interface
-   void InitializeModuleData();
    MM::Device* CreateDevice(const char* deviceName);
    void DeleteDevice(MM::Device* device);
    unsigned GetNumberOfDevices();
@@ -58,6 +57,7 @@ private:
    void CheckInterfaceVersion();
 
    // Wrappers around raw module interface functions
+   void InitializeModuleData();
    long GetModuleVersion();
    long GetDeviceInterfaceVersion();
 

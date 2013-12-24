@@ -575,9 +575,6 @@ vector<string> CPluginManager::GetAvailableDevices(const char* moduleName) throw
 
    try
    {
-      // initalize module data
-      module->InitializeModuleData();
-
       unsigned numDev = module->GetNumberOfDevices();
       for (unsigned i=0; i<numDev; i++)
       {
@@ -605,8 +602,6 @@ vector<string> CPluginManager::GetAvailableDeviceDescriptions(const char* module
 
    try
    {
-      module->InitializeModuleData();
-
       unsigned numDev = module->GetNumberOfDevices();
       for (unsigned i=0; i<numDev; i++)
       {
@@ -640,8 +635,6 @@ vector<long> CPluginManager::GetAvailableDeviceTypes(const char* moduleName) thr
 
    try
    {
-      module->InitializeModuleData();
-
       unsigned numDev = module->GetNumberOfDevices();
 
       for (unsigned i=0; i<numDev; i++)
