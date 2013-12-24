@@ -284,8 +284,6 @@ CMMCore::~CMMCore()
    }
    CORE_LOG("Core session ended\n");
 
-   pluginManager_.DeleteModuleLocks();
-
    delete logger_;
    delete callback_;
    delete configGroups_;

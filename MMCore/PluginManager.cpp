@@ -68,13 +68,11 @@ CPluginManager::CPluginManager()
 CPluginManager::~CPluginManager()
 {
    UnloadAllDevices();
-   DeleteModuleLocks();
 }
 
 
 std::vector<std::string> CPluginManager::searchPaths_;
 std::map< std::string, boost::shared_ptr<LoadedDeviceAdapter> > CPluginManager::moduleMap_;
-std::map<std::string, MMThreadLock*> CPluginManager::moduleLocks_;
 
 /**
  * Add search path.
@@ -162,7 +160,6 @@ CPluginManager::LoadPluginLibrary(const char* shortName)
    }
 
    moduleMap_[shortName] = mod;
-   CreateModuleLock(shortName);
    return mod;
 }
 
@@ -729,31 +726,6 @@ vector<long> CPluginManager::GetAvailableDeviceTypes(const char* moduleName) thr
    return types;
 }
 
-/**
-* Creates a thread lock for a particular module.
-*/
-void CPluginManager::CreateModuleLock(const char* moduleName)
-{
-	CModuleLockMap::iterator it2 = moduleLocks_.find(moduleName);
-	if (it2 == moduleLocks_.end())
-	{
-		moduleLocks_[moduleName] = new MMThreadLock;
-	}
-}
-
-
-/**
- * Deletes all module locks.
- * Should be called only on exit, when all devices are inactive
- */
-void CPluginManager::DeleteModuleLocks()
-{
-   // delete all module locks
-   for (CModuleLockMap::iterator it = moduleLocks_.begin(); it != moduleLocks_.end(); it++)
-      delete(it->second);
-
-   moduleLocks_.clear();
-}
 
 /**
  * Returns appropriate module-level lock for a given device.
@@ -764,13 +736,11 @@ MMThreadLock* CPluginManager::getModuleLock(const MM::Device* pDev)
    if (pDev == 0)
       return 0;
 
-   char moduleName[MM::MaxStrLength];
-   pDev->GetModuleName(moduleName);
-   CModuleLockMap::iterator it = moduleLocks_.find(moduleName);
-   if (it == moduleLocks_.end())
+   std::map< const MM::Device*, boost::shared_ptr<LoadedDeviceAdapter> >::iterator it =
+      deviceModules_.find(pDev);
+   if (it == deviceModules_.end())
       return 0;
-
-   return it->second;
+   return it->second->GetLock();
 }
 
 /**
@@ -778,14 +748,17 @@ MMThreadLock* CPluginManager::getModuleLock(const MM::Device* pDev)
  * This method is used by devices to defeat module thread locking in MMCore.
  * If device implements its own thread safety mechanism, then it makes sense to
  * defeat the system level locking.
+ * XXX I don't think this should be exposed. It will couple the device
+ * implementations to the core implementation so tightly that we're going to
+ * end up with a hard-to-maintain situation. Keeping it for now. - Mark
  */
 bool CPluginManager::removeModuleLock(const char* moduleName)
 {
-   CModuleLockMap::iterator it = moduleLocks_.find(moduleName);
-   if (it == moduleLocks_.end())
+   std::map< std::string, boost::shared_ptr<LoadedDeviceAdapter> >::iterator it =
+      moduleMap_.find(moduleName);
+   if (it == moduleMap_.end())
       return false;
 
-   delete moduleLocks_[moduleName];
-   moduleLocks_.erase(it);
+   it->second->RemoveLock();
    return true;
 }

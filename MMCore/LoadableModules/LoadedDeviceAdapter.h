@@ -23,6 +23,7 @@
 
 #include "LoadedModule.h"
 
+#include "../../MMDevice/DeviceThreads.h"
 #include "../../MMDevice/MMDevice.h"
 #include "../../MMDevice/ModuleInterface.h"
 
@@ -39,6 +40,11 @@ public:
    // deletion to unload)
    void Unload() { module_->Unload(); } // For developer use only
 
+   // The "module lock", used to synchronize _most_ access to the device
+   // adapter.
+   MMThreadLock* GetLock();
+   void RemoveLock(); // XXX I'm not sure it is a good idea to expose this.
+
    // TODO Make these private and provide higher-level interface
    void InitializeModuleData();
    MM::Device* CreateDevice(const char* deviceName);
@@ -52,6 +58,9 @@ public:
 
 private:
    boost::shared_ptr<LoadedModule> module_;
+
+   MMThreadLock lock_;
+   bool useLock_;
 
    // Cached function pointers
    fnInitializeModuleData InitializeModuleData_;

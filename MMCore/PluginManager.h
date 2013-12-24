@@ -72,12 +72,8 @@ public:
    static std::vector<long> GetAvailableDeviceTypes(const char* moduleName) throw (CMMError);
 
    // module level thread locking
-   static void CreateModuleLock(const char* moduleName);
-   void DeleteModuleLocks();
    MMThreadLock* getModuleLock(const MM::Device* pDev);
    bool removeModuleLock(const char* moduleName);
- 
-
 
 private:
    static void GetModules(std::vector<std::string> &modules, const char *path);
@@ -85,7 +81,6 @@ private:
    static void CheckVersion(boost::shared_ptr<LoadedDeviceAdapter> libHandle);
    static std::string FindInSearchPath(std::string filename);
 
-   typedef std::map<std::string, MMThreadLock*> CModuleLockMap;
    typedef std::map<std::string, MM::Device*> CDeviceMap;
    typedef std::vector<MM::Device*> DeviceVector;
 
@@ -93,14 +88,13 @@ private:
    static std::vector<std::string> searchPaths_;
    CDeviceMap devices_;
    DeviceVector devVector_;
-   static std::map<std::string, MMThreadLock*> moduleLocks_;
    static std::map< std::string, boost::shared_ptr<LoadedDeviceAdapter> > moduleMap_;
 
    // This is a temporary kludge. I've factored out LoadedDeviceAdapter from
    // PluginManager, but can't store a shared_ptr in MM::Device, so I need a
    // way to get the module from the device ptr, until we have a wrapper class
    // for attached ("loaded") devices. - Mark
-   std::map< MM::Device*, boost::shared_ptr<LoadedDeviceAdapter> > deviceModules_;
+   std::map< const MM::Device*, boost::shared_ptr<LoadedDeviceAdapter> > deviceModules_;
 };
 
 #endif //_PLUGIN_MANAGER_H_

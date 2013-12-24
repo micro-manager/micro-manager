@@ -26,6 +26,7 @@
 
 LoadedDeviceAdapter::LoadedDeviceAdapter(const std::string& filename) :
    module_(boost::make_shared<LoadedModule>(filename)),
+   useLock_(true),
    InitializeModuleData_(0),
    CreateDevice_(0),
    DeleteDevice_(0),
@@ -36,6 +37,22 @@ LoadedDeviceAdapter::LoadedDeviceAdapter(const std::string& filename) :
    GetDeviceType_(0),
    GetDeviceDescription_(0)
 {}
+
+
+MMThreadLock*
+LoadedDeviceAdapter::GetLock()
+{
+   if (useLock_)
+      return &lock_;
+   return 0;
+}
+
+
+void
+LoadedDeviceAdapter::RemoveLock()
+{
+   useLock_ = false;
+}
 
 
 void
