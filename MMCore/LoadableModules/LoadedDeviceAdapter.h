@@ -49,14 +49,18 @@ public:
    void InitializeModuleData();
    MM::Device* CreateDevice(const char* deviceName);
    void DeleteDevice(MM::Device* device);
-   long GetModuleVersion();
-   long GetDeviceInterfaceVersion();
    unsigned GetNumberOfDevices();
    bool GetDeviceName(unsigned index, char* buf, unsigned bufLen);
    bool GetDeviceType(const char* deviceName, int* type);
    bool GetDeviceDescription(const char* deviceName, char* buf, unsigned bufLen);
 
 private:
+   void CheckInterfaceVersion();
+
+   // Wrappers around raw module interface functions
+   long GetModuleVersion();
+   long GetDeviceInterfaceVersion();
+
    const std::string label_;
    boost::shared_ptr<LoadedModule> module_;
 

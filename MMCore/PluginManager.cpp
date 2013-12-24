@@ -182,29 +182,6 @@ void CPluginManager::UnloadPluginLibrary(const char* moduleName)
 
 
 /**
- * Verifies that plugin interface/device version matches the core version expectations.
- * Throws if there is a mismatch or if the version info is not available.
-*/
-void CPluginManager::CheckVersion(boost::shared_ptr<LoadedDeviceAdapter> module)
-{
-   long moduleVersion = module->GetModuleVersion();
-   if (moduleVersion != MODULE_INTERFACE_VERSION)
-   {
-      ostringstream errTxt;
-      errTxt << "Module interface version: core=" << MODULE_INTERFACE_VERSION << ", library=" << moduleVersion;  
-      throw CMMError(errTxt.str().c_str(), MMERR_ModuleVersionMismatch);
-   }
-
-   long deviceVersion = module->GetDeviceInterfaceVersion();
-   if (deviceVersion != DEVICE_INTERFACE_VERSION)
-   {
-      ostringstream errTxt;
-      errTxt << "Device interface version: core=" << DEVICE_INTERFACE_VERSION << ", library=" << deviceVersion;  
-      throw CMMError(errTxt.str().c_str(), MMERR_DeviceVersionMismatch);
-   }
-}
-
-/**
  * Unloads the specified device from the core.
  * @param pDevice pointer to the device to unload
  */
@@ -312,16 +289,6 @@ MM::Device* CPluginManager::LoadDevice(const char* label, const char* moduleName
       throw CMMError("Invalid label (empty string)", MMERR_InvalidLabel);
    
    boost::shared_ptr<LoadedDeviceAdapter> module = LoadPluginLibrary(moduleName);
-
-   try
-   {
-      CheckVersion(module);
-   }
-   catch (const CMMError& e)
-   {
-      throw CMMError("Cannot load device " + ToQuotedString(deviceName) +
-            " as " + ToQuotedString(label), e);
-   }
 
    // instantiate the new device
    MM::Device* pDevice = module->CreateDevice(deviceName);
@@ -605,7 +572,6 @@ vector<string> CPluginManager::GetAvailableDevices(const char* moduleName) throw
 {
    vector<string> devices;
    boost::shared_ptr<LoadedDeviceAdapter> module = LoadPluginLibrary(moduleName);
-   CheckVersion(module);
 
    try
    {
@@ -636,7 +602,6 @@ vector<string> CPluginManager::GetAvailableDeviceDescriptions(const char* module
 {
    vector<string> descriptions;
    boost::shared_ptr<LoadedDeviceAdapter> module = LoadPluginLibrary(moduleName);
-   CheckVersion(module);
 
    try
    {
@@ -672,7 +637,6 @@ vector<long> CPluginManager::GetAvailableDeviceTypes(const char* moduleName) thr
 {
    vector<long> types;
    boost::shared_ptr<LoadedDeviceAdapter> module = LoadPluginLibrary(moduleName);
-   CheckVersion(module);
 
    try
    {

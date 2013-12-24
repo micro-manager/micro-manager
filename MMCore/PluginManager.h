@@ -78,7 +78,6 @@ public:
 private:
    static void GetModules(std::vector<std::string> &modules, const char *path);
    static boost::shared_ptr<LoadedDeviceAdapter> LoadPluginLibrary(const char* libName);
-   static void CheckVersion(boost::shared_ptr<LoadedDeviceAdapter> libHandle);
    static std::string FindInSearchPath(std::string filename);
 
    typedef std::map<std::string, MM::Device*> CDeviceMap;

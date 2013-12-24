@@ -17,7 +17,8 @@
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-// AUTHOR:        Mark Tsuchida
+// AUTHOR:        Mark Tsuchida,
+//                based on parts of CPluginManager by Nenad Amodaj
 
 #include "LoadedDeviceAdapter.h"
 
@@ -29,7 +30,6 @@
 
 LoadedDeviceAdapter::LoadedDeviceAdapter(const std::string& label, const std::string& filename) :
    label_(label),
-   module_(boost::make_shared<LoadedModule>(filename)),
    useLock_(true),
    InitializeModuleData_(0),
    CreateDevice_(0),
@@ -47,7 +47,19 @@ LoadedDeviceAdapter::LoadedDeviceAdapter(const std::string& label, const std::st
    }
    catch (const CMMError& e)
    {
+      module_.reset();
       throw CMMError("Failed to load device adapter " + ToQuotedString(label_), e);
+   }
+
+   try
+   {
+      CheckInterfaceVersion();
+   }
+   catch (const CMMError& e)
+   {
+      module_.reset();
+      throw CMMError("Failed to load device adapter " + ToQuotedString(label_) +
+            " from " + ToQuotedString(filename), e);
    }
 }
 
@@ -65,6 +77,32 @@ void
 LoadedDeviceAdapter::RemoveLock()
 {
    useLock_ = false;
+}
+
+
+void
+LoadedDeviceAdapter::CheckInterfaceVersion()
+{
+   long moduleInterfaceVersion, deviceInterfaceVersion;
+   try
+   {
+      moduleInterfaceVersion = GetModuleVersion();
+      deviceInterfaceVersion = GetDeviceInterfaceVersion();
+   }
+   catch (const CMMError& e)
+   {
+      throw CMMError("Cannot verify interface compatibility of device adapter", e);
+   }
+
+   if (moduleInterfaceVersion != MODULE_INTERFACE_VERSION)
+      throw CMMError("Incompatible module interface version (required = " +
+            ToString(MODULE_INTERFACE_VERSION) +
+            "; found = " + ToString(moduleInterfaceVersion) + ")");
+
+   if (deviceInterfaceVersion != DEVICE_INTERFACE_VERSION)
+      throw CMMError("Incompatible device interface version (required = " +
+            ToString(DEVICE_INTERFACE_VERSION) +
+            "; found = " + ToString(deviceInterfaceVersion) + ")");
 }
 
 
