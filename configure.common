@@ -1,12 +1,16 @@
 # Checks for programs.
-AC_PROG_CXX
-AC_PROG_CC
+AC_PROG_CXX([clang++ llvm-g++ g++ c++])
+AC_PROG_CC([clang llvm-gcc gcc cc])
 AC_PROG_LIBTOOL
 
 OSNAME=`uname -s`
 
 # GCC version
-if test "x$GXX" = "xyes"; then
+# AC_PROG_CXX sets GXX to yes even when using clang++, but clang++'s -v output
+# has a different format and will cause an error. So check CXX directly.
+# XXX There may be cases where CXX != g++ even though we are using (real) g++.
+# If so this check will be skipped. But g++ < 3.0 is rare enough.
+if test "x$GXX" = "xyes" -a "x$CXX" = "xg++"; then
   AC_MSG_CHECKING([GNU compiler version])
 
   # Don't pass CXXFLAGS to the following CXX command as some
@@ -27,15 +31,15 @@ if test "x$GXX" = "xyes"; then
   if test $cc_vers_major -lt 3; then
     AC_MSG_ERROR([gcc >= 3.0 is needed to compile `])
   fi
-fi 
 
-# On linux, some gcc versions build shared libraries unusable in java when using
-# the -O2 optimization.  Switch it off here:
+  # On linux, some gcc versions build shared libraries unusable in java when using
+  # the -O2 optimization.  Switch it off here:
 
-if test $cc_vers_major -gt 3; then
-   case $host in
-      *-*-linux*) CXXFLAGS="-g -O";;
-   esac
+  if test $cc_vers_major -gt 3; then
+     case $host in
+        *-*-linux*) CXXFLAGS="-g -O";;
+     esac
+  fi
 fi
 
 
