@@ -36,6 +36,9 @@ libMMCoreJ_wrap_la_SOURCES = $(SWIGLIB_SOURCES) \
 	$(top_srcdir)/MMCore/FastLogger.cpp \
 	$(top_srcdir)/MMCore/MMCore.cpp \
 	$(top_srcdir)/MMCore/PluginManager.cpp \
+	$(top_srcdir)/MMCore/LoadableModules/LoadedModule.cpp \
+	$(top_srcdir)/MMCore/LoadableModules/LoadedModuleImpl.cpp \
+	$(top_srcdir)/MMCore/LoadableModules/LoadedModuleImplUnix.cpp \
 	$(top_srcdir)/MMCore/Host.cpp
  
 libMMCoreJ_wrap_la_LIBADD = $(BOOST_SYSTEM_LIB)

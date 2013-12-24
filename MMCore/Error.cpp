@@ -54,6 +54,20 @@ CMMError::CMMError(const char* msg, Code code, const CMMError& underlyingError) 
 {}
 
 
+CMMError::CMMError(const std::string& msg, const CMMError& underlyingError) :
+   message_(msg),
+   code_(MMERR_GENERIC),
+   underlying_(new CMMError(underlyingError))
+{}
+
+
+CMMError::CMMError(const char* msg, const CMMError& underlyingError) :
+   message_(msg ? msg : "(null message)"),
+   code_(MMERR_GENERIC),
+   underlying_(new CMMError(underlyingError))
+{}
+
+
 CMMError::CMMError(const CMMError& other) :
    message_(other.message_),
    code_(other.code_),

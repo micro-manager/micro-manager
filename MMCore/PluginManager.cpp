@@ -20,16 +20,11 @@
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 // AUTHOR:        Nenad Amodaj, nenad@amodaj.com, 08/10/2005
-//
-// CVS:           $Id$
-//
 
-//#include "CoreUtils.h"
 #ifdef WIN32
    #include <windows.h>
    #include <io.h>
 #else
-   #include <dlfcn.h>
    #include <sys/types.h>
    #include <dirent.h>
 #endif // WIN32
@@ -40,7 +35,8 @@
 #include "CoreUtils.h"
 #include "Error.h"
 
-#include <assert.h>
+#include <boost/make_shared.hpp>
+
 #include <sstream>
 #include <iostream>
 #include <fstream>
@@ -77,7 +73,7 @@ CPluginManager::~CPluginManager()
 
 
 std::vector<std::string> CPluginManager::searchPaths_;
-std::map<std::string, HDEVMODULE> CPluginManager::moduleMap_;
+std::map< std::string, boost::shared_ptr<LoadedModule> > CPluginManager::moduleMap_;
 std::map<std::string, MMThreadLock*> CPluginManager::moduleLocks_;
 
 /**
@@ -142,155 +138,63 @@ string CPluginManager::FindInSearchPath(string filename)
  * @param shortName Simple module name without path, prefix, or suffix.
  * @return Module handle if successful, throws exception if not
  */
-HDEVMODULE CPluginManager::LoadPluginLibrary(const char* shortName)
+boost::shared_ptr<LoadedModule>
+CPluginManager::LoadPluginLibrary(const char* shortName)
 {
+   std::map< std::string, boost::shared_ptr<LoadedModule> >::iterator it =
+      moduleMap_.find(shortName);
+   if (it != moduleMap_.end())
+      return it->second;
+
    string name(LIB_NAME_PREFIX);
    name += shortName;
    name += LIB_NAME_SUFFIX;
    name = FindInSearchPath(name);
 
-   HDEVMODULE hMod;
-   string errorText;
-   #ifdef WIN32
-      int originalErrorMode = SetErrorMode(SEM_NOOPENFILEERRORBOX | SEM_FAILCRITICALERRORS);
-      hMod = LoadLibrary(name.c_str());
-      SetErrorMode(originalErrorMode);
-   #else
-      int mode = RTLD_NOW | RTLD_LOCAL;
-      // Hack to make Andor adapter on Linux work
-      if (strcmp (shortName, "Andor") == 0)
-         mode = RTLD_LAZY | RTLD_LOCAL;
-
-      // XXX What's this line for? It makes absolutely no sense - Mark.
-      hMod = dlopen(name.c_str(), RTLD_NOLOAD | mode);
-
-      if (!hMod)
-      {
-         hMod = dlopen(name.c_str(), mode);
-      }
-   #endif // WIN32
-   if (hMod) 
+   boost::shared_ptr<LoadedModule> mod;
+   try
    {
-      moduleMap_[shortName] = hMod;
-      CreateModuleLock(shortName);
-      return hMod;
+      mod = boost::make_shared<LoadedModule>(name);
+   }
+   catch (const CMMError& e)
+   {
+      throw CMMError("Cannot load device adapter " + ToQuotedString(shortName), e);
    }
 
-   GetSystemError(errorText);
-#ifdef WIN32
-   // This message can be misleading.
-   if (errorText == "The specified module could not be found.") {
-      errorText = "The module, or a module it depends upon, could not be found. (\"" + errorText + "\")";
-   }
-#endif
-   errorText = "Failed to load library \"" + name + "\" (for \"" +
-         shortName + "\") [" + errorText + "]";
-   throw CMMError(errorText.c_str(), MMERR_LoadLibraryFailed);
+   moduleMap_[shortName] = mod;
+   CreateModuleLock(shortName);
+   return mod;
 }
 
 /** 
- * Forcefully unload a library. Do not use.
+ * Unload a module.
  */
 void CPluginManager::UnloadPluginLibrary(const char* moduleName)
 {
-   HDEVMODULE hLib = moduleMap_[moduleName];
-   if (!hLib)
-      return;
+   std::map< std::string, boost::shared_ptr<LoadedModule> >::iterator it =
+      moduleMap_.find(moduleName);
+   if (it == moduleMap_.end())
+      throw CMMError("No device adapter named " + ToQuotedString(moduleName));
 
-   // XXX A terrible thing is done here, to completely unload the library: the
-   // API function to unload is called repetitively until it fails, so that the
-   // library is actually unloaded regardless of its current (OS-managed)
-   // reference count. This was presumably done to get the DLLAutoReloader
-   // plugin to work, and there is no other place from which this function is
-   // called, so I'm keeping the behavior for now - Mark.
-   #ifdef WIN32
-      while (FreeLibrary(hLib))
-         ;
-   #else
-      while (dlclose(hLib) == 0)
-         ;
-   #endif
-}
-
-/** 
- * Returns pointer to the function from the plugin library. Platform dependent.
- * @param hLib module (plugin library) handle
- * @param funcName the name of the function
- * @return function pointer if successful, throws exception if not
- */
-void* CPluginManager::GetModuleFunction(HDEVMODULE hLib, const char* funcName)
-{
-   string errorText;
-   void* procAddr;
-   #ifdef WIN32
-      procAddr = ::GetProcAddress(hLib, funcName);
-   #else
-      procAddr = dlsym(hLib, funcName);
-   #endif
-   if (procAddr)
-      return procAddr;
-      
-   GetSystemError(errorText);
-   // TODO Would be nice to include name of library.
-   errorText = "Failed to find function \"" + string(funcName) +
-         "\" in device adapter library [" + errorText + "]";
-   throw CMMError(errorText.c_str(), MMERR_LibraryFunctionNotFound);
-}
-
-/**
- * Get the OS error message.
- *
- * Must be called right after a dynamic library related API call, and can only
- * be called once.
- */
-void CPluginManager::GetSystemError(string& errorText)
-{
-   errorText.clear();
-
-   #ifdef WIN32
-      DWORD err = GetLastError();
-      LPSTR pMsgBuf(0);
-      if (FormatMessageA( 
-            FORMAT_MESSAGE_ALLOCATE_BUFFER | 
-            FORMAT_MESSAGE_FROM_SYSTEM | 
-            FORMAT_MESSAGE_IGNORE_INSERTS,
-            NULL,
-            err,
-            MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-            (LPSTR)&pMsgBuf,
-            0,
-            NULL) && pMsgBuf)
-      {
-         errorText = (const char*)pMsgBuf;
-
-         // Windows error messages sometimes have trailing newlines
-         boost::algorithm::trim(errorText);
-      }
-      if (pMsgBuf)
-      {
-         LocalFree(pMsgBuf);
-      }
-   #else
-      const char* errorString = dlerror();  
-      if (errorString) {
-         errorText = errorString;
-      }
-   #endif
-
-   if (errorText.empty()) {
-      errorText = "operating system error message not available";
+   try
+   {
+      it->second->Unload();
+   }
+   catch (const CMMError& e)
+   {
+      throw CMMError("Cannot unload device adapter " + ToQuotedString(moduleName), e);
    }
 }
+
 
 /**
  * Verifies that plugin interface/device version matches the core version expectations.
  * Throws if there is a mismatch or if the version info is not available.
- * @param hLib handle to the plugin library (module)
 */
-void CPluginManager::CheckVersion(HDEVMODULE hLib)
+void CPluginManager::CheckVersion(boost::shared_ptr<LoadedModule> module)
 {
    // module version
-   fnGetModuleVersion hGetModuleVersionFunc = (fnGetModuleVersion) GetModuleFunction(hLib, "GetModuleVersion");
+   fnGetModuleVersion hGetModuleVersionFunc = (fnGetModuleVersion) module->GetFunction("GetModuleVersion");
 
    long moduleVersion = hGetModuleVersionFunc();
    if (moduleVersion != MODULE_INTERFACE_VERSION)
@@ -301,7 +205,7 @@ void CPluginManager::CheckVersion(HDEVMODULE hLib)
    }
 
    // device version
-   fnGetDeviceInterfaceVersion hGetDeviceInterfaceVersionFunc = (fnGetDeviceInterfaceVersion) GetModuleFunction(hLib, "GetDeviceInterfaceVersion");
+   fnGetDeviceInterfaceVersion hGetDeviceInterfaceVersionFunc = (fnGetDeviceInterfaceVersion) module->GetFunction("GetDeviceInterfaceVersion");
    long deviceVersion = hGetDeviceInterfaceVersionFunc();
    if (deviceVersion != DEVICE_INTERFACE_VERSION)
    {
@@ -351,19 +255,18 @@ void CPluginManager::UnloadDevice(MM::Device* pDevice)
       devVector_ = newDevVector;
    }
 
-   HDEVMODULE hLib = pDevice->GetModuleHandle();
-   if (hLib == 0)
-      throw CMMError("Device cannot be unloaded: using unknown library", MMERR_UnknownModule);
+   boost::shared_ptr<LoadedModule> module = deviceModules_[pDevice];
 
    // obtain handle to the DeleteDevice method
-   // we are assuming here that the current device module is already loaded
-   fnDeleteDevice hDeleteDeviceFunc = (fnDeleteDevice) GetModuleFunction(hLib, "DeleteDevice");
+   fnDeleteDevice hDeleteDeviceFunc = (fnDeleteDevice) module->GetFunction("DeleteDevice");
 
    // release device resources
    pDevice->Shutdown();
 
    // delete device
    hDeleteDeviceFunc(pDevice);
+
+   deviceModules_.erase(pDevice);
 }
 
 /**
@@ -423,9 +326,7 @@ MM::Device* CPluginManager::LoadDevice(const char* label, const char* moduleName
    if (strlen(label) == 0)
       throw CMMError("Invalid label (empty string)", MMERR_InvalidLabel);
    
-   // always attempt to load the plugin module
-   // this should work fine even if the same module was previously loaded
-   HDEVMODULE hLib = LoadPluginLibrary(moduleName);
+   boost::shared_ptr<LoadedModule> module = LoadPluginLibrary(moduleName);
 
    fnCreateDevice hCreateDeviceFunc(0);
    fnDeleteDevice hDeleteDeviceFunc(0);
@@ -433,20 +334,18 @@ MM::Device* CPluginManager::LoadDevice(const char* label, const char* moduleName
    fnGetDeviceDescription hGetDeviceDescription(0);
    try
    {
-      CheckVersion(hLib);
-      hCreateDeviceFunc = (fnCreateDevice) GetModuleFunction(hLib, "CreateDevice");
-      hDeleteDeviceFunc = (fnDeleteDevice) GetModuleFunction(hLib, "DeleteDevice");
-      hGetDeviceType = (fnGetDeviceType) GetModuleFunction(hLib, "GetDeviceType");
-      hGetDeviceDescription = (fnGetDeviceDescription) GetModuleFunction(hLib, "GetDeviceDescription");
+      CheckVersion(module);
+      hCreateDeviceFunc = (fnCreateDevice) module->GetFunction("CreateDevice");
+      hDeleteDeviceFunc = (fnDeleteDevice) module->GetFunction("DeleteDevice");
+      hGetDeviceType = (fnGetDeviceType) module->GetFunction("GetDeviceType");
+      hGetDeviceDescription = (fnGetDeviceDescription) module->GetFunction("GetDeviceDescription");
    }
-   catch (CMMError& err)
+   catch (const CMMError& e)
    {
-      string msg = "Failed to load device " + ToQuotedString(deviceName) +
-         " from module " + ToQuotedString(moduleName) +
-         " as " + ToQuotedString(label);
-      throw CMMError(msg, MMERR_GENERIC, err);
+      throw CMMError("Cannot load device " + ToQuotedString(deviceName) +
+            " as " + ToQuotedString(label), e);
    }
-   
+
    // instantiate the new device
    MM::Device* pDevice = hCreateDeviceFunc(deviceName);
    if (pDevice == 0)
@@ -475,7 +374,7 @@ MM::Device* CPluginManager::LoadDevice(const char* label, const char* moduleName
    hGetDeviceDescription(deviceName, descr, MM::MaxStrLength);
 
    // make sure that each device carries a reference to the module it belongs to!!!
-   pDevice->SetModuleHandle(hLib);
+   deviceModules_[pDevice] = module;
    pDevice->SetLabel(label);
    pDevice->SetModuleName(moduleName);
    pDevice->SetDescription(descr);
@@ -728,8 +627,8 @@ vector<string> CPluginManager::GetModules()
 vector<string> CPluginManager::GetAvailableDevices(const char* moduleName) throw (CMMError)
 {
    vector<string> devices;
-   HDEVMODULE hLib = LoadPluginLibrary(moduleName);
-   CheckVersion(hLib);
+   boost::shared_ptr<LoadedModule> module = LoadPluginLibrary(moduleName);
+   CheckVersion(module);
 
    fnGetNumberOfDevices hGetNumberOfDevices(0);
    fnGetDeviceName hGetDeviceName(0);
@@ -738,14 +637,11 @@ vector<string> CPluginManager::GetAvailableDevices(const char* moduleName) throw
    try
    {
       // initalize module data
-      hInitializeModuleData = (fnInitializeModuleData) GetModuleFunction(hLib, "InitializeModuleData");
-      assert(hInitializeModuleData);
+      hInitializeModuleData = (fnInitializeModuleData) module->GetFunction("InitializeModuleData");
       hInitializeModuleData();
 
-      hGetNumberOfDevices = (fnGetNumberOfDevices) GetModuleFunction(hLib, "GetNumberOfDevices");
-      assert(hGetNumberOfDevices);
-      hGetDeviceName = (fnGetDeviceName) GetModuleFunction(hLib, "GetDeviceName");
-      assert(hGetDeviceName);
+      hGetNumberOfDevices = (fnGetNumberOfDevices) module->GetFunction("GetNumberOfDevices");
+      hGetDeviceName = (fnGetDeviceName) module->GetFunction("GetDeviceName");
 
       unsigned numDev = hGetNumberOfDevices();
       for (unsigned i=0; i<numDev; i++)
@@ -770,8 +666,8 @@ vector<string> CPluginManager::GetAvailableDevices(const char* moduleName) throw
 vector<string> CPluginManager::GetAvailableDeviceDescriptions(const char* moduleName) throw (CMMError)
 {
    vector<string> descriptions;
-   HDEVMODULE hLib = LoadPluginLibrary(moduleName);
-   CheckVersion(hLib);
+   boost::shared_ptr<LoadedModule> module = LoadPluginLibrary(moduleName);
+   CheckVersion(module);
 
    fnGetNumberOfDevices hGetNumberOfDevices(0);
    fnGetDeviceDescription hGetDeviceDescription(0);
@@ -780,16 +676,12 @@ vector<string> CPluginManager::GetAvailableDeviceDescriptions(const char* module
 
    try
    {
-      hInitializeModuleData = (fnInitializeModuleData) GetModuleFunction(hLib, "InitializeModuleData");
-      assert(hInitializeModuleData);
+      hInitializeModuleData = (fnInitializeModuleData) module->GetFunction("InitializeModuleData");
       hInitializeModuleData();
 
-      hGetNumberOfDevices = (fnGetNumberOfDevices) GetModuleFunction(hLib, "GetNumberOfDevices");
-      assert(hGetNumberOfDevices);
-      hGetDeviceDescription = (fnGetDeviceDescription) GetModuleFunction(hLib, "GetDeviceDescription");
-      assert(hGetDeviceDescription);
-      hGetDeviceName = (fnGetDeviceName) GetModuleFunction(hLib, "GetDeviceName");
-      assert(hGetDeviceName);
+      hGetNumberOfDevices = (fnGetNumberOfDevices) module->GetFunction("GetNumberOfDevices");
+      hGetDeviceDescription = (fnGetDeviceDescription) module->GetFunction("GetDeviceDescription");
+      hGetDeviceName = (fnGetDeviceName) module->GetFunction("GetDeviceName");
 
       unsigned numDev = hGetNumberOfDevices();
       for (unsigned i=0; i<numDev; i++)
@@ -820,29 +712,23 @@ vector<string> CPluginManager::GetAvailableDeviceDescriptions(const char* module
 vector<long> CPluginManager::GetAvailableDeviceTypes(const char* moduleName) throw (CMMError)
 {
    vector<long> types;
-   HDEVMODULE hLib = LoadPluginLibrary(moduleName);
-   CheckVersion(hLib);
+   boost::shared_ptr<LoadedModule> module = LoadPluginLibrary(moduleName);
+   CheckVersion(module);
 
    fnGetNumberOfDevices hGetNumberOfDevices(0);
    fnInitializeModuleData hInitializeModuleData(0);
 
    try
    {
-      hInitializeModuleData = (fnInitializeModuleData) GetModuleFunction(hLib, "InitializeModuleData");
-      assert(hInitializeModuleData);
+      hInitializeModuleData = (fnInitializeModuleData) module->GetFunction("InitializeModuleData");
       hInitializeModuleData();
 
-      hGetNumberOfDevices = (fnGetNumberOfDevices) GetModuleFunction(hLib, "GetNumberOfDevices");
-      assert(hGetNumberOfDevices);
+      hGetNumberOfDevices = (fnGetNumberOfDevices) module->GetFunction("GetNumberOfDevices");
 
-      fnDeleteDevice hDeleteDeviceFunc = (fnDeleteDevice) GetModuleFunction(hLib, "DeleteDevice");
-      assert(hDeleteDeviceFunc);
-      fnCreateDevice hCreateDeviceFunc = (fnCreateDevice) GetModuleFunction(hLib, "CreateDevice");
-      assert(hCreateDeviceFunc);
-      fnGetDeviceName hGetDeviceName = (fnGetDeviceName) GetModuleFunction(hLib, "GetDeviceName");
-      assert(hGetDeviceName);
-      fnGetDeviceType hGetDeviceType = (fnGetDeviceType) GetModuleFunction(hLib, "GetDeviceType");
-      assert(hGetDeviceType);
+      fnDeleteDevice hDeleteDeviceFunc = (fnDeleteDevice) module->GetFunction("DeleteDevice");
+      fnCreateDevice hCreateDeviceFunc = (fnCreateDevice) module->GetFunction("CreateDevice");
+      fnGetDeviceName hGetDeviceName = (fnGetDeviceName) module->GetFunction("GetDeviceName");
+      fnGetDeviceType hGetDeviceType = (fnGetDeviceType) module->GetFunction("GetDeviceType");
       
       unsigned numDev = hGetNumberOfDevices();
 

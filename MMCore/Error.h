@@ -82,7 +82,7 @@ public:
     */
    explicit CMMError(const char* msg, Code code = MMERR_GENERIC);
 
-   /// Construct with an underlying (chained/wrapped) error.
+   /// Construct with an error code and underlying (chained/wrapped) error.
    /**
     * Use this form of the constructor when adding information and rethrowing
     * the exception.
@@ -91,7 +91,7 @@ public:
     */
    CMMError(const std::string& msg, Code code, const CMMError& underlyingError);
 
-   /// Construct with an underlying (chained/wrapped) error.
+   /// Construct with an error code and underlying (chained/wrapped) error.
    /**
     * Use this form of the constructor when adding information and rethrowing
     * the exception.
@@ -99,6 +99,22 @@ public:
     * msg should not be null. code should not be MMERR_OK (0).
     */
    CMMError(const char* msg, Code code, const CMMError& underlyingError);
+
+   /// Construct with an underlying (chained/wrapped) error.
+   /**
+    * Use this form of the constructor when adding information and rethrowing
+    * the exception.
+    */
+   CMMError(const std::string& msg, const CMMError& underlyingError);
+
+   /// Construct with an underlying (chained/wrapped) error.
+   /**
+    * Use this form of the constructor when adding information and rethrowing
+    * the exception.
+    *
+    * msg should not be null.
+    */
+   CMMError(const char* msg, const CMMError& underlyingError);
 
    /// Copy constructor (perform a deep copy).
    CMMError(const CMMError& other);

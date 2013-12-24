@@ -48,6 +48,15 @@
     <ClCompile Include="Error.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="LoadableModules\LoadedModule.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="LoadableModules\LoadedModuleImpl.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="LoadableModules\LoadedModuleImplWindows.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CircularBuffer.h">
@@ -102,6 +111,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="PluginManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LoadableModules\LoadedModule.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LoadableModules\LoadedModuleImpl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LoadableModules\LoadedModuleImplWindows.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -21,11 +21,6 @@
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 // AUTHOR:        Nenad Amodaj, nenad@amodaj.com, 08/10/2005
-// 
-// REVISIONS:     
-//
-// CVS:           $Id$
-//
 
 #ifndef _PLUGIN_MANAGER_H_
 #define _PLUGIN_MANAGER_H_
@@ -34,6 +29,8 @@
 // disable exception scpecification warnings in MSVC
 #pragma warning( disable : 4290 )
 #endif
+
+#include "LoadableModules/LoadedModule.h"
 
 #include <string>
 #include <cstring>
@@ -84,12 +81,10 @@ public:
 
 private:
    static void GetModules(std::vector<std::string> &modules, const char *path);
-   static void GetSystemError(std::string& errorText);
-   static void ReleasePluginLibrary(HDEVMODULE libHandle);
-   static HDEVMODULE LoadPluginLibrary(const char* libName);
-   static void* GetModuleFunction(HDEVMODULE hLib, const char* funcName);
-   static void CheckVersion(HDEVMODULE libHandle);
+   static boost::shared_ptr<LoadedModule> LoadPluginLibrary(const char* libName);
+   static void CheckVersion(boost::shared_ptr<LoadedModule> libHandle);
    static std::string FindInSearchPath(std::string filename);
+
    typedef std::map<std::string, MMThreadLock*> CModuleLockMap;
    typedef std::map<std::string, MM::Device*> CDeviceMap;
    typedef std::vector<MM::Device*> DeviceVector;
@@ -99,7 +94,13 @@ private:
    CDeviceMap devices_;
    DeviceVector devVector_;
    static std::map<std::string, MMThreadLock*> moduleLocks_;
-   static std::map<std::string, HDEVMODULE> moduleMap_;
+   static std::map< std::string, boost::shared_ptr<LoadedModule> > moduleMap_;
+
+   // This is a temporary kludge. I've factored out LoadedModule from
+   // PluginManager, but can't store a shared_ptr in MM::Device, so I need a
+   // way to get the module from the device ptr, until we have a wrapper class
+   // for attached ("loaded") devices. - Mark
+   std::map< MM::Device*, boost::shared_ptr<LoadedModule> > deviceModules_;
 };
 
 #endif //_PLUGIN_MANAGER_H_

@@ -309,6 +309,8 @@ namespace MM {
       /*
        * library handle management (for use only in the client code)
        */
+      // TODO Get/SetModuleHandle() is no longer used; can remove at a
+      // convenient time.
       virtual HDEVMODULE GetModuleHandle() const = 0;
       virtual void SetModuleHandle(HDEVMODULE hLibraryHandle) = 0;
       virtual void SetLabel(const char* label) = 0;

@@ -27,7 +27,10 @@ MMCOREPYSOURCES = $(SWIGLIBSOURCES) \
 	$(top_srcdir)/MMCore/FastLogger.cpp \
 	$(top_srcdir)/MMCore/Host.cpp \
 	$(top_srcdir)/MMCore/MMCore.cpp \
-	$(top_srcdir)/MMCore/PluginManager.cpp
+	$(top_srcdir)/MMCore/PluginManager.cpp \
+	$(top_srcdir)/MMCore/LoadableModules/LoadedModule.cpp \
+	$(top_srcdir)/MMCore/LoadableModules/LoadedModuleImpl.cpp \
+	$(top_srcdir)/MMCore/LoadableModules/LoadedModuleImplUnix.cpp
 
 _MMCorePy.so: MMCorePy_wrap.cxx $(MMCOREPYSOURCES)
 	python setup.py build_ext --inplace

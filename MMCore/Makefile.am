@@ -9,7 +9,10 @@ libMMCore_a_SOURCES = MMCore.cpp MMCore.h \
 	CoreUtils.h \
 	Error.h Error.cpp \
 	ErrorCodes.h\
-   PluginManager.h PluginManager.cpp \
+	PluginManager.h PluginManager.cpp \
+	LoadableModules/LoadedModule.h LoadableModules/LoadedModule.cpp \
+	LoadableModules/LoadedModuleImpl.h LoadableModules/LoadedModuleImpl.cpp \
+	LoadableModules/LoadedModuleImplUnix.h LoadableModules/LoadedModuleImplUnix.cpp \
 	IMLogger.h \
 	FastLogger.h FastLogger.cpp \
         Compressor.h \
