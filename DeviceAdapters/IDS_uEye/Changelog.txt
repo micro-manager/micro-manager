@@ -1,0 +1,8 @@
+IDS_uEye Changelog
+
+version 1.1:
+
+- fixed: vaules of pixel clock, frame rate and exposure range are now readjusted
+  and kept consistent
+  
+- changed: initial pixel clock set to default proposed by the hardware

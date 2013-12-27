@@ -5,17 +5,17 @@
 //-----------------------------------------------------------------------------
 // DESCRIPTION:   Driver for IDS uEye series of USB cameras
 //                (also Thorlabs DCUxxxx USB, Edmund EO-xxxxM USB
-//                 which are produced by IDS)
+//                 with IDS hardware)
 //
 //                based on IDS uEye SDK and Micromanager DemoCamera example
-//                tested with SDK version 3.82, 4.02 and 4.20
+//                tested with SDK version 3.82, 4.02, 4.20 and 4.30
 //                (3.82-specific functions are still present but not used)
 //                
 // AUTHOR:        Wenjamin Rosenfeld
 //
 // YEAR:          2012, 2013
 //                
-// VERSION:       1.0     
+// VERSION:       1.1
 //
 // LICENSE:       This file is distributed under the BSD license.
 //                License text is included with the source distribution.
@@ -28,7 +28,7 @@
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-//LAST UPDATE:    07.02.2013 WR
+//LAST UPDATE:    22.12.2013 WR
 
 
 
@@ -63,8 +63,31 @@ const char* g_PixelType_32bit = "32bit";        // floating point greyscale
 */
 
 
+// TODO: linux entry code
+
+// windows DLL entry code
+#ifdef WIN32
+BOOL APIENTRY DllMain( HANDLE /*hModule*/, 
+                      DWORD  ul_reason_for_call, 
+                      LPVOID /*lpReserved*/
+                      )
+{
+   switch (ul_reason_for_call)
+   {
+   case DLL_PROCESS_ATTACH:
+   case DLL_THREAD_ATTACH:
+   case DLL_THREAD_DETACH:
+   case DLL_PROCESS_DETACH:
+      break;
+   }
+   return TRUE;
+}
+#endif
+
+
+
 //definitions
-#define ACQ_TIMEOUT 200                             //timeout for image acquisition (in 10ms)
+#define ACQ_TIMEOUT 1100                             //timeout for image acquisition (in 10ms)
 
 
 
@@ -83,7 +106,8 @@ const char* g_PixelType_32bit = "32bit";        // floating point greyscale
  */
 MODULE_API void InitializeModuleData()
 {
-  RegisterDevice(g_CameraDeviceName, MM::CameraDevice, "uEye Camera");
+  AddAvailableDeviceName(g_CameraDeviceName, "uEye Camera");
+  
 }
 
 
@@ -292,18 +316,18 @@ int CIDS_uEye::Initialize()
    printf("pixel clock range: %d - %d MHz\n", pixelClkMin_, pixelClkMax_);
 
 
-   //get frame rate range
+   //get initial frame rate range
    GetFramerateRange(hCam, &framerateMin_, &framerateMax_);
    printf("frame rate range %.2f - %.2f\n",framerateMin_,framerateMax_);
 
 
-   //get current exposure range
+   //get initial exposure range
    GetExposureRange(hCam, &exposureMin_, &exposureMax_, &exposureIncrement_);
    if(exposureMax_>EXPOSURE_MAX) exposureMax_=EXPOSURE_MAX;                            //limit exposure time to keep the interface responsive
    printf("Exposure (%.3f, %.3f) ms, increment %.4f ms\n", exposureMin_, exposureMax_, exposureIncrement_);
 
 
-   //get current gain
+   //get initial gain
    gainMaster_=is_SetHardwareGain (hCam, IS_GET_MASTER_GAIN, 0, 0, 0);
    gainRed_=   is_SetHardwareGain (hCam, IS_GET_RED_GAIN, 0, 0, 0);
    gainGreen_= is_SetHardwareGain (hCam, IS_GET_GREEN_GAIN, 0, 0, 0);
@@ -509,14 +533,25 @@ int CIDS_uEye::Initialize()
    printf("display mode: %d\n", is_SetDisplayMode(hCam, IS_GET_DISPLAY_MODE));
 
 
-
    //set initial pixel clock
-   if(bitDepthReal_>8){
-     pixelClkCur_=pixelClkMin_+(pixelClkMax_-pixelClkMin_)/4;
+   nReturn = is_PixelClock(hCam, IS_PIXELCLOCK_CMD_GET_DEFAULT,
+                           (void*)&pixelClkDef_, sizeof(pixelClkDef_));
+
+   if(nReturn==IS_SUCCESS){                     //obtained default pixel clock
+     printf("default pixel clock: %d MHz\n",pixelClkDef_);
+     pixelClkCur_=pixelClkDef_;
+     SetPixelClock(pixelClkCur_);
    }
-   else{
-     pixelClkCur_=pixelClkMax_;
+   else{                                        //could not obtain default pixel cloc, guess one
+     if(bitDepthReal_>8){
+     pixelClkDef_=pixelClkMin_+(pixelClkMax_-pixelClkMin_)/4;
+     }
+     else{
+       pixelClkDef_=pixelClkMax_;
+     }
    }
+   
+   pixelClkCur_=pixelClkDef_;
    SetPixelClock(pixelClkCur_);
 
 
@@ -538,7 +573,7 @@ int CIDS_uEye::Initialize()
 
    
    //set timeout for image acquisition
-   nReturn = is_SetTimeout (hCam, IS_TRIGGER_TIMEOUT,300);
+   nReturn = is_SetTimeout (hCam, IS_TRIGGER_TIMEOUT, ACQ_TIMEOUT);
    if (nReturn != IS_SUCCESS){                          //could not set time out
      printf("Could not set acquisition time out\n");
    }
@@ -581,6 +616,7 @@ int CIDS_uEye::SnapImage()
 {
 
   int nReturn;
+  char *pErr = 0;
 
 
   static int callCounter = 0;
@@ -595,10 +631,11 @@ int CIDS_uEye::SnapImage()
   nReturn=is_FreezeVideo(hCam, ACQ_TIMEOUT);                    //returns when the first image is in memory or timeout
   if(nReturn !=IS_SUCCESS){
     if(nReturn == IS_TRANSFER_ERROR){
-      printf("IDS_uEye: failed capturing an image, transfer failed. Check pixel clock.\n");
+      printf("IDS_uEye: failed capturing an image, transfer failed. Check/reduce pixel clock.\n");
     }
     else{
-      printf("IDS_uEye: failed capturing an image, error %d\n", nReturn);
+      is_GetError(hCam, &nReturn, &pErr);                       //retrieve detailed error message
+      printf("IDS_uEye: failed capturing an image, error %d: %s\n", nReturn, pErr);
     }
   }
   
@@ -817,10 +854,17 @@ int CIDS_uEye::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize)
       img_.Resize(roiXSize_, roiYSize_);
 
 
+      //update frame rate range
+      GetFramerateRange(hCam, &framerateMin_, &framerateMax_);
+      SetPropertyLimits("Frame Rate", framerateMin_, framerateMax_);
+      //printf("new frame rate range %f %f\n", framerateMin_, framerateMax_);
+
       //update the exposure range
       GetExposureRange(hCam, &exposureMin_, &exposureMax_, &exposureIncrement_);
       if(exposureMax_>EXPOSURE_MAX) exposureMax_=EXPOSURE_MAX;                  //limit exposure time to keep the interface responsive
       SetPropertyLimits(MM::g_Keyword_Exposure, exposureMin_, exposureMax_);
+
+      //FIXME: device properties browser window needs to be refreshed here
 
       return DEVICE_OK;
     }
@@ -889,7 +933,18 @@ int CIDS_uEye::ClearROI()
     //resize the image buffer
     img_.Resize(roiXSize_, roiYSize_);
 
+    
 
+    //update pixel clock range
+    GetPixelClockRange(hCam, &pixelClkMin_, &pixelClkMax_);
+    SetPropertyLimits("Pixel Clock",pixelClkMin_, pixelClkMax_); 
+    
+
+    //update frame rate range
+    GetFramerateRange(hCam, &framerateMin_, &framerateMax_);
+    SetPropertyLimits("Frame Rate", framerateMin_, framerateMax_);
+     
+    
     //update the exposure range
     GetExposureRange(hCam, &exposureMin_, &exposureMax_, &exposureIncrement_);
     if(exposureMax_>EXPOSURE_MAX) exposureMax_=EXPOSURE_MAX;                       //limit exposure time to keep the interface responsive
@@ -923,7 +978,7 @@ void CIDS_uEye::GetPixelClockRange(HIDS hCam, UINT* pixClkMin, UINT* pixClkMax) 
 
 
 /*
-  convenience function for obtaining the pixel clock range
+  convenience function for obtaining the frame rate range
 */
 void CIDS_uEye::GetFramerateRange(HIDS hCam, double* fpsMin, double* fpsMax) {
     
@@ -1333,6 +1388,16 @@ int CIDS_uEye::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
   //SetImageMemory();                    //FIXME: what about image memory settings?
   ResizeImageBuffer();
 
+
+  //update frame rate range
+  GetFramerateRange(hCam, &framerateMin_, &framerateMax_);
+  SetPropertyLimits("Frame Rate", framerateMin_, framerateMax_);
+     
+    
+  //update the exposure range
+  GetExposureRange(hCam, &exposureMin_, &exposureMax_, &exposureIncrement_);
+  if(exposureMax_>EXPOSURE_MAX) exposureMax_=EXPOSURE_MAX;
+  SetPropertyLimits(MM::g_Keyword_Exposure, exposureMin_, exposureMax_);  
   
 
    return ret; 
@@ -1358,6 +1423,18 @@ int CIDS_uEye::OnPixelClock(MM::PropertyBase* pProp, MM::ActionType eAct)
     SetPixelClock((UINT)pixClk);
   }
 
+  //update frame rate range
+  GetFramerateRange(hCam, &framerateMin_, &framerateMax_);
+  SetPropertyLimits("Frame Rate", framerateMin_, framerateMax_);
+  printf("IDS_uEye: new frame rate range %.4f - %.4f\n",framerateMin_,framerateMax_);
+  
+
+  //update the exposure range
+  GetExposureRange(hCam, &exposureMin_, &exposureMax_, &exposureIncrement_);
+  if(exposureMax_>EXPOSURE_MAX) exposureMax_=EXPOSURE_MAX;                       //limit exposure time to keep the interface responsive
+  SetPropertyLimits(MM::g_Keyword_Exposure, exposureMin_, exposureMax_);
+  printf("IDS_uEye: new exposure range %.4f - %.4f\n",exposureMin_,exposureMax_); 
+
   return ret; 
 }
 
@@ -1370,8 +1447,8 @@ int CIDS_uEye::OnFramerate(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
 
   int ret = DEVICE_OK;
-
   UINT nRet;
+
 
   if (eAct == MM::BeforeGet){
     pProp->Set(framerateCur_);
@@ -1379,7 +1456,7 @@ int CIDS_uEye::OnFramerate(MM::PropertyBase* pProp, MM::ActionType eAct)
 
   else if (eAct == MM::AfterSet){
     double framerate;
-    pProp->Get(framerate);
+    pProp->Get(framerate);   
 
     nRet=is_SetFrameRate (hCam, framerate, &framerateCur_);
 
@@ -1391,6 +1468,12 @@ int CIDS_uEye::OnFramerate(MM::PropertyBase* pProp, MM::ActionType eAct)
     }
 
   }
+
+  //update the exposure range
+  GetExposureRange(hCam, &exposureMin_, &exposureMax_, &exposureIncrement_);
+  if(exposureMax_>EXPOSURE_MAX) exposureMax_=EXPOSURE_MAX;                       //limit exposure time to keep the interface responsive
+  SetPropertyLimits(MM::g_Keyword_Exposure, exposureMin_, exposureMax_);
+  printf("IDS_uEye: new exposure range %.4f - %.4f\n",exposureMin_,exposureMax_); 
 
   return ret; 
 }

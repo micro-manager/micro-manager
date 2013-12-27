@@ -8,14 +8,14 @@
 //                 which are produced by IDS)
 //
 //                based on IDS uEye SDK and Micromanager DemoCamera example
-//                tested with SDK version 3.82, 4.02 and 4.20
+//                tested with SDK version 3.82, 4.02, 4.20 and 4.30
 //                (3.82-specific functions are still present but not used)
 //                
 // AUTHOR:        Wenjamin Rosenfeld
 //
 // YEAR:          2012, 2013
 //                
-// VERSION:       1.0     
+// VERSION:       1.1
 //
 // LICENSE:       This file is distributed under the BSD license.
 //                License text is included with the source distribution.
@@ -28,7 +28,7 @@
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-//LAST UPDATE:    07.02.2013 WR
+//LAST UPDATE:    22.12.2013 WR
 
 
 
@@ -65,7 +65,7 @@ using namespace std;
 // General definitions
 //
 
-#define EXPOSURE_MAX 1000               //maximal exposure (ms) to use, even if the camera reports higher values
+#define EXPOSURE_MAX 10000               //maximal exposure (ms) to use, even if the camera reports higher values
 
 
 //////////////////////////////////////////////////////////////////////////////
@@ -486,6 +486,7 @@ class CIDS_uEye : public CCameraBase<CIDS_uEye>
   UINT pixelClkMin_;                                            //minimal pixel clock (MHz)
   UINT pixelClkMax_;                                            //maximal pixel clock (MHz)
   UINT pixelClkCur_;                                            //current (real) pixel clock
+  UINT pixelClkDef_;                                            //default pixel clock 
 
   double framerateMin_;                                         //minimal framerate
   double framerateMax_;                                         //maximal framerate
