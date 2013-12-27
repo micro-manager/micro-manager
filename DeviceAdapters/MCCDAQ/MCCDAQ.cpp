@@ -24,12 +24,12 @@
 #include "cbw.h"
 
 
-#define BOARDREADY 100
+const int BOARDREADY = 100;
 
 /* MCCDaq board handle */
 
 typedef struct tag_board {
-   int initialized;		/* board has been initialized == 1 */
+   int initialized;		/* board has been initialized == BOARDREADY */
    int board_num;         /* board number            */
    int analog_range;	/* voltage range for analog output */
    int status;       /* board error status       */
@@ -293,7 +293,6 @@ int MCCDaqDA::WriteToPort(unsigned short value)
       return ret;
 
    return DEVICE_OK;
-   // return channel_;
 }
 
 int MCCDaqDA::SetVolts(double volts)
