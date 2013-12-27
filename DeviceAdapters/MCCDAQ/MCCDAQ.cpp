@@ -22,6 +22,7 @@
 #include "MCCDAQ.h"
 #include "../../MMDevice/ModuleInterface.h"
 #include "cbw.h"
+#include <sstream>
 
 
 const int BOARDREADY = 100;
@@ -37,23 +38,21 @@ typedef struct tag_board {
 
 static MCCBoard board;
 
-const char* g_DeviceNameMCCShutter0 = "MCC-Shutter-0";
-const char* g_DeviceNameMCCShutter1 = "MCC-Shutter-1";
-const char* g_DeviceNameMCCShutter2 = "MCC-Shutter-2";
-const char* g_DeviceNameMCCShutter3 = "MCC-Shutter-3";
-const char* g_DeviceNameMCCShutter4 = "MCC-Shutter-4";
-const char* g_DeviceNameMCCShutter5 = "MCC-Shutter-5";
-const char* g_DeviceNameMCCShutter6 = "MCC-Shutter-6";
-const char* g_DeviceNameMCCShutter7 = "MCC-Shutter-7";
+const int NUM_CHANNELS = 8;
 
-const char* g_DeviceNameMCCDA0 = "MCC-DAC-0";
-const char* g_DeviceNameMCCDA1 = "MCC-DAC-1";
-const char* g_DeviceNameMCCDA2 = "MCC-DAC-2";
-const char* g_DeviceNameMCCDA3 = "MCC-DAC-3";
-const char* g_DeviceNameMCCDA4 = "MCC-DAC-4";
-const char* g_DeviceNameMCCDA5 = "MCC-DAC-5";
-const char* g_DeviceNameMCCDA6 = "MCC-DAC-6";
-const char* g_DeviceNameMCCDA7 = "MCC-DAC-7";
+inline std::string DeviceNameMCCShutter(int channel)
+{
+   std::ostringstream chanStrm;
+   chanStrm << channel;
+   return "MCC-Shutter-" + chanStrm.str();
+}
+
+inline std::string DeviceNameMCCDA(int channel)
+{
+   std::ostringstream chanStrm;
+   chanStrm << channel;
+   return "MCC-DAC-" + chanStrm.str();
+}
 
 const char* g_volts = "Volts";
 const char* g_PropertyMin = "MinV";
@@ -89,23 +88,16 @@ int InitializeTheBoard()
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-   RegisterDevice(g_DeviceNameMCCShutter0, MM::ShutterDevice, "MCC DAQ Shutter 0");
-   RegisterDevice(g_DeviceNameMCCShutter1, MM::ShutterDevice, "MCC DAQ Shutter 1");
-   RegisterDevice(g_DeviceNameMCCShutter2, MM::ShutterDevice, "MCC DAQ Shutter 2");
-   RegisterDevice(g_DeviceNameMCCShutter3, MM::ShutterDevice, "MCC DAQ Shutter 3");
-   RegisterDevice(g_DeviceNameMCCShutter4, MM::ShutterDevice, "MCC DAQ Shutter 4");
-   RegisterDevice(g_DeviceNameMCCShutter5, MM::ShutterDevice, "MCC DAQ Shutter 5");
-   RegisterDevice(g_DeviceNameMCCShutter6, MM::ShutterDevice, "MCC DAQ Shutter 6");
-   RegisterDevice(g_DeviceNameMCCShutter7, MM::ShutterDevice, "MCC DAQ Shutter 7");
+   for (int i = 0; i < NUM_CHANNELS; i++)
+   {
+      std::ostringstream chanStrm;
+      chanStrm << i;
 
-   RegisterDevice(g_DeviceNameMCCDA0, MM::SignalIODevice, "MCC DAQ DA 0");
-   RegisterDevice(g_DeviceNameMCCDA1, MM::SignalIODevice, "MCC DAQ DA 1");
-   RegisterDevice(g_DeviceNameMCCDA2, MM::SignalIODevice, "MCC DAQ DA 2");
-   RegisterDevice(g_DeviceNameMCCDA3, MM::SignalIODevice, "MCC DAQ DA 3");
-   RegisterDevice(g_DeviceNameMCCDA4, MM::SignalIODevice, "MCC DAQ DA 4");
-   RegisterDevice(g_DeviceNameMCCDA5, MM::SignalIODevice, "MCC DAQ DA 5");
-   RegisterDevice(g_DeviceNameMCCDA6, MM::SignalIODevice, "MCC DAQ DA 6");
-   RegisterDevice(g_DeviceNameMCCDA7, MM::SignalIODevice, "MCC DAQ DA 7");
+      RegisterDevice(DeviceNameMCCShutter(i).c_str(), MM::ShutterDevice,
+            ("MCC DAQ Shutter " + chanStrm.str()).c_str());
+      RegisterDevice(DeviceNameMCCDA(i).c_str(), MM::SignalIODevice,
+            ("MCC DAQ DA " + chanStrm.str()).c_str());
+   }
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)
@@ -113,72 +105,13 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
    if (deviceName == 0)
       return 0;
 
-   if (strcmp(deviceName, g_DeviceNameMCCShutter0) == 0)
+   for (int i = 0; i < NUM_CHANNELS; i++)
    {
-      return new MCCDaqShutter(0, g_DeviceNameMCCShutter0);
+      if (deviceName == DeviceNameMCCShutter(i))
+         return new MCCDaqShutter(i, deviceName);
+      if (deviceName == DeviceNameMCCDA(i))
+         return new MCCDaqDA(i, deviceName);
    }
-   else if (strcmp(deviceName, g_DeviceNameMCCShutter1) == 0)
-   {
-      return new MCCDaqShutter(1, g_DeviceNameMCCShutter1);
-   }
-   else if (strcmp(deviceName, g_DeviceNameMCCShutter2) == 0)
-   {
-      return new MCCDaqShutter(2, g_DeviceNameMCCShutter2);
-   }
-   else if (strcmp(deviceName, g_DeviceNameMCCShutter3) == 0)
-   {
-      return new MCCDaqShutter(2, g_DeviceNameMCCShutter3);
-   }
-   else if (strcmp(deviceName, g_DeviceNameMCCShutter4) == 0)
-   {
-      return new MCCDaqShutter(2, g_DeviceNameMCCShutter4);
-   }
-   else if (strcmp(deviceName, g_DeviceNameMCCShutter5) == 0)
-   {
-      return new MCCDaqShutter(2, g_DeviceNameMCCShutter5);
-   }
-   else if (strcmp(deviceName, g_DeviceNameMCCShutter6) == 0)
-   {
-      return new MCCDaqShutter(2, g_DeviceNameMCCShutter6);
-   }
-   else if (strcmp(deviceName, g_DeviceNameMCCShutter7) == 0)
-   {
-      return new MCCDaqShutter(2, g_DeviceNameMCCShutter7);
-   }
-
-   else if (strcmp(deviceName, g_DeviceNameMCCDA0) == 0)
-   {
-      return new MCCDaqDA(0, g_DeviceNameMCCDA0);
-   }
-   else if (strcmp(deviceName, g_DeviceNameMCCDA1) == 0)
-   {
-      return new MCCDaqDA(1, g_DeviceNameMCCDA1);
-   }
-      else if (strcmp(deviceName, g_DeviceNameMCCDA2) == 0)
-   {
-      return new MCCDaqDA(2, g_DeviceNameMCCDA2);
-   }
-   else if (strcmp(deviceName, g_DeviceNameMCCDA3) == 0)
-   {
-      return new MCCDaqDA(3, g_DeviceNameMCCDA3);
-   }
-	  else if (strcmp(deviceName, g_DeviceNameMCCDA4) == 0)
-   {
-      return new MCCDaqDA(3, g_DeviceNameMCCDA4);
-   }
-   else if (strcmp(deviceName, g_DeviceNameMCCDA5) == 0)
-   {
-      return new MCCDaqDA(3, g_DeviceNameMCCDA5);
-   }
-	  else if (strcmp(deviceName, g_DeviceNameMCCDA6) == 0)
-   {
-      return new MCCDaqDA(3, g_DeviceNameMCCDA6);
-   }
-   else if (strcmp(deviceName, g_DeviceNameMCCDA7) == 0)
-   {
-      return new MCCDaqDA(3, g_DeviceNameMCCDA7);
-   }
-
 
    return 0;
 }
