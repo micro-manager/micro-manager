@@ -130,9 +130,10 @@ const char* const g_SetHomeHerePropertyName = "SetHomeToCurrentPosition";
 // Hub property names
 const char* const g_HubDevicePropertyName = "HubDeviceName";
 const char* const g_TigerHexAddrPropertyName = "TigerHexAddress";
-const char* const g_SerialCommandPropertyName = "SerialCommand(sent_only_on_change)";
+const char* const g_SerialCommandPropertyName = "SerialCommand";
 const char* const g_SerialResponsePropertyName = "SerialResponse";
 const char* const g_SerialTerminatorPropertyName = "SerialResponseTerminator";
+const char* const g_SerialCommandOnlySendChangedPropertyName = "OnlySendSerialCommandOnChange";
 const char* const g_SerialCommandRepeatDurationPropertyName = "SerialCommandRepeatDuration(s)";
 const char* const g_SerialCommandRepeatPeriodPropertyName = "SerialCommandRepeatPeriod(ms)";
 
@@ -311,12 +312,12 @@ const char* const g_OnState = "On";
 // yes/no control settings
 const char* const g_YesState = "Yes";
 const char* const g_NoState = "No";
-// single-axis mode for micromirror
+// single-axis mode
 const char* const g_SAMode_0 = "0 - Disabled";
 const char* const g_SAMode_1 = "1 - Enabled";
 const char* const g_SAMode_2 = "2 - Armed for TTL trigger";
 const char* const g_SAMode_3 = "3 - Enabled with axes synced";
-// single-axis pattern for micromirror
+// single-axis pattern
 const char* const g_SAPattern_0 = "0 - Ramp";
 const char* const g_SAPattern_1 = "1 - Triangle";
 const char* const g_SAPattern_2 = "2 - Square";

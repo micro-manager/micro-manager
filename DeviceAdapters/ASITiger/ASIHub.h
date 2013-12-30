@@ -116,6 +116,7 @@ public:
    int OnSerialCommand              (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSerialCommandRepeatDuration(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSerialCommandRepeatPeriod  (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSerialCommandOnlySendChanged(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 protected:
    string port_;         // port to use for communication
@@ -132,6 +133,7 @@ private:
    string serialTerminator_;  // only used when parsing command sent via OnSerialCommand action handler
    long serialRepeatDuration_; // for how long total time the command is repeatedly sent
    long serialRepeatPeriod_;  // how often in ms the command is sent
+   bool serialOnlySendChanged_;        // if true the serial command is only sent when it has changed
 };
 
 

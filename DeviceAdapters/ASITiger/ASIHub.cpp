@@ -52,7 +52,8 @@ ASIHub::ASIHub() :
       serialCommand_(""),
       serialTerminator_(g_SerialTerminatorDefault),
       serialRepeatDuration_(0),
-      serialRepeatPeriod_(500)
+      serialRepeatPeriod_(500),
+      serialOnlySendChanged_(true)
 {
    CPropertyAction* pAct = new CPropertyAction(this, &ASIHub::OnPort);
    CreateProperty(MM::g_Keyword_Port, "Undefined", MM::String, false, pAct, true);
@@ -70,6 +71,12 @@ ASIHub::ASIHub() :
    // how often to send the same command
    pAct = new CPropertyAction (this, &ASIHub::OnSerialCommandRepeatPeriod);
    CreateProperty(g_SerialCommandRepeatPeriodPropertyName, "500", MM::Integer, false, pAct);
+
+   // disable sending serial commands unless changed by default
+   pAct = new CPropertyAction (this, &ASIHub::OnSerialCommandOnlySendChanged);
+   CreateProperty(g_SerialCommandOnlySendChangedPropertyName, g_YesState, MM::String, false, pAct);
+   AddAllowedValue(g_SerialCommandOnlySendChangedPropertyName, g_NoState);
+   AddAllowedValue(g_SerialCommandOnlySendChangedPropertyName, g_YesState);
 
 
    // change serial terminator, mainly useful for direct communication with filter wheel card
@@ -475,8 +482,8 @@ int ASIHub::OnSerialCommand(MM::PropertyBase* pProp, MM::ActionType eAct)
       string tmpstr;
       pProp->Get(tmpstr);
       tmpstr =   UnescapeControlCharacters(tmpstr);
-      // only send the command if it has been updated
-      if (tmpstr.compare(last_command) != 0)
+      // only send the command if it has been updated, or if the feature has been set to "no"/false then always send
+      if (!serialOnlySendChanged_ || (tmpstr.compare(last_command) != 0))
       {
          last_command = tmpstr;
          SendCommand(tmpstr);
@@ -529,6 +536,19 @@ int ASIHub::OnSerialCommandRepeatPeriod(MM::PropertyBase* pProp, MM::ActionType 
       pProp->Get(tmp);
       if (tmp < 0) tmp = 0;
       serialRepeatPeriod_ = tmp;
+   }
+   return DEVICE_OK;
+}
+
+int ASIHub::OnSerialCommandOnlySendChanged(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   string tmpstr;
+   if (eAct == MM::AfterSet) {
+      pProp->Get(tmpstr);
+      if (tmpstr.compare(g_YesState) == 0)
+         serialOnlySendChanged_ = true;
+      else
+         serialOnlySendChanged_ = false;
    }
    return DEVICE_OK;
 }
