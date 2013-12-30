@@ -90,7 +90,6 @@ long     GetImageBufferSize() const;
 unsigned GetBitDepth() const;
 
     unsigned GetNumberOfComponents() const;
-	int GetComponentName(unsigned channel, char* name);
 	double GetPixelSizeUm() const {return 1.0 * GetBinning();};
 	int GetBinning() const;
 	int SetBinning(int binSize);
@@ -134,11 +133,12 @@ unsigned GetBitDepth() const;
 	int OnShowPropertyDialog(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnFlipHorizontal    (MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnFlipVertical      (MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnRotate			(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnDeNoise           (MM::PropertyBase* pProp, MM::ActionType eAct);
 
-		/*
-		int OnCamera      (MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnCamera			(MM::PropertyBase* pProp, MM::ActionType eAct);
 
+		/*
 		int OnContrast    (MM::PropertyBase* pProp, MM::ActionType eAct);
 
 		int OnGammaMode   (MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -165,13 +165,11 @@ private:
 
     double currentExpMS_; // value used by camera
 
-	bool bColor_;
 	bool sequenceRunning_;
     bool sequencePaused_;
-	bool flipH_;
-	bool flipV_;
 	double FPS_;
 	long Brightness_;
+	long Rotation_;
 	long WhiteBalance_;
 	long Gain_;
 	long DeNoiseLevel_;
