@@ -280,7 +280,7 @@ public class PanelUtils {
          public void updateFromProperty() {
             sp_.setValue(ASIdiSPIMFrame.props_.getPropValueInteger(paramKey_));
          }
-      };
+      }
 
       SpinnerModel jspm = new SpinnerNumberModel(ASIdiSPIMFrame.props_.getPropValueInteger(spimParamName), min, max, 1);
       JSpinner jsp = new JSpinner(jspm);
@@ -314,7 +314,7 @@ public class PanelUtils {
          public void updateFromProperty() {
             sp_.setValue(ASIdiSPIMFrame.props_.getPropValueFloat(paramKey_));
          }
-      };
+      }
       
       SpinnerModel jspm = new SpinnerNumberModel((double)ASIdiSPIMFrame.props_.getPropValueFloat(spimParamName), min, max, step);
       JSpinner jsp = new JSpinner(jspm);
@@ -349,7 +349,7 @@ public class PanelUtils {
          public void actionPerformed(ActionEvent ae) {
             ASIdiSPIMFrame.props_.setPropValue(key_, (String) box_.getSelectedItem());
          }
-      };
+      }
 
       JComboBox jcb = new JComboBox(vals);
       jcb.setSelectedItem(ASIdiSPIMFrame.props_.getPropValueString(key));

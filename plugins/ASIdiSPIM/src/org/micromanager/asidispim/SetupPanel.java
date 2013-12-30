@@ -28,7 +28,6 @@ import java.awt.event.ActionListener;
 import java.awt.geom.Point2D;
 import java.util.prefs.Preferences;
 
-import org.micromanager.asidispim.ASIdiSPIMFrame;
 import org.micromanager.asidispim.Data.Devices;
 import org.micromanager.asidispim.Data.Setup;
 import org.micromanager.asidispim.Utils.ListeningJPanel;
@@ -43,6 +42,7 @@ import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.api.ScriptInterface;
+import org.micromanager.internalinterfaces.LiveModeListener;
 import org.micromanager.utils.ReportingUtils;
 
 /**
@@ -51,9 +51,10 @@ import org.micromanager.utils.ReportingUtils;
  * @author Jon
  */
 @SuppressWarnings("serial")
-public class SetupPanel extends ListeningJPanel {
+public class SetupPanel extends ListeningJPanel implements LiveModeListener {
 
    ScriptInterface gui_;
+   CMMCore core_;
    Devices devices_;
    Setup setup_;
    Labels.Sides side_;
@@ -70,12 +71,12 @@ public class SetupPanel extends ListeningJPanel {
    JRadioButton dualCameraButton_;
    String imagingPiezo_;
    String illuminationPiezo_;
-   boolean isMultiCamera_;
    final String MULTICAMERAPREF = "IsMultiCamera";
    final String JOYSTICK = Devices.JOYSTICKS.get(Devices.JoystickDevice.JOYSTICK);
    final String RIGHTWHEEL = Devices.JOYSTICKS.get(Devices.JoystickDevice.RIGHT_KNOB);
    final String LEFTWHEEL = Devices.JOYSTICKS.get(Devices.JoystickDevice.LEFT_KNOB);
-   
+   final String SERIALCOMMAND = "SerialCommand(sent_only_on_change)";
+   final String ISMULTICAMERAPREFNAME;
    
    // TODO actually use properties class
    public SetupPanel(Setup setup, ScriptInterface gui, Devices devices, Labels.Sides side) {
@@ -87,9 +88,12 @@ public class SetupPanel extends ListeningJPanel {
       devices_ = devices;
       setup_ = setup;
       gui_ = gui;
+      core_ = gui_.getMMCore();
       side_ = side;
       prefs_ = Preferences.userNodeForPackage(this.getClass());
-
+      
+      
+      ISMULTICAMERAPREFNAME= MULTICAMERAPREF + side_.toString();
       String joystickPrefName = JOYSTICK + side_.toString();
       String rightWheelPrefName = RIGHTWHEEL + side_.toString();
       String leftWheelPrefName = LEFTWHEEL + side_.toString();
@@ -135,10 +139,9 @@ public class SetupPanel extends ListeningJPanel {
          public void actionPerformed(ActionEvent e) {
             // TODO clean this up, it's ugly and easily broken!!
             // but need better way of accessing devices I think
-            String mmDevice = devices_.getMMDevice("Piezo"+side_.toString());
-            if (mmDevice == null || mmDevice == "")
+            String mmDevice = devices_.getMMDevice("Piezo" + side_.toString());
+            if (mmDevice == null || "".equals(mmDevice))
                return;
-            CMMCore core_ = MMStudioMainFrame.getInstance().getCore();
             try {
                setup_.imagingStartPos_ = core_.getPosition(mmDevice);
             } catch (Exception ex) {
@@ -155,10 +158,9 @@ public class SetupPanel extends ListeningJPanel {
          public void actionPerformed(ActionEvent e) {
             // TODO clean this up, it's ugly and easily broken!!
             // but need better way of accessing devices I think
-            String mmDevice = devices_.getMMDevice("Piezo"+side_.toString());
-            if (mmDevice == null || mmDevice == "")
+            String mmDevice = devices_.getMMDevice("Piezo" + side_.toString());
+            if (mmDevice == null || "".equals(mmDevice))
                return;
-            CMMCore core_ = MMStudioMainFrame.getInstance().getCore();
             try {
                setup_.imagingEndPos_ = core_.getPosition(mmDevice);
             } catch (Exception ex) {
@@ -183,19 +185,19 @@ public class SetupPanel extends ListeningJPanel {
       tmp_but.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            CMMCore core = gui_.getMMCore();
             String letter = "";
-            String mmDevice = "";
             try {
-               mmDevice = devices_.getMMDevice(illuminationPiezo_);
-               if (mmDevice == null || mmDevice == "")
+               String mmDevice = devices_.getMMDevice(illuminationPiezo_);
+               if (mmDevice == null || "".equals(mmDevice)) {
                   return;
-               letter = core.getProperty(mmDevice, "AxisLetter");
-               core.setSerialPortCommand("COM2", "HM "+letter+"+", "\r");
+               }
+               letter = core_.getProperty(mmDevice, "AxisLetter");
+               String hubDevice = core_.getParentLabel(mmDevice);
+               core_.setProperty(hubDevice, SERIALCOMMAND, "HM " + letter + "+");
             } catch (Exception ex) {
                ReportingUtils.showError("could not execute core function set home for axis " + letter);
             }
-            
+
          }
       });
       
@@ -261,9 +263,8 @@ public class SetupPanel extends ListeningJPanel {
             // TODO clean this up, it's ugly and easily broken!!
             // but need better way of accessing devices I think
             String mmDevice = devices_.getMMDevice("MicroMirror"+side_.toString());
-            if (mmDevice == null || mmDevice == "")
+            if (mmDevice == null || "".equals(mmDevice))
                return;
-            CMMCore core_ = MMStudioMainFrame.getInstance().getCore();
             try {
                 Point2D.Double pt = core_.getGalvoPosition(mmDevice);
                 setup_.sheetStartPos_ = pt.y;
@@ -282,9 +283,8 @@ public class SetupPanel extends ListeningJPanel {
             // TODO clean this up, it's ugly and easily broken!!
             // but need better way of accessing devices I think
             String mmDevice = devices_.getMMDevice("MicroMirror"+side_.toString());
-            if (mmDevice == null || mmDevice == "")
+            if (mmDevice == null || "".equals(mmDevice))
                return;
-            CMMCore core_ = MMStudioMainFrame.getInstance().getCore();
             try {
                Point2D.Double pt = core_.getGalvoPosition(mmDevice);
                setup_.sheetEndPos_ = pt.y;
@@ -309,16 +309,14 @@ public class SetupPanel extends ListeningJPanel {
          }
       });
       add(toggleButtonLive_, "span, split 3, center, width 110px");
-
-
-      String isMultiCameraPrefName = MULTICAMERAPREF + side_.toString();
-      prefs_.getBoolean(isMultiCameraPrefName, isMultiCamera_);
+      boolean isMultiCamera = false;
+      prefs_.getBoolean(ISMULTICAMERAPREFNAME, isMultiCamera);
       dualCameraButton_ = new JRadioButton("Dual Camera");
       singleCameraButton_ = new JRadioButton("Single Camera");
       ButtonGroup singleDualCameraButtonGroup = new ButtonGroup();
       singleDualCameraButtonGroup.add(dualCameraButton_);
       singleDualCameraButtonGroup.add(singleCameraButton_);
-      if (isMultiCamera_) {
+      if (isMultiCamera) {
          dualCameraButton_.setSelected(true);
       } else {
          singleCameraButton_.setSelected(true);
@@ -337,6 +335,10 @@ public class SetupPanel extends ListeningJPanel {
 
    }
 
+   /**
+    * Changes the looks of the live button
+    * @param enable - true: live mode is switched on
+    */
    public final void setLiveButton(boolean enable) {
       toggleButtonLive_.setIcon(enable ? SwingResourceManager.getIcon(MMStudioMainFrame.class,
               "/org/micromanager/icons/cancel.png")
@@ -347,13 +349,41 @@ public class SetupPanel extends ListeningJPanel {
    }
 
    /**
+    * Switches the active camera to the desired one Takes care of possible side
+    * effects
+    *
+    * @param mmDevice - name of new camera device
+    */
+   private void setCameraDevice(String mmDevice) {
+      if (mmDevice != null) {
+         try {
+            boolean liveEnabled = gui_.isLiveModeOn();
+            if (liveEnabled) {
+               gui_.enableLiveMode(false);
+            }
+            core_.setProperty(
+                    "Core", "Camera", mmDevice);
+            gui_.refreshGUIFromCache();
+            if (liveEnabled) {
+               gui_.enableLiveMode(true);
+            }
+         } catch (Exception ex) {
+            ReportingUtils.showError("Failed to set Core Camera property");
+         }
+      }
+   }
+
+   /**
     * Implements the ActionEventLister for the Camera selection Radio Buttons
     * @param myButton 
     */
    private void handleCameraButton(JRadioButton myButton) {
       if (myButton != null && myButton.isSelected()) {
+         // default to dual camera button
          String mmDevice = devices_.getMMDevice(Devices.DUALCAMERA);
+         prefs_.putBoolean(ISMULTICAMERAPREFNAME, true);
          if (myButton.equals(singleCameraButton_)) {
+            prefs_.putBoolean(ISMULTICAMERAPREFNAME, false);
             if (side_ == Labels.Sides.A) {
                mmDevice = devices_.getMMDevice(Devices.CAMERAA);
             } else {
@@ -362,23 +392,7 @@ public class SetupPanel extends ListeningJPanel {
                }
             }
          }
-         if (mmDevice != null) {
-            try {
-
-               boolean liveEnabled = gui_.isLiveModeOn();
-               if (liveEnabled) {
-                  gui_.enableLiveMode(false);
-               }
-               MMStudioMainFrame.getInstance().getCore().setProperty(
-                       "Core", "Camera", mmDevice);
-               gui_.refreshGUIFromCache();
-               if (liveEnabled) {
-                  gui_.enableLiveMode(true);
-               }
-            } catch (Exception ex) {
-               ReportingUtils.showError("Failed to set Core Camera property");
-            }
-         }
+         setCameraDevice(mmDevice);        
       }
    }
 
@@ -404,19 +418,23 @@ public class SetupPanel extends ListeningJPanel {
       rightWheelBox_.setSelectedItem(rightWheelBox_.getSelectedItem());
       leftWheelBox_.setSelectedItem(leftWheelBox_.getSelectedItem());
       setup_.callListeners();
-      setLiveButton(gui_.isLiveModeOn());
-
+      
+      JRadioButton jr = dualCameraButton_;
+      if (singleCameraButton_.isSelected()) {
+         jr = singleCameraButton_;
+      }
+      handleCameraButton(jr);
+      
       // moves illumination piezo to correct place for this side
       // TODO do this more elegantly (ideally MM API would add Home() function)
-      CMMCore core = gui_.getMMCore();
       String letter = "";
-      String mmDevice = "";
       try {
-         mmDevice = devices_.getMMDevice(illuminationPiezo_);
-         if (mmDevice == null || mmDevice == "")
+         String mmDevice = devices_.getMMDevice(illuminationPiezo_);
+         if (mmDevice == null || "".equals(mmDevice))
             return;
-         letter = core.getProperty(mmDevice, "AxisLetter");
-         core.setSerialPortCommand("COM2", "! "+letter, "\r");
+         letter = core_.getProperty(mmDevice, "AxisLetter");
+         String hubDevice = core_.getParentLabel(mmDevice);
+         core_.setProperty(hubDevice, SERIALCOMMAND, "! " + letter);
       } catch (Exception ex) {
          ReportingUtils.showError("could not execute core function move to home for axis " + letter);
       }

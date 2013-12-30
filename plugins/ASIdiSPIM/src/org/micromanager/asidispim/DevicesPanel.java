@@ -58,8 +58,8 @@ public class DevicesPanel extends ListeningJPanel {
    public DevicesPanel(ScriptInterface gui, Devices devices) {
       super(new MigLayout(
               "",
-              "[right]8[align center]8[align center]",
-              "[]2[]"));
+              "[right]25[align center]16[align center]",
+              "[]5[]"));
       devices_ = devices;
       gui_ = gui;
 
