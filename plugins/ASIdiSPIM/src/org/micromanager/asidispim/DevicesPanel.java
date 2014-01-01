@@ -21,6 +21,8 @@
 
 package org.micromanager.asidispim;
 
+import org.micromanager.utils.ReportingUtils;
+import org.micromanager.MMStudioMainFrame;
 import org.micromanager.asidispim.Data.Devices;
 import org.micromanager.asidispim.Utils.ListeningJPanel;
 
@@ -30,7 +32,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 
@@ -38,146 +39,126 @@ import mmcorej.CMMCore;
 import mmcorej.StrVector;
 import net.miginfocom.swing.MigLayout;
 
-import org.micromanager.api.ScriptInterface;
-import org.micromanager.utils.ReportingUtils;
 
 /**
  * Draws the Devices tab in the ASI diSPIM GUI
  * @author nico
+ * @author Jon
  */
 @SuppressWarnings("serial")
 public class DevicesPanel extends ListeningJPanel {
    Devices devices_;
-   ScriptInterface gui_;
+   private CMMCore core_;
    
    /**
     * Constructs the GUI Panel that lets the user specify which device to use
     * @param gui - hook to MMstudioMainFrame script interface
     * @param devices - instance of class that holds information about devices
     */
-   public DevicesPanel(ScriptInterface gui, Devices devices) {
+   public DevicesPanel(Devices devices) {
       super(new MigLayout(
               "",
               "[right]25[align center]16[align center]",
               "[]5[]"));
       devices_ = devices;
-      gui_ = gui;
+      core_ = MMStudioMainFrame.getInstance().getCore();
 
+      add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.XYSTAGE) + ":", null, JLabel.RIGHT));
+      JComboBox tmp_cb = makeDeviceBox(mmcorej.DeviceType.XYStageDevice, Devices.Keys.XYSTAGE); 
+      add(tmp_cb, "span 2, center, wrap");
       
-      add(new JLabel(Devices.XYSTAGE + ":", null, JLabel.RIGHT));
-      add(makeDeviceBox(mmcorej.DeviceType.XYStageDevice, Devices.XYSTAGE), 
-              "span 2, center, wrap");
+      add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.LOWERZDRIVE) + ":", null, JLabel.RIGHT));
+      tmp_cb = makeDeviceBox(mmcorej.DeviceType.StageDevice, Devices.Keys.LOWERZDRIVE);
+      add(tmp_cb, "span 2, center, wrap");
       
-      add(new JLabel(Devices.LOWERZDRIVE + ":", null, JLabel.RIGHT));
-      add(makeDeviceBox(mmcorej.DeviceType.StageDevice, Devices.LOWERZDRIVE), 
-              "span 2, center, wrap");
-      
-      add(new JLabel(Devices.UPPERZDRIVE + ":", null, JLabel.RIGHT));
-      add(makeDeviceBox(mmcorej.DeviceType.StageDevice, Devices.UPPERZDRIVE), 
-              "span 2, center, wrap");
+      add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.UPPERZDRIVE) + ":", null, JLabel.RIGHT));
+      tmp_cb = makeDeviceBox(mmcorej.DeviceType.StageDevice, Devices.Keys.UPPERZDRIVE);
+      add(tmp_cb, "span 2, center, wrap");
             
-      add(new JLabel(Devices.DUALCAMERA + ":", null, JLabel.RIGHT));
-      add(makeDualCameraDeviceBox(Devices.DUALCAMERA), "span 2, center, wrap");
-      
-      add(new JLabel("Side A"), "skip 1");
-      add(new JLabel("Side B"), "wrap");
+      add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.MULTICAMERA) + ":", null, JLabel.RIGHT));
+      add(makeDualCameraDeviceBox(Devices.Keys.MULTICAMERA), "span 2, center, wrap");
+
+      add(new JLabel("Imaging Path A"), "skip 1");
+      add(new JLabel("Imaging Path B"), "wrap");
 
       add(new JLabel("Camera:", null, JLabel.RIGHT));
-      add(makeDeviceBox(
-              mmcorej.DeviceType.CameraDevice, Devices.CAMERAA));
-      add(makeDeviceBox(
-              mmcorej.DeviceType.CameraDevice, Devices.CAMERAB),
-              "wrap");
+      add(makeDeviceBox(mmcorej.DeviceType.CameraDevice, Devices.Keys.CAMERAA));
+      add(makeDeviceBox(mmcorej.DeviceType.CameraDevice, Devices.Keys.CAMERAB), "wrap");
 
-      add(new JLabel("Imaging Piezo:", null, JLabel.RIGHT));
-      add(makeDeviceBox(
-              mmcorej.DeviceType.StageDevice, Devices.PIEZOA));
-      add(makeDeviceBox(
-              mmcorej.DeviceType.StageDevice, Devices.PIEZOB), "wrap");
+      add(new JLabel(devices_.getDeviceDisplayGeneric(Devices.Keys.PIEZOA) + ":", null, JLabel.RIGHT));
+      tmp_cb = makeDeviceBox(mmcorej.DeviceType.StageDevice, Devices.Keys.PIEZOA);
+      add(tmp_cb);
+      
+      tmp_cb = makeDeviceBox(mmcorej.DeviceType.StageDevice, Devices.Keys.PIEZOB);
+      add(tmp_cb, "wrap");
 
-      JLabel label = new JLabel("Sheet MicroMirror:", null, JLabel.RIGHT);
+      JLabel label = new JLabel(devices_.getDeviceDisplayGeneric(Devices.Keys.GALVOA) + ":", null, JLabel.RIGHT);
       label.setToolTipText("Should be the first two axes on the MicroMirror card, usually AB");
       add (label);
-      add(makeDeviceBox(
-              mmcorej.DeviceType.GalvoDevice, Devices.GALVOA));
-      add(makeDeviceBox(
-              mmcorej.DeviceType.GalvoDevice, Devices.GALVOB),
-              "wrap");
-
-      add(new JLabel("Fast axis:"));
-      add(makeReverseCheckBox(Devices.FASTAXISAREV));
-      add(makeReverseCheckBox(Devices.FASTAXISBREV), "wrap");
-
-      add(new JLabel("Anti-striping MicroMirror:", null, JLabel.RIGHT));
-      add(makeDeviceBox(mmcorej.DeviceType.GalvoDevice, Devices.GALVOC));
-      add(makeDeviceBox(mmcorej.DeviceType.GalvoDevice, Devices.GALVOD), "wrap");
-
-      add(new JLabel("Anti-striping axis:"));
-      add(makeXYBox(Devices.FASTAXISCDIR));
-      add(makeXYBox(Devices.FASTAXISDDIR), "wrap");
-
-   }
+      tmp_cb = makeDeviceBox(mmcorej.DeviceType.GalvoDevice, Devices.Keys.GALVOA);
+      add(tmp_cb);
+      tmp_cb = makeDeviceBox(mmcorej.DeviceType.GalvoDevice, Devices.Keys.GALVOB);
+      add(tmp_cb, "wrap");
+      
+   }//constructor
    
-   /**
-    * Listener for the device JComboBox
-    * Updates class Devices with any GUI changes
-    * 
-    */
+   // was nested class in makeDeviceBox, needed to move back out for makeDualCameraDeviceBox()
+   // TODO clean up
    class DeviceBoxListener implements ActionListener {
-      String device_;
+      Devices.Keys key_;
       JComboBox box_;
 
-      public DeviceBoxListener(String device, JComboBox box) {
-         device_ = device;
+      public DeviceBoxListener(Devices.Keys key, JComboBox box) {
+         key_ = key;
          box_ = box;
       }
-
+      
       @Override
       public void actionPerformed(ActionEvent ae) {
-         devices_.putDeviceInfo(device_, (String) box_.getSelectedItem());
+         devices_.setMMDevice(key_, (String) box_.getSelectedItem());
       }
    };
    
-   
    /**
-    * Constructs a JCombobox populated with devices of specified Micro-Manager type
+    * Constructs a JComboBox populated with devices of specified Micro-Manager type
     * Attaches a listener and sets selected item to what is specified in the Devices
     * class
     * 
-    * @param deviceType - Micro-Manager device type
+    * @param deviceType - Micro-Manager device type (mmcorej.DeviceType)
     * @param deviceName - ASi diSPIM device type (see Devices class)
     * @return final JComboBox
     */
-   private JComboBox makeDeviceBox(mmcorej.DeviceType deviceType, String deviceName) {
-      StrVector strvDevices = gui_.getMMCore().getLoadedDevicesOfType(deviceType);
-      ArrayList<String> devices = new ArrayList<String>(Arrays.asList(strvDevices.toArray()));
-      devices.add(0, "");
+   private JComboBox makeDeviceBox(mmcorej.DeviceType deviceType, Devices.Keys deviceKey) {
       
+      // class DeviceBoxListener was here as nested class
+      
+      StrVector strvDevices =  MMStudioMainFrame.getInstance().getMMCore().getLoadedDevicesOfType(deviceType);
+      ArrayList<String> devices = new ArrayList<String>(Arrays.asList(strvDevices.toArray()));
+      devices.add(0, "");  // adds initial blank
       JComboBox deviceBox = new JComboBox(devices.toArray());
-      deviceBox.setSelectedItem(devices_.getMMDevice(deviceName));
-      deviceBox.addActionListener(new DevicesPanel.DeviceBoxListener(deviceName, deviceBox));
-
+      deviceBox.setSelectedItem(devices_.getMMDevice(deviceKey));
+      deviceBox.addActionListener(new DeviceBoxListener(deviceKey, deviceBox));
       return deviceBox;
    }
-
-   private JComboBox makeDualCameraDeviceBox(String deviceName) {
+   
+   // TODO (for Jon) understand what this does
+   private JComboBox makeDualCameraDeviceBox(Devices.Keys deviceName) {
       List<String> multiCameras = new ArrayList<String>();
       multiCameras.add("");
       try {
-         CMMCore core = gui_.getMMCore();
-         StrVector strvDevices = core.getLoadedDevicesOfType(
-                 mmcorej.DeviceType.CameraDevice);
+         StrVector strvDevices = core_.getLoadedDevicesOfType(
+               mmcorej.DeviceType.CameraDevice);
 
-         String originalCamera = core.getProperty("Core", "Camera");
-         
+         String originalCamera = core_.getProperty("Core", "Camera");
+
          for (int i = 0; i < strvDevices.size(); i++) {
             String test = strvDevices.get(i);
-            core.setProperty("Core", "Camera", test);
-            if (core.getNumberOfCameraChannels() > 1) {
+            core_.setProperty("Core", "Camera", test);
+            if (core_.getNumberOfCameraChannels() > 1) {
                multiCameras.add(test);
             }
          }
-         core.setProperty("Core", "Camera", originalCamera);
+         core_.setProperty("Core", "Camera", originalCamera);
 
       } catch (Exception ex) {
          ReportingUtils.showError("Error detecting multiCamera devices");
@@ -188,75 +169,80 @@ public class DevicesPanel extends ListeningJPanel {
       deviceBox.addActionListener(new DevicesPanel.DeviceBoxListener(deviceName, deviceBox));
       return deviceBox;
    }
-   
-   /**
-    * Listener for the Axis directions combox boxes
-    * Updates the model in the Devices class with any GUI changes
-    */
-   class AxisDirBoxListener implements ActionListener {
-      String axis_;
-      JComboBox box_;
 
-      public AxisDirBoxListener(String axis, JComboBox box) {
-         axis_ = axis;
-         box_ = box;
-      }
-
-      @Override
-      public void actionPerformed(ActionEvent ae) {
-         devices_.putAxisDirInfo(axis_, (String) box_.getSelectedItem());
-      }
-   }
    
-   /**
-    * Constructs a DropDown box containing X/Y.
-    * Sets selection based on info in the Devices class and attaches
-    * a Listener
-    * 
-    * @param axis - Name under which this axis is known in the Device class
-    * @return constructed JComboBox
-    */
-   private JComboBox makeXYBox(String axis) {
-      String[] xy = {"X", "Y"};
-      JComboBox jcb = new JComboBox(xy);
-      jcb.setSelectedItem(devices_.getAxisDirInfo(axis));
-      jcb.addActionListener(new DevicesPanel.AxisDirBoxListener(axis, jcb));
- 
-      return jcb;
-   }
+   // below is code for features that have been removed, specifically
+   // changing which axis generates the sheet (now always X) and
+   // changing the sign of X axis (maybe will add back later)
    
-   /**
-    * Listener for the Checkbox indicating whether this axis should be reversed
-    * Updates the Devices model with GUI selections
-    */
-   class ReverseCheckBoxListener implements ActionListener {
-      String axis_;
-      JCheckBox box_;
-
-      public ReverseCheckBoxListener(String axis, JCheckBox box) {
-         axis_ = axis;
-         box_ = box;
-      }
-
-      @Override
-      public void actionPerformed(ActionEvent ae) {
-         devices_.putFastAxisRevInfo(axis_, box_.isSelected());
-      }
-   };
-   
-   /**
-    * Constructs the JCheckBox through which the user can set the direction of
-    * the sheet
-    * @param fastAxisDir name under which this axis is known in the Devices class
-    * @return constructed JCheckBox
-    */
-   private JCheckBox makeReverseCheckBox(String fastAxisDir) {
-      JCheckBox jc = new JCheckBox("Reverse");
-      jc.setSelected(devices_.getFastAxisRevInfo(fastAxisDir));
-      jc.addActionListener(new DevicesPanel.ReverseCheckBoxListener(fastAxisDir, jc));
-      
-      return jc;
-   }
+//   /**
+//    * Listener for the Axis directions combox boxes
+//    * Updates the model in the Devices class with any GUI changes
+//    */
+//   class AxisDirBoxListener implements ActionListener {
+//      String axis_;
+//      JComboBox box_;
+//
+//      public AxisDirBoxListener(String axis, JComboBox box) {
+//         axis_ = axis;
+//         box_ = box;
+//      }
+//
+//      @Override
+//      public void actionPerformed(ActionEvent ae) {
+//         devices_.putAxisDirInfo(axis_, (String) box_.getSelectedItem());
+//      }
+//   }
+//   
+//   /**
+//    * Constructs a DropDown box containing X/Y.
+//    * Sets selection based on info in the Devices class and attaches
+//    * a Listener
+//    * 
+//    * @param axis - Name under which this axis is known in the Device class
+//    * @return constructed JComboBox
+//    */
+//   private JComboBox makeXYBox(String axis) {
+//      String[] xy = {"X", "Y"};
+//      JComboBox jcb = new JComboBox(xy);
+//      jcb.setSelectedItem(devices_.getAxisDirInfo(axis));
+//      jcb.addActionListener(new DevicesPanel.AxisDirBoxListener(axis, jcb));
+// 
+//      return jcb;
+//   }
+//   
+//   /**
+//    * Listener for the Checkbox indicating whether this axis should be reversed
+//    * Updates the Devices model with GUI selections
+//    */
+//   class ReverseCheckBoxListener implements ActionListener {
+//      String axis_;
+//      JCheckBox box_;
+//
+//      public ReverseCheckBoxListener(String axis, JCheckBox box) {
+//         axis_ = axis;
+//         box_ = box;
+//      }
+//
+//      @Override
+//      public void actionPerformed(ActionEvent ae) {
+//         devices_.putFastAxisRevInfo(axis_, box_.isSelected());
+//      }
+//   };
+//   
+//   /**
+//    * Constructs the JCheckBox through which the user can set the direction of
+//    * the sheet
+//    * @param fastAxisDir name under which this axis is known in the Devices class
+//    * @return constructed JCheckBox
+//    */
+//   private JCheckBox makeReverseCheckBox(String fastAxisDir) {
+//      JCheckBox jc = new JCheckBox("Reverse");
+//      jc.setSelected(devices_.getFastAxisRevInfo(fastAxisDir));
+//      jc.addActionListener(new DevicesPanel.ReverseCheckBoxListener(fastAxisDir, jc));
+//      
+//      return jc;
+//   }
 
    
 }

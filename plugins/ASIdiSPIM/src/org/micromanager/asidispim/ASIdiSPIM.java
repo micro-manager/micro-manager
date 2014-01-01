@@ -29,58 +29,56 @@ import org.micromanager.utils.ReportingUtils;
 public class ASIdiSPIM implements MMPlugin {
    public static String menuName = "ASI diSPIM";
    public static String tooltipDescription = "Control the ASI diSPIM ";
-   
+
    private ScriptInterface gui_;
    private ASIdiSPIMFrame myFrame_;
 
-    @Override
+   @Override
    public void setApp(ScriptInterface app) {
       gui_ = app;     
-     // if (myFrame_ == null) {
-         try {
-            myFrame_ = new ASIdiSPIMFrame(gui_);
-            myFrame_.setBackground(gui_.getBackgroundColor());
-            gui_.addMMListener(myFrame_);
-            gui_.addMMBackgroundListener(myFrame_);
-         } catch (Exception e) {
-            ReportingUtils.showError(e);
-         }
-      //}
+      try {
+         myFrame_ = new ASIdiSPIMFrame(gui_);
+         myFrame_.setBackground(gui_.getBackgroundColor());
+         gui_.addMMListener(myFrame_);
+         gui_.addMMBackgroundListener(myFrame_);
+      } catch (Exception e) {
+         ReportingUtils.showError(e);
+      }
       myFrame_.setVisible(true);
    }
 
-    /**
-     * The main app calls this method to remove the module window
-     */
-    @Override
+   /**
+    * The main app calls this method to remove the module window
+    */
+   @Override
    public void dispose() {
       if (myFrame_ != null)
          myFrame_.dispose();
    }
 
-    @Override
+   @Override
    public void show() {
-    	@SuppressWarnings("unused")
-		String ig = "ASI diSPIM";
+      @SuppressWarnings("unused")
+      String ig = "ASI diSPIM";
    }
 
-    @Override
+   @Override
    public String getInfo () {
       return "ASI diSPIM";
       // TODO add more
    }
 
-    @Override
+   @Override
    public String getDescription() {
       return tooltipDescription;
    }
-   
-    @Override
+
+   @Override
    public String getVersion() {
-      return "0.1";
+      return "0.2";
    }
-   
-    @Override
+
+   @Override
    public String getCopyright() {
       return "University of California and ASI, 2013";
    }

@@ -28,10 +28,12 @@ import java.awt.event.ActionListener;
 import java.awt.geom.Point2D;
 import java.util.prefs.Preferences;
 
+import org.micromanager.api.ScriptInterface;
 import org.micromanager.asidispim.Data.Devices;
-import org.micromanager.asidispim.Data.Setup;
+import org.micromanager.asidispim.Data.Joystick;
+import org.micromanager.asidispim.Data.Positions;
+import org.micromanager.asidispim.Data.Properties;
 import org.micromanager.asidispim.Utils.ListeningJPanel;
-import org.micromanager.asidispim.Utils.Labels;
 import org.micromanager.asidispim.Utils.PanelUtils;
 
 import mmcorej.CMMCore;
@@ -41,7 +43,6 @@ import javax.swing.*;
 import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.MMStudioMainFrame;
-import org.micromanager.api.ScriptInterface;
 import org.micromanager.internalinterfaces.LiveModeListener;
 import org.micromanager.utils.ReportingUtils;
 
@@ -53,402 +54,377 @@ import org.micromanager.utils.ReportingUtils;
 @SuppressWarnings("serial")
 public class SetupPanel extends ListeningJPanel implements LiveModeListener {
 
-   ScriptInterface gui_;
-   CMMCore core_;
    Devices devices_;
-   Setup setup_;
-   Labels.Sides side_;
+   Devices.Sides side_;
+   Properties props_;
+   Joystick joystick_;
+   Positions positions_;
    Preferences prefs_;
-   JComboBox joystickBox_;
-   JComboBox rightWheelBox_;
-   JComboBox leftWheelBox_;
+   private CMMCore core_;
+   ScriptInterface gui_;
+   
+   JPanel joystickPanel_;
+   
+   // used to store the start/stop positions of the single-axis moves for imaging piezo and micromirror sheet move axis
+   double imagingStartPos_;
+   double imagingStopPos_;
+   double sheetStartPos_;
+   double sheetStopPos_;
+   
+   JRadioButton singleCameraButton_; 
+   JRadioButton dualCameraButton_;
+   final String MULTICAMERAPREF = "IsMultiCamera";
+   final String ISMULTICAMERAPREFNAME;
+   
+   // device keys, get assigned in constructor based on side
+   Devices.Keys piezoImagingDeviceKey_;
+   Devices.Keys piezoIlluminationDeviceKey_;
+   Devices.Keys micromirrorDeviceKey_;
+   
    JToggleButton toggleButtonLive_;
    JCheckBox sheetABox_;
    JCheckBox sheetBBox_;
    JLabel imagingPiezoPositionLabel_;
    JLabel illuminationPiezoPositionLabel_;
-   JRadioButton singleCameraButton_;
-   JRadioButton dualCameraButton_;
-   String imagingPiezo_;
-   String illuminationPiezo_;
-   final String MULTICAMERAPREF = "IsMultiCamera";
-   final String JOYSTICK = Devices.JOYSTICKS.get(Devices.JoystickDevice.JOYSTICK);
-   final String RIGHTWHEEL = Devices.JOYSTICKS.get(Devices.JoystickDevice.RIGHT_KNOB);
-   final String LEFTWHEEL = Devices.JOYSTICKS.get(Devices.JoystickDevice.LEFT_KNOB);
-   final String SERIALCOMMAND = "SerialCommand(sent_only_on_change)";
-   final String ISMULTICAMERAPREFNAME;
-   
-   // TODO actually use properties class
-   public SetupPanel(Setup setup, ScriptInterface gui, Devices devices, Labels.Sides side) {
+
+   public SetupPanel(Devices devices, Properties props, Joystick joystick, Devices.Sides side, Positions positions) {
       super(new MigLayout(
               "",
               "[right]8[align center]16[right]8[60px,center]8[center]8[center]",
               "[]16[]"));
-
       devices_ = devices;
-      setup_ = setup;
-      gui_ = gui;
-      core_ = gui_.getMMCore();
+      props_ = props;
+      joystick_ = joystick;
+      positions_ = positions;
       side_ = side;
       prefs_ = Preferences.userNodeForPackage(this.getClass());
+      gui_ = MMStudioMainFrame.getInstance();
+      core_ = MMStudioMainFrame.getInstance().getCore();
       
+      piezoImagingDeviceKey_ = devices_.getSideSpecificKey(Devices.Keys.PIEZOA, side_);
+      piezoIlluminationDeviceKey_ = devices_.getSideSpecificKey(Devices.Keys.PIEZOA, devices.getOppositeSide(side_));
+      micromirrorDeviceKey_ = devices_.getSideSpecificKey(Devices.Keys.GALVOA, side_);
       
       ISMULTICAMERAPREFNAME= MULTICAMERAPREF + side_.toString();
-      String joystickPrefName = JOYSTICK + side_.toString();
-      String rightWheelPrefName = RIGHTWHEEL + side_.toString();
-      String leftWheelPrefName = LEFTWHEEL + side_.toString();
-
-      String jcs = "";
-      if (devices_.getTwoAxisTigerStages() != null
-              && devices_.getTwoAxisTigerStages().length > 0) {
-         jcs = devices_.getTwoAxisTigerStages()[0];
-      }
-      String joystickSelection = prefs_.get(joystickPrefName, jcs);
-      String ws = "";
-      if (devices_.getTigerStages() != null
-              && devices_.getTigerStages().length > 0) {
-         ws = devices_.getTigerStages()[0];
-      }
-      String rightWheelSelection = prefs_.get(rightWheelPrefName, ws);
-      String leftWheelSelection = prefs_.get(leftWheelPrefName, ws);
-
-      if (side_ == Labels.Sides.B) {
-         imagingPiezo_ = Devices.PIEZOB;
-         illuminationPiezo_ = Devices.PIEZOA;
-      }
-      else {
-         imagingPiezo_ = Devices.PIEZOA;
-         illuminationPiezo_ = Devices.PIEZOB;         
-      }
-
-      PanelUtils pu = new PanelUtils();
-
-      add(new JLabel(JOYSTICK + ":"));
-      joystickBox_ = pu.makeJoystickSelectionBox(Devices.JoystickDevice.JOYSTICK,
-              devices_.getTwoAxisTigerStages(), joystickSelection, devices_,
-              prefs_, joystickPrefName);
-      add(joystickBox_);
+      
+      updateStartStopPositions();
+      
+      joystickPanel_ = new JoystickPanel(joystick_, devices_, "Side" + side_.toString());
+      add(joystickPanel_, "span 2 3");
+      
       add(new JLabel("Imaging piezo:"));
-      imagingPiezoPositionLabel_ = new JLabel(Devices.posToDisplayString(
-              devices_.getStagePosition(imagingPiezo_)));
+      imagingPiezoPositionLabel_ = new JLabel("");
       add(imagingPiezoPositionLabel_);
       
-      JButton tmp_but = new JButton("Set start");
+      JButton tmp_but = new JButton("Set start here");
       tmp_but.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            // TODO clean this up, it's ugly and easily broken!!
-            // but need better way of accessing devices I think
-            String mmDevice = devices_.getMMDevice("Piezo" + side_.toString());
-            if (mmDevice == null || "".equals(mmDevice))
-               return;
             try {
-               setup_.imagingStartPos_ = core_.getPosition(mmDevice);
+               imagingStartPos_ = core_.getPosition(devices_.getMMDeviceException(piezoImagingDeviceKey_));
+               updateImagingSAParams();
             } catch (Exception ex) {
                ReportingUtils.showError(ex);
             }
-            setup_.updateImagingSAParams(side_.toString());
          }
       });
       add(tmp_but);
-      
-      tmp_but = new JButton("Set end");
+
+      tmp_but = new JButton("Set end here");
       tmp_but.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            // TODO clean this up, it's ugly and easily broken!!
-            // but need better way of accessing devices I think
-            String mmDevice = devices_.getMMDevice("Piezo" + side_.toString());
-            if (mmDevice == null || "".equals(mmDevice))
-               return;
             try {
-               setup_.imagingEndPos_ = core_.getPosition(mmDevice);
+               imagingStopPos_ = core_.getPosition(devices_.getMMDeviceException(piezoImagingDeviceKey_));
+               updateImagingSAParams();
             } catch (Exception ex) {
                ReportingUtils.showError(ex);
             }
-            setup_.updateImagingSAParams(side_.toString());
          }
       });
       add(tmp_but, "wrap");
+      
+    add(new JLabel("Illumination Piezo:"));
+    illuminationPiezoPositionLabel_ = new JLabel("");
+    add(illuminationPiezoPositionLabel_);
+    
+    tmp_but = new JButton("Set to here");
+    tmp_but.addActionListener(new ActionListener() {
+       @Override
+       public void actionPerformed(ActionEvent e) {
+          String letter = "";
+          try {
+             letter = props_.getPropValueString(piezoIlluminationDeviceKey_, Properties.Keys.AXIS_LETTER);
+             String hubname = core_.getParentLabel(devices_.getMMDevice(piezoIlluminationDeviceKey_));
+             // TODO fix the next two lines to use our framework, ideally with change to Micromanager API
+             String port = core_.getProperty(hubname, Properties.Keys.SERIAL_COM_PORT.toString()); 
+             core_.setSerialPortCommand(port, "HM "+letter+"+", "\r");
+          } catch (Exception ex) {
+             ReportingUtils.showError("could not execute core function set home for axis " + letter);
+          }
+       }
+    });
+    add(tmp_but, "span 2, center, wrap");
+    
+    add(new JLabel("Scan amplitude:"));
+    add(new JLabel(""));
+    PanelUtils pu = new PanelUtils();
+    JSlider tmp_sl = pu.makeSlider(0, // 0 is min amplitude
+          props_.getPropValueFloat(micromirrorDeviceKey_, Properties.Keys.MAX_DEFLECTION_X) - props_.getPropValueFloat(micromirrorDeviceKey_, Properties.Keys.MIN_DEFLECTION_X), // compute max amplitude
+          1000,   // the scale factor between internal integer representation and float representation
+          props_, devices_, micromirrorDeviceKey_, Properties.Keys.SA_AMPLITUDE_X_DEG);
+    add(tmp_sl, "span 2, center, wrap");
+    
+    add(new JLabel("Scan enabled:"));
+    sheetABox_ = pu.makeCheckBox("Side A", "0 - Disabled", "1 - Enabled", props_, devices_, 
+          Devices.Keys.GALVOA, Properties.Keys.SA_MODE_X);
+    add(sheetABox_, "split 2");
+    sheetBBox_ = pu.makeCheckBox("Side B", "0 - Disabled", "1 - Enabled", props_, devices_, 
+          Devices.Keys.GALVOB, Properties.Keys.SA_MODE_X);
+    add(sheetBBox_);
+    
+    add(new JLabel("Scan offset:"));
+    add(new JLabel(""));
 
-      add(new JLabel(RIGHTWHEEL + ":"));
-      rightWheelBox_ = pu.makeJoystickSelectionBox(Devices.JoystickDevice.RIGHT_KNOB,
-              devices_.getTigerStages(), rightWheelSelection, devices_, prefs_,
-              rightWheelPrefName);
-      add(rightWheelBox_);
-      add(new JLabel("Illumination Piezo:"));
-      illuminationPiezoPositionLabel_ = new JLabel(Devices.posToDisplayString(
-              devices_.getStagePosition(illuminationPiezo_)));
-      add(illuminationPiezoPositionLabel_);
-      
-      tmp_but = new JButton("Set position");
-      tmp_but.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            String letter = "";
-            try {
-               String mmDevice = devices_.getMMDevice(illuminationPiezo_);
-               if (mmDevice == null || "".equals(mmDevice)) {
-                  return;
-               }
-               letter = core_.getProperty(mmDevice, "AxisLetter");
-               String hubDevice = core_.getParentLabel(mmDevice);
-               core_.setProperty(hubDevice, SERIALCOMMAND, "HM " + letter + "+");
-            } catch (Exception ex) {
-               ReportingUtils.showError("could not execute core function set home for axis " + letter);
-            }
+    tmp_sl = pu.makeSlider(
+          props.getPropValueFloat(micromirrorDeviceKey_, Properties.Keys.MIN_DEFLECTION_X), // min value
+          props.getPropValueFloat(micromirrorDeviceKey_, Properties.Keys.MAX_DEFLECTION_X), // max value
+          1000,  // the scale factor between internal integer representation and float representation
+          props_, devices_, micromirrorDeviceKey_, Properties.Keys.SA_OFFSET_X_DEG);
+    add(tmp_sl, "span 2, center, wrap");
+    
+    tmp_but = new JButton("Toggle scan");
+    tmp_but.addActionListener(new ActionListener() {
+       @Override
+       public void actionPerformed(ActionEvent e) {
+          boolean a = sheetABox_.isSelected();
+          boolean b = sheetBBox_.isSelected();
+          sheetABox_.setSelected(!a);
+          sheetBBox_.setSelected(!b);
+       }
+    });
+    add(tmp_but, "skip 1");
+    
+    add(new JLabel("Sheet/slice position:"));
+    add(new JLabel(""));
 
-         }
-      });
-      
-      add(tmp_but, "span 2, center, wrap");
+    tmp_but = new JButton("Set start here");
+    tmp_but.addActionListener(new ActionListener() {
+       @Override
+       public void actionPerformed(ActionEvent e) {
+          try {
+             Point2D.Double pt = core_.getGalvoPosition(devices_.getMMDeviceException(micromirrorDeviceKey_));
+             sheetStartPos_ = pt.y;
+             updateSheetSAParams();
+          } catch (Exception ex) {
+             ReportingUtils.showError(ex);
+          }
+       }
+    });
+    add(tmp_but);
+    
+    tmp_but = new JButton("Set end here");
+    tmp_but.addActionListener(new ActionListener() {
+       @Override
+       public void actionPerformed(ActionEvent e) {
+          try {
+             Point2D.Double pt = core_.getGalvoPosition(devices_.getMMDeviceException(micromirrorDeviceKey_));
+             sheetStopPos_ = pt.y;
+             updateSheetSAParams();
+          } catch (Exception ex) {
+             ReportingUtils.showError(ex);
+          }
+       }
+    });
+    add(tmp_but, "wrap");
+    
+    toggleButtonLive_ = new JToggleButton();
+    toggleButtonLive_.setMargin(new Insets(0, 10, 0, 10));
+    toggleButtonLive_.setIconTextGap(6);
+    toggleButtonLive_.setToolTipText("Continuous live view");
+    setLiveButton(gui_.isLiveModeOn());
+    toggleButtonLive_.addActionListener(new ActionListener() {
+       @Override
+       public void actionPerformed(ActionEvent e) {
+          setLiveButton(!gui_.isLiveModeOn());          
+          gui_.enableLiveMode(!gui_.isLiveModeOn());
+       }
+    });
 
-      add(new JLabel(LEFTWHEEL + ":"));
-      leftWheelBox_ = pu.makeJoystickSelectionBox(Devices.JoystickDevice.LEFT_KNOB,
-              devices_.getTigerStages(), leftWheelSelection, devices_, prefs_,
-              leftWheelPrefName);
-      add(leftWheelBox_);
-      
-      add(new JLabel("Scan amplitude:"));
-      add(new JLabel(""));
-      
-      JSlider tmp_sl = pu.makeSlider(Setup.SHEET_AMPLITUDE+side_.toString(), 0, // 0 is min amplitude
-            ASIdiSPIMFrame.props_.getPropValueFloat(Setup.MAX_SHEET_VAL+side_.toString())-ASIdiSPIMFrame.props_.getPropValueFloat(Setup.MIN_SHEET_VAL+side_.toString()),  // max value minus min value is max amplitude
-            ASIdiSPIMFrame.props_.getPropValueFloat(Setup.SHEET_AMPLITUDE+side_.toString()),  // initialize to current value
-            1000);  // Slider value (int)(1000*property value)
-      setup_.addListener(tmp_sl);
-      add(tmp_sl, "span 2, center, wrap");
 
-      add(new JLabel("Scan enabled:"));
-      sheetABox_ = pu.makeCheckBox(Setup.SHEET_ENABLED_A, "Side A", "0 - Disabled", "1 - Enabled");
-      setup_.addListener(sheetABox_);
-      add(sheetABox_, "split 2");
-      
-      sheetBBox_ = pu.makeCheckBox(Setup.SHEET_ENABLED_B, "Side B", "0 - Disabled", "1 - Enabled");
-      setup_.addListener(sheetBBox_);
-      add(sheetBBox_);
-      
-      add(new JLabel("Scan offset:"));
-      add(new JLabel(""));
-      
-      tmp_sl = pu.makeSlider(Setup.SHEET_OFFSET+side_.toString(), 
-            ASIdiSPIMFrame.props_.getPropValueFloat(Setup.MIN_SHEET_VAL+side_.toString()),  // min value
-            ASIdiSPIMFrame.props_.getPropValueFloat(Setup.MAX_SHEET_VAL+side_.toString()),  // max value
-            ASIdiSPIMFrame.props_.getPropValueFloat(Setup.SHEET_OFFSET+side_.toString()),   // initialize to current value
-            1000);  // Slider value (int)(1000*property value)
-      setup_.addListener(tmp_sl);
-      add(tmp_sl, "span 2, center, wrap");
+    add(toggleButtonLive_, "span, split 3, center, width 110px");
+    String isMultiCameraPrefName = MULTICAMERAPREF + side_.toString();
+    boolean isMultiCamera = false;
+    prefs_.getBoolean(isMultiCameraPrefName, isMultiCamera);
+    dualCameraButton_ = new JRadioButton("Dual Camera");
+    singleCameraButton_ = new JRadioButton("Single Camera");
+    ButtonGroup singleDualCameraButtonGroup = new ButtonGroup();
+    singleDualCameraButtonGroup.add(dualCameraButton_);
+    singleDualCameraButtonGroup.add(singleCameraButton_);
+    if (isMultiCamera) {
+       dualCameraButton_.setSelected(true);
+    } else {
+       singleCameraButton_.setSelected(true);
+    } 
+    ActionListener radioButtonListener = new ActionListener() {
+       public void actionPerformed(ActionEvent ae) {
+          JRadioButton myButton = (JRadioButton) ae.getSource();
+          handleCameraButton(myButton);
+       }
+    };
+    dualCameraButton_.addActionListener(radioButtonListener);
+    singleCameraButton_.addActionListener(radioButtonListener);
+    add(singleCameraButton_, "center");
+    add(dualCameraButton_, "center");
 
-      tmp_but = new JButton("Toggle scan");
-      tmp_but.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            boolean a = sheetABox_.isSelected();
-            boolean b = sheetBBox_.isSelected();
-            sheetABox_.setSelected(!a);
-            sheetBBox_.setSelected(!b);
-         }
-      });
       
-      add(tmp_but, "skip 1");
-      
-      
-      add(new JLabel("Sheet position:"));
-      add(new JLabel(""));
-      
-      tmp_but = new JButton("Set start");
-      tmp_but.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            // TODO clean this up, it's ugly and easily broken!!
-            // but need better way of accessing devices I think
-            String mmDevice = devices_.getMMDevice("MicroMirror"+side_.toString());
-            if (mmDevice == null || "".equals(mmDevice))
-               return;
-            try {
-                Point2D.Double pt = core_.getGalvoPosition(mmDevice);
-                setup_.sheetStartPos_ = pt.y;
-            } catch (Exception ex) {
-               ReportingUtils.showError(ex);
-            }
-            setup_.updateSheetSAParams(side_.toString());
-         }
-      });
-      add(tmp_but);
-      
-      tmp_but = new JButton("Set end");
-      tmp_but.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            // TODO clean this up, it's ugly and easily broken!!
-            // but need better way of accessing devices I think
-            String mmDevice = devices_.getMMDevice("MicroMirror"+side_.toString());
-            if (mmDevice == null || "".equals(mmDevice))
-               return;
-            try {
-               Point2D.Double pt = core_.getGalvoPosition(mmDevice);
-               setup_.sheetEndPos_ = pt.y;
-            } catch (Exception ex) {
-               ReportingUtils.showError(ex);
-            }
-            setup_.updateSheetSAParams(side_.toString());
-         }
-      });
-      add(tmp_but, "wrap");
-
-      toggleButtonLive_ = new JToggleButton();
-      toggleButtonLive_.setMargin(new Insets(0, 10, 0, 10));
-      toggleButtonLive_.setIconTextGap(6);
-      toggleButtonLive_.setToolTipText("Continuous live view");
-      setLiveButton(gui_.isLiveModeOn());
-      toggleButtonLive_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            //setLiveButton(!gui_.isLiveModeOn());
-            gui_.enableLiveMode(!gui_.isLiveModeOn());
-         }
-      });
-      add(toggleButtonLive_, "span, split 3, center, width 110px");
-      boolean isMultiCamera = false;
-      prefs_.getBoolean(ISMULTICAMERAPREFNAME, isMultiCamera);
-      dualCameraButton_ = new JRadioButton("Dual Camera");
-      singleCameraButton_ = new JRadioButton("Single Camera");
-      ButtonGroup singleDualCameraButtonGroup = new ButtonGroup();
-      singleDualCameraButtonGroup.add(dualCameraButton_);
-      singleDualCameraButtonGroup.add(singleCameraButton_);
-      if (isMultiCamera) {
-         dualCameraButton_.setSelected(true);
-      } else {
-         singleCameraButton_.setSelected(true);
-      }
-      ActionListener radioButtonListener = new ActionListener() {
-         public void actionPerformed(ActionEvent ae) {
-            JRadioButton myButton = (JRadioButton) ae.getSource();
-            handleCameraButton(myButton);          
-         }
-      };
-      dualCameraButton_.addActionListener(radioButtonListener);
-      singleCameraButton_.addActionListener(radioButtonListener);
-      add(singleCameraButton_, "center");
-      add(dualCameraButton_, "center");
-      
-
-   }
-
+   }// end of constructor
+   
    /**
-    * Changes the looks of the live button
-    * @param enable - true: live mode is switched on
+    * required by LiveModeListener interface
     */
+   public void liveModeEnabled(boolean enable) { 
+      setLiveButton(enable); 
+   } 
+   
+   /** 
+   * Changes the looks of the live button 
+   * @param enable - true: live mode is switched on 
+   */ 
    public final void setLiveButton(boolean enable) {
       toggleButtonLive_.setIcon(enable ? SwingResourceManager.getIcon(MMStudioMainFrame.class,
-              "/org/micromanager/icons/cancel.png")
-              : SwingResourceManager.getIcon(MMStudioMainFrame.class,
-              "/org/micromanager/icons/camera_go.png"));
+            "/org/micromanager/icons/cancel.png")
+            : SwingResourceManager.getIcon(MMStudioMainFrame.class,
+                  "/org/micromanager/icons/camera_go.png"));
       toggleButtonLive_.setSelected(false);
       toggleButtonLive_.setText(enable ? "Stop Live" : "Live");
    }
-
-   /**
-    * Switches the active camera to the desired one Takes care of possible side
-    * effects
-    *
-    * @param mmDevice - name of new camera device
-    */
-   private void setCameraDevice(String mmDevice) {
-      if (mmDevice != null) {
-         try {
-            boolean liveEnabled = gui_.isLiveModeOn();
-            if (liveEnabled) {
-               gui_.enableLiveMode(false);
-            }
-            core_.setProperty(
-                    "Core", "Camera", mmDevice);
-            gui_.refreshGUIFromCache();
-            if (liveEnabled) {
-               gui_.enableLiveMode(true);
-            }
-         } catch (Exception ex) {
-            ReportingUtils.showError("Failed to set Core Camera property");
+   
+   /** 
+    * Switches the active camera to the desired one Takes care of possible side 
+    * effects 
+    * 
+    * @param mmDevice - name of new camera device 
+    */ 
+   private void setCameraDevice(String mmDevice) { 
+      if (mmDevice != null) { 
+         try { 
+            boolean liveEnabled = gui_.isLiveModeOn(); 
+            if (liveEnabled) { 
+               gui_.enableLiveMode(false); 
+            } 
+            core_.setProperty( 
+                  "Core", "Camera", mmDevice); 
+            gui_.refreshGUIFromCache(); 
+            if (liveEnabled) { 
+               gui_.enableLiveMode(true); 
+            } 
+         } catch (Exception ex) { 
+            ReportingUtils.showError("Failed to set Core Camera property"); 
+         } 
+      } 
+   } 
+   
+   
+   /** 
+    * Implements the ActionEventLister for the Camera selection Radio Buttons 
+    * @param myButton  
+    */ 
+   private void handleCameraButton(JRadioButton myButton) { 
+      if (myButton != null && myButton.isSelected()) { 
+         String mmDevice;
+         if (myButton.equals(singleCameraButton_)) { 
+            mmDevice = devices_.getMMDevice(devices_.getSideSpecificKey(Devices.Keys.CAMERAA, side_));
+            prefs_.putBoolean(ISMULTICAMERAPREFNAME, false);
+         } else {
+            // default to dual camera button 
+            mmDevice = devices_.getMMDevice(Devices.Keys.MULTICAMERA); 
+            prefs_.putBoolean(ISMULTICAMERAPREFNAME, true); 
          }
+         setCameraDevice(mmDevice);
       }
    }
-
+   
    /**
-    * Implements the ActionEventLister for the Camera selection Radio Buttons
-    * @param myButton 
+    * Gets called when this tab gets focus.  Sets the physical UI in the Tiger
+    * controller to what was selected in this pane.
+    * Uses the ActionListeners of the UI components
     */
-   private void handleCameraButton(JRadioButton myButton) {
-      if (myButton != null && myButton.isSelected()) {
-         // default to dual camera button
-         String mmDevice = devices_.getMMDevice(Devices.DUALCAMERA);
-         prefs_.putBoolean(ISMULTICAMERAPREFNAME, true);
-         if (myButton.equals(singleCameraButton_)) {
-            prefs_.putBoolean(ISMULTICAMERAPREFNAME, false);
-            if (side_ == Labels.Sides.A) {
-               mmDevice = devices_.getMMDevice(Devices.CAMERAA);
-            } else {
-               if (side_ == Labels.Sides.B) {
-                  mmDevice = devices_.getMMDevice(Devices.CAMERAB);
-               }
-            }
-         }
-         setCameraDevice(mmDevice);        
+   @Override
+   public void gotSelected() {
+      ((ListeningJPanel) joystickPanel_).gotSelected();
+      props_.callListeners();
+      updateStartStopPositions();  // I'm undecided if this is wise or not, see updateStartStopPositions() JavaDoc
+      
+      // moves illumination piezo to home
+      // TODO do this more elegantly (ideally MM API would add Home() function)
+      String letter = "";
+      try {
+         letter = props_.getPropValueString(piezoIlluminationDeviceKey_, Properties.Keys.AXIS_LETTER);
+         String hubname = core_.getParentLabel(devices_.getMMDevice(piezoIlluminationDeviceKey_));
+         String port = core_.getProperty(hubname, Properties.Keys.SERIAL_COM_PORT.toString());
+         core_.setSerialPortCommand(port, "! "+letter+"+", "\r");
+      } catch (Exception ex) {
+         ReportingUtils.showError("could not execute core function move to home for axis " + letter);
       }
+      
+      // handles single/dual camera
+      JRadioButton jr = dualCameraButton_; 
+      if (singleCameraButton_.isSelected()) { 
+         jr = singleCameraButton_; 
+      } 
+      handleCameraButton(jr); 
+   }
+   
+   /**
+    * updates single-axis parameters for stepped piezos
+    * according to sheetStartPos_ and sheetEndPos_
+    */
+   public void updateImagingSAParams() {
+      float amplitude = (float)(imagingStopPos_ - imagingStartPos_);
+      float offset = (float)(imagingStartPos_ + imagingStopPos_)/2;
+      props_.setPropValue(piezoImagingDeviceKey_, Properties.Keys.SA_AMPLITUDE, amplitude);
+      props_.setPropValue(piezoImagingDeviceKey_, Properties.Keys.SA_OFFSET, offset);
+   }
+   
+   /**
+    * updates single-axis parameters for slice positions of micromirrors
+    * according to sheetStartPos_ and sheetEndPos_
+    */
+   public void updateSheetSAParams() {
+      float amplitude = (float)(sheetStopPos_ - sheetStartPos_);
+      float offset = (float)(sheetStartPos_ + sheetStopPos_)/2;
+      props_.setPropValue(micromirrorDeviceKey_, Properties.Keys.SA_AMPLITUDE_Y_DEG, amplitude);
+      props_.setPropValue(micromirrorDeviceKey_, Properties.Keys.SA_OFFSET_Y_DEG, offset);
+   }
+   
+   /**
+    * updates start/stop positions from the present values of properties
+    * i'm undecided if this should be called when tab is selected
+    * if yes, then start/end settings are clobbered when you change tabs
+    * if no, then changes to start/end settings made elsewhere (notably using joystick with scan enabled) will be clobbered
+    */
+   public void updateStartStopPositions() {
+      // compute initial start/stop positions from properties
+      double amplitude = (double)props_.getPropValueFloat(piezoImagingDeviceKey_, Properties.Keys.SA_AMPLITUDE);
+      double offset = (double)props_.getPropValueFloat(piezoImagingDeviceKey_, Properties.Keys.SA_OFFSET);
+      imagingStartPos_ = offset - amplitude/2;
+      imagingStopPos_ = offset + amplitude/2;
+      amplitude = props_.getPropValueFloat(micromirrorDeviceKey_, Properties.Keys.SA_AMPLITUDE_Y_DEG);
+      offset = props_.getPropValueFloat(micromirrorDeviceKey_, Properties.Keys.SA_OFFSET_Y_DEG);
+      sheetStartPos_ = offset - amplitude/2;
+      sheetStopPos_ = offset + amplitude/2;
    }
 
    @Override
    public void saveSettings() {
-      prefs_.put(JOYSTICK + side_.toString(),
-              (String) joystickBox_.getSelectedItem());
-      prefs_.put(RIGHTWHEEL + side_.toString(),
-              (String) rightWheelBox_.getSelectedItem());
-      prefs_.put(LEFTWHEEL + side_.toString(),
-              (String) leftWheelBox_.getSelectedItem());
-   }
-
-   /**
-    * Gets called when this tab gets focus. Sets the physical UI in the Tiger
-    * controller to what was selected in this pane.
-    * Uses the ActionListeners of the UI components 
-    */
-   @Override
-   public void gotSelected() {
-      devices_.clearJoystickBindings();
-      joystickBox_.setSelectedItem(joystickBox_.getSelectedItem());
-      rightWheelBox_.setSelectedItem(rightWheelBox_.getSelectedItem());
-      leftWheelBox_.setSelectedItem(leftWheelBox_.getSelectedItem());
-      setup_.callListeners();
-      
-      JRadioButton jr = dualCameraButton_;
-      if (singleCameraButton_.isSelected()) {
-         jr = singleCameraButton_;
-      }
-      handleCameraButton(jr);
-      
-      // moves illumination piezo to correct place for this side
-      // TODO do this more elegantly (ideally MM API would add Home() function)
-      String letter = "";
-      try {
-         String mmDevice = devices_.getMMDevice(illuminationPiezo_);
-         if (mmDevice == null || "".equals(mmDevice))
-            return;
-         letter = core_.getProperty(mmDevice, "AxisLetter");
-         String hubDevice = core_.getParentLabel(mmDevice);
-         core_.setProperty(hubDevice, SERIALCOMMAND, "! " + letter);
-      } catch (Exception ex) {
-         ReportingUtils.showError("could not execute core function move to home for axis " + letter);
-      }
+      // now all prefs are updated on button press instead of here
    }
 
    @Override
    public void updateStagePositions() {
-      imagingPiezoPositionLabel_.setText(Devices.posToDisplayString(
-              devices_.getStagePosition(imagingPiezo_)));
-      illuminationPiezoPositionLabel_.setText(Devices.posToDisplayString(
-              devices_.getStagePosition(illuminationPiezo_)));
+      imagingPiezoPositionLabel_.setText(positions_.getStagePositionString(piezoImagingDeviceKey_));
+      illuminationPiezoPositionLabel_.setText(positions_.getStagePositionString(piezoIlluminationDeviceKey_));
    }
-
-   public void liveModeEnabled(boolean enable) {
-      setLiveButton(enable);
-   }
+      
 }

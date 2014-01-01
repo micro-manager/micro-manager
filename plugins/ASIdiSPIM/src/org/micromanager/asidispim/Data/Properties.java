@@ -22,253 +22,382 @@
 package org.micromanager.asidispim.Data;
 
 import java.text.ParseException;
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.List;
 
 import mmcorej.CMMCore;
 
-import org.micromanager.api.ScriptInterface;
+import org.micromanager.MMStudioMainFrame;
+import org.micromanager.asidispim.Utils.UpdateFromPropertyListenerInterface;
 import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.ReportingUtils;
 
 
 /**
- * Contains data and methods related to getting and setting device properties.  Ideally this is the single
- * place where properties are read and set, but currently this also happens other places.
- * One static instance of this class exists in the top-level class.
+ * Contains data and methods related to getting and setting device properties.
+ * Ideally this is the only place where properties are read and set.
+ * One instance of this class exists in the top-level class.
  * @author Jon
  * @author nico
  */
 public class Properties {
    private Devices devices_;
-   private ScriptInterface gui_;
    private CMMCore core_;
+   private List<UpdateFromPropertyListenerInterface> listeners_;
 
-   private final HashMap<String, PropertyData> propInfo_;  // contains all the information about the corresponding property
-   
    /**
-    * types of properties that Micro-Manager supports 
-    * @author Jon
+    * List of all device adapter properties used.  The enum value (all caps) is used in the Java code.  The corresponding
+    * string value (in quotes) is the value used by the device adapter.
     */
-   public static enum PropTypes { STRING, FLOAT, INTEGER };
-   
-   /**
-    * associative class to store information about MicroManager properties
-    * @author Jon
-    */
-   public static class PropertyData {
-      public String pluginName;
-      public String adapterName;
-      public String pluginDevice;
-      public PropTypes propType;
-      
-      /**
-       * 
-       * @param pluginName property name in Java; used as key to hashmap
-       * @param adapterName property name in ASITiger.h
-       * @param pluginDevice device name in Java, usually in Devices class
-       * @param propType STRING, FLOAT, or INTEGER
-       */
-      public PropertyData(String pluginName, String adapterName, String pluginDevice, PropTypes propType) {
-         this.pluginName = pluginName;
-         this.adapterName = adapterName;
-         this.pluginDevice = pluginDevice;
-         this.propType = propType;
+   public static enum Keys {
+      JOYSTICK_ENABLED("JoystickEnabled"),
+      JOYSTICK_INPUT("JoystickInput"),
+      JOYSTICK_INPUT_X("JoystickInputX"),
+      JOYSTICK_INPUT_Y("JoystickInputY"),
+      SPIM_NUM_SIDES("SPIMNumSides"),
+      SPIM_NUM_SLICES("SPIMNumSlices"),
+      SPIM_NUM_REPEATS("SPIMNumRepeats"),
+      SPIM_NUM_SCANSPERSLICE("SPIMNumScansPerSlice"),
+      SPIM_LINESCAN_PERIOD("SingleAxisXPeriod(ms)"),
+      SPIM_DELAY_SIDE("SPIMDelayBeforeSide(ms)"),
+      SPIM_DELAY_SLICE("SPIMDelayBeforeSlice(ms)"),
+      SPIM_FIRSTSIDE("SPIMFirstSide"),
+      SA_AMPLITUDE("SingleAxisAmplitude(um)"),
+      SA_OFFSET("SingleAxisOffset(um)"),
+      SA_AMPLITUDE_X_DEG("SingleAxisXAmplitude(deg)"),
+      SA_OFFSET_X_DEG("SingleAxisXOffset(deg)"),
+      SA_OFFSET_X("SingleAxisXOffset(um)"),
+      SA_MODE_X("SingleAxisXMode"),
+      SA_AMPLITUDE_Y_DEG("SingleAxisYAmplitude(deg)"),
+      SA_OFFSET_Y_DEG("SingleAxisYOffset(deg)"),
+      SA_OFFSET_Y("SingleAxisYOffset(um)"),
+      AXIS_LETTER("AxisLetter"),
+      SERIAL_ONLY_ON_CHANGE("OnlySendSerialCommandOnChange"),
+      SERIAL_COMMAND("SerialCommand"),
+      SERIAL_COM_PORT("SerialComPort"),
+      MAX_DEFLECTION_X("MaxDeflectionX(deg)"),
+      MIN_DEFLECTION_X("MinDeflectionX(deg)"),
+      ;
+      private final String text;
+      Keys(String text) {
+         this.text = text;
+      }
+      public String toString(Object... o) {
+         return String.format(text, o);
+      }
+      public String toString() {
+         return text;
       }
    }
-
+   
+   
    /**
-    * Constructor.  Creates HashMap but does not populate it; that should be done
-    * by calling addPropertyData() method
-    * @param gui
+    * Constructor.
     * @param devices
     * @author Jon
     */
-   public Properties (ScriptInterface gui, Devices devices) {
-      gui_ = gui;
-      core_ = gui_.getMMCore();
+   public Properties (Devices devices) {
+      core_ = MMStudioMainFrame.getInstance().getCore();
       devices_ = devices;
-      
-      // only create a blank hashmap to store the information now
-      // other constructors should call addPropertyData() method
-      propInfo_ = new HashMap<String, PropertyData>();
+      listeners_ = new ArrayList<UpdateFromPropertyListenerInterface>();
    }
 
-   public void addPropertyData(PropertyData prop) {
-      propInfo_.put(prop.pluginName, prop);
+   /**
+    * sees if property exists in given device
+    * @param device enum key for device 
+    * @param name enum key for property 
+    * @param ignoreError false (default) will do error checking, true means ignores non-existing property
+    * @return
+    */
+   boolean hasProperty(Devices.Keys device, Properties.Keys name, boolean ignoreError) {
+      String mmDevice = null;
+      try {
+         if (ignoreError) {
+            mmDevice = devices_.getMMDevice(device);
+            return ((mmDevice!=null) &&  core_.hasProperty(mmDevice, name.toString()));
+         } else {
+            mmDevice = devices_.getMMDeviceException(device);
+            return core_.hasProperty(mmDevice, name.toString());
+         }
+      } catch (Exception ex) {
+         ReportingUtils.showError("Couldn't find property "+ name.toString() + " in device " + mmDevice);
+      }
+      return false;
    }
    
    /**
-    * adds an entry with property information; overwrites any previous entry under the identical name
-    * no enforcement is done to prevent the same underlying property from being added multiple times
-    * @param pluginName property name in Java; used as key to hashmap
-    * @param adapterName property name in ASITiger.h
-    * @param pluginDevice device name in Java, usually in Devices class
-    * @param propType STRING, FLOAT, or INTEGER
+    * sees if property exists in given device, with error checking
+    * @param device enum key for device 
+    * @param name enum key for property 
+    * @return
     */
-   public void addPropertyData(String pluginName, String adapterName, String pluginDevice, PropTypes propType) {
-      if (propInfo_.containsKey(pluginName)) {
-         propInfo_.remove(pluginDevice);
-      }
-      PropertyData prop = new PropertyData(pluginName, adapterName, pluginDevice, propType);
-      propInfo_.put(pluginName, prop);
+   boolean hasProperty(Devices.Keys device, Properties.Keys name) {
+      return hasProperty(device, name, false);
    }
    
    /**
     * writes string property value to the device adapter using a core call
-    * @param key property name in Java; key to property hashmap
+    * @param device enum key for device 
+    * @param name enum key for property 
     * @param strVal value in string form, sent to core using setProperty()
+    * @param ignoreError false (default) will do error checking, true means ignores non-existing property
     */
-   public void setPropValue(String key, String strVal) {
-      synchronized (propInfo_) {
-         if (propInfo_.containsKey(key)) {
-            PropertyData prop = propInfo_.get(key);
-            String mmDevice = null;
-            try {
-               mmDevice = devices_.getMMDevice(prop.pluginDevice);
-               core_.setProperty(mmDevice, prop.adapterName, strVal);
-            } catch (Exception ex) {
-               ReportingUtils.showError("Error setting string property "+ prop.adapterName + " to " + strVal + " in device " + mmDevice);
+   public void setPropValue(Devices.Keys device, Properties.Keys name, String strVal, boolean ignoreError) {
+      String mmDevice = null;
+      try {
+         if (ignoreError) {
+            mmDevice = devices_.getMMDevice(device);
+            if (mmDevice != null) {
+               core_.setProperty(mmDevice, name.toString(), strVal);
             }
-
+         } else { 
+            mmDevice = devices_.getMMDeviceException(device);
+            core_.setProperty(mmDevice, name.toString(), strVal);
          }
+      } catch (Exception ex) {
+         ReportingUtils.showError("Error setting string property "+ name.toString() + " to " + strVal + " in device " + mmDevice);
       }
    }
-
+   
+   /**
+    * writes string property value to the device adapter using a core call, with error checking
+    * @param device enum key for device 
+    * @param name enum key for property 
+    * @param strVal value in string form, sent to core using setProperty()
+    */
+   public void setPropValue(Devices.Keys device, Properties.Keys name, String strVal) {
+      setPropValue(device, name, strVal, false);
+   }
+ 
    /**
     * writes integer property value to the device adapter using a core call
-    * @param key property name in Java; key to property hashmap
+    * @param device enum key for device 
+    * @param name enum key for property 
+    * @param intVal value in integer form, sent to core using setProperty()
+    * @param ignoreError false (default) will do error checking, true means ignores non-existing property
+    */
+   public void setPropValue(Devices.Keys device, Properties.Keys name, int intVal, boolean ignoreError) {
+      String mmDevice = null;
+      try {
+         if (ignoreError) {
+            mmDevice = devices_.getMMDevice(device);
+            if (mmDevice != null) {
+               core_.setProperty(mmDevice, name.toString(), intVal);
+            }
+         } else {
+            mmDevice = devices_.getMMDeviceException(device);
+            core_.setProperty(mmDevice, name.toString(), intVal);
+         }
+      } catch (Exception ex) {
+         ReportingUtils.showError("Error setting int property " + name.toString() + " in device " + mmDevice);
+      }
+   }
+   
+   /**
+    * writes integer property value to the device adapter using a core call, with error checking
+    * @param device enum key for device 
+    * @param name enum key for property 
     * @param intVal value in integer form, sent to core using setProperty()
     */
-   public void setPropValue(String key, int intVal) {
-      synchronized (propInfo_) {
-         if (propInfo_.containsKey(key)) {
-            PropertyData prop = propInfo_.get(key);
-            String mmDevice = null;
-            try {
-               mmDevice = devices_.getMMDevice(prop.pluginDevice);
-               core_.setProperty(mmDevice, prop.adapterName, intVal);
-            } catch (Exception ex) {
-               ReportingUtils.showError("Error setting int property " + prop.adapterName + " in device " + mmDevice);
-            }
-
-         }
-      }
+   public void setPropValue(Devices.Keys device, Properties.Keys name, int intVal) {
+      setPropValue(device, name, intVal, false);
    }
 
    /**
     * writes float property value to the device adapter using a core call
-    * @param key property name in Java; key to property hashmap
+    * @param device enum key for device 
+    * @param name enum key for property 
     * @param intVal value in integer form, sent to core using setProperty()
+    * @param ignoreError false (default) will do error checking, true means ignores non-existing property
     */
-   public void setPropValue(String key, float floatVal) {
-      synchronized (propInfo_) {
-         if (propInfo_.containsKey(key)) {
-            PropertyData prop = propInfo_.get(key);
-            String mmDevice = null;
-            try {
-               mmDevice = devices_.getMMDevice(prop.pluginDevice);
-               core_.setProperty(mmDevice, prop.adapterName, floatVal);
-            } catch (Exception ex) {
-               ReportingUtils.showError("Error setting float property " + prop.adapterName + " in device " + mmDevice);
+   public void setPropValue(Devices.Keys device, Properties.Keys name, float floatVal, boolean ignoreError) {
+      String mmDevice = null;
+      try {
+         if (ignoreError) {
+            mmDevice = devices_.getMMDevice(device);
+            if (mmDevice != null) {
+               core_.setProperty(mmDevice, name.toString(), floatVal);
             }
-
+         } else {
+            mmDevice = devices_.getMMDeviceException(device);
+            core_.setProperty(mmDevice, name.toString(), floatVal);
          }
+      } catch (Exception ex) {
+         ReportingUtils.showError("Error setting float property " + name.toString() + " in device " + mmDevice);
       }
    }
-
+   
    /**
-    * gets the property hashmap data
-    * @param key property name in Java; key to property hashmap
-    * @return the associative array with property info
+    * writes float property value to the device adapter using a core call, with error checking
+    * @param device enum key for device 
+    * @param name enum key for property 
+    * @param intVal value in integer form, sent to core using setProperty()
     */
-   private PropertyData getPropEntry(String key) {
-      return propInfo_.get(key);
+   public void setPropValue(Devices.Keys device, Properties.Keys name, float floatVal) {
+      setPropValue(device, name, floatVal, false);
    }
 
    /**
     * reads the property value from the device adapter using a core call
-    * @param key property name in Java; key to property hashmap
+    * @param device enum key for device 
+    * @param name enum key for property 
     * @return value in string form, returned from core call to getProperty()
     */
-   private String getPropValue(String key) {
-      // TODO see if this needs synchronize statement
+   private String getPropValue(Devices.Keys device, Properties.Keys name, boolean ignoreError) {
       String val = null;
-      PropertyData prop = propInfo_.get(key);
-      boolean throwException = true;
-      if ((prop==null)) {
-         if (throwException) {
-            ReportingUtils.showError("Could not get property for " + key);
+      String mmDevice = null;
+      try {
+         if (ignoreError) {
+            mmDevice = devices_.getMMDevice(device);
+            val = "";  // set to be empty string to avoid null pointer exceptions
+            if (mmDevice != null) {
+               val = core_.getProperty(mmDevice, name.toString());
+            }
+         } else {
+            mmDevice = devices_.getMMDeviceException(device);
+            val = core_.getProperty(mmDevice, name.toString());
          }
-         return val;
-      }
-      String mmDevice = devices_.getMMDevice(prop.pluginDevice);
-      if (mmDevice==null || mmDevice.equals("")) {
-         if (throwException) {
-            ReportingUtils.showError("Could not get device for property " + key + " with " + prop.pluginDevice);
-         }
-      }
-      else
-      {
-         try {
-            val = core_.getProperty(mmDevice, prop.adapterName);
-         } catch (Exception ex) {
-            ReportingUtils.showError("Could not get property " + prop.adapterName + " from device " + mmDevice);
-         }
+         
+      } catch (Exception ex) {
+         ReportingUtils.showError("Could not get property " + name.toString() + " from device " + mmDevice);
       }
       return val;
    }
 
    /**
-    * returns an integer value for the specified property (assumes the caller knows the property contains an integer)
-    * @param key property name in Java; key to property hashmap
+    * returns a string value for the specified property (assumes the caller knows the property contains an string)
+    * @param device enum key for device 
+    * @param name enum key for property 
     * @return
     * @throws ParseException
     */
-   public int getPropValueInteger(String key) {
+   public String getPropValueString(Devices.Keys device, Properties.Keys name) {
+      String strVal = null;
+      strVal = getPropValue(device, name, false);
+      return strVal;
+   }
+   
+   /**
+    * returns a string value for the specified property (assumes the caller knows the property contains an string)
+    * @param device enum key for device 
+    * @param name enum key for property 
+    * @param ignoreError false (default) will do error checking, true means ignores non-existing property
+    * @return
+    * @throws ParseException
+    */
+   public String getPropValueString(Devices.Keys device, Properties.Keys name, boolean ignoreError) {
+      String strVal = null;
+      strVal = getPropValue(device, name, ignoreError);
+      return strVal;
+   }
+   
+   /**
+    * returns an integer value for the specified property (assumes the caller knows the property contains an integer)
+    * @param device enum key for device 
+    * @param name enum key for property 
+    * @return
+    * @throws ParseException
+    */
+   public int getPropValueInteger(Devices.Keys device, Properties.Keys name) {
       int val = 0;
+      String strVal = null;
       try {
-         val = NumberUtils.coreStringToInt(getPropValue(key));
+         strVal = getPropValue(device, name, false);
+         val = NumberUtils.coreStringToInt(strVal);
       } catch (ParseException ex) {
-         ReportingUtils.showError("Could not parse int value of " + key);
+         ReportingUtils.showError("Could not parse int value of " + strVal + " for " + name.toString() + " in device " + device.toString());
       }
-      catch (Exception ex) {
-         ReportingUtils.showError("Could not get int value of property " + key);
+      return val;
+   }
+   
+
+   /**
+    * returns an integer value for the specified property (assumes the caller knows the property contains an integer)
+    * @param device enum key for device 
+    * @param name enum key for property 
+    * @param ignoreError false (default) will do error checking, true means ignores non-existing property
+    * @return
+    * @throws ParseException
+    */
+   public int getPropValueInteger(Devices.Keys device, Properties.Keys name, boolean ignoreError) {
+      int val = 0;
+      String strVal = null;
+      try {
+         strVal = getPropValue(device, name, ignoreError);
+         if (!ignoreError || strVal != "") {
+            val = NumberUtils.coreStringToInt(strVal);
+         }
+      } catch (ParseException ex) {
+         ReportingUtils.showError("Could not parse int value of " + strVal + " for " + name.toString() + " in device " + device.toString());
       }
       return val;
    }
 
    /**
     * returns an float value for the specified property (assumes the caller knows the property contains a float)
-    * @param key property name in Java; key to property hashmap
+    * @param device enum key for device 
+    * @param name enum key for property 
     * @return
     * @throws ParseException
     */
-   public float getPropValueFloat(String key) {
+   public float getPropValueFloat(Devices.Keys device, Properties.Keys name) {
       float val = 0;
+      String strVal = null;
       try {
-         val = (float)NumberUtils.coreStringToDouble(getPropValue(key));
+         strVal = getPropValue(device, name, false);
+         val = (float)NumberUtils.coreStringToDouble(strVal);
       } catch (ParseException ex) {
-         ReportingUtils.showError("Could not parse float value of " + key);
-      }
-      catch (Exception ex) {
-         ReportingUtils.showError("Could not get float value of property " + key);
+         ReportingUtils.showError("Could not parse int value of " + strVal + " for " + name.toString() + " in device " + device.toString());
       }
       return val;
    }
-
-   /**
-    * returns a string value for the specified property
-    * @param key property name in Java; key to property hashmap
-    * @return
-    */
-   public String getPropValueString(String key) {
-      return getPropValue(key);
-   }
-
-   public PropTypes getPropType(String key) {
-      return getPropEntry(key).propType;
-   }
    
+   /**
+   * returns an float value for the specified property (assumes the caller knows the property contains a float)
+   * @param device enum key for device 
+   * @param name enum key for property 
+   * @return
+   * @throws ParseException
+   */
+  public float getPropValueFloat(Devices.Keys device, Properties.Keys name, boolean ignoreError) {
+     float val = 0;
+     String strVal = null;
+     try {
+        strVal = getPropValue(device, name, ignoreError);
+        if (!ignoreError || strVal != "") {
+           val = (float)NumberUtils.coreStringToDouble(strVal);
+        }
+     } catch (ParseException ex) {
+        ReportingUtils.showError("Could not parse int value of " + strVal + " for " + name.toString() + " in device " + device.toString());
+     }
+     return val;
+  }
+  
+  
+  /**
+   * Used to add classes implementing DeviceListenerInterface as listeners
+   */
+  public void addListener(UpdateFromPropertyListenerInterface listener) {
+     listeners_.add(listener);
+  }
+
+  /**
+   * Remove classes implementing the DeviceListener interface from the listers
+   *
+   * @param listener
+   */
+  public void removeListener(UpdateFromPropertyListenerInterface listener) {
+     listeners_.remove(listener);
+  }
+  
+  /**
+   * Call each listener in succession to alert them that something changed
+   */
+  public void callListeners() {
+     for (UpdateFromPropertyListenerInterface listener : listeners_) {
+        listener.updateFromProperty();
+     }
+  }
    
 
 }

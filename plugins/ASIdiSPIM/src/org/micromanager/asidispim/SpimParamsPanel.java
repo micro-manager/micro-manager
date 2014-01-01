@@ -21,8 +21,9 @@
 
 package org.micromanager.asidispim;
 
-import org.micromanager.asidispim.Data.SpimParams;
+import org.micromanager.asidispim.Data.Properties;
 import org.micromanager.asidispim.Data.Devices;
+import org.micromanager.asidispim.Utils.DevicesListenerInterface;
 import org.micromanager.asidispim.Utils.ListeningJPanel;
 import org.micromanager.asidispim.Utils.PanelUtils;
 import org.micromanager.utils.ReportingUtils;
@@ -39,72 +40,69 @@ import net.miginfocom.swing.MigLayout;
  * @author Jon
  */
 @SuppressWarnings("serial")
-public class SpimParamsPanel extends ListeningJPanel {
+public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerInterface {
 
-   SpimParams spimParams_;
    Devices devices_;
+   Properties props_;
+   
+//   private final List<UpdateFromPropertyListenerInterface> listeners_;
 
-   public SpimParamsPanel(SpimParams spimParams, Devices devices) {
+   public SpimParamsPanel(Devices devices, Properties props) {
       super(new MigLayout(
             "",
             "[right]16[center]16[center]",
             "[]12[]"));
-      spimParams_ = spimParams;
       devices_ = devices;
+      props_ = props;
+      
+//      listeners_ = new ArrayList<UpdateFromPropertyListenerInterface>();
 
       try {
          PanelUtils pu = new PanelUtils();
          JSpinner tmp_jsp;
          
          add(new JLabel("Number of sides:"), "split 2");
-         tmp_jsp = pu.makeSpinnerInteger(SpimParams.NR_SIDES, 1, 2);
-         spimParams_.addListener(tmp_jsp);
+         tmp_jsp = pu.makeSpinnerInteger(1, 2, props_, devices_, Devices.Keys.GALVOA, Properties.Keys.SPIM_NUM_SIDES);
          add(tmp_jsp);
 
          add(new JLabel("First side:"), "align right");
-         String[] ab = {SpimParams.FIRSTSIDE_A_VAL, SpimParams.FIRSTSIDE_B_VAL};
-         JComboBox tmp_box = pu.makeDropDownBox(SpimParams.FIRSTSIDE, ab);
+         String[] ab = {Devices.Sides.A.toString(), Devices.Sides.B.toString()};
+         JComboBox tmp_box = pu.makeDropDownBox(ab, props_, devices_, Devices.Keys.GALVOA, Properties.Keys.SPIM_FIRSTSIDE);
          // no listener here
          add(tmp_box, "wrap");
 
-         add(new JLabel("Side A"), "cell 1 2");
-         add(new JLabel("Side B"), "wrap");
+         add(new JLabel("Path A"), "cell 1 2");
+         add(new JLabel("Path B"), "wrap");
 
          add(new JLabel("Number of repeats:"));
-         tmp_jsp = pu.makeSpinnerInteger(SpimParams.NR_REPEATS, 1, 100);
-         spimParams_.addListener(tmp_jsp);
+         tmp_jsp = pu.makeSpinnerInteger(1, 100, props_, devices_, Devices.Keys.GALVOA, Properties.Keys.SPIM_NUM_REPEATS);
          add(tmp_jsp, "span 2, wrap");
 
          add(new JLabel("Number of slices:"));
-         tmp_jsp = pu.makeSpinnerInteger(SpimParams.NR_SLICES, 1, 99);
-         spimParams_.addListener(tmp_jsp);
+         tmp_jsp = pu.makeSpinnerInteger(1, 100, props_, devices_, Devices.Keys.GALVOA, Properties.Keys.SPIM_NUM_SLICES);
          add(tmp_jsp, "span 2, wrap");
 
          add(new JLabel("Lines scans per slice:"));
-         tmp_jsp = pu.makeSpinnerInteger(SpimParams.NR_LINESCANS_PER_SLICE, 1, 1000);
-         spimParams_.addListener(tmp_jsp);
+         tmp_jsp = pu.makeSpinnerInteger(1, 1000, props_, devices_, Devices.Keys.GALVOA, Properties.Keys.SPIM_NUM_SCANSPERSLICE);
          add(tmp_jsp, "span 2, wrap");
 
          add(new JLabel("Line scan period (ms):"));
-         tmp_jsp = pu.makeSpinnerInteger(SpimParams.LINE_SCAN_PERIOD, 1, 10000);
-         spimParams_.addListener(tmp_jsp);
+         tmp_jsp = pu.makeSpinnerInteger(1, 10000, props_, devices_, Devices.Keys.GALVOA, Properties.Keys.SPIM_LINESCAN_PERIOD);
          add(tmp_jsp);
-         tmp_jsp = pu.makeSpinnerInteger(SpimParams.LINE_SCAN_PERIOD_B, 1, 10000);
-         spimParams_.addListener(tmp_jsp);
+         // TODO remove this if only doing single-sided?? would have to add/remove dynamically which might be a pain
+         tmp_jsp = pu.makeSpinnerInteger(1, 10000, props_, devices_, Devices.Keys.GALVOB, Properties.Keys.SPIM_LINESCAN_PERIOD);
          add(tmp_jsp, "wrap");
 
          add(new JLabel("Delay before each slice (ms):"));
-         tmp_jsp = pu.makeSpinnerFloat(SpimParams.DELAY_BEFORE_SLICE, 0, 10000, 0.25);
-         spimParams_.addListener(tmp_jsp);
+         tmp_jsp = pu.makeSpinnerFloat(0, 10000, 0.25, props_, devices_, Devices.Keys.GALVOA, Properties.Keys.SPIM_DELAY_SLICE);
          add(tmp_jsp, "span 2, wrap");
 
          add(new JLabel("Delay before each side (ms):"));
-         tmp_jsp = pu.makeSpinnerFloat(SpimParams.DELAY_BEFORE_SIDE, 0, 10000, 0.25);
-         spimParams_.addListener(tmp_jsp);
+         tmp_jsp = pu.makeSpinnerFloat(0, 10000, 0.25, props_, devices_, Devices.Keys.GALVOA, Properties.Keys.SPIM_DELAY_SIDE);
          add(tmp_jsp, "span 2, wrap");
 
       } catch (Exception ex) {
-         ReportingUtils.showError("Error creating SpimParamsPanel, probably a type mismatch");
+         ReportingUtils.showError("Error creating \"SPIM Params\" tab.  Make sure to select devices in \"Devices\" first, then restart plugin");
       }
 
    }
@@ -115,9 +113,13 @@ public class SpimParamsPanel extends ListeningJPanel {
     */
    @Override
    public void gotSelected() {
-//         spimParams_.callAllListeners();
-      // had problems with this, seem to be related to this tab being selected when plugin is started
-      // TODO fix or decide to remove refresh
+      props_.callListeners();
    }
+   
+   @Override
+   public void devicesChangedAlert() {
+      devices_.callListeners();
+   }
+
 
 }

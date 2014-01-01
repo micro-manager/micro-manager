@@ -21,132 +21,302 @@
 
 package org.micromanager.asidispim.Data;
 
-import java.awt.geom.Point2D;
-import org.micromanager.asidispim.Utils.DevicesListenerInterface;
-import org.micromanager.asidispim.Utils.Labels;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EnumMap;
-import java.util.HashMap;
-import java.util.Iterator;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.prefs.Preferences;
+
 import mmcorej.CMMCore;
 import mmcorej.StrVector;
-import org.micromanager.MMStudioMainFrame;
-import org.micromanager.asidispim.Utils.DirectionalDevice;
-import org.micromanager.utils.NumberUtils;
-import org.micromanager.utils.ReportingUtils;
 
-// TODO implement fast axis checkbox (may need device adapter change and possibly even firmware-level change)
+import org.micromanager.MMStudioMainFrame;
+import org.micromanager.asidispim.Utils.DevicesListenerInterface;
+
+// TODO implement fast axis reverse checkbox (may need device adapter change and possibly even firmware-level change)
 
 /**
- * Class that holds information about the selected devices
- * This should always be the only source of device information
- * The GUI should update this class and use its information
+ * Class that holds information about the selected devices.
+ * This should always be the only source of device information.
+ * The GUI should update this class and use its information.
  * 
  * This could be implemented more elegantly using templates
- * 
  * 
  * @author nico
  * @author Jon
  */
 public class Devices {
-   // useful static constants 
 
-   public static enum JoystickDevice {
-      JOYSTICK, RIGHT_KNOB, LEFT_KNOB
-   };
-   public static final Map<JoystickDevice, String> JOYSTICKS =
-           new EnumMap<JoystickDevice, String>(JoystickDevice.class);
-   static {
-      JOYSTICKS.put(JoystickDevice.JOYSTICK, "Joystick");
-      JOYSTICKS.put(JoystickDevice.RIGHT_KNOB, "Right Wheel");
-      JOYSTICKS.put(JoystickDevice.LEFT_KNOB, "Left Wheel");
-   }
-   public static final Map<String, JoystickDevice> INV_JOYSTICKS =
-           new HashMap<String, JoystickDevice>();
-   static {
-      Iterator<JoystickDevice> it = JOYSTICKS.keySet().iterator();
-      while (it.hasNext()) {
-         JoystickDevice term = it.next();
-         INV_JOYSTICKS.put(JOYSTICKS.get(term), term);
+   /**
+    * A, B, or N for not associated with either side specifically.
+    * Now sides are labeled as "paths" in GUI to avoid confusion, but code still has "sides" nomenclature
+    */
+   public static enum Sides {
+      A("A"),  // side A
+      B("B"),  // side B
+      N("N");   // not associated with either side specifically
+      private final String text;
+      Sides(String text) {
+         this.text = text;
+      }
+      public String toString() {
+         return text;
       }
    }
    
-   /*
-    public static enum AbstractDevices {
-    CAMERAA, CAMERAB, DUALCAMERA, PIEZOA, PIEZOB, GALVOA, GALVOB, GALVOC,
-    GALVOD, XYSTAGE, LOWERZDRIVE, UPPERZDRIVE };
-    public static final Map<AbstractDevices, String> DEVICEMAP = 
-    new EnumMap<AbstractDevices, String>(AbstractDevices.class);
-    static {
-    DEVICEMAP.put(AbstractDevices.CAMERAA,"CameraA");
-    }
-    * */
-   // TODO: change to enums:
-   public static final String CAMERAA = "CameraA";
-   public static final String CAMERAB = "CameraB";
-   public static final String DUALCAMERA = "Dual Camera";
-   public static final String PIEZOA = "PiezoA";
-   public static final String PIEZOB = "PiezoB";
-   public static final String GALVOA = "MicroMirrorA";
-   public static final String GALVOB = "MicroMirrorB";
-   public static final String GALVOC = "MicroMirrorC";
-   public static final String GALVOD = "MicroMirrorD";
-   public static final String XYSTAGE = "XY Stage";
-   public static final String LOWERZDRIVE = "Lower Z Drive";
-   public static final String UPPERZDRIVE = "Upper Z Drive";
-   public static final String[] DEVICES = {
-      CAMERAA, CAMERAB, DUALCAMERA, PIEZOA, PIEZOB, GALVOA, GALVOB, GALVOC,
-      GALVOD, XYSTAGE, LOWERZDRIVE, UPPERZDRIVE};
-   public static final String[] TIGERDEVICES = {PIEZOA, PIEZOB, GALVOA,
-      GALVOB, GALVOC, GALVOD, XYSTAGE, LOWERZDRIVE, UPPERZDRIVE};
-   public static final String[] TWOAXISTIGERDEVICES = {GALVOA, GALVOB, GALVOC,
-      GALVOD, XYSTAGE};
-   public static final String[] ONEAXISTIGERDEVICES = {PIEZOA, PIEZOB,
-      LOWERZDRIVE, UPPERZDRIVE};
-   
-   public static final String FASTAXISAREV = "FastAxisARev";
-   public static final String FASTAXISBREV = "FastAxisBRev";
-   public static final String[] FASTAXISREVS = {FASTAXISAREV, FASTAXISBREV};
-   public static final String FASTAXISADIR = "FastAxisADir";
-   public static final String FASTAXISBDIR = "FastAxisBDir";
-   public static final String FASTAXISCDIR = "FastAxisCDir";
-   public static final String FASTAXISDDIR = "FastAxisDDir";
-   public static final String[] FASTAXISDIRS = {FASTAXISADIR, FASTAXISBDIR,
-      FASTAXISCDIR, FASTAXISDDIR};
-   public static final String X = "X";
-   public static final String Y = "Y";
-   public static final String NONE = "None";
-   
-   public static final HashMap<String, DirectionalDevice> STAGES;
-   static {
-      STAGES = new HashMap<String, DirectionalDevice>();
-      for (String dd : ONEAXISTIGERDEVICES) {
-         STAGES.put(dd, new DirectionalDevice(dd, Labels.Directions.X));
+   /**
+    * Enum containing Device keys, representing role of each device
+    * (each key is mapped to a particular Micro-manager device according
+    * to the ComboBoxes in DevicesPanel)    
+    */
+   public static enum Keys { NONE,
+      CAMERAA, CAMERAB, MULTICAMERA, 
+      PIEZOA, PIEZOB,
+      GALVOA, GALVOB,
+      XYSTAGE, LOWERZDRIVE, UPPERZDRIVE
+//      ASGALVOA, ASGALVOB,
+      };
+      
+   public final static Set<Devices.Keys> STAGES1D = EnumSet.of(
+         Devices.Keys.LOWERZDRIVE, 
+         Devices.Keys.UPPERZDRIVE, 
+         Devices.Keys.PIEZOA, 
+         Devices.Keys.PIEZOB
+         );
+   public final static Set<Devices.Keys> STAGES2D = EnumSet.of(
+         Devices.Keys.XYSTAGE,
+         Devices.Keys.GALVOA,
+         Devices.Keys.GALVOB
+         );      
+      
+   /**
+    * associative class to store information about devices
+    * @author Jon
+    */
+   public static class DeviceData {
+      Keys key;
+      String mmDevice;  // device name in Micro-manager
+      String displayName;  // how device should be rendered in GUI
+      Sides side; 
+      
+      /**
+       * @param key device key as given by enum in Devices.Keys
+       * @param displayName name shown in the GUI
+       * @param side enum A, B, or N
+       */
+      public DeviceData(Keys key, String displayName, Sides side) {
+         this.key = key;
+         this.mmDevice = "";
+         this.displayName = displayName;
+         this.side = side;
       }
-      for (String dd : TWOAXISTIGERDEVICES) {
-         STAGES.put(dd, new DirectionalDevice(dd, Labels.Directions.X));
-         STAGES.put(dd, new DirectionalDevice(dd, Labels.Directions.Y));
+      
+      public String toString() {
+         switch (side) { // break not needed here
+         case A: 
+         case B: return displayName + " " + side.toString();
+         case N: return displayName;
+         default: return "";
+         }
+      }
+   }
+  
+   /**
+    * Holds the data associated with the device, keyed by Devices.Keys enums
+    */
+   private final Map<Devices.Keys, DeviceData> deviceInfo_;
+      
+   /**
+    * Takes a key and side specifier and returns the corresponding side-specific key
+    * or else NONE if it cannot be found or doesn't exist.  For example, 
+    * PIEZOA with side B will return PIZEOB
+    * @param genericKey
+    * @param side
+    * @return
+    */
+   public Devices.Keys getSideSpecificKey(Devices.Keys genericKey, Devices.Sides side) {
+      Devices.Keys ret = Devices.Keys.NONE;
+      switch (genericKey) {
+      case PIEZOA:
+      case PIEZOB:
+         switch (side) {
+         case A: ret = Devices.Keys.PIEZOA; break;
+         case B: ret = Devices.Keys.PIEZOB; break;
+         case N: break;
+         default: break;
+         }
+         break;
+      case GALVOA:
+      case GALVOB:
+         switch (side) {
+         case A: ret = Devices.Keys.GALVOA; break;
+         case B: ret = Devices.Keys.GALVOB; break;
+         case N: break;
+         default: break;
+         }
+         break;
+      case CAMERAA:
+      case CAMERAB:
+         switch (side) {
+         case A: ret = Devices.Keys.CAMERAA; break;
+         case B: ret = Devices.Keys.CAMERAB; break;
+         case N: break;
+         default: break;
+         }
+         break;
+      default: break;
+      }
+      return ret;
+   }
+   
+   /**
+    * Takes a side specifier and returns the opposite side (A->B and B->A)
+    * @param side
+    * @return
+    */
+   public Devices.Sides getOppositeSide(Devices.Sides side) {
+      Devices.Sides ret = Devices.Sides.N;
+      switch (side) {
+      case A: ret = Devices.Sides.B; break;
+      case B: ret = Devices.Sides.A; break;
+      default: break;
+      }
+      return ret;
+   }
+   
+   /**
+    * Associates a Micro-manager device name with the Device key.  
+    * Changes deviceInfo_.
+    * @param key Device key (enum) as defined in this class
+    * @param mmDevice 
+    */
+   public void setMMDevice(Devices.Keys key, String mmDevice) {
+      DeviceData d = deviceInfo_.get(key);
+      if (d==null)  // do nothing if key doesn't exist
+         return;
+      d.mmDevice = mmDevice;
+      deviceInfo_.put(key, d);
+      callListeners();  // make sure everybody else knows about change
+   }
+
+   /**
+    * Looks up the Micro-Manager device name currently set for particular Device key.
+    * @param key Device key (enum) as defined in this class
+    * @return Micro-Manager deviceName, or null when not found
+    */
+   public String getMMDevice(Devices.Keys key) {
+      String mmDevice = deviceInfo_.get(key).mmDevice;
+      if (mmDevice == null || mmDevice.equals("")) {
+         return null;
+      }
+      return mmDevice;
+   }
+   
+   /**
+    * Looks up the Micro-Manager device name currently set for particular Device key.
+    * @param key Device key (enum) as defined in this class
+    * @return Micro-Manager deviceName, or null when not found
+    * @throws Exception 
+    */
+   public String getMMDeviceException(Devices.Keys key) throws Exception {
+      String mmDevice = getMMDevice(key);
+      if (mmDevice == null || mmDevice.equals("")) {
+         throw (new Exception("No device set for " + key.toString()));
+      }
+      return mmDevice;
+   }
+
+   /**
+    * Looks up the Micro-Manager device names currently set for an array
+    * of Device keys.
+    * @param keys Array of Device keys (enums) as defined in this class
+    * @return array of Micro-Manager deviceNames
+    */
+   public String[] getMMDevices(Devices.Keys[] keys) {
+      List<String> devices = new ArrayList<String>();
+      for (Devices.Keys key : keys) {
+         String d = getMMDevice(key);
+         if (d!=null) {
+            devices.add(d);
+         }
+      }
+      return devices.toArray(new String[0]);
+   }
+   
+   /**
+    * 
+    * @param key from Devices.Keys
+    * @return  string used to describe device, e.g. "MicroMirror A" or "XY Stage"
+    */
+   public String getDeviceDisplay(Devices.Keys key) {
+      return deviceInfo_.get(key).toString();
+   }
+   
+   /**
+    * 
+    * @param keys array of Devices.Keys
+    * @return array of strings used to describe device, e.g. "MicroMirror" or "XY Stage"
+    */
+   public String[] getDeviceDisplay(Devices.Keys[] keys) {
+      List<String> list = new ArrayList<String>();
+      for (Devices.Keys key : keys) {
+         list.add(getDeviceDisplay(key));
+      }
+      return list.toArray(new String[0]);
+   }
+   
+   /**
+    * Returns "generic" descriptor, e.g. without side A designation appended
+    * @param key
+    * @return
+    */
+   public String getDeviceDisplayGeneric(Devices.Keys key) {
+      return deviceInfo_.get(key).displayName;
+   }
+   
+   /**
+    * Saves to preferences the mapping between Device keys and Micro-manager device names
+    */
+   public void saveSettings() {
+      for (Devices.Keys key : deviceInfo_.keySet()) {
+         prefs_.put(key.toString(), deviceInfo_.get(key).mmDevice);
       }
    }
    
-   public static String posToDisplayString(Double pos) {
-      if (pos != null) {
-         return NumberUtils.doubleToDisplayString(pos) + "\u00B5"+"m";
-//         return NumberUtils.doubleToDisplayString(Math.round(100*pos)/100) + "\u00B5"+"m";  // rounds to two decimal places
+   /**
+    * Reads mapping between Device keys and Micro-manager device names from preferences.
+    * Assumes loadedDevices_ contains all available devices, and sets any no-longer-existing device to null.
+    * Changes deviceInfo_.
+    */
+   public void restoreSettings() {
+      for (Devices.Keys key : Devices.Keys.values()) {
+         String mmDevice = prefs_.get(key.toString(), "");
+         if (!loadedDevices_.contains(mmDevice)) {
+            mmDevice = "";
+         }
+         DeviceData d = deviceInfo_.get(key);
+         d.mmDevice = mmDevice;
+         deviceInfo_.put(key, d);
       }
-      return "";
    }
    
-   // Non-static variables
-   private HashMap<String, String> deviceInfo_;
-   private HashMap<String, Boolean> axisRevs_;
-   private HashMap<String, String> axisDirs_;
-   private HashMap<String, Double> oneAxisDrivePositions_;
-   private HashMap<String, Point2D.Double> twoAxisDrivePositions_;
-   private List<DevicesListenerInterface> listeners_;
+   /**
+    * Queries core to see what devices are available
+    * @return ArrayList containing the Micro-Manager names of all loaded devices
+    */
+   private final ArrayList<String> GetLoadedDevices() {
+      ArrayList<String> list = new ArrayList<String>();
+      StrVector strv = core_.getLoadedDevices();
+      for (int i =0; i < strv.size(); i++) {
+         list.add(strv.get(i));
+      }
+      return list;
+   }
+   
+
    private List<String>loadedDevices_;
    private Preferences prefs_;
    private CMMCore core_;
@@ -154,390 +324,33 @@ public class Devices {
    public Devices() {
       prefs_ = Preferences.userNodeForPackage(this.getClass());
       core_ = MMStudioMainFrame.getInstance().getCore();
+      
+      // create synchronized version of data structure containing Device information and populate it
+      // populating must be done dynamically because some elements (e.g. mmDevice field) are dynamic
+      // must make sure that every key is initialized here
+      deviceInfo_ = Collections.synchronizedMap(new EnumMap<Devices.Keys, DeviceData>(Devices.Keys.class));
+      deviceInfo_.put(Keys.NONE, new DeviceData(Keys.NONE, "None", Sides.N));
+      deviceInfo_.put(Keys.CAMERAA, new DeviceData(Keys.CAMERAA, "Camera", Sides.A));
+      deviceInfo_.put(Keys.CAMERAB, new DeviceData(Keys.CAMERAB, "Camera", Sides.B));
+      deviceInfo_.put(Keys.MULTICAMERA, new DeviceData(Keys.MULTICAMERA, "Multi Camera", Sides.N));
+      deviceInfo_.put(Keys.PIEZOA, new DeviceData(Keys.PIEZOA, "Imaging Piezo", Sides.A));
+      deviceInfo_.put(Keys.PIEZOB, new DeviceData(Keys.PIEZOB, "Imaging Piezo", Sides.B));
+      deviceInfo_.put(Keys.GALVOA, new DeviceData(Keys.GALVOA, "Sheet MicroMirror", Sides.A));
+      deviceInfo_.put(Keys.GALVOB, new DeviceData(Keys.GALVOB, "Sheet MicroMirror", Sides.B));
+      deviceInfo_.put(Keys.XYSTAGE, new DeviceData(Keys.XYSTAGE, "XY Stage", Sides.N));
+      deviceInfo_.put(Keys.LOWERZDRIVE, new DeviceData(Keys.LOWERZDRIVE, "Lower Z Drive", Sides.N));
+      deviceInfo_.put(Keys.UPPERZDRIVE, new DeviceData(Keys.UPPERZDRIVE, "Upper (SPIM) Z Drive", Sides.N));
+//      deviceInfo_.put(Keys.ASGALVOA, new DeviceData(Keys.ASGALVOA, "Anti-striping Micromirror", Sides.A));
+//      deviceInfo_.put(Keys.ASGALVOB, new DeviceData(Keys.ASGALVOB, "Anti-striping Micromirror", Sides.B));
 
-      deviceInfo_ = new HashMap<String, String>();
-      axisRevs_ = new HashMap<String, Boolean>();
-      axisDirs_ = new HashMap<String, String>();
-      oneAxisDrivePositions_ = new HashMap<String, Double>();
-      twoAxisDrivePositions_ = new HashMap<String, Point2D.Double>();
       listeners_ = new ArrayList<DevicesListenerInterface>();
-      loadedDevices_ = new ArrayList<String>();
       
-      DetectLoadedDevices();
+      loadedDevices_ = GetLoadedDevices();
+      restoreSettings();    // look for settings from last time
 
-      for (String device : DEVICES) {
-         String mmDevice = prefs_.get(device, "");
-         if (!loadedDevices_.contains(mmDevice)) {
-            mmDevice = "";
-         }
-         deviceInfo_.put(device, mmDevice);
-      }
-
-      for (String axisRev : FASTAXISREVS) {
-         axisRevs_.put(axisRev, prefs_.getBoolean(axisRev, false));
-      }
-
-      for (String axisDir : FASTAXISDIRS) {
-         axisDirs_.put(axisDir, prefs_.get(axisDir, X));
-      }
-      
-      updateStagePositions();
-
-   }
-
-   /**
-    * TODO: throw exception when non-existent key is provided
-    *
-    * @param key - devicetype
-    * @param value - devicename
-    */
-   public synchronized void putDeviceInfo(String key, String value) {
-      if (deviceInfo_.containsKey(key)) {
-         deviceInfo_.put(key, value);
-         callListeners();
-      }
-   }
-
-   /**
-    * Gets the name under which Micro-Manager knows the device
-    *
-    * @param abstractName - DeviceType as defined in this class
-    * @return Micro-Manager deviceName, or null when not found
-    */
-   public synchronized String getMMDevice(String abstractName) {
-      String mmDevice = deviceInfo_.get(abstractName);
-      if (mmDevice == null || mmDevice.equals("")) {
-         return null;
-      }
-      return mmDevice;
-   }
-
-   /**
-    * Given an input array of abstract device names, returns the corresponding
-    * set of names under which Micro-Manager knows these devices
-    * Does not include null for devices not known as Micro-Manager devices
-    *
-    * @param devices array with abstract device names
-    * @return array with Micro-Manager device names
-    */
-   public synchronized String[] getMMDevices(String[] devices) {
-      List<String> tigerDevices = new ArrayList<String>();
-      for (String device : devices) {
-         String d = deviceInfo_.get(device);
-         if (d != null && d.length() > 0) {
-            tigerDevices.add(d);
-         }
-      }
-      return tigerDevices.toArray(new String[0]);
    }
    
-   /**
-    * Creates an array with the abstract names of the stages present in the 
-    * tiger controller.
-    * X and Y of XY drive and MicroMirror devices will be listed separately
-    * @return 
-    */
-   public String[] getTigerStages() {
-      List<String> res = new ArrayList<String>();
-      res.add(NONE);
-      for (String dev : Devices.ONEAXISTIGERDEVICES) {
-         if (getMMDevice(dev) != null) {
-            res.add(dev);
-         }
-      }
-      for (String dev : Devices.TWOAXISTIGERDEVICES) {
-         if (getMMDevice(dev) != null) {
-            res.add(new DirectionalDevice(dev, Labels.Directions.X).getFancyName());
-            res.add(new DirectionalDevice(dev, Labels.Directions.Y).getFancyName());
-         }
-      }
-      return res.toArray(new String[0]);
-   }
-   
-   /**
-    * Creates an array with the abstract names of the two axis drives 
-    * present in the tiger controller
-    * @return 
-    */
-   public String[] getTwoAxisTigerStages() {
-      List<String> res = new ArrayList<String>();
-      res.add(NONE);
-      for (String dev : Devices.TWOAXISTIGERDEVICES) {
-         if (getMMDevice(dev) != null) {
-            res.add(dev);
-         }
-      }
-      return res.toArray(new String[0]);
-   }
-   
-   /**
-    * Return cached position of given abstract stage
-    * 
-    * @param abstractDeviceName
-    * @return stage position
-    */
-   public Double getStagePosition(String abstractDeviceName) {
-      return oneAxisDrivePositions_.get(abstractDeviceName);
-   }
-   
-   /**
-    * return cached positon of given abstract XY stage or Micro-Mirror
-    * 
-    * @param abstractDeviceName
-    * @return 
-    */
-   public Point2D.Double getTwoAxisStagePosition(String abstractDeviceName) {
-      return twoAxisDrivePositions_.get(abstractDeviceName);
-   }
-
-   /**
-    * TODO: throw exception when key is not found
-    *
-    * @param key - AxisName
-    * @param value Axisdirection (true == Reverse)
-    */
-   public synchronized void putFastAxisRevInfo(String key, boolean value) {
-      if (axisRevs_.containsKey(key)) {
-         axisRevs_.put(key, value);
-         callListeners();
-      }
-   }
-
-   /**
-    * Gets the direction of the specified fast axis
-    *
-    * TODO: throw exception when axisDir is not found
-    *
-    * @param axisRev - FASTAXISADIR or FASTAXISBDIR
-    * @return axis direction (true == Reverse)
-    */
-   public synchronized boolean getFastAxisRevInfo(String axisRev) {
-      return axisRevs_.get(axisRev);
-   }
-
-   /**
-    * TODO: throw exception when non-existent key is provided, or value other
-    * than X or Y
-    *
-    * @param key - Axis Type (
-    * @param value - X or Y
-    */
-   public synchronized void putAxisDirInfo(String key, String value) {
-      if (value.equals(X) || value.equals(Y)) {
-         if (axisDirs_.containsKey(key)) {
-            axisDirs_.put(key, value);
-            callListeners();
-         }
-      }
-   }
-
-   /**
-    * Gets the name under which Micro-Manager knows the device
-    *
-    * @param axisDir - FASTAXISADIR, FASTAXISBDIR, etc.
-    * @return Micro-Manager deviceName, or null when not found
-    */
-   public synchronized String getAxisDirInfo(String axisDir) {
-      return axisDirs_.get(axisDir);
-   }
-
-   /**
-    * Clears all device settings that associate devices with joystick inputs
-    *
-    */
-   public void clearJoystickBindings() {
-      String[] oneAxisTigerDevices = getMMDevices(ONEAXISTIGERDEVICES);
-      String propName = "JoystickInput";
-      String xyStagePropName = "JoystickEnabled";
-      String noInput = "0 - none";
-      String no = "No";
-
-      try {
-         for (String dev : oneAxisTigerDevices) {
-            if (core_.hasProperty(dev, propName)) {
-               core_.setProperty(dev, propName, noInput);
-            }
-         }
-
-         String[] twoAxisTigerDevices = getMMDevices(TWOAXISTIGERDEVICES);
-         for (String dev : twoAxisTigerDevices) {
-            if (core_.getDeviceType(dev) == mmcorej.DeviceType.XYStageDevice) {
-               if (core_.hasProperty(dev, xyStagePropName)) {
-                  core_.setProperty(dev, xyStagePropName, no);
-               }
-            } else { // Galvo device
-               if (core_.hasProperty(dev, propName + "X")) {
-                  core_.setProperty(dev, propName + "X", noInput);
-               }
-               if (core_.hasProperty(dev, propName + "Y")) {
-                  core_.setProperty(dev, propName + "Y", noInput);
-               }
-            }
-         }
-      } catch (Exception ex) {
-         ReportingUtils.showError("Failed to communicate with Tiger controller");
-      }
-   }
-
-   /**
-    * Associates the given input device (knob or joystick) to the desired device
-    * Each device specifies its direction (usually X or Y) as a
-    * DirectionalDevice. Two devices can be associated with a Joystick (first one
-    * will be linked to the Joystick X, second one to the Joystick Y) A knob can
-    * have only one directional device associated.
-    * 
-    * The stored association for this input device will be removed first
-    *
-    * @param control Joystick, left or right knob
-    * @param devices A combination of a Tiger device and direction
-    * @return true on success, false on failure
-    */
-   public boolean setJoystickOutput(JoystickDevice joystickDevice,
-           DirectionalDevice device) {
-      String propName = "JoystickInput";
-      String xyStagePropName = "JoystickEnabled";
-      String yes = "Yes";
-
-      // for joystick device
-      String setting = "2 - joystick X";
-      String settingY = "3 - joystick Y";
-      if (joystickDevice.equals(JoystickDevice.LEFT_KNOB)) {
-         setting = "23 - left wheel";
-      } else if (joystickDevice.equals(JoystickDevice.RIGHT_KNOB)) {
-         setting = "22 - right wheel";
-      }
-
-      try {
-         String mmDevice = getMMDevice(device.getDeviceName());
-         if (device.getNrOfAxis() == DirectionalDevice.NumberOfAxis.ONE) {
-            if (core_.hasProperty(mmDevice, propName)) {
-               core_.setProperty(mmDevice, propName, setting);
-            }
-         } else if (device.getNrOfAxis() == DirectionalDevice.NumberOfAxis.TWO) {
-            if (core_.hasProperty(mmDevice, xyStagePropName)) {
-               core_.setProperty(mmDevice, xyStagePropName, yes);
-            } else { // Micro-Mirror Device
-               if (core_.hasProperty(mmDevice, propName + "X")) {
-                  core_.setProperty(mmDevice, propName + "X", setting);
-               }
-               if (core_.hasProperty(mmDevice, propName + "Y")) {
-                  core_.setProperty(mmDevice, propName + "Y", settingY);
-               }
-            }
-         }
-      } catch (Exception ex) {
-         ReportingUtils.showError("Failed to communicate with Tiger controller");
-         return false;
-      }
-
-      return true;
-   }
-   
-   /**
-    * Removes the association between an input (joystick) device and a stage
-    * both in hardware and in the internal model of this association
-    * 
-    * @param joystickDevice
-    * @param device
-    * @return true on success, false on failure
-    */
-   public boolean unsetJoystickOutput(JoystickDevice joystickDevice,
-           DirectionalDevice device) {
-      String propName = "JoystickInput";
-      String xyStagePropName = "JoystickEnabled";
-      String no = "No";
-
-      // for joystick device
-      String setting = "0 - none";
-
-      try {
-         String mmDevice = getMMDevice(device.getDeviceName());
-         if (device.getNrOfAxis() == DirectionalDevice.NumberOfAxis.ONE) {
-            if (core_.hasProperty(mmDevice, propName)) {
-               core_.setProperty(mmDevice, propName, setting);
-            }
-         } else if (device.getNrOfAxis() == DirectionalDevice.NumberOfAxis.TWO) {
-            if (core_.hasProperty(mmDevice, xyStagePropName)) {
-               core_.setProperty(mmDevice, xyStagePropName, no);
-            } else {
-               for (String prop : new String[]{propName + "X", propName + "Y"}) {
-                  if (core_.hasProperty(mmDevice, prop)) {
-                     core_.setProperty(mmDevice, prop, setting);
-                  }
-               }
-            }
-         }
-      } catch (Exception ex) {
-         ReportingUtils.showError("Failed to communicate with Tiger controller");
-         return false;
-      }
-
-      return true;
-   }
-
-   
-   public final void DetectLoadedDevices() {
-      loadedDevices_.clear();
-      StrVector strv = core_.getLoadedDevices();
-      for (int i =0; i < strv.size(); i++) {
-         loadedDevices_.add(strv.get(i));
-      }
-   }
-
-   private void updateSingleAxisStagePositions() {
-      String[] drives = getTigerStages();
-      for (String drive : drives) {
-         String mmDevice = getMMDevice(drive);
-         if (mmDevice != null) {
-            try {
-               this.oneAxisDrivePositions_.put(drive, core_.getPosition(mmDevice));
-            } catch (Exception ex) {
-               ReportingUtils.logError("Problem getting position of " + mmDevice);
-            }
-         }
-      }
-   }
-
-   private void updateTwoAxisStagePositions() {
-      String[] drives = getTwoAxisTigerStages();
-      for (String drive : drives) {
-         String mmDevice = this.getMMDevice(drive);
-         if (mmDevice != null) {
-            try {
-               if (core_.getDeviceType(mmDevice) == mmcorej.DeviceType.XYStageDevice) {
-                  twoAxisDrivePositions_.put(drive, core_.getXYStagePosition(mmDevice));
-               } 
-               if (core_.getDeviceType(mmDevice) == mmcorej.DeviceType.GalvoDevice) {
-                  twoAxisDrivePositions_.put(drive, core_.getGalvoPosition(mmDevice));
-               }
-            } catch (Exception ex) {
-               ReportingUtils.logError("Problem getting position of " + mmDevice);
-            }
-         }
-      }
-   }
-   
-
-   public final void updateStagePositions() {
-      updateSingleAxisStagePositions();
-      updateTwoAxisStagePositions();
-   }
-
-   /**
-    * Write deviceInfo_ back to Preferences
-    */
-   public synchronized void saveSettings() {
-      for (String device : DEVICES) {
-         prefs_.put(device, deviceInfo_.get(device));
-      }
-      for (String axisRev : FASTAXISREVS) {
-         prefs_.putBoolean(axisRev, axisRevs_.get(axisRev));
-      }
-
-      for (String axisDir : FASTAXISDIRS) {
-         prefs_.put(axisDir, axisDirs_.get(axisDir));
-      }
-   }
+   private List<DevicesListenerInterface> listeners_;
 
    /**
     * Used to add classes implementing DeviceListenerInterface as listeners
@@ -554,13 +367,15 @@ public class Devices {
    public void removeListener(DevicesListenerInterface listener) {
       listeners_.remove(listener);
    }
-
+   
    /**
     * Call each listener in succession to alert them that something changed
     */
-   private void callListeners() {
+   public void callListeners() {
       for (DevicesListenerInterface listener : listeners_) {
          listener.devicesChangedAlert();
       }
    }
+   
+
 }

@@ -26,7 +26,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.Hashtable;
-import java.util.prefs.Preferences;
 
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -38,8 +37,8 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import org.micromanager.asidispim.ASIdiSPIMFrame;
 import org.micromanager.asidispim.Data.Devices;
+import org.micromanager.asidispim.Data.Properties;
 
 /**
  *
@@ -48,153 +47,54 @@ import org.micromanager.asidispim.Data.Devices;
  */
 public class PanelUtils {
    
-   /**
-    * Listener for Selection boxes that attach joysticks to drives
-    */
-   public class StageSelectionBoxListener implements ItemListener,
-           ActionListener, DevicesListenerInterface {
-      Devices.JoystickDevice joystickDevice_;
-      JComboBox jc_;
-      Devices devices_;
-      Preferences prefs_;
-      String prefName_;
-
-      public StageSelectionBoxListener(Devices.JoystickDevice joyStickDevice, 
-              JComboBox jc, Devices devices, Preferences prefs, String prefName) {
-         joystickDevice_ = joyStickDevice;
-         jc_ = jc;
-         devices_ = devices;
-         prefs_ = prefs;
-         prefName_ = prefName;
-      }    
-
-      /**
-       * This will be called whenever the user selects a new item, but also when
-       * the tab to which this selectionbox belongs is selected
-       *
-       * @param ae
-       */
-      public void actionPerformed(ActionEvent ae) {
-         String stage = (String) jc_.getSelectedItem();
-         if (stage != null) {
-            String[] items = stage.split("-");
-            DirectionalDevice dd;
-            if (items.length > 1) {
-               dd = new DirectionalDevice(items[0],
-                       Labels.REVDIRECTIONS.get(items[1]));
-            } else {
-               dd = new DirectionalDevice(items[0], Labels.Directions.X);
-            }
-            devices_.setJoystickOutput(joystickDevice_, dd);
-            prefs_.put(prefName_, stage);
-         }
-      }
-
-      public void devicesChangedAlert() {
-         String selectedItem = (String) jc_.getSelectedItem();
-         jc_.removeAllItems();
-         String[] devices;
-         if (joystickDevice_ == Devices.JoystickDevice.JOYSTICK) { 
-            devices = devices_.getTwoAxisTigerStages();
-         } else {
-            devices = devices_.getTigerStages();
-         }
-         for (String device : devices) {
-            jc_.addItem(device);
-         }
-         if (inArray(devices, selectedItem)) {
-            jc_.setSelectedItem(selectedItem);
-         }
-      }
-
-      public void itemStateChanged(ItemEvent e) {
-         String stage = (String) jc_.getSelectedItem();
-         if (stage != null) {
-            
-            String[] items = stage.split("-");
-            DirectionalDevice dd;
-            if (items.length > 1) {
-               dd = new DirectionalDevice(items[0],
-                       Labels.REVDIRECTIONS.get(items[1]));
-            } else {
-               dd = new DirectionalDevice(items[0], Labels.Directions.X);
-            }
-            if (e.getStateChange() == ItemEvent.SELECTED) {
-               // do not need to respond, will be done in ActionEvent
-            } else if (e.getStateChange() == ItemEvent.DESELECTED) {
-               devices_.unsetJoystickOutput(joystickDevice_, dd);
-            }
-         }
-      }
-
-   }//class StageSelectionBoxListener
-   
-   private boolean inArray (String[] array, String val) {
-      for (String test : array) {
-         if (val.equals(test)) {
-            return true;
-         }
-      }
-      return false;
-   }
-   
-   
-   public JComboBox makeJoystickSelectionBox(Devices.JoystickDevice joystickDevice, 
-           String[] selections, String selectedItem, Devices devices_, 
-           Preferences prefs, String prefName) {
-      JComboBox jcb = new JComboBox(selections);
-      jcb.setSelectedItem(selectedItem);  
-      StageSelectionBoxListener ssbl = new StageSelectionBoxListener(
-              joystickDevice , jcb, devices_, prefs, prefName);
-      jcb.addActionListener(ssbl);
-      jcb.addItemListener(ssbl);
-      devices_.addListener(ssbl);
- 
-      return jcb;
-   }
    
    /**
     * makes JSlider for double values where the values are multiplied by a scale factor
     * before internal representation as integer (as JSlider requires)
-    * @param key
-    * @param min
-    * @param max
-    * @param init
-    * @param scalefactor
     * @return
     */
-   public JSlider makeSlider(String key, double min, double max, double init, int scalefactor) {
+   public JSlider makeSlider(double min, double max, int scalefactor, Properties props, Devices devs, Devices.Keys devKey, Properties.Keys propKey) {
       
-      class sliderListener implements ChangeListener, UpdateFromPropertyListenerInterface {
+      class sliderListener implements ChangeListener, UpdateFromPropertyListenerInterface, DevicesListenerInterface {
          JSlider js_;
-         String key_;
          int scalefactor_;
+         Properties props_;
+         Devices.Keys devKey_;
+         Properties.Keys propKey_;
          
-         public sliderListener(String key, JSlider js, int scalefactor) {
+         public sliderListener(JSlider js, int scalefactor, Properties props, Devices.Keys devKey, Properties.Keys propKey) {
             js_ = js;
-            key_ = key;
             scalefactor_ = scalefactor;
+            props_ = props;
+            devKey_ = devKey;
+            propKey_ = propKey;
          }
          
          public void stateChanged(ChangeEvent ce) {
             if (!((JSlider)ce.getSource()).getValueIsAdjusting()) {  // only change when user releases
-               ASIdiSPIMFrame.props_.setPropValue(key_, (float)js_.getValue()/(float)scalefactor_);
+               props_.setPropValue(devKey_, propKey_, (float)js_.getValue()/(float)scalefactor_, true);
             }
          }
          
          public void updateFromProperty() {
-            js_.setValue((int)(scalefactor_*ASIdiSPIMFrame.props_.getPropValueFloat(key_)));
+            js_.setValue((int)(scalefactor_*props_.getPropValueFloat(devKey_, propKey_, true)));
+         }
+         
+         public void devicesChangedAlert() {
+            updateFromProperty();
          }
          
       }
       
       int intmin = (int)(min*scalefactor);
       int intmax = (int)(max*scalefactor);
-      int intinit = (int)(init*scalefactor);
       
-      JSlider js = new JSlider(JSlider.HORIZONTAL, intmin, intmax, intinit);
-      ChangeListener l = new sliderListener(key, js, scalefactor);
+      JSlider js = new JSlider(JSlider.HORIZONTAL, intmin, intmax, intmin);  // initialize with min value, will set to current value shortly 
+      ChangeListener l = new sliderListener(js, scalefactor, props, devKey, propKey);
+      ((UpdateFromPropertyListenerInterface) l).updateFromProperty();  // set to value of property at present
       js.addChangeListener(l);
+      devs.addListener((DevicesListenerInterface) l);
+      props.addListener((UpdateFromPropertyListenerInterface) l);
       js.setMajorTickSpacing(intmax-intmin);
       js.setMinorTickSpacing(scalefactor);
       //Create the label table
@@ -209,49 +109,61 @@ public class PanelUtils {
 
    /**
     * Constructs JCheckBox appropriately set up
-    * @param key associated property key
     * @param label the GUI label
     * @param offValue the value of the property when not checked
     * @param onValue the value of the property when checked
+    * @param props
+    * @param devs
+    * @param devKey
+    * @param propKey
     * @return constructed JCheckBox
     */
-   public JCheckBox makeCheckBox(String key, String label, String offValue, String onValue) {
+   public JCheckBox makeCheckBox(String label, String offValue, String onValue, Properties props, Devices devs, Devices.Keys devKey, Properties.Keys propKey) {
       
       /**
        * nested inner class 
        * @author Jon
        */
-      class checkBoxListener implements ItemListener, UpdateFromPropertyListenerInterface {
-         String key_;
+      class checkBoxListener implements ItemListener, UpdateFromPropertyListenerInterface, DevicesListenerInterface {
          JCheckBox jc_;
          String offValue_;
          String onValue_;
+         Properties props_;
+         Devices.Keys devKey_;
+         Properties.Keys propKey_;
          
-         // TODO should this be private?  also similar nested inner classes...
-         public checkBoxListener(String key, JCheckBox jc, String offValue, String onValue) {
-            key_ = key;
+         public checkBoxListener(JCheckBox jc, String offValue, String onValue, Properties props, Devices.Keys devKey, Properties.Keys propKey) {
             jc_ = jc;
             offValue_ = offValue;
             onValue_ = onValue;
+            props_ = props;
+            devKey_ = devKey;
+            propKey_ = propKey;
          }
          
          public void itemStateChanged(ItemEvent e) {
             if (e.getStateChange() == ItemEvent.SELECTED) {
-               ASIdiSPIMFrame.props_.setPropValue(key_, onValue_);
+               props_.setPropValue(devKey_, propKey_, onValue_, true);
             } else {
-               ASIdiSPIMFrame.props_.setPropValue(key_, offValue_);
+               props_.setPropValue(devKey_, propKey_, offValue_, true);
             }
          }
          
          public void updateFromProperty() {
-            jc_.setSelected(ASIdiSPIMFrame.props_.getPropValueString(key_).equals(onValue_));
+            jc_.setSelected(props_.getPropValueString(devKey_, propKey_, true).equals(onValue_));
          }
          
+         public void devicesChangedAlert() {
+            updateFromProperty();
+         }
       }
       
       JCheckBox jc = new JCheckBox(label);
-      ItemListener l = new checkBoxListener(key, jc, offValue, onValue);
+      ItemListener l = new checkBoxListener(jc, offValue, onValue, props, devKey, propKey);
       jc.addItemListener(l);
+      devs.addListener((DevicesListenerInterface) l);
+      props.addListener((UpdateFromPropertyListenerInterface) l);
+      ((UpdateFromPropertyListenerInterface) l).updateFromProperty();  // set to value of property at present
       return jc;
    }
    
@@ -262,30 +174,49 @@ public class PanelUtils {
     * Implements UpdateFromPropertyListenerInterface, causing updates in the model
     * that were generated by changes in the device to be propagated back to the UI
     */
-   public JSpinner makeSpinnerInteger(String spimParamName, int min, int max) {
+   public JSpinner makeSpinnerInteger(int min, int max, Properties props, Devices devs, Devices.Keys devKey, Properties.Keys propKey) {
 
-      class SpinnerListenerInt implements ChangeListener, UpdateFromPropertyListenerInterface {
-         String paramKey_;
+      class SpinnerListenerInt implements ChangeListener, UpdateFromPropertyListenerInterface, DevicesListenerInterface {
          JSpinner sp_;
-
-         public SpinnerListenerInt(String paramKey, JSpinner sp) {
-            paramKey_ = paramKey;
+         Properties props_;
+         Devices.Keys devKey_;
+         Properties.Keys propKey_;
+         
+         public SpinnerListenerInt(JSpinner sp, Properties props, Devices.Keys devKey, Properties.Keys propKey) {
             sp_ = sp;
+            props_ = props;
+            devKey_ = devKey;
+            propKey_ = propKey;
          }
 
          public void stateChanged(ChangeEvent ce) {
-            ASIdiSPIMFrame.props_.setPropValue(paramKey_, ((Integer)sp_.getValue()).intValue());
+            props_.setPropValue(devKey_, propKey_, ((Integer)sp_.getValue()).intValue(), true);
          }
 
          public void updateFromProperty() {
-            sp_.setValue(ASIdiSPIMFrame.props_.getPropValueInteger(paramKey_));
+            sp_.setValue(props_.getPropValueInteger(devKey_, propKey_, true));
+         }
+         
+         public void devicesChangedAlert() {
+            updateFromProperty();
          }
       }
+      
+   // read the existing value from property and make sure it is within our min/max limits
+      int origVal = props.getPropValueInteger(devKey, propKey, true);
+      if (origVal < min) {
+         origVal = min;
+      }
+      if (origVal > max) {
+         origVal = max;
+      }
 
-      SpinnerModel jspm = new SpinnerNumberModel(ASIdiSPIMFrame.props_.getPropValueInteger(spimParamName), min, max, 1);
+      SpinnerModel jspm = new SpinnerNumberModel(origVal, min, max, 1);
       JSpinner jsp = new JSpinner(jspm);
-      SpinnerListenerInt ispl = new SpinnerListenerInt(spimParamName, jsp);
+      SpinnerListenerInt ispl = new SpinnerListenerInt(jsp, props, devKey, propKey);
       jsp.addChangeListener(ispl);
+      devs.addListener(ispl);
+      props.addListener(ispl);
       return jsp;
    }
    
@@ -294,32 +225,58 @@ public class PanelUtils {
     * Implements UpdateFromPropertyListenerInterface, causing updates in the model
     * that were generated by changes in the device to be propagated back to the UI
     */
-   public JSpinner makeSpinnerFloat(String spimParamName, double min, double max, double step) {
+   public JSpinner makeSpinnerFloat(double min, double max, double step, Properties props, Devices devs, Devices.Keys devKey, Properties.Keys propKey) {
       // same as IntSpinnerListener except
       //  - cast to Float object in stateChanged()
       //  - getPropValueFloat in spimParamsChangedAlert()
-      class SpinnerListenerFloat implements ChangeListener, UpdateFromPropertyListenerInterface {
-         String paramKey_;
+      class SpinnerListenerFloat implements ChangeListener, UpdateFromPropertyListenerInterface, DevicesListenerInterface {
          JSpinner sp_;
+         Properties props_;
+         Devices.Keys devKey_;
+         Properties.Keys propKey_;
 
-         public SpinnerListenerFloat(String paramKey, JSpinner sp) {
-            paramKey_ = paramKey;
+         public SpinnerListenerFloat(JSpinner sp, Properties props, Devices.Keys devKey, Properties.Keys propKey) {
             sp_ = sp;
+            props_ = props;
+            devKey_ = devKey;
+            propKey_ = propKey;
          }
 
          public void stateChanged(ChangeEvent ce) {
-            ASIdiSPIMFrame.props_.setPropValue(paramKey_, ((Double)sp_.getValue()).floatValue());
+            // TODO figure out why the type of value in the numbermodel is changing type to float which necessitates this code
+            float f = 0;
+            try {
+               f = (float)((Double)sp_.getValue()).doubleValue();
+            } catch (Exception ex) {
+               f = ((Float)sp_.getValue()).floatValue();
+            }
+            props_.setPropValue(devKey_, propKey_, f, true);
          }
 
          public void updateFromProperty() {
-            sp_.setValue(ASIdiSPIMFrame.props_.getPropValueFloat(paramKey_));
+            sp_.setValue(props_.getPropValueFloat(devKey_, propKey_, true));
+         }
+         
+         public void devicesChangedAlert() {
+            updateFromProperty();
          }
       }
       
-      SpinnerModel jspm = new SpinnerNumberModel((double)ASIdiSPIMFrame.props_.getPropValueFloat(spimParamName), min, max, step);
+      // read the existing value from property and make sure it is within our min/max limits
+      double origVal = (double)props.getPropValueFloat(devKey, propKey, true);
+      if (origVal < min) {
+         origVal = min;
+      }
+      if (origVal > max) {
+         origVal = max;
+      }
+      
+      SpinnerModel jspm = new SpinnerNumberModel(origVal, min, max, step);
       JSpinner jsp = new JSpinner(jspm);
-      SpinnerListenerFloat ispl = new SpinnerListenerFloat(spimParamName, jsp);
+      SpinnerListenerFloat ispl = new SpinnerListenerFloat(jsp, props, devKey, propKey);
       jsp.addChangeListener(ispl);
+      devs.addListener(ispl);
+      props.addListener(ispl);
       return jsp;
    }
 
@@ -332,28 +289,43 @@ public class PanelUtils {
     * @param vals array of strings, each one is a different option in the dropdown 
     * @return constructed JComboBox
     */
-   public JComboBox makeDropDownBox(String key, String[] vals) {
+   public JComboBox makeDropDownBox(String[] vals, Properties props, Devices devs, Devices.Keys devKey, Properties.Keys propKey) {
       /**
        * Listener for the string-based dropdown boxes
        * Updates the model in the params class with any GUI changes
        */
-      class StringBoxListener implements ActionListener {
-         String key_;
+      class StringBoxListener implements ActionListener, UpdateFromPropertyListenerInterface, DevicesListenerInterface {
          JComboBox box_;
+         Properties props_;
+         Devices.Keys devKey_;
+         Properties.Keys propKey_;
 
-         public StringBoxListener(String key, JComboBox box) {
-            key_ = key;
+         public StringBoxListener(JComboBox box, Properties props, Devices.Keys devKey, Properties.Keys propKey) {
             box_ = box;
+            props_ = props;
+            devKey_ = devKey;
+            propKey_ = propKey;
          }
 
          public void actionPerformed(ActionEvent ae) {
-            ASIdiSPIMFrame.props_.setPropValue(key_, (String) box_.getSelectedItem());
+            props_.setPropValue(devKey_, propKey_, (String) box_.getSelectedItem(), true);
+         }
+         
+         public void updateFromProperty() {
+            box_.setSelectedItem(props_.getPropValueString(devKey_, propKey_, true));
+         }
+         
+         public void devicesChangedAlert() {
+            updateFromProperty();
          }
       }
 
       JComboBox jcb = new JComboBox(vals);
-      jcb.setSelectedItem(ASIdiSPIMFrame.props_.getPropValueString(key));
-      jcb.addActionListener(new StringBoxListener(key, jcb));
+      jcb.setSelectedItem(props.getPropValueString(devKey, propKey, true));
+      StringBoxListener l = new StringBoxListener(jcb, props, devKey, propKey);
+      jcb.addActionListener(l);
+      devs.addListener(l);
+      props.addListener(l);
       return jcb;
    }
    
