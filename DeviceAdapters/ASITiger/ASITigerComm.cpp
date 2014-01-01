@@ -72,6 +72,9 @@ int CTigerCommHub::Initialize()
    // add a description
    RETURN_ON_MM_ERROR ( CreateProperty(MM::g_Keyword_Description, g_TigerCommHubDescription, MM::String, true) );
 
+   // say which com port we are on
+   RETURN_ON_MM_ERROR ( CreateProperty(g_SerialComPortPropertyName, port_.c_str(), MM::String, true) );
+
    // if we made it this far everything looks good
    initialized_ = true;
    return DEVICE_OK;

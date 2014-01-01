@@ -136,6 +136,7 @@ const char* const g_SerialTerminatorPropertyName = "SerialResponseTerminator";
 const char* const g_SerialCommandOnlySendChangedPropertyName = "OnlySendSerialCommandOnChange";
 const char* const g_SerialCommandRepeatDurationPropertyName = "SerialCommandRepeatDuration(s)";
 const char* const g_SerialCommandRepeatPeriodPropertyName = "SerialCommandRepeatPeriod(ms)";
+const char* const g_SerialComPortPropertyName = "SerialComPort";
 
 // XY stage property names
 const char* const g_StepSizeXPropertyName = "StepSizeX(um)";
