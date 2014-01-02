@@ -353,7 +353,7 @@ int CoreCallback::OnExposureChanged(const MM::Device* device, double newExposure
  * Handler for magnifier changer
  * 
  */
-int CoreCallback::OnMagnifierChanged(const MM::Device* device)
+int CoreCallback::OnMagnifierChanged(const MM::Device* /* device */)
 {
    if (core_->externalCallback_) 
    {

@@ -634,6 +634,8 @@ vector<string> CMMCore::getDeviceLibraries() throw (CMMError)
  */
 void CMMCore::loadDevice(const char* label, const char* library, const char* device) throw (CMMError)
 {
+  	if (label == 0 || library == 0 || device == 0)
+      throw CMMError(errorText_[MMERR_NullPointerException],  MMERR_NullPointerException);
 
    try
    {
@@ -913,6 +915,9 @@ void CMMCore::updateCoreProperties() throw (CMMError)
 
 void CMMCore::updateCoreProperty(const char* propName, MM::DeviceType devType) throw (CMMError)
 {
+  	if (propName == 0)
+      throw CMMError(errorText_[MMERR_NullPointerException],  MMERR_NullPointerException);
+
    vector<string> devices = getLoadedDevicesOfType(devType);
    devices.push_back(""); // add empty value
    properties_->ClearAllowedValues(propName);
@@ -928,6 +933,9 @@ void CMMCore::updateCoreProperty(const char* propName, MM::DeviceType devType) t
 void CMMCore::initializeDevice(const char* label ///< the device to initialize
                                ) throw (CMMError)
 {
+  	if (label == 0)
+      throw CMMError(errorText_[MMERR_NullPointerException],  MMERR_NullPointerException);
+
    MM::Device* pDevice = getDevice(label);
    MMThreadGuard guard(pluginManager_.getModuleLock(pDevice));
 
@@ -959,6 +967,9 @@ void CMMCore::updateSystemStateCache()
  */
 MM::DeviceType CMMCore::getDeviceType(const char* label) throw (CMMError)
 {
+	if (label == 0)
+      throw CMMError(errorText_[MMERR_NullPointerException],  MMERR_NullPointerException);
+
    if (strcmp(label, MM::g_Keyword_CoreDevice) == 0)
       return MM::CoreDevice;
 
@@ -973,6 +984,9 @@ MM::DeviceType CMMCore::getDeviceType(const char* label) throw (CMMError)
  */
 std::string CMMCore::getDeviceLibrary(const char* label) throw (CMMError)
 {
+	if (label == 0)
+      throw CMMError(errorText_[MMERR_NullPointerException],  MMERR_NullPointerException);
+
    if (strcmp(label, MM::g_Keyword_CoreDevice) == 0)
       return "";
    
@@ -989,13 +1003,16 @@ std::string CMMCore::getDeviceLibrary(const char* label) throw (CMMError)
  */
 void CMMCore::unloadLibrary(const char* moduleName) throw (CMMError)
 {
+  	if (moduleName == 0)
+      throw CMMError(errorText_[MMERR_NullPointerException],  MMERR_NullPointerException);
+
    try {
       vector<string> devices = pluginManager_.GetDeviceList();
       vector<string>::reverse_iterator it;
       for (it=devices.rbegin(); it != devices.rend(); it++)
       {
          MM::Device* pDev = pluginManager_.GetDevice((*it).c_str());
-		 MMThreadGuard guard(pluginManager_.getModuleLock(pDev));
+         MMThreadGuard guard(pluginManager_.getModuleLock(pDev));
 
          char deviceLabel[MM::MaxStrLength] = "";
          char deviceModuleName[MM::MaxStrLength] = "";
@@ -1024,6 +1041,9 @@ void CMMCore::unloadLibrary(const char* moduleName) throw (CMMError)
  */
 std::string CMMCore::getDeviceName(const char* label) throw (CMMError)
 {
+	if (label == 0)
+      throw CMMError(errorText_[MMERR_NullPointerException],  MMERR_NullPointerException);
+
    if (strcmp(label, MM::g_Keyword_CoreDevice) == 0)
       return "Core";
    
@@ -1040,6 +1060,9 @@ std::string CMMCore::getDeviceName(const char* label) throw (CMMError)
  */
 std::string CMMCore::getParentLabel(const char* label) throw (CMMError)
 {
+	if (label == 0)
+      throw CMMError(errorText_[MMERR_NullPointerException],  MMERR_NullPointerException);
+
    if (strcmp(label, MM::g_Keyword_CoreDevice) == 0)
       return "";
    
@@ -1055,6 +1078,9 @@ std::string CMMCore::getParentLabel(const char* label) throw (CMMError)
  */ 
 void CMMCore::setParentLabel(const char* label, const char* parentLabel) throw (CMMError)
 {
+   if (label == 0 || parentLabel == 0)
+      throw CMMError(errorText_[MMERR_NullPointerException],  MMERR_NullPointerException);
+
    if (strcmp(label, MM::g_Keyword_CoreDevice) == 0)
       return; // core can't have parent ID
    
@@ -1069,7 +1095,10 @@ void CMMCore::setParentLabel(const char* label, const char* parentLabel) throw (
  * "Description" is determined by the library and is immutable.
  */
 std::string CMMCore::getDeviceDescription(const char* label) throw (CMMError)
-{
+{	
+   if (label == 0)
+      throw CMMError(errorText_[MMERR_NullPointerException],  MMERR_NullPointerException);
+   
    if (strcmp(label, MM::g_Keyword_CoreDevice) == 0)
       return "Core device";
    
@@ -1094,6 +1123,8 @@ std::string CMMCore::getDeviceDescription(const char* label) throw (CMMError)
  */
 double CMMCore::getDeviceDelayMs(const char* label) throw (CMMError)
 {
+	if (label == 0)
+      throw CMMError(errorText_[MMERR_NullPointerException],  MMERR_NullPointerException);
 
    if (strcmp(label, MM::g_Keyword_CoreDevice) == 0)
    {
@@ -1114,6 +1145,9 @@ double CMMCore::getDeviceDelayMs(const char* label) throw (CMMError)
  */
 void CMMCore::setDeviceDelayMs(const char* label, double delayMs) throw (CMMError)
 {
+	if (label == 0)
+      throw CMMError(errorText_[MMERR_NullPointerException],  MMERR_NullPointerException);
+
    if (strcmp(label, MM::g_Keyword_CoreDevice) == 0)
       return; // ignore
 
@@ -1130,6 +1164,9 @@ void CMMCore::setDeviceDelayMs(const char* label, double delayMs) throw (CMMErro
  */
 bool CMMCore::usesDeviceDelay(const char* label) throw (CMMError)
 {
+	if (label == 0)
+      throw CMMError(errorText_[MMERR_NullPointerException],  MMERR_NullPointerException);
+
    if (strcmp(label, MM::g_Keyword_CoreDevice) == 0)
    {
       return false;
@@ -1146,6 +1183,9 @@ bool CMMCore::usesDeviceDelay(const char* label) throw (CMMError)
  */
 bool CMMCore::deviceBusy(const char* label) throw (CMMError)
 {
+	if (label == 0)
+      throw CMMError(errorText_[MMERR_NullPointerException],  MMERR_NullPointerException);
+
    MM::Device* pDevice = getDevice(label);
    MMThreadGuard guard(pluginManager_.getModuleLock(pDevice));
    return pDevice->Busy();
@@ -1169,6 +1209,9 @@ void CMMCore::sleep(double intervalMs) const
  */
 void CMMCore::waitForDevice(const char* label) throw (CMMError)
 {
+	if (label == 0)
+      throw CMMError(errorText_[MMERR_NullPointerException],  MMERR_NullPointerException);
+
    if (strcmp(label, MM::g_Keyword_CoreDevice) == 0)
       return; // core property commands always block - no need to poll
 
@@ -1273,6 +1316,9 @@ void CMMCore::waitForDeviceType(MM::DeviceType devType) throw (CMMError)
 void CMMCore::waitForConfig(const char* group, const char* configName) throw (CMMError)
 {
 
+ 	if (group == 0 || configName == 0)
+      throw CMMError(errorText_[MMERR_NullPointerException],  MMERR_NullPointerException);
+
    Configuration cfg = getConfigData(group, configName);
    try {
       for(size_t i=0; i<cfg.size(); i++)
@@ -1302,6 +1348,9 @@ void CMMCore::waitForImageSynchro() throw (CMMError)
  */
 void CMMCore::setPosition(const char* label, double position) throw (CMMError)
 {
+	if (label == 0)
+      throw CMMError(errorText_[MMERR_NullPointerException],  MMERR_NullPointerException);
+
    // TODO: insert system lock
 
    MM::Stage* pStage = getSpecificDevice<MM::Stage>(label);
@@ -1326,6 +1375,8 @@ void CMMCore::setPosition(const char* label, double position) throw (CMMError)
  */
 void CMMCore::setRelativePosition(const char* label, double d) throw (CMMError)
 {
+	if (label == 0)
+      throw CMMError(errorText_[MMERR_NullPointerException],  MMERR_NullPointerException);
 
    MM::Stage* pStage = getSpecificDevice<MM::Stage>(label);
    CORE_DEBUG("attempt to move %s relative %.5g um\n", label, d);
@@ -1348,6 +1399,9 @@ void CMMCore::setRelativePosition(const char* label, double d) throw (CMMError)
  */
 double CMMCore::getPosition(const char* label) throw (CMMError)
 {
+	if (label == 0)
+      throw CMMError(errorText_[MMERR_NullPointerException],  MMERR_NullPointerException);
+
    MM::Stage* pStage = getSpecificDevice<MM::Stage>(label);
    MMThreadGuard guard(pluginManager_.getModuleLock(pStage));
    double pos;
@@ -1370,6 +1424,8 @@ double CMMCore::getPosition(const char* label) throw (CMMError)
  */
 void CMMCore::setXYPosition(const char* deviceName, double x, double y) throw (CMMError)
 {
+	if (deviceName == 0)
+      throw CMMError(errorText_[MMERR_NullPointerException],  MMERR_NullPointerException);
 
    MM::XYStage* pXYStage = getSpecificDevice<MM::XYStage>(deviceName);
    MMThreadGuard guard(pluginManager_.getModuleLock(pXYStage));
@@ -1392,6 +1448,9 @@ void CMMCore::setXYPosition(const char* deviceName, double x, double y) throw (C
  */
 void CMMCore::setRelativeXYPosition(const char* deviceName, double dx, double dy) throw (CMMError)
 {
+	if (deviceName == 0)
+      throw CMMError(errorText_[MMERR_NullPointerException],  MMERR_NullPointerException);
+
    CORE_DEBUG("Attempt relative move of %s to %g ,  %g um\n", deviceName, dx, dy);
 
    MM::XYStage* pXYStage = getSpecificDevice<MM::XYStage>(deviceName);
@@ -1414,6 +1473,9 @@ void CMMCore::setRelativeXYPosition(const char* deviceName, double dx, double dy
  */
 void CMMCore::getXYPosition(const char* deviceName, double& x, double& y) throw (CMMError)
 {
+ 	if (deviceName == 0)
+      throw CMMError(errorText_[MMERR_NullPointerException],  MMERR_NullPointerException);
+
    MM::XYStage* pXYStage = getSpecificDevice<MM::XYStage>(deviceName);
    MMThreadGuard guard(pluginManager_.getModuleLock(pXYStage));
    int ret = pXYStage->GetPositionUm(x, y);
@@ -1433,6 +1495,9 @@ void CMMCore::getXYPosition(const char* deviceName, double& x, double& y) throw 
  */
 double CMMCore::getXPosition(const char* deviceName) throw (CMMError)
 {
+ 	if (deviceName == 0)
+      throw CMMError(errorText_[MMERR_NullPointerException],  MMERR_NullPointerException);
+
    MM::XYStage* pXYStage = getSpecificDevice<MM::XYStage>(deviceName);
    MMThreadGuard guard(pluginManager_.getModuleLock(pXYStage));
    double x, y;
@@ -1455,6 +1520,9 @@ double CMMCore::getXPosition(const char* deviceName) throw (CMMError)
  */
 double CMMCore::getYPosition(const char* deviceName) throw (CMMError)
 {
+  	if (deviceName == 0)
+      throw CMMError(errorText_[MMERR_NullPointerException],  MMERR_NullPointerException);
+
    MM::XYStage* pXYStage = getSpecificDevice<MM::XYStage>(deviceName);
    MMThreadGuard guard(pluginManager_.getModuleLock(pXYStage));
    double x, y;
@@ -1476,6 +1544,9 @@ double CMMCore::getYPosition(const char* deviceName) throw (CMMError)
  */
 void CMMCore::stop(const char* deviceName) throw (CMMError)
 {
+ 	if (deviceName == 0)
+      throw CMMError(errorText_[MMERR_NullPointerException],  MMERR_NullPointerException);
+
    MM::XYStage* pXYStage = getSpecificDevice<MM::XYStage>(deviceName);
    MMThreadGuard guard(pluginManager_.getModuleLock(pXYStage));
    int ret = pXYStage->Stop();
@@ -1493,6 +1564,9 @@ void CMMCore::stop(const char* deviceName) throw (CMMError)
  */
 void CMMCore::home(const char* deviceName) throw (CMMError)
 {
+ 	if (deviceName == 0)
+      throw CMMError(errorText_[MMERR_NullPointerException],  MMERR_NullPointerException);
+
    MM::XYStage* pXYStage = getSpecificDevice<MM::XYStage>(deviceName);
    MMThreadGuard guard(pluginManager_.getModuleLock(pXYStage));
    int ret = pXYStage->Home();
@@ -1511,6 +1585,9 @@ void CMMCore::home(const char* deviceName) throw (CMMError)
  */
 void CMMCore::setOriginXY(const char* deviceName) throw (CMMError)
 {
+ 	if (deviceName == 0)
+      throw CMMError(errorText_[MMERR_NullPointerException],  MMERR_NullPointerException);
+
    MM::XYStage* pXYStage = getSpecificDevice<MM::XYStage>(deviceName);
    MMThreadGuard guard(pluginManager_.getModuleLock(pXYStage));
    int ret = pXYStage->SetOrigin();
@@ -1528,6 +1605,9 @@ void CMMCore::setOriginXY(const char* deviceName) throw (CMMError)
  */
 void CMMCore::setOrigin(const char* deviceName) throw (CMMError)
 {
+ 	if (deviceName == 0)
+      throw CMMError(errorText_[MMERR_NullPointerException],  MMERR_NullPointerException);
+
    MM::Stage* pStage = getSpecificDevice<MM::Stage>(deviceName);
    MMThreadGuard guard(pluginManager_.getModuleLock(pStage));
    int ret = pStage->SetOrigin();
@@ -1546,6 +1626,9 @@ void CMMCore::setOrigin(const char* deviceName) throw (CMMError)
  */
 void CMMCore::setAdapterOrigin(const char* deviceName, double d) throw (CMMError)
 {
+ 	if (deviceName == 0)
+      throw CMMError(errorText_[MMERR_NullPointerException],  MMERR_NullPointerException);
+
    MM::Stage* pStage = getSpecificDevice<MM::Stage>(deviceName);
    MMThreadGuard guard(pluginManager_.getModuleLock(pStage));
    int ret = pStage->SetAdapterOriginUm(d);
@@ -1566,6 +1649,9 @@ void CMMCore::setAdapterOrigin(const char* deviceName, double d) throw (CMMError
  */
 void CMMCore::setAdapterOriginXY(const char* deviceName, double x, double y) throw (CMMError)
 {
+ 	if (deviceName == 0)
+      throw CMMError(errorText_[MMERR_NullPointerException],  MMERR_NullPointerException);
+
    MM::XYStage* pXYStage = getSpecificDevice<MM::XYStage>(deviceName);
    MMThreadGuard guard(pluginManager_.getModuleLock(pXYStage));
    int ret = pXYStage->SetAdapterOriginUm(x, y);
@@ -1585,6 +1671,8 @@ void CMMCore::setAdapterOriginXY(const char* deviceName, double x, double y) thr
  */
 bool CMMCore::isExposureSequenceable(const char* cameraLabel) throw (CMMError)
 {
+ 	if (cameraLabel == 0)
+      throw CMMError(errorText_[MMERR_NullPointerException],  MMERR_NullPointerException);
 
    MM::Camera* pCamera = getSpecificDevice<MM::Camera>(cameraLabel);
    MMThreadGuard guard(pluginManager_.getModuleLock(pCamera));
@@ -1605,6 +1693,9 @@ bool CMMCore::isExposureSequenceable(const char* cameraLabel) throw (CMMError)
  */
 void CMMCore::startExposureSequence(const char* cameraLabel) throw (CMMError)
 {
+ 	if (cameraLabel == 0)
+      throw CMMError(errorText_[MMERR_NullPointerException],  MMERR_NullPointerException);
+
    MM::Camera* pCamera = getSpecificDevice<MM::Camera>(cameraLabel);
    MMThreadGuard guard(pluginManager_.getModuleLock(pCamera));
 
@@ -1620,6 +1711,9 @@ void CMMCore::startExposureSequence(const char* cameraLabel) throw (CMMError)
  */
 void CMMCore::stopExposureSequence(const char* cameraLabel) throw (CMMError)
 {
+ 	if (cameraLabel == 0)
+      throw CMMError(errorText_[MMERR_NullPointerException],  MMERR_NullPointerException);
+
    MM::Camera* pCamera = getSpecificDevice<MM::Camera>(cameraLabel);
    MMThreadGuard guard(pluginManager_.getModuleLock(pCamera));
 
@@ -1635,6 +1729,8 @@ void CMMCore::stopExposureSequence(const char* cameraLabel) throw (CMMError)
  */
 long CMMCore::getExposureSequenceMaxLength(const char* cameraLabel) throw (CMMError)
 {
+ 	if (cameraLabel == 0)
+      throw CMMError(errorText_[MMERR_NullPointerException],  MMERR_NullPointerException);
 
    MM::Camera* pCamera = getSpecificDevice<MM::Camera>(cameraLabel);
    MMThreadGuard guard(pluginManager_.getModuleLock(pCamera));
@@ -1654,6 +1750,9 @@ long CMMCore::getExposureSequenceMaxLength(const char* cameraLabel) throw (CMMEr
  */
 void CMMCore::loadExposureSequence(const char* cameraLabel, std::vector<double> exposureTime_ms) throw (CMMError)
 {
+ 	if (cameraLabel == 0)
+      throw CMMError(errorText_[MMERR_NullPointerException],  MMERR_NullPointerException);
+
    MM::Camera* pCamera = getSpecificDevice<MM::Camera>(cameraLabel);
    unsigned long maxLength = getExposureSequenceMaxLength(cameraLabel);
    if (exposureTime_ms.size() > maxLength) {
@@ -1690,6 +1789,9 @@ void CMMCore::loadExposureSequence(const char* cameraLabel, std::vector<double> 
  */
 bool CMMCore::isStageSequenceable(const char* deviceName) throw (CMMError)
 {
+  	if (deviceName == 0)
+      throw CMMError(errorText_[MMERR_NullPointerException],  MMERR_NullPointerException);
+
    MM::Stage* pStage = getSpecificDevice<MM::Stage>(deviceName);
    MMThreadGuard guard(pluginManager_.getModuleLock(pStage));
 
@@ -1709,6 +1811,9 @@ bool CMMCore::isStageSequenceable(const char* deviceName) throw (CMMError)
  */
 void CMMCore::startStageSequence(const char* label) throw (CMMError)
 {
+  	if (label == 0)
+      throw CMMError(errorText_[MMERR_NullPointerException],  MMERR_NullPointerException);
+
    MM::Stage* pStage = getSpecificDevice<MM::Stage>(label);
    MMThreadGuard guard(pluginManager_.getModuleLock(pStage));
 
@@ -1724,6 +1829,9 @@ void CMMCore::startStageSequence(const char* label) throw (CMMError)
  */
 void CMMCore::stopStageSequence(const char* label) throw (CMMError)
 {
+  	if (label == 0)
+      throw CMMError(errorText_[MMERR_NullPointerException],  MMERR_NullPointerException);
+
    MM::Stage* pStage = getSpecificDevice<MM::Stage>(label);
    MMThreadGuard guard(pluginManager_.getModuleLock(pStage));
 
@@ -1740,6 +1848,9 @@ void CMMCore::stopStageSequence(const char* label) throw (CMMError)
  */
 long CMMCore::getStageSequenceMaxLength(const char* label) throw (CMMError)
 {
+  	if (label == 0)
+      throw CMMError(errorText_[MMERR_NullPointerException],  MMERR_NullPointerException);
+
    MM::Stage* pStage = getSpecificDevice<MM::Stage>(label);
    MMThreadGuard guard(pluginManager_.getModuleLock(pStage));
    long length;
@@ -1758,6 +1869,9 @@ long CMMCore::getStageSequenceMaxLength(const char* label) throw (CMMError)
  */
 void CMMCore::loadStageSequence(const char* label, std::vector<double> positionSequence) throw (CMMError)
 {
+  	if (label == 0)
+      throw CMMError(errorText_[MMERR_NullPointerException],  MMERR_NullPointerException);
+
    MM::Stage* pStage = getSpecificDevice<MM::Stage>(label);
    MMThreadGuard guard(pluginManager_.getModuleLock(pStage));
    
@@ -1785,6 +1899,9 @@ void CMMCore::loadStageSequence(const char* label, std::vector<double> positionS
  */
 bool CMMCore::isXYStageSequenceable(const char* deviceName) throw (CMMError)
 {
+  	if (deviceName == 0)
+      throw CMMError(errorText_[MMERR_NullPointerException],  MMERR_NullPointerException);
+
    MM::XYStage* pStage = getSpecificDevice<MM::XYStage>(deviceName);
    MMThreadGuard guard(pluginManager_.getModuleLock(pStage));
 
@@ -1805,6 +1922,8 @@ bool CMMCore::isXYStageSequenceable(const char* deviceName) throw (CMMError)
  */
 void CMMCore::startXYStageSequence(const char* label) throw (CMMError)
 {
+  	if (label == 0)
+      throw CMMError(errorText_[MMERR_NullPointerException],  MMERR_NullPointerException);
 
    MM::XYStage* pStage = getSpecificDevice<MM::XYStage>(label);
    MMThreadGuard guard(pluginManager_.getModuleLock(pStage));
@@ -1821,6 +1940,9 @@ void CMMCore::startXYStageSequence(const char* label) throw (CMMError)
  */
 void CMMCore::stopXYStageSequence(const char* label) throw (CMMError)
 {
+  	if (label == 0)
+      throw CMMError(errorText_[MMERR_NullPointerException],  MMERR_NullPointerException);
+
    MM::XYStage* pStage = getSpecificDevice<MM::XYStage>(label);
    MMThreadGuard guard(pluginManager_.getModuleLock(pStage));
 
@@ -1837,6 +1959,9 @@ void CMMCore::stopXYStageSequence(const char* label) throw (CMMError)
  */
 long CMMCore::getXYStageSequenceMaxLength(const char* label) throw (CMMError)
 {
+  	if (label == 0)
+      throw CMMError(errorText_[MMERR_NullPointerException],  MMERR_NullPointerException);
+
    MM::XYStage* pStage = getSpecificDevice<MM::XYStage>(label);
    MMThreadGuard guard(pluginManager_.getModuleLock(pStage));
    long length;
@@ -1859,6 +1984,9 @@ void CMMCore::loadXYStageSequence(const char* label,
                                   std::vector<double> xSequence,
                                   std::vector<double> ySequence) throw (CMMError)
 {
+  	if (label == 0)
+      throw CMMError(errorText_[MMERR_NullPointerException],  MMERR_NullPointerException);
+
    MM::XYStage* pStage = getSpecificDevice<MM::XYStage>(label);
    MMThreadGuard guard(pluginManager_.getModuleLock(pStage));
    
@@ -1958,6 +2086,9 @@ void CMMCore::snapImage() throw (CMMError)
  */
 void CMMCore::assignImageSynchro(const char* label) throw (CMMError)
 {
+  	if (label == 0)
+      throw CMMError(errorText_[MMERR_NullPointerException],  MMERR_NullPointerException);
+
    imageSynchro_.push_back(getDevice(label));
    CORE_LOG("Image acquisition synchronized with %s\n", label);
 }
@@ -1968,6 +2099,9 @@ void CMMCore::assignImageSynchro(const char* label) throw (CMMError)
  */
 void CMMCore::removeImageSynchro(const char* label) throw (CMMError)
 {
+  	if (label == 0)
+      throw CMMError(errorText_[MMERR_NullPointerException],  MMERR_NullPointerException);
+
    MM::Device* dev = getDevice(label);
    vector<MM::Device*>::iterator it = find(imageSynchro_.begin(), imageSynchro_.end(), dev);
    if(it != imageSynchro_.end())
@@ -6242,6 +6376,9 @@ string CMMCore::getCoreErrorText(int code) const
 
 MM::Device* CMMCore::getDevice(const char* label) throw (CMMError)
 {
+  	if (label == 0)
+      throw CMMError(errorText_[MMERR_NullPointerException],  MMERR_NullPointerException);
+
    try {
       return pluginManager_.GetDevice(label);
    } catch (CMMError& err) {
