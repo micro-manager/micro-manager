@@ -1009,6 +1009,12 @@ int Wheel::HomeWheel()
  */
 int Wheel::SetWheelPosition(int position)
 {
+   // 10 position Ludl Wheel needs 0 to move to position 10
+   if (position == 10) 
+   {
+      position = 0;
+   }
+   
    ostringstream  cmd;
    cmd << "Rotat S" << deviceNumber_ << " ";
    if (wheelNumber_==1)
