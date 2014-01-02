@@ -58,7 +58,6 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
    private Joystick joystick_;
    private Positions positions_;
 //   private Operation oper_;
-//   private Setup setup_;
    
    private static final String XLOCATION = "xlocation";
    private static final String YLOCATION = "ylocation";
@@ -74,11 +73,6 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
       props_ = new Properties(devices_);  // doesn't have its own frame, but is an object used by other classes
       positions_ = new Positions(devices_);
       joystick_ = new Joystick(devices_, props_);
-      
-//      spimParams_ = new SpimParams();
-//      devices_.addListener(spimParams_);
-//      oper_ = new Operation();
-//      setup_ = new Setup();  // this data is shared between the instances of SetupPanel
       
       final ListeningJTabbedPane tabbedPane = new ListeningJTabbedPane();
         

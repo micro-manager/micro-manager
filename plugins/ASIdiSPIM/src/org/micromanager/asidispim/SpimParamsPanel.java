@@ -30,6 +30,7 @@ import org.micromanager.utils.ReportingUtils;
 
 import javax.swing.JLabel;
 import javax.swing.JComboBox;
+import javax.swing.JSeparator;
 import javax.swing.JSpinner;
 
 import net.miginfocom.swing.MigLayout;
@@ -50,7 +51,7 @@ public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerI
    public SpimParamsPanel(Devices devices, Properties props) {
       super(new MigLayout(
             "",
-            "[right]16[center]16[center]",
+            "[right]16[center]16[center]16[center]",
             "[]12[]"));
       devices_ = devices;
       props_ = props;
@@ -100,6 +101,10 @@ public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerI
          add(new JLabel("Delay before each side (ms):"));
          tmp_jsp = pu.makeSpinnerFloat(0, 10000, 0.25, props_, devices_, Devices.Keys.GALVOA, Properties.Keys.SPIM_DELAY_SIDE);
          add(tmp_jsp, "span 2, wrap");
+         
+         add(new JSeparator(JSeparator.VERTICAL), "growy, cell 3 0 1 9");
+         
+         
 
       } catch (Exception ex) {
          ReportingUtils.showError("Error creating \"SPIM Params\" tab.  Make sure to select devices in \"Devices\" first, then restart plugin");

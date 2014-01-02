@@ -106,15 +106,9 @@ public class SetupPanel extends ListeningJPanel implements LiveModeListener {
       piezoIlluminationDeviceKey_ = devices_.getSideSpecificKey(Devices.Keys.PIEZOA, devices.getOppositeSide(side_));
       micromirrorDeviceKey_ = devices_.getSideSpecificKey(Devices.Keys.GALVOA, side_);
       
-      port_ = "";
-      try {
-         String hubname = core_.getParentLabel(devices_.getMMDevice(piezoIlluminationDeviceKey_));
-         port_ = core_.getProperty(hubname, Properties.Keys.SERIAL_COM_PORT.toString());
-      }
-      catch (Exception ex) {
-         ReportingUtils.showError("Could not get COM port in SetupPanel constructor.");
-      }
-      
+      port_ = null;
+      updatePort();
+
       ISMULTICAMERAPREFNAME= MULTICAMERAPREF + side_.toString();
       
       updateStartStopPositions();
@@ -163,6 +157,10 @@ public class SetupPanel extends ListeningJPanel implements LiveModeListener {
        @Override
        public void actionPerformed(ActionEvent e) {
           String letter = "";
+          updatePort();
+          if (port_ == null) {
+             return;
+          }
           try {
              letter = props_.getPropValueString(piezoIlluminationDeviceKey_, Properties.Keys.AXIS_LETTER);
              core_.setSerialPortCommand(port_, "HM "+letter+"+", "\r");
@@ -366,6 +364,10 @@ public class SetupPanel extends ListeningJPanel implements LiveModeListener {
       // moves illumination piezo to home
       // TODO do this more elegantly (ideally MM API would add Home() function)
       String letter = "";
+      updatePort();
+      if (port_ == null) {
+         return;
+      }
       try {
          letter = props_.getPropValueString(piezoIlluminationDeviceKey_, Properties.Keys.AXIS_LETTER);
          core_.setSerialPortCommand(port_, "! "+letter+"+", "\r");
@@ -386,6 +388,9 @@ public class SetupPanel extends ListeningJPanel implements LiveModeListener {
     * according to sheetStartPos_ and sheetEndPos_
     */
    public void updateImagingSAParams() {
+      if (devices_.getMMDevice(piezoImagingDeviceKey_) == null) {
+         return;
+      }
       float amplitude = (float)(imagingStopPos_ - imagingStartPos_);
       float offset = (float)(imagingStartPos_ + imagingStopPos_)/2;
       props_.setPropValue(piezoImagingDeviceKey_, Properties.Keys.SA_AMPLITUDE, amplitude);
@@ -397,6 +402,9 @@ public class SetupPanel extends ListeningJPanel implements LiveModeListener {
     * according to sheetStartPos_ and sheetEndPos_
     */
    public void updateSheetSAParams() {
+      if (devices_.getMMDevice(micromirrorDeviceKey_) == null) {
+         return;
+      }
       float amplitude = (float)(sheetStopPos_ - sheetStartPos_);
       float offset = (float)(sheetStartPos_ + sheetStopPos_)/2;
       props_.setPropValue(micromirrorDeviceKey_, Properties.Keys.SA_AMPLITUDE_Y_DEG, amplitude);
@@ -410,6 +418,9 @@ public class SetupPanel extends ListeningJPanel implements LiveModeListener {
     * if no, then changes to start/end settings made elsewhere (notably using joystick with scan enabled) will be clobbered
     */
    public void updateStartStopPositions() {
+      if (devices_.getMMDevice(piezoImagingDeviceKey_) == null) {
+         return;
+      }
       // compute initial start/stop positions from properties
       double amplitude = (double)props_.getPropValueFloat(piezoImagingDeviceKey_, Properties.Keys.SA_AMPLITUDE);
       double offset = (double)props_.getPropValueFloat(piezoImagingDeviceKey_, Properties.Keys.SA_OFFSET);
@@ -419,6 +430,27 @@ public class SetupPanel extends ListeningJPanel implements LiveModeListener {
       offset = props_.getPropValueFloat(micromirrorDeviceKey_, Properties.Keys.SA_OFFSET_Y_DEG);
       sheetStartPos_ = offset - amplitude/2;
       sheetStopPos_ = offset + amplitude/2;
+   }
+   
+   /**
+    * 
+    * @return true if port is valid, false if not
+    */
+   private void updatePort() {
+      if (port_ != null) {  // if we've already found it then skip
+         return;
+      }
+      try {
+         String mmDevice = devices_.getMMDevice(piezoIlluminationDeviceKey_);
+         if (mmDevice == null) {
+            return;
+         }
+         String hubname = core_.getParentLabel(mmDevice);
+         port_ = core_.getProperty(hubname, Properties.Keys.SERIAL_COM_PORT.toString());
+      }
+      catch (Exception ex) {
+         ReportingUtils.showError("Could not get COM port in SetupPanel constructor.");
+      }
    }
 
    @Override

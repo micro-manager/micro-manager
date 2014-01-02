@@ -74,14 +74,14 @@ public class Joystick {
       }
    };
 
-   private static final Map<Keys, String> VALUES =
+   private static final Map<Joystick.Keys, String> VALUES =
          new EnumMap<Keys, String>(Keys.class);
    static {
-      VALUES.put(Keys.NONE, "0 - none");
-      VALUES.put(Keys.JOYSTICK_X, "2 - joystick X");
-      VALUES.put(Keys.JOYSTICK_Y, "3 - joystick Y");
-      VALUES.put(Keys.RIGHT_WHEEL, "22 - right wheel");
-      VALUES.put(Keys.LEFT_WHEEL, "23 - left wheel");
+      VALUES.put(Keys.NONE, Properties.Values.JS_NONE.toString());
+      VALUES.put(Keys.JOYSTICK_X, Properties.Values.JS_X.toString());
+      VALUES.put(Keys.JOYSTICK_Y, Properties.Values.JS_Y.toString());
+      VALUES.put(Keys.RIGHT_WHEEL, Properties.Values.JS_RIGHT_WHEEL.toString());
+      VALUES.put(Keys.LEFT_WHEEL, Properties.Values.JS_LEFT_WHEEL.toString());
    }
    
    /**
@@ -168,11 +168,11 @@ public class Joystick {
    public void unsetAllJoysticks() {
       try {
          for (Devices.Keys dev : Devices.STAGES1D) {
-            props_.setPropValue(dev, Properties.Keys.JOYSTICK_INPUT, "0 - none", true);
+            props_.setPropValue(dev, Properties.Keys.JOYSTICK_INPUT, VALUES.get(Joystick.Keys.NONE), true);
          }
          for (Devices.Keys dev : Devices.STAGES2D) {
             if (props_.hasProperty(dev, Properties.Keys.JOYSTICK_ENABLED, true)) { // if XY stage
-               props_.setPropValue(dev, Properties.Keys.JOYSTICK_ENABLED, "No", true);
+               props_.setPropValue(dev, Properties.Keys.JOYSTICK_ENABLED, Properties.Values.NO.toString(), true);
             }
             else {  // must be micro-mirror
                props_.setPropValue(dev, Properties.Keys.JOYSTICK_INPUT_X, VALUES.get(Joystick.Keys.NONE), true);

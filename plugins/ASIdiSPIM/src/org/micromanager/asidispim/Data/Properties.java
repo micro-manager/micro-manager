@@ -28,6 +28,7 @@ import java.util.List;
 import mmcorej.CMMCore;
 
 import org.micromanager.MMStudioMainFrame;
+import org.micromanager.asidispim.Data.Joystick.Keys;
 import org.micromanager.asidispim.Utils.UpdateFromPropertyListenerInterface;
 import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.ReportingUtils;
@@ -62,6 +63,7 @@ public class Properties {
       SPIM_DELAY_SIDE("SPIMDelayBeforeSide(ms)"),
       SPIM_DELAY_SLICE("SPIMDelayBeforeSlice(ms)"),
       SPIM_FIRSTSIDE("SPIMFirstSide"),
+      SPIM_STATE("SPIMState"),
       SA_AMPLITUDE("SingleAxisAmplitude(um)"),
       SA_OFFSET("SingleAxisOffset(um)"),
       SA_AMPLITUDE_X_DEG("SingleAxisXAmplitude(deg)"),
@@ -82,14 +84,30 @@ public class Properties {
       Keys(String text) {
          this.text = text;
       }
-      public String toString(Object... o) {
-         return String.format(text, o);
-      }
       public String toString() {
          return text;
       }
    }
    
+   // values for properties
+   public static enum Values {
+      YES("Yes"),
+      NO("No"),
+      JS_NONE("0 - none"),
+      JS_X("2 - joystick X"),
+      JS_Y("3 - joystick Y"),
+      JS_RIGHT_WHEEL("22 - right wheel"),
+      JS_LEFT_WHEEL("23 - left wheel"),
+      
+      ;
+      private final String text;
+      Values(String text) {
+         this.text = text;
+      }
+      public String toString() {
+         return text;
+      }
+   }
    
    /**
     * Constructor.
@@ -273,7 +291,7 @@ public class Properties {
     */
    public String getPropValueString(Devices.Keys device, Properties.Keys name) {
       String strVal = null;
-      strVal = getPropValue(device, name, false);
+      strVal = getPropValue(device, name, true);
       return strVal;
    }
    
@@ -302,8 +320,10 @@ public class Properties {
       int val = 0;
       String strVal = null;
       try {
-         strVal = getPropValue(device, name, false);
-         val = NumberUtils.coreStringToInt(strVal);
+         strVal = getPropValue(device, name, true);
+         if (!strVal.equals("")) {
+            val = NumberUtils.coreStringToInt(strVal);
+         }
       } catch (ParseException ex) {
          ReportingUtils.showError("Could not parse int value of " + strVal + " for " + name.toString() + " in device " + device.toString());
       }
@@ -324,7 +344,7 @@ public class Properties {
       String strVal = null;
       try {
          strVal = getPropValue(device, name, ignoreError);
-         if (!ignoreError || strVal != "") {
+         if (!ignoreError || !strVal.equals("")) {
             val = NumberUtils.coreStringToInt(strVal);
          }
       } catch (ParseException ex) {
@@ -344,8 +364,10 @@ public class Properties {
       float val = 0;
       String strVal = null;
       try {
-         strVal = getPropValue(device, name, false);
-         val = (float)NumberUtils.coreStringToDouble(strVal);
+         strVal = getPropValue(device, name, true);
+         if (!strVal.equals("")) {
+            val = (float)NumberUtils.coreStringToDouble(strVal);
+         }
       } catch (ParseException ex) {
          ReportingUtils.showError("Could not parse int value of " + strVal + " for " + name.toString() + " in device " + device.toString());
       }
@@ -364,7 +386,7 @@ public class Properties {
      String strVal = null;
      try {
         strVal = getPropValue(device, name, ignoreError);
-        if (!ignoreError || strVal != "") {
+        if (!ignoreError || !strVal.equals("")) {
            val = (float)NumberUtils.coreStringToDouble(strVal);
         }
      } catch (ParseException ex) {
