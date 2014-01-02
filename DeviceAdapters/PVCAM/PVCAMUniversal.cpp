@@ -2252,6 +2252,11 @@ int Universal::StopSequenceAcquisition()
       isAcquiring_ = false;
    }
    curImageCnt_ = 0;
+
+   // LW: Give the camera some time to stop acquiring. This reduces occasional
+   //     crashes/hangs when frequently starting/stopping with some fast cameras.
+   CDeviceUtils::SleepMs( 50 );
+
    return nRet;
 }
 
