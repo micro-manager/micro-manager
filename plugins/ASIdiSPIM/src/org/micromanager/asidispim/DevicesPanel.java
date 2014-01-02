@@ -59,7 +59,7 @@ public class DevicesPanel extends ListeningJPanel {
       super(new MigLayout(
               "",
               "[right]25[align center]16[align center]",
-              "[]5[]"));
+              "[]16[]"));
       devices_ = devices;
       core_ = MMStudioMainFrame.getInstance().getCore();
 
