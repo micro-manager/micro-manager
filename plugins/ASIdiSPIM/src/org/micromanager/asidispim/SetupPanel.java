@@ -62,6 +62,7 @@ public class SetupPanel extends ListeningJPanel implements LiveModeListener {
    Preferences prefs_;
    private CMMCore core_;
    ScriptInterface gui_;
+   String port_;  // need to send serial commands directly
    
    JPanel joystickPanel_;
    
@@ -104,6 +105,15 @@ public class SetupPanel extends ListeningJPanel implements LiveModeListener {
       piezoImagingDeviceKey_ = devices_.getSideSpecificKey(Devices.Keys.PIEZOA, side_);
       piezoIlluminationDeviceKey_ = devices_.getSideSpecificKey(Devices.Keys.PIEZOA, devices.getOppositeSide(side_));
       micromirrorDeviceKey_ = devices_.getSideSpecificKey(Devices.Keys.GALVOA, side_);
+      
+      port_ = "";
+      try {
+         String hubname = core_.getParentLabel(devices_.getMMDevice(piezoIlluminationDeviceKey_));
+         port_ = core_.getProperty(hubname, Properties.Keys.SERIAL_COM_PORT.toString());
+      }
+      catch (Exception ex) {
+         ReportingUtils.showError("Could not get COM port in SetupPanel constructor.");
+      }
       
       ISMULTICAMERAPREFNAME= MULTICAMERAPREF + side_.toString();
       
@@ -155,10 +165,7 @@ public class SetupPanel extends ListeningJPanel implements LiveModeListener {
           String letter = "";
           try {
              letter = props_.getPropValueString(piezoIlluminationDeviceKey_, Properties.Keys.AXIS_LETTER);
-             String hubname = core_.getParentLabel(devices_.getMMDevice(piezoIlluminationDeviceKey_));
-             // TODO fix the next two lines to use our framework, ideally with change to Micromanager API
-             String port = core_.getProperty(hubname, Properties.Keys.SERIAL_COM_PORT.toString()); 
-             core_.setSerialPortCommand(port, "HM "+letter+"+", "\r");
+             core_.setSerialPortCommand(port_, "HM "+letter+"+", "\r");
           } catch (Exception ex) {
              ReportingUtils.showError("could not execute core function set home for axis " + letter);
           }
@@ -361,9 +368,7 @@ public class SetupPanel extends ListeningJPanel implements LiveModeListener {
       String letter = "";
       try {
          letter = props_.getPropValueString(piezoIlluminationDeviceKey_, Properties.Keys.AXIS_LETTER);
-         String hubname = core_.getParentLabel(devices_.getMMDevice(piezoIlluminationDeviceKey_));
-         String port = core_.getProperty(hubname, Properties.Keys.SERIAL_COM_PORT.toString());
-         core_.setSerialPortCommand(port, "! "+letter+"+", "\r");
+         core_.setSerialPortCommand(port_, "! "+letter+"+", "\r");
       } catch (Exception ex) {
          ReportingUtils.showError("could not execute core function move to home for axis " + letter);
       }

@@ -58,8 +58,6 @@ public class NavigationPanel extends ListeningJPanel {
    JLabel galvoBxPositionLabel_;
    JLabel galvoByPositionLabel_;
    
-   // TODO add galvo stages
-    
    /**
     * Navigation panel constructor.
     */

@@ -65,7 +65,6 @@ public class ASIdiSPIM implements MMPlugin {
    @Override
    public String getInfo () {
       return "ASI diSPIM";
-      // TODO add more
    }
 
    @Override
