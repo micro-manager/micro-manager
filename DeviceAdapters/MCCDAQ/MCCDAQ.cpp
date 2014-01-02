@@ -214,6 +214,13 @@ int MCCDaqDA::Shutdown()
    return DEVICE_OK;
 }
 
+int MCCDaqDA::SetGateOpen(bool open)
+{
+   gateOpen_ = open;
+   SetVolts(volts_);
+   return DEVICE_OK;
+}
+
 int MCCDaqDA::SetSignal(double volts)
 {
    return SetProperty(g_volts, CDeviceUtils::ConvertToString(volts));
@@ -233,7 +240,12 @@ int MCCDaqDA::SetVolts(double volts)
    if (volts > maxV_ || volts < minV_)
       return DEVICE_RANGE_EXCEEDED;
 
+   volts_ = volts;
+
    unsigned short value = (unsigned short) ( (volts/maxV_) * 65535 );
+   if (!gateOpen_)
+      value = 0;
+
    return WriteToPort(value);
 }
 
