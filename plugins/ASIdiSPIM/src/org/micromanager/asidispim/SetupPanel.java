@@ -172,7 +172,7 @@ public class SetupPanel extends ListeningJPanel implements LiveModeListener {
     add(tmp_but, "span 2, center, wrap");
     
     add(new JLabel("Scan amplitude:"));
-    add(new JLabel(""));
+    add(new JLabel(""));   // TODO update this label with current value
     PanelUtils pu = new PanelUtils();
     JSlider tmp_sl = pu.makeSlider(0, // 0 is min amplitude
           props_.getPropValueFloat(micromirrorDeviceKey_, Properties.Keys.MAX_DEFLECTION_X) - props_.getPropValueFloat(micromirrorDeviceKey_, Properties.Keys.MIN_DEFLECTION_X), // compute max amplitude
@@ -189,7 +189,7 @@ public class SetupPanel extends ListeningJPanel implements LiveModeListener {
     add(sheetBBox_);
     
     add(new JLabel("Scan offset:"));
-    add(new JLabel(""));
+    add(new JLabel(""));   // TODO update this label with current value
 
     tmp_sl = pu.makeSlider(
           props.getPropValueFloat(micromirrorDeviceKey_, Properties.Keys.MIN_DEFLECTION_X), // min value

@@ -28,10 +28,14 @@ import org.micromanager.asidispim.Utils.ListeningJPanel;
 import org.micromanager.asidispim.Utils.PanelUtils;
 import org.micromanager.utils.ReportingUtils;
 
+import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JComboBox;
 import javax.swing.JSeparator;
 import javax.swing.JSpinner;
+
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 import net.miginfocom.swing.MigLayout;
 
@@ -104,7 +108,17 @@ public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerI
          
          add(new JSeparator(JSeparator.VERTICAL), "growy, cell 3 0 1 9");
          
-         
+         JButton buttonStart_ = new JButton("Start!");
+         buttonStart_.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+               props_.setPropValue(Devices.Keys.PIEZOA, Properties.Keys.SPIM_STATE, Properties.Values.ARMED.toString());
+               props_.setPropValue(Devices.Keys.PIEZOB, Properties.Keys.SPIM_STATE, Properties.Values.ARMED.toString());
+               props_.setPropValue(Devices.Keys.GALVOA, Properties.Keys.SPIM_STATE, Properties.Values.RUNNING.toString());
+               // TODO generalize this for different ways of running SPIM
+            }
+         });
+         add(buttonStart_, "span 2, center, wrap");
 
       } catch (Exception ex) {
          ReportingUtils.showError("Error creating \"SPIM Params\" tab.  Make sure to select devices in \"Devices\" first, then restart plugin");
