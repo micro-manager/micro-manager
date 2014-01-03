@@ -121,10 +121,10 @@ public class Joystick {
     */
    public JSAxisData[] getWheelJSAxisData() {
       List<JSAxisData> list = new ArrayList<JSAxisData>();
-      list.add(new JSAxisData(devices_.getDeviceDisplay(Devices.Keys.NONE), Devices.Keys.NONE, Directions.NONE));  // adds "None" to top of list
+      list.add(new JSAxisData(devices_.getDeviceDisplayWithAxis(Devices.Keys.NONE), Devices.Keys.NONE, Directions.NONE));  // adds "None" to top of list
       for (Devices.Keys devKey : Devices.STAGES1D) {
          if (devices_.getMMDevice(devKey)!=null) {
-            String dispKey = devices_.getDeviceDisplay(devKey); 
+            String dispKey = devices_.getDeviceDisplayWithAxis(devKey); 
             list.add(new JSAxisData(dispKey, devKey, Directions.NONE));
          }
       }
@@ -135,7 +135,7 @@ public class Joystick {
          if (devices_.getMMDevice(devKey)!=null) {
             Directions[] dirs = {Directions.X, Directions.Y};
             for (Directions dir : dirs) {  // gets for X and Y for now
-               String dispKey = devices_.getDeviceDisplay(devKey) + "-" + dir.toString();
+               String dispKey = devices_.getDeviceDisplayWithAxis(devKey) + "-" + dir.toString();
                list.add(new JSAxisData(dispKey, devKey, dir));
             }
          }
@@ -150,10 +150,10 @@ public class Joystick {
     */
    public JSAxisData[] getStickJSAxisData() {
       List<JSAxisData> list = new ArrayList<JSAxisData>();
-      list.add(new JSAxisData(devices_.getDeviceDisplay(Devices.Keys.NONE), Devices.Keys.NONE, Directions.NONE));
+      list.add(new JSAxisData(devices_.getDeviceDisplayWithAxis(Devices.Keys.NONE), Devices.Keys.NONE, Directions.NONE));
       for (Devices.Keys devKey : Devices.STAGES2D) {
          if (devices_.getMMDevice(devKey)!=null) {
-            String dispKey = devices_.getDeviceDisplay(devKey);
+            String dispKey = devices_.getDeviceDisplayWithAxis(devKey);
             list.add(new JSAxisData(dispKey, devKey, Directions.NONE));
          }
       }

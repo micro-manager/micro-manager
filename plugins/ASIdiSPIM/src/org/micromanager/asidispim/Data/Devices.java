@@ -101,6 +101,7 @@ public class Devices {
       String mmDevice;  // device name in Micro-manager
       String displayName;  // how device should be rendered in GUI
       Sides side; 
+      String axisLetter;  // the letter or letters
       
       /**
        * @param key device key as given by enum in Devices.Keys
@@ -112,12 +113,13 @@ public class Devices {
          this.mmDevice = "";
          this.displayName = displayName;
          this.side = side;
+         this.axisLetter = "";
       }
       
       public String toString() {
          switch (side) { // break not needed here
          case A: 
-         case B: return displayName + " " + side.toString();
+         case B: return displayName + " Path " + side.toString();
          case N: return displayName;
          default: return "";
          }
@@ -195,9 +197,21 @@ public class Devices {
     */
    public void setMMDevice(Devices.Keys key, String mmDevice) {
       DeviceData d = deviceInfo_.get(key);
-      if (d==null)  // do nothing if key doesn't exist
+      if (d==null) {  // do nothing if key doesn't exist
          return;
+      }
+      if (mmDevice==null) {  // sometimes from init this will be null instead of empty string like it should
+         mmDevice = "";
+      }
       d.mmDevice = mmDevice;
+      // if a ASITiger device then add axis letters
+      int idx1 = mmDevice.indexOf(":");
+      if (idx1 > 0) {
+         int idx2 = mmDevice.indexOf(":", idx1+1);
+         if (idx2 > 0) {
+            d.axisLetter = mmDevice.substring(idx1+1, idx2); 
+         }
+      }
       deviceInfo_.put(key, d);
       callListeners();  // make sure everybody else knows about change
    }
@@ -256,25 +270,21 @@ public class Devices {
    }
    
    /**
-    * 
-    * @param keys array of Devices.Keys
-    * @return array of strings used to describe device, e.g. "MicroMirror" or "XY Stage"
-    */
-   public String[] getDeviceDisplay(Devices.Keys[] keys) {
-      List<String> list = new ArrayList<String>();
-      for (Devices.Keys key : keys) {
-         list.add(getDeviceDisplay(key));
-      }
-      return list.toArray(new String[0]);
-   }
-   
-   /**
     * Returns "generic" descriptor, e.g. without side A designation appended
     * @param key
     * @return
     */
    public String getDeviceDisplayGeneric(Devices.Keys key) {
       return deviceInfo_.get(key).displayName;
+   }
+   
+   public String getDeviceDisplayWithAxis(Devices.Keys key) {
+      String ret = getDeviceDisplay(key);
+      DeviceData d = deviceInfo_.get(key);
+      if (!d.axisLetter.equals("")) {
+         ret = ret + " (" + d.axisLetter + ")";
+      }
+      return ret;
    }
    
    /**
@@ -341,8 +351,8 @@ public class Devices {
       deviceInfo_.put(Keys.MULTICAMERA, new DeviceData(Keys.MULTICAMERA, "Multi Camera", Sides.N));
       deviceInfo_.put(Keys.PIEZOA, new DeviceData(Keys.PIEZOA, "Imaging Piezo", Sides.A));
       deviceInfo_.put(Keys.PIEZOB, new DeviceData(Keys.PIEZOB, "Imaging Piezo", Sides.B));
-      deviceInfo_.put(Keys.GALVOA, new DeviceData(Keys.GALVOA, "Sheet MicroMirror", Sides.A));
-      deviceInfo_.put(Keys.GALVOB, new DeviceData(Keys.GALVOB, "Sheet MicroMirror", Sides.B));
+      deviceInfo_.put(Keys.GALVOA, new DeviceData(Keys.GALVOA, "Sheet Galvo", Sides.A));
+      deviceInfo_.put(Keys.GALVOB, new DeviceData(Keys.GALVOB, "Sheet Galvo", Sides.B));
       deviceInfo_.put(Keys.XYSTAGE, new DeviceData(Keys.XYSTAGE, "XY Stage", Sides.N));
       deviceInfo_.put(Keys.LOWERZDRIVE, new DeviceData(Keys.LOWERZDRIVE, "Lower Z Drive", Sides.N));
       deviceInfo_.put(Keys.UPPERZDRIVE, new DeviceData(Keys.UPPERZDRIVE, "Upper (SPIM) Z Drive", Sides.N));

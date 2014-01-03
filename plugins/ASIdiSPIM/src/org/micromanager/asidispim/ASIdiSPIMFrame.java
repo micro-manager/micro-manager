@@ -88,10 +88,6 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
       MMStudioMainFrame.getInstance().addLiveModeListener((LiveModeListener) setupPanelB);
       final ListeningJPanel navigationPanel = new NavigationPanel(devices_, joystick_, positions_);
       tabbedPane.addLTab("Navigation", navigationPanel);
-
-//      final ListeningJPanel operationPanel = new OperationPanel();
-//      tabbedPane.addLTab("Operate", operationPanel);
-
       tabbedPane.addLTab("Help", new HelpPanel());
       
       final Timer stagePosUpdater = new Timer(1000, new ActionListener() {

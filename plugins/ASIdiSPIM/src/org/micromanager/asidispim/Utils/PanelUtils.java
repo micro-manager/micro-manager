@@ -81,6 +81,7 @@ public class PanelUtils {
          }
          
          public void devicesChangedAlert() {
+            // TODO refresh limits
             updateFromProperty();
          }
          
