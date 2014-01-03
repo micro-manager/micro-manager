@@ -20,7 +20,7 @@ AX_BOOST_SYSTEM
 
 # Find Micro-Manager headers
 micromanager_path=${ac_pwd}/..
-MMDEVAPI_CXXFLAGS="-I${micromanager_path}/MMDevice"
+MMDEVAPI_CXXFLAGS="-I${micromanager_path}/MMDevice ${BOOST_CPPFLAGS}"
 AC_SUBST(MMDEVAPI_CXXFLAGS)
 
 # Find Micro-Manager static device library
