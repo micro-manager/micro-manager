@@ -325,6 +325,8 @@ public class Properties {
          }
       } catch (ParseException ex) {
          ReportingUtils.showError("Could not parse int value of " + strVal + " for " + name.toString() + " in device " + device.toString());
+      } catch (NullPointerException ex) {
+         ReportingUtils.showError("Null Pointer error in function getPropValueInteger");
       }
       return val;
    }
@@ -348,6 +350,8 @@ public class Properties {
          }
       } catch (ParseException ex) {
          ReportingUtils.showError("Could not parse int value of " + strVal + " for " + name.toString() + " in device " + device.toString());
+      } catch (NullPointerException ex) {
+         ReportingUtils.showError("Null Pointer error in function getPropValueInteger");
       }
       return val;
    }
@@ -369,8 +373,8 @@ public class Properties {
          }
       } catch (ParseException ex) {
          ReportingUtils.showError("Could not parse int value of " + strVal + " for " + name.toString() + " in device " + device.toString());
-//      } catch (NullPointerException ex) {
-//         ReportingUtils.showError("Null Pointer error in function getPropValueFLoat");
+      } catch (NullPointerException ex) {
+         ReportingUtils.showError("Null Pointer error in function getPropValueFLoat");
       }
       return val;
    }
@@ -392,7 +396,10 @@ public class Properties {
         }
      } catch (ParseException ex) {
         ReportingUtils.showError("Could not parse int value of " + strVal + " for " + name.toString() + " in device " + device.toString());
+     } catch (NullPointerException ex) {
+        ReportingUtils.showError("Null Pointer error in function getPropValueFLoat");
      }
+     
      return val;
   }
   
