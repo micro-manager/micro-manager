@@ -318,8 +318,7 @@ public class SetupPanel extends ListeningJPanel implements LiveModeListener {
             if (liveEnabled) { 
                gui_.enableLiveMode(false); 
             } 
-            core_.setProperty( 
-                  "Core", "Camera", mmDevice); 
+            core_.setProperty("Core", "Camera", mmDevice); 
             gui_.refreshGUIFromCache(); 
             if (liveEnabled) { 
                gui_.enableLiveMode(true); 
@@ -370,6 +369,9 @@ public class SetupPanel extends ListeningJPanel implements LiveModeListener {
       try {
          letter = props_.getPropValueString(piezoIlluminationDeviceKey_, Properties.Keys.AXIS_LETTER);
          core_.setSerialPortCommand(port_, "! "+letter+"+", "\r");
+         // we need to read the answer or we can get in trouble later on
+         // It would be nice to check the answer
+         core_.getSerialPortAnswer(port_, "\r\n");
       } catch (Exception ex) {
          ReportingUtils.showError("could not execute core function move to home for axis " + letter);
       }

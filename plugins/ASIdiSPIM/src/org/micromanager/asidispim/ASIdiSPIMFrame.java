@@ -71,6 +71,8 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
    private static final String PREF_YLOCATION = "ylocation";
    private static final String PREF_TABINDEX = "tabIndex";
    
+   private final Timer stagePosUpdater_;
+   
    /**
     * Creates the ASIdiSPIM plugin frame
     * @param gui - Micro-Manager script interface
@@ -88,17 +90,20 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
       // only use addLTab, not addTab to guarantee this
       tabbedPane.addLTab("Devices", new DevicesPanel(devices_));
       tabbedPane.addLTab("SPIM Params", new SpimParamsPanel(devices_, props_));
-      final ListeningJPanel setupPanelA = new SetupPanel(devices_, props_, joystick_, Devices.Sides.A, positions_);
+      final ListeningJPanel setupPanelA = new SetupPanel(devices_, props_, 
+              joystick_, Devices.Sides.A, positions_);
       tabbedPane.addLTab("Setup Path A", setupPanelA);
       MMStudioMainFrame.getInstance().addLiveModeListener((LiveModeListener) setupPanelA);
-      final ListeningJPanel setupPanelB = new SetupPanel(devices_, props_, joystick_, Devices.Sides.B, positions_); 
+      final ListeningJPanel setupPanelB = new SetupPanel(devices_, props_, 
+              joystick_, Devices.Sides.B, positions_); 
       tabbedPane.addLTab("Setup Path B", setupPanelB);
       MMStudioMainFrame.getInstance().addLiveModeListener((LiveModeListener) setupPanelB);
-      final ListeningJPanel navigationPanel = new NavigationPanel(devices_, joystick_, positions_);
+      final ListeningJPanel navigationPanel =   new NavigationPanel(devices_, 
+              joystick_, positions_, this);
       tabbedPane.addLTab("Navigation", navigationPanel);
       tabbedPane.addLTab("Help", new HelpPanel());
       
-      final Timer stagePosUpdater = new Timer(1000000, new ActionListener() {
+      stagePosUpdater_ = new Timer(1000, new ActionListener() {
          public void actionPerformed(ActionEvent ae) {
             // update stage positions in devices
             positions_.updateStagePositions();
@@ -108,8 +113,7 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
             navigationPanel.updateStagePositions();
          }
       });
-      stagePosUpdater.start();
-      
+               
       // make sure gotSelected() gets called whenever we switch tabs
       tabbedPane.addChangeListener(new ChangeListener() {
          public void stateChanged(ChangeEvent e) {
@@ -133,7 +137,7 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
          @Override
          public void windowClosing(java.awt.event.WindowEvent evt) {
             // stop the timer for updating stages
-            stagePosUpdater.stop();
+            stagePosUpdater_.stop();
 
             // save selections in device tab
             devices_.saveSettings();
@@ -149,16 +153,28 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
    public void unsetAllJoysticks() {
       joystick_.unsetAllJoysticks();
    }
+   
+   public void stopTimer() {
+      if (stagePosUpdater_ != null) {
+         stagePosUpdater_.stop();
+      }
+   }
+   
+   public void startTimer() {
+      if (stagePosUpdater_ != null) {
+         stagePosUpdater_.start();
+      }
+   }
     
 
    // MMListener mandated member functions
    public void propertiesChangedAlert() {
       // doesn't seem to actually be called by core when property changes
-      props_.callListeners();
+     // props_.callListeners();
    }
 
    public void propertyChangedAlert(String device, String property, String value) {
-      props_.callListeners();
+     // props_.callListeners();
    }
 
    public void configGroupChangedAlert(String groupName, String newConfig) {

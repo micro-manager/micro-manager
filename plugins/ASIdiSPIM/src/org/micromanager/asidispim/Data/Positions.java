@@ -27,7 +27,6 @@ import java.util.HashMap;
 import mmcorej.CMMCore;
 
 import org.micromanager.MMStudioMainFrame;
-import org.micromanager.asidispim.Data.Devices;
 import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.ReportingUtils;
 

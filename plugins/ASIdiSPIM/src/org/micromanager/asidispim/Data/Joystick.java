@@ -271,12 +271,12 @@ public class Joystick {
             }
          }
          else { // must be either right or left wheel
-            Properties.Keys prop = null;
+            Properties.Keys prop;
             switch (JSAxisData.direction) {
-            case X:    prop = Properties.Keys.JOYSTICK_INPUT_X; break;
-            case Y:    prop = Properties.Keys.JOYSTICK_INPUT_Y; break;
-            case NONE: prop = Properties.Keys.JOYSTICK_INPUT; break;
-            default:   prop = Properties.Keys.JOYSTICK_INPUT; break;
+               case X:    prop = Properties.Keys.JOYSTICK_INPUT_X; break;
+               case Y:    prop = Properties.Keys.JOYSTICK_INPUT_Y; break;
+               case NONE: prop = Properties.Keys.JOYSTICK_INPUT; break;
+               default:   prop = Properties.Keys.JOYSTICK_INPUT; break;
             }
             props_.setPropValue(dev, prop, VALUES.get(jkey));
          }

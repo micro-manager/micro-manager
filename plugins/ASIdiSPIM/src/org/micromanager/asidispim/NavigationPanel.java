@@ -22,6 +22,9 @@
 package org.micromanager.asidispim;
 
 
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import javax.swing.JCheckBox;
 import org.micromanager.asidispim.Data.Devices;
 import org.micromanager.asidispim.Data.Joystick;
 import org.micromanager.asidispim.Data.Positions;
@@ -43,7 +46,6 @@ public class NavigationPanel extends ListeningJPanel {
    Devices devices_;
    Joystick joystick_;
    Positions positions_;
-//   Preferences prefs_;
    
    JPanel joystickPanel_;
    
@@ -61,11 +63,12 @@ public class NavigationPanel extends ListeningJPanel {
    /**
     * Navigation panel constructor.
     */
-   public NavigationPanel(Devices devices, Joystick joystick, Positions positions) {    
+   public NavigationPanel(Devices devices, Joystick joystick, Positions positions,
+           final ASIdiSPIMFrame parentFrame) {    
       super (new MigLayout(
               "", 
               "[right]8[align center]16[right]8[center]8[center]8[center]",
-              "[]16[]"));
+              "[]12[]"));
       devices_ = devices;
       joystick_ = joystick;
       positions_ = positions;
@@ -88,7 +91,21 @@ public class NavigationPanel extends ListeningJPanel {
       upperZPositionLabel_ = new JLabel("");
       add(upperZPositionLabel_, "wrap");
       
-      add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.PIEZOA) + ":"), "span 3");
+      final JCheckBox activeTimerCheckBox = new JCheckBox("Live Update");
+      activeTimerCheckBox.addActionListener(new ActionListener() {
+         public void actionPerformed(ActionEvent e) { 
+            if (activeTimerCheckBox.isSelected()) {
+               parentFrame.startTimer();
+            } else {
+              parentFrame.stopTimer();
+            }
+         }
+      } 
+   
+      );
+      add(activeTimerCheckBox);
+      
+      add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.PIEZOA) + ":"), "span 2, align right");
       piezoAPositionLabel_ = new JLabel("");
       add(piezoAPositionLabel_, "wrap");
       
