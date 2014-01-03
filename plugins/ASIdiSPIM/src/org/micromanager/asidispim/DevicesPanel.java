@@ -175,6 +175,14 @@ public class DevicesPanel extends ListeningJPanel {
       deviceBox.addActionListener(new DevicesPanel.DeviceBoxListener(deviceName, deviceBox));
       return deviceBox;
    }
+   
+   /**
+   * Gets called when this tab gets focus.
+   */
+  @Override
+  public void gotSelected() {
+     
+  }
 
    
    // below is code for features that have been removed, specifically

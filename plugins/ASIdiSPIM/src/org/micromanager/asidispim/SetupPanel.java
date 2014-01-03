@@ -351,8 +351,7 @@ public class SetupPanel extends ListeningJPanel implements LiveModeListener {
    }
    
    /**
-    * Gets called when this tab gets focus.  Sets the physical UI in the Tiger
-    * controller to what was selected in this pane.
+    * Gets called when this tab gets focus.
     * Uses the ActionListeners of the UI components
     */
    @Override

@@ -51,8 +51,7 @@ public class HelpPanel extends ListeningJPanel {
    }
    
     /**
-    * Gets called when this tab gets focus.  Sets the physical UI in the Tiger
-    * controller to what was selected in this pane
+    * Gets called when this tab gets focus.
     */
    @Override
    public void gotSelected() {

@@ -128,7 +128,8 @@ public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerI
 
 
    /**
-    * Gets called when this tab gets focus.  Refreshes values from properties.
+    * Gets called when this tab gets focus.
+    * Refreshes values from properties.
     */
    @Override
    public void gotSelected() {

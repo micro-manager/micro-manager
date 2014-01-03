@@ -41,6 +41,13 @@ import org.micromanager.api.ScriptInterface;
 import org.micromanager.MMStudioMainFrame; 
 import org.micromanager.internalinterfaces.LiveModeListener; 
 
+// TODO figure out update of slider limits when devices changed
+// TODO fix scan A/B when switching between tabs
+// TODO resolve whether Home/Stop should be added to 1axis stage API, use here if possible
+// TODO add sethome property to device adapter and use it here
+// TODO centralize preference handling?
+// TODO able to disable position update
+// TODO make position listener instead of current update mechanism?
 
 /**
  *
@@ -52,16 +59,14 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
       implements MMListenerInterface {
    
    public Properties props_;  // using like global variable so I don't have to pass object all the way down to event handlers
-   
    private Preferences prefs_;
    private Devices devices_;
    private Joystick joystick_;
    private Positions positions_;
-//   private Operation oper_;
    
-   private static final String XLOCATION = "xlocation";
-   private static final String YLOCATION = "ylocation";
-   private static final String TABINDEX = "tabIndex";
+   private static final String PREF_XLOCATION = "xlocation";
+   private static final String PREF_YLOCATION = "ylocation";
+   private static final String PREF_TABINDEX = "tabIndex";
    
    /**
     * Creates the ASIdiSPIM plugin frame
@@ -111,8 +116,8 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
     
       // put pane back where it was last time
       // gotSelected will be called because we put it after the ChangeListener code
-      setLocation(prefs_.getInt(XLOCATION, 100), prefs_.getInt(YLOCATION, 100));
-      tabbedPane.setSelectedIndex(prefs_.getInt(TABINDEX, 0));
+      setLocation(prefs_.getInt(PREF_XLOCATION, 100), prefs_.getInt(PREF_YLOCATION, 100));
+      tabbedPane.setSelectedIndex(prefs_.getInt(PREF_TABINDEX, 0));
 
       // set up the window
       add(tabbedPane);  // add the pane to the GUI window
@@ -131,11 +136,15 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
             devices_.saveSettings();
 
             // save pane location in prefs
-            prefs_.putInt(XLOCATION, evt.getWindow().getX());
-            prefs_.putInt(YLOCATION, evt.getWindow().getY());
-            prefs_.putInt(TABINDEX, tabbedPane.getSelectedIndex());
+            prefs_.putInt(PREF_XLOCATION, evt.getWindow().getX());
+            prefs_.putInt(PREF_YLOCATION, evt.getWindow().getY());
+            prefs_.putInt(PREF_TABINDEX, tabbedPane.getSelectedIndex());
          }
       });
+   }
+   
+   public void unsetAllJoysticks() {
+      joystick_.unsetAllJoysticks();
    }
     
 
