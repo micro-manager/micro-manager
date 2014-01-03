@@ -62,6 +62,9 @@ public class DevicesPanel extends ListeningJPanel {
               "[]16[]"));
       devices_ = devices;
       core_ = MMStudioMainFrame.getInstance().getCore();
+      
+      // turn off listeners while we build the panel
+      devices_.enableListeners(false);
 
       add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.XYSTAGE) + ":", null, JLabel.RIGHT));
       JComboBox tmp_cb = makeDeviceBox(mmcorej.DeviceType.XYStageDevice, Devices.Keys.XYSTAGE); 
@@ -99,6 +102,9 @@ public class DevicesPanel extends ListeningJPanel {
       add(tmp_cb);
       tmp_cb = makeDeviceBox(mmcorej.DeviceType.GalvoDevice, Devices.Keys.GALVOB);
       add(tmp_cb, "wrap");
+      
+      // turn on listeners again
+      devices_.enableListeners(true);
       
    }//constructor
    

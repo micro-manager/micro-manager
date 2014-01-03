@@ -282,7 +282,11 @@ public class Devices {
     */
    public void saveSettings() {
       for (Devices.Keys key : deviceInfo_.keySet()) {
-         prefs_.put(key.toString(), deviceInfo_.get(key).mmDevice);
+         String mmDevice = getMMDevice(key);
+         if (mmDevice == null) {
+            mmDevice = "";
+         }
+         prefs_.put(key.toString(), mmDevice); 
       }
    }
    
@@ -320,6 +324,8 @@ public class Devices {
    private List<String>loadedDevices_;
    private Preferences prefs_;
    private CMMCore core_;
+   private List<DevicesListenerInterface> listeners_;
+   private boolean listenersEnabled_;
 
    public Devices() {
       prefs_ = Preferences.userNodeForPackage(this.getClass());
@@ -344,13 +350,12 @@ public class Devices {
 //      deviceInfo_.put(Keys.ASGALVOB, new DeviceData(Keys.ASGALVOB, "Anti-striping Micromirror", Sides.B));
 
       listeners_ = new ArrayList<DevicesListenerInterface>();
+      listenersEnabled_ = true;
       
       loadedDevices_ = GetLoadedDevices();
       restoreSettings();    // look for settings from last time
-
    }
    
-   private List<DevicesListenerInterface> listeners_;
 
    /**
     * Used to add classes implementing DeviceListenerInterface as listeners
@@ -359,6 +364,19 @@ public class Devices {
       listeners_.add(listener);
    }
 
+   /**
+    * Enable or disable listeners.  When switching from disabled to enabled
+    * it will perform callListeners()
+    */
+   public void enableListeners(boolean enabled) {
+      if (enabled && !listenersEnabled_) {
+         listenersEnabled_ = enabled;
+         callListeners();
+      }
+      listenersEnabled_ = enabled;
+   }
+   
+   
    /**
     * Remove classes implementing the DeviceListener interface from the listers
     *
@@ -372,8 +390,10 @@ public class Devices {
     * Call each listener in succession to alert them that something changed
     */
    public void callListeners() {
-      for (DevicesListenerInterface listener : listeners_) {
-         listener.devicesChangedAlert();
+      if (listenersEnabled_) {
+         for (DevicesListenerInterface listener : listeners_) {
+            listener.devicesChangedAlert();
+         }
       }
    }
    

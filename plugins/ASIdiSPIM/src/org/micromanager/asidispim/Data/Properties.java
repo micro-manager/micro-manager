@@ -28,7 +28,6 @@ import java.util.List;
 import mmcorej.CMMCore;
 
 import org.micromanager.MMStudioMainFrame;
-import org.micromanager.asidispim.Data.Joystick.Keys;
 import org.micromanager.asidispim.Utils.UpdateFromPropertyListenerInterface;
 import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.ReportingUtils;
@@ -370,8 +369,8 @@ public class Properties {
          }
       } catch (ParseException ex) {
          ReportingUtils.showError("Could not parse int value of " + strVal + " for " + name.toString() + " in device " + device.toString());
-      } catch (NullPointerException ex) {
-         ReportingUtils.showError("Null Pointer error in function getPropValueFLoat");
+//      } catch (NullPointerException ex) {
+//         ReportingUtils.showError("Null Pointer error in function getPropValueFLoat");
       }
       return val;
    }

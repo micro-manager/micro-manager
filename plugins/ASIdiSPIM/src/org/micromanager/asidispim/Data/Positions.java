@@ -48,9 +48,16 @@ public class Positions {
    public Positions(Devices devices) {
       devices_ = devices;
       core_ = MMStudioMainFrame.getInstance().getCore();
-      oneAxisDrivePositions_ = new HashMap<Devices.Keys, Double>();
-      twoAxisDrivePositions_ = new HashMap<Devices.Keys, Point2D.Double>();
       
+      // fill the hashmaps with correct keys, leave values blank for now
+      oneAxisDrivePositions_ = new HashMap<Devices.Keys, Double>();
+      for (Devices.Keys key : Devices.STAGES1D) {
+         oneAxisDrivePositions_.put(key, null);
+      }
+      twoAxisDrivePositions_ = new HashMap<Devices.Keys, Point2D.Double>();
+      for (Devices.Keys key : Devices.STAGES2D) {
+         twoAxisDrivePositions_.put(key, null);
+      }
       
    }// constructor
 
@@ -70,7 +77,7 @@ public class Positions {
     * @param devKey
     * @return 
     */
-   public double getOneAxisStagePosition(Devices.Keys devKey) {
+   public Double getOneAxisStagePosition(Devices.Keys devKey) {
       return oneAxisDrivePositions_.get(devKey);
    }
    
@@ -125,7 +132,7 @@ public class Positions {
       String ret = "";
       Double pt = getOneAxisStagePosition(devKey);
       if (pt != null) {
-         ret = posToDisplayStringUm(pt);
+         ret = posToDisplayStringUm(pt.doubleValue());
       }
       return ret;
    }
