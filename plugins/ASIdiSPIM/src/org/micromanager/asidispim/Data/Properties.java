@@ -78,6 +78,7 @@ public class Properties {
       SERIAL_COM_PORT("SerialComPort"),
       MAX_DEFLECTION_X("MaxDeflectionX(deg)"),
       MIN_DEFLECTION_X("MinDeflectionX(deg)"),
+      BEAM_ENABLED("BeamEnabled");
       ;
       private final String text;
       Keys(String text) {

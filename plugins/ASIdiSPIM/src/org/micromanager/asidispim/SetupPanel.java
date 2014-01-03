@@ -52,7 +52,7 @@ import org.micromanager.utils.ReportingUtils;
  * @author Jon
  */
 @SuppressWarnings("serial")
-public class SetupPanel extends ListeningJPanel implements LiveModeListener {
+public final class SetupPanel extends ListeningJPanel implements LiveModeListener {
 
    Devices devices_;
    Devices.Sides side_;
@@ -85,6 +85,8 @@ public class SetupPanel extends ListeningJPanel implements LiveModeListener {
    JToggleButton toggleButtonLive_;
    JCheckBox sheetABox_;
    JCheckBox sheetBBox_;
+   JCheckBox beamABox_;
+   JCheckBox beamBBox_;
    JLabel imagingPiezoPositionLabel_;
    JLabel illuminationPiezoPositionLabel_;
 
@@ -180,23 +182,32 @@ public class SetupPanel extends ListeningJPanel implements LiveModeListener {
           props_, devices_, micromirrorDeviceKey_, Properties.Keys.SA_AMPLITUDE_X_DEG);
     add(tmp_sl, "span 2, center, wrap");
     
-    add(new JLabel("Scan enabled:"));
-    sheetABox_ = pu.makeCheckBox("Side A", "0 - Disabled", "1 - Enabled", props_, devices_, 
-          Devices.Keys.GALVOA, Properties.Keys.SA_MODE_X);
-    add(sheetABox_, "split 2");
-    sheetBBox_ = pu.makeCheckBox("Side B", "0 - Disabled", "1 - Enabled", props_, devices_, 
-          Devices.Keys.GALVOB, Properties.Keys.SA_MODE_X);
-    add(sheetBBox_);
+    add(new JLabel("Beam enabled:"));
+    beamABox_ = pu.makeCheckBox("Side A", "No", "Yes", props_, devices_, 
+          Devices.Keys.GALVOA, Properties.Keys.BEAM_ENABLED);
+    add(beamABox_, "split 2");
+    beamBBox_ = pu.makeCheckBox("Side B", "No", "Yes", props_, devices_, 
+          Devices.Keys.GALVOB, Properties.Keys.BEAM_ENABLED);
+    add(beamBBox_);
     
-    add(new JLabel("Scan offset:"));
-    add(new JLabel(""));   // TODO update this label with current value
+    add(new JLabel("Scan offset:"), "span 1 2");
+    add(new JLabel(""), "span 1 2");   // TODO update this label with current value
 
     tmp_sl = pu.makeSlider(
           props.getPropValueFloat(micromirrorDeviceKey_, Properties.Keys.MIN_DEFLECTION_X), // min value
           props.getPropValueFloat(micromirrorDeviceKey_, Properties.Keys.MAX_DEFLECTION_X), // max value
           1000,  // the scale factor between internal integer representation and float representation
           props_, devices_, micromirrorDeviceKey_, Properties.Keys.SA_OFFSET_X_DEG);
-    add(tmp_sl, "span 2, center, wrap");
+    add(tmp_sl, "span 2 2, center, wrap");
+    
+    add(new JLabel("Scan enabled:"));
+    sheetABox_ = pu.makeCheckBox("Side A", "0 - Disabled", "1 - Enabled", props_, devices_, 
+          Devices.Keys.GALVOA, Properties.Keys.SA_MODE_X);
+    add(sheetABox_, "split 2");
+    sheetBBox_ = pu.makeCheckBox("Side B", "0 - Disabled", "1 - Enabled", props_, devices_, 
+          Devices.Keys.GALVOB, Properties.Keys.SA_MODE_X);
+    add(sheetBBox_, "wrap");
+    
     
     tmp_but = new JButton("Toggle scan");
     tmp_but.addActionListener(new ActionListener() {
