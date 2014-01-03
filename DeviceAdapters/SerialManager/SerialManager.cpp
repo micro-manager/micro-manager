@@ -597,7 +597,7 @@ int SerialPort::SetCommand(const char* command, const char* term)
       }
    }
 
-   LogBinaryMessage("SetCommand", false, sendText, true);
+   LogAsciiCommunication("SetCommand", false, sendText);
 
    return DEVICE_OK;
 }
@@ -667,7 +667,7 @@ int SerialPort::GetAnswer(char* answer, unsigned bufLen, const char* term)
                LogMessage(("GetAnswer # retries = " +
                   boost::lexical_cast<std::string>(retryCounter)).c_str(), true);
 
-            LogBinaryMessage("GetAnswer", true, answer, true);
+            LogAsciiCommunication("GetAnswer", true, answer);
 
             // erase the terminator from the answer:
             *termPos = '\0';
@@ -683,7 +683,7 @@ int SerialPort::GetAnswer(char* answer, unsigned bufLen, const char* term)
             LogMessage(("GetAnswer without terminator returned after " + 
                boost::lexical_cast<std::string>((long)((GetCurrentMMTime() - startTime).getMsec())) +
                "msec").c_str(), true);
-            LogBinaryMessage("GetAnswer", true, answer, true);
+            LogAsciiCommunication("GetAnswer", true, answer);
             return DEVICE_OK;
          }
       }
@@ -719,7 +719,7 @@ int SerialPort::Write(const unsigned char* buf, unsigned long bufLen)
    if( 0 < i)
    {
       if (verbose_)
-         LogBinaryMessage("Write", false, buf, i, true);
+         LogBinaryCommunication("Write", false, buf, i);
    }
 
    return ret;
@@ -760,7 +760,7 @@ int SerialPort::Read(unsigned char* buf, unsigned long bufLen, unsigned long& ch
       if( 0 < charsRead)
       {
          if(verbose_)
-            LogBinaryMessage("Read", true, buf, charsRead, true);
+            LogBinaryCommunication("Read", true, buf, charsRead);
       }
    }
    else
@@ -909,48 +909,121 @@ int SerialPort::OnDelayBetweenCharsMs(MM::PropertyBase* pProp, MM::ActionType eA
    return DEVICE_OK;
 }
 
-void SerialPort::LogBinaryMessage(const char* prefix, bool isInput, const std::string& data, bool debugOnly)
+
+// Helper functions for message logging
+// (TODO: Do these have any utility outside of SerialManager?)
+
+// Note: This returns true for ' ' (space).
+static bool ShouldEscape(char ch)
 {
-   LogBinaryMessage(prefix, isInput, reinterpret_cast<const unsigned char*>(data.c_str()), data.size(), debugOnly);
+   if (ch >= 0 && std::isgraph(ch))
+      if (std::string("\'\"\\").find(ch) == std::string::npos)
+         return false;
+   return true;
 }
 
-void SerialPort::LogBinaryMessage(const char* prefix, bool isInput, const unsigned char* pdata, std::size_t length, bool debugOnly)
+static void PrintEscaped(std::ostream& strm, char ch)
 {
-   const std::vector<unsigned char> data(pdata, pdata + length);
-   LogBinaryMessage(prefix, isInput, data, debugOnly);
+   switch (ch)
+   {
+      // We leave out some less common C escape sequences that are more handy
+      // to read as hex values (\a, \b, \f, \v).
+      case '\'': strm << "\\\'"; break;
+      case '\"': strm << "\\\""; break;
+      case '\\': strm << "\\\\"; break;
+      case '\0': strm << "\\0"; break;
+      case '\n': strm << "\\n"; break;
+      case '\r': strm << "\\r"; break;
+      case '\t': strm << "\\t"; break;
+      default:
+      {
+         // boost::format doesn't work with "%02hhx". Also note that the
+         // reinterpret_cast to unsigned char is necessary to prevent sign
+         // extension.
+         unsigned char byte = *reinterpret_cast<unsigned char*>(&ch);
+         strm << boost::format("\\x%02x") % static_cast<unsigned int>(byte);
+         break;
+      }
+   }
 }
 
-void SerialPort::LogBinaryMessage(const char* prefix, bool isInput, const std::vector<unsigned char>& data, bool debugOnly)
+static void FormatAsciiContent(std::ostream& strm, const char* begin, const char* end)
 {
-   std::ostringstream oss;
-   oss << prefix;
-   oss << (isInput ? " <- " : " -> ");
+   // We log ASCII data in an unambiguous format free of control characters and
+   // spaces. The format used is a valid C escaped string (without the
+   // surrounding quotes), with the exception of '?' not being escaped even if
+   // it constitutes part of a trigraph.
 
-   // We log the data in an unambiguous format free of control characters and
-   // spaces. The format used is a valid C escaped string (without the quotes),
-   // although not all escape sequences are used (e.g. \a and \t are not used).
+   // We want to escape leading and trailing spaces, but not internal spaces,
+   // for maximum readability and zero ambiguity.
+   bool hasEncounteredNonSpace = false;
+   unsigned pendingSpaces = 0;
 
-   std::vector<unsigned char>::const_iterator end = data.end();
-   for (std::vector<unsigned char>::const_iterator ii = data.begin(); ii != end; ++ii) {
-      if (*ii == '\\') {
-         oss << "\\\\";
+   for (const char* p = begin; p != end; ++p)
+   {
+      if (*p == ' ')
+      {
+         if (!hasEncounteredNonSpace)
+            PrintEscaped(strm, ' '); // Leading space
+         else
+            ++pendingSpaces; // Don't know yet if internal or trailing space
       }
-      else if (*ii < 0x80 && std::isgraph(*ii)) { // ASCII and graphical (but not backslash)
-         oss << static_cast<char>(*ii);
-      }
-      else if (*ii == '\r') {
-         oss << "\\r";
-      }
-      else if (*ii == '\n') {
-         oss << "\\n";
-      }
-      else {
-         // boost::format doesn't work with %02hhx. Also note that the
-         // following requires that *ii is _unsigned_ char (a signed char would
-         // be sign-extended).
-         oss << boost::format("\\x%02x") % static_cast<unsigned>(*ii);
+      else // *p != ' '
+      {
+         if (!hasEncounteredNonSpace)
+            hasEncounteredNonSpace = true;
+         else
+         {
+            while (pendingSpaces > 0)
+            {
+               strm << ' '; // Internal space
+               --pendingSpaces;
+            }
+         }
+
+         if (ShouldEscape(*p))
+            PrintEscaped(strm, *p);
+         else
+            strm << *p;
       }
    }
 
-   LogMessage(oss.str().c_str(), debugOnly);
+   while (pendingSpaces > 0)
+   {
+      PrintEscaped(strm, ' '); // Trailing space
+      --pendingSpaces;
+   }
+}
+
+static void FormatBinaryContent(std::ostream& strm, const unsigned char* begin, const unsigned char* end)
+{
+   for (const unsigned char* p = begin; p != end; ++p)
+   {
+      if (p != begin)
+         strm << ' ';
+      strm << boost::format("%02x") % static_cast<unsigned int>(*p);
+   }
+}
+
+static void PrintCommunicationPrefix(std::ostream& strm, const char* prefix, bool isInput)
+{
+   strm << prefix;
+   strm << (isInput ? " <- " : " -> ");
+}
+
+void SerialPort::LogAsciiCommunication(const char* prefix, bool isInput, const std::string& data)
+{
+   std::ostringstream oss;
+   PrintCommunicationPrefix(oss, prefix, isInput);
+   FormatAsciiContent(oss, data.c_str(), data.c_str() + data.size());
+   LogMessage(oss.str().c_str(), true);
+}
+
+void SerialPort::LogBinaryCommunication(const char* prefix, bool isInput, const unsigned char* pdata, std::size_t length)
+{
+   std::ostringstream oss;
+   PrintCommunicationPrefix(oss, prefix, isInput);
+   oss << "(hex) ";
+   FormatBinaryContent(oss, pdata, pdata + length);
+   LogMessage(oss.str().c_str(), true);
 }
