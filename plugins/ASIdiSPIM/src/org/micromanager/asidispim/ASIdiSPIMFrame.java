@@ -142,11 +142,11 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
    // MMListener mandated member functions
    public void propertiesChangedAlert() {
       // doesn't seem to actually be called by core when property changes
-      devices_.callListeners();
+      props_.callListeners();
    }
 
    public void propertyChangedAlert(String device, String property, String value) {
-      devices_.callListeners();
+      props_.callListeners();
    }
 
    public void configGroupChangedAlert(String groupName, String newConfig) {
