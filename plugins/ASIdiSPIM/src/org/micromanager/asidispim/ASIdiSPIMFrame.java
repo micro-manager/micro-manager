@@ -42,11 +42,14 @@ import org.micromanager.MMStudioMainFrame;
 import org.micromanager.internalinterfaces.LiveModeListener; 
 
 // TODO figure out update of slider limits when devices changed
+// TODO able to disable position update
 // TODO fix scan A/B when switching between tabs
+// TODO figure out why NR Z, NV X, and NV Y are called by devices_.callListeners()
 // TODO resolve whether Home/Stop should be added to 1axis stage API, use here if possible
 // TODO add sethome property to device adapter and use it here
+// TODO add help text and/or link to wiki
+// TODO check if window position is off screen (can happen if changing monitors) and reset if so
 // TODO centralize preference handling?
-// TODO able to disable position update
 // TODO make position listener instead of current update mechanism?
 
 /**
@@ -95,7 +98,7 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
       tabbedPane.addLTab("Navigation", navigationPanel);
       tabbedPane.addLTab("Help", new HelpPanel());
       
-      final Timer stagePosUpdater = new Timer(1000, new ActionListener() {
+      final Timer stagePosUpdater = new Timer(1000000, new ActionListener() {
          public void actionPerformed(ActionEvent ae) {
             // update stage positions in devices
             positions_.updateStagePositions();

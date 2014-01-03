@@ -138,6 +138,9 @@ public class JoystickPanel extends ListeningJPanel {
        * @param ae
        */
       public void actionPerformed(ActionEvent ae) {
+         if (updatingList_ == true) {
+            return;  // don't go through this if we are rebuilding selections
+         }
          JSAxisData axis = JSAxisDataHash_.get(jc_.getSelectedItem());
          if (axis != null) {
             if (axis.deviceKey != Devices.Keys.NONE) {
