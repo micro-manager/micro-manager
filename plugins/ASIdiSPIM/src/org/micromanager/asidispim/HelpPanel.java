@@ -22,7 +22,17 @@
 package org.micromanager.asidispim;
 
 
+import java.awt.Desktop;
+import java.awt.Dimension;
+import java.net.URI;
+
+import javax.swing.JScrollPane;
+import javax.swing.JTextPane;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
+
 import org.micromanager.asidispim.Utils.ListeningJPanel;
+import org.micromanager.utils.ReportingUtils;
 
 import net.miginfocom.swing.MigLayout;
 
@@ -43,6 +53,35 @@ public class HelpPanel extends ListeningJPanel {
               "[right]8[align center]16[right]8[center]8[center]8[center]",
               "[]16[]"));
      
+      final JTextPane textPane = new JTextPane();
+      textPane.setEditable(false);
+      textPane.setContentType("text/html");
+      textPane.setText("This plugin is a work in progress, and please contact the authors "
+            + "if you have bug reports or feature requests.  Further information, "
+            + "plus instructions are at "
+            + "<a href='http://micro-manager.org/wiki/ASIdiSPIM_Plugin'>"
+            + "http://micro-manager.org/wiki/ASIdiSPIM_Plugin</a>.");
+      textPane.addHyperlinkListener(new HyperlinkListener() {
+         @Override
+         public void hyperlinkUpdate(HyperlinkEvent hle) {
+            if (HyperlinkEvent.EventType.ACTIVATED.equals(hle.getEventType())) {
+               try {
+                   Desktop.getDesktop().browse(new URI(hle.getURL().toString()));
+               } catch (Exception ex) {
+                  ReportingUtils.showError("Could not open web browser."); 
+               }
+
+           }
+         }
+      });
+      final JScrollPane editScroll = new JScrollPane(textPane);
+      editScroll.setPreferredSize(new Dimension(500,250));
+      editScroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+      editScroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+      add(editScroll);
+      
+      
+      
    }
    
    @Override

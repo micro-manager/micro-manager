@@ -50,8 +50,6 @@ public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerI
    Devices devices_;
    Properties props_;
    
-//   private final List<UpdateFromPropertyListenerInterface> listeners_;
-
    public SpimParamsPanel(Devices devices, Properties props) {
       super(new MigLayout(
             "",
@@ -60,8 +58,6 @@ public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerI
       devices_ = devices;
       props_ = props;
       
-//      listeners_ = new ArrayList<UpdateFromPropertyListenerInterface>();
-
       try {
          PanelUtils pu = new PanelUtils();
          JSpinner tmp_jsp;
@@ -112,9 +108,9 @@ public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerI
          buttonStart_.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-               props_.setPropValue(Devices.Keys.PIEZOA, Properties.Keys.SPIM_STATE, Properties.Values.ARMED.toString());
-               props_.setPropValue(Devices.Keys.PIEZOB, Properties.Keys.SPIM_STATE, Properties.Values.ARMED.toString());
-               props_.setPropValue(Devices.Keys.GALVOA, Properties.Keys.SPIM_STATE, Properties.Values.RUNNING.toString());
+               props_.setPropValue(Devices.Keys.PIEZOA, Properties.Keys.SPIM_STATE, Properties.Values.SPIM_ARMED.toString());
+               props_.setPropValue(Devices.Keys.PIEZOB, Properties.Keys.SPIM_STATE, Properties.Values.SPIM_ARMED.toString());
+               props_.setPropValue(Devices.Keys.GALVOA, Properties.Keys.SPIM_STATE, Properties.Values.SPIM_RUNNING.toString());
                // TODO generalize this for different ways of running SPIM
             }
          });

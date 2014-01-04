@@ -183,10 +183,12 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
     add(tmp_sl, "span 2, center, wrap");
     
     add(new JLabel("Beam enabled:"));
-    beamABox_ = pu.makeCheckBox("Side A", "No", "Yes", props_, devices_, 
+    beamABox_ = pu.makeCheckBox("Path A", 
+          Properties.Values.NO.toString(), Properties.Values.YES.toString(),
+          props_, devices_, 
           Devices.Keys.GALVOA, Properties.Keys.BEAM_ENABLED);
     add(beamABox_, "split 2");
-    beamBBox_ = pu.makeCheckBox("Side B", "No", "Yes", props_, devices_, 
+    beamBBox_ = pu.makeCheckBox("Path B", "No", "Yes", props_, devices_, 
           Devices.Keys.GALVOB, Properties.Keys.BEAM_ENABLED);
     add(beamBBox_);
     
@@ -201,12 +203,32 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
     add(tmp_sl, "span 2 2, center, wrap");
     
     add(new JLabel("Scan enabled:"));
-    sheetABox_ = pu.makeCheckBox("Side A", "0 - Disabled", "1 - Enabled", props_, devices_, 
+    sheetABox_ = pu.makeCheckBox("Path A", 
+          Properties.Values.SAM_DISABLED.toString(), Properties.Values.SAM_ENABLED.toString(), 
+          props_, devices_, 
           Devices.Keys.GALVOA, Properties.Keys.SA_MODE_X);
     add(sheetABox_, "split 2");
-    sheetBBox_ = pu.makeCheckBox("Side B", "0 - Disabled", "1 - Enabled", props_, devices_, 
+    sheetBBox_ = pu.makeCheckBox("Path B", "0 - Disabled", "1 - Enabled", props_, devices_, 
           Devices.Keys.GALVOB, Properties.Keys.SA_MODE_X);
     add(sheetBBox_, "wrap");
+
+    // disable the sheetA/B boxes when beam is disabled and vice versa
+    beamABox_.addActionListener(new ActionListener() {
+       public void actionPerformed(ActionEvent e) { 
+          sheetABox_.setEnabled(beamABox_.isSelected());
+          // whether beam is turned off or on, we want scan to be off on toggle
+          sheetABox_.setSelected(false);
+       }
+    } 
+    );
+    beamBBox_.addActionListener(new ActionListener() {
+       public void actionPerformed(ActionEvent e) { 
+          sheetBBox_.setEnabled(beamBBox_.isSelected());
+          // whether beam is turned off or on, we want scan to be off on toggle
+          sheetBBox_.setSelected(false);
+       }
+    } 
+    );
     
     
     tmp_but = new JButton("Toggle scan");
@@ -472,8 +494,8 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
 
    @Override
    public void updateStagePositions() {
-      imagingPiezoPositionLabel_.setText(positions_.getStagePositionString(piezoImagingDeviceKey_));
-      illuminationPiezoPositionLabel_.setText(positions_.getStagePositionString(piezoIlluminationDeviceKey_));
+      imagingPiezoPositionLabel_.setText(positions_.getPositionString(piezoImagingDeviceKey_));
+      illuminationPiezoPositionLabel_.setText(positions_.getPositionString(piezoIlluminationDeviceKey_));
    }
       
 }

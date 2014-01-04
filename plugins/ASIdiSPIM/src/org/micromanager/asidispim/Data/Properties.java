@@ -98,9 +98,11 @@ public class Properties {
       JS_Y("3 - joystick Y"),
       JS_RIGHT_WHEEL("22 - right wheel"),
       JS_LEFT_WHEEL("23 - left wheel"),
-      ARMED("Armed"),
-      RUNNING("Running"),
-      IDLE("Idle"),
+      SPIM_ARMED("Armed"),
+      SPIM_RUNNING("Running"),
+      SPIM_IDLE("Idle"),
+      SAM_DISABLED("0 - Disabled"),
+      SAM_ENABLED("1 - Enabled"),
       ;
       private final String text;
       Values(String text) {

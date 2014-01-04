@@ -24,7 +24,8 @@ package org.micromanager.asidispim;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import javax.swing.JCheckBox;
+import java.util.prefs.Preferences;
+
 import org.micromanager.asidispim.Data.Devices;
 import org.micromanager.asidispim.Data.Joystick;
 import org.micromanager.asidispim.Data.Positions;
@@ -32,6 +33,7 @@ import org.micromanager.asidispim.Utils.ListeningJPanel;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JCheckBox;
 
 import net.miginfocom.swing.MigLayout;
 
@@ -46,6 +48,7 @@ public class NavigationPanel extends ListeningJPanel {
    Devices devices_;
    Joystick joystick_;
    Positions positions_;
+   Preferences prefs_;
    
    JPanel joystickPanel_;
    
@@ -60,6 +63,8 @@ public class NavigationPanel extends ListeningJPanel {
    JLabel galvoBxPositionLabel_;
    JLabel galvoByPositionLabel_;
    
+   private static final String PREF_ENABLEUPDATES = "EnablePositionUpdates";
+   
    /**
     * Navigation panel constructor.
     */
@@ -72,6 +77,8 @@ public class NavigationPanel extends ListeningJPanel {
       devices_ = devices;
       joystick_ = joystick;
       positions_ = positions;
+      prefs_ = Preferences.userNodeForPackage(this.getClass());
+      
       joystickPanel_ = new JoystickPanel(joystick_, devices_, "Navigation");
       add(joystickPanel_, "span 2 4");  // make artificially tall to keep stage positions in line with each other
       
@@ -91,21 +98,22 @@ public class NavigationPanel extends ListeningJPanel {
       upperZPositionLabel_ = new JLabel("");
       add(upperZPositionLabel_, "wrap");
       
-      final JCheckBox activeTimerCheckBox = new JCheckBox("Live Update");
+      final JCheckBox activeTimerCheckBox = new JCheckBox("Enable position update");
       activeTimerCheckBox.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent e) { 
             if (activeTimerCheckBox.isSelected()) {
-               parentFrame.startTimer();
+               parentFrame.startStagePosTimer();
             } else {
-              parentFrame.stopTimer();
+              parentFrame.stopStagePosTimer();
             }
+            prefs_.putBoolean(PREF_ENABLEUPDATES, activeTimerCheckBox.isSelected());
          }
       } 
-   
       );
-      add(activeTimerCheckBox);
+      activeTimerCheckBox.setSelected(prefs_.getBoolean(PREF_ENABLEUPDATES, true));
+      add(activeTimerCheckBox, "align left, span 2");
       
-      add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.PIEZOA) + ":"), "span 2, align right");
+      add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.PIEZOA) + ":"));
       piezoAPositionLabel_ = new JLabel("");
       add(piezoAPositionLabel_, "wrap");
       
@@ -144,16 +152,16 @@ public class NavigationPanel extends ListeningJPanel {
    
    @Override
    public void updateStagePositions() {
-      xPositionLabel_.setText(positions_.getXYStagePositionString(Devices.Keys.XYSTAGE, Joystick.Directions.X));   
-      yPositionLabel_.setText(positions_.getXYStagePositionString(Devices.Keys.XYSTAGE, Joystick.Directions.Y));
-      lowerZPositionLabel_.setText(positions_.getStagePositionString(Devices.Keys.LOWERZDRIVE));
-      upperZPositionLabel_.setText(positions_.getStagePositionString(Devices.Keys.UPPERZDRIVE));
-      piezoAPositionLabel_.setText(positions_.getStagePositionString(Devices.Keys.PIEZOA));
-      piezoBPositionLabel_.setText(positions_.getStagePositionString(Devices.Keys.PIEZOB));
-      galvoAxPositionLabel_.setText(positions_.getMicromirrorPositionString(Devices.Keys.GALVOA, Joystick.Directions.X));
-      galvoAyPositionLabel_.setText(positions_.getMicromirrorPositionString(Devices.Keys.GALVOA, Joystick.Directions.Y));
-      galvoBxPositionLabel_.setText(positions_.getMicromirrorPositionString(Devices.Keys.GALVOB, Joystick.Directions.X));
-      galvoByPositionLabel_.setText(positions_.getMicromirrorPositionString(Devices.Keys.GALVOB, Joystick.Directions.Y)); 
+      xPositionLabel_.setText(positions_.getPositionString(Devices.Keys.XYSTAGE, Joystick.Directions.X));   
+      yPositionLabel_.setText(positions_.getPositionString(Devices.Keys.XYSTAGE, Joystick.Directions.Y));
+      lowerZPositionLabel_.setText(positions_.getPositionString(Devices.Keys.LOWERZDRIVE));
+      upperZPositionLabel_.setText(positions_.getPositionString(Devices.Keys.UPPERZDRIVE));
+      piezoAPositionLabel_.setText(positions_.getPositionString(Devices.Keys.PIEZOA));
+      piezoBPositionLabel_.setText(positions_.getPositionString(Devices.Keys.PIEZOB));
+      galvoAxPositionLabel_.setText(positions_.getPositionString(Devices.Keys.GALVOA, Joystick.Directions.X));
+      galvoAyPositionLabel_.setText(positions_.getPositionString(Devices.Keys.GALVOA, Joystick.Directions.Y));
+      galvoBxPositionLabel_.setText(positions_.getPositionString(Devices.Keys.GALVOB, Joystick.Directions.X));
+      galvoByPositionLabel_.setText(positions_.getPositionString(Devices.Keys.GALVOB, Joystick.Directions.Y)); 
    }
       
 

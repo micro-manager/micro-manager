@@ -87,7 +87,7 @@ public class Positions {
     * @param dir
     * @return
     */
-   public String getXYStagePositionString(Devices.Keys devKey, Joystick.Directions dir) {
+   private String getXYStagePositionString(Devices.Keys devKey, Joystick.Directions dir) {
       String ret = "";
       Point2D.Double pt = getTwoAxisStagePosition(devKey);
       if (pt != null) {
@@ -107,7 +107,7 @@ public class Positions {
     * @param dir
     * @return
     */
-   public String getMicromirrorPositionString(Devices.Keys devKey, Joystick.Directions dir) {
+   private String getMicromirrorPositionString(Devices.Keys devKey, Joystick.Directions dir) {
       String ret = "";
       Point2D.Double pt = getTwoAxisStagePosition(devKey);
       if (pt != null) {
@@ -127,7 +127,7 @@ public class Positions {
     * @param dir
     * @return
     */
-   public String getStagePositionString(Devices.Keys devKey) {
+   private String getStagePositionString(Devices.Keys devKey) {
       String ret = "";
       Double pt = getOneAxisStagePosition(devKey);
       if (pt != null) {
@@ -135,6 +135,35 @@ public class Positions {
       }
       return ret;
    }
+   
+   /**
+    * Returns cached position in string form.
+    * If dir == Joystick.Directions.NONE then assumes 1D stage
+    * Assumes 2D stage is galvo unless it is Devices.Keys.XYSTAGE
+    * @param devKey
+    * @param dir
+    * @return
+    */
+   public String getPositionString(Devices.Keys devKey, Joystick.Directions dir) {
+      // would probably be nice to add some extra error checking here
+      if (devKey==Devices.Keys.XYSTAGE) {
+         return getXYStagePositionString(devKey, dir);
+      }
+      if (dir==Joystick.Directions.NONE) {
+         return getStagePositionString(devKey);
+      }
+      return getMicromirrorPositionString(devKey, dir);
+   }
+   
+   /**
+    * Returns cached position in string form for 1D stage
+    * @param devKey
+    * @return
+    */
+   public String getPositionString(Devices.Keys devKey) {
+      return getStagePositionString(devKey);
+   }
+
    
    
    /**
