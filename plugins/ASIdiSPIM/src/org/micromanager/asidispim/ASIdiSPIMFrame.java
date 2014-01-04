@@ -39,6 +39,7 @@ import javax.swing.event.ChangeListener;
 import org.micromanager.api.MMListenerInterface;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.MMStudioMainFrame; 
+import org.micromanager.asidispim.Utils.StagePositionUpdater;
 import org.micromanager.internalinterfaces.LiveModeListener; 
 
 // TODO add "move to zero position" and "set to zero position" buttons on navigation
@@ -77,8 +78,6 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
    private static final String PREF_YLOCATION = "ylocation";
    private static final String PREF_TABINDEX = "tabIndex";
    
-   private final Timer stagePosUpdater_;
-   
    /**
     * Creates the ASIdiSPIM plugin frame
     * @param gui - Micro-Manager script interface
@@ -89,6 +88,7 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
       props_ = new Properties(devices_);  // doesn't have its own frame, but is an object used by other classes
       positions_ = new Positions(devices_);
       joystick_ = new Joystick(devices_, props_);
+      final StagePositionUpdater stagePosUpdater = new StagePositionUpdater(positions_);
       
       final ListeningJTabbedPane tabbedPane = new ListeningJTabbedPane();
         
@@ -98,31 +98,27 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
       tabbedPane.addLTab("Devices", devicesPanel_);
       spimParamsPanel_ = new SpimParamsPanel(devices_, props_);
       tabbedPane.addLTab("SPIM Params", spimParamsPanel_);
+      
       setupPanelA_ = new SetupPanel(devices_, props_, joystick_, 
             Devices.Sides.A, positions_);
       tabbedPane.addLTab("Setup Path A", setupPanelA_);
+      stagePosUpdater.addPanel(setupPanelA_);
       MMStudioMainFrame.getInstance().addLiveModeListener((LiveModeListener) setupPanelA_);
+      
       setupPanelB_ = new SetupPanel(devices_, props_, joystick_,
             Devices.Sides.B, positions_); 
       tabbedPane.addLTab("Setup Path B", setupPanelB_);
+      stagePosUpdater.addPanel(setupPanelB_);
       MMStudioMainFrame.getInstance().addLiveModeListener((LiveModeListener) setupPanelB_);
+      
       navigationPanel_ = new NavigationPanel(devices_, joystick_,
-            positions_, this);
+            positions_, stagePosUpdater);
       tabbedPane.addLTab("Navigation", navigationPanel_);
+      stagePosUpdater.addPanel(navigationPanel_);
+      
       helpPanel_ = new HelpPanel();
       tabbedPane.addLTab("Help", helpPanel_);
       
-      stagePosUpdater_ = new Timer(1000, new ActionListener() {
-         public void actionPerformed(ActionEvent ae) {
-            // update stage positions in devices
-            positions_.updateStagePositions();
-            // notify listeners that positions are updated
-            setupPanelA_.updateStagePositions();
-            setupPanelB_.updateStagePositions();
-            navigationPanel_.updateStagePositions();
-         }
-      });
-      startStagePosTimer();
                
       // make sure gotSelected() gets called whenever we switch tabs
       tabbedPane.addChangeListener(new ChangeListener() {
@@ -147,7 +143,7 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
          @Override
          public void windowClosing(java.awt.event.WindowEvent evt) {
             // stop the timer for updating stages
-            stagePosUpdater_.stop();
+            stagePosUpdater.stop();
 
             // save selections in device tab
             devices_.saveSettings();
@@ -159,18 +155,7 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
          }
       });
    }
-   
-   public void stopStagePosTimer() {
-      if (stagePosUpdater_ != null) {
-         stagePosUpdater_.stop();
-      }
-   }
-   
-   public void startStagePosTimer() {
-      if (stagePosUpdater_ != null) {
-         stagePosUpdater_.start();
-      }
-   }
+  
     
 
    // MMListener mandated member functions

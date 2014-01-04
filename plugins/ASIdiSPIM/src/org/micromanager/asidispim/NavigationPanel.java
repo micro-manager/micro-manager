@@ -36,6 +36,7 @@ import javax.swing.JPanel;
 import javax.swing.JCheckBox;
 
 import net.miginfocom.swing.MigLayout;
+import org.micromanager.asidispim.Utils.StagePositionUpdater;
 
 
 /**
@@ -69,7 +70,7 @@ public class NavigationPanel extends ListeningJPanel {
     * Navigation panel constructor.
     */
    public NavigationPanel(Devices devices, Joystick joystick, Positions positions,
-           final ASIdiSPIMFrame parentFrame) {    
+           final StagePositionUpdater stagePosUpdater) {    
       super (new MigLayout(
               "", 
               "[right]8[align center]16[right]8[center]8[center]8[center]",
@@ -102,9 +103,9 @@ public class NavigationPanel extends ListeningJPanel {
       activeTimerCheckBox.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent e) { 
             if (activeTimerCheckBox.isSelected()) {
-               parentFrame.startStagePosTimer();
+               stagePosUpdater.start(1000);
             } else {
-              parentFrame.stopStagePosTimer();
+              stagePosUpdater.stop();
             }
             prefs_.putBoolean(PREF_ENABLEUPDATES, activeTimerCheckBox.isSelected());
          }
