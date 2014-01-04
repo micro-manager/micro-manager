@@ -245,7 +245,7 @@ public class PanelUtils {
 
          public void stateChanged(ChangeEvent ce) {
             // TODO figure out why the type of value in the numbermodel is changing type to float which necessitates this code
-            float f = 0;
+            float f;
             try {
                f = (float)((Double)sp_.getValue()).doubleValue();
             } catch (Exception ex) {

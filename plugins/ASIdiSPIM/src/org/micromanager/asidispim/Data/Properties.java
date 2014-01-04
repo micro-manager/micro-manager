@@ -84,6 +84,7 @@ public class Properties {
       Keys(String text) {
          this.text = text;
       }
+      @Override
       public String toString() {
          return text;
       }
@@ -108,6 +109,7 @@ public class Properties {
       Values(String text) {
          this.text = text;
       }
+      @Override
       public String toString() {
          return text;
       }
@@ -287,30 +289,31 @@ public class Properties {
    }
 
    /**
-    * returns a string value for the specified property (assumes the caller knows the property contains an string)
+    * returns a string value for the specified property (assumes the caller 
+    * knows the property contains an string)
+    * 
     * @param device enum key for device 
     * @param name enum key for property 
     * @return
     * @throws ParseException
     */
    public String getPropValueString(Devices.Keys device, Properties.Keys name) {
-      String strVal = null;
-      strVal = getPropValue(device, name, true);
-      return strVal;
+      return getPropValue(device, name, true);
    }
    
    /**
-    * returns a string value for the specified property (assumes the caller knows the property contains an string)
+    * returns a string value for the specified property (assumes the caller 
+    * knows the property contains an string)
+    * 
     * @param device enum key for device 
     * @param name enum key for property 
     * @param ignoreError false (default) will do error checking, true means ignores non-existing property
     * @return
     * @throws ParseException
     */
-   public String getPropValueString(Devices.Keys device, Properties.Keys name, boolean ignoreError) {
-      String strVal = null;
-      strVal = getPropValue(device, name, ignoreError);
-      return strVal;
+   public String getPropValueString(Devices.Keys device, Properties.Keys name, 
+           boolean ignoreError) {
+      return getPropValue(device, name, ignoreError);
    }
    
    /**

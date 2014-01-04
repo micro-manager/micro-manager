@@ -58,6 +58,7 @@ public class Joystick {
       Keys(String text) {
          this.text = text;
       }
+      @Override
       public String toString() {
          return text;
       }
@@ -69,6 +70,7 @@ public class Joystick {
       Directions(String text) {
          this.text = text;
       }
+      @Override
       public String toString() {
          return text;
       }
@@ -109,8 +111,30 @@ public class Joystick {
          return (this.displayString.equals(a.displayString) && this.direction==a.direction && this.deviceKey==a.deviceKey);
       }
       
+      @Override
       public int hashCode() {
          return (this.displayString.hashCode() + this.deviceKey.toString().hashCode() + this.direction.toString().hashCode());
+      }
+
+      @Override
+      public boolean equals(Object obj) {
+         if (obj == null) {
+            return false;
+         }
+         if (getClass() != obj.getClass()) {
+            return false;
+         }
+         final JSAxisData other = (JSAxisData) obj;
+         if ((this.displayString == null) ? (other.displayString != null) : !this.displayString.equals(other.displayString)) {
+            return false;
+         }
+         if (this.deviceKey != other.deviceKey) {
+            return false;
+         }
+         if (this.direction != other.direction) {
+            return false;
+         }
+         return true;
       }
    }
    

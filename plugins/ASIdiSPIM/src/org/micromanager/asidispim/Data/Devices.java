@@ -62,6 +62,7 @@ public class Devices {
       Sides(String text) {
          this.text = text;
       }
+      @Override
       public String toString() {
          return text;
       }
@@ -116,6 +117,7 @@ public class Devices {
          this.axisLetter = "";
       }
       
+      @Override
       public String toString() {
          switch (side) { // break not needed here
          case A: 
@@ -305,7 +307,7 @@ public class Devices {
     * Assumes loadedDevices_ contains all available devices, and sets any no-longer-existing device to null.
     * Changes deviceInfo_.
     */
-   public void restoreSettings() {
+   public final void restoreSettings() {
       for (Devices.Keys key : Devices.Keys.values()) {
          String mmDevice = prefs_.get(key.toString(), "");
          if (!loadedDevices_.contains(mmDevice)) {
@@ -321,7 +323,7 @@ public class Devices {
     * Queries core to see what devices are available
     * @return ArrayList containing the Micro-Manager names of all loaded devices
     */
-   private final ArrayList<String> GetLoadedDevices() {
+   private ArrayList<String> GetLoadedDevices() {
       ArrayList<String> list = new ArrayList<String>();
       StrVector strv = core_.getLoadedDevices();
       for (int i =0; i < strv.size(); i++) {

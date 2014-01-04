@@ -181,7 +181,7 @@ public class Positions {
             twoAxisDrivePositions_.put(devKey, null);
             continue;
          }
-         Point2D.Double pt = null;
+         Point2D.Double pt;
          try {
             if (devKey == Devices.Keys.XYSTAGE) {
                pt = core_.getXYStagePosition(mmDevice);
