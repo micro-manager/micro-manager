@@ -100,7 +100,7 @@ public class NavigationPanel extends ListeningJPanel {
       add(upperZPositionLabel_, "wrap");
       
       final JCheckBox activeTimerCheckBox = new JCheckBox("Enable position update");
-      activeTimerCheckBox.addActionListener(new ActionListener() {
+      ActionListener ae = new ActionListener() {
          public void actionPerformed(ActionEvent e) { 
             if (activeTimerCheckBox.isSelected()) {
                stagePosUpdater.start(1000);
@@ -109,9 +109,10 @@ public class NavigationPanel extends ListeningJPanel {
             }
             prefs_.putBoolean(PREF_ENABLEUPDATES, activeTimerCheckBox.isSelected());
          }
-      } 
-      );
+      }; 
+      activeTimerCheckBox.addActionListener(ae);
       activeTimerCheckBox.setSelected(prefs_.getBoolean(PREF_ENABLEUPDATES, true));
+      ae.actionPerformed(null);
       add(activeTimerCheckBox, "align left, span 2");
       
       add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.PIEZOA) + ":"));
