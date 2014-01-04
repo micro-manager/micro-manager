@@ -22,4 +22,4 @@ libMMCore_a_SOURCES = MMCore.cpp MMCore.h \
       Host.cpp Host.h \
       AppleHost.h
 
-EXTRA_DIST = license.txt MMCore_vc8.vcproj MMCore.vcproj
+EXTRA_DIST = license.txt MMCore.vcproj

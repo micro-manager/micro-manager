@@ -1,5 +1,5 @@
 pkglibdir = $(DEVICEADAPTERPATH)
-AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS) -fpermissive $(BOOST_CPPFLAGS) $(LIBFREEIMAGE_CXXFLAGS) \
+AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS) -fpermissive $(LIBFREEIMAGE_CXXFLAGS) \
 	$(LIBFREEIMAGEPLUS_CXXFLAGS)
 pkglib_LTLIBRARIES = libmmgr_dal_GPhoto.la
 libmmgr_dal_GPhoto_la_SOURCES = CameraFrontend.cpp CameraFrontend.h 
