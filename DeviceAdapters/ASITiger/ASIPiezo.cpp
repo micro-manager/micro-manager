@@ -77,9 +77,9 @@ int CPiezo::Initialize()
    unitMult_ = tmp/1000;
    command.str("");
 
-   // set controller card to return positions with 3 decimal places (max allowed currently)
+   // set controller card to return positions with 2 decimal places (3 is max allowed currently, 2 gives 1nm resolution)
    command.str("");
-   command << addressChar_ << "VB Z=3";
+   command << addressChar_ << "VB Z=2";
    RETURN_ON_MM_ERROR ( hub_->QueryCommand(command.str()) );
 
    // expose the step size to user as read-only property (no need for action handler)

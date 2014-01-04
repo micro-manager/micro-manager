@@ -57,6 +57,7 @@ CMMirror::CMMirror(const char* name) :
    shutterY_(0), // home position, used to turn beam off
    lastX_(0),    // cached position, used for SetIlluminationState
    lastY_(0),    // cached position, used for SetIlluminationState
+   illuminationState_(true),
    polygonRepetitions_(0)
 {
    if (IsExtendedName(name))  // only set up these properties if we have the required information in the name
@@ -95,9 +96,9 @@ int CMMirror::Initialize()
    RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":") );
    RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(shutterY_) );
 
-   // set controller card to return positions with 3 decimal places (max allowed currently)
+   // set controller card to return positions with 1 decimal places (3 is max allowed currently, units are millidegrees)
    command.str("");
-   command << addressChar_ << "VB Z=3";
+   command << addressChar_ << "VB Z=1";
    RETURN_ON_MM_ERROR ( hub_->QueryCommand(command.str()) );
 
    // create MM description; this doesn't work during hardware configuration wizard but will work afterwards
@@ -379,18 +380,10 @@ bool CMMirror::Busy()
 
 int CMMirror::SetPosition(double x, double y)
 {
+   if (!illuminationState_) return DEVICE_OK;  // don't do anything if beam is turned off
    ostringstream command; command.str("");
    command << "M " << axisLetterX_ << "=" << x*unitMultX_ << " " << axisLetterY_ << "=" << y*unitMultY_;
-   ret_ = hub_->QueryCommandVerify(command.str(),":A");
-   if (ret_ == DEVICE_OK)
-   {
-      // cache the position (if it worked) for SetIlluminationState
-      lastX_ = x;
-      lastY_ = y;
-      return DEVICE_OK;
-   }
-   else
-      return ret_;
+   return hub_->QueryCommandVerify(command.str(),":A");
 }
 
 int CMMirror::GetPosition(double& x, double& y)
@@ -412,17 +405,25 @@ int CMMirror::GetPosition(double& x, double& y)
 int CMMirror::SetIlluminationState(bool on)
 // we can't turn off beam but we can steer beam to corner where hopefully it is blocked internally
 {
-   if (on)
+   if (on && !illuminationState_)  // was off, turning on
    {
+      illuminationState_ = true;
       return SetPosition(lastX_, lastY_);  // move to where it was when last turned off
    }
-   else
+   else if (!on && illuminationState_) // was on, turning off
    {
-      GetPosition(lastX_, lastY_);  // cache position so we can undo
+      illuminationState_ = false;
+      GetPosition(lastX_, lastY_);  // read and store pre-off position so we can undo
       ostringstream command; command.str("");
       command << "! " << axisLetterX_ << " " << axisLetterY_;
-      return hub_->QueryCommandVerify(command.str(),":A");
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
+      SetProperty(g_MMirrorSAModeXPropertyName, g_SAMode_0);  // scan is stopped by firmware, change property accordingly
+      SetProperty(g_MMirrorSAModeYPropertyName, g_SAMode_0);  // scan is stopped by firmware, change property accordingly
+      return DEVICE_OK;
    }
+   // if was off, turning off do nothing
+   // if was on, turning on do nothing
+   return DEVICE_OK;
 }
 
 int CMMirror::AddPolygonVertex(int polygonIndex, double x, double y)
@@ -977,6 +978,11 @@ int CMMirror::OnSAModeX(MM::PropertyBase* pProp, MM::ActionType eAct)
       justSet = false;
    }
    else if (eAct == MM::AfterSet) {
+      if (!illuminationState_)  // don't do anything if beam is turned off
+      {
+         pProp->Set(g_SAMode_0);
+         return DEVICE_OK;
+      }
       string tmpstr;
       pProp->Get(tmpstr);
       if (tmpstr.compare(g_SAMode_0) == 0)
@@ -1026,6 +1032,11 @@ int CMMirror::OnSAPatternX(MM::PropertyBase* pProp, MM::ActionType eAct)
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
    else if (eAct == MM::AfterSet) {
+      if (!illuminationState_)  // don't do anything if beam is turned off
+      {
+         pProp->Set(g_SAMode_0);
+         return DEVICE_OK;
+      }
       string tmpstr;
       pProp->Get(tmpstr);
       if (tmpstr.compare(g_SAPattern_0) == 0)
@@ -1153,6 +1164,11 @@ int CMMirror::OnSAModeY(MM::PropertyBase* pProp, MM::ActionType eAct)
       justSet = false;
    }
    else if (eAct == MM::AfterSet) {
+      if (!illuminationState_)  // don't do anything if beam is turned off
+      {
+         pProp->Set(g_SAMode_0);
+         return DEVICE_OK;
+      }
       string tmpstr;
       pProp->Get(tmpstr);
       if (tmpstr.compare(g_SAMode_0) == 0)

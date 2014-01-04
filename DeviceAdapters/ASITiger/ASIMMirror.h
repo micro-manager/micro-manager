@@ -126,6 +126,7 @@ private:
    double shutterY_;  // home position, used to turn beam off
    double lastX_;   // used to cache position
    double lastY_;   // used to cache position
+   bool illuminationState_;  // true if on, false if beam is turned off
 
    // for polygons
    vector< pair<double,double> > polygons_;
