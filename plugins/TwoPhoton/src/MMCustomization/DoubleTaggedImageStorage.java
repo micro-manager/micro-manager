@@ -265,7 +265,6 @@ public class DoubleTaggedImageStorage implements TaggedImageStorage {
                size = hdfQueue_.size();
             }
             TwoPhotonControl.updateHDFQueueSize(size * slicesPerWrite_, (int) (numChannels_ * numSlices_ * 2.5));
-            IJ.log("HDF Queue: " + size);
          } catch (Exception ex) {
             ReportingUtils.showError("HDF writing error");
             ex.printStackTrace();
