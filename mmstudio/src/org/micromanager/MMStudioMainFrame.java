@@ -129,16 +129,8 @@ import javax.swing.event.AncestorListener;
 import mmcorej.TaggedImage;
 
 import org.json.JSONException;
-import org.micromanager.acquisition.AcquisitionWrapperEngine;
-import org.micromanager.acquisition.LiveModeTimer;
-import org.micromanager.acquisition.MMAcquisition;
+import org.micromanager.acquisition.*;
 import org.micromanager.api.ImageCache;
-import org.micromanager.acquisition.MetadataPanel;
-import org.micromanager.acquisition.ProcessorStack;
-import org.micromanager.acquisition.TaggedImageQueue;
-import org.micromanager.acquisition.TaggedImageStorageDiskDefault;
-import org.micromanager.acquisition.TaggedImageStorageMultipageTiff;
-import org.micromanager.acquisition.VirtualAcquisitionDisplay;
 import org.micromanager.api.IAcquisitionEngine2010;
 import org.micromanager.graph.HistogramSettings;
 import org.micromanager.internalinterfaces.LiveModeListener;
@@ -292,6 +284,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    private  JButton clearRoiButton_;
    
    private DropTarget dt_;
+   private ProcessorStackManager processorStackManager_;
 
    public ImageWindow getImageWin() {
       return getSnapLiveWin();
@@ -536,7 +529,8 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       autoShutterCheckBox_.setText("Auto shutter");
       GUIUtils.addWithEdges(topPanel, autoShutterCheckBox_, 107, 96, 199, 119);
 
-      toggleShutterButton_ = (JToggleButton) createButton(true, "toggleShutterButton", "Open",
+      toggleShutterButton_ = (JToggleButton) GUIUtils.createButton(true,
+              "toggleShutterButton", "Open",
               "Open/close the shutter",
               new Runnable() {
                  public void run() {
@@ -556,7 +550,8 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    private void createConfigurationControls(JPanel topPanel) {
       createLabel("Configuration settings", true, topPanel, 280, 2, 430, 22);
 
-      saveConfigButton_ = (JButton) createButton(false, "saveConfigureButton", "Save",
+      saveConfigButton_ = (JButton) GUIUtils.createButton(false,
+              "saveConfigureButton", "Save",
               "Save current presets to the configuration file",
               new Runnable() {
                  public void run() {
@@ -576,7 +571,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    }
 
    private void createMainButtons(JPanel topPanel) {
-      snapButton_ = (JButton) createButton(false, "Snap", "Snap",
+      snapButton_ = (JButton) GUIUtils.createButton(false, "Snap", "Snap",
               "Snap single image",
               new Runnable() {
                  public void run() {
@@ -584,7 +579,8 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
                  }
               }, "camera.png", topPanel, 7, 4, 95, 25);
 
-      liveButton_ = (JToggleButton) createButton(true, "Live", "Live",
+      liveButton_ = (JToggleButton) GUIUtils.createButton(true,
+              "Live", "Live",
               "Continuous live view",
               new Runnable() {
                  public void run() {
@@ -592,7 +588,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
                  }
               }, "camera_go.png", topPanel, 7, 26, 95, 47);
 
-      toAlbumButton_ = (JButton) createButton(false, "Album", "Album",
+      toAlbumButton_ = (JButton) GUIUtils.createButton(false, "Album", "Album",
               "Acquire single frame and add to an album",
               new Runnable() {
                  public void run() {
@@ -600,7 +596,8 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
                  }
               }, "camera_plus_arrow.png", topPanel, 7, 48, 95, 69);
 
-      /* MDA Button = */ createButton(false, "Multi-D Acq.", "Multi-D Acq.",
+      /* MDA Button = */ GUIUtils.createButton(false,
+              "Multi-D Acq.", "Multi-D Acq.",
               "Open multi-dimensional acquisition window",
               new Runnable() {
                  public void run() {
@@ -608,7 +605,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
                  }
               }, "film.png", topPanel, 7, 70, 95, 91);
 
-      /* Refresh = */ createButton(false, "Refresh", "Refresh",
+      /* Refresh = */ GUIUtils.createButton(false, "Refresh", "Refresh",
               "Refresh all GUI controls directly from the hardware",
               new Runnable() {
                  public void run() {
@@ -691,7 +688,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       
       createLabel("ROI", true, topPanel, 8, 140, 71, 154);
       
-      createButton(false, "setRoiButton", null,
+      GUIUtils.createButton(false, "setRoiButton", null,
               "Set Region Of Interest to selected rectangle",
               new Runnable() {
                  public void run() {
@@ -699,7 +696,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
                  }
               }, "shape_handles.png", topPanel, 7, 154, 37, 174);
 
-      createButton(false, "clearRoiButton", null,
+      GUIUtils.createButton(false, "clearRoiButton", null,
               "Reset Region of Interest to full frame",
               new Runnable() {
                  public void run() {
@@ -711,7 +708,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       
       createLabel("Zoom", true, topPanel, 81, 140, 139, 154);
 
-      createButton(false, "zoomInButton", null,
+      GUIUtils.createButton(false, "zoomInButton", null,
               "Zoom in",
               new Runnable() {
                  public void run() {
@@ -719,7 +716,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
                  }
               }, "zoom_in.png", topPanel, 80, 154, 110, 174);
 
-      createButton(false, "zoomOutButton", null,
+      GUIUtils.createButton(false, "zoomOutButton", null,
               "Zoom out",
               new Runnable() {
                  public void run() {
@@ -731,7 +728,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       
       createLabel("Profile", true, topPanel, 154, 140, 217, 154);
 
-      createButton(false, "lineProfileButton", null,
+      GUIUtils.createButton(false, "lineProfileButton", null,
               "Open line profile window (requires line selection)",
               new Runnable() {
                  public void run() {
@@ -743,7 +740,8 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
 
       createLabel("Autofocus", true, topPanel, 194, 140, 276, 154);
 
-      autofocusNowButton_ = (JButton) createButton(false, "autofocusNowButton", null,
+      autofocusNowButton_ = (JButton) GUIUtils.createButton(false,
+              "autofocusNowButton", null,
               "Autofocus now",
               new Runnable() {
                  public void run() {
@@ -752,7 +750,8 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
               }, "find.png", topPanel, 193, 154, 223, 174);
 
 
-      autofocusConfigureButton_ = (JButton) createButton(false, "autofocusConfigureButton", null,
+      autofocusConfigureButton_ = (JButton) GUIUtils.createButton(false,
+              "autofocusConfigureButton", null,
               "Set autofocus options",
               new Runnable() {
                  public void run() {
@@ -961,6 +960,15 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
               new Runnable() {
                  public void run() {
                     createCalibrationListDlg();
+                 }
+              });
+      
+      GUIUtils.addMenuItem(toolsMenu, "Image Processor Manager",
+              "Control the order in which Image Processor plugins"
+              + "are applied to incoming images.",
+              new Runnable() {
+                 public void run() {
+                   processorStackManager_.show();
                  }
               });
 
@@ -1250,37 +1258,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
         }.start();
     }
 
-   private static AbstractButton createButton(final boolean isToggleButton,
-           final String name,
-           final String text,
-           final String toolTipText,
-           final Runnable buttonActionRunnable,
-           final String iconFileName,
-           final JPanel parentPanel,
-           int west, int north, int east, int south) {
-      AbstractButton button = isToggleButton ? new JToggleButton() : new JButton();
-      button.setFont(new Font("Arial", Font.PLAIN, 10));
-      button.setMargin(new Insets(0, 0, 0, 0));
-      button.setName(name);
-      if (text != null) {
-         button.setText(text);
-      }
-      if (iconFileName != null) {
-         button.setIconTextGap(4);
-         GUIUtils.setIcon(button, iconFileName);
-      }
-      if (toolTipText != null) {
-         button.setToolTipText(toolTipText);
-      }
-      button.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            buttonActionRunnable.run();
-         }
-      });
-      GUIUtils.addWithEdges(parentPanel, button, west, north, east, south);
-      return button;
-   }
 
    private static JLabel createLabel(String text, boolean big,
            JPanel parentPanel, int west, int north, int east, int south) {
@@ -1472,6 +1449,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
             zStageLabel_ = "";
             xyStageLabel_ = "";
             engine_ = new AcquisitionWrapperEngine(acqMgr_);
+            processorStackManager_ = new ProcessorStackManager(engine_);
 
             // register callback for MMCore notifications, this is a global
             // to avoid garbage collection
@@ -4241,6 +4219,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    
    @Override
    public void addImageProcessor(DataProcessor<TaggedImage> processor) {
+      System.out.println("Processor: "+processor.getClass().getSimpleName());
 	   getAcquisitionEngine().addImageProcessor(processor);
    }
 

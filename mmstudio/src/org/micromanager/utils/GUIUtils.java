@@ -26,16 +26,7 @@ package org.micromanager.utils;
 import com.swtdesigner.SwingResourceManager;
 import ij.WindowManager;
 import ij.gui.ImageWindow;
-import java.awt.AWTEvent;
-
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.GraphicsDevice;
-import java.awt.GraphicsEnvironment;
-import java.awt.Point;
-import java.awt.Rectangle;
-import java.awt.Toolkit;
-import java.awt.Window;
+import java.awt.*;
 import java.awt.event.*;
 import java.lang.reflect.InvocationTargetException;
 import java.util.prefs.Preferences;
@@ -328,21 +319,66 @@ public class GUIUtils {
    ////////////// END MENU ITEM UTILITY METHODS ////////////////
    
     /* Add a component to the parent panel, set positions of the edges of
-     * component relative to panel. If edges are negative, then they 
-     * are positioned relative to south and east edges of parent panel.
-     * Assumes parent panel uses SpringLayout.
+     * component relative to panel. If edges are positive, then they are
+     * positioned relative to north and west edges of parent container. If edges
+     * are negative, then they are positioned relative to south and east
+     * edges of parent container.
+     * Requires that parent container uses SpringLayout.
      */
-   public static void addWithEdges(JPanel parentPanel, JComponent component, int west, int north, int east, int south) {
-      parentPanel.add(component);
-      SpringLayout topLayout = (SpringLayout) parentPanel.getLayout();
+   public static void addWithEdges(Container parentContainer, JComponent component, int west, int north, int east, int south) {
+      parentContainer.add(component);
+      SpringLayout topLayout = (SpringLayout) parentContainer.getLayout();
       topLayout.putConstraint(SpringLayout.EAST, component, east,
-              (east > 0) ? SpringLayout.WEST : SpringLayout.EAST, parentPanel);
+              (east > 0) ? SpringLayout.WEST : SpringLayout.EAST, parentContainer);
       topLayout.putConstraint(SpringLayout.WEST, component, west,
-              (west >= 0) ? SpringLayout.WEST : SpringLayout.EAST, parentPanel);
+              (west >= 0) ? SpringLayout.WEST : SpringLayout.EAST, parentContainer);
       topLayout.putConstraint(SpringLayout.SOUTH, component, south,
-              (south > 0) ? SpringLayout.NORTH : SpringLayout.SOUTH, parentPanel);
+              (south > 0) ? SpringLayout.NORTH : SpringLayout.SOUTH, parentContainer);
       topLayout.putConstraint(SpringLayout.NORTH, component, north,
-              (north >= 0) ? SpringLayout.NORTH : SpringLayout.SOUTH, parentPanel);
+              (north >= 0) ? SpringLayout.NORTH : SpringLayout.SOUTH, parentContainer);
+   }
+   
+
+
+   
+    /* Add a component to the parent panel, set positions of the edges of
+     * component relative to panel. If edges are positive, then they are
+     * positioned relative to north and west edges of parent container. If edges
+     * are negative, then they are positioned relative to south and east
+     * edges of parent container.
+     * Requires that parent container uses SpringLayout.
+     */
+
+   public static AbstractButton createButton(final boolean isToggleButton,
+           final String name,
+           final String text,
+           final String toolTipText,
+           final Runnable buttonActionRunnable,
+           final String iconFileName,
+           final Container parentPanel,
+           int west, int north, int east, int south) {
+      AbstractButton button = isToggleButton ? new JToggleButton() : new JButton();
+      button.setFont(new Font("Arial", Font.PLAIN, 10));
+      button.setMargin(new Insets(0, 0, 0, 0));
+      button.setName(name);
+      if (text != null) {
+         button.setText(text);
+      }
+      if (iconFileName != null) {
+         button.setIconTextGap(4);
+         setIcon(button, iconFileName);
+      }
+      if (toolTipText != null) {
+         button.setToolTipText(toolTipText);
+      }
+      button.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            buttonActionRunnable.run();
+         }
+      });
+      GUIUtils.addWithEdges(parentPanel, button, west, north, east, south);
+      return button;
    }
    
 }
