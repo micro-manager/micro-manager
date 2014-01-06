@@ -57,7 +57,7 @@ public:
    MM::Device* LoadDevice(const char* label, const char* moduleName, const char* deviceName);
    void UnloadDevice(MM::Device* device);
    void UnloadAllDevices();
-   MM::Device* GetDevice(const char* label) const throw (CMMError);
+   MM::Device* GetDevice(const std::string& label) const throw (CMMError);
    std::string GetDeviceLabel(const MM::Device& device) const;
    std::vector<std::string> GetDeviceList(MM::DeviceType t = MM::AnyType) const;
    std::vector<std::string> GetLoadedPeripherals(const char* hubLabel) const;

@@ -80,21 +80,20 @@ public:
     */
    MM::Device* GetDevice(const MM::Device* caller, const char* label)
    {
-      assert(core_);
-      MM::Device* pDev = 0;
+      if (!caller || !label)
+         return 0;
 
       try
       {
-         pDev = core_->getDevice(label);
-         if (pDev == caller)
-            return 0; // prevent caller from obtaining it's own address
+         MM::Device* pDevice = core_->GetDeviceWithCheckedLabel(label);
+         if (pDevice == caller)
+            return 0;
+         return pDevice;
       }
-      catch (...)
+      catch (const CMMError&)
       {
-         // trap all exceptions
+         return 0;
       }
-
-      return pDev;
    }
    
    MM::PortType GetSerialPortType(const char* portName) const
@@ -102,7 +101,7 @@ public:
       MM::Serial* pSerial = 0;
       try
       {
-         pSerial = core_->getSpecificDevice<MM::Serial>(portName);
+         pSerial = core_->GetDeviceWithCheckedLabelAndType<MM::Serial>(portName);
       }
       catch (...)
       {
@@ -196,7 +195,7 @@ public:
    MM::State* GetStateDevice(const MM::Device* /* caller */, const char* deviceName)
    {
       try {
-         return core_->getSpecificDevice<MM::State>(deviceName);
+         return core_->GetDeviceWithCheckedLabelAndType<MM::State>(deviceName);
       } catch(...) {
          //trap all exceptions
          return 0;
@@ -206,7 +205,7 @@ public:
    MM::SignalIO* GetSignalIODevice(const MM::Device* /* caller */, const char* deviceName)
    {
       try {
-         return core_->getSpecificDevice<MM::SignalIO>(deviceName);
+         return core_->GetDeviceWithCheckedLabelAndType<MM::SignalIO>(deviceName);
       } catch(...) {
          //trap all exceptions
          return 0;
@@ -235,7 +234,7 @@ public:
       try
       {
          if (idx < peripheralLabels.size())
-            return core_->pluginManager_.GetDevice(peripheralLabels[idx].c_str());
+            return core_->pluginManager_.GetDevice(peripheralLabels[idx]);
          else
             return 0;
       }

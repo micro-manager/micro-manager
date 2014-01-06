@@ -335,7 +335,7 @@ MM::Device* CPluginManager::LoadDevice(const char* label, const char* moduleName
  * @param label device label
  * @return pointer to the device or 0 if the label is not recognized
  */
-MM::Device* CPluginManager::GetDevice(const char* label) const throw (CMMError)
+MM::Device* CPluginManager::GetDevice(const std::string& label) const throw (CMMError)
 {
    CDeviceMap::const_iterator it;
    it = devices_.find(label);

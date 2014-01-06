@@ -402,7 +402,7 @@ int CoreCallback::WriteToSerial(const MM::Device* caller, const char* portName, 
    MM::Serial* pSerial = 0;
    try
    {
-      pSerial = core_->getSpecificDevice<MM::Serial>(portName);
+      pSerial = core_->GetDeviceWithCheckedLabelAndType<MM::Serial>(portName);
    }
    catch (CMMError& err)
    {
@@ -428,7 +428,7 @@ int CoreCallback::ReadFromSerial(const MM::Device* caller, const char* portName,
    MM::Serial* pSerial = 0;
    try
    {
-      pSerial = core_->getSpecificDevice<MM::Serial>(portName);
+      pSerial = core_->GetDeviceWithCheckedLabelAndType<MM::Serial>(portName);
    }
    catch (CMMError& err)
    {
@@ -454,7 +454,7 @@ int CoreCallback::PurgeSerial(const MM::Device* caller, const char* portName)
    MM::Serial* pSerial = 0;
    try
    {
-      pSerial = core_->getSpecificDevice<MM::Serial>(portName);
+      pSerial = core_->GetDeviceWithCheckedLabelAndType<MM::Serial>(portName);
    }
    catch (CMMError& err)
    {

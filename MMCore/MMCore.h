@@ -35,18 +35,15 @@
 //                12/18/2007  N.A. - Callbacks for GUI side notifications
 //                05/20/2008  N.A. - Relative positions for stages, cached system state
 //
-// NOTES:                   
-//                Public methods follow slightly different naming conventions than
+// NOTES:         Public methods follow a slightly different naming convention than
 //                the rest of the C++ code, i.e we have:
 //                   getConfiguration();
 //                instead of:
 //                   GetConfiguration();
 //                The alternative (lowercase function names) convention is used
-//                because all public methods will most likely appear in other
-//                programming environments (Java or Python).
-//
-// CVS:           $Id$
-//
+//                because public method names appear as wrapped methods in other
+//                languages, in particular Java.
+
 #ifndef _MMCORE_H_
 #define _MMCORE_H_
 
@@ -491,28 +488,8 @@ public:
    std::string getInstalledDeviceDescription(const char* hubLabel, const char* deviceLabel);
    std::vector<std::string> getLoadedPeripheralDevices(const char* hubLabel);
 
-   template <class T>
-   T* getSpecificDevice(const char* deviceLabel) const throw (CMMError)
-   {
-      MM::Device* pDevice;
-      T* pSpecDev = 0;
-      try {
-         pDevice = pluginManager_.GetDevice(deviceLabel);
-         // The most appropriate thing to do here is to use
-         // pSpecDev = dynamic_cast<T*>(pDevice). But, we can't use dynamic_cast beacuse
-         // GCC linker on Linux does not interpret RTTI properly across the DLL boundary.
-         // Instead we'll check the type through the Type identifier and use static_cast.
-         if (pDevice->GetType() != T::Type)
-            throw CMMError(deviceLabel, MMERR_InvalidSpecificDevice);
-
-         pSpecDev = static_cast<T*>(pDevice);
-      } catch (...) {                                                           
-         throw CMMError(getCoreErrorText(MMERR_UnhandledException).c_str(), MMERR_UnhandledException);
-      }                                                                         
-      return pSpecDev;                                                          
-   }  
-
    std::vector<std::string> getMACAddresses(void);
+
 
 private:
    // make object non-copyable
@@ -551,10 +528,28 @@ private:
    bool debugLog_;
    mutable Configuration stateCache_; // system state cache
 
+   // Parameter/value validation
+   static void CheckDeviceLabel(const char* label) throw (CMMError);
+   static void CheckPropertyName(const char* propName) throw (CMMError);
+   static void CheckPropertyValue(const char* propValue) throw (CMMError);
+   static void CheckStateLabel(const char* stateLabel) throw (CMMError);
+   static void CheckConfigGroupName(const char* groupName) throw (CMMError);
+   static void CheckConfigPresetName(const char* presetName) throw (CMMError);
+   static void CheckPropertyBlockName(const char* blockName) throw (CMMError);
+   bool IsCoreDeviceLabel(const char* label) const throw (CMMError);
+   MM::Device* GetDeviceWithCheckedLabel(const char* label) const throw (CMMError);
+   template <class TDevice>
+   TDevice* GetDeviceWithCheckedLabelAndType(const char* label) const throw (CMMError)
+   {
+      MM::Device* pDevice = GetDeviceWithCheckedLabel(label);
+      if (pDevice->GetType() != TDevice::Type)
+         throw CMMError("Device " + ToQuotedString(label) + " is of the wrong type for the requested operation");
+      return static_cast<TDevice*>(pDevice);
+   }
+
    bool isConfigurationCurrent(const Configuration& config);
    void applyConfiguration(const Configuration& config) throw (CMMError);
    int applyProperties(std::vector<PropertySetting>& props, std::string& lastError);
-   MM::Device* getDevice(const char* label) throw (CMMError);
    void waitForDevice(MM::Device* pDev) throw (CMMError);
    Configuration getConfigGroupState(const char* group, bool fromCache) throw (CMMError);
    std::string getDeviceErrorText(int deviceCode, MM::Device* pDevice);
