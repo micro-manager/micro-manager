@@ -284,7 +284,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    private  JButton clearRoiButton_;
    
    private DropTarget dt_;
-   private ProcessorStackManager processorStackManager_;
+  // private ProcessorStackManager processorStackManager_;
 
    public ImageWindow getImageWin() {
       return getSnapLiveWin();
@@ -962,7 +962,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
                     createCalibrationListDlg();
                  }
               });
-      
+     /* 
       GUIUtils.addMenuItem(toolsMenu, "Image Processor Manager",
               "Control the order in which Image Processor plugins"
               + "are applied to incoming images.",
@@ -971,7 +971,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
                    processorStackManager_.show();
                  }
               });
-
+*/
       toolsMenu.addSeparator();
 
       GUIUtils.addMenuItem(toolsMenu, "Hardware Configuration Wizard...",
@@ -1449,7 +1449,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
             zStageLabel_ = "";
             xyStageLabel_ = "";
             engine_ = new AcquisitionWrapperEngine(acqMgr_);
-            processorStackManager_ = new ProcessorStackManager(engine_);
+           // processorStackManager_ = new ProcessorStackManager(engine_);
 
             // register callback for MMCore notifications, this is a global
             // to avoid garbage collection
