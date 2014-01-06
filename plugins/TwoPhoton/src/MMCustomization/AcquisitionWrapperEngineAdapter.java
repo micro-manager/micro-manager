@@ -82,12 +82,18 @@ public class AcquisitionWrapperEngineAdapter extends AcquisitionWrapperEngine {
             String acqDirectory = createAcqDirectory(summaryMetadata.getString("Directory"), summaryMetadata.getString("Prefix"));
             summaryMetadata.put("Prefix", acqDirectory);
             String acqPath = summaryMetadata.getString("Directory") + File.separator + acqDirectory;
-            storage = new DoubleTaggedImageStorage(summaryMetadata, acqPath, prefs_.get(SettingsDialog.STITCHED_DATA_DIRECTORY, ""),
-                    prefs_.getBoolean(SettingsDialog.CREATE_IMS_FILE, false));
+            storage = new DoubleTaggedImageStorage(summaryMetadata, acqPath, 
+                    prefs_.get(SettingsDialog.STITCHED_DATA_DIRECTORY, ""),
+                    prefs_.getBoolean(SettingsDialog.CREATE_IMS_FILE, false),
+                    prefs_.getBoolean(SettingsDialog.FILTER_IMS, false),
+                    prefs_.getDouble(SettingsDialog.FILTER_SIZE, 2.0));
          } else {
             //RAM storage
-            storage = new DoubleTaggedImageStorage(summaryMetadata, null, prefs_.get(SettingsDialog.STITCHED_DATA_DIRECTORY, ""),
-                    prefs_.getBoolean(SettingsDialog.CREATE_IMS_FILE, false));
+            storage = new DoubleTaggedImageStorage(summaryMetadata, null, 
+                    prefs_.get(SettingsDialog.STITCHED_DATA_DIRECTORY, ""),
+                    prefs_.getBoolean(SettingsDialog.CREATE_IMS_FILE, false), 
+                    prefs_.getBoolean(SettingsDialog.FILTER_IMS, false),
+                    prefs_.getDouble(SettingsDialog.FILTER_SIZE, 2.0));
          }
 
          MMImageCache imageCache = new MMImageCache(storage) {

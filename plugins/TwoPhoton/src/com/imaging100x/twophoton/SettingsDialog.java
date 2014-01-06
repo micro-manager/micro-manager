@@ -36,6 +36,8 @@ public class SettingsDialog extends JDialog {
    static public final String STITCHED_DATA_DIRECTORY = "Stitched data location";
    static public final String FREE_GB__MIN_IN_STITCHED_DATA = "Free GB minimum in stitched data dir";
    static public final String CREATE_IMS_FILE = "Create Imaris file";
+   static public final String FILTER_IMS = "Use gaussian filter";
+   static public final String FILTER_SIZE = "Gaussian filter width";
    
    public static int xOverlap_ = 0, yOverlap_ = 0;
    
@@ -93,6 +95,20 @@ public class SettingsDialog extends JDialog {
       panel.add(rowskis);
       
       
+      JPanel rowsqueezy = new JPanel (new FlowLayout(FlowLayout.LEFT));
+      final JCheckBox filter = new JCheckBox("Gaussian filter imaris data");
+      rowsqueezy.add(new JLabel("         "));
+      rowsqueezy.add(filter);
+      filter.setSelected(prefs.getBoolean(FILTER_IMS, false));
+      final JSpinner filterSize = new JSpinner(new SpinnerNumberModel(prefs.getDouble(
+              FILTER_SIZE, 2), 0.1, 50, 0.01));
+      rowsqueezy.add(filterSize);
+      rowsqueezy.add(new JLabel(" pixels"));
+
+      
+      panel.add(rowsqueezy);
+      
+      
       JPanel row3 = new JPanel(new FlowLayout(FlowLayout.LEFT));
       JLabel dir = new JLabel("            Saving location");
       row3.add(dir);
@@ -127,6 +143,8 @@ public class SettingsDialog extends JDialog {
             prefs.put(STITCHED_DATA_DIRECTORY, location.getText());
             prefs.putInt(FREE_GB__MIN_IN_STITCHED_DATA, (Integer) freeGig.getValue());
             prefs.putBoolean(CREATE_IMS_FILE, saveIMS.isSelected());
+            prefs.putBoolean(FILTER_IMS, filter.isSelected());
+            prefs.putDouble(FILTER_SIZE, (Double) filterSize.getValue());
          }
       };
       realTimeStitch.addActionListener(saveSettings);
@@ -151,7 +169,15 @@ public class SettingsDialog extends JDialog {
             saveSettings.actionPerformed(null);
          }
       });
+      filterSize.addChangeListener(new ChangeListener() {
+
+         @Override
+         public void stateChanged(ChangeEvent e) {
+            saveSettings.actionPerformed(null);
+         }
+      });
       saveIMS.addActionListener(saveSettings);
+      filter.addActionListener(saveSettings);
       
       this.pack();
       this.setTitle("Settings");

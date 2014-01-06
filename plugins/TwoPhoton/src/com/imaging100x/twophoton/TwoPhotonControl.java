@@ -117,8 +117,8 @@ public class TwoPhotonControl extends MMFrame implements MMPlugin, KeyListener,
    private JButton removeAllButton;
    private JCheckBox activateDepthList_;
    private JComboBox pixelSizeCombo_;
-   private static JProgressBar hdfProgressBar_;
-   private JPanel imarisPanel_, stitchPanel_;
+   private static JProgressBar hdfProgressBar_, filterProgressBar_;
+   private JPanel imarisPanel_, stitchPanel_, filteringPanel_;
    
    private File depthFile_;
 
@@ -262,17 +262,17 @@ private JCheckBox drawGrid_, drawPosNames_;
    }
    
    private void addDynamicStitchControls() {
-      createIMSProgressPanel();
-      JButton exploreButton = new JButton("Explore");
-      getContentPane().add(exploreButton);
-      exploreButton.setBounds(410, 290, 130, 20);
-      exploreButton.addActionListener(new ActionListener() {
-
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            new ExplorerManager();
-         }
-      });
+      createProgressPanels();
+//      JButton exploreButton = new JButton("Explore");
+//      getContentPane().add(exploreButton);
+//      exploreButton.setBounds(410, 290, 130, 20);
+//      exploreButton.addActionListener(new ActionListener() {
+//
+//         @Override
+//         public void actionPerformed(ActionEvent e) {
+//            new ExplorerManager();
+//         }
+//      });
    }
 
    public void acitvateDynamicStitching() {
@@ -289,6 +289,11 @@ private JCheckBox drawGrid_, drawPosNames_;
       getContentPane().validate();
       getContentPane().paint(getContentPane().getGraphics());
       
+   }
+   
+   public static void updateFilterQueueSize(int n, int max) {
+      filterProgressBar_.setMaximum(max);
+      filterProgressBar_.setValue(n);
    }
    
    public static void updateHDFQueueSize(int n, int max) {
@@ -370,8 +375,14 @@ private JCheckBox drawGrid_, drawPosNames_;
       panel.add(buttonPanel,BorderLayout.PAGE_END);
    }
    
-   private void createIMSProgressPanel() {
-      imarisPanel_ = createPanel("Imaris file writing queue", 405, 235, 650, 285);
+   private void createProgressPanels() {
+      filteringPanel_ = createPanel("Image processing queue", 405, 235, 650, 285);
+      filteringPanel_.setLayout(new BorderLayout());
+      filterProgressBar_ = new JProgressBar(0,1);
+      filteringPanel_.add(filterProgressBar_, BorderLayout.CENTER);
+      filteringPanel_.setVisible(true);
+      
+      imarisPanel_ = createPanel("Imaris file writing queue", 405, 290, 650, 340);
       imarisPanel_.setLayout(new BorderLayout());
       hdfProgressBar_ = new JProgressBar(0,1);
       imarisPanel_.add(hdfProgressBar_, BorderLayout.CENTER);

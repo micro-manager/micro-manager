@@ -10,6 +10,7 @@ import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.utils.MDUtils;
+import org.micromanager.utils.ReportingUtils;
 
 
 public class HDFPreprocessor   {
@@ -35,7 +36,8 @@ public class HDFPreprocessor   {
       histograms_ = new TreeMap<Integer, long[][]>();
    }
    
-   public PipelineImage process(LinkedList<TaggedImage> slices) throws Exception {     
+   public PipelineImage process(LinkedList<TaggedImage> slices)  {     
+      try {
       if (startS_ == -1) {
          //first image
          String[] timeInfo = slices.get(0).tags.getString("Time").split(" ");
@@ -173,6 +175,11 @@ public class HDFPreprocessor   {
          histograms_.put(channel, null);
       }  
       return img;
+      } catch (Exception e) {
+         ReportingUtils.showError("HDF preprocessing error"); 
+         e.printStackTrace();
+         return null;
+      }
    }
    
    private String convertMMToImsTime(JSONObject tags) {
