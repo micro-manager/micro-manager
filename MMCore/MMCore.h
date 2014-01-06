@@ -62,6 +62,7 @@
 #include "../MMDevice/MMDevice.h"
 #include "PluginManager.h"
 #include "Configuration.h"
+#include "CoreUtils.h"
 #include "Error.h"
 #include "ErrorCodes.h"
 
