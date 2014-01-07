@@ -114,7 +114,7 @@ public class NavigationPanel extends ListeningJPanel {
       add(makeHomeButton(Devices.Keys.UPPERZDRIVE, Joystick.Directions.NONE));
       add(makeZeroButton(Devices.Keys.UPPERZDRIVE, Joystick.Directions.NONE), "wrap");
       
-      final JCheckBox activeTimerCheckBox = new JCheckBox("Enable position update");
+      final JCheckBox activeTimerCheckBox = new JCheckBox("Update positions continually");
       ActionListener ae = new ActionListener() {
          public void actionPerformed(ActionEvent e) { 
             if (activeTimerCheckBox.isSelected()) {
@@ -136,7 +136,16 @@ public class NavigationPanel extends ListeningJPanel {
       add(makeHomeButton(Devices.Keys.PIEZOA, Joystick.Directions.NONE));
       add(makeZeroButton(Devices.Keys.PIEZOA, Joystick.Directions.NONE), "wrap");
       
-      add(new JLabel(devices_.getDeviceDisplayWithAxis(Devices.Keys.PIEZOB) + ":"), "span 3");
+      JButton buttonUpdate = new JButton("Update positions once");
+      buttonUpdate.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            stagePosUpdater.oneTimeUpdate();
+         }
+      });
+      add(buttonUpdate, "align left, span 2");
+      
+      add(new JLabel(devices_.getDeviceDisplayWithAxis(Devices.Keys.PIEZOB) + ":"));
       piezoBPositionLabel_ = new JLabel("");
       add(piezoBPositionLabel_);
       add(makeHomeButton(Devices.Keys.PIEZOB, Joystick.Directions.NONE));

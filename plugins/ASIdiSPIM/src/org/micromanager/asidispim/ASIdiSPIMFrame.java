@@ -115,6 +115,9 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
       helpPanel_ = new HelpPanel();
       tabbedPane.addLTab("Help", helpPanel_);
       
+      // get initial positions, even if user doesn't want continual refresh
+      stagePosUpdater.oneTimeUpdate();
+      
                
       // make sure gotSelected() gets called whenever we switch tabs
       tabbedPane.addChangeListener(new ChangeListener() {

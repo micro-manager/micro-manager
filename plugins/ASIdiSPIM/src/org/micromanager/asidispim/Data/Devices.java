@@ -121,7 +121,7 @@ public class Devices {
       public String toString() {
          switch (side) { // break not needed here
          case A: 
-         case B: return displayName + side.toString();
+         case B: return displayName + " " + side.toString();
          case N: return displayName;
          default: return "";
          }

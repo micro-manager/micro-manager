@@ -108,13 +108,28 @@ public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerI
          buttonStart_.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-               props_.setPropValue(Devices.Keys.PIEZOA, Properties.Keys.SPIM_STATE, Properties.Values.SPIM_ARMED.toString());
-               props_.setPropValue(Devices.Keys.PIEZOB, Properties.Keys.SPIM_STATE, Properties.Values.SPIM_ARMED.toString());
-               props_.setPropValue(Devices.Keys.GALVOA, Properties.Keys.SPIM_STATE, Properties.Values.SPIM_RUNNING.toString());
+               props_.setPropValue(Devices.Keys.PIEZOA, Properties.Keys.SPIM_STATE, Properties.Values.SPIM_ARMED);
+               props_.setPropValue(Devices.Keys.PIEZOB, Properties.Keys.SPIM_STATE, Properties.Values.SPIM_ARMED);
+               props_.setPropValue(Devices.Keys.GALVOA, Properties.Keys.SPIM_STATE, Properties.Values.SPIM_RUNNING);
                // TODO generalize this for different ways of running SPIM
             }
          });
-         add(buttonStart_, "span 2, center, wrap");
+         add(buttonStart_, "cell 4 0, span 2, center, wrap");
+         
+         JButton buttonSaveSettings_ = new JButton("Save controller settings");
+         buttonSaveSettings_.setToolTipText("Saves settings to piezo and galvo cards");
+         buttonSaveSettings_.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+               props_.setPropValue(Devices.Keys.PIEZOA, Properties.Keys.SAVE_CARD_SETTINGS, Properties.Values.DO_SSZ);
+               props_.setPropValue(Devices.Keys.PIEZOB, Properties.Keys.SAVE_CARD_SETTINGS, Properties.Values.DO_SSZ);
+               props_.setPropValue(Devices.Keys.GALVOA, Properties.Keys.SAVE_CARD_SETTINGS, Properties.Values.DO_SSZ);
+               props_.setPropValue(Devices.Keys.GALVOB, Properties.Keys.SAVE_CARD_SETTINGS, Properties.Values.DO_SSZ);
+            }
+         });
+         add(buttonSaveSettings_, "cell 4 8, span 2, center, wrap");
+         
+         
 
       } catch (Exception ex) {
          ReportingUtils.showError("Error creating \"SPIM Params\" tab.  Make sure to select devices in \"Devices\" first, then restart plugin");

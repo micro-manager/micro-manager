@@ -177,7 +177,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
     });
     add(tmp_but);
     
-    final JCheckBox illumPiezoHomeEnable = new JCheckBox("Move on tab change");
+    final JCheckBox illumPiezoHomeEnable = new JCheckBox("Move on tab activate");
     ActionListener ae = new ActionListener() {
        public void actionPerformed(ActionEvent e) { 
           illumPiezoHomeEnable_ = illumPiezoHomeEnable.isSelected();
@@ -204,7 +204,9 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
           props_, devices_, 
           Devices.Keys.GALVOA, Properties.Keys.BEAM_ENABLED);
     add(beamABox_, "split 2");
-    beamBBox_ = pu.makeCheckBox("Path B", "No", "Yes", props_, devices_, 
+    beamBBox_ = pu.makeCheckBox("Path B",
+          Properties.Values.NO.toString(), Properties.Values.YES.toString(), 
+          props_, devices_, 
           Devices.Keys.GALVOB, Properties.Keys.BEAM_ENABLED);
     add(beamBBox_);
     
@@ -224,7 +226,9 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
           props_, devices_, 
           Devices.Keys.GALVOA, Properties.Keys.SA_MODE_X);
     add(sheetABox_, "split 2");
-    sheetBBox_ = pu.makeCheckBox("Path B", "0 - Disabled", "1 - Enabled", props_, devices_, 
+    sheetBBox_ = pu.makeCheckBox("Path B", 
+          Properties.Values.SAM_DISABLED.toString(), Properties.Values.SAM_ENABLED.toString(),
+          props_, devices_, 
           Devices.Keys.GALVOB, Properties.Keys.SA_MODE_X);
     add(sheetBBox_, "wrap");
 

@@ -78,7 +78,8 @@ public class Properties {
       SERIAL_COM_PORT("SerialComPort"),
       MAX_DEFLECTION_X("MaxDeflectionX(deg)"),
       MIN_DEFLECTION_X("MinDeflectionX(deg)"),
-      BEAM_ENABLED("BeamEnabled");
+      BEAM_ENABLED("BeamEnabled"),
+      SAVE_CARD_SETTINGS("SaveCardSettings"),
       ;
       private final String text;
       Keys(String text) {
@@ -104,6 +105,8 @@ public class Properties {
       SPIM_IDLE("Idle"),
       SAM_DISABLED("0 - Disabled"),
       SAM_ENABLED("1 - Enabled"),
+      DO_IT("Do it"),
+      DO_SSZ("Z - save settings to card (partial)"),
       ;
       private final String text;
       Values(String text) {
@@ -184,6 +187,30 @@ public class Properties {
    }
    
    /**
+    * writes string property value to the device adapter using a core call
+    * @param device enum key for device 
+    * @param name enum key for property 
+    * @param val value in Properties.Values enum form, sent to core using setProperty() after toString() call
+    * @param ignoreError false (default) will do error checking, true means ignores non-existing property
+    */
+   public void setPropValue(Devices.Keys device, Properties.Keys name, Properties.Values val, boolean ignoreError) {
+      String mmDevice = null;
+      try {
+         if (ignoreError) {
+            mmDevice = devices_.getMMDevice(device);
+            if (mmDevice != null) {
+               core_.setProperty(mmDevice, name.toString(), val.toString());
+            }
+         } else { 
+            mmDevice = devices_.getMMDeviceException(device);
+            core_.setProperty(mmDevice, name.toString(), val.toString());
+         }
+      } catch (Exception ex) {
+         ReportingUtils.showError("Error setting string property "+ name.toString() + " to " + val.toString() + " in device " + mmDevice);
+      }
+   }
+   
+   /**
     * writes string property value to the device adapter using a core call, with error checking
     * @param device enum key for device 
     * @param name enum key for property 
@@ -191,6 +218,16 @@ public class Properties {
     */
    public void setPropValue(Devices.Keys device, Properties.Keys name, String strVal) {
       setPropValue(device, name, strVal, false);
+   }
+   
+   /**
+    * writes string property value to the device adapter using a core call, with error checking
+    * @param device enum key for device 
+    * @param name enum key for property 
+    * @param val value in Properties.Values enum form, sent to core using setProperty() after toString() call
+    */
+   public void setPropValue(Devices.Keys device, Properties.Keys name, Properties.Values val) {
+      setPropValue(device, name, val.toString(), false);
    }
  
    /**

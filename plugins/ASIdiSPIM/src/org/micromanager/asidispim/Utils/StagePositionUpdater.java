@@ -67,12 +67,7 @@ public class StagePositionUpdater {
       }
       stagePosUpdater_ = new Timer(interval_, new ActionListener() {
          public void actionPerformed(ActionEvent ae) {
-            // update stage positions in devices
-            positions_.updateStagePositions();
-            // notify listeners that positions are updated
-            for (ListeningJPanel panel : panels_) {
-               panel.updateStagePositions();
-            }
+            oneTimeUpdate();
          }
       });
       stagePosUpdater_.start();
@@ -81,6 +76,15 @@ public class StagePositionUpdater {
    public void stop() {
       if (stagePosUpdater_ != null) {
          stagePosUpdater_.stop();
+      }
+   }
+   
+   public void oneTimeUpdate() {
+      // update stage positions in devices
+      positions_.updateStagePositions();
+      // notify listeners that positions are updated
+      for (ListeningJPanel panel : panels_) {
+         panel.updateStagePositions();
       }
    }
    
