@@ -28,6 +28,8 @@ import org.micromanager.asidispim.Data.Properties;
 import org.micromanager.asidispim.Utils.ListeningJPanel;
 import org.micromanager.asidispim.Utils.ListeningJTabbedPane;
 
+import java.awt.Dimension;
+import java.awt.Toolkit;
 import java.util.prefs.Preferences;
 
 import javax.swing.event.ChangeEvent;
@@ -45,7 +47,6 @@ import org.micromanager.internalinterfaces.LiveModeListener;
 // TODO figure out why NR Z, NV X, and NV Y are called by devices_.callListeners()
 // TODO resolve whether Home/Stop should be added to 1axis stage API, use here if possible
 // TODO add sethome property to device adapter and use it here
-// TODO check if window position is off screen (can happen if changing monitors) and reset if so
 // TODO centralize preference handling?
 
 /**
@@ -125,6 +126,15 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
             ((ListeningJPanel) tabbedPane.getSelectedComponent()).gotSelected();
          }
       });
+      
+      // make sure plugin window is on the screen (if screen size changes)
+      Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+      if (screenSize.width < prefs_.getInt(PREF_XLOCATION, 0)) {
+         prefs_.putInt(PREF_XLOCATION, 100);
+      }
+      if (screenSize.height < prefs_.getInt(PREF_YLOCATION, 0)) {
+         prefs_.putInt(PREF_YLOCATION, 100);
+      }
     
       // put pane back where it was last time
       // gotSelected will be called because we put it after the ChangeListener code
