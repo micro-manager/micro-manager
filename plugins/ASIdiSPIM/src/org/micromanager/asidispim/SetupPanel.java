@@ -229,23 +229,26 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
     add(sheetBBox_, "wrap");
 
     // disable the sheetA/B boxes when beam is disabled and vice versa
-    beamABox_.addActionListener(new ActionListener() {
+    ActionListener alA = 
+    new ActionListener() {
        public void actionPerformed(ActionEvent e) { 
           sheetABox_.setEnabled(beamABox_.isSelected());
           // whether beam is turned off or on, we want scan to be off on toggle
           sheetABox_.setSelected(false);
        }
-    } 
-    );
-    beamBBox_.addActionListener(new ActionListener() {
+    }; 
+    alA.actionPerformed(null);
+    beamABox_.addActionListener(alA);
+    
+    ActionListener alB = new ActionListener() {
        public void actionPerformed(ActionEvent e) { 
           sheetBBox_.setEnabled(beamBBox_.isSelected());
           // whether beam is turned off or on, we want scan to be off on toggle
           sheetBBox_.setSelected(false);
        }
-    } 
-    );
-    
+    };
+    alB.actionPerformed(null);
+    beamBBox_.addActionListener(alB);
     
     tmp_but = new JButton("Toggle scan");
     tmp_but.addActionListener(new ActionListener() {
@@ -426,6 +429,9 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
             ReportingUtils.showError("could not execute core function move to home for axis " + letter);
          }
       }
+     
+      sheetABox_.setEnabled(beamABox_.isSelected());
+      sheetBBox_.setEnabled(beamBBox_.isSelected());
       
       // handles single/dual camera
       JRadioButton jr = dualCameraButton_; 
