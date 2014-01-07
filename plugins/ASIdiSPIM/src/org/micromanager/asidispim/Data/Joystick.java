@@ -159,7 +159,7 @@ public class Joystick {
          if (devices_.getMMDevice(devKey)!=null) {
             Directions[] dirs = {Directions.X, Directions.Y};
             for (Directions dir : dirs) {  // gets for X and Y for now
-               String dispKey = devices_.getDeviceDisplayWithAxis(devKey) + "-" + dir.toString();
+               String dispKey = devices_.getDeviceDisplayWithAxis1D(devKey, dir);
                list.add(new JSAxisData(dispKey, devKey, dir));
             }
          }

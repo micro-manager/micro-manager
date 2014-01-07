@@ -121,7 +121,7 @@ public class Devices {
       public String toString() {
          switch (side) { // break not needed here
          case A: 
-         case B: return displayName + " Path " + side.toString();
+         case B: return displayName + side.toString();
          case N: return displayName;
          default: return "";
          }
@@ -280,11 +280,42 @@ public class Devices {
       return deviceInfo_.get(key).displayName;
    }
    
+   /**
+    * Returns display string with axis included.  For 2D device both axes are included.
+    * @param key
+    * @return
+    */
    public String getDeviceDisplayWithAxis(Devices.Keys key) {
       String ret = getDeviceDisplay(key);
       DeviceData d = deviceInfo_.get(key);
       if (!d.axisLetter.equals("")) {
          ret = ret + " (" + d.axisLetter + ")";
+      }
+      return ret;
+   }
+   
+   /**
+    * Returns display string with axis included, but only specified axis for 2D device.
+    * @param key
+    * @return
+    */
+   public String getDeviceDisplayWithAxis1D(Devices.Keys key, Joystick.Directions dir) {
+      String ret = getDeviceDisplay(key);
+      String axisLetter = deviceInfo_.get(key).axisLetter;
+      if (axisLetter.length() < 2) {
+         return getDeviceDisplayWithAxis(key);
+      }
+      switch (dir) {
+      // assumes the "X" axis is the first char of two
+      case X:
+         ret = ret + ", " + Joystick.Directions.X.toString() + " axis (" + axisLetter.charAt(0) + ")";
+         break;
+      case Y:
+         ret = ret + ", " + Joystick.Directions.Y.toString() + " axis (" + axisLetter.charAt(1) + ")";
+         break;
+      case NONE:
+      default:
+         return getDeviceDisplayWithAxis(key);
       }
       return ret;
    }

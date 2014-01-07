@@ -39,13 +39,13 @@ import org.micromanager.MMStudioMainFrame;
 import org.micromanager.asidispim.Utils.StagePositionUpdater;
 import org.micromanager.internalinterfaces.LiveModeListener; 
 
-// TODO add "move to zero position" and "set to zero position" buttons on navigation
+// TODO add "move to zero position" and "set to zero position" buttons on navigation for galvos
 // TODO add checkbox to disable moving illumination piezo to home when setup panel selected 
 // TODO figure out update of slider limits when devices changed
+// TODO display certain properties like positions, e.g. scan amplitudes/offsets
 // TODO figure out why NR Z, NV X, and NV Y are called by devices_.callListeners()
 // TODO resolve whether Home/Stop should be added to 1axis stage API, use here if possible
 // TODO add sethome property to device adapter and use it here
-// TODO add help text and/or link to wiki
 // TODO check if window position is off screen (can happen if changing monitors) and reset if so
 // TODO centralize preference handling?
 
@@ -58,7 +58,7 @@ import org.micromanager.internalinterfaces.LiveModeListener;
 public class ASIdiSPIMFrame extends javax.swing.JFrame  
       implements MMListenerInterface {
    
-   public Properties props_;  // using like global variable so I don't have to pass object all the way down to event handlers
+   private Properties props_; 
    private Preferences prefs_;
    private Devices devices_;
    private Joystick joystick_;
