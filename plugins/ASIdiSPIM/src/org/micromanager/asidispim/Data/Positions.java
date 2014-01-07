@@ -145,14 +145,17 @@ public class Positions {
     * @return
     */
    public String getPositionString(Devices.Keys devKey, Joystick.Directions dir) {
-      // would probably be nice to add some extra error checking here
-      if (devKey==Devices.Keys.XYSTAGE) {
-         return getXYStagePositionString(devKey, dir);
-      }
       if (dir==Joystick.Directions.NONE) {
          return getStagePositionString(devKey);
       }
-      return getMicromirrorPositionString(devKey, dir);
+      if (devices_.isXYStage(devKey)) {
+         return getXYStagePositionString(devKey, dir);
+      }
+      if (devices_.isGalvo(devKey)) {
+         return getMicromirrorPositionString(devKey, dir);
+      }
+      // shouldn't get here
+      return "";
    }
    
    /**
@@ -183,10 +186,12 @@ public class Positions {
          }
          Point2D.Double pt;
          try {
-            if (devKey == Devices.Keys.XYSTAGE) {
+            if (devices_.isXYStage(devKey)) {
                pt = core_.getXYStagePosition(mmDevice);
-            } else { // must be galvo
+            } else if (devices_.isGalvo(devKey)) {
                pt = core_.getGalvoPosition(mmDevice);
+            } else {
+               pt = new Point2D.Double();
             }
             twoAxisDrivePositions_.put(devKey, pt);
          } catch (Exception ex) {
@@ -203,8 +208,10 @@ public class Positions {
             continue;
          }
          try {
+            if (devices_.is1DStage(devKey)) {
                double pt = core_.getPosition(mmDevice);
                oneAxisDrivePositions_.put(devKey, pt);
+            }
          } catch (Exception ex) {
             ReportingUtils.logError("Problem getting position of " + mmDevice);
          }

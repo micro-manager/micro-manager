@@ -31,6 +31,7 @@ import java.util.Set;
 import java.util.prefs.Preferences;
 
 import mmcorej.CMMCore;
+import mmcorej.DeviceType;
 import mmcorej.StrVector;
 
 import org.micromanager.MMStudioMainFrame;
@@ -103,6 +104,7 @@ public class Devices {
       String displayName;  // how device should be rendered in GUI
       Sides side; 
       String axisLetter;  // the letter or letters
+      mmcorej.DeviceType type;
       
       /**
        * @param key device key as given by enum in Devices.Keys
@@ -115,6 +117,7 @@ public class Devices {
          this.displayName = displayName;
          this.side = side;
          this.axisLetter = "";
+         this.type = mmcorej.DeviceType.UnknownType;
       }
       
       @Override
@@ -214,6 +217,11 @@ public class Devices {
             d.axisLetter = mmDevice.substring(idx1+1, idx2); 
          }
       }
+      try {
+         d.type = core_.getDeviceType(mmDevice);
+      } catch (Exception e) {
+         d.type = mmcorej.DeviceType.UnknownType;
+      }
       deviceInfo_.put(key, d);
       callListeners();  // make sure everybody else knows about change
    }
@@ -260,6 +268,42 @@ public class Devices {
          }
       }
       return devices.toArray(new String[0]);
+   }
+   
+   /**
+    * Looks up the Micro-Manager device type currently set for particular Device key.
+    * @param key Device key (enum) as defined in this class
+    * @return Micro-Manager device type, or mmcorej.DeviceType.UnknownType if not found 
+    */
+   public DeviceType getMMDeviceType(Devices.Keys key) {
+      return deviceInfo_.get(key).type;
+   }
+   
+   /**
+    * 
+    * @param key
+    * @return true if XYstage, false otherwise
+    */
+   public boolean isXYStage(Devices.Keys key) {
+      return (deviceInfo_.get(key).type == mmcorej.DeviceType.XYStageDevice);
+   }
+   
+   /**
+    * 
+    * @param key
+    * @return true if 1D stage (piezo or motorized), false otherwise
+    */
+   public boolean is1DStage(Devices.Keys key) {
+      return (deviceInfo_.get(key).type == mmcorej.DeviceType.StageDevice);
+   }
+   
+   /**
+    * 
+    * @param key
+    * @return true if galvo, false otherwise
+    */
+   public boolean isGalvo(Devices.Keys key) {
+      return (deviceInfo_.get(key).type == mmcorej.DeviceType.GalvoDevice);
    }
    
    /**
