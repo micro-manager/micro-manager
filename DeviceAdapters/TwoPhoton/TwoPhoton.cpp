@@ -490,19 +490,15 @@ int BitFlowCamera::Shutdown()
  */
 int BitFlowCamera::SnapImage()
 {
-	GetCoreCallback()->LogMessage(this,"Snap1",true);
    if (expNumFrames_ <= 0)
       return DEVICE_OK;
 
-   	GetCoreCallback()->LogMessage(this,"Snap2",true);
    MM::MMTime start = GetCoreCallback()->GetCurrentMMTime();
    MM::MMTime processingTime(0, 0);
 
-   	GetCoreCallback()->LogMessage(this,"Snap3",true);
    // clear all accumulators (set to zero)
    for (unsigned j=0; j<img_.size(); j++)
       img_[j].ResetPixels();
-		GetCoreCallback()->LogMessage(this,"Snap4",true);
 
    unsigned buflen(0);
 
@@ -533,17 +529,13 @@ int BitFlowCamera::SnapImage()
    }
    else
    {
-	   	GetCoreCallback()->LogMessage(this,"Snap5",true);
       if (!bfDev_.isInitialized())
          return ERR_HARDWARE_NOT_INITIALIZED;
 
-	  	GetCoreCallback()->LogMessage(this,"Snap6",true);
       bfDev_.StartSequence(); // start streaming mode
 
-	  	GetCoreCallback()->LogMessage(this,"Snap7",true);
       for (int k=0; k<expNumFrames_; k++)
       {
-		  GetCoreCallback()->LogMessage(this,"SnapFrame",true);
 		  GetCoreCallback()->LogMessage(this,CDeviceUtils::ConvertToString(k),true);
          unsigned char* buf = const_cast<unsigned char*>(bfDev_.GetImageCont());
          
@@ -555,13 +547,10 @@ int BitFlowCamera::SnapImage()
             bfDev_.StopSequence();
             return ERR_SNAP_FAILED;
          }
-         GetCoreCallback()->LogMessage(this,"Snap8",true);
          unsigned bufLen = bfDev_.GetBufferSize();
-         GetCoreCallback()->LogMessage(this,"Snap9",true);
          MM::MMTime startProcessingTime = GetCoreCallback()->GetCurrentMMTime();
          if (deinterlace_)
          {
-			 GetCoreCallback()->LogMessage(this,"Snap10",true);
             // de-interlace, re-size and correct image
             DeinterlaceBuffer(buf, bufLen, bfDev_.Width(), cosineWarp_);
          }
@@ -573,18 +562,12 @@ int BitFlowCamera::SnapImage()
          }
          processingTime = processingTime + (GetCoreCallback()->GetCurrentMMTime() - startProcessingTime);
       }
-	  GetCoreCallback()->LogMessage(this,"Snap11",true);
       bfDev_.StopSequence(); //stop streaming mode
-	  GetCoreCallback()->LogMessage(this,"Snap12",true);
       MM::MMTime startProcessingTime = GetCoreCallback()->GetCurrentMMTime();
-      GetCoreCallback()->LogMessage(this,"Snap13",true);
       for (unsigned i=0; i<img_.size(); i++)
          img_[i].Scale(1.0/expNumFrames_); // average
-	  GetCoreCallback()->LogMessage(this,"Snap14",true);
       processingTime = processingTime + (GetCoreCallback()->GetCurrentMMTime() - startProcessingTime);
    }
-
-   GetCoreCallback()->LogMessage(this,"Snap15",true);
 
    MM::MMTime end = GetCoreCallback()->GetCurrentMMTime();
    intervalMs_ = (end - start).getMsec() / expNumFrames_;

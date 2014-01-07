@@ -21,10 +21,10 @@
     <ClCompile Include="ImgAccumulator.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="MaiTai.cpp">
+    <ClCompile Include="TwoPhoton.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="TwoPhoton.cpp">
+    <ClCompile Include="VirtualShutter.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
