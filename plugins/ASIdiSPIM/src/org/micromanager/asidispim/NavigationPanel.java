@@ -82,7 +82,7 @@ public class NavigationPanel extends ListeningJPanel {
       super (new MigLayout(
               "", 
               "[right]8[align center]16[right]8[center]8[center]8[center]",
-              "[]12[]"));
+              "[]6[]"));
       devices_ = devices;
       joystick_ = joystick;
       positions_ = positions;
@@ -252,7 +252,7 @@ public class NavigationPanel extends ListeningJPanel {
          }
       }
       
-      JButton jb = new JButton("Move to 0");
+      JButton jb = new JButton("Go to 0");
       ActionListener l = new homeButtonActionListener(key, dir);
       jb.addActionListener(l);
       return jb;
@@ -312,7 +312,7 @@ public class NavigationPanel extends ListeningJPanel {
          }
       }
       
-      JButton jb = new JButton("Set Origin");
+      JButton jb = new JButton("Set 0");
       ActionListener l = new zeroButtonActionListener(key, dir);
       jb.addActionListener(l);
       return jb;
