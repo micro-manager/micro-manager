@@ -1009,10 +1009,11 @@ int Wheel::HomeWheel()
  */
 int Wheel::SetWheelPosition(int position)
 {
+   int pos = position;
    // 10 position Ludl Wheel needs 0 to move to position 10
    if (position == 10) 
    {
-      position = 0;
+      pos = 0;
    }
    
    ostringstream  cmd;
@@ -1021,7 +1022,7 @@ int Wheel::SetWheelPosition(int position)
       cmd << "M ";
    else
       cmd << "A ";
-   cmd << position;
+   cmd << pos;
    int ret = SendSerialCommand(port_.c_str(), cmd.str().c_str(), "\r");
    if (ret !=DEVICE_OK)
       return ret;
