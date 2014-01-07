@@ -776,8 +776,41 @@ int XYStage::Initialize()
    ret = GetSerialAnswer(port_.c_str(), "\r", answer);
    if (ret != DEVICE_OK)
       return false;
-   
-   
+
+   // Some individual stages start up with the SAS, SCS, SMS, SAZ, SCZ, SMZ
+   // parameters set to > 100 (the maximum stated in the manual). We may allow
+   // higher values in the future, but for now, set everything > 100 to 100
+   // before we set up the properties, to prevent range check errors.
+   {
+      std::vector<std::string> cmds;
+      cmds.push_back("SMS");
+      cmds.push_back("SAS");
+      if (HasCommand("SCS"))
+         cmds.push_back("SCS");
+      for (std::vector<std::string>::const_iterator it = cmds.begin(), end = cmds.end(); it != end; ++it)
+      {
+         const std::string cmd = *it;
+         std::string answer;
+
+         int ret = SendSerialCommand(port_.c_str(), cmd.c_str(), "\r");
+         if (ret != DEVICE_OK)
+            return ret;
+         ret = GetSerialAnswer(port_.c_str(), "\r", answer);
+         if (ret != DEVICE_OK)
+            return ret;
+         int value = atoi(answer.c_str());
+         if (value > 100)
+         {
+            ret = SendSerialCommand(port_.c_str(), (cmd + ",100").c_str(), "\r");
+            if (ret != DEVICE_OK)
+               return ret;
+            ret = GetSerialAnswer(port_.c_str(), "\r", answer);
+            if (ret != DEVICE_OK)
+               return ret;
+         }
+      }
+   }
+
    // set stage step size and resolution
    double resX, resY;
    ret = GetResolution(resX, resY);
@@ -1474,6 +1507,42 @@ void ZStage::GetName(char* Name) const
 
 int ZStage::Initialize()
 {
+   // Some individual stages start up with the SAS, SCS, SMS, SAZ, SCZ, SMZ
+   // parameters set to > 100 (the maximum stated in the manual). We may allow
+   // higher values in the future, but for now, set everything > 100 to 100
+   // before we set up the properties, to prevent range check errors.
+   {
+      std::vector<std::string> cmds;
+      if (HasCommand("SMZ"))
+         cmds.push_back("SMZ");
+      if (HasCommand("SAZ"))
+         cmds.push_back("SAZ");
+      if (HasCommand("SCZ"))
+         cmds.push_back("SCZ");
+      for (std::vector<std::string>::const_iterator it = cmds.begin(), end = cmds.end(); it != end; ++it)
+      {
+         const std::string cmd = *it;
+         std::string answer;
+
+         int ret = SendSerialCommand(port_.c_str(), cmd.c_str(), "\r");
+         if (ret != DEVICE_OK)
+            return ret;
+         ret = GetSerialAnswer(port_.c_str(), "\r", answer);
+         if (ret != DEVICE_OK)
+            return ret;
+         int value = atoi(answer.c_str());
+         if (value > 100)
+         {
+            ret = SendSerialCommand(port_.c_str(), (cmd + ",100").c_str(), "\r");
+            if (ret != DEVICE_OK)
+               return ret;
+            ret = GetSerialAnswer(port_.c_str(), "\r", answer);
+            if (ret != DEVICE_OK)
+               return ret;
+         }
+      }
+   }
+
    // set stage step size and resolution
    double res;
    int ret = GetResolution(res);
