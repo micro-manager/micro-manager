@@ -40,7 +40,6 @@ import org.micromanager.asidispim.Utils.StagePositionUpdater;
 import org.micromanager.internalinterfaces.LiveModeListener; 
 
 // TODO add "move to zero position" and "set to zero position" buttons on navigation for galvos
-// TODO add checkbox to disable moving illumination piezo to home when setup panel selected 
 // TODO figure out update of slider limits when devices changed
 // TODO display certain properties like positions, e.g. scan amplitudes/offsets
 // TODO figure out why NR Z, NV X, and NV Y are called by devices_.callListeners()

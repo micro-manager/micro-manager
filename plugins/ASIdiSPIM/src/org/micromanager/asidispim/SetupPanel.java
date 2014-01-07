@@ -72,6 +72,8 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
    double sheetStartPos_;
    double sheetStopPos_;
    
+   private boolean illumPiezoHomeEnable_;
+   
    JRadioButton singleCameraButton_; 
    JRadioButton dualCameraButton_;
    final String MULTICAMERAPREF = "IsMultiCamera";
@@ -89,6 +91,8 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
    JCheckBox beamBBox_;
    JLabel imagingPiezoPositionLabel_;
    JLabel illuminationPiezoPositionLabel_;
+   
+   private static final String PREF_ENABLE_ILLUM_HOME = "EnableIllumPiezoHome";
 
    public SetupPanel(Devices devices, Properties props, Joystick joystick, Devices.Sides side, Positions positions) {
       super(new MigLayout(
@@ -171,7 +175,19 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
           }
        }
     });
-    add(tmp_but, "span 2, center, wrap");
+    add(tmp_but);
+    
+    final JCheckBox illumPiezoHomeEnable = new JCheckBox("Move on tab change");
+    ActionListener ae = new ActionListener() {
+       public void actionPerformed(ActionEvent e) { 
+          illumPiezoHomeEnable_ = illumPiezoHomeEnable.isSelected();
+          prefs_.putBoolean(PREF_ENABLE_ILLUM_HOME, illumPiezoHomeEnable.isSelected());
+       }
+    }; 
+    illumPiezoHomeEnable.addActionListener(ae);
+    illumPiezoHomeEnable.setSelected(prefs_.getBoolean(PREF_ENABLE_ILLUM_HOME, true));
+    ae.actionPerformed(null);
+    add(illumPiezoHomeEnable, "wrap");
     
     add(new JLabel("Scan amplitude:"));
     add(new JLabel(""));   // TODO update this label with current value
@@ -399,14 +415,16 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       if (port_ == null) {
          return;
       }
-      try {
-         letter = props_.getPropValueString(piezoIlluminationDeviceKey_, Properties.Keys.AXIS_LETTER);
-         core_.setSerialPortCommand(port_, "! "+letter+"+", "\r");
-         // we need to read the answer or we can get in trouble later on
-         // It would be nice to check the answer
-         core_.getSerialPortAnswer(port_, "\r\n");
-      } catch (Exception ex) {
-         ReportingUtils.showError("could not execute core function move to home for axis " + letter);
+      if (illumPiezoHomeEnable_) {
+         try {
+            letter = props_.getPropValueString(piezoIlluminationDeviceKey_, Properties.Keys.AXIS_LETTER);
+            core_.setSerialPortCommand(port_, "! "+letter, "\r");
+            // we need to read the answer or we can get in trouble later on
+            // It would be nice to check the answer
+            core_.getSerialPortAnswer(port_, "\r\n");
+         } catch (Exception ex) {
+            ReportingUtils.showError("could not execute core function move to home for axis " + letter);
+         }
       }
       
       // handles single/dual camera
