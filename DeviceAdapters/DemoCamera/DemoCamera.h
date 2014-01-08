@@ -578,16 +578,7 @@ public:
 
       return DEVICE_OK;
    }
-   virtual int GetLimits(double& lower, double& upper)
-   {
-      DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
-      if (pHub && pHub->GenerateRandomError())
-         return SIMULATED_ERROR;
 
-      lower = lowerLimit_;
-      upper = upperLimit_;
-      return DEVICE_OK;
-   }
    virtual int GetLimitsUm(double& xMin, double& xMax, double& yMin, double& yMax)
    {
       DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
