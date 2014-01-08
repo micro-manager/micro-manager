@@ -63,6 +63,18 @@
 #include <sstream>
 
 
+#ifdef MODULE_EXPORTS
+#   ifdef _MSC_VER
+#      define MM_DEPRECATED(prototype) __declspec(deprecated) prototype
+#   elif defined(__GNUC__)
+#      define MM_DEPRECATED(prototype) prototype __attribute__((deprecated))
+#   else
+#      define MM_DEPRECATED(prototype) prototype
+#   endif
+#else
+#   define MM_DEPRECATED(prototype) prototype
+#endif
+
 
 #ifdef WIN32
    #define WIN32_LEAN_AND_MEAN
@@ -1142,7 +1154,18 @@ namespace MM {
       virtual Device* GetDevice(const Device* caller, const char* label) = 0;
       virtual int GetDeviceProperty(const char* deviceName, const char* propName, char* value) = 0;
       virtual int SetDeviceProperty(const char* deviceName, const char* propName, const char* value) = 0;
+
+      /// Get the names of currently loaded devices of a given type.
+      /**
+       * If deviceIterator exceeds or is equal to the number of currently
+       * loaded devices of type devType, an empty string is returned.
+       *
+       * \param[in] devType - the device type
+       * \param[out] pDeviceName - buffer in which device name will be returned
+       * \param[in] deviceIterator - index of device (within the given type)
+       */
       virtual void GetLoadedDeviceOfType(const Device* caller, MM::DeviceType devType, char* pDeviceName, const unsigned int deviceIterator) = 0;
+
       virtual int SetSerialProperties(const char* portName,
                                       const char* answerTimeout,
                                       const char* baudRate,
@@ -1156,8 +1179,12 @@ namespace MM {
       virtual int ReadFromSerial(const Device* caller, const char* port, unsigned char* buf, unsigned long length, unsigned long& read) = 0;
       virtual int PurgeSerial(const Device* caller, const char* portName) = 0;
       virtual MM::PortType GetSerialPortType(const char* portName) const = 0;
-      virtual int OnStatusChanged(const Device* caller) = 0;
-      virtual int OnFinished(const Device* caller) = 0;
+
+      /// \deprecated Not sure what this was meant to do.
+      MM_DEPRECATED(virtual int OnStatusChanged(const Device* caller)) = 0;
+      /// \deprecated Not sure what this was meant to do.
+      MM_DEPRECATED(virtual int OnFinished(const Device* caller)) = 0;
+
       virtual int OnPropertiesChanged(const Device* caller) = 0;
       /**
        * Callback to signal the UI that a property changed
@@ -1187,22 +1214,37 @@ namespace MM {
       virtual unsigned long GetClockTicksUs(const Device* caller) = 0;
       virtual MM::MMTime GetCurrentMMTime() = 0;
 
-      // continuous acquisition
-      virtual int OpenFrame(const Device* caller) = 0;
-      virtual int CloseFrame(const Device* caller) = 0;
+      // sequence acquisition
+      /// \deprecated Not sure what this was meant to do.
+      MM_DEPRECATED(virtual int OpenFrame(const Device* caller)) = 0;
+      /// \deprecated Not sure what this was meant to do.
+      MM_DEPRECATED(virtual int CloseFrame(const Device* caller)) = 0;
       virtual int AcqFinished(const Device* caller, int statusCode) = 0;
       virtual int PrepareForAcq(const Device* caller) = 0;
       virtual int InsertImage(const Device* caller, const ImgBuffer& buf) = 0;
       virtual int InsertImage(const Device* caller, const unsigned char* buf, unsigned width, unsigned height, unsigned byteDepth, const Metadata* md = 0, const bool doProcess = true) = 0;
+      /// \deprecated Use the other forms instead.
       virtual int InsertImage(const Device* caller, const unsigned char* buf, unsigned width, unsigned height, unsigned byteDepth, const char* serializedMetadata, const bool doProcess = true) = 0;
       virtual void ClearImageBuffer(const Device* caller) = 0;
       virtual bool InitializeImageBuffer(unsigned channels, unsigned slices, unsigned int w, unsigned int h, unsigned int pixDepth) = 0;
       virtual int InsertMultiChannel(const Device* caller, const unsigned char* buf, unsigned numChannels, unsigned width, unsigned height, unsigned byteDepth, Metadata* md = 0) = 0;
-      virtual void SetAcqStatus(const Device* caller, int statusCode) = 0;
-      virtual long getImageBufferTotalFrames() = 0;
-      virtual long getImageBufferFreeFrames() = 0;
+      /// \deprecated Not sure what this was meant to do.
+      MM_DEPRECATED(virtual void SetAcqStatus(const Device* caller, int statusCode)) = 0;
+
+      // These two are deprecated because they are incorrectly named
+      // (capitalization), are not used by any in-tree device adapter, and do
+      // not have a clear use case. I think they should be removed - we don't
+      // want cameras to make assumptions about the internals of the circular
+      // buffer. - Mark T.
+      /// \deprecated Do not use.
+      MM_DEPRECATED(virtual long getImageBufferTotalFrames()) = 0;
+      /// \deprecated Do not use.
+      MM_DEPRECATED(virtual long getImageBufferFreeFrames()) = 0;
 
       // autofocus
+      // TODO This interface needs improvement: the caller pointer should be
+      // passed, and it should be clarified whether the use of these methods is
+      // to be limited to autofocus or not. - Mark T.
       virtual const char* GetImage() = 0;
       virtual int GetImageDimensions(int& width, int& height, int& depth) = 0;
       virtual int GetFocusPosition(double& pos) = 0;
@@ -1218,24 +1260,54 @@ namespace MM {
       virtual int GetChannelConfig(char* channelConfigName, const unsigned int channelConfigIterator) = 0;
 
       // direct access to specific device types
-      virtual MM::ImageProcessor* GetImageProcessor(const MM::Device* caller) = 0;
-      virtual MM::AutoFocus* GetAutoFocus(const MM::Device* caller) = 0;
-      virtual MM::Hub* GetParentHub(const MM::Device* caller) const = 0;
-      virtual MM::Device* GetPeripheral(const MM::Device* caller, unsigned idx) const = 0;
-      virtual unsigned GetNumberOfPeripherals(const MM::Device* caller) = 0;
+      // TODO With the exception of GetParentHub(), these should be removed in
+      // favor of methods providing indirect access to the required
+      // functionality. Eventually we should completely avoid access to raw
+      // pointers to devices of other device adapters (because we loose
+      // information on errors, because direct access ignores any
+      // synchronization implemented in the Core, and because it would be bad
+      // if device adapters stored the returned pointer). - Mark T.
+      virtual MM::ImageProcessor* GetImageProcessor(const MM::Device* caller) = 0; // Use not recommended
+      virtual MM::AutoFocus* GetAutoFocus(const MM::Device* caller) = 0; // Use not recommended
 
-      virtual MM::State* GetStateDevice(const MM::Device* caller, const char* deviceName) = 0;
-      virtual MM::SignalIO* GetSignalIODevice(const MM::Device* caller, const char* deviceName) = 0;
+      virtual MM::Hub* GetParentHub(const MM::Device* caller) const = 0;
+
+      // These two are deprecated because 1) within the same device adapter,
+      // peripherals can register themselves with their hub, so as to allow
+      // later querying, if necessary, 2) other device adapters have no
+      // business querying this information, and 3) these methods have never
+      // been used by in-tree device adapters.
+      /// \deprecated Call Hub methods directly instead.
+      MM_DEPRECATED(virtual MM::Device* GetPeripheral(const MM::Device* caller, unsigned idx) const) = 0;
+      /// \deprecated Call Hub methods directly instead.
+      MM_DEPRECATED(virtual unsigned GetNumberOfPeripherals(const MM::Device* caller)) = 0;
+
+      virtual MM::State* GetStateDevice(const MM::Device* caller, const char* deviceName) = 0; // Use not recommended
+      virtual MM::SignalIO* GetSignalIODevice(const MM::Device* caller, const char* deviceName) = 0; // Use not recommended
 
       // asynchronous error handling
-      virtual void NextPostedError(int& /*errorCode*/, char* /*pMessage*/, int /*maxlen*/, int& /*messageLength*/) = 0;
-      virtual void PostError(const int, const char* ) = 0;
-      virtual void ClearPostedErrors( void) = 0;
+      // TODO We do need a framework for handling asynchronous errors, but this
+      // interface is poorly thought through. I'm working on a better design.
+      // - Mark T.
+      /// \deprecated Not sure what this was meant to do.
+      MM_DEPRECATED(virtual void NextPostedError(int& /*errorCode*/, char* /*pMessage*/, int /*maxlen*/, int& /*messageLength*/)) = 0;
+      /// \deprecated Better handling of asynchronous errors to be developed.
+      MM_DEPRECATED(virtual void PostError(const int, const char*)) = 0;
+      /// \deprecated Better handling of asynchronous errors to be developed.
+      MM_DEPRECATED(virtual void ClearPostedErrors(void)) = 0;
 
       // thread locking
-      virtual MMThreadLock* getModuleLock(const MM::Device* caller) = 0;
-      virtual void removeModuleLock(const MM::Device* caller) = 0;
-   
+      // XXX I'm deprecating these because 1) use of these would couple device
+      // adapters to the Core's concurrency management implementation way too
+      // strongly, 2) they are named incorrectly (capitalization), and 3) no
+      // in-tree device adapter uses them. This is not to say that it would not
+      // be desirable to allow device adapters to handle concurrent operations
+      // when so designed, but we need a better thought through design to do
+      // that. - Mark T.
+      /// \deprecated Do not use.
+      MM_DEPRECATED(virtual MMThreadLock* getModuleLock(const MM::Device* caller)) = 0;
+      /// \deprecated Do not use.
+      MM_DEPRECATED(virtual void removeModuleLock(const MM::Device* caller)) = 0;
    };
 
 } // namespace MM
