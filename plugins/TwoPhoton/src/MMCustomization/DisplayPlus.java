@@ -82,25 +82,7 @@ public class DisplayPlus implements ImageCacheListener  {
         } catch (Exception e) {
             ReportingUtils.showError("Couldnt get grid info");
         }
-        vad_ = new VirtualAcquisitionDisplay(stitchedCache, eng, WINDOW_TITLE) {
-            public void showImage(final JSONObject tags, boolean waitForDisplay)
-                    throws InterruptedException, InvocationTargetException {
-                //Since this is multichannel camera, only show when last channel arrives
-                try {
-                    if (MDUtils.getChannelIndex(tags) == super.getNumChannels() - 1) {
-                        super.showImage(tags, waitForDisplay);
-                    } else {
-                        ImagePlus ip = super.getHyperImage();
-                        if (ip != null) {
-                            //canvas never gets painted so need to set painpending false
-                            
-                            ip.getCanvas().setPaintPending(false);
-                        }
-                    }
-                } catch (JSONException ex) {
-                }
-            }
-        };
+        vad_ = new VirtualAcquisitionDisplay(stitchedCache, eng, WINDOW_TITLE) ;
         DisplayControls controls = new Controls();
 
         //Add in custom controls
