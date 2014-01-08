@@ -41,7 +41,6 @@ import org.micromanager.MMStudioMainFrame;
 import org.micromanager.asidispim.Utils.StagePositionUpdater;
 import org.micromanager.internalinterfaces.LiveModeListener; 
 
-// TODO add "move to zero position" and "set to zero position" buttons on navigation for galvos
 // TODO figure out update of slider limits when devices changed
 // TODO display certain properties like positions, e.g. scan amplitudes/offsets
 // TODO figure out why NR Z, NV X, and NV Y are called by devices_.callListeners()
@@ -85,6 +84,7 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
       props_ = new Properties(devices_);  // doesn't have its own frame, but is an object used by other classes
       positions_ = new Positions(devices_);
       joystick_ = new Joystick(devices_, props_);
+      
       final StagePositionUpdater stagePosUpdater = new StagePositionUpdater(positions_);
       
       final ListeningJTabbedPane tabbedPane = new ListeningJTabbedPane();
@@ -108,6 +108,10 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
       stagePosUpdater.addPanel(setupPanelB_);
       MMStudioMainFrame.getInstance().addLiveModeListener((LiveModeListener) setupPanelB_);
       
+      // get initial positions, even if user doesn't want continual refresh
+      // these used by NavigationPanel 
+      stagePosUpdater.oneTimeUpdate();
+      
       navigationPanel_ = new NavigationPanel(devices_, joystick_,
             positions_, stagePosUpdater);
       tabbedPane.addLTab("Navigation", navigationPanel_);
@@ -115,10 +119,6 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
       
       helpPanel_ = new HelpPanel();
       tabbedPane.addLTab("Help", helpPanel_);
-      
-      // get initial positions, even if user doesn't want continual refresh
-      stagePosUpdater.oneTimeUpdate();
-      
                
       // make sure gotSelected() gets called whenever we switch tabs
       tabbedPane.addChangeListener(new ChangeListener() {

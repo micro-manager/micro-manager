@@ -66,7 +66,7 @@ public class Positions {
     * @param devKey
     * @return 
     */
-   public Point2D.Double getTwoAxisStagePosition(Devices.Keys devKey) {
+   private Point2D.Double getTwoAxisStagePosition(Devices.Keys devKey) {
       return twoAxisDrivePositions_.get(devKey);
    }
    
@@ -76,83 +76,108 @@ public class Positions {
     * @param devKey
     * @return 
     */
-   public Double getOneAxisStagePosition(Devices.Keys devKey) {
+   private Double getOneAxisStagePosition(Devices.Keys devKey) {
       return oneAxisDrivePositions_.get(devKey);
    }
    
    /**
-    * returns cached position of XY stage in string form,
-    *  or empty string if device hasn't been defined
+    * Returns the cached position of the specified stage, or 0 if the stage wasn't found or
+    * if the cache is uninitialized.
     * @param devKey
     * @param dir
     * @return
     */
-   private String getXYStagePositionString(Devices.Keys devKey, Joystick.Directions dir) {
-      String ret = "";
-      Point2D.Double pt = getTwoAxisStagePosition(devKey);
-      if (pt != null) {
-         if (dir == Joystick.Directions.X) {
-            ret = posToDisplayStringUm(pt.x);
-         } else if (dir == Joystick.Directions.Y) {
-            ret = posToDisplayStringUm(pt.y);
+   public double getPosition(Devices.Keys devKey, Joystick.Directions dir) {
+      if (devices_.is1DStage(devKey)) {
+         Double pos = getOneAxisStagePosition(devKey);
+         if (pos != null) {
+            return pos.doubleValue();
          }
       }
-      return ret;
-   }
-   
-   /**
-    * returns cached position of micromirror stage in string form,
-    *  or empty string if device hasn't been defined
-    * @param devKey
-    * @param dir
-    * @return
-    */
-   private String getMicromirrorPositionString(Devices.Keys devKey, Joystick.Directions dir) {
-      String ret = "";
-      Point2D.Double pt = getTwoAxisStagePosition(devKey);
-      if (pt != null) {
-         if (dir == Joystick.Directions.X) {
-            ret = posToDisplayStringDeg(pt.x);
-         } else if (dir == Joystick.Directions.Y) {
-            ret = posToDisplayStringDeg(pt.y);
+      if (devices_.isGalvo(devKey) || devices_.isXYStage(devKey)) {
+         Point2D.Double pos = getTwoAxisStagePosition(devKey);
+         if (pos != null) {
+            if (dir == Joystick.Directions.X) {
+               return pos.x;
+            } else if (dir == Joystick.Directions.Y) {
+               return pos.y;
+            }
          }
       }
-      return ret;
+      return 0;
    }
    
    /**
-    * returns cached position of linear stage in string form,
-    *  or empty string if device hasn't been defined
+    * Returns the current position of the specified stage, or 0 if the stage wasn't found.
+    * Updates the cache with the value as well.
     * @param devKey
     * @param dir
     * @return
     */
-   private String getStagePositionString(Devices.Keys devKey) {
-      String ret = "";
-      Double pt = getOneAxisStagePosition(devKey);
-      if (pt != null) {
-         ret = posToDisplayStringUm(pt.doubleValue());
+   public double getUpdatedPosition(Devices.Keys devKey, Joystick.Directions dir) {
+      String mmDevice = devices_.getMMDevice(devKey);
+      if (mmDevice == null) {
+         return 0;
       }
-      return ret;
+      try {
+         if (devices_.is1DStage(devKey)) {
+            double pt = core_.getPosition(mmDevice);
+            oneAxisDrivePositions_.put(devKey, pt);
+            return pt;
+         }
+         Point2D.Double pt;
+         if (devices_.isXYStage(devKey)) {
+            pt = core_.getXYStagePosition(mmDevice);
+         } else if (devices_.isGalvo(devKey)) {
+            pt = core_.getGalvoPosition(mmDevice);
+         } else {
+            pt = new Point2D.Double();
+         }
+         twoAxisDrivePositions_.put(devKey, pt);
+         if (dir == Joystick.Directions.X) {
+            return pt.x;
+         } else if (dir == Joystick.Directions.Y) {
+            return pt.y;
+         }
+      } catch (Exception ex) {
+         ReportingUtils.showError(ex);
+      }
+      return 0;
    }
    
    /**
-    * Returns cached position in string form.
+    * Returns cached position in string form, or the empty string if there is an error.
     * If dir == Joystick.Directions.NONE then assumes 1D stage
-    * Assumes 2D stage is galvo unless it is Devices.Keys.XYSTAGE
     * @param devKey
     * @param dir
     * @return
     */
    public String getPositionString(Devices.Keys devKey, Joystick.Directions dir) {
-      if (dir==Joystick.Directions.NONE) {
-         return getStagePositionString(devKey);
+      if (devices_.is1DStage(devKey) || dir==Joystick.Directions.NONE) {
+         Double pt = getOneAxisStagePosition(devKey);
+         if (pt != null) {
+            return posToDisplayStringUm(pt.doubleValue());
+         }
       }
       if (devices_.isXYStage(devKey)) {
-         return getXYStagePositionString(devKey, dir);
+         Point2D.Double pt = getTwoAxisStagePosition(devKey);
+         if (pt != null) {
+            if (dir == Joystick.Directions.X) {
+               return posToDisplayStringUm(pt.x);
+            } else if (dir == Joystick.Directions.Y) {
+               return  posToDisplayStringUm(pt.y);
+            }
+         }
       }
       if (devices_.isGalvo(devKey)) {
-         return getMicromirrorPositionString(devKey, dir);
+         Point2D.Double pt = getTwoAxisStagePosition(devKey);
+         if (pt != null) {
+            if (dir == Joystick.Directions.X) {
+               return posToDisplayStringDeg(pt.x);
+            } else if (dir == Joystick.Directions.Y) {
+               return posToDisplayStringDeg(pt.y);
+            }
+         }
       }
       // shouldn't get here
       return "";
@@ -164,7 +189,76 @@ public class Positions {
     * @return
     */
    public String getPositionString(Devices.Keys devKey) {
-      return getStagePositionString(devKey);
+      return getPositionString(devKey, Joystick.Directions.NONE);
+   }
+   
+   /**
+    * Sets the position of specified stage to the specified value
+    * @param devKey
+    * @param dir
+    * @param pos new position of the stage
+    */
+   public void setPosition(Devices.Keys devKey, Joystick.Directions dir, double pos) {
+      try {
+         String mmDevice = devices_.getMMDeviceException(devKey);
+         if (devices_.is1DStage(devKey)) {
+            core_.setPosition(mmDevice, pos);
+         }
+         if (devices_.isXYStage(devKey)) {
+            if (dir == Joystick.Directions.X) {
+               double ypos = core_.getYPosition(mmDevice);
+               core_.setXYPosition(mmDevice, pos, ypos);
+            } else if (dir == Joystick.Directions.Y) {
+               double xpos = core_.getXPosition(mmDevice);
+               core_.setXYPosition(mmDevice, xpos, pos);
+            }
+         } else if (devices_.isGalvo(devKey)) {
+            Point2D.Double pos2D = core_.getGalvoPosition(mmDevice);
+            if (dir == Joystick.Directions.X) {
+               core_.setGalvoPosition(mmDevice, pos, pos2D.y);
+            } else if (dir == Joystick.Directions.Y) {
+               core_.setGalvoPosition(mmDevice, pos2D.x, pos);
+            }
+         } else if (devices_.is1DStage(devKey)) {
+            core_.setPosition(mmDevice, pos);
+         }
+      } catch (Exception ex) {
+         ReportingUtils.showError(ex);
+      }
+   }
+   
+   /**
+    * Sets the current position to be the origin.
+    * @param devKey
+    * @param dir
+    * @param pos
+    */
+   public void setOrigin(Devices.Keys devKey, Joystick.Directions dir) {
+      try {
+         String mmDevice = devices_.getMMDeviceException(devKey);
+         switch (dir) {
+         case X:
+            if (devices_.isXYStage(devKey)) { 
+               double ypos = getUpdatedPosition(devKey, Joystick.Directions.Y);
+               core_.setAdapterOriginXY(mmDevice, 0.0, ypos);  // so serial com, since adapter keeps own origin
+            }
+            break;
+         case Y:
+            if (devices_.isXYStage(devKey)) { 
+               double xpos = getUpdatedPosition(devKey, Joystick.Directions.X);
+               core_.setAdapterOriginXY(mmDevice, xpos, 0.0);  // so serial com, since adapter keeps own origin
+            }
+            break;
+         case NONE:
+         default:
+            if (devices_.is1DStage(devKey)) {
+               core_.setOrigin(mmDevice);
+            }
+            break;
+         }
+      } catch (Exception ex) {
+         ReportingUtils.showError(ex);
+      }
    }
 
    
