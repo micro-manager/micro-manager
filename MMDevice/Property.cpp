@@ -18,17 +18,19 @@
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 // CVS:           $Id$
-//
 
-const int BUFSIZE = 60;
-#include <assert.h>
-#include <cstdio>
 #include "Property.h"
+
+#include <cstdio>
+
 using namespace std;
 
 #if WIN32
    #define snprintf _snprintf
 #endif
+
+const int BUFSIZE = 60; // For number-to-string conversion
+
 
 vector<string> MM::Property::GetAllowedValues() const
 {

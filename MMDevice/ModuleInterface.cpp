@@ -21,7 +21,6 @@
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-#define _CRT_SECURE_NO_DEPRECATE
 #include "ModuleInterface.h"
 
 #include <algorithm>

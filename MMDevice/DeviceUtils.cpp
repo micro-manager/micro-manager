@@ -17,7 +17,7 @@
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 // CVS:           $Id$
-//
+
 #include "DeviceUtils.h"
 #include <stdlib.h>
 #include <string.h>
@@ -28,7 +28,6 @@
    #define WIN32_LEAN_AND_MEAN
    #include <windows.h>
    #define snprintf _snprintf 
-#pragma warning(disable : 4996)
 #else
    #include <unistd.h>
 #endif
