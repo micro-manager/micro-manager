@@ -194,12 +194,23 @@ def read_log(entry_target, summary_target):
 # Generate summary from parsed items
 #
 
+def message_filter(message):
+    # "PDB 'filename' was not found with 'object/library' or at 'path'; linking
+    # object as if no debug info" - this warning cannot be suppressed with a
+    # linker flag, but is usually due to third-party libraries that we cannot
+    # fix. Since it is not expected to affect us, suppress it.
+    if message.code == "LNK4099":
+        return False
+    return True
+
+
 @coroutine
 def process_summary(section_sink):
     fatal_errors = dict()
     errors = dict()
     warnings = dict()
     warn_stats = dict()
+    suppressed_warn_stats = dict()
 
     while True:
         try:
@@ -209,7 +220,11 @@ def process_summary(section_sink):
 
         for message in messages:
             if message.kind == "warning":
-                warn_stats[message.code] = warn_stats.get(message.code, 0) + 1
+                if message_filter(message):
+                    warn_stats[message.code] = warn_stats.get(message.code, 0) + 1
+                else:
+                    suppressed_warn_stats[message.code] = \
+                            suppressed_warn_stats.get(message.code, 0) + 1
 
         # Sort messages by kind and project
 
@@ -224,7 +239,7 @@ def process_summary(section_sink):
 
         project_relpath = ntpath.relpath(project_path,
                                          ntpath.dirname(solution_path))
-        for message in messages:
+        for message in filter(message_filter, messages):
             if message.kind == "fatal error":
                 fatal_errors.setdefault(project_relpath, list()).append(message)
             elif message.kind == "error":
@@ -242,6 +257,8 @@ def process_summary(section_sink):
         section_sink.send((False, "Warnings", True, summarize_messages(warnings)))
     if warn_stats:
         section_sink.send((False, "Warning Statistics", False, summarize_stats(warn_stats)))
+    if suppressed_warn_stats:
+        section_sink.send((False, "Suppressed Warnings", False, summarize_stats(suppressed_warn_stats)))
 
 
 def summarize_messages(project_messages):
