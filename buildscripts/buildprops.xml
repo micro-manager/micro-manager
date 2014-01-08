@@ -14,6 +14,9 @@
 	<!-- Whether to run (C++) builds in parallel -->
 	<property name="mm.build.parallel" value="true"/>
 
+	<!-- Verbosity setting for MSBuild (VC++); e.g. minimal or normal -->
+	<property name="mm.build.msbuild.verbosity" value="minimal"/>
+
 	<!-- Path of repository root, from the project basedir -->
 	<dirname property="mm.basedir" file="${ant.file.mm.props}/.."/>
 
@@ -128,6 +131,7 @@
 		<attribute name="logdir" default="${mm.cpp.outdir}"/>
 		<attribute name="logbasename" default="msbuild"/>
 		<attribute name="parallel" default="${mm.build.parallel}"/>
+		<attribute name="verbosity" default="${mm.build.msbuild.verbosity}"/>
 		<attribute name="failonerror" default="true"/>
 		<sequential>
 			<!-- MSBuild will fail if log dir does not exist -->
@@ -142,7 +146,7 @@
 
 			<local name="msbuild.params"/>
 			<property name="msbuild.params"
-				value="@{project} /t:@{target} /p:Configuration=${mm.configuration} /p:Platform=${mm.architecture} /flp:LogFile=${msbuild.log} ${msbuild.flag.parallel}"/>
+				value="@{project} /t:@{target} /p:Configuration=${mm.configuration} /p:Platform=${mm.architecture} /v:@{verbosity} /flp:LogFile=${msbuild.log} ${msbuild.flag.parallel}"/>
 
 			<local name="vs.commontools.dir"/>
 			<property name="vs.commontools.dir" location="${mm.env.VS100COMNTOOLS}"/>

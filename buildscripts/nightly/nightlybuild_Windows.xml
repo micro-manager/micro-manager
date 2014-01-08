@@ -5,6 +5,9 @@
 	<!-- Use the nightly-build-style version string -->
 	<property name="mm.build.mode" value="nightly"/>
 
+	<!-- Keep compiler command lines and other details -->
+	<property name="mm.build.msbuild.verbosity" value="normal"/>
+
 	<!-- Don't give up build if a device adapter or plugin is broken -->
 	<property name="mm.build.failonerror" value="false"/>
 
