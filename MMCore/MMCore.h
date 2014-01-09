@@ -527,7 +527,9 @@ private:
    CConfigMap configs_;
    CPropBlockMap propBlocks_;
    bool debugLog_;
-   mutable Configuration stateCache_; // system state cache
+
+   mutable MMThreadLock stateCacheLock_; // Must be unlocked when calling MMEventCallback or calling device methods
+   mutable Configuration stateCache_; // Synchronized by stateCacheLock_
 
    // Parameter/value validation
    static void CheckDeviceLabel(const char* label) throw (CMMError);

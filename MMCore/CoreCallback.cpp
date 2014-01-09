@@ -217,7 +217,10 @@ int CoreCallback::OnPropertyChanged(const MM::Device* device, const char* propNa
       bool readOnly;
       device->GetPropertyReadOnly(propName, readOnly);
       const PropertySetting* ps = new PropertySetting(label, propName, value, readOnly);
-      core_->stateCache_.addSetting(*ps);
+      {
+         MMThreadGuard scg(core_->stateCacheLock_);
+         core_->stateCache_.addSetting(*ps);
+      }
       core_->externalCallback_->onPropertyChanged(label, propName, value);
       
       // find all configs that contain this property and callback to indicate 

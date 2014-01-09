@@ -484,6 +484,7 @@ Configuration CMMCore::getSystemState()
  */
 Configuration CMMCore::getSystemStateCache() const
 {
+   MMThreadGuard scg(stateCacheLock_);
    return stateCache_;
 }
 
@@ -947,7 +948,10 @@ void CMMCore::initializeDevice(const char* label ///< the device to initialize
  */
 void CMMCore::updateSystemStateCache()
 {
-   stateCache_ = getSystemState();
+   {
+      MMThreadGuard scg(stateCacheLock_);
+      stateCache_ = getSystemState();
+   }
    CORE_LOG("System state cache updated.\n");
 }
 
@@ -2027,7 +2031,10 @@ void CMMCore::setAutoShutter(bool state)
 {
    properties_->Set(MM::g_Keyword_CoreAutoShutter, state ? "1" : "0");
    autoShutter_ = state;
-   stateCache_.addSetting(PropertySetting(MM::g_Keyword_CoreDevice, MM::g_Keyword_CoreAutoShutter, state ? "1" : "0"));
+   {
+      MMThreadGuard scg(stateCacheLock_);
+      stateCache_.addSetting(PropertySetting(MM::g_Keyword_CoreDevice, MM::g_Keyword_CoreAutoShutter, state ? "1" : "0"));
+   }
    CORE_LOG("Auto shutter %s.\n", state ? "ON" : "OFF");
 }
 
@@ -2059,7 +2066,10 @@ void CMMCore::setShutterOpen(bool state) throw (CMMError)
       {
          char shutterName[MM::MaxStrLength];
          shutter_->GetLabel(shutterName);
-         stateCache_.addSetting(PropertySetting(shutterName, MM::g_Keyword_State, CDeviceUtils::ConvertToString(state)));
+         {
+            MMThreadGuard scg(stateCacheLock_);
+            stateCache_.addSetting(PropertySetting(shutterName, MM::g_Keyword_State, CDeviceUtils::ConvertToString(state)));
+         }
       }
    }
 }
@@ -2727,7 +2737,10 @@ void CMMCore::setAutoFocusDevice(const char* autofocusLabel) throw (CMMError)
       CORE_LOG("Auto-focus device removed.\n");
    }
    properties_->Refresh(); // TODO: more efficient
-   stateCache_.addSetting(PropertySetting(MM::g_Keyword_CoreDevice, MM::g_Keyword_CoreAutoFocus, getAutoFocusDevice().c_str()));
+   {
+      MMThreadGuard scg(stateCacheLock_);
+      stateCache_.addSetting(PropertySetting(MM::g_Keyword_CoreDevice, MM::g_Keyword_CoreAutoFocus, getAutoFocusDevice().c_str()));
+   }
 }
 
 /**
@@ -2806,7 +2819,10 @@ void CMMCore::setImageProcessorDevice(const char* procLabel) throw (CMMError)
       CORE_LOG("Image processor device removed.\n");
    }
    properties_->Refresh(); // TODO: more efficient
-   stateCache_.addSetting(PropertySetting(MM::g_Keyword_CoreDevice, MM::g_Keyword_CoreImageProcessor, getImageProcessorDevice().c_str()));
+   {
+      MMThreadGuard scg(stateCacheLock_);
+      stateCache_.addSetting(PropertySetting(MM::g_Keyword_CoreDevice, MM::g_Keyword_CoreImageProcessor, getImageProcessorDevice().c_str()));
+   }
 }
 
 /**
@@ -2825,7 +2841,10 @@ void CMMCore::setSLMDevice(const char* slmLabel) throw (CMMError)
       CORE_LOG("Image processor device removed.\n");
    }
    properties_->Refresh(); // TODO: more efficient
-   stateCache_.addSetting(PropertySetting(MM::g_Keyword_CoreDevice, MM::g_Keyword_CoreSLM, getSLMDevice().c_str()));
+   {
+      MMThreadGuard scg(stateCacheLock_);
+      stateCache_.addSetting(PropertySetting(MM::g_Keyword_CoreDevice, MM::g_Keyword_CoreSLM, getSLMDevice().c_str()));
+   }
 }
 
 
@@ -2845,7 +2864,10 @@ void CMMCore::setGalvoDevice(const char* galvoLabel) throw (CMMError)
       CORE_LOG("Image processor device removed.\n");
    }
    properties_->Refresh(); // TODO: more efficient
-   stateCache_.addSetting(PropertySetting(MM::g_Keyword_CoreDevice, MM::g_Keyword_CoreGalvo, getGalvoDevice().c_str()));
+   {
+      MMThreadGuard scg(stateCacheLock_);
+      stateCache_.addSetting(PropertySetting(MM::g_Keyword_CoreDevice, MM::g_Keyword_CoreGalvo, getGalvoDevice().c_str()));
+   }
 }
 
 /**
@@ -2863,7 +2885,10 @@ void CMMCore::setChannelGroup(const char* chGroup) throw (CMMError)
       channelGroup_.clear();
    }
    properties_->Refresh(); // TODO: more efficient
-   stateCache_.addSetting(PropertySetting(MM::g_Keyword_CoreDevice, MM::g_Keyword_CoreChannelGroup, getChannelGroup().c_str()));
+   {
+      MMThreadGuard scg(stateCacheLock_);
+      stateCache_.addSetting(PropertySetting(MM::g_Keyword_CoreDevice, MM::g_Keyword_CoreChannelGroup, getChannelGroup().c_str()));
+   }
 }
 
 /**
@@ -2918,7 +2943,10 @@ void CMMCore::setShutterDevice(const char* shutterLabel) throw (CMMError)
       CORE_LOG("Shutter device removed.\n");
    }
    properties_->Refresh(); // TODO: more efficient
-   stateCache_.addSetting(PropertySetting(MM::g_Keyword_CoreDevice, MM::g_Keyword_CoreShutter, getShutterDevice().c_str()));
+   {
+      MMThreadGuard scg(stateCacheLock_);
+      stateCache_.addSetting(PropertySetting(MM::g_Keyword_CoreDevice, MM::g_Keyword_CoreShutter, getShutterDevice().c_str()));
+   }
 }
 
 /**
@@ -2938,7 +2966,10 @@ void CMMCore::setFocusDevice(const char* focusLabel) throw (CMMError)
       CORE_LOG("Focus device removed.\n");
    }
    properties_->Refresh(); // TODO: more efficient
-   stateCache_.addSetting(PropertySetting(MM::g_Keyword_CoreDevice, MM::g_Keyword_CoreFocus, getFocusDevice().c_str()));
+   {
+      MMThreadGuard scg(stateCacheLock_);
+      stateCache_.addSetting(PropertySetting(MM::g_Keyword_CoreDevice, MM::g_Keyword_CoreFocus, getFocusDevice().c_str()));
+   }
 }
 
 /**
@@ -2956,7 +2987,10 @@ void CMMCore::setXYStageDevice(const char* xyDeviceLabel) throw (CMMError)
       xyStage_ = 0;
       CORE_LOG("XYDevice device removed.\n");
    }
-   stateCache_.addSetting(PropertySetting(MM::g_Keyword_CoreDevice, MM::g_Keyword_CoreXYStage, getXYStageDevice().c_str()));
+   {
+      MMThreadGuard scg(stateCacheLock_);
+      stateCache_.addSetting(PropertySetting(MM::g_Keyword_CoreDevice, MM::g_Keyword_CoreXYStage, getXYStageDevice().c_str()));
+   }
 }
 
 /**
@@ -2976,7 +3010,10 @@ void CMMCore::setCameraDevice(const char* cameraLabel) throw (CMMError)
       CORE_LOG("Camera device removed.\n");
    }
    properties_->Refresh(); // TODO: more efficient
-   stateCache_.addSetting(PropertySetting(MM::g_Keyword_CoreDevice, MM::g_Keyword_CoreCamera, getCameraDevice().c_str()));
+   {
+      MMThreadGuard scg(stateCacheLock_);
+      stateCache_.addSetting(PropertySetting(MM::g_Keyword_CoreDevice, MM::g_Keyword_CoreCamera, getCameraDevice().c_str()));
+   }
 }
 
 /**
@@ -3090,7 +3127,10 @@ string CMMCore::getProperty(const char* label, const char* propName) throw (CMME
    // use the opportunity to update the cache
    // Note, stateCache is mutable so that we can update it from this const function
    PropertySetting s(label, propName, value);
-   stateCache_.addSetting(s);
+   {
+      MMThreadGuard scg(stateCacheLock_);
+      stateCache_.addSetting(s);
+   }
 
    return string(value);
 }
@@ -3109,14 +3149,15 @@ string CMMCore::getPropertyFromCache(const char* label, const char* propName) co
    CheckDeviceLabel(label);
    CheckPropertyName(propName);
 
-   if (!stateCache_.isPropertyIncluded(label, propName))
-      throw CMMError("Property " + ToQuotedString(propName) + " of device " +
-            ToQuotedString(label) + " not found in cache",
-            MMERR_PropertyNotInCache);
-
-   PropertySetting s = stateCache_.getSetting(label, propName);
-
-   return s.getPropertyValue();
+   {
+      MMThreadGuard scg(stateCacheLock_);
+      if (!stateCache_.isPropertyIncluded(label, propName))
+         throw CMMError("Property " + ToQuotedString(propName) + " of device " +
+               ToQuotedString(label) + " not found in cache",
+               MMERR_PropertyNotInCache);
+      PropertySetting s = stateCache_.getSetting(label, propName);
+      return s.getPropertyValue();
+   }
 }
 
 /**
@@ -3138,7 +3179,10 @@ void CMMCore::setProperty(const char* label, const char* propName,
    if (IsCoreDeviceLabel(label))
    {
       properties_->Execute(propName, propValue);
-      stateCache_.addSetting(PropertySetting(MM::g_Keyword_CoreDevice, propName, propValue));
+      {
+         MMThreadGuard scg(stateCacheLock_);
+         stateCache_.addSetting(PropertySetting(MM::g_Keyword_CoreDevice, propName, propValue));
+      }
    }
    else
    {
@@ -3153,7 +3197,10 @@ void CMMCore::setProperty(const char* label, const char* propName,
          logError(label, se.str().c_str());
          throw CMMError(se.str().c_str(), MMERR_DEVICE_GENERIC);
       }
-      stateCache_.addSetting(PropertySetting(label, propName, propValue));
+      {
+         MMThreadGuard scg(stateCacheLock_);
+         stateCache_.addSetting(PropertySetting(label, propName, propValue));
+      }
    }
 
    CORE_DEBUG("Did set property: \"%s\"-\"%s\" = \"%s\"", label, propName, propValue);
@@ -3596,7 +3643,10 @@ void CMMCore::setExposure(const char* label, double dExp) throw (CMMError)
       pCamera->SetExposure(dExp);
       if (camera_->HasProperty(MM::g_Keyword_Exposure))
       {
-         stateCache_.addSetting(PropertySetting(label, MM::g_Keyword_Exposure, CDeviceUtils::ConvertToString(dExp)));
+         {
+            MMThreadGuard scg(stateCacheLock_);
+            stateCache_.addSetting(PropertySetting(label, MM::g_Keyword_Exposure, CDeviceUtils::ConvertToString(dExp)));
+         }
       }
    }
 
@@ -3701,7 +3751,10 @@ void CMMCore::setState(const char* deviceLabel, long state) throw (CMMError)
 
    if (pStateDev->HasProperty(MM::g_Keyword_State))
    {
-      stateCache_.addSetting(PropertySetting(deviceLabel, MM::g_Keyword_State, CDeviceUtils::ConvertToString(state)));
+      {
+         MMThreadGuard scg(stateCacheLock_);
+         stateCache_.addSetting(PropertySetting(deviceLabel, MM::g_Keyword_State, CDeviceUtils::ConvertToString(state)));
+      }
    }
    if (pStateDev->HasProperty(MM::g_Keyword_Label))
    {
@@ -3709,7 +3762,10 @@ void CMMCore::setState(const char* deviceLabel, long state) throw (CMMError)
       nRet = pStateDev->GetPositionLabel(state, posLbl);
       if (nRet != DEVICE_OK)
          throw CMMError(getDeviceErrorText(nRet, pStateDev));
-      stateCache_.addSetting(PropertySetting(deviceLabel, MM::g_Keyword_Label, posLbl));
+      {
+         MMThreadGuard scg(stateCacheLock_);
+         stateCache_.addSetting(PropertySetting(deviceLabel, MM::g_Keyword_Label, posLbl));
+      }
    }
 
    CORE_DEBUG("%s set to state %d\n", deviceLabel, (int)state);
@@ -3763,12 +3819,18 @@ void CMMCore::setStateLabel(const char* deviceLabel, const char* stateLabel) thr
 
    if (pStateDev->HasProperty(MM::g_Keyword_Label))
    {
-      stateCache_.addSetting(PropertySetting(deviceLabel, MM::g_Keyword_Label, stateLabel));
+      {
+         MMThreadGuard scg(stateCacheLock_);
+         stateCache_.addSetting(PropertySetting(deviceLabel, MM::g_Keyword_Label, stateLabel));
+      }
    }
    if (pStateDev->HasProperty(MM::g_Keyword_State))
    {
-      stateCache_.addSetting(PropertySetting(deviceLabel, MM::g_Keyword_State,
-                             CDeviceUtils::ConvertToString(getStateFromLabel(deviceLabel, stateLabel))));
+      {
+         MMThreadGuard scg(stateCacheLock_);
+         stateCache_.addSetting(PropertySetting(deviceLabel, MM::g_Keyword_State,
+                  CDeviceUtils::ConvertToString(getStateFromLabel(deviceLabel, stateLabel))));
+      }
    }
 
    CORE_DEBUG("%s set to state label %s\n", deviceLabel, stateLabel);
@@ -4579,7 +4641,8 @@ string CMMCore::getCurrentPixelSizeConfig(bool cached) throw (CMMError)
 				}
 				else
 				{
-				   value = stateCache_.getSetting(cs.getDeviceLabel().c_str(), cs.getPropertyName().c_str()).getPropertyValue();
+               MMThreadGuard scg(stateCacheLock_);
+               value = stateCache_.getSetting(cs.getDeviceLabel().c_str(), cs.getPropertyName().c_str()).getPropertyValue();
 				}
                PropertySetting ss(cs.getDeviceLabel().c_str(), cs.getPropertyName().c_str(), value.c_str()); // state setting
                curState.addSetting(ss);
@@ -6190,7 +6253,10 @@ void CMMCore::applyConfiguration(const Configuration& config) throw (CMMError)
       if (setting.getDeviceLabel().compare(MM::g_Keyword_CoreDevice) == 0)
       {
          properties_->Execute(setting.getPropertyName().c_str(), setting.getPropertyValue().c_str());
-         stateCache_.addSetting(PropertySetting(MM::g_Keyword_CoreDevice, setting.getPropertyName().c_str(), setting.getPropertyValue().c_str()));
+         {
+            MMThreadGuard scg(stateCacheLock_);
+            stateCache_.addSetting(PropertySetting(MM::g_Keyword_CoreDevice, setting.getPropertyName().c_str(), setting.getPropertyValue().c_str()));
+         }
       }
       else
       {
@@ -6202,8 +6268,12 @@ void CMMCore::applyConfiguration(const Configuration& config) throw (CMMError)
          {
             failedProps.push_back(setting);
             error = true;
-         } else
+         }
+         else
+         {
+            MMThreadGuard scg(stateCacheLock_);
             stateCache_.addSetting(setting);
+         }
       }
    }
    if (error) 
@@ -6243,8 +6313,12 @@ int CMMCore::applyProperties(vector<PropertySetting>& props, string& lastError)
          se << getDeviceErrorText(ret, pDevice).c_str() << "(Error code: " << ret << ")";
          logError(props[i].getDeviceLabel().c_str(), se.str().c_str());
          lastError = se.str();
-      } else
+      }
+      else
+      {
+         MMThreadGuard scg(stateCacheLock_);
          stateCache_.addSetting(props[i]);
+      }
    }
    props = failedProps;
    return (int) failedProps.size();
