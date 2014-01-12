@@ -948,9 +948,10 @@ void CMMCore::initializeDevice(const char* label ///< the device to initialize
  */
 void CMMCore::updateSystemStateCache()
 {
+   Configuration wk = getSystemState();
    {
       MMThreadGuard scg(stateCacheLock_);
-      stateCache_ = getSystemState();
+      stateCache_ = wk;
    }
    CORE_LOG("System state cache updated.\n");
 }
@@ -2737,9 +2738,10 @@ void CMMCore::setAutoFocusDevice(const char* autofocusLabel) throw (CMMError)
       CORE_LOG("Auto-focus device removed.\n");
    }
    properties_->Refresh(); // TODO: more efficient
+   std::string newAutofocusLabel = getAutoFocusDevice();
    {
       MMThreadGuard scg(stateCacheLock_);
-      stateCache_.addSetting(PropertySetting(MM::g_Keyword_CoreDevice, MM::g_Keyword_CoreAutoFocus, getAutoFocusDevice().c_str()));
+      stateCache_.addSetting(PropertySetting(MM::g_Keyword_CoreDevice, MM::g_Keyword_CoreAutoFocus, newAutofocusLabel.c_str()));
    }
 }
 
@@ -2819,9 +2821,10 @@ void CMMCore::setImageProcessorDevice(const char* procLabel) throw (CMMError)
       CORE_LOG("Image processor device removed.\n");
    }
    properties_->Refresh(); // TODO: more efficient
+   std::string newProcLabel = getImageProcessorDevice();
    {
       MMThreadGuard scg(stateCacheLock_);
-      stateCache_.addSetting(PropertySetting(MM::g_Keyword_CoreDevice, MM::g_Keyword_CoreImageProcessor, getImageProcessorDevice().c_str()));
+      stateCache_.addSetting(PropertySetting(MM::g_Keyword_CoreDevice, MM::g_Keyword_CoreImageProcessor, newProcLabel.c_str()));
    }
 }
 
@@ -2841,9 +2844,10 @@ void CMMCore::setSLMDevice(const char* slmLabel) throw (CMMError)
       CORE_LOG("Image processor device removed.\n");
    }
    properties_->Refresh(); // TODO: more efficient
+   std::string newSLMLabel = getSLMDevice();
    {
       MMThreadGuard scg(stateCacheLock_);
-      stateCache_.addSetting(PropertySetting(MM::g_Keyword_CoreDevice, MM::g_Keyword_CoreSLM, getSLMDevice().c_str()));
+      stateCache_.addSetting(PropertySetting(MM::g_Keyword_CoreDevice, MM::g_Keyword_CoreSLM, newSLMLabel.c_str()));
    }
 }
 
@@ -2864,9 +2868,10 @@ void CMMCore::setGalvoDevice(const char* galvoLabel) throw (CMMError)
       CORE_LOG("Image processor device removed.\n");
    }
    properties_->Refresh(); // TODO: more efficient
+   std::string newGalvoLabel = getGalvoDevice();
    {
       MMThreadGuard scg(stateCacheLock_);
-      stateCache_.addSetting(PropertySetting(MM::g_Keyword_CoreDevice, MM::g_Keyword_CoreGalvo, getGalvoDevice().c_str()));
+      stateCache_.addSetting(PropertySetting(MM::g_Keyword_CoreDevice, MM::g_Keyword_CoreGalvo, newGalvoLabel.c_str()));
    }
 }
 
@@ -2885,9 +2890,10 @@ void CMMCore::setChannelGroup(const char* chGroup) throw (CMMError)
       channelGroup_.clear();
    }
    properties_->Refresh(); // TODO: more efficient
+   std::string newChGroup = getChannelGroup();
    {
       MMThreadGuard scg(stateCacheLock_);
-      stateCache_.addSetting(PropertySetting(MM::g_Keyword_CoreDevice, MM::g_Keyword_CoreChannelGroup, getChannelGroup().c_str()));
+      stateCache_.addSetting(PropertySetting(MM::g_Keyword_CoreDevice, MM::g_Keyword_CoreChannelGroup, newChGroup.c_str()));
    }
 }
 
@@ -2943,9 +2949,10 @@ void CMMCore::setShutterDevice(const char* shutterLabel) throw (CMMError)
       CORE_LOG("Shutter device removed.\n");
    }
    properties_->Refresh(); // TODO: more efficient
+   std::string newShutterLabel = getShutterDevice();
    {
       MMThreadGuard scg(stateCacheLock_);
-      stateCache_.addSetting(PropertySetting(MM::g_Keyword_CoreDevice, MM::g_Keyword_CoreShutter, getShutterDevice().c_str()));
+      stateCache_.addSetting(PropertySetting(MM::g_Keyword_CoreDevice, MM::g_Keyword_CoreShutter, newShutterLabel.c_str()));
    }
 }
 
@@ -2966,9 +2973,10 @@ void CMMCore::setFocusDevice(const char* focusLabel) throw (CMMError)
       CORE_LOG("Focus device removed.\n");
    }
    properties_->Refresh(); // TODO: more efficient
+   std::string newFocusLabel = getFocusDevice();
    {
       MMThreadGuard scg(stateCacheLock_);
-      stateCache_.addSetting(PropertySetting(MM::g_Keyword_CoreDevice, MM::g_Keyword_CoreFocus, getFocusDevice().c_str()));
+      stateCache_.addSetting(PropertySetting(MM::g_Keyword_CoreDevice, MM::g_Keyword_CoreFocus, newFocusLabel.c_str()));
    }
 }
 
@@ -2987,9 +2995,10 @@ void CMMCore::setXYStageDevice(const char* xyDeviceLabel) throw (CMMError)
       xyStage_ = 0;
       CORE_LOG("XYDevice device removed.\n");
    }
+   std::string newXYStageLabel = getXYStageDevice();
    {
       MMThreadGuard scg(stateCacheLock_);
-      stateCache_.addSetting(PropertySetting(MM::g_Keyword_CoreDevice, MM::g_Keyword_CoreXYStage, getXYStageDevice().c_str()));
+      stateCache_.addSetting(PropertySetting(MM::g_Keyword_CoreDevice, MM::g_Keyword_CoreXYStage, newXYStageLabel.c_str()));
    }
 }
 
@@ -3010,9 +3019,10 @@ void CMMCore::setCameraDevice(const char* cameraLabel) throw (CMMError)
       CORE_LOG("Camera device removed.\n");
    }
    properties_->Refresh(); // TODO: more efficient
+   std::string newCameraLabel = getCameraDevice();
    {
       MMThreadGuard scg(stateCacheLock_);
-      stateCache_.addSetting(PropertySetting(MM::g_Keyword_CoreDevice, MM::g_Keyword_CoreCamera, getCameraDevice().c_str()));
+      stateCache_.addSetting(PropertySetting(MM::g_Keyword_CoreDevice, MM::g_Keyword_CoreCamera, newCameraLabel.c_str()));
    }
 }
 
@@ -3826,10 +3836,11 @@ void CMMCore::setStateLabel(const char* deviceLabel, const char* stateLabel) thr
    }
    if (pStateDev->HasProperty(MM::g_Keyword_State))
    {
+      long state = getStateFromLabel(deviceLabel, stateLabel);
       {
          MMThreadGuard scg(stateCacheLock_);
          stateCache_.addSetting(PropertySetting(deviceLabel, MM::g_Keyword_State,
-                  CDeviceUtils::ConvertToString(getStateFromLabel(deviceLabel, stateLabel))));
+                  CDeviceUtils::ConvertToString(state)));
       }
    }
 

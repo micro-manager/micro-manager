@@ -528,7 +528,9 @@ private:
    CPropBlockMap propBlocks_;
    bool debugLog_;
 
-   mutable MMThreadLock stateCacheLock_; // Must be unlocked when calling MMEventCallback or calling device methods
+   // Must be unlocked when calling MMEventCallback or calling device methods
+   // or acquiring a module lock
+   mutable MMThreadLock stateCacheLock_;
    mutable Configuration stateCache_; // Synchronized by stateCacheLock_
 
    // Parameter/value validation
