@@ -11,6 +11,7 @@ import ij.process.ImageProcessor;
 import java.awt.Color;
 import java.awt.Polygon;
 import java.awt.geom.AffineTransform;
+import java.util.HashSet;
 import mmcorej.CMMCore;
 import org.micromanager.utils.ReportingUtils;
 
@@ -25,6 +26,7 @@ public class SLM implements ProjectionDevice {
    int slmHeight_;
    private double diameter_;
    private boolean imageOn_ = false;   
+   HashSet<OnStateListener> onStateListeners_ = new HashSet<OnStateListener>();
 
    public SLM(CMMCore mmc, double diameter) {
       mmc_ = mmc;
@@ -74,6 +76,9 @@ public class SLM implements ProjectionDevice {
       try {
          mmc_.setSLMPixelsTo(slm_, (byte) 0);
          imageOn_ = false;
+         for (OnStateListener listener:onStateListeners_) {
+            listener.turnedOff();
+         }
       } catch (Exception ex) {
          ReportingUtils.showError(ex);
       }
@@ -84,6 +89,9 @@ public class SLM implements ProjectionDevice {
          if (imageOn_ == false) {
             mmc_.displaySLMImage(slm_);
             imageOn_ = true;
+         }
+         for (OnStateListener listener:onStateListeners_) {
+            listener.turnedOn();
          }
       } catch (Exception ex) {
          ReportingUtils.showError(ex);
@@ -152,9 +160,13 @@ public class SLM implements ProjectionDevice {
    public void runPolygons(int reptitions) {
       
    }
-
+   
    public void addOnStateListener(OnStateListener listener) {
-      throw new UnsupportedOperationException("Not supported yet.");
+      onStateListeners_.add(listener);
+   }
+
+   public void removeOnStateListener(OnStateListener listener) {
+      onStateListeners_.remove(listener);
    }
 
    public void setPolygonRepetitions(int reps) {
