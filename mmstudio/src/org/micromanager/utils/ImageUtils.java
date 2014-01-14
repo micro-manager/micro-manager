@@ -93,16 +93,16 @@ public class ImageUtils {
          }
       }
    }
-
+   
    public static ImageProcessor makeProcessor(TaggedImage taggedImage) {
       final JSONObject tags = taggedImage.tags;
       try {
       return makeProcessor(MDUtils.getIJType(tags), MDUtils.getWidth(tags),
               MDUtils.getHeight(tags), taggedImage.pix);
       } catch (Exception e) {
-         ReportingUtils.logError(e);
+          ReportingUtils.logError(e);
+          return null;
       }
-      return null;
    }
 
    public static ImageProcessor makeProcessor(int type, int w, int h) {
@@ -118,14 +118,39 @@ public class ImageUtils {
          return null;
       }
    }
+   
+   public static ImageProcessor makeMonochromeProcessor(TaggedImage taggedImage) {
+        try {
+            ImageProcessor processor;
+            if (MDUtils.isRGB32(taggedImage)) {
+                ColorProcessor colorProcessor = new ColorProcessor(MDUtils.getWidth(taggedImage.tags), MDUtils.getHeight(taggedImage.tags), convertRGB32BytesToInt((byte []) taggedImage.pix));
+                processor = colorProcessor.convertToByteProcessor();
+            } else {
+                processor = makeProcessor(taggedImage);
+            }
+            return processor;
+        } catch (Exception e) {
+            ReportingUtils.logError(e);
+            return null;
+        }
+   }
+
 
    public static ImageProcessor subtractImageProcessors(ImageProcessor proc1, ImageProcessor proc2) {
       if (proc1 instanceof ByteProcessor) {
          return subtractByteProcessors((ByteProcessor) proc1, (ByteProcessor) proc2);
       } else if (proc1 instanceof ShortProcessor) {
          return subtractShortProcessors((ShortProcessor) proc1, (ShortProcessor) proc2);
-      } 
+      } else if (proc1 instanceof FloatProcessor) {
+          return subtractFloatProcessors((FloatProcessor) proc1, (FloatProcessor) proc2);
+      }
       return null;
+   }
+   
+   public static ImageProcessor subtractFloatProcessors(FloatProcessor proc1, FloatProcessor proc2) {
+       return new FloatProcessor(proc1.getWidth(), proc1.getHeight(),
+               subtractPixelArrays((float[]) proc1.getPixels(), (float[]) proc2.getPixels()),
+               null);
    }
    
    private static ByteProcessor subtractByteProcessors(ByteProcessor proc1, ByteProcessor proc2) {
@@ -157,6 +182,16 @@ public class ImageUtils {
       }
       return result;
    }
+   
+   public static float[] subtractPixelArrays(float[] array1, float[] array2) {
+      int l = array1.length;
+      float[] result = new float[l];
+      for (int i=0;i<l;++i) {
+         result[i] = (float) array1[i] - array2[i];
+      }
+      return result;
+   }
+   
    
    
    /*
