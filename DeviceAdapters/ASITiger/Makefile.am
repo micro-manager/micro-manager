@@ -2,24 +2,24 @@ pkglibdir = $(DEVICEADAPTERPATH)
 AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS) -fpermissive
 pkglib_LTLIBRARIES = libmmgr_dal_ASITiger.la
 libmmgr_dal_ASITiger_la_SOURCES = \
-	ASIClocked.cpp \
-	ASIClocked.h \
 	ASICRISP.cpp \
 	ASICRISP.h \
+	ASIClocked.cpp \
+	ASIClocked.h \
 	ASIDevice.cpp \
 	ASIDevice.h \
 	ASIFWheel.cpp \
 	ASIFWheel.h \
 	ASIHub.cpp \
 	ASIHub.h \
-	ASIMMirror.cpp \
-	ASIMMirror.h \
 	ASIPiezo.cpp \
 	ASIPiezo.h \
-	ASITigerComm.cpp \
-	ASITigerComm.h \
+	ASIScanner.cpp \
+	ASIScanner.h \
 	ASITiger.cpp \
 	ASITiger.h \
+	ASITigerComm.cpp \
+	ASITigerComm.h \
 	ASIXYStage.cpp \
 	ASIXYStage.h \
 	ASIZStage.cpp \
