@@ -53,16 +53,14 @@ public:
    int LoadPolygons();
    int SetPolygonRepetitions(int repetitions);
    int RunPolygons();
+   int RunSequence();
+   int StopSequence() { return DEVICE_UNSUPPORTED_COMMAND; }  // doesn't appear to be used in MMCore.cpp anyway
 
    // below aren't really implemented but we do the closest thing we can with our hardware
    int PointAndFire(double x, double y, double /*time_us*/) { return SetPosition(x, y); }  // we can't control beam time but go to location
    int SetSpotInterval(double /*pulseInterval_us*/) { return DEVICE_OK; }  // we can't actual control beam time so just ignore
    int SetIlluminationState(bool on);  // we can't turn off beam but we can steer beam to corner where hopefully it is blocked internally
-
-   // below aren't implemented yet
-   int RunSequence() { return DEVICE_UNSUPPORTED_COMMAND; }
-   int StopSequence() { return DEVICE_UNSUPPORTED_COMMAND; }
-   int GetChannel(char* /*channelName*/) { return DEVICE_UNSUPPORTED_COMMAND; }
+   int GetChannel(char* channelName);
 
    // action interface
    // ----------------
@@ -106,6 +104,7 @@ public:
    int OnSATTLOutX            (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSATTLPolX            (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSAPatternByteX       (MM::PropertyBase* pProp, MM::ActionType eAct);
+   // SPIM properties
    int OnSPIMScansPerSlice    (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSPIMNumSlices        (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSPIMNumSides         (MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -114,6 +113,12 @@ public:
    int OnSPIMState            (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSPIMDelayBeforeSlice (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSPIMDelayBeforeSide  (MM::PropertyBase* pProp, MM::ActionType eAct);
+   // ring buffer properties
+   int OnRBDelayBetweenPoints (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnRBMode               (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnRBTrigger            (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnRBRunning            (MM::PropertyBase* pProp, MM::ActionType eAct);
+
 
 private:
    string axisLetterX_;
@@ -131,6 +136,7 @@ private:
    // for polygons
    vector< pair<double,double> > polygons_;
    long polygonRepetitions_;
+   bool ring_buffer_supported_;
 };
 
 #endif //_ASIMMirror_H_

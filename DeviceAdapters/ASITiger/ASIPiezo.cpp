@@ -51,7 +51,8 @@ CPiezo::CPiezo(const char* name) :
    ASIDevice(this,name),
    unitMult_(g_StageDefaultUnitMult),  // later will try to read actual setting
    stepSizeUm_(g_StageMinStepSize),    // we'll use 1 nm as our smallest possible step size, this is somewhat arbitrary and doesn't change during the program
-   axisLetter_(g_EmptyAxisLetterStr)   // value determined by extended name
+   axisLetter_(g_EmptyAxisLetterStr),  // value determined by extended name
+   ring_buffer_supported_(false)
 {
    if (IsExtendedName(name))  // only set up these properties if we have the required information in the name
    {
@@ -281,6 +282,37 @@ int CPiezo::Initialize()
       UpdateProperty(g_AdvancedSAPropertiesPropertyName);
       AddAllowedValue(g_AdvancedSAPropertiesPropertyName, g_NoState);
       AddAllowedValue(g_AdvancedSAPropertiesPropertyName, g_YesState);
+   }
+
+   // add ring buffer properties if supported
+   if (build.vAxesProps[0] & BIT1)
+   {
+      ring_buffer_supported_ = true;
+
+      pAct = new CPropertyAction (this, &CPiezo::OnRBMode);
+      CreateProperty(g_RB_ModePropertyName, g_RB_OnePoint_1, MM::String, false, pAct);
+      AddAllowedValue(g_RB_ModePropertyName, g_RB_OnePoint_1);
+      AddAllowedValue(g_RB_ModePropertyName, g_RB_PlayOnce_2);
+      AddAllowedValue(g_RB_ModePropertyName, g_RB_PlayRepeat_3);
+      UpdateProperty(g_RB_ModePropertyName);
+
+      pAct = new CPropertyAction (this, &CPiezo::OnRBDelayBetweenPoints);
+      CreateProperty(g_RB_DelayPropertyName, "0", MM::Integer, false, pAct);
+      UpdateProperty(g_RB_DelayPropertyName);
+
+      // "do it" property to do TTL trigger via serial
+      pAct = new CPropertyAction (this, &CPiezo::OnRBTrigger);
+      CreateProperty(g_RB_TriggerPropertyName, g_IdleState, MM::String, false, pAct);
+      AddAllowedValue(g_RB_TriggerPropertyName, g_IdleState, 0);
+      AddAllowedValue(g_RB_TriggerPropertyName, g_DoItState, 1);
+      AddAllowedValue(g_RB_TriggerPropertyName, g_DoneState, 2);
+      UpdateProperty(g_RB_TriggerPropertyName);
+
+      pAct = new CPropertyAction (this, &CPiezo::OnRBRunning);
+      CreateProperty(g_RB_AutoplayRunningPropertyName, g_NoState, MM::String, false, pAct);
+      AddAllowedValue(g_RB_AutoplayRunningPropertyName, g_NoState);
+      AddAllowedValue(g_RB_AutoplayRunningPropertyName, g_YesState);
+      UpdateProperty(g_RB_AutoplayRunningPropertyName);
    }
 
    initialized_ = true;
@@ -570,7 +602,7 @@ int CPiezo::OnJoystickFastSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    else if (eAct == MM::AfterSet) {
       pProp->Get(tmp);
-     char joystickMirror[MM::MaxStrLength];
+      char joystickMirror[MM::MaxStrLength];
       RETURN_ON_MM_ERROR ( GetProperty(g_JoystickMirrorPropertyName, joystickMirror) );
       if (strcmp(joystickMirror, g_YesState) == 0)
          command << addressChar_ << "JS X=-" << tmp;
@@ -1190,7 +1222,10 @@ int CPiezo::OnSATTLPol(MM::PropertyBase* pProp, MM::ActionType eAct)
 int CPiezo::OnSetHomeHere(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    ostringstream command; command.str("");
-   if (eAct == MM::AfterSet) {
+   if (eAct == MM::BeforeGet) {
+      pProp->Set(g_IdleState);
+   }
+   else  if (eAct == MM::AfterSet) {
       string tmpstr;
       pProp->Get(tmpstr);
       if (tmpstr.compare(g_DoItState) == 0)
@@ -1274,5 +1309,122 @@ int CPiezo::OnSPIMState(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
+int CPiezo::OnRBMode(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   long tmp;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << addressChar_ << "RM X?";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A X="));
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
+      if (tmp >= 128)
+      {
+         tmp -= 128;  // remove the "running now" code if present
+      }
+      bool success;
+      switch ( tmp )
+      {
+         case 1: success = pProp->Set(g_RB_OnePoint_1); break;
+         case 2: success = pProp->Set(g_RB_PlayOnce_2); break;
+         case 3: success = pProp->Set(g_RB_PlayRepeat_3); break;
+         default: success = false;
+      }
+      if (!success)
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+
+      string tmpstr;
+      pProp->Get(tmpstr);
+      if (tmpstr.compare(g_RB_OnePoint_1) == 0)
+         tmp = 1;
+      else if (tmpstr.compare(g_RB_PlayOnce_2) == 0)
+         tmp = 2;
+      else if (tmpstr.compare(g_RB_PlayRepeat_3) == 0)
+         tmp = 3;
+      else
+         return DEVICE_INVALID_PROPERTY_VALUE;
+      command << addressChar_ << "RM X=" << tmp;
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
+   }
+   return DEVICE_OK;
+}
+
+int CPiezo::OnRBTrigger(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   if (eAct == MM::BeforeGet) {
+      pProp->Set(g_IdleState);
+   }
+   else  if (eAct == MM::AfterSet) {
+      string tmpstr;
+      pProp->Get(tmpstr);
+      if (tmpstr.compare(g_DoItState) == 0)
+      {
+         command << addressChar_ << "RM";
+         RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+         pProp->Set(g_DoneState);
+      }
+   }
+   return DEVICE_OK;
+}
+
+int CPiezo::OnRBRunning(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   long tmp = 0;
+   static bool updateAgain;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_ && !updateAgain)
+         return DEVICE_OK;
+      command << addressChar_ << "RM X?";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A X="));
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
+      bool success;
+      if (tmp >= 128)
+      {
+         success = pProp->Set(g_YesState);
+      }
+      else
+      {
+         success = pProp->Set(g_NoState);
+      }
+      if (!success)
+         return DEVICE_INVALID_PROPERTY_VALUE;
+      updateAgain = false;
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      updateAgain = true;
+      return OnRBRunning(pProp, MM::BeforeGet);
+   }
+   return DEVICE_OK;
+}
+
+int CPiezo::OnRBDelayBetweenPoints(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   long tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << addressChar_ << "RM F?";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A F="));
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
+      if (!pProp->Set(tmp))
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      pProp->Get(tmp);
+      command << addressChar_ << "RM F=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}
 
 

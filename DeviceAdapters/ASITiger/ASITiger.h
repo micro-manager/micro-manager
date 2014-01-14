@@ -251,6 +251,13 @@ const char* const g_NumberAveragesPropertyName = "Number of Averages";
 const char* const g_SNRPropertyName = "Signal to Noise Ratio";
 const char* const g_DitherErrorPropertyName = "Dither Error";
 
+// ring buffer property names
+const char* const g_RB_DelayPropertyName = "RingBufferDelayBetweenPoints(ms)";
+const char* const g_RB_ModePropertyName = "RingBufferMode";
+const char* const g_RB_EnablePropertyName = "RingBufferEnable";
+const char* const g_RB_TriggerPropertyName = "RingBufferTrigger";
+const char* const g_RB_AutoplayRunningPropertyName = "RingBufferAutoplayRunning";
+
 // SPIM property names
 const char* const g_SPIMNumSlicesPropertyName = "SPIMNumSlices"; // used by both piezos and micromirror
 const char* const g_SPIMNumScansPerSlicePropertyName = "SPIMNumScansPerSlice";
@@ -353,7 +360,10 @@ const char* const g_SaveSettingsDone = "save settings done";
 const char* const g_IdleState = "Not done";
 const char* const g_DoItState = "Do it";
 const char* const g_DoneState = "Done";
-
+// ring buffer modes
+const char* const g_RB_OnePoint_1 =   "1 - One Point";
+const char* const g_RB_PlayOnce_2 =   "2 - Play Once";
+const char* const g_RB_PlayRepeat_3 = "3 - Repeat";
 // CRISP states
 const char* const g_CRISPState = "CRISP State";
 const char* const g_CRISP_I = "Idle";

@@ -56,6 +56,8 @@ public:
    int SetRelativePositionSteps(long x, long y);
    int GetStepLimits(long& xMin, long& xMax, long& yMin, long& yMax);
    int SetOrigin();
+   int Home();
+   int SetHome();
 
    int IsXYStageSequenceable(bool& isSequenceable) const { isSequenceable = false; return DEVICE_OK; }
    int GetXYStageSequenceMaxLength(long& nrEvents) const { nrEvents = 0; return DEVICE_OK; }
@@ -68,7 +70,6 @@ public:
 //      int GetPositionUm(double& x, double& y);
 
    // below aren't implemented yet
-   int Home() { return DEVICE_UNSUPPORTED_COMMAND; }
    int GetLimitsUm(double& /*xMin*/, double& /*xMax*/, double& /*yMin*/, double& /*yMax*/) { return DEVICE_UNSUPPORTED_COMMAND; }
 
    // action interface

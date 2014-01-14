@@ -351,6 +351,26 @@ int CXYStage::SetOrigin()
    return hub_->QueryCommandVerify(command.str(),":A");
 }
 
+int CXYStage::Home()
+{
+   ostringstream command; command.str("");
+   command << "! " << axisLetterX_ << " " << axisLetterY_;
+   return hub_->QueryCommandVerify(command.str(),":A");
+}
+
+int CXYStage::SetHome()
+{
+   if (firmwareVersion_ > 2.7) {
+      ostringstream command; command.str("");
+      command << "HM " << axisLetterX_ << "+" << " " << axisLetterY_ << "+";
+      return hub_->QueryCommandVerify(command.str(),":A");
+   }
+   else
+   {
+      return DEVICE_UNSUPPORTED_COMMAND;
+   }
+}
+
 
 ////////////////
 // action handlers

@@ -57,7 +57,7 @@ public:
    int GetLimits(double& min, double& max);
    int SetOrigin();
 
-   bool IsContinuousFocusDrive() const {return false;}  // todo figure out what this means and if it's accurate
+   bool IsContinuousFocusDrive() const { return false; }  // todo figure out what this means and if it's accurate
    int IsStageSequenceable(bool& isSequenceable) const { isSequenceable = false; return DEVICE_OK; }
    int GetStageSequenceMaxLength(long& nrEvents) const  { nrEvents = 0; return DEVICE_OK; }
 
@@ -93,15 +93,22 @@ public:
    int OnSATTLOut             (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSATTLPol             (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSAPatternByte        (MM::PropertyBase* pProp, MM::ActionType eAct);
+   // SPIM properties
    int OnSetHomeHere          (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSPIMNumSlices        (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSPIMState            (MM::PropertyBase* pProp, MM::ActionType eAct);
+   // ring buffer properties
+   int OnRBDelayBetweenPoints (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnRBMode               (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnRBTrigger            (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnRBRunning            (MM::PropertyBase* pProp, MM::ActionType eAct);
 
 
 private:
    double unitMult_;
    double stepSizeUm_;
    string axisLetter_;
+   bool ring_buffer_supported_;
 };
 
 #endif //_ASIPiezo_H_

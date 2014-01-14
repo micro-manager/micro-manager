@@ -58,7 +58,8 @@ CMMirror::CMMirror(const char* name) :
    lastX_(0),    // cached position, used for SetIlluminationState
    lastY_(0),    // cached position, used for SetIlluminationState
    illuminationState_(true),
-   polygonRepetitions_(0)
+   polygonRepetitions_(0),
+   ring_buffer_supported_(false)
 {
    if (IsExtendedName(name))  // only set up these properties if we have the required information in the name
    {
@@ -192,27 +193,27 @@ int CMMirror::Initialize()
    // joystick mirror (changes joystick fast/slow speeds to negative) (per-card, not per-axis)
    pAct = new CPropertyAction (this, &CMMirror::OnJoystickMirror);
    CreateProperty(g_JoystickMirrorPropertyName, g_NoState, MM::String, false, pAct);
-   UpdateProperty(g_JoystickMirrorPropertyName);
    AddAllowedValue(g_JoystickMirrorPropertyName, g_NoState);
    AddAllowedValue(g_JoystickMirrorPropertyName, g_YesState);
+   UpdateProperty(g_JoystickMirrorPropertyName);
 
    // joystick disable and select which knob
    pAct = new CPropertyAction (this, &CMMirror::OnJoystickSelectX);
    CreateProperty(g_JoystickSelectXPropertyName, g_JSCode_0, MM::String, false, pAct);
-   UpdateProperty(g_JoystickSelectXPropertyName);
    AddAllowedValue(g_JoystickSelectXPropertyName, g_JSCode_0);
    AddAllowedValue(g_JoystickSelectXPropertyName, g_JSCode_2);
    AddAllowedValue(g_JoystickSelectXPropertyName, g_JSCode_3);
    AddAllowedValue(g_JoystickSelectXPropertyName, g_JSCode_22);
    AddAllowedValue(g_JoystickSelectXPropertyName, g_JSCode_23);
+   UpdateProperty(g_JoystickSelectXPropertyName);
    pAct = new CPropertyAction (this, &CMMirror::OnJoystickSelectY);
    CreateProperty(g_JoystickSelectYPropertyName, g_JSCode_0, MM::String, false, pAct);
-   UpdateProperty(g_JoystickSelectYPropertyName);
    AddAllowedValue(g_JoystickSelectYPropertyName, g_JSCode_0);
    AddAllowedValue(g_JoystickSelectYPropertyName, g_JSCode_2);
    AddAllowedValue(g_JoystickSelectYPropertyName, g_JSCode_3);
    AddAllowedValue(g_JoystickSelectYPropertyName, g_JSCode_22);
    AddAllowedValue(g_JoystickSelectYPropertyName, g_JSCode_23);
+   UpdateProperty(g_JoystickSelectYPropertyName);
 
    // turn the beam on and off
    pAct = new CPropertyAction (this, &CMMirror::OnBeamEnabled);
@@ -233,17 +234,17 @@ int CMMirror::Initialize()
    UpdateProperty(g_MMirrorSAPeriodXPropertyName);
    pAct = new CPropertyAction (this, &CMMirror::OnSAModeX);
    CreateProperty(g_MMirrorSAModeXPropertyName, g_SAMode_0, MM::String, false, pAct);
-   UpdateProperty(g_MMirrorSAModeXPropertyName);
    AddAllowedValue(g_MMirrorSAModeXPropertyName, g_SAMode_0);
    AddAllowedValue(g_MMirrorSAModeXPropertyName, g_SAMode_1);
    AddAllowedValue(g_MMirrorSAModeXPropertyName, g_SAMode_2);
    AddAllowedValue(g_MMirrorSAModeXPropertyName, g_SAMode_3);
+   UpdateProperty(g_MMirrorSAModeXPropertyName);
    pAct = new CPropertyAction (this, &CMMirror::OnSAPatternX);
    CreateProperty(g_MMirrorSAPatternXPropertyName, g_SAPattern_0, MM::String, false, pAct);
-   UpdateProperty(g_MMirrorSAPatternXPropertyName);
    AddAllowedValue(g_MMirrorSAPatternXPropertyName, g_SAPattern_0);
    AddAllowedValue(g_MMirrorSAPatternXPropertyName, g_SAPattern_1);
    AddAllowedValue(g_MMirrorSAPatternXPropertyName, g_SAPattern_2);
+   UpdateProperty(g_MMirrorSAPatternXPropertyName);
    pAct = new CPropertyAction (this, &CMMirror::OnSAAmplitudeY);
    CreateProperty(g_MMirrorSAAmplitudeYPropertyName, "0", MM::Float, false, pAct);
    UpdateProperty(g_MMirrorSAAmplitudeYPropertyName);
@@ -255,29 +256,29 @@ int CMMirror::Initialize()
    UpdateProperty(g_MMirrorSAPeriodYPropertyName);
    pAct = new CPropertyAction (this, &CMMirror::OnSAModeY);
    CreateProperty(g_MMirrorSAModeYPropertyName, g_SAMode_0, MM::String, false, pAct);
-   UpdateProperty(g_MMirrorSAModeYPropertyName);
    AddAllowedValue(g_MMirrorSAModeYPropertyName, g_SAMode_0);
    AddAllowedValue(g_MMirrorSAModeYPropertyName, g_SAMode_1);
    AddAllowedValue(g_MMirrorSAModeYPropertyName, g_SAMode_2);
    AddAllowedValue(g_MMirrorSAModeYPropertyName, g_SAMode_3);
+   UpdateProperty(g_MMirrorSAModeYPropertyName);
    pAct = new CPropertyAction (this, &CMMirror::OnSAPatternY);
    CreateProperty(g_MMirrorSAPatternYPropertyName, g_SAPattern_0, MM::String, false, pAct);
-   UpdateProperty(g_MMirrorSAPatternYPropertyName);
    AddAllowedValue(g_MMirrorSAPatternYPropertyName, g_SAPattern_0);
    AddAllowedValue(g_MMirrorSAPatternYPropertyName, g_SAPattern_1);
    AddAllowedValue(g_MMirrorSAPatternYPropertyName, g_SAPattern_2);
+   UpdateProperty(g_MMirrorSAPatternYPropertyName);
 
    // generates a set of additional advanced properties that are rarely used
    pAct = new CPropertyAction (this, &CMMirror::OnSAAdvancedX);
    CreateProperty(g_AdvancedSAPropertiesXPropertyName, g_NoState, MM::String, false, pAct);
-   UpdateProperty(g_AdvancedSAPropertiesXPropertyName);
    AddAllowedValue(g_AdvancedSAPropertiesXPropertyName, g_NoState);
    AddAllowedValue(g_AdvancedSAPropertiesXPropertyName, g_YesState);
+   UpdateProperty(g_AdvancedSAPropertiesXPropertyName);
    pAct = new CPropertyAction (this, &CMMirror::OnSAAdvancedY);
    CreateProperty(g_AdvancedSAPropertiesYPropertyName, g_NoState, MM::String, false, pAct);
-   UpdateProperty(g_AdvancedSAPropertiesYPropertyName);
    AddAllowedValue(g_AdvancedSAPropertiesYPropertyName, g_NoState);
    AddAllowedValue(g_AdvancedSAPropertiesYPropertyName, g_YesState);
+   UpdateProperty(g_AdvancedSAPropertiesYPropertyName);
 
    // end now if we are pre-2.8 firmware
    if (firmwareVersion_ < 2.8)
@@ -286,7 +287,7 @@ int CMMirror::Initialize()
       return DEVICE_OK;
    }
 
-   // everything below only supported in firmware 2.8 and prior
+   // everything below only supported in firmware 2.8 and newer
 
    // get build info so we can add optional properties
    build_info_type build;
@@ -317,26 +318,57 @@ int CMMirror::Initialize()
 
       pAct = new CPropertyAction (this, &CMMirror::OnSPIMFirstSide);
       CreateProperty(g_SPIMFirstSidePropertyName, g_SPIMSideAFirst, MM::String, false, pAct);
-      UpdateProperty(g_SPIMFirstSidePropertyName);
       AddAllowedValue(g_SPIMFirstSidePropertyName, g_SPIMSideAFirst);
       AddAllowedValue(g_SPIMFirstSidePropertyName, g_SPIMSideBFirst);
+      UpdateProperty(g_SPIMFirstSidePropertyName);
 
       pAct = new CPropertyAction (this, &CMMirror::OnSPIMDelayBeforeSide);
       CreateProperty(g_SPIMDelayBeforeSidePropertyName, "0", MM::Float, false, pAct);
-      UpdateProperty(g_SPIMDelayBeforeSidePropertyName);
       SetPropertyLimits(g_SPIMDelayBeforeSidePropertyName, 0, 100);
+      UpdateProperty(g_SPIMDelayBeforeSidePropertyName);
 
       pAct = new CPropertyAction (this, &CMMirror::OnSPIMDelayBeforeSlice);
       CreateProperty(g_SPIMDelayBeforeSlicePropertyName, "0", MM::Float, false, pAct);
-      UpdateProperty(g_SPIMDelayBeforeSlicePropertyName);
       SetPropertyLimits(g_SPIMDelayBeforeSlicePropertyName, 0, 100);
+      UpdateProperty(g_SPIMDelayBeforeSlicePropertyName);
 
       pAct = new CPropertyAction (this, &CMMirror::OnSPIMState);
       CreateProperty(g_SPIMStatePropertyName, g_SPIMStateIdle, MM::String, false, pAct);
-      UpdateProperty(g_SPIMStatePropertyName);
       AddAllowedValue(g_SPIMStatePropertyName, g_SPIMStateIdle);
       AddAllowedValue(g_SPIMStatePropertyName, g_SPIMStateArmed);
       AddAllowedValue(g_SPIMStatePropertyName, g_SPIMStateRunning);
+      UpdateProperty(g_SPIMStatePropertyName);
+   }
+
+   // add ring buffer properties if supported
+   if (build.vAxesProps[0] & BIT1)
+   {
+      ring_buffer_supported_ = true;
+
+      pAct = new CPropertyAction (this, &CMMirror::OnRBMode);
+      CreateProperty(g_RB_ModePropertyName, g_RB_OnePoint_1, MM::String, false, pAct);
+      AddAllowedValue(g_RB_ModePropertyName, g_RB_OnePoint_1);
+      AddAllowedValue(g_RB_ModePropertyName, g_RB_PlayOnce_2);
+      AddAllowedValue(g_RB_ModePropertyName, g_RB_PlayRepeat_3);
+      UpdateProperty(g_RB_ModePropertyName);
+
+      pAct = new CPropertyAction (this, &CMMirror::OnRBDelayBetweenPoints);
+      CreateProperty(g_RB_DelayPropertyName, "0", MM::Integer, false, pAct);
+      UpdateProperty(g_RB_DelayPropertyName);
+
+      // "do it" property to do TTL trigger via serial
+      pAct = new CPropertyAction (this, &CMMirror::OnRBTrigger);
+      CreateProperty(g_RB_TriggerPropertyName, g_IdleState, MM::String, false, pAct);
+      AddAllowedValue(g_RB_TriggerPropertyName, g_IdleState, 0);
+      AddAllowedValue(g_RB_TriggerPropertyName, g_DoItState, 1);
+      AddAllowedValue(g_RB_TriggerPropertyName, g_DoneState, 2);
+      UpdateProperty(g_RB_TriggerPropertyName);
+
+      pAct = new CPropertyAction (this, &CMMirror::OnRBRunning);
+      CreateProperty(g_RB_AutoplayRunningPropertyName, g_NoState, MM::String, false, pAct);
+      AddAllowedValue(g_RB_AutoplayRunningPropertyName, g_NoState);
+      AddAllowedValue(g_RB_AutoplayRunningPropertyName, g_YesState);
+      UpdateProperty(g_RB_AutoplayRunningPropertyName);
    }
 
    initialized_ = true;
@@ -443,22 +475,78 @@ int CMMirror::DeletePolygons()
 
 int CMMirror::LoadPolygons()
 {
-   // do nothing since device doesn't store polygons in HW
+   if (ring_buffer_supported_)
+   {
+      ostringstream command; command.str("");
+      command << addressChar_ << "RM X=0";
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+      for (int i=0; i< (int) polygons_.size(); ++i)
+      {
+         command.str("");
+         command << "LD " << axisLetterX_ << "=" << polygons_[i].first
+               << " " << axisLetterY_ << "=" << polygons_[i].second;
+         RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+      }
+   }
+   else
+   {
+      // do nothing since device doesn't store polygons in HW
+   }
    return DEVICE_OK;
 }
 
 int CMMirror::SetPolygonRepetitions(int repetitions)
 {
-   polygonRepetitions_ = repetitions;
-   return DEVICE_OK;
+   if (ring_buffer_supported_)
+   {
+      // ring buffer HW does not support having multiple repetitions
+      return DEVICE_UNSUPPORTED_COMMAND;
+   }
+   else
+   {
+      polygonRepetitions_ = repetitions;
+      return DEVICE_OK;
+   }
 }
 
 int CMMirror::RunPolygons()
 {
-   for (int j=0; j<polygonRepetitions_; ++j)
-      for (int i=0; i< (int) polygons_.size(); ++i)
-         SetPosition(polygons_[i].first,polygons_[i].second);
+   if (ring_buffer_supported_)
+   {
+      ostringstream command; command.str("");
+      command << addressChar_ << "RM";
+      return hub_->QueryCommandVerify(command.str(), ":A");
+   }
+   else
+   {
+      // no HW support => have to repeatedly call SetPosition
+      for (int j=0; j<polygonRepetitions_; ++j)
+         for (int i=0; i< (int) polygons_.size(); ++i)
+            SetPosition(polygons_[i].first,polygons_[i].second);
+      return DEVICE_OK;
+   }
+}
+
+int CMMirror::GetChannel(char* channelName)
+{
+   ostringstream command; command.str("");
+   command << "Axes_ " << axisLetterX_ << axisLetterY_;
+   CDeviceUtils::CopyLimitedString(channelName, command.str().c_str());
    return DEVICE_OK;
+}
+
+int CMMirror::RunSequence()
+{
+   if (ring_buffer_supported_)
+   {
+      // note that this simply sends a trigger, which will also turn it off if it's currently running
+      SetProperty(g_RB_TriggerPropertyName, g_DoItState);
+      return DEVICE_OK;
+   }
+   else
+   {
+      return DEVICE_UNSUPPORTED_COMMAND;
+   }
 }
 
 
@@ -2140,6 +2228,124 @@ int CMMirror::OnSPIMState(MM::PropertyBase* pProp, MM::ActionType eAct)
       }
       else
          return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   return DEVICE_OK;
+}
+
+int CMMirror::OnRBMode(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   long tmp;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << addressChar_ << "RM X?";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A X="));
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
+      if (tmp >= 128)
+      {
+         tmp -= 128;  // remove the "running now" code if present
+      }
+      bool success;
+      switch ( tmp )
+      {
+         case 1: success = pProp->Set(g_RB_OnePoint_1); break;
+         case 2: success = pProp->Set(g_RB_PlayOnce_2); break;
+         case 3: success = pProp->Set(g_RB_PlayRepeat_3); break;
+         default: success = false;
+      }
+      if (!success)
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+
+      string tmpstr;
+      pProp->Get(tmpstr);
+      if (tmpstr.compare(g_RB_OnePoint_1) == 0)
+         tmp = 1;
+      else if (tmpstr.compare(g_RB_PlayOnce_2) == 0)
+         tmp = 2;
+      else if (tmpstr.compare(g_RB_PlayRepeat_3) == 0)
+         tmp = 3;
+      else
+         return DEVICE_INVALID_PROPERTY_VALUE;
+      command << addressChar_ << "RM X=" << tmp;
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
+   }
+   return DEVICE_OK;
+}
+
+int CMMirror::OnRBTrigger(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   if (eAct == MM::BeforeGet) {
+      pProp->Set(g_IdleState);
+   }
+   else  if (eAct == MM::AfterSet) {
+      string tmpstr;
+      pProp->Get(tmpstr);
+      if (tmpstr.compare(g_DoItState) == 0)
+      {
+         command << addressChar_ << "RM";
+         RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+         pProp->Set(g_DoneState);
+      }
+   }
+   return DEVICE_OK;
+}
+
+int CMMirror::OnRBRunning(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   long tmp = 0;
+   static bool updateAgain;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_ && !updateAgain)
+         return DEVICE_OK;
+      command << addressChar_ << "RM X?";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A X="));
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
+      bool success;
+      if (tmp >= 128)
+      {
+         success = pProp->Set(g_YesState);
+      }
+      else
+      {
+         success = pProp->Set(g_NoState);
+      }
+      if (!success)
+         return DEVICE_INVALID_PROPERTY_VALUE;
+      updateAgain = false;
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      updateAgain = true;
+      return OnRBRunning(pProp, MM::BeforeGet);
+   }
+   return DEVICE_OK;
+}
+
+int CMMirror::OnRBDelayBetweenPoints(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   long tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << addressChar_ << "RM F?";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A F="));
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
+      if (!pProp->Set(tmp))
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      pProp->Get(tmp);
+      command << addressChar_ << "RM F=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
    }
    return DEVICE_OK;
 }
