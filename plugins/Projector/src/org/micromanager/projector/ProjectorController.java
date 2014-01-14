@@ -22,7 +22,6 @@ import java.awt.Polygon;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.event.AWTEventListener;
-import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -33,14 +32,8 @@ import java.io.BufferedOutputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.Writer;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -51,9 +44,7 @@ import mmcorej.CMMCore;
 import mmcorej.Configuration;
 import mmcorej.TaggedImage;
 
-import org.micromanager.acquisition.AcquisitionEngine;
 import org.micromanager.acquisition.VirtualAcquisitionDisplay;
-import org.micromanager.api.ImageCache;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.JavaUtils;
@@ -65,8 +56,6 @@ import org.micromanager.utils.ReportingUtils;
  * @author arthur
  */
 public class ProjectorController {
-
-   private String slm;
    private CMMCore mmc;
    private final ScriptInterface gui;
    private boolean imageOn_ = false;
@@ -92,7 +81,7 @@ public class ProjectorController {
       String galvo = mmc.getGalvoDevice();
       
       if (slm.length() > 0) {
-         dev = new SLM(mmc, 5);
+         dev = new SLM(mmc, 20);
       } else if (galvo.length() > 0) {
          dev = new Galvo(mmc);
       } else {
@@ -131,45 +120,51 @@ public class ProjectorController {
    }
    
    public void calibrate() {
-      final boolean liveModeRunning = gui.isLiveModeOn();
-      gui.enableLiveMode(false);
-      if (!isRunning_.get()) {
-          this.stopRequested_.set(false);
-          Thread th = new Thread("Projector calibration thread") {
-              public void run() {
-                  isRunning_.set(true);
-                  Roi originalROI = IJ.getImage().getRoi();
-                  gui.snapSingleImage();
+        final boolean liveModeRunning = gui.isLiveModeOn();
+        gui.enableLiveMode(false);
+        if (!isRunning_.get()) {
+            this.stopRequested_.set(false);
+            Thread th = new Thread("Projector calibration thread") {
+                public void run() {
+                    try {
+                        isRunning_.set(true);
+                        Roi originalROI = IJ.getImage().getRoi();
+                        gui.snapSingleImage();
 
-                  AffineTransform firstApproxAffine = getFirstApproxTransform();
+                        AffineTransform firstApproxAffine = getFirstApproxTransform();
 
-                  HashMap<Polygon, AffineTransform> mapping = (HashMap<Polygon, AffineTransform>) getMapping(firstApproxAffine);
+                        HashMap<Polygon, AffineTransform> mapping = (HashMap<Polygon, AffineTransform>) getMapping(firstApproxAffine);
                   //LocalWeightedMean lwm = multipleAffineTransforms(mapping_);
-                  //AffineTransform affineTransform = MathFunctions.generateAffineTransformFromPointPairs(mapping_);
-                  dev.turnOff();
-                  try {
-                      Thread.sleep(500);
-                  } catch (InterruptedException ex) {
-                      ReportingUtils.logError(ex);
-                  }
-                  if (!stopRequested_.get()) {
-                      saveMapping(mapping);
-                  }
-                  //saveAffineTransform(affineTransform);
-                  gui.enableLiveMode(liveModeRunning);
-                  JOptionPane.showMessageDialog(IJ.getImage().getWindow(), "Calibration "
-                          + (!stopRequested_.get() ? "finished." : "canceled."));
-                  IJ.getImage().setRoi(originalROI);
-                  isRunning_.set(false);
-                  stopRequested_.set(false);
-                  for (OnStateListener listener : listeners_) {
-                      listener.calibrationDone();
-                  }
-              }
-          };
-          th.start();
-      }
-   }
+                        //AffineTransform affineTransform = MathFunctions.generateAffineTransformFromPointPairs(mapping_);
+                        dev.turnOff();
+                        try {
+                            Thread.sleep(500);
+                        } catch (InterruptedException ex) {
+                            ReportingUtils.logError(ex);
+                        }
+                        if (!stopRequested_.get()) {
+                            saveMapping(mapping);
+                        }
+                        //saveAffineTransform(affineTransform);
+                        gui.enableLiveMode(liveModeRunning);
+                        JOptionPane.showMessageDialog(IJ.getImage().getWindow(), "Calibration "
+                                + (!stopRequested_.get() ? "finished." : "canceled."));
+                        IJ.getImage().setRoi(originalROI);
+
+                        for (OnStateListener listener : listeners_) {
+                            listener.calibrationDone();
+                        }
+                    } catch (Exception e) {
+                        ReportingUtils.showError(e);
+                    } finally {
+                        isRunning_.set(false);
+                        stopRequested_.set(false);
+                    }
+                }
+            };
+            th.start();
+        }
+    }
 
    private HashMap<Polygon, AffineTransform> loadMapping() {
        String nodeStr = getCalibrationNode().toString();
@@ -208,24 +203,32 @@ public class ProjectorController {
       }
    }
       
+     
+      
    public Point measureSpot(Point dmdPt) {
       if (stopRequested_.get()) {
           return null;
       }
       
       try {
+         dev.turnOff();
+         Thread.sleep(300);
          mmc.snapImage();
-         ImageProcessor proc1 = ImageUtils.makeProcessor(mmc.getTaggedImage());
-
+         TaggedImage image = mmc.getTaggedImage();
+         ImageProcessor proc1 = ImageUtils.makeMonochromeProcessor(image);
+         //showProcessor("proc1", proc1);
          displaySpot(dmdPt.x, dmdPt.y, 500000);
          Thread.sleep(300);
 
          mmc.snapImage();
          TaggedImage taggedImage2 = mmc.getTaggedImage();
-         ImageProcessor proc2 = ImageUtils.makeProcessor(taggedImage2);
+         ImageProcessor proc2 = ImageUtils.makeMonochromeProcessor(taggedImage2);
+         //showProcessor("proc2", proc2);
          gui.displayImage(taggedImage2);
 
-         Point peak = findPeak(ImageUtils.subtractImageProcessors(proc2, proc1));
+         ImageProcessor diffImage = ImageUtils.subtractImageProcessors(proc2.convertToFloatProcessor(), proc1.convertToFloatProcessor());
+         //showProcessor("diff", diffImage);
+         Point peak = findPeak(diffImage);
          Point maxPt = peak;
          IJ.getImage().setRoi(new PointRoi(maxPt.x, maxPt.y));
          mmc.sleep(500);
@@ -235,13 +238,17 @@ public class ProjectorController {
          return null;
       }
    }
+   
+   private void showProcessor(String title, ImageProcessor proc) {
+       new ImagePlus(title, proc).show();
+   }
 
    private Point findPeak(ImageProcessor proc) {
-      ImageProcessor blurImage = ( proc.duplicate() );
+      ImageProcessor blurImage = proc.duplicate();
       blurImage.setRoi((Roi) null);
       GaussianBlur blur = new GaussianBlur();
       blur.blurGaussian(blurImage, 10, 10, 0.01);
-      //gui.displayImage(blurImage.getPixels());
+      //showProcessor("findPeak",proc);
       Point x = ImageUtils.findMaxPixel(blurImage);
       x.translate(1, 1);
       return x;
@@ -376,16 +383,7 @@ public class ProjectorController {
    }
 
    void activateAllPixels() {
-     if (dev instanceof SLM) {
-        try {
-           mmc.setSLMPixelsTo(slm, (short) 255);
-           if (imageOn_ == true) {
-              mmc.displaySLMImage(slm);
-           }
-        } catch (Exception ex) {
-           ReportingUtils.showError(ex);
-        }
-     }
+       dev.activateAllPixels();
    }
 
    public static Roi[] separateOutPointRois(Roi[] rois) {

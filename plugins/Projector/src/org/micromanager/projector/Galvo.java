@@ -252,4 +252,9 @@ public class Galvo implements ProjectionDevice {
          ReportingUtils.showError(ex);
       }
    }
+
+    @Override
+    public void activateAllPixels() {
+        // Do nothing.
+    }
 }

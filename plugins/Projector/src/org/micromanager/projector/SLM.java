@@ -6,12 +6,16 @@
 package org.micromanager.projector;
 
 import ij.ImagePlus;
+import ij.gui.PolygonRoi;
+import ij.gui.Roi;
 import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
 import java.awt.Color;
 import java.awt.Polygon;
 import java.awt.geom.AffineTransform;
 import java.util.HashSet;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import mmcorej.CMMCore;
 import org.micromanager.utils.ReportingUtils;
 
@@ -24,13 +28,14 @@ public class SLM implements ProjectionDevice {
    CMMCore mmc_;
    int slmWidth_;
    int slmHeight_;
-   private double diameter_;
+   private double spotDiameter_;
    private boolean imageOn_ = false;   
    HashSet<OnStateListener> onStateListeners_ = new HashSet<OnStateListener>();
 
-   public SLM(CMMCore mmc, double diameter) {
+   public SLM(CMMCore mmc, double spotDiameter) {
       mmc_ = mmc;
       slm_ = mmc_.getSLMDevice();
+      spotDiameter_ = spotDiameter;
       slmWidth_ = (int) mmc.getSLMWidth(slm_);
       slmHeight_ = (int) mmc.getSLMHeight(slm_);
    }
@@ -44,9 +49,7 @@ public class SLM implements ProjectionDevice {
       proc.setColor(Color.black);
       proc.fill();
       proc.setColor(Color.white);
-      addSpot(proc,x,y, diameter_);
-      ImagePlus img = new ImagePlus("",proc);
-      //img.show();
+      addSpot(proc, x, y, spotDiameter_);
       try {
          mmc_.setSLMImage(slm_, (byte []) proc.getPixels());
          mmc_.displaySLMImage(slm_);
@@ -98,63 +101,24 @@ public class SLM implements ProjectionDevice {
       }
    }
 
-   public void setRois(Polygon[] roi) {
-      throw new UnsupportedOperationException("Not supported yet.");
-/*
-      AffineTransformOp cmo = new AffineTransformOp(trans, AffineTransformOp.TYPE_BILINEAR);
-      ImagePlus imgpCamera = null;
-
-      if (gui_.getImageWin() != null) {
-         imgpCamera = gui_.getImageWin().getImagePlus();
-      } else {
-         return;
+   public void setRois(Polygon[] roiPolygons) {
+      ByteProcessor processor = new ByteProcessor(slmWidth_, slmHeight_);
+      processor.setColor(Color.black);
+      processor.fill();
+      processor.setColor(Color.white);
+      for (Polygon roiPolygon : roiPolygons) {
+         Roi roi = new PolygonRoi(roiPolygon, Roi.POLYGON);
+         processor.fill(roi);
       }
-
-      int imgWidth = (int) mmc_.getImageWidth();
-      int imgHeight = (int) mmc_.getImageHeight();
-
-
-      if (imgpCamera != null) {
-         ImageProcessor procCamera = imgpCamera.getProcessor();
-         ImageCanvas cvsCamera = imgpCamera.getCanvas();
-         Roi roiCamera = imgpCamera.getRoi();
-
-         if (roiCamera != null) {
-            ByteProcessor procMask = new ByteProcessor(imgWidth, imgHeight);
-            procMask.setColor(Color.black);
-            procMask.fill();
-            procMask.setColor(Color.white);
-            procMask.fill(roiCamera);
-            //imgpMask = new ImagePlus("", procMask);
-            //imgpMask.show();
-
-            BufferedImage imgMask = procMask.getBufferedImage();
-            BufferedImage imgSLM = new BufferedImage(
-                    dev.getWidth(),
-                    dev.getHeight(),
-                    BufferedImage.TYPE_BYTE_GRAY);
-            cmo.filter(imgMask,imgSLM);
-            ByteProcessor procSLM = new ByteProcessor(imgSLM);
-            try {
-               mmc_.setSLMImage(slm_, (byte[]) procSLM.getPixels());
-               if (imageOn_)
-                  mmc_.displaySLMImage(slm_);
-            } catch (Exception ex) {
-               ReportingUtils.showError(ex);
-            }
-            //gui.snapSingleImage();
-         } else {
-            ReportingUtils.showMessage("Please draw an ROI for bleaching.");
-         }
-      } else {
-         ReportingUtils.showMessage("Please snap an image first.");
+      try {
+         mmc_.setSLMImage(slm_, (byte[]) processor.getPixels());
+      } catch (Exception ex) {
+         ReportingUtils.showError(ex);
       }
-
- */
    }
 
    public void displaySpot(double x, double y, double intervalMs) {
-      throw new UnsupportedOperationException("Not supported yet.");
+      displaySpot(x, y);
    }
 
    public void runPolygons(int reptitions) {
@@ -170,11 +134,15 @@ public class SLM implements ProjectionDevice {
    }
 
    public void setPolygonRepetitions(int reps) {
-      throw new UnsupportedOperationException("Not supported yet.");
+      // Ignore!
    }
 
    public void runPolygons() {
-      throw new UnsupportedOperationException("Not supported yet.");
+      try {
+         mmc_.displaySLMImage(slm_);
+      } catch (Exception ex) {
+         ReportingUtils.showError(ex);
+      }
    }
 
    public String getChannel() {
@@ -191,6 +159,20 @@ public class SLM implements ProjectionDevice {
 
    @Override
    public void setSpotInterval(long interval_us) {
-      throw new UnsupportedOperationException("Not supported yet.");
+      // Ignore
+      //throw new UnsupportedOperationException("Not supported yet.");
    }
+
+    @Override
+    public void activateAllPixels() {
+        try {
+           mmc_.setSLMPixelsTo(slm_, (short) 255);
+           if (imageOn_ == true) {
+              mmc_.displaySLMImage(slm_);
+           }
+        } catch (Exception ex) {
+           ReportingUtils.showError(ex);
+        }
+     }
+    
 }
