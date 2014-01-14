@@ -1,0 +1,192 @@
+/**
+ * Code for Micro-Manager ImageProcessor that executes flatfielding and 
+ * background subtraction
+ * 
+ * Nico Stuurman.  Copyright UCSF, 2012
+ * Kurt Thorn. Copyright UCSF, 2013
+ * 
+ * Released under the BSD license
+ * 
+ */
+package org.micromanager.multichannelshading;
+
+import ij.ImagePlus;
+import ij.process.ImageProcessor;
+import mmcorej.CMMCore;
+import mmcorej.TaggedImage;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.micromanager.acquisition.TaggedImageQueue;
+import org.micromanager.api.DataProcessor;
+import org.micromanager.utils.ImageUtils;
+import org.micromanager.utils.MDUtils;
+import org.micromanager.utils.MMScriptException;
+import org.micromanager.utils.ReportingUtils;
+
+/**
+ *
+ * @author nico
+ */
+class BFProcessor extends DataProcessor<TaggedImage> {
+   private final FlatFieldCollection flatFieldImages = new FlatFieldCollection();
+   private String channelGroup_;
+   private int flatFieldWidth_;
+   private int flatFieldHeight_;
+   private int flatFieldType_;
+   private ImagePlus background_;
+   private final CMMCore mmc_;
+   private float multiplicationFactor_; //used to stretch range back to full bitdepth for non-normalized images
+   
+   public BFProcessor(CMMCore core){
+       mmc_ = core;
+   }
+   
+   /**
+    * Set the flatfield image that will be used in flatfielding
+    * Set to null if no flatfielding is desired
+    * 
+    * @param flatField ImagePlus object representing the flatfield image 
+    */
+   public void setFlatField(int channel, ImagePlus flatField) {
+       flatFieldImages.setFlatField(channel, flatField);
+   }
+   
+   public void setFlatFieldChannel(int channel, String channelName){
+       flatFieldImages.setChannelName(channel, channelName);
+   }
+   
+   public void setBackground(ImagePlus background){
+      background_ = background;
+   }  
+   
+   public void setChannelGroup(String channelGroup){
+       channelGroup_ = channelGroup;
+   }
+   
+   public void setFlatFieldNormalize(int channel, boolean normalize){
+       flatFieldImages.setFlatFieldNormalize(channel, normalize);
+   }
+   
+   /**
+    * Polls for tagged images, and processes them if their size and type matches
+    * 
+    */
+   @Override
+   public void process() {
+      try {
+         TaggedImage nextImage = poll();
+         if (nextImage != TaggedImageQueue.POISON) {
+            try {
+
+               produce(processTaggedImage(nextImage));
+
+            } catch (Exception ex) {
+               produce(nextImage);
+               ReportingUtils.logError(ex);
+            }
+         } else {
+            // Must produce Poison (sentinel) image to terminate tagged image pipeline
+            produce(nextImage);
+         }
+      } catch (Exception ex) {
+         ReportingUtils.logError(ex);
+      }
+   }
+
+   /**
+    * Executes flat-fielding
+    * 
+    * 
+    * 
+    * @return - Transformed tagged image, otherwise a copy of the input
+    * @throws JSONException
+    * @throws MMScriptException 
+    */
+   public  TaggedImage processTaggedImage(TaggedImage nextImage) throws JSONException, MMScriptException, Exception {     
+      int width = MDUtils.getWidth(nextImage.tags);
+      int height = MDUtils.getHeight(nextImage.tags);
+      int channelIndex;
+      Float [] flatFieldImage_;
+      String type = MDUtils.getPixelType(nextImage.tags);
+      String imageChannel;
+      String CHANNELNAME = "Channel"; //name of Channel tag
+      int ijType = ImagePlus.GRAY8;
+      if (type.equals("GRAY16")) {
+         ijType = ImagePlus.GRAY16;
+      }
+      
+      // For now, this plugin only works with 8 or 16 bit grayscale images
+      if (! (ijType == ImagePlus.GRAY8 || ijType == ImagePlus.GRAY16) ) {
+         ReportingUtils.logError("Cannot flatfield correct images other than 8 or 16 bit grayscale");
+         return nextImage;
+      }
+      
+      JSONObject newTags = nextImage.tags;
+      
+      //check tags and identify appropriate flatfielding image
+      if (newTags.has(CHANNELNAME)){
+        imageChannel = (String) newTags.get(CHANNELNAME);
+      } else {
+        //work out channel from core; get channel corresponding to selected group
+        imageChannel = mmc_.getCurrentConfig(channelGroup_);
+      }      
+      //get flat field image; returns null if no image found
+      if (flatFieldImages.getFlatFieldNormalize(imageChannel)){
+          flatFieldImage_ = flatFieldImages.getNormalizedFlatField(imageChannel);
+          multiplicationFactor_ = 1;
+      } else {
+          flatFieldImage_ = flatFieldImages.getFlatField(imageChannel); 
+      }
+      flatFieldHeight_ = flatFieldImages.getImageHeight(imageChannel);
+      flatFieldWidth_ = flatFieldImages.getImageWidth(imageChannel);
+      
+      // subtract background
+      if (background_ != null) {
+         ImageProcessor differenceProcessor =
+                 ImageUtils.subtractImageProcessors(ImageUtils.makeProcessor(nextImage),
+                 background_.getProcessor());        
+         nextImage = new TaggedImage(differenceProcessor.getPixels(), newTags);
+      }      
+      
+      //do not calculate flat field if we don't have a matching channel
+      if (flatFieldImage_ == null) {
+         return nextImage;
+      }      
+      // do not calculate if image size differs
+      if (width != flatFieldWidth_ || height != flatFieldHeight_) {
+         ReportingUtils.logError
+            ("FlatField dimensions do not match image dimensions");
+         return nextImage;
+      }      
+      
+      TaggedImage newImage = null;
+      
+      if (ijType == ImagePlus.GRAY8) {
+         byte[] newPixels = new byte[width * height];
+         byte[] oldPixels = (byte[]) nextImage.pix;
+         for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
+               int index = (y * flatFieldWidth_) + x;
+               newPixels[index] = (byte) ( (float) oldPixels[index] 
+                       * flatFieldImage_[index]);
+            }
+         }
+         newImage = new TaggedImage(newPixels, newTags);
+      } else if (ijType == ImagePlus.GRAY16) {
+
+         short[] newPixels = new short[width * height];
+         short[] oldPixels = (short[]) nextImage.pix;
+         for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
+               int index = (y * flatFieldWidth_) + x;
+               //shorts are signed in java so have to do this conversion to get the right value
+               float oldPixel = (float)((int)(oldPixels[index]) & 0x0000ffff);
+               newPixels[index] = (short) ((oldPixel 
+                       * flatFieldImage_[index]) + 0.5f);
+            }
+         }         
+         newImage = new TaggedImage(newPixels, newTags);
+      }
+      return newImage;
+   }   
+}
