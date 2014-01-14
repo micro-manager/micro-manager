@@ -483,8 +483,8 @@ int CScanner::LoadPolygons()
       for (int i=0; i< (int) polygons_.size(); ++i)
       {
          command.str("");
-         command << "LD " << axisLetterX_ << "=" << polygons_[i].first
-               << " " << axisLetterY_ << "=" << polygons_[i].second;
+         command << "LD " << axisLetterX_ << "=" << polygons_[i].first*unitMultX_
+               << " " << axisLetterY_ << "=" << polygons_[i].second*unitMultY_;
          RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
       }
    }

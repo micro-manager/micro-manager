@@ -99,7 +99,7 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
    else if (deviceStr.compare(0, strlen(g_ScannerDeviceName), (string)g_ScannerDeviceName) == 0)
       return new CScanner(deviceName);
    else if (deviceStr.compare(0, strlen(g_MMirrorDeviceName), (string)g_MMirrorDeviceName) == 0)
-         return new CScanner(deviceName);
+         return new CScanner(deviceName);  // this for compatibility with old config files
    else if (deviceStr.compare(0, strlen(g_PiezoDeviceName), (string)g_PiezoDeviceName) == 0)
       return new CPiezo(deviceName);
    else if (deviceStr.compare(0, strlen(g_CRISPDeviceName), (string)g_CRISPDeviceName) == 0)
