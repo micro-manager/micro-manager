@@ -53,7 +53,9 @@ public class PanelUtils {
     * before internal representation as integer (as JSlider requires)
     * @return
     */
-   public JSlider makeSlider(double min, double max, int scalefactor, Properties props, Devices devs, Devices.Keys devKey, Properties.Keys propKey) {
+   public JSlider makeSlider(double min, double max, int scalefactor, Properties props, Devices devs,
+         Devices.Keys devKey, Properties.Keys propKey,
+         boolean restart, Properties.Keys restartKey, Properties.Values restartValue) {
       
       class sliderListener implements ChangeListener, UpdateFromPropertyListenerInterface, DevicesListenerInterface {
          JSlider js_;
@@ -61,18 +63,28 @@ public class PanelUtils {
          Properties props_;
          Devices.Keys devKey_;
          Properties.Keys propKey_;
+         boolean restart_;
+         Properties.Keys restartKey_;
+         Properties.Values restartValue_;
          
-         public sliderListener(JSlider js, int scalefactor, Properties props, Devices.Keys devKey, Properties.Keys propKey) {
+         public sliderListener(JSlider js, int scalefactor, Properties props, Devices.Keys devKey,
+                Properties.Keys propKey, boolean restart, Properties.Keys restartKey, Properties.Values restartValue) {
             js_ = js;
             scalefactor_ = scalefactor;
             props_ = props;
             devKey_ = devKey;
             propKey_ = propKey;
+            restart_ = restart;
+            restartKey_ = restartKey;
+            restartValue_ = restartValue;
          }
          
          public void stateChanged(ChangeEvent ce) {
             if (!((JSlider)ce.getSource()).getValueIsAdjusting()) {  // only change when user releases
                props_.setPropValue(devKey_, propKey_, (float)js_.getValue()/(float)scalefactor_, true);
+               if (restart_) {
+                  props_.setPropValue(devKey_, restartKey_, restartValue_);
+               }
             }
          }
          
@@ -91,7 +103,7 @@ public class PanelUtils {
       int intmax = (int)(max*scalefactor);
       
       JSlider js = new JSlider(JSlider.HORIZONTAL, intmin, intmax, intmin);  // initialize with min value, will set to current value shortly 
-      ChangeListener l = new sliderListener(js, scalefactor, props, devKey, propKey);
+      ChangeListener l = new sliderListener(js, scalefactor, props, devKey, propKey, restart, restartKey, restartValue);
       ((UpdateFromPropertyListenerInterface) l).updateFromProperty();  // set to value of property at present
       js.addChangeListener(l);
       devs.addListener((DevicesListenerInterface) l);
