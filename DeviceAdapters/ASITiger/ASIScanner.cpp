@@ -2067,7 +2067,7 @@ int CScanner::OnSPIMFirstSide(MM::PropertyBase* pProp, MM::ActionType eAct)
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
    else if (eAct == MM::AfterSet) {
-      long NumSides;
+      long NumSides = 1;
       string tmpstr;
       pProp->Get(tmpstr);
       RETURN_ON_MM_ERROR ( GetProperty(g_SPIMNumSidesPropertyName, NumSides) );
