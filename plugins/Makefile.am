@@ -116,6 +116,14 @@ BFCorrector.jar:  \
 	$(JAVAC) $(JAVACFLAGS) -sourcepath $(srcdir):. -classpath $(IJJARPATH):$(BSHJARPATH):$(COMMONSMATHJARPATH):$(SWINGLAYOUTJARPATH):../mmstudio/MMJ_.jar:. $(srcdir)/BFCorrector/src/org/micromanager/bfcorrector/*.java -d build
 	cd build && jar cf ../BFCorrector.jar * 
 
+MultiChannelShading.jar: \
+	$(srcdir)/MultiChannelShading/src/org/micromanager/multichannelshading/*.java \
+	$(srcdir)/MultiChannelShading/src/org/micromanager/multichannelshading/*.form
+	test -d build || mkdir build
+	rm -rf build/*
+	$(JAVAC) $(JAVACFLAGS) -sourcepath $(srcdir):. -classpath $(IJJARPATH):$(BSHJARPATH):$(COMMONSMATHJARPATH):$(SWINGLAYOUTJARPATH):../mmstudio/MMJ_.jar:. $(srcdir)/MultiChannelShading/src/org/micromanager/multichannelshading/*.java -d build
+	cd build && jar cf ../MultiChannelShading.jar *
+
 Gaussian.jar:  \
 	$(srcdir)/Gaussian/source/GaussianTrack_.java \
 	$(srcdir)/Gaussian/source/edu/valelab/GaussianFit/DataCollectionForm.java \
@@ -177,7 +185,7 @@ HCS.jar:  \
 
 
 
-all: PixelCalibrator.jar Projector.jar RecallPlugin.jar StageControl.jar MultiCamera.jar CRISP.jar Big.jar NewImageFlipper.jar SlideExplorer.jar DataBrowser.jar ClojureEditor.jar SplitView.jar Gaussian.jar IntelligentAcquisition.jar BFCorrector.jar HCS.jar
+all: PixelCalibrator.jar Projector.jar RecallPlugin.jar StageControl.jar MultiCamera.jar CRISP.jar Big.jar NewImageFlipper.jar SlideExplorer.jar DataBrowser.jar ClojureEditor.jar SplitView.jar Gaussian.jar IntelligentAcquisition.jar BFCorrector.jar MultiChannelShading.jar HCS.jar
 
 
 install: 
@@ -198,6 +206,7 @@ install:
 	cp Gaussian.jar $(DESTDIR)$(IJPATH)/mmplugins
 	cp IntelligentAcquisition.jar $(DESTDIR)$(IJPATH)/mmplugins
 	cp BFCorrector.jar $(DESTDIR)$(IJPATH)/mmplugins
+	cp MultiChannelShading.jar $(DESTDIR)$(IJPATH)/mmplugins
 	cp HCS.jar $(DESTDIR)$(IJPATH)/mmplugins
 	
 clean:
@@ -208,6 +217,7 @@ clean:
 	test -f ImageFlipper.jar && rm ImageFlipper.jar || echo "ImageFlipper.jar not found"
 	test -f MMTracker_.jar && rm MMTracker_.jar || echo "MMTracker_.jar not found"
 	test -f MultiCamera.jar && rm MultiCamera.jar || echo "MultiCamera.jar not found"
+	test -f MultiChannelShading.jar && rm MultiChannelShading.jar || echo "MultiChannelShading.jar not found"
 	test -f NewImageFlipper.jar && rm NewImageFlipper.jar || echo "NewImageFlipper.jar not found"
 	test -f PixelCalibrator.jar && rm PixelCalibrator.jar || echo "PixelCalibrator.jar not found"
 	test -f Projector.jar && rm Projector.jar || echo "Projector.jar not found"
