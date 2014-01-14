@@ -57,6 +57,7 @@ private:
 };
 
 #define SCOPELED_ILLUMINATOR_MSM_PRESET_CHANNELS_MAX 6
+// #define SCOPELED_ILLUMINATOR_MSM_INTENSITY_DAC 1 // <-- For testing with uncalibrated devices. 
 class ScopeLEDMSMMicroscopeIlluminator : public ScopeLEDBasicIlluminator<ScopeLEDMSMMicroscopeIlluminator>
 {    
 public:
@@ -72,7 +73,11 @@ public:
     int GetOpen(bool& open);
 
 // action interface
+#ifdef SCOPELED_ILLUMINATOR_MSM_INTENSITY_DAC
+    int OnChannelIntensityDAC(int index, MM::PropertyBase* pProp, MM::ActionType eAct);
+#else
     int OnChannelIntensity(int index, MM::PropertyBase* pProp, MM::ActionType eAct);
+#endif
     int OnIntensityChannel1(MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnIntensityChannel2(MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnIntensityChannel3(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -94,12 +99,17 @@ protected:
     void ClearOpticalState();
 
 private:
+#ifdef SCOPELED_ILLUMINATOR_MSM_INTENSITY_DAC
+    long intensityRawChannelDAC[SCOPELED_ILLUMINATOR_CHANNELS_MAX];
+    int SetManualColorDAC();
+#else
     double intensityRawChannel[SCOPELED_ILLUMINATOR_CHANNELS_MAX];
+    int SetManualColor();
+#endif
     double intensityPresetMode[SCOPELED_ILLUMINATOR_MSM_PRESET_CHANNELS_MAX];
     long activePresetModeIndex;
     static const char* const s_PresetModeStrings[];
 
-    int SetManualColor();
     int PlayPresetMode();
 };
 
