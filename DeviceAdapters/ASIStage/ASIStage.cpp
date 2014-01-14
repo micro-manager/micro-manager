@@ -415,8 +415,8 @@ int XYStage::Initialize()
       CreateProperty("Speed-S", "1", MM::Float, false, pAct);
       // Maximum Speed that can be set in Speed-S property
       pAct = new CPropertyAction(this, &XYStage::OnMaxSpeed);
-      CreateProperty("Maximum Speed, Do Not Change", "7.5", MM::Float, false, pAct);
-      SetPropertyLimits("Maximum Speed, Do Not Change", 0.1, 25.0);
+      CreateProperty("Maximum Speed (Do Not Change)", "7.5", MM::Float, false, pAct);
+      SetPropertyLimits("Maximum Speed (Do Not Change)", 0.1, 25.0);
    }
 
    // Backlash (sets both x and y)
