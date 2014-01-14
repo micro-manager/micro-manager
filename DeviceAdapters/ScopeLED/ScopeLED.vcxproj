@@ -147,7 +147,6 @@
     <ClInclude Include="ScopeLEDBasicIlluminator.h" />
     <ClInclude Include="ScopeLEDDevices.h" />
     <ClInclude Include="USBCommAdapter.h" />
-    <ClInclude Include="USBCommDLL\USBCommDLL.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ScopeLEDDevices.cpp" />
