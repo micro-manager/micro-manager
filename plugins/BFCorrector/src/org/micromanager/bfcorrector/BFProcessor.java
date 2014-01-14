@@ -166,8 +166,8 @@ class BFProcessor extends DataProcessor<TaggedImage> {
          for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
                int index = (y * flatFieldWidth_) + x;
-               newPixels[index] = (short) ( (float) oldPixels[index] 
-                       / normalizedFlatField_[index]);
+               float oldPixel = (float)((int)(oldPixels[index]) & 0x0000ffff);
+               newPixels[index] = (short)(oldPixel / normalizedFlatField_[index] + 0.5f);
             }
          }
          newImage = new TaggedImage(newPixels, newTags);
