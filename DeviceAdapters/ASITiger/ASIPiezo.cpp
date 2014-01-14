@@ -255,27 +255,27 @@ int CPiezo::Initialize()
    {
       // copied from ASIMMirror.cpp
       pAct = new CPropertyAction (this, &CPiezo::OnSAAmplitude);
-      CreateProperty(g_MMirrorSAAmplitudePropertyName, "0", MM::Float, false, pAct);
-      UpdateProperty(g_MMirrorSAAmplitudePropertyName);
+      CreateProperty(g_SAAmplitudePropertyName, "0", MM::Float, false, pAct);
+      UpdateProperty(g_SAAmplitudePropertyName);
       pAct = new CPropertyAction (this, &CPiezo::OnSAOffset);
-      CreateProperty(g_MMirrorSAOffsetPropertyName, "0", MM::Float, false, pAct);
-      UpdateProperty(g_MMirrorSAOffsetPropertyName);
+      CreateProperty(g_SAOffsetPropertyName, "0", MM::Float, false, pAct);
+      UpdateProperty(g_SAOffsetPropertyName);
       pAct = new CPropertyAction (this, &CPiezo::OnSAPeriod);
-      CreateProperty(g_MMirrorSAPeriodPropertyName, "0", MM::Integer, false, pAct);
-      UpdateProperty(g_MMirrorSAPeriodPropertyName);
+      CreateProperty(g_SAPeriodPropertyName, "0", MM::Integer, false, pAct);
+      UpdateProperty(g_SAPeriodPropertyName);
       pAct = new CPropertyAction (this, &CPiezo::OnSAMode);
-      CreateProperty(g_MMirrorSAModePropertyName, g_SAMode_0, MM::String, false, pAct);
-      UpdateProperty(g_MMirrorSAModePropertyName);
-      AddAllowedValue(g_MMirrorSAModePropertyName, g_SAMode_0);
-      AddAllowedValue(g_MMirrorSAModePropertyName, g_SAMode_1);
-      AddAllowedValue(g_MMirrorSAModePropertyName, g_SAMode_2);
-      AddAllowedValue(g_MMirrorSAModePropertyName, g_SAMode_3);
+      CreateProperty(g_SAModePropertyName, g_SAMode_0, MM::String, false, pAct);
+      AddAllowedValue(g_SAModePropertyName, g_SAMode_0);
+      AddAllowedValue(g_SAModePropertyName, g_SAMode_1);
+      AddAllowedValue(g_SAModePropertyName, g_SAMode_2);
+      AddAllowedValue(g_SAModePropertyName, g_SAMode_3);
+      UpdateProperty(g_SAModePropertyName);
       pAct = new CPropertyAction (this, &CPiezo::OnSAPattern);
-      CreateProperty(g_MMirrorSAPatternPropertyName, g_SAPattern_0, MM::String, false, pAct);
-      UpdateProperty(g_MMirrorSAPatternPropertyName);
-      AddAllowedValue(g_MMirrorSAPatternPropertyName, g_SAPattern_0);
-      AddAllowedValue(g_MMirrorSAPatternPropertyName, g_SAPattern_1);
-      AddAllowedValue(g_MMirrorSAPatternPropertyName, g_SAPattern_2);
+      CreateProperty(g_SAPatternPropertyName, g_SAPattern_0, MM::String, false, pAct);
+      AddAllowedValue(g_SAPatternPropertyName, g_SAPattern_0);
+      AddAllowedValue(g_SAPatternPropertyName, g_SAPattern_1);
+      AddAllowedValue(g_SAPatternPropertyName, g_SAPattern_2);
+      UpdateProperty(g_SAPatternPropertyName);
       // generates a set of additional advanced properties that are rarely used
       pAct = new CPropertyAction (this, &CPiezo::OnSAAdvanced);
       CreateProperty(g_AdvancedSAPropertiesPropertyName, g_NoState, MM::String, false, pAct);
@@ -798,33 +798,33 @@ int CPiezo::OnSAAdvanced(MM::PropertyBase* pProp, MM::ActionType eAct)
          CPropertyAction* pAct;
 
          pAct = new CPropertyAction (this, &CPiezo::OnSAClkSrc);
-         CreateProperty(g_MMirrorSAClkSrcPropertyName, g_SAClkSrc_0, MM::String, false, pAct);
-         UpdateProperty(g_MMirrorSAClkSrcPropertyName);
-         AddAllowedValue(g_MMirrorSAClkSrcPropertyName, g_SAClkSrc_0);
-         AddAllowedValue(g_MMirrorSAClkSrcPropertyName, g_SAClkSrc_1);
+         CreateProperty(g_SAClkSrcPropertyName, g_SAClkSrc_0, MM::String, false, pAct);
+         AddAllowedValue(g_SAClkSrcPropertyName, g_SAClkSrc_0);
+         AddAllowedValue(g_SAClkSrcPropertyName, g_SAClkSrc_1);
+         UpdateProperty(g_SAClkSrcPropertyName);
 
          pAct = new CPropertyAction (this, &CPiezo::OnSAClkPol);
-         CreateProperty(g_MMirrorSAClkPolPropertyName, g_SAClkPol_0, MM::String, false, pAct);
-         UpdateProperty(g_MMirrorSAClkPolPropertyName);
-         AddAllowedValue(g_MMirrorSAClkPolPropertyName, g_SAClkPol_0);
-         AddAllowedValue(g_MMirrorSAClkPolPropertyName, g_SAClkPol_1);
+         CreateProperty(g_SAClkPolPropertyName, g_SAClkPol_0, MM::String, false, pAct);
+         AddAllowedValue(g_SAClkPolPropertyName, g_SAClkPol_0);
+         AddAllowedValue(g_SAClkPolPropertyName, g_SAClkPol_1);
+         UpdateProperty(g_SAClkPolPropertyName);
 
          pAct = new CPropertyAction (this, &CPiezo::OnSATTLOut);
-         CreateProperty(g_MMirrorSATTLOutPropertyName, g_SATTLOut_0, MM::String, false, pAct);
-         UpdateProperty(g_MMirrorSATTLOutPropertyName);
-         AddAllowedValue(g_MMirrorSATTLOutPropertyName, g_SATTLOut_0);
-         AddAllowedValue(g_MMirrorSATTLOutPropertyName, g_SATTLOut_1);
+         CreateProperty(g_SATTLOutPropertyName, g_SATTLOut_0, MM::String, false, pAct);
+         AddAllowedValue(g_SATTLOutPropertyName, g_SATTLOut_0);
+         AddAllowedValue(g_SATTLOutPropertyName, g_SATTLOut_1);
+         UpdateProperty(g_SATTLOutPropertyName);
 
          pAct = new CPropertyAction (this, &CPiezo::OnSATTLPol);
-         CreateProperty(g_MMirrorSATTLPolPropertyName, g_SATTLPol_0, MM::String, false, pAct);
-         UpdateProperty(g_MMirrorSATTLPolPropertyName);
-         AddAllowedValue(g_MMirrorSATTLPolPropertyName, g_SATTLPol_0);
-         AddAllowedValue(g_MMirrorSATTLPolPropertyName, g_SATTLPol_1);
+         CreateProperty(g_SATTLPolPropertyName, g_SATTLPol_0, MM::String, false, pAct);
+         AddAllowedValue(g_SATTLPolPropertyName, g_SATTLPol_0);
+         AddAllowedValue(g_SATTLPolPropertyName, g_SATTLPol_1);
+         UpdateProperty(g_SATTLPolPropertyName);
 
          pAct = new CPropertyAction (this, &CPiezo::OnSAPatternByte);
-         CreateProperty(g_MMirrorSAPatternModePropertyName, "0", MM::Integer, false, pAct);
-         UpdateProperty(g_MMirrorSAPatternModePropertyName);
-         SetPropertyLimits(g_MMirrorSAPatternModePropertyName, 0, 255);
+         CreateProperty(g_SAPatternModePropertyName, "0", MM::Integer, false, pAct);
+         UpdateProperty(g_SAPatternModePropertyName);
+         SetPropertyLimits(g_SAPatternModePropertyName, 0, 255);
       }
    }
    return DEVICE_OK;

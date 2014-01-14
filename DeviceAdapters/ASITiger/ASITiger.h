@@ -92,7 +92,8 @@ const char* const g_XYStageDeviceName = "XYStage";
 const char* const g_FSliderDeviceName =  "FilterSlider";
 const char* const g_TurretDeviceName =  "Turret";
 const char* const g_FWheelDeviceName =  "FilterWheel";
-const char* const g_MMirrorDeviceName =  "MicroMirror";
+const char* const g_ScannerDeviceName =  "Scanner";
+const char* const g_MMirrorDeviceName = "MicroMirror";  // deprecated
 const char* const g_PiezoDeviceName = "PiezoStage";
 const char* const g_CRISPDeviceName = "CRISPAFocus";
 
@@ -103,14 +104,14 @@ const char* const g_XYStageDeviceDescription =   "ASI XY Stage";
 const char* const g_FSliderDeviceDescription =   "ASI Filter Slider";
 const char* const g_FWheelDeviceDescription =   "ASI Filter Wheel";
 const char* const g_TurretDeviceDescription =   "ASI Turret";
-const char* const g_MMirrorDeviceDescription = "ASI 2-axis MicroMirror";
+const char* const g_ScannerDeviceDescription = "ASI 2-axis Scanner";
 const char* const g_PiezoDeviceDescription = "ASI Piezo Stage";
 const char* const g_CRISPDeviceDescription = "ASI CRISP AutoFocus";
 
 // constant values
 const double g_StageMinStepSize = 0.001;   // in units of um
 const double g_StageDefaultUnitMult = 10;  // in units of um
-const double g_MicromirrorDefaultUnitMult = 1000;  // units per degree
+const double g_ScannerDefaultUnitMult = 1000;  // units per degree
 const char* const g_SerialTerminatorDefault = "\r\n";
 const char* const g_SerialTerminatorFW = "\n\r";
 const string g_EmptyAxisLetterStr = " ";     // single char but like convenience of strings
@@ -180,11 +181,11 @@ const char* const g_FWVelocityRunPropertyName = "VelocityRun";
 const char* const g_FWSpeedSettingPropertyName = "SpeedSetting";
 const char* const g_FWLockModePropertyName = "LockMode";
 
-// micromirror property names
-const char* const g_MMirrorLowerLimXPropertyName = "MinDeflectionX(deg)";
-const char* const g_MMirrorUpperLimXPropertyName = "MaxDeflectionX(deg)";
-const char* const g_MMirrorLowerLimYPropertyName = "MinDeflectionY(deg)";
-const char* const g_MMirrorUpperLimYPropertyName = "MaxDeflectionY(deg)";
+// scanner property names
+const char* const g_ScannerLowerLimXPropertyName = "MinDeflectionX(deg)";
+const char* const g_ScannerUpperLimXPropertyName = "MaxDeflectionX(deg)";
+const char* const g_ScannerLowerLimYPropertyName = "MinDeflectionY(deg)";
+const char* const g_ScannerUpperLimYPropertyName = "MaxDeflectionY(deg)";
 const char* const g_JoystickFastSpeedXPropertyName = "JoystickFastSpeedX";
 const char* const g_JoystickFastSpeedYPropertyName = "JoystickFastSpeedY";
 const char* const g_JoystickSlowSpeedXPropertyName = "JoystickSlowSpeedX";
@@ -193,34 +194,12 @@ const char* const g_JoystickMirrorXPropertyName = "JoystickReverseX";
 const char* const g_JoystickMirrorYPropertyName = "JoystickReverseY";
 const char* const g_JoystickSelectXPropertyName = "JoystickInputX";
 const char* const g_JoystickSelectYPropertyName = "JoystickInputY";
-const char* const g_AdvancedSAPropertiesXPropertyName = "SingleAxisAdvancedXPropertiesEnable";
-const char* const g_AdvancedSAPropertiesYPropertyName = "SingleAxisAdvancedYPropertiesEnable";
-const char* const g_MMirrorSAAmplitudeXPropertyName = "SingleAxisXAmplitude(deg)";
-const char* const g_MMirrorSAOffsetXPropertyName = "SingleAxisXOffset(deg)";
-const char* const g_MMirrorSAPeriodXPropertyName = "SingleAxisXPeriod(ms)";
-const char* const g_MMirrorSAModeXPropertyName = "SingleAxisXMode";
-const char* const g_MMirrorSAPatternXPropertyName = "SingleAxisXPattern";
-const char* const g_MMirrorSAClkSrcXPropertyName = "SingleAxisXClockSource";
-const char* const g_MMirrorSAClkPolXPropertyName = "SingleAxisXClockPolarity";
-const char* const g_MMirrorSATTLOutXPropertyName = "SingleAxisXTTLOut";
-const char* const g_MMirrorSATTLPolXPropertyName = "SingleAxisXTTLPolarity";
-const char* const g_MMirrorSAPatternModeXPropertyName = "SingleAxisXPatternByte";
-const char* const g_MMirrorSAAmplitudeYPropertyName = "SingleAxisYAmplitude(deg)";
-const char* const g_MMirrorSAOffsetYPropertyName = "SingleAxisYOffset(deg)";
-const char* const g_MMirrorSAPeriodYPropertyName = "SingleAxisYPeriod(ms)";
-const char* const g_MMirrorSAModeYPropertyName = "SingleAxisYMode";
-const char* const g_MMirrorSAPatternYPropertyName = "SingleAxisYPattern";
-const char* const g_MMirrorSAClkSrcYPropertyName = "SingleAxisYClockSource";
-const char* const g_MMirrorSAClkPolYPropertyName = "SingleAxisYClockPolarity";
-const char* const g_MMirrorSATTLOutYPropertyName = "SingleAxisYTTLOut";
-const char* const g_MMirrorSATTLPolYPropertyName = "SingleAxisYTTLPolarity";
-const char* const g_MMirrorSAPatternModeYPropertyName = "SingleAxisYPatternByte";
-const char* const g_MMirrorModePropertyName = "InputMode";
-const char* const g_MMirrorCutoffFilterXPropertyName = "FilterFreqX(kHz)";
-const char* const g_MMirrorCutoffFilterYPropertyName = "FilterFreqY(kHz)";
-const char* const g_MMirrorAttenuateXPropertyName = "AttenuateX(0..1)";
-const char* const g_MMirrorAttenuateYPropertyName = "AttenuateY(0..1)";
-const char* const g_MMirrorBeamEnabledPropertyName = "BeamEnabled";
+const char* const g_ScannerInputModePropertyName = "InputMode";
+const char* const g_ScannerCutoffFilterXPropertyName = "FilterFreqX(kHz)";
+const char* const g_ScannerCutoffFilterYPropertyName = "FilterFreqY(kHz)";
+const char* const g_ScannerAttenuateXPropertyName = "AttenuateX(0..1)";
+const char* const g_ScannerAttenuateYPropertyName = "AttenuateY(0..1)";
+const char* const g_ScannerBeamEnabledPropertyName = "BeamEnabled";
 
 // pizeo property names
 const char* const g_CardVoltagePropertyName = "CardVoltage(V)"; // also used for micromirror
@@ -228,17 +207,41 @@ const char* const g_PiezoModePropertyName = "PiezoMode";
 const char* const g_PiezoTravelRangePropertyName = "PiezoTravelRange(um)";
 const char* const g_PiezoModeFourOvershoot = "PiezoModeFourOvershoot(percent)";
 const char* const g_PiezoModeFourMaxTime = "PiezoModeFourMaxTime(ms)";
+
+// single axis property names
 const char* const g_AdvancedSAPropertiesPropertyName = "SingleAxisAdvancedPropertiesEnable";
-const char* const g_MMirrorSAAmplitudePropertyName = "SingleAxisAmplitude(um)";
-const char* const g_MMirrorSAOffsetPropertyName = "SingleAxisOffset(um)";
-const char* const g_MMirrorSAPeriodPropertyName = "SingleAxisPeriod(ms)";
-const char* const g_MMirrorSAModePropertyName = "SingleAxisMode";
-const char* const g_MMirrorSAPatternPropertyName = "SingleAxisPattern";
-const char* const g_MMirrorSAClkSrcPropertyName = "SingleAxisClockSource";
-const char* const g_MMirrorSAClkPolPropertyName = "SingleAxisClockPolarity";
-const char* const g_MMirrorSATTLOutPropertyName = "SingleAxisTTLOut";
-const char* const g_MMirrorSATTLPolPropertyName = "SingleAxisTTLPolarity";
-const char* const g_MMirrorSAPatternModePropertyName = "SingleAxisPatternByte";
+const char* const g_SAAmplitudePropertyName = "SingleAxisAmplitude(um)";
+const char* const g_SAOffsetPropertyName = "SingleAxisOffset(um)";
+const char* const g_SAPeriodPropertyName = "SingleAxisPeriod(ms)";
+const char* const g_SAModePropertyName = "SingleAxisMode";
+const char* const g_SAPatternPropertyName = "SingleAxisPattern";
+const char* const g_SAClkSrcPropertyName = "SingleAxisClockSource";
+const char* const g_SAClkPolPropertyName = "SingleAxisClockPolarity";
+const char* const g_SATTLOutPropertyName = "SingleAxisTTLOut";
+const char* const g_SATTLPolPropertyName = "SingleAxisTTLPolarity";
+const char* const g_SAPatternModePropertyName = "SingleAxisPatternByte";
+const char* const g_AdvancedSAPropertiesXPropertyName = "SingleAxisAdvancedXPropertiesEnable";
+const char* const g_AdvancedSAPropertiesYPropertyName = "SingleAxisAdvancedYPropertiesEnable";
+const char* const g_ScannerSAAmplitudeXPropertyName = "SingleAxisXAmplitude(deg)";
+const char* const g_ScannerSAOffsetXPropertyName = "SingleAxisXOffset(deg)";
+const char* const g_SAPeriodXPropertyName = "SingleAxisXPeriod(ms)";
+const char* const g_SAModeXPropertyName = "SingleAxisXMode";
+const char* const g_SAPatternXPropertyName = "SingleAxisXPattern";
+const char* const g_SAClkSrcXPropertyName = "SingleAxisXClockSource";
+const char* const g_SAClkPolXPropertyName = "SingleAxisXClockPolarity";
+const char* const g_SATTLOutXPropertyName = "SingleAxisXTTLOut";
+const char* const g_SATTLPolXPropertyName = "SingleAxisXTTLPolarity";
+const char* const g_SAPatternModeXPropertyName = "SingleAxisXPatternByte";
+const char* const g_ScannerSAAmplitudeYPropertyName = "SingleAxisYAmplitude(deg)";
+const char* const g_ScannerSAOffsetYPropertyName = "SingleAxisYOffset(deg)";
+const char* const g_SAPeriodYPropertyName = "SingleAxisYPeriod(ms)";
+const char* const g_SAModeYPropertyName = "SingleAxisYMode";
+const char* const g_SAPatternYPropertyName = "SingleAxisYPattern";
+const char* const g_SAClkSrcYPropertyName = "SingleAxisYClockSource";
+const char* const g_SAClkPolYPropertyName = "SingleAxisYClockPolarity";
+const char* const g_SATTLOutYPropertyName = "SingleAxisYTTLOut";
+const char* const g_SATTLPolYPropertyName = "SingleAxisYTTLPolarity";
+const char* const g_SAPatternModeYPropertyName = "SingleAxisYPatternByte";
 
 // CRISP property names
 const char* const g_WaitAfterLockPropertyName = "Wait time after Lock(ms)";
@@ -342,8 +345,8 @@ const char* const g_SATTLOut_1 = g_YesState;
 const char* const g_SATTLPol_0 = "active high";
 const char* const g_SATTLPol_1 = "active low";
 // micromirror input modes
-const char* const g_MMirrorMode_external = "external input";
-const char* const g_MMirrorMode_internal = "internal input";
+const char* const g_ScannerMode_external = "external input";
+const char* const g_ScannerMode_internal = "internal input";
 // piezo control modes
 const char* const g_AdeptMode_0 = "0 - internal input closed-loop";
 const char* const g_AdeptMode_1 = "1 - external input closed-loop";

@@ -165,8 +165,8 @@
     <ClCompile Include="ASIDevice.cpp" />
     <ClCompile Include="ASIFWheel.cpp" />
     <ClCompile Include="ASIHub.cpp" />
-    <ClCompile Include="ASIMMirror.cpp" />
     <ClCompile Include="ASIPiezo.cpp" />
+    <ClCompile Include="ASIScanner.cpp" />
     <ClCompile Include="ASITiger.cpp" />
     <ClCompile Include="ASITigerComm.cpp" />
     <ClCompile Include="ASIXYStage.cpp" />
@@ -178,8 +178,8 @@
     <ClInclude Include="ASIDevice.h" />
     <ClInclude Include="ASIFWheel.h" />
     <ClInclude Include="ASIHub.h" />
-    <ClInclude Include="ASIMMirror.h" />
     <ClInclude Include="ASIPiezo.h" />
+    <ClInclude Include="ASIScanner.h" />
     <ClInclude Include="ASITiger.h" />
     <ClInclude Include="ASITigerComm.h" />
     <ClInclude Include="ASIXYStage.h" />

@@ -181,10 +181,10 @@ int CTigerCommHub::DetectInstalledDevices()
             else
                return ERR_TIGER_PAIR_NOT_PRESENT;
             break;
-         case 'u': // MMirror type
+         case 'u': // scanner type (used to be MMirror type)
             if (build.vAxesType[i+1] == 'u')  // skip one code because we added two axes in one step
             {
-               name = g_MMirrorDeviceName;
+               name = g_ScannerDeviceName;
                twoaxis = 1;
                i++; // skip one code because we added two axes in one step
             }

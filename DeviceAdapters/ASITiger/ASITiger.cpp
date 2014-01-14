@@ -36,7 +36,7 @@
 #include "ASIZStage.h"
 #include "ASIClocked.h"
 #include "ASIFWheel.h"
-#include "ASIMMirror.h"
+#include "ASIScanner.h"
 #include "ASIPiezo.h"
 #include "ASICRISP.h"
 #include <cstdio>
@@ -74,7 +74,7 @@ MODULE_API void InitializeModuleData()
    RegisterDevice(g_FSliderDeviceName, MM::StateDevice, g_FSliderDeviceDescription);
    RegisterDevice(g_TurretDeviceName, MM::StateDevice, g_TurretDeviceDescription);
    RegisterDevice(g_FWheelDeviceName, MM::StateDevice, g_FWheelDeviceDescription);
-   RegisterDevice(g_MMirrorDeviceName, MM::GalvoDevice, g_MMirrorDeviceDescription);
+   RegisterDevice(g_ScannerDeviceName, MM::GalvoDevice, g_ScannerDeviceDescription);
    RegisterDevice(g_PiezoDeviceName, MM::StageDevice, g_PiezoDeviceDescription);
    RegisterDevice(g_CRISPDeviceName, MM::AutoFocusDevice, g_CRISPDeviceDescription);
 }
@@ -96,8 +96,10 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
       return new CTurret(deviceName);
    else if (deviceStr.compare(0, strlen(g_FWheelDeviceName), (string)g_FWheelDeviceName) == 0)
       return new CFWheel(deviceName);
+   else if (deviceStr.compare(0, strlen(g_ScannerDeviceName), (string)g_ScannerDeviceName) == 0)
+      return new CScanner(deviceName);
    else if (deviceStr.compare(0, strlen(g_MMirrorDeviceName), (string)g_MMirrorDeviceName) == 0)
-      return new CMMirror(deviceName);
+         return new CScanner(deviceName);
    else if (deviceStr.compare(0, strlen(g_PiezoDeviceName), (string)g_PiezoDeviceName) == 0)
       return new CPiezo(deviceName);
    else if (deviceStr.compare(0, strlen(g_CRISPDeviceName), (string)g_CRISPDeviceName) == 0)
