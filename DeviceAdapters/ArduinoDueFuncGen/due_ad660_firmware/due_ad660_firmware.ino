@@ -186,30 +186,7 @@
 // ER12\n (error code 12)
 
 
-//
-// Error codes
-//
-// TODO Put these in a header that can be included from host code, too.
-// TODO Rename with different prefix.
-enum {
-  ERR_OK,
-  ERR_BAD_ALLOC,
-  ERR_BAD_CMD,
-  ERR_BAD_PARAMS,
-  ERR_TOO_FEW_PARAMS,
-  ERR_CMD_TOO_LONG,
-  ERR_EXPECTED_UINT,
-  ERR_FREQ_OUT_OF_RANGE,
-  ERR_INVALID_BANK,
-  ERR_INVALID_CHANNEL,
-  ERR_INVALID_PHASE_OFFSET,
-  ERR_INVALID_SAMPLE_VALUE,
-  ERR_INVALID_TABLE,
-  ERR_OVERFLOW,
-  ERR_TIMEOUT,
-  ERR_NO_WAVEFORM,
-  ERR_BUSY,
-};
+#include "SerialProtocol.h"
 
 
 //
@@ -628,17 +605,17 @@ inline void respond_ok() {
 int parse_uint(const char *buffer, size_t *p, uint32_t *result) {
   *result = 0;
   if (!isdigit(buffer[*p])) {
-    return ERR_EXPECTED_UINT;
+    return DFGERR_EXPECTED_UINT;
   }
 
   do {
     if (*result >= UINT32_MAX / 10) {
-      return ERR_OVERFLOW;
+      return DFGERR_OVERFLOW;
     }
     *result *= 10;
     *result += buffer[(*p)++] - '0';
   } while (isdigit(buffer[*p]));
-  return ERR_OK;
+  return DFGERR_OK;
 }
 
 
@@ -654,14 +631,14 @@ int parse_uint_params(const char *buffer, uint32_t *params, size_t num_params) {
     }
 
     if (buffer[p++] != ',') {
-      return ERR_TOO_FEW_PARAMS;
+      return DFGERR_TOO_FEW_PARAMS;
     }
   }
 
   if (buffer[p] != '\0') {
-    return ERR_BAD_PARAMS;
+    return DFGERR_BAD_PARAMS;
   }
-  return ERR_OK;
+  return DFGERR_OK;
 }
 
 
@@ -676,22 +653,22 @@ void handle_AW(const char *param_str) {
   }
 
   if (params[0] >= g_n_tables) {
-    respond_error(ERR_INVALID_TABLE);
+    respond_error(DFGERR_INVALID_TABLE);
     return;
   }
 
   if (params[1] >= g_n_banks) {
-    respond_error(ERR_INVALID_BANK);
+    respond_error(DFGERR_INVALID_BANK);
     return;
   }
 
   if (params[2] >= NUM_CHANNELS) {
-    respond_error(ERR_INVALID_CHANNEL);
+    respond_error(DFGERR_INVALID_CHANNEL);
     return;
   }
 
   if (g_tc_sampler_active) {
-    respond_error(ERR_BUSY);
+    respond_error(DFGERR_BUSY);
     return;
   }
 
@@ -709,18 +686,18 @@ void handle_DM(const char *param_str) {
 
   size_t waveform_length = params[0];
   if (params[1] > UINT8_MAX) {
-    respond_error(ERR_OVERFLOW);
+    respond_error(DFGERR_OVERFLOW);
     return;
   }
   uint8_t n_banks = params[1];
   if (params[2] > UINT8_MAX) {
-    respond_error(ERR_OVERFLOW);
+    respond_error(DFGERR_OVERFLOW);
     return;
   }
   uint8_t n_tables = params[2];
 
   if (g_tc_sampler_active) {
-    respond_error(ERR_BUSY);
+    respond_error(DFGERR_BUSY);
     return;
   }
 
@@ -728,7 +705,7 @@ void handle_DM(const char *param_str) {
     respond_ok();
   }
   else {
-    respond_error(ERR_BAD_ALLOC);
+    respond_error(DFGERR_BAD_ALLOC);
   }
 }
 
@@ -754,7 +731,7 @@ void handle_FQ(const char *param_str) {
   }
 
   if (params[0] < MIN_SAMPLE_FREQ || params[0] > MAX_SAMPLE_FREQ) {
-    respond_error(ERR_FREQ_OUT_OF_RANGE);
+    respond_error(DFGERR_FREQ_OUT_OF_RANGE);
     return;
   }
 
@@ -765,7 +742,7 @@ void handle_FQ(const char *param_str) {
 
 void handle_HL(const char *param_str) {
   if (param_str[0] != '\0') {
-    respond_error(ERR_BAD_CMD);
+    respond_error(DFGERR_BAD_CMD);
     return;
   }
 
@@ -777,7 +754,7 @@ void handle_HL(const char *param_str) {
 
 void handle_ID(const char *param_str) {
   if (param_str[0] != '\0') {
-    respond_error(ERR_BAD_CMD);
+    respond_error(DFGERR_BAD_CMD);
   }
   respond_ok(SERIAL_MAGIC_ID);
 }
@@ -791,12 +768,12 @@ void handle_LW(const char *param_str) {
   }
 
   if (params[0] >= g_n_tables) {
-    respond_error(ERR_INVALID_TABLE);
+    respond_error(DFGERR_INVALID_TABLE);
     return;
   }
 
   if (g_tc_sampler_active) {
-    respond_error(ERR_BUSY);
+    respond_error(DFGERR_BUSY);
     return;
   }
 
@@ -806,7 +783,7 @@ void handle_LW(const char *param_str) {
   respond_data_request(length);
   size_t bytes = Serial.readBytes((char *)table, length);
   if (bytes < length) {
-    respond_error(ERR_TIMEOUT);
+    respond_error(DFGERR_TIMEOUT);
     return;
   }
   respond_ok();
@@ -821,17 +798,17 @@ void handle_MV(const char *param_str) {
   }
 
   if (params[0] >= NUM_CHANNELS) {
-    respond_error(ERR_INVALID_CHANNEL);
+    respond_error(DFGERR_INVALID_CHANNEL);
     return;
   }
 
   if (params[1] > UINT16_MAX) {
-    respond_error(ERR_INVALID_SAMPLE_VALUE);
+    respond_error(DFGERR_INVALID_SAMPLE_VALUE);
     return;
   }
 
   if (g_tc_sampler_active) {
-    respond_error(ERR_BUSY);
+    respond_error(DFGERR_BUSY);
     return;
   }
 
@@ -855,17 +832,17 @@ void handle_PH(const char *param_str) {
   }
 
   if (params[0] >= NUM_CHANNELS) {
-    respond_error(ERR_INVALID_CHANNEL);
+    respond_error(DFGERR_INVALID_CHANNEL);
     return;
   }
 
   if (params[1] >= g_waveform_length) {
-    respond_error(ERR_INVALID_PHASE_OFFSET);
+    respond_error(DFGERR_INVALID_PHASE_OFFSET);
     return;
   }
 
   if (g_tc_sampler_active) {
-    respond_error(ERR_BUSY);
+    respond_error(DFGERR_BUSY);
     return;
   }
 
@@ -876,12 +853,12 @@ void handle_PH(const char *param_str) {
 
 void handle_RN(const char *param_str) {
   if (param_str[0] != '\0') {
-    respond_error(ERR_BAD_CMD);
+    respond_error(DFGERR_BAD_CMD);
     return;
   }
 
   if (g_n_banks == 0 || g_n_tables == 0) {
-    respond_error(ERR_NO_WAVEFORM);
+    respond_error(DFGERR_NO_WAVEFORM);
     return;
   }
 
@@ -898,7 +875,7 @@ void handle_SB(const char *param_str) {
   }
 
   if (params[0] >= g_n_banks) {
-    respond_error(ERR_INVALID_BANK);
+    respond_error(DFGERR_INVALID_BANK);
     return;
   }
 
@@ -916,12 +893,12 @@ void handle_WH(const char *param_str) {
   }
 
   if (params[0] >= NUM_CHANNELS) {
-    respond_error(ERR_INVALID_CHANNEL);
+    respond_error(DFGERR_INVALID_CHANNEL);
     return;
   }
 
   if (g_tc_sampler_active) {
-    respond_error(ERR_BUSY);
+    respond_error(DFGERR_BUSY);
     return;
   }
 
@@ -966,7 +943,7 @@ void dispatch_cmd(char first, char second, const char *param_str) {
   else if (first == 'W') {
     if (second == 'H') { handle_WH(param_str); return; }
   }
-  respond_error(ERR_BAD_CMD);
+  respond_error(DFGERR_BAD_CMD);
 }
 
 
@@ -983,12 +960,12 @@ void handle_cmd() {
     while (Serial.readBytesUntil('\n', cmd_buffer, MAX_CMD_LEN) > 0) {
       // Discard the rest of the command
     }
-    respond_error(ERR_CMD_TOO_LONG);
+    respond_error(DFGERR_CMD_TOO_LONG);
     return;
   }
 
   if (cmd_len < 2) {
-    respond_error(ERR_BAD_CMD);
+    respond_error(DFGERR_BAD_CMD);
     return;
   }
   
