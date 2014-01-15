@@ -1,6 +1,25 @@
-// Arduino Due waveform generator using AD660
-// Copyright 2013 University of California, San Francisco
+// Arduino Due waveform generator using Analog Devices AD660
+//
+// Copyright 2013-4 University of California, San Francisco
+//
+// This library is free software; you can redistribute it and/or modify it
+// under the terms of the GNU Lesser General Public License as published by the
+// Free Software Foundation.
+//
+// You should have received a copy of the GNU Lesser General Public License
+// along with the source distribution; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+//
+// This file is distributed in the hope that it will be useful, but WITHOUT ANY
+// WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+// FOR A PARTICULAR PURPOSE.
+//
+// IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY
+// DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+//
+//
 // Author: Mark Tsuchida
+
 
 //
 // Introduction
@@ -91,14 +110,30 @@
 //   than a handful of waveforms are required. If that becomes an issue, it
 //   might make sense to read waveforms from an SD card via SPI. The SPI
 //   interface of an SD (MMC) card can be clocked at 25 MHz, so it is probably
-//   fast enough for may applications.
+//   fast enough for many applications.
+
+
+//
+// Hardware requirements
+//
+
+// The two AD660s are assumed to be configured in serial data mode, with the
+// DAC for channel 0 connected to the MCU and the channel 1 DAC daisy-chained
+// from the serial output of the channel 0 DAC.
+//
+// The following connections between the MCU board (Arduino Due) and the DACs
+// are assumed:
+// - SPI header MOSI (PA26) -> SIN (DAC 0)
+// - SPI header SCK (PA27) -> nCS (all DACs)
+// - Digital pin 10 (PA28 (and PA29)) -> LDAC (all DACs)
+// - Digital pin 2 (PB25) -> nCLR (all DACs)
 
 
 //
 // Serial communication protocol
 //
 
-// Commands are terminated with LF
+// Commands are terminated with LF. Extra spaces are not allowed.
 //
 // ID - identify the device
 // ID\n
@@ -202,7 +237,7 @@ Spi *const SPI_DAC = SPI0;
 const IRQn_Type SPI_DAC_IRQn = SPI0_IRQn;
 #define SPI_DAC_Handler SPI0_Handler
 
-// SPI peripheral chip select (slave select) line
+// SPI peripheral chip select line
 const uint32_t SPI_DAC_NPCS = 0; // This is PA28, which is Arduino board pin 10
 
 // Number of daisy-chained DACs
@@ -226,13 +261,13 @@ const int ASYNC_CLEAR_PIN = 2;
 
 // Static descriptions of the waveforms for each channel
 struct WaveformBank {
-  // Pointer to the start of the waveform table, for each channel (channels may
-  // share the same table)
+  // Pointer to the start of the waveform table, for each channel. (Channels
+  // may share the same table.)
   uint16_t *channel_waveform[NUM_CHANNELS];
 
-  // Starting offset (phase) into the table, for each channel
-  // (The actual array is stored outside of this struct, since in many cases it
-  // will be shared between many (if not all) banks.)
+  // Starting offset (phase) into the table, for each channel. (The actual
+  // array is stored outside of this struct, since it may be shared between
+  // multiple banks.)
   size_t *channel_offset;
 };
 
@@ -385,8 +420,8 @@ void setup_spi_dac() {
   SPI_DAC->SPI_IDR = ~SPI_IDR_TDRE;
   SPI_DAC->SPI_IER = SPI_IER_TDRE;
   
-  // We do not enable the IRQ line itself; we only want TDRE interrupts when
-  // we are actully sending someting words.
+  // We do not enable the IRQ line itself here; we only want TDRE interrupts
+  // when we are actully sending someting words.
 }
 
 
@@ -475,7 +510,7 @@ void send_channel_sample() {
 // On the timer interrupt, we determine the current waveform bank and start
 // sending the sample for channel 0.
 void TC_Sampler_Handler() {
-  // Access the TC to deassert the IRQ
+  // Access the TC to deassert (acknowledge) the IRQ
   TC_GetStatus(TC_SAMPLER, TC_SAMPLER_CHANNEL);
 
   g_current_sample_bank = g_current_bank;
@@ -989,7 +1024,7 @@ void setup() {
 
 void loop() {
   // Kind of silly to have to poll, but otherwise we'd need to forgo the
-  // Arduino serial library and things will get much more complicated.
+  // Arduino serial library and things would get much more complicated.
   if (Serial.available()) {
     handle_cmd();
   }
