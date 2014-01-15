@@ -352,7 +352,7 @@ bool reset_waveform_data(size_t waveform_length, uint8_t n_banks, uint8_t n_tabl
     }
   }
   if (n_tables) {
-    g_tables = (uint16_t *)calloc(n_tables * g_waveform_length, sizeof(uint16_t));
+    g_tables = (uint16_t *)calloc(n_tables * waveform_length, sizeof(uint16_t));
     if (!g_tables) {
       free(g_banks);
       return false;
