@@ -240,11 +240,11 @@ int DueFunctionGenerator::OnWaveformFrequency(PropertyBase* pProp, ActionType eA
 }
 
 
-int DueFunctionGenerator::OnChannelVoltageImpl(unsigned chan, PropertyBase* pProp, ActionType eAct)
+int DueFunctionGenerator::OnStationaryVoltageImpl(unsigned chan, PropertyBase* pProp, ActionType eAct)
 {
    return PropertyActionImpl<double, double>(pProp, eAct,
-         boost::bind<double>(&Self::GetChannelVoltage, this, chan),
-         boost::bind<void>(&Self::SetChannelVoltage, this, chan, _1, false));
+         boost::bind<double>(&Self::GetStationaryVoltage, this, chan),
+         boost::bind<void>(&Self::SetStationaryVoltage, this, chan, _1, false));
 }
 
 
@@ -289,7 +289,7 @@ int DueFunctionGenerator::OnPhaseDegreesImpl(unsigned chan, PropertyBase* pProp,
 }
 
 
-void DueFunctionGenerator::SetChannelVoltage(unsigned chan, double voltage, bool forceWrite)
+void DueFunctionGenerator::SetStationaryVoltage(unsigned chan, double voltage, bool forceWrite)
 {
    CheckChannelNumber(chan);
 
@@ -298,27 +298,13 @@ void DueFunctionGenerator::SetChannelVoltage(unsigned chan, double voltage, bool
    if (!forceWrite && voltage == currentStationaryVoltage_[chan])
       return;
 
-   bool shouldRestartWaveformGeneration = false;
-   if (GetWaveformGenerationActive())
-   {
-      if (GetAllowInterruption())
-      {
-         SetWaveformGenerationActive(false);
-         shouldRestartWaveformGeneration = true;
-      }
-      else
-         throw DFGError("Cannot set stationary voltage while generating waveform");
-   }
-
-   CmdSetDACValue(chan, VoltsToDACUnits(voltage));
+   if (!GetWaveformGenerationActive())
+      CmdSetDACValue(chan, VoltsToDACUnits(voltage));
    currentStationaryVoltage_[chan] = voltage;
-
-   if (shouldRestartWaveformGeneration)
-      SetWaveformGenerationActive(true);
 }
 
 
-double DueFunctionGenerator::GetChannelVoltage(unsigned chan) const
+double DueFunctionGenerator::GetStationaryVoltage(unsigned chan) const
 {
    CheckChannelNumber(chan);
    return currentStationaryVoltage_[chan];
@@ -355,7 +341,7 @@ void DueFunctionGenerator::SetWaveformGenerationActive(bool active, bool forceWr
       if (GetReturnToStationaryPoint())
       {
          for (unsigned chan = 0; chan < NUM_CHANNELS; ++chan)
-            SetChannelVoltage(chan, currentStationaryVoltage_[chan], true);
+            SetStationaryVoltage(chan, currentStationaryVoltage_[chan], true);
       }
       else
       {

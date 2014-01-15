@@ -244,7 +244,7 @@ private: // Simplify the tedious property interface (and enforce a uniform struc
    }
 
 private: // Property names
-   static std::string PropertyName_ChannelVoltage(unsigned chan)
+   static std::string PropertyName_StationaryVoltage(unsigned chan)
    { return "Channel " + ToString(chan) + " stationary voltage"; }
    static std::string PropertyName_AllowInterruption() { return "Allow waveform interruption"; }
    static std::string PropertyName_ReturnToStationaryPoint() { return "Return to stationary voltage on halt"; }
@@ -269,9 +269,9 @@ private: // Property action handlers
    int OnPort(PropertyBase* pProp, ActionType eAct); // Pre-init
 
    template <unsigned Chan>
-   int OnChannelVoltage(PropertyBase* pProp, ActionType eAct)
-   { return OnChannelVoltageImpl(Chan, pProp, eAct); }
-   int OnChannelVoltageImpl(unsigned chan, PropertyBase* pProp, ActionType eAct);
+   int OnStationaryVoltage(PropertyBase* pProp, ActionType eAct)
+   { return OnStationaryVoltageImpl(Chan, pProp, eAct); }
+   int OnStationaryVoltageImpl(unsigned chan, PropertyBase* pProp, ActionType eAct);
 
    int OnAllowInterruption(PropertyBase* pProp, ActionType eAct);
    int OnReturnToStationaryPoint(PropertyBase* pProp, ActionType eAct);
@@ -334,8 +334,8 @@ private: // Accessors
    void SetPort(const std::string& label) { port_ = label; }
    std::string GetPort() const { return port_; }
 
-   void SetChannelVoltage(unsigned chan, double voltage, bool forceWrite = false);
-   double GetChannelVoltage(unsigned chan) const;
+   void SetStationaryVoltage(unsigned chan, double voltage, bool forceWrite = false);
+   double GetStationaryVoltage(unsigned chan) const;
 
    void SetAllowInterruption(bool allow) { allowInterruption_ = allow; }
    bool GetAllowInterruption() const { return allowInterruption_; }
@@ -435,11 +435,11 @@ private: // Internal implementation functions
    {
       int err;
 
-      SetChannelVoltage(Chan, GetChannelVoltage(Chan), true);
-      err = CreateFloatProperty(PropertyName_ChannelVoltage(Chan).c_str(), GetChannelVoltage(Chan),
-            false, new CPropertyAction(this, &Self::OnChannelVoltage<Chan>));
+      SetStationaryVoltage(Chan, GetStationaryVoltage(Chan), true);
+      err = CreateFloatProperty(PropertyName_StationaryVoltage(Chan).c_str(), GetStationaryVoltage(Chan),
+            false, new CPropertyAction(this, &Self::OnStationaryVoltage<Chan>));
       DFGError::ThrowIfMMError(err);
-      err = SetPropertyLimits(PropertyName_ChannelVoltage(Chan).c_str(), MIN_VOLTAGE, MAX_VOLTAGE);
+      err = SetPropertyLimits(PropertyName_StationaryVoltage(Chan).c_str(), MIN_VOLTAGE, MAX_VOLTAGE);
       DFGError::ThrowIfMMError(err);
 
       err = CreateIntegerProperty(PropertyName_PhaseOffset(Chan).c_str(), GetPhaseOffset(Chan),
