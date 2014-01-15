@@ -1118,6 +1118,10 @@ void setup() {
 
   clear_debug_message();
 
+  // Set the UART (USB-serial) IRQ priority lower than the TC and SPI
+  // interrupts. Without this, UART interrupts can disrupt waveform generation.
+  NVIC_SetPriority(UART_IRQn, 1);
+
   Serial.begin(SERIAL_BAUDRATE);
   Serial.setTimeout(SERIAL_TEXT_TIMEOUT);
 
