@@ -364,22 +364,71 @@ public class ProjectorController {
    
    // ### Transforming points according to a calibration mapping.
    
-   private Point transform(Map<Polygon, AffineTransform> mapping, Point pt) {
+   // Roughly gets the center of a Polygon, given that it is more or less
+   // a rectangle.
+   private static Point2D.Double getApproximateCenter(Polygon polygon) {
+      int n = polygon.npoints;
+      double xsum = 0;
+      double ysum = 0;
+      for (int i = 0; i < n; ++i) {
+         xsum += polygon.xpoints[i];
+         ysum += polygon.ypoints[i];
+      }
+      return new Point2D.Double(xsum/n, ysum/n);
+   }
+   
+   // Transform a point, pt, given the mapping, which is a Map of polygon cells
+   // to AffineTransforms.
+   private static Point transform(Map<Polygon, AffineTransform> mapping, Point pt) {
       Set<Polygon> set = mapping.keySet();
+      // First find out if the given point is inside a cell, and if so,
+      // transform it with that cell's AffineTransform.
       for (Polygon poly : set) {
          if (poly.contains(pt)) {
             return toIntPoint((Point2D.Double) mapping.get(poly).transform(toDoublePoint(pt), null));
          }
       }
-      return null;
+      // The point isn't inside any cell, so search for the closest cell
+      // and use the AffineTransform from that.
+      double minDistance = Double.MAX_VALUE;
+      Polygon bestPoly = null;
+      for (Polygon poly : set) {
+         double distance = getApproximateCenter(poly).distance(pt.x, pt.y);
+         if (minDistance > distance) {
+            bestPoly = poly;
+            minDistance = distance;
+         }
+      }
+      return toIntPoint((Point2D.Double) mapping.get(bestPoly).transform(toDoublePoint(pt), null));
    }
    
-   private Point transformAndFlip(Map<Polygon, AffineTransform> mapping, ImagePlus imgp, Point pt) {
+   // Returns true if a particular image is mirrored.
+   private static boolean isMirrored(ImagePlus imgp) {
+      try {
+         String mirrorString = VirtualAcquisitionDisplay.getDisplay(imgp)
+               .getCurrentMetadata().getString("ImageFlipper-Mirror");
+         return (mirrorString.contentEquals("On"));
+      } catch (Exception e) {
+         return false;
+      }
+   }
+
+   // Flips a point if it has been mirrored.
+   private static Point mirrorIfNecessary(Point pOffscreen, ImagePlus imgp) {
+      if (isMirrored(imgp)) {
+         return new Point(imgp.getWidth() - pOffscreen.x, pOffscreen.y);
+      } else {
+         return pOffscreen;
+      }
+   }
+   
+   
+   private static Point transformAndFlip(Map<Polygon, AffineTransform> mapping, ImagePlus imgp, Point pt) {
       Point pOffscreen = mirrorIfNecessary(pt, imgp);
       return transform(mapping, pOffscreen);
    }
    
-   private Polygon[] transformROIs(ImagePlus imgp, Roi[] rois, Map<Polygon, AffineTransform> mapping) {
+   private static Polygon[] transformROIs(ImagePlus imgp, Roi[] rois, Map<Polygon, AffineTransform> mapping) {
       ArrayList<Polygon> transformedROIs = new ArrayList<Polygon>();
       for (Roi roi : rois) {
          if ((roi.getType() == Roi.POINT)
@@ -518,23 +567,6 @@ public class ProjectorController {
       }
    }
 
-   public boolean isMirrored(ImagePlus imgp) {
-      try {
-         String mirrorString = VirtualAcquisitionDisplay.getDisplay(imgp)
-               .getCurrentMetadata().getString("ImageFlipper-Mirror");
-         return (mirrorString.contentEquals("On"));
-      } catch (Exception e) {
-         return false;
-      }
-   }
-
-   public Point mirrorIfNecessary(Point pOffscreen, ImagePlus imgp) {
-      if (isMirrored(imgp)) {
-         return new Point(imgp.getWidth() - pOffscreen.x, pOffscreen.y);
-      } else {
-         return pOffscreen;
-      }
-   }
 
    public MouseListener setupPointAndShootMouseListener() {
       final ProjectorController thisController = this;
@@ -582,38 +614,7 @@ public class ProjectorController {
       }
    }
 
-   public void attachToMDA(int frameOn, boolean repeat, int repeatInterval) {
-      Runnable runPolygons = new Runnable() {
-         public void run() {
-            runPolygons();
-         }
 
-         public String toString() {
-            return "Phototargeting of ROIs";
-         }
-      };
-
-      gui.clearRunnables();
-      if (repeat) {
-         for (int i = frameOn; i < gui.getAcqusitionSettings().numFrames * 10; i += repeatInterval) {
-            gui.attachRunnable(i, -1, 0, 0, runPolygons);
-         }
-      } else {
-         gui.attachRunnable(frameOn, -1, 0, 0, runPolygons);
-      }
-   }
-
-   public void removeFromMDA() {
-      gui.clearRunnables();
-   }
-
-   public void setPointAndShootInterval(double intervalUs) {
-      this.pointAndShootInterval = intervalUs;
-   }
-
-   public double getPointAndShootInterval() {
-      return this.pointAndShootInterval;
-   }
 
    void runPolygons() {
       Configuration originalConfig = prepareChannel();
@@ -642,6 +643,30 @@ public class ProjectorController {
       targetingChannel_ = (String) selectedItem;
    }
 
+   private void saveROIs(File path) {
+      try {
+         ImagePlus imgp = IJ.getImage();
+         ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(path));
+         DataOutputStream out = new DataOutputStream(new BufferedOutputStream(zos));
+         RoiEncoder re = new RoiEncoder(out);
+         int count = 0;
+         for (Roi roi : individualRois_) {
+            String label = getROILabel(imgp, roi, 0);
+            if (!label.endsWith(".roi")) {
+               label += ".roi";
+            }
+            zos.putNextEntry(new ZipEntry(label));
+            re.write(roi);
+            out.flush();
+            ++count;
+         }
+         out.close();
+      } catch (Exception e) {
+         ReportingUtils.logError(e);
+      }
+   }
+
+   
    private void recordPolygons() {
       if (gui.isAcquisitionRunning()) {
          String location = gui.getAcquisitionPath();
@@ -699,28 +724,6 @@ public class ProjectorController {
       return label;
    }
 
-   private void saveROIs(File path) {
-      try {
-         ImagePlus imgp = IJ.getImage();
-         ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(path));
-         DataOutputStream out = new DataOutputStream(new BufferedOutputStream(zos));
-         RoiEncoder re = new RoiEncoder(out);
-         int count = 0;
-         for (Roi roi : individualRois_) {
-            String label = getROILabel(imgp, roi, 0);
-            if (!label.endsWith(".roi")) {
-               label += ".roi";
-            }
-            zos.putNextEntry(new ZipEntry(label));
-            re.write(roi);
-            out.flush();
-            ++count;
-         }
-         out.close();
-      } catch (Exception e) {
-         ReportingUtils.logError(e);
-      }
-   }
 
   // ### Public methods for interfacing with the UI.
    
@@ -744,13 +747,47 @@ public class ProjectorController {
       dev.activateAllPixels();
    }
    
-   boolean isCalibrating() {
+   // Returns true if the calibration is currently running.
+   public boolean isCalibrating() {
       return isRunning_.get();
    }
 
-   void stopCalibration() {
+   // Requests an interruption to calibration while it is running.
+   public void stopCalibration() {
       stopRequested_.set(true);
    }
 
+   public void attachToMDA(int frameOn, boolean repeat, int repeatInterval) {
+      Runnable runPolygons = new Runnable() {
+         public void run() {
+            runPolygons();
+         }
+
+         public String toString() {
+            return "Phototargeting of ROIs";
+         }
+      };
+
+      gui.clearRunnables();
+      if (repeat) {
+         for (int i = frameOn; i < gui.getAcqusitionSettings().numFrames * 10; i += repeatInterval) {
+            gui.attachRunnable(i, -1, 0, 0, runPolygons);
+         }
+      } else {
+         gui.attachRunnable(frameOn, -1, 0, 0, runPolygons);
+      }
+   }
+
+   public void removeFromMDA() {
+      gui.clearRunnables();
+   }
+
+   public void setPointAndShootInterval(double intervalUs) {
+      this.pointAndShootInterval = intervalUs;
+   }
+
+   public double getPointAndShootInterval() {
+      return this.pointAndShootInterval;
+   }
 
 }

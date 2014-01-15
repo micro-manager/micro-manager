@@ -17,7 +17,8 @@ import org.micromanager.utils.ReportingUtils;
 public class ProjectorPlugin implements MMPlugin {
    public static String menuName = "Projector";
    public static String tooltipDescription = "Plugin that allows for light to be targeted"+
-   " to specific locations on the sample. Requires a microscope with a Spatial Light Modulator";
+   " to specific locations on the sample. Requires a microscope with a Spatial Light Modulator"
+         + " or a galvo-based phototargeting device.";
    
    private ScriptInterface app_;
    private CMMCore core_;
@@ -33,7 +34,8 @@ public class ProjectorPlugin implements MMPlugin {
 
    public void show() {
       if (core_.getSLMDevice().length()==0 && core_.getGalvoDevice().length()==0) {
-         ReportingUtils.showMessage("Please load an SLM (Spatial Light Modulator) device\n" +
+         ReportingUtils.showMessage("Please load an SLM (Spatial Light Modulator) " +
+               "or a Galvo-based phototargeting device " +
                "before using the Projector plugin.");
          return;
       }
