@@ -121,6 +121,18 @@ int DueFunctionGenerator::Initialize()
 {
    try
    {
+      try
+      {
+         CheckDeviceId();
+      }
+      catch (const DFGError&)
+      {
+         // Ignore first failure
+         // (As of this writing, the Arduino Due Serial library appears to
+         // return incorrect data when sent bytes right after a connection has
+         // been established. Also, we want to guard against any leftover data
+         // in the serial buffer.
+      }
       CheckDeviceId();
       CollectDeviceInfo();
       InitProperties();
