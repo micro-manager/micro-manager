@@ -22,6 +22,7 @@ import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ReportingUtils;
+import java.lang.System;
 
 /**
  *
@@ -35,7 +36,6 @@ class BFProcessor extends DataProcessor<TaggedImage> {
    private int flatFieldType_;
    private ImagePlus background_;
    private final CMMCore mmc_;
-   private float multiplicationFactor_; //used to stretch range back to full bitdepth for non-normalized images
    
    public BFProcessor(CMMCore core){
        mmc_ = core;
@@ -105,11 +105,12 @@ class BFProcessor extends DataProcessor<TaggedImage> {
    public  TaggedImage processTaggedImage(TaggedImage nextImage) throws JSONException, MMScriptException, Exception {     
       int width = MDUtils.getWidth(nextImage.tags);
       int height = MDUtils.getHeight(nextImage.tags);
-      int channelIndex;
+      TaggedImage newImage;
       Float [] flatFieldImage_;
       String type = MDUtils.getPixelType(nextImage.tags);
       String imageChannel;
       String CHANNELNAME = "Channel"; //name of Channel tag
+      
       int ijType = ImagePlus.GRAY8;
       if (type.equals("GRAY16")) {
          ijType = ImagePlus.GRAY16;
@@ -120,7 +121,6 @@ class BFProcessor extends DataProcessor<TaggedImage> {
          ReportingUtils.logError("Cannot flatfield correct images other than 8 or 16 bit grayscale");
          return nextImage;
       }
-      
       JSONObject newTags = nextImage.tags;
       
       //check tags and identify appropriate flatfielding image
@@ -133,7 +133,6 @@ class BFProcessor extends DataProcessor<TaggedImage> {
       //get flat field image; returns null if no image found
       if (flatFieldImages.getFlatFieldNormalize(imageChannel)){
           flatFieldImage_ = flatFieldImages.getNormalizedFlatField(imageChannel);
-          multiplicationFactor_ = 1;
       } else {
           flatFieldImage_ = flatFieldImages.getFlatField(imageChannel); 
       }
@@ -146,7 +145,7 @@ class BFProcessor extends DataProcessor<TaggedImage> {
                  ImageUtils.subtractImageProcessors(ImageUtils.makeProcessor(nextImage),
                  background_.getProcessor());        
          nextImage = new TaggedImage(differenceProcessor.getPixels(), newTags);
-      }      
+      }
       
       //do not calculate flat field if we don't have a matching channel
       if (flatFieldImage_ == null) {
@@ -159,34 +158,32 @@ class BFProcessor extends DataProcessor<TaggedImage> {
          return nextImage;
       }      
       
-      TaggedImage newImage = null;
-      
       if (ijType == ImagePlus.GRAY8) {
          byte[] newPixels = new byte[width * height];
          byte[] oldPixels = (byte[]) nextImage.pix;
-         for (int x = 0; x < width; x++) {
-            for (int y = 0; y < height; y++) {
-               int index = (y * flatFieldWidth_) + x;
-               newPixels[index] = (byte) ( (float) oldPixels[index] 
-                       * flatFieldImage_[index]);
-            }
+         int length = oldPixels.length;
+         for (int index = 0; index < length; index++){
+            newPixels[index] = (byte) ( (float) oldPixels[index] 
+                * flatFieldImage_[index]);
          }
          newImage = new TaggedImage(newPixels, newTags);
+         return newImage;
+       
       } else if (ijType == ImagePlus.GRAY16) {
-
          short[] newPixels = new short[width * height];
          short[] oldPixels = (short[]) nextImage.pix;
-         for (int x = 0; x < width; x++) {
-            for (int y = 0; y < height; y++) {
-               int index = (y * flatFieldWidth_) + x;
-               //shorts are signed in java so have to do this conversion to get the right value
-               float oldPixel = (float)((int)(oldPixels[index]) & 0x0000ffff);
-               newPixels[index] = (short) ((oldPixel 
-                       * flatFieldImage_[index]) + 0.5f);
-            }
-         }         
+         int length = oldPixels.length;
+         for (int index = 0; index < length; index++){
+            //shorts are signed in java so have to do this conversion to get the right value
+            float oldPixel = (float)((int)(oldPixels[index]) & 0x0000ffff);
+            newPixels[index] = (short) ((oldPixel * flatFieldImage_[index]) + 0.5f);
+         }
          newImage = new TaggedImage(newPixels, newTags);
+         return newImage;         
+         
+      } else {
+          return nextImage;
       }
-      return newImage;
+
    }   
 }

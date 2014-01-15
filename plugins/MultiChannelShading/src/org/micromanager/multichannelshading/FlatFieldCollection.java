@@ -17,8 +17,8 @@ import java.util.HashMap;
  */
 public class FlatFieldCollection {
    private static final int nFlatFields_ = 5;
-   private final HashMap flatFieldList_ = new HashMap(nFlatFields_);
-   private final HashMap normalizedFlatFieldList_ = new HashMap(nFlatFields_);
+   private final HashMap<Integer, Float[]> flatFieldList_;
+   private final HashMap<Integer, Float[]> normalizedFlatFieldList_;
    private final String[] channelList_ = new String[nFlatFields_];
    private final boolean[] normalizeList_ = new boolean[nFlatFields_];
    private final int[] flatFieldWidths_ = new int [nFlatFields_];
@@ -26,9 +26,11 @@ public class FlatFieldCollection {
    private ImageStatistics flatFieldStats_;
    private int flatFieldWidth_;
    private int flatFieldHeight_;
-   private int index_;
+   private Integer index_;
 
     public FlatFieldCollection() {
+        this.normalizedFlatFieldList_ = new HashMap<Integer, Float[]>(nFlatFields_);
+        this.flatFieldList_ = new HashMap<Integer, Float[]>(nFlatFields_);
     }
    
    public Float[] getFlatField(String channelName){
@@ -124,7 +126,7 @@ public class FlatFieldCollection {
    }
    
    private int getIndex(String channelName){
-       for (int n=0; n<channelList_.length; n++){
+       for (Integer n=0; n<channelList_.length; n++){
            if (channelName.equals(channelList_[n])){
                return n;
            }

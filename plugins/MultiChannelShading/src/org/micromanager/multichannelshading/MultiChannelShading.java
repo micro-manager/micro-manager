@@ -38,7 +38,6 @@ public class MultiChannelShading implements org.micromanager.api.MMPlugin {
 
     @Override
     public void show() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
@@ -58,7 +57,7 @@ public class MultiChannelShading implements org.micromanager.api.MMPlugin {
 
     @Override
     public String getCopyright() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+       return "University of California, 2014";
     }
     
 }
