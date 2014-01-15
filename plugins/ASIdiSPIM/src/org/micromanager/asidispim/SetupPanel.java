@@ -318,9 +318,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
 
 
     add(toggleButtonLive_, "span, split 3, center, width 110px");
-    String isMultiCameraPrefName = MULTICAMERAPREF + side_.toString();
-    boolean isMultiCamera = false;
-    prefs_.getBoolean(isMultiCameraPrefName, isMultiCamera);
+    boolean isMultiCamera = prefs_.getBoolean(ISMULTICAMERAPREFNAME, false);
     dualCameraButton_ = new JRadioButton("Dual Camera");
     singleCameraButton_ = new JRadioButton("Single Camera");
     ButtonGroup singleDualCameraButtonGroup = new ButtonGroup();
