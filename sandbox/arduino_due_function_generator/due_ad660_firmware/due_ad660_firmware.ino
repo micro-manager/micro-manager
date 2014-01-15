@@ -107,6 +107,10 @@
 // DM - set waveform length, number of banks, and number of tables
 // DM512,8,4\n (error if generating waveform)
 //
+// ED - enable or disable all DACs
+// ED0\n (disable all DACs)
+// ED1\n (enable all DACs)
+//
 // FQ - set sampling frequency
 // FQ1000\n (1 kHz)
 //
@@ -203,6 +207,9 @@ const uint32_t SPI_DAC_NPCS = 0; // This is PA28, which is Arduino board pin 10
 
 // Number of daisy-chained DACs
 const int NUM_CHANNELS = 2;
+
+// Arduino pin number for asynchronous clear (nCLR)
+const int ASYNC_CLEAR_PIN = 2;
 
 
 //
@@ -537,6 +544,16 @@ void wait_for_spi_dac() {
 
 
 //
+// Asynchronous clearing of the DAC (AD660 nCLR pin)
+//
+
+// This operates completely independently of the SPI transmission.
+void set_dac_cleared(bool clear) {
+  digitalWrite(ASYNC_CLEAR_PIN, (clear ? LOW : HIGH));
+}
+
+
+//
 // Serial command handling
 //
 
@@ -678,6 +695,19 @@ void handle_DM(const char *param_str) {
   else {
     respond_error(ERR_BAD_ALLOC);
   }
+}
+
+
+void handle_ED(const char *param_str) {
+  uint32_t params[1];
+  if (int err = parse_uint_params(param_str, params, 1)) {
+    respond_error(err);
+    return;
+  }
+
+  bool enable = params[0];
+  set_dac_cleared(!enable);
+  respond_ok();
 }
 
 
@@ -871,6 +901,9 @@ void dispatch_cmd(char first, char second, const char *param_str) {
   else if (first == 'D') {
     if (second == 'M') { handle_DM(param_str); return; }
   }
+  else if (first == 'E') {
+    if (second == 'D') { handle_ED(param_str); return; }
+  }
   else if (first == 'F') {
     if (second == 'Q') { handle_FQ(param_str); return; }
   }
@@ -936,6 +969,9 @@ void handle_cmd() {
 //
 
 void setup() {
+  pinMode(ASYNC_CLEAR_PIN, OUTPUT);
+  set_dac_cleared(true);
+
   Serial.begin(115200);
   Serial.setTimeout(3000);
 
