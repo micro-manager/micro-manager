@@ -963,6 +963,9 @@ void DueFunctionGenerator::UploadWaveforms() const
       std::vector<uint16_t> samples = GenerateWaveform(uniqueWaveforms[table], GetWaveformTableLength());
       CmdLoadWaveform(table, samples);
    }
+
+   // Since the banks have changed, we need to reset the current bank.
+   CmdSwitchBank(GetBank());
 }
 
 
