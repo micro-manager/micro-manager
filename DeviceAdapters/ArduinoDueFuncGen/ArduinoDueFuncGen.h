@@ -316,7 +316,7 @@ private: // Private types
       double amplitudeVolts_;
       double biasVolts_;
 
-      WaveformDescription() : waveform_(WFSine), amplitudeVolts_(1.0), biasVolts_(0.0) {}
+      WaveformDescription() : waveform_(WFSine), amplitudeVolts_(10.0), biasVolts_(0.0) {}
 
       WaveformDescription(Waveform waveform, double amplitudeVolts, double biasVolts) :
          waveform_(waveform), amplitudeVolts_(amplitudeVolts), biasVolts_(biasVolts)
