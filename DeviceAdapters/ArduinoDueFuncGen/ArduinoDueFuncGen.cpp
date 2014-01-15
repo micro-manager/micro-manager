@@ -848,6 +848,9 @@ void DueFunctionGenerator::CollectDeviceInfo()
 {
    minSamplingFreqHz_ = CmdGetMinSamplingFreq();
    maxSamplingFreqHz_ = CmdGetMaxSamplingFreq();
+
+   // Frequencies above 100 kHz can interfere with serial communication.
+   maxSamplingFreqHz_ = 100000;
 }
 
 
