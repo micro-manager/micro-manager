@@ -14,6 +14,7 @@
 	<property name="mm.java.lib.jcommon" location="${mm.java.libs}/jcommon-1.0.16.jar"/>
 	<property name="mm.java.lib.jfreechart" location="${mm.java.libs}/jfreechart-1.0.13.jar"/>
 	<property name="mm.java.lib.loci-common" location="${mm.java.libs}/loci-common.jar"/>
+	<property name="mm.java.lib.miglayout" location="${mm.java.libs}/miglayout-4.0-swing.jar"/>
 	<property name="mm.java.lib.ome-xml" location="${mm.java.libs}/ome-xml.jar"/>
 	<property name="mm.java.lib.protobuf" location="${mm.java.libs}/gproto.jar"/>
 	<property name="mm.java.lib.scifio" location="${mm.java.libs}/scifio.jar"/>
