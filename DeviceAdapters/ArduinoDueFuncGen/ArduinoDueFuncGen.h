@@ -397,19 +397,19 @@ private: // Internal implementation functions
    std::string SendRecv(const std::string& cmd) const;
    std::string SendRecv(const std::vector<uint16_t>& samples) const;
 
-   static uint32_t ParseResponseWithParam(const std::string& response,
-      const std::string& expectedPrefix, bool handlingError = false);
+   uint32_t ParseResponseWithParam(const std::string& response,
+      const std::string& expectedPrefix, bool handlingError = false) const;
 #ifdef _MSC_VER
    __declspec(noreturn)
 #endif
-   static void ParseUnexpectedResponse(const std::string& response)
+   void ParseUnexpectedResponse(const std::string& response) const
 #ifdef __GNUC__
    __attribute__((noreturn))
 #endif
    ;
-   static void ParseOkResponse(const std::string& response);
-   static uint32_t ParseOkResponseWithParam(const std::string& response);
-   static size_t ParseDataExpectedResponse(const std::string& response);
+   void ParseOkResponse(const std::string& response) const;
+   uint32_t ParseOkResponseWithParam(const std::string& response) const;
+   size_t ParseDataExpectedResponse(const std::string& response) const;
 
    uint32_t CmdGetDeviceId() const;
    void CmdSetDACValue(unsigned chan, uint16_t value) const;

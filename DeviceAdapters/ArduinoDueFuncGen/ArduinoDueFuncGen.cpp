@@ -577,6 +577,8 @@ std::string DueFunctionGenerator::FirmwareErrorCodeToString(unsigned code)
          return "Invalid command parameters";
       case DFGERR_TOO_FEW_PARAMS:
          return "Too few parameters for command";
+      case DFGERR_TOO_MANY_PARAMS:
+         return "Too many parameters for command";
       case DFGERR_CMD_TOO_LONG:
          return "Command too long";
       case DFGERR_EXPECTED_UINT:
@@ -657,7 +659,7 @@ std::string DueFunctionGenerator::SendRecv(const std::vector<uint16_t>& samples)
 
 
 uint32_t DueFunctionGenerator::ParseResponseWithParam(const std::string& response,
-      const std::string& expectedPrefix, bool handlingError)
+      const std::string& expectedPrefix, bool handlingError) const
 {
    size_t prefixLen = expectedPrefix.size();
 
@@ -676,15 +678,19 @@ uint32_t DueFunctionGenerator::ParseResponseWithParam(const std::string& respons
 }
 
 
-void DueFunctionGenerator::ParseUnexpectedResponse(const std::string& response)
+void DueFunctionGenerator::ParseUnexpectedResponse(const std::string& response) const
 {
    uint32_t code = ParseResponseWithParam(response, "ER", true);
+
+   // Let the serial manager log the debug info if in debug mode
+   (void)SendRecv("GM");
+
    throw DFGError("Firmware returned error " + ToString(code) +
          " (" + FirmwareErrorCodeToString(code) + ")");
 }
 
 
-void DueFunctionGenerator::ParseOkResponse(const std::string& response)
+void DueFunctionGenerator::ParseOkResponse(const std::string& response) const
 {
    if (response == "OK")
       return;
@@ -692,13 +698,13 @@ void DueFunctionGenerator::ParseOkResponse(const std::string& response)
 }
 
 
-uint32_t DueFunctionGenerator::ParseOkResponseWithParam(const std::string& response)
+uint32_t DueFunctionGenerator::ParseOkResponseWithParam(const std::string& response) const
 {
    return ParseResponseWithParam(response, "OK");
 }
 
 
-size_t DueFunctionGenerator::ParseDataExpectedResponse(const std::string& response)
+size_t DueFunctionGenerator::ParseDataExpectedResponse(const std::string& response) const
 {
    return ParseResponseWithParam(response, "EX");
 }

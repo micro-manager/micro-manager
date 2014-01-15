@@ -190,9 +190,20 @@
 // ER12\r (error code 12)
 
 
+//
+// Serial communication
+//
+
 #include "SerialProtocol.h"
 
+// Command and response terminator
 const char SERIAL_TERMINATOR = '\r';
+
+// Length of command buffer
+const size_t MAX_CMD_LEN = 32;
+
+const size_t DEBUG_BUFFER_LEN = 64;
+static char g_debug_buffer[DEBUG_BUFFER_LEN] = "";
 
 
 //
@@ -228,9 +239,6 @@ const int NUM_CHANNELS = 2;
 
 // Arduino pin number for asynchronous clear (nCLR)
 const int ASYNC_CLEAR_PIN = 2;
-
-// Length of command buffer
-const size_t MAX_CMD_LEN = 32;
 
 
 //
@@ -567,8 +575,37 @@ void set_dac_cleared(bool clear) {
 
 
 //
+// Debug buffer
+//
+
+void clear_debug_message() {
+  g_debug_buffer[0] = '\0';
+}
+
+
+void append_debug_message(const char* str) {
+  strncat(g_debug_buffer, str,
+      DEBUG_BUFFER_LEN - 1 - strlen(g_debug_buffer));
+}
+
+
+void append_debug_message(uint32_t num) {
+  int len = strlen(g_debug_buffer);
+  snprintf(g_debug_buffer + len, DEBUG_BUFFER_LEN - 1 - len,
+      "%u", num);
+}
+
+
+//
 // Serial command handling
 //
+
+void respond(const char *str, const char *msg) {
+  Serial.print(str);
+  Serial.print(msg);
+  Serial.write(SERIAL_TERMINATOR);
+}
+
 
 void respond(const char *str, uint32_t num) {
   Serial.print(str);
@@ -590,6 +627,11 @@ inline void respond_error(uint32_t code) {
 
 inline void respond_data_request(size_t bytes) {
   respond("EX", bytes);
+}
+
+
+inline void respond_ok(const char* response) {
+  respond("OK", response);
 }
 
 
@@ -636,6 +678,9 @@ int parse_uint_params(const char *buffer, uint32_t *params, size_t num_params) {
     }
   }
 
+  if (buffer[p] == ',') {
+    return DFGERR_TOO_MANY_PARAMS;
+  }
   if (buffer[p] != '\0') {
     return DFGERR_BAD_PARAMS;
   }
@@ -741,9 +786,36 @@ void handle_FQ(const char *param_str) {
 }
 
 
+void handle_GM(const char *param_str) {
+  if (param_str[0] != '\0') {
+    // respond_error(DFGERR_TOO_MANY_PARAMS);
+    // return;
+  }
+
+  char buf[DEBUG_BUFFER_LEN];
+  char *p = g_debug_buffer, *q = buf;
+  char *end = q + DEBUG_BUFFER_LEN - 1;
+
+  while (*p && q < end) {
+    if (*p != SERIAL_TERMINATOR)
+      *q++ = *p++;
+    else {
+      if (end - q < 2)
+        break;
+      p++;
+      *q++ = '\\';
+      *q++ = (SERIAL_TERMINATOR == '\r' ? 'r' : 'n');
+    }
+  }
+  *q = '\0';
+
+  respond_ok(buf);
+}
+
+
 void handle_HL(const char *param_str) {
   if (param_str[0] != '\0') {
-    respond_error(DFGERR_BAD_CMD);
+    respond_error(DFGERR_TOO_MANY_PARAMS);
     return;
   }
 
@@ -755,7 +827,8 @@ void handle_HL(const char *param_str) {
 
 void handle_ID(const char *param_str) {
   if (param_str[0] != '\0') {
-    respond_error(DFGERR_BAD_CMD);
+    respond_error(DFGERR_TOO_MANY_PARAMS);
+    return;
   }
   respond_ok(DFG_SERIAL_MAGIC_ID);
 }
@@ -793,7 +866,7 @@ void handle_LW(const char *param_str) {
 
 void handle_MN(const char *param_str) {
   if (param_str[0] != '\0') {
-    respond_error(DFGERR_BAD_CMD);
+    respond_error(DFGERR_TOO_MANY_PARAMS);
     return;
   }
 
@@ -837,7 +910,7 @@ void handle_MV(const char *param_str) {
 
 void handle_MX(const char *param_str) {
   if (param_str[0] != '\0') {
-    respond_error(DFGERR_BAD_CMD);
+    respond_error(DFGERR_TOO_MANY_PARAMS);
     return;
   }
 
@@ -874,7 +947,7 @@ void handle_PH(const char *param_str) {
 
 void handle_RN(const char *param_str) {
   if (param_str[0] != '\0') {
-    respond_error(DFGERR_BAD_CMD);
+    respond_error(DFGERR_TOO_MANY_PARAMS);
     return;
   }
 
@@ -928,6 +1001,13 @@ void handle_WH(const char *param_str) {
 
 
 void dispatch_cmd(char first, char second, const char *param_str) {
+  if (first == 'G' && second == 'M') {
+    handle_GM(param_str); // Must call before clearing debug message buffer
+    return;
+  }
+
+  clear_debug_message();
+
   if (first == 'A') {
     if (second == 'W') { handle_AW(param_str); return; }
   }
@@ -966,7 +1046,14 @@ void dispatch_cmd(char first, char second, const char *param_str) {
   else if (first == 'W') {
     if (second == 'H') { handle_WH(param_str); return; }
   }
+
   respond_error(DFGERR_BAD_CMD);
+
+  char cmd[3];
+  cmd[0] = first; cmd[1] = second; cmd[2] = '\0';
+  append_debug_message(cmd);
+  append_debug_message("|");
+  append_debug_message(param_str);
 }
 
 
@@ -983,17 +1070,22 @@ void handle_cmd() {
     while (Serial.readBytesUntil(SERIAL_TERMINATOR, cmd_buffer, MAX_CMD_LEN) > 0) {
       // Discard the rest of the command
     }
+    clear_debug_message();
     respond_error(DFGERR_CMD_TOO_LONG);
     return;
   }
 
-  if (cmd_len < 2) {
-    respond_error(DFGERR_BAD_CMD);
-    return;
-  }
-  
   // Append a null terminator to the command string
   cmd_buffer[cmd_len] = '\0';
+
+  if (cmd_len < 2) {
+    clear_debug_message();
+    respond_error(DFGERR_BAD_CMD);
+    append_debug_message(cmd_len);
+    append_debug_message("|");
+    append_debug_message(cmd_buffer);
+    return;
+  }
 
   dispatch_cmd(cmd_buffer[0], cmd_buffer[1], cmd_buffer + 2);
 }
@@ -1006,6 +1098,8 @@ void handle_cmd() {
 void setup() {
   pinMode(ASYNC_CLEAR_PIN, OUTPUT);
   set_dac_cleared(true);
+
+  clear_debug_message();
 
   Serial.begin(115200);
   Serial.setTimeout(3000);
