@@ -170,8 +170,12 @@
 // HL - halt waveform generation
 // HL\n
 //
+// MN - return sampling frequency minimum
+//
 // MV - set absolute DAC value on channel
 // MV0,32767\n (error if generating waveform)
+//
+// MX - return sampling frequency maximum
 //
 // WH - query DAC value on channel
 // WH0\n (error if generating waveform)
@@ -223,13 +227,8 @@ const int NUM_CHANNELS = 2;
 // Arduino pin number for asynchronous clear (nCLR)
 const int ASYNC_CLEAR_PIN = 2;
 
-
-//
-// Other constants
-//
-
-#define SERIAL_MAGIC_ID 18569
-#define MAX_CMD_LEN 32
+// Length of command buffer
+const size_t MAX_CMD_LEN = 32;
 
 
 //
@@ -756,7 +755,7 @@ void handle_ID(const char *param_str) {
   if (param_str[0] != '\0') {
     respond_error(DFGERR_BAD_CMD);
   }
-  respond_ok(SERIAL_MAGIC_ID);
+  respond_ok(DFG_SERIAL_MAGIC_ID);
 }
 
 
@@ -787,6 +786,16 @@ void handle_LW(const char *param_str) {
     return;
   }
   respond_ok();
+}
+
+
+void handle_MN(const char *param_str) {
+  if (param_str[0] != '\0') {
+    respond_error(DFGERR_BAD_CMD);
+    return;
+  }
+
+  respond_ok(MIN_SAMPLE_FREQ);
 }
 
 
@@ -821,6 +830,16 @@ void handle_MV(const char *param_str) {
   wait_for_spi_dac();
   respond_ok();
   return;
+}
+
+
+void handle_MX(const char *param_str) {
+  if (param_str[0] != '\0') {
+    respond_error(DFGERR_BAD_CMD);
+    return;
+  }
+
+  respond_ok(MAX_SAMPLE_FREQ);
 }
 
 
@@ -929,7 +948,9 @@ void dispatch_cmd(char first, char second, const char *param_str) {
     if (second == 'W') { handle_LW(param_str); return; }
   }
   else if (first == 'M') {
+    if (second == 'N') { handle_MN(param_str); return; }
     if (second == 'V') { handle_MV(param_str); return; }
+    if (second == 'X') { handle_MX(param_str); return; }
   }
   else if (first == 'P') {
     if (second == 'H') { handle_PH(param_str); return; }

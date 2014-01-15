@@ -45,3 +45,5 @@ enum {
    DFGERR_BUSY,
    END_DFGERR
 };
+
+const unsigned DFG_SERIAL_MAGIC_ID = 18569;
