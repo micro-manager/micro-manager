@@ -176,7 +176,6 @@ public class ImageUtils {
    
    public static short[] subtractPixelArrays(short[] array1, short[] array2) {
       int l = array1.length;
-      int pixel1, pixle2;
       short[] result = new short[l];
       for (int i=0;i<l;++i) {
          result[i] = (short) Math.max(0, unsignedValue(array1[i]) - unsignedValue(array2[i]));
