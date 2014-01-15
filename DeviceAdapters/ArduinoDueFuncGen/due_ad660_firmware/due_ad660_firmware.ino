@@ -375,6 +375,22 @@ bool reset_waveform_data(size_t waveform_length, uint8_t n_banks, uint8_t n_tabl
     g_banks[i].channel_offset = g_channel_offset;
   }
 
+  // By default, the waveform tables initially contain invalid data. To
+  // facilitate testing from a terminal (without loading a binary waveform),
+  // load a test "waveform" if length <= 4 is requested.
+  if (waveform_length <= 4) {
+    for (uint8_t t = 0; t < n_tables; t++) {
+      if (waveform_length >= 1)
+        waveform_table(t)[0] = 32768;
+      if (waveform_length >= 2)
+        waveform_table(t)[1] = 65535;;
+      if (waveform_length >= 3)
+        waveform_table(t)[2] = 32768;;
+      if (waveform_length >= 4)
+        waveform_table(t)[3] = 0;;
+    }
+  }
+
   return true;
 }
 
