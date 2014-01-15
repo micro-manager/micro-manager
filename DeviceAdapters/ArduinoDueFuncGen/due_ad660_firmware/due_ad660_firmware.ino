@@ -510,15 +510,10 @@ void TC_Sampler_Handler() {
 // this ISR gets called every time we finish sending a word (sample).
 // If we have not finished, we send the sample for the next channel. If we have
 // finished with all channels, we reset the channel counter and increment the
-// sample index.
+// sample index. Note that g_next_channel > 0 always holds when this ISR is
+// called.
 void SPI_DAC_Handler() {
   NVIC_DisableIRQ(SPI_DAC_IRQn);
-  
-  if (g_next_channel == 0) {
-    // We shouldn't be here for the 0th channel: this is spurious.
-    // XXX Do we need this check? It should be a programming error.
-    return;
-  }
   
   if (g_next_channel >= NUM_CHANNELS) {
     g_next_channel = 0;
