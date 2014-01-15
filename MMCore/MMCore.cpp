@@ -5092,6 +5092,30 @@ void CMMCore::displaySLMImage(const char* deviceLabel) throw (CMMError)
    }
 }
 
+void CMMCore::setSLMExposure(const char* deviceLabel, double exposure_ms) throw (CMMError)
+{
+   MM::SLM* pSLM = GetDeviceWithCheckedLabelAndType<MM::SLM>(deviceLabel);
+
+   MMThreadGuard guard(pluginManager_.getModuleLock(pSLM));
+
+   int ret = pSLM->SetExposure(exposure_ms);
+   if (ret != DEVICE_OK)
+   {
+      logError(deviceLabel, getDeviceErrorText(ret, pSLM).c_str());
+      throw CMMError(getDeviceErrorText(ret, pSLM));
+   }
+}
+
+double CMMCore::getSLMExposure(const char* deviceLabel) throw (CMMError)
+{
+   MM::SLM* pSLM = GetDeviceWithCheckedLabelAndType<MM::SLM>(deviceLabel);
+
+   MMThreadGuard guard(pluginManager_.getModuleLock(pSLM));
+
+   return pSLM->GetExposure();
+}
+
+
 unsigned CMMCore::getSLMWidth(const char* deviceLabel)
 {
    MM::SLM* pSLM = GetDeviceWithCheckedLabelAndType<MM::SLM>(deviceLabel);

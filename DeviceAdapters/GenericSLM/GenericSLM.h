@@ -77,6 +77,8 @@ public:
    int SetPixelsTo(unsigned char red, unsigned char green, unsigned char blue);
    int SetPixelsTo(unsigned char intensity);
    int DisplayImage();
+   int SetExposure(double interval_ms);
+   double GetExposure();
 
    unsigned int GetWidth();
    unsigned int GetHeight();

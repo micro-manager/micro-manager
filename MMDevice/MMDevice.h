@@ -1035,6 +1035,16 @@ namespace MM {
       virtual int SetPixelsTo(unsigned char red, unsigned char green, unsigned char blue) = 0;
 
       /**
+       * Command the SLM to turn off after a specified interval.
+       */
+      virtual int SetExposure(double interval_ms) = 0;
+
+      /**
+       * Find out the exposure interval of an SLM.
+       */
+      virtual double GetExposure() = 0;
+
+      /**
        * Get the SLM width in pixels.
        */
       virtual unsigned GetWidth() = 0;

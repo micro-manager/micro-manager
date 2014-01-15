@@ -575,4 +575,13 @@ public class ImageUtils {
       }
       return new TaggedImage(pixels, tags);
    }
+   
+   /*
+   * A utility testing method for displaying an image.
+   */
+   private static void show(String title, ImageProcessor proc) {
+      new ImagePlus(title, proc).show();
+   }
 }
+
+   

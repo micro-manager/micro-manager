@@ -453,6 +453,17 @@ int GenericSLM::DisplayImage()
    }
 }
 
+int GenericSLM::SetExposure(double /*interval_ms*/)
+{
+   // ignore for now.
+   return DEVICE_OK;
+}
+
+double GenericSLM::GetExposure()
+{
+   return 0;
+}
+
 unsigned int GenericSLM::GetWidth()
 {
    return displays_[chosenDisplayIndex_].width;

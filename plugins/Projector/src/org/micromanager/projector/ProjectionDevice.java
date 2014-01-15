@@ -27,6 +27,6 @@ public interface ProjectionDevice {
    public String getChannel();
    public String getName();
    public void waitForDevice();
-   public void setSpotInterval(long interval_us);
+   public void setDwellTime(long interval_us);
    public void activateAllPixels();
 }

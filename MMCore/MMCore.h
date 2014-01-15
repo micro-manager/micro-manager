@@ -446,6 +446,8 @@ public:
    void setSLMPixelsTo(const char* deviceLabel, unsigned char intensity) throw (CMMError);
    void setSLMPixelsTo(const char* deviceLabel, unsigned char red, unsigned char green, unsigned char blue) throw (CMMError);
    void displaySLMImage(const char* deviceLabel) throw (CMMError);
+   void setSLMExposure(const char* deviceLabel, double exposure_ms) throw (CMMError);
+   double getSLMExposure(const char* deviceLabel) throw (CMMError);
    unsigned getSLMWidth(const char* deviceLabel);
    unsigned getSLMHeight(const char* deviceLabel);
    unsigned getSLMNumberOfComponents(const char* deviceLabel);

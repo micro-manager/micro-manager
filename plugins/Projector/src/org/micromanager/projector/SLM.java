@@ -117,12 +117,9 @@ public class SLM implements ProjectionDevice {
       }
    }
 
-   public void displaySpot(double x, double y, double intervalMs) {
+   public void displaySpot(double x, double y, double interval_us) {
+      setDwellTime((long) interval_us);
       displaySpot(x, y);
-   }
-
-   public void runPolygons(int reptitions) {
-      
    }
    
    public void addOnStateListener(OnStateListener listener) {
@@ -158,8 +155,12 @@ public class SLM implements ProjectionDevice {
    }
 
    @Override
-   public void setSpotInterval(long interval_us) {
-      // Ignore
+   public void setDwellTime(long interval_us) {
+      try {
+         mmc_.setSLMExposure(slm_, interval_us / 1000.);
+      } catch (Exception ex) {
+         ReportingUtils.showError(ex);
+      }
    }
 
     @Override

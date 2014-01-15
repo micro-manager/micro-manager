@@ -518,7 +518,7 @@ public class ProjectorController {
             Polygon[] galvoROIs = transformROIs(imgp, individualRois_, mapping_);
             dev.setRois(galvoROIs);
             dev.setPolygonRepetitions(reps_);
-            dev.setSpotInterval(interval_us_);
+            dev.setDwellTime(interval_us_);
          }
       }
    }

@@ -245,7 +245,7 @@ public class Galvo implements ProjectionDevice {
     }
 
    @Override
-   public void setSpotInterval(long interval_us) {
+   public void setDwellTime(long interval_us) {
       try {
          mmc_.setGalvoSpotInterval(galvo_, interval_us);
       } catch (Exception ex) {

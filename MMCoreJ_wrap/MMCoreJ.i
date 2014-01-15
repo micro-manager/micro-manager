@@ -32,7 +32,6 @@
 %include std_map.i
 %include std_pair.i
 %include "typemaps.i"
-
 // output arguments
 %apply double &OUTPUT { double &x_stage };
 %apply double &OUTPUT { double &y_stage };
