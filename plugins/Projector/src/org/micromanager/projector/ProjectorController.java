@@ -61,7 +61,7 @@ public class ProjectorController {
    private final ScriptInterface gui;
    private final ProjectionDevice dev;
    private final MouseListener pointAndShootMouseListener;
-   private final Set<OnStateListener> listeners_ = new HashSet<>();
+   private final Set<OnStateListener> listeners_ = new HashSet<OnStateListener>();
    private final AtomicBoolean pointAndShooteModeOn_ = new AtomicBoolean(false);
    private double pointAndShootInterval;
    private Roi[] individualRois_ = {};
@@ -354,7 +354,7 @@ public class ProjectorController {
             addVertex(poly, toIntPoint(resultPoint[i + 1][j]));
 
             Map<Point2D.Double, Point2D.Double> map
-                  = new HashMap<>();
+                  = new HashMap<Point2D.Double, Point2D.Double>();
             map.put(resultPoint[i][j], dmdPoint[i][j]);
             map.put(resultPoint[i][j + 1], dmdPoint[i][j + 1]);
             map.put(resultPoint[i + 1][j], dmdPoint[i + 1][j]);
