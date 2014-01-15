@@ -756,6 +756,7 @@ void ScopeLEDFluorescenceIlluminator::ClearOpticalState()
     m_LogFile << "ScopeLEDFluorescenceIlluminator::ClearOpticalState" << std::endl;
 #endif
     m_NumChannels = 0;
+    m_SettlingTime = 0;
 
     memset(channel_wavelengths_initialized, false, NUM_FMI_CHANNELS);
 }
@@ -911,6 +912,15 @@ int ScopeLEDFluorescenceIlluminator::Initialize()
     for (mode=1; mode < MAX_CONTROL_MODE; mode++)
     {
         AddAllowedValue("ControlMode", s_ControModeStrings[mode], mode);
+    }
+
+    nRet = GetSettlingTime(m_SettlingTime);
+    if (nRet == DEVICE_OK)
+    {
+        pAct = new CPropertyAction (this, &ScopeLEDFluorescenceIlluminator::OnSettlingTime);
+        nRet = CreateIntegerProperty("SettlingTime", m_SettlingTime, false, pAct);
+        if (nRet != DEVICE_OK) return nRet;
+        SetPropertyLimits("SettlingTime", 0, 30000);
     }
         
     // state
@@ -1215,5 +1225,67 @@ int ScopeLEDFluorescenceIlluminator::GetChannelWavelength(long channel, long& wa
 #ifdef SCOPELED_DEBUGLOG
     m_LogFile << "-ScopeLEDFluorescenceIlluminator::GetChannelWavelength index=" << index << ", wavelength=" << std::dec << wavelength << std::endl;
 #endif
+    return result;
+}
+
+int ScopeLEDFluorescenceIlluminator::OnSettlingTime(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+    if (eAct == MM::BeforeGet)
+    {
+        pProp->Set(m_SettlingTime);
+    }
+    else if (eAct == MM::AfterSet)
+    {
+        pProp->Get(m_SettlingTime);
+        SetSettlingTime(m_SettlingTime);
+    }
+    return DEVICE_OK;
+}
+
+int ScopeLEDFluorescenceIlluminator::SetSettlingTime(long time)
+{
+    unsigned char cmdbuf[7];
+    memset(cmdbuf, 0, sizeof(cmdbuf));
+    cmdbuf[0] = 0xA9;  // Start Byte
+    cmdbuf[1] = 0x04;  // Length Byte
+    cmdbuf[2] =   79;  // Command Byte - MSG_SAVE_SETTLING_TIME
+    cmdbuf[3] = ((time >> 8) & 0xFF);
+    cmdbuf[4] = (time & 0xFF);
+    cmdbuf[6] = 0x5C;  // End Byte
+
+    unsigned char* const pChecksum = &cmdbuf[5];
+    unsigned char* const pStart = &cmdbuf[1];
+
+    *pChecksum = g_USBCommAdapter.CalculateChecksum(pStart, *pStart);
+
+    return Transact(cmdbuf, sizeof(cmdbuf));
+}
+
+int ScopeLEDFluorescenceIlluminator::GetSettlingTime(long& time)
+{
+    unsigned char cmdbuf[5];
+    memset(cmdbuf, 0, sizeof(cmdbuf));
+    cmdbuf[0] = 0xA9;  // Start Byte
+    cmdbuf[1] = 0x02;  // Length Byte
+    cmdbuf[2] =   80;  // Command Byte - MSG_GET_SETTLING_TIME
+    cmdbuf[4] = 0x5C;  // End Byte
+
+    unsigned char* const pChecksum = &cmdbuf[3];
+    unsigned char* const pStart = &cmdbuf[1];
+
+    *pChecksum = g_USBCommAdapter.CalculateChecksum(pStart, *pStart);
+
+    unsigned char RxBuffer[16];
+    unsigned long cbRxBuffer = sizeof(RxBuffer);
+    int result = Transact(cmdbuf, sizeof(cmdbuf), RxBuffer, &cbRxBuffer);
+
+    if ((DEVICE_OK == result) && (cbRxBuffer == 8) && (0==RxBuffer[3]))
+    {
+        time = (RxBuffer[4] << 8) | RxBuffer[5];
+    }
+    else
+    {
+        time = 0;
+    }
     return result;
 }

@@ -118,6 +118,9 @@ class ScopeLEDFluorescenceIlluminator : public ScopeLEDBasicIlluminator<ScopeLED
 {
     bool channel_wavelengths_initialized[NUM_FMI_CHANNELS];
     long channel_wavelengths[NUM_FMI_CHANNELS];
+    long m_SettlingTime;
+
+    long m_NumChannels;
     
 public:
     ScopeLEDFluorescenceIlluminator(); 
@@ -135,11 +138,10 @@ public:
     int OnIntensity(MM::PropertyBase* pProp, MM::ActionType eAct);
     
     int OnActiveWavelength(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnSettlingTime(MM::PropertyBase* pProp, MM::ActionType eAct);
 
     static const char* DeviceName;
     static const char* DeviceDescription;
-
-    long m_NumChannels;
 
 protected:
     void ClearOpticalState();
@@ -154,6 +156,9 @@ private:
     int SetActiveChannel(long channel);
     int GetActiveChannel(long& channel);
     int GetNumChannels(long& count);
+
+    int SetSettlingTime(long time);
+    int GetSettlingTime(long& time);
 
 };
 
