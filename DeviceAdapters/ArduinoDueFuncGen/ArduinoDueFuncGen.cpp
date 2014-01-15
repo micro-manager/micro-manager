@@ -57,6 +57,8 @@ const double DAC_UNITS_PER_VOLT = DAC_ZERO / 10.0;
 const double DAC_MIN_VOLTS = -10.0;
 const double DAC_MAX_VOLTS = 10.0;
 
+const char* const SERIAL_TERMINATOR = "\r";
+
 
 
 MODULE_API void InitializeModuleData()
@@ -610,7 +612,7 @@ std::string DueFunctionGenerator::FirmwareErrorCodeToString(unsigned code)
 std::string DueFunctionGenerator::Recv() const
 {
    std::string response;
-   int err = const_cast<Self*>(this)->GetSerialAnswer(port_.c_str(), "\n", response);
+   int err = const_cast<Self*>(this)->GetSerialAnswer(port_.c_str(), SERIAL_TERMINATOR, response);
    if (err != DEVICE_OK)
       throw DFGError("Serial receive error (" + ToString(err) + ")");
    return response;
@@ -619,7 +621,7 @@ std::string DueFunctionGenerator::Recv() const
 
 std::string DueFunctionGenerator::SendRecv(const std::string& cmd) const
 {
-   int err = const_cast<Self*>(this)->SendSerialCommand(port_.c_str(), cmd.c_str(), "\n");
+   int err = const_cast<Self*>(this)->SendSerialCommand(port_.c_str(), cmd.c_str(), SERIAL_TERMINATOR);
    if (err != DEVICE_OK)
       throw DFGError("Serial send error (" + ToString(err) + ")");
    return Recv();

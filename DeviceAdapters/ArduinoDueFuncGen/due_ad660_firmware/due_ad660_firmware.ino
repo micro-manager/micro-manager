@@ -133,64 +133,66 @@
 // Serial communication protocol
 //
 
-// Commands are terminated with LF. Extra spaces are not allowed.
+// Commands are terminated with CR. Extra spaces are not allowed.
 //
 // ID - identify the device
-// ID\n
-// -> OK18569\n
+// ID\r
+// -> OK18569\r
 //
 // DM - set waveform length, number of banks, and number of tables
-// DM512,8,4\n (error if generating waveform)
+// DM512,8,4\r (error if generating waveform)
 //
 // ED - enable or disable all DACs
-// ED0\n (disable all DACs)
-// ED1\n (enable all DACs)
+// ED0\r (disable all DACs)
+// ED1\r (enable all DACs)
 //
 // FQ - set sampling frequency
-// FQ1000\n (1 kHz)
+// FQ1000\r (1 kHz)
 //
 // LW - load waveform into table
-// LW0\n
-// -> EX1024\n
+// LW0\r
+// -> EX1024\r
 // <- 1024 bytes (512 little-endian samples)
-// -> OK\n
+// -> OK\r
 //
 // AW - assign waveform
-// AW2,0,1\n (use waveform in table 2 for bank 0, channel 1)
+// AW2,0,1\r (use waveform in table 2 for bank 0, channel 1)
 //
 // PH - set phase offset
-// PH0,127\n (channel 0 starts at sample 127)
+// PH0,127\r (channel 0 starts at sample 127)
 //
 // SB - switch bank
-// SB2\n (switch to bank 2)
+// SB2\r (switch to bank 2)
 //
 // RN - start generating waveform
-// RN\n
+// RN\r
 //
 // HL - halt waveform generation
-// HL\n
+// HL\r
 //
 // MN - return sampling frequency minimum
 //
 // MV - set absolute DAC value on channel
-// MV0,32767\n (error if generating waveform)
+// MV0,32767\r (error if generating waveform)
 //
 // MX - return sampling frequency maximum
 //
 // WH - query DAC value on channel
-// WH0\n (error if generating waveform)
+// WH0\r (error if generating waveform)
 //
 //
-// Replies are also termianted with LF
+// Replies are also termianted with CR
 // Host should not send next command before receiving complete reply
 //
-// OK\n
-// OK128\n (response to a query)
-// EX512\n (expecting 512 bytes of binary data)
-// ER12\n (error code 12)
+// OK\r
+// OK128\r (response to a query)
+// EX512\r (expecting 512 bytes of binary data)
+// ER12\r (error code 12)
 
 
 #include "SerialProtocol.h"
+
+const char SERIAL_TERMINATOR = '\r';
 
 
 //
@@ -571,13 +573,13 @@ void set_dac_cleared(bool clear) {
 void respond(const char *str, uint32_t num) {
   Serial.print(str);
   Serial.print(num);
-  Serial.write('\n');
+  Serial.write(SERIAL_TERMINATOR);
 }
 
 
 void respond(const char *str) {
   Serial.print(str);
-  Serial.write('\n');
+  Serial.write(SERIAL_TERMINATOR);
 }
 
 
@@ -970,7 +972,7 @@ void dispatch_cmd(char first, char second, const char *param_str) {
 
 void handle_cmd() {
   char cmd_buffer[MAX_CMD_LEN];
-  size_t cmd_len = Serial.readBytesUntil('\n', cmd_buffer, MAX_CMD_LEN);
+  size_t cmd_len = Serial.readBytesUntil(SERIAL_TERMINATOR, cmd_buffer, MAX_CMD_LEN);
 
   if (cmd_len == 0) {
     // Empty command - ignore
@@ -978,7 +980,7 @@ void handle_cmd() {
   }
 
   if (cmd_len == MAX_CMD_LEN) {
-    while (Serial.readBytesUntil('\n', cmd_buffer, MAX_CMD_LEN) > 0) {
+    while (Serial.readBytesUntil(SERIAL_TERMINATOR, cmd_buffer, MAX_CMD_LEN) > 0) {
       // Discard the rest of the command
     }
     respond_error(DFGERR_CMD_TOO_LONG);
