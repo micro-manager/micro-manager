@@ -196,6 +196,10 @@
 
 #include "SerialProtocol.h"
 
+const int SERIAL_BAUDRATE = 115200;
+const int SERIAL_TEXT_TIMEOUT = 60000;
+const int SERIAL_BINARY_TIMEOUT = 5000;
+
 // Command and response terminator
 const char SERIAL_TERMINATOR = '\r';
 
@@ -865,8 +869,10 @@ void handle_LW(const char *param_str) {
   uint16_t *table = waveform_table(params[0]);
   size_t length = sizeof(uint16_t) * g_waveform_length;
 
+  Serial.setTimeout(SERIAL_BINARY_TIMEOUT);
   respond_data_request(length);
   size_t bytes = Serial.readBytes((char *)table, length);
+  Serial.setTimeout(SERIAL_TEXT_TIMEOUT);
   if (bytes < length) {
     respond_error(DFGERR_TIMEOUT);
     return;
@@ -1112,8 +1118,8 @@ void setup() {
 
   clear_debug_message();
 
-  Serial.begin(115200);
-  Serial.setTimeout(3000);
+  Serial.begin(SERIAL_BAUDRATE);
+  Serial.setTimeout(SERIAL_TEXT_TIMEOUT);
 
   setup_spi_dac();
   setup_tc_sampler();
