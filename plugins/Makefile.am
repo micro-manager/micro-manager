@@ -1,4 +1,7 @@
 ## Process this file with automake to produce Makefile.in
+
+TARGETS= ASIdiSPIM.jar PixelCalibrator.jar Projector.jar RecallPlugin.jar StageControl.jar MultiCamera.jar CRISP.jar Big.jar NewImageFlipper.jar SlideExplorer.jar DataBrowser.jar ClojureEditor.jar SplitView.jar Gaussian.jar IntelligentAcquisition.jar BFCorrector.jar MultiChannelShading.jar HCS.jar
+
 ASIdiSPIM.jar:  \
 	$(srcdir)/ASIdiSPIM/src/org/micromanager/asidispim/*.java \
 	$(srcdir)/ASIdiSPIM/src/org/micromanager/asidispim/Data/*.java \
@@ -183,46 +186,19 @@ HCS.jar:  \
 	## Work around bug in 'jar': jar cf MM_.jar -C bin/ bin/* does not work
 	cd build && jar cf ../HCS.jar * 
 
-
-
-all: PixelCalibrator.jar Projector.jar RecallPlugin.jar StageControl.jar MultiCamera.jar CRISP.jar Big.jar NewImageFlipper.jar SlideExplorer.jar DataBrowser.jar ClojureEditor.jar SplitView.jar Gaussian.jar IntelligentAcquisition.jar BFCorrector.jar MultiChannelShading.jar HCS.jar
-
+all: ${TARGETS}
 
 install: 
 	test -d $(DESTDIR)$(IJPATH)/mmplugins || mkdir $(DESTDIR)$(IJPATH)/mmplugins
-	## cp MMTracker_.jar $(DESTDIR)$(IJPATH)/mmplugins
-	cp PixelCalibrator.jar $(DESTDIR)$(IJPATH)/mmplugins
-	cp Projector.jar $(DESTDIR)$(IJPATH)/mmplugins
-	cp SlideExplorer.jar $(DESTDIR)$(IJPATH)/mmplugins
-	cp RecallPlugin.jar $(DESTDIR)$(IJPATH)/mmplugins
-	cp StageControl.jar $(DESTDIR)$(IJPATH)/mmplugins
-	cp MultiCamera.jar $(DESTDIR)$(IJPATH)/mmplugins
-	cp CRISP.jar $(DESTDIR)$(IJPATH)/mmplugins
-	cp Big.jar $(DESTDIR)$(IJPATH)/mmplugins
-	cp DataBrowser.jar $(DESTDIR)$(IJPATH)/mmplugins
-	cp ClojureEditor.jar $(DESTDIR)$(IJPATH)/mmplugins
-	cp SplitView.jar $(DESTDIR)$(IJPATH)/mmplugins
-	cp NewImageFlipper.jar $(DESTDIR)$(IJPATH)/mmplugins
-	cp Gaussian.jar $(DESTDIR)$(IJPATH)/mmplugins
-	cp IntelligentAcquisition.jar $(DESTDIR)$(IJPATH)/mmplugins
-	cp BFCorrector.jar $(DESTDIR)$(IJPATH)/mmplugins
-	cp MultiChannelShading.jar $(DESTDIR)$(IJPATH)/mmplugins
-	cp HCS.jar $(DESTDIR)$(IJPATH)/mmplugins
+	for thisjar in $(TARGETS); \
+	do \
+		cp $$thisjar $(DESTDIR)$(IJPATH)/mmplugins; \
+	done
 	
 clean:
-	test -f Big.jar && rm Big.jar || echo "Big.jar not found"
-	test -f BFCorrector.jar && rm BFCorrector.jar || echo "BFCorrector.jar not found"
-	test -f CRISP.jar && rm CRISP.jar || echo "CRISP.jar not found"
-	test -f Gaussian.jar && rm Gaussian.jar || echo "Gaussian.jar not found"
-	test -f ImageFlipper.jar && rm ImageFlipper.jar || echo "ImageFlipper.jar not found"
-	test -f MMTracker_.jar && rm MMTracker_.jar || echo "MMTracker_.jar not found"
-	test -f MultiCamera.jar && rm MultiCamera.jar || echo "MultiCamera.jar not found"
-	test -f MultiChannelShading.jar && rm MultiChannelShading.jar || echo "MultiChannelShading.jar not found"
-	test -f NewImageFlipper.jar && rm NewImageFlipper.jar || echo "NewImageFlipper.jar not found"
-	test -f PixelCalibrator.jar && rm PixelCalibrator.jar || echo "PixelCalibrator.jar not found"
-	test -f Projector.jar && rm Projector.jar || echo "Projector.jar not found"
-	test -f RecallPlugin.jar && rm RecallPlugin.jar || echo "RecallPlugin.jar not found"
-	test -f SlideExplorer.jar && rm SlideExplorer.jar || echo "SlideExplorer.jar not found"
-	test -f StageControl.jar && rm StageControl.jar || echo "StageControl.jar not found"
-	
-EXTRA_DIST = src build.xml
+	for f in $(TARGETS); \
+	do \
+		test -f $$f && rm $$f || echo "$$f not found"; \
+	done
+
+ EXTRA_DIST = src build.xml
