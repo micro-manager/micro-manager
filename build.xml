@@ -34,7 +34,7 @@
 	</target>
 
 	<target name="build-java" depends="build-buildtools"
-		description="Build all Java components (requires MMCoreJ_wrap DLL to have been built)">
+		description="Build all Java components (will NOT trigger build-cpp; requires MMCoreJ_wrap DLL)">
 		<run-all-java-projects target="jar"/>
 	</target>
 
@@ -47,7 +47,7 @@
 		<ant antfile="DeviceAdapters/build.xml" useNativeBasedir="true" target="install"/>
 	</target>
 
-	<target name="stage-only" description="Like 'stage', but skip the build">
+	<target name="stage-only" description="Gather files to be installed (will NOT trigger build)">
 		<antcall target="stage-deviceadapters"/>
 
 		<run-all-java-projects target="install-only"/>
@@ -93,9 +93,9 @@
 	</target>
 
 	<target name="stage" depends="build-buildtools,set-version,build-cpp,build-java,stage-only"
-		description="Gather files to be installed"/>
+		description="Gather files to be installed (will trigger build)"/>
 
-	<target name="run" description="Run the staged application (without building or staging)">
+	<target name="run" description="Run the staged application (will NOT trigger build or stage)">
 		<exec dir="${mm.installdir}" executable="${mm.installdir}/ImageJ.exe"/>
 	</target>
 
@@ -106,7 +106,7 @@
 			dir="${mm.installdir}"/>
 	</target>
 
-	<target name="package" depends="stage" description="Create installer">
+	<target name="package" description="Create installer from staged files (will NOT trigger build or stage)">
 		<!-- Default name, if not set -->
 		<property name="mm.installer.basename" value="MMSetup_${mm.architecture.bits}bit"/>
 		<property name="mm.installer" value="${mm.installer.basename}.exe"/>
@@ -119,6 +119,18 @@
 			<arg value="/F${mm.installer.basename}"/>
 			<arg file="${mm.basedir}/buildscripts/installer-${mm.architecture}.iss"/>
 		</exec>
+	</target>
+
+	<target name="package-symbols" description="Create a ZIP archive of the PDB files (will NOT trigger build)">
+		<!-- Default name, if not set -->
+		<property name="mm.symbols.basename"
+			value="MMDebugSymbols_${mm.architecture}"/>
+		<property name="mm.symbols" value="${mm.symbols.basename}.zip"/>
+
+		<mkdir dir="${mm.symbolsdir}"/>
+		<zip destfile="${mm.symbolsdir}/${mm.symbols}"
+			basedir="${mm.cpp.outdir}"
+			includes="*.pdb"/>
 	</target>
 
 	<target name="clean-java" description="Clean only the Java components">
@@ -139,7 +151,7 @@
 		<delete dir="${mm.installdir}"/>
 	</target>
 
-	<target name="unstage-all" description="Delete stage files for all configurations and architectures">
+	<target name="unstage-all" description="Delete staged files for all configurations and architectures">
 		<delete dir="${mm.stagedir}"/>
 	</target>
 </project>

@@ -15,12 +15,18 @@
 		<condition property="mm.installer.basename" value="MMSetup_${mm.architecture.bits}bit_${mm.version.short}_${DSTAMP}">
 			<equals arg1="${mm.build.mode}" arg2="nightly" casesensitive="false"/>
 		</condition>
+		<condition property="mm.symbols.basename" value="MMDebugSymbols_DoNotDistribute_${mm.architecture.bits}bit_${mm.version.short}_${DSTAMP}">
+			<equals arg1="${mm.build.mode}" arg2="nightly" casesensitive="false"/>
+		</condition>
 
 		<condition property="mm.versionstring" value="${mm.version.short}">
 			<equals arg1="${mm.build.mode}" arg2="release" casesensitive="false"/>
 		</condition>
 		<condition property="mm.installer.basename" value="MMSetup_${mm.architecture.bits}bit_${mm.version.short}">
 			<equals arg1="${mm.build.mode}" arg2="release" casesensitive="false"/>
+		</condition>
+		<condition property="mm.symbols.basename" value="MMDebugSymbols_DoNotDistribute_${mm.architecture.bits}bit_${mm.version.short}">
+			<equals arg1="${mm.build.mode}" arg2="nightly" casesensitive="false"/>
 		</condition>
 	</target>
 

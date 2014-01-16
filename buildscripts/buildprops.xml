@@ -65,6 +65,9 @@
 	<!-- Installers -->
 	<property name="mm.distdir" location="${mm.basedir}/dist"/>
 
+	<!-- Private symbol (debug info) archives -->
+	<property name="mm.symbolsdir" location="${mm.basedir}/symbols"/>
+
 	<!-- C++ components -->
 	<property name="mm.cpp.intdir" location="${mm.intdir}/${mm.configuration}/${mm.architecture}"/>
 	<property name="mm.cpp.outdir" location="${mm.outdir}/${mm.configuration}/${mm.architecture}"/>
