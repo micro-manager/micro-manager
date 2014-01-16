@@ -195,9 +195,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
     JSlider tmp_sl = pu.makeSlider(0, // 0 is min amplitude
           props_.getPropValueFloat(micromirrorDeviceKey_, Properties.Keys.MAX_DEFLECTION_X) - props_.getPropValueFloat(micromirrorDeviceKey_, Properties.Keys.MIN_DEFLECTION_X), // compute max amplitude
           1000,   // the scale factor between internal integer representation and float representation
-          props_, devices_, micromirrorDeviceKey_, Properties.Keys.SA_AMPLITUDE_X_DEG,
-          true, Properties.Keys.SA_MODE_X, Properties.Values.SAM_ENABLED,
-          Properties.Values.SAM_DISABLED);
+          props_, devices_, micromirrorDeviceKey_, Properties.Keys.SA_AMPLITUDE_X_DEG);
     add(tmp_sl, "span 2, center, wrap");
     
     add(new JLabel("Beam enabled:"));
@@ -219,9 +217,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
           props.getPropValueFloat(micromirrorDeviceKey_, Properties.Keys.MIN_DEFLECTION_X), // min value
           props.getPropValueFloat(micromirrorDeviceKey_, Properties.Keys.MAX_DEFLECTION_X), // max value
           1000,  // the scale factor between internal integer representation and float representation
-          props_, devices_, micromirrorDeviceKey_, Properties.Keys.SA_OFFSET_X_DEG,
-          true, Properties.Keys.SA_MODE_X, Properties.Values.SAM_ENABLED,
-          Properties.Values.SAM_DISABLED);
+          props_, devices_, micromirrorDeviceKey_, Properties.Keys.SA_OFFSET_X_DEG);
     add(tmp_sl, "span 2 2, center, wrap");
     
     add(new JLabel("Scan enabled:"));
