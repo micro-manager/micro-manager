@@ -340,8 +340,8 @@ int CScanner::Initialize()
       UpdateProperty(g_SPIMStatePropertyName);
    }
 
-   // add ring buffer properties if supported
-   if (build.vAxesProps[0] & BIT1)
+   // add ring buffer properties if supported (starting 2.81)
+   if ((firmwareVersion_ > 2.8) && (build.vAxesProps[0] & BIT1))
    {
       ring_buffer_supported_ = true;
 
@@ -434,9 +434,41 @@ int CScanner::GetPosition(double& x, double& y)
    return DEVICE_OK;
 }
 
+void CScanner::UpdateIlluminationState()
+{
+   // no direct way to query the controller if we are in "home" position or not
+   // here we make the assumption that if both axes are at upper limits we are at home
+   if (firmwareVersion_ > 2.7)  // require version 2.8 to do this
+   {
+      ostringstream command; command.str("");
+      command << "RS " << axisLetterX_ << "-";
+      ret_ = hub_->QueryCommandVerify(command.str(),":A");
+      if (ret_ != DEVICE_OK)  // don't choke on comm error
+         return;
+      if (hub_->LastSerialAnswer().at(3) != 'U')
+      {
+         illuminationState_ = true;
+         return;
+      }
+      command << "RS " << axisLetterY_ << "-";
+      ret_ = hub_->QueryCommandVerify(command.str(),":A");
+      if (ret_ != DEVICE_OK)  // don't choke on comm error
+         return;
+      if (hub_->LastSerialAnswer().at(3) != 'U')
+      {
+         illuminationState_ = true;
+         return;
+      }
+      // if we made it this far then both axes are at upper limits
+      illuminationState_ = false;
+      return;
+   }
+}
+
 int CScanner::SetIlluminationState(bool on)
 // we can't turn off beam but we can steer beam to corner where hopefully it is blocked internally
 {
+   UpdateIlluminationState();
    if (on && !illuminationState_)  // was off, turning on
    {
       illuminationState_ = true;
@@ -860,7 +892,20 @@ int CScanner::OnAttenuateTravelY(MM::PropertyBase* pProp, MM::ActionType eAct)
 int CScanner::OnBeamEnabled(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    string tmpstr;
-   if (eAct == MM::AfterSet) {
+   if (eAct == MM::BeforeGet)
+   {
+      // do this one even if refreshProps is turned off
+      UpdateIlluminationState();
+      bool success;
+      if (illuminationState_)
+         success = pProp->Set(g_YesState);
+      else
+         success = pProp->Set(g_NoState);
+      if (!success)
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      UpdateIlluminationState();
       pProp->Get(tmpstr);
       if (tmpstr.compare(g_YesState) == 0)
          SetIlluminationState(true);

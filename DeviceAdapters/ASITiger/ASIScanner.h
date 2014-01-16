@@ -62,6 +62,9 @@ public:
    int SetIlluminationState(bool on);  // we can't turn off beam but we can steer beam to corner where hopefully it is blocked internally
    int GetChannel(char* channelName);
 
+   // useful functions used internally
+   void UpdateIlluminationState();
+
    // action interface
    // ----------------
    int OnSaveCardSettings     (MM::PropertyBase* pProp, MM::ActionType eAct);

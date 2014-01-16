@@ -284,8 +284,8 @@ int CPiezo::Initialize()
       AddAllowedValue(g_AdvancedSAPropertiesPropertyName, g_YesState);
    }
 
-   // add ring buffer properties if supported
-   if (build.vAxesProps[0] & BIT1)
+   // add ring buffer properties if supported (starting version 2.81)
+   if ((firmwareVersion_ > 2.8) && (build.vAxesProps[0] & BIT1))
    {
       ring_buffer_supported_ = true;
 
