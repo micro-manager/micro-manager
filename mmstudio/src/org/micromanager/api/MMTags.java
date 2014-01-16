@@ -63,6 +63,7 @@ public class MMTags {
       public static final String IJ_TYPE = "IJType";
       public static final String TIME = "Time";
       public static final String PIX_TYPE = "PixelType";
+      public static final String BIT_DEPTH = "BitDepth";
    }
    
    public class Values {
