@@ -69,6 +69,7 @@ public class MMTags {
    public class Values {
       public static final String PIX_TYPE_GRAY_16 = "GRAY16";
       public static final String PIX_TYPE_GRAY_8 = "GRAY8";
+      public static final String CHANNEL_DEFAULT = "Default";
    }
 
 }

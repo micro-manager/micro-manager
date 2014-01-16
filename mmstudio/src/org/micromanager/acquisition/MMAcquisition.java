@@ -347,7 +347,7 @@ public class MMAcquisition {
          } else {
             for (int i = 0; i < numChannels_; i++) {
                if (channelNames_.length() < (1+i)) {
-                  this.setChannelName(i, "Default");
+                  this.setChannelName(i, "Default" + i);
                }
             }
          }

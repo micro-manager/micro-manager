@@ -122,8 +122,8 @@ import java.awt.event.MouseEvent;
 import java.util.Collections;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-import javax.swing.*;
 
+import javax.swing.*;
 import javax.swing.event.AncestorListener;
 
 import mmcorej.TaggedImage;
@@ -3646,15 +3646,8 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    }
 
    @Override
-   public String createDataSet(String root, String name, boolean diskCached, boolean displayOff) throws MMScriptException {
-	   JSONObject summary = new JSONObject();
-	   try {
-		   summary.put(MMTags.Summary.PREFIX, name);
-		   summary.put(MMTags.Summary.DIRECTORY, root);
-	   } catch (JSONException e) {
-		   throw new MMScriptException(e.getMessage());
-	   }
-	   return acqMgr_.createAcquisition(summary, diskCached, engine_, displayOff);
+   public void createDataSet(String name, String rootDir, int nrFrames, int nrChannels, int nrSlices, int nrPositions, boolean show, boolean save) throws MMScriptException {
+	   openAcquisition(name, rootDir, nrFrames, nrChannels, nrSlices, nrPositions, show, save);
    }
    
    private void openAcquisitionSnap(String name, String rootDir, boolean show)
@@ -3876,7 +3869,12 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
 
    @Override
    public void addImage(String name, TaggedImage taggedImg) throws MMScriptException {
-      acqMgr_.getAcquisition(name).insertImage(taggedImg);
+      MMAcquisition acq = acqMgr_.getAcquisition(name);
+      if (!acq.isInitialized()) {
+         // TODO: extract relevant parameters from the tagged image
+         acq.initialize();
+      }
+      acq.insertImage(taggedImg);
    }
    
    @Override
@@ -3889,8 +3887,8 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    }
 
    @Override
-   public void addImage(String name, TaggedImage taggedImg, boolean updateDisplay) throws MMScriptException {
-      acqMgr_.getAcquisition(name).insertImage(taggedImg, updateDisplay);
+   public void addImage(String name, TaggedImage img, boolean updateDisplay) throws MMScriptException {
+      acqMgr_.getAcquisition(name).insertImage(img, updateDisplay);
    }
    
    @Override

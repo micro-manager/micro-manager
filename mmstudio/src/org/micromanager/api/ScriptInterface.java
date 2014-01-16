@@ -91,8 +91,21 @@ public interface ScriptInterface {
     * @param displayOff True if no display is to be created or shown.
     * @throws MMScriptException
     */
-   public String createDataSet(String root, String name, boolean diskCached, boolean displayOff) throws MMScriptException;
+   // public String createDataSet(String root, String name, boolean diskCached, boolean displayOff) throws MMScriptException;
    // TODO: add data set format specifier (multi-file or single file) to the parameter list
+   /**
+    * Opens a new acquisition data set
+    * @param name Name of the new acquisition context.
+    * @param rootDir Place in the file system where data may be stored.
+    * @param nrFrames Nunmber of Frames (time points) in this acquisition.  This number can grow dynamically.
+    * @param nrChannels Number of Channels in this acquisition.  This number is fixed.
+    * @param nrSlices Number of Slices (Z-positions) in this acquisition.
+    * @param nrPositions Number of (XY) Positions in this acquisition.
+    * @param show Whether or not to show this acquisition.
+    * @param save Whether or not save data during acquisition.
+    * @throws MMScriptException
+    */
+   public void createDataSet(String name, String rootDir, int nrFrames, int nrChannels, int nrSlices, int nrPositions, boolean show, boolean save) throws MMScriptException;
    
    /**
     * Inserts image into the acquisition handle.
