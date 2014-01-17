@@ -115,6 +115,10 @@ public final class MultiStagePosition {
       stagePosList_.add(sp);
    }
    
+   public void remove(StagePosition sp) {
+      stagePosList_.remove(sp);
+   }
+   
    /**
     * Number of stages.
     */

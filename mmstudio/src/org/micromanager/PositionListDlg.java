@@ -373,7 +373,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       posTable_.setModel(model);
       CellEditor cellEditor_ = new CellEditor();
       posTable_.setDefaultEditor(Object.class, cellEditor_);
-      posTable_.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+      posTable_.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
       scrollPane.setViewportView(posTable_);
       posTable_.addMouseListener(this);
 
@@ -538,7 +538,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       removeButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent arg0) {
-            removeCurrentPosition();
+            removeSelectedPositions();
          }
       });
       removeButton.setIcon(SwingResourceManager.getIcon(PositionListDlg.class, "icons/cross.png"));
@@ -830,9 +830,12 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
    }
    
    
-   protected void removeCurrentPosition() {
+   protected void removeSelectedPositions() {
       PosTableModel ptm = (PosTableModel)posTable_.getModel();
-      ptm.getPositionList().removePosition(posTable_.getSelectedRow() - 1);
+      int[] selectedRows = posTable_.getSelectedRows();
+      for (int row : selectedRows) {
+         ptm.getPositionList().removePosition(row - 1);
+      }
       ptm.fireTableDataChanged();
       gui_.getAcqDlg().updateGUIContents();
    }
@@ -869,11 +872,30 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
    
    /**
     * To all selected positions, add the current position of any selected drive
-    * If that drive is already recorded in a multistageposition, update it 
+    * If that drive is already recorded in a multi-stageposition, update it 
     * with the current position
     */
    public void mergePositions() {
-      // TODOL implement
+      PosTableModel ptm = (PosTableModel)posTable_.getModel();
+      int[] selectedRows = posTable_.getSelectedRows();
+      
+      refreshCurrentPosition();
+      for (int row : selectedRows) {
+         MultiStagePosition listPos = ptm.getPositionList().getPosition(row - 1);
+         // TODO: implement
+         for (int i=0; i < curMsp_.size(); i++) {
+            StagePosition sp = StagePosition.newInstance(curMsp_.get(i));
+            StagePosition lpsp = listPos.get(sp.stageName);
+            if (lpsp != null) {
+               listPos.remove(lpsp);
+            }
+            listPos.add(sp);
+               
+         }
+      }
+      ptm.fireTableDataChanged();
+      gui_.getAcqDlg().updateGUIContents();
+      
    }
 
    /**
