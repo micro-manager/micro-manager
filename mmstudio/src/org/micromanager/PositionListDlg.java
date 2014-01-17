@@ -872,7 +872,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
     * If that drive is already recorded in a multistageposition, update it 
     * with the current position
     */
-   public void mergePosition() {
+   public void mergePositions() {
       // TODOL implement
    }
 
