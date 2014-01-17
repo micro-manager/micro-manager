@@ -347,6 +347,8 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       setBackground(gui_.getBackgroundColor());
       gui_.addMMBackgroundListener(this);
 
+      Font arialSmallFont = new Font("Arial", Font.PLAIN, 10);
+      
       final JScrollPane scrollPane = new JScrollPane();
       getContentPane().add(scrollPane);
 
@@ -477,6 +479,24 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
                 
       
       // from this point on, the top right button's positions are computed
+      final JButton mergeButton = new JButton();
+      mergeButton.setFont(arialSmallFont);
+      mergeButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent arg0) {
+            mergePositions();
+         }
+      });
+      mergeButton.setIcon(SwingResourceManager.getIcon(PositionListDlg.class, "icons/asterisk_orange.png"));
+      mergeButton.setText("Merge");
+      mergeButton.setToolTipText("Merges selected position with current position of the system");
+      getContentPane().add(mergeButton);
+      springLayout.putConstraint(SpringLayout.NORTH, mergeButton, northConstraint, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.SOUTH, mergeButton, northConstraint+=buttonHeight, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.EAST, mergeButton, 0, SpringLayout.EAST, markButton);
+      springLayout.putConstraint(SpringLayout.WEST, mergeButton, 0, SpringLayout.WEST, markButton);
+
+      
       // the Go To button:
       final JButton gotoButton = new JButton();
       gotoButton.setFont(new Font("Arial", Font.PLAIN, 10));
@@ -675,7 +695,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
    
 
 
-public void addPosition(MultiStagePosition msp, String label) {
+   public void addPosition(MultiStagePosition msp, String label) {
       PosTableModel ptm = (PosTableModel)posTable_.getModel();
       msp.setLabel(label);
       ptm.getPositionList().addPosition(msp);
@@ -845,6 +865,15 @@ public void addPosition(MultiStagePosition msp, String label) {
          // this functions exits...
          posTable_.setRowSelectionInterval(selectedRow, selectedRow);
       }
+   }
+   
+   /**
+    * To all selected positions, add the current position of any selected drive
+    * If that drive is already recorded in a multistageposition, update it 
+    * with the current position
+    */
+   public void mergePosition() {
+      // TODOL implement
    }
 
    /**
