@@ -663,12 +663,16 @@ uint32_t DueFunctionGenerator::ParseResponseWithParam(const std::string& respons
 
    if (response.substr(0, prefixLen) == expectedPrefix && response.size() > prefixLen)
    {
-      uint32_t value = boost::lexical_cast<uint32_t>(response.substr(prefixLen));
-      // If the string is not a valid number, value == 0; if so, check that it
-      // actually resulted from the string "0".
-      if (value != 0 || response.substr(prefixLen) == "0")
-         return value;
+      try
+      {
+         return boost::lexical_cast<uint32_t>(response.substr(prefixLen));
+      }
+      catch (const boost::bad_lexical_cast&)
+      {
+         // Fall through to error handling below.
+      }
    }
+
    if (handlingError)
       throw DFGError("Unexpected response from firmware: " + ToQuotedString(response));
    else
