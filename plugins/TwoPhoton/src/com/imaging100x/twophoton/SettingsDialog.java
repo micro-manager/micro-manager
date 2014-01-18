@@ -39,7 +39,7 @@ public class SettingsDialog extends JDialog {
    static public final String FILTER_IMS = "Use gaussian filter";
    static public final String FILTER_SIZE = "Gaussian filter width";
    
-   public static int xOverlap_ = 0, yOverlap_ = 0;
+   private static int xOverlap_ = 0, yOverlap_ = 0;
    
    
    public SettingsDialog(final Preferences prefs, final TwoPhotonControl twoP) {
@@ -67,8 +67,8 @@ public class SettingsDialog extends JDialog {
       });
       
       JPanel rowSquaw = new JPanel(new FlowLayout(FlowLayout.LEFT));
-      final JSpinner xOverlap = new JSpinner(new SpinnerNumberModel(0,0,500,1));  
-      final JSpinner yOverlap = new JSpinner(new SpinnerNumberModel(0,0,500,1));
+      final JSpinner xOverlap = new JSpinner(new SpinnerNumberModel(xOverlap_,0,500,1));  
+      final JSpinner yOverlap = new JSpinner(new SpinnerNumberModel(yOverlap_,0,500,1));
       rowSquaw.add(new JLabel("            Pixel overlap x: "));
       rowSquaw.add(xOverlap);
       rowSquaw.add(new JLabel("  y:"));
@@ -185,4 +185,12 @@ public class SettingsDialog extends JDialog {
       this.setVisible(true);
    }
 
+   public static int getXOverlap() {
+      return xOverlap_;
+   }
+   
+   public static int getYOverlap() {
+      return yOverlap_;
+   }
+   
 }

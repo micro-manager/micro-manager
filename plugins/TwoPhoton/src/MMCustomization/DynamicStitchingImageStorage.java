@@ -4,6 +4,7 @@
  */
 package MMCustomization;
 
+import com.imaging100x.twophoton.SettingsDialog;
 import java.io.IOException;
 import java.util.Set;
 import java.util.TreeSet;
@@ -31,8 +32,11 @@ public class DynamicStitchingImageStorage {
     private int width_, height_, tileWidth_, tileHeight_;
     private TreeSet<String> imageKeys_;
     private JSONArray positionList_;
+    private int xOverlap_, yOverlap_, numRows_, numCols_;
 
    public DynamicStitchingImageStorage(JSONObject summaryMetadata, String savingDir) {
+      xOverlap_ = SettingsDialog.getXOverlap();
+      yOverlap_ = SettingsDialog.getYOverlap();
       imageKeys_ = new TreeSet<String>();
       try {
          summaryMetadata_ = new JSONObject(summaryMetadata.toString());
@@ -53,25 +57,26 @@ public class DynamicStitchingImageStorage {
 
 
        try {
-           int numRows = 1, numCols = 1;
+           numRows_ = 1;
+           numCols_ = 1;
            if (summaryMetadata.has("InitialPositionList") && !summaryMetadata.isNull("InitialPositionList")) {
                positionList_ = summaryMetadata.getJSONArray("InitialPositionList");
                for (int i = 0; i < positionList_.length(); i++) {
                    long colInd = positionList_.getJSONObject(i).getLong("GridColumnIndex");
                    long rowInd = positionList_.getJSONObject(i).getLong("GridRowIndex");
-                   if (colInd >= numCols) {
-                       numCols = (int) (colInd + 1);
+                   if (colInd >= numCols_) {
+                       numCols_ = (int) (colInd + 1);
                    }
-                   if (rowInd >= numRows) {
-                       numRows = (int) (rowInd + 1);
+                   if (rowInd >= numRows_) {
+                       numRows_ = (int) (rowInd + 1);
                    }
                }
            }
 
            tileHeight_ = MDUtils.getHeight(summaryMetadata);
            tileWidth_ = MDUtils.getWidth(summaryMetadata);
-           height_ = numRows * tileHeight_;
-           width_ = numCols * tileWidth_;
+           height_ = numRows_ * tileHeight_ - (numRows_ - 1) * xOverlap_;
+           width_ = numCols_ * tileWidth_ - (numCols_ - 1) * yOverlap_;
            //change summary metadata fields
            summaryMetadata_.put("Positions", 1);
            summaryMetadata_.put("Width", width_);
@@ -103,17 +108,36 @@ public class DynamicStitchingImageStorage {
             tags = tile.tags;
             JSONObject posInfo;
             int xTileIndex = 0, yTileIndex = 0;
-             try {
+            //Get indices in stitched image 
+            try {
                  posInfo = positionList_.getJSONObject(positionIndex);
                  xTileIndex = (int) posInfo.getLong("GridColumnIndex");
                  yTileIndex = (int) posInfo.getLong("GridRowIndex");
              } catch (JSONException ex) {
                  ReportingUtils.showError("Couldnt find tile indices");
              }
-      
-            for (int y = 0; y < tileHeight_; y++) {
-               int destinationIndex = width_ * (tileHeight_ * yTileIndex + y) + xTileIndex * tileWidth_;
-               System.arraycopy(tile.pix, y * tileWidth_, pixels, destinationIndex, tileWidth_);
+             //do stitching
+            int startLine = 0, endLine = tileHeight_;
+            if (yTileIndex > 0 ) {
+               startLine = yOverlap_ / 2;
+            }
+            if (yTileIndex < numRows_ - 1) {
+               endLine = tileHeight_ - (yOverlap_ + 1) / 2;
+            }
+            int startPix = 0, endPix = tileWidth_;
+            if (xTileIndex > 0 ) {
+               startPix = xOverlap_ / 2;
+            }
+            if (xTileIndex < numCols_ - 1) {
+               endPix = tileWidth_ - (xOverlap_ + 1) / 2;
+            }
+            int pixPerLine = endPix - startPix;
+            
+            for (int y = startLine; y < endLine; y++) {
+ 
+               int destIndex = ((tileHeight_ - yOverlap_) * yTileIndex + y) * width_ + 
+                       ((tileWidth_ - xOverlap_) * xTileIndex + startPix);             
+               System.arraycopy(tile.pix, y * tileWidth_ + startPix, pixels, destIndex, pixPerLine);
             }
          }
       }

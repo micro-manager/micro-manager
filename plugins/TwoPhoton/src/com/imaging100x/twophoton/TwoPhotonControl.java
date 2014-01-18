@@ -105,7 +105,8 @@ public class TwoPhotonControl extends MMFrame implements MMPlugin, KeyListener,
    private PMTDataModel pmtData_;
    private JTable depthTable_;
    private DepthDataModel depthData_;
-
+   private static TwoPhotonControl twoPC_;
+   
    private SliderPanel laserSlider2_;
    private SliderPanel laserSlider1_;
    private JSpinner gridOverlapYSpinner_, gridOverlapXSpinner_;
@@ -124,6 +125,8 @@ public class TwoPhotonControl extends MMFrame implements MMPlugin, KeyListener,
 
    private String posListDir_;
    private static final String DEFAULT_DEPTH_FNAME = "default_depth_list.dlf";
+   private static ArrayList<Integer> depthListOffsets_;
+   private AcquisitionWrapperEngineAdapter acqEngAdapter_;
 
 
 private ActionListener pixelSizeListener_;
@@ -178,7 +181,8 @@ private JCheckBox drawGrid_, drawPosNames_;
     */
    public TwoPhotonControl() {
        super();
- 
+       twoPC_ = this;
+       
       setLocation(-3, -31);
 
       // load preferences
@@ -258,7 +262,16 @@ private JCheckBox drawGrid_, drawPosNames_;
       loadSettings();
 
       GUIUtils.registerImageFocusListener(this);
-      MMStudioMainFrame.getInstance().getAcquisitionEngine().attachRunnable(-1, -1, -1, -1, getDepthListRunnable());
+      //attach depth list runnable
+      MMStudioMainFrame.getInstance().getAcquisitionEngine().attachRunnable(-1, -1, -1, -1,
+              new Runnable() {
+                 @Override
+                 public void run() {        
+                    applyDepthSetting(-1);                  
+                    //refresh GUI on each image so it reflects depth list changes
+                    refreshGUI();
+                 }
+              });
    }
    
    private void addDynamicStitchControls() {
@@ -280,7 +293,7 @@ private JCheckBox drawGrid_, drawPosNames_;
       addDynamicStitchControls();
       clearSpaceInIMSFileCache();
       try {
-         new AcquisitionWrapperEngineAdapter(getDepthListRunnable(), prefs_);
+         acqEngAdapter_ = new AcquisitionWrapperEngineAdapter(this, prefs_);
       } catch (NoSuchFieldException ex) {
          ReportingUtils.showError("Couldn't substitute acquisition engine");
       }
@@ -366,9 +379,7 @@ private JCheckBox drawGrid_, drawPosNames_;
       activateDepthList_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            if (activateDepthList_.isSelected()) {
-               applyDepthSetting();
-            }
+            applyDepthSetting(-1);
          }
       });
       buttonPanel.add(row2);
@@ -635,20 +646,6 @@ private JCheckBox drawGrid_, drawPosNames_;
          }
       }).start();
    }
-   
-   private Runnable getDepthListRunnable() {
-      return new Runnable() {
-         @Override
-         public void run() {
-            //apply depth list settings  
-            if (activateDepthList_.isSelected()) {
-               applyDepthSetting();
-            }
-            //refresh GUI on each image so it reflects depth list changes
-            refreshGUI();          
-         }
-      };
-   }
 
    protected void onSaveDepthListAs() {
       JFileChooser fc = new JFileChooser();
@@ -719,6 +716,15 @@ private JCheckBox drawGrid_, drawPosNames_;
       }
       activateDepthList_.setSelected(true);
    }
+   
+   public static int getDepthListOffset(int index) {
+      return depthListOffsets_.get(index);
+   }
+   
+   public static void setDepthListOffset(int index, int offset) {
+      depthListOffsets_.add(index, offset);
+      depthListOffsets_.remove(index + 1);
+   }
 
    protected void generateGrid() {
       String xyStage = core_.getXYStageDevice();
@@ -760,11 +766,15 @@ private JCheckBox drawGrid_, drawPosNames_;
       int ySize = (Integer) gridSizeYSpinner_.getValue();
 
       
-     createGrid(x[0], y[0], xSize, ySize, pixelOverlapX, pixelOverlapY);
+     makeGrid(x[0], y[0], xSize, ySize, pixelOverlapX, pixelOverlapY);
       
    }
-  
+   
    public static void createGrid(double xCenter, double yCenter, int xSize, int ySize, int pixelOverlapX, int pixelOverlapY) {      
+      twoPC_.makeGrid(xCenter, yCenter,  xSize,  ySize,  pixelOverlapX,  pixelOverlapY);
+   }
+  
+   private void makeGrid(double xCenter, double yCenter, int xSize, int ySize, int pixelOverlapX, int pixelOverlapY) {      
       MMStudioMainFrame gui = MMStudioMainFrame.getInstance();
       //Get affine transform
       Preferences prefs = Preferences.userNodeForPackage(MMStudioMainFrame.class);
@@ -813,111 +823,24 @@ private JCheckBox drawGrid_, drawPosNames_;
             mpl.setLabel(lab);
             //row, column (in image space)
             mpl.setGridCoordinates(row, col);
-            positions.add(mpl);
+            positions.add(mpl);            
          }
       }
    
       try {
+         depthListOffsets_ = new ArrayList<Integer>();
          PositionList list = gui.getPositionList();
          list.clearAllPositions();
          for (MultiStagePosition p : positions) {
             list.addPosition(p);
+            depthListOffsets_.add(0);
          }
+
          list.notifyChangeListeners();
       } catch (MMScriptException e) {
          ReportingUtils.showError(e.getMessage());
       }
    }
-
-//   public static void createGrid(double xCenter, double yCenter, int xSize, int ySize, int pixelOverlapX, int pixelOverlapY) {
-//      MMStudioMainFrame gui = MMStudioMainFrame.getInstance();
-//      double pixSize = gui.getCore().getPixelSizeUm();
-//      if (pixSize == 0.0) {
-//         pixSize = 0.1;
-//      }
-//      
-//      String camera = gui.getCore().getCameraDevice();
-//      if (camera.isEmpty()) {
-//         ReportingUtils.showError("No camera available.");
-//         return;
-//      }
-//      boolean swapXY = false, invertX = false, invertY = false;
-//      try {
-//         swapXY = gui.getCore().getProperty(camera, MMCoreJ.getG_Keyword_Transpose_SwapXY()).equals("1");
-//         invertX = gui.getCore().getProperty(camera, MMCoreJ.getG_Keyword_Transpose_MirrorX()).equals("1");
-//         invertY = gui.getCore().getProperty(camera, MMCoreJ.getG_Keyword_Transpose_MirrorY()).equals("1");
-//      } catch (Exception e) {
-//         ReportingUtils.showError(e.getMessage());
-//         return;
-//      }
-//      
-//      long height = gui.getCore().getImageHeight();
-//      long width = gui.getCore().getImageWidth();
-//      
-//      //get image stage offset in degrees
-//      double theta = prefs_.getDouble(SettingsDialog.STAGE_IMAGE_ANGLE_OFFSET, 0.0) / 360.0 * 2 * Math.PI;
-//      //Y axis --> more positive stage coordinate = up on image
-//      //X axis --> more positive stage coordinate = left on image
-//      ArrayList<MultiStagePosition> positions = new ArrayList<MultiStagePosition>();
-//      for (int xIndex = 0; xIndex < xSize; xIndex++) {
-//         double xDistFromCenter =  - (xIndex - (xSize - 1) / 2.0) * (width - pixelOverlapX) * pixSize;
-//         for (int yIndex = 0; yIndex < ySize; yIndex++) {
-//            double yDistFromCenter =  - (yIndex - (ySize - 1) / 2.0) * (height - pixelOverlapY) * pixSize;
-//            //account for angle between stage axes and image axes
-//            double xPos, yPos;
-//             if (swapXY) {
-//                 //if axes swapped apply invertX and invertY to opposite
-//                  xPos = xCenter + (invertY ? -1 : 1)* Math.cos(theta) * xDistFromCenter + 
-//                         (invertX ? -1 : 1)* Math.sin(theta) * yDistFromCenter;
-//                  yPos = yCenter + (invertY ? -1 : 1)* Math.sin(theta) * xDistFromCenter + 
-//                         (invertX ? -1 : 1)* Math.cos(theta) * yDistFromCenter;
-//             } else {
-//                  xPos = xCenter + (invertX ? -1 : 1) * Math.cos(theta) * xDistFromCenter
-//                         + (invertY ? -1 : 1) * Math.sin(theta) * yDistFromCenter;
-//                  yPos = yCenter + (invertX ? -1 : 1) * Math.sin(theta) * xDistFromCenter
-//                         + (invertY ? -1 : 1)* Math.cos(theta) * yDistFromCenter;
-//             }
-//            
-//            MultiStagePosition mpl = new MultiStagePosition();
-//            StagePosition sp = new StagePosition();
-//            sp.numAxes = 2;
-//            sp.stageName = gui.getCore().getXYStageDevice();
-//            //Only effect of swapping x and y should be telling the stage coordinates and reading them out
-//            if (swapXY) {
-//               sp.y = xPos;
-//               sp.x = yPos;
-//            } else {
-//               sp.x = xPos;
-//               sp.y = yPos;
-//            }
-//            mpl.add(sp);
-//            int col =0, row = 0;
-//            if (swapXY) {
-//                row = invertY ? xSize - xIndex - 1 : xIndex;
-//                col = invertX ? ySize - yIndex - 1 : yIndex;
-//            } else {
-//                col = invertX ? xSize - xIndex - 1 : xIndex;
-//                row = invertY ? ySize - yIndex - 1 : yIndex;
-//            }
-//            //label should be Grid_(x index of tile)_(y index of tile)
-//            String lab = new String("Grid_" + row + "_" + col);
-//            mpl.setLabel(lab);
-//            mpl.setGridCoordinates(yIndex, xIndex);
-//            positions.add(mpl);
-//         }
-//      }
-//   
-//      try {
-//         PositionList list = gui.getPositionList();
-//         list.clearAllPositions();
-//         for (MultiStagePosition p : positions) {
-//            list.addPosition(p);
-//         }
-//         list.notifyChangeListeners();
-//      } catch (MMScriptException e) {
-//         ReportingUtils.showError(e.getMessage());
-//      }
-//   }
 
    protected void onPixelSize() {
       String pixSizeName = (String)pixelSizeCombo_.getSelectedItem();
@@ -932,18 +855,22 @@ private JCheckBox drawGrid_, drawPosNames_;
       }
    }
 
-   public void applyDepthSetting() {
-      try {
-         DepthSetting ds = depthData_.getInterpolatedDepthSetting(core_.getPosition(core_.getFocusDevice()));
-         core_.setProperty(LASER_EOM_1, "Volts", Double.toString(ds.eomVolts1_));
-         core_.setProperty(LASER_EOM_2, "Volts", Double.toString(ds.eomVolts2_));
-         for (int i = 0; i < ds.pmts.length; i++) {
-            core_.setProperty(ds.pmts[i].name, "Volts", Double.toString(ds.pmts[i].volts));
+   public void applyDepthSetting(int positionIndex) {
+      if (activateDepthList_.isSelected()) {
+         int offset = positionIndex == -1 ? 0 : depthListOffsets_.get(positionIndex);       
+         try {
+            double zPos = core_.getPosition(core_.getFocusDevice());
+            DepthSetting ds = depthData_.getInterpolatedDepthSetting(zPos + offset);
+            core_.setProperty(LASER_EOM_1, "Volts", Double.toString(ds.eomVolts1_));
+            core_.setProperty(LASER_EOM_2, "Volts", Double.toString(ds.eomVolts2_));
+            for (int i = 0; i < ds.pmts.length; i++) {
+               core_.setProperty(ds.pmts[i].name, "Volts", Double.toString(ds.pmts[i].volts));
+            }
+            refreshGUI();
+         } catch (Exception e) {
+            handleError(e.getMessage());
+            return;
          }
-         refreshGUI();
-      } catch (Exception e) {
-         handleError(e.getMessage());
-         return;
       }
    }
 
@@ -982,10 +909,8 @@ private JCheckBox drawGrid_, drawPosNames_;
       String zprop = pifocSlider_.getText();
       try {
          double z = Double.parseDouble(zprop);
-         core_.setPosition(core_.getFocusDevice(), z);
-         if (activateDepthList_.isSelected()) {
-            applyDepthSetting();
-         }
+         core_.setPosition(core_.getFocusDevice(), z);    
+         applyDepthSetting(-1);
          removeDepthListSelection();
          MMStudioMainFrame.getInstance().updateZPos(z);
       } catch (NumberFormatException e) {
@@ -1091,7 +1016,7 @@ private JCheckBox drawGrid_, drawPosNames_;
       pixelSizeCombo_.addActionListener(pixelSizeListener_);
    }
 
-   private void refreshGUI() {
+   public void refreshGUI() {
       try {
          core_.logMessage("Refreshing Two Photon plugin from hardware", true);
          //with devices on a separate thread during acquisition

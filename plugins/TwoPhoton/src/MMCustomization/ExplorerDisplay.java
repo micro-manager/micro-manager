@@ -333,16 +333,16 @@ public class ExplorerDisplay implements ImageCacheListener  {
          //TODO: add adjustments for angle of stage relative to image
 
          
-         int xOverlap = SettingsDialog.xOverlap_, yOverlap = SettingsDialog.yOverlap_;
-         if (swapXY_) {
-            TwoPhotonControl.createGrid(currentCenterY + rectCenterXDisp, currentCenterX + rectCenterYDisp,
-                    (Integer) gridXSpinner_.getValue(), (Integer) gridYSpinner_.getValue(), 
-                    xOverlap, yOverlap);
-         } else {
-            TwoPhotonControl.createGrid(currentCenterX + rectCenterXDisp, currentCenterY + rectCenterYDisp,
-                    (Integer) gridXSpinner_.getValue(), (Integer) gridYSpinner_.getValue(),
-                    xOverlap, yOverlap);
-         }
+//         int xOverlap = SettingsDialog.xOverlap_, yOverlap = SettingsDialog.yOverlap_;
+//         if (swapXY_) {
+//            TwoPhotonControl.createGrid(currentCenterY + rectCenterXDisp, currentCenterX + rectCenterYDisp,
+//                    (Integer) gridXSpinner_.getValue(), (Integer) gridYSpinner_.getValue(), 
+//                    xOverlap, yOverlap);
+//         } else {
+//            TwoPhotonControl.createGrid(currentCenterX + rectCenterXDisp, currentCenterY + rectCenterYDisp,
+//                    (Integer) gridXSpinner_.getValue(), (Integer) gridYSpinner_.getValue(),
+//                    xOverlap, yOverlap);
+//         }
          
       } catch (Exception e) {
          ReportingUtils.showError("Couldnt create grid");

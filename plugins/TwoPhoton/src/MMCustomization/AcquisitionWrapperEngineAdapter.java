@@ -5,6 +5,7 @@
 package MMCustomization;
 
 import com.imaging100x.twophoton.SettingsDialog;
+import com.imaging100x.twophoton.TwoPhotonControl;
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.BlockingQueue;
@@ -42,18 +43,19 @@ public class AcquisitionWrapperEngineAdapter extends AcquisitionWrapperEngine {
 
    private IAcquisitionEngine2010 realAcqEng_;
       private Preferences prefs_;
+      private TwoPhotonControl twoPC_;
 
    
-   public AcquisitionWrapperEngineAdapter(Runnable depthListRunnable, Preferences prefs) throws NoSuchFieldException {
+   public AcquisitionWrapperEngineAdapter(TwoPhotonControl twoP, Preferences prefs) throws NoSuchFieldException {
       super((AcquisitionManager) JavaUtils.getRestrictedFieldValue(
               MMStudioMainFrame.getInstance(), MMStudioMainFrame.class, "acqMgr_"));
       MMStudioMainFrame gui = MMStudioMainFrame.getInstance();
       super.setCore(MMStudioMainFrame.getInstance().getCore(), null);
-
+      twoPC_ = twoP;
 
       prefs_ = prefs;
       realAcqEng_ = new AcquisitionEngine2010(MMStudioMainFrame.getInstance().getCore());
-      realAcqEng_.attachRunnable(-1, -1, -1, -1, depthListRunnable);
+     
       try {
          gui.setAcquisitionEngine(this);
          //assorted things copied from MMStudioMainFrame to ensure compatibility
@@ -66,11 +68,42 @@ public class AcquisitionWrapperEngineAdapter extends AcquisitionWrapperEngine {
       }
    }
 
-      private void runAcquisition(SequenceSettings settings) throws Exception {
+   private void runAcquisition(SequenceSettings settings) throws Exception {
+      //add runnables for using depth list that varies with XY position
+      realAcqEng_.clearRunnables();
+      if (settings.usePositionList) {
+         int numPositions = MMStudioMainFrame.getInstance().getPositionList().getPositions().length;
+         for (int i = 0; i < numPositions; i++) {
+            final int posIndex = i;
+            realAcqEng_.attachRunnable(-1, i, -1, -1, new Runnable() {
+               @Override
+               public void run() {
+                  twoPC_.applyDepthSetting(posIndex);
+                  twoPC_.refreshGUI();
+               }
+            });
+         }
+      } else {
+         //XY position invariant depth list runnable
+         realAcqEng_.attachRunnable(-1,-1,-1,-1, new Runnable() {
+            @Override
+            public void run() {
+               twoPC_.applyDepthSetting(-1);
+               twoPC_.refreshGUI();
+            }
+         }); 
+      }
+      
+      
       // Start up the acquisition engine
       BlockingQueue<TaggedImage> engineOutputQueue = realAcqEng_.run(settings, true, gui_.getPositionList(), null);
       JSONObject summaryMetadata = realAcqEng_.getSummaryMetadata();
 
+      //write pixel overlap into metadata
+      summaryMetadata.put("GridPixelOverlapX", SettingsDialog.getXOverlap());
+      summaryMetadata.put("GridPixelOverlapY", SettingsDialog.getYOverlap());
+
+      
       // Set up the DataProcessor<TaggedImage> sequence--no data processors for now
       // BlockingQueue<TaggedImage> procStackOutputQueue = ProcessorStack.run(engineOutputQueue, imageProcessors);
       
@@ -233,4 +266,9 @@ public class AcquisitionWrapperEngineAdapter extends AcquisitionWrapperEngine {
      return realAcqEng_.stopHasBeenRequested();
   }
 
+  @Override
+  public boolean isFinished() {
+     return realAcqEng_.isFinished();
+  }
+  
 }

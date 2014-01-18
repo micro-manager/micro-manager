@@ -2,7 +2,7 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package MMCustomization;
+package unused;
 
 import com.imaging100x.twophoton.TwoPhotonControl;
 import java.io.File;
