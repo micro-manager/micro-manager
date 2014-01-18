@@ -860,7 +860,7 @@ private JCheckBox drawGrid_, drawPosNames_;
          int offset = positionIndex == -1 ? 0 : depthListOffsets_.get(positionIndex);       
          try {
             double zPos = core_.getPosition(core_.getFocusDevice());
-            DepthSetting ds = depthData_.getInterpolatedDepthSetting(zPos + offset);
+            DepthSetting ds = depthData_.getInterpolatedDepthSetting(zPos - offset);
             core_.setProperty(LASER_EOM_1, "Volts", Double.toString(ds.eomVolts1_));
             core_.setProperty(LASER_EOM_2, "Volts", Double.toString(ds.eomVolts2_));
             for (int i = 0; i < ds.pmts.length; i++) {
