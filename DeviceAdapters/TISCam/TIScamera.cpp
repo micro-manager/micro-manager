@@ -38,19 +38,11 @@
 // Parameter: -Xmx640m -cp D:\PROGRA~1\MICRO-~1.3\ij.jar ij.ImageJ -ijpath D:\PROGRA~1\MICRO-~1.3\
 
 /*
-Following Runtime DLLs are needed:
+This program require following runtime DLL
 For 32 bit :	TIS_DShowLib10.dll		TIS_UDSHL10.dll 
 For 64 bit :	TIS_DShowLib10_x64.dll	TIS_UDSHL10_x64.dll 
-
-
-TIS Device Adapters:
-Please add all files with the extension VDA from the appropriate directory for 32 or 64 bit. 
-
-TIS Codec Adapters:
-Please add all files with the extension TCA from the appropriate directory for 32 or 64 bit.
-
-TIS Standard Frame Filters:
-If there are own frame filters created, add all files with the extension FTF
+You may extract these files from TIS development environment "IC Imaging Control" version 3.3
+IMPORTANT: Use build 3.3.0.1796 or later
 
 System:
 Use the VC runtime installations from Microsoft™.
@@ -360,41 +352,27 @@ int CTIScamera::Initialize()
    AddAllowedValue("Device Properties","Show device property dialog.");
    AddAllowedValue("Device Properties","Click here for device property dialog.");
 
+   // Add ROI filter first, then the RotateFilter has less to do.
+   pROIFilter        = FilterLoader::createFilter("ROI");
+   pRotateFlipFilter = FilterLoader::createFilter("Rotate Flip");
+   pDeNoiseFilter    = FilterLoader::createFilter("DeNoise");
 
-
-
-   // Filters prevent sink from operating in Y16 mode
-   const GUID subtype = pGrabber->getVideoFormat().getSubtype();
-   if (subtype == MEDIASUBTYPE_Y16)
+   tFrameFilterList filterList;
+   if ( pROIFilter != NULL )
    {
-      pROIFilter        = NULL;
-      pRotateFlipFilter = NULL;
-      pDeNoiseFilter    = NULL;
+      filterList.push_back( pROIFilter.get() );
    }
-   else
+
+   if ( pRotateFlipFilter != NULL )
    {
-      // Add the ROI Flip Filter. Add ROI filter first, then the RotateFilter has less to do.
-      pROIFilter        = FilterLoader::createFilter("ROI");
-      pRotateFlipFilter = FilterLoader::createFilter("Rotate Flip");
-      pDeNoiseFilter    = FilterLoader::createFilter("DeNoise");
-
-      tFrameFilterList filterList;
-      if ( pROIFilter != NULL )
-      {
-         filterList.push_back( pROIFilter.get() );
-      }
-
-      if ( pRotateFlipFilter != NULL )
-      {
-         filterList.push_back( pRotateFlipFilter.get() );    
-      }
-
-      if ( pDeNoiseFilter != NULL )
-      {
-         filterList.push_back( pDeNoiseFilter.get() );    
-      }
-      pGrabber->setDeviceFrameFilters( filterList );
+      filterList.push_back( pRotateFlipFilter.get() );    
    }
+
+   if ( pDeNoiseFilter != NULL )
+   {
+      filterList.push_back( pDeNoiseFilter.get() );    
+   }
+   pGrabber->setDeviceFrameFilters( filterList );
 
 
    pAct = new CPropertyAction (this, &CTIScamera::OnFlipHorizontal);
@@ -527,49 +505,50 @@ int CTIScamera::SetupProperties()
    else if (subtype == MEDIASUBTYPE_YGB0)   cf = eYGB0;
    else if (subtype == MEDIASUBTYPE_YGB1)   cf = eYGB1;
 
- 
+/*
    pGrabber->setDeviceFrameFilters(NULL);
-   bool bCreateFilter;
-   if (cf == eY16) bCreateFilter = false;
-   else bCreateFilter = true;
-   if (bCreateFilter)
+   pROIFilter        = NULL;
+   pRotateFlipFilter = NULL;
+   pDeNoiseFilter    = NULL;
+
+   if (cf == eY16)
    {
-      // Filters prevent sink from operating in Y16 mode
-      // Add the ROI Flip Filter. Add ROI filter first, then the RotateFilter has less to do.
+      // some Filters prevent sink from operating in Y16 mode
       pROIFilter        = FilterLoader::createFilter("ROI");
       pRotateFlipFilter = FilterLoader::createFilter("Rotate Flip");
       pDeNoiseFilter    = FilterLoader::createFilter("DeNoise");
-
-	  tFrameFilterList filterList;
-      if ( pROIFilter != NULL )
-      {
-         filterList.push_back( pROIFilter.get() );
-      }
-
-      if ( pRotateFlipFilter != NULL )
-      {
-         filterList.push_back( pRotateFlipFilter.get() );    
-      }
-
-      if ( pDeNoiseFilter != NULL )
-      {
-         filterList.push_back( pDeNoiseFilter.get() );    
-      }
-      pGrabber->setDeviceFrameFilters( filterList );
-
-	  if ((subtype == MEDIASUBTYPE_RGB32) || (subtype == MEDIASUBTYPE_RGB24))
-      {
-         nRet = SetProperty(g_FlipV, g_On);
-		 pRotateFlipFilter->setParameter( "Flip V", true );
-	  }
-
    }
    else
    {
-      pROIFilter        = NULL;
-      pRotateFlipFilter = NULL;
-      pDeNoiseFilter    = NULL;
-      pGrabber->setDeviceFrameFilters(NULL);
+      // Add ROI filter first, then the RotateFilter has less to do.
+      pROIFilter        = FilterLoader::createFilter("ROI");
+      pRotateFlipFilter = FilterLoader::createFilter("Rotate Flip");
+      pDeNoiseFilter    = FilterLoader::createFilter("DeNoise");
+   }
+
+   tFrameFilterList filterList;
+   if ( pROIFilter != NULL )
+   {
+      filterList.push_back( pROIFilter.get() );
+   }
+
+   if ( pRotateFlipFilter != NULL )
+   {
+      filterList.push_back( pRotateFlipFilter.get() );    
+   }
+
+   if ( pDeNoiseFilter != NULL )
+   {
+      filterList.push_back( pDeNoiseFilter.get() );    
+   }
+
+   pGrabber->setDeviceFrameFilters( filterList );
+*/
+
+   if ((subtype == MEDIASUBTYPE_RGB32) || (subtype == MEDIASUBTYPE_RGB24))
+   {
+      nRet = SetProperty(g_FlipV, g_On);
+	  pRotateFlipFilter->setParameter( "Flip V", true );
    }
 
    if (pSink != 0) pSink.destroy();
@@ -577,8 +556,7 @@ int CTIScamera::SetupProperties()
    assert(pSink!=NULL);
 
    //set the sink.
-   bool success = pGrabber->setSinkType(pSink);
-   assert(success==true);
+   assert(pGrabber->setSinkType(pSink) == true);
 
 
 
@@ -799,8 +777,6 @@ int CTIScamera::SetupProperties()
    DeNoiseValues.push_back("2");
    DeNoiseValues.push_back("3");
    DeNoiseValues.push_back("4");
-   DeNoiseValues.push_back("5");
-   DeNoiseValues.push_back("6");
    LogMessage("Setting some DeNoise settings", true);
    SetAllowedValues(g_Keyword_DeNoise, DeNoiseValues);
 
@@ -994,7 +970,8 @@ int CTIScamera::SnapImage()
 	Sleep(200);
   }
 
-  pSink->snapImages(1); //,2000);  //this command blocks until exposure is finished or timeout after 2000ms
+  //this command blocks until exposure is finished or timeout after 2000ms
+  assert (pSink->snapImages(1) == eNOERROR);
 
   if (was_off)
   {
@@ -1196,7 +1173,7 @@ Required by the MM::Camera API.
 ==============================================================================*/
 long CTIScamera::GetImageBufferSize() const
 {
-   return img_.Width() * img_.Height() * GetImageBytesPerPixel();
+   return img_.Width() * img_.Height() * img_.Depth();
 }
 
 
@@ -1618,23 +1595,24 @@ int CTIScamera::OnRotate(MM::PropertyBase* pProp, MM::ActionType eAct)
 		pRotateFlipFilter->getParameter( "Rotation Angle", lAngleOld);
         if ((abs(lAngleOld - lAngleNew) == 90) || (abs(lAngleOld - lAngleNew) == 270))
 		{
-			pGrabber->stopLive();
-			pRotateFlipFilter->setParameter( "Rotation Angle", lAngleNew);
-		    pGrabber->prepareLive(ACTIVEMOVIE);
+			if (pGrabber->isLive()) pGrabber->stopLive();
+			assert (pRotateFlipFilter->setParameter( "Rotation Angle", lAngleNew) == eNO_ERROR);
+		    assert (pGrabber->prepareLive(ACTIVEMOVIE) == true);
 
             //sink oriented data size
 			DShowLib::FrameTypeInfo info;
             pSink->getOutputFrameType(info);
-			//maximize ROI
+            roiX_ = 0;
+            roiY_ = 0;
             roiXSize_ = info.dim.cx;
             roiYSize_ = info.dim.cy;
 
 			ResizeImageBuffer();
-		    pGrabber->startLive(ACTIVEMOVIE);
+		    assert (pGrabber->startLive(ACTIVEMOVIE) == true);
 		}
 		else if (lAngleOld != lAngleNew)
 		{
-			pRotateFlipFilter->setParameter( "Rotation Angle", lAngleNew);
+			assert (pRotateFlipFilter->setParameter( "Rotation Angle", lAngleNew) == eNO_ERROR);
 		}
 	}
 	return DEVICE_OK;
