@@ -1261,7 +1261,7 @@ public class VirtualAcquisitionDisplay implements
          JSONObject tags = this.getCurrentMetadata();
          JSONObject summary = getSummaryMetadata();
          double pixSizeUm;
-         if (tags.has(pixSizeTag)) {
+         if (tags != null && tags.has(pixSizeTag)) {
             pixSizeUm = tags.getDouble(pixSizeTag);
          } else {
             pixSizeUm = summary.getDouble("PixelSize_um");
