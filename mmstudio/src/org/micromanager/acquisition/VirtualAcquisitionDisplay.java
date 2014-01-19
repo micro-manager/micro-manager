@@ -101,8 +101,8 @@ public class VirtualAcquisitionDisplay implements
          return null;
       }
    }
-   private static final Color[] DEFAULT_COLORS = {Color.blue, Color.green, Color.red};
-   private final static int SLOW_UPDATE_TIME = 1500;
+   //private static final Color[] DEFAULT_COLORS = {Color.blue, Color.green, Color.red};
+   //private final static int SLOW_UPDATE_TIME = 1500;
    private static final int ANIMATION_AND_LOCK_RESTART_DELAY = 800;
    final static Color[] rgb = {Color.red, Color.green, Color.blue};
    final static String[] rgbNames = {"Red", "Blue", "Green"};
@@ -484,7 +484,7 @@ public class VirtualAcquisitionDisplay implements
       eng_ = eng;
       pSelector_ = createPositionScrollbar();
       mda_ = eng != null;
-      this.albumSaved_ = imageCache.isFinished();
+      this.albumSaved_ = imageCache.isFinished();    
    }
 
    //used for snap and live
@@ -1115,7 +1115,6 @@ public class VirtualAcquisitionDisplay implements
 
    private void updateDisplay(TaggedImage taggedImage, boolean finalUpdate) {
       try {
-
          long t = System.currentTimeMillis();
          JSONObject tags;
          if (taggedImage != null) {
@@ -1222,12 +1221,13 @@ public class VirtualAcquisitionDisplay implements
             chMaxes = MDUtils.getJSONArrayMember(summaryMetadata, "ChContrastMax");
          }      
          
-         boolean rgb = MDUtils.isRGB(summaryMetadata);
+         // boolean rgb = MDUtils.isRGB(summaryMetadata);
 
          for (int k = 0; k < numDisplayChannels; ++k) {
             String name = chNames != null ? chNames.getString(k) :"channel " + k;    
-            int color = chColors != null && k < chColors.length() ? color = chColors.getInt(k) : Color.white.getRGB();
-            int min = chMins != null ? chMins.getInt(k) : 0;
+            int color = (chColors != null && k < chColors.length()) ? 
+                    chColors.getInt(k) : Color.white.getRGB();
+            int min = (chMins != null) ? chMins.getInt(k) : 0;
             int bitDepth = 16;
             if (summaryMetadata.has("BitDepth")) {
                bitDepth = MDUtils.getBitDepth(summaryMetadata);
@@ -1271,6 +1271,11 @@ public class VirtualAcquisitionDisplay implements
             if (summary.has(zStepUm))
                cal.pixelDepth = summary.getDouble(zStepUm);
             hyperImage.setCalibration(cal);
+            // this call is needed to update the top status line with image size
+            ImageWindow win = hyperImage.getWindow();
+            if (win != null) {
+               win.repaint();
+            }
          }
       } catch (JSONException ex) {
          // no pixelsize defined.  Nothing to do
@@ -1304,6 +1309,7 @@ public class VirtualAcquisitionDisplay implements
    }
    
    public void updateAndDraw(boolean force) {
+      imageChangedUpdate();
       if (hyperImage_ != null && hyperImage_.isVisible()) {  
          if (hyperImage_ instanceof MMCompositeImage) {                   
             ((MMCompositeImage) hyperImage_).updateAndDraw(force);
@@ -1315,7 +1321,7 @@ public class VirtualAcquisitionDisplay implements
 
    public void updateWindowTitleAndStatus() {
       if (simple_) {
-          int mag = (int) (100 * hyperImage_.getCanvas().getMagnification());
+         int mag = (int) (100 * hyperImage_.getCanvas().getMagnification());
          String title = hyperImage_.getTitle() + " ("+mag+"%)";
          hyperImage_.getWindow().setTitle(title);
          return;
