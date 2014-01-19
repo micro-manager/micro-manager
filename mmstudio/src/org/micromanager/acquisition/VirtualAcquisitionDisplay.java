@@ -1256,9 +1256,16 @@ public class VirtualAcquisitionDisplay implements
     * @param hyperImage
     */
    private void applyPixelSizeCalibration(final ImagePlus hyperImage) {
+      final String pixSizeTag = "PixelSizeUm";
       try {
+         JSONObject tags = this.getCurrentMetadata();
          JSONObject summary = getSummaryMetadata();
-         double pixSizeUm = summary.getDouble("PixelSize_um");
+         double pixSizeUm;
+         if (tags.has(pixSizeTag)) {
+            pixSizeUm = tags.getDouble(pixSizeTag);
+         } else {
+            pixSizeUm = summary.getDouble("PixelSize_um");
+         }
          if (pixSizeUm > 0) {
             Calibration cal = new Calibration();
             cal.setUnit("um");
@@ -2182,6 +2189,7 @@ public class VirtualAcquisitionDisplay implements
     */
    private void imageChangedUpdate() {
       boolean updatePixelSize = updatePixelSize_.get();
+
       if (updatePixelSize) {
          try {
             JSONObject summary = getSummaryMetadata();
@@ -2194,8 +2202,24 @@ public class VirtualAcquisitionDisplay implements
             
          } catch (JSONException ex) {
             ReportingUtils.logError("Error in imageChangedUpdate in VirtualAcquisitionDisplay.java");
-         }
+         } 
          updatePixelSize_.set(false);
+      } else {
+         if (hyperImage_ != null) {
+            Calibration cal = hyperImage_.getCalibration();
+            double calPixSize = cal.pixelWidth;
+            JSONObject tags = this.getCurrentMetadata();
+            if (tags != null) {
+               try {
+                  double imgPixSize = tags.getDouble("PixelSizeUm");
+                  if (calPixSize != imgPixSize) {
+                     applyPixelSizeCalibration(hyperImage_);
+                  }
+               } catch (JSONException ex) {
+                  ReportingUtils.logError("Found Image without PixelSizeUm tag");
+               }
+            }
+         }
       }
       if (histograms_ != null) {
          histograms_.imageChanged();
