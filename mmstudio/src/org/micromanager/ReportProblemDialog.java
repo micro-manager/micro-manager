@@ -245,7 +245,12 @@ public class ReportProblemDialog extends javax.swing.JDialog {
       stepInstructions_.setText("Sending...");
 
       core_.logMessage("User requested to send problem report");
-      logExtraInformation(false);
+      try {
+         logExtraInformation(false);
+      }
+      catch (Exception e) {
+         core_.logMessage("Exception while logging info");
+      }
       core_.logMessage("Now sending problem report, after a delay of 200 ms");
 
       // Hack: The end of the logged info gets truncated, presumably due to the
@@ -446,12 +451,17 @@ public class ReportProblemDialog extends javax.swing.JDialog {
     private void clearButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_clearButton_ActionPerformed
        core_.clearLog();
        core_.logMessage("CoreLog cleared by problem reporter");
-       parent_.logStartupProperties();
-       logExtraInformation(true);
+       try {
+          parent_.logStartupProperties();
+          logExtraInformation(true);
+       }
+       catch (Exception e) {
+          core_.logMessage("Exception while logging info");
+       }
 
        stepInstructions_.setText("The system is now capturing a 'debug' level log file. Operate the system until you've duplicated the problem. When you're successful, "
                + " press Send to send your information, problem description, system configuration, and log to micro-manager.org.");
-
+       core_.logMessage("User has been propmted to reproduce problem");
 
        descriptionPane_.setEnabled(true);
        descriptionPane_.setEditable(true);
