@@ -397,32 +397,37 @@ public class ReportProblemDialog extends javax.swing.JDialog {
       // before sending the report.
       long[] deadlockedThreadIds = threadMXB.findDeadlockedThreads();
 
-      java.util.Arrays.sort(deadlockedThreadIds);
-      ThreadInfo[] deadlockedInfos = threadMXB.getThreadInfo(deadlockedThreadIds, true, true);
-      for (ThreadInfo tInfo : deadlockedInfos) {
-         core_.logMessage("Deadlocked thread " + tInfo.getThreadId() +
-                 " (\"" + tInfo.getThreadName() + "\"):");
-         java.lang.management.LockInfo blockingLock = tInfo.getLockInfo();
-         core_.logMessage("  Blocked waiting to lock " + blockingLock.getClassName() +
-                 " " + blockingLock.getIdentityHashCode());
+      if (deadlockedThreadIds != null && deadlockedThreadIds.length > 0) {
+         java.util.Arrays.sort(deadlockedThreadIds);
+         ThreadInfo[] deadlockedInfos = threadMXB.getThreadInfo(deadlockedThreadIds, true, true);
+         for (ThreadInfo tInfo : deadlockedInfos) {
+            core_.logMessage("Deadlocked thread " + tInfo.getThreadId() +
+                    " (\"" + tInfo.getThreadName() + "\"):");
+            java.lang.management.LockInfo blockingLock = tInfo.getLockInfo();
+            core_.logMessage("  Blocked waiting to lock " + blockingLock.getClassName() +
+                    " " + blockingLock.getIdentityHashCode());
 
-         java.lang.management.MonitorInfo[] monitors = tInfo.getLockedMonitors();
-         java.lang.management.LockInfo[] synchronizers = tInfo.getLockedSynchronizers();
-         StackTraceElement[] trace = tInfo.getStackTrace();
-         for (StackTraceElement frame : trace) {
-            core_.logMessage("    at " + frame.toString());
-            for (java.lang.management.MonitorInfo monitor : monitors) {
-               if (monitor.getLockedStackFrame().equals(frame)) {
-                  core_.logMessage("      where monitor was locked: " +
-                          monitor.getClassName() + " " +
-                          monitor.getIdentityHashCode());
+            java.lang.management.MonitorInfo[] monitors = tInfo.getLockedMonitors();
+            java.lang.management.LockInfo[] synchronizers = tInfo.getLockedSynchronizers();
+            StackTraceElement[] trace = tInfo.getStackTrace();
+            for (StackTraceElement frame : trace) {
+               core_.logMessage("    at " + frame.toString());
+               for (java.lang.management.MonitorInfo monitor : monitors) {
+                  if (monitor.getLockedStackFrame().equals(frame)) {
+                     core_.logMessage("      where monitor was locked: " +
+                             monitor.getClassName() + " " +
+                             monitor.getIdentityHashCode());
+                  }
                }
             }
+            for (java.lang.management.LockInfo sync : synchronizers) {
+               core_.logMessage("  Ownable synchronizer is locked: " +
+                       sync.getClassName() + " " + sync.getIdentityHashCode());
+            }
          }
-         for (java.lang.management.LockInfo sync : synchronizers) {
-            core_.logMessage("  Ownable synchronizer is locked: " +
-                    sync.getClassName() + " " + sync.getIdentityHashCode());
-         }
+      }
+      else {
+         core_.logMessage("No deadlocked threads detected");
       }
    }
 
