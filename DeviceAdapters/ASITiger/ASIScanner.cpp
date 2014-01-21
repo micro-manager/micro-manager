@@ -420,7 +420,7 @@ int CScanner::SetPosition(double x, double y)
 
 int CScanner::GetPosition(double& x, double& y)
 {
-   // read from card instead of using cached values directly, could be slight mismatch
+//   // read from card instead of using cached values directly, could be slight mismatch
    ostringstream command; command.str("");
    command << "W " << axisLetterX_;
    RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
@@ -432,6 +432,19 @@ int CScanner::GetPosition(double& x, double& y)
    RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterPosition2(y) );
    y = y/unitMultY_;
    return DEVICE_OK;
+//   ostringstream command; command.str("");
+//   hub_->QueryCommand("VB F=1");
+//   command << "W " << axisLetterX_;
+//   RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),axisLetterX_) );
+//   RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(x) );
+//   x = x/unitMultX_;
+//   command.str("");
+//   command << "W " << axisLetterY_;
+//   RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),axisLetterY_) );
+//   RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(y) );
+//   y = y/unitMultY_;
+//   hub_->QueryCommand("VB F=0");
+//   return DEVICE_OK;
 }
 
 void CScanner::UpdateIlluminationState()

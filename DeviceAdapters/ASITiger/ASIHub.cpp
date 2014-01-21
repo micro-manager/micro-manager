@@ -317,7 +317,7 @@ vector<string> ASIHub::SplitAnswerOnDelim(string delim) const
 
 int ASIHub::GetBuildInfo(const string addressLetter, build_info_type &build)
 // original use is in DetectInstalledDevices addressed to comm card
-// made as separate function that could be used to query other cards, including defines
+// refactored as separate function for use to query other cards, including defines
 {
    ostringstream command; command.str("");
    command << addressLetter << "BU X";

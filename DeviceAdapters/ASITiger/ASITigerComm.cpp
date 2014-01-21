@@ -59,8 +59,14 @@ int CTigerCommHub::Initialize()
    // make sure we are on Tiger
    RETURN_ON_MM_ERROR ( TalkToTiger() );
 
+   // make sure we are using the old reply syntax
+   // unfortunately the newer and easier-to-use syntax came after these device adapters
+   // older firmware should just accept this command without any side effects
+   // newer firmware will set to Whizkid syntax (:A everywhere, inconsistent axis specifiers, etc.)
+   RETURN_ON_MM_ERROR ( QueryCommand("VB F=0") );
+
    // get version information from the controller, this is just for TigerComm (hub/serial card)
-   ret_ = QueryCommandVerify("V", ":A v");  // N.B. this is different for non-Tiger controllers like MS/WK-2000
+   ret_ = QueryCommandVerify("0 V", ":A v");  // N.B. this is different for non-Tiger controllers like MS/WK-2000
    if(ret_ == ERR_UNRECOGNIZED_ANSWER)
       ret_ = DEVICE_NOT_SUPPORTED;
    RETURN_ON_MM_ERROR (ret_);
@@ -142,7 +148,7 @@ int CTigerCommHub::DetectInstalledDevices()
    //   the user checks "selected" in the Peripherals list will it become accessible to MM
    // importantly MM's behavior is not to use the instance created in this function
    //   but create another instance by calling CreateDevice with the name parameter of
-   //   whatever device is created here
+   //   whatever device is created here... basically it creates a config file and then reloads it
 
    // make sure we can communicate with an initialized hub
    if (DetectDevice() != MM::CanCommunicate)
