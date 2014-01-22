@@ -463,6 +463,7 @@ void CScanner::UpdateIlluminationState()
          illuminationState_ = true;
          return;
       }
+      command.str("");
       command << "RS " << axisLetterY_ << "-";
       ret_ = hub_->QueryCommandVerify(command.str(),":A");
       if (ret_ != DEVICE_OK)  // don't choke on comm error
