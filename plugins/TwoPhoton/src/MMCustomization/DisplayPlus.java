@@ -268,13 +268,16 @@ public class DisplayPlus implements ImageCacheListener  {
             public void mouseEntered(MouseEvent e) {
             }
 
-            @Override
-            public void mouseExited(MouseEvent e) {
+           @Override
+           public void mouseExited(MouseEvent e) {
+               if (!positionSelectMode_) {
+                   return;
+               }
                mouseRowIndex_ = -1;
                mouseColIndex_ = -1;
                drawDepthListOverlay(vad_.getImagePlus().getCanvas());
-            }
-        });
+           }
+       });
     }
    
  
