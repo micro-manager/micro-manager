@@ -102,6 +102,10 @@ public class DisplayPlus implements ImageCacheListener  {
                     
         //add mouse listeners for moving grids
         addMouseListeners();
+        
+        //remove channel switching scroll wheel listener
+         vad_.getImagePlus().getWindow().removeMouseWheelListener( 
+                 vad_.getImagePlus().getWindow().getMouseWheelListeners()[0]);
 
       stitchedCache.addImageCacheListener(this);
    }
@@ -171,9 +175,11 @@ public class DisplayPlus implements ImageCacheListener  {
          overlay.add(rect);
       }
       
-      for (int row = 0; row < numRows_; row++) {
-         for (int col = 0; col < numCols_; col++) {
-            overlay.add(makeTextRoi(row, col, TwoPhotonControl.getDepthListOffset(getPosIndex(row, col))));
+      if (positionSelectMode_) {
+         for (int row = 0; row < numRows_; row++) {
+            for (int col = 0; col < numCols_; col++) {
+               overlay.add(makeTextRoi(row, col, TwoPhotonControl.getDepthListOffset(getPosIndex(row, col))));
+            }
          }
       }
       
@@ -245,8 +251,7 @@ public class DisplayPlus implements ImageCacheListener  {
              String posName = "";
              int i = getPosIndex(selectedRowIndex_, selectedColIndex_);
              try {
-                controls_.updateOffsetInfo(positionList_.getJSONObject(i).getString("Label"),
-                        TwoPhotonControl.getDepthListOffset(i));
+                controls_.updateSelectedPosition(positionList_.getJSONObject(i).getString("Label"));
              } catch (JSONException ex) {
                 ReportingUtils.showError("couldnt update dpeth list offset");
              }
@@ -278,7 +283,23 @@ public class DisplayPlus implements ImageCacheListener  {
                drawDepthListOverlay(vad_.getImagePlus().getCanvas());
            }
        });
-    }
+       
+        vad_.getImagePlus().getCanvas().addMouseWheelListener(new MouseWheelListener() {
+
+         @Override
+         public void mouseWheelMoved(MouseWheelEvent e) {
+            if (selectedRowIndex_ != -1 && selectedColIndex_ != -1) {
+               int numClicks = e.getWheelRotation();
+               TwoPhotonControl.setDepthListOffset(getPosIndex(selectedRowIndex_, selectedColIndex_),
+                       TwoPhotonControl.getDepthListOffset(getPosIndex(selectedRowIndex_, selectedColIndex_)) + numClicks);
+               drawDepthListOverlay(vad_.getImagePlus().getCanvas());
+
+            }
+         }
+      });
+
+
+   }
    
  
    public int getPosIndex(int row, int col) {
@@ -432,7 +453,6 @@ public class DisplayPlus implements ImageCacheListener  {
 
         private JButton pauseButton_, abortButton_;
         private JTextField fpsField_;
-        private JSpinner offsetField_;
         private JLabel zPosLabel_, timeStampLabel_, posNameLabel_;
 
         public Controls() {
@@ -454,8 +474,7 @@ public class DisplayPlus implements ImageCacheListener  {
             }
         }
 
-        public void updateOffsetInfo(String posName, int offset) {
-           offsetField_.setValue(offset);
+        public void updateSelectedPosition(String posName) {
            posNameLabel_.setText(posName);
         } 
         
@@ -624,7 +643,6 @@ public class DisplayPlus implements ImageCacheListener  {
                   gridYSpinner_.setEnabled(false);
                   createGridButton.setEnabled(false);
                }
-               drawDepthListOverlay(vad_.getImagePlus().getCanvas());
             }
          });
           
@@ -647,30 +665,16 @@ public class DisplayPlus implements ImageCacheListener  {
             }
          };
          panel1.add(posNameLabel_);
-         offsetField_  = new JSpinner(new SpinnerNumberModel(0,0,400,1));
-         panel1.add(offsetField_);
-         offsetField_.setEnabled(false);
-         offsetField_.addChangeListener(new ChangeListener() {
-            @Override
-            public void stateChanged(ChangeEvent e) {
-               TwoPhotonControl.setDepthListOffset(getPosIndex(selectedRowIndex_, selectedColIndex_),
-                (Integer) offsetField_.getValue());
-            }
-         });
-         //make changes as soon as they are typed
-         ((DefaultFormatter) ((JFormattedTextField) offsetField_.getEditor().getComponent(0)).getFormatter()).setCommitsOnValidEdit(true);
-
+                 
          dlOffsetsButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                if (dlOffsetsButton.isSelected()) {
-                  offsetField_.setEnabled(true);
                   newGridButton_.setSelected(false);
                   newGridButton_.getActionListeners()[0].actionPerformed(null);
                   dlOffsetsButton.setText("Select XY position");
                   positionSelectMode_ = true;
                } else {
-                  offsetField_.setEnabled(false);
                   posNameLabel_.setText("");
                   dlOffsetsButton.setText("Set depth list offsets");
                   positionSelectMode_ = false;
@@ -678,6 +682,7 @@ public class DisplayPlus implements ImageCacheListener  {
                   selectedRowIndex_ = -1;
                   selectedColIndex_ = -1;
                }
+               drawDepthListOverlay(vad_.getImagePlus().getCanvas());
             }
          });
          
