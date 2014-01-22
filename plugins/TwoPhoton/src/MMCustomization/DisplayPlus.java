@@ -127,7 +127,7 @@ public class DisplayPlus implements ImageCacheListener  {
          x = canvasWidth - (tileWidth_ - xOverlap_ / 2);
       } else {
          width = tileWidth_ - xOverlap_;
-         x = (tileWidth_ - xOverlap_ / 2) + (colIndex - 1) * (tileHeight_ - yOverlap_);
+         x = (tileWidth_ - xOverlap_ / 2) + (colIndex - 1) * (tileWidth_ - xOverlap_);
       }
       return new Roi(x,y,width,height);
    }
@@ -153,7 +153,7 @@ public class DisplayPlus implements ImageCacheListener  {
          x = canvasWidth - (tileWidth_ - xOverlap_ / 2);
       } else {
          width = tileWidth_ - xOverlap_;
-         x = (tileWidth_ - xOverlap_ / 2) + (colIndex - 1) * (tileHeight_ - yOverlap_);
+         x = (tileWidth_ - xOverlap_ / 2) + (colIndex - 1) * (tileWidth_ - xOverlap_);
       }
       double mag = vad_.getImagePlus().getCanvas().getMagnification();
       TextRoi tr = new TextRoi(x + width / 2,y + height / 2,"Offset: " + offset + " um");
@@ -171,9 +171,11 @@ public class DisplayPlus implements ImageCacheListener  {
          overlay.add(rect);
       }
       
-      TextRoi roi = makeTextRoi(mouseRowIndex_,mouseColIndex_, 
-              TwoPhotonControl.getDepthListOffset(getPosIndex(mouseRowIndex_,mouseColIndex_)));
-      overlay.add(roi);
+      for (int row = 0; row < numRows_; row++) {
+         for (int col = 0; col < numCols_; col++) {
+            overlay.add(makeTextRoi(row, col, TwoPhotonControl.getDepthListOffset(getPosIndex(row, col))));
+         }
+      }
       
       if (selectedRowIndex_ != -1 && selectedColIndex_ != -1) {
          Roi selectionRect = makeROIRect(selectedRowIndex_, selectedColIndex_);
@@ -619,6 +621,7 @@ public class DisplayPlus implements ImageCacheListener  {
                   gridYSpinner_.setEnabled(false);
                   createGridButton.setEnabled(false);
                }
+               drawDepthListOverlay(vad_.getImagePlus().getCanvas());
             }
          });
           
