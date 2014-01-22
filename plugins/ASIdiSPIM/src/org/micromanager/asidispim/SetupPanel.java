@@ -236,9 +236,11 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
     ActionListener alA = 
     new ActionListener() {
        public void actionPerformed(ActionEvent e) { 
-          sheetABox_.setEnabled(beamABox_.isSelected());
-          // whether beam is turned off or on, we want scan to be off on toggle
-          sheetABox_.setSelected(false);
+          if (beamABox_.isSelected() && sheetABox_.isSelected()) {
+             // restart sheet if it was enabled before
+             sheetABox_.doClick();
+             sheetABox_.doClick();
+          }
        }
     }; 
     alA.actionPerformed(null);
@@ -246,25 +248,37 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
     
     ActionListener alB = new ActionListener() {
        public void actionPerformed(ActionEvent e) { 
-          sheetBBox_.setEnabled(beamBBox_.isSelected());
-          // whether beam is turned off or on, we want scan to be off on toggle
-          sheetBBox_.setSelected(false);
+          if (beamBBox_.isSelected() && sheetBBox_.isSelected()) {
+             // restart sheet if it was enabled before
+             sheetBBox_.doClick();
+             sheetBBox_.doClick();
+          }
        }
     };
     alB.actionPerformed(null);
     beamBBox_.addActionListener(alB);
     
-    tmp_but = new JButton("Toggle scan");
+    add(new JLabel("Toggle:"));
+    
+    tmp_but = new JButton("Beams");
     tmp_but.addActionListener(new ActionListener() {
        @Override
        public void actionPerformed(ActionEvent e) {
-          boolean a = sheetABox_.isSelected();
-          boolean b = sheetBBox_.isSelected();
-          sheetABox_.setSelected(!a);
-          sheetBBox_.setSelected(!b);
+          beamABox_.doClick();
+          beamBBox_.doClick();
        }
     });
-    add(tmp_but, "skip 1");
+    add(tmp_but, "split 2");
+    
+    tmp_but = new JButton("Scan");
+    tmp_but.addActionListener(new ActionListener() {
+       @Override
+       public void actionPerformed(ActionEvent e) {
+          sheetABox_.doClick();
+          sheetBBox_.doClick();
+       }
+    });
+    add(tmp_but);
     
     add(new JLabel("Sheet/slice position:"));
     add(new JLabel(""));
@@ -312,11 +326,10 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
        }
     });
 
-
-    add(toggleButtonLive_, "span, split 3, center, width 110px");
+    add(new JLabel("Camera:"));
     boolean isMultiCamera = prefs_.getBoolean(ISMULTICAMERAPREFNAME, false);
-    dualCameraButton_ = new JRadioButton("Dual Camera");
-    singleCameraButton_ = new JRadioButton("Single Camera");
+    dualCameraButton_ = new JRadioButton("Dual");
+    singleCameraButton_ = new JRadioButton("Single");
     ButtonGroup singleDualCameraButtonGroup = new ButtonGroup();
     singleDualCameraButtonGroup.add(dualCameraButton_);
     singleDualCameraButtonGroup.add(singleCameraButton_);
@@ -333,11 +346,11 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
     };
     dualCameraButton_.addActionListener(radioButtonListener);
     singleCameraButton_.addActionListener(radioButtonListener);
-    add(singleCameraButton_, "center");
-    add(dualCameraButton_, "center");
-
+    add(singleCameraButton_, "split 2, center");
+    add(dualCameraButton_, "center, wrap");
+    add(toggleButtonLive_, "center, width 110px, skip 1");
       
-   }// end of constructor
+   }// end of SetupPanel constructor
    
    /**
     * required by LiveModeListener interface
@@ -431,9 +444,6 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
             ReportingUtils.showError("could not execute core function move to home for axis " + letter);
          }
       }
-     
-      sheetABox_.setEnabled(beamABox_.isSelected());
-      sheetBBox_.setEnabled(beamBBox_.isSelected());
       
       // handles single/dual camera
       JRadioButton jr = dualCameraButton_; 
