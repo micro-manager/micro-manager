@@ -1592,7 +1592,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
 
    @SuppressWarnings("LeakingThisInConstructor")
    public MMStudioMainFrame(boolean pluginStatus) {
-      super();
+      org.micromanager.diagnostics.ThreadExceptionLogger.setUp();
 
       startLoadingPipelineClass();
 
