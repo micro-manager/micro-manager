@@ -13,9 +13,9 @@
 //                
 // AUTHOR:        Wenjamin Rosenfeld
 //
-// YEAR:          2012, 2013
+// YEAR:          2012 - 2014
 //                
-// VERSION:       1.1
+// VERSION:       1.1.1
 //
 // LICENSE:       This file is distributed under the BSD license.
 //                License text is included with the source distribution.
@@ -28,7 +28,7 @@
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-//LAST UPDATE:    22.12.2013 WR
+//LAST UPDATE:    23.01.2014 WR
 
 
 
@@ -42,6 +42,11 @@
 
 #include "IDS_uEye.h"
 
+
+
+//definitions
+#define DRV_VERSION "1.1.1"                       //version of this driver
+#define ACQ_TIMEOUT 1100                             //timeout for image acquisition (in 10ms)
 
 
 
@@ -63,8 +68,6 @@ const char* g_PixelType_32bit = "32bit";        // floating point greyscale
 */
 
 
-//definitions
-#define ACQ_TIMEOUT 1100                             //timeout for image acquisition (in 10ms)
 
 
 
@@ -315,7 +318,8 @@ int CIDS_uEye::Initialize()
       return nRet;
 
    // Description (read-only)
-   nRet = CreateProperty(MM::g_Keyword_Description, "IDS uEye Device Adapter", MM::String, true);
+   string descr=std::string("IDS uEye Adapter v. ") + DRV_VERSION;
+   nRet = CreateProperty(MM::g_Keyword_Description, descr.c_str(), MM::String, true);
    if (DEVICE_OK != nRet)
       return nRet;
 
@@ -397,12 +401,14 @@ int CIDS_uEye::Initialize()
    assert(nRet == DEVICE_OK);
    SetPropertyLimits("Frame Rate", framerateMin_, framerateMax_);
 
-
+   
    // exposure
-   nRet = CreateProperty(MM::g_Keyword_Exposure,CDeviceUtils::ConvertToString(exposureMin_) , MM::Float, false);
+   pAct = new CPropertyAction (this, &CIDS_uEye::OnExposure);
+   nRet = CreateProperty(MM::g_Keyword_Exposure,CDeviceUtils::ConvertToString(exposureMin_) , MM::Float, false, pAct);
    assert(nRet == DEVICE_OK);
    SetPropertyLimits(MM::g_Keyword_Exposure, exposureMin_, exposureMax_);
    SetExposure(exposureMin_);
+
 
    //exposure interval (read-only)
    nRet = CreateProperty(MM::g_Keyword_Interval_ms,CDeviceUtils::ConvertToString(exposureIncrement_) , MM::Float, true);
@@ -1007,11 +1013,14 @@ double CIDS_uEye::GetExposure() const
 */
 void CIDS_uEye::SetExposure(double exp)
 {
-   SetProperty(MM::g_Keyword_Exposure, CDeviceUtils::ConvertToString(exp));
-   exposureSet_=exp;
-   //is_SetExposureTime (hCam, exposureSet_, &exposureCur_);            //deprecated since v. 4.0
-   is_Exposure(hCam, IS_EXPOSURE_CMD_SET_EXPOSURE, &exposureSet_, sizeof(exposureSet_));
-   is_Exposure(hCam, IS_EXPOSURE_CMD_GET_EXPOSURE, &exposureCur_, sizeof(exposureCur_));
+  exposureSet_=exp;
+  //is_SetExposureTime (hCam, exposureSet_, &exposureCur_);            //deprecated since v. 4.0
+  is_Exposure(hCam, IS_EXPOSURE_CMD_SET_EXPOSURE, &exposureSet_, sizeof(exposureSet_));
+  is_Exposure(hCam, IS_EXPOSURE_CMD_GET_EXPOSURE, &exposureCur_, sizeof(exposureCur_));
+  
+  SetProperty(MM::g_Keyword_Exposure, CDeviceUtils::ConvertToString(exposureCur_));
+  
+  //GetCoreCallback()->OnExposureChanged(this, exposureCur_);            //FIXME: what does this do?
 }
 
 
@@ -1393,7 +1402,7 @@ int CIDS_uEye::OnPixelClock(MM::PropertyBase* pProp, MM::ActionType eAct)
     SetPixelClock((UINT)pixClk);
   }
 
-  //update frame rate range
+  //update frame rate range                                                     //FIXME: the frame rate and exposure ranges are updated more than one time
   GetFramerateRange(hCam, &framerateMin_, &framerateMax_);
   SetPropertyLimits("Frame Rate", framerateMin_, framerateMax_);
   printf("IDS_uEye: new frame rate range %.4f - %.4f\n",framerateMin_,framerateMax_);
@@ -1404,6 +1413,9 @@ int CIDS_uEye::OnPixelClock(MM::PropertyBase* pProp, MM::ActionType eAct)
   if(exposureMax_>EXPOSURE_MAX) exposureMax_=EXPOSURE_MAX;                       //limit exposure time to keep the interface responsive
   SetPropertyLimits(MM::g_Keyword_Exposure, exposureMin_, exposureMax_);
   printf("IDS_uEye: new exposure range %.4f - %.4f\n",exposureMin_,exposureMax_); 
+
+  //set again current exposure (FIXME: why is it necessary?)
+  SetExposure(exposureCur_);
 
   return ret; 
 }
@@ -1448,6 +1460,42 @@ int CIDS_uEye::OnFramerate(MM::PropertyBase* pProp, MM::ActionType eAct)
   return ret; 
 }
 
+
+
+/**
+* Handles "Exposure" property.
+*/
+int CIDS_uEye::OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+
+  int ret = DEVICE_OK;
+  UINT nRet;
+
+  
+  if (eAct == MM::BeforeGet){
+    pProp->Set(exposureCur_);
+  }
+
+  else if (eAct == MM::AfterSet){
+    double exp;
+    pProp->Get(exp);
+
+    exposureSet_=exp;
+
+    nRet=is_Exposure(hCam, IS_EXPOSURE_CMD_SET_EXPOSURE, &exposureSet_, sizeof(exposureSet_));
+    is_Exposure(hCam, IS_EXPOSURE_CMD_GET_EXPOSURE, &exposureCur_, sizeof(exposureCur_));
+    
+    if(nRet!=IS_SUCCESS){
+      printf("IDS_uEye: could not set exposure\n");
+    }
+    else{
+      printf("IDS_uEye: set exposure to %.4f\n", exposureCur_);
+    } 
+
+  }
+
+  return ret;  
+}
 
 
 

@@ -13,9 +13,9 @@
 //                
 // AUTHOR:        Wenjamin Rosenfeld
 //
-// YEAR:          2012, 2013
+// YEAR:          2012 - 2014
 //                
-// VERSION:       1.1
+// VERSION:       1.1.1
 //
 // LICENSE:       This file is distributed under the BSD license.
 //                License text is included with the source distribution.
@@ -28,7 +28,7 @@
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-//LAST UPDATE:    22.12.2013 WR
+//LAST UPDATE:    22.01.2014 WR
 
 
 
@@ -443,6 +443,7 @@ class CIDS_uEye : public CCameraBase<CIDS_uEye>
   int OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct);
   int OnPixelClock(MM::PropertyBase* pProp, MM::ActionType eAct);
   int OnFramerate(MM::PropertyBase* pProp, MM::ActionType eAct);
+  int OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct);
   int OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct);
   int OnReadoutTime(MM::PropertyBase* pProp, MM::ActionType eAct);
   int OnErrorSimulation(MM::PropertyBase* , MM::ActionType );
