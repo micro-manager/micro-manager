@@ -473,6 +473,7 @@ AC_CONFIG_FILES(
 	[XCite120PC_Exacte/Makefile:XCite120PC_Exacte/Makefile.in:MMDEVAPI.rules]
 	[XCiteLed/Makefile:XCiteLed/Makefile.in:MMDEVAPI.rules]
 	[Xcite/Makefile:Xcite/Makefile.in:MMDEVAPI.rules]
+	[XLight/Makefile:XLight/Makefile.in:MMDEVAPI.rules]
 	[Yokogawa/Makefile:Yokogawa/Makefile.in:MMDEVAPI.rules]
 	[Zaber/Makefile:Zaber/Makefile.in:MMDEVAPI.rules]
 	[ZeissCAN/Makefile:ZeissCAN/Makefile.in:MMDEVAPI.rules]
