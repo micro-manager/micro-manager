@@ -314,6 +314,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MMDevice-StaticRuntime", "M
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Mosaic3", "SecretDeviceAdapters\Mosaic3\Mosaic3.vcxproj", "{E1EEF63F-5DE9-46DD-9291-9D356F02CFD1}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "XLight", "DeviceAdapters\XLight\XLight.vcxproj", "{2AC2C860-BA44-452A-A801-BAAB7A51C0AC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -1548,6 +1550,13 @@ Global
 		{E1EEF63F-5DE9-46DD-9291-9D356F02CFD1}.Release|Win32.Build.0 = Release|Win32
 		{E1EEF63F-5DE9-46DD-9291-9D356F02CFD1}.Release|x64.ActiveCfg = Release|x64
 		{E1EEF63F-5DE9-46DD-9291-9D356F02CFD1}.Release|x64.Build.0 = Release|x64
+		{2AC2C860-BA44-452A-A801-BAAB7A51C0AC}.Debug|Win32.ActiveCfg = Debug|Win32
+		{2AC2C860-BA44-452A-A801-BAAB7A51C0AC}.Debug|Win32.Build.0 = Debug|Win32
+		{2AC2C860-BA44-452A-A801-BAAB7A51C0AC}.Debug|x64.ActiveCfg = Debug|Win32
+		{2AC2C860-BA44-452A-A801-BAAB7A51C0AC}.Release|Win32.ActiveCfg = Release|Win32
+		{2AC2C860-BA44-452A-A801-BAAB7A51C0AC}.Release|Win32.Build.0 = Release|Win32
+		{2AC2C860-BA44-452A-A801-BAAB7A51C0AC}.Release|x64.ActiveCfg = Release|x64
+		{2AC2C860-BA44-452A-A801-BAAB7A51C0AC}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
