@@ -1,6 +1,5 @@
 package HDF;
 
-
 import ij.IJ;
 import java.awt.Color;
 import java.io.*;
@@ -18,16 +17,13 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.utils.ReportingUtils;
 
-
-
 public class HDFWriter {
-         
-   private static final Color[] DEFAULT_CHANNEL_COLORS = 
-           new Color[]{new Color(75,0,130), Color.blue, Color.green, Color.yellow,
+
+   private static final Color[] DEFAULT_CHANNEL_COLORS =
+           new Color[]{new Color(75, 0, 130), Color.blue, Color.green, Color.yellow,
       Color.red, Color.pink, Color.orange, Color.magenta};
    private static final String VERSION = "7.6";
-  
-   private int bitDepth_;   
+   private int bitDepth_;
    private String acqDate_ = "2012-11-08 16:14:17.000";
    private int numChannels_, numFrames_;
    private int imageWidth_, imageHeight_, numSlices_;
@@ -37,7 +33,7 @@ public class HDFWriter {
    private DecimalFormat numberFormat_ = new DecimalFormat("#.###");
    private ResolutionLevel[] resLevels_;
    private int[] resLevelIDs_;
-   private String directory_, filename_; 
+   private String directory_, filename_;
    private TimePoint currentTimePoint_;
    private int timePointImageCount_ = 0;
    private final boolean compressImageData_;
@@ -45,8 +41,8 @@ public class HDFWriter {
    private Color[] channelColors_;
    private boolean initialized_ = false;
    private boolean finished_ = false;
-   
-   public HDFWriter( String directory, String filename, int numChannels, 
+
+   public HDFWriter(String directory, String filename, int numChannels,
            int numFrames, int numSlices, double pixelSize, double pixelSizeZ, Color[] channelColors,
            int width, int height, ResolutionLevel[] resLevels) {
       compressImageData_ = true;
@@ -63,29 +59,29 @@ public class HDFWriter {
          channelColors_ = channelColors;
       }
       bitDepth_ = 8;
-      
+
       imageWidth_ = width;
       imageHeight_ = height;
       resLevels_ = resLevels;
-      slicesPerWrite_ = resLevels_[resLevels_.length - 1].getReductionFactorZ(); 
+      slicesPerWrite_ = resLevels_[resLevels_.length - 1].getReductionFactorZ();
    }
-   
+
    public boolean isFinished() {
       return finished_;
    }
-   
+
    public void finish() {
       try {
-      //if canceled
-      if (currentTimePoint_ != null) {
-         currentTimePoint_.closeTimePoint();
-      }
+         //if canceled
+         if (currentTimePoint_ != null) {
+            currentTimePoint_.closeTimePoint();
+         }
 
-      H5.H5Gclose(timeInfoID_);
-      for (int id : resLevelIDs_) {
-         H5.H5Gclose(id);
-      }
-      finished_ = true;
+         H5.H5Gclose(timeInfoID_);
+         for (int id : resLevelIDs_) {
+            H5.H5Gclose(id);
+         }
+         finished_ = true;
       } catch (Exception e) {
          ReportingUtils.showError("Couldn't finish Imaris file");
          e.printStackTrace();
@@ -93,89 +89,48 @@ public class HDFWriter {
    }
 
    public void close() {
-      try {       
+      try {
          //close file
          H5.H5Fclose(fileID_);
       } catch (Exception e) {
          e.printStackTrace();
       }
    }
-   
-   public TaggedImage readAsTaggedImage(int channel, int slice, int frame) throws HDF5LibraryException, HDF5Exception {
-      byte[] pixels = new byte[imageHeight_ * imageWidth_];
-            
-      long t1 = System.currentTimeMillis();
-      int datasetID = H5.H5Dopen(fileID_, "/DataSet/ResolutionLevel 0/TimePoint " + frame + "/Channel " + channel +"/Data",
-              HDF5Constants.H5P_DEFAULT);
-      int filespaceID = H5.H5Screate_simple(3, new long[]{1, imageHeight_, imageWidth_}, null);
-      int memspaceID = H5.H5Screate_simple(1, new long[]{imageWidth_ * imageHeight_}, null);
-      long t2 = System.currentTimeMillis();
-      
-      H5.H5Dread(datasetID, HDF5Constants.H5T_NATIVE_UCHAR, memspaceID, filespaceID,  HDF5Constants.H5P_DEFAULT, pixels);
 
-      long t3 = System.currentTimeMillis();
-      H5.H5Dclose(datasetID);
-      H5.H5Sclose(filespaceID);
-      H5.H5Sclose(memspaceID);
-      long t4 = System.currentTimeMillis();
-      
-      System.out.println((t2 -t1) + "\t\t" + (t3-t2) + "\t\t" + (t4-t3));
-      
-      //convert to Imaris format
-      JSONObject tags = new JSONObject();
-      try {
-         tags.put("ChannelIndex", channel);
-         tags.put("FrameIndex", frame);
-         tags.put("SliceIndex", slice);
-         tags.put("PositionIndex", 0);
-         tags.put("PixelType", "GRAY8");
-         tags.put("Width", imageWidth_);
-         tags.put("Height", imageHeight_);
-      } catch (JSONException ex) {
-         ReportingUtils.showError("Couldn't add image tags after reading from HDF");
-      }
-      return new TaggedImage(pixels, tags);
-   }
-   
    //this function is not writing one image, but rather the minimum number of slices needed to 
    //write one image at the lowest resolution level
-   public void writeImage(PipelineImage img) {
+   public void writeImage(PipelineImage img) throws Exception {
       if (!initialized_) {
-         acqDate_ = img.acqDate;            
+         acqDate_ = img.acqDate;
          createFile();
          initialized_ = true;
       }
-      try {
-         //if new timepoint
-         if (timePointImageCount_ == 0) {
-            currentTimePoint_ = new TimePoint(resLevels_, resLevelIDs_, numChannels_, img.frame, 
-                    bitDepth_, compressImageData_);
-            HDFUtils.writeStringAttribute(timeInfoID_, "TimePoint" + (1 + img.frame), img.time);
-         }      
+      //if new timepoint
+      if (timePointImageCount_ == 0) {
+         currentTimePoint_ = new TimePoint(resLevels_, resLevelIDs_, numChannels_, img.frame,
+                 bitDepth_, compressImageData_);
+         HDFUtils.writeStringAttribute(timeInfoID_, "TimePoint" + (1 + img.frame), img.time);
+      }
 
-         currentTimePoint_.writePixels(img);
+      currentTimePoint_.writePixels(img);
 
-         
-         if (numSlices_ % slicesPerWrite_ != 0 && img.slice + slicesPerWrite_ - 1 >= numSlices_) {
-            //dont want to overcount extra slices that don't exist in original data
-            timePointImageCount_ += numSlices_ % slicesPerWrite_;
-         } else {
-            timePointImageCount_ += slicesPerWrite_;
+
+      if (numSlices_ % slicesPerWrite_ != 0 && img.slice + slicesPerWrite_ - 1 >= numSlices_) {
+         //dont want to overcount extra slices that don't exist in original data
+         timePointImageCount_ += numSlices_ % slicesPerWrite_;
+      } else {
+         timePointImageCount_ += slicesPerWrite_;
+      }
+
+      //close channels if full
+      if (timePointImageCount_ == numChannels_ * numSlices_) {
+         if (img.histograms == null) {
+            IJ.log("histogram not created correctly");
+            img.histograms = new long[resLevels_.length][256];
          }
-
-         //close channels if full
-         if (timePointImageCount_ == numChannels_ * numSlices_) {
-            if (img.histograms == null) {
-               IJ.log("histogram not created correctly");
-               img.histograms = new long[resLevels_.length][256];
-            }
-            currentTimePoint_.closeTimePoint();
-            currentTimePoint_ = null;
-            timePointImageCount_ = 0;
-         }
-      } catch (Exception ex) {
-         IJ.log(ex+"");
-         ex.printStackTrace();
+         currentTimePoint_.closeTimePoint();
+         currentTimePoint_ = null;
+         timePointImageCount_ = 0;
       }
    }
 
@@ -183,7 +138,7 @@ public class HDFWriter {
       try {
          if (!directory_.endsWith(File.separator)) {
             directory_ = directory_ + File.separator;
-         }     
+         }
          new File(directory_ + filename_).exists();
          fileID_ = H5.H5Fcreate(directory_ + filename_, HDF5Constants.H5P_DEFAULT,
                  HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
@@ -191,16 +146,16 @@ public class HDFWriter {
          makeDataSetInfo();
          makeDataSet();
       } catch (Exception e) {
-         IJ.log("Couldn't create file");
+         IJ.log("Couldn't create Imaris file");
          e.printStackTrace();
       }
    }
-   
+
    private void addRootAttributes() throws HDF5LibraryException, HDF5Exception {
-      HDFUtils.writeStringAttribute(fileID_, "DataSetDirectoryName", "DataSet");      
-      HDFUtils.writeStringAttribute(fileID_, "DataSetInfoDirectoryName", "DataSetInfo");      
-      HDFUtils.writeStringAttribute(fileID_, "ImarisDataSet", "ImarisDataSet");      
-      HDFUtils.writeStringAttribute(fileID_, "ImarisVersion", "5.5.0");      
+      HDFUtils.writeStringAttribute(fileID_, "DataSetDirectoryName", "DataSet");
+      HDFUtils.writeStringAttribute(fileID_, "DataSetInfoDirectoryName", "DataSetInfo");
+      HDFUtils.writeStringAttribute(fileID_, "ImarisDataSet", "ImarisDataSet");
+      HDFUtils.writeStringAttribute(fileID_, "ImarisVersion", "5.5.0");
       HDFUtils.writeStringAttribute(fileID_, "ThumbnailDirectoryName", "Thumbnail");
       //Create number of datasets attribute
       int dataspaceID = H5.H5Screate_simple(1, new long[]{1}, null);
@@ -211,7 +166,7 @@ public class HDFWriter {
       H5.H5Sclose(dataspaceID);
       H5.H5Aclose(attID);
    }
-   
+
    private void makeDataSetInfo() throws NullPointerException, HDF5LibraryException, HDF5Exception {
       int dataSetGroupID = H5.H5Gcreate(fileID_, "/DataSetInfo", HDF5Constants.H5P_DEFAULT,
               HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
@@ -219,12 +174,12 @@ public class HDFWriter {
       for (int c = 0; c < numChannels_; c++) {
          int channelID = H5.H5Gcreate(dataSetGroupID, "Channel " + c, HDF5Constants.H5P_DEFAULT,
                  HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
-         float[] rgb = channelColors_[c].getRGBColorComponents(null);         
+         float[] rgb = channelColors_[c].getRGBColorComponents(null);
          HDFUtils.writeStringAttribute(channelID, "Color", numberFormat_.format(rgb[0]) + " "
                  + numberFormat_.format(rgb[1]) + " " + numberFormat_.format(rgb[2]));
          HDFUtils.writeStringAttribute(channelID, "ColorMode", "BaseColor");
          HDFUtils.writeStringAttribute(channelID, "ColorOpacity", "1.000");
-         HDFUtils.writeStringAttribute(channelID, "ColorRange", "0 " +((int) Math.pow(2, bitDepth_)));
+         HDFUtils.writeStringAttribute(channelID, "ColorRange", "0 " + ((int) Math.pow(2, bitDepth_)));
          HDFUtils.writeStringAttribute(channelID, "Description", "(description not specified)");
          HDFUtils.writeStringAttribute(channelID, "GammaCorrection", "1.000");
          HDFUtils.writeStringAttribute(channelID, "Name", "(name not specified)");
@@ -252,7 +207,7 @@ public class HDFWriter {
       //Imaris
       int imarisID = H5.H5Gcreate(dataSetGroupID, "Imaris", HDF5Constants.H5P_DEFAULT,
               HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
-      HDFUtils.writeStringAttribute(imarisID, "Version", VERSION);      
+      HDFUtils.writeStringAttribute(imarisID, "Version", VERSION);
       H5.H5Gclose(imarisID);
 
       //ImarisDataSet
@@ -275,13 +230,13 @@ public class HDFWriter {
       HDFUtils.writeStringAttribute(timeInfoID_, "DatasetTimePoints", numFrames_ + "");
       HDFUtils.writeStringAttribute(timeInfoID_, "FileTimePoints", numFrames_ + "");
       //close this at the end after all time points added
-      
+
       H5.H5Gclose(dataSetGroupID);
    }
-   
+
    private void makeDataSet() throws NullPointerException, HDF5LibraryException, HDF5Exception {
       resLevelIDs_ = new int[resLevels_.length];
-        
+
       int dataSetGroupID = H5.H5Gcreate(fileID_, "/DataSet", HDF5Constants.H5P_DEFAULT,
               HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
 
@@ -289,7 +244,43 @@ public class HDFWriter {
       for (int level = 0; level < resLevels_.length; level++) {
          resLevelIDs_[level] = H5.H5Gcreate(dataSetGroupID, "ResolutionLevel " + level,
                  HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
-      }            
+      }
       H5.H5Gclose(dataSetGroupID);
-   } 
+   }
+   
+//    public TaggedImage readAsTaggedImage(int channel, int slice, int frame) throws HDF5LibraryException, HDF5Exception {
+//      byte[] pixels = new byte[imageHeight_ * imageWidth_];
+//
+//      long t1 = System.currentTimeMillis();
+//      int datasetID = H5.H5Dopen(fileID_, "/DataSet/ResolutionLevel 0/TimePoint " + frame + "/Channel " + channel + "/Data",
+//              HDF5Constants.H5P_DEFAULT);
+//      int filespaceID = H5.H5Screate_simple(3, new long[]{1, imageHeight_, imageWidth_}, null);
+//      int memspaceID = H5.H5Screate_simple(1, new long[]{imageWidth_ * imageHeight_}, null);
+//      long t2 = System.currentTimeMillis();
+//
+//      H5.H5Dread(datasetID, HDF5Constants.H5T_NATIVE_UCHAR, memspaceID, filespaceID, HDF5Constants.H5P_DEFAULT, pixels);
+//
+//      long t3 = System.currentTimeMillis();
+//      H5.H5Dclose(datasetID);
+//      H5.H5Sclose(filespaceID);
+//      H5.H5Sclose(memspaceID);
+//      long t4 = System.currentTimeMillis();
+//
+//      System.out.println((t2 - t1) + "\t\t" + (t3 - t2) + "\t\t" + (t4 - t3));
+//
+//      //convert to Imaris format
+//      JSONObject tags = new JSONObject();
+//      try {
+//         tags.put("ChannelIndex", channel);
+//         tags.put("FrameIndex", frame);
+//         tags.put("SliceIndex", slice);
+//         tags.put("PositionIndex", 0);
+//         tags.put("PixelType", "GRAY8");
+//         tags.put("Width", imageWidth_);
+//         tags.put("Height", imageHeight_);
+//      } catch (JSONException ex) {
+//         ReportingUtils.showError("Couldn't add image tags after reading from HDF");
+//      }
+//      return new TaggedImage(pixels, tags);
+//   }
 }

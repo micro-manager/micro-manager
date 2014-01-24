@@ -128,7 +128,8 @@ public class StitchedImageStorageImaris implements TaggedImageStorage{
       } else if (hdfLabels_.contains(label))  {
          try {
             //read from HDF file
-            return hdfWriter_.readAsTaggedImage(channelIndex, sliceIndex, frameIndex);
+            return null;
+//            return hdfWriter_.readAsTaggedImage(channelIndex, sliceIndex, frameIndex);
          } catch (Exception ex) {
             ReportingUtils.showError("HDF reading error");
             return null;

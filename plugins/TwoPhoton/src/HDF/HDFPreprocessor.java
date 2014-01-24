@@ -36,8 +36,7 @@ public class HDFPreprocessor   {
       histograms_ = new TreeMap<Integer, long[][]>();
    }
    
-   public PipelineImage process(LinkedList<TaggedImage> slices)  {     
-      try {
+   public PipelineImage process(LinkedList<TaggedImage> slices) throws Exception  {           
       if (startS_ == -1) {
          //first image
          String[] timeInfo = slices.get(0).tags.getString("Time").split(" ");
@@ -129,15 +128,17 @@ public class HDFPreprocessor   {
                   //to fill out the end of stack that has been downsampled in z. Use the first slice in the 
                   //slice group (which must exist) to calculate the summed value. This way, the bottom slice
                   //in lower resolutions is not half as bright as others
-                  if (IJ.debugMode) {
-                     IJ.log("duplicating bottom slice");
-                  }
                   if (bitDepth_ > 8) {
                      val = (((short[]) slices.get(0).pix)[i] & 0xffff);
                   } else {
                      val = (((byte[]) slices.get(0).pix)[i] & 0xff);
                   }
                } else if (bitDepth_ > 8) {
+                  if (slices.get(sliceIndex) == null) {
+                     System.out.println("null slice index");
+                  } else if (slices.get(sliceIndex).pix == null) {
+                     System.out.println("null pix");
+                  }
                   val = (((short[]) slices.get(sliceIndex).pix)[i] & 0xffff);
                   histograms_.get(channel)[resLevel][(int)(255*(val / Math.pow(2,bitDepth_)))]++;
                } else {
@@ -175,11 +176,6 @@ public class HDFPreprocessor   {
          histograms_.put(channel, null);
       }  
       return img;
-      } catch (Exception e) {
-         ReportingUtils.showError("HDF preprocessing error"); 
-         e.printStackTrace();
-         return null;
-      }
    }
    
    private String convertMMToImsTime(JSONObject tags) {

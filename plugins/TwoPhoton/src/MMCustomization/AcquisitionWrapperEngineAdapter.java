@@ -9,27 +9,24 @@ import com.imaging100x.twophoton.TwoPhotonControl;
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.BlockingQueue;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.swing.JOptionPane;
-import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.AcqControlDlg;
 import org.micromanager.AcquisitionEngine2010;
-import org.micromanager.acquisition.AcquisitionWrapperEngine;
-import org.micromanager.utils.JavaUtils;
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.acquisition.AcquisitionManager;
+import org.micromanager.acquisition.AcquisitionWrapperEngine;
 import org.micromanager.acquisition.DefaultTaggedImageSink;
 import org.micromanager.acquisition.MMImageCache;
 import org.micromanager.api.IAcquisitionEngine2010;
 import org.micromanager.api.SequenceSettings;
 import org.micromanager.api.TaggedImageStorage;
+import org.micromanager.utils.JavaUtils;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.ReportingUtils;
 
@@ -115,18 +112,10 @@ public class AcquisitionWrapperEngineAdapter extends AcquisitionWrapperEngine {
             String acqDirectory = createAcqDirectory(summaryMetadata.getString("Directory"), summaryMetadata.getString("Prefix"));
             summaryMetadata.put("Prefix", acqDirectory);
             String acqPath = summaryMetadata.getString("Directory") + File.separator + acqDirectory;
-            storage = new DoubleTaggedImageStorage(summaryMetadata, acqPath, 
-                    prefs_.get(SettingsDialog.STITCHED_DATA_DIRECTORY, ""),
-                    prefs_.getBoolean(SettingsDialog.CREATE_IMS_FILE, false),
-                    prefs_.getBoolean(SettingsDialog.FILTER_IMS, false),
-                    prefs_.getDouble(SettingsDialog.FILTER_SIZE, 2.0));
+            storage = new DoubleTaggedImageStorage(summaryMetadata, acqPath, prefs_);
          } else {
             //RAM storage
-            storage = new DoubleTaggedImageStorage(summaryMetadata, null, 
-                    prefs_.get(SettingsDialog.STITCHED_DATA_DIRECTORY, ""),
-                    prefs_.getBoolean(SettingsDialog.CREATE_IMS_FILE, false), 
-                    prefs_.getBoolean(SettingsDialog.FILTER_IMS, false),
-                    prefs_.getDouble(SettingsDialog.FILTER_SIZE, 2.0));
+            storage = new DoubleTaggedImageStorage(summaryMetadata, null, prefs_);
          }
 
          MMImageCache imageCache = new MMImageCache(storage) {
