@@ -106,8 +106,8 @@ public class OMEMetadata {
       }
       if (summaryMD.has("z-step_um") && !summaryMD.isNull("z-step_um")) {
          double zStep = summaryMD.getDouble("z-step_um");
-         if (zStep > 0) {
-            metadata_.setPixelsPhysicalSizeZ(new PositiveFloat(zStep), seriesIndex);
+	 if (zStep != 0) {
+            metadata_.setPixelsPhysicalSizeZ(new PositiveFloat(Math.abs(zStep)), seriesIndex);
          }
       }
 
