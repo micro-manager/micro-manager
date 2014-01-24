@@ -59,7 +59,6 @@ public class ContrastPanel extends JPanel {
    private static final String PREF_LOG_HIST = "log_hist";
    private static final String PREF_SYNC_CHANNELS = "sync_channels";
    private static final String PREF_SLOW_HIST = "slow_hist";
-   private static final String PREF_SLOW_DISP = "slow_disp";
    private JScrollPane histDisplayScrollPane_;
    private JComboBox displayModeCombo_;
    private JCheckBox autostretchCheckBox_;

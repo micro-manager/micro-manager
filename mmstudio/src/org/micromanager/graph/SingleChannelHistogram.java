@@ -23,6 +23,7 @@ package org.micromanager.graph;
 
 import com.swtdesigner.SwingResourceManager;
 import ij.ImagePlus;
+import ij.plugin.LutLoader;
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
 import ij.process.LUT;
@@ -36,6 +37,10 @@ import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -62,6 +67,7 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
    
    private long lastUpdateTime_;
    private JComboBox histRangeComboBox_;
+   private JComboBox lutComboBox_;
    private HistogramPanel histogramPanel_;
    private JLabel maxLabel_;
    private JLabel minLabel_;
@@ -124,6 +130,20 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
       controlHolder.add(controls, BorderLayout.PAGE_START);
       this.add(controlHolder, BorderLayout.LINE_START);
 
+      lutComboBox_ = new JComboBox();
+      lutComboBox_.setFont(new Font("", Font.PLAIN, 10));
+      lutComboBox_.addActionListener(new ActionListener() {
+
+         @Override
+         public void actionPerformed(final ActionEvent e) {
+            lutComboAction();
+         }
+      });
+      // Todo: graphical choices
+      lutComboBox_.setModel(new DefaultComboBoxModel(new String[]{
+                 "Grey", "Glow Over/Under", "Fire"}));
+
+      
       JButton fullScaleButton = new JButton();
       fullScaleButton.addActionListener(new ActionListener() {
 
@@ -207,7 +227,6 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
 
 
       GridBagLayout layout = new GridBagLayout();
-      GridBagConstraints gbc = new GridBagConstraints();
       controls.setLayout(layout);
 
 
@@ -223,15 +242,24 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
       histZoomLine.add(zoomOutButton);
       histZoomLine.add(zoomInButton);
 
-      gbc = new GridBagConstraints();
+      
+      GridBagConstraints gbc = new GridBagConstraints();
       gbc.gridy = 0;
       gbc.weightx = 0;
       gbc.gridwidth = 2;
       gbc.fill = GridBagConstraints.BOTH;
       controls.add(new JLabel(" "), gbc);
-
+   
       gbc = new GridBagConstraints();
       gbc.gridy = 1;
+      gbc.weightx = 1;
+      gbc.gridwidth = 2;
+      gbc.fill = GridBagConstraints.HORIZONTAL;
+      controls.add(lutComboBox_, gbc);
+      
+      gbc = new GridBagConstraints();
+      gbc.gridy = 2;
+      gbc.gridx = 0;
       gbc.weightx = 1;
       gbc.ipadx = 4;
       gbc.ipady = 4;
@@ -239,7 +267,7 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
       controls.add(fullScaleButton, gbc);
 
       gbc = new GridBagConstraints();
-      gbc.gridy = 1;
+      gbc.gridy = 2;
       gbc.gridx = 1;
       gbc.weightx = 1;
       gbc.ipadx = 4;
@@ -248,21 +276,21 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
       controls.add(autoScaleButton, gbc);
 
       gbc = new GridBagConstraints();
-      gbc.gridy = 2;
+      gbc.gridy = 3;
       gbc.weightx = 1;
       gbc.gridwidth = 2;
       gbc.fill = GridBagConstraints.HORIZONTAL;
       controls.add(histZoomLine, gbc);
 
       gbc = new GridBagConstraints();
-      gbc.gridy = 3;
+      gbc.gridy = 4;
       gbc.weightx = 1;
       gbc.gridwidth = 2;
       gbc.fill = GridBagConstraints.HORIZONTAL;
       controls.add(histRangeComboBox_, gbc);
 
       gbc = new GridBagConstraints();
-      gbc.gridy = 4;
+      gbc.gridy = 5;
       gbc.weightx = 1;
       gbc.gridwidth = 2;
 
@@ -301,6 +329,12 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
       setHistMaxAndBinSize();     
       calcAndDisplayHistAndStats(true);
    }
+   
+   // todo: implement!
+   private void lutComboAction () {
+      applyLUTToImage();
+      display_.drawWithoutUpdate();
+   }
 
    @Override
    public void rejectOutliersChangeAction() {
@@ -324,26 +358,94 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
       }
 
       double maxValue = 255.0;
-      byte[] r = new byte[256];
-      byte[] g = new byte[256];
-      byte[] b = new byte[256];
-      for (int i = 0; i < 256; i++) {
+      int length = 256;
+      byte[] r = new byte[length];
+      byte[] g = new byte[length];
+      byte[] b = new byte[length];
+      for (int i = 0; i < length; i++) {
          double val = Math.pow((double) i / maxValue, gamma_) * maxValue;
          r[i] = (byte) val;
          g[i] = (byte) val;
          b[i] = (byte) val;
       }
+      
+      if (lutComboBox_.getSelectedIndex() == 1) {
+         // glow over/under LUT
+         r[0] = (byte) 0; g[0] = (byte) 0; b[0] = (byte) 255;
+         r[255] = (byte) 255; g[255] = (byte) 0; b[255] = (byte) 0;
+      }  
+      
+      if (lutComboBox_.getSelectedIndex() == 2) {
+         length = fire(r, g, b);
+      }
+      
       //apply gamma and contrast to image
-      ip.setColorModel(new LUT(8, 256, r, g, b));    //doesnt explicitly redraw
+      ip.setColorModel(new LUT(8, length, r, g, b));    //doesnt explicitly redraw
       ip.setMinAndMax(contrastMin_, contrastMax_);   //doesnt explicitly redraw
 
       saveDisplaySettings();
 
       updateHistogram();
    }
+   
+   public int fire(byte[] reds, byte[] greens, byte[] blues) {
+      byte rb = (byte) 255; byte gb = (byte) 0; byte bb = (byte) 0;
+      for (int i =0; i < 43; i++) {
+         reds[i] = rb;
+         greens[i] = gb;
+         blues[i] = bb;
+         gb += 6;
+      }
+      rb = (byte) 252; gb = (byte) 255;
+      for (int i = 43; i < 86; i ++) {
+         reds[i] = rb;
+         greens[i] = gb;
+         blues[i] = bb;
+         rb -= 6;
+      }
+      bb = (byte) 6;
+      for (int i = 86; i < 127; i++) {
+         reds[i] = rb;
+         greens[i] = gb;
+         blues[i] = bb;
+         bb += 6;
+      }
+      bb = (byte) 255; gb = (byte)252;
+      for (int i = 127; i < 171; i++) {
+         reds[i] = rb;
+         greens[i] = gb;
+         blues[i] = bb;
+         gb -= 6;
+      }
+      for (int i = 171; i < 213; i++) {
+         reds[i] = rb;
+         greens[i] = gb;
+         blues[i] = bb;
+         rb -= 6;
+      }
+      rb = (byte) 255; bb = (byte) 252;
+      for (int i = 213; i < 256; i++) {
+         reds[i] = rb;
+         greens[i] = gb;
+         blues[i] = bb;
+         bb -= 6;
+      }
+      /*
+		int[] r = {0,0,1,25,49,73,98,122,146,162,173,184,195,207,217,229,240,252,255,255,255,255,255,255,255,255,255,255,255,255,255,255};
+		int[] g = {0,0,0,0,0,0,0,0,0,0,0,0,0,14,35,57,79,101,117,133,147,161,175,190,205,219,234,248,255,255,255,255};
+		int[] b = {0,61,96,130,165,192,220,227,210,181,151,122,93,64,35,5,0,0,0,0,0,0,0,0,0,0,0,35,98,160,223,255};
+		for (int i=0; i<r.length; i++) {
+			reds[i] = (byte)r[i];
+			greens[i] = (byte)g[i];
+			blues[i] = (byte)b[i];
+		}
+      * */
+		return 255;
+	}
+
 
    public void saveDisplaySettings() {
-      int histMax = histRangeComboBox_.getSelectedIndex() == 0 ? histMax = -1 : histMax_;
+      int histMax = histRangeComboBox_.getSelectedIndex() == 0 ? -1 : histMax_;
       display_.storeChannelHistogramSettings(0,  contrastMin_, contrastMax_, gamma_, histMax, 1);
    }
 
