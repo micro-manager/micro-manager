@@ -41,7 +41,6 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Vector;
 import java.util.prefs.Preferences;
 
 import javax.swing.BoxLayout;
@@ -86,6 +85,7 @@ import bsh.util.JConsole;
 
 import com.swtdesigner.SwingResourceManager;
 import java.io.BufferedReader;
+import java.util.List;
 import org.micromanager.utils.FileDialogs;
 import org.micromanager.utils.FileDialogs.FileType;
 import org.micromanager.utils.HotKeysDialog;
@@ -104,7 +104,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
    private JTextField immediatePane_;
    private JSplitPane rightSplitPane_;
    private JSplitPane splitPane_;
-   private Vector<String> immediatePaneHistory_ = new Vector<String>(HISTORYSIZE);
+   private List<String> immediatePaneHistory_ = new ArrayList<String>(HISTORYSIZE);
    private int immediatePaneHistoryIndex_ = 0;
    private Preferences prefs_;
    private static ScriptingEngine interp_;
@@ -325,6 +325,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
    /**
     * Create the dialog
     */
+   @SuppressWarnings("LeakingThisInConstructor")
    public ScriptPanel(CMMCore core, MMOptions options, MMStudioMainFrame gui) {
       super();
       gui_ = gui;
@@ -993,7 +994,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
    private void runImmediatePane() 
    {
       try {
-         immediatePaneHistory_.addElement(immediatePane_.getText());
+         immediatePaneHistory_.add(immediatePane_.getText());
          immediatePaneHistoryIndex_ = immediatePaneHistory_.size();
          interp_.evaluateAsync(immediatePane_.getText());
          immediatePane_.setText("");
@@ -1009,7 +1010,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
       if (immediatePaneHistoryIndex_ >= 0 && 
               immediatePaneHistoryIndex_ < immediatePaneHistory_.size())
          immediatePane_.setText(
-                 immediatePaneHistory_.elementAt(immediatePaneHistoryIndex_));
+                 immediatePaneHistory_.get(immediatePaneHistoryIndex_));
    }
 
    private void doImmediatePaneHistoryDown()
@@ -1018,7 +1019,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
          immediatePaneHistoryIndex_++;
       if (immediatePaneHistoryIndex_ < immediatePaneHistory_.size())
          immediatePane_.setText(
-                 immediatePaneHistory_.elementAt(immediatePaneHistoryIndex_));
+                 immediatePaneHistory_.get(immediatePaneHistoryIndex_));
       else
          immediatePane_.setText("");
    }
