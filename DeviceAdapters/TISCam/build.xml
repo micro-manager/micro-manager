@@ -3,7 +3,7 @@
 
 	<target name="install-Win32">
 		<copy todir="${mm.dll.installdir}">
-			<filelist dir="lib/Win32/Release">
+			<filelist dir="lib/win32">
 				<file name="TIS_DShowLib10.dll"/>
 				<file name="TIS_UDSHL10.dll"/>
 			</filelist>
@@ -12,7 +12,7 @@
 
 	<target name="install-x64">
 		<copy todir="${mm.dll.installdir}">
-			<filelist dir="lib/x64/Release">
+			<filelist dir="lib/x64">
 				<file name="TIS_DShowLib10_x64.dll"/>
 				<file name="TIS_UDSHL10_x64.dll"/>
 			</filelist>
