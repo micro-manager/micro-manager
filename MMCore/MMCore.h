@@ -452,6 +452,10 @@ public:
    unsigned getSLMHeight(const char* deviceLabel);
    unsigned getSLMNumberOfComponents(const char* deviceLabel);
    unsigned getSLMBytesPerPixel(const char* deviceLabel);
+   long getSLMSequenceMaxLength(const char* deviceLabel);
+   void startSLMSequence(const char* deviceLabel) throw (CMMError);
+   void stopSLMSequence(const char* deviceLabel) throw (CMMError);
+   void loadSLMSequence(const char* label, std::vector<unsigned char*> imageSequence) throw (CMMError);
    //@ }
 
    /** @name Galvo control

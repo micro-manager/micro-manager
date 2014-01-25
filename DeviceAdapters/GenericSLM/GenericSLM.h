@@ -91,6 +91,8 @@ public:
    int OnInversion(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnMonochromeColor(MM::PropertyBase* pProp, MM::ActionType eAct);
 
+   int IsSLMSequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
+
 private:
    string graphicsPortDescription_;
    long chosenDisplayIndex_;

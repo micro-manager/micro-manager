@@ -34,7 +34,7 @@
 // Header version
 // If any of the class declarations changes, the interface version
 // must be incremented
-#define DEVICE_INTERFACE_VERSION 56
+#define DEVICE_INTERFACE_VERSION 57
 ///////////////////////////////////////////////////////////////////////////////
 
 
@@ -1063,6 +1063,84 @@ namespace MM {
        * Get the SLM number of bytes per pixel.
        */
       virtual unsigned GetBytesPerPixel() = 0;
+
+      // SLM Sequence functions
+      // Sequences can be used for fast acquisitions, synchronized by TTLs rather than
+      // computer commands. 
+      // Sequences of images can be uploaded to the SLM.  The SLM will cycle through
+      // the uploaded list of images (perhaps triggered by an external trigger or by
+      // an internal clock.
+      // If the device is capable (and ready) to do so IsSLMSequenceable will return
+      // be true. If your device can not execute sequences, IsSLMSequenceable returns false.
+
+      /**
+       * Lets the core know whether or not this SLM device accepts sequences
+       * If the device is sequenceable, it is usually best to add a property through which 
+       * the user can set "isSequenceable", since only the user knows whether the device
+       * is actually connected to a trigger source.
+       * If IsSLMSequenceable returns true, the device adapter must also implement the
+       * sequencing functions for the SLM.
+       * @param isSequenceable signals whether other sequence functions will work
+       * @return errorcode (DEVICE_OK if no error)
+       */
+      virtual int IsSLMSequenceable(bool& isSequenceable) const = 0;
+
+      /**
+       * Returns the maximum length of a sequence that the hardware can store.
+       * @param nrEvents max length of sequence
+       * @return errorcode (DEVICE_OK if no error)
+       */
+      virtual int GetSLMSequenceMaxLength(long& nrEvents) const = 0; 
+
+      /**
+       * Tells the device to start running a sequnece (i.e. start switching between images 
+       * sent previously, triggered by a TTL or internal clock).
+       * @return errorcode (DEVICE_OK if no error)
+       */
+      virtual int StartSLMSequence() = 0;
+
+      /**
+       * Tells the device to stop running the sequence.
+       * @return errorcode (DEVICE_OK if no error)
+       */
+      virtual int StopSLMSequence() = 0;
+
+      /**
+       * Clears the SLM sequence from the device and the adapter.
+       * If this function is not called in between running 
+       * two sequences, it is expected that the same sequence will run twice.
+       * To upload a new sequence, first call this function, then call
+       * AddToSLMSequence(image)
+       * as often as needed.
+       * @return errorcode (DEVICE_OK if no error)
+       */
+      virtual int ClearSLMSequence() = 0;
+
+      /**
+       * Adds a new 8-bit projection image to the sequence.
+       * The image can either be added to a representation of the sequence in the 
+       * adapter, or it can be directly written to the device
+       * @param pixels An array of 8-bit pixels whose length matches that expected by the SLM.
+       * @return errorcode (DEVICE_OK if no error)
+       */
+      virtual int AddToSLMSequence(const unsigned char * const pixels) = 0;
+
+      /**
+       * Adds a new 32-bit (RGB) projection image to the sequence.
+       * The image can either be added to a representation of the sequence in the 
+       * adapter, or it can be directly written to the device
+       * @param pixels An array of 32-bit RGB pixels whose length matches that expected by the SLM.
+       * @return errorcode (DEVICE_OK if no error)
+       */
+      virtual int AddToSLMSequence(const unsigned int * const pixels) = 0;
+
+      /**
+       * Sends the complete sequence to the device.
+       * If the individual images were already send to the device, there is 
+       * nothing to be done.
+       * @return errorcode (DEVICE_OK if no error)
+       */
+      virtual int SendSLMSequence() = 0;
 
    };
 

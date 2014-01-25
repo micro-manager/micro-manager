@@ -3488,7 +3488,7 @@ void CMMCore::loadPropertySequence(const char* label, const char* propName, std:
    if (ret != DEVICE_OK)
       throw CMMError(getDeviceErrorText(ret, pDevice));
 
-      std::vector<std::string>::iterator it;
+   std::vector<std::string>::iterator it;
    for (std::vector<std::string>::const_iterator it = eventSequence.begin(),
          end = eventSequence.end();
          it < end; ++it)
@@ -5011,9 +5011,7 @@ void CMMCore::setSLMImage(const char* deviceLabel, unsigned char* pixels) throw 
    MM::SLM* pSLM = GetDeviceWithCheckedLabelAndType<MM::SLM>(deviceLabel);
    if (!pixels)
       throw CMMError("Null image");
-
    MMThreadGuard guard(pluginManager_.getModuleLock(pSLM));
-
    int ret = pSLM->SetImage(pixels);
    if (ret != DEVICE_OK)
    {
@@ -5030,9 +5028,7 @@ void CMMCore::setSLMImage(const char* deviceLabel, imgRGB32 pixels) throw (CMMEr
    MM::SLM* pSLM = GetDeviceWithCheckedLabelAndType<MM::SLM>(deviceLabel);
    if (!pixels)
       throw CMMError("Null image");
-
    MMThreadGuard guard(pluginManager_.getModuleLock(pSLM));
-
    int ret = pSLM->SetImage((unsigned int *) pixels);
    if (ret != DEVICE_OK)
    {
@@ -5047,9 +5043,7 @@ void CMMCore::setSLMImage(const char* deviceLabel, imgRGB32 pixels) throw (CMMEr
 void CMMCore::setSLMPixelsTo(const char* deviceLabel, unsigned char intensity) throw (CMMError)
 {
    MM::SLM* pSLM = GetDeviceWithCheckedLabelAndType<MM::SLM>(deviceLabel);
-
    MMThreadGuard guard(pluginManager_.getModuleLock(pSLM));
-
    int ret = pSLM->SetPixelsTo(intensity);
    if (ret != DEVICE_OK)
    {
@@ -5064,9 +5058,7 @@ void CMMCore::setSLMPixelsTo(const char* deviceLabel, unsigned char intensity) t
 void CMMCore::setSLMPixelsTo(const char* deviceLabel, unsigned char red, unsigned char green, unsigned char blue) throw (CMMError)
 {
    MM::SLM* pSLM = GetDeviceWithCheckedLabelAndType<MM::SLM>(deviceLabel);
-
    MMThreadGuard guard(pluginManager_.getModuleLock(pSLM));
-
    int ret = pSLM->SetPixelsTo(red, green, blue);
    if (ret != DEVICE_OK)
    {
@@ -5081,9 +5073,7 @@ void CMMCore::setSLMPixelsTo(const char* deviceLabel, unsigned char red, unsigne
 void CMMCore::displaySLMImage(const char* deviceLabel) throw (CMMError)
 {
    MM::SLM* pSLM = GetDeviceWithCheckedLabelAndType<MM::SLM>(deviceLabel);
-
    MMThreadGuard guard(pluginManager_.getModuleLock(pSLM));
-
    int ret = pSLM->DisplayImage();
    if (ret != DEVICE_OK)
    {
@@ -5095,9 +5085,7 @@ void CMMCore::displaySLMImage(const char* deviceLabel) throw (CMMError)
 void CMMCore::setSLMExposure(const char* deviceLabel, double exposure_ms) throw (CMMError)
 {
    MM::SLM* pSLM = GetDeviceWithCheckedLabelAndType<MM::SLM>(deviceLabel);
-
    MMThreadGuard guard(pluginManager_.getModuleLock(pSLM));
-
    int ret = pSLM->SetExposure(exposure_ms);
    if (ret != DEVICE_OK)
    {
@@ -5109,9 +5097,7 @@ void CMMCore::setSLMExposure(const char* deviceLabel, double exposure_ms) throw 
 double CMMCore::getSLMExposure(const char* deviceLabel) throw (CMMError)
 {
    MM::SLM* pSLM = GetDeviceWithCheckedLabelAndType<MM::SLM>(deviceLabel);
-
    MMThreadGuard guard(pluginManager_.getModuleLock(pSLM));
-
    return pSLM->GetExposure();
 }
 
@@ -5119,7 +5105,6 @@ double CMMCore::getSLMExposure(const char* deviceLabel) throw (CMMError)
 unsigned CMMCore::getSLMWidth(const char* deviceLabel)
 {
    MM::SLM* pSLM = GetDeviceWithCheckedLabelAndType<MM::SLM>(deviceLabel);
-
    MMThreadGuard guard(pluginManager_.getModuleLock(pSLM));
    return pSLM->GetWidth();
 }
@@ -5127,7 +5112,6 @@ unsigned CMMCore::getSLMWidth(const char* deviceLabel)
 unsigned CMMCore::getSLMHeight(const char* deviceLabel)
 {
    MM::SLM* pSLM = GetDeviceWithCheckedLabelAndType<MM::SLM>(deviceLabel);
-
    MMThreadGuard guard(pluginManager_.getModuleLock(pSLM));
    return pSLM->GetHeight();
 }
@@ -5135,7 +5119,6 @@ unsigned CMMCore::getSLMHeight(const char* deviceLabel)
 unsigned CMMCore::getSLMNumberOfComponents(const char* deviceLabel)
 {
    MM::SLM* pSLM = GetDeviceWithCheckedLabelAndType<MM::SLM>(deviceLabel);
-
    MMThreadGuard guard(pluginManager_.getModuleLock(pSLM));
    return pSLM->GetNumberOfComponents();
 }
@@ -5143,13 +5126,64 @@ unsigned CMMCore::getSLMNumberOfComponents(const char* deviceLabel)
 unsigned CMMCore::getSLMBytesPerPixel(const char* deviceLabel)
 {
    MM::SLM* pSLM = GetDeviceWithCheckedLabelAndType<MM::SLM>(deviceLabel);
-
    MMThreadGuard guard(pluginManager_.getModuleLock(pSLM));
    return pSLM->GetBytesPerPixel();
 }
 
-/* GALVO CODE */
+long CMMCore::getSLMSequenceMaxLength(const char* deviceLabel) 
+{
+   MM::SLM* pSLM = GetDeviceWithCheckedLabelAndType<MM::SLM>(deviceLabel);
+   MMThreadGuard guard(pluginManager_.getModuleLock(pSLM));
+   long numEvents;
+   int ret = pSLM->GetSLMSequenceMaxLength(numEvents);
+   if (ret != DEVICE_OK)
+      throw CMMError(getDeviceErrorText(ret, pSLM));
+   return numEvents;
+}
 
+void CMMCore::startSLMSequence(const char* deviceLabel) throw (CMMError)
+{
+   MM::SLM* pSLM = GetDeviceWithCheckedLabelAndType<MM::SLM>(deviceLabel);
+   MMThreadGuard guard(pluginManager_.getModuleLock(pSLM));
+   int ret = pSLM->StartSLMSequence();
+   if (ret != DEVICE_OK)
+      throw CMMError(getDeviceErrorText(ret, pSLM));
+}
+
+void CMMCore::stopSLMSequence(const char* deviceLabel) throw (CMMError)
+{
+   MM::SLM* pSLM = GetDeviceWithCheckedLabelAndType<MM::SLM>(deviceLabel);
+   MMThreadGuard guard(pluginManager_.getModuleLock(pSLM));
+   int ret = pSLM->StopSLMSequence();
+   if (ret != DEVICE_OK)
+      throw CMMError(getDeviceErrorText(ret, pSLM));
+}
+
+void CMMCore::loadSLMSequence(const char* deviceLabel, std::vector<unsigned char *> imageSequence) throw (CMMError)
+{
+   MM::SLM* pSLM = GetDeviceWithCheckedLabelAndType<MM::SLM>(deviceLabel);
+   
+   MMThreadGuard guard(pluginManager_.getModuleLock(pSLM));
+   int ret = pSLM->ClearSLMSequence();
+   if (ret != DEVICE_OK)
+      throw CMMError(getDeviceErrorText(ret, pSLM));
+
+   std::vector<unsigned char *>::iterator it;
+   for (std::vector<unsigned char *>::const_iterator it = imageSequence.begin(),
+         end = imageSequence.end();
+         it < end; ++it)
+   {
+      ret = pSLM->AddToSLMSequence(*it);
+      if (ret != DEVICE_OK)
+         throw CMMError(getDeviceErrorText(ret, pSLM));
+   }
+
+   ret = pSLM->SendSLMSequence();
+   if (ret != DEVICE_OK)
+      throw CMMError(getDeviceErrorText(ret, pSLM));
+}
+
+/* GALVO CODE */
 
 /**
  * Set the Galvo to an x,y position and fire the laser for a predetermined duration.

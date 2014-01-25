@@ -2040,7 +2040,37 @@ class CMagnifierBase : public CDeviceBase<MM::Magnifier, U>
 template <class U>
 class CSLMBase : public CDeviceBase<MM::SLM, U>
 {
+   virtual int GetSLMSequenceMaxLength(long& /*nrEvents*/) const 
+   {
+      return DEVICE_UNSUPPORTED_COMMAND;
+   }
 
+   virtual int StartSLMSequence() 
+   {
+      return DEVICE_UNSUPPORTED_COMMAND;
+   }
+
+   virtual int StopSLMSequence() {
+      return DEVICE_UNSUPPORTED_COMMAND;
+   }
+
+   virtual int ClearSLMSequence() {
+      return DEVICE_UNSUPPORTED_COMMAND;
+   }
+
+   virtual int AddToSLMSequence(const unsigned char * const /*image*/) 
+   {
+      return DEVICE_UNSUPPORTED_COMMAND;
+   }
+
+   virtual int AddToSLMSequence(const unsigned int * const /*image*/) 
+   {
+      return DEVICE_UNSUPPORTED_COMMAND;
+   }
+
+   virtual int SendSLMSequence() {
+      return DEVICE_UNSUPPORTED_COMMAND;
+   }
 };
 
 /**

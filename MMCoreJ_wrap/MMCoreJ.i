@@ -42,7 +42,7 @@
 
 
 // Java typemap
-// change deafult SWIG mapping of unsigned char* return values
+// change default SWIG mapping of unsigned char* return values
 // to byte[]
 //
 // Assumes that class has the following method defined:
@@ -98,17 +98,56 @@
 %typemap(javain) unsigned char* "$javainput" 
 
 
+
  
+// Map input argument: java List<byte[]> -> C++ std::vector<unsigned char*>
+%typemap(jni) std::vector<unsigned char*>        "jobject"
+%typemap(jtype) std::vector<unsigned char*>      "java.util.List<byte[]>"
+%typemap(jstype) std::vector<unsigned char*>     "java.util.List<byte[]>"
+%typemap(in) std::vector<unsigned char*>
+{
+   // Assume that we are sending an image to an SLM device, one byte per pixel (monochrome grayscale).
+   
+   long expectedLength = (arg1)->getSLMWidth(arg2) * (arg1)->getSLMHeight(arg2);
+   std::vector<unsigned char*> inputVector;
+   jclass clazz = jenv->FindClass("java/util/List");
+   jmethodID sizeMethodID = jenv->GetMethodID(clazz, "size", "()I");
+   // get JNI ID for java.util.List.get(int i) method.
+   // Because of type erasure we specify an "Object" return value,
+   // but we expect a byte[] to be returned.
+   jmethodID getMethodID = jenv->GetMethodID(clazz, "get", "(I)Ljava/lang/Object;");
+   int listSize = jenv->CallIntMethod($input, sizeMethodID);
+   
+   for (int i = 0; i < listSize; ++i) {
+     jbyteArray pixels = (jbyteArray) jenv->CallObjectMethod($input, getMethodID, i);
+     long receivedLength = jenv->GetArrayLength(pixels);
+   	 if (receivedLength != expectedLength && receivedLength != expectedLength*4)
+	 {
+	    jclass excep = jenv->FindClass("java/lang/Exception");
+	     if (excep)
+	        jenv->ThrowNew(excep, "Image dimensions are wrong for this SLM.");
+	      return;
+	  }
+	  inputVector.push_back((unsigned char *) JCALL2(GetByteArrayElements, jenv, pixels, 0));
+   }
+   $1 = inputVector;
+}
+
+%typemap(freearg) std::vector<unsigned char*> {
+   // Allow the Java List to be garbage collected.
+   // Not sure how to do that here -- may not be necessary.
+   //JCALL3(ReleaseByteArrayElements, jenv, $input, (jbyte *) $1, JNI_ABORT); // JNI_ABORT = Don't alter the original array.
+}
+
+%typemap(javain) std::vector<unsigned char*> "$javainput" 
+
 // Java typemap
-// change deafult SWIG mapping of void* return values
+// change default SWIG mapping of void* return values
 // to return CObject containing array of pixel values
 //
 // Assumes that class has the following methods defined:
 // unsigned GetImageWidth()
 // unsigned GetImageHeight()
-// unsigned GetImageDepth()
-// unsigned GetNumberOfComponents
-
 
 %typemap(jni) void*        "jobject"
 %typemap(jtype) void*      "Object"
@@ -204,7 +243,7 @@
 }
 
 // Java typemap
-// change deafult SWIG mapping of void* return values
+// change default SWIG mapping of void* return values
 // to return CObject containing array of pixel values
 //
 // Assumes that class has the following methods defined:
@@ -724,7 +763,6 @@ namespace std {
     %template(BooleanVector)    vector<bool>;
     %template(pair_ss)      pair<string, string>;
     %template(StrMap)       map<string, string>;
-
 
 
 
