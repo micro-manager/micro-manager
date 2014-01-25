@@ -376,7 +376,20 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
       }  
       
       if (lutComboBox_.getSelectedIndex() == 2) {
-         length = fire(r, g, b);
+         byte[] rn = new byte[length];
+         byte[] gn = new byte[length];
+         byte[] bn = new byte[length];
+         length = fire(rn, gn, bn);
+         if (length < 256) {
+            interpolate (rn, gn, bn, length);
+            length = 256;
+            for (int i = 0; i < length; i++) {
+               double val = Math.pow((double) i / maxValue, gamma_) * maxValue;
+               r[i] = rn[(int)val];
+               g[i] = gn[(int)val];
+               b[i] = bn[(int)val];
+            }
+         }
       }
       
       //apply gamma and contrast to image
@@ -389,48 +402,6 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
    }
    
    public int fire(byte[] reds, byte[] greens, byte[] blues) {
-      byte rb = (byte) 255; byte gb = (byte) 0; byte bb = (byte) 0;
-      for (int i =0; i < 43; i++) {
-         reds[i] = rb;
-         greens[i] = gb;
-         blues[i] = bb;
-         gb += 6;
-      }
-      rb = (byte) 252; gb = (byte) 255;
-      for (int i = 43; i < 86; i ++) {
-         reds[i] = rb;
-         greens[i] = gb;
-         blues[i] = bb;
-         rb -= 6;
-      }
-      bb = (byte) 6;
-      for (int i = 86; i < 127; i++) {
-         reds[i] = rb;
-         greens[i] = gb;
-         blues[i] = bb;
-         bb += 6;
-      }
-      bb = (byte) 255; gb = (byte)252;
-      for (int i = 127; i < 171; i++) {
-         reds[i] = rb;
-         greens[i] = gb;
-         blues[i] = bb;
-         gb -= 6;
-      }
-      for (int i = 171; i < 213; i++) {
-         reds[i] = rb;
-         greens[i] = gb;
-         blues[i] = bb;
-         rb -= 6;
-      }
-      rb = (byte) 255; bb = (byte) 252;
-      for (int i = 213; i < 256; i++) {
-         reds[i] = rb;
-         greens[i] = gb;
-         blues[i] = bb;
-         bb -= 6;
-      }
-      /*
 		int[] r = {0,0,1,25,49,73,98,122,146,162,173,184,195,207,217,229,240,252,255,255,255,255,255,255,255,255,255,255,255,255,255,255};
 		int[] g = {0,0,0,0,0,0,0,0,0,0,0,0,0,14,35,57,79,101,117,133,147,161,175,190,205,219,234,248,255,255,255,255};
 		int[] b = {0,61,96,130,165,192,220,227,210,181,151,122,93,64,35,5,0,0,0,0,0,0,0,0,0,0,0,35,98,160,223,255};
@@ -439,10 +410,31 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
 			greens[i] = (byte)g[i];
 			blues[i] = (byte)b[i];
 		}
-      * */
-		return 255;
+		return r.length;
 	}
 
+   void interpolate(byte[] reds, byte[] greens, byte[] blues, int nColors) {
+		byte[] r = new byte[nColors]; 
+		byte[] g = new byte[nColors]; 
+		byte[] b = new byte[nColors];
+		System.arraycopy(reds, 0, r, 0, nColors);
+		System.arraycopy(greens, 0, g, 0, nColors);
+		System.arraycopy(blues, 0, b, 0, nColors);
+		double scale = nColors/256.0;
+		int i1, i2;
+		double fraction;
+		for (int i=0; i<256; i++) {
+			i1 = (int)(i*scale);
+			i2 = i1+1;
+			if (i2==nColors) i2 = nColors-1;
+			fraction = i*scale - i1;
+			//IJ.write(i+" "+i1+" "+i2+" "+fraction);
+			reds[i] = (byte)((1.0-fraction)*(r[i1]&255) + fraction*(r[i2]&255));
+			greens[i] = (byte)((1.0-fraction)*(g[i1]&255) + fraction*(g[i2]&255));
+			blues[i] = (byte)((1.0-fraction)*(b[i1]&255) + fraction*(b[i2]&255));
+		}
+	}
+   
 
    public void saveDisplaySettings() {
       int histMax = histRangeComboBox_.getSelectedIndex() == 0 ? -1 : histMax_;
