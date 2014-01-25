@@ -75,7 +75,7 @@ public class Devices {
     * to the ComboBoxes in DevicesPanel)    
     */
    public static enum Keys { NONE,
-      CAMERAA, CAMERAB, MULTICAMERA, 
+      CAMERAA, CAMERAB, MULTICAMERA, CAMERALOWER,
       PIEZOA, PIEZOB,
       GALVOA, GALVOB,
       XYSTAGE, LOWERZDRIVE, UPPERZDRIVE
@@ -425,11 +425,12 @@ public class Devices {
       deviceInfo_.put(Keys.NONE, new DeviceData(Keys.NONE, "None", Sides.N));
       deviceInfo_.put(Keys.CAMERAA, new DeviceData(Keys.CAMERAA, "Camera", Sides.A));
       deviceInfo_.put(Keys.CAMERAB, new DeviceData(Keys.CAMERAB, "Camera", Sides.B));
+      deviceInfo_.put(Keys.CAMERALOWER, new DeviceData(Keys.CAMERALOWER, "Lower Camera", Sides.N));
       deviceInfo_.put(Keys.MULTICAMERA, new DeviceData(Keys.MULTICAMERA, "Multi Camera", Sides.N));
       deviceInfo_.put(Keys.PIEZOA, new DeviceData(Keys.PIEZOA, "Imaging Piezo", Sides.A));
       deviceInfo_.put(Keys.PIEZOB, new DeviceData(Keys.PIEZOB, "Imaging Piezo", Sides.B));
-      deviceInfo_.put(Keys.GALVOA, new DeviceData(Keys.GALVOA, "Sheet Galvo", Sides.A));
-      deviceInfo_.put(Keys.GALVOB, new DeviceData(Keys.GALVOB, "Sheet Galvo", Sides.B));
+      deviceInfo_.put(Keys.GALVOA, new DeviceData(Keys.GALVOA, "Scanner", Sides.A));
+      deviceInfo_.put(Keys.GALVOB, new DeviceData(Keys.GALVOB, "Scanner", Sides.B));
       deviceInfo_.put(Keys.XYSTAGE, new DeviceData(Keys.XYSTAGE, "XY Stage", Sides.N));
       deviceInfo_.put(Keys.LOWERZDRIVE, new DeviceData(Keys.LOWERZDRIVE, "Lower Z Drive", Sides.N));
       deviceInfo_.put(Keys.UPPERZDRIVE, new DeviceData(Keys.UPPERZDRIVE, "Upper (SPIM) Z Drive", Sides.N));

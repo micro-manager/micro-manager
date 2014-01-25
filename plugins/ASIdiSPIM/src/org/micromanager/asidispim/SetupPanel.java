@@ -74,8 +74,10 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
    
    private boolean illumPiezoHomeEnable_;
    
-   JRadioButton singleCameraButton_; 
+   JRadioButton imagingCameraButton_;
+   JRadioButton epiCameraButton_;
    JRadioButton dualCameraButton_;
+   JRadioButton lowerCameraButton_;
    final String MULTICAMERAPREF = "IsMultiCamera";
    final String ISMULTICAMERAPREFNAME;
    
@@ -109,7 +111,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       core_ = MMStudioMainFrame.getInstance().getCore();
       
       piezoImagingDeviceKey_ = devices_.getSideSpecificKey(Devices.Keys.PIEZOA, side_);
-      piezoIlluminationDeviceKey_ = devices_.getSideSpecificKey(Devices.Keys.PIEZOA, devices.getOppositeSide(side_));
+      piezoIlluminationDeviceKey_ = devices_.getSideSpecificKey(Devices.Keys.PIEZOA, devices_.getOppositeSide(side_));
       micromirrorDeviceKey_ = devices_.getSideSpecificKey(Devices.Keys.GALVOA, side_);
       
       port_ = null;
@@ -328,15 +330,19 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
 
     add(new JLabel("Camera:"));
     boolean isMultiCamera = prefs_.getBoolean(ISMULTICAMERAPREFNAME, false);
+    imagingCameraButton_ = new JRadioButton("Imaging");
+    epiCameraButton_ = new JRadioButton("Epi");
     dualCameraButton_ = new JRadioButton("Dual");
-    singleCameraButton_ = new JRadioButton("Single");
+    lowerCameraButton_ = new JRadioButton("Lower");
     ButtonGroup singleDualCameraButtonGroup = new ButtonGroup();
+    singleDualCameraButtonGroup.add(imagingCameraButton_);
+    singleDualCameraButtonGroup.add(epiCameraButton_);
     singleDualCameraButtonGroup.add(dualCameraButton_);
-    singleDualCameraButtonGroup.add(singleCameraButton_);
+    singleDualCameraButtonGroup.add(lowerCameraButton_);
     if (isMultiCamera) {
        dualCameraButton_.setSelected(true);
     } else {
-       singleCameraButton_.setSelected(true);
+       imagingCameraButton_.setSelected(true);
     } 
     ActionListener radioButtonListener = new ActionListener() {
        public void actionPerformed(ActionEvent ae) {
@@ -344,11 +350,15 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
           handleCameraButton(myButton);
        }
     };
+    imagingCameraButton_.addActionListener(radioButtonListener);
+    epiCameraButton_.addActionListener(radioButtonListener);
     dualCameraButton_.addActionListener(radioButtonListener);
-    singleCameraButton_.addActionListener(radioButtonListener);
-    add(singleCameraButton_, "split 2, center");
-    add(dualCameraButton_, "center, wrap");
-    add(toggleButtonLive_, "center, width 110px, skip 1");
+    lowerCameraButton_.addActionListener(radioButtonListener);
+    add(imagingCameraButton_, "split 2, center");
+    add(epiCameraButton_, "center, wrap");
+    add(toggleButtonLive_, "center, width 100px");
+    add(dualCameraButton_, "center, split 2");
+    add(lowerCameraButton_, "center, wrap");
       
    }// end of SetupPanel constructor
    
@@ -404,10 +414,18 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
    private void handleCameraButton(JRadioButton myButton) { 
       if (myButton != null && myButton.isSelected()) { 
          String mmDevice;
-         if (myButton.equals(singleCameraButton_)) { 
+         if (myButton.equals(imagingCameraButton_)) { 
             mmDevice = devices_.getMMDevice(devices_.getSideSpecificKey(Devices.Keys.CAMERAA, side_));
             prefs_.putBoolean(ISMULTICAMERAPREFNAME, false);
-         } else {
+         } else if (myButton.equals(epiCameraButton_)) {
+            mmDevice = devices_.getMMDevice(devices_.getSideSpecificKey(Devices.Keys.CAMERAA, devices_.getOppositeSide(side_)));
+            prefs_.putBoolean(ISMULTICAMERAPREFNAME, false);
+         }
+         else if (myButton.equals(lowerCameraButton_)) {
+            mmDevice = devices_.getMMDevice(Devices.Keys.CAMERALOWER);
+            prefs_.putBoolean(ISMULTICAMERAPREFNAME, false);
+         }
+         else {
             // default to dual camera button 
             mmDevice = devices_.getMMDevice(Devices.Keys.MULTICAMERA); 
             prefs_.putBoolean(ISMULTICAMERAPREFNAME, true); 
@@ -445,11 +463,14 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
          }
       }
       
-      // handles single/dual camera
+      // handles camera setting
       JRadioButton jr = dualCameraButton_; 
-      if (singleCameraButton_.isSelected()) { 
-         jr = singleCameraButton_; 
+      if (imagingCameraButton_.isSelected()) { 
+         jr = imagingCameraButton_; 
       } 
+      else if (epiCameraButton_.isSelected()) {
+         jr = epiCameraButton_;
+      }
       handleCameraButton(jr); 
    }
    

@@ -32,8 +32,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import javax.swing.ImageIcon;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
+import javax.swing.JSeparator;
 
 import mmcorej.CMMCore;
 import mmcorej.StrVector;
@@ -68,33 +70,25 @@ public class DevicesPanel extends ListeningJPanel {
 
       add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.XYSTAGE) + ":", null, JLabel.RIGHT));
       JComboBox tmp_cb = makeDeviceBox(mmcorej.DeviceType.XYStageDevice, Devices.Keys.XYSTAGE); 
-      add(tmp_cb, "span 2, center, wrap");
+      add(tmp_cb, "span 2, left, wrap");
       
       add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.LOWERZDRIVE) + ":", null, JLabel.RIGHT));
       tmp_cb = makeDeviceBox(mmcorej.DeviceType.StageDevice, Devices.Keys.LOWERZDRIVE);
-      add(tmp_cb, "span 2, center, wrap");
+      add(tmp_cb, "span 2, left, wrap");
       
       add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.UPPERZDRIVE) + ":", null, JLabel.RIGHT));
       tmp_cb = makeDeviceBox(mmcorej.DeviceType.StageDevice, Devices.Keys.UPPERZDRIVE);
-      add(tmp_cb, "span 2, center, wrap");
+      add(tmp_cb, "span 2, left, wrap");
+      
+      add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.CAMERALOWER) + ":", null, JLabel.RIGHT));
+      add(makeDeviceBox(mmcorej.DeviceType.CameraDevice, Devices.Keys.CAMERALOWER), "span 2, left, wrap");
             
       add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.MULTICAMERA) + ":", null, JLabel.RIGHT));
-      add(makeDualCameraDeviceBox(Devices.Keys.MULTICAMERA), "span 2, center, wrap");
+      add(makeDualCameraDeviceBox(Devices.Keys.MULTICAMERA), "span 2, leftl, wrap");
 
       add(new JLabel("Imaging Path A"), "skip 1");
       add(new JLabel("Imaging Path B"), "wrap");
-
-      add(new JLabel("Camera:", null, JLabel.RIGHT));
-      add(makeDeviceBox(mmcorej.DeviceType.CameraDevice, Devices.Keys.CAMERAA));
-      add(makeDeviceBox(mmcorej.DeviceType.CameraDevice, Devices.Keys.CAMERAB), "wrap");
-
-      add(new JLabel(devices_.getDeviceDisplayGeneric(Devices.Keys.PIEZOA) + ":", null, JLabel.RIGHT));
-      tmp_cb = makeDeviceBox(mmcorej.DeviceType.StageDevice, Devices.Keys.PIEZOA);
-      add(tmp_cb);
       
-      tmp_cb = makeDeviceBox(mmcorej.DeviceType.StageDevice, Devices.Keys.PIEZOB);
-      add(tmp_cb, "wrap");
-
       JLabel label = new JLabel(devices_.getDeviceDisplayGeneric(Devices.Keys.GALVOA) + ":", null, JLabel.RIGHT);
       label.setToolTipText("Should be the first two axes on the MicroMirror card, usually AB");
       add (label);
@@ -102,6 +96,21 @@ public class DevicesPanel extends ListeningJPanel {
       add(tmp_cb);
       tmp_cb = makeDeviceBox(mmcorej.DeviceType.GalvoDevice, Devices.Keys.GALVOB);
       add(tmp_cb, "wrap");
+      
+      add(new JLabel(devices_.getDeviceDisplayGeneric(Devices.Keys.PIEZOA) + ":", null, JLabel.RIGHT));
+      tmp_cb = makeDeviceBox(mmcorej.DeviceType.StageDevice, Devices.Keys.PIEZOA);
+      add(tmp_cb);
+      tmp_cb = makeDeviceBox(mmcorej.DeviceType.StageDevice, Devices.Keys.PIEZOB);
+      add(tmp_cb, "wrap");
+
+      add(new JLabel("Camera:", null, JLabel.RIGHT));
+      add(makeDeviceBox(mmcorej.DeviceType.CameraDevice, Devices.Keys.CAMERAA));
+      add(makeDeviceBox(mmcorej.DeviceType.CameraDevice, Devices.Keys.CAMERAB), "wrap");
+
+      add(new JSeparator(JSeparator.VERTICAL), "growy, cell 3 0 1 12");
+      
+      JLabel imgLabel = new JLabel(new ImageIcon(getClass().getResource("/org/micromanager/asidispim/icons/diSPIM.png")));
+      add(imgLabel, "cell 4 0 1 12, growy");
       
       // turn on listeners again
       devices_.enableListeners(true);
