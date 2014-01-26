@@ -278,7 +278,8 @@ public class SplitViewFrame extends javax.swing.JFrame {
 
    private void openAcq() throws MMScriptException {
 
-      gui_.openAcquisition(ACQNAME, "", 1, 2, 1);
+      //gui_.createDataSet(ACQNAME, "", 1, 2, 1, 1, true, true);
+      gui_.openAcquisition(ACQNAME, "", 1, 2, 1, 1);
       gui_.initializeAcquisition(ACQNAME, newWidth_, newHeight_, (int) imgDepth_);
       gui_.promptToSaveAcqusition(ACQNAME, false);
       gui_.setChannelColor(ACQNAME, 0, col1_);

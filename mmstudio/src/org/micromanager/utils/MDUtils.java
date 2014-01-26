@@ -6,18 +6,22 @@
 package org.micromanager.utils;
 
 import ij.ImagePlus;
+
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.UUID;
+
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
 import mmcorej.PropertySetting;
 import mmcorej.TaggedImage;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.micromanager.api.MMTags;
 
 /**
  *
@@ -441,13 +445,13 @@ public class MDUtils {
 
    public static int getDepth(JSONObject tags) throws MMScriptException, JSONException {
       String pixelType = getPixelType(tags);
-      if (pixelType.contains("GRAY8"))
+      if (pixelType.contains(MMTags.Values.PIX_TYPE_GRAY_8))
          return 1;
-      else if (pixelType.contains("GRAY16"))
+      else if (pixelType.contains(MMTags.Values.PIX_TYPE_GRAY_16))
          return 2;
-      else if (pixelType.contains("RGB32"))
+      else if (pixelType.contains(MMTags.Values.PIX_TYPE_RGB_32))
          return 4;
-      else if (pixelType.contains("RGB64"))
+      else if (pixelType.contains(MMTags.Values.PIX_TYPE_RGB_64))
          return 8;
       else
          return 0;

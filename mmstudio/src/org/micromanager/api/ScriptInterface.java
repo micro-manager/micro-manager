@@ -85,15 +85,6 @@ public interface ScriptInterface {
    public void snapSingleImage();
    
    /**
-    * Opens an acquisition data set
-    * @param summaryMetadata The metadata describing the acquisition parameters
-    * @param diskCached True if images are cached on disk; false if they are kept in RAM only.
-    * @param displayOff True if no display is to be created or shown.
-    * @throws MMScriptException
-    */
-   // public String createDataSet(String root, String name, boolean diskCached, boolean displayOff) throws MMScriptException;
-   // TODO: add data set format specifier (multi-file or single file) to the parameter list
-   /**
     * Opens a new acquisition data set
     * @param name Name of the new acquisition context.
     * @param rootDir Place in the file system where data may be stored.
@@ -165,7 +156,6 @@ public interface ScriptInterface {
     */
    public String[] getAcquisitionNames();
 
-   
    
    /**
     * Returns the width (in pixels) of images in this acquisition
@@ -754,7 +744,7 @@ public interface ScriptInterface {
      * @param nrSlices Number of Slices (Z-positions) in this acquisition.
      * @throws MMScriptException 
      */
-    public void openAcquisition(String name, String rootDir, int nrFrames, int nrChannels, int nrSlices) throws MMScriptException;
+    // public void openAcquisition(String name, String rootDir, int nrFrames, int nrChannels, int nrSlices) throws MMScriptException;
 
     /**
      * Opens a new acquisition context with explicit image physical parameters.
@@ -783,7 +773,7 @@ public interface ScriptInterface {
      * @throws MMScriptException 
      */
 
-    public void openAcquisition(String name, String rootDir, int nrFrames, int nrChannels, int nrSlices, int nrPositions, boolean show) throws MMScriptException;
+    // public void openAcquisition(String name, String rootDir, int nrFrames, int nrChannels, int nrSlices, int nrPositions, boolean show) throws MMScriptException;
 
     /**
      * Variant of openAcquisition that allows specifying whether or not the data should be saved during acquisition.
@@ -797,7 +787,7 @@ public interface ScriptInterface {
      * @param save Whether or not save data during acquisition.
      * @throws MMScriptException
      */
-    public void openAcquisition(String name, String rootDir, int nrFrames, int nrChannels, int nrSlices, int nrPositions, boolean show, boolean save) throws MMScriptException;
+    // public void openAcquisition(String name, String rootDir, int nrFrames, int nrChannels, int nrSlices, int nrPositions, boolean show, boolean save) throws MMScriptException;
 
 
     /**
@@ -810,7 +800,7 @@ public interface ScriptInterface {
      * @param show Whether or not to show this acquisition.
      * @throws MMScriptException
      */
-    public void openAcquisition(String name, String rootDir, int nrFrames, int nrChannels, int nrSlices, boolean show) throws MMScriptException;
+    // public void openAcquisition(String name, String rootDir, int nrFrames, int nrChannels, int nrSlices, boolean show) throws MMScriptException;
 
 
     /**
@@ -823,7 +813,7 @@ public interface ScriptInterface {
      * @param show Whether or not to show this acquisition.
      * @throws MMScriptException
      */
-    public void openAcquisition(String name, String rootDir, int nrFrames, int nrChannels, int nrSlices, boolean show, boolean save) throws MMScriptException;
+   //  public void openAcquisition(String name, String rootDir, int nrFrames, int nrChannels, int nrSlices, boolean show, boolean save) throws MMScriptException;
     /**
      * Set up a Simple Acquisition that has already been opened
      * Simple Acquisitions are used in Live and Snap modes.  They
@@ -831,8 +821,7 @@ public interface ScriptInterface {
      * this image in RAM, regardless of whether the conserve RAM
      * option in tools-options is checked
      */
-    public void initializeSimpleAcquisition(String name, int width, int height, 
-            int byteDepth, int bitDepth, int multiCamNumCh) throws MMScriptException;
+    // public void initializeSimpleAcquisition(String name, int width, int height, int byteDepth, int bitDepth, int multiCamNumCh) throws MMScriptException;
     
     /**
      * Set up an acquisition that has already been opened.
@@ -842,7 +831,7 @@ public interface ScriptInterface {
     /**
      * Set up an acquisition that has already been opened.
      */
-    public void initializeAcquisition(String name, int width, int height, int byteDepth, int bitDepth) throws MMScriptException;
+    //public void initializeAcquisition(String name, int width, int height, int byteDepth, int bitDepth) throws MMScriptException;
     
     /**
      * Opens and initializes an acquisition according to summaryMetadata
@@ -851,7 +840,7 @@ public interface ScriptInterface {
      * @param diskCached True if images are cached on disk; false if they are kept in RAM only.
      * @throws MMScriptException
      */
-    public String createAcquisition(JSONObject summaryMetadata, boolean diskCached);
+    // public String createAcquisition(JSONObject summaryMetadata, boolean diskCached);
 
     /**
      * Opens and initializes an acquisition according to summaryMetadata
@@ -861,12 +850,13 @@ public interface ScriptInterface {
      * @param displayOff True if no display is to be created or shown.
      * @throws MMScriptException
      */
+    // this is required by DefaultTaggedImagePipeline
     public String createAcquisition(JSONObject summaryMetadata, boolean diskCached, boolean displayOff);
     
     /**
      * Sets the summary metadata for an acquisition (as opposed to metadata for individual planes).
      */
-    public void setAcquisitionSummary(String acqName, JSONObject md) throws MMScriptException;
+    // public void setAcquisitionSummary(String acqName, JSONObject md) throws MMScriptException;
 
     /**
      * Inserts image into the acquisition handle.
@@ -875,7 +865,7 @@ public interface ScriptInterface {
      * in the acquisition this image will be inserted (i.e. frame, channel, slice, and position indecies)    
      * @throws MMScriptException
      */
-    public void addImage(String name, TaggedImage taggedImg) throws MMScriptException;
+    // public void addImage(String name, TaggedImage taggedImg) throws MMScriptException;
 
     /**
      * Inserts image into the acquisition handle and gives option whether or not to update the display.
@@ -885,7 +875,7 @@ public interface ScriptInterface {
      * in the acquisition this image will be inserted (i.e. frame, channel, slice, and position indecies)    * @param updateDisplay Flag used to indicate whether or not to update the display.
      * @throws MMScriptException
      */
-    public void addImage(String name, TaggedImage taggedImg, boolean updateDisplay) throws MMScriptException;
+    // public void addImage(String name, TaggedImage taggedImg, boolean updateDisplay) throws MMScriptException;
 
     /**
      * Inserts image into the acquisition handle and gives option whether or not to update the display.
@@ -898,8 +888,7 @@ public interface ScriptInterface {
      * drawing the image before returning
      * @throws MMScriptException
      */
-    public void addImage(String name, TaggedImage taggedImg, 
-            boolean updateDisplay, boolean waitForDisplay) throws MMScriptException;
+    // public void addImage(String name, TaggedImage taggedImg, boolean updateDisplay, boolean waitForDisplay) throws MMScriptException;
 
    /**
      * Inserts image into the acquisition handle.
@@ -911,8 +900,8 @@ public interface ScriptInterface {
      * @param position index of the position where image should be inserted
      * @throws MMScriptException
      */
-    public void addImage(String name, TaggedImage taggedImg, int frame, int channel, 
-            int slice, int position) throws MMScriptException;
+    // TODO: >> Required by SplitView plugin
+    public void addImage(String name, TaggedImage taggedImg, int frame, int channel, int slice, int position) throws MMScriptException;
 
 
     /**
@@ -927,8 +916,7 @@ public interface ScriptInterface {
      * @param updateDisplay Flag used to indicate whether or not to update the display.
      * @throws MMScriptException
      */
-    public void addImage(String name, TaggedImage taggedImg, int frame, int channel, 
-            int slice, int position, boolean updateDisplay) throws MMScriptException;
+    // public void addImage(String name, TaggedImage taggedImg, int frame, int channel, int slice, int position, boolean updateDisplay) throws MMScriptException;
 
     /**
      * Inserts image into the acquisition handle and gives option whether or not to update the display.
@@ -944,7 +932,6 @@ public interface ScriptInterface {
      * drawing the image before returning
      * @throws MMScriptException
      */
-    public void addImage(String name, TaggedImage taggedImg, int frame, int channel, 
-            int slice, int position, boolean updateDisplay, boolean waitForDisplay) throws MMScriptException;
+    //public void addImage(String name, TaggedImage taggedImg, int frame, int channel, int slice, int position, boolean updateDisplay, boolean waitForDisplay) throws MMScriptException;
 
 }

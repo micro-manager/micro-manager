@@ -3591,20 +3591,20 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       return acqMgr_.getUniqueAcquisitionName(stub);
    }
    
-   @Override
+   //@Override
    public void openAcquisition(String name, String rootDir, int nrFrames,
          int nrChannels, int nrSlices, int nrPositions) throws MMScriptException {
       this.openAcquisition(name, rootDir, nrFrames, nrChannels, nrSlices,
               nrPositions, true, false);
    }
 
-   @Override
+   //@Override
    public void openAcquisition(String name, String rootDir, int nrFrames,
          int nrChannels, int nrSlices) throws MMScriptException {
       openAcquisition(name, rootDir, nrFrames, nrChannels, nrSlices, 0);
    }
    
-   @Override
+   //@Override
    public void openAcquisition(String name, String rootDir, int nrFrames,
          int nrChannels, int nrSlices, int nrPositions, boolean show)
          throws MMScriptException {
@@ -3612,14 +3612,14 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    }
 
 
-   @Override
+   //@Override
    public void openAcquisition(String name, String rootDir, int nrFrames,
          int nrChannels, int nrSlices, boolean show)
          throws MMScriptException {
       this.openAcquisition(name, rootDir, nrFrames, nrChannels, nrSlices, 0, show, false);
    }   
 
-   @Override
+   //@Override
    public void openAcquisition(String name, String rootDir, int nrFrames,
          int nrChannels, int nrSlices, int nrPositions, boolean show, boolean virtual)
          throws MMScriptException {
@@ -3628,14 +3628,14 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       acq.setDimensions(nrFrames, nrChannels, nrSlices, nrPositions);
    }
 
-   @Override
+   //@Override
    public void openAcquisition(String name, String rootDir, int nrFrames,
          int nrChannels, int nrSlices, boolean show, boolean virtual)
          throws MMScriptException {
       this.openAcquisition(name, rootDir, nrFrames, nrChannels, nrSlices, 0, show, virtual);
    }
 
-   @Override
+   //@Override
    public String createAcquisition(JSONObject summaryMetadata, boolean diskCached) {
       return createAcquisition(summaryMetadata, diskCached, false);
    }
@@ -3667,7 +3667,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
        */
    }
 
-   @Override
+   //@Override
    public void initializeSimpleAcquisition(String name, int width, int height,
          int byteDepth, int bitDepth, int multiCamNumCh) throws MMScriptException {
       MMAcquisition acq = acqMgr_.getAcquisition(name);
@@ -3675,13 +3675,13 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       acq.initializeSimpleAcq();
    }
    
-   @Override
+   //@Override
    public void initializeAcquisition(String name, int width, int height,
          int depth) throws MMScriptException {
       initializeAcquisition(name,width,height,depth,8*depth);
    }
    
-   @Override
+   //@Override
    public void initializeAcquisition(String name, int width, int height,
          int byteDepth, int bitDepth) throws MMScriptException {
       MMAcquisition acq = acqMgr_.getAcquisition(name);
@@ -3776,7 +3776,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       setAcquisitionSummary(acqName, md);
    }
 
-   @Override
+   //@Override
    public void setAcquisitionSummary(String acqName, JSONObject md) throws MMScriptException {
       acqMgr_.getAcquisition(acqName).setSummaryProperties(md);
    }
@@ -3867,12 +3867,22 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       acq.insertImage(img, frame, channel, slice);
    }
 
-   @Override
+   //@Override
    public void addImage(String name, TaggedImage taggedImg) throws MMScriptException {
       MMAcquisition acq = acqMgr_.getAcquisition(name);
       if (!acq.isInitialized()) {
-         // TODO: extract relevant parameters from the tagged image
-         acq.initialize();
+         JSONObject tags = taggedImg.tags;
+         
+         // initialize physical dimensions of the image
+         try {
+            int width = tags.getInt(MMTags.Image.WIDTH);
+            int height = tags.getInt(MMTags.Image.HEIGHT);
+            int byteDepth = MDUtils.getDepth(tags);
+            int bitDepth = tags.getInt(MMTags.Image.BIT_DEPTH);
+            initializeAcquisition(name, width, height, byteDepth, bitDepth);
+         } catch (JSONException e) {
+            throw new MMScriptException(e);
+         }
       }
       acq.insertImage(taggedImg);
    }
@@ -3886,19 +3896,19 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
 	   a.insertImage(taggedImg);
    }
 
-   @Override
+   //@Override
    public void addImage(String name, TaggedImage img, boolean updateDisplay) throws MMScriptException {
       acqMgr_.getAcquisition(name).insertImage(img, updateDisplay);
    }
    
-   @Override
+   //@Override
    public void addImage(String name, TaggedImage taggedImg, 
            boolean updateDisplay,
            boolean waitForDisplay) throws MMScriptException {
       acqMgr_.getAcquisition(name).insertImage(taggedImg, updateDisplay, waitForDisplay);
    }
    
-   @Override
+   //@Override
    public void addImage(String name, TaggedImage taggedImg, int frame, int channel, 
            int slice, int position) throws MMScriptException {
       try {
@@ -3908,7 +3918,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       }
    }
 
-   @Override
+   //@Override
    public void addImage(String name, TaggedImage taggedImg, int frame, int channel, 
            int slice, int position, boolean updateDisplay) throws MMScriptException {
       try {
@@ -3918,7 +3928,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       }  
    }
 
-   @Override
+   //@Override
    public void addImage(String name, TaggedImage taggedImg, int frame, int channel,
            int slice, int position, boolean updateDisplay, boolean waitForDisplay) throws MMScriptException {
       try {
