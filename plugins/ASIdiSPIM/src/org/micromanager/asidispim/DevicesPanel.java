@@ -84,7 +84,7 @@ public class DevicesPanel extends ListeningJPanel {
       add(makeDeviceBox(mmcorej.DeviceType.CameraDevice, Devices.Keys.CAMERALOWER), "span 2, left, wrap");
             
       add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.MULTICAMERA) + ":", null, JLabel.RIGHT));
-      add(makeDualCameraDeviceBox(Devices.Keys.MULTICAMERA), "span 2, leftl, wrap");
+      add(makeDualCameraDeviceBox(Devices.Keys.MULTICAMERA), "span 2, left, wrap");
 
       add(new JLabel("Imaging Path A"), "skip 1");
       add(new JLabel("Imaging Path B"), "wrap");
