@@ -267,9 +267,7 @@ private JCheckBox drawGrid_, drawPosNames_;
               new Runnable() {
                  @Override
                  public void run() {        
-                    applyDepthSetting(-1);                  
-                    //refresh GUI on each image so it reflects depth list changes
-                    refreshGUI();
+                    applyDepthSetting(-1,0);                  
                  }
               });
    }
@@ -379,7 +377,7 @@ private JCheckBox drawGrid_, drawPosNames_;
       activateDepthList_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            applyDepthSetting(-1);
+            applyDepthSetting(-1,0);
          }
       });
       buttonPanel.add(row2);
@@ -854,13 +852,26 @@ private JCheckBox drawGrid_, drawPosNames_;
          handleError(e.getMessage());
       }
    }
-
-   public void applyDepthSetting(int positionIndex) {
+   
+   public void applyDepthSetting(int positionIndex, double focusOffset) {
       if (activateDepthList_.isSelected()) {
          int offset = positionIndex == -1 ? 0 : depthListOffsets_.get(positionIndex);       
          try {
-            double zPos = core_.getPosition(core_.getFocusDevice());
-            DepthSetting ds = depthData_.getInterpolatedDepthSetting(zPos - offset);
+             
+             //It takes time for the z on gen3 to get to its proper position,
+             //for now, loop here until it settles so correct depth setting is applied          
+            double zPos1 = 1000000;
+            double zPos2 = core_.getPosition(Z_STAGE); 
+//            int count = 0;
+            while (Math.abs(zPos1 - zPos2) > 1) {
+                zPos1 = zPos2;
+                zPos2 = core_.getPosition(core_.getFocusDevice()); 
+//                count++;
+            }
+//            System.out.println(count + " cycles to settle z");
+            //Z should now have settled
+                    
+            DepthSetting ds = depthData_.getInterpolatedDepthSetting(zPos2 + offset + focusOffset);
             core_.setProperty(LASER_EOM_1, "Volts", Double.toString(ds.eomVolts1_));
             core_.setProperty(LASER_EOM_2, "Volts", Double.toString(ds.eomVolts2_));
             for (int i = 0; i < ds.pmts.length; i++) {
@@ -871,6 +882,26 @@ private JCheckBox drawGrid_, drawPosNames_;
             handleError(e.getMessage());
             return;
          }
+      }
+   }
+   
+   public void refreshGUI() {
+      try {
+         core_.logMessage("Refreshing Two Photon plugin from hardware", true);
+         //with devices on a separate thread during acquisition
+         
+         core_.updateSystemStateCache();
+//         pifocSlider_.setText(core_.getProperty(Z_STAGE, "Position"));
+         pifocSlider_.setText(core_.getPosition(Z_STAGE) +"");
+         laserSlider1_.setText(core_.getProperty(LASER_EOM_1, "Volts"));
+         laserSlider2_.setText(core_.getProperty(LASER_EOM_2, "Volts"));
+         pixelSizeCombo_.setSelectedItem(core_.getProperty(RESOLUTION, "Label"));
+
+         PMTDataModel pmtdata = (PMTDataModel) pmtTable_.getModel();
+         pmtdata.refresh();
+
+      } catch (Exception ex) {
+         ReportingUtils.logError(ex.getMessage());
       }
    }
 
@@ -910,7 +941,7 @@ private JCheckBox drawGrid_, drawPosNames_;
       try {
          double z = Double.parseDouble(zprop);
          core_.setPosition(core_.getFocusDevice(), z);    
-         applyDepthSetting(-1);
+         applyDepthSetting(-1,0);
          removeDepthListSelection();
          MMStudioMainFrame.getInstance().updateZPos(z);
       } catch (NumberFormatException e) {
@@ -1014,24 +1045,6 @@ private JCheckBox drawGrid_, drawPosNames_;
       }
       
       pixelSizeCombo_.addActionListener(pixelSizeListener_);
-   }
-
-   public void refreshGUI() {
-      try {
-         core_.logMessage("Refreshing Two Photon plugin from hardware", true);
-         //with devices on a separate thread during acquisition
-         
-         pifocSlider_.setText(core_.getProperty(Z_STAGE, "Position"));
-         laserSlider1_.setText(core_.getProperty(LASER_EOM_1, "Volts"));
-         laserSlider2_.setText(core_.getProperty(LASER_EOM_2, "Volts"));
-         pixelSizeCombo_.setSelectedItem(core_.getProperty(RESOLUTION, "Label"));
-
-         PMTDataModel pmtdata = (PMTDataModel) pmtTable_.getModel();
-         pmtdata.refresh();
-
-      } catch (Exception ex) {
-         ReportingUtils.logError(ex.getMessage());
-      }
    }
 
    /**

@@ -155,7 +155,7 @@ public class DepthDataModel extends AbstractTableModel {
       
       int idx = Collections.binarySearch(settings_, ds);
    
-      System.out.println("Index: " + idx + "Z: " + z);
+//      System.out.println("Index: " + idx + "Z: " + z);
       
       if (idx >= 0)
          return settings_.get(idx);
@@ -170,8 +170,8 @@ public class DepthDataModel extends AbstractTableModel {
          ds.resizePMT(dsLow.pmts.length);
          double zFactor = (z - dsLow.z)/(dsHigh.z - dsLow.z);
          ds.eomVolts1_ = linearInterpolation(dsLow.eomVolts1_, dsHigh.eomVolts1_, zFactor);
-         System.out.println("VL=" + dsLow.eomVolts1_ + ", VH=" + dsHigh.eomVolts1_ + ", Z=" + z + ", ZL=" + dsLow.z + ", ZH=" + dsHigh.z);
-         System.out.println("V=" + ds.eomVolts1_);
+//         System.out.println("VL=" + dsLow.eomVolts1_ + ", VH=" + dsHigh.eomVolts1_ + ", Z=" + z + ", ZL=" + dsLow.z + ", ZH=" + dsHigh.z);
+//         System.out.println("V=" + ds.eomVolts1_);
          ds.eomVolts2_ = linearInterpolation(dsLow.eomVolts2_, dsHigh.eomVolts2_, zFactor);
          for (int i=0; i<ds.pmts.length; i++) {
             ds.pmts[i].name = new String(dsLow.pmts[i].name);
