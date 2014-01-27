@@ -240,8 +240,8 @@ int ThorlabsUSBCam::Initialize()
 
    // Exposure
    pAct = new CPropertyAction (this, &ThorlabsUSBCam::OnExposure);
-   CreateProperty(MM::g_Keyword_Exposure, "15", MM::Integer, false, pAct);
-   SetPropertyLimits(MM::g_Keyword_Exposure, 1, 35);
+   CreateProperty(MM::g_Keyword_Exposure, "15.0", MM::Float, false, pAct);
+   SetPropertyLimits(MM::g_Keyword_Exposure, 1.0, 100.0);
 
    // camera gain
    pAct = new CPropertyAction (this, &ThorlabsUSBCam::OnHardwareGain);
@@ -891,12 +891,13 @@ int ThorlabsUSBCam::OnExposure(MM::PropertyBase* pProp , MM::ActionType eAct)
    }
    else if (eAct == MM::AfterSet)
    {
-      long value;
+      double value;
       pProp->Get(value);
 		if( value != Exposure_)
 		{
-			Exposure_ = value;
-			is_SetExposureTime(camHandle_, Exposure_, newEXP);
+			int nRet = is_SetExposureTime(camHandle_, value, &Exposure_);
+         if (nRet != IS_SUCCESS)
+            return nRet;
 		}
    }
 	return DEVICE_OK;
