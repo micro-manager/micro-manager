@@ -3888,6 +3888,9 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
          tags.put(MMTags.Image.CHANNEL_INDEX, channel);
          tags.put(MMTags.Image.SLICE_INDEX, slice);
          tags.put(MMTags.Image.POS_INDEX, position);
+         if (!tags.has(MMTags.Image.POS_NAME)) {
+            tags.put(MMTags.Image.POS_NAME, "Pos-" + position);
+         }
       } catch (JSONException e) {
          throw new MMScriptException(e);
       }
