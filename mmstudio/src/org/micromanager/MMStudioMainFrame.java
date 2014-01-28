@@ -3619,7 +3619,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       this.openAcquisition(name, rootDir, nrFrames, nrChannels, nrSlices, 0, show, false);
    }   
 
-   //@Override
+   @Override
    public void openAcquisition(String name, String rootDir, int nrFrames,
          int nrChannels, int nrSlices, int nrPositions, boolean show, boolean virtual)
          throws MMScriptException {
@@ -3644,29 +3644,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    public String createAcquisition(JSONObject summaryMetadata, boolean diskCached, boolean displayOff) {
       return acqMgr_.createAcquisition(summaryMetadata, diskCached, engine_, displayOff);
    }
-
-   @Override
-   public void createDataSet(String name, String rootDir, int nrFrames, int nrChannels, int nrSlices, int nrPositions, boolean show, boolean save) throws MMScriptException {
-	   openAcquisition(name, rootDir, nrFrames, nrChannels, nrSlices, nrPositions, show, save);
-   }
    
-   private void openAcquisitionSnap(String name, String rootDir, boolean show)
-         throws MMScriptException {
-      /*
-       MMAcquisition acq = acqMgr_.openAcquisitionSnap(name, rootDir, this,
-            show);
-      acq.setDimensions(0, 1, 1, 1);
-      try {
-         // acq.getAcqData().setPixelSizeUm(core_.getPixelSizeUm());
-         acq.setProperty(SummaryKeys.IMAGE_PIXEL_SIZE_UM, String.valueOf(core_.getPixelSizeUm()));
-
-      } catch (Exception e) {
-         ReportingUtils.showError(e);
-      }
-       *
-       */
-   }
-
    //@Override
    public void initializeSimpleAcquisition(String name, int width, int height,
          int byteDepth, int bitDepth, int multiCamNumCh) throws MMScriptException {
@@ -3674,20 +3652,13 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       acq.setImagePhysicalDimensions(width, height, byteDepth, bitDepth, multiCamNumCh);
       acq.initializeSimpleAcq();
    }
-   
-   //@Override
-   public void initializeAcquisition(String name, int width, int height,
-         int depth) throws MMScriptException {
-      initializeAcquisition(name,width,height,depth,8*depth);
-   }
-   
-   //@Override
-   public void initializeAcquisition(String name, int width, int height,
-         int byteDepth, int bitDepth) throws MMScriptException {
+      
+   @Override
+   public void initializeAcquisition(String name, int width, int height, int byteDepth, int bitDepth) throws MMScriptException {
       MMAcquisition acq = acqMgr_.getAcquisition(name);
       //number of multi-cam cameras is set to 1 here for backwards compatibility
       //might want to change this later
-      acq.setImagePhysicalDimensions(width, height, byteDepth, bitDepth,1);
+      acq.setImagePhysicalDimensions(width, height, byteDepth, bitDepth, 1);
       acq.initialize();
    }
 
@@ -3888,12 +3859,41 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    }
    
    @Override
-   public void addImageToDataSet(String name, int frame, String channel, int slice, String position, TaggedImage taggedImg) throws MMScriptException {
+   public void addImageToAcquisition(String name, int frame, int channel, int slice, int position, TaggedImage taggedImg) throws MMScriptException {
 	   // TODO: complete the tag set and initialize the acquisition
-	   MMAcquisition a = acqMgr_.getAcquisition(name);
-	   //if (!a.isInitialized())
-	   // initialize
-	   a.insertImage(taggedImg);
+	   MMAcquisition acq = acqMgr_.getAcquisition(name);
+      JSONObject tags = taggedImg.tags;
+	   
+	   // if the acquisition was not previously initialized, set physical dimensions of the image
+      if (!acq.isInitialized()) {
+         
+         // automatically initialize physical dimensions of the image
+         try {
+            int width = tags.getInt(MMTags.Image.WIDTH);
+            int height = tags.getInt(MMTags.Image.HEIGHT);
+            int byteDepth = MDUtils.getDepth(tags);
+            int bitDepth = byteDepth * 8;
+            if (tags.has(MMTags.Image.BIT_DEPTH))
+                  bitDepth = tags.getInt(MMTags.Image.BIT_DEPTH);
+            initializeAcquisition(name, width, height, byteDepth, bitDepth);
+         } catch (JSONException e) {
+            throw new MMScriptException(e);
+         }
+      }
+      
+      // create coordinate tags
+      try {
+         tags.put(MMTags.Image.FRAME_INDEX, frame);
+         tags.put(MMTags.Image.FRAME, frame);
+         tags.put(MMTags.Image.CHANNEL_INDEX, channel);
+         tags.put(MMTags.Image.SLICE_INDEX, slice);
+         tags.put(MMTags.Image.POS_INDEX, position);
+      } catch (JSONException e) {
+         throw new MMScriptException(e);
+      }
+      
+      System.out.println("Inserting frame: " + frame + ", channel: " + channel + ", slice: " + slice + ", pos: " + position);
+	   acq.insertImage(taggedImg);
    }
 
    //@Override

@@ -105,8 +105,9 @@ public class RecallPlugin implements MMPlugin {
          long width = core_.getImageWidth();
          long height = core_.getImageHeight();
          long depth = core_.getBytesPerPixel();
+         long bitDepth = core_.getImageBitDepth();
 
-         gui_.initializeAcquisition(ACQ_NAME, (int) width,(int) height, (int) depth);
+         gui_.initializeAcquisition(ACQ_NAME, (int) width,(int) height, (int) depth, (int)bitDepth);
 
          gui_.runDisplayThread(imageQueue_, displayImageRoutine_);
          

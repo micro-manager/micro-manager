@@ -278,9 +278,8 @@ public class SplitViewFrame extends javax.swing.JFrame {
 
    private void openAcq() throws MMScriptException {
 
-      //gui_.createDataSet(ACQNAME, "", 1, 2, 1, 1, true, true);
-      gui_.openAcquisition(ACQNAME, "", 1, 2, 1, 1);
-      gui_.initializeAcquisition(ACQNAME, newWidth_, newHeight_, (int) imgDepth_);
+      gui_.openAcquisition(ACQNAME, "", 1, 2, 1, 1, true, false);
+      gui_.initializeAcquisition(ACQNAME, newWidth_, newHeight_, (int) imgDepth_, 8 * (int)imgDepth_);
       gui_.promptToSaveAcqusition(ACQNAME, false);
       gui_.setChannelColor(ACQNAME, 0, col1_);
       gui_.setChannelColor(ACQNAME, 1, col2_);
@@ -325,7 +324,8 @@ public class SplitViewFrame extends javax.swing.JFrame {
          TaggedImage firstChannel = new TaggedImage(tmpImg.crop().getPixels(), img.tags);
          firstChannel.tags.put(MMTags.Image.WIDTH, newWidth_);
          firstChannel.tags.put(MMTags.Image.HEIGHT, newHeight_);
-         gui_.addImage(ACQNAME, firstChannel, 0, 0, 0, 0);
+         gui_.addImageToAcquisition(ACQNAME, 0, 0, 0, 0, firstChannel);
+         
          // second channel
          if (orientation_.equals(LR)) {
             tmpImg.setRoi(newWidth_, 0, newWidth_, height_);
@@ -335,7 +335,7 @@ public class SplitViewFrame extends javax.swing.JFrame {
          TaggedImage secondChannel = new TaggedImage(tmpImg.crop().getPixels(), img.tags);
          secondChannel.tags.put(MMTags.Image.WIDTH, newWidth_);
          secondChannel.tags.put(MMTags.Image.HEIGHT, newHeight_);
-         gui_.addImage(ACQNAME, secondChannel, 0, 1, 0, 0);
+         gui_.addImageToAcquisition(ACQNAME, 0, 1, 0, 0, secondChannel);
 
       } catch (Exception e) {
          if (gui_.isLiveModeOn())

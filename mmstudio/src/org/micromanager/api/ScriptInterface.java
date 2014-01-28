@@ -86,26 +86,63 @@ public interface ScriptInterface {
    
    /**
     * Opens a new acquisition data set
-    * @param name Name of the new acquisition context.
-    * @param rootDir Place in the file system where data may be stored.
-    * @param nrFrames Nunmber of Frames (time points) in this acquisition.  This number can grow dynamically.
-    * @param nrChannels Number of Channels in this acquisition.  This number is fixed.
-    * @param nrSlices Number of Slices (Z-positions) in this acquisition.
+    * 
+    * @param name - Name of the data set
+    * @param rootDir - Directory where the new data set is going to be created 
+    * @param nrFrames - Number of Frames (time points) in this acquisition
+    * @param nrChannels - Number of Channels in this acquisition
+    * @param nrSlices - Number of Slices (Z-positions) in this acquisition
     * @param nrPositions Number of (XY) Positions in this acquisition.
     * @param show Whether or not to show this acquisition.
     * @param save Whether or not save data during acquisition.
     * @throws MMScriptException
     */
-   public void createDataSet(String name, String rootDir, int nrFrames, int nrChannels, int nrSlices, int nrPositions, boolean show, boolean save) throws MMScriptException;
+   public void openAcquisition(String name, String rootDir, int nrFrames, int nrChannels, int nrSlices, int nrPositions, boolean show, boolean save) throws MMScriptException;
    
    /**
-    * Inserts image into the acquisition handle.
-    * @param name Name of the acquisition.
-    * @param taggedImg Tagged Image (image with associated metadata).  The metadata determines where
-    * in the acquisition this image will be inserted (i.e. frame, channel, slice, and position indecies)    
+    * Another way to create data set, an alternative to the 
+    *  openAcquisition(String name, String rootDir, int nrFrames, int nrChannels, int nrSlices, int nrPositions, boolean show, boolean save)
+    * 
+    * The caller is responsible for providing all required metadata within the summaryMetadata argument
+    * @param summaryMetadata The metadata describing the acquisition parameters
+    * @param diskCached True if images are cached on disk; false if they are kept in RAM only.
+    * @param displayOff True if no display is to be created or shown.
     * @throws MMScriptException
     */
-   public void addImageToDataSet(String name, int frame, String channel, int slice, String position, TaggedImage taggedImg) throws MMScriptException;   
+   public String createAcquisition(JSONObject summaryMetadata, boolean diskCached, boolean displayOff);
+
+   /**
+    * Set up image physical dimensions for the data set that has already been opened.
+    * Once dimensions of the image has been set, they can't be changed, i.e. subsequent calls to this method will generate an error.
+    * Typically there is no need to call this method, except when display options have to be set before the first image is inserted.
+    * If this method is not explicitly called after openAcqusition(), the image dimensions will be automatically initialized based
+    * on the first image inserted in the data set.
+    * 
+    * @param name - Name of the data set
+    * @param width - Image width in pixels 
+    * @param height - Image height in pixels
+    * @param bytesPerPixel - Number of bytes per pixel
+    * @param bitDepth - Dynamic range in bits per pixel
+    * @throws MMScriptException
+    */
+   public void initializeAcquisition(String name, int width, int height, int bytesPerPixel, int bitDepth) throws MMScriptException;
+        
+   /**
+    * Inserts image into the data set.
+    * @param name - data set name
+    * @param taggedImg Tagged Image (image with associated metadata) 
+    * @throws MMScriptException
+    */
+   public void addImageToAcquisition(String name, int frame, int channel, int slice, int position, TaggedImage taggedImg) throws MMScriptException;   
+
+   /**
+    * Provides access to the data set through the MMAcquisition interface.
+    * Typically there is no need to use this low-level method and interfere with the default acquisition execution.
+    * Intended use is within advanced plugins.
+    * @param name - data set name
+    * @throws MMScriptException
+    */
+   public MMAcquisition getAcquisition(String name) throws MMScriptException;
    
    /**
     * Returns a name beginning with stem that is not yet used.
@@ -700,10 +737,9 @@ public interface ScriptInterface {
     
     /**
      * OBSOLETE!!!
-     * TO BE REMOVED >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+     * TO BE DELETED IN THE 1.4.16 RELEASE>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
      * @return
      */
-    public MMAcquisition getAcquisition(String name) throws MMScriptException;
     
     /**
      * Snaps an image with current settings and moves pixels into the specified layer of the MDA viewer.
@@ -758,7 +794,7 @@ public interface ScriptInterface {
      * @param nrPositions Number of (XY) Positions in this acquisition.
      * @throws MMScriptException
      */
-    public void openAcquisition(String name, String rootDir, int nrFrames, int nrChannels, int nrSlices, int nrPositions) throws MMScriptException;
+    // public void openAcquisition(String name, String rootDir, int nrFrames, int nrChannels, int nrSlices, int nrPositions) throws MMScriptException;
 
     /**
      * Opens a new acquisition context with explicit image physical parameters.
@@ -822,12 +858,7 @@ public interface ScriptInterface {
      * option in tools-options is checked
      */
     // public void initializeSimpleAcquisition(String name, int width, int height, int byteDepth, int bitDepth, int multiCamNumCh) throws MMScriptException;
-    
-    /**
-     * Set up an acquisition that has already been opened.
-     */
-    public void initializeAcquisition(String name, int width, int height, int byteDepth) throws MMScriptException;
-    
+        
     /**
      * Set up an acquisition that has already been opened.
      */
@@ -841,17 +872,6 @@ public interface ScriptInterface {
      * @throws MMScriptException
      */
     // public String createAcquisition(JSONObject summaryMetadata, boolean diskCached);
-
-    /**
-     * Opens and initializes an acquisition according to summaryMetadata
-     * (as typically generated by acquisition dialog).
-     * @param summaryMetadata The metadata describing the acquisition parameters
-     * @param diskCached True if images are cached on disk; false if they are kept in RAM only.
-     * @param displayOff True if no display is to be created or shown.
-     * @throws MMScriptException
-     */
-    // this is required by DefaultTaggedImagePipeline
-    public String createAcquisition(JSONObject summaryMetadata, boolean diskCached, boolean displayOff);
     
     /**
      * Sets the summary metadata for an acquisition (as opposed to metadata for individual planes).
@@ -900,8 +920,7 @@ public interface ScriptInterface {
      * @param position index of the position where image should be inserted
      * @throws MMScriptException
      */
-    // TODO: >> Required by SplitView plugin
-    public void addImage(String name, TaggedImage taggedImg, int frame, int channel, int slice, int position) throws MMScriptException;
+    // public void addImage(String name, TaggedImage taggedImg, int frame, int channel, int slice, int position) throws MMScriptException;
 
 
     /**
