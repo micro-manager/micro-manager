@@ -46,7 +46,7 @@ public class DoubleTaggedImageStorage implements TaggedImageStorage {
    private boolean finished_ = false;
    private boolean preprocessFinished_ = false;
    private ByteProcessor imageProcessor_;
-   private GaussianBlur filter_ = new GaussianBlur();
+   private SingleThreadedGaussianFilter filter_;
    private Preferences prefs_;
 
    public DoubleTaggedImageStorage(JSONObject summaryMetadata, String savingDir, Preferences prefs) {
@@ -135,12 +135,6 @@ public class DoubleTaggedImageStorage implements TaggedImageStorage {
       hdfWritingThread_.start();
    }
 
-   private Object gaussianFilter(Object pixels) {
-      imageProcessor_.setPixels(Arrays.copyOf((byte[]) pixels, ((byte[]) pixels).length));
-      filter_.blurGaussian(imageProcessor_, filterWidth_, filterWidth_, 0.002);
-      return imageProcessor_.getPixels();
-   }
-
    private void hdfPreprocessing() {
       try {
          while (!preprocessFinished_ && makeImarisFile_) {
@@ -197,18 +191,14 @@ public class DoubleTaggedImageStorage implements TaggedImageStorage {
 
             //Filter
             if (gaussianFilter_) {
-               if (imageProcessor_ == null) {
-                  try {
-                     imageProcessor_ = new ByteProcessor(MDUtils.getWidth(batch.getFirst().tags),
-                             MDUtils.getHeight(batch.getFirst().tags));
-                  } catch (JSONException ex) {
-                     ReportingUtils.showError("Problem with image tags");
-                  }
-               }
+               if (filter_ == null) {
+                  filter_ = new SingleThreadedGaussianFilter(MDUtils.getWidth(batch.getFirst().tags),
+                             MDUtils.getHeight(batch.getFirst().tags), filterWidth_);
+               } 
                for (int i = 0; i < batch.size(); i++) {
                   if (batch.get(i).pix != null) {
                      //filter if it's not a dummy image
-                     batch.add(i, new TaggedImage(gaussianFilter(batch.get(i).pix), batch.get(i).tags));
+                     batch.add(i, new TaggedImage(filter_.gaussianFilter(batch.get(i).pix), batch.get(i).tags));
                      batch.remove(i + 1);
                   }
                }
