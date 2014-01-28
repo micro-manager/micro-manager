@@ -21,11 +21,14 @@
 
 package org.micromanager.asidispim;
 
+import org.micromanager.MMStudioMainFrame;
+import org.micromanager.acquisition.AcquisitionWrapperEngine;
 import org.micromanager.asidispim.Data.Properties;
 import org.micromanager.asidispim.Data.Devices;
 import org.micromanager.asidispim.Utils.DevicesListenerInterface;
 import org.micromanager.asidispim.Utils.ListeningJPanel;
 import org.micromanager.asidispim.Utils.PanelUtils;
+import org.micromanager.utils.MMException;
 import org.micromanager.utils.ReportingUtils;
 
 import javax.swing.JButton;
@@ -37,6 +40,7 @@ import javax.swing.JSpinner;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+import mmcorej.CMMCore;
 import net.miginfocom.swing.MigLayout;
 
 /**
@@ -49,6 +53,12 @@ public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerI
 
    Devices devices_;
    Properties props_;
+   private final AcquisitionWrapperEngine acqEngine_;
+   private final CMMCore core_;
+   
+   JSpinner numSlices_;
+   JSpinner numScansPerSlice_;
+   JSpinner lineScanPeriodA_;
    
    public SpimParamsPanel(Devices devices, Properties props) {
       super(new MigLayout(
@@ -57,6 +67,8 @@ public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerI
             "[]12[]"));
       devices_ = devices;
       props_ = props;
+      acqEngine_ = MMStudioMainFrame.getInstance().getAcquisitionEngine();
+      core_ = MMStudioMainFrame.getInstance().getCore();
       
       try {
          PanelUtils pu = new PanelUtils();
@@ -80,16 +92,16 @@ public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerI
          add(tmp_jsp, "span 2, wrap");
 
          add(new JLabel("Number of slices:"));
-         tmp_jsp = pu.makeSpinnerInteger(1, 100, props_, devices_, Devices.Keys.GALVOA, Properties.Keys.SPIM_NUM_SLICES);
-         add(tmp_jsp, "span 2, wrap");
+         numSlices_ = pu.makeSpinnerInteger(1, 100, props_, devices_, Devices.Keys.GALVOA, Properties.Keys.SPIM_NUM_SLICES);
+         add(numSlices_, "span 2, wrap");
 
          add(new JLabel("Lines scans per slice:"));
-         tmp_jsp = pu.makeSpinnerInteger(1, 1000, props_, devices_, Devices.Keys.GALVOA, Properties.Keys.SPIM_NUM_SCANSPERSLICE);
-         add(tmp_jsp, "span 2, wrap");
+         numScansPerSlice_ = pu.makeSpinnerInteger(1, 1000, props_, devices_, Devices.Keys.GALVOA, Properties.Keys.SPIM_NUM_SCANSPERSLICE);
+         add(numScansPerSlice_, "span 2, wrap");
 
          add(new JLabel("Line scan period (ms):"));
-         tmp_jsp = pu.makeSpinnerInteger(1, 10000, props_, devices_, Devices.Keys.GALVOA, Properties.Keys.SPIM_LINESCAN_PERIOD);
-         add(tmp_jsp);
+         lineScanPeriodA_ = pu.makeSpinnerInteger(1, 10000, props_, devices_, Devices.Keys.GALVOA, Properties.Keys.SPIM_LINESCAN_PERIOD);
+         add(lineScanPeriodA_);
          // TODO remove this if only doing single-sided?? would have to add/remove dynamically which might be a pain
          tmp_jsp = pu.makeSpinnerInteger(1, 10000, props_, devices_, Devices.Keys.GALVOB, Properties.Keys.SPIM_LINESCAN_PERIOD);
          add(tmp_jsp, "wrap");
@@ -108,10 +120,19 @@ public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerI
          buttonStart_.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-               props_.setPropValue(Devices.Keys.PIEZOA, Properties.Keys.SPIM_STATE, Properties.Values.SPIM_ARMED, true);
-               props_.setPropValue(Devices.Keys.PIEZOB, Properties.Keys.SPIM_STATE, Properties.Values.SPIM_ARMED, true);
-               props_.setPropValue(Devices.Keys.GALVOA, Properties.Keys.SPIM_STATE, Properties.Values.SPIM_RUNNING, true);
-               // TODO generalize this for different ways of running SPIM
+               try {
+                  // trigger cameras
+                  acqEngine_.setFrames((Integer)numSlices_.getValue(), 0); // 0 means it will record as fast as possible
+                  acqEngine_.acquire();
+                  core_.sleep(3000);  // seem to need a long delay for some reason, more than 1 sec
+                  // trigger controller
+                  props_.setPropValue(Devices.Keys.PIEZOA, Properties.Keys.SPIM_STATE, Properties.Values.SPIM_ARMED, true);
+                  props_.setPropValue(Devices.Keys.PIEZOB, Properties.Keys.SPIM_STATE, Properties.Values.SPIM_ARMED, true);
+                  props_.setPropValue(Devices.Keys.GALVOA, Properties.Keys.SPIM_STATE, Properties.Values.SPIM_RUNNING, true);
+                  // TODO generalize this for different ways of running SPIM
+               } catch (MMException ex) {
+                  ReportingUtils.showError(ex);
+               }
             }
          });
          add(buttonStart_, "cell 4 0, span 2, center, wrap");
