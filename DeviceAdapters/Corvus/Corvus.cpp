@@ -875,7 +875,7 @@ void ZStage::GetName(char* Name) const
 int ZStage::Initialize()
 {
    if (!g_DeviceCorvusAvailable) return DEVICE_NOT_CONNECTED;
-   if (g_NumberOfAxes < 3) return DEVICE_NOT_CONNECTED;
+   // if (g_NumberOfAxes < 3) return DEVICE_NOT_CONNECTED;
 
    // set property list
    // -----------------
