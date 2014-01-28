@@ -143,12 +143,6 @@ bool seqactive_g = false;
 // Exported MMDevice API
 ///////////////////////////////////////////////////////////////////////////////
 
-/**
- * List all supported hardware devices here
- * Do not discover devices at runtime.  To avoid warnings about missing DLLs, Micro-Manager
- * maintains a list of supported device (MMDeviceList.txt).  This list is generated using 
- * information supplied by this function, so runtime discovery will create problems.
- */
 MODULE_API void InitializeModuleData()
 {
    RegisterDevice(g_CameraDeviceName, MM::CameraDevice, "Baumer Optronic driver for Leica Cameras");
