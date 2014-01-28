@@ -943,6 +943,13 @@ int ThorlabsUSBCam::OnPixelClock(MM::PropertyBase* pProp, MM::ActionType eAct)
       int ret = is_PixelClock(camHandle_, IS_PIXELCLOCK_CMD_SET, (void*)&pixClock, sizeof(pixClock));
       if (ret != IS_SUCCESS)
          return ret;
+
+      // refresh the exposure range
+      double expRange[3];
+      int nRet = is_Exposure(camHandle_, IS_EXPOSURE_CMD_GET_FINE_INCREMENT_RANGE, (void*)expRange, sizeof(expRange));
+      if (nRet != IS_SUCCESS)
+         return nRet;
+      SetPropertyLimits(MM::g_Keyword_Exposure, expRange[0], expRange[1]);
    }
 	return DEVICE_OK;
 }
