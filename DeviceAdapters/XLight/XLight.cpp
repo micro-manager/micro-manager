@@ -26,7 +26,7 @@
 #define snprintf _snprintf 
 #endif
 
-#include "XLIGHT.h"
+#include "XLight.h"
 #include "XLIGHTHub.h"
 #include <cstdio>
 #include <string>
