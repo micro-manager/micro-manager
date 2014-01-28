@@ -551,7 +551,8 @@ int SerialPort::Shutdown()
    if( 0 != pThread_)
    {
       CDeviceUtils::SleepMs(100);
-      if (!pThread_->timed_join(boost::posix_time::millisec(100) )) {
+      if (!pThread_->timed_join(boost::posix_time::millisec(1000) )) {
+         LogMessage("Failed to cleanly close port (thread join timed out)");
          pThread_->detach();
          g_BlackListedPorts.push_back(portName_);
       }
