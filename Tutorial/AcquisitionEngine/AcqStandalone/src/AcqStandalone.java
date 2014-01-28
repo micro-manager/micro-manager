@@ -13,15 +13,14 @@ import org.json.JSONObject;
 import org.micromanager.AcquisitionEngine2010;
 import org.micromanager.acquisition.DefaultTaggedImageSink;
 import org.micromanager.acquisition.MMImageCache;
-import org.micromanager.acquisition.SequenceSettings;
-import org.micromanager.acquisition.TaggedImageQueue;
 import org.micromanager.acquisition.TaggedImageStorageDiskDefault;
 import org.micromanager.api.IAcquisitionEngine2010;
 import org.micromanager.api.ImageCacheListener;
 import org.micromanager.api.MMTags;
+import org.micromanager.api.MultiStagePosition;
+import org.micromanager.api.PositionList;
+import org.micromanager.api.SequenceSettings;
 import org.micromanager.api.TaggedImageStorage;
-import org.micromanager.navigation.MultiStagePosition;
-import org.micromanager.navigation.PositionList;
 import org.micromanager.utils.ChannelSpec;
 
 
