@@ -70,7 +70,7 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
    public TaggedImageStorageMultipageTiff(String dir, Boolean newDataSet, JSONObject summaryMetadata) throws IOException {            
       this(dir, newDataSet, summaryMetadata, MMStudioMainFrame.getInstance().getMetadataFileWithMultipageTiff(),
               MMStudioMainFrame.getInstance().getSeparateFilesForPositionsMPTiff(),
-              MMStudioMainFrame.getInstance().getFastStorageOption());
+              true);
    }
    
    /*

@@ -124,8 +124,7 @@ public class MMAcquisition {
                imageCache_ = null;
             }
          } else {
-            imageFileManager = MMStudioMainFrame.getInstance().getFastStorageOption() ? 
-                    new TaggedImageStorageRamFast(null) : new TaggedImageStorageRam(null);
+            imageFileManager = new TaggedImageStorageRamFast(null);
             imageCache_ = new MMImageCache(imageFileManager);
          }
   

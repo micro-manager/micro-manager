@@ -447,19 +447,6 @@ public class OptionsDlg extends MMDialog {
       springLayout.putConstraint(SpringLayout.WEST, hideMDAdisplay, 20, SpringLayout.WEST, getContentPane());
       springLayout.putConstraint(SpringLayout.NORTH, hideMDAdisplay, 5, SpringLayout.SOUTH, syncExposureMainAndMDA);
       hideMDAdisplay.setSelected(opts_.hideMDADisplay_);
-      
-      final JCheckBox fastStorage = new JCheckBox();
-      fastStorage.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent arg0) {
-            opts_.fastStorage_ = fastStorage.isSelected();
-         }
-      });
-      fastStorage.setText("Fast storage");
-      getContentPane().add(fastStorage);
-      springLayout.putConstraint(SpringLayout.WEST, fastStorage, 20, SpringLayout.WEST, getContentPane());
-      springLayout.putConstraint(SpringLayout.NORTH, fastStorage, 5, SpringLayout.SOUTH, hideMDAdisplay);
-      fastStorage.setSelected(opts_.fastStorage_);
    }
 
    private void changeBackground() {

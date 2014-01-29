@@ -1883,10 +1883,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    public boolean getHideMDADisplayOption() {
       return options_.hideMDADisplay_;
    }
-   
-   public boolean getFastStorageOption() {
-      return options_.fastStorage_;
-   }
 
    private void updateTitle() {
       this.setTitle(MICRO_MANAGER_TITLE + " " + MMVersion.VERSION_STRING + " - " + sysConfigFile_);
