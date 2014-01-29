@@ -33,10 +33,6 @@
 #include <algorithm>
 #include <iostream>
 
-#include <fstream>
-#include <boost/progress.hpp>
-using boost::timer;
-
 using namespace std;
 
 // External names used used by the rest of the system
