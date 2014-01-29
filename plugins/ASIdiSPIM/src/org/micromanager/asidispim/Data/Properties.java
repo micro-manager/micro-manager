@@ -69,6 +69,7 @@ public class Properties {
       SA_OFFSET_X_DEG("SingleAxisXOffset(deg)"),
       SA_OFFSET_X("SingleAxisXOffset(um)"),
       SA_MODE_X("SingleAxisXMode"),
+      SA_PATTERN_X("SingleAxisXPattern"),
       SA_AMPLITUDE_Y_DEG("SingleAxisYAmplitude(deg)"),
       SA_OFFSET_Y_DEG("SingleAxisYOffset(deg)"),
       SA_OFFSET_Y("SingleAxisYOffset(um)"),
@@ -80,6 +81,7 @@ public class Properties {
       MIN_DEFLECTION_X("MinDeflectionX(deg)"),
       BEAM_ENABLED("BeamEnabled"),
       SAVE_CARD_SETTINGS("SaveCardSettings"),
+      TRIGGER_SOURCE("TRIGGER SOURCE"),
       ;
       private final String text;
       Keys(String text) {
@@ -105,8 +107,11 @@ public class Properties {
       SPIM_IDLE("Idle"),
       SAM_DISABLED("0 - Disabled"),
       SAM_ENABLED("1 - Enabled"),
+      SAM_TRIANGLE("1 - Triangle"),
       DO_IT("Do it"),
       DO_SSZ("Z - save settings to card (partial)"),
+      INTERNAL("INTERNAL"),
+      EXTERNAL("EXTERNAL"),
       ;
       private final String text;
       Values(String text) {

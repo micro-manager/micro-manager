@@ -93,6 +93,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
    JCheckBox beamBBox_;
    JLabel imagingPiezoPositionLabel_;
    JLabel illuminationPiezoPositionLabel_;
+   JLabel sheetPositionLabel_;
    
    private static final String PREF_ENABLE_ILLUM_HOME = "EnableIllumPiezoHome";
 
@@ -283,7 +284,8 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
     add(tmp_but);
     
     add(new JLabel("Sheet/slice position:"));
-    add(new JLabel(""));
+    sheetPositionLabel_ = new JLabel("");
+    add(sheetPositionLabel_);
 
     tmp_but = new JButton("Set start here");
     tmp_but.addActionListener(new ActionListener() {
@@ -319,12 +321,12 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
     toggleButtonLive_.setMargin(new Insets(0, 10, 0, 10));
     toggleButtonLive_.setIconTextGap(6);
     toggleButtonLive_.setToolTipText("Continuous live view");
-    setLiveButton(gui_.isLiveModeOn());
+    setLiveButtonAppearance(gui_.isLiveModeOn());
     toggleButtonLive_.addActionListener(new ActionListener() {
        @Override
        public void actionPerformed(ActionEvent e) {
-          setLiveButton(!gui_.isLiveModeOn());          
-          gui_.enableLiveMode(!gui_.isLiveModeOn());
+          setLiveButtonAppearance(!gui_.isLiveModeOn());
+          enableLiveMode(!gui_.isLiveModeOn());
        }
     });
 
@@ -359,21 +361,24 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
     add(toggleButtonLive_, "center, width 100px");
     add(dualCameraButton_, "center, split 2");
     add(lowerCameraButton_, "center, wrap");
-      
+    
+    // set scan waveform to be triangle, just like SPIM is
+    props_.setPropValue(micromirrorDeviceKey_, Properties.Keys.SA_PATTERN_X, Properties.Values.SAM_TRIANGLE, true);
+     
    }// end of SetupPanel constructor
    
    /**
     * required by LiveModeListener interface
     */
    public void liveModeEnabled(boolean enable) { 
-      setLiveButton(enable); 
+      setLiveButtonAppearance(enable); 
    } 
    
    /** 
    * Changes the looks of the live button 
    * @param enable - true: live mode is switched on 
    */ 
-   public final void setLiveButton(boolean enable) {
+   public final void setLiveButtonAppearance(boolean enable) {
       toggleButtonLive_.setIcon(enable ? SwingResourceManager.getIcon(MMStudioMainFrame.class,
             "/org/micromanager/icons/cancel.png")
             : SwingResourceManager.getIcon(MMStudioMainFrame.class,
@@ -391,20 +396,55 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
    private void setCameraDevice(String mmDevice) { 
       if (mmDevice != null) { 
          try { 
+
             boolean liveEnabled = gui_.isLiveModeOn(); 
             if (liveEnabled) { 
-               gui_.enableLiveMode(false); 
+               enableLiveMode(false); 
             } 
             core_.setProperty("Core", "Camera", mmDevice); 
             gui_.refreshGUIFromCache(); 
             if (liveEnabled) { 
-               gui_.enableLiveMode(true); 
+               enableLiveMode(true);
             } 
          } catch (Exception ex) { 
             ReportingUtils.showError("Failed to set Core Camera property"); 
          } 
       } 
    } 
+   
+   public void setCameraTriggerExternal(boolean external) {
+      // set mode to external
+      // have to handle any device adapters, currently HamamatsuHam only
+      String camLibraryA = null;
+      try {
+         camLibraryA = core_.getDeviceLibrary(devices_.getMMDevice(Devices.Keys.CAMERAA));
+         if (camLibraryA != null && camLibraryA.equals("HamamatsuHam")) {
+            if (external) {
+               props_.setPropValue(Devices.Keys.CAMERAA, Properties.Keys.TRIGGER_SOURCE, Properties.Values.EXTERNAL, true);
+            } else {
+               props_.setPropValue(Devices.Keys.CAMERAA, Properties.Keys.TRIGGER_SOURCE, Properties.Values.INTERNAL, true);
+            }
+         }
+         String camLibraryB = null;
+         camLibraryB = core_.getDeviceLibrary(devices_.getMMDevice(Devices.Keys.CAMERAB));
+         if (camLibraryB != null && camLibraryB.equals("HamamatsuHam")) {
+            if (external) {
+               props_.setPropValue(Devices.Keys.CAMERAB, Properties.Keys.TRIGGER_SOURCE, Properties.Values.EXTERNAL, true);
+            } else {
+               props_.setPropValue(Devices.Keys.CAMERAB, Properties.Keys.TRIGGER_SOURCE, Properties.Values.INTERNAL, true);
+            }
+         }
+      } catch (Exception e) {
+         ReportingUtils.showError(e);
+      }
+   }
+   
+   private void enableLiveMode(boolean enable) {
+      if (enable) {
+         setCameraTriggerExternal(false);
+      }
+      gui_.enableLiveMode(enable);
+   }
    
    
    /** 
@@ -553,6 +593,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
    public void updateStagePositions() {
       imagingPiezoPositionLabel_.setText(positions_.getPositionString(piezoImagingDeviceKey_));
       illuminationPiezoPositionLabel_.setText(positions_.getPositionString(piezoIlluminationDeviceKey_));
+      sheetPositionLabel_.setText(positions_.getPositionString(micromirrorDeviceKey_, Joystick.Directions.Y));
    }
       
 }

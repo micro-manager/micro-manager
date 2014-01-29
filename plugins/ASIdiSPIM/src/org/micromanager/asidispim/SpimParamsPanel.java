@@ -59,6 +59,7 @@ public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerI
    JSpinner numSlices_;
    JSpinner numScansPerSlice_;
    JSpinner lineScanPeriodA_;
+   JSpinner numRepeats_;
    
    public SpimParamsPanel(Devices devices, Properties props) {
       super(new MigLayout(
@@ -88,8 +89,8 @@ public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerI
          add(new JLabel("Path B"), "wrap");
 
          add(new JLabel("Number of repeats:"));
-         tmp_jsp = pu.makeSpinnerInteger(1, 100, props_, devices_, Devices.Keys.GALVOA, Properties.Keys.SPIM_NUM_REPEATS);
-         add(tmp_jsp, "span 2, wrap");
+         numRepeats_ = pu.makeSpinnerInteger(1, 100, props_, devices_, Devices.Keys.GALVOA, Properties.Keys.SPIM_NUM_REPEATS);
+         add(numRepeats_, "span 2, wrap");
 
          add(new JLabel("Number of slices:"));
          numSlices_ = pu.makeSpinnerInteger(1, 100, props_, devices_, Devices.Keys.GALVOA, Properties.Keys.SPIM_NUM_SLICES);
@@ -121,10 +122,20 @@ public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerI
             @Override
             public void actionPerformed(ActionEvent e) {
                try {
-                  // trigger cameras
-                  acqEngine_.setFrames((Integer)numSlices_.getValue(), 0); // 0 means it will record as fast as possible
+                  // trigger cameras after getting acquisition engine configured
+                  acqEngine_.enableFramesSetting(true);
+                  acqEngine_.setFrames(
+                        (Integer)numSlices_.getValue() * (Integer)numRepeats_.getValue(), // number of frames to capture
+                        0); // 0ms exposure time means it will record as fast as possible
+                  acqEngine_.enableMultiPosition(false);
+                  acqEngine_.enableZSliceSetting(false);
+                  acqEngine_.enableChannelsSetting(false);
                   acqEngine_.acquire();
-                  core_.sleep(3000);  // seem to need a long delay for some reason, more than 1 sec
+                  core_.sleep(2000);  // seem to need a long delay for some reason, more than 1 sec
+                  // make sure camera is set to external mode
+                  // TODO make this cleaner, probably by factoring out camera into own class
+                  props_.setPropValue(Devices.Keys.CAMERAA, Properties.Keys.TRIGGER_SOURCE, Properties.Values.EXTERNAL, true);
+                  props_.setPropValue(Devices.Keys.CAMERAB, Properties.Keys.TRIGGER_SOURCE, Properties.Values.EXTERNAL, true);
                   // trigger controller
                   props_.setPropValue(Devices.Keys.PIEZOA, Properties.Keys.SPIM_STATE, Properties.Values.SPIM_ARMED, true);
                   props_.setPropValue(Devices.Keys.PIEZOB, Properties.Keys.SPIM_STATE, Properties.Values.SPIM_ARMED, true);
