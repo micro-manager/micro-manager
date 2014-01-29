@@ -9,6 +9,7 @@ ASIdiSPIM.jar:  \
 	test -d build || mkdir build
 	rm -rf build/*
 	$(JAVAC) $(JAVACFLAGS) -sourcepath $(srcdir):. -classpath $(IJJARPATH):$(BSHJARPATH):$(COMMONSMATHJARPATH):$(SWINGLAYOUTJARPATH):$(JFREECHARTJARPATH):$(CLASSEXT)/miglayout-4.0-swing.jar:../mmstudio/MMJ_.jar:. $(srcdir)/ASIdiSPIM/src/org/micromanager/asidispim/*.java $(srcdir)/ASIdiSPIM/src/org/micromanager/asidispim/Utils/*.java $(srcdir)/ASIdiSPIM/src/org/micromanager/asidispim/Data/*.java -d build
+	cp -r $(srcdir)/ASIdiSPIM/src/org/micromanager/asidispim/icons build/org/micromanager/asidispim/
 	cd build && jar cf ../ASIdiSPIM.jar * 
 
 IntelligentAcquisition.jar:  \
