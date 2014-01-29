@@ -47,6 +47,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.prefs.Preferences;
 
+import javax.swing.AbstractButton;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -280,8 +281,8 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    private final JSplitPane splitPane_;
    private volatile boolean ignorePropertyChanges_; 
 
-   private JButton setRoiButton_;
-   private  JButton clearRoiButton_;
+   private AbstractButton setRoiButton_;
+   private AbstractButton clearRoiButton_;
    
    private DropTarget dt_;
   // private ProcessorStackManager processorStackManager_;
@@ -688,7 +689,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       
       createLabel("ROI", true, topPanel, 8, 140, 71, 154);
       
-      GUIUtils.createButton(false, "setRoiButton", null,
+      setRoiButton_ = GUIUtils.createButton(false, "setRoiButton", null,
               "Set Region Of Interest to selected rectangle",
               new Runnable() {
                  public void run() {
@@ -696,7 +697,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
                  }
               }, "shape_handles.png", topPanel, 7, 154, 37, 174);
 
-      GUIUtils.createButton(false, "clearRoiButton", null,
+      clearRoiButton_ = GUIUtils.createButton(false, "clearRoiButton", null,
               "Reset Region of Interest to full frame",
               new Runnable() {
                  public void run() {
