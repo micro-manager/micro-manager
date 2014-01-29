@@ -89,7 +89,7 @@ public class OptionsDlg extends MMDialog {
       setTitle("Micro-Manager Options");
       springLayout = new SpringLayout();
       getContentPane().setLayout(springLayout);
-      setBounds(100, 100, 380, 430);
+      setBounds(100, 100, 380, 400);
       guiColors_ = new GUIColors();
       Dimension buttonSize = new Dimension(120, 20);
 
