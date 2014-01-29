@@ -55,8 +55,8 @@ CScanner::CScanner(const char* name) :
    limitY_(0),   // later will try to read actual setting
    shutterX_(0), // home position, used to turn beam off
    shutterY_(0), // home position, used to turn beam off
-   lastX_(0),    // cached position, used for SetIlluminationState
-   lastY_(0),    // cached position, used for SetIlluminationState
+   lastX_(0),    // cached position before blanking, used for SetIlluminationState
+   lastY_(0),    // cached position before blanking, used for SetIlluminationState
    illuminationState_(true),
    polygonRepetitions_(0),
    ring_buffer_supported_(false)
@@ -411,11 +411,27 @@ bool CScanner::Busy()
 }
 
 int CScanner::SetPosition(double x, double y)
+// will not change the position of an axis unless single-axis functions are inactive
 {
    if (!illuminationState_) return DEVICE_OK;  // don't do anything if beam is turned off
    ostringstream command; command.str("");
-   command << "M " << axisLetterX_ << "=" << x*unitMultX_ << " " << axisLetterY_ << "=" << y*unitMultY_;
-   return hub_->QueryCommandVerify(command.str(),":A");
+   char SAModeX[MM::MaxStrLength];
+   RETURN_ON_MM_ERROR ( GetProperty(g_SAModeXPropertyName, SAModeX) );
+   if (strcmp(SAModeX, g_SAMode_0) == 0)
+   {
+      command.str("");
+      command << "M " << axisLetterX_ << "=" << x*unitMultX_;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
+   }
+   char SAModeY[MM::MaxStrLength];
+   RETURN_ON_MM_ERROR ( GetProperty(g_SAModeXPropertyName, SAModeY) );
+   if (strcmp(SAModeY, g_SAMode_0) == 0)
+   {
+      command.str("");
+      command << "M " << axisLetterY_ << "=" << y*unitMultY_;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
+   }
+   return DEVICE_OK;
 }
 
 int CScanner::GetPosition(double& x, double& y)
