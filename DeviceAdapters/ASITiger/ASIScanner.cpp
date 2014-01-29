@@ -424,7 +424,7 @@ int CScanner::SetPosition(double x, double y)
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
    }
    char SAModeY[MM::MaxStrLength];
-   RETURN_ON_MM_ERROR ( GetProperty(g_SAModeXPropertyName, SAModeY) );
+   RETURN_ON_MM_ERROR ( GetProperty(g_SAModeYPropertyName, SAModeY) );
    if (strcmp(SAModeY, g_SAMode_0) == 0)
    {
       command.str("");
