@@ -141,7 +141,7 @@ public class JoystickPanel extends ListeningJPanel {
          if (updatingList_ == true) {
             return;  // don't go through this if we are rebuilding selections
          }
-         JSAxisData axis = JSAxisDataHash_.get(jc_.getSelectedItem());
+         JSAxisData axis = JSAxisDataHash_.get( (String) jc_.getSelectedItem());
          if (axis != null) {
             if (axis.deviceKey != Devices.Keys.NONE) {
                joystick_.setJoystick(jkey_, axis);
@@ -158,7 +158,7 @@ public class JoystickPanel extends ListeningJPanel {
             return;  // don't go through this if we are rebuilding selections
          }
          if (e.getStateChange() == ItemEvent.DESELECTED) {  // clear the old association
-            JSAxisData axis = JSAxisDataHash_.get(e.getItem());  // gets deselected item
+            JSAxisData axis = JSAxisDataHash_.get( (String) e.getItem());  // gets deselected item
             if (axis.deviceKey != Devices.Keys.NONE) {
                joystick_.unsetJoystick(jkey_, axis);
             }

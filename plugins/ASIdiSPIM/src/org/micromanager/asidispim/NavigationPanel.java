@@ -230,7 +230,7 @@ public class NavigationPanel extends ListeningJPanel {
    }
    
    @Override
-   public void updateStagePositions() {
+   public final void updateStagePositions() {
       xPositionLabel_.setText(positions_.getPositionString(Devices.Keys.XYSTAGE, Joystick.Directions.X));   
       yPositionLabel_.setText(positions_.getPositionString(Devices.Keys.XYSTAGE, Joystick.Directions.Y));
       lowerZPositionLabel_.setText(positions_.getPositionString(Devices.Keys.LOWERZDRIVE));
@@ -313,7 +313,6 @@ public class NavigationPanel extends ListeningJPanel {
    }
    
    private JFormattedTextField makeSetPositionField(Devices.Keys key, Joystick.Directions dir) {
-      double val = 0;
 
       class setPositionListener implements PropertyChangeListener { 
          private final Devices.Keys key_;
@@ -334,8 +333,7 @@ public class NavigationPanel extends ListeningJPanel {
       }
 
       JFormattedTextField tf = new JFormattedTextField();
-      val = positions_.getPosition(key, dir);
-      tf.setValue(new Double(val));
+      tf.setValue(new Double(positions_.getPosition(key, dir)));
       tf.setColumns(5);
       PropertyChangeListener pc = new setPositionListener(key, dir);
       tf.addPropertyChangeListener("value", pc);
