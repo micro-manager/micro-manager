@@ -229,10 +229,12 @@ int ThorlabsUSBCam::Initialize()
       return nRet;
 
    // Exposure
-   double expRange[3];
+   double expRange[3] = {0.0, 0.0, 0.0};
    nRet = is_Exposure(camHandle_, IS_EXPOSURE_CMD_GET_FINE_INCREMENT_RANGE, (void*)expRange, sizeof(expRange));
-   if (nRet != IS_SUCCESS)
+   if (nRet != IS_SUCCESS && nRet != IS_NOT_SUPPORTED)
+   {
       return nRet;
+   }
 
    pAct = new CPropertyAction (this, &ThorlabsUSBCam::OnExposure);
    CreateProperty(MM::g_Keyword_Exposure, "15.0", MM::Float, false, pAct);
@@ -935,11 +937,13 @@ int ThorlabsUSBCam::OnPixelClock(MM::PropertyBase* pProp, MM::ActionType eAct)
          return ret;
 
       // refresh the exposure range
-      double expRange[3];
+      double expRange[3] = {0.0, 0.0, 0.0};
       int nRet = is_Exposure(camHandle_, IS_EXPOSURE_CMD_GET_FINE_INCREMENT_RANGE, (void*)expRange, sizeof(expRange));
-      if (nRet != IS_SUCCESS)
+      bool available = nRet == IS_NOT_SUPPORTED ? false : true; // is this feature available?
+      if (nRet != IS_SUCCESS && available)
          return nRet;
-      SetPropertyLimits(MM::g_Keyword_Exposure, expRange[0], expRange[1]);
+      if (available)
+         SetPropertyLimits(MM::g_Keyword_Exposure, expRange[0], expRange[1]);
    }
 	return DEVICE_OK;
 }
