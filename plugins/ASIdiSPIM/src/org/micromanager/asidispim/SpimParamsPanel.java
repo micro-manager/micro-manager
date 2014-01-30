@@ -122,6 +122,10 @@ public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerI
             @Override
             public void actionPerformed(ActionEvent e) {
                try {
+                  // make sure camera is set to external mode
+                  // TODO make this cleaner, probably by factoring out camera into own class
+                  props_.setPropValue(Devices.Keys.CAMERAA, Properties.Keys.TRIGGER_SOURCE, Properties.Values.EXTERNAL, true);
+                  props_.setPropValue(Devices.Keys.CAMERAB, Properties.Keys.TRIGGER_SOURCE, Properties.Values.EXTERNAL, true);
                   // trigger cameras after getting acquisition engine configured
                   acqEngine_.enableFramesSetting(true);
                   acqEngine_.setFrames(
@@ -132,10 +136,6 @@ public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerI
                   acqEngine_.enableChannelsSetting(false);
                   acqEngine_.acquire();
                   core_.sleep(2000);  // seem to need a long delay for some reason, more than 1 sec
-                  // make sure camera is set to external mode
-                  // TODO make this cleaner, probably by factoring out camera into own class
-                  props_.setPropValue(Devices.Keys.CAMERAA, Properties.Keys.TRIGGER_SOURCE, Properties.Values.EXTERNAL, true);
-                  props_.setPropValue(Devices.Keys.CAMERAB, Properties.Keys.TRIGGER_SOURCE, Properties.Values.EXTERNAL, true);
                   // get controller ready
                   props_.setPropValue(Devices.Keys.GALVOA, Properties.Keys.BEAM_ENABLED, Properties.Values.NO, true);
                   props_.setPropValue(Devices.Keys.GALVOB, Properties.Keys.BEAM_ENABLED, Properties.Values.NO, true);
