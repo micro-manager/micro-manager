@@ -335,8 +335,15 @@ private:
 class FloatProperty : public Property
 {
 public:
-   FloatProperty(): Property(), value_(0.0), decimalPlaces_(4) {}      
-   virtual ~FloatProperty() {};
+   FloatProperty(): Property(), value_(0.0), decimalPlaces_(4)
+   {
+      int rms = 1;
+      for (int i = 0; i < decimalPlaces_; ++i)
+         rms *= 10;
+      reciprocalMinimalStep_ = rms;
+   }
+
+   virtual ~FloatProperty() {}
             
    PropertyType GetType() {return Float;}
    
@@ -349,12 +356,17 @@ public:
    bool Get(long& val) const ;
    bool Get(std::string& val) const;
 
+   bool SetLimits(double lowerLimit, double upperLimit);
+
 private:
    FloatProperty& operator=(const FloatProperty&);
 
    double Truncate(double dVal);
+   double TruncateDown(double dVal);
+   double TruncateUp(double dVal);
    double value_;
    int decimalPlaces_;
+   double reciprocalMinimalStep_;
 };
 
 /**

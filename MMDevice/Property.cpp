@@ -145,6 +145,18 @@ double MM::FloatProperty::Truncate(double dVal)
    sprintf(fmtStr, "%%.%df", decimalPlaces_);
    snprintf(buf, BUFSIZE, fmtStr, dVal);
    return atof(buf);
+   // TODO Use, but test first on all platforms:
+   // return floor(dVal * reciprocalMinimalStep_ + 0.5) / reciprocalMinimalStep_;
+}
+
+double MM::FloatProperty::TruncateDown(double dVal)
+{
+   return floor(dVal * reciprocalMinimalStep_) / reciprocalMinimalStep_;
+}
+
+double MM::FloatProperty::TruncateUp(double dVal)
+{
+   return ceil(dVal * reciprocalMinimalStep_) / reciprocalMinimalStep_;
 }
 
 bool MM::FloatProperty::Set(double dVal)
@@ -189,6 +201,11 @@ bool MM::FloatProperty::Get(std::string& strVal) const
    snprintf(buf, BUFSIZE, fmtStr, value_);
    strVal = buf;
    return true;
+}
+
+bool MM::FloatProperty::SetLimits(double lowerLimit, double upperLimit)
+{
+   return MM::Property::SetLimits(TruncateUp(lowerLimit), TruncateDown(upperLimit));
 }
 
 ///////////////////////////////////////////////////////////////////////////////
