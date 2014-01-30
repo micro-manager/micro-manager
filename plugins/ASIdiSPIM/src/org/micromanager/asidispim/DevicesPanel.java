@@ -70,21 +70,21 @@ public class DevicesPanel extends ListeningJPanel {
 
       add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.XYSTAGE) + ":", null, JLabel.RIGHT));
       JComboBox tmp_cb = makeDeviceBox(mmcorej.DeviceType.XYStageDevice, Devices.Keys.XYSTAGE); 
-      add(tmp_cb, "span 2, left, wrap");
+      add(tmp_cb, "span 2, center, wrap");
       
       add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.LOWERZDRIVE) + ":", null, JLabel.RIGHT));
       tmp_cb = makeDeviceBox(mmcorej.DeviceType.StageDevice, Devices.Keys.LOWERZDRIVE);
-      add(tmp_cb, "span 2, left, wrap");
+      add(tmp_cb, "span 2, center, wrap");
       
       add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.UPPERZDRIVE) + ":", null, JLabel.RIGHT));
       tmp_cb = makeDeviceBox(mmcorej.DeviceType.StageDevice, Devices.Keys.UPPERZDRIVE);
-      add(tmp_cb, "span 2, left, wrap");
+      add(tmp_cb, "span 2, center, wrap");
       
       add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.CAMERALOWER) + ":", null, JLabel.RIGHT));
-      add(makeDeviceBox(mmcorej.DeviceType.CameraDevice, Devices.Keys.CAMERALOWER), "span 2, left, wrap");
+      add(makeDeviceBox(mmcorej.DeviceType.CameraDevice, Devices.Keys.CAMERALOWER), "span 2, center, wrap");
             
       add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.MULTICAMERA) + ":", null, JLabel.RIGHT));
-      add(makeDualCameraDeviceBox(Devices.Keys.MULTICAMERA), "span 2, left, wrap");
+      add(makeDualCameraDeviceBox(Devices.Keys.MULTICAMERA), "span 2, center, wrap");
 
       add(new JLabel("Imaging Path A"), "skip 1");
       add(new JLabel("Imaging Path B"), "wrap");

@@ -118,7 +118,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       port_ = null;
       updatePort();
 
-      ISMULTICAMERAPREFNAME= MULTICAMERAPREF + side_.toString();
+      ISMULTICAMERAPREFNAME = MULTICAMERAPREF + side_.toString();
       
       updateStartStopPositions();
       
@@ -202,7 +202,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
     add(tmp_sl, "span 2, center, wrap");
     
     add(new JLabel("Beam enabled:"));
-    beamABox_ = pu.makeCheckBox("Path A", 
+    beamABox_ = pu.makeCheckBox("PathA", 
           Properties.Values.NO.toString(), Properties.Values.YES.toString(),
           props_, devices_, 
           Devices.Keys.GALVOA, Properties.Keys.BEAM_ENABLED);
@@ -330,11 +330,15 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
        }
     });
 
-    add(new JLabel("Camera:"));
+    
     boolean isMultiCamera = prefs_.getBoolean(ISMULTICAMERAPREFNAME, false);
-    imagingCameraButton_ = new JRadioButton("Imaging");
-    epiCameraButton_ = new JRadioButton("Epi");
-    dualCameraButton_ = new JRadioButton("Dual");
+    imagingCameraButton_ = new JRadioButton(
+            devices_.getMMDevice(devices_.getSideSpecificKey(Devices.Keys.CAMERAA, 
+            side_)));
+    epiCameraButton_ = new JRadioButton(
+            devices_.getMMDevice(devices_.getSideSpecificKey(Devices.Keys.CAMERAA, 
+            devices_.getOppositeSide(side_))));
+    dualCameraButton_ = new JRadioButton("Both");
     lowerCameraButton_ = new JRadioButton("Lower");
     ButtonGroup singleDualCameraButtonGroup = new ButtonGroup();
     singleDualCameraButtonGroup.add(imagingCameraButton_);
@@ -356,11 +360,14 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
     epiCameraButton_.addActionListener(radioButtonListener);
     dualCameraButton_.addActionListener(radioButtonListener);
     lowerCameraButton_.addActionListener(radioButtonListener);
-    add(imagingCameraButton_, "split 2, center");
-    add(epiCameraButton_, "center, wrap");
-    add(toggleButtonLive_, "center, width 100px");
-    add(dualCameraButton_, "center, split 2");
+    
+   
+    add(new JLabel("Camera:"), "right, span 2");
+    add(imagingCameraButton_, "center");
+    add(epiCameraButton_, "center");
+    add(dualCameraButton_, "center");
     add(lowerCameraButton_, "center, wrap");
+    add(toggleButtonLive_, "center, span 6, width 100px, wrap");
     
     // set scan waveform to be triangle, just like SPIM is
     props_.setPropValue(micromirrorDeviceKey_, Properties.Keys.SA_PATTERN_X, Properties.Values.SAM_TRIANGLE, true);
@@ -415,7 +422,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
    public void setCameraTriggerExternal(boolean external) {
       // set mode to external
       // have to handle any device adapters, currently HamamatsuHam only
-      String camLibraryA = null;
+      String camLibraryA;
       try {
          camLibraryA = core_.getDeviceLibrary(devices_.getMMDevice(Devices.Keys.CAMERAA));
          if (camLibraryA != null && camLibraryA.equals("HamamatsuHam")) {
@@ -425,7 +432,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
                props_.setPropValue(Devices.Keys.CAMERAA, Properties.Keys.TRIGGER_SOURCE, Properties.Values.INTERNAL, true);
             }
          }
-         String camLibraryB = null;
+         String camLibraryB;
          camLibraryB = core_.getDeviceLibrary(devices_.getMMDevice(Devices.Keys.CAMERAB));
          if (camLibraryB != null && camLibraryB.equals("HamamatsuHam")) {
             if (external) {
