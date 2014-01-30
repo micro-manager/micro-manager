@@ -25,10 +25,13 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.Hashtable;
 
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
+import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JSlider;
 import javax.swing.JSpinner;
@@ -38,7 +41,10 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import org.micromanager.asidispim.Data.Devices;
+import org.micromanager.asidispim.Data.Joystick;
+import org.micromanager.asidispim.Data.Positions;
 import org.micromanager.asidispim.Data.Properties;
+import org.micromanager.utils.ReportingUtils;
 
 /**
  *
@@ -330,6 +336,43 @@ public class PanelUtils {
       devs.addListener(l);
       props.addListener(l);
       return jcb;
+   }
+   
+   
+   /**
+    * Creates field for user to type in new position for an axis, with default value of 0
+    * @param key
+    * @param dir
+    * @return
+    */
+   public JFormattedTextField makeSetPositionField(Devices.Keys key, Joystick.Directions dir, Positions positions) {
+
+      class setPositionListener implements PropertyChangeListener { 
+         private final Devices.Keys key_;
+         private final Joystick.Directions dir_;
+         private final Positions positions_;
+
+         public void propertyChange(PropertyChangeEvent evt) {
+            try {
+               positions_.setPosition(key_, dir_, ((Number)evt.getNewValue()).doubleValue());
+            } catch (Exception e) {
+               ReportingUtils.showError(e);
+            }
+         }
+
+         setPositionListener(Devices.Keys key, Joystick.Directions dir, Positions positions) {
+            key_ = key;
+            dir_ = dir;
+            positions_ = positions;
+         }
+      }
+
+      JFormattedTextField tf = new JFormattedTextField();
+      tf.setValue(new Double(0.0));
+      tf.setColumns(4);
+      PropertyChangeListener pc = new setPositionListener(key, dir, positions);
+      tf.addPropertyChangeListener("value", pc);
+      return tf;
    }
    
 }

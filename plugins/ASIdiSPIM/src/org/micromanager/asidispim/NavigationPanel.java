@@ -24,8 +24,6 @@ package org.micromanager.asidispim;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.util.prefs.Preferences;
 
 import org.micromanager.MMStudioMainFrame;
@@ -34,9 +32,9 @@ import org.micromanager.asidispim.Data.Joystick;
 import org.micromanager.asidispim.Data.Positions;
 import org.micromanager.asidispim.Data.Properties;
 import org.micromanager.asidispim.Utils.ListeningJPanel;
+import org.micromanager.asidispim.Utils.PanelUtils;
 
 import javax.swing.JButton;
-import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -91,6 +89,7 @@ public class NavigationPanel extends ListeningJPanel {
       positions_ = positions;
       prefs_ = Preferences.userNodeForPackage(this.getClass());
       core_ = MMStudioMainFrame.getInstance().getCore();
+      PanelUtils pu = new PanelUtils();
       
       joystickPanel_ = new JoystickPanel(joystick_, devices_, "Navigation");
       add(joystickPanel_, "span 2 4");  // make artificially tall to keep stage positions in line with each other
@@ -98,28 +97,28 @@ public class NavigationPanel extends ListeningJPanel {
       add(new JLabel(devices_.getDeviceDisplayWithAxis1D(Devices.Keys.XYSTAGE, Joystick.Directions.X) + ":"));
       xPositionLabel_ = new JLabel("");
       add(xPositionLabel_);
-      add(makeSetPositionField(Devices.Keys.XYSTAGE, Joystick.Directions.X));
+      add(pu.makeSetPositionField(Devices.Keys.XYSTAGE, Joystick.Directions.X, positions_));
       add(makeMoveToOriginButton(Devices.Keys.XYSTAGE, Joystick.Directions.X));
       add(makeSetOriginHereButton(Devices.Keys.XYSTAGE, Joystick.Directions.X), "wrap");
       
       add(new JLabel(devices_.getDeviceDisplayWithAxis1D(Devices.Keys.XYSTAGE, Joystick.Directions.Y) + ":"));
       yPositionLabel_ = new JLabel("");
       add(yPositionLabel_);
-      add(makeSetPositionField(Devices.Keys.XYSTAGE, Joystick.Directions.Y));
+      add(pu.makeSetPositionField(Devices.Keys.XYSTAGE, Joystick.Directions.Y, positions_));
       add(makeMoveToOriginButton(Devices.Keys.XYSTAGE, Joystick.Directions.Y));
       add(makeSetOriginHereButton(Devices.Keys.XYSTAGE, Joystick.Directions.Y), "wrap");
       
       add(new JLabel(devices_.getDeviceDisplayWithAxis(Devices.Keys.LOWERZDRIVE) + ":"));
       lowerZPositionLabel_ = new JLabel("");
       add(lowerZPositionLabel_);
-      add(makeSetPositionField(Devices.Keys.LOWERZDRIVE, Joystick.Directions.NONE));
+      add(pu.makeSetPositionField(Devices.Keys.LOWERZDRIVE, Joystick.Directions.NONE, positions_));
       add(makeMoveToOriginButton(Devices.Keys.LOWERZDRIVE, Joystick.Directions.NONE));
       add(makeSetOriginHereButton(Devices.Keys.LOWERZDRIVE, Joystick.Directions.NONE), "wrap");
       
       add(new JLabel(devices_.getDeviceDisplayWithAxis(Devices.Keys.UPPERZDRIVE) + ":"));
       upperZPositionLabel_ = new JLabel("");
       add(upperZPositionLabel_);
-      add(makeSetPositionField(Devices.Keys.UPPERZDRIVE, Joystick.Directions.NONE));
+      add(pu.makeSetPositionField(Devices.Keys.UPPERZDRIVE, Joystick.Directions.NONE, positions_));
       add(makeMoveToOriginButton(Devices.Keys.UPPERZDRIVE, Joystick.Directions.NONE));
       add(makeSetOriginHereButton(Devices.Keys.UPPERZDRIVE, Joystick.Directions.NONE), "wrap");
       
@@ -142,7 +141,7 @@ public class NavigationPanel extends ListeningJPanel {
       add(new JLabel(devices_.getDeviceDisplayWithAxis(Devices.Keys.PIEZOA) + ":"));
       piezoAPositionLabel_ = new JLabel("");
       add(piezoAPositionLabel_);
-      add(makeSetPositionField(Devices.Keys.PIEZOA, Joystick.Directions.NONE));
+      add(pu.makeSetPositionField(Devices.Keys.PIEZOA, Joystick.Directions.NONE, positions_));
       add(makeMoveToOriginButton(Devices.Keys.PIEZOA, Joystick.Directions.NONE), "wrap");
       
       JButton buttonUpdate = new JButton("Update positions once");
@@ -157,21 +156,21 @@ public class NavigationPanel extends ListeningJPanel {
       add(new JLabel(devices_.getDeviceDisplayWithAxis(Devices.Keys.PIEZOB) + ":"));
       piezoBPositionLabel_ = new JLabel("");
       add(piezoBPositionLabel_);
-      add(makeSetPositionField(Devices.Keys.PIEZOB, Joystick.Directions.NONE));
+      add(pu.makeSetPositionField(Devices.Keys.PIEZOB, Joystick.Directions.NONE, positions_));
       add(makeMoveToOriginButton(Devices.Keys.PIEZOB, Joystick.Directions.NONE), "wrap");
       
       add(new JLabel(devices_.getDeviceDisplayWithAxis1D(Devices.Keys.GALVOA, Joystick.Directions.X)
             + " (in sheet plane):"), "span 3");
       galvoAxPositionLabel_ = new JLabel("");
       add(galvoAxPositionLabel_);
-      add(makeSetPositionField(Devices.Keys.GALVOA, Joystick.Directions.X));
+      add(pu.makeSetPositionField(Devices.Keys.GALVOA, Joystick.Directions.X, positions_));
       add(makeMoveToOriginButton(Devices.Keys.GALVOA, Joystick.Directions.X), "wrap");
       
       add(new JLabel(devices_.getDeviceDisplayWithAxis1D(Devices.Keys.GALVOA, Joystick.Directions.Y)
             + " (slice position):"), "span 3");
       galvoAyPositionLabel_ = new JLabel("");
       add(galvoAyPositionLabel_);
-      add(makeSetPositionField(Devices.Keys.GALVOA, Joystick.Directions.Y));
+      add(pu.makeSetPositionField(Devices.Keys.GALVOA, Joystick.Directions.Y, positions_));
       add(makeMoveToOriginButton(Devices.Keys.GALVOA, Joystick.Directions.Y), "wrap");
       
       JButton buttonHalt = new JButton("Halt!");
@@ -202,14 +201,14 @@ public class NavigationPanel extends ListeningJPanel {
             + " (in sheet plane):"), "span 2, align right");
       galvoBxPositionLabel_ = new JLabel("");
       add(galvoBxPositionLabel_);
-      add(makeSetPositionField(Devices.Keys.GALVOB, Joystick.Directions.X));
+      add(pu.makeSetPositionField(Devices.Keys.GALVOB, Joystick.Directions.X, positions_));
       add(makeMoveToOriginButton(Devices.Keys.GALVOB, Joystick.Directions.X), "wrap");
       
       add(new JLabel(devices_.getDeviceDisplayWithAxis1D(Devices.Keys.GALVOB, Joystick.Directions.Y)
             + " (slice position):"), "span 2, align right");
       galvoByPositionLabel_ = new JLabel("");
       add(galvoByPositionLabel_);
-      add(makeSetPositionField(Devices.Keys.GALVOB, Joystick.Directions.Y));
+      add(pu.makeSetPositionField(Devices.Keys.GALVOB, Joystick.Directions.Y, positions_));
       add(makeMoveToOriginButton(Devices.Keys.GALVOB, Joystick.Directions.Y), "wrap");
       
       // fill the labels with position values (the positions_ data structure
@@ -217,7 +216,6 @@ public class NavigationPanel extends ListeningJPanel {
       updateStagePositions();
       
    }
-   
 
    
    /**
@@ -312,31 +310,5 @@ public class NavigationPanel extends ListeningJPanel {
       return jb;
    }
    
-   private JFormattedTextField makeSetPositionField(Devices.Keys key, Joystick.Directions dir) {
-
-      class setPositionListener implements PropertyChangeListener { 
-         private final Devices.Keys key_;
-         private final Joystick.Directions dir_;
-
-         public void propertyChange(PropertyChangeEvent evt) {
-            try {
-               positions_.setPosition(key_, dir_, ((Number)evt.getNewValue()).doubleValue());
-            } catch (Exception e) {
-               ReportingUtils.showError(e);
-            }
-         }
-
-         setPositionListener(Devices.Keys key, Joystick.Directions dir) {
-            key_ = key;
-            dir_ = dir;
-         }
-      }
-
-      JFormattedTextField tf = new JFormattedTextField();
-      tf.setValue(new Double(positions_.getPosition(key, dir)));
-      tf.setColumns(5);
-      PropertyChangeListener pc = new setPositionListener(key, dir);
-      tf.addPropertyChangeListener("value", pc);
-      return tf;
-   }
+  
 }

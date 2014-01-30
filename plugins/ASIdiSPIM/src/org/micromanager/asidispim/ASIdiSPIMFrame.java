@@ -41,6 +41,10 @@ import org.micromanager.MMStudioMainFrame;
 import org.micromanager.asidispim.Utils.StagePositionUpdater;
 import org.micromanager.internalinterfaces.LiveModeListener; 
 
+// TODO factor out camera to sub-panel like joystick, add camera to navigation
+// TODO make sure to grab final camera frame
+// TODO add support for PCO Edge
+// TODO make beam on/off and scan on/off associated with tab like other settings
 // TODO finish adding 3rd camera (inverted scope camera)
 // TODO figure out update of slider limits when devices changed
 // TODO display certain properties like positions, e.g. scan amplitudes/offsets
