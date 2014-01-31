@@ -50,15 +50,19 @@ import javax.swing.JTextField;
 import javax.swing.Timer;
 import javax.swing.border.BevelBorder;
 
-import mmcorej.Configuration;
 import mmcorej.MMCoreJ;
+import mmcorej.TaggedImage;
+import org.json.JSONException;
 
 import org.micromanager.api.MMPlugin;
 import org.micromanager.api.ScriptInterface;
-import org.micromanager.metadata.AcquisitionData;
-import org.micromanager.metadata.MMAcqDataException;
-import org.micromanager.utils.Annotator;
+import org.micromanager.utils.MDUtils;
+//import org.micromanager.metadata.AcquisitionData;
+//import org.micromanager.metadata.MMAcqDataException;
+//import org.micromanager.utils.Annotator;
 import org.micromanager.utils.MMFrame;
+import org.micromanager.utils.MMScriptException;
+import org.micromanager.utils.ReportingUtils;
 import org.micromanager.utils.TextUtils;
 
 public class TrackerControl extends MMFrame implements MMPlugin {
@@ -86,8 +90,9 @@ public class TrackerControl extends MMFrame implements MMPlugin {
    private boolean rotate_ = false;
    private Preferences prefs_;
    private MMRect limits_;
-   private AcquisitionData acq_;
+   //private AcquisitionData acq_;
    private int imageCounter_;
+   private String acqName_;
 
    private static final String RESOLUTION_PIX = "resolution_pix";
    private static final String OFFSET_PIX = "offset_pix";
@@ -173,6 +178,7 @@ public class TrackerControl extends MMFrame implements MMPlugin {
       prefs_ = Preferences.userNodeForPackage(this.getClass());
 
       addWindowListener(new WindowAdapter() {
+         @Override
          public void windowOpened(WindowEvent e) {
             resolutionPix_ = prefs_.getInt(RESOLUTION_PIX, resolutionPix_);
             offsetPix_ = prefs_.getInt(OFFSET_PIX, offsetPix_);
@@ -187,6 +193,7 @@ public class TrackerControl extends MMFrame implements MMPlugin {
             intervalField_.setText(Integer.toString(intervalMs_));
          }
 
+         @Override
          public void windowClosing(final WindowEvent e) {
             prefs_.putInt(RESOLUTION_PIX, resolutionPix_);
             prefs_.putInt(OFFSET_PIX, offsetPix_);
@@ -359,8 +366,10 @@ public class TrackerControl extends MMFrame implements MMPlugin {
       // Setup timer
       ActionListener timerHandler = new ActionListener() {
          public void actionPerformed(ActionEvent evt) {
-            snapSingleImage();
-            processOneFrame(true);
+            TaggedImage img = snapSingleImage();
+            if (img != null) {
+               processOneFrame(img, true);
+            }
          }
       };
       timer_ = new Timer(intervalMs_, timerHandler);
@@ -385,57 +394,75 @@ public class TrackerControl extends MMFrame implements MMPlugin {
       imageCounter_ = 0;
       distUm_ = 0.0;
       //roiStart_ = roi_.getBoundingRect();
-      IJ.write("Tracking started at " + GregorianCalendar.getInstance().getTime());
+      ReportingUtils.logMessage("Tracking started at " + GregorianCalendar.getInstance().getTime());
       if (image5dRadioButton_.isSelected()) {
-         acq_ = new AcquisitionData();
          try {
-            acq_.createNew(nameField_.getText(), rootField_.getText(), true);
-            acq_.setDimensions(0, 1, 1);
-            acq_.setImagePhysicalDimensions((int)app_.getMMCore().getImageWidth(), (int)app_.getMMCore().getImageHeight(), (int)app_.getMMCore().getBytesPerPixel());
-            acq_.setImageIntervalMs(intervalMs_);
-            acq_.setPixelSizeUm(pixelSizeUm_);
-         } catch (MMAcqDataException e) {
-            IJ.write(e.getMessage());
+            acqName_ = nameField_.getText();
+            app_.openAcquisition(acqName_, rootField_.getText(), 
+                    1, 1, 1, 0, true, true);
+            // can be removed:
+            app_.initializeAcquisition(acqName_, 
+                    (int) app_.getMMCore().getImageWidth(), 
+                    (int) app_.getMMCore().getImageHeight(),
+                    (int) app_.getMMCore().getBytesPerPixel(),
+                    (int) app_.getMMCore().getImageBitDepth() );
+            /* NS
+            acq_ = new AcquisitionData();
+            try {
+               acq_.createNew(nameField_.getText(), rootField_.getText(), true);
+               acq_.setDimensions(0, 1, 1);
+               acq_.setImagePhysicalDimensions((int)app_.getMMCore().getImageWidth(), (int)app_.getMMCore().getImageHeight(), (int)app_.getMMCore().getBytesPerPixel());
+               acq_.setImageIntervalMs(intervalMs_);
+               acq_.setPixelSizeUm(pixelSizeUm_);
+            } catch (MMAcqDataException e) {
+               IJ.write(e.getMessage());
+            }
+         } else {
+            acq_ = null;
          }
-      } else {
-         acq_ = null;
+         */
+         } catch (MMScriptException ex) {
+            ReportingUtils.showError(ex, "Problem while tracking");
+         }
       }
       timer_.start();
    }
    public void stopTracking() {
 
       //roiStart_ = roi_.getBoundingRect();
-      IJ.write("Tracking stopped at " + GregorianCalendar.getInstance().getTime());
+      ReportingUtils.logMessage("Tracking stopped at " + GregorianCalendar.getInstance().getTime());
       timer_.stop();
+      /*  NS
       if (acq_ == null)
          createStack();
+       */
    }
 
-   private boolean snapSingleImage() {
+   private TaggedImage snapSingleImage() {
 
       ImagePlus implus = WindowManager.getCurrentImage();
       if (implus == null) {
-         IJ.write("There are no windows open.\n" + "Tracker plugin is now exiting.");
+         ReportingUtils.showError("There are no windows open.\n" + "Tracker plugin is now exiting.");
          timer_.stop();
-
-         return false;
+         return null;
       }
 
       roi_ = implus.getRoi();
       if (roi_ == null || roi_.getType() != Roi.RECTANGLE) {
-         IJ.write("Rectangular roi requred.");
+         ReportingUtils.showError("Rectangular roi required.");
          timer_.stop();
-         return false;
+         return null;
       }
 
       try {
          app_.getMMCore().snapImage();
-         Object img = app_.getMMCore().getImage();
-         implus.getProcessor().setPixels(img);
+         TaggedImage img = app_.getMMCore().getTaggedImage();
+         implus.getProcessor().setPixels(img.pix);
          implus.updateAndDraw();
          ImageWindow iwnd = implus.getWindow();
          iwnd.getCanvas().paint(iwnd.getCanvas().getGraphics());
          ipCurrent_ = implus.getProcessor();
+         /* NS
          if (acq_ == null && stack_ == null)
             stack_ = new ImageStack(implus.getProcessor().getWidth(), implus.getHeight());
          if (acq_ != null) {
@@ -445,15 +472,23 @@ public class TrackerControl extends MMFrame implements MMPlugin {
             Annotator.setStateMetadata(acq_, imageCounter_, 0, 0, cfg);
          } else
             stack_.addSlice(Integer.toString(stack_.getSize()+1), implus.getProcessor());
+            */ 
+         if (acqName_ != null) {
+            MDUtils.setFrameIndex(img.tags, imageCounter_);
+            app_.getAcquisition(acqName_).insertImage(img, true);
+         }
+         return img;
       } catch (Exception e) {
          IJ.error(e.getMessage());
          timer_.stop();
-         return false;
+         return null;
       }
 
       //IJ.write("Frame acquired!");
-      return true;
+      //return true;
    }
+   
+   
    private void createStack() {
       // create a stack window
       ImagePlus impStack = new ImagePlus("Tracker stack", stack_);
@@ -461,7 +496,7 @@ public class TrackerControl extends MMFrame implements MMPlugin {
       impStack.draw();
    }
 
-   private void processOneFrame(boolean moveStage) {
+   private void processOneFrame(TaggedImage img, boolean moveStage) {
       if (ipPrevious_ == null) {
          ipPrevious_ = ipCurrent_;
          return;
@@ -522,6 +557,15 @@ public class TrackerControl extends MMFrame implements MMPlugin {
             double[] xCur = new double[1];
             double[] yCur = new double[1];            
             app_.getMMCore().getXYPosition(stage_, xCur, yCur);
+            img.tags.put(TRACK_X, xCur[0]);
+            img.tags.put(TRACK_Y, yCur[0]);
+            img.tags.put(TRACK_DX, lMax);
+            img.tags.put(TRACK_DY, kMax);
+            img.tags.put(RECT_X, r.x);
+            img.tags.put(RECT_Y, r.y);
+            img.tags.put(RECT_W, r.width);
+            img.tags.put(RECT_H, r.height);
+            /* NS not sure how this is currently handled
             if (acq_ != null) {
                acq_.setImageValue(imageCounter_, 0, 0, TRACK_X, xCur[0]);
                acq_.setImageValue(imageCounter_, 0, 0, TRACK_Y, yCur[0]);
@@ -532,6 +576,7 @@ public class TrackerControl extends MMFrame implements MMPlugin {
                acq_.setImageValue(imageCounter_, 0, 0, RECT_W, r.width);
                acq_.setImageValue(imageCounter_, 0, 0, RECT_H, r.height);
             }
+            */
 
             // apply image transposition
             if (mirrorX_)
@@ -556,9 +601,9 @@ public class TrackerControl extends MMFrame implements MMPlugin {
                app_.getMMCore().setXYPosition(stage_, newX, newY);
                app_.getMMCore().waitForDevice(stage_);
                app_.getMMCore().getXYPosition(stage_, xCur, yCur);
-               IJ.write(xCur[0] + "," + yCur[0]);
+               ReportingUtils.logMessage(xCur[0] + "," + yCur[0]);
             } else {
-               IJ.write("Skipped. Stage limits reached.");
+               ReportingUtils.logMessage("Skipped. Stage limits reached.");
             }
          } catch (Exception e) {
             IJ.error(e.getMessage());
@@ -573,6 +618,15 @@ public class TrackerControl extends MMFrame implements MMPlugin {
       double v = d / intervalMs_ * 1000.0;
       speedLabel_.setText("n=" + imageCounter_ + ", t=" + TextUtils.FMT2.format(((double)imageCounter_ * intervalMs_)/1000.0) +
             " s, d=" + TextUtils.FMT2.format(d) + " um, l=" + TextUtils.FMT2.format(distUm_) + " um, v=" + TextUtils.FMT2.format(v) + " um/s");
+      try {
+         img.tags.put(D, d);
+         img.tags.put(V, v);
+         img.tags.put(L, distUm_);
+      } catch (JSONException ex) {
+         ReportingUtils.showError(ex, "Problem adding tags to image");
+      }
+      
+      /*  NS
       if (acq_ != null) {
          try {
             acq_.setImageValue(imageCounter_, 0, 0, D, d);
@@ -583,6 +637,7 @@ public class TrackerControl extends MMFrame implements MMPlugin {
             timer_.stop();
          }
       }
+      */
       imageCounter_++;
    }
 
@@ -612,7 +667,7 @@ public class TrackerControl extends MMFrame implements MMPlugin {
 
       } catch (Exception e1) {
          // TODO Auto-generated catch block
-         e1.printStackTrace();
+         ReportingUtils.showError(e1, "Problem initializing Tracker plugin");
       }
       
       topLeftButton_.addActionListener(new ActionListener() {
