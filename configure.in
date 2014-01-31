@@ -13,7 +13,6 @@ AC_PROG_LIBTOOL
 
 m4_include([configure.common])
 
-
 AM_CONDITIONAL(BUILD_WITH_JAVA, test "$IMAGEJDIR" != "no")
 if test "$IMAGEJDIR" != "no" ; then
 

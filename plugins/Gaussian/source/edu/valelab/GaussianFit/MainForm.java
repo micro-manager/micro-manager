@@ -30,6 +30,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import edu.valelab.GaussianFit.utils.NumberUtils;
 import edu.valelab.GaussianFit.utils.ReportingUtils;
+import org.micromanager.MMStudioMainFrame;
 
 
 
@@ -140,9 +141,10 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
 
        setTitle("Localization Microscopy");
        
-       // wdith on Mac should be 250, Windows 270
+       // with on Mac should be 250, Windows 270
        setBounds(prefs_.getInt(FRAMEXPOS, 100), prefs_.getInt(FRAMEYPOS, 100), 270, 575);
        ImagePlus.addImageListener(this);
+       setBackground(MMStudioMainFrame.getInstance().getBackgroundColor());
        setVisible(true);
     }
     
@@ -741,6 +743,7 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
     private void showButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_showButtonActionPerformed
        DataCollectionForm dcForm = DataCollectionForm.getInstance();
        dcForm.setVisible(true);
+       MMStudioMainFrame.getInstance().addMMBackgroundListener(dcForm);
     }//GEN-LAST:event_showButtonActionPerformed
 
    private void endTrackCheckBox_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_endTrackCheckBox_ActionPerformed

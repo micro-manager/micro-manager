@@ -11,6 +11,7 @@
 import edu.valelab.GaussianFit.MainForm;
 
 import ij.plugin.*;
+import org.micromanager.MMStudioMainFrame;
 import org.micromanager.api.MMPlugin;
 import org.micromanager.api.ScriptInterface;
 
@@ -29,6 +30,7 @@ public class GaussianTrack_ implements PlugIn, MMPlugin {
          theForm_ = new MainForm();
       }
       theForm_.setVisible(true);
+      MMStudioMainFrame.getInstance().addMMBackgroundListener(theForm_);
       /*
       if (gui_ != null) {
          theForm_.setBackground(gui_.getBackgroundColor());

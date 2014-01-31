@@ -94,11 +94,10 @@ USBDeviceInfo g_knownDevices[] = {
    {"Velleman K8061-1", 0x10cf, 0x8062, 0x01, 0x81, 64, false},
    {"Ludl Mac 5000", 0x6969, 0x1235, 0x02, 0x82, 64, false},
    {"ASI MS-2000", 0x0b54, 0x2000, 0x02, 0x82, 64, false},
-   {"Spectral LMM5", 0x1bdb, 0x0300, 0x02, 0x81, 64, false},
    {"Nikon AZ100m", 0x04b0, 0x7804, 0x05, 0x84, 64, false},
    {"Zeiss AxioObserver Z1", 0x0758, 0x1004, 0x02, 0x81, 64, true}
 };
-int g_numberKnownDevices = 11;
+int g_numberKnownDevices = 10;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Exported MMDevice API

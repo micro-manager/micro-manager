@@ -5,24 +5,31 @@
 // any tab or comma-separated data file.
 
  macro "Import Results Table" {
-     requires("1.35r");
+     // set separators 
      lineseparator = "\n";
      cellseparator = ",\t";
 
+     // close "Results" window and open file
+     if (isOpen("Results")) {
+        selectWindow("Results");
+        run("Close");
+     }
+     open();
+
      // copies the whole RT to an array of lines
-     lines=split(File.openAsString(""), lineseparator);
+     lines=split(getInfo(), lineseparator);
+     run("Close");
 
      // recreates the columns headers
      labels=split(lines[0], cellseparator);
-     if (labels[0]==" ")
+     if (labels[0]==" ") 
         k=1; // it is an ImageJ Results table, skip first column
-     else
+     else 
         k=0; // it is not a Results table, load all columns
      for (j=k; j<labels.length; j++)
         setResult(labels[j],0,0);
 
      // dispatches the data into the new RT
-     run("Clear Results");
      for (i=1; i<lines.length; i++) {
         items=split(lines[i], cellseparator);
         for (j=k; j<items.length; j++)
@@ -30,3 +37,4 @@
      }
      updateResults();
  }
+

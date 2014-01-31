@@ -66,6 +66,7 @@ import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumnModel;
 import org.apache.commons.math.stat.StatUtils;
 import org.jfree.data.xy.XYSeries;
+import org.micromanager.MMStudioMainFrame;
 
 
 /**
@@ -329,7 +330,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
          }
       });
 
-      // setBackground(MMStudioMainFrame.getInstance().getBackgroundColor());
+      setBackground(MMStudioMainFrame.getInstance().getBackgroundColor());
 
       setVisible(true);
    }

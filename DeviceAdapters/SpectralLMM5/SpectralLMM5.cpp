@@ -134,7 +134,7 @@ int LMM5Hub::Initialize()
    availableLines* lines = g_Interface->getAvailableLaserLines();
    for (int i=0; i < nrLines_; i++) 
    {
-      if (lines[i].present) 
+      if (lines[i].present && ( lines[i].waveLength > 100.0) ) 
       {
          CPropertyActionEx *pEx = new CPropertyActionEx(this, &LMM5Hub::OnTransmission, (long) i);
          std::ostringstream propName;

@@ -26,7 +26,9 @@ import org.micromanager.api.MMPlugin;
 import org.micromanager.api.ScriptInterface;
 
 
+
 public class StageControl implements MMPlugin {
+   
    public static String menuName = "Stage Control";
    public static String tooltipDescription = "A virtual joystick that allows for manual control"
 		   +" of the XY and Z stages";
