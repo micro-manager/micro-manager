@@ -1230,25 +1230,17 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener, Acq
          public void actionPerformed(ActionEvent arg0) {
             String newGroup = (String) channelGroupCombo_.getSelectedItem();
 
-            try {
-               if (acqEng_.setChannelGroup(newGroup)) {
-                  model_.cleanUpConfigurationList();
-                  if (gui_.getAutofocusManager() != null) {
-                     try {
-                        gui_.getAutofocusManager().refresh();
-                     } catch (MMException e) {
-                        ReportingUtils.showError(e);
-                     }
+            if (acqEng_.setChannelGroup(newGroup)) {
+               model_.cleanUpConfigurationList();
+               if (gui_.getAutofocusManager() != null) {
+                  try {
+                     gui_.getAutofocusManager().refresh();
+                  } catch (MMException e) {
+                     ReportingUtils.showError(e);
                   }
-               } else {
-                  updateGroupsCombo();
                }
-            } catch (Exception ex) {
-               if (ex.getMessage().startsWith("Core property is read-only")) {
-                  ReportingUtils.logError(ex);
-               } else {
-                  ReportingUtils.showError(ex);
-               }
+            } else {
+               updateGroupsCombo();
             }
          }
       });
@@ -2269,7 +2261,6 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener, Acq
       model_.fireTableStructureChanged();
 
       channelGroupCombo_.setSelectedItem(acqEng_.getChannelGroup());
-
       try {
          displayModeCombo_.setSelectedIndex(acqEng_.getDisplayMode());
       } catch (IllegalArgumentException e) {
