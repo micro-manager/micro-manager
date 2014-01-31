@@ -92,7 +92,24 @@ public class Devices {
          Devices.Keys.XYSTAGE,
          Devices.Keys.GALVOA,
          Devices.Keys.GALVOB
-         );      
+         );    
+   
+   public static enum Libraries {
+      NODEVICE("NoDevice"),  // if the device doesn't exist in Micro-manager (e.g. no camera has been selected)
+      ASITIGER("ASITiger"),
+      HAMCAM("HamamatsuHam"),
+      PCOCAM("PCO_Camera"),
+      UNKNOWN("Unknown"),  // if the device is valid but not one we know about
+      ;
+      private final String text;
+      Libraries(String text) {
+         this.text = text;
+      }
+      @Override
+      public String toString() {
+         return text;
+      }
+   }
       
    /**
     * associative class to store information about devices
@@ -105,6 +122,7 @@ public class Devices {
       Sides side; 
       String axisLetter;  // the letter or letters
       mmcorej.DeviceType type;
+      Libraries deviceLibrary;
       
       /**
        * @param key device key as given by enum in Devices.Keys
@@ -118,6 +136,7 @@ public class Devices {
          this.side = side;
          this.axisLetter = "";
          this.type = mmcorej.DeviceType.UnknownType;
+         this.deviceLibrary = Devices.Libraries.NODEVICE;
       }
       
       @Override
@@ -205,22 +224,36 @@ public class Devices {
       if (d==null) {  // do nothing if key doesn't exist
          return;
       }
-      if (mmDevice==null) {  // sometimes from init this will be null instead of empty string like it should
-         mmDevice = "";
-      }
-      d.mmDevice = mmDevice;
-      // if a ASITiger device then add axis letters
-      int idx1 = mmDevice.indexOf(":");
-      if (idx1 > 0) {
-         int idx2 = mmDevice.indexOf(":", idx1+1);
-         if (idx2 > 0) {
-            d.axisLetter = mmDevice.substring(idx1+1, idx2); 
+      if (mmDevice==null || mmDevice.equals("")) {  // sometimes from init this will be null instead of empty string like it should
+         // restore to empty default DeviceData structure if no device is selected or if there is an error
+         d = getDefaultDeviceData(key);
+      } else {
+         // populate the DeviceData structure with actual information about the device
+         d.mmDevice = mmDevice;
+         // if a ASITiger device then add axis letters
+         int idx1 = mmDevice.indexOf(":");
+         if (idx1 > 0) {
+            int idx2 = mmDevice.indexOf(":", idx1+1);
+            if (idx2 > 0) {
+               d.axisLetter = mmDevice.substring(idx1+1, idx2); 
+            }
          }
-      }
-      try {
-         d.type = core_.getDeviceType(mmDevice);
-      } catch (Exception e) {
-         d.type = mmcorej.DeviceType.UnknownType;
+         try {
+            d.type = core_.getDeviceType(mmDevice);
+            String library = core_.getDeviceLibrary(mmDevice);
+            if (library.equals(Devices.Libraries.ASITIGER.toString())) {
+               d.deviceLibrary = Devices.Libraries.ASITIGER;
+            } else if (library.equals(Devices.Libraries.HAMCAM.toString())) {
+               d.deviceLibrary = Devices.Libraries.HAMCAM;
+            } else if (library.equals(Devices.Libraries.PCOCAM.toString())) {
+               d.deviceLibrary = Devices.Libraries.PCOCAM;
+            } else {
+               d.deviceLibrary = Devices.Libraries.UNKNOWN;
+            }
+         } catch (Exception e) {
+            d.type = mmcorej.DeviceType.UnknownType;
+            d.deviceLibrary = Devices.Libraries.UNKNOWN;
+         }
       }
       deviceInfo_.put(key, d);
       callListeners();  // make sure everybody else knows about change
@@ -277,6 +310,29 @@ public class Devices {
     */
    public DeviceType getMMDeviceType(Devices.Keys key) {
       return deviceInfo_.get(key).type;
+   }
+   
+   /**
+    * Looks up the Micro-Manager device library currently set for particular Device key.
+    * @param key Device key (enum) as defined in this class
+    * @return Micro-Manager device library, or empty string if not found 
+    */
+   public Libraries getMMDeviceLibrary(Devices.Keys key) {
+      return deviceInfo_.get(key).deviceLibrary;
+   }
+   
+   /**
+    * call core's hasProperty, just with our keys as inputs
+    * @param devKey Device key (enum) as defined in this class
+    * @param propKey Property key (enum)
+    * @return
+    */
+   public boolean hasProperty(Devices.Keys devKey, Properties.Keys propKey) {
+      try {
+         return core_.hasProperty(getMMDevice(devKey), propKey.toString());
+      } catch (Exception e) {
+         return false;
+      }
    }
    
    /**
@@ -407,6 +463,31 @@ public class Devices {
       return list;
    }
    
+   /**
+    * gets the initial/default DeviceData structure for the specified device key
+    * @param key
+    * @return
+    */
+   DeviceData getDefaultDeviceData(Devices.Keys key) {
+      switch (key) {
+      case CAMERAA: return new DeviceData(Keys.CAMERAA, "Camera", Sides.A);
+      case CAMERAB: return new DeviceData(Keys.CAMERAB, "Camera", Sides.B);
+      case CAMERALOWER: return new DeviceData(Keys.CAMERALOWER, "Lower Camera", Sides.N);
+      case MULTICAMERA: return new DeviceData(Keys.MULTICAMERA, "Multi Camera", Sides.N);
+      case PIEZOA: return new DeviceData(Keys.PIEZOA, "Imaging Piezo", Sides.A);
+      case PIEZOB: return new DeviceData(Keys.PIEZOB, "Imaging Piezo", Sides.B);
+      case GALVOA: return new DeviceData(Keys.GALVOA, "Scanner", Sides.A);
+      case GALVOB: return new DeviceData(Keys.GALVOB, "Scanner", Sides.B);
+      case XYSTAGE: return new DeviceData(Keys.XYSTAGE, "XY Stage", Sides.N);
+      case LOWERZDRIVE: return new DeviceData(Keys.LOWERZDRIVE, "Lower Z Drive", Sides.N);
+      case UPPERZDRIVE: return new DeviceData(Keys.UPPERZDRIVE, "Upper (SPIM) Z Drive", Sides.N);
+//      case ASGALVOA: return new DeviceData(Keys.ASGALVOA, "Anti-striping Micromirror", Sides.A);
+//      case ASGALVOB: return new DeviceData(Keys.ASGALVOB, "Anti-striping Micromirror", Sides.B);
+      case NONE: 
+      default: return new DeviceData(Keys.NONE, "None", Sides.N);
+      }
+   }
+   
 
    private List<String>loadedDevices_;
    private Preferences prefs_;
@@ -422,20 +503,20 @@ public class Devices {
       // populating must be done dynamically because some elements (e.g. mmDevice field) are dynamic
       // must make sure that every key is initialized here
       deviceInfo_ = Collections.synchronizedMap(new EnumMap<Devices.Keys, DeviceData>(Devices.Keys.class));
-      deviceInfo_.put(Keys.NONE, new DeviceData(Keys.NONE, "None", Sides.N));
-      deviceInfo_.put(Keys.CAMERAA, new DeviceData(Keys.CAMERAA, "Camera", Sides.A));
-      deviceInfo_.put(Keys.CAMERAB, new DeviceData(Keys.CAMERAB, "Camera", Sides.B));
-      deviceInfo_.put(Keys.CAMERALOWER, new DeviceData(Keys.CAMERALOWER, "Lower Camera", Sides.N));
-      deviceInfo_.put(Keys.MULTICAMERA, new DeviceData(Keys.MULTICAMERA, "Multi Camera", Sides.N));
-      deviceInfo_.put(Keys.PIEZOA, new DeviceData(Keys.PIEZOA, "Imaging Piezo", Sides.A));
-      deviceInfo_.put(Keys.PIEZOB, new DeviceData(Keys.PIEZOB, "Imaging Piezo", Sides.B));
-      deviceInfo_.put(Keys.GALVOA, new DeviceData(Keys.GALVOA, "Scanner", Sides.A));
-      deviceInfo_.put(Keys.GALVOB, new DeviceData(Keys.GALVOB, "Scanner", Sides.B));
-      deviceInfo_.put(Keys.XYSTAGE, new DeviceData(Keys.XYSTAGE, "XY Stage", Sides.N));
-      deviceInfo_.put(Keys.LOWERZDRIVE, new DeviceData(Keys.LOWERZDRIVE, "Lower Z Drive", Sides.N));
-      deviceInfo_.put(Keys.UPPERZDRIVE, new DeviceData(Keys.UPPERZDRIVE, "Upper (SPIM) Z Drive", Sides.N));
-//      deviceInfo_.put(Keys.ASGALVOA, new DeviceData(Keys.ASGALVOA, "Anti-striping Micromirror", Sides.A));
-//      deviceInfo_.put(Keys.ASGALVOB, new DeviceData(Keys.ASGALVOB, "Anti-striping Micromirror", Sides.B));
+      deviceInfo_.put(Keys.NONE, getDefaultDeviceData(Keys.NONE));
+      deviceInfo_.put(Keys.CAMERAA, getDefaultDeviceData(Keys.CAMERAA));
+      deviceInfo_.put(Keys.CAMERAB, getDefaultDeviceData(Keys.CAMERAB));
+      deviceInfo_.put(Keys.CAMERALOWER, getDefaultDeviceData(Keys.CAMERALOWER));
+      deviceInfo_.put(Keys.MULTICAMERA, getDefaultDeviceData(Keys.MULTICAMERA));
+      deviceInfo_.put(Keys.PIEZOA, getDefaultDeviceData(Keys.PIEZOA));
+      deviceInfo_.put(Keys.PIEZOB, getDefaultDeviceData(Keys.PIEZOB));
+      deviceInfo_.put(Keys.GALVOA, getDefaultDeviceData(Keys.GALVOA));
+      deviceInfo_.put(Keys.GALVOB, getDefaultDeviceData(Keys.GALVOB));
+      deviceInfo_.put(Keys.XYSTAGE, getDefaultDeviceData(Keys.XYSTAGE));
+      deviceInfo_.put(Keys.LOWERZDRIVE, getDefaultDeviceData(Keys.LOWERZDRIVE));
+      deviceInfo_.put(Keys.UPPERZDRIVE, getDefaultDeviceData(Keys.UPPERZDRIVE));
+//      deviceInfo_.put(Keys.ASGALVOA, getDefaultDeviceData(Keys.ASGALVOA));
+//      deviceInfo_.put(Keys.ASGALVOB, getDefaultDeviceData(Keys.ASGALVOB));
 
       listeners_ = new ArrayList<DevicesListenerInterface>();
       listenersEnabled_ = true;

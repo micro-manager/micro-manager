@@ -82,6 +82,7 @@ public class Properties {
       BEAM_ENABLED("BeamEnabled"),
       SAVE_CARD_SETTINGS("SaveCardSettings"),
       TRIGGER_SOURCE("TRIGGER SOURCE"),
+      FIRMWARE_VERSION("FirmwareVersion"),
       ;
       private final String text;
       Keys(String text) {
@@ -430,9 +431,11 @@ public class Properties {
    }
    
    /**
-   * returns an float value for the specified property (assumes the caller knows the property contains a float)
+   * returns an float value for the specified property (assumes the caller knows the property contains a float).
+   * Returns 0 if device isn't found and ignoreError is true
    * @param device enum key for device 
-   * @param name enum key for property 
+   * @param name enum key for property
+   * @param ignoreError true to ignore error (usually unassigned device) 
    * @return
    * @throws ParseException
    */

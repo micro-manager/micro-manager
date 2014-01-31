@@ -96,7 +96,7 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
         
       // all added tabs must be of type ListeningJPanel
       // only use addLTab, not addTab to guarantee this
-      devicesPanel_ = new DevicesPanel(devices_);
+      devicesPanel_ = new DevicesPanel(devices_, props_);
       tabbedPane.addLTab("Devices", devicesPanel_);
       spimParamsPanel_ = new SpimParamsPanel(devices_, props_);
       tabbedPane.addLTab("SPIM Params", spimParamsPanel_);
@@ -168,6 +168,7 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
             prefs_.putInt(PREF_TABINDEX, tabbedPane.getSelectedIndex());
          }
       });
+      
    }
   
     

@@ -506,18 +506,18 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
    public void setCameraTriggerExternal(boolean external) {
       // set mode to external
       // have to handle any device adapters, currently HamamatsuHam only
-      String camLibraryA, camLibraryB;
+      Devices.Libraries camLibraryA, camLibraryB;
       try {
-         camLibraryA = core_.getDeviceLibrary(devices_.getMMDevice(Devices.Keys.CAMERAA));
-         if (camLibraryA != null && camLibraryA.equals("HamamatsuHam")) {
+         camLibraryA = devices_.getMMDeviceLibrary(Devices.Keys.CAMERAA);
+         if (camLibraryA == Devices.Libraries.HAMCAM) {
             if (external) {
                props_.setPropValue(Devices.Keys.CAMERAA, Properties.Keys.TRIGGER_SOURCE, Properties.Values.EXTERNAL, true);
             } else {
                props_.setPropValue(Devices.Keys.CAMERAA, Properties.Keys.TRIGGER_SOURCE, Properties.Values.INTERNAL, true);
             }
          }
-         camLibraryB = core_.getDeviceLibrary(devices_.getMMDevice(Devices.Keys.CAMERAB));
-         if (camLibraryB != null && camLibraryB.equals("HamamatsuHam")) {
+         camLibraryB = devices_.getMMDeviceLibrary(Devices.Keys.CAMERAB);
+         if (camLibraryB == Devices.Libraries.HAMCAM) {
             if (external) {
                props_.setPropValue(Devices.Keys.CAMERAB, Properties.Keys.TRIGGER_SOURCE, Properties.Values.EXTERNAL, true);
             } else {

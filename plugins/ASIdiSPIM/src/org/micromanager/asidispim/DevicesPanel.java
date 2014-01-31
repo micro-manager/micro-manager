@@ -24,6 +24,7 @@ package org.micromanager.asidispim;
 import org.micromanager.utils.ReportingUtils;
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.asidispim.Data.Devices;
+import org.micromanager.asidispim.Data.Properties;
 import org.micromanager.asidispim.Utils.ListeningJPanel;
 
 import java.awt.event.ActionEvent;
@@ -49,7 +50,8 @@ import net.miginfocom.swing.MigLayout;
  */
 @SuppressWarnings("serial")
 public class DevicesPanel extends ListeningJPanel {
-   Devices devices_;
+   private Devices devices_;
+   private Properties props_;
    private CMMCore core_;
    
    /**
@@ -57,12 +59,13 @@ public class DevicesPanel extends ListeningJPanel {
     * @param gui - hook to MMstudioMainFrame script interface
     * @param devices - instance of class that holds information about devices
     */
-   public DevicesPanel(Devices devices) {
+   public DevicesPanel(Devices devices, Properties props) {
       super(new MigLayout(
               "",
               "[right]25[align center]16[align center]",
               "[]16[]"));
       devices_ = devices;
+      props_ = props;
       core_ = MMStudioMainFrame.getInstance().getCore();
       
       // turn off listeners while we build the panel
@@ -131,8 +134,69 @@ public class DevicesPanel extends ListeningJPanel {
       @Override
       public void actionPerformed(ActionEvent ae) {
          devices_.setMMDevice(key_, (String) box_.getSelectedItem());
+         checkFirmwareVersion(key_);
+         checkDeviceLibrary(key_);
       }
    };
+   
+   /**
+    * checks firmware versions and gives any necessary warnings to user
+    * @param key
+    */
+   private void checkFirmwareVersion(Devices.Keys key) {
+      float firmwareVersion = props_.getPropValueFloat(key, Properties.Keys.FIRMWARE_VERSION, true);
+      switch (key) {
+      case PIEZOA:
+      case PIEZOB:
+         if (firmwareVersion!=0 && firmwareVersion < 2.83) {
+            ReportingUtils.showError("Device " + devices_.getMMDevice(key) + 
+                  ": Piezo firmware is old; piezo may not move correctly in sync with sheet");
+         }
+         break;
+      case GALVOA:
+      case GALVOB:
+         if (firmwareVersion!=0 && firmwareVersion < 2.81) {
+            ReportingUtils.showError("Device " + devices_.getMMDevice(key) + 
+                  ": Micromirror firmware is old; wheel control of some scanner axes may not work");
+         }
+         break;
+      default:
+         break;
+      }
+   }
+   
+   /**
+    * checks that the device library is supported and that we have correct properties
+    * @param key
+    */
+   private void checkDeviceLibrary(Devices.Keys key) {
+      Devices.Libraries deviceLibrary = devices_.getMMDeviceLibrary(key);
+      switch (key) {
+      case CAMERAA:
+      case CAMERAB:
+         switch (deviceLibrary) {
+         case NODEVICE:
+            // do nothing if there isn't a camera
+            break;
+         case HAMCAM:
+            if (! devices_.hasProperty(key, Properties.Keys.TRIGGER_SOURCE) ) {
+               ReportingUtils.showError("Device " + devices_.getMMDevice(key) + 
+                     ": Hamamatsu device adapter doesn't have external trigger setting");
+            }
+            break;
+         case PCOCAM:
+            ReportingUtils.showError("Device " + devices_.getMMDevice(key) +
+                  ": PCO support coming soon");
+            break;
+         default:
+            ReportingUtils.showError("Plugin doesn't support your camera for SPIM yet;"
+                  + " contact the authors for support (camera must have hardware trigger)");
+            break;
+         } // CamA/B case
+      default:
+         break;
+      }
+   }
    
    /**
     * Constructs a JComboBox populated with devices of specified Micro-Manager type
