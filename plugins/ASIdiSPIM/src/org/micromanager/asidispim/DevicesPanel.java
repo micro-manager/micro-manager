@@ -134,8 +134,8 @@ public class DevicesPanel extends ListeningJPanel {
       @Override
       public void actionPerformed(ActionEvent ae) {
          devices_.setMMDevice(key_, (String) box_.getSelectedItem());
-         checkFirmwareVersion(key_);
          checkDeviceLibrary(key_);
+         checkFirmwareVersion(key_);
       }
    };
    
@@ -148,16 +148,24 @@ public class DevicesPanel extends ListeningJPanel {
       switch (key) {
       case PIEZOA:
       case PIEZOB:
-         if (firmwareVersion!=0 && firmwareVersion < 2.83) {
+         if (firmwareVersion==(float)0) {
+            // firmware version property wasn't found, maybe device hasn't been selected
+         }
+         else if (firmwareVersion < (float)2.829) {
             ReportingUtils.showError("Device " + devices_.getMMDevice(key) + 
                   ": Piezo firmware is old; piezo may not move correctly in sync with sheet");
          }
          break;
       case GALVOA:
       case GALVOB:
-         if (firmwareVersion!=0 && firmwareVersion < 2.81) {
+         if (firmwareVersion==(float)0) {
+            // firmware version property wasn't found, maybe device hasn't been selected
+         } else if (firmwareVersion < (float)2.809) {
             ReportingUtils.showError("Device " + devices_.getMMDevice(key) + 
                   ": Micromirror firmware is old; wheel control of some scanner axes may not work");
+         } else if (firmwareVersion < (float)2.829) {
+            ReportingUtils.showError("Device " + devices_.getMMDevice(key) + 
+                  ": Micromirror firmware is old; imaging piezo not set correctly the first stack");
          }
          break;
       default:
