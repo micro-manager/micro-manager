@@ -8,6 +8,7 @@
 //                Nico Stuurman, updated to current API, Jan. 2014
 //
 //COPYRIGHT:      100X Imaging Inc, www.100ximaging.com, 2008
+//                University of California, San Francisco, 2014
 //                
 //LICENSE:        This file is distributed under the GPL license.
 //                License text is included with the source distribution.
@@ -43,7 +44,6 @@ import java.util.prefs.Preferences;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
-import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JRadioButton;
 import javax.swing.JTextField;
@@ -56,6 +56,7 @@ import org.json.JSONException;
 
 import org.micromanager.api.MMPlugin;
 import org.micromanager.api.ScriptInterface;
+import org.micromanager.utils.FileDialogs;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMFrame;
 import org.micromanager.utils.MMScriptException;
@@ -300,14 +301,14 @@ public class TrackerControl extends MMFrame implements MMPlugin {
 
       stackRadioButton_ = new JRadioButton();
       buttonGroup.add(stackRadioButton_);
-      stackRadioButton_.setText("Stack (in-memory)");
+      stackRadioButton_.setText("In Memory)");
       stackRadioButton_.setBounds(240, 185, 160, 24);
       getContentPane().add(stackRadioButton_);
       stackRadioButton_.setSelected(true);
 
       image5dRadioButton_ = new JRadioButton();
       buttonGroup.add(image5dRadioButton_);
-      image5dRadioButton_.setText("Image5D (disk)");
+      image5dRadioButton_.setText("On Disk");
       image5dRadioButton_.setBounds(240, 203, 160, 24);
       getContentPane().add(image5dRadioButton_);
 
@@ -338,6 +339,11 @@ public class TrackerControl extends MMFrame implements MMPlugin {
       button.setText("...");
       button.setBounds(358, 260, 38, 26);
       getContentPane().add(button);
+      button.addActionListener(new ActionListener() {
+         public void actionPerformed(ActionEvent ae) {
+            browse();
+         }
+      });
 
       final JButton clearButton = new JButton();
       clearButton.addActionListener(new ActionListener() {
@@ -379,12 +385,12 @@ public class TrackerControl extends MMFrame implements MMPlugin {
     * Choose the root directory to save files.
     */
    protected void browse() {
-      JFileChooser fc = new JFileChooser();
-      fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-      fc.setCurrentDirectory(new File(rootField_.getText()));
-      int retVal = fc.showOpenDialog(this);
-      if (retVal == JFileChooser.APPROVE_OPTION) {
-         rootField_.setText(fc.getSelectedFile().getAbsolutePath());
+      FileDialogs.FileType ft = new FileDialogs.FileType("Tracker root", "Tracker root",
+           System.getProperty("user.home") + "/Tracker",
+           true, "");
+      File f = FileDialogs.openDir(null, "Tracker file location", ft);
+      if (f != null) {
+         rootField_.setText(f.getAbsolutePath());
       }
    }
 
