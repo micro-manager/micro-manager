@@ -144,35 +144,38 @@ public class DevicesPanel extends ListeningJPanel {
     * @param key
     */
    private void checkFirmwareVersion(Devices.Keys key) {
+      if (key == Devices.Keys.CAMERAA || key == Devices.Keys.CAMERAB
+              || key == Devices.Keys.CAMERALOWER || key == Devices.Keys.MULTICAMERA) {
+         return;
+      }
       float firmwareVersion = props_.getPropValueFloat(key, Properties.Keys.FIRMWARE_VERSION, true);
       switch (key) {
-      case PIEZOA:
-      case PIEZOB:
-         if (firmwareVersion==(float)0) {
-            // firmware version property wasn't found, maybe device hasn't been selected
-         }
-         else if (firmwareVersion < (float)2.829) {
-            ReportingUtils.showError("Device " + devices_.getMMDevice(key) + 
-                  ": Piezo firmware is old; piezo may not move correctly in sync with sheet");
-         }
-         break;
-      case GALVOA:
-      case GALVOB:
-         if (firmwareVersion==(float)0) {
-            // firmware version property wasn't found, maybe device hasn't been selected
-         } else if (firmwareVersion < (float)2.809) {
-            ReportingUtils.showError("Device " + devices_.getMMDevice(key) + 
-                  ": Micromirror firmware is old; wheel control of some scanner axes may not work");
-         } else if (firmwareVersion < (float)2.829) {
-            ReportingUtils.showError("Device " + devices_.getMMDevice(key) + 
-                  ": Micromirror firmware is old; imaging piezo not set correctly the first stack");
-         }
-         break;
-      default:
-         break;
+         case PIEZOA:
+         case PIEZOB:
+            if (firmwareVersion == (float) 0) {
+               // firmware version property wasn't found, maybe device hasn't been selected
+            } else if (firmwareVersion < (float) 2.829) {
+               ReportingUtils.showError("Device " + devices_.getMMDevice(key)
+                       + ": Piezo firmware is old; piezo may not move correctly in sync with sheet");
+            }
+            break;
+         case GALVOA:
+         case GALVOB:
+            if (firmwareVersion == (float) 0) {
+               // firmware version property wasn't found, maybe device hasn't been selected
+            } else if (firmwareVersion < (float) 2.809) {
+               ReportingUtils.showError("Device " + devices_.getMMDevice(key)
+                       + ": Micromirror firmware is old; wheel control of some scanner axes may not work");
+            } else if (firmwareVersion < (float) 2.829) {
+               ReportingUtils.showError("Device " + devices_.getMMDevice(key)
+                       + ": Micromirror firmware is old; imaging piezo not set correctly the first stack");
+            }
+            break;
+         default:
+            break;
       }
    }
-   
+
    /**
     * checks that the device library is supported and that we have correct properties
     * @param key
