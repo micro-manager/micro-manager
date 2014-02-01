@@ -293,6 +293,9 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
 
    @Override
    public ImageWindow getSnapLiveWin() {
+      if (simpleDisplay_ == null) {
+         return null;
+      }
       return simpleDisplay_.getHyperImage().getWindow();
    }
 
