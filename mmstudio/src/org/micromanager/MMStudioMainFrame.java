@@ -5,7 +5,7 @@
 //-----------------------------------------------------------------------------
 //AUTHOR:        Nenad Amodaj, nenad@amodaj.com, Jul 18, 2005
 //               Modifications by Arthur Edelstein, Nico Stuurman, Henry Pinkard
-//COPYRIGHT:     University of California, San Francisco, 2006-2012
+//COPYRIGHT:     University of California, San Francisco, 2006-2013
 //               100X Imaging Inc, www.100ximaging.com, 2008
 //LICENSE:       This file is distributed under the BSD license.
 //               License text is included with the source distribution.
@@ -1382,6 +1382,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
             mmIntf.exposureChanged(deviceName, exposure);
          }
       }
+     
 
    }
 
@@ -3618,9 +3619,9 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
 
    @Override
    public void openAcquisition(String name, String rootDir, int nrFrames,
-         int nrChannels, int nrSlices, int nrPositions, boolean show, boolean virtual)
+         int nrChannels, int nrSlices, int nrPositions, boolean show, boolean save)
          throws MMScriptException {
-      acqMgr_.openAcquisition(name, rootDir, show, virtual);
+      acqMgr_.openAcquisition(name, rootDir, show, save);
       MMAcquisition acq = acqMgr_.getAcquisition(name);
       acq.setDimensions(nrFrames, nrChannels, nrSlices, nrPositions);
    }
