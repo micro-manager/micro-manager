@@ -3761,48 +3761,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    }
 
 
-   public void snapAndAddImage(String name, int frame, int channel, int slice)
-           throws MMScriptException {
-      snapAndAddImage(name, frame, channel, slice, 0);
-   }
-
-   public void snapAndAddImage(String name, int frame, int channel, int slice, int position)
-           throws MMScriptException {
-      TaggedImage ti;
-      try {
-         if (core_.isSequenceRunning()) {
-            ti = core_.getLastTaggedImage();
-         } else {
-            core_.snapImage();
-            ti = core_.getTaggedImage();
-         }
-         MDUtils.setChannelIndex(ti.tags, channel);
-         MDUtils.setFrameIndex(ti.tags, frame);
-         MDUtils.setSliceIndex(ti.tags, slice);
-         MDUtils.setPositionIndex(ti.tags, position);
-         
-         MMAcquisition acq = acqMgr_.getAcquisition(name);
-         if (!acq.isInitialized()) {
-            long width = core_.getImageWidth();
-            long height = core_.getImageHeight();
-            long depth = core_.getBytesPerPixel();
-            long bitDepth = core_.getImageBitDepth();
-            int multiCamNumCh = (int) core_.getNumberOfCameraChannels();
-
-            acq.setImagePhysicalDimensions((int) width, (int) height, (int) depth, (int) bitDepth, multiCamNumCh);
-            acq.initialize();
-         }
-         
-         if (acq.getPositions() > 1) {
-            MDUtils.setPositionName(ti.tags, "Pos" + position);
-         }
-
-         addImage(name, ti, true);
-      } catch (Exception e) {
-         ReportingUtils.showError(e);
-      }
-   }
-
    @Override
    public String getCurrentAlbum() {
       return acqMgr_.getCurrentAlbum();
@@ -3860,9 +3818,27 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    }
    
    @Override
+   /**
+    * The basic method for adding images to an existing data set.
+    * If the acquisition was not previously initialized, it will attempt to initialize it from the available image data
+    */
    public void addImageToAcquisition(String name, int frame, int channel, int slice, int position, TaggedImage taggedImg) throws MMScriptException {
 	   // TODO: complete the tag set and initialize the acquisition
 	   MMAcquisition acq = acqMgr_.getAcquisition(name);
+	   
+	   // check position, for multi-position data set the number of declared positions should be at least 2
+	   if (acq.getPositions() <= 1 && position > 0) {
+	      throw new MMScriptException("The acquisition was open as a single position data set.\n"
+	            + "Open acqusition with two or more positions in order to crate a multi-position data set.");
+	   }
+	   
+	   // check position, for multi-position data set the number of declared positions should be at least 2
+      if (acq.getChannels() <= channel) {
+         throw new MMScriptException("This acquisition was opened with " + acq.getChannels() + " channels.\n"
+               + "The channel number must not exceed declared number of positions.");
+      }
+
+	   
       JSONObject tags = taggedImg.tags;
 	   
 	   // if the acquisition was not previously initialized, set physical dimensions of the image
@@ -3882,23 +3858,81 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
          }
       }
       
-      // create coordinate tags
+      // create required coordinate tags
       try {
          tags.put(MMTags.Image.FRAME_INDEX, frame);
          tags.put(MMTags.Image.FRAME, frame);
          tags.put(MMTags.Image.CHANNEL_INDEX, channel);
          tags.put(MMTags.Image.SLICE_INDEX, slice);
          tags.put(MMTags.Image.POS_INDEX, position);
-         if (!tags.has(MMTags.Image.POS_NAME)) {
-            tags.put(MMTags.Image.POS_NAME, "Pos-" + position);
+         
+         if (!tags.has(MMTags.Summary.SLICES_FIRST) && !tags.has(MMTags.Summary.TIME_FIRST)) {
+            // add default setting
+            tags.put(MMTags.Summary.SLICES_FIRST, true);
+            tags.put(MMTags.Summary.TIME_FIRST, false);
          }
+         
+         if (acq.getPositions() > 1) {
+            // if no position name is defined we need to insert a default one
+            if (tags.has(MMTags.Image.POS_NAME))
+                  tags.put(MMTags.Image.POS_NAME, "Pos" + position);
+         }
+         
+         // update frames if necessary
+         if (acq.getFrames() <= frame) {
+            acq.setProperty(MMTags.Summary.FRAMES, Integer.toString(frame+1));
+         }
+         
       } catch (JSONException e) {
          throw new MMScriptException(e);
       }
       
-      System.out.println("Inserting frame: " + frame + ", channel: " + channel + ", slice: " + slice + ", pos: " + position);
+      // System.out.println("Inserting frame: " + frame + ", channel: " + channel + ", slice: " + slice + ", pos: " + position);
 	   acq.insertImage(taggedImg);
    }
+   
+   @Override
+   /**
+    * A quick way to implicitly snap an image and add it to the data set.
+    * Works in the same way as above.
+    */
+   public void snapAndAddImage(String name, int frame, int channel, int slice, int position) throws MMScriptException {
+      TaggedImage ti;
+      try {
+         if (core_.isSequenceRunning()) {
+            ti = core_.getLastTaggedImage();
+         } else {
+            core_.snapImage();
+            ti = core_.getTaggedImage();
+         }
+         MDUtils.setChannelIndex(ti.tags, channel);
+         MDUtils.setFrameIndex(ti.tags, frame);
+         MDUtils.setSliceIndex(ti.tags, slice);
+         
+         MDUtils.setPositionIndex(ti.tags, position);
+                  
+         MMAcquisition acq = acqMgr_.getAcquisition(name);
+         if (!acq.isInitialized()) {
+            long width = core_.getImageWidth();
+            long height = core_.getImageHeight();
+            long depth = core_.getBytesPerPixel();
+            long bitDepth = core_.getImageBitDepth();
+            int multiCamNumCh = (int) core_.getNumberOfCameraChannels();
+
+            acq.setImagePhysicalDimensions((int) width, (int) height, (int) depth, (int) bitDepth, multiCamNumCh);
+            acq.initialize();
+         }
+         
+         if (acq.getPositions() > 1) {
+            MDUtils.setPositionName(ti.tags, "Pos" + position);
+         }
+
+         addImageToAcquisition(name, frame, channel, slice, position, ti);
+      } catch (Exception e) {
+         throw new MMScriptException(e);
+      }
+   }
+
 
    //@Override
    public void addImage(String name, TaggedImage img, boolean updateDisplay) throws MMScriptException {

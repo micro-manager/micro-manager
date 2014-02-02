@@ -640,7 +640,7 @@ public class MMAcquisition {
          long elapsedTimeMillis = System.currentTimeMillis() - startTimeMs_;
          tags.put("ElapsedTime-ms", elapsedTimeMillis);
          tags.put("Time", MDUtils.getCurrentTime());
-         
+                  
          imageCache_.putImage(taggedImg);
       } catch (Exception ex) {
          throw new MMScriptException(ex);

@@ -548,15 +548,11 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
    public final void setSummaryMetadata(JSONObject summaryMetadata) {
       summaryMetadata_ = summaryMetadata;
       if (summaryMetadata_ != null) {
-         try {
-            boolean slicesFirst = summaryMetadata_.getBoolean("SlicesFirst");
-            boolean timeFirst = summaryMetadata_.getBoolean("TimeFirst");
-            TreeMap<String, String> oldFilenameTable = filenameTable_;
-            filenameTable_ = new TreeMap<String, String>(new ImageLabelComparator(slicesFirst, timeFirst));
-            filenameTable_.putAll(oldFilenameTable);
-         } catch (JSONException ex) {
-            ReportingUtils.logError("Couldn't find SlicesFirst or TimeFirst in summary metadata");
-         }
+         boolean slicesFirst = summaryMetadata_.optBoolean("SlicesFirst", true);
+         boolean timeFirst = summaryMetadata_.optBoolean("TimeFirst", false);
+         TreeMap<String, String> oldFilenameTable = filenameTable_;
+         filenameTable_ = new TreeMap<String, String>(new ImageLabelComparator(slicesFirst, timeFirst));
+         filenameTable_.putAll(oldFilenameTable);
       }
    }
 

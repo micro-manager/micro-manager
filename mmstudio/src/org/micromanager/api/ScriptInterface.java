@@ -136,6 +136,18 @@ public interface ScriptInterface {
    public void addImageToAcquisition(String name, int frame, int channel, int slice, int position, TaggedImage taggedImg) throws MMScriptException;   
 
    /**
+    * Snaps an image with the current settings and places pixels in the specified position
+    * of the Micro-Manager Image viewer
+    * @param name Name of the acquisition.
+    * @param frame Frame number (time point, 0-based) in which this image should be inserted.
+    * @param channel Channel number (0-based) in which this image should be inserted.
+    * @param z Slice number (0-based) in which this image should be inserted.
+    * @param position Position number (0-based) in which this image should be inserted. 
+    * @throws MMScriptException
+    */
+   public void snapAndAddImage(String name, int frame, int channel, int z, int position) throws MMScriptException;
+
+   /**
     * Provides access to the data set through the MMAcquisition interface.
     * Typically there is no need to use this low-level method and interfere with the default acquisition execution.
     * Intended use is within advanced plugins.
@@ -750,21 +762,6 @@ public interface ScriptInterface {
      * @throws MMScriptException 
      */
     // public void snapAndAddImage(String name, int frame, int channel, int z) throws MMScriptException;
-    // replace with:
-    // mmc.snapImage();
-    // gui.addImage(acqName, mmc.getTaggedImage());
-
-    /**
-     * Snaps an image with the current settings and places pixels in the specified position
-     * of the Micro-Manager Image viewer
-     * @param name Name of the acquisition.
-     * @param frame Frame number (time point, 0-based) in which this image should be inserted.
-     * @param channel Channel number (0-based) in which this image should be inserted.
-     * @param z Slice number (0-based) in which this image should be inserted.
-     * @param position Position number (0-based) in which this image should be inserted. 
-     * @throws MMScriptException
-     */
-    // public void snapAndAddImage(String name, int frame, int channel, int z, int position) throws MMScriptException;
     // replace with:
     // mmc.snapImage();
     // gui.addImage(acqName, mmc.getTaggedImage());
