@@ -98,8 +98,6 @@ unsigned int CTIScamera::refCount_ = 0;
 // global driver thread lock
 MMThreadLock g_DriverLock;
 
-static bool bApiAvailable_s;
-
 DShowLib::Grabber*                 pGrabber;
 DShowLib::tFrameHandlerSinkPtr     pSink;
 DShowLib::tMemBufferCollectionPtr  pCollection;
@@ -267,6 +265,10 @@ bool CTIScamera::Busy()
 }
 */
 
+void RunTimeDebugMessage(LPCSTR sss)
+{
+   MessageBox(NULL, sss, "TIScam debug information", MB_ICONINFORMATION | MB_OK | MB_SYSTEMMODAL);
+}
 
 
 
@@ -303,12 +305,12 @@ int CTIScamera::Initialize()
    pGrabber = new DShowLib::Grabber();
    assert(pGrabber);
 
-   DShowLib::Grabber::tVidCapDevListPtr  pVidCapDevList    = pGrabber->getAvailableVideoCaptureDevices();
+   DShowLib::Grabber::tVidCapDevListPtr  pVidCapDevList = pGrabber->getAvailableVideoCaptureDevices();
    if ( pVidCapDevList == 0 || pVidCapDevList->empty() )
    {
       MessageBox(
          NULL,
-         "Capture device list is empty. No video capture device detetcted.",
+         "Capture device list is empty. No video capture device detected.",
          "TIS Initialisation Error",
          MB_ICONSTOP | MB_OK | MB_SYSTEMMODAL
       );
@@ -317,9 +319,10 @@ int CTIScamera::Initialize()
 
    //try last used/stored selected camera device and settings
    bool success = pGrabber->loadDeviceStateFromFile(XMLPath);
-   if (!success) //connect to 1st available list entry
+   if (!success) //else connect to 1st available list entry (if not empty)
    {
-	  pGrabber->openDev(pVidCapDevList->begin()->c_str());
+      if (!(pVidCapDevList == 0 || pVidCapDevList->empty()))
+    	  pGrabber->openDev(pVidCapDevList->begin()->c_str());
    }
 
    pAct = new CPropertyAction (this, &CTIScamera::OnCamera);
@@ -353,7 +356,10 @@ int CTIScamera::Initialize()
    AddAllowedValue("Device Properties","Click here for device property dialog.");
 
    // Add ROI filter first, then the RotateFilter has less to do.
-   pROIFilter        = FilterLoader::createFilter("ROI");
+
+//2.Feb 2014 => ROI not yet works with Y16 camera mode
+//   pROIFilter        = FilterLoader::createFilter("ROI");
+
    pRotateFlipFilter = FilterLoader::createFilter("Rotate Flip");
    pDeNoiseFilter    = FilterLoader::createFilter("DeNoise");
 
@@ -372,7 +378,7 @@ int CTIScamera::Initialize()
    {
       filterList.push_back( pDeNoiseFilter.get() );    
    }
-   pGrabber->setDeviceFrameFilters( filterList );
+   pGrabber->setDeviceFrameFilters(filterList);
 
 
    pAct = new CPropertyAction (this, &CTIScamera::OnFlipHorizontal);
@@ -491,21 +497,23 @@ int CTIScamera::SetupProperties()
 
    m_pSimpleProperties = new CSimplePropertyAccess( pGrabber->getAvailableVCDProperties() );
 
+   Grabber::tVidFmtListPtr pVidFmtList = pGrabber->getAvailableVideoFormats();
+   if (pVidFmtList == 0) RunTimeDebugMessage("getAvailableVideoFormats() ");; // No video formats available?
+
    const GUID subtype = pGrabber->getVideoFormat().getSubtype();
-   tColorformatEnum cf = eY8;
+   tColorformatEnum cf = eY800;
    if      (subtype == MEDIASUBTYPE_Y16)    cf = eY16;
    else if (subtype == MEDIASUBTYPE_RGB32)  cf = eRGB32;
-   else if (subtype == MEDIASUBTYPE_RGB24)  cf = eRGB32; //trick: converts RGB24 grabber to RGB32 sink
-   else if (subtype == MEDIASUBTYPE_RGB565) cf = eRGB32; //trick: converts RGB565 grabber to RGB32 sink
-   else if (subtype == MEDIASUBTYPE_RGB555) cf = eRGB32; //trick: converts RGB555 grabber to RGB32 sink
-   else if (subtype == MEDIASUBTYPE_RGB8)   cf = eRGB8;
-   else if (subtype == MEDIASUBTYPE_UYVY)   cf = eUYVY;
+   else if (subtype == MEDIASUBTYPE_RGB24)  cf = eRGB32;
+   else if (subtype == MEDIASUBTYPE_RGB565) cf = eRGB32;
+   else if (subtype == MEDIASUBTYPE_RGB555) cf = eRGB32;
+   else if (subtype == MEDIASUBTYPE_RGB8)   cf = eY800;
+   else if (subtype == MEDIASUBTYPE_UYVY)   cf = eRGB32;
    else if (subtype == MEDIASUBTYPE_Y800)   cf = eY800;
-   else if (subtype == MEDIASUBTYPE_BY8)    cf = eBY8;
-   else if (subtype == MEDIASUBTYPE_YGB0)   cf = eYGB0;
-   else if (subtype == MEDIASUBTYPE_YGB1)   cf = eYGB1;
+   else if (subtype == MEDIASUBTYPE_BY8)    cf = eY800;
+   else if (subtype == MEDIASUBTYPE_YGB0)   cf = eY16;
+   else if (subtype == MEDIASUBTYPE_YGB1)   cf = eY16;
 
-/*
    pGrabber->setDeviceFrameFilters(NULL);
    pROIFilter        = NULL;
    pRotateFlipFilter = NULL;
@@ -513,8 +521,8 @@ int CTIScamera::SetupProperties()
 
    if (cf == eY16)
    {
-      // some Filters prevent sink from operating in Y16 mode
-      pROIFilter        = FilterLoader::createFilter("ROI");
+      // ROI Filter prevent sink from operating in Y16 mode
+      // pROIFilter        = FilterLoader::createFilter("ROI");
       pRotateFlipFilter = FilterLoader::createFilter("Rotate Flip");
       pDeNoiseFilter    = FilterLoader::createFilter("DeNoise");
    }
@@ -543,12 +551,21 @@ int CTIScamera::SetupProperties()
    }
 
    pGrabber->setDeviceFrameFilters( filterList );
-*/
 
-   if ((subtype == MEDIASUBTYPE_RGB32) || (subtype == MEDIASUBTYPE_RGB24))
+   //reverse bottom up frames
+   if (pRotateFlipFilter != NULL)
    {
-      nRet = SetProperty(g_FlipV, g_On);
-	  pRotateFlipFilter->setParameter( "Flip V", true );
+      if ((subtype == MEDIASUBTYPE_RGB32) || (subtype == MEDIASUBTYPE_RGB24))
+      {
+         nRet = SetProperty(g_FlipV, g_On);
+	     pRotateFlipFilter->setParameter( "Flip V", true );
+      }
+	  else
+	  {
+         nRet = SetProperty(g_FlipV, g_Off);
+	     pRotateFlipFilter->setParameter( "Flip V", false );
+      }
+
    }
 
    if (pSink != 0) pSink.destroy();
@@ -556,7 +573,8 @@ int CTIScamera::SetupProperties()
    assert(pSink!=NULL);
 
    //set the sink.
-   assert(pGrabber->setSinkType(pSink) == true);
+   bool bResult = pGrabber->setSinkType(pSink);
+   assert (bResult == true);
 
 
 
@@ -672,22 +690,20 @@ int CTIScamera::SetupProperties()
       else SetProperty(g_Keyword_WhiteBalance_Auto, "n/a");
    }
  
-
-
-
-
    // Prepare the live mode, to get the output size of the sink.
    pGrabber->prepareLive(ACTIVEMOVIE);
-
-   
-
 
    // Retrieve the output type and dimension of the handler sink.
    // The dimension of the sink could be different from the VideoFormat, when
    // you use filters.
 
+   bResult = pSink->isAttached();
+   if (!bResult) RunTimeDebugMessage("pSink->isAttached() is FALSE");
+
    DShowLib::FrameTypeInfo info;
-   pSink->getOutputFrameType(info);
+   bResult = pSink->getOutputFrameType(info);
+   if (!bResult) RunTimeDebugMessage("psink->getOutputFrameType() is FALSE");
+
    //sink oriented data size
    lCCD_Width         = info.dim.cx;
    lCCD_Height        = info.dim.cy;
@@ -971,8 +987,8 @@ int CTIScamera::SnapImage()
   }
 
   //this command blocks until exposure is finished or timeout after 2000ms
-  assert (pSink->snapImages(1) == eNOERROR);
-
+  pSink->snapImages(1);
+  
   if (was_off)
   {
     pGrabber->stopLive();
@@ -1402,6 +1418,7 @@ int CTIScamera::ResizeImageBuffer()
 
    img_.Resize(roiXSize_/binSize, roiYSize_/binSize, byteDepth);
 
+ 
    return DEVICE_OK;
 }
 
@@ -1608,11 +1625,12 @@ int CTIScamera::OnRotate(MM::PropertyBase* pProp, MM::ActionType eAct)
             roiYSize_ = info.dim.cy;
 
 			ResizeImageBuffer();
-		    assert (pGrabber->startLive(ACTIVEMOVIE) == true);
+		    bool bSuccess = pGrabber->startLive(ACTIVEMOVIE);
+			assert (bSuccess == true);
 		}
 		else if (lAngleOld != lAngleNew)
 		{
-			assert (pRotateFlipFilter->setParameter( "Rotation Angle", lAngleNew) == eNO_ERROR);
+			pRotateFlipFilter->setParameter( "Rotation Angle", lAngleNew);
 		}
 	}
 	return DEVICE_OK;
@@ -1626,18 +1644,28 @@ int CTIScamera::OnDeNoise(MM::PropertyBase* pProp, MM::ActionType eAct)
 	{
 		if (eAct == MM::BeforeGet)
 		{
-			long lDeNoise;
+			long lDeNoise = 0;
 			pDeNoiseFilter->getParameter( "DeNoise Level", lDeNoise );
 			pProp->Set(CDeviceUtils::ConvertToString(lDeNoise));
 		}
 		else if (eAct == MM::AfterSet)
 		{
-         string buf;
-         pProp->Get(buf);
-         long lDeNoise = atoi(buf.c_str());
-         pGrabber->stopLive();
-		 pDeNoiseFilter->setParameter( "DeNoise Level", lDeNoise );
-         pGrabber->startLive(ACTIVEMOVIE);
+			string buf;
+			pProp->Get(buf);
+			long lDeNoise = atoi(buf.c_str());
+
+			bool bWasLive = false;
+			if (pGrabber->isLive())
+			{
+				pGrabber->stopLive();
+				bWasLive = true;
+			}
+			pDeNoiseFilter->setParameter( "DeNoise Level", lDeNoise );
+			if (bWasLive)
+			{
+				Sleep(200);
+				pGrabber->startLive();
+			}
 		}
 	}
 	else
