@@ -29,8 +29,19 @@ import ij.gui.ImageWindow;
 import java.awt.*;
 import java.awt.event.*;
 import java.lang.reflect.InvocationTargetException;
+import java.text.ParseException;
+import java.util.Vector;
+import java.util.concurrent.Callable;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.text.JTextComponent;
 
 
 
@@ -94,18 +105,7 @@ public class GUIUtils {
    }
 
     public static void stopEditingOnLosingFocus(final JTable table) {
-        table.addFocusListener(new FocusAdapter() {
-         @Override
-            public void focusLost(FocusEvent e) {
-                Component focused = e.getOppositeComponent();
-                try {
-                  if (table!=focused && !table.isAncestorOf(focused))
-                     table.getDefaultEditor(String.class).stopCellEditing();
-                } catch (Exception ex) {
-                   ReportingUtils.logError(ex);
-                }
-            }
-        });
+       table.putClientProperty("terminateEditOnFocusLost", Boolean.TRUE);
     }
 
         /**
@@ -380,5 +380,201 @@ public class GUIUtils {
       GUIUtils.addWithEdges(parentPanel, button, west, north, east, south);
       return button;
    }
+
    
+   public interface StringValidator {
+      public boolean validate(String string);
+   }
+   
+   public static void enforceValidTextField(final JTextField field, final StringValidator validator) {
+      field.addFocusListener(new FocusListener() {
+         private String lastValue_;
+         
+         public void focusGained(FocusEvent e) {
+            lastValue_ = field.getText();
+         }
+
+         public void focusLost(FocusEvent e) {
+            String currentValue = field.getText();
+            if (!validator.validate(currentValue)) {
+               field.setText(lastValue_);
+            }
+         }
+      });      
+   }
+   
+   public static void enforceIntegerTextField(final JTextField field, final int minValue, final int maxValue) {
+      enforceValidTextField(field, new StringValidator() {
+         public boolean validate(String string) {
+            try {
+               int value = Integer.parseInt(string);
+               value = Math.min(value, maxValue);
+               value = Math.max(value, minValue);
+               field.setText(String.valueOf(value));
+               return true;
+            } catch (NumberFormatException e) {
+               return false;
+            }
+         }
+      });
+   }
+   
+   public static void enforceFloatFieldText(final JTextField field, final double minValue, final double maxValue) {
+      enforceValidTextField(field, new StringValidator() {
+         public boolean validate(String string) {
+            try {
+               double value = Double.parseDouble(string);
+               value = Math.min(value, maxValue);
+               value = Math.max(value, minValue);
+               field.setText(String.valueOf(value));
+               return true;
+            } catch (NumberFormatException e) {
+               return false;
+            }
+         }
+      });
+   }
+   
+   public static String getStringValue(JComponent component) {
+      if (component instanceof JTextComponent) {
+         return ((JTextComponent) component).getText();
+      }
+      if (component instanceof JComboBox) {
+         return ((JComboBox) component).getSelectedItem().toString();
+      }
+      if (component instanceof JList) {
+         return ((JList) component).getSelectedValue().toString();
+      }
+      return null;
+   }
+   
+   public static void setValue(JComponent component, String value) {
+      if (component instanceof JTextComponent) {
+         ((JTextComponent) component).setText(value);
+      }
+      if (component instanceof JComboBox) {
+         ((JComboBox) component).setSelectedItem(value);
+      }
+      if (component instanceof JList) {
+         ((JList) component).setSelectedValue(value, true);
+      }
+   }
+   
+   public static void setValue(JComponent component, Object value) {
+      String valueText = value.toString();
+      if (component instanceof JTextComponent) {
+         ((JTextComponent) component).setText(valueText);
+      }
+      if (component instanceof JComboBox) {
+         ((JComboBox) component).setSelectedItem(valueText);
+      }
+      if (component instanceof JList) {
+         ((JList) component).setSelectedValue(valueText, true);
+      }
+   }
+   
+   public static int getIntValue(JTextField component) {
+     return Integer.parseInt(((JTextField) component).getText());
+   }
+   
+   private static void enableOnTableEvent(final JTable table, final JComponent component) {
+      table.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+         @Override
+         public void valueChanged(ListSelectionEvent e) {
+            if (!e.getValueIsAdjusting()) {
+               if (component.getParent().isEnabled()) {
+                  if (table.getSelectedRowCount() > 0) {
+                     component.setEnabled(true);
+                  } else {
+                     component.setEnabled(false);
+                  }
+               }
+            }
+         }
+      });
+   }
+   
+   public static void makeIntoMoveRowUpButton(final JTable table, JButton button) {
+      button.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            int rowIndex = table.getSelectedRow();
+            if (rowIndex > 0) {
+               ((DefaultTableModel) table.getModel()).moveRow(rowIndex, rowIndex, rowIndex - 1);
+               table.setRowSelectionInterval(rowIndex - 1, rowIndex - 1);
+            }
+         }
+      });
+      enableOnTableEvent(table, button);
+   }
+      
+   public static void makeIntoMoveRowDownButton(final JTable table, JButton button) {
+      button.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            int rowIndex = table.getSelectedRow();
+            if (rowIndex < table.getRowCount() - 1) {
+               ((DefaultTableModel) table.getModel()).moveRow(rowIndex, rowIndex, rowIndex + 1);
+               table.setRowSelectionInterval(rowIndex + 1, rowIndex + 1);
+            }
+         }
+      });
+      enableOnTableEvent(table, button);
+   }
+   
+   public static void makeIntoDeleteRowButton(final JTable table, JButton button) {
+      button.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            int rowIndex = table.getSelectedRow();
+            DefaultTableModel model = (DefaultTableModel) table.getModel();
+            model.removeRow(rowIndex);
+            if (rowIndex < table.getRowCount()) {
+               table.setRowSelectionInterval(rowIndex, rowIndex);
+            }
+         }
+      });
+      enableOnTableEvent(table, button);
+   }
+   
+   public static void makeIntoCloneRowButton(final JTable table, JButton button) {
+      button.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            int rowIndex = table.getSelectedRow();
+            DefaultTableModel model = (DefaultTableModel) table.getModel();
+            Vector rowData = (Vector) model.getDataVector().elementAt(rowIndex);
+            model.insertRow(rowIndex + 1, new Vector(rowData));
+            table.setRowSelectionInterval(rowIndex + 1, rowIndex + 1);
+         }
+      });
+      enableOnTableEvent(table, button);
+   }
+  
+   public static void startEditingAtCell(JTable table, int row, int column) {
+      table.editCellAt(row, column);
+      table.getEditorComponent().requestFocusInWindow();
+   }
+
+   public static void tabKeyTraversesTable(final JTable table) {
+      table.addKeyListener(new KeyAdapter() {
+         public void keyReleased(KeyEvent event) {
+            // Check if the TAB key was pressed.
+            if (event.getKeyCode() == 9) {
+               int row = table.getEditingRow();
+               int column = table.getEditingColumn();
+               // Don't proceed if we aren't already editing.
+               if (row < 0 || column < 0) return;
+               if (column == (table.getColumnCount() - 1)) {
+                  column = 0;
+                  row = row + 1 % table.getRowCount();
+               } else {
+                  ++column;
+               }
+               startEditingAtCell(table, row, column);
+            }
+         }
+      });
+   }
+
 }

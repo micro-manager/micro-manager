@@ -12,25 +12,13 @@ package org.micromanager.projector;
 
 import ij.IJ;
 import ij.plugin.frame.RoiManager;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.awt.event.WindowFocusListener;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 import javax.swing.*;
-import javax.swing.event.ChangeListener;
 import javax.swing.text.DefaultFormatter;
 import mmcorej.CMMCore;
 import org.micromanager.utils.GUIUtils;
-import org.micromanager.utils.JavaUtils;
-import org.micromanager.utils.ReportingUtils;
 
 /**
  *

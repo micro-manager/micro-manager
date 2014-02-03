@@ -95,14 +95,15 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
       return sequenceTableModel_.getRowCount() - 1;
    }
    
+   // Implements the Add Time Slot button. Adds the default 
+   // integer values. Sends the user to edit the Frame ROIs.
    private void addTimeSlot() {
       int row = addRow("",
             GUIUtils.getIntValue(onDurationTextField),
             GUIUtils.getIntValue(offDurationTextField),
-            GUIUtils.getIntValue(onDurationTextField));
+            GUIUtils.getIntValue(loopCountTextField));
       sequenceTable.setRowSelectionInterval(row, row);
-      sequenceTable.editCellAt(row, 1);
-      sequenceTable.getEditorComponent().requestFocusInWindow();
+      GUIUtils.startEditingAtCell(sequenceTable, row, 1);
    }
    
    // Generate a new sequence of phototargeting events.
@@ -155,6 +156,7 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
       GUIUtils.makeIntoMoveRowDownButton(sequenceTable, downButton);
       GUIUtils.makeIntoCloneRowButton(sequenceTable, cloneButton);
       GUIUtils.makeIntoDeleteRowButton(sequenceTable, deleteButton);
+      GUIUtils.tabKeyTraversesTable(sequenceTable);
       
       keepTimeSlotIndicesUpToDate();
       
