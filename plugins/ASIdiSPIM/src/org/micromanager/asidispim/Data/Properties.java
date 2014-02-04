@@ -37,6 +37,11 @@ import org.micromanager.utils.ReportingUtils;
  * Contains data and methods related to getting and setting device properties.
  * Ideally this is the only place where properties are read and set.
  * One instance of this class exists in the top-level class.
+ * 
+ * Currently the property "reads" default to ignoring errors due to missing
+ *  device or property, but property "writes" default to reporting errors
+ *  due to missing device or property
+ * 
  * @author Jon
  * @author nico
  */
@@ -313,28 +318,30 @@ public class Properties {
    private String getPropValue(Devices.Keys device, Properties.Keys name, boolean ignoreError) {
       String val = null;
       String mmDevice = null;
-      try {
-         if (ignoreError) {
-            mmDevice = devices_.getMMDevice(device);
-            val = "";  // set to be empty string to avoid null pointer exceptions
-            if (mmDevice != null) {
+      if (ignoreError) {
+         mmDevice = devices_.getMMDevice(device);
+         val = "";  // set to be empty string to avoid null pointer exceptions
+         if (mmDevice != null) {
+            try {
                val = core_.getProperty(mmDevice, name.toString());
+            } catch (Exception ex) {
+               // do nothing, just let empty string stay
             }
-         } else {
+         }
+      } else {
+         try {
             mmDevice = devices_.getMMDeviceException(device);
             val = core_.getProperty(mmDevice, name.toString());
+         } catch (Exception ex) {
+            ReportingUtils.showError("Could not get property " + name.toString() + " from device " + mmDevice);
          }
-         
-      } catch (Exception ex) {
-         ReportingUtils.showError("Could not get property " + name.toString() + " from device " + mmDevice);
       }
       return val;
    }
 
    /**
-    * returns a string value for the specified property (assumes the caller 
-    * knows the property contains an string)
-    * 
+    * returns a string value for the specified property (assumes the caller knows the property contains an string)
+    * Ignores missing device or property, returning empty string.
     * @param device enum key for device 
     * @param name enum key for property 
     * @return
@@ -347,10 +354,10 @@ public class Properties {
    /**
     * returns a string value for the specified property (assumes the caller 
     * knows the property contains an string)
-    * 
+    * If device property isn't found, returns empty string.  If ignoreError then user is warned too.
     * @param device enum key for device 
     * @param name enum key for property 
-    * @param ignoreError false (default) will do error checking, true means ignores non-existing property
+    * @param ignoreError false (default) will do error checking, true means ignores non-existing device property
     * @return
     * @throws ParseException
     */
@@ -360,7 +367,8 @@ public class Properties {
    }
    
    /**
-    * returns an integer value for the specified property (assumes the caller knows the property contains an integer)
+    * returns an integer value for the specified property (assumes the caller knows the property contains an integer).
+    * Ignores missing device or property, returning 0.
     * @param device enum key for device 
     * @param name enum key for property 
     * @return
@@ -384,7 +392,8 @@ public class Properties {
    
 
    /**
-    * returns an integer value for the specified property (assumes the caller knows the property contains an integer)
+    * returns an integer value for the specified property (assumes the caller knows the property contains an integer).
+    * If property isn't found, returns 0.  If ignoreError then user is warned too. 
     * @param device enum key for device 
     * @param name enum key for property 
     * @param ignoreError false (default) will do error checking, true means ignores non-existing property
@@ -408,7 +417,8 @@ public class Properties {
    }
 
    /**
-    * returns an float value for the specified property (assumes the caller knows the property contains a float)
+    * returns an float value for the specified property (assumes the caller knows the property contains a float).
+    * Ignores missing device or property, returning 0.
     * @param device enum key for device 
     * @param name enum key for property 
     * @return
@@ -432,7 +442,7 @@ public class Properties {
    
    /**
    * returns an float value for the specified property (assumes the caller knows the property contains a float).
-   * Returns 0 if device isn't found and ignoreError is true
+   * If property isn't found, returns 0.  If ignoreError then user is warned too.
    * @param device enum key for device 
    * @param name enum key for property
    * @param ignoreError true to ignore error (usually unassigned device) 

@@ -144,11 +144,7 @@ public class DevicesPanel extends ListeningJPanel {
     * @param key
     */
    private void checkFirmwareVersion(Devices.Keys key) {
-      if (key == Devices.Keys.CAMERAA || key == Devices.Keys.CAMERAB
-              || key == Devices.Keys.CAMERALOWER || key == Devices.Keys.MULTICAMERA) {
-         return;
-      }
-      float firmwareVersion = props_.getPropValueFloat(key, Properties.Keys.FIRMWARE_VERSION, true);
+      float firmwareVersion = props_.getPropValueFloat(key, Properties.Keys.FIRMWARE_VERSION);
       switch (key) {
          case PIEZOA:
          case PIEZOB:
