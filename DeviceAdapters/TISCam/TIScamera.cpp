@@ -510,7 +510,7 @@ int CTIScamera::SetupProperties()
    else if (subtype == MEDIASUBTYPE_RGB8)   cf = eY800;
    else if (subtype == MEDIASUBTYPE_UYVY)   cf = eRGB32;
    else if (subtype == MEDIASUBTYPE_Y800)   cf = eY800;
-   else if (subtype == MEDIASUBTYPE_BY8)    cf = eY800;
+   else if (subtype == MEDIASUBTYPE_BY8)    cf = eRGB32;
    else if (subtype == MEDIASUBTYPE_YGB0)   cf = eY16;
    else if (subtype == MEDIASUBTYPE_YGB1)   cf = eY16;
 
