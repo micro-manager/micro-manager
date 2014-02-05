@@ -21,6 +21,8 @@ import java.util.Map;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Vector;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JComboBox;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
@@ -28,6 +30,9 @@ import javax.swing.table.DefaultTableModel;
 import mmcorej.CMMCore;
 import mmcorej.DeviceType;
 import mmcorej.StrVector;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.GUIUtils;
 import org.micromanager.utils.ReportingUtils;
@@ -347,6 +352,52 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
       }
    }
    
+   private String serializeToJSONString() {
+      JSONObject toSave = new JSONObject();
+      int columnCount = sequenceTableModel_.getColumnCount();
+      int rowCount = sequenceTableModel_.getRowCount();
+      JSONArray tableData = new JSONArray();
+      for (int column = 0; column < columnCount; ++column) {
+         JSONObject rowData = new JSONObject();
+         for (int row = 0; row < rowCount; ++row) {
+            try {
+               headerNames.get(column);
+               rowData.put(headerNames.get(column), sequenceTableModel_.getValueAt(row, column));
+            } catch (JSONException ex) {
+               ReportingUtils.logError(ex);
+            }
+         }
+         tableData.put(rowData);
+      }
+
+      try {
+         toSave.put("SequenceData", tableData);
+         toSave.put("SequenceRepeats", GUIUtils.getIntValue(this.sequenceLoopCountTextField_));
+      } catch (JSONException ex) {
+         ReportingUtils.logError(ex);
+      }
+      return toSave.toString();
+   }
+   
+   private void deserializeFromJSONString(String jsonString) {
+      try {
+         JSONObject jsonData = new JSONObject(jsonString);
+         JSONArray tableData = jsonData.getJSONArray("SequenceData");
+         for (int row = 0; row < tableData.length(); ++row) {
+            JSONObject rowData = tableData.getJSONObject(row);
+            int col = 0;
+            for (String headerName : headerNames) {
+               String value = rowData.getString(headerName);
+               sequenceTableModel_.setValueAt(value, row, col);
+               ++col;
+            }
+         }
+         sequenceLoopCountTextField_.setText(String.valueOf(jsonData.getInt("SequenceRepeats")));
+      } catch (JSONException ex) {
+         ReportingUtils.logError(ex);
+      }
+   }
+   
    // Creates a new window, the MosaicSequencingFrame. This frame allows the
    // user to generate sequences of ROIs, and optionally, generate ROIs in
    // a grid pattern.
@@ -382,6 +433,7 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
       GUIUtils.stopEditingOnLosingFocus(sequenceTable_);
 
       keepTimeSlotIndicesUpToDate(sequenceTableModel_);
+      
    }
 
    
@@ -425,6 +477,9 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
       stopButton_ = new javax.swing.JButton();
       jLabel6 = new javax.swing.JLabel();
       sequenceLoopCountTextField_ = new javax.swing.JTextField();
+      jButton3 = new javax.swing.JButton();
+      jButton2 = new javax.swing.JButton();
+      jButton1 = new javax.swing.JButton();
       jPanel5 = new javax.swing.JPanel();
       numRoisAcrossLabel_ = new javax.swing.JLabel();
       numRoisDownLabel = new javax.swing.JLabel();
@@ -631,26 +686,41 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
 
       sequenceLoopCountTextField_.setText("1");
 
+      jButton3.setText("Attach to Acquisition");
+
+      jButton2.setText("Save");
+
+      jButton1.setText("Load");
+
       javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
       jPanel3.setLayout(jPanel3Layout);
       jPanel3Layout.setHorizontalGroup(
          jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
          .addGroup(jPanel3Layout.createSequentialGroup()
             .addContainerGap()
-            .addComponent(uploadButton_)
-            .addGap(18, 18, 18)
-            .addComponent(jLabel6)
-            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-            .addComponent(sequenceLoopCountTextField_, javax.swing.GroupLayout.PREFERRED_SIZE, 47, javax.swing.GroupLayout.PREFERRED_SIZE)
-            .addGap(18, 18, 18)
-            .addComponent(jLabel7)
-            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-            .addComponent(sequenceTriggerComboBox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addGap(29, 29, 29)
-            .addComponent(runButton_)
-            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-            .addComponent(stopButton_)
-            .addGap(22, 22, 22))
+            .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+               .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel3Layout.createSequentialGroup()
+                  .addComponent(uploadButton_)
+                  .addGap(18, 18, 18)
+                  .addComponent(jLabel6)
+                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                  .addComponent(sequenceLoopCountTextField_, javax.swing.GroupLayout.PREFERRED_SIZE, 47, javax.swing.GroupLayout.PREFERRED_SIZE)
+                  .addGap(18, 18, 18)
+                  .addComponent(jLabel7)
+                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                  .addComponent(sequenceTriggerComboBox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                  .addGap(163, 163, 163))
+               .addGroup(jPanel3Layout.createSequentialGroup()
+                  .addComponent(runButton_)
+                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                  .addComponent(jButton3)
+                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                  .addComponent(stopButton_)
+                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                  .addComponent(jButton1)
+                  .addGap(18, 18, 18)
+                  .addComponent(jButton2)
+                  .addGap(24, 24, 24))))
       );
       jPanel3Layout.setVerticalGroup(
          jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -660,11 +730,16 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
                .addComponent(uploadButton_)
                .addComponent(jLabel7)
                .addComponent(sequenceTriggerComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-               .addComponent(runButton_)
-               .addComponent(stopButton_)
                .addComponent(jLabel6)
                .addComponent(sequenceLoopCountTextField_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-            .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+            .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+               .addComponent(runButton_)
+               .addComponent(jButton3)
+               .addComponent(jButton2)
+               .addComponent(stopButton_)
+               .addComponent(jButton1))
+            .addContainerGap(29, Short.MAX_VALUE))
       );
 
       jPanel5.setBorder(javax.swing.BorderFactory.createTitledBorder(javax.swing.BorderFactory.createEtchedBorder(), "New ROI Grid", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 1, 11), new java.awt.Color(0, 0, 0))); // NOI18N
@@ -756,7 +831,7 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
       layout.setVerticalGroup(
          layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
          .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-            .addContainerGap()
+            .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                .addComponent(jPanel5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
@@ -804,6 +879,9 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
    private javax.swing.JButton downButton;
    private javax.swing.JButton generateROIGridButton_;
    private javax.swing.JButton generateSequenceButton;
+   private javax.swing.JButton jButton1;
+   private javax.swing.JButton jButton2;
+   private javax.swing.JButton jButton3;
    private javax.swing.JLabel jLabel1;
    private javax.swing.JLabel jLabel2;
    private javax.swing.JLabel jLabel3;
