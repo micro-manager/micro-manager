@@ -31,6 +31,12 @@
 #include "MicroManager.h"
 //#pragma warning(disable : 4996) // disable warning for deperecated CRT functions on Windows 
 
+#if defined _WIN64
+#pragma comment(lib, ".\\lib\\pco_generic\\pco_kamlib64.lib")
+#else
+#pragma comment(lib, ".\\lib\\pco_generic\\pco_kamlib.lib")
+#endif
+
 #include <string>
 #include <sstream>
 #include <list>
@@ -58,7 +64,7 @@ int g_iPFCount = 0;
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-  RegisterDevice(g_CameraDeviceName, MM::CameraDevice, "PCO generic camera adapter");
+  AddAvailableDeviceName(g_CameraDeviceName, "PCO generic camera adapter");
 }
 
 MODULE_API void DeleteDevice(MM::Device* pDevice)
@@ -224,8 +230,17 @@ int CPCOCam::OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct)
         sprintf(m_pszTimes, "0,%d,-1,-1", (int)m_dExposure);
       if(m_pCamera->iCamClass == 3)
       {
-        m_pCamera->strCam.strTiming.dwExposureTable[0] = (int)m_dExposure;
+        if(m_pCamera->strCam.strTiming.wTimingControlMode == 0)// pco.camera
+        {
         m_pCamera->strCam.strTiming.wTimeBaseExposure = 2;
+          m_pCamera->strCam.strTiming.dwExposureTable[0] = m_dExposure;
+          m_pCamera->strCam.strTiming.dwDelayTable[0] = 0;
+        }
+        else
+        {
+          m_pCamera->strCam.strTiming.dwFrameRateExposure = m_dExposure;
+          m_pCamera->strCam.strTiming.dwFrameRate = (DWORD)(m_dFps * 1000.0);
+        }
       }
       nErr = SetupCamera();
     }
@@ -348,9 +363,21 @@ int CPCOCam::OnFpsMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 
       m_iFpsMode = ihelp;
       if(m_iFpsMode == 1)
+      {
         sprintf(m_pszTimes, "%ffps,%f,-1,-1", m_dFps, m_dExposure);
+        if(m_pCamera->iCamClass == 3)// pco.camera
+        {
+          m_pCamera->strCam.strTiming.wTimingControlMode = 1;
+        }
+      }
       else
+      {
         sprintf(m_pszTimes, "0,%d,-1,-1", (int)m_dExposure);
+        if(m_pCamera->iCamClass == 3)// pco.camera
+        {
+          m_pCamera->strCam.strTiming.wTimingControlMode = 0;
+        }
+      }
       nErr = SetupCamera();
     }
 
@@ -504,9 +531,24 @@ int CPCOCam::OnFps(MM::PropertyBase* pProp, MM::ActionType eAct)
     {
       m_dFps = dhelp;
       if(m_iFpsMode == 1)
+      {
         sprintf(m_pszTimes, "%ffps,%f,-1,-1", m_dFps, m_dExposure);
+        if(m_pCamera->iCamClass == 3)// pco.camera
+        {
+          m_pCamera->strCam.strTiming.dwFrameRateExposure = m_dExposure;
+          m_pCamera->strCam.strTiming.dwFrameRate = (DWORD)(m_dFps * 1000.0);
+        }
+      }
       else
+      {
         sprintf(m_pszTimes, "0,%d,-1,-1", (int)m_dExposure);
+        if(m_pCamera->iCamClass == 3)// pco.camera
+        {
+          m_pCamera->strCam.strTiming.wTimeBaseExposure = 2;
+          m_pCamera->strCam.strTiming.dwExposureTable[0] = m_dExposure;
+          m_pCamera->strCam.strTiming.dwDelayTable[0] = 0;
+        }
+      }
       nErr = SetupCamera();
     }
 
@@ -547,6 +589,7 @@ int CPCOCam::OnPixelRate(MM::PropertyBase* pProp, MM::ActionType eAct)
       if(m_pCamera->iCamClass == 3)// pco.camera
       {
         m_pCamera->strCam.strSensor.dwPixelRate = m_pCamera->strCam.strSensor.strDescription.dwPixelRateDESC[m_iPixelRate];
+        m_pCamera->strCam.strTiming.dwDelayTable[0] = 0;
       }
 
       nErr = SetupCamera();
@@ -1018,6 +1061,13 @@ int CPCOCam::Initialize()
     snprintf(m_pszTimes, m_nTimesLen, "0,%.0f,-1,-1", m_dExposure);
     m_iDoubleShutterMode = m_pCamera->strCam.strSensor.wDoubleImage;
     m_iIRMode            = m_pCamera->strCam.strSensor.wIR;
+    m_iFpsMode           = m_pCamera->strCam.strTiming.wTimingControlMode;
+    if(m_iFpsMode == 1)
+      m_dExposure = m_pCamera->strCam.strTiming.dwFrameRateExposure;
+    else
+      m_dExposure = m_pCamera->strCam.strTiming.dwExposureTable[0];
+    m_dFps = m_pCamera->strCam.strTiming.dwFrameRate;
+    m_dFps /= 100;
   }
   if(m_pCamera->iCamClass == 2)
   {
