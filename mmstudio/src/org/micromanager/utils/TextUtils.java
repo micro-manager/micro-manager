@@ -24,7 +24,9 @@
 package org.micromanager.utils;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.text.DecimalFormat;
 
@@ -42,6 +44,12 @@ public class TextUtils {
       }
       
       return sb.toString();
+   }
+   
+   static public void writeTextFile(String path, String content) throws IOException {
+      BufferedWriter output= new BufferedWriter(new FileWriter(path));
+      output.append(content);
+      output.close();
    }
    
    public static final DecimalFormat FMT0 = new DecimalFormat("#0");
