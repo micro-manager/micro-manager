@@ -20,7 +20,7 @@ public interface ProjectionDevice {
    public double getHeight();
    public void turnOn();
    public void turnOff();
-   public void setRois(Polygon[] rois);
+   public void loadRois(Polygon[] rois);
    public void setPolygonRepetitions(int reps);
    public void runPolygons();
    public void addOnStateListener(OnStateListener listener);

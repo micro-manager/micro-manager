@@ -37,6 +37,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.prefs.Preferences;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+import javax.swing.JFrame;
 
 import javax.swing.JOptionPane;
 
@@ -72,6 +73,7 @@ public class ProjectorController {
    private String targetingChannel_;
    AtomicBoolean stopRequested_ = new AtomicBoolean(false);
    AtomicBoolean isRunning_ = new AtomicBoolean(false);
+   private MosaicSequencingFrame mosaicSequencingFrame_;
 
    // ### ProjectorController constructor.
    
@@ -462,6 +464,27 @@ public class ProjectorController {
       return transformedROIs.toArray(new Polygon[0]);
    }
    
+      /* Returns the currently selected ROIs for a given ImageWindow. */
+   public static Roi[] getRois(ImageWindow window) {
+      Roi[] rois = new Roi[]{};
+      Roi[] roiMgrRois = {};
+      Roi singleRoi = window.getImagePlus().getRoi();
+      final RoiManager mgr = RoiManager.getInstance();
+      if (mgr != null) {
+         roiMgrRois = mgr.getRoisAsArray();
+      }
+      if (roiMgrRois.length > 0) {
+         rois = roiMgrRois;
+      } else if (singleRoi != null) {
+         rois = new Roi[]{singleRoi};
+      }
+      return rois;
+
+   }
+   
+   public Polygon[] getTransformedRois(ImagePlus contextImagePlus, Roi[] rois) {
+      return transformROIs(contextImagePlus, rois, mapping_);
+   }
 
    public static Roi[] separateOutPointRois(Roi[] rois) {
       List<Roi> roiList = new ArrayList<Roi>();
@@ -480,37 +503,21 @@ public class ProjectorController {
       return roiList.toArray(rois);
    }
 
-   /* Returns the currently selected ROIs for a given ImageWindow. */
-   public static Roi[] getRois(ImageWindow window) {
-      Roi[] rois = null;
-      Roi[] roiMgrRois = {};
-      Roi singleRoi = window.getImagePlus().getRoi();
-      final RoiManager mgr = RoiManager.getInstance();
-      if (mgr != null) {
-         roiMgrRois = mgr.getRoisAsArray();
-      }
-      if (roiMgrRois.length > 0) {
-         rois = roiMgrRois;
-      } else if (singleRoi != null) {
-         rois = new Roi[]{singleRoi};
-      } else {
-         ReportingUtils.showError("Please first select ROI(s)");
-      }
-      return rois;
-
-   }
-
-   public int setRois(int reps, ImagePlus imgp) {
+   public int setRois(int reps) {
       if (mapping_ != null) {
          ImageWindow window = WindowManager.getCurrentWindow();
-         if (window != null) {
+         ImagePlus imgp = window.getImagePlus();
+         if (window == null) {
+            ReportingUtils.showError("No image window with ROIs is open.");
+            return 0;
+         } else {
             Roi[] rois = getRois(window);
+            if (rois.length == 0) {
+               ReportingUtils.showMessage("Please first draw the desired phototargeting ROIs.");
+            }
             individualRois_ = separateOutPointRois(rois);
             sendRoiData(imgp);
             return individualRois_.length;
-         } else {
-            ReportingUtils.showError("No image window with ROIs is open.");
-            return 0;
          }
       } else {
          return 0;
@@ -521,8 +528,8 @@ public class ProjectorController {
    private void sendRoiData(ImagePlus imgp) {
       if (individualRois_.length > 0) {
          if (mapping_ != null) {
-            Polygon[] galvoROIs = transformROIs(imgp, individualRois_, mapping_);
-            dev.setRois(galvoROIs);
+            Polygon[] rois = transformROIs(imgp, individualRois_, mapping_);
+            dev.loadRois(rois);
             dev.setPolygonRepetitions(reps_);
             dev.setDwellTime(interval_us_);
          }
@@ -794,6 +801,13 @@ public class ProjectorController {
 
    public double getPointAndShootInterval() {
       return this.pointAndShootInterval;
+   }
+
+   void showMosaicSequencingFrame() {
+      if (mosaicSequencingFrame_ == null) {
+         mosaicSequencingFrame_ = new MosaicSequencingFrame(this.gui, this.mmc, this);
+      }
+      mosaicSequencingFrame_.setVisible(true);
    }
 
 }

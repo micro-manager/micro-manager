@@ -150,7 +150,7 @@ public class Galvo implements ProjectionDevice {
       }
    }
 
-   public void setRois(final Polygon[] rois) {
+   public void loadRois(final Polygon[] rois) {
       galvoExecutor_.submit(new Runnable() {
          public void run() {
             try {

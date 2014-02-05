@@ -8,14 +8,19 @@
 
 package org.micromanager.projector;
 
+import ij.IJ;
+import ij.ImagePlus;
 import ij.gui.ImageWindow;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.ArrayList;
+import ij.gui.Roi;
+import ij.plugin.frame.RoiManager;
+import java.awt.Polygon;
+import java.awt.Rectangle;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Vector;
-import java.util.concurrent.ConcurrentHashMap;
 import javax.swing.JComboBox;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
@@ -23,7 +28,7 @@ import javax.swing.table.DefaultTableModel;
 import mmcorej.CMMCore;
 import mmcorej.DeviceType;
 import mmcorej.StrVector;
-import org.micromanager.MMStudioMainFrame;
+import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.GUIUtils;
 import org.micromanager.utils.ReportingUtils;
 
@@ -32,12 +37,24 @@ import org.micromanager.utils.ReportingUtils;
  * and those parts should not be edited by hand.
  */
 public class MosaicSequencingFrame extends javax.swing.JFrame {
+   private class Sequence {
+      Vector<Vector<String>> sequenceTableDataVector;
+      int repeatCount;
+   }
+
    private final CMMCore core_;
-   private final MMStudioMainFrame gui_;
+   private final ScriptInterface gui_;
    private final String mosaic_;
-   private final Map settings = new ConcurrentHashMap();
-   private DefaultTableModel sequenceTableModel_;
+   private final int mosaicWidth_;
+   private final int mosaicHeight_;
+   private final ProjectorController projectorController_;
+   private final DefaultTableModel sequenceTableModel_;
+   private final Vector<String> headerNames = new Vector(Arrays.asList(         
+                           new String[] {"Time Slot", "Roi Indices", "On Duration (ms)",
+                              "Off Duration (ms)", "Loop count"}));
    
+   // The triggerProperties_ allow us to convert GUI names for triggering
+   // to the Mosaic3 device adapter names for triggering.
    final Map<String, String> triggerProperties_ = new HashMap<String, String>() {{
          put("External Frame Bulb", "ExternalBulb");
          put("Sequence Start", "InternalExpose");
@@ -46,7 +63,7 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
       }};
 
    // Returns all active Mosaic devices reported by the MMCore.
-   private static ArrayList<String> getMosaicDevices(CMMCore core) {
+   public static ArrayList<String> getMosaicDevices(CMMCore core) {
       StrVector slmDevices = core.getLoadedDevicesOfType(DeviceType.SLMDevice);
       final ArrayList<String> mosaicDevices = new ArrayList<String>();
       for (final String slmDevice : slmDevices) {
@@ -62,21 +79,21 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
    
    // Alter the Time Slot indices such that the first row is
    // column 1, the second column 2, and so on.
-   private void updateTimeSlotIndices() {
-      for (int i = 0; i < sequenceTableModel_.getRowCount(); ++i) {
-         sequenceTableModel_.setValueAt(i + 1, i, 0);
+   private void updateTimeSlotIndices(final DefaultTableModel sequenceTableModel) {
+      for (int i = 0; i < sequenceTableModel.getRowCount(); ++i) {
+         sequenceTableModel.setValueAt(i + 1, i, 0);
       }
    }
    
    // Ensures that the "Time Slot" column such that the first
    // row is column 1, the second is 2, and so on.
-   private void keepTimeSlotIndicesUpToDate() {
-      sequenceTableModel_.addTableModelListener(new TableModelListener() {
+   private void keepTimeSlotIndicesUpToDate(final DefaultTableModel sequenceTableModel) {
+      sequenceTableModel.addTableModelListener(new TableModelListener() {
          @Override
          public void tableChanged(TableModelEvent e) {
-            sequenceTableModel_.removeTableModelListener(this);
-            updateTimeSlotIndices();
-            sequenceTableModel_.addTableModelListener(this);
+            sequenceTableModel.removeTableModelListener(this);
+            updateTimeSlotIndices(sequenceTableModel);
+            sequenceTableModel.addTableModelListener(this);
          }
       });
    }
@@ -84,96 +101,290 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
    // Adds a row to the sequence table, including ROIs, an
    // on-duration period, an off-duration period, and a loop 
    // repeat count. Returns the index of the added row.
-   private int addRow(String roiIndicesString, int onDurationMs, int offDurationMs, int loopCount) {
-      Vector<String> rowVector = new Vector<String>();
-      rowVector.add("");
-      rowVector.add(roiIndicesString);
-      rowVector.add(String.valueOf(onDurationMs).trim());
-      rowVector.add(String.valueOf(offDurationMs).trim());
-      rowVector.add(String.valueOf(loopCount).trim());
-      sequenceTableModel_.addRow(rowVector);
-      return sequenceTableModel_.getRowCount() - 1;
+   private int addRow(DefaultTableModel sequenceTableModel, String roiIndicesString, int onDurationMs, int offDurationMs, int loopCount) {
+      ArrayList<String> rows = new ArrayList<String>();
+      rows.add("");
+      rows.add(roiIndicesString);
+      rows.add(String.valueOf(onDurationMs).trim());
+      rows.add(String.valueOf(offDurationMs).trim());
+      rows.add(String.valueOf(loopCount).trim());
+      sequenceTableModel.addRow(rows.toArray());
+      sequenceTable_.invalidate();
+      return sequenceTableModel.getRowCount() - 1;
    }
    
    // Implements the Add Time Slot button. Adds the default 
    // integer values. Sends the user to edit the Frame ROIs.
    private void addTimeSlot() {
-      int row = addRow("",
-            GUIUtils.getIntValue(onDurationTextField),
-            GUIUtils.getIntValue(offDurationTextField),
-            GUIUtils.getIntValue(loopCountTextField));
-      sequenceTable.setRowSelectionInterval(row, row);
-      GUIUtils.startEditingAtCell(sequenceTable, row, 1);
+      int row = addRow(
+            sequenceTableModel_,
+            "",
+            GUIUtils.getIntValue(onDurationTextField_),
+            GUIUtils.getIntValue(offDurationTextField_),
+            GUIUtils.getIntValue(loopCountTextField_));
+      sequenceTable_.setRowSelectionInterval(row, row);
+      GUIUtils.startEditingAtCell(sequenceTable_, row, 1);
    }
    
    // Generate a new sequence of phototargeting events.
    private void generateNewSequence(int roiCount) {
-      int onDurationMs = GUIUtils.getIntValue(onDurationTextField);
-      int offDurationMs = GUIUtils.getIntValue(offDurationTextField);
-      int loopCount = GUIUtils.getIntValue(loopCountTextField);
+      int onDurationMs = GUIUtils.getIntValue(onDurationTextField_);
+      int offDurationMs = GUIUtils.getIntValue(offDurationTextField_);
+      int loopCount = GUIUtils.getIntValue(loopCountTextField_);
       String sequenceType = (String) sequenceTypeComboBox.getSelectedItem();
-      sequenceTable.clearSelection();
+      sequenceTable_.clearSelection();
       sequenceTableModel_.getDataVector().clear();
       if (sequenceType.contentEquals("Simultaneous")) {
-         addRow("1-" + String.valueOf(roiCount).trim(), onDurationMs, offDurationMs, loopCount);
+         addRow(sequenceTableModel_, "1-" + String.valueOf(roiCount).trim(), onDurationMs, offDurationMs, loopCount);
       }
       if (sequenceType.contentEquals("Sequential")) {
          for (int i = 0; i < roiCount; ++i) {
-            addRow(String.valueOf(i + 1).trim(), onDurationMs, offDurationMs, loopCount);      
+            addRow(sequenceTableModel_, String.valueOf(i + 1).trim(), onDurationMs, offDurationMs, loopCount);      
          }
       }
       if (sequenceType.contentEquals("Cumulative")) {
          for (int i = 0; i < roiCount; ++i) {
-            addRow(i == 0 ? "1" : "1-" + String.valueOf(i + 1).trim(), onDurationMs, offDurationMs, loopCount);      
+            addRow(sequenceTableModel_, i == 0 ? "1" : "1-" + String.valueOf(i + 1).trim(), onDurationMs, offDurationMs, loopCount);      
          }
       }
-      updateTimeSlotIndices();
+      updateTimeSlotIndices(sequenceTableModel_);
    }
    
+   // Convert a textual representation of a set of one-based roi indices to a
+   // vector of zero-based integers also representing those indices. For example,
+   // "1-3,5,7,9-11" gets converted to [0,1,2,4,6,8,9,10].
+   private ArrayList<Integer> frameStringToRoiIndexList(String sequenceString) {
+      ArrayList<Integer> sequence = new ArrayList<Integer>();
+      String[] pieces = sequenceString.split(",");
+      try {
+         for (String piece : pieces) {
+            // First parse a range fragment, such as "2-4".
+            if (piece.contains("-")) {
+               String[] limits = piece.split("-");
+               int min = Integer.parseInt(limits[0]);
+               int max = Integer.parseInt(limits[1]);
+               // If the limits are specified in reverse order, fix that.
+               if (min > max) {
+                  int temp = max;
+                  max = min;
+                  min = temp;
+               }
+               // Add each integer in range (inclusive) to the sequence.
+               for (int i = min; i <= max; ++i) {
+                  sequence.add(i - 1);
+               }
+            } else {
+               // Parse a standalone integer.
+               int value = Integer.parseInt(piece);
+               sequence.add(value - 1);
+            }
+         }
+      // Throw an exception in case we have a parse error. We'll use
+      // the absence (presence) of this exception to (in)validate
+      // user entries.
+      } catch (NumberFormatException e) {
+         throw new RuntimeException("Unable to parse frame specifier");
+      }
+      return sequence;
+   }
+
+   // The SequenceEvent object defines a Sequence event by a number of
+   // simple parameters, including the on and off duration, the loopCount,
+   // and the pixels belonging to a particular frame.
+   private class SequenceEvent {
+      public byte[] framePixels;
+      public int onDurationMs;
+      public int offDurationMs;
+      public int loopCount;
+   }
+   
+   // Read an integer from a sequenceTable_ cell.
+   private int integerAt(int rowIndex, int columnIndex) {
+      return Integer.parseInt(sequenceTableModel_.getValueAt(rowIndex, columnIndex).toString());
+   }
+   
+   // Convert a row from the sequenceTable_ to a SequenceEvent object.
+   private SequenceEvent sequenceRowToSequenceEvent(int rowIndex, Polygon[] availableRoiPolygons) {
+      final ArrayList<Integer> roiIndexList = frameStringToRoiIndexList(sequenceTableModel_.getValueAt(rowIndex, 1).toString());
+      SequenceEvent sequenceEvent = new SequenceEvent();
+      ArrayList<Polygon> selectedRoiPolygons = new ArrayList<Polygon>();
+      for (int roiIndex : roiIndexList) {
+         selectedRoiPolygons.add(availableRoiPolygons[roiIndex]);
+      }
+      sequenceEvent.framePixels = SLM.roisToPixels(mosaicWidth_, mosaicHeight_,
+                                                   selectedRoiPolygons.toArray(new Polygon[0]));
+      sequenceEvent.onDurationMs = integerAt(rowIndex, 2);
+      sequenceEvent.offDurationMs = integerAt(rowIndex, 3);
+      sequenceEvent.loopCount = integerAt(rowIndex, 4);
+      return sequenceEvent;
+   }
+   
+   // Get a list of SequenceEvents by extracting information from the sequenceTable_.
+   private ArrayList<SequenceEvent> getSequenceEvents() {
+      final ImageWindow snapLiveWin = gui_.getSnapLiveWin();
+      final ImagePlus snapLiveImage = snapLiveWin.getImagePlus();
+      Polygon[] availableRoiPolygons = projectorController_.getTransformedRois(snapLiveImage ,ProjectorController.getRois(snapLiveWin));
+      ArrayList<SequenceEvent> events = new ArrayList<SequenceEvent>();
+      for (int i = 0; i < sequenceTableModel_.getRowCount(); ++i) {
+         events.add(sequenceRowToSequenceEvent(i, availableRoiPolygons));
+      }
+      return events;
+   }
+   
+   // Convert a series of sequence events to a string.
+   private String sequenceEventsToString(final ArrayList<SequenceEvent> events) {
+      String eventString = "";
+      int i = 0;
+      for (SequenceEvent event:events) {
+         eventString += i
+                       + " " + event.onDurationMs
+                       + " " + event.offDurationMs
+                       + " " + event.loopCount + ";";
+         ++i;
+      }
+      return eventString;
+   }
+   
+   // Convert a list of SequenceEvents to a list of byte arrays, each
+   // corresponding to a frame in the sequence.
+   private List<byte[]> imageListFromSequenceEvents(final ArrayList<SequenceEvent> events) {
+      List<byte[]> imageList = new ArrayList<byte[]>();
+      for (SequenceEvent event:events) {
+         imageList.add(event.framePixels);
+      }
+      return imageList;
+   }
+   
+   // Upload the provided SequenceEvents to the Mosaic, by using the
+   // "SequenceSettings" property.
+   private void uploadSequence(final ArrayList<SequenceEvent> events) {
+      try {
+         core_.loadSLMSequence(mosaic_, imageListFromSequenceEvents(events));      
+         core_.setProperty(mosaic_, "SequenceSettings", sequenceEventsToString(events));
+      } catch (Exception ex) {
+         ReportingUtils.showError(ex);
+      }
+   }
+   
+   // Upload the sequence from the sequence table to the Mosaic.
+   private void uploadSequence() {
+      uploadSequence(getSequenceEvents());
+   }
+
+   // Get the total number of ROIs available in the Snap/Live window.
    private int getRoiCount() {
-      final ImageWindow win = gui_.getSnapLiveWin();
-      if (win == null) {
+      ImageWindow win;
+      try {
+         win = gui_.getSnapLiveWin();
+      } catch (Exception e) {
          return 0;
       }
-      return ProjectorController.getRois(gui_.getSnapLiveWin()).length;
+      Roi[] rois = ProjectorController.getRois(win);
+      if (rois == null) return 0;
+      return rois.length;
    }
    
-   /**
-    * Creates new form MosaicSequencingFrame
-    */
-   public MosaicSequencingFrame(MMStudioMainFrame gui, CMMCore core) {
+   // Generate the ROI grid from a single ROI. The initial ROI will be located
+   // in the upper left corner of the grid and the remaining ROIs will be
+   // clones of that ROI, with offsets specified.
+   private void generateRoiGrid() {
+      IJ.run("ROI Manager...");
+      final RoiManager roiManager = RoiManager.getInstance();
+      Roi selectedRoi = null;
+      if (roiManager.getCount() == 0) {
+         selectedRoi = IJ.getImage().getRoi();
+      } else {
+         int firstSelectedRoi = Math.max(0, roiManager.getSelectedIndex());
+         selectedRoi = roiManager.getRoisAsArray()[firstSelectedRoi];
+      }
+      if (selectedRoi == null) {
+         ReportingUtils.showError("Please draw a single ROI for duplication in a grid.");
+         return;
+      }
+      roiManager.runCommand("reset");
+      int numX = GUIUtils.getIntValue(this.numRoisAcrossField_);
+      int numY = GUIUtils.getIntValue(this.numRoisDownField_);
+      int spacingX = GUIUtils.getIntValue(this.roiSpacingAcrossField_);
+      int spacingY = GUIUtils.getIntValue(this.roiSpacingDownField_);
+      for (int j = 0; j < numY; ++j) {
+         for (int i = 0; i < numX; ++i) {
+            Roi newRoi = (Roi) selectedRoi.clone();
+            Rectangle bounds = selectedRoi.getBounds();
+            newRoi.setLocation(bounds.x + i * spacingX, bounds.y + j * spacingY);
+            roiManager.addRoi(newRoi);
+         }
+      }
+   }
+
+   // Create the Sequence from the sequenceTable_.
+   private void generateSequence() {
+      int roiCount = getRoiCount();
+      if (roiCount == 0) {
+         ReportingUtils.showMessage("Please draw ROIs for phototargeting.");
+      }
+      generateNewSequence(getRoiCount());
+   }
+   
+   // Run the Mosaic Sequence. Called by Run button.
+   private void runSequence() {
+      try {
+         final String selectedItem = ((JComboBox) sequenceTriggerComboBox).getSelectedItem().toString();
+         core_.setProperty(mosaic_, "SequenceLoopCount", GUIUtils.getIntValue(sequenceLoopCountTextField_));
+         core_.setProperty(mosaic_, "TriggerMode", triggerProperties_.get(selectedItem));
+         core_.setProperty(mosaic_, "OperationMode", "FrameSequence");
+         core_.startSLMSequence(mosaic_);
+      } catch (Exception ex) {
+         ReportingUtils.showError(ex);
+      }
+   }
+   
+   // Abort the Mosaic sequence. Called by Stop button.
+   private void stopSequence() {
+      try {
+         core_.stopSLMSequence(mosaic_);
+      } catch (Exception ex) {
+         ReportingUtils.showError(ex);
+      }
+   }
+   
+   // Creates a new window, the MosaicSequencingFrame. This frame allows the
+   // user to generate sequences of ROIs, and optionally, generate ROIs in
+   // a grid pattern.
+   public MosaicSequencingFrame(ScriptInterface gui, CMMCore core, ProjectorController projectorController) {
       initComponents();
       gui_ = gui;
       core_ = core;
+      projectorController_ = projectorController;
       // Get the first available Mosaic device for now.
-      mosaic_ = getMosaicDevices(core).get(0);
-      sequenceTableModel_ = (DefaultTableModel) sequenceTable.getModel();
-      
-      GUIUtils.setClickCountToStartEditing(sequenceTable, 1);
-      GUIUtils.stopEditingOnLosingFocus(sequenceTable);
-      
-      GUIUtils.makeIntoMoveRowUpButton(sequenceTable, upButton);
-      GUIUtils.makeIntoMoveRowDownButton(sequenceTable, downButton);
-      GUIUtils.makeIntoCloneRowButton(sequenceTable, cloneButton);
-      GUIUtils.makeIntoDeleteRowButton(sequenceTable, deleteButton);
-      GUIUtils.tabKeyTraversesTable(sequenceTable);
-      
-      keepTimeSlotIndicesUpToDate();
+      mosaic_ = getMosaicDevices(core_).get(0);
+      mosaicWidth_ = (int) core_.getSLMWidth(mosaic_);
+      mosaicHeight_ = (int) core.getSLMHeight(mosaic_);
+      sequenceTableModel_ = (DefaultTableModel) sequenceTable_.getModel();
       
       GUIUtils.recallPosition(this);
-      GUIUtils.enforceIntegerTextField(this.loopCountTextField, 0, 65535);
-      GUIUtils.enforceIntegerTextField(this.offDurationTextField, 0, 200000);
-      GUIUtils.enforceIntegerTextField(this.onDurationTextField, 0, 200000);
-      GUIUtils.enforceIntegerTextField(this.sequenceCountTextField, 0, 65535);
+      GUIUtils.enforceIntegerTextField(onDurationTextField_, 0, 200000);
+      GUIUtils.enforceIntegerTextField(offDurationTextField_, 0, 200000);
+      GUIUtils.enforceIntegerTextField(loopCountTextField_, 0, 65535);
+      GUIUtils.enforceIntegerTextField(sequenceLoopCountTextField_, 0, 65535);
       
-      addTimeSlotButton.addActionListener(new ActionListener() {
-         public void actionPerformed(ActionEvent e) {
-            addTimeSlot();
-         }
-         
-      });
+      GUIUtils.enforceIntegerTextField(numRoisAcrossField_, 1, 30);
+      GUIUtils.enforceIntegerTextField(numRoisDownField_, 1, 30);
+      GUIUtils.enforceIntegerTextField(this.roiSpacingAcrossField_, 10, 1000);
+      GUIUtils.enforceIntegerTextField(this.roiSpacingDownField_, 10, 1000);
+      
+      GUIUtils.makeIntoMoveRowUpButton(sequenceTable_, upButton);
+      GUIUtils.makeIntoMoveRowDownButton(sequenceTable_, downButton);
+      GUIUtils.makeIntoCloneRowButton(sequenceTable_, cloneButton);
+      GUIUtils.makeIntoDeleteRowButton(sequenceTable_, deleteButton);
+      GUIUtils.tabKeyTraversesTable(sequenceTable_);
+      
+      GUIUtils.setClickCountToStartEditing(sequenceTable_, 1);
+      GUIUtils.stopEditingOnLosingFocus(sequenceTable_);
+
+      keepTimeSlotIndicesUpToDate(sequenceTableModel_);
    }
 
+   
    // Warning: code below this line should not be edited by hand.
    // Instead, use the Netbeans Form Editor to make changes.
    
@@ -186,33 +397,46 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
    private void initComponents() {
 
+      jLabel5 = new javax.swing.JLabel();
       jPanel1 = new javax.swing.JPanel();
       jLabel2 = new javax.swing.JLabel();
       jLabel3 = new javax.swing.JLabel();
       jLabel4 = new javax.swing.JLabel();
-      onDurationTextField = new javax.swing.JTextField();
-      offDurationTextField = new javax.swing.JTextField();
-      loopCountTextField = new javax.swing.JTextField();
+      onDurationTextField_ = new javax.swing.JTextField();
+      offDurationTextField_ = new javax.swing.JTextField();
+      loopCountTextField_ = new javax.swing.JTextField();
       sequenceTypeComboBox = new javax.swing.JComboBox();
       generateSequenceButton = new javax.swing.JButton();
       jLabel1 = new javax.swing.JLabel();
       jPanel2 = new javax.swing.JPanel();
       jScrollPane2 = new javax.swing.JScrollPane();
-      sequenceTable = new javax.swing.JTable();
-      jButton7 = new javax.swing.JButton();
+      sequenceTable_ = new javax.swing.JTable();
       downButton = new javax.swing.JButton();
       cloneButton = new javax.swing.JButton();
-      addTimeSlotButton = new javax.swing.JButton();
+      addTimeSlotButton_ = new javax.swing.JButton();
       upButton = new javax.swing.JButton();
       deleteButton = new javax.swing.JButton();
+      jLabel8 = new javax.swing.JLabel();
       jPanel3 = new javax.swing.JPanel();
-      jButton8 = new javax.swing.JButton();
-      jLabel6 = new javax.swing.JLabel();
-      sequenceCountTextField = new javax.swing.JTextField();
+      uploadButton_ = new javax.swing.JButton();
       jLabel7 = new javax.swing.JLabel();
       sequenceTriggerComboBox = new javax.swing.JComboBox();
-      jButton9 = new javax.swing.JButton();
-      jButton10 = new javax.swing.JButton();
+      runButton_ = new javax.swing.JButton();
+      stopButton_ = new javax.swing.JButton();
+      jLabel6 = new javax.swing.JLabel();
+      sequenceLoopCountTextField_ = new javax.swing.JTextField();
+      jPanel5 = new javax.swing.JPanel();
+      numRoisAcrossLabel_ = new javax.swing.JLabel();
+      numRoisDownLabel = new javax.swing.JLabel();
+      roisDownSpacingLabel = new javax.swing.JLabel();
+      roisAcrossSpacingLabel1 = new javax.swing.JLabel();
+      generateROIGridButton_ = new javax.swing.JButton();
+      numRoisAcrossField_ = new javax.swing.JTextField();
+      roiSpacingAcrossField_ = new javax.swing.JTextField();
+      numRoisDownField_ = new javax.swing.JTextField();
+      roiSpacingDownField_ = new javax.swing.JTextField();
+
+      jLabel5.setText("jLabel5");
 
       setTitle("Andor Mosaic Sequencing");
       setResizable(false);
@@ -225,11 +449,11 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
 
       jLabel4.setText("Loop Count");
 
-      onDurationTextField.setText("0");
+      onDurationTextField_.setText("400");
 
-      offDurationTextField.setText("0");
+      offDurationTextField_.setText("50");
 
-      loopCountTextField.setText("0");
+      loopCountTextField_.setText("1");
 
       sequenceTypeComboBox.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Sequential", "Cumulative", "Simultaneous" }));
 
@@ -256,9 +480,9 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
                      .addComponent(jLabel2, javax.swing.GroupLayout.Alignment.TRAILING))
                   .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                   .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                     .addComponent(loopCountTextField, javax.swing.GroupLayout.Alignment.LEADING)
-                     .addComponent(offDurationTextField, javax.swing.GroupLayout.Alignment.LEADING)
-                     .addComponent(onDurationTextField, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 57, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                     .addComponent(loopCountTextField_, javax.swing.GroupLayout.Alignment.LEADING)
+                     .addComponent(offDurationTextField_, javax.swing.GroupLayout.Alignment.LEADING)
+                     .addComponent(onDurationTextField_, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 57, javax.swing.GroupLayout.PREFERRED_SIZE)))
                .addGroup(jPanel1Layout.createSequentialGroup()
                   .addComponent(jLabel1)
                   .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -278,24 +502,24 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
             .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                .addComponent(jLabel2)
-               .addComponent(onDurationTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+               .addComponent(onDurationTextField_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
             .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                .addComponent(jLabel3)
-               .addComponent(offDurationTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+               .addComponent(offDurationTextField_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
             .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                .addComponent(jLabel4)
-               .addComponent(loopCountTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+               .addComponent(loopCountTextField_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
             .addComponent(generateSequenceButton)
             .addContainerGap(12, Short.MAX_VALUE))
       );
 
-      jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder(javax.swing.BorderFactory.createEtchedBorder(), "Sequence", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 1, 11), new java.awt.Color(0, 0, 0))); // NOI18N
+      jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder(javax.swing.BorderFactory.createEtchedBorder(), "Sequences", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 1, 11), new java.awt.Color(0, 0, 0))); // NOI18N
       jPanel2.setFont(new java.awt.Font("Tahoma", 1, 11)); // NOI18N
 
-      sequenceTable.setModel(new javax.swing.table.DefaultTableModel(
+      sequenceTable_.setModel(new javax.swing.table.DefaultTableModel(
          new Object [][] {
 
          },
@@ -311,31 +535,31 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
             return canEdit [columnIndex];
          }
       });
-      sequenceTable.getTableHeader().setResizingAllowed(false);
-      sequenceTable.getTableHeader().setReorderingAllowed(false);
-      jScrollPane2.setViewportView(sequenceTable);
-      if (sequenceTable.getColumnModel().getColumnCount() > 0) {
-         sequenceTable.getColumnModel().getColumn(0).setResizable(false);
-         sequenceTable.getColumnModel().getColumn(0).setPreferredWidth(40);
-         sequenceTable.getColumnModel().getColumn(4).setPreferredWidth(50);
+      sequenceTable_.getTableHeader().setResizingAllowed(false);
+      sequenceTable_.getTableHeader().setReorderingAllowed(false);
+      jScrollPane2.setViewportView(sequenceTable_);
+      if (sequenceTable_.getColumnModel().getColumnCount() > 0) {
+         sequenceTable_.getColumnModel().getColumn(0).setResizable(false);
+         sequenceTable_.getColumnModel().getColumn(0).setPreferredWidth(40);
+         sequenceTable_.getColumnModel().getColumn(4).setPreferredWidth(50);
       }
-
-      jButton7.setText("Customize");
 
       downButton.setText("Down");
 
       cloneButton.setText("Clone");
 
-      addTimeSlotButton.setText("Add time slot");
-      addTimeSlotButton.addActionListener(new java.awt.event.ActionListener() {
+      addTimeSlotButton_.setText("Add");
+      addTimeSlotButton_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            addTimeSlotButtonActionPerformed(evt);
+            addTimeSlotButton_ActionPerformed(evt);
          }
       });
 
       upButton.setText("Up");
 
       deleteButton.setText("Delete");
+
+      jLabel8.setText("Time slot:");
 
       javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
       jPanel2.setLayout(jPanel2Layout);
@@ -344,8 +568,11 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
          .addGroup(jPanel2Layout.createSequentialGroup()
             .addContainerGap()
             .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-               .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
-                  .addComponent(addTimeSlotButton)
+               .addComponent(jScrollPane2)
+               .addGroup(jPanel2Layout.createSequentialGroup()
+                  .addComponent(jLabel8)
+                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                  .addComponent(addTimeSlotButton_)
                   .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                   .addComponent(cloneButton)
                   .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -354,47 +581,55 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
                   .addComponent(upButton)
                   .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                   .addComponent(downButton)
-                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                  .addComponent(jButton7))
-               .addComponent(jScrollPane2))
+                  .addGap(0, 0, Short.MAX_VALUE)))
             .addContainerGap())
       );
       jPanel2Layout.setVerticalGroup(
          jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
          .addGroup(jPanel2Layout.createSequentialGroup()
             .addContainerGap()
-            .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 125, javax.swing.GroupLayout.PREFERRED_SIZE)
-            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 146, Short.MAX_VALUE)
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
             .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-               .addComponent(addTimeSlotButton)
                .addComponent(cloneButton)
                .addComponent(deleteButton)
                .addComponent(upButton)
                .addComponent(downButton)
-               .addComponent(jButton7))
-            .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+               .addComponent(addTimeSlotButton_)
+               .addComponent(jLabel8))
+            .addGap(11, 11, 11))
       );
 
       jPanel3.setBorder(javax.swing.BorderFactory.createTitledBorder(javax.swing.BorderFactory.createEtchedBorder()));
 
-      jButton8.setText("Upload");
-
-      jLabel6.setText("Sequence Count:");
-
-      sequenceCountTextField.setText("0");
+      uploadButton_.setText("Upload Sequences");
+      uploadButton_.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            uploadButton_ActionPerformed(evt);
+         }
+      });
 
       jLabel7.setText("Trigger:");
 
       sequenceTriggerComboBox.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Sequence Start", "External Start", "External Advance", "External Frame Bulb" }));
-      sequenceTriggerComboBox.addActionListener(new java.awt.event.ActionListener() {
+
+      runButton_.setText("Run");
+      runButton_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            sequenceTriggerComboBoxActionPerformed(evt);
+            runButton_ActionPerformed(evt);
          }
       });
 
-      jButton9.setText("Run");
+      stopButton_.setText("Stop");
+      stopButton_.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            stopButton_ActionPerformed(evt);
+         }
+      });
 
-      jButton10.setText("Stop");
+      jLabel6.setText("Repeats:");
+
+      sequenceLoopCountTextField_.setText("1");
 
       javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
       jPanel3.setLayout(jPanel3Layout);
@@ -402,34 +637,105 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
          jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
          .addGroup(jPanel3Layout.createSequentialGroup()
             .addContainerGap()
-            .addComponent(jButton8)
-            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+            .addComponent(uploadButton_)
+            .addGap(18, 18, 18)
             .addComponent(jLabel6)
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-            .addComponent(sequenceCountTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 47, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addComponent(sequenceLoopCountTextField_, javax.swing.GroupLayout.PREFERRED_SIZE, 47, javax.swing.GroupLayout.PREFERRED_SIZE)
             .addGap(18, 18, 18)
             .addComponent(jLabel7)
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-            .addComponent(sequenceTriggerComboBox, 0, 147, Short.MAX_VALUE)
+            .addComponent(sequenceTriggerComboBox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addGap(29, 29, 29)
+            .addComponent(runButton_)
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-            .addComponent(jButton9)
-            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-            .addComponent(jButton10)
-            .addContainerGap())
+            .addComponent(stopButton_)
+            .addGap(22, 22, 22))
       );
       jPanel3Layout.setVerticalGroup(
          jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
          .addGroup(jPanel3Layout.createSequentialGroup()
             .addContainerGap()
             .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-               .addComponent(jButton8)
-               .addComponent(jLabel6)
-               .addComponent(sequenceCountTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+               .addComponent(uploadButton_)
                .addComponent(jLabel7)
                .addComponent(sequenceTriggerComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-               .addComponent(jButton9)
-               .addComponent(jButton10))
+               .addComponent(runButton_)
+               .addComponent(stopButton_)
+               .addComponent(jLabel6)
+               .addComponent(sequenceLoopCountTextField_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
             .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+      );
+
+      jPanel5.setBorder(javax.swing.BorderFactory.createTitledBorder(javax.swing.BorderFactory.createEtchedBorder(), "New ROI Grid", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 1, 11), new java.awt.Color(0, 0, 0))); // NOI18N
+
+      numRoisAcrossLabel_.setText("Number across:");
+
+      numRoisDownLabel.setText("Number down:");
+
+      roisDownSpacingLabel.setText("Spacing:");
+
+      roisAcrossSpacingLabel1.setText("Spacing:");
+
+      generateROIGridButton_.setText("Generate ROI Grid");
+      generateROIGridButton_.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            generateROIGridButton_ActionPerformed(evt);
+         }
+      });
+
+      numRoisAcrossField_.setText("1");
+
+      roiSpacingAcrossField_.setText("100");
+
+      numRoisDownField_.setText("1");
+
+      roiSpacingDownField_.setText("100");
+
+      javax.swing.GroupLayout jPanel5Layout = new javax.swing.GroupLayout(jPanel5);
+      jPanel5.setLayout(jPanel5Layout);
+      jPanel5Layout.setHorizontalGroup(
+         jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+         .addGroup(jPanel5Layout.createSequentialGroup()
+            .addGap(33, 33, 33)
+            .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+               .addComponent(generateROIGridButton_)
+               .addGroup(jPanel5Layout.createSequentialGroup()
+                  .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                     .addComponent(roisAcrossSpacingLabel1)
+                     .addComponent(roisDownSpacingLabel)
+                     .addComponent(numRoisDownLabel)
+                     .addComponent(numRoisAcrossLabel_))
+                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                  .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                     .addComponent(roiSpacingAcrossField_, javax.swing.GroupLayout.DEFAULT_SIZE, 53, Short.MAX_VALUE)
+                     .addComponent(numRoisAcrossField_)
+                     .addComponent(numRoisDownField_)
+                     .addComponent(roiSpacingDownField_))))
+            .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+      );
+      jPanel5Layout.setVerticalGroup(
+         jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+         .addGroup(jPanel5Layout.createSequentialGroup()
+            .addContainerGap()
+            .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+               .addComponent(numRoisAcrossLabel_)
+               .addComponent(numRoisAcrossField_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+            .addGap(3, 3, 3)
+            .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+               .addComponent(roisAcrossSpacingLabel1)
+               .addComponent(roiSpacingAcrossField_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+            .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+               .addComponent(numRoisDownLabel)
+               .addComponent(numRoisDownField_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+               .addComponent(roisDownSpacingLabel)
+               .addComponent(roiSpacingDownField_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(generateROIGridButton_)
+            .addContainerGap())
       );
 
       javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
@@ -439,71 +745,96 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
          .addGroup(layout.createSequentialGroup()
             .addContainerGap()
             .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-               .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-               .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-               .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+               .addGroup(layout.createSequentialGroup()
+                  .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                  .addComponent(jPanel5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+               .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+               .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
             .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
       );
       layout.setVerticalGroup(
          layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
          .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
             .addContainerGap()
-            .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+               .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+               .addComponent(jPanel5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
             .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
             .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-            .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addContainerGap())
       );
+
+      jPanel2.getAccessibleContext().setAccessibleName("Sequences");
 
       pack();
    }// </editor-fold>//GEN-END:initComponents
 
-   private void sequenceTriggerComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_sequenceTriggerComboBoxActionPerformed
-      try {
-         String currentValue = ((JComboBox) sequenceTriggerComboBox).getSelectedItem().toString();
-         settings.put("TriggerMode", currentValue);
-      } catch (Exception ex) {
-         ReportingUtils.logError(ex);
-      }
-            
-   }//GEN-LAST:event_sequenceTriggerComboBoxActionPerformed
-
    private void generateSequenceButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_generateSequenceButtonActionPerformed
-      generateNewSequence(getRoiCount());
+      generateSequence();
    }//GEN-LAST:event_generateSequenceButtonActionPerformed
 
-   private void addTimeSlotButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addTimeSlotButtonActionPerformed
-   }//GEN-LAST:event_addTimeSlotButtonActionPerformed
+   private void runButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_runButton_ActionPerformed
+      runSequence();
+   }//GEN-LAST:event_runButton_ActionPerformed
+
+   private void stopButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_stopButton_ActionPerformed
+      stopSequence();
+   }//GEN-LAST:event_stopButton_ActionPerformed
+
+   private void addTimeSlotButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addTimeSlotButton_ActionPerformed
+      addTimeSlot();
+   }//GEN-LAST:event_addTimeSlotButton_ActionPerformed
+
+   private void uploadButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_uploadButton_ActionPerformed
+      uploadSequence();
+   }//GEN-LAST:event_uploadButton_ActionPerformed
+
+   private void generateROIGridButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_generateROIGridButton_ActionPerformed
+      generateRoiGrid();
+   }//GEN-LAST:event_generateROIGridButton_ActionPerformed
 
 
    // Variables declaration - do not modify//GEN-BEGIN:variables
-   private javax.swing.JButton addTimeSlotButton;
+   private javax.swing.JButton addTimeSlotButton_;
    private javax.swing.JButton cloneButton;
    private javax.swing.JButton deleteButton;
    private javax.swing.JButton downButton;
+   private javax.swing.JButton generateROIGridButton_;
    private javax.swing.JButton generateSequenceButton;
-   private javax.swing.JButton jButton10;
-   private javax.swing.JButton jButton7;
-   private javax.swing.JButton jButton8;
-   private javax.swing.JButton jButton9;
    private javax.swing.JLabel jLabel1;
    private javax.swing.JLabel jLabel2;
    private javax.swing.JLabel jLabel3;
    private javax.swing.JLabel jLabel4;
+   private javax.swing.JLabel jLabel5;
    private javax.swing.JLabel jLabel6;
    private javax.swing.JLabel jLabel7;
+   private javax.swing.JLabel jLabel8;
    private javax.swing.JPanel jPanel1;
    private javax.swing.JPanel jPanel2;
    private javax.swing.JPanel jPanel3;
+   private javax.swing.JPanel jPanel5;
    private javax.swing.JScrollPane jScrollPane2;
-   private javax.swing.JTextField loopCountTextField;
-   private javax.swing.JTextField offDurationTextField;
-   private javax.swing.JTextField onDurationTextField;
-   private javax.swing.JTextField sequenceCountTextField;
-   private javax.swing.JTable sequenceTable;
+   private javax.swing.JTextField loopCountTextField_;
+   private javax.swing.JTextField numRoisAcrossField_;
+   private javax.swing.JLabel numRoisAcrossLabel_;
+   private javax.swing.JTextField numRoisDownField_;
+   private javax.swing.JLabel numRoisDownLabel;
+   private javax.swing.JTextField offDurationTextField_;
+   private javax.swing.JTextField onDurationTextField_;
+   private javax.swing.JTextField roiSpacingAcrossField_;
+   private javax.swing.JTextField roiSpacingDownField_;
+   private javax.swing.JLabel roisAcrossSpacingLabel1;
+   private javax.swing.JLabel roisDownSpacingLabel;
+   private javax.swing.JButton runButton_;
+   private javax.swing.JTextField sequenceLoopCountTextField_;
+   private javax.swing.JTable sequenceTable_;
    private javax.swing.JComboBox sequenceTriggerComboBox;
    private javax.swing.JComboBox sequenceTypeComboBox;
+   private javax.swing.JButton stopButton_;
    private javax.swing.JButton upButton;
+   private javax.swing.JButton uploadButton_;
    // End of variables declaration//GEN-END:variables
 }

@@ -5,6 +5,7 @@
 //-----------------------------------------------------------------------------
 //
 // AUTHOR:       Nenad Amodaj, nenad@amodaj.com, 2005
+//               Arthur Edelstein, arthuredelstein@gmail.com
 //
 // COPYRIGHT:    University of California San Francisco, 2005
 //               100X Imaging Inc, 2009
@@ -28,6 +29,9 @@ import ij.WindowManager;
 import ij.gui.ImageWindow;
 import java.awt.*;
 import java.awt.event.*;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.lang.ref.Reference;
 import java.lang.reflect.InvocationTargetException;
 import java.text.ParseException;
 import java.util.Vector;
@@ -36,11 +40,14 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableCellEditor;
 import javax.swing.text.JTextComponent;
 
 
@@ -101,7 +108,12 @@ public class GUIUtils {
    }
 
    public static void setClickCountToStartEditing(JTable table, int count) {
-       ((DefaultCellEditor) table.getDefaultEditor(String.class)).setClickCountToStart(count);
+      for (int columnIndex = 0; columnIndex < table.getColumnCount(); ++columnIndex) {
+         TableCellEditor cellEditor = table.getColumnModel().getColumn(columnIndex).getCellEditor();
+         if (cellEditor instanceof DefaultCellEditor) {
+            ((DefaultCellEditor) cellEditor).setClickCountToStart(count);
+         }
+      }
    }
 
     public static void stopEditingOnLosingFocus(final JTable table) {
@@ -337,10 +349,7 @@ public class GUIUtils {
       topLayout.putConstraint(SpringLayout.NORTH, component, north,
               (north >= 0) ? SpringLayout.NORTH : SpringLayout.SOUTH, parentContainer);
    }
-   
-
-
-   
+      
     /* Add a component to the parent panel, set positions of the edges of
      * component relative to panel. If edges are positive, then they are
      * positioned relative to north and west edges of parent container. If edges
@@ -383,57 +392,112 @@ public class GUIUtils {
 
    
    public interface StringValidator {
-      public boolean validate(String string);
+      public void validate(String string);
    }
    
-   public static void enforceValidTextField(final JTextField field, final StringValidator validator) {
-      field.addFocusListener(new FocusListener() {
-         private String lastValue_;
-         
-         public void focusGained(FocusEvent e) {
-            lastValue_ = field.getText();
+   // If the user attempts to edit a text field, but doesn't enter a valid input,
+   // as specifed by the StringValidator, then a dialog pops up that reminds
+   // user what kind of input is needed. If the user presses OK, then verifier
+   // returns false. If user presses CANCEL, then verifier reverts the 
+   // value and returns true.
+   public static InputVerifier textFieldInputVerifier(final JTextField field, final StringValidator validator) {
+      return new InputVerifier() {
+         private String lastGoodValue = field.getText();
+
+         public boolean verify(JComponent input) {
+            String proposedValue = ((JTextField) input).getText();
+            validator.validate(proposedValue);
+            return true;
          }
 
-         public void focusLost(FocusEvent e) {
-            String currentValue = field.getText();
-            if (!validator.validate(currentValue)) {
-               field.setText(lastValue_);
+         public boolean shouldYieldFocus(JComponent input) {
+            try {
+               boolean isValid = super.shouldYieldFocus(input);
+               lastGoodValue = field.getText();
+               return isValid;
+            } catch (Exception e) {
+               int response = JOptionPane.showConfirmDialog(
+                     null, e.getMessage(),
+                     "Invalid input",
+                     JOptionPane.OK_CANCEL_OPTION);
+               if (response == JOptionPane.OK_OPTION) {
+                  return false;
+               } else if (response == JOptionPane.CANCEL_OPTION) {
+                  field.setText(lastGoodValue);
+                  return true;
+               }
+            }
+            return true;
+         }
+      };
+   }
+
+   public static void enforceValidTextField(final JTextField field, final StringValidator validator) {
+      field.setInputVerifier(textFieldInputVerifier(field, validator));
+   }
+
+   public static DefaultCellEditor validatingDefaultCellEditor(final StringValidator validator) {
+      final String lastValue[] = {""};
+      final JTextField field = new JTextField();
+      field.getDocument().addDocumentListener(new DocumentListener() {
+         public void insertUpdate(DocumentEvent e) {}
+         public void removeUpdate(DocumentEvent e) {}
+
+         public void changedUpdate(DocumentEvent e) {
+            lastValue[0] = field.getText();         }
+      });
+      final InputVerifier verifier = textFieldInputVerifier(field, validator);
+      DefaultCellEditor editor = new DefaultCellEditor(field) {
+         public boolean stopCellEditing() {
+            return verifier.shouldYieldFocus(field) && super.stopCellEditing();
+         }
+      };
+      return editor;
+   }
+
+   public static StringValidator integerStringValidator(final int minValue, final int maxValue) {
+      return new StringValidator() {
+         public void validate(String string) {
+            try {
+               int value = Integer.parseInt(string.trim());
+               if ((value < minValue) || (value > maxValue)) {
+                  throw new RuntimeException("Value should be between " + minValue + " and " + maxValue);
+               }
+            } catch (NumberFormatException e) {
+               throw new RuntimeException("Please enter an integer.");
             }
          }
-      });      
+      };
+   }
+   
+   public static StringValidator floatStringValidator(final double minValue, final double maxValue) {
+       return new StringValidator() {
+         public void validate(String string) {
+            try {
+               double value = Double.parseDouble(string);
+               if ((value < minValue) || (value > maxValue)) {
+                  throw new RuntimeException("Value should be between " + minValue + " and " + maxValue);
+               }
+            } catch (NumberFormatException e) {
+               throw new RuntimeException("Please enter a number.");
+            }
+         }
+       };
    }
    
    public static void enforceIntegerTextField(final JTextField field, final int minValue, final int maxValue) {
-      enforceValidTextField(field, new StringValidator() {
-         public boolean validate(String string) {
-            try {
-               int value = Integer.parseInt(string);
-               value = Math.min(value, maxValue);
-               value = Math.max(value, minValue);
-               field.setText(String.valueOf(value));
-               return true;
-            } catch (NumberFormatException e) {
-               return false;
-            }
-         }
-      });
+      enforceValidTextField(field, integerStringValidator(minValue, maxValue));
    }
    
    public static void enforceFloatFieldText(final JTextField field, final double minValue, final double maxValue) {
-      enforceValidTextField(field, new StringValidator() {
-         public boolean validate(String string) {
-            try {
-               double value = Double.parseDouble(string);
-               value = Math.min(value, maxValue);
-               value = Math.max(value, minValue);
-               field.setText(String.valueOf(value));
-               return true;
-            } catch (NumberFormatException e) {
-               return false;
-            }
-         }
-      });
+      enforceValidTextField(field, floatStringValidator(minValue, maxValue));
    }
+   
+   public static void enforceIntegerTextColumn(final JTable table, int columnInt, int minValue, int maxValue) {
+      table.getColumnModel().getColumn(columnInt)
+           .setCellEditor(validatingDefaultCellEditor(integerStringValidator(minValue, maxValue)));
+   }
+   
    
    public static String getStringValue(JComponent component) {
       if (component instanceof JTextComponent) {

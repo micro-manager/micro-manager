@@ -101,8 +101,9 @@ public class SLM implements ProjectionDevice {
       }
    }
 
-   public void setRois(Polygon[] roiPolygons) {
-      ByteProcessor processor = new ByteProcessor(slmWidth_, slmHeight_);
+   // Convert an array of polygonal ROIs to a single pixel image.
+   public static byte[] roisToPixels(int width, int height, Polygon[] roiPolygons) {
+      ByteProcessor processor = new ByteProcessor(width, height);
       processor.setColor(Color.black);
       processor.fill();
       processor.setColor(Color.white);
@@ -110,13 +111,17 @@ public class SLM implements ProjectionDevice {
          Roi roi = new PolygonRoi(roiPolygon, Roi.POLYGON);
          processor.fill(roi);
       }
+      return (byte[]) processor.getPixels();
+   }
+   
+   public void loadRois(Polygon[] roiPolygons) {
       try {
-         mmc_.setSLMImage(slm_, (byte[]) processor.getPixels());
+         mmc_.setSLMImage(slm_, roisToPixels(slmWidth_, slmHeight_, roiPolygons));
       } catch (Exception ex) {
          ReportingUtils.showError(ex);
       }
    }
-
+   
    public void displaySpot(double x, double y, double interval_us) {
       setDwellTime((long) interval_us);
       displaySpot(x, y);
