@@ -503,9 +503,10 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       } 
    } 
    
-   public void setCameraTriggerExternal(boolean external) {
+   // copy of same function in SpimParamsPanel
+   private void setCameraTriggerExternal(boolean external) {
       // set mode to external
-      // have to handle any device adapters, currently HamamatsuHam only
+      // have to handle any device adapters, currently HamamatsuHam and PCO only
       Devices.Libraries camLibraryA, camLibraryB;
       try {
          camLibraryA = devices_.getMMDeviceLibrary(Devices.Keys.CAMERAA);
@@ -515,6 +516,12 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
             } else {
                props_.setPropValue(Devices.Keys.CAMERAA, Properties.Keys.TRIGGER_SOURCE, Properties.Values.INTERNAL, true);
             }
+         } else if (camLibraryA == Devices.Libraries.PCOCAM) {
+            if (external) {
+               props_.setPropValue(Devices.Keys.CAMERAA, Properties.Keys.TRIGGER_MODE, Properties.Values.EXTERNAL_LC, true);
+            } else {
+               props_.setPropValue(Devices.Keys.CAMERAA, Properties.Keys.TRIGGER_MODE, Properties.Values.INTERNAL_LC, true);
+            }
          }
          camLibraryB = devices_.getMMDeviceLibrary(Devices.Keys.CAMERAB);
          if (camLibraryB == Devices.Libraries.HAMCAM) {
@@ -522,6 +529,12 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
                props_.setPropValue(Devices.Keys.CAMERAB, Properties.Keys.TRIGGER_SOURCE, Properties.Values.EXTERNAL, true);
             } else {
                props_.setPropValue(Devices.Keys.CAMERAB, Properties.Keys.TRIGGER_SOURCE, Properties.Values.INTERNAL, true);
+            }
+         } else if (camLibraryB == Devices.Libraries.PCOCAM) {
+            if (external) {
+               props_.setPropValue(Devices.Keys.CAMERAB, Properties.Keys.TRIGGER_MODE, Properties.Values.EXTERNAL_LC, true);
+            } else {
+               props_.setPropValue(Devices.Keys.CAMERAB, Properties.Keys.TRIGGER_MODE, Properties.Values.INTERNAL_LC, true);
             }
          }
       } catch (Exception e) {

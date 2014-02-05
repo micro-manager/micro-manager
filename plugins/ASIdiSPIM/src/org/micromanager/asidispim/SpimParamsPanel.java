@@ -123,9 +123,8 @@ public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerI
             public void actionPerformed(ActionEvent e) {
                try {
                   // make sure camera is set to external mode
-                  // TODO make this cleaner, probably by factoring out camera into own class
-                  props_.setPropValue(Devices.Keys.CAMERAA, Properties.Keys.TRIGGER_SOURCE, Properties.Values.EXTERNAL, true);
-                  props_.setPropValue(Devices.Keys.CAMERAB, Properties.Keys.TRIGGER_SOURCE, Properties.Values.EXTERNAL, true);
+                  // TODO factor out camera into own class and call that
+                  setCameraTriggerExternal(true);
                   // trigger cameras after getting acquisition engine configured
                   acqEngine_.enableFramesSetting(true);
                   acqEngine_.setFrames(
@@ -187,6 +186,46 @@ public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerI
    @Override
    public void devicesChangedAlert() {
       devices_.callListeners();
+   }
+   
+   // TODO need to factor out camera-handling code into own file instead of splitting between SetupPanel and here 
+   // copy of same function in SetupPanel
+   private void setCameraTriggerExternal(boolean external) {
+      // set mode to external
+      // have to handle any device adapters, currently HamamatsuHam and PCO only
+      Devices.Libraries camLibraryA, camLibraryB;
+      try {
+         camLibraryA = devices_.getMMDeviceLibrary(Devices.Keys.CAMERAA);
+         if (camLibraryA == Devices.Libraries.HAMCAM) {
+            if (external) {
+               props_.setPropValue(Devices.Keys.CAMERAA, Properties.Keys.TRIGGER_SOURCE, Properties.Values.EXTERNAL, true);
+            } else {
+               props_.setPropValue(Devices.Keys.CAMERAA, Properties.Keys.TRIGGER_SOURCE, Properties.Values.INTERNAL, true);
+            }
+         } else if (camLibraryA == Devices.Libraries.PCOCAM) {
+            if (external) {
+               props_.setPropValue(Devices.Keys.CAMERAA, Properties.Keys.TRIGGER_MODE, Properties.Values.EXTERNAL_LC, true);
+            } else {
+               props_.setPropValue(Devices.Keys.CAMERAA, Properties.Keys.TRIGGER_MODE, Properties.Values.INTERNAL_LC, true);
+            }
+         }
+         camLibraryB = devices_.getMMDeviceLibrary(Devices.Keys.CAMERAB);
+         if (camLibraryB == Devices.Libraries.HAMCAM) {
+            if (external) {
+               props_.setPropValue(Devices.Keys.CAMERAB, Properties.Keys.TRIGGER_SOURCE, Properties.Values.EXTERNAL, true);
+            } else {
+               props_.setPropValue(Devices.Keys.CAMERAB, Properties.Keys.TRIGGER_SOURCE, Properties.Values.INTERNAL, true);
+            }
+         } else if (camLibraryB == Devices.Libraries.PCOCAM) {
+            if (external) {
+               props_.setPropValue(Devices.Keys.CAMERAB, Properties.Keys.TRIGGER_MODE, Properties.Values.EXTERNAL_LC, true);
+            } else {
+               props_.setPropValue(Devices.Keys.CAMERAB, Properties.Keys.TRIGGER_MODE, Properties.Values.INTERNAL_LC, true);
+            }
+         }
+      } catch (Exception e) {
+         ReportingUtils.showError(e);
+      }
    }
 
 

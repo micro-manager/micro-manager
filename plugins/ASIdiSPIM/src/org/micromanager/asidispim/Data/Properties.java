@@ -86,7 +86,8 @@ public class Properties {
       MIN_DEFLECTION_X("MinDeflectionX(deg)"),
       BEAM_ENABLED("BeamEnabled"),
       SAVE_CARD_SETTINGS("SaveCardSettings"),
-      TRIGGER_SOURCE("TRIGGER SOURCE"),
+      TRIGGER_SOURCE("TRIGGER SOURCE"), // for Hamamatsu
+      TRIGGER_MODE("Triggermode"),      // for PCO
       FIRMWARE_VERSION("FirmwareVersion"),
       ;
       private final String text;
@@ -118,6 +119,8 @@ public class Properties {
       DO_SSZ("Z - save settings to card (partial)"),
       INTERNAL("INTERNAL"),
       EXTERNAL("EXTERNAL"),
+      INTERNAL_LC("Internal"),
+      EXTERNAL_LC("External"),
       ;
       private final String text;
       Values(String text) {

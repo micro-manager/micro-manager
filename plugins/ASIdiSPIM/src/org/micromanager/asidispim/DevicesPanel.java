@@ -188,12 +188,14 @@ public class DevicesPanel extends ListeningJPanel {
          case HAMCAM:
             if (! devices_.hasProperty(key, Properties.Keys.TRIGGER_SOURCE) ) {
                ReportingUtils.showError("Device " + devices_.getMMDevice(key) + 
-                     ": Hamamatsu device adapter doesn't have external trigger setting");
+                     ": Hamamatsu device adapter doesn't have external trigger property");
             }
             break;
          case PCOCAM:
-            ReportingUtils.showError("Device " + devices_.getMMDevice(key) +
-                  ": PCO support coming soon");
+            if (! devices_.hasProperty(key, Properties.Keys.TRIGGER_MODE) ) {
+               ReportingUtils.showError("Device " + devices_.getMMDevice(key) + 
+                     ": PCO device adapter doesn't have external trigger property");
+            }
             break;
          default:
             ReportingUtils.showError("Plugin doesn't support your camera for SPIM yet;"
