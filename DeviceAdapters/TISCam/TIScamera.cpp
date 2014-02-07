@@ -1664,7 +1664,7 @@ int CTIScamera::OnDeNoise(MM::PropertyBase* pProp, MM::ActionType eAct)
 			if (bWasLive)
 			{
 				Sleep(200);
-				pGrabber->startLive();
+				pGrabber->startLive(ACTIVEMOVIE);
 			}
 		}
 	}
