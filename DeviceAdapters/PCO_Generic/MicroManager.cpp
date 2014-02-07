@@ -64,7 +64,8 @@ int g_iPFCount = 0;
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-  AddAvailableDeviceName(g_CameraDeviceName, "PCO generic camera adapter");
+  //AddAvailableDeviceName(g_CameraDeviceName, "PCO generic camera adapter");
+  RegisterDevice(g_CameraDeviceName, MM::CameraDevice, "PCO generic camera adapter");
 }
 
 MODULE_API void DeleteDevice(MM::Device* pDevice)
@@ -205,12 +206,16 @@ int CPCOCam::OnCCDType(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 int CPCOCam::OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
+  int tb[3] = {1000000, 1000, 1};
   if (eAct == MM::BeforeGet)
   {
-    int tb[3] = {1000000, 1000, 1};
     if(m_pCamera->iCamClass == 3)
     {
+      if(m_pCamera->strCam.strTiming.wTimingControlMode == 0)// pco.camera
       m_dExposure = m_pCamera->strCam.strTiming.dwExposureTable[0] / tb[m_pCamera->strCam.strTiming.wTimeBaseExposure];
+      else
+        m_dExposure = m_pCamera->strCam.strTiming.dwFrameRateExposure / tb[0];
+
       if(m_dExposure <= 0.0)
         m_dExposure = 1.0;
     }
@@ -225,20 +230,20 @@ int CPCOCam::OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct)
     {
       m_dExposure = dhelp;
       if(m_pCamera->iCamClass == 2)
-        sprintf(m_pszTimes, "%f", m_dExposure / 1000.0);
+        sprintf_s(m_pszTimes, sizeof(m_pszTimes), "%f", m_dExposure / 1000.0);
       else
-        sprintf(m_pszTimes, "0,%d,-1,-1", (int)m_dExposure);
+        sprintf_s(m_pszTimes, sizeof(m_pszTimes), "0,%d,-1,-1", (int)m_dExposure);
       if(m_pCamera->iCamClass == 3)
       {
         if(m_pCamera->strCam.strTiming.wTimingControlMode == 0)// pco.camera
         {
         m_pCamera->strCam.strTiming.wTimeBaseExposure = 2;
-          m_pCamera->strCam.strTiming.dwExposureTable[0] = m_dExposure;
+          m_pCamera->strCam.strTiming.dwExposureTable[0] = (DWORD)m_dExposure;
           m_pCamera->strCam.strTiming.dwDelayTable[0] = 0;
         }
         else
         {
-          m_pCamera->strCam.strTiming.dwFrameRateExposure = m_dExposure;
+          m_pCamera->strCam.strTiming.dwFrameRateExposure = (DWORD)(m_dExposure * tb[0]);
           m_pCamera->strCam.strTiming.dwFrameRate = (DWORD)(m_dFps * 1000.0);
         }
       }
@@ -364,7 +369,7 @@ int CPCOCam::OnFpsMode(MM::PropertyBase* pProp, MM::ActionType eAct)
       m_iFpsMode = ihelp;
       if(m_iFpsMode == 1)
       {
-        sprintf(m_pszTimes, "%ffps,%f,-1,-1", m_dFps, m_dExposure);
+        sprintf_s(m_pszTimes, sizeof(m_pszTimes), "%ffps,%f,-1,-1", m_dFps, m_dExposure);
         if(m_pCamera->iCamClass == 3)// pco.camera
         {
           m_pCamera->strCam.strTiming.wTimingControlMode = 1;
@@ -372,7 +377,7 @@ int CPCOCam::OnFpsMode(MM::PropertyBase* pProp, MM::ActionType eAct)
       }
       else
       {
-        sprintf(m_pszTimes, "0,%d,-1,-1", (int)m_dExposure);
+        sprintf_s(m_pszTimes, sizeof(m_pszTimes), "0,%d,-1,-1", (int)m_dExposure);
         if(m_pCamera->iCamClass == 3)// pco.camera
         {
           m_pCamera->strCam.strTiming.wTimingControlMode = 0;
@@ -410,9 +415,9 @@ int CPCOCam::OnNoiseFilterMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 
     if(ihelp != m_iNoiseFilterMode)
     {
+      m_iNoiseFilterMode = ihelp;
       if(m_pCamera->iCamClass == 3)// pco.camera
         m_pCamera->strCam.strSensor.wNoiseFilterMode = (WORD)m_iNoiseFilterMode;
-      m_iNoiseFilterMode = ihelp;
       if(m_iNoiseFilterMode == 0)
         m_nMode &= 0xFFFFFF7F;
       else
@@ -532,20 +537,20 @@ int CPCOCam::OnFps(MM::PropertyBase* pProp, MM::ActionType eAct)
       m_dFps = dhelp;
       if(m_iFpsMode == 1)
       {
-        sprintf(m_pszTimes, "%ffps,%f,-1,-1", m_dFps, m_dExposure);
+        sprintf_s(m_pszTimes, sizeof(m_pszTimes), "%ffps,%f,-1,-1", m_dFps, m_dExposure);
         if(m_pCamera->iCamClass == 3)// pco.camera
         {
-          m_pCamera->strCam.strTiming.dwFrameRateExposure = m_dExposure;
+          m_pCamera->strCam.strTiming.dwFrameRateExposure = (DWORD)m_dExposure * 1000000;
           m_pCamera->strCam.strTiming.dwFrameRate = (DWORD)(m_dFps * 1000.0);
         }
       }
       else
       {
-        sprintf(m_pszTimes, "0,%d,-1,-1", (int)m_dExposure);
+        sprintf_s(m_pszTimes, sizeof(m_pszTimes), "0,%d,-1,-1", (int)m_dExposure);
         if(m_pCamera->iCamClass == 3)// pco.camera
         {
           m_pCamera->strCam.strTiming.wTimeBaseExposure = 2;
-          m_pCamera->strCam.strTiming.dwExposureTable[0] = m_dExposure;
+          m_pCamera->strCam.strTiming.dwExposureTable[0] = (DWORD)m_dExposure;
           m_pCamera->strCam.strTiming.dwDelayTable[0] = 0;
         }
       }
@@ -662,6 +667,10 @@ int CPCOCam::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
           {
             m_nRoiXMax = roiXMaxFull_ / m_nHBin;
             m_nRoiYMax = roiYMaxFull_ / m_nVBin;
+        m_pCamera->strCam.strSensor.wRoiX0 = (WORD)m_nRoiXMin;
+        m_pCamera->strCam.strSensor.wRoiY0 = (WORD)m_nRoiYMin;
+        m_pCamera->strCam.strSensor.wRoiX1 = (WORD)m_nRoiXMax;
+        m_pCamera->strCam.strSensor.wRoiY1 = (WORD)m_nRoiYMax;
             m_pCamera->strCam.strSensor.wBinHorz = (WORD)m_nHBin;
             m_pCamera->strCam.strSensor.wBinVert = (WORD)m_nVBin;
           }
@@ -891,7 +900,7 @@ int CPCOCam::OnEMGain(MM::PropertyBase* pProp, MM::ActionType eAct)
     if(ihelp != m_iEMGain)
     {
       m_iEMGain = ihelp;
-      sprintf(m_pszTimes, "0,%d,-1,-1\r\nmg%d", (int)m_dExposure, m_iEMGain);
+      sprintf_s(m_pszTimes, sizeof(m_pszTimes), "0,%d,-1,-1\r\nmg%d", (int)m_dExposure, m_iEMGain);
       nErr = SetupCamera();
     }
 
@@ -1052,22 +1061,30 @@ int CPCOCam::Initialize()
 
   if(m_pCamera->iCamClass == 3)
   {
+    int tb[3] = {1000000, 1000, 1};
+
     m_pCamera->strCam.wSize = sizeof(PCO_Camera);
     m_pCamera->GetCameraStruct((PCO_Camera*)&m_pCamera->strCam.wSize);
     //m_nHBin = m_nVBin = 1;
     //m_nMode = 0;//M_LONG;
     m_nSubMode = 0;//NORMALLONG;
     //m_nTrig = 0;
-    snprintf(m_pszTimes, m_nTimesLen, "0,%.0f,-1,-1", m_dExposure);
+    sprintf_s(m_pszTimes, sizeof(m_pszTimes), "0,%.0f,-1,-1", m_dExposure);
     m_iDoubleShutterMode = m_pCamera->strCam.strSensor.wDoubleImage;
     m_iIRMode            = m_pCamera->strCam.strSensor.wIR;
     m_iFpsMode           = m_pCamera->strCam.strTiming.wTimingControlMode;
     if(m_iFpsMode == 1)
-      m_dExposure = m_pCamera->strCam.strTiming.dwFrameRateExposure;
+      m_dExposure = m_pCamera->strCam.strTiming.dwFrameRateExposure / tb[0];
     else
-      m_dExposure = m_pCamera->strCam.strTiming.dwExposureTable[0];
+      m_dExposure = m_pCamera->strCam.strTiming.dwExposureTable[0] / tb[m_pCamera->strCam.strTiming.wTimeBaseExposure];
     m_dFps = m_pCamera->strCam.strTiming.dwFrameRate;
-    m_dFps /= 100;
+    m_dFps /= 1000.0;
+    m_nVBin = m_pCamera->strCam.strSensor.wBinVert;
+    m_pCamera->strCam.strSensor.wBinHorz = m_pCamera->strCam.strSensor.wBinVert;
+    m_nRoiXMin = m_pCamera->strCam.strSensor.wRoiX0;
+    m_nRoiYMin = m_pCamera->strCam.strSensor.wRoiY0;
+    m_nRoiXMax = m_pCamera->strCam.strSensor.wRoiX1;
+    m_nRoiYMax = m_pCamera->strCam.strSensor.wRoiY1;
   }
   if(m_pCamera->iCamClass == 2)
   {
@@ -1075,7 +1092,7 @@ int CPCOCam::Initialize()
     m_nMode = 0x20000;//M_LONG;
     m_nSubMode = 0;//NORMALLONG;
     m_nTrig = 1;
-    sprintf(m_pszTimes, "%f", m_dExposure / 1000.0);
+    sprintf_s(m_pszTimes, sizeof(m_pszTimes), "%f", m_dExposure / 1000.0);
   }
   if(m_pCamera->iCamClass == 1)
   {
@@ -1089,7 +1106,7 @@ int CPCOCam::Initialize()
         m_nTrig = 0;
         //1ms exposure time
         m_dExposure = 1;
-        snprintf(m_pszTimes, m_nTimesLen, "0,%.0f,-1,-1", m_dExposure * 1.0e06);
+        sprintf_s(m_pszTimes, sizeof(m_pszTimes), "0,%.0f,-1,-1", m_dExposure * 1.0e06);
       break;
 
       case 2:
@@ -1102,9 +1119,9 @@ int CPCOCam::Initialize()
         //10ms exposure time
 
         if(m_nCCDType == 0x21)
-          snprintf(m_pszTimes, m_nTimesLen, "0,%.0f,-1,-1\r\nmg%d", m_dExposure, m_iEMGain);
+          sprintf_s(m_pszTimes, sizeof(m_pszTimes), "0,%.0f,-1,-1\r\nmg%d", m_dExposure, m_iEMGain);
         else
-          snprintf(m_pszTimes, m_nTimesLen, "0,%.0f,-1,-1", m_dExposure);
+          sprintf_s(m_pszTimes, sizeof(m_pszTimes), "0,%.0f,-1,-1", m_dExposure);
       break;
 
       case 3:
@@ -1113,7 +1130,7 @@ int CPCOCam::Initialize()
         m_nSubMode = 0;//NORMALLONG;
         m_nTrig = 0;
         //10ms exposure time
-        snprintf(m_pszTimes, m_nTimesLen, "0,%.0f,-1,-1", m_dExposure);
+        sprintf_s(m_pszTimes, sizeof(m_pszTimes), "0,%.0f,-1,-1", m_dExposure);
       break;
 
       case 8://FASTEXPQE
@@ -1122,7 +1139,7 @@ int CPCOCam::Initialize()
         m_iGainCam = 0;
         m_nTrig = 0;
         //10ms exposure time
-        snprintf(m_pszTimes, m_nTimesLen, "0,%.0f,-1,-1", m_dExposure);
+        sprintf_s(m_pszTimes, sizeof(m_pszTimes), "0,%.0f,-1,-1", m_dExposure);
       break;
 
       default:
@@ -2011,8 +2028,8 @@ void CPCOCam::WriteLog(char* message, int nErr)
   char szmes[300];
 
   if(nErr != 0)
-    sprintf(szmes, "Error %x! %s", nErr, message);
+    sprintf_s(szmes, sizeof(szmes), "Error %x! %s", nErr, message);
   else
-    sprintf(szmes, "%s", message);
+    sprintf_s(szmes, sizeof(szmes), "%s", message);
   LogMessage(szmes);
 }
