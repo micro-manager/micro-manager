@@ -115,7 +115,7 @@ public class Hub {
 
       AffineTransform transform = null;
       try {
-         transform = (AffineTransform) JavaUtils.getObjectFromPrefs(prefs, "affine_transform_" + core.getCurrentPixelSizeConfig(), null);
+         transform = JavaUtils.getObjectFromPrefs(prefs, "affine_transform_" + core.getCurrentPixelSizeConfig(), (AffineTransform) null);
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
       }

@@ -60,7 +60,7 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
    private final int mosaicHeight_;
    private final ProjectorController projectorController_;
    private final DefaultTableModel sequenceTableModel_;
-   private final Vector<String> headerNames = new Vector(Arrays.asList(         
+   private final Vector<String> headerNames = new Vector<String>(Arrays.asList(         
                            new String[] {"Time Slot", "Roi Indices", "On Duration (ms)",
                               "Off Duration (ms)", "Loop count"}));
    
@@ -349,7 +349,7 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
    // Run the Mosaic Sequence. Called by Run button.
    private void runSequence() {
       try {
-         final String selectedItem = ((JComboBox) sequenceTriggerComboBox).getSelectedItem().toString();
+         final String selectedItem = sequenceTriggerComboBox.getSelectedItem().toString();
          core_.setProperty(mosaic_, "SequenceLoopCount", GUIUtils.getIntValue(sequenceLoopCountTextField_));
          core_.setProperty(mosaic_, "TriggerMode", triggerProperties_.get(selectedItem));
          core_.setProperty(mosaic_, "OperationMode", "FrameSequence");
@@ -400,7 +400,7 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
             Roi roi = new PolygonRoi(poly, Roi.POLYGON);
             rois.add(roi);
          }
-         return (Roi[]) rois.toArray(new Roi[0]);
+         return rois.toArray(new Roi[0]);
       } catch (JSONException ex) {
          ReportingUtils.logError(ex);
          return new Roi[0];
@@ -447,7 +447,7 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
          for (int row = 0; row < tableData.length(); ++row) {
             JSONObject rowData = tableData.getJSONObject(row);
             int col = 0;
-            Vector newRow = new Vector();
+            Vector<String> newRow = new Vector<String>();
             for (String headerName : headerNames) {
                String value = rowData.getString(headerName);
                newRow.add(value);

@@ -303,7 +303,7 @@ public class ProjectorController {
       String nodeStr = getCalibrationNode().toString();
       if (mappingNode_ == null || !nodeStr.contentEquals(mappingNode_)) {
          mappingNode_ = nodeStr;
-         mapping_ = (HashMap<Polygon, AffineTransform>) JavaUtils.getObjectFromPrefs(getCalibrationNode(), dev.getName(), new HashMap<Polygon, AffineTransform>());
+         mapping_ = JavaUtils.getObjectFromPrefs(getCalibrationNode(), dev.getName(), new HashMap<Polygon, AffineTransform>());
       }
       return (HashMap<Polygon, AffineTransform>) mapping_;
    }
