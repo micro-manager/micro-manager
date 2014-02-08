@@ -160,7 +160,7 @@ public class GUIUtils {
     
    public static void recallPosition(final Window win) {
       Preferences prefs = Preferences.userNodeForPackage(win.getClass());
-      Point dialogPosition = (Point) JavaUtils.getObjectFromPrefs(prefs, DIALOG_POSITION, null);
+      Point dialogPosition = JavaUtils.getObjectFromPrefs(prefs, DIALOG_POSITION, (Point) null);
       if (dialogPosition == null || !isLocationInScreenBounds(dialogPosition)) {
          Dimension screenDims = JavaUtils.getScreenDimensions();
          dialogPosition = new Point((screenDims.width - win.getWidth()) / 2, (screenDims.height - win.getHeight()) / 2);

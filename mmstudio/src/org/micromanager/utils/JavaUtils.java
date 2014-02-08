@@ -271,7 +271,7 @@ public class JavaUtils {
    /**
     * Retrieves an object from Preferences (deserialized).
     */
-    public static Object getObjectFromPrefs(Preferences prefs, String key, Object def) {
+    public static <T> T getObjectFromPrefs(Preferences prefs, String key, T def) {
         ArrayList<byte[]> chunks = new ArrayList<byte[]>();
         byte[] serialBytes = new byte[0];
         int totalLength = 0;
@@ -297,7 +297,7 @@ public class JavaUtils {
         ByteArrayInputStream byteStream = new ByteArrayInputStream(serialBytes);
         try {
             ObjectInputStream objectStream = new ObjectInputStream(byteStream);
-            return objectStream.readObject();
+            return (T) objectStream.readObject();
         } catch (Exception e) {
             ReportingUtils.logError(e, "Failed to get object from preferences.");
             return def;
