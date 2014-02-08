@@ -15,7 +15,7 @@
 //
 // YEAR:          2012 - 2014
 //                
-// VERSION:       1.1.1
+// VERSION:       1.2
 //
 // LICENSE:       This file is distributed under the BSD license.
 //                License text is included with the source distribution.
@@ -28,7 +28,7 @@
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-//LAST UPDATE:    23.01.2014 WR
+//LAST UPDATE:    08.02.2014 WR
 
 
 
@@ -44,9 +44,11 @@
 
 
 
+
 //definitions
-#define DRV_VERSION "1.1.1"                       //version of this driver
-#define ACQ_TIMEOUT 1100                             //timeout for image acquisition (in 10ms)
+#define DRV_VERSION "1.2"                       //version of this device adapter
+#define ACQ_TIMEOUT 1100                        //timeout for image acquisition (in 10ms) 
+
 
 
 
@@ -58,19 +60,20 @@ double g_IntensityFactor_ = 1.0;
 // to load particular device from the "IDS_uEye.dll" library
 const char* g_CameraDeviceName = "IDS uEye";
 
-/*
+
 // constants for naming pixel types (allowed values of the "PixelType" property)
-const char* g_PixelType_8bit = "8bit";
-const char* g_PixelType_16bit = "16bit";
-const char* g_PixelType_32bitRGB = "32bitRGB";
-const char* g_PixelType_64bitRGB = "64bitRGB";
-const char* g_PixelType_32bit = "32bit";        // floating point greyscale
-*/
+const char* g_PixelType_8bit =          "8bit mono";
+const char* g_PixelType_10bit =         "10bit mono";
+const char* g_PixelType_12bit =         "12bit mono";
+const char* g_PixelType_16bit =         "16bit mono";
+const char* g_PixelType_8bitRGB =       "8bit RGB";
+const char* g_PixelType_8bitBGR =       "8bit BGR";
+const char* g_PixelType_8bitRGBA =      "8bit RGBA";
+const char* g_PixelType_8bitBGRA =      "8bit BGRA";    //directly corresponds to MM image buffer with 4 components
+const char* g_PixelType_32bit =         "32bit";        // floating point greyscale
 
 
-
-
-
+   
 
 
 
@@ -240,9 +243,7 @@ int CIDS_uEye::Initialize()
 
    }
 
-   //initialize sensor data from header
-   initializeSensorData(); 
-
+   
    //get sensor info
    SENSORINFO sensorInfo;
    nReturn=is_GetSensorInfo (hCam, &sensorInfo);
@@ -251,22 +252,31 @@ int CIDS_uEye::Initialize()
    }
    if(nReturn == IS_SUCCESS){
 
-     //print sensor info
+     //analyze and print sensor info
      printf("sensor properties:\n");
      printf("sensor ID: %x\n",sensorInfo.SensorID);
      printf("sensor name: %s\n",sensorInfo.strSensorName);
-     printf("width x height %d x %d \n", sensorInfo.nMaxWidth, sensorInfo.nMaxHeight);
-     printf("pixel pitch %.3f um \n", sensorInfo.wPixelSize*0.01);
+     printf("width x height: %d x %d \n", sensorInfo.nMaxWidth, sensorInfo.nMaxHeight);
+     printf("pixel pitch: %.3f um \n", sensorInfo.wPixelSize*0.01);
+     switch(sensorInfo.nColorMode){
+     case(IS_COLORMODE_MONOCHROME):
+       printf("color mode: monochrome\n"); break;
+     case(IS_COLORMODE_BAYER):
+       printf("color mode: bayer\n"); break;
+     case(IS_COLORMODE_CBYCRY):
+       printf("color mode: CbYCrY\n"); break;  
+     }
+     /*
+      switch(sensorInfo.nUpperLeftBayerPixel){
+     case(0):
+       printf("upper left bayer pixel: red\n"); break;
+     case(1):
+       printf("upper left bayer pixel: green\n"); break;
+     case(2):
+       printf("upper left bayer pixel: blue\n"); break;        
+       }
+     */
 
-     //determine pixel properties based on sensorID
-     if(setSensorPixelParameters(sensorInfo.SensorID)== IS_SUCCESS){
-       bitDepth_=bitDepthReal_;
-       printf("ADC bpp: %d, real bpp: %d\n",
-              bitDepthADC_, bitDepthReal_);
-     }
-     else{
-       printf("SensorID not in database\n");
-     }
 
      cameraCCDXSize_=sensorInfo.nMaxWidth;
      cameraCCDYSize_=sensorInfo.nMaxHeight;
@@ -282,7 +292,7 @@ int CIDS_uEye::Initialize()
    roiY_=0;
    roiXSize_=cameraCCDXSize_;
    roiYSize_=cameraCCDYSize_;
-   
+
 
    //get pixel clock range
    GetPixelClockRange(hCam, &pixelClkMin_, &pixelClkMax_);
@@ -298,6 +308,7 @@ int CIDS_uEye::Initialize()
    GetExposureRange(hCam, &exposureMin_, &exposureMax_, &exposureIncrement_);
    if(exposureMax_>EXPOSURE_MAX) exposureMax_=EXPOSURE_MAX;                            //limit exposure time to keep the interface responsive
    printf("Exposure (%.3f, %.3f) ms, increment %.4f ms\n", exposureMin_, exposureMax_, exposureIncrement_);
+
 
 
    //get initial gain
@@ -364,24 +375,64 @@ int CIDS_uEye::Initialize()
    binY_=1;
 
 
-   /*   the pixel type is defined by the real bit depth, no user interaction
-        FIXME: allow user selection of bit depth if several are available?
+   
    // pixel type
    pAct = new CPropertyAction (this, &CIDS_uEye::OnPixelType);
    nRet = CreateProperty(MM::g_Keyword_PixelType, g_PixelType_8bit, MM::String, false, pAct);
    assert(nRet == DEVICE_OK);
 
+   //test for available color modes, determine the real, i.e., maximal bit depth
    vector<string> pixelTypeValues;
-   pixelTypeValues.push_back(g_PixelType_8bit);
-   pixelTypeValues.push_back(g_PixelType_16bit); 
-   pixelTypeValues.push_back(g_PixelType_32bitRGB);
-   pixelTypeValues.push_back(g_PixelType_64bitRGB);
-   //pixelTypeValues.push_back(::g_PixelType_32bit);
 
+   nComponents_=1;
+   bitDepthReal_=8;
+   if(is_SetColorMode(hCam, IS_CM_MONO8)==IS_SUCCESS){
+     pixelTypeValues.push_back(g_PixelType_8bit);
+   }
+   if(is_SetColorMode(hCam, IS_CM_MONO10)==IS_SUCCESS){
+     bitDepthReal_=10;
+     pixelTypeValues.push_back(g_PixelType_10bit);
+   }
+   if(is_SetColorMode(hCam, IS_CM_MONO12)==IS_SUCCESS){
+     bitDepthReal_=12;
+     pixelTypeValues.push_back(g_PixelType_12bit);
+   }
+   if(is_SetColorMode(hCam, IS_CM_MONO16)==IS_SUCCESS){
+     bitDepthReal_=16;
+     pixelTypeValues.push_back(g_PixelType_16bit);
+   }
+   bitDepth_=bitDepthReal_;                             //initial bit depth=maximal bit depth for monochrome
+
+   if(sensorInfo.nColorMode==IS_COLORMODE_BAYER){
+     nComponents_=4;
+     bitDepth_=8;                                       //initial bit depth=8bit for color FIXME: support higher bit depths for color 
+     //if(is_SetColorMode(hCam, IS_CM_RGB8_PACKED)==IS_SUCCESS){
+     //  pixelTypeValues.push_back(g_PixelType_8bitRGB);
+     //}
+     //if(is_SetColorMode(hCam, IS_CM_BGR8_PACKED)==IS_SUCCESS){        //RGB8/BGR8_PACKED require a different transfer method
+     //  pixelTypeValues.push_back(g_PixelType_8bitBGR);
+     //}
+     if(is_SetColorMode(hCam, IS_CM_RGBA8_PACKED)==IS_SUCCESS){
+       pixelTypeValues.push_back(g_PixelType_8bitRGBA);
+     }
+     if(is_SetColorMode(hCam, IS_CM_BGRA8_PACKED)==IS_SUCCESS){
+       pixelTypeValues.push_back(g_PixelType_8bitBGRA);
+     }
+   }
+
+
+   //get the last color mode which was successfuly set, this will be used as the default
+   colorModeDef_=is_SetColorMode(hCam, IS_GET_COLOR_MODE);
+
+   //set color mode to default
+   //NOTE: after unsuccessful probing a valid mode needs to be set, otherwise acquisition may be disturbed
+   is_SetColorMode(hCam, colorModeDef_);
+   printf("IDS_uEye: color mode %s\n", colorModeToString(is_SetColorMode(hCam, IS_GET_COLOR_MODE)).c_str());
+   
    nRet = SetAllowedValues(MM::g_Keyword_PixelType, pixelTypeValues);
    if (nRet != DEVICE_OK)
       return nRet;
-   */
+
 
    // bit depth
    nRet = CreateProperty("BitDepth",CDeviceUtils::ConvertToString((int)GetBitDepth()) , MM::Integer, true);
@@ -401,7 +452,7 @@ int CIDS_uEye::Initialize()
    assert(nRet == DEVICE_OK);
    SetPropertyLimits("Frame Rate", framerateMin_, framerateMax_);
 
-   
+
    // exposure
    pAct = new CPropertyAction (this, &CIDS_uEye::OnExposure);
    nRet = CreateProperty(MM::g_Keyword_Exposure,CDeviceUtils::ConvertToString(exposureMin_) , MM::Float, false, pAct);
@@ -461,28 +512,6 @@ int CIDS_uEye::Initialize()
 
 
 
-
-
-   //set color mode of the image data from the camera
-   switch(bitDepthReal_){
-   case(8): default:
-     printf("Setting color mode to CM_MONO8: ");
-     nReturn = is_SetColorMode(hCam, IS_CM_MONO8);
-     break;
-
-   case(12):
-     printf("Setting color mode to CM_MONO12: ");
-     nReturn = is_SetColorMode(hCam, IS_CM_MONO12);
-     break;
-
-   }
-   if (nReturn != IS_SUCCESS){
-     printf("could not set color mode, error %d\n", nReturn);
-   }
-   printf("color mode: %d\n", is_SetColorMode(hCam, IS_GET_COLOR_MODE));
-
-
-
    // set up image buffer
    nRet = ResizeImageBuffer();
    if (nRet != DEVICE_OK)
@@ -491,8 +520,6 @@ int CIDS_uEye::Initialize()
 
    //clear image buffer
    ClearImageBuffer(img_);
-
-   printf("MM-Image buffer size: %ld byte\n", GetImageBufferSize());
 
    
 
@@ -518,7 +545,7 @@ int CIDS_uEye::Initialize()
      pixelClkCur_=pixelClkDef_;
      SetPixelClock(pixelClkCur_);
    }
-   else{                                        //could not obtain default pixel cloc, guess one
+   else{                                        //could not obtain default pixel clock, guess one
      if(bitDepthReal_>8){
      pixelClkDef_=pixelClkMin_+(pixelClkMax_-pixelClkMin_)/4;
      }
@@ -541,17 +568,17 @@ int CIDS_uEye::Initialize()
 
 
    //set the trigger mode
-   printf("setting trigger to software\n");
+   printf("IDS_uEye: setting trigger to software\n");
    nReturn = is_SetExternalTrigger (hCam, IS_SET_TRIGGER_SOFTWARE);
    if (nReturn != IS_SUCCESS){                          //could not set software trigger
-     printf("could not set software trigger\n");
+     printf("IDS_uEye: could not set software trigger\n");
    }
 
    
    //set timeout for image acquisition
    nReturn = is_SetTimeout (hCam, IS_TRIGGER_TIMEOUT, ACQ_TIMEOUT);
    if (nReturn != IS_SUCCESS){                          //could not set time out
-     printf("Could not set acquisition time out\n");
+     printf("IDS_uEye: could not set acquisition time out\n");
    }
  
 
@@ -617,7 +644,7 @@ int CIDS_uEye::SnapImage()
   
 
   /*
-  //copy image into the buffer (not needed if the buffer is assigned directly vie SetAllocatedImageMem
+  //copy image into the buffer (not needed if the buffer is assigned directly via SetAllocatedImageMem)
 
   //copy image to the buffer using built-in function    //FIXME: (seems not to work for 12 bit with SDK 4.0 on linux)
   //nReturn=is_CopyImageMem(hCam, pcImgMem, memPid, (char*)img_.GetPixelsRW());          
@@ -898,6 +925,9 @@ int CIDS_uEye::ClearROI()
     roiXSize_=rectAOI.s32Width;
     roiYSize_=rectAOI.s32Height;   
     
+
+    //resize the image buffer
+    img_.Resize(roiXSize_, roiYSize_);
     
     //free previous image memory
     is_FreeImageMem (hCam, pcImgMem,  memPid);
@@ -905,9 +935,6 @@ int CIDS_uEye::ClearROI()
     //allocate image memory for the new size
     SetImageMemory();
       
-
-    //resize the image buffer
-    img_.Resize(roiXSize_, roiYSize_);
 
     
 
@@ -1013,14 +1040,14 @@ double CIDS_uEye::GetExposure() const
 */
 void CIDS_uEye::SetExposure(double exp)
 {
-  exposureSet_=exp;
-  //is_SetExposureTime (hCam, exposureSet_, &exposureCur_);            //deprecated since v. 4.0
-  is_Exposure(hCam, IS_EXPOSURE_CMD_SET_EXPOSURE, &exposureSet_, sizeof(exposureSet_));
-  is_Exposure(hCam, IS_EXPOSURE_CMD_GET_EXPOSURE, &exposureCur_, sizeof(exposureCur_));
-  
-  SetProperty(MM::g_Keyword_Exposure, CDeviceUtils::ConvertToString(exposureCur_));
-  
-  //GetCoreCallback()->OnExposureChanged(this, exposureCur_);            //FIXME: what does this do?
+   exposureSet_=exp;
+   //is_SetExposureTime (hCam, exposureSet_, &exposureCur_);            //deprecated since v. 4.0
+   is_Exposure(hCam, IS_EXPOSURE_CMD_SET_EXPOSURE, &exposureSet_, sizeof(exposureSet_));
+   is_Exposure(hCam, IS_EXPOSURE_CMD_GET_EXPOSURE, &exposureCur_, sizeof(exposureCur_));
+
+   SetProperty(MM::g_Keyword_Exposure, CDeviceUtils::ConvertToString(exposureCur_));
+
+   //GetCoreCallback()->OnExposureChanged(this, exposureCur_);            //FIXME: what does this do?
 }
 
 
@@ -1323,6 +1350,7 @@ int CIDS_uEye::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
   
   int ret = DEVICE_OK;
 
+
   if (eAct == MM::BeforeGet){
     
   }
@@ -1362,24 +1390,26 @@ int CIDS_uEye::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
       is_SetBinning (hCam, IS_BINNING_2X_HORIZONTAL | IS_BINNING_2X_VERTICAL); 
     }
      
-  }
   
-  //SetImageMemory();                    //FIXME: what about image memory settings?
-  ResizeImageBuffer();
+    //is_FreeImageMem (hCam, pcImgMem,  memPid);
+    //SetImageMemory();                    //FIXME: what about image memory settings?
+    ResizeImageBuffer();
 
 
-  //update frame rate range
-  GetFramerateRange(hCam, &framerateMin_, &framerateMax_);
-  SetPropertyLimits("Frame Rate", framerateMin_, framerateMax_);
+    //update frame rate range
+    GetFramerateRange(hCam, &framerateMin_, &framerateMax_);
+    SetPropertyLimits("Frame Rate", framerateMin_, framerateMax_);
      
     
-  //update the exposure range
-  GetExposureRange(hCam, &exposureMin_, &exposureMax_, &exposureIncrement_);
-  if(exposureMax_>EXPOSURE_MAX) exposureMax_=EXPOSURE_MAX;
-  SetPropertyLimits(MM::g_Keyword_Exposure, exposureMin_, exposureMax_);  
+    //update the exposure range
+    GetExposureRange(hCam, &exposureMin_, &exposureMax_, &exposureIncrement_);
+    if(exposureMax_>EXPOSURE_MAX) exposureMax_=EXPOSURE_MAX;
+    SetPropertyLimits(MM::g_Keyword_Exposure, exposureMin_, exposureMax_);
+
+  }
   
 
-   return ret; 
+  return ret; 
 }
 
 
@@ -1397,25 +1427,28 @@ int CIDS_uEye::OnPixelClock(MM::PropertyBase* pProp, MM::ActionType eAct)
   }
 
   else if (eAct == MM::AfterSet){
+
     long pixClk;
     pProp->Get(pixClk);
     SetPixelClock((UINT)pixClk);
-  }
-
-  //update frame rate range                                                     //FIXME: the frame rate and exposure ranges are updated more than one time
-  GetFramerateRange(hCam, &framerateMin_, &framerateMax_);
-  SetPropertyLimits("Frame Rate", framerateMin_, framerateMax_);
-  printf("IDS_uEye: new frame rate range %.4f - %.4f\n",framerateMin_,framerateMax_);
   
 
-  //update the exposure range
-  GetExposureRange(hCam, &exposureMin_, &exposureMax_, &exposureIncrement_);
-  if(exposureMax_>EXPOSURE_MAX) exposureMax_=EXPOSURE_MAX;                       //limit exposure time to keep the interface responsive
-  SetPropertyLimits(MM::g_Keyword_Exposure, exposureMin_, exposureMax_);
-  printf("IDS_uEye: new exposure range %.4f - %.4f\n",exposureMin_,exposureMax_); 
+    //update frame rate range
+    GetFramerateRange(hCam, &framerateMin_, &framerateMax_);
+    SetPropertyLimits("Frame Rate", framerateMin_, framerateMax_);
+    printf("IDS_uEye: new frame rate range %.4f - %.4f\n",framerateMin_,framerateMax_);
+  
 
-  //set again current exposure (FIXME: why is it necessary?)
-  SetExposure(exposureCur_);
+    //update the exposure range
+    GetExposureRange(hCam, &exposureMin_, &exposureMax_, &exposureIncrement_);
+    if(exposureMax_>EXPOSURE_MAX) exposureMax_=EXPOSURE_MAX;                       //limit exposure time to keep the interface responsive
+    SetPropertyLimits(MM::g_Keyword_Exposure, exposureMin_, exposureMax_);
+    printf("IDS_uEye: new exposure range %.4f - %.4f\n",exposureMin_,exposureMax_);
+
+    //set again current exposure (FIXME: why is it necessary?)
+    SetExposure(exposureCur_);
+
+  }
 
   return ret; 
 }
@@ -1437,6 +1470,7 @@ int CIDS_uEye::OnFramerate(MM::PropertyBase* pProp, MM::ActionType eAct)
   }
 
   else if (eAct == MM::AfterSet){
+
     double framerate;
     pProp->Get(framerate);   
 
@@ -1449,13 +1483,14 @@ int CIDS_uEye::OnFramerate(MM::PropertyBase* pProp, MM::ActionType eAct)
       printf("IDS_uEye: set framerate to %.2f\n", framerateCur_);
     }
 
-  }
 
-  //update the exposure range
-  GetExposureRange(hCam, &exposureMin_, &exposureMax_, &exposureIncrement_);
-  if(exposureMax_>EXPOSURE_MAX) exposureMax_=EXPOSURE_MAX;                       //limit exposure time to keep the interface responsive
-  SetPropertyLimits(MM::g_Keyword_Exposure, exposureMin_, exposureMax_);
-  printf("IDS_uEye: new exposure range %.4f - %.4f\n",exposureMin_,exposureMax_); 
+    //update the exposure range
+    GetExposureRange(hCam, &exposureMin_, &exposureMax_, &exposureIncrement_);
+    if(exposureMax_>EXPOSURE_MAX) exposureMax_=EXPOSURE_MAX;                       //limit exposure time to keep the interface responsive
+    SetPropertyLimits(MM::g_Keyword_Exposure, exposureMin_, exposureMax_);
+    printf("IDS_uEye: new exposure range %.4f - %.4f\n",exposureMin_,exposureMax_); 
+
+  }
 
   return ret; 
 }
@@ -1498,18 +1533,73 @@ int CIDS_uEye::OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct)
 }
 
 
-
+//FIXME: check whether gamma/LUT, etc. functions need to be deactivated again after mode change
 /**
 * Handles "PixelType" property.
 */
-/*
 int CIDS_uEye::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-
   
-  int ret = DEVICE_ERR;
+  int ret = DEVICE_INVALID_PROPERTY_VALUE;
+  int nRet;
+
+
   switch(eAct)
   {
+
+  case MM::BeforeGet:{
+
+    long bytesPerPixel = GetImageBytesPerPixel();
+    int colorMode;
+
+    colorMode=is_SetColorMode(hCam, IS_GET_COLOR_MODE);
+    switch(colorMode){
+
+    case(IS_CM_MONO8):
+      pProp->Set(g_PixelType_8bit);
+      break;
+
+    case(IS_CM_MONO10):
+      pProp->Set(g_PixelType_10bit);
+      break;
+
+    case(IS_CM_MONO12):
+      pProp->Set(g_PixelType_12bit);
+      break;
+
+    case(IS_CM_MONO16):
+      pProp->Set(g_PixelType_16bit);
+      break;
+
+      
+    case(IS_CM_RGB8_PACKED):
+      pProp->Set(g_PixelType_8bitRGB);
+      break;
+
+    case(IS_CM_BGR8_PACKED):
+      pProp->Set(g_PixelType_8bitBGR);
+      break;
+
+    case(IS_CM_RGBA8_PACKED):
+      pProp->Set(g_PixelType_8bitRGBA);
+      break;
+
+    case(IS_CM_BGRA8_PACKED):
+      pProp->Set(g_PixelType_8bitBGRA);
+      break;  
+
+
+    default:
+      break;
+    }
+
+
+    ret=DEVICE_OK;
+  }
+    break;
+
+
+
   case MM::AfterSet:{
       
     if(IsCapturing())
@@ -1520,78 +1610,145 @@ int CIDS_uEye::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
     
     if (pixelType.compare(g_PixelType_8bit) == 0){
           
-      nComponents_ = 1;
-      img_.Resize(img_.Width(), img_.Height(), 1);
-      bitDepth_ = 8;
-      ret=DEVICE_OK;
+      nRet=is_SetColorMode(hCam, IS_CM_MONO8);
+      if(nRet==IS_SUCCESS){
+
+        nComponents_ = 1;
+        bitDepth_ = 8;
+
+        ret=DEVICE_OK;
+      }
+
     }
+
+    else if (pixelType.compare(g_PixelType_10bit) == 0){
+          
+      nRet=is_SetColorMode(hCam, IS_CM_MONO10);
+      if(nRet==IS_SUCCESS){
+
+        nComponents_ = 1;
+        bitDepth_ = 10;
+
+        ret=DEVICE_OK;
+      }
+
+    }
+
+    else if (pixelType.compare(g_PixelType_12bit) == 0){
+          
+      nRet=is_SetColorMode(hCam, IS_CM_MONO12);
+      if(nRet==IS_SUCCESS){
+
+        nComponents_ = 1;
+        bitDepth_ = 12;
+
+        ret=DEVICE_OK;
+      }
+
+    }
+
     else if (pixelType.compare(g_PixelType_16bit) == 0){
-           
-      nComponents_ = 1;
-      img_.Resize(img_.Width(), img_.Height(), 2);
-      ret=DEVICE_OK;
+          
+      nRet=is_SetColorMode(hCam, IS_CM_MONO16);
+      if(nRet==IS_SUCCESS){
+
+        nComponents_ = 1;
+        bitDepth_ = 16;
+
+        ret=DEVICE_OK;
+      }
+
     }
-    else if ( pixelType.compare(g_PixelType_32bitRGB) == 0){
-           
-      nComponents_ = 4;
-      img_.Resize(img_.Width(), img_.Height(), 4);
-      ret=DEVICE_OK;
+
+
+    else if (pixelType.compare(g_PixelType_8bitRGB) == 0){
+      
+       nRet=is_SetColorMode(hCam, IS_CM_RGB8_PACKED);
+       if(nRet==IS_SUCCESS){
+
+         nComponents_ = 4;
+         bitDepth_ = 8;
+
+         ret=DEVICE_OK;
+      }
+ 
     }
-    else if ( pixelType.compare(g_PixelType_64bitRGB) == 0){
-           
-      nComponents_ = 4;
-      img_.Resize(img_.Width(), img_.Height(), 8);
-      ret=DEVICE_OK;
+
+    else if (pixelType.compare(g_PixelType_8bitBGR) == 0){
+      
+       nRet=is_SetColorMode(hCam, IS_CM_BGR8_PACKED);
+       if(nRet==IS_SUCCESS){
+
+         nComponents_ = 4;
+         bitDepth_ = 8;
+
+         ret=DEVICE_OK;
+      }
+ 
     }
-    else if ( pixelType.compare(g_PixelType_32bit) == 0){
+
+
+    else if (pixelType.compare(g_PixelType_8bitRGBA) == 0){
+      
+       nRet=is_SetColorMode(hCam, IS_CM_RGBA8_PACKED);
+       if(nRet==IS_SUCCESS){
+
+         nComponents_ = 4;
+         bitDepth_ = 8;
+
+         ret=DEVICE_OK;
+      }
+ 
+    }
+
+    
+    else if (pixelType.compare(g_PixelType_8bitBGRA) == 0){
+      
+       nRet=is_SetColorMode(hCam, IS_CM_BGRA8_PACKED);
+       if(nRet==IS_SUCCESS){
+
+         nComponents_ = 4;
+         bitDepth_ = 8;
+
+         ret=DEVICE_OK;
+      }
+ 
+    }
+
+
+    else if (pixelType.compare(g_PixelType_32bit) == 0){
           
       nComponents_ = 1;
       img_.Resize(img_.Width(), img_.Height(), 4);
       ret=DEVICE_OK;
     }
+
+
     else{
 
-      // on error switch to default pixel type
-      nComponents_ = 1;
-      img_.Resize(img_.Width(), img_.Height(), 1);
-      pProp->Set(g_PixelType_8bit);
+      // on error do nothing
       ret = ERR_UNKNOWN_MODE;
     }
+
+
+
+    //if the mode was changed, adjust memory buffers
+    if(ret==DEVICE_OK){
+      printf("IDS_uEye: set color mode %s\n", colorModeToString(is_SetColorMode(hCam, IS_GET_COLOR_MODE)).c_str());
+      is_FreeImageMem (hCam, pcImgMem,  memPid);
+      ResizeImageBuffer();
+      ClearImageBuffer(img_);
+      SetImageMemory();
+    }
+
   }
     break;
 
-  case MM::BeforeGet:{
 
-     long bytesPerPixel = GetImageBytesPerPixel();
-     
-     if (bytesPerPixel == 1){
-       pProp->Set(g_PixelType_8bit);
-     }
-     else if (bytesPerPixel == 2){
-       pProp->Set(g_PixelType_16bit);
-     }
-     else if (bytesPerPixel == 4){
-        
-       if(4 == this->nComponents_)      // FIXME: todo SEPARATE bitdepth from #components
-         pProp->Set(g_PixelType_32bitRGB);
-       else if( 1 == nComponents_)
-         pProp->Set(::g_PixelType_32bit);
-     }
-     else if (bytesPerPixel == 8){      // FIXME: todo SEPARATE bitdepth from #components
-       pProp->Set(g_PixelType_64bitRGB);
-     }
-     else{
-       pProp->Set(g_PixelType_8bit);
-     }
-
-     ret=DEVICE_OK;
-   }
-     break;
-
-   }    
-   return ret; 
+  }
+  return ret; 
 }
-*/
+
 
 
 /**
@@ -1754,6 +1911,8 @@ int CIDS_uEye::ResizeImageBuffer()
    //char buf[MM::MaxStrLength];
    int byteDepth = 0;
 
+   int colorMode;
+
    //int ret = GetProperty(MM::g_Keyword_Binning, buf);
    //if (ret != DEVICE_OK)
    //   return ret;
@@ -1789,15 +1948,73 @@ int CIDS_uEye::ResizeImageBuffer()
    }
    */
 
+   //determine the necessary number of memory bytes per pixel for the current color mode
+   colorMode=is_SetColorMode(hCam, IS_GET_COLOR_MODE);
+
+   switch(colorMode){
+   case(IS_CM_MONO8):
+     byteDepth=1;
+     break;
+
+   case(IS_CM_MONO16): case(IS_CM_MONO12): case(IS_CM_MONO10):
+     byteDepth=2;
+     break;
+     
+   case(IS_CM_SENSOR_RAW8):
+     byteDepth=1;
+     break;
+ 
+   case(IS_CM_SENSOR_RAW16): case(IS_CM_SENSOR_RAW12): case(IS_CM_SENSOR_RAW10):
+     byteDepth=2;
+     break;
+
+   case(IS_CM_BGR565_PACKED): case(IS_CM_BGR5_PACKED):
+     byteDepth=2;
+     break;
+
+   case(IS_CM_UYVY_PACKED):  //case(IS_CM_UYVY_MONO):  case(IS_CM_UYVY_BAYER):  //FIXME: MONO and BAYER not yet supported by SDK
+     byteDepth=2;
+     break;
+
+   case(IS_CM_CBYCRY_PACKED):
+     byteDepth=2;
+     break; 
+     
+   case(IS_CM_RGB8_PACKED): case(IS_CM_BGR8_PACKED):
+     byteDepth=4;
+     break;
+
+   case(IS_CM_RGB10_PACKED): case(IS_CM_RGBA8_PACKED): case(IS_CM_RGBY8_PACKED):
+     byteDepth=4;
+     break;
+     
+   case(IS_CM_BGR10_PACKED): case(IS_CM_BGRA8_PACKED): case(IS_CM_BGRY8_PACKED):
+     byteDepth=4;
+     break;
+
+   case(IS_CM_RGB12_UNPACKED):  case(IS_CM_RGB10_UNPACKED):  case(IS_CM_BGR12_UNPACKED):  case(IS_CM_BGR10_UNPACKED):
+     byteDepth=6;
+     break;
+
+   case(IS_CM_RGBA12_UNPACKED): case(IS_CM_BGRA12_UNPACKED):
+     byteDepth=8;
+     break;
+
+   }
+
+
+   /*
    if(bitDepthReal_<=8){
      byteDepth=1;
    }
    else if(bitDepthReal_<=16){
      byteDepth=2;
    }
+   */
 
+   img_.Resize(roiXSize_/binX_, roiYSize_/binY_, byteDepth);
 
-   img_.Resize(roiXSize_/binX_, roiYSize_/binY_, byteDepth);            //FIXME: check for the color mode which is actually set
+   printf("IDS_uEye: MM-Image buffer size for color mode %s: %ld byte\n",colorModeToString(colorMode).c_str(), GetImageBufferSize());
 
    return DEVICE_OK;
 }
@@ -1839,17 +2056,18 @@ int CIDS_uEye::SetImageMemory()
 
   //method 2: directly assign the buffer to the camera (full CCD size)
   pcImgMem=(char*)img_.GetPixelsRW();
+  //printf("IDS_uEye: assigning image memory for %d x %d, %d bpp, pointer: 0x%x\n",  cameraCCDXSize_, cameraCCDYSize_, 8*img_.Depth(), pcImgMem);
   nRet = is_SetAllocatedImageMem (hCam, cameraCCDXSize_, cameraCCDYSize_, 8*img_.Depth(), pcImgMem, &memPid);
-  if (nRet != IS_SUCCESS){                          //could not activate image memory
-    printf("Could set the buffer as the image memory, error %d\n", nRet);
+  if (nRet != IS_SUCCESS){                          //could not assign image memory
+    printf("IDS_uEye: could not assign the image buffer as the image memory, error %d\n", nRet);
   }
 
-   
+
   
   //activate the new image memory
   nRet = is_SetImageMem (hCam, pcImgMem, memPid);
   if (nRet != IS_SUCCESS){                          //could not activate image memory
-    printf("Could not activate image memory, error %d\n", nRet);
+    printf("IDS_uEye: could not activate image memory, error %d\n", nRet);
   }
 
 
@@ -1866,25 +2084,4 @@ void CIDS_uEye::TestResourceLocking(const bool recurse)
 }
 
 
-/*
-  Set bit per pixel and pixel pitch parameter based on sensorID
-  the pixel pitch is given by GetSensorInfo since v. 4.0
-*/
-int CIDS_uEye::setSensorPixelParameters(WORD sensorID){
 
-  if((sensorID<0)|(sensorID>=IS_SENSOR_MAX_ID)){
-    return IS_NO_SUCCESS;
-  }
-  else if(IS_SENSOR_REAL_BPP[sensorID]==0){
-    return IS_NO_SUCCESS;
-  }
-  else{
-
-     bitDepthADC_=IS_SENSOR_ADC_BPP[sensorID];
-     bitDepthReal_=IS_SENSOR_REAL_BPP[sensorID];
-     //nominalPixelSizeUm_=IS_SENSOR_PITCH[sensorID];      //not needed since 4.0 (given by GetSensorInfo)
-
-     return IS_SUCCESS;
-  }
-
-}

@@ -1,12 +1,11 @@
-IDS_uEye.cpp v. 1.2 TODO list
+IDS_uEye.cpp v. 1.3 TODO list
 
 - binning: handle image memory correctly; support more modes
 - handle camera disconnect
 - handle more than one camera
+- support gain boost
 
 - support external trigger option
 - export all important properties
-- extend database of supported cameras
 - error messages with error codes
 
-- support color

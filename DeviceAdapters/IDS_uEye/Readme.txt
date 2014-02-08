@@ -14,9 +14,9 @@ DESCRIPTION:   Driver for IDS uEye series of USB cameras
                 
 AUTHOR:        Wenjamin Rosenfeld
 
-YEAR:          2012, 2013
+YEAR:          2012 - 2014
                 
-VERSION:       1.1
+VERSION:       1.2
 
 LICENSE:       This software is distributed under the BSD license.
                License text is included with the source distribution.
@@ -44,6 +44,7 @@ Compiling requirements:
 Linux:
  - The IDS SDK components are part of the IDS Software Suite and are automatically installed with the drivers.
 
+
 Windows: 
  - Install the IDS Software Suite with the SDK
  - The development files are in ...\IDS\uEye\Develop within the installation directory
@@ -52,7 +53,11 @@ Windows:
 
 
 Notes:
+
  - The "frame rate" parameter is mainly for the internal live mode of the camera which is not used,
    as for micro manager the pictures are acquired one by one. It does, however, determine
    the maximal exposure time (inverse of the frame rate).
    For some camera models it will also limit the real frame rate in "live" acquisition mode of micro manager.
+
+
+ - Currently color modes BGRA8/RGBA8 are supported which allow for 1:1 direct transfer of pixel data into MM image buffer

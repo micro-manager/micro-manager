@@ -6,3 +6,26 @@ version 1.1:
   and kept consistent
   
 - changed: initial pixel clock set to default proposed by the hardware
+
+
+version 1.1.1:
+
+- fixed: changing the exposure value in the property browser now also sets it
+
+- changed: the displayed exposure now represents the real value from the camera
+
+
+
+version 1.2:
+
+- added: support of color
+  initially supported are the modes BGRA8/RGBA8,
+  which allow for 1:1 direct transfer of pixel data into MM image buffer
+
+- added: probing for available color modes and their selection in the property browser 
+
+- fixed: performance improvement after dropping certain unnecessary memory management operations
+  and parameter changes
+
+- removed: the internal sensor database is obsolete, since all necessary information
+  can be extracted during operation
