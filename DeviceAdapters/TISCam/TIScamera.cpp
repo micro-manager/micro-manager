@@ -84,6 +84,8 @@ const char* g_Keyword_Brightness   = "Property Brightness";
 const char* g_Keyword_Gain         = "Property Gain";
 const char* g_Keyword_Gain_Auto    = "Property Gain_Auto";
 const char* g_Keyword_WhiteBalance = "Property White_Balance";
+const char* g_Keyword_WhiteBalanceRed = "Property White_Balance_Red";
+const char* g_Keyword_WhiteBalanceBlue = "Property White_Balance_Blue";
 const char* g_Keyword_WhiteBalance_Auto = "Property White_Balance_Auto";
 const char* g_On                   = "On";
 const char* g_Off                  = "Off";
@@ -170,7 +172,9 @@ currentExpMS_(12.34), //ms
    FPS_(10),
    Brightness_(10),
    Rotation_(0),
-   WhiteBalance_(10),
+   WhiteBalance_(0),
+   WhiteBalanceRed_(0),
+   WhiteBalanceBlue_(0),
    Gain_(0),
    DeNoiseLevel_(0),
 
@@ -446,6 +450,14 @@ int CTIScamera::Initialize()
    nRet = CreateProperty(g_Keyword_WhiteBalance, CDeviceUtils::ConvertToString(WhiteBalance_), MM::Integer, false, pAct);
    if (nRet != DEVICE_OK) return nRet;
 
+   pAct = new CPropertyAction (this, &CTIScamera::OnWhiteBalanceRed);
+   nRet = CreateProperty(g_Keyword_WhiteBalanceRed, CDeviceUtils::ConvertToString(WhiteBalanceRed_), MM::Integer, false, pAct);
+   if (nRet != DEVICE_OK) return nRet;
+
+   pAct = new CPropertyAction (this, &CTIScamera::OnWhiteBalanceBlue);
+   nRet = CreateProperty(g_Keyword_WhiteBalanceBlue, CDeviceUtils::ConvertToString(WhiteBalanceBlue_), MM::Integer, false, pAct);
+   if (nRet != DEVICE_OK) return nRet;
+
    pAct = new CPropertyAction (this, &CTIScamera::OnWhiteBalanceAuto);
    nRet = CreateProperty(g_Keyword_WhiteBalance_Auto, "n/a", MM::String, false, pAct);
    if (nRet != DEVICE_OK) return nRet;
@@ -688,6 +700,37 @@ int CTIScamera::SetupProperties()
          }
       }
       else SetProperty(g_Keyword_WhiteBalance_Auto, "n/a");
+
+
+
+	  // Initialize the slider for whitebalance blue
+      if( !m_pSimpleProperties->isAvailable( VCDElement_WhiteBalanceBlue ) )
+      {
+         SetProperty(g_Keyword_WhiteBalanceBlue, "n/a");
+      }
+      else
+      {
+         lMin = m_pSimpleProperties->getRangeMin( VCDElement_WhiteBalanceBlue );
+         lMax = m_pSimpleProperties->getRangeMax( VCDElement_WhiteBalanceBlue );
+         WhiteBalanceBlue_ = m_pSimpleProperties->getValue( VCDElement_WhiteBalanceBlue );
+         SetProperty(g_Keyword_WhiteBalance, CDeviceUtils::ConvertToString(WhiteBalanceBlue_));
+         if (lMax != 0) SetPropertyLimits(g_Keyword_WhiteBalanceBlue, (double)lMin, (double)lMax);
+      }
+ 
+      // Initialize the slider for whitebalance red
+      if( !m_pSimpleProperties->isAvailable( VCDElement_WhiteBalanceRed ) )
+      {
+         SetProperty(g_Keyword_WhiteBalanceRed, "n/a");
+      }
+      else
+      {
+         lMin = m_pSimpleProperties->getRangeMin( VCDElement_WhiteBalanceRed );
+         lMax = m_pSimpleProperties->getRangeMax( VCDElement_WhiteBalanceRed );
+         WhiteBalanceRed_ = m_pSimpleProperties->getValue( VCDElement_WhiteBalanceRed );
+         SetProperty(g_Keyword_WhiteBalanceRed, CDeviceUtils::ConvertToString(WhiteBalanceRed_));
+         if (lMax != 0) SetPropertyLimits(g_Keyword_WhiteBalanceRed, (double)lMin, (double)lMax);
+      }
+
    }
  
    // Prepare the live mode, to get the output size of the sink.
@@ -1819,6 +1862,77 @@ int CTIScamera::OnWhiteBalance(MM::PropertyBase* pProp, MM::ActionType eAct)
 }
 
 
+
+int CTIScamera::OnWhiteBalanceRed(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	bool bCanBeSet = true;
+	if( m_pSimpleProperties != NULL )
+	{
+		if (m_pSimpleProperties->isAutoAvailable(VCDID_WhiteBalance))
+		{
+			bCanBeSet = !m_pSimpleProperties->getAuto(VCDID_WhiteBalance);
+		}
+
+		if (eAct == MM::BeforeGet)
+		{
+			if (m_pSimpleProperties->isAvailable(VCDElement_WhiteBalanceRed))
+			{
+				long lValue;
+				lValue = m_pSimpleProperties->getValue(VCDElement_WhiteBalanceRed);
+				WhiteBalanceRed_  = lValue;
+				pProp->Set(WhiteBalanceRed_);
+			}
+		}
+		else if (eAct == MM::AfterSet)
+		{
+			if(!bCanBeSet) return DEVICE_CAN_NOT_SET_PROPERTY; // Means automatic is enabled.
+
+         long WhiteBalanceRed;
+			pProp->Get(WhiteBalanceRed);
+			if (m_pSimpleProperties->isAvailable(VCDElement_WhiteBalanceRed))
+			{
+				m_pSimpleProperties->setValue(VCDElement_WhiteBalanceRed, WhiteBalanceRed);
+			}
+		}
+	}
+   return DEVICE_OK;
+}
+
+
+int CTIScamera::OnWhiteBalanceBlue(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	bool bCanBeSet = true;
+	if( m_pSimpleProperties != NULL )
+	{
+		if (m_pSimpleProperties->isAutoAvailable(VCDID_WhiteBalance))
+		{
+			bCanBeSet = !m_pSimpleProperties->getAuto(VCDID_WhiteBalance);
+		}
+
+		if (eAct == MM::BeforeGet)
+		{
+			if (m_pSimpleProperties->isAvailable(VCDElement_WhiteBalanceBlue))
+			{
+				long lValue;
+				lValue = m_pSimpleProperties->getValue(VCDElement_WhiteBalanceBlue);
+				WhiteBalanceBlue_  = lValue;
+				pProp->Set(WhiteBalanceBlue_);
+			}
+		}
+		else if (eAct == MM::AfterSet)
+		{
+			if(!bCanBeSet) return DEVICE_CAN_NOT_SET_PROPERTY; // Means automatic is enabled.
+
+         long WhiteBalanceBlue;
+			pProp->Get(WhiteBalanceBlue);
+			if (m_pSimpleProperties->isAvailable(VCDElement_WhiteBalanceBlue))
+			{
+				m_pSimpleProperties->setValue(VCDElement_WhiteBalanceBlue, WhiteBalanceBlue);
+			}
+		}
+	}
+   return DEVICE_OK;
+}
 
 // GainAuto event handler
 int CTIScamera::OnWhiteBalanceAuto(MM::PropertyBase* pProp, MM::ActionType eAct)
