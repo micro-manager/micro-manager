@@ -27,7 +27,6 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
-import java.awt.geom.Rectangle2D;
 import java.io.BufferedOutputStream;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -37,7 +36,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.prefs.Preferences;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
-import javax.swing.JFrame;
 
 import javax.swing.JOptionPane;
 
@@ -299,13 +297,16 @@ public class ProjectorController {
    
    // Load the mapping for the current calibration node. The mapping
    // maps each polygon cell to an AffineTransform.
-   private HashMap<Polygon, AffineTransform> loadMapping() {
+   private Map<Polygon, AffineTransform> loadMapping() {
       String nodeStr = getCalibrationNode().toString();
       if (mappingNode_ == null || !nodeStr.contentEquals(mappingNode_)) {
          mappingNode_ = nodeStr;
-         mapping_ = JavaUtils.getObjectFromPrefs(getCalibrationNode(), dev.getName(), new HashMap<Polygon, AffineTransform>());
+         mapping_ = (Map<Polygon, AffineTransform>) JavaUtils.getObjectFromPrefs(
+                 getCalibrationNode(), 
+                 dev.getName(), 
+                 new HashMap<Polygon, AffineTransform>());
       }
-      return (HashMap<Polygon, AffineTransform>) mapping_;
+      return  mapping_;
    }
 
    // Save the mapping for the current calibration node. The mapping
@@ -323,6 +324,7 @@ public class ProjectorController {
       if (!isRunning_.get()) {
          this.stopRequested_.set(false);
          Thread th = new Thread("Projector calibration thread") {
+            @Override
             public void run() {
                try {
                   isRunning_.set(true);
@@ -506,11 +508,11 @@ public class ProjectorController {
    public int setRois(int reps) {
       if (mapping_ != null) {
          ImageWindow window = WindowManager.getCurrentWindow();
-         ImagePlus imgp = window.getImagePlus();
          if (window == null) {
             ReportingUtils.showError("No image window with ROIs is open.");
             return 0;
          } else {
+            ImagePlus imgp = window.getImagePlus();
             Roi[] rois = getRois(window);
             if (rois.length == 0) {
                ReportingUtils.showMessage("Please first draw the desired phototargeting ROIs.");
@@ -581,16 +583,18 @@ public class ProjectorController {
    }
 
 
-   public MouseListener setupPointAndShootMouseListener() {
+   public final MouseListener setupPointAndShootMouseListener() {
       final ProjectorController thisController = this;
       return new MouseAdapter() {
+         @Override
          public void mouseClicked(MouseEvent e) {
             if (e.isControlDown()) {
                Configuration originalConfig = prepareChannel();
                Point p = e.getPoint();
                ImageCanvas canvas = (ImageCanvas) e.getSource();
                Point pOffscreen = new Point(canvas.offScreenX(p.x), canvas.offScreenY(p.y));
-               Point devP = transformAndFlip((Map<Polygon, AffineTransform>) loadMapping(), canvas.getImage(), new Point(pOffscreen.x, pOffscreen.y));
+               Point devP = transformAndFlip(loadMapping(), canvas.getImage(), 
+                       new Point(pOffscreen.x, pOffscreen.y));
                if (devP != null) {
                   displaySpot(devP.x, devP.y, thisController.getPointAndShootInterval());
                }
@@ -776,6 +780,7 @@ public class ProjectorController {
             runPolygons();
          }
 
+         @Override
          public String toString() {
             return "Phototargeting of ROIs";
          }
