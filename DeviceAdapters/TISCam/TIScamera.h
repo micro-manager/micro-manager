@@ -128,6 +128,7 @@ unsigned GetBitDepth() const;
 	int OnWhiteBalance      (MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnWhiteBalanceRed   (MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnWhiteBalanceBlue  (MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnWhiteBalanceGreen (MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnWhiteBalanceAuto  (MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnAutoExposure      (MM::PropertyBase* pProp, MM::ActionType eAct);
 
@@ -175,6 +176,7 @@ private:
 	long WhiteBalance_;
 	long WhiteBalanceRed_;
 	long WhiteBalanceBlue_;
+	long WhiteBalanceGreen_;
 	long Gain_;
 	long DeNoiseLevel_;
 
