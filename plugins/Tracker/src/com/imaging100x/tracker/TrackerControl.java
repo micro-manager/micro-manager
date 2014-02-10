@@ -20,8 +20,6 @@
 //                IN NO EVENT SHALL THE COPYRIGHT OWNER OR
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
-//
-//CVS:            $Id: TrackerControlDlg.java 2019 2009-01-26 05:21:09Z nenad $
 
 package com.imaging100x.tracker;
 
@@ -112,7 +110,7 @@ public class TrackerControl extends MMFrame implements MMPlugin {
    private static final String RECT_Y = "RECT_Y";
    private static final String RECT_W = "RECT_W";
    private static final String RECT_H = "RECT_H";
-   private static final String ACQNAME = "Tracker";
+   private static final String ACQNAME = "LiveTracking";
    private JLabel labelTopLeft_;
    private JLabel labelBottomRight_;
    private JRadioButton stackRadioButton_;
@@ -207,7 +205,7 @@ public class TrackerControl extends MMFrame implements MMPlugin {
          }
       });
 
-      setTitle("MM Tracker");
+      setTitle("Live Tracking");
       setResizable(false);
       getContentPane().setLayout(null);
       setBounds(100, 100, 412, 346);
@@ -388,10 +386,10 @@ public class TrackerControl extends MMFrame implements MMPlugin {
     * Choose the root directory to save files.
     */
    protected void browse() {
-      FileDialogs.FileType ft = new FileDialogs.FileType("Tracker root", "Tracker root",
-           System.getProperty("user.home") + "/Tracker",
+      FileDialogs.FileType ft = new FileDialogs.FileType("LiveTracking root", "LiveTracking root",
+           System.getProperty("user.home") + "/LiveTracking",
            true, "");
-      File f = FileDialogs.openDir(null, "Tracker file location", ft);
+      File f = FileDialogs.openDir(null, "Live Tracking file location", ft);
       if (f != null) {
          rootField_.setText(f.getAbsolutePath());
       }
@@ -640,7 +638,7 @@ public class TrackerControl extends MMFrame implements MMPlugin {
 
       } catch (Exception e1) {
          // TODO Auto-generated catch block
-         ReportingUtils.showError(e1, "Problem initializing Tracker plugin");
+         ReportingUtils.showError(e1, "Problem initializing Live Tracking plugin");
       }
       
       topLeftButton_.addActionListener(new ActionListener() {
@@ -696,5 +694,5 @@ public class TrackerControl extends MMFrame implements MMPlugin {
       return VERSION_INFO;
    }
 
-   public static String menuName = "Tracker";
+   public static String menuName = "Live Tracking";
 }

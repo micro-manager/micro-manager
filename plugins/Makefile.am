@@ -19,13 +19,13 @@ IntelligentAcquisition.jar:  \
 	$(JAVAC) $(JAVACFLAGS) -sourcepath $(srcdir):. -classpath $(IJJARPATH):$(BSHJARPATH):$(COMMONSMATHJARPATH):$(SWINGLAYOUTJARPATH):$(JFREECHARTJARPATH):../mmstudio/MMJ_.jar:. $(srcdir)/IntelligentAcquisition/src/org/micromanager/intelligentacquisition/*.java -d build
 	cd build && jar cf ../IntelligentAcquisition.jar * 
 
-MMTracker_.jar:  \
+MMTracker.jar:  \
 	$(srcdir)/Tracker/src/com/imaging100x/tracker/TrackerControl.java
 	test -d build || mkdir build
 	rm -rf build/*
 	$(JAVAC) $(JAVACFLAGS) -sourcepath $(srcdir):. -classpath $(IJJARPATH):$(BSHJARPATH):../mmstudio/MMJ_.jar:. $(srcdir)/Tracker/src/com/imaging100x/tracker/*.java -d build
 	## Work around bug in 'jar': jar cf MM_.jar -C bin/ bin/* does not work
-	cd build && jar cf ../MMTracker_.jar * 
+	cd build && jar cf ../MMTracker.jar * 
 
 PixelCalibrator.jar:  \
 	$(srcdir)/PixelCalibrator/src/org/micromanager/pixelcalibrator/CalibrationThread.java \
