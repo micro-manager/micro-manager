@@ -573,7 +573,7 @@ int CTIScamera::SetupProperties()
    //reverse bottom up frames
    if (pRotateFlipFilter != NULL)
    {
-      if ((subtype == MEDIASUBTYPE_RGB32) || (subtype == MEDIASUBTYPE_RGB24))
+      if ((subtype == MEDIASUBTYPE_RGB32) || (subtype == MEDIASUBTYPE_RGB24) || (subtype == MEDIASUBTYPE_BY8))
       {
          nRet = SetProperty(g_FlipV, g_On);
 	     pRotateFlipFilter->setParameter( "Flip V", true );
