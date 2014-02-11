@@ -1443,9 +1443,10 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
             try {
                core_ = new CMMCore();
             } catch(UnsatisfiedLinkError ex) {
-               ReportingUtils.showError(ex, "Failed to open libMMCoreJ_wrap.jnilib");
+               ReportingUtils.showError(ex, "Failed to load the MMCoreJ_wrap native library");
                return;
             }
+
             ReportingUtils.setCore(core_);
             logStartupProperties();
                     
