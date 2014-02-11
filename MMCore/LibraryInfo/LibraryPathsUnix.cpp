@@ -37,6 +37,7 @@
 #include <dlfcn.h>
 
 #ifdef __linux__
+#   include <cstring> // for strcpy()
 #   include <libgen.h> // for basename()
 #   include <unistd.h> // for readlink()
 #endif
