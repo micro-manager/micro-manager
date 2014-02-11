@@ -81,7 +81,8 @@ public class TrackerControl extends MMFrame implements MMPlugin {
    private int imWidth_ = 0;
    private String stage_ = "XYStage";
    private Roi roi_;
-   private ImageStack stack_;
+   private ImageStack corrStack_;
+   private ImagePlus corrImplus_;
    private boolean mirrorX_ = false;
    private boolean mirrorY_ = false;
    private boolean rotate_ = false;
@@ -228,7 +229,6 @@ public class TrackerControl extends MMFrame implements MMPlugin {
             resolutionPix_ = Integer.parseInt(resField_.getText());
             pixelsPrev_ = null;
             pixelsCur_ = null;
-            stack_ = null;
             timer_.setDelay(intervalMs_);
             track(); 
          }
@@ -416,6 +416,12 @@ public class TrackerControl extends MMFrame implements MMPlugin {
          return;
       }
 
+      // Set up new ImageJ window to display the correlation image
+      int kCount = 2 * offsetPix_ / resolutionPix_;
+      int lCount = 2 * offsetPix_ / resolutionPix_;
+      corrStack_ = new ij.ImageStack(lCount, kCount);
+      corrImplus_ = null;
+
       ReportingUtils.logMessage("Tracking started at " + GregorianCalendar.getInstance().getTime());
 
       try {
@@ -486,7 +492,13 @@ public class TrackerControl extends MMFrame implements MMPlugin {
          return;
       }
 
-      // iterate on all offsets
+      int kCount = 2 * offsetPix_ / resolutionPix_;
+      int lCount = 2 * offsetPix_ / resolutionPix_;
+      ImageProcessor corrImproc = new ij.process.FloatProcessor(lCount, kCount);
+      corrStack_.addSlice(corrImproc);
+      float[] corrPixels = (float[])corrImproc.getPixels();
+
+      // position of correlation maximum
       int kMax = 0;
       int lMax = 0;
 
@@ -526,6 +538,10 @@ public class TrackerControl extends MMFrame implements MMPlugin {
             meanCur /= corScale;
             sum /= meanPrev*meanCur;
 
+            int x = (l + offsetPix_) / resolutionPix_;
+            int y = (k + offsetPix_) / resolutionPix_;
+            corrPixels[x + lCount * y] = (float)sum;
+
             // check for max value
             if (sum > maxCor) {
                maxCor = sum;
@@ -533,6 +549,15 @@ public class TrackerControl extends MMFrame implements MMPlugin {
                lMax = l;
             }
          }
+      }
+
+      if (corrImplus_ == null) {
+         corrImplus_ = new ij.ImagePlus("Cross Correlation", corrStack_);
+         corrImplus_.show();
+      }
+      else {
+         corrImplus_.setPosition(imageCounter_ + 1);
+         corrImplus_.updateAndRepaintWindow();
       }
 
       //IJ.write("maxc=" + maxCor + ", offset=(" + lMax + "," + kMax + ")");
