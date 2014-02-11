@@ -50,6 +50,7 @@ import javax.swing.border.BevelBorder;
 
 import mmcorej.MMCoreJ;
 import mmcorej.TaggedImage;
+import org.jfree.data.xy.XYSeries;
 import org.json.JSONException;
 
 import org.micromanager.api.MMPlugin;
@@ -93,6 +94,7 @@ public class TrackerControl extends MMFrame implements MMPlugin {
    //private AcquisitionData acq_;
    private int imageCounter_;
    private String acqName_;
+   private XYSeries xySeries_;
 
    private static final String RESOLUTION_PIX = "resolution_pix";
    private static final String OFFSET_PIX = "offset_pix";
@@ -428,14 +430,17 @@ public class TrackerControl extends MMFrame implements MMPlugin {
          acqName_ = nameField_.getText();
          if (acqName_.length() == 0) {
             acqName_ = ACQNAME;
-            }
-            acqName_ = app_.getUniqueAcquisitionName(acqName_);
-            nameField_.setText(acqName_);
-            app_.openAcquisition(acqName_, rootField_.getText(), 
-                    2, 1, 1, 1, true, image5dRadioButton_.isSelected());            
-         } catch (MMScriptException ex) {
-            ReportingUtils.showError(ex, "Problem while tracking");
          }
+         acqName_ = app_.getUniqueAcquisitionName(acqName_);
+         nameField_.setText(acqName_);
+         app_.openAcquisition(acqName_, rootField_.getText(),
+                 2, 1, 1, 1, true, image5dRadioButton_.isSelected());
+      } catch (MMScriptException ex) {
+         ReportingUtils.showError(ex, "Problem while tracking");
+      }
+      xySeries_ = new XYSeries("Track");
+      TrackerUtils.plotData("Cell Track", xySeries_, "X (micron)", 
+               "Y (micron)", 100, 100);
       timer_.start();
    }
    
@@ -496,7 +501,7 @@ public class TrackerControl extends MMFrame implements MMPlugin {
       int lCount = 2 * offsetPix_ / resolutionPix_;
       ImageProcessor corrImproc = new ij.process.FloatProcessor(lCount, kCount);
       corrStack_.addSlice(corrImproc);
-      float[] corrPixels = (float[])corrImproc.getPixels();
+      // float[] corrPixels = (float[])corrImproc.getPixels();
 
       // position of correlation maximum
       int kMax = 0;
@@ -540,7 +545,7 @@ public class TrackerControl extends MMFrame implements MMPlugin {
 
             int x = (l + offsetPix_) / resolutionPix_;
             int y = (k + offsetPix_) / resolutionPix_;
-            corrPixels[x + lCount * y] = (float)sum;
+            //corrPixels[x + lCount * y] = (float)sum;
 
             // check for max value
             if (sum > maxCor) {
@@ -603,6 +608,10 @@ public class TrackerControl extends MMFrame implements MMPlugin {
             // update the XY position based on the offset
             double newX = xCur[0] + dxUm;
             double newY = yCur[0] + dyUm;
+            
+            xySeries_.add(newX, newY);
+            
+            
 
             if ((limits_.isValid() && limits_.isWithin(newX, newY)) || (!limits_.isValid())) {
                app_.getMMCore().setXYPosition(stage_, newX, newY);
