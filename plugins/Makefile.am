@@ -1,6 +1,6 @@
 ## Process this file with automake to produce Makefile.in
 
-TARGETS= ASIdiSPIM.jar PixelCalibrator.jar Projector.jar RecallPlugin.jar StageControl.jar MultiCamera.jar CRISP.jar Big.jar NewImageFlipper.jar SlideExplorer.jar DataBrowser.jar ClojureEditor.jar SplitView.jar Gaussian.jar IntelligentAcquisition.jar BFCorrector.jar MultiChannelShading.jar HCS.jar
+TARGETS= ASIdiSPIM.jar PixelCalibrator.jar Projector.jar RecallPlugin.jar StageControl.jar MultiCamera.jar CRISP.jar Big.jar NewImageFlipper.jar SlideExplorer.jar DataBrowser.jar ClojureEditor.jar SplitView.jar Gaussian.jar IntelligentAcquisition.jar BFCorrector.jar MultiChannelShading.jar HCS.jar MMTracker.jar
 
 ASIdiSPIM.jar:  \
 	$(srcdir)/ASIdiSPIM/src/org/micromanager/asidispim/*.java \
@@ -23,7 +23,7 @@ MMTracker.jar:  \
 	$(srcdir)/Tracker/src/com/imaging100x/tracker/TrackerControl.java
 	test -d build || mkdir build
 	rm -rf build/*
-	$(JAVAC) $(JAVACFLAGS) -sourcepath $(srcdir):. -classpath $(IJJARPATH):$(BSHJARPATH):../mmstudio/MMJ_.jar:. $(srcdir)/Tracker/src/com/imaging100x/tracker/*.java -d build
+	$(JAVAC) $(JAVACFLAGS) -sourcepath $(srcdir):. -classpath $(IJJARPATH):$(BSHJARPATH):$(JFREECHARTJARPATH):../mmstudio/MMJ_.jar:. $(srcdir)/Tracker/src/com/imaging100x/tracker/*.java -d build
 	## Work around bug in 'jar': jar cf MM_.jar -C bin/ bin/* does not work
 	cd build && jar cf ../MMTracker.jar * 
 
