@@ -501,7 +501,6 @@ public class TrackerControl extends MMFrame implements MMPlugin {
       int lCount = 2 * offsetPix_ / resolutionPix_;
       ImageProcessor corrImproc = new ij.process.FloatProcessor(lCount, kCount);
       corrStack_.addSlice(corrImproc);
-      // float[] corrPixels = (float[])corrImproc.getPixels();
 
       // position of correlation maximum
       int kMax = 0;
@@ -545,7 +544,7 @@ public class TrackerControl extends MMFrame implements MMPlugin {
 
             int x = (l + offsetPix_) / resolutionPix_;
             int y = (k + offsetPix_) / resolutionPix_;
-            //corrPixels[x + lCount * y] = (float)sum;
+            corrImproc.setf(x + lCount * y, (float) sum);
 
             // check for max value
             if (sum > maxCor) {
