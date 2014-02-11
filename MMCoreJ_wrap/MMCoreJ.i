@@ -561,9 +561,9 @@
    import java.net.URLDecoder;
 %}
 
-// Pull in the device adapter path that micro-manager has been compiled against
-%javaconst(1) DEVICEADAPTERPATH;
-%constant char *DEVICEADAPTERPATH = SWIG_DEVICEADAPTERPATH;
+// Pull in the compile-time (configuration-dependent) hard-coded paths.
+%javaconst(1) LIBRARY_PATH;
+%constant char *LIBRARY_PATH = MMCOREJ_LIBRARY_PATH;
 
 %pragma(java) jniclasscode=%{
 
@@ -621,9 +621,9 @@
     searchPaths.add(directory);
     directoryMM = new File(new File(directory, "mm"), platform);
     searchPaths.add(directoryMM);
-    // on Linux use the LSB-defined library path (set in configure.common)
+    // on Linux use the compiled-in device adapter path
     if (platform.startsWith("linux"))
-        searchPaths.add(new File(MMCoreJConstants.DEVICEADAPTERPATH));
+        searchPaths.add(new File(MMCoreJConstants.LIBRARY_PATH));
     
 	try {
 	    loadLibrary(searchPaths, "MMCoreJ_wrap");

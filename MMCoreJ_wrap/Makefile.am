@@ -22,15 +22,17 @@ SWIGLIB_SOURCES = MMCoreJ.i \
 	../MMCore/Host.h  \
 	../MMDevice/MMDeviceConstants.h 
 
+# DEVICEADAPTERPATH is poorly named: it actually means "where to put all MM
+# libraries, including device adapters".
 MMCoreJ_wrap.cxx: $(SWIGLIB_SOURCES)
 	test -d mmcorej || mkdir mmcorej
 	touch $(srcdir)/MMCoreJ_wrap.cxx || (chmod +wrx $(srcdir) && touch $(srcdir)/MMCoreJ_wrap.cxx)
 	$(SWIG) -c++ -java -package mmcorej -outdir mmcorej -module MMCoreJ \
-		-DSWIG_DEVICEADAPTERPATH="\"$(DEVICEADAPTERPATH)\"" \
+		"-DMMCOREJ_LIBRARY_PATH=\"$(DEVICEADAPTERPATH)\"" \
 		-o $(srcdir)/MMCoreJ_wrap.cxx $(srcdir)/MMCoreJ.i 
 	cp $(srcdir)/MMCoreJ_wrap.cxx MMCoreJ_wrap.cxx || echo "No problem"
 	
-INCLUDES = $(JAVAINC)
+AM_CPPFLAGS = $(JAVAINC)
 lib_LTLIBRARIES = libMMCoreJ_wrap.la
 nodist_libMMCoreJ_wrap_la_SOURCES = MMCoreJ_wrap.cxx
 libMMCoreJ_wrap_la_SOURCES = $(SWIGLIB_SOURCES) \
