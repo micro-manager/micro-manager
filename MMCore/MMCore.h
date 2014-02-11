@@ -101,6 +101,14 @@ public:
    CMMCore();
    ~CMMCore();
 
+   /**
+    * A method that does nothing.
+    *
+    * This method can be called as a sanity check when dynamically loading the
+    * Core library.
+    */
+   static void noop() {}
+
    /** @name Initialization and set-up
    * Loading of drivers, initialization and setting-up the environment.
    */

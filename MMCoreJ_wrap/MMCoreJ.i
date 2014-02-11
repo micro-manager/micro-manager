@@ -32,6 +32,231 @@
 %include std_map.i
 %include std_pair.i
 %include "typemaps.i"
+
+
+//
+// Native library loading
+//
+
+%pragma(java) jniclassimports=%{
+   import java.io.File;
+   import java.util.ArrayList;
+   import java.util.List;
+   import java.net.URL;
+   import java.net.URLDecoder;
+%}
+
+// Pull in the compile-time hard-coded paths (determined by Unix configure script)
+%javaconst(1) LIBRARY_PATH;
+%constant char *LIBRARY_PATH = MMCOREJ_LIBRARY_PATH;
+
+%pragma(java) jniclasscode=%{
+   private static class FijiPaths {
+      private static String URLtoFilePath(URL url) throws Exception {
+         // We need to get rid of multiple protocols (jar: and file:)
+         // and end up with an file path correct on every platform.
+         // The following lines seem to work, though it's ugly:
+         String url1 = URLDecoder.decode(url.getPath(), "UTF-8");
+         String url2 = URLDecoder.decode(new URL(url1).getPath(), "UTF-8");
+         return new File(url2).getAbsolutePath();
+      }
+
+      private static String getJarPath() {
+         String classFile = "/mmcorej/CMMCore.class";
+         try {
+            String path = URLtoFilePath(CMMCore.class.getResource(classFile));
+            int bang = path.indexOf('!');
+            if (bang >= 0)
+               path = path.substring(0, bang);
+            return path;
+         } catch (Exception e) {
+            return "";
+         }
+      }
+
+      private static String getPlatformString() {
+         String osName = System.getProperty("os.name");
+         String osArch = System.getProperty("os.arch");
+         return osName.startsWith("Mac") ? "macosx" :
+            (osName.startsWith("Win") ? "win" : osName.toLowerCase()) +
+            (osArch.indexOf("64") < 0 ? "32" : "64");
+      }
+
+      public static List<File> getPaths() {
+         // Return these dirs:
+         // $MMCOREJ_JAR_DIR
+         // $MMCOREJ_JAR_DIR/..
+         // $MMCOREJ_JAR_DIR/../mm/$PLATFORM
+         // $MMCOREJ_JAR_DIR/../..               # Was used by classic Micro-Manager
+         // $MMCOREJ_JAR_DIR/../../mm/$PLATFORM
+         // XXX: Which one is used by OpenSPIM?
+
+         final File jarDir = new File(getJarPath()).getParentFile();
+         final File jarDirParent = jarDir.getParentFile();
+         final File jarDirGrandParent = jarDirParent.getParentFile();
+
+         final String fijiPlatform = getPlatformString();
+         final File jarDirParentFiji = new File(new File(jarDirParent, "mm"), fijiPlatform);
+         final File jarDirGrandParentFiji = new File(new File(jarDirGrandParent, "mm"), fijiPlatform);
+
+         final List<File> searchPaths = new ArrayList<File>();
+         searchPaths.add(jarDir);
+         searchPaths.add(jarDirParent);
+         searchPaths.add(jarDirParentFiji);
+         searchPaths.add(jarDirGrandParent);
+         searchPaths.add(jarDirGrandParentFiji);
+         return searchPaths;
+      }
+   }
+
+   private final static String MM_PROPERTY_MMCOREJ_LIB_PATH = "mmcorej.library.path";
+   private final static String NATIVE_LIBRARY_NAME = "MMCoreJ_wrap";
+
+   private static List<String> libraryLoadLog_ = new ArrayList<String>();
+   private static void logLibraryLoading(String message) {
+      libraryLoadLog_.add(message);
+   }
+
+   public static String getNativeLibraryLoadLog() {
+      String ret = "";
+      for (String s : libraryLoadLog_)
+         ret = ret + "\n" + s;
+      return ret.substring(1);
+   }
+
+   private static File getPreferredLibraryPath() {
+      final String path = System.getProperty(MM_PROPERTY_MMCOREJ_LIB_PATH);
+      if (path != null && path.length() > 0)
+         return new File(path);
+      return null;
+   }
+
+   private static File getHardCodedLibraryPath() {
+      final String path = MMCoreJConstants.LIBRARY_PATH;
+      if (path != null && path.length() > 0)
+         return new File(path);
+      return null;
+   }
+
+   private static boolean isLinux() {
+      return System.getProperty("os.name").toLowerCase().startsWith("linux");
+   }
+
+   private static boolean loadNativeLibrary(File dirPath) {
+      String libraryName = System.mapLibraryName(NATIVE_LIBRARY_NAME);
+      String libraryPath = new File(dirPath, libraryName).getAbsolutePath();
+      if (new File(libraryPath).exists()) {
+         System.load(libraryPath);
+         return true;
+      }
+      return false;
+   }
+      
+   private static boolean checkIfAlreadyLoaded() {
+      boolean loaded = true;
+      try {
+         CMMCore.noop();
+      }
+      catch (UnsatisfiedLinkError e) {
+         loaded = false;
+      }
+
+      if (loaded) {
+         // TODO If the library is already loaded, we still want to make sure
+         // that it was loaded from the right copy. The Core now has this
+         // information, so we should check it.
+         logLibraryLoading(NATIVE_LIBRARY_NAME + " was already loaded");
+         return true;
+      }
+      return false;
+   }
+
+   private static boolean loadFromPathSetBySystemProperty() {
+      final File preferredPath = getPreferredLibraryPath();
+      if (preferredPath != null) {
+         if (loadNativeLibrary(preferredPath)) {
+            logLibraryLoading("Loaded " + NATIVE_LIBRARY_NAME + " from " +
+               preferredPath.getAbsolutePath() +
+               ", given by " + MM_PROPERTY_MMCOREJ_LIB_PATH);
+         }
+         else {
+            logLibraryLoading("Failed to load " + NATIVE_LIBRARY_NAME + " from " +
+               preferredPath.getAbsolutePath() +
+               ", given by " + MM_PROPERTY_MMCOREJ_LIB_PATH);
+         }
+         return true;
+      }
+      return false;
+   }
+
+   private static boolean loadFromHardCodedPaths() {
+      final List<File> searchPaths = new ArrayList<File>();
+
+      // Some relative paths were hard-coded for running Micro-Manager in Fiji
+      // and in the classic distribution (in which the native library is
+      // located in the grand-parent directory of the directory containing the
+      // MMCoreJ JAR). This also allows finding the native library in the same
+      // directory as the JAR.
+      searchPaths.addAll(FijiPaths.getPaths());
+
+      // On Linux, also search a compile-time hard-coded path (TODO It is odd
+      // that this is done only in the case of Linux. The build system should
+      // be modified so that it can be enabled or disabled on any Unix.)
+      if (isLinux()) {
+         final File hardCodedPath = getHardCodedLibraryPath();
+         if (hardCodedPath != null)
+            searchPaths.add(hardCodedPath);
+      }
+
+      logLibraryLoading(NATIVE_LIBRARY_NAME + " will be searched for in:");
+      for (File path : searchPaths) {
+         logLibraryLoading("  " + path.getPath());
+      }
+
+      for (File path : searchPaths) {
+         if (loadNativeLibrary(path)) {
+            logLibraryLoading("Loaded " + NATIVE_LIBRARY_NAME + " from " +
+               path.getAbsolutePath());
+            return true;
+         }
+      }
+      logLibraryLoading("Failed to load " + NATIVE_LIBRARY_NAME + " from listed paths");
+      return false;
+   }
+
+   // Load the MMCoreJ_wrap native library.
+   static {
+      if (!checkIfAlreadyLoaded()) {
+         // The most reliable method for locating (the correct copy of)
+         // MMCoreJ_wrap is to look in the single path given as a Java system
+         // property. The launcher will typically set this property. If this
+         // property is set, other paths will not be considered.
+         if (!loadFromPathSetBySystemProperty()) {
+            // However, if the system property is not set, we search in some
+            // candidate directories in order.
+            if (!loadFromHardCodedPaths()) {
+               // Finally, if all else fails, try the system default mechanism,
+               // which will use java.library.path. This is necessary for
+               // backward compatibility, and it is also what people will
+               // generally expect.
+               logLibraryLoading("Falling back to loading " + NATIVE_LIBRARY_NAME +
+                  " using system default method");
+               try {
+                  System.loadLibrary(NATIVE_LIBRARY_NAME);
+               }
+               catch (UnsatisfiedLinkError e) {
+                  logLibraryLoading("Failed to load " + NATIVE_LIBRARY_NAME);
+                  System.err.println(getNativeLibraryLoadLog());
+               }
+            }
+         }
+      }
+   }
+
+%} // jniclasscode (native library loading)
+
+
+
 // output arguments
 %apply double &OUTPUT { double &x_stage };
 %apply double &OUTPUT { double &y_stage };
@@ -551,94 +776,6 @@
    }
 %}
 
-
-%pragma(java) jniclassimports=%{
-   import java.io.File;
-
-   import java.util.ArrayList;
-   import java.util.List;
-   import java.net.URL;
-   import java.net.URLDecoder;
-%}
-
-// Pull in the compile-time (configuration-dependent) hard-coded paths.
-%javaconst(1) LIBRARY_PATH;
-%constant char *LIBRARY_PATH = MMCOREJ_LIBRARY_PATH;
-
-%pragma(java) jniclasscode=%{
-
-  private static String URLtoFilePath(URL url) throws Exception {
-    // We need to get rid of multiple protocols (jar: and file:)
-    // and end up with an file path correct on every platform.
-    // The following lines seem to work, though it's ugly:
-	String url1 = URLDecoder.decode(url.getPath(), "UTF-8");
-	String url2 = URLDecoder.decode(new URL(url1).getPath(), "UTF-8");
-	return new File(url2).getAbsolutePath();
-  }
-
-  private static String getJarPath() {
-    String classFile = "/mmcorej/CMMCore.class";
-    try {
-		String path = URLtoFilePath(CMMCore.class.getResource(classFile));
-		int bang = path.indexOf('!');
-		if (bang > 0)
-			path = path.substring(0, bang);
-		System.out.println("MMCoreJ.jar path = " + path);
-		return path;
-	} catch (Exception e) {
-		return "";
-	}
-  }
-
-  private static String getPlatformString() {
-    String osName = System.getProperty("os.name");
-    String osArch = System.getProperty("os.arch");
-    return osName.startsWith("Mac") ? "macosx" :
-      (osName.startsWith("Win") ? "win" : osName.toLowerCase()) +
-      (osArch.indexOf("64") < 0 ? "32" : "64");
-  }
-
-  public static void loadLibrary(List<File> searchPaths, String name) {
-    String libraryName = System.mapLibraryName(name);
-    for (File path : searchPaths)
-        if (new File(path, libraryName).exists()) {
-            System.load(new File(path, libraryName).getAbsolutePath());
-            return;
-        }
-    System.loadLibrary(name);
-  }
-
-  static {
-    List<File> searchPaths = new ArrayList<File>();
-    File directory = new File(getJarPath()).getParentFile();
-    searchPaths.add(directory);
-    directory = directory.getParentFile();
-    searchPaths.add(directory);
-    String platform = getPlatformString();
-    File directoryMM = new File(new File(directory, "mm"), platform);
-    searchPaths.add(directoryMM);
-    directory = directory.getParentFile();
-    searchPaths.add(directory);
-    directoryMM = new File(new File(directory, "mm"), platform);
-    searchPaths.add(directoryMM);
-    // on Linux use the compiled-in device adapter path
-    if (platform.startsWith("linux"))
-        searchPaths.add(new File(MMCoreJConstants.LIBRARY_PATH));
-    
-	try {
-	    loadLibrary(searchPaths, "MMCoreJ_wrap");
-        for (File path : searchPaths) {
-          System.out.println(path.getAbsolutePath());
-          CMMCore.addSearchPath(path.getAbsolutePath());
-          }
-    } catch (UnsatisfiedLinkError e) {
-        System.err.println("Native code library failed to load. \n" + e);
-        // do not exit here, loadLibrary does not work on all platforms in the same way,
-        // perhaps the library is already loaded.
-        //System.exit(1);
-    }
-  }
-%}
 
 %{
 #include "../MMDevice/MMDeviceConstants.h"
