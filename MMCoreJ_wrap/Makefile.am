@@ -53,7 +53,6 @@ libMMCoreJ_wrap_la_SOURCES = $(SWIGLIB_SOURCES) \
 	$(top_srcdir)/MMCore/LoadableModules/LoadedModuleImplUnix.cpp \
 	$(top_srcdir)/MMCore/LoadableModules/LoadedDeviceAdapter.cpp \
 	$(top_srcdir)/MMCore/Host.cpp
- 
 libMMCoreJ_wrap_la_LIBADD = $(BOOST_SYSTEM_LIB)
 libMMCoreJ_wrap_la_LDFLAGS = -Wl, -module -ldl $(BOOST_LDFLAGS)
 
