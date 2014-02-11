@@ -63,6 +63,7 @@
 #include <assert.h>
 #include <sstream>
 #include <algorithm>
+#include <set>
 #include <vector>
 #include <ostream>
 
@@ -408,7 +409,7 @@ vector<string> CMMCore::getAvailableDevices(const char* library) throw (CMMError
    if (!library)
       throw CMMError("Null device adapter name");
 
-   return CPluginManager::GetAvailableDevices(library);
+   return pluginManager_.GetAvailableDevices(library);
 }
 /**
  * Get descriptions for available devices from the specified library.
@@ -418,7 +419,7 @@ vector<string> CMMCore::getAvailableDeviceDescriptions(const char* library) thro
    if (!library)
       throw CMMError("Null device adapter name");
 
-   return CPluginManager::GetAvailableDeviceDescriptions(library);
+   return pluginManager_.GetAvailableDeviceDescriptions(library);
 }
 /**
  * Get type information for available devices from the specified library.
@@ -428,7 +429,7 @@ vector<long> CMMCore::getAvailableDeviceTypes(const char* library) throw (CMMErr
    if (!library)
       throw CMMError("Null device adapter name");
 
-   return CPluginManager::GetAvailableDeviceTypes(library);
+   return pluginManager_.GetAvailableDeviceTypes(library);
 }
 
 /**
@@ -588,29 +589,77 @@ void CMMCore::setSystemState(const Configuration& conf)
 }
 
 /**
- * Add a list of paths to the search path of the plugin manager.
+ * Return the current device adapter search paths.
+ */
+std::vector<std::string> CMMCore::getDeviceAdapterSearchPaths()
+{
+   return pluginManager_.GetSearchPaths();
+}
+
+/**
+ * Set the device adapter search paths.
  *
- * We need to make sure that the drivers discovered with getDeviceLibraries()
- * can actually be loaded. This is only possible if we require the search
- * path to be set in the plugin manager, and force the plugin manager respect
- * this setting for both discovery and loading drivers.
+ * Upon subsequent attempts to load device adapters, these paths (and only
+ * these paths) will be searched. Calling this function has no effect on device
+ * adapters that have already been loaded.
  *
- * @param path    a list of search paths in a single string
+ * If you want to simply add to the list of paths, you must first retrieve the
+ * current paths by calling getDeviceAdapterSearchPaths().
+ *
+ * @param paths   the device adapter search paths
+ */
+void CMMCore::setDeviceAdapterSearchPaths(const std::vector<std::string>& paths)
+{
+   pluginManager_.SetSearchPaths(paths.begin(), paths.end());
+}
+
+/**
+ * Return the names of discoverable device adapters.
+ *
+ * Note that this list is constructed based on filename matching in the current
+ * search paths. This method does not check whether the files are valid and
+ * compatible device adapters.
+ */
+std::vector<std::string> CMMCore::getDeviceAdapterNames() throw (CMMError)
+{
+   return pluginManager_.GetAvailableDeviceAdapters();
+}
+
+/**
+ * Add a list of paths to the legacy device adapter search path list.
+ *
+ * Do not use in new code. This adds to a global (static) fallback list that is
+ * only searched when a device adapter is not located in any of the directories
+ * set by setDeviceAdapterSearchPaths(). The list is initially empty.
+ *
+ * @deprecated Use the non-static setDeviceAdapterSearchPaths() instead.
+ *
+ * @param path   a list of search paths in a single string
  */
 void CMMCore::addSearchPath(const char *path)
 {
    if (!path)
       return;
 
-   CPluginManager::AddSearchPath(string(path));
+   CPluginManager::AddLegacyFallbackSearchPath(path);
 }
 
 /**
  * Returns a list of library names available in the search path.
+ *
+ * Do not use in new code. For backward compatibility, this method returns the
+ * list of device adapters availbable in the default search path(s) and the
+ * paths added via addSearchPath(). For obvious reasons (since this method is
+ * static), it will not return device adapters found in the search paths set by
+ * setDeviceAdapterSearchPaths(). Thus, this method will only work as expected
+ * when called from legacy code that does not make use of
+ * setDeviceAdapterSearchPaths().
+ *
+ * @deprecated Use the non-static getDeviceAdapterNames() instead.
  */
 vector<string> CMMCore::getDeviceLibraries() throw (CMMError)
 {
-   return CPluginManager::GetModules();
+   return CPluginManager::GetModulesInLegacyFallbackSearchPaths();
 }
 
 /**

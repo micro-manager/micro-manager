@@ -150,8 +150,13 @@ public:
    * API guaranteed to work for all devices.
    */
    //@ {
-   static void addSearchPath(const char *path);
-   static std::vector<std::string> getDeviceLibraries() throw (CMMError);
+   std::vector<std::string> getDeviceAdapterSearchPaths();
+   void setDeviceAdapterSearchPaths(const std::vector<std::string>& paths);
+   std::vector<std::string> getDeviceAdapterNames() throw (CMMError);
+
+   static void addSearchPath(const char *path); // Deprecated
+   static std::vector<std::string> getDeviceLibraries() throw (CMMError); // Deprecated
+
    std::vector<std::string> getLoadedDevices() const;
    std::vector<std::string> getLoadedDevicesOfType(MM::DeviceType devType) const;
    std::vector<std::string> getDevicePropertyNames(const char* label) throw (CMMError);
