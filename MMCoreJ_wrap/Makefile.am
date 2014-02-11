@@ -1,5 +1,14 @@
-## Process this file with automake to produce Makefile.in
-AM_CXXFLAGS = $(BOOST_CPPFLAGS)
+# We use -fno-strict-aliasing (which disables certain optimizations in GCC and
+# Clang), because SWIG documentation calls for it (when wrapping for Java).
+# Strictly speaking, this should only be necessary when compiling
+# SWIG-generated code; if our own code changes behavior depending on whether
+# this flag is used or not, it should be considered a bug in our code.
+#
+# (We used to globally use -O by default, rather than -O2, on Linux, presumably
+# for the above reason (though the intent was never documented). But there is
+# nothing Linux-specific about this.)
+AM_CXXFLAGS = $(BOOST_CPPFLAGS) -fno-strict-aliasing
+
 SWIGLIB_SOURCES = MMCoreJ.i \
 	../MMCore/CircularBuffer.h  \
 	../MMCore/ConfigGroup.h  \

@@ -1,77 +1,14 @@
-# Checks for programs.
+# Check for programs.
 AC_PROG_CXX([clang++ llvm-g++ g++ c++])
 AC_PROG_CC([clang llvm-gcc gcc cc])
 AC_PROG_LIBTOOL
 
-OSNAME=`uname -s`
-
-# GCC version
-# AC_PROG_CXX sets GXX to yes even when using clang++, but clang++'s -v output
-# has a different format and will cause an error. So check CXX directly.
-# XXX There may be cases where CXX != g++ even though we are using (real) g++.
-# If so this check will be skipped. But g++ < 3.0 is rare enough.
-if test "x$GXX" = "xyes" -a "x$CXX" = "xg++"; then
-  AC_MSG_CHECKING([GNU compiler version])
-
-  # Don't pass CXXFLAGS to the following CXX command as some
-  # of them can't be specified along with '-v'.
-  cc_version=["`$CXX -v 2>&1 </dev/null |grep 'gcc version' |\
-          sed 's/.*gcc version \([-a-z0-9\.]*\).*/\1/'`"]
-  AC_MSG_RESULT([$cc_version])
-
-  # Some version numbers
-  cc_vers_major=`echo $cc_version | cut -f1 -d.`
-  cc_vers_minor=`echo $cc_version | cut -f2 -d.`
-  cc_vers_patch=`echo $cc_version | cut -f3 -d.`
-  test -n "$cc_vers_major" || cc_vers_major=0
-  test -n "$cc_vers_minor" || cc_vers_minor=0
-  test -n "$cc_vers_patch" || cc_vers_patch=0
-  cc_vers_all=`expr $cc_vers_major '*' 1000000 + $cc_vers_minor '*' 1000 + $cc_vers_patch`
-
-  if test $cc_vers_major -lt 3; then
-    AC_MSG_ERROR([gcc >= 3.0 is needed to compile `])
-  fi
-
-  # On linux, some gcc versions build shared libraries unusable in java when using
-  # the -O2 optimization.  Switch it off here:
-
-  if test $cc_vers_major -gt 3; then
-     case $host in
-        *-*-linux*) CXXFLAGS="-g -O";;
-     esac
-  fi
-fi
-
-
-#----------------------------------------------------------------
-# LINKFORSHARED are the flags passed to the $(CC) command that links
-# -- this is only needed for a few systems
-#----------------------------------------------------------------
-AC_MSG_CHECKING(LINKFORSHARED)
-if test -z "$LINKFORSHARED"
-then    
-case $host in   
-   *-*-aix*)   LINKFORSHARED='-Wl,-bE:$(srcdir)/python.exp -lld';;
-   *-*-hp*) LINKFORSHARED="-Wl,-E -Wl,+s -Wl,+b\$(BINLIBDEST)/lib-dynload";;
-   *-*-linux*) LINKFORSHARED="-Xlinker -export-dynamic";;
-   *-*-next*) LINKFORSHARED="-u libsys_s";;
-   *-sco-sysv*) LINKFORSHARED="-Bdynamic -dy -Wl,-Bexport";;                  
-   *-*-irix6*) LINKFORSHARED="-all";;   esac
-fi
-AC_MSG_RESULT($LINKFORSHARED)
-AC_SUBST(LINKFORSHARED)
-
-
-#---------------------------------------------------
-# Platform dependent flags
-#---------------------------------------------------
 case $host in
    *-*-linux*)
    LPTHREAD="-lpthread"
    DEVICEADAPTERPATH="\${libdir}/micro-manager"
    ;;
 esac
-AC_MSG_RESULT($LPTHREAD)
 AC_SUBST(LPTHREAD)
 
 build_platform="$build_cpu"
@@ -88,10 +25,9 @@ AC_ARG_ENABLE([arch], [AS_HELP_STRING([--enable-arch=arch],[Mac OS X only: ppc, 
 # ImageJ
 #----------------------------------------------------------------
 
-
 # Determine if we need to look for ImageJ
-AC_MSG_CHECKING(whether to build for imagej)
-AC_ARG_WITH([imagej], [AS_HELP_STRING([--with-imagej=path],[path to ImageJ-based GUI])], [IMAGEJDIR="$withval"], [IMAGEJDIR="yes"])
+AC_MSG_CHECKING(whether to build for ImageJ)
+AC_ARG_WITH([imagej], [AS_HELP_STRING([--with-imagej=path],[path to ImageJ directory])], [IMAGEJDIR="$withval"], [IMAGEJDIR="yes"])
 AC_MSG_RESULT($IMAGEJDIR)
 
 # Debian IJ settings
@@ -100,9 +36,6 @@ DEBIANIJPLUGIN="/usr/share/imagej";
 
 AM_CONDITIONAL(BUILD_WITH_JAVA, test "$IMAGEJDIR" != "no")
 if test "$IMAGEJDIR" != "no" ; then
-   #----------------------------------------------------------------
-   # Find ImageJ directory
-   #----------------------------------------------------------------
    AC_MSG_CHECKING(for ImageJ directory)
 
    if test "$IMAGEJDIR" = "yes"; then
@@ -122,32 +55,24 @@ if test "$IMAGEJDIR" != "no" ; then
    fi
 
    if test "$IJPATH" = "" ; then
-     AC_MSG_ERROR([not found, Use the without-imagej directive to build without ImageJ or install ImageJ (http://rsb.info.nih.gov/ij/ and rerun configure, possibly using the --with-imagej=path directive])
+     AC_MSG_ERROR([not found, use the --without-imagej option to build without ImageJ or install ImageJ (http://rsb.info.nih.gov/ij/ and rerun configure, possibly using the --with-imagej=path option])
    fi
 
-
-   #----------------------------------------------------------------
-   # .so-directory
-   #----------------------------------------------------------------
    if test -z "$DEVICEADAPTERPATH"; then
       DEVICEADAPTERPATH="$IJPATH"
    fi
 
-   #----------------------------------------------------------------
-   # .jar-directory
-   #----------------------------------------------------------------
    if test -z "$JARPATH"; then
       JARPATH="$IJPATH/plugins/Micro-Manager"
    fi
 else
-   DEVICEADAPTERPATH="${libdir}/micro-manager"
+   DEVICEADAPTERPATH="\${libdir}/micro-manager"
 fi
 
 
 AC_SUBST(IJPATH)
 AC_SUBST(DEVICEADAPTERPATH)
 AC_SUBST(JARPATH)
-AC_SUBST(OSNAME)
 
 AC_MSG_CHECKING(device adapter path)
 AC_MSG_RESULT($DEVICEADAPTERPATH)
