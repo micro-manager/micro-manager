@@ -10,6 +10,7 @@ libMMCore_a_SOURCES = MMCore.cpp MMCore.h \
 	Error.h Error.cpp \
 	ErrorCodes.h\
 	PluginManager.h PluginManager.cpp \
+	LibraryInfo/LibraryPaths.h LibraryInfo/LibraryPathsUnix.cpp \
 	LoadableModules/LoadedModule.h LoadableModules/LoadedModule.cpp \
 	LoadableModules/LoadedModuleImpl.h LoadableModules/LoadedModuleImpl.cpp \
 	LoadableModules/LoadedModuleImplUnix.h LoadableModules/LoadedModuleImplUnix.cpp \

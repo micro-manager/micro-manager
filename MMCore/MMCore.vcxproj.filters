@@ -60,6 +60,9 @@
     <ClCompile Include="LoadableModules\LoadedDeviceAdapter.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="LibraryInfo\LibraryPathsWindows.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CircularBuffer.h">
@@ -126,6 +129,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="LoadableModules\LoadedDeviceAdapter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LibraryInfo\LibraryPaths.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

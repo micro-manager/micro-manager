@@ -28,6 +28,7 @@ MMCOREPYSOURCES = $(SWIGLIBSOURCES) \
 	$(top_srcdir)/MMCore/Host.cpp \
 	$(top_srcdir)/MMCore/MMCore.cpp \
 	$(top_srcdir)/MMCore/PluginManager.cpp \
+	$(top_srcdir)/MMCore/LibraryInfo/LibraryPathsUnix.cpp \
 	$(top_srcdir)/MMCore/LoadableModules/LoadedModule.cpp \
 	$(top_srcdir)/MMCore/LoadableModules/LoadedModuleImpl.cpp \
 	$(top_srcdir)/MMCore/LoadableModules/LoadedModuleImplUnix.cpp \
