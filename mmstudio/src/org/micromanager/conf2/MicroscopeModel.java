@@ -75,7 +75,7 @@ public class MicroscopeModel {
          deviceListFileName.append(DEVLIST_FILE_NAME);
          CMMCore core = (null == c) ? new CMMCore() : c;
          core.enableDebugLog(true);
-         StrVector libs = getDeviceLibraries(core);
+         StrVector libs = core.getDeviceAdapterNames();
          ArrayList<Device> devs = new ArrayList<Device>();
 
          for (int i = 0; i < libs.size(); i++) {
@@ -183,15 +183,6 @@ public class MicroscopeModel {
    }
 
    /**
-    * Match the file list against currently available DLLs and add ones that are
-    * missing Find all paths on java.library.path and add an empty (current)
-    * directory Then assemble a list with DeviceLibraries on all these paths
-    */
-   public static StrVector getDeviceLibraries(CMMCore core) throws Exception {
-      return CMMCore.getDeviceLibraries();
-   }
-
-   /**
     * Inspects the Micro-manager software and gathers information about all
     * available devices.
     */
@@ -205,7 +196,7 @@ public class MicroscopeModel {
          ArrayList<Device> hubs = new ArrayList<Device>();
          badLibraries_ = new Vector<String>();
 
-         StrVector libs = getDeviceLibraries(core);
+         StrVector libs = core.getDeviceAdapterNames();
 
          for (int i = 0; i < libs.size(); i++) {
             boolean good = false;

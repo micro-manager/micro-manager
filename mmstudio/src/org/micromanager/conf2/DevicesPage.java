@@ -488,7 +488,7 @@ private JComboBox byLibCombo_;
       setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 		try {
          // double check that list of device libraries is valid before continuing.
-         CMMCore.getDeviceLibraries();
+         core_.getDeviceAdapterNames();
 			model_.removeDuplicateComPorts();
 			rebuildDevicesTable();
 			if (fromNextPage) {
