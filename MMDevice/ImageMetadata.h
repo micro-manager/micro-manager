@@ -332,7 +332,7 @@ public:
       if (it != tags_.end())
       {
          delete it->second;
-         tags_.erase(it);
+         tags_.erase(key);
       }
    }
 
