@@ -116,8 +116,8 @@ public class TrackerControl extends MMFrame implements MMPlugin {
    private static final String ACQNAME = "LiveTracking";
    private JLabel labelTopLeft_;
    private JLabel labelBottomRight_;
-   private JRadioButton stackRadioButton_;
-   private JRadioButton image5dRadioButton_;
+   private JRadioButton memoryRadioButton_;
+   private JRadioButton diskRadioButton_;
    private JLabel speedLabel_;
    private double distUm_;
    private JButton topLeftButton_;
@@ -187,7 +187,7 @@ public class TrackerControl extends MMFrame implements MMPlugin {
             resolutionPix_ = prefs_.getInt(RESOLUTION_PIX, resolutionPix_);
             offsetPix_ = prefs_.getInt(OFFSET_PIX, offsetPix_);
             intervalMs_ = prefs_.getInt(INTERVAL_MS, intervalMs_);
-            image5dRadioButton_.setSelected(prefs_.getBoolean(DISK_RECORDING, image5dRadioButton_.isSelected()));
+            diskRadioButton_.setSelected(prefs_.getBoolean(DISK_RECORDING, diskRadioButton_.isSelected()));
             rootField_.setText(prefs_.get(ROOT, ""));
             nameField_.setText(prefs_.get(NAME, ""));
 
@@ -202,7 +202,7 @@ public class TrackerControl extends MMFrame implements MMPlugin {
             prefs_.putInt(RESOLUTION_PIX, resolutionPix_);
             prefs_.putInt(OFFSET_PIX, offsetPix_);
             prefs_.putInt(INTERVAL_MS, intervalMs_);
-            prefs_.putBoolean(DISK_RECORDING, image5dRadioButton_.isSelected());
+            prefs_.putBoolean(DISK_RECORDING, diskRadioButton_.isSelected());
             prefs_.put(ROOT, rootField_.getText());
             prefs_.put(NAME, nameField_.getText());
          }
@@ -302,18 +302,18 @@ public class TrackerControl extends MMFrame implements MMPlugin {
       trackingRegionLabel.setBounds(10, 120, 217, 16);
       getContentPane().add(trackingRegionLabel);
 
-      stackRadioButton_ = new JRadioButton();
-      buttonGroup.add(stackRadioButton_);
-      stackRadioButton_.setText("In Memory)");
-      stackRadioButton_.setBounds(240, 185, 160, 24);
-      getContentPane().add(stackRadioButton_);
-      stackRadioButton_.setSelected(true);
+      memoryRadioButton_ = new JRadioButton();
+      buttonGroup.add(memoryRadioButton_);
+      memoryRadioButton_.setText("In Memory");
+      memoryRadioButton_.setBounds(240, 185, 160, 24);
+      getContentPane().add(memoryRadioButton_);
+      memoryRadioButton_.setSelected(true);
 
-      image5dRadioButton_ = new JRadioButton();
-      buttonGroup.add(image5dRadioButton_);
-      image5dRadioButton_.setText("On Disk");
-      image5dRadioButton_.setBounds(240, 203, 160, 24);
-      getContentPane().add(image5dRadioButton_);
+      diskRadioButton_ = new JRadioButton();
+      buttonGroup.add(diskRadioButton_);
+      diskRadioButton_.setText("On Disk");
+      diskRadioButton_.setBounds(240, 203, 160, 24);
+      getContentPane().add(diskRadioButton_);
 
       final JLabel sequenceDataLabel = new JLabel();
       sequenceDataLabel.setText("Sequence data:");
@@ -434,7 +434,7 @@ public class TrackerControl extends MMFrame implements MMPlugin {
          acqName_ = app_.getUniqueAcquisitionName(acqName_);
          nameField_.setText(acqName_);
          app_.openAcquisition(acqName_, rootField_.getText(),
-                 2, 1, 1, 1, true, image5dRadioButton_.isSelected());
+                 2, 1, 1, 1, true, diskRadioButton_.isSelected());
       } catch (MMScriptException ex) {
          ReportingUtils.showError(ex, "Problem while tracking");
       }
