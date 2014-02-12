@@ -31,10 +31,11 @@
 
 #include "MMDeviceConstants.h"
 
+#include <map>
+#include <memory>
+#include <sstream>
 #include <string>
 #include <vector>
-#include <map>
-#include <sstream>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -283,8 +284,6 @@ public:
    }
 
    void Clear() {
-      for (TagIterator it=tags_.begin(); it != tags_.end(); it++)
-         delete it->second;
       tags_.clear();
    }
 
@@ -330,7 +329,7 @@ public:
       tags_.erase(tag.GetQualifiedName());
 
       // adding a new tag
-      tags_[tag.GetQualifiedName()] = newTag;
+      tags_[tag.GetQualifiedName()] = std::auto_ptr<MetadataTag>(newTag);
    }
 
    void RemoveTag(const char* key)
@@ -457,7 +456,7 @@ public:
             ms.SetValue(readLine(is).c_str());
 
             MetadataTag* newTag = ms.Clone();
-            tags_[ms.GetQualifiedName()] = newTag;
+            tags_[ms.GetQualifiedName()] = std::auto_ptr<MetadataTag>(newTag);
          }
          else if (id.compare("a") == 0)
          {
@@ -474,7 +473,7 @@ public:
             }
 
             MetadataTag* newTag = as.Clone();
-            tags_[as.GetQualifiedName()] = newTag;
+            tags_[as.GetQualifiedName()] = std::auto_ptr<MetadataTag>(newTag);
          }
          else
          {
@@ -506,13 +505,18 @@ private:
    {
       TagIterator it = tags_.find(key);
       if (it != tags_.end())
-         return it->second;
+         return it->second.get();
       else
          throw MetadataKeyError();
    }
 
-   std::map<std::string, MetadataTag*> tags_;
-   typedef std::map<std::string, MetadataTag*>::const_iterator TagIterator;
+   // The memory management of tag objects is a little scary (originally it was
+   // using raw pointers and leaking tag objects in multiple places). It might
+   // be better to store tag instances instead of pointers. For now, converted
+   // raw pointers to auto_ptr's, since I'm not sure we want to require boost
+   // headers (for shared_ptr) for every device adapter.
+   std::map<std::string, std::auto_ptr<MetadataTag> > tags_;
+   typedef std::map<std::string, std::auto_ptr<MetadataTag> >::const_iterator TagIterator;
 };
 
 #endif //_IMAGE_METADATA_H_
