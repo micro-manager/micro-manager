@@ -179,6 +179,7 @@ public class TrackerControl extends MMFrame implements MMPlugin {
       imageCounter_ = 0;
       limits_ = new MMRect();
       prefs_ = Preferences.userNodeForPackage(this.getClass());
+      setPrefsNode(prefs_);
       initialize();
 
       addWindowListener(new WindowAdapter() {
@@ -205,13 +206,14 @@ public class TrackerControl extends MMFrame implements MMPlugin {
             prefs_.putBoolean(DISK_RECORDING, diskRadioButton_.isSelected());
             prefs_.put(ROOT, rootField_.getText());
             prefs_.put(NAME, nameField_.getText());
+            savePosition();
          }
       });
 
       setTitle("Live Tracking");
       setResizable(false);
       getContentPane().setLayout(null);
-      setBounds(100, 100, 412, 346);
+      loadPosition(100, 100, 412, 346);
 
       final JLabel intervalmsLabel = new JLabel();
       intervalmsLabel.setText("Interval [ms]");
