@@ -27,28 +27,24 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
-    <UseOfMfc>Dynamic</UseOfMfc>
     <CharacterSet>MultiByte</CharacterSet>
     <PlatformToolset>Windows7.1SDK</PlatformToolset>
     <UseDebugLibraries>false</UseDebugLibraries>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
-    <UseOfMfc>Dynamic</UseOfMfc>
     <CharacterSet>MultiByte</CharacterSet>
     <PlatformToolset>Windows7.1SDK</PlatformToolset>
     <UseDebugLibraries>true</UseDebugLibraries>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
-    <UseOfMfc>Dynamic</UseOfMfc>
     <CharacterSet>MultiByte</CharacterSet>
     <PlatformToolset>Windows7.1SDK</PlatformToolset>
     <UseDebugLibraries>false</UseDebugLibraries>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
-    <UseOfMfc>Dynamic</UseOfMfc>
     <CharacterSet>MultiByte</CharacterSet>
     <PlatformToolset>Windows7.1SDK</PlatformToolset>
     <UseDebugLibraries>true</UseDebugLibraries>
@@ -87,7 +83,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>../../../3rdParty/PiperApi;../../MMDevice;..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../MMDevice;../../../3rdParty/PiperApi;$(MM_BOOST_INCLUDEDIR);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_AFXEXT;MODULE_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -97,7 +93,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>PiperAPI.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\..\..\3rdparty\PiperAPI\Lib\$(Platform);..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\..\..\3rdparty\PiperAPI\Lib\$(Platform);$(MM_BOOST_LIBDIR);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <UACExecutionLevel>HighestAvailable</UACExecutionLevel>
       <ModuleDefinitionFile>.\PiperMmAdapter.def</ModuleDefinitionFile>
       <SubSystem>Windows</SubSystem>
@@ -111,7 +107,7 @@
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>../../../3rdParty/PiperApi;../../MMDevice;..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../MMDevice;../../../3rdParty/PiperApi;$(MM_BOOST_INCLUDEDIR);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_AFXEXT;MODULE_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -121,7 +117,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>PiperAPI.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\..\..\3rdparty\PiperAPI\Lib\$(Platform);..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\..\..\3rdparty\PiperAPI\Lib\$(Platform);$(MM_BOOST_LIBDIR);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <UACExecutionLevel>HighestAvailable</UACExecutionLevel>
       <ModuleDefinitionFile>.\PiperMmAdapter.def</ModuleDefinitionFile>
       <SubSystem>Windows</SubSystem>
@@ -132,7 +128,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
-      <AdditionalIncludeDirectories>../../../3rdParty/PiperApi;../../MMDevice;..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../MMDevice;../../../3rdParty/PiperApi;$(MM_BOOST_INCLUDEDIR);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_AFXEXT;MODULE_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <PrecompiledHeader>
@@ -140,7 +136,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>PiperAPI.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\..\..\3rdparty\PiperAPI\Lib\$(Platform);..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\..\..\3rdparty\PiperAPI\Lib\$(Platform);$(MM_BOOST_LIBDIR);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <UACExecutionLevel>HighestAvailable</UACExecutionLevel>
       <ModuleDefinitionFile>.\PiperMmAdapter.def</ModuleDefinitionFile>
       <SubSystem>Windows</SubSystem>
@@ -156,15 +152,13 @@
     </Midl>
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
-      <AdditionalIncludeDirectories>../../../3rdParty/PiperApi;../../MMDevice;..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../MMDevice;../../../3rdParty/PiperApi;$(MM_BOOST_INCLUDEDIR);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_AFXEXT;MODULE_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
-      <PrecompiledHeader>
-      </PrecompiledHeader>
     </ClCompile>
     <Link>
       <AdditionalDependencies>PiperAPI.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\..\..\3rdparty\PiperAPI\Lib\$(Platform);..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\..\..\3rdparty\PiperAPI\Lib\$(Platform);$(MM_BOOST_LIBDIR);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <UACExecutionLevel>HighestAvailable</UACExecutionLevel>
       <ModuleDefinitionFile>.\PiperMmAdapter.def</ModuleDefinitionFile>
       <SubSystem>Windows</SubSystem>
@@ -177,7 +171,6 @@
   <ItemGroup>
     <ClCompile Include="CameraAdapter.cpp" />
     <ClCompile Include="PiperMmAdapter.cpp" />
-    <ClCompile Include="stdafx.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="PiperMmAdapter.def" />

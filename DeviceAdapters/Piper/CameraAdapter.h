@@ -10,7 +10,7 @@
 //                
 // AUTHOR:        Terry L. Sprout, Terry.Sprout@Agile-Automation.com
 //
-// COPYRIGHT:     (c) 2011, AgileAutomation, Inc, All rights reserved
+// COPYRIGHT:     (c) 2014, AgileAutomation, Inc, All rights reserved
 //
 // LICENSE:       This file is distributed under the BSD license.
 //                License text is included with the source distribution.
@@ -39,6 +39,7 @@
 #define ERR_INVALID_CAMERA       1005
 #define ERR_INVALID_CAMERA_ID    1006
 #define ERR_INVALID_CAMERA_MODE  1007
+
 
 
 //////////////////////////////////////////////////////////////////////////////
@@ -85,26 +86,26 @@ public:
    
    // MMCamera API
    // ------------
-   int SnapImage();
-   const unsigned char* GetImageBuffer();
-   int StartSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow);
-   int StopSequenceAcquisition();
-   unsigned GetImageWidth() const;
-   unsigned GetImageHeight() const;
-   unsigned GetImageBytesPerPixel() const;
-   unsigned GetBitDepth() const;
-   long GetImageBufferSize() const;
-   double GetExposure() const;
-   void SetExposure(double exp);
-   int SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize); 
-   int GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySize); 
-   int ClearROI();
-   double GetNominalPixelSizeUm() const {return nominalPixelSizeUm_;}
-   double GetPixelSizeUm() const {return nominalPixelSizeUm_ * GetBinning();}
-   int GetBinning() const;
-   int SetBinning(int binSize);
-   int IsExposureSequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
-   bool IsCapturing();
+   virtual int SnapImage();
+   virtual int IsExposureSequenceable(bool& isSequenceable) const { isSequenceable=false; return 0; }
+   virtual const unsigned char* GetImageBuffer();
+   virtual int StartSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow);
+   virtual int StopSequenceAcquisition();
+   virtual unsigned GetImageWidth() const;
+   virtual unsigned GetImageHeight() const;
+   virtual unsigned GetImageBytesPerPixel() const;
+   virtual unsigned GetBitDepth() const;
+   virtual long GetImageBufferSize() const;
+   virtual double GetExposure() const;
+   virtual void SetExposure(double exp);
+   virtual int SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize); 
+   virtual int GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySize); 
+   virtual int ClearROI();
+   virtual double GetNominalPixelSizeUm() const {return nominalPixelSizeUm_;}
+   virtual double GetPixelSizeUm() const {return nominalPixelSizeUm_ * GetBinning();}
+   virtual int GetBinning() const;
+   virtual int SetBinning(int binSize);
+   virtual bool IsCapturing();
 
    // action interface
    // ----------------
@@ -159,13 +160,13 @@ public:
 private:
    static const double nominalPixelSizeUm_;
 
-   CString m_sMyName;
+   string m_sMyName;
    BOOL m_bIsConnected;
    bool m_bIsInitialized;
    bool m_bIsBusy;
    double readoutUs_;
    MM::MMTime readoutStartTime_;
-   CSyncObject *m_pCS;
+   CRITICAL_SECTION *m_csLockObj;
    HANDLE m_hCaptureThread;
    HANDLE m_hCaptureEnded;
    BOOL m_bChangingGrabber;
@@ -209,7 +210,7 @@ private:
    int m_nDiscriminatorNumTotal;
    BOOL m_bDiscriminatorEnabled;
 
-   CString m_sVersion;
+   string m_sVersion;
    vector<string> m_asGrabbers;
    vector<string> m_asCameras;
    vector<string> m_asCameraSns;
@@ -240,7 +241,7 @@ private:
    INT16 m_nVideoOffset;
    double m_fIntensifierVolts;
    double m_fIntensifierGain;
-   CString m_sPixel;
+   string m_sPixel;
 
    INT16 m_nImageLeft;
    INT16 m_nImageWidth;

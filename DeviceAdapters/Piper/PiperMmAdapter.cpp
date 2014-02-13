@@ -11,7 +11,7 @@
 //                
 // AUTHOR:        Terry L. Sprout, Terry.Sprout@Agile-Automation.com
 //
-// COPYRIGHT:     (c) 2009, AgileAutomation, Inc, All rights reserved
+// COPYRIGHT:     (c) 2014, AgileAutomation, Inc, All rights reserved
 // LICENSE:       This file is distributed under the BSD license.
 //                License text is included with the source distribution.
 //
@@ -44,8 +44,6 @@ extern LONG gs_nInstanceCount = -1;
 // to load particular device from the "CameraAdapter.dll" library
 static LPCTSTR sc_pszCameraDeviceName = "SPI Cameras";
 
-static AFX_EXTENSION_MODULE PiperMmAdapterDLL = { NULL, NULL };
-
 extern "C" int APIENTRY
 DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
 {
@@ -54,27 +52,14 @@ DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
 
 	if (dwReason == DLL_PROCESS_ATTACH)
 	{
-		TRACE0("PiperMmAdapter.DLL Initializing!\n");
-
-		// Extension DLL one-time initialization
-		if (!AfxInitExtensionModule(PiperMmAdapterDLL, hInstance))
-			return 0;
-
-		new CDynLinkLibrary(PiperMmAdapterDLL);
-
       // Increment the instance count for this DLL
       InterlockedIncrement( &gs_nInstanceCount );
 	}
 	else if (dwReason == DLL_PROCESS_DETACH)
 	{
-		TRACE0("PiperMmAdapter.DLL Terminating!\n");
-
       // We do not want to release the PIL until this DLL is being unloaded.
       // The release function does nothing if the PIL was never connected.
       pilReleaseLib();
-
-		// Terminate the library before destructors are called
-		AfxTermExtensionModule(PiperMmAdapterDLL);
 
       // Decrement the instance count for this DLL
       InterlockedDecrement( &gs_nInstanceCount );
@@ -88,7 +73,7 @@ DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
 
 MODULE_API void InitializeModuleData()
 {
-   RegisterDevice(sc_pszCameraDeviceName, MM::CameraDevice, "Stanford Photonics cameras");
+   RegisterDevice( sc_pszCameraDeviceName, MM::CameraDevice, "Stanford Photonics cameras" );
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

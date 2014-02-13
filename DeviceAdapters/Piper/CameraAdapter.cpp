@@ -7,7 +7,7 @@
 //                
 // AUTHOR:        Terry L. Sprout, Terry.Sprout@Agile-Automation.com
 //
-// COPYRIGHT:     (c) 2011, AgileAutomation, Inc, All rights reserved
+// COPYRIGHT:     (c) 2014, AgileAutomation, Inc, All rights reserved
 // LICENSE:       This file is distributed under the BSD license.
 //                License text is included with the source distribution.
 //
@@ -22,6 +22,50 @@
 
 #include "stdafx.h"
 #include "CameraAdapter.h"
+
+class CSingleLock
+{
+public:
+   CSingleLock( CRITICAL_SECTION *pCS, BOOL bLock = TRUE )
+   {
+      m_pLockObj = pCS;
+      m_bIsLocked = FALSE;
+      if( bLock )
+      {
+         EnterCriticalSection( m_pLockObj );
+         m_bIsLocked = TRUE;
+      }
+   }
+   virtual ~CSingleLock()
+   {
+      if( m_bIsLocked )
+      {
+         LeaveCriticalSection( m_pLockObj );
+         m_bIsLocked = FALSE;
+      }
+   }
+
+   void Lock()
+   {
+      if( !m_bIsLocked )
+      {
+         EnterCriticalSection( m_pLockObj );
+         m_bIsLocked = TRUE;
+      }
+   }
+   void Unlock()
+   {
+      if( m_bIsLocked )
+      {
+         LeaveCriticalSection( m_pLockObj );
+         m_bIsLocked = FALSE;
+      }
+   }
+
+private:
+   CRITICAL_SECTION *m_pLockObj;
+   BOOL m_bIsLocked;
+};
 
 #define __CS_ENABLE TRUE
 
@@ -200,21 +244,21 @@ static LPCTSTR sc_pszShowLogSelectProp = "Select log messages";
 static LPCTSTR sc_pszShowLogProp = "Show log file";
 static LPCTSTR sc_pszClearLogProp = "Clear log file";
 
-static int s_nLogGroup;
-static DWORD s_unLogConstruct;
-static DWORD s_unLogDestruct;
-static DWORD s_unLogSetProps;
-static DWORD s_unLogGetProps;
-static DWORD s_unLogMethodBegin;
-static DWORD s_unLogMethodEnd;
-static DWORD s_unLogMethodCalls;
-static DWORD s_unLogMethodFrame;
-static DWORD s_unLogMethodCallTrace;
-static DWORD s_unLogCallbackBegin;
-static DWORD s_unLogCallbackEnd;
-static DWORD s_unLogCallbacks;
-static DWORD s_unLogCallbackFrame;
-static DWORD s_unLogCallbackTrace;
+static int s_nLogGroup = -1;
+static DWORD s_unLogConstruct = 0;
+static DWORD s_unLogDestruct = 0;
+static DWORD s_unLogSetProps = 0;
+static DWORD s_unLogGetProps = 0;
+static DWORD s_unLogMethodBegin = 0;
+static DWORD s_unLogMethodEnd = 0;
+static DWORD s_unLogMethodCalls = 0;
+static DWORD s_unLogMethodFrame = 0;
+static DWORD s_unLogMethodCallTrace = 0;
+static DWORD s_unLogCallbackBegin = 0;
+static DWORD s_unLogCallbackEnd = 0;
+static DWORD s_unLogCallbacks = 0;
+static DWORD s_unLogCallbackFrame = 0;
+static DWORD s_unLogCallbackTrace = 0;
 
 int s_nStatus;
 #define PIL_ERROR 2000
@@ -222,7 +266,8 @@ int s_nStatus;
 #define RETURN_ON_FAILURE( result ) if( 0 > (s_nStatus = (result)) ) return (INT16)s_nStatus
 #define RETURN_ON_MM_ERROR( result ) if( DEVICE_OK != (s_nStatus = (result)) ) return s_nStatus
 
-static UINT StreamThread( LPVOID pvAdapter )
+//static UINT StreamThread( LPVOID pvAdapter )
+DWORD WINAPI StreamThread( LPVOID pvAdapter )
 {
    ((CCameraAdapter*)pvAdapter)->Capture();
    return 0;
@@ -271,7 +316,9 @@ CCameraAdapter::CCameraAdapter( LPCTSTR pszName )
    m_bModeChanged = FALSE;
    m_bPropsChanged = FALSE;
    m_bClearROI = FALSE;
-   m_pCS = new CCriticalSection;
+   m_csLockObj = new CRITICAL_SECTION;
+   InitializeCriticalSection( m_csLockObj );
+   //&m_csLockObj = new CCriticalSection;
    m_hCaptureThread = NULL;
    m_hCaptureEnded = CreateEvent( NULL, TRUE, FALSE, NULL );
 
@@ -393,9 +440,10 @@ CCameraAdapter::CCameraAdapter( LPCTSTR pszName )
  */
 CCameraAdapter::~CCameraAdapter()
 {
-   if( m_pCS )
+   if( m_csLockObj )
    {
-      delete m_pCS;
+      DeleteCriticalSection( m_csLockObj );
+      delete m_csLockObj;
    }
 }
 
@@ -407,7 +455,7 @@ void CCameraAdapter::GetName(char* name) const
 {
    // We just return the name we use for referring to this
    // device adapter.
-   CDeviceUtils::CopyLimitedString(name, m_sMyName);
+   CDeviceUtils::CopyLimitedString(name, m_sMyName.c_str());
 }
 
 /**
@@ -416,7 +464,7 @@ void CCameraAdapter::GetName(char* name) const
  */
 bool CCameraAdapter::Busy()
 {
-//OD   CSingleLock oCS( m_pCS, __CS_ENABLE );
+//OD   CSingleLock oCS(m_csLockObj, __CS_ENABLE );
 //   return m_bStream ? true : false;
    return false;
 }
@@ -426,7 +474,7 @@ bool CCameraAdapter::Busy()
  */
 bool CCameraAdapter::IsCapturing()
 {
-   CSingleLock oCS( m_pCS, __CS_ENABLE );
+   CSingleLock oCS(m_csLockObj, __CS_ENABLE );
    return m_bStream ? true : false;
 }
 
@@ -441,8 +489,8 @@ bool CCameraAdapter::IsCapturing()
  */
 int CCameraAdapter::Initialize()
 {
-   piulLogMessage( m_sMyName, s_unLogMethodBegin, "Initialize() Begin" );
-   CSingleLock oCS( m_pCS, __CS_ENABLE );
+   piulLogMessage( m_sMyName.c_str(), s_unLogMethodBegin, "Initialize() Begin" );
+   CSingleLock oCS(m_csLockObj, __CS_ENABLE );
    if (m_bIsInitialized)
       return DEVICE_OK;
 
@@ -451,7 +499,7 @@ int CCameraAdapter::Initialize()
    CPropertyAction *pAct;
    
    // Name
-   RETURN_ON_MM_ERROR( CreateProperty(MM::g_Keyword_Name, m_sMyName, MM::String, true) );
+   RETURN_ON_MM_ERROR( CreateProperty(MM::g_Keyword_Name, m_sMyName.c_str(), MM::String, true) );
 
    // Description
    RETURN_ON_MM_ERROR( CreateProperty(MM::g_Keyword_Description, "Piper Camera Adapter", MM::String, true) );
@@ -599,8 +647,9 @@ int CCameraAdapter::Initialize()
    INT16 nMinor;
    INT16 nBuild;
    RETURN_ON_PIL_ERROR( pilGetLibraryId( (LPTSTR)pszLib, 100, nMajor, nMinor, nBuild ) );
-   m_sVersion.Format( "v%d.%d.%02d", nMajor, nMinor, nBuild );
-   RETURN_ON_MM_ERROR( CreateProperty(MM::g_Keyword_Version, m_sVersion, MM::String, true) );
+   sprintf( m_sVersion._Myptr(), "v%d.%d.%02d", nMajor, nMinor, nBuild );
+   //m_sVersion._Myptr( "v%d.%d.%02d", nMajor, nMinor, nBuild );
+   RETURN_ON_MM_ERROR( CreateProperty(MM::g_Keyword_Version, m_sVersion.c_str(), MM::String, true) );
 
    // Enable all log messages for the local group
    pAct = new CPropertyAction (this, &CCameraAdapter::OnEnableLogGroup);
@@ -679,13 +728,13 @@ int CCameraAdapter::Initialize()
    // unnecessary messages.
    if( 0 < gs_nInstanceCount )
    {
-      TRACE0("Not original PiperMmAdapter.DLL instance");
+      //TRACE0("Not original PiperMmAdapter.DLL instance");
       return ERR_MULTIPLE_LIBRARY;
    }
    if( s_pOnlyCamera )
    {
       // The camera cannot be instantiated more than once
-      TRACE0("Not original camera adapter");
+      //TRACE0("Not original camera adapter");
       return ERR_MULTIPLE_CAMERA;
    }
 
@@ -772,7 +821,7 @@ int CCameraAdapter::Initialize()
 
    m_bIsInitialized = true;
 
-   piulLogMessage( m_sMyName, s_unLogConstruct, "This adapter has been successfully initialized" );
+   piulLogMessage( m_sMyName.c_str(), s_unLogConstruct, "This adapter has been successfully initialized" );
    return DEVICE_OK;
 }
 
@@ -795,13 +844,13 @@ int CCameraAdapter::Shutdown()
    m_bIsInitialized = false;
    if( m_hCaptureThread )
    {
-      piulLogMessage( m_sMyName, s_unLogDestruct, "The capture thread is still active, we need to stop it" );
-      CSingleLock oCS( m_pCS, __CS_ENABLE );
+      piulLogMessage( m_sMyName.c_str(), s_unLogDestruct, "The capture thread is still active, we need to stop it" );
+      CSingleLock oCS(m_csLockObj, __CS_ENABLE );
       m_bStream = FALSE;
       oCS.Unlock();
       WaitForSingleObject( m_hCaptureEnded, INFINITE );
       m_hCaptureThread = NULL;
-      piulLogMessage( m_sMyName, s_unLogDestruct, "The capture thread was stopped" );
+      piulLogMessage( m_sMyName.c_str(), s_unLogDestruct, "The capture thread was stopped" );
    }
    if( m_punRoi )
    {
@@ -810,11 +859,11 @@ int CCameraAdapter::Shutdown()
    }
    if( -1 < m_nCurGrabber )
    {
-      piulLogMessage( m_sMyName, s_unLogDestruct, "Releasing the current pipe" );
+      piulLogMessage( m_sMyName.c_str(), s_unLogDestruct, "Releasing the current pipe" );
       pilReleasePipe( m_nCurGrabber );
       m_nCurGrabber = -1;
    }
-   piulLogMessage( m_sMyName, s_unLogDestruct, "This adapter was successfully shutdown" );
+   piulLogMessage( m_sMyName.c_str(), s_unLogDestruct, "This adapter was successfully shutdown" );
    return DEVICE_OK;
 }
 
@@ -827,12 +876,12 @@ void CCameraAdapter::OnGrabberChanged( LPCTSTR pszGrabber )
 
    piulLogMessage
       (
-         m_sMyName,
+         m_sMyName.c_str(),
          s_unLogCallbackBegin,
          "OnGrabberChanged( Grabber = %s ) Begin",
          pszGrabber
       );
-   CSingleLock oCS( m_pCS, __CS_ENABLE );
+   CSingleLock oCS(m_csLockObj, __CS_ENABLE );
    std::string sGrabber( pszGrabber );
    for( INT16 nPipe=0; nPipe<(INT16)m_asGrabbers.size(); nPipe++ )
    {
@@ -841,14 +890,14 @@ void CCameraAdapter::OnGrabberChanged( LPCTSTR pszGrabber )
          if( m_nCurGrabber != nPipe )
          {
             oCS.Unlock();
-            piulLogMessage( m_sMyName, s_unLogCallbackTrace, "Connecting to the new pipe" );
+            piulLogMessage( m_sMyName.c_str(), s_unLogCallbackTrace, "Connecting to the new pipe" );
             ConnectPipe( nPipe );
             //UpdateGUI();
          }
          break;
       }
    }
-   piulLogMessage( m_sMyName, s_unLogCallbackEnd, "OnGrabberChanged() End" );
+   piulLogMessage( m_sMyName.c_str(), s_unLogCallbackEnd, "OnGrabberChanged() End" );
 }
 
 void CCameraAdapter::OnCameraChanged( LPCTSTR pszCamera, int /*nId*/ )
@@ -860,12 +909,12 @@ void CCameraAdapter::OnCameraChanged( LPCTSTR pszCamera, int /*nId*/ )
 
    piulLogMessage
       (
-         m_sMyName,
+         m_sMyName.c_str(),
          s_unLogCallbackBegin,
          "OnCameraChanged( Camera = %s ) Begin",
          pszCamera
       );
-   CSingleLock oCS( m_pCS, __CS_ENABLE );
+   CSingleLock oCS(m_csLockObj, __CS_ENABLE );
    std::string sCamera( pszCamera );
    for( INT16 nCam=0; nCam<(INT16)m_asCameras.size(); nCam++ )
    {
@@ -875,7 +924,7 @@ void CCameraAdapter::OnCameraChanged( LPCTSTR pszCamera, int /*nId*/ )
          {
             oCS.Unlock();
             m_nCurCamera = nCam;
-            piulLogMessage( m_sMyName, s_unLogCallbackTrace, "Querying for the new camera choices" );
+            piulLogMessage( m_sMyName.c_str(), s_unLogCallbackTrace, "Querying for the new camera choices" );
             GetCameraChoices();
             //GetProperties();
             //ClearROI();
@@ -884,7 +933,7 @@ void CCameraAdapter::OnCameraChanged( LPCTSTR pszCamera, int /*nId*/ )
          break;
       }
    }
-   piulLogMessage( m_sMyName, s_unLogCallbackEnd, "OnCameraChanged() End" );
+   piulLogMessage( m_sMyName.c_str(), s_unLogCallbackEnd, "OnCameraChanged() End" );
 }
 
 void CCameraAdapter::OnCameraIdChanged( LPCTSTR pszSn )
@@ -896,12 +945,12 @@ void CCameraAdapter::OnCameraIdChanged( LPCTSTR pszSn )
 
    piulLogMessage
       (
-         m_sMyName,
+         m_sMyName.c_str(),
          s_unLogCallbackBegin,
          "OnCameraIdChanged( S/N = %s ) Begin",
          pszSn
       );
-   CSingleLock oCS( m_pCS, __CS_ENABLE );
+   CSingleLock oCS(m_csLockObj, __CS_ENABLE );
    std::string sSn( pszSn );
    for( INT16 nSn=0; nSn<(INT16)m_asCameraSns.size(); nSn++ )
    {
@@ -915,7 +964,7 @@ void CCameraAdapter::OnCameraIdChanged( LPCTSTR pszSn )
          break;
       }
    }
-   piulLogMessage( m_sMyName, s_unLogCallbackEnd, "OnCameraIdChanged() End" );
+   piulLogMessage( m_sMyName.c_str(), s_unLogCallbackEnd, "OnCameraIdChanged() End" );
 }
 
 void CCameraAdapter::OnCameraModeChanged( LPCTSTR pszMode )
@@ -927,12 +976,12 @@ void CCameraAdapter::OnCameraModeChanged( LPCTSTR pszMode )
 
    piulLogMessage
       (
-         m_sMyName,
+         m_sMyName.c_str(),
          s_unLogCallbackBegin,
          "OnCameraModeChanged( Mode = %s ) Begin",
          pszMode
       );
-   CSingleLock oCS( m_pCS, __CS_ENABLE );
+   CSingleLock oCS(m_csLockObj, __CS_ENABLE );
    std::string sMode( pszMode );
    for( INT16 nMode=0; nMode<(INT16)m_asCameraModes.size(); nMode++ )
    {
@@ -946,7 +995,7 @@ void CCameraAdapter::OnCameraModeChanged( LPCTSTR pszMode )
          break;
       }
    }
-   piulLogMessage( m_sMyName, s_unLogCallbackEnd, "OnCameraModeChanged() End" );
+   piulLogMessage( m_sMyName.c_str(), s_unLogCallbackEnd, "OnCameraModeChanged() End" );
 }
 
 void CCameraAdapter::OnCameraPropertiesChanged()
@@ -955,13 +1004,13 @@ void CCameraAdapter::OnCameraPropertiesChanged()
    {
       return;
    }
-   piulLogMessage( m_sMyName, s_unLogCallbackBegin, "OnCameraPropertiesChanged() Begin" );
-   piulLogMessage( m_sMyName, s_unLogCallbackTrace, "Querying for the new camera properties" );
+   piulLogMessage( m_sMyName.c_str(), s_unLogCallbackBegin, "OnCameraPropertiesChanged() Begin" );
+   piulLogMessage( m_sMyName.c_str(), s_unLogCallbackTrace, "Querying for the new camera properties" );
    GetProperties();
    ClearROI();
-   piulLogMessage( m_sMyName, s_unLogCallbackTrace, "Updating the MM GUI" );
+   piulLogMessage( m_sMyName.c_str(), s_unLogCallbackTrace, "Updating the MM GUI" );
    UpdateGUI();
-   piulLogMessage( m_sMyName, s_unLogCallbackEnd, "OnCameraPropertiesChanged() End" );
+   piulLogMessage( m_sMyName.c_str(), s_unLogCallbackEnd, "OnCameraPropertiesChanged() End" );
 }
 
 void CCameraAdapter::OnIonFeedbackSizeChanged( int nPixels )
@@ -972,15 +1021,15 @@ void CCameraAdapter::OnIonFeedbackSizeChanged( int nPixels )
    }
    piulLogMessage
       (
-         m_sMyName,
+         m_sMyName.c_str(),
          s_unLogCallbackBegin,
          "OnIonFeedbackSizeChanged( Pixels = %d ) Begin",
          nPixels
       );
    m_nIonFeedbackFilterSize = (INT16)nPixels;
-   piulLogMessage( m_sMyName, s_unLogCallbackTrace, "Updating the MM GUI" );
+   piulLogMessage( m_sMyName.c_str(), s_unLogCallbackTrace, "Updating the MM GUI" );
    UpdateGUI();
-   piulLogMessage( m_sMyName, s_unLogCallbackEnd, "OnIonFeedbackSizeChanged() End" );
+   piulLogMessage( m_sMyName.c_str(), s_unLogCallbackEnd, "OnIonFeedbackSizeChanged() End" );
 }
 
 void CCameraAdapter::OnIonFeedbackEnabled( BOOL bEnabled )
@@ -991,15 +1040,15 @@ void CCameraAdapter::OnIonFeedbackEnabled( BOOL bEnabled )
    }
    piulLogMessage
       (
-         m_sMyName,
+         m_sMyName.c_str(),
          s_unLogCallbackBegin,
          "OnIonFeedbackEnabled( Enabled = %s ) Begin",
          bEnabled ? "yes" : "no"
       );
    m_bIonFeedbackEnabled = bEnabled;
-   piulLogMessage( m_sMyName, s_unLogCallbackTrace, "Updating the MM GUI" );
+   piulLogMessage( m_sMyName.c_str(), s_unLogCallbackTrace, "Updating the MM GUI" );
    UpdateGUI();
-   piulLogMessage( m_sMyName, s_unLogCallbackEnd, "OnIonFeedbackEnabled() End" );
+   piulLogMessage( m_sMyName.c_str(), s_unLogCallbackEnd, "OnIonFeedbackEnabled() End" );
 }
 
 void CCameraAdapter::OnHistogramTransferChanged( double fBrightness, double fContrast, double fGamma )
@@ -1010,7 +1059,7 @@ void CCameraAdapter::OnHistogramTransferChanged( double fBrightness, double fCon
    }
    piulLogMessage
       (
-         m_sMyName,
+         m_sMyName.c_str(),
          s_unLogCallbackBegin,
          "OnHistogramTransferChanged( Brightness = %lf, Contrast = %lf, Gamma = %lf ) Begin",
          fBrightness,
@@ -1020,9 +1069,9 @@ void CCameraAdapter::OnHistogramTransferChanged( double fBrightness, double fCon
    m_fSourceBrightness = fBrightness;
    m_fSourceContrast = fContrast;
    m_fSourceGamma = fGamma;
-   piulLogMessage( m_sMyName, s_unLogCallbackTrace, "Updating the MM GUI" );
+   piulLogMessage( m_sMyName.c_str(), s_unLogCallbackTrace, "Updating the MM GUI" );
    UpdateGUI();
-   piulLogMessage( m_sMyName, s_unLogCallbackEnd, "OnHistogramTransferChanged() End" );
+   piulLogMessage( m_sMyName.c_str(), s_unLogCallbackEnd, "OnHistogramTransferChanged() End" );
 }
 
 void CCameraAdapter::OnHistogramAutoContrast( BOOL bOn )
@@ -1033,15 +1082,15 @@ void CCameraAdapter::OnHistogramAutoContrast( BOOL bOn )
    }
    piulLogMessage
       (
-         m_sMyName,
+         m_sMyName.c_str(),
          s_unLogCallbackBegin,
          "OnHistogramAutoContrast( %s ) Begin",
          bOn ? "ON" : "OFF"
       );
    m_bSourceAutoContrast = bOn;
-   piulLogMessage( m_sMyName, s_unLogCallbackTrace, "Updating the MM GUI" );
+   piulLogMessage( m_sMyName.c_str(), s_unLogCallbackTrace, "Updating the MM GUI" );
    UpdateGUI();
-   piulLogMessage( m_sMyName, s_unLogCallbackEnd, "OnHistogramAutoContrast() End" );
+   piulLogMessage( m_sMyName.c_str(), s_unLogCallbackEnd, "OnHistogramAutoContrast() End" );
 }
 
 void CCameraAdapter::OnDiscriminatorMaxValue( double fMax )
@@ -1052,13 +1101,13 @@ void CCameraAdapter::OnDiscriminatorMaxValue( double fMax )
    }
    piulLogMessage
       (
-         m_sMyName,
+         m_sMyName.c_str(),
          s_unLogCallbackBegin,
          "OnDiscriminatorMaxValue( Max = %lf ) Begin",
          fMax
       );
    m_fDiscriminatorMax = fMax;
-   piulLogMessage( m_sMyName, s_unLogCallbackEnd, "OnDiscriminatorMaxValue() End" );
+   piulLogMessage( m_sMyName.c_str(), s_unLogCallbackEnd, "OnDiscriminatorMaxValue() End" );
 }
 
 void CCameraAdapter::OnDiscriminatorNewValues
@@ -1076,7 +1125,7 @@ void CCameraAdapter::OnDiscriminatorNewValues
    }
    piulLogMessage
       (
-         m_sMyName,
+         m_sMyName.c_str(),
          s_unLogCallbackBegin,
          "OnDiscriminatorNewValues( Avg = %lf, StdDev = %lf, Meas'd = %lf, Sigma = %lf, Discarded = %s ) Begin",
          fAverage,
@@ -1090,9 +1139,9 @@ void CCameraAdapter::OnDiscriminatorNewValues
    m_fDiscriminatorMeasured = fMeasured;
    m_fDiscriminatorSigma = fSigma;
    m_bDiscriminatorDiscarded = bDiscarded;
-   piulLogMessage( m_sMyName, s_unLogCallbackTrace, "Updating the MM GUI" );
+   piulLogMessage( m_sMyName.c_str(), s_unLogCallbackTrace, "Updating the MM GUI" );
    UpdateGUI();
-   piulLogMessage( m_sMyName, s_unLogCallbackEnd, "OnDiscriminatorNewValues() End" );
+   piulLogMessage( m_sMyName.c_str(), s_unLogCallbackEnd, "OnDiscriminatorNewValues() End" );
 }
 
 void CCameraAdapter::OnDiscriminatorDiscardCount( int nNumDiscarded, int nNumTotal )
@@ -1103,7 +1152,7 @@ void CCameraAdapter::OnDiscriminatorDiscardCount( int nNumDiscarded, int nNumTot
    }
    piulLogMessage
       (
-         m_sMyName,
+         m_sMyName.c_str(),
          s_unLogCallbackBegin,
          "OnDiscriminatorDiscardCount( #Discarded = %d, Total = %d ) Begin",
          nNumDiscarded,
@@ -1111,9 +1160,9 @@ void CCameraAdapter::OnDiscriminatorDiscardCount( int nNumDiscarded, int nNumTot
       );
    m_nDiscriminatorNumDiscarded = nNumDiscarded;
    m_nDiscriminatorNumTotal = nNumTotal;
-   piulLogMessage( m_sMyName, s_unLogCallbackTrace, "Updating the MM GUI" );
+   piulLogMessage( m_sMyName.c_str(), s_unLogCallbackTrace, "Updating the MM GUI" );
    UpdateGUI();
-   piulLogMessage( m_sMyName, s_unLogCallbackEnd, "OnDiscriminatorDiscardCount() End" );
+   piulLogMessage( m_sMyName.c_str(), s_unLogCallbackEnd, "OnDiscriminatorDiscardCount() End" );
 }
 
 void CCameraAdapter::OnDiscriminatorEnabled( BOOL bEnabled )
@@ -1124,35 +1173,35 @@ void CCameraAdapter::OnDiscriminatorEnabled( BOOL bEnabled )
    }
    piulLogMessage
       (
-         m_sMyName,
+         m_sMyName.c_str(),
          s_unLogCallbackBegin,
          "OnDiscriminatorEnabled( Enabled = %s) Begin",
          bEnabled ? "yes" : "no"
       );
    m_bDiscriminatorEnabled = bEnabled;
-   piulLogMessage( m_sMyName, s_unLogCallbackTrace, "Updating the MM GUI" );
+   piulLogMessage( m_sMyName.c_str(), s_unLogCallbackTrace, "Updating the MM GUI" );
    UpdateGUI();
-   piulLogMessage( m_sMyName, s_unLogCallbackEnd, "OnDiscriminatorEnabled() End" );
+   piulLogMessage( m_sMyName.c_str(), s_unLogCallbackEnd, "OnDiscriminatorEnabled() End" );
 }
 
 void CCameraAdapter::OnIntegratorDepthChanged( INT32 nSize )
 {
-   CSingleLock oCS( m_pCS, __CS_ENABLE );
+   CSingleLock oCS(m_csLockObj, __CS_ENABLE );
    if( m_nIntegratorDepth == nSize )
    {
       return;
    }
    piulLogMessage
       (
-         m_sMyName,
+         m_sMyName.c_str(),
          s_unLogCallbackBegin,
          "OnIntegratorDepthChanged( Size = %d ) Begin",
          nSize
       );
    m_nIntegratorDepth = nSize;
-   piulLogMessage( m_sMyName, s_unLogCallbackTrace, "Updating the MM GUI" );
+   piulLogMessage( m_sMyName.c_str(), s_unLogCallbackTrace, "Updating the MM GUI" );
    UpdateGUI();
-   piulLogMessage( m_sMyName, s_unLogCallbackEnd, "OnIntegratorDepthChanged() End" );
+   piulLogMessage( m_sMyName.c_str(), s_unLogCallbackEnd, "OnIntegratorDepthChanged() End" );
 }
 
 void CCameraAdapter::OnIntegratorCurrentDepth( INT32 nDepth )
@@ -1163,14 +1212,14 @@ void CCameraAdapter::OnIntegratorCurrentDepth( INT32 nDepth )
    }
    piulLogMessage
       (
-         m_sMyName,
+         m_sMyName.c_str(),
          s_unLogCallbackBegin,
          "OnIntegratorCurrentDepth( Depth = %d ) Begin",
          nDepth
       );
    m_nIntegratorCurrentDepth = nDepth;
    //UpdateGUI();
-   piulLogMessage( m_sMyName, s_unLogCallbackEnd, "OnIntegratorCurrentDepth() End" );
+   piulLogMessage( m_sMyName.c_str(), s_unLogCallbackEnd, "OnIntegratorCurrentDepth() End" );
 }
 
 void CCameraAdapter::OnIntegratorRateChanged( double fRate )
@@ -1181,7 +1230,7 @@ void CCameraAdapter::OnIntegratorRateChanged( double fRate )
    }
    piulLogMessage
       (
-         m_sMyName,
+         m_sMyName.c_str(),
          s_unLogCallbackBegin,
          "OnIntegratorRateChanged( Rate = %lf ) Begin",
          fRate
@@ -1189,7 +1238,7 @@ void CCameraAdapter::OnIntegratorRateChanged( double fRate )
    m_fIntegratorRate = fRate;
    m_fIntegratorExposure = 1.0 / fRate;
    UpdateGUI();
-   piulLogMessage( m_sMyName, s_unLogCallbackEnd, "OnIntegratorRateChanged() End" );
+   piulLogMessage( m_sMyName.c_str(), s_unLogCallbackEnd, "OnIntegratorRateChanged() End" );
 }
 
 void CCameraAdapter::OnIntegratorEnabled( BOOL bEnabled )
@@ -1200,14 +1249,14 @@ void CCameraAdapter::OnIntegratorEnabled( BOOL bEnabled )
    }
    piulLogMessage
       (
-         m_sMyName,
+         m_sMyName.c_str(),
          s_unLogCallbackBegin,
          "OnIntegratorEnabled( Enabled = %s ) Begin",
          bEnabled ? "yes" : "no"
       );
    m_bIntegratorEnabled = bEnabled;
    UpdateGUI();
-   piulLogMessage( m_sMyName, s_unLogCallbackEnd, "OnIntegratorEnabled() End" );
+   piulLogMessage( m_sMyName.c_str(), s_unLogCallbackEnd, "OnIntegratorEnabled() End" );
 }
 
 void CCameraAdapter::OnAveragingDepthChanged( INT32 nSize )
@@ -1218,14 +1267,14 @@ void CCameraAdapter::OnAveragingDepthChanged( INT32 nSize )
    }
    piulLogMessage
       (
-         m_sMyName,
+         m_sMyName.c_str(),
          s_unLogCallbackBegin,
          "OnAveragingDepthChanged( Size = %d ) Begin",
          nSize
       );
    m_nAveragingDepth = nSize;
    UpdateGUI();
-   piulLogMessage( m_sMyName, s_unLogCallbackEnd, "OnAveragingDepthChanged() End" );
+   piulLogMessage( m_sMyName.c_str(), s_unLogCallbackEnd, "OnAveragingDepthChanged() End" );
 }
 
 void CCameraAdapter::OnAveragingCurrentDepth( INT32 nDepth )
@@ -1236,14 +1285,14 @@ void CCameraAdapter::OnAveragingCurrentDepth( INT32 nDepth )
    }
    piulLogMessage
       (
-         m_sMyName,
+         m_sMyName.c_str(),
          s_unLogCallbackBegin,
          "OnAveragingCurrentDepth( Depth = %d ) Begin",
          nDepth
       );
    m_nAveragingCurrentDepth = nDepth;
    //UpdateGUI();
-   piulLogMessage( m_sMyName, s_unLogCallbackEnd, "OnAveragingCurrentDepth() End" );
+   piulLogMessage( m_sMyName.c_str(), s_unLogCallbackEnd, "OnAveragingCurrentDepth() End" );
 }
 
 void CCameraAdapter::OnAveragingRateChanged( double fRate )
@@ -1254,14 +1303,14 @@ void CCameraAdapter::OnAveragingRateChanged( double fRate )
    }
    piulLogMessage
       (
-         m_sMyName,
+         m_sMyName.c_str(),
          s_unLogCallbackBegin,
          "OnAveragingRateChanged( Rate = %lf ) Begin",
          fRate
       );
    m_fAveragingRate = fRate;
    UpdateGUI();
-   piulLogMessage( m_sMyName, s_unLogCallbackEnd, "OnAveragingRateChanged() End" );
+   piulLogMessage( m_sMyName.c_str(), s_unLogCallbackEnd, "OnAveragingRateChanged() End" );
 }
 
 void CCameraAdapter::OnSmoothAveragingEnabled( BOOL bEnabled )
@@ -1272,14 +1321,14 @@ void CCameraAdapter::OnSmoothAveragingEnabled( BOOL bEnabled )
    }
    piulLogMessage
       (
-         m_sMyName,
+         m_sMyName.c_str(),
          s_unLogCallbackBegin,
          "OnSmoothAveragingEnabled( Enabled = %s ) Begin",
          bEnabled ? "yes" : "no"
       );
    m_bSmoothAvgEnabled = bEnabled;
    UpdateGUI();
-   piulLogMessage( m_sMyName, s_unLogCallbackEnd, "OnSmoothAveragingEnabled() End" );
+   piulLogMessage( m_sMyName.c_str(), s_unLogCallbackEnd, "OnSmoothAveragingEnabled() End" );
 }
 
 void CCameraAdapter::OnFastAveragingEnabled( BOOL bEnabled )
@@ -1290,19 +1339,19 @@ void CCameraAdapter::OnFastAveragingEnabled( BOOL bEnabled )
    }
    piulLogMessage
       (
-         m_sMyName,
+         m_sMyName.c_str(),
          s_unLogCallbackBegin,
          "OnFastAveragingEnabled( Enabled = %s ) Begin",
          bEnabled ? "yes" : "no"
       );
    m_bFastAvgEnabled = bEnabled;
    UpdateGUI();
-   piulLogMessage( m_sMyName, s_unLogCallbackEnd, "OnFastAveragingEnabled() End" );
+   piulLogMessage( m_sMyName.c_str(), s_unLogCallbackEnd, "OnFastAveragingEnabled() End" );
 }
 
 INT16 CCameraAdapter::ConnectToPiper()
 {
-   piulLogMessage( m_sMyName, s_unLogMethodBegin, "ConnectToPiper() Begin" );
+   piulLogMessage( m_sMyName.c_str(), s_unLogMethodBegin, "ConnectToPiper() Begin" );
    m_asGrabbers.clear();
    m_asCameras.clear();
    m_asCameraSns.clear();
@@ -1312,11 +1361,11 @@ INT16 CCameraAdapter::ConnectToPiper()
    m_nCurCameraSn = -1;
    m_nCurCameraMode = -1;
 
-   piulLogMessage( m_sMyName, s_unLogMethodCallTrace, "Connecting to Piper API" );
+   piulLogMessage( m_sMyName.c_str(), s_unLogMethodCallTrace, "Connecting to Piper API" );
    RETURN_ON_FAILURE( pilConnectLib( "AgileAutomation, Inc.", LibCallback, this ) );
 
    INT16 nPipeCnt;
-   piulLogMessage( m_sMyName, s_unLogMethodCallTrace, "Querying for list of frame grabbers" );
+   piulLogMessage( m_sMyName.c_str(), s_unLogMethodCallTrace, "Querying for list of frame grabbers" );
    RETURN_ON_FAILURE( pilGetNumPipes( nPipeCnt ) );
    for( INT16 nPipe=0; nPipe<nPipeCnt; nPipe++ )
    {
@@ -1326,7 +1375,7 @@ INT16 CCameraAdapter::ConnectToPiper()
    }
    SetAllowedValues( sc_pszPropFrameGrabber, m_asGrabbers );
 
-   piulLogMessage( m_sMyName, s_unLogMethodEnd, "ConnectToPiper() End" );
+   piulLogMessage( m_sMyName.c_str(), s_unLogMethodEnd, "ConnectToPiper() End" );
    return PIL_SUCCESS;
 }
 
@@ -1334,7 +1383,7 @@ INT16 CCameraAdapter::ConnectPipe( INT16 nEnum )
 {
    piulLogMessage
       (
-         m_sMyName,
+         m_sMyName.c_str(),
          s_unLogMethodBegin,
          "ConnectPipe( Enum = %d ) Begin",
          nEnum
@@ -1363,11 +1412,11 @@ INT16 CCameraAdapter::ConnectPipe( INT16 nEnum )
    INT32 nUniqueId;
    CHAR pszCamera[100];
    pszCamera[0] = 0;
-   piulLogMessage( m_sMyName, s_unLogMethodCallTrace, "Querying for current camera selection" );
+   piulLogMessage( m_sMyName.c_str(), s_unLogMethodCallTrace, "Querying for current camera selection" );
    RETURN_ON_FAILURE( pilGetCameraId( m_nCurGrabber, nUniqueId, pszCamera, 100 ) );
 
    INT16 nCamCnt;
-   piulLogMessage( m_sMyName, s_unLogMethodCallTrace, "Querying for list of known cameras" );
+   piulLogMessage( m_sMyName.c_str(), s_unLogMethodCallTrace, "Querying for list of known cameras" );
    RETURN_ON_FAILURE( pilGetNumKnownCameras( m_nCurGrabber, nCamCnt ) );
    for( INT16 nCam=0; nCam<nCamCnt; nCam++ )
    {
@@ -1397,7 +1446,7 @@ INT16 CCameraAdapter::ConnectPipe( INT16 nEnum )
    {
       piulLogMessage
          (
-            m_sMyName,
+            m_sMyName.c_str(),
             s_unLogMethodCallTrace,
             "Selecting camera -> %s",
             m_asCameras[m_nCurCamera].c_str()
@@ -1405,7 +1454,7 @@ INT16 CCameraAdapter::ConnectPipe( INT16 nEnum )
       RETURN_ON_FAILURE( SelectCamera( m_nCurCamera ) );
       if( m_bShowControlPanel )
       {
-         piulLogMessage( m_sMyName, s_unLogMethodCallTrace, "Showing the control panel" );
+         piulLogMessage( m_sMyName.c_str(), s_unLogMethodCallTrace, "Showing the control panel" );
          RETURN_ON_FAILURE( pilShowControlPanel( m_nCurGrabber, TRUE ) );
       }
    }
@@ -1414,7 +1463,7 @@ INT16 CCameraAdapter::ConnectPipe( INT16 nEnum )
    //RETURN_ON_FAILURE( ClearROI() );
 
    m_bChangingGrabber = FALSE;
-   piulLogMessage( m_sMyName, s_unLogMethodEnd, "ConnectPipe() End" );
+   piulLogMessage( m_sMyName.c_str(), s_unLogMethodEnd, "ConnectPipe() End" );
    return PIL_SUCCESS;
 }
 
@@ -1422,7 +1471,7 @@ INT16 CCameraAdapter::SelectCamera( INT16 nEnum )
 {
    piulLogMessage
       (
-         m_sMyName,
+         m_sMyName.c_str(),
          s_unLogMethodBegin,
          "SelectCamera( Enum = %d ) Begin",
          nEnum
@@ -1433,7 +1482,7 @@ INT16 CCameraAdapter::SelectCamera( INT16 nEnum )
    INT32 nUniqueId;
    piulLogMessage
       (
-         m_sMyName,
+         m_sMyName.c_str(),
          s_unLogMethodCallTrace,
          "Selecting camera -> %s",
          m_asCameras[nEnum].c_str()
@@ -1441,14 +1490,14 @@ INT16 CCameraAdapter::SelectCamera( INT16 nEnum )
    RETURN_ON_FAILURE( pilSetCameraId( m_nCurGrabber, m_asCameras[nEnum].c_str(), nUniqueId ) );
    m_nCurCamera = nEnum;
 
-   piulLogMessage( m_sMyName, s_unLogMethodCallTrace, "Query for additional choices for this camera" );
+   piulLogMessage( m_sMyName.c_str(), s_unLogMethodCallTrace, "Query for additional choices for this camera" );
    RETURN_ON_FAILURE( GetCameraChoices() );
 
    if( -1 < m_nCurCameraSn )
    {
       piulLogMessage
          (
-            m_sMyName,
+            m_sMyName.c_str(),
             s_unLogMethodCallTrace,
             "Selecting camera S/N -> %s",
             m_asCameraSns[m_nCurCameraSn].c_str()
@@ -1459,7 +1508,7 @@ INT16 CCameraAdapter::SelectCamera( INT16 nEnum )
    {
       piulLogMessage
          (
-            m_sMyName,
+            m_sMyName.c_str(),
             s_unLogMethodCallTrace,
             "Selecting camera mode -> %s",
             m_asCameraModes[m_nCurCameraMode].c_str()
@@ -1476,24 +1525,24 @@ INT16 CCameraAdapter::SelectCamera( INT16 nEnum )
    m_bChangingCameraSn = FALSE;
    m_bChangingCameraMode = FALSE;
 
-   piulLogMessage( m_sMyName, s_unLogMethodEnd, "SelectCamera() End" );
+   piulLogMessage( m_sMyName.c_str(), s_unLogMethodEnd, "SelectCamera() End" );
    return PIL_SUCCESS;
 }
 
 INT16 CCameraAdapter::GetCameraChoices()
 {
-   piulLogMessage( m_sMyName, s_unLogMethodBegin, "GetCameraChoices() Begin" );
+   piulLogMessage( m_sMyName.c_str(), s_unLogMethodBegin, "GetCameraChoices() Begin" );
    m_asCameraSns.clear();
    m_asCameraModes.clear();
    m_nCurCameraSn = -1;
    m_nCurCameraMode = -1;
 
    CHAR pszSerial[100];
-   piulLogMessage( m_sMyName, s_unLogMethodCallTrace, "Querying for current camera S/N" );
+   piulLogMessage( m_sMyName.c_str(), s_unLogMethodCallTrace, "Querying for current camera S/N" );
    RETURN_ON_FAILURE( pilGetCameraSn( m_nCurGrabber, pszSerial, 100 ) );
 
    INT16 nSnCnt;
-   piulLogMessage( m_sMyName, s_unLogMethodCallTrace, "Querying for list of known S/N's for this camera" );
+   piulLogMessage( m_sMyName.c_str(), s_unLogMethodCallTrace, "Querying for list of known S/N's for this camera" );
    RETURN_ON_FAILURE( pilGetNumCameraSns( m_nCurGrabber, m_nCurCamera, nSnCnt ) );
    for( INT16 nSn=0; nSn<nSnCnt; nSn++ )
    {
@@ -1508,11 +1557,11 @@ INT16 CCameraAdapter::GetCameraChoices()
    SetAllowedValues( sc_pszPropCameraID, m_asCameraSns );
 
    CHAR pszCurMode[100];
-   piulLogMessage( m_sMyName, s_unLogMethodCallTrace, "Querying for current camera mode" );
+   piulLogMessage( m_sMyName.c_str(), s_unLogMethodCallTrace, "Querying for current camera mode" );
    RETURN_ON_FAILURE( pilGetCameraMode( m_nCurGrabber, pszCurMode, 100 ) );
 
    INT16 nModeCnt;
-   piulLogMessage( m_sMyName, s_unLogMethodCallTrace, "Querying for list of camera modes" );
+   piulLogMessage( m_sMyName.c_str(), s_unLogMethodCallTrace, "Querying for list of camera modes" );
    RETURN_ON_FAILURE( pilGetNumCameraModes( m_nCurGrabber, m_nCurCamera, nModeCnt ) );
    for( INT16 nMode=0; nMode<nModeCnt; nMode++ )
    {
@@ -1527,7 +1576,7 @@ INT16 CCameraAdapter::GetCameraChoices()
    }
    SetAllowedValues( sc_pszPropCameraMode, m_asCameraModes );
 
-   piulLogMessage( m_sMyName, s_unLogMethodEnd, "GetCameraChoices() End" );
+   piulLogMessage( m_sMyName.c_str(), s_unLogMethodEnd, "GetCameraChoices() End" );
    return PIL_SUCCESS;
 }
 
@@ -1535,7 +1584,7 @@ INT16 CCameraAdapter::SelectCameraSn( INT16 nEnum )
 {
    piulLogMessage
       (
-         m_sMyName,
+         m_sMyName.c_str(),
          s_unLogMethodBegin,
          "SelectCameraSn( Enum = %d ) Begin",
          nEnum
@@ -1543,7 +1592,7 @@ INT16 CCameraAdapter::SelectCameraSn( INT16 nEnum )
    m_bChangingCameraSn = TRUE;
    piulLogMessage
       (
-         m_sMyName,
+         m_sMyName.c_str(),
          s_unLogMethodCallTrace,
          "Selecting camera S/N -> %s",
          m_asCameraSns[nEnum].c_str()
@@ -1557,7 +1606,7 @@ INT16 CCameraAdapter::SelectCameraSn( INT16 nEnum )
    //   RETURN_ON_FAILURE( ClearROI() );
    //}
    m_bChangingCameraSn = m_bChangingCamera;
-   piulLogMessage( m_sMyName, s_unLogMethodEnd, "SelectCameraSn() End" );
+   piulLogMessage( m_sMyName.c_str(), s_unLogMethodEnd, "SelectCameraSn() End" );
    return PIL_SUCCESS;
 }
 
@@ -1565,7 +1614,7 @@ INT16 CCameraAdapter::SelectCameraMode( INT16 nEnum )
 {
    piulLogMessage
       (
-         m_sMyName,
+         m_sMyName.c_str(),
          s_unLogMethodBegin,
          "SelectCameraMode( Enum = %d ) Begin",
          nEnum
@@ -1573,7 +1622,7 @@ INT16 CCameraAdapter::SelectCameraMode( INT16 nEnum )
    m_bChangingCameraMode = TRUE;
    piulLogMessage
       (
-         m_sMyName,
+         m_sMyName.c_str(),
          s_unLogMethodCallTrace,
          "Selecting camera mode -> %s",
          m_asCameraModes[nEnum].c_str()
@@ -1592,7 +1641,7 @@ INT16 CCameraAdapter::SelectCameraMode( INT16 nEnum )
    //   RETURN_ON_FAILURE( ClearROI() );
    //}
    m_bChangingCameraMode = m_bChangingCamera;
-   piulLogMessage( m_sMyName, s_unLogMethodEnd, "SelectCameraMode() End" );
+   piulLogMessage( m_sMyName.c_str(), s_unLogMethodEnd, "SelectCameraMode() End" );
    return PIL_SUCCESS;
 }
 
@@ -1600,12 +1649,12 @@ INT16 CCameraAdapter::SetIntegration( INT16 nFrames )
 {
    piulLogMessage
       (
-         m_sMyName,
+         m_sMyName.c_str(),
          s_unLogMethodBegin,
          "SetIntegration( Frames = %d ) Begin",
          nFrames
       );
-   CSingleLock oCS( m_pCS, __CS_ENABLE );
+   CSingleLock oCS(m_csLockObj, __CS_ENABLE );
    if( !m_bExposureInSync )
    {
       return PIL_SUCCESS;
@@ -1628,14 +1677,14 @@ INT16 CCameraAdapter::SetIntegration( INT16 nFrames )
    }
 
    m_unTimeout = (UINT)(m_fExposure * 20000.0);
-   piulLogMessage( m_sMyName, s_unLogMethodEnd, "SetIntegration() End" );
+   piulLogMessage( m_sMyName.c_str(), s_unLogMethodEnd, "SetIntegration() End" );
    return PIL_SUCCESS;
 }
 
 INT16 CCameraAdapter::GetProperties()
 {
-   piulLogMessage( m_sMyName, s_unLogMethodBegin, "GetProperties() Begin" );
-   piulLogMessage( m_sMyName, s_unLogMethodCallTrace, "Querying for current capture properties" );
+   piulLogMessage( m_sMyName.c_str(), s_unLogMethodBegin, "GetProperties() Begin" );
+   piulLogMessage( m_sMyName.c_str(), s_unLogMethodCallTrace, "Querying for current capture properties" );
    RETURN_ON_FAILURE
       (
          pilGetCaptureProps
@@ -1651,7 +1700,7 @@ INT16 CCameraAdapter::GetProperties()
                m_nCapYBin
             )
       );
-   piulLogMessage( m_sMyName, s_unLogMethodCallTrace, "Querying for current image properties" );
+   piulLogMessage( m_sMyName.c_str(), s_unLogMethodCallTrace, "Querying for current image properties" );
    RETURN_ON_FAILURE
       (
          pilGetImageProps
@@ -1668,7 +1717,7 @@ INT16 CCameraAdapter::GetProperties()
             )
       );
 
-   piulLogMessage( m_sMyName, s_unLogMethodCallTrace, "Querying for other camera properties" );
+   piulLogMessage( m_sMyName.c_str(), s_unLogMethodCallTrace, "Querying for other camera properties" );
    RETURN_ON_FAILURE( pilGetCameraIntegration( m_nCurGrabber, m_nFrameClocks, m_fExposure ) );
    RETURN_ON_FAILURE( pilGetCameraVideoGain( m_nCurGrabber, m_nVideoGain ) );
    RETURN_ON_FAILURE( pilGetCameraVideoOffset( m_nCurGrabber, m_nVideoOffset ) );
@@ -1676,13 +1725,14 @@ INT16 CCameraAdapter::GetProperties()
 
    m_bExposureInSync = ( m_nFrameClocks == m_nMMFrameClocks );
 
-   m_sPixel.Format( "%dbit", m_nCapBits );
+   sprintf( m_sPixel._Myptr(), "%dbit", m_nCapBits );
+   //m_sPixel.Format( "%dbit", m_nCapBits );
    m_asPixelTypes.clear();
-   m_asPixelTypes.push_back( (LPCTSTR)m_sPixel );
+   m_asPixelTypes.push_back( m_sPixel.c_str() );
    SetAllowedValues( MM::g_Keyword_PixelType, m_asPixelTypes );
-   SetProperty( MM::g_Keyword_PixelType, m_sPixel );
+   SetProperty( MM::g_Keyword_PixelType, m_sPixel.c_str() );
 
-   CSingleLock oCS( m_pCS, __CS_ENABLE );
+   CSingleLock oCS(m_csLockObj, __CS_ENABLE );
 
    m_nRoiLeft = 0;
    m_nRoiWidth = m_nImageWidth;
@@ -1693,7 +1743,7 @@ INT16 CCameraAdapter::GetProperties()
    m_nImageImageBytes = m_nImageHeight * m_nImageStride;
    m_unTimeout = (UINT)(m_fExposure * 20000.0);
 
-   piulLogMessage( m_sMyName, s_unLogMethodEnd, "GetProperties() End" );
+   piulLogMessage( m_sMyName.c_str(), s_unLogMethodEnd, "GetProperties() End" );
    return PIL_SUCCESS;
 }
 
@@ -1703,22 +1753,22 @@ INT16 CCameraAdapter::GetProperties()
  */
 int CCameraAdapter::SnapImage()
 {
-   piulLogMessage( m_sMyName, s_unLogMethodBegin, "SnapImage() Begin" );
-   CSingleLock oCS( m_pCS, FALSE );
+   piulLogMessage( m_sMyName.c_str(), s_unLogMethodBegin, "SnapImage() Begin" );
+   CSingleLock oCS(m_csLockObj, FALSE );
 
    while( true )
    {
       oCS.Lock();
-      piulLogMessage( m_sMyName, s_unLogMethodCallTrace, "Ensuring the ROI buffer is allocated properly" );
+      piulLogMessage( m_sMyName.c_str(), s_unLogMethodCallTrace, "Ensuring the ROI buffer is allocated properly" );
       RETURN_ON_MM_ERROR( ResizeImageBuffer() );
 
       oCS.Unlock();
 
-      piulLogMessage( m_sMyName, s_unLogMethodCallTrace, "Request a snapped image, will wait for image" );
+      piulLogMessage( m_sMyName.c_str(), s_unLogMethodCallTrace, "Request a snapped image, will wait for image" );
       INT16 nStatus = pilSnapImage( m_nCurGrabber, m_punRoi, m_unTimeout );
       if( PIL_ROI_CHANGED == nStatus )
       {
-         piulLogMessage( m_sMyName, s_unLogMethodCallTrace, "ROI changed size while waiting for image" );
+         piulLogMessage( m_sMyName.c_str(), s_unLogMethodCallTrace, "ROI changed size while waiting for image" );
          pilUpdateCamera( m_nCurGrabber );
          pilWaitForCameraUpdate( m_nCurGrabber );
       }
@@ -1730,7 +1780,7 @@ int CCameraAdapter::SnapImage()
 
    int nRet = DEVICE_OK;
 //imageprocessor now called from core
-   piulLogMessage( m_sMyName, s_unLogMethodEnd, "SnapImage() End" );
+   piulLogMessage( m_sMyName.c_str(), s_unLogMethodEnd, "SnapImage() End" );
    return nRet;
 }
 
@@ -1748,7 +1798,7 @@ const unsigned char* CCameraAdapter::GetImageBuffer()
 {
    pilUpdateCamera( m_nCurGrabber );
    pilWaitForCameraUpdate( m_nCurGrabber );
-   piulLogMessage( m_sMyName, s_unLogGetProps, "GetImageBuffer()" );
+   piulLogMessage( m_sMyName.c_str(), s_unLogGetProps, "GetImageBuffer()" );
    return m_punRoi;
 }
 
@@ -1756,7 +1806,7 @@ int CCameraAdapter::StartSequenceAcquisition( long numImages, double interval_ms
 {
    piulLogMessage
       (
-         m_sMyName,
+         m_sMyName.c_str(),
          s_unLogMethodBegin,
          "StartSequenceAcquisition( #Images = %d, Interval = %lf ms, StopOnOverflow = %s ) Begin",
          numImages,
@@ -1780,28 +1830,30 @@ int CCameraAdapter::StartSequenceAcquisition( long numImages, double interval_ms
    m_bStream = TRUE;
    m_nStreamImages = numImages;
    ResetEvent( m_hCaptureEnded );
-   piulLogMessage( m_sMyName, s_unLogMethodCallTrace, "Creating the capture thread" );
-   CWinThread *pThread = AfxBeginThread( StreamThread, this, THREAD_PRIORITY_HIGHEST );
-   m_hCaptureThread = pThread->m_hThread;
-   piulLogMessage( m_sMyName, s_unLogMethodEnd, "StartSequenceAcquisition() End" );
+   piulLogMessage( m_sMyName.c_str(), s_unLogMethodCallTrace, "Creating the capture thread" );
+   //CWinThread *pThread = AfxBeginThread( StreamThread, this, THREAD_PRIORITY_HIGHEST );
+   //m_hCaptureThread = pThread->m_hThread;
+   m_hCaptureThread = CreateThread( NULL, 0, StreamThread, this, 0, NULL );
+   SetThreadPriority( m_hCaptureThread, THREAD_PRIORITY_HIGHEST );
+   piulLogMessage( m_sMyName.c_str(), s_unLogMethodEnd, "StartSequenceAcquisition() End" );
    return DEVICE_OK;
 }
 
 int CCameraAdapter::StopSequenceAcquisition()
 {
-   piulLogMessage( m_sMyName, s_unLogMethodBegin, "StopSequenceAcquisition() Begin" );
+   piulLogMessage( m_sMyName.c_str(), s_unLogMethodBegin, "StopSequenceAcquisition() Begin" );
    if( m_bStream && m_hCaptureThread )
    {
-      CSingleLock oCS( m_pCS, __CS_ENABLE );
+      CSingleLock oCS(m_csLockObj, __CS_ENABLE );
       m_bStream = FALSE;
       oCS.Unlock();
-      piulLogMessage( m_sMyName, s_unLogMethodCallTrace, "Waiting for capture thread to complete" );
+      piulLogMessage( m_sMyName.c_str(), s_unLogMethodCallTrace, "Waiting for capture thread to complete" );
       WaitForSingleObject( m_hCaptureEnded, INFINITE );
       m_hCaptureThread = NULL;
-      piulLogMessage( m_sMyName, s_unLogMethodCallTrace, "Stopping the image stream" );
+      piulLogMessage( m_sMyName.c_str(), s_unLogMethodCallTrace, "Stopping the image stream" );
       RETURN_ON_PIL_ERROR( pilStopStreamingCapture( m_nCurGrabber ) );
    }
-   piulLogMessage( m_sMyName, s_unLogMethodEnd, "StopSequenceAcquisition() End" );
+   piulLogMessage( m_sMyName.c_str(), s_unLogMethodEnd, "StopSequenceAcquisition() End" );
    return DEVICE_OK;
 }
 
@@ -1816,8 +1868,8 @@ void CCameraAdapter::Capture()
       return;
    }
 
-   piulLogMessage( m_sMyName, s_unLogMethodBegin, "Capture() Begin" );
-   CSingleLock oCS( m_pCS, TRUE );
+   piulLogMessage( m_sMyName.c_str(), s_unLogMethodBegin, "Capture() Begin" );
+   CSingleLock oCS(m_csLockObj, TRUE );
    m_nStreamLeft = m_nRoiLeft;
    m_nStreamWidth = m_nRoiWidth;
    m_nStreamTop = m_nRoiTop;
@@ -1830,11 +1882,11 @@ void CCameraAdapter::Capture()
    oCS.Unlock();
 
    UINT unMaxCnt = m_nStreamImages ? m_nStreamImages : INFINITE;
-   piulLogMessage( m_sMyName, s_unLogMethodCallTrace, "Starting the image stream" );
+   piulLogMessage( m_sMyName.c_str(), s_unLogMethodCallTrace, "Starting the image stream" );
    pilStartStreamingCapture( m_nCurGrabber, m_nStreamImages * m_nIntervalCount );
    piulLogMessage
       (
-         m_sMyName,
+         m_sMyName.c_str(),
          s_unLogMethodCallTrace,
          "Allocating the initial buffer ( w = %d, h = %d, d = %d, m = %d )",
          m_nStreamWidth,
@@ -1868,7 +1920,7 @@ void CCameraAdapter::Capture()
          m_fStreamFrameRate = m_fImageFrameRate;
          piulLogMessage
             (
-               m_sMyName,
+               m_sMyName.c_str(),
                s_unLogMethodCallTrace,
                "Allocating a buffer for the next image ( w = %d, h = %d, d = %d, m = %d )",
                m_nStreamWidth,
@@ -1884,12 +1936,12 @@ void CCameraAdapter::Capture()
       INT16 nStatus = pilWaitForNextFrame( m_nCurGrabber, punBuffer, m_unTimeout );
       if( 0 > nStatus )
       {
-         piulLogMessage( m_sMyName, s_unLogMethodCallTrace, "Encountered an error = %d", nStatus );
+         piulLogMessage( m_sMyName.c_str(), s_unLogMethodCallTrace, "Encountered an error = %d", nStatus );
          break;
       }
       else if( PIL_ROI_CHANGED == nStatus )
       {
-         piulLogMessage( m_sMyName, s_unLogMethodCallTrace, "The image ROI changed while waiting for the next image" );
+         piulLogMessage( m_sMyName.c_str(), s_unLogMethodCallTrace, "The image ROI changed while waiting for the next image" );
          pilStopStreamingCapture( m_nCurGrabber );
          pilUpdateCamera( m_nCurGrabber );
          pilWaitForCameraUpdate( m_nCurGrabber );
@@ -1964,7 +2016,7 @@ void CCameraAdapter::Capture()
          {
             // do not stop on overflow - just reset the buffer
             GetCoreCallback()->ClearImageBuffer(this);
-            piulLogMessage( m_sMyName, s_unLogMethodCallTrace, "MM can't keep up, clearing its buffer" );
+            piulLogMessage( m_sMyName.c_str(), s_unLogMethodCallTrace, "MM can't keep up, clearing its buffer" );
             ret = GetCoreCallback()->InsertImage
                   (
                      this,
@@ -1983,7 +2035,7 @@ void CCameraAdapter::Capture()
       oCS.Unlock();
       if( !m_bStream || (m_nStreamCount == (long)unMaxCnt) )
       {
-         piulLogMessage( m_sMyName, s_unLogMethodCallTrace, "Stopping the image stream" );
+         piulLogMessage( m_sMyName.c_str(), s_unLogMethodCallTrace, "Stopping the image stream" );
          pilStopStreamingCapture( m_nCurGrabber );
          break;
       }
@@ -1998,7 +2050,7 @@ void CCameraAdapter::Capture()
 
    GetCoreCallback()->AcqFinished(this, 0);
    LogMessage(g_Msg_SEQUENCE_ACQUISITION_THREAD_EXITING);
-   piulLogMessage( m_sMyName, s_unLogMethodEnd, "Capture() End" );
+   piulLogMessage( m_sMyName.c_str(), s_unLogMethodEnd, "Capture() End" );
 }
 
 /**
@@ -2007,9 +2059,9 @@ void CCameraAdapter::Capture()
  */
 unsigned CCameraAdapter::GetImageWidth() const
 {
-   CSingleLock oCS( m_pCS, __CS_ENABLE );
+   CSingleLock oCS(m_csLockObj, __CS_ENABLE );
    INT16 nWidth = m_hCaptureThread ? m_nStreamWidth : m_nRoiWidth;
-   piulLogMessage( m_sMyName, s_unLogGetProps, "GetImageWidth() = %d", nWidth );
+   piulLogMessage( m_sMyName.c_str(), s_unLogGetProps, "GetImageWidth() = %d", nWidth );
    return nWidth;
 }
 
@@ -2019,9 +2071,9 @@ unsigned CCameraAdapter::GetImageWidth() const
  */
 unsigned CCameraAdapter::GetImageHeight() const
 {
-   CSingleLock oCS( m_pCS, __CS_ENABLE );
+   CSingleLock oCS(m_csLockObj, __CS_ENABLE );
    INT16 nHeight = m_hCaptureThread ? m_nStreamHeight : m_nRoiHeight;
-   piulLogMessage( m_sMyName, s_unLogGetProps, "GetImageHeight() = %d", nHeight );
+   piulLogMessage( m_sMyName.c_str(), s_unLogGetProps, "GetImageHeight() = %d", nHeight );
    return nHeight;
 }
 
@@ -2031,9 +2083,9 @@ unsigned CCameraAdapter::GetImageHeight() const
  */
 unsigned CCameraAdapter::GetImageBytesPerPixel() const
 {
-   CSingleLock oCS( m_pCS, __CS_ENABLE );
+   CSingleLock oCS(m_csLockObj, __CS_ENABLE );
    INT16 nPixelBytes = m_hCaptureThread ? m_nStreamPixelBytes : m_nImagePixelBytes;
-   piulLogMessage( m_sMyName, s_unLogGetProps, "GetImageBytesPerPixel() = %d", nPixelBytes );
+   piulLogMessage( m_sMyName.c_str(), s_unLogGetProps, "GetImageBytesPerPixel() = %d", nPixelBytes );
    return nPixelBytes;
 } 
 
@@ -2045,8 +2097,8 @@ unsigned CCameraAdapter::GetImageBytesPerPixel() const
  */
 unsigned CCameraAdapter::GetBitDepth() const
 {
-   CSingleLock oCS( m_pCS, __CS_ENABLE );
-   piulLogMessage( m_sMyName, s_unLogGetProps, "GetBitDepth() = %d", m_nCapBits );
+   CSingleLock oCS(m_csLockObj, __CS_ENABLE );
+   piulLogMessage( m_sMyName.c_str(), s_unLogGetProps, "GetBitDepth() = %d", m_nCapBits );
    return m_nCapBits;
 }
 
@@ -2056,9 +2108,9 @@ unsigned CCameraAdapter::GetBitDepth() const
  */
 long CCameraAdapter::GetImageBufferSize() const
 {
-   CSingleLock oCS( m_pCS, __CS_ENABLE );
+   CSingleLock oCS(m_csLockObj, __CS_ENABLE );
    UINT unImageBytes = m_hCaptureThread ?  m_nStreamImageBytes: m_nRoiImageBytes;
-   piulLogMessage( m_sMyName, s_unLogGetProps, "GetImageBufferSize() = %d", unImageBytes );
+   piulLogMessage( m_sMyName.c_str(), s_unLogGetProps, "GetImageBufferSize() = %d", unImageBytes );
    return unImageBytes;
 }
 
@@ -2075,7 +2127,7 @@ int CCameraAdapter::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySiz
 {
    piulLogMessage
       (
-         m_sMyName,
+         m_sMyName.c_str(),
          s_unLogSetProps,
          "SetROI( l = %d, t = %d, w = %d, h = %d )",
          x,
@@ -2107,7 +2159,7 @@ int CCameraAdapter::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySiz
  */
 int CCameraAdapter::GetROI( unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySize )
 {
-   CSingleLock oCS( m_pCS, __CS_ENABLE );
+   CSingleLock oCS(m_csLockObj, __CS_ENABLE );
 
    if( m_hCaptureThread )
    {
@@ -2125,7 +2177,7 @@ int CCameraAdapter::GetROI( unsigned& x, unsigned& y, unsigned& xSize, unsigned&
    }
    piulLogMessage
       (
-         m_sMyName,
+         m_sMyName.c_str(),
          s_unLogGetProps,
          "GetROI( l=%d, t=%d, w=%d, h=%d )",
          x,
@@ -2142,7 +2194,7 @@ int CCameraAdapter::GetROI( unsigned& x, unsigned& y, unsigned& xSize, unsigned&
  */
 int CCameraAdapter::ClearROI()
 {
-   piulLogMessage( m_sMyName, s_unLogMethodBegin, "ClearROI() Begin" );
+   piulLogMessage( m_sMyName.c_str(), s_unLogMethodBegin, "ClearROI() Begin" );
    m_nRoiLeft = 0;
    m_nRoiTop = 0;
    m_nRoiWidth = m_nImageWidth;
@@ -2158,7 +2210,7 @@ int CCameraAdapter::ClearROI()
          m_nRoiStride
       ) );
    m_nRoiImageBytes = m_nRoiHeight * m_nRoiStride;
-   piulLogMessage( m_sMyName, s_unLogMethodEnd, "ClearROI() End" );
+   piulLogMessage( m_sMyName.c_str(), s_unLogMethodEnd, "ClearROI() End" );
    return DEVICE_OK;
 }
 
@@ -2168,12 +2220,12 @@ int CCameraAdapter::ClearROI()
  */
 double CCameraAdapter::GetExposure() const
 {
-   CSingleLock oCS( m_pCS, __CS_ENABLE );
+   CSingleLock oCS(m_csLockObj, __CS_ENABLE );
    CCameraAdapter *pThis = const_cast<CCameraAdapter*>(this);
    pThis->m_nMMFrameClocks = m_nFrameClocks;
    pThis->m_bExposureInSync = TRUE;
    double fExposure = floor( 1000000.0 * m_fExposure ) / 1000.0;
-   piulLogMessage( m_sMyName, s_unLogGetProps, "GetExposure() = %lf", fExposure );
+   piulLogMessage( m_sMyName.c_str(), s_unLogGetProps, "GetExposure() = %lf", fExposure );
    return fExposure;
 }
 
@@ -2183,8 +2235,8 @@ double CCameraAdapter::GetExposure() const
  */
 void CCameraAdapter::SetExposure(double exp)
 {
-   CSingleLock oCS( m_pCS, __CS_ENABLE );
-   piulLogMessage( m_sMyName, s_unLogSetProps, "SetExposure( Exposure = %lf )", exp );
+   CSingleLock oCS(m_csLockObj, __CS_ENABLE );
+   piulLogMessage( m_sMyName.c_str(), s_unLogSetProps, "SetExposure( Exposure = %lf )", exp );
    if( !m_bExposureInSync )
    {
       return;
@@ -2208,7 +2260,7 @@ void CCameraAdapter::SetExposure(double exp)
  */
 int CCameraAdapter::GetBinning() const
 {
-   CSingleLock oCS( m_pCS, __CS_ENABLE );
+   CSingleLock oCS(m_csLockObj, __CS_ENABLE );
    int nBin = 1;
    char buf[MM::MaxStrLength];
    int ret = GetProperty(MM::g_Keyword_Binning, buf);
@@ -2216,7 +2268,7 @@ int CCameraAdapter::GetBinning() const
    {
       nBin = atoi(buf);
    }
-   piulLogMessage( m_sMyName, s_unLogGetProps, "GetBinning() = %d", nBin );
+   piulLogMessage( m_sMyName.c_str(), s_unLogGetProps, "GetBinning() = %d", nBin );
    return nBin;
 }
 
@@ -2226,8 +2278,8 @@ int CCameraAdapter::GetBinning() const
  */
 int CCameraAdapter::SetBinning(int binFactor)
 {
-   CSingleLock oCS( m_pCS, __CS_ENABLE );
-   piulLogMessage( m_sMyName, s_unLogSetProps, "SetBinning( BinFactor = %d )", binFactor );
+   CSingleLock oCS(m_csLockObj, __CS_ENABLE );
+   piulLogMessage( m_sMyName.c_str(), s_unLogSetProps, "SetBinning( BinFactor = %d )", binFactor );
    return SetProperty(MM::g_Keyword_Binning, CDeviceUtils::ConvertToString(binFactor));
 }
 ///////////////////////////////////////////////////////////////////////////////
@@ -2248,7 +2300,7 @@ int CCameraAdapter::OnShowControlPanel( MM::PropertyBase* pProp, MM::ActionType 
       m_bShowControlPanel = (m_asBooleans[1] == sShow) ? TRUE : FALSE;
       if( m_bIsConnected )
       {
-         piulLogMessage( m_sMyName, s_unLogSetProps, "%s the control panel", m_bShowControlPanel ? "Show" : "Hide" );
+         piulLogMessage( m_sMyName.c_str(), s_unLogSetProps, "%s the control panel", m_bShowControlPanel ? "Show" : "Hide" );
          RETURN_ON_PIL_ERROR( pilShowControlPanel( m_nCurGrabber, m_bShowControlPanel ) );
       }
    }
@@ -2257,7 +2309,7 @@ int CCameraAdapter::OnShowControlPanel( MM::PropertyBase* pProp, MM::ActionType 
       // the user is requesting the current value for the property, so
       // either ask the 'hardware' or let the system return the value
       // cached in the property.
-      piulLogMessage( m_sMyName, s_unLogGetProps, "The control panel is %s", m_bShowControlPanel ? "visible" : "hidden" );
+      piulLogMessage( m_sMyName.c_str(), s_unLogGetProps, "The control panel is %s", m_bShowControlPanel ? "visible" : "hidden" );
       pProp->Set( m_asBooleans[m_bShowControlPanel ? 1 : 0].c_str() );
    }
 
@@ -2273,7 +2325,7 @@ int CCameraAdapter::OnShowLogSelections(MM::PropertyBase* pProp, MM::ActionType 
       BOOL bOn = (m_asBooleans[1] == sOn) ? TRUE : FALSE;
       if( m_bIsConnected && bOn )
       {
-         piulLogMessage( m_sMyName, s_unLogSetProps, "Display the global log message selection dialog" );
+         piulLogMessage( m_sMyName.c_str(), s_unLogSetProps, "Display the global log message selection dialog" );
          piulSelectLogItems();
       }
    }
@@ -2295,13 +2347,13 @@ int CCameraAdapter::OnShowLogFile(MM::PropertyBase* pProp, MM::ActionType eAct)
       m_bShowLog = (m_asBooleans[1] == sOn) ? TRUE : FALSE;
       if( m_bIsConnected )
       {
-         piulLogMessage( m_sMyName, s_unLogSetProps, "%s the log file", m_bShowLog ? "Show" : "Hide" );
+         piulLogMessage( m_sMyName.c_str(), s_unLogSetProps, "%s the log file", m_bShowLog ? "Show" : "Hide" );
          piulDisplayLog( m_bShowLog );
       }
    }
    else if( MM::BeforeGet == eAct )
    {
-      piulLogMessage( m_sMyName, s_unLogGetProps, "The log file is %s", m_bShowLog ? "visible" : "hidden" );
+      piulLogMessage( m_sMyName.c_str(), s_unLogGetProps, "The log file is %s", m_bShowLog ? "visible" : "hidden" );
       pProp->Set( m_asBooleans[m_bShowLog ? 1 : 0].c_str() );
    }
 
@@ -2317,7 +2369,7 @@ int CCameraAdapter::OnClearLogFile(MM::PropertyBase* pProp, MM::ActionType eAct)
       BOOL bOn = (m_asBooleans[1] == sOn) ? TRUE : FALSE;
       if( m_bIsConnected && bOn )
       {
-         piulLogMessage( m_sMyName, s_unLogSetProps, "Clear the log file" );
+         piulLogMessage( m_sMyName.c_str(), s_unLogSetProps, "Clear the log file" );
          piulClearLog();
       }
    }
@@ -2341,11 +2393,11 @@ int CCameraAdapter::OnEnableLogGroup(MM::PropertyBase* pProp, MM::ActionType eAc
       {
          if( bOn )
          {
-            piulLogMessage( m_sMyName, s_unLogSetProps, "Enable the entire group of local log messages" );
+            piulLogMessage( m_sMyName.c_str(), s_unLogSetProps, "Enable the entire group of local log messages" );
          }
          else
          {
-            piulLogMessage( m_sMyName, s_unLogSetProps, "Disable local log messages that are not individually enabled" );
+            piulLogMessage( m_sMyName.c_str(), s_unLogSetProps, "Disable local log messages that are not individually enabled" );
          }
          piulEnableLogGroup( s_nLogGroup, bOn );
       }
@@ -2355,11 +2407,11 @@ int CCameraAdapter::OnEnableLogGroup(MM::PropertyBase* pProp, MM::ActionType eAc
       BOOL bOn = m_bIsConnected ? piulLogGroupIsEnabled( s_nLogGroup ) : FALSE;
       if( bOn )
       {
-         piulLogMessage( m_sMyName, s_unLogGetProps, "The entire group of local log messages is enabled" );
+         piulLogMessage( m_sMyName.c_str(), s_unLogGetProps, "The entire group of local log messages is enabled" );
       }
       else
       {
-         piulLogMessage( m_sMyName, s_unLogGetProps, "Local log messages are individually enabled" );
+         piulLogMessage( m_sMyName.c_str(), s_unLogGetProps, "Local log messages are individually enabled" );
       }
       pProp->Set( m_asBooleans[bOn ? 1 : 0].c_str() );
    }
@@ -2376,14 +2428,14 @@ int CCameraAdapter::OnEnableLogConstruct(MM::PropertyBase* pProp, MM::ActionType
       BOOL bOn = (m_asBooleans[1] == sOn) ? TRUE : FALSE;
       if( m_bIsConnected )
       {
-         piulLogMessage( m_sMyName, s_unLogSetProps, "%s log messages during contruction", bOn ? "Enable" : "Disable" );
+         piulLogMessage( m_sMyName.c_str(), s_unLogSetProps, "%s log messages during contruction", bOn ? "Enable" : "Disable" );
          piulEnableLogItem( s_unLogConstruct, bOn );
       }
    }
    else if( MM::BeforeGet == eAct )
    {
       BOOL bOn = m_bIsConnected ? piulLogItemIsEnabled( s_unLogConstruct ) : FALSE;
-      piulLogMessage( m_sMyName, s_unLogGetProps, "Log messages during contruction are %s", bOn ? "enabled" : "disabled" );
+      piulLogMessage( m_sMyName.c_str(), s_unLogGetProps, "Log messages during contruction are %s", bOn ? "enabled" : "disabled" );
       pProp->Set( m_asBooleans[bOn ? 1 : 0].c_str() );
    }
 
@@ -2399,14 +2451,14 @@ int CCameraAdapter::OnEnableLogDestruct(MM::PropertyBase* pProp, MM::ActionType 
       BOOL bOn = (m_asBooleans[1] == sOn) ? TRUE : FALSE;
       if( m_bIsConnected )
       {
-         piulLogMessage( m_sMyName, s_unLogSetProps, "%s log messages during destruction", bOn ? "Enable" : "Disable" );
+         piulLogMessage( m_sMyName.c_str(), s_unLogSetProps, "%s log messages during destruction", bOn ? "Enable" : "Disable" );
          piulEnableLogItem( s_unLogDestruct, bOn );
       }
    }
    else if( MM::BeforeGet == eAct )
    {
       BOOL bOn = m_bIsConnected ? piulLogItemIsEnabled( s_unLogDestruct ) : FALSE;
-      piulLogMessage( m_sMyName, s_unLogGetProps, "Log messages during destruction are %s", bOn ? "enabled" : "disabled" );
+      piulLogMessage( m_sMyName.c_str(), s_unLogGetProps, "Log messages during destruction are %s", bOn ? "enabled" : "disabled" );
       pProp->Set( m_asBooleans[bOn ? 1 : 0].c_str() );
    }
 
@@ -2422,14 +2474,14 @@ int CCameraAdapter::OnEnableLogSetProps(MM::PropertyBase* pProp, MM::ActionType 
       BOOL bOn = (m_asBooleans[1] == sOn) ? TRUE : FALSE;
       if( m_bIsConnected )
       {
-         piulLogMessage( m_sMyName, s_unLogSetProps, "%s log messages as property values are set", bOn ? "Enable" : "Disable" );
+         piulLogMessage( m_sMyName.c_str(), s_unLogSetProps, "%s log messages as property values are set", bOn ? "Enable" : "Disable" );
          piulEnableLogItem( s_unLogSetProps, bOn );
       }
    }
    else if( MM::BeforeGet == eAct )
    {
       BOOL bOn = m_bIsConnected ? piulLogItemIsEnabled( s_unLogSetProps ) : FALSE;
-      piulLogMessage( m_sMyName, s_unLogGetProps, "Log messages as property values are set are %s", bOn ? "enabled" : "disabled" );
+      piulLogMessage( m_sMyName.c_str(), s_unLogGetProps, "Log messages as property values are set are %s", bOn ? "enabled" : "disabled" );
       pProp->Set( m_asBooleans[bOn ? 1 : 0].c_str() );
    }
 
@@ -2445,14 +2497,14 @@ int CCameraAdapter::OnEnableLogGetProps(MM::PropertyBase* pProp, MM::ActionType 
       BOOL bOn = (m_asBooleans[1] == sOn) ? TRUE : FALSE;
       if( m_bIsConnected )
       {
-         piulLogMessage( m_sMyName, s_unLogSetProps, "%s log messages as property values are read", bOn ? "Enable" : "Disable" );
+         piulLogMessage( m_sMyName.c_str(), s_unLogSetProps, "%s log messages as property values are read", bOn ? "Enable" : "Disable" );
          piulEnableLogItem( s_unLogGetProps, bOn );
       }
    }
    else if( MM::BeforeGet == eAct )
    {
       BOOL bOn = m_bIsConnected ? piulLogItemIsEnabled( s_unLogGetProps ) : FALSE;
-      piulLogMessage( m_sMyName, s_unLogGetProps, "Log messages as property values are read are %s", bOn ? "enabled" : "disabled" );
+      piulLogMessage( m_sMyName.c_str(), s_unLogGetProps, "Log messages as property values are read are %s", bOn ? "enabled" : "disabled" );
       pProp->Set( m_asBooleans[bOn ? 1 : 0].c_str() );
    }
 
@@ -2468,14 +2520,14 @@ int CCameraAdapter::OnEnableLogMethodCalls(MM::PropertyBase* pProp, MM::ActionTy
       BOOL bOn = (m_asBooleans[1] == sOn) ? TRUE : FALSE;
       if( m_bIsConnected )
       {
-         piulLogMessage( m_sMyName, s_unLogSetProps, "%s log messages that identify method calls", bOn ? "Enable" : "Disable" );
+         piulLogMessage( m_sMyName.c_str(), s_unLogSetProps, "%s log messages that identify method calls", bOn ? "Enable" : "Disable" );
          piulEnableLogItem( s_unLogMethodCalls, bOn );
       }
    }
    else if( MM::BeforeGet == eAct )
    {
       BOOL bOn = m_bIsConnected ? piulLogItemIsEnabled( s_unLogMethodCalls ) : FALSE;
-      piulLogMessage( m_sMyName, s_unLogGetProps, "Log messages that identify method calls are %s", bOn ? "enabled" : "disabled" );
+      piulLogMessage( m_sMyName.c_str(), s_unLogGetProps, "Log messages that identify method calls are %s", bOn ? "enabled" : "disabled" );
       pProp->Set( m_asBooleans[bOn ? 1 : 0].c_str() );
    }
 
@@ -2491,14 +2543,14 @@ int CCameraAdapter::OnEnableLogMethodFrame(MM::PropertyBase* pProp, MM::ActionTy
       BOOL bOn = (m_asBooleans[1] == sOn) ? TRUE : FALSE;
       if( m_bIsConnected )
       {
-         piulLogMessage( m_sMyName, s_unLogSetProps, "%s log messages that frame method calls", bOn ? "Enable" : "Disable" );
+         piulLogMessage( m_sMyName.c_str(), s_unLogSetProps, "%s log messages that frame method calls", bOn ? "Enable" : "Disable" );
          piulEnableLogItem( s_unLogMethodFrame, bOn );
       }
    }
    else if( MM::BeforeGet == eAct )
    {
       BOOL bOn = m_bIsConnected ? piulLogItemIsEnabled( s_unLogMethodFrame ) : FALSE;
-      piulLogMessage( m_sMyName, s_unLogGetProps, "Log messages that frame method calls are %s", bOn ? "enabled" : "disabled" );
+      piulLogMessage( m_sMyName.c_str(), s_unLogGetProps, "Log messages that frame method calls are %s", bOn ? "enabled" : "disabled" );
       pProp->Set( m_asBooleans[bOn ? 1 : 0].c_str() );
    }
 
@@ -2514,14 +2566,14 @@ int CCameraAdapter::OnEnableLogMethodCallTrace(MM::PropertyBase* pProp, MM::Acti
       BOOL bOn = (m_asBooleans[1] == sOn) ? TRUE : FALSE;
       if( m_bIsConnected )
       {
-         piulLogMessage( m_sMyName, s_unLogSetProps, "%s log messages that trace method call actions", bOn ? "Enable" : "Disable" );
+         piulLogMessage( m_sMyName.c_str(), s_unLogSetProps, "%s log messages that trace method call actions", bOn ? "Enable" : "Disable" );
          piulEnableLogItem( s_unLogMethodCallTrace, bOn );
       }
    }
    else if( MM::BeforeGet == eAct )
    {
       BOOL bOn = m_bIsConnected ? piulLogItemIsEnabled( s_unLogMethodCallTrace ) : FALSE;
-      piulLogMessage( m_sMyName, s_unLogGetProps, "Log messages that trace method call actions are %s", bOn ? "enabled" : "disabled" );
+      piulLogMessage( m_sMyName.c_str(), s_unLogGetProps, "Log messages that trace method call actions are %s", bOn ? "enabled" : "disabled" );
       pProp->Set( m_asBooleans[bOn ? 1 : 0].c_str() );
    }
 
@@ -2537,14 +2589,14 @@ int CCameraAdapter::OnEnableLogCallbacks(MM::PropertyBase* pProp, MM::ActionType
       BOOL bOn = (m_asBooleans[1] == sOn) ? TRUE : FALSE;
       if( m_bIsConnected )
       {
-         piulLogMessage( m_sMyName, s_unLogSetProps, "%s log messages that identify callback routines", bOn ? "Enable" : "Disable" );
+         piulLogMessage( m_sMyName.c_str(), s_unLogSetProps, "%s log messages that identify callback routines", bOn ? "Enable" : "Disable" );
          piulEnableLogItem( s_unLogCallbacks, bOn );
       }
    }
    else if( MM::BeforeGet == eAct )
    {
       BOOL bOn = m_bIsConnected ? piulLogItemIsEnabled( s_unLogCallbacks ) : FALSE;
-      piulLogMessage( m_sMyName, s_unLogGetProps, "Log messages that identify callback routines are %s", bOn ? "enabled" : "disabled" );
+      piulLogMessage( m_sMyName.c_str(), s_unLogGetProps, "Log messages that identify callback routines are %s", bOn ? "enabled" : "disabled" );
       pProp->Set( m_asBooleans[bOn ? 1 : 0].c_str() );
    }
 
@@ -2560,14 +2612,14 @@ int CCameraAdapter::OnEnableLogCallbackFrame(MM::PropertyBase* pProp, MM::Action
       BOOL bOn = (m_asBooleans[1] == sOn) ? TRUE : FALSE;
       if( m_bIsConnected )
       {
-         piulLogMessage( m_sMyName, s_unLogSetProps, "%s log messages that frame callback routines", bOn ? "Enable" : "Disable" );
+         piulLogMessage( m_sMyName.c_str(), s_unLogSetProps, "%s log messages that frame callback routines", bOn ? "Enable" : "Disable" );
          piulEnableLogItem( s_unLogCallbackFrame, bOn );
       }
    }
    else if( MM::BeforeGet == eAct )
    {
       BOOL bOn = m_bIsConnected ? piulLogItemIsEnabled( s_unLogCallbackFrame ) : FALSE;
-      piulLogMessage( m_sMyName, s_unLogGetProps, "Log messages that frame callback routines are %s", bOn ? "enabled" : "disabled" );
+      piulLogMessage( m_sMyName.c_str(), s_unLogGetProps, "Log messages that frame callback routines are %s", bOn ? "enabled" : "disabled" );
       pProp->Set( m_asBooleans[bOn ? 1 : 0].c_str() );
    }
 
@@ -2583,14 +2635,14 @@ int CCameraAdapter::OnEnableLogCallbackTrace(MM::PropertyBase* pProp, MM::Action
       BOOL bOn = (m_asBooleans[1] == sOn) ? TRUE : FALSE;
       if( m_bIsConnected )
       {
-         piulLogMessage( m_sMyName, s_unLogSetProps, "%s log messages that trace callback routine actions", bOn ? "Enable" : "Disable" );
+         piulLogMessage( m_sMyName.c_str(), s_unLogSetProps, "%s log messages that trace callback routine actions", bOn ? "Enable" : "Disable" );
          piulEnableLogItem( s_unLogCallbackTrace, bOn );
       }
    }
    else if( MM::BeforeGet == eAct )
    {
       BOOL bOn = m_bIsConnected ? piulLogItemIsEnabled( s_unLogCallbackTrace ) : FALSE;
-      piulLogMessage( m_sMyName, s_unLogGetProps, "Log messages that trace callback routine actions are %s", bOn ? "enabled" : "disabled" );
+      piulLogMessage( m_sMyName.c_str(), s_unLogGetProps, "Log messages that trace callback routine actions are %s", bOn ? "enabled" : "disabled" );
       pProp->Set( m_asBooleans[bOn ? 1 : 0].c_str() );
    }
 
@@ -2615,13 +2667,13 @@ int CCameraAdapter::OnGrabber(MM::PropertyBase* pProp, MM::ActionType eAct)
          {
             if( m_nCurGrabber != nPipe )
             {
-               piulLogMessage( m_sMyName, s_unLogSetProps, "Connecting to %s", sGrabber.c_str() );
+               piulLogMessage( m_sMyName.c_str(), s_unLogSetProps, "Connecting to %s", sGrabber.c_str() );
                RETURN_ON_PIL_ERROR( ConnectPipe( nPipe ) );
             }
             return DEVICE_OK;
          }
       }
-      piulLogMessage( m_sMyName, s_unLogSetProps, "Invalid frame grabber: %s", sGrabber.c_str() );
+      piulLogMessage( m_sMyName.c_str(), s_unLogSetProps, "Invalid frame grabber: %s", sGrabber.c_str() );
       return ERR_INVALID_GRABBER;
    }
    else if( MM::BeforeGet == eAct )
@@ -2631,12 +2683,12 @@ int CCameraAdapter::OnGrabber(MM::PropertyBase* pProp, MM::ActionType eAct)
       // cached in the property.
       if( -1 < m_nCurGrabber )
       {
-         piulLogMessage( m_sMyName, s_unLogGetProps, "Connected to %s", m_asGrabbers[m_nCurGrabber].c_str() );
+         piulLogMessage( m_sMyName.c_str(), s_unLogGetProps, "Connected to %s", m_asGrabbers[m_nCurGrabber].c_str() );
          pProp->Set( m_asGrabbers[m_nCurGrabber].c_str() );
       }
       else
       {
-         piulLogMessage( m_sMyName, s_unLogGetProps, "Not connected to a frame grabber" );
+         piulLogMessage( m_sMyName.c_str(), s_unLogGetProps, "Not connected to a frame grabber" );
          pProp->Set( "" );
       }
    }
@@ -2659,12 +2711,12 @@ int CCameraAdapter::OnCamera(MM::PropertyBase* pProp, MM::ActionType eAct)
       {
          if( m_asCameras[nCam] == sCamera )
          {
-            piulLogMessage( m_sMyName, s_unLogSetProps, "Selecting camera: %s", sCamera.c_str() );
+            piulLogMessage( m_sMyName.c_str(), s_unLogSetProps, "Selecting camera: %s", sCamera.c_str() );
             RETURN_ON_PIL_ERROR( SelectCamera( nCam ) );
             return DEVICE_OK;
          }
       }
-      piulLogMessage( m_sMyName, s_unLogSetProps, "Invalid camera: %s", sCamera.c_str() );
+      piulLogMessage( m_sMyName.c_str(), s_unLogSetProps, "Invalid camera: %s", sCamera.c_str() );
       return ERR_INVALID_CAMERA;
    }
    else if( MM::BeforeGet == eAct )
@@ -2674,12 +2726,12 @@ int CCameraAdapter::OnCamera(MM::PropertyBase* pProp, MM::ActionType eAct)
       // cached in the property.
       if( -1 < m_nCurCamera )
       {
-         piulLogMessage( m_sMyName, s_unLogGetProps, "The selected camera is: %s", m_asCameras[m_nCurCamera].c_str() );
+         piulLogMessage( m_sMyName.c_str(), s_unLogGetProps, "The selected camera is: %s", m_asCameras[m_nCurCamera].c_str() );
          pProp->Set( m_asCameras[m_nCurCamera].c_str() );
       }
       else
       {
-         piulLogMessage( m_sMyName, s_unLogGetProps, "No camera selected" );
+         piulLogMessage( m_sMyName.c_str(), s_unLogGetProps, "No camera selected" );
          pProp->Set( "" );
       }
    }
@@ -2702,12 +2754,12 @@ int CCameraAdapter::OnCameraId(MM::PropertyBase* pProp, MM::ActionType eAct)
       {
          if( m_asCameraSns[nSn] == sSn )
          {
-            piulLogMessage( m_sMyName, s_unLogSetProps, "Selecting camera S/N: %s", sSn.c_str() );
+            piulLogMessage( m_sMyName.c_str(), s_unLogSetProps, "Selecting camera S/N: %s", sSn.c_str() );
             RETURN_ON_PIL_ERROR( SelectCameraSn( nSn ) );
             return DEVICE_OK;
          }
       }
-      piulLogMessage( m_sMyName, s_unLogSetProps, "Invalid camera S/N: %s", sSn.c_str() );
+      piulLogMessage( m_sMyName.c_str(), s_unLogSetProps, "Invalid camera S/N: %s", sSn.c_str() );
       return ERR_INVALID_CAMERA_ID;
    }
    else if( MM::BeforeGet == eAct )
@@ -2717,12 +2769,12 @@ int CCameraAdapter::OnCameraId(MM::PropertyBase* pProp, MM::ActionType eAct)
       // cached in the property.
       if( -1 < m_nCurCameraSn )
       {
-         piulLogMessage( m_sMyName, s_unLogGetProps, "The selected camera S/N is: %s", m_asCameraSns[m_nCurCameraSn].c_str() );
+         piulLogMessage( m_sMyName.c_str(), s_unLogGetProps, "The selected camera S/N is: %s", m_asCameraSns[m_nCurCameraSn].c_str() );
          pProp->Set( m_asCameraSns[m_nCurCameraSn].c_str() );
       }
       else
       {
-         piulLogMessage( m_sMyName, s_unLogGetProps, "No camera S/N selected" );
+         piulLogMessage( m_sMyName.c_str(), s_unLogGetProps, "No camera S/N selected" );
          pProp->Set( "" );
       }
    }
@@ -2745,12 +2797,12 @@ int CCameraAdapter::OnMode(MM::PropertyBase* pProp, MM::ActionType eAct)
       {
          if( m_asCameraModes[nMode] == sMode )
          {
-            piulLogMessage( m_sMyName, s_unLogSetProps, "Selecting camera mode: %s", sMode.c_str() );
+            piulLogMessage( m_sMyName.c_str(), s_unLogSetProps, "Selecting camera mode: %s", sMode.c_str() );
             RETURN_ON_PIL_ERROR( SelectCameraMode( nMode ) );
             return DEVICE_OK;
          }
       }
-      piulLogMessage( m_sMyName, s_unLogSetProps, "Invalid camera mode: %s", sMode.c_str() );
+      piulLogMessage( m_sMyName.c_str(), s_unLogSetProps, "Invalid camera mode: %s", sMode.c_str() );
       return ERR_INVALID_CAMERA_MODE;
    }
    else if( MM::BeforeGet == eAct )
@@ -2760,12 +2812,12 @@ int CCameraAdapter::OnMode(MM::PropertyBase* pProp, MM::ActionType eAct)
       // cached in the property.
       if( -1 < m_nCurCameraMode )
       {
-         piulLogMessage( m_sMyName, s_unLogGetProps, "The current camera mode is: %s", m_asCameraModes[m_nCurCameraMode].c_str() );
+         piulLogMessage( m_sMyName.c_str(), s_unLogGetProps, "The current camera mode is: %s", m_asCameraModes[m_nCurCameraMode].c_str() );
          pProp->Set( m_asCameraModes[m_nCurCameraMode].c_str() );
       }
       else
       {
-         piulLogMessage( m_sMyName, s_unLogGetProps, "No camera mode selected" );
+         piulLogMessage( m_sMyName.c_str(), s_unLogGetProps, "No camera mode selected" );
          pProp->Set( "" );
       }
    }
@@ -2785,7 +2837,7 @@ int CCameraAdapter::OnVideoGain(MM::PropertyBase* pProp, MM::ActionType eAct)
       long nGain;
       pProp->Get( nGain );
       m_nVideoGain = (INT16)nGain;
-      piulLogMessage( m_sMyName, s_unLogSetProps, "Set video gain to %d", m_nVideoGain );
+      piulLogMessage( m_sMyName.c_str(), s_unLogSetProps, "Set video gain to %d", m_nVideoGain );
       RETURN_ON_PIL_ERROR( pilSetCameraVideoGain( m_nCurGrabber, m_nVideoGain ) );
    }
    else if( MM::BeforeGet == eAct )
@@ -2793,7 +2845,7 @@ int CCameraAdapter::OnVideoGain(MM::PropertyBase* pProp, MM::ActionType eAct)
       // the user is requesting the current value for the property, so
       // either ask the 'hardware' or let the system return the value
       // cached in the property.
-      piulLogMessage( m_sMyName, s_unLogGetProps, "Video gain is set to %d", m_nVideoGain );
+      piulLogMessage( m_sMyName.c_str(), s_unLogGetProps, "Video gain is set to %d", m_nVideoGain );
       pProp->Set( (long)m_nVideoGain );
    }
 
@@ -2812,7 +2864,7 @@ int CCameraAdapter::OnVideoOffset(MM::PropertyBase* pProp, MM::ActionType eAct)
       long nOffset;
       pProp->Get( nOffset );
       m_nVideoOffset = (INT16)nOffset;
-      piulLogMessage( m_sMyName, s_unLogSetProps, "Set video offset to %d", m_nVideoOffset );
+      piulLogMessage( m_sMyName.c_str(), s_unLogSetProps, "Set video offset to %d", m_nVideoOffset );
       RETURN_ON_PIL_ERROR( pilSetCameraVideoOffset( m_nCurGrabber, m_nVideoOffset ) );
    }
    else if( MM::BeforeGet == eAct )
@@ -2820,7 +2872,7 @@ int CCameraAdapter::OnVideoOffset(MM::PropertyBase* pProp, MM::ActionType eAct)
       // the user is requesting the current value for the property, so
       // either ask the 'hardware' or let the system return the value
       // cached in the property.
-      piulLogMessage( m_sMyName, s_unLogGetProps, "Video offset is set to %d", m_nVideoOffset );
+      piulLogMessage( m_sMyName.c_str(), s_unLogGetProps, "Video offset is set to %d", m_nVideoOffset );
       pProp->Set( (long)m_nVideoOffset );
    }
 
@@ -2839,7 +2891,7 @@ int CCameraAdapter::OnIntensifierVolts(MM::PropertyBase* pProp, MM::ActionType e
       double fVolts;
       pProp->Get( fVolts );
       m_fIntensifierVolts = fVolts;
-      piulLogMessage( m_sMyName, s_unLogSetProps, "Set the intensifier volts to %lf", m_fIntensifierVolts );
+      piulLogMessage( m_sMyName.c_str(), s_unLogSetProps, "Set the intensifier volts to %lf", m_fIntensifierVolts );
       RETURN_ON_PIL_ERROR( pilSetIntensifierVolts( m_nCurGrabber, m_fIntensifierVolts, m_fIntensifierGain ) );
    }
    else if( MM::BeforeGet == eAct )
@@ -2847,7 +2899,7 @@ int CCameraAdapter::OnIntensifierVolts(MM::PropertyBase* pProp, MM::ActionType e
       // the user is requesting the current value for the property, so
       // either ask the 'hardware' or let the system return the value
       // cached in the property.
-      piulLogMessage( m_sMyName, s_unLogGetProps, "Intensifier volts is set to %lf", m_fIntensifierVolts );
+      piulLogMessage( m_sMyName.c_str(), s_unLogGetProps, "Intensifier volts is set to %lf", m_fIntensifierVolts );
       pProp->Set( m_fIntensifierVolts );
    }
 
@@ -2866,7 +2918,7 @@ int CCameraAdapter::OnIntensifierGain(MM::PropertyBase* pProp, MM::ActionType eA
       double fGain;
       pProp->Get( fGain );
       m_fIntensifierGain = fGain;
-      piulLogMessage( m_sMyName, s_unLogSetProps, "Set the intensifier gain to %lf", m_fIntensifierGain );
+      piulLogMessage( m_sMyName.c_str(), s_unLogSetProps, "Set the intensifier gain to %lf", m_fIntensifierGain );
       RETURN_ON_PIL_ERROR( pilSetIntensifierGain( m_nCurGrabber, m_fIntensifierGain, m_fIntensifierVolts ) );
    }
    else if( MM::BeforeGet == eAct )
@@ -2874,7 +2926,7 @@ int CCameraAdapter::OnIntensifierGain(MM::PropertyBase* pProp, MM::ActionType eA
       // the user is requesting the current value for the property, so
       // either ask the 'hardware' or let the system return the value
       // cached in the property.
-      piulLogMessage( m_sMyName, s_unLogGetProps, "Intensifier gain is set to %lf", m_fIntensifierGain );
+      piulLogMessage( m_sMyName.c_str(), s_unLogGetProps, "Intensifier gain is set to %lf", m_fIntensifierGain );
       pProp->Set( m_fIntensifierGain );
    }
 
@@ -2893,7 +2945,7 @@ int CCameraAdapter::OnFrameLeft(MM::PropertyBase* pProp, MM::ActionType eAct)
       long nLeft;
       pProp->Get( nLeft );
       m_nCapLeft = (INT16)nLeft;
-      piulLogMessage( m_sMyName, s_unLogSetProps, "Set the captured frame horizontal offset to %d", m_nCapLeft );
+      piulLogMessage( m_sMyName.c_str(), s_unLogSetProps, "Set the captured frame horizontal offset to %d", m_nCapLeft );
       RETURN_ON_PIL_ERROR( pilSetCaptureOffset( m_nCurGrabber, m_nCapLeft, m_nCapTop ) );
    }
    else if( MM::BeforeGet == eAct )
@@ -2901,7 +2953,7 @@ int CCameraAdapter::OnFrameLeft(MM::PropertyBase* pProp, MM::ActionType eAct)
       // the user is requesting the current value for the property, so
       // either ask the 'hardware' or let the system return the value
       // cached in the property.
-      piulLogMessage( m_sMyName, s_unLogGetProps, "The captured frame horizontal offset is set to %d", m_nCapLeft );
+      piulLogMessage( m_sMyName.c_str(), s_unLogGetProps, "The captured frame horizontal offset is set to %d", m_nCapLeft );
       pProp->Set( (long)m_nCapLeft );
    }
 
@@ -2920,7 +2972,7 @@ int CCameraAdapter::OnFrameTop(MM::PropertyBase* pProp, MM::ActionType eAct)
       long nTop;
       pProp->Get( nTop );
       m_nCapTop = (INT16)nTop;
-      piulLogMessage( m_sMyName, s_unLogSetProps, "Set the captured frame vertical offset to %d", m_nCapTop );
+      piulLogMessage( m_sMyName.c_str(), s_unLogSetProps, "Set the captured frame vertical offset to %d", m_nCapTop );
       RETURN_ON_PIL_ERROR( pilSetCaptureOffset( m_nCurGrabber, m_nCapLeft, m_nCapTop ) );
    }
    else if( MM::BeforeGet == eAct )
@@ -2928,7 +2980,7 @@ int CCameraAdapter::OnFrameTop(MM::PropertyBase* pProp, MM::ActionType eAct)
       // the user is requesting the current value for the property, so
       // either ask the 'hardware' or let the system return the value
       // cached in the property.
-      piulLogMessage( m_sMyName, s_unLogGetProps, "The captured frame vertical offset is set to %d", m_nCapTop );
+      piulLogMessage( m_sMyName.c_str(), s_unLogGetProps, "The captured frame vertical offset is set to %d", m_nCapTop );
       pProp->Set( (long)m_nCapTop );
    }
 
@@ -2943,7 +2995,7 @@ int CCameraAdapter::OnFrameWidth(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    else if( MM::BeforeGet == eAct )
    {
-      piulLogMessage( m_sMyName, s_unLogGetProps, "The captured frame width is set to %d", m_nCapWidth );
+      piulLogMessage( m_sMyName.c_str(), s_unLogGetProps, "The captured frame width is set to %d", m_nCapWidth );
       pProp->Set( (long)m_nCapWidth );
    }
 
@@ -2958,7 +3010,7 @@ int CCameraAdapter::OnFrameHeight(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    else if( MM::BeforeGet == eAct )
    {
-      piulLogMessage( m_sMyName, s_unLogGetProps, "The captured frame height is set to %d", m_nCapHeight );
+      piulLogMessage( m_sMyName.c_str(), s_unLogGetProps, "The captured frame height is set to %d", m_nCapHeight );
       pProp->Set( (long)m_nCapHeight );
    }
 
@@ -2976,7 +3028,7 @@ int CCameraAdapter::OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct)
       // apply this value to the 'hardware'.
       double fExposureMM;
       pProp->Get(fExposureMM);
-      piulLogMessage( m_sMyName, s_unLogSetProps, "Set the camera exposure to %lf milliseconds", fExposureMM );
+      piulLogMessage( m_sMyName.c_str(), s_unLogSetProps, "Set the camera exposure to %lf milliseconds", fExposureMM );
       SetExposure( fExposureMM );
    }
    else if( MM::BeforeGet == eAct )
@@ -2985,7 +3037,7 @@ int CCameraAdapter::OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct)
       // either ask the 'hardware' or let the system return the value
       // cached in the property.
       double fExposureMM = GetExposure();
-      piulLogMessage( m_sMyName, s_unLogGetProps, "The camera exposure is set to %lf milliseconds", fExposureMM );
+      piulLogMessage( m_sMyName.c_str(), s_unLogGetProps, "The camera exposure is set to %lf milliseconds", fExposureMM );
       pProp->Set( fExposureMM );
    }
 
@@ -3003,7 +3055,7 @@ int CCameraAdapter::OnIntegration(MM::PropertyBase* pProp, MM::ActionType eAct)
       // apply this value to the 'hardware'.
       long nFrames;
       pProp->Get(nFrames);
-      piulLogMessage( m_sMyName, s_unLogSetProps, "Set the camera on-chip integration to %d clocks", nFrames );
+      piulLogMessage( m_sMyName.c_str(), s_unLogSetProps, "Set the camera on-chip integration to %d clocks", nFrames );
       RETURN_ON_PIL_ERROR( SetIntegration( (INT16)nFrames ) );
    }
    else if( MM::BeforeGet == eAct )
@@ -3013,7 +3065,7 @@ int CCameraAdapter::OnIntegration(MM::PropertyBase* pProp, MM::ActionType eAct)
       // cached in the property.
       m_nMMFrameClocks = m_nFrameClocks;
       m_bExposureInSync = TRUE;
-      piulLogMessage( m_sMyName, s_unLogGetProps, "The camera on-chip integration is set to %d clocks", m_nFrameClocks );
+      piulLogMessage( m_sMyName.c_str(), s_unLogGetProps, "The camera on-chip integration is set to %d clocks", m_nFrameClocks );
       pProp->Set( (long)m_nFrameClocks );
    }
 
@@ -3057,7 +3109,7 @@ int CCameraAdapter::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
    else if( MM::BeforeGet == eAct )
    {
       //piulLogMessage( m_sMyName, s_unLogGetProps, "" );
-      pProp->Set( m_sPixel );
+      pProp->Set( m_sPixel.c_str() );
    }
 
    return DEVICE_OK;
@@ -3070,12 +3122,12 @@ int CCameraAdapter::OnSourceBrightness( MM::PropertyBase* pProp, MM::ActionType 
       double fValue;
       pProp->Get( fValue );
       m_fSourceBrightness = fValue;
-      piulLogMessage( m_sMyName, s_unLogSetProps, "Set the source brightness to %lf", m_fSourceBrightness );
+      piulLogMessage( m_sMyName.c_str(), s_unLogSetProps, "Set the source brightness to %lf", m_fSourceBrightness );
       RETURN_ON_PIL_ERROR( pilSetInputTransform( m_nCurGrabber, m_fSourceBrightness, m_fSourceContrast, m_fSourceGamma ) );
    }
    else if( MM::BeforeGet == eAct )
    {
-      piulLogMessage( m_sMyName, s_unLogGetProps, "The source brightness is set to %lf", m_fSourceBrightness );
+      piulLogMessage( m_sMyName.c_str(), s_unLogGetProps, "The source brightness is set to %lf", m_fSourceBrightness );
       pProp->Set( m_fSourceBrightness );
    }
 
@@ -3089,12 +3141,12 @@ int CCameraAdapter::OnSourceContrast( MM::PropertyBase* pProp, MM::ActionType eA
       double fValue;
       pProp->Get( fValue );
       m_fSourceContrast = fValue;
-      piulLogMessage( m_sMyName, s_unLogSetProps, "Set the source contrast to %lf", m_fSourceContrast );
+      piulLogMessage( m_sMyName.c_str(), s_unLogSetProps, "Set the source contrast to %lf", m_fSourceContrast );
       RETURN_ON_PIL_ERROR( pilSetInputTransform( m_nCurGrabber, m_fSourceBrightness, m_fSourceContrast, m_fSourceGamma ) );
    }
    else if( MM::BeforeGet == eAct )
    {
-      piulLogMessage( m_sMyName, s_unLogGetProps, "The source contrast is set to %lf", m_fSourceContrast );
+      piulLogMessage( m_sMyName.c_str(), s_unLogGetProps, "The source contrast is set to %lf", m_fSourceContrast );
       pProp->Set( m_fSourceContrast );
    }
 
@@ -3108,12 +3160,12 @@ int CCameraAdapter::OnSourceGamma( MM::PropertyBase* pProp, MM::ActionType eAct 
       double fValue;
       pProp->Get( fValue );
       m_fSourceGamma = fValue;
-      piulLogMessage( m_sMyName, s_unLogSetProps, "Set the source gamma to %lf", m_fSourceGamma );
+      piulLogMessage( m_sMyName.c_str(), s_unLogSetProps, "Set the source gamma to %lf", m_fSourceGamma );
       RETURN_ON_PIL_ERROR( pilSetInputTransform( m_nCurGrabber, m_fSourceBrightness, m_fSourceContrast, m_fSourceGamma ) );
    }
    else if( MM::BeforeGet == eAct )
    {
-      piulLogMessage( m_sMyName, s_unLogGetProps, "The source gamma is set to %lf", m_fSourceGamma );
+      piulLogMessage( m_sMyName.c_str(), s_unLogGetProps, "The source gamma is set to %lf", m_fSourceGamma );
       pProp->Set( m_fSourceGamma );
    }
 
@@ -3127,12 +3179,12 @@ int CCameraAdapter::OnSourceThreshold( MM::PropertyBase* pProp, MM::ActionType e
       long nValue;
       pProp->Get( nValue );
       m_nSourceThreshold = (INT16)__min( nValue, (long)m_unImageSaturation );
-      piulLogMessage( m_sMyName, s_unLogSetProps, "Set the source threshold to %d", m_nSourceThreshold );
+      piulLogMessage( m_sMyName.c_str(), s_unLogSetProps, "Set the source threshold to %d", m_nSourceThreshold );
       RETURN_ON_PIL_ERROR( pilSetInputThreshold( m_nCurGrabber, m_nSourceThreshold ) );
    }
    else if( MM::BeforeGet == eAct )
    {
-      piulLogMessage( m_sMyName, s_unLogGetProps, "The source threshold is set to %d", m_nSourceThreshold );
+      piulLogMessage( m_sMyName.c_str(), s_unLogGetProps, "The source threshold is set to %d", m_nSourceThreshold );
       pProp->Set( (long)m_nSourceThreshold );
    }
 
@@ -3146,12 +3198,12 @@ int CCameraAdapter::OnSourceAutoContrast( MM::PropertyBase* pProp, MM::ActionTyp
       std::string sValue;
       pProp->Get( sValue );
       m_bSourceAutoContrast = (m_asBooleans[1] == sValue) ? TRUE : FALSE;
-      piulLogMessage( m_sMyName, s_unLogSetProps, "%s the source auto-contrast feature", m_bSourceAutoContrast ? "Enable" : "Disable" );
+      piulLogMessage( m_sMyName.c_str(), s_unLogSetProps, "%s the source auto-contrast feature", m_bSourceAutoContrast ? "Enable" : "Disable" );
       RETURN_ON_PIL_ERROR( pilSetInputAutoContrast( m_nCurGrabber, m_bSourceAutoContrast ) );
    }
    else if( MM::BeforeGet == eAct )
    {
-      piulLogMessage( m_sMyName, s_unLogGetProps, "The source auto-contrast feature is %s", m_bSourceAutoContrast ? "enabled" : "disabled" );
+      piulLogMessage( m_sMyName.c_str(), s_unLogGetProps, "The source auto-contrast feature is %s", m_bSourceAutoContrast ? "enabled" : "disabled" );
       pProp->Set( m_asBooleans[m_bSourceAutoContrast ? 1 : 0].c_str() );
    }
 
@@ -3167,7 +3219,7 @@ int CCameraAdapter::OnSourceNormalContrast( MM::PropertyBase* pProp, MM::ActionT
       BOOL bNormal = (m_asBooleans[1] == sValue) ? TRUE : FALSE;
       if( bNormal )
       {
-         piulLogMessage( m_sMyName, s_unLogSetProps, "Set the source brightness, contrast, and gamma to normal" );
+         piulLogMessage( m_sMyName.c_str(), s_unLogSetProps, "Set the source brightness, contrast, and gamma to normal" );
          RETURN_ON_PIL_ERROR( pilSetInputNormalContrast( m_nCurGrabber ) );
       }
    }
@@ -3187,12 +3239,12 @@ int CCameraAdapter::OnIonFeedbackFilterSize( MM::PropertyBase* pProp, MM::Action
       long nValue;
       pProp->Get( nValue );
       m_nIonFeedbackFilterSize = (INT16)nValue;
-      piulLogMessage( m_sMyName, s_unLogSetProps, "Set the ion-feedback filter size to %d", m_nIonFeedbackFilterSize );
+      piulLogMessage( m_sMyName.c_str(), s_unLogSetProps, "Set the ion-feedback filter size to %d", m_nIonFeedbackFilterSize );
       RETURN_ON_PIL_ERROR( pilSetIonFeedbackFilterSize( m_nCurGrabber, m_nIonFeedbackFilterSize ) );
    }
    else if( MM::BeforeGet == eAct )
    {
-      piulLogMessage( m_sMyName, s_unLogGetProps, "The ion-feedback filter size is set to %d", m_nIonFeedbackFilterSize );
+      piulLogMessage( m_sMyName.c_str(), s_unLogGetProps, "The ion-feedback filter size is set to %d", m_nIonFeedbackFilterSize );
       pProp->Set( (long)m_nIonFeedbackFilterSize );
    }
 
@@ -3206,12 +3258,12 @@ int CCameraAdapter::OnEnableIonFeedback( MM::PropertyBase* pProp, MM::ActionType
       std::string sValue;
       pProp->Get( sValue );
       m_bIonFeedbackEnabled = (m_asBooleans[1] == sValue) ? TRUE : FALSE;
-      piulLogMessage( m_sMyName, s_unLogSetProps, "%s the ion-feedback filter", m_bIonFeedbackEnabled ? "Enable" : "Disable" );
+      piulLogMessage( m_sMyName.c_str(), s_unLogSetProps, "%s the ion-feedback filter", m_bIonFeedbackEnabled ? "Enable" : "Disable" );
       RETURN_ON_PIL_ERROR( pilEnableIonFeedback( m_nCurGrabber, m_bIonFeedbackEnabled ) );
    }
    else if( MM::BeforeGet == eAct )
    {
-      piulLogMessage( m_sMyName, s_unLogGetProps, "The ion-feedback filter is %s", m_bIonFeedbackEnabled ? "enabled" : "disabled" );
+      piulLogMessage( m_sMyName.c_str(), s_unLogGetProps, "The ion-feedback filter is %s", m_bIonFeedbackEnabled ? "enabled" : "disabled" );
       pProp->Set( m_asBooleans[m_bIonFeedbackEnabled ? 1 : 0].c_str() );
    }
 
@@ -3225,13 +3277,13 @@ int CCameraAdapter::OnRamStackDepth( MM::PropertyBase* pProp, MM::ActionType eAc
       long nValue;
       pProp->Get( nValue );
       m_nIntegratorDepth = (INT32)nValue;
-      piulLogMessage( m_sMyName, s_unLogSetProps, "Set the RAM stack depth to %d frames", m_nIntegratorDepth );
+      piulLogMessage( m_sMyName.c_str(), s_unLogSetProps, "Set the RAM stack depth to %d frames", m_nIntegratorDepth );
       RETURN_ON_PIL_ERROR( pilSetRamIntegratorDepth( m_nCurGrabber, m_nIntegratorDepth, m_fIntegratorExposure ) );
       m_fIntegratorRate = 1.0 / m_fIntegratorExposure;
    }
    else if( MM::BeforeGet == eAct )
    {
-      piulLogMessage( m_sMyName, s_unLogGetProps, "The RAM stack depth is set to %d frames", m_nIntegratorDepth );
+      piulLogMessage( m_sMyName.c_str(), s_unLogGetProps, "The RAM stack depth is set to %d frames", m_nIntegratorDepth );
       pProp->Set( (long)m_nIntegratorDepth );
    }
 
@@ -3246,11 +3298,11 @@ int CCameraAdapter::OnRamStackExposure( MM::PropertyBase* pProp, MM::ActionType 
       pProp->Get( fValue );
       m_fIntegratorExposure = fValue / 1000.0;
       m_fIntegratorRate = 1.0 / m_fIntegratorExposure;
-      piulLogMessage( m_sMyName, s_unLogSetProps, "Set the RAM stack exposure to %lf milliseconds", m_fIntegratorExposure );
+      piulLogMessage( m_sMyName.c_str(), s_unLogSetProps, "Set the RAM stack exposure to %lf milliseconds", m_fIntegratorExposure );
    }
    else if( MM::BeforeGet == eAct )
    {
-      piulLogMessage( m_sMyName, s_unLogGetProps, "The RAM stack exposure is set to %lf milliseconds", m_fIntegratorExposure );
+      piulLogMessage( m_sMyName.c_str(), s_unLogGetProps, "The RAM stack exposure is set to %lf milliseconds", m_fIntegratorExposure );
       pProp->Set( m_fIntegratorExposure * 1000.0 );
    }
 
@@ -3264,12 +3316,12 @@ int CCameraAdapter::OnEnableRamStack( MM::PropertyBase* pProp, MM::ActionType eA
       std::string sValue;
       pProp->Get( sValue );
       m_bIntegratorEnabled = (m_asBooleans[1] == sValue) ? TRUE : FALSE;
-      piulLogMessage( m_sMyName, s_unLogSetProps, "%s the RAM stack integrator", m_bIntegratorEnabled ? "Enable" : "Disable" );
+      piulLogMessage( m_sMyName.c_str(), s_unLogSetProps, "%s the RAM stack integrator", m_bIntegratorEnabled ? "Enable" : "Disable" );
       RETURN_ON_PIL_ERROR( pilEnableRamIntegrator( m_nCurGrabber, m_bIntegratorEnabled ) );
    }
    else if( MM::BeforeGet == eAct )
    {
-      piulLogMessage( m_sMyName, s_unLogGetProps, "The RAM stack integrator is %s", m_bIntegratorEnabled ? "enabled" : "disabled" );
+      piulLogMessage( m_sMyName.c_str(), s_unLogGetProps, "The RAM stack integrator is %s", m_bIntegratorEnabled ? "enabled" : "disabled" );
       pProp->Set( m_asBooleans[m_bIntegratorEnabled ? 1 : 0].c_str() );
    }
 
@@ -3283,12 +3335,12 @@ int CCameraAdapter::OnRamAverageDepth( MM::PropertyBase* pProp, MM::ActionType e
       long nValue;
       pProp->Get( nValue );
       m_nAveragingDepth = (INT32)nValue;
-      piulLogMessage( m_sMyName, s_unLogSetProps, "Set the RAM average depth to %d frames", m_nAveragingDepth );
+      piulLogMessage( m_sMyName.c_str(), s_unLogSetProps, "Set the RAM average depth to %d frames", m_nAveragingDepth );
       RETURN_ON_PIL_ERROR( pilSetRamAveragingDepth( m_nCurGrabber, m_nAveragingDepth ) );
    }
    else if( MM::BeforeGet == eAct )
    {
-      piulLogMessage( m_sMyName, s_unLogGetProps, "The RAM average depth is set to %d frames", m_nAveragingDepth );
+      piulLogMessage( m_sMyName.c_str(), s_unLogGetProps, "The RAM average depth is set to %d frames", m_nAveragingDepth );
       pProp->Set( (long)m_nAveragingDepth );
    }
 
@@ -3302,12 +3354,12 @@ int CCameraAdapter::OnRamAverageExposure( MM::PropertyBase* pProp, MM::ActionTyp
       double fValue;
       pProp->Get( fValue );
       m_fAveragingRate = 1000.0 / fValue;
-      piulLogMessage( m_sMyName, s_unLogSetProps, "Set the RAM average exposure to %lf milliseconds", fValue );
+      piulLogMessage( m_sMyName.c_str(), s_unLogSetProps, "Set the RAM average exposure to %lf milliseconds", fValue );
    }
    else if( MM::BeforeGet == eAct )
    {
       double fValue = 1000.0 / m_fAveragingRate;
-      piulLogMessage( m_sMyName, s_unLogGetProps, "The RAM average exposure is set to %lf milliseconds", fValue );
+      piulLogMessage( m_sMyName.c_str(), s_unLogGetProps, "The RAM average exposure is set to %lf milliseconds", fValue );
       pProp->Set( fValue );
    }
 
@@ -3321,12 +3373,12 @@ int CCameraAdapter::OnEnableSmoothRamAverage( MM::PropertyBase* pProp, MM::Actio
       std::string sValue;
       pProp->Get( sValue );
       m_bSmoothAvgEnabled = (m_asBooleans[1] == sValue) ? TRUE : FALSE;
-      piulLogMessage( m_sMyName, s_unLogSetProps, "%s smooth RAM averaging", m_bSmoothAvgEnabled ? "Enable" : "Disable" );
+      piulLogMessage( m_sMyName.c_str(), s_unLogSetProps, "%s smooth RAM averaging", m_bSmoothAvgEnabled ? "Enable" : "Disable" );
       RETURN_ON_PIL_ERROR( pilEnableSmoothRamAveraging( m_nCurGrabber, m_bSmoothAvgEnabled ) );
    }
    else if( MM::BeforeGet == eAct )
    {
-      piulLogMessage( m_sMyName, s_unLogGetProps, "Smooth RAM averaging is %s", m_bSmoothAvgEnabled ? "enabled" : "disabled" );
+      piulLogMessage( m_sMyName.c_str(), s_unLogGetProps, "Smooth RAM averaging is %s", m_bSmoothAvgEnabled ? "enabled" : "disabled" );
       pProp->Set( m_asBooleans[m_bSmoothAvgEnabled ? 1 : 0].c_str() );
    }
 
@@ -3340,12 +3392,12 @@ int CCameraAdapter::OnEnableFastRamAverage( MM::PropertyBase* pProp, MM::ActionT
       std::string sValue;
       pProp->Get( sValue );
       m_bFastAvgEnabled = (m_asBooleans[1] == sValue) ? TRUE : FALSE;
-      piulLogMessage( m_sMyName, s_unLogSetProps, "%s fast RAM averaging", m_bFastAvgEnabled ? "Enable" : "Disable" );
+      piulLogMessage( m_sMyName.c_str(), s_unLogSetProps, "%s fast RAM averaging", m_bFastAvgEnabled ? "Enable" : "Disable" );
       RETURN_ON_PIL_ERROR( pilEnableFastRamAveraging( m_nCurGrabber, m_bFastAvgEnabled ) );
    }
    else if( MM::BeforeGet == eAct )
    {
-      piulLogMessage( m_sMyName, s_unLogGetProps, "Fast RAM averaging is %s", m_bFastAvgEnabled ? "enabled" : "disabled" );
+      piulLogMessage( m_sMyName.c_str(), s_unLogGetProps, "Fast RAM averaging is %s", m_bFastAvgEnabled ? "enabled" : "disabled" );
       pProp->Set( m_asBooleans[m_bFastAvgEnabled ? 1 : 0].c_str() );
    }
 
@@ -3363,12 +3415,12 @@ int CCameraAdapter::OnReadoutTime( MM::PropertyBase* pProp, MM::ActionType eAct 
       pProp->Get(readoutMs);
 
       readoutUs_ = readoutMs * 1000.0;
-      piulLogMessage( m_sMyName, s_unLogSetProps, "Set the readout time to %lf milliseconds", readoutMs );
+      piulLogMessage( m_sMyName.c_str(), s_unLogSetProps, "Set the readout time to %lf milliseconds", readoutMs );
    }
    else if( MM::BeforeGet == eAct )
    {
       double readoutMs = readoutUs_ / 1000.0;
-      piulLogMessage( m_sMyName, s_unLogGetProps, "The readout time is set to %lf milliseconds", readoutMs );
+      piulLogMessage( m_sMyName.c_str(), s_unLogGetProps, "The readout time is set to %lf milliseconds", readoutMs );
       pProp->Set(readoutMs);
    }
 

@@ -26,37 +26,18 @@
 #define _WIN32_IE 0x0600	// Change this to the appropriate value to target other versions of IE.
 #endif
 
-#define _ATL_CSTRING_EXPLICIT_CONSTRUCTORS	// some CString constructors will be explicit
-
-#include <afxwin.h>         // MFC core and standard components
-#include <afxext.h>         // MFC extensions
-#include <afxmt.h>          // MFC synchronization
-#include <afxsock.h>        // MFC socket extensions
-
-#ifndef _AFX_NO_OLE_SUPPORT
-#include <afxole.h>         // MFC OLE classes
-#include <afxodlgs.h>       // MFC OLE dialog classes
-#include <afxdisp.h>        // MFC Automation classes
-#endif // _AFX_NO_OLE_SUPPORT
-
-#ifndef _AFX_NO_DB_SUPPORT
-#include <afxdb.h>			// MFC ODBC database classes
-#endif // _AFX_NO_DB_SUPPORT
-
-#ifndef _AFX_NO_DAO_SUPPORT
-#include <afxdao.h>			// MFC DAO database classes
-#endif // _AFX_NO_DAO_SUPPORT
-
-#ifndef _AFX_NO_OLE_SUPPORT
-#include <afxdtctl.h>		// MFC support for Internet Explorer 4 Common Controls
-#endif
-#ifndef _AFX_NO_AFXCMN_SUPPORT
-#include <afxcmn.h>			// MFC support for Windows Common Controls
-#endif // _AFX_NO_AFXCMN_SUPPORT
+#include <Windows.h>
 
 #define snprintf _snprintf
 
-#include "PiperApiPub.h"
+#define __PIPER_API_EXPORT __declspec(dllimport)
+
+#include "PiperApiErrors.h"
+#include "PiperApiCbCmds.h"
+#include "PiperApiLib.h"
+#include "PiperApiUtils.h"
+
+
 #include <vector>
 #include <string>
 #include <map>
