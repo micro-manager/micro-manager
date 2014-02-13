@@ -1,3 +1,12 @@
+2014-02-13  Pariksheet Nanda <p.nanda@andor.com>
+
+	* AndorLaserCombiner.cpp (OnSaveLifetime, OnIsLinear): New
+	properties for firmware 2 devices.  Save laser hours and indicate
+	if linear AOTF output, respectively.
+
+	* AndorLaserCombiner.cpp (OnEnable): Added External TTL option for
+	devices that support it.
+
 2013-09-18  Pariksheet Nanda  <p.nanda@andor.com>
 
 	* AndorLaserCombiner.cpp (OnEnable): Added new "Enable" property

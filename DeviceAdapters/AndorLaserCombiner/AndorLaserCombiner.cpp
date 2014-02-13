@@ -203,7 +203,7 @@ AndorLaserCombiner::AndorLaserCombiner( const char* name) :
    initialized_(false), 
    name_(name), 
    busy_(false),
-   error_(0),
+   error_(DEVICE_OK),
    changedTime_(0.0),
    DOUT_(0),
    pImpl_(NULL),
@@ -710,11 +710,21 @@ int AndorLaserCombiner::OnSaveLifetime(MM::PropertyBase* pProp, MM::ActionType e
 		pProp->Get(savelifetime);
 		if( savelifetime_[il].compare(savelifetime) != 0 )
       {
-         savelifetime_[il] = savelifetime;
          if (savelifetime == g_Keyword_SaveLifetimeOff)
             pImpl_->pALC_REVLaser2_->Enable(il);
          else
+         {
             pImpl_->pALC_REVLaser2_->Disable(il);
+            // SDK Bug: Disable returns true even if not supported.
+            // So one has to confirm if it worked by checking
+            // IsEnabled().
+            int v;
+            pImpl_->pALC_REVLaser2_->IsEnabled(il, &v);
+            if (v == 1)
+               error_ = DEVICE_INVALID_PROPERTY_VALUE;
+         }
+         if (error_ == DEVICE_OK)
+            savelifetime_[il] = savelifetime;
          LogMessage("SaveLifetime" + boost::lexical_cast<std::string, long>(Wavelength(il)) + " = " + savelifetime_[il].c_str(), true);
       }
    }
@@ -1141,7 +1151,7 @@ int AndorLaserCombiner::OnLaserPort(MM::PropertyBase* pProp , MM::ActionType eAc
 int AndorLaserCombiner::HandleErrors()
 {
    int lastError = error_;
-   error_ = 0;
+   error_ = DEVICE_OK;
    return lastError;
 }
 
