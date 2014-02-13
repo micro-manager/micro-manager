@@ -4233,13 +4233,13 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    public String installAutofocusPlugin(Class<?> autofocus) {
       String msg = autofocus.getSimpleName() + " module loaded.";
       if (afMgr_ != null) {
+         afMgr_.setAFPluginClassName(autofocus.getSimpleName());
          try {
             afMgr_.refresh();
          } catch (MMException e) {
             msg = e.getMessage();
             ReportingUtils.logError(e);
          }
-         afMgr_.setAFPluginClassName(autofocus.getSimpleName());
       } else {
          msg = "Internal error: AF manager not instantiated.";
       }
