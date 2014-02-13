@@ -300,8 +300,11 @@ public class LiveModeTimer {
                   timerLock_.set(true);
                   TaggedImage ti = core_.getLastTaggedImage();
                   // if we have already shown this image, do not do it again.
-                  setImageNumber(ti.tags.getLong("ImageNumber"));
-                  imageQueue_.put(ti);
+                  long imageNumber = ti.tags.getLong("ImageNumber");
+                  if (imageNumber > imageNumber_ ) {
+                     setImageNumber(imageNumber);
+                     imageQueue_.put(ti);
+                  }
                } catch (Exception ex) {
                   ReportingUtils.logMessage("Stopping live mode because of error...");
                   gui_.enableLiveMode(false);
