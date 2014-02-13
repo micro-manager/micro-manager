@@ -45,7 +45,7 @@ extern LONG gs_nInstanceCount = -1;
 static LPCTSTR sc_pszCameraDeviceName = "SPI Cameras";
 
 extern "C" int APIENTRY
-DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
+DllMain(HINSTANCE /*hInstance*/, DWORD dwReason, LPVOID lpReserved)
 {
 	// Remove this if you use lpReserved
 	UNREFERENCED_PARAMETER(lpReserved);
