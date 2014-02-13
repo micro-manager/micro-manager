@@ -131,8 +131,6 @@
       <AdditionalIncludeDirectories>../../MMDevice;../../../3rdParty/PiperApi;$(MM_BOOST_INCLUDEDIR);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_AFXEXT;MODULE_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
-      <PrecompiledHeader>
-      </PrecompiledHeader>
     </ClCompile>
     <Link>
       <AdditionalDependencies>PiperAPI.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -177,11 +175,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CameraAdapter.h" />
-    <ClInclude Include="resource.h" />
     <ClInclude Include="stdafx.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="PiperMmAdapter.rc" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\MMDevice\MMDevice-SharedRuntime.vcxproj">
