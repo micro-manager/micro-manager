@@ -40,7 +40,9 @@ class AndorLaserCombiner;
 
 class PiezoStage : public CStageBase<PiezoStage>
 {
+
    friend class AndorLaserCombiner;
+
 public:
 
    PiezoStage( const char* name);
@@ -64,9 +66,8 @@ public:
 
    int OnPiezoRange(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnPiezoPosition(MM::PropertyBase* pProp, MM::ActionType eAct);
- 
-   bool IsContinuousFocusDrive() const {return false;}
 
+   bool IsContinuousFocusDrive() const {return false;}
 
    // TODO: Implement these for Andor Laser Z sequencing
    // Sequence functions
@@ -78,9 +79,9 @@ public:
    int AddToStageSequence(double /* position */) {return DEVICE_OK;}
    int SendStageSequence()  {return DEVICE_OK;}
 
-
 private:
-   // implementation
+
+   /** Implementation instance shared with AndorLaserCombiner. */
 	ALCImpl* pImpl_;
 
    std::string name_;
@@ -88,92 +89,99 @@ private:
 	void PiezoRange(const float);
 	float PiezoPosition(void);
 	void PiezoPosition(const float);
-
-
 };
 
 
 class AndorLaserCombiner : public CShutterBase<AndorLaserCombiner>
 {
+
    friend class PiezoStage;
+
 private:
-	double minlp_;
-	double maxlp_;
+
+   double minlp_;
+   double maxlp_;
 
 public:
 
+   // Power setting limits:
+   double minlp(){ return minlp_;};
+   void minlp(double v_a) { minlp_= v_a;};
+   double maxlp(){ return maxlp_;};
+   void maxlp(double v_a) { maxlp_= v_a;};
 
-	// power setting limits:
-	double minlp(){ return minlp_;};
-	void minlp(double v_a) { minlp_= v_a;};
-	double maxlp(){ return maxlp_;};
-	void maxlp(double v_a) { maxlp_= v_a;};
    AndorLaserCombiner( const char* name);
    ~AndorLaserCombiner();
-  
-   // MMDevice API
-   // ------------
+
+   // MMDevice API.
    int Initialize();
    int Shutdown();
-  
+
    void GetName(char* pszName) const;
    bool Busy();
-   
-   // action interface
-   // ----------------
+
+   // Action interface.
    int OnAddress(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnPowerSetpoint(MM::PropertyBase* pProp, MM::ActionType eAct, long index);
-	int OnPowerReadback(MM::PropertyBase* pProp, MM::ActionType eAct, long index);
+   int OnPowerReadback(MM::PropertyBase* pProp, MM::ActionType eAct, long index);
    int OnSaveLifetime(MM::PropertyBase* pProp, MM::ActionType eAct, long index);
    int OnConnectionType(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnReceivedData(MM::PropertyBase* pProp, MM::ActionType eAct);
 
-	// some important read-only properties
-	int OnHours(MM::PropertyBase* pProp, MM::ActionType eAct, long index);
-	int OnIsLinear(MM::PropertyBase* pProp, MM::ActionType eAct, long index);
-	int OnMaximumLaserPower(MM::PropertyBase* pProp, MM::ActionType eAct, long index);
-	int OnWaveLength(MM::PropertyBase* pProp, MM::ActionType eAct, long index);
+   // Read-only properties.
+   int OnNLasers(MM::PropertyBase* , MM::ActionType );
+   int OnHours(MM::PropertyBase* pProp, MM::ActionType eAct, long index);
+   int OnIsLinear(MM::PropertyBase* pProp, MM::ActionType eAct, long index);
+   int OnMaximumLaserPower(MM::PropertyBase* pProp, MM::ActionType eAct, long index);
+   int OnWaveLength(MM::PropertyBase* pProp, MM::ActionType eAct, long index);
    int OnLaserState(MM::PropertyBase* , MM::ActionType , long );
-	int AndorLaserCombiner::OnEnable(MM::PropertyBase* pProp, MM::ActionType, long index);
+   int AndorLaserCombiner::OnEnable(MM::PropertyBase* pProp, MM::ActionType, long index);
 
-
-	//ALC mechanics
+   // Mechanical properties.
    int OnDIN(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnDOUT(MM::PropertyBase* pProp, MM::ActionType eAct);
-	 int AndorLaserCombiner::OnDOUT1(MM::PropertyBase* pProp, MM::ActionType eAct);
-	 int AndorLaserCombiner::OnDOUT2(MM::PropertyBase* pProp, MM::ActionType eAct);
-	 int AndorLaserCombiner::OnDOUT3(MM::PropertyBase* pProp, MM::ActionType eAct);
-	 int AndorLaserCombiner::OnDOUT4(MM::PropertyBase* pProp, MM::ActionType eAct);
-	 int AndorLaserCombiner::OnDOUT5(MM::PropertyBase* pProp, MM::ActionType eAct);
-	 int AndorLaserCombiner::OnDOUT6(MM::PropertyBase* pProp, MM::ActionType eAct);
-	 int AndorLaserCombiner::OnDOUT7(MM::PropertyBase* pProp, MM::ActionType eAct);
-	 int AndorLaserCombiner::OnDOUT8(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnNLasers(MM::PropertyBase* , MM::ActionType );
-
-
-
+   int AndorLaserCombiner::OnDOUT1(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int AndorLaserCombiner::OnDOUT2(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int AndorLaserCombiner::OnDOUT3(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int AndorLaserCombiner::OnDOUT4(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int AndorLaserCombiner::OnDOUT5(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int AndorLaserCombiner::OnDOUT6(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int AndorLaserCombiner::OnDOUT7(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int AndorLaserCombiner::OnDOUT8(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnMultiPortUnitPresent(MM::PropertyBase* , MM::ActionType );
    int OnLaserPort(MM::PropertyBase* , MM::ActionType );
 
-   // Shutter API
+   // Shutter API.
    int SetOpen(bool open = true);
    int GetOpen(bool& open);
    int Fire(double deltaT);
 
+   int Wavelength(const int laserIndex_a);  // nano-meters.
+   int PowerFullScale(const int laserIndex_a);  // Unitless.  TODO Should be percentage IFF isLinear_.
+   bool Ready(const int laserIndex_a);
+   float PowerReadback(const int laserIndex_a);  // milli-Watts.
+   bool AllowsExternalTTL(const int laserIndex_a);
+   float PowerSetpoint(const int laserIndex_a);  // milli-Watts.
+   void PowerSetpoint( const int laserIndex_a, const float);  // milli-Watts.
 
-	int Wavelength(const int laserIndex_a);
-	int PowerFullScale(const int laserIndex_a);
-	bool Ready(const int laserIndex_a);
-	float PowerReadback(const int laserIndex_a);
-	bool AllowsExternalTTL(const int laserIndex_a);
+   unsigned char DIN(void);
+   void DOUT(const unsigned char);
 
-	// setpoint in milliwatts
-	float PowerSetpoint(const int laserIndex_a);
-	void PowerSetpoint( const int laserIndex_a, const float);
-
-	unsigned char DIN(void);
-	void DOUT(const unsigned char);
 private:
+
+   /** Implementation instance shared with PiezoStage. */
+   ALCImpl* pImpl_;
+      // todo -- can move these to the implementation
+   int HandleErrors();
+   AndorLaserCombiner& operator = (AndorLaserCombiner& /*rhs*/)
+   {
+      assert(false);
+      return *this;
+   }
+
+   void GenerateALCProperties();
+   void GenerateReadOnlyIDProperties();
+
    int error_;
    bool initialized_;
    std::string name_;
@@ -182,33 +190,22 @@ private:
    bool busy_;
    double answerTimeoutMs_;
    MM::MMTime changedTime_;
-   void GenerateALCProperties();
- 
-	void GenerateReadOnlyIDProperties();
-
-	// todo -- can move these to the implementation
-   int HandleErrors();
-   AndorLaserCombiner& operator=(AndorLaserCombiner& /*rhs*/) {
-      assert(false); return *this;}
-
-	// implementation
-	ALCImpl* pImpl_;
-	int nLasers_;
-	// 1 based array
-	float powerSetPoint_[MaxLasers+1];
+   int nLasers_;
+   float powerSetPoint_[MaxLasers+1];  // 1-based arrays therefore +1
    bool isLinear_[MaxLasers+1];
-
    std::string enable_[MaxLasers+1];
-	std::vector<std::string> enableStates_[MaxLasers+1];
-   enum EXTERNALMODE { CW, TTL_PULSED };
-
-	std::string savelifetime_[MaxLasers+1];
-	std::vector<std::string> savelifetimeStates_[MaxLasers+1];
-
-	bool openRequest_;
-	unsigned char DOUT_;
+   std::vector<std::string> enableStates_[MaxLasers+1];
+   enum EXTERNALMODE
+   {
+      CW,
+      TTL_PULSED
+   };
+   std::string savelifetime_[MaxLasers+1];
+   std::vector<std::string> savelifetimeStates_[MaxLasers+1];
+   bool openRequest_;
+   unsigned char DOUT_;
    bool multiPortUnitPresent_;
-   unsigned char laserPort_;  // first two bits of DOUT (0 or 1 or 2) IFF multiPortUnitPresent_
+   unsigned char laserPort_;  // First two bits of DOUT (0 or 1 or 2) IFF multiPortUnitPresent_
 };
 
 

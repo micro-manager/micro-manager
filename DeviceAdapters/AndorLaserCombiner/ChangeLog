@@ -7,6 +7,11 @@
 	* AndorLaserCombiner.cpp (OnEnable): Added External TTL option for
 	devices that support it.
 
+	* AndorLaserCombiner.h, AndorLaserCombiner.cpp: Cleanup to comply
+	with upstream coding style and conventions.
+
+	* AndorLaserCombiner.cpp: Document all Action Interface functions.
+
 2013-09-18  Pariksheet Nanda  <p.nanda@andor.com>
 
 	* AndorLaserCombiner.cpp (OnEnable): Added new "Enable" property
