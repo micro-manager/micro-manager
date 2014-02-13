@@ -124,11 +124,13 @@ public:
    int OnAddress(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnPowerSetpoint(MM::PropertyBase* pProp, MM::ActionType eAct, long index);
 	int OnPowerReadback(MM::PropertyBase* pProp, MM::ActionType eAct, long index);
+   int OnSaveLifetime(MM::PropertyBase* pProp, MM::ActionType eAct, long index);
    int OnConnectionType(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnReceivedData(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 	// some important read-only properties
 	int OnHours(MM::PropertyBase* pProp, MM::ActionType eAct, long index);
+	int OnIsLinear(MM::PropertyBase* pProp, MM::ActionType eAct, long index);
 	int OnMaximumLaserPower(MM::PropertyBase* pProp, MM::ActionType eAct, long index);
 	int OnWaveLength(MM::PropertyBase* pProp, MM::ActionType eAct, long index);
    int OnLaserState(MM::PropertyBase* , MM::ActionType , long );
@@ -163,6 +165,7 @@ public:
 	int PowerFullScale(const int laserIndex_a);
 	bool Ready(const int laserIndex_a);
 	float PowerReadback(const int laserIndex_a);
+	bool AllowsExternalTTL(const int laserIndex_a);
 
 	// setpoint in milliwatts
 	float PowerSetpoint(const int laserIndex_a);
@@ -193,13 +196,19 @@ private:
 	int nLasers_;
 	// 1 based array
 	float powerSetPoint_[MaxLasers+1];
-	std::string enable_[MaxLasers+1]; // allow external mode in future for ALC-601
+   bool isLinear_[MaxLasers+1];
+
+   std::string enable_[MaxLasers+1];
 	std::vector<std::string> enableStates_[MaxLasers+1];
+   enum EXTERNALMODE { CW, TTL_PULSED };
+
+	std::string savelifetime_[MaxLasers+1];
+	std::vector<std::string> savelifetimeStates_[MaxLasers+1];
+
 	bool openRequest_;
 	unsigned char DOUT_;
    bool multiPortUnitPresent_;
    unsigned char laserPort_;  // first two bits of DOUT (0 or 1 or 2) IFF multiPortUnitPresent_
-
 };
 
 

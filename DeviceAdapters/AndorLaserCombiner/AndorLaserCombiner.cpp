@@ -29,10 +29,6 @@
 // CVS:           $Id :$        
 //
 
-
-
-
-
 #ifdef WIN32
    #include <windows.h>
    #define snprintf _snprintf 
@@ -74,6 +70,10 @@ const char* g_Keyword_PowerReadback = "PowerReadback";
 const char* g_Keyword_Enable = "Enable";
 const char* g_Keyword_EnableOn = "On";
 const char* g_Keyword_EnableOff = "Off";
+const char* g_Keyword_EnableTTL = "External TTL";
+const char* g_Keyword_SaveLifetime = "SaveLifetime";
+const char* g_Keyword_SaveLifetimeOn = "Standby";
+const char* g_Keyword_SaveLifetimeOff = "PowerOn";
 
 const char * carriage_return = "\r";
 const char * line_feed = "\n";
@@ -86,19 +86,19 @@ class ALCImpl
 public:
 
 	HMODULE alcHandle_;
-	typedef bool (__stdcall *TCreate_ALC_REV)( IALC_REVObject **ALC_REVObject);
-   typedef bool (__stdcall *TDelete_ALC_REV)( IALC_REVObject *ALC_REVObject);
-   TCreate_ALC_REV Create_ALC_REV_;
-   TDelete_ALC_REV Delete_ALC_REV_;
-   IALC_REVObject *ALC_REVObject_;
+	typedef bool (__stdcall *TCreate_ALC_REV2)( IALC_REVObject2 **ALC_REVObject2);
+   typedef bool (__stdcall *TDelete_ALC_REV2)( IALC_REVObject2 *ALC_REVObject2);
+   TCreate_ALC_REV2 Create_ALC_REV2_;
+   TDelete_ALC_REV2 Delete_ALC_REV2_;
+   IALC_REVObject2 *ALC_REVObject2_;
 	
-	IALC_REV_Laser *pALC_REVLaser_;
+	IALC_REV_Laser2 *pALC_REVLaser2_;
    IALC_REV_Piezo *pALC_REVPiezo_;
    IALC_REV_DIO *pALC_REV_DIO_;
 
 
 	//ctor
-	ALCImpl(void):alcHandle_(0),Create_ALC_REV_(0),Delete_ALC_REV_(0),ALC_REVObject_(0),pALC_REVLaser_(0),
+	ALCImpl(void):alcHandle_(0),Create_ALC_REV2_(0),Delete_ALC_REV2_(0),ALC_REVObject2_(0),pALC_REVLaser2_(0),
 		pALC_REVPiezo_(0), pALC_REV_DIO_(0)
 	{
 		#ifdef _M_X64
@@ -113,31 +113,31 @@ public:
 			messs << "failed to load library: " << libraryName << " check that the library is in your PATH ";
 			throw messs.str();
 		}
-		Create_ALC_REV_ = ( TCreate_ALC_REV)GetProcAddress( alcHandle_, "Create_ALC_REV");
-		if( Create_ALC_REV_ == 0 )
+		Create_ALC_REV2_ = ( TCreate_ALC_REV2)GetProcAddress( alcHandle_, "Create_ALC_REV2");
+		if( Create_ALC_REV2_ == 0 )
 		{
-			throw "GetProcAddress Create_ALC_REV failed\n";
+			throw "GetProcAddress Create_ALC_REV2 failed\n";
 		}
-		Delete_ALC_REV_ = ( TDelete_ALC_REV)GetProcAddress( alcHandle_, "Delete_ALC_REV");
-		if( Delete_ALC_REV_ == 0 )
+		Delete_ALC_REV2_ = ( TDelete_ALC_REV2)GetProcAddress( alcHandle_, "Delete_ALC_REV2");
+		if( Delete_ALC_REV2_ == 0 )
 		{
-			throw "GetProcAddress Delete_ALC_REV failed\n";
+			throw "GetProcAddress Delete_ALC_REV2 failed\n";
 		}
-	   Create_ALC_REV_( &ALC_REVObject_);
-	   if( NULL == ALC_REVObject_ != NULL )
+	   Create_ALC_REV2_( &ALC_REVObject2_);
+	   if( NULL == ALC_REVObject2_ != NULL )
 	   {
-			throw "Create_ALC_REV failed";
+			throw "Create_ALC_REV2 failed";
 	   }
 
-    pALC_REVLaser_ = ALC_REVObject_->GetLaserInterface( );
-    if(0 == pALC_REVLaser_)
+    pALC_REVLaser2_ = ALC_REVObject2_->GetLaserInterface2( );
+    if(0 == pALC_REVLaser2_)
       throw "GetLaserInterface failed";
     
-    pALC_REVPiezo_ = ALC_REVObject_->GetPiezoInterface( );
+    pALC_REVPiezo_ = ALC_REVObject2_->GetPiezoInterface( );
 	 if( 0 == pALC_REVPiezo_)
       throw "GetPiezoInterface failed";
     
-    pALC_REV_DIO_ = ALC_REVObject_->GetDIOInterface( );
+    pALC_REV_DIO_ = ALC_REVObject2_->GetDIOInterface( );
     if( 0 == pALC_REV_DIO_ )
 		 throw " GetDIOInterface failed!";
 
@@ -147,9 +147,9 @@ public:
 	// dtor
 	~ALCImpl()
 	{
-		if( 0 != ALC_REVObject_)
-			Delete_ALC_REV_(ALC_REVObject_);
-		ALC_REVObject_ = 0;
+		if( 0 != ALC_REVObject2_)
+			Delete_ALC_REV2_(ALC_REVObject2_);
+		ALC_REVObject2_ = 0;
 		if( 0 != alcHandle_) 
 			FreeLibrary(alcHandle_);
 		alcHandle_ = 0;
@@ -217,6 +217,7 @@ AndorLaserCombiner::AndorLaserCombiner( const char* name) :
 	for( int il = 0; il <MaxLasers+1; ++il)
 	{
 		powerSetPoint_[il] = 0;
+		isLinear_[il] = false;
 		enable_[il] = g_Keyword_EnableOn;
 	}
 
@@ -291,7 +292,7 @@ int AndorLaserCombiner::Initialize()
       }
       else
          pImpl_ = pImplInstance_s;
-		nLasers_ = pImpl_->pALC_REVLaser_->Initialize();
+		nLasers_ = pImpl_->pALC_REVLaser2_->Initialize();
 		LogMessage(("in AndorLaserCombiner::Initialize, nLasers_ ="+boost::lexical_cast<std::string,int>(nLasers_)), true);
 		CDeviceUtils::SleepMs(100);
 		bool initialised = pImpl_->pALC_REV_DIO_->InitializeDIO();
@@ -311,7 +312,7 @@ int AndorLaserCombiner::Initialize()
 			{
 				if ( 0 == state[il])
 				{
-					pImpl_->pALC_REVLaser_->GetLaserState(il, state + il);
+					pImpl_->pALC_REVLaser2_->GetLaserState(il, state + il);
 					switch( *(state + il))
 					{
 					case 0: // ALC_NOT_AVAILABLE ( 0) Laser is not Available
@@ -424,8 +425,20 @@ void AndorLaserCombiner::GenerateALCProperties()
 		enableStates_[il].clear();
 		enableStates_[il].push_back(g_Keyword_EnableOn);
 		enableStates_[il].push_back(g_Keyword_EnableOff);
+      if (AllowsExternalTTL(il))
+         enableStates_[il].push_back(g_Keyword_EnableTTL);
 		CreateProperty(buildname.str().c_str(), enableStates_[il][0].c_str(), MM::String, false, pAct);
 		SetAllowedValues(buildname.str().c_str(),  enableStates_[il]);
+      
+		// save lifetime
+		buildname.str("");
+		pAct = new CPropertyActionEx(this, &AndorLaserCombiner::OnSaveLifetime, il);
+		buildname <<  g_Keyword_SaveLifetime << Wavelength(il);
+		savelifetimeStates_[il].clear();
+		savelifetimeStates_[il].push_back(g_Keyword_SaveLifetimeOn);
+		savelifetimeStates_[il].push_back(g_Keyword_SaveLifetimeOff);
+		CreateProperty(buildname.str().c_str(), savelifetimeStates_[il][0].c_str(), MM::String, false, pAct);
+		SetAllowedValues(buildname.str().c_str(), savelifetimeStates_[il]);
 	}
 	
 
@@ -502,6 +515,11 @@ void AndorLaserCombiner::GenerateReadOnlyIDProperties()
 		CreateProperty(buildname.str().c_str(), "", MM::String, true, pAct);
 
 		buildname.str("");
+		buildname << "IsLinear"  << Wavelength(il);
+		pAct = new CPropertyActionEx(this, &AndorLaserCombiner::OnIsLinear, il);
+		CreateProperty(buildname.str().c_str(), "", MM::String, true, pAct);
+
+		buildname.str("");
 		buildname << "Wavelength"  << il;
 		pAct = new CPropertyActionEx(this, &AndorLaserCombiner::OnWaveLength, il);
 		CreateProperty(buildname.str().c_str(), "", MM::Float, true, pAct);
@@ -566,7 +584,7 @@ int AndorLaserCombiner::OnHours(MM::PropertyBase* pProp, MM::ActionType eAct, lo
    if (eAct == MM::BeforeGet)
    {
 		int wval = 0;
-		pImpl_->pALC_REVLaser_->GetLaserHours(il, &wval);
+		pImpl_->pALC_REVLaser2_->GetLaserHours(il, &wval);
 		LogMessage("Hours" + boost::lexical_cast<std::string, long>(Wavelength(il)) + "  = " + boost::lexical_cast<std::string,int>(wval), true);
 		pProp->Set((long)wval);
    }
@@ -577,6 +595,31 @@ int AndorLaserCombiner::OnHours(MM::PropertyBase* pProp, MM::ActionType eAct, lo
    return HandleErrors();
 }
 
+
+/**
+ * Reads whether linear correction algorithm is being applied to AOTF,
+ * otherwise AOTF output is sigmoid.
+ * <p>
+ * Requires firmware 2.
+ */
+int AndorLaserCombiner::OnIsLinear(MM::PropertyBase* pProp, MM::ActionType eAct, long il) 
+{
+
+   if (eAct == MM::BeforeGet)
+   {
+		int v;
+		pImpl_->pALC_REVLaser2_->IsLaserOutputLinearised(il, &v);
+      isLinear_[il] = (v == 1);
+		long lv = static_cast<long>(v);
+		LogMessage("IsLinear" + boost::lexical_cast<std::string, long>(Wavelength(il)) + "  = " + boost::lexical_cast<std::string,int>(lv), true);
+		pProp->Set((long)lv);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      // never do anything!!
+   }
+   return HandleErrors();
+}
 
 
 int AndorLaserCombiner::OnMaximumLaserPower(MM::PropertyBase* pProp, MM::ActionType eAct, long il)
@@ -620,7 +663,7 @@ int AndorLaserCombiner::OnLaserState(MM::PropertyBase* pProp, MM::ActionType eAc
    if (eAct == MM::BeforeGet)
    {
 		TLaserState v;
-		pImpl_->pALC_REVLaser_->GetLaserState(il,&v);
+		pImpl_->pALC_REVLaser2_->GetLaserState(il,&v);
 		long lv = static_cast<long>(v);
 		LogMessage(" LaserState" + boost::lexical_cast<std::string, long>(Wavelength(il)) + "  = " + boost::lexical_cast<std::string,long>(lv), true);
 		pProp->Set(lv);
@@ -633,10 +676,64 @@ int AndorLaserCombiner::OnLaserState(MM::PropertyBase* pProp, MM::ActionType eAc
 }
 
 
+/**
+ * Allows lasers to be put in standby mode to preserve lifetime hours.
+ * Since coming out of standby can take a few seconds, best practise
+ * is leave this property "global" by not including it in channels.
+ * <p>
+ * Requires firmware 2.
+ */
+int AndorLaserCombiner::OnSaveLifetime(MM::PropertyBase* pProp, MM::ActionType eAct, long il)
+{
+   // The SDK calls the laser standby feature "Enable".  Don't get
+   // confused with the DeviceAdapter "enable" property, which is
+   // just a logical shutter.
+   if (eAct == MM::BeforeGet)
+   {
+      int v;
+      pImpl_->pALC_REVLaser2_->IsEnabled(il, &v);
+		std::string savelifetime;
+      if (v == 1)
+      {
+         // True value of "Enabled" corresponds to lifetime drain.
+         // Therefore, lifetime saving is off.
+         savelifetime_[il] = g_Keyword_SaveLifetimeOff;
+      }
+      else
+         savelifetime_[il] = g_Keyword_SaveLifetimeOn;
+      LogMessage("SaveLifetime" + boost::lexical_cast<std::string, long>(Wavelength(il)) + " = " + savelifetime_[il], true);
+      pProp->Set(savelifetime_[il].c_str());
+   }
+   else if (eAct == MM::AfterSet)
+   {
+		std::string savelifetime;
+		pProp->Get(savelifetime);
+		if( savelifetime_[il].compare(savelifetime) != 0 )
+      {
+         savelifetime_[il] = savelifetime;
+         if (savelifetime == g_Keyword_SaveLifetimeOff)
+            pImpl_->pALC_REVLaser2_->Enable(il);
+         else
+            pImpl_->pALC_REVLaser2_->Disable(il);
+         LogMessage("SaveLifetime" + boost::lexical_cast<std::string, long>(Wavelength(il)) + " = " + savelifetime_[il].c_str(), true);
+      }
+   }
+   return HandleErrors();
+}
+
+
+/**
+ * Logical shutter to allow selection of laser line.  It can also set
+ * the laser to TTL mode, if the laser supports it.
+ * <p>
+ * TTL mode requires firmware 2.
+ */
 int AndorLaserCombiner::OnEnable(MM::PropertyBase* pProp, MM::ActionType eAct, long il)
 {
 	if (eAct == MM::BeforeGet)
 	{
+      // Not calling GetControlMode() from ALC SDK, since it may slow
+      // down acquisition while switching channels.
 		pProp->Set(enable_[il].c_str());
 	}
 	else if (eAct == MM::AfterSet)
@@ -645,6 +742,13 @@ int AndorLaserCombiner::OnEnable(MM::PropertyBase* pProp, MM::ActionType eAct, l
 		pProp->Get(enable);
 		if( enable_[il].compare(enable) != 0 )
 		{
+         // Update the laser control mode if we are changing to, or
+         // from External TTL mode.
+         if ( enable.compare(g_Keyword_EnableTTL) == 0 )
+            pImpl_->pALC_REVLaser2_->SetControlMode(il, TTL_PULSED);
+         else if ( enable_[il].compare(g_Keyword_EnableTTL) == 0 )
+            pImpl_->pALC_REVLaser2_->SetControlMode(il, CW);
+
 			enable_[il] = enable;
 			LogMessage("Enable" + boost::lexical_cast<std::string, long>(Wavelength(il)) + " = " + enable_[il], true);
 			if( openRequest_)
@@ -655,6 +759,9 @@ int AndorLaserCombiner::OnEnable(MM::PropertyBase* pProp, MM::ActionType eAct, l
 }
 
 
+/**
+ * Digital 8-bit input to Precision Control Unit.
+ */
 int AndorLaserCombiner::OnDIN(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
 	if (eAct == MM::BeforeGet)
@@ -672,6 +779,10 @@ int AndorLaserCombiner::OnDIN(MM::PropertyBase* pProp, MM::ActionType eAct)
 }
 
 
+/**
+ * Digital 8-bit output from Precision Control Unit.  The lowest 2
+ * bits are not accessible if a multi fiber port unit is present.
+ */
 int AndorLaserCombiner::OnDOUT(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    
@@ -943,8 +1054,9 @@ int AndorLaserCombiner::OnNLasers(MM::PropertyBase* pProp, MM::ActionType eAct)
 }
 
 
-
-
+/**
+ * Multi fiber port unit detection.
+ */
 int AndorLaserCombiner::OnMultiPortUnitPresent(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
 	if (eAct == MM::BeforeGet)
@@ -962,6 +1074,9 @@ int AndorLaserCombiner::OnMultiPortUnitPresent(MM::PropertyBase* pProp, MM::Acti
    return HandleErrors();
 }
 
+/**
+ * Multi fiber port unit control.
+ */
 int AndorLaserCombiner::OnLaserPort(MM::PropertyBase* pProp , MM::ActionType eAct)
 {
 
@@ -1057,7 +1172,7 @@ int AndorLaserCombiner::SetOpen(bool open)
          "("+boost::lexical_cast<std::string,bool>(onn)+")" , true);
 
          TLaserState ttmp;
-         pImpl_->pALC_REVLaser_->GetLaserState(il, &ttmp);
+         pImpl_->pALC_REVLaser2_->GetLaserState(il, &ttmp);
          if( onn && ( 2 != ttmp))
          {
             std::string messg = "Laser # " + boost::lexical_cast<std::string,int>(il) + " is not ready!";
@@ -1069,12 +1184,12 @@ int AndorLaserCombiner::SetOpen(bool open)
          if( ALC_NOT_AVAILABLE < ttmp)
          {
             LogMessage("setting Laser " + boost::lexical_cast<std::string,int>(Wavelength(il)) + " to " + boost::lexical_cast<std::string, double>(percentScale) + "% full scale", true);
-            pImpl_->pALC_REVLaser_->SetLas_I( il,percentScale, onn );
+            pImpl_->pALC_REVLaser2_->SetLas_I( il,percentScale, onn );
          }
 
 		}
 		LogMessage("set shutter " + boost::lexical_cast<std::string, bool>(open), true);
-		bool succ = pImpl_->pALC_REVLaser_->SetLas_Shutter(open);
+		bool succ = pImpl_->pALC_REVLaser2_->SetLas_Shutter(open);
       if( !succ)
          LogMessage("set shutter " + boost::lexical_cast<std::string, bool>(open) + " failed", false);
 	}
@@ -1110,14 +1225,14 @@ int AndorLaserCombiner::Fire(double deltaT)
 int AndorLaserCombiner::Wavelength(const int laserIndex_a)
 {
 	int wval = 0;
-	pImpl_->pALC_REVLaser_->GetWavelength(laserIndex_a, &wval);
+	pImpl_->pALC_REVLaser2_->GetWavelength(laserIndex_a, &wval);
 	return wval;
 }
 
 int AndorLaserCombiner::PowerFullScale(const int laserIndex_a)
 {
 	int val = 0;
-	pImpl_->pALC_REVLaser_->GetPower(laserIndex_a, &val);
+	pImpl_->pALC_REVLaser2_->GetPower(laserIndex_a, &val);
 	return val;
 }
 
@@ -1125,7 +1240,7 @@ int AndorLaserCombiner::PowerFullScale(const int laserIndex_a)
 float AndorLaserCombiner::PowerReadback(const int laserIndex_a)
 {
 	double val = 0.;
-	pImpl_->pALC_REVLaser_->GetCurrentPower(laserIndex_a, &val);
+	pImpl_->pALC_REVLaser2_->GetCurrentPower(laserIndex_a, &val);
 	if( isnan(val))
 	{
 		LogMessage("invalid PowerReadback on # " + boost::lexical_cast<std::string,int>(laserIndex_a), false);
@@ -1146,12 +1261,19 @@ void  AndorLaserCombiner::PowerSetpoint(const int laserIndex_a, const float val_
 	powerSetPoint_[laserIndex_a] = val_a;
 }
 
+bool AndorLaserCombiner::AllowsExternalTTL(const int laserIndex_a)
+{
+	int val = 0;
+	pImpl_->pALC_REVLaser2_->IsControlModeAvailable(laserIndex_a, &val);
+	return (val == 1);
+}
+
 
 
 bool AndorLaserCombiner::Ready(const int laserIndex_a)
 {
 	TLaserState state = ALC_NOT_AVAILABLE;
-	bool ret =	pImpl_->pALC_REVLaser_->GetLaserState(laserIndex_a, &state);
+	bool ret =	pImpl_->pALC_REVLaser2_->GetLaserState(laserIndex_a, &state);
 	return ret && ( ALC_READY == state);	
 }
 
@@ -1370,9 +1492,3 @@ void PiezoStage::PiezoPosition(const float val)
 	   pImpl_->pALC_REVPiezo_->SetPosition((const double)val);
    }
 }
-
-
-
-
-
-
