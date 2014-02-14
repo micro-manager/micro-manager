@@ -29,23 +29,14 @@ import ij.WindowManager;
 import ij.gui.ImageWindow;
 import java.awt.*;
 import java.awt.event.*;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-import java.lang.ref.Reference;
 import java.lang.reflect.InvocationTargetException;
-import java.text.ParseException;
 import java.util.Vector;
-import java.util.concurrent.Callable;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import javax.swing.event.TableModelEvent;
-import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellEditor;
 import javax.swing.text.JTextComponent;
@@ -410,6 +401,7 @@ public class GUIUtils {
             return true;
          }
 
+         @Override
          public boolean shouldYieldFocus(JComponent input) {
             try {
                boolean isValid = super.shouldYieldFocus(input);
@@ -448,6 +440,7 @@ public class GUIUtils {
       });
       final InputVerifier verifier = textFieldInputVerifier(field, validator);
       DefaultCellEditor editor = new DefaultCellEditor(field) {
+         @Override
          public boolean stopCellEditing() {
             return verifier.shouldYieldFocus(field) && super.stopCellEditing();
          }
@@ -538,7 +531,7 @@ public class GUIUtils {
    }
    
    public static int getIntValue(JTextField component) {
-     return Integer.parseInt(((JTextField) component).getText());
+     return Integer.parseInt(component.getText());
    }
    
    private static void enableOnTableEvent(final JTable table, final JComponent component) {
@@ -622,6 +615,7 @@ public class GUIUtils {
 
    public static void tabKeyTraversesTable(final JTable table) {
       table.addKeyListener(new KeyAdapter() {
+         @Override
          public void keyReleased(KeyEvent event) {
             // Check if the TAB key was pressed.
             if (event.getKeyCode() == 9) {
