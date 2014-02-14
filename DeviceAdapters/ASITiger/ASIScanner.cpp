@@ -200,19 +200,19 @@ int CScanner::Initialize()
    // joystick disable and select which knob
    pAct = new CPropertyAction (this, &CScanner::OnJoystickSelectX);
    CreateProperty(g_JoystickSelectXPropertyName, g_JSCode_0, MM::String, false, pAct);
-   AddAllowedValue(g_JoystickSelectXPropertyName, g_JSCode_0);
-   AddAllowedValue(g_JoystickSelectXPropertyName, g_JSCode_2);
-   AddAllowedValue(g_JoystickSelectXPropertyName, g_JSCode_3);
-   AddAllowedValue(g_JoystickSelectXPropertyName, g_JSCode_22);
-   AddAllowedValue(g_JoystickSelectXPropertyName, g_JSCode_23);
+   AddAllowedValue(g_JoystickSelectXPropertyName, g_JSCode_0, 0);
+   AddAllowedValue(g_JoystickSelectXPropertyName, g_JSCode_2, 2);
+   AddAllowedValue(g_JoystickSelectXPropertyName, g_JSCode_3, 3);
+   AddAllowedValue(g_JoystickSelectXPropertyName, g_JSCode_22, 22);
+   AddAllowedValue(g_JoystickSelectXPropertyName, g_JSCode_23, 23);
    UpdateProperty(g_JoystickSelectXPropertyName);
    pAct = new CPropertyAction (this, &CScanner::OnJoystickSelectY);
    CreateProperty(g_JoystickSelectYPropertyName, g_JSCode_0, MM::String, false, pAct);
-   AddAllowedValue(g_JoystickSelectYPropertyName, g_JSCode_0);
-   AddAllowedValue(g_JoystickSelectYPropertyName, g_JSCode_2);
-   AddAllowedValue(g_JoystickSelectYPropertyName, g_JSCode_3);
-   AddAllowedValue(g_JoystickSelectYPropertyName, g_JSCode_22);
-   AddAllowedValue(g_JoystickSelectYPropertyName, g_JSCode_23);
+   AddAllowedValue(g_JoystickSelectYPropertyName, g_JSCode_0, 0);
+   AddAllowedValue(g_JoystickSelectYPropertyName, g_JSCode_2, 2);
+   AddAllowedValue(g_JoystickSelectYPropertyName, g_JSCode_3, 3);
+   AddAllowedValue(g_JoystickSelectYPropertyName, g_JSCode_22, 22);
+   AddAllowedValue(g_JoystickSelectYPropertyName, g_JSCode_23, 23);
    UpdateProperty(g_JoystickSelectYPropertyName);
 
    // turn the beam on and off
@@ -280,6 +280,16 @@ int CScanner::Initialize()
    AddAllowedValue(g_AdvancedSAPropertiesYPropertyName, g_YesState);
    UpdateProperty(g_AdvancedSAPropertiesYPropertyName);
 
+   // invert axis by changing unitMult in Micro-manager's eyes (not actually on controller)
+   pAct = new CPropertyAction (this, &CScanner::OnAxisPolarityX);
+   CreateProperty(g_AxisPolarityX, g_AxisPolarityNormal, MM::String, false, pAct);
+   AddAllowedValue(g_AxisPolarityX, g_AxisPolarityReversed);
+   AddAllowedValue(g_AxisPolarityX, g_AxisPolarityNormal);
+   pAct = new CPropertyAction (this, &CScanner::OnAxisPolarityY);
+   CreateProperty(g_AxisPolarityY, g_AxisPolarityNormal, MM::String, false, pAct);
+   AddAllowedValue(g_AxisPolarityY, g_AxisPolarityReversed);
+   AddAllowedValue(g_AxisPolarityY, g_AxisPolarityNormal);
+
    // end now if we are pre-2.8 firmware
    if (firmwareVersion_ < 2.8)
    {
@@ -324,12 +334,12 @@ int CScanner::Initialize()
 
       pAct = new CPropertyAction (this, &CScanner::OnSPIMDelayBeforeSide);
       CreateProperty(g_SPIMDelayBeforeSidePropertyName, "0", MM::Float, false, pAct);
-      SetPropertyLimits(g_SPIMDelayBeforeSidePropertyName, 0, 100);
+      SetPropertyLimits(g_SPIMDelayBeforeSidePropertyName, 0, 1000);
       UpdateProperty(g_SPIMDelayBeforeSidePropertyName);
 
       pAct = new CPropertyAction (this, &CScanner::OnSPIMDelayBeforeSlice);
       CreateProperty(g_SPIMDelayBeforeSlicePropertyName, "0", MM::Float, false, pAct);
-      SetPropertyLimits(g_SPIMDelayBeforeSlicePropertyName, 0, 100);
+      SetPropertyLimits(g_SPIMDelayBeforeSlicePropertyName, 0, 1000);
       UpdateProperty(g_SPIMDelayBeforeSlicePropertyName);
 
       pAct = new CPropertyAction (this, &CScanner::OnSPIMState);
@@ -2039,6 +2049,46 @@ int CScanner::OnJoystickSelectY(MM::PropertyBase* pProp, MM::ActionType eAct)
          return DEVICE_INVALID_PROPERTY_VALUE;
       command << "J " << axisLetterY_ << "=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}
+
+int CScanner::OnAxisPolarityX(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   ostringstream response; response.str("");
+   if (eAct == MM::BeforeGet)
+   {
+      // do nothing
+   }
+   else if (eAct == MM::AfterSet) {
+      string tmpstr;
+      pProp->Get(tmpstr);
+      if (tmpstr.compare(g_AxisPolarityReversed) == 0) {
+         unitMultX_ = -1*abs(unitMultX_);
+      } else {
+         unitMultX_ = abs(unitMultX_);
+      }
+   }
+   return DEVICE_OK;
+}
+
+int CScanner::OnAxisPolarityY(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   ostringstream response; response.str("");
+   if (eAct == MM::BeforeGet)
+   {
+      // do nothing
+   }
+   else if (eAct == MM::AfterSet) {
+      string tmpstr;
+      pProp->Get(tmpstr);
+      if (tmpstr.compare(g_AxisPolarityReversed) == 0) {
+         unitMultY_ = -1*abs(unitMultY_);
+      } else {
+         unitMultY_ = abs(unitMultY_);
+      }
    }
    return DEVICE_OK;
 }

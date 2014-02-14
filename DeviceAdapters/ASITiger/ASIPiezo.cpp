@@ -200,6 +200,13 @@ int CPiezo::Initialize()
    AddAllowedValue(g_JoystickSelectPropertyName, g_JSCode_22);
    AddAllowedValue(g_JoystickSelectPropertyName, g_JSCode_23);
 
+   // is negative towards sample (ASI firmware convention) or away from sample (Micro-manager convention)
+   pAct = new CPropertyAction (this, &CPiezo::OnAxisPolarity);
+   CreateProperty(g_AxisPolarity, g_FocusPolarityASIDefault, MM::String, false, pAct);
+   AddAllowedValue(g_AxisPolarity, g_FocusPolarityASIDefault);
+   AddAllowedValue(g_AxisPolarity, g_FocusPolarityMicroManagerDefault);
+
+
    // end now if we are pre-2.8 firmware
    if (firmwareVersion_ < 2.8)
    {
@@ -731,6 +738,28 @@ int CPiezo::OnJoystickSelect(MM::PropertyBase* pProp, MM::ActionType eAct)
          return DEVICE_INVALID_PROPERTY_VALUE;
       command << "J " << axisLetter_ << "=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}
+
+int CPiezo::OnAxisPolarity(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   ostringstream response; response.str("");
+   if (eAct == MM::BeforeGet)
+   {
+      // do nothing
+   }
+   else if (eAct == MM::AfterSet) {
+      string tmpstr;
+      pProp->Get(tmpstr);
+      // change the unit mult that converts controller coordinates to micro-manager coordinates
+      // micro-manager defines positive towards sample, ASI controllers just opposite
+      if (tmpstr.compare(g_FocusPolarityMicroManagerDefault) == 0) {
+         unitMult_ = -1*abs(unitMult_);
+      } else {
+         unitMult_ = abs(unitMult_);
+      }
    }
    return DEVICE_OK;
 }

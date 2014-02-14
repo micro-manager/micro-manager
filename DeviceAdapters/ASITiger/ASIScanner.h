@@ -83,6 +83,8 @@ public:
    int OnJoystickMirror       (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnJoystickSelectX      (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnJoystickSelectY      (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnAxisPolarityX        (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnAxisPolarityY        (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnBeamEnabled          (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSAAmplitudeX         (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSAOffsetX            (MM::PropertyBase* pProp, MM::ActionType eAct);

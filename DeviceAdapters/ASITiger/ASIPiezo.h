@@ -80,8 +80,10 @@ public:
    int OnJoystickMirror       (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnJoystickSelect       (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnMotorControl         (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnAxisPolarity         (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnModeFourOvershoot    (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnModeFourMaxTime      (MM::PropertyBase* pProp, MM::ActionType eAct);
+   // single axis properties
    int OnSAAmplitude          (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSAOffset             (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSAPeriod             (MM::PropertyBase* pProp, MM::ActionType eAct);

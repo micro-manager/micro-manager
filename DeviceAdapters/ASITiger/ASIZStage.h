@@ -94,6 +94,7 @@ public:
    int OnJoystickSlowSpeed    (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnJoystickMirror       (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnJoystickSelect       (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnAxisPolarity         (MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    double unitMult_;

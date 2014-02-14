@@ -229,6 +229,16 @@ int CXYStage::Initialize()
    AddAllowedValue(g_AdvancedPropertiesPropertyName, g_NoState);
    AddAllowedValue(g_AdvancedPropertiesPropertyName, g_YesState);
 
+   // invert axis by changing unitMult in Micro-manager's eyes (not actually on controller)
+   pAct = new CPropertyAction (this, &CXYStage::OnAxisPolarityX);
+   CreateProperty(g_AxisPolarityX, g_AxisPolarityNormal, MM::String, false, pAct);
+   AddAllowedValue(g_AxisPolarityX, g_AxisPolarityReversed);
+   AddAllowedValue(g_AxisPolarityX, g_AxisPolarityNormal);
+   pAct = new CPropertyAction (this, &CXYStage::OnAxisPolarityY);
+   CreateProperty(g_AxisPolarityY, g_AxisPolarityNormal, MM::String, false, pAct);
+   AddAllowedValue(g_AxisPolarityY, g_AxisPolarityReversed);
+   AddAllowedValue(g_AxisPolarityY, g_AxisPolarityNormal);
+
    initialized_ = true;
    return DEVICE_OK;
 }
@@ -1116,6 +1126,46 @@ int CXYStage::OnNrExtraMoveReps(MM::PropertyBase* pProp, MM::ActionType eAct)
       pProp->Get(tmp);
       command << addressChar_ << "CCA Y=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}
+
+int CXYStage::OnAxisPolarityX(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   ostringstream response; response.str("");
+   if (eAct == MM::BeforeGet)
+   {
+      // do nothing
+   }
+   else if (eAct == MM::AfterSet) {
+      string tmpstr;
+      pProp->Get(tmpstr);
+      if (tmpstr.compare(g_AxisPolarityReversed) == 0) {
+         unitMultX_ = -1*abs(unitMultX_);
+      } else {
+         unitMultX_ = abs(unitMultX_);
+      }
+   }
+   return DEVICE_OK;
+}
+
+int CXYStage::OnAxisPolarityY(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   ostringstream response; response.str("");
+   if (eAct == MM::BeforeGet)
+   {
+      // do nothing
+   }
+   else if (eAct == MM::AfterSet) {
+      string tmpstr;
+      pProp->Get(tmpstr);
+      if (tmpstr.compare(g_AxisPolarityReversed) == 0) {
+         unitMultY_ = -1*abs(unitMultY_);
+      } else {
+         unitMultY_ = abs(unitMultY_);
+      }
    }
    return DEVICE_OK;
 }

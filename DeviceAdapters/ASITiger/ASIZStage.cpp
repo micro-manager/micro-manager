@@ -211,6 +211,12 @@ int CZStage::Initialize()
    AddAllowedValue(g_AdvancedPropertiesPropertyName, g_NoState);
    AddAllowedValue(g_AdvancedPropertiesPropertyName, g_YesState);
 
+   // is negative towards sample (ASI firmware convention) or away from sample (Micro-manager convention)
+   pAct = new CPropertyAction (this, &CZStage::OnAxisPolarity);
+   CreateProperty(g_AxisPolarity, g_FocusPolarityASIDefault, MM::String, false, pAct);
+   AddAllowedValue(g_AxisPolarity, g_FocusPolarityASIDefault);
+   AddAllowedValue(g_AxisPolarity, g_FocusPolarityMicroManagerDefault);
+
    initialized_ = true;
    return DEVICE_OK;
 }
@@ -988,5 +994,26 @@ int CZStage::OnJoystickSelect(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
+int CZStage::OnAxisPolarity(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   ostringstream response; response.str("");
+   if (eAct == MM::BeforeGet)
+   {
+      // do nothing
+   }
+   else if (eAct == MM::AfterSet) {
+      string tmpstr;
+      pProp->Get(tmpstr);
+      // change the unit mult that converts controller coordinates to micro-manager coordinates
+      // micro-manager defines positive towards sample, ASI controllers just opposite
+      if (tmpstr.compare(g_FocusPolarityMicroManagerDefault) == 0) {
+         unitMult_ = -1*abs(unitMult_);
+      } else {
+         unitMult_ = abs(unitMult_);
+      }
+   }
+   return DEVICE_OK;
+}
 
 

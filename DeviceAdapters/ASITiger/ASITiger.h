@@ -127,6 +127,9 @@ const char* const g_AxisLetterXPropertyName = "AxisLetterX";
 const char* const g_AxisLetterYPropertyName = "AxisLetterY";
 const char* const g_AxisLetterPropertyName = "AxisLetter";
 const char* const g_SetHomeHerePropertyName = "SetHomeToCurrentPosition";
+const char* const g_AxisPolarity = "AxisPolarity";
+const char* const g_AxisPolarityX = "AxisPolarityX";
+const char* const g_AxisPolarityY = "AxisPolarityY";
 
 // Hub property names
 const char* const g_HubDevicePropertyName = "HubDeviceName";
@@ -367,6 +370,11 @@ const char* const g_DoneState = "Done";
 const char* const g_RB_OnePoint_1 =   "1 - One Point";
 const char* const g_RB_PlayOnce_2 =   "2 - Play Once";
 const char* const g_RB_PlayRepeat_3 = "3 - Repeat";
+// axis polarity
+const char* const g_FocusPolarityASIDefault = "Negative towards sample";  // used for focus stages
+const char* const g_FocusPolarityMicroManagerDefault = "Positive towards sample";  // used for focus stages
+const char* const g_AxisPolarityNormal = "Normal";  // used for other stages
+const char* const g_AxisPolarityReversed = "Reversed";  // used for other stages
 // CRISP states
 const char* const g_CRISPState = "CRISP State";
 const char* const g_CRISP_I = "Idle";
