@@ -111,6 +111,7 @@ const char* g_Keyword_CCDSerSize      = "X-dimension";
 const char* g_Keyword_CCDParSize      = "Y-dimension";
 const char* g_Keyword_FWellCapacity   = "FullWellCapacity";
 const char* g_Keyword_TriggerMode     = "TriggerMode";
+const char* g_Keyword_ExposeOutMode   = "ExposeOutMode";
 const char* g_Keyword_ColorMode       = "ColorMode";
 const char* g_Keyword_TriggerTimeout  = "Trigger Timeout (secs)";
 const char* g_Keyword_ActualGain      = "Actual Gain e/ADU";
@@ -155,7 +156,7 @@ ParamNameIdPair g_UniversalParams[] = {
    {"PostscanPixels",     PARAM_POSTSCAN},           // UNS16
    {"ShutterMode",        PARAM_SHTR_OPEN_MODE},     // ENUM
    {"ShutterOpenDelay",   PARAM_SHTR_OPEN_DELAY},    // UNS16 (milliseconds)
-   {"ShutterCloseDelay",  PARAM_SHTR_CLOSE_DELAY}    // UNS16 (milliseconds)
+   {"ShutterCloseDelay",  PARAM_SHTR_CLOSE_DELAY},   // UNS16 (milliseconds)
 };
 const int g_UniversalParamsCount = sizeof(g_UniversalParams)/sizeof(ParamNameIdPair);
 
@@ -204,7 +205,10 @@ rgbaColor_(false)
    prmTempSetpoint_   = NULL;
    prmGainIndex_      = NULL;
    prmGainMultFactor_ = NULL;
+   prmExpResIndex_    = NULL;
+   prmExpRes_         = NULL;
    prmTriggerMode_    = NULL;
+   prmExposeOutMode_  = NULL;
    prmReadoutPort_    = NULL;
    prmColorMode_      = NULL;
 }
@@ -234,12 +238,19 @@ Universal::~Universal()
        delete prmGainIndex_;
    if ( prmGainMultFactor_ )
        delete prmGainMultFactor_;
+   if ( prmExpResIndex_ )
+       delete prmExpResIndex_;
+   if ( prmExpRes_ )
+       delete prmExpRes_;
    if ( prmTriggerMode_ )
        delete prmTriggerMode_;
+   if ( prmExposeOutMode_ )
+       delete prmExposeOutMode_;
    if ( prmReadoutPort_ )
        delete prmReadoutPort_;
    if ( prmColorMode_ )
        delete prmColorMode_;
+
    // Delete universal parameters
    for ( unsigned i = 0; i < universalParams_.size(); i++ )
        delete universalParams_[i];
@@ -358,6 +369,22 @@ int Universal::Initialize()
       CreateProperty(g_Keyword_TriggerTimeout, "2", MM::Integer, false, pAct);
    }
 
+   /// EXPOSE OUT MODE
+#ifdef PVCAM_PARAM_EXPOSE_OUT_DEFINED
+   prmExposeOutMode_ = new PvEnumParam( g_Keyword_ExposeOutMode, PARAM_EXPOSE_OUT_MODE, this );
+   if ( prmExposeOutMode_->IsAvailable() )
+   {
+      pAct = new CPropertyAction (this, &Universal::OnExposeOutMode);
+      const char* currentMode = prmExposeOutMode_->GetEnumStrings()[0].c_str();
+      CreateProperty(g_Keyword_ExposeOutMode, currentMode, MM::String, false, pAct);
+      SetAllowedValues( g_Keyword_ExposeOutMode, prmExposeOutMode_->GetEnumStrings() );
+   }
+#else
+   // If the flag is not defined the prmExposeOutMode_ stays NULL, the property is not created - event handlers are not called,
+   // the code that still uses the param should first check the variable for NULL, then try to call it. We need to flag this
+   // part of the code because the PARAM_EXPOSE_OUT_MODE is defined for WIN only and compilation on other platforms would fail.
+#endif
+
    /// CAMERA TEMPERATURE
    /// The actual value is read out from the camera in OnTemperature(). Please note
    /// we cannot read the temperature when continuous sequence is running.
@@ -459,21 +486,25 @@ int Universal::Initialize()
    }
 
    /// EXPOSURE RESOLUTION
-   uns32 expResCount = 0;
-   int32 expResVal;
-   const uns32 expResDescLen = 64;
-   char expResDesc[expResDescLen];
-   
+   // The PARAM_EXP_RES_INDEX is used to get and set the current exposure resolution (usec, msec, sec, ...)
+   // The PARAM_EXP_RES is only used to enumerate the supported exposure resolutions and their string names
    microsecResSupported_ = false;
-
-   if (!pl_get_param(hPVCAM_, PARAM_EXP_RES_INDEX, ATTR_COUNT, (void *)&expResCount))
-      return LogCamError(__LINE__, "pl_get_param(PARAM_EXP_RES_INDEX)" );
-
-   for (uns32 i = 0; i < expResCount; i++)
+   prmExpResIndex_ = new PvParam<uns16>( "PARAM_EXP_RES_INDEX", PARAM_EXP_RES_INDEX, this );
+   prmExpRes_ = new PvEnumParam( "PARAM_EXP_RES", PARAM_EXP_RES, this );
+   if ( prmExpResIndex_->IsAvailable() )
    {
-      if ( pl_get_enum_param(hPVCAM_, PARAM_EXP_RES, i, &expResVal, expResDesc, expResDescLen) )
-         if ( expResVal == EXP_RES_ONE_MICROSEC )
-            microsecResSupported_ = true;
+       if ( prmExpRes_->IsAvailable() )
+       {
+           std::vector<int32> enumVals = prmExpRes_->GetEnumValues();
+           for ( unsigned i = 0; i < enumVals.size(); ++i )
+           {
+               if ( enumVals[i] == EXP_RES_ONE_MICROSEC )
+               {
+                   microsecResSupported_ = true;
+                   break;
+               }
+           }
+       }
    }
 
    /// MULTIPLIER GAIN
@@ -1074,11 +1105,46 @@ int Universal::OnTriggerMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 
       prmTriggerMode_->Set( valStr );
       // We don't call Write() here because the PARAM_EXPOSURE_MODE cannot be set,
-      // it can only be retrieved and used in pl_setup_cont.
+      // it can only be read and used in pl_setup_cont so we use the
+      // prmTriggerMode just as a cache to store our value
    }
    else if (eAct == MM::BeforeGet)
    {
       pProp->Set( prmTriggerMode_->ToString().c_str() );
+   }
+
+   return DEVICE_OK;
+}
+
+/***
+* PARAM_EXPOSE_OUT_MODE
+*/
+int Universal::OnExposeOutMode(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   START_ONPROPERTY("Universal::OnExposeOutMode", eAct);
+
+   if (eAct == MM::AfterSet)
+   {
+      // The acquisition must be stopped, and will be
+      // automatically started again by MMCore
+      if (IsCapturing())
+         StopSequenceAcquisition();
+
+      // request reconfiguration of acquisition before next use
+      singleFrameModeReady_ = false;
+      sequenceModeReady_ = false;
+
+      string valStr;
+      pProp->Get( valStr );
+
+      prmExposeOutMode_->Set( valStr );
+      // We don't call Write() here because the PARAM_EXPOSE_OUT_MODE cannot be set,
+      // it can only be retrieved and used in pl_setup_cont so we use the
+      // prmExposeOutMode just as a cache to store our value
+   }
+   else if (eAct == MM::BeforeGet)
+   {
+      pProp->Set( prmExposeOutMode_->ToString().c_str() );
    }
 
    return DEVICE_OK;
@@ -1410,7 +1476,7 @@ int Universal::initializePostProcessing()
             }
          }  
       }
-		 
+         
       // encourage a meaningful sort in the micromanager property browser window
       resetName << "PP" << setw(3) << PP_count+1 << " Reset";
       nRet = CreateProperty(resetName.str().c_str(), g_Keyword_No, MM::String, false, pAct);
@@ -1843,7 +1909,7 @@ int Universal::buildSpdTable()
        return LogCamError(__LINE__, "pl_get_param PARAM_READOUT_PORT ATTR_COUNT" );
 
     // Iterate through each port and fill in the speed table
-    for (uns16 portIndex = 0; portIndex < portCount; portIndex++)
+    for (uns32 portIndex = 0; portIndex < portCount; portIndex++)
     {
         if (pl_set_param(hPVCAM_, PARAM_READOUT_PORT, (void_ptr)&portIndex) != PV_OK)
            return LogCamError(__LINE__, "pl_set_param PARAM_READOUT_PORT" );
@@ -1902,11 +1968,59 @@ int Universal::buildSpdTable()
     return DEVICE_OK;
 }
 
+/**
+* This function returns the correct exposure mode and exposure value to be used in both
+* pl_exp_setup_seq and pl_exp_setup_cont
+*/
+int Universal::GetPvExposureSettings( int16& pvExposeOutMode, uns32& pvExposureValue )
+{
+    int nRet = DEVICE_OK;
+
+    // Prepare the exposure mode
+    int16 trigModeValue = (int16)prmTriggerMode_->Current();
+    // Some cameras like the OptiMos allow special expose-out modes.
+    int16 eposeOutModeValue = 0;
+    if ( prmExposeOutMode_ && prmExposeOutMode_->IsAvailable() )
+    {
+        eposeOutModeValue = (int16)prmExposeOutMode_->Current();
+    }
+
+    pvExposeOutMode = (trigModeValue | eposeOutModeValue);
+
+    // Prepare the exposure value
+
+    uns16 expRes = EXP_RES_ONE_MILLISEC;
+
+    // If the exposure is smaller than 60 milliseconds (MM works in milliseconds but uses float type)
+    // we switch the camera to microseconds so user can type 59.5 and we send 59500 to PVCAM.
+    if (exposure_ < 60 && microsecResSupported_)
+    {
+        expRes = EXP_RES_ONE_MICROSEC;
+        pvExposureValue = (uns32)(1000*exposure_);
+    }
+    else
+    {
+        expRes = EXP_RES_ONE_MILLISEC;
+        pvExposureValue = (uns32)exposure_;
+    }
+
+    g_pvcamLock.Lock();
+    // If the PARAM_EXP_RES_INDEX is not available, we use the exposure number as it is.
+    if ( prmExpResIndex_->IsAvailable() )
+    {
+        nRet = prmExpResIndex_->Set( expRes );
+        if (nRet == DEVICE_OK)
+            nRet = prmExpResIndex_->Apply();
+    }
+    g_pvcamLock.Unlock();
+
+    return nRet;
+}
 
 int Universal::ResizeImageBufferContinuous()
 {
    START_METHOD("Universal::ResizeImageBufferContinuous");
-   //ToDo: use semaphore
+
    int nRet = DEVICE_ERR;
 
    try
@@ -1914,37 +2028,23 @@ int Universal::ResizeImageBufferContinuous()
       img_.Resize(roi_.newXSize, roi_.newYSize);
       colorImg_.Resize(roi_.newXSize, roi_.newYSize, 4);
 
-      uns32 frameSize;
-      int16 trigModeValue = (int16)prmTriggerMode_->Current();
-
-      uns32 convertedExposure;
-      uns16 expRes = EXP_RES_ONE_MILLISEC;
-
-      if (exposure_ < 60 && microsecResSupported_)
-      {
-         expRes = EXP_RES_ONE_MICROSEC;
-         convertedExposure = (uns32)(1000*exposure_);
-      }
-      else
-      {
-         expRes = EXP_RES_ONE_MILLISEC;
-         convertedExposure = (uns32)exposure_;
-      }
+      uns32 frameSize = 0;
+      int16 pvExposureMode = 0;
+      uns32 pvExposure = 0;
+      nRet = GetPvExposureSettings( pvExposureMode, pvExposure );
+      if ( nRet != DEVICE_OK )
+          return nRet;
 
       g_pvcamLock.Lock();
-      if (!pl_set_param(hPVCAM_, PARAM_EXP_RES_INDEX, (void *)&expRes))
+      if (!pl_exp_setup_cont(hPVCAM_, 1, &camRegion_, pvExposureMode, pvExposure, &frameSize, CIRC_OVERWRITE)) 
       {
          g_pvcamLock.Unlock();
-         return LogCamError(__LINE__, "");
-      }
-      g_pvcamLock.Unlock();
 
-
-      g_pvcamLock.Lock();
-      if (!pl_exp_setup_cont(hPVCAM_, 1, &camRegion_, (int16)trigModeValue, convertedExposure, &frameSize, CIRC_OVERWRITE)) 
-      {
-         g_pvcamLock.Unlock();
-         return LogCamError(__LINE__, "");
+         nRet = LogCamError(__LINE__, "pl_exp_setup_seq failed");
+         SetBinning(1); // The error might have been caused by not supported BIN or ROI, so do a reset
+         this->GetCoreCallback()->OnPropertiesChanged(this); // Notify the MM UI to update the BIN and ROI
+         SetErrorText( nRet, "Failed to setup the acquisition" );
+         return nRet;
       }
       g_pvcamLock.Unlock();
 
@@ -1965,7 +2065,7 @@ int Universal::ResizeImageBufferContinuous()
    {
        LogCamError( __LINE__, e.what() );
    }
-   //ToDo: use semaphore
+
    singleFrameModeReady_ = false;
    LogMessage("ResizeImageBufferContinuous singleFrameModeReady_=false", true);
    return nRet;
@@ -1981,48 +2081,36 @@ int Universal::ResizeImageBufferContinuous()
  */
 int Universal::ResizeImageBufferSingle()
 {
-  START_METHOD("Universal::ResizeImageBufferSingle");
-   //ToDo: use semaphore
+   START_METHOD("Universal::ResizeImageBufferSingle");
+
+   int nRet = DEVICE_ERR;
 
    try
    {
       img_.Resize(roi_.newXSize, roi_.newYSize);
       colorImg_.Resize(roi_.newXSize, roi_.newYSize, 4);
 
-      uns32 frameSize;
-      int16 trigModeValue = (int16)prmTriggerMode_->Current();
+      uns32 frameSize = 0;
+      int16 pvExposureMode = 0;
+      uns32 pvExposure = 0;
+      nRet = GetPvExposureSettings( pvExposureMode, pvExposure );
+      if ( nRet != DEVICE_OK )
+          return nRet;
 
-      uns32 convertedExposure;
-      uns16 expRes = EXP_RES_ONE_MILLISEC;
-
-      if (exposure_ < 60 && microsecResSupported_)
-      {
-         expRes = EXP_RES_ONE_MICROSEC;
-         convertedExposure = (uns32)(1000*exposure_);
-      }
-      else 
-      {
-         expRes = EXP_RES_ONE_MILLISEC;
-         convertedExposure = (uns32)exposure_;
-      }
-	
       g_pvcamLock.Lock();
-      if (!pl_set_param(hPVCAM_, PARAM_EXP_RES_INDEX, (void *)&expRes))
+      if (!pl_exp_setup_seq(hPVCAM_, 1, 1, &camRegion_, pvExposureMode, pvExposure, &frameSize ))
       {
          g_pvcamLock.Unlock();
-         return LogCamError(__LINE__, "");
+         nRet = LogCamError(__LINE__, "pl_exp_setup_seq failed");
+         SetBinning(1); // The error might have been caused by not supported BIN or ROI, so do a reset
+         this->GetCoreCallback()->OnPropertiesChanged(this); // Notify the MM UI to update the BIN and ROI
+         SetErrorText( nRet, "Failed to setup the acquisition" );
+         return nRet;
       }
       g_pvcamLock.Unlock();
 
-      g_pvcamLock.Lock();
-      if (!pl_exp_setup_seq(hPVCAM_, 1, 1, &camRegion_, (int16)trigModeValue, convertedExposure, &frameSize ))
+      if (img_.Height() * img_.Width() * img_.Depth() != frameSize)
       {
-         g_pvcamLock.Unlock();
-         return LogCamError(__LINE__, "");
-      }
-      g_pvcamLock.Unlock();
-
-      if (img_.Height() * img_.Width() * img_.Depth() != frameSize) {
          return LogMMError(DEVICE_INTERNAL_INCONSISTENCY, __LINE__); // buffer sizes don't match ???
       }
 
@@ -2031,8 +2119,8 @@ int Universal::ResizeImageBufferSingle()
    {
       LogMessage("Caught error in ResizeImageBufferSingle", false);
    }
-   //ToDo: use semaphore
-   return DEVICE_OK;
+
+   return nRet;
 }
 
 
@@ -2143,7 +2231,8 @@ int Universal::PrepareSequenceAcqusition()
 {
    START_METHOD("Universal::PrepareSequenceAcqusition");
 
-   if (IsCapturing()) {
+   if (IsCapturing())
+   {
       return ERR_BUSY_ACQUIRING;
    }
    else if (!sequenceModeReady_)
@@ -2157,8 +2246,11 @@ int Universal::PrepareSequenceAcqusition()
       binXSize_ = newBinXSize_;
       binYSize_ = newBinYSize_;
       // reconfigure anything that has to do with pl_exp_setup_cont
-      ResizeImageBufferContinuous();
-
+      int nRet = ResizeImageBufferContinuous();
+      if ( nRet != DEVICE_OK )
+      {
+          return nRet;
+      }
       GetCoreCallback()->InitializeImageBuffer( 1, 1, GetImageWidth(), GetImageHeight(), GetImageBytesPerPixel() );
       GetCoreCallback()->PrepareForAcq(this);
       sequenceModeReady_ = true;

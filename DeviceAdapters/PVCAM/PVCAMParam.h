@@ -4,8 +4,6 @@
 #include "../../MMDevice/DeviceBase.h"
 #include "PVCAMAdapter.h"
 
-#define MAX_ENUM_STR_LEN 100
-
 #ifndef WIN32
 typedef long long long64;
 #endif
@@ -13,16 +11,14 @@ typedef long long long64;
 /***
 * A base class for PVCAM parameters. This is used for easy access to specific camera parameters.
 */
-
 class PvParamBase
 {
 public:
 
-    PvParamBase( std::string aName, uns32 aParamId, Universal* aCamera )
+    PvParamBase( std::string aName, uns32 aParamId, Universal* aCamera ) :
+        mId( aParamId ), mCamera( aCamera ), mName( aName),
+        mAvail( FALSE ), mAccess( ACC_READ_ONLY ), mType( TYPE_INT32 )
     {
-       this->mId = aParamId;
-       this->mName = aName;
-       this->mCamera = aCamera;
        initialize();
     }
 
@@ -79,8 +75,9 @@ template<class T>
 class PvParam : public PvParamBase
 {
 public:
-    PvParam( std::string aName, uns32 aParamId, Universal* aCamera )
-        : PvParamBase( aName, aParamId, aCamera )
+    PvParam( std::string aName, uns32 aParamId, Universal* aCamera ) :
+        PvParamBase( aName, aParamId, aCamera ),
+        mCurrent(0), mMax(0), mMin(0), mCount(0), mIncrement(0)
     {
        if (IsAvailable())
        {
@@ -190,39 +187,26 @@ public:
     PvEnumParam( std::string aName, uns32 aParamId, Universal* aCamera )
         : PvParam<int32>( aName, aParamId, aCamera )
     {
-        mEnumStrings.clear();
-        mEnumValues.clear();
-
-        int32 enumVal;
-        char enumStr[MAX_ENUM_STR_LEN];
-        for ( uns32 i = 0; i < mCount; i++ )
+        if ( IsAvailable() )
         {
-            if ( pl_get_enum_param( mCamera->Handle(), mId, i, &enumVal, enumStr, MAX_ENUM_STR_LEN ) != PV_OK )
-            {
-                mCamera->LogCamError(__LINE__, "pl_get_enum_param");
-                mEnumStrings.push_back( "Unable to read" );
-                mEnumValues.push_back(0);
-            }
-            else
-            {
-                mEnumStrings.push_back( std::string( enumStr ) );
-                mEnumValues.push_back( enumVal );
-            }
+            enumerate();
         }
     }
 
     /***
-    * Overloaded function. Return the enum string instead of value only.
+    * Overrided function. Instead of returning the current enum index, we return the value.
+    */
+    int32 Current()
+    {
+        return mEnumValues[mCurrent];
+    }
+
+    /***
+    * Overrided function. Return the enum string instead of the value only.
     */
     std::string ToString()
     {
-        for ( unsigned i = 0; i < mEnumValues.size(); ++i )
-        {
-            if ( mEnumValues[i] == mCurrent )
-                return mEnumStrings[i];
-        }
-        mCamera->LogCamError(__LINE__, "PvUniversalParam::ToString() Enum string not found" );
-        return "VALUE NAME NOT FOUND";
+        return mEnumStrings[mCurrent];
     }
 
     /***
@@ -244,11 +228,11 @@ public:
     */
     int Set(const std::string& aValue)
     {
-        for ( unsigned i = 0; i < mEnumStrings.size(); ++i)
+        for ( unsigned i = 0; i < mEnumStrings.size(); ++i )
         {
             if ( mEnumStrings[i].compare( aValue ) == 0 )
             {
-                mCurrent = mEnumValues[i];
+                mCurrent = i; // mCurrent contains an index of the current value
                 return DEVICE_OK;
             }
         }
@@ -266,7 +250,7 @@ public:
         {
             if ( mEnumValues[i] == aValue )
             {
-                mCurrent = mEnumValues[i];
+                mCurrent = i; // mCurrent contains an index of the current value
                 return DEVICE_OK;
             }
         }
@@ -274,8 +258,53 @@ public:
         return DEVICE_CAN_NOT_SET_PROPERTY;
     }
 
+    /**
+    * Overrided function. If we want to re-read the parameter, we also need to re-enumerate the values.
+    */
+    int Update()
+    {
+        PvParam<int32>::Update();
+        enumerate();
+    }
+
 
 private:
+
+    /**
+    * Read all the enum values and correspondig string descriptions
+    */
+    void enumerate()
+    {
+        mEnumStrings.clear();
+        mEnumValues.clear();
+
+        int32 enumVal;
+        // Enumerate the parameter with the index and find actual values and descriptions
+        for ( uns32 i = 0; i < mCount; i++ )
+        {
+            uns32 enumStrLen = 0;
+            if ( pl_enum_str_length( mCamera->Handle(), mId, i, &enumStrLen ) != PV_OK )
+            {
+                mCamera->LogCamError(__LINE__, "pl_enum_str_length");
+                break;
+            }
+            char* enumStrBuf = new char[enumStrLen+1];
+            enumStrBuf[enumStrLen] = '\0';
+            if ( pl_get_enum_param( mCamera->Handle(), mId, i, &enumVal, enumStrBuf, enumStrLen ) != PV_OK )
+            {
+                mCamera->LogCamError(__LINE__, "pl_get_enum_param");
+                mEnumStrings.push_back( "Unable to read" );
+                mEnumValues.push_back(0);
+                break;
+            }
+            else
+            {
+                mEnumStrings.push_back( std::string( enumStrBuf ) );
+                mEnumValues.push_back( enumVal );
+            }
+            delete[] enumStrBuf;
+        }
+   }
 
    // Enum values and their corresponding names
    std::vector<std::string> mEnumStrings;

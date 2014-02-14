@@ -61,10 +61,12 @@
 #endif
 
 #ifdef WIN32
-// FRAME_INFO is currently supported on Windows only (PVCAM 2.9.5)
+// FRAME_INFO is currently supported on Windows only (PVCAM 2.9.5+)
 #define PVCAM_FRAME_INFO_SUPPORTED
-// Callbacks are not supported on Linux and Mac
+// Callbacks are not supported on Linux and Mac (as for 01/2014)
 #define PVCAM_CALLBACKS_SUPPORTED
+// The new parameter is implmented in PVCAM for Windows only (PVCAM 3+)
+#define PVCAM_PARAM_EXPOSE_OUT_DEFINED
 #endif
 
 #include <string>
@@ -262,6 +264,7 @@ public:
    int OnActGainProperties(MM::PropertyBase* pProp, MM::ActionType eAct);
 #endif
    int OnTriggerMode(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnExposeOutMode(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnTriggerTimeOut(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnOutputTriggerFirstMissing(MM::PropertyBase* pProp, MM::ActionType eAct); 
    int OnCircBufferFrameCount(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -293,8 +296,9 @@ protected:
 private:
 
    Universal(Universal&) {}
-   int ResizeImageBufferSingle();
+   int GetPvExposureSettings( int16& pvExposeOutMode, uns32& pvExposureValue );
    int ResizeImageBufferContinuous();
+   int ResizeImageBufferSingle();
    bool WaitForExposureDone() throw();
    MM::MMTime GetCurrentTime() { return GetCurrentMMTime();}
 
@@ -355,7 +359,10 @@ private:
    PvParam<int16>* prmTempSetpoint_;      // Desired CCD temperature
    PvParam<int16>* prmGainIndex_;
    PvParam<uns16>* prmGainMultFactor_;
-   PvEnumParam*    prmTriggerMode_;
+   PvEnumParam*    prmTriggerMode_;       // (PARAM_EXPOSURE_MODE)
+   PvParam<uns16>* prmExpResIndex_;
+   PvEnumParam*    prmExpRes_;
+   PvEnumParam*    prmExposeOutMode_;
    PvEnumParam*    prmReadoutPort_;
    PvEnumParam*    prmColorMode_;
 
