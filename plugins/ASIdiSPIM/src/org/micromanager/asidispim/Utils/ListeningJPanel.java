@@ -32,8 +32,12 @@ import javax.swing.JPanel;
  */
 @SuppressWarnings("serial")
 public class ListeningJPanel extends JPanel {
-   public ListeningJPanel(LayoutManager l) {
+   
+   protected String panelName_;
+   
+   public ListeningJPanel(String panelName, LayoutManager l) {
       super (l);
+      panelName_ = panelName;
    }
    
    /**
@@ -50,4 +54,10 @@ public class ListeningJPanel extends JPanel {
     * Called when new stage positions are available in the device class
     */
    public void updateStagePositions() {};
+   
+   /**
+    * returns the name of the panel 
+    */
+   public String getPanelName() { return panelName_; }
+   
 }

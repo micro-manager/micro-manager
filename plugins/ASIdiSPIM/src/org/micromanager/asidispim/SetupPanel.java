@@ -20,18 +20,15 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 package org.micromanager.asidispim;
 
-import com.swtdesigner.SwingResourceManager;
-
-import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.geom.Point2D;
-import java.util.prefs.Preferences;
 
-import org.micromanager.api.ScriptInterface;
+import org.micromanager.asidispim.Data.Cameras;
 import org.micromanager.asidispim.Data.Devices;
 import org.micromanager.asidispim.Data.Joystick;
 import org.micromanager.asidispim.Data.Positions;
+import org.micromanager.asidispim.Data.Prefs;
 import org.micromanager.asidispim.Data.Properties;
 import org.micromanager.asidispim.Utils.ListeningJPanel;
 import org.micromanager.asidispim.Utils.PanelUtils;
@@ -54,76 +51,64 @@ import org.micromanager.utils.ReportingUtils;
 @SuppressWarnings("serial")
 public final class SetupPanel extends ListeningJPanel implements LiveModeListener {
 
-   Devices devices_;
-   Devices.Sides side_;
-   Properties props_;
-   Joystick joystick_;
-   Positions positions_;
-   Preferences prefs_;
-   private CMMCore core_;
-   ScriptInterface gui_;
-   String port_;  // needed to send serial commands directly
+   private final Devices devices_;
+   private final Properties props_;
+   private final Joystick joystick_;
+   private final Positions positions_;
+   private final Cameras cameras_;
+   private final Prefs prefs_;
+   private final String panelName_;
+   private final CMMCore core_;
+   private String port_;  // needed to send serial commands directly
    
-   JPanel joystickPanel_;
+   private final JoystickSubPanel joystickPanel_;
+   private final CameraSubPanel cameraPanel_;
+   private final BeamSubPanel beamPanel_;
    
    // used to store the start/stop positions of the single-axis moves for imaging piezo and micromirror sheet move axis
-   double imagingStartPos_;
-   double imagingStopPos_;
-   double sheetStartPos_;
-   double sheetStopPos_;
+   private double imagingStartPos_;
+   private double imagingStopPos_;
+   private double sheetStartPos_;
+   private double sheetStopPos_;
    
    private boolean illumPiezoHomeEnable_;
    
-   JRadioButton imagingCameraButton_;
-   JRadioButton epiCameraButton_;
-   JRadioButton dualCameraButton_;
-   JRadioButton lowerCameraButton_;
-   final String MULTICAMERAPREF = "IsMultiCamera";
-   final String ISMULTICAMERAPREFNAME;
-   
    // device keys, get assigned in constructor based on side
-   Devices.Keys piezoImagingDeviceKey_;
-   Devices.Keys piezoIlluminationDeviceKey_;
-   Devices.Keys micromirrorDeviceKey_;
+   private Devices.Keys piezoImagingDeviceKey_;
+   private Devices.Keys piezoIlluminationDeviceKey_;
+   private Devices.Keys micromirrorDeviceKey_;
    
-   JToggleButton toggleButtonLive_;
-   JCheckBox sheetABox_;
-   JCheckBox sheetBBox_;
-   JCheckBox beamABox_;
-   JCheckBox beamBBox_;
-   JLabel imagingPiezoPositionLabel_;
-   JLabel illuminationPiezoPositionLabel_;
-   JLabel sheetPositionLabel_;
+   private JLabel imagingPiezoPositionLabel_;
+   private JLabel illuminationPiezoPositionLabel_;
+   private JLabel sheetPositionLabel_;
    
-   private static final String PREF_ENABLE_ILLUM_HOME = "EnableIllumPiezoHome";
-
-   public SetupPanel(Devices devices, Properties props, Joystick joystick, Devices.Sides side, Positions positions) {
-      super(new MigLayout(
+   public SetupPanel(Devices devices, Properties props, Joystick joystick, Devices.Sides side, 
+         Positions positions, Cameras cameras, Prefs prefs) {
+      super("Setup Path " + side.toString(),
+            new MigLayout(
               "",
-              "[right]8[align center]16[right]8[60px,center]8[center]8[center]",
+              "[right]8[align center]16[right]8[60px,center]8[center]8[center]8[center]8[center]",
               "[]16[]"));
+      panelName_ = super.panelName_; 
       devices_ = devices;
       props_ = props;
       joystick_ = joystick;
       positions_ = positions;
-      side_ = side;
-      prefs_ = Preferences.userNodeForPackage(this.getClass());
-      gui_ = MMStudioMainFrame.getInstance();
+      cameras_ = cameras;
+      prefs_ = prefs;
       core_ = MMStudioMainFrame.getInstance().getCore();
       PanelUtils pu = new PanelUtils();
       
-      piezoImagingDeviceKey_ = devices_.getSideSpecificKey(Devices.Keys.PIEZOA, side_);
-      piezoIlluminationDeviceKey_ = devices_.getSideSpecificKey(Devices.Keys.PIEZOA, devices_.getOppositeSide(side_));
-      micromirrorDeviceKey_ = devices_.getSideSpecificKey(Devices.Keys.GALVOA, side_);
+      piezoImagingDeviceKey_ = Devices.getSideSpecificKey(Devices.Keys.PIEZOA, side);
+      piezoIlluminationDeviceKey_ = Devices.getSideSpecificKey(Devices.Keys.PIEZOA, Devices.getOppositeSide(side));
+      micromirrorDeviceKey_ = Devices.getSideSpecificKey(Devices.Keys.GALVOA, side);
       
       port_ = null;
       updatePort();
 
-      ISMULTICAMERAPREFNAME = MULTICAMERAPREF + side_.toString();
-      
       updateStartStopPositions();
       
-      joystickPanel_ = new JoystickPanel(joystick_, devices_, "Side" + side_.toString());
+      joystickPanel_ = new JoystickSubPanel(joystick_, devices_, panelName_, side, prefs_);
       add(joystickPanel_, "span 2 3");
       
       add(new JLabel("Sheet/slice position:"));
@@ -147,7 +132,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
             }
          }
       });
-      add(tmp_but, "split 2");
+      add(tmp_but);
       
       tmp_but = new JButton("Go start");
       tmp_but.addActionListener(new ActionListener() {
@@ -176,7 +161,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
             }
          }
       });
-      add(tmp_but, "split 2");
+      add(tmp_but);
       
       tmp_but = new JButton("Go end");
       tmp_but.addActionListener(new ActionListener() {
@@ -210,7 +195,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
             }
          }
       });
-      add(tmp_but, "split 2");
+      add(tmp_but);
       
       tmp_but = new JButton("Go start");
       tmp_but.addActionListener(new ActionListener() {
@@ -239,7 +224,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
             }
          }
       });
-      add(tmp_but, "split 2");
+      add(tmp_but);
       
       tmp_but = new JButton("Go end");
       tmp_but.addActionListener(new ActionListener() {
@@ -277,7 +262,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
           }
        }
     });
-    add(tmp_but, "split 2");
+    add(tmp_but);
     
     tmp_but = new JButton("Go home");
     tmp_but.setToolTipText("During SPIM, illumination piezo is moved to home position");
@@ -303,320 +288,43 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
     ActionListener ae = new ActionListener() {
        public void actionPerformed(ActionEvent e) { 
           illumPiezoHomeEnable_ = illumPiezoHomeEnable.isSelected();
-          prefs_.putBoolean(PREF_ENABLE_ILLUM_HOME, illumPiezoHomeEnable.isSelected());
+          prefs_.putBoolean(panelName_, Prefs.Keys.ENABLE_ILLUM_PIEZO_HOME, illumPiezoHomeEnable.isSelected());
        }
     }; 
     illumPiezoHomeEnable.addActionListener(ae);
-    illumPiezoHomeEnable.setSelected(prefs_.getBoolean(PREF_ENABLE_ILLUM_HOME, true));
+    illumPiezoHomeEnable.setSelected(prefs_.getBoolean(panelName_, Prefs.Keys.ENABLE_ILLUM_PIEZO_HOME, true));
     ae.actionPerformed(null);
-    add(illumPiezoHomeEnable, "wrap");
+    add(illumPiezoHomeEnable, "span 2, wrap");
     
-    add(new JLabel("Beam enabled:"));
-    beamABox_ = pu.makeCheckBox("Path A", 
-          Properties.Values.NO.toString(), Properties.Values.YES.toString(),
-          props_, devices_, 
-          Devices.Keys.GALVOA, Properties.Keys.BEAM_ENABLED);
-    add(beamABox_, "split 2");
-    beamBBox_ = pu.makeCheckBox("Path B",
-          Properties.Values.NO.toString(), Properties.Values.YES.toString(), 
-          props_, devices_, 
-          Devices.Keys.GALVOB, Properties.Keys.BEAM_ENABLED);
-    add(beamBBox_);
+    beamPanel_ = new BeamSubPanel(devices_, panelName_, side, prefs_, props_);
+    add(beamPanel_, "center, span 2 1");
     
-    add(new JLabel("Scan amplitude:"));
+    add(new JLabel("Sheet width:"));
     add(new JLabel(""), "span 2");   // TODO update this label with current value
     JSlider tmp_sl = pu.makeSlider(0, // 0 is min amplitude
           props_.getPropValueFloat(micromirrorDeviceKey_, Properties.Keys.MAX_DEFLECTION_X) - props_.getPropValueFloat(micromirrorDeviceKey_, Properties.Keys.MIN_DEFLECTION_X), // compute max amplitude
           1000,   // the scale factor between internal integer representation and float representation
           props_, devices_, micromirrorDeviceKey_, Properties.Keys.SA_AMPLITUDE_X_DEG);
-    add(tmp_sl, "span 2, growx, center, wrap");
+    add(tmp_sl, "span 4, growx, center, wrap");
     
-    add(new JLabel("Scan enabled:"));
-    sheetABox_ = pu.makeCheckBox("Path A", 
-          Properties.Values.SAM_DISABLED.toString(), Properties.Values.SAM_ENABLED.toString(), 
-          props_, devices_, 
-          Devices.Keys.GALVOA, Properties.Keys.SA_MODE_X);
-    add(sheetABox_, "split 2");
-    sheetBBox_ = pu.makeCheckBox("Path B", 
-          Properties.Values.SAM_DISABLED.toString(), Properties.Values.SAM_ENABLED.toString(),
-          props_, devices_, 
-          Devices.Keys.GALVOB, Properties.Keys.SA_MODE_X);
-    add(sheetBBox_);
+    cameraPanel_ = new CameraSubPanel(cameras_, devices_, panelName_, side, prefs_);
+    add(cameraPanel_, "center, span 2 1");
     
-    add(new JLabel("Scan offset:"));
+    add(new JLabel("Sheet offset:"));
     add(new JLabel(""), "span 2");   // TODO update this label with current value
-
     tmp_sl = pu.makeSlider(
           props.getPropValueFloat(micromirrorDeviceKey_, Properties.Keys.MIN_DEFLECTION_X), // min value
           props.getPropValueFloat(micromirrorDeviceKey_, Properties.Keys.MAX_DEFLECTION_X), // max value
           1000,  // the scale factor between internal integer representation and float representation
           props_, devices_, micromirrorDeviceKey_, Properties.Keys.SA_OFFSET_X_DEG);
-    add(tmp_sl, "span 2, growx, center, wrap");
-
-    // disable the sheetA/B boxes when beam is disabled and vice versa
-    ActionListener alA = 
-    new ActionListener() {
-       public void actionPerformed(ActionEvent e) { 
-          if (beamABox_.isSelected() && sheetABox_.isSelected()) {
-             // restart sheet if it was enabled before
-             sheetABox_.doClick();
-             sheetABox_.doClick();
-          }
-       }
-    }; 
-    alA.actionPerformed(null);
-    beamABox_.addActionListener(alA);
-    
-    ActionListener alB = new ActionListener() {
-       public void actionPerformed(ActionEvent e) { 
-          if (beamBBox_.isSelected() && sheetBBox_.isSelected()) {
-             // restart sheet if it was enabled before
-             sheetBBox_.doClick();
-             sheetBBox_.doClick();
-          }
-       }
-    };
-    alB.actionPerformed(null);
-    beamBBox_.addActionListener(alB);
-    
-    add(new JLabel("Toggle:"));
-    
-    tmp_but = new JButton("Beams");
-    tmp_but.addActionListener(new ActionListener() {
-       @Override
-       public void actionPerformed(ActionEvent e) {
-          beamABox_.doClick();
-          beamBBox_.doClick();
-       }
-    });
-    add(tmp_but, "split 2");
-    
-    tmp_but = new JButton("Scan");
-    tmp_but.addActionListener(new ActionListener() {
-       @Override
-       public void actionPerformed(ActionEvent e) {
-          sheetABox_.doClick();
-          sheetBBox_.doClick();
-       }
-    });
-    add(tmp_but);
-    
-    toggleButtonLive_ = new JToggleButton();
-    toggleButtonLive_.setMargin(new Insets(0, 10, 0, 10));
-    toggleButtonLive_.setIconTextGap(6);
-    toggleButtonLive_.setToolTipText("Continuous live view");
-    setLiveButtonAppearance(gui_.isLiveModeOn());
-    toggleButtonLive_.addActionListener(new ActionListener() {
-       @Override
-       public void actionPerformed(ActionEvent e) {
-          setLiveButtonAppearance(!gui_.isLiveModeOn());
-          enableLiveMode(!gui_.isLiveModeOn());
-       }
-    });
-
-    boolean isMultiCamera = prefs_.getBoolean(ISMULTICAMERAPREFNAME, false);
-    imagingCameraButton_ = new JRadioButton( 
-          devices_.getMMDevice(devices_.getSideSpecificKey(Devices.Keys.CAMERAA,
-          side_)) +
-          " (Imaging)"); 
-    epiCameraButton_ = new JRadioButton( 
-          devices_.getMMDevice(devices_.getSideSpecificKey(Devices.Keys.CAMERAA,  
-          devices_.getOppositeSide(side_))) +
-          " (Epi)"); 
-    dualCameraButton_ = new JRadioButton("Both"); 
-    lowerCameraButton_ = new JRadioButton("Lower");
-    ButtonGroup singleDualCameraButtonGroup = new ButtonGroup();
-    singleDualCameraButtonGroup.add(imagingCameraButton_);
-    singleDualCameraButtonGroup.add(epiCameraButton_);
-    singleDualCameraButtonGroup.add(dualCameraButton_);
-    singleDualCameraButtonGroup.add(lowerCameraButton_);
-    if (isMultiCamera) {
-       dualCameraButton_.setSelected(true);
-    } else {
-       imagingCameraButton_.setSelected(true);
-    } 
-    ActionListener radioButtonListener = new ActionListener() {
-       public void actionPerformed(ActionEvent ae) {
-          JRadioButton myButton = (JRadioButton) ae.getSource();
-          handleCameraButton(myButton);
-       }
-    };
-    imagingCameraButton_.addActionListener(radioButtonListener);
-    epiCameraButton_.addActionListener(radioButtonListener);
-    dualCameraButton_.addActionListener(radioButtonListener);
-    lowerCameraButton_.addActionListener(radioButtonListener);
-    
-    add(new JLabel("Camera:")); 
-    add(imagingCameraButton_, "center, span 2"); 
-    add(epiCameraButton_, "center"); 
-    add(dualCameraButton_, "center, split 2"); 
-    add(lowerCameraButton_, "center, wrap");
-    add(toggleButtonLive_, "center, span 6, width 100px, wrap"); 
+    add(tmp_sl, "span 4, growx, center, wrap");
     
     // set scan waveform to be triangle, just like SPIM is
     props_.setPropValue(micromirrorDeviceKey_, Properties.Keys.SA_PATTERN_X, Properties.Values.SAM_TRIANGLE, true);
      
    }// end of SetupPanel constructor
    
-   /**
-    * required by LiveModeListener interface
-    */
-   public void liveModeEnabled(boolean enable) { 
-      setLiveButtonAppearance(enable); 
-   } 
-   
-   /** 
-   * Changes the looks of the live button 
-   * @param enable - true: live mode is switched on 
-   */ 
-   public final void setLiveButtonAppearance(boolean enable) {
-      toggleButtonLive_.setIcon(enable ? SwingResourceManager.getIcon(MMStudioMainFrame.class,
-            "/org/micromanager/icons/cancel.png")
-            : SwingResourceManager.getIcon(MMStudioMainFrame.class,
-                  "/org/micromanager/icons/camera_go.png"));
-      toggleButtonLive_.setSelected(false);
-      toggleButtonLive_.setText(enable ? "Stop Live" : "Live");
-   }
-   
-   /** 
-    * Switches the active camera to the desired one Takes care of possible side 
-    * effects 
-    * 
-    * @param mmDevice - name of new camera device 
-    */ 
-   private void setCameraDevice(String mmDevice) { 
-      if (mmDevice != null) { 
-         try { 
 
-            boolean liveEnabled = gui_.isLiveModeOn(); 
-            if (liveEnabled) { 
-               enableLiveMode(false); 
-            } 
-            core_.setProperty("Core", "Camera", mmDevice); 
-            gui_.refreshGUIFromCache(); 
-            if (liveEnabled) { 
-               enableLiveMode(true);
-            } 
-         } catch (Exception ex) { 
-            ReportingUtils.showError("Failed to set Core Camera property"); 
-         } 
-      } 
-   } 
-   
-   // copy of same function in SpimParamsPanel
-   private void setCameraTriggerExternal(boolean external) {
-      // set mode to external
-      // have to handle any device adapters, currently HamamatsuHam and PCO only
-      Devices.Libraries camLibraryA, camLibraryB;
-      try {
-         camLibraryA = devices_.getMMDeviceLibrary(Devices.Keys.CAMERAA);
-         if (camLibraryA == Devices.Libraries.HAMCAM) {
-            if (external) {
-               props_.setPropValue(Devices.Keys.CAMERAA, Properties.Keys.TRIGGER_SOURCE, Properties.Values.EXTERNAL, true);
-            } else {
-               props_.setPropValue(Devices.Keys.CAMERAA, Properties.Keys.TRIGGER_SOURCE, Properties.Values.INTERNAL, true);
-            }
-         } else if (camLibraryA == Devices.Libraries.PCOCAM) {
-            if (external) {
-               props_.setPropValue(Devices.Keys.CAMERAA, Properties.Keys.TRIGGER_MODE, Properties.Values.EXTERNAL_LC, true);
-            } else {
-               props_.setPropValue(Devices.Keys.CAMERAA, Properties.Keys.TRIGGER_MODE, Properties.Values.INTERNAL_LC, true);
-            }
-         }
-         camLibraryB = devices_.getMMDeviceLibrary(Devices.Keys.CAMERAB);
-         if (camLibraryB == Devices.Libraries.HAMCAM) {
-            if (external) {
-               props_.setPropValue(Devices.Keys.CAMERAB, Properties.Keys.TRIGGER_SOURCE, Properties.Values.EXTERNAL, true);
-            } else {
-               props_.setPropValue(Devices.Keys.CAMERAB, Properties.Keys.TRIGGER_SOURCE, Properties.Values.INTERNAL, true);
-            }
-         } else if (camLibraryB == Devices.Libraries.PCOCAM) {
-            if (external) {
-               props_.setPropValue(Devices.Keys.CAMERAB, Properties.Keys.TRIGGER_MODE, Properties.Values.EXTERNAL_LC, true);
-            } else {
-               props_.setPropValue(Devices.Keys.CAMERAB, Properties.Keys.TRIGGER_MODE, Properties.Values.INTERNAL_LC, true);
-            }
-         }
-      } catch (Exception e) {
-         ReportingUtils.showError(e);
-      }
-   }
-   
-   private void enableLiveMode(boolean enable) {
-      if (enable) {
-         setCameraTriggerExternal(false);
-      }
-      gui_.enableLiveMode(enable);
-   }
-   
-   
-   /** 
-    * Implements the ActionEventLister for the Camera selection Radio Buttons 
-    * @param myButton  
-    */ 
-   private void handleCameraButton(JRadioButton myButton) { 
-      if (myButton != null && myButton.isSelected()) { 
-         String mmDevice;
-         if (myButton.equals(imagingCameraButton_)) { 
-            mmDevice = devices_.getMMDevice(devices_.getSideSpecificKey(Devices.Keys.CAMERAA, side_));
-            prefs_.putBoolean(ISMULTICAMERAPREFNAME, false);
-         } else if (myButton.equals(epiCameraButton_)) {
-            mmDevice = devices_.getMMDevice(devices_.getSideSpecificKey(Devices.Keys.CAMERAA, devices_.getOppositeSide(side_)));
-            prefs_.putBoolean(ISMULTICAMERAPREFNAME, false);
-         }
-         else if (myButton.equals(lowerCameraButton_)) {
-            mmDevice = devices_.getMMDevice(Devices.Keys.CAMERALOWER);
-            prefs_.putBoolean(ISMULTICAMERAPREFNAME, false);
-         }
-         else {
-            // default to dual camera button 
-            mmDevice = devices_.getMMDevice(Devices.Keys.MULTICAMERA); 
-            prefs_.putBoolean(ISMULTICAMERAPREFNAME, true); 
-         }
-         setCameraDevice(mmDevice);
-      }
-   }
-   
-   /**
-    * Gets called when this tab gets focus.
-    * Uses the ActionListeners of the UI components
-    */
-   @Override
-   public void gotSelected() {
-      ((ListeningJPanel) joystickPanel_).gotSelected();
-      props_.callListeners();
-      updateStartStopPositions();  // I'm undecided if this is wise or not, see updateStartStopPositions() JavaDoc
-      
-      // moves illumination piezo to home
-      // TODO do this more elegantly (ideally MM API would add Home() function)
-      String letter = "";
-      updatePort();
-      if (port_ == null) {
-         return;
-      }
-      if (illumPiezoHomeEnable_) {
-         try {
-            letter = props_.getPropValueString(piezoIlluminationDeviceKey_, Properties.Keys.AXIS_LETTER);
-            core_.setSerialPortCommand(port_, "! "+letter, "\r");
-            // we need to read the answer or we can get in trouble later on
-            // It would be nice to check the answer
-            core_.getSerialPortAnswer(port_, "\r\n");
-         } catch (Exception ex) {
-            ReportingUtils.showError("could not execute core function move to home for axis " + letter);
-         }
-      }
-      
-      // handles camera setting
-      JRadioButton jr = dualCameraButton_; 
-      if (imagingCameraButton_.isSelected()) { 
-         jr = imagingCameraButton_; 
-      } 
-      else if (epiCameraButton_.isSelected()) {
-         jr = epiCameraButton_;
-      }
-      handleCameraButton(jr); 
-   }
-   
    /**
     * updates single-axis parameters for stepped piezos
     * according to sheetStartPos_ and sheetEndPos_
@@ -667,7 +375,9 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
    }
    
    /**
-    * 
+    * finds the appropriate COM port, because we have to send "home" (!) and "sethome" (HM)
+    *  commands "manually" over serial since the right API calls don't yet exist
+    *  // TODO pester Nico et al. for API
     * @return true if port is valid, false if not
     */
    private void updatePort() {
@@ -689,7 +399,8 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
 
    @Override
    public void saveSettings() {
-      // now all prefs are updated on button press instead of here
+      beamPanel_.saveSettings();
+      // all other prefs are updated on button press instead of here
    }
 
    @Override
@@ -697,6 +408,46 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       imagingPiezoPositionLabel_.setText(positions_.getPositionString(piezoImagingDeviceKey_));
       illuminationPiezoPositionLabel_.setText(positions_.getPositionString(piezoIlluminationDeviceKey_));
       sheetPositionLabel_.setText(positions_.getPositionString(micromirrorDeviceKey_, Joystick.Directions.Y));
+   }
+   
+   /**
+    * required by LiveModeListener interface; just pass call along to camera panel
+    */
+   public void liveModeEnabled(boolean enable) { 
+      cameraPanel_.liveModeEnabled(enable);
+   } 
+   
+   /**
+    * Gets called when this tab gets focus.
+    * Uses the ActionListeners of the UI components
+    */
+   @Override
+   public void gotSelected() {
+      props_.callListeners();
+      joystickPanel_.gotSelected();
+      cameraPanel_.gotSelected();
+      beamPanel_.gotSelected();
+      updateStartStopPositions();  // I'm undecided if this is wise or not, see updateStartStopPositions() JavaDoc
+      
+      // moves illumination piezo to home
+      // TODO do this more elegantly (ideally MM API would add Home() function)
+      String letter = "";
+      updatePort();
+      if (port_ == null) {
+         return;
+      }
+      if (illumPiezoHomeEnable_) {
+         try {
+            letter = props_.getPropValueString(piezoIlluminationDeviceKey_, Properties.Keys.AXIS_LETTER);
+            core_.setSerialPortCommand(port_, "! "+letter, "\r");
+            // we need to read the answer or we can get in trouble later on
+            // It would be nice to check the answer
+            core_.getSerialPortAnswer(port_, "\r\n");
+         } catch (Exception ex) {
+            ReportingUtils.showError("could not execute core function move to home for axis " + letter);
+         }
+      }
+
    }
       
 }

@@ -24,12 +24,13 @@ package org.micromanager.asidispim;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.prefs.Preferences;
 
 import org.micromanager.MMStudioMainFrame;
+import org.micromanager.asidispim.Data.Cameras;
 import org.micromanager.asidispim.Data.Devices;
 import org.micromanager.asidispim.Data.Joystick;
 import org.micromanager.asidispim.Data.Positions;
+import org.micromanager.asidispim.Data.Prefs;
 import org.micromanager.asidispim.Data.Properties;
 import org.micromanager.asidispim.Utils.ListeningJPanel;
 import org.micromanager.asidispim.Utils.PanelUtils;
@@ -37,13 +38,13 @@ import org.micromanager.asidispim.Utils.PanelUtils;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
-import javax.swing.JPanel;
 import javax.swing.JCheckBox;
 
 import mmcorej.CMMCore;
 import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.asidispim.Utils.StagePositionUpdater;
+import org.micromanager.internalinterfaces.LiveModeListener;
 import org.micromanager.utils.ReportingUtils;
 
 
@@ -53,14 +54,19 @@ import org.micromanager.utils.ReportingUtils;
  * @author Jon
  */
 @SuppressWarnings("serial")
-public class NavigationPanel extends ListeningJPanel {
-   private Devices devices_;
-   private Joystick joystick_;
-   private Positions positions_;
-   private Preferences prefs_;
-   private CMMCore core_;
+public class NavigationPanel extends ListeningJPanel implements LiveModeListener {
+   private final Devices devices_;
+   private final Properties props_;
+   private final Joystick joystick_;
+   private final Positions positions_;
+   private final Prefs prefs_;
+   private final Cameras cameras_;
+   private final CMMCore core_;
+   private final String panelName_;
    
-   private JPanel joystickPanel_;
+   private final JoystickSubPanel joystickPanel_;
+   private final CameraSubPanel cameraPanel_;
+   private final BeamSubPanel beamPanel_;
    
    private JLabel xPositionLabel_;
    private JLabel yPositionLabel_;
@@ -73,26 +79,34 @@ public class NavigationPanel extends ListeningJPanel {
    private JLabel galvoBxPositionLabel_;
    private JLabel galvoByPositionLabel_;
    
-   private static final String PREF_ENABLEUPDATES = "EnablePositionUpdates";
-   
    /**
     * Navigation panel constructor.
     */
-   public NavigationPanel(Devices devices, Joystick joystick, Positions positions,
-           final StagePositionUpdater stagePosUpdater) {    
-      super (new MigLayout(
+   public NavigationPanel(Devices devices, Properties props, Joystick joystick, Positions positions,
+           final StagePositionUpdater stagePosUpdater, Prefs prefs, Cameras cameras) {    
+      super ("Navigation",
+            new MigLayout(
               "", 
-              "[right]8[align center]16[right]8[center]8[center]8[center]",
+              "[right]8[align center]16[right]8[60px,center]8[center]8[center]8[center]",
               "[]6[]"));
       devices_ = devices;
+      props_ = props;
       joystick_ = joystick;
       positions_ = positions;
-      prefs_ = Preferences.userNodeForPackage(this.getClass());
+      prefs_ = prefs;
+      cameras_ = cameras;
+      panelName_ = super.panelName_;
       core_ = MMStudioMainFrame.getInstance().getCore();
       PanelUtils pu = new PanelUtils();
       
-      joystickPanel_ = new JoystickPanel(joystick_, devices_, "Navigation");
+      joystickPanel_ = new JoystickSubPanel(joystick_, devices_, panelName_, Devices.Sides.NONE, prefs_);
       add(joystickPanel_, "span 2 4");  // make artificially tall to keep stage positions in line with each other
+      
+      add(new JLabel(devices_.getDeviceDisplayWithAxis(Devices.Keys.PIEZOA) + ":"));
+      piezoAPositionLabel_ = new JLabel("");
+      add(piezoAPositionLabel_);
+      add(pu.makeSetPositionField(Devices.Keys.PIEZOA, Joystick.Directions.NONE, positions_));
+      add(makeMoveToOriginButton(Devices.Keys.PIEZOA, Joystick.Directions.NONE), "wrap");
       
       add(new JLabel(devices_.getDeviceDisplayWithAxis1D(Devices.Keys.XYSTAGE, Joystick.Directions.X) + ":"));
       xPositionLabel_ = new JLabel("");
@@ -115,12 +129,38 @@ public class NavigationPanel extends ListeningJPanel {
       add(makeMoveToOriginButton(Devices.Keys.LOWERZDRIVE, Joystick.Directions.NONE));
       add(makeSetOriginHereButton(Devices.Keys.LOWERZDRIVE, Joystick.Directions.NONE), "wrap");
       
+      beamPanel_ = new BeamSubPanel(devices_, panelName_, Devices.Sides.NONE, prefs_, props_);
+      add(beamPanel_, "center, span 2 2");
+      
       add(new JLabel(devices_.getDeviceDisplayWithAxis(Devices.Keys.UPPERZDRIVE) + ":"));
       upperZPositionLabel_ = new JLabel("");
       add(upperZPositionLabel_);
       add(pu.makeSetPositionField(Devices.Keys.UPPERZDRIVE, Joystick.Directions.NONE, positions_));
       add(makeMoveToOriginButton(Devices.Keys.UPPERZDRIVE, Joystick.Directions.NONE));
-      add(makeSetOriginHereButton(Devices.Keys.UPPERZDRIVE, Joystick.Directions.NONE), "wrap");
+      add(makeSetOriginHereButton(Devices.Keys.UPPERZDRIVE, Joystick.Directions.NONE), "wrap");      
+      
+      add(new JLabel(devices_.getDeviceDisplayWithAxis(Devices.Keys.PIEZOB) + ":"));
+      piezoBPositionLabel_ = new JLabel("");
+      add(piezoBPositionLabel_);
+      add(pu.makeSetPositionField(Devices.Keys.PIEZOB, Joystick.Directions.NONE, positions_));
+      add(makeMoveToOriginButton(Devices.Keys.PIEZOB, Joystick.Directions.NONE), "wrap");
+      
+      cameraPanel_ = new CameraSubPanel(cameras_, devices_, panelName_, Devices.Sides.NONE, prefs_);
+      add(cameraPanel_, "center, span 2 2");
+      
+      add(new JLabel(devices_.getDeviceDisplayWithAxis1D(Devices.Keys.GALVOA, Joystick.Directions.X)
+            + " (sheet axis):"));
+      galvoAxPositionLabel_ = new JLabel("");
+      add(galvoAxPositionLabel_);
+      add(pu.makeSetPositionField(Devices.Keys.GALVOA, Joystick.Directions.X, positions_));
+      add(makeMoveToOriginButton(Devices.Keys.GALVOA, Joystick.Directions.X), "wrap");
+      
+      add(new JLabel(devices_.getDeviceDisplayWithAxis1D(Devices.Keys.GALVOA, Joystick.Directions.Y)
+            + " (slice position):"));
+      galvoAyPositionLabel_ = new JLabel("");
+      add(galvoAyPositionLabel_);
+      add(pu.makeSetPositionField(Devices.Keys.GALVOA, Joystick.Directions.Y, positions_));
+      add(makeMoveToOriginButton(Devices.Keys.GALVOA, Joystick.Directions.Y), "wrap");
       
       final JCheckBox activeTimerCheckBox = new JCheckBox("Update positions continually");
       ActionListener ae = new ActionListener() {
@@ -130,48 +170,29 @@ public class NavigationPanel extends ListeningJPanel {
             } else {
               stagePosUpdater.stop();
             }
-            prefs_.putBoolean(PREF_ENABLEUPDATES, activeTimerCheckBox.isSelected());
+            prefs_.putBoolean(panelName_, Prefs.Keys.ENABLE_POSITION_UPDATES, activeTimerCheckBox.isSelected());
          }
       }; 
       activeTimerCheckBox.addActionListener(ae);
-      activeTimerCheckBox.setSelected(prefs_.getBoolean(PREF_ENABLEUPDATES, true));
+      activeTimerCheckBox.setSelected(prefs_.getBoolean(panelName_, Prefs.Keys.ENABLE_POSITION_UPDATES, true));
       ae.actionPerformed(null);
-      add(activeTimerCheckBox, "align left, span 2");
+      add(activeTimerCheckBox, "center, span 2");
       
-      add(new JLabel(devices_.getDeviceDisplayWithAxis(Devices.Keys.PIEZOA) + ":"));
-      piezoAPositionLabel_ = new JLabel("");
-      add(piezoAPositionLabel_);
-      add(pu.makeSetPositionField(Devices.Keys.PIEZOA, Joystick.Directions.NONE, positions_));
-      add(makeMoveToOriginButton(Devices.Keys.PIEZOA, Joystick.Directions.NONE), "wrap");
+      add(new JLabel(devices_.getDeviceDisplayWithAxis1D(Devices.Keys.GALVOB, Joystick.Directions.X)
+            + " (sheet axis):"));
+      galvoBxPositionLabel_ = new JLabel("");
+      add(galvoBxPositionLabel_);
+      add(pu.makeSetPositionField(Devices.Keys.GALVOB, Joystick.Directions.X, positions_));
+      add(makeMoveToOriginButton(Devices.Keys.GALVOB, Joystick.Directions.X), "wrap");
       
-      JButton buttonUpdate = new JButton("Update positions once");
+      JButton buttonUpdate = new JButton("Update once");
       buttonUpdate.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
             stagePosUpdater.oneTimeUpdate();
          }
       });
-      add(buttonUpdate, "align left, span 2");
-      
-      add(new JLabel(devices_.getDeviceDisplayWithAxis(Devices.Keys.PIEZOB) + ":"));
-      piezoBPositionLabel_ = new JLabel("");
-      add(piezoBPositionLabel_);
-      add(pu.makeSetPositionField(Devices.Keys.PIEZOB, Joystick.Directions.NONE, positions_));
-      add(makeMoveToOriginButton(Devices.Keys.PIEZOB, Joystick.Directions.NONE), "wrap");
-      
-      add(new JLabel(devices_.getDeviceDisplayWithAxis1D(Devices.Keys.GALVOA, Joystick.Directions.X)
-            + " (in sheet plane):"), "span 3");
-      galvoAxPositionLabel_ = new JLabel("");
-      add(galvoAxPositionLabel_);
-      add(pu.makeSetPositionField(Devices.Keys.GALVOA, Joystick.Directions.X, positions_));
-      add(makeMoveToOriginButton(Devices.Keys.GALVOA, Joystick.Directions.X), "wrap");
-      
-      add(new JLabel(devices_.getDeviceDisplayWithAxis1D(Devices.Keys.GALVOA, Joystick.Directions.Y)
-            + " (slice position):"), "span 3");
-      galvoAyPositionLabel_ = new JLabel("");
-      add(galvoAyPositionLabel_);
-      add(pu.makeSetPositionField(Devices.Keys.GALVOA, Joystick.Directions.Y, positions_));
-      add(makeMoveToOriginButton(Devices.Keys.GALVOA, Joystick.Directions.Y), "wrap");
+      add(buttonUpdate, "center");
       
       JButton buttonHalt = new JButton("Halt!");
       buttonHalt.addActionListener(new ActionListener() {
@@ -195,21 +216,15 @@ public class NavigationPanel extends ListeningJPanel {
             }
          }
       });
-      add(buttonHalt, "align left, span 1 2, growy");
-      
-      add(new JLabel(devices_.getDeviceDisplayWithAxis1D(Devices.Keys.GALVOB, Joystick.Directions.X)
-            + " (in sheet plane):"), "span 2, align right");
-      galvoBxPositionLabel_ = new JLabel("");
-      add(galvoBxPositionLabel_);
-      add(pu.makeSetPositionField(Devices.Keys.GALVOB, Joystick.Directions.X, positions_));
-      add(makeMoveToOriginButton(Devices.Keys.GALVOB, Joystick.Directions.X), "wrap");
+      add(buttonHalt);
       
       add(new JLabel(devices_.getDeviceDisplayWithAxis1D(Devices.Keys.GALVOB, Joystick.Directions.Y)
-            + " (slice position):"), "span 2, align right");
+            + " (slice position):"));
       galvoByPositionLabel_ = new JLabel("");
       add(galvoByPositionLabel_);
       add(pu.makeSetPositionField(Devices.Keys.GALVOB, Joystick.Directions.Y, positions_));
       add(makeMoveToOriginButton(Devices.Keys.GALVOB, Joystick.Directions.Y), "wrap");
+      
       
       // fill the labels with position values (the positions_ data structure
       //   has been filled via the main plugin frame's call to stagePosUpdater.oneTimeUpdate()
@@ -218,29 +233,6 @@ public class NavigationPanel extends ListeningJPanel {
    }
 
    
-   /**
-    * Gets called when this tab gets focus.  Sets the physical UI in the Tiger
-    * controller to what was selected in this pane
-    */
-   @Override
-   public void gotSelected() {
-      ((ListeningJPanel) joystickPanel_).gotSelected();
-   }
-   
-   @Override
-   public final void updateStagePositions() {
-      xPositionLabel_.setText(positions_.getPositionString(Devices.Keys.XYSTAGE, Joystick.Directions.X));   
-      yPositionLabel_.setText(positions_.getPositionString(Devices.Keys.XYSTAGE, Joystick.Directions.Y));
-      lowerZPositionLabel_.setText(positions_.getPositionString(Devices.Keys.LOWERZDRIVE));
-      upperZPositionLabel_.setText(positions_.getPositionString(Devices.Keys.UPPERZDRIVE));
-      piezoAPositionLabel_.setText(positions_.getPositionString(Devices.Keys.PIEZOA));
-      piezoBPositionLabel_.setText(positions_.getPositionString(Devices.Keys.PIEZOB));
-      galvoAxPositionLabel_.setText(positions_.getPositionString(Devices.Keys.GALVOA, Joystick.Directions.X));
-      galvoAyPositionLabel_.setText(positions_.getPositionString(Devices.Keys.GALVOA, Joystick.Directions.Y));
-      galvoBxPositionLabel_.setText(positions_.getPositionString(Devices.Keys.GALVOB, Joystick.Directions.X));
-      galvoByPositionLabel_.setText(positions_.getPositionString(Devices.Keys.GALVOB, Joystick.Directions.Y)); 
-   }
-
    /**
     * creates a button to go to origin "home" position.
     * @param key
@@ -309,6 +301,43 @@ public class NavigationPanel extends ListeningJPanel {
       jb.addActionListener(l);
       return jb;
    }
+
+   /**
+    * required by LiveModeListener interface; just pass call along to camera panel
+    */
+   public void liveModeEnabled(boolean enable) { 
+      cameraPanel_.liveModeEnabled(enable);
+   } 
    
-  
+   @Override
+   public void saveSettings() {
+      beamPanel_.saveSettings();
+      // all other prefs are updated on button press instead of here
+   }
+   
+   /**
+    * Gets called when this tab gets focus.  Sets the physical UI in the Tiger
+    * controller to what was selected in this pane
+    */
+   @Override
+   public void gotSelected() {
+      joystickPanel_.gotSelected();
+      cameraPanel_.gotSelected();
+      beamPanel_.gotSelected();
+   }
+   
+   @Override
+   public final void updateStagePositions() {
+      xPositionLabel_.setText(positions_.getPositionString(Devices.Keys.XYSTAGE, Joystick.Directions.X));   
+      yPositionLabel_.setText(positions_.getPositionString(Devices.Keys.XYSTAGE, Joystick.Directions.Y));
+      lowerZPositionLabel_.setText(positions_.getPositionString(Devices.Keys.LOWERZDRIVE));
+      upperZPositionLabel_.setText(positions_.getPositionString(Devices.Keys.UPPERZDRIVE));
+      piezoAPositionLabel_.setText(positions_.getPositionString(Devices.Keys.PIEZOA));
+      piezoBPositionLabel_.setText(positions_.getPositionString(Devices.Keys.PIEZOB));
+      galvoAxPositionLabel_.setText(positions_.getPositionString(Devices.Keys.GALVOA, Joystick.Directions.X));
+      galvoAyPositionLabel_.setText(positions_.getPositionString(Devices.Keys.GALVOA, Joystick.Directions.Y));
+      galvoBxPositionLabel_.setText(positions_.getPositionString(Devices.Keys.GALVOB, Joystick.Directions.X));
+      galvoByPositionLabel_.setText(positions_.getPositionString(Devices.Keys.GALVOB, Joystick.Directions.Y)); 
+   }
+   
 }

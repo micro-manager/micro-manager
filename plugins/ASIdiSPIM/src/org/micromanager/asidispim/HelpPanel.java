@@ -48,7 +48,8 @@ public class HelpPanel extends ListeningJPanel {
     * @param devices the (single) instance of the Devices class
     */
    public HelpPanel() {    
-      super (new MigLayout(
+      super ("Help", 
+            new MigLayout(
               "", 
               "[right]8[align center]16[right]8[center]8[center]8[center]",
               "[]16[]"));
@@ -79,22 +80,6 @@ public class HelpPanel extends ListeningJPanel {
       editScroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
       editScroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
       add(editScroll);
-      
-      
-      
-   }
-   
-   @Override
-   public void saveSettings() {
-
-   }
-   
-    /**
-    * Gets called when this tab gets focus.
-    */
-   @Override
-   public void gotSelected() {
-
    }
    
    

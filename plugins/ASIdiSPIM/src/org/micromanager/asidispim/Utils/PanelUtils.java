@@ -23,13 +23,10 @@ package org.micromanager.asidispim.Utils;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Hashtable;
 
-import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
@@ -116,68 +113,6 @@ public class PanelUtils {
       return js;
    }
 
-   /**
-    * Constructs JCheckBox appropriately set up
-    * @param label the GUI label
-    * @param offValue the value of the property when not checked
-    * @param onValue the value of the property when checked
-    * @param props
-    * @param devs
-    * @param devKey
-    * @param propKey
-    * @return constructed JCheckBox
-    */
-   public JCheckBox makeCheckBox(String label, String offValue, String onValue, Properties props, Devices devs, Devices.Keys devKey, Properties.Keys propKey) {
-      
-      /**
-       * nested inner class 
-       * @author Jon
-       */
-      class checkBoxListener implements ItemListener, UpdateFromPropertyListenerInterface, DevicesListenerInterface {
-         JCheckBox jc_;
-         String offValue_;
-         String onValue_;
-         Properties props_;
-         Devices.Keys devKey_;
-         Properties.Keys propKey_;
-         
-         public checkBoxListener(JCheckBox jc, String offValue, String onValue, Properties props, Devices.Keys devKey, Properties.Keys propKey) {
-            jc_ = jc;
-            offValue_ = offValue;
-            onValue_ = onValue;
-            props_ = props;
-            devKey_ = devKey;
-            propKey_ = propKey;
-         }
-         
-         public void itemStateChanged(ItemEvent e) {
-            if (e.getStateChange() == ItemEvent.SELECTED) {
-               props_.setPropValue(devKey_, propKey_, onValue_, true);
-            } else {
-               props_.setPropValue(devKey_, propKey_, offValue_, true);
-            }
-         }
-         
-         public void updateFromProperty() {
-            jc_.setSelected(props_.getPropValueString(devKey_, propKey_, true).equals(onValue_));
-         }
-         
-         public void devicesChangedAlert() {
-            updateFromProperty();
-         }
-      }
-      
-      JCheckBox jc = new JCheckBox(label);
-      ItemListener l = new checkBoxListener(jc, offValue, onValue, props, devKey, propKey);
-      jc.addItemListener(l);
-      devs.addListener((DevicesListenerInterface) l);
-      props.addListener((UpdateFromPropertyListenerInterface) l);
-      ((UpdateFromPropertyListenerInterface) l).updateFromProperty();  // set to value of property at present
-      return jc;
-   }
-   
-   
-   
    /**
     * Creates spinner for integers in the GUI
     * Implements UpdateFromPropertyListenerInterface, causing updates in the model

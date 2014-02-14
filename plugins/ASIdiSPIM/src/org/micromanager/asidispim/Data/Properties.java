@@ -89,6 +89,7 @@ public class Properties {
       TRIGGER_SOURCE("TRIGGER SOURCE"), // for Hamamatsu
       TRIGGER_MODE("Triggermode"),      // for PCO
       FIRMWARE_VERSION("FirmwareVersion"),
+      CAMERA("Camera"),
       ;
       private final String text;
       Keys(String text) {

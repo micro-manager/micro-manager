@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-//FILE:          JoystickPanel.java
+//FILE:          JoystickSubPanel.java
 //PROJECT:       Micro-Manager 
 //SUBSYSTEM:     ASIdiSPIM plugin
 //-----------------------------------------------------------------------------
@@ -26,14 +26,13 @@ import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.HashMap;
-import java.util.prefs.Preferences;
 
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 
 import org.micromanager.asidispim.Data.Devices;
 import org.micromanager.asidispim.Data.Joystick;
-import org.micromanager.asidispim.Data.Joystick.JSAxisData;
+import org.micromanager.asidispim.Data.Prefs;
 import org.micromanager.asidispim.Utils.DevicesListenerInterface;
 import org.micromanager.asidispim.Utils.ListeningJPanel;
 
@@ -48,62 +47,59 @@ import net.miginfocom.swing.MigLayout;
  * @author Jon
  */
 @SuppressWarnings("serial")
-public class JoystickPanel extends ListeningJPanel {
+public final class JoystickSubPanel extends ListeningJPanel {
    
-   private Joystick joystick_;
-   private Devices devices_;
-   private Preferences prefs_;
-   String instanceLabel_;
-   JComboBox joystickBox_;
-   JComboBox rightWheelBox_;
-   JComboBox leftWheelBox_;
+   private final Joystick joystick_;
+   private final Devices devices_;
+   private final Prefs prefs_;
+   private final String instanceLabel_;
+   private final JComboBox joystickBox_;
+   private final JComboBox rightWheelBox_;
+   private final JComboBox leftWheelBox_;
      
    /**
     * 
     * @param devices the (single) instance of the Devices class
     */
-   public JoystickPanel(Joystick joystick, Devices devices, String instanceLabel) {    
-      super (new MigLayout(
+   public JoystickSubPanel(Joystick joystick, Devices devices, String instanceLabel,
+         Devices.Sides side, Prefs prefs) {    
+      super ("Joystick_"+instanceLabel,
+            new MigLayout(
               "", 
               "[right]8[align center]",
               "[]16[]"));
      
       joystick_ = joystick;
       devices_ = devices;
-      prefs_ = Preferences.userNodeForPackage(this.getClass());
+      prefs_ = prefs;
       instanceLabel_ = instanceLabel;
       
-      String labelstr = Joystick.Keys.JOYSTICK.toString();
-      add(new JLabel(labelstr + ":"));
-      joystickBox_ = makeJoystickSelectionBox(
-            Joystick.Keys.JOYSTICK, devices_, prefs_, instanceLabel_+"_"+labelstr);
+      // TODO actually use side specifier in code below
+      
+      add(new JLabel(Joystick.Keys.JOYSTICK.toString() + ":"));
+      joystickBox_ = makeJoystickSelectionBox(Joystick.Keys.JOYSTICK);
       add(joystickBox_, "wrap");
       
-      labelstr = Joystick.Keys.LEFT_WHEEL.toString();
-      add(new JLabel(labelstr + ":"));
-      leftWheelBox_ = makeJoystickSelectionBox(
-            Joystick.Keys.LEFT_WHEEL, devices_, prefs_, instanceLabel_+"_"+labelstr);
+      add(new JLabel(Joystick.Keys.LEFT_WHEEL.toString() + ":"));
+      leftWheelBox_ = makeJoystickSelectionBox(Joystick.Keys.LEFT_WHEEL);
       add(leftWheelBox_, "wrap");
       
-      labelstr = Joystick.Keys.RIGHT_WHEEL.toString();
-      add(new JLabel(labelstr + ":"));
+      add(new JLabel(Joystick.Keys.RIGHT_WHEEL.toString() + ":"));
       rightWheelBox_ = makeJoystickSelectionBox(
-            Joystick.Keys.RIGHT_WHEEL, devices_, prefs_, instanceLabel_+"_"+labelstr);
+            Joystick.Keys.RIGHT_WHEEL);
       add(rightWheelBox_, "wrap");
    }
    
-   private JComboBox makeJoystickSelectionBox(Joystick.Keys jkey, 
-         Devices devices_, Preferences prefs_, String prefsKey_) {
+   private JComboBox makeJoystickSelectionBox(Joystick.Keys jkey) {
       JComboBox jcb = new JComboBox();
-      StageSelectionBoxListener ssbl = new StageSelectionBoxListener(
-            jkey , jcb, prefs_, prefsKey_);
+      StageSelectionBoxListener ssbl = new StageSelectionBoxListener(jkey , jcb);
       jcb.addActionListener(ssbl);
       jcb.addItemListener(ssbl);
       devices_.addListener(ssbl);
       // intentionally set from prefs after adding listeners so programmatic change from prefs will be handled like user change
-      String selectedItem = prefs_.get(prefsKey_, Joystick.Keys.NONE.toString());
+      String selectedItem = prefs_.getString(instanceLabel_, jkey.toString(),
+            Joystick.Keys.NONE.toString());
       jcb.setSelectedItem(selectedItem);
-
       return jcb;
    }
    
@@ -114,19 +110,13 @@ public class JoystickPanel extends ListeningJPanel {
    ActionListener, DevicesListenerInterface {
       Joystick.Keys jkey_;
       JComboBox jc_;
-      Preferences prefs_;
-      String prefsKey_;
-      HashMap<String, JSAxisData> JSAxisDataHash_;
+      HashMap<String, Joystick.JSAxisData> JSAxisDataHash_;
       boolean updatingList_;
 
-      
-      public StageSelectionBoxListener(Joystick.Keys jkey, 
-            JComboBox jc, Preferences prefs, String prefsKey) {
+      public StageSelectionBoxListener(Joystick.Keys jkey, JComboBox jc) {
          jkey_ = jkey;
          jc_ = jc;
-         prefs_ = prefs;
-         prefsKey_ = prefsKey;
-         JSAxisDataHash_ = new HashMap<String, JSAxisData>();
+         JSAxisDataHash_ = new HashMap<String, Joystick.JSAxisData>();
          this.updateStageSelections();  // do initial rendering
       }    
 
@@ -141,7 +131,7 @@ public class JoystickPanel extends ListeningJPanel {
          if (updatingList_ == true) {
             return;  // don't go through this if we are rebuilding selections
          }
-         JSAxisData axis = JSAxisDataHash_.get( (String) jc_.getSelectedItem());
+         Joystick.JSAxisData axis = JSAxisDataHash_.get( (String) jc_.getSelectedItem());
          if (axis != null) {
             if (axis.deviceKey != Devices.Keys.NONE) {
                joystick_.setJoystick(jkey_, axis);
@@ -149,16 +139,17 @@ public class JoystickPanel extends ListeningJPanel {
             else {
                joystick_.unsetJoystick(jkey_, axis);
             }
-            prefs_.put(prefsKey_, (String) jc_.getSelectedItem());
+            prefs_.putString(instanceLabel_, jkey_.toString(), (String) jc_.getSelectedItem());
          }
       }
       
+      // have both actionlistener and itemlistener because need to do deselect operation
       public void itemStateChanged(ItemEvent e) {
          if (updatingList_ == true) {
             return;  // don't go through this if we are rebuilding selections
          }
          if (e.getStateChange() == ItemEvent.DESELECTED) {  // clear the old association
-            JSAxisData axis = JSAxisDataHash_.get( (String) e.getItem());  // gets deselected item
+            Joystick.JSAxisData axis = JSAxisDataHash_.get( (String) e.getItem());  // gets deselected item
             if (axis.deviceKey != Devices.Keys.NONE) {
                joystick_.unsetJoystick(jkey_, axis);
             }
@@ -182,7 +173,7 @@ public class JoystickPanel extends ListeningJPanel {
          joystick_.unsetJoystick(jkey_);
          
          // get the appropriate list of strings (in form of JSAxisData array) depending on joystick device type
-         JSAxisData[] JSAxisDataItems = null;
+         Joystick.JSAxisData[] JSAxisDataItems = null;
          JSAxisDataHash_.clear();
          if (jkey_==Joystick.Keys.LEFT_WHEEL || jkey_==Joystick.Keys.RIGHT_WHEEL) {
             JSAxisDataItems = joystick_.getWheelJSAxisData();
@@ -195,7 +186,7 @@ public class JoystickPanel extends ListeningJPanel {
          updatingList_ = true;  // make sure itemStateChanged isn't fired until we rebuild list
          boolean itemInNew = false;
          jc_.removeAllItems();
-         for (JSAxisData a : JSAxisDataItems) {
+         for (Joystick.JSAxisData a : JSAxisDataItems) {
             String s = a.displayString;
             jc_.addItem(s);
             JSAxisDataHash_.put(s, a);
@@ -218,9 +209,9 @@ public class JoystickPanel extends ListeningJPanel {
    
    
    /**
-   * Gets called when this panel gets focus.
+   * Should be called when enclosing panel gets focus.
    */
-  @Override
+   @Override
   public void gotSelected() {
      joystick_.unsetAllJoysticks();
      joystickBox_.setSelectedItem(joystickBox_.getSelectedItem());

@@ -21,9 +21,11 @@
 
 package org.micromanager.asidispim;
 
+import org.micromanager.asidispim.Data.Cameras;
 import org.micromanager.asidispim.Data.Devices;
 import org.micromanager.asidispim.Data.Joystick;
 import org.micromanager.asidispim.Data.Positions;
+import org.micromanager.asidispim.Data.Prefs;
 import org.micromanager.asidispim.Data.Properties;
 import org.micromanager.asidispim.Utils.ListeningJPanel;
 import org.micromanager.asidispim.Utils.ListeningJTabbedPane;
@@ -41,17 +43,15 @@ import org.micromanager.MMStudioMainFrame;
 import org.micromanager.asidispim.Utils.StagePositionUpdater;
 import org.micromanager.internalinterfaces.LiveModeListener; 
 
-// TODO factor out camera to sub-panel like joystick, add camera to navigation
 // TODO make sure to grab final camera frame
 // TODO add support for PCO Edge
-// TODO make beam on/off and scan on/off associated with tab like other settings
+// TODO joystick labels dependent on which side you are on
 // TODO finish adding 3rd camera (inverted scope camera)
 // TODO figure out update of slider limits when devices changed
 // TODO display certain properties like positions, e.g. scan amplitudes/offsets
 // TODO figure out why NR Z, NV X, and NV Y are called by devices_.callListeners()
 // TODO resolve whether Home/Stop should be added to 1axis stage API, use here if possible
 // TODO add sethome property to device adapter and use it here
-// TODO centralize preference handling?
 
 /**
  *
@@ -63,10 +63,11 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
       implements MMListenerInterface {
    
    private Properties props_; 
-   private Preferences prefs_;
+   private Prefs prefs_;
    private Devices devices_;
    private Joystick joystick_;
    private Positions positions_;
+   private Cameras cameras_;
    
    private final DevicesPanel devicesPanel_;
    private final SpimParamsPanel spimParamsPanel_;
@@ -75,20 +76,21 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
    private final NavigationPanel navigationPanel_;
    private final HelpPanel helpPanel_;
    
-   private static final String PREF_XLOCATION = "xlocation";
-   private static final String PREF_YLOCATION = "ylocation";
-   private static final String PREF_TABINDEX = "tabIndex";
+   private static final String MAIN_PREF_NODE = "Main"; 
    
    /**
     * Creates the ASIdiSPIM plugin frame
     * @param gui - Micro-Manager script interface
     */
    public ASIdiSPIMFrame(ScriptInterface gui)  {
-      prefs_ = Preferences.userNodeForPackage(this.getClass());
-      devices_ = new Devices();
-      props_ = new Properties(devices_);  // doesn't have its own frame, but is an object used by other classes
+
+      // create interface objects used by panels
+      prefs_ = new Prefs(Preferences.userNodeForPackage(this.getClass()));
+      devices_ = new Devices(prefs_);
+      props_ = new Properties(devices_);
       positions_ = new Positions(devices_);
       joystick_ = new Joystick(devices_, props_);
+      cameras_ = new Cameras(devices_, props_);
       
       final StagePositionUpdater stagePosUpdater = new StagePositionUpdater(positions_);
       
@@ -97,19 +99,20 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
       // all added tabs must be of type ListeningJPanel
       // only use addLTab, not addTab to guarantee this
       devicesPanel_ = new DevicesPanel(devices_, props_);
-      tabbedPane.addLTab("Devices", devicesPanel_);
-      spimParamsPanel_ = new SpimParamsPanel(devices_, props_);
-      tabbedPane.addLTab("SPIM Params", spimParamsPanel_);
+      tabbedPane.addLTab(devicesPanel_);
+      spimParamsPanel_ = new SpimParamsPanel(devices_, props_, cameras_, prefs_);
+      tabbedPane.addLTab(spimParamsPanel_);
+      MMStudioMainFrame.getInstance().addLiveModeListener((LiveModeListener) spimParamsPanel_);
       
       setupPanelA_ = new SetupPanel(devices_, props_, joystick_, 
-            Devices.Sides.A, positions_);
-      tabbedPane.addLTab("Setup Path A", setupPanelA_);
+            Devices.Sides.A, positions_, cameras_, prefs_);
+      tabbedPane.addLTab(setupPanelA_);
       stagePosUpdater.addPanel(setupPanelA_);
       MMStudioMainFrame.getInstance().addLiveModeListener((LiveModeListener) setupPanelA_);
       
       setupPanelB_ = new SetupPanel(devices_, props_, joystick_,
-            Devices.Sides.B, positions_); 
-      tabbedPane.addLTab("Setup Path B", setupPanelB_);
+            Devices.Sides.B, positions_, cameras_, prefs_);
+      tabbedPane.addLTab(setupPanelB_);
       stagePosUpdater.addPanel(setupPanelB_);
       MMStudioMainFrame.getInstance().addLiveModeListener((LiveModeListener) setupPanelB_);
       
@@ -117,13 +120,14 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
       // these used by NavigationPanel 
       stagePosUpdater.oneTimeUpdate();
       
-      navigationPanel_ = new NavigationPanel(devices_, joystick_,
-            positions_, stagePosUpdater);
-      tabbedPane.addLTab("Navigation", navigationPanel_);
+      navigationPanel_ = new NavigationPanel(devices_, props_, joystick_,
+            positions_, stagePosUpdater, prefs_, cameras_);
+      tabbedPane.addLTab(navigationPanel_);
       stagePosUpdater.addPanel(navigationPanel_);
+      MMStudioMainFrame.getInstance().addLiveModeListener((LiveModeListener) navigationPanel_);
       
       helpPanel_ = new HelpPanel();
-      tabbedPane.addLTab("Help", helpPanel_);
+      tabbedPane.addLTab(helpPanel_);
                
       // make sure gotSelected() gets called whenever we switch tabs
       tabbedPane.addChangeListener(new ChangeListener() {
@@ -134,17 +138,17 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
       
       // make sure plugin window is on the screen (if screen size changes)
       Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-      if (screenSize.width < prefs_.getInt(PREF_XLOCATION, 0)) {
-         prefs_.putInt(PREF_XLOCATION, 100);
+      if (screenSize.width < prefs_.getInt(MAIN_PREF_NODE, Prefs.Keys.WIN_LOC_X, 0)) {
+         prefs_.putInt(MAIN_PREF_NODE, Prefs.Keys.WIN_LOC_X, 100);
       }
-      if (screenSize.height < prefs_.getInt(PREF_YLOCATION, 0)) {
-         prefs_.putInt(PREF_YLOCATION, 100);
+      if (screenSize.height < prefs_.getInt(MAIN_PREF_NODE, Prefs.Keys.WIN_LOC_Y, 0)) {
+         prefs_.putInt(MAIN_PREF_NODE, Prefs.Keys.WIN_LOC_Y, 100);
       }
     
       // put pane back where it was last time
-      // gotSelected will be called because we put it after the ChangeListener code
-      setLocation(prefs_.getInt(PREF_XLOCATION, 100), prefs_.getInt(PREF_YLOCATION, 100));
-      tabbedPane.setSelectedIndex(prefs_.getInt(PREF_TABINDEX, 0));
+      // gotSelected will be called because we put this after adding the ChangeListener
+      setLocation(prefs_.getInt(MAIN_PREF_NODE, Prefs.Keys.WIN_LOC_X, 100), prefs_.getInt(MAIN_PREF_NODE, Prefs.Keys.WIN_LOC_Y, 100));
+      tabbedPane.setSelectedIndex(prefs_.getInt(MAIN_PREF_NODE, Prefs.Keys.TAB_INDEX, 0));
 
       // set up the window
       add(tabbedPane);  // add the pane to the GUI window
@@ -159,19 +163,20 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
             // stop the timer for updating stages
             stagePosUpdater.stop();
 
-            // save selections in device tab
+            // save selections as needed
             devices_.saveSettings();
+            setupPanelA_.saveSettings();
+            setupPanelB_.saveSettings();
 
             // save pane location in prefs
-            prefs_.putInt(PREF_XLOCATION, evt.getWindow().getX());
-            prefs_.putInt(PREF_YLOCATION, evt.getWindow().getY());
-            prefs_.putInt(PREF_TABINDEX, tabbedPane.getSelectedIndex());
+            prefs_.putInt(MAIN_PREF_NODE, Prefs.Keys.WIN_LOC_X, evt.getWindow().getX());
+            prefs_.putInt(MAIN_PREF_NODE, Prefs.Keys.WIN_LOC_Y, evt.getWindow().getY());
+            prefs_.putInt(MAIN_PREF_NODE, Prefs.Keys.TAB_INDEX, tabbedPane.getSelectedIndex());
          }
       });
       
    }
   
-    
 
    // MMListener mandated member functions
    public void propertiesChangedAlert() {

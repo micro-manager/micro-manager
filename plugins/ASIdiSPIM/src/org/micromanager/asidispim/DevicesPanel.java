@@ -50,9 +50,9 @@ import net.miginfocom.swing.MigLayout;
  */
 @SuppressWarnings("serial")
 public class DevicesPanel extends ListeningJPanel {
-   private Devices devices_;
-   private Properties props_;
-   private CMMCore core_;
+   private final Devices devices_;
+   private final Properties props_;
+   private final CMMCore core_;
    
    /**
     * Constructs the GUI Panel that lets the user specify which device to use
@@ -60,7 +60,8 @@ public class DevicesPanel extends ListeningJPanel {
     * @param devices - instance of class that holds information about devices
     */
    public DevicesPanel(Devices devices, Properties props) {
-      super(new MigLayout(
+      super("Devices", 
+            new MigLayout(
               "",
               "[right]25[align center]16[align center]",
               "[]16[]"));
@@ -109,11 +110,14 @@ public class DevicesPanel extends ListeningJPanel {
       add(new JLabel("Camera:", null, JLabel.RIGHT));
       add(makeDeviceBox(mmcorej.DeviceType.CameraDevice, Devices.Keys.CAMERAA));
       add(makeDeviceBox(mmcorej.DeviceType.CameraDevice, Devices.Keys.CAMERAB), "wrap");
+      
+      add(new JLabel("Note: plugin has to be restarted for certain changes to take effect."), "span 3");
 
       add(new JSeparator(JSeparator.VERTICAL), "growy, cell 3 0 1 12");
       
       JLabel imgLabel = new JLabel(new ImageIcon(getClass().getResource("/org/micromanager/asidispim/icons/diSPIM.png")));
       add(imgLabel, "cell 4 0 1 12, growy");
+      
       
       // turn on listeners again
       devices_.enableListeners(true);
@@ -258,13 +262,6 @@ public class DevicesPanel extends ListeningJPanel {
       return deviceBox;
    }
    
-   /**
-   * Gets called when this tab gets focus.
-   */
-  @Override
-  public void gotSelected() {
-     
-  }
 
    
    // below is code for features that have been removed, specifically

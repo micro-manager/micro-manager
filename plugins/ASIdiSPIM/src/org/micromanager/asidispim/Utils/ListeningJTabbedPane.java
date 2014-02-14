@@ -30,7 +30,7 @@ import javax.swing.JTabbedPane;
  */
 @SuppressWarnings("serial")
 public class ListeningJTabbedPane extends JTabbedPane {
-   public void addLTab(String name, ListeningJPanel panel) {
-      addTab(name, panel);
+   public void addLTab(ListeningJPanel panel) {
+      addTab(panel.getPanelName(), panel);
    }
 }
