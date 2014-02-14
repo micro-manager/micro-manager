@@ -5,6 +5,7 @@ package MMCustomization;
 
 import com.imaging100x.twophoton.SettingsDialog;
 import com.imaging100x.twophoton.TwoPhotonControl;
+import com.imaging100x.twophoton.Util;
 import ij.IJ;
 import ij.gui.*;
 import java.awt.*;
@@ -13,6 +14,7 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.prefs.Preferences;
@@ -51,7 +53,8 @@ public class DisplayPlus implements ImageCacheListener {
     private boolean positionSelectMode_ = false, gotoMode_ = false, newGridMode_ = false;
     private boolean suspendUpdates_ = false;
     private int yOverlap_, xOverlap_;
-    private int mouseRowIndex_ = -1, mouseColIndex_ = -1, selectedRowIndex_ = -1, selectedColIndex_ = -1;
+    private int mouseRowIndex_ = -1, mouseColIndex_ = -1;
+    private ArrayList<Point> selectedPositions_ = new ArrayList<Point>();
     private ScrollbarWithLabel tSelector_;
 
     public DisplayPlus(final ImageCache stitchedCache, AcquisitionEngine eng, JSONObject summaryMD) {
@@ -186,15 +189,17 @@ public class DisplayPlus implements ImageCacheListener {
         if (positionSelectMode_) {
             for (int row = 0; row < numRows_; row++) {
                 for (int col = 0; col < numCols_; col++) {
-                    overlay.add(makeTextRoi(row, col, TwoPhotonControl.getDepthListOffset(getPosIndex(row, col))));
+                    overlay.add(makeTextRoi(row, col, Util.getDepthListOffset(getPosIndex(row, col))));
                 }
             }
         }
 
-        if (selectedRowIndex_ != -1 && selectedColIndex_ != -1) {
-            Roi selectionRect = makeROIRect(selectedRowIndex_, selectedColIndex_);
-            selectionRect.setStrokeWidth(10f);
-            overlay.add(selectionRect);
+        if (!selectedPositions_.isEmpty()) {
+           for (Point p : selectedPositions_) {
+              Roi selectionRect = makeROIRect(p.x, p.y);
+              selectionRect.setStrokeWidth(10f);
+              overlay.add(selectionRect);
+           }
         }
 
         canvas.setOverlay(overlay);
@@ -252,10 +257,15 @@ public class DisplayPlus implements ImageCacheListener {
             @Override
             public void mouseClicked(MouseEvent e) {
                 if (positionSelectMode_) {
-                    selectedRowIndex_ = mouseRowIndex_;
-                    selectedColIndex_ = mouseColIndex_;
+                   Point p = new Point();
+                    p.x = mouseRowIndex_;
+                    p.y = mouseColIndex_;
+                    if (e.getModifiersEx() != MouseEvent.SHIFT_DOWN_MASK) {
+                       selectedPositions_.clear();
+                    }
+                    selectedPositions_.add(p);
                     drawDepthListOverlay(vad_.getImagePlus().getCanvas());
-                    int i = getPosIndex(selectedRowIndex_, selectedColIndex_);
+                    int i = getPosIndex(p.x, p.y);
                     try {
                         controls_.updateSelectedPosition(positionList_.getJSONObject(i).getString("Label"));
                     } catch (JSONException ex) {
@@ -311,13 +321,14 @@ public class DisplayPlus implements ImageCacheListener {
         vad_.getImagePlus().getCanvas().addMouseWheelListener(new MouseWheelListener() {
             @Override
             public void mouseWheelMoved(MouseWheelEvent e) {
-                if (selectedRowIndex_ != -1 && selectedColIndex_ != -1) {
+              if (!selectedPositions_.isEmpty()) {
+                 for (Point p : selectedPositions_) {
                     int numClicks = e.getWheelRotation();
-                    TwoPhotonControl.setDepthListOffset(getPosIndex(selectedRowIndex_, selectedColIndex_),
-                            TwoPhotonControl.getDepthListOffset(getPosIndex(selectedRowIndex_, selectedColIndex_)) + numClicks);
-                    drawDepthListOverlay(vad_.getImagePlus().getCanvas());
-                }
-            }
+                    Util.setDepthListOffset(getPosIndex(p.x, p.y), Util.getDepthListOffset(getPosIndex(p.x, p.y)) + numClicks);
+                 }
+                 drawDepthListOverlay(vad_.getImagePlus().getCanvas());
+              }
+           }
         });
     }
 
@@ -347,7 +358,7 @@ public class DisplayPlus implements ImageCacheListener {
             Point2D.Double stagePos = stagePositionFromPixelPosition(rectCenterXDisp, rectCenterYDisp);
 
             int xOverlap = SettingsDialog.getXOverlap(), yOverlap = SettingsDialog.getYOverlap();
-            TwoPhotonControl.createGrid(stagePos.x, stagePos.y,
+            Util.createGrid(stagePos.x, stagePos.y,
                     (Integer) gridXSpinner_.getValue(), (Integer) gridYSpinner_.getValue(),
                     xOverlap, yOverlap);
             controls_.clearSelectedButtons();
@@ -361,7 +372,6 @@ public class DisplayPlus implements ImageCacheListener {
         try {
             //get coordinates of center of exisitng grid
             String xyStage = MMStudioMainFrame.getInstance().getCore().getXYStageDevice();
-            MMStudioMainFrame gui = MMStudioMainFrame.getInstance();
 
             //row column map to coordinates for exisiting stage positiions
             Point2D.Double[][] coordinates = new Point2D.Double[numCols_][numRows_];
@@ -729,8 +739,7 @@ public class DisplayPlus implements ImageCacheListener {
                         dlOffsetsButton_.setText("Set depth list offsets");
                         positionSelectMode_ = false;
                         vad_.getImagePlus().getCanvas().setOverlay(null);
-                        selectedRowIndex_ = -1;
-                        selectedColIndex_ = -1;
+                        selectedPositions_.clear();
                     }
                     drawDepthListOverlay(vad_.getImagePlus().getCanvas());
                 }

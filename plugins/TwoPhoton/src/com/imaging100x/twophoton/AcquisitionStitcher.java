@@ -113,7 +113,7 @@ public class AcquisitionStitcher {
                   try {
                      calcGridDimensions(batch, cache_.getSummaryMetadata());
 
-                     gui_.initializeAcquisition(ACQ_NAME, newImageWidth_, newImageHeight_, 1);
+                     gui_.initializeAcquisition(ACQ_NAME, newImageWidth_, newImageHeight_, 1,8);
                      gui_.getAcquisition(ACQ_NAME).getAcquisitionWindow().promptToSave(false);
                      imageWindow_ = gui_.getAcquisition(ACQ_NAME).getAcquisitionWindow().getHyperImage().getWindow();
 

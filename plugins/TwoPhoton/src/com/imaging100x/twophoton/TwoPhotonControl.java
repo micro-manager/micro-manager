@@ -28,12 +28,12 @@
 package com.imaging100x.twophoton;
 
 import MMCustomization.AcquisitionWrapperEngineAdapter;
-import MMCustomization.ExplorerManager;
+import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
 import ij.gui.ImageWindow;
+import ij.io.Opener;
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
@@ -53,8 +53,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -125,7 +123,6 @@ public class TwoPhotonControl extends MMFrame implements MMPlugin, KeyListener,
 
    private String posListDir_;
    private static final String DEFAULT_DEPTH_FNAME = "default_depth_list.dlf";
-   private static ArrayList<Integer> depthListOffsets_;
    private AcquisitionWrapperEngineAdapter acqEngAdapter_;
 
 
@@ -263,7 +260,7 @@ private JCheckBox drawGrid_, drawPosNames_;
 
       GUIUtils.registerImageFocusListener(this);
       //attach depth list runnable
-      MMStudioMainFrame.getInstance().getAcquisitionEngine().attachRunnable(-1, -1, -1, -1,
+      MMStudioMainFrame.getInstance().getAcquisitionEngine2010().attachRunnable(-1, -1, -1, -1,
               new Runnable() {
                  @Override
                  public void run() {        
@@ -271,17 +268,16 @@ private JCheckBox drawGrid_, drawPosNames_;
                  }
               });
    }
-   
+
    private void addDynamicStitchControls() {
       createProgressPanels();
 //      JButton exploreButton = new JButton("Explore");
 //      getContentPane().add(exploreButton);
-//      exploreButton.setBounds(410, 290, 130, 20);
+//      exploreButton.setBounds(410, 450, 130, 20);
 //      exploreButton.addActionListener(new ActionListener() {
 //
 //         @Override
 //         public void actionPerformed(ActionEvent e) {
-//            new ExplorerManager();
 //         }
 //      });
    }
@@ -676,7 +672,6 @@ private JCheckBox drawGrid_, drawPosNames_;
       try {
          depthData_.save(depthFile_.getAbsolutePath());
          posListDir_ = depthFile_.getParent();
-//         labelListName_.setText(depthFile_.getName());
       } catch (Exception e) {
          handleError(e.getMessage());
       }
@@ -689,7 +684,6 @@ private JCheckBox drawGrid_, drawPosNames_;
       try {
          depthData_.save(depthFile_.getAbsolutePath());
          posListDir_ = depthFile_.getParent();
-//         labelListName_.setText(depthFile_.getName());
       } catch (Exception e) {
          handleError(e.getMessage());
       }
@@ -713,15 +707,6 @@ private JCheckBox drawGrid_, drawPosNames_;
          }
       }
       activateDepthList_.setSelected(true);
-   }
-   
-   public static int getDepthListOffset(int index) {
-      return depthListOffsets_.get(index);
-   }
-   
-   public static void setDepthListOffset(int index, int offset) {
-      depthListOffsets_.add(index, offset);
-      depthListOffsets_.remove(index + 1);
    }
 
    protected void generateGrid() {
@@ -764,80 +749,8 @@ private JCheckBox drawGrid_, drawPosNames_;
       int ySize = (Integer) gridSizeYSpinner_.getValue();
 
       
-     makeGrid(x[0], y[0], xSize, ySize, pixelOverlapX, pixelOverlapY);
+     Util.createGrid(x[0], y[0], xSize, ySize, pixelOverlapX, pixelOverlapY);
       
-   }
-   
-   public static void createGrid(double xCenter, double yCenter, int xSize, int ySize, int pixelOverlapX, int pixelOverlapY) {      
-      twoPC_.makeGrid(xCenter, yCenter,  xSize,  ySize,  pixelOverlapX,  pixelOverlapY);
-   }
-  
-   private void makeGrid(double xCenter, double yCenter, int xSize, int ySize, int pixelOverlapX, int pixelOverlapY) {      
-      MMStudioMainFrame gui = MMStudioMainFrame.getInstance();
-      //Get affine transform
-      Preferences prefs = Preferences.userNodeForPackage(MMStudioMainFrame.class);
-
-      AffineTransform transform = null;
-      try {
-         transform = (AffineTransform) JavaUtils.getObjectFromPrefs(prefs, "affine_transform_" + gui.getCore().getCurrentPixelSizeConfig(), null);
-         //set map origin to current stage position
-         double[] matrix = new double[6];
-         transform.getMatrix(matrix);
-         matrix[4] = xCenter;
-         matrix[5] = yCenter;
-         transform = new AffineTransform(matrix);
-      } catch (Exception ex) {
-         ReportingUtils.logError(ex);
-         ReportingUtils.showError("Couldnt get affine transform");
-      }
-
-      long height = gui.getCore().getImageHeight();
-      long width = gui.getCore().getImageWidth();
-      ArrayList<MultiStagePosition> positions = new ArrayList<MultiStagePosition>();
-      //due to affine transform, xindex and yindex correspond to image space
-      for (int xIndex = 0; xIndex < xSize; xIndex++) {
-         double xPixelOffset = (xIndex - (xSize - 1) / 2.0) * (width - pixelOverlapX) ;
-         for (int yIndex = 0; yIndex < ySize; yIndex++) {
-            double yPixelOffset = (yIndex - (ySize - 1) / 2.0) * (height - pixelOverlapY);
-            //account for angle between stage axes and image axes
-            Point2D.Double pixelPos = new Point2D.Double(xPixelOffset, yPixelOffset);      
-            Point2D.Double stagePos = new Point2D.Double();
-
-            transform.transform(pixelPos, stagePos);
-                
-            MultiStagePosition mpl = new MultiStagePosition();
-            StagePosition sp = new StagePosition();
-            sp.numAxes = 2;
-            sp.stageName = gui.getCore().getXYStageDevice();
-            sp.x = stagePos.x;
-            sp.y = stagePos.y;
-            mpl.add(sp);
-             
-            int row = yIndex, col = xIndex;
-
-            //label should be Grid_(x index of tile)_(y index of tile) (in image space)
-            String lab = new String("Grid_" + col + "_" + row);
- 
-            mpl.setLabel(lab);
-            //row, column (in image space)
-            mpl.setGridCoordinates(row, col);
-            positions.add(mpl);            
-         }
-      }
-   
-      try {
-         depthListOffsets_ = new ArrayList<Integer>();
-         PositionList list = gui.getPositionList();
-         list.clearAllPositions();
-         for (MultiStagePosition p : positions) {
-            list.addPosition(p);
-            depthListOffsets_.add(0);
-         }
-
-         list.notifyChangeListeners();
-      } catch (MMScriptException e) {
-         ReportingUtils.showError(e.getMessage());
-      }
    }
 
    protected void onPixelSize() {
@@ -855,7 +768,8 @@ private JCheckBox drawGrid_, drawPosNames_;
    
    public void applyDepthSetting(int positionIndex, double focusOffset) {
       if (activateDepthList_.isSelected()) {
-         int offset = positionIndex == -1 ? 0 : depthListOffsets_.get(positionIndex);       
+         int offset =  Util.getDepthListOffset(positionIndex);        
+                        
          try {
              
              //It takes time for the z on gen3 to get to its proper position,
