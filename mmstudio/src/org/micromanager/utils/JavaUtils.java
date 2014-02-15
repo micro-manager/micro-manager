@@ -271,6 +271,7 @@ public class JavaUtils {
    /**
     * Retrieves an object from Preferences (deserialized).
     */
+   @SuppressWarnings("unchecked")
     public static <T> T getObjectFromPrefs(Preferences prefs, String key, T def) {
         ArrayList<byte[]> chunks = new ArrayList<byte[]>();
         byte[] serialBytes = new byte[0];

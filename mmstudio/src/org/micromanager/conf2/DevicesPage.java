@@ -104,7 +104,7 @@ private JComboBox byLibCombo_;
          setMicroscopeModel(model);
       }
       
-      public void setMicroscopeModel(MicroscopeModel mod) {
+      public final void setMicroscopeModel(MicroscopeModel mod) {
          devices_ = mod.getDevices();
          model_ = mod;
       }

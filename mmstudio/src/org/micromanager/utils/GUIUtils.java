@@ -594,13 +594,14 @@ public class GUIUtils {
       enableOnTableEvent(table, button);
    }
    
+   @SuppressWarnings("unchecked")
    public static void makeIntoCloneRowButton(final JTable table, JButton button) {
       button.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
             int rowIndex = table.getSelectedRow();
             DefaultTableModel model = (DefaultTableModel) table.getModel();
-            Vector rowData = (Vector) model.getDataVector().elementAt(rowIndex);
+            Vector rowData = (Vector) model.getDataVector().elementAt(rowIndex);       
             model.insertRow(rowIndex + 1, new Vector(rowData));
             table.setRowSelectionInterval(rowIndex + 1, rowIndex + 1);
          }
