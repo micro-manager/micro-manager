@@ -139,16 +139,16 @@ public class Joystick {
    }
    
    /**
-    * used to generate selection list for joystick wheel combo list
+    * used to generate selection list for joypod wheel combo list
     * order: none, devices in JOYSTICK1DSET, then individual axes of devices in JOYSTICK2DSET
     * @return array with representative strings of 1 axis stages plus individual axes of 2-axis stages/galvos
     */
-   public JSAxisData[] getWheelJSAxisData() {
+   public JSAxisData[] getWheelJSAxisData(Devices.Sides side) {
       List<JSAxisData> list = new ArrayList<JSAxisData>();
-      list.add(new JSAxisData(devices_.getDeviceDisplayWithAxis(Devices.Keys.NONE), Devices.Keys.NONE, Directions.NONE));  // adds "None" to top of list
+      list.add(new JSAxisData(devices_.getDeviceDisplayVerbose(Devices.Keys.NONE), Devices.Keys.NONE, Directions.NONE));  // adds "None" to top of list
       for (Devices.Keys devKey : Devices.STAGES1D) {
          if (devices_.getMMDevice(devKey)!=null) {
-            String dispKey = devices_.getDeviceDisplayWithAxis(devKey); 
+            String dispKey = devices_.getDeviceDisplayWithRole(devKey, Directions.NONE, side); 
             list.add(new JSAxisData(dispKey, devKey, Directions.NONE));
          }
       }
@@ -159,7 +159,7 @@ public class Joystick {
          if (devices_.getMMDevice(devKey)!=null) {
             Directions[] dirs = {Directions.X, Directions.Y};
             for (Directions dir : dirs) {  // gets for X and Y for now
-               String dispKey = devices_.getDeviceDisplayWithAxis1D(devKey, dir);
+               String dispKey = devices_.getDeviceDisplayWithRole(devKey, dir, side);
                list.add(new JSAxisData(dispKey, devKey, dir));
             }
          }
@@ -172,12 +172,12 @@ public class Joystick {
     * used to generate selection list for joystick stick combo list
     * @return array with representative strings of 2 axis stages
     */
-   public JSAxisData[] getStickJSAxisData() {
+   public JSAxisData[] getStickJSAxisData(Devices.Sides side) {
       List<JSAxisData> list = new ArrayList<JSAxisData>();
-      list.add(new JSAxisData(devices_.getDeviceDisplayWithAxis(Devices.Keys.NONE), Devices.Keys.NONE, Directions.NONE));
+      list.add(new JSAxisData(devices_.getDeviceDisplayVerbose(Devices.Keys.NONE), Devices.Keys.NONE, Directions.NONE));
       for (Devices.Keys devKey : Devices.STAGES2D) {
          if (devices_.getMMDevice(devKey)!=null) {
-            String dispKey = devices_.getDeviceDisplayWithAxis(devKey);
+            String dispKey = devices_.getDeviceDisplayVerbose(devKey);
             list.add(new JSAxisData(dispKey, devKey, Directions.NONE));
          }
       }

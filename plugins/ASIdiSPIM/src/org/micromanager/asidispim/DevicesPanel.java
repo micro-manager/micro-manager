@@ -111,7 +111,7 @@ public class DevicesPanel extends ListeningJPanel {
       add(makeDeviceBox(mmcorej.DeviceType.CameraDevice, Devices.Keys.CAMERAA));
       add(makeDeviceBox(mmcorej.DeviceType.CameraDevice, Devices.Keys.CAMERAB), "wrap");
       
-      add(new JLabel("Note: plugin has to be restarted for certain changes to take effect."), "span 3");
+      add(new JLabel("Note: plugin must be restarted for some changes to take full effect."), "span 3");
 
       add(new JSeparator(JSeparator.VERTICAL), "growy, cell 3 0 1 12");
       

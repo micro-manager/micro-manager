@@ -307,7 +307,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
           props_, devices_, micromirrorDeviceKey_, Properties.Keys.SA_AMPLITUDE_X_DEG);
     add(tmp_sl, "span 4, growx, center, wrap");
     
-    cameraPanel_ = new CameraSubPanel(cameras_, devices_, panelName_, side, prefs_);
+    cameraPanel_ = new CameraSubPanel(cameras_, devices_, panelName_, side, prefs_, true);
     add(cameraPanel_, "center, span 2 1");
     
     add(new JLabel("Sheet offset:"));

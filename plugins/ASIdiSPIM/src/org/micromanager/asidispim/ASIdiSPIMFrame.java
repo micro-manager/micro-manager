@@ -102,7 +102,6 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
       tabbedPane.addLTab(devicesPanel_);
       spimParamsPanel_ = new SpimParamsPanel(devices_, props_, cameras_, prefs_);
       tabbedPane.addLTab(spimParamsPanel_);
-      MMStudioMainFrame.getInstance().addLiveModeListener((LiveModeListener) spimParamsPanel_);
       
       setupPanelA_ = new SetupPanel(devices_, props_, joystick_, 
             Devices.Sides.A, positions_, cameras_, prefs_);

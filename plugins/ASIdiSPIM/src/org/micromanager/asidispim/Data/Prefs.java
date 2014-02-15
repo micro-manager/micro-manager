@@ -55,6 +55,7 @@ public class Prefs {
       SHEET_SCAN_ENABLED("SheetScanEnabled"),
       EPI_BEAM_ENABLED("EpiBeamEnabled"),
       EPI_SCAN_ENABLED("EpiBeamEnabled"),
+      ENABLE_BEAM_SETTINGS("EnableBeamSettings"),
       NONE("None");
       private final String text;
       Keys(String text) {

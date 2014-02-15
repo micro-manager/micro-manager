@@ -56,6 +56,7 @@ public final class BeamSubPanel extends ListeningJPanel {
    private final JCheckBox scanBBox_;
    private final JCheckBox beamABox_;
    private final JCheckBox beamBBox_;
+   private final JCheckBox updateOnTab_;
    
    /**
     * 
@@ -120,8 +121,7 @@ public final class BeamSubPanel extends ListeningJPanel {
          add(beamBBox_);
          add(scanBBox_, "wrap");   
       }
-
-
+      
       // disable the sheetA/B boxes when beam is disabled and vice versa
       ActionListener alA = new ActionListener() {
          public void actionPerformed(ActionEvent e) { 
@@ -148,6 +148,10 @@ public final class BeamSubPanel extends ListeningJPanel {
       };
       alB.actionPerformed(null);
       beamBBox_.addActionListener(alB);
+      
+      updateOnTab_ = new JCheckBox("Change settings on tab activate");
+      updateOnTab_.setSelected(prefs_.getBoolean(instanceLabel_, Prefs.Keys.ENABLE_BEAM_SETTINGS, true));
+      add(updateOnTab_, "center, span 3");
       
    }//constructor
    
@@ -189,13 +193,14 @@ public final class BeamSubPanel extends ListeningJPanel {
          // only called when the user selects/deselects from GUI or the value _changes_ programmatically
          public void itemStateChanged(ItemEvent e) {
             if (e.getStateChange() == ItemEvent.SELECTED) {
-               props_.setPropValue(devKey_, propKey_, onValue_, true);
+               props_.setPropValue(devKey_, propKey_, onValue_);
             } else {
-               props_.setPropValue(devKey_, propKey_, offValue_, true);
+               props_.setPropValue(devKey_, propKey_, offValue_);
             }
          }
          
          public void updateFromProperty() {
+            jc_.setEnabled(devices_.getMMDevice(devKey_)!=null);
             jc_.setSelected(props_.getPropValueString(devKey_, propKey_, true).equals(onValue_.toString()));
          }
          
@@ -205,53 +210,56 @@ public final class BeamSubPanel extends ListeningJPanel {
       }
       
       boolean startSelected = prefs_.getBoolean(instanceLabel_, prefKey, false);
-      JCheckBox jc = new JCheckBox(label, !startSelected);
+      JCheckBox jc = new JCheckBox(label, startSelected);
       checkBoxListener l = new checkBoxListener(jc, offValue, onValue, devKey, propKey);
       jc.addItemListener(l);
-      jc.setSelected(startSelected);  // triggers ItemListener because we initialized to inverse of this value
-      
+      if (devices_.getMMDevice(devKey)==null) {  // if we don't have valid device
+         jc.setSelected(false);
+         jc.setEnabled(false);
+      } else {  // if we have valid device then toggle to force setting to initial value
+         jc.setSelected(!startSelected);  // triggers ItemListener
+         jc.setSelected(startSelected);  // triggers ItemListener
+      }
       devices_.addListener((DevicesListenerInterface) l);
       return jc;
    }
    
    /**
-   * Should be called when enclosing panel gets focus.
-   * a kludgey way of doing things!! I would like a "refresh" setting on the checkbox but couldn't figure out how to do it
-   *   this isn't like combobox because itemStateChanged isn't always called on setSelected despite what I expect... instead
-   *   it is only called when the value changes
+    * Internal function for updating the checkboxes as desired on activation
+    * @param box
+    * @param devKey
+    * @param propKey
+    * @param onValue
+    */
+   private void updateOnSelected(JCheckBox box, Devices.Keys devKey, Properties.Keys propKey, Properties.Values onValue) {
+      if (!box.isEnabled()) {
+         return;
+      }
+      boolean boxVal = box.isSelected();
+      boolean propVal = props_.getPropValueString(devKey, propKey).equals(onValue.toString());
+      if (updateOnTab_.isSelected()) { // update settings when tab got selected
+         if (boxVal != propVal) {
+            box.setSelected(!boxVal);
+            box.setSelected(boxVal);
+         }
+      } else { // update GUI with present settings
+         box.setSelected(propVal);
+      }
+   }
+   
+   /**
+   * Should be called when enclosing panel gets focus (need to call in gotSelected() function of enclosing frame)
    */ 
    @Override
   public void gotSelected() {
-      boolean boxVal;
-      boolean propVal;
-      boxVal = beamABox_.isSelected();
-      propVal = props_.getPropValueString(Devices.getSideSpecificKey(Devices.Keys.GALVOA, side_), 
-            Properties.Keys.BEAM_ENABLED).equals(Properties.Values.YES.toString());
-      if (boxVal != propVal) {
-         beamABox_.setSelected(!boxVal);
-         beamABox_.setSelected(boxVal);
-      }
-      boxVal = scanABox_.isSelected();
-      propVal = props_.getPropValueString(Devices.getSideSpecificKey(Devices.Keys.GALVOA, side_),
-            Properties.Keys.SA_MODE_X).equals(Properties.Values.SAM_ENABLED.toString());
-      if (boxVal != propVal) {
-         scanABox_.setSelected(!boxVal);
-         scanABox_.setSelected(boxVal);
-      }
-      boxVal = beamBBox_.isSelected();
-      propVal = props_.getPropValueString(Devices.getSideSpecificKey(Devices.Keys.GALVOA, otherSide_),
-            Properties.Keys.BEAM_ENABLED).equals(Properties.Values.YES.toString());
-      if (boxVal != propVal) {
-         beamBBox_.setSelected(!boxVal);
-         beamBBox_.setSelected(boxVal);
-      }
-      boxVal = scanBBox_.isSelected();
-      propVal = props_.getPropValueString(Devices.getSideSpecificKey(Devices.Keys.GALVOA, otherSide_), 
-            Properties.Keys.SA_MODE_X).equals(Properties.Values.SAM_ENABLED.toString());
-      if (boxVal != propVal) {
-         scanBBox_.setSelected(!boxVal);
-         scanBBox_.setSelected(boxVal);
-      }
+      updateOnSelected(beamABox_, Devices.getSideSpecificKey(Devices.Keys.GALVOA, side_), 
+               Properties.Keys.BEAM_ENABLED, Properties.Values.YES);
+      updateOnSelected(scanABox_, Devices.getSideSpecificKey(Devices.Keys.GALVOA, side_),
+               Properties.Keys.SA_MODE_X, Properties.Values.SAM_ENABLED);
+      updateOnSelected(beamBBox_, Devices.getSideSpecificKey(Devices.Keys.GALVOA, otherSide_),
+               Properties.Keys.BEAM_ENABLED, Properties.Values.YES);
+      updateOnSelected(scanBBox_, Devices.getSideSpecificKey(Devices.Keys.GALVOA, otherSide_), 
+               Properties.Keys.SA_MODE_X, Properties.Values.SAM_ENABLED);
   }
    
    @Override
@@ -260,6 +268,7 @@ public final class BeamSubPanel extends ListeningJPanel {
       prefs_.putBoolean(instanceLabel_, Prefs.Keys.EPI_BEAM_ENABLED, beamBBox_.isSelected());
       prefs_.putBoolean(instanceLabel_, Prefs.Keys.SHEET_SCAN_ENABLED, scanABox_.isSelected());
       prefs_.putBoolean(instanceLabel_, Prefs.Keys.EPI_SCAN_ENABLED, scanBBox_.isSelected());
+      prefs_.putBoolean(instanceLabel_, Prefs.Keys.ENABLE_BEAM_SETTINGS, updateOnTab_.isSelected());
    }
    
    

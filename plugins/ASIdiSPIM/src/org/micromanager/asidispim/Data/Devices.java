@@ -178,57 +178,40 @@ public class Devices {
     */
    public static Devices.Keys getSideSpecificKey(Devices.Keys genericKey,
          Devices.Sides side) {
-      Devices.Keys ret = Devices.Keys.NONE;
       switch (genericKey) {
       case PIEZOA:
       case PIEZOB:
          switch (side) {
          case A:
-            ret = Devices.Keys.PIEZOA;
-            break;
+            return Devices.Keys.PIEZOA;
          case B:
-            ret = Devices.Keys.PIEZOB;
-            break;
-         case NONE:
-            break;
+            return Devices.Keys.PIEZOB;
          default:
-            break;
+            return Devices.Keys.NONE;
          }
-         break;
       case GALVOA:
       case GALVOB:
          switch (side) {
          case A:
-            ret = Devices.Keys.GALVOA;
-            break;
+            return Devices.Keys.GALVOA;
          case B:
-            ret = Devices.Keys.GALVOB;
-            break;
-         case NONE:
-            break;
+            return Devices.Keys.GALVOB;
          default:
-            break;
+            return Devices.Keys.NONE;
          }
-         break;
       case CAMERAA:
       case CAMERAB:
          switch (side) {
          case A:
-            ret = Devices.Keys.CAMERAA;
-            break;
+            return Devices.Keys.CAMERAA;
          case B:
-            ret = Devices.Keys.CAMERAB;
-            break;
-         case NONE:
-            break;
+            return Devices.Keys.CAMERAB;
          default:
-            break;
+            return Devices.Keys.NONE;
          }
-         break;
       default:
-         break;
+         return Devices.Keys.NONE;
       }
-      return ret;
    }
 
    /**
@@ -465,13 +448,90 @@ public class Devices {
    }
 
    /**
-    * Returns display string with axis included. For 2D device both axes are
+    * Returns verbose description, including axis role (but not axis letter)
+    * @param key
+    * @return
+    */
+   private String getDeviceDisplayVerboseEnding(Devices.Keys key, Joystick.Directions dir) {
+      String ret = "";
+      switch (key) {
+      case GALVOA:
+      case GALVOB:
+         switch (dir) {
+         case X: ret += ", sheet axis"; break;
+         case Y: ret += ", slice position"; break;
+         default: break;
+         }
+         break;
+      case XYSTAGE:
+         switch (dir) {
+         case X: ret += ", X axis"; break;
+         case Y: ret += ", Y axis"; break;
+         default: break;
+         }
+         break;
+      default: break;
+      }
+      return ret;
+   }
+   
+   /**
+    * Returns verbose description, including axis role (but not axis letter)
+    * @param key
+    * @return
+    */
+   public String getDeviceDisplayVerbose(Devices.Keys key, Joystick.Directions dir) {
+      return getDeviceDisplay(key) + getDeviceDisplayVerboseEnding(key, dir);
+   }
+   
+   public String getDeviceDisplayWithRole(Devices.Keys key, Joystick.Directions dir, Devices.Sides side) {
+      String ret;
+      DeviceData d = deviceInfo_.get(key);
+      switch (key) {
+      case GALVOA:
+      case GALVOB:
+        if (side == d.side) {
+           ret = "Sheet Beam";
+        } else if (side == Devices.getOppositeSide(d.side)) {
+           ret = "Epi Beam";
+        } else {
+           ret = getDeviceDisplay(key);
+        }
+        ret += getDeviceDisplayVerboseEnding(key, dir);
+        break;
+      case PIEZOA:
+      case PIEZOB:
+         if (side == d.side) {
+            ret = "Imaging Piezo";
+         } else if (side == Devices.getOppositeSide(d.side)) {
+            ret = "Illumination Piezo";
+         } else {
+            ret = getDeviceDisplay(key);
+         }
+         break;
+      default:
+         ret = getDeviceDisplay(key);
+      }
+      return ret;
+   }
+   
+   /**
+    * Returns verbose description, including axis role (but not axis letter)
+    * @param key
+    * @return
+    */
+   public String getDeviceDisplayVerbose(Devices.Keys key) {
+      return getDeviceDisplayVerbose(key, Joystick.Directions.NONE);
+   }
+   
+   /**
+    * Returns display string with axis letter included. For 2D device both axes are
     * included.
     * 
     * @param key
     * @return
     */
-   public String getDeviceDisplayWithAxis(Devices.Keys key) {
+   public String getDeviceDisplayWithAxisLetter(Devices.Keys key) {
       String ret = getDeviceDisplay(key);
       DeviceData d = deviceInfo_.get(key);
       if (!d.axisLetter.equals("")) {
@@ -481,18 +541,18 @@ public class Devices {
    }
 
    /**
-    * Returns display string with axis included, but only specified axis for 2D
+    * Returns display string with axis letter included, but only specified axis for 2D
     * device.
     * 
     * @param key
     * @return
     */
-   public String getDeviceDisplayWithAxis1D(Devices.Keys key,
+   public String getDeviceDisplayWithAxisLetter1D(Devices.Keys key,
          Joystick.Directions dir) {
       String ret = getDeviceDisplay(key);
       String axisLetter = deviceInfo_.get(key).axisLetter;
       if (axisLetter.length() < 2) {
-         return getDeviceDisplayWithAxis(key);
+         return getDeviceDisplayWithAxisLetter(key);
       }
       switch (dir) {
       // assumes the "X" axis is the first char of two
@@ -506,7 +566,7 @@ public class Devices {
          break;
       case NONE:
       default:
-         return getDeviceDisplayWithAxis(key);
+         return getDeviceDisplayWithAxisLetter(key);
       }
       return ret;
    }

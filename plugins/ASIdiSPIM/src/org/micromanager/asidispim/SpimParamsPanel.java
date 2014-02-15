@@ -30,7 +30,6 @@ import org.micromanager.asidispim.Data.Devices;
 import org.micromanager.asidispim.Utils.DevicesListenerInterface;
 import org.micromanager.asidispim.Utils.ListeningJPanel;
 import org.micromanager.asidispim.Utils.PanelUtils;
-import org.micromanager.internalinterfaces.LiveModeListener;
 import org.micromanager.utils.MMException;
 import org.micromanager.utils.ReportingUtils;
 
@@ -52,7 +51,7 @@ import net.miginfocom.swing.MigLayout;
  * @author Jon
  */
 @SuppressWarnings("serial")
-public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerInterface, LiveModeListener{
+public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerInterface {
 
    private final Devices devices_;
    private final Properties props_;
@@ -130,10 +129,14 @@ public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerI
       buttonStart_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            // set up cameras
-            cameras_.enableLiveMode(false);
-            cameras_.setCameraTriggerExternal(true);
             try {
+               // set up cameras
+               if (!cameras_.isCurrentCameraValid()) {
+                  ReportingUtils.showError("No camera set for acquisition!");
+                  return;
+               }
+               cameras_.enableLiveMode(false);
+               cameras_.setCameraTriggerExternal(true);
                // get acquisition engine configured
                acqEngine_.enableFramesSetting(true);
                acqEngine_.setFrames(
@@ -163,8 +166,10 @@ public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerI
       });
       add(buttonStart_, "cell 4 0, span 2, center, wrap");
 
-      cameraPanel_ = new CameraSubPanel(cameras_, devices_, this.panelName_, Devices.Sides.NONE, prefs_);
-      add(cameraPanel_, "cell 4 2, center, span 2 2");
+      cameraPanel_ = new CameraSubPanel(cameras_, devices_, this.panelName_, Devices.Sides.NONE, prefs_, false);
+      add(cameraPanel_, "cell 4 2, center, span 2");
+      
+      add(new JLabel("This camera is used for acquisition"), "cell 4 3, span 2");
 
       JButton buttonSaveSettings_ = new JButton("Save controller settings");
       buttonSaveSettings_.setToolTipText("Saves settings to piezo and galvo cards");
@@ -180,14 +185,6 @@ public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerI
       add(buttonSaveSettings_, "cell 4 8, span 2, center, wrap");
 
    }//end constructor
-   
-   /**
-    * required by LiveModeListener interface; just pass call along to camera panel
-    */
-   public void liveModeEnabled(boolean enable) { 
-      cameraPanel_.liveModeEnabled(enable);
-   } 
-
 
    /**
     * Gets called when this tab gets focus.

@@ -51,6 +51,7 @@ public final class JoystickSubPanel extends ListeningJPanel {
    
    private final Joystick joystick_;
    private final Devices devices_;
+   private final Devices.Sides side_;
    private final Prefs prefs_;
    private final String instanceLabel_;
    private final JComboBox joystickBox_;
@@ -72,6 +73,7 @@ public final class JoystickSubPanel extends ListeningJPanel {
       joystick_ = joystick;
       devices_ = devices;
       prefs_ = prefs;
+      side_ = side;
       instanceLabel_ = instanceLabel;
       
       // TODO actually use side specifier in code below
@@ -176,10 +178,10 @@ public final class JoystickSubPanel extends ListeningJPanel {
          Joystick.JSAxisData[] JSAxisDataItems = null;
          JSAxisDataHash_.clear();
          if (jkey_==Joystick.Keys.LEFT_WHEEL || jkey_==Joystick.Keys.RIGHT_WHEEL) {
-            JSAxisDataItems = joystick_.getWheelJSAxisData();
+            JSAxisDataItems = joystick_.getWheelJSAxisData(side_);
          }
          else if (jkey_==Joystick.Keys.JOYSTICK) {
-            JSAxisDataItems = joystick_.getStickJSAxisData();
+            JSAxisDataItems = joystick_.getStickJSAxisData(side_);
          }
 
          // repopulate the combo box with items

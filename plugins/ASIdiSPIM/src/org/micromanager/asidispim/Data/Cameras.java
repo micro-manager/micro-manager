@@ -150,6 +150,10 @@ public class Cameras {
       return currentCameraKey_;
    }
    
+   public boolean isCurrentCameraValid() {
+      return !((currentCameraKey_ == null) || (currentCameraKey_ == Devices.Keys.NONE));
+   }
+   
    public void enableLiveMode(boolean enable) {
       if (enable) {
          setCameraTriggerExternal(false);

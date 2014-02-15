@@ -58,13 +58,14 @@ public final class CameraSubPanel extends ListeningJPanel implements LiveModeLis
    private final String instanceLabel_;
    private final JComboBox cameraBox_;
    private final JToggleButton toggleButtonLive_;
+   private final boolean showLiveButton_;
    
    /**
     * 
     * @param devices the (single) instance of the Devices class
     */
    public CameraSubPanel(Cameras cameras, Devices devices, String instanceLabel, 
-         Devices.Sides side, Prefs prefs) {    
+         Devices.Sides side, Prefs prefs, boolean showLiveButton) {    
       super ("Camera_"+instanceLabel,
             new MigLayout(
               "", 
@@ -75,6 +76,7 @@ public final class CameraSubPanel extends ListeningJPanel implements LiveModeLis
       devices_ = devices;
       side_ = side;
       prefs_ = prefs;
+      showLiveButton_ = showLiveButton;
       instanceLabel_ = instanceLabel;
       gui_ = MMStudioMainFrame.getInstance();
       
@@ -83,25 +85,29 @@ public final class CameraSubPanel extends ListeningJPanel implements LiveModeLis
       add(cameraBox_, "wrap");
       
       toggleButtonLive_ = new JToggleButton();
-      toggleButtonLive_.setMargin(new Insets(0, 10, 0, 10));
-      toggleButtonLive_.setIconTextGap(6);
-      toggleButtonLive_.setToolTipText("Continuous live view");
-      setLiveButtonAppearance(gui_.isLiveModeOn());
-      toggleButtonLive_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            setLiveButtonAppearance(!gui_.isLiveModeOn());
-            cameras_.enableLiveMode(!gui_.isLiveModeOn());
-         }
-      });
-      add(toggleButtonLive_, "width 100px, skip 1");
+      if (showLiveButton) {
+         toggleButtonLive_.setMargin(new Insets(0, 10, 0, 10));
+         toggleButtonLive_.setIconTextGap(6);
+         toggleButtonLive_.setToolTipText("Continuous live view");
+         setLiveButtonAppearance(gui_.isLiveModeOn());
+         toggleButtonLive_.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+               setLiveButtonAppearance(!gui_.isLiveModeOn());
+               cameras_.enableLiveMode(!gui_.isLiveModeOn());
+            }
+         });
+         add(toggleButtonLive_, "width 100px, skip 1");
+      }
    }
    
    /**
     * required by LiveModeListener interface
     */
    public void liveModeEnabled(boolean enable) { 
-      setLiveButtonAppearance(enable); 
+      if (showLiveButton_) {
+         setLiveButtonAppearance(enable);
+      }
    } 
    
    /** 
@@ -158,7 +164,6 @@ public final class CameraSubPanel extends ListeningJPanel implements LiveModeLis
             }
          }
       }
-      
       
       /**
        * called whenever one of the devices is changed in the "Devices" tab
