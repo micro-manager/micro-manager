@@ -38,7 +38,6 @@ import org.micromanager.utils.*;
 
 public class DisplayPlus implements ImageCacheListener {
 
-    public static final String WINDOW_TITLE = "Stitched overview";
     private static final Color TRANSPARENT_BLUE = new Color(0, 0, 255, 60);
     //VirtualAcquisitionDisplay on top of which this display is built
     private VirtualAcquisitionDisplay vad_;
@@ -87,7 +86,15 @@ public class DisplayPlus implements ImageCacheListener {
         } catch (Exception e) {
             ReportingUtils.showError("Couldnt get grid info");
         }
-        vad_ = new VirtualAcquisitionDisplay(stitchedCache, eng, WINDOW_TITLE);
+        String name = "Untitled";
+        try {
+            String pre = summaryMD.getString("Prefix");
+            if (pre != null && pre.length() > 0) {
+                name = pre;
+            }
+        } catch (Exception e) {}
+        
+        vad_ = new VirtualAcquisitionDisplay(stitchedCache, eng, name);
         controls_ = new Controls();
 
         //Add in custom controls

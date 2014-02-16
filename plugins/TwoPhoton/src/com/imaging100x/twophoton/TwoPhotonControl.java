@@ -768,10 +768,12 @@ private JCheckBox drawGrid_, drawPosNames_;
    
    public void applyDepthSetting(int positionIndex, double focusOffset) {
       if (activateDepthList_.isSelected()) {
-         int offset =  Util.getDepthListOffset(positionIndex);        
-                        
+         int offset =  Util.getDepthListOffset(positionIndex);                             
          try {
-             
+             //need to disable live mode for some reason or crashes
+             boolean live = app_.isLiveModeOn();
+             app_.enableLiveMode(false);
+                     
              //It takes time for the z on gen3 to get to its proper position,
              //for now, loop here until it settles so correct depth setting is applied          
             double zPos1 = 1000000;
@@ -792,6 +794,7 @@ private JCheckBox drawGrid_, drawPosNames_;
                core_.setProperty(ds.pmts[i].name, "Volts", Double.toString(ds.pmts[i].volts));
             }
             refreshGUI();
+            app_.enableLiveMode(live);
          } catch (Exception e) {
             handleError(e.getMessage());
             return;

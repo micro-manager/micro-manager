@@ -6,6 +6,7 @@ package MMCustomization;
 
 import com.imaging100x.twophoton.SettingsDialog;
 import com.imaging100x.twophoton.TwoPhotonControl;
+import ij.IJ;
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.BlockingQueue;
@@ -27,6 +28,7 @@ import org.micromanager.acquisition.AcquisitionWrapperEngine;
 import org.micromanager.acquisition.DefaultTaggedImageSink;
 import org.micromanager.acquisition.MMImageCache;
 import org.micromanager.api.IAcquisitionEngine2010;
+import org.micromanager.api.ImageCache;
 import org.micromanager.api.SequenceSettings;
 import org.micromanager.api.TaggedImageStorage;
 import org.micromanager.utils.JavaUtils;
@@ -49,6 +51,8 @@ public class AcquisitionWrapperEngineAdapter extends AcquisitionWrapperEngine {
     private double focusOffset_ = 0;
     private CMMCore core_ = MMStudioMainFrame.getInstance().getCore();
     private boolean runAutofocus_ = false;
+    //most recent storage
+    private TaggedImageStorage storage_;
 
     public AcquisitionWrapperEngineAdapter(TwoPhotonControl twoP, Preferences prefs) throws NoSuchFieldException {
         super((AcquisitionManager) JavaUtils.getRestrictedFieldValue(
@@ -78,7 +82,22 @@ public class AcquisitionWrapperEngineAdapter extends AcquisitionWrapperEngine {
        runAutofocus_ = false;
        return result;
     }
-
+    
+    public TaggedImageStorage getStorage() {
+        return storage_;
+    }
+    
+    public void setFocusOffset(double offset) {
+       //image moves up = negative offset
+        focusOffset_ = offset;
+        try {
+            //set new position (this is how the autofocus works)
+            core_.setPosition(TwoPhotonControl.Z_STAGE, initialZPosition_ + focusOffset_);
+        } catch (Exception e) {
+            IJ.log("Couldnt set focus offset, initial z pos: " + initialZPosition_ + " focusOffset: " + focusOffset_);
+        }
+    }
+    
    private void addRunnables(SequenceSettings settings) {
       acqEngine_.clearRunnables();
 
@@ -114,11 +133,12 @@ public class AcquisitionWrapperEngineAdapter extends AcquisitionWrapperEngine {
                             initialZPosition_ = core_.getPosition("Z");
                         } catch (Exception ex) {
                         }
-                    } else {
-                        try {
-                            focusOffset_ = initialZPosition_ - core_.getPosition("Z");
-                        } catch (Exception ex) {}
-                    }
+                    } 
+////                    else {
+//                        try {
+//                            focusOffset_ = initialZPosition_ - core_.getPosition("Z");
+//                        } catch (Exception ex) {}
+//                    }
 
                    //Set EOM on/off 
                    if (skipInterval != 1) {
@@ -137,15 +157,20 @@ public class AcquisitionWrapperEngineAdapter extends AcquisitionWrapperEngine {
         }
         
       //add runables to apply depth list settings--either by position or invariant
-      if (settings.usePositionList) {
+        int numPos = 0;
+        try {
+            numPos = gui_.getPositionList().getNumberOfPositions();
+        } catch (Exception e) {
+            ReportingUtils.showError("Couldnt get number of positions");
+        }
+      if (settings.usePositionList && numPos > 0) {
          //add position list runnables
          for (int p = 0; p < numPositions; p++) {
             final int posIndex = p;
             acqEngine_.attachRunnable(-1, p, -1, -1, new Runnable() {
-
                @Override
                public void run() {
-                  twoPC_.applyDepthSetting(posIndex, focusOffset_);
+                  twoPC_.applyDepthSetting(posIndex, -focusOffset_);
                }
             });
          }
@@ -154,7 +179,7 @@ public class AcquisitionWrapperEngineAdapter extends AcquisitionWrapperEngine {
          acqEngine_.attachRunnable(-1, -1, -1, -1, new Runnable() {
                 @Override
                 public void run() {
-                    twoPC_.applyDepthSetting(-1, focusOffset_);
+                    twoPC_.applyDepthSetting(-1, -focusOffset_);
                 }
             });
         }
@@ -178,24 +203,23 @@ public class AcquisitionWrapperEngineAdapter extends AcquisitionWrapperEngine {
         // Set up the DataProcessor<TaggedImage> sequence--no data processors for now
         // BlockingQueue<TaggedImage> procStackOutputQueue = ProcessorStack.run(engineOutputQueue, imageProcessors);
 
-        // create storage
-        TaggedImageStorage storage;
+        // create storage     
         try {
             if (settings.save) {
                 //MPTiff storage
                 String acqDirectory = createAcqDirectory(summaryMetadata.getString("Directory"), summaryMetadata.getString("Prefix"));
                 summaryMetadata.put("Prefix", acqDirectory);
                 String acqPath = summaryMetadata.getString("Directory") + File.separator + acqDirectory;
-                storage = new DoubleTaggedImageStorage(summaryMetadata, acqPath, prefs_);
+                storage_ = new DoubleTaggedImageStorage(summaryMetadata, acqPath, prefs_);
             } else {
                 //RAM storage
-                storage = new DoubleTaggedImageStorage(summaryMetadata, null, prefs_);
+                storage_ = new DoubleTaggedImageStorage(summaryMetadata, null, prefs_);
             }
 
 //            final int numChannels = MDUtils.getNumChannels(summaryMetadata);
 //            final int numPositions = MDUtils.getNumPositions(summaryMetadata);
 //            final int numSlices = MDUtils.getNumSlices(summaryMetadata);
-            final MMImageCache imageCache = new MMImageCache(storage) {
+            ImageCache imageCache = new MMImageCache(storage_) {
                 @Override
                 public JSONObject getLastImageTags() {
                     //So that display doesnt show a position scrollbar when imaging finished

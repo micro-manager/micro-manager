@@ -107,7 +107,7 @@ public class SettingsDialog extends JDialog {
 
 
         JPanel row3 = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        JLabel dir = new JLabel("            Saving location");
+        JLabel dir = new JLabel("            Saving location (DO NOT CHANGE)");
         row3.add(dir);
         final JTextField location = new JTextField(60);
         location.setText(prefs.get(STITCHED_DATA_DIRECTORY, ""));
