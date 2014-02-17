@@ -51,15 +51,16 @@ public class HelpPanel extends ListeningJPanel {
       super ("Help", 
             new MigLayout(
               "", 
-              "[right]8[align center]16[right]8[center]8[center]8[center]",
+              "[right]",
               "[]16[]"));
      
       final JTextPane textPane = new JTextPane();
       textPane.setEditable(false);
       textPane.setContentType("text/html");
-      textPane.setText("This plugin is a work in progress, and please contact the authors "
-            + "if you have bug reports or feature requests.  Further information, "
-            + "plus instructions are at "
+      textPane.setText("This plugin is a work in progress; please contact the authors "
+            + "if you have bug reports or feature requests."
+            + "(<a href='mailto:jon@asiimaging.com'>jon@asiimaging.com</a>)"
+            + "<p>Further information and instructions are at "
             + "<a href='http://micro-manager.org/wiki/ASIdiSPIM_Plugin'>"
             + "http://micro-manager.org/wiki/ASIdiSPIM_Plugin</a>.");
       textPane.addHyperlinkListener(new HyperlinkListener() {
@@ -76,7 +77,7 @@ public class HelpPanel extends ListeningJPanel {
          }
       });
       final JScrollPane editScroll = new JScrollPane(textPane);
-      editScroll.setPreferredSize(new Dimension(500,250));
+      editScroll.setPreferredSize(new Dimension(700,250));
       editScroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
       editScroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
       add(editScroll);

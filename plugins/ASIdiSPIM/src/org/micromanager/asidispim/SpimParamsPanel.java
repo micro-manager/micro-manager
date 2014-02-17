@@ -24,9 +24,9 @@ package org.micromanager.asidispim;
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.acquisition.AcquisitionWrapperEngine;
 import org.micromanager.asidispim.Data.Cameras;
+import org.micromanager.asidispim.Data.Devices;
 import org.micromanager.asidispim.Data.Prefs;
 import org.micromanager.asidispim.Data.Properties;
-import org.micromanager.asidispim.Data.Devices;
 import org.micromanager.asidispim.Utils.DevicesListenerInterface;
 import org.micromanager.asidispim.Utils.ListeningJPanel;
 import org.micromanager.asidispim.Utils.PanelUtils;
@@ -84,45 +84,55 @@ public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerI
       JSpinner tmp_jsp;
 
       add(new JLabel("Number of sides:"), "split 2");
-      tmp_jsp = pu.makeSpinnerInteger(1, 2, props_, devices_, Devices.Keys.GALVOA, Properties.Keys.SPIM_NUM_SIDES);
+      tmp_jsp = pu.makeSpinnerInteger(1, 2, props_, devices_, 
+            new Devices.Keys [] {Devices.Keys.GALVOA, Devices.Keys.GALVOB},
+            Properties.Keys.SPIM_NUM_SIDES);
       add(tmp_jsp);
 
       add(new JLabel("First side:"), "align right");
       String[] ab = {Devices.Sides.A.toString(), Devices.Sides.B.toString()};
-      JComboBox tmp_box = pu.makeDropDownBox(ab, props_, devices_, Devices.Keys.GALVOA, Properties.Keys.SPIM_FIRSTSIDE);
+      JComboBox tmp_box = pu.makeDropDownBox(ab, props_, devices_, 
+            new Devices.Keys [] {Devices.Keys.GALVOA, Devices.Keys.GALVOB}, 
+            Properties.Keys.SPIM_FIRSTSIDE);
       // no listener here
       add(tmp_box, "wrap");
 
-      add(new JLabel("Path A"), "cell 1 2");
-      add(new JLabel("Path B"), "wrap");
-
       add(new JLabel("Number of repeats:"));
-      numRepeats_ = pu.makeSpinnerInteger(1, 100, props_, devices_, Devices.Keys.GALVOA, Properties.Keys.SPIM_NUM_REPEATS);
-      add(numRepeats_, "span 2, wrap");
+      numRepeats_ = pu.makeSpinnerInteger(1, 100, props_, devices_, 
+            new Devices.Keys [] {Devices.Keys.GALVOA, Devices.Keys.GALVOB}, 
+            Properties.Keys.SPIM_NUM_REPEATS);
+      add(numRepeats_, "wrap");
 
       add(new JLabel("Number of slices:"));
-      numSlices_ = pu.makeSpinnerInteger(1, 100, props_, devices_, Devices.Keys.GALVOA, Properties.Keys.SPIM_NUM_SLICES);
-      add(numSlices_, "span 2, wrap");
+      numSlices_ = pu.makeSpinnerInteger(1, 100, props_, devices_, 
+            new Devices.Keys [] {Devices.Keys.GALVOA, Devices.Keys.GALVOB},
+            Properties.Keys.SPIM_NUM_SLICES);
+      add(numSlices_, "wrap");
 
       add(new JLabel("Lines scans per slice:"));
-      numScansPerSlice_ = pu.makeSpinnerInteger(1, 1000, props_, devices_, Devices.Keys.GALVOA, Properties.Keys.SPIM_NUM_SCANSPERSLICE);
-      add(numScansPerSlice_, "span 2, wrap");
+      numScansPerSlice_ = pu.makeSpinnerInteger(1, 1000, props_, devices_, 
+            new Devices.Keys [] {Devices.Keys.GALVOA, Devices.Keys.GALVOB},
+            Properties.Keys.SPIM_NUM_SCANSPERSLICE);
+      add(numScansPerSlice_, "wrap");
 
       add(new JLabel("Line scan period (ms):"));
-      lineScanPeriodA_ = pu.makeSpinnerInteger(1, 10000, props_, devices_, Devices.Keys.GALVOA, Properties.Keys.SPIM_LINESCAN_PERIOD);
-      add(lineScanPeriodA_);
-      // TODO remove this if only doing single-sided?? would have to add/remove dynamically which might be a pain
-      tmp_jsp = pu.makeSpinnerInteger(1, 10000, props_, devices_, Devices.Keys.GALVOB, Properties.Keys.SPIM_LINESCAN_PERIOD);
-      add(tmp_jsp, "wrap");
+      lineScanPeriodA_ = pu.makeSpinnerInteger(1, 10000, props_, devices_, 
+            new Devices.Keys [] {Devices.Keys.GALVOA, Devices.Keys.GALVOB},
+            Properties.Keys.SPIM_LINESCAN_PERIOD);
+      add(lineScanPeriodA_, "wrap");
 
       add(new JLabel("Delay before each slice (ms):"));
-      tmp_jsp = pu.makeSpinnerFloat(0, 10000, 0.25, props_, devices_, Devices.Keys.GALVOA, Properties.Keys.SPIM_DELAY_SLICE);
-      add(tmp_jsp, "span 2, wrap");
+      tmp_jsp = pu.makeSpinnerFloat(0, 10000, 0.25, props_, devices_,
+            new Devices.Keys [] {Devices.Keys.GALVOA, Devices.Keys.GALVOB},
+            Properties.Keys.SPIM_DELAY_SLICE);
+      add(tmp_jsp, "wrap");
 
       add(new JLabel("Delay before each side (ms):"));
-      tmp_jsp = pu.makeSpinnerFloat(0, 10000, 0.25, props_, devices_, Devices.Keys.GALVOA, Properties.Keys.SPIM_DELAY_SIDE);
-      add(tmp_jsp, "span 2, wrap");
-
+      tmp_jsp = pu.makeSpinnerFloat(0, 10000, 0.25, props_, devices_, 
+            new Devices.Keys [] {Devices.Keys.GALVOA, Devices.Keys.GALVOB},
+            Properties.Keys.SPIM_DELAY_SIDE);
+      add(tmp_jsp, "wrap");
+      
       add(new JSeparator(JSeparator.VERTICAL), "growy, cell 3 0 1 9");
 
       JButton buttonStart_ = new JButton("Start!");
