@@ -21,8 +21,6 @@
 
 package org.micromanager.asidispim;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
@@ -52,11 +50,13 @@ public final class BeamSubPanel extends ListeningJPanel {
    private final Devices.Sides side_;
    private final Devices.Sides otherSide_;
    
-   private final JCheckBox scanABox_;
-   private final JCheckBox scanBBox_;
    private final JCheckBox beamABox_;
    private final JCheckBox beamBBox_;
+   private final JCheckBox sheetABox_;
+   private final JCheckBox sheetBBox_;
    private final JCheckBox updateOnTab_;
+   private final ItemListener disableSheetA_;
+   private final ItemListener disableSheetB_;
    
    /**
     * 
@@ -92,7 +92,7 @@ public final class BeamSubPanel extends ListeningJPanel {
             Properties.Values.NO, Properties.Values.YES,
             Devices.getSideSpecificKey(Devices.Keys.GALVOA, side_),
             Properties.Keys.BEAM_ENABLED, Prefs.Keys.SHEET_BEAM_ENABLED);
-      scanABox_ = makeCheckBox("Sheet", 
+      sheetABox_ = makeCheckBox("Sheet", 
             Properties.Values.SAM_DISABLED, Properties.Values.SAM_ENABLED,
             Devices.getSideSpecificKey(Devices.Keys.GALVOA, side_),
             Properties.Keys.SA_MODE_X, Prefs.Keys.SHEET_SCAN_ENABLED);
@@ -101,7 +101,7 @@ public final class BeamSubPanel extends ListeningJPanel {
             Properties.Values.NO, Properties.Values.YES,
             Devices.getSideSpecificKey(Devices.Keys.GALVOA, otherSide_),
             Properties.Keys.BEAM_ENABLED, Prefs.Keys.EPI_BEAM_ENABLED);
-      scanBBox_ = makeCheckBox("Sheet", 
+      sheetBBox_ = makeCheckBox("Sheet", 
             Properties.Values.SAM_DISABLED, Properties.Values.SAM_ENABLED,
             Devices.getSideSpecificKey(Devices.Keys.GALVOA, otherSide_),
             Properties.Keys.SA_MODE_X, Prefs.Keys.EPI_SCAN_ENABLED);
@@ -109,49 +109,60 @@ public final class BeamSubPanel extends ListeningJPanel {
       if (noSide) {
          add(new JLabel("Path A:"));
          add(beamABox_);
-         add(scanABox_, "wrap");
+         add(sheetABox_, "wrap");
          add(new JLabel("Path B:"));
          add(beamBBox_);
-         add(scanBBox_, "wrap");         
+         add(sheetBBox_, "wrap");         
       } else {
          add(new JLabel("Sheet side:"));
          add(beamABox_);
-         add(scanABox_, "wrap");
+         add(sheetABox_, "wrap");
          add(new JLabel("Epi side:"));
          add(beamBBox_);
-         add(scanBBox_, "wrap");   
+         add(sheetBBox_, "wrap");   
       }
       
       // disable the sheetA/B boxes when beam is disabled and vice versa
-      ActionListener alA = new ActionListener() {
-         public void actionPerformed(ActionEvent e) { 
-            scanABox_.setEnabled(beamABox_.isSelected());
-            if (beamABox_.isSelected() && scanABox_.isSelected()) {
-               // restart sheet if it was enabled before
-               scanABox_.doClick();
-               scanABox_.doClick();
+      disableSheetA_ = new ItemListener() {
+         // only called when the user selects/deselects from GUI or the value _changes_ programmatically
+         public void itemStateChanged(ItemEvent e) {
+            if (e.getStateChange() == ItemEvent.SELECTED) {
+               sheetABox_.setEnabled(true);
+               if (beamABox_.isSelected() && sheetABox_.isSelected()) { // restart sheet if appropriate
+                  sheetABox_.setSelected(false);
+                  sheetABox_.setSelected(true);
+               }
+            } else {
+               sheetABox_.setEnabled(false);
             }
+
          }
       }; 
-      alA.actionPerformed(null);
-      beamABox_.addActionListener(alA);
+      beamABox_.addItemListener(disableSheetA_);
       
-      ActionListener alB = new ActionListener() {
-         public void actionPerformed(ActionEvent e) { 
-            scanBBox_.setEnabled(beamBBox_.isSelected());
-            if (beamBBox_.isSelected() && scanBBox_.isSelected()) {
-               // restart sheet if it was enabled before
-               scanBBox_.doClick();
-               scanBBox_.doClick();
+      disableSheetB_ = new ItemListener() {
+         // only called when the user selects/deselects from GUI or the value _changes_ programmatically
+         public void itemStateChanged(ItemEvent e) {
+            if (e.getStateChange() == ItemEvent.SELECTED) {
+               sheetBBox_.setEnabled(true);
+               if (beamBBox_.isSelected() && sheetBBox_.isSelected()) { // restart sheet if appropriate
+                  sheetBBox_.setSelected(false);
+                  sheetBBox_.setSelected(true);
+               }
+            } else {
+               sheetBBox_.setEnabled(false);
             }
+
          }
-      };
-      alB.actionPerformed(null);
-      beamBBox_.addActionListener(alB);
+      }; 
+      beamBBox_.addItemListener(disableSheetB_);
+      
       
       updateOnTab_ = new JCheckBox("Change settings on tab activate");
       updateOnTab_.setSelected(prefs_.getBoolean(instanceLabel_, Prefs.Keys.ENABLE_BEAM_SETTINGS, true));
       add(updateOnTab_, "center, span 3");
+      
+      
       
    }//constructor
    
@@ -243,6 +254,7 @@ public final class BeamSubPanel extends ListeningJPanel {
             box.setSelected(boxVal);
          }
       } else { // update GUI with present settings
+         box.setSelected(!propVal);
          box.setSelected(propVal);
       }
    }
@@ -254,11 +266,11 @@ public final class BeamSubPanel extends ListeningJPanel {
   public void gotSelected() {
       updateOnSelected(beamABox_, Devices.getSideSpecificKey(Devices.Keys.GALVOA, side_), 
                Properties.Keys.BEAM_ENABLED, Properties.Values.YES);
-      updateOnSelected(scanABox_, Devices.getSideSpecificKey(Devices.Keys.GALVOA, side_),
+      updateOnSelected(sheetABox_, Devices.getSideSpecificKey(Devices.Keys.GALVOA, side_),
                Properties.Keys.SA_MODE_X, Properties.Values.SAM_ENABLED);
       updateOnSelected(beamBBox_, Devices.getSideSpecificKey(Devices.Keys.GALVOA, otherSide_),
                Properties.Keys.BEAM_ENABLED, Properties.Values.YES);
-      updateOnSelected(scanBBox_, Devices.getSideSpecificKey(Devices.Keys.GALVOA, otherSide_), 
+      updateOnSelected(sheetBBox_, Devices.getSideSpecificKey(Devices.Keys.GALVOA, otherSide_), 
                Properties.Keys.SA_MODE_X, Properties.Values.SAM_ENABLED);
   }
    
@@ -266,8 +278,8 @@ public final class BeamSubPanel extends ListeningJPanel {
    public void saveSettings() {
       prefs_.putBoolean(instanceLabel_, Prefs.Keys.SHEET_BEAM_ENABLED, beamABox_.isSelected());
       prefs_.putBoolean(instanceLabel_, Prefs.Keys.EPI_BEAM_ENABLED, beamBBox_.isSelected());
-      prefs_.putBoolean(instanceLabel_, Prefs.Keys.SHEET_SCAN_ENABLED, scanABox_.isSelected());
-      prefs_.putBoolean(instanceLabel_, Prefs.Keys.EPI_SCAN_ENABLED, scanBBox_.isSelected());
+      prefs_.putBoolean(instanceLabel_, Prefs.Keys.SHEET_SCAN_ENABLED, sheetABox_.isSelected());
+      prefs_.putBoolean(instanceLabel_, Prefs.Keys.EPI_SCAN_ENABLED, sheetBBox_.isSelected());
       prefs_.putBoolean(instanceLabel_, Prefs.Keys.ENABLE_BEAM_SETTINGS, updateOnTab_.isSelected());
    }
    
