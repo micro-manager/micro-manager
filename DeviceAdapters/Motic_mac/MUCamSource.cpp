@@ -355,7 +355,8 @@ int MUCamSource::Initialize()
     CPropertyAction* pAct;
     if (!OpenCamera(hCameras_[currentCam_])) return DEVICE_ERR;
     char sName[Camera_Name_Len];
-    memcpy(sName, GetMotiCamNAME(hCameras_[currentCam_]), Camera_Name_Len);
+    GetMotiCamNAME(hCameras_[currentCam_], sName);
+    //memcpy(sName, GetMotiCamNAME(hCameras_[currentCam_]), Camera_Name_Len);
     pAct = new CPropertyAction(this, &MUCamSource::OnDevice);
     ret = CreateProperty(g_Keyword_Cameras, sName, MM::String, false, pAct);
     ret = SetAllowedValues(g_Keyword_Cameras, DevicesVec_);
@@ -594,7 +595,7 @@ int MUCamSource::SetBinning(int binF)
  */
 int MUCamSource::StopSequenceAcquisition()
 {
-    return CCameraBase::StopSequenceAcquisition();
+    return StopSequenceAcquisition();
 }
 
 /**
@@ -607,7 +608,7 @@ int MUCamSource::StartSequenceAcquisition(long numImages, double interval_ms, bo
     if (IsCapturing())
         return DEVICE_CAMERA_BUSY_ACQUIRING;
     
-    return CCameraBase::StartSequenceAcquisition(numImages, interval_ms, stopOnOverflow);
+    return CCameraBase<MUCamSource>::StartSequenceAcquisition(numImages, interval_ms, stopOnOverflow);
 }
 
 /*
@@ -663,7 +664,7 @@ int MUCamSource::ThreadRun (void)
 
 bool MUCamSource::IsCapturing()
 {
-    if(CCameraBase::IsCapturing())
+    if(CCameraBase<MUCamSource>::IsCapturing())
     {
         return true;
     }
@@ -808,11 +809,11 @@ int MUCamSource::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
             assert(false);
         ////////////////////////////////
         
-        //////////////////////////////////////////////////////////////////////////
+        ////////////////////////////////////////////////////////////////////////
+        
         char buf[MM::MaxStrLength];
         GetProperty(MM::g_Keyword_PixelType, buf);
         std::string pixelType(buf);
-        unsigned int bytesPerPixel = 1;
         if (pixelType.compare(g_PixelType_8bit) == 0)
         {
             if(bytesPerPixel_ == 2)
@@ -999,7 +1000,8 @@ int MUCamSource::FindMoticCameras()
     {
         memset(sName, 0, Camera_Name_Len);
         hCameras_[cameraCnt_++] = hCamera;
-        memcpy(sName, GetMotiCamNAME(hCamera), Camera_Name_Len);
+        GetMotiCamNAME(hCamera, sName);
+        //memcpy(sName, GetMotiCamNAME(hCamera), Camera_Name_Len);
         DevicesVec_.push_back(sName);
         hCamera = MUCam_findCamera();
     }
@@ -1010,10 +1012,11 @@ int MUCamSource::FindMoticCameras()
 /**
  * Get motic camera name.
  */
-char *MUCamSource::GetMotiCamNAME(MUCam_Handle hCamera)
+void MUCamSource::GetMotiCamNAME(MUCam_Handle hCamera, char* sName)
 {
-    if (hCamera == 0) return 0;
-    char sName[Camera_Name_Len];
+    if (hCamera == 0) {
+       return;
+    }
     memset(sName, 0, Camera_Name_Len);
     switch (MUCam_getType(hCamera))
     {
@@ -1070,7 +1073,6 @@ char *MUCamSource::GetMotiCamNAME(MUCam_Handle hCamera)
             break;
     }
     
-    return sName;
 }
 
 int MUCamSource::InitDevice()
@@ -1167,7 +1169,7 @@ void MUCamSource::InitGain()
 {
     //MIDP_GetGainRange(&m_dMinGain, &m_dMaxGain);
     CPropertyAction *pAct = new CPropertyAction (this, &MUCamSource::OnGain);
-    int ret = CreateProperty(MM::g_Keyword_Gain, "1.0", MM::Float, false, pAct);
+    CreateProperty(MM::g_Keyword_Gain, "1.0", MM::Float, false, pAct);
     //assert(ret == DEVICE_OK);
     //SetPropertyLimits(MM::g_Keyword_Gain, m_dMinGain, m_dMaxGain);
     //m_dGain = 1.0;
@@ -1179,7 +1181,7 @@ void MUCamSource::InitExposure()
     exposureMs_ = 10.0;
     MUCam_setExposure(hCameras_[currentCam_], (float)exposureMs_);
     char buf[10];
-    sprintf(buf, "%0.1f\0", (float)exposureMs_);
+    sprintf(buf, "%0.1f", (float)exposureMs_);
     CPropertyAction *pAct = new CPropertyAction (this, &MUCamSource::OnExposure);
     int ret = CreateProperty(MM::g_Keyword_Exposure, buf, MM::Float, false, pAct);
     assert(ret == DEVICE_OK);

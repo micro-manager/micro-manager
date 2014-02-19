@@ -91,18 +91,17 @@ private:
     static const int MAX_BIT_DEPTH = 12;
     
     //MSequenceThread* thd_;
-    bool stopOnOverflow_;
     int binning_;
+    double gain_;
     int bytesPerPixel_;
     int colorChannel_;
-    int width_, height_;
-    double gain_;
-    double exposureMs_;
-    float exposureMin_, exposureMax_;
     bool initialized_;
+    int width_, height_;
+    double exposureMs_;
+    float exposureMin_;
+    float exposureMax_;
+    bool stopOnOverflow_;
     ImgBuffer img_;
-    unsigned char *tmpbuf_;
-    int bufferSize_;
     int roiX_, roiY_;
     int cameraCnt_, currentCam_;
     MUCam_Handle hCameras_[100];
@@ -110,7 +109,9 @@ private:
     vector<long>BinningsVec_;
     int bitDepth_;
     int bitCnt_;
+    unsigned char *tmpbuf_;
     void *handle_;
+    int bufferSize_;
     
     bool LoadFunctions();
     void UnloadFunctions();
@@ -133,7 +134,7 @@ private:
     void ReAllocalBuffer(int size);
     void GenerateImage();
     int FindMoticCameras();
-    char *GetMotiCamNAME(MUCam_Handle hCamera);
+    void GetMotiCamNAME(MUCam_Handle hCamera, char* sName);
     int InitDevice();
     void InitBinning();
     void InitPixelType();
