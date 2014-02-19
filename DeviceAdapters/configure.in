@@ -423,6 +423,7 @@ AC_CONFIG_FILES(
 	[Marzhauser/Makefile:Marzhauser/Makefile.in:MMDEVAPI.rules]
 	[Marzhauser-LStep/Makefile:Marzhauser-LStep/Makefile.in:MMDEVAPI.rules]
    [MicroPoint/Makefile:MicroPoint/Makefile.in:MMDEVAPI.rules]
+   [Motic_mac/Makefile:Motic_mac/Makefile.in:MMDEVAPI.rules]
 	[MP285/Makefile:MP285/Makefile.in:MMDEVAPI.rules]
 	[Neos/Makefile:Neos/Makefile.in:MMDEVAPI.rules]
 	[Nikon/Makefile:Nikon/Makefile.in:MMDEVAPI.rules]
@@ -481,4 +482,5 @@ AC_CONFIG_FILES(
 	[dc1394/Makefile:dc1394/Makefile.in:MMDEVAPI.rules]
 	[kdv/Makefile:kdv/Makefile.in:MMDEVAPI.rules]
 )
+
 AC_OUTPUT
