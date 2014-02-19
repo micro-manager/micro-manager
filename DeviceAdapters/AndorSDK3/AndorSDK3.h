@@ -146,6 +146,11 @@ private:
 
    bool GetCameraPresent() { return b_cameraPresent_; };
    void SetNumberOfDevicesPresent(int deviceCount) { number_of_devices_ = deviceCount; };
+
+   double CalculateDefaultExposure(std::wstring & interfaceType);
+   double defaultExposureTime_;
+   void SetDefaultExpsoure(double d) { defaultExposureTime_ = d; };
+   double GetDefaultExpsoure() { return defaultExposureTime_; };
    AT_64 GetTimeStamp(unsigned char* pBuf);
 
    MMThreadLock* pDemoResourceLock_;
@@ -176,6 +181,8 @@ private:
    TFloatProperty* exposureTime_property;
    TFloatProperty* frameRate_property;
    TFloatStringProperty* frameRateLimits_property;
+   TEnumProperty* auxOutSignal_property;
+
 
    // atcore++ objects
    andor::IDeviceManager* deviceManager;

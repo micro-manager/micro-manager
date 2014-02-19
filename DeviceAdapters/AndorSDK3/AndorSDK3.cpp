@@ -146,6 +146,7 @@ CAndorSDK3Camera::CAndorSDK3Camera()
   sequenceStartTime_(0),
   fpgaTSclockFrequency_(0),
   timeStamp_(0),
+  defaultExposureTime_(0.0f),
   pDemoResourceLock_(0),
   image_buffers_(NULL),
   numImgBuffersAllocated_(0),
@@ -316,22 +317,40 @@ int CAndorSDK3Camera::Initialize()
    cameraDevice->Release(cameraSerialNumber);
    ret = CreateProperty(MM::g_Keyword_CameraID, p_cameraInfoString, MM::String, true);
    assert(DEVICE_OK == ret);
+   wstring cameraSerialCheck(temp_ws);
+
+   // Camera Model
+   IString * cameraModel = cameraDevice->GetString(L"CameraModel");
+   temp_ws = cameraModel->Get();
+   memset(p_cameraInfoString, 0, MAX_CHARS_INFO_STRING);
+   wcstombs(p_cameraInfoString, temp_ws.c_str(), temp_ws.size());
+   cameraDevice->Release(cameraModel);
+   ret = CreateProperty(g_Keyword_CameraModel, p_cameraInfoString, MM::String, true);
+   assert(DEVICE_OK == ret);
+   wstring cameraModelCheck(temp_ws);
 
    //Name and Interface type
-   string s_cameraName("Neo ");
-   temp_ws.erase(4);
-   bool b_zyla = false;
-   if (0 == temp_ws.compare(L"VSC-") )
-   {
-      b_zyla = true;
-      s_cameraName = "Zyla ";
-   }
-   
    IString * cameraInterfaceType = cameraDevice->GetString(L"InterfaceType");
    temp_ws = cameraInterfaceType->Get();
    memset(p_cameraInfoString, 0, MAX_CHARS_INFO_STRING);
    wcstombs(p_cameraInfoString, temp_ws.c_str(), temp_ws.size());
    cameraDevice->Release(cameraInterfaceType);
+   
+   SetDefaultExpsoure(CalculateDefaultExposure(temp_ws));
+
+   string s_cameraName("Neo 5.5 ");
+   cameraSerialCheck.erase(4);
+   bool b_zyla = (0 == cameraSerialCheck.compare(L"VSC-") );
+   cameraModelCheck.erase(8);
+   
+   if (b_zyla)
+   {
+      s_cameraName = "Zyla 5.5 ";
+      if (0 == cameraModelCheck.compare(L"ZYLA-4.2") )
+      {
+         s_cameraName = "Zyla 4.2 ";
+      }
+   }
    
    s_cameraName += p_cameraInfoString;
    ret = CreateProperty(MM::g_Keyword_CameraName, s_cameraName.c_str(), MM::String, true);
@@ -343,14 +362,6 @@ int CAndorSDK3Camera::Initialize()
    ret = CreateProperty(g_Keyword_SoftwareVersion, p_cameraInfoString, MM::String, true);
    assert(DEVICE_OK == ret);
 
-   // Camera Model
-   IString * cameraModel = cameraDevice->GetString(L"CameraModel");
-   temp_ws = cameraModel->Get();
-   memset(p_cameraInfoString, 0, MAX_CHARS_INFO_STRING);
-   wcstombs(p_cameraInfoString, temp_ws.c_str(), temp_ws.size());
-   cameraDevice->Release(cameraModel);
-   ret = CreateProperty(g_Keyword_CameraModel, p_cameraInfoString, MM::String, true);
-   assert(DEVICE_OK == ret);
    ret = CreateProperty(g_Keyword_ExtTrigTimeout, "5000", MM::Integer, false);
    assert(DEVICE_OK == ret);
 
@@ -441,6 +452,10 @@ int CAndorSDK3Camera::Initialize()
    frameRate_property = new TFloatProperty(TAndorSDK3Strings::FRAME_RATE, 
                                              new TAndorFloatCache(cameraDevice->GetFloat(L"FrameRate")),  
                                              callbackManager_, false, true);
+   //Aux TTL
+   auxOutSignal_property = new TEnumProperty(TAndorSDK3Strings::AUX_SOURCE, 
+                                             cameraDevice->GetEnum(L"AuxiliaryOutSource"), 
+                                             this, thd_, snapShotController_, false, false);
 
    char errorStr[MM::MaxStrLength];
    if (false == eventsManager_->Initialise(errorStr) )
@@ -486,6 +501,7 @@ int CAndorSDK3Camera::Shutdown()
       delete aoi_property_;
       delete triggerMode_property;
       delete exposureTime_property;
+      delete auxOutSignal_property;
 
       delete callbackManager_;
       delete snapShotController_;
@@ -505,6 +521,16 @@ int CAndorSDK3Camera::Shutdown()
 
    initialized_ = false;
    return DEVICE_OK;
+}
+
+double CAndorSDK3Camera::CalculateDefaultExposure(wstring & interfaceType)
+{
+   double d_retValue = 0.0340f;
+   if (0 == interfaceType.compare(L"CL 10 Tap") )
+   {
+      d_retValue = 0.0100f;
+   }
+   return d_retValue;
 }
 
 void CAndorSDK3Camera::InitialiseSDK3Defaults()
@@ -561,7 +587,7 @@ void CAndorSDK3Camera::InitialiseSDK3Defaults()
       b_feature = NULL;
       //Exposure
       f_feature = cameraDevice->GetFloat(L"ExposureTime");
-      f_feature->Set(0.0340f);
+      f_feature->Set(GetDefaultExpsoure());
       cameraDevice->Release(f_feature);
       f_feature = NULL;
       //MetaData / TimeStamp enable
