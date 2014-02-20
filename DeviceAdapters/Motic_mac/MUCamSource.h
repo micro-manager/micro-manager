@@ -64,8 +64,8 @@ public:
     int ClearROI();
 //    int PrepareSequenceAcqusition();
 //    int StartSequenceAcquisition(double interval);
-    virtual int StartSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow);
-    virtual int StopSequenceAcquisition();
+    // virtual int StartSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow);
+    //virtual int StopSequenceAcquisition();
     int InsertImage();
     virtual int ThreadRun(void);
     bool IsCapturing();

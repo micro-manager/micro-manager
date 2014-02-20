@@ -593,23 +593,23 @@ int MUCamSource::SetBinning(int binF)
 /**
  * Stop and wait for the Sequence thread finished
  */
-int MUCamSource::StopSequenceAcquisition()
-{
-    return StopSequenceAcquisition();
-}
+// int MUCamSource::StopSequenceAcquisition()
+// {
+//    return StopSequenceAcquisition();
+//}
 
 /**
  * Simple implementation of Sequence Acquisition
  * A sequence acquisition should run on its own thread and transport new images
  * coming of the camera into the MMCore circular buffer.
  */
-int MUCamSource::StartSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow)
-{
-    if (IsCapturing())
-        return DEVICE_CAMERA_BUSY_ACQUIRING;
-    
-    return CCameraBase<MUCamSource>::StartSequenceAcquisition(numImages, interval_ms, stopOnOverflow);
-}
+//int MUCamSource::StartSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow)
+//{
+//    if (IsCapturing())
+//        return DEVICE_CAMERA_BUSY_ACQUIRING;
+//    
+//    return CCameraBase<MUCamSource>::StartSequenceAcquisition(numImages, interval_ms, stopOnOverflow);
+//}
 
 /*
  * Inserts Image and MetaData into MMCore circular Buffer
