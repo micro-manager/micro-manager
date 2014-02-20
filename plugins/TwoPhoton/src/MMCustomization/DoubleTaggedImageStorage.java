@@ -28,7 +28,7 @@ import org.micromanager.utils.ReportingUtils;
 
 /**
  * A class that holds a tagged image storage which dynamically stitches images,
- * and an otional imaris writing image storage class
+ * and an optional Imaris writing image storage class
  *
  * @author Henry
  */
@@ -48,6 +48,9 @@ public class DoubleTaggedImageStorage implements TaggedImageStorage {
    private ByteProcessor imageProcessor_;
    private SingleThreadedGaussianFilter filter_;
    private Preferences prefs_;
+   private int startS_ = -1, startMin_ = -1, startHour_ = -1;
+   private String acqStartDate_;
+   private String acqDate_;
 
    public DoubleTaggedImageStorage(JSONObject summaryMetadata, String savingDir, Preferences prefs) {
       prefs_ = prefs;
@@ -93,7 +96,7 @@ public class DoubleTaggedImageStorage implements TaggedImageStorage {
       try {
          ResolutionLevel[] resLevels = ResolutionLevelMaker.calcLevels(width, height,
                  MDUtils.getNumSlices(summaryMetadata), MDUtils.getNumFrames(summaryMetadata), 1);
-         hdfPreprocessor_ = new HDFPreprocessor(width, height, resLevels, MDUtils.getNumChannels(summaryMetadata));
+         hdfPreprocessor_ = new HDFPreprocessor(width, height, resLevels);
 
          hdfWriter_ = new HDFWriter(newDir.getAbsolutePath(), prefix + ".ims", MDUtils.getNumChannels(summaryMetadata),
                  MDUtils.getNumFrames(summaryMetadata), MDUtils.getNumSlices(summaryMetadata),
@@ -210,7 +213,28 @@ public class DoubleTaggedImageStorage implements TaggedImageStorage {
                for (int s = 0; s < slicesPerWrite_; s++) {
                   singleChannelBatch.add(batch.get(c + s * numChannels_));
                }
-               PipelineImage pi = hdfPreprocessor_.process(singleChannelBatch);
+            
+               String[] timeInfo = singleChannelBatch.get(0).tags.getString("Time").split(" ");
+
+               //get starting time
+               if (startS_ == -1) {
+                  //first image
+                  startHour_ = Integer.parseInt(timeInfo[1].split(":")[0]);
+                  startMin_ = Integer.parseInt(timeInfo[1].split(":")[1]);
+                  startS_ = Integer.parseInt(timeInfo[1].split(":")[2]);
+                  acqStartDate_ = timeInfo[0];
+                  acqDate_ = timeInfo[0] + " " + timeInfo[1] + ".000";
+               }
+               
+               LinkedList<Object> pixelBatch = new LinkedList<Object>();
+               for (TaggedImage img : singleChannelBatch) {
+                  pixelBatch.add(img.pix);
+               }
+               PipelineImage pi = hdfPreprocessor_.process(pixelBatch, 
+                       MDUtils.getChannelIndex(singleChannelBatch.getFirst().tags),
+                       MDUtils.getSliceIndex(singleChannelBatch.getFirst().tags),
+                       MDUtils.getFrameIndex(singleChannelBatch.getFirst().tags),
+                       acqDate_, convertMMToImsTime(singleChannelBatch.getFirst().tags));
                synchronized (hdfQueue_) {
                   hdfQueue_.add(pi);
                }
@@ -222,6 +246,48 @@ public class DoubleTaggedImageStorage implements TaggedImageStorage {
          e.printStackTrace();
          makeImarisFile_ = false;
       }
+   }
+   
+     private String convertMMToImsTime(JSONObject tags) {
+      int elapsedMs = 0; 
+      try {
+         elapsedMs = tags.getInt("ElapsedTime-ms") + startS_ * 1000 
+              + startMin_ * 1000 * 60 + startHour_ * 60 * 60 * 1000;
+      } catch (JSONException e) {}
+      int h = elapsedMs / (60 * 60 * 1000);
+      int min = (elapsedMs / (60 * 1000)) % 60;
+      int s = (elapsedMs / 1000) % 60;
+      int ms = elapsedMs % 1000;
+
+      String timeMD = "";
+      try {
+         timeMD = tags.getString("Time");
+      } catch (JSONException e) {}
+      String date = timeMD.split(" ")[0];
+      if (!date.equals(acqStartDate_)) {
+         //for data sets spanning multiple days, only use number of hours into this day
+         h = h % 24;
+      }
+      return date + " " + twoDigitFormat(h) + ":" + twoDigitFormat(min) + ":"
+              + twoDigitFormat(s) + "." + threeDigitFormat(ms);
+   }
+   
+   private String threeDigitFormat(int i) {
+      String ret = i + "";
+      if (ret.length() == 1) {
+         ret = "00" + ret;
+      } else if (ret.length() == 2) {
+         ret = "0" + ret;
+      }
+      return ret;
+   }
+
+   private String twoDigitFormat(int i) {
+      String ret = i + "";
+      if (ret.length() == 1) {
+         ret = "0" + ret;
+      }
+      return ret;
    }
 
    //Occurs on HDF writing thread
