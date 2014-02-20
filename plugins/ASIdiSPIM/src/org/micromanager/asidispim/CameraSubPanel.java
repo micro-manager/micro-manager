@@ -141,6 +141,7 @@ public final class CameraSubPanel extends ListeningJPanel implements LiveModeLis
    private class CameraSelectionBoxListener implements ActionListener, DevicesListenerInterface {
       JComboBox box_;
       HashMap<String, Cameras.CameraData> CameraDataHash_;
+      boolean updatingList_;
       
       public CameraSelectionBoxListener(JComboBox box) {
          box_ = box;
@@ -156,6 +157,9 @@ public final class CameraSubPanel extends ListeningJPanel implements LiveModeLis
        * @param ae
        */
       public void actionPerformed(ActionEvent ae) {
+         if (updatingList_ == true) {
+            return;  // don't go through this if we are rebuilding selections
+         }
          Cameras.CameraData sel = CameraDataHash_.get( (String) box_.getSelectedItem());
          cameras_.setCamera(sel.deviceKey);
          prefs_.putString(instanceLabel_, Prefs.Keys.CAMERA, (String) box_.getSelectedItem());
@@ -183,6 +187,7 @@ public final class CameraSubPanel extends ListeningJPanel implements LiveModeLis
          CameraDataItems = cameras_.getCameraData();
 
          boolean itemInNew = false;
+         updatingList_ = true;
          box_.removeAllItems();
          for (Cameras.CameraData a : CameraDataItems) {
             String s = a.displayString;
@@ -200,13 +205,14 @@ public final class CameraSubPanel extends ListeningJPanel implements LiveModeLis
                itemInNew = true;
             }
          }
+         updatingList_ = false;
          
          // restore the original selection if it's still present
          if (itemInNew) {
             box_.setSelectedItem(itemOrig);
          }
          else {
-            box_.setSelectedItem("");
+            box_.setSelectedItem(Devices.Keys.CAMERAPREVIOUS);
          }
       }//updateCameraSelections
       

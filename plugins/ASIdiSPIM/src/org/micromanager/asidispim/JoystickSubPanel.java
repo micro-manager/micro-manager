@@ -196,6 +196,7 @@ public final class JoystickSubPanel extends ListeningJPanel {
                itemInNew = true;
             }
          }
+         updatingList_ = false;
          
          // restore the original selection if it's still present
          if (itemInNew) {
@@ -204,7 +205,6 @@ public final class JoystickSubPanel extends ListeningJPanel {
          else {
             jc_.setSelectedItem(Joystick.Keys.NONE.toString());
          }
-         updatingList_ = false;
       }//updateStageSelections
       
    }//class StageSelectionBoxListener

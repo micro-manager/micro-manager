@@ -220,7 +220,6 @@ public class DevicesPanel extends ListeningJPanel {
          box_ = box;
       }
       
-      @Override
       public void actionPerformed(ActionEvent ae) {
          devices_.setMMDevice(key_, (String) box_.getSelectedItem());
          checkDeviceLibrary(key_);
@@ -243,36 +242,42 @@ public class DevicesPanel extends ListeningJPanel {
       
       StrVector strvDevices =  MMStudioMainFrame.getInstance().getMMCore().getLoadedDevicesOfType(deviceType);
       ArrayList<String> devices = new ArrayList<String>(Arrays.asList(strvDevices.toArray()));
-      devices.add(0, "None");
+      devices.add(0, "");
       JComboBox deviceBox = new JComboBox(devices.toArray());
+      deviceBox.setSelectedItem(devices_.getMMDevice(deviceKey));  // selects whatever device was read in by prefs
       deviceBox.addActionListener(new DeviceBoxListener(deviceKey, deviceBox));
-      deviceBox.setSelectedItem(devices_.getMMDevice(deviceKey));
       return deviceBox;
    }
    
+   /**
+    * Constructs a special JComboBox with all cameras that have more than 1 channel,
+    * which we expect to just be the Multicamera device
+    * @param deviceName
+    * @return
+    */
    private JComboBox makeDualCameraDeviceBox(Devices.Keys deviceName) {
       List<String> multiCameras = new ArrayList<String>();
-      multiCameras.add(0, "None");
+      multiCameras.add(0, "");
+      // loop through all cameras to see which have more than 1 channel;
+      //   these we consider to be be our multi cameras
+      String originalCamera = props_.getPropValueString(Devices.Keys.CORE, Properties.Keys.CAMERA); 
       try {
-         StrVector strvDevices = core_.getLoadedDevicesOfType(
-               mmcorej.DeviceType.CameraDevice);
-         String originalCamera = core_.getProperty("Core", "Camera");
-         // loop through all cameras to see which have more than 1 channel;
-         //   these we consider to be be our multi cameras
+         StrVector strvDevices = core_.getLoadedDevicesOfType(mmcorej.DeviceType.CameraDevice);
          for (int i = 0; i < strvDevices.size(); i++) {
             String test = strvDevices.get(i);
-            core_.setProperty("Core", "Camera", test);
+            props_.setPropValue(Devices.Keys.CORE, Properties.Keys.CAMERA, test);
             if (core_.getNumberOfCameraChannels() > 1) {
                multiCameras.add(test);
             }
          }
-         core_.setProperty("Core", "Camera", originalCamera);
       } catch (Exception ex) {
          ReportingUtils.showError("Error detecting multiCamera devices");
+      } finally {
+         props_.setPropValue(Devices.Keys.CORE, Properties.Keys.CAMERA, originalCamera);
       }
-
+      
       JComboBox deviceBox = new JComboBox(multiCameras.toArray());
-      deviceBox.setSelectedItem(devices_.getMMDevice(deviceName));
+      deviceBox.setSelectedItem(devices_.getMMDevice(deviceName));  // selects whatever device was read in by prefs
       deviceBox.addActionListener(new DevicesPanel.DeviceBoxListener(deviceName, deviceBox));
       return deviceBox;
    }

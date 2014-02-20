@@ -261,11 +261,11 @@ public class Devices {
       if (d == null) { // do nothing if key doesn't exist
          return;
       }
-      if (mmDevice == null || mmDevice.equals("None")) { 
+      if (mmDevice == null || mmDevice.equals("")) { 
          // sometimes from init this will be null instead of empty string
          //   like it should
          // restore to empty default DeviceData structure if no device is
-         // selected or if there is an error
+         //   selected or if there is an error
          d = getDefaultDeviceData(key);
       } else {
          // populate the DeviceData structure with actual information about the
@@ -579,7 +579,7 @@ public class Devices {
       for (Devices.Keys key : deviceInfo_.keySet()) {
          String mmDevice = getMMDevice(key);
          if (mmDevice == null) {
-            mmDevice = "None";
+            mmDevice = "";
          }
          if (deviceInfo_.get(key).saveInPref) {
             prefs_.putString(DEVICES_PREF_NODE, key.toString(), mmDevice);
@@ -595,13 +595,9 @@ public class Devices {
    public final void restoreSettings() {
       for (Devices.Keys key : Devices.Keys.values()) {
          if (deviceInfo_.get(key).saveInPref) {
-            String mmDevice = prefs_.getString(DEVICES_PREF_NODE,
-                  key.toString(), "None");
-            if (mmDevice.equals("")) {
-               mmDevice = "None";
-            }
+            String mmDevice = prefs_.getString(DEVICES_PREF_NODE, key.toString(), "");
             if (!loadedDevices_.contains(mmDevice)) {
-               mmDevice = "None";
+               mmDevice = "";
             }
             DeviceData d = deviceInfo_.get(key);
             d.mmDevice = mmDevice;
