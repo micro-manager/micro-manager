@@ -109,7 +109,8 @@ public class Cameras {
     */
    public CameraData[] getCameraData() {
       List<CameraData> list = new ArrayList<CameraData>();
-      list.add(new CameraData("", Devices.Keys.NONE, Devices.Sides.NONE));  // adds blank to top of list
+      list.add(new CameraData(devices_.getDeviceDisplay(Devices.Keys.CAMERAPREVIOUS), 
+            Devices.Keys.CAMERAPREVIOUS, Devices.Sides.NONE));
       for (Devices.Keys devKey : Devices.CAMERAS) {
          if (devices_.getMMDevice(devKey)!=null) {
             String dispKey = devices_.getMMDevice(devKey); // getDeviceDisplay(devKey); 
@@ -125,6 +126,9 @@ public class Cameras {
     */ 
    public void setCamera(Devices.Keys key) {
       if (Devices.CAMERAS.contains(key)) {
+         if (key == Devices.Keys.CAMERAPREVIOUS) {
+            return;
+         }
          String mmDevice = devices_.getMMDevice(key);
          if (mmDevice != null) {
             try {

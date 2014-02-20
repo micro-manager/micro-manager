@@ -78,7 +78,8 @@ public class Devices {
     * DevicesPanel)
     */
    public static enum Keys {
-      NONE, CORE, CAMERAA, CAMERAB, MULTICAMERA, CAMERALOWER, PIEZOA, PIEZOB, GALVOA, GALVOB, XYSTAGE, LOWERZDRIVE, UPPERZDRIVE
+      NONE, CORE, CAMERAA, CAMERAB, MULTICAMERA, CAMERALOWER, CAMERAPREVIOUS, 
+      PIEZOA, PIEZOB, GALVOA, GALVOB, XYSTAGE, LOWERZDRIVE, UPPERZDRIVE
       // ASGALVOA, ASGALVOB,
    };
 
@@ -260,10 +261,9 @@ public class Devices {
       if (d == null) { // do nothing if key doesn't exist
          return;
       }
-      if (mmDevice == null || mmDevice.equals("")) { // sometimes from init this
-                                                     // will be null instead of
-                                                     // empty string like it
-                                                     // should
+      if (mmDevice == null || mmDevice.equals("None")) { 
+         // sometimes from init this will be null instead of empty string
+         //   like it should
          // restore to empty default DeviceData structure if no device is
          // selected or if there is an error
          d = getDefaultDeviceData(key);
@@ -579,9 +579,11 @@ public class Devices {
       for (Devices.Keys key : deviceInfo_.keySet()) {
          String mmDevice = getMMDevice(key);
          if (mmDevice == null) {
-            mmDevice = "";
+            mmDevice = "None";
          }
-         prefs_.putString(DEVICES_PREF_NODE, key.toString(), mmDevice);
+         if (deviceInfo_.get(key).saveInPref) {
+            prefs_.putString(DEVICES_PREF_NODE, key.toString(), mmDevice);
+         }
       }
    }
 
@@ -594,9 +596,12 @@ public class Devices {
       for (Devices.Keys key : Devices.Keys.values()) {
          if (deviceInfo_.get(key).saveInPref) {
             String mmDevice = prefs_.getString(DEVICES_PREF_NODE,
-                  key.toString(), "");
+                  key.toString(), "None");
+            if (mmDevice.equals("")) {
+               mmDevice = "None";
+            }
             if (!loadedDevices_.contains(mmDevice)) {
-               mmDevice = "";
+               mmDevice = "None";
             }
             DeviceData d = deviceInfo_.get(key);
             d.mmDevice = mmDevice;
@@ -626,6 +631,7 @@ public class Devices {
     * @return
     */
    DeviceData getDefaultDeviceData(Devices.Keys key) {
+      DeviceData d_new;
       switch (key) {
       case CAMERAA:
          return new DeviceData(Keys.CAMERAA, "Camera", Sides.A, true);
@@ -658,10 +664,13 @@ public class Devices {
          // case ASGALVOB: return new DeviceData(Keys.ASGALVOB,
          // "Anti-striping Micromirror", Sides.B, true);
       case CORE: // special case
-         DeviceData d = new DeviceData(Keys.CORE, "Core", Sides.NONE, false);
-         d.mmDevice = "Core";
-         d.type = mmcorej.DeviceType.CoreDevice;
-         return d;
+         d_new = new DeviceData(Keys.CORE, "Core", Sides.NONE, false);
+         d_new.mmDevice = "Core";
+         d_new.type = mmcorej.DeviceType.CoreDevice;
+         return d_new;
+      case CAMERAPREVIOUS: // special case
+         d_new = new DeviceData(Keys.CAMERAPREVIOUS, "No change", Sides.NONE, false);
+         return d_new;
       case NONE:
       default:
          return new DeviceData(Keys.NONE, "None", Sides.NONE, false);
@@ -703,6 +712,9 @@ public class Devices {
 
       // special core device
       deviceInfo_.put(Keys.CORE, getDefaultDeviceData(Keys.CORE));
+      
+      // special device representing "don't change the camera"
+      deviceInfo_.put(Keys.CAMERAPREVIOUS, getDefaultDeviceData(Keys.CAMERAPREVIOUS));
 
       listeners_ = new ArrayList<DevicesListenerInterface>();
       listenersEnabled_ = true;

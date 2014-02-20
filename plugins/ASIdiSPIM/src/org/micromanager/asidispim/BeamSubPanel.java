@@ -23,6 +23,8 @@ package org.micromanager.asidispim;
 
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
@@ -58,6 +60,8 @@ public final class BeamSubPanel extends ListeningJPanel {
    private final ItemListener disableSheetA_;
    private final ItemListener disableSheetB_;
    
+   private List<UpdateFromPropertyListenerInterface> propListeners_;
+   
    /**
     * 
     * @param devices the (single) instance of the Devices class
@@ -74,6 +78,8 @@ public final class BeamSubPanel extends ListeningJPanel {
       prefs_ = prefs;
       props_ = props;
       instanceLabel_ = instanceLabel;
+      
+      propListeners_ = new ArrayList<UpdateFromPropertyListenerInterface>();
       
       // check to see if we are on "neutral" side (NONE)
       // if so act like we are on side A but remember that so we can label accordingly
@@ -122,49 +128,46 @@ public final class BeamSubPanel extends ListeningJPanel {
          add(sheetBBox_, "wrap");   
       }
       
-      // disable the sheetA/B boxes when beam is disabled and vice versa
-      disableSheetA_ = new ItemListener() {
-         // only called when the user selects/deselects from GUI or the value _changes_ programmatically
-         public void itemStateChanged(ItemEvent e) {
-            if (e.getStateChange() == ItemEvent.SELECTED) {
-               sheetABox_.setEnabled(true);
-               if (beamABox_.isSelected() && sheetABox_.isSelected()) { // restart sheet if appropriate
-                  sheetABox_.setSelected(false);
-                  sheetABox_.setSelected(true);
-               }
-            } else {
-               sheetABox_.setEnabled(false);
-            }
-
-         }
-      }; 
+      // mechanism to disable the sheetA/B boxes when beam is off and vice versa
+      disableSheetA_ = makeDisableSheetListener(sheetABox_);
+      disableSheetB_ = makeDisableSheetListener(sheetBBox_);
       beamABox_.addItemListener(disableSheetA_);
-      
-      disableSheetB_ = new ItemListener() {
-         // only called when the user selects/deselects from GUI or the value _changes_ programmatically
-         public void itemStateChanged(ItemEvent e) {
-            if (e.getStateChange() == ItemEvent.SELECTED) {
-               sheetBBox_.setEnabled(true);
-               if (beamBBox_.isSelected() && sheetBBox_.isSelected()) { // restart sheet if appropriate
-                  sheetBBox_.setSelected(false);
-                  sheetBBox_.setSelected(true);
-               }
-            } else {
-               sheetBBox_.setEnabled(false);
-            }
-
-         }
-      }; 
       beamBBox_.addItemListener(disableSheetB_);
-      
       
       updateOnTab_ = new JCheckBox("Change settings on tab activate");
       updateOnTab_.setSelected(prefs_.getBoolean(instanceLabel_, Prefs.Keys.ENABLE_BEAM_SETTINGS, true));
       add(updateOnTab_, "center, span 3");
-      
-      
-      
+
    }//constructor
+   
+   
+   private ItemListener makeDisableSheetListener(JCheckBox sheetBox) {
+      /**
+       * nested inner class 
+       * @author Jon
+       */
+      class checkBoxDisableListener implements ItemListener {
+         JCheckBox sheetBox_;
+         
+         public checkBoxDisableListener(JCheckBox sheetBox) {
+            sheetBox_ = sheetBox;
+         }
+         
+         // only called when the user selects/deselects from GUI or the value _changes_ programmatically
+         public void itemStateChanged(ItemEvent e) {
+            if (e.getStateChange() == ItemEvent.SELECTED) {
+               sheetBox_.setEnabled(true);
+            } else {
+               sheetBox_.setEnabled(false);
+               sheetBox_.setSelected(false);  // turn off sheet too, since that's what firmware does
+            }
+         }//itemStateChanged
+         
+      }// nested inner class
+      
+      // main body of function
+      return new checkBoxDisableListener(sheetBox);
+   }
    
    
    /**
@@ -178,7 +181,7 @@ public final class BeamSubPanel extends ListeningJPanel {
     * @param propKey
     * @return constructed JCheckBox
     */
-   public JCheckBox makeCheckBox(String label, Properties.Values offValue, Properties.Values onValue,
+   private JCheckBox makeCheckBox(String label, Properties.Values offValue, Properties.Values onValue,
          Devices.Keys devKey, Properties.Keys propKey, Prefs.Keys prefKey) {
       
       /**
@@ -224,54 +227,60 @@ public final class BeamSubPanel extends ListeningJPanel {
       JCheckBox jc = new JCheckBox(label, startSelected);
       checkBoxListener l = new checkBoxListener(jc, offValue, onValue, devKey, propKey);
       jc.addItemListener(l);
-      if (devices_.getMMDevice(devKey)==null) {  // if we don't have valid device
-         jc.setSelected(false);
-         jc.setEnabled(false);
-      } else {  // if we have valid device then toggle to force setting to initial value
-         jc.setSelected(!startSelected);  // triggers ItemListener
-         jc.setSelected(startSelected);  // triggers ItemListener
-      }
-      devices_.addListener((DevicesListenerInterface) l);
+      devices_.addListener(l);
+      propListeners_.add(l);
       return jc;
    }
    
    /**
-    * Internal function for updating the checkboxes as desired on activation
+    * Internal function for updating the properties according to checkbox settings.
+    * Not called when updateOnTab_.isSelected is FALSE 
     * @param box
     * @param devKey
     * @param propKey
     * @param onValue
     */
-   private void updateOnSelected(JCheckBox box, Devices.Keys devKey, Properties.Keys propKey, Properties.Values onValue) {
-      if (!box.isEnabled()) {
-         return;
-      }
-      boolean boxVal = box.isSelected();
-      boolean propVal = props_.getPropValueString(devKey, propKey).equals(onValue.toString());
-      if (updateOnTab_.isSelected()) { // update settings when tab got selected
-         if (boxVal != propVal) {
-            box.setSelected(!boxVal);
-            box.setSelected(boxVal);
+   private void setPropertyToBoxValue(JCheckBox box, Devices.Keys devKey, Properties.Keys propKey, 
+         Properties.Values onValue, Properties.Values offValue) {
+      if (devices_.getMMDevice(devKey)==null) {
+         box.setEnabled(false);
+         box.setSelected(false);
+      } else {
+         box.setEnabled(true);
+         boolean boxVal = box.isSelected();
+         boolean propVal = props_.getPropValueString(devKey, propKey).equals(onValue.toString());
+         if (boxVal != propVal) {  // if property value is "wrong" then change it
+            props_.setPropValue(devKey, propKey, (boxVal ? onValue : offValue));
          }
-      } else { // update GUI with present settings
-         box.setSelected(!propVal);
-         box.setSelected(propVal);
       }
    }
    
    /**
-   * Should be called when enclosing panel gets focus (need to call in gotSelected() function of enclosing frame)
+   * Should be called when enclosing panel gets focus (need to call in gotSelected() function of enclosing frame).
+   * Includes first time if the frame is selected initially.
    */ 
    @Override
   public void gotSelected() {
-      updateOnSelected(beamABox_, Devices.getSideSpecificKey(Devices.Keys.GALVOA, side_), 
-               Properties.Keys.BEAM_ENABLED, Properties.Values.YES);
-      updateOnSelected(sheetABox_, Devices.getSideSpecificKey(Devices.Keys.GALVOA, side_),
-               Properties.Keys.SA_MODE_X, Properties.Values.SAM_ENABLED);
-      updateOnSelected(beamBBox_, Devices.getSideSpecificKey(Devices.Keys.GALVOA, otherSide_),
-               Properties.Keys.BEAM_ENABLED, Properties.Values.YES);
-      updateOnSelected(sheetBBox_, Devices.getSideSpecificKey(Devices.Keys.GALVOA, otherSide_), 
-               Properties.Keys.SA_MODE_X, Properties.Values.SAM_ENABLED);
+      // have to do this the "hard way" because itemStateChanged only responds to _changes_ in value
+      //   and changing the beam setting (to refresh it) erases the state of the sheet setting in firmware
+      if (updateOnTab_.isSelected()) { // update properties from settings in checkboxes
+         setPropertyToBoxValue(beamABox_, Devices.getSideSpecificKey(Devices.Keys.GALVOA, side_), 
+               Properties.Keys.BEAM_ENABLED, Properties.Values.YES, Properties.Values.NO);
+         setPropertyToBoxValue(sheetABox_, Devices.getSideSpecificKey(Devices.Keys.GALVOA, side_),
+               Properties.Keys.SA_MODE_X, Properties.Values.SAM_ENABLED, Properties.Values.SAM_DISABLED);
+         setPropertyToBoxValue(beamBBox_, Devices.getSideSpecificKey(Devices.Keys.GALVOA, otherSide_),
+               Properties.Keys.BEAM_ENABLED, Properties.Values.YES, Properties.Values.NO);
+         setPropertyToBoxValue(sheetBBox_, Devices.getSideSpecificKey(Devices.Keys.GALVOA, otherSide_), 
+               Properties.Keys.SA_MODE_X, Properties.Values.SAM_ENABLED, Properties.Values.SAM_DISABLED);
+      } else { // update GUI with present settings according to properties
+         for (UpdateFromPropertyListenerInterface listener : propListeners_) {
+            listener.updateFromProperty();
+         }
+      }
+      // make sure the sheet enables get set properly; this is handled on user input by 
+      //   listeners based on makeDisableSheetListener
+      sheetABox_.setEnabled(beamABox_.isSelected());
+      sheetBBox_.setEnabled(beamBBox_.isSelected());
   }
    
    @Override

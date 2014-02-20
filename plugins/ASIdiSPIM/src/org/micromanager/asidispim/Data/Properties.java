@@ -151,7 +151,7 @@ public class Properties {
     * @param ignoreError false (default) will do error checking, true means ignores non-existing property
     * @return
     */
-   boolean hasProperty(Devices.Keys device, Properties.Keys name, boolean ignoreError) {
+   public boolean hasProperty(Devices.Keys device, Properties.Keys name, boolean ignoreError) {
       String mmDevice = null;
       try {
          if (ignoreError) {
@@ -173,7 +173,7 @@ public class Properties {
     * @param name enum key for property 
     * @return
     */
-   boolean hasProperty(Devices.Keys device, Properties.Keys name) {
+   public boolean hasProperty(Devices.Keys device, Properties.Keys name) {
       return hasProperty(device, name, false);
    }
    

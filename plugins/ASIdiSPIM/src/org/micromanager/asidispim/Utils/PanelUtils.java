@@ -146,16 +146,18 @@ public class PanelUtils {
                // property reads (core calls) are inexpensive compared to 
                //   property writes (serial comm) so only write if needed
                // however, this doesn't solve problem of properties that are really
-               //    for the card (not for the axis) because other devices on same
+               //    card-specific (not axis-specific) because other devices on same
                //    card may have been changed but not refreshed in micro-Manager
                if (props_.getPropValueInteger(devKey, propKey_) != spinnerValue) {
-                  props_.setPropValue(devKey, propKey_, getSpinnerValue());
+                  props_.setPropValue(devKey, propKey_, spinnerValue, true);
+                  // ignore error for sake of missing device assignment
                }
             }
          }
 
          public void updateFromProperty() {
             sp_.setValue(props_.getPropValueInteger(devKeys_[0], propKey_, true));
+            stateChanged(new ChangeEvent(sp_));  // fire manually to set all the devices is devKeys
          }
          
          public void devicesChangedAlert() {
@@ -167,11 +169,13 @@ public class PanelUtils {
       int origVal = props.getPropValueInteger(devKeys[0], propKey, true);
       if (origVal < min) {
          origVal = min;
-         props.setPropValue(devKeys[0], propKey, min);
+         props.setPropValue(devKeys[0], propKey, min, true);
+         // ignore error for sake of missing device assignment
       }
       if (origVal > max) {
          origVal = max;
-         props.setPropValue(devKeys[0], propKey, max);
+         props.setPropValue(devKeys[0], propKey, max, true);
+         // ignore error for sake of missing device assignment
       }
 
       SpinnerModel jspm = new SpinnerNumberModel(origVal, min, max, 1);
@@ -226,13 +230,15 @@ public class PanelUtils {
                //    for the card (not for the axis) because other devices on same
                //    card may have been changed but not refreshed in micro-Manager
                if (props_.getPropValueFloat(devKey, propKey_) != spinnerValue) {
-                  props_.setPropValue(devKey, propKey_, getSpinnerValue());
+                  props_.setPropValue(devKey, propKey_, spinnerValue, true);
+               // ignore error for sake of missing device assignment
                }
             }
          }
 
          public void updateFromProperty() {
             sp_.setValue(props_.getPropValueFloat(devKeys_[0], propKey_, true));
+            stateChanged(new ChangeEvent(sp_));  // fire manually to set all the devices is devKeys
          }
          
          public void devicesChangedAlert() {
@@ -244,9 +250,13 @@ public class PanelUtils {
       double origVal = (double)props.getPropValueFloat(devKeys[0], propKey, true);
       if (origVal < min) {
          origVal = min;
+         props.setPropValue(devKeys[0], propKey, (float)min, true);
+         // ignore error for sake of missing device assignment
       }
       if (origVal > max) {
          origVal = max;
+         props.setPropValue(devKeys[0], propKey, (float)max, true);
+         // ignore error for sake of missing device assignment
       }
       
       // all devices' properties will be set on tab's gotSelected which calls updateFromProperty
@@ -293,6 +303,7 @@ public class PanelUtils {
          }
 
          public void actionPerformed(ActionEvent ae) {
+            // unlike analogous int/float functions, this handler is called on any setSelectedItem 
             String boxValue = getBoxValue();
             for (Devices.Keys devKey : devKeys_) {
                // property reads (core calls) are inexpensive compared to 
@@ -301,7 +312,7 @@ public class PanelUtils {
                //    for the card (not for the axis) because other devices on same
                //    card may have been changed but not refreshed in micro-Manager
                if (!props_.getPropValueString(devKey, propKey_).equals(boxValue)) {
-                  props_.setPropValue(devKey, propKey_, getBoxValue());
+                  props_.setPropValue(devKey, propKey_, boxValue, true);
                }
             }
          }

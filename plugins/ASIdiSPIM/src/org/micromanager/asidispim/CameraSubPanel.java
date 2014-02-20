@@ -130,7 +130,7 @@ public final class CameraSubPanel extends ListeningJPanel implements LiveModeLis
       cameraBox.addActionListener(csbl);
       devices_.addListener(csbl);
       // intentionally set from prefs after adding listeners so programmatic change from prefs will be handled like user change
-      String selectedItem = prefs_.getString(instanceLabel_, Prefs.Keys.CAMERA, "");
+      String selectedItem = prefs_.getString(instanceLabel_, Prefs.Keys.CAMERA, Devices.Keys.CAMERAPREVIOUS.toString());
       cameraBox.setSelectedItem(selectedItem);
       return cameraBox;
    }
@@ -157,12 +157,8 @@ public final class CameraSubPanel extends ListeningJPanel implements LiveModeLis
        */
       public void actionPerformed(ActionEvent ae) {
          Cameras.CameraData sel = CameraDataHash_.get( (String) box_.getSelectedItem());
-         if (sel != null) {
-            if (sel.deviceKey != Devices.Keys.NONE) {
-               cameras_.setCamera(sel.deviceKey);
-               prefs_.putString(instanceLabel_, Prefs.Keys.CAMERA, (String) box_.getSelectedItem());
-            }
-         }
+         cameras_.setCamera(sel.deviceKey);
+         prefs_.putString(instanceLabel_, Prefs.Keys.CAMERA, (String) box_.getSelectedItem());
       }
       
       /**

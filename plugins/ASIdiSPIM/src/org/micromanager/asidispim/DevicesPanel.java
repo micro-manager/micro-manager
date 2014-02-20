@@ -54,6 +54,19 @@ public class DevicesPanel extends ListeningJPanel {
    private final Properties props_;
    private final CMMCore core_;
    
+   private final JComboBox boxXY_;
+   private final JComboBox boxLowerZ_;
+   private final JComboBox boxUpperZ_;
+   private final JComboBox boxLowerCam_;
+   private final JComboBox boxMultiCam_;
+   private final JComboBox boxScannerA_;
+   private final JComboBox boxScannerB_;
+   private final JComboBox boxPiezoA_;
+   private final JComboBox boxPiezoB_;
+   private final JComboBox boxCameraA_;
+   private final JComboBox boxCameraB_;
+   
+   
    /**
     * Constructs the GUI Panel that lets the user specify which device to use
     * @param gui - hook to MMstudioMainFrame script interface
@@ -73,22 +86,24 @@ public class DevicesPanel extends ListeningJPanel {
       devices_.enableListeners(false);
 
       add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.XYSTAGE) + ":", null, JLabel.RIGHT));
-      JComboBox tmp_cb = makeDeviceBox(mmcorej.DeviceType.XYStageDevice, Devices.Keys.XYSTAGE); 
-      add(tmp_cb, "span 2, center, wrap");
+      boxXY_ = makeDeviceSelectionBox(mmcorej.DeviceType.XYStageDevice, Devices.Keys.XYSTAGE); 
+      add(boxXY_, "span 2, center, wrap");
       
       add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.LOWERZDRIVE) + ":", null, JLabel.RIGHT));
-      tmp_cb = makeDeviceBox(mmcorej.DeviceType.StageDevice, Devices.Keys.LOWERZDRIVE);
-      add(tmp_cb, "span 2, center, wrap");
+      boxLowerZ_ = makeDeviceSelectionBox(mmcorej.DeviceType.StageDevice, Devices.Keys.LOWERZDRIVE);
+      add(boxLowerZ_, "span 2, center, wrap");
       
       add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.UPPERZDRIVE) + ":", null, JLabel.RIGHT));
-      tmp_cb = makeDeviceBox(mmcorej.DeviceType.StageDevice, Devices.Keys.UPPERZDRIVE);
-      add(tmp_cb, "span 2, center, wrap");
+      boxUpperZ_ = makeDeviceSelectionBox(mmcorej.DeviceType.StageDevice, Devices.Keys.UPPERZDRIVE);
+      add(boxUpperZ_, "span 2, center, wrap");
       
       add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.CAMERALOWER) + ":", null, JLabel.RIGHT));
-      add(makeDeviceBox(mmcorej.DeviceType.CameraDevice, Devices.Keys.CAMERALOWER), "span 2, center, wrap");
+      boxLowerCam_ = makeDeviceSelectionBox(mmcorej.DeviceType.CameraDevice, Devices.Keys.CAMERALOWER);
+      add(boxLowerCam_, "span 2, center, wrap");
             
       add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.MULTICAMERA) + ":", null, JLabel.RIGHT));
-      add(makeDualCameraDeviceBox(Devices.Keys.MULTICAMERA), "span 2, center, wrap");
+      boxMultiCam_ = makeDualCameraDeviceBox(Devices.Keys.MULTICAMERA);
+      add(boxMultiCam_, "span 2, center, wrap");
 
       add(new JLabel("Imaging Path A"), "skip 1");
       add(new JLabel("Imaging Path B"), "wrap");
@@ -96,20 +111,22 @@ public class DevicesPanel extends ListeningJPanel {
       JLabel label = new JLabel(devices_.getDeviceDisplayGeneric(Devices.Keys.GALVOA) + ":", null, JLabel.RIGHT);
       label.setToolTipText("Should be the first two axes on the MicroMirror card, usually AB");
       add (label);
-      tmp_cb = makeDeviceBox(mmcorej.DeviceType.GalvoDevice, Devices.Keys.GALVOA);
-      add(tmp_cb);
-      tmp_cb = makeDeviceBox(mmcorej.DeviceType.GalvoDevice, Devices.Keys.GALVOB);
-      add(tmp_cb, "wrap");
+      boxScannerA_ = makeDeviceSelectionBox(mmcorej.DeviceType.GalvoDevice, Devices.Keys.GALVOA);
+      add(boxScannerA_);
+      boxScannerB_ = makeDeviceSelectionBox(mmcorej.DeviceType.GalvoDevice, Devices.Keys.GALVOB);
+      add(boxScannerB_, "wrap");
       
       add(new JLabel(devices_.getDeviceDisplayGeneric(Devices.Keys.PIEZOA) + ":", null, JLabel.RIGHT));
-      tmp_cb = makeDeviceBox(mmcorej.DeviceType.StageDevice, Devices.Keys.PIEZOA);
-      add(tmp_cb);
-      tmp_cb = makeDeviceBox(mmcorej.DeviceType.StageDevice, Devices.Keys.PIEZOB);
-      add(tmp_cb, "wrap");
+      boxPiezoA_ = makeDeviceSelectionBox(mmcorej.DeviceType.StageDevice, Devices.Keys.PIEZOA);
+      add(boxPiezoA_);
+      boxPiezoB_ = makeDeviceSelectionBox(mmcorej.DeviceType.StageDevice, Devices.Keys.PIEZOB);
+      add(boxPiezoB_, "wrap");
 
       add(new JLabel("Camera:", null, JLabel.RIGHT));
-      add(makeDeviceBox(mmcorej.DeviceType.CameraDevice, Devices.Keys.CAMERAA));
-      add(makeDeviceBox(mmcorej.DeviceType.CameraDevice, Devices.Keys.CAMERAB), "wrap");
+      boxCameraA_ = makeDeviceSelectionBox(mmcorej.DeviceType.CameraDevice, Devices.Keys.CAMERAA);
+      add(boxCameraA_);
+      boxCameraB_ = makeDeviceSelectionBox(mmcorej.DeviceType.CameraDevice, Devices.Keys.CAMERAB);
+      add(boxCameraB_, "wrap");
       
       add(new JLabel("Note: plugin must be restarted for some changes to take full effect."), "span 3");
 
@@ -118,30 +135,11 @@ public class DevicesPanel extends ListeningJPanel {
       JLabel imgLabel = new JLabel(new ImageIcon(getClass().getResource("/org/micromanager/asidispim/icons/diSPIM.png")));
       add(imgLabel, "cell 4 0 1 12, growy");
       
-      
       // turn on listeners again
       devices_.enableListeners(true);
       
    }//constructor
    
-   // was nested class in makeDeviceBox, needed to move back out for makeDualCameraDeviceBox()
-   // TODO clean up
-   class DeviceBoxListener implements ActionListener {
-      Devices.Keys key_;
-      JComboBox box_;
-
-      public DeviceBoxListener(Devices.Keys key, JComboBox box) {
-         key_ = key;
-         box_ = box;
-      }
-      
-      @Override
-      public void actionPerformed(ActionEvent ae) {
-         devices_.setMMDevice(key_, (String) box_.getSelectedItem());
-         checkDeviceLibrary(key_);
-         checkFirmwareVersion(key_);
-      }
-   };
    
    /**
     * checks firmware versions and gives any necessary warnings to user
@@ -211,6 +209,25 @@ public class DevicesPanel extends ListeningJPanel {
       }
    }
    
+   // was nested class in makeDeviceBox, needed to move back out for makeDualCameraDeviceBox()
+   // TODO clean up
+   class DeviceBoxListener implements ActionListener {
+      Devices.Keys key_;
+      JComboBox box_;
+
+      public DeviceBoxListener(Devices.Keys key, JComboBox box) {
+         key_ = key;
+         box_ = box;
+      }
+      
+      @Override
+      public void actionPerformed(ActionEvent ae) {
+         devices_.setMMDevice(key_, (String) box_.getSelectedItem());
+         checkDeviceLibrary(key_);
+         checkFirmwareVersion(key_);
+      }
+   };
+   
    /**
     * Constructs a JComboBox populated with devices of specified Micro-Manager type
     * Attaches a listener and sets selected item to what is specified in the Devices
@@ -220,29 +237,28 @@ public class DevicesPanel extends ListeningJPanel {
     * @param deviceName - ASi diSPIM device type (see Devices class)
     * @return final JComboBox
     */
-   private JComboBox makeDeviceBox(mmcorej.DeviceType deviceType, Devices.Keys deviceKey) {
+   private JComboBox makeDeviceSelectionBox(mmcorej.DeviceType deviceType, Devices.Keys deviceKey) {
       
-      // class DeviceBoxListener was here as nested class
+      // class DeviceBoxListener used to be here as nested class
       
       StrVector strvDevices =  MMStudioMainFrame.getInstance().getMMCore().getLoadedDevicesOfType(deviceType);
       ArrayList<String> devices = new ArrayList<String>(Arrays.asList(strvDevices.toArray()));
-      devices.add(0, "");  // adds initial blank
+      devices.add(0, "None");
       JComboBox deviceBox = new JComboBox(devices.toArray());
       deviceBox.addActionListener(new DeviceBoxListener(deviceKey, deviceBox));
       deviceBox.setSelectedItem(devices_.getMMDevice(deviceKey));
       return deviceBox;
    }
    
-   // TODO (for Jon) understand what this does
    private JComboBox makeDualCameraDeviceBox(Devices.Keys deviceName) {
       List<String> multiCameras = new ArrayList<String>();
-      multiCameras.add("");
+      multiCameras.add(0, "None");
       try {
          StrVector strvDevices = core_.getLoadedDevicesOfType(
                mmcorej.DeviceType.CameraDevice);
-
          String originalCamera = core_.getProperty("Core", "Camera");
-
+         // loop through all cameras to see which have more than 1 channel;
+         //   these we consider to be be our multi cameras
          for (int i = 0; i < strvDevices.size(); i++) {
             String test = strvDevices.get(i);
             core_.setProperty("Core", "Camera", test);
@@ -251,7 +267,6 @@ public class DevicesPanel extends ListeningJPanel {
             }
          }
          core_.setProperty("Core", "Camera", originalCamera);
-
       } catch (Exception ex) {
          ReportingUtils.showError("Error detecting multiCamera devices");
       }

@@ -423,10 +423,10 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
     */
    @Override
    public void gotSelected() {
-      props_.callListeners();
       joystickPanel_.gotSelected();
       cameraPanel_.gotSelected();
       beamPanel_.gotSelected();
+//      props_.callListeners();  // not used yet, only for SPIM Params
       updateStartStopPositions();  // I'm undecided if this is wise or not, see updateStartStopPositions() JavaDoc
       
       // moves illumination piezo to home

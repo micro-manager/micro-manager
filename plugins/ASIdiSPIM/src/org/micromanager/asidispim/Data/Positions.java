@@ -193,7 +193,7 @@ public class Positions {
    }
    
    /**
-    * Sets the position of specified stage to the specified value
+    * Sets the position of specified stage to the specified value using appropriate core calls
     * @param devKey
     * @param dir
     * @param pos new position of the stage
@@ -203,8 +203,7 @@ public class Positions {
          String mmDevice = devices_.getMMDeviceException(devKey);
          if (devices_.is1DStage(devKey)) {
             core_.setPosition(mmDevice, pos);
-         }
-         if (devices_.isXYStage(devKey)) {
+         } else  if (devices_.isXYStage(devKey)) {
             if (dir == Joystick.Directions.X) {
                double ypos = core_.getYPosition(mmDevice);
                core_.setXYPosition(mmDevice, pos, ypos);
@@ -219,8 +218,36 @@ public class Positions {
             } else if (dir == Joystick.Directions.Y) {
                core_.setGalvoPosition(mmDevice, pos2D.x, pos);
             }
-         } else if (devices_.is1DStage(devKey)) {
-            core_.setPosition(mmDevice, pos);
+         }
+      } catch (Exception ex) {
+         ReportingUtils.showError(ex);
+      }
+   }
+   
+   /**
+    * Sets the relative position of specified stage to the specified value using appropriate core calls
+    * @param devKey
+    * @param dir
+    * @param pos new position of the stage
+    */
+   public void setPositionRelative(Devices.Keys devKey, Joystick.Directions dir, double delta) {
+      try {
+         String mmDevice = devices_.getMMDeviceException(devKey);
+         if (devices_.is1DStage(devKey)) {
+            core_.setRelativePosition(mmDevice, delta);
+         } else if (devices_.isXYStage(devKey)) {
+            if (dir == Joystick.Directions.X) {
+               core_.setRelativeXYPosition(mmDevice, delta, 0);
+            } else if (dir == Joystick.Directions.Y) {
+               core_.setRelativeXYPosition(mmDevice, 0, delta);
+            }
+         } else if (devices_.isGalvo(devKey)) {
+            Point2D.Double pos2D = core_.getGalvoPosition(mmDevice);
+            if (dir == Joystick.Directions.X) {
+               core_.setGalvoPosition(mmDevice, pos2D.x + delta, pos2D.y);
+            } else if (dir == Joystick.Directions.Y) {
+               core_.setGalvoPosition(mmDevice, pos2D.x, pos2D.y + delta);
+            }
          }
       } catch (Exception ex) {
          ReportingUtils.showError(ex);

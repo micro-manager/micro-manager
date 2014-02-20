@@ -87,7 +87,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       super ("Navigation",
             new MigLayout(
               "", 
-              "[right]8[align center]16[right]8[60px,center]8[center]8[center]8[center]8[center]",
+              "[right]8[align center]16[right]8[60px,center]8[center]8[center]8[center]8[center]8[center]",
               "[]6[]"));
       devices_ = devices;
       props_ = props;
@@ -106,6 +106,8 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       xPositionLabel_ = new JLabel("");
       add(xPositionLabel_);
       add(pu.makeSetPositionField(Devices.Keys.XYSTAGE, Joystick.Directions.X, positions_));
+      add(makeIncrementButton(Devices.Keys.XYSTAGE, Joystick.Directions.X, -10, "-"), "split 2");
+      add(makeIncrementButton(Devices.Keys.XYSTAGE, Joystick.Directions.X, 10, "+"));
       add(makeMoveToOriginButton(Devices.Keys.XYSTAGE, Joystick.Directions.X));
       add(makeSetOriginHereButton(Devices.Keys.XYSTAGE, Joystick.Directions.X), "wrap");
       
@@ -113,6 +115,8 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       yPositionLabel_ = new JLabel("");
       add(yPositionLabel_);
       add(pu.makeSetPositionField(Devices.Keys.XYSTAGE, Joystick.Directions.Y, positions_));
+      add(makeIncrementButton(Devices.Keys.XYSTAGE, Joystick.Directions.Y, -10, "-"), "split 2");
+      add(makeIncrementButton(Devices.Keys.XYSTAGE, Joystick.Directions.Y, 10, "+"));
       add(makeMoveToOriginButton(Devices.Keys.XYSTAGE, Joystick.Directions.Y));
       add(makeSetOriginHereButton(Devices.Keys.XYSTAGE, Joystick.Directions.Y), "wrap");
       
@@ -120,6 +124,8 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       lowerZPositionLabel_ = new JLabel("");
       add(lowerZPositionLabel_);
       add(pu.makeSetPositionField(Devices.Keys.LOWERZDRIVE, Joystick.Directions.NONE, positions_));
+      add(makeIncrementButton(Devices.Keys.LOWERZDRIVE, Joystick.Directions.NONE, -10, "-"), "split 2");
+      add(makeIncrementButton(Devices.Keys.LOWERZDRIVE, Joystick.Directions.NONE, 10, "+"));
       add(makeMoveToOriginButton(Devices.Keys.LOWERZDRIVE, Joystick.Directions.NONE));
       add(makeSetOriginHereButton(Devices.Keys.LOWERZDRIVE, Joystick.Directions.NONE), "wrap");
       
@@ -127,6 +133,8 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       upperZPositionLabel_ = new JLabel("");
       add(upperZPositionLabel_);
       add(pu.makeSetPositionField(Devices.Keys.UPPERZDRIVE, Joystick.Directions.NONE, positions_));
+      add(makeIncrementButton(Devices.Keys.UPPERZDRIVE, Joystick.Directions.NONE, -10, "-"), "split 2");
+      add(makeIncrementButton(Devices.Keys.UPPERZDRIVE, Joystick.Directions.NONE, 10, "+"));
       add(makeMoveToOriginButton(Devices.Keys.UPPERZDRIVE, Joystick.Directions.NONE));
       add(makeSetOriginHereButton(Devices.Keys.UPPERZDRIVE, Joystick.Directions.NONE), "wrap");   
       
@@ -137,18 +145,24 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       piezoAPositionLabel_ = new JLabel("");
       add(piezoAPositionLabel_);
       add(pu.makeSetPositionField(Devices.Keys.PIEZOA, Joystick.Directions.NONE, positions_));
+      add(makeIncrementButton(Devices.Keys.PIEZOA, Joystick.Directions.NONE, -5, "-"), "split 2");
+      add(makeIncrementButton(Devices.Keys.PIEZOA, Joystick.Directions.NONE, 5, "+"));
       add(makeMoveToOriginButton(Devices.Keys.PIEZOA, Joystick.Directions.NONE), "wrap");
       
       add(new JLabel(devices_.getDeviceDisplayVerbose(Devices.Keys.PIEZOB) + ":"));
       piezoBPositionLabel_ = new JLabel("");
       add(piezoBPositionLabel_);
       add(pu.makeSetPositionField(Devices.Keys.PIEZOB, Joystick.Directions.NONE, positions_));
+      add(makeIncrementButton(Devices.Keys.PIEZOB, Joystick.Directions.NONE, -5, "-"), "split 2");
+      add(makeIncrementButton(Devices.Keys.PIEZOB, Joystick.Directions.NONE, 5, "+"));
       add(makeMoveToOriginButton(Devices.Keys.PIEZOB, Joystick.Directions.NONE), "wrap");
 
       add(new JLabel(devices_.getDeviceDisplayVerbose(Devices.Keys.GALVOA, Joystick.Directions.X) + ":"));
       galvoAxPositionLabel_ = new JLabel("");
       add(galvoAxPositionLabel_);
       add(pu.makeSetPositionField(Devices.Keys.GALVOA, Joystick.Directions.X, positions_));
+      add(makeIncrementButton(Devices.Keys.GALVOA, Joystick.Directions.X, -0.2, "-"), "split 2");
+      add(makeIncrementButton(Devices.Keys.GALVOA, Joystick.Directions.X, 0.2, "+"));
       add(makeMoveToOriginButton(Devices.Keys.GALVOA, Joystick.Directions.X), "wrap");
       
       cameraPanel_ = new CameraSubPanel(cameras_, devices_, panelName_, Devices.Sides.NONE, prefs_, true);
@@ -158,12 +172,16 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       galvoAyPositionLabel_ = new JLabel("");
       add(galvoAyPositionLabel_);
       add(pu.makeSetPositionField(Devices.Keys.GALVOA, Joystick.Directions.Y, positions_));
+      add(makeIncrementButton(Devices.Keys.GALVOA, Joystick.Directions.Y, -0.2, "-"), "split 2");
+      add(makeIncrementButton(Devices.Keys.GALVOA, Joystick.Directions.Y, 0.2, "+"));
       add(makeMoveToOriginButton(Devices.Keys.GALVOA, Joystick.Directions.Y), "wrap");
       
       add(new JLabel(devices_.getDeviceDisplayVerbose(Devices.Keys.GALVOB, Joystick.Directions.X) + ":"));
       galvoBxPositionLabel_ = new JLabel("");
       add(galvoBxPositionLabel_);
       add(pu.makeSetPositionField(Devices.Keys.GALVOB, Joystick.Directions.X, positions_));
+      add(makeIncrementButton(Devices.Keys.GALVOB, Joystick.Directions.X, -0.2, "-"), "split 2");
+      add(makeIncrementButton(Devices.Keys.GALVOB, Joystick.Directions.X, 0.2, "+"));
       add(makeMoveToOriginButton(Devices.Keys.GALVOB, Joystick.Directions.X), "wrap");
       
       final JCheckBox activeTimerCheckBox = new JCheckBox("Update positions continually");
@@ -186,6 +204,8 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       galvoByPositionLabel_ = new JLabel("");
       add(galvoByPositionLabel_);
       add(pu.makeSetPositionField(Devices.Keys.GALVOB, Joystick.Directions.Y, positions_));
+      add(makeIncrementButton(Devices.Keys.GALVOB, Joystick.Directions.Y, -0.2, "-"), "split 2");
+      add(makeIncrementButton(Devices.Keys.GALVOB, Joystick.Directions.Y, 0.2, "+"));
       add(makeMoveToOriginButton(Devices.Keys.GALVOB, Joystick.Directions.Y), "wrap");
       
 //      JButton buttonUpdate = new JButton("Update once");
@@ -219,7 +239,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
             }
          }
       });
-      add(buttonHalt, "cell 9 0, span 1 10, growy");
+      add(buttonHalt, "cell 11 0, span 1 10, growy");
       
       // fill the labels with position values (the positions_ data structure
       //   has been filled via the main plugin frame's call to stagePosUpdater.oneTimeUpdate()
@@ -296,6 +316,33 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       jb.addActionListener(l);
       return jb;
    }
+   
+   private JButton makeIncrementButton(Devices.Keys key, Joystick.Directions dir, double delta, String label) {
+      class incrementButtonActionListener implements ActionListener {
+         private final Devices.Keys key_;
+         private final Joystick.Directions dir_;
+         private final double delta_;
+         
+         public void actionPerformed(ActionEvent e) {
+            try {
+               positions_.setPositionRelative(key_, dir_, delta_);
+            } catch (Exception ex) {
+               ReportingUtils.showError(ex);
+            }
+         }
+
+         private incrementButtonActionListener(Devices.Keys key, Joystick.Directions dir, double delta) {
+            key_ = key;
+            dir_ = dir;
+            delta_ = delta;
+         }
+      }
+      
+      JButton jb = new JButton(label);
+      ActionListener l = new incrementButtonActionListener(key, dir, delta);
+      jb.addActionListener(l);
+      return jb;
+   }
 
    /**
     * required by LiveModeListener interface; just pass call along to camera panel
@@ -319,6 +366,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       joystickPanel_.gotSelected();
       cameraPanel_.gotSelected();
       beamPanel_.gotSelected();
+//      props_.callListeners();  // not used yet, only for SPIM Params
    }
    
    @Override
