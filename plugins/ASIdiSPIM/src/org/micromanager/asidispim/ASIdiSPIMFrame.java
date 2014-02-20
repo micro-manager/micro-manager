@@ -167,6 +167,7 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
             setupPanelA_.saveSettings();
             setupPanelB_.saveSettings();
             navigationPanel_.saveSettings();
+            spimParamsPanel_.saveSettings();
 
             // save pane location in prefs
             prefs_.putInt(MAIN_PREF_NODE, Prefs.Keys.WIN_LOC_X, evt.getWindow().getX());

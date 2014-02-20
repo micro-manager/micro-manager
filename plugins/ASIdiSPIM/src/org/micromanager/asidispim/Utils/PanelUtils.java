@@ -195,8 +195,8 @@ public class PanelUtils {
    public JSpinner makeSpinnerFloat(double min, double max, double step, Properties props, Devices devs, 
          Devices.Keys [] devKeys, Properties.Keys propKey) {
       // same as IntSpinnerListener except
-      //  - cast to Float object in stateChanged()
-      //  - getPropValueFloat in spimParamsChangedAlert()
+      //  - different getSpinnerValue() implementation
+      //  - getPropValueFloat in stateChanged()
       class SpinnerListenerFloat implements ChangeListener, UpdateFromPropertyListenerInterface, DevicesListenerInterface {
          JSpinner sp_;
          Properties props_;

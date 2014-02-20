@@ -31,13 +31,17 @@ import org.micromanager.asidispim.Utils.DevicesListenerInterface;
 import org.micromanager.asidispim.Utils.ListeningJPanel;
 import org.micromanager.asidispim.Utils.PanelUtils;
 import org.micromanager.utils.MMException;
+import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.ReportingUtils;
 
 import javax.swing.JButton;
+import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JComboBox;
 import javax.swing.JSeparator;
 import javax.swing.JSpinner;
+import javax.swing.JTextField;
+import javax.swing.text.NumberFormatter;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -60,10 +64,15 @@ public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerI
    private final AcquisitionWrapperEngine acqEngine_;
    private final CMMCore core_;
 
-   private JSpinner numSlices_;
-   private JSpinner numScansPerSlice_;
-   private JSpinner lineScanPeriodA_;
-   private JSpinner numRepeats_;
+   private final JSpinner numSlices_;
+   private final JSpinner numSides_;
+   private final JComboBox firstSide_;
+   private final JSpinner numScansPerSlice_;
+   private final JSpinner lineScanPeriod_;
+   private final JSpinner numRepeats_;
+   private final JSpinner delaySlice_;
+   private final JSpinner delaySide_;
+   private final JTextField acqExposure_;
 
    private final CameraSubPanel cameraPanel_;
 
@@ -71,7 +80,7 @@ public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerI
       super("SPIM Params", 
             new MigLayout(
                   "",
-                  "[right]16[center]16[center]16[center]",
+                  "[right]16[center]16[center]16[center]16[center]",
                   "[]12[]"));
       devices_ = devices;
       props_ = props;
@@ -81,21 +90,20 @@ public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerI
       core_ = MMStudioMainFrame.getInstance().getCore();
 
       PanelUtils pu = new PanelUtils();
-      JSpinner tmp_jsp;
 
       add(new JLabel("Number of sides:"), "split 2");
-      tmp_jsp = pu.makeSpinnerInteger(1, 2, props_, devices_, 
+      numSides_ = pu.makeSpinnerInteger(1, 2, props_, devices_, 
             new Devices.Keys [] {Devices.Keys.GALVOA, Devices.Keys.GALVOB},
             Properties.Keys.SPIM_NUM_SIDES);
-      add(tmp_jsp);
+      add(numSides_);
 
       add(new JLabel("First side:"), "align right");
       String[] ab = {Devices.Sides.A.toString(), Devices.Sides.B.toString()};
-      JComboBox tmp_box = pu.makeDropDownBox(ab, props_, devices_, 
+      firstSide_ = pu.makeDropDownBox(ab, props_, devices_, 
             new Devices.Keys [] {Devices.Keys.GALVOA, Devices.Keys.GALVOB}, 
             Properties.Keys.SPIM_FIRSTSIDE);
       // no listener here
-      add(tmp_box, "wrap");
+      add(firstSide_, "wrap");
 
       add(new JLabel("Number of repeats:"));
       numRepeats_ = pu.makeSpinnerInteger(1, 100, props_, devices_, 
@@ -116,22 +124,22 @@ public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerI
       add(numScansPerSlice_, "wrap");
 
       add(new JLabel("Line scan period (ms):"));
-      lineScanPeriodA_ = pu.makeSpinnerInteger(1, 10000, props_, devices_, 
+      lineScanPeriod_ = pu.makeSpinnerInteger(1, 10000, props_, devices_, 
             new Devices.Keys [] {Devices.Keys.GALVOA, Devices.Keys.GALVOB},
             Properties.Keys.SPIM_LINESCAN_PERIOD);
-      add(lineScanPeriodA_, "wrap");
+      add(lineScanPeriod_, "wrap");
 
       add(new JLabel("Delay before each slice (ms):"));
-      tmp_jsp = pu.makeSpinnerFloat(0, 10000, 0.25, props_, devices_,
+      delaySlice_ = pu.makeSpinnerFloat(0, 10000, 0.25, props_, devices_,
             new Devices.Keys [] {Devices.Keys.GALVOA, Devices.Keys.GALVOB},
             Properties.Keys.SPIM_DELAY_SLICE);
-      add(tmp_jsp, "wrap");
+      add(delaySlice_, "wrap");
 
       add(new JLabel("Delay before each side (ms):"));
-      tmp_jsp = pu.makeSpinnerFloat(0, 10000, 0.25, props_, devices_, 
+      delaySide_ = pu.makeSpinnerFloat(0, 10000, 0.25, props_, devices_, 
             new Devices.Keys [] {Devices.Keys.GALVOA, Devices.Keys.GALVOB},
             Properties.Keys.SPIM_DELAY_SIDE);
-      add(tmp_jsp, "wrap");
+      add(delaySide_, "wrap");
       
       add(new JSeparator(JSeparator.VERTICAL), "growy, cell 3 0 1 9");
 
@@ -139,6 +147,7 @@ public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerI
       buttonStart_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
+            double oldExposure = 0;
             try {
                // set up cameras
                if (!cameras_.isCurrentCameraValid()) {
@@ -146,6 +155,8 @@ public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerI
                   return;
                }
                cameras_.enableLiveMode(false);
+               oldExposure = core_.getExposure();
+               core_.setExposure(NumberUtils.displayStringToDouble(acqExposure_.getText()));
                cameras_.setCameraTriggerExternal(true);
                // get acquisition engine configured
                acqEngine_.enableFramesSetting(true);
@@ -166,15 +177,28 @@ public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerI
                props_.setPropValue(Devices.Keys.PIEZOB, Properties.Keys.SPIM_STATE, Properties.Values.SPIM_ARMED, true);
                // trigger controller
                props_.setPropValue(Devices.Keys.GALVOA, Properties.Keys.SPIM_STATE, Properties.Values.SPIM_RUNNING, true);
+               
                // TODO generalize this for different ways of running SPIM
+               
+               // clean up
+               core_.setExposure(oldExposure);
+               
             } catch (MMException ex) {
                ReportingUtils.showError(ex);
+            } catch (Exception e1) {
+               ReportingUtils.showError(e1);
             } finally {
                cameras_.setCameraTriggerExternal(false);  // go back to internal triggering mode
             }
          }
       });
       add(buttonStart_, "cell 4 0, span 2, center, wrap");
+      
+      add(new JLabel("Acquisition exposure (ms):"), "cell 4 1");
+      acqExposure_ = new JFormattedTextField(new NumberFormatter());
+      acqExposure_.setColumns(5);
+      acqExposure_.setText(prefs_.getString(super.panelName_, Prefs.Keys.SPIM_EXPOSURE, "10"));
+      add(acqExposure_, "wrap");
 
       cameraPanel_ = new CameraSubPanel(cameras_, devices_, this.panelName_, Devices.Sides.NONE, prefs_, false);
       add(cameraPanel_, "cell 4 2, center, span 2");
@@ -195,6 +219,11 @@ public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerI
       add(buttonSaveSettings_, "cell 4 8, span 2, center, wrap");
 
    }//end constructor
+   
+   @Override
+   public void saveSettings() {
+      prefs_.putString(super.panelName_, Prefs.Keys.SPIM_EXPOSURE, acqExposure_.getText());
+   }
 
    /**
     * Gets called when this tab gets focus.
