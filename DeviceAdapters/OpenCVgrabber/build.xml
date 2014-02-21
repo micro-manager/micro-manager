@@ -4,8 +4,8 @@
 	<target name="install-Win32">
 		<copy todir="${mm.dll.installdir}">
 			<filelist dir="lib/Win32">
-				<file name="opencv_core231.dll"/>
-				<file name="opencv_highgui231.dll"/>
+				<file name="opencv_core248.dll"/>
+				<file name="opencv_highgui248.dll"/>
 			</filelist>
 		</copy>
 	</target>
@@ -13,8 +13,8 @@
 	<target name="install-x64">
 		<copy todir="${mm.dll.installdir}">
 			<filelist dir="lib/x64">
-				<file name="opencv_core231.dll"/>
-				<file name="opencv_highgui231.dll"/>
+				<file name="opencv_core248.dll"/>
+				<file name="opencv_highgui248.dll"/>
 			</filelist>
 		</copy>
 	</target>
