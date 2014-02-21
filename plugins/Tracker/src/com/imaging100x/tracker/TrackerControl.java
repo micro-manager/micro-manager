@@ -38,6 +38,7 @@ import java.awt.event.WindowEvent;
 import java.awt.Insets;
 import java.io.File;
 import java.util.GregorianCalendar;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.prefs.Preferences;
 
 import javax.swing.ButtonGroup;
@@ -65,7 +66,7 @@ import org.micromanager.utils.TextUtils;
 public class TrackerControl extends MMFrame implements MMPlugin {
    private JTextField nameField_;
    private JTextField rootField_;
-   private ButtonGroup buttonGroup = new ButtonGroup();
+   private final ButtonGroup buttonGroup = new ButtonGroup();
    private static final long serialVersionUID = 1L;
    private JTextField resField_;
    private JTextField offsetField_;
@@ -116,17 +117,19 @@ public class TrackerControl extends MMFrame implements MMPlugin {
    private static final String ACQNAME = "LiveTracking";
    private JLabel labelTopLeft_;
    private JLabel labelBottomRight_;
-   private JRadioButton memoryRadioButton_;
+   private final JRadioButton memoryRadioButton_;
    private JRadioButton diskRadioButton_;
-   private JLabel speedLabel_;
+   private final JLabel speedLabel_;
    private double distUm_;
-   private JButton topLeftButton_;
-   private JButton bottomRightButton_;
+   private final JButton topLeftButton_;
+   private final JButton bottomRightButton_;
    
    static private final String VERSION_INFO = "1.0";
    static private final String COPYRIGHT_NOTICE = "Copyright by 100X Imaging Inc, 2009";
    static private final String DESCRIPTION = "Live cell tracking module";
    static private final String INFO = "Not available";
+   private double firstX_;
+   private double firstY_;
 
 
    private class MMRect {
@@ -226,6 +229,7 @@ public class TrackerControl extends MMFrame implements MMPlugin {
 
       final JButton trackButton = new JButton();
       trackButton.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent e) {
             intervalMs_ = Integer.parseInt(intervalField_.getText());
             pixelSizeUm_ = Double.parseDouble(pixelSizeField_.getText());
@@ -270,6 +274,7 @@ public class TrackerControl extends MMFrame implements MMPlugin {
 
       final JButton stopButton = new JButton();
       stopButton.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(final ActionEvent e) {
             stopTracking();
          }
@@ -345,6 +350,7 @@ public class TrackerControl extends MMFrame implements MMPlugin {
       button.setBounds(358, 260, 38, 26);
       getContentPane().add(button);
       button.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent ae) {
             browse();
          }
@@ -352,6 +358,7 @@ public class TrackerControl extends MMFrame implements MMPlugin {
 
       final JButton clearButton = new JButton();
       clearButton.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(final ActionEvent e) {
             limits_.clear();
             labelBottomRight_.setText("not set");
@@ -373,14 +380,26 @@ public class TrackerControl extends MMFrame implements MMPlugin {
       getContentPane().add(fileLocationsLabel);
 
       // Setup timer
+      final AtomicBoolean taskRunning = new AtomicBoolean(false);
       ActionListener timerHandler = new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent evt) {
-            TaggedImage img = snapSingleImage();
-            if (img != null) {
-               processOneFrame(img, true);
+            Runnable doTrack = new Runnable() {
+               @Override
+               public void run() {
+                  TaggedImage img = snapSingleImage();
+                  if (img != null) {
+                     processOneFrame(img, true);
+                  }
+                  taskRunning.set(false);
+               }
+            };
+            if (!taskRunning.get()) {
+               taskRunning.set(true);
+               (new Thread(doTrack)).start();
             }
          }
-      };
+       };
       timer_ = new Timer(intervalMs_, timerHandler);
       timer_.stop();
 
@@ -424,7 +443,11 @@ public class TrackerControl extends MMFrame implements MMPlugin {
       int kCount = 2 * offsetPix_ / resolutionPix_;
       int lCount = 2 * offsetPix_ / resolutionPix_;
       corrStack_ = new ij.ImageStack(lCount, kCount);
-      corrImplus_ = null;
+      ImageProcessor corrImproc = new ij.process.FloatProcessor(lCount, kCount);
+      corrStack_.addSlice(corrImproc);
+      corrImplus_ = new ij.ImagePlus("Cross Correlation", corrStack_);
+      corrImplus_.show();
+
 
       ReportingUtils.logMessage("Tracking started at " + GregorianCalendar.getInstance().getTime());
 
@@ -440,8 +463,8 @@ public class TrackerControl extends MMFrame implements MMPlugin {
       } catch (MMScriptException ex) {
          ReportingUtils.showError(ex, "Problem while tracking");
       }
-      xySeries_ = new XYSeries("Track");
-      TrackerUtils.plotData("Cell Track", xySeries_, "X (micron)", 
+      xySeries_ = new XYSeries("Track",false);
+      TrackerUtils.plotData("Cell Track: " + acqName_, xySeries_, "X (micron)", 
                "Y (micron)", 100, 100);
       timer_.start();
    }
@@ -467,18 +490,18 @@ public class TrackerControl extends MMFrame implements MMPlugin {
             int size = ip.getWidth() * ip.getHeight();
             if (ip instanceof ij.process.ByteProcessor) {
                pixelsCur_ = new float[size];
-               byte[] pixels = (byte[])ip.getPixels();
+               byte[] pixels = (byte[])img.pix;
                for (int i = 0; i < size; i++)
                   pixelsCur_[i] = pixels[i];
             }
             if (ip instanceof ij.process.ShortProcessor) {
                pixelsCur_ = new float[size];
-               short[] pixels = (short[])ip.getPixels();
+               short[] pixels = (short[])img.pix;
                for (int i = 0; i < size; i++)
                   pixelsCur_[i] = pixels[i];
             }
             if (ip instanceof ij.process.FloatProcessor) {
-               pixelsCur_ = java.util.Arrays.copyOf((float[])ip.getPixels(), size);
+               pixelsCur_ = java.util.Arrays.copyOf((float[])img.pix, size);
             }
             imWidth_ = ip.getWidth();
          }
@@ -570,8 +593,8 @@ public class TrackerControl extends MMFrame implements MMPlugin {
       pixelsPrev_ = pixelsCur_;
 
       // offset in um
-      double shiftXUm = lMax * pixelSizeUm_;
-      double shiftYUm = kMax * pixelSizeUm_;
+      double shiftXUm = -lMax * pixelSizeUm_;
+      double shiftYUm = -kMax * pixelSizeUm_;
 
       // apply image transposition
       if (mirrorX_)
@@ -610,9 +633,12 @@ public class TrackerControl extends MMFrame implements MMPlugin {
             double newX = xCur[0] + dxUm;
             double newY = yCur[0] + dyUm;
             
-            xySeries_.add(newX, newY);
-            
-            
+            // Plot relative coordinates, swap Y axis to match image direction
+            if (xySeries_.isEmpty()) {
+                firstX_ = newX;
+                firstY_ = newY;
+            }
+            xySeries_.add(firstX_ - newX, firstY_ - newY);
 
             if ((limits_.isValid() && limits_.isWithin(newX, newY)) || (!limits_.isValid())) {
                app_.getMMCore().setXYPosition(stage_, newX, newY);
@@ -654,6 +680,7 @@ public class TrackerControl extends MMFrame implements MMPlugin {
       imageCounter_++;
    }
 
+   @Override
    public void setApp(ScriptInterface app) {
       app_ = app;
       initialize();
@@ -677,6 +704,7 @@ public class TrackerControl extends MMFrame implements MMPlugin {
       }
       
       topLeftButton_.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(final ActionEvent e) {
             double[] x = new double[1];
             double[] y = new double[1];
@@ -693,6 +721,7 @@ public class TrackerControl extends MMFrame implements MMPlugin {
       });
       
       bottomRightButton_.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(final ActionEvent e) {
             double[] x = new double[1];
             double[] y = new double[1];
@@ -713,18 +742,22 @@ public class TrackerControl extends MMFrame implements MMPlugin {
       initialize();
    }
 
+   @Override
    public String getCopyright() {
       return COPYRIGHT_NOTICE;
    }
 
+   @Override
    public String getDescription() {
       return DESCRIPTION;
    }
 
+   @Override
    public String getInfo() {
       return INFO;
    }
 
+   @Override
    public String getVersion() {
       return VERSION_INFO;
    }

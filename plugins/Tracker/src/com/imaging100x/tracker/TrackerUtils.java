@@ -25,7 +25,7 @@ import org.jfree.data.xy.XYSeriesCollection;
  * @author nico
  */
 public class TrackerUtils {
-   private static final int SIZE = 500;
+   private static final int SIZE = 600;
     /**
     * Create a frame with a plot of the data given in XYSeries
     */
@@ -58,7 +58,7 @@ public class TrackerUtils {
       ChartFrame graphFrame = new ChartFrame(title, chart);
       graphFrame.getChartPanel().setMouseWheelEnabled(true);
       graphFrame.setPreferredSize(new Dimension(SIZE, SIZE) );
-      graphFrame.setResizable(false);
+      graphFrame.setResizable(true);
       graphFrame.pack();
       graphFrame.setLocation(xLocation, yLocation);
       graphFrame.setVisible(true);
