@@ -33,8 +33,6 @@ using namespace std;
 #define g_Keyword_Cameras         "Devices"
 #define g_Keyword_MoticUI         "MoticInterface"
 
-class MSequenceThread;
-
 class MUCamSource : public CCameraBase<MUCamSource>
 {
 public:
@@ -62,12 +60,6 @@ public:
     int SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize);
     int GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySize);
     int ClearROI();
-//    int PrepareSequenceAcqusition();
-//    int StartSequenceAcquisition(double interval);
-    // virtual int StartSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow);
-    //virtual int StopSequenceAcquisition();
-    int InsertImage();
-    virtual int ThreadRun(void);
     bool IsCapturing();
     int GetBinning() const;
     int SetBinning(int binSize);
@@ -87,10 +79,8 @@ public:
     const unsigned int* GetImageBufferAsRGB32();
     
 private:
-    friend class MSequenceThread;
     static const int MAX_BIT_DEPTH = 12;
     
-    //MSequenceThread* thd_;
     int binning_;
     double gain_;
     int bytesPerPixel_;
@@ -142,37 +132,5 @@ private:
     void InitExposure();
     bool OpenCamera(MUCam_Handle hCamera);
 };
-
-//class MSequenceThread : public MMDeviceThreadBase
-//{
-//public:
-//    MSequenceThread(MUCamSource* pCam);
-//    ~MSequenceThread();
-//    void Stop();
-//    void Start(long numImages, double intervalMs);
-//    bool IsStopped();
-//    void Suspend();
-//    bool IsSuspended();
-//    void Resume();
-//    double GetIntervalMs(){return intervalMs_;}
-//    void SetLength(long images) {numImages_ = images;}
-//    long GetLength() const {return numImages_;}
-//    long GetImageCounter(){return imageCounter_;}
-//    MM::MMTime GetStartTime(){return startTime_;}
-//    MM::MMTime GetActualDuration(){return actualDuration_;}
-//private:
-//    int svc(void) throw();
-//    double intervalMs_;
-//    long numImages_;
-//    long imageCounter_;
-//    bool stop_;
-//    bool suspend_;
-//    MUCamSource* camera_;
-//    MM::MMTime startTime_;
-//    MM::MMTime actualDuration_;
-//    MM::MMTime lastFrameTime_;
-//    MMThreadLock stopLock_;
-//    MMThreadLock suspendLock_;
-//};
 
 #endif /* defined(__MUCamSource__MUCamSource__) */
