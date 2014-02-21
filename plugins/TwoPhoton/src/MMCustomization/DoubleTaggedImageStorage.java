@@ -4,15 +4,13 @@
  */
 package MMCustomization;
 
-import HDF.*;
+import HDF.ImarisWriter;
 import com.imaging100x.twophoton.SettingsDialog;
 import com.imaging100x.twophoton.TwoPhotonControl;
 import ij.IJ;
-import ij.plugin.filter.GaussianBlur;
 import ij.process.ByteProcessor;
 import java.awt.Color;
 import java.io.File;
-import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Set;
 import java.util.logging.Level;
@@ -37,20 +35,16 @@ public class DoubleTaggedImageStorage implements TaggedImageStorage {
    private DynamicStitchingImageStorage storage_;
    private boolean makeImarisFile_, gaussianFilter_;
    private double filterWidth_;
-   private int numPositions_, numSlices_, numChannels_, slicesPerWrite_;
-   private volatile LinkedList<TaggedImage> hdfPreprocessQueue_;
-   private volatile LinkedList<PipelineImage> hdfQueue_;
-   private HDFWriter hdfWriter_;
-   private HDFPreprocessor hdfPreprocessor_;
-   private Thread hdfWritingThread_, hdfProcessingThread_;
+   private int numPositions_, numSlices_, numChannels_, numFrames_, slicesPerWrite_;
+   private volatile LinkedList<TaggedImage> imarisWritingQueue_;
+   private Thread imarisWritingThread_;
    private boolean finished_ = false;
-   private boolean preprocessFinished_ = false;
    private ByteProcessor imageProcessor_;
    private SingleThreadedGaussianFilter filter_;
    private Preferences prefs_;
    private int startS_ = -1, startMin_ = -1, startHour_ = -1;
    private String acqStartDate_;
-   private String acqDate_;
+   private ImarisWriter imarisWriter_;
 
    public DoubleTaggedImageStorage(JSONObject summaryMetadata, String savingDir, Preferences prefs) {
       prefs_ = prefs;
@@ -94,166 +88,90 @@ public class DoubleTaggedImageStorage implements TaggedImageStorage {
       int width = storage_.getWidth();
       int height = storage_.getHeight();
       try {
-         ResolutionLevel[] resLevels = ResolutionLevelMaker.calcLevels(width, height,
-                 MDUtils.getNumSlices(summaryMetadata), MDUtils.getNumFrames(summaryMetadata), 1);
-         hdfPreprocessor_ = new HDFPreprocessor(width, height, resLevels);
-
-         hdfWriter_ = new HDFWriter(newDir.getAbsolutePath(), prefix + ".ims", MDUtils.getNumChannels(summaryMetadata),
-                 MDUtils.getNumFrames(summaryMetadata), MDUtils.getNumSlices(summaryMetadata),
-                 summaryMetadata.getDouble("PixelSize_um"), Math.abs(summaryMetadata.getDouble("z-step_um")),
-                 channelColors, width, height, resLevels);
-         slicesPerWrite_ = resLevels[resLevels.length - 1].getReductionFactorZ();
-      } catch (JSONException ex) {
-         Logger.getLogger(DoubleTaggedImageStorage.class.getName()).log(Level.SEVERE, null, ex);
-      }
-
-
-      hdfQueue_ = new LinkedList<PipelineImage>();
-      hdfPreprocessQueue_ = new LinkedList<TaggedImage>();
-      try {
          numPositions_ = MDUtils.getNumPositions(summaryMetadata);
          numSlices_ = MDUtils.getNumSlices(summaryMetadata);
          numChannels_ = MDUtils.getNumChannels(summaryMetadata);
+         numFrames_ = MDUtils.getNumFrames(summaryMetadata);
+         double pixelSizeXY = summaryMetadata.getDouble("PixelSize_um");
+         double pixelSizeZ = summaryMetadata.getDouble("z-step_um");
+         imarisWriter_ = new ImarisWriter(newDir.getAbsolutePath(), prefix, width, height, numSlices_,
+                 numChannels_, numFrames_, pixelSizeXY, pixelSizeZ, channelColors);
       } catch (JSONException ex) {
-         ReportingUtils.showError("Coulndt get num positions from summary metadata");
+         ReportingUtils.showError("Problem with summary metadata: couldnt make imaris writer");
       }
 
-
-      hdfProcessingThread_ = new Thread(new Runnable() {
-
+      imarisWritingQueue_ = new LinkedList<TaggedImage>();
+      imarisWritingThread_ = new Thread(new Runnable() {
          @Override
          public void run() {
-            hdfPreprocessing();
+            imarisWriting();
          }
-      }, "HDF Preprocessing thread");
-      hdfProcessingThread_.start();
-
-      hdfWritingThread_ = new Thread(new Runnable() {
-
-         @Override
-         public void run() {
-            hdfWriting();
-         }
-      }, "HDF writing thread");
-      hdfWritingThread_.start();
+      }, "Imaris writing queue thread");
+      imarisWritingThread_.start();
    }
 
-   private void hdfPreprocessing() {
-      try {
-         while (!preprocessFinished_ && makeImarisFile_) {
-            int size = 0;
-            synchronized (hdfPreprocessQueue_) {
-               size = hdfPreprocessQueue_.size();
+   private void imarisWriting() {
+      while (true) {
+         TaggedImage toAdd = null;
+         int size = 0;
+         synchronized (imarisWritingQueue_) {
+            size = imarisWritingQueue_.size();
+            if (size != 0) {
+               toAdd = imarisWritingQueue_.removeFirst();
             }
-            TwoPhotonControl.updateFilterQueueSize(size, (int) (numChannels_ * numSlices_ * 2.5));
-            //check if Imaris writing is too slow and abort if needed
-            if (size > 2.5 * numChannels_ * numSlices_) {
-               hdfWriter_.finish();
-               hdfWriter_.close();
-               makeImarisFile_ = false;
-               ReportingUtils.showMessage("Imaris writing couldn't keep up with rate of data acquisition."
-                       + " Imaris writing aborted.");
-               break;
-            }
-
-
-            //break loop if images done coming in preprocess queue is empty 
-            if (finished_) {
-               synchronized (hdfPreprocessQueue_) {
-                  if (hdfPreprocessQueue_.isEmpty()) {
-                     preprocessFinished_ = true;
-                     break;
-                  } else if (hdfPreprocessQueue_.size() < slicesPerWrite_ * numChannels_) {
-                     //abort has occured
-                     preprocessFinished_ = true;
-                     break;
-                  }
-                  //else still waiting to take images out of queue
-               }
-            }
-
-            //add slicesPerWrite * numChannels images to a batch
-            LinkedList<TaggedImage> batch;
-            int hppqSize = 0;
-            synchronized (hdfPreprocessQueue_) {
-               hppqSize = hdfPreprocessQueue_.size();
-            }
-            if (hppqSize >= slicesPerWrite_ * numChannels_) {
-               //filter slices, add to batch, hdfPreprocess
-               batch = new LinkedList<TaggedImage>();
-               synchronized (hdfPreprocessQueue_) {
-                  for (int i = 0; i < slicesPerWrite_ * numChannels_; i++) {
-                     batch.add(hdfPreprocessQueue_.removeFirst());
-                  }
-               }
-            } else {
-               Thread.sleep(10);
-               continue;
-            }
-
-
-            //Filter
+         }
+         if (toAdd != null) {
+            //gaussian Filter
             if (gaussianFilter_) {
                if (filter_ == null) {
-                  filter_ = new SingleThreadedGaussianFilter(MDUtils.getWidth(batch.getFirst().tags),
-                             MDUtils.getHeight(batch.getFirst().tags), filterWidth_);
-               } 
-               for (int i = 0; i < batch.size(); i++) {
-                  if (batch.get(i).pix != null) {
-                     //filter if it's not a dummy image
-                     batch.add(i, new TaggedImage(filter_.gaussianFilter(batch.get(i).pix), batch.get(i).tags));
-                     batch.remove(i + 1);
+                  try {
+                     filter_ = new SingleThreadedGaussianFilter(MDUtils.getWidth(toAdd.tags),
+                             MDUtils.getHeight(toAdd.tags), filterWidth_);
+                  } catch (JSONException ex) {
+                     ReportingUtils.showError("couldnt get width and height from tags");
                   }
                }
+               //filter
+               toAdd = new TaggedImage(filter_.gaussianFilter(toAdd.pix), toAdd.tags);
             }
 
-            //process images in groups corrseponding to a single channel at a time
-            for (int c = 0; c < numChannels_; c++) {
-               LinkedList<TaggedImage> singleChannelBatch = new LinkedList<TaggedImage>();
-               for (int s = 0; s < slicesPerWrite_; s++) {
-                  singleChannelBatch.add(batch.get(c + s * numChannels_));
-               }
             
-               String[] timeInfo = singleChannelBatch.get(0).tags.getString("Time").split(" ");
-
-               //get starting time
-               if (startS_ == -1) {
-                  //first image
-                  startHour_ = Integer.parseInt(timeInfo[1].split(":")[0]);
-                  startMin_ = Integer.parseInt(timeInfo[1].split(":")[1]);
-                  startS_ = Integer.parseInt(timeInfo[1].split(":")[2]);
-                  acqStartDate_ = timeInfo[0];
-                  acqDate_ = timeInfo[0] + " " + timeInfo[1] + ".000";
-               }
-               
-               LinkedList<Object> pixelBatch = new LinkedList<Object>();
-               for (TaggedImage img : singleChannelBatch) {
-                  pixelBatch.add(img.pix);
-               }
-               PipelineImage pi = hdfPreprocessor_.process(pixelBatch, 
-                       MDUtils.getChannelIndex(singleChannelBatch.getFirst().tags),
-                       MDUtils.getSliceIndex(singleChannelBatch.getFirst().tags),
-                       MDUtils.getFrameIndex(singleChannelBatch.getFirst().tags),
-                       acqDate_, convertMMToImsTime(singleChannelBatch.getFirst().tags));
-               synchronized (hdfQueue_) {
-                  hdfQueue_.add(pi);
-               }
+            try {
+               int channel = MDUtils.getChannelIndex(toAdd.tags);
+               int frame = MDUtils.getFrameIndex(toAdd.tags);
+               int slice = MDUtils.getSliceIndex(toAdd.tags);
+               String time = convertMMToImsTime(toAdd.tags);
+               imarisWriter_.addImage(toAdd.pix, slice, channel, frame, acqStartDate_, time);
+            } catch (Exception e) {
+               ReportingUtils.showError(e.toString());
             }
 
+         } else if (finished_) {
+            imarisWriter_.close();
+            break;
          }
-      } catch (Exception e) {
-         ReportingUtils.showError("Exception in HDF preprocessing: cancelling Imaris file writing");
-         e.printStackTrace();
-         makeImarisFile_ = false;
+         TwoPhotonControl.updateHDFQueueSize(size, (int) (numChannels_ * numSlices_ * 2.5));
+         //TODO check if lagging behind and cancel if needed
       }
    }
-   
-     private String convertMMToImsTime(JSONObject tags) {
-      int elapsedMs = 0; 
+
+   private String convertMMToImsTime(JSONObject tags) throws JSONException {
+      //get starting time
+      if (startS_ == -1) {
+         //first image
+         String[] timeInfo = tags.getString("Time").split(" ");
+         startHour_ = Integer.parseInt(timeInfo[1].split(":")[0]);
+         startMin_ = Integer.parseInt(timeInfo[1].split(":")[1]);
+         startS_ = Integer.parseInt(timeInfo[1].split(":")[2]);
+         acqStartDate_ = timeInfo[0];
+      }
+
+      int elapsedMs = 0;
       try {
-         elapsedMs = tags.getInt("ElapsedTime-ms") + startS_ * 1000 
-              + startMin_ * 1000 * 60 + startHour_ * 60 * 60 * 1000;
-      } catch (JSONException e) {}
+         elapsedMs = tags.getInt("ElapsedTime-ms") + startS_ * 1000
+                 + startMin_ * 1000 * 60 + startHour_ * 60 * 60 * 1000;
+      } catch (JSONException e) {
+      }
       int h = elapsedMs / (60 * 60 * 1000);
       int min = (elapsedMs / (60 * 1000)) % 60;
       int s = (elapsedMs / 1000) % 60;
@@ -290,74 +208,6 @@ public class DoubleTaggedImageStorage implements TaggedImageStorage {
       return ret;
    }
 
-   //Occurs on HDF writing thread
-   private void hdfWriting() {
-      try {
-         while (!hdfWriter_.isFinished() && makeImarisFile_) {
-            //check if Imaris writing is too slow and abort if needed
-            if (hdfQueue_.size() * slicesPerWrite_ > 2.5 * numChannels_ * numSlices_) {
-               hdfWriter_.finish();
-               hdfWriter_.close();
-               makeImarisFile_ = false;
-               ReportingUtils.showMessage("Imaris writing couldn't keep up with rate of data acquisition."
-                       + " Imaris writing aborted.");
-               break;
-            }
-
-
-            //Check if finished or aborted
-            //TODO: properly finish aborted acqs
-            if (preprocessFinished_) {
-               synchronized (hdfQueue_) {
-                  if (hdfQueue_.size() == 0) {
-                     //may be leftover images
-                     hdfWriter_.finish();
-                     //close this as soon as it is done because don't need to read data from it
-                     hdfWriter_.close();
-                     break;
-                  } else {
-                     //finished, but preprocessing incomplete
-
-                     Thread.sleep(5);
-
-                  }
-               }
-            }
-
-            PipelineImage toWrite = null;
-            boolean isEmpty = true;
-            synchronized (hdfQueue_) {
-               isEmpty = hdfQueue_.isEmpty();
-            }
-            if (!isEmpty) {
-               synchronized (hdfQueue_) {
-                  toWrite = hdfQueue_.removeFirst();
-               }
-            } else {
-               //wait for more
-               try {
-                  Thread.sleep(2);
-               } catch (InterruptedException ex) {
-                  ReportingUtils.showError("Couldn't sleep thread");
-               }
-               continue;
-            }
-
-            //write batch
-            hdfWriter_.writeImage(toWrite);
-            int size;
-            synchronized (hdfQueue_) {
-               size = hdfQueue_.size();
-            }
-            TwoPhotonControl.updateHDFQueueSize(size * slicesPerWrite_, (int) (numChannels_ * numSlices_ * 2.5));
-
-         }
-      } catch (Exception e) {
-         ReportingUtils.showError("Exception in HDF preprocessing: cancelling Imaris file writing");
-         makeImarisFile_ = false;
-      }
-   }
-
    @Override
    public TaggedImage getImage(int channelIndex, int sliceIndex, int frameIndex, int positionIndex) {
       return storage_.getImage(channelIndex, sliceIndex, frameIndex, positionIndex);
@@ -371,6 +221,7 @@ public class DoubleTaggedImageStorage implements TaggedImageStorage {
    @Override
    public void putImage(TaggedImage taggedImage) throws MMException {
       storage_.putImage(taggedImage);
+      
       if (!makeImarisFile_) {
          return;
       }
@@ -389,29 +240,8 @@ public class DoubleTaggedImageStorage implements TaggedImageStorage {
       //when fully stitched, add to HDF preprocesser
       if (position == numPositions_ - 1) {
          TaggedImage image = storage_.getImage(channel, slice, frame, 0);
-         synchronized (hdfPreprocessQueue_) {
-            hdfPreprocessQueue_.add(image);
-            //add dummy slices  if needed after the last image at the time point has arrived
-            if (slice == numSlices_ - 1 && channel == numChannels_ - 1 && slicesPerWrite_ > 1) {
-               //Last slice for this time point in this channel-send dummy images as needed
-               int s = slice + 1;
-               while (s % slicesPerWrite_ != 0) {
-                  try {
-                     //add dummy slices first by channel then by slice
-                     for (int c = 0; c < numChannels_; c++) {
-                        //copy tags
-                        JSONObject tags = storage_.getImageTags(c, slice, frame, 0);
-                        TaggedImage dummyImage = new TaggedImage(null, new JSONObject(tags.toString()));
-                        MDUtils.setSliceIndex(dummyImage.tags, s);
-                        hdfPreprocessQueue_.add(dummyImage);
-                     }
-                  } catch (JSONException ex) {
-                     ReportingUtils.showError("Problem generating dummy slice");
-                  }
-                  s++;
-               }
-
-            }
+         synchronized (imarisWritingQueue_) {
+            imarisWritingQueue_.add(image);         
          }
       }
    }
