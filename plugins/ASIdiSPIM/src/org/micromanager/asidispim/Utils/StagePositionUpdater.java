@@ -81,7 +81,7 @@ public class StagePositionUpdater {
    
    public void oneTimeUpdate() {
       // update stage positions in devices
-      positions_.updateStagePositions();
+      positions_.refreshStagePositions();
       // notify listeners that positions are updated
       for (ListeningJPanel panel : panels_) {
          panel.updateStagePositions();

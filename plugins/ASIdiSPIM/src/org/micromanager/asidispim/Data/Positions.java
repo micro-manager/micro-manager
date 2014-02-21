@@ -293,12 +293,12 @@ public class Positions {
    /**
     * updates the cached stage positions via calls to MMCore
     */
-   public final void updateStagePositions() {
-      updateOneAxisStagePositions();
-      updateTwoAxisStagePositions();
+   public final void refreshStagePositions() {
+      refreshOneAxisStagePositions();
+      refreshTwoAxisStagePositions();
    }
    
-   private void updateTwoAxisStagePositions() {
+   private void refreshTwoAxisStagePositions() {
       for (Devices.Keys devKey : Devices.STAGES2D) {
          String mmDevice = devices_.getMMDevice(devKey);
          if (mmDevice==null) {  // skip devices not set in devices tab
@@ -321,7 +321,7 @@ public class Positions {
       }
    }
    
-   private void updateOneAxisStagePositions() {
+   private void refreshOneAxisStagePositions() {
       for (Devices.Keys devKey : Devices.STAGES1D) {
          String mmDevice = devices_.getMMDevice(devKey);
          if (mmDevice==null) {  // skip devices not set in devices tab

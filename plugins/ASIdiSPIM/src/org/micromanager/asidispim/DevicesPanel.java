@@ -244,8 +244,8 @@ public class DevicesPanel extends ListeningJPanel {
       ArrayList<String> devices = new ArrayList<String>(Arrays.asList(strvDevices.toArray()));
       devices.add(0, "");
       JComboBox deviceBox = new JComboBox(devices.toArray());
-      deviceBox.setSelectedItem(devices_.getMMDevice(deviceKey));  // selects whatever device was read in by prefs
       deviceBox.addActionListener(new DeviceBoxListener(deviceKey, deviceBox));
+      deviceBox.setSelectedItem(devices_.getMMDevice(deviceKey));  // selects whatever device was read in by prefs
       return deviceBox;
    }
    
@@ -277,8 +277,8 @@ public class DevicesPanel extends ListeningJPanel {
       }
       
       JComboBox deviceBox = new JComboBox(multiCameras.toArray());
-      deviceBox.setSelectedItem(devices_.getMMDevice(deviceName));  // selects whatever device was read in by prefs
       deviceBox.addActionListener(new DevicesPanel.DeviceBoxListener(deviceName, deviceBox));
+      deviceBox.setSelectedItem(devices_.getMMDevice(deviceName));  // selects whatever device was read in by prefs
       return deviceBox;
    }
    
