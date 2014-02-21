@@ -63,6 +63,7 @@ public final class CameraSubPanel extends ListeningJPanel implements LiveModeLis
    /**
     * 
     * @param devices the (single) instance of the Devices class
+    * @param showLiveButton if false then the live button is omitted
     */
    public CameraSubPanel(Cameras cameras, Devices devices, String instanceLabel, 
          Devices.Sides side, Prefs prefs, boolean showLiveButton) {    

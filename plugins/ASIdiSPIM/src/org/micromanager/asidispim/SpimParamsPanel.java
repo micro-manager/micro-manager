@@ -157,15 +157,20 @@ public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerI
                cameras_.enableLiveMode(false);
                oldExposure = core_.getExposure();
                core_.setExposure(NumberUtils.displayStringToDouble(acqExposure_.getText()));
-               cameras_.setCameraTriggerExternal(true);
+               cameras_.setSPIMCameraTriggerMode(Cameras.TriggerModes.EXTERNAL);
                // get acquisition engine configured
+               // patterned after code in mmstudio\src\org\micromanager\AcqControlDlg.java
+               acqEngine_.clear();
+               acqEngine_.setUpdateLiveWindow(false);
+               acqEngine_.enableCustomTimeIntervals(false);
                acqEngine_.enableFramesSetting(true);
-               acqEngine_.setFrames(
-                     (Integer)numSlices_.getValue() * (Integer)numRepeats_.getValue(), // number of frames to capture
-                     0); // 0ms exposure time means it will record as fast as possible
                acqEngine_.enableMultiPosition(false);
                acqEngine_.enableZSliceSetting(false);
                acqEngine_.enableChannelsSetting(false);
+               acqEngine_.enableAutoFocus(false);
+               acqEngine_.setFrames(
+                     (Integer)numSlices_.getValue() * (Integer)numRepeats_.getValue(), // number of frames to capture
+                     0); // 0ms exposure time means it will record as fast as possible
                acqEngine_.acquire();
                core_.sleep(2000);  // seem to need a long delay for some reason, more than 1 sec
                // get controller ready
@@ -182,19 +187,18 @@ public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerI
                
                // clean up
                core_.setExposure(oldExposure);
+               cameras_.setSPIMCameraTriggerMode(Cameras.TriggerModes.INTERNAL);  // go back to internal triggering mode
                
             } catch (MMException ex) {
                ReportingUtils.showError(ex);
             } catch (Exception e1) {
                ReportingUtils.showError(e1);
-            } finally {
-               cameras_.setCameraTriggerExternal(false);  // go back to internal triggering mode
             }
          }
       });
       add(buttonStart_, "cell 4 0, span 2, center, wrap");
       
-      add(new JLabel("Acquisition exposure (ms):"), "cell 4 1");
+      add(new JLabel("SPIM exposure time (ms):"), "cell 4 1");
       acqExposure_ = new JFormattedTextField(new NumberFormatter());
       acqExposure_.setColumns(5);
       acqExposure_.setText(prefs_.getString(super.panelName_, Prefs.Keys.SPIM_EXPOSURE, "10"));

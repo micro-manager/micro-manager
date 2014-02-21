@@ -160,47 +160,43 @@ public class Cameras {
    
    public void enableLiveMode(boolean enable) {
       if (enable) {
-         setCameraTriggerExternal(false);
+         setSPIMCameraTriggerMode(TriggerModes.INTERNAL);
       }
       gui_.enableLiveMode(enable);
    }
-   
-   public void setCameraTriggerExternal(boolean external) {
-      // set mode to external
-      // have to handle any device adapters, currently HamamatsuHam and PCO only
-      Devices.Libraries camLibraryA, camLibraryB;
-      try {
-         camLibraryA = devices_.getMMDeviceLibrary(Devices.Keys.CAMERAA);
-         if (camLibraryA == Devices.Libraries.HAMCAM) {
-            if (external) {
-               props_.setPropValue(Devices.Keys.CAMERAA, Properties.Keys.TRIGGER_SOURCE, Properties.Values.EXTERNAL, true);
-            } else {
-               props_.setPropValue(Devices.Keys.CAMERAA, Properties.Keys.TRIGGER_SOURCE, Properties.Values.INTERNAL, true);
-            }
-         } else if (camLibraryA == Devices.Libraries.PCOCAM) {
-            if (external) {
-               props_.setPropValue(Devices.Keys.CAMERAA, Properties.Keys.TRIGGER_MODE, Properties.Values.EXTERNAL_LC, true);
-            } else {
-               props_.setPropValue(Devices.Keys.CAMERAA, Properties.Keys.TRIGGER_MODE, Properties.Values.INTERNAL_LC, true);
-            }
-         }
-         camLibraryB = devices_.getMMDeviceLibrary(Devices.Keys.CAMERAB);
-         if (camLibraryB == Devices.Libraries.HAMCAM) {
-            if (external) {
-               props_.setPropValue(Devices.Keys.CAMERAB, Properties.Keys.TRIGGER_SOURCE, Properties.Values.EXTERNAL, true);
-            } else {
-               props_.setPropValue(Devices.Keys.CAMERAB, Properties.Keys.TRIGGER_SOURCE, Properties.Values.INTERNAL, true);
-            }
-         } else if (camLibraryB == Devices.Libraries.PCOCAM) {
-            if (external) {
-               props_.setPropValue(Devices.Keys.CAMERAB, Properties.Keys.TRIGGER_MODE, Properties.Values.EXTERNAL_LC, true);
-            } else {
-               props_.setPropValue(Devices.Keys.CAMERAB, Properties.Keys.TRIGGER_MODE, Properties.Values.INTERNAL_LC, true);
-            }
-         }
-      } catch (Exception e) {
-         ReportingUtils.showError(e);
+
+   /**
+    * Internal use only, take care of low-level property setting depending on camera type (via the DeviceLibrar)
+    * currently only HamamatsuHam and PCO are supported
+    * @param devKey
+    * @param external
+    */
+   private void setCameraTriggerMode(Devices.Keys devKey, TriggerModes mode) {
+      Devices.Libraries camLibrary = devices_.getMMDeviceLibrary(devKey);
+      switch (camLibrary) {
+      case HAMCAM:
+         props_.setPropValue(devKey, Properties.Keys.TRIGGER_SOURCE, 
+               (mode == TriggerModes.EXTERNAL) ? 
+                     Properties.Values.EXTERNAL : Properties.Values.INTERNAL,
+               true);
+         break;
+      case PCOCAM:
+         props_.setPropValue(devKey, Properties.Keys.TRIGGER_MODE, 
+               (mode == TriggerModes.EXTERNAL) ? 
+                     Properties.Values.EXTERNAL_LC : Properties.Values.INTERNAL_LC,
+               true);
+         break;
+      default: break;
       }
+   }
+   
+   /**
+    * Sets cameras A and B to external or internal mode
+    * @param external
+    */
+   public void setSPIMCameraTriggerMode(TriggerModes mode) {
+      setCameraTriggerMode(Devices.Keys.CAMERAA, mode);
+      setCameraTriggerMode(Devices.Keys.CAMERAB, mode);
    }
    
    
