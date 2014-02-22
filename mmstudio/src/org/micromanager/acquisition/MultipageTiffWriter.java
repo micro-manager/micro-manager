@@ -373,6 +373,7 @@ public class MultipageTiffWriter {
             ++attemptCount;
             try {
                Thread.sleep(5);
+               queueSize = writingExecutor_.getQueue().size();
             } catch (InterruptedException ex) {
                ReportingUtils.logError(ex);
             }
