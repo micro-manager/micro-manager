@@ -27,7 +27,8 @@ import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
-
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import java.util.prefs.Preferences;
 import javax.swing.BorderFactory;
@@ -60,6 +61,8 @@ implements MMListenerInterface {
    private int frameYPos_ = 100;
    
    private LayoutManager frameLayout_;
+   
+   private final ExecutorService zStageExecutor_;
 
    private static final String FRAMEXPOS = "FRAMEXPOS";
    private static final String FRAMEYPOS = "FRAMEYPOS";
@@ -80,6 +83,7 @@ implements MMListenerInterface {
       core_ = gui_.getMMCore();
       nf_ = NumberFormat.getInstance();
       prefs_ = Preferences.userNodeForPackage(this.getClass());
+      zStageExecutor_ = Executors.newFixedThreadPool(1);
 
       // Read values from PREFS
       frameXPos_ = prefs_.getInt(FRAMEXPOS, frameXPos_);
@@ -859,14 +863,34 @@ implements MMListenerInterface {
        }
    }
    
+   private class StageThread implements Runnable {
+      final String drive_;
+      final double z_;
+      public StageThread (String drive, double z) {
+         drive_ = drive;
+         z_ = z;
+      }
+      
+      public void run() {
+         try {
+            core_.waitForDevice(drive_);
+            core_.setRelativePosition(drive_, z_);
+            core_.waitForDevice(drive_);
+            updateZPosLabel();
+         } catch (Exception ex) {
+            gui_.logError(ex); 
+         }
+      }
+   }
+   
    private void setRelativeStagePosition(double z) {
       try {
          if (!core_.deviceBusy(currentZDrive_)) {
-            core_.setRelativePosition(currentZDrive_, z);
-            updateZPosLabel();
+            StageThread st = new StageThread(currentZDrive_, z);
+            zStageExecutor_.execute(st);
          }
-      } catch (Exception e) {
-         gui_.logError(e);
+      } catch (Exception ex) {
+         gui_.showError(ex);
       }
    }
 
