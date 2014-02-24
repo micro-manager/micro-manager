@@ -533,7 +533,8 @@ typedef MUCam_Handle (*MUCam_findCameraUPP)(void);
  *
  * @see MUCam_findCamera
  */
-void MUCam_releaseCamera(MUCam_Handle camera);
+//void MUCam_releaseCamera(MUCam_Handle camera);
+typedef void (*MUCam_releaseCameraUPP)(MUCam_Handle camera);
 
 /**
  * @brief 取得摄像头类型。
@@ -784,7 +785,8 @@ bool MUCam_setMirror(MUCam_Handle camera, bool b);
  * @return 支持的增益值个数。
  *         The count of the gain supported by camera.
  */
-int MUCam_getGainCount(MUCam_Handle camera);
+//int MUCam_getGainCount(MUCam_Handle camera);
+typedef int (*MUCam_getGainCountUPP)(MUCam_Handle camera);
 
 /**
  * @brief 取得摄像头所支持的增益值列表。
@@ -802,7 +804,8 @@ int MUCam_getGainCount(MUCam_Handle camera);
  *
  * @see MUCam_getGainCount
  */
-bool MUCam_getGainList(MUCam_Handle camera, float *g);
+//bool MUCam_getGainList(MUCam_Handle camera, float *g);
+typedef bool (*MUCam_getGainListUPP)(MUCam_Handle camera, float *g);
 
 /**
  * @brief 设置RGB各颜色通道的增益值索引。
@@ -825,7 +828,8 @@ bool MUCam_getGainList(MUCam_Handle camera, float *g);
  *
  * @see MUCam_getGainCount
  */
-bool MUCam_setRGBGainIndex(MUCam_Handle camera, int r, int g, int b);
+//bool MUCam_setRGBGainIndex(MUCam_Handle camera, int r, int g, int b);
+typedef bool (*MUCam_setRGBGainIndexUPP)(MUCam_Handle camera, int r, int g, int b);
 
 /**
  * @brief 设置RGB各颜色通道的增益值。
@@ -894,7 +898,7 @@ bool MUCam_setRGBGainIndex(MUCam_Handle camera, int r, int g, int b);
  *
  * @see MUCam_getGainCount, MUCam_setRGBGainIndex
  */
-bool MUCam_setRGBGainValue(MUCam_Handle camera, float r, float g, float b, int *ri, int *gi, int *bi);
+typedef bool (*MUCam_setRGBGainValueUPP)(MUCam_Handle camera, float r, float g, float b, int *ri, int *gi, int *bi);
 
 
 /**

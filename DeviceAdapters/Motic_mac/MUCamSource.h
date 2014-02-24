@@ -82,7 +82,8 @@ private:
     static const int MAX_BIT_DEPTH = 12;
     
     int binning_;
-    double gain_;
+    float gain_;
+    float *gains_;
     int bytesPerPixel_;
     int colorChannel_;
     bool initialized_;
@@ -119,6 +120,12 @@ private:
     MUCam_setExposureUPP MUCam_setExposure;
     MUCam_setBitCountUPP MUCam_setBitCount;
     MUCam_getExposureRangeUPP MUCam_getExposureRange;
+    MUCam_getGainCountUPP MUCam_getGainCount;
+    MUCam_getGainListUPP MUCam_getGainList;
+    MUCam_setRGBGainIndexUPP MUCam_setRGBGainIndex;
+    MUCam_setRGBGainValueUPP MUCam_setRGBGainValue;
+    MUCam_releaseCameraUPP MUCam_releaseCamera;
+    
     
     int ResizeImageBuffer();
     void ReAllocalBuffer(int size);

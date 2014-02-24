@@ -256,6 +256,17 @@ inline void CoverImage48( unsigned char* pSour, unsigned char* pDest, int sz, in
     }
 }
 
+inline int ConvertInnerBinning(int binF)
+{
+    int binning = 0;
+    while ((binF=(binF>>1))>0)
+    {
+        binning++;
+    }
+    
+    return binning;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // MUCamSource implementation
 // ~~~~~~~~~~~~~~~~~~~~~~~
@@ -272,7 +283,8 @@ inline void CoverImage48( unsigned char* pSour, unsigned char* pDest, int sz, in
  */
 MUCamSource::MUCamSource() :
 binning_ (0),
-gain_(0.8),
+gain_(1.0),
+gains_(0),
 bytesPerPixel_(4),
 colorChannel_(3),
 initialized_(false),
@@ -314,8 +326,12 @@ MUCamSource::~MUCamSource()
 {
     if (initialized_)
         Shutdown();
-    
     //delete thd_;
+    if (gains_)
+    {
+        delete [] gains_;
+        gains_ = 0;
+    }
 }
 
 /**
@@ -358,7 +374,7 @@ int MUCamSource::Initialize()
     GetMotiCamNAME(hCameras_[currentCam_], sName);
     //memcpy(sName, GetMotiCamNAME(hCameras_[currentCam_]), Camera_Name_Len);
     pAct = new CPropertyAction(this, &MUCamSource::OnDevice);
-    ret = CreateProperty(g_Keyword_Cameras, sName, MM::String, false, pAct);
+    ret = CreateProperty(g_Keyword_Cameras, sName, MM::String, true, pAct);
     ret = SetAllowedValues(g_Keyword_Cameras, DevicesVec_);
     assert(ret == DEVICE_OK);
     
@@ -382,6 +398,15 @@ int MUCamSource::Shutdown()
     if (initialized_)
     {
         MUCam_closeCamera(hCameras_[currentCam_]);
+        for (int i = 0; i<cameraCnt_; i++)
+        {
+            if (hCameras_[i])
+            {
+                MUCam_releaseCamera(hCameras_[i]);
+                hCameras_[i] = 0;
+            }
+        }
+        cameraCnt_ = 0;
     }
     initialized_ = false;
     UnloadFunctions();
@@ -552,7 +577,7 @@ void MUCamSource::SetExposure(double exp)
  */
 int MUCamSource::GetBinning() const
 {
-    return binning_;
+    return 1<<binning_;
 }
 
 /**
@@ -561,8 +586,8 @@ int MUCamSource::GetBinning() const
  */
 int MUCamSource::SetBinning(int binF)
 {
-    binning_ = binF;
-    MUCam_setBinningIndex(hCameras_[currentCam_], binF);
+    binning_ = ConvertInnerBinning(binF);
+    MUCam_setBinningIndex(hCameras_[currentCam_], binning_);
     ResizeImageBuffer();
     return SetProperty(MM::g_Keyword_Binning, CDeviceUtils::ConvertToString(binF));
 }
@@ -666,13 +691,13 @@ int MUCamSource::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
     {
         long binSize;
         pProp->Get(binSize);
-        binning_ = (int)binSize;
+        binning_ = ConvertInnerBinning(binSize);
         MUCam_setBinningIndex(hCameras_[currentCam_], binning_);
         return ResizeImageBuffer();
     }
     else if (eAct == MM::BeforeGet)
     {
-        pProp->Set((long)binning_);
+        pProp->Set((long)1<<binning_);
     }
     
     return DEVICE_OK;
@@ -808,7 +833,11 @@ int MUCamSource::OnGain(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
     if (eAct == MM::AfterSet)
     {
-        pProp->Get(gain_);
+        int gainRed, gainGreen, gainBlue;
+        double gain;
+        pProp->Get(gain);
+        if(MUCam_setRGBGainValue(hCameras_[currentCam_], gain, gain, gain, &gainRed, &gainGreen, &gainBlue))
+            gain_ = gains_[gainRed];
     }
     else if (eAct == MM::BeforeGet)
     {
@@ -1025,14 +1054,15 @@ void MUCamSource::InitBinning()
     
     // binning
     CPropertyAction *pAct = new CPropertyAction (this, &MUCamSource::OnBinning);
-    int ret = CreateProperty(MM::g_Keyword_Binning, CDeviceUtils::ConvertToString(binning_), MM::Integer, false, pAct);
-    SetBinning(binning_);
+    int ret = CreateProperty(MM::g_Keyword_Binning,
+                             CDeviceUtils::ConvertToString(1<<binning_), MM::Integer, false, pAct);
+    SetBinning(1<<binning_);
     //assert(ret == DEVICE_OK);
     
     vector<string> binningValues;
     for(int i = 0; i < cnt; i++)
     {
-        binningValues.push_back(CDeviceUtils::ConvertToString(i));
+        binningValues.push_back(CDeviceUtils::ConvertToString(1<<i));
     }
     
     ret = SetAllowedValues(MM::g_Keyword_Binning, binningValues);
@@ -1073,12 +1103,23 @@ void MUCamSource::InitPixelType()
 
 void MUCamSource::InitGain()
 {
-    //MIDP_GetGainRange(&m_dMinGain, &m_dMaxGain);
-    CPropertyAction *pAct = new CPropertyAction (this, &MUCamSource::OnGain);
-    CreateProperty(MM::g_Keyword_Gain, "1.0", MM::Float, false, pAct);
-    //assert(ret == DEVICE_OK);
-    //SetPropertyLimits(MM::g_Keyword_Gain, m_dMinGain, m_dMaxGain);
-    //m_dGain = 1.0;
+    int cnt = MUCam_getGainCount(hCameras_[currentCam_]);
+    if (cnt <= 0) return;
+    if (gains_ != 0)
+    {
+        delete [] gains_;
+        gains_ = 0;
+    }
+    gains_ = new float[cnt];
+    if (MUCam_getGainList(hCameras_[currentCam_], gains_))
+    {
+        int gainRed, gainGreen, gainBlue;
+        CPropertyAction *pAct = new CPropertyAction (this, &MUCamSource::OnGain);
+        CreateProperty(MM::g_Keyword_Gain, "1.0", MM::Float, false, pAct);
+        if(MUCam_setRGBGainValue(hCameras_[currentCam_], 1.0, 1.0, 1.0, &gainRed, &gainGreen, &gainBlue))
+            gain_ = gains_[gainRed];
+        SetPropertyLimits(MM::g_Keyword_Gain, gains_[0], gains_[cnt - 1]);
+    }
 }
 
 void MUCamSource::InitExposure()
@@ -1155,6 +1196,11 @@ bool MUCamSource::LoadFunctions()
     MUCam_getExposureRange = (MUCam_getExposureRangeUPP)dlsym(handle_, "MUCam_getExposureRange");
     MUCam_closeCamera = (MUCam_closeCameraUPP)dlsym(handle_, "MUCam_closeCamera");
     MUCam_getFrameFormat = (MUCam_getFrameFormatUPP)dlsym(handle_, "MUCam_getFrameFormat");
+    MUCam_getGainCount = (MUCam_getGainCountUPP)dlsym(handle_, "MUCam_getGainCount");
+    MUCam_getGainList = (MUCam_getGainListUPP)dlsym(handle_, "MUCam_getGainList");
+    MUCam_setRGBGainIndex = (MUCam_setRGBGainIndexUPP)dlsym(handle_, "MUCam_setRGBGainIndex");
+    MUCam_setRGBGainValue = (MUCam_setRGBGainValueUPP)dlsym(handle_, "MUCam_setRGBGainValue");
+    MUCam_releaseCamera = (MUCam_releaseCameraUPP)dlsym(handle_, "MUCam_releaseCamera");
     return true;
 }
 
