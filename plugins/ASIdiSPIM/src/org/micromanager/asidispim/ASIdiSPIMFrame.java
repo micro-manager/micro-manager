@@ -44,7 +44,6 @@ import org.micromanager.asidispim.Utils.StagePositionUpdater;
 import org.micromanager.internalinterfaces.LiveModeListener; 
 
 // TODO make sure to grab final camera frame
-// TODO add support for PCO Edge
 // TODO joystick labels dependent on which side you are on
 // TODO finish adding 3rd camera (inverted scope camera)
 // TODO figure out update of slider limits when devices changed
@@ -75,6 +74,7 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
    private final SetupPanel setupPanelB_;
    private final NavigationPanel navigationPanel_;
    private final HelpPanel helpPanel_;
+   private final StagePositionUpdater stagePosUpdater_;
    
    private static final String MAIN_PREF_NODE = "Main"; 
    
@@ -92,7 +92,7 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
       joystick_ = new Joystick(devices_, props_);
       cameras_ = new Cameras(devices_, props_);
       
-      final StagePositionUpdater stagePosUpdater = new StagePositionUpdater(positions_);
+      stagePosUpdater_ = new StagePositionUpdater(positions_);
       
       final ListeningJTabbedPane tabbedPane = new ListeningJTabbedPane();
         
@@ -106,23 +106,23 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
       setupPanelA_ = new SetupPanel(devices_, props_, joystick_, 
             Devices.Sides.A, positions_, cameras_, prefs_);
       tabbedPane.addLTab(setupPanelA_);
-      stagePosUpdater.addPanel(setupPanelA_);
+      stagePosUpdater_.addPanel(setupPanelA_);
       MMStudioMainFrame.getInstance().addLiveModeListener((LiveModeListener) setupPanelA_);
       
       setupPanelB_ = new SetupPanel(devices_, props_, joystick_,
             Devices.Sides.B, positions_, cameras_, prefs_);
       tabbedPane.addLTab(setupPanelB_);
-      stagePosUpdater.addPanel(setupPanelB_);
+      stagePosUpdater_.addPanel(setupPanelB_);
       MMStudioMainFrame.getInstance().addLiveModeListener((LiveModeListener) setupPanelB_);
       
       // get initial positions, even if user doesn't want continual refresh
       // these used by NavigationPanel 
-      stagePosUpdater.oneTimeUpdate();
+      stagePosUpdater_.oneTimeUpdate();
       
       navigationPanel_ = new NavigationPanel(devices_, props_, joystick_,
-            positions_, stagePosUpdater, prefs_, cameras_);
+            positions_, stagePosUpdater_, prefs_, cameras_);
       tabbedPane.addLTab(navigationPanel_);
-      stagePosUpdater.addPanel(navigationPanel_);
+      stagePosUpdater_.addPanel(navigationPanel_);
       MMStudioMainFrame.getInstance().addLiveModeListener((LiveModeListener) navigationPanel_);
       
       helpPanel_ = new HelpPanel();
@@ -160,7 +160,7 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
          @Override
          public void windowClosing(java.awt.event.WindowEvent evt) {
             // stop the timer for updating stages
-            stagePosUpdater.stop();
+            stagePosUpdater_.stop();
 
             // save selections as needed
             devices_.saveSettings();

@@ -188,7 +188,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       ActionListener ae = new ActionListener() {
          public void actionPerformed(ActionEvent e) { 
             if (activeTimerCheckBox.isSelected()) {
-               stagePosUpdater.start(1000);
+               stagePosUpdater.start();
             } else {
               stagePosUpdater.stop();
             }

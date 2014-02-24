@@ -147,7 +147,11 @@ public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerI
       buttonStart_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            double oldExposure = 0;
+//            double oldExposure = 0;
+            if (acqEngine_.isAcquisitionRunning()) {
+               ReportingUtils.showError("Already running another acquisition!");
+               return;
+            }
             try {
                // set up cameras
                if (!cameras_.isCurrentCameraValid()) {
@@ -155,7 +159,7 @@ public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerI
                   return;
                }
                cameras_.enableLiveMode(false);
-               oldExposure = core_.getExposure();
+//               oldExposure = core_.getExposure();
                core_.setExposure(NumberUtils.displayStringToDouble(acqExposure_.getText()));
                cameras_.setSPIMCameraTriggerMode(Cameras.TriggerModes.EXTERNAL);
                // get acquisition engine configured
@@ -181,14 +185,11 @@ public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerI
                props_.setPropValue(Devices.Keys.PIEZOA, Properties.Keys.SPIM_STATE, Properties.Values.SPIM_ARMED, true);
                props_.setPropValue(Devices.Keys.PIEZOB, Properties.Keys.SPIM_STATE, Properties.Values.SPIM_ARMED, true);
                // trigger controller
-               props_.setPropValue(Devices.Keys.GALVOA, Properties.Keys.SPIM_STATE, Properties.Values.SPIM_RUNNING, true);
-               
                // TODO generalize this for different ways of running SPIM
-               
+               props_.setPropValue(Devices.Keys.GALVOA, Properties.Keys.SPIM_STATE, Properties.Values.SPIM_RUNNING, true);
+               // TODO figure out how to wait until acquisition is done to continue
                // clean up
-               core_.setExposure(oldExposure);
-               cameras_.setSPIMCameraTriggerMode(Cameras.TriggerModes.INTERNAL);  // go back to internal triggering mode
-               
+//               core_.setExposure(oldExposure); // don't do this until we make sure acquisition is complete
             } catch (MMException ex) {
                ReportingUtils.showError(ex);
             } catch (Exception e1) {
