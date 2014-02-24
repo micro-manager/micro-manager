@@ -32,7 +32,6 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
-import java.awt.Insets;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -50,7 +49,6 @@ import java.util.prefs.Preferences;
 import javax.swing.AbstractButton;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
-import javax.swing.JComponent;
 import javax.swing.JCheckBox;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComboBox;
@@ -69,7 +67,6 @@ import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.ToolTipManager;
 import javax.swing.UIManager;
-import javax.swing.event.AncestorEvent;
 
 import mmcorej.CMMCore;
 import mmcorej.DeviceType;
@@ -104,7 +101,6 @@ import org.micromanager.utils.MMException;
 import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.TextUtils;
-import org.micromanager.utils.TooltipTextMaker;
 import org.micromanager.utils.WaitDialog;
 
 import bsh.EvalError;
@@ -123,9 +119,6 @@ import java.awt.event.MouseEvent;
 import java.util.Collections;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-
-import javax.swing.*;
-import javax.swing.event.AncestorListener;
 
 import mmcorej.TaggedImage;
 
@@ -184,7 +177,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    private JTextField textFieldExp_;
    private JLabel labelImageDimensions_;
    private JToggleButton liveButton_;
-   private JButton toAlbumButton_;
    private JCheckBox autoShutterCheckBox_;
    private MMOptions options_;
    private boolean runsAsPlugin_;
@@ -249,7 +241,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    private AcquisitionManager acqMgr_;
    private static VirtualAcquisitionDisplay simpleDisplay_;
    private Color[] multiCameraColors_ = {Color.RED, Color.GREEN, Color.BLUE, Color.YELLOW, Color.CYAN};
-   private int snapCount_ = -1;
    private boolean liveModeSuspended_;
    public Font defaultScriptFont_ = null;
    public static final String SIMPLE_ACQ = "Snap/Live Window";
@@ -592,7 +583,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
                  }
               }, "camera_go.png", topPanel, 7, 26, 95, 47);
 
-      toAlbumButton_ = (JButton) GUIUtils.createButton(false, "Album", "Album",
+      /* toAlbumButton_ = (JButton) */ GUIUtils.createButton(false, "Album", "Album",
               "Acquire single frame and add to an album",
               new Runnable() {
                  public void run() {
