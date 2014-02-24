@@ -87,11 +87,16 @@ public class AcquisitionWrapperEngineAdapter extends AcquisitionWrapperEngine {
         return storage_;
     }
     
+    public double getFocusOffset() {
+        return focusOffset_;
+    }
+    
     public void setFocusOffset(double offset) {
        //image moves up = negative offset
         focusOffset_ = offset;
         try {
             //set new position (this is how the autofocus works)
+            IJ.log("Setting Z position: " + (initialZPosition_ + focusOffset_));
             core_.setPosition(TwoPhotonControl.Z_STAGE, initialZPosition_ + focusOffset_);
         } catch (Exception e) {
             IJ.log("Couldnt set focus offset, initial z pos: " + initialZPosition_ + " focusOffset: " + focusOffset_);
@@ -186,6 +191,7 @@ public class AcquisitionWrapperEngineAdapter extends AcquisitionWrapperEngine {
     }
 
     private void runAcquisition(SequenceSettings settings) throws Exception {
+        focusOffset_ = 0;
         addRunnables(settings);
         //don't run autofocus before first position
         runAutofocus_  = false;
