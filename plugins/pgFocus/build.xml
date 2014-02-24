@@ -1,8 +1,8 @@
 <project name="pgFocus" default="jar">
 	<import file="../javapluginbuild.xml"/>
 
-        <path id="plugin.classpath">
-            <pathelement location="${mm.java.lib.jfreechart}"/>
-        </path>
-
+	<path id="plugin.classpath">
+		<pathelement location="${mm.java.lib.jcommon}"/>
+		<pathelement location="${mm.java.lib.jfreechart}"/>
+	</path>
 </project>
