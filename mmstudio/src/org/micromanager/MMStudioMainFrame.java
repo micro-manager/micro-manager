@@ -2146,6 +2146,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       String rootDir = new File(dir).getAbsolutePath();
       String name = new File(dir).getName();
       rootDir = rootDir.substring(0, rootDir.length() - (name.length() + 1));
+      name = acqMgr_.getUniqueAcquisitionName(name);
       acqMgr_.openAcquisition(name, rootDir, show, !inRAM, true);
       try {
          getAcquisition(name).initialize();
