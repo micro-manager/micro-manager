@@ -374,7 +374,7 @@ int pgFocus::FullFocus()
    MM::MMTime startTime = GetCurrentMMTime();
    MM::MMTime wait(0, waitAfterLock_ * 1000);
    while (!IsContinuousFocusLocked() && ( (GetCurrentMMTime() - startTime) < wait) ) {
-      CDeviceUtils::SleepMs(25);
+	      CDeviceUtils::SleepMs(25);
    }
 
    CDeviceUtils::SleepMs(waitAfterLock_);
@@ -725,8 +725,11 @@ int pgFocus::OnCalibrationCurve(MM::PropertyBase* pProp, MM::ActionType eAct)
 	MM_THREAD_GUARD_LOCK(&mutex);
 
 	std::ostringstream oss;
-	for (vector<int>::size_type i=0; i<deviceInfo_.calibration_curve.size();i++){
 
+
+
+	for (std::vector<std::string>::size_type i = 0; i<deviceInfo_.calibration_curve.size();i++)
+	{
 		oss << deviceInfo_.calibration_curve[i] << ",";
 		oss << deviceInfo_.calibration_curve[++i];
 		if ((i + 1) < deviceInfo_.calibration_curve.size()) oss << ",";
@@ -1063,10 +1066,10 @@ pgFocusMonitoringThread::pgFocusMonitoringThread(pgFocus &pgfocus, MM::Core& cor
 	pgfocus_(pgfocus),
 	core_ (core),
 	debug_(debug),
+	deviceInfo_(deviceInfo),
 	threadStop_ (true),
 	intervalMs_(100) // check every 100 ms for new messages,
 {
-	deviceInfo_ = deviceInfo;
 	port_ = pgfocus_.port_;
 }
 

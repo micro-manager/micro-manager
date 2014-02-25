@@ -17,6 +17,7 @@
 #include "../../MMDevice/DeviceUtils.h"
 #include <string>
 #include <queue>
+#include <vector>
 
 //////////////////////////////////////////////////////////////////////////////
 // Error codes
@@ -144,6 +145,7 @@ struct pgFocusInfo {
 		offset = 0;
 		micronPerVolt = 10;
 		qoffsetMax = 30;
+		gain = 1.0;
 		stepSizeUm = 0;
 		continuousFocusing = 0;
 		standardDeviation = 0;
@@ -171,7 +173,7 @@ struct pgFocusInfo {
 	long diffADC;
 	long startTime;
 	long micronPerVolt;
-	unsigned long qoffsetMax; // length of queue used to store offsets for standard deviation calculation
+	std::deque<double>::size_type qoffsetMax; // length of queue used to store offsets for standard deviation calculation
 
 	double gain;
 	double slope;
@@ -318,22 +320,23 @@ class pgFocusMonitoringThread : public MMDeviceThreadBase
 		void Stop() {threadStop_ = true;}
 
    private:
-		//MM_THREAD_HANDLE thread_;
-		void parseMessage(char* message);
-		double standard_deviation();
-		MM::Core& core_;
 		pgFocus& pgfocus_;
-
+		MM::Core& core_;
 		pgFocusInfo *deviceInfo_;
+
+		bool debug_;
+		bool threadStop_;
+		long intervalMs_;
 
 		std::string port_;
 		std::string serialTerminator_;
 		std::deque<double> qoffsets_;
 
-		bool debug_;
-		bool threadStop_;
-		long intervalMs_;
 		pgFocusMonitoringThread& operator=(pgFocusMonitoringThread& ) {assert(false); return *this;}
+
+		//MM_THREAD_HANDLE thread_;
+		void parseMessage(char* message);
+		double standard_deviation();
 };
 
 float dacVoltage(float  dac) {
