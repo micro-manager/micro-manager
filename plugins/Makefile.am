@@ -193,6 +193,7 @@ pgFocus.jar: \
 	test -d build || mkdir build
 	rm -rf build/*
 	$(JAVAC) $(JAVACFLAGS) -source 1.5 -target 1.5 -sourcepath $(srcdir):. -classpath ../mmstudio/MMJ_.jar:$(JFREECHARTJARPATH):. $(srcdir)/pgFocus/src/edu/umassmed/pgFocus/*.java -d build
+	cp -r $(srcdir)/pgFocus/src/edu/umassmed/pgFocus/umass_logo.png build/edu/umassmed/pgfocus/
 	cd build && jar cf ../pgFocus.jar * 
 
 
