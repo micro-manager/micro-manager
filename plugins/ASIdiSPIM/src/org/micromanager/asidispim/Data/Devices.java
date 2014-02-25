@@ -95,8 +95,11 @@ public class Devices {
    public static enum Libraries {
       NODEVICE("NoDevice"), // if the device doesn't exist in Micro-manager
                             // (e.g. no camera has been selected)
-      ASITIGER("ASITiger"), HAMCAM("HamamatsuHam"), PCOCAM("PCO_Camera"), UNKNOWN(
-            "Unknown"), // if the device is valid but not one we know about
+      ASITIGER("ASITiger"), // ASI TG-1000 controller
+      HAMCAM("HamamatsuHam"), 
+      PCOCAM("PCO_Camera"), 
+      ANDORCAM("AndorSDK3"),
+      UNKNOWN("Unknown"), // if the device is valid but not one we know about
       ;
       private final String text;
 
@@ -128,14 +131,10 @@ public class Devices {
       boolean saveInPref;
 
       /**
-       * @param key
-       *           device key as given by enum in Devices.Keys
-       * @param displayName
-       *           name shown in the GUI
-       * @param side
-       *           enum A, B, or N
-       * @param saveInPref
-       *           true if we save this value to preferences
+       * @param key device key as given by enum in Devices.Keys
+       * @param displayName name shown in the GUI
+       * @param side enum A, B, or N
+       * @param saveInPref true if we save this value to preferences
        */
       public DeviceData(Keys key, String displayName, Sides side,
             boolean saveInPref) {
@@ -249,11 +248,9 @@ public class Devices {
    }
 
    /**
-    * Associates a Micro-manager device name with the Device key. Changes
-    * deviceInfo_.
-    * 
-    * @param key
-    *           Device key (enum) as defined in this class
+    * Associates a Micro-manager device name with the Device key. 
+    * Changes deviceInfo_.
+    * @param key  Device key (enum) as defined in this class
     * @param mmDevice
     */
    public void setMMDevice(Devices.Keys key, String mmDevice) {
@@ -268,8 +265,7 @@ public class Devices {
          //   selected or if there is an error
          d = getDefaultDeviceData(key);
       } else {
-         // populate the DeviceData structure with actual information about the
-         // device
+         // populate the DeviceData structure with actual device information
          d.mmDevice = mmDevice;
          try {
             d.type = core_.getDeviceType(mmDevice);
@@ -280,6 +276,8 @@ public class Devices {
                d.deviceLibrary = Devices.Libraries.HAMCAM;
             } else if (library.equals(Devices.Libraries.PCOCAM.toString())) {
                d.deviceLibrary = Devices.Libraries.PCOCAM;
+            } else if (library.equals(Devices.Libraries.ANDORCAM.toString())) {
+               d.deviceLibrary = Devices.Libraries.ANDORCAM;
             } else {
                d.deviceLibrary = Devices.Libraries.UNKNOWN;
             }
@@ -289,13 +287,16 @@ public class Devices {
          }
          if (d.deviceLibrary == Devices.Libraries.ASITIGER) {
             try {
-               // can't use plugin's prop_ object because it hasn't been created yet
-               // => have to resort to core_ calls despite wanting to use props_ everywhere else
+               // can't use plugin's prop_ object because it hasn't been created
+               //  yet => have to resort to core_ calls despite wanting to use
+               //  props_ everywhere else
                if (core_.hasProperty(mmDevice, "AxisLetter")) {
                   d.axisLetter = core_.getProperty(mmDevice, "AxisLetter");
                }
-               if (core_.hasProperty(mmDevice, "AxisLetterX") && core_.hasProperty(mmDevice, "AxisLetterY")) {
-                  d.axisLetter = core_.getProperty(mmDevice, "AxisLetterX") + core_.getProperty(mmDevice, "AxisLetterY");
+               if (core_.hasProperty(mmDevice, "AxisLetterX") && 
+                     core_.hasProperty(mmDevice, "AxisLetterY")) {
+                  d.axisLetter = core_.getProperty(mmDevice, "AxisLetterX") 
+                        + core_.getProperty(mmDevice, "AxisLetterY");
                }
             } catch (Exception ex) {
                ReportingUtils.showError(ex);
@@ -310,8 +311,7 @@ public class Devices {
     * Looks up the Micro-Manager device name currently set for particular Device
     * key.
     * 
-    * @param key
-    *           Device key (enum) as defined in this class
+    * @param key Device key (enum) as defined in this class
     * @return Micro-Manager deviceName, or null when not found
     */
    public String getMMDevice(Devices.Keys key) {
@@ -326,8 +326,7 @@ public class Devices {
     * Looks up the Micro-Manager device name currently set for particular Device
     * key.
     * 
-    * @param key
-    *           Device key (enum) as defined in this class
+    * @param key Device key (enum) as defined in this class
     * @return Micro-Manager deviceName, or null when not found
     * @throws Exception
     */
@@ -343,8 +342,7 @@ public class Devices {
     * Looks up the Micro-Manager device names currently set for an array of
     * Device keys.
     * 
-    * @param keys
-    *           Array of Device keys (enums) as defined in this class
+    * @param keys Array of Device keys (enums) as defined in this class
     * @return array of Micro-Manager deviceNames
     */
    public String[] getMMDevices(Devices.Keys[] keys) {
@@ -362,8 +360,7 @@ public class Devices {
     * Looks up the Micro-Manager device type currently set for particular Device
     * key.
     * 
-    * @param key
-    *           Device key (enum) as defined in this class
+    * @param key Device key (enum) as defined in this class
     * @return Micro-Manager device type, or mmcorej.DeviceType.UnknownType if
     *         not found
     */
@@ -375,8 +372,7 @@ public class Devices {
     * Looks up the Micro-Manager device library currently set for particular
     * Device key.
     * 
-    * @param key
-    *           Device key (enum) as defined in this class
+    * @param key Device key (enum) as defined in this class
     * @return Micro-Manager device library, or empty string if not found
     */
    public Libraries getMMDeviceLibrary(Devices.Keys key) {
@@ -386,10 +382,8 @@ public class Devices {
    /**
     * call core's hasProperty, just with our keys as inputs
     * 
-    * @param devKey
-    *           Device key (enum) as defined in this class
-    * @param propKey
-    *           Property key (enum)
+    * @param devKey Device key (enum) as defined in this class
+    * @param propKey Property key (enum)
     * @return
     */
    public boolean hasProperty(Devices.Keys devKey, Properties.Keys propKey) {
@@ -401,7 +395,6 @@ public class Devices {
    }
 
    /**
-    * 
     * @param key
     * @return true if XYstage, false otherwise
     */
@@ -410,7 +403,6 @@ public class Devices {
    }
 
    /**
-    * 
     * @param key
     * @return true if 1D stage (piezo or motorized), false otherwise
     */
@@ -419,7 +411,6 @@ public class Devices {
    }
 
    /**
-    * 
     * @param key
     * @return true if galvo, false otherwise
     */
@@ -428,9 +419,7 @@ public class Devices {
    }
 
    /**
-    * 
-    * @param key
-    *           from Devices.Keys
+    * @param key from Devices.Keys
     * @return string used to describe device, e.g. "MicroMirror A" or "XY Stage"
     */
    public String getDeviceDisplay(Devices.Keys key) {
@@ -686,7 +675,7 @@ public class Devices {
       // create synchronized version of data structure containing Device
       // information and populate it
       // populating must be done dynamically because some elements (e.g.
-      // mmDevice field) are dynamic
+      // mmDevice field) are dynamic (updated later)
       // must make sure that every key is initialized here
       deviceInfo_ = Collections
             .synchronizedMap(new EnumMap<Devices.Keys, DeviceData>(

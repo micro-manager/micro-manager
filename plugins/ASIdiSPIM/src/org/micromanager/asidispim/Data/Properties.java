@@ -88,6 +88,7 @@ public class Properties {
       SAVE_CARD_SETTINGS("SaveCardSettings"),
       TRIGGER_SOURCE("TRIGGER SOURCE"), // for Hamamatsu
       TRIGGER_MODE("Triggermode"),      // for PCO
+      TRIGGER_MODE_ANDOR("TriggerMode"),// for Andor sCMOS
       FIRMWARE_VERSION("FirmwareVersion"),
       CAMERA("Camera"),
       ;
@@ -122,6 +123,7 @@ public class Properties {
       EXTERNAL("EXTERNAL"),
       INTERNAL_LC("Internal"),
       EXTERNAL_LC("External"),
+      INTERNAL_ANDOR("Internal (Recommended for fast acquisitions)"),
       ;
       private final String text;
       Values(String text) {

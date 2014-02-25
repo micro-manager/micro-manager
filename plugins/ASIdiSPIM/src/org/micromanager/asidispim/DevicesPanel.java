@@ -199,6 +199,12 @@ public class DevicesPanel extends ListeningJPanel {
                      ": PCO device adapter doesn't have external trigger property");
             }
             break;
+         case ANDORCAM:
+            if (! devices_.hasProperty(key, Properties.Keys.TRIGGER_MODE_ANDOR) ) {
+               ReportingUtils.showError("Device " + devices_.getMMDevice(key) + 
+                     ": Andor sCMOS device adapter doesn't have external trigger property");
+            }
+            break;
          default:
             ReportingUtils.showError("Plugin doesn't support your camera for SPIM yet;"
                   + " contact the authors for support (camera must have hardware trigger)");

@@ -50,7 +50,7 @@ public class Cameras {
       devices_ = devices;
       props_ = props;
       gui_ = MMStudioMainFrame.getInstance();
-   }
+   }//constructor
    
    /**
     * associative class to store information for camera combo boxes.
@@ -122,7 +122,7 @@ public class Cameras {
    }
    
    /** 
-    * Switches the active camera to the desired one. Takes care of possible side effects 
+    * Switches the active camera to the desired one. Takes care of possible side effects.
     */ 
    public void setCamera(Devices.Keys key) {
       if (Devices.CAMERAS.contains(key)) {
@@ -149,15 +149,23 @@ public class Cameras {
       }
    }
    
-   
+   /**
+    * @return device key, e.g. CAMERAA or CAMERALOWER
+    */
    public Devices.Keys getCurrentCamera() {
       return currentCameraKey_;
    }
    
+   /**
+    * @return false if and only if a camera is not set (checks this class, not Core-Camera)
+    */
    public boolean isCurrentCameraValid() {
       return !((currentCameraKey_ == null) || (currentCameraKey_ == Devices.Keys.NONE));
    }
    
+   /**
+    * Turns live mode on or off via core call
+    */
    public void enableLiveMode(boolean enable) {
       if (enable) {
          setSPIMCameraTriggerMode(TriggerModes.INTERNAL);
@@ -166,24 +174,34 @@ public class Cameras {
    }
 
    /**
-    * Internal use only, take care of low-level property setting depending on camera type (via the DeviceLibrar)
-    * currently only HamamatsuHam and PCO are supported
+    * Internal use only, take care of low-level property setting to make
+    *  internal or external depending on camera type (via the DeviceLibrary)
+    * currently HamamatsuHam, PCO_Camera, and Andor sCMOS are supported
     * @param devKey
-    * @param external
+    * @param mode enum from this class
     */
    private void setCameraTriggerMode(Devices.Keys devKey, TriggerModes mode) {
       Devices.Libraries camLibrary = devices_.getMMDeviceLibrary(devKey);
       switch (camLibrary) {
       case HAMCAM:
          props_.setPropValue(devKey, Properties.Keys.TRIGGER_SOURCE, 
-               (mode == TriggerModes.EXTERNAL) ? 
-                     Properties.Values.EXTERNAL : Properties.Values.INTERNAL,
+               ((mode == TriggerModes.EXTERNAL) ? 
+                     Properties.Values.EXTERNAL : 
+                     Properties.Values.INTERNAL),
                true);
          break;
       case PCOCAM:
          props_.setPropValue(devKey, Properties.Keys.TRIGGER_MODE, 
-               (mode == TriggerModes.EXTERNAL) ? 
-                     Properties.Values.EXTERNAL_LC : Properties.Values.INTERNAL_LC,
+               ((mode == TriggerModes.EXTERNAL) ? 
+                     Properties.Values.EXTERNAL_LC : 
+                     Properties.Values.INTERNAL_LC),
+               true);
+         break;
+      case ANDORCAM:
+         props_.setPropValue(devKey, Properties.Keys.TRIGGER_MODE_ANDOR, 
+               ((mode == TriggerModes.EXTERNAL) ? 
+                     Properties.Values.EXTERNAL_LC :
+                     Properties.Values.INTERNAL_ANDOR),
                true);
          break;
       default: break;
