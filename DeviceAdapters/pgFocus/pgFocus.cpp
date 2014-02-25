@@ -67,20 +67,22 @@ pgFocus::pgFocus(const char* name) :
 		port_("Undefined"),
 		version_("0"),
 		serialNumber_("0"),
+		focusMode_(g_pgFocus_Unlock),
+		focusCurrentMode_(g_pgFocus_Unlocked),
 		initialized_(false),
 		busy_(false),
 		debug_(true),
 		justCalibrated_(false),
-		continuousFocusing_(false),
 		autoExposure_(true),
-		ret_(DEVICE_OK),
-		exposure_(10000),
+		continuousFocusing_(false),
 		answerTimeoutMs_(1000),
+		ret_(DEVICE_OK),
 		waitAfterLock_(100),
 		waitAfterLight_(1000),
+		exposure_(10000),
 		DAC_nM_ (0),
 		ADC_nM_ (0),
-		focusMode_(g_pgFocus_Unlock),
+
 		monitoringThread_(NULL)
 {
 
@@ -520,7 +522,6 @@ int pgFocus::GetContinuousFocusing(bool& state)
 
 int pgFocus::OnMicronsPerVolt(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-	long uMperVolt;
 
 	if (eAct == MM::BeforeGet)
 	{
@@ -724,7 +725,7 @@ int pgFocus::OnCalibrationCurve(MM::PropertyBase* pProp, MM::ActionType eAct)
 	MM_THREAD_GUARD_LOCK(&mutex);
 
 	std::ostringstream oss;
-	for (int i=0; i<deviceInfo_.calibration_curve.size();i++){
+	for (vector<int>::size_type i=0; i<deviceInfo_.calibration_curve.size();i++){
 
 		oss << deviceInfo_.calibration_curve[i] << ",";
 		oss << deviceInfo_.calibration_curve[++i];

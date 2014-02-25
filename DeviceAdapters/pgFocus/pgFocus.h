@@ -269,38 +269,37 @@ public:
 
 
 private:
+	std::string name_;				// Name assigned by the user during installation
+	std::string port_;				// Serial Port assigned by the user during installation
+	std::string version_;			// Firmware version of the hardware
+	std::string serialNumber_;		// Not used yet, but will be serial version of the hardware
+	std::string focusMode_;  		// Requested Focus mode
+	std::string focusCurrentMode_;	// Current focus status
 
-	bool debug_;
-	bool busy_;
-	bool autoExposure_;
 	bool initialized_;
+	bool busy_;
+	bool debug_;
 	bool justCalibrated_;
+	bool autoExposure_;
 	bool continuousFocusing_;
+
+	int answerTimeoutMs_;
+	int ret_;
+
+	long waitAfterLock_;
+	long waitAfterLight_;
+	long exposure_;
+	long DAC_nM_;
+	long ADC_nM_;
+
+	pgFocusMonitoringThread* monitoringThread_;
+    MM_THREAD_GUARD mutex;
+    MMThreadLock executeLock_;
+	pgFocusInfo deviceInfo_;
 
 	int GetValue(std::string cmd, float& val);
 	int SetCommand(std::string cmd);
 
-	long waitAfterLock_;
-	long waitAfterLight_;
-	long DAC_nM_;
-	long ADC_nM_;
-	long exposure_;
-
-	std::string name_;
-	std::string port_;
-	std::string focusMode_;  	// Requested Focus mode
-	std::string focusCurrentMode_;	// Current focus status
-	std::string version_;
-	std::string serialNumber_;
-
-
-    MM_THREAD_GUARD mutex;
-    MMThreadLock executeLock_;
-	pgFocusMonitoringThread* monitoringThread_;
-	int answerTimeoutMs_;
-	int ret_;
-
-	pgFocusInfo deviceInfo_;
 
 };
 
