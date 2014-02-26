@@ -373,4 +373,26 @@ public class PanelUtils {
       return tf;
    }
    
+
+   /**
+    * takes a JSpinner and adds a listener that is guaranteed to be called after the other listeners.
+    * Modifies the JSpinner!!
+    */
+   public void addListenerLast(JSpinner js, final ChangeListener lastListener) {
+      final ChangeListener [] origListeners = js.getChangeListeners();
+      for (ChangeListener list : origListeners) {
+         js.removeChangeListener(list);
+      }
+
+      ChangeListener newListener = new ChangeListener() {
+         public void stateChanged(ChangeEvent e) {
+            for (ChangeListener list : origListeners) {
+               list.stateChanged(e);
+            }
+            lastListener.stateChanged(e);
+         }
+      };
+      js.addChangeListener(newListener);
+   }
+   
 }

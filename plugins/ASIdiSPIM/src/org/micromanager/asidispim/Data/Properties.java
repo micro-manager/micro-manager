@@ -23,6 +23,7 @@ package org.micromanager.asidispim.Data;
 
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import mmcorej.CMMCore;
@@ -46,9 +47,6 @@ import org.micromanager.utils.ReportingUtils;
  * @author nico
  */
 public class Properties {
-   private Devices devices_;
-   private CMMCore core_;
-   private List<UpdateFromPropertyListenerInterface> listeners_;
 
    /**
     * List of all device adapter properties used.  The enum value (all caps) is used in the Java code.  The corresponding
@@ -91,6 +89,7 @@ public class Properties {
       TRIGGER_MODE_ANDOR("TriggerMode"),// for Andor sCMOS
       FIRMWARE_VERSION("FirmwareVersion"),
       CAMERA("Camera"),
+      PLUGIN_POSITION_REFRESH_INTERVAL("PositionRefreshInterval(s)"),
       ;
       private final String text;
       Keys(String text) {
@@ -135,6 +134,14 @@ public class Properties {
       }
    }
    
+   // variables
+   private Devices devices_;
+   private CMMCore core_;
+   private List<UpdateFromPropertyListenerInterface> listeners_;
+   private HashMap<Keys, Float> pluginFloats_;
+   private HashMap<Keys, Integer> pluginInts_;
+   private HashMap<Keys, String> pluginStrings_;
+   
    /**
     * Constructor.
     * @param devices
@@ -144,6 +151,10 @@ public class Properties {
       core_ = MMStudioMainFrame.getInstance().getCore();
       devices_ = devices;
       listeners_ = new ArrayList<UpdateFromPropertyListenerInterface>();
+      
+      pluginFloats_ = new HashMap<Keys, Float>();
+      pluginInts_ = new HashMap<Keys, Integer>();
+      pluginStrings_ = new HashMap<Keys, String>();
    }
 
    /**
@@ -154,17 +165,23 @@ public class Properties {
     * @return
     */
    public boolean hasProperty(Devices.Keys device, Properties.Keys name, boolean ignoreError) {
-      String mmDevice = null;
-      try {
-         if (ignoreError) {
-            mmDevice = devices_.getMMDevice(device);
-            return ((mmDevice!=null) &&  core_.hasProperty(mmDevice, name.toString()));
-         } else {
-            mmDevice = devices_.getMMDeviceException(device);
-            return core_.hasProperty(mmDevice, name.toString());
+      if (device == Devices.Keys.PLUGIN) {
+         return pluginStrings_.containsKey(name) 
+               || pluginFloats_.containsKey(name) 
+               || pluginInts_.containsKey(name);
+      } else {
+         String mmDevice = null;
+         try {
+            if (ignoreError) {
+               mmDevice = devices_.getMMDevice(device);
+               return ((mmDevice!=null) &&  core_.hasProperty(mmDevice, name.toString()));
+            } else {
+               mmDevice = devices_.getMMDeviceException(device);
+               return core_.hasProperty(mmDevice, name.toString());
+            }
+         } catch (Exception ex) {
+            ReportingUtils.showError("Couldn't find property "+ name.toString() + " in device " + mmDevice);
          }
-      } catch (Exception ex) {
-         ReportingUtils.showError("Couldn't find property "+ name.toString() + " in device " + mmDevice);
       }
       return false;
    }
@@ -187,19 +204,23 @@ public class Properties {
     * @param ignoreError false (default) will do error checking, true means ignores non-existing property
     */
    public void setPropValue(Devices.Keys device, Properties.Keys name, String strVal, boolean ignoreError) {
-      String mmDevice = null;
-      try {
-         if (ignoreError) {
-            mmDevice = devices_.getMMDevice(device);
-            if (mmDevice != null) {
+      if (device == Devices.Keys.PLUGIN) {
+         pluginStrings_.put(name, strVal);
+      } else {
+         String mmDevice = null;
+         try {
+            if (ignoreError) {
+               mmDevice = devices_.getMMDevice(device);
+               if (mmDevice != null) {
+                  core_.setProperty(mmDevice, name.toString(), strVal);
+               }
+            } else { 
+               mmDevice = devices_.getMMDeviceException(device);
                core_.setProperty(mmDevice, name.toString(), strVal);
             }
-         } else { 
-            mmDevice = devices_.getMMDeviceException(device);
-            core_.setProperty(mmDevice, name.toString(), strVal);
+         } catch (Exception ex) {
+            ReportingUtils.showError("Error setting string property "+ name.toString() + " to " + strVal + " in device " + mmDevice);
          }
-      } catch (Exception ex) {
-         ReportingUtils.showError("Error setting string property "+ name.toString() + " to " + strVal + " in device " + mmDevice);
       }
    }
    
@@ -211,19 +232,23 @@ public class Properties {
     * @param ignoreError false (default) will do error checking, true means ignores non-existing property
     */
    public void setPropValue(Devices.Keys device, Properties.Keys name, Properties.Values val, boolean ignoreError) {
-      String mmDevice = null;
-      try {
-         if (ignoreError) {
-            mmDevice = devices_.getMMDevice(device);
-            if (mmDevice != null) {
+      if (device == Devices.Keys.PLUGIN) {
+         pluginStrings_.put(name, val.toString());
+      } else {
+         String mmDevice = null;
+         try {
+            if (ignoreError) {
+               mmDevice = devices_.getMMDevice(device);
+               if (mmDevice != null) {
+                  core_.setProperty(mmDevice, name.toString(), val.toString());
+               }
+            } else { 
+               mmDevice = devices_.getMMDeviceException(device);
                core_.setProperty(mmDevice, name.toString(), val.toString());
             }
-         } else { 
-            mmDevice = devices_.getMMDeviceException(device);
-            core_.setProperty(mmDevice, name.toString(), val.toString());
+         } catch (Exception ex) {
+            ReportingUtils.showError("Error setting string property "+ name.toString() + " to " + val.toString() + " in device " + mmDevice);
          }
-      } catch (Exception ex) {
-         ReportingUtils.showError("Error setting string property "+ name.toString() + " to " + val.toString() + " in device " + mmDevice);
       }
    }
    
@@ -255,19 +280,23 @@ public class Properties {
     * @param ignoreError false (default) will do error checking, true means ignores non-existing property
     */
    public void setPropValue(Devices.Keys device, Properties.Keys name, int intVal, boolean ignoreError) {
-      String mmDevice = null;
-      try {
-         if (ignoreError) {
-            mmDevice = devices_.getMMDevice(device);
-            if (mmDevice != null) {
+      if (device == Devices.Keys.PLUGIN) {
+         pluginInts_.put(name, (Integer)intVal);
+      } else {
+         String mmDevice = null;
+         try {
+            if (ignoreError) {
+               mmDevice = devices_.getMMDevice(device);
+               if (mmDevice != null) {
+                  core_.setProperty(mmDevice, name.toString(), intVal);
+               }
+            } else {
+               mmDevice = devices_.getMMDeviceException(device);
                core_.setProperty(mmDevice, name.toString(), intVal);
             }
-         } else {
-            mmDevice = devices_.getMMDeviceException(device);
-            core_.setProperty(mmDevice, name.toString(), intVal);
+         } catch (Exception ex) {
+            ReportingUtils.showError("Error setting int property " + name.toString() + " in device " + mmDevice);
          }
-      } catch (Exception ex) {
-         ReportingUtils.showError("Error setting int property " + name.toString() + " in device " + mmDevice);
       }
    }
    
@@ -289,19 +318,23 @@ public class Properties {
     * @param ignoreError false (default) will do error checking, true means ignores non-existing property
     */
    public void setPropValue(Devices.Keys device, Properties.Keys name, float floatVal, boolean ignoreError) {
-      String mmDevice = null;
-      try {
-         if (ignoreError) {
-            mmDevice = devices_.getMMDevice(device);
-            if (mmDevice != null) {
+      if (device == Devices.Keys.PLUGIN) {
+         pluginFloats_.put(name, (Float)floatVal);
+      } else {
+         String mmDevice = null;
+         try {
+            if (ignoreError) {
+               mmDevice = devices_.getMMDevice(device);
+               if (mmDevice != null) {
+                  core_.setProperty(mmDevice, name.toString(), floatVal);
+               }
+            } else {
+               mmDevice = devices_.getMMDeviceException(device);
                core_.setProperty(mmDevice, name.toString(), floatVal);
             }
-         } else {
-            mmDevice = devices_.getMMDeviceException(device);
-            core_.setProperty(mmDevice, name.toString(), floatVal);
+         } catch (Exception ex) {
+            ReportingUtils.showError("Error setting float property " + name.toString() + " in device " + mmDevice);
          }
-      } catch (Exception ex) {
-         ReportingUtils.showError("Error setting float property " + name.toString() + " in device " + mmDevice);
       }
    }
    
@@ -316,30 +349,37 @@ public class Properties {
    }
 
    /**
-    * reads the property value from the device adapter using a core call
+    * reads the property value from the device adapter using a core call, 
+    * or empty string if it can't find property.
     * @param device enum key for device 
     * @param name enum key for property 
     * @return value in string form, returned from core call to getProperty()
     */
    private String getPropValue(Devices.Keys device, Properties.Keys name, boolean ignoreError) {
-      String val = null;
-      String mmDevice = null;
-      if (ignoreError) {
-         mmDevice = devices_.getMMDevice(device);
-         val = "";  // set to be empty string to avoid null pointer exceptions
-         if (mmDevice != null) {
-            try {
-               val = core_.getProperty(mmDevice, name.toString());
-            } catch (Exception ex) {
-               // do nothing, just let empty string stay
-            }
+      String val = "";
+      if (device == Devices.Keys.PLUGIN) {
+         if (pluginStrings_.containsKey(name)) {
+            val = pluginStrings_.get(name);
          }
       } else {
-         try {
-            mmDevice = devices_.getMMDeviceException(device);
-            val = core_.getProperty(mmDevice, name.toString());
-         } catch (Exception ex) {
-            ReportingUtils.showError("Could not get property " + name.toString() + " from device " + mmDevice);
+         String mmDevice = null;
+         if (ignoreError) {
+            mmDevice = devices_.getMMDevice(device);
+            val = "";  // set to be empty string to avoid null pointer exceptions
+            if (mmDevice != null) {
+               try {
+                  val = core_.getProperty(mmDevice, name.toString());
+               } catch (Exception ex) {
+                  // do nothing, just let empty string stay
+               }
+            }
+         } else {
+            try {
+               mmDevice = devices_.getMMDeviceException(device);
+               val = core_.getProperty(mmDevice, name.toString());
+            } catch (Exception ex) {
+               ReportingUtils.showError("Could not get property " + name.toString() + " from device " + mmDevice);
+            }
          }
       }
       return val;
@@ -358,8 +398,7 @@ public class Properties {
    }
    
    /**
-    * returns a string value for the specified property (assumes the caller 
-    * knows the property contains an string)
+    * returns a string value for the specified property (assumes the caller knows the property contains an string)
     * If device property isn't found, returns empty string.  If ignoreError then user is warned too.
     * @param device enum key for device 
     * @param name enum key for property 
@@ -381,19 +420,7 @@ public class Properties {
     * @throws ParseException
     */
    public int getPropValueInteger(Devices.Keys device, Properties.Keys name) {
-      int val = 0;
-      String strVal = null;
-      try {
-         strVal = getPropValue(device, name, true);
-         if (!strVal.equals("")) {
-            val = NumberUtils.coreStringToInt(strVal);
-         }
-      } catch (ParseException ex) {
-         ReportingUtils.showError("Could not parse int value of " + strVal + " for " + name.toString() + " in device " + device.toString());
-      } catch (NullPointerException ex) {
-         ReportingUtils.showError("Null Pointer error in function getPropValueInteger");
-      }
-      return val;
+      return getPropValueInteger(device, name, true);
    }
    
 
@@ -408,16 +435,22 @@ public class Properties {
     */
    public int getPropValueInteger(Devices.Keys device, Properties.Keys name, boolean ignoreError) {
       int val = 0;
-      String strVal = null;
-      try {
-         strVal = getPropValue(device, name, ignoreError);
-         if (!ignoreError || !strVal.equals("")) {
-            val = NumberUtils.coreStringToInt(strVal);
+      if (device == Devices.Keys.PLUGIN) {
+         if (pluginInts_.containsKey(name)) {
+            val = pluginInts_.get(name).intValue();
          }
-      } catch (ParseException ex) {
-         ReportingUtils.showError("Could not parse int value of " + strVal + " for " + name.toString() + " in device " + device.toString());
-      } catch (NullPointerException ex) {
-         ReportingUtils.showError("Null Pointer error in function getPropValueInteger");
+      } else {
+         String strVal = null;
+         try {
+            strVal = getPropValue(device, name, ignoreError);
+            if (!ignoreError || !strVal.equals("")) {
+               val = NumberUtils.coreStringToInt(strVal);
+            }
+         } catch (ParseException ex) {
+            ReportingUtils.showError("Could not parse int value of " + strVal + " for " + name.toString() + " in device " + device.toString());
+         } catch (NullPointerException ex) {
+            ReportingUtils.showError("Null Pointer error in function getPropValueInteger");
+         }
       }
       return val;
    }
@@ -428,22 +461,9 @@ public class Properties {
     * @param device enum key for device 
     * @param name enum key for property 
     * @return
-    * @throws ParseException
     */
    public float getPropValueFloat(Devices.Keys device, Properties.Keys name) {
-      float val = 0;
-      String strVal = null;
-      try {
-         strVal = getPropValue(device, name, true);
-         if (!strVal.equals("")) {
-            val = (float)NumberUtils.coreStringToDouble(strVal);
-         }
-      } catch (ParseException ex) {
-         ReportingUtils.showError("Could not parse int value of " + strVal + " for " + name.toString() + " in device " + device.toString());
-      } catch (NullPointerException ex) {
-         ReportingUtils.showError("Null Pointer error in function getPropValueFLoat");
-      }
-      return val;
+      return getPropValueFloat(device, name, true);
    }
    
    /**
@@ -453,22 +473,26 @@ public class Properties {
    * @param name enum key for property
    * @param ignoreError true to ignore error (usually unassigned device) 
    * @return
-   * @throws ParseException
    */
   public float getPropValueFloat(Devices.Keys device, Properties.Keys name, boolean ignoreError) {
      float val = 0;
-     String strVal = null;
-     try {
-        strVal = getPropValue(device, name, ignoreError);
-        if (!ignoreError || !strVal.equals("")) {
-           val = (float)NumberUtils.coreStringToDouble(strVal);
+     if (device == Devices.Keys.PLUGIN) {
+        if (pluginFloats_.containsKey(name)) {
+           val = pluginFloats_.get(name).floatValue();
         }
-     } catch (ParseException ex) {
-        ReportingUtils.showError("Could not parse int value of " + strVal + " for " + name.toString() + " in device " + device.toString());
-     } catch (NullPointerException ex) {
-        ReportingUtils.showError("Null Pointer error in function getPropValueFLoat");
+     } else {
+        String strVal = null;
+        try {
+           strVal = getPropValue(device, name, ignoreError);
+           if (!ignoreError || !strVal.equals("")) {
+              val = (float)NumberUtils.coreStringToDouble(strVal);
+           }
+        } catch (ParseException ex) {
+           ReportingUtils.showError("Could not parse int value of " + strVal + " for " + name.toString() + " in device " + device.toString());
+        } catch (NullPointerException ex) {
+           ReportingUtils.showError("Null Pointer error in function getPropValueFLoat");
+        }
      }
-     
      return val;
   }
   

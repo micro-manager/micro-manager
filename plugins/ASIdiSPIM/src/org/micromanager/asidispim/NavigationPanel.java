@@ -68,6 +68,8 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
    private final CameraSubPanel cameraPanel_;
    private final BeamSubPanel beamPanel_;
    
+   public final StagePositionUpdater stagePosUpdater_;
+   
    private JLabel xPositionLabel_;
    private JLabel yPositionLabel_;
    private JLabel lowerZPositionLabel_;
@@ -83,7 +85,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
     * Navigation panel constructor.
     */
    public NavigationPanel(Devices devices, Properties props, Joystick joystick, Positions positions,
-           final StagePositionUpdater stagePosUpdater, Prefs prefs, Cameras cameras) {    
+           StagePositionUpdater stagePosUpdater, Prefs prefs, Cameras cameras) {    
       super ("Navigation",
             new MigLayout(
               "", 
@@ -93,6 +95,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       props_ = props;
       joystick_ = joystick;
       positions_ = positions;
+      stagePosUpdater_ = stagePosUpdater;
       prefs_ = prefs;
       cameras_ = cameras;
       panelName_ = super.panelName_;
@@ -188,9 +191,9 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       ActionListener ae = new ActionListener() {
          public void actionPerformed(ActionEvent e) { 
             if (activeTimerCheckBox.isSelected()) {
-               stagePosUpdater.start();
+               stagePosUpdater_.start();
             } else {
-              stagePosUpdater.stop();
+               stagePosUpdater_.stop();
             }
             prefs_.putBoolean(panelName_, Prefs.Keys.ENABLE_POSITION_UPDATES, activeTimerCheckBox.isSelected());
          }

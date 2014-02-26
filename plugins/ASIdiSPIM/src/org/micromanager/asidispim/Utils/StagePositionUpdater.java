@@ -30,7 +30,9 @@ import javax.swing.Timer;
 
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.acquisition.AcquisitionEngine;
+import org.micromanager.asidispim.Data.Devices;
 import org.micromanager.asidispim.Data.Positions;
+import org.micromanager.asidispim.Data.Properties;
 
 /**
  *
@@ -38,10 +40,11 @@ import org.micromanager.asidispim.Data.Positions;
  * @author Jon
  */
 public class StagePositionUpdater {
-   private int interval_ = 1000;
+   private int interval_;
    private List<ListeningJPanel> panels_;
-   private Timer stagePosUpdater_;
+   private Timer timer_;
    private Positions positions_;
+   private final Properties props_;
    private final AcquisitionEngine acqEngine_;
    
    /**
@@ -51,14 +54,24 @@ public class StagePositionUpdater {
     * Panels to be informed of updated stage positions should be added
     * using the addPanel function.
     * 
-    * Defaults to 1 sec interval between updates.  Can be set 
-    * 
     * @param positions
     */
-   public StagePositionUpdater(Positions positions) {
+   public StagePositionUpdater(Positions positions, Properties props) {
       positions_ = positions;
+      props_ = props;
       panels_ = new ArrayList<ListeningJPanel>();
       acqEngine_ = MMStudioMainFrame.getInstance().getAcquisitionEngine();
+      updateInterval();
+   }
+   
+   private void updateInterval() {
+      // get interval from properties (note this is special plugin property
+      //   which gets stored as preference)
+      interval_ =  (int) (1000*props_.getPropValueFloat(Devices.Keys.PLUGIN, 
+            Properties.Keys.PLUGIN_POSITION_REFRESH_INTERVAL));
+      if (interval_ == 0) {
+         interval_ = 1000;
+      }
    }
    
    /**
@@ -74,44 +87,32 @@ public class StagePositionUpdater {
     * Start the updater at whatever interval is
     */
    public void start() {
-      if (stagePosUpdater_ != null) {
-         stagePosUpdater_.stop();
+      if (timer_ != null) {
+         timer_.stop();
       }
-      stagePosUpdater_ = new Timer(interval_, new ActionListener() {
+      updateInterval();
+      timer_ = new Timer(interval_, new ActionListener() {
          public void actionPerformed(ActionEvent ae) {
             oneTimeUpdate();
          }
       });
-      stagePosUpdater_.start();
-   }
-   
-   /**
-    * Starts the timer with a new interval.
-    * @param interval_ms new interval in milliseconds
-    */
-   public void start(int interval_ms) {
-      interval_ = interval_ms;
-      start();
+      timer_.start();
    }
    
    /**
     * stops the timer
     */
    public void stop() {
-      if (stagePosUpdater_ != null) {
-         stagePosUpdater_.stop();
+      if (timer_ != null) {
+         timer_.stop();
       }
    }
    
    public boolean isRunning() {
-      if (stagePosUpdater_ != null) {
-         return stagePosUpdater_.isRunning();
+      if (timer_ != null) {
+         return timer_.isRunning();
       }
       return false;
-   }
-
-   public int getInterval() {
-      return interval_;
    }
    
    /**

@@ -43,8 +43,6 @@ import org.micromanager.MMStudioMainFrame;
 import org.micromanager.asidispim.Utils.StagePositionUpdater;
 import org.micromanager.internalinterfaces.LiveModeListener; 
 
-// TODO make sure to grab final camera frame
-// TODO joystick labels dependent on which side you are on
 // TODO finish adding 3rd camera (inverted scope camera)
 // TODO figure out update of slider limits when devices changed
 // TODO display certain properties like positions, e.g. scan amplitudes/offsets
@@ -73,6 +71,7 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
    private final SetupPanel setupPanelA_;
    private final SetupPanel setupPanelB_;
    private final NavigationPanel navigationPanel_;
+   private final GuiSettingsPanel guiSettingsPanel_;
    private final HelpPanel helpPanel_;
    private final StagePositionUpdater stagePosUpdater_;
    
@@ -92,42 +91,44 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
       joystick_ = new Joystick(devices_, props_);
       cameras_ = new Cameras(devices_, props_);
       
-      stagePosUpdater_ = new StagePositionUpdater(positions_);
-      
-      final ListeningJTabbedPane tabbedPane = new ListeningJTabbedPane();
-        
-      // all added tabs must be of type ListeningJPanel
-      // only use addLTab, not addTab to guarantee this
+      // create the panels themselves
+      // in some cases dependencies create required ordering
       devicesPanel_ = new DevicesPanel(devices_, props_);
-      tabbedPane.addLTab(devicesPanel_);
       spimParamsPanel_ = new SpimParamsPanel(devices_, props_, cameras_, prefs_);
-      tabbedPane.addLTab(spimParamsPanel_);
-      
       setupPanelA_ = new SetupPanel(devices_, props_, joystick_, 
             Devices.Sides.A, positions_, cameras_, prefs_);
-      tabbedPane.addLTab(setupPanelA_);
-      stagePosUpdater_.addPanel(setupPanelA_);
-      MMStudioMainFrame.getInstance().addLiveModeListener((LiveModeListener) setupPanelA_);
-      
       setupPanelB_ = new SetupPanel(devices_, props_, joystick_,
             Devices.Sides.B, positions_, cameras_, prefs_);
-      tabbedPane.addLTab(setupPanelB_);
-      stagePosUpdater_.addPanel(setupPanelB_);
-      MMStudioMainFrame.getInstance().addLiveModeListener((LiveModeListener) setupPanelB_);
-      
       // get initial positions, even if user doesn't want continual refresh
-      // these used by NavigationPanel 
-      stagePosUpdater_.oneTimeUpdate();
-      
+      stagePosUpdater_ = new StagePositionUpdater(positions_, props_);  // needed for setup and navigation
+      guiSettingsPanel_ = new GuiSettingsPanel(devices_, props_, prefs_, stagePosUpdater_);
+      stagePosUpdater_.oneTimeUpdate();  // needed for NavigationPanel
       navigationPanel_ = new NavigationPanel(devices_, props_, joystick_,
             positions_, stagePosUpdater_, prefs_, cameras_);
+      helpPanel_ = new HelpPanel();
+      
+      // now add tabs to GUI
+      // all added tabs must be of type ListeningJPanel
+      // only use addLTab, not addTab to guarantee this
+      final ListeningJTabbedPane tabbedPane = new ListeningJTabbedPane();
+      tabbedPane.addLTab(devicesPanel_);
+      tabbedPane.addLTab(spimParamsPanel_);
+      tabbedPane.addLTab(setupPanelA_);
+      tabbedPane.addLTab(setupPanelB_);
       tabbedPane.addLTab(navigationPanel_);
+      tabbedPane.addLTab(guiSettingsPanel_);
+      tabbedPane.addLTab(helpPanel_);
+
+      // attach position updaters
+      stagePosUpdater_.addPanel(setupPanelA_);
+      stagePosUpdater_.addPanel(setupPanelB_);
       stagePosUpdater_.addPanel(navigationPanel_);
+
+      // attach live mode listeners
+      MMStudioMainFrame.getInstance().addLiveModeListener((LiveModeListener) setupPanelB_);
+      MMStudioMainFrame.getInstance().addLiveModeListener((LiveModeListener) setupPanelA_);
       MMStudioMainFrame.getInstance().addLiveModeListener((LiveModeListener) navigationPanel_);
       
-      helpPanel_ = new HelpPanel();
-      tabbedPane.addLTab(helpPanel_);
-               
       // make sure gotSelected() gets called whenever we switch tabs
       tabbedPane.addChangeListener(new ChangeListener() {
          public void stateChanged(ChangeEvent e) {
@@ -168,6 +169,7 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
             setupPanelB_.saveSettings();
             navigationPanel_.saveSettings();
             spimParamsPanel_.saveSettings();
+            guiSettingsPanel_.saveSettings();
 
             // save pane location in prefs
             prefs_.putInt(MAIN_PREF_NODE, Prefs.Keys.WIN_LOC_X, evt.getWindow().getX());

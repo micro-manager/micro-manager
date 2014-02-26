@@ -78,7 +78,8 @@ public class Devices {
     * DevicesPanel)
     */
    public static enum Keys {
-      NONE, CORE, CAMERAA, CAMERAB, MULTICAMERA, CAMERALOWER, CAMERAPREVIOUS, 
+      NONE, CORE, PLUGIN,
+      CAMERAA, CAMERAB, MULTICAMERA, CAMERALOWER, CAMERAPREVIOUS, 
       PIEZOA, PIEZOB, GALVOA, GALVOB, XYSTAGE, LOWERZDRIVE, UPPERZDRIVE
       // ASGALVOA, ASGALVOB,
    };
@@ -653,6 +654,8 @@ public class Devices {
          d_new.mmDevice = "Core";
          d_new.type = mmcorej.DeviceType.CoreDevice;
          return d_new;
+      case PLUGIN: // special case
+         d_new = new DeviceData(Keys.PLUGIN, "Plugin", Sides.NONE, false);
       case CAMERAPREVIOUS: // special case
          d_new = new DeviceData(Keys.CAMERAPREVIOUS, "No change", Sides.NONE, false);
          return d_new;
@@ -697,6 +700,9 @@ public class Devices {
 
       // special core device
       deviceInfo_.put(Keys.CORE, getDefaultDeviceData(Keys.CORE));
+      
+      // device for plugin "properties" (not device adapter)
+      deviceInfo_.put(Keys.PLUGIN, getDefaultDeviceData(Keys.PLUGIN));
       
       // special device representing "don't change the camera"
       deviceInfo_.put(Keys.CAMERAPREVIOUS, getDefaultDeviceData(Keys.CAMERAPREVIOUS));
