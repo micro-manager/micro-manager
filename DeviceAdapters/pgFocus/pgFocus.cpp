@@ -1065,8 +1065,8 @@ int pgFocus::OnSerialTerminator(MM::PropertyBase* pProp, MM::ActionType eAct)
 pgFocusMonitoringThread::pgFocusMonitoringThread(pgFocus &pgfocus, MM::Core& core, pgFocusInfo *deviceInfo, bool debug) :
 	pgfocus_(pgfocus),
 	core_ (core),
-	debug_(debug),
 	deviceInfo_(deviceInfo),
+	debug_(debug),
 	threadStop_ (true),
 	intervalMs_(100) // check every 100 ms for new messages,
 {
