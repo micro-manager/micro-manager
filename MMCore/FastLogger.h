@@ -17,8 +17,6 @@
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 // AUTHOR:        Karl Hoover, karl.hoover@ucsf.edu, 20091111
-// 
-// CVS:           $Id: FastLogger.h $
 
 #pragma once
 
@@ -26,35 +24,6 @@
 #include "../MMDevice/DeviceThreads.h"
 
 
-  enum
-  {
-    /// Write messages to stderr.
-    STDERR = 1,
-    /// Write messages to the local client logger deamon.
-    LOGGER = 2,
-    /// Write messages to the ostream * stored in thread-specific
-    /// storage.
-    OSTREAM = 4,
-    /// Write messages to the callback object.
-    MSG_CALLBACK = 8,
-    /// Display messages in a verbose manner.
-    VERBOSE = 16,
-    /// Display messages in a less verbose manner (i.e., only print
-    /// information that can change between calls).
-    VERBOSE_LITE = 32,
-    /// Do not print messages at all (just leave in thread-specific
-    /// storage for later inspection).
-    SILENT = 64,
-    /// Write messages to the system's event log.
-    SYSLOG = 128,
-    /// Write messages to the user provided backend
-    CUSTOM = 256
- };
-
-/**
-* class FastLogger 
-* Implements interface IMMLogger with ACE logging facility
-*/
 class LoggerThread;
 
 class FastLogger: public IMMLogger
@@ -73,9 +42,9 @@ public:
    void Shutdown()throw(IMMLogger::runtime_exception);
    bool Reset()throw(IMMLogger::runtime_exception);
    bool Open(const std::string f_a);
-   void SetPriorityLevel(priority level)throw();
+   void SetPriorityLevel(bool includeDebug)throw();
    bool EnableLogToStderr(bool enable)throw();
-   void Log(IMMLogger::priority p, const char*, ...) throw();
+   void Log(bool isDebug, const char*, ...) throw();
 
    // read the current log into memory ( for automated trouble report )
    // since the log file can be extremely large, pass back exactly the buffer that was read
@@ -83,17 +52,14 @@ public:
    void LogContents(char** /* ppContents */, unsigned long& /*len*/);
    std::string LogPath(void);
 
-	unsigned long flags(void) const { return fast_log_flags_;};
-	void set_flags( unsigned long bits_a) { fast_log_flags_ |= bits_a;};
-	void clr_flags( unsigned long bits_a) { fast_log_flags_ &=(~bits_a);};
-
 private:
-   std::string GetEntryPrefix(IMMLogger::priority p);
+   std::string GetEntryPrefix(bool isDebug);
    void ReportLogFailure()throw();
 
 private:
-   priority       level_;
-   unsigned long  fast_log_flags_;
+   bool debugLoggingEnabled_;
+   bool stderrLoggingEnabled_;
+   bool fileLoggingEnabled_;
    std::string    logFileName_;
    std::ofstream * plogFile_;
    bool           failureReported;

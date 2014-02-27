@@ -100,8 +100,8 @@ const int MMCore_versionBuild = 2;
 
 // Legacy macros for logging.
 // (Note: the '##' before the __VA_ARGS__ is required for GCC, though not for MSVC.)
-#define CORE_DEBUG(FMT, ...) (this->getLoggerInstance()->Log(IMMLogger::debug, (FMT), ## __VA_ARGS__))
-#define CORE_LOG(FMT, ...)   (this->getLoggerInstance()->Log(IMMLogger::info,  (FMT), ## __VA_ARGS__))
+#define CORE_DEBUG(FMT, ...) (this->getLoggerInstance()->Log(true, (FMT), ## __VA_ARGS__))
+#define CORE_LOG(FMT, ...)   (this->getLoggerInstance()->Log(false,  (FMT), ## __VA_ARGS__))
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -334,13 +334,8 @@ void CMMCore::logMessage(const char* msg, bool debugOnly)
 void CMMCore::enableDebugLog(bool enable)
 {
    debugLog_ = enable;
-   IMMLogger::priority loggingMask;
-   if (debugLog_)
-      loggingMask = IMMLogger::any;
-   else
-      loggingMask = (IMMLogger::priority)(IMMLogger::any & ~(IMMLogger::trace & IMMLogger::debug));
 
-   getLoggerInstance()->SetPriorityLevel(loggingMask);
+   getLoggerInstance()->SetPriorityLevel(enable);
 
    CORE_LOG("Debug logging %s\n", enable ? "enabled" : "disabled");
 }
@@ -6492,8 +6487,6 @@ void CMMCore::initializeLogging()
 
    getLoggerInstance()->Initialize(logName, g_CoreName);
    getLoggerInstance()->EnableLogToStderr(true);
-   //only "debug" priority messages will have time stamp
-   //- requested feature
 }
 
 

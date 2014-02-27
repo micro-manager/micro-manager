@@ -17,8 +17,6 @@
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 // AUTHOR:        Karl Hoover, karl.hoover@ucsf.edu, 2009 11 11
-// 
-// CVS:           $Id$
 
 
 
@@ -80,7 +78,7 @@ int LoggerThread::svc(void)
 
 		if (0 < stmp.length())
 		{
-			if( 0 != (log_->flags() & STDERR))
+         if (log_->stderrLoggingEnabled_)
 				std::cerr << stmp << '\n' << flush;
                                 
 			MMThreadGuard fileGuard(log_->logFileLock_g);
@@ -98,8 +96,9 @@ LoggerThread* pLogThread_g = NULL;
 
 
 FastLogger::FastLogger()
-:level_(any)
-,fast_log_flags_(any)
+:debugLoggingEnabled_(true)
+,stderrLoggingEnabled_(true)
+,fileLoggingEnabled_(false)
 ,plogFile_(NULL)
 ,failureReported(false),
 plogFile_g(0)
@@ -133,12 +132,8 @@ bool FastLogger::Initialize(std::string logFileName, std::string logInstanceName
 		{
 			MMThreadGuard guard(logFileLock_g);
          bRet = Open(logFileName);
-			if(bRet)
-			{
-				fast_log_flags_ |= OSTREAM;
-			}
-			fast_log_flags_ |= STDERR;
-			set_flags (fast_log_flags_);
+         if(bRet)
+            fileLoggingEnabled_ = true;
 		}
 
       if( NULL == pLogThread_g)
@@ -166,12 +161,11 @@ void FastLogger::Shutdown()throw(IMMLogger::runtime_exception)
 
       if(NULL != plogFile_g)
       {
+         fileLoggingEnabled_ = false;
          plogFile_g->close();
          delete plogFile_g;
          plogFile_g = NULL;
       }
-      clr_flags (OSTREAM);
-      //msg_ostream (0, 0);
    }
    catch(...)
    {
@@ -207,27 +201,20 @@ bool FastLogger::Reset()throw(IMMLogger::runtime_exception)
    return bRet;
 };
 
-void FastLogger::SetPriorityLevel(IMMLogger::priority level) throw()
+void FastLogger::SetPriorityLevel(bool includeDebug) throw()
 {
-   level_ = level;
+   debugLoggingEnabled_ = includeDebug;
 }
 
 bool FastLogger::EnableLogToStderr(bool enable)throw()
 {
-   bool bRet = ( 0 != (fast_log_flags_ | STDERR));
+   if (stderrLoggingEnabled_ == enable)
+      return stderrLoggingEnabled_;
 
-   fast_log_flags_ |= OSTREAM;
-   if (enable)
-   {
-      fast_log_flags_ |= STDERR;
-   }
-   else
-   {
-      fast_log_flags_ &= ~STDERR;
-   }
+   bool bRet = stderrLoggingEnabled_;
    pLogThread_g->Stop();
    pLogThread_g->wait();
-   set_flags (fast_log_flags_);
+   stderrLoggingEnabled_ = enable;
 	pLogThread_g->Start();
 
    return bRet;
@@ -238,7 +225,7 @@ const size_t MaxBuf = 32767;
 struct BigBuffer { char buffer[MaxBuf]; };
 
 
-void FastLogger::Log(IMMLogger::priority p, const char* format, ...) throw()
+void FastLogger::Log(bool isDebug, const char* format, ...) throw()
 {
 	{
 		MMThreadGuard guard(logFileLock_g);
@@ -251,11 +238,10 @@ void FastLogger::Log(IMMLogger::priority p, const char* format, ...) throw()
 
 	try
 	{
-		// filter by current priority
-      if (!(p & level_))
+      if (isDebug && !debugLoggingEnabled_)
 			return;
 
-		std::string entryPrefix = GetEntryPrefix(p);
+		std::string entryPrefix = GetEntryPrefix(isDebug);
 
 		std::auto_ptr<BigBuffer> pB (new BigBuffer());
 
@@ -304,7 +290,7 @@ void FastLogger::ReportLogFailure()throw()
 };
 
 
-std::string FastLogger::GetEntryPrefix(IMMLogger::priority p)
+std::string FastLogger::GetEntryPrefix(bool isDebug)
 {
    // date, pid, tid, and log level
    std::string entryPrefix;
@@ -332,7 +318,7 @@ std::string FastLogger::GetEntryPrefix(IMMLogger::priority p)
 #endif
 
    // Log level
-   if (p == debug)
+   if (isDebug)
       entryPrefix += " [dbg] ";
    else
       entryPrefix += " [LOG] ";

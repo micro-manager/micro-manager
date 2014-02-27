@@ -16,9 +16,6 @@
 //                IN NO EVENT SHALL THE COPYRIGHT OWNER OR
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
-//
-// CVS:           $Id:$
-//
 
 #pragma once
 
@@ -43,24 +40,6 @@ public:
    public:
       runtime_exception(std::string msg) : runtime_error(msg) {}
    };
-
-   /**
-   * enum priority
-   * This enum type defines the relative priorities of the
-   *    messages sent to the log, lowest to highest priority.
-   *    defined from lowest to highest
-   */
-   typedef enum 
-   {
-      none     = 0,
-      trace    = 1,
-      debug    = 2,
-      info     = 4,
-      warning  = 8,
-      error    = 16,
-      alert    = 32,
-      any      = 0x7FFFFFFF
-   }priority;
 
    virtual ~IMMLogger(){};
 
@@ -96,16 +75,7 @@ public:
    */
    virtual bool Reset()throw(IMMLogger::runtime_exception) = 0;
 
-   /**
-   * SetPriorityLevel
-   * set current priority level for the logged
-   * Messages of a lower priority will be ignored
-   * Parameter priority - indicates priority to be set
-   * Returns previous value of the priority level
-   * Must guaranty safe reentrance
-   * Must not throw exceptions
-   */
-   virtual void SetPriorityLevel(IMMLogger::priority level)throw() = 0;
+   virtual void SetPriorityLevel(bool includeDebug) throw() = 0;
 
    /**
    * EnableLogToStderr
@@ -116,17 +86,7 @@ public:
    */
    virtual bool EnableLogToStderr(bool enable)throw() = 0;
 
-   /**
-   * Log
-   * Sends message to the log if current priority level is equal or higher than
-   * priority level of this message
-   * Parameter priority - indicates priority of this message
-   * Parameter format - printf-stile format string
-   * Parameters ... used as specified by the parameter "format" 
-   * Must guaranty safe reentrance
-   * Must not throw exceptions
-   */
-   virtual void Log(IMMLogger::priority p, const char*, ...) throw() = 0;
+   virtual void Log(bool isDebug, const char*, ...) throw() = 0;
 
    virtual void LogContents(char**  /*ppContents*/, unsigned long& /*len*/) = 0;
    virtual std::string LogPath(void) = 0;
