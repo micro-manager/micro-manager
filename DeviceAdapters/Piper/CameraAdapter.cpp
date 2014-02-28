@@ -892,7 +892,10 @@ void CCameraAdapter::OnGrabberChanged( LPCTSTR pszGrabber )
             oCS.Unlock();
             piulLogMessage( m_sMyName.c_str(), s_unLogCallbackTrace, "Connecting to the new pipe" );
             ConnectPipe( nPipe );
-            //UpdateGUI();
+            if( m_bIsInitialized )
+            {
+               OnPropertyChanged( sc_pszPropFrameGrabber, pszGrabber );
+            }
          }
          break;
       }
@@ -926,9 +929,12 @@ void CCameraAdapter::OnCameraChanged( LPCTSTR pszCamera, int /*nId*/ )
             m_nCurCamera = nCam;
             piulLogMessage( m_sMyName.c_str(), s_unLogCallbackTrace, "Querying for the new camera choices" );
             GetCameraChoices();
+            if( m_bIsInitialized )
+            {
+               OnPropertyChanged( sc_pszPropCameraName, pszCamera );
+            }
             //GetProperties();
             //ClearROI();
-            //UpdateGUI();
          }
          break;
       }
@@ -958,9 +964,12 @@ void CCameraAdapter::OnCameraIdChanged( LPCTSTR pszSn )
       {
          oCS.Unlock();
          m_nCurCameraSn = nSn;
+         if( m_bIsInitialized )
+         {
+            OnPropertyChanged( sc_pszPropCameraID, pszSn );
+         }
          //GetProperties();
          //ClearROI();
-         //UpdateGUI();
          break;
       }
    }
@@ -989,9 +998,12 @@ void CCameraAdapter::OnCameraModeChanged( LPCTSTR pszMode )
       {
          oCS.Unlock();
          m_nCurCameraMode = nMode;
+         if( m_bIsInitialized )
+         {
+            OnPropertyChanged( sc_pszPropCameraMode, pszMode );
+         }
          //GetProperties();
          //ClearROI();
-         //UpdateGUI();
          break;
       }
    }
@@ -1008,8 +1020,11 @@ void CCameraAdapter::OnCameraPropertiesChanged()
    piulLogMessage( m_sMyName.c_str(), s_unLogCallbackTrace, "Querying for the new camera properties" );
    GetProperties();
    ClearROI();
-   piulLogMessage( m_sMyName.c_str(), s_unLogCallbackTrace, "Updating the MM GUI" );
-   UpdateGUI();
+
+   // Needs to update only the properties that were changed
+   //piulLogMessage( m_sMyName.c_str(), s_unLogCallbackTrace, "Updating the MM GUI" );
+   //UpdateGUI();
+
    piulLogMessage( m_sMyName.c_str(), s_unLogCallbackEnd, "OnCameraPropertiesChanged() End" );
 }
 
@@ -1028,7 +1043,14 @@ void CCameraAdapter::OnIonFeedbackSizeChanged( int nPixels )
       );
    m_nIonFeedbackFilterSize = (INT16)nPixels;
    piulLogMessage( m_sMyName.c_str(), s_unLogCallbackTrace, "Updating the MM GUI" );
-   UpdateGUI();
+   
+   if( m_bIsInitialized )
+   {
+      char acValue[10];
+      _itoa( nPixels, acValue, 10 );
+      OnPropertyChanged( sc_pszIonFeedbackFilterSize, acValue );
+   }
+
    piulLogMessage( m_sMyName.c_str(), s_unLogCallbackEnd, "OnIonFeedbackSizeChanged() End" );
 }
 
@@ -1047,7 +1069,11 @@ void CCameraAdapter::OnIonFeedbackEnabled( BOOL bEnabled )
       );
    m_bIonFeedbackEnabled = bEnabled;
    piulLogMessage( m_sMyName.c_str(), s_unLogCallbackTrace, "Updating the MM GUI" );
-   UpdateGUI();
+   
+   if( m_bIsInitialized )
+   {
+      OnPropertyChanged( sc_pszEnableIonFeedback, bEnabled ? "YES" : "NO" );
+   }
    piulLogMessage( m_sMyName.c_str(), s_unLogCallbackEnd, "OnIonFeedbackEnabled() End" );
 }
 
@@ -1070,7 +1096,17 @@ void CCameraAdapter::OnHistogramTransferChanged( double fBrightness, double fCon
    m_fSourceContrast = fContrast;
    m_fSourceGamma = fGamma;
    piulLogMessage( m_sMyName.c_str(), s_unLogCallbackTrace, "Updating the MM GUI" );
-   UpdateGUI();
+   
+   if( m_bIsInitialized )
+   {
+      char acValue[20];
+      _gcvt( fBrightness, 8, acValue );
+      OnPropertyChanged( sc_pszSourceBrightness, acValue );
+      _gcvt( fContrast, 8, acValue );
+      OnPropertyChanged( sc_pszSourceContrast, acValue );
+      _gcvt( fGamma, 8, acValue );
+      OnPropertyChanged( sc_pszSourceGamma, acValue );
+   }
    piulLogMessage( m_sMyName.c_str(), s_unLogCallbackEnd, "OnHistogramTransferChanged() End" );
 }
 
@@ -1089,7 +1125,11 @@ void CCameraAdapter::OnHistogramAutoContrast( BOOL bOn )
       );
    m_bSourceAutoContrast = bOn;
    piulLogMessage( m_sMyName.c_str(), s_unLogCallbackTrace, "Updating the MM GUI" );
-   UpdateGUI();
+   
+   if( m_bIsInitialized )
+   {
+      OnPropertyChanged( sc_pszSourceAutoContrast, bOn ? "YES" : "NO" );
+   }
    piulLogMessage( m_sMyName.c_str(), s_unLogCallbackEnd, "OnHistogramAutoContrast() End" );
 }
 
@@ -1140,7 +1180,9 @@ void CCameraAdapter::OnDiscriminatorNewValues
    m_fDiscriminatorSigma = fSigma;
    m_bDiscriminatorDiscarded = bDiscarded;
    piulLogMessage( m_sMyName.c_str(), s_unLogCallbackTrace, "Updating the MM GUI" );
-   UpdateGUI();
+  
+   // Needs to update only the properties that were changed
+   // UpdateGUI();
    piulLogMessage( m_sMyName.c_str(), s_unLogCallbackEnd, "OnDiscriminatorNewValues() End" );
 }
 
@@ -1161,7 +1203,9 @@ void CCameraAdapter::OnDiscriminatorDiscardCount( int nNumDiscarded, int nNumTot
    m_nDiscriminatorNumDiscarded = nNumDiscarded;
    m_nDiscriminatorNumTotal = nNumTotal;
    piulLogMessage( m_sMyName.c_str(), s_unLogCallbackTrace, "Updating the MM GUI" );
-   UpdateGUI();
+   
+   // Needs to update only the properties that were changed
+   //UpdateGUI();
    piulLogMessage( m_sMyName.c_str(), s_unLogCallbackEnd, "OnDiscriminatorDiscardCount() End" );
 }
 
@@ -1180,13 +1224,17 @@ void CCameraAdapter::OnDiscriminatorEnabled( BOOL bEnabled )
       );
    m_bDiscriminatorEnabled = bEnabled;
    piulLogMessage( m_sMyName.c_str(), s_unLogCallbackTrace, "Updating the MM GUI" );
-   UpdateGUI();
+   
+   //if( m_bIsInitialized )
+   //{
+   //   OnPropertyChanged( , bEnabled ? "YES" : "NO" );
+   //}
    piulLogMessage( m_sMyName.c_str(), s_unLogCallbackEnd, "OnDiscriminatorEnabled() End" );
 }
 
 void CCameraAdapter::OnIntegratorDepthChanged( INT32 nSize )
 {
-   CSingleLock oCS(m_csLockObj, __CS_ENABLE );
+   //CSingleLock oCS( m_csLockObj, __CS_ENABLE );
    if( m_nIntegratorDepth == nSize )
    {
       return;
@@ -1200,7 +1248,12 @@ void CCameraAdapter::OnIntegratorDepthChanged( INT32 nSize )
       );
    m_nIntegratorDepth = nSize;
    piulLogMessage( m_sMyName.c_str(), s_unLogCallbackTrace, "Updating the MM GUI" );
-   UpdateGUI();
+   if( m_bIsInitialized )
+   {
+      char acSize[10];
+      _itoa( nSize, acSize, 10 );
+      OnPropertyChanged( sc_pszRamStackDepth, acSize );
+   }
    piulLogMessage( m_sMyName.c_str(), s_unLogCallbackEnd, "OnIntegratorDepthChanged() End" );
 }
 
@@ -1237,7 +1290,13 @@ void CCameraAdapter::OnIntegratorRateChanged( double fRate )
       );
    m_fIntegratorRate = fRate;
    m_fIntegratorExposure = 1.0 / fRate;
-   UpdateGUI();
+   
+   if( m_bIsInitialized )
+   {
+      char acValue[20];
+      _gcvt( m_fIntegratorExposure, 8, acValue );
+      OnPropertyChanged( sc_pszRamAverageExposure, acValue );
+   }
    piulLogMessage( m_sMyName.c_str(), s_unLogCallbackEnd, "OnIntegratorRateChanged() End" );
 }
 
@@ -1255,7 +1314,10 @@ void CCameraAdapter::OnIntegratorEnabled( BOOL bEnabled )
          bEnabled ? "yes" : "no"
       );
    m_bIntegratorEnabled = bEnabled;
-   UpdateGUI();
+   if( m_bIsInitialized )
+   {
+      OnPropertyChanged( sc_pszEnableRamStack, bEnabled ? "YES" : "NO" );
+   }
    piulLogMessage( m_sMyName.c_str(), s_unLogCallbackEnd, "OnIntegratorEnabled() End" );
 }
 
@@ -1273,7 +1335,13 @@ void CCameraAdapter::OnAveragingDepthChanged( INT32 nSize )
          nSize
       );
    m_nAveragingDepth = nSize;
-   UpdateGUI();
+   
+   if( m_bIsInitialized )
+   {
+      char acValue[10];
+      _itoa( nSize, acValue, 10 );
+      OnPropertyChanged( sc_pszRamAverageDepth, acValue );
+   }
    piulLogMessage( m_sMyName.c_str(), s_unLogCallbackEnd, "OnAveragingDepthChanged() End" );
 }
 
@@ -1309,7 +1377,13 @@ void CCameraAdapter::OnAveragingRateChanged( double fRate )
          fRate
       );
    m_fAveragingRate = fRate;
-   UpdateGUI();
+   
+   if( m_bIsInitialized )
+   {
+      char acValue[10];
+      _gcvt( fRate, 8, acValue );
+      OnPropertyChanged( sc_pszRamAverageExposure, acValue );
+   }
    piulLogMessage( m_sMyName.c_str(), s_unLogCallbackEnd, "OnAveragingRateChanged() End" );
 }
 
@@ -1327,7 +1401,11 @@ void CCameraAdapter::OnSmoothAveragingEnabled( BOOL bEnabled )
          bEnabled ? "yes" : "no"
       );
    m_bSmoothAvgEnabled = bEnabled;
-   UpdateGUI();
+   
+   if( m_bIsInitialized )
+   {
+      OnPropertyChanged( sc_pszEnableSmoothRamAverage, bEnabled ? "YES" : "NO" );
+   }
    piulLogMessage( m_sMyName.c_str(), s_unLogCallbackEnd, "OnSmoothAveragingEnabled() End" );
 }
 
@@ -1345,7 +1423,11 @@ void CCameraAdapter::OnFastAveragingEnabled( BOOL bEnabled )
          bEnabled ? "yes" : "no"
       );
    m_bFastAvgEnabled = bEnabled;
-   UpdateGUI();
+   
+   if( m_bIsInitialized )
+   {
+      OnPropertyChanged( sc_pszEnableFastRamAverage, bEnabled ? "YES" : "NO" );
+   }
    piulLogMessage( m_sMyName.c_str(), s_unLogCallbackEnd, "OnFastAveragingEnabled() End" );
 }
 
@@ -1672,7 +1754,7 @@ INT16 CCameraAdapter::SetIntegration( INT16 nFrames )
    {
       oCS.Unlock();
       RETURN_ON_FAILURE( GetProperties() );
-      UpdateGUI();
+      //UpdateGUI();
       oCS.Lock();
    }
 
@@ -1700,6 +1782,7 @@ INT16 CCameraAdapter::GetProperties()
                m_nCapYBin
             )
       );
+
    piulLogMessage( m_sMyName.c_str(), s_unLogMethodCallTrace, "Querying for current image properties" );
    RETURN_ON_FAILURE
       (
@@ -1722,6 +1805,32 @@ INT16 CCameraAdapter::GetProperties()
    RETURN_ON_FAILURE( pilGetCameraVideoGain( m_nCurGrabber, m_nVideoGain ) );
    RETURN_ON_FAILURE( pilGetCameraVideoOffset( m_nCurGrabber, m_nVideoOffset ) );
    RETURN_ON_FAILURE( pilGetIntensifierValues( m_nCurGrabber, m_fIntensifierVolts, m_fIntensifierGain ) );
+
+   if( m_bIsInitialized )
+   {
+      char acValue[20];
+      _itoa( m_nImageLeft, acValue, 10 );
+      OnPropertyChanged( sc_pszPropFrameLeft, acValue );
+      _itoa( m_nImageWidth, acValue, 10 );
+      OnPropertyChanged( sc_pszPropFrameWidth, acValue );
+      _itoa( m_nImageTop, acValue, 10 );
+      OnPropertyChanged( sc_pszPropFrameTop, acValue );
+      _itoa( m_nImageHeight, acValue, 10 );
+      OnPropertyChanged( sc_pszPropFrameHeight, acValue );
+      _itoa( m_nFrameClocks, acValue, 10 );
+      OnPropertyChanged( sc_pszPropIntegration, acValue );
+      _itoa( m_nVideoGain, acValue, 10 );
+      OnPropertyChanged( sc_pszPropVideoGain, acValue );
+      _itoa( m_nVideoOffset, acValue, 10 );
+      OnPropertyChanged( sc_pszPropVideoOffset, acValue );
+
+      _gcvt( m_fExposure, 8, acValue );
+      OnPropertyChanged( sc_pszPropExposure, acValue );
+      _gcvt( m_fIntensifierVolts, 8, acValue );
+      OnPropertyChanged( sc_pszPropIntensVolts, acValue );
+      _gcvt( m_fIntensifierGain, 8, acValue );
+      OnPropertyChanged( sc_pszPropIntensGain, acValue );
+   }
 
    m_bExposureInSync = ( m_nFrameClocks == m_nMMFrameClocks );
 
@@ -2001,6 +2110,7 @@ void CCameraAdapter::Capture()
       //imageprocessor now called from core
 
       // insert image into the circular buffer
+      //oCS.Lock();
       int ret = GetCoreCallback()->InsertImage
          (
             this,
@@ -2031,8 +2141,8 @@ void CCameraAdapter::Capture()
             }
          }
       }
+      //oCS.Unlock();
 
-      oCS.Unlock();
       if( !m_bStream || (m_nStreamCount == (long)unMaxCnt) )
       {
          piulLogMessage( m_sMyName.c_str(), s_unLogMethodCallTrace, "Stopping the image stream" );
@@ -3448,6 +3558,7 @@ void CCameraAdapter::UpdateGUI()
 {
    if( m_bIsInitialized )
    {
-      OnPropertiesChanged();
+      //CSingleLock oCS(m_csLockObj, __CS_ENABLE );
+      //OnPropertiesChanged();
    }
 }
