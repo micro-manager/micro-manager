@@ -1,6 +1,6 @@
 ## Process this file with automake to produce Makefile.in
 
-TARGETS= ASIdiSPIM.jar PixelCalibrator.jar Projector.jar RecallPlugin.jar StageControl.jar MultiCamera.jar CRISP.jar Big.jar NewImageFlipper.jar SlideExplorer.jar DataBrowser.jar ClojureEditor.jar SplitView.jar Gaussian.jar IntelligentAcquisition.jar BFCorrector.jar MultiChannelShading.jar HCS.jar MMTracker.jar pgFocus.jar
+TARGETS= ASIdiSPIM.jar PixelCalibrator.jar Projector.jar RecallPlugin.jar StageControl.jar MultiCamera.jar CRISP.jar Big.jar NewImageFlipper.jar SlideExplorer.jar DataBrowser.jar ClojureEditor.jar SplitView.jar Gaussian.jar IntelligentAcquisition.jar BFCorrector.jar MultiChannelShading.jar HCS.jar MMTracker.jar pgFocus.jar autolase.jar
 
 ASIdiSPIM.jar:  \
 	$(srcdir)/ASIdiSPIM/src/org/micromanager/asidispim/*.java \
@@ -196,6 +196,28 @@ pgFocus.jar: \
 	cp -r $(srcdir)/pgFocus/src/edu/umassmed/pgFocus/umass_logo.png build/edu/umassmed/pgfocus/
 	cd build && jar cf ../pgFocus.jar * 
 
+autolase.jar: \
+	$(srcdir)/autolase/src/ch/epfl/leb/autolase/AutoLase.java \
+	$(srcdir)/autolase/src/ch/epfl/leb/autolase/AutoLaseDialog.java \
+	$(srcdir)/autolase/src/ch/epfl/leb/autolase/AutoLaseOptionsDialog.java \
+	$(srcdir)/autolase/src/ch/epfl/leb/autolase/AutoLasePlugin.java \
+	$(srcdir)/autolase/src/ch/epfl/leb/autolase/Camera.java \
+	$(srcdir)/autolase/src/ch/epfl/leb/autolase/DensityFileLogger.java \
+	$(srcdir)/autolase/src/ch/epfl/leb/autolase/DensityMap.java \
+	$(srcdir)/autolase/src/ch/epfl/leb/autolase/DensityMapMonitor.java \
+	$(srcdir)/autolase/src/ch/epfl/leb/autolase/DensityMonitor.java \
+	$(srcdir)/autolase/src/ch/epfl/leb/autolase/DensityProfiler.java \
+	$(srcdir)/autolase/src/ch/epfl/leb/autolase/DensityThread.java \
+	$(srcdir)/autolase/src/ch/epfl/leb/autolase/LaseThread.java \
+	$(srcdir)/autolase/src/ch/epfl/leb/autolase/LaserConfig.java \
+	$(srcdir)/autolase/src/ch/epfl/leb/autolase/LaserPowerMonitor.java \
+	$(srcdir)/autolase/src/ch/epfl/leb/autolase/MMCamera.java \
+	$(srcdir)/autolase/src/ch/epfl/leb/autolase/RegularIntervalThread.java \
+	$(srcdir)/autolase/src/ch/epfl/leb/autolase/TiffCamera.java
+	test -d build || mkdir build
+	rm -rf build/*
+	$(JAVAC) $(JAVACFLAGS) -source 1.5 -target 1.5 -sourcepath $(srcdir):. -classpath ../mmstudio/MMJ_.jar:$(IJJARPATH):. $(srcdir)/autolase/src/ch/epfl/leb/autolase/*.java -d build
+	cd build && jar cf ../autolase.jar * 
 
 all: ${TARGETS}
 
