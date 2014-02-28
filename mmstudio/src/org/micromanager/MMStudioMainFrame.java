@@ -1475,6 +1475,10 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
                introDlg.setConfigFile(sysConfigFile_);
                introDlg.setBackground(guiColors_.background.get((options_.displayBackground_)));
                introDlg.setVisible(true);
+               if (!introDlg.okChosen()) {
+                  closeSequence(false);
+                  return;
+               }
                sysConfigFile_ = introDlg.getConfigFile();
             }
             saveMRUConfigFiles();

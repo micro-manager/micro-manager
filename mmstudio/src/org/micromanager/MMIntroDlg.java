@@ -57,9 +57,8 @@ import org.micromanager.utils.JavaUtils;
 public class MMIntroDlg extends JDialog {
    private static final long serialVersionUID = 1L;
    private JTextArea welcomeTextArea_;
-   private JTextArea supportTextArea_;
+   private boolean okFlag_ = true;
    
-   //private JTextField textFieldFile_;
    ArrayList<String> mruCFGFileList_;
 
    private JComboBox cfgFileDropperDown_;
@@ -111,16 +110,34 @@ public class MMIntroDlg extends JDialog {
       okButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
+            okFlag_ = true;
             setVisible(false);
          }
       });
       okButton.setText("OK");
       if (JavaUtils.isMac())
-         okButton.setBounds(150, 497, 81, 24);
+         okButton.setBounds(200, 497, 81, 24);
       else
-         okButton.setBounds(150, 492, 81, 24);
+         okButton.setBounds(100, 492, 81, 24);
       getContentPane().add(okButton);
       getRootPane().setDefaultButton(okButton);
+      
+      final JButton cancelButton = new JButton();
+      cancelButton.setFont(new Font("Arial", Font.PLAIN, 10));
+      cancelButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            okFlag_ = false;
+            setVisible(false);
+         }
+      });
+      cancelButton.setText("Cancel");
+      if (JavaUtils.isMac())
+         cancelButton.setBounds(100, 497, 81, 24);
+      else
+         okButton.setBounds(200, 492, 81, 24);
+      getContentPane().add(cancelButton);
+      //getRootPane().setDefaultButton(okButton);
 
       final JLabel microscopeManagerLabel = new JLabel();
       microscopeManagerLabel.setFont(new Font("", Font.BOLD, 12));
@@ -156,7 +173,6 @@ public class MMIntroDlg extends JDialog {
       cfgFileDropperDown_.setBounds(5, 245, 342, 26);
       getContentPane().add(cfgFileDropperDown_);
 
-
       welcomeTextArea_ = new JTextArea() {
          @Override
          public Insets getInsets() {
@@ -177,15 +193,9 @@ public class MMIntroDlg extends JDialog {
 
    }
 
-
-   private class IOcfgFileFilter implements java.io.FileFilter {
-
-      @Override
-      public boolean accept(File f) {
-         String name = f.getName().toLowerCase();
-         return name.endsWith("cfg");
-      }//end accept
-   }//end class cfgFileFilter
+   public boolean okChosen() {
+      return okFlag_;
+   }
 
    public void setConfigFile(String path) {
       // using the provided path, setup the drop down list of config files in the same directory
@@ -199,8 +209,9 @@ public class MMIntroDlg extends JDialog {
       // add the new configuration file to the list
         if(!mruCFGFileList_.contains(path)){
             // in case persistant data is inconsistent
-            if( 6 <= mruCFGFileList_.size() )
+            if( 6 <= mruCFGFileList_.size() ) {
                 mruCFGFileList_.remove(mruCFGFileList_.size()-2);
+            }
             mruCFGFileList_.add(0, path);
         }
       }
@@ -222,26 +233,8 @@ public class MMIntroDlg extends JDialog {
       if( !doesExist)
           cfgFileDropperDown_.setSelectedIndex(cfgFileDropperDown_.getItemCount()-1);
 
-  /*    for(File theMatch: matches){
-          cfgFileDropperDown_.addItem(theMatch.getAbsolutePath());
-          if(doesExist){
-              if(theMatch.getAbsolutePath().equals(path)){
-              cfgFileDropperDown_.setSelectedIndex(cfgFileDropperDown_.getItemCount()-1);
-              }
-          }
-      }
-      if(!doesExist){
-          if( 0 < matches.length)
-              cfgFileDropperDown_.setSelectedIndex(0);
-      }
-*/
-  
-      //textFieldFile_.setText(path);
    }
-   
-   public void setScriptFile(String path) {
-   }
-   
+      
    public String getConfigFile() {
        String tvalue = cfgFileDropperDown_.getSelectedItem().toString();
        String nvalue = "(none)";
