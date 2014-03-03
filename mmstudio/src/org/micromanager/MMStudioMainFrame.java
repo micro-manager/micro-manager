@@ -116,7 +116,9 @@ import java.awt.*;
 import java.awt.dnd.DropTarget;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.text.Collator;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -2880,8 +2882,12 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       return MMVersion.VERSION_STRING;
    }
 
-   private void addPluginToMenu(final PluginItem plugin, Class<?> cl) {
-      // add plugin menu items
+   /**
+    * Adds plugin items to the plugins menu
+    * @param plugin - plugin to be added to the menu
+    */
+   private void addPluginToMenu(final PluginItem plugin) {
+      Class<?> cl = plugin.pluginClass;
       String toolTipDescription = "";
       try {
           // Get this static field from the class implementing MMPlugin.
@@ -4143,17 +4149,66 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       return engine_;
    }
 
+   /**
+    * Helper class for plugin loader functions
+    */
+   private class PluginItemAndClass {
+      private String msg_;
+      private Class<?> cl_;
+      private PluginItem pi_;
+      
+      public PluginItemAndClass(String msg, Class<?> cl, PluginItem pi) {
+         msg_ = msg;
+         cl_ = cl;
+         pi_ = pi;
+      }
+      public Class<?> getItsClass () {return cl_;}
+      public String getMessage() {return msg_;}
+      public PluginItem getPluginItem() {return pi_;}
+   }
+   
+   private class PluginItemAndClassComparator implements Comparator<PluginItemAndClass> {
+      public int compare(PluginItemAndClass t1, PluginItemAndClass t2) {
+         try {
+            String m1 = t1.getPluginItem().menuItem;
+            String m2 = t2.getPluginItem().menuItem;
+            Collator collator = Collator.getInstance();
+            collator.setStrength(Collator.PRIMARY);
+            return collator.compare(m1, m2);
+         } catch (NullPointerException npe) {
+            ReportingUtils.logError("NullPointerException in PluginItemAndClassCopmarator");
+         }
+         return 0;
+      }
+   }
+   
    public String installPlugin(Class<?> cl) {
+      PluginItemAndClass piac = declarePlugin(cl);
+      final PluginItem pi = piac.getPluginItem();
+      if (pi != null) {
+         addPluginToMenuLater(pi);
+      }
+      String msg = piac.getMessage();
+      if (msg != null) {
+         return msg;
+      }
+      ReportingUtils.logError("In MMStudioMainFrame:installPlugin, msg was null");
+      return piac.getMessage();     
+   }
+   
+   private PluginItemAndClass declarePlugin(Class<?> cl) {
       String className = cl.getSimpleName();
       String msg = className + " module loaded.";
+      PluginItem pi = new PluginItem();
       try {
          for (PluginItem plugin : plugins_) {
             if (plugin.className.contentEquals(className)) {
-               return className + " already loaded.";
+               msg = className + " already loaded";
+               PluginItemAndClass piac = new PluginItemAndClass(msg, cl, null);
+               return piac;
             }
          }
-
-         PluginItem pi = new PluginItem();
+       
          pi.className = className;
          try {
             // Get this static field from the class implementing MMPlugin.
@@ -4176,24 +4231,23 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
          pi.menuItem = pi.menuItem.replace("_", " ");
          pi.pluginClass = cl;
          plugins_.add(pi);
-         final PluginItem pi2 = pi;
-         final Class<?> cl2 = cl;
-         SwingUtilities.invokeLater(
-            new Runnable() {
-               @Override
-               public void run() {
-                  addPluginToMenu(pi2, cl2);
-               }
-            });
-
       } catch (NoClassDefFoundError e) {
          msg = className + " class definition not found.";
          ReportingUtils.logError(e, msg);
-
       }
-
-      return msg;
-
+      PluginItemAndClass piac = new PluginItemAndClass(msg, cl, pi);
+      return piac;
+   }
+   
+   
+   private void addPluginToMenuLater(final PluginItem pi) {
+      SwingUtilities.invokeLater(
+              new Runnable() {
+         @Override
+         public void run() {
+            addPluginToMenu(pi);
+         }
+      });
    }
 
    public String installPlugin(String className, String menuName) {
@@ -4389,6 +4443,10 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
 
 
 
+   /**
+    * Discovers Micro-Manager plugins and autofocus plugins at runtime
+    * Adds these to the plugins menu
+    */
 
    private void loadPlugins() {
       
@@ -4399,16 +4457,13 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       try {
          long t1 = System.currentTimeMillis();
          classes = JavaUtils.findClasses(new File("mmplugins"), 2);
-         //System.out.println("findClasses: " + (System.currentTimeMillis() - t1));
-         //System.out.println(classes.size());
+
          for (Class<?> clazz : classes) {
             for (Class<?> iface : clazz.getInterfaces()) {
-               //core_.logMessage("interface found: " + iface.getName());
                if (iface == MMPlugin.class) {
                   pluginClasses.add(clazz);
                }
             }
-
          }
 
          classes = JavaUtils.findClasses(new File("mmautofocus"), 2);
@@ -4425,12 +4480,23 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
          ReportingUtils.logError(e1);
       }
 
+      ArrayList<PluginItemAndClass> piacs = new ArrayList<PluginItemAndClass>();
       for (Class<?> plugin : pluginClasses) {
          try {
             ReportingUtils.logMessage("Attempting to install plugin " + plugin.getName());
-            installPlugin(plugin);
+            PluginItemAndClass piac = declarePlugin(plugin);
+            if (piac.getPluginItem() != null) {
+               piacs.add(piac);
+            }
          } catch (Exception e) {
             ReportingUtils.logError(e, "Failed to install the \"" + plugin.getName() + "\" plugin .");
+         }
+      }
+      Collections.sort(piacs, new PluginItemAndClassComparator());
+      for (PluginItemAndClass piac : piacs) {
+         final PluginItem pi = piac.getPluginItem();
+         if (pi != null) {
+            addPluginToMenuLater(pi);
          }
       }
 
