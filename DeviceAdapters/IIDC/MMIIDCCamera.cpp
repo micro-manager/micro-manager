@@ -447,8 +447,7 @@ MMIIDCCamera::GetBitDepth() const
     */
    try
    {
-      boost::shared_ptr<IIDC::VideoMode> mode = iidcCamera_->GetVideoMode();
-      switch (mode->GetPixelFormat())
+      switch (currentVideoMode_->GetPixelFormat())
       {
          case IIDC::PixelFormatGray8:
             return 8;
@@ -491,10 +490,9 @@ int
 MMIIDCCamera::GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySize)
 {
    // ROI not (yet) implemented, so return bounds of maximum ROI
-   boost::shared_ptr<IIDC::VideoMode> mode = iidcCamera_->GetVideoMode();
    x = y = 0;
-   xSize = mode->GetMaxWidth();
-   ySize = mode->GetMaxHeight();
+   xSize = currentVideoMode_->GetMaxWidth();
+   ySize = currentVideoMode_->GetMaxHeight();
    return DEVICE_OK;
 }
 
@@ -587,18 +585,18 @@ MMIIDCCamera::OnVideoMode(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       if (eAct == MM::BeforeGet)
       {
-         pProp->Set(iidcCamera_->GetVideoMode()->ToString().c_str());
+         pProp->Set(currentVideoMode_->ToString().c_str());
       }
       else if (eAct == MM::AfterSet)
       {
-         boost::shared_ptr<IIDC::VideoMode> oldMode = iidcCamera_->GetVideoMode();
          std::string value;
          pProp->Get(value);
          long index;
          GetPropertyData(MMIIDC_Property_VideoMode, value.c_str(), index);
-         if (*videoModes_[index] != *oldMode)
+         if (*videoModes_[index] != *currentVideoMode_)
          {
             iidcCamera_->SetVideoMode(videoModes_[index]);
+            currentVideoMode_ = iidcCamera_->GetVideoMode();
             VideoModeDidChange();
          }
       }
@@ -805,21 +803,33 @@ MMIIDCCamera::InitializeVideoMode()
    if (videoModes_.empty())
       return AdHocErrorCode("None of the camera's video modes are currently supported");
 
-   boost::shared_ptr<IIDC::VideoMode> currentMode = iidcCamera_->GetVideoMode();
    bool currentModeSupported = false;
-   BOOST_FOREACH(boost::shared_ptr<IIDC::VideoMode> mode, videoModes_)
+   try
    {
-      if (*mode == *currentMode)
+      currentVideoMode_ = iidcCamera_->GetVideoMode();
+   }
+   catch (const IIDC::Error&)
+   {
+   }
+   if (currentVideoMode_)
+   {
+      BOOST_FOREACH(boost::shared_ptr<IIDC::VideoMode> mode, videoModes_)
       {
-         currentModeSupported = true;
-         break;
+         if (*mode == *currentVideoMode_)
+         {
+            currentModeSupported = true;
+            break;
+         }
       }
    }
    if (!currentModeSupported)
-      iidcCamera_->SetVideoMode(currentMode = videoModes_.front());
+   {
+      iidcCamera_->SetVideoMode(videoModes_.front());
+      currentVideoMode_ = iidcCamera_->GetVideoMode();
+   }
 
    int err;
-   err = CreateStringProperty(MMIIDC_Property_VideoMode, currentMode->ToString().c_str(), false,
+   err = CreateStringProperty(MMIIDC_Property_VideoMode, currentVideoMode_->ToString().c_str(), false,
          new CPropertyAction(this, &MMIIDCCamera::OnVideoMode));
    if (err != DEVICE_OK)
       return err;

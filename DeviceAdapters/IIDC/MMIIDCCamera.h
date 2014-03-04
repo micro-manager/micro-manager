@@ -32,6 +32,11 @@ class MMIIDCCamera : public CCameraBase<MMIIDCCamera>
 {
    boost::shared_ptr<IIDC::Camera> iidcCamera_;
    std::vector< boost::shared_ptr<IIDC::VideoMode> > videoModes_;
+
+   // Cache the video mode info, because getting it during a capture can hang
+   // (observed on OpenSUSE 12.3, libdc1394 2.2.0).
+   boost::shared_ptr<IIDC::VideoMode> currentVideoMode_;
+
    double shutterUsPerUnit_, shutterOffsetUs_; // Set once from pre-init properties
 
    double cachedExposure_;
