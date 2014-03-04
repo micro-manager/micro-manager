@@ -16,6 +16,9 @@ endif
 if BUILD_IDSUEYE
    IDSUEYE = IDS_uEye
 endif
+# if BUILD_IIDC
+#    IIDC = IIDC
+# endif
 if BUILD_ITC
    ITC = ITC18
 endif
@@ -47,4 +50,4 @@ if BUILD_V4L2
    V4L = Video4Linux
 endif
 
-SUBDIRS =  AAAOTF Aladdin AOTF $(ANDOR) $(ANDORLASERCOMBINER) Aquinas Arduino ASIFW1000 ASIStage ASITiger ASIWPTR CARVII Cobolt CoherentCube Conix CSUW1 $(DC1394) DTOpenLayer DemoCamera Corvus $(IDSUEYE) ImageProcessorChain $(ITC) FreeSerialPort FocalPoint $(HIDMANAGER) kdv K8055 K8061 LeicaDMI LeicaDMR LeicaDMSTC Ludl LudlLow LumencorSpectra MaestroServo Marzhauser Marzhauser-LStep MicroPoint MP285 Neos $(NIDAQ) Nikon NikonTE2000 Motic_mac nPoint Omicron $(OPENCVGRABBER) Oxxius pgFocus PI PI_GCS PI_GCS_2 Piezosystem_30DV50 Piezosystem_dDrive Piezosystem_NV120_1 Piezosystem_NV40_1 Piezosystem_NV40_3 Prior PriorLegacy ParallelPort Pecon PrecisExcite $(PVCAM) $(QCAM) Sapphire $(SCION) Scientifica $(SIMPLECAM) $(SENSICAM) SerialManager SimpleAutofocus $(SPOT) SpectralLMM5 SutterLambda SutterStage Thorlabs ThorlabsDCxxxx ThorlabsFilterWheel ThorlabsSC10 Tofra $(USBMANAGER) Utilities VariLC Vincent Vortran $(V4L) XCite120PC_Exacte XCiteLed Xcite XLight Yokogawa Zaber ZeissCAN ZeissCAN29
+SUBDIRS =  AAAOTF Aladdin AOTF $(ANDOR) $(ANDORLASERCOMBINER) Aquinas Arduino ASIFW1000 ASIStage ASITiger ASIWPTR CARVII Cobolt CoherentCube Conix CSUW1 $(DC1394) DTOpenLayer DemoCamera Corvus $(IDSUEYE) ImageProcessorChain $(ITC) FreeSerialPort FocalPoint $(HIDMANAGER) $(IIDC) kdv K8055 K8061 LeicaDMI LeicaDMR LeicaDMSTC Ludl LudlLow LumencorSpectra MaestroServo Marzhauser Marzhauser-LStep MicroPoint MP285 Neos $(NIDAQ) Nikon NikonTE2000 Motic_mac nPoint Omicron $(OPENCVGRABBER) Oxxius pgFocus PI PI_GCS PI_GCS_2 Piezosystem_30DV50 Piezosystem_dDrive Piezosystem_NV120_1 Piezosystem_NV40_1 Piezosystem_NV40_3 Prior PriorLegacy ParallelPort Pecon PrecisExcite $(PVCAM) $(QCAM) Sapphire $(SCION) Scientifica $(SIMPLECAM) $(SENSICAM) SerialManager SimpleAutofocus $(SPOT) SpectralLMM5 SutterLambda SutterStage Thorlabs ThorlabsDCxxxx ThorlabsFilterWheel ThorlabsSC10 Tofra $(USBMANAGER) Utilities VariLC Vincent Vortran $(V4L) XCite120PC_Exacte XCiteLed Xcite XLight Yokogawa Zaber ZeissCAN ZeissCAN29

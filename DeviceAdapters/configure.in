@@ -17,6 +17,8 @@ AX_BOOST_BASE([1.40.0])
 AX_BOOST_THREAD
 AX_BOOST_ASIO
 AX_BOOST_SYSTEM
+AX_BOOST_CHRONO
+AX_BOOST_DATE_TIME
 
 # Find Micro-Manager headers
 micromanager_path=${ac_pwd}/..
@@ -153,6 +155,7 @@ else
 fi
 AC_SUBST(LIBDC1394)
 AM_CONDITIONAL([BUILD_DC1394], [test -n "$LIBDC1394"])
+AM_CONDITIONAL([BUILD_IIDC], [test -n "$LIBDC1394"])
 
 # Andor cameras on linux 
 AC_MSG_CHECKING(for Andor cameras)
@@ -409,6 +412,7 @@ AC_CONFIG_FILES(
 	[FreeSerialPort/Makefile:FreeSerialPort/Makefile.in:MMDEVAPI.rules]
 	[FocalPoint/Makefile:FocalPoint/Makefile.in:MMDEVAPI.rules]
 	[IDS_uEye/Makefile:IDS_uEye/Makefile.in:MMDEVAPI.rules]
+	[IIDC/Makefile:IIDC/Makefile.in:MMDEVAPI.rules]
 	[ITC18/Makefile:ITC18/Makefile.in:MMDEVAPI.rules]
 	[ImageProcessorChain/Makefile:ImageProcessorChain/Makefile.in:MMDEVAPI.rules]
 	[K8055/Makefile:K8055/Makefile.in:MMDEVAPI.rules]
