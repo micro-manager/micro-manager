@@ -379,7 +379,7 @@ XLed::XLed()
     XLed::m_sXLedStr[XLed::XL_PWMStateLabel]            = "X.09 IPG State (1=Run 0=Off)";             // 22: XLed PWM State label
     XLed::m_sXLedStr[XLed::XL_PWMModeLabel]             = "X.10 IPG Running Mode (1=Sing 0=Cont)";    // 23: XLed PWM mode label
     XLed::m_sXLedStr[XLed::XL_FrontPanelLabel]          = "X.11 Front Panel (1=Lock 0=Unlock)";       // 24: Front Panel (Lock/UnLock) label
-    XLed::m_sXLedStr[XLed::XL_LCDScrnNumberLabel]       = "X.12 LCD Screen Number (2-6,8-13)";        // 25: LCD screen number label
+    XLed::m_sXLedStr[XLed::XL_LCDScrnNumberLabel]       = "X.12 LCD Screen Number (2-6;8-13)";        // 25: LCD screen number label
     XLed::m_sXLedStr[XLed::XL_LCDScrnBriteLabel]        = "X.13 LCD Brightness (0-255)";              // 26: LCD Screen brightness label
     XLed::m_sXLedStr[XLed::XL_LCDScrnSaverLabel]        = "X.14 LCD Screen Timeout (0:Disabled)";     // 27: LCD screen saver timeout label
     XLed::m_sXLedStr[XLed::XL_ClearAlarmLebel]          = "X.15 Clear Alarm (1:Cleared 0:Ok)";        // 28: Clear Alarm label
