@@ -412,39 +412,52 @@ MMIIDCCamera::GetImageBufferSize() const
 unsigned
 MMIIDCCamera::GetImageWidth() const
 {
-   if (!snappedPixels_)
-      return 0;
-   return static_cast<unsigned>(snappedWidth_);
+   try
+   {
+      // TODO Update when supporting ROI
+      return static_cast<unsigned>(currentVideoMode_->GetMaxWidth());
+   }
+   CATCH_AND_LOG_ERROR
+   return 0;
 }
 
 
 unsigned
 MMIIDCCamera::GetImageHeight() const
 {
-   if (!snappedPixels_)
-      return 0;
-   return static_cast<unsigned>(snappedHeight_);
+   try
+   {
+      // TODO Update when supporting ROI
+      return static_cast<unsigned>(currentVideoMode_->GetMaxHeight());
+   }
+   CATCH_AND_LOG_ERROR
+   return 0;
 }
 
 
 unsigned
 MMIIDCCamera::GetImageBytesPerPixel() const
 {
-   if (!snappedPixels_)
-      return 0;
-   return static_cast<unsigned>(snappedBytesPerPixel_);
+   try
+   {
+      switch (currentVideoMode_->GetPixelFormat())
+      {
+         case IIDC::PixelFormatGray8:
+            return 1;
+         case IIDC::PixelFormatGray16:
+            return 2;
+         default:
+            return 0; // Unsupported format
+      }
+   }
+   CATCH_AND_LOG_ERROR
+   return 0;
 }
 
 
 unsigned
 MMIIDCCamera::GetBitDepth() const
 {
-   /*
-    * This function is an interface design bug. There is no clear specification
-    * as to whether it is supposed to return the bits-per-pixel of the last
-    * acquired image or the current camera settings. The latter appears to be
-    * the safer assumption.
-    */
    try
    {
       switch (currentVideoMode_->GetPixelFormat())
