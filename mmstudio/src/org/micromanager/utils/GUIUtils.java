@@ -81,20 +81,20 @@ public class GUIUtils {
     * is attached in Windows.
     */
    public static void preventDisplayAdapterChangeExceptions() {
-	   try {
-		   if (JavaUtils.isWindows()) { // Check that we are in windows.
-			   //Dynamically load sun.awt.Win32GraphicsEnvironment, because it seems to be missing from
-			   //the Mac OS X JVM.
-			   ClassLoader cl = ClassLoader.getSystemClassLoader ();
-			   Class<?> envClass = cl.loadClass("sun.awt.Win32GraphicsEnvironment");
-			   //Get the current local graphics environment.
-			   GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-			   //Send notification that display may have changed, so that display count is updated.
-			   envClass.getDeclaredMethod("displayChanged").invoke(envClass.cast(ge));
-		   }
-	   } catch (Exception e) {
-           ReportingUtils.logError(e);
-	   }
+      try {
+         if (JavaUtils.isWindows()) { // Check that we are in windows.
+            //Dynamically load sun.awt.Win32GraphicsEnvironment, because it seems to be missing from
+            //the Mac OS X JVM.
+            ClassLoader cl = ClassLoader.getSystemClassLoader();
+            Class<?> envClass = cl.loadClass("sun.awt.Win32GraphicsEnvironment");
+            //Get the current local graphics environment.
+            GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+            //Send notification that display may have changed, so that display count is updated.
+            envClass.getDeclaredMethod("displayChanged").invoke(envClass.cast(ge));
+         }
+      } catch (Exception e) {
+         ReportingUtils.logError(e);
+      }
 
    }
 
@@ -111,43 +111,43 @@ public class GUIUtils {
        table.putClientProperty("terminateEditOnFocusLost", Boolean.TRUE);
     }
 
-        /**
+    /**
      * Verifies if the given point is visible on the screen.
      * From http://www.java2s.com/Code/Java/Swing-JFC/Verifiesifthegivenpointisvisibleonthescreen.htm
      * @param   location     The given location on the screen.
      * @return           True if the location is on the screen, false otherwise.
-     */
-    public static boolean isLocationInScreenBounds(Point location) 
-    {
-      
+
+    */
+   public static boolean isLocationInScreenBounds(Point location) {
+
       // Check if the location is in the bounds of one of the graphics devices.
-    GraphicsEnvironment graphicsEnvironment = GraphicsEnvironment.getLocalGraphicsEnvironment();
-    GraphicsDevice[] graphicsDevices = graphicsEnvironment.getScreenDevices();
-    Rectangle graphicsConfigurationBounds = new Rectangle();
-    
-    // Iterate over the graphics devices.
-    for (int j = 0; j < graphicsDevices.length; j++) {
-      
-      // Get the bounds of the device.
-      GraphicsDevice graphicsDevice = graphicsDevices[j];
-      graphicsConfigurationBounds.setRect(graphicsDevice.getDefaultConfiguration().getBounds());
-      
-        // Is the location in this bounds?
-      graphicsConfigurationBounds.setRect(graphicsConfigurationBounds.x, graphicsConfigurationBounds.y,
-          graphicsConfigurationBounds.width, graphicsConfigurationBounds.height);
-      if (graphicsConfigurationBounds.contains(location.x, location.y)) {
-        
-        // The location is in this screengraphics.
-        return true;
-        
+      GraphicsEnvironment graphicsEnvironment = GraphicsEnvironment.getLocalGraphicsEnvironment();
+      GraphicsDevice[] graphicsDevices = graphicsEnvironment.getScreenDevices();
+      Rectangle graphicsConfigurationBounds = new Rectangle();
+
+      // Iterate over the graphics devices.
+      for (int j = 0; j < graphicsDevices.length; j++) {
+
+         // Get the bounds of the device.
+         GraphicsDevice graphicsDevice = graphicsDevices[j];
+         graphicsConfigurationBounds.setRect(graphicsDevice.getDefaultConfiguration().getBounds());
+
+         // Is the location in this bounds?
+         graphicsConfigurationBounds.setRect(graphicsConfigurationBounds.x, graphicsConfigurationBounds.y,
+                 graphicsConfigurationBounds.width, graphicsConfigurationBounds.height);
+         if (graphicsConfigurationBounds.contains(location.x, location.y)) {
+
+            // The location is in this screengraphics.
+            return true;
+
+         }
+
       }
-      
-    }
-    
-    // We could not find a device that contains the given point.
-    return false;
-    
-    }
+
+      // We could not find a device that contains the given point.
+      return false;
+
+   }
     
    public static void recallPosition(final Window win) {
       Preferences prefs = Preferences.userNodeForPackage(win.getClass());
@@ -259,8 +259,8 @@ public class GUIUtils {
       menuBar.add(menu);
       return menu;
    }
-
-    /*
+   
+    /**
      * Add a menu item to the specified parent menu.
      */
    public static JMenuItem addMenuItem(final JMenu parentMenu,
@@ -281,7 +281,7 @@ public class GUIUtils {
       return menuItem;
    }
    
-   /*
+   /**
     * Add a menu item with given text to the specified parent menu.
     */
    public static JMenuItem addMenuItem(final JMenu parentMenu,
