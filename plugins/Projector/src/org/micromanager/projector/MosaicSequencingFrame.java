@@ -300,7 +300,7 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
       uploadSequence(getSequenceEvents());
    }
 
-   
+   // Show the ImageJ Roi Manager and return a reference to it.   
    private RoiManager showRoiManager() {
       IJ.run("ROI Manager...");
       return RoiManager.getInstance();
@@ -334,7 +334,7 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
             newRoi.setLocation(bounds.x + i * spacingX, bounds.y + j * spacingY);
             roiManager.addRoi(newRoi);
          }
-      }
+      }     
    }
 
    // Create the Sequence from the sequenceTable_.
@@ -503,6 +503,8 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
       });
    }
    
+   // The acquisition engine will no longer run phototargeting after this
+   // is called. Called by the "detach" button.
    public void detachFromAcquisition() {
       gui_.clearRunnables();
    }
