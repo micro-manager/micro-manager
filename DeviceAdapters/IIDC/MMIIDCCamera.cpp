@@ -579,6 +579,17 @@ MMIIDCCamera::IsCapturing()
 
 
 int
+MMIIDCCamera::OnMaximumFramerate(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(cachedFramerate_);
+   }
+   return DEVICE_OK;
+}
+
+
+int
 MMIIDCCamera::OnFormat7PacketSizeNegativeDelta(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    try
@@ -866,11 +877,13 @@ MMIIDCCamera::InitializeFramerateAndExposure()
       prioritizedFramerate->SetOnOff(false);
 
    iidcCamera_->SetMaxFramerate();
+   cachedFramerate_ = iidcCamera_->GetFramerate();
    LogMessage("IIDC Framerate now set to " +
-         boost::lexical_cast<std::string>(iidcCamera_->GetFramerate()) + " (fps)");
+         boost::lexical_cast<std::string>(cachedFramerate_) + " (fps)");
 
    int err;
-   err = CreateFloatProperty(MMIIDC_Property_MaxFramerate, iidcCamera_->GetFramerate(), true);
+   err = CreateFloatProperty(MMIIDC_Property_MaxFramerate, cachedFramerate_, true,
+         new CPropertyAction(this, &MMIIDCCamera::OnMaximumFramerate));
    if (err != DEVICE_OK)
       return err;
 
@@ -996,14 +1009,11 @@ MMIIDCCamera::VideoModeDidChange()
       return err;
 
    iidcCamera_->SetMaxFramerate(static_cast<unsigned>(-format7PacketSizeDelta));
+   cachedFramerate_ = iidcCamera_->GetFramerate();
    LogMessage("IIDC Framerate now set to " +
-         boost::lexical_cast<std::string>(iidcCamera_->GetFramerate()) + " (fps)");
-
-   std::string framerateStr = boost::lexical_cast<std::string>(iidcCamera_->GetFramerate());
-   err = SetProperty(MMIIDC_Property_MaxFramerate, framerateStr.c_str());
-   if (err != DEVICE_OK)
-      return err;
-   err = OnPropertyChanged(MMIIDC_Property_MaxFramerate, framerateStr.c_str());
+         boost::lexical_cast<std::string>(cachedFramerate_) + " (fps)");
+   err = OnPropertyChanged(MMIIDC_Property_MaxFramerate,
+         boost::lexical_cast<std::string>(cachedFramerate_).c_str());
    if (err != DEVICE_OK)
       return err;
 

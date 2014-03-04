@@ -39,6 +39,7 @@ class MMIIDCCamera : public CCameraBase<MMIIDCCamera>
 
    double shutterUsPerUnit_, shutterOffsetUs_; // Set once from pre-init properties
 
+   double cachedFramerate_;
    double cachedExposure_;
 
    bool stopOnOverflow_;
@@ -107,6 +108,7 @@ private:
     * Property action handlers
     */
 
+   int OnMaximumFramerate(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnFormat7PacketSizeNegativeDelta(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnVideoMode(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct);
