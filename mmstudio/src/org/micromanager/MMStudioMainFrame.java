@@ -195,7 +195,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    private ReportProblemDialog reportProblemDialog_;
    
    private JMenu pluginMenu_;
-   private ArrayList<PluginItem> plugins_;
+   // private ArrayList<PluginItem> plugins_;
    private List<MMListenerInterface> MMListeners_
            = Collections.synchronizedList(new ArrayList<MMListenerInterface>());
    private List<LiveModeListener> liveModeListeners_
@@ -273,6 +273,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    private IAcquisitionEngine2010 acquisitionEngine2010 = null;
    private final JSplitPane splitPane_;
    private volatile boolean ignorePropertyChanges_; 
+   private PluginLoader pluginLoader_;
 
    private AbstractButton setRoiButton_;
    private AbstractButton clearRoiButton_;
@@ -1382,7 +1383,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
 
    }
 
-   private class PluginItem {
+   public class PluginItem {
 
       public Class<?> pluginClass = null;
       public String menuItem = "undefined";
@@ -1468,7 +1469,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
 
             loadMRUConfigFiles();
             afMgr_ = new AutofocusManager(gui_);
-            Thread pluginLoader = initializePlugins();
+            Thread pluginInitializer = initializePlugins();
 
             toFront();
             
@@ -1502,7 +1503,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
             // before loading the system configuration, we need to wait 
             // until the plugins are loaded
             try {  
-               pluginLoader.join(2000);
+               pluginInitializer.join(2000);
             } catch (InterruptedException ex) {
                ReportingUtils.logError(ex, "Plugin loader thread was interupted");
             }
@@ -1569,7 +1570,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
             public void run() {
                // Needed for loading clojure-based jars:
                Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
-               loadPlugins();
+               pluginLoader_.loadPlugins();
             }
          }
   
@@ -1610,7 +1611,8 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       
       guiColors_ = new GUIColors();
 
-      plugins_ = new ArrayList<PluginItem>();
+      pluginLoader_ = new PluginLoader();
+      // plugins_ = new ArrayList<PluginItem>();
 
       gui_ = this;
 
@@ -2917,6 +2919,41 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       menuBar_.validate();
    }
    
+    /**
+    * Adds plugin items to the plugins menu
+    * @param plugin - plugin to be added to the menu
+    */
+   public void addPluginToMenu(final PluginLoader.PluginItem plugin) {
+      Class<?> cl = plugin.pluginClass;
+      String toolTipDescription = "";
+      try {
+          // Get this static field from the class implementing MMPlugin.
+    	  toolTipDescription = (String) cl.getDeclaredField("tooltipDescription").get(null);
+       } catch (SecurityException e) {
+          ReportingUtils.logError(e);
+          toolTipDescription = "Description not available";
+       } catch (NoSuchFieldException e) {
+          toolTipDescription = "Description not available";
+          ReportingUtils.logMessage(cl.getName() + " fails to implement static String tooltipDescription.");
+       } catch (IllegalArgumentException e) {
+          ReportingUtils.logError(e);
+       } catch (IllegalAccessException e) {
+          ReportingUtils.logError(e);
+       }
+
+      GUIUtils.addMenuItem(pluginMenu_, plugin.menuItem, toolTipDescription,
+              new Runnable() {
+                 public void run() {
+                    ReportingUtils.logMessage("Plugin command: " + plugin.menuItem);
+                    plugin.instantiate();
+                    plugin.plugin.show();
+                 }
+              });
+      
+      pluginMenu_.validate();
+      menuBar_.validate();
+   }
+   
    public void updateGUI(boolean updateConfigPadStructure) {
       updateGUI(updateConfigPadStructure, false);
    }
@@ -3070,13 +3107,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
          afMgr_.closeOptionsDialog();
       }
 
-      // dispose plugins
-      for (int i = 0; i < plugins_.size(); i++) {
-         MMPlugin plugin = plugins_.get(i).plugin;
-         if (plugin != null) {
-            plugin.dispose();
-         }
-      }
+      pluginLoader_.disposePlugins();
 
       synchronized (shutdownLock_) {
          try {
@@ -4152,6 +4183,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    /**
     * Helper class for plugin loader functions
     */
+   /*
    private class PluginItemAndClass {
       private String msg_;
       private Class<?> cl_;
@@ -4249,7 +4281,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
          }
       });
    }
-
+*/
    public String installPlugin(String className, String menuName) {
       String msg = "installPlugin(String className, String menuName) is Deprecated. Use installPlugin(String className) instead.";
       core_.logMessage(msg);
@@ -4261,7 +4293,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    public String installPlugin(String className) {
       try {
          Class clazz = Class.forName(className);
-         return installPlugin(clazz);
+         return pluginLoader_.installPlugin(clazz);
       } catch (ClassNotFoundException e) {
          String msg = className + " plugin not found.";
          ReportingUtils.logError(e, msg);
@@ -4447,7 +4479,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
     * Discovers Micro-Manager plugins and autofocus plugins at runtime
     * Adds these to the plugins menu
     */
-
+/*
    private void loadPlugins() {
       
       ArrayList<Class<?>> pluginClasses = new ArrayList<Class<?>>();
@@ -4510,6 +4542,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       }
 
    }
+   * */
 
    @Override
    public void logMessage(String msg) {
