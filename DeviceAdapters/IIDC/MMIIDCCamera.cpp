@@ -83,6 +83,7 @@ const char* const MMIIDC_Property_SupportsMultiShot = "Camera supports multi-sho
 const char* const MMIIDC_Property_SupportsPowerSwitch = "Camera supports switching power";
 const char* const MMIIDC_Property_1394BEnabled = "1394B enabled";
 const char* const MMIIDC_Property_IsoSpeed = "Transmission speed (Mbps)";
+const char* const MMIIDC_Property_Format7PacketSizeNegativeDelta = "Limit Format_7 packet size";
 const char* const MMIIDC_Property_VideoMode = "Video mode";
 const char* const MMIIDC_Property_MaxFramerate = "Maximum framerate (fps)";
 const char* const MMIIDC_Property_ExposureMs = MM::g_Keyword_Exposure;
@@ -297,6 +298,10 @@ MMIIDCCamera::Initialize()
        */
 
       err = InitializeInformationalProperties();
+      if (err != DEVICE_OK)
+         return err;
+
+      err = InitializeBehaviorTweakProperties();
       if (err != DEVICE_OK)
          return err;
 
@@ -563,6 +568,19 @@ MMIIDCCamera::IsCapturing()
 
 
 int
+MMIIDCCamera::OnFormat7PacketSizeNegativeDelta(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   try
+   {
+      if (eAct == MM::AfterSet)
+         VideoModeDidChange();
+   }
+   CATCH_AND_RETURN_ERROR
+   return DEVICE_OK;
+}
+
+
+int
 MMIIDCCamera::OnVideoMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    try
@@ -743,6 +761,23 @@ MMIIDCCamera::InitializeInformationalProperties()
 
    err = CreateIntegerProperty(MMIIDC_Property_IsoSpeed,
          static_cast<long>(iidcCamera_->GetIsoSpeed()), true);
+
+   return DEVICE_OK;
+}
+
+
+int
+MMIIDCCamera::InitializeBehaviorTweakProperties()
+{
+   int err;
+
+   err = CreateIntegerProperty(MMIIDC_Property_Format7PacketSizeNegativeDelta, 0, false,
+         new CPropertyAction(this, &MMIIDCCamera::OnFormat7PacketSizeNegativeDelta));
+   if (err != DEVICE_OK)
+      return err;
+   for (int i = 0; i < 8; ++i)
+      AddAllowedValue(MMIIDC_Property_Format7PacketSizeNegativeDelta,
+            boost::lexical_cast<std::string>(-i).c_str());
 
    return DEVICE_OK;
 }
@@ -931,12 +966,17 @@ MMIIDCCamera::InitializeFeatureProperties()
 int
 MMIIDCCamera::VideoModeDidChange()
 {
-   iidcCamera_->SetMaxFramerate();
+   int err;
+   long format7PacketSizeDelta;
+   err = GetProperty(MMIIDC_Property_Format7PacketSizeNegativeDelta, format7PacketSizeDelta);
+   if (err != DEVICE_OK)
+      return err;
+
+   iidcCamera_->SetMaxFramerate(static_cast<unsigned>(-format7PacketSizeDelta));
    LogMessage("IIDC Framerate now set to " +
          boost::lexical_cast<std::string>(iidcCamera_->GetFramerate()) + " (fps)");
 
    std::string framerateStr = boost::lexical_cast<std::string>(iidcCamera_->GetFramerate());
-   int err;
    err = SetProperty(MMIIDC_Property_MaxFramerate, framerateStr.c_str());
    if (err != DEVICE_OK)
       return err;

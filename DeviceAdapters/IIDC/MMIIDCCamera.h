@@ -102,6 +102,7 @@ private:
     * Property action handlers
     */
 
+   int OnFormat7PacketSizeNegativeDelta(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnVideoMode(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnBrightness(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -113,6 +114,7 @@ private:
     */
 
    int InitializeInformationalProperties();
+   int InitializeBehaviorTweakProperties();
    int InitializeVideoMode();
    int InitializeFramerateAndExposure();
    int InitializeFeatureProperties();

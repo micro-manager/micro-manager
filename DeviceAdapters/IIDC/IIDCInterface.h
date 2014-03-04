@@ -116,8 +116,11 @@ public:
    /*
     * Set the framerate to the maximum possible given the current format, video
     * mode, and (for Format_7) color coding and ROI.
+    *
+    * The format7NegativeDeltaUnits parameter is an advanced setting that might
+    * prevent corrupted images in some cases.
     */
-   void SetMaxFramerate();
+   void SetMaxFramerate(unsigned format7NegativeDeltaUnits = 0);
 
    /*
     * Get the current framerate (assuming that the FRAME_RATE feature is off).

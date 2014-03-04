@@ -453,7 +453,7 @@ Camera::SetVideoMode(boost::shared_ptr<VideoMode> mode)
 
 
 void
-Camera::SetMaxFramerate()
+Camera::SetMaxFramerate(unsigned format7NegativeDeltaUnits)
 {
    /*
     * Correct handling of framerates in IIDC is extremely complex. Make sure
@@ -468,8 +468,14 @@ Camera::SetMaxFramerate()
       uint32_t busMaxPacketSize = 1024 * GetIsoSpeed() / 100;
       uint32_t packetSize;
 
-      uint32_t recommendedSize;
+      uint32_t unitPacketSize, maxPacketSize;
       dc1394error_t err;
+      err = dc1394_format7_get_packet_parameters(libdc1394camera_, mode->GetLibDC1394Mode(),
+            &unitPacketSize, &maxPacketSize);
+      if (err != DC1394_SUCCESS)
+         throw Error("Cannot get packet size parameters");
+
+      uint32_t recommendedSize;
       err = dc1394_format7_get_recommended_packet_size(libdc1394camera_, mode->GetLibDC1394Mode(), &recommendedSize);
       if (err == DC1394_SUCCESS && recommendedSize > 0 && recommendedSize <= busMaxPacketSize)
       {
@@ -477,18 +483,23 @@ Camera::SetMaxFramerate()
       }
       else
       {
-         uint32_t unitPacketSize, maxPacketSize;
-         dc1394error_t err;
-         err = dc1394_format7_get_packet_parameters(libdc1394camera_, mode->GetLibDC1394Mode(),
-               &unitPacketSize, &maxPacketSize);
-         if (err != DC1394_SUCCESS)
-            throw Error("Cannot get packet size parameters");
-
          maxPacketSize = std::min(maxPacketSize, busMaxPacketSize);
 
          // Largest multiple of unitPacketSize that does not exceed maxPacketSize
          packetSize = maxPacketSize - (maxPacketSize % unitPacketSize);
       }
+
+      /*
+       * There are cases where corrupted images get returned at the maximum
+       * packet size. I do not know if this is dependent on the camera, 1394
+       * interface, driver/kernel, libdc1394 version, or some combination of
+       * the above.
+       * For example, the AVT Guppy PRO F031B exhibited this issue on OpenSUSE
+       * 12.3, Rosewill RC-506E, 1394B S800, Format_7, Mode_0, Y16, full frame
+       * (max packet size 8192, unit size 4); setting the packet size to 8188
+       * resulted in correct images.
+       */
+      packetSize -= unitPacketSize * format7NegativeDeltaUnits;
 
       err = dc1394_format7_set_packet_size(libdc1394camera_, mode->GetLibDC1394Mode(), packetSize);
       if (err != DC1394_SUCCESS)
