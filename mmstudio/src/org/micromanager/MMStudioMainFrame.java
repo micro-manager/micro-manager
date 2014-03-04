@@ -78,7 +78,6 @@ import org.json.JSONObject;
 import org.micromanager.acquisition.AcquisitionManager;
 import org.micromanager.api.Autofocus;
 import org.micromanager.api.DataProcessor;
-import org.micromanager.api.MMPlugin;
 import org.micromanager.api.MMTags;
 import org.micromanager.api.PositionList;
 import org.micromanager.api.ScriptInterface;
@@ -116,9 +115,7 @@ import java.awt.*;
 import java.awt.dnd.DropTarget;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.text.Collator;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -1383,27 +1380,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
 
    }
 
-   public class PluginItem {
-
-      public Class<?> pluginClass = null;
-      public String menuItem = "undefined";
-      public MMPlugin plugin = null;
-      public String className = "";
-
-      public void instantiate() {
-
-         try {
-            if (plugin == null) {
-               plugin = (MMPlugin) pluginClass.newInstance();
-            }
-         } catch (InstantiationException e) {
-            ReportingUtils.logError(e);
-         } catch (IllegalAccessException e) {
-            ReportingUtils.logError(e);
-         }
-         plugin.setApp(MMStudioMainFrame.this);
-      }
-   }
 
    /*
     * Simple class used to cache static info
@@ -2883,41 +2859,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    public String getVersion() {
       return MMVersion.VERSION_STRING;
    }
-
-   /**
-    * Adds plugin items to the plugins menu
-    * @param plugin - plugin to be added to the menu
-    */
-   private void addPluginToMenu(final PluginItem plugin) {
-      Class<?> cl = plugin.pluginClass;
-      String toolTipDescription = "";
-      try {
-          // Get this static field from the class implementing MMPlugin.
-    	  toolTipDescription = (String) cl.getDeclaredField("tooltipDescription").get(null);
-       } catch (SecurityException e) {
-          ReportingUtils.logError(e);
-          toolTipDescription = "Description not available";
-       } catch (NoSuchFieldException e) {
-          toolTipDescription = "Description not available";
-          ReportingUtils.logMessage(cl.getName() + " fails to implement static String tooltipDescription.");
-       } catch (IllegalArgumentException e) {
-          ReportingUtils.logError(e);
-       } catch (IllegalAccessException e) {
-          ReportingUtils.logError(e);
-       }
-
-      GUIUtils.addMenuItem(pluginMenu_, plugin.menuItem, toolTipDescription,
-              new Runnable() {
-                 public void run() {
-                    ReportingUtils.logMessage("Plugin command: " + plugin.menuItem);
-                    plugin.instantiate();
-                    plugin.plugin.show();
-                 }
-              });
-      
-      pluginMenu_.validate();
-      menuBar_.validate();
-   }
    
     /**
     * Adds plugin items to the plugins menu
@@ -4180,108 +4121,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       return engine_;
    }
 
-   /**
-    * Helper class for plugin loader functions
-    */
-   /*
-   private class PluginItemAndClass {
-      private String msg_;
-      private Class<?> cl_;
-      private PluginItem pi_;
-      
-      public PluginItemAndClass(String msg, Class<?> cl, PluginItem pi) {
-         msg_ = msg;
-         cl_ = cl;
-         pi_ = pi;
-      }
-      public Class<?> getItsClass () {return cl_;}
-      public String getMessage() {return msg_;}
-      public PluginItem getPluginItem() {return pi_;}
-   }
-   
-   private class PluginItemAndClassComparator implements Comparator<PluginItemAndClass> {
-      public int compare(PluginItemAndClass t1, PluginItemAndClass t2) {
-         try {
-            String m1 = t1.getPluginItem().menuItem;
-            String m2 = t2.getPluginItem().menuItem;
-            Collator collator = Collator.getInstance();
-            collator.setStrength(Collator.PRIMARY);
-            return collator.compare(m1, m2);
-         } catch (NullPointerException npe) {
-            ReportingUtils.logError("NullPointerException in PluginItemAndClassCopmarator");
-         }
-         return 0;
-      }
-   }
-   
-   public String installPlugin(Class<?> cl) {
-      PluginItemAndClass piac = declarePlugin(cl);
-      final PluginItem pi = piac.getPluginItem();
-      if (pi != null) {
-         addPluginToMenuLater(pi);
-      }
-      String msg = piac.getMessage();
-      if (msg != null) {
-         return msg;
-      }
-      ReportingUtils.logError("In MMStudioMainFrame:installPlugin, msg was null");
-      return piac.getMessage();     
-   }
-   
-   private PluginItemAndClass declarePlugin(Class<?> cl) {
-      String className = cl.getSimpleName();
-      String msg = className + " module loaded.";
-      PluginItem pi = new PluginItem();
-      try {
-         for (PluginItem plugin : plugins_) {
-            if (plugin.className.contentEquals(className)) {
-               msg = className + " already loaded";
-               PluginItemAndClass piac = new PluginItemAndClass(msg, cl, null);
-               return piac;
-            }
-         }
-       
-         pi.className = className;
-         try {
-            // Get this static field from the class implementing MMPlugin.
-            pi.menuItem = (String) cl.getDeclaredField("menuName").get(null);
-         } catch (SecurityException e) {
-            ReportingUtils.logError(e);
-            pi.menuItem = className;
-         } catch (NoSuchFieldException e) {
-            pi.menuItem = className;
-            ReportingUtils.logMessage(className + " fails to implement static String menuName.");
-         } catch (IllegalArgumentException e) {
-            ReportingUtils.logError(e);
-         } catch (IllegalAccessException e) {
-            ReportingUtils.logError(e);
-         }
-
-         if (pi.menuItem == null) {
-            pi.menuItem = className;
-         }
-         pi.menuItem = pi.menuItem.replace("_", " ");
-         pi.pluginClass = cl;
-         plugins_.add(pi);
-      } catch (NoClassDefFoundError e) {
-         msg = className + " class definition not found.";
-         ReportingUtils.logError(e, msg);
-      }
-      PluginItemAndClass piac = new PluginItemAndClass(msg, cl, pi);
-      return piac;
-   }
-   
-   
-   private void addPluginToMenuLater(final PluginItem pi) {
-      SwingUtilities.invokeLater(
-              new Runnable() {
-         @Override
-         public void run() {
-            addPluginToMenu(pi);
-         }
-      });
-   }
-*/
    public String installPlugin(String className, String menuName) {
       String msg = "installPlugin(String className, String menuName) is Deprecated. Use installPlugin(String className) instead.";
       core_.logMessage(msg);
@@ -4473,76 +4312,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       }
    }
 
-
-
-   /**
-    * Discovers Micro-Manager plugins and autofocus plugins at runtime
-    * Adds these to the plugins menu
-    */
-/*
-   private void loadPlugins() {
-      
-      ArrayList<Class<?>> pluginClasses = new ArrayList<Class<?>>();
-      ArrayList<Class<?>> autofocusClasses = new ArrayList<Class<?>>();
-      List<Class<?>> classes;
-
-      try {
-         long t1 = System.currentTimeMillis();
-         classes = JavaUtils.findClasses(new File("mmplugins"), 2);
-
-         for (Class<?> clazz : classes) {
-            for (Class<?> iface : clazz.getInterfaces()) {
-               if (iface == MMPlugin.class) {
-                  pluginClasses.add(clazz);
-               }
-            }
-         }
-
-         classes = JavaUtils.findClasses(new File("mmautofocus"), 2);
-         for (Class<?> clazz : classes) {
-            for (Class<?> iface : clazz.getInterfaces()) {
-               //core_.logMessage("interface found: " + iface.getName());
-               if (iface == Autofocus.class) {
-                  autofocusClasses.add(clazz);
-               }
-            }
-         }
-
-      } catch (ClassNotFoundException e1) {
-         ReportingUtils.logError(e1);
-      }
-
-      ArrayList<PluginItemAndClass> piacs = new ArrayList<PluginItemAndClass>();
-      for (Class<?> plugin : pluginClasses) {
-         try {
-            ReportingUtils.logMessage("Attempting to install plugin " + plugin.getName());
-            PluginItemAndClass piac = declarePlugin(plugin);
-            if (piac.getPluginItem() != null) {
-               piacs.add(piac);
-            }
-         } catch (Exception e) {
-            ReportingUtils.logError(e, "Failed to install the \"" + plugin.getName() + "\" plugin .");
-         }
-      }
-      Collections.sort(piacs, new PluginItemAndClassComparator());
-      for (PluginItemAndClass piac : piacs) {
-         final PluginItem pi = piac.getPluginItem();
-         if (pi != null) {
-            addPluginToMenuLater(pi);
-         }
-      }
-
-      for (Class<?> autofocus : autofocusClasses) {
-         try {
-            ReportingUtils.logMessage("Attempting to install autofocus plugin " + autofocus.getName());
-            installAutofocusPlugin(autofocus.getName());
-         } catch (Exception e) {
-            ReportingUtils.logError("Failed to install the \"" + autofocus.getName() + "\" autofocus plugin.");
-         }
-      }
-
-   }
-   * */
 
    @Override
    public void logMessage(String msg) {
@@ -4750,8 +4519,4 @@ class BooleanLock extends Object {
       return (value == state);
    }
 
-
- 
-
 }
-
