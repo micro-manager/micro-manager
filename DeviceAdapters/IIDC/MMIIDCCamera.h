@@ -39,10 +39,11 @@ class MMIIDCCamera : public CCameraBase<MMIIDCCamera>
 
    double shutterUsPerUnit_, shutterOffsetUs_; // Set once from pre-init properties
 
+   unsigned cachedBitsPerSample_;
    double cachedFramerate_;
    double cachedExposure_;
 
-   bool stopOnOverflow_;
+   bool stopOnOverflow_; // Set by StartSequenceAcquisition(), read by SequenceCallback()
 
    int nextAdHocErrorCode_;
 
@@ -123,7 +124,7 @@ private:
    int InitializeInformationalProperties();
    int InitializeBehaviorTweakProperties();
    int InitializeVideoMode();
-   int InitializeFramerateAndExposure();
+   int InitializeVideoModeDependentState();
    int InitializeFeatureProperties();
 
    int VideoModeDidChange();

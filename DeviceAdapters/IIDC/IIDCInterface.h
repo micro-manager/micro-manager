@@ -113,6 +113,8 @@ public:
    boost::shared_ptr<VideoMode> GetVideoMode();
    void SetVideoMode(boost::shared_ptr<VideoMode> mode);
 
+   unsigned GetBitsPerSample();
+
    /*
     * Set the framerate to the maximum possible given the current format, video
     * mode, and (for Format_7) color coding and ROI.

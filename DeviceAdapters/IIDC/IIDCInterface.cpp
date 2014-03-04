@@ -452,6 +452,31 @@ Camera::SetVideoMode(boost::shared_ptr<VideoMode> mode)
 }
 
 
+unsigned
+Camera::GetBitsPerSample()
+{
+   boost::shared_ptr<VideoMode> mode = GetVideoMode();
+   switch (mode->GetLibDC1394Coding())
+   {
+      case DC1394_COLOR_CODING_MONO8:
+         return 8;
+      case DC1394_COLOR_CODING_MONO16:
+         {
+            uint32_t depth;
+            dc1394error_t err;
+            err = dc1394_video_get_data_depth(libdc1394camera_, &depth);
+            if (err != DC1394_SUCCESS)
+               throw Error(err, "Cannot get bits per sample");
+            if (!depth)
+               return 16;
+            return depth;
+         }
+      default:
+         return 0;
+   }
+}
+
+
 void
 Camera::SetMaxFramerate(unsigned format7NegativeDeltaUnits)
 {

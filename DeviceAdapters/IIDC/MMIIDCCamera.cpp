@@ -309,11 +309,11 @@ MMIIDCCamera::Initialize()
       if (err != DEVICE_OK)
          return err;
 
-      err = InitializeFramerateAndExposure(); // Depends on video mode
+      err = InitializeVideoModeDependentState(); // Depends on video mode
       if (err != DEVICE_OK)
          return err;
 
-      err = InitializeFeatureProperties(); // May depend on video mode
+      err = InitializeFeatureProperties(); // May also depend on video mode
       if (err != DEVICE_OK)
          return err;
 
@@ -458,20 +458,7 @@ MMIIDCCamera::GetImageBytesPerPixel() const
 unsigned
 MMIIDCCamera::GetBitDepth() const
 {
-   try
-   {
-      switch (currentVideoMode_->GetPixelFormat())
-      {
-         case IIDC::PixelFormatGray8:
-            return 8;
-         case IIDC::PixelFormatGray16:
-            return 16; // TODO Return correct value
-         default:
-            return 0; // Unsupported format
-      }
-   }
-   CATCH_AND_LOG_ERROR
-   return 0;
+   return cachedBitsPerSample_;
 }
 
 
@@ -870,8 +857,10 @@ MMIIDCCamera::InitializeVideoMode()
 
 
 int
-MMIIDCCamera::InitializeFramerateAndExposure()
+MMIIDCCamera::InitializeVideoModeDependentState()
 {
+   cachedBitsPerSample_ = iidcCamera_->GetBitsPerSample();
+
    boost::shared_ptr<IIDC::FrameRateFeature> prioritizedFramerate = iidcCamera_->GetFrameRateFeature();
    if (prioritizedFramerate->IsPresent() && prioritizedFramerate->IsSwitchable())
       prioritizedFramerate->SetOnOff(false);
@@ -1002,6 +991,8 @@ MMIIDCCamera::InitializeFeatureProperties()
 int
 MMIIDCCamera::VideoModeDidChange()
 {
+   cachedBitsPerSample_ = iidcCamera_->GetBitsPerSample();
+
    int err;
    long format7PacketSizeDelta;
    err = GetProperty(MMIIDC_Property_Format7PacketSizeNegativeDelta, format7PacketSizeDelta);
