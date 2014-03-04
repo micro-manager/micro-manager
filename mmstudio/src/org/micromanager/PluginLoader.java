@@ -29,7 +29,7 @@ import org.micromanager.utils.JavaUtils;
 import org.micromanager.utils.ReportingUtils;
 
 /**
- * Code for plugin loading, split out from MMStudioMainFrame.
+ * Code for plugin_ loading, split out from MMStudioMainFrame.
  */
 public class PluginLoader {
 
@@ -37,54 +37,58 @@ public class PluginLoader {
 
    public class PluginItem {
 
-      public Class<?> pluginClass = null;
-      public String menuItem = "undefined";
-      public MMPlugin plugin = null;
-      public String className = "";
+      public Class<?> pluginClass_ = null;
+      private String menuItem_ = "undefined";
+      public MMPlugin plugin_ = null;
+      public String className_ = "";
+      private String directory_ = "";
+      private String msg_ = "";
 
+      public PluginItem(Class<?> pluginClass, String menuItem, 
+              String className, String directory, String msg) {
+         pluginClass_ = pluginClass;
+         menuItem_ = menuItem;
+         className_ = className;
+         directory_ = directory;
+         msg_ = msg;
+      }
+      
+      public PluginItem (PluginItem pio) {
+         pluginClass_ = pio.pluginClass_;
+         menuItem_ = pio.menuItem_;
+         plugin_ = pio.plugin_;
+         className_ = pio.className_;
+         directory_ = pio.directory_;
+         msg_ = pio.msg_;
+      }
+      
+      public String getMenuItem() { return menuItem_; }
+      
+      public String getMessage() { return msg_; }
+
+      public String getDirectory() { return directory_; }
+      
       public void instantiate() {
-
          try {
-            if (plugin == null) {
-               plugin = (MMPlugin) pluginClass.newInstance();
+            if (plugin_ == null) {
+               plugin_ = (MMPlugin) pluginClass_.newInstance();
             }
          } catch (InstantiationException e) {
             ReportingUtils.logError(e);
          } catch (IllegalAccessException e) {
             ReportingUtils.logError(e);
          }
-         plugin.setApp(MMStudioMainFrame.getInstance());
+         plugin_.setApp(MMStudioMainFrame.getInstance());
       }
    }
 
-   /**
-    * Utility class that holds a PluginItem and a message
-    */
-   private class PluginItemAndClass {
 
-      private String msg_;
-      private PluginItem pi_;
+   private class PluginItemComparator implements Comparator<PluginItem> {
 
-      public PluginItemAndClass(String msg, PluginItem pi) {
-         msg_ = msg;
-         pi_ = pi;
-      }
-
-      public String getMessage() {
-         return msg_;
-      }
-
-      public PluginItem getPluginItem() {
-         return pi_;
-      }
-   }
-
-   private class PluginItemAndClassComparator implements Comparator<PluginItemAndClass> {
-
-      public int compare(PluginItemAndClass t1, PluginItemAndClass t2) {
+      public int compare(PluginItem t1, PluginItem t2) {
          try {
-            String m1 = t1.getPluginItem().menuItem;
-            String m2 = t2.getPluginItem().menuItem;
+            String m1 = t1.menuItem_;
+            String m2 = t2.menuItem_;
             Collator collator = Collator.getInstance();
             collator.setStrength(Collator.PRIMARY);
             return collator.compare(m1, m2);
@@ -96,41 +100,39 @@ public class PluginLoader {
    }
 
    public String installPlugin(Class<?> cl) {
-      PluginItemAndClass piac = declarePlugin(cl);
-      final PluginItem pi = piac.getPluginItem();
+      final PluginItem pi = declarePlugin(cl);
       if (pi != null) {
          addPluginToMenuLater(pi);
+      
+         if (pi.msg_ != null) {
+            return pi.msg_;
+         }
       }
-      String msg = piac.getMessage();
-      if (msg != null) {
-         return msg;
-      }
-      ReportingUtils.logError("In MMStudioMainFrame:installPlugin, msg was null");
-      return piac.getMessage();
+      String error = "In MMStudioMainFrame:installPlugin, msg was null";
+      ReportingUtils.logError(error);
+      return error;
    }
 
-   private PluginItemAndClass declarePlugin(Class<?> cl) {
+   private PluginItem declarePlugin(Class<?> cl) {
       String className = cl.getSimpleName();
       String msg = className + " module loaded.";
-      PluginItem pi = new PluginItem();
       try {
          for (PluginItem plugin : plugins_) {
-            if (plugin.className.contentEquals(className)) {
+            if (plugin.className_.contentEquals(className)) {
                msg = className + " already loaded";
-               PluginItemAndClass piac = new PluginItemAndClass(msg, null);
-               return piac;
+               return new PluginItem(cl, "", "", "", msg);
             }
          }
 
-         pi.className = className;
+         String menuItem = className;
          try {
             // Get this static field from the class implementing MMPlugin.
-            pi.menuItem = (String) cl.getDeclaredField("menuName").get(null);
+            menuItem = (String) cl.getDeclaredField("menuName").get(null);
          } catch (SecurityException e) {
             ReportingUtils.logError(e);
-            pi.menuItem = className;
+            menuItem = className;
          } catch (NoSuchFieldException e) {
-            pi.menuItem = className;
+            menuItem = className;
             ReportingUtils.logMessage(className + " fails to implement static String menuName.");
          } catch (IllegalArgumentException e) {
             ReportingUtils.logError(e);
@@ -138,18 +140,15 @@ public class PluginLoader {
             ReportingUtils.logError(e);
          }
 
-         if (pi.menuItem == null) {
-            pi.menuItem = className;
-         }
-         pi.menuItem = pi.menuItem.replace("_", " ");
-         pi.pluginClass = cl;
+         menuItem = menuItem.replace("_", " ");
+         PluginItem pi = new PluginItem (cl, menuItem, className, "", msg);
          plugins_.add(pi);
+         return pi;
       } catch (NoClassDefFoundError e) {
          msg = className + " class definition not found.";
          ReportingUtils.logError(e, msg);
       }
-      PluginItemAndClass piac = new PluginItemAndClass(msg, pi);
-      return piac;
+      return new PluginItem(cl, "", "", "", msg);
    }
 
    private static void addPluginToMenuLater(final PluginItem pi) {
@@ -184,21 +183,20 @@ public class PluginLoader {
          ReportingUtils.logError(e1);
       }
 
-      ArrayList<PluginItemAndClass> piacs = new ArrayList<PluginItemAndClass>();
+      ArrayList<PluginItem> pis = new ArrayList<PluginItem>();
       for (Class<?> plugin : pluginClasses) {
          try {
             ReportingUtils.logMessage("Attempting to install plugin " + plugin.getName());
-            PluginItemAndClass piac = declarePlugin(plugin);
-            if (piac.getPluginItem() != null) {
-               piacs.add(piac);
+            PluginItem pi = declarePlugin(plugin);
+            if (pi != null) {
+               pis.add(pi);
             }
          } catch (Exception e) {
             ReportingUtils.logError(e, "Failed to install the \"" + plugin.getName() + "\" plugin .");
          }
       }
-      Collections.sort(piacs, new PluginItemAndClassComparator());
-      for (PluginItemAndClass piac : piacs) {
-         final PluginItem pi = piac.getPluginItem();
+      Collections.sort(pis, new PluginItemComparator());
+      for (PluginItem pi : pis) {
          if (pi != null) {
             addPluginToMenuLater(pi);
          }
@@ -232,7 +230,7 @@ public class PluginLoader {
 
    public void disposePlugins() {
       for (int i = 0; i < plugins_.size(); i++) {
-         MMPlugin plugin = plugins_.get(i).plugin;
+         MMPlugin plugin = plugins_.get(i).plugin_;
          if (plugin != null) {
             plugin.dispose();
          }

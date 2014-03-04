@@ -2861,11 +2861,11 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    }
    
     /**
-    * Adds plugin items to the plugins menu
-    * @param plugin - plugin to be added to the menu
+    * Adds plugin_ items to the plugins menu
+    * @param plugin_ - plugin_ to be added to the menu
     */
    public void addPluginToMenu(final PluginLoader.PluginItem plugin) {
-      Class<?> cl = plugin.pluginClass;
+      Class<?> cl = plugin.pluginClass_;
       String toolTipDescription = "";
       try {
           // Get this static field from the class implementing MMPlugin.
@@ -2882,12 +2882,12 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
           ReportingUtils.logError(e);
        }
 
-      GUIUtils.addMenuItem(pluginMenu_, plugin.menuItem, toolTipDescription,
+      GUIUtils.addMenuItem(pluginMenu_, plugin.getMenuItem(), toolTipDescription,
               new Runnable() {
                  public void run() {
-                    ReportingUtils.logMessage("Plugin command: " + plugin.menuItem);
+                    ReportingUtils.logMessage("Plugin command: " + plugin.getMenuItem() );
                     plugin.instantiate();
-                    plugin.plugin.show();
+                    plugin.plugin_.show();
                  }
               });
       
