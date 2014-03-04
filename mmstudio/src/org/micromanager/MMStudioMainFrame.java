@@ -116,6 +116,8 @@ import java.awt.dnd.DropTarget;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -192,7 +194,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    private ReportProblemDialog reportProblemDialog_;
    
    private JMenu pluginMenu_;
-   // private ArrayList<PluginItem> plugins_;
+   private Map<String, JMenu> pluginSubMenus_;
    private List<MMListenerInterface> MMListeners_
            = Collections.synchronizedList(new ArrayList<MMListenerInterface>());
    private List<LiveModeListener> liveModeListeners_
@@ -2862,34 +2864,43 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    
     /**
     * Adds plugin_ items to the plugins menu
+    * Adds submenus (currently only 1 level deep)
     * @param plugin_ - plugin_ to be added to the menu
     */
    public void addPluginToMenu(final PluginLoader.PluginItem plugin) {
-      Class<?> cl = plugin.pluginClass_;
-      String toolTipDescription = "";
-      try {
-          // Get this static field from the class implementing MMPlugin.
-    	  toolTipDescription = (String) cl.getDeclaredField("tooltipDescription").get(null);
-       } catch (SecurityException e) {
-          ReportingUtils.logError(e);
-          toolTipDescription = "Description not available";
-       } catch (NoSuchFieldException e) {
-          toolTipDescription = "Description not available";
-          ReportingUtils.logMessage(cl.getName() + " fails to implement static String tooltipDescription.");
-       } catch (IllegalArgumentException e) {
-          ReportingUtils.logError(e);
-       } catch (IllegalAccessException e) {
-          ReportingUtils.logError(e);
-       }
+               
+      String[] path = plugin.getDirectory().split(File.separator);
+      if (path.length == 1) {
+         GUIUtils.addMenuItem(pluginMenu_, plugin.getMenuItem(), plugin.getTooltip(),
+                 new Runnable() {
+            public void run() {
+               ReportingUtils.logMessage("Plugin command: " + plugin.getMenuItem());
+               plugin.instantiate();
+               plugin.getMMPlugin().show();
+            }
+         });
+      }
+      if (path.length == 2) {
+         if (pluginSubMenus_ == null) {
+            pluginSubMenus_ = new HashMap<String, JMenu>();
+         }
+         JMenu submenu = pluginSubMenus_.get(path[1]);
+         if (submenu == null) {
+            submenu = new JMenu(path[1]);
+            pluginSubMenus_.put(path[1], submenu);
+            submenu.validate();
+            pluginMenu_.add(submenu);
+         }
+         GUIUtils.addMenuItem(submenu, plugin.getMenuItem(), plugin.getTooltip(),
+                 new Runnable() {
+            public void run() {
+               ReportingUtils.logMessage("Plugin command: " + plugin.getMenuItem());
+               plugin.instantiate();
+               plugin.getMMPlugin().show();
+            }
+         });
 
-      GUIUtils.addMenuItem(pluginMenu_, plugin.getMenuItem(), toolTipDescription,
-              new Runnable() {
-                 public void run() {
-                    ReportingUtils.logMessage("Plugin command: " + plugin.getMenuItem() );
-                    plugin.instantiate();
-                    plugin.plugin_.show();
-                 }
-              });
+      }
       
       pluginMenu_.validate();
       menuBar_.validate();
