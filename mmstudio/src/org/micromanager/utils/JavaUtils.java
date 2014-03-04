@@ -35,7 +35,8 @@ public class JavaUtils {
 
    private static final String BACKING_STORE_AVAIL = "BackingStoreAvail";
 
-   public static List<Class<?>> findClasses(File directory, int recursionLevel) throws ClassNotFoundException {
+   public static List<Class<?>> findClasses(File directory, int recursionLevel) 
+           throws ClassNotFoundException {
       List<Class<?>> classes = new ArrayList<Class<?>>();
       if (!directory.exists()) {
          return classes;

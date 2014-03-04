@@ -3,8 +3,8 @@
 //PROJECT:       Micro-Manager
 //SUBSYSTEM:     mmstudio
 //-----------------------------------------------------------------------------
-//AUTHOR:        NNico Stuurman, 2014
-//               Modifications by Arthur Edelstein, Nico Stuurman, Henry Pinkard
+//AUTHOR:        Nico Stuurman, 2014
+//               Based on code previously in MMStudioMainFrame
 //COPYRIGHT:     University of California, San Francisco, 2006-2014
 //LICENSE:       This file is distributed under the BSD license.
 //               License text is included with the source distribution.
@@ -14,7 +14,6 @@
 //               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
-
 package org.micromanager;
 
 import java.io.File;
@@ -30,14 +29,14 @@ import org.micromanager.utils.JavaUtils;
 import org.micromanager.utils.ReportingUtils;
 
 /**
- * Code for plugin loading, split out from MMStudioMainFrame.  
+ * Code for plugin loading, split out from MMStudioMainFrame.
  */
 public class PluginLoader {
+
    private ArrayList<PluginItem> plugins_ = new ArrayList<PluginItem>();
-  
-   
-   
-   public class PluginItem {     
+
+   public class PluginItem {
+
       public Class<?> pluginClass = null;
       public String menuItem = "undefined";
       public MMPlugin plugin = null;
@@ -58,22 +57,30 @@ public class PluginLoader {
       }
    }
 
+   /**
+    * Utility class that holds a PluginItem and a message
+    */
    private class PluginItemAndClass {
+
       private String msg_;
-      private Class<?> cl_;
       private PluginItem pi_;
-      
-      public PluginItemAndClass(String msg, Class<?> cl, PluginItem pi) {
+
+      public PluginItemAndClass(String msg, PluginItem pi) {
          msg_ = msg;
-         cl_ = cl;
          pi_ = pi;
       }
-      public Class<?> getItsClass () {return cl_;}
-      public String getMessage() {return msg_;}
-      public PluginItem getPluginItem() {return pi_;}
+
+      public String getMessage() {
+         return msg_;
+      }
+
+      public PluginItem getPluginItem() {
+         return pi_;
+      }
    }
-   
+
    private class PluginItemAndClassComparator implements Comparator<PluginItemAndClass> {
+
       public int compare(PluginItemAndClass t1, PluginItemAndClass t2) {
          try {
             String m1 = t1.getPluginItem().menuItem;
@@ -87,7 +94,7 @@ public class PluginLoader {
          return 0;
       }
    }
-   
+
    public String installPlugin(Class<?> cl) {
       PluginItemAndClass piac = declarePlugin(cl);
       final PluginItem pi = piac.getPluginItem();
@@ -99,9 +106,9 @@ public class PluginLoader {
          return msg;
       }
       ReportingUtils.logError("In MMStudioMainFrame:installPlugin, msg was null");
-      return piac.getMessage();     
+      return piac.getMessage();
    }
-   
+
    private PluginItemAndClass declarePlugin(Class<?> cl) {
       String className = cl.getSimpleName();
       String msg = className + " module loaded.";
@@ -110,11 +117,11 @@ public class PluginLoader {
          for (PluginItem plugin : plugins_) {
             if (plugin.className.contentEquals(className)) {
                msg = className + " already loaded";
-               PluginItemAndClass piac = new PluginItemAndClass(msg, cl, null);
+               PluginItemAndClass piac = new PluginItemAndClass(msg, null);
                return piac;
             }
          }
-       
+
          pi.className = className;
          try {
             // Get this static field from the class implementing MMPlugin.
@@ -141,11 +148,10 @@ public class PluginLoader {
          msg = className + " class definition not found.";
          ReportingUtils.logError(e, msg);
       }
-      PluginItemAndClass piac = new PluginItemAndClass(msg, cl, pi);
+      PluginItemAndClass piac = new PluginItemAndClass(msg, pi);
       return piac;
    }
-   
-   
+
    private static void addPluginToMenuLater(final PluginItem pi) {
       SwingUtilities.invokeLater(
               new Runnable() {
@@ -155,22 +161,18 @@ public class PluginLoader {
          }
       });
    }
-   
-   
-   /**
-    * Discovers Micro-Manager plugins and autofocus plugins at runtime
-    * Adds these to the plugins menu
-    */
 
-   public void  loadPlugins() {   
+   /**
+    * Discovers Micro-Manager plugins and autofocus plugins at runtime Adds
+    * these to the plugins menu
+    */
+   public void loadPlugins() {
       ArrayList<Class<?>> pluginClasses = new ArrayList<Class<?>>();
       ArrayList<Class<?>> autofocusClasses = new ArrayList<Class<?>>();
       List<Class<?>> classes;
 
       try {
-         long t1 = System.currentTimeMillis();
-         classes = JavaUtils.findClasses(new File("mmplugins"), 2);
-
+         classes = JavaUtils.findClasses(new File("mmplugins"), 1);
          for (Class<?> clazz : classes) {
             for (Class<?> iface : clazz.getInterfaces()) {
                if (iface == MMPlugin.class) {
@@ -178,17 +180,6 @@ public class PluginLoader {
                }
             }
          }
-
-         classes = JavaUtils.findClasses(new File("mmautofocus"), 2);
-         for (Class<?> clazz : classes) {
-            for (Class<?> iface : clazz.getInterfaces()) {
-               //core_.logMessage("interface found: " + iface.getName());
-               if (iface == Autofocus.class) {
-                  autofocusClasses.add(clazz);
-               }
-            }
-         }
-
       } catch (ClassNotFoundException e1) {
          ReportingUtils.logError(e1);
       }
@@ -213,6 +204,21 @@ public class PluginLoader {
          }
       }
 
+
+      // Install Autofocus classes found in mmautofocus
+      try {
+         classes = JavaUtils.findClasses(new File("mmautofocus"), 2);
+         for (Class<?> clazz : classes) {
+            for (Class<?> iface : clazz.getInterfaces()) {
+               if (iface == Autofocus.class) {
+                  autofocusClasses.add(clazz);
+               }
+            }
+         }
+      } catch (ClassNotFoundException e1) {
+         ReportingUtils.logError(e1);
+      }
+
       for (Class<?> autofocus : autofocusClasses) {
          try {
             ReportingUtils.logMessage("Attempting to install autofocus plugin " + autofocus.getName());
@@ -223,7 +229,7 @@ public class PluginLoader {
       }
 
    }
-   
+
    public void disposePlugins() {
       for (int i = 0; i < plugins_.size(); i++) {
          MMPlugin plugin = plugins_.get(i).plugin;
@@ -232,5 +238,4 @@ public class PluginLoader {
          }
       }
    }
-   
 }
