@@ -30,22 +30,25 @@ import org.micromanager.utils.JavaUtils;
 import org.micromanager.utils.ReportingUtils;
 
 /**
- * Code for plugin_ loading, split out from MMStudioMainFrame.
+ * Code for plugin loading
  */
 public class PluginLoader {
    public static final String MMPLUGINSDIR = "mmplugins";
    
    private ArrayList<PluginItem> plugins_ = new ArrayList<PluginItem>();
 
+   /**
+    * Utility class used to to assemble information about the plugin
+    */
    public class PluginItem {
 
-      private Class<?> pluginClass_ = null;
-      private MMPlugin plugin_ = null;
-      private String className_ = "";
-      private String menuItem_ = "undefined";
-      private String tooltip_ = "";
-      private String directory_ = "";
-      private String msg_ = "";
+      private Class<?> pluginClass_ = null; // raw class as input by caller
+      private MMPlugin plugin_ = null;      // MMPlugin instance generated in PluginItem
+      private String className_ = "";       // className deduced from pluginClass
+      private String menuItem_ = "undefined";  // menuText deduced from plugin_
+      private String tooltip_ = "";         // tooltip deduced from plugin_
+      private String directory_ = "";       // dir in which the class lives (start at mmplugins)
+      private String msg_ = "";             // message generated during insepction of pluginClass_
 
       public PluginItem(Class<?> pluginClass, String className, String menuItem, 
                String tooltip, String directory,  String msg) {
@@ -88,15 +91,37 @@ public class PluginLoader {
    }
 
 
+   /**
+    * Used to sort list of plugins
+    * TODO: sort directories correctly
+    */
    private class PluginItemComparator implements Comparator<PluginItem> {
-
+      
       public int compare(PluginItem t1, PluginItem t2) {
          try {
-            String m1 = t1.menuItem_;
-            String m2 = t2.menuItem_;
             Collator collator = Collator.getInstance();
             collator.setStrength(Collator.PRIMARY);
-            return collator.compare(m1, m2);
+            String m1 = t1.menuItem_;
+            String m2 = t2.menuItem_;
+            String path1[] = t1.getDirectory().split(File.separator);
+            String path2[] = t2.getDirectory().split(File.separator);
+            if (path1.length == 1 && path2.length == 1) {       
+               return collator.compare(m1, m2);
+            }
+            if (path1.length == 2 && path2.length == 1) {
+               return collator.compare(path1[1], m2);
+            }
+            if (path1.length == 1 && path2.length == 2) {
+               return collator.compare(m1, path2[1]);
+            }
+            if (path1.length == 2 && path2.length == 2) {
+               int res = collator.compare(path1[1], path2[1]);
+               if (res == 0) {
+                  return collator.compare(m1, m2);
+               }
+               return res;
+            }
+            
          } catch (NullPointerException npe) {
             ReportingUtils.logError("NullPointerException in PluginItemAndClassCopmarator");
          }
@@ -104,6 +129,11 @@ public class PluginLoader {
       }
    }
 
+   /**
+    * Adds class (which should be a MMPlugin instance) to the plugins menu
+    * @param cl - Class (which should be an instance of a MMPlugin
+    * @return - Message generated while inspecting class, or error  
+    */
    public String installPlugin(Class<?> cl) {
       final PluginItem pi = declarePlugin(cl, "mmplugins");
       if (pi != null) {
@@ -113,11 +143,17 @@ public class PluginLoader {
             return pi.msg_;
          }
       }
-      String error = "In MMStudioMainFrame:installPlugin, msg was null";
+      String error = "In PluginLoader:installPlugin, msg was null";
       ReportingUtils.logError(error);
       return error;
    }
 
+   /**
+    * Inspects the provided class and transforms it into a PluginItem instance
+    * @param cl - Class that potentially is a plugin
+    * @param dir - directory in which it was found (start at mmplugins)
+    * @return - PluginItem constructed from provided data
+    */
    private PluginItem declarePlugin(Class<?> cl, String dir) {
       String className = cl.getSimpleName();
       String msg = className + " module loaded.";
@@ -184,8 +220,8 @@ public class PluginLoader {
    }
 
    /**
-    * Discovers Micro-Manager plugins and autofocus plugins at runtime Adds
-    * these to the plugins menu
+    * Discovers Micro-Manager plugins and autofocus plugins at runtime 
+    * Adds these to the plugins menu
     */
    public void loadPlugins() {
       ArrayList<Class<?>> autofocusClasses = new ArrayList<Class<?>>();
