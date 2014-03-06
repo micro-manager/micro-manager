@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.regex.Pattern;
 import javax.swing.SwingUtilities;
 import org.micromanager.api.Autofocus;
 import org.micromanager.api.MMPlugin;
@@ -103,8 +104,8 @@ public class PluginLoader {
             collator.setStrength(Collator.PRIMARY);
             String m1 = t1.menuItem_;
             String m2 = t2.menuItem_;
-            String path1[] = t1.getDirectory().split(File.separator);
-            String path2[] = t2.getDirectory().split(File.separator);
+            String path1[] = t1.getDirectory().split(Pattern.quote(File.separator));
+            String path2[] = t2.getDirectory().split(Pattern.quote(File.separator));
             if (path1.length == 1 && path2.length == 1) {       
                return collator.compare(m1, m2);
             }

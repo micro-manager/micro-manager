@@ -45,6 +45,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.prefs.Preferences;
+import java.util.regex.Pattern;
 
 import javax.swing.AbstractButton;
 import javax.swing.BorderFactory;
@@ -2869,7 +2870,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
     */
    public void addPluginToMenu(final PluginLoader.PluginItem plugin) {
                
-      String[] path = plugin.getDirectory().split(File.separator);
+      String[] path = plugin.getDirectory().split(Pattern.quote(File.separator));
       if (path.length == 1) {
          GUIUtils.addMenuItem(pluginMenu_, plugin.getMenuItem(), plugin.getTooltip(),
                  new Runnable() {
