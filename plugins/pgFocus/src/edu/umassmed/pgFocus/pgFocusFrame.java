@@ -65,6 +65,8 @@ import java.awt.GridBagConstraints;
 import java.awt.Insets;
 
 import javax.swing.SwingConstants;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 
 public class pgFocusFrame extends JFrame {
@@ -79,20 +81,10 @@ public class pgFocusFrame extends JFrame {
     private int frameXPos_ = 100;
     private int frameYPos_ = 100;
     
-    private int calXMin_ = -16383/2;
-    private int calXMax_ = 16383/2;
-
-    private int calYMin_ = 0;
-    private int calYMax_ = 127;
-    
     private static final String FRAMEXPOS = "FRAMEXPOS";
     private static final String FRAMEYPOS = "FRAMEYPOS";
     
-    private static final String CALXRANGEMIN = "CALXRANGEMIN";
-    private static final String CALXRANGEMAX = "CALXRANGEMAX";
-    
-    private static final String CALYRANGEMIN = "CALXRANGEMIN";
-    private static final String CALYRANGEMAX = "CALYRANGEMAX";
+    private static final String CALIBRATIONCURVE = "CALIBRATIONCURVE";
 
     JButton btnCalibrateButton = new JButton("Calibrate");
     JToggleButton tglbtnLockButton = new JToggleButton();
@@ -118,8 +110,11 @@ public class pgFocusFrame extends JFrame {
     private JLabel lblOnSlope;
     private JLabel lblOnIntercept;
     
+    private String savedCalibrationCurve = "";
+    
     /** Creates pgFocus */
     public pgFocusFrame(ScriptInterface gui)  {
+    	
    
        gui_ = gui;
        core_ = gui.getMMCore();
@@ -152,14 +147,12 @@ public class pgFocusFrame extends JFrame {
 
       frameXPos_ = prefs_.getInt(FRAMEXPOS, frameXPos_);
       frameYPos_ = prefs_.getInt(FRAMEYPOS, frameYPos_);
+      savedCalibrationCurve = prefs_.get(CALIBRATIONCURVE, savedCalibrationCurve);
       
-      calXMin_ = prefs_.getInt(CALXRANGEMIN, calXMin_);
-      calXMax_ = prefs_.getInt(CALYRANGEMAX, calXMax_);
-
       setLocation(frameXPos_, frameYPos_);
       
       initGUI();      
-    
+      
     }
 
   
@@ -174,7 +167,7 @@ public class pgFocusFrame extends JFrame {
         Timer timer = new Timer(waitTime, this);
 
         public void actionPerformed(ActionEvent actionevent) {
-        	updateValues();
+        	updateGraph();
         }
 
         public static final int SUBPLOT_COUNT = 4;
@@ -249,7 +242,7 @@ public class pgFocusFrame extends JFrame {
             
         }        
         
-        private void updateValues() {
+        private void updateGraph() {
         	// adjust timer delay
 			int waitTime = getIntProperty("Wait ms after Message"); 
 			timer.setDelay(waitTime);
@@ -287,7 +280,7 @@ public class pgFocusFrame extends JFrame {
         final Timer timer = new Timer(waitTime, this);
 
         public void actionPerformed(ActionEvent actionevent) {
-            updateValues();
+        	updateGraph();
         }
 
 
@@ -299,7 +292,7 @@ public class pgFocusFrame extends JFrame {
         	
             core_ = core;
             
-            timer.setInitialDelay(1000);
+            timer.setInitialDelay(5000);
             
             lightProfile = new XYSeries(Title);
             
@@ -344,7 +337,7 @@ public class pgFocusFrame extends JFrame {
             
         }       
         
-        private void updateValues() {
+        private void updateGraph() {
 
         	 // adjust timer delay
         	 int waitTime = getIntProperty("Wait ms after Light"); 
@@ -383,9 +376,7 @@ public class pgFocusFrame extends JFrame {
         private Timer timer = new Timer(2000, this);
        
         public void actionPerformed(ActionEvent actionevent) {
-            
-            updateValues();
-            System.out.println("Updating Calibration Plot");
+            updateGraph();
         }
 
 
@@ -395,6 +386,8 @@ public class pgFocusFrame extends JFrame {
         	String Title = "Calibration Profile";
         	
             core_ = core;
+            
+            timer.setInitialDelay(2000);
         
             calibrateProfile = new XYSeries(Title);
             
@@ -434,48 +427,59 @@ public class pgFocusFrame extends JFrame {
             calibratePanel.setPreferredSize(new Dimension(800, 50));
             calibratePanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
             
+            updateValues();
+            
         }       
         
-        private void updateValues() {
+        private boolean updateValues() {
+        	String Curve = getStringProperty("Calibration Curve"); 
+
+        	try {
+        		if (Curve.length() > 0) {
+
+        			if (Curve.equals("Please wait while calibrating...")) return false;
+        			
+	        		if (getStringProperty("Focus Mode").equals("Calibration")) return false;
+	        		
+	        		if (Curve.equals("Please perform a calibration")) 
+	        			if (savedCalibrationCurve.isEmpty() == false) Curve = savedCalibrationCurve;
+	        			else return false;
+	        		
+	        		savedCalibrationCurve = Curve;
+	        		
+	        		String calibrateSplit[] = Curve.split(",");	
+	
+	        		calibrateProfile.clear();
+	        		
+        			for (int i = 0; i < calibrateSplit.length; i++) {	 
+        				int dau = Integer.parseInt(calibrateSplit[i]) - 16384/2;
+        				float lightPosition = Float.parseFloat(calibrateSplit[++i]);
+        				calibrateProfile.add(dau,lightPosition); 
+        			}
+        		}
+        	}
+        	catch (NumberFormatException e) 
+        	{
+        		System.out.print("pgFocus plugin: corrupted calibration profile!");
+        	}
         	
-			 String calibrate = getStringProperty("Calibration Curve"); 
-			 
-			 if (calibrate.length() > 0) {
-				 if (calibrate.equals("Please perform a calibration")) return;
-				 
-				 try {
-					 if (getStringProperty("Focus Current Mode").equals("Calibrating")) return;
-				 } catch (Exception ex) {
-					 ReportingUtils.showError("Error reading values from pgFocus");
-				 }
-				 
-				 System.out.println("pgFocus plugin: " + calibrate);
-				 
-				 String calibrateSplit[] = calibrate.split(",");	
-				 	 
-				 calibrateProfile.clear();
-				 
-				 try {
-					 for (int i = 0; i < calibrateSplit.length; i++) {	 
-						 int dau = Integer.parseInt(calibrateSplit[i]) - 16384/2;
-						 float lightPosition = Float.parseFloat(calibrateSplit[++i]);
-						 System.out.println("pgFocus plugin: " + dau + " " + lightPosition);
-						 calibrateProfile.add(dau,lightPosition); 
-					 }	
-					 timer.stop();
-					 btnCalibrateButton.setText("Calibrate");
-					 btnCalibrateButton.repaint();
-					 lblOnResiduals.setText(getStringProperty("Residuals"));
-					 lblOnResiduals.repaint();
-					 lblOnIntercept.setText(getStringProperty("Intercept"));
-					 lblOnIntercept.repaint();
-					 lblOnSlope.setText(getStringProperty("Slope"));
-					 lblOnSlope.repaint();
-					 
-	        	} catch (NumberFormatException e) {
-	        		System.out.print("pgFocus plugin: corrupted calibration profile!");
-	        	}		
-			 }
+        	return true;
+        }
+        private void updateGraph() {
+        	
+				if (updateValues()) 
+				{
+					timer.stop();
+					btnCalibrateButton.setText("Calibrate");
+					btnCalibrateButton.repaint();
+					lblOnResiduals.setText(getStringProperty("Residuals"));
+					lblOnResiduals.repaint();
+					lblOnIntercept.setText(getStringProperty("Intercept"));
+					lblOnIntercept.repaint();
+					lblOnSlope.setText(getStringProperty("Slope"));
+					lblOnSlope.repaint();
+				}
+			
         }  
     } 
     
@@ -928,10 +932,9 @@ public class pgFocusFrame extends JFrame {
 		    public void actionPerformed(java.awt.event.ActionEvent evt) {
 	        	if (evt.getActionCommand().equals("Calibrate")) {
 	            	try {
-	            		core_.setProperty(pgFocus_, "Focus Mode","Calibration");
-	            		calibratePanel_.timer.start();
-	            		lightPanel_.timer.stop();
+	            		setStringProperty("Focus Mode","Calibration");
 	            		btnCalibrateButton.setText("Processing");
+	            		calibratePanel_.timer.start();
 	    			} catch (Exception e) {
 	    				// TODO Auto-generated catch block
 	    				e.printStackTrace();
@@ -955,7 +958,6 @@ public class pgFocusFrame extends JFrame {
 					tglbtnLockButton.setText("Locked");
 					tglbtnLockButton.setSelected(true);
 					tglbtnLockButton.repaint();
-					System.out.println("pgFocus: Repainting to Locked");
 				}
 			}
 			else {
@@ -963,7 +965,6 @@ public class pgFocusFrame extends JFrame {
 					tglbtnLockButton.setText("Unlocked");
 					tglbtnLockButton.setSelected(false);
 					tglbtnLockButton.repaint();
-					System.out.println("pgFocus: Repainting to Unocked");
 				}
 			}
 		} catch (Exception e) {
@@ -972,14 +973,20 @@ public class pgFocusFrame extends JFrame {
     }
     
     public void safePrefs() {
-        prefs_.putInt(FRAMEXPOS, this.getX());
-        prefs_.putInt(FRAMEYPOS, this.getY());
-        
-        prefs_.putInt(CALXRANGEMIN, calXMin_);
-        prefs_.putInt(CALXRANGEMAX, calXMax_);
-        
-        prefs_.putInt(CALYRANGEMIN, calYMin_);
-        prefs_.putInt(CALYRANGEMAX, calYMax_);
+    	
+		prefs_.putInt(FRAMEXPOS, this.getX());
+		prefs_.putInt(FRAMEYPOS, this.getY());
+		        
+		if (savedCalibrationCurve.equals("Please perform a calibration") == false ) {
+			if (savedCalibrationCurve.equals("Please wait while calibrating...") == false ) {
+			   if (savedCalibrationCurve.isEmpty() == false) {
+				   System.out.print("pgFocus: saving curve: ");
+				   System.out.println(savedCalibrationCurve);
+				   prefs_.put(CALIBRATIONCURVE, savedCalibrationCurve);
+			   }
+			}
+		}
+
      }
     
     
