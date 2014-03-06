@@ -1206,7 +1206,7 @@ MMIIDCCamera::SnapCallback(const void* pixels, size_t width, size_t height, IIDC
          break;
 
       default:
-         throw Error("Unsupported pixel format");
+         BOOST_THROW_EXCEPTION(Error("Unsupported pixel format"));
    }
 
    size_t bufferSize = width * height * bytesPerPixel;
@@ -1240,7 +1240,7 @@ MMIIDCCamera::SequenceCallback(const void* pixels, size_t width, size_t height, 
          break;
 
       default:
-         throw Error("Unsupported pixel format");
+         BOOST_THROW_EXCEPTION(Error("Unsupported pixel format"));
    }
 
    boost::scoped_array<uint16_t> swapped;
@@ -1273,8 +1273,9 @@ MMIIDCCamera::SequenceCallback(const void* pixels, size_t width, size_t height, 
             serializedMD.c_str(), false);
    }
    if (err != DEVICE_OK)
-      throw Error("Unknown error (" + boost::lexical_cast<std::string>(err) +
-            " while placing image in circular buffer");
+      BOOST_THROW_EXCEPTION(Error("Unknown error (" +
+               boost::lexical_cast<std::string>(err) +
+               ") while placing image in circular buffer"));
 }
 
 

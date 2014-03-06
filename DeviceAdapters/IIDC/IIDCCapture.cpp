@@ -22,6 +22,7 @@
 
 #include <boost/chrono.hpp>
 #include <boost/thread.hpp>
+#include <boost/throw_exception.hpp>
 
 
 namespace IIDC {
@@ -115,8 +116,8 @@ FrameRetriever::RetrieveFrame(unsigned timeoutMs, unsigned pollingIntervalMs)
 {
    if (expectedFrames_ && retrievedFrames_ >= expectedFrames_)
    {
-      throw Error("Failed to retrieved the requested number of frame(s) "
-            "(possibly due to having skipped corrupted frame(s)");
+      BOOST_THROW_EXCEPTION(Error("Failed to retrieved the requested number of frame(s) "
+            "(possibly due to having skipped corrupted frame(s)"));
    }
 
    dc1394video_frame_t* dequeuedFrame;
@@ -158,7 +159,7 @@ FrameRetriever::RetrieveFrame(unsigned timeoutMs, unsigned pollingIntervalMs)
    dc1394error_t enqErr;
    enqErr = dc1394_capture_enqueue(libdc1394camera_, dequeuedFrame);
    if (enqErr != DC1394_SUCCESS)
-      throw Error(enqErr, "Cannot recycle captured frame buffer");
+      BOOST_THROW_EXCEPTION(Error(enqErr, "Cannot recycle captured frame buffer"));
 }
 
 
@@ -175,12 +176,12 @@ FrameRetriever::PollForFrame(unsigned timeoutMs, unsigned pollingIntervalMs)
       dc1394error_t err;
       err = dc1394_capture_dequeue(libdc1394camera_, DC1394_CAPTURE_POLICY_POLL, &dequeuedFrame);
       if (err != DC1394_SUCCESS)
-         throw Error(err, "Cannot obtain captured frame");
+         BOOST_THROW_EXCEPTION(Error(err, "Cannot obtain captured frame"));
       if (dequeuedFrame)
          break;
       if (steady_clock::now() > deadline)
-         throw Error(err, "Timeout of " + boost::lexical_cast<std::string>(timeoutMs) +
-               " ms reached while waiting for frame");
+         BOOST_THROW_EXCEPTION(Error(err, "Timeout of " + boost::lexical_cast<std::string>(timeoutMs) +
+               " ms reached while waiting for frame"));
       // Note: With newer Boost versions, use
       // boost::this_thread::sleep_for(boost::chrono::milliseconds(pollingIntervalMs));
       boost::this_thread::sleep(boost::posix_time::milliseconds(pollingIntervalMs));
@@ -196,7 +197,7 @@ FrameRetriever::WaitForFrame()
    dc1394error_t err;
    err = dc1394_capture_dequeue(libdc1394camera_, DC1394_CAPTURE_POLICY_WAIT, &dequeuedFrame);
    if (err != DC1394_SUCCESS)
-      throw Error(err, "Cannot obtain captured frame");
+      BOOST_THROW_EXCEPTION(Error(err, "Cannot obtain captured frame"));
    return dequeuedFrame;
 }
 
@@ -232,18 +233,18 @@ ContinuousCapture::SetUp()
    err = dc1394_capture_setup(libdc1394camera_, nrDMABuffers_,
          DC1394_CAPTURE_FLAGS_DEFAULT);
    if (err != DC1394_SUCCESS)
-      throw Error(err, "Cannot start capture");
+      BOOST_THROW_EXCEPTION(Error(err, "Cannot start capture"));
 
    err = dc1394_video_set_transmission(libdc1394camera_, DC1394_ON);
    if (err != DC1394_SUCCESS)
-      throw Error(err, "Cannot start continuous transmission");
+      BOOST_THROW_EXCEPTION(Error(err, "Cannot start continuous transmission"));
 
    dc1394switch_t flag;
    err = dc1394_video_get_transmission(libdc1394camera_, &flag);
    if (err != DC1394_SUCCESS)
-      throw Error(err, "Cannot check if continuous transmission started");
+      BOOST_THROW_EXCEPTION(Error(err, "Cannot check if continuous transmission started"));
    if (flag != DC1394_ON)
-      throw Error(err, "Continuous transmission did not start");
+      BOOST_THROW_EXCEPTION(Error(err, "Continuous transmission did not start"));
 }
 
 
@@ -253,18 +254,18 @@ ContinuousCapture::CleanUp()
    dc1394error_t err;
    err = dc1394_video_set_transmission(libdc1394camera_, DC1394_OFF);
    if (err != DC1394_SUCCESS)
-      throw Error(err, "Cannot stop continuous transmission");
+      BOOST_THROW_EXCEPTION(Error(err, "Cannot stop continuous transmission"));
 
    dc1394switch_t flag;
    err = dc1394_video_get_transmission(libdc1394camera_, &flag);
    if (err != DC1394_SUCCESS)
-      throw Error(err, "Cannot check if continuous transmission stopped");
+      BOOST_THROW_EXCEPTION(Error(err, "Cannot check if continuous transmission stopped"));
    if (flag != DC1394_OFF)
-      throw Error(err, "Continuous transmission did not stop");
+      BOOST_THROW_EXCEPTION(Error(err, "Continuous transmission did not stop"));
 
    err = dc1394_capture_stop(libdc1394camera_);
    if (err != DC1394_SUCCESS)
-      throw Error(err, "Error while stopping capture");
+      BOOST_THROW_EXCEPTION(Error(err, "Error while stopping capture"));
 }
 
 
@@ -276,11 +277,11 @@ MultiShotCapture::SetUp()
          DC1394_CAPTURE_FLAGS_CHANNEL_ALLOC |
          DC1394_CAPTURE_FLAGS_BANDWIDTH_ALLOC);
    if (err != DC1394_SUCCESS)
-      throw Error(err, "Cannot start capture");
+      BOOST_THROW_EXCEPTION(Error(err, "Cannot start capture"));
 
    err = dc1394_video_set_multi_shot(libdc1394camera_, nrFrames_, DC1394_ON);
    if (err != DC1394_SUCCESS)
-      throw Error(err, "Cannot start multi-shot transmission");
+      BOOST_THROW_EXCEPTION(Error(err, "Cannot start multi-shot transmission"));
 }
 
 
@@ -290,11 +291,11 @@ MultiShotCapture::CleanUp()
    dc1394error_t err;
    err = dc1394_video_set_multi_shot(libdc1394camera_, 0, DC1394_OFF);
    if (err != DC1394_SUCCESS)
-      throw Error(err, "Cannot turn off multi-shot transmission");
+      BOOST_THROW_EXCEPTION(Error(err, "Cannot turn off multi-shot transmission"));
 
    err = dc1394_capture_stop(libdc1394camera_);
    if (err != DC1394_SUCCESS)
-      throw Error(err, "Error while stopping capture");
+      BOOST_THROW_EXCEPTION(Error(err, "Error while stopping capture"));
 }
 
 
@@ -306,11 +307,11 @@ OneShotCapture::SetUp()
          DC1394_CAPTURE_FLAGS_CHANNEL_ALLOC |
          DC1394_CAPTURE_FLAGS_BANDWIDTH_ALLOC);
    if (err != DC1394_SUCCESS)
-      throw Error(err, "Cannot start capture");
+      BOOST_THROW_EXCEPTION(Error(err, "Cannot start capture"));
 
    err = dc1394_video_set_one_shot(libdc1394camera_, DC1394_ON);
    if (err != DC1394_SUCCESS)
-      throw Error(err, "Cannot start one-shot transmission");
+      BOOST_THROW_EXCEPTION(Error(err, "Cannot start one-shot transmission"));
 }
 
 
@@ -322,11 +323,11 @@ OneShotCapture::CleanUp()
    dc1394error_t err;
    err = dc1394_video_set_one_shot(libdc1394camera_, DC1394_OFF);
    if (err != DC1394_SUCCESS)
-      throw Error(err, "Cannot turn off multi-shot transmission");
+      BOOST_THROW_EXCEPTION(Error(err, "Cannot turn off multi-shot transmission"));
 
    err = dc1394_capture_stop(libdc1394camera_);
    if (err != DC1394_SUCCESS)
-      throw Error(err, "Error while stopping capture");
+      BOOST_THROW_EXCEPTION(Error(err, "Error while stopping capture"));
 }
 
 } // namespace IIDC

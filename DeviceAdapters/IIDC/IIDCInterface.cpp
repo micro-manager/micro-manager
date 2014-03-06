@@ -680,7 +680,15 @@ Camera::WaitForCapture()
    // In newer Boost versions: if (captureFuture_.valid())
    if (captureFuture_.get_state() != boost::future_state::uninitialized)
    {
-      captureFuture_.wait();
+      try
+      {
+         captureFuture_.get();
+      }
+      catch (...)
+      {
+         captureFuture_ = boost::unique_future<void>();
+         throw;
+      }
       captureFuture_ = boost::unique_future<void>();
    }
 }
