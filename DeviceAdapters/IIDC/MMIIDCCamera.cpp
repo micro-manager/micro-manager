@@ -15,6 +15,12 @@
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
+#ifdef _MSC_VER
+// Prevent windows.h from defining the min and max macros, so that std::min
+// and std::max work
+#define NOMINMAX
+#endif
+
 #include "MMIIDCCamera.h"
 
 #include "IIDCError.h"
@@ -179,6 +185,9 @@ inline bool HostIsLittleEndian()
    return *reinterpret_cast<const uint8_t*>(&test);
 }
 
+#ifdef _MSC_VER
+#define restrict __restrict
+#endif
 inline void ByteSwap16(uint16_t* restrict dst, const uint16_t* restrict src, size_t count)
 {
 #ifdef _MSC_VER

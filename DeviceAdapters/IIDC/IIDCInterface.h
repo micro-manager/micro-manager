@@ -20,6 +20,9 @@
 #include "IIDCFeature.h"
 
 #include <dc1394/dc1394.h>
+#ifdef _MSC_VER
+#undef restrict
+#endif
 
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/function.hpp>
