@@ -1,4 +1,18 @@
-
+///////////////////////////////////////////////////////////////////////////////
+// FILE:          pgFocus.h
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     DeviceAdapters
+//-----------------------------------------------------------------------------
+// DESCRIPTION:   Focus stability
+// COPYRIGHT:     University of Massachusetts Medical School, Worcester, MA 2014
+//
+//
+//
+// LICENSE:       LGPL
+//
+// AUTHOR:        Karl Bellve
+// MAINTAINER     Karl Bellve Karl.Bellve@umassmed.edu
+//
 
 #ifndef _PGFOCUS_H_
 #define _PGFOCUS_H_
@@ -23,6 +37,7 @@
 // Error codes
 //
 
+
 #define ERR_UNKNOWN_POSITION         	10002
 #define ERR_PORT_CHANGE_FORBIDDEN    	10004
 #define ERR_SET_POSITION_FAILED      	10005
@@ -35,7 +50,12 @@
 #define ERR_OUT_OF_RANGE	        	10012
 #define ERR_ANSWER_TIMEOUT           	10015
 #define ERR_NO_AUTOFOCUS_DEVICE_FOUND	10022
-#define ERR_NO_AUTOFOCUS_DEVICE       	10023
+#define ERR_VERSION_MISMATCH 			10023
+#define ERR_NO_PORT_SET					10024
+#define ERR_HUB_NOT_FOUND				10025
+#define ERR_DEVICE_NOT_FOUND			10026
+#define ERR_SERVICE_THREAD_NOT_FOUND	10027
+#define ERR_STILL_CALIBRATING			10028
 
 
 #define ERR_PORT_NOT_OPEN            	104
@@ -51,10 +71,9 @@
 #define ADC_VOLTAGE( x )	( ( ( float ) x / MIDDLE_DAU ) * 10 )
 #define DAC_VOLTAGE( x ) 	( ( ( ( float ) x / MAX_DAU ) * 10 ) -5 )
 
-#define PGFOCUS_MODE_UNLOCKED 			0
-#define PGFOCUS_MODE_LOCKED				1
-#define PGFOCUS_MODE_CALIBRATING		2
-#define PGFOCUS_MODE_LIGHT_PROFILE		3
+#define PGFOCUS_MODE_UNLOCK 			0
+#define PGFOCUS_MODE_LOCK				1
+#define PGFOCUS_MODE_CALIBRATION		2
 
 //////////////////////////////////////////////////////////////////////////////
 // Common Values
@@ -63,21 +82,20 @@
 //////////////////////////////////////////////////////////////////////////////
 // Device Names Strings
 //
-const char * const g_pgFocus = "pgFocus";
+const char * const g_DeviceNamepgFocusHub = "pgFocus";
+const char * const g_DeviceNamepgFocusStabilization = "pgFocus-Stabilization";
+
 
 //////////////////////////////////////////////////////////////////////////////
 // General Property Identifiers
 //
+
+const char * const g_pgFocus_Identity = "BIG-pgFocus";
+
 const char * const g_pgFocus_Mode = "Focus Mode";
 	const char * const g_pgFocus_Lock = "Lock Focus";
 	const char * const g_pgFocus_Unlock = "Unlock Focus";
-	const char * const g_pgFocus_Light = "Light Profile";
 	const char * const g_pgFocus_Calibration = "Calibration";
-
-const char * const g_pgFocus_Current_Mode = "Focus Current Mode";
-	const char * const g_pgFocus_Calibrating = "Calibrating";
-	const char * const g_pgFocus_Locked = "Locked Focus";
-	const char * const g_pgFocus_Unlocked = "Unlocked Focus";
 
 const char * const g_pgFocus_ThisPosition = "Measure Position";
 const char * const g_pgFocus_LastPosition = "Last Position";
@@ -100,6 +118,8 @@ const char * const g_SerialTerminator = "Serial Terminator";
 
 const char * const g_pgFocus_CalibrationCurve = "Calibration Curve";
 const char * const g_pgFocus_CalibrationCurveRequest = "Please perform a calibration";
+const char * const g_pgFocus_CalibrationCurveWait = "Please wait while calibrating...";
+
 const char * const g_pgFocus_Wait_Time_Message = "Wait ms after Message";
 const char * const g_pgFocus_Wait_Time_Lock = "Wait ms after Lock";
 const char * const g_pgFocus_Standard_Deviation = "Standard Deviation";
@@ -118,91 +138,28 @@ const char * const g_pgFocus_Intercept = "Intercept";
 const char * const g_pgFocus_Firmware = "Firmware";
 const char * const g_pgFocus_Slope = "Slope";
 const char * const g_pgFocus_Offset = "Offset";
-
-const char * const g_pgFocus_On = "On";
-const char * const g_pgFocus_Off = "Off";
-const char * const g_pgFocus_Default_String = "NA";
-const char * const g_pgFocus_Default_Integer = "0";
 const char * const g_pgFocus_Last_Error = "Last Error";
 const char * const g_pgFocus_Last_Status = "Last Status";
 
+const char * const g_On = "On";
+const char * const g_Off = "Off";
+const char * const g_Default_String = "NA";
+const char * const g_Default_Integer = "0";
+const char * const g_Default_Float = "0.00";
 
-struct pgFocusInfo {
+const int g_Min_MMVersion = 1;
+const int g_Max_MMVersion = 2;
+const char* g_versionProp = "Version";
 
-	pgFocusInfo() {
-		mode = 0;
-		loopTime = 0;
-		startTime = 0;
-		min = 0;
-		max = 1023;
-		DAC = 8192;
-		exposure = 10000;
-		ADC = 0;
-		diffADC = 0;
-		slope = 0;
-		intercept = 0;
-		residuals = 0;
-		offset = 0;
-		micronPerVolt = 10;
-		qoffsetMax = 30;
-		gain = 1.0;
-		stepSizeUm = 0;
-		continuousFocusing = 0;
-		standardDeviation = 0;
-		standardDeviation_nM = 0;
-		version = g_pgFocus_Default_String;
-		error = g_pgFocus_Default_String;
-		status = g_pgFocus_Default_String;
-		serialTerminator = g_SerialTerminator_2;
-		serialTerminatorText = g_SerialTerminator_2_Text;
-	}
-
-	~pgFocusInfo() {
-	}
-
-	bool continuousFocusing;
-	// focus parameters
-	long mode;
-	long lightArray[128];
-	long loopTime;
-	long min;
-	long max;
-	long DAC;
-	long exposure;
-	long ADC;
-	long diffADC;
-	long startTime;
-	long micronPerVolt;
-	std::deque<double>::size_type qoffsetMax; // length of queue used to store offsets for standard deviation calculation
-
-	double gain;
-	double slope;
-	double intercept;
-	double residuals;
-	double offset;
-	double stepSizeUm;
-	double standardDeviation;
-	double standardDeviation_nM;
-
-	std::string version;
-	std::string status;
-	std::string error;
-	std::string serialTerminator;
-	std::string serialTerminatorText;
-
-	std::vector<std::string> calibration_curve;
-
-};
 
 class pgFocusMonitoringThread;
 
-class pgFocus : public CAutoFocusBase<pgFocus>
+class pgFocusStabilization : public CAutoFocusBase<pgFocusStabilization>
 {
-	friend class pgFocusMonitoringThread;
 
 public:
-	pgFocus(const char* name);
-	~pgFocus();
+	pgFocusStabilization();
+	~pgFocusStabilization();
 
     // MMDevice API
     // ------------
@@ -224,8 +181,6 @@ public:
 	virtual int  SetContinuousFocusing(bool state);
 	virtual int  GetContinuousFocusing(bool& state);
 
-	std::string GetFocusCurrentMode();
-	int  SetFocusMode(std::string focusMode_);
 	int  UpdateFocusMode();
 
 	// Action Interface
@@ -256,36 +211,17 @@ public:
 	int OnFocusMode(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnResiduals(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnIntercept(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnFocusCurrentMode(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnWaitAfterLock(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnSerialTerminator(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnCalibrationCurve(MM::PropertyBase* pProp, MM::ActionType eAct);
-
-	// Serial Port
-	// ----------------
-	int ClearPort(void);
-	int SendCommand(const char *command);
-	int SendCommand(std::string command);
-	static const int RCV_BUF_LENGTH = 1024;
-	unsigned char rcvBuf_[RCV_BUF_LENGTH];
+	int OnFirmwareVersion(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 
 private:
-	std::string name_;				// Name assigned by the user during installation
-	std::string port_;				// Serial Port assigned by the user during installation
-	std::string version_;			// Firmware version of the hardware
-	std::string serialNumber_;		// Not used yet, but will be serial version of the hardware
-	std::string focusMode_;  		// Requested Focus mode
-	std::string focusCurrentMode_;	// Current focus status
 
 	bool initialized_;
 	bool busy_;
-	bool debug_;
 	bool justCalibrated_;
-	bool autoExposure_;
-	bool continuousFocusing_;
 
-	int answerTimeoutMs_;
 	int ret_;
 
 	long waitAfterLock_;
@@ -294,21 +230,190 @@ private:
 	long DAC_nM_;
 	long ADC_nM_;
 
-	pgFocusMonitoringThread* monitoringThread_;
-    MM_THREAD_GUARD mutex;
-    MMThreadLock executeLock_;
-	pgFocusInfo deviceInfo_;
+	std::string focusMode_;
 
 	int GetValue(std::string cmd, float& val);
-	int SetCommand(std::string cmd);
 
 
 };
 
+class pgFocusHub :  public HubBase<pgFocusHub>
+{
+	friend class pgFocusMonitoringThread;
+
+	public:
+		pgFocusHub();
+		~pgFocusHub();
+
+		int Initialize();
+		int Shutdown();
+		void GetName(char* pszName) const;
+		bool Busy();
+
+		MM::DeviceDetectionStatus DetectDevice(void);
+		int DetectInstalledDevices();
+
+		// property handlers
+		// ----------------
+		int OnPort(MM::PropertyBase* pPropt, MM::ActionType eAct);
+		int OnFirmwareVersion(MM::PropertyBase* pPropt, MM::ActionType eAct);
+		int OnSerialTerminator(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+		// custom interface for child devices
+		bool IsPortAvailable() {return portAvailable_;}
+
+
+		// Serial Port
+		// ----------------
+		int ClearPort(void);
+		int SendCommand(const char *command);
+		int SendCommand(std::string command);
+		int SetCommand(std::string cmd);
+		std::string GetPort();
+
+
+		// Commands to get or apply pgFocus parameters
+		// ----------------
+		double GetOffset();
+		long GetMicronPerVolt();
+		double GetStandardDeviation();
+		long GetWaitTime();
+		int SetWaitTime(long time);
+		long GetLoopTime();
+		long GetRunningTime();
+		long GetExposure();
+
+		bool GetAutoExposure();
+		int SetAutoExposure(bool autoExposure);
+
+		std::string GetCalibrationCurve();
+		int ClearCalibrationCurve();
+		int AddCalibration(std::string dau, std::string pixel); // for Standard deviation calculation of streaming offsets returned by pgFocus
+
+		double GetGain();
+
+		// returns Digital to Analog Units, not Volts
+		long GetDAC();
+		long GetADC();
+		double GetSlope();
+		double GetResiduals();
+		double GetIntercept();
+		long GetMaxLight();
+		long GetMinLight();
+		long GetLight(long index);
+
+		const char * GetLastError();
+		const char * GetLastStatus();
+		int GetIdentity();
+		const char * GetFirmwareVersion();
+
+		std::string GetSerialTerminator();
+		int SetSerialTerminator(std::string);
+
+		std::string GetFocusMode();
+		int SetFocusMode(std::string focusMode);
+		int SetFocusMode(int focusMode);
+		int SetContinuousFocusing(bool state);
+		int GetContinuousFocusing(bool& state);
+
+		void SetFocusDevice (pgFocusStabilization *device);
+		static const int RCV_BUF_LENGTH = 1024;
+		unsigned char rcvBuf_[RCV_BUF_LENGTH];
+
+		// update local variables and/or hardware
+		int SetExposure(long exposure) {return(SetExposure(exposure,true));};
+		int SetDAC(long DAU) {return(SetDAC(DAU,true));};
+		int SetOffset(long offset) {return(SetOffset(offset,true));};
+		int SetGain(long gain) {return(SetGain(gain,true));};
+		int SetMicronPerVolt(long mpv) {return(SetMicronPerVolt(mpv,true));};
+
+	protected: // functions used by monitoring thread to update values, but not trigger sending those values back
+
+		int SetExposure(long exposure, bool hardware);
+		int SetDAC(long DAU, bool hardware);
+		int SetOffset(double offset, bool hardware);
+		int SetGain (double gain, bool hardware);
+		int SetMicronPerVolt(int mpv, bool hardware);
+
+		int SetDiffADC(long DAU);
+		int SetADC(long DAU);
+		int AddOffset(double offset); // for Standard deviation calculation of streaming offsets returned by pgFocus
+		int SetLight(long index, long light);
+		int SetMinLight(long min);
+		int SetMaxLight(long max);
+		int SetFirmwareVersion(std::string firmware);
+		int SetIntercept(double intercept);
+		int SetSlope(double slope);
+		int SetLastError(std::string error);
+		int SetLastStatus(std::string status);
+		int SetResiduals(double residuals);
+		int SetStandardDeviation(double SD);
+		int SetRunningTime(long time);
+		int SetLoopTime(long time);
+
+
+	private:
+		bool initialized_;
+		bool portAvailable_;
+		bool debug_;
+		bool continuousFocusing_;
+		bool autoExposure_;
+
+		int ret_;
+
+		// focus parameters
+		long mode_;
+		long lightArray_[128];
+		long loopTime_;
+		long min_;
+		long max_;
+		long DAC_;
+		long exposure_;
+		long ADC_;
+		long diffADC_;
+		long runningTime_;
+		long micronPerVolt_;
+		std::deque<double>::size_type qoffsetMax_; // length of queue used to store offsets for standard deviation calculation
+
+		double gain_;
+		double slope_;
+		double intercept_;
+		double residuals_;
+		double offset_;
+		double stepSizeUm_;
+		double standardDeviation_;
+		double standardDeviation_nM_;
+
+		std::string version_;
+		std::string status_;
+		std::string error_;
+		std::string serialTerminator_;
+		std::string serialTerminatorText_;
+		std::string focusMode_;  		// Requested Focus mode
+		std::string focusCurrentMode_;	// Current focus status
+
+		std::vector<std::string> calibration_curve_;
+		std::deque<double> qoffsets_;
+
+		std::string name_;				// Name assigned by the user during installation
+		std::string port_;				// Serial Port assigned by the user during installation
+		std::string serialNumber_;		// Not used yet, but will be serial version of the hardware
+		std::string identity_;			// Used to idenditfy the board as a pgFocus board
+
+		MM_THREAD_GUARD mutex;
+
+		pgFocusMonitoringThread* monitoringThread_;
+		pgFocusStabilization* pgFocusStabilizationDevice;
+
+		int GetControllerVersion(int&);
+		double standard_deviation ();
+};
+
+
 class pgFocusMonitoringThread : public MMDeviceThreadBase
 {
 	public:
-		pgFocusMonitoringThread(pgFocus &focus,MM::Core& core,  pgFocusInfo *deviceInfo, bool debug);
+		pgFocusMonitoringThread(pgFocusHub &pgfocushub,MM::Core& core, bool debug);
 		~pgFocusMonitoringThread();
 		int svc();
 		int open (void*) { return 0;}
@@ -318,11 +423,11 @@ class pgFocusMonitoringThread : public MMDeviceThreadBase
 
 		void Start();
 		void Stop() {threadStop_ = true;}
+		bool isRunning();
 
    private:
-		pgFocus& pgfocus_;
+		pgFocusHub& pgfocushub_;
 		MM::Core& core_;
-		pgFocusInfo *deviceInfo_;
 
 		bool debug_;
 		bool threadStop_;
@@ -330,12 +435,10 @@ class pgFocusMonitoringThread : public MMDeviceThreadBase
 
 		std::string port_;
 		std::string serialTerminator_;
-		std::deque<double> qoffsets_;
 
 		pgFocusMonitoringThread& operator=(pgFocusMonitoringThread& ) {assert(false); return *this;}
 
-		//MM_THREAD_HANDLE thread_;
-		void parseMessage(char* message);
+		void parseMessage(std::string message);
 		double standard_deviation();
 };
 
