@@ -1,0 +1,13 @@
+<project name="IIDC">
+	<import file="../../buildscripts/deviceadapter.xml"/>
+
+	<property name="dc1394.libs" location="${mm.thirdpartypublic}/libdc1394/libdc1394-2.2.1-bin"/>
+
+	<target name="install-Win32">
+		<copy todir="${mm.dll.installdir}" file="${dc1394.libs}/Win32/libdc1394-22.dll"/>
+	</target>
+
+	<target name="install-x64">
+		<copy todir="${mm.dll.installdir}" file="${dc1394.libs}/x64/libdc1394-22.dll"/>
+	</target>
+</project>
