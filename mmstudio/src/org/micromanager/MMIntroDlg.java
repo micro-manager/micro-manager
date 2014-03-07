@@ -115,13 +115,10 @@ public class MMIntroDlg extends JDialog {
          }
       });
       okButton.setText("OK");
-      if (JavaUtils.isMac()) {
-         okButton.setBounds(200, 497, 81, 24);
-      } else {
-         okButton.setBounds(100, 492, 81, 24);
-      }
+      okButton.setBounds(100, 497, 81, 24);
       getContentPane().add(okButton);
       getRootPane().setDefaultButton(okButton);
+      okButton.requestFocusInWindow();
       
       final JButton cancelButton = new JButton();
       cancelButton.setFont(new Font("Arial", Font.PLAIN, 10));
@@ -133,12 +130,8 @@ public class MMIntroDlg extends JDialog {
          }
       });
       cancelButton.setText("Cancel");
-      if (JavaUtils.isMac()) {
-         cancelButton.setBounds(100, 497, 81, 24);
-      } else {
-         cancelButton.setBounds(200, 492, 81, 24);
-      }
-      getContentPane().add(cancelButton);
+      cancelButton.setBounds(200, 497, 81, 24);
+      getContentPane().add(cancelButton);     
 
       final JLabel microscopeManagerLabel = new JLabel();
       microscopeManagerLabel.setFont(new Font("", Font.BOLD, 12));
