@@ -1262,6 +1262,8 @@ int CPiezo::OnSetHomeHere(MM::PropertyBase* pProp, MM::ActionType eAct)
          command << "HM " << axisLetter_ << "+";
          RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
          pProp->Set(g_DoneState);
+         // set single-axis property to not running because firmware will do that
+         SetProperty(g_SAModePropertyName, g_SAMode_0);
       }
    }
    return DEVICE_OK;

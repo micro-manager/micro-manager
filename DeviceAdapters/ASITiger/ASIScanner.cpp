@@ -516,13 +516,15 @@ int CScanner::SetIlluminationState(bool on)
    }
    else if (!on && illuminationState_) // was on, turning off
    {
-      illuminationState_ = false;
+      // stop any single-axis action happening first; should go to position before single-axis was started
+      // firmware will stop single-axis actions anyway but this gives us the right position
+      SetProperty(g_SAModeXPropertyName, g_SAMode_0);
+      SetProperty(g_SAModeYPropertyName, g_SAMode_0);
       GetPosition(lastX_, lastY_);  // read and store pre-off position so we can undo
+      illuminationState_ = false;
       ostringstream command; command.str("");
       command << "! " << axisLetterX_ << " " << axisLetterY_;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
-      SetProperty(g_SAModeXPropertyName, g_SAMode_0);  // scan is stopped by firmware, change property accordingly
-      SetProperty(g_SAModeYPropertyName, g_SAMode_0);  // scan is stopped by firmware, change property accordingly
       return DEVICE_OK;
    }
    // if was off, turning off do nothing
