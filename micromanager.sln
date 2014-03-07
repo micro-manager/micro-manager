@@ -318,6 +318,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "XLight", "DeviceAdapters\XL
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Piper", "DeviceAdapters\Piper\Piper.vcxproj", "{8FDA6D04-7C5D-4061-8467-AE0C104A2C83}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "IIDC", "DeviceAdapters\IIDC\IIDC.vcxproj", "{3AD2E831-7A16-4097-ACE1-4210A7F08751}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -1567,6 +1569,14 @@ Global
 		{8FDA6D04-7C5D-4061-8467-AE0C104A2C83}.Release|Win32.Build.0 = Release|Win32
 		{8FDA6D04-7C5D-4061-8467-AE0C104A2C83}.Release|x64.ActiveCfg = Release|x64
 		{8FDA6D04-7C5D-4061-8467-AE0C104A2C83}.Release|x64.Build.0 = Release|x64
+		{3AD2E831-7A16-4097-ACE1-4210A7F08751}.Debug|Win32.ActiveCfg = Debug|Win32
+		{3AD2E831-7A16-4097-ACE1-4210A7F08751}.Debug|Win32.Build.0 = Debug|Win32
+		{3AD2E831-7A16-4097-ACE1-4210A7F08751}.Debug|x64.ActiveCfg = Debug|x64
+		{3AD2E831-7A16-4097-ACE1-4210A7F08751}.Debug|x64.Build.0 = Debug|x64
+		{3AD2E831-7A16-4097-ACE1-4210A7F08751}.Release|Win32.ActiveCfg = Release|Win32
+		{3AD2E831-7A16-4097-ACE1-4210A7F08751}.Release|Win32.Build.0 = Release|Win32
+		{3AD2E831-7A16-4097-ACE1-4210A7F08751}.Release|x64.ActiveCfg = Release|x64
+		{3AD2E831-7A16-4097-ACE1-4210A7F08751}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
