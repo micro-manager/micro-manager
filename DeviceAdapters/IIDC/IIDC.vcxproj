@@ -81,7 +81,7 @@
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(MM_3RDPARTYPUBLIC)\dc1394-drivers\libdc1394-2.2.1-bin\$(Platform);$(MM_3RDPARTYPUBLIC)\dc1394-drivers\libdc1394-2.2.1-bin\MinGW-w64-runtime\$(Platform);$(MM_3RDPARTYPUBLIC)\dc1394-drivers\libdc1394-2.2.1-bin\CMU-1394Camera-646\$(Platform);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>libdc1394.a;libgcc_s.a;libmingw32.a;libmingwex.a;libsetupapi.a;libws2_32.a;1394camera.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libdc1394.a;libgcc_s.a;libmingwex.a;libsetupapi.a;libws2_32.a;1394camera.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -93,7 +93,7 @@
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(MM_3RDPARTYPUBLIC)\dc1394-drivers\libdc1394-2.2.1-bin\$(Platform);$(MM_3RDPARTYPUBLIC)\dc1394-drivers\libdc1394-2.2.1-bin\MinGW-w64-runtime\$(Platform);$(MM_3RDPARTYPUBLIC)\dc1394-drivers\libdc1394-2.2.1-bin\CMU-1394Camera-646\$(Platform);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>libdc1394.a;libgcc_s.a;libmingw32.a;libmingwex.a;libsetupapi.a;libws2_32.a;1394camera.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libdc1394.a;libgcc_s.a;libmingwex.a;libsetupapi.a;libws2_32.a;1394camera.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -110,7 +110,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>$(MM_3RDPARTYPUBLIC)\dc1394-drivers\libdc1394-2.2.1-bin\$(Platform);$(MM_3RDPARTYPUBLIC)\dc1394-drivers\libdc1394-2.2.1-bin\MinGW-w64-runtime\$(Platform);$(MM_3RDPARTYPUBLIC)\dc1394-drivers\libdc1394-2.2.1-bin\CMU-1394Camera-646\$(Platform);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>libdc1394.a;libgcc_s.a;libmingw32.a;libmingwex.a;libsetupapi.a;libws2_32.a;1394camera.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libdc1394.a;libgcc_s.a;libmingwex.a;libsetupapi.a;libws2_32.a;1394camera.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -127,7 +127,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>$(MM_3RDPARTYPUBLIC)\dc1394-drivers\libdc1394-2.2.1-bin\$(Platform);$(MM_3RDPARTYPUBLIC)\dc1394-drivers\libdc1394-2.2.1-bin\MinGW-w64-runtime\$(Platform);$(MM_3RDPARTYPUBLIC)\dc1394-drivers\libdc1394-2.2.1-bin\CMU-1394Camera-646\$(Platform);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>libdc1394.a;libgcc_s.a;libmingw32.a;libmingwex.a;libsetupapi.a;libws2_32.a;1394camera.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libdc1394.a;libgcc_s.a;libmingwex.a;libsetupapi.a;libws2_32.a;1394camera.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
