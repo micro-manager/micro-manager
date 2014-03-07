@@ -28,8 +28,13 @@
 #include <vector>
 
 
+class MMIIDCHub; // Not a Micro-Manager "Hub" device
+
+
 class MMIIDCCamera : public CCameraBase<MMIIDCCamera>
 {
+   boost::shared_ptr<MMIIDCHub> hub_;
+
    boost::shared_ptr<IIDC::Camera> iidcCamera_;
    std::vector< boost::shared_ptr<IIDC::VideoMode> > videoModes_;
 

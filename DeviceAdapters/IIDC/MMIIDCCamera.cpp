@@ -42,6 +42,7 @@
 #include <boost/format.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/make_shared.hpp>
+#include <boost/weak_ptr.hpp>
 
 #include <algorithm>
 #include <cmath>
@@ -132,51 +133,6 @@ const int MMIIDC_Error_AdHoc_Max = 30000;
 
 
 /*
- * A hub device for IIDC cameras would be a nice idea, but the hub-peripheral
- * interface is broken (it doesn't allow multiple distinguishable copies of the
- * same peripheral device), so we can't do that. Instead, use a global object
- * internal to the device adapter (not user-visible).
- */
-class IIDCHub {
-   static boost::shared_ptr<IIDC::Interface> iidc_s;
-   static std::set<std::string> activeCameras_s;
-
-   static boost::shared_ptr<IIDC::Interface> GetIIDC()
-   {
-      if (!iidc_s)
-         iidc_s = boost::make_shared<IIDC::Interface>();
-      return iidc_s;
-   }
-
-public:
-   static boost::shared_ptr<IIDC::Camera> GetCameraByID(const std::string& id)
-   {
-      if (activeCameras_s.count(id))
-         throw Error("Camera " + id + " is already in use");
-      return GetIIDC()->NewCamera(id);
-   }
-
-   static boost::shared_ptr<IIDC::Camera> GetNextAvailableCamera()
-   {
-      std::vector<std::string> ids = GetIIDC()->GetCameraIDs();
-      BOOST_FOREACH(std::string id, ids)
-      {
-         if (!activeCameras_s.count(id))
-            return GetIIDC()->NewCamera(id);
-      }
-      throw Error("No IIDC camera available");
-   }
-
-   static void PutCamera(const std::string& id)
-   {
-      activeCameras_s.erase(id);
-   }
-};
-
-boost::shared_ptr<IIDC::Interface> IIDCHub::iidc_s;
-std::set<std::string> IIDCHub::activeCameras_s;
-
-/*
  * Endianness
  */
 inline bool HostIsLittleEndian()
@@ -228,6 +184,70 @@ DeleteDevice(MM::Device* device)
 {
    delete device;
 }
+
+
+/*
+ * Camera enumeration and resource management for libdc1394 context
+ *
+ * IIDC::Interface object must outlive all IIDC::Camera objects created from
+ * it. It also must be unique (only a single instance should exist).
+ *
+ * A hub device for IIDC cameras would be a nice idea, but the hub-peripheral
+ * interface is broken (it doesn't allow multiple distinguishable copies of the
+ * same peripheral device), so we can't do that. Instead, use a global object
+ * internal to the device adapter (not user-visible).
+ */
+class MMIIDCHub {
+   typedef MMIIDCHub Self;
+
+   boost::shared_ptr<IIDC::Interface> iidc_;
+   std::set<std::string> activeCameras_;
+
+   /*
+    * We only want one copy of MMIIDCHub at any given time, but we want to
+    * release that copy when not in use (so that destruction happens early
+    * enough). So keep a weak pointer to the current instance.
+    */
+   static boost::weak_ptr<Self> instance_s;
+
+   MMIIDCHub() : iidc_(new IIDC::Interface()) {}
+
+public:
+   static boost::shared_ptr<Self> GetInstance()
+   {
+      if (boost::shared_ptr<Self> instance = instance_s.lock())
+         return instance;
+      boost::shared_ptr<Self> instance(new Self());
+      instance_s = instance;
+      return instance;
+   }
+
+   boost::shared_ptr<IIDC::Camera> GetCameraByID(const std::string& id)
+   {
+      if (activeCameras_.count(id))
+         throw Error("Camera " + id + " is already in use");
+      return iidc_->NewCamera(id);
+   }
+
+   boost::shared_ptr<IIDC::Camera> GetNextAvailableCamera()
+   {
+      std::vector<std::string> ids = iidc_->GetCameraIDs();
+      BOOST_FOREACH(std::string id, ids)
+      {
+         if (!activeCameras_.count(id))
+            return iidc_->NewCamera(id);
+      }
+      throw Error("No IIDC camera available");
+   }
+
+   void PutCamera(const std::string& id)
+   {
+      activeCameras_.erase(id);
+   }
+};
+
+// Static member variable definition
+boost::weak_ptr<MMIIDCHub> MMIIDCHub::instance_s;
 
 
 /*
@@ -294,10 +314,12 @@ MMIIDCCamera::Initialize()
 
    try
    {
+      hub_ = MMIIDCHub::GetInstance();
+
       if (cameraID == MMIIDC_Property_PreInitCameraID_NextAvailable || cameraID.empty())
-         iidcCamera_ = IIDCHub::GetNextAvailableCamera();
+         iidcCamera_ = hub_->GetNextAvailableCamera();
       else
-         iidcCamera_ = IIDCHub::GetCameraByID(cameraID);
+         iidcCamera_ = hub_->GetCameraByID(cameraID);
 
       iidcCamera_->Enable1394B(opMode == MMIIDC_Property_PreInit1394Mode_1394B);
       iidcCamera_->SetIsoSpeed(isoSpeed);
@@ -356,7 +378,7 @@ MMIIDCCamera::Shutdown()
       iidcCamera_.reset();
 
       if (!cameraID.empty())
-         IIDCHub::PutCamera(cameraID);
+         hub_->PutCamera(cameraID);
    }
    CATCH_AND_RETURN_ERROR
 
