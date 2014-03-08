@@ -150,8 +150,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SpotCamera", "DeviceAdapter
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Thorlabs", "DeviceAdapters\Thorlabs\Thorlabs.vcxproj", "{308AA3EE-4053-47E0-9004-A57E9572C7A6}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Hamamatsu", "SecretDeviceAdapters\Hamamatsu\Hamamatsu.vcxproj", "{E0369FA6-1D4C-4FF7-AF9E-FFFFFFF00C5F}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "HamamatsuHam", "SecretDeviceAdapters\HamamatsuHam\HamamatsuHam.vcxproj", "{1B4CC156-6C0B-4571-AC6D-E6173512684F}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Stradus", "DeviceAdapters\Vortran\Stradus.vcxproj", "{3A83E7A0-34A5-4304-8D88-00000572AD05}"
@@ -908,14 +906,6 @@ Global
 		{308AA3EE-4053-47E0-9004-A57E9572C7A6}.Release|Win32.Build.0 = Release|Win32
 		{308AA3EE-4053-47E0-9004-A57E9572C7A6}.Release|x64.ActiveCfg = Release|x64
 		{308AA3EE-4053-47E0-9004-A57E9572C7A6}.Release|x64.Build.0 = Release|x64
-		{E0369FA6-1D4C-4FF7-AF9E-FFFFFFF00C5F}.Debug|Win32.ActiveCfg = Debug|Win32
-		{E0369FA6-1D4C-4FF7-AF9E-FFFFFFF00C5F}.Debug|Win32.Build.0 = Debug|Win32
-		{E0369FA6-1D4C-4FF7-AF9E-FFFFFFF00C5F}.Debug|x64.ActiveCfg = Debug|x64
-		{E0369FA6-1D4C-4FF7-AF9E-FFFFFFF00C5F}.Debug|x64.Build.0 = Debug|x64
-		{E0369FA6-1D4C-4FF7-AF9E-FFFFFFF00C5F}.Release|Win32.ActiveCfg = Release|Win32
-		{E0369FA6-1D4C-4FF7-AF9E-FFFFFFF00C5F}.Release|Win32.Build.0 = Release|Win32
-		{E0369FA6-1D4C-4FF7-AF9E-FFFFFFF00C5F}.Release|x64.ActiveCfg = Release|x64
-		{E0369FA6-1D4C-4FF7-AF9E-FFFFFFF00C5F}.Release|x64.Build.0 = Release|x64
 		{1B4CC156-6C0B-4571-AC6D-E6173512684F}.Debug|Win32.ActiveCfg = Debug|Win32
 		{1B4CC156-6C0B-4571-AC6D-E6173512684F}.Debug|Win32.Build.0 = Debug|Win32
 		{1B4CC156-6C0B-4571-AC6D-E6173512684F}.Debug|x64.ActiveCfg = Debug|x64
