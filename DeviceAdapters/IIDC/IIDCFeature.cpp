@@ -228,10 +228,6 @@ ScalarFeature::GetAbsoluteMinMax()
 uint32_t
 ScalarFeature::GetValue()
 {
-   if (GetAbsoluteControl())
-      throw Error("Cannot get raw value for " + GetName() +
-            " feature because absolute value control is enabled");
-
    uint32_t value;
    dc1394error_t err;
    err = dc1394_feature_get_value(GetLibDC1394Camera(), GetLibDC1394Feature(), &value);
@@ -244,10 +240,6 @@ ScalarFeature::GetValue()
 void
 ScalarFeature::SetValue(uint32_t value)
 {
-   if (GetAbsoluteControl())
-      throw Error("Cannot set raw value for " + GetName() +
-            " feature because absolute value control is enabled");
-
    std::pair<uint32_t, uint32_t> range = GetMinMax();
    if (value < range.first || value > range.second)
       throw Error("Value " + boost::lexical_cast<std::string>(value) +
@@ -267,9 +259,8 @@ ScalarFeature::SetValue(uint32_t value)
 float
 ScalarFeature::GetAbsoluteValue()
 {
-   if (!GetAbsoluteControl())
-      throw Error("Cannot get absolute value for " + GetName() +
-            " feature because absolute value control is disabled");
+   if (!HasAbsoluteControl())
+      throw Error("Absolute value control is not supported for " + GetName() + " feature");
 
    float value;
    dc1394error_t err;
@@ -283,9 +274,8 @@ ScalarFeature::GetAbsoluteValue()
 void
 ScalarFeature::SetAbsoluteValue(float value)
 {
-   if (!GetAbsoluteControl())
-      throw Error("Cannot set absolute value for " + GetName() +
-            " feature because absolute value control is disabled");
+   if (!HasAbsoluteControl())
+      throw Error("Absolute value control is not supported for " + GetName() + " feature");
 
    std::pair<float, float> range = GetAbsoluteMinMax();
    if (value < range.first || value > range.second)

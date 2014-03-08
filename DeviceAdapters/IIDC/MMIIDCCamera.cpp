@@ -78,6 +78,10 @@ const char* const MMIIDC_Property_PreInitIsoSpeed_800 = "800 Mbps (requires 1394
 const char* const MMIIDC_Property_PreInitShutterUsPerUnit = "Shutter units (us/unit)";
 const char* const MMIIDC_Property_PreInitShutterOffsetUs = "Shutter offset (us)";
 
+const char* const MMIIDC_Property_PreInitGainUnits = "Gain units";
+const char* const MMIIDC_Property_PreInitGainUnits_Auto = "Auto-detect";
+const char* const MMIIDC_Property_PreInitGainUnits_ArbitraryWithAbsoluteReadOut = "AU with dB readout";
+
 const char* const MMIIDC_Property_TimeoutMs = "Timeout (ms)";
 const char* const MMIIDC_Property_CameraID = "Camera ID";
 const char* const MMIIDC_Property_IIDCVersion = "Camera IIDC version";
@@ -293,6 +297,11 @@ MMIIDCCamera::MMIIDCCamera() :
 
    CreateFloatProperty(MMIIDC_Property_PreInitShutterUsPerUnit, 10.0, false, 0, true);
    CreateFloatProperty(MMIIDC_Property_PreInitShutterOffsetUs, 0.0, false, 0, true);
+
+   CreateStringProperty(MMIIDC_Property_PreInitGainUnits, MMIIDC_Property_PreInitGainUnits_Auto,
+         false, 0, true);
+   AddAllowedValue(MMIIDC_Property_PreInitGainUnits, MMIIDC_Property_PreInitGainUnits_Auto);
+   AddAllowedValue(MMIIDC_Property_PreInitGainUnits, MMIIDC_Property_PreInitGainUnits_ArbitraryWithAbsoluteReadOut);
 }
 
 
@@ -309,12 +318,12 @@ MMIIDCCamera::Initialize()
    err = GetProperty(MMIIDC_Property_PreInitCameraID, buf);
    if (err != DEVICE_OK)
       return err;
-   std::string cameraID(buf);
+   const std::string cameraID(buf);
 
    err = GetProperty(MMIIDC_Property_PreInit1394Mode, buf);
    if (err != DEVICE_OK)
       return err;
-   std::string opMode(buf);
+   const std::string opMode(buf);
 
    long isoSpeedLong;
    err = GetCurrentPropertyData(MMIIDC_Property_PreInitIsoSpeed, isoSpeedLong);
@@ -329,6 +338,15 @@ MMIIDCCamera::Initialize()
    err = GetProperty(MMIIDC_Property_PreInitShutterOffsetUs, shutterOffsetUs_);
    if (err != DEVICE_OK)
       return err;
+
+   err = GetProperty(MMIIDC_Property_PreInitGainUnits, buf);
+   if (err != DEVICE_OK)
+      return err;
+   const std::string gainUnitsMode(buf);
+   if (gainUnitsMode == MMIIDC_Property_PreInitGainUnits_Auto)
+      absoluteGainIsReadOnly_ = false;
+   else if (gainUnitsMode == MMIIDC_Property_PreInitGainUnits_ArbitraryWithAbsoluteReadOut)
+      absoluteGainIsReadOnly_ = true;
 
    try
    {
@@ -759,14 +777,14 @@ MMIIDCCamera::OnGain(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       if (eAct == MM::BeforeGet)
       {
-         if (false && gain->HasAbsoluteControl()) // XXX TEMPORARILY DISABLED
+         if (gain->HasAbsoluteControl() && !absoluteGainIsReadOnly_)
             pProp->Set(gain->GetAbsoluteValue());
          else
             pProp->Set(static_cast<long>(gain->GetValue()));
       }
       else if (eAct == MM::AfterSet)
       {
-         if (false && gain->HasAbsoluteControl()) // XXX TEMPORARILY DISABLED
+         if (gain->HasAbsoluteControl() && !absoluteGainIsReadOnly_)
          {
             double value;
             pProp->Get(value);
@@ -777,8 +795,31 @@ MMIIDCCamera::OnGain(MM::PropertyBase* pProp, MM::ActionType eAct)
             long value;
             pProp->Get(value);
             gain->SetValue(static_cast<uint32_t>(value));
+
+            if (gain->HasAbsoluteControl() && absoluteGainIsReadOnly_)
+            {
+               int err;
+               err = OnPropertyChanged(MMIIDC_Property_GainAbsolute,
+                     boost::lexical_cast<std::string>(gain->GetAbsoluteValue()).c_str());
+               if (err != DEVICE_OK)
+                  return err;
+            }
          }
       }
+   }
+   CATCH_AND_RETURN_ERROR
+   return DEVICE_OK;
+}
+
+
+int
+MMIIDCCamera::OnReadOnlyAbsoluteGain(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   boost::shared_ptr<IIDC::GainFeature> gain = iidcCamera_->GetGainFeature();
+   try
+   {
+      if (eAct == MM::BeforeGet)
+         pProp->Set(gain->GetAbsoluteValue());
    }
    CATCH_AND_RETURN_ERROR
    return DEVICE_OK;
@@ -1040,7 +1081,16 @@ MMIIDCCamera::InitializeFeatureProperties()
          gain->SetOnOff(true);
       gain->SetAutoMode(false);
 
-      if (false && gain->HasAbsoluteControl()) // XXX TEMPORARILY DISABLED
+      if (gain->HasAbsoluteControl() && absoluteGainIsReadOnly_)
+      {
+         gain->SetAbsoluteControl(false);
+         int err;
+         err = CreateFloatProperty(MMIIDC_Property_GainAbsolute, gain->GetAbsoluteValue(),
+               true, new CPropertyAction(this, &MMIIDCCamera::OnReadOnlyAbsoluteGain));
+         if (err != DEVICE_OK)
+            return err;
+      }
+      else if (gain->HasAbsoluteControl())
       {
          gain->SetAbsoluteControl(true);
          int err;
@@ -1053,7 +1103,8 @@ MMIIDCCamera::InitializeFeatureProperties()
          if (err != DEVICE_OK)
             return err;
       }
-      else
+
+      if (!gain->HasAbsoluteControl() || absoluteGainIsReadOnly_)
       {
          int err;
          err = CreateIntegerProperty(MMIIDC_Property_Gain, gain->GetValue(), false,

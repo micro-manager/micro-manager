@@ -43,11 +43,14 @@ class MMIIDCCamera : public CCameraBase<MMIIDCCamera>
    // (observed on OpenSUSE 12.3, libdc1394 2.2.0).
    boost::shared_ptr<IIDC::VideoMode> currentVideoMode_;
 
-   double shutterUsPerUnit_, shutterOffsetUs_; // Set once from pre-init properties
+   // Unchanging settings (set once from pre-init properties)
+   double shutterUsPerUnit_, shutterOffsetUs_;
+   bool absoluteGainIsReadOnly_;
 
-   unsigned cachedBitsPerSample_;
-   double cachedFramerate_;
-   double cachedExposure_;
+   // Cached settings and properties
+   unsigned cachedBitsPerSample_; // Depends on video mode
+   double cachedFramerate_; // Depends on video mode and Format_7 packet size
+   double cachedExposure_; // User settable but may also depend on video mode
 
    boost::mutex sampleProcessingMutex_;
    bool rightShift16BitSamples_; // Guarded by sampleProcessingMutex_
@@ -125,6 +128,7 @@ private:
    int OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnBrightness(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnGain(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnReadOnlyAbsoluteGain(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    /*
