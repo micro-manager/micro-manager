@@ -277,9 +277,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
 
    private AbstractButton setRoiButton_;
    private AbstractButton clearRoiButton_;
-   
-   private DropTarget dt_;
-  // private ProcessorStackManager processorStackManager_;
+
 
    public ImageWindow getImageWin() {
       return getSnapLiveWin();
@@ -302,7 +300,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    }
 
    
- public void checkSimpleAcquisition() {
+   public void checkSimpleAcquisition() {
       if (core_.getCameraDevice().length() == 0) {
          ReportingUtils.showError("No camera configured");
          return;
@@ -345,7 +343,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    }
 
 
- public void checkSimpleAcquisition(TaggedImage image) {
+   public void checkSimpleAcquisition(TaggedImage image) {
       try {
          JSONObject tags = image.tags;
          int width = MDUtils.getWidth(tags);
@@ -1384,7 +1382,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    }
 
 
-   /*
+   /**
     * Simple class used to cache static info
     */
    private class StaticInfo {
@@ -1692,8 +1690,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       // Add our own keyboard manager that handles Micro-Manager shortcuts
       MMKeyDispatcher mmKD = new MMKeyDispatcher(gui_);
       KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(mmKD);
-
-      dt_ = new DropTarget(this, new DragDropUtil());
+      DropTarget dropTarget = new DropTarget(this, new DragDropUtil());
 
    }
    
@@ -1725,10 +1722,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       core_.logMessage(message);
    }
 
-   @Override
-   public void makeActive() {
-      toFront();
-   }
    
    /**
     * used to store contrast settings to be later used for initialization of contrast of new windows.
@@ -2858,10 +2851,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       }
    }
 
-   @Override
-   public String getVersion() {
-      return MMVersion.VERSION_STRING;
-   }
+
    
     /**
     * Adds plugin_ items to the plugins menu
@@ -3354,17 +3344,137 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
          
          acqControlWin_.repaint();
 
-         // TODO: this call causes a strange exception the first time the
-         // dialog is created
-         // something to do with the order in which combo box creation is
-         // performed
-
-         // acqControlWin_.updateGroupsCombo();
       } catch (Exception exc) {
          ReportingUtils.showError(exc,
                "\nAcquistion window failed to open due to invalid or corrupted settings.\n"
                + "Try resetting registry settings to factory defaults (Menu Tools|Options).");
       }
+   }
+   
+
+   private void updateChannelCombos() {
+      if (this.acqControlWin_ != null) {
+         this.acqControlWin_.updateChannelAndGroupCombo();
+      }
+   }
+     
+   private void runHardwareWizard() {
+      try {
+         if (configChanged_) {
+            Object[] options = {"Yes", "No"};
+            int n = JOptionPane.showOptionDialog(null,
+                  "Save Changed Configuration?", "Micro-Manager",
+                  JOptionPane.YES_NO_OPTION,
+                  JOptionPane.QUESTION_MESSAGE, null, options,
+                  options[0]);
+            if (n == JOptionPane.YES_OPTION) {
+               saveConfigPresets();
+            }
+            configChanged_ = false;
+         }
+
+         boolean liveRunning = false;
+         if (isLiveModeOn()) {
+            liveRunning = true;
+            enableLiveMode(false);
+         }
+
+         // unload all devices before starting configurator
+         core_.reset();
+         GUIUtils.preventDisplayAdapterChangeExceptions();
+
+         // run Configurator
+         ConfiguratorDlg2 cfg2 = null;
+         try {
+            setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+            cfg2 = new ConfiguratorDlg2(core_, sysConfigFile_);
+         } finally {
+            setCursor(Cursor.getDefaultCursor());        		 
+         }
+
+         if (cfg2 == null)
+         {
+            ReportingUtils.showError("Failed to launch Hardware Configuration Wizard");
+            return;
+         }
+         cfg2.setVisible(true);
+         GUIUtils.preventDisplayAdapterChangeExceptions();
+
+         // re-initialize the system with the new configuration file
+         sysConfigFile_ = cfg2.getFileName();
+
+         mainPrefs_.put(SYSTEM_CONFIG_FILE, sysConfigFile_);
+         loadSystemConfiguration();
+         GUIUtils.preventDisplayAdapterChangeExceptions();
+
+         if (liveRunning) {
+            enableLiveMode(liveRunning);
+         }
+
+      } catch (Exception e) {
+         ReportingUtils.showError(e);
+      }
+   }
+
+   private void autofocusNow() {
+      if (afMgr_.getDevice() != null) {
+         new Thread() {
+
+            @Override
+            public void run() {
+               try {
+                  boolean lmo = isLiveModeOn();
+                  if (lmo) {
+                     enableLiveMode(false);
+                  }
+                  afMgr_.getDevice().fullFocus();
+                  if (lmo) {
+                     enableLiveMode(true);
+                  }
+               } catch (MMException ex) {
+                  ReportingUtils.logError(ex);
+               }
+            }
+         }.start(); // or any other method from Autofocus.java API
+      }
+   }
+   
+
+   private class ExecuteAcq implements Runnable {
+
+      public ExecuteAcq() {
+      }
+
+      @Override
+      public void run() {
+         if (acqControlWin_ != null) {
+            acqControlWin_.runAcquisition();
+         }
+      }
+   }
+
+   private void testForAbortRequests() throws MMScriptException {
+      if (scriptPanel_ != null) {
+         if (scriptPanel_.stopRequestPending()) {
+            throw new MMScriptException("Script interrupted by the user!");
+         }
+      }
+   }
+
+      
+   
+   // //////////////////////////////////////////////////////////////////////////
+   // Script interface
+   // //////////////////////////////////////////////////////////////////////////
+
+   @Override
+   public String getVersion() {
+      return MMVersion.VERSION_STRING;
+   }
+   
+   @Override
+   public void makeActive() {
+      toFront();
    }
    
    /**
@@ -3378,13 +3488,8 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       posListDlg_.setVisible(true);
    }
 
-   private void updateChannelCombos() {
-      if (this.acqControlWin_ != null) {
-         this.acqControlWin_.updateChannelAndGroupCombo();
-      }
-   }
-
-   @Override
+   
+    @Override
    public void setConfigChanged(boolean status) {
       configChanged_ = status;
       setConfigSaveButtonStatus(configChanged_);
@@ -3420,30 +3525,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       return options_.displayBackground_;
    }
 
-   // //////////////////////////////////////////////////////////////////////////
-   // Scripting interface
-   // //////////////////////////////////////////////////////////////////////////
-   private class ExecuteAcq implements Runnable {
-
-      public ExecuteAcq() {
-      }
-
-      @Override
-      public void run() {
-         if (acqControlWin_ != null) {
-            acqControlWin_.runAcquisition();
-         }
-      }
-   }
-
-   private void testForAbortRequests() throws MMScriptException {
-      if (scriptPanel_ != null) {
-         if (scriptPanel_.stopRequestPending()) {
-            throw new MMScriptException("Script interrupted by the user!");
-         }
-      }
-   }
-
+   
    /**
     * @Deprecated - used to be in api/AcquisitionEngine
     */
@@ -4244,7 +4326,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    
    @Override
    public void promptToSaveAcqusition(String name, boolean prompt) throws MMScriptException {
-	   MMAcquisition acq = getAcquisition(name);
 	   getAcquisition(name).promptToSave(prompt);
    }
 
@@ -4324,7 +4405,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       }
    }
 
-
    @Override
    public void logMessage(String msg) {
       ReportingUtils.logMessage(msg);
@@ -4364,171 +4444,5 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    public void showError(String msg) {
       ReportingUtils.showError(msg);
    }
-
-   private void runHardwareWizard() {
-      try {
-         if (configChanged_) {
-            Object[] options = {"Yes", "No"};
-            int n = JOptionPane.showOptionDialog(null,
-                  "Save Changed Configuration?", "Micro-Manager",
-                  JOptionPane.YES_NO_OPTION,
-                  JOptionPane.QUESTION_MESSAGE, null, options,
-                  options[0]);
-            if (n == JOptionPane.YES_OPTION) {
-               saveConfigPresets();
-            }
-            configChanged_ = false;
-         }
-
-         boolean liveRunning = false;
-         if (isLiveModeOn()) {
-            liveRunning = true;
-            enableLiveMode(false);
-         }
-
-         // unload all devices before starting configurator
-         core_.reset();
-         GUIUtils.preventDisplayAdapterChangeExceptions();
-
-         // run Configurator
-         ConfiguratorDlg2 cfg2 = null;
-         try {
-            setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-            cfg2 = new ConfiguratorDlg2(core_, sysConfigFile_);
-         } finally {
-            setCursor(Cursor.getDefaultCursor());        		 
-         }
-
-         if (cfg2 == null)
-         {
-            ReportingUtils.showError("Failed to launch Hardware Configuration Wizard");
-            return;
-         }
-         cfg2.setVisible(true);
-         GUIUtils.preventDisplayAdapterChangeExceptions();
-
-         // re-initialize the system with the new configuration file
-         sysConfigFile_ = cfg2.getFileName();
-
-         mainPrefs_.put(SYSTEM_CONFIG_FILE, sysConfigFile_);
-         loadSystemConfiguration();
-         GUIUtils.preventDisplayAdapterChangeExceptions();
-
-         if (liveRunning) {
-            enableLiveMode(liveRunning);
-         }
-
-      } catch (Exception e) {
-         ReportingUtils.showError(e);
-      }
-   }
-
-   private void autofocusNow() {
-      if (afMgr_.getDevice() != null) {
-         new Thread() {
-
-            @Override
-            public void run() {
-               try {
-                  boolean lmo = isLiveModeOn();
-                  if (lmo) {
-                     enableLiveMode(false);
-                  }
-                  afMgr_.getDevice().fullFocus();
-                  if (lmo) {
-                     enableLiveMode(true);
-                  }
-               } catch (MMException ex) {
-                  ReportingUtils.logError(ex);
-               }
-            }
-         }.start(); // or any other method from Autofocus.java API
-      }
-   }
    
-}
-class BooleanLock extends Object {
-
-   private boolean value;
-
-   public BooleanLock(boolean initialValue) {
-      value = initialValue;
-   }
-
-   public BooleanLock() {
-      this(false);
-   }
-
-   public synchronized void setValue(boolean newValue) {
-      if (newValue != value) {
-         value = newValue;
-         notifyAll();
-      }
-   }
-
-   public synchronized boolean waitToSetTrue(long msTimeout)
-         throws InterruptedException {
-
-      boolean success = waitUntilFalse(msTimeout);
-      if (success) {
-         setValue(true);
-      }
-
-      return success;
-   }
-
-   public synchronized boolean waitToSetFalse(long msTimeout)
-         throws InterruptedException {
-
-      boolean success = waitUntilTrue(msTimeout);
-      if (success) {
-         setValue(false);
-      }
-
-      return success;
-   }
-
-   public synchronized boolean isTrue() {
-      return value;
-   }
-
-   public synchronized boolean isFalse() {
-      return !value;
-   }
-
-   public synchronized boolean waitUntilTrue(long msTimeout)
-         throws InterruptedException {
-
-      return waitUntilStateIs(true, msTimeout);
-   }
-
-   public synchronized boolean waitUntilFalse(long msTimeout)
-         throws InterruptedException {
-
-      return waitUntilStateIs(false, msTimeout);
-   }
-
-   public synchronized boolean waitUntilStateIs(
-         boolean state,
-         long msTimeout) throws InterruptedException {
-
-      if (msTimeout == 0L) {
-         while (value != state) {
-            wait();
-         }
-
-         return true;
-      }
-
-      long endTime = System.currentTimeMillis() + msTimeout;
-      long msRemaining = msTimeout;
-
-      while ((value != state) && (msRemaining > 0L)) {
-         wait(msRemaining);
-         msRemaining = endTime - System.currentTimeMillis();
-      }
-
-      return (value == state);
-   }
-
 }
