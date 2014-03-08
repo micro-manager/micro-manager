@@ -115,7 +115,7 @@ public class MMIntroDlg extends JDialog {
          }
       });
       okButton.setText("OK");
-      okButton.setBounds(100, 497, 81, 24);
+      okButton.setBounds(JavaUtils.isMac() ? 200 : 100, 497, 81, 24);
       getContentPane().add(okButton);
       getRootPane().setDefaultButton(okButton);
       okButton.requestFocusInWindow();
@@ -130,7 +130,7 @@ public class MMIntroDlg extends JDialog {
          }
       });
       cancelButton.setText("Cancel");
-      cancelButton.setBounds(200, 497, 81, 24);
+      cancelButton.setBounds(JavaUtils.isMac() ? 100 : 200, 497, 81, 24);
       getContentPane().add(cancelButton);     
 
       final JLabel microscopeManagerLabel = new JLabel();
