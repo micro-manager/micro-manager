@@ -42,6 +42,7 @@
 #include <boost/format.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/make_shared.hpp>
+#include <boost/thread.hpp>
 #include <boost/weak_ptr.hpp>
 
 #include <algorithm>
@@ -90,6 +91,7 @@ const char* const MMIIDC_Property_SupportsMultiShot = "Camera supports multi-sho
 const char* const MMIIDC_Property_SupportsPowerSwitch = "Camera supports switching power";
 const char* const MMIIDC_Property_1394BEnabled = "1394B enabled";
 const char* const MMIIDC_Property_IsoSpeed = "Transmission speed (Mbps)";
+const char* const MMIIDC_Property_RightShift16BitSamples = "Right-shift 16-bit samples";
 const char* const MMIIDC_Property_Format7PacketSizeNegativeDelta = "Limit Format_7 packet size";
 const char* const MMIIDC_Property_VideoMode = "Video mode";
 const char* const MMIIDC_Property_MaxFramerate = "Maximum framerate (fps)";
@@ -133,7 +135,7 @@ const int MMIIDC_Error_AdHoc_Max = 30000;
 
 
 /*
- * Endianness
+ * Endianness, etc.
  */
 inline bool HostIsLittleEndian()
 {
@@ -142,9 +144,12 @@ inline bool HostIsLittleEndian()
 }
 
 #ifdef _MSC_VER
-#define restrict __restrict
+#define mmiidc_restrict __restrict
+#else
+#define mmiidc_restrict restrict
 #endif
-inline void ByteSwap16(uint16_t* restrict dst, const uint16_t* restrict src, size_t count)
+
+inline void ByteSwap16(uint16_t* mmiidc_restrict dst, const uint16_t* mmiidc_restrict src, size_t count)
 {
 #ifdef _MSC_VER
    for (size_t i = 0; i < count; ++i)
@@ -154,6 +159,19 @@ inline void ByteSwap16(uint16_t* restrict dst, const uint16_t* restrict src, siz
 #else
 #error Need to implement byte swap for this platform
 #endif
+}
+
+inline void RightShift16(uint16_t* mmiidc_restrict dst, const uint16_t* mmiidc_restrict src,
+      size_t count, unsigned shift)
+{
+   for (size_t i = 0; i < count; ++i)
+      dst[i] = src[i] >> shift;
+}
+
+inline void RightShift16InPlace(uint16_t* samples, size_t count, unsigned shift)
+{
+   for (size_t i = 0; i < count; ++i)
+      samples[i] >>= shift;
 }
 
 } // anonymous namespace
@@ -608,6 +626,32 @@ MMIIDCCamera::OnMaximumFramerate(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 
 int
+MMIIDCCamera::OnRightShift16BitSamples(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      bool flag;
+      {
+         boost::lock_guard<boost::mutex> lock(sampleProcessingMutex_);
+         flag = rightShift16BitSamples_;
+      }
+      pProp->Set(flag ? "Yes" : "No");
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      std::string value;
+      pProp->Get(value);
+      bool flag = (value == "Yes");
+      {
+         boost::lock_guard<boost::mutex> lock(sampleProcessingMutex_);
+         rightShift16BitSamples_ = flag;
+      }
+   }
+   return DEVICE_OK;
+}
+
+
+int
 MMIIDCCamera::OnFormat7PacketSizeNegativeDelta(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    try
@@ -810,6 +854,14 @@ int
 MMIIDCCamera::InitializeBehaviorTweakProperties()
 {
    int err;
+
+   // This one needs a handler because its value is accessed asynchronously
+   err = CreateStringProperty(MMIIDC_Property_RightShift16BitSamples, "No", false,
+         new CPropertyAction(this, &MMIIDCCamera::OnRightShift16BitSamples));
+   if (err != DEVICE_OK)
+      return err;
+   AddAllowedValue(MMIIDC_Property_RightShift16BitSamples, "No");
+   AddAllowedValue(MMIIDC_Property_RightShift16BitSamples, "Yes");
 
    err = CreateIntegerProperty(MMIIDC_Property_Format7PacketSizeNegativeDelta, 0, false,
          new CPropertyAction(this, &MMIIDCCamera::OnFormat7PacketSizeNegativeDelta));
@@ -1271,6 +1323,32 @@ MMIIDCCamera::SequenceCallback(const void* pixels, size_t width, size_t height, 
       swapped.reset(new uint16_t[width * height]);
       ByteSwap16(swapped.get(), reinterpret_cast<const uint16_t*>(pixels), width * height);
       pixels = swapped.get();
+   }
+
+   /*
+    * Some cameras return 16-bit samples MSB-aligned. If the user has
+    * requested, convert to normal LSB-aligned samples.
+    */
+   boost::scoped_array<uint16_t> shifted;
+   bool doRightShift = (bytesPerPixel == 2);
+   {
+      boost::lock_guard<boost::mutex> g(sampleProcessingMutex_);
+      doRightShift = doRightShift && rightShift16BitSamples_;
+   }
+   if (doRightShift)
+   {
+      unsigned shift = 16 - cachedBitsPerSample_;
+      if (swapped) // Reuse the buffer
+      {
+         shifted.swap(swapped);
+         RightShift16InPlace(shifted.get(), width * height, shift);
+      }
+      else
+      {
+         shifted.reset(new uint16_t[width * height]);
+         RightShift16(shifted.get(), reinterpret_cast<const uint16_t*>(pixels), width * height, shift);
+      }
+      pixels = shifted.get();
    }
 
    /*

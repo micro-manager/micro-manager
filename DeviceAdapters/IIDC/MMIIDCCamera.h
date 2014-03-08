@@ -21,6 +21,7 @@
 
 #include "IIDCInterface.h"
 
+#include <boost/thread.hpp>
 #include <boost/shared_array.hpp>
 #include <boost/shared_ptr.hpp>
 
@@ -47,6 +48,9 @@ class MMIIDCCamera : public CCameraBase<MMIIDCCamera>
    unsigned cachedBitsPerSample_;
    double cachedFramerate_;
    double cachedExposure_;
+
+   boost::mutex sampleProcessingMutex_;
+   bool rightShift16BitSamples_; // Guarded by sampleProcessingMutex_
 
    bool stopOnOverflow_; // Set by StartSequenceAcquisition(), read by SequenceCallback()
 
@@ -115,6 +119,7 @@ private:
     */
 
    int OnMaximumFramerate(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnRightShift16BitSamples(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnFormat7PacketSizeNegativeDelta(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnVideoMode(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct);
