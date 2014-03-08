@@ -140,7 +140,7 @@ const int MMIIDC_Error_AdHoc_Max = 30000;
 inline bool HostIsLittleEndian()
 {
    const uint16_t test = 1;
-   return *reinterpret_cast<const uint8_t*>(&test);
+   return *reinterpret_cast<const uint8_t*>(&test) != 0;
 }
 
 #ifdef _MSC_VER
@@ -652,7 +652,7 @@ MMIIDCCamera::OnRightShift16BitSamples(MM::PropertyBase* pProp, MM::ActionType e
 
 
 int
-MMIIDCCamera::OnFormat7PacketSizeNegativeDelta(MM::PropertyBase* pProp, MM::ActionType eAct)
+MMIIDCCamera::OnFormat7PacketSizeNegativeDelta(MM::PropertyBase*, MM::ActionType eAct)
 {
    try
    {
@@ -736,7 +736,7 @@ MMIIDCCamera::OnBrightness(MM::PropertyBase* pProp, MM::ActionType eAct)
          {
             double value;
             pProp->Get(value);
-            brightness->SetAbsoluteValue(value);
+            brightness->SetAbsoluteValue(static_cast<float>(value));
          }
          else
          {
@@ -770,7 +770,7 @@ MMIIDCCamera::OnGain(MM::PropertyBase* pProp, MM::ActionType eAct)
          {
             double value;
             pProp->Get(value);
-            gain->SetAbsoluteValue(value);
+            gain->SetAbsoluteValue(static_cast<float>(value));
          }
          else
          {
@@ -1181,13 +1181,13 @@ MMIIDCCamera::SetExposureImpl(double milliseconds)
    if (shutter->GetAbsoluteControl())
    {
       std::pair<float, float> limits = shutter->GetAbsoluteMinMax();
-      float actualSeconds = milliseconds / 1000.0f;
-      actualSeconds = std::max(actualSeconds, limits.first);
+      float seconds = static_cast<float>(milliseconds / 1000.0f);
+      float actualSeconds = std::max(seconds, limits.first);
       actualSeconds = std::min(actualSeconds, limits.second);
-      if (actualSeconds != milliseconds)
+      if (actualSeconds != seconds)
       {
-         LogMessage("Requested exposure (" + boost::lexical_cast<std::string>(milliseconds) +
-               " ms) out of range (" +
+         LogMessage("Requested exposure (" + boost::lexical_cast<std::string>(seconds) +
+               " s) out of range (" +
                boost::lexical_cast<std::string>(limits.first) + " - " +
                boost::lexical_cast<std::string>(limits.second) + " s); adjusted");
       }
@@ -1363,13 +1363,18 @@ MMIIDCCamera::SequenceCallback(const void* pixels, size_t width, size_t height, 
 
    const unsigned char* bytes = reinterpret_cast<const unsigned char*>(pixels);
 
+   // InsertImage() wants unsigned, not size_t; placate VC++.
+   unsigned uWidth = static_cast<unsigned>(width);
+   unsigned uHeight = static_cast<unsigned>(height);
+   unsigned uBytesPerPixel = static_cast<unsigned>(bytesPerPixel);
+
    int err;
-   err = GetCoreCallback()->InsertImage(this, bytes, width, height, bytesPerPixel,
+   err = GetCoreCallback()->InsertImage(this, bytes, uWidth, uHeight, uBytesPerPixel,
          serializedMD.c_str());
    if (!stopOnOverflow_ && err == DEVICE_BUFFER_OVERFLOW)
    {
       GetCoreCallback()->ClearImageBuffer(this);
-      err = GetCoreCallback()->InsertImage(this, bytes, width, height, bytesPerPixel,
+      err = GetCoreCallback()->InsertImage(this, bytes, uWidth, uHeight, uBytesPerPixel,
             serializedMD.c_str(), false);
    }
    if (err != DEVICE_OK)

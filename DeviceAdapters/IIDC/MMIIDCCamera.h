@@ -97,7 +97,7 @@ public:
    virtual unsigned GetBitDepth() const;
 
    virtual int GetBinning() const { return 1; }
-   virtual int SetBinning(int binSize) { return DEVICE_UNSUPPORTED_COMMAND; }
+   virtual int SetBinning(int) { return DEVICE_UNSUPPORTED_COMMAND; }
    virtual void SetExposure(double milliseconds);
    virtual double GetExposure() const { return cachedExposure_; }
 

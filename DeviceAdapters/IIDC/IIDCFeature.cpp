@@ -34,7 +34,7 @@ Feature::Feature(boost::shared_ptr<Camera> camera, dc1394camera_t* libdc1394came
       err = dc1394_feature_is_present(GetLibDC1394Camera(), GetLibDC1394Feature(), &flag);
       if (err != DC1394_SUCCESS)
          throw Error(err, "Cannot check if " + GetName() + " feature is present");
-      isPresent_ = flag;
+      isPresent_ = flag != DC1394_FALSE;
    }
 
    {
@@ -43,7 +43,7 @@ Feature::Feature(boost::shared_ptr<Camera> camera, dc1394camera_t* libdc1394came
       err = dc1394_feature_has_absolute_control(GetLibDC1394Camera(), GetLibDC1394Feature(), &flag);
       if (err != DC1394_SUCCESS)
          throw Error(err, "Cannot check if " + GetName() + " feature allows absolute value control");
-      hasAbsolute_ = flag;
+      hasAbsolute_ = flag != DC1394_FALSE;
    }
 
    {
@@ -52,7 +52,7 @@ Feature::Feature(boost::shared_ptr<Camera> camera, dc1394camera_t* libdc1394came
       err = dc1394_feature_is_readable(GetLibDC1394Camera(), GetLibDC1394Feature(), &flag);
       if (err != DC1394_SUCCESS)
          throw Error(err, "Cannot check if " + GetName() + " feature supports readout");
-      isReadable_ = flag;
+      isReadable_ = flag != DC1394_FALSE;
    }
 
    {
@@ -61,7 +61,7 @@ Feature::Feature(boost::shared_ptr<Camera> camera, dc1394camera_t* libdc1394came
       err = dc1394_feature_is_switchable(GetLibDC1394Camera(), GetLibDC1394Feature(), &flag);
       if (err != DC1394_SUCCESS)
          throw Error(err, "Cannot check if " + GetName() + " feature is switchable");
-      isSwitchable_ = flag;
+      isSwitchable_ = flag != DC1394_FALSE;
    }
 }
 
@@ -296,7 +296,7 @@ ScalarFeature::SetAbsoluteValue(float value)
             GetName() + " feature");
 
    dc1394error_t err;
-   err = dc1394_feature_set_value(GetLibDC1394Camera(), GetLibDC1394Feature(), value);
+   err = dc1394_feature_set_absolute_value(GetLibDC1394Camera(), GetLibDC1394Feature(), value);
    if (err != DC1394_SUCCESS)
       throw Error(err, "Cannot set value of " + GetName() + " feature to " +
             boost::lexical_cast<std::string>(value));

@@ -92,17 +92,17 @@ public:
    ~Camera();
 
    uint64_t GetGUID() const { return libdc1394camera_->guid; }
-   int GetUnitNo() const { return libdc1394camera_->unit; }
+   uint16_t GetUnitNo() const { return static_cast<uint16_t>(libdc1394camera_->unit); }
    std::string GetCameraID() const;
    std::string GetIIDCVersion() const;
    std::string GetVendor() const { return libdc1394camera_->vendor; }
    std::string GetModel() const { return libdc1394camera_->model; }
    uint32_t GetVendorID() const { return libdc1394camera_->vendor_id; }
    uint32_t GetModelID() const { return libdc1394camera_->model_id; }
-   bool Is1394BCapable() const { return libdc1394camera_->bmode_capable; }
-   bool IsOneShotCapable() const { return libdc1394camera_->one_shot_capable; }
-   bool IsMultiShotCapable() const { return libdc1394camera_->multi_shot_capable; }
-   bool IsPowerSwitchable() const { return libdc1394camera_->can_switch_on_off; }
+   bool Is1394BCapable() const { return libdc1394camera_->bmode_capable != DC1394_FALSE; }
+   bool IsOneShotCapable() const { return libdc1394camera_->one_shot_capable != DC1394_FALSE; }
+   bool IsMultiShotCapable() const { return libdc1394camera_->multi_shot_capable != DC1394_FALSE; }
+   bool IsPowerSwitchable() const { return libdc1394camera_->can_switch_on_off != DC1394_FALSE; }
 
    void ResetBus(); // Use sparingly.
    std::pair<uint32_t, uint32_t> Get1394NodeAndGeneration();

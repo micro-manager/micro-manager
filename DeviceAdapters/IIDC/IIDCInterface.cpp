@@ -64,7 +64,7 @@ StringToCameraId(const std::string& idString, dc1394camera_id_t* id)
    try
    {
       id->guid = boost::lexical_cast< HexTo<uint64_t> >(idString.substr(0, dashPos));
-      id->unit = boost::lexical_cast<int>(idString.substr(dashPos + 1));
+      id->unit = boost::lexical_cast<uint16_t>(idString.substr(dashPos + 1));
    }
    catch (const boost::bad_lexical_cast&)
    {
@@ -593,8 +593,7 @@ Camera::GetFramerate()
          throw Error(err, "Cannot get bits per pixel for color coding");
 
       // framerate = packetSize / (width * height * (bpp / 8) * 125e-6)
-         (width * height * bitsPerPixel) << '\n';
-      return 64000.0 * packetSize / (width * height * bitsPerPixel);
+      return static_cast<float>(64000.0 * packetSize / (width * height * bitsPerPixel));
    }
    else
    {
