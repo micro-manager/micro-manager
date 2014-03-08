@@ -251,7 +251,7 @@ public class PluginLoader {
                      try {
                         ReportingUtils.logMessage("Attempting to install plugin " + clazz.getName());
                         PluginItem pi = declarePlugin(clazz, dir);
-                        if (pi != null) {
+                        if (pi != null && !pi.getClassName().isEmpty()) {
                            pis.add(pi);
                         }
                      } catch (Exception e) {
