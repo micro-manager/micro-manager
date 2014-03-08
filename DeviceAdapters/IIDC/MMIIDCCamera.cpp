@@ -93,6 +93,7 @@ const char* const MMIIDC_Property_Supports1394B = "Camera supports 1394B";
 const char* const MMIIDC_Property_SupportsOneShot = "Camera supports one-shot capture";
 const char* const MMIIDC_Property_SupportsMultiShot = "Camera supports multi-shot capture";
 const char* const MMIIDC_Property_SupportsPowerSwitch = "Camera supports switching power";
+const char* const MMIIDC_Property_SupportsAbsoluteShutter = "Camera supports integration time in physical units";
 const char* const MMIIDC_Property_1394BEnabled = "1394B enabled";
 const char* const MMIIDC_Property_IsoSpeed = "Transmission speed (Mbps)";
 const char* const MMIIDC_Property_RightShift16BitSamples = "Right-shift 16-bit samples";
@@ -876,6 +877,12 @@ MMIIDCCamera::InitializeInformationalProperties()
 
    err = CreateStringProperty(MMIIDC_Property_SupportsPowerSwitch,
          iidcCamera_->IsPowerSwitchable() ? "Yes" : "No", true);
+   if (err != DEVICE_OK)
+      return err;
+
+   boost::shared_ptr<IIDC::ShutterFeature> shutter = iidcCamera_->GetShutterFeature();
+   err = CreateStringProperty(MMIIDC_Property_SupportsAbsoluteShutter,
+         shutter->HasAbsoluteControl() ? "Yes" : "No", true);
    if (err != DEVICE_OK)
       return err;
 
