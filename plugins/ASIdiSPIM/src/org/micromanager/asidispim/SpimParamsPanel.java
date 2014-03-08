@@ -143,7 +143,7 @@ public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerI
       
       add(new JSeparator(JSeparator.VERTICAL), "growy, cell 3 0 1 9");
 
-      JButton buttonStart_ = new JButton("Start!");
+      JButton buttonStart_ = new JButton("Start acquisition!");
       buttonStart_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {

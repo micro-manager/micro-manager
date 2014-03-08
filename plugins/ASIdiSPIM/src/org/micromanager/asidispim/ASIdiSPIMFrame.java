@@ -43,10 +43,9 @@ import org.micromanager.MMStudioMainFrame;
 import org.micromanager.asidispim.Utils.StagePositionUpdater;
 import org.micromanager.internalinterfaces.LiveModeListener; 
 
-// TODO finish adding 3rd camera (inverted scope camera)
-// TODO figure out update of slider limits when devices changed
+// TODO make sure acquisition works for single SPIM
+// TODO add stop acquisition button
 // TODO display certain properties like positions, e.g. scan amplitudes/offsets
-// TODO figure out why NR Z, NV X, and NV Y are called by devices_.callListeners()
 // TODO resolve whether Home/Stop should be added to 1axis stage API, use here if possible
 // TODO add sethome property to device adapter and use it here
 

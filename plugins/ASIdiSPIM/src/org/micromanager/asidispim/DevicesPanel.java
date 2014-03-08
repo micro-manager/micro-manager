@@ -270,10 +270,12 @@ public class DevicesPanel extends ListeningJPanel {
       try {
          StrVector strvDevices = core_.getLoadedDevicesOfType(mmcorej.DeviceType.CameraDevice);
          for (int i = 0; i < strvDevices.size(); i++) {
+            // older method found all cameras with more than one channel
+            // instead we look for Multicamera instances now; we expect only one
             String test = strvDevices.get(i);
-            props_.setPropValue(Devices.Keys.CORE, Properties.Keys.CAMERA, test);
-            if (core_.getNumberOfCameraChannels() > 1) {
-               multiCameras.add(test);
+            if (core_.getDeviceLibrary(test).equals(Devices.Libraries.UTILITIES.toString()) &&
+                  core_.getDeviceDescription(test).equals("Combine multiple physical cameras into a single logical camera")) {
+               multiCameras.add(strvDevices.get(i));
             }
          }
       } catch (Exception ex) {
@@ -284,7 +286,12 @@ public class DevicesPanel extends ListeningJPanel {
       
       JComboBox deviceBox = new JComboBox(multiCameras.toArray());
       deviceBox.addActionListener(new DevicesPanel.DeviceBoxListener(deviceName, deviceBox));
-      deviceBox.setSelectedItem(devices_.getMMDevice(deviceName));  // selects whatever device was read in by prefs
+   // if we have one and only one multi-camera then set box to it
+      if (multiCameras.size() == 2){  // recall we added empty string as the first entry
+         deviceBox.setSelectedIndex(1);
+      } else {
+         deviceBox.setSelectedItem(devices_.getMMDevice(deviceName));  // selects whatever device was read in by prefs
+      }
       return deviceBox;
    }
    

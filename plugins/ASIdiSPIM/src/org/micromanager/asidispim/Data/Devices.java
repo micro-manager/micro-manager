@@ -100,6 +100,7 @@ public class Devices {
       HAMCAM("HamamatsuHam"), 
       PCOCAM("PCO_Camera"), 
       ANDORCAM("AndorSDK3"),
+      UTILITIES("Utilities"),
       UNKNOWN("Unknown"), // if the device is valid but not one we know about
       ;
       private final String text;

@@ -21,7 +21,6 @@
 
 package org.micromanager.asidispim;
 
-
 import javax.swing.JLabel;
 import javax.swing.JSpinner;
 import javax.swing.event.ChangeEvent;
@@ -88,7 +87,6 @@ public class GuiSettingsPanel extends ListeningJPanel {
       pu.addListenerLast(positionRefreshInterval_, listenerLast);
       add(positionRefreshInterval_, "wrap");
       
-
    }
    
    @Override
