@@ -908,6 +908,7 @@ MMIIDCCamera::InitializeBehaviorTweakProperties()
          new CPropertyAction(this, &MMIIDCCamera::OnRightShift16BitSamples));
    if (err != DEVICE_OK)
       return err;
+   rightShift16BitSamples_ = false;
    AddAllowedValue(MMIIDC_Property_RightShift16BitSamples, "No");
    AddAllowedValue(MMIIDC_Property_RightShift16BitSamples, "Yes");
 
