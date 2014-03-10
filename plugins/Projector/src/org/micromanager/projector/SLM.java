@@ -5,17 +5,13 @@
 
 package org.micromanager.projector;
 
-import ij.ImagePlus;
 import ij.gui.PolygonRoi;
 import ij.gui.Roi;
 import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
 import java.awt.Color;
 import java.awt.Polygon;
-import java.awt.geom.AffineTransform;
 import java.util.HashSet;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import mmcorej.CMMCore;
 import org.micromanager.utils.ReportingUtils;
 

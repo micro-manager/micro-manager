@@ -3,6 +3,9 @@
  * Contributed as open source to the Micro-Manager
  * code base.
  * Code written by Arthur Edelstein.
+ * The functions in this file are written in call
+ * stack order: functions declared earlier in the file are
+ * called by those declared later.
  * 
  */
 
@@ -16,7 +19,6 @@ import ij.gui.Roi;
 import ij.plugin.frame.RoiManager;
 import java.awt.Polygon;
 import java.awt.Rectangle;
-import java.awt.Window;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
@@ -25,9 +27,6 @@ import java.util.Map;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Vector;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import javax.swing.JComboBox;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableModel;
@@ -288,6 +287,7 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
    // "SequenceSettings" property.
    private void uploadSequence(final ArrayList<SequenceEvent> events) {
       try {
+         core_.stopSLMSequence(mosaic_);
          core_.loadSLMSequence(mosaic_, imageListFromSequenceEvents(events));      
          core_.setProperty(mosaic_, "SequenceSettings", sequenceEventsToString(events));
       } catch (Exception ex) {
@@ -349,6 +349,7 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
    // Run the Mosaic Sequence. Called by Run button.
    private void runSequence() {
       try {
+         core_.stopSLMSequence(mosaic_);
          final String selectedItem = sequenceTriggerComboBox.getSelectedItem().toString();
          core_.setProperty(mosaic_, "SequenceLoopCount", GUIUtils.getIntValue(sequenceLoopCountTextField_));
          core_.setProperty(mosaic_, "TriggerMode", triggerProperties_.get(selectedItem));
