@@ -1840,6 +1840,7 @@ int CPCOCam::StartSequenceAcquisition(long numImages, double interval_ms, bool s
     return ret;
   m_bSequenceRunning = true;
   m_iNumImages = numImages;
+  m_iNumImagesInserted = 0;
   dIntervall = interval_ms;
   m_bDoAutoBalance = TRUE;
 
@@ -1882,6 +1883,9 @@ int CPCOCam::StopSequenceAcquisition()
 
 int CPCOCam::StoppedByThread()
 {
+  int nErr = 0;
+
+  m_pCamera->StopCam(&nErr);
   m_bSequenceRunning = false;
   return DEVICE_OK;
 }
@@ -1952,6 +1956,7 @@ int CPCOCam::InsertImage()
       if (img == 0)
         return ERR_TIMEOUT;
 
+      m_iNumImagesInserted++;
       ret = pcore->InsertImage(this, img, m_iWidth, m_iHeight, m_iBytesPerPixel);
       if (!m_bStopOnOverflow && ret == DEVICE_BUFFER_OVERFLOW)
       {
@@ -2006,7 +2011,7 @@ int CPCOCam::SequenceThread::svc()
       break;
     }
     //CDeviceUtils::SleepMs(20);
-    count++;
+    count = camera_->m_iNumImagesInserted;
   }
 
   camera_->StoppedByThread();

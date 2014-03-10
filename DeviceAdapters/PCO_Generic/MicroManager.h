@@ -224,6 +224,7 @@ private:
   int m_iNextBuffer;
   CRITICAL_SECTION m_cCrisec;
   int m_iNumImages;
+  int m_iNumImagesInserted;
   double dIntervall;
 };
 
