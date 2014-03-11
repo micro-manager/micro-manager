@@ -30,6 +30,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import edu.valelab.GaussianFit.utils.NumberUtils;
 import edu.valelab.GaussianFit.utils.ReportingUtils;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 
 
@@ -73,6 +74,8 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
    private FindLocalMaxima.FilterType preFilterType_ = FindLocalMaxima.FilterType.NONE;
 
    private FitAllThread ft_;
+   
+   public AtomicBoolean aStop_ = new AtomicBoolean(false);
 
    private int lastFrame_ = -1;
    
@@ -718,6 +721,7 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
     private void stopButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_stopButtonActionPerformed
        if (ft_ != null && ft_.isRunning())
           ft_.stop();
+       aStop_.set(true);   
     }//GEN-LAST:event_stopButtonActionPerformed
 
     private void filterDataCheckBoxNrPhotonsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_filterDataCheckBoxNrPhotonsActionPerformed
@@ -973,8 +977,9 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
          ip_ = siPlus;
       }
 
-      Runnable MTracker = new Runnable() {
+      Runnable mTracker = new Runnable() {
          public void run() {
+            aStop_ .set(false);
             int val = Integer.parseInt(noiseToleranceTextField_.getText());
             int halfSize = Integer.parseInt(boxSizeTextField.getText()) / 2;
 
@@ -989,7 +994,7 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
                for (Roi roi : rois) {
                   siPlus.setRoi(roi, false);
                   Polygon pol = FindLocalMaxima.FindMax(siPlus, halfSize, val, preFilterType_);
-                  for (int i = 0; i < pol.npoints; i++) {
+                  for (int i = 0; i < pol.npoints && !aStop_.get(); i++) {
                      int x = pol.xpoints[i];
                      int y = pol.ypoints[i];
                      siPlus.setRoi(x - 2 * halfSize, y - 2 * halfSize, 4 * halfSize, 4 * halfSize);
@@ -999,10 +1004,8 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
                   }
                }
             } else {  // no Rois in RoiManager
-               // siPlus.setRoi(originalRoi, false);
-
                Polygon pol = FindLocalMaxima.FindMax(siPlus, halfSize, val, preFilterType_);
-               for (int i = 0; i < pol.npoints; i++) {
+               for (int i = 0; i < pol.npoints && !aStop_.get(); i++) {
                   int x = pol.xpoints[i];
                   int y = pol.ypoints[i];
                   siPlus.setRoi(x - 2 * halfSize, y - 2 * halfSize, 4 * halfSize, 4 * halfSize);
@@ -1014,7 +1017,7 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
          }
       };
 
-      (new Thread(MTracker)).start();
+      (new Thread(mTracker)).start();
 
    }//GEN-LAST:event_mTrackButton_ActionPerformed
 

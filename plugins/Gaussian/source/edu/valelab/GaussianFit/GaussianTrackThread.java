@@ -12,6 +12,7 @@
 
 package edu.valelab.GaussianFit;
 
+import edu.valelab.GaussianFit.utils.ReportingUtils;
 import java.awt.geom.Point2D;
 import java.awt.Rectangle;
 import java.util.ArrayList;
@@ -114,7 +115,9 @@ public class GaussianTrackThread extends GaussianInfo implements Runnable  {
       Polygon pol = FindLocalMaxima.FindMax(siPlus, halfSize_, noiseTolerance_, preFilterType_);
       if (pol.npoints == 0) {
          if (!silent_)
-            ij.IJ.showMessage("No local maxima found in ROI" );
+            ReportingUtils.showError("No local maxima found in ROI" );
+         else
+            ReportingUtils.logError("No local maxima found in ROI");
          return false;
       }
       
