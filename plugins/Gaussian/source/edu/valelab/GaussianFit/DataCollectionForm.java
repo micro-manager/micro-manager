@@ -65,6 +65,7 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumnModel;
 import org.apache.commons.math.stat.StatUtils;
+import org.jfree.data.xy.XYDataItem;
 import org.jfree.data.xy.XYSeries;
 
 
@@ -3799,7 +3800,7 @@ public void run() {
 
       XYSeries[] datas = new XYSeries[rowDatas.length];
 
-      boolean useS;
+      boolean useS = false;
 
       String xAxis = null;
 
@@ -3813,12 +3814,18 @@ public void run() {
                        0, 400, useShapes, logLog);
 
             } else {
-               for (int index = 0; index < rowDatas.length; index++) {
+               for (int index = 0; index < rowDatas.length || !useS; index++) {
                   datas[index] = new XYSeries(rowDatas[index].ID_);
+                  useS = useSeconds(rowDatas[index]);
+               }
+               for (int index = 0; index < rowDatas.length; index++) {
                   for (int i = 0; i < rowDatas[index].spotList_.size(); i++) {
                      GaussianSpotData spot = rowDatas[index].spotList_.get(i);
                      if (rowDatas[index].timePoints_ != null) {
                         double timePoint = rowDatas[index].timePoints_.get(i);
+                        if (useS) {
+                           timePoint /= 1000;
+                        }
                         datas[index].add(timePoint, spot.getXCenter());
                      } else {
                         datas[index].add(i, spot.getXCenter());
@@ -3827,6 +3834,9 @@ public void run() {
                   xAxis = "Time (frameNr)";
                   if (rowDatas[index].timePoints_ != null) {
                      xAxis = "Time (ms)";
+                     if (useS) {
+                        xAxis = "Time(s)";
+                     }
                   }
                }
                GaussianUtils.plotDataN(title, datas, xAxis, "X(nm)", 0, 400, useShapes, logLog);
@@ -3841,12 +3851,19 @@ public void run() {
                GaussianUtils.plotDataN(title + " PSD", datas, xAxis, "Strength",
                        0, 400, useShapes, logLog);
             } else {
+               for (int index = 0; index < rowDatas.length || !useS; index++) {
+                  datas[index] = new XYSeries(rowDatas[index].ID_);
+                  useS = useSeconds(rowDatas[index]);
+               }
                for (int index = 0; index < rowDatas.length; index++) {
                   datas[index] = new XYSeries(rowDatas[index].ID_);
                   for (int i = 0; i < rowDatas[index].spotList_.size(); i++) {
                      GaussianSpotData spot = rowDatas[index].spotList_.get(i);
                      if (rowDatas[index].timePoints_ != null) {
                         double timePoint = rowDatas[index].timePoints_.get(i);
+                        if (useS) {
+                           timePoint /= 1000;
+                        }
                         datas[index].add(timePoint, spot.getYCenter());
                      } else {
                         datas[index].add(i, spot.getYCenter());
@@ -3854,7 +3871,10 @@ public void run() {
                   }
                   xAxis = "Time (frameNr)";
                   if (rowDatas[index].timePoints_ != null) {
-                     xAxis = "Time (s)";
+                     xAxis = "Time (ms)";
+                     if (useS) {
+                        xAxis = "Time(s)";
+                     }
                   }
                }
                GaussianUtils.plotDataN(title, datas, xAxis, "Y(nm)", 0, 400, useShapes, logLog);
@@ -3872,6 +3892,10 @@ public void run() {
                        0, 400, useShapes, logLog);
                        * */
             } else {
+               for (int index = 0; index < rowDatas.length || !useS; index++) {
+                  datas[index] = new XYSeries(rowDatas[index].ID_);
+                  useS = useSeconds(rowDatas[index]);
+               }
                for (int index = 0; index < rowDatas.length; index++) {
                   datas[index] = new XYSeries(rowDatas[index].ID_);
                   GaussianSpotData sp = rowDatas[index].spotList_.get(0);
@@ -3884,6 +3908,9 @@ public void run() {
                      double dist = Math.sqrt(distX + distY);
                      if (rowDatas[index].timePoints_ != null) {
                         double timePoint = rowDatas[index].timePoints_.get(i);
+                        if (useS) {
+                           timePoint /= 1000.0;
+                        }
                         datas[index].add(timePoint, dist);
                      } else {
                         datas[index].add(i, dist);
@@ -3891,7 +3918,10 @@ public void run() {
                   }
                   xAxis = "Time (frameNr)";
                   if (rowDatas[index].timePoints_ != null) {
-                     xAxis = "Time (s)";
+                     xAxis = "Time (ms)";
+                     if (useS) {
+                        xAxis = "Time (s)";
+                     }
                   }
                }
                GaussianUtils.plotDataN(title, datas, xAxis, " distance (nm)", 0, 400, useShapes, logLog);
@@ -3903,9 +3933,12 @@ public void run() {
             if (doPSD) {
                 JOptionPane.showMessageDialog(this, "Function is not implemented");
             } else {
-               for (int index = 0; index < rowDatas.length; index++) {
+               for (int index = 0; index < rowDatas.length || !useS; index++) {
                   datas[index] = new XYSeries(rowDatas[index].ID_);
                   useS = useSeconds(rowDatas[index]);
+               }
+               for (int index = 0; index < rowDatas.length; index++) {
+                  datas[index] = new XYSeries(rowDatas[index].ID_);
                   for (int i = 0; i < rowDatas[index].spotList_.size(); i++) {
                      GaussianSpotData spot = rowDatas[index].spotList_.get(i);
                      if (rowDatas[index].timePoints_ != null) {
@@ -3937,14 +3970,43 @@ public void run() {
             if (doPSD) {
                JOptionPane.showMessageDialog(this, "Function is not implemented");
             } else {
+               double minX = Double.MAX_VALUE; double minY = Double.MAX_VALUE;
+               double maxX = Double.MIN_VALUE; double maxY = Double.MIN_VALUE;
                for (int index = 0; index < rowDatas.length; index++) {
                   datas[index] = new XYSeries(rowDatas[index].ID_, false, true);
                   for (int i = 0; i < rowDatas[index].spotList_.size(); i++) {
                      GaussianSpotData spot = rowDatas[index].spotList_.get(i);
                      datas[index].add(spot.getXCenter(), spot.getYCenter());
+                     minX = Math.min(minX, spot.getXCenter());
+                     minY = Math.min(minY, spot.getYCenter());
+                     maxX = Math.max(maxX, spot.getXCenter());
+                     maxY = Math.max(maxY, spot.getYCenter());
                   }
                }
-               GaussianUtils.plotDataN(title, datas, "X(nm)", "Y(nm)", 0, 400, useShapes, logLog);
+               double xDivisor = 1.0;
+               double yDivisor = 1.0;
+               String xAxisTitle = "X(nm)";
+               String yAxisTitle = "Y(nm)";
+               if (maxX - minX > 10000) {
+                  xAxisTitle = "X(micron)";
+                  xDivisor = 1000;
+               }
+               if (maxY - minY > 10000) {
+                  yAxisTitle = "Y(micron)";
+                  yDivisor = 1000;
+               } 
+               if (xDivisor != 1.0 || yDivisor != 1.0) {  
+                  for (int index = 0; index < rowDatas.length; index++) {
+                     datas[index] = new XYSeries(rowDatas[index].ID_, false, true);
+                     for (int i = 0; i < rowDatas[index].spotList_.size(); i++) {
+                        GaussianSpotData spot = rowDatas[index].spotList_.get(i);
+                        datas[index].add(spot.getXCenter() / xDivisor, 
+                                spot.getYCenter() / yDivisor);
+                     }
+                  }
+               }
+
+               GaussianUtils.plotDataN(title, datas, xAxisTitle, yAxisTitle, 0, 400, useShapes, logLog);
             }
          }
          break;

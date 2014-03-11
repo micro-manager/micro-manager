@@ -620,7 +620,8 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
     }//GEN-LAST:event_noiseToleranceTextField_PropertyChange
 
     private void trackButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_trackButtonActionPerformed
-       GaussianTrackThread tT = new GaussianTrackThread(FindLocalMaxima.FilterType.NONE);
+       GaussianTrackThread tT = new GaussianTrackThread(IJ.getImage(), 
+               FindLocalMaxima.FilterType.NONE);
        updateValues(tT);
        
        // Execute on another thread,
@@ -998,7 +999,8 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
                      int x = pol.xpoints[i];
                      int y = pol.ypoints[i];
                      siPlus.setRoi(x - 2 * halfSize, y - 2 * halfSize, 4 * halfSize, 4 * halfSize);
-                     GaussianTrackThread tT = new GaussianTrackThread(FindLocalMaxima.FilterType.NONE);
+                     GaussianTrackThread tT = new GaussianTrackThread(siPlus, 
+                             FindLocalMaxima.FilterType.NONE);
                      updateValues(tT);
                      tT.trackGaussians(true);
                   }
@@ -1009,7 +1011,8 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
                   int x = pol.xpoints[i];
                   int y = pol.ypoints[i];
                   siPlus.setRoi(x - 2 * halfSize, y - 2 * halfSize, 4 * halfSize, 4 * halfSize);
-                  GaussianTrackThread tT = new GaussianTrackThread(FindLocalMaxima.FilterType.NONE);
+                  GaussianTrackThread tT = new GaussianTrackThread(siPlus,
+                          FindLocalMaxima.FilterType.NONE);
                   updateValues(tT);
                   tT.trackGaussians(true);
                }
