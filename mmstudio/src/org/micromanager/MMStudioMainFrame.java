@@ -26,8 +26,6 @@ import ij.WindowManager;
 import ij.gui.Line;
 import ij.gui.Roi;
 import ij.process.ImageProcessor;
-import ij.process.ShortProcessor;
-
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -278,17 +276,463 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    private AbstractButton setRoiButton_;
    private AbstractButton clearRoiButton_;
 
+   /**
+    * Simple class used to cache static info
+    */
+   private class StaticInfo {
+
+      public long width_;
+      public long height_;
+      public long bytesPerPixel_;
+      public long imageBitDepth_;
+      public double pixSizeUm_;
+      public double zPos_;
+      public double x_;
+      public double y_;
+   }
+   private StaticInfo staticInfo_ = new StaticInfo();
+   
+   
+   /**
+    * Main procedure for stand alone operation.
+    */
+   public static void main(String args[]) {
+      try {
+         UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+         MMStudioMainFrame frame = new MMStudioMainFrame(false);
+         frame.setVisible(true);
+         frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+      } catch (Throwable e) {
+         ReportingUtils.showError(e, "A java error has caused Micro-Manager to exit.");
+         System.exit(1);
+      }
+   }
+
+   /**
+    * MMStudioMainframe constructor
+    * @param pluginStatus 
+    */
+   @SuppressWarnings("LeakingThisInConstructor")
+   public MMStudioMainFrame(boolean pluginStatus) {
+      org.micromanager.diagnostics.ThreadExceptionLogger.setUp();
+
+      startLoadingPipelineClass();
+
+      options_ = new MMOptions();
+      try {
+         options_.loadSettings();
+      } catch (NullPointerException ex) {
+         ReportingUtils.logError(ex);
+      }
+
+      UIMonitor.enable(options_.debugLogEnabled_);
+      
+      guiColors_ = new GUIColors();
+
+      pluginLoader_ = new PluginLoader();
+      // plugins_ = new ArrayList<PluginItem>();
+
+      gui_ = this;
+
+      runsAsPlugin_ = pluginStatus;
+      setIconImage(SwingResourceManager.getImage(MMStudioMainFrame.class,
+            "icons/microscope.gif"));
+      running_ = true;
+
+      acqMgr_ = new AcquisitionManager();
+      
+      sysConfigFile_ = System.getProperty("user.dir") + "/"
+            + DEFAULT_CONFIG_FILE_NAME;
+
+      if (options_.startupScript_.length() > 0) {
+         startupScriptFile_ = System.getProperty("user.dir") + "/"
+                 + options_.startupScript_;
+      } else {
+         startupScriptFile_ = "";
+      }
+
+      ReportingUtils.SetContainingFrame(gui_);
+      
+           
+      // set the location for app preferences
+      try {
+         mainPrefs_ = Preferences.userNodeForPackage(this.getClass());
+      } catch (Exception e) {
+         ReportingUtils.logError(e);
+      }
+      systemPrefs_ = mainPrefs_;
+      
+      colorPrefs_ = mainPrefs_.node(mainPrefs_.absolutePath() + "/" + 
+              AcqControlDlg.COLOR_SETTINGS_NODE);
+      exposurePrefs_ = mainPrefs_.node(mainPrefs_.absolutePath() + "/" + 
+              EXPOSURE_SETTINGS_NODE);
+      contrastPrefs_ = mainPrefs_.node(mainPrefs_.absolutePath() + "/" +
+              CONTRAST_SETTINGS_NODE);
+      
+      // check system preferences
+      try {
+         Preferences p = Preferences.systemNodeForPackage(this.getClass());
+         if (null != p) {
+            // if we can not write to the systemPrefs, use AppPrefs instead
+            if (JavaUtils.backingStoreAvailable(p)) {
+               systemPrefs_ = p;
+            }
+         }
+      } catch (Exception e) {
+         ReportingUtils.logError(e);
+      }
+      
+      showRegistrationDialogMaybe();
+
+      // load application preferences
+      // NOTE: only window size and position preferences are loaded,
+      // not the settings for the camera and live imaging -
+      // attempting to set those automatically on startup may cause problems
+      // with the hardware
+      int x = mainPrefs_.getInt(MAIN_FRAME_X, 100);
+      int y = mainPrefs_.getInt(MAIN_FRAME_Y, 100);
+      int width = mainPrefs_.getInt(MAIN_FRAME_WIDTH, 644);
+      int height = mainPrefs_.getInt(MAIN_FRAME_HEIGHT, 570);
+      openAcqDirectory_ = mainPrefs_.get(OPEN_ACQ_DIR, "");
+      try {
+         ImageUtils.setImageStorageClass(Class.forName (mainPrefs_.get(MAIN_SAVE_METHOD,
+                 ImageUtils.getImageStorageClass().getName()) ) );
+      } catch (ClassNotFoundException ex) {
+         ReportingUtils.logError(ex, "Class not found error.  Should never happen");
+      }
+
+      ToolTipManager ttManager = ToolTipManager.sharedInstance();
+      ttManager.setDismissDelay(TOOLTIP_DISPLAY_DURATION_MILLISECONDS);
+      ttManager.setInitialDelay(TOOLTIP_DISPLAY_INITIAL_DELAY_MILLISECONDS);
+      
+      setBounds(x, y, width, height);
+      setExitStrategy(options_.closeOnExit_);
+      setTitle(MICRO_MANAGER_TITLE + " " + MMVersion.VERSION_STRING);
+      setBackground(guiColors_.background.get((options_.displayBackground_)));
+      setMinimumSize(new Dimension(605,480));
+      
+      menuBar_ = new JMenuBar();
+      switchConfigurationMenu_ = new JMenu();
+
+      setJMenuBar(menuBar_);
+
+      initializeFileMenu();
+      initializeToolsMenu();
+
+      splitPane_ = createSplitPane(mainPrefs_.getInt(MAIN_FRAME_DIVIDER_POS, 200));
+      getContentPane().add(splitPane_);
+
+      createTopPanelWidgets((JPanel) splitPane_.getComponent(0));
+      
+      metadataPanel_ = createMetadataPanel((JPanel) splitPane_.getComponent(1));
+      
+      setupWindowHandlers();
+      
+      // Add our own keyboard manager that handles Micro-Manager shortcuts
+      MMKeyDispatcher mmKD = new MMKeyDispatcher(gui_);
+      KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(mmKD);
+      DropTarget dropTarget = new DropTarget(this, new DragDropUtil());
+
+   }
+   
+   private void setupWindowHandlers() {
+      // add window listeners
+      addWindowListener(new WindowAdapter() {
+         @Override
+         public void windowClosing(WindowEvent e) {
+            closeSequence(false);
+         }
+
+         @Override
+         public void windowOpened(WindowEvent e) {
+            // -------------------
+            // initialize hardware
+            // -------------------
+            try {
+               core_ = new CMMCore();
+            } catch(UnsatisfiedLinkError ex) {
+               ReportingUtils.showError(ex, "Failed to load the MMCoreJ_wrap native library");
+               return;
+            }
+
+            ReportingUtils.setCore(core_);
+            logStartupProperties();
+                    
+            cameraLabel_ = "";
+            shutterLabel_ = "";
+            zStageLabel_ = "";
+            xyStageLabel_ = "";
+            engine_ = new AcquisitionWrapperEngine(acqMgr_);
+           // processorStackManager_ = new ProcessorStackManager(engine_);
+
+            // register callback for MMCore notifications, this is a global
+            // to avoid garbage collection
+            cb_ = new CoreEventCallback();
+            core_.registerCallback(cb_);
+
+            try {
+               core_.setCircularBufferMemoryFootprint(options_.circularBufferSizeMB_);
+            } catch (Exception e2) {
+               ReportingUtils.showError(e2);
+            }
+
+            MMStudioMainFrame parent = (MMStudioMainFrame) e.getWindow();
+            if (parent != null) {
+               engine_.setParentGUI(parent);
+            }
+
+            loadMRUConfigFiles();
+            afMgr_ = new AutofocusManager(gui_);
+            Thread pluginInitializer = initializePlugins();
+
+            toFront();
+            
+            if (!options_.doNotAskForConfigFile_) {
+               MMIntroDlg introDlg = new MMIntroDlg(MMVersion.VERSION_STRING, MRUConfigFiles_);
+               introDlg.setConfigFile(sysConfigFile_);
+               introDlg.setBackground(guiColors_.background.get((options_.displayBackground_)));
+               introDlg.setVisible(true);
+               if (!introDlg.okChosen()) {
+                  closeSequence(false);
+                  return;
+               }
+               sysConfigFile_ = introDlg.getConfigFile();
+            }
+            saveMRUConfigFiles();
+
+            mainPrefs_.put(SYSTEM_CONFIG_FILE, sysConfigFile_);
+
+            paint(MMStudioMainFrame.this.getGraphics());
+
+            engine_.setCore(core_, afMgr_);
+            posList_ = new PositionList();
+            engine_.setPositionList(posList_);
+            // load (but do no show) the scriptPanel
+            createScriptPanel();
+
+            // Create an instance of HotKeys so that they can be read in from prefs
+            hotKeys_ = new org.micromanager.utils.HotKeys();
+            hotKeys_.loadSettings();
+            
+            // before loading the system configuration, we need to wait 
+            // until the plugins are loaded
+            try {  
+               pluginInitializer.join(2000);
+            } catch (InterruptedException ex) {
+               ReportingUtils.logError(ex, "Plugin loader thread was interupted");
+            }
+            
+            // if an error occurred during config loading, 
+            // do not display more errors than needed
+            if (!loadSystemConfiguration())
+               ReportingUtils.showErrorOn(false);
+
+            executeStartupScript();
+
+
+            // Create Multi-D window here but do not show it.
+            // This window needs to be created in order to properly set the "ChannelGroup"
+            // based on the Multi-D parameters
+            acqControlWin_ = new AcqControlDlg(engine_, mainPrefs_, MMStudioMainFrame.this, options_);
+            addMMBackgroundListener(acqControlWin_);
+
+            configPad_.setCore(core_);
+            if (parent != null) {
+               configPad_.setParentGUI(parent);
+            }
+
+            configPadButtonPanel_.setCore(core_);
+
+            // initialize controls
+            initializeHelpMenu();
+            
+            String afDevice = mainPrefs_.get(AUTOFOCUS_DEVICE, "");
+            if (afMgr_.hasDevice(afDevice)) {
+               try {
+                  afMgr_.selectDevice(afDevice);
+               } catch (MMException e1) {
+                  // this error should never happen
+                  ReportingUtils.showError(e1);
+               }
+            }
+
+            centerAndDragListener_ = new CenterAndDragListener(gui_);
+            zWheelListener_ = new ZWheelListener(core_, gui_);
+            gui_.addLiveModeListener(zWheelListener_);
+            xyzKeyListener_ = new XYZKeyListener(core_, gui_);
+            gui_.addLiveModeListener(xyzKeyListener_);
+
+            // switch error reporting back on
+            ReportingUtils.showErrorOn(true);
+         }
+
+         private Thread initializePlugins() {
+            pluginMenu_ = GUIUtils.createMenuInMenuBar(menuBar_, "Plugins");
+            Thread myThread = new ThreadPluginLoading("Plugin loading");
+            myThread.start();
+            return myThread;
+         }
+
+         class ThreadPluginLoading extends Thread {
+
+            public ThreadPluginLoading(String string) {
+               super(string);
+            }
+
+            @Override
+            public void run() {
+               // Needed for loading clojure-based jars:
+               Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
+               pluginLoader_.loadPlugins();
+            }
+         }
+  
+      });
+        
+   }
+   
+   
+   
+ 
+   /**
+    * Callback to update GUI when a change happens in the MMCore.
+    */
+   public class CoreEventCallback extends MMEventCallback {
+
+      public CoreEventCallback() {
+         super();
+      }
+
+      @Override
+      public void onPropertiesChanged() {
+         // TODO: remove test once acquisition engine is fully multithreaded
+         if (engine_ != null && engine_.isAcquisitionRunning()) {
+            core_.logMessage("Notification from MMCore ignored because acquistion is running!", true);
+         } else {
+            if (ignorePropertyChanges_) {
+               core_.logMessage("Notification from MMCore ignored since the system is still loading", true);
+            } else {
+               core_.updateSystemStateCache();
+               updateGUI(true);
+               // update all registered listeners 
+               for (MMListenerInterface mmIntf : MMListeners_) {
+                  mmIntf.propertiesChangedAlert();
+               }
+               core_.logMessage("Notification from MMCore!", true);
+            }
+         }
+      }
+
+      @Override
+      public void onPropertyChanged(String deviceName, String propName, String propValue) {
+         core_.logMessage("Notification for Device: " + deviceName + " Property: " +
+               propName + " changed to value: " + propValue, true);
+         // update all registered listeners
+         for (MMListenerInterface mmIntf:MMListeners_) {
+            mmIntf.propertyChangedAlert(deviceName, propName, propValue);
+         }
+      }
+
+      @Override
+      public void onConfigGroupChanged(String groupName, String newConfig) {
+         try {
+            configPad_.refreshGroup(groupName, newConfig);
+            for (MMListenerInterface mmIntf:MMListeners_) {
+               mmIntf.configGroupChangedAlert(groupName, newConfig);
+            }
+         } catch (Exception e) {
+         }
+      }
+      
+      @Override
+      public void onSystemConfigurationLoaded() {
+         for (MMListenerInterface mmIntf:MMListeners_) {
+            mmIntf.systemConfigurationLoaded();
+         }
+      }
+
+      @Override
+      public void onPixelSizeChanged(double newPixelSizeUm) {
+         updatePixSizeUm (newPixelSizeUm);
+         for (MMListenerInterface mmIntf:MMListeners_) {
+            mmIntf.pixelSizeChangedAlert(newPixelSizeUm);
+         }
+      }
+
+      @Override
+      public void onStagePositionChanged(String deviceName, double pos) {
+         if (deviceName.equals(zStageLabel_)) {
+            updateZPos(pos);
+            for (MMListenerInterface mmIntf:MMListeners_) {
+               mmIntf.stagePositionChangedAlert(deviceName, pos);
+            }
+         }
+      }
+
+      @Override
+      public void onStagePositionChangedRelative(String deviceName, double pos) {
+         if (deviceName.equals(zStageLabel_))
+            updateZPosRelative(pos);
+      }
+
+      @Override
+      public void onXYStagePositionChanged(String deviceName, double xPos, double yPos) {
+         if (deviceName.equals(xyStageLabel_)) {
+            updateXYPos(xPos, yPos);
+            for (MMListenerInterface mmIntf:MMListeners_) {
+               mmIntf.xyStagePositionChanged(deviceName, xPos, yPos);
+            }
+         }
+      }
+
+      @Override
+      public void onXYStagePositionChangedRelative(String deviceName, double xPos, double yPos) {
+         if (deviceName.equals(xyStageLabel_))
+            updateXYPosRelative(xPos, yPos);
+      }
+      
+      @Override
+      public void onExposureChanged(String deviceName, double exposure) {
+         if (deviceName.equals(cameraLabel_)){
+            // update exposure in gui
+            textFieldExp_.setText(NumberUtils.doubleToDisplayString(exposure));  
+         }
+         for (MMListenerInterface mmIntf:MMListeners_) {
+            mmIntf.exposureChanged(deviceName, exposure);
+         }
+      }
+     
+   }
+
+   private void handleException(Exception e, String msg) {
+      String errText = "Exception occurred: ";
+      if (msg.length() > 0) {
+         errText += msg + " -- ";
+      }
+      if (options_.debugLogEnabled_) {
+         errText += e.getMessage();
+      } else {
+         errText += e.toString() + "\n";
+         ReportingUtils.showError(e);
+      }
+      handleError(errText);
+   }
+
+   private void handleException(Exception e) {
+      handleException(e, "");
+   }
+
+   private void handleError(String message) {
+      if (isLiveModeOn()) {
+         // Should we always stop live mode on any error?
+         enableLiveMode(false);
+      }
+      JOptionPane.showMessageDialog(this, message);
+      core_.logMessage(message);
+   }
 
    public ImageWindow getImageWin() {
       return getSnapLiveWin();
-   }
-
-   @Override
-   public ImageWindow getSnapLiveWin() {
-      if (simpleDisplay_ == null) {
-         return null;
-      }
-      return simpleDisplay_.getHyperImage().getWindow();
    }
 
    public static VirtualAcquisitionDisplay getSimpleDisplay() {
@@ -398,17 +842,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       }
       return new Color(defaultColor);
    }
-  
-   @Override
-   public void enableRoiButtons(final boolean enabled) {
-       SwingUtilities.invokeLater(new Runnable() {
-           @Override
-           public void run() {
-               setRoiButton_.setEnabled(enabled);
-               clearRoiButton_.setEnabled(enabled);
-           }
-       });
-   }
+
 
    public void copyFromLiveModeToAlbum(VirtualAcquisitionDisplay display) throws MMScriptException, JSONException {
       ImageCache ic = display.getImageCache();
@@ -1023,22 +1457,22 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       GUIUtils.addMenuItem(toolsMenu, "Options...",
               "Set a variety of Micro-Manager configuration options",
               new Runnable() {
-                 public void run() {
-                    final int oldBufsize = options_.circularBufferSizeMB_;
+         public void run() {
+            final int oldBufsize = options_.circularBufferSizeMB_;
 
-                    OptionsDlg dlg = new OptionsDlg(options_, core_, mainPrefs_,
-                            thisInstance);
-                    dlg.setVisible(true);
-                    // adjust memory footprint if necessary
-                    if (oldBufsize != options_.circularBufferSizeMB_) {
-                       try {
-                          core_.setCircularBufferMemoryFootprint(options_.circularBufferSizeMB_);
-                       } catch (Exception exc) {
-                          ReportingUtils.showError(exc);
-                       }
-                    }
-                 }
-              });
+            OptionsDlg dlg = new OptionsDlg(options_, core_, mainPrefs_,
+                    thisInstance);
+            dlg.setVisible(true);
+            // adjust memory footprint if necessary
+            if (oldBufsize != options_.circularBufferSizeMB_) {
+               try {
+                  core_.setCircularBufferMemoryFootprint(options_.circularBufferSizeMB_);
+               } catch (Exception exc) {
+                  ReportingUtils.showError(exc);
+               }
+            }
+         }
+      });
    }
 
    private void showRegistrationDialogMaybe() {
@@ -1065,35 +1499,16 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
             GUIUtils.addMenuItem(switchConfigurationMenu_,
                     configFile, null,
                     new Runnable() {
-                       public void run() {
-                          sysConfigFile_ = configFile;
-                          loadSystemConfiguration();
-                          mainPrefs_.put(SYSTEM_CONFIG_FILE, sysConfigFile_);
-                       }
-                    });
+               public void run() {
+                  sysConfigFile_ = configFile;
+                  loadSystemConfiguration();
+                  mainPrefs_.put(SYSTEM_CONFIG_FILE, sysConfigFile_);
+               }
+            });
          }
       }
    }
 
-   /**
-    * Allows MMListeners to register themselves
-    */
-   @Override
-   public void addMMListener(MMListenerInterface newL) {
-      if (MMListeners_.contains(newL))
-         return;
-      MMListeners_.add(newL);
-   }
-
-   /**
-    * Allows MMListeners to remove themselves
-    */
-   @Override
-   public void removeMMListener(MMListenerInterface oldL) {
-      if (!MMListeners_.contains(oldL))
-         return;
-      MMListeners_.remove(oldL);
-   }
 
    
    public final void addLiveModeListener (LiveModeListener listener) {
@@ -1113,28 +1528,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       }
    }
    
-   /**
-    * Lets JComponents register themselves so that their background can be
-    * manipulated
-    */
-   @Override
-   public void addMMBackgroundListener(Component comp) {
-      if (MMFrames_.contains(comp))
-         return;
-      MMFrames_.add(comp);
-   }
-
-   /**
-    * Lets JComponents remove themselves from the list whose background gets
-    * changes
-    */
-   @Override
-   public void removeMMBackgroundListener(Component comp) {
-      if (!MMFrames_.contains(comp))
-         return;
-      MMFrames_.remove(comp);
-   }
-
+ 
    /**
     * Part of ScriptInterface
     * Manipulate acquisition so that it looks like a burst
@@ -1174,22 +1568,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    }
 
    /**
-    * Inserts version info for various components in the Corelog
-    */
-   @Override
-   public void logStartupProperties() {
-      core_.enableDebugLog(options_.debugLogEnabled_);
-      core_.logMessage("MM Studio version: " + getVersion());
-      core_.logMessage(core_.getVersionInfo());
-      core_.logMessage(core_.getAPIVersionInfo());
-      core_.logMessage("Operating System: " + System.getProperty("os.name") +
-              " (" + System.getProperty("os.arch") + ") " + System.getProperty("os.version"));
-      core_.logMessage("JVM: " + System.getProperty("java.vm.name") +
-              ", version " + System.getProperty("java.version") + ", " +
-              System.getProperty("sun.arch.data.model") + "-bit");
-   }
-
-   /**
     * @Deprecated
     * @throws MMScriptException
     */
@@ -1219,10 +1597,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       acquisitionEngine2010LoadingThread.start();
    }
 
-   @Override
-   public ImageCache getAcquisitionImageCache(String acquisitionName) throws MMScriptException {
-      return getAcquisition(acquisitionName).getImageCache();
-   }
 
    
    /**
@@ -1269,459 +1643,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    public interface DisplayImageRoutine {
       public void show(TaggedImage image);
    }
- 
-   /**
-    * Callback to update GUI when a change happens in the MMCore.
-    */
-   public class CoreEventCallback extends MMEventCallback {
-
-      public CoreEventCallback() {
-         super();
-      }
-
-      @Override
-      public void onPropertiesChanged() {
-         // TODO: remove test once acquisition engine is fully multithreaded
-         if (engine_ != null && engine_.isAcquisitionRunning()) {
-            core_.logMessage("Notification from MMCore ignored because acquistion is running!", true);
-         } else {
-            if (ignorePropertyChanges_) {
-               core_.logMessage("Notification from MMCore ignored since the system is still loading", true);
-            } else {
-               core_.updateSystemStateCache();
-               updateGUI(true);
-               // update all registered listeners 
-               for (MMListenerInterface mmIntf : MMListeners_) {
-                  mmIntf.propertiesChangedAlert();
-               }
-               core_.logMessage("Notification from MMCore!", true);
-            }
-         }
-      }
-
-      @Override
-      public void onPropertyChanged(String deviceName, String propName, String propValue) {
-         core_.logMessage("Notification for Device: " + deviceName + " Property: " +
-               propName + " changed to value: " + propValue, true);
-         // update all registered listeners
-         for (MMListenerInterface mmIntf:MMListeners_) {
-            mmIntf.propertyChangedAlert(deviceName, propName, propValue);
-         }
-      }
-
-      @Override
-      public void onConfigGroupChanged(String groupName, String newConfig) {
-         try {
-            configPad_.refreshGroup(groupName, newConfig);
-            for (MMListenerInterface mmIntf:MMListeners_) {
-               mmIntf.configGroupChangedAlert(groupName, newConfig);
-            }
-         } catch (Exception e) {
-         }
-      }
-      
-      @Override
-      public void onSystemConfigurationLoaded() {
-         for (MMListenerInterface mmIntf:MMListeners_) {
-            mmIntf.systemConfigurationLoaded();
-         }
-      }
-
-      @Override
-      public void onPixelSizeChanged(double newPixelSizeUm) {
-         updatePixSizeUm (newPixelSizeUm);
-         for (MMListenerInterface mmIntf:MMListeners_) {
-            mmIntf.pixelSizeChangedAlert(newPixelSizeUm);
-         }
-      }
-
-      @Override
-      public void onStagePositionChanged(String deviceName, double pos) {
-         if (deviceName.equals(zStageLabel_)) {
-            updateZPos(pos);
-            for (MMListenerInterface mmIntf:MMListeners_) {
-               mmIntf.stagePositionChangedAlert(deviceName, pos);
-            }
-         }
-      }
-
-      @Override
-      public void onStagePositionChangedRelative(String deviceName, double pos) {
-         if (deviceName.equals(zStageLabel_))
-            updateZPosRelative(pos);
-      }
-
-      @Override
-      public void onXYStagePositionChanged(String deviceName, double xPos, double yPos) {
-         if (deviceName.equals(xyStageLabel_)) {
-            updateXYPos(xPos, yPos);
-            for (MMListenerInterface mmIntf:MMListeners_) {
-               mmIntf.xyStagePositionChanged(deviceName, xPos, yPos);
-            }
-         }
-      }
-
-      @Override
-      public void onXYStagePositionChangedRelative(String deviceName, double xPos, double yPos) {
-         if (deviceName.equals(xyStageLabel_))
-            updateXYPosRelative(xPos, yPos);
-      }
-      
-      @Override
-      public void onExposureChanged(String deviceName, double exposure) {
-         if (deviceName.equals(cameraLabel_)){
-            // update exposure in gui
-            textFieldExp_.setText(NumberUtils.doubleToDisplayString(exposure));  
-         }
-         for (MMListenerInterface mmIntf:MMListeners_) {
-            mmIntf.exposureChanged(deviceName, exposure);
-         }
-      }
-     
-
-   }
-
-
-   /**
-    * Simple class used to cache static info
-    */
-   private class StaticInfo {
-
-      public long width_;
-      public long height_;
-      public long bytesPerPixel_;
-      public long imageBitDepth_;
-      public double pixSizeUm_;
-      public double zPos_;
-      public double x_;
-      public double y_;
-   }
-   private StaticInfo staticInfo_ = new StaticInfo();
-
-   private void setupWindowHandlers() {
-      // add window listeners
-      addWindowListener(new WindowAdapter() {
-         @Override
-         public void windowClosing(WindowEvent e) {
-            closeSequence(false);
-         }
-
-         @Override
-         public void windowOpened(WindowEvent e) {
-            // -------------------
-            // initialize hardware
-            // -------------------
-            try {
-               core_ = new CMMCore();
-            } catch(UnsatisfiedLinkError ex) {
-               ReportingUtils.showError(ex, "Failed to load the MMCoreJ_wrap native library");
-               return;
-            }
-
-            ReportingUtils.setCore(core_);
-            logStartupProperties();
-                    
-            cameraLabel_ = "";
-            shutterLabel_ = "";
-            zStageLabel_ = "";
-            xyStageLabel_ = "";
-            engine_ = new AcquisitionWrapperEngine(acqMgr_);
-           // processorStackManager_ = new ProcessorStackManager(engine_);
-
-            // register callback for MMCore notifications, this is a global
-            // to avoid garbage collection
-            cb_ = new CoreEventCallback();
-            core_.registerCallback(cb_);
-
-            try {
-               core_.setCircularBufferMemoryFootprint(options_.circularBufferSizeMB_);
-            } catch (Exception e2) {
-               ReportingUtils.showError(e2);
-            }
-
-            MMStudioMainFrame parent = (MMStudioMainFrame) e.getWindow();
-            if (parent != null) {
-               engine_.setParentGUI(parent);
-            }
-
-            loadMRUConfigFiles();
-            afMgr_ = new AutofocusManager(gui_);
-            Thread pluginInitializer = initializePlugins();
-
-            toFront();
-            
-            if (!options_.doNotAskForConfigFile_) {
-               MMIntroDlg introDlg = new MMIntroDlg(MMVersion.VERSION_STRING, MRUConfigFiles_);
-               introDlg.setConfigFile(sysConfigFile_);
-               introDlg.setBackground(guiColors_.background.get((options_.displayBackground_)));
-               introDlg.setVisible(true);
-               if (!introDlg.okChosen()) {
-                  closeSequence(false);
-                  return;
-               }
-               sysConfigFile_ = introDlg.getConfigFile();
-            }
-            saveMRUConfigFiles();
-
-            mainPrefs_.put(SYSTEM_CONFIG_FILE, sysConfigFile_);
-
-            paint(MMStudioMainFrame.this.getGraphics());
-
-            engine_.setCore(core_, afMgr_);
-            posList_ = new PositionList();
-            engine_.setPositionList(posList_);
-            // load (but do no show) the scriptPanel
-            createScriptPanel();
-
-            // Create an instance of HotKeys so that they can be read in from prefs
-            hotKeys_ = new org.micromanager.utils.HotKeys();
-            hotKeys_.loadSettings();
-            
-            // before loading the system configuration, we need to wait 
-            // until the plugins are loaded
-            try {  
-               pluginInitializer.join(2000);
-            } catch (InterruptedException ex) {
-               ReportingUtils.logError(ex, "Plugin loader thread was interupted");
-            }
-            
-            // if an error occurred during config loading, 
-            // do not display more errors than needed
-            if (!loadSystemConfiguration())
-               ReportingUtils.showErrorOn(false);
-
-            executeStartupScript();
-
-
-            // Create Multi-D window here but do not show it.
-            // This window needs to be created in order to properly set the "ChannelGroup"
-            // based on the Multi-D parameters
-            acqControlWin_ = new AcqControlDlg(engine_, mainPrefs_, MMStudioMainFrame.this, options_);
-            addMMBackgroundListener(acqControlWin_);
-
-            configPad_.setCore(core_);
-            if (parent != null) {
-               configPad_.setParentGUI(parent);
-            }
-
-            configPadButtonPanel_.setCore(core_);
-
-            // initialize controls
-            // initializeGUI();  Not needed since it is already called in loadSystemConfiguration
-            initializeHelpMenu();
-            
-            String afDevice = mainPrefs_.get(AUTOFOCUS_DEVICE, "");
-            if (afMgr_.hasDevice(afDevice)) {
-               try {
-                  afMgr_.selectDevice(afDevice);
-               } catch (MMException e1) {
-                  // this error should never happen
-                  ReportingUtils.showError(e1);
-               }
-            }
-
-            centerAndDragListener_ = new CenterAndDragListener(gui_);
-            zWheelListener_ = new ZWheelListener(core_, gui_);
-            gui_.addLiveModeListener(zWheelListener_);
-            xyzKeyListener_ = new XYZKeyListener(core_, gui_);
-            gui_.addLiveModeListener(xyzKeyListener_);
-
-            // switch error reporting back on
-            ReportingUtils.showErrorOn(true);
-         }
-
-         private Thread initializePlugins() {
-            pluginMenu_ = GUIUtils.createMenuInMenuBar(menuBar_, "Plugins");
-            Thread myThread = new ThreadPluginLoading("Plugin loading");
-            myThread.start();
-            return myThread;
-         }
-
-         class ThreadPluginLoading extends Thread {
-
-            public ThreadPluginLoading(String string) {
-               super(string);
-            }
-
-            @Override
-            public void run() {
-               // Needed for loading clojure-based jars:
-               Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
-               pluginLoader_.loadPlugins();
-            }
-         }
-  
-      });
-      
-      
-   }
-   
-   /**
-    * Main procedure for stand alone operation.
-    */
-   public static void main(String args[]) {
-      try {
-         UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-         MMStudioMainFrame frame = new MMStudioMainFrame(false);
-         frame.setVisible(true);
-         frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-      } catch (Throwable e) {
-         ReportingUtils.showError(e, "A java error has caused Micro-Manager to exit.");
-         System.exit(1);
-      }
-   }
-
-   @SuppressWarnings("LeakingThisInConstructor")
-   public MMStudioMainFrame(boolean pluginStatus) {
-      org.micromanager.diagnostics.ThreadExceptionLogger.setUp();
-
-      startLoadingPipelineClass();
-
-      options_ = new MMOptions();
-      try {
-         options_.loadSettings();
-      } catch (NullPointerException ex) {
-         ReportingUtils.logError(ex);
-      }
-
-      UIMonitor.enable(options_.debugLogEnabled_);
-      
-      guiColors_ = new GUIColors();
-
-      pluginLoader_ = new PluginLoader();
-      // plugins_ = new ArrayList<PluginItem>();
-
-      gui_ = this;
-
-      runsAsPlugin_ = pluginStatus;
-      setIconImage(SwingResourceManager.getImage(MMStudioMainFrame.class,
-            "icons/microscope.gif"));
-      running_ = true;
-
-      acqMgr_ = new AcquisitionManager();
-      
-      sysConfigFile_ = System.getProperty("user.dir") + "/"
-            + DEFAULT_CONFIG_FILE_NAME;
-
-      if (options_.startupScript_.length() > 0) {
-         startupScriptFile_ = System.getProperty("user.dir") + "/"
-                 + options_.startupScript_;
-      } else {
-         startupScriptFile_ = "";
-      }
-
-      ReportingUtils.SetContainingFrame(gui_);
-      
-           
-      // set the location for app preferences
-      try {
-         mainPrefs_ = Preferences.userNodeForPackage(this.getClass());
-      } catch (Exception e) {
-         ReportingUtils.logError(e);
-      }
-      systemPrefs_ = mainPrefs_;
-      
-      colorPrefs_ = mainPrefs_.node(mainPrefs_.absolutePath() + "/" + 
-              AcqControlDlg.COLOR_SETTINGS_NODE);
-      exposurePrefs_ = mainPrefs_.node(mainPrefs_.absolutePath() + "/" + 
-              EXPOSURE_SETTINGS_NODE);
-      contrastPrefs_ = mainPrefs_.node(mainPrefs_.absolutePath() + "/" +
-              CONTRAST_SETTINGS_NODE);
-      
-      // check system preferences
-      try {
-         Preferences p = Preferences.systemNodeForPackage(this.getClass());
-         if (null != p) {
-            // if we can not write to the systemPrefs, use AppPrefs instead
-            if (JavaUtils.backingStoreAvailable(p)) {
-               systemPrefs_ = p;
-            }
-         }
-      } catch (Exception e) {
-         ReportingUtils.logError(e);
-      }
-      
-      showRegistrationDialogMaybe();
-
-      // load application preferences
-      // NOTE: only window size and position preferences are loaded,
-      // not the settings for the camera and live imaging -
-      // attempting to set those automatically on startup may cause problems
-      // with the hardware
-      int x = mainPrefs_.getInt(MAIN_FRAME_X, 100);
-      int y = mainPrefs_.getInt(MAIN_FRAME_Y, 100);
-      int width = mainPrefs_.getInt(MAIN_FRAME_WIDTH, 644);
-      int height = mainPrefs_.getInt(MAIN_FRAME_HEIGHT, 570);
-      openAcqDirectory_ = mainPrefs_.get(OPEN_ACQ_DIR, "");
-      try {
-         ImageUtils.setImageStorageClass(Class.forName (mainPrefs_.get(MAIN_SAVE_METHOD,
-                 ImageUtils.getImageStorageClass().getName()) ) );
-      } catch (ClassNotFoundException ex) {
-         ReportingUtils.logError(ex, "Class not found error.  Should never happen");
-      }
-
-      ToolTipManager ttManager = ToolTipManager.sharedInstance();
-      ttManager.setDismissDelay(TOOLTIP_DISPLAY_DURATION_MILLISECONDS);
-      ttManager.setInitialDelay(TOOLTIP_DISPLAY_INITIAL_DELAY_MILLISECONDS);
-      
-      setBounds(x, y, width, height);
-      setExitStrategy(options_.closeOnExit_);
-      setTitle(MICRO_MANAGER_TITLE + " " + MMVersion.VERSION_STRING);
-      setBackground(guiColors_.background.get((options_.displayBackground_)));
-      setMinimumSize(new Dimension(605,480));
-      
-      menuBar_ = new JMenuBar();
-      switchConfigurationMenu_ = new JMenu();
-
-      setJMenuBar(menuBar_);
-
-      initializeFileMenu();
-      initializeToolsMenu();
-
-      splitPane_ = createSplitPane(mainPrefs_.getInt(MAIN_FRAME_DIVIDER_POS, 200));
-      getContentPane().add(splitPane_);
-
-      createTopPanelWidgets((JPanel) splitPane_.getComponent(0));
-      
-      metadataPanel_ = createMetadataPanel((JPanel) splitPane_.getComponent(1));
-      
-      setupWindowHandlers();
-      
-      // Add our own keyboard manager that handles Micro-Manager shortcuts
-      MMKeyDispatcher mmKD = new MMKeyDispatcher(gui_);
-      KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(mmKD);
-      DropTarget dropTarget = new DropTarget(this, new DragDropUtil());
-
-   }
-   
-
-   private void handleException(Exception e, String msg) {
-      String errText = "Exception occurred: ";
-      if (msg.length() > 0) {
-         errText += msg + " -- ";
-      }
-      if (options_.debugLogEnabled_) {
-         errText += e.getMessage();
-      } else {
-         errText += e.toString() + "\n";
-         ReportingUtils.showError(e);
-      }
-      handleError(errText);
-   }
-
-   private void handleException(Exception e) {
-      handleException(e, "");
-   }
-
-   private void handleError(String message) {
-      if (isLiveModeOn()) {
-         // Should we always stop live mode on any error?
-         enableLiveMode(false);
-      }
-      JOptionPane.showMessageDialog(this, message);
-      core_.logMessage(message);
-   }
-
    
    /**
     * used to store contrast settings to be later used for initialization of contrast of new windows.
@@ -1793,56 +1714,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       }
    }
    
-   /**
-    * Returns exposure time for the desired preset in the given channelgroup
-    * Acquires its info from the preferences
-    * Same thing is used in MDA window, but this class keeps its own copy
-    * 
-    * @param channelGroup
-    * @param channel - 
-    * @param defaultExp - default value
-    * @return exposure time
-    */
-   @Override
-   public double getChannelExposureTime(String channelGroup, String channel,
-           double defaultExp) {
-      return exposurePrefs_.getDouble("Exposure_" + channelGroup
-              + "_" + channel, defaultExp);
-   }
 
-   /**
-    * Updates the exposure time in the given preset 
-    * Will also update current exposure if it the given channel and channelgroup
-    * are the current one
-    * 
-    * @param channelGroup - 
-    * 
-    * @param channel - preset for which to change exposure time
-    * @param exposure - desired exposure time
-    */
-   @Override
-   public void setChannelExposureTime(String channelGroup, String channel,
-           double exposure) {
-      try {
-         exposurePrefs_.putDouble("Exposure_" + channelGroup + "_"
-                 + channel, exposure);
-         if (channelGroup != null && channelGroup.equals(core_.getChannelGroup())) {
-            if (channel != null && !channel.equals("") && 
-                    channel.equals(core_.getCurrentConfigFromCache(channelGroup))) {
-               textFieldExp_.setText(NumberUtils.doubleToDisplayString(exposure));
-               setExposure();
-            }
-         }
-      } catch (Exception ex) {
-         ReportingUtils.logError("Failed to set Exposure prefs using Channelgroup: "
-                 + channelGroup + ", channel: " + channel + ", exposure: " + exposure);
-      }
-   }
-
-   @Override
-   public boolean getAutoreloadOption() {
-      return options_.autoreloadDevices_;
-   }
 
    public double getPreferredWindowMag() {
       return options_.windowMag_;
@@ -1938,24 +1810,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       lineProfileData_.setData(line.getPixels());
    }
 
-   @Override
-   public void setROI(Rectangle r) throws MMScriptException {
-      boolean liveRunning = false;
-      if (isLiveModeOn()) {
-         liveRunning = true;
-         enableLiveMode(false);
-      }
-      try {
-         core_.setROI(r.x, r.y, r.width, r.height);
-      } catch (Exception e) {
-         throw new MMScriptException(e.getMessage());
-      }
-      updateStaticInfo();
-      if (liveRunning) {
-         enableLiveMode(true);
-      }
-
-   }
+  
 
    private void setROI() {
       ImagePlus curImage = WindowManager.getCurrentImage();
@@ -2520,39 +2375,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       return liveModeTimer_;
    }
    
-   @Override
-   public void enableLiveMode(boolean enable) {
-      if (core_ == null) {
-         return;
-      }
-      if (enable == isLiveModeOn()) {
-         return;
-      }
-      if (enable) {
-         try {
-            if (core_.getCameraDevice().length() == 0) {
-               ReportingUtils.showError("No camera configured");
-               updateButtonsForLiveMode(false);
-               return;
-            }
-            if (liveModeTimer_ == null) {
-               liveModeTimer_ = new LiveModeTimer();
-            }
-            liveModeTimer_.begin();
-            callLiveModeListeners(enable);
-         } catch (Exception e) {
-            ReportingUtils.showError(e);
-            liveModeTimer_.stop();
-            callLiveModeListeners(false);
-            updateButtonsForLiveMode(false);
-            return;
-         }
-      } else {
-         liveModeTimer_.stop();
-         callLiveModeListeners(enable);
-      }
-      updateButtonsForLiveMode(enable);
-   }
+   
 
    public void updateButtonsForLiveMode(boolean enable) {
       autoShutterCheckBox_.setEnabled(!enable);
@@ -2734,13 +2557,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
          ReportingUtils.logError(ex);
       }
       }
-   }
-
-
-   @Override
-   public boolean displayImage(TaggedImage ti) {
-      normalizeTags(ti);
-      return displayTaggedImage(ti, true);
    }
 
    private boolean displayTaggedImage(TaggedImage ti, boolean update) {
@@ -3169,6 +2985,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       return true;
    }
 
+   /*
    public void applyContrastSettings(ContrastSettings contrast8,
          ContrastSettings contrast16) {
       ImagePlus img = WindowManager.getCurrentImage();
@@ -3181,6 +2998,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
          VirtualAcquisitionDisplay.getDisplay(img).setChannelContrast(0, 
                  contrast16.min, contrast16.max, contrast16.gamma);
    }
+   */
 
    //TODO: Deprecated @Override
    public ContrastSettings getContrastSettings() {
@@ -3189,7 +3007,8 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
          return null;
       return VirtualAcquisitionDisplay.getDisplay(img).getChannelContrastSettings(0);
    }
-
+   
+/*
    public boolean is16bit() {
       ImagePlus ip = WindowManager.getCurrentImage();
       if (ip != null && ip.getProcessor() instanceof ShortProcessor) {
@@ -3197,6 +3016,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       }
       return false;
    }
+   * */
 
    public boolean isRunning() {
       return running_;
@@ -3472,9 +3292,32 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       return MMVersion.VERSION_STRING;
    }
    
+   /**
+    * Inserts version info for various components in the Corelog
+    */
+   @Override
+   public void logStartupProperties() {
+      core_.enableDebugLog(options_.debugLogEnabled_);
+      core_.logMessage("MM Studio version: " + getVersion());
+      core_.logMessage(core_.getVersionInfo());
+      core_.logMessage(core_.getAPIVersionInfo());
+      core_.logMessage("Operating System: " + System.getProperty("os.name") +
+              " (" + System.getProperty("os.arch") + ") " + System.getProperty("os.version"));
+      core_.logMessage("JVM: " + System.getProperty("java.vm.name") +
+              ", version " + System.getProperty("java.version") + ", " +
+              System.getProperty("sun.arch.data.model") + "-bit");
+   }
+   
    @Override
    public void makeActive() {
       toFront();
+   }
+   
+   
+   @Override
+   public boolean displayImage(TaggedImage ti) {
+      normalizeTags(ti);
+      return displayTaggedImage(ti, true);
    }
    
    /**
@@ -3494,7 +3337,91 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       configChanged_ = status;
       setConfigSaveButtonStatus(configChanged_);
    }
+    
+   /**
+    * Lets JComponents register themselves so that their background can be
+    * manipulated
+    */
+   @Override
+   public void addMMBackgroundListener(Component comp) {
+      if (MMFrames_.contains(comp))
+         return;
+      MMFrames_.add(comp);
+   }
 
+   /**
+    * Lets JComponents remove themselves from the list whose background gets
+    * changes
+    */
+   @Override
+   public void removeMMBackgroundListener(Component comp) {
+      if (!MMFrames_.contains(comp))
+         return;
+      MMFrames_.remove(comp);
+   }
+
+
+    /**
+    * Returns exposure time for the desired preset in the given channelgroup
+    * Acquires its info from the preferences
+    * Same thing is used in MDA window, but this class keeps its own copy
+    * 
+    * @param channelGroup
+    * @param channel - 
+    * @param defaultExp - default value
+    * @return exposure time
+    */
+   @Override
+   public double getChannelExposureTime(String channelGroup, String channel,
+           double defaultExp) {
+      return exposurePrefs_.getDouble("Exposure_" + channelGroup
+              + "_" + channel, defaultExp);
+   }
+
+   /**
+    * Updates the exposure time in the given preset 
+    * Will also update current exposure if it the given channel and channelgroup
+    * are the current one
+    * 
+    * @param channelGroup - 
+    * 
+    * @param channel - preset for which to change exposure time
+    * @param exposure - desired exposure time
+    */
+   @Override
+   public void setChannelExposureTime(String channelGroup, String channel,
+           double exposure) {
+      try {
+         exposurePrefs_.putDouble("Exposure_" + channelGroup + "_"
+                 + channel, exposure);
+         if (channelGroup != null && channelGroup.equals(core_.getChannelGroup())) {
+            if (channel != null && !channel.equals("") && 
+                    channel.equals(core_.getCurrentConfigFromCache(channelGroup))) {
+               textFieldExp_.setText(NumberUtils.doubleToDisplayString(exposure));
+               setExposure();
+            }
+         }
+      } catch (Exception ex) {
+         ReportingUtils.logError("Failed to set Exposure prefs using Channelgroup: "
+                 + channelGroup + ", channel: " + channel + ", exposure: " + exposure);
+      }
+   }
+     
+   @Override
+   public void enableRoiButtons(final boolean enabled) {
+       SwingUtilities.invokeLater(new Runnable() {
+           @Override
+           public void run() {
+               setRoiButton_.setEnabled(enabled);
+               clearRoiButton_.setEnabled(enabled);
+           }
+       });
+   }
+
+   @Override
+   public boolean getAutoreloadOption() {
+      return options_.autoreloadDevices_;
+   }
 
    /**
     * Returns the current background color
@@ -3525,6 +3452,15 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       return options_.displayBackground_;
    }
 
+   
+   @Override
+   public ImageWindow getSnapLiveWin() {
+      if (simpleDisplay_ == null) {
+         return null;
+      }
+      return simpleDisplay_.getHyperImage().getWindow();
+   }
+   
    
    /**
     * @Deprecated - used to be in api/AcquisitionEngine
@@ -3834,6 +3770,40 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    public String getCurrentAlbum() {
       return acqMgr_.getCurrentAlbum();
    }
+   
+   @Override
+   public void enableLiveMode(boolean enable) {
+      if (core_ == null) {
+         return;
+      }
+      if (enable == isLiveModeOn()) {
+         return;
+      }
+      if (enable) {
+         try {
+            if (core_.getCameraDevice().length() == 0) {
+               ReportingUtils.showError("No camera configured");
+               updateButtonsForLiveMode(false);
+               return;
+            }
+            if (liveModeTimer_ == null) {
+               liveModeTimer_ = new LiveModeTimer();
+            }
+            liveModeTimer_.begin();
+            callLiveModeListeners(enable);
+         } catch (Exception e) {
+            ReportingUtils.showError(e);
+            liveModeTimer_.stop();
+            callLiveModeListeners(false);
+            updateButtonsForLiveMode(false);
+            return;
+         }
+      } else {
+         liveModeTimer_.stop();
+         callLiveModeListeners(enable);
+      }
+      updateButtonsForLiveMode(enable);
+   }
 
    public String createNewAlbum() {
       return acqMgr_.createNewAlbum();
@@ -4062,6 +4032,11 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    @Override
    public MMAcquisition getAcquisition(String name) throws MMScriptException {
       return acqMgr_.getAcquisition(name);
+   }
+      
+   @Override
+   public ImageCache getAcquisitionImageCache(String acquisitionName) throws MMScriptException {
+      return getAcquisition(acquisitionName).getImageCache();
    }
 
    private class ScriptConsoleMessage implements Runnable {
@@ -4329,6 +4304,24 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
 	   getAcquisition(name).promptToSave(prompt);
    }
 
+    @Override
+   public void setROI(Rectangle r) throws MMScriptException {
+      boolean liveRunning = false;
+      if (isLiveModeOn()) {
+         liveRunning = true;
+         enableLiveMode(false);
+      }
+      try {
+         core_.setROI(r.x, r.y, r.width, r.height);
+      } catch (Exception e) {
+         throw new MMScriptException(e.getMessage());
+      }
+      updateStaticInfo();
+      if (liveRunning) {
+         enableLiveMode(true);
+      }
+
+   }
 
    public void snapAndAddToImage5D() {
       if (core_.getCameraDevice().length() == 0) {
@@ -4403,6 +4396,27 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       if (acqControlWin_ != null) {
          acqControlWin_.updateSavingTypeButtons();
       }
+   }
+   
+   
+   /**
+    * Allows MMListeners to register themselves
+    */
+   @Override
+   public void addMMListener(MMListenerInterface newL) {
+      if (MMListeners_.contains(newL))
+         return;
+      MMListeners_.add(newL);
+   }
+
+   /**
+    * Allows MMListeners to remove themselves
+    */
+   @Override
+   public void removeMMListener(MMListenerInterface oldL) {
+      if (!MMListeners_.contains(oldL))
+         return;
+      MMListeners_.remove(oldL);
    }
 
    @Override
