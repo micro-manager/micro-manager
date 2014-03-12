@@ -135,6 +135,8 @@ private:
   int ResizeImageBuffer();
   int SetupCamera();
   int CleanupSequenceAcquisition();
+  int SetNCheckROI(int Roix0, int Roix1, int Roiy0, int Roiy1);
+
 
   class SequenceThread : public MMDeviceThreadBase
   {
