@@ -29,6 +29,7 @@
 #include "../../MMDevice/DeviceThreads.h"
 #include "../../MMDevice/DeviceUtils.h"
 #include "Camera.h"
+#include "sc2_defs.h"
 #include <string>
 #include <map>
 
