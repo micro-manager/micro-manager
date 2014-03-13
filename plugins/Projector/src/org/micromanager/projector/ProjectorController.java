@@ -436,9 +436,11 @@ public class ProjectorController {
       ArrayList<Polygon> transformedROIs = new ArrayList<Polygon>();
       for (Roi roi : rois) {
          if ((roi.getType() == Roi.POINT)
+               || (roi.getType() == Roi.FREEROI)
                || (roi.getType() == Roi.POLYGON)
                || (roi.getType() == Roi.RECTANGLE)
-               || (roi.getType() == Roi.OVAL)) {
+               //|| (roi.getType() == Roi.OVAL)
+                 ) {
 
             Polygon poly = roi.getPolygon();
             Polygon newPoly = new Polygon();
