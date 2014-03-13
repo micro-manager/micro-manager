@@ -327,13 +327,13 @@ public class ReportProblemDialog extends javax.swing.JDialog {
          java.lang.reflect.Method totalMemMethod = sunOSMXBClass.getMethod("getTotalPhysicalMemorySize");
          if (includeConstantInfo) {
             long totalRAM = ((Long) totalMemMethod.invoke(osMXB)).longValue();
-            core_.logMessage("Total physical memory (4 GB max if JVM is 32-bit): " +
+            core_.logMessage("Total physical memory (caveats apply if JVM is 32-bit): " +
                     totalRAM + " (" + (totalRAM / 1024 / 1024) + "M)");
          }
 
          java.lang.reflect.Method freeMemMethod = sunOSMXBClass.getMethod("getFreePhysicalMemorySize");
          long freeRAM = ((Long) freeMemMethod.invoke(osMXB)).longValue();
-         core_.logMessage("Free physical memory (4 GB max if JVM is 32-bit): " +
+         core_.logMessage("Free physical memory (caveats apply if JVM is 32-bit): " +
                  freeRAM + " (" + (freeRAM / 1024 / 1024) + "M)");
       } catch (ClassNotFoundException exc) {
       } catch (NoSuchMethodException exc) {
