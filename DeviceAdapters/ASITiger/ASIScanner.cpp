@@ -309,17 +309,14 @@ int CScanner::Initialize()
       pAct = new CPropertyAction (this, &CScanner::OnSPIMScansPerSlice);
       CreateProperty(g_SPIMNumScansPerSlicePropertyName, "1", MM::Integer, false, pAct);
       UpdateProperty(g_SPIMNumScansPerSlicePropertyName);
-      SetPropertyLimits(g_SPIMNumScansPerSlicePropertyName, 1, 100);
 
       pAct = new CPropertyAction (this, &CScanner::OnSPIMNumSlices);
       CreateProperty(g_SPIMNumSlicesPropertyName, "1", MM::Integer, false, pAct);
       UpdateProperty(g_SPIMNumSlicesPropertyName);
-      SetPropertyLimits(g_SPIMNumSlicesPropertyName, 1, 100);
 
       pAct = new CPropertyAction (this, &CScanner::OnSPIMNumRepeats);
       CreateProperty(g_SPIMNumRepeatsPropertyName, "1", MM::Integer, false, pAct);
       UpdateProperty(g_SPIMNumRepeatsPropertyName);
-      SetPropertyLimits(g_SPIMNumRepeatsPropertyName, 1, 100);
 
       pAct = new CPropertyAction (this, &CScanner::OnSPIMNumSides);
       CreateProperty(g_SPIMNumSidesPropertyName, "1", MM::Integer, false, pAct);
@@ -334,12 +331,10 @@ int CScanner::Initialize()
 
       pAct = new CPropertyAction (this, &CScanner::OnSPIMDelayBeforeSide);
       CreateProperty(g_SPIMDelayBeforeSidePropertyName, "0", MM::Float, false, pAct);
-      SetPropertyLimits(g_SPIMDelayBeforeSidePropertyName, 0, 1000);
       UpdateProperty(g_SPIMDelayBeforeSidePropertyName);
 
       pAct = new CPropertyAction (this, &CScanner::OnSPIMDelayBeforeSlice);
       CreateProperty(g_SPIMDelayBeforeSlicePropertyName, "0", MM::Float, false, pAct);
-      SetPropertyLimits(g_SPIMDelayBeforeSlicePropertyName, 0, 1000);
       UpdateProperty(g_SPIMDelayBeforeSlicePropertyName);
 
       pAct = new CPropertyAction (this, &CScanner::OnSPIMState);
