@@ -52,6 +52,7 @@ typedef unsigned long dword;    /* 32-bit */
 #include "PCO_err.h"
 #include "PCO_errt.h"
 #include "sc2_SDKStructures.h"
+#include "sc2_defs.h"
 
 extern void InitLib(unsigned char, char*, int, char*);
 #define MMIJ 5

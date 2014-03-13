@@ -2052,7 +2052,8 @@ int CPCOCam::SnapImage()
     m_pCamera->StartCam();
   }
 
-  m_pCamera->ResetEvWait();
+  if(!m_bSequenceRunning)              // Don't do it when sequenceing
+    m_pCamera->ResetEvWait();
 
   m_iLastBufferUsed[0] = m_iNextBuffer;
 
