@@ -46,6 +46,13 @@ public class ListeningJPanel extends JPanel {
    public void gotSelected() {};
    
    /**
+    * Will be called when this Panel was active in the parent TabbedPanel
+    *  and another one is becoming active instead 
+    */
+   public void gotDeSelected() {};
+   
+   
+   /**
     * Should force the panel to write its current settings to its preferences
     */
    public void saveSettings() {};

@@ -130,8 +130,11 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
       
       // make sure gotSelected() gets called whenever we switch tabs
       tabbedPane.addChangeListener(new ChangeListener() {
+         int lastSelectedIndex_ = tabbedPane.getSelectedIndex();
          public void stateChanged(ChangeEvent e) {
+            ((ListeningJPanel) tabbedPane.getComponentAt(lastSelectedIndex_)).gotDeSelected();
             ((ListeningJPanel) tabbedPane.getSelectedComponent()).gotSelected();
+            lastSelectedIndex_ = tabbedPane.getSelectedIndex();
          }
       });
       
