@@ -90,6 +90,8 @@ public class Properties {
       FIRMWARE_VERSION("FirmwareVersion"),
       CAMERA("Camera"),
       PLUGIN_POSITION_REFRESH_INTERVAL("PositionRefreshInterval(s)"),
+      PLUGIN_NUM_ACQUISITIONS("NumberOfAcquisitions"),
+      PLUGIN_ACQUISITION_PERIOD("AcquisitionPeriod"),
       ;
       private final String text;
       Keys(String text) {
