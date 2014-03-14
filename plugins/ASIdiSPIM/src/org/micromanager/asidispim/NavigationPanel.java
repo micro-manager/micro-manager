@@ -200,7 +200,10 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       }; 
       activeTimerCheckBox.addActionListener(ae);
       activeTimerCheckBox.setSelected(prefs_.getBoolean(panelName_, Prefs.Keys.ENABLE_POSITION_UPDATES, true));
-      ae.actionPerformed(null);
+      // programmatically click twice to make sure the action handler is called;
+      //   it is not called by setSelected unless there is a change in the value
+      activeTimerCheckBox.doClick();
+      activeTimerCheckBox.doClick();
       add(activeTimerCheckBox, "center, span 2");
       
       add(new JLabel(devices_.getDeviceDisplayVerbose(Devices.Keys.GALVOB, Joystick.Directions.Y) + ":"));

@@ -81,7 +81,10 @@ public class GuiSettingsPanel extends ListeningJPanel {
       ChangeListener listenerLast = new ChangeListener() {
          @Override
          public void stateChanged(ChangeEvent e) {
-            stagePosUpdater_.start();
+            if (stagePosUpdater_.isRunning()) {
+               // restart, doing this grabs the interval from the plugin property
+               stagePosUpdater_.start();
+            }
          }
       };
       pu.addListenerLast(positionRefreshInterval_, listenerLast);
