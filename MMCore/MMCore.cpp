@@ -301,7 +301,7 @@ void CMMCore::clearLog()
 {
    getLoggerInstance()->Reset();
    CORE_LOG("-------->>\n");
-   CORE_LOG("\nLog cleared and re-started by %s on %s\n", getUserId().c_str(), getHostName().c_str());
+   CORE_LOG("Log cleared and re-started by %s on %s\n", getUserId().c_str(), getHostName().c_str());
 }
 
 /**
