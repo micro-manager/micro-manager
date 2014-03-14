@@ -28,6 +28,7 @@ import java.beans.PropertyChangeListener;
 import java.util.Hashtable;
 
 import javax.swing.JComboBox;
+import javax.swing.JComponent;
 import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JSlider;
@@ -184,6 +185,9 @@ public class PanelUtils {
       jsp.addChangeListener(ispl);
       devs.addListener(ispl);
       props.addListener(ispl);
+      JComponent editor = jsp.getEditor();
+      JFormattedTextField tf = ((JSpinner.DefaultEditor) editor).getTextField();
+      tf.setColumns(4);
       return jsp;
    }
    
@@ -267,6 +271,9 @@ public class PanelUtils {
       jsp.addChangeListener(ispl);
       devs.addListener(ispl);
       props.addListener(ispl);
+      JComponent editor = jsp.getEditor();
+      JFormattedTextField tf = ((JSpinner.DefaultEditor) editor).getTextField();
+      tf.setColumns(4);
       return jsp;
    }
 

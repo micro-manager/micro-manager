@@ -65,6 +65,7 @@ public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerI
    private final AcquisitionWrapperEngine acqEngine_;
    private final CMMCore core_;
 //   private final ScriptInterface gui_;
+   private final String panelName_;
 
    private final JSpinner numSlices_;
    private final JSpinner numSides_;
@@ -103,6 +104,7 @@ public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerI
       prefs_ = prefs;
       acqEngine_ = MMStudioMainFrame.getInstance().getAcquisitionEngine();
       core_ = MMStudioMainFrame.getInstance().getCore();
+      panelName_ = super.panelName_;
       numAcquisitionsDone_ = 0;
 
       PanelUtils pu = new PanelUtils();
@@ -165,23 +167,30 @@ public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerI
             Properties.Keys.SPIM_DELAY_SIDE);
       acqPanel_.add(delaySide_, "wrap");
       
-      JButton buttonSaveSettings_ = new JButton("Save settings");
-      buttonSaveSettings_.setToolTipText("Saves settings to piezo and galvo cards on controller");
-      buttonSaveSettings_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            props_.setPropValue(Devices.Keys.PIEZOA, Properties.Keys.SAVE_CARD_SETTINGS, Properties.Values.DO_SSZ, true);
-            props_.setPropValue(Devices.Keys.PIEZOB, Properties.Keys.SAVE_CARD_SETTINGS, Properties.Values.DO_SSZ, true);
-            props_.setPropValue(Devices.Keys.GALVOA, Properties.Keys.SAVE_CARD_SETTINGS, Properties.Values.DO_SSZ, true);
-            props_.setPropValue(Devices.Keys.GALVOB, Properties.Keys.SAVE_CARD_SETTINGS, Properties.Values.DO_SSZ, true);
-         }
-      });
-      acqPanel_.add(buttonSaveSettings_, "span 2, center, wrap");
-      
-      // add acquisition sub-panel to tabbed pane
-      add(acqPanel_, "span 2 10, wrap");
-      
       // end acquisition sub-panel
+      
+      // start camera sub-panel
+      
+      camPanel_ = new JPanel(new MigLayout(
+            "",
+            "[right]16[center]",
+            "[]12[]"));
+      
+      myBorder = BorderFactory.createTitledBorder("Camera Settings");
+      myBorder.setTitleJustification(TitledBorder.CENTER);
+      camPanel_.setBorder(myBorder);
+      
+      cameraPanel_ = new CameraSubPanel(cameras_, devices_, panelName_, Devices.Sides.NONE, prefs_, false);
+      camPanel_.add(cameraPanel_, "center, span 2");
+      
+//      camPanel.add(new JLabel("Exposure (ms):"));
+//      acqExposure_ = new JFormattedTextField(new NumberFormatter());
+//      acqExposure_.setColumns(5);
+//      acqExposure_.setText(prefs_.getString(panelName_, Prefs.Keys.SPIM_EXPOSURE, "10"));
+//      camPanel.add(acqExposure_, "wrap");
+      
+      
+      // end camera sub-panes
       
       // start repeat sub-panel
       
@@ -195,42 +204,24 @@ public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerI
       loopPanel_.setBorder(myBorder);
       
       loopPanel_.add(new JLabel("Number of acquisitions:"));
+      // create plugin "property" for number of acquisitions
+      props_.setPropValue(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_NUM_ACQUISITIONS, 
+            prefs_.getInt(panelName_, Properties.Keys.PLUGIN_NUM_ACQUISITIONS, 1));
       numAcquisitions_ = pu.makeSpinnerInteger(1, 32000, props_, devices_, 
             new Devices.Keys [] {Devices.Keys.PLUGIN},
             Properties.Keys.PLUGIN_NUM_ACQUISITIONS);
       loopPanel_.add(numAcquisitions_, "wrap");
       
       loopPanel_.add(new JLabel("Acquisition interval (s):"));
+      // create plugin "property" for acquisition interval
+      props_.setPropValue(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_ACQUISITION_INTERVAL, 
+            prefs_.getFloat(panelName_, Properties.Keys.PLUGIN_ACQUISITION_INTERVAL, 60));
       acquisitionInterval_ = pu.makeSpinnerFloat(1, 32000, 0.1, props_, devices_, 
             new Devices.Keys [] {Devices.Keys.PLUGIN},
-            Properties.Keys.PLUGIN_ACQUISITION_PERIOD);
+            Properties.Keys.PLUGIN_ACQUISITION_INTERVAL);
       loopPanel_.add(acquisitionInterval_, "wrap");
       
-      add(loopPanel_, "span 2 3, wrap");
-      
       // end repeat sub-panel
-      
-      // start camera sub-panel
-      
-      camPanel_ = new JPanel(new MigLayout(
-            "",
-            "[right]16[center]",
-            "[]12[]"));
-      
-      myBorder = BorderFactory.createTitledBorder("Camera Settings");
-      myBorder.setTitleJustification(TitledBorder.CENTER);
-      camPanel_.setBorder(myBorder);
-      
-      cameraPanel_ = new CameraSubPanel(cameras_, devices_, this.panelName_, Devices.Sides.NONE, prefs_, false);
-      camPanel_.add(cameraPanel_, "center, span 2");
-      
-//      camPanel.add(new JLabel("Exposure (ms):"));
-//      acqExposure_ = new JFormattedTextField(new NumberFormatter());
-//      acqExposure_.setColumns(5);
-//      acqExposure_.setText(prefs_.getString(super.panelName_, Prefs.Keys.SPIM_EXPOSURE, "10"));
-//      camPanel.add(acqExposure_, "wrap");
-      
-      add(camPanel_, "cell 2 4, span 2 2, wrap");
       
       acqTimer_ = null;
       acqTask_ = null;
@@ -242,19 +233,12 @@ public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerI
             numAcquisitionsDone_ = 0;
             acqTimer_ = new Timer(true); // once cancelled we need to create a new one
             acqTask_ = new AcquisitionTask();
-            float f = 0;
-            try {
-               f = (float)((Double)acquisitionInterval_.getValue()).doubleValue();
-            } catch (Exception ex) {
-               f = ((Float)acquisitionInterval_.getValue()).floatValue();
-            }
-            int rate = (int)(f*1000); 
-            acqTimer_.scheduleAtFixedRate(acqTask_, 0, rate);
+            float f = props_.getPropValueFloat(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_ACQUISITION_INTERVAL);
+            acqTimer_.scheduleAtFixedRate(acqTask_, 0, (long)(f*1000));
             buttonStart_.setEnabled(false);
             buttonStop_.setEnabled(true);
          }
       });
-      add(buttonStart_, "cell 2 7, center");
       
       buttonStop_ = new JButton("Stop!");
       buttonStop_.setEnabled(false);
@@ -266,12 +250,17 @@ public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerI
             buttonStart_.setEnabled(true);
          }
       });
-      add(buttonStop_, "cell 3 7, center");
       
       numAcquisitionsDoneLabel_ = new JLabel("");
       updateAcquisitionCountLabel();
-      add(numAcquisitionsDoneLabel_, "cell 3 8, center");
       
+      // set up tabbed pane
+      add(acqPanel_, "dock west");
+      add(camPanel_, "cell 0 0 2 3");
+      add(loopPanel_, "cell 2 0 2 3");
+      add(buttonStart_, "cell 2 7, center");
+      add(buttonStop_, "cell 3 7, center");
+      add(numAcquisitionsDoneLabel_, "cell 2 8 2 1, center");
             
    }//end constructor
    
@@ -285,11 +274,12 @@ public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerI
    private class AcquisitionTask extends TimerTask {
       @Override
       public void run() {
-         if (numAcquisitionsDone_ >= ((Integer)numAcquisitions_.getValue()).intValue()) {
+         if (numAcquisitionsDone_ >= props_.getPropValueInteger(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_NUM_ACQUISITIONS)) {
             buttonStop_.doClick();
          } else {
-            startAcquisition();
-            numAcquisitionsDone_++;
+            if (startAcquisition()) {
+               numAcquisitionsDone_++;
+            }
          }
          updateAcquisitionCountLabel();
       }
@@ -298,17 +288,19 @@ public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerI
    
    /**
     * Performs an acquisition using the Micro-manager AcquisitionEngine object
+    * @return true if successfully started acquisition
     */
-   private void startAcquisition() {
+   private boolean startAcquisition() {
     if (acqEngine_.isAcquisitionRunning()) {
-       ReportingUtils.showError("Already running another acquisition!");
-       return;
+//       ReportingUtils.showError("Already running another acquisition!");
+       ReportingUtils.logError("diSPIM plugin can't start acquisition while another acquisition happening");
+       return false;
     }
     try {
        // set up cameras
        if (!cameras_.isCurrentCameraValid()) {
           ReportingUtils.showError("No camera set for acquisition!");
-          return;
+          return false;
        }
        // TODO warn user if acquisition interval is too low
        cameras_.enableLiveMode(false);
@@ -342,15 +334,27 @@ public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerI
        // clean up
     } catch (MMException ex) {
        ReportingUtils.showError(ex);
+       return false;
     } catch (Exception e1) {
        ReportingUtils.showError(e1);
+       return false;
     }
+    return true;
  
    }
    
    @Override
    public void saveSettings() {
-//      prefs_.putString(super.panelName_, Prefs.Keys.SPIM_EXPOSURE, acqExposure_.getText());
+//      prefs_.putString(panelName_, Prefs.Keys.SPIM_EXPOSURE, acqExposure_.getText());
+      prefs_.putInt(panelName_, Properties.Keys.PLUGIN_NUM_ACQUISITIONS,
+            props_.getPropValueInteger(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_NUM_ACQUISITIONS));
+      prefs_.putFloat(panelName_, Properties.Keys.PLUGIN_ACQUISITION_INTERVAL,
+            props_.getPropValueFloat(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_ACQUISITION_INTERVAL));
+      // save controller settings
+      props_.setPropValue(Devices.Keys.PIEZOA, Properties.Keys.SAVE_CARD_SETTINGS, Properties.Values.DO_SSZ, true);
+      props_.setPropValue(Devices.Keys.PIEZOB, Properties.Keys.SAVE_CARD_SETTINGS, Properties.Values.DO_SSZ, true);
+      props_.setPropValue(Devices.Keys.GALVOA, Properties.Keys.SAVE_CARD_SETTINGS, Properties.Values.DO_SSZ, true);
+      props_.setPropValue(Devices.Keys.GALVOB, Properties.Keys.SAVE_CARD_SETTINGS, Properties.Values.DO_SSZ, true);
    }
 
    /**

@@ -58,6 +58,7 @@ public class Prefs {
       ENABLE_BEAM_SETTINGS("EnableBeamSettings"),
       SPIM_EXPOSURE("AcquisitionExposure"),
       POSITION_REFRESH_INTERVAL("PositionRefreshInterval"),
+      // can also use the name of the property as the key
       NONE("None");
       private final String text;
       Keys(String text) {

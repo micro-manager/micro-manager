@@ -91,7 +91,7 @@ public class Properties {
       CAMERA("Camera"),
       PLUGIN_POSITION_REFRESH_INTERVAL("PositionRefreshInterval(s)"),
       PLUGIN_NUM_ACQUISITIONS("NumberOfAcquisitions"),
-      PLUGIN_ACQUISITION_PERIOD("AcquisitionPeriod"),
+      PLUGIN_ACQUISITION_INTERVAL("AcquisitionPeriod"),
       ;
       private final String text;
       Keys(String text) {
