@@ -23,8 +23,8 @@
 
 
 
-#ifndef _XLIGHT_H_
-#define _XLIGHT_H_
+#ifndef _XLUPD_H_
+#define _XLUPD_H_
 
 #include "../../MMDevice/MMDevice.h"
 #include "../../MMDevice/DeviceBase.h"
@@ -64,33 +64,7 @@ private:
     // Has a command been sent to which no answer has been received yet?
     bool pendingCommand_;
 };
-
-class SpeckleReducer : public CStateDeviceBase<SpeckleReducer> {
-public:
-    SpeckleReducer();
-    ~SpeckleReducer();
-
-    int Initialize();
-    int Shutdown();
-
-    void GetName(char* pszName) const;
-    bool Busy();
-
-    unsigned long GetNumberOfPositions()const {
-        return numPos_;
-    }
-
-    // action interface                                                       
-    // ----------------                                                       
-    int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
-
-private:
-    bool initialized_;
-	unsigned numPos_;
-    long pos_;
-    std::string name_;
-    int state_;
-};
+ 
 
  
  

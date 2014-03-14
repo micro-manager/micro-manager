@@ -52,12 +52,8 @@ public:
     }
     bool IsBusy();
 
-    int SetSpeckleReducerPosition(MM::Device& device, MM::Core& core, int pos);
-    int GetSpeckleReducerPosition(MM::Device& device, MM::Core& core, int pos);
-
- 
-    int SetDichroicPosition(MM::Device& device, MM::Core& core, int pos);
-    int GetDichroicPosition(MM::Device& device, MM::Core& core, int pos);
+    int SetDichroicPosition(MM::Device& device, MM::Core& core, int pos, int delay);
+    int GetDichroicPositionEcho(MM::Device& device, MM::Core& core, int pos);
 
 	int SetEmissionWheelPosition(MM::Device& device, MM::Core& core, int pos);
     int GetEmissionWheelPosition(MM::Device& device, MM::Core& core, int pos);
@@ -68,9 +64,8 @@ public:
     int SetTouchScreenState(MM::Device& device, MM::Core& core, int state);
     int GetTouchScreenState(MM::Device& device, MM::Core& core, int state);
 
-    int SetDiskSliderPosition(MM::Device& device, MM::Core& core, int pos);
-    int GetDiskSliderPosition(MM::Device& device, MM::Core& core, int pos);
-
+    int SetDiskSliderPosition(MM::Device& device, MM::Core& core, int pos, int delay);
+ 	int GetXlightCommandEcho(MM::Device& device, MM::Core& core);
  
     int StartSpinningDisk(MM::Device& device, MM::Core& core);
 

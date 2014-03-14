@@ -50,70 +50,34 @@ XLIGHTHub::~XLIGHTHub() {
 // Device commands
 ///////////////////////////////////////////////////////////////////////////////
 
-/* SpeckleReducer
- * 0 = closed
- * 1 = open
- */
-
-int XLIGHTHub::SetSpeckleReducerPosition(MM::Device& device, MM::Core& core, int pos) {
-    ostringstream os;
-    os << "L" << pos;
-	bool succeeded = false;
-    int counter = 0;
-    int ret = DEVICE_OK;
-    //return ExecuteCommand(device, core, os.str().c_str());
-	// try up to 10 times
-    while (!succeeded && counter < 10) {
-        ret = ExecuteCommand(device, core, os.str().c_str());
-
-        //to ensure wheel finishes movement, CARVII does not signal movement succeeded
-        CDeviceUtils::SleepMs(deviceWaitMs_);
-
-        if (ret != DEVICE_OK)
-            counter++;
-        else
-            succeeded = true;
-    }
-    if (!succeeded)
-        return ret;
-
-    return DEVICE_OK;
-}
-
-int XLIGHTHub::GetSpeckleReducerPosition(MM::Device& device, MM::Core& core, int pos) {
-    ClearAllRcvBuf(device, core);
-    int ret = ExecuteCommand(device, core, "rL");
-    // analyze what comes back:
-    ret = core.GetSerialAnswer(&device, port_.c_str(), RCV_BUF_LENGTH, rcvBuf_, "\r");
-    if (ret != DEVICE_OK)
-        return ret;
-    //CARVII echoes command, SpeckleReducer position is in bit 3
-    pos = rcvBuf_[2];
-
-    return DEVICE_OK;
-}
-
  
- 
-int XLIGHTHub::SetDichroicPosition(MM::Device& device, MM::Core& core, int pos) {
+int XLIGHTHub::SetDichroicPosition(MM::Device& device, MM::Core& core, int pos, int delay) {
     int posCommand = pos + 1; //MM positions start at 0, CARVII pos start at 1
     ostringstream os;
     os << "C" << posCommand;
     bool succeeded = false;
-    int counter = 0;
+    //int counter = 0;
     int ret = DEVICE_OK;
+	deviceWaitMs_ = delay;
 
-    // try up to 10 times
-    while (!succeeded && counter < 10) {
+ 
+	 while (!succeeded ) {
         ret = ExecuteCommand(device, core, os.str().c_str());
 
-        //to ensure wheel finishes movement, CARVII does not signal movement succeeded
-        CDeviceUtils::SleepMs(deviceWaitMs_);
-
-        if (ret != DEVICE_OK)
-            counter++;
-        else
-            succeeded = true;
+        //to ensure wheel finishes movement, query the serial line waiting for echoed 
+		// command executed which means XLight accomplished the movement
+        
+		//time_t now = time(0);
+		//char* dt = ctime(&now);
+		GetXlightCommandEcho(device,core);
+		
+       if (ret != DEVICE_OK)
+            continue;
+        else {
+		 
+			CDeviceUtils::SleepMs(deviceWaitMs_);
+			succeeded = true;
+		}
     }
     if (!succeeded)
         return ret;
@@ -121,15 +85,14 @@ int XLIGHTHub::SetDichroicPosition(MM::Device& device, MM::Core& core, int pos) 
     return DEVICE_OK;
 }
 
-int XLIGHTHub::GetDichroicPosition(MM::Device& device, MM::Core& core, int pos) {
+int XLIGHTHub::GetDichroicPositionEcho(MM::Device& device, MM::Core& core, int pos) {
     ClearAllRcvBuf(device, core);
     int ret = ExecuteCommand(device, core, "rC");
     ret = core.GetSerialAnswer(&device, port_.c_str(), RCV_BUF_LENGTH, rcvBuf_, "\r");
     if (ret != DEVICE_OK)
         return ret;
 
-    // CARVII echoes command, dichroic position is in bit 3
-    pos = rcvBuf_[2];
+     pos = rcvBuf_[2];
 
     return DEVICE_OK;
 }
@@ -137,22 +100,24 @@ int XLIGHTHub::GetDichroicPosition(MM::Device& device, MM::Core& core, int pos) 
 int XLIGHTHub::SetEmissionWheelPosition(MM::Device& device, MM::Core& core, int pos) {
     int posCommand = pos + 1; //MM positions start at 0, CARVII pos start at 1
     ostringstream os;
-    os << "E" << posCommand;
+    os << "B" << posCommand;
     bool succeeded = false;
-    int counter = 0;
+    //int counter = 0;  
     int ret = DEVICE_OK;
 
     // try up to 10 times
-    while (!succeeded && counter < 10) {
+    while (!succeeded) {
         ret = ExecuteCommand(device, core, os.str().c_str());
 
         //to ensure wheel finishes movement, CARVII does not signal movement succeeded
-        CDeviceUtils::SleepMs(deviceWaitMs_);
+       GetXlightCommandEcho(device,core);
+		
 
         if (ret != DEVICE_OK)
-            counter++;
-        else
-            succeeded = true;
+            continue;
+        else{
+			CDeviceUtils::SleepMs(deviceWaitMs_);
+			succeeded = true;}
     }
     if (!succeeded)
         return ret;
@@ -178,16 +143,15 @@ int XLIGHTHub::SetSpinMotorState(MM::Device& device, MM::Core& core, int state) 
     os << "N" << state;
     bool succeeded = false;
     int counter = 0;
-
     int ret = DEVICE_OK;
-
+	deviceWaitMs_ = 15;
     // try up to 10 times
     while (!succeeded && counter < 10) {
         ret = ExecuteCommand(device, core, os.str().c_str());
 
         //to ensure wheel finishes movement, CARVII does not signal movement succeeded
         CDeviceUtils::SleepMs(deviceWaitMs_);
-
+		 
         if (ret != DEVICE_OK)
             counter++;
         else
@@ -247,43 +211,58 @@ int XLIGHTHub::GetTouchScreenState(MM::Device& device, MM::Core& core, int state
     return DEVICE_OK;
 }
 
-int XLIGHTHub::SetDiskSliderPosition(MM::Device& device, MM::Core& core, int pos) {
-    ostringstream os;
+int XLIGHTHub::SetDiskSliderPosition(MM::Device& device, MM::Core& core, int pos, int delay) {
+	
+    deviceWaitMs_ = delay;
+	ostringstream os;
     os << "D" << pos;
     bool succeeded = false;
-    int counter = 0;
-
+ 
     int ret = DEVICE_OK;
-
-    // try up to 10 times
-    while (!succeeded && counter < 10) {
+      // try up to 10 times
+ 	 while (!succeeded ) {
         ret = ExecuteCommand(device, core, os.str().c_str());
 
-        //to ensure wheel finishes movement, CARVII does not signal movement succeeded
-        CDeviceUtils::SleepMs(deviceWaitMs_);
-
-        if (ret != DEVICE_OK)
-            counter++;
-        else 
-            succeeded = true;
+        //to ensure wheel finishes movement, query the serial line waiting for echoed 
+		// command executed which means XLight accomplished the movement
+        
+		//time_t now = time(0);
+		//char* dt = ctime(&now);
+		GetXlightCommandEcho(device,core);
+		
+       if (ret != DEVICE_OK)
+            continue;
+        else {
+		 
+			CDeviceUtils::SleepMs(deviceWaitMs_);
+			succeeded = true;
+		}
     }
     if (!succeeded)
         return ret;
-
-    return DEVICE_OK;
+	 
+	return DEVICE_OK;
 }
 
-int XLIGHTHub::GetDiskSliderPosition(MM::Device& device, MM::Core& core, int pos) {
-    ClearAllRcvBuf(device, core);
-    int ret = ExecuteCommand(device, core, "rD");
-    ret = core.GetSerialAnswer(&device, port_.c_str(), RCV_BUF_LENGTH, rcvBuf_, "\r");
-    if (ret != DEVICE_OK)
-        return ret;
+int XLIGHTHub::GetXlightCommandEcho(MM::Device& device, MM::Core& core) {
+     ClearAllRcvBuf(device, core);
+	 int ret = 0;
+   
 
-    // CARVII echoes command, motor state is in bit 3
-    pos = rcvBuf_[2];
-
-    return DEVICE_OK;
+    // XLight echoes command, motor state starting from bit 0
+    
+	 
+	while (rcvBuf_[0] == 0)
+	{
+		ret = core.GetSerialAnswer(&device, port_.c_str(), RCV_BUF_LENGTH, rcvBuf_, "\r");
+	 
+	}
+	 if (rcvBuf_[0] == 68 || rcvBuf_[0] == 67){
+		 //time_t after = time(0);
+		//char* dt = ctime(&after);
+		 return DEVICE_OK;}
+	 else 
+		 return ret;
 }
 
  
@@ -337,8 +316,8 @@ int XLIGHTHub::ExecuteCommand(MM::Device& device, MM::Core& core, const char* co
     //FetchSerialData(device, core);
 
     ClearAllRcvBuf(device, core);
-
     // send command
     return core.SetSerialCommand(&device, port_.c_str(), command, "\r");
- 
+ 	
+	
 }

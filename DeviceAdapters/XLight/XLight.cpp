@@ -36,7 +36,7 @@
 #include <iostream>
 
 const char* g_XLIGHTHub = "XLIGHT Hub";
-const char* g_XLIGHTSpeckleReducer = "XLIGHT SpeckleReducer";
+//const char* g_XLIGHTSpeckleReducer = "XLIGHT SpeckleReducer";
 const char* g_XLIGHTDichroicFilter = "XLIGHT Dichroic";
 const char* g_XLIGHTDiskSlider = "XLIGHT Disk slider";
 const char* g_XLIGHTSpinMotor = "XLIGHT Spin motor";
@@ -54,7 +54,7 @@ XLIGHTHub g_hub;
 MODULE_API void InitializeModuleData() {
  
 	RegisterDevice(g_XLIGHTHub, MM::GenericDevice, "Hub (Needed for XLIGHT)");
-    RegisterDevice(g_XLIGHTSpeckleReducer, MM::StateDevice, "Confocal SpeckleReducer");
+    //RegisterDevice(g_XLIGHTSpeckleReducer, MM::StateDevice, "Confocal SpeckleReducer");
     RegisterDevice(g_XLIGHTDichroicFilter, MM::StateDevice, "Confocal dichroic wheel");
     RegisterDevice(g_XLIGHTDiskSlider, MM::StateDevice, "Spinning disk slider");
     RegisterDevice(g_XLIGHTSpinMotor, MM::StateDevice, "Spinning disk motor");
@@ -68,9 +68,9 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName) {
 
     if (strcmp(deviceName, g_XLIGHTHub) == 0) {
         return new Hub();
-    } else if (strcmp(deviceName, g_XLIGHTSpeckleReducer) == 0) {
+    } /*else if (strcmp(deviceName, g_XLIGHTSpeckleReducer) == 0) {
         return new SpeckleReducer();
-    } else if (strcmp(deviceName, g_XLIGHTDichroicFilter) == 0) {
+    }*/ else if (strcmp(deviceName, g_XLIGHTDichroicFilter) == 0) {
         return new Dichroic();
     } else if (strcmp(deviceName, g_XLIGHTDiskSlider) == 0) {
         return new DiskSlider();
@@ -198,137 +198,7 @@ int Hub::OnPort(MM::PropertyBase* pProp, MM::ActionType eAct) {
     return DEVICE_OK;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-// XLIGHT SpeckleReducer
-///////////////////////////////////////////////////////////////////////////////
-
-SpeckleReducer::SpeckleReducer() :
-initialized_(false),
-numPos_(2),
-pos_(0),
-name_(g_XLIGHTSpeckleReducer)
-{
-
-    InitializeDefaultErrorMessages();
-
-    // Todo: Add custom messages
-}
-
-SpeckleReducer::~SpeckleReducer() {
-
-    Shutdown();
-}
-
-void SpeckleReducer::GetName(char* name) const {
-
-    assert(name_.length() < CDeviceUtils::GetMaxStringLength());
-    CDeviceUtils::CopyLimitedString(name, name_.c_str());
-}
-
-int SpeckleReducer::Initialize() {
-    // Name
-    int ret = CreateProperty(MM::g_Keyword_Name, name_.c_str(), MM::String, true);
-    if (DEVICE_OK != ret)
-        return ret;
-
-    // Description
-    ret = CreateProperty(MM::g_Keyword_Description, "XLIGHT SpeckleReducer", MM::String, true);
-    if (DEVICE_OK != ret)
-        return ret;
-
-    // State
-    CPropertyAction * pAct = new CPropertyAction(this, &SpeckleReducer::OnState);
-	ret = CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct);
-	if (ret != DEVICE_OK)
-        return ret;
-    AddAllowedValue(MM::g_Keyword_State, "0");
-    AddAllowedValue(MM::g_Keyword_State, "1");
-
-	pAct = new CPropertyAction(this, &CStateBase::OnLabel);
-    ret = CreateProperty(MM::g_Keyword_Label, "Undefined", MM::String, false, pAct);
-    if (ret != DEVICE_OK)
-        return ret;
-
-    // create default positions and labels
-    SetPositionLabel(0, "Power Disable");
-    SetPositionLabel(1, "Power Enable");
  
-    ret = UpdateStatus();
-    if (ret != DEVICE_OK)
-        return ret;
-
-    initialized_ = true;
-
-    return DEVICE_OK;
-}
-
-bool SpeckleReducer::Busy() {
-    // Who knows?
-
-    return false;
-}
-
-int SpeckleReducer::Shutdown() {
-    if (initialized_) {
-
-        initialized_ = false;
-    }
-    return DEVICE_OK;
-}
-
-  
-
-///////////////////////////////////////////////////////////////////////////////
-// Action handlers                                                           
-///////////////////////////////////////////////////////////////////////////////
-
-int SpeckleReducer::OnState(MM::PropertyBase* pProp, MM::ActionType eAct) {
-	   if (eAct == MM::BeforeGet) {
-        // return pos as we know it
-        pProp->Set(pos_);
-    } else if (eAct == MM::AfterSet) {
-        long pos;
-        pProp->Get(pos);
-        if (pos == pos_)
-            return DEVICE_OK;
-        if (pos < 0)
-            pos = 0;
-        else if (pos > 1)
-            pos = 1;
-        int ret = g_hub.SetSpinMotorState(*this, *GetCoreCallback(), pos);
-        if (ret == DEVICE_OK) {
-            pos_ = pos;
-            pProp->Set(pos_);
-            return DEVICE_OK;
-        } else
-            return ret;
-    }
-/*    if (eAct == MM::BeforeGet) {
-        // return pos as we know it
-        if (state_ == 1)
-            pProp->Set("Open");
-        else
-            pProp->Set("Closed");
-    } else if (eAct == MM::AfterSet) {
-        std::string state;
-        pProp->Get(state);
-        if (state == "Open") {
-            pProp->Set("Open");
-            return this->SetOpen(true);
-        } else {
-            pProp->Set("Closed");
-
-            return this->SetOpen(false);
-        }
-    }*/
-    return DEVICE_OK;
-}
-
-
- 
-
- 
-
 ///////////////////////////////////////////////////////////////////////////////
 // XLIGHT Dichroic Filters
 ///////////////////////////////////////////////////////////////////////////////
@@ -419,6 +289,7 @@ int Dichroic::Shutdown() {
 ///////////////////////////////////////////////////////////////////////////////
 
 int Dichroic::OnState(MM::PropertyBase* pProp, MM::ActionType eAct) {
+    int delay = 90;
     if (eAct == MM::BeforeGet) {
         // return pos as we know it
         pProp->Set(pos_);
@@ -431,7 +302,7 @@ int Dichroic::OnState(MM::PropertyBase* pProp, MM::ActionType eAct) {
             pos = 0;
         else if (pos > 4)
             pos = 4;
-        int ret = g_hub.SetDichroicPosition(*this, *GetCoreCallback(), pos);
+        int ret = g_hub.SetDichroicPosition(*this, *GetCoreCallback(), pos, delay);
         if (ret == DEVICE_OK) {
             pos_ = pos;
             pProp->Set(pos_);
@@ -538,6 +409,7 @@ int Emission::Shutdown() {
 ///////////////////////////////////////////////////////////////////////////////
 
 int Emission::OnState(MM::PropertyBase* pProp, MM::ActionType eAct) {
+    int delay = 75;
     if (eAct == MM::BeforeGet) {
         // return pos as we know it
         pProp->Set(pos_);
@@ -550,7 +422,7 @@ int Emission::OnState(MM::PropertyBase* pProp, MM::ActionType eAct) {
             pos = 0;
         else if (pos > 7)
             pos = 7;
-        int ret = g_hub.SetDichroicPosition(*this, *GetCoreCallback(), pos);
+        int ret = g_hub.SetDichroicPosition(*this, *GetCoreCallback(), pos, delay);
         if (ret == DEVICE_OK) {
             pos_ = pos;
             pProp->Set(pos_);
@@ -616,9 +488,7 @@ int DiskSlider::Initialize() {
    ret = SetAllowedValues(MM::g_Keyword_State, DiskSliderValues);
 
 //----------------------------------------------------------
-   /* AddAllowedValue(MM::g_Keyword_State, "0");
-    AddAllowedValue(MM::g_Keyword_State, "1");
-	AddAllowedValue(MM::g_Keyword_State, "2");*/
+  
      // Label                                                                  
     pAct = new CPropertyAction(this, &CStateBase::OnLabel);
     ret = CreateProperty(MM::g_Keyword_Label, "Undefined", MM::String, false, pAct);
@@ -658,7 +528,8 @@ int DiskSlider::Shutdown() {
 ///////////////////////////////////////////////////////////////////////////////
 
 int DiskSlider::OnState(MM::PropertyBase* pProp, MM::ActionType eAct) {
-    if (eAct == MM::BeforeGet) {
+    int delay = 0;
+	if (eAct == MM::BeforeGet) {
         // return pos as we know it
         pProp->Set(pos_);
     } else if (eAct == MM::AfterSet) {
@@ -670,7 +541,13 @@ int DiskSlider::OnState(MM::PropertyBase* pProp, MM::ActionType eAct) {
             pos = 0;
         else if (pos > 2)
             pos = 2;
-        int ret = g_hub.SetDiskSliderPosition(*this, *GetCoreCallback(), pos);
+			if (( pos_ == 0 && pos == 1 )|| ( pos_ == 1 && pos == 0 ))
+			delay = 600;
+		if ( (pos_ == 0 && pos == 2) || (pos_ == 2 && pos == 0))
+			delay = 300;
+		 if ( (pos_ == 1 && pos == 2) || (pos_ == 2 && pos == 1))
+			delay = 700;
+        int ret = g_hub.SetDiskSliderPosition(*this, *GetCoreCallback(), pos, delay);
         if (ret == DEVICE_OK) {
             pos_ = pos;
             pProp->Set(pos_);
