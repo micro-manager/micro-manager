@@ -23,6 +23,7 @@ package org.micromanager.asidispim;
 
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.acquisition.AcquisitionWrapperEngine;
+import org.micromanager.api.ScriptInterface;
 import org.micromanager.asidispim.Data.Cameras;
 import org.micromanager.asidispim.Data.Devices;
 import org.micromanager.asidispim.Data.Prefs;
@@ -30,7 +31,6 @@ import org.micromanager.asidispim.Data.Properties;
 import org.micromanager.asidispim.Utils.DevicesListenerInterface;
 import org.micromanager.asidispim.Utils.ListeningJPanel;
 import org.micromanager.asidispim.Utils.PanelUtils;
-import org.micromanager.utils.MMException;
 import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.ReportingUtils;
 
@@ -64,7 +64,7 @@ public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerI
    private final Prefs prefs_;
    private final AcquisitionWrapperEngine acqEngine_;
    private final CMMCore core_;
-//   private final ScriptInterface gui_;
+   private final ScriptInterface gui_;
    private final String panelName_;
 
    private final JSpinner numSlices_;
@@ -89,8 +89,9 @@ public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerI
    
    private final JLabel numAcquisitionsDoneLabel_;
    private int numAcquisitionsDone_;
-   Timer acqTimer_;
-   AcquisitionTask acqTask_;
+   private Timer acqTimer_;
+   private AcquisitionTask acqTask_;
+   private String acqName_;
    
    public SpimParamsPanel(Devices devices, Properties props, Cameras cameras, Prefs prefs) {
       super("SPIM Params", 
@@ -104,8 +105,10 @@ public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerI
       prefs_ = prefs;
       acqEngine_ = MMStudioMainFrame.getInstance().getAcquisitionEngine();
       core_ = MMStudioMainFrame.getInstance().getCore();
+      gui_ = MMStudioMainFrame.getInstance();
       panelName_ = super.panelName_;
       numAcquisitionsDone_ = 0;
+      acqName_ = "Acq";
 
       PanelUtils pu = new PanelUtils();
       
@@ -230,7 +233,12 @@ public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerI
       buttonStart_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
+            if (!cameras_.isCurrentCameraValid()) {
+               ReportingUtils.showError("Must set valid camera for acquisition!");
+               return;
+            }
             numAcquisitionsDone_ = 0;
+//            initAcquisitionSettings();
             acqTimer_ = new Timer(true); // once cancelled we need to create a new one
             acqTask_ = new AcquisitionTask();
             float f = props_.getPropValueFloat(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_ACQUISITION_INTERVAL);
@@ -284,6 +292,19 @@ public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerI
          updateAcquisitionCountLabel();
       }
    }
+   
+   private void initAcquisitionSettings() {
+      acqEngine_.setUpdateLiveWindow(false);
+      acqEngine_.enableCustomTimeIntervals(false);
+      acqEngine_.enableFramesSetting(true);
+      acqEngine_.enableMultiPosition(false);
+      acqEngine_.enableZSliceSetting(false);
+      acqEngine_.enableChannelsSetting(false);
+      acqEngine_.enableAutoFocus(false);
+      acqEngine_.setFrames(
+            (Integer)numSlices_.getValue() * (Integer)numRepeats_.getValue(), // number of frames to capture
+            0); // 0ms exposure time means it will record as fast as possible
+   }
 
    
    /**
@@ -291,56 +312,49 @@ public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerI
     * @return true if successfully started acquisition
     */
    private boolean startAcquisition() {
-    if (acqEngine_.isAcquisitionRunning()) {
-//       ReportingUtils.showError("Already running another acquisition!");
-       ReportingUtils.logError("diSPIM plugin can't start acquisition while another acquisition happening");
-       return false;
-    }
-    try {
-       // set up cameras
-       if (!cameras_.isCurrentCameraValid()) {
-          ReportingUtils.showError("No camera set for acquisition!");
-          return false;
-       }
-       // TODO warn user if acquisition interval is too low
-       cameras_.enableLiveMode(false);
-//       core_.setExposure(NumberUtils.displayStringToDouble(acqExposure_.getText()));
-       // get acquisition engine configured
-       // patterned after code in mmstudio\src\org\micromanager\AcqControlDlg.java
-       acqEngine_.clear();
-       acqEngine_.setUpdateLiveWindow(false);
-       acqEngine_.enableCustomTimeIntervals(false);
-       acqEngine_.enableFramesSetting(true);
-       acqEngine_.enableMultiPosition(false);
-       acqEngine_.enableZSliceSetting(false);
-       acqEngine_.enableChannelsSetting(false);
-       acqEngine_.enableAutoFocus(false);
-       acqEngine_.setFrames(
-             (Integer)numSlices_.getValue() * (Integer)numRepeats_.getValue(), // number of frames to capture
-             0); // 0ms exposure time means it will record as fast as possible
-       acqEngine_.acquire();
-       core_.sleep(1000);  // seem to need a long delay for some reason, more than 1 sec
-       // get controller ready
-       props_.setPropValue(Devices.Keys.GALVOA, Properties.Keys.BEAM_ENABLED, Properties.Values.NO, true);
-       props_.setPropValue(Devices.Keys.GALVOB, Properties.Keys.BEAM_ENABLED, Properties.Values.NO, true);
-       props_.setPropValue(Devices.Keys.PIEZOA, Properties.Keys.SPIM_NUM_SLICES, (Integer)numSlices_.getValue(), true);
-       props_.setPropValue(Devices.Keys.PIEZOB, Properties.Keys.SPIM_NUM_SLICES, (Integer)numSlices_.getValue(), true);
-       props_.setPropValue(Devices.Keys.PIEZOA, Properties.Keys.SPIM_STATE, Properties.Values.SPIM_ARMED, true);
-       props_.setPropValue(Devices.Keys.PIEZOB, Properties.Keys.SPIM_STATE, Properties.Values.SPIM_ARMED, true);
-       // trigger controller
-       // TODO generalize this for different ways of running SPIM
-       props_.setPropValue(Devices.Keys.GALVOA, Properties.Keys.SPIM_STATE, Properties.Values.SPIM_RUNNING, true);
-       // TODO figure out how to wait until acquisition is done to continue
-       // clean up
-    } catch (MMException ex) {
-       ReportingUtils.showError(ex);
-       return false;
-    } catch (Exception e1) {
-       ReportingUtils.showError(e1);
-       return false;
-    }
-    return true;
- 
+      if (acqEngine_.isAcquisitionRunning()) {
+         //       ReportingUtils.showError("Already running another acquisition!");
+         // just log so we will still perform the requested number of acquisitions 
+         ReportingUtils.logError("diSPIM plugin can't start acquisition while another acquisition happening");
+         return false;
+      }
+      try {
+         // set up cameras
+         // TODO warn user if acquisition interval is too low
+         cameras_.enableLiveMode(false);
+         
+         // get acquisition engine configured and started
+         // patterned after code in mmstudio\src\org\micromanager\AcqControlDlg.java
+         acqEngine_.clear();
+         initAcquisitionSettings();
+         // close the old acquisition window to avoid getting too many
+         if (gui_.acquisitionExists(acqName_)) {
+            gui_.closeAcquisitionWindow(acqName_);
+         }
+         acqEngine_.acquire();
+//         acqName_ = gui_.runAcquisition();  // this doesn't use the better way to call acqEngine_.acquire()
+         
+         // need a long delay for MM/camera setup for some reason, more than 1 sec needed??
+         core_.sleep(1000);
+         
+         // get controller armed
+         props_.setPropValue(Devices.Keys.GALVOA, Properties.Keys.BEAM_ENABLED, Properties.Values.NO, true);
+         props_.setPropValue(Devices.Keys.GALVOB, Properties.Keys.BEAM_ENABLED, Properties.Values.NO, true);
+         props_.setPropValue(Devices.Keys.PIEZOA, Properties.Keys.SPIM_NUM_SLICES, (Integer)numSlices_.getValue(), true);
+         props_.setPropValue(Devices.Keys.PIEZOB, Properties.Keys.SPIM_NUM_SLICES, (Integer)numSlices_.getValue(), true);
+         props_.setPropValue(Devices.Keys.PIEZOA, Properties.Keys.SPIM_STATE, Properties.Values.SPIM_ARMED, true);
+         props_.setPropValue(Devices.Keys.PIEZOB, Properties.Keys.SPIM_STATE, Properties.Values.SPIM_ARMED, true);
+        
+         // trigger controller
+         // TODO generalize this for different ways of running SPIM
+         props_.setPropValue(Devices.Keys.GALVOA, Properties.Keys.SPIM_STATE, Properties.Values.SPIM_RUNNING, true);
+
+      } catch (Exception e1) {
+         ReportingUtils.showError(e1);
+         return false;
+      }
+      return true;
+
    }
    
    @Override
