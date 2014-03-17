@@ -53,6 +53,12 @@ XYStage::XYStage() :
    initialized_ (false),
    stepSizeUm_(0.2) // assuming fixed step size at 0.2um
 {
+   // StepSize property - pre-init since it should never change
+   CPropertyAction* pAct = new CPropertyAction (this, &XYStage::OnStepSizeUm);
+   std::ostringstream os;
+   os << stepSizeUm_;
+   CreateProperty("StepSize(um)", os.str().c_str(), MM::Float, false, pAct, true);
+
    InitializeDefaultErrorMessages();
 
    SetErrorText(ERR_SCOPE_NOT_ACTIVE, "Zeiss Scope is not initialized.  It is needed for the XYStage to work");
@@ -386,6 +392,20 @@ int XYStage::OnY(MM::PropertyBase* pProp, MM::ActionType eAct)
       double yUm;
       pProp->Get(yUm);
       SetPositionUm(GetCachedYUm(), yUm);
+   }
+
+   return DEVICE_OK;
+}
+
+int XYStage::OnStepSizeUm(MM::PropertyBase* pProp, MM::ActionType eAct) 
+{
+   if (eAct == MM::BeforeGet) 
+   {
+      pProp->Set(stepSizeUm_);
+   } 
+   else if (eAct == MM::AfterSet) 
+   {
+      pProp->Get(stepSizeUm_);
    }
 
    return DEVICE_OK;

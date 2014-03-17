@@ -592,6 +592,7 @@ public:
    // ----------------
    int OnX(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnY(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnStepSizeUm(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    int GetXYFirmwareVersion();
