@@ -263,8 +263,11 @@ public:
     */
     int Update()
     {
-        PvParam<int32>::Update();
+        int err = PvParam<int32>::Update();
+        if (err != DEVICE_OK)
+            return err;
         enumerate();
+        return DEVICE_OK;
     }
 
 
