@@ -456,6 +456,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
             }
 
             ReportingUtils.setCore(core_);
+            core_.enableDebugLog(options_.debugLogEnabled_);
             logStartupProperties();
                     
             cameraLabel_ = "";
@@ -3297,7 +3298,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
     */
    @Override
    public void logStartupProperties() {
-      core_.enableDebugLog(options_.debugLogEnabled_);
       core_.logMessage("MM Studio version: " + getVersion());
       core_.logMessage(core_.getVersionInfo());
       core_.logMessage(core_.getAPIVersionInfo());
