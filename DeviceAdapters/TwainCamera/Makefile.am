@@ -1,5 +1,5 @@
 pkglibdir = $(DEVICEADAPTERPATH)
-AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS) -fpermissive -fweak
+AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS) -fpermissive
 pkglib_LTLIBRARIES = libmmgr_dal_TwainRGBCamera.la
 libmmgr_dal_TwainRGBCamera_la_SOURCES = TwainRGBCamera.cpp TwainRGBCamera.h RGBSignalGenerator.cpp
 libmmgr_dal_TwainRGBCamera_la_LDFLAGS = $(MMDEVAPI_LDFLAGS) 

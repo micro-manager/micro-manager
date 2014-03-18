@@ -1,5 +1,5 @@
 pkglibdir = $(DEVICEADAPTERPATH)
-AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS) -fpermissive -fweak
+AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS) -fpermissive
 pkglib_LTLIBRARIES = libmmgr_dal_ThorlabsFilterWheel.la
 libmmgr_dal_ThorlabsFilterWheel_la_SOURCES = FilterWheel.cpp FilterWheel.h
 libmmgr_dal_ThorlabsFilterWheel_la_LDFLAGS = $(MMDEVAPI_LDFLAGS) 
