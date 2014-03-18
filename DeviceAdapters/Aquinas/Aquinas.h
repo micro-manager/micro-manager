@@ -10,7 +10,7 @@
 
 
 #ifndef _AQUINAS_H_
-#define _AQUINAS_H
+#define _AQUINAS_H_
 
 #include "../../MMDevice/MMDevice.h"
 #include "../../MMDevice/DeviceBase.h"
@@ -55,4 +55,4 @@ private:
    std::string id_;
 };
 
-#endif
+#endif // _AQUINAS_H_
