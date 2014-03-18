@@ -21,6 +21,7 @@ package org.micromanager.stagecontrol;
 
 import java.awt.BorderLayout;
 import java.awt.LayoutManager;
+import java.awt.event.ActionListener;
 import mmcorej.CMMCore;
 
 import java.text.NumberFormat;
@@ -144,6 +145,15 @@ implements MMListenerInterface {
          }
 
          boolean zDriveFound = false;
+         if (zDriveSelect_.getItemCount() != 0) {
+            zDriveSelect_.removeAllItems();
+         }
+         
+         ActionListener[] zDriveActionListeners = 
+                 zDriveSelect_.getActionListeners();
+         for (ActionListener l : zDriveActionListeners) {
+            zDriveSelect_.removeActionListener(l);
+         }
          for (int i = 0; i < zDrives.size(); i++) {
             String drive = zDrives.get(i);
             smallMovementZ_.put(drive, prefs_.getDouble(SMALLMOVEMENTZ + drive, 1.0));
@@ -155,6 +165,11 @@ implements MMListenerInterface {
          }
          if (!zDriveFound) {
             currentZDrive_ = zDrives.get(0);
+         } else {
+            zDriveSelect_.setSelectedItem(currentZDrive_);
+         }
+                  for (ActionListener l : zDriveActionListeners) {
+            zDriveSelect_.addActionListener(l);
          }
          updateZMovements();
       } 
@@ -1114,8 +1129,9 @@ implements MMListenerInterface {
    }//GEN-LAST:event_mediumZUpButton_ActionPerformed
 
    private void zDriveSelect_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_zDriveSelect_ActionPerformed
-      currentZDrive_ = (String) zDriveSelect_.getSelectedItem();
-      if (initialized_) {
+      String currentZDrive = (String) zDriveSelect_.getSelectedItem();
+      if (initialized_ && currentZDrive != null) {
+         currentZDrive_ = currentZDrive;
          prefs_.put(CURRENTZDRIVE, currentZDrive_);
          updateZMovements();   // Sets the small and medium Z movement to whatever we had for this new drive
          try {
