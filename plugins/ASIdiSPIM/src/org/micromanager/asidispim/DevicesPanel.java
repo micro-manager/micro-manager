@@ -210,6 +210,7 @@ public class DevicesPanel extends ListeningJPanel {
                   + " contact the authors for support (camera must have hardware trigger)");
             break;
          } // CamA/B case
+         break;
       default:
          break;
       }

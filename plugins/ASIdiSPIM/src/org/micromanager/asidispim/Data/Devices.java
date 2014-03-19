@@ -657,6 +657,7 @@ public class Devices {
          return d_new;
       case PLUGIN: // special case
          d_new = new DeviceData(Keys.PLUGIN, "Plugin", Sides.NONE, false);
+         return d_new;
       case CAMERAPREVIOUS: // special case
          d_new = new DeviceData(Keys.CAMERAPREVIOUS, "No change", Sides.NONE, false);
          return d_new;
