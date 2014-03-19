@@ -122,7 +122,7 @@ private:
    void UnpackDataWithPadding(unsigned char* _pucSrcBuffer);
    bool InitialiseDeviceCircularBuffer(const unsigned numBuffers);
    bool CleanUpDeviceCircularBuffer();
-   int  SetupCameraForSeqAcquisition(int numImages);
+   int  SetupCameraForSeqAcquisition(long numImages);
    int  CameraStart();
    int  checkForBufferOverflow();
    bool waitForData(unsigned char *& return_buffer, int & buffer_size);

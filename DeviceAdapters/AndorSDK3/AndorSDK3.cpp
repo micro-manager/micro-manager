@@ -968,7 +968,7 @@ bool CAndorSDK3Camera::CleanUpDeviceCircularBuffer()
    return true;
 }
 
-int CAndorSDK3Camera::SetupCameraForSeqAcquisition(int numImages)
+int CAndorSDK3Camera::SetupCameraForSeqAcquisition(long numImages)
 {
    int retCode = DEVICE_OK;
    bool b_memOkRet = false;
