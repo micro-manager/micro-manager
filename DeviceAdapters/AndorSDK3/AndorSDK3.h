@@ -112,8 +112,12 @@ public:
    void RestartLiveAcquisition();
 
 private:
+   typedef enum CameraId { CIDNeo = 0, CIDZyla = 1 };
    std::wstring currentSoftwareVersion_;
    std::wstring PerformReleaseVersionCheck();
+   double CalculateDefaultExposure(std::wstring & interfaceType);
+   CameraId DetermineCameraId(std::wstring & cameraSerialCheck);
+   std::string GenerateCameraName(unsigned cameraID, std::wstring & cameraModelCheck);
    void InitialiseSDK3Defaults();
    void UnpackDataWithPadding(unsigned char* _pucSrcBuffer);
    bool InitialiseDeviceCircularBuffer(const unsigned numBuffers);
@@ -147,7 +151,6 @@ private:
    bool GetCameraPresent() { return b_cameraPresent_; };
    void SetNumberOfDevicesPresent(int deviceCount) { number_of_devices_ = deviceCount; };
 
-   double CalculateDefaultExposure(std::wstring & interfaceType);
    double defaultExposureTime_;
    void SetDefaultExpsoure(double d) { defaultExposureTime_ = d; };
    double GetDefaultExpsoure() { return defaultExposureTime_; };

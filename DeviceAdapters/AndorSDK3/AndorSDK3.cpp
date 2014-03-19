@@ -95,17 +95,14 @@ MODULE_API MM::Device * CreateDevice(const char * deviceName)
    {
       // create camera
       MM::Device * openedDevice = new CAndorSDK3Camera();
-      if (openedDevice)
+      CAndorSDK3Camera * cameraPtr = dynamic_cast<CAndorSDK3Camera *>(openedDevice);
+      if (cameraPtr && cameraPtr->GetNumberOfDevicesPresent() > 0)
       {
-         CAndorSDK3Camera * cameraPtr = dynamic_cast<CAndorSDK3Camera *>(openedDevice);
-         if (cameraPtr && cameraPtr->GetNumberOfDevicesPresent() > 0)
-         {
-            return openedDevice;
-         }
+         return openedDevice;
       }
       else
       {
-         return 0;
+         delete openedDevice;
       }
    }
 
@@ -236,6 +233,140 @@ wstring CAndorSDK3Camera::PerformReleaseVersionCheck()
    return ws;
 }
 
+
+double CAndorSDK3Camera::CalculateDefaultExposure(wstring & interfaceType)
+{
+   double d_retValue = 0.0340f;
+   if (0 == interfaceType.compare(L"CL 10 Tap") )
+   {
+      d_retValue = 0.0100f;
+   }
+   return d_retValue;
+}
+
+CAndorSDK3Camera::CameraId CAndorSDK3Camera::DetermineCameraId(wstring & cameraSerialCheck)
+{
+   CameraId id = CIDNeo;
+   try {
+      cameraSerialCheck.erase(4);
+      if (0 == cameraSerialCheck.compare(L"VSC-") )
+      {
+         id = CIDZyla;
+      }
+   }
+   catch (const std::out_of_range&)
+   {
+   }
+   return id;
+}
+
+std::string CAndorSDK3Camera::GenerateCameraName(unsigned cameraID, wstring & cameraModelCheck)
+{
+   string s_cameraName("Neo 5.5 "); 
+   if (CIDZyla == cameraID)
+   {
+      try {
+         cameraModelCheck.erase(8);
+      }
+      catch (const std::out_of_range&)
+      {
+         cameraModelCheck.erase();
+      }
+
+      s_cameraName = "Zyla 5.5 ";
+      if (0 == cameraModelCheck.compare(L"ZYLA-4.2") )
+      {
+         s_cameraName = "Zyla 4.2 ";
+      }
+   }
+   return s_cameraName;
+}
+
+void CAndorSDK3Camera::InitialiseSDK3Defaults()
+{
+   IEnum * e_feature = NULL;
+   IInteger * i_feature = NULL;
+   IFloat * f_feature = NULL;
+   IBool * b_feature = NULL;
+   try
+   {
+      //Sensor cooling mode on
+      b_feature = cameraDevice->GetBool(L"SensorCooling");
+      b_feature->Set(true);
+      cameraDevice->Release(b_feature);
+      b_feature = NULL;
+      e_feature = cameraDevice->GetEnum(L"ElectronicShutteringMode");
+      e_feature->Set(L"Rolling");
+      cameraDevice->Release(e_feature);
+      e_feature = NULL;
+      e_feature = cameraDevice->GetEnum(L"SimplePreAmpGainControl");
+      e_feature->Set(L"11-bit (low noise)");
+      cameraDevice->Release(e_feature);
+      e_feature = NULL;
+      //Image Size
+      i_feature = cameraDevice->GetInteger(L"AOIWidth");
+      i_feature->Set(i_feature->Max());
+      cameraDevice->Release(i_feature);
+      i_feature = NULL;
+      i_feature = cameraDevice->GetInteger(L"AOILeft");
+      i_feature->Set(i_feature->Min());
+      cameraDevice->Release(i_feature);
+      i_feature = NULL;
+      i_feature = cameraDevice->GetInteger(L"AOIHeight");
+      i_feature->Set(i_feature->Max());
+      cameraDevice->Release(i_feature);
+      i_feature = NULL;
+      i_feature = cameraDevice->GetInteger(L"AOITop");
+      i_feature->Set(i_feature->Min());
+      cameraDevice->Release(i_feature);
+      i_feature = NULL;
+      //more enums - readout rate and trigger mode
+      e_feature = cameraDevice->GetEnum(L"PixelReadoutRate");
+      e_feature->Set(L"280 MHz");
+      cameraDevice->Release(e_feature);
+      e_feature = NULL;
+      e_feature = cameraDevice->GetEnum(L"TriggerMode");
+      e_feature->Set(L"Internal");
+      cameraDevice->Release(e_feature);
+      e_feature = NULL;
+      //Overlap mode
+      b_feature = cameraDevice->GetBool(L"Overlap");
+      b_feature->Set(true);
+      cameraDevice->Release(b_feature);
+      b_feature = NULL;
+      //Exposure
+      f_feature = cameraDevice->GetFloat(L"ExposureTime");
+      f_feature->Set(GetDefaultExpsoure());
+      cameraDevice->Release(f_feature);
+      f_feature = NULL;
+      //MetaData / TimeStamp enable
+      b_feature = cameraDevice->GetBool(L"MetadataEnable");
+      b_feature->Set(true);
+      cameraDevice->Release(b_feature);
+      b_feature = NULL;
+      b_feature = cameraDevice->GetBool(L"MetadataTimestamp");
+      b_feature->Set(true);
+      cameraDevice->Release(b_feature);
+      b_feature = NULL;
+      //TimestampClockFrequency
+      i_feature = cameraDevice->GetInteger(L"TimestampClockFrequency");
+      fpgaTSclockFrequency_ = i_feature->Get();
+      cameraDevice->Release(i_feature);
+      i_feature = NULL;
+   }
+   catch (exception & e)
+   {
+      string s("[InitialiseSDK3Defaults] Caught Exception with message: ");
+      s += e.what();
+      LogMessage(s);
+   }
+   cameraDevice->Release(b_feature);
+   cameraDevice->Release(f_feature);
+   cameraDevice->Release(i_feature);
+   cameraDevice->Release(e_feature);
+}
+
+
 /**
 * Intializes the hardware.
 * Required by the MM::Device API.
@@ -338,21 +469,7 @@ int CAndorSDK3Camera::Initialize()
    
    SetDefaultExpsoure(CalculateDefaultExposure(temp_ws));
 
-   string s_cameraName("Neo 5.5 ");
-   cameraSerialCheck.erase(4);
-   bool b_zyla = (0 == cameraSerialCheck.compare(L"VSC-") );
-   cameraModelCheck.erase(8);
-   
-   if (b_zyla)
-   {
-      s_cameraName = "Zyla 5.5 ";
-      if (0 == cameraModelCheck.compare(L"ZYLA-4.2") )
-      {
-         s_cameraName = "Zyla 4.2 ";
-      }
-   }
-   
-   s_cameraName += p_cameraInfoString;
+   string s_cameraName = GenerateCameraName(DetermineCameraId(cameraSerialCheck), cameraModelCheck) + p_cameraInfoString;
    ret = CreateProperty(MM::g_Keyword_CameraName, s_cameraName.c_str(), MM::String, true);
    assert(DEVICE_OK == ret);
 
@@ -401,7 +518,7 @@ int CAndorSDK3Camera::Initialize()
 
    temperatureControl_property = new TEnumProperty(TAndorSDK3Strings::TEMPERATURE_CONTROL,
                                                    cameraDevice->GetEnum(L"TemperatureControl"), this, thd_, 
-                                                   snapShotController_, b_zyla, false);
+                                                   snapShotController_, CIDZyla==DetermineCameraId(cameraSerialCheck), false);
 
    accumulationLength_property = new TIntegerProperty(TAndorSDK3Strings::ACCUMULATE_COUNT,
                                                       cameraDevice->GetInteger(L"AccumulateCount"), this, thd_, 
@@ -521,100 +638,6 @@ int CAndorSDK3Camera::Shutdown()
 
    initialized_ = false;
    return DEVICE_OK;
-}
-
-double CAndorSDK3Camera::CalculateDefaultExposure(wstring & interfaceType)
-{
-   double d_retValue = 0.0340f;
-   if (0 == interfaceType.compare(L"CL 10 Tap") )
-   {
-      d_retValue = 0.0100f;
-   }
-   return d_retValue;
-}
-
-void CAndorSDK3Camera::InitialiseSDK3Defaults()
-{
-   IEnum * e_feature = NULL;
-   IInteger * i_feature = NULL;
-   IFloat * f_feature = NULL;
-   IBool * b_feature = NULL;
-   try
-   {
-      //Sensor cooling mode on
-      b_feature = cameraDevice->GetBool(L"SensorCooling");
-      b_feature->Set(true);
-      cameraDevice->Release(b_feature);
-      b_feature = NULL;
-      e_feature = cameraDevice->GetEnum(L"ElectronicShutteringMode");
-      e_feature->Set(L"Rolling");
-      cameraDevice->Release(e_feature);
-      e_feature = NULL;
-      e_feature = cameraDevice->GetEnum(L"SimplePreAmpGainControl");
-      e_feature->Set(L"11-bit (low noise)");
-      cameraDevice->Release(e_feature);
-      e_feature = NULL;
-      //Image Size
-      i_feature = cameraDevice->GetInteger(L"AOIWidth");
-      i_feature->Set(i_feature->Max());
-      cameraDevice->Release(i_feature);
-      i_feature = NULL;
-      i_feature = cameraDevice->GetInteger(L"AOILeft");
-      i_feature->Set(i_feature->Min());
-      cameraDevice->Release(i_feature);
-      i_feature = NULL;
-      i_feature = cameraDevice->GetInteger(L"AOIHeight");
-      i_feature->Set(i_feature->Max());
-      cameraDevice->Release(i_feature);
-      i_feature = NULL;
-      i_feature = cameraDevice->GetInteger(L"AOITop");
-      i_feature->Set(i_feature->Min());
-      cameraDevice->Release(i_feature);
-      i_feature = NULL;
-      //more enums - readout rate and trigger mode
-      e_feature = cameraDevice->GetEnum(L"PixelReadoutRate");
-      e_feature->Set(L"280 MHz");
-      cameraDevice->Release(e_feature);
-      e_feature = NULL;
-      e_feature = cameraDevice->GetEnum(L"TriggerMode");
-      e_feature->Set(L"Internal");
-      cameraDevice->Release(e_feature);
-      e_feature = NULL;
-      //Overlap mode
-      b_feature = cameraDevice->GetBool(L"Overlap");
-      b_feature->Set(true);
-      cameraDevice->Release(b_feature);
-      b_feature = NULL;
-      //Exposure
-      f_feature = cameraDevice->GetFloat(L"ExposureTime");
-      f_feature->Set(GetDefaultExpsoure());
-      cameraDevice->Release(f_feature);
-      f_feature = NULL;
-      //MetaData / TimeStamp enable
-      b_feature = cameraDevice->GetBool(L"MetadataEnable");
-      b_feature->Set(true);
-      cameraDevice->Release(b_feature);
-      b_feature = NULL;
-      b_feature = cameraDevice->GetBool(L"MetadataTimestamp");
-      b_feature->Set(true);
-      cameraDevice->Release(b_feature);
-      b_feature = NULL;
-      //TimestampClockFrequency
-      i_feature = cameraDevice->GetInteger(L"TimestampClockFrequency");
-      fpgaTSclockFrequency_ = i_feature->Get();
-      cameraDevice->Release(i_feature);
-      i_feature = NULL;
-   }
-   catch (exception & e)
-   {
-      string s("[InitialiseSDK3Defaults] Caught Exception with message: ");
-      s += e.what();
-      LogMessage(s);
-   }
-   cameraDevice->Release(b_feature);
-   cameraDevice->Release(f_feature);
-   cameraDevice->Release(i_feature);
-   cameraDevice->Release(e_feature);
 }
 
 void CAndorSDK3Camera::UnpackDataWithPadding(unsigned char * _pucSrcBuffer)
