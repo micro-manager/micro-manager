@@ -45,7 +45,7 @@ public class SLM implements ProjectionDevice {
       proc.setColor(Color.black);
       proc.fill();
       proc.setColor(Color.white);
-      addSpot(proc, x, y, spotDiameter_);
+      fillSpot(proc, x, y, spotDiameter_);
       try {
          mmc_.setSLMImage(slm_, (byte []) proc.getPixels());
          mmc_.displaySLMImage(slm_);
@@ -54,7 +54,7 @@ public class SLM implements ProjectionDevice {
       }
    }
 
-   private void addSpot(ImageProcessor proc, int x, int y, double dia) {
+   private static void fillSpot(ImageProcessor proc, int x, int y, double dia) {
       proc.fillOval((int) (x-dia/2), (int) (y-dia/2), (int) dia, (int) dia);
    }
 
@@ -98,14 +98,18 @@ public class SLM implements ProjectionDevice {
    }
 
    // Convert an array of polygonal ROIs to a single pixel image.
-   public static byte[] roisToPixels(int width, int height, Polygon[] roiPolygons) {
+   public byte[] roisToPixels(int width, int height, Polygon[] roiPolygons) {
       ByteProcessor processor = new ByteProcessor(width, height);
       processor.setColor(Color.black);
       processor.fill();
       processor.setColor(Color.white);
       for (Polygon roiPolygon : roiPolygons) {
-         Roi roi = new PolygonRoi(roiPolygon, Roi.POLYGON);
-         processor.fill(roi);
+         if (roiPolygon.npoints == 1) {
+            fillSpot(processor, roiPolygon.xpoints[0], roiPolygon.ypoints[0], spotDiameter_); 
+         } else {
+            Roi roi = new PolygonRoi(roiPolygon, Roi.POLYGON);
+            processor.fill(roi);
+         }
       }
       return (byte[]) processor.getPixels();
    }

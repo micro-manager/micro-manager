@@ -37,16 +37,18 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
     */
    public ProjectorControlForm(ProjectorPlugin plugin, ProjectorController controller, CMMCore core) {
       initComponents();
+      // Place window where it was last.
+      GUIUtils.recallPosition(this);
       plugin_ = plugin;
       controller_ = controller;
       core_ = core;
       isSLM_ = controller_.isSLM();
       // Only an SLM (not a galvo) has pixels.
-      allPixelsButton.setEnabled(isSLM_);
+      allPixelsButton.setVisible(isSLM_);
       // No point in looping ROIs on an SLM.
-      roiLoopSpinner.setEnabled(!isSLM_);
-      roiLoopLabel.setEnabled(!isSLM_);
-      GUIUtils.recallPosition(this);
+      roiLoopSpinner.setVisible(!isSLM_);
+      roiLoopLabel.setVisible(!isSLM_);
+      roiLoopTimesLabel.setVisible(!isSLM_);
       pointAndShootOffButton.setSelected(true);
       updateROISettings();
       populateChannelComboBox(Preferences.userNodeForPackage(this.getClass()).get("channel", ""));
@@ -560,12 +562,7 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
    }//GEN-LAST:event_spotDwellTimeSpinnerStateChanged
 
    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-      IJ.run("ROI Manager...");
-      RoiManager roiManager = RoiManager.getInstance();
-      // Both of the following peculiar commands are needed to turn on
-      // the Show All and Labels check boxes in the ROI manager.
-      roiManager.runCommand("Show All with Labels");
-      roiManager.runCommand("Show All");
+      ProjectorPlugin.showRoiManager();
    }//GEN-LAST:event_jButton1ActionPerformed
 
    private void useInMDAcheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_useInMDAcheckBoxActionPerformed

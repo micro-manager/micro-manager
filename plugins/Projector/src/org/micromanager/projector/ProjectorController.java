@@ -812,7 +812,7 @@ public class ProjectorController {
 
    void showMosaicSequencingFrame() {
       if (mosaicSequencingFrame_ == null) {
-         mosaicSequencingFrame_ = new MosaicSequencingFrame(this.gui, this.mmc, this);
+         mosaicSequencingFrame_ = new MosaicSequencingFrame(this.gui, this.mmc, this, (SLM) this.dev);
       }
       mosaicSequencingFrame_.setVisible(true);
    }
