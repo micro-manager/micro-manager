@@ -17,6 +17,10 @@
 # -> scan all *.nextgen files and copy them to final location, removing the
 #    corresponding legacy files
 #
+# activate.py --reactivate
+# -> scan all *.nextgen files and copy them to final location, without
+#    performing removal of legacy files (and without checking MD5)
+#
 # activate.py --sum FILE1 FILE2
 # -> compute MD5 sums of files and print in *.nextgen header format
 #
@@ -39,12 +43,12 @@ import shutil
 import sys
 
 
-def activate():
+def activate(do_removal=True):
     all_deletes, all_renames = [], []
     for nextgen_filename in iterate_nextgen_files():
         print("reading " + nextgen_filename);
         hdr = get_nextgen_header(nextgen_filename)
-        deletes, renames = process_nextgen(hdr)
+        deletes, renames = process_nextgen(hdr, do_removal)
         all_deletes.extend(deletes)
         all_renames.extend(renames)
 
@@ -56,7 +60,7 @@ def activate():
 
     print("finished reading info; now execute")
 
-    if (all_deletes):
+    if all_deletes:
         print("delete files: " + " ".join(all_deletes))
         for filename in all_deletes:
             os.unlink(filename)
@@ -111,16 +115,17 @@ def get_nextgen_header(filename):
     return hdr
 
 
-def process_nextgen(hdr):
+def process_nextgen(hdr, do_removal=True):
     dirname = os.path.dirname(hdr.filename)
     deletes = []
-    for old_filename, old_md5 in hdr.replaced.items():
-        old_path = os.path.join(dirname, old_filename)
-        if get_md5(old_path) != old_md5:
-            print("MD5 does not match: " + old_path +
-                " (to be replaced by: " + hdr.filename + ")")
-            sys.exit(1)
-        deletes.append(old_path)
+    if do_removal:
+        for old_filename, old_md5 in hdr.replaced.items():
+            old_path = os.path.join(dirname, old_filename)
+            if get_md5(old_path) != old_md5:
+                print("MD5 does not match: " + old_path +
+                    " (to be replaced by: " + hdr.filename + ")")
+                sys.exit(1)
+            deletes.append(old_path)
     new_path = os.path.join(dirname, hdr.rename_to) if hdr.rename_to else None
     return deletes, [(hdr.filename, new_path)]
 
@@ -141,13 +146,16 @@ def print_sums(filenames):
 def run():
     p = argparse.ArgumentParser()
     p.add_argument("--activate", action="store_true")
+    p.add_argument("--reactivate", action="store_true")
     p.add_argument("--sum", nargs="+")
     args = p.parse_args()
-    if args.activate and args.sum:
+    if sum(1 for _ in filter(None, [args.activate, args.reactivate, args.sum])) > 1:
         print("multiple verbs not allowed")
         sys.exit(1)
     if args.activate:
         activate()
+    elif args.reactivate:
+        activate(False)
     elif args.sum:
         print_sums(args.sum)
     else:
