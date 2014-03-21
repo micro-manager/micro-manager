@@ -135,33 +135,40 @@ else
    AC_MSG_RESULT([not found])
 fi
 
-# and for Firewire cameras (libdc1394) 
-AC_MSG_CHECKING(for libdc1394)
-AC_FIND_FILE([dc1394], [/usr/include /usr/local/$ARCH/include], DC1394INCDIR)
-if test x$DC1394INCDIR = xNO; then
-   AC_MSG_RESULT([not found])
-else
-   AC_CHECK_HEADERS([$DC1394INCDIR/dc1394/dc1394.h])
-   if test -z "$LIBDC1394" ; then
-      case $host in
-         *-*-linux*)
-            LIBDC1394="-ldc1394"
-            ;;
-         *)
-            AC_FIND_FILE([libdc1394.a], [/usr/lib /usr/lib64 /usr/local/$ARCH/lib], DC1394LIBDIR)
-            if test x$DC1394LIBDIR = xNO; then
-               AC_MSG_RESULT(["libdc1394 not found"])
-            else
-               AC_MSG_RESULT(["libdc1394.a" found])
-               LIBDC1394="$DC1394LIBDIR/libdc1394.a"
-            fi
-         ;;
-      esac
-   fi
-fi
-AC_SUBST(LIBDC1394)
-AM_CONDITIONAL([BUILD_DC1394], [test -n "$LIBDC1394"])
-AM_CONDITIONAL([BUILD_IIDC], [test -n "$LIBDC1394"])
+
+# libdc1394 2.x
+AC_MSG_CHECKING([if use of libdc1394 requested])
+AC_ARG_WITH([libdc1394],
+   [AS_HELP_STRING([--with-libdc1394=DIR],
+      [build libdc1394-based device adapters (default: check)])],
+   [],
+   [with_libdc1394=check])
+case $with_libdc1394 in
+   yes | no | check) ;;
+   *) if test -n "$LIBDC1394_CPPFLAGS"; then LIBDC1394_CPPFLAGS="-I$with_libdc1394/include"; fi
+      if test -n "$LIBDC1394_LDFLAGS"; then LIBDC1394_LDFLAGS="-L$with_libdc1394/lib"; fi
+      with_libdc1394=yes ;;
+esac
+AC_MSG_RESULT([$with_libdc1394])
+
+AS_IF([test "x$with_libdc1394" != xno],
+   [MM_LIB_DC1394
+    use_libdc1394=$have_libdc1394],
+   [use_libdc1394=no])
+
+test "x$with_libdc1394" = xyes &&
+   { test "x$use_libdc1394" = xno && use_libdc1394=error; }
+AS_IF([test "x$use_libdc1394" = xerror],
+   [AC_MSG_FAILURE([--with-libdc1394 was given, but test for libdc1394 failed])])
+
+
+# TODO These BUILD_x conditionals should not be associated with particular
+# libraries; they might depend on multiple libraries. Should collect them at
+# the end of this file
+AM_CONDITIONAL([BUILD_DC1394], [test "x$use_libdc1394" = xyes])
+# TODO BUILD_IIDC should also check for Boost libraries
+AM_CONDITIONAL([BUILD_IIDC], [test "x$use_libdc1394" = xyes])
+
 
 # Andor cameras on linux 
 AC_MSG_CHECKING(for Andor cameras)

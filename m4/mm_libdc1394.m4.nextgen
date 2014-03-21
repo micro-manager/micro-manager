@@ -1,0 +1,74 @@
+# This file is part of a progressive rewrite of the GNU (autotools) build
+# scripts. Please do not modify this file. Instead, please modify the legacy
+# build files (without the .nextgen suffix). Changes to legacy files will be
+# automatically detected and manually applied to the next-gen files.
+# - Mark Tsuchida
+#
+# %nextgen_build_filename = mm_libdc1394.m4
+
+# Author: Mark Tsuchida
+# Copyright: University of California, San Francisco, 2014
+# License: BSD
+
+# Usage: MM_LIB_DC1394
+#
+# Checks for an appropriate version of libdc1394 2.x.
+#
+# Defines variables LIBDC1394_CPPFLAGS, LIBDC1394_CFLAGS, LIBDC1394_LDFLAGS,
+# and LIBDC1394_LIBS, which can be overridden by the user (although that is
+# rarely necessary).
+#
+# Returns yes or no in shell variable have_libdc1394.
+
+AC_DEFUN([MM_LIB_DC1394], [
+
+AC_ARG_VAR([LIBDC1394_CPPFLAGS], [preprocessor flags for libdc1394])
+AC_ARG_VAR([LIBDC1394_CFLAGS], [compiler flags for libdc1394])
+AC_ARG_VAR([LIBDC1394_LDFLAGS], [linker flags for libdc1394])
+AC_ARG_VAR([LIBDC1394_LIBS], [library flags for libdc1394])
+
+# defaults
+test -n "$LIBDC1394_LIBS" || LIBDC1394_LIBS=-ldc1394
+have_libdc1394=
+
+# push state
+AC_LANG_PUSH([C])
+check_libdc1394_old_cppflags="$CPPFLAGS"
+check_libdc1394_old_cflags="$CFLAGS"
+check_libdc1394_old_ldflags="$LDFLAGS"
+check_libdc1394_old_libs="$LIBS"
+CPPFLAGS="$LIBDC1394_CPPFLAGS $CPPFLAGS"
+CFLAGS="$LIBDC1394_CFLAGS $CFLAGS"
+LDFLAGS="$LIBDC1394_LDFLAGS $LDFLAGS"
+LIBS="$LIBDC1394_LIBS $LIBS"
+# end push state
+
+AC_MSG_CHECKING([for dc1394/dc1394.h])
+AC_PREPROC_IFELSE(
+   [AC_LANG_PROGRAM([[#include <dc1394/dc1394.h>]])],
+   [AC_MSG_RESULT([yes])],
+   [AC_MSG_RESULT([no])
+    have_libdc1394=no])
+
+AS_IF([test "x$have_libdc1394" != xno],
+   [
+      # Note: This test was written with libdc1394 2.2.1 in use.
+      AC_MSG_CHECKING([for dc1394_capture_is_frame_corrupt in libdc1394])
+      AC_LINK_IFELSE([AC_LANG_CALL([], [dc1394_capture_is_frame_corrupt])],
+         [AC_MSG_RESULT([yes])
+          have_libdc1394=yes
+          LIBDC1394_LIBS=-ldc1394],
+         [AC_MSG_RESULT([no])
+          have_libdc1394=no
+          LIBDC1394_LIBS=])
+   ])
+
+# pop state
+CPPFLAGS="$check_libdc1394_old_cppflags"
+CFLAGS="$check_libdc1394_old_cflags"
+LDFLAGS="$check_libdc1394_old_ldflags"
+LIBS="$check_libdc1394_old_libs"
+AC_LANG_POP([C])
+# end pop state
+
+])
