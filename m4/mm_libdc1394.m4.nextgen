@@ -27,48 +27,63 @@ AC_ARG_VAR([LIBDC1394_CFLAGS], [compiler flags for libdc1394])
 AC_ARG_VAR([LIBDC1394_LDFLAGS], [linker flags for libdc1394])
 AC_ARG_VAR([LIBDC1394_LIBS], [library flags for libdc1394])
 
-# defaults
-test -n "$LIBDC1394_LIBS" || LIBDC1394_LIBS=-ldc1394
-have_libdc1394=
+# if any of the vars are already defined, do not modify and assume user knows
+# what they are doing
+AC_MSG_CHECKING([for libdc1394 configuration])
+test -n "$LIBDC1394_CPPFLAGS" && have_libdc1394=yes
+test -n "$LIBDC1394_CFLAGS" && have_libdc1394=yes
+test -n "$LIBDC1394_LDFLAGS" && have_libdc1394=yes
+test -n "$LIBDC1394_LIBS" && have_libdc1394=yes
 
-# push state
-AC_LANG_PUSH([C])
-check_libdc1394_old_cppflags="$CPPFLAGS"
-check_libdc1394_old_cflags="$CFLAGS"
-check_libdc1394_old_ldflags="$LDFLAGS"
-check_libdc1394_old_libs="$LIBS"
-CPPFLAGS="$LIBDC1394_CPPFLAGS $CPPFLAGS"
-CFLAGS="$LIBDC1394_CFLAGS $CFLAGS"
-LDFLAGS="$LIBDC1394_LDFLAGS $LDFLAGS"
-LIBS="$LIBDC1394_LIBS $LIBS"
-# end push state
+AS_IF([test "x$have_libdc1394" = xyes],
+[
+   AC_MSG_RESULT([user provided flag(s); skip checks])
+],
+[
+   AC_MSG_RESULT([need check])
 
-AC_MSG_CHECKING([for dc1394/dc1394.h])
-AC_PREPROC_IFELSE(
-   [AC_LANG_PROGRAM([[#include <dc1394/dc1394.h>]])],
-   [AC_MSG_RESULT([yes])],
-   [AC_MSG_RESULT([no])
-    have_libdc1394=no])
+   # defaults
+   LIBDC1394_LIBS=-ldc1394
+   have_libdc1394=
 
-AS_IF([test "x$have_libdc1394" != xno],
-   [
-      # Note: This test was written with libdc1394 2.2.1 in use.
-      AC_MSG_CHECKING([for dc1394_capture_is_frame_corrupt in libdc1394])
-      AC_LINK_IFELSE([AC_LANG_CALL([], [dc1394_capture_is_frame_corrupt])],
-         [AC_MSG_RESULT([yes])
-          have_libdc1394=yes
-          LIBDC1394_LIBS=-ldc1394],
-         [AC_MSG_RESULT([no])
-          have_libdc1394=no
-          LIBDC1394_LIBS=])
-   ])
+   # push state
+   AC_LANG_PUSH([C])
+   check_libdc1394_old_cppflags="$CPPFLAGS"
+   check_libdc1394_old_cflags="$CFLAGS"
+   check_libdc1394_old_ldflags="$LDFLAGS"
+   check_libdc1394_old_libs="$LIBS"
+   CPPFLAGS="$LIBDC1394_CPPFLAGS $CPPFLAGS"
+   CFLAGS="$LIBDC1394_CFLAGS $CFLAGS"
+   LDFLAGS="$LIBDC1394_LDFLAGS $LDFLAGS"
+   LIBS="$LIBDC1394_LIBS $LIBS"
+   # end push state
 
-# pop state
-CPPFLAGS="$check_libdc1394_old_cppflags"
-CFLAGS="$check_libdc1394_old_cflags"
-LDFLAGS="$check_libdc1394_old_ldflags"
-LIBS="$check_libdc1394_old_libs"
-AC_LANG_POP([C])
-# end pop state
+   AC_MSG_CHECKING([for dc1394/dc1394.h])
+   AC_PREPROC_IFELSE(
+      [AC_LANG_PROGRAM([[#include <dc1394/dc1394.h>]])],
+      [AC_MSG_RESULT([yes])],
+      [AC_MSG_RESULT([no])
+       have_libdc1394=no])
 
+   AS_IF([test "x$have_libdc1394" != xno],
+      [
+         # Note: This test was written with libdc1394 2.2.1 in use.
+         AC_MSG_CHECKING([for dc1394_capture_is_frame_corrupt in libdc1394])
+         AC_LINK_IFELSE([AC_LANG_CALL([], [dc1394_capture_is_frame_corrupt])],
+            [AC_MSG_RESULT([yes])
+             have_libdc1394=yes
+             LIBDC1394_LIBS=-ldc1394],
+            [AC_MSG_RESULT([no])
+             have_libdc1394=no
+             LIBDC1394_LIBS=])
+      ])
+
+   # pop state
+   CPPFLAGS="$check_libdc1394_old_cppflags"
+   CFLAGS="$check_libdc1394_old_cflags"
+   LDFLAGS="$check_libdc1394_old_ldflags"
+   LIBS="$check_libdc1394_old_libs"
+   AC_LANG_POP([C])
+   # end pop state
+])
 ])
