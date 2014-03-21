@@ -1,0 +1,349 @@
+# This file is part of a progressive rewrite of the GNU (autotools) build
+# scripts. Please do not modify this file. Instead, please modify the legacy
+# build files (without the .nextgen suffix). Changes to legacy files will be
+# automatically detected and manually applied to the next-gen files.
+# - Mark Tsuchida
+#
+# %nextgen_build_filename = configure.ac
+# %nextgen_build_replaces = configure.in 7bfca1ee4c30fc410ff1d5e5e6062190
+
+AC_PREREQ(2.57)
+AC_INIT([Micro-Manager], 1.4, info@micro-manager.org)
+#AC_CONFIG_HEADERS([config.h])
+AC_CONFIG_MACRO_DIR([m4])
+AC_CONFIG_SRCDIR([MMCore/MMCore.cpp])
+AC_CANONICAL_HOST
+AM_INIT_AUTOMAKE
+AC_LIBTOOL_DLOPEN
+AC_PROG_LIBTOOL
+
+m4_include([configure.common])
+
+
+AM_CONDITIONAL(BUILD_WITH_JAVA, test "$IMAGEJDIR" != "no")
+if test "$IMAGEJDIR" != "no" ; then
+
+   #----------------------------------------------------------------
+   # Set the CLASSEXT location
+   #----------------------------------------------------------------
+   CLASSEXT=$PWD"/../3rdpartypublic/classext"
+   echo "CLASSEXT="$CLASSEXT
+
+   #----------------------------------------------------------------
+   # Find ij.jar in directory
+   #----------------------------------------------------------------
+   AC_MSG_CHECKING(for ij.jar)
+   IJJARDIR="$CLASSEXT/ij.jar"
+   echo "IJJARDDIR="$IJJARDIR
+   if test -r "$IJJARDIR" ; then
+      IJJARPATH="$IJJARDIR"
+      AC_MSG_RESULT($IJJARPATH)
+   fi
+
+   if test -z "$IJJARPATH"; then
+     AC_MSG_ERROR([not found, Use the without-imagej directive to build without ImageJ or install ImageJ (http://rsb.info.nih.gov/ij/ and rerun configure, possibly using the --with-imagej=path directive])
+   fi
+
+   #----------------------------------------------------------------
+   # Find beanshell.jar in ImageJ plugins directory
+   #----------------------------------------------------------------
+   AC_MSG_CHECKING(for beanshell jar file in ImageJ plugins directory)
+   if test -r "$CLASSEXT/bsh-2.0b4.jar" ; then
+      BSHJARPATH="$CLASSEXT/bsh-2.0b4.jar"
+      AC_MSG_RESULT($BSHJARPATH)
+   fi
+   if test -r "/usr/share/java/bsh.jar" ; then
+      BSHJARPATH="/usr/share/java/bsh.jar"
+      AC_MSG_RESULT($BSHJARPATH)
+   fi
+   if test "$BSHJARPATH" = "" ; then
+      AC_MSG_ERROR([not found, Use the without-imagej directive to build without ImageJ GUI, or download Beanshell (http://www.beanshell.org/download.html) and copy bsh-2.0b4.jar to $IJPATH/plugins])
+   fi
+
+   #----------------------------------------------------------------
+   # Find swingx.jar in ImageJ plugins directory
+   #----------------------------------------------------------------
+   AC_MSG_CHECKING(for swingx jar file in ImageJ plugins directory)
+   if test -r "$CLASSEXT/swingx-0.9.5.jar" ; then
+      SWINGXJARPATH="$CLASSEXT/swingx-0.9.5.jar"
+      AC_MSG_RESULT($SWINGXJARPATH)
+   fi
+   if test -r "/usr/share/java/swingx.jar" ; then
+      SWINGXJARPATH="/usr/share/java/swingx.jar"
+      AC_MSG_RESULT($SWINGXJARPATH)
+   fi
+   if test "$SWINGXJARPATH" = "" ; then
+      AC_MSG_ERROR([not found, Use the without-imagej directive to build without ImageJ GUI, or download swingx and copy to $IJPATH/plugins])
+   fi
+   
+   #----------------------------------------------------------------
+   # Find commons-math-2.0.jar in ImageJ plugins directory
+   #----------------------------------------------------------------
+
+   AC_MSG_CHECKING(for apache commons math jar file)
+   if test -r "$CLASSEXT/commons-math-2.0.jar" ; then
+      COMMONSMATHJARPATH="$CLASSEXT/plugins/commons-math-2.0.jar"
+      AC_MSG_RESULT($COMMONSMATHJARPATH)
+   fi
+   if test -r "/usr/share/java/commons-math-2.0.jar" ; then
+      COMMONSMATHJARPATH="/usr/share/java/commons-math-2.0.jar"
+      AC_MSG_RESULT($COMMONSMATHJARPATH)
+   fi
+   if test -r $CLASSEXT"/commons-math-2.0.jar" ; then
+      COMMONSMATHJARPATH=$CLASSEXT"/commons-math-2.0.jar"
+      AC_MSG_RESULT($COMMONSMATHJARPATH)
+   fi
+   if test "$COMMONSMATHJARPATH" = "" ; then
+      AC_MSG_ERROR([commons-math-2.0.jar not found. It should be in the classext directory.])
+   fi
+
+   #----------------------------------------------------------------
+   # Find swing-layout-1.0.4.jar in ImageJ plugins directory
+   #----------------------------------------------------------------
+   AC_MSG_CHECKING(for swing-layout jar file)
+   if test -r "$CLASSEXT/swing-layout-1.0.4.jar" ; then
+      SWINGLAYOUTJARPATH="$CLASSEXT/swing-layout-1.0.4.jar"
+      AC_MSG_RESULT($SWINGLAYOUTJARPATH)
+   fi
+   if test -r "/usr/share/java/swing-layout-1.0.4.jar" ; then
+      SWINGLAYOUTJARPATH="/usr/share/java/swing-layout-1.0.4.jar"
+      AC_MSG_RESULT($SWINGLAYOUTJARPATH)
+   fi
+   if test -r $CLASSEXT"/swing-layout-1.0.4.jar" ; then
+      SWINGLAYOUTJARPATH=$CLASSEXT"/swing-layout-1.0.4.jar"
+      AC_MSG_RESULT($SWINGLAYOUTJARPATH)
+   fi
+   if test "$SWINGLAYOUTJARPATH" = "" ; then
+      AC_MSG_ERROR([swing-layout-1.0.4.jar not found.  It should be in the classext directory.])
+   fi
+   
+   #----------------------------------------------------------------
+   # Find AbsoluteLayout.jar 
+   #----------------------------------------------------------------
+   AC_MSG_CHECKING(for AbsoluteLayout jar file)
+   if test -r "$CLASSEXT/AbsoluteLayout.jar" ; then
+      ABSOLUTEJARPATH="$CLASSEXT/AbsoluteLayout.jar"
+      AC_MSG_RESULT($ABSOLUTEJARPATH)
+   fi
+   if test -r "/usr/share/java/AbsoluteLayout.jar" ; then
+      ABSOLUTEJARPATH="/usr/share/java/AbsoluteLayout.jar"
+      AC_MSG_RESULT($ABOSLUTEJARPATH)
+   fi
+   if test -r $CLASSEXT"/AbsoluteLayout.jar" ; then
+      ABSOLUTEJARPATH=$CLASSEXT"/AbsoluteLayout.jar"
+      AC_MSG_RESULT($ABSOLUTEJARPATH)
+   fi
+   if test "$ABSOLUTEJARPATH" = "" ; then
+      AC_MSG_ERROR([AbsoluteLayout.jar not found.  It should be in the classext directory.])
+   fi
+   #----------------------------------------------------------------
+   # Find JFreeChart 
+   #----------------------------------------------------------------
+   AC_MSG_CHECKING(for JFreeChart jar file)
+   if test -r "$CLASSEXT/jfreechart-1.0.13.jar" ; then
+      JFREECHARTJARPATH="$CLASSEXT/jfreechart-1.0.13.jar:$CLASSEXT/jcommon-1.0.16.jar"
+      AC_MSG_RESULT($JFREECHARTJARPATH)
+   fi
+   # TODO: look in other paths
+fi
+
+
+AC_SUBST(CLASSEXT)
+AC_SUBST(BSHJARPATH)
+AC_SUBST(SWINGXJARPATH)
+AC_SUBST(COMMONSMATHJARPATH)
+AC_SUBST(SWINGLAYOUTJARPATH)
+AC_SUBST(ABSOLUTEJARPATH)
+AC_SUBST(JFREECHARTJARPATH)
+AC_SUBST(IJJARPATH)
+
+AC_MSG_CHECKING([whether to build the core])
+AC_ARG_WITH([core], [AS_HELP_STRING([--with-core],[use --without-core to only build DeviceAdapters])], [], [with_core=yes])
+if test "x$with_core" = xno; then
+   AC_MSG_RESULT([no]);
+else
+   AC_MSG_RESULT([yes])
+
+   #---------------------------------------------------
+   # Check for BOOST
+   #---------------------------------------------------
+   AX_BOOST_BASE([1.40.0])
+   AX_BOOST_DATE_TIME
+   AX_BOOST_SYSTEM
+
+   #---------------------------------------------------
+   # Check for ZLIB
+   #---------------------------------------------------
+   # The following is hard-coded to find a static libz.a, which we prefer for
+   # release builds. Use of static vs shared libz should probably be
+   # configurable from the command line, but keep the behavior for now.
+   AC_MSG_CHECKING(for zlib)
+   zlib_incdirs="/usr/local/$ARCH/include /usr/local/include /usr/include"
+   zlib_libdirs="/usr/local/$ARCH/lib /usr/local/lib /usr/lib /usr/lib64 /usr/lib/$build_platform-$build_os"
+   AC_ARG_WITH([zlib], [AS_HELP_STRING([--with-zlib=path], [use zlib at path])],
+      [ZLIBDIR="$withval"], [ZLIBDIR="yes"])
+   if test "x$ZLIBDIR" != "xno" ; then
+      if test "x$ZLIBDIR" != "xyes" ; then
+         zlib_incdirs="$ZLIBDIR/include"
+         zlib_libdirs="$ZLIBDIR/lib"
+      fi
+   else
+      AC_MSG_RESULT([zlib required but disabled on command line])
+      exit 1
+   fi
+
+   AC_FIND_FILE([zlib.h], [$zlib_incdirs], ZLIBINCDIR)
+   if test x$ZLIBINCDIR = xNO; then
+      AC_MSG_RESULT([not found]) 
+      exit 1
+   else 
+      AC_CHECK_HEADERS([$ZLIBINCDIR/zlib.h])
+      if test -z "$LIBZLIB" ; then
+         AC_FIND_FILE([libz.a], [$zlib_libdirs], ZLIBLIBDIR)
+         if test x$ZLIBLIBDIR = xNO; then
+            AC_MSG_RESULT([zlib not found])
+            exit 1
+         else
+            AC_MSG_RESULT([libz.a found])
+            LIBZLIB="$ZLIBLIBDIR/libz.a"
+         fi 
+      fi 
+   fi 
+   AC_SUBST(LIBZLIB) 
+
+
+   #---------------------------------------------------
+   # Check for SWIG
+   #---------------------------------------------------
+   AC_CHECK_PROGS(SWIG, swig)
+   if test "$SWIG" = "" ; then
+      AC_MSG_ERROR([not found, swig is needed to build this application.  Please download (http://www.swig.org/download.html) and install])
+   fi
+
+fi
+AM_CONDITIONAL([BUILD_APP], test "x$with_core" = xyes)
+
+
+# Check whether to build python
+
+AC_MSG_CHECKING(whether to build for python)
+AC_ARG_ENABLE([python],
+    AS_HELP_STRING([--enable-python], [Enable building python wrapper of MMCore]))
+
+AC_MSG_RESULT($enable_python)
+
+AM_CONDITIONAL([BUILD_PYTHON], test "$enable_python" = "yes")
+
+#----------------------------------------------------------------
+# Look for java binaries and headers
+#----------------------------------------------------------------
+
+AC_CHECK_PROGS(JAVA, java kaffe guavac)
+AC_CHECK_PROGS(JAVAC, javac)
+AC_CHECK_PROGS(JAR, jar)
+
+# Find Java header files:
+AC_MSG_CHECKING(for java include file jni.h)
+AC_ARG_WITH([javaincl], [AS_HELP_STRING([--with-javaincl=path],[set location of Java include directory])], [JAVAINCDIR="$withval"], [JAVAINCDIR=])
+
+if test -z "$JAVAINCDIR"; then  
+   JAVAINCDIR="/usr/j2sdk*/include /usr/local/j2sdk*/include /usr/jdk*/include /usr/local/jdk*/include /opt/j2sdk*/include /opt/jdk*/include /usr/java/include /usr/java/j2sdk*/include /usr/java/jdk*/include /usr/local/java/include /opt/java/include /usr/include/java /usr/local/include/java /usr/lib/java/include /usr/lib/jvm/java*/include /usr/include/kaffe /usr/local/include/kaffe /usr/include"                                                                             
+  # Add in default installation directory on Windows for Cygwin              
+  case $host in                                                              
+  *-*-cygwin* | *-*-mingw*) JAVAINCDIR="c:/Program*Files/Java/jdk*/include d:/Program*Files/Java/jdk*/include c:/j2sdk*/include d:/j2sdk*/include c:/jdk*/include d:/jdk*/include $JAVAINCDIR";;
+  *-*-darwin*) JAVAINCDIR="/System/Library/Frameworks/JavaVM.framework/Headers $JAVAINCDIR";;
+  *);;                                                                       
+  esac                                                                       
+fi  
+
+
+JAVAINC=""                                                                   
+for d in $JAVAINCDIR ; do                                                    
+  if test -r "$d/jni.h" ; then 
+    AC_MSG_RESULT($d)
+    JAVAINCDIR=$d
+    JAVAINC=-I\"$d\"
+    break
+  fi
+done
+
+if test "$JAVAINC" = "" ; then
+  AC_MSG_RESULT(not found)
+else
+  # now look for <arch>/jni_md.h
+  AC_MSG_CHECKING(for java include file jni_md.h)
+  JAVAMDDIR=`find "$JAVAINCDIR" -follow -name jni_md.h -print`
+  if test "$JAVAMDDIR" = "" ; then
+    AC_MSG_RESULT(not found)
+  else
+    JAVAMDDIR=`dirname "$JAVAMDDIR" | tail -n 1`
+    JAVAINC="${JAVAINC} -I\"$JAVAMDDIR\""
+    AC_MSG_RESULT($JAVAMDDIR)
+  fi
+fi
+
+# Java on Windows platforms including Cygwin doesn't use libname.dll, rather name.dll when loading dlls
+case $host in
+*-*-cygwin* | *-*-mingw*) JAVALIBRARYPREFIX="";;
+*)JAVALIBRARYPREFIX="lib";;
+esac
+
+# Java on Mac OS X tweaks
+case $host in
+*-*-darwin*) 
+    JAVASO=".jnilib"
+    JAVALDSHARED='$(CC)'
+    JAVACXXSHARED='$(CXX)'
+    ;;
+*)
+    # JAVASO='$(SO)'
+    JAVASO='.so'
+    JAVALDSHARED='$(LDSHARED)'
+    JAVACXXSHARED='$(CXXSHARED)'
+    ;;
+esac
+
+JAVACFLAGS='-Xlint:all,-serial -source 1.5 -target 1.5'
+
+# Export variables to Makefile
+AC_SUBST(JAVAINC)
+AC_SUBST(JAVADYNAMICLINKING)
+AC_SUBST(JAVALIBRARYPREFIX)
+AC_SUBST(JAVASO)
+AC_SUBST(JAVALDSHARED)
+AC_SUBST(JAVACXXSHARED)
+AC_SUBST(JAVACFLAGS)
+AC_SUBST(I5DJARPATH)
+
+# Checks for libraries.
+AC_CHECK_LIB(dl, dlopen)   # Dynamic linking for SunOS/Solaris and SYSV
+
+# Checks for header files.
+AC_HEADER_STDC
+
+# Checks for typedefs, structures, and compiler characteristics.
+AC_HEADER_STDBOOL
+AC_C_CONST
+AC_C_INLINE
+
+
+# Checks for library functions.
+AC_HEADER_STDC
+AC_CHECK_FUNCS([memset])
+
+# Install Device Adapter API library and headers
+install_mmdevapi=false
+AC_ARG_ENABLE(inst-devapi,
+    [  --enable-inst-devapi    Install the Device Adapter API library and headers ],
+    [ install_mmdevapi=true ])
+AM_CONDITIONAL([INSTALL_MMDEVAPI], [test x$install_mmdevapi = xtrue])
+
+# Check for Device Adapters with proprietary code
+AC_MSG_CHECKING(for proprietary DeviceAdapters)
+AM_CONDITIONAL(BUILD_SECRETDEVICEADAPTERS, test -f "SecretDeviceAdapters/configure.in")
+if test -z "${BUILD_SECRETDEVICEADAPTERS}" ; then
+   AC_CONFIG_SUBDIRS([SecretDeviceAdapters])
+fi
+
+AC_CONFIG_SUBDIRS(DeviceAdapters DeviceKit)
+AC_OUTPUT(Makefile MMCore/Makefile MMCoreJ_wrap/Makefile mmstudio/Makefile acqEngine/Makefile plugins/Makefile scripts/Makefile autofocus/Makefile MMDevice/Makefile  MMCorePy_wrap/Makefile)

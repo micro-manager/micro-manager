@@ -1,0 +1,88 @@
+# This file is part of a progressive rewrite of the GNU (autotools) build
+# scripts. Please do not modify this file. Instead, please modify the legacy
+# build files (without the .nextgen suffix). Changes to legacy files will be
+# automatically detected and manually applied to the next-gen files.
+# - Mark Tsuchida
+#
+# %nextgen_build_filename = configure.ac
+# %nextgen_build_replaces = configure.in 101b6a9e37884724eb2309bed9298af5
+
+AC_PREREQ(2.57)
+AC_INIT(FULL-PACKAGE-NAME, VERSION, BUG-REPORT-ADDRESS)
+#AC_CONFIG_SRCDIR([DemoCamera/DemoCamera.cpp])
+AC_CANONICAL_HOST
+AM_INIT_AUTOMAKE
+AC_PROG_LIBTOOL
+
+m4_include([../configure.common])
+
+AX_BOOST_BASE
+AX_BOOST_DATE_TIME
+
+# Checks for typedefs, structures, and compiler characteristics.
+AC_HEADER_STDBOOL
+AC_C_CONST
+AC_C_INLINE
+
+# Checks for library functions.
+AC_HEADER_STDC
+AC_CHECK_FUNCS([memset])
+AC_CHECK_LIB(dl, dlopen) # for dynamic linking on linux
+
+
+#---------------------------------------------------
+# Check for ZLIB
+#---------------------------------------------------
+# The following is hard-coded to find a static libz.a, which we prefer for
+# release builds. Use of static vs shared libz should probably be
+# configurable from the command line, but keep the behavior for now.
+AC_MSG_CHECKING(for zlib)
+zlib_incdirs="/usr/local/$ARCH/include /usr/local/include /usr/include"
+zlib_libdirs="/usr/local/$ARCH/lib /usr/local/lib /usr/lib /usr/lib64 /usr/lib/$build_platform-$build_os"
+AC_ARG_WITH([zlib], [AS_HELP_STRING([--with-zlib=path], [use zlib at path])],
+   [ZLIBDIR="$withval"], [ZLIBDIR="yes"])
+if test "x$ZLIBDIR" != "xno" ; then
+   if test "x$ZLIBDIR" != "xyes" ; then
+      zlib_incdirs="$ZLIBDIR/include"
+      zlib_libdirs="$ZLIBDIR/lib"
+   fi
+else
+   AC_MSG_RESULT([zlib required but disabled on command line])
+   exit 1
+fi
+
+AC_FIND_FILE([zlib.h], [$zlib_incdirs], ZLIBINCDIR)
+if test x$ZLIBINCDIR = xNO; then
+   AC_MSG_RESULT([not found]) 
+   exit 1
+else 
+   AC_CHECK_HEADERS([$ZLIBINCDIR/zlib.h])
+   if test -z "$LIBZLIB" ; then
+      AC_FIND_FILE([libz.a], [$zlib_libdirs], ZLIBLIBDIR)
+      if test x$ZLIBLIBDIR = xNO; then
+         AC_MSG_RESULT([zlib not found])
+         exit 1
+      else
+         AC_MSG_RESULT([libz.a found])
+         LIBZLIB="$ZLIBLIBDIR/libz.a"
+      fi 
+   fi 
+fi 
+AC_SUBST(LIBZLIB) 
+
+# On the Mac we need some frameworks that can be in the way on Linux
+case $host in
+   *apple-darwin*)
+      SERIALFRAMEWORKS="-framework CoreFoundation -framework IOKit"
+      AC_MSG_RESULT($SERIALFRAMEWORKS)
+      ;;
+   *linux*)
+      ;;
+esac
+AC_SUBST(SERIALFRAMEWORKS)
+
+
+AC_CONFIG_FILES(Makefile CoreTest/Makefile DeviceTest/Makefile LibraryTest/Makefile)
+
+
+AC_OUTPUT
