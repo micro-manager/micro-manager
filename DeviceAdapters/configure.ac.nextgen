@@ -217,11 +217,27 @@ fi
 PKG_PROG_PKG_CONFIG
 PKG_CHECK_MODULES([GPHOTO2], [libgphoto2 >= 2.5.1], [have_libgphoto2=yes], [have_libgphoto2=no])
 
-# Libtool library 
-AC_MSG_CHECKING(for ltdl)
-AC_FIND_FILE([libltdl.dylib], [/usr/local/$ARCH/lib /usr/lib /usr/lib64], LIBLTDLPATH)
+# Libtool dynamic loading library (used by libgphoto2)
+AC_MSG_CHECKING(for libltdl)
+AC_ARG_WITH([ltdl], [AS_HELP_STRING([--with-ltdl=path], [use libltdl at path])],
+   [LIBLTDLPATH="$withval"], [LIBLTDLPATH="yes"])
+case $LIBLTDLPATH in
+   yes)
+      ltdl_libdirs="/usr/local/$ARCH/lib /usr/lib /usr/lib64"
+      ;;
+   no)
+       AC_MSG_RESULT([libltdl required for GPhoto2 (SimpleCam) but disabled on command line])
+      ltdl_libdirs=""
+      ;;
+   *)
+      ltdl_libdirs="$LIBLTDLPATH"
+      ;;
+esac
+# XXX This is broken on non-OS X! We shouldn't be using AC_FIND_FILE for a
+# library anyway.
+AC_FIND_FILE([libltdl.dylib], [$ltdl_libdirs], LIBLTDLPATH)
 if test x$LIBLTDLPATH = xNO; then
-   AC_MSG_RESULT(["libltdl not found, can not build GPhoto adapter"])
+   AC_MSG_RESULT(["libltdl not found, cannot build GPhoto2 (SimpleCam) adapter"])
 else
    AC_MSG_RESULT(["libltdl" found])
    LIBLTDL="$LIBLTDLPATH/libltdl.dylib"
