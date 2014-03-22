@@ -23,6 +23,9 @@
 #
 # Returns yes or no in shell variable have_libdc1394.
 
+# TODO Make an abstract macro that expands to either the following or to
+# MM_LIB_USB_0_1.
+
 AC_DEFUN([MM_LIB_DC1394], [
 
 AC_ARG_VAR([LIBDC1394_CPPFLAGS], [preprocessor flags for libdc1394])
@@ -62,6 +65,8 @@ AS_IF([test "x$have_libdc1394" = xyes],
    LDFLAGS="$LIBDC1394_LDFLAGS $mm_libdc1394_old_ldflags"
    LIBS="$LIBDC1394_LIBS $mm_libdc1394_old_libs"
    # end push state
+
+	# TODO We could add pkg-config-based configuration
 
    AC_MSG_CHECKING([for dc1394/dc1394.h])
    AC_PREPROC_IFELSE(

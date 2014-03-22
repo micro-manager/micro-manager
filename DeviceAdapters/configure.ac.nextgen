@@ -44,7 +44,7 @@ AC_SUBST(MMDEVAPI_LDFLAGS)
 thirdpartypublic="${micromanager_path}/../3rdpartypublic"
 
 
-# Checkfor libUSB 
+# libusb 0.1 (or libusb-compat)
 AC_MSG_CHECKING(for libusb)
 AC_FIND_FILE([usb.h], [/usr/include /usr/local/$ARCH/include], USBINCDIR)
 if test x$USBINCDIR = xNO; then
@@ -69,7 +69,35 @@ else
    fi
 fi
 AC_SUBST(LIBUSB)
-AM_CONDITIONAL([BUILD_USBMANAGER], [test -n "$LIBUSB"])
+
+# libusb 0.1 or libusb-compat
+AC_MSG_CHECKING([if libusb 0.1 support requested])
+AC_ARG_WITH([libusb-0-1],
+   [AS_HELP_STRING([--with-libusb-0-1=DIR],
+      [build libusb 0.1 (or libusb-compat)-based device adapters (default: auto)])],
+   [],
+   [with_libusb_0_1=auto])
+case $with_libusb_0_1 in
+   yes | no | auto) want_libusb_0_1="$with_libusb_0_1" ;;
+   *) LIBUSB_0_1_INCDIR="$with_libusb_0_1/include"
+      LIBUSB_0_1_LIBDIR="$with_libusb_0_1/lib"
+      want_libusb_0_1=yes ;;
+esac
+AC_MSG_RESULT([$want_libusb_0_1])
+
+AS_IF([test "x$want_libusb_0_1" != xno],
+   [MM_LIB_USB_0_1
+    use_libusb_0_1=$have_libusb_0_1],
+   [use_libusb_0_1=no])
+
+test "x$want_libusb_0_1" = xyes &&
+   { test "x$use_libusb_0_1" = xno && use_libusb_0_1=error; }
+AS_IF([test "x$use_libusb_0_1" = xerror],
+   [AC_MSG_FAILURE([--with-libusb-0-1 was given, but test for libusb 0.1 or libusb-compat failed])])
+
+
+AM_CONDITIONAL([BUILD_USBMANAGER], [test "x$use_libusb_0_1" = xyes])
+
 
 # Check for HIDAPI
 case $host in

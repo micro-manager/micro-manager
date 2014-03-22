@@ -1,0 +1,99 @@
+# This file is part of a progressive rewrite of the GNU (autotools) build
+# scripts. Please do not modify this file. Instead, please modify the legacy
+# build files (without the .nextgen suffix). Changes to legacy files will be
+# automatically detected and manually applied to the next-gen files.
+# - Mark Tsuchida
+#
+# %nextgen_build_filename = mm_libusb_0_1.m4
+
+# Author: Mark Tsuchida
+# Copyright: University of California, San Francisco, 2014
+# License: BSD
+
+# Usage: MM_LIB_USB_0_1
+#
+# Checks for libusb 0.1 (or libusb-1.0-based libusb-compat)
+#
+# Defines variables LIBUSB_0_1_CPPFLAGS, LIBUSB_0_1_CFLAGS, LIBUSB_0_1_LDFLAGS,
+# and LIBUSB_0_1_LIBS, which can be overridden by the user (although that is
+# rarely necessary).
+#
+# If LIBUSB_0_1_INCDIR or LIBUSB_0_1_LIBDIR is given, add to search paths when
+# checking.
+#
+# Returns yes or no in shell variable have_libusb_0_1.
+
+# TODO Make an abstract macro that expands to either the following or to
+# MM_LIB_DC1394.
+
+AC_DEFUN([MM_LIB_USB_0_1], [
+
+AC_ARG_VAR([LIBUSB_0_1_CPPFLAGS], [preprocessor flags for libusb 0.1 or libusb-compat])
+AC_ARG_VAR([LIBUSB_0_1_CFLAGS], [compiler flags for libusb 0.1 or libusb-compat])
+AC_ARG_VAR([LIBUSB_0_1_LDFLAGS], [linker flags for libusb 0.1 or libusb-compat])
+AC_ARG_VAR([LIBUSB_0_1_LIBS], [library flags for libusb 0.1 or libusb-compat])
+
+# if any of the vars are already defined, do not modify and assume user knows
+# what they are doing
+AC_MSG_CHECKING([for libusb 0.1 configuration])
+test -n "$LIBUSB_0_1_CPPFLAGS" && have_libusb_0_1=yes
+test -n "$LIBUSB_0_1_CFLAGS" && have_libusb_0_1=yes
+test -n "$LIBUSB_0_1_LDFLAGS" && have_libusb_0_1=yes
+test -n "$LIBUSB_0_1_LIBS" && have_libusb_0_1=yes
+
+AS_IF([test "x$have_libusb_0_1" = xyes],
+[
+   AC_MSG_RESULT([user provided flag(s); will skip checks])
+],
+[
+   AC_MSG_RESULT([no; will check if available])
+
+   # defaults
+   have_libusb_0_1=
+   test -n "$LIBUSB_0_1_INCDIR" && LIBUSB_0_1_CPPFLAGS="-I$LIBUSB_0_1_INCDIR"
+   test -n "$LIBUSB_0_1_LIBDIR" && LIBUSB_0_1_LDFLAGS="-L$LIBUSB_0_1_LIBDIR"
+   LIBUSB_0_1_LIBS=-lusb
+
+   # push state
+   AC_LANG_PUSH([C])
+   mm_libusb_0_1_old_cppflags="$CPPFLAGS"
+   mm_libusb_0_1_old_cflags="$CFLAGS"
+   mm_libusb_0_1_old_ldflags="$LDFLAGS"
+   mm_libusb_0_1_old_libs="$LIBS"
+   CPPFLAGS="$LIBUSB_0_1_CPPFLAGS $mm_libusb_0_1_old_cppflags"
+   CFLAGS="$LIBUSB_0_1_CFLAGS $mm_libusb_0_1_old_cflags"
+   LDFLAGS="$LIBUSB_0_1_LDFLAGS $mm_libusb_0_1_old_ldflags"
+   LIBS="$LIBUSB_0_1_LIBS $mm_libusb_0_1_old_libs"
+   # end push state
+
+	# TODO We could add pkg-config-based configuration
+
+   AC_MSG_CHECKING([for usb.h])
+   AC_PREPROC_IFELSE(
+      [AC_LANG_PROGRAM([[#include <usb.h>]])],
+      [AC_MSG_RESULT([yes])],
+      [AC_MSG_RESULT([no])
+       have_libusb_0_1=no])
+
+   AS_IF([test "x$have_libusb_0_1" != xno],
+      [
+         # libusb-1.0 uses 'libusb_' for function name prefix, so checking for
+         # usb_init is sufficient to prevent confusion.
+         AC_MSG_CHECKING([for usb_init in libusb])
+         AC_LINK_IFELSE([AC_LANG_CALL([], [usb_init])],
+            [AC_MSG_RESULT([yes])
+             have_libusb_0_1=yes],
+            [AC_MSG_RESULT([no])
+             have_libusb_0_1=no
+             LIBUSB_0_1_LIBS=])
+      ])
+
+   # pop state
+   CPPFLAGS="$mm_libusb_0_1_old_cppflags"
+   CFLAGS="$mm_libusb_0_1_old_cflags"
+   LDFLAGS="$mm_libusb_0_1_old_ldflags"
+   LIBS="$mm_libusb_0_1_old_libs"
+   AC_LANG_POP([C])
+   # end pop state
+])
+])
