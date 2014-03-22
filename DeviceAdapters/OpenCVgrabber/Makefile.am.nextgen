@@ -8,10 +8,12 @@
 # %nextgen_build_replaces = Makefile.am e855b3ea972a6511b685c7421fc3e2fc
 
 pkglibdir = $(DEVICEADAPTERPATH)
-AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS) -fpermissive
-pkglib_LTLIBRARIES = libmmgr_dal_OpenCVgrabber.la
-libmmgr_dal_OpenCVgrabber_la_SOURCES = OpenCVgrabber.cpp OpenCVgrabber.h ../../MMDevice/MMDevice.h
 
-libmmgr_dal_OpenCVgrabber_la_CXXFLAGS = $(AM_CXXFLAGS) $(OPENCV_CFLAGS)
-libmmgr_dal_OpenCVgrabber_la_LDFLAGS = $(MMDEVAPI_LDFLAGS)
+AM_CPPFLAGS = $(OPENCV_CPPFLAGS)
+AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS) $(OPENCV_CFLAGS)
+AM_LDFLAGS = $(MMDEVAPI_LDFLAGS) $(OPENCV_LDFLAGS)
+
+pkglib_LTLIBRARIES = libmmgr_dal_OpenCVgrabber.la
+
+libmmgr_dal_OpenCVgrabber_la_SOURCES = OpenCVgrabber.cpp OpenCVgrabber.h
 libmmgr_dal_OpenCVgrabber_la_LIBADD = $(MMDEVAPI_LIBADD) $(OPENCV_LIBS)

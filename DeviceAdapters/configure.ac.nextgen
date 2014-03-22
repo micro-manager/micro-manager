@@ -137,26 +137,26 @@ fi
 
 
 # libdc1394 2.x
-AC_MSG_CHECKING([if use of libdc1394 requested])
+AC_MSG_CHECKING([if libdc1394 support requested])
 AC_ARG_WITH([libdc1394],
    [AS_HELP_STRING([--with-libdc1394=DIR],
-      [build libdc1394-based device adapters (default: check)])],
+      [build libdc1394-based device adapters (default: auto)])],
    [],
-   [with_libdc1394=check])
+   [with_libdc1394=auto])
 case $with_libdc1394 in
-   yes | no | check) ;;
-   *) if test -n "$LIBDC1394_CPPFLAGS"; then LIBDC1394_CPPFLAGS="-I$with_libdc1394/include"; fi
-      if test -n "$LIBDC1394_LDFLAGS"; then LIBDC1394_LDFLAGS="-L$with_libdc1394/lib"; fi
-      with_libdc1394=yes ;;
+   yes | no | auto) want_libdc1394="$with_libdc1394" ;;
+   *) LIBDC1394_INCDIR="$with_libdc1394/include"
+      LIBDC1394_LIBDIR="$with_libdc1394/lib"
+      want_libdc1394=yes ;;
 esac
-AC_MSG_RESULT([$with_libdc1394])
+AC_MSG_RESULT([$want_libdc1394])
 
-AS_IF([test "x$with_libdc1394" != xno],
+AS_IF([test "x$want_libdc1394" != xno],
    [MM_LIB_DC1394
     use_libdc1394=$have_libdc1394],
    [use_libdc1394=no])
 
-test "x$with_libdc1394" = xyes &&
+test "x$want_libdc1394" = xyes &&
    { test "x$use_libdc1394" = xno && use_libdc1394=error; }
 AS_IF([test "x$use_libdc1394" = xerror],
    [AC_MSG_FAILURE([--with-libdc1394 was given, but test for libdc1394 failed])])
@@ -340,9 +340,35 @@ else
    AC_MSG_RESULT([not found])
 fi
 
+
 # OpenCV
-AX_OPENCV
-AM_CONDITIONAL(BUILD_OPENCV,test x$hasopencv = xtrue)
+AC_MSG_CHECKING([if OpenCV support requested])
+AC_ARG_WITH([opencv],
+	[AS_HELP_STRING([--with-opencv=DIR],
+      [build OpenCV-based device adapters (default: auto)])],
+   [],
+   [with_opencv=auto])
+case $with_opencv in
+   yes | no | auto) want_opencv="$with_opencv" ;;
+   *) OPENCV_INCDIR="$with_opencv/include"
+      OPENCV_LIBDIR="$with_opencv/lib"
+      want_opencv=yes ;;
+esac
+AC_MSG_RESULT([$want_opencv])
+
+AS_IF([test "x$want_opencv" != no],
+   [MM_LIB_OPENCV
+    use_opencv=$have_opencv],
+   [use_opencv=no])
+
+test "x$want_opencv" = xyes &&
+   { test "x$use_opencv" = xno && use_opencv=error; }
+AS_IF([test "x$use_opencv" = xerror],
+   [AC_MSG_FAILURE([--with-opencv was given, but test for OpenCV failed])])
+
+
+AM_CONDITIONAL([BUILD_OPENCV], [test "x$use_opencv" = xyes])
+
 
 # Only build ... when the code is there
 AM_CONDITIONAL([BUILD_TEST],[test -f "Test/Test.h"])
@@ -376,9 +402,6 @@ case $host in
       AC_MSG_CHECKING(QuickTime linker flags)
       QUICKTIMEFRAMEWORKS="-framework QuickTime -framework QTKit"
       AC_MSG_RESULT($QUICKTIMEFRAMEWORKS)
-      AC_MSG_CHECKING(OpenCV linker flags)
-      OPENCV_XLDFLAGS="-lopencv_imgproc"
-      AC_MSG_RESULT($OPENCV_XLDFLAGS)
       ;;
    *linux*)
       AC_MSG_CHECKING(pvcam linker flags)
@@ -389,7 +412,6 @@ AC_SUBST(PVCAMFRAMEWORKS)
 AC_SUBST(SPOTFRAMEWORKS)
 AC_SUBST(SERIALFRAMEWORKS)
 AC_SUBST(QUICKTIMEFRAMEWORKS)
-AC_SUBST(OPENCV_XLDFLAGS)
 
 # Micro-Manager libraries have a prefix & suffix to make them unique.  These are defined here:
 case $host in

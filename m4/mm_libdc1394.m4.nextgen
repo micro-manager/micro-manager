@@ -18,6 +18,9 @@
 # and LIBDC1394_LIBS, which can be overridden by the user (although that is
 # rarely necessary).
 #
+# If LIBDC1394_INCDIR or LIBDC1394_LIBDIR is given, add to search paths when
+# checking.
+#
 # Returns yes or no in shell variable have_libdc1394.
 
 AC_DEFUN([MM_LIB_DC1394], [
@@ -37,25 +40,27 @@ test -n "$LIBDC1394_LIBS" && have_libdc1394=yes
 
 AS_IF([test "x$have_libdc1394" = xyes],
 [
-   AC_MSG_RESULT([user provided flag(s); skip checks])
+   AC_MSG_RESULT([user provided flag(s); will skip checks])
 ],
 [
-   AC_MSG_RESULT([need check])
+   AC_MSG_RESULT([no; will check if available])
 
    # defaults
-   LIBDC1394_LIBS=-ldc1394
    have_libdc1394=
+   test -n "$LIBDC1394_INCDIR" && LIBDC1394_CPPFLAGS="-I$LIBDC1394_INCDIR"
+   test -n "$LIBDC1394_LIBDIR" && LIBDC1394_LDFLAGS="-L$LIBDC1394_LIBDIR"
+   LIBDC1394_LIBS=-ldc1394
 
    # push state
    AC_LANG_PUSH([C])
-   check_libdc1394_old_cppflags="$CPPFLAGS"
-   check_libdc1394_old_cflags="$CFLAGS"
-   check_libdc1394_old_ldflags="$LDFLAGS"
-   check_libdc1394_old_libs="$LIBS"
-   CPPFLAGS="$LIBDC1394_CPPFLAGS $CPPFLAGS"
-   CFLAGS="$LIBDC1394_CFLAGS $CFLAGS"
-   LDFLAGS="$LIBDC1394_LDFLAGS $LDFLAGS"
-   LIBS="$LIBDC1394_LIBS $LIBS"
+   mm_libdc1394_old_cppflags="$CPPFLAGS"
+   mm_libdc1394_old_cflags="$CFLAGS"
+   mm_libdc1394_old_ldflags="$LDFLAGS"
+   mm_libdc1394_old_libs="$LIBS"
+   CPPFLAGS="$LIBDC1394_CPPFLAGS $mm_libdc1394_old_cppflags"
+   CFLAGS="$LIBDC1394_CFLAGS $mm_libdc1394_old_cflags"
+   LDFLAGS="$LIBDC1394_LDFLAGS $mm_libdc1394_old_ldflags"
+   LIBS="$LIBDC1394_LIBS $mm_libdc1394_old_libs"
    # end push state
 
    AC_MSG_CHECKING([for dc1394/dc1394.h])
@@ -71,18 +76,17 @@ AS_IF([test "x$have_libdc1394" = xyes],
          AC_MSG_CHECKING([for dc1394_capture_is_frame_corrupt in libdc1394])
          AC_LINK_IFELSE([AC_LANG_CALL([], [dc1394_capture_is_frame_corrupt])],
             [AC_MSG_RESULT([yes])
-             have_libdc1394=yes
-             LIBDC1394_LIBS=-ldc1394],
+             have_libdc1394=yes],
             [AC_MSG_RESULT([no])
              have_libdc1394=no
              LIBDC1394_LIBS=])
       ])
 
    # pop state
-   CPPFLAGS="$check_libdc1394_old_cppflags"
-   CFLAGS="$check_libdc1394_old_cflags"
-   LDFLAGS="$check_libdc1394_old_ldflags"
-   LIBS="$check_libdc1394_old_libs"
+   CPPFLAGS="$mm_libdc1394_old_cppflags"
+   CFLAGS="$mm_libdc1394_old_cflags"
+   LDFLAGS="$mm_libdc1394_old_ldflags"
+   LIBS="$mm_libdc1394_old_libs"
    AC_LANG_POP([C])
    # end pop state
 ])
