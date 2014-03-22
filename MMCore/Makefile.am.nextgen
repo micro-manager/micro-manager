@@ -1,0 +1,37 @@
+# This file is part of a progressive rewrite of the GNU (autotools) build
+# scripts. Please do not modify this file. Instead, please modify the legacy
+# build files (without the .nextgen suffix). Changes to legacy files will be
+# automatically detected and manually applied to the next-gen files.
+# - Mark Tsuchida
+#
+# %nextgen_build_filename = Makefile.am
+# %nextgen_build_replaces = Makefile.am 92a9ff09e3296430e2118a4af45b6302
+
+AUTOMAKE_OPTIONS = foreign subdir-objects
+
+AM_CXXFLAGS = $(BOOST_CPPFLAGS)
+noinst_LIBRARIES = libMMCore.a
+libMMCore_a_SOURCES = MMCore.cpp MMCore.h \
+	CircularBuffer.h CircularBuffer.cpp \
+	CoreCallback.h CoreCallback.cpp \
+	Configuration.h Configuration.cpp \
+	ConfigGroup.h \
+	CoreProperty.h CoreProperty.cpp \
+	CoreUtils.h \
+	Error.h Error.cpp \
+	ErrorCodes.h\
+	PluginManager.h PluginManager.cpp \
+	LibraryInfo/LibraryPaths.h LibraryInfo/LibraryPathsUnix.cpp \
+	LoadableModules/LoadedModule.h LoadableModules/LoadedModule.cpp \
+	LoadableModules/LoadedModuleImpl.h LoadableModules/LoadedModuleImpl.cpp \
+	LoadableModules/LoadedModuleImplUnix.h LoadableModules/LoadedModuleImplUnix.cpp \
+	LoadableModules/LoadedDeviceAdapter.h LoadableModules/LoadedDeviceAdapter.cpp \
+	IMLogger.h \
+	FastLogger.h FastLogger.cpp \
+        Compressor.h \
+	../MMDevice/MMDevice.h ../MMDevice/MMDeviceConstants.h \
+	../MMDevice/ModuleInterface.h \
+      Host.cpp Host.h \
+      AppleHost.h
+
+EXTRA_DIST = license.txt MMCore.vcproj

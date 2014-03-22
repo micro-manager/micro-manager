@@ -1,0 +1,34 @@
+# This file is part of a progressive rewrite of the GNU (autotools) build
+# scripts. Please do not modify this file. Instead, please modify the legacy
+# build files (without the .nextgen suffix). Changes to legacy files will be
+# automatically detected and manually applied to the next-gen files.
+# - Mark Tsuchida
+#
+# %nextgen_build_filename = Makefile.am
+# %nextgen_build_replaces = Makefile.am 60b876ae98a21d8a8e2b9b71f5561a36
+
+AUTOMAKE_OPTIONS = foreign subdir-objects
+
+## Process this file with automake to produce Makefile.in
+JARS=MMAutofocus.jar MMAutofocusTB.jar MMAutofocusDuo.jar MMOughtaFocus.jar
+
+MM%.jar: BUILD=$(patsubst MM%.jar,build-%,$@)
+
+$(JARS):MM%.jar: $(srcdir)/%.java
+	mkdir -p $(BUILD)
+	rm -rf $(BUILD)/*
+	$(JAVAC) $(JAVACFLAGS) -sourcepath $(srcdir):. -classpath $(IJJARPATH):$(BSHJARPATH):$(COMMONSMATHJARPATH):../mmstudio/MMJ_.jar:. $^ -d $(BUILD)
+	## Work around bug in 'jar': jar cf MM_.jar -C bin/ bin/* does not work
+	cd $(BUILD) && jar cf ../$@ *
+
+all: $(JARS)
+
+install: 
+	test -d $(DESTDIR)$(IJPATH)/mmautofocus || mkdir $(DESTDIR)$(IJPATH)/mmautofocus
+	cp $(JARS) $(DESTDIR)$(IJPATH)/mmautofocus/
+	
+clean:
+	for f in $(JARS); \
+	do \
+		test -e $$f && rm $$f || echo "$$f not found"; \
+	done
