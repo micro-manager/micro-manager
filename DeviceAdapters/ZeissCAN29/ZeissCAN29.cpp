@@ -57,8 +57,12 @@ ZeissHub g_hub;
 const char* g_ZeissDeviceName = "ZeissScope";
 const char* g_ZeissReflector = "ZeissReflectorTurret";
 const char* g_ZeissNosePiece = "ZeissObjectiveTurret";
+const char* g_ZeissNeutralDensityWheel1RL = "ZeissNDWheel1RL";
+const char* g_ZeissNeutralDensityWheel2RL = "ZeissNDWheel2RL";
 const char* g_ZeissFieldDiaphragm = "ZeissFieldDiaphragm";
 const char* g_ZeissApertureDiaphragm = "ZeissApertureDiaphragm";
+const char* g_ZeissNeutralDensityWheel1TL = "ZeissNDWheel1TL";
+const char* g_ZeissNeutralDensityWheel2TL = "ZeissNDWheel2TL";
 const char* g_ZeissFocusAxis = "ZeissFocusAxis";
 const char* g_ZeissTubeLens = "ZeissTubeLens";
 const char* g_ZeissTubeLensShutter = "ZeissTubeLensShutter";
@@ -90,8 +94,12 @@ const char* g_ZeissHXPShutter = "ZeissHXPShutter";
 // List of Device numbers (from Zeiss documentation)
 ZeissUByte g_ReflectorChanger = 0x01;
 ZeissUByte g_NosePieceChanger = 0x02;
+ZeissUByte g_NeutralDensityWheel1RL = 0x05; // Called Filter wheel 1 in docs
+ZeissUByte g_NeutralDensityWheel2RL = 0x06; // Called Filter wheel 2 in docs
 ZeissUByte g_FieldDiaphragmServo = 0x08; // Reflected Light
 ZeissUByte g_ApertureDiaphragmServo = 0x09; // Reflected Light
+ZeissUByte g_NeutralDensityWheel1TL = 0x0B; // Called Filter wheel 1 in docs
+ZeissUByte g_NeutralDensityWheel2TL = 0x0C; // Called Filter wheel 2 in docs
 ZeissUByte g_FocusAxis = 0x0F;
 ZeissUByte g_TubeLensChanger = 0x12;
 ZeissUByte g_TubeShutter = 0x13;
@@ -132,8 +140,12 @@ MODULE_API void InitializeModuleData()
    RegisterDevice(g_ZeissDeviceName, MM::GenericDevice, "Zeiss AxioObserver controlled through serial interface");
    RegisterDevice(g_ZeissReflector, MM::StateDevice, "Reflector Turret (dichroics)");
    RegisterDevice(g_ZeissNosePiece, MM::StateDevice, "Objective Turret");
+   RegisterDevice(g_ZeissNeutralDensityWheel1RL, MM::StateDevice, "ND Filter Wheel 1 Fluorescence Light Path");
+   RegisterDevice(g_ZeissNeutralDensityWheel2RL, MM::StateDevice, "ND Filter Wheel 2 Fluorescence Light Path");
    RegisterDevice(g_ZeissFieldDiaphragm, MM::GenericDevice, "Field Diaphragm (fluorescence)");
    RegisterDevice(g_ZeissApertureDiaphragm, MM::GenericDevice, "Aperture Diaphragm (fluorescence)");
+   RegisterDevice(g_ZeissNeutralDensityWheel1TL, MM::StateDevice, "ND Filter Wheel 1 Transmitted Light Path");
+   RegisterDevice(g_ZeissNeutralDensityWheel2TL, MM::StateDevice, "ND Filter Wheel 2 Transmitted Light Path");
    RegisterDevice(g_ZeissFocusAxis, MM::StageDevice, "Z-drive");
    RegisterDevice(g_ZeissXYStage, MM::XYStageDevice, "XYStage");
    RegisterDevice(g_ZeissTubeLens, MM::StateDevice, "Tube Lens (optovar)");
@@ -178,10 +190,18 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
         return new ReflectorTurret(g_ReflectorChanger, g_ZeissReflector, "Reflector Turret");
    else if (strcmp(deviceName, g_ZeissNosePiece) == 0)
         return new ObjectiveTurret(g_NosePieceChanger, g_ZeissNosePiece, "Objective Turret");
+   else if (strcmp(deviceName, g_ZeissNeutralDensityWheel1RL) == 0)
+        return new Turret(g_NeutralDensityWheel1RL, g_ZeissNeutralDensityWheel1RL, "ND Filter 1 Refl. Light");
+   else if (strcmp(deviceName, g_ZeissNeutralDensityWheel2RL) == 0)
+        return new Turret(g_NeutralDensityWheel2RL, g_ZeissNeutralDensityWheel2RL, "ND Filter 2 Refl. Light");
    else if (strcmp(deviceName, g_ZeissFieldDiaphragm) == 0)
         return new Servo(g_FieldDiaphragmServo, g_ZeissFieldDiaphragm, "Field Diaphragm");
    else if (strcmp(deviceName, g_ZeissApertureDiaphragm) == 0)
         return new Servo(g_ApertureDiaphragmServo, g_ZeissApertureDiaphragm, "Aperture Diaphragm");
+   else if (strcmp(deviceName, g_ZeissNeutralDensityWheel1TL) == 0)
+        return new Turret(g_NeutralDensityWheel1TL, g_ZeissNeutralDensityWheel1TL, "ND Filter 1 Trans. Light");
+   else if (strcmp(deviceName, g_ZeissNeutralDensityWheel2TL) == 0)
+        return new Turret(g_NeutralDensityWheel2TL, g_ZeissNeutralDensityWheel2TL, "ND Filter 2 Trans. Light");
    else if (strcmp(deviceName, g_ZeissFocusAxis) == 0)
         return new Axis(g_FocusAxis, g_ZeissFocusAxis, "Z-drive");
    else if (strcmp(deviceName, g_ZeissXYStage) == 0)
