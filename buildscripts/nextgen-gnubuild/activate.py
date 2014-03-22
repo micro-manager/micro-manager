@@ -21,6 +21,10 @@
 # -> scan all *.nextgen files and copy them to final location, without
 #    performing removal of legacy files (and without checking MD5)
 #
+# activate.py --deactivate
+# -> scan all *.nextgen files and revert the effect of --activate, using 'git
+#    checkout' to reinstate deleted legacy files.
+#
 # activate.py --sum FILE1 FILE2
 # -> compute MD5 sums of files and print in *.nextgen header format
 #
@@ -40,13 +44,14 @@ import hashlib
 import os, os.path
 import re
 import shutil
+import subprocess
 import sys
 
 
 def activate(do_removal=True):
     all_deletes, all_renames = [], []
     for nextgen_filename in iterate_nextgen_files():
-        print("reading " + nextgen_filename);
+        print("reading " + nextgen_filename)
         hdr = get_nextgen_header(nextgen_filename)
         deletes, renames = process_nextgen(hdr, do_removal)
         all_deletes.extend(deletes)
@@ -71,6 +76,34 @@ def activate(do_removal=True):
             shutil.copyfile(src, dst)
         else:
             print("no new file from " + src)
+
+
+def deactivate():
+    all_deleted, all_renamed = [], []
+    for nextgen_filename in iterate_nextgen_files():
+        print("reading " + nextgen_filename)
+        hdr = get_nextgen_header(nextgen_filename)
+        deleted, renamed = process_nextgen(hdr, True, False)
+        all_deleted.extend(deleted)
+        all_renamed.extend(renamed)
+
+    print("finished reading info; now execute")
+
+    for src, dst in all_renamed:
+        if dst is not None:
+            print("remove " + dst + " (from " + src + ")")
+            try:
+                os.unlink(dst)
+            except:
+                pass
+
+    for deleted in all_deleted:
+        print("reinstate " + deleted)
+        # Change to the containing directory so that split repository for
+        # SecretDeviceAdapters works.
+        subprocess.call("cd '{}'; git checkout '{}'".
+                        format(*os.path.split(deleted)),
+                        shell=True)
 
 
 def iterate_nextgen_files():
@@ -115,13 +148,15 @@ def get_nextgen_header(filename):
     return hdr
 
 
-def process_nextgen(hdr, do_removal=True):
+def process_nextgen(hdr, do_removal=True, check_removal=None):
+    if check_removal is None:
+        check_removal = do_removal
     dirname = os.path.dirname(hdr.filename)
     deletes = []
     if do_removal:
         for old_filename, old_md5 in hdr.replaced.items():
             old_path = os.path.join(dirname, old_filename)
-            if get_md5(old_path) != old_md5:
+            if check_removal and get_md5(old_path) != old_md5:
                 print("MD5 does not match: " + old_path +
                     " (to be replaced by: " + hdr.filename + ")")
                 sys.exit(1)
@@ -147,15 +182,19 @@ def run():
     p = argparse.ArgumentParser()
     p.add_argument("--activate", action="store_true")
     p.add_argument("--reactivate", action="store_true")
+    p.add_argument("--deactivate", action="store_true")
     p.add_argument("--sum", nargs="+")
     args = p.parse_args()
-    if sum(1 for _ in filter(None, [args.activate, args.reactivate, args.sum])) > 1:
+    if sum(1 for _ in filter(None, [args.activate, args.reactivate,
+                                    args.deactivate, args.sum])) > 1:
         print("multiple verbs not allowed")
         sys.exit(1)
     if args.activate:
         activate()
     elif args.reactivate:
         activate(False)
+    elif args.deactivate:
+        deactivate()
     elif args.sum:
         print_sums(args.sum)
     else:
