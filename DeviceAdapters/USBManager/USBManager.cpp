@@ -196,7 +196,7 @@ busy_(false),
 open_(false),
 initialized_(false),
 portTimeoutMs_(2000.0),
-deviceHandle_('\0'),
+deviceHandle_(0),
 answerTimeoutMs_(20),
 overflowBufferOffset_(0),
 overflowBufferLength_(0)
