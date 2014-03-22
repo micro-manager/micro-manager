@@ -25,8 +25,11 @@
 # -> scan all *.nextgen files and revert the effect of --activate, using 'git
 #    checkout' to reinstate deleted legacy files.
 #
-# activate.py --sum FILE1 FILE2
+# activate.py --sum FILE1 FILE2 ...
 # -> compute MD5 sums of files and print in *.nextgen header format
+#
+# activate.py --ngize FILE... [--header HEADER_FILE]
+# -> create a .nextgen shadow for FILEs, optionally prepending HEADER_FILE
 #
 #
 # Header format for *.nextgen:
@@ -178,15 +181,37 @@ def print_sums(filenames):
               get_md5(filename))
 
 
+def ngize(filename, header=None):
+    dirname, basename = os.path.split(filename)
+    orig_dir = os.getcwd()
+    os.chdir(dirname)
+    try:
+        with open(basename + ".nextgen", "w") as f:
+            if header is not None:
+                with open(header) as h:
+                    f.write(h.read())
+            print("# %nextgen_build_filename = " + basename, file=f)
+            if os.path.exists(basename):
+                print("# %nextgen_build_replaces = " + basename + " " +
+                      get_md5(basename), file=f)
+                print(file=f)
+                with  open(basename) as g:
+                    f.write(g.read())
+    finally:
+        os.chdir(orig_dir)
+
+
 def run():
     p = argparse.ArgumentParser()
     p.add_argument("--activate", action="store_true")
     p.add_argument("--reactivate", action="store_true")
     p.add_argument("--deactivate", action="store_true")
     p.add_argument("--sum", nargs="+")
+    p.add_argument("--ngize", nargs="+")
+    p.add_argument("--header", nargs=1)
     args = p.parse_args()
     if sum(1 for _ in filter(None, [args.activate, args.reactivate,
-                                    args.deactivate, args.sum])) > 1:
+                                    args.deactivate, args.sum, args.ngize])) > 1:
         print("multiple verbs not allowed")
         sys.exit(1)
     if args.activate:
@@ -197,6 +222,10 @@ def run():
         deactivate()
     elif args.sum:
         print_sums(args.sum)
+    elif args.ngize:
+        header_filename = args.header[0] if args.header else None
+        for filename in args.ngize:
+            ngize(filename, header_filename)
     else:
         print("nothing to do")
 
