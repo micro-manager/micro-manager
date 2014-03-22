@@ -5,7 +5,7 @@
 # - Mark Tsuchida
 #
 # %nextgen_build_filename = mm_lib_opencv.m4
-# %nextgen_build_replaces = m4/ax_opencv.m4 904b6d2016853877d07a19ce948445c6
+# %nextgen_build_replaces = ax_opencv.m4 904b6d2016853877d07a19ce948445c6
 
 # Author: Mark Tsuchida
 # Copyright: University of California, San Francisco, 2014
