@@ -1396,9 +1396,10 @@ int HalogenLamp::Initialize()
 
    // switch off the light manager
    ret = SetLM(false);
+   if (ret != DEVICE_OK) 
+      return ret; 
    pAct = new CPropertyAction(this, &HalogenLamp::OnLightManager);
    ret = CreateProperty("LightManager", "0", MM::Integer, false, pAct);
-
    if (ret != DEVICE_OK) 
       return ret; 
 
@@ -1550,7 +1551,6 @@ int HalogenLamp::SetIntensity(long intensity)
    const char* prefix = "HPCV1,";
    std::stringstream command_stream;
    command_stream << prefix << intensity;
-   command_stream.str().c_str();
    return g_hub.ExecuteCommand(*this, *GetCoreCallback(), command_stream.str().c_str());
 }
 
