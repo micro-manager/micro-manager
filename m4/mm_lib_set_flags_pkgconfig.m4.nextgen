@@ -101,9 +101,9 @@ AC_DEFUN([_MM_PKGCONFIG_SPLIT_CFLAGS], [
    do
       noIprefix=`echo $flag | sed 's%^-I%%'`
       if test "x$noIprefix" = "x$flag"; then
-         $1_CPPFLAGS="$$2_CPPFLAGS $flag"
+         $1_CPPFLAGS="$$1_CPPFLAGS $flag"
       else
-         $1_CFLAGS="$$2_CFLAGS $flag"
+         $1_CFLAGS="$$1_CFLAGS $flag"
       fi
    done
 ])
@@ -116,22 +116,16 @@ AC_DEFUN([_MM_PKGCONFIG_SPLIT_LIBS], [
    for flag in $2
    do
       nolprefix=`echo $flag | sed 's%^-l%%'`
-      if test "x$nolprefix" = "x$flag"; then
-         nolibprefix=`echo $flag | sed 's%^lib%%'`
-         if test "x$nolibprefix" = "x$flag"; then
+      if test "x$nolprefix" = "x$flag"; then # no -l prefix
+         nosuffix=`echo $flag | sed 's%\.dylib$%%
+                                     s%\.a$%%
+                                     s%\.la$%%'`
+         if test "x$nosuffix" = "x$flag"; then # no suffix
             $1_LDFLAGS="$$1_LDFLAGS $flag"
-         else
-            # TODO Are there any cases where we would see a *.so.x.y.z here?
-            nosuffix=`echo $flag | sed 's%\.dylib$%%
-                                        s%\.a$%%
-                                        s%\.la$%%'`
-            if test "x$nosuffix" = "x$flag"; then
-               $1_LDFLAGS="$$1_LDFLAGS $flag"
-            else
-               $1_LIBS="$$1_LIBS $flag"
-            fi
+         else # has suffix
+            $1_LIBS="$$1_LIBS $flag"
          fi
-      else
+      else # has -l prefix
          $1_LIBS="$$1_LIBS $flag"
       fi
    done
