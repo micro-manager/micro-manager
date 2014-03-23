@@ -10,21 +10,17 @@
 # Copyright: University of California, San Francisco, 2014
 # License: BSD
 
-# Usage: MM_LIB_DC1394
+# Usage: MM_LIB_DC1394([dc1394-prefix], [action-if-found],
+# [action-if-not-found])
 #
 # Checks for an appropriate version of libdc1394 2.x.
 #
 # Defines variables LIBDC1394_CPPFLAGS, LIBDC1394_CFLAGS, LIBDC1394_LDFLAGS,
 # and LIBDC1394_LIBS, which can be overridden by the user (although that is
 # rarely necessary).
-#
-# If LIBDC1394_INCDIR or LIBDC1394_LIBDIR is given, add to search paths when
-# checking.
-#
-# Returns yes or no in shell variable have_libdc1394.
 
 AC_DEFUN([MM_LIB_DC1394], [
-   MM_CHECK_LIB([LIBDC1394], [libdc1394], [libdc1394],
-                [$LIBDC1394_INCDIR], [$LIBDC1394_LIBDIR], [-ldc1394],
-                [dc1394/dc1394.h], [dc1394_capture_is_frame_corrupt])
+   MM_LIB_SIMPLE([LIBDC1394], [libdc1394],
+      [$1], [-ldc1394], [dc1394/dc1394.h], [dc1394_capture_is_frame_corrupt],
+      [$2], [$3])
 ])

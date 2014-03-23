@@ -10,21 +10,17 @@
 # Copyright: University of California, San Francisco, 2014
 # License: BSD
 
-# Usage: MM_LIB_USB_0_1
+# Usage: MM_LIB_USB_0_1([libusb-prefix], [action-if-found],
+# [action-if-not-found])
 #
 # Checks for libusb 0.1 (or libusb-1.0-based libusb-compat)
 #
 # Defines variables LIBUSB_0_1_CPPFLAGS, LIBUSB_0_1_CFLAGS, LIBUSB_0_1_LDFLAGS,
 # and LIBUSB_0_1_LIBS, which can be overridden by the user (although that is
 # rarely necessary).
-#
-# If LIBUSB_0_1_INCDIR or LIBUSB_0_1_LIBDIR is given, add to search paths when
-# checking.
-#
-# Returns yes or no in shell variable have_libusb_0_1.
 
 AC_DEFUN([MM_LIB_USB_0_1], [
-   MM_CHECK_LIB([LIBUSB_0_1], [libusb 0.1 or libusb-compat], [libusb_0_1],
-                [$LIBUSB_0_1_INCDIR], [$LIBUSB_0_1_LIBDIR], [-lusb],
-                [usb.h], [usb_init])
+   MM_LIB_SIMPLE([LIBUSB_0_1], [libusb 0.1 or libusb-compat],
+      [$1], [-lusb], [usb.h], [usb_init],
+      [$2], [$3])
 ])

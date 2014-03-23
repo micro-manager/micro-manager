@@ -13,7 +13,8 @@
 
 # Check for OpenCV video capture
 #
-# Usage: MM_LIB_OPENCV
+# Usage: MM_LIB_OPENCV([OpenCV prefix], [action-if-found],
+# [action-if-not-found])
 #
 # First try to get the required flags from pkg-config. Since the pkg-config
 # entry tends to be erroneous (especially on OS X), we verify that the link
@@ -23,8 +24,8 @@
 # Trial 2: ignore pkg-config, leave OPENCV_CPPFLAGS and OPENCV_LDFLAGS empty,
 # and try our own OPENCV_LIBS.
 #
-# If OPENCV_INCDIR or OPENCV_LIBDIR is set, trial 1 is skipped, and the given
-# directories are used in trial 2.
+# If a prefix for OpenCV (arg 1) is given, trial 1 is skipped, and the given
+# prefix is used in trial 2.
 #
 # OpenCV does not provide .la files (it is a CMake project), so the link tests
 # below should be relatively reliable, at least when using OpenCV shared
@@ -32,43 +33,41 @@
 # set the flags manually (including the transitive dependencies), at least on
 # OS X.
 AC_DEFUN([MM_LIB_OPENCV], [
-   MM_LIB_CHECK_ARG_VARS([OPENCV], [OpenCV], [have_opencv=yes], [
-      have_opencv=
-
-      # libopencv_highgui depends on libopencv_imgproc, which in turn depends on
-      # libopencv_core
-      mm_lib_opencv_libs_simple="-lopencv_highgui -lopencv_imgproc -lopencv_core"
-
+   mm_lib_opencv_have_opencv=
+   MM_LIB_CHECK_ARG_VARS([OPENCV], [OpenCV], [mm_lib_opencv_have_opencv=yes], [
       # fake loop (to exit with break)
       while true
       do
-         try_pkgconfig=yes
-         test -n "$OPENCV_INCDIR" && try_pkgconfig=no
-         test -n "$OPENCV_LIBDIR" && try_pkgconfig=no
-
-         AS_IF([test "x$try_pkgconfig" = xyes],
+         AS_IF([test -n "$1"], [],
          [
             MM_LIB_SET_FLAGS_PKGCONFIG([OPENCV], [opencv], [],
             [
                # Trial 1
-               _MM_LIB_OPENCV_IFELSE([with flags from pkg-config], [have_opencv=yes])
+               _MM_LIB_OPENCV_IFELSE([with flags from pkg-config],
+                                     [mm_lib_opencv_have_opencv=yes])
             ])
          ])
-         test "x$have_opencv" = xyes && break
+         test "x$mm_lib_opencv_have_opencv" = xyes && break
 
          # Trial 2
          MM_LIB_CLEAR_FLAGS([OPENCV])
-         MM_LIB_SET_DIR_FLAGS([OPENCV], [$OPENCV_INCDIR], [$OPENCV_LIBDIR])
-         OPENCV_LIBS="$mm_lib_opencv_libs_simple"
-         _MM_LIB_OPENCV_IFELSE([with just $mm_lib_opencv_libs_simple], [have_opencv=yes])
-         test "x$have_opencv" = xyes && break
+         m4_ifval([$1], AS_IF([test -n "$1"],
+         [
+            OPENCV_CPPFLAGS="-I$1/include"
+            OPENCV_LDFLAGS="-L$1/lib"
+         ]))
+         OPENCV_LIBS="-lopencv_highgui -lopencv_imgproc -lopencv_core"
+         _MM_LIB_OPENCV_IFELSE([with hard-coded flags],
+                               [mm_lib_opencv_have_opencv=yes])
+         test "x$mm_lib_opencv_have_opencv" = xyes && break
 
-         have_opencv=no
+         mm_lib_opencv_have_opencv=no
          # Do not leak failed configuration
          MM_LIB_CLEAR_FLAGS([OPENCV])
          break
       done
    ])
+   AS_IF([test "x$mm_lib_opencv_have_opencv" = xyes], [$2], [$3])
 ])
 
 

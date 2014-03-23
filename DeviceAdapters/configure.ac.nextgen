@@ -53,15 +53,13 @@ AC_ARG_WITH([libusb-0-1],
    [with_libusb_0_1=auto])
 case $with_libusb_0_1 in
    yes | no | auto) want_libusb_0_1="$with_libusb_0_1" ;;
-   *) LIBUSB_0_1_INCDIR="$with_libusb_0_1/include"
-      LIBUSB_0_1_LIBDIR="$with_libusb_0_1/lib"
+   *) LIBUSB_0_1_PREFIX="$with_libusb_0_1"
       want_libusb_0_1=yes ;;
 esac
 AC_MSG_RESULT([$want_libusb_0_1])
 
 AS_IF([test "x$want_libusb_0_1" != xno],
-   [MM_LIB_USB_0_1
-    use_libusb_0_1=$have_libusb_0_1],
+   [MM_LIB_USB_0_1([$LIBUSB_0_1_PREFIX], [use_libusb_0_1=yes], [use_libusb_0_1=no])],
    [use_libusb_0_1=no])
 
 test "x$want_libusb_0_1" = xyes &&
@@ -147,15 +145,13 @@ AC_ARG_WITH([libdc1394],
    [with_libdc1394=auto])
 case $with_libdc1394 in
    yes | no | auto) want_libdc1394="$with_libdc1394" ;;
-   *) LIBDC1394_INCDIR="$with_libdc1394/include"
-      LIBDC1394_LIBDIR="$with_libdc1394/lib"
+   *) LIBDC1394_PREFIX="$with_libdc1394"
       want_libdc1394=yes ;;
 esac
 AC_MSG_RESULT([$want_libdc1394])
 
 AS_IF([test "x$want_libdc1394" != xno],
-   [MM_LIB_DC1394
-    use_libdc1394=$have_libdc1394],
+   [MM_LIB_DC1394([$LIBDC1394_PREFIX], [use_libdc1394=yes], [use_libdc1394=no])],
    [use_libdc1394=no])
 
 test "x$want_libdc1394" = xyes &&
@@ -350,17 +346,16 @@ AC_ARG_WITH([opencv],
       [build OpenCV-based device adapters (default: auto)])],
    [],
    [with_opencv=auto])
+OPENCV_PREFIX=
 case $with_opencv in
    yes | no | auto) want_opencv="$with_opencv" ;;
-   *) OPENCV_INCDIR="$with_opencv/include"
-      OPENCV_LIBDIR="$with_opencv/lib"
+   *) OPENCV_PREFIX="$with_opencv"
       want_opencv=yes ;;
 esac
 AC_MSG_RESULT([$want_opencv])
 
 AS_IF([test "x$want_opencv" != no],
-   [MM_LIB_OPENCV
-    use_opencv=$have_opencv],
+   [MM_LIB_OPENCV([$OPENCV_PREFIX], [use_opencv=yes], [use_opencv=no])],
    [use_opencv=no])
 
 test "x$want_opencv" = xyes &&

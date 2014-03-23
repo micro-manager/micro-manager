@@ -38,13 +38,6 @@ AC_DEFUN([_MM_LIB_FLAGS_IFELSE], [
 ])
 
 
-# MM_LIB_SET_DIR_FLAGS(var-prefix, [include-dir], [lib-dir])
-AC_DEFUN([MM_LIB_SET_DIR_FLAGS], [
-   m4_ifval([$2], [test -n "$2" && $1_CPPFLAGS="-I$2"])
-   m4_ifval([$3], [test -n "$3" && $1_LDFLAGS="-L$3"])
-])
-
-
 # MM_LIB_CHECK_ARG_VARS(var-prefix, name, [action-if-user-provided],
 # action-if-check-required)
 AC_DEFUN([MM_LIB_CHECK_ARG_VARS], [
