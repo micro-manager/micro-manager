@@ -203,12 +203,12 @@ def ngize(filename, header=None):
 
 def run():
     p = argparse.ArgumentParser()
-    p.add_argument("--activate", action="store_true")
-    p.add_argument("--reactivate", action="store_true")
-    p.add_argument("--deactivate", action="store_true")
-    p.add_argument("--sum", nargs="+")
-    p.add_argument("--ngize", nargs="+")
-    p.add_argument("--header", nargs=1)
+    p.add_argument("-a", "--activate", action="store_true")
+    p.add_argument("-r", "--reactivate", action="store_true")
+    p.add_argument("-d", "--deactivate", action="store_true")
+    p.add_argument("-s", "--sum", nargs="+")
+    p.add_argument("-n", "--ngize", nargs="+")
+    p.add_argument("-H", "--header", nargs=1)
     args = p.parse_args()
     if sum(1 for _ in filter(None, [args.activate, args.reactivate,
                                     args.deactivate, args.sum, args.ngize])) > 1:
