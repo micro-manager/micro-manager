@@ -183,7 +183,7 @@ public final class CameraSubPanel extends ListeningJPanel implements LiveModeLis
          String itemOrig = (String) box_.getSelectedItem();
          
          // get the appropriate list of strings (in form of CameraData array)
-         Cameras.CameraData[] CameraDataItems = null;
+         Cameras.CameraData[] CameraDataItems;
          CameraDataHash_.clear();
          CameraDataItems = cameras_.getCameraData();
 
