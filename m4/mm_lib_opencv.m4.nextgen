@@ -71,21 +71,9 @@ AS_IF([test "x$have_opencv" = xyes],
 
       AS_IF([test "x$try_pkgconfig" = xyes],
       [
-         # Use OpenCV (mixed case) as local variable prefix to capture output of
-         # pkg-config; it needs to be a "pretty" name as it will be printed in a
-         # "checking for OpenCV..." message.
-         PKG_CHECK_MODULES([OpenCV], [opencv],
-            [have_opencv_pkgconfig=yes], [have_opencv_pkgconfig=no])
-         MM_LIB_OPENCV_SPLIT_CFLAGS([$OpenCV_CFLAGS], [OpenCV])
-         MM_LIB_OPENCV_SPLIT_LIBS([$OpenCV_LIBS], [OpenCV])
-
-         AS_IF([test "x$have_opencv_pkgconfig" = xyes],
+      	MM_LIB_SET_FLAGS_PKGCONFIG([OPENCV], [opencv], [],
          [
             # Trial 1
-            OPENCV_CPPFLAGS="$OpenCV_CPPFLAGS"
-            OPENCV_CFLAGS="$OpenCV_CFLAGS"
-            OPENCV_LDFLAGS="$OpenCV_LDFLAGS"
-            OPENCV_LIBS="$OpenCV_LIBS"
             _MM_LIB_OPENCV_IFELSE([with flags from pkg-config], [have_opencv=yes])
          ])
       ])
@@ -120,52 +108,4 @@ AC_DEFUN([_MM_LIB_OPENCV_IFELSE], [
    MM_LIB_IFELSE([OPENCV], [OpenCV], [$1],
       [opencv/highgui.h], [cvGetCaptureProperty],
       [$2], [$3])
-])
-
-
-# Usage: MM_LIB_OPENCV_SPLIT_CFLAGS(input, output_prefix)
-AC_DEFUN([MM_LIB_OPENCV_SPLIT_CFLAGS], [
-   input="$1"
-   $2_CFLAGS=
-   $2_CPPFLAGS=
-   for flag in $input
-   do
-      noIprefix=`echo $flag | sed 's%^-I%%'`
-      if test "x$noIprefix" = "x$flag"; then
-         $2_CPPFLAGS="$$2_CPPFLAGS $flag"
-      else
-         $2_CFLAGS="$$2_CFLAGS $flag"
-      fi
-   done
-])
-
-
-# Usage: MM_LIB_OPENCV_SPLIT_LIBS(input, output_prefix)
-AC_DEFUN([MM_LIB_OPENCV_SPLIT_LIBS], [
-   # Note: -framework X goes into LDFLAGS, not LIBS; this is intentional
-   input="$1"
-   $2_LDFLAGS=
-   $2_LIBS=
-   for flag in $input
-   do
-      nolprefix=`echo $flag | sed 's%^-l%%'`
-      if test "x$nolprefix" = "x$flag"; then
-         nolibprefix=`echo $flag | sed 's%^lib%%'`
-         if test "x$nolibprefix" = "x$flag"; then
-            $2_LDFLAGS="$$2_LDFLAGS $flag"
-         else
-            # TODO Are there any cases where we would see a *.so.x.y.z here?
-            nosuffix=`echo $flag | sed 's%\.dylib$%%
-                                        s%\.a$%%
-                                        s%\.la$%%'`
-            if test "x$nosuffix" = "x$flag"; then
-               $2_LDFLAGS="$$2_LDFLAGS $flag"
-            else
-               $2_LIBS="$$2_LIBS $flag"
-            fi
-         fi
-      else
-         $2_LIBS="$$2_LIBS $flag"
-      fi
-   done
 ])
