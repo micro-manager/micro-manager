@@ -32,71 +32,43 @@
 # set the flags manually (including the transitive dependencies), at least on
 # OS X.
 AC_DEFUN([MM_LIB_OPENCV], [
+   MM_LIB_CHECK_ARG_VARS([OPENCV], [OpenCV], [have_opencv=yes], [
+      have_opencv=
 
-AC_ARG_VAR([OPENCV_CPPFLAGS], [preprocessor flags for OpenCV])
-AC_ARG_VAR([OPENCV_CFLAGS], [compiler flags for OpenCV])
-AC_ARG_VAR([OPENCV_LDFLAGS], [linker flags for OpenCV])
-AC_ARG_VAR([OPENCV_LIBS], [library flags for libdc1394])
+      # libopencv_highgui depends on libopencv_imgproc, which in turn depends on
+      # libopencv_core
+      mm_lib_opencv_libs_simple="-lopencv_highgui -lopencv_imgproc -lopencv_core"
 
-AC_MSG_CHECKING([for OpenCV configuration])
-test -n "$OPENCV_CPPFLAGS" && have_opencv=yes
-test -n "$OPENCV_CFLAGS" && have_opencv=yes
-test -n "$OPENCV_LDFLAGS" && have_opencv=yes
-test -n "$OPENCV_LIBS" && have_opencv=yes
+      # fake loop (to exit with break)
+      while true
+      do
+         try_pkgconfig=yes
+         test -n "$OPENCV_INCDIR" && try_pkgconfig=no
+         test -n "$OPENCV_LIBDIR" && try_pkgconfig=no
 
-AS_IF([test "x$have_opencv" = xyes],
-[
-   AC_MSG_RESULT([user provided flag(s); will skip checks])
-],
-[
-   AC_MSG_RESULT([no; will check if available])
-
-   # defaults
-   have_opencv=
-
-   # libopencv_highgui depends on libopencv_imgproc, which in turn depends on
-   # libopencv_core
-   mm_lib_opencv_libs_simple=
-   for module in highgui imgproc core
-   do
-      mm_lib_opencv_libs_simple="$mm_lib_opencv_libs_simple -lopencv_$module"
-   done
-
-   # fake loop (to exit with break)
-   while true
-   do
-      try_pkgconfig=yes
-      test -n "$OPENCV_INCDIR" && try_pkgconfig=no
-      test -n "$OPENCV_LIBDIR" && try_pkgconfig=no
-
-      AS_IF([test "x$try_pkgconfig" = xyes],
-      [
-      	MM_LIB_SET_FLAGS_PKGCONFIG([OPENCV], [opencv], [],
+         AS_IF([test "x$try_pkgconfig" = xyes],
          [
-            # Trial 1
-            _MM_LIB_OPENCV_IFELSE([with flags from pkg-config], [have_opencv=yes])
+            MM_LIB_SET_FLAGS_PKGCONFIG([OPENCV], [opencv], [],
+            [
+               # Trial 1
+               _MM_LIB_OPENCV_IFELSE([with flags from pkg-config], [have_opencv=yes])
+            ])
          ])
-      ])
-      test "x$have_opencv" = xyes && break
+         test "x$have_opencv" = xyes && break
 
-      # Trial 2
-      OPENCV_CPPFLAGS=
-      OPENCV_CFLAGS=
-      OPENCV_LDFLAGS=
-      OPENCV_LIBS="$mm_lib_opencv_libs_simple"
-      test -n "$OPENCV_INCDIR" && OPENCV_CPPFLAGS="-I$OPENCV_INCDIR"
-      test -n "$OPENCV_LIBDIR" && OPENCV_LDFLAGS="-L$OPENCV_LIBDIR"
-      _MM_LIB_OPENCV_IFELSE([with just $mm_lib_opencv_libs_simple], [have_opencv=yes])
-      test "x$have_opencv" = xyes && break
+         # Trial 2
+         MM_LIB_CLEAR_FLAGS([OPENCV])
+         MM_LIB_SET_DIR_FLAGS([OPENCV], [$OPENCV_INCDIR], [$OPENCV_LIBDIR])
+         OPENCV_LIBS="$mm_lib_opencv_libs_simple"
+         _MM_LIB_OPENCV_IFELSE([with just $mm_lib_opencv_libs_simple], [have_opencv=yes])
+         test "x$have_opencv" = xyes && break
 
-      have_opencv=no
-      OPENCV_CPPFLAGS=
-      OPENCV_CFLAGS=
-      OPENCV_LDFLAGS=
-      OPENCV_LIBS=
-      break
-   done
-])
+         have_opencv=no
+         # Do not leak failed configuration
+         MM_LIB_CLEAR_FLAGS([OPENCV])
+         break
+      done
+   ])
 ])
 
 

@@ -30,42 +30,10 @@
 # $1_LIBS (e.g. LIBFOO_LIBS)
 
 AC_DEFUN([MM_CHECK_LIB], [
-
-# "Precious" variables to allow user override of automatic configuration
-AC_ARG_VAR([$1_CPPFLAGS], [preprocessor flags for $2])
-AC_ARG_VAR([$1_CFLAGS], [compiler flags for $2])
-AC_ARG_VAR([$1_LDFLAGS], [linker flags for $2])
-AC_ARG_VAR([$1_LIBS], [library flags for $2])
-
-# If any of the precious variables are already defined, do not modify them.
-# Assume the user knows what they are doing.
-AC_MSG_CHECKING([for user-provided configuration for $2])
-test -n "$$1_CPPFLAGS" && have_$3=yes
-test -n "$$1_CFLAGS" && have_$3=yes
-test -n "$$1_LDFLAGS" && have_$3=yes
-test -n "$$1_LIBS" && have_$3=yes
-
-AS_IF([test "x$have_$3" = xyes],
-[
-   AC_MSG_RESULT([yes; will skip checks])
-],
-[
-   AC_MSG_RESULT([no; will check for availability])
-
-   # Defaults
-   have_$3=
-   m4_ifval([$4], [test -n "$4" && $1_CPPFLAGS="-I$4"])
-   m4_ifval([$5], [test -n "$5" && $1_LDFLAGS="-L$5"])
-   $1_LIBS="$6"
-
-   MM_LIB_IFELSE([$1], [$2], [], [$7], [$8], [have_$3=yes], [have_$3=no])
-
-   # Don't leak trid but failed configuration
-   if "x$have_$3" = xno; then
-      $1_CPPFLAGS=
-      $1_CFLAGS=
-      $1_LDFLAGS=
-      $1_LIBS=
-   fi
-])
+	MM_LIB_CHECK_ARG_VARS([$1], [$2], [have_$3=yes], [
+      MM_LIB_SET_DIR_FLAGS([$1], [$4], [$5])
+      $1_LIBS="$6"
+      MM_LIB_IFELSE([$1], [$2], [], [$7], [$8], [have_$3=yes], [have_$3=no])
+      AS_IF([test "x$have_$3" = xno], [MM_LIB_CLEAR_FLAGS([$1])])
+   ])
 ])
