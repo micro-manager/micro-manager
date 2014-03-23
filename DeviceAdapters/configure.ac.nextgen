@@ -354,7 +354,7 @@ case $with_opencv in
 esac
 AC_MSG_RESULT([$want_opencv])
 
-AS_IF([test "x$want_opencv" != no],
+AS_IF([test "x$want_opencv" != xno],
    [MM_LIB_OPENCV([$OPENCV_PREFIX], [use_opencv=yes], [use_opencv=no])],
    [use_opencv=no])
 
