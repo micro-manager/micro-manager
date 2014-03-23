@@ -58,49 +58,7 @@ AS_IF([test "x$have_$3" = xyes],
    m4_ifval([$5], [test -n "$5" && $1_LDFLAGS="-L$5"])
    $1_LIBS="$6"
 
-   # Push state
-   AC_LANG_PUSH([C])
-   mm_check_lib_$3_old_cppflags="$CPPFLAGS"
-   mm_check_lib_$3_old_cflags="$CFLAGS"
-   mm_check_lib_$3_old_ldflags="$LDFLAGS"
-   mm_check_lib_$3_old_libs="$LIBS"
-   CPPFLAGS="$$1_CPPFLAGS $mm_check_lib_$3_old_cppflags"
-   CFLAGS="$$1_CFLAGS $mm_check_lib_$3_old_cflags"
-   LDFLAGS="$$1_LDFLAGS $mm_check_lib_$3_old_ldflags"
-   LIBS="$$1_LIBS $mm_check_lib_$3_old_libs"
-   # End push state
-
-   AC_MSG_CHECKING([for $7])
-   AC_PREPROC_IFELSE([AC_LANG_PROGRAM([[#include <$7>]])],
-   [
-      AC_MSG_RESULT([yes])
-   ],
-   [
-      AC_MSG_RESULT([no])
-      have_$3=no
-   ])
-
-   AS_IF([test "x$have_$3" != xno],
-   [
-      AC_MSG_CHECKING([for $8 in $2])
-      AC_LINK_IFELSE([AC_LANG_CALL([], [$8])],
-      [
-         AC_MSG_RESULT([yes])
-         have_$3=yes
-      ],
-      [
-         AC_MSG_RESULT([no])
-         have_$3=no
-      ])
-   ])
-
-   # Pop state
-   CPPFLAGS="$mm_check_lib_$3_old_cppflags"
-   CFLAGS="$mm_check_lib_$3_old_cflags"
-   LDFLAGS="$mm_check_lib_$3_old_ldflags"
-   LIBS="$mm_check_lib_$3_old_libs"
-   AC_LANG_POP([C])
-   # End pop state
+   MM_LIB_IFELSE([$1], [$2], [], [$7], [$8], [have_$3=yes], [have_$3=no])
 
    # Don't leak trid but failed configuration
    if "x$have_$3" = xno; then

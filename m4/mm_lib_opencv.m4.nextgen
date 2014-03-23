@@ -86,11 +86,10 @@ AS_IF([test "x$have_opencv" = xyes],
             OPENCV_CFLAGS="$OpenCV_CFLAGS"
             OPENCV_LDFLAGS="$OpenCV_LDFLAGS"
             OPENCV_LIBS="$OpenCV_LIBS"
-            MM_LIB_OPENCV_CHECK([with flags from pkg-config], [have_opencv])
+            _MM_LIB_OPENCV_IFELSE([with flags from pkg-config], [have_opencv=yes])
          ])
       ])
       test "x$have_opencv" = xyes && break
-      have_opencv=
 
       # Trial 2
       OPENCV_CPPFLAGS=
@@ -99,7 +98,7 @@ AS_IF([test "x$have_opencv" = xyes],
       OPENCV_LIBS="$mm_lib_opencv_libs_simple"
       test -n "$OPENCV_INCDIR" && OPENCV_CPPFLAGS="-I$OPENCV_INCDIR"
       test -n "$OPENCV_LIBDIR" && OPENCV_LDFLAGS="-L$OPENCV_LIBDIR"
-      MM_LIB_OPENCV_CHECK([with just $mm_lib_opencv_libs_simple], [have_opencv])
+      _MM_LIB_OPENCV_IFELSE([with just $mm_lib_opencv_libs_simple], [have_opencv=yes])
       test "x$have_opencv" = xyes && break
 
       have_opencv=no
@@ -117,48 +116,10 @@ AS_IF([test "x$have_opencv" = xyes],
 # Sub-macros
 #
 
-# Usage: MM_LIB_OPENCV_CHECK(message_suffix, result_var_name)
-AC_DEFUN([MM_LIB_OPENCV_CHECK], [
-   # push state
-   AC_LANG_PUSH([C])
-   mm_lib_opencv_old_cppflags="$CPPFLAGS"
-   mm_lib_opencv_old_cflags="$CFLAGS"
-   mm_lib_opencv_old_ldflags="$LDFLAGS"
-   mm_lib_opencv_old_libs="$LIBS"
-   CPPFLAGS="$OPENCV_CPPFLAGS $mm_lib_opencv_old_cppflags"
-   CFLAGS="$OPENCV_CFLAGS $mm_lib_opencv_old_cflags"
-   LDFLAGS="$OPENCV_LDFLAGS $mm_lib_opencv_old_ldflags"
-   LIBS="$OPENCV_LIBS $mm_lib_opencv_old_libs"
-   # end push state
-
-   AC_MSG_CHECKING([for opencv/highgui.h $1])
-   AC_PREPROC_IFELSE(
-      [AC_LANG_PROGRAM([[#include <opencv/highgui.h>]])],
-      [AC_MSG_RESULT(yes)],
-      [AC_MSG_RESULT(no)
-       $2=no])
-
-   AS_IF([test "x$$2" != xno],
-   [
-      AC_MSG_CHECKING([for cvGetCaptureProperty $1])
-      AC_LINK_IFELSE([AC_LANG_CALL([], [cvGetCaptureProperty])],
-      [
-         AC_MSG_RESULT([yes])
-         $2=yes
-      ],
-      [
-         AC_MSG_RESULT([no])
-         $2=no
-      ])
-   ])
-
-   # pop state
-   CPPFLAGS="$mm_lib_opencv_old_cppflags"
-   CFLAGS="$mm_lib_opencv_old_cflags"
-   LDFLAGS="$mm_lib_opencv_old_ldflags"
-   LIBS="$mm_lib_opencv_old_libs"
-   AC_LANG_POP([C])
-   # end pop state
+AC_DEFUN([_MM_LIB_OPENCV_IFELSE], [
+   MM_LIB_IFELSE([OPENCV], [OpenCV], [$1],
+      [opencv/highgui.h], [cvGetCaptureProperty],
+      [$2], [$3])
 ])
 
 
