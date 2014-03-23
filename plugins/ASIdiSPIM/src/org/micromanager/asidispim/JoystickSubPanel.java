@@ -26,6 +26,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.HashMap;
+import javax.swing.BorderFactory;
 
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
@@ -69,7 +70,8 @@ public final class JoystickSubPanel extends ListeningJPanel {
               "", 
               "[right]8[align center]",
               "[]16[]"));
-     
+      setBorder(BorderFactory.createLineBorder(ASIdiSPIM.borderColor));
+      
       joystick_ = joystick;
       devices_ = devices;
       prefs_ = prefs;

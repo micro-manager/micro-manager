@@ -21,14 +21,16 @@
 
 package org.micromanager.asidispim;
 
+import java.awt.Color;
 import org.micromanager.api.MMPlugin;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.ReportingUtils;
 
 
 public class ASIdiSPIM implements MMPlugin {
-   public static String menuName = "ASI diSPIM";
-   public static String tooltipDescription = "Control the ASI diSPIM ";
+   public final static String menuName = "ASI diSPIM";
+   public final static String tooltipDescription = "Control the ASI diSPIM ";
+   public final static Color borderColor = Color.gray;
 
    private ScriptInterface gui_;
    private ASIdiSPIMFrame myFrame_;

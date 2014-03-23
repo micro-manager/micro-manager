@@ -65,7 +65,7 @@ public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerI
    private final AcquisitionWrapperEngine acqEngine_;
    private final CMMCore core_;
    private final ScriptInterface gui_;
-   private final String panelName_;
+   //private final String panelName_;
 
    private final JSpinner numSlices_;
    private final JSpinner numSides_;
@@ -77,7 +77,6 @@ public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerI
    private final JSpinner delaySide_;
    private final JSpinner numAcquisitions_;   
    private final JSpinner acquisitionInterval_;
-//   private final JTextField acqExposure_;
    private final JButton buttonStart_;
    private final JButton buttonStop_;
 
@@ -117,9 +116,7 @@ public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerI
             "[right]16[center]",
             "[]12[]"));
       
-      TitledBorder myBorder = BorderFactory.createTitledBorder("Acquisition Settings");
-      myBorder.setTitleJustification(TitledBorder.CENTER);
-      acqPanel_.setBorder(myBorder);
+      acqPanel_.setBorder(makeTitledBorder("Acquisition Settings"));
 
       acqPanel_.add(new JLabel("Number of sides:"));
       numSides_ = pu.makeSpinnerInteger(1, 2, props_, devices_, 
@@ -179,9 +176,7 @@ public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerI
             "[right]16[center]",
             "[]12[]"));
       
-      myBorder = BorderFactory.createTitledBorder("Camera Settings");
-      myBorder.setTitleJustification(TitledBorder.CENTER);
-      camPanel_.setBorder(myBorder);
+      camPanel_.setBorder(makeTitledBorder("Camera Settings")); 
       
       cameraPanel_ = new CameraSubPanel(cameras_, devices_, panelName_, Devices.Sides.NONE, prefs_, false);
       camPanel_.add(cameraPanel_, "center, span 2");
@@ -202,9 +197,7 @@ public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerI
             "[right]16[center]",
             "[]12[]"));
       
-      myBorder = BorderFactory.createTitledBorder("Repeat Settings");
-      myBorder.setTitleJustification(TitledBorder.CENTER);
-      loopPanel_.setBorder(myBorder);
+      loopPanel_.setBorder(makeTitledBorder("Repeat Settings"));
       
       loopPanel_.add(new JLabel("Number of acquisitions:"));
       // create plugin "property" for number of acquisitions
@@ -272,6 +265,12 @@ public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerI
             
    }//end constructor
    
+   private TitledBorder  makeTitledBorder(String title) {
+      TitledBorder myBorder = BorderFactory.createTitledBorder(
+              BorderFactory.createLineBorder(ASIdiSPIM.borderColor),title);
+      myBorder.setTitleJustification(TitledBorder.CENTER);
+      return myBorder;
+   }
 
    private void updateAcquisitionCountLabel() {
       numAcquisitionsDoneLabel_.setText( "Current acquisition: " +
