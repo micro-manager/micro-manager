@@ -44,32 +44,6 @@ AC_SUBST(MMDEVAPI_LDFLAGS)
 thirdpartypublic="${micromanager_path}/../3rdpartypublic"
 
 
-# libusb 0.1 (or libusb-compat)
-AC_MSG_CHECKING(for libusb)
-AC_FIND_FILE([usb.h], [/usr/include /usr/local/$ARCH/include], USBINCDIR)
-if test x$USBINCDIR = xNO; then
-   AC_MSG_RESULT([not found])
-else
-   AC_CHECK_HEADERS([$USBINCDIR/usb.h])
-   if test -z "$LIBUSB" ; then
-      case $host in
-         *-*-linux*)
-            LIBUSB="-lusb"
-            ;;
-         *)
-            AC_FIND_FILE([libusb.a], [/usr/lib /usr/lib64 /usr/local/$ARCH/lib], USBLIBDIR)
-            if test x$USBLIBDIR = xNO; then
-               AC_MSG_RESULT(["libusb not found"])
-            else
-               AC_MSG_RESULT(["libusb.a" found])
-               LIBUSB="$USBLIBDIR/libusb.a"
-            fi
-         ;;
-      esac
-   fi
-fi
-AC_SUBST(LIBUSB)
-
 # libusb 0.1 or libusb-compat
 AC_MSG_CHECKING([if libusb 0.1 support requested])
 AC_ARG_WITH([libusb-0-1],
