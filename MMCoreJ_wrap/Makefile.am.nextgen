@@ -19,6 +19,7 @@ AUTOMAKE_OPTIONS = foreign subdir-objects
 # for the above reason (though the intent was never documented). But there is
 # nothing Linux-specific about this.)
 AM_CXXFLAGS = $(BOOST_CPPFLAGS) -fno-strict-aliasing
+AM_CPPFLAGS = $(JAVAINC)
 
 SWIGLIB_SOURCES = MMCoreJ.i \
 	../MMCore/CircularBuffer.h  \
@@ -29,9 +30,13 @@ SWIGLIB_SOURCES = MMCoreJ.i \
 	../MMCore/CoreUtils.h \
 	../MMCore/Error.h \
 	../MMCore/ErrorCodes.h \
-	../MMCore/MMCore.h  \
 	../MMCore/Host.h  \
-	../MMDevice/MMDeviceConstants.h 
+	../MMCore/MMCore.h  \
+	../MMCore/MMEventCallback.h \
+	../MMCore/PluginManager.h \
+	../MMDevice/ImageMetadata.h \
+	../MMDevice/MMDevice.h \
+	../MMDevice/MMDeviceConstants.h
 
 # DEVICEADAPTERPATH is poorly named: it actually means "where to put all MM
 # libraries, including device adapters".
@@ -43,29 +48,11 @@ MMCoreJ_wrap.cxx: $(SWIGLIB_SOURCES)
 		-o $(srcdir)/MMCoreJ_wrap.cxx $(srcdir)/MMCoreJ.i 
 	cp $(srcdir)/MMCoreJ_wrap.cxx MMCoreJ_wrap.cxx || echo "No problem"
 	
-AM_CPPFLAGS = $(JAVAINC)
 lib_LTLIBRARIES = libMMCoreJ_wrap.la
 nodist_libMMCoreJ_wrap_la_SOURCES = MMCoreJ_wrap.cxx
-libMMCoreJ_wrap_la_SOURCES = $(SWIGLIB_SOURCES) \
-	$(top_srcdir)/MMDevice/DeviceUtils.cpp \
-	$(top_srcdir)/MMDevice/ImgBuffer.cpp \
-	$(top_srcdir)/MMDevice/Property.cpp \
-	$(top_srcdir)/MMCore/CircularBuffer.cpp \
-	$(top_srcdir)/MMCore/Configuration.cpp \
-	$(top_srcdir)/MMCore/CoreCallback.cpp \
-	$(top_srcdir)/MMCore/CoreProperty.cpp \
-	$(top_srcdir)/MMCore/Error.cpp \
-	$(top_srcdir)/MMCore/FastLogger.cpp \
-	$(top_srcdir)/MMCore/MMCore.cpp \
-	$(top_srcdir)/MMCore/PluginManager.cpp \
-	$(top_srcdir)/MMCore/LibraryInfo/LibraryPathsUnix.cpp \
-	$(top_srcdir)/MMCore/LoadableModules/LoadedModule.cpp \
-	$(top_srcdir)/MMCore/LoadableModules/LoadedModuleImpl.cpp \
-	$(top_srcdir)/MMCore/LoadableModules/LoadedModuleImplUnix.cpp \
-	$(top_srcdir)/MMCore/LoadableModules/LoadedDeviceAdapter.cpp \
-	$(top_srcdir)/MMCore/Host.cpp
-libMMCoreJ_wrap_la_LIBADD = $(BOOST_SYSTEM_LIB)
-libMMCoreJ_wrap_la_LDFLAGS = -Wl, -module -ldl $(BOOST_LDFLAGS)
+libMMCoreJ_wrap_la_LIBADD = ../MMCore/libMMCore.la $(BOOST_SYSTEM_LIB) -ldl
+# TODO Add -shrext .jnilib on OS X and normalize install target
+libMMCoreJ_wrap_la_LDFLAGS = -module -avoid-version $(BOOST_LDFLAGS)
 
 $(srcdir)/MMCoreJ.jar:  MMCoreJ_wrap.cxx \
 	libMMCoreJ_wrap.la \
@@ -91,7 +78,7 @@ install:
 
 ###IJ-dependent! #todo: split IJ and pure-java code
 
-EXTRA_DIST = license.txt MMCoreJ_wrap.vcproj
+EXTRA_DIST = license.txt
 
 clean:
 	test -z "libMMCoreJ_wrap.la" || rm -f libMMCoreJ_wrap.la

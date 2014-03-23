@@ -10,28 +10,45 @@
 AUTOMAKE_OPTIONS = foreign subdir-objects
 
 AM_CXXFLAGS = $(BOOST_CPPFLAGS)
-noinst_LIBRARIES = libMMCore.a
-libMMCore_a_SOURCES = MMCore.cpp MMCore.h \
-	CircularBuffer.h CircularBuffer.cpp \
-	CoreCallback.h CoreCallback.cpp \
-	Configuration.h Configuration.cpp \
-	ConfigGroup.h \
-	CoreProperty.h CoreProperty.cpp \
-	CoreUtils.h \
-	Error.h Error.cpp \
-	ErrorCodes.h\
-	PluginManager.h PluginManager.cpp \
-	LibraryInfo/LibraryPaths.h LibraryInfo/LibraryPathsUnix.cpp \
-	LoadableModules/LoadedModule.h LoadableModules/LoadedModule.cpp \
-	LoadableModules/LoadedModuleImpl.h LoadableModules/LoadedModuleImpl.cpp \
-	LoadableModules/LoadedModuleImplUnix.h LoadableModules/LoadedModuleImplUnix.cpp \
-	LoadableModules/LoadedDeviceAdapter.h LoadableModules/LoadedDeviceAdapter.cpp \
-	IMLogger.h \
-	FastLogger.h FastLogger.cpp \
-        Compressor.h \
-	../MMDevice/MMDevice.h ../MMDevice/MMDeviceConstants.h \
-	../MMDevice/ModuleInterface.h \
-      Host.cpp Host.h \
-      AppleHost.h
 
-EXTRA_DIST = license.txt MMCore.vcproj
+noinst_LTLIBRARIES = libMMCore.la
+libMMCore_la_SOURCES = \
+       ../MMDevice/MMDevice.h \
+       ../MMDevice/MMDeviceConstants.h \
+       ../MMDevice/ModuleInterface.h \
+       AppleHost.h \
+       CircularBuffer.cpp \
+       CircularBuffer.h \
+       Compressor.h \
+       ConfigGroup.h \
+       Configuration.cpp \
+       Configuration.h \
+       CoreCallback.cpp \
+       CoreCallback.h \
+       CoreProperty.cpp \
+       CoreProperty.h \
+       CoreUtils.h \
+       Error.cpp \
+       Error.h \
+       ErrorCodes.h \
+       FastLogger.cpp \
+       FastLogger.h \
+       Host.cpp \
+       Host.h \
+       IMLogger.h \
+       LibraryInfo/LibraryPaths.h \
+       LibraryInfo/LibraryPathsUnix.cpp \
+       LoadableModules/LoadedDeviceAdapter.cpp \
+       LoadableModules/LoadedDeviceAdapter.h \
+       LoadableModules/LoadedModule.cpp \
+       LoadableModules/LoadedModule.h \
+       LoadableModules/LoadedModuleImpl.cpp \
+       LoadableModules/LoadedModuleImpl.h \
+       LoadableModules/LoadedModuleImplUnix.cpp \
+       LoadableModules/LoadedModuleImplUnix.h \
+       MMCore.cpp \
+       MMCore.h \
+       PluginManager.cpp \
+       PluginManager.h
+
+EXTRA_DIST = license.txt
