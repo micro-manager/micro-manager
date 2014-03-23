@@ -51,12 +51,12 @@ import subprocess
 import sys
 
 
-def activate(do_removal=True):
+def activate(initial=True):
     all_deletes, all_renames = [], []
     for nextgen_filename in iterate_nextgen_files():
         print("reading " + nextgen_filename)
         hdr = get_nextgen_header(nextgen_filename)
-        deletes, renames = process_nextgen(hdr, do_removal)
+        deletes, renames = process_nextgen(hdr, initial)
         all_deletes.extend(deletes)
         all_renames.extend(renames)
 
@@ -75,8 +75,13 @@ def activate(do_removal=True):
 
     for src, dst in all_renames:
         if dst is not None:
-            print("copy " + src + " -> " + dst)
-            shutil.copyfile(src, dst)
+            if (initial or
+                not os.path.exists(dst) or
+                os.stat(src).st_mtime > os.stat(dst).st_mtime):
+                print("copy " + src + " -> " + dst)
+                shutil.copyfile(src, dst)
+            else:
+                print("up to date: " + dst + " (from " + src + ")")
         else:
             print("no new file from " + src)
 
