@@ -16,8 +16,8 @@
 # sets FOO_PREFIX to the argument.
 #
 AC_DEFUN([MM_ARG_WITH_OPTIONAL_LIB], [
-   m4_pushdef([withvar], [with_[]m4_bpatsubst([$2], [[+-=;:,.]], [_])])dnl
-   m4_pushdef([wantvar], [want_[]m4_bpatsubst([$2], [[+-=;:,.]], [_])])dnl
+   m4_pushdef([withvar], [with_[]m4_bpatsubst([$2], [[-+=;:,.]], [_])])dnl
+   m4_pushdef([wantvar], [want_[]m4_bpatsubst([$2], [[-+=;:,.]], [_])])dnl
    AC_MSG_CHECKING([if $1 support was requested])
    AC_ARG_WITH([$2], [AS_HELP_STRING([--with-[]$2[]=[[yes|no|DIR]]],
                [use $1 (default: auto)])],
