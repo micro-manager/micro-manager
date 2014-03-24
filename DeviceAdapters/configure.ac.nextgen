@@ -68,7 +68,7 @@ AM_CONDITIONAL([BUILD_USBMANAGER], [test "x$use_libusb_0_1" = xyes])
 MM_ARG_WITH_OPTIONAL_LIB([HIDAPI], [hidapi], [HIDAPI])
 AS_IF([test "x$want_hidapi" != xno],
 [
-	MM_LIB_HIDAPI([$HIDAPI_PREFIX],
+   MM_LIB_HIDAPI([$HIDAPI_PREFIX],
    [
       use_hidapi=yes
    ],

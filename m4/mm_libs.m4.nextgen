@@ -36,7 +36,7 @@ AC_DEFUN([MM_LIB_DC1394], [
 # HIDAPI_LIS.
 #
 AC_DEFUN([MM_LIB_HIDAPI], [
-	MM_LIB_WITH_PKG_CONFIG([HIDAPI], [HIDAPI], [hidapi], [],
+   MM_LIB_WITH_PKG_CONFIG([HIDAPI], [HIDAPI], [hidapi], [],
       [$1], [-lhidapi], [hidapi/hidapi.h], [hid_init],
       [$2], [$3])
 ])
@@ -50,10 +50,10 @@ AC_DEFUN([MM_LIB_HIDAPI], [
 # OPENCV_LIBS.
 #
 AC_DEFUN([MM_LIB_OPENCV], [
-   MM_LIB_WITH_PKG_CONFIG([OPENCV], [OpenCV], [opencv], [], [$1],
-                          [-lopencv_highgui -lopencv_imgproc -lopencv_core],
-                          [opencv/highgui.h], [cvGetCaptureProperty],
-                          [$2], [$3])
+   MM_LIB_WITH_PKG_CONFIG([OPENCV], [OpenCV], [opencv], [],
+      [$1], [-lopencv_highgui -lopencv_imgproc -lopencv_core],
+      [opencv/highgui.h], [cvGetCaptureProperty],
+      [$2], [$3])
 ])
 
 
