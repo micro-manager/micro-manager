@@ -69,3 +69,16 @@ AC_DEFUN([MM_LIB_USB_0_1], [
       [$1], [-lusb], [usb.h], [usb_init],
       [$2], [$3])
 ])
+
+
+# MM_LIB_Z([zlib-prefix], [action-if-found], [action-if-not-found])
+#
+# Check for zlib
+#
+# Defines variables ZLIB_CPPFLAGS, ZLIB_CFLAGS, ZLIB_LDFLAGS, and ZLIB_LIBS.
+#
+AC_DEFUN([MM_LIB_Z], [
+	MM_LIB_WITH_PKG_CONFIG([ZLIB], [zlib], [zlib], [],
+      [$1], [-lz], [zlib.h], [deflateEnd],
+      [$2], [$3])
+])

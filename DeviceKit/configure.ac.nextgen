@@ -31,45 +31,10 @@ AC_CHECK_FUNCS([memset])
 AC_CHECK_LIB(dl, dlopen) # for dynamic linking on linux
 
 
-#---------------------------------------------------
-# Check for ZLIB
-#---------------------------------------------------
-# The following is hard-coded to find a static libz.a, which we prefer for
-# release builds. Use of static vs shared libz should probably be
-# configurable from the command line, but keep the behavior for now.
-AC_MSG_CHECKING(for zlib)
-zlib_incdirs="/usr/local/$ARCH/include /usr/local/include /usr/include"
-zlib_libdirs="/usr/local/$ARCH/lib /usr/local/lib /usr/lib /usr/lib64 /usr/lib/$build_platform-$build_os"
-AC_ARG_WITH([zlib], [AS_HELP_STRING([--with-zlib=path], [use zlib at path])],
-   [ZLIBDIR="$withval"], [ZLIBDIR="yes"])
-if test "x$ZLIBDIR" != "xno" ; then
-   if test "x$ZLIBDIR" != "xyes" ; then
-      zlib_incdirs="$ZLIBDIR/include"
-      zlib_libdirs="$ZLIBDIR/lib"
-   fi
-else
-   AC_MSG_RESULT([zlib required but disabled on command line])
-   exit 1
-fi
+# zlib
+MM_ARG_WITH_REQUIRED_LIB([zlib], [zlib], [ZLIB])
+MM_LIB_Z([$ZLIB_PREFIX], [], [MM_MSG_REQUIRED_LIB_FAILURE([zlib], [zlib])])
 
-AC_FIND_FILE([zlib.h], [$zlib_incdirs], ZLIBINCDIR)
-if test x$ZLIBINCDIR = xNO; then
-   AC_MSG_RESULT([not found]) 
-   exit 1
-else 
-   AC_CHECK_HEADERS([$ZLIBINCDIR/zlib.h])
-   if test -z "$LIBZLIB" ; then
-      AC_FIND_FILE([libz.a], [$zlib_libdirs], ZLIBLIBDIR)
-      if test x$ZLIBLIBDIR = xNO; then
-         AC_MSG_RESULT([zlib not found])
-         exit 1
-      else
-         AC_MSG_RESULT([libz.a found])
-         LIBZLIB="$ZLIBLIBDIR/libz.a"
-      fi 
-   fi 
-fi 
-AC_SUBST(LIBZLIB) 
 
 # On the Mac we need some frameworks that can be in the way on Linux
 case $host in
