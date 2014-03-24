@@ -24,6 +24,7 @@ package org.micromanager.asidispim;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import javax.swing.BorderFactory;
 
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.asidispim.Data.Cameras;
@@ -142,6 +143,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       add(makeSetOriginHereButton(Devices.Keys.UPPERZDRIVE, Joystick.Directions.NONE), "wrap");   
       
       beamPanel_ = new BeamSubPanel(devices_, panelName_, Devices.Sides.NONE, prefs_, props_);
+      beamPanel_.setBorder(BorderFactory.createLineBorder(ASIdiSPIM.borderColor));
       add(beamPanel_, "center, span 2 3");
       
       add(new JLabel(devices_.getDeviceDisplayVerbose(Devices.Keys.PIEZOA) + ":"));
@@ -169,6 +171,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       add(makeMoveToOriginButton(Devices.Keys.GALVOA, Joystick.Directions.X), "wrap");
       
       cameraPanel_ = new CameraSubPanel(cameras_, devices_, panelName_, Devices.Sides.NONE, prefs_, true);
+      cameraPanel_.setBorder(BorderFactory.createLineBorder(ASIdiSPIM.borderColor)); 
       add(cameraPanel_, "center, span 2 2");
       
       add(new JLabel(devices_.getDeviceDisplayVerbose(Devices.Keys.GALVOA, Joystick.Directions.Y) + ":"));
