@@ -512,3 +512,22 @@ AC_CONFIG_FILES(
 )
 
 AC_OUTPUT
+
+echo ""
+echo "m4_text_box([DeviceAdapters configuration])"
+echo ""
+echo "Note: This is an incomplete list currently under development."
+echo ""
+echo "m4_text_wrap([$use_hidapi],
+		   [                                         ],
+		   [    HIDAPI support:                      ])"
+echo "m4_text_wrap([$use_libdc1394],
+		   [                                         ],
+		   [    libdc1394 support:                   ])"
+echo "m4_text_wrap([$use_libusb_0_1],
+		   [                                         ],
+		   [    libusb 0.1 (libusb-compat) support:  ])"
+echo "m4_text_wrap([$use_opencv],
+		   [                                         ],
+		   [    OpenCV support:                      ])"
+echo ""
