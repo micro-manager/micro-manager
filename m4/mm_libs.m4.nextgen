@@ -1,0 +1,57 @@
+# This file is part of a progressive rewrite of the GNU (autotools) build
+# scripts. Please do not modify this file. Instead, please modify the legacy
+# build files (without the .nextgen suffix). Changes to legacy files will be
+# automatically detected and manually applied to the next-gen files.
+# - Mark Tsuchida
+#
+# %nextgen_build_filename = mm_libs.m4
+
+# Author: Mark Tsuchida
+# Copyright: University of California, San Francisco, 2014
+# License: BSD
+
+#
+# Macros to check for particular libraries, our style.
+#
+
+# MM_LIB_DC1394([dc1394-prefix], [action-if-found], [action-if-not-found])
+#
+# Checks for an appropriate version of libdc1394 2.x.
+#
+# Defines precious variables LIBDC1394_CPPFLAGS, LIBDC1394_CFLAGS,
+# LIBDC1394_LDFLAGS, and LIBDC1394_LIBS.
+#
+AC_DEFUN([MM_LIB_DC1394], [
+   MM_LIB_SIMPLE([LIBDC1394], [libdc1394],
+      [$1], [-ldc1394], [dc1394/dc1394.h], [dc1394_capture_is_frame_corrupt],
+      [$2], [$3])
+])
+
+
+# Check for OpenCV video capture
+#
+# MM_LIB_OPENCV([OpenCV prefix], [action-if-found], [action-if-not-found])
+#
+# Defines precious variables OPENCV_CPPFLAGS, OPENCV_CFLAGS, OPENCV_LDFLAGS,
+# OPENCV_LIBS.
+#
+AC_DEFUN([MM_LIB_OPENCV], [
+   MM_LIB_WITH_PKG_CONFIG([OPENCV], [OpenCV], [opencv], [], [$1],
+                          [-lopencv_highgui -lopencv_imgproc -lopencv_core],
+                          [opencv/highgui.h], [cvGetCaptureProperty],
+                          [$2], [$3])
+])
+
+
+# MM_LIB_USB_0_1([libusb-prefix], [action-if-found], [action-if-not-found])
+#
+# Checks for libusb 0.1 (or libusb-1.0-based libusb-compat)
+#
+# Defines variables LIBUSB_0_1_CPPFLAGS, LIBUSB_0_1_CFLAGS, LIBUSB_0_1_LDFLAGS,
+# and LIBUSB_0_1_LIBS.
+#
+AC_DEFUN([MM_LIB_USB_0_1], [
+   MM_LIB_SIMPLE([LIBUSB_0_1], [libusb 0.1 or libusb-compat],
+      [$1], [-lusb], [usb.h], [usb_init],
+      [$2], [$3])
+])
