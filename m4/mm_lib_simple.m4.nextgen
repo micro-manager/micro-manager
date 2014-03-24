@@ -70,7 +70,7 @@ AC_DEFUN([MM_LIB_WITH_PKG_CONFIG], [
       ])
    ])
    AS_IF([test "x$mm_lib_with_pkg_config_have_$1" = xyes],
-         [$9], [m4_argn([10], $@)])
+         [$9], m4_argn([10], $@))
 ])
 
 
