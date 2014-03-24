@@ -7,8 +7,8 @@
 # %nextgen_build_filename = configure.ac
 # %nextgen_build_replaces = configure.in e19f50963c84e60161e98fe080b3e6f1
 
-AC_PREREQ(2.57)
-AC_INIT(FULL-PACKAGE-NAME, VERSION, BUG-REPORT-ADDRESS)
+AC_PREREQ([2.64])
+AC_INIT([Micro-Manager], [1.4], [info@micro-manager.org])
 AC_CONFIG_MACRO_DIR([../m4])
 AC_CONFIG_SRCDIR([DemoCamera/DemoCamera.cpp])
 AC_CANONICAL_HOST

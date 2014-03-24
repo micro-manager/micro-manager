@@ -7,8 +7,8 @@
 # %nextgen_build_filename = configure.ac
 # %nextgen_build_replaces = configure.in 7bfca1ee4c30fc410ff1d5e5e6062190
 
-AC_PREREQ(2.57)
-AC_INIT([Micro-Manager], 1.4, info@micro-manager.org)
+AC_PREREQ([2.64])
+AC_INIT([Micro-Manager], [1.4], [info@micro-manager.org])
 #AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_SRCDIR([MMCore/MMCore.cpp])
