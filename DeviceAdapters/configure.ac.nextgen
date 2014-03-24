@@ -48,7 +48,7 @@ thirdpartypublic="${micromanager_path}/../3rdpartypublic"
 MM_ARG_WITH_OPTIONAL_LIB([libusb 0.1 or libusb-compat], [libusb-0-1], [LIBUSB_0_1])
 AS_IF([test "x$want_libusb_0_1" != xno],
 [
-   MM_LIB_OPENCV([$LIBUSB_0_1_PREFIX],
+   MM_LIB_USB_0_1([$LIBUSB_0_1_PREFIX],
    [
       use_libusb_0_1=yes
    ],
