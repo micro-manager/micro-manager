@@ -64,28 +64,25 @@ AS_IF([test "x$want_libusb_0_1" != xno],
 AM_CONDITIONAL([BUILD_USBMANAGER], [test "x$use_libusb_0_1" = xyes])
 
 
-# Check for HIDAPI
-case $host in
-   *apple-darwin*)
-   AC_MSG_CHECKING(for hidapi)
-   AC_FIND_FILE([hidapi.h], [${thirdpartypublic}/hidapi/hidapi-0.7.0/hidapi], HIDAPIINCDIR)
-   if test x$HIDAPIINCDIR = xNO; then
-       AC_MSG_RESULT([not found])
-   else
-      AC_FIND_FILE([hid.c], [${thirdpartypublic}/hidapi/hidapi-0.7.0/mac], HIDAPICDIR)
-      if test x$HIDAPCDIR = xNO; then
-         AC_MSG_RESULT([not found])
-      fi
-   fi
-   ;;
-esac
+# HIDAPI
+MM_ARG_WITH_OPTIONAL_LIB([HIDAPI], [hidapi], [HIDAPI])
+AS_IF([test "x$want_hidapi" != xno],
+[
+	MM_LIB_HIDAPI([$HIDAPI_PREFIX],
+   [
+      use_hidapi=yes
+   ],
+   [
+      use_hidapi=no
+      AS_IF([test "x$want_hidapi" = xyes],
+            [MM_MSG_OPTIONAL_LIB_FAILURE([HIDAPI], [hidapi])])
+   ])
+],
+[use_hidapi=no])
 
-AM_CONDITIONAL([BUILD_HID], [test -f "$HIDAPIINCDIR/hidapi.h"])
-if test -f "$HIDAPIINCDIR/hidapi.h" ; then
-   AC_MSG_RESULT([found])
-fi
-AC_SUBST(HIDAPICDIR)
-AC_SUBST(HIDAPIINCDIR)
+
+AM_CONDITIONAL([BUILD_HID], [test "x$use_hidapi" = xyes])
+
 
 # Only build PVCAM if header files present.
 AC_MSG_CHECKING(for Pvcam)
