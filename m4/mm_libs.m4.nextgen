@@ -22,7 +22,7 @@
 # LIBDC1394_LDFLAGS, and LIBDC1394_LIBS.
 #
 AC_DEFUN([MM_LIB_DC1394], [
-   MM_LIB_SIMPLE([LIBDC1394], [libdc1394],
+   MM_LIB_WITH_PKG_CONFIG([LIBDC1394], [libdc1394], [libdc1394-2], [],
       [$1], [-ldc1394], [dc1394/dc1394.h], [dc1394_capture_is_frame_corrupt],
       [$2], [$3])
 ])
@@ -65,7 +65,7 @@ AC_DEFUN([MM_LIB_OPENCV], [
 # and LIBUSB_0_1_LIBS.
 #
 AC_DEFUN([MM_LIB_USB_0_1], [
-   MM_LIB_SIMPLE([LIBUSB_0_1], [libusb 0.1 or libusb-compat],
+   MM_LIB_WITH_PKG_CONFIG([LIBUSB_0_1], [libusb 0.1 or libusb-compat], [libusb], [],
       [$1], [-lusb], [usb.h], [usb_init],
       [$2], [$3])
 ])
