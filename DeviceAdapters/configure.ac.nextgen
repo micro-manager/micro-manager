@@ -45,27 +45,20 @@ thirdpartypublic="${micromanager_path}/../3rdpartypublic"
 
 
 # libusb 0.1 or libusb-compat
-AC_MSG_CHECKING([if libusb 0.1 support requested])
-AC_ARG_WITH([libusb-0-1],
-   [AS_HELP_STRING([--with-libusb-0-1=DIR],
-      [build libusb 0.1 (or libusb-compat)-based device adapters (default: auto)])],
-   [],
-   [with_libusb_0_1=auto])
-case $with_libusb_0_1 in
-   yes | no | auto) want_libusb_0_1="$with_libusb_0_1" ;;
-   *) LIBUSB_0_1_PREFIX="$with_libusb_0_1"
-      want_libusb_0_1=yes ;;
-esac
-AC_MSG_RESULT([$want_libusb_0_1])
-
+MM_ARG_WITH_OPTIONAL_LIB([libusb 0.1 or libusb-compat], [libusb-0-1], [LIBUSB_0_1])
 AS_IF([test "x$want_libusb_0_1" != xno],
-   [MM_LIB_USB_0_1([$LIBUSB_0_1_PREFIX], [use_libusb_0_1=yes], [use_libusb_0_1=no])],
-   [use_libusb_0_1=no])
-
-test "x$want_libusb_0_1" = xyes &&
-   { test "x$use_libusb_0_1" = xno && use_libusb_0_1=error; }
-AS_IF([test "x$use_libusb_0_1" = xerror],
-   [AC_MSG_FAILURE([--with-libusb-0-1 was given, but test for libusb 0.1 or libusb-compat failed])])
+[
+   MM_LIB_OPENCV([$LIBUSB_0_1_PREFIX],
+   [
+      use_libusb_0_1=yes
+   ],
+   [
+      use_libusb_0_1=no
+      AS_IF([test "x$want_libusb_0_1" = xyes],
+            [MM_MSG_OPTIONAL_LIB_FAILURE([libusb 0.1 or libusb-compat], [libusb-0-1])])
+   ])
+],
+[use_libusb_0_1=no])
 
 
 AM_CONDITIONAL([BUILD_USBMANAGER], [test "x$use_libusb_0_1" = xyes])
@@ -137,27 +130,20 @@ fi
 
 
 # libdc1394 2.x
-AC_MSG_CHECKING([if libdc1394 support requested])
-AC_ARG_WITH([libdc1394],
-   [AS_HELP_STRING([--with-libdc1394=DIR],
-      [build libdc1394-based device adapters (default: auto)])],
-   [],
-   [with_libdc1394=auto])
-case $with_libdc1394 in
-   yes | no | auto) want_libdc1394="$with_libdc1394" ;;
-   *) LIBDC1394_PREFIX="$with_libdc1394"
-      want_libdc1394=yes ;;
-esac
-AC_MSG_RESULT([$want_libdc1394])
-
+MM_ARG_WITH_OPTIONAL_LIB([libdc1394], [libdc1394], [LIBDC1394])
 AS_IF([test "x$want_libdc1394" != xno],
-   [MM_LIB_DC1394([$LIBDC1394_PREFIX], [use_libdc1394=yes], [use_libdc1394=no])],
-   [use_libdc1394=no])
-
-test "x$want_libdc1394" = xyes &&
-   { test "x$use_libdc1394" = xno && use_libdc1394=error; }
-AS_IF([test "x$use_libdc1394" = xerror],
-   [AC_MSG_FAILURE([--with-libdc1394 was given, but test for libdc1394 failed])])
+[
+   MM_LIB_DC1394([$LIBDC1394_PREFIX],
+   [
+      use_libdc1394=yes
+   ],
+   [
+      use_libdc1394=no
+      AS_IF([test "x$want_libdc1394" = xyes],
+            [MM_MSG_OPTIONAL_LIB_FAILURE([libdc1394], [libdc1394])])
+   ])
+],
+[use_libdc1394=no])
 
 
 # TODO These BUILD_x conditionals should not be associated with particular
@@ -340,28 +326,20 @@ fi
 
 
 # OpenCV
-AC_MSG_CHECKING([if OpenCV support requested])
-AC_ARG_WITH([opencv],
-	[AS_HELP_STRING([--with-opencv=DIR],
-      [build OpenCV-based device adapters (default: auto)])],
-   [],
-   [with_opencv=auto])
-OPENCV_PREFIX=
-case $with_opencv in
-   yes | no | auto) want_opencv="$with_opencv" ;;
-   *) OPENCV_PREFIX="$with_opencv"
-      want_opencv=yes ;;
-esac
-AC_MSG_RESULT([$want_opencv])
-
+MM_ARG_WITH_OPTIONAL_LIB([OpenCV], [opencv], [OPENCV])
 AS_IF([test "x$want_opencv" != xno],
-   [MM_LIB_OPENCV([$OPENCV_PREFIX], [use_opencv=yes], [use_opencv=no])],
-   [use_opencv=no])
-
-test "x$want_opencv" = xyes &&
-   { test "x$use_opencv" = xno && use_opencv=error; }
-AS_IF([test "x$use_opencv" = xerror],
-   [AC_MSG_FAILURE([--with-opencv was given, but test for OpenCV failed])])
+[
+   MM_LIB_OPENCV([$OPENCV_PREFIX],
+   [
+      use_opencv=yes
+   ],
+   [
+      use_opencv=no
+      AS_IF([test "x$want_opencv" = xyes],
+            [MM_MSG_OPTIONAL_LIB_FAILURE([OpenCV], [opencv])])
+   ])
+],
+[use_opencv=no])
 
 
 AM_CONDITIONAL([BUILD_OPENCV], [test "x$use_opencv" = xyes])
