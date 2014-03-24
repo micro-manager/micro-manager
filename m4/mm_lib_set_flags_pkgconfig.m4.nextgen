@@ -95,15 +95,15 @@ AC_DEFUN([MM_LIB_SET_FLAGS_PKGCONFIG], [
 #
 
 AC_DEFUN([_MM_PKGCONFIG_SPLIT_CFLAGS], [
-   $1_CFLAGS=
    $1_CPPFLAGS=
+   $1_CFLAGS=
    for flag in $2
    do
       noIprefix=`echo $flag | sed 's%^-I%%'`
-      if test "x$noIprefix" = "x$flag"; then
-         $1_CPPFLAGS="$$1_CPPFLAGS $flag"
-      else
+      if test "x$noIprefix" = "x$flag"; then # no -I prefix
          $1_CFLAGS="$$1_CFLAGS $flag"
+      else
+         $1_CPPFLAGS="$$1_CPPFLAGS $flag"
       fi
    done
 ])
