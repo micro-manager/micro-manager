@@ -1,5 +1,5 @@
 pkglibdir = $(DEVICEADAPTERPATH)
-AM_CFLAGS = -I$(HIDAPIINCDIR)
+AM_CFLAGS = -I$(HIDAPIINCDIR)/hidapi
 AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS) -I$(HIDAPIINCDIR) -fpermissive
 pkglib_LTLIBRARIES = libmmgr_dal_HIDManager.la
 libmmgr_dal_HIDManager_la_SOURCES = HIDManager.cpp HIDManager.h $(HIDAPICDIR)/hid.c
