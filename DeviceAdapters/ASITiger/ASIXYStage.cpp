@@ -214,6 +214,13 @@ int CXYStage::Initialize()
    AddAllowedValue(g_JoystickMirrorPropertyName, g_NoState);
    AddAllowedValue(g_JoystickMirrorPropertyName, g_YesState);
 
+   // joystick rotate (interchanges X and Y axes, useful if camera is rotated
+   pAct = new CPropertyAction (this, &CXYStage::OnJoystickRotate);
+   CreateProperty(g_JoystickRotatePropertyName, g_NoState, MM::String, false, pAct);
+   UpdateProperty(g_JoystickRotatePropertyName);
+   AddAllowedValue(g_JoystickRotatePropertyName, g_NoState);
+   AddAllowedValue(g_JoystickRotatePropertyName, g_YesState);
+
    // joystick enable/disable
    pAct = new CPropertyAction (this, &CXYStage::OnJoystickEnableDisable);
    CreateProperty(g_JoystickEnabledPropertyName, g_YesState, MM::String, false, pAct);
@@ -994,7 +1001,7 @@ int CXYStage::OnJoystickFastSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    else if (eAct == MM::AfterSet) {
       pProp->Get(tmp);
-	  char joystickMirror[MM::MaxStrLength];
+      char joystickMirror[MM::MaxStrLength];
       RETURN_ON_MM_ERROR ( GetProperty(g_JoystickMirrorPropertyName, joystickMirror) );
       if (strcmp(joystickMirror, g_YesState) == 0)
          command << addressChar_ << "JS X=-" << tmp;
@@ -1075,6 +1082,48 @@ int CXYStage::OnJoystickMirror(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
+int CXYStage::OnJoystickRotate(MM::PropertyBase* pProp, MM::ActionType eAct)
+// interchanges axes for X and Y on the joystick
+{
+   ostringstream command; command.str("");
+   ostringstream response; response.str("");
+   double tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << "J " << axisLetterX_ << "?";  // only look at X axis for joystick
+      response << ":A " << axisLetterX_ << "=";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
+      bool success = 0;
+      if (tmp == 3) // if set to be Y joystick direction then we are rotated, otherwise assume not rotated
+         success = pProp->Set(g_YesState);
+      else
+         success = pProp->Set(g_NoState);
+      if (!success)
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      // ideally would call OnJoystickEnableDisable but don't know how to get the appropriate pProp
+      string tmpstr;
+      pProp->Get(tmpstr);
+      char joystickEnabled[MM::MaxStrLength];
+      RETURN_ON_MM_ERROR ( GetProperty(g_JoystickEnabledPropertyName, joystickEnabled) );
+      if (strcmp(joystickEnabled, g_YesState) == 0)
+      {
+         if (tmpstr.compare(g_YesState) == 0)
+            command << "J " << axisLetterX_ << "=3" << " " << axisLetterY_ << "=2";  // rotated
+         else
+            command << "J " << axisLetterX_ << "=2" << " " << axisLetterY_ << "=3";
+      }
+      else  // No = disabled
+         command << "J " << axisLetterX_ << "=0" << " " << axisLetterY_ << "=0";
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}
+
 int CXYStage::OnJoystickEnableDisable(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    ostringstream command; command.str("");
@@ -1100,8 +1149,15 @@ int CXYStage::OnJoystickEnableDisable(MM::PropertyBase* pProp, MM::ActionType eA
       string tmpstr;
       pProp->Get(tmpstr);
       if (tmpstr.compare(g_YesState) == 0)
-         command << "J " << axisLetterX_ << "=2" << " " << axisLetterY_ << "=3";
-      else
+      {
+         char joystickRotate[MM::MaxStrLength];
+         RETURN_ON_MM_ERROR ( GetProperty(g_JoystickRotatePropertyName, joystickRotate) );
+         if (strcmp(joystickRotate, g_YesState) == 0)
+            command << "J " << axisLetterX_ << "=3" << " " << axisLetterY_ << "=2";  // rotated
+         else
+            command << "J " << axisLetterX_ << "=2" << " " << axisLetterY_ << "=3";
+      }
+      else  // No = disabled
          command << "J " << axisLetterX_ << "=0" << " " << axisLetterY_ << "=0";
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
    }

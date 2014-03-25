@@ -101,6 +101,7 @@ public:
    int OnJoystickFastSpeed    (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnJoystickSlowSpeed    (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnJoystickMirror       (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnJoystickRotate       (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnJoystickEnableDisable(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnAxisPolarityX        (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnAxisPolarityY        (MM::PropertyBase* pProp, MM::ActionType eAct);
