@@ -69,7 +69,7 @@ AM_CONDITIONAL([BUILD_USBMANAGER], [test -n "$LIBUSB"])
 case $host in
    *apple-darwin*)
    AC_MSG_CHECKING(for hidapi)
-   AC_FIND_FILE([hidapi.h], [${thirdpartypublic}/hidapi/hidapi-0.7.0/hidapi], HIDAPIINCDIR)
+   AC_FIND_FILE([hidapi/hidapi.h], [${thirdpartypublic}/hidapi/hidapi-0.7.0], HIDAPIINCDIR)
    if test x$HIDAPIINCDIR = xNO; then
        AC_MSG_RESULT([not found])
    else
@@ -81,8 +81,8 @@ case $host in
    ;;
 esac
 
-AM_CONDITIONAL([BUILD_HID], [test -f "$HIDAPIINCDIR/hidapi.h"])
-if test -f "$HIDAPIINCDIR/hidapi.h" ; then
+AM_CONDITIONAL([BUILD_HID], [test -f "$HIDAPIINCDIR/hidapi/hidapi.h"])
+if test -f "$HIDAPIINCDIR/hidapi/hidapi.h" ; then
    AC_MSG_RESULT([found])
 fi
 AC_SUBST(HIDAPICDIR)

@@ -5,7 +5,7 @@
 # - Mark Tsuchida
 #
 # %nextgen_build_filename = configure.ac
-# %nextgen_build_replaces = configure.in e19f50963c84e60161e98fe080b3e6f1
+# %nextgen_build_replaces = configure.in 6a5c8ae459a90385c40d913c3ec21b0e
 
 AC_PREREQ([2.64])
 AC_INIT([Micro-Manager], [1.4], [info@micro-manager.org])

@@ -27,7 +27,7 @@
 #define _std_iostream_INCLUDED_
 #endif
 
-#include "hidapi.h"
+#include <hidapi/hidapi.h>
 
 #ifndef _HID_h_
 #include "HIDManager.h"
