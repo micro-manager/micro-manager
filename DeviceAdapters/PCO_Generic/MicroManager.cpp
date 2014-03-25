@@ -1392,7 +1392,9 @@ int CPCOCam::Initialize()
       if (nRet != DEVICE_OK)
         return nRet;
     }
-
+  }
+  if(m_pCamera->strCam.strSensor.strDescription.dwPixelRateDESC[1] != 0)
+  {
     pAct = new CPropertyAction (this, &CPCOCam::OnPixelRate);
     nRet = CreateProperty("PixelRate", "slow scan", MM::String, false, pAct);
     if (nRet != DEVICE_OK)
