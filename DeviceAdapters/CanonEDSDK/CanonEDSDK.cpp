@@ -17,9 +17,9 @@
 
 #include "CanonEDSDK.h"
 
-#include "../../../3rdparty/trunk/Canon/EDSDK2.11/Mac/EDSDK/Header/EDSDK.h"
-#include "../../../3rdparty/trunk/Canon/EDSDK2.11/Mac/EDSDK/Header/EDSDKErrors.h"
-#include "../../../3rdparty/trunk/Canon/EDSDK2.11/Mac/EDSDK/Header/EDSDKTypes.h"
+#include "../../../3rdparty/trunk/Canon/EDSDK2.13/Mac/EDSDK/Header/EDSDK.h"
+#include "../../../3rdparty/trunk/Canon/EDSDK2.13/Mac/EDSDK/Header/EDSDKErrors.h"
+#include "../../../3rdparty/trunk/Canon/EDSDK2.13/Mac/EDSDK/Header/EDSDKTypes.h"
 
 //////////////////////////////////////////////////////////////////////////////
 // Error codes
@@ -145,7 +145,7 @@ int CanonEDCamera::Initialize()
    // Set event handler 
    if(err == EDS_ERR_OK) 
    { 
-      err = EdsSetObjectEventHandler(camera_,  kEdsObjectEvent_All, &CanonEDCamera::handleObjectEvent,  NULL); 
+      err = EdsSetObjectEventHandler(camera_,  kEdsObjectEvent_All, &CanonEDCamera::handleObjectEvent,  (EdsVoid*) this); 
    } 
     
    // Set event handler 
@@ -159,6 +159,12 @@ int CanonEDCamera::Initialize()
    { 
       err = EdsSetCameraStateEventHandler(camera_,  kEdsStateEvent_All, &CanonEDCamera::handleStateEvent,  NULL); 
    } 
+
+//#ifdef TARGET_OSX
+   // NSAutoreleasePool * pool = [[NSAutoreleasePool alloc] init];
+//#elif TARGET_WIN32
+//   CoInitializeEx( NULL, 0x0);// OINIT_MULTITHREADED );
+//#endif 
 
    if(err == EDS_ERR_OK) 
    { 
@@ -188,8 +194,13 @@ int CanonEDCamera::Initialize()
       // lock the UI before setting properties - only needed on legacy cameras
       if (isLegacy_)
          EdsSendStatusCommand (camera_,  kEdsCameraStatusCommand_UILock, 0);
+   
+      // Save images directly to the computer
       EdsSaveTo toPC = kEdsSaveTo_Host;
       err = EdsSetPropertyData(camera_,  kEdsPropID_SaveTo, 0 , sizeof(EdsSaveTo),  &toPC);
+//      EdsSaveTo toBoth = kEdsSaveTo_Both;
+//      err = EdsSetPropertyData(camera_,  kEdsPropID_SaveTo, 0 , sizeof(toBoth),  &toBoth);
+
       if (isLegacy_)
          EdsSendStatusCommand (camera_, kEdsCameraStatusCommand_UIUnLock, 0);
    }
@@ -200,6 +211,7 @@ int CanonEDCamera::Initialize()
       int nRet = CreateProperty(MM::g_Keyword_Binning, "1", MM::Integer, false, pAct);
       if (nRet != DEVICE_OK)
          return nRet;
+      AddAllowedValue(MM::g_Keyword_Binning, "1");
    }
 
    if (err == EDS_ERR_OK)
@@ -346,7 +358,7 @@ EdsError EDSCALLBACK CanonEDCamera::handleObjectEvent( EdsObjectEvent event, Eds
 
 EdsError EDSCALLBACK  CanonEDCamera::handlePropertyEvent (EdsPropertyEvent event, EdsPropertyID  property, EdsUInt32 param, EdsVoid * context) 
 { 
-   printf ("Property Event triggered\n");
+   printf ("Property Event triggered, event: %d, ID: %d\n", event, property);
    CanonEDCamera* mmCanon = (CanonEDCamera*) g_Self;
     // do something 
 } 
@@ -362,15 +374,33 @@ EdsError EDSCALLBACK  CanonEDCamera::handleStateEvent (EdsStateEvent event, EdsU
 // MMCamera API
 int CanonEDCamera::SnapImage()
 {
-   EdsError err = EdsSendCommand(camera_, kEdsCameraCommand_TakePicture , 0); 
+   // TODO: accurate estimate of capacity
+   EdsCapacity capacity;
+   capacity.reset = 1;
+   capacity.numberOfFreeClusters = 1000000;
+   capacity.bytesPerSector = 512;
+   EdsError err  = EdsSetCapacity(camera_, capacity);
    if (err != EDS_ERR_OK)
       return EdsToMMError(err);
+
+    // err = EdsSetObjectEventHandler(camera_,  kEdsObjectEvent_All, &CanonEDCamera::handleObjectEvent,  NULL); 
+
+printf ("Sending Snap command to the camera\n");
+
+      if (isLegacy_)
+         EdsSendStatusCommand (camera_,  kEdsCameraStatusCommand_UILock, 0);
+   err = EdsSendCommand(camera_, kEdsCameraCommand_TakePicture , 0); 
+   if (err != EDS_ERR_OK)
+      return EdsToMMError(err);
+      if (isLegacy_)
+         EdsSendStatusCommand (camera_,  kEdsCameraStatusCommand_UIUnLock, 0);
 
    return DEVICE_OK;
 }
 
 const unsigned char* CanonEDCamera::GetImageBuffer()
 {
+   
    return 0;
 }
 

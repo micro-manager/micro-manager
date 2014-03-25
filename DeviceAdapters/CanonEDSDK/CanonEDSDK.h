@@ -16,7 +16,7 @@
 
 #include "../../MMDevice/DeviceBase.h"
 #include "../../MMDevice/ImgBuffer.h"
-#include "../../../3rdparty/trunk/Canon/EDSDK2.11/Mac/EDSDK/Header/EDSDKTypes.h"
+#include "../../../3rdparty/trunk/Canon/EDSDK2.13/Mac/EDSDK/Header/EDSDKTypes.h"
 
 //////////////////////////////////////////////////////////////////////////////
 // Error codes
