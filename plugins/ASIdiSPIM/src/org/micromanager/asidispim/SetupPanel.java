@@ -355,8 +355,10 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       }
       float amplitude = (float) (imagingStopPos_ - imagingStartPos_);
       float offset = (float) (imagingStartPos_ + imagingStopPos_) / 2;
-      props_.setPropValue(piezoImagingDeviceKey_, Properties.Keys.SA_AMPLITUDE, amplitude);
-      props_.setPropValue(piezoImagingDeviceKey_, Properties.Keys.SA_OFFSET, offset);
+      props_.setPropValue(piezoImagingDeviceKey_, 
+              Properties.Keys.SA_AMPLITUDE, amplitude);
+      props_.setPropValue(piezoImagingDeviceKey_, 
+              Properties.Keys.SA_OFFSET, offset);
    }
 
    /**
@@ -369,8 +371,10 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       }
       float amplitude = (float) (sheetStopPos_ - sheetStartPos_);
       float offset = (float) (sheetStartPos_ + sheetStopPos_) / 2;
-      props_.setPropValue(micromirrorDeviceKey_, Properties.Keys.SA_AMPLITUDE_Y_DEG, amplitude);
-      props_.setPropValue(micromirrorDeviceKey_, Properties.Keys.SA_OFFSET_Y_DEG, offset);
+      props_.setPropValue(micromirrorDeviceKey_, 
+              Properties.Keys.SA_AMPLITUDE_Y_DEG, amplitude);
+      props_.setPropValue(micromirrorDeviceKey_, 
+              Properties.Keys.SA_OFFSET_Y_DEG, offset);
    }
 
    /**
