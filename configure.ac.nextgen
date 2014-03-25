@@ -305,7 +305,7 @@ AM_CONDITIONAL([INSTALL_MMDEVAPI], [test x$install_mmdevapi = xtrue])
 
 # Check for Device Adapters with proprietary code
 AC_MSG_CHECKING(for proprietary DeviceAdapters)
-AM_CONDITIONAL(BUILD_SECRETDEVICEADAPTERS, test -f "SecretDeviceAdapters/configure.in")
+AM_CONDITIONAL(BUILD_SECRETDEVICEADAPTERS, test -f "SecretDeviceAdapters/configure.ac")
 if test -z "${BUILD_SECRETDEVICEADAPTERS}" ; then
    AC_CONFIG_SUBDIRS([SecretDeviceAdapters])
 fi
