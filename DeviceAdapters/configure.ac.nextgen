@@ -32,12 +32,11 @@ MMDEVAPI_CXXFLAGS="-I${micromanager_path}/MMDevice ${BOOST_CPPFLAGS}"
 AC_SUBST(MMDEVAPI_CXXFLAGS)
 
 # Find Micro-Manager static device library
-## Note: adding the libtool library gives problems on OS X 10.4, adding the static lib works
-MMDEVAPI_LIBADD="${micromanager_path}/MMDevice/.libs/libMMDevice.a"
+MMDEVAPI_LIBADD="${micromanager_path}/MMDevice/libMMDevice.la"
 AC_SUBST(MMDEVAPI_LIBADD)
 
 # Apply appropriate libtool options for the Micro-Manager device API
-MMDEVAPI_LDFLAGS="-module -shared -shrext \"\$(MMSUFFIX)\" -avoid-version"
+MMDEVAPI_LDFLAGS="-module -avoid-version -shrext \"\$(MMSUFFIX)\""
 AC_SUBST(MMDEVAPI_LDFLAGS)
 
 # Location of third party public files
