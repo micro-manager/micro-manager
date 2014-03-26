@@ -5,7 +5,7 @@
 # - Mark Tsuchida
 #
 # %nextgen_build_filename = Makefile.am
-# %nextgen_build_replaces = Makefile.am 836b82bfc6843361860983d6ca0696dc
+# %nextgen_build_replaces = Makefile.am 790b2d0f6e58ca3a4f9ddf6d255c20c2
 
 pkglibdir = $(DEVICEADAPTERPATH)
 
