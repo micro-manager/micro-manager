@@ -189,7 +189,8 @@ def print_sums(filenames):
 def ngize(filename, header=None):
     dirname, basename = os.path.split(filename)
     orig_dir = os.getcwd()
-    os.chdir(dirname)
+    if dirname:
+        os.chdir(dirname)
     try:
         with open(basename + ".nextgen", "w") as f:
             if header is not None:
