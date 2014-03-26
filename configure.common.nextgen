@@ -1,0 +1,81 @@
+# This file is part of a progressive rewrite of the GNU (autotools) build
+# scripts. Please do not modify this file. Instead, please modify the legacy
+# build files (without the .nextgen suffix). Changes to legacy files will be
+# automatically detected and manually applied to the next-gen files.
+# - Mark Tsuchida
+#
+# %nextgen_build_filename = configure.common
+# %nextgen_build_replaces = configure.common 077a489eb345d835812214d086346f15
+
+# Check for programs.
+AC_PROG_CXX([clang++ llvm-g++ g++ c++])
+AC_PROG_CC([clang llvm-gcc gcc cc])
+AC_PROG_LIBTOOL
+
+case $host in
+   *-*-linux*)
+   LPTHREAD="-lpthread"
+   DEVICEADAPTERPATH="\${libdir}/micro-manager"
+   ;;
+esac
+AC_SUBST(LPTHREAD)
+
+
+#----------------------------------------------------------------
+# ImageJ
+#----------------------------------------------------------------
+
+# Determine if we need to look for ImageJ
+AC_MSG_CHECKING(whether to build for ImageJ)
+AC_ARG_WITH([imagej], [AS_HELP_STRING([--with-imagej=path],[path to ImageJ directory])], [IMAGEJDIR="$withval"], [IMAGEJDIR="yes"])
+AC_MSG_RESULT($IMAGEJDIR)
+
+# Debian IJ settings
+DEBIANIJ="/usr/share/java/ij.jar";
+DEBIANIJPLUGIN="/usr/share/imagej";
+
+AM_CONDITIONAL(BUILD_WITH_JAVA, test "$IMAGEJDIR" != "no")
+if test "$IMAGEJDIR" != "no" ; then
+   AC_MSG_CHECKING(for ImageJ directory)
+
+   if test "$IMAGEJDIR" = "yes"; then
+      IMAGEJDIR="/Applications/ImageJ /usr/local/ImageJ /usr/local/imagej "
+   fi
+   IJPATH=""
+   for d in $IMAGEJDIR ; do
+     if test -d "$d" ; then
+       AC_MSG_RESULT($d)
+       IJPATH=$d
+       break
+     fi
+   done
+
+   if test -e "$DEBIANIJ"; then
+     IJPATH="$DEBIANIJPLUGIN";
+   fi
+
+   if test "$IJPATH" = "" ; then
+     AC_MSG_ERROR([not found, use the --without-imagej option to build without ImageJ or install ImageJ (http://rsb.info.nih.gov/ij/ and rerun configure, possibly using the --with-imagej=path option])
+   fi
+
+   if test -z "$DEVICEADAPTERPATH"; then
+      DEVICEADAPTERPATH="$IJPATH"
+   fi
+
+   if test -z "$JARPATH"; then
+      JARPATH="$IJPATH/plugins/Micro-Manager"
+   fi
+else
+   DEVICEADAPTERPATH="\${libdir}/micro-manager"
+fi
+
+
+AC_SUBST(IJPATH)
+AC_SUBST(DEVICEADAPTERPATH)
+AC_SUBST(JARPATH)
+
+AC_MSG_CHECKING(device adapter path)
+AC_MSG_RESULT($DEVICEADAPTERPATH)
+
+AC_MSG_CHECKING(jar path)
+AC_MSG_RESULT($JARPATH)

@@ -203,7 +203,7 @@ AC_ARG_WITH([ltdl], [AS_HELP_STRING([--with-ltdl=path], [use libltdl at path])],
    [LIBLTDLPATH="$withval"], [LIBLTDLPATH="yes"])
 case $LIBLTDLPATH in
    yes)
-      ltdl_libdirs="/usr/local/$ARCH/lib /usr/lib /usr/lib64"
+      ltdl_libdirs="/usr/local/lib /usr/lib /usr/lib64"
       ;;
    no)
        AC_MSG_RESULT([libltdl required for GPhoto2 (SimpleCam) but disabled on command line])
@@ -270,7 +270,7 @@ AM_CONDITIONAL([LIBFREEIMAGEFOUND], [test -f "$FREEIMAGEINCDIR/FreeImage.h"])
 if test -f "$FREEIMAGEINCDIR/FreeImage.h"; then
    AC_MSG_RESULT([found])
    
-   AC_FIND_FILE([libfreeimage.a], [/usr/lib /usr/lib64 /usr/local/$ARCH/lib], FREEIMAGELIBDIR)
+   AC_FIND_FILE([libfreeimage.a], [/usr/lib /usr/lib64 /usr/local/lib], FREEIMAGELIBDIR)
    if test x$FREEIMAGELIBDIR = xNO; then
       buildsc=false
       AC_MSG_RESULT(["libfreeimage.a" not found...])
@@ -285,7 +285,7 @@ if test -f "$FREEIMAGEINCDIR/FreeImage.h"; then
    if test -f "$FREEIMAGEPLUSINCDIR/FreeImagePlus.h"; then
       AC_MSG_RESULT([found])
       AC_SUBST(LIBFREEIMAGEPLUS_CXXFLAGS, "-I$FREEIMAGEPLUSINCDIR")
-      AC_FIND_FILE([libfreeimageplus.a], [/usr/lib /usr/lib64 /usr/local/$ARCH/lib], FREEIMAGEPLUSLIBDIR)
+      AC_FIND_FILE([libfreeimageplus.a], [/usr/lib /usr/lib64 /usr/local/lib], FREEIMAGEPLUSLIBDIR)
       if test x$FREEIMAGEPLUSLIBDIR = xNO; then
          AC_MSG_RESULT(["libfreeimageplus.a" not found (can be ok)])
       else
