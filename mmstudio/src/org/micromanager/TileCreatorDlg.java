@@ -130,8 +130,7 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
       setLeftButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent arg0) {
-            markPosition(3);
-            labelLeft_.setText(thisPosition());
+            labelLeft_.setText(thisPosition(markPosition(3)));
          }
       });
       setLeftButton.setText("Set");
@@ -161,8 +160,7 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
       setTopButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent arg0) {
-            markPosition(0);
-            labelTop_.setText(thisPosition());
+            labelTop_.setText(thisPosition(markPosition(0)));
          }
       });
       setTopButton.setBounds(129, 5, 93, 23);
@@ -180,8 +178,7 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
       setRightButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent arg0) {
-            markPosition(1);
-            labelRight_.setText(thisPosition());
+            labelRight_.setText(thisPosition(markPosition(1)));
          }
       });
       setRightButton.setBounds(234, 66, 93, 23);
@@ -199,8 +196,7 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
       setBottomButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent arg0) {
-            markPosition(2);
-            labelBottom_.setText(thisPosition());
+            labelBottom_.setText(thisPosition(markPosition(2)));
          }
       });
       setBottomButton.setFont(new Font("", Font.PLAIN, 10)); 
@@ -386,72 +382,49 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
    /**
     * Store current xyPosition.
     */
-   private void markPosition(int location) {
+   private MultiStagePosition markPosition(int location) {
       MultiStagePosition msp = new MultiStagePosition();
       msp.setDefaultXYStage(core_.getXYStageDevice());
       msp.setDefaultZStage(core_.getFocusDevice());
 
       // read 1-axis stages
       try {
-         StrVector stages = core_.getLoadedDevicesOfType(DeviceType.StageDevice);
-         for (int i=0; i<stages.size(); i++) {
-            StagePosition sp = new StagePosition();
-            sp.stageName = stages.get(i);
-            sp.numAxes = 1;
-            sp.x = core_.getPosition(stages.get(i));
-            msp.add(sp);
-         }
+         String stage = core_.getFocusDevice();
+         StagePosition sp = new StagePosition();
+         sp.stageName = stage;
+         sp.numAxes = 1;
+         sp.x = core_.getPosition(stage);
+         msp.add(sp);
 
-         // read 2-axis stages
-         StrVector stages2D = core_.getLoadedDevicesOfType(DeviceType.XYStageDevice);
-         for (int i=0; i<stages2D.size(); i++) {
-            StagePosition sp = new StagePosition();
-            sp.stageName = stages2D.get(i);
-            sp.numAxes = 2;
-            sp.x = core_.getXPosition(stages2D.get(i));
-            sp.y = core_.getYPosition(stages2D.get(i));
-            msp.add(sp);
-         }
+         // and 2 axis default stage
+         sp = new StagePosition();
+         stage = core_.getXYStageDevice();
+         sp.stageName = stage;
+         sp.numAxes = 2;
+         sp.x = core_.getXPosition(stage);
+         sp.y = core_.getYPosition(stage);
+         msp.add(sp);
       } catch (Exception e) {
          ReportingUtils.showError(e);
       }
 
       endPosition_[location] = msp;
       endPositionSet_[location] = true;
+      
+      return msp;
 
    }
 
    /**
     * Update display of the current xy position.
     */
-   private String thisPosition() {
+   private String thisPosition(MultiStagePosition msp) {
       StringBuilder sb = new StringBuilder();
-
-      // read 1-axis stages
-      try {
-         StrVector stages = core_.getLoadedDevicesOfType(DeviceType.StageDevice);
-         for (int i=0; i<stages.size(); i++) {
-            StagePosition sp = new StagePosition();
-            sp.stageName = stages.get(i);
-            sp.numAxes = 1;
-            sp.x = core_.getPosition(stages.get(i));
-            sb.append(sp.getVerbose()).append("\n");
-         }
-
-         // read 2-axis stages
-         StrVector stages2D = core_.getLoadedDevicesOfType(DeviceType.XYStageDevice);
-         for (int i=0; i<stages2D.size(); i++) {
-            StagePosition sp = new StagePosition();
-            sp.stageName = stages2D.get(i);
-            sp.numAxes = 2;
-            sp.x = core_.getXPosition(stages2D.get(i));
-            sp.y = core_.getYPosition(stages2D.get(i));
-            sb.append(sp.getVerbose()).append("\n");
-         }
-      } catch (Exception e) {
-         ReportingUtils.showError(e);
+      for (int i = 0; i < msp.size(); i++) {
+         StagePosition sp = msp.get(i);
+         sb.append(sp.getVerbose()).append("\n");
       }
-
+      
       return sb.toString();
    }
 
@@ -492,7 +465,7 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
    }
 
    /**
-    * Updates all four positions to create a grid that's centered at the
+    * Updates all four positions to create a grid that is centered at the
     * current location and has a total diameter with the specified number
     * of frames.
     */
@@ -680,8 +653,8 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
       return new double[] {tileSizeXUm, tileSizeYUm};
    }
 
-   private double[] getImageSize()
-   {
+   private double[] getImageSize() {
+      
        double pixSizeUm = getPixelSizeUm();
        boolean swapXY = isSwappedXY();
        double imageSizeXUm = swapXY ? pixSizeUm * core_.getImageHeight() : 
@@ -918,7 +891,7 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
                 int overlapPixX = (int) Math.floor(overlapXUm/pixSizeUm);
                 int overlapPixY = (int) Math.floor(overlapYUm/pixSizeUm);
                 msp.setProperty("OverlapPixelsX", NumberUtils.intToCoreString(overlapPixX));
-                msp.setProperty("OverlapPixelsY", NumberUtils.intToCoreString(overlapPixX));
+                msp.setProperty("OverlapPixelsY", NumberUtils.intToCoreString(overlapPixY));
             }
 
             // Add to position list

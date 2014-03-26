@@ -72,6 +72,7 @@ import org.micromanager.api.StagePosition;
 import org.micromanager.utils.FileDialogs;
 import org.micromanager.utils.FileDialogs.FileType;
 import org.micromanager.utils.GUIUtils;
+import org.micromanager.utils.JavaUtils;
 import org.micromanager.utils.MMException;
 import org.micromanager.utils.ReportingUtils;
 
@@ -241,7 +242,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
    private class AxisTableModel extends AbstractTableModel {
       private static final long serialVersionUID = 1L;
       public final String[] COLUMN_NAMES = new String[] {
-            "Record",
+            "Use",
             "Axis"
       };
       
@@ -387,10 +388,18 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       axisPane.setViewportView(axisTable_);
       axisTable_.addMouseListener(this);
 
-      springLayout.putConstraint(SpringLayout.SOUTH, axisPane, -10, SpringLayout.SOUTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.SOUTH, scrollPane, -10, SpringLayout.NORTH, axisPane);
-      springLayout.putConstraint(SpringLayout.NORTH, scrollPane, 10, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.NORTH, axisPane, -(23 + 23*axisModel.getRowCount()), SpringLayout.SOUTH, getContentPane());
+      int axisPaneLineOffset = 26;
+      if (JavaUtils.isMac()) {
+         axisPaneLineOffset = 22;
+      }
+      springLayout.putConstraint(SpringLayout.SOUTH, axisPane, -10, 
+              SpringLayout.SOUTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.SOUTH, scrollPane, -10, 
+              SpringLayout.NORTH, axisPane);
+      springLayout.putConstraint(SpringLayout.NORTH, scrollPane, 10, 
+              SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.NORTH, axisPane, 
+              -(axisPaneLineOffset + axisPaneLineOffset*axisModel.getRowCount()), SpringLayout.SOUTH, getContentPane());
 
       // mark / replace button:
       JButton markButton = new JButton();
