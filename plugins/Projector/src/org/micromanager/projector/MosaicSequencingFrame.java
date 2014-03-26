@@ -68,6 +68,8 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
    private final Vector<String> headerNames = new Vector<String>(Arrays.asList(         
                            new String[] {"Time Slot", "Roi Indices", "On Duration (ms)",
                               "Off Duration (ms)", "Loop count"}));
+   private final List<String> intensityNames_;
+  
    
    // ## Utility functions.
    
@@ -143,7 +145,7 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
          rowVector.add(i);
          rowVector.add(name);
          rowVector.add("FRAP");
-         rowVector.add("255");
+         rowVector.add("100%");
          tableModel.addRow(rowVector);
       }
    }
@@ -172,13 +174,26 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
             .setCellEditor(new DefaultCellEditor(new JComboBox(items)));
    }
 
+   // Generates a list of intensity percentages, that correspond to 4-bits
+   // of grayscale. There are 
+   private static List<String> generateIntensityNames() {
+      ArrayList<String> intensities = new ArrayList<String>();
+      for (int i = 0; i <= 15; ++i) {
+         int percentage = (int) Math.round(100. * i / 15.);
+         intensities.add("" + percentage + "%");
+      }
+      return intensities;
+   }
    
    // Create the ROI list table
    private void setupRoiListTable() {
       String roiTypes[] = {"FRAP", "Image"};
       setComboBoxColumn(roiListTable_, 2, roiTypes);
-      String intensities[] = {"100%", "86%", "71%", "57%", "43%", "29%", "14%", "0%"};
-      setComboBoxColumn(roiListTable_, 3, intensities);
+      Vector<String> intensityNames = new Vector();
+      intensityNames.addAll(intensityNames_);
+      Collections.reverse(intensityNames);      
+      setComboBoxColumn(roiListTable_, 3, intensityNames.toArray(new String[0]));
+      // TODO: Stop hiding this column, and implement grayscale sequencing.
       roiListTable_.removeColumn(roiListTable_.getColumnModel().getColumn(3));
       mirrorRoiManager();      
    }
@@ -297,6 +312,8 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
       GUIUtils.startEditingAtCell(sequenceTable_, row, 1);
    }
    
+   // Takes a list of integers and converts that to a string containing
+   // a list of integers separated by commas. In clojure: (string/join "," items)
    private String integerList(List<Integer> items) {
       String theString = "";
       for (int item:items) {
@@ -305,8 +322,13 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
       return theString.substring(0, theString.length() - 1);
    }
    
-   // Generate a new sequence of phototargeting events.
-   private void generateNewSequence(int roiCount) {
+   // Generate a new sequence of phototargeting events and place
+   // in the sequence table.
+   private void generateNewSequence() {
+      int roiCount = getRoiCount();
+      if (roiCount == 0) {
+         throw new RuntimeException("Please draw ROIs for phototargeting.");
+      }
       int onDurationMs = GUIUtils.getIntValue(onDurationTextField_);
       int offDurationMs = GUIUtils.getIntValue(offDurationTextField_);
       int loopCount = GUIUtils.getIntValue(loopCountTextField_);
@@ -316,10 +338,8 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
       List<Integer> frapROIs = getFrapROIs();
       if (sequenceType.contentEquals("Simultaneous")) {
          addRow(sequenceTableModel_, "1-" + String.valueOf(roiCount).trim(), onDurationMs, offDurationMs, loopCount);
-      }
-      
+      }      
       if (sequenceType.contentEquals("Sequential")) {
-         final List<Integer> imageROIs = this.getImageROIs();
          for (int i = 0; i < frapROIs.size(); ++i) {
             final List<Integer> rois = this.getImageROIs();
             rois.addAll(frapROIs.subList(i, i + 1));
@@ -393,16 +413,34 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
       return Integer.parseInt(sequenceTableModel_.getValueAt(rowIndex, columnIndex).toString());
    }
    
+   // Get the intensity given the ROI number (zero-based). Intensities values
+   // are always provided as 8-bit, so that in BlackAndWhite mode, white pixels
+   // have bit7 = 1.
+   private int getRoiIntensity(int roiIndex) {
+      String intensityName = (String) roiListTable_.getValueAt(roiIndex, 3);
+      for (int i = 0; i < intensityNames_.size(); ++i) {
+         if (intensityNames_.get(i).contentEquals(intensityName)) {
+            return i << 4;
+         }
+      }
+      return 0;
+   }
+   
    // Convert a row from the sequenceTable_ to a SequenceEvent object.
-   private SequenceEvent sequenceRowToSequenceEvent(int rowIndex, Polygon[] availableRoiPolygons) {
+   private SequenceEvent sequenceRowToSequenceEvent(int rowIndex, List<Polygon> availableRoiPolygons) {
       final ArrayList<Integer> roiIndexList = frameStringToRoiIndexList(sequenceTableModel_.getValueAt(rowIndex, 1).toString());
       SequenceEvent sequenceEvent = new SequenceEvent();
       ArrayList<Polygon> selectedRoiPolygons = new ArrayList<Polygon>();
       for (int roiIndex : roiIndexList) {
-         selectedRoiPolygons.add(availableRoiPolygons[roiIndex]);
+         selectedRoiPolygons.add(availableRoiPolygons.get(roiIndex));
       }
+      ArrayList<Integer> selectedRoiIntensities = null; // new ArrayList<Integer>();
+      //for (int roiIndex : roiIndexList) {
+      //   selectedRoiIntensities.add(getRoiIntensity(roiIndex));
+      //}      
       sequenceEvent.framePixels = mosaicDevice_.roisToPixels(mosaicWidth_, mosaicHeight_,
-                                                   selectedRoiPolygons.toArray(new Polygon[0]));
+                                                   selectedRoiPolygons,
+                                                   selectedRoiIntensities);
       sequenceEvent.onDurationMs = integerAt(rowIndex, 2);
       sequenceEvent.offDurationMs = integerAt(rowIndex, 3);
       sequenceEvent.loopCount = integerAt(rowIndex, 4);
@@ -413,7 +451,7 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
    private ArrayList<SequenceEvent> getSequenceEvents() {
       final ImageWindow snapLiveWin = gui_.getSnapLiveWin();
       final ImagePlus snapLiveImage = snapLiveWin.getImagePlus();
-      Polygon[] availableRoiPolygons = projectorController_.getTransformedRois(snapLiveImage, getRois());
+      List<Polygon> availableRoiPolygons = projectorController_.getTransformedRois(snapLiveImage, getRois());
       ArrayList<SequenceEvent> events = new ArrayList<SequenceEvent>();
       for (int i = 0; i < sequenceTableModel_.getRowCount(); ++i) {
          events.add(sequenceRowToSequenceEvent(i, availableRoiPolygons));
@@ -455,8 +493,8 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
    private void uploadSequence(final ArrayList<SequenceEvent> events) {
       try {
          core_.stopSLMSequence(mosaicName_);
-         core_.loadSLMSequence(mosaicName_, imageListFromSequenceEvents(events));      
          core_.setProperty(mosaicName_, "SequenceSettings", sequenceEventsToString(events));
+         core_.loadSLMSequence(mosaicName_, imageListFromSequenceEvents(events));  
       } catch (Exception ex) {
          ReportingUtils.showError(ex);
       }
@@ -465,15 +503,6 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
    // Upload the sequence from the sequence table to the Mosaic.
    private void uploadSequence() {
       uploadSequence(getSequenceEvents());
-   }
-  
-   // Create the Sequence from the sequenceTable_.
-   private void generateSequence() {
-      int roiCount = getRoiCount();
-      if (roiCount == 0) {
-         ReportingUtils.showMessage("Please draw ROIs for phototargeting.");
-      }
-      generateNewSequence(getRoiCount());
    }
    
    // Run the Mosaic Sequence. Called by Run button.
@@ -675,6 +704,7 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
       mosaicWidth_ = (int) core_.getSLMWidth(mosaicName_);
       mosaicHeight_ = (int) core.getSLMHeight(mosaicName_);
       sequenceTableModel_ = (DefaultTableModel) sequenceTable_.getModel();
+      intensityNames_ = generateIntensityNames();
       
       GUIUtils.recallPosition(this);
       GUIUtils.enforceIntegerTextField(onDurationTextField_, 0, 200000);
@@ -1194,7 +1224,11 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
    }// </editor-fold>//GEN-END:initComponents
 
    private void generateSequenceButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_generateSequenceButtonActionPerformed
-      generateSequence();
+      try {
+         generateNewSequence();
+      } catch (Exception e) {
+         ReportingUtils.showError(e);
+      }
    }//GEN-LAST:event_generateSequenceButtonActionPerformed
 
    private void runButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_runButton_ActionPerformed

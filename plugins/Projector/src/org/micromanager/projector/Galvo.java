@@ -7,6 +7,7 @@ package org.micromanager.projector;
 import java.awt.Polygon;
 import java.awt.geom.Point2D;
 import java.util.HashSet;
+import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -150,7 +151,7 @@ public class Galvo implements ProjectionDevice {
       }
    }
 
-   public void loadRois(final Polygon[] rois) {
+   public void loadRois(final List<Polygon> rois) {
       galvoExecutor_.submit(new Runnable() {
          public void run() {
             try {

@@ -432,7 +432,7 @@ public class ProjectorController {
       return transform(mapping, pOffscreen);
    }
    
-   private static Polygon[] transformROIs(ImagePlus imgp, Roi[] rois, Map<Polygon, AffineTransform> mapping) {
+   private static List<Polygon> transformROIs(ImagePlus imgp, Roi[] rois, Map<Polygon, AffineTransform> mapping) {
       ArrayList<Polygon> transformedROIs = new ArrayList<Polygon>();
       for (Roi roi : rois) {
          if ((roi.getType() == Roi.POINT)
@@ -465,7 +465,7 @@ public class ProjectorController {
             break;
          }
       }
-      return transformedROIs.toArray(new Polygon[0]);
+      return transformedROIs;
    }
    
       /* Returns the currently selected ROIs for a given ImageWindow. */
@@ -486,7 +486,7 @@ public class ProjectorController {
 
    }
    
-   public Polygon[] getTransformedRois(ImagePlus contextImagePlus, Roi[] rois) {
+   public List<Polygon> getTransformedRois(ImagePlus contextImagePlus, Roi[] rois) {
       return transformROIs(contextImagePlus, rois, mapping_);
    }
 
@@ -528,11 +528,10 @@ public class ProjectorController {
       }
    }
 
-
    private void sendRoiData(ImagePlus imgp) {
       if (individualRois_.length > 0) {
          if (mapping_ != null) {
-            Polygon[] rois = transformROIs(imgp, individualRois_, mapping_);
+            List<Polygon> rois = transformROIs(imgp, individualRois_, mapping_);
             dev.loadRois(rois);
             dev.setPolygonRepetitions(reps_);
             dev.setDwellTime(interval_us_);
