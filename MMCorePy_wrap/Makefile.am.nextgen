@@ -1,0 +1,56 @@
+# This file is part of a progressive rewrite of the GNU (autotools) build
+# scripts. Please do not modify this file. Instead, please modify the legacy
+# build files (without the .nextgen suffix). Changes to legacy files will be
+# automatically detected and manually applied to the next-gen files.
+# - Mark Tsuchida
+#
+# %nextgen_build_filename = Makefile.am
+# %nextgen_build_replaces = Makefile.am d7d29c95d6562cee3dae4142b2cae2cb
+# %nextgen_build_replaces = setup.py 1d041127df502230294bf147954d6c98
+
+# This ugly list of headers is necessary to trigger the rebuild of the
+# SWIG-generated source when a header is modified. The issue cannot be fixed
+# here; it is a result of poor implementation hiding in the MMCore headers.
+# Unfortunately this list needs to be repeated in MMCoreJ_wrap/Makefile.am, so
+# don't forget to update that file.
+swig_sources = MMCorePy.i \
+	../MMCore/CircularBuffer.h  \
+	../MMCore/ConfigGroup.h  \
+	../MMCore/Configuration.h \
+	../MMCore/CoreCallback.h \
+	../MMCore/CoreProperty.h \
+	../MMCore/CoreUtils.h \
+	../MMCore/Error.h \
+	../MMCore/ErrorCodes.h \
+	../MMCore/Host.h  \
+	../MMCore/MMCore.h  \
+	../MMCore/MMEventCallback.h \
+	../MMCore/PluginManager.h \
+	../MMDevice/ImageMetadata.h \
+	../MMDevice/MMDevice.h \
+	../MMDevice/MMDeviceConstants.h
+
+MMCorePy_wrap.cxx MMCorePy.py: $(swig_sources)
+	$(SWIG) -c++ -python MMCorePy.i 
+
+pkglib_LTLIBRARIES = _MMCorePy.la
+nodist__MMCorePy_la_SOURCES = MMCorePy_wrap.cxx
+_MMCorePy_la_LIBADD = ../MMCore/libMMCore.la $(BOOST_SYSTEM_LIB) -ldl
+_MMCorePy_la_LDFLAGS = -module -avoid-version -shrext .so $(BOOST_LDFLAGS)
+
+all:
+	make MMCorePy_wrap.cxx MMCorePy.py
+	cp MMCorePy.py ../bin
+	cp .libs/_MMCorePy.so ../bin
+
+install:
+	cp MMCorePy.py $(DEVICEADAPTERPATH)
+	cp .libs/_MMCorePy.so $(DEVICEADAPTERPATH)
+
+clean:
+	rm MMCorePy_wrap.cxx || echo "Not found, no problem"
+	rm MMCorePy.py || echo "Not found, no problem"
+	rm .libs/_MMCorePy.so || echo "Not found, no problem"
+	rm -rf build || echo "Not found, no problem"
+	rm -f *.so || echo "Not found, no problem"
+
