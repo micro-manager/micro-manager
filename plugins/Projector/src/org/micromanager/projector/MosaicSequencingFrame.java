@@ -140,7 +140,7 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
       tableModel.setRowCount(0);
       int i = 0;
       for (String name : roiNames) {
-         Vector<Object> rowVector = new Vector();
+         Vector<Object> rowVector = new Vector<Object>();
          ++i;
          rowVector.add(i);
          rowVector.add(name);
@@ -189,12 +189,10 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
    private void setupRoiListTable() {
       String roiTypes[] = {"FRAP", "Image"};
       setComboBoxColumn(roiListTable_, 2, roiTypes);
-      Vector<String> intensityNames = new Vector();
+      Vector<String> intensityNames = new Vector<String>();
       intensityNames.addAll(intensityNames_);
       Collections.reverse(intensityNames);      
       setComboBoxColumn(roiListTable_, 3, intensityNames.toArray(new String[0]));
-      // TODO: Stop hiding this column, and implement grayscale sequencing.
-      roiListTable_.removeColumn(roiListTable_.getColumnModel().getColumn(3));
       mirrorRoiManager();      
    }
    
@@ -207,7 +205,7 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
    
    // Returns a list of ROIs that have been designated as Image ROIs.
    private List<Integer> getImageROIs() {
-      final List imageRois = new ArrayList<Integer>();
+      final List<Integer> imageRois = new ArrayList<Integer>();
       for (int i = 1; i <= roiListTable_.getRowCount(); ++i) {
          if (isImageROI(i)) {
             imageRois.add(i);
@@ -218,7 +216,7 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
    
    // Returns a list of ROIs that have been designated as FRAP ROIs.
    private List<Integer> getFrapROIs() {
-      final List frapROIs = new ArrayList<Integer>();
+      final List<Integer> frapROIs = new ArrayList<Integer>();
       for (int i = 1; i <= roiListTable_.getRowCount(); ++i) {
          if (!isImageROI(i)) {
             frapROIs.add(i);
@@ -233,8 +231,7 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
    // in the upper left corner of the grid and the remaining ROIs will be
    // clones of that ROI, with offsets specified.
    private void generateRoiGrid() {
-      Roi selectedRoi = null;
-      selectedRoi = IJ.getImage().getRoi();
+      Roi selectedRoi = IJ.getImage().getRoi();
       RoiManager roiManager = ProjectorPlugin.showRoiManager();
       if (selectedRoi == null && roiManager.getCount() > 0) {
          int firstSelectedRoi = Math.max(0, roiManager.getSelectedIndex());
@@ -434,10 +431,10 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
       for (int roiIndex : roiIndexList) {
          selectedRoiPolygons.add(availableRoiPolygons.get(roiIndex));
       }
-      ArrayList<Integer> selectedRoiIntensities = null; // new ArrayList<Integer>();
-      //for (int roiIndex : roiIndexList) {
-      //   selectedRoiIntensities.add(getRoiIntensity(roiIndex));
-      //}      
+      ArrayList<Integer> selectedRoiIntensities = new ArrayList<Integer>();
+      for (int roiIndex : roiIndexList) {
+         selectedRoiIntensities.add(getRoiIntensity(roiIndex));
+      }      
       sequenceEvent.framePixels = mosaicDevice_.roisToPixels(mosaicWidth_, mosaicHeight_,
                                                    selectedRoiPolygons,
                                                    selectedRoiIntensities);
@@ -642,7 +639,7 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
    // Declare a unique file type for Mosaic sequence descriptor file
    // so that we can return to the last location where a file was loaded
    // or saved.
-   private  FileDialogs.FileType fileType = new FileDialogs.FileType("Mosaic", "Mosaic Sequence Description", "MosaicSequence.txt", true, "txt");   
+   private final FileDialogs.FileType fileType = new FileDialogs.FileType("Mosaic", "Mosaic Sequence Description", "MosaicSequence.txt", true, "txt");   
    
    // Save the sequence settings to a file.
    private void save() {
