@@ -21,7 +21,10 @@ AUTOMAKE_OPTIONS = foreign subdir-objects
 AM_CXXFLAGS = $(BOOST_CPPFLAGS) -fno-strict-aliasing
 AM_CPPFLAGS = $(JAVAINC)
 
-SWIGLIB_SOURCES = MMCoreJ.i \
+# This ugly list of headers is necessary to trigger the rebuild of the
+# SWIG-generated source when a header is modified. The issue cannot be fixed
+# here; it is a result of poor implementation hiding in the MMCore headers.
+MMCoreJ_wrap_SWIG_sources = MMCoreJ.i \
 	../MMCore/CircularBuffer.h  \
 	../MMCore/ConfigGroup.h  \
 	../MMCore/Configuration.h \
@@ -40,7 +43,7 @@ SWIGLIB_SOURCES = MMCoreJ.i \
 
 # DEVICEADAPTERPATH is poorly named: it actually means "where to put all MM
 # libraries, including device adapters".
-MMCoreJ_wrap.cxx: $(SWIGLIB_SOURCES)
+MMCoreJ_wrap.cxx: $(MMCoreJ_wrap_SWIG_sources)
 	test -d mmcorej || mkdir mmcorej
 	touch $(srcdir)/MMCoreJ_wrap.cxx || (chmod +wrx $(srcdir) && touch $(srcdir)/MMCoreJ_wrap.cxx)
 	$(SWIG) -c++ -java -package mmcorej -outdir mmcorej -module MMCoreJ \
