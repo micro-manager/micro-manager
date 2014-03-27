@@ -115,15 +115,6 @@ public enum AutoLase {
         
     }
     
-    /**
-     * Call when configuration changes.
-     */
-    public void configurationChanged() {
-        // TODO Check if configuration is ok
-        // Check if laser device exists
-    }
-    
-   
     
     ////////////////////////////////////////////
     // Getters and setters                    //

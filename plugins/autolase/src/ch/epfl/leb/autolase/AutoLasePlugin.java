@@ -29,10 +29,6 @@ public class AutoLasePlugin implements org.micromanager.api.MMPlugin {
         AutoLase.INSTANCE.show();
     }
 
-    public void configurationChanged() {
-        AutoLase.INSTANCE.configurationChanged();
-    }
-
     @Override
     public String getDescription() {
         return "Automated single-molecule density control via activation laser power";
