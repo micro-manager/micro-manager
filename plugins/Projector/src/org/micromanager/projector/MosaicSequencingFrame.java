@@ -193,6 +193,8 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
       intensityNames.addAll(intensityNames_);
       Collections.reverse(intensityNames);      
       setComboBoxColumn(roiListTable_, 3, intensityNames.toArray(new String[0]));
+      // TODO: Stop hiding this column, and implement grayscale sequencing.
+      roiListTable_.removeColumn(roiListTable_.getColumnModel().getColumn(3));
       mirrorRoiManager();      
    }
    
