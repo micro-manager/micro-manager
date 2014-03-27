@@ -1,0 +1,20 @@
+#!/bin/sh
+
+# This file is part of a progressive rewrite of the GNU (autotools) build
+# scripts. Please do not modify this file. Instead, please modify the legacy
+# build files (without the .nextgen suffix). Changes to legacy files will be
+# automatically detected and manually applied to the next-gen files.
+# - Mark Tsuchida
+#
+# %nextgen_build_filename = autogen.sh
+# %nextgen_build_filemode = 7
+# %nextgen_build_replaces = mmUnixBuild.sh 3ca884a4fe4a532ae9a199b702a1ea71
+
+echo "Bootstrapping autoconf/automake build system for Micro-Manager..."
+
+# Subdirectory must be present, even if empty, to prevent automake errors.
+mkdir -p SecretDeviceAdapters
+
+autoreconf --force --install --verbose
+
+echo "Bootstrapping complete; now you can run ./configure"

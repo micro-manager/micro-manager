@@ -35,9 +35,13 @@
 # Header format for *.nextgen:
 #
 # %nextgen_build_filename FINAL_FILENAME
+# %nextgen_build_filemode OCTAL_DIGIT
 # %nextgen_build_replaces LEGACY_FILENAME MD5SUM
 #
-# Both directives are optional.
+# All directives are optional (but at least one is required). The filemode is a
+# single octal digit, usually 6 or 7. The default is 6. (Recall that git only
+# stores a single executable bit. The current umask is applied to the given
+# mode.)
 #
 # Author: Mark Tsuchida, March 2014
 
@@ -73,13 +77,16 @@ def activate(initial=True):
         for filename in all_deletes:
             os.unlink(filename)
 
-    for src, dst in all_renames:
+    umask = os.umask(0o777); os.umask(umask)
+    for src, dst, mode in all_renames:
         if dst is not None:
             if (initial or
                 not os.path.exists(dst) or
                 os.stat(src).st_mtime > os.stat(dst).st_mtime):
-                print("copy " + src + " -> " + dst)
+                masked_mode = mode & ~umask
+                print("copy", src, "->", dst, "(0{:03o})".format(masked_mode))
                 shutil.copyfile(src, dst)
+                os.chmod(dst, masked_mode)
             else:
                 print("up to date: " + dst + " (from " + src + ")")
         else:
@@ -97,7 +104,7 @@ def deactivate():
 
     print("finished reading info; now execute")
 
-    for src, dst in all_renamed:
+    for src, dst, mode in all_renamed:
         if dst is not None:
             print("remove " + dst + " (from " + src + ")")
             try:
@@ -127,12 +134,18 @@ class Header:
         self.filename = filename
         self.replaced = {}
         self.rename_to = None
+        # Default mode before applying umask
+        self.file_mode = 0o666
 
     def set_rename_to(self, filename):
         if self.rename_to is not None:
             print("duplicate %nextgen_filename: " + filename)
             sys.exit(1)
         self.rename_to = filename
+
+    def set_file_mode(self, mode_octal_digit):
+        p = mode_octal_digit
+        self.file_mode = p + 8 * (p + 8 * p)
 
     def add_replaced(self, old_filename, md5):
         if old_filename in self.replaced:
@@ -143,16 +156,26 @@ class Header:
 
 def get_nextgen_header(filename):
     hdr = Header(filename)
+    found_directive = False
     with open(filename) as f:
         for line in f:
             m = re.match(r"#\s+%nextgen_build_([a-z]+)\s*=\s*(\S.*)$", line.strip())
             if m:
+                found_directive = True
                 if m.group(1) == "filename":
                     hdr.set_rename_to(m.group(2).strip())
                     rename_to = m.group(2).strip()
+                elif m.group(1) == "filemode":
+                    hdr.set_file_mode(int(m.group(2).strip()))
                 elif m.group(1) == "replaces":
                     old_filename, md5 = m.group(2).split()
                     hdr.add_replaced(old_filename, md5)
+                else:
+                    print("Unknown directive:", line.strip())
+                    sys.exit(1)
+    if not found_directive:
+        print("No valid directives in file:", filename)
+        sys.exit(1)
     return hdr
 
 
@@ -170,7 +193,7 @@ def process_nextgen(hdr, do_removal=True, check_removal=None):
                 sys.exit(1)
             deletes.append(old_path)
     new_path = os.path.join(dirname, hdr.rename_to) if hdr.rename_to else None
-    return deletes, [(hdr.filename, new_path)]
+    return deletes, [(hdr.filename, new_path, hdr.file_mode)]
 
 
 def get_md5(filename):
