@@ -37,7 +37,6 @@ import java.awt.event.MouseListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
-import java.util.Vector;
 import java.util.prefs.Preferences;
 
 import javax.swing.AbstractCellEditor;
@@ -61,6 +60,7 @@ import org.micromanager.utils.GUIColors;
 import org.micromanager.utils.MMDialog;
 
 import com.swtdesigner.SwingResourceManager;
+import java.util.ArrayList;
 
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -197,7 +197,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
     * of this class
     */
    private class AxisList {
-      private Vector<AxisData> axisList_ = new Vector<AxisData>();
+      private ArrayList<AxisData> axisList_ = new ArrayList<AxisData>();
       public AxisList() {
          // Initialize the axisList.
          try {
@@ -1145,7 +1145,6 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
                }
 
                sct.interrupt();
-               sct=null;
 
                //calibrate_(deviceName, x1, y1);
 
@@ -1175,10 +1174,10 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
                bt.start();
 
                core_.setXYPosition(deviceName, x1[0]-x2[0], y1[0]-y2[0]);               
-
-               busy = core_.deviceBusy(deviceName);
-
-               if (isInterrupted())return;
+               
+               if (isInterrupted())
+                  return;
+               
                busy = core_.deviceBusy(deviceName);
                while (busy){
                   if (isInterrupted())return;
@@ -1188,7 +1187,6 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
                }
 
                bt.interrupt();
-               bt=null;
 
             }           
          } catch (InterruptedException e) { ReportingUtils.logError(e);}
