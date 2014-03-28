@@ -77,6 +77,8 @@ import org.micromanager.utils.MMException;
 import org.micromanager.utils.ReportingUtils;
 
 
+enum AxisType {oneD, twoD};
+
 public class PositionListDlg extends MMDialog implements MouseListener, ChangeListener {
    private static final long serialVersionUID = 1L;
    private String posListDir_;
@@ -98,6 +100,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
    private TileCreatorDlg tileCreatorDlg_;
    private GUIColors guiColors_;
    private AxisList axisList_;
+   private final JButton tileButton_;
 
    private MultiStagePosition curMsp_;
    public JButton markButtonRef;
@@ -181,15 +184,21 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
    }
 
    private class AxisData {
-      public AxisData(boolean use, String axisName) {
+      private boolean use_;
+      private String axisName_;
+      private AxisType type_;
+      
+      public AxisData(boolean use, String axisName, AxisType type) {
          use_ = use;
          axisName_ = axisName;
+         type_ = type;
       }
       public boolean getUse() {return use_;}
       public String getAxisName() {return axisName_;}
+      public AxisType getType() {return type_;}
+      
       public void setUse(boolean use) {use_ = use;}
-      private boolean use_;
-      private String axisName_;
+
    }
 
    /**
@@ -204,12 +213,14 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
             // add 1D stages
             StrVector stages = core_.getLoadedDevicesOfType(DeviceType.StageDevice);
             for (int i=0; i<stages.size(); i++) {
-               axisList_.add(new AxisData(prefs_.getBoolean(stages.get(i),true), stages.get(i)));
+               axisList_.add(new AxisData(prefs_.getBoolean(stages.get(i),true), 
+                       stages.get(i), AxisType.oneD));
             }
             // read 2-axis stages
             StrVector stages2D = core_.getLoadedDevicesOfType(DeviceType.XYStageDevice);
             for (int i=0; i<stages2D.size(); i++) {
-               axisList_.add(new AxisData(prefs_.getBoolean(stages2D.get(i),true), stages2D.get(i)));
+               axisList_.add(new AxisData(prefs_.getBoolean(stages2D.get(i),true), 
+                       stages2D.get(i), AxisType.twoD));
             }
          } catch (Exception e) {
             handleError(e);
@@ -285,13 +296,36 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       public void setValueAt(Object value, int rowIndex, int columnIndex) {
          if (columnIndex == 0) {
             axisList_.get(rowIndex).setUse( (Boolean) value);
-            prefs_.putBoolean(axisList_.get(rowIndex).getAxisName(), (Boolean) value);
+            prefs_.putBoolean(axisList_.get(rowIndex).getAxisName(), (Boolean) value); 
+            updateTileButton();
          }
          fireTableCellUpdated(rowIndex, columnIndex);
          axisTable_.clearSelection();
       }
    }
 
+   private void updateTileButton() {
+      int n2DStages = 0;
+      int n1DStages = 0;
+      for (int i = 0; i < axisList_.getNumberOfPositions(); i++) {
+         AxisData ad = axisList_.get(i);
+         if (ad.getUse()) {
+            if (ad.getType() == AxisType.oneD) {
+               n1DStages++;
+            }
+            if (ad.getType() == AxisType.twoD) {
+               n2DStages++;
+            }
+         }
+      }
+      if ( n2DStages == 1 && n1DStages == 1) {
+         tileButton_.setEnabled(true);
+      } else {
+         tileButton_.setEnabled(false);
+      }
+      
+   }
+   
    /**
     * Renders the first row of the position list table
     */
@@ -621,22 +655,23 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       springLayout.putConstraint(SpringLayout.EAST, closeButton, 0, SpringLayout.EAST, markButton);
       springLayout.putConstraint(SpringLayout.WEST, closeButton, 0, SpringLayout.WEST, markButton);
 
-      final JButton tileButton = new JButton();
-      tileButton.setFont(new Font("Arial", Font.PLAIN, 10));
-      tileButton.addActionListener(new ActionListener() {
+      tileButton_ = new JButton();
+      tileButton_.setFont(new Font("Arial", Font.PLAIN, 10));
+      tileButton_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent arg0) {
             showCreateTileDlg();
          }
       });
-      tileButton.setIcon(SwingResourceManager.getIcon(PositionListDlg.class, "icons/empty.png"));
-      tileButton.setText("Create Grid");
-      tileButton.setToolTipText("Open new window to create grid of equally spaced positions");
-      getContentPane().add(tileButton);
-      springLayout.putConstraint(SpringLayout.SOUTH, tileButton, -1, SpringLayout.NORTH, closeButton);
-      springLayout.putConstraint(SpringLayout.NORTH, tileButton, -27, SpringLayout.NORTH, closeButton);
-      springLayout.putConstraint(SpringLayout.EAST, tileButton, 0, SpringLayout.EAST, markButton);
-      springLayout.putConstraint(SpringLayout.WEST, tileButton, 0, SpringLayout.WEST, markButton);
+      tileButton_.setIcon(SwingResourceManager.getIcon(PositionListDlg.class, "icons/empty.png"));
+      tileButton_.setText("Create Grid");
+      tileButton_.setToolTipText("Open new window to create grid of equally spaced positions");
+      getContentPane().add(tileButton_);
+      springLayout.putConstraint(SpringLayout.SOUTH, tileButton_, -1, SpringLayout.NORTH, closeButton);
+      springLayout.putConstraint(SpringLayout.NORTH, tileButton_, -27, SpringLayout.NORTH, closeButton);
+      springLayout.putConstraint(SpringLayout.EAST, tileButton_, 0, SpringLayout.EAST, markButton);
+      springLayout.putConstraint(SpringLayout.WEST, tileButton_, 0, SpringLayout.WEST, markButton);
+      updateTileButton();
 
       final JButton saveAsButton = new JButton();
       saveAsButton.setFont(new Font("Arial", Font.PLAIN, 10));
