@@ -354,6 +354,79 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       return acquisitionSettings;
    }
 
+   public void setSequenceSettings(SequenceSettings ss) {
+      
+      updateChannelCameras();
+
+      // Frames
+      useFrames_ = true;
+      if (useCustomIntervals_) {
+         customTimeIntervalsMs_ = ss.customIntervalsMs;
+         numFrames_ = ss.customIntervalsMs.size();
+      } else {
+         numFrames_ = ss.numFrames;
+         interval_ = ss.intervalMs;
+      }
+
+      // Slices
+      useSlices_ = true;
+      if (ss.slices.size() == 0)
+         useSlices_ = false;
+      else if (ss.slices.size() == 1) {
+         sliceZBottomUm_ = ss.slices.get(0);
+         sliceZTopUm_ = sliceZBottomUm_;
+         sliceZStepUm_ = 0.0;
+      } else {
+         sliceZBottomUm_ = ss.slices.get(0);
+         sliceZTopUm_ = ss.slices.get(ss.slices.size()-1);
+         sliceZStepUm_ = ss.slices.get(1) - ss.slices.get(0);
+         if (sliceZBottomUm_ > sliceZBottomUm_)
+            sliceZStepUm_ = -sliceZStepUm_;
+      }
+
+      absoluteZ_ = !ss.relativeZSlice;
+      // NOTE: there is no adequate setting for ss.zReference
+      
+      // Channels
+      if (ss.channels.size() > 0)
+         useChannels_ = true;
+      else
+         useChannels_ = false;
+         
+      channels_ = ss.channels;
+       // no channel group
+
+      //timeFirst = true means that time points are collected at each position      
+      if (ss.timeFirst && ss.slicesFirst) {
+         acqOrderMode_ = AcqOrderMode.POS_TIME_CHANNEL_SLICE;
+      }
+      
+      if (ss.timeFirst && !ss.slicesFirst) {
+         acqOrderMode_ = AcqOrderMode.POS_TIME_SLICE_CHANNEL;
+      }
+      
+      if (!ss.timeFirst && ss.slicesFirst) {
+         acqOrderMode_ = AcqOrderMode.TIME_POS_CHANNEL_SLICE;
+      }
+
+      if (!ss.timeFirst && !ss.slicesFirst) {
+         acqOrderMode_ = AcqOrderMode.TIME_POS_SLICE_CHANNEL;
+      }
+
+      useAutoFocus_ = ss.useAutofocus;
+      afSkipInterval_ = ss.skipAutofocusCount;
+
+      keepShutterOpenForChannels_ = ss.keepShutterOpenChannels;
+      keepShutterOpenForStack_ = ss.keepShutterOpenSlices;
+
+      saveFiles_ = ss.save;
+      rootName_ = ss.root;
+      dirName_ = ss.prefix;
+      comment_ = ss.comment;
+      
+      useMultiPosition_ = ss.usePositionList;
+   }
+
 //////////////////// Actions ///////////////////////////////////////////
    @Override
    public void stop(boolean interrupted) {

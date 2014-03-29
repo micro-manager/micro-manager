@@ -4293,6 +4293,15 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    }
    
    @Override
+   public void setAcqusitionSettings(SequenceSettings ss) {
+      if (engine_ == null)
+         return;
+      
+      engine_.setSequenceSettings(ss);
+   }
+
+   
+   @Override
    public String getAcquisitionPath() {
 	   if (engine_ == null)
 		   return null;
