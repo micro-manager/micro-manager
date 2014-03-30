@@ -4298,6 +4298,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
          return;
       
       engine_.setSequenceSettings(ss);
+      acqControlWin_.updateGUIContents();
    }
 
    
