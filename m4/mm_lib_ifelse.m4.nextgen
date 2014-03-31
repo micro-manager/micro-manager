@@ -45,6 +45,10 @@ AC_DEFUN([MM_LIB_IFELSE], [
 
    m4_ifval([$4], [
       AC_MSG_CHECKING([for $4 $3])
+      dnl Note: We cannot use AC_CHECK_HEADER here, because we may be called
+      dnl multiple times with different CPPFLAGS, etc. The cache variable would
+      dnl clash. However, we should be checking for compilation, not
+      dnl preprocessing: use AC_COMPILE_IFELSE
       AC_PREPROC_IFELSE([AC_LANG_PROGRAM([[#include <][$4][>]])],
       [
          AC_MSG_RESULT([yes])

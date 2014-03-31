@@ -109,7 +109,8 @@ AC_DEFUN([_MM_PYTHON_CPPFLAGS], [
             $1_CPPFLAGS="$$1_CPPFLAGS -I$mm_python_directory"
          done
 
-         # TODO Factor out state-pushing header check
+         dnl TODO Factor out state-pushing header check as MM_CHECK_HEADER
+         dnl (with the ability to specify prerequisite code).
 
          # Push state
          AC_LANG_PUSH([C])
@@ -117,6 +118,8 @@ AC_DEFUN([_MM_PYTHON_CPPFLAGS], [
          CPPFLAGS="$$1_CPPFLAGS $mm_python_$1_old_cppflags"
          # End push state
 
+         dnl Warning: Using AC_CHECK_HEADER would be incorrect if we were to be
+         dnl checking for the same header under different conditions.
          AC_CHECK_HEADER([$4], [], [$1_CPPFLAGS=], [#include <Python.h>])
 
          # Pop state
