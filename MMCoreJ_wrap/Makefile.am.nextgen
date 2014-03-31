@@ -50,9 +50,9 @@ MMCoreJ_wrap.cxx: $(swig_sources)
 	touch $(srcdir)/MMCoreJ_wrap.cxx || (chmod +wrx $(srcdir) && touch $(srcdir)/MMCoreJ_wrap.cxx)
 	$(SWIG) -c++ -java -package mmcorej -outdir mmcorej -module MMCoreJ \
 		"-DMMCOREJ_LIBRARY_PATH=\"$(DEVICEADAPTERPATH)\"" \
-		-o $(srcdir)/MMCoreJ_wrap.cxx $(srcdir)/MMCoreJ.i 
+		-o $(srcdir)/MMCoreJ_wrap.cxx $(srcdir)/MMCoreJ.i
 	cp $(srcdir)/MMCoreJ_wrap.cxx MMCoreJ_wrap.cxx || echo "No problem"
-	
+
 lib_LTLIBRARIES = libMMCoreJ_wrap.la
 nodist_libMMCoreJ_wrap_la_SOURCES = MMCoreJ_wrap.cxx
 libMMCoreJ_wrap_la_LIBADD = ../MMCore/libMMCore.la
@@ -64,7 +64,7 @@ $(srcdir)/MMCoreJ.jar:  MMCoreJ_wrap.cxx \
 	TaggedImage.java
 	mkdir -p mmcorej
 	cp TaggedImage.java mmcorej/
-	$(JAVAC) -source 1.5 -target 1.5 ../mmstudio/src/org/json/*.java mmcorej/*.java
+	$(JAVAC) $(JAVACFLAGS) ../mmstudio/src/org/json/*.java mmcorej/*.java
 	$(JAR) cvf MMCoreJ.jar mmcorej/*.class
 
 all:
@@ -77,9 +77,9 @@ macinstall:
 
 install:
 	install -d $(DESTDIR)$(DEVICEADAPTERPATH)
-	install .libs/libMMCoreJ_wrap.so $(DESTDIR)$(DEVICEADAPTERPATH)/libMMCoreJ_wrap$(JAVASO) 
+	install .libs/libMMCoreJ_wrap.so $(DESTDIR)$(DEVICEADAPTERPATH)/libMMCoreJ_wrap$(JAVASO)
 	install -d $(DESTDIR)$(JARPATH)
-	install MMCoreJ.jar $(DESTDIR)$(JARPATH)/MMCoreJ.jar 
+	install MMCoreJ.jar $(DESTDIR)$(JARPATH)/MMCoreJ.jar
 
 ###IJ-dependent! #todo: split IJ and pure-java code
 
