@@ -1383,7 +1383,7 @@ void WINAPI  SpotDevice::CalledBackfromDriver(int iStatus, long lInfo, DWORD/* d
 	bool waitForSPOT_STATUSIMAGEREADRED = (g_Device->DoesMultiShotColor() && (g_Device->BitDepth()<17));
 	bool waitForSPOT_STATUSIMAGEREADBLUE = (g_Device->DoesMultiShotColor() && (16<g_Device->BitDepth()));
 
-	char *pszStatusMsg=NULL;
+	const char *pszStatusMsg=NULL;
 	double eventTime = 0.;
 	if(g_Camera && ( 0.< g_Camera->SnapImageStartTime()) ) 
 		eventTime = g_Camera->GetCurrentMMTime().getMsec() - g_Camera->SnapImageStartTime();
