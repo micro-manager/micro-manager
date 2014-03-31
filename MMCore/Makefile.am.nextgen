@@ -17,7 +17,7 @@ noinst_LTLIBRARIES = libMMCore.la
 
 # libMMCore currently requires libMMDevice, due to use of CDeviceUtils,
 # ImgBuffer, and FrameBuffer. This dependency should probably be removed.
-libMMCore_la_LIBADD = $(BOOST_SYSTEM_LIB) $(ZLIB_LIBS) ../MMDevice/libMMDevice.la
+libMMCore_la_LIBADD = $(BOOST_SYSTEM_LIB) $(BOOST_DATE_TIME_LIB) $(ZLIB_LIBS) ../MMDevice/libMMDevice.la
 
 libMMCore_la_SOURCES = \
        ../MMDevice/MMDevice.h \
