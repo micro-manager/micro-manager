@@ -231,7 +231,7 @@ sequenceLength_(0),
 OutputAmplifierIndex_(0),
 HSSpeedIdx_(0),
 PreAmpGainIdx_(0),
-bSoftwareTriggerSupported_(false),
+biCamFeaturesSupported_(false),
 maxTemp_(0),
 myCameraID_(-1),
 pImgBuffer_(0),
@@ -1106,11 +1106,22 @@ int AndorCamera::GetListOfAvailableCameras()
       if(!HasProperty(MM::g_Keyword_ReadoutTime))
       {
          pAct = new CPropertyAction (this, &AndorCamera::OnReadoutTime);
-         nRet = CreateProperty(MM::g_Keyword_ReadoutTime, "1", MM::Integer, true, pAct);
+         nRet = CreateProperty(MM::g_Keyword_ReadoutTime, "1", MM::Float, true, pAct);
       }
       else
       {
          nRet = SetProperty(MM::g_Keyword_ReadoutTime, "1");
+      }
+      assert(nRet == DEVICE_OK);
+
+      if(!HasProperty(MM::g_Keyword_KeepCleanTime))
+      {
+         pAct = new CPropertyAction (this, &AndorCamera::OnKeepCleanTime);
+         nRet = CreateProperty(MM::g_Keyword_KeepCleanTime, "1", MM::Float, true, pAct);
+      }
+      else
+      {
+         nRet = SetProperty(MM::g_Keyword_KeepCleanTime, "1");
       }
       assert(nRet == DEVICE_OK);
 
@@ -1386,7 +1397,7 @@ int AndorCamera::GetListOfAvailableCameras()
 
       initialized_ = true;
 
-      if (bSoftwareTriggerSupported_)
+      if (biCamFeaturesSupported_)
       {
          iCurrentTriggerMode_ = SOFTWARE;
          strCurrentTriggerMode_ = "Software";
@@ -1494,7 +1505,7 @@ int AndorCamera::GetListOfAvailableCameras()
    /**
    * Acquires a single frame.
    * Micro-Manager expects that this function blocks the calling thread until the exposure phase is over.
-   * This wait is implemented either by sleeping ActualInterval_ms_ - ReadoutTime_ + 0.99 ms.
+   * This wait is implemented either by sleeping for the exposure time.
    * or waiting until the readout event notification, this is set by the SnapImageMode property.
    */
    int AndorCamera::SnapImage()
@@ -1528,7 +1539,7 @@ int AndorCamera::GetListOfAvailableCameras()
          }
          else
          {
-            CDeviceUtils::SleepMs((long) (ActualInterval_ms_ - ReadoutTime_ + 0.99));
+            CDeviceUtils::SleepMs((long) (currentExpMS_ + 0.99));
          }
       }//release camera
       
@@ -1583,45 +1594,41 @@ int AndorCamera::GetListOfAvailableCameras()
       unsigned int ret;
       float fReadOutTime,fKeepCleanTime, fAccumTime, fExposure, fKinetic;
       
-      //Workaround until Andor bug #7705 is fixed
-      //ret = GetReadOutTime(&fReadOutTime);
-      //if(DRV_SUCCESS!=ret)
-      //   return ret;
-      
-      //ret = GetKeepCleanTime(&fKeepCleanTime);
-      //if(DRV_NOT_AVAILABLE == ret)
-      //{
-      //   fKeepCleanTime=0.000f; 
-      //}
-      //else if(DRV_SUCCESS!=ret)
-      //   return ret; */
-
-      //fReadOutTime is readout+keepclean time, neglect fKeepCleanTime until bug fix
-      SetExposureTime(0.f);
-      ret = GetAcquisitionTimings(&fExposure,&fAccumTime,&fReadOutTime);
-      SetExposureTime( (float) expMs_/1000.f);
-      fKeepCleanTime=0.000f; 
-     
-
-      //convert to ms
-      
-      fReadOutTime *= 1000.f;
-      fKeepCleanTime *= 1000.f;
-
-      ReadoutTime_ = static_cast<long>(fReadOutTime);
-      KeepCleanTime_ = static_cast<long>(fKeepCleanTime);
-
-      
-      
       ret = GetAcquisitionTimings(&fExposure,&fAccumTime,&fKinetic);
       if(DRV_SUCCESS!=ret)
         return ret;
+
+      ret = GetReadOutTime(&fReadOutTime);
+      if(DRV_SUCCESS!=ret)
+         return ret;
+      
+      ret = GetKeepCleanTime(&fKeepCleanTime);
+      if(DRV_NOT_AVAILABLE == ret)
+      {
+         fKeepCleanTime=0.000f; 
+      }
+      else if(DRV_SUCCESS!=ret)
+         return ret; 
+
+      //reset exposure time (until Andor #7705 is fixed)
+      //TODO: remove fix when 2.97 is released
+      ret = SetExposureTime(fExposure);
+      if(DRV_SUCCESS!=ret)
+         return ret; 
+
+      //convert to ms      
+      fReadOutTime *= 1000.f;
+      fKeepCleanTime *= 1000.f;
+      fExposure *= 1000.f;
+
+      ReadoutTime_ = fReadOutTime;
+      KeepCleanTime_ = fKeepCleanTime;
 
       bool externalMode = EXTERNAL == iCurrentTriggerMode_ || EXTERNALEXPOSURE == iCurrentTriggerMode_ || FASTEXTERNAL == iCurrentTriggerMode_;
       
       if(externalMode) //calculate minimum period
       {
-         if(EXTERNALEXPOSURE == iCurrentTriggerMode_||bFrameTransfer_)
+         if(EXTERNALEXPOSURE == iCurrentTriggerMode_)
          {
             fExposure = 0.f; //set by trigger pulse
          }
@@ -1629,19 +1636,20 @@ int AndorCamera::GetListOfAvailableCameras()
          if(FASTEXTERNAL == iCurrentTriggerMode_)
          {
             fKeepCleanTime = 0.f;
+         }         
+      }
+
+      if(bFrameTransfer_)
+      {
+         ActualInterval_ms_ = max(fExposure, fKeepCleanTime + fReadOutTime);
+      }
+      else
+      {
+         ActualInterval_ms_ = fExposure + fKeepCleanTime + fReadOutTime;
+         if(AUTO == iShutterMode_ || AUTO==iInternalShutterMode_) //add shutter transfer times
+         {
+            ActualInterval_ms_ = ActualInterval_ms_+iShutterOpeningTime_ + iShutterClosingTime_;
          }
-
-         ActualInterval_ms_ = fExposure*1000.f + fKeepCleanTime + fReadOutTime;
-
-      }
-      else //actual period
-      {
-         ActualInterval_ms_ = fKinetic*1000.f;
-      }
-
-      if(AUTO == iShutterMode_) //add shutter transfer times
-      {
-         ActualInterval_ms_ = ActualInterval_ms_+iShutterOpeningTime_ + iShutterClosingTime_;
       }
 
       ActualInterval_ms_str_ = CDeviceUtils::ConvertToString((double)ActualInterval_ms_) ;
@@ -1824,30 +1832,39 @@ int AndorCamera::GetListOfAvailableCameras()
       {
          double exp;
          pProp->Get(exp);
+         
 
          if(fabs(exp-currentExpMS_)>0.001)
          {
-            bool acquiring = sequenceRunning_;
-            if (acquiring)
+            bool requiresSequenceAcquisitionStop = sequenceRunning_;
+            if (requiresSequenceAcquisitionStop)
                StopSequenceAcquisition(true);
+            
+            bool fastExposureSupported = biCamFeaturesSupported_ && SOFTWARE == iCurrentTriggerMode_;
+
+            if(!fastExposureSupported)
+              SetToIdle();
 
             if (sequenceRunning_)
                return ERR_BUSY_ACQUIRING;
              
             {
-				   DriverGuard dg(this);
-				   currentExpMS_ = exp;
+               DriverGuard dg(this);
+               currentExpMS_ = exp;
 
-				   unsigned ret = SetExposureTime((float)(exp / 1000.0));
-				   if (DRV_SUCCESS != ret)
-					   return (int)ret;
-				   expMs_ = exp;
+               unsigned ret = SetExposureTime((float)(exp / 1000.0));
+               if (DRV_SUCCESS != ret)
+                  return (int)ret;
+               expMs_ = exp;
 
-				   UpdateHSSpeeds();
+               UpdateTimings();
             }
 
-            if (acquiring)
+            if (requiresSequenceAcquisitionStop)
                StartSequenceAcquisition(sequenceLength_ - imageCounter_, intervalMs_, stopOnOverflow_);
+
+            if(!fastExposureSupported)
+              PrepareSnap();
          }
       }
       return DEVICE_OK;
@@ -1921,13 +1938,22 @@ int AndorCamera::GetListOfAvailableCameras()
 
    /**
    * Provides information on readout time.
-   * TODO: Not implemented
    */
    int AndorCamera::OnReadoutTime(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       if (eAct == MM::BeforeGet)
       {
          pProp->Set(ReadoutTime_);
+      }
+
+      return DEVICE_OK;
+   }
+
+   int AndorCamera::OnKeepCleanTime(MM::PropertyBase* pProp, MM::ActionType eAct)
+   {
+      if (eAct == MM::BeforeGet)
+      {
+         pProp->Set(KeepCleanTime_);
       }
 
       return DEVICE_OK;
@@ -4864,7 +4890,7 @@ unsigned int AndorCamera::PopulateROIDropdown()
          {
             return retVal;
          }
-         bSoftwareTriggerSupported_ = true;
+         biCamFeaturesSupported_ = true;
       }
       if(caps->ulTriggerModes & AC_TRIGGERMODE_EXTERNAL) 
       {

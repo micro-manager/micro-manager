@@ -131,6 +131,7 @@ public:
    int OnEMSwitch(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnReadoutMode(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnReadoutTime(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnKeepCleanTime(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnOffset(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnTemperature(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnDriverDir(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -240,7 +241,7 @@ private:
 
    double currentExpMS_;
 
-   long ReadoutTime_, KeepCleanTime_;
+   float ReadoutTime_, KeepCleanTime_;
 
    unsigned int UpdateTimings();
    unsigned int ApplyShutterSettings();
@@ -289,7 +290,7 @@ private:
    int HSSpeedIdx_;
    int PreAmpGainIdx_;
 
-   bool bSoftwareTriggerSupported_;
+   bool biCamFeaturesSupported_;
    int  iCurrentTriggerMode_;
 
    enum {
