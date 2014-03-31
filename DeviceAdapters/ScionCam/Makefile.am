@@ -1,5 +1,5 @@
 pkglibdir = $(DEVICEADAPTERPATH)
-AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS) -fpermissive
+AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS) -F/Library/Frameworks
 pkglib_LTLIBRARIES = libmmgr_dal_ScionCam.la
 libmmgr_dal_ScionCam_la_SOURCES = ScionCamera.cpp ScionCamera.h capture.cpp utilities.cpp
 libmmgr_dal_ScionCam_la_LIBADD = $(MMDEVAPI_LIBADD)
