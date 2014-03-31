@@ -55,9 +55,9 @@ MMCoreJ_wrap.cxx: $(swig_sources)
 	
 lib_LTLIBRARIES = libMMCoreJ_wrap.la
 nodist_libMMCoreJ_wrap_la_SOURCES = MMCoreJ_wrap.cxx
-libMMCoreJ_wrap_la_LIBADD = ../MMCore/libMMCore.la $(BOOST_SYSTEM_LIB) -ldl
+libMMCoreJ_wrap_la_LIBADD = ../MMCore/libMMCore.la
 # TODO Add -shrext .jnilib on OS X and normalize install target
-libMMCoreJ_wrap_la_LDFLAGS = -module -avoid-version $(BOOST_LDFLAGS)
+libMMCoreJ_wrap_la_LDFLAGS = -module -avoid-version
 
 $(srcdir)/MMCoreJ.jar:  MMCoreJ_wrap.cxx \
 	libMMCoreJ_wrap.la \

@@ -9,9 +9,16 @@
 
 AUTOMAKE_OPTIONS = foreign subdir-objects
 
-AM_CXXFLAGS = $(BOOST_CPPFLAGS)
+AM_CPPFLAGS = $(BOOST_CPPFLAGS) $(ZLIB_CPPFLAGS)
+AM_CXXFLAGS = $(ZLIB_CFLAGS)
+AM_LDFLAGS = $(BOOST_LDFLAGS) $(ZLIB_LDFLAGS) $(MMCORE_APPLEHOST_LDFLAGS)
 
 noinst_LTLIBRARIES = libMMCore.la
+
+# libMMCore currently requires libMMDevice, due to use of CDeviceUtils,
+# ImgBuffer, and FrameBuffer. This dependency should probably be removed.
+libMMCore_la_LIBADD = $(BOOST_SYSTEM_LIB) $(ZLIB_LIBS) ../MMDevice/libMMDevice.la
+
 libMMCore_la_SOURCES = \
        ../MMDevice/MMDevice.h \
        ../MMDevice/MMDeviceConstants.h \
