@@ -2048,9 +2048,19 @@ int CPCOCam::SnapImage()
   }
   if(m_bSequenceRunning == FALSE)
   {
+    for(int i = 0; i < 4; i++)
+    {
+      m_iLastBufferUsed[i] = -1;
+      m_iNextBufferToUse[i] = m_iLastBufferUsed[i];
+    }
+
     SetSizes(GetImageWidth(), GetImageHeight(), GetImageBytesPerPixel());
     m_iNextBufferToUse[0] = 0;
     m_iNextBuffer = 0;
+
+    unsigned int uiMode = 0x10000 + 0x0010;//Avoid adding buffers, Preview, Single
+    nErr = m_pCamera->PreStartCam(uiMode, 0, 0, 0);            // schaltet automatisch auf internen Trigger
+
     m_pCamera->StartCam();
   }
 
