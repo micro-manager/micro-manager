@@ -1,4 +1,5 @@
 pkglibdir = $(DEVICEADAPTERPATH)
+AM_CPPFLAGS = -F/Library/Frameworks
 AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS) -fpermissive
 pkglib_LTLIBRARIES = libmmgr_dal_PVCAM.la
 libmmgr_dal_PVCAM_la_SOURCES = PVCAMAdapter.cpp PVCAMAdapter.h PVCAMUniversal.cpp PVCAMParam.cpp

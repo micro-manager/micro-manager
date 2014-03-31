@@ -1,4 +1,5 @@
 pkglibdir = $(DEVICEADAPTERPATH)
+AM_CPPFLAGS = -F/Library/Frameworks
 AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS) -fpermissive
 pkglib_LTLIBRARIES = libmmgr_dal_PrincetonInstruments.la
 libmmgr_dal_PrincetonInstruments_la_SOURCES = PVCAM.cpp PVCAM.h PVCAMUtils.cpp PVCAMUtils.h PVCAMUniversal.cpp
