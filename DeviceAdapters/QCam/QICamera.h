@@ -125,8 +125,8 @@ public:
     class Access
     {
     public:
-        Access::Access();
-        Access::~Access();
+        Access();
+        ~Access();
         operator bool() { return m_error == qerrSuccess; }
         QCam_Err Status() { return m_error; }
     private:
