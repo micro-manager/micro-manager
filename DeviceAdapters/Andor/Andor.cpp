@@ -77,6 +77,8 @@ const char* g_IxonName = "Ixon";
 const char* g_PixelType_8bit = "8bit";
 const char* g_PixelType_16bit = "16bit";
 
+const char* g_Keyword_KeepCleanTime = "KeepCleanTime";
+
 const char* g_ShutterMode = "Shutter";
 const char* g_ExternalShutterMode = "Shutter (External)";
 const char* g_InternalShutterMode = "Shutter (Internal)";
@@ -105,7 +107,6 @@ const char* g_FanMode_Off = "Off";
 const char* g_CoolerMode_FanOffAtShutdown = "Fan off at shutdown";
 const char* g_CoolerMode_FanOnAtShutdown = "Fan on at shutdown";
 
-//const char* g_FrameTransferProp = "FrameTransfer";
 const char* g_FrameTransferOn = "On";
 const char* g_FrameTransferOff = "Off";
 const char* g_OutputAmplifier = "Output_Amplifier";
@@ -1114,14 +1115,14 @@ int AndorCamera::GetListOfAvailableCameras()
       }
       assert(nRet == DEVICE_OK);
 
-      if(!HasProperty(MM::g_Keyword_KeepCleanTime))
+      if(!HasProperty(g_Keyword_KeepCleanTime))
       {
          pAct = new CPropertyAction (this, &AndorCamera::OnKeepCleanTime);
-         nRet = CreateProperty(MM::g_Keyword_KeepCleanTime, "1", MM::Float, true, pAct);
+         nRet = CreateProperty(g_Keyword_KeepCleanTime, "1", MM::Float, true, pAct);
       }
       else
       {
-         nRet = SetProperty(MM::g_Keyword_KeepCleanTime, "1");
+         nRet = SetProperty(g_Keyword_KeepCleanTime, "1");
       }
       assert(nRet == DEVICE_OK);
 
