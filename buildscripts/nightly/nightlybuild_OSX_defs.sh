@@ -9,7 +9,7 @@ MM_DEPS_PREFIX="$MM_BUILDDIR/dependencies"
 # backward-compatible binaries. Omitting this will produce binaries that will
 # only run on the OS X version of the build host or newer. Also, mixing
 # different minimum versions may cause C++ linking issues (mainly due to the
-# switch from libstdc++ to libc++ between 10.8 and 10.9).
+# switch from libstdc++ to libc++).
 MM_MACOSX_VERSION_SDK=10.9
 MM_MACOSX_VERSION_MIN=10.5
 MM_MACOSX_SDKROOT="/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX${MM_MACOSX_VERSION_SDK}.sdk"

@@ -27,8 +27,8 @@ export SDKROOT=$MM_MACOSX_SDKROOT
 ##
 
 cd "$MM_SRCDIR"
-buildscripts/nextgen-gnubuild/activate.py -r
-#autoreconf -fiv
+buildscripts/nextgen-gnubuild/activate.py -a
+sh autogen.sh
 
 # Note on OpenCV library flags.
 # Since OpenCV is a CMake project, it does not produce the convenient libtool
