@@ -38,9 +38,7 @@ import javax.swing.JTextField;
 import javax.swing.JComboBox;
 
 import mmcorej.CMMCore;
-import mmcorej.DeviceType;
 import mmcorej.MMCoreJ;
-import mmcorej.StrVector;
 
 import org.micromanager.api.MMListenerInterface;
 import org.micromanager.api.MultiStagePosition;
@@ -90,8 +88,10 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
             savePosition();
          }
       });
+      
       core_ = core;
-      positionListDlg_ = positionListDlg;
+      positionListDlg_ = positionListDlg;   
+      positionListDlg_.activateAxisTable(false);
       endPosition_ = new MultiStagePosition[4];
       endPositionSet_ = new boolean[4];
 
@@ -356,7 +356,8 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
       cancelButton.setFont(new Font("", Font.PLAIN, 10));
       cancelButton.addActionListener(new ActionListener() {
          @Override
-         public void actionPerformed(ActionEvent arg0) {
+         public void actionPerformed(ActionEvent arg0) { 
+            positionListDlg_.activateAxisTable(true);
             savePosition();
             dispose();
          }
@@ -381,29 +382,34 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
 
    /**
     * Store current xyPosition.
+    * Only store positions of drives selected in PositionList
     */
    private MultiStagePosition markPosition(int location) {
       MultiStagePosition msp = new MultiStagePosition();
-      msp.setDefaultXYStage(core_.getXYStageDevice());
-      msp.setDefaultZStage(core_.getFocusDevice());
-
-      // read 1-axis stages
+      msp.setDefaultXYStage(positionListDlg_.get2DAxis());
+      msp.setDefaultZStage(positionListDlg_.get1DAxis());
+      
       try {
-         String stage = core_.getFocusDevice();
-         StagePosition sp = new StagePosition();
-         sp.stageName = stage;
-         sp.numAxes = 1;
-         sp.x = core_.getPosition(stage);
-         msp.add(sp);
+         // read 1-axis stages
+         String stage = positionListDlg_.get1DAxis();
+         if (stage != null) {
+            StagePosition sp = new StagePosition();
+            sp.stageName = stage;
+            sp.numAxes = 1;
+            sp.x = core_.getPosition(stage);
+            msp.add(sp);
+         }
 
          // and 2 axis default stage
-         sp = new StagePosition();
-         stage = core_.getXYStageDevice();
-         sp.stageName = stage;
-         sp.numAxes = 2;
-         sp.x = core_.getXPosition(stage);
-         sp.y = core_.getYPosition(stage);
-         msp.add(sp);
+         stage = positionListDlg_.get2DAxis();
+         if (stage != null) {
+            StagePosition sp = new StagePosition();
+            sp.stageName = stage;
+            sp.numAxes = 2;
+            sp.x = core_.getXPosition(stage);
+            sp.y = core_.getYPosition(stage);
+            msp.add(sp);
+         }
       } catch (Exception e) {
          ReportingUtils.showError(e);
       }
@@ -486,120 +492,119 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
       double offsetXUm = centeredSize[0] / 2.0 - imageSizeXUm / 2.0 - 1;
       double offsetYUm = centeredSize[1] / 2.0 - imageSizeYUm / 2.0 - 1;
 
-      for(int location = 0; location < 4; ++location)
-      {
-          // get the current position
-          MultiStagePosition msp = new MultiStagePosition();
-          StringBuilder sb = new StringBuilder();
-          msp.setDefaultXYStage(core_.getXYStageDevice());
-          msp.setDefaultZStage(core_.getFocusDevice());
+      for (int location = 0; location < 4; ++location) {
+         // get the current position
+         MultiStagePosition msp = new MultiStagePosition();
+         StringBuilder sb = new StringBuilder();
+         msp.setDefaultXYStage(positionListDlg_.get2DAxis());
+         msp.setDefaultZStage(positionListDlg_.get1DAxis());
 
-          // read 1-axis stages
-          try {
-              StrVector stages = core_.getLoadedDevicesOfType(DeviceType.StageDevice);
-              for (int i=0; i<stages.size(); i++) {
-                  StagePosition sp = new StagePosition();
-                  sp.stageName = stages.get(i);
-                  sp.numAxes = 1;
-                  sp.x = core_.getPosition(stages.get(i));
-                  msp.add(sp);
-                  sb.append(sp.getVerbose()).append("\n");
-              }
+         // read 1-axis stages
+         try {
+            String stage = positionListDlg_.get1DAxis();
+            if (stage != null) {
+               StagePosition sp = new StagePosition();
+               sp.stageName = stage;
+               sp.numAxes = 1;
+               sp.x = core_.getPosition(stage);
+               msp.add(sp);
+               sb.append(sp.getVerbose()).append("\n");
+            }
 
-              // read 2-axis stages
-              StrVector stages2D = core_.getLoadedDevicesOfType(DeviceType.XYStageDevice);
-              for (int i=0; i<stages2D.size(); i++) {
-                  StagePosition sp = new StagePosition();
-                  sp.stageName = stages2D.get(i);
-                  sp.numAxes = 2;
-                  sp.x = core_.getXPosition(stages2D.get(i));
-                  sp.y = core_.getYPosition(stages2D.get(i));
+            // read 2-axis stages
+            stage = positionListDlg_.get2DAxis();
+            if (stage != null) {
+               StagePosition sp = new StagePosition();
+               sp.stageName = stage;
+               sp.numAxes = 2;
+               sp.x = core_.getXPosition(stage);
+               sp.y = core_.getYPosition(stage);
 
-                  switch(location)
-                  {
-                      case 0: // top
-                          sp.y += offsetYUm;
-                          break;
-                      case 1: // right
-                          sp.x += offsetXUm;
-                          break;
-                      case 2: // bottom
-                          sp.y -= offsetYUm;
-                          break;
-                       case 3: // left
-                          sp.x -= offsetXUm;
-                          break;
-                  }
-                  msp.add(sp);
-                  sb.append(sp.getVerbose()).append("\n");
-              }
-          } catch (Exception e) {
-              ReportingUtils.showError(e);
-          }
+               switch (location) {
+                  case 0: // top
+                     sp.y += offsetYUm;
+                     break;
+                  case 1: // right
+                     sp.x += offsetXUm;
+                     break;
+                  case 2: // bottom
+                     sp.y -= offsetYUm;
+                     break;
+                  case 3: // left
+                     sp.x -= offsetXUm;
+                     break;
+               }
+               msp.add(sp);
+               sb.append(sp.getVerbose()).append("\n");
+            }
+         } catch (Exception e) {
+            ReportingUtils.showError(e);
+         }
 
-          endPosition_[location] = msp;
-          endPositionSet_[location] = true;
+         endPosition_[location] = msp;
+         endPositionSet_[location] = true;
 
-          switch(location)
-          {
-              case 0: // top
-                  labelTop_.setText(sb.toString());
-                  break;
-              case 1: // right
-                  labelRight_.setText(sb.toString());
-                  break;
-              case 2: // bottom
-                  labelBottom_.setText(sb.toString());
-                  break;
-              case 3: // left
-                  labelLeft_.setText(sb.toString());
-                  break;
-          }
+         switch (location) {
+            case 0: // top
+               labelTop_.setText(sb.toString());
+               break;
+            case 1: // right
+               labelRight_.setText(sb.toString());
+               break;
+            case 2: // bottom
+               labelBottom_.setText(sb.toString());
+               break;
+            case 3: // left
+               labelLeft_.setText(sb.toString());
+               break;
+         }
       }
    }
 
-   private boolean isSwappedXY()
-   {
-       boolean correction, transposeXY, mirrorX, mirrorY;
-       String camera = core_.getCameraDevice();
-       if (camera == null) {
-           JOptionPane.showMessageDialog(null, "This function does not work without a camera");
-           return false;
-       }
+   private boolean isSwappedXY() {
+      boolean correction, transposeXY, mirrorX, mirrorY;
+      String camera = core_.getCameraDevice();
+      if (camera == null) {
+         JOptionPane.showMessageDialog(null, "This function does not work without a camera");
+         return false;
+      }
 
-       try{
-           String tmp = core_.getProperty(camera, "TransposeCorrection");
-           if (tmp.equals("0"))
-               correction = false;
-           else
-               correction = true;
-           tmp = core_.getProperty(camera, MMCoreJ.getG_Keyword_Transpose_MirrorX());
-           if (tmp.equals("0"))
-               mirrorX = false;
-           else
-               mirrorX = true;
-           tmp = core_.getProperty(camera, MMCoreJ.getG_Keyword_Transpose_MirrorY());
-           if (tmp.equals("0"))
-               mirrorY = false;
-           else
-               mirrorY = true;
-           
-           tmp = core_.getProperty(camera, MMCoreJ.getG_Keyword_Transpose_SwapXY());
-           if (tmp.equals("0"))
-               transposeXY = false;
-           else
-               transposeXY = true;
-       } catch(Exception exc) {
-           ReportingUtils.showError(exc);
-           return false;
-       }
+      try {
+         String tmp = core_.getProperty(camera, "TransposeCorrection");
+         if (tmp.equals("0")) {
+            correction = false;
+         } else {
+            correction = true;
+         }
+         tmp = core_.getProperty(camera, MMCoreJ.getG_Keyword_Transpose_MirrorX());
+         if (tmp.equals("0")) {
+            mirrorX = false;
+         } else {
+            mirrorX = true;
+         }
+         tmp = core_.getProperty(camera, MMCoreJ.getG_Keyword_Transpose_MirrorY());
+         if (tmp.equals("0")) {
+            mirrorY = false;
+         } else {
+            mirrorY = true;
+         }
 
-       return !correction && transposeXY;
+         tmp = core_.getProperty(camera, MMCoreJ.getG_Keyword_Transpose_SwapXY());
+         if (tmp.equals("0")) {
+            transposeXY = false;
+         } else {
+            transposeXY = true;
+         }
+      } catch (Exception exc) {
+         ReportingUtils.showError(exc);
+         return false;
+      }
+
+      return !correction && transposeXY;
    }
 
-   private double getPixelSizeUm()
-   {
-       // check if we are calibrated, TODO: allow input of image size
+   private double getPixelSizeUm() {
+      // check if we are calibrated, TODO: allow input of image size
       double pixSizeUm = 0.0;
       try {
          pixSizeUm = NumberUtils.displayStringToDouble(pixelSizeField_.getText());
@@ -612,12 +617,10 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
       }
 
       return pixSizeUm;
-
-
    }
+   
 
-   private double[] getTileSize()
-   {
+   private double[] getTileSize() {
       double pixSizeUm = getPixelSizeUm();
       double overlap = 0.0;
       try {
@@ -653,16 +656,15 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
       return new double[] {tileSizeXUm, tileSizeYUm};
    }
 
-   private double[] getImageSize() {
-      
-       double pixSizeUm = getPixelSizeUm();
-       boolean swapXY = isSwappedXY();
-       double imageSizeXUm = swapXY ? pixSizeUm * core_.getImageHeight() : 
-                                      pixSizeUm * core_.getImageWidth();
-       double imageSizeYUm = swapXY ? pixSizeUm * core_.getImageWidth() :
-                                      pixSizeUm * core_.getImageHeight();
+   private double[] getImageSize() {     
+      double pixSizeUm = getPixelSizeUm();
+      boolean swapXY = isSwappedXY();
+      double imageSizeXUm = swapXY ? pixSizeUm * core_.getImageHeight() : 
+                                     pixSizeUm * core_.getImageWidth();
+      double imageSizeYUm = swapXY ? pixSizeUm * core_.getImageWidth() :
+                                     pixSizeUm * core_.getImageHeight();
 
-       return new double[] {imageSizeXUm, imageSizeYUm};
+      return new double[] {imageSizeXUm, imageSizeYUm};
    }
 
 
@@ -776,8 +778,12 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
          // "sufficiently" large here is 0.5 radians, or about 30 degrees
          if(theta < 0.5 
                  || theta > (2 * Math.PI - 0.5) 
-                 || (theta > (Math.PI - 0.5) && theta < (Math.PI + 0.5)))
+                 || (theta > (Math.PI - 0.5) && theta < (Math.PI + 0.5))) {
              hasZPlane = false;
+         }
+         if (Double.isNaN(theta)) {
+            hasZPlane = false;
+         }
 
          // intermediates: ax + by + cz + d = 0
 
@@ -795,8 +801,8 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
 
       // make sure the user wants to continue if they've asked for Z positions
       // but haven't defined enough (non-colinear!) points for a Z plane
-
-      if(positionListDlg_.useDrive(core_.getFocusDevice()) && !hasZPlane)
+/*
+      if(positionListDlg_.get1DAxis() != null && !hasZPlane)
       {
           int choice = JOptionPane.showConfirmDialog(this, 
                   "You are creating a position list that includes\n" +
@@ -813,7 +819,7 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
               return;
 
       }
-
+*/
       double pixSizeUm = getPixelSizeUm();
 
       double imageSizeXUm = getImageSize()[0];
@@ -843,55 +849,61 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
       prefix_ += 1;
 
       // todo handle mirrorX mirrorY
-      for (int y=0; y< nrImagesY; y++) {
-         for (int x=0; x<nrImagesX; x++) {
+      for (int y = 0; y < nrImagesY; y++) {
+         for (int x = 0; x < nrImagesX; x++) {
             // on even rows go left to right, on odd rows right to left
             int tmpX = x;
-            if ( (y & 1) == 1)
+            if ((y & 1) == 1) {
                tmpX = nrImagesX - x - 1;
+            }
             MultiStagePosition msp = new MultiStagePosition();
 
             // Add XY position
-            msp.setDefaultXYStage(core_.getXYStageDevice());
-            msp.setDefaultZStage(core_.getFocusDevice());
+            msp.setDefaultXYStage(positionListDlg_.get2DAxis());
+            msp.setDefaultZStage(positionListDlg_.get1DAxis());
             StagePosition spXY = new StagePosition();
-            spXY.stageName = core_.getXYStageDevice();
-            spXY.numAxes = 2;
-            spXY.x = minX - offsetXUm + (tmpX * tileSizeXUm);
-            spXY.y = minY - offsetYUm + (y * tileSizeYUm);
-            msp.add(spXY);
+            String stage = positionListDlg_.get2DAxis();
+            spXY.stageName = stage;
+            if (stage != null) {
+               spXY.numAxes = 2;
+               spXY.x = minX - offsetXUm + (tmpX * tileSizeXUm);
+               spXY.y = minY - offsetYUm + (y * tileSizeYUm);
+               msp.add(spXY);
+            }
 
             // Add Z position
             StagePosition spZ = new StagePosition();
-            spZ.stageName = core_.getFocusDevice();
-            spZ.numAxes = 1;
+            stage = positionListDlg_.get1DAxis();
+            if (stage != null) {
+               spZ.stageName = stage;
+               spZ.numAxes = 1;
 
-            if(hasZPlane) {
-                double z = zPlaneA * spXY.x + zPlaneB * spXY.y + zPlaneC;
-                spZ.x = z;
-            } else 
-                spZ.x = meanZ;
+               if (hasZPlane) {
+                  double z = zPlaneA * spXY.x + zPlaneB * spXY.y + zPlaneC;
+                  spZ.x = z;
+               } else {
+                  spZ.x = meanZ;
+               }
 
-            if (positionListDlg_.useDrive(spZ.stageName))
                msp.add(spZ);
- 
+            }
+
             // Add 'metadata'
             msp.setGridCoordinates(y, tmpX);
 
-            if(overlapUnit_ == OverlapUnitEnum.UM || overlapUnit_ == OverlapUnitEnum.PX)
-            {
-                msp.setProperty("OverlapUm", NumberUtils.doubleToCoreString(overlapXUm));
-                int overlapPix = (int) Math.floor(overlapXUm/pixSizeUm);
+            if (overlapUnit_ == OverlapUnitEnum.UM || overlapUnit_ == OverlapUnitEnum.PX) {
+               msp.setProperty("OverlapUm", NumberUtils.doubleToCoreString(overlapXUm));
+               int overlapPix = (int) Math.floor(overlapXUm / pixSizeUm);
 
-                msp.setProperty("OverlapPixels", NumberUtils.intToCoreString(overlapPix));
+               msp.setProperty("OverlapPixels", NumberUtils.intToCoreString(overlapPix));
             } else { // overlapUnit_ == OverlapUnit.PERCENT
-                // overlapUmX != overlapUmY; store both
-                msp.setProperty("OverlapUmX", NumberUtils.doubleToCoreString(overlapXUm));
-                msp.setProperty("OverlapUmY", NumberUtils.doubleToCoreString(overlapYUm));
-                int overlapPixX = (int) Math.floor(overlapXUm/pixSizeUm);
-                int overlapPixY = (int) Math.floor(overlapYUm/pixSizeUm);
-                msp.setProperty("OverlapPixelsX", NumberUtils.intToCoreString(overlapPixX));
-                msp.setProperty("OverlapPixelsY", NumberUtils.intToCoreString(overlapPixY));
+               // overlapUmX != overlapUmY; store both
+               msp.setProperty("OverlapUmX", NumberUtils.doubleToCoreString(overlapXUm));
+               msp.setProperty("OverlapUmY", NumberUtils.doubleToCoreString(overlapYUm));
+               int overlapPixX = (int) Math.floor(overlapXUm / pixSizeUm);
+               int overlapPixY = (int) Math.floor(overlapYUm / pixSizeUm);
+               msp.setProperty("OverlapPixelsX", NumberUtils.intToCoreString(overlapPixX));
+               msp.setProperty("OverlapPixelsY", NumberUtils.intToCoreString(overlapPixY));
             }
 
             // Add to position list
@@ -899,6 +911,7 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
          }
       }
 
+      positionListDlg_.activateAxisTable(true);
       dispose();
    }
 
@@ -906,7 +919,7 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
     * Delete all positions from the dialog and update labels.  Re-read pixel calibration - when available - from the core 
     */
    private void reset() {
-      for (int i=0; i<4; i++) 
+      for (int i = 0; i < 4; i++)
          endPositionSet_[i] = false;
       labelTop_.setText("");
       labelRight_.setText("");

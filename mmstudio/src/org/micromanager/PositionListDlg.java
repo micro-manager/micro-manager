@@ -92,12 +92,12 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
 
    private JTable posTable_;
    private JTable axisTable_;
+   private AxisTableModel axisModel_;
    private SpringLayout springLayout;
    private CMMCore core_;
    private ScriptInterface gui_;
    private MMOptions opts_;
    private Preferences prefs_;
-   private TileCreatorDlg tileCreatorDlg_;
    private GUIColors guiColors_;
    private AxisList axisList_;
    private final JButton tileButton_;
@@ -207,6 +207,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
     */
    private class AxisList {
       private ArrayList<AxisData> axisList_ = new ArrayList<AxisData>();
+      
       public AxisList() {
          // Initialize the axisList.
          try {
@@ -252,6 +253,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
     */
    private class AxisTableModel extends AbstractTableModel {
       private static final long serialVersionUID = 1L;
+      private boolean isEditable_ = true;
       public final String[] COLUMN_NAMES = new String[] {
             "Use",
             "Axis"
@@ -285,10 +287,18 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       public Class<?> getColumnClass(int c) {
          return getValueAt(0, c).getClass();
       }
+      public void setEditable(boolean state) {
+         isEditable_ = state;
+         if (state) {
+            for (int i=0; i < getRowCount(); i++) {
+               
+            }
+         }
+      }
       @Override
       public boolean isCellEditable(int rowIndex, int columnIndex) {
          if (columnIndex == 0) {
-            return true;
+            return isEditable_;
          }
          return false;
       }
@@ -417,8 +427,8 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       axisTable_ = new JTable();
       axisTable_.setFont(new Font("Arial", Font.PLAIN, 10));
       axisList_ = new AxisList();
-      AxisTableModel axisModel = new AxisTableModel();
-      axisTable_.setModel(axisModel);
+      axisModel_ = new AxisTableModel();
+      axisTable_.setModel(axisModel_);
       axisPane.setViewportView(axisTable_);
       axisTable_.addMouseListener(this);
 
@@ -433,7 +443,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       springLayout.putConstraint(SpringLayout.NORTH, scrollPane, 10, 
               SpringLayout.NORTH, getContentPane());
       springLayout.putConstraint(SpringLayout.NORTH, axisPane, 
-              -(axisPaneLineOffset + axisPaneLineOffset*axisModel.getRowCount()), SpringLayout.SOUTH, getContentPane());
+              -(axisPaneLineOffset + axisPaneLineOffset*axisModel_.getRowCount()), SpringLayout.SOUTH, getContentPane());
 
       // mark / replace button:
       JButton markButton = new JButton();
@@ -611,10 +621,6 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       springLayout.putConstraint(SpringLayout.SOUTH, setOriginButton, northConstraint+=buttonHeight, SpringLayout.NORTH, getContentPane());
       springLayout.putConstraint(SpringLayout.EAST, setOriginButton, 0, SpringLayout.EAST, markButton);
       springLayout.putConstraint(SpringLayout.WEST, setOriginButton, 0, SpringLayout.WEST, markButton);
-
-
-
-
 
 
       final JButton removeAllButton = new JButton();
@@ -806,6 +812,11 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       axm.fireTableDataChanged();
    }
 
+   public void activateAxisTable(boolean state) {
+      axisModel_.setEditable(state);
+      axisTable_.setEnabled(state);
+   }
+   
    public void setPositionList(PositionList pl) {
       PosTableModel ptm = (PosTableModel)posTable_.getModel();
       ptm.setData(pl);
@@ -1048,15 +1059,44 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
    public boolean useDrive(String drive) {
       return axisList_.use(drive);
    }
+   
+   /**
+    * Returns the first selected drive of the specified type
+    * @param type
+    * @return 
+    */
+   private String getAxis(AxisType type) {
+      for (int i = 0; i < axisList_.getNumberOfPositions(); i++) {
+         AxisData axis = axisList_.get(i);
+         if (axis.getUse() && axis.getType() == type) {
+            return axis.getAxisName();
+         }
+      }
+      return null;
+   }
+   
+   /**
+    * Returns the first selected XYDrive or null when none is selected
+    * @return 
+    */
+   public String get2DAxis() {
+      return getAxis(AxisType.twoD);
+   }
+   
+    /**
+    * Returns the first selected Drive or null when none is selected
+    * @return 
+    */
+   public String get1DAxis() {
+      return getAxis(AxisType.oneD);
+   }
 
    protected void showCreateTileDlg() {
-      if (tileCreatorDlg_ == null) {
-         tileCreatorDlg_ = new TileCreatorDlg(core_, opts_, this);
-         gui_.addMMBackgroundListener(tileCreatorDlg_);
-         gui_.addMMListener(tileCreatorDlg_);
-      }
-      tileCreatorDlg_.setBackground(guiColors_.background.get(opts_.displayBackground_));
-      tileCreatorDlg_.setVisible(true);
+      TileCreatorDlg tileCreatorDlg = new TileCreatorDlg(core_, opts_, this);
+      gui_.addMMBackgroundListener(tileCreatorDlg);
+      gui_.addMMListener(tileCreatorDlg);
+      tileCreatorDlg.setBackground(guiColors_.background.get(opts_.displayBackground_));
+      tileCreatorDlg.setVisible(true);
    }
 
 
