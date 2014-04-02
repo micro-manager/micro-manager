@@ -2055,7 +2055,7 @@ int CPCOCam::SnapImage()
     }
 
     SetSizes(GetImageWidth(), GetImageHeight(), GetImageBytesPerPixel());
-    m_iNextBufferToUse[0] = 0;
+    //m_iNextBufferToUse[0] = 0;
     m_iNextBuffer = 0;
 
     unsigned int uiMode = 0x10000 + 0x0010;//Avoid adding buffers, Preview, Single
