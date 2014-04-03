@@ -22,7 +22,7 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib/micro-manager
 cd /usr/share/imagej
 strace -f java -Djava.library.path=/usr/lib/micro-manager -classpath /usr/share/imagej/plugins/bsh-2.0b4.jar:/usr/share/imagej/ij.jar:/usr/share/imagej/plugins/Micro-Manager/MMJ_.jar org/micromanager/MMStudioMainFrame
 */
-// LICENSE:       This file is distributed under the "GPL" license.
+// LICENSE:       This file is distributed under the "LGPL" license.
 //
 //                This file is distributed in the hope that it will be useful,
 //                but WITHOUT ANY WARRANTY; without even the implied warranty
