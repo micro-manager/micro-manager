@@ -39,7 +39,7 @@
 #define TRUE 1
 
 // A Carbon (!!) header for the Rect type used in <SpotCam/SpotCam.h>.
-#include <MacTypes.h>
+#include </System/Library/Frameworks/CoreServices.framework/Frameworks/CarbonCore.framework/Headers/MacTypes.h>
 
 #define TARGET_OS_MAC 1
 #include <SpotCam/SpotCam.h>
