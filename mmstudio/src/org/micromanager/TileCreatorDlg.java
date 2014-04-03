@@ -56,9 +56,6 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
 
    private JTextField overlapField_;
    private JComboBox overlapUnitsCombo_;
-
-   
-
    
    private enum OverlapUnitEnum {UM, PX, PERCENT};
    private OverlapUnitEnum overlapUnit_ = OverlapUnitEnum.UM;
@@ -915,8 +912,9 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
       dispose();
    }
 
-   /*
-    * Delete all positions from the dialog and update labels.  Re-read pixel calibration - when available - from the core 
+   /**
+    * Delete all positions from the dialog and update labels.  
+    * Re-read pixel calibration - when available - from the core 
     */
    private void reset() {
       for (int i = 0; i < 4; i++)
@@ -933,7 +931,7 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
       centeredFrames_ = 0;
    }
    
-   /*
+   /**
     * Move stage to position
     */
    private void goToPosition(MultiStagePosition position) {
@@ -942,10 +940,6 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
       } catch (Exception e) {
          ReportingUtils.logError(e);
       }
-   }
-
-   private void handleError(String txt) {
-      JOptionPane.showMessageDialog(this, txt);      
    }
 
    public static String generatePosLabel(String prefix, int x, int y) {

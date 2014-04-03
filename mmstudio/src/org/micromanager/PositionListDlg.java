@@ -27,7 +27,6 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
-import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
@@ -386,11 +385,8 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       prefs_ = root.node(root.absolutePath() + "/XYPositionListDlg");
       setPrefsNode(prefs_);
 
-      Rectangle r = getBounds();
-      GUIUtils.recallPosition(this);
-
-      setBackground(gui_.getBackgroundColor());
-      gui_.addMMBackgroundListener(this);
+      // Rectangle r = getBounds();
+          
 
       Font arialSmallFont = new Font("Arial", Font.PLAIN, 10);
       
@@ -417,12 +413,10 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       model.setData(posList);
       posTable_.setModel(model);
       CellEditor cellEditor_ = new CellEditor();
+      cellEditor_.addListener();
       posTable_.setDefaultEditor(Object.class, cellEditor_);
       posTable_.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
       scrollPane.setViewportView(posTable_);
-      posTable_.addMouseListener(this);
-
-      
 
       axisTable_ = new JTable();
       axisTable_.setFont(new Font("Arial", Font.PLAIN, 10));
@@ -430,7 +424,6 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       axisModel_ = new AxisTableModel();
       axisTable_.setModel(axisModel_);
       axisPane.setViewportView(axisTable_);
-      axisTable_.addMouseListener(this);
 
       int axisPaneLineOffset = 26;
       if (JavaUtils.isMac()) {
@@ -712,8 +705,13 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       springLayout.putConstraint(SpringLayout.NORTH, loadButton, -83, SpringLayout.NORTH, closeButton);
       springLayout.putConstraint(SpringLayout.EAST, loadButton, 0, SpringLayout.EAST, markButton);
       springLayout.putConstraint(SpringLayout.WEST, loadButton, 0, SpringLayout.WEST, markButton);
-
-      getPositionList().addChangeListener(this);
+      
+   }
+   
+   public void addListeners() {   
+      axisTable_.addMouseListener(this);
+      posTable_.addMouseListener(this);      
+      getPositionList().addChangeListener(this);    
    }
    
    
@@ -743,7 +741,6 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
 
    }
    
-
 
    public void addPosition(MultiStagePosition msp, String label) {
       PosTableModel ptm = (PosTableModel)posTable_.getModel();
@@ -956,14 +953,18 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
    /**
     * Editor component for the position list table
     */
-   public class CellEditor extends AbstractCellEditor implements TableCellEditor, FocusListener {
+   public class CellEditor extends AbstractCellEditor implements TableCellEditor, 
+           FocusListener {
       private static final long serialVersionUID = 3L;
       // This is the component that will handle editing of the cell's value
       JTextField text_ = new JTextField();
       int editingCol_;
 
       public CellEditor() {
-         super();
+         super();       
+      }
+      
+      public void addListener() {
          text_.addFocusListener(this);
       }
 
@@ -1321,7 +1322,6 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
             bt.start();
 
             core_.setXYPosition(deviceName, x1[0] - x2[0], y1[0] - y2[0]);
-            busy = core_.deviceBusy(deviceName);
 
             if (isInterrupted()) {
                return;
@@ -1339,7 +1339,6 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
             }
 
             bt.interrupt();
-            bt = null;
 
          } catch (InterruptedException e) {
             ReportingUtils.logError(e);
