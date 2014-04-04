@@ -251,7 +251,7 @@ $(STATICLIB): $(MODULES)
 	$(LIBTOOL) -static -o $@ $(MODULES)
 
 clean:
-	rm -f Dist/*.* $(MODULES) $(STATICLIB)
+	rm -f Dist/$(STATICLIB) Dist/$(HEADER) $(MODULES) $(STATICLIB)
 END_OF_MAKEFILE
 
 # Patch to add a missing #include
@@ -294,8 +294,8 @@ MODULES := $(MODULES:.cpp=.o)
 all: dist
 
 dist: FreeImagePlus
-	cp *.a dist
-	cp $(HEADER) dist
+	cp *.a Dist
+	cp $(HEADER) Dist
 
 FreeImagePlus: $(STATICLIB)
 
@@ -303,12 +303,12 @@ $(STATICLIB): $(MODULES)
 	$(LIBTOOL) -static -o $@ $(MODULES)
 
 clean:
-	rm -f dist/*.* $(MODULES) $(STATICLIB)
+	rm -f Dist/$(STATICLIB) Dist/$(HEADER) $(MODULES) $(STATICLIB)
 END_OF_MAKEFILE
 
 make -f Makefile.clang $MM_PARALLELMAKEFLAG CC="$MM_CC" CXX="$MM_CXX" MM_CPPFLAGS="$MM_CPPFLAGS"
-cp dist/FreeImagePlus.h $MM_DEPS_PREFIX/include
-cp dist/libfreeimageplus.a $MM_DEPS_PREFIX/lib
+cp Dist/FreeImagePlus.h $MM_DEPS_PREFIX/include
+cp Dist/libfreeimageplus.a $MM_DEPS_PREFIX/lib
 popd # Wrapper
 
 popd # FreeImage
