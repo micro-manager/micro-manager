@@ -71,17 +71,47 @@ eval ./configure \
    HIDAPI_LIBS=$MM_DEPS_PREFIX/lib/libhidapi.la
 
 make
+
+# Remove x86_64 from device adapters that depend on 32-bit only frameworks.
+for file in DeviceAdapters/PVCAM/.libs/libmmgr_dal_PVCAM \
+            DeviceAdapters/PrincetonInstruments/.libs/libmmgr_dal_PrincetonInstruments \
+            DeviceAdapters/QCam/.libs/libmmgr_dal_QCam \
+            DeviceAdapters/ScionCam/.libs/libmmgr_dal_ScionCam \
+            DeviceAdapters/Spot/.libs/libmmgr_dal_Spot 
+do
+   lipo -extract i386 -output $file.i386 $file
+   mv $file.i386 $file
+done
+
+
+# TODO Fix install: modules should go to $PREFIX/lib/micro-manager ($pkglibdir); JARs should go to $IJPREFIX/plugins/Micro-Manager ($jardir?)
+# The default jardir should probably be $datadir/java/micro-manager
 make install
+
+
+# TODO Stage other files:
+
+# mkdir -p $MM_STAGEDIR/libgphoto2/libgphoto2
+# mkdir -p $MM_STAGEDIR/libgphoto2/libgphoto2_port
+# cp $MM_DEPS_PREFIX/lib/libgphoto2/2.5.2/*.so $MM_STAGEDIR/libgphoto2/libgphoto2
+# cp $MM_DEPS_PREFIX/lib/libgphoto2_port/0.10.0/*.so $MM_STAGEDIR/libgphoto2/libgphoto2_port
+#
+# buildscripts/nightly/mkportableapp_OSX/mkportableapp.py \
+#    --srcdir $MM_DEPS_PREFIX/lib \
+#    --destdir $MM_STAGEDIR \
+#    --forbid-from $MM_BUILDDIR/share \
+#    --forbid-from $MM_DEPS_PREFIX/src \
+#    --forbid-from $MM_DEPS_PREFIX/share \
+#    --forbid-from /usr/local \
+#    --map-path 'libltdl*.dylib:libgphoto2' \
+#    --map-path 'libgphoto2*.dylib:libgphoto2'
+
 
 echo "Finished building Micro-Manager"
 
-# TODO Remove x86_64 from 32-bit-only device adapters (PVCAM,
-# PrincetonInstruments, QCam, Spot; ScionCam?)
-# TODO Get GPhoto to build
-
 
 # TODO Put this in an appropriate place for testing; add tests for
-# non-device-adapter binaries
+# non-device-adapter binaries (scan all Mach-O files)
 #for arch in i386 x86_64; do
 #   echo "Check $arch device adapters for suspicious undefined symbols..."
 #   for file in $MM_BUILDDIR/mm/lib/micro-manager/libmmgr_dal_*; do
