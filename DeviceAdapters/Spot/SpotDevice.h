@@ -35,11 +35,18 @@
 // #define SpotAPI(X) (std::cerr << __LINE__ << ": Calling Spot API: " #X << std::endl, X)
 #define SpotAPI(X) (X)
 #ifdef __APPLE__
+typedef struct
+{
+   short left, top;
+   short right, bottom;
+} RECT;
+
+// Compatibility with SpotCam.framework 4.7.x
+// (Could also include MacTypes.h to get Rect)
+typedef RECT Rect;
+
 #define FALSE 0
 #define TRUE 1
-
-// A Carbon (!!) header for the Rect type used in <SpotCam/SpotCam.h>.
-#include </System/Library/Frameworks/CoreServices.framework/Frameworks/CarbonCore.framework/Headers/MacTypes.h>
 
 #define TARGET_OS_MAC 1
 #include <SpotCam/SpotCam.h>
