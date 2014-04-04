@@ -69,20 +69,26 @@ int Debayer::Process(ImgBuffer& out, const ImgBuffer& input, int bitDepth)
    if (input.Depth() == 1)
    {
       const unsigned char* inBuf = input.GetPixels();
-      return Process(out, inBuf, input.Width(), input.Height(), bitDepth);
+      return ProcessT(out, inBuf, input.Width(), input.Height(), bitDepth);
    }
    else if (input.Depth() == 2)
    {
       const unsigned short* inBuf = reinterpret_cast<const unsigned short*>(input.GetPixels());
-      return Process(out, inBuf, input.Width(), input.Height(), bitDepth);
+      return ProcessT(out, inBuf, input.Width(), input.Height(), bitDepth);
    }
    else
       return DEVICE_UNSUPPORTED_DATA_FORMAT;
 
 }
 
+int Debayer::Process(ImgBuffer& out, const unsigned char* in, int width, int height, int bitDepth)
+{ return ProcessT(out, in, width, height, bitDepth); }
+
+int Debayer::Process(ImgBuffer& out, const unsigned short* in, int width, int height, int bitDepth)
+{ return ProcessT(out, in, width, height, bitDepth); }
+
 template <typename T>
-int Debayer::Process(ImgBuffer& out, const T* in, int width, int height, int bitDepth)
+int Debayer::ProcessT(ImgBuffer& out, const T* in, int width, int height, int bitDepth)
 {
    assert(sizeof(int) == 4);
    out.Resize(width, height, 4);

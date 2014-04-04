@@ -39,8 +39,8 @@ public:
    ~Debayer();
 
    int Process(ImgBuffer& out, const ImgBuffer& in, int bitDepth);
-   template <typename T>
-   int Process(ImgBuffer& out, const T* in, int width, int height, int bitDepth);
+   int Process(ImgBuffer& out, const unsigned char* in, int width, int height, int bitDepth);
+   int Process(ImgBuffer& out, const unsigned short* in, int width, int height, int bitDepth);
 
    const std::vector<std::string> GetOrders() const {return orders;}
    const std::vector<std::string> GetAlgorithms() const {return algorithms;}
@@ -49,6 +49,8 @@ public:
    void SetAlgorithmIndex(int idx) {algoIndex = idx;}
 
 private:
+   template <typename T>
+   int ProcessT(ImgBuffer& out, const T* in, int width, int height, int bitDepth);
    template<typename T>
    void ReplicateDecode(const T* input, int* out, int width, int height, int bitDepth, int rowOrder);
    template <typename T>
