@@ -59,6 +59,8 @@ eval ./configure \
    --with-libusb-0-1 \
    --with-hidapi \
    --with-opencv \
+   --with-gphoto2 \
+   --with-freeimageplus \
    --with-python=/usr \
    $MM_CONFIGUREFLAGS \
    "OPENCV_LDFLAGS=\"-framework Cocoa -framework QTKit -framework QuartzCore -framework AppKit\"" \
