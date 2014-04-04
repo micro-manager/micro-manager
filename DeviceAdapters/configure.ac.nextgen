@@ -193,114 +193,43 @@ else
 fi
 
 
-
-PKG_PROG_PKG_CONFIG
-PKG_CHECK_MODULES([GPHOTO2], [libgphoto2 >= 2.5.1], [have_libgphoto2=yes], [have_libgphoto2=no])
-
-# Libtool dynamic loading library (used by libgphoto2)
-AC_MSG_CHECKING(for libltdl)
-AC_ARG_WITH([ltdl], [AS_HELP_STRING([--with-ltdl=path], [use libltdl at path])],
-   [LIBLTDLPATH="$withval"], [LIBLTDLPATH="yes"])
-case $LIBLTDLPATH in
-   yes)
-      ltdl_libdirs="/usr/local/lib /usr/lib /usr/lib64"
-      ;;
-   no)
-       AC_MSG_RESULT([libltdl required for GPhoto2 (SimpleCam) but disabled on command line])
-      ltdl_libdirs=""
-      ;;
-   *)
-      ltdl_libdirs="$LIBLTDLPATH"
-      ;;
-esac
-# XXX This is broken on non-OS X! We shouldn't be using AC_FIND_FILE for a
-# library anyway.
-AC_FIND_FILE([libltdl.dylib], [$ltdl_libdirs], LIBLTDLPATH)
-if test x$LIBLTDLPATH = xNO; then
-   AC_MSG_RESULT(["libltdl not found, cannot build GPhoto2 (SimpleCam) adapter"])
-else
-   AC_MSG_RESULT(["libltdl" found])
-   LIBLTDL="$LIBLTDLPATH/libltdl.dylib"
-
-   # SimpleCam - GPhoto
-   if test x$have_libgphoto2 = xno; then
-      buildsc=false
-      AC_MSG_RESULT([not found])
-   else
-      AC_MSG_RESULT([found])
-      GPHOTO2_VERSION=`$PKG_CONFIG --modversion libgphoto2`
-      GPHOTO2_PORT_VERSION=`$PKG_CONFIG --modversion libgphoto2_port`
-      GPHOTO2_LIBDIR=`$PKG_CONFIG --variable=libdir libgphoto2`
-      LIBGPHOTO2LIBDIR=`$PKG_CONFIG --variable=libdir libgphoto2`
-      buildsc=false
-      if test -f "$LIBGPHOTO2LIBDIR/libgphoto2.la"; then
-         LIBGPHOTO2="$LIBGPHOTO2LIBDIR/libgphoto2.la $LIBLTDL"
-         buildsc=true
-      else
-         if test -f "$LIBGPHOTO2LIBDIR/libgphoto2.so"; then
-            LIBGPHOTO2="-lgphoto2"
-            buildsc=true
-         fi
-      fi
-   fi
-fi
+MM_ARG_WITH_OPTIONAL_LIB([libgphoto2], [gphoto2], [GPHOTO2])
+AS_IF([test "x$want_gphoto2" != xno],
+[
+   MM_LIB_GPHOTO2([$GPHOTO2_PREFIX],
+   [
+      use_gphoto2=yes
+   ],
+   [
+      use_gphoto2=no
+      AS_IF([test "x$want_gphoto2" = xyes],
+            [MM_MSG_OPTIONAL_LIB_FAILURE([libgphoto2], [gphoto2])])
+   ])
+],
+[use_gphoto2=no])
 
 
-# On mac, install dynamic gphoto2 libraries 
-case $host in
-   *apple-darwin*)
-      AC_SUBST([INSTALL_LIBGPHOTO], [install_macos])
-      ;;
-   *)
-      AC_SUBST([INSTALL_LIBGPHOTO], [install_linux])
-      ;;
-esac
-AC_SUBST(GPHOTO2_CFLAGS)
-AC_SUBST(GPHOTO2_LIBS)
-AC_SUBST(GPHOTO2_LIBDIR)
-AC_SUBST(GPHOTO2_VERSION)
-AC_SUBST(GPHOTO2_PORT_VERSION)
-AC_SUBST(LIBGPHOTO2)
-AC_SUBST(LIBLTDL)
+MM_ARG_WITH_OPTIONAL_LIB([FreeImagePlus], [freeimageplus], [FREEIMAGEPLUS])
+AS_IF([test "x$want_freeimageplus" != xno],
+[
+   MM_LIB_FREEIMAGEPLUS([$FREEIMAGEPLUS_PREFIX],
+   [
+      use_freeimageplus=yes
+   ],
+   [
+      use_freeimageplus=no
+      AS_IF([test "x$want_freeimageplus" = xyes],
+            [MM_MSG_OPTIONAL_LIB_FAILURE([FreeImagePlus], [freeimageplus])])
+   ])
+],
+[use_freeimageplus=no])
 
-# LibFreeImage
-AC_MSG_CHECKING(for libFreeImage headers)
-AC_FIND_FILE([FreeImage.h], [/usr/local/include /usr/include ${thirdpartypublic}/FreeImage/Dist], FREEIMAGEINCDIR)
-AM_CONDITIONAL([LIBFREEIMAGEFOUND], [test -f "$FREEIMAGEINCDIR/FreeImage.h"])
-if test -f "$FREEIMAGEINCDIR/FreeImage.h"; then
-   AC_MSG_RESULT([found])
-   
-   AC_FIND_FILE([libfreeimage.a], [/usr/lib /usr/lib64 /usr/local/lib], FREEIMAGELIBDIR)
-   if test x$FREEIMAGELIBDIR = xNO; then
-      buildsc=false
-      AC_MSG_RESULT(["libfreeimage.a" not found...])
-   else
-      AC_MSG_RESULT(["libfreeimage.a" found])
-      AC_SUBST(LIBFREEIMAGE, "$FREEIMAGELIBDIR/libfreeimage.a")
-      AC_SUBST(LIBFREEIMAGE_CXXFLAGS, "-I$FREEIMAGEINCDIR")
-   fi
-   
-   AC_MSG_CHECKING(for libFreeImagePlus headers)
-   AC_FIND_FILE([FreeImagePlus.h], [/usr/local/include /usr/include ${thirdpartypublic}/FreeImage/Wrapper/FreeImagePlus], FREEIMAGEPLUSINCDIR)
-   if test -f "$FREEIMAGEPLUSINCDIR/FreeImagePlus.h"; then
-      AC_MSG_RESULT([found])
-      AC_SUBST(LIBFREEIMAGEPLUS_CXXFLAGS, "-I$FREEIMAGEPLUSINCDIR")
-      AC_FIND_FILE([libfreeimageplus.a], [/usr/lib /usr/lib64 /usr/local/lib], FREEIMAGEPLUSLIBDIR)
-      if test x$FREEIMAGEPLUSLIBDIR = xNO; then
-         AC_MSG_RESULT(["libfreeimageplus.a" not found (can be ok)])
-      else
-         AC_MSG_RESULT(["libfreeimageplus.a" found])
-         AC_SUBST(LIBFREEIMAGEPLUS, "$FREEIMAGEPLUSLIBDIR/libfreeimageplus.a")
-      fi
-   else
-      AC_MSG_RESULT([not found])
-   fi
-fi
-if test x$FREEIMAGELIBDIR = xNO; then
-   buildsc=false
-   AC_MSG_RESULT([not found: To build the GPhoto device adapter download and install FreeImage in ../../3rdpartypublic/FreeImage])
-fi
-AM_CONDITIONAL([BUILD_SIMPLECAM], [test x$buildsc = xtrue])
+
+build_simplecam=no
+test "x$use_gphoto2" = xyes && {
+   test "x$use_freeimageplus" = xyes && build_simplecam=yes; }
+AM_CONDITIONAL([BUILD_SIMPLECAM], [test "x$build_simplecam" = xyes])
+
 
 # Video4linux
 AC_MSG_CHECKING(for Video4linux2)
