@@ -222,9 +222,6 @@ public class AcquisitionWrapperEngineAdapter extends AcquisitionWrapperEngine {
                 storage_ = new DoubleTaggedImageStorage(summaryMetadata, null, prefs_);
             }
 
-//            final int numChannels = MDUtils.getNumChannels(summaryMetadata);
-//            final int numPositions = MDUtils.getNumPositions(summaryMetadata);
-//            final int numSlices = MDUtils.getNumSlices(summaryMetadata);
             ImageCache imageCache = new MMImageCache(storage_) {
                 @Override
                 public JSONObject getLastImageTags() {
@@ -240,7 +237,6 @@ public class AcquisitionWrapperEngineAdapter extends AcquisitionWrapperEngine {
                 }
             };
             imageCache.setSummaryMetadata(summaryMetadata);
-
 
             DisplayPlus stitchedDisplay = new DisplayPlus(imageCache, this, summaryMetadata);
 

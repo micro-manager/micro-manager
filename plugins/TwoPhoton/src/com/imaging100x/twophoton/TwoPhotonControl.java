@@ -207,7 +207,7 @@ private JCheckBox drawGrid_, drawPosNames_;
       setResizable(false);
 
       setTitle("Two Photon Control v " + VERSION_INFO);
-      setSize(660, 580);
+      setSize(680, 580);
       loadPosition(100, 100);
       
       createExcitationPanel();
@@ -436,7 +436,7 @@ private JCheckBox drawGrid_, drawPosNames_;
    }
 
    private void createGridPanel() {
-      JPanel panel = createPanel("Create multi-position grid", 405, 140, 650, 235);
+      JPanel panel = createPanel("Create multi-position grid", 405, 140, 670, 235);
       panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 
       JPanel row1 = new JPanel(new FlowLayout(FlowLayout.LEFT));
