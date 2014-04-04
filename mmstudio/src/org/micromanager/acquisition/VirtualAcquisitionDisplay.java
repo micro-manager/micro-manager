@@ -555,8 +555,12 @@ public class VirtualAcquisitionDisplay implements
       } catch (MMScriptException ex) {
          ReportingUtils.showError(ex, "Unable to determine acquisition type.");
       }
-      virtualStack_ = new AcquisitionVirtualStack(width, height, type, null,
-              imageCache_, numGrayChannels * numSlices * numFrames, this);
+      if (avs != null) {
+         virtualStack_ = avs;
+      } else {
+         virtualStack_ = new AcquisitionVirtualStack(width, height, type, null,
+                 imageCache_, numGrayChannels * numSlices * numFrames, this);
+      }
       if (summaryMetadata.has("PositionIndex")) {
          try {
             virtualStack_.setPositionIndex(MDUtils.getPositionIndex(summaryMetadata));
