@@ -645,7 +645,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
          }
       }
       
-      @Override
       public void onSystemConfigurationLoaded() {
          for (MMListenerInterface mmIntf:MMListeners_) {
             mmIntf.systemConfigurationLoaded();
