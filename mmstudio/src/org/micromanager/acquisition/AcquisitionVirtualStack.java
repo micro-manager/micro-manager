@@ -48,14 +48,6 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
       return acq_;
    }
 
-   public void setSize(int size) {
-      nSlices_ = size;
-   }
-
-   public TaggedImageStorage getCache() {
-      return imageCache_;
-   }
-
    public TaggedImage getTaggedImage(int flatIndex) {
       int[] pos;
       // If we don't have the ImagePlus yet, then we need to assume
@@ -73,7 +65,7 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
       return getTaggedImage(chanIndex, slice, frame);
    }
 
-   public TaggedImage getTaggedImage(int chanIndex, int slice, int frame) {
+   private TaggedImage getTaggedImage(int chanIndex, int slice, int frame) {
       int nSlices;
       ImagePlus imagePlus = acq_.getImagePlus();
       if (imagePlus == null) {
