@@ -1308,9 +1308,9 @@ public class VirtualAcquisitionDisplay implements
 
    private void imageChangedWindowUpdate() {
       if (hyperImage_ != null && hyperImage_.isVisible()) {
-         TaggedImage ti = virtualStack_.getTaggedImage(hyperImage_.getCurrentSlice());
-         if (ti != null) {
-            controls_.newImageUpdate(ti.tags);
+         JSONObject md = getCurrentMetadata();
+         if (md != null) {
+            controls_.newImageUpdate(md);
          }
       }
    }
@@ -1950,19 +1950,12 @@ public class VirtualAcquisitionDisplay implements
       win.setLocation(newLocation);
    }
 
+   //Return metadata associated with image currently shown in the viewer
    public JSONObject getCurrentMetadata() {
-      try {
-         if (hyperImage_ != null) {
-            TaggedImage image = virtualStack_.getTaggedImage(hyperImage_.getCurrentSlice());
-            if (image != null) {
-               return image.tags;
-            } else {
-               return null;
-            }
-         } else {
-            return null;
-         }
-      } catch (NullPointerException ex) {
+      if (hyperImage_ != null) {
+         JSONObject md = virtualStack_.getImageTags(hyperImage_.getCurrentSlice());
+         return md;
+      } else {
          return null;
       }
    }

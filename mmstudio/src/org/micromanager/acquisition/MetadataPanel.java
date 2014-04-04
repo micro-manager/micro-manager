@@ -525,12 +525,10 @@ public class MetadataPanel extends JPanel
          }
          AcquisitionVirtualStack stack = disp.virtualStack_;
          if (stack != null) {
-            int slice = disp.getHyperImage().getCurrentSlice();
-            TaggedImage taggedImg = stack.getTaggedImage(slice);
-            if (taggedImg == null) {
+            JSONObject md = disp.getCurrentMetadata();
+            if (md == null) {
                imageMetadataModel_.setMetadata(null);
             } else {
-               JSONObject md = taggedImg.tags;
                if (!showUnchangingKeys_) {
                   md = selectChangingTags(disp.getHyperImage(), md);
                }

@@ -48,7 +48,8 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
       return acq_;
    }
 
-   public TaggedImage getTaggedImage(int flatIndex) {
+   
+   private TaggedImage getTaggedImage(int flatIndex) {
       int[] pos;
       // If we don't have the ImagePlus yet, then we need to assume
       // we are on the very first image.
@@ -65,7 +66,10 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
       return getTaggedImage(chanIndex, slice, frame);
    }
 
-   private TaggedImage getTaggedImage(int chanIndex, int slice, int frame) {
+   //This method is the ultimate source of tagged images/metadata to update the display, but has no
+   //relevance to image data on disk. It is protected so that this class can be overriden and a differnet image
+   //used for display compared to the the underlying data
+   protected TaggedImage getTaggedImage(int chanIndex, int slice, int frame) {
       int nSlices;
       ImagePlus imagePlus = acq_.getImagePlus();
       if (imagePlus == null) {
@@ -116,6 +120,18 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
          ReportingUtils.logError(e);
          return null;
       }
+   }
+   
+   //this method is available so that image tags can be synchrnized with the pixels displayed in the viewer,
+   //since alternate images are filled in when some are missing (for example, when a z stack is not collecte din one channel
+   //or when frames are skipped)
+   public JSONObject getImageTags(int flatIndex) {
+      TaggedImage img = getTaggedImage(flatIndex);
+      if (img == null) {
+         return null;
+      }
+      return img.tags;
+      
    }
 
    @Override
