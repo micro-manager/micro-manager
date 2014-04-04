@@ -530,7 +530,7 @@ public class MetadataPanel extends JPanel
             if (taggedImg == null) {
                imageMetadataModel_.setMetadata(null);
             } else {
-               JSONObject md = stack.getTaggedImage(slice).tags;
+               JSONObject md = taggedImg.tags;
                if (!showUnchangingKeys_) {
                   md = selectChangingTags(disp.getHyperImage(), md);
                }
