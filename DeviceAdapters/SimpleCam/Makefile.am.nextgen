@@ -12,7 +12,8 @@ AUTOMAKE_OPTIONS = foreign subdir-objects
 pkglibdir = $(DEVICEADAPTERPATH)
 AM_CPPFLAGS = $(GPHOTO2_CPPFLAGS) $(FREEIMAGEPLUS_CPPFLAGS)
 AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS) $(GPHOTO2_CFLAGS) $(FREEIMAGEPLUS_CXXFLAGS)
-AM_LDFLAGS = $(MMDEVAPI_LDFLAGS) $(GPHOTO2_LDFLAGS) $(FREEIMAGEPLUS_LDFLAGS)
+# TODO -framework CoreFoundation (used by gphoto/SimpleCam.cpp) should be Apple-only
+AM_LDFLAGS = $(MMDEVAPI_LDFLAGS) $(GPHOTO2_LDFLAGS) $(FREEIMAGEPLUS_LDFLAGS) -framework CoreFoundation
 
 pkglib_LTLIBRARIES = libmmgr_dal_GPhoto.la
 libmmgr_dal_GPhoto_la_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)/gphoto
