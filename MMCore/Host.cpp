@@ -144,25 +144,43 @@ std::vector<MACValue > Host::getMACAddresses(long& status)
 
 #ifdef linux
 
-   //not tested!
-   // assumes the device eth0 is the primary ethernet card
-   extern int errno;
-
    int sock;
-   struct ifreq buffer;
    sock = socket(PF_INET, SOCK_DGRAM, 0);
-   memset(&buffer, 0, sizeof(buffer));
-   strcpy(buffer.ifr_name, "eth0");
-   // this could return an error
-   int osstatus = ioctl(sock, SIOCGIFHWADDR, &buffer);
-   if ( -1 == osstatus)
-      status = (long)errno;
-   close(sock);
-   if( 0 == status)
-   {
-      MACValue v = 0;
-      memcpy(&v, buffer.ifr_hwaddr.sa_data, 6);
-      retval.push_back(v);
+   if ( -1 == sock ) {
+      status = static_cast<long>(errno);
+   }
+   else {
+      char buf[2048];
+      ifconf ifc;
+      ifc.ifc_buf = buf;
+      ifc.ifc_len = sizeof(buf);
+      int osstatus = ioctl(sock, SIOCGIFCONF, &ifc);
+      if ( -1 == osstatus ) {
+         status = static_cast<long>(errno);
+      }
+      else {
+         MACValue macaddr;
+         for ( ifreq *ifr(ifc.ifc_req), *ifrEnd(ifc.ifc_req + ifc.ifc_len / sizeof(ifreq));
+               ifr != ifrEnd;
+               ++ifr )
+         {
+            osstatus = ioctl(sock, SIOCGIFHWADDR, ifr);
+            if ( osstatus == 0 ) {
+               macaddr = 0;
+               memcpy(&macaddr, ifr->ifr_hwaddr.sa_data, 6);
+               if(macaddr != 0) {
+                  retval.push_back(macaddr);
+               }
+            }
+         }
+         // Raise error flag if no mac address could be found for *any* interface.  The loopback and some tunnel
+         // interfaces, for example, may have an IP address but only one peer and therefore no need for a media layer
+         // address.  So, some mac addr retrieval failures and null mac addrs are to be expected.
+         if ( retval.empty() ) {
+            status = static_cast<long>(errno);
+         }
+      }
+      close(sock);
    }
 
 
