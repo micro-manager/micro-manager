@@ -318,6 +318,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Piper", "DeviceAdapters\Pip
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "IIDC", "DeviceAdapters\IIDC\IIDC.vcxproj", "{3AD2E831-7A16-4097-ACE1-4210A7F08751}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PICAM", "DeviceAdapters\PICAM\PICAM.vcxproj", "{DC09C991-D279-4A37-9332-5F7767621D5C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -1567,6 +1569,12 @@ Global
 		{3AD2E831-7A16-4097-ACE1-4210A7F08751}.Release|Win32.Build.0 = Release|Win32
 		{3AD2E831-7A16-4097-ACE1-4210A7F08751}.Release|x64.ActiveCfg = Release|x64
 		{3AD2E831-7A16-4097-ACE1-4210A7F08751}.Release|x64.Build.0 = Release|x64
+		{DC09C991-D279-4A37-9332-5F7767621D5C}.Debug|Win32.ActiveCfg = Debug|x64
+		{DC09C991-D279-4A37-9332-5F7767621D5C}.Debug|x64.ActiveCfg = Debug|x64
+		{DC09C991-D279-4A37-9332-5F7767621D5C}.Debug|x64.Build.0 = Debug|x64
+		{DC09C991-D279-4A37-9332-5F7767621D5C}.Release|Win32.ActiveCfg = Release|x64
+		{DC09C991-D279-4A37-9332-5F7767621D5C}.Release|x64.ActiveCfg = Release|x64
+		{DC09C991-D279-4A37-9332-5F7767621D5C}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
