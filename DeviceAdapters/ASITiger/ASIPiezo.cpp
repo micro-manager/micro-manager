@@ -225,7 +225,7 @@ int CPiezo::Initialize()
    pAct = new CPropertyAction (this, &CPiezo::OnModeFourMaxTime);
    CreateProperty(g_PiezoModeFourMaxTime, "10", MM::Integer, false, pAct);
    UpdateProperty(g_PiezoModeFourMaxTime);
-   SetPropertyLimits(g_PiezoModeFourMaxTime, 0, 30);
+   SetPropertyLimits(g_PiezoModeFourMaxTime, 0, 50);
 
    // "do it" property to set home position
    pAct = new CPropertyAction (this, &CPiezo::OnSetHomeHere);
@@ -243,9 +243,8 @@ int CPiezo::Initialize()
    if (build.vAxesProps[0] & BIT4)
    {
       pAct = new CPropertyAction (this, &CPiezo::OnSPIMNumSlices);
-      CreateProperty(g_SPIMNumSlicesPropertyName, "0", MM::Integer, false, pAct);
+      CreateProperty(g_SPIMNumSlicesPropertyName, "1", MM::Integer, false, pAct);
       UpdateProperty(g_SPIMNumSlicesPropertyName);
-      SetPropertyLimits(g_SPIMNumSlicesPropertyName, 1, 100);
 
       pAct = new CPropertyAction (this, &CPiezo::OnSPIMState);
       CreateProperty(g_SPIMStatePropertyName, g_SPIMStateIdle, MM::String, false, pAct);
