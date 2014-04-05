@@ -216,9 +216,7 @@ public class VirtualAcquisitionDisplay implements
    }
 
    public class MMCompositeImage extends CompositeImage implements IMMImagePlus {
-            
-      boolean paintPendingSetByMe_ = false;
-      
+                  
       MMCompositeImage(ImagePlus imgp, int type) {
          super(imgp, type);
       }
@@ -1026,7 +1024,6 @@ public class VirtualAcquisitionDisplay implements
 
    private ScrollbarWithLabel createPositionScrollbar() {
       final ScrollbarWithLabel pSelector = new ScrollbarWithLabel(null, 1, 1, 1, 2, 'p') {
-
          @Override
          public void setValue(int v) {
             if (this.getValue() != v) {
@@ -1041,7 +1038,6 @@ public class VirtualAcquisitionDisplay implements
       pSelector.setUnitIncrement(1);
       pSelector.setBlockIncrement(1);
       pSelector.addAdjustmentListener(new AdjustmentListener() {
-
          @Override
          public void adjustmentValueChanged(AdjustmentEvent e) {
             if (lockedPosition_ != -1) {
