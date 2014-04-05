@@ -446,16 +446,22 @@ echo "m4_text_box([DeviceAdapters configuration])"
 echo ""
 echo "Note: This is an incomplete list currently under development."
 echo ""
+echo "m4_text_wrap([$use_freeimageplus],
+                   [                                            ],
+                   [    Build with FreeImagePlus:               ])"
 echo "m4_text_wrap([$use_hidapi],
-		   [                                         ],
-		   [    HIDAPI support:                      ])"
+                   [                                            ],
+                   [    Build with HIDAPI:                      ])"
 echo "m4_text_wrap([$use_libdc1394],
-		   [                                         ],
-		   [    libdc1394 support:                   ])"
+                   [                                            ],
+                   [    Build with libdc1394:                   ])"
+echo "m4_text_wrap([$use_gphoto2],
+                   [                                            ],
+                   [    Build with libgphoto2:                  ])"
 echo "m4_text_wrap([$use_libusb_0_1],
-		   [                                         ],
-		   [    libusb 0.1 (libusb-compat) support:  ])"
+                   [                                            ],
+                   [    Build with libusb 0.1 (libusb-compat):  ])"
 echo "m4_text_wrap([$use_opencv],
-		   [                                         ],
-		   [    OpenCV support:                      ])"
+                   [                                            ],
+                   [    Build with OpenCV:                      ])"
 echo ""
