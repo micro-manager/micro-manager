@@ -89,6 +89,9 @@ done
 make install
 
 
+# TODO
+# rm -f $MM_STAGEDIR/*.la
+
 # TODO Stage other files:
 
 # mkdir -p $MM_STAGEDIR/libgphoto2/libgphoto2
