@@ -25,3 +25,7 @@ libmmgr_dal_GPhoto_la_SOURCES = \
 libmmgr_dal_GPhoto_la_LIBADD = $(MMDEVAPI_LIBADD) $(GPHOTO2_LIBS) $(FREEIMAGEPLUS_LIBS)
 
 EXTRA_DIST = license.txt
+
+# TODO On Mac OS X, create an AppleScript app to quit PTPCamera.
+# This used to be done as part of the 'install' target.
+# osacompile -e 'tell application "PTPCamera" to quit' -o $(DEVICEADAPTERPATH)/libgphoto2/KillPtpCamera.app
