@@ -9,18 +9,19 @@
 
 AC_PREREQ([2.64])
 AC_INIT([Micro-Manager], [1.4], [info@micro-manager.org])
-#AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_SRCDIR([MMCore/MMCore.cpp])
 AC_CANONICAL_HOST
 AM_INIT_AUTOMAKE
 AC_LIBTOOL_DLOPEN
 AC_PROG_LIBTOOL
+AC_PROG_MKDIR_P
 
 m4_include([configure.common])
 
+# TODO Use proper condition
+AM_CONDITIONAL(BUILD_MMCOREJ, [test "$IMAGEJDIR" != "no"])
 
-AM_CONDITIONAL(BUILD_WITH_JAVA, test "$IMAGEJDIR" != "no")
 if test "$IMAGEJDIR" != "no" ; then
 
    #----------------------------------------------------------------
@@ -157,12 +158,9 @@ AC_SUBST(ABSOLUTEJARPATH)
 AC_SUBST(JFREECHARTJARPATH)
 AC_SUBST(IJJARPATH)
 
-AC_MSG_CHECKING([whether to build the core])
-AC_ARG_WITH([core], [AS_HELP_STRING([--with-core],[use --without-core to only build DeviceAdapters])], [], [with_core=yes])
-if test "x$with_core" = xno; then
-   AC_MSG_RESULT([no]);
-else
-   AC_MSG_RESULT([yes])
+
+# TODO Reinstate --disable-core flag, and skip Core-associated tests (but not
+# all of the indented checks below are truly associated with the Core only)
 
    #---------------------------------------------------
    # Check for BOOST
@@ -192,8 +190,6 @@ else
       AC_MSG_ERROR([not found, swig is needed to build this application.  Please download (http://www.swig.org/download.html) and install])
    fi
 
-fi
-AM_CONDITIONAL([BUILD_APP], test "x$with_core" = xyes)
 
 
 # Python and NumPy
@@ -233,7 +229,7 @@ AS_IF([test "x$want_python" != xno],
 ])
 
 
-AM_CONDITIONAL([BUILD_PYTHON], [test "x$use_python" = xyes])
+AM_CONDITIONAL([BUILD_MMCOREPY], [test "x$use_python" = xyes])
 
 #----------------------------------------------------------------
 # Look for java binaries and headers
@@ -282,69 +278,67 @@ else
     AC_MSG_RESULT($JAVAMDDIR)
   fi
 fi
+AC_SUBST([JAVAINC])
 
-# Java on Windows platforms including Cygwin doesn't use libname.dll, rather name.dll when loading dlls
+
 case $host in
-*-*-cygwin* | *-*-mingw*) JAVALIBRARYPREFIX="";;
-*)JAVALIBRARYPREFIX="lib";;
+   *-*-darwin*)
+      JNI_PREFIX=lib
+      JNI_SUFFIX=.jnilib ;;
+   *-*-cygwin* | *-*-mingw*)
+      JNI_PREFIX=
+      JNI_SUFFIX=.dll ;;
+   *)
+      JNI_PREFIX=lib
+      JNI_SUFFIX=.so ;;
 esac
+AC_SUBST([JNI_PREFIX])
+AC_SUBST([JNI_SUFFIX])
+AM_CONDITIONAL([NONSTD_JNI_PREFIX], [test "x$JNI_PREFIX" != xlib])
 
-# Java on Mac OS X tweaks
-case $host in
-*-*-darwin*) 
-    JAVASO=".jnilib"
-    JAVALDSHARED='$(CC)'
-    JAVACXXSHARED='$(CXX)'
-    ;;
-*)
-    # JAVASO='$(SO)'
-    JAVASO='.so'
-    JAVALDSHARED='$(LDSHARED)'
-    JAVACXXSHARED='$(CXXSHARED)'
-    ;;
-esac
+JAVACFLAGS="-Xlint:all,-serial -source 1.5 -target 1.5"
+AC_SUBST([JAVACFLAGS])
 
-JAVACFLAGS='-Xlint:all,-serial -source 1.5 -target 1.5'
 
-# Export variables to Makefile
-AC_SUBST(JAVAINC)
-AC_SUBST(JAVADYNAMICLINKING)
-AC_SUBST(JAVALIBRARYPREFIX)
-AC_SUBST(JAVASO)
-AC_SUBST(JAVALDSHARED)
-AC_SUBST(JAVACXXSHARED)
-AC_SUBST(JAVACFLAGS)
-AC_SUBST(I5DJARPATH)
-
-# Checks for libraries.
-AC_CHECK_LIB(dl, dlopen)   # Dynamic linking for SunOS/Solaris and SYSV
-
-# Checks for header files.
 AC_HEADER_STDC
-
-# Checks for typedefs, structures, and compiler characteristics.
 AC_HEADER_STDBOOL
 AC_C_CONST
 AC_C_INLINE
-
-
-# Checks for library functions.
-AC_HEADER_STDC
 AC_CHECK_FUNCS([memset])
+AC_CHECK_LIB(dl, dlopen)
+
 
 # Install Device Adapter API library and headers
 install_mmdevapi=false
-AC_ARG_ENABLE(inst-devapi,
-    [  --enable-inst-devapi    Install the Device Adapter API library and headers ],
-    [ install_mmdevapi=true ])
+# TODO reinstate this flag in some better form
+#AC_ARG_ENABLE(inst-devapi,
+#    [  --enable-inst-devapi    Install the Device Adapter API library and headers ],
+#    [ install_mmdevapi=true ])
 AM_CONDITIONAL([INSTALL_MMDEVAPI], [test x$install_mmdevapi = xtrue])
 
-# Check for Device Adapters with proprietary code
-AC_MSG_CHECKING(for proprietary DeviceAdapters)
-AM_CONDITIONAL(BUILD_SECRETDEVICEADAPTERS, test -f "SecretDeviceAdapters/configure.ac")
-if test -z "${BUILD_SECRETDEVICEADAPTERS}" ; then
-   AC_CONFIG_SUBDIRS([SecretDeviceAdapters])
-fi
+AC_MSG_CHECKING([for proprietary device adapter source])
+AS_IF([test -f "$srcdir/SecretDeviceAdapters/configure"],
+   [build_secretdeviceadapters=yes], [build_secretdeviceadapters=no])
+AM_CONDITIONAL([BUILD_SECRETDEVICEADAPTERS],
+   [test "x$build_secretdeviceadapters" = xyes])
 
-AC_CONFIG_SUBDIRS(DeviceAdapters DeviceKit)
-AC_OUTPUT(Makefile MMCore/Makefile MMCoreJ_wrap/Makefile mmstudio/Makefile acqEngine/Makefile plugins/Makefile scripts/Makefile autofocus/Makefile MMDevice/Makefile  MMCorePy_wrap/Makefile)
+AC_CONFIG_SUBDIRS([DeviceAdapters])
+AS_IF([test "x$build_secretdeviceadapters" = xyes], [
+   AC_CONFIG_SUBDIRS([SecretDeviceAdapters])
+])
+AC_CONFIG_SUBDIRS([DeviceKit])
+
+AC_CONFIG_FILES(m4_strip([
+   Makefile
+   MMDevice/Makefile
+   MMCore/Makefile
+   MMCoreJ_wrap/Makefile
+   MMCorePy_wrap/Makefile
+   mmstudio/Makefile
+   acqEngine/Makefile
+   plugins/Makefile
+   autofocus/Makefile
+   scripts/Makefile
+]))
+
+AC_OUTPUT

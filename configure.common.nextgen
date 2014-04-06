@@ -34,7 +34,10 @@ AC_MSG_RESULT($IMAGEJDIR)
 DEBIANIJ="/usr/share/java/ij.jar";
 DEBIANIJPLUGIN="/usr/share/imagej";
 
-AM_CONDITIONAL(BUILD_WITH_JAVA, test "$IMAGEJDIR" != "no")
+# TODO Building the Java app should have nothing to do with IMAGEJDIR - all it
+# requires is that ij.jar be available. Also note that --disable-core is
+# incompatible with --enable-java-app.
+AM_CONDITIONAL(BUILD_JAVA_APP, [test "$IMAGEJDIR" != "no"])
 if test "$IMAGEJDIR" != "no" ; then
    AC_MSG_CHECKING(for ImageJ directory)
 

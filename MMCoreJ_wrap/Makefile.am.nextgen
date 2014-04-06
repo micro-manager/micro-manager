@@ -18,8 +18,10 @@ AUTOMAKE_OPTIONS = foreign subdir-objects
 # (We used to globally use -O by default, rather than -O2, on Linux, presumably
 # for the above reason (though the intent was never documented). But there is
 # nothing Linux-specific about this.)
-AM_CXXFLAGS = $(BOOST_CPPFLAGS) -fno-strict-aliasing
-AM_CPPFLAGS = $(JAVAINC)
+# TODO The flag should come from configure.
+AM_CXXFLAGS = -fno-strict-aliasing
+AM_CPPFLAGS = $(JAVAINC) $(BOOST_CPPFLAGS)
+
 
 # This ugly list of headers is necessary to trigger the rebuild of the
 # SWIG-generated source when a header is modified. The issue cannot be fixed
@@ -43,57 +45,52 @@ swig_sources = MMCoreJ.i \
 	../MMDevice/MMDevice.h \
 	../MMDevice/MMDeviceConstants.h
 
-# DEVICEADAPTERPATH is poorly named: it actually means "where to put all MM
-# libraries, including device adapters".
-MMCoreJ_wrap.cxx: $(swig_sources)
-	test -d mmcorej || mkdir mmcorej
-	touch $(srcdir)/MMCoreJ_wrap.cxx || (chmod +wrx $(srcdir) && touch $(srcdir)/MMCoreJ_wrap.cxx)
+# TODO Add option to disable hard-coded MMCOREJ_LIBRARY_PATH.
+MMCoreJ_wrap.h MMCoreJ_wrap.cxx: $(swig_sources)
+	$(MKDIR_P) mmcorej
 	$(SWIG) -c++ -java -package mmcorej -outdir mmcorej -module MMCoreJ \
-		"-DMMCOREJ_LIBRARY_PATH=\"$(DEVICEADAPTERPATH)\"" \
-		-o $(srcdir)/MMCoreJ_wrap.cxx $(srcdir)/MMCoreJ.i
-	cp $(srcdir)/MMCoreJ_wrap.cxx MMCoreJ_wrap.cxx || echo "No problem"
+		"-DMMCOREJ_LIBRARY_PATH=\"$(pkglibdir)\"" \
+		-o MMCoreJ_wrap.cxx $(srcdir)/MMCoreJ.i
 
-lib_LTLIBRARIES = libMMCoreJ_wrap.la
-nodist_libMMCoreJ_wrap_la_SOURCES = MMCoreJ_wrap.cxx
+# See Automake manual section about multiple outputs
+MMCoreJ_wrap.h: MMCoreJ_wrap.cxx
+
+pkglib_LTLIBRARIES = libMMCoreJ_wrap.la
+libMMCoreJ_wrap_la_SOURCES = MMCoreJ_wrap.h MMCoreJ_wrap.cxx
+libMMCoreJ_wrap_la_LDFLAGS = -module -avoid-version -shrext $(JNI_SUFFIX)
 libMMCoreJ_wrap_la_LIBADD = ../MMCore/libMMCore.la
-# TODO Add -shrext .jnilib on OS X and normalize install target
-libMMCoreJ_wrap_la_LDFLAGS = -module -avoid-version
 
-$(srcdir)/MMCoreJ.jar:  MMCoreJ_wrap.cxx \
-	libMMCoreJ_wrap.la \
-	TaggedImage.java
-	mkdir -p mmcorej
-	cp TaggedImage.java mmcorej/
-	$(JAVAC) $(JAVACFLAGS) ../mmstudio/src/org/json/*.java mmcorej/*.java
-	$(JAR) cvf MMCoreJ.jar mmcorej/*.class
 
-all:
-	make $(srcdir)/MMCoreJ_wrap.cxx
-	make $(srcdir)/MMCoreJ.jar
-	cp MMCoreJ.jar ../bin
+jardir = $(pkgdatadir)/jars
+jar_DATA = MMCoreJ.jar
 
-macinstall:
-	cp .libs/libMMCoreJ_wrap.so $(top_srcdir)/MacInstaller/Package_contents/libMMCoreJ_wrap$(JAVASO)
+MMCoreJ.jar: MMCoreJ_wrap.h TaggedImage.java
+	$(MKDIR_P) mmcorej
+	cp $(srcdir)/TaggedImage.java mmcorej
+	$(JAVAC) $(JAVACFLAGS) -d . $(srcdir)/../mmstudio/src/org/json/*.java
+	$(JAVAC) $(JAVACFLAGS) -cp . -d . mmcorej/*.java
+	$(JAR) cvf MMCoreJ.jar org/json/*.class mmcorej/*.class
 
-install:
-	install -d $(DESTDIR)$(DEVICEADAPTERPATH)
-	install .libs/libMMCoreJ_wrap.so $(DESTDIR)$(DEVICEADAPTERPATH)/libMMCoreJ_wrap$(JAVASO)
-	install -d $(DESTDIR)$(JARPATH)
-	install MMCoreJ.jar $(DESTDIR)$(JARPATH)/MMCoreJ.jar
 
-###IJ-dependent! #todo: split IJ and pure-java code
+if NONSTD_JNI_PREFIX
+# The suffix (.so vs .jnilib vs .dll) can be handled by libtool's -shrext flag,
+# but there is no clean way to parameterize the prefix in the Automake rules.
+# We adjust it at install time instead:
+
+install-exec-hook:
+	cd $(DESTDIR)$(jardir); \
+	mv -f libMMCoreJ_wrap$(JNI_SUFFIX) $(JNI_PREFIX)MMCoreJ_wrap$(JNI_SUFFIX)
+
+uninstall-hook:
+	-rm -f $(DESTDIR)$(jardir)/$(JNI_PREFIX)MMCoreJ_wrap$(JNI_SUFFIX)
+
+endif # NONSTD_JNI_PREFIX
+
+
+CLEANFILES = MMCoreJ_wrap.cxx MMCoreJ_wrap.h MMCoreJ.jar
+
+clean-local:
+	-rm -rf mmcorej org
+
 
 EXTRA_DIST = license.txt
-
-clean:
-	test -z "libMMCoreJ_wrap.la" || rm -f libMMCoreJ_wrap.la
-	rm -rf mmcorej/
-	rm -f MMCoreJ_wrap.cxx
-	rm -f "./so_locations"
-	rm -rf .libs _libs
-	rm -f *.o
-	rm -f *.lo
-
-dist-hook:
-	test -d $(distdir)/mmcorej || mkdir $(distdir)/mmcorej
-	touch $(distdir)/mmcorej/empty.txt
