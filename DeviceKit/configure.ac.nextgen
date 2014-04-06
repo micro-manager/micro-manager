@@ -10,10 +10,9 @@
 AC_PREREQ([2.64])
 AC_INIT([Micro-Manager], [1.4], [info@micro-manager.org])
 AC_CONFIG_MACRO_DIR([../m4])
-#AC_CONFIG_SRCDIR([DemoCamera/DemoCamera.cpp])
 AC_CANONICAL_HOST
 AM_INIT_AUTOMAKE
-AC_PROG_LIBTOOL
+LT_INIT([disable-static])
 
 m4_include([../configure.common])
 

@@ -14,8 +14,7 @@ AC_CONFIG_MACRO_DIR([../m4])
 AC_CONFIG_SRCDIR([DemoCamera/DemoCamera.cpp])
 AC_CANONICAL_HOST
 AM_INIT_AUTOMAKE
-AC_DISABLE_STATIC
-AC_PROG_LIBTOOL
+LT_INIT([disable-static])
 
 m4_include([../configure.common])
 
