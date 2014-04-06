@@ -45,15 +45,25 @@ swig_sources = MMCoreJ.i \
 	../MMDevice/MMDevice.h \
 	../MMDevice/MMDeviceConstants.h
 
+
+# Use MMCoreJ.stamp to manage multiple outputs. A fully parallel-safe rule
+# would be complex (see Automake manual), but this implementation works most of
+# the time and 'make clean' can recover from any problems.
 # TODO Add option to disable hard-coded MMCOREJ_LIBRARY_PATH.
-MMCoreJ_wrap.h MMCoreJ_wrap.cxx: $(swig_sources)
+MMCoreJ.stamp: $(swig_sources)
+	@rm -f MMCoreJ.tmp
+	@touch MMCoreJ.tmp
 	$(MKDIR_P) mmcorej
 	$(SWIG) -c++ -java -package mmcorej -outdir mmcorej -module MMCoreJ \
 		"-DMMCOREJ_LIBRARY_PATH=\"$(pkglibdir)\"" \
 		-o MMCoreJ_wrap.cxx $(srcdir)/MMCoreJ.i
+	@mv -f MMCoreJ.tmp $@
+MMCoreJ_wrap.h MMCoreJ_wrap.cxx: MMCoreJ.stamp
+	@if test -f $@; then :; else \
+		rm -f MMCoreJ.stamp; \
+		$(MAKE) $(AM_MAKEFLAGS) MMCoreJ.stamp; \
+	fi
 
-# See Automake manual section about multiple outputs
-MMCoreJ_wrap.h: MMCoreJ_wrap.cxx
 
 pkglib_LTLIBRARIES = libMMCoreJ_wrap.la
 libMMCoreJ_wrap_la_SOURCES = MMCoreJ_wrap.h MMCoreJ_wrap.cxx
@@ -87,7 +97,7 @@ uninstall-hook:
 endif # NONSTD_JNI_PREFIX
 
 
-CLEANFILES = MMCoreJ_wrap.cxx MMCoreJ_wrap.h MMCoreJ.jar
+CLEANFILES = MMCoreJ.stamp MMCoreJ_wrap.h MMCoreJ_wrap.cxx MMCoreJ.jar
 
 clean-local:
 	-rm -rf mmcorej org

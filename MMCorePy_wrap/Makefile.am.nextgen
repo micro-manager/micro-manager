@@ -30,28 +30,31 @@ swig_sources = MMCorePy.i \
 	../MMDevice/MMDevice.h \
 	../MMDevice/MMDeviceConstants.h
 
-MMCorePy_wrap.cxx MMCorePy.py: $(swig_sources)
-	$(SWIG) -c++ -python MMCorePy.i 
+
+# Use MMCorePy.stamp to manage multiple outputs. A fully parallel-safe rule
+# would be complex (see Automake manual), but this implementation works most of
+# the time and 'make clean' can recover from any problems.
+MMCorePy.stamp: $(swig_sources)
+	@rm -f MMCorePy.tmp
+	@touch MMCorePy.tmp
+	$(SWIG) -c++ -python -outdir . -o MMCorePy_wrap.cxx $(srcdir)/MMCorePy.i
+	@mv -f MMCorePy.tmp $@
+MMCorePy_wrap.h MMCorePy_wrap.cxx MMCorePy.py: MMCorePy.stamp
+	@if test -f $@; then :; else \
+		rm -f MMCorePy.stamp; \
+		$(MAKE) $(AM_MAKEFLAGS) MMCorePy.stamp; \
+	fi
+
 
 pkglib_LTLIBRARIES = _MMCorePy.la
-nodist__MMCorePy_la_SOURCES = MMCorePy_wrap.cxx
+nodist__MMCorePy_la_SOURCES = MMCorePy_wrap.h MMCorePy_wrap.cxx
 _MMCorePy_la_CPPFLAGS = $(BOOST_CPPFLAGS) $(PYTHON_CPPFLAGS) $(NUMPY_CPPFLAGS)
 _MMCorePy_la_LDFLAGS = -module -avoid-version -shrext .so
 _MMCorePy_la_LIBADD = ../MMCore/libMMCore.la
 
-all:
-	make MMCorePy_wrap.cxx MMCorePy.py
-	cp MMCorePy.py ../bin
-	cp .libs/_MMCorePy.so ../bin
+install-exec-local:
+	$(INSTALL) MMCorePy.py $(DESTDIR)$(pkglibdir)
 
-install:
-	cp MMCorePy.py $(DEVICEADAPTERPATH)
-	cp .libs/_MMCorePy.so $(DEVICEADAPTERPATH)
+CLEANFILES = MMCorePy.stamp MMCorePy.py MMCorePy_wrap.h MMCorePy_wrap.cxx
 
-clean:
-	rm MMCorePy_wrap.cxx || echo "Not found, no problem"
-	rm MMCorePy.py || echo "Not found, no problem"
-	rm .libs/_MMCorePy.so || echo "Not found, no problem"
-	rm -rf build || echo "Not found, no problem"
-	rm -f *.so || echo "Not found, no problem"
-
+EXTRA_DIST = license.txt
