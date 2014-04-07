@@ -51,8 +51,7 @@ public class AcquisitionWrapperEngineAdapter extends AcquisitionWrapperEngine {
     private double focusOffset_ = 0;
     private CMMCore core_ = MMStudioMainFrame.getInstance().getCore();
     private boolean runAutofocus_ = false;
-    //most recent storage
-    private TaggedImageStorage storage_;
+    private DoubleTaggedImageStorage storage_;
 
     public AcquisitionWrapperEngineAdapter(TwoPhotonControl twoP, Preferences prefs) throws NoSuchFieldException {
         super((AcquisitionManager) JavaUtils.getRestrictedFieldValue(
@@ -238,7 +237,7 @@ public class AcquisitionWrapperEngineAdapter extends AcquisitionWrapperEngine {
             };
             imageCache.setSummaryMetadata(summaryMetadata);
 
-            DisplayPlus stitchedDisplay = new DisplayPlus(imageCache, this, summaryMetadata);
+            DisplayPlus stitchedDisplay = new DisplayPlus(imageCache, this, summaryMetadata, storage_);
 
             DefaultTaggedImageSink sink = new DefaultTaggedImageSink(engineOutputQueue, imageCache);
             sink.start();
@@ -276,6 +275,7 @@ public class AcquisitionWrapperEngineAdapter extends AcquisitionWrapperEngine {
             runAcquisition(acquisitionSettings);
         } catch (Exception ex) {
             ReportingUtils.showError("Probelem running acquisiton: " + ex.getMessage());
+            ex.printStackTrace();
         }
 
         return "";

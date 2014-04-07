@@ -208,6 +208,10 @@ public class DoubleTaggedImageStorage implements TaggedImageStorage {
       return ret;
    }
 
+   public TaggedImage getFullResStitchedSubImage(int channel, int slice, int frame, int x, int y, int width, int height) {
+      return storage_.getFullResStitchedSubImage(channel, slice, frame, x, y, width, height);
+   }
+   
    @Override
    public TaggedImage getImage(int channelIndex, int sliceIndex, int frameIndex, int positionIndex) {
       return storage_.getImage(channelIndex, sliceIndex, frameIndex, positionIndex);

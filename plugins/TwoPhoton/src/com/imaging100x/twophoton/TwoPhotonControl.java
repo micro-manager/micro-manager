@@ -267,6 +267,7 @@ private JCheckBox drawGrid_, drawPosNames_;
                     applyDepthSetting(-1,0);                  
                  }
               });
+      acitvateDynamicStitching();
    }
 
    private void addDynamicStitchControls() {
