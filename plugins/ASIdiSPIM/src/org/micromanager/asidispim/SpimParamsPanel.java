@@ -46,9 +46,12 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.TimerTask;
 import java.util.Timer;  // note different from javax.swing.Timer
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import mmcorej.CMMCore;
+import mmcorej.TaggedImage;
 import net.miginfocom.swing.MigLayout;
+import org.micromanager.utils.MMScriptException;
 
 /**
  *
@@ -91,6 +94,7 @@ public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerI
    private Timer acqTimer_;
    private AcquisitionTask acqTask_;
    private String acqName_;
+   private AtomicBoolean stop_ = new AtomicBoolean(false);
    
    public SpimParamsPanel(Devices devices, Properties props, Cameras cameras, Prefs prefs) {
       super("SPIM Params", 
@@ -281,7 +285,9 @@ public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerI
    private class AcquisitionTask extends TimerTask {
       @Override
       public void run() {
-         if (numAcquisitionsDone_ >= props_.getPropValueInteger(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_NUM_ACQUISITIONS)) {
+         if (numAcquisitionsDone_ >= 
+                 props_.getPropValueInteger(Devices.Keys.PLUGIN, 
+                        Properties.Keys.PLUGIN_NUM_ACQUISITIONS)) {
             buttonStop_.doClick();
          } else {
             if (startAcquisition()) {
@@ -305,6 +311,91 @@ public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerI
             0); // 0ms exposure time means it will record as fast as possible
    }
 
+   
+   /**
+    * Alternative implementation of acquisition that orchestrates
+    * image acquisition itself rather than using the acquisition engine 
+    * @return 
+    */
+   private boolean runAcquisition() {
+      if (acqEngine_.isAcquisitionRunning()) {
+         ReportingUtils.showError("An acquisition is already running");
+         return false;
+      }
+      
+      boolean liveMode = gui_.isLiveModeOn();
+      gui_.enableLiveMode(false);
+      // TODO: get trigger mode and reset after acquisition
+      cameras_.setSPIMCameraTriggerMode(Cameras.TriggerModes.EXTERNAL);
+      String cameraA = devices_.getMMDevice(Devices.Keys.CAMERAA);
+      String cameraB = devices_.getMMDevice(Devices.Keys.CAMERAB);
+      String acqName = gui_.getUniqueAcquisitionName(acqName_);
+      String rootDir = "";
+      // TODO: int nrFrames = (Integer)numRepeats_.getValue();
+      int nrFrames = 1;
+      int nrCh = (Integer)numSides_.getValue();
+      int nrSlices = (Integer)numSlices_.getValue();
+      int nrPos = 1;
+      boolean show = true;
+      boolean save = false;
+      try {
+         gui_.openAcquisition(acqName, rootDir, nrFrames, nrCh, nrSlices, nrPos, 
+                 show, save);
+         // Not sure what to do with camera and # of sides selection
+         // simply start sequene acquisition on both cameras 
+         core_.startSequenceAcquisition(cameraA, nrFrames, 0, true);
+         core_.startSequenceAcquisition(cameraB, nrFrames, 0, true);        
+      
+         // get controller armed
+         props_.setPropValue(Devices.Keys.GALVOA, Properties.Keys.BEAM_ENABLED, 
+                 Properties.Values.NO, true);
+         props_.setPropValue(Devices.Keys.GALVOB, Properties.Keys.BEAM_ENABLED, 
+                 Properties.Values.NO, true);
+         props_.setPropValue(Devices.Keys.PIEZOA, Properties.Keys.SPIM_NUM_SLICES, 
+                 (Integer)numSlices_.getValue(), true);
+         props_.setPropValue(Devices.Keys.PIEZOB, Properties.Keys.SPIM_NUM_SLICES, 
+                 (Integer)numSlices_.getValue(), true);
+         props_.setPropValue(Devices.Keys.PIEZOA, Properties.Keys.SPIM_STATE, 
+                 Properties.Values.SPIM_ARMED, true);
+         props_.setPropValue(Devices.Keys.PIEZOB, Properties.Keys.SPIM_STATE, 
+                 Properties.Values.SPIM_ARMED, true);
+        
+         // trigger controller
+         // TODO generalize this for different ways of running SPIM
+         props_.setPropValue(Devices.Keys.GALVOA, Properties.Keys.SPIM_STATE, 
+                 Properties.Values.SPIM_RUNNING, true);
+         
+         // get images from camera and stick into acquisition
+         // Wait for first image to create ImageWindow, so that we can be sure about image size
+         long start = System.currentTimeMillis();
+         long now = start;
+         long timeout = 10000;
+         while (core_.getRemainingImageCount() == 0 && (now - start < timeout) ) {
+            now = System.currentTimeMillis();
+            Thread.sleep(5);
+         }
+         if (now - start >= timeout) {
+            throw new Exception("Camera did not send image within a reasonable time");
+         }
+            
+         while ( (core_.getRemainingImageCount() > 0 || core_.isSequenceRunning(cameraA) ||
+                 core_.isSequenceRunning(cameraB)) || !stop_.get()) {
+            TaggedImage timg = core_.getLastTaggedImage();
+            gui_.addImageToAcquisition(acqName, nrPos, nrCh, nrSlices, nrPos, timg);
+         }
+      } catch (MMScriptException mex) {
+         // TODO: handle exception
+      } catch (Exception ex) {
+         // TODO: handle exception
+      }
+      
+      
+      cameras_.setSPIMCameraTriggerMode(Cameras.TriggerModes.INTERNAL);
+      gui_.enableLiveMode(liveMode);
+      
+      return true;
+   }
+   
    
    /**
     * Performs an acquisition using the Micro-manager AcquisitionEngine object
@@ -364,10 +455,14 @@ public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerI
       prefs_.putFloat(panelName_, Properties.Keys.PLUGIN_ACQUISITION_INTERVAL,
             props_.getPropValueFloat(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_ACQUISITION_INTERVAL));
       // save controller settings
-      props_.setPropValue(Devices.Keys.PIEZOA, Properties.Keys.SAVE_CARD_SETTINGS, Properties.Values.DO_SSZ, true);
-      props_.setPropValue(Devices.Keys.PIEZOB, Properties.Keys.SAVE_CARD_SETTINGS, Properties.Values.DO_SSZ, true);
-      props_.setPropValue(Devices.Keys.GALVOA, Properties.Keys.SAVE_CARD_SETTINGS, Properties.Values.DO_SSZ, true);
-      props_.setPropValue(Devices.Keys.GALVOB, Properties.Keys.SAVE_CARD_SETTINGS, Properties.Values.DO_SSZ, true);
+      props_.setPropValue(Devices.Keys.PIEZOA, Properties.Keys.SAVE_CARD_SETTINGS, 
+              Properties.Values.DO_SSZ, true);
+      props_.setPropValue(Devices.Keys.PIEZOB, Properties.Keys.SAVE_CARD_SETTINGS, 
+              Properties.Values.DO_SSZ, true);
+      props_.setPropValue(Devices.Keys.GALVOA, Properties.Keys.SAVE_CARD_SETTINGS, 
+              Properties.Values.DO_SSZ, true);
+      props_.setPropValue(Devices.Keys.GALVOB, Properties.Keys.SAVE_CARD_SETTINGS, 
+              Properties.Values.DO_SSZ, true);
    }
 
    /**
