@@ -377,11 +377,19 @@ public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerI
          if (now - start >= timeout) {
             throw new Exception("Camera did not send image within a reasonable time");
          }
-            
+          
+         int[] frNumber = new int[2];
+         
          while ( (core_.getRemainingImageCount() > 0 || core_.isSequenceRunning(cameraA) ||
                  core_.isSequenceRunning(cameraB)) || !stop_.get()) {
             TaggedImage timg = core_.getLastTaggedImage();
-            gui_.addImageToAcquisition(acqName, nrPos, nrCh, nrSlices, nrPos, timg);
+            String camera = (String) timg.tags.get("Core-Camera");
+            int ch = 0;
+            if (camera.equals(cameraB)) {
+               ch = 1;
+            }
+            gui_.addImageToAcquisition(acqName, frNumber[ch], ch, 0, 0, timg);
+            frNumber[ch]++;
          }
       } catch (MMScriptException mex) {
          // TODO: handle exception
