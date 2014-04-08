@@ -28,10 +28,10 @@ public class ZoomableVirtualStack extends AcquisitionVirtualStack {
    private int downsampleFactor_;
    private int fullResWidth_, fullResHeight_; 
    private double fullResXStart_ = 0, fullResYStart_ = 0;  
-   private DoubleTaggedImageStorage storage_;
+   private DynamicStitchingImageStorage storage_;
    
    public ZoomableVirtualStack(int fullResWidth, int fullResHeight, int type, TaggedImageStorage imageCache,
-           int nSlices, VirtualAcquisitionDisplay vad, DoubleTaggedImageStorage storage) {
+           int nSlices, VirtualAcquisitionDisplay vad, DynamicStitchingImageStorage storage) {
       super(fullResWidth / Math.max(1, Math.max(fullResWidth, fullResHeight) / WIDTH_HEIGHT_MAX), 
               fullResHeight / Math.max(1, Math.max(fullResWidth, fullResHeight) / WIDTH_HEIGHT_MAX), 
               type, null, imageCache, nSlices, vad);
@@ -78,48 +78,10 @@ public class ZoomableVirtualStack extends AcquisitionVirtualStack {
          //return full res part of larger stitched image
          return storage_.getFullResStitchedSubImage(channel, slice, frame, 
                  (int) fullResXStart_, (int) fullResYStart_, displayImageWidth_, displayImageHeight_);
-      } else {
+      } else {        
          //return downsampled full image
-         TaggedImage img = imageCache_.getImage(channel, slice, frame, 0);
-         if (img == null) {
-            return null;
-         }
-         try {
-            if (MDUtils.isGRAY8(img)) {
-               //average for now, load downsampled image later...
-               return new TaggedImage(makeDownsampledImage((byte[]) img.pix), img.tags);               
-            } else {
-               
-            }
-         } catch (Exception e) {
-            ReportingUtils.showError("Couldnt get pixel type");           
-         }
-         return null;
+         return storage_.getImage(channel, slice, frame, 0);
       }
    }
-   
-   private byte[] makeDownsampledImage(byte[] originalPix) {
-      //downsample image by averaging squares of pixels into single pixels 
-      int dsFactor = Math.max(1, Math.max(fullResWidth_, fullResHeight_) / WIDTH_HEIGHT_MAX);
-      byte[] newPix = new byte[displayImageWidth_ * displayImageHeight_];
-      for (int i = 0; i < newPix.length; i++) {
-         int dsx = i % displayImageWidth_;
-         int dsy = i / displayImageWidth_;
-         long sum = 0;
-         for (int x = dsx * dsFactor; x < (dsx + 1) * dsFactor; x++) {
-            for (int y = dsy * dsFactor; y < (dsy + 1) * dsFactor; y++) {
-               if (x < fullResWidth_ && y < fullResHeight_) {
-                  sum += originalPix[x + fullResWidth_ * y] & 0xff;
-               }
-            }
-         } 
-         newPix[i] = (byte) (sum / dsFactor / dsFactor);
-      }
-      return newPix;
-
-   }
-   
-   
-  
    
 }

@@ -59,7 +59,7 @@ public class DisplayPlus implements ImageCacheListener {
    private ZoomableVirtualStack zoomableStack_;
 
    public DisplayPlus(final ImageCache stitchedCache, AcquisitionEngine eng, JSONObject summaryMD, 
-           DoubleTaggedImageStorage storage) {
+           DynamicStitchingImageStorage storage) {
       //Set parameters for tile dimensions, num rows and columns, overlap, and image dimensions
       yOverlap_ = SettingsDialog.getYOverlap();
       xOverlap_ = SettingsDialog.getXOverlap();
@@ -136,14 +136,9 @@ public class DisplayPlus implements ImageCacheListener {
       //Zoom to 100%
       canvas_.unzoom();
 
-      //add mouse listeners for moving grids
-      addMouseListeners();
+      setupMouseListeners();
 
       IJ.setTool(Toolbar.SPARE6);
-
-      //remove channel switching scroll wheel listener
-      vad_.getImagePlus().getWindow().removeMouseWheelListener(
-              vad_.getImagePlus().getWindow().getMouseWheelListeners()[0]);
 
       stitchedCache.addImageCacheListener(this);
    }
@@ -254,7 +249,32 @@ public class DisplayPlus implements ImageCacheListener {
       canvas_.setOverlay(overlay);
    }
 
-   private void addMouseListeners() {
+   private void zoomIn(Point p) {
+      zoomMode_ = true;
+      zoomAreaSelectMode_ = false;
+      //This assumes 100% display of tiled image
+      zoomableStack_.activateZoomMode(p.x, p.y);
+      vad_.getHyperImage().setOverlay(null);
+      redrawPixels();
+      drawZoomIndicatorOverlay();   
+   }
+   
+   private void zoomOut() {
+      zoomableStack_.activateFullImageMode();
+      redrawPixels();
+      canvas_.setOverlay(null);
+   }
+
+   private void setupMouseListeners() {  
+      //remove channel switching scroll wheel listener
+      vad_.getImagePlus().getWindow().removeMouseWheelListener(
+              vad_.getImagePlus().getWindow().getMouseWheelListeners()[0]);
+      //remove canvas mouse listener and virtualacquisitiondisplay as mouse listener
+      vad_.getImagePlus().getCanvas().removeMouseListener(
+              vad_.getImagePlus().getCanvas().getMouseListeners()[0]);
+      vad_.getImagePlus().getCanvas().removeMouseListener(
+              vad_.getImagePlus().getCanvas().getMouseListeners()[0]);
+      
       canvas_.addMouseMotionListener(new MouseMotionListener() {
 
          @Override
@@ -346,15 +366,15 @@ public class DisplayPlus implements ImageCacheListener {
                }
                controls_.clearSelectedButtons();
             } else if (zoomAreaSelectMode_) {
-               Point p = e.getPoint();
-               zoomMode_ = true;
-               zoomAreaSelectMode_ = false;
-               //This assumes 100% display of tiled image
-               zoomableStack_.activateZoomMode(p.x, p.y);
-               vad_.getHyperImage().setOverlay(null);
-               redrawPixels();
-               drawZoomIndicatorOverlay();
-            } 
+               zoomIn(e.getPoint());
+            } else {
+               //no special mode, default to zoom
+               if (e.getClickCount() > 1) {
+                  zoomIn(e.getPoint());
+               } else if (SwingUtilities.isRightMouseButton(e)) {
+                  zoomOut();
+               }
+            }
          }
 
          @Override
@@ -533,8 +553,6 @@ public class DisplayPlus implements ImageCacheListener {
          ReportingUtils.showError("Couldn't manipulate image tags for display");
       }
 
-
-
       if (!suspendUpdates_) {
          vad_.imageReceived(taggedImage);
       } else {
@@ -635,9 +653,7 @@ public class DisplayPlus implements ImageCacheListener {
             clearSelectedButtons();
             zoomAreaSelectMode_ = true;
          } else {
-            zoomableStack_.activateFullImageMode();
-            redrawPixels();
-            canvas_.setOverlay(null);
+            zoomOut();
          }
       }
 

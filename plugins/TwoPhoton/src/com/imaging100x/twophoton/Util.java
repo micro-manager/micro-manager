@@ -134,7 +134,27 @@ public class Util {
       }
       return 0;
    }
-    
+   
+   public static int rowFromPosIndex(JSONArray positionList, int index) {
+      try {
+         return (int) positionList.getJSONObject(index).getLong("GridRowIndex");
+      } catch (JSONException ex) {
+         ex.printStackTrace();
+         ReportingUtils.showError("Couldnt find tile indices");
+         return 0;
+      }
+   }
+
+   public static int colFromPosIndex(JSONArray positionList, int index) {
+      try {
+         return (int) positionList.getJSONObject(index).getLong("GridColumnIndex");
+      } catch (JSONException ex) {
+         ex.printStackTrace();
+         ReportingUtils.showError("Couldnt find tile indices");
+         return 0;
+      }
+   }
+
    //get the tile index from the pixel index in larger stitched image
    public static int stitchedPixelToTile(int i, int overlap, int tileLength, int numTiles, int imageLength) {
       int tile;
@@ -148,14 +168,26 @@ public class Util {
       return tile;
    }
    
-   //get the stiched pixel index fromt the tile pixel index
+   //get the index of first pixel in the stitched image of the given tile
+   public static int tileToFirstStitchedPixel(int tile, int overlap, int tileLength, int numTiles, int imageLength) {
+      if (tile == 0) {
+         return 0;
+      } else if (tile == numTiles -1) {
+         return imageLength - (tileLength - overlap / 2) + 1;
+      } else {
+         return (tile - 1) * (tileLength - overlap) + (tileLength - overlap / 2);
+      }
+      
+   }
+   
+   //get the stiched pixel index from the tile pixel index
    public static int tilePixelToStitchedPixel(int tilePixel, int overlap, int tileLength, int tileIndex) {
       if (tileIndex == 0) {
          return tilePixel; //0th tile
       }
       int stitchedPixel = tileLength - overlap / 2; //account for 0th tile
       stitchedPixel += (tileIndex - 1) * (tileLength - overlap); //account for additional tiles
-      stitchedPixel += tilePixel; //account for location in particular tile
+      stitchedPixel += tilePixel - overlap / 2; //account for location in particular tile
       return stitchedPixel;
    }
    

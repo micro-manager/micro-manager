@@ -51,7 +51,7 @@ public class AcquisitionWrapperEngineAdapter extends AcquisitionWrapperEngine {
     private double focusOffset_ = 0;
     private CMMCore core_ = MMStudioMainFrame.getInstance().getCore();
     private boolean runAutofocus_ = false;
-    private DoubleTaggedImageStorage storage_;
+    private DynamicStitchingImageStorage storage_;
 
     public AcquisitionWrapperEngineAdapter(TwoPhotonControl twoP, Preferences prefs) throws NoSuchFieldException {
         super((AcquisitionManager) JavaUtils.getRestrictedFieldValue(
@@ -215,10 +215,12 @@ public class AcquisitionWrapperEngineAdapter extends AcquisitionWrapperEngine {
                 String acqDirectory = createAcqDirectory(summaryMetadata.getString("Directory"), summaryMetadata.getString("Prefix"));
                 summaryMetadata.put("Prefix", acqDirectory);
                 String acqPath = summaryMetadata.getString("Directory") + File.separator + acqDirectory;
-                storage_ = new DoubleTaggedImageStorage(summaryMetadata, acqPath, prefs_);
+                storage_ = new DynamicStitchingImageStorage(summaryMetadata, acqPath, "/Users/henrypinkard/Desktop/downsamplecache");
+                
             } else {
                 //RAM storage
-                storage_ = new DoubleTaggedImageStorage(summaryMetadata, null, prefs_);
+                storage_ = new DynamicStitchingImageStorage(summaryMetadata, null, "/Users/henrypinkard/Desktop/downsamplecache");
+                //TODO also add in prefix
             }
 
             ImageCache imageCache = new MMImageCache(storage_) {

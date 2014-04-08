@@ -2,9 +2,11 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package MMCustomization;
+package unused;
 
 import HDF.ImarisWriter;
+import MMCustomization.DynamicStitchingImageStorage;
+import MMCustomization.SingleThreadedGaussianFilter;
 import com.imaging100x.twophoton.SettingsDialog;
 import com.imaging100x.twophoton.TwoPhotonControl;
 import ij.IJ;
@@ -53,7 +55,7 @@ public class DoubleTaggedImageStorage implements TaggedImageStorage {
       gaussianFilter_ = prefs_.getBoolean(SettingsDialog.FILTER_IMS, false);
       filterWidth_ = prefs_.getDouble(SettingsDialog.FILTER_SIZE, 2.0);
 
-      storage_ = new DynamicStitchingImageStorage(summaryMetadata, savingDir);
+//      storage_ = new DynamicStitchingImageStorage(summaryMetadata, savingDir);
 
       if (!makeImarisFile_) {
          return;
@@ -85,8 +87,8 @@ public class DoubleTaggedImageStorage implements TaggedImageStorage {
 
 
       Color[] channelColors = null;
-      int width = storage_.getWidth();
-      int height = storage_.getHeight();
+//      int width = storage_.getWidth();
+//      int height = storage_.getHeight();
       try {
          numPositions_ = MDUtils.getNumPositions(summaryMetadata);
          numSlices_ = MDUtils.getNumSlices(summaryMetadata);
@@ -94,8 +96,8 @@ public class DoubleTaggedImageStorage implements TaggedImageStorage {
          numFrames_ = MDUtils.getNumFrames(summaryMetadata);
          double pixelSizeXY = summaryMetadata.getDouble("PixelSize_um");
          double pixelSizeZ = summaryMetadata.getDouble("z-step_um");
-         imarisWriter_ = new ImarisWriter(newDir.getAbsolutePath(), prefix, width, height, numSlices_,
-                 numChannels_, numFrames_, pixelSizeXY, pixelSizeZ, channelColors);
+//         imarisWriter_ = new ImarisWriter(newDir.getAbsolutePath(), prefix, width, height, numSlices_,
+//                 numChannels_, numFrames_, pixelSizeXY, pixelSizeZ, channelColors);
       } catch (JSONException ex) {
          ReportingUtils.showError("Problem with summary metadata: couldnt make imaris writer");
       }
