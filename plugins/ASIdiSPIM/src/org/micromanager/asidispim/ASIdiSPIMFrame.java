@@ -43,10 +43,13 @@ import org.micromanager.MMStudioMainFrame;
 import org.micromanager.asidispim.Utils.StagePositionUpdater;
 import org.micromanager.internalinterfaces.LiveModeListener; 
 
+// TODO change filter speed on micro-mirror card
 // TODO make sure acquisition works for single SPIM
+// TODO file save settings in plugin
 // TODO display certain properties like positions, e.g. scan amplitudes/offsets
 // TODO resolve whether Home/Stop should be added to 1axis stage API, use here if possible
 // TODO add sethome property to device adapter and use it here
+
 
 /**
  *

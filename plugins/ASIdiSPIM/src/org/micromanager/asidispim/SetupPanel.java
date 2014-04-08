@@ -160,14 +160,14 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
 
 
       tmp_but = new JButton("Set start");
-      tmp_but.setToolTipText("Use with imaging piezo position \"Set start\" when focused");
+      tmp_but.setToolTipText("Saves start position for imaging piezo and scanner slice (should be focused)");
       tmp_but.setOpaque(true);
       tmp_but.setBackground(Color.red);
       tmp_but.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
             try {
-               // TODO use positions_ for this instead of core call
+               // bypass cached positions in positions_ in case they aren't current
                Point2D.Double pt = core_.getGalvoPosition(
                        devices_.getMMDeviceException(micromirrorDeviceKey_));
                sheetStartPos_ = pt.y;
@@ -185,7 +185,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
 
 
       tmp_but = new JButton("Set end");
-      tmp_but.setToolTipText("Use with imaging piezo position \"Set end\" when focused");
+      tmp_but.setToolTipText("Saves end position for imaging piezo and scanner slice (should be focused)");
       tmp_but.setContentAreaFilled(false);
       tmp_but.setOpaque(true);
       tmp_but.setBackground(Color.red);
@@ -193,6 +193,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
          @Override
          public void actionPerformed(ActionEvent e) {
             try {
+               // bypass cached positions in positions_ in case they aren't current
                Point2D.Double pt = core_.getGalvoPosition(
                        devices_.getMMDeviceException(micromirrorDeviceKey_));
                sheetStopPos_ = pt.y;
