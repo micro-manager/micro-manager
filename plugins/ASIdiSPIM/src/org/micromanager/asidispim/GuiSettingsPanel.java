@@ -65,8 +65,6 @@ public class GuiSettingsPanel extends ListeningJPanel {
       prefs_ = prefs;
       stagePosUpdater_ = stagePosUpdater;
       
-      panelName_ = super.panelName_;
-
       // copy plugin "property" values from prefs to props
       props_.setPropValue(Devices.Keys.PLUGIN,
             Properties.Keys.PLUGIN_POSITION_REFRESH_INTERVAL, // in seconds

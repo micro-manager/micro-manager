@@ -63,7 +63,6 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
    private final Prefs prefs_;
    private final Cameras cameras_;
    private final CMMCore core_;
-   //private final String panelName_;
    
    private final JoystickSubPanel joystickPanel_;
    private final CameraSubPanel cameraPanel_;
@@ -99,7 +98,6 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       stagePosUpdater_ = stagePosUpdater;
       prefs_ = prefs;
       cameras_ = cameras;
-      //panelName_ = super.panelName_;
       core_ = MMStudioMainFrame.getInstance().getCore();
       PanelUtils pu = new PanelUtils();
       

@@ -68,7 +68,6 @@ public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerI
    private final AcquisitionWrapperEngine acqEngine_;
    private final CMMCore core_;
    private final ScriptInterface gui_;
-   //private final String panelName_;
 
    private final JSpinner numSlices_;
    private final JSpinner numSides_;
@@ -109,7 +108,6 @@ public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerI
       acqEngine_ = MMStudioMainFrame.getInstance().getAcquisitionEngine();
       core_ = MMStudioMainFrame.getInstance().getCore();
       gui_ = MMStudioMainFrame.getInstance();
-      panelName_ = super.panelName_;
       numAcquisitionsDone_ = 0;
       acqName_ = "Acq";
 

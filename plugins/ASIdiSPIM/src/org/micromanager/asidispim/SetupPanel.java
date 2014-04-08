@@ -59,7 +59,6 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
    private final Positions positions_;
    private final Cameras cameras_;
    private final Prefs prefs_;
-   // private final String panelName_;
    private final CMMCore core_;
    private String port_;  // needed to send serial commands directly
    private final JoystickSubPanel joystickPanel_;
