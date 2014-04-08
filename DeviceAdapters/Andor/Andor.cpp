@@ -56,6 +56,8 @@
 
 #include "../../MMDevice/ModuleInterface.h"
 #include "Andor.h"
+#include "SpuriousNoiseFilterControl.h"
+
 #include <string>
 #include <sstream>
 #include <iomanip>
@@ -250,8 +252,6 @@ countConvertMode_(""),
 countConvertWavelength_(0.0),
 optAcquireModeStr_(""),
 optAcquireDescriptionStr_(""),
-spuriousNoiseFilter_(""),
-spuriousNoiseFilterDescriptionStr_(""),
 iSnapImageDelay_(0),
 bSnapImageWaitForReadout_(false)
 { 
@@ -295,7 +295,7 @@ AndorCamera::~AndorCamera()
 {
    DriverGuard dg(this);
    delete seqThread_;
-
+   delete spuriousNoiseFilterControl_;
 
    refCount_--;
    if (refCount_ == 0) {
@@ -327,6 +327,7 @@ AndorCamera* AndorCamera::GetInstance()
    //if (!instance_) {
    instance_ = new AndorCamera();
    //}
+
 
    refCount_++;
    return instance_;
@@ -405,8 +406,8 @@ int AndorCamera::GetListOfAvailableCameras()
             anStr = "| " + camType + " | " + anStr + " | " + chars + " |";
             cameraName_.push_back(anStr);
 
-            cameraID_.push_back((int)CameraID);   
-         }   
+            cameraID_.push_back((int)CameraID);
+         }
 
          myCameraID_ = CameraID;
       }
@@ -1184,53 +1185,7 @@ int AndorCamera::GetListOfAvailableCameras()
         assert(nRet == DEVICE_OK);
       }
 
-      // SpuriousNoiseFilter
-      if(caps.ulFeatures&AC_FEATURES_REALTIMESPURIOUSNOISEFILTER) //some cameras might not support this
-      {
-        if(!HasProperty("SpuriousNoiseFilter"))
-        {
-           pAct = new CPropertyAction (this, &AndorCamera::OnSpuriousNoiseFilter);
-           nRet = CreateProperty("SpuriousNoiseFilter", "None", MM::String, false, pAct);
-           assert(nRet == DEVICE_OK);
-        }
-        else
-        {
-           nRet = SetProperty("SpuriousNoiseFilter",  "None");  
-           if (nRet != DEVICE_OK)
-              return nRet;
-        }
-
-        SetProperty("SpuriousNoiseFilter",  "None");
-        vector<string> CCValues;
-        CCValues.push_back("None");
-        CCValues.push_back("Median");
-        CCValues.push_back("Level Above");
-        nRet = SetAllowedValues("SpuriousNoiseFilter", CCValues);
-        
-        if (nRet != DEVICE_OK)
-           return nRet;
-      
-
-        // SpuriousNoiseFilterThreshold
-        if(!HasProperty("SpuriousNoiseFilterThreshold"))
-        {
-           pAct = new CPropertyAction (this, &AndorCamera::OnSpuriousNoiseFilterThreshold);
-           nRet = CreateProperty("SpuriousNoiseFilterThreshold", "0.0", MM::Float, false, pAct);
-        }
-        else
-        {
-           nRet = SetProperty("SpuriousNoiseFilterThreshold", "0.0");
-        }
-
-         // Description
-        if (!HasProperty("SpuriousNoiseFilterDescription"))
-        {
-           pAct = new CPropertyAction (this, &AndorCamera::OnSpuriousNoiseFilterDescription);
-           nRet = CreateProperty("SpuriousNoiseFilterDescription", "Recommended Range", MM::String, true, pAct);
-        }
-
-        assert(nRet == DEVICE_OK);
-      }
+      spuriousNoiseFilterControl_ = new SpuriousNoiseFilterControl(this);
 
       //OptAcquire
       if(caps.ulFeatures&AC_FEATURES_OPTACQUIRE) //some cameras might not support this
@@ -2818,124 +2773,6 @@ int AndorCamera::GetListOfAvailableCameras()
 
 
 
-   int AndorCamera::OnSpuriousNoiseFilter(MM::PropertyBase* pProp, MM::ActionType eAct)
-   {
-      if (eAct == MM::AfterSet)
-      { 
-         bool acquiring = sequenceRunning_;
-         if (acquiring)
-            StopSequenceAcquisition(true);
-
-         if (sequenceRunning_)
-            return ERR_BUSY_ACQUIRING;
-
-         //added to use RTA
-         SetToIdle();
-
-         string spuriousNoiseFilterStr;
-         long spuriousNoiseFilter = 0;
-         pProp->Get(spuriousNoiseFilterStr);
-         
-         if(spuriousNoiseFilterStr.compare("None") == 0)
-         {
-           spuriousNoiseFilter = 0;
-           spuriousNoiseFilterDescriptionStr_ = "Recommended Range";
-         }
-         else if(spuriousNoiseFilterStr.compare("Median") == 0)
-         {
-           spuriousNoiseFilter = 1;
-           spuriousNoiseFilterDescriptionStr_ = "Recommended Range 2-10";
-         }
-         else if(spuriousNoiseFilterStr.compare("Level Above") == 0)
-         {
-           spuriousNoiseFilter = 2;
-           spuriousNoiseFilterDescriptionStr_ = "Recommended Range 10-50";
-         }
-
-         if(spuriousNoiseFilterStr == spuriousNoiseFilter_)
-            return DEVICE_OK;
-          
-         // wait for camera to finish acquiring
-         int status = DRV_IDLE;
-         unsigned int ret = GetStatus(&status);
-         while (status == DRV_ACQUIRING && ret == DRV_SUCCESS)
-            ret = GetStatus(&status);
-
-         ret = Filter_SetMode(spuriousNoiseFilter);
-          if (ret != DRV_SUCCESS)
-         {           
-            return DEVICE_CAN_NOT_SET_PROPERTY;
-         }
-        
-         pProp->Set(spuriousNoiseFilterStr.c_str());
-         spuriousNoiseFilter_ = spuriousNoiseFilterStr;
-         if (acquiring)
-            StartSequenceAcquisition(sequenceLength_ - imageCounter_, intervalMs_, stopOnOverflow_);
-         PrepareSnap();
-         
-         SetProperty("SpuriousNoiseFilterDescription", spuriousNoiseFilterDescriptionStr_.c_str());  
-      }
-      else if (eAct == MM::BeforeGet)
-      {
-         pProp->Set(spuriousNoiseFilter_.c_str());
-      }
-      return DEVICE_OK;
-   }
-
-   int AndorCamera::OnSpuriousNoiseFilterThreshold(MM::PropertyBase* pProp, MM::ActionType eAct)
-   {
-      if (eAct == MM::AfterSet)
-      {
-         bool acquiring = sequenceRunning_;
-         if (acquiring)
-            StopSequenceAcquisition(true);
-
-         if (sequenceRunning_)
-            return ERR_BUSY_ACQUIRING;
-
-         //added to use RTA
-         SetToIdle();
-
-         double spuriousNoiseFilterThreshold = 0;
-         pProp->Get(spuriousNoiseFilterThreshold);
-         
-         if(spuriousNoiseFilterThreshold == spuriousNoiseFilterThreshold_)
-            return DEVICE_OK;
-          
-         // wait for camera to finish acquiring
-         int status = DRV_IDLE;
-         unsigned int ret = GetStatus(&status);
-         while (status == DRV_ACQUIRING && ret == DRV_SUCCESS)
-            ret = GetStatus(&status);
-
-         ret  = Filter_SetThreshold(static_cast<float>(spuriousNoiseFilterThreshold));
-         if (ret != DRV_SUCCESS)
-         {           
-            return DEVICE_CAN_NOT_SET_PROPERTY;
-         }
-        
-         pProp->Set(spuriousNoiseFilterThreshold);
-         spuriousNoiseFilterThreshold_ = spuriousNoiseFilterThreshold;
-         if (acquiring)
-            StartSequenceAcquisition(sequenceLength_ - imageCounter_, intervalMs_, stopOnOverflow_);
-         PrepareSnap();
-      }
-      else if (eAct == MM::BeforeGet)
-      {
-         pProp->Set(spuriousNoiseFilterThreshold_);
-      }
-      return DEVICE_OK;
-   }  
-  
-   int AndorCamera::OnSpuriousNoiseFilterDescription(MM::PropertyBase* pProp, MM::ActionType eAct)
-   {
-      if (eAct == MM::BeforeGet)
-      {
-        pProp->Set(spuriousNoiseFilterDescriptionStr_.c_str());
-      }
-
-      return DEVICE_OK;
-   }
 
    int AndorCamera::OnCountConvert(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
@@ -4190,6 +4027,11 @@ int AndorCamera::GetListOfAvailableCameras()
       return DEVICE_OK;
    }
 
+   int AndorCamera::RestartSequenceAcquisition()
+   {
+      return StartSequenceAcquisition(sequenceLength_ - imageCounter_, intervalMs_, stopOnOverflow_);
+   }
+
    /**
    * Stop Seq sequence acquisition
    * This is the function for internal use and can/should be called from the thread
@@ -5168,6 +5010,21 @@ unsigned int AndorCamera::PopulateROIDropdown()
 
       return DRV_SUCCESS;
    }
+
+int AndorCamera::AddProperty(const char* name, const char* value, MM::PropertyType eType, bool readOnly, MM::ActionFunctor* pAct)
+{
+   if(!HasProperty(name))
+   {
+      CreateProperty(name, value, eType, readOnly, pAct);
+   }
+   else
+   {
+      SetProperty(name, value);
+   }
+   return DRV_SUCCESS;
+}
+
+
 
 
 

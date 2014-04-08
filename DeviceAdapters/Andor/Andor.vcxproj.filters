@@ -18,9 +18,15 @@
     <ClCompile Include="Andor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="SpuriousNoiseFilterControl.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Andor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SpuriousNoiseFilterControl.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

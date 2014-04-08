@@ -165,9 +165,11 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Andor.cpp" />
+    <ClCompile Include="SpuriousNoiseFilterControl.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Andor.h" />
+    <ClInclude Include="SpuriousNoiseFilterControl.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\MMDevice\MMDevice-SharedRuntime.vcxproj">
