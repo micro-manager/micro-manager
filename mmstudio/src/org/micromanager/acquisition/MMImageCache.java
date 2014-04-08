@@ -240,6 +240,7 @@ public class MMImageCache implements ImageCache {
          }
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
+         ex.printStackTrace();
       }
    }
 

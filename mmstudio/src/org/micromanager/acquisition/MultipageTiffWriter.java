@@ -392,6 +392,49 @@ public class MultipageTiffWriter {
       }
       fileChannelWrite(buffs);
    }
+   
+    private long unsignInt(int i) {
+      long val = Integer.MAX_VALUE & i;
+      if (i < 0) {
+         val += (long) Math.pow(2, 31);
+      }
+      return val;
+   }
+   
+   public void overwritePixels(Object pixels, int channel, int slice, int frame) throws IOException {
+      long byteOffset = indexMap_.get(MDUtils.generateLabel(channel, slice, frame, 0));      
+      ByteBuffer buffer = ByteBuffer.allocate(2).order(BYTE_ORDER);
+      fileChannel_.read(buffer, byteOffset);
+      int numEntries = buffer.getChar(0);
+      ByteBuffer entries = ByteBuffer.allocate(numEntries*12 + 4).order(BYTE_ORDER);
+      fileChannel_.read(entries, byteOffset + 2);        
+
+      long pixelOffset = -1, bytesPerImage = -1;
+      //read Tiff tags to find pixel offset
+      for (int i = 0; i < numEntries; i++) {
+         char tag = entries.getChar(i*12);
+         char type = entries.getChar(i*12 + 2);
+         long count = unsignInt(entries.getInt(i*12 + 4));
+         long value;
+         if (type == 3 && count == 1) {
+            value = entries.getChar(i*12 + 8);
+         } else {
+            value = unsignInt(entries.getInt(i*12 + 8));
+         }
+        if (tag == STRIP_OFFSETS) {
+            pixelOffset = value;
+         } else if (tag == STRIP_BYTE_COUNTS) {
+            bytesPerImage = value;
+         } 
+      }
+      if (pixelOffset == -1 || bytesPerImage == -1) {
+         ReportingUtils.showError("Couldn't overwrite pixel data");
+         return;
+      }
+      
+      ByteBuffer pixBuff = ByteBuffer.wrap((byte[]) pixels);
+      fileChannel_.write(pixBuff, pixelOffset); 
+   }
 
    private void writeIFD(TaggedImage img) throws IOException {
       char numEntries = ((firstIFD_  ? ENTRIES_PER_IFD + 4 : ENTRIES_PER_IFD));
@@ -459,7 +502,7 @@ public class MultipageTiffWriter {
          charView.put(bufferPosition_/2+2,(char) (byteDepth_*8));
       }
       buffers_.add(ifdBuffer);
-      buffers_.add(getPixelBuffer(img));
+      buffers_.add(getPixelBuffer(img.pix));
       buffers_.add(getResolutionValuesBuffer());   
       buffers_.add(ByteBuffer.wrap(mdBytes));
       
@@ -493,54 +536,54 @@ public class MultipageTiffWriter {
       numFrames_ = n;
    }
 
-   private ByteBuffer getPixelBuffer(TaggedImage img) throws IOException {
+   private ByteBuffer getPixelBuffer(Object pixels) throws IOException {
       if (rgb_) {
          if (byteDepth_ == 1) {
-            byte[] originalPix = (byte[]) img.pix;
-            byte[] pix = new byte[originalPix.length * 3 / 4];
+            byte[] originalPix = (byte[]) pixels;
+            byte[] rgbaPix = new byte[originalPix.length * 3 / 4];
             int count = 0;
             for (int i = 0; i < originalPix.length; i++) {
                //skip alpha channel
                if ((i + 1) % 4 != 0) {
                   //swap R and B for correct format
                   if ((i + 1) % 4 == 1 ) {
-                     pix[count] = originalPix[i + 2];
+                     rgbaPix[count] = originalPix[i + 2];
                   } else if ((i + 1) % 4 == 3) {
-                     pix[count] = originalPix[i - 2];
+                     rgbaPix[count] = originalPix[i - 2];
                   } else {                      
-                     pix[count] = originalPix[i];
+                     rgbaPix[count] = originalPix[i];
                   }
                   count++;
                }
             }
-            return ByteBuffer.wrap(pix);
+            return ByteBuffer.wrap(rgbaPix);
          } else {
-            short[] originalPix = (short[]) img.pix;
-            short[] pix = new short[originalPix.length * 3 / 4];
+            short[] originalPix = (short[]) pixels;
+            short[] rgbaPix = new short[originalPix.length * 3 / 4];
             int count = 0;
             for (int i = 0; i < originalPix.length; i++) {
                if ((i + 1) % 4 != 0) {
                   //swap R and B for correct format
                   if ((i + 1) % 4 == 1 ) {
-                     pix[count] = originalPix[i + 2];
+                     rgbaPix[count] = originalPix[i + 2];
                   } else if ((i + 1) % 4 == 3) {
-                     pix[count] = originalPix[i - 2];
+                     rgbaPix[count] = originalPix[i - 2];
                   } else {                      
-                     pix[count] = originalPix[i];
+                     rgbaPix[count] = originalPix[i];
                   }
                   count++;
                }
             }
-            ByteBuffer buffer = allocateByteBufferMemo(pix.length * 2);
+            ByteBuffer buffer = allocateByteBufferMemo(rgbaPix.length * 2);
             buffer.rewind();
-            buffer.asShortBuffer().put(pix);
+            buffer.asShortBuffer().put(rgbaPix);
             return buffer;
          }
       } else {
          if (byteDepth_ == 1) {
-            return ByteBuffer.wrap((byte[]) img.pix);
+            return ByteBuffer.wrap((byte[]) pixels);
          } else {
-            short[] pix = (short[]) img.pix;
+            short[] pix = (short[]) pixels;
             ByteBuffer buffer = allocateByteBufferMemo(pix.length * 2);
             buffer.rewind();
             buffer.asShortBuffer().put(pix);
