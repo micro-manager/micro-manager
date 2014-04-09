@@ -336,9 +336,9 @@ public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerI
          ReportingUtils.showError("Please set up a camera first on the Devices Panel");
          return false;
       }
-      if (nrSides == 1 && secondCamera == null) {
-         ReportingUtils.showError("2 Sides requested, but second camera not configured." +
-                 "\nPlease configure the Side B camera on the Devices Panel");
+      if (nrSides == 2 && secondCamera == null) {
+         ReportingUtils.showError("2 Sides requested, but second camera is not configured." +
+                 "\nPlease configure the Imaging Path B camera on the Devices Panel");
          return false;
       }
 
@@ -352,8 +352,10 @@ public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerI
 
          gui_.openAcquisition(acqName, rootDir, nrFrames, nrSides, nrSlices, nrPos,
                  show, save);
-         core_.setExposure(cameraA, exposure);
-         core_.setExposure(cameraB, exposure);
+         core_.setExposure(firstCamera, exposure);
+         if (secondCamera != null) {
+            core_.setExposure(secondCamera, exposure);
+         }
          gui_.setChannelName(acqName, 0, firstCamera);
          if (nrSides == 2 && secondCamera != null) {
             gui_.setChannelName(acqName, 1, secondCamera);
