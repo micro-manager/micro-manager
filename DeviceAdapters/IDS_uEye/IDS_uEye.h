@@ -15,7 +15,7 @@
 //
 // YEAR:          2012 - 2014
 //                
-// VERSION:       1.2
+// VERSION:       1.3
 //
 // LICENSE:       This file is distributed under the BSD license.
 //                License text is included with the source distribution.
@@ -28,7 +28,7 @@
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-//LAST UPDATE:    07.02.2014 WR
+//LAST UPDATE:    09.04.2014 WR
 
 
 
@@ -78,22 +78,49 @@ using namespace std;
 #define ERR_ROI_INVALID          110
 
 
-const char* Err_UNKNOWN_MODE = "Unknown mode";
-const char* Err_CAMERA_NOT_FOUND = "uEye camera not found";
-const char* Err_MEM_ALLOC = "Could not allocate image memory";
-const char* Err_ROI_INVALID = "Invalid ROI size";
+const char* Err_UNKNOWN_MODE =          "Unknown mode";
+const char* Err_CAMERA_NOT_FOUND =      "uEye camera not found";
+const char* Err_MEM_ALLOC =             "Could not allocate image memory";
+const char* Err_ROI_INVALID =           "Invalid ROI size";
 
 
 
 
 ////////////////////////////////////////////////////////////////////////////
-// Binning mode names
+// Binning mode structure
 //
-#define NUM_BIN_MODES 4
-string binModeString[]={"1x1","1x2","2x1","2x2"};
+struct binMode{
+  string name;          //readable name
+  int mode;             //specifies the mode in the language of SDK
+  int binX;
+  int binY;
+};
 
 
+//available bin modes from ueye.h
+const int binModesH[]={IS_BINNING_DISABLE,
+               IS_BINNING_2X_HORIZONTAL,
+               IS_BINNING_3X_HORIZONTAL,
+               IS_BINNING_4X_HORIZONTAL,
+               IS_BINNING_5X_HORIZONTAL,
+               IS_BINNING_6X_HORIZONTAL,
+               IS_BINNING_8X_HORIZONTAL,
+               IS_BINNING_16X_HORIZONTAL};
 
+const int binModesV[]={IS_BINNING_DISABLE,
+               IS_BINNING_2X_VERTICAL,
+               IS_BINNING_3X_VERTICAL,
+               IS_BINNING_4X_VERTICAL,
+               IS_BINNING_5X_VERTICAL,
+               IS_BINNING_6X_VERTICAL,
+               IS_BINNING_8X_VERTICAL,
+               IS_BINNING_16X_VERTICAL};
+
+
+const int binModesHNum=sizeof(binModesH)/sizeof(binModesH[0]);
+const int binModesVNum=sizeof(binModesV)/sizeof(binModesV[0]);
+
+binMode binModes[binModesHNum][binModesVNum];
 
 
 /* convert color mode code to user readable string (as defined in uEye.h) */
@@ -158,6 +185,25 @@ string colorModeToString(int colorMode){
   return(outString);
 }
 
+
+/* convert trigger mode code to user readable string (as defined in uEye.h) */
+string triggerModeToString(int triggerMode){
+  
+  string outString="";
+
+  switch(triggerMode){
+    
+  case(IS_SET_TRIGGER_OFF):             outString="TRIGGER_OFF"; break;
+  case(IS_SET_TRIGGER_HI_LO):           outString="TRIGGER_HI_LO"; break;
+  case(IS_SET_TRIGGER_LO_HI):           outString="TRIGGER_LO_HI"; break;
+  case(IS_SET_TRIGGER_SOFTWARE):        outString="TRIGGER_SOFTWARE"; break;   
+
+  default: outString+="unknown";
+
+  }
+
+  return(outString);
+}
 
 
 //////////////////////////////////////////////////////////////////////////////
@@ -253,6 +299,7 @@ class CIDS_uEye : public CCameraBase<CIDS_uEye>
   int OnErrorSimulation(MM::PropertyBase* , MM::ActionType );
   int OnCameraCCDXSize(MM::PropertyBase* , MM::ActionType );
   int OnCameraCCDYSize(MM::PropertyBase* , MM::ActionType );
+  int OnTrigger(MM::PropertyBase* pProp, MM::ActionType eAct);
   int OnTriggerDevice(MM::PropertyBase* pProp, MM::ActionType eAct);
   int OnDropPixels(MM::PropertyBase* pProp, MM::ActionType eAct);
   int OnFractionOfPixelsToDropOrSaturate(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -276,8 +323,10 @@ class CIDS_uEye : public CCameraBase<CIDS_uEye>
 
   unsigned roiX_;                                               //x-position of the ROI corner
   unsigned roiY_;                                               //y-position of the ROI corner
-  unsigned roiXSize_;                                           //width of the ROI
-  unsigned roiYSize_;                                           //height of the ROI
+  unsigned roiXSize_;                                           //width of the ROI, screen pixel (incl. binning)
+  unsigned roiYSize_;                                           //height of the ROI, screen pixel (incl. binning)
+  unsigned roiXSizeReal_;                                       //width of the ROI, CCD pixel
+  unsigned roiYSizeReal_;                                       //height of the ROI, CCD pixel
   
   long cameraCCDXSize_;                                         //sensor width in pixels
   long cameraCCDYSize_;                                         //sensor height in pixels
@@ -312,7 +361,8 @@ class CIDS_uEye : public CCameraBase<CIDS_uEye>
 
   long binX_;                                                   //horizontal binning factor
   long binY_;                                                   //vertical binning factor
-  long binMode_;                                                //binning mode number (name defined in binModeString)
+  string binModeName_;                                          //name of the current binning mode
+
   
 
   bool dropPixels_;

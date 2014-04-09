@@ -15,7 +15,7 @@
 //
 // YEAR:          2012 - 2014
 //                
-// VERSION:       1.2
+// VERSION:       1.3
 //
 // LICENSE:       This file is distributed under the BSD license.
 //                License text is included with the source distribution.
@@ -28,7 +28,7 @@
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-//LAST UPDATE:    08.02.2014 WR
+//LAST UPDATE:    09.04.2014 WR
 
 
 
@@ -46,7 +46,7 @@
 
 
 //definitions
-#define DRV_VERSION "1.2"                       //version of this device adapter
+#define DRV_VERSION "1.3"                       //version of this device adapter
 #define ACQ_TIMEOUT 1100                        //timeout for image acquisition (in 10ms) 
 
 
@@ -73,8 +73,11 @@ const char* g_PixelType_8bitBGRA =      "8bit BGRA";    //directly corresponds t
 const char* g_PixelType_32bit =         "32bit";        // floating point greyscale
 
 
-   
-
+// constants for naming trigger modes (allowed values of the "Triger" property)
+const char* g_TriggerType_OFF =         "off";
+const char* g_TriggerType_HI_LO =       "ext. falling";
+const char* g_TriggerType_LO_HI =       "ext. rising";
+const char* g_TriggerType_SOFTWARE =    "internal";
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -287,12 +290,15 @@ int CIDS_uEye::Initialize()
 
    }
 
+
    //define starting ROI as the full image size
    roiX_=0;
    roiY_=0;
    roiXSize_=cameraCCDXSize_;
    roiYSize_=cameraCCDYSize_;
-
+   roiXSizeReal_=cameraCCDXSize_;
+   roiYSizeReal_=cameraCCDYSize_;
+  
 
    //get pixel clock range
    GetPixelClockRange(hCam, &pixelClkMin_, &pixelClkMax_);
@@ -363,16 +369,12 @@ int CIDS_uEye::Initialize()
 
    // binning
    pAct = new CPropertyAction (this, &CIDS_uEye::OnBinning);
-   //nRet = CreateProperty(MM::g_Keyword_Binning, "1", MM::Integer, false, pAct);
-   nRet = CreateProperty(MM::g_Keyword_Binning, binModeString[0].c_str(), MM::String, false, pAct);
+   nRet = CreateProperty(MM::g_Keyword_Binning,"", MM::String, false, pAct);
    assert(nRet == DEVICE_OK);
 
    nRet = SetAllowedBinning();
    if (nRet != DEVICE_OK)
-      return nRet;
-   binMode_=0;
-   binX_=1;
-   binY_=1;
+     return nRet;
 
 
    
@@ -481,6 +483,30 @@ int CIDS_uEye::Initialize()
    assert(nRet == DEVICE_OK);
 
  
+   // trigger
+   pAct = new CPropertyAction (this, &CIDS_uEye::OnTrigger);
+   nRet = CreateProperty("Trigger", g_TriggerType_SOFTWARE, MM::String, false, pAct);
+   assert(nRet == DEVICE_OK);
+
+   //test for available trigger types
+   vector<string> triggerTypeValues;
+   if(is_SetExternalTrigger(hCam, IS_SET_TRIGGER_OFF)==IS_SUCCESS){
+     triggerTypeValues.push_back(g_TriggerType_OFF);
+   }
+   if(is_SetExternalTrigger(hCam, IS_SET_TRIGGER_HI_LO)==IS_SUCCESS){
+     triggerTypeValues.push_back(g_TriggerType_HI_LO);
+   }
+   if(is_SetExternalTrigger(hCam, IS_SET_TRIGGER_LO_HI)==IS_SUCCESS){
+     triggerTypeValues.push_back(g_TriggerType_LO_HI);
+   }
+   if(is_SetExternalTrigger(hCam, IS_SET_TRIGGER_SOFTWARE)==IS_SUCCESS){        //this should become the default
+     triggerTypeValues.push_back(g_TriggerType_SOFTWARE);
+   }
+
+   nRet = SetAllowedValues("Trigger", triggerTypeValues);
+   if (nRet != DEVICE_OK)
+      return nRet;
+
 
    // Trigger device
    pAct = new CPropertyAction (this, &CIDS_uEye::OnTriggerDevice);
@@ -523,8 +549,12 @@ int CIDS_uEye::Initialize()
 
    
 
-   //allocate image memory for full sensor size
+   //allocate image memory
    SetImageMemory();
+
+   
+   //reset ROI
+   ClearROI();  
 
 
    //set the display mode to capturing bitmap into RAM (DIB)
@@ -563,16 +593,6 @@ int CIDS_uEye::Initialize()
 
    //disable hardware gamma correction
    is_SetHardwareGamma(hCam, IS_SET_HW_GAMMA_OFF);
-
-   
-
-
-   //set the trigger mode
-   printf("IDS_uEye: setting trigger to software\n");
-   nReturn = is_SetExternalTrigger (hCam, IS_SET_TRIGGER_SOFTWARE);
-   if (nReturn != IS_SUCCESS){                          //could not set software trigger
-     printf("IDS_uEye: could not set software trigger\n");
-   }
 
    
    //set timeout for image acquisition
@@ -808,8 +828,10 @@ int CIDS_uEye::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize)
     is_StopLiveVideo (hCam, IS_FORCE_VIDEO_STOP);
     */  
 
-    printf("ROI of %d x %d pixel requested\n", xSize, ySize);
+    printf("IDS_uEye: ROI of %d x %d pixel requested\n", xSize, ySize);
 
+    //read out the current ROI
+    is_AOI(hCam, IS_AOI_IMAGE_GET_AOI, (void*)&rectAOI2, sizeof(rectAOI2)); 
 
     //check ROI parameters and define the ROI rectangle
     is_AOI(hCam, IS_AOI_IMAGE_GET_SIZE_INC , (void*)&sizeInc, sizeof(sizeInc)); 
@@ -835,28 +857,27 @@ int CIDS_uEye::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize)
     if(nRet==IS_SUCCESS){
 
 
-      //update stored ROI parameters
+      //update ROI parameters
       roiX_=rectAOI.s32X;
       roiY_=rectAOI.s32Y;      
       roiXSize_=rectAOI.s32Width;
-      roiYSize_=rectAOI.s32Height;   
+      roiYSize_=rectAOI.s32Height;
 
       //read out the ROI
       is_AOI(hCam, IS_AOI_IMAGE_GET_AOI, (void*)&rectAOI2, sizeof(rectAOI2)); 
-      printf("ROI of %d x %d pixel obtained\n", rectAOI2.s32Width, rectAOI2.s32Height );
+      printf("IDS_uEye: ROI of %d x %d pixel obtained\n", rectAOI2.s32Width, rectAOI2.s32Height );
 
-      
-      //free previous image memory
+      roiXSizeReal_=rectAOI2.s32Width*binX_;
+      roiYSizeReal_=rectAOI2.s32Height*binY_;
+
+ 
+      //adjust image memory
       is_FreeImageMem (hCam, pcImgMem,  memPid);
-
-      //allocate image memory for the new size
+      ResizeImageBuffer();
+      ClearImageBuffer(img_);
       SetImageMemory();
+
       
-
-      //resize the image buffer
-      img_.Resize(roiXSize_, roiYSize_);
-
-
       //update frame rate range
       GetFramerateRange(hCam, &framerateMin_, &framerateMax_);
       SetPropertyLimits("Frame Rate", framerateMin_, framerateMax_);
@@ -872,13 +893,14 @@ int CIDS_uEye::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize)
       return DEVICE_OK;
     }
     else{
-      LogMessage("could not set ROI",true);
+      LogMessage("IDS_uEye: could not set ROI",true);
       return ERR_ROI_INVALID;
     }
     
   }
 
 }
+
 
 
 /**
@@ -897,6 +919,7 @@ int CIDS_uEye::GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySize
    return DEVICE_OK;
 }
 
+
 /**
 * Resets the Region of Interest to full frame.
 * Required by the MM::Camera API.
@@ -909,8 +932,8 @@ int CIDS_uEye::ClearROI()
 
   rectAOI.s32X     = 0;
   rectAOI.s32Y     = 0;
-  rectAOI.s32Width = cameraCCDXSize_;
-  rectAOI.s32Height =cameraCCDYSize_;
+  rectAOI.s32Width = cameraCCDXSize_/binX_;
+  rectAOI.s32Height =cameraCCDYSize_/binY_;
   
   
   //apply ROI  
@@ -923,20 +946,17 @@ int CIDS_uEye::ClearROI()
     roiX_=rectAOI.s32X;
     roiY_=rectAOI.s32Y;      
     roiXSize_=rectAOI.s32Width;
-    roiYSize_=rectAOI.s32Height;   
-    
+    roiYSize_=rectAOI.s32Height;
+    roiXSizeReal_=rectAOI.s32Width*binX_;
+    roiYSizeReal_=rectAOI.s32Height*binY_;
 
-    //resize the image buffer
-    img_.Resize(roiXSize_, roiYSize_);
-    
-    //free previous image memory
+
+    //adjust image memory
     is_FreeImageMem (hCam, pcImgMem,  memPid);
-    
-    //allocate image memory for the new size
-    SetImageMemory();
-      
-
-    
+    ResizeImageBuffer();
+    ClearImageBuffer(img_);
+    SetImageMemory(); 
+          
 
     //update pixel clock range
     GetPixelClockRange(hCam, &pixelClkMin_, &pixelClkMax_);
@@ -1089,19 +1109,55 @@ int CIDS_uEye::SetBinning(int binF)
    return SetProperty(MM::g_Keyword_Binning, CDeviceUtils::ConvertToString(binF));
 }
 
+/* determine available binning combinations */
 int CIDS_uEye::SetAllowedBinning() 
 {
 
-  vector<string> binValues;
+  vector<string> binModeValues;
+  int i,j;
+  stringstream modeName;
 
-  for(int i=0; i<NUM_BIN_MODES; i++){
-    binValues.push_back(binModeString[i]);
+  //initialize the structure
+  for(i=0;i<binModesHNum;i++){
+    for(j=0;j<binModesVNum;j++){ 
+      binModes[i][j].name="";
+      binModes[i][j].mode=IS_BINNING_DISABLE;
+      binModes[i][j].binX=1;
+      binModes[i][j].binY=1;
+    }
   }
 
+  //probe available modes
+  //NOTE: as with SDK 4.30 for cameras which support only simultaneous binning on x and y this method yields redundant modes
+  //       for such cameras IS_SUCCESS is returned if the x-binning factor is available
+  for(i=0;i<binModesHNum;i++){
+    for(j=0;j<binModesVNum;j++){
+      is_SetBinning(hCam, IS_BINNING_DISABLE);  //clear binning
+      if(is_SetBinning(hCam,binModesH[i]|binModesV[j])==IS_SUCCESS){
+        binModes[i][j].mode=binModesH[i]|binModesV[j];
+        binModes[i][j].binX=is_SetBinning(hCam,IS_GET_BINNING_FACTOR_HORIZONTAL);
+        binModes[i][j].binY=is_SetBinning(hCam,IS_GET_BINNING_FACTOR_VERTICAL);
+        
+        modeName.str(std::string());            //clear stream
+        modeName<<binModes[i][j].binX<<"x"<<binModes[i][j].binY<<" ("<<std::showbase<<std::hex<<binModes[i][j].mode<<")"<<std::dec;
+        binModes[i][j].name=modeName.str();
+
+        printf("IDS_uEye: binning %dx%d available\n",binModes[i][j].binX, binModes[i][j].binY);
+        binModeValues.push_back(binModes[i][j].name);
+      }
+    }
+  }
+
+  //reset to default 1x1 mode
+  is_SetBinning(hCam, IS_BINNING_DISABLE);
+  binModeName_=binModes[0][0].name; 
+  binX_=1;
+  binY_=1;
       
   LogMessage("Setting Allowed Binning settings", true);
-  return SetAllowedValues(MM::g_Keyword_Binning, binValues);
+  return SetAllowedValues(MM::g_Keyword_Binning, binModeValues);
 }
+
 
 
 /**
@@ -1347,64 +1403,69 @@ int MySequenceThread::svc(void) throw()
 */
 int CIDS_uEye::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
+ 
+  int i,j; 
+  int ret = DEVICE_INVALID_PROPERTY_VALUE;
   
-  int ret = DEVICE_OK;
 
 
   if (eAct == MM::BeforeGet){
-    
+   
+    pProp->Set(binModeName_.c_str());
+
+    ret=DEVICE_OK; 
   }
 
   else if (eAct == MM::AfterSet){
 
+    if(IsCapturing())
+      return DEVICE_CAMERA_BUSY_ACQUIRING;
+
     string binModeName;
     pProp->Get(binModeName);
- 
     
-    if(strcmp(binModeName.c_str(), binModeString[0].c_str())==0){               //mode 0: "1x1"
-      printf("Binning mode 0: 1x1\n");
-      binMode_=0;
-      binX_=1;
-      binY_=1;
-      is_SetBinning (hCam, IS_BINNING_DISABLE);
+    for(i=0;i<binModesVNum;i++){
+      for(j=0;j<binModesHNum;j++){
+        if(strcmp(binModeName.c_str(), binModes[i][j].name.c_str())==0){
+          is_SetBinning(hCam, IS_BINNING_DISABLE);                      //clear binning
+          binModeName_=binModes[0][0].name;
+          if(is_SetBinning (hCam, binModes[i][j].mode)==IS_SUCCESS){
+            binX_= is_SetBinning(hCam,IS_GET_BINNING_FACTOR_HORIZONTAL);
+            binY_= is_SetBinning(hCam,IS_GET_BINNING_FACTOR_VERTICAL);
+            binModeName_=binModes[i][j].name;
+            printf("IDS_uEye: set binning to %s\n",binModes[i][j].name.c_str());
+
+            //printf("IDS_uEye: obtained binning %dx%d\n",binX_,binY_);
+
+            ret=DEVICE_OK;
+          }
+        }
+
+      }
     }
-    if(strcmp(binModeName.c_str(), binModeString[1].c_str())==0){               //mode 1: "1x2"
-      printf("Binning mode 1: 1x2\n");
-      binMode_=1;
-      binX_=1;
-      binY_=2;
-      is_SetBinning (hCam, IS_BINNING_2X_VERTICAL); 
-    }
-    if(strcmp(binModeName.c_str(), binModeString[2].c_str())==0){               //mode 2: "2x1"
-      printf("Binning mode 2: 2x1\n");
-      binMode_=2;
-      binX_=2;
-      binY_=1;
-      is_SetBinning (hCam, IS_BINNING_2X_HORIZONTAL); 
-    }
-    if(strcmp(binModeName.c_str(), binModeString[3].c_str())==0){               //mode 3: "2x2"
-      printf("Binning mode 3: 2x2\n");
-      binMode_=3;
-      binX_=2;
-      binY_=2;
-      is_SetBinning (hCam, IS_BINNING_2X_HORIZONTAL | IS_BINNING_2X_VERTICAL); 
-    }
+
      
   
-    //is_FreeImageMem (hCam, pcImgMem,  memPid);
-    //SetImageMemory();                    //FIXME: what about image memory settings?
-    ResizeImageBuffer();
+    //if the mode was changed adjust memory buffers and other dependent parameters
+    if(ret==DEVICE_OK){
+
+      //adjust image memory
+      is_FreeImageMem (hCam, pcImgMem,  memPid);
+      ResizeImageBuffer();
+      ClearImageBuffer(img_);
+      SetImageMemory();
 
 
-    //update frame rate range
-    GetFramerateRange(hCam, &framerateMin_, &framerateMax_);
-    SetPropertyLimits("Frame Rate", framerateMin_, framerateMax_);
+      //update frame rate range
+      GetFramerateRange(hCam, &framerateMin_, &framerateMax_);
+      SetPropertyLimits("Frame Rate", framerateMin_, framerateMax_);
      
     
-    //update the exposure range
-    GetExposureRange(hCam, &exposureMin_, &exposureMax_, &exposureIncrement_);
-    if(exposureMax_>EXPOSURE_MAX) exposureMax_=EXPOSURE_MAX;
-    SetPropertyLimits(MM::g_Keyword_Exposure, exposureMin_, exposureMax_);
+      //update the exposure range
+      GetExposureRange(hCam, &exposureMin_, &exposureMax_, &exposureIncrement_);
+      if(exposureMax_>EXPOSURE_MAX) exposureMax_=EXPOSURE_MAX;
+      SetPropertyLimits(MM::g_Keyword_Exposure, exposureMin_, exposureMax_);
+    }
 
   }
   
@@ -1859,6 +1920,118 @@ int CIDS_uEye::OnCameraCCDYSize(MM::PropertyBase* pProp, MM::ActionType eAct)
 }
 
 
+/**
+* Handles "Trigger" property.
+*/
+int CIDS_uEye::OnTrigger(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+  int ret = DEVICE_INVALID_PROPERTY_VALUE;
+  int nRet;
+
+
+  switch(eAct)
+  {
+
+  case MM::BeforeGet:{
+      
+    int triggerMode;
+      
+    triggerMode=is_SetExternalTrigger(hCam, IS_GET_EXTERNALTRIGGER);
+    switch(triggerMode){
+
+    case(IS_SET_TRIGGER_OFF):
+      pProp->Set(g_TriggerType_OFF);
+      break;
+
+    case(IS_SET_TRIGGER_HI_LO):
+      pProp->Set(g_TriggerType_HI_LO);
+      break;
+
+    case(IS_SET_TRIGGER_LO_HI):
+      pProp->Set(g_TriggerType_LO_HI);
+      break;
+
+    case(IS_SET_TRIGGER_SOFTWARE):
+      pProp->Set(g_TriggerType_SOFTWARE);
+      break;
+
+      
+    default:
+      break;
+    }
+    
+
+    ret=DEVICE_OK;
+  }
+    break;
+
+  case MM::AfterSet:{
+
+    //if(IsCapturing())
+    //  return DEVICE_CAMERA_BUSY_ACQUIRING;
+
+    string triggerType;
+    pProp->Get(triggerType);
+
+    if (triggerType.compare(g_TriggerType_OFF) == 0){
+      
+      nRet=is_SetExternalTrigger(hCam, IS_SET_TRIGGER_OFF);
+      if(nRet==IS_SUCCESS){
+        ret=DEVICE_OK;
+      }
+
+    }
+
+    else if (triggerType.compare(g_TriggerType_HI_LO) == 0){
+      
+      nRet=is_SetExternalTrigger(hCam, IS_SET_TRIGGER_HI_LO);
+      if(nRet==IS_SUCCESS){
+        ret=DEVICE_OK;
+      }
+
+    }
+
+    else if (triggerType.compare(g_TriggerType_LO_HI) == 0){
+      
+      nRet=is_SetExternalTrigger(hCam, IS_SET_TRIGGER_LO_HI);
+      if(nRet==IS_SUCCESS){
+        ret=DEVICE_OK;
+      }
+
+    }
+
+    
+    else if (triggerType.compare(g_TriggerType_SOFTWARE) == 0){
+      
+      nRet=is_SetExternalTrigger(hCam, IS_SET_TRIGGER_SOFTWARE);
+      if(nRet==IS_SUCCESS){
+        ret=DEVICE_OK;
+      }
+
+    }
+
+    
+    else{
+      // on error do nothing
+      ret = ERR_UNKNOWN_MODE;
+    }
+
+
+    if(ret==DEVICE_OK){
+       printf("IDS_uEye: set trigger mode %s\n", triggerModeToString(is_SetExternalTrigger(hCam, IS_GET_EXTERNALTRIGGER)).c_str());
+    }
+
+  }
+    break;
+      
+
+  }
+
+
+  return ret;
+}
+
+
 int CIDS_uEye::OnTriggerDevice(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
   
@@ -1913,40 +2086,7 @@ int CIDS_uEye::ResizeImageBuffer()
 
    int colorMode;
 
-   //int ret = GetProperty(MM::g_Keyword_Binning, buf);
-   //if (ret != DEVICE_OK)
-   //   return ret;
-   //binSize_ = atol(buf);
 
-   /*   buffer size byte depth is now deduced from real bit depth
-   int ret = GetProperty(MM::g_Keyword_PixelType, buf);
-   if (ret != DEVICE_OK)
-      return ret;
-
-   std::string pixelType(buf);
-
-   
-   if (pixelType.compare(g_PixelType_8bit) == 0)
-   {
-      byteDepth = 1;
-   }
-   else if (pixelType.compare(g_PixelType_16bit) == 0)
-   {
-      byteDepth = 2;
-   }
-   else if ( pixelType.compare(g_PixelType_32bitRGB) == 0)
-   {
-     byteDepth = 4;
-   }
-   else if ( pixelType.compare(g_PixelType_32bit) == 0)
-   {
-     byteDepth = 4;
-   }
-   else if ( pixelType.compare(g_PixelType_64bitRGB) == 0)
-   {
-     byteDepth = 8;
-   }
-   */
 
    //determine the necessary number of memory bytes per pixel for the current color mode
    colorMode=is_SetColorMode(hCam, IS_GET_COLOR_MODE);
@@ -2002,19 +2142,12 @@ int CIDS_uEye::ResizeImageBuffer()
 
    }
 
+   
+   
+   img_.Resize(roiXSizeReal_/binX_, roiYSizeReal_/binY_, byteDepth);
 
-   /*
-   if(bitDepthReal_<=8){
-     byteDepth=1;
-   }
-   else if(bitDepthReal_<=16){
-     byteDepth=2;
-   }
-   */
-
-   img_.Resize(roiXSize_/binX_, roiYSize_/binY_, byteDepth);
-
-   printf("IDS_uEye: MM-Image buffer size for color mode %s: %ld byte\n",colorModeToString(colorMode).c_str(), GetImageBufferSize());
+   printf("IDS_uEye: MM-Image buffer size for %dx%d, color mode %s, %dx%d binning: %ld byte\n",
+          roiXSizeReal_,roiYSizeReal_, colorModeToString(colorMode).c_str(), binX_, binY_, GetImageBufferSize());
 
    return DEVICE_OK;
 }
@@ -2037,16 +2170,17 @@ int CIDS_uEye::SetImageMemory()
 
   int nRet;
 
-  //allocate image memory for the current size 
+  //allocate image memory for the current size
+  //the size of the ROI already contains binning
 
   /*
-  //  nRet = is_AllocImageMem (hCam, roiXSize_/binX_, roiYSize_/binY_, bitDepthReal_, &pcImgMem, &memPid);        //FIXME: support binning
+  //  nRet = is_AllocImageMem (hCam, roiXSizeReal_/binX_, roiYSizeReal_/binY_, bitDepthReal_, &pcImgMem, &memPid);
   */
 
 
   /*
   //method 1: assign extra memory area which is then copied into the buffer
-  nRet = is_AllocImageMem (hCam, roiXSize_, roiYSize_, bitDepthReal_, &pcImgMem, &memPid);
+  nRet = is_AllocImageMem (hCam, roiXSizeReal_/binX_, roiYSizeReal_/binY_, bitDepthReal_, &pcImgMem, &memPid);
   if (nRet != IS_SUCCESS){                          //could not allocate memory
     LogMessage("could not allocate ROI image memory",true);
     return ERR_MEM_ALLOC;
@@ -2054,10 +2188,9 @@ int CIDS_uEye::SetImageMemory()
  
   */
 
-  //method 2: directly assign the buffer to the camera (full CCD size)
+  //method 2: directly assign the buffer to the camera
   pcImgMem=(char*)img_.GetPixelsRW();
-  //printf("IDS_uEye: assigning image memory for %d x %d, %d bpp, pointer: 0x%x\n",  cameraCCDXSize_, cameraCCDYSize_, 8*img_.Depth(), pcImgMem);
-  nRet = is_SetAllocatedImageMem (hCam, cameraCCDXSize_, cameraCCDYSize_, 8*img_.Depth(), pcImgMem, &memPid);
+  nRet = is_SetAllocatedImageMem (hCam, roiXSizeReal_/binX_, roiYSizeReal_/binY_, 8*img_.Depth(), pcImgMem, &memPid);
   if (nRet != IS_SUCCESS){                          //could not assign image memory
     printf("IDS_uEye: could not assign the image buffer as the image memory, error %d\n", nRet);
   }

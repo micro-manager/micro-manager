@@ -5,7 +5,7 @@ DESCRIPTION:   Driver for IDS uEye series of USB cameras
                 with IDS hardware).
 
                Based on IDS uEye SDK and Micromanager DemoCamera example.
-               Tested with SDK version 3.82, 4.02, 4.20 and 4.30.
+               Tested with SDK version 4.30.
 
                This driver was developed within a project to enable
                laser beam profiling with ImageJ.
@@ -16,7 +16,7 @@ AUTHOR:        Wenjamin Rosenfeld
 
 YEAR:          2012 - 2014
                 
-VERSION:       1.2
+VERSION:       1.3
 
 LICENSE:       This software is distributed under the BSD license.
                License text is included with the source distribution.
@@ -31,11 +31,25 @@ LICENSE:       This software is distributed under the BSD license.
 
 
 
+
+Supported features:
+
+ - Monochrome and color cameras. The available modes/bit depths can be selected in the properties browser ("Pixel Type").
+
+ - Gain.
+
+ - Binning.
+
+ - ROI.
+
+ - External/internal triggerring.
+
+
 Runtime requirements:
 
 Linux/Windows:
- - The IDS camera driver package must be installed. Follow the installation
-instructions of the manufacturer (http://ids-imaging.com).
+ - The IDS camera driver package must be installed (version 4.30 or higher).
+   Follow the installation instructions of the manufacturer (http://ids-imaging.com).
 
 
 
@@ -54,10 +68,12 @@ Windows:
 
 Notes:
 
- - The "frame rate" parameter is mainly for the internal live mode of the camera which is not used,
-   as for micro manager the pictures are acquired one by one. It does, however, determine
-   the maximal exposure time (inverse of the frame rate).
-   For some camera models it will also limit the real frame rate in "live" acquisition mode of micro manager.
+ - For color, currently only the modes "BGRA8" and "RGBA8" are supported.
+   The "Frame rate" property will not necessarily affect the real frame rate in the live-mode for every camera model.
+   It does, however, determine the maximal exposure time.
 
+ - Gamma correction is deactivated.
 
- - Currently color modes BGRA8/RGBA8 are supported which allow for 1:1 direct transfer of pixel data into MM image buffer
+ - If several cameras are connected, currently only the first camera in the list will be addressed.
+
+ - With Linux and OpenJDK, using the color modes may cause problems (monochrome modes work), with Sun/Oracle JDK all modes work. 
