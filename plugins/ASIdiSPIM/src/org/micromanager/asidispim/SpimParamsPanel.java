@@ -87,6 +87,8 @@ public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerI
    private AtomicBoolean stop_ = new AtomicBoolean(false);
    private final StagePositionUpdater stagePosUpdater_;
    private final JFormattedTextField exposureField_;
+   
+   private static final String ZSTEPTAG = "z-step_um";
 
    public SpimParamsPanel(Devices devices, Properties props, Cameras cameras, 
            Prefs prefs, StagePositionUpdater stagePosUpdater) {
@@ -272,6 +274,7 @@ public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerI
               + NumberUtils.intToDisplayString(timePointsDone));
    }
 
+
    /**
     * Alternative implementation of acquisition that orchestrates image
     * acquisition itself rather than using the acquisition engine
@@ -303,7 +306,6 @@ public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerI
 
       String cameraA = devices_.getMMDevice(Devices.Keys.CAMERAA);
       String cameraB = devices_.getMMDevice(Devices.Keys.CAMERAB);
-      String acqName = gui_.getUniqueAcquisitionName(acqName_);
       String firstSide = (String) firstSide_.getSelectedItem();
       String firstCamera, secondCamera;
       if (firstSide.equals("A")) {
@@ -313,7 +315,11 @@ public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerI
          firstCamera = cameraB;
          secondCamera = cameraA;
       }
-      String rootDir = "";  // TODO: get this from the UI
+
+      // TODO: get these from the UI
+      String acqName = gui_.getUniqueAcquisitionName(acqName_);
+      String rootDir = "";  
+      
       int nrFrames = (Integer) numAcquisitions_.getValue();
       long timeBetweenFramesMs = Math.round ( 
               PanelUtils.getSpinnerValue(acquisitionInterval_) * 1000d);
@@ -325,7 +331,16 @@ public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerI
       boolean autoShutter = core_.getAutoShutter();
       boolean shutterOpen = false;
 
-      
+      // Sanity checks
+      if (firstCamera == null) {
+         ReportingUtils.showError("Please set up a camera first on the Devices Panel");
+         return false;
+      }
+      if (nrSides == 1 && secondCamera == null) {
+         ReportingUtils.showError("2 Sides requested, but second camera not configured." +
+                 "\nPlease configure the Side B camera on the Devices Panel");
+         return false;
+      }
 
       try {
          // empty out circular buffer
@@ -340,7 +355,7 @@ public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerI
          core_.setExposure(cameraA, exposure);
          core_.setExposure(cameraB, exposure);
          gui_.setChannelName(acqName, 0, firstCamera);
-         if (nrSides == 2) {
+         if (nrSides == 2 && secondCamera != null) {
             gui_.setChannelName(acqName, 1, secondCamera);
          }
          long acqStart = System.currentTimeMillis();
@@ -446,11 +461,11 @@ public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerI
                }
             }
  
-            if (core_.isSequenceRunning(cameraA)) {
-               core_.stopSequenceAcquisition(cameraA);
+            if (core_.isSequenceRunning(firstCamera)) {
+               core_.stopSequenceAcquisition(firstCamera);
             }
-            if (core_.isSequenceRunning(cameraB)) {
-               core_.stopSequenceAcquisition(cameraB);
+            if (secondCamera != null && core_.isSequenceRunning(secondCamera)) {
+               core_.stopSequenceAcquisition(secondCamera);
             }
             if (autoShutter) {
                core_.setAutoShutter(true);
@@ -468,11 +483,11 @@ public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerI
          ReportingUtils.showError(ex);
       } finally {
          try {
-            if (core_.isSequenceRunning(cameraA)) {
-               core_.stopSequenceAcquisition(cameraA);
+            if (core_.isSequenceRunning(firstCamera)) {
+               core_.stopSequenceAcquisition(firstCamera);
             }
-            if (core_.isSequenceRunning(cameraB)) {
-               core_.stopSequenceAcquisition(cameraB);
+            if (secondCamera != null && core_.isSequenceRunning(secondCamera)) {
+               core_.stopSequenceAcquisition(secondCamera);
             }
             if (autoShutter) {
                core_.setAutoShutter(true);
