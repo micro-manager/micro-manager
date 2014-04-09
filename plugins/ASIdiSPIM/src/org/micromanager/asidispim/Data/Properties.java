@@ -64,7 +64,7 @@ public class Properties {
       SPIM_NUM_SCANSPERSLICE("SPIMNumScansPerSlice"),
       SPIM_LINESCAN_PERIOD("SingleAxisXPeriod(ms)"),
       SPIM_DELAY_SIDE("SPIMDelayBeforeSide(ms)"),
-      SPIM_DELAY_SLICE("SPIMDelayBeforeSlice(ms)"),
+      SPIM_DELAY_SLICE("SPIMDelayBeforeScan(ms)"),
       SPIM_FIRSTSIDE("SPIMFirstSide"),
       SPIM_STATE("SPIMState"),
       SA_AMPLITUDE("SingleAxisAmplitude(um)"),
