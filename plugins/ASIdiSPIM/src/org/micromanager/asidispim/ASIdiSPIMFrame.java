@@ -95,13 +95,14 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
       // create the panels themselves
       // in some cases dependencies create required ordering
       devicesPanel_ = new DevicesPanel(devices_, props_);
-      spimParamsPanel_ = new SpimParamsPanel(devices_, props_, cameras_, prefs_);
+      
       setupPanelA_ = new SetupPanel(devices_, props_, joystick_, 
             Devices.Sides.A, positions_, cameras_, prefs_);
       setupPanelB_ = new SetupPanel(devices_, props_, joystick_,
             Devices.Sides.B, positions_, cameras_, prefs_);
       // get initial positions, even if user doesn't want continual refresh
       stagePosUpdater_ = new StagePositionUpdater(positions_, props_);  // needed for setup and navigation
+      spimParamsPanel_ = new SpimParamsPanel(devices_, props_, cameras_, prefs_, stagePosUpdater_);
       guiSettingsPanel_ = new GuiSettingsPanel(devices_, props_, prefs_, stagePosUpdater_);
       stagePosUpdater_.oneTimeUpdate();  // needed for NavigationPanel
       navigationPanel_ = new NavigationPanel(devices_, props_, joystick_,

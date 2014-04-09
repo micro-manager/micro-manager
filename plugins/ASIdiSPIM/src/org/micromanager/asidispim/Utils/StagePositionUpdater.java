@@ -25,6 +25,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.swing.Timer;
 
@@ -46,6 +47,7 @@ public class StagePositionUpdater {
    private Positions positions_;
    private final Properties props_;
    private final AcquisitionEngine acqEngine_;
+   private AtomicBoolean acqRunning_ = new AtomicBoolean(false);
    
    /**
     * Utility class for stage position timer.
@@ -115,12 +117,16 @@ public class StagePositionUpdater {
       return false;
    }
    
+   public void setAcqRunning(boolean r) {
+      acqRunning_.set(r);
+   }
+   
    /**
     * Updates the stage positions.  Called whenever the timer "dings", or can be called separately.
     * If acquisition is running then does nothing.
     */
    public void oneTimeUpdate() {
-      if (!acqEngine_.isAcquisitionRunning()) {  // 
+      if (!acqEngine_.isAcquisitionRunning() && !acqRunning_.get() ) {  // 
          // update stage positions in devices
          positions_.refreshStagePositions();
          // notify listeners that positions are updated

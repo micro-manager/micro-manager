@@ -57,7 +57,7 @@ public class PanelUtils {
     * before internal representation as integer (as JSlider requires)
     * @return
     */
-   public JSlider makeSlider(double min, double max, int scalefactor, Properties props, Devices devs,
+   public JSlider makeSlider(double min, double max, final int scalefactor, Properties props, Devices devs,
          Devices.Keys devKey, Properties.Keys propKey) {
       
       class sliderListener implements ChangeListener, UpdateFromPropertyListenerInterface, DevicesListenerInterface {
@@ -90,7 +90,7 @@ public class PanelUtils {
             // TODO refresh limits
             updateFromProperty();
          }
-         
+                
       }
       
       int intmin = (int)(min*scalefactor);
@@ -102,15 +102,18 @@ public class PanelUtils {
       js.addChangeListener(l);
       devs.addListener((DevicesListenerInterface) l);
       props.addListener((UpdateFromPropertyListenerInterface) l);
+
       js.setMajorTickSpacing(intmax-intmin);
       js.setMinorTickSpacing(scalefactor);
       //Create the label table
       Hashtable<Integer, JLabel> labelTable = new Hashtable<Integer, JLabel>();
       labelTable.put( new Integer(intmax), new JLabel(Double.toString(max)) );
       labelTable.put( new Integer(intmin), new JLabel(Double.toString(min)) );
+      
       js.setLabelTable( labelTable );
       js.setPaintTicks(true);
       js.setPaintLabels(true);
+      
       return js;
    }
 
@@ -191,6 +194,18 @@ public class PanelUtils {
       return jsp;
    }
    
+   public static float getSpinnerValue(JSpinner sp) {
+      // TODO figure out why the type of value in the numbermodel is 
+      // changing type to float which necessitates this code
+      float f;
+      try {
+         f = (float) ((Double) sp.getValue()).doubleValue();
+      } catch (Exception ex) {
+         f = ((Float) sp.getValue()).floatValue();
+      }
+      return f;
+   }
+   
    /**
     * Creates spinner for floats in the GUI
     * Implements UpdateFromPropertyListenerInterface, causing updates in the model
@@ -213,20 +228,9 @@ public class PanelUtils {
             devKeys_ = devKeys;
             propKey_ = propKey;
          }
-         
-         private float getSpinnerValue() {
-            // TODO figure out why the type of value in the numbermodel is changing type to float which necessitates this code
-            float f;
-            try {
-               f = (float)((Double)sp_.getValue()).doubleValue();
-            } catch (Exception ex) {
-               f = ((Float)sp_.getValue()).floatValue();
-            }
-            return f;
-         }
-
+                
          public void stateChanged(ChangeEvent ce) {
-            float spinnerValue = getSpinnerValue();
+            float spinnerValue = getSpinnerValue(sp_);
             for (Devices.Keys devKey : devKeys_) {
                // property reads (core calls) are inexpensive compared to 
                //   property writes (serial comm) so only write if needed

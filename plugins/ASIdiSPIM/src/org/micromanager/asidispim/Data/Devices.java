@@ -172,7 +172,7 @@ public class Devices {
    /**
     * Takes a key and side specifier and returns the corresponding side-specific
     * key or else NONE if it cannot be found or doesn't exist. For example,
-    * PIEZOA with side B will return PIZEOB
+    * PIEZOA with side B will return PIEZOB
     * 
     * @param genericKey
     * @param side
@@ -617,7 +617,7 @@ public class Devices {
     * @param key
     * @return
     */
-   DeviceData getDefaultDeviceData(Devices.Keys key) {
+   final DeviceData getDefaultDeviceData(Devices.Keys key) {
       DeviceData d_new;
       switch (key) {
       case CAMERAA:

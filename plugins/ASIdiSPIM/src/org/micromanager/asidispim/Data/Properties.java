@@ -49,8 +49,9 @@ import org.micromanager.utils.ReportingUtils;
 public class Properties {
 
    /**
-    * List of all device adapter properties used.  The enum value (all caps) is used in the Java code.  The corresponding
-    * string value (in quotes) is the value used by the device adapter.
+    * List of all device adapter properties used.  The enum value (all caps) 
+    * is used in the Java code.  The corresponding string value (in quotes) is 
+    * the value used by the device adapter.
     */
    public static enum Keys {
       JOYSTICK_ENABLED("JoystickEnabled"),
@@ -182,7 +183,8 @@ public class Properties {
                return core_.hasProperty(mmDevice, name.toString());
             }
          } catch (Exception ex) {
-            ReportingUtils.showError("Couldn't find property "+ name.toString() + " in device " + mmDevice);
+            ReportingUtils.showError(ex, "Couldn't find property " + 
+                    name.toString() + " in device " + mmDevice);
          }
       }
       return false;
@@ -221,7 +223,8 @@ public class Properties {
                core_.setProperty(mmDevice, name.toString(), strVal);
             }
          } catch (Exception ex) {
-            ReportingUtils.showError("Error setting string property "+ name.toString() + " to " + strVal + " in device " + mmDevice);
+            ReportingUtils.showError(ex, "Error setting string property " + 
+                    name.toString() + " to " + strVal + " in device " + mmDevice);
          }
       }
    }
@@ -249,7 +252,9 @@ public class Properties {
                core_.setProperty(mmDevice, name.toString(), val.toString());
             }
          } catch (Exception ex) {
-            ReportingUtils.showError("Error setting string property "+ name.toString() + " to " + val.toString() + " in device " + mmDevice);
+            ReportingUtils.showError(ex, "Error setting string property " + 
+                    name.toString() + " to " + val.toString() + " in device " + 
+                    mmDevice);
          }
       }
    }
@@ -297,7 +302,8 @@ public class Properties {
                core_.setProperty(mmDevice, name.toString(), intVal);
             }
          } catch (Exception ex) {
-            ReportingUtils.showError("Error setting int property " + name.toString() + " in device " + mmDevice);
+            ReportingUtils.showError(ex, "Error setting int property " + 
+                    name.toString() + " in device " + mmDevice);
          }
       }
    }
@@ -335,7 +341,8 @@ public class Properties {
                core_.setProperty(mmDevice, name.toString(), floatVal);
             }
          } catch (Exception ex) {
-            ReportingUtils.showError("Error setting float property " + name.toString() + " in device " + mmDevice);
+            ReportingUtils.showError(ex, "Error setting float property " + 
+                    name.toString() + " in device " + mmDevice);
          }
       }
    }
@@ -380,7 +387,8 @@ public class Properties {
                mmDevice = devices_.getMMDeviceException(device);
                val = core_.getProperty(mmDevice, name.toString());
             } catch (Exception ex) {
-               ReportingUtils.showError("Could not get property " + name.toString() + " from device " + mmDevice);
+               ReportingUtils.showError(ex, "Could not get property " + 
+                       name.toString() + " from device " + mmDevice);
             }
          }
       }
@@ -449,9 +457,11 @@ public class Properties {
                val = NumberUtils.coreStringToInt(strVal);
             }
          } catch (ParseException ex) {
-            ReportingUtils.showError("Could not parse int value of " + strVal + " for " + name.toString() + " in device " + device.toString());
+            ReportingUtils.showError(ex, "Could not parse int value of " + 
+                    strVal + " for " + name.toString() + " in device " + 
+                    device.toString());
          } catch (NullPointerException ex) {
-            ReportingUtils.showError("Null Pointer error in function getPropValueInteger");
+            ReportingUtils.showError(ex, "Null Pointer error in function getPropValueInteger");
          }
       }
       return val;
@@ -490,14 +500,16 @@ public class Properties {
               val = (float)NumberUtils.coreStringToDouble(strVal);
            }
         } catch (ParseException ex) {
-           ReportingUtils.showError("Could not parse int value of " + strVal + " for " + name.toString() + " in device " + device.toString());
+           ReportingUtils.showError(ex, "Could not parse int value of " + 
+                   strVal + " for " + name.toString() + " in device " + 
+                   device.toString());
         } catch (NullPointerException ex) {
-           ReportingUtils.showError("Null Pointer error in function getPropValueFLoat");
+           ReportingUtils.showError(ex, "Null Pointer error in function getPropValueFLoat");
         }
      }
      return val;
   }
-  
+ 
   
   /**
    * Used to add classes implementing DeviceListenerInterface as listeners

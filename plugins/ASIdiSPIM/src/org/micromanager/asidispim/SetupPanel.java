@@ -308,7 +308,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       sheetPanel.add(new JLabel("Sheet width:"));
       sheetPanel.add(new JLabel(""), "span 2");   // TODO update this label with current value
       JSlider tmp_sl = pu.makeSlider(0, // 0 is min amplitude
-              props_.getPropValueFloat(micromirrorDeviceKey_, Properties.Keys.MAX_DEFLECTION_X) - props_.getPropValueFloat(micromirrorDeviceKey_, Properties.Keys.MIN_DEFLECTION_X), // compute max amplitude
+              props_.getPropValueFloat(micromirrorDeviceKey_,Properties.Keys.MAX_DEFLECTION_X) - props_.getPropValueFloat(micromirrorDeviceKey_, Properties.Keys.MIN_DEFLECTION_X), // compute max amplitude
               1000, // the scale factor between internal integer representation and float representation
               props_, devices_, micromirrorDeviceKey_, Properties.Keys.SA_AMPLITUDE_X_DEG);
       sheetPanel.add(tmp_sl, "span 4, growx, center, wrap");

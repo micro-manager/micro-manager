@@ -342,7 +342,6 @@ public class Positions {
    private static String posToDisplayStringUm(Double pos) {
       if (pos != null) {
          return NumberUtils.doubleToDisplayString(pos)
-//         return NumberUtils.doubleToDisplayString(Math.round(1000*pos)/1000)  // rounds to two decimal places 
                + " \u00B5"+"m";
       }
       return "";
@@ -351,7 +350,6 @@ public class Positions {
    private static String posToDisplayStringDeg(Double pos) {
       if (pos != null) {
          return NumberUtils.doubleToDisplayString(pos)
-//         return NumberUtils.doubleToDisplayString(Math.round(100*pos)/100)  // rounds to two decimal places
                + " \u00B0"; 
       }
       return "";
