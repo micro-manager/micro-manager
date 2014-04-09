@@ -15,7 +15,7 @@ runnable = new Runnable() {
 		channel = channels.get(count);
 		// deal with useChannel_ flag
 	   round = 0;
-		while (!channel.useChannel_ && round < 2) {
+		while (!channel.useChannel && round < 2) {
 			count++;
 			if (count == channels.size) {
 				count = 0;
@@ -25,9 +25,9 @@ runnable = new Runnable() {
 		}
 		// show message and wzit for response
 		GenericDialog dlg = new GenericDialog("Manual Acquisition", null);
-      dlg.addMessage("Move filters for channel " + channel.config_ + " in place");
+      dlg.addMessage("Move filters for channel " + channel.config + " in place");
       dlg.showDialog();
-      print("Move channel " + channel.config_ + " in place");
+      print("Move channel " + channel.config + " in place");
       ++count;
 		if (count >= channels.size)
 			count = 0;
