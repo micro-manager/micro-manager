@@ -269,10 +269,17 @@ const char* const g_SPIMNumScansPerSlicePropertyName = "SPIMNumScansPerSlice";
 const char* const g_SPIMNumSidesPropertyName = "SPIMNumSides";
 const char* const g_SPIMFirstSidePropertyName = "SPIMFirstSide";
 const char* const g_SPIMNumRepeatsPropertyName = "SPIMNumRepeats";
+const char* const g_SPIMLaserOutputModePropertyName = "SPIMLaserMode";
 const char* const g_SPIMArmForTTLPropertyName = "SPIMArm";
 const char* const g_SPIMStatePropertyName = "SPIMState";
-const char* const g_SPIMDelayBeforeSlicePropertyName = "SPIMDelayBeforeSlice(ms)";
+const char* const g_SPIMModePropertyName = "SPIMModeByte";
+const char* const g_SPIMDelayBeforeRepeatPropertyName = "SPIMDelayBeforeRepeat(ms)";
 const char* const g_SPIMDelayBeforeSidePropertyName = "SPIMDelayBeforeSide(ms)";
+const char* const g_SPIMDelayBeforeScanPropertyName = "SPIMDelayBeforeScan(ms)";
+const char* const g_SPIMDelayBeforeCameraPropertyName = "SPIMDelayBeforeCamera(ms)";
+const char* const g_SPIMDelayBeforeLaserPropertyName = "SPIMDelayBeforeLaser(ms)";
+const char* const g_SPIMCameraDurationPropertyName = "SPIMCameraDuration(ms)";
+const char* const g_SPIMLaserDurationPropertyName = "SPIMLaserDuration(ms)";
 
 // SPIM enums
 // which side first
@@ -288,6 +295,10 @@ const char g_SPIMStateCode_Stop = 'P';
 const char g_SPIMStateCode_Start = 'S';
 const char g_SPIMStateCode_Arm =  'a';
 const char g_SPIMStateCode_Armed ='A';
+// SPIM laser output modes
+const char* const g_SPIMLaserOutputMode_0 = "individual shutters";
+const char* const g_SPIMLaserOutputMode_1 = "shutter + side";
+const char* const g_SPIMLaserOutputMode_2 = "side + side";
 // SPIM state on piezo card
 const char g_PZSPIMStateCode_Idle = 'I';
 const char g_PZSPIMStateCode_Arm =  'a';

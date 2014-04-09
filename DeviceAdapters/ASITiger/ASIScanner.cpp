@@ -329,13 +329,18 @@ int CScanner::Initialize()
       AddAllowedValue(g_SPIMFirstSidePropertyName, g_SPIMSideBFirst);
       UpdateProperty(g_SPIMFirstSidePropertyName);
 
+      pAct = new CPropertyAction (this, &CScanner::OnSPIMModeByte);
+      CreateProperty(g_SPIMModePropertyName, "1", MM::Integer, false, pAct);
+      UpdateProperty(g_SPIMModePropertyName);
+
       pAct = new CPropertyAction (this, &CScanner::OnSPIMDelayBeforeSide);
       CreateProperty(g_SPIMDelayBeforeSidePropertyName, "0", MM::Float, false, pAct);
       UpdateProperty(g_SPIMDelayBeforeSidePropertyName);
 
-      pAct = new CPropertyAction (this, &CScanner::OnSPIMDelayBeforeSlice);
-      CreateProperty(g_SPIMDelayBeforeSlicePropertyName, "0", MM::Float, false, pAct);
-      UpdateProperty(g_SPIMDelayBeforeSlicePropertyName);
+      pAct = new CPropertyAction (this, &CScanner::OnSPIMDelayBeforeScan);
+      // as of v2.85 this is delay before scan starts, previously was OnSPIMDelayBeforeSlice which included camera
+      CreateProperty(g_SPIMDelayBeforeScanPropertyName, "0", MM::Float, false, pAct);
+      UpdateProperty(g_SPIMDelayBeforeScanPropertyName);
 
       pAct = new CPropertyAction (this, &CScanner::OnSPIMState);
       CreateProperty(g_SPIMStatePropertyName, g_SPIMStateIdle, MM::String, false, pAct);
@@ -343,6 +348,37 @@ int CScanner::Initialize()
       AddAllowedValue(g_SPIMStatePropertyName, g_SPIMStateArmed);
       AddAllowedValue(g_SPIMStatePropertyName, g_SPIMStateRunning);
       UpdateProperty(g_SPIMStatePropertyName);
+
+      if (firmwareVersion_ > 2.84)
+      {
+         pAct = new CPropertyAction (this, &CScanner::OnSPIMDelayBeforeRepeat);
+         CreateProperty(g_SPIMDelayBeforeRepeatPropertyName, "0", MM::Float, false, pAct);
+         UpdateProperty(g_SPIMDelayBeforeRepeatPropertyName);
+
+         pAct = new CPropertyAction (this, &CScanner::OnSPIMDelayBeforeCamera);
+         CreateProperty(g_SPIMDelayBeforeCameraPropertyName, "0", MM::Float, false, pAct);
+         UpdateProperty(g_SPIMDelayBeforeCameraPropertyName);
+
+         pAct = new CPropertyAction (this, &CScanner::OnSPIMDelayBeforeLaser);
+         CreateProperty(g_SPIMDelayBeforeLaserPropertyName, "0", MM::Float, false, pAct);
+         UpdateProperty(g_SPIMDelayBeforeLaserPropertyName);
+
+         pAct = new CPropertyAction (this, &CScanner::OnSPIMCameraDuration);
+         CreateProperty(g_SPIMCameraDurationPropertyName, "0", MM::Float, false, pAct);
+         UpdateProperty(g_SPIMCameraDurationPropertyName);
+
+         pAct = new CPropertyAction (this, &CScanner::OnSPIMLaserDuration);
+         CreateProperty(g_SPIMLaserDurationPropertyName, "0", MM::Float, false, pAct);
+         UpdateProperty(g_SPIMLaserDurationPropertyName);
+
+         pAct = new CPropertyAction (this, &CScanner::OnSPIMLaserOutputMode);
+         CreateProperty(g_SPIMLaserOutputModePropertyName, "0", MM::String, false, pAct);
+         AddAllowedValue(g_SPIMLaserOutputModePropertyName, g_SPIMLaserOutputMode_0);
+         AddAllowedValue(g_SPIMLaserOutputModePropertyName, g_SPIMLaserOutputMode_1);
+         AddAllowedValue(g_SPIMLaserOutputModePropertyName, g_SPIMLaserOutputMode_2);
+         UpdateProperty(g_SPIMLaserOutputModePropertyName);
+      }
+
    }
 
    // add ring buffer properties if supported (starting 2.81)
@@ -1900,7 +1936,7 @@ int CScanner::OnJoystickSlowSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    else if (eAct == MM::AfterSet) {
       pProp->Get(tmp);
-     char joystickMirror[MM::MaxStrLength];
+      char joystickMirror[MM::MaxStrLength];
       RETURN_ON_MM_ERROR ( GetProperty(g_JoystickMirrorPropertyName, joystickMirror) );
       if (strcmp(joystickMirror, g_YesState) == 0)
          command << addressChar_ << "JS Y=-" << tmp;
@@ -2023,7 +2059,7 @@ int CScanner::OnJoystickSelectY(MM::PropertyBase* pProp, MM::ActionType eAct)
          case 3: success = pProp->Set(g_JSCode_3); break;
          case 22: success = pProp->Set(g_JSCode_22); break;
          case 23: success = pProp->Set(g_JSCode_23); break;
-         default: success=0;
+         default: success = 0;
       }
       // don't complain if value is unsupported, just leave as-is
    }
@@ -2145,6 +2181,7 @@ int CScanner::OnSPIMNumSides(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << addressChar_ << "NR Z?";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A Z="));
       RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
+      tmp &= (0x03);          // mask off all but the two LSBs
       if (tmp==3)   tmp = 2;  // 3 means two-sided but opposite side
       if (tmp==0)   tmp = 1;  // 0 means one-sided but opposite side
       if (!pProp->Set(tmp))
@@ -2159,6 +2196,12 @@ int CScanner::OnSPIMNumSides(MM::PropertyBase* pProp, MM::ActionType eAct)
          if (tmp==1)   tmp = 0;
          if (tmp==2)   tmp = 3;
       }
+      command << addressChar_ << "NR Z?";
+      long tmp2;
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A Z="));
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp2) );
+      tmp += (tmp2 & (0xFC));  // preserve the upper 6 bits from before, change only the two LSBs
+      command.str("");
       command << addressChar_ << "NR Z=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
    }
@@ -2177,6 +2220,7 @@ int CScanner::OnSPIMFirstSide(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << addressChar_ << "NR Z?";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A Z="));
       RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
+      tmp &= (0x03);          // mask off all but the two LSBs
       if (tmp==3 || tmp==0)  // if opposite side
       {
          success = pProp->Set(g_SPIMSideBFirst);
@@ -2202,6 +2246,82 @@ int CScanner::OnSPIMFirstSide(MM::PropertyBase* pProp, MM::ActionType eAct)
          if (NumSides==1)   tmp = 0;
          if (NumSides==2)   tmp = 3;
       }
+      command << addressChar_ << "NR Z?";
+      long tmp2;
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A Z="));
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp2) );
+      tmp += (tmp2 & (0xFC));  // preserve the upper 6 bits from before, change only the two LSBs
+      command.str("");
+      command << addressChar_ << "NR Z=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}
+
+int CScanner::OnSPIMLaserOutputMode(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   long tmp = 0;
+   bool success;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << addressChar_ << "NR Z?";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A Z="));
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
+      tmp = tmp >> 2;   // shift left to get bits 2 and 3 in position of two LSBs
+      tmp &= (0x03);    // mask off all but what used to be bits 2 and 3; this mitigates uncertainty of whether 1 or 0 was shifted in
+      switch (tmp)
+      {
+         case 0: success = pProp->Set(g_SPIMLaserOutputMode_0); break;
+         case 1: success = pProp->Set(g_SPIMLaserOutputMode_1); break;
+         case 2: success = pProp->Set(g_SPIMLaserOutputMode_2); break;
+         default: success = 0;
+      }
+      if (!success)
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      string tmpstr;
+      pProp->Get(tmpstr);
+      if (tmpstr.compare(g_SPIMLaserOutputMode_0) == 0)
+         tmp = 0;
+      else if (tmpstr.compare(g_SPIMLaserOutputMode_1) == 0)
+         tmp = 1;
+      else if (tmpstr.compare(g_SPIMLaserOutputMode_2) == 0)
+         tmp = 2;
+      else
+         return DEVICE_INVALID_PROPERTY_VALUE;
+      tmp = tmp << 2;  // right shift to get the value to bits 2 and 3
+      command << addressChar_ << "NR Z?";
+      long tmp2;
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A Z="));
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp2) );
+      tmp += (tmp2 & (0xF3));  // preserve the upper 4 bits and the two LSBs from prior setting, add bits 2 and 3 in manually
+      command.str("");
+      command << addressChar_ << "NR Z=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}
+
+int CScanner::OnSPIMModeByte(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   long tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << addressChar_ << "NR Z?";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A Z="));
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
+      if (!pProp->Set(tmp))
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      pProp->Get(tmp);
       command << addressChar_ << "NR Z=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
    }
@@ -2230,6 +2350,28 @@ int CScanner::OnSPIMNumRepeats(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
+int CScanner::OnSPIMDelayBeforeScan(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   double tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << addressChar_ << "NV X?";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A X="));
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
+      if (!pProp->Set(tmp))
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      pProp->Get(tmp);
+      command << addressChar_ << "NV X=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}
+
 int CScanner::OnSPIMDelayBeforeSide(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    ostringstream command; command.str("");
@@ -2252,7 +2394,7 @@ int CScanner::OnSPIMDelayBeforeSide(MM::PropertyBase* pProp, MM::ActionType eAct
    return DEVICE_OK;
 }
 
-int CScanner::OnSPIMDelayBeforeSlice(MM::PropertyBase* pProp, MM::ActionType eAct)
+int CScanner::OnSPIMDelayBeforeRepeat(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    ostringstream command; command.str("");
    double tmp = 0;
@@ -2260,15 +2402,103 @@ int CScanner::OnSPIMDelayBeforeSlice(MM::PropertyBase* pProp, MM::ActionType eAc
    {
       if (!refreshProps_ && initialized_)
          return DEVICE_OK;
-      command << addressChar_ << "NV X?";
-      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A X="));
+      command << addressChar_ << "NV Z?";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A Z="));
       RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
    else if (eAct == MM::AfterSet) {
       pProp->Get(tmp);
-      command << addressChar_ << "NV X=" << tmp;
+      command << addressChar_ << "NV Z=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}
+
+int CScanner::OnSPIMDelayBeforeCamera(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   double tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << addressChar_ << "NV T?";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A T="));
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
+      if (!pProp->Set(tmp))
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      pProp->Get(tmp);
+      command << addressChar_ << "NV T=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}
+
+int CScanner::OnSPIMDelayBeforeLaser(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   double tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << addressChar_ << "NV R?";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A R="));
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
+      if (!pProp->Set(tmp))
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      pProp->Get(tmp);
+      command << addressChar_ << "NV R=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}
+
+int CScanner::OnSPIMLaserDuration(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   double tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << addressChar_ << "RT R?";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A R="));
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
+      if (!pProp->Set(tmp))
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      pProp->Get(tmp);
+      command << addressChar_ << "RT R=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}
+
+int CScanner::OnSPIMCameraDuration(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   double tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << addressChar_ << "RT T?";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A T="));
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
+      if (!pProp->Set(tmp))
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      pProp->Get(tmp);
+      command << addressChar_ << "RT T=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
    }
    return DEVICE_OK;

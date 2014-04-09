@@ -114,10 +114,17 @@ public:
    int OnSPIMNumSlices        (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSPIMNumSides         (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSPIMFirstSide        (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSPIMLaserOutputMode  (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSPIMModeByte         (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSPIMNumRepeats       (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSPIMState            (MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnSPIMDelayBeforeSlice (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSPIMCameraDuration   (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSPIMLaserDuration    (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSPIMDelayBeforeScan  (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSPIMDelayBeforeCamera(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSPIMDelayBeforeLaser (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSPIMDelayBeforeSide  (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSPIMDelayBeforeRepeat(MM::PropertyBase* pProp, MM::ActionType eAct);
    // ring buffer properties
    int OnRBDelayBetweenPoints (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnRBMode               (MM::PropertyBase* pProp, MM::ActionType eAct);
