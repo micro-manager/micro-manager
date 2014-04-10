@@ -21,6 +21,24 @@ m4_include([configure.common])
 # TODO Use proper condition
 AM_CONDITIONAL(BUILD_MMCOREJ, [test "$IMAGEJDIR" != "no"])
 
+
+AC_ARG_ENABLE([hardcoded-mmcorej-library-path],
+   [AS_HELP_STRING([--disable-hardcoded-mmcorej-library-path],
+                   [Do not use a fallback absolute path to locate the MMCoreJ_wrap native library])],
+   [],
+   [enable_hardcoded_mmcorej_library_path=yes])
+if test "x$enable_hardcoded_mmcorej_library_path" = xyes; then
+   # The path to be hard-coded into MMCoreJ's Java class loading code. This
+   # should be the value of pkglibdir at build time (not configuration time),
+   # so we use an escaped make variable substitution (recall that normal make
+   # variables are recursively expanded).
+   MMCOREJ_LIBRARY_PATH="\$(pkglibdir)"
+else
+   MMCOREJ_LIBRARY_PATH=
+fi
+AC_SUBST([MMCOREJ_LIBRARY_PATH])
+
+
 if test "$IMAGEJDIR" != "no" ; then
 
    #----------------------------------------------------------------
