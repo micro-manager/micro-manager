@@ -7,7 +7,7 @@
     <MM_BOOST_INCLUDEDIR>$(MM_3RDPARTYPUBLIC)\boost-versions\boost_1_55_0</MM_BOOST_INCLUDEDIR>
     <MM_BOOST_LIBDIR>$(MM_3RDPARTYPUBLIC)\boost-versions\boost_1_55_0-lib-$(Platform)</MM_BOOST_LIBDIR>
     <MM_ZLIB_INCLUDEDIR>$(MM_3RDPARTYPUBLIC)\zlib\zlib-1.2.8</MM_ZLIB_INCLUDEDIR>
-    <MM_ZLIB_LIBDIR>$(MM_3RDPARTYPUBLIC)\zlib\zlib-1.2.8-bin\VS2008\$(Platform)\$(Configuration)</MM_ZLIB_LIBDIR>
+    <MM_ZLIB_LIBDIR>$(MM_3RDPARTYPUBLIC)\zlib\zlib-1.2.8-bin\VS2010\$(Platform)\$(Configuration)</MM_ZLIB_LIBDIR>
     <MM_ZLIB_LIBADD>zlibstat.lib</MM_ZLIB_LIBADD>
     <MM_SWIG>$(MM_3RDPARTYPUBLIC)\swig\swig.exe</MM_SWIG>
     <MM_PROTOBUF_INCLUDEDIR>$(MM_3RDPARTYPUBLIC)\google\protobuf-2.5.0_build\VS2010\include</MM_PROTOBUF_INCLUDEDIR>
