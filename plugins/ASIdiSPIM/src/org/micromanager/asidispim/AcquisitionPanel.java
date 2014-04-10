@@ -20,6 +20,7 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 package org.micromanager.asidispim;
 
+import java.awt.Insets;
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.acquisition.AcquisitionWrapperEngine;
 import org.micromanager.api.ScriptInterface;
@@ -45,6 +46,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.swing.JFormattedTextField;
+import javax.swing.JTextField;
 
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
@@ -58,7 +60,7 @@ import org.micromanager.utils.MMScriptException;
  * @author Jon
  */
 @SuppressWarnings("serial")
-public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerInterface {
+public class AcquisitionPanel extends ListeningJPanel implements DevicesListenerInterface {
 
    private final Devices devices_;
    private final Properties props_;
@@ -80,6 +82,9 @@ public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerI
    private final JButton buttonStop_;
    private final JPanel acqPanel_;
    private final JPanel loopPanel_;
+   private final JPanel savePanel_;
+   private final JTextField rootField_;
+   private final JTextField nameField_;
    private final JLabel numTimePointsDoneLabel_;
    private int numTimePointsDone_;
    private final JLabel nextTimePointLabel_;
@@ -90,7 +95,7 @@ public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerI
    
    private static final String ZSTEPTAG = "z-step_um";
 
-   public SpimParamsPanel(Devices devices, Properties props, Cameras cameras, 
+   public AcquisitionPanel(Devices devices, Properties props, Cameras cameras, 
            Prefs prefs, StagePositionUpdater stagePosUpdater) {
       super("Acquisition",
               new MigLayout(
@@ -207,6 +212,43 @@ public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerI
       loopPanel_.add(acquisitionInterval_, "wrap");
 
       // end repeat sub-panel
+      
+      
+      // start savePanel
+      savePanel_ = new JPanel(new MigLayout(
+              "",
+              "[right]16[center]16[left]",
+              "[]12[]"));
+      savePanel_.setBorder(makeTitledBorder("Save Settings"));
+      
+      savePanel_.add(new JLabel ("Directory root"));
+
+      rootField_ = new JTextField();
+      savePanel_.add(rootField_);
+
+      JButton browseRootButton = new JButton();
+      browseRootButton.addActionListener(new ActionListener() {
+
+         @Override
+         public void actionPerformed(final ActionEvent e) {
+            // setRootDirectory();
+         }
+      });
+      browseRootButton.setMargin(new Insets(2, 5, 2, 5));
+      browseRootButton.setText("...");
+      //browseRootButton_.setBounds(445, 30, 47, 24);
+      savePanel_.add(browseRootButton, "wrap");
+
+      JLabel namePrefixLabel = new JLabel();
+      namePrefixLabel.setText("Name prefix");
+      savePanel_.add(namePrefixLabel);
+
+      nameField_ = new JTextField();
+      savePanel_.add(nameField_, "wrap");
+      
+      
+      // end save panel
+      
 
       buttonStart_ = new JButton("Start!");
       buttonStart_.addActionListener(new ActionListener() {
@@ -255,10 +297,11 @@ public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerI
       // set up tabbed pane
       add(acqPanel_, "dock west");
       add(loopPanel_, "cell 2 0 2 3");
-      add(buttonStart_, "cell 2 7, center");
-      add(buttonStop_, "cell 3 7, center");
-      add(numTimePointsDoneLabel_, "cell 2 8 2 1, center");
-      add(nextTimePointLabel_, "cell 2 9 2 1, center");
+      add(savePanel_, "cell 2 7");
+      add(buttonStart_, "cell 2 8, center");
+      add(buttonStop_, "cell 3 8, center");
+      add(numTimePointsDoneLabel_, "cell 2 9 2 1, center");
+      add(nextTimePointLabel_, "cell 2 10 2 1, center");
 
    }//end constructor
 
@@ -276,7 +319,7 @@ public class SpimParamsPanel extends ListeningJPanel implements DevicesListenerI
 
 
    /**
-    * Alternative implementation of acquisition that orchestrates image
+    * Implementation of acquisition that orchestrates image
     * acquisition itself rather than using the acquisition engine
     *
     * @return

@@ -68,7 +68,7 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
    private Cameras cameras_;
    
    private final DevicesPanel devicesPanel_;
-   private final SpimParamsPanel spimParamsPanel_;
+   private final AcquisitionPanel spimParamsPanel_;
    private final SetupPanel setupPanelA_;
    private final SetupPanel setupPanelB_;
    private final NavigationPanel navigationPanel_;
@@ -102,7 +102,7 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
             Devices.Sides.B, positions_, cameras_, prefs_);
       // get initial positions, even if user doesn't want continual refresh
       stagePosUpdater_ = new StagePositionUpdater(positions_, props_);  // needed for setup and navigation
-      spimParamsPanel_ = new SpimParamsPanel(devices_, props_, cameras_, prefs_, stagePosUpdater_);
+      spimParamsPanel_ = new AcquisitionPanel(devices_, props_, cameras_, prefs_, stagePosUpdater_);
       guiSettingsPanel_ = new GuiSettingsPanel(devices_, props_, prefs_, stagePosUpdater_);
       stagePosUpdater_.oneTimeUpdate();  // needed for NavigationPanel
       navigationPanel_ = new NavigationPanel(devices_, props_, joystick_,
