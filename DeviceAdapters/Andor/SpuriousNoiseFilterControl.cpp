@@ -99,26 +99,16 @@ int SpuriousNoiseFilterControl::OnSpuriousNoiseFilter(MM::PropertyBase* pProp, M
       if(newMode == currentMode_)
         return DEVICE_OK;
 
-      bool acquiring = camera_->sequenceRunning_;
-      if (acquiring)
-        camera_->StopSequenceAcquisition(true);
-
-      if (camera_->sequenceRunning_)
-        return ERR_BUSY_ACQUIRING;
-
-      camera_->SetToIdle();
-        
+      camera_->PrepareToApplySetting();
       {
          DriverGuard dg(camera_);
          unsigned int ret = Filter_SetMode(static_cast<long>(newMode));
          if (ret != DRV_SUCCESS)
            return DEVICE_CAN_NOT_SET_PROPERTY;
       }
-        
+      camera_->ResumeAfterApplySetting();
+
       currentMode_ = newMode;
-      if (acquiring)
-        camera_->RestartSequenceAcquisition();
-      camera_->PrepareSnap();
    }
    else if (eAct == MM::BeforeGet)
    {
@@ -137,26 +127,14 @@ int SpuriousNoiseFilterControl::OnSpuriousNoiseFilterThreshold(MM::PropertyBase*
       if(almostEqual(spuriousNoiseFilterThreshold,spuriousNoiseFilterThreshold_,4))
         return DEVICE_OK;
 
-      bool acquiring = camera_->sequenceRunning_;
-      if (acquiring)
-        camera_->StopSequenceAcquisition(true);
-
-      if (camera_->sequenceRunning_)
-        return ERR_BUSY_ACQUIRING;
-
-      camera_->SetToIdle();
-          
+      camera_->PrepareToApplySetting();
       {
          DriverGuard dg(camera_);
          unsigned int ret  = Filter_SetThreshold(static_cast<float>(spuriousNoiseFilterThreshold));
          if (ret != DRV_SUCCESS)
            return DEVICE_CAN_NOT_SET_PROPERTY;
       }
-        
-      spuriousNoiseFilterThreshold_ = spuriousNoiseFilterThreshold;
-      if (acquiring)
-        camera_->RestartSequenceAcquisition();
-      camera_->PrepareSnap();
+      camera_->ResumeAfterApplySetting();
   }
   else if (eAct == MM::BeforeGet)
   {

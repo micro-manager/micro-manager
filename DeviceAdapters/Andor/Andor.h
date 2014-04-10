@@ -122,7 +122,10 @@ public:
 
    int StopSequenceAcquisition(); // temporary=true 
    int StopSequenceAcquisition(bool temporary);
-   int RestartSequenceAcquisition();
+
+   void PrepareToApplySetting();
+   void ResumeAfterApplySetting();
+
 
    bool IsCapturing(){return sequenceRunning_;};
 
@@ -197,8 +200,8 @@ private:
    bool IsAcquiring();
 
    void LogStatus();
-	int PrepareSnap();
-	unsigned int UpdateSnapTriggerMode();
+   int PrepareSnap();
+   unsigned int UpdateSnapTriggerMode();
    std::string GetTriggerModeString(int mode);
    unsigned int ApplyTriggerMode(int mode);
    int GetTriggerModeInt(std::string mode);
@@ -247,6 +250,10 @@ private:
 
    unsigned int UpdateTimings();
    unsigned int ApplyShutterSettings();
+
+   enum STATE { PREPAREDFORSINGLESNAP, SEQUENCEACQUISITION };
+   STATE stateBeforePause_;
+   int RestartSequenceAcquisition();
 
 #ifdef __linux__
    HDEVMODULE hAndorDll; 

@@ -253,7 +253,8 @@ countConvertWavelength_(0.0),
 optAcquireModeStr_(""),
 optAcquireDescriptionStr_(""),
 iSnapImageDelay_(0),
-bSnapImageWaitForReadout_(false)
+bSnapImageWaitForReadout_(false),
+stateBeforePause_(PREPAREDFORSINGLESNAP)
 { 
    InitializeDefaultErrorMessages();
 
@@ -4031,6 +4032,27 @@ int AndorCamera::GetListOfAvailableCameras()
    {
       return StartSequenceAcquisition(sequenceLength_ - imageCounter_, intervalMs_, stopOnOverflow_);
    }
+
+   void AndorCamera::PrepareToApplySetting()
+   {
+      stateBeforePause_ = PREPAREDFORSINGLESNAP;
+      if (sequenceRunning_)
+      {
+         stateBeforePause_ = SEQUENCEACQUISITION;
+         StopSequenceAcquisition(true);
+      }
+
+      SetToIdle();
+   }
+
+   void AndorCamera::ResumeAfterApplySetting()
+   {
+      if (SEQUENCEACQUISITION == stateBeforePause_)
+         RestartSequenceAcquisition();
+      else
+         PrepareSnap();
+   }
+
 
    /**
    * Stop Seq sequence acquisition
