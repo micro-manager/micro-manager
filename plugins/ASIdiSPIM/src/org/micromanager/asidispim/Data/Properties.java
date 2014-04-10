@@ -180,20 +180,24 @@ public class Properties {
                || pluginInts_.containsKey(name);
       } else {
          String mmDevice = null;
-         try {
-            if (ignoreError) {
+         if (ignoreError) {
+            try {
                mmDevice = devices_.getMMDevice(device);
                return ((mmDevice!=null) &&  core_.hasProperty(mmDevice, name.toString()));
-            } else {
+            } catch (Exception ex){
+               // do nothing
+            }
+         } else {
+            try {
                mmDevice = devices_.getMMDeviceException(device);
                return core_.hasProperty(mmDevice, name.toString());
+            } catch (Exception ex) {
+               ReportingUtils.showError(ex, "Couldn't find property " + 
+                     name.toString() + " in device " + mmDevice);
             }
-         } catch (Exception ex) {
-            ReportingUtils.showError(ex, "Couldn't find property " + 
-                    name.toString() + " in device " + mmDevice);
          }
+         return false;
       }
-      return false;
    }
    
    /**
@@ -218,24 +222,25 @@ public class Properties {
          pluginStrings_.put(name, strVal);
       } else {
          String mmDevice = null;
-         try {
-            if (ignoreError) {
-               mmDevice = devices_.getMMDevice(device);
-               if (mmDevice != null) {
-                  if (core_.hasProperty(mmDevice, name.toString())) {
-                     core_.setProperty(mmDevice, name.toString(), strVal);
-                  } else {
-                     ReportingUtils.logMessage("Device " + mmDevice + 
-                             " does not have property: " + name.toString());
-                  }
+         if (ignoreError) {
+            mmDevice = devices_.getMMDevice(device);
+            if (mmDevice != null) {
+               try {
+                  core_.setProperty(mmDevice, name.toString(), strVal);
+               } catch (Exception ex) {
+                  // log to file but nothing else
+                  ReportingUtils.logMessage("Device " + mmDevice + 
+                        " does not have property: " + name.toString());
                }
-            } else { 
+            }
+         } else {
+            try {
                mmDevice = devices_.getMMDeviceException(device);
                core_.setProperty(mmDevice, name.toString(), strVal);
-            }
-         } catch (Exception ex) {
-            ReportingUtils.showError(ex, "Error setting string property " + 
+            } catch (Exception ex) {
+               ReportingUtils.showError(ex, "Error setting string property " + 
                     name.toString() + " to " + strVal + " in device " + mmDevice);
+            }
          }
       }
    }
@@ -252,20 +257,24 @@ public class Properties {
          pluginStrings_.put(name, val.toString());
       } else {
          String mmDevice = null;
-         try {
-            if (ignoreError) {
-               mmDevice = devices_.getMMDevice(device);
-               if (mmDevice != null) {
+         if (ignoreError) {
+            mmDevice = devices_.getMMDevice(device);
+            if (mmDevice != null) {
+               try {
                   core_.setProperty(mmDevice, name.toString(), val.toString());
+               } catch (Exception ex) {
+                  // do nothing
                }
-            } else { 
+            }
+         } else {
+            try {
                mmDevice = devices_.getMMDeviceException(device);
                core_.setProperty(mmDevice, name.toString(), val.toString());
-            }
-         } catch (Exception ex) {
-            ReportingUtils.showError(ex, "Error setting string property " + 
+            } catch (Exception ex) {
+               ReportingUtils.showError(ex, "Error setting string property " + 
                     name.toString() + " to " + val.toString() + " in device " + 
                     mmDevice);
+            }
          }
       }
    }
@@ -302,19 +311,23 @@ public class Properties {
          pluginInts_.put(name, (Integer)intVal);
       } else {
          String mmDevice = null;
-         try {
-            if (ignoreError) {
-               mmDevice = devices_.getMMDevice(device);
-               if (mmDevice != null) {
+         if (ignoreError) {
+            mmDevice = devices_.getMMDevice(device);
+            if (mmDevice != null) {
+               try {
                   core_.setProperty(mmDevice, name.toString(), intVal);
+               } catch (Exception ex) {
+                  // do nothing
                }
-            } else {
+            }
+         } else {
+            try {
                mmDevice = devices_.getMMDeviceException(device);
                core_.setProperty(mmDevice, name.toString(), intVal);
-            }
-         } catch (Exception ex) {
-            ReportingUtils.showError(ex, "Error setting int property " + 
+            } catch (Exception ex) {
+               ReportingUtils.showError(ex, "Error setting int property " + 
                     name.toString() + " in device " + mmDevice);
+            }
          }
       }
    }
@@ -341,19 +354,23 @@ public class Properties {
          pluginFloats_.put(name, (Float)floatVal);
       } else {
          String mmDevice = null;
-         try {
-            if (ignoreError) {
-               mmDevice = devices_.getMMDevice(device);
-               if (mmDevice != null) {
+         if (ignoreError) {
+            mmDevice = devices_.getMMDevice(device);
+            if (mmDevice != null) {
+               try {
                   core_.setProperty(mmDevice, name.toString(), floatVal);
+               } catch (Exception ex) {
+                  // do nothing
                }
-            } else {
+            }
+         } else {
+            try {
                mmDevice = devices_.getMMDeviceException(device);
                core_.setProperty(mmDevice, name.toString(), floatVal);
-            }
-         } catch (Exception ex) {
-            ReportingUtils.showError(ex, "Error setting float property " + 
+            } catch (Exception ex) {
+               ReportingUtils.showError(ex, "Error setting float property " + 
                     name.toString() + " in device " + mmDevice);
+            }
          }
       }
    }
