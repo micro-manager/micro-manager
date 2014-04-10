@@ -269,7 +269,7 @@ public class MMAcquisition {
 
       TaggedImageStorage imageFileManager;
       String name = name_;
-
+      
       if (virtual_ && existing_) {
          String dirName = rootDirectory_ + File.separator + name;
          try {
@@ -293,6 +293,7 @@ public class MMAcquisition {
                String acqDirectory = createAcqDirectory(rootDirectory_, name_);
                if (summary_ != null) {
                   summary_.put("Prefix", acqDirectory);
+                  summary_.put("Channels", numChannels_);
                }
                dirName = rootDirectory_ + File.separator + acqDirectory;
             } catch (Exception ex) {

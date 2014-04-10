@@ -57,6 +57,8 @@ import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 
 import javax.swing.JMenuItem;
@@ -538,7 +540,11 @@ public class VirtualAcquisitionDisplay implements
       numGrayChannels = numComponents_ * numChannels;
 
       if (imageCache_.getDisplayAndComments() == null || imageCache_.getDisplayAndComments().isNull("Channels")) {
-         imageCache_.setDisplayAndComments(getDisplaySettingsFromSummary(summaryMetadata));
+         try {
+            imageCache_.setDisplayAndComments(getDisplaySettingsFromSummary(summaryMetadata));
+         } catch (Exception ex) {
+            ReportingUtils.logError(ex, "Problem setting display and Comments");
+         }
       }
 
       int type = 0;
@@ -1186,7 +1192,7 @@ public class VirtualAcquisitionDisplay implements
       }
    }
 
-   public static JSONObject getDisplaySettingsFromSummary(JSONObject summaryMetadata) {
+   public static JSONObject getDisplaySettingsFromSummary(JSONObject summaryMetadata) throws Exception {
       JSONObject displaySettings = new JSONObject();
       try {
          //create empty display and comments object  
@@ -1246,7 +1252,8 @@ public class VirtualAcquisitionDisplay implements
             channels.put(channelObject);
          }
       } catch (Exception e) {
-         ReportingUtils.showError("Problem creating display and comments from summary metadata");        
+         // ReportingUtils.showError("Problem creating display and comments from summary metadata");       
+         throw(e);
       }
       return displaySettings;
    }

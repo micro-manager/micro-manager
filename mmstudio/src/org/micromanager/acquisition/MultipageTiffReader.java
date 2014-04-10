@@ -568,8 +568,13 @@ public class MultipageTiffReader {
       buffer.putInt(0, 0);
       fileChannel_.write(buffer, nextIFDOffsetLocation); 
       
-      JSONArray settings = VirtualAcquisitionDisplay.
+      JSONArray settings = null;
+      try {
+         settings = VirtualAcquisitionDisplay.
               getDisplaySettingsFromSummary(summaryMetadata_).getJSONArray("Channels");
+      } catch (Exception ex) {
+         ReportingUtils.showError(ex, "Problem saving file.  PLease test to make sure file can be opened");
+      }
       filePosition += writeDisplaySettings(settings, filePosition);
       
       raFile_.setLength(filePosition + 8);

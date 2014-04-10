@@ -104,7 +104,11 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
    }
    
    private void processSummaryMD() {
-      displayAndComments_ = VirtualAcquisitionDisplay.getDisplaySettingsFromSummary(summaryMetadata_);
+      try {
+         displayAndComments_ = VirtualAcquisitionDisplay.getDisplaySettingsFromSummary(summaryMetadata_);    
+      } catch (Exception ex) {
+         ReportingUtils.logError(ex, "Problems setting displaySettings from Summery");
+      }
       try {
          numPositions_ = MDUtils.getNumPositions(summaryMetadata_);
          if (numPositions_ <= 0) {
@@ -329,9 +333,9 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
    private void setSummaryMetadata(JSONObject md, boolean showProgress) {
       summaryMetadata_ = md;
       if (summaryMetadata_ != null) {
-         try {
-            boolean slicesFirst = summaryMetadata_.getBoolean("SlicesFirst");
-            boolean timeFirst = summaryMetadata_.getBoolean("TimeFirst");
+         // try {
+            boolean slicesFirst = summaryMetadata_.optBoolean("SlicesFirst", true);
+            boolean timeFirst = summaryMetadata_.optBoolean("TimeFirst", false);
             TreeMap<String, MultipageTiffReader> oldImageMap = tiffReadersByLabel_;
             tiffReadersByLabel_ = new TreeMap<String, MultipageTiffReader>(new ImageLabelComparator(slicesFirst, timeFirst));
             if (showProgress) {
@@ -348,9 +352,9 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
             } else {
                tiffReadersByLabel_.putAll(oldImageMap);
             }
-         } catch (JSONException ex) {
-            ReportingUtils.logError("Couldn't find SlicesFirst or TimeFirst in summary metadata");
-         }
+        //  } catch (JSONException ex) {
+        //    ReportingUtils.logError(ex, "Couldn't find SlicesFirst or TimeFirst in summary metadata");
+        //  }
          if (summaryMetadata_ != null && summaryMetadata_.length() > 0) {
             processSummaryMD();
          }
