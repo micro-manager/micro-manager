@@ -313,7 +313,7 @@ AC_SUBST([JNI_PREFIX])
 AC_SUBST([JNI_SUFFIX])
 AM_CONDITIONAL([NONSTD_JNI_PREFIX], [test "x$JNI_PREFIX" != xlib])
 
-JAVACFLAGS="-Xlint:all,-serial -source 1.5 -target 1.5"
+JAVACFLAGS="-Xlint:all,-serial -source 1.6 -target 1.6"
 AC_SUBST([JAVACFLAGS])
 
 
