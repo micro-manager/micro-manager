@@ -46,7 +46,9 @@ import javax.swing.border.TitledBorder;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
 import java.util.concurrent.atomic.AtomicBoolean;
+import javax.swing.JCheckBox;
 
 import javax.swing.JFormattedTextField;
 import javax.swing.JTextField;
@@ -56,6 +58,7 @@ import mmcorej.TaggedImage;
 import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.asidispim.Utils.StagePositionUpdater;
+import org.micromanager.utils.FileDialogs;
 import org.micromanager.utils.MMScriptException;
 
 /**
@@ -100,6 +103,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private AtomicBoolean stop_ = new AtomicBoolean(false);
    private final StagePositionUpdater stagePosUpdater_;
    private final JFormattedTextField exposureField_;
+   private final JCheckBox separateTimePointsCB_;
+   private final JCheckBox saveCB_;
    
    private static final String ZSTEPTAG = "z-step_um";
 
@@ -265,11 +270,20 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
               "",
               "[right]16[center]16[left]",
               "[]12[]"));
-      savePanel_.setBorder(makeTitledBorder("Save Settings"));
+      savePanel_.setBorder(makeTitledBorder("Data saving Settings"));
+      
+      separateTimePointsCB_ = new JCheckBox("Separate viewer for each time point");
+      savePanel_.add(separateTimePointsCB_, "span 3, left, wrap");
+      
+      saveCB_ = new JCheckBox("Save while acquiring");
+      // TODO: need to remember in prefs
+      // TODO: actionlistener that actives/deactivates prefix and root fields
+      savePanel_.add(saveCB_, "span 3, left, wrap");
       
       savePanel_.add(new JLabel ("Directory root"));
 
       rootField_ = new JTextField();
+      // TODO: need to remember in prefs
       rootField_.setColumns(textFieldWidth);
       savePanel_.add(rootField_);
 
@@ -278,19 +292,19 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
 
          @Override
          public void actionPerformed(final ActionEvent e) {
-            // setRootDirectory();
+            setRootDirectory(rootField_);
          }
       });
       browseRootButton.setMargin(new Insets(2, 5, 2, 5));
       browseRootButton.setText("...");
-      //browseRootButton_.setBounds(445, 30, 47, 24);
       savePanel_.add(browseRootButton, "wrap");
 
       JLabel namePrefixLabel = new JLabel();
       namePrefixLabel.setText("Name prefix");
       savePanel_.add(namePrefixLabel);
 
-      nameField_ = new JTextField();
+      nameField_ = new JTextField("acq");
+      // TODO: need to remember in prefs
       nameField_.setColumns(textFieldWidth);
       savePanel_.add(nameField_, "wrap");
       
@@ -343,10 +357,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       nextTimePointLabel_ = new JLabel("");
 
       // set up tabbed pane
-      add(slicePanel_, "spany 2");
+      add(slicePanel_, "spany 2, top");
+      add(volPanel_, "top");
+      add(repeatPanel_, "top, wrap");
       add(savePanel_, "spanx 2, wrap");
-      add(volPanel_, "");
-      add(repeatPanel_, "wrap");
       add(buttonStart_, "cell 0 2, split 2, center");
       add(buttonStop_, "center");
       add(numTimePointsDoneLabel_, "center");
@@ -407,10 +421,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          firstCamera = cameraB;
          secondCamera = cameraA;
       }
-      
+
       // TODO: get these from the UI
-      String acqName = gui_.getUniqueAcquisitionName(acqName_);
-      String rootDir = "";  
+      boolean show = true;
+      boolean save = saveCB_.isSelected();
+      String acqName = gui_.getUniqueAcquisitionName(nameField_.getText());
+      String rootDir = rootField_.getText();
       
       int nrFrames = (Integer) numAcquisitions_.getValue();
       long timeBetweenFramesMs = Math.round ( 
@@ -418,8 +434,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       int nrSides = (Integer) numSides_.getValue();  // TODO: multi-channel
       int nrSlices = (Integer) numSlices_.getValue();
       int nrPos = 1;
-      boolean show = true;
-      boolean save = false;
+
       boolean autoShutter = core_.getAutoShutter();
       boolean shutterOpen = false;
 
@@ -654,5 +669,15 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    @Override
    public void devicesChangedAlert() {
       devices_.callListeners();
+   }
+   
+   
+   protected void setRootDirectory(JTextField rootField) {
+      File result = FileDialogs.openDir(null,
+              "Please choose a directory root for image data",
+              MMStudioMainFrame.MM_DATA_SET);
+      if (result != null) {
+         rootField.setText(result.getAbsolutePath());
+      }
    }
 }
