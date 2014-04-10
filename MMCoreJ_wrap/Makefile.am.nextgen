@@ -78,7 +78,7 @@ MMCoreJ.jar: MMCoreJ_wrap.h TaggedImage.java
 	cp $(srcdir)/TaggedImage.java mmcorej
 	$(JAVAC) $(JAVACFLAGS) -d . $(srcdir)/../mmstudio/src/org/json/*.java
 	$(JAVAC) $(JAVACFLAGS) -cp . -d . mmcorej/*.java
-	$(JAR) cvf MMCoreJ.jar org/json/*.class mmcorej/*.class
+	$(JAR) cf MMCoreJ.jar org/json/*.class mmcorej/*.class
 
 
 if NONSTD_JNI_PREFIX
