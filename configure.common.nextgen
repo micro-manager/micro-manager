@@ -14,7 +14,6 @@ AC_PROG_CC([clang llvm-gcc gcc cc])
 case $host in
    *-*-linux*)
    LPTHREAD="-lpthread"
-   DEVICEADAPTERPATH="\${libdir}/micro-manager"
    ;;
 esac
 AC_SUBST(LPTHREAD)
@@ -60,24 +59,14 @@ if test "$IMAGEJDIR" != "no" ; then
      AC_MSG_ERROR([not found, use the --without-imagej option to build without ImageJ or install ImageJ (http://rsb.info.nih.gov/ij/ and rerun configure, possibly using the --with-imagej=path option])
    fi
 
-   if test -z "$DEVICEADAPTERPATH"; then
-      DEVICEADAPTERPATH="$IJPATH"
-   fi
-
    if test -z "$JARPATH"; then
       JARPATH="$IJPATH/plugins/Micro-Manager"
    fi
-else
-   DEVICEADAPTERPATH="\${libdir}/micro-manager"
 fi
 
 
 AC_SUBST(IJPATH)
-AC_SUBST(DEVICEADAPTERPATH)
 AC_SUBST(JARPATH)
-
-AC_MSG_CHECKING(device adapter path)
-AC_MSG_RESULT($DEVICEADAPTERPATH)
 
 AC_MSG_CHECKING(jar path)
 AC_MSG_RESULT($JARPATH)

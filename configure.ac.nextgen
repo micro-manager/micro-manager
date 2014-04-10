@@ -18,7 +18,7 @@ AC_PROG_MKDIR_P
 
 m4_include([configure.common])
 
-# TODO Use proper condition
+# TODO This conditional should ask whether we are building MMCoreJ
 AM_CONDITIONAL(BUILD_MMCOREJ, [test "$IMAGEJDIR" != "no"])
 
 
@@ -39,6 +39,7 @@ fi
 AC_SUBST([MMCOREJ_LIBRARY_PATH])
 
 
+# TODO This conditional should ask whether we are building the Java app.
 if test "$IMAGEJDIR" != "no" ; then
 
    #----------------------------------------------------------------

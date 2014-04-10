@@ -42,6 +42,14 @@ AC_SUBST(MMDEVAPI_LDFLAGS)
 # Location of third party public files
 thirdpartypublic="${micromanager_path}/../3rdpartypublic"
 
+# Currently, the device adapter Makefile.am's set pkglibdir to
+# DEVICEADAPTERPATH. We should eliminate DEVICEADAPTERPATH in favor of either
+# just using pkglibdir or using deviceadapterdir together with Automake
+# variables like deviceadapter_LTLIBRARIES. But keep DEVICEADAPTERPATH for now.
+# See also: definition in SecretDeviceAdapters/configure.ac
+DEVICEADAPTERPATH="\${pkglibdir}"
+AC_SUBST([DEVICEADAPTERPATH])
+
 
 # libusb 0.1 or libusb-compat
 MM_ARG_WITH_OPTIONAL_LIB([libusb 0.1 or libusb-compat], [libusb-0-1], [LIBUSB_0_1])
