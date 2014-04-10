@@ -526,8 +526,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             long timeout2 = Math.max(10000, Math.round ( (Float) delaySide_.getValue() + 
                     nrSlices * nrSides * lineScanTime) );
             start = System.currentTimeMillis();
-            while ((core_.getRemainingImageCount() > 0 || core_.isSequenceRunning(cameraA)
-                    || core_.isSequenceRunning(cameraB)) && !stop_.get() && !done) {
+            while ( (core_.getRemainingImageCount() > 0 || 
+                     core_.isSequenceRunning(firstCamera) ||
+                     (secondCamera != null && core_.isSequenceRunning(secondCamera)))
+                    && !stop_.get() && !done) {
                //int nrImg = core_.getRemainingImageCount();
                //ReportingUtils.logMessage("Images in C++ buffer: " + nrImg);
                if (core_.getRemainingImageCount() > 0) {
