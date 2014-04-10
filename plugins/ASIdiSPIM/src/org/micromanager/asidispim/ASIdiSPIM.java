@@ -22,6 +22,8 @@
 package org.micromanager.asidispim;
 
 import java.awt.Color;
+import java.awt.Toolkit;
+import java.awt.event.WindowEvent;
 import org.micromanager.api.MMPlugin;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.ReportingUtils;
@@ -38,6 +40,11 @@ public class ASIdiSPIM implements MMPlugin {
    @Override
    public void setApp(ScriptInterface app) {
       gui_ = app;
+      if (myFrame_ != null) {
+         WindowEvent wev = new WindowEvent(myFrame_, WindowEvent.WINDOW_CLOSING);
+         Toolkit.getDefaultToolkit().getSystemEventQueue().postEvent(wev);
+         myFrame_ = null;
+      }
       if (myFrame_ == null) {
          try {
             myFrame_ = new ASIdiSPIMFrame(gui_);

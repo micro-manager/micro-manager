@@ -222,7 +222,12 @@ public class Properties {
             if (ignoreError) {
                mmDevice = devices_.getMMDevice(device);
                if (mmDevice != null) {
-                  core_.setProperty(mmDevice, name.toString(), strVal);
+                  if (core_.hasProperty(mmDevice, name.toString())) {
+                     core_.setProperty(mmDevice, name.toString(), strVal);
+                  } else {
+                     ReportingUtils.logMessage("Device " + mmDevice + 
+                             " does not have property: " + name.toString());
+                  }
                }
             } else { 
                mmDevice = devices_.getMMDeviceException(device);
