@@ -42,7 +42,7 @@ public class ASIdiSPIM implements MMPlugin {
       gui_ = app;
       if (myFrame_ != null) {
          WindowEvent wev = new WindowEvent(myFrame_, WindowEvent.WINDOW_CLOSING);
-         Toolkit.getDefaultToolkit().getSystemEventQueue().postEvent(wev);
+         myFrame_.dispatchEvent(wev);
          myFrame_ = null;
       }
       if (myFrame_ == null) {

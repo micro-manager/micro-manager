@@ -260,6 +260,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       
       
       // start savePanel
+      int textFieldWidth = 20;
       savePanel_ = new JPanel(new MigLayout(
               "",
               "[right]16[center]16[left]",
@@ -269,6 +270,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       savePanel_.add(new JLabel ("Directory root"));
 
       rootField_ = new JTextField();
+      rootField_.setColumns(textFieldWidth);
       savePanel_.add(rootField_);
 
       JButton browseRootButton = new JButton();
@@ -289,6 +291,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       savePanel_.add(namePrefixLabel);
 
       nameField_ = new JTextField();
+      nameField_.setColumns(textFieldWidth);
       savePanel_.add(nameField_, "wrap");
       
       
