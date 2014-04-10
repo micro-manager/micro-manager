@@ -22,6 +22,7 @@
 package org.micromanager.asidispim;
 
 import javax.swing.JLabel;
+import javax.swing.JSeparator;
 import javax.swing.JSpinner;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -46,6 +47,8 @@ public class GuiSettingsPanel extends ListeningJPanel {
    private final Properties props_;
    private final Prefs prefs_;
    private final JSpinner positionRefreshInterval_;
+   private final JSpinner scannerFilterX_;
+   private final JSpinner scannerFilterY_;
    private final StagePositionUpdater stagePosUpdater_;
      
    /**
@@ -72,6 +75,7 @@ public class GuiSettingsPanel extends ListeningJPanel {
       
       
       PanelUtils pu = new PanelUtils();
+      
       add(new JLabel("Position refresh interval (s):"));
       positionRefreshInterval_ = pu.makeSpinnerFloat(0.5, 1000, 0.5, props_, devices_, 
             new Devices.Keys [] {Devices.Keys.PLUGIN},
@@ -87,6 +91,24 @@ public class GuiSettingsPanel extends ListeningJPanel {
       };
       pu.addListenerLast(positionRefreshInterval_, listenerLast);
       add(positionRefreshInterval_, "wrap");
+      
+      
+      add(new JSeparator(JSeparator.VERTICAL), "growy, cell 2 0 1 9");
+      
+      add(new JLabel("Scanner filter freq, sheet axis (kHz):"));
+      scannerFilterX_ = pu.makeSpinnerFloat(0.1, 5, 0.1, props_, devices_, 
+            new Devices.Keys [] {Devices.Keys.GALVOA, Devices.Keys.GALVOB},
+            Properties.Keys.SCANNER_FILTER_X);
+      add(scannerFilterX_, "wrap");
+      
+      add(new JLabel("Scanner filter freq, slice axis (kHz):"), "skip 2");
+      scannerFilterY_ = pu.makeSpinnerFloat(0.1, 5, 0.1, props_, devices_, 
+            new Devices.Keys [] {Devices.Keys.GALVOA, Devices.Keys.GALVOB},
+            Properties.Keys.SCANNER_FILTER_Y);
+      add(scannerFilterY_, "wrap");
+      
+      
+      
       
    }
    

@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-//FILE:          SpimParamsPanel.java
+//FILE:          AcquisitionPanel.java
 //PROJECT:       Micro-Manager 
 //SUBSYSTEM:     ASIdiSPIM plugin
 //-----------------------------------------------------------------------------
@@ -21,6 +21,7 @@
 package org.micromanager.asidispim;
 
 import java.awt.Insets;
+
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.acquisition.AcquisitionWrapperEngine;
 import org.micromanager.api.ScriptInterface;
@@ -39,18 +40,21 @@ import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JComboBox;
 import javax.swing.JPanel;
+import javax.swing.JSeparator;
 import javax.swing.JSpinner;
 import javax.swing.border.TitledBorder;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.concurrent.atomic.AtomicBoolean;
+
 import javax.swing.JFormattedTextField;
 import javax.swing.JTextField;
 
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import net.miginfocom.swing.MigLayout;
+
 import org.micromanager.asidispim.Utils.StagePositionUpdater;
 import org.micromanager.utils.MMScriptException;
 
@@ -74,14 +78,18 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private final JComboBox firstSide_;
    private final JSpinner numScansPerSlice_;
    private final JSpinner lineScanPeriod_;
-   private final JSpinner delaySlice_;
+   private final JSpinner delayScan_;
+   private final JSpinner delayLaser_;
+   private final JSpinner delayCamera_;
+   private final JSpinner durationLaser_;
    private final JSpinner delaySide_;
    private final JSpinner numAcquisitions_;
    private final JSpinner acquisitionInterval_;
    private final JButton buttonStart_;
    private final JButton buttonStop_;
-   private final JPanel acqPanel_;
-   private final JPanel loopPanel_;
+   private final JPanel volPanel_;
+   private final JPanel slicePanel_;
+   private final JPanel repeatPanel_;
    private final JPanel savePanel_;
    private final JTextField rootField_;
    private final JTextField nameField_;
@@ -114,26 +122,29 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       acqName_ = "Acq";
 
       PanelUtils pu = new PanelUtils();
+      
+      
+      // start volume sub-panel
 
-      acqPanel_ = new JPanel(new MigLayout(
+      volPanel_ = new JPanel(new MigLayout(
               "",
               "[right]16[center]",
               "[]12[]"));
 
-      acqPanel_.setBorder(makeTitledBorder("Acquisition Settings"));
+      volPanel_.setBorder(makeTitledBorder("Volume Settings"));
 
-      acqPanel_.add(new JLabel("Number of sides:"));
+      volPanel_.add(new JLabel("Number of sides:"));
       numSides_ = pu.makeSpinnerInteger(1, 2, props_, devices_,
               new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
               Properties.Keys.SPIM_NUM_SIDES);
-      acqPanel_.add(numSides_, "wrap");
+      volPanel_.add(numSides_, "wrap");
 
-      acqPanel_.add(new JLabel("First side:"));
+      volPanel_.add(new JLabel("First side:"));
       String[] ab = {Devices.Sides.A.toString(), Devices.Sides.B.toString()};
       firstSide_ = pu.makeDropDownBox(ab, props_, devices_,
               new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
               Properties.Keys.SPIM_FIRSTSIDE);
-      acqPanel_.add(firstSide_, "wrap");
+      volPanel_.add(firstSide_, "wrap");
 
       // acqPanel_.add(new JLabel("Number of volumes per acquisition:"));
       // numRepeats_ = pu.makeSpinnerInteger(1, 32000, props_, devices_,
@@ -141,37 +152,71 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       //        Properties.Keys.SPIM_NUM_REPEATS);
       // acqPanel_.add(numRepeats_, "wrap");
 
-      acqPanel_.add(new JLabel("Number of slices per volume:"));
+      volPanel_.add(new JLabel("Number of slices per volume:"));
       numSlices_ = pu.makeSpinnerInteger(1, 1000, props_, devices_,
               new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
               Properties.Keys.SPIM_NUM_SLICES);
-      acqPanel_.add(numSlices_, "wrap");
+      volPanel_.add(numSlices_, "wrap");
 
-      acqPanel_.add(new JLabel("Lines scans per slice:"));
-      numScansPerSlice_ = pu.makeSpinnerInteger(1, 1000, props_, devices_,
-              new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
-              Properties.Keys.SPIM_NUM_SCANSPERSLICE);
-      acqPanel_.add(numScansPerSlice_, "wrap");
-
-      acqPanel_.add(new JLabel("Line scan period (ms):"));
-      lineScanPeriod_ = pu.makeSpinnerInteger(1, 10000, props_, devices_,
-              new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
-              Properties.Keys.SPIM_LINESCAN_PERIOD);
-      acqPanel_.add(lineScanPeriod_, "wrap");
-
-      acqPanel_.add(new JLabel("Delay before each slice (ms):"));
-      delaySlice_ = pu.makeSpinnerFloat(0, 10000, 0.25, props_, devices_,
-              new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
-              Properties.Keys.SPIM_DELAY_SLICE);
-      acqPanel_.add(delaySlice_, "wrap");
-
-      acqPanel_.add(new JLabel("Delay before each side (ms):"));
+      volPanel_.add(new JLabel("Delay before each side (ms):"));
       delaySide_ = pu.makeSpinnerFloat(0, 10000, 0.25, props_, devices_,
               new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
               Properties.Keys.SPIM_DELAY_SIDE);
-      acqPanel_.add(delaySide_, "wrap");
+      volPanel_.add(delaySide_, "wrap");
+
+      // end volume sub-panel
       
-      acqPanel_.add(new JLabel("Exposure (ms)"));
+      
+      // start slice sub-panel
+
+      slicePanel_ = new JPanel(new MigLayout(
+              "",
+              "[right]16[center]",
+              "[]12[]"));
+
+      slicePanel_.setBorder(makeTitledBorder("Slice Settings"));
+
+      slicePanel_.add(new JLabel("Delay before starting scan (ms):"));
+      delayScan_ = pu.makeSpinnerFloat(0, 10000, 0.25, props_, devices_,
+            new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
+            Properties.Keys.SPIM_DELAY_SCAN);
+      slicePanel_.add(delayScan_, "wrap");
+
+      slicePanel_.add(new JLabel("Lines scans per slice:"));
+      numScansPerSlice_ = pu.makeSpinnerInteger(1, 1000, props_, devices_,
+              new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
+              Properties.Keys.SPIM_NUM_SCANSPERSLICE);
+      slicePanel_.add(numScansPerSlice_, "wrap");
+
+      slicePanel_.add(new JLabel("Line scan period (ms):"));
+      lineScanPeriod_ = pu.makeSpinnerInteger(1, 10000, props_, devices_,
+              new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
+              Properties.Keys.SPIM_LINESCAN_PERIOD);
+      slicePanel_.add(lineScanPeriod_, "wrap");
+      
+      slicePanel_.add(new JSeparator(), "span 2, wrap");
+      
+      slicePanel_.add(new JLabel("Delay before laser (ms):"));
+      delayLaser_ = pu.makeSpinnerFloat(0, 10000, 0.25, props_, devices_,
+            new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
+            Properties.Keys.SPIM_DELAY_LASER);
+      slicePanel_.add(delayLaser_, "wrap");
+      
+      slicePanel_.add(new JLabel("Laser duration (ms):"));
+      durationLaser_ = pu.makeSpinnerFloat(0, 10000, 0.25, props_, devices_,
+            new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
+            Properties.Keys.SPIM_DURATION_LASER);
+      slicePanel_.add(durationLaser_, "span 2, wrap");
+      
+      slicePanel_.add(new JSeparator(), "wrap");
+
+      slicePanel_.add(new JLabel("Delay before camera (ms):"));
+      delayCamera_ = pu.makeSpinnerFloat(0, 10000, 0.25, props_, devices_,
+            new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
+            Properties.Keys.SPIM_DELAY_CAMERA);
+      slicePanel_.add(delayCamera_, "wrap");
+      
+      slicePanel_.add(new JLabel("Exposure (ms)"));
       exposureField_ = new JFormattedTextField();
       try {
          exposureField_.setValue((Double) core_.getExposure());
@@ -179,37 +224,37 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          ReportingUtils.showError(ex, "Error getting exposure time from core");
       }
       exposureField_.setColumns(6);
-      acqPanel_.add(exposureField_, "wrap");
+      slicePanel_.add(exposureField_, "wrap");
 
-      // end acquisition sub-panel
-
+      // end slice sub-panel
+      
 
       // start repeat sub-panel
 
-      loopPanel_ = new JPanel(new MigLayout(
+      repeatPanel_ = new JPanel(new MigLayout(
               "",
               "[right]16[center]",
               "[]12[]"));
 
-      loopPanel_.setBorder(makeTitledBorder("Repeat Settings"));
+      repeatPanel_.setBorder(makeTitledBorder("Repeat Settings"));
 
-      loopPanel_.add(new JLabel("Time points:"));
+      repeatPanel_.add(new JLabel("Time points:"));
       // create plugin "property" for number of acquisitions
       props_.setPropValue(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_NUM_ACQUISITIONS,
               prefs_.getInt(panelName_, Properties.Keys.PLUGIN_NUM_ACQUISITIONS, 1));
       numAcquisitions_ = pu.makeSpinnerInteger(1, 32000, props_, devices_,
               new Devices.Keys[]{Devices.Keys.PLUGIN},
               Properties.Keys.PLUGIN_NUM_ACQUISITIONS);
-      loopPanel_.add(numAcquisitions_, "wrap");
+      repeatPanel_.add(numAcquisitions_, "wrap");
 
-      loopPanel_.add(new JLabel("Interval (s):"));
+      repeatPanel_.add(new JLabel("Interval (s):"));
       // create plugin "property" for acquisition interval
       props_.setPropValue(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_ACQUISITION_INTERVAL,
               prefs_.getFloat(panelName_, Properties.Keys.PLUGIN_ACQUISITION_INTERVAL, 60));
       acquisitionInterval_ = pu.makeSpinnerFloat(1, 32000, 0.1, props_, devices_,
               new Devices.Keys[]{Devices.Keys.PLUGIN},
               Properties.Keys.PLUGIN_ACQUISITION_INTERVAL);
-      loopPanel_.add(acquisitionInterval_, "wrap");
+      repeatPanel_.add(acquisitionInterval_, "wrap");
 
       // end repeat sub-panel
       
@@ -295,13 +340,14 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       nextTimePointLabel_ = new JLabel("");
 
       // set up tabbed pane
-      add(acqPanel_, "dock west");
-      add(loopPanel_, "cell 2 0 2 3");
-      add(savePanel_, "cell 2 7");
-      add(buttonStart_, "cell 2 8, center");
-      add(buttonStop_, "cell 3 8, center");
-      add(numTimePointsDoneLabel_, "cell 2 9 2 1, center");
-      add(nextTimePointLabel_, "cell 2 10 2 1, center");
+      add(slicePanel_, "spany 2");
+      add(savePanel_, "spanx 2, wrap");
+      add(volPanel_, "");
+      add(repeatPanel_, "wrap");
+      add(buttonStart_, "cell 0 2, split 2, center");
+      add(buttonStop_, "center");
+      add(numTimePointsDoneLabel_, "center");
+      add(nextTimePointLabel_, "center");
 
    }//end constructor
 
@@ -331,7 +377,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       }
 
       // check input for sanity
-      float lineScanTime = (Float) delaySlice_.getValue()
+      float lineScanTime = (Float) delayScan_.getValue()
               + ((Integer) lineScanPeriod_.getValue()
               * (Integer) numScansPerSlice_.getValue());
       double exposure = (Double) exposureField_.getValue();
@@ -345,7 +391,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       boolean liveMode = gui_.isLiveModeOn();
       gui_.enableLiveMode(false);
       // TODO: get camera trigger mode and reset after acquisition
-      cameras_.setSPIMCameraTriggerMode(Cameras.TriggerModes.EXTERNAL);
+      cameras_.setSPIMCameraTriggerMode(Cameras.TriggerModes.EXTERNAL_START);
 
       String cameraA = devices_.getMMDevice(Devices.Keys.CAMERAA);
       String cameraB = devices_.getMMDevice(Devices.Keys.CAMERAB);
@@ -358,7 +404,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          firstCamera = cameraB;
          secondCamera = cameraA;
       }
-
+      
       // TODO: get these from the UI
       String acqName = gui_.getUniqueAcquisitionName(acqName_);
       String rootDir = "";  
