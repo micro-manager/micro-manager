@@ -2397,7 +2397,7 @@ void CMMCore::stopSequenceAcquisition(const char* label) throw (CMMError)
       throw CMMError(getDeviceErrorText(nRet, camera_).c_str(), MMERR_DEVICE_GENERIC);
    }
 
-   CORE_DEBUG("Sequence acquisition stopped on %.\n", label);
+   CORE_DEBUG("Sequence acquisition stopped on %s.\n", label);
 }
 
 /**
