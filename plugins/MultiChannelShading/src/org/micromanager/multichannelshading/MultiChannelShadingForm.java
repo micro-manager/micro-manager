@@ -121,8 +121,13 @@ public class MultiChannelShadingForm extends javax.swing.JFrame {
     }
     
    private void populateFlatFieldComboBoxes() {
+        StrVector configNames;
         groupName = (String) groupComboBox.getSelectedItem();
-        StrVector configNames = mmc_.getAvailableConfigs(groupName);
+        if (groupName == null ) {
+            configNames = new StrVector();
+        } else {
+            configNames = mmc_.getAvailableConfigs(groupName);
+        }
         configNames.add("None");
         flatFieldComboBox1.setModel(new javax.swing.DefaultComboBoxModel(configNames.toArray()));
         flatFieldComboBox1.setSelectedIndex(flatFieldComboBox1.getItemCount()-1);
