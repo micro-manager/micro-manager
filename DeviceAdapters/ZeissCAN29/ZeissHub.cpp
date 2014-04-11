@@ -46,11 +46,12 @@
 //
 
 // Define static members of class ZeissHub
+// TODO: change these arrays into dynamically allocated structures
 std::string ZeissHub::reflectorList_[10];
 std::string ZeissHub::objectiveList_[7];
 std::string ZeissHub::tubeLensList_[5];
 std::string ZeissHub::sidePortList_[3];
-std::string ZeissHub::condenserList_[7];
+std::string ZeissHub::condenserList_[8];
 
 ZeissDeviceInfo ZeissHub::deviceInfo_[MAXNUMBERDEVICES];
 DefiniteFocusModel ZeissHub::definiteFocusModel_;
@@ -257,7 +258,7 @@ int ZeissHub::Initialize(MM::Device& device, MM::Core& core)
    GetCondenserLabels(device, core);
    os.str("");
    os <<"Condenser: ";
-   for (int i=0; (i<= deviceInfo_[0x22].maxPos) && (i < 7); i++) {
+   for (int i=0; (i<= deviceInfo_[0x22].maxPos) && (i < 8); i++) {
       os << "\n" << condenserList_[i].c_str();
    }
    core.LogMessage(&device, os.str().c_str(), false);
@@ -997,7 +998,7 @@ int ZeissHub::GetCondenserLabels(MM::Device& device, MM::Core& core)
    {
       return DEVICE_OK; // no Condenser, lets not make a fuss
    }
-   for (ZeissLong i=0; (i<= deviceInfo_[0x22].maxPos) && (i < 7); i++) {
+   for (ZeissLong i=0; (i<= deviceInfo_[0x22].maxPos) && (i < 8); i++) {
       memset(data, 0, RCV_BUF_LENGTH);
       dataLength = 0;
       GetPermanentParameter(device, core, (ZeissUShort) 0x1470, (ZeissByte) (0x15 + ((i)*8)), dataType, data, dataLength);
