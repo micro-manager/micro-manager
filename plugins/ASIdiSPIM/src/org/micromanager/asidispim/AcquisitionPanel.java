@@ -47,6 +47,8 @@ import javax.swing.border.TitledBorder;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.swing.JCheckBox;
 
@@ -56,6 +58,10 @@ import javax.swing.JTextField;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import net.miginfocom.swing.MigLayout;
+import org.micromanager.acquisition.DefaultTaggedImageSink;
+import org.micromanager.acquisition.MMAcquisition;
+import org.micromanager.acquisition.TaggedImageQueue;
+import org.micromanager.api.ImageCache;
 
 import org.micromanager.asidispim.Utils.StagePositionUpdater;
 import org.micromanager.utils.FileDialogs;
@@ -448,7 +454,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                  "\nPlease configure the Imaging Path B camera on the Devices Panel");
          return false;
       }
-
+      
+      java.util.concurrent.BlockingQueue<TaggedImage> bq = new LinkedBlockingQueue<TaggedImage>(10);
+      
+      
+      
       try {
          // empty out circular buffer
          while (core_.getRemainingImageCount() > 0) {
@@ -467,6 +477,16 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          if (nrSides == 2 && secondCamera != null) {
             gui_.setChannelName(acqName, 1, secondCamera);
          }
+         gui_.initializeAcquisition(acqName, (int) core_.getImageWidth(), 
+                 (int) core_.getImageHeight(), (int) core_.getBytesPerPixel(), 
+                 (int) core_.getImageBitDepth());
+         MMAcquisition acq = gui_.getAcquisition(acqName);
+         ImageCache imageCache = acq.getImageCache();
+
+         // Start pumping images into the ImageCache
+         DefaultTaggedImageSink sink = new DefaultTaggedImageSink(bq, imageCache);
+         sink.start();
+         
          long acqStart = System.currentTimeMillis();
 
          // If the interval between frames is shorter than the time to acquire
@@ -611,6 +631,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             numTimePointsDone_ = 0;
             updateTimePointsDoneLabel(numTimePointsDone_);
             stagePosUpdater_.setAcqRunning(false);
+            bq.add(TaggedImageQueue.POISON);
             gui_.closeAcquisition(acqName);
          } catch (Exception ex) {
             // exception while stopping sequence acquisition, not sure what to do...
