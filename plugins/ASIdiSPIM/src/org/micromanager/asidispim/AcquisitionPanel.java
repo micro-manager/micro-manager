@@ -70,7 +70,6 @@ import org.micromanager.api.MMTags;
 
 import org.micromanager.asidispim.Utils.StagePositionUpdater;
 import org.micromanager.utils.FileDialogs;
-import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMScriptException;
 
 /**
@@ -343,10 +342,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       buttonStart_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            if (!cameras_.isCurrentCameraValid()) {
-               ReportingUtils.showError("Must set valid camera for acquisition!");
-               return;
-            }
+            //if (!cameras_.isCurrentCameraValid()) {
+            //   ReportingUtils.showError("Must set valid camera for acquisition!");
+            //   return;
+            //}
             stop_.set(false);
 
             class acqThread extends Thread {
@@ -497,9 +496,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          return false;
       }
 
-     
-
-
       long acqStart = System.currentTimeMillis();
 
       try {
@@ -628,8 +624,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                        || core_.isSequenceRunning(firstCamera)
                        || (secondCamera != null && core_.isSequenceRunning(secondCamera)))
                        && !stop_.get() && !done) {
-                  //int nrImg = core_.getRemainingImageCount();
-                  //ReportingUtils.logMessage("Images in C++ buffer: " + nrImg);
                   now = System.currentTimeMillis();
                   if (core_.getRemainingImageCount() > 0) {
                      TaggedImage timg = core_.popNextTaggedImage();
@@ -704,6 +698,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
 
       }
 
+      // return camera trigger mode 
       cameras_.setSPIMCameraTriggerMode(Cameras.TriggerModes.INTERNAL);
       gui_.enableLiveMode(liveMode);
 
@@ -754,8 +749,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     */
    @Override
    public void gotDeSelected() {
-      // need to make sure we switch back to internal mode for everything
-      // cameras_.setSPIMCameraTriggerMode(Cameras.TriggerModes.INTERNAL);
+
    }
 
    @Override
@@ -786,16 +780,17 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
            TaggedImage taggedImg,
            BlockingQueue<TaggedImage> bq) throws MMScriptException {
 
-      // TODO: complete the tag set and initialize the acquisition
       MMAcquisition acq = gui_.getAcquisition(name);
 
-      // check position, for multi-position data set the number of declared positions should be at least 2
+      // check position, for multi-position data set the number of declared 
+      // positions should be at least 2
       if (acq.getPositions() <= 1 && position > 0) {
-         throw new MMScriptException("The acquisition was open as a single position data set.\n"
+         throw new MMScriptException("The acquisition was opened as a single position data set.\n"
                  + "Open acqusition with two or more positions in order to crate a multi-position data set.");
       }
 
-      // check position, for multi-position data set the number of declared positions should be at least 2
+      // check position, for multi-position data set the number of declared 
+      // positions should be at least 2
       if (acq.getChannels() <= channel) {
          throw new MMScriptException("This acquisition was opened with " + acq.getChannels() + " channels.\n"
                  + "The channel number must not exceed declared number of positions.");
@@ -804,25 +799,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
 
       JSONObject tags = taggedImg.tags;
 
-      // if the acquisition was not previously initialized, set physical dimensions of the image
       if (!acq.isInitialized()) {
-
-         // automatically initialize physical dimensions of the image
-         try {
-            int width = tags.getInt(MMTags.Image.WIDTH);
-            int height = tags.getInt(MMTags.Image.HEIGHT);
-            int byteDepth = MDUtils.getDepth(tags);
-            int bitDepth = byteDepth * 8;
-            if (tags.has(MMTags.Image.BIT_DEPTH)) {
-               bitDepth = tags.getInt(MMTags.Image.BIT_DEPTH);
-            }
-            gui_.initializeAcquisition(name, width, height, byteDepth, bitDepth);
-            VirtualAcquisitionDisplay vad = acq.getAcquisitionWindow();
-            ImageCache ic = acq.getImageCache();
-            ic.addImageCacheListener(vad);
-         } catch (JSONException e) {
-            throw new MMScriptException(e);
-         }
+         throw new MMScriptException("Error in the ASIdiSPIM logic.  Acquisition should have been initialized");
       }
 
       // create required coordinate tags
@@ -856,8 +834,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          throw new MMScriptException(e);
       }
 
-      // System.out.println("Inserting frame: " + frame + ", channel: " + channel + ", slice: " + slice + ", pos: " + position);
-      // acq.insertImage(taggedImg);
       bq.add(taggedImg);
    }
    
