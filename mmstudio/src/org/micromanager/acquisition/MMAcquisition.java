@@ -101,7 +101,8 @@ public class MMAcquisition {
       virtual_ = diskCached;
    }
 
-   public MMAcquisition(String name, JSONObject summaryMetadata, boolean diskCached, AcquisitionEngine eng, boolean show) {
+   public MMAcquisition(String name, JSONObject summaryMetadata, boolean diskCached, 
+           AcquisitionEngine eng, boolean show) {
       TaggedImageStorage imageFileManager;
       name_ = name;
       virtual_ = diskCached;

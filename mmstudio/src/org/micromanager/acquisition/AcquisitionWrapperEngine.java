@@ -5,6 +5,7 @@ import java.awt.Color;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.BlockingQueue;
 import java.util.prefs.Preferences;
 
 import javax.swing.JOptionPane;
@@ -108,16 +109,21 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       return acquisitionEngine2010;
    }
 
-   protected String runAcquisition(SequenceSettings acquisitionSettings, AcquisitionManager acqManager) {
+   protected String runAcquisition(SequenceSettings acquisitionSettings, 
+           AcquisitionManager acqManager) {
       //Make sure computer can write to selected location and that there is enough space to do so
       if (saveFiles_) {
          File root = new File(rootName_);
          if (!root.canWrite()) {
-            int result = JOptionPane.showConfirmDialog(null, "The specified root directory\n" + root.getAbsolutePath() +"\ndoes not exist. Create it?", "Directory not found.", JOptionPane.YES_NO_OPTION);
+            int result = JOptionPane.showConfirmDialog(null, 
+                    "The specified root directory\n" + root.getAbsolutePath() +
+                    "\ndoes not exist. Create it?", "Directory not found.", 
+                    JOptionPane.YES_NO_OPTION);
             if (result == JOptionPane.YES_OPTION) {
                root.mkdirs();
                if (!root.canWrite()) {
-                  ReportingUtils.showError("Unable to save data to selected location: check that location exists.\nAcquisition canceled.");
+                  ReportingUtils.showError(
+                          "Unable to save data to selected location: check that location exists.\nAcquisition canceled.");
                   return null;
                }
             } else {
@@ -125,21 +131,38 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
                return null;
             }
          } else if (!this.enoughDiskSpace()) {
-            ReportingUtils.showError("Not enough space on disk to save the requested image set; acquisition canceled.");
+            ReportingUtils.showError(
+                    "Not enough space on disk to save the requested image set; acquisition canceled.");
             return null;
          }
       }
       try {
-         DefaultTaggedImagePipeline taggedImagePipeline = new DefaultTaggedImagePipeline(
-               getAcquisitionEngine2010(),
-               acquisitionSettings,
-               taggedImageProcessors_,
-               gui_,
-               acquisitionSettings.save);
-       summaryMetadata_ = taggedImagePipeline.summaryMetadata_;
-       imageCache_ = taggedImagePipeline.imageCache_;
-       return taggedImagePipeline.acqName_;
-       
+         // Start up the acquisition engine
+         BlockingQueue<TaggedImage> engineOutputQueue = getAcquisitionEngine2010().run(
+                 acquisitionSettings, true,
+                 gui_.getPositionList(),
+                 gui_.getAutofocusManager().getDevice());
+         summaryMetadata_ = getAcquisitionEngine2010().getSummaryMetadata();
+
+         // Run the Acquisition Engine output through a pipeline of ImageProcessors
+         BlockingQueue<TaggedImage> procStackOutputQueue = ProcessorStack.run(
+                 engineOutputQueue, taggedImageProcessors_);
+
+         // Create an MMAcquisition object, which will result in an ImageCache
+         // and VirtualImageDisplay if desired
+         String acqName = acqManager.createAcquisition(
+                 summaryMetadata_, acquisitionSettings.save, this,
+                 gui_.getHideMDADisplayOption());
+         MMAcquisition acq = acqManager.getAcquisition(acqName);
+         imageCache_ = acq.getImageCache();
+
+         // Start pumping processed images into the ImageCache
+         DefaultTaggedImageSink sink = new DefaultTaggedImageSink(
+                 procStackOutputQueue, imageCache_);
+         sink.start();
+        
+         return acqName;
+
       } catch (Throwable ex) {
          ReportingUtils.showError(ex);
          return null;
