@@ -470,11 +470,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       boolean singleTimePoints = separateTimePointsCB_.isSelected();
       String rootDir = rootField_.getText();
 
-      int timePoints = (Integer) numAcquisitions_.getValue();
+      int nrRepeats = (Integer) numAcquisitions_.getValue();
       int nrFrames = 1;
       if (!singleTimePoints) {
-         nrFrames = timePoints;
-         timePoints = 1;
+         nrFrames = nrRepeats;
+         nrRepeats = 1;
       }
 
       long timeBetweenFramesMs = Math.round(
@@ -507,15 +507,21 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          while (core_.getRemainingImageCount() > 0) {
             core_.popNextImage();
          }
-         // Something is not thread safe, so disable the stageposupdater
-         stagePosUpdater_.setAcqRunning(true);
+      } catch (Exception ex) {
+         ReportingUtils.showError(ex, "Error emptying out the circular buffer");
+         return false;
+      }
 
-         for (int tp = 0; tp < timePoints && !stop_.get(); tp++) {
-            java.util.concurrent.BlockingQueue<TaggedImage> bq = new LinkedBlockingQueue<TaggedImage>(10);
-            String acqName = gui_.getUniqueAcquisitionName(nameField_.getText());
-            if (singleTimePoints) {
-               acqName = gui_.getUniqueAcquisitionName(nameField_.getText() + "-" + tp);
-            }
+      // Something is not thread safe, so disable the stageposupdater
+      stagePosUpdater_.setAcqRunning(true);
+
+      for (int tp = 0; tp < nrRepeats && !stop_.get(); tp++) {
+         BlockingQueue<TaggedImage> bq = new LinkedBlockingQueue<TaggedImage>(10);
+         String acqName = gui_.getUniqueAcquisitionName(nameField_.getText());
+         if (singleTimePoints) {
+            acqName = gui_.getUniqueAcquisitionName(nameField_.getText() + "-" + tp);
+         }
+         try {
             gui_.openAcquisition(acqName, rootDir, nrFrames, nrSides, nrSlices, nrPos,
                     show, save);
             core_.setExposure(firstCamera, exposure);
@@ -530,6 +536,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                     (int) core_.getImageHeight(), (int) core_.getBytesPerPixel(),
                     (int) core_.getImageBitDepth());
             MMAcquisition acq = gui_.getAcquisition(acqName);
+            
+            // Dive into MM internals since script interface does not support pipelines
             ImageCache imageCache = acq.getImageCache();
             VirtualAcquisitionDisplay vad = acq.getAcquisitionWindow();
             imageCache.addImageCacheListener(vad);
@@ -557,8 +565,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                nextTimePointLabel_.setText("");
                updateTimePointsDoneLabel(numTimePointsDone_++);
 
-               // Not sure what to do with camera and # of sides selection
-               // simply start sequence acquisition on both cameras 
                core_.startSequenceAcquisition(firstCamera, nrSlices, 0, true);
                if (nrSides == 2) {
                   core_.startSequenceAcquisition(secondCamera, nrSlices, 0, true);
@@ -591,7 +597,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                // TODO generalize this for different ways of running SPIM
                props_.setPropValue(Devices.Keys.GALVOA, Properties.Keys.SPIM_STATE,
                        Properties.Values.SPIM_RUNNING, true);
-
 
                // get images from camera and stick into acquisition
                // Wait for first image to create ImageWindow, so that we can be sure about image size
@@ -661,70 +666,69 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                      core_.setShutterOpen(false);
                   }
                }
-
             }
-            nextTimePointLabel_.setText("Acquisition finished");
-            numTimePointsDone_ = 0;
-            updateTimePointsDoneLabel(numTimePointsDone_);
-            stagePosUpdater_.setAcqRunning(false);
-            bq.add(TaggedImageQueue.POISON);
-            gui_.closeAcquisition(acqName);
-            System.out.println("Acquisition took: " + (System.currentTimeMillis() - acqStart) + "ms");
-         }
-
-      } catch (MMScriptException mex) {
-         ReportingUtils.showError(mex);
-      } catch (Exception ex) {
-         ReportingUtils.showError(ex);
-      } finally {
-         try {
-            if (core_.isSequenceRunning(firstCamera)) {
-               core_.stopSequenceAcquisition(firstCamera);
-            }
-            if (secondCamera != null && core_.isSequenceRunning(secondCamera)) {
-               core_.stopSequenceAcquisition(secondCamera);
-            }
-            if (autoShutter) {
-               core_.setAutoShutter(true);
-
-               if (!shutterOpen) {
-                  core_.setShutterOpen(false);
-               }
-            }
-            
+         } catch (MMScriptException mex) {
+            ReportingUtils.showError(mex);
          } catch (Exception ex) {
-            // exception while stopping sequence acquisition, not sure what to do...
-            ReportingUtils.showError(ex, "Problem while finsihing acquisition");
+            ReportingUtils.showError(ex);
+         } finally {
+            try {
+               if (core_.isSequenceRunning(firstCamera)) {
+                  core_.stopSequenceAcquisition(firstCamera);
+               }
+               if (secondCamera != null && core_.isSequenceRunning(secondCamera)) {
+                  core_.stopSequenceAcquisition(secondCamera);
+               }
+               if (autoShutter) {
+                  core_.setAutoShutter(true);
+
+                  if (!shutterOpen) {
+                     core_.setShutterOpen(false);
+                  }
+               }
+
+               nextTimePointLabel_.setText("Acquisition finished");
+               numTimePointsDone_ = 0;
+               updateTimePointsDoneLabel(numTimePointsDone_);
+               stagePosUpdater_.setAcqRunning(false);
+               bq.add(TaggedImageQueue.POISON);
+               gui_.closeAcquisition(acqName);
+               ReportingUtils.logMessage("Acquisition took: " + 
+                       (System.currentTimeMillis() - acqStart) + "ms");
+               
+            } catch (Exception ex) {
+               // exception while stopping sequence acquisition, not sure what to do...
+               ReportingUtils.showError(ex, "Problem while finsihing acquisition");
+            }
          }
 
       }
-       
+
       cameras_.setSPIMCameraTriggerMode(Cameras.TriggerModes.INTERNAL);
       gui_.enableLiveMode(liveMode);
 
       return true;
    }
-
- 
+   
 
    @Override
    public void saveSettings() {
       prefs_.putInt(panelName_, Properties.Keys.PLUGIN_NUM_ACQUISITIONS,
-              props_.getPropValueInteger(Devices.Keys.PLUGIN, 
+              props_.getPropValueInteger(Devices.Keys.PLUGIN,
               Properties.Keys.PLUGIN_NUM_ACQUISITIONS));
       prefs_.putFloat(panelName_, Properties.Keys.PLUGIN_ACQUISITION_INTERVAL,
-              props_.getPropValueFloat(Devices.Keys.PLUGIN, 
+              props_.getPropValueFloat(Devices.Keys.PLUGIN,
               Properties.Keys.PLUGIN_ACQUISITION_INTERVAL));
-      prefs_.putBoolean(panelName_, Properties.Keys.PLUGIN_SAVE_WHILE_ACQUIRING, 
-              saveCB_.isSelected() );
-      prefs_.putString(panelName_, Properties.Keys.PLUGIN_DIRECTORY_ROOT, 
+      prefs_.putBoolean(panelName_, Properties.Keys.PLUGIN_SAVE_WHILE_ACQUIRING,
+              saveCB_.isSelected());
+      prefs_.putString(panelName_, Properties.Keys.PLUGIN_DIRECTORY_ROOT,
               rootField_.getText());
-      prefs_.putString(panelName_, Properties.Keys.PLUGIN_NAME_PREFIX, 
+      prefs_.putString(panelName_, Properties.Keys.PLUGIN_NAME_PREFIX,
               nameField_.getText());
-      prefs_.putBoolean(panelName_, 
-              Properties.Keys.PLUGIN_SEPARATE_VIEWERS_FOR_TIMEPOINTS, 
+      prefs_.putBoolean(panelName_,
+              Properties.Keys.PLUGIN_SEPARATE_VIEWERS_FOR_TIMEPOINTS,
               separateTimePointsCB_.isSelected());
-            
+
       // save controller settings
       props_.setPropValue(Devices.Keys.PIEZOA, Properties.Keys.SAVE_CARD_SETTINGS,
               Properties.Values.DO_SSZ, true);
@@ -743,10 +747,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    @Override
    public void gotSelected() {
       props_.callListeners();
-      // cameraPanel_.gotSelected();
-      // cameras_.enableLiveMode(false);
-      // would like to close liveMode window if we can!
-      // cameras_.setSPIMCameraTriggerMode(Cameras.TriggerModes.EXTERNAL);
    }
 
    /**
@@ -756,15 +756,13 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    public void gotDeSelected() {
       // need to make sure we switch back to internal mode for everything
       // cameras_.setSPIMCameraTriggerMode(Cameras.TriggerModes.INTERNAL);
-     
    }
 
    @Override
    public void devicesChangedAlert() {
       devices_.callListeners();
    }
-   
-   
+
    private void setRootDirectory(JTextField rootField) {
       File result = FileDialogs.openDir(null,
               "Please choose a directory root for image data",
@@ -773,19 +771,20 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          rootField.setText(result.getAbsolutePath());
       }
    }
-   
-      /**
-    * The basic method for adding images to an existing data set.
-    * If the acquisition was not previously initialized, it will attempt to initialize it from the available image data
+
+   /**
+    * The basic method for adding images to an existing data set. If the
+    * acquisition was not previously initialized, it will attempt to initialize
+    * it from the available image data
     */
    public void addImageToAcquisition(String name,
            int frame,
            int channel,
            int slice,
            int position,
-           long ms, 
+           long ms,
            TaggedImage taggedImg,
-           BlockingQueue<TaggedImage> bq ) throws MMScriptException {
+           BlockingQueue<TaggedImage> bq) throws MMScriptException {
 
       // TODO: complete the tag set and initialize the acquisition
       MMAcquisition acq = gui_.getAcquisition(name);
