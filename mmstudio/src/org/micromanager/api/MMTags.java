@@ -64,6 +64,7 @@ public class MMTags {
       public static final String TIME = "Time";
       public static final String PIX_TYPE = "PixelType";
       public static final String BIT_DEPTH = "BitDepth";
+      public static final String ELAPSED_TIME_MS = "ElapsedTime-ms";
    }
    
    public class Values {
