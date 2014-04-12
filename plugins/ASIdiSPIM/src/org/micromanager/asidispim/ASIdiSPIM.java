@@ -22,7 +22,6 @@
 package org.micromanager.asidispim;
 
 import java.awt.Color;
-import java.awt.Toolkit;
 import java.awt.event.WindowEvent;
 import org.micromanager.api.MMPlugin;
 import org.micromanager.api.ScriptInterface;

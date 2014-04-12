@@ -99,6 +99,10 @@ public class Properties {
       PLUGIN_POSITION_REFRESH_INTERVAL("PositionRefreshInterval(s)"),
       PLUGIN_NUM_ACQUISITIONS("NumberOfAcquisitions"),
       PLUGIN_ACQUISITION_INTERVAL("AcquisitionPeriod"),
+      PLUGIN_DIRECTORY_ROOT("DirectoryRoot"),
+      PLUGIN_NAME_PREFIX("NamePrefix"),
+      PLUGIN_SAVE_WHILE_ACQUIRING("SaveWhileAcquiring"),
+      PLUGIN_SEPARATE_VIEWERS_FOR_TIMEPOINTS("SeparateViewersForTimePoints")
       ;
       private final String text;
       Keys(String text) {
