@@ -32,7 +32,6 @@ MMJ_.jar:  \
 	$(srcdir)/src/org/micromanager/acquisition/AcquisitionVirtualStack.java \
 	$(srcdir)/src/org/micromanager/acquisition/AcquisitionWrapperEngine.java \
 	$(srcdir)/src/org/micromanager/acquisition/ComponentTitledBorder.java \
-	$(srcdir)/src/org/micromanager/acquisition/DefaultTaggedImagePipeline.java \
 	$(srcdir)/src/org/micromanager/acquisition/DefaultTaggedImageSink.java \
 	$(srcdir)/src/org/micromanager/acquisition/HyperstackControls.java \
 	$(srcdir)/src/org/micromanager/acquisition/LiveModeTimer.java \
