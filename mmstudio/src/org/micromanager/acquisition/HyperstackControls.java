@@ -28,9 +28,9 @@ public class HyperstackControls extends DisplayControls {
    private final VirtualAcquisitionDisplay display_;
 
    /** Creates new form HyperstackControls */
-   public HyperstackControls(VirtualAcquisitionDisplay acq) {
+   public HyperstackControls(VirtualAcquisitionDisplay display) {
       initComponents();
-      display_ = acq;
+      display_ = display;
       fpsField.setText(NumberUtils.doubleToDisplayString(display_.getPlaybackFPS()));
    }
 
