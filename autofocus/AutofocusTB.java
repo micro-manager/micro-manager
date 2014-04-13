@@ -8,16 +8,12 @@ import ij.process.ShortProcessor;
 import java.awt.Color;
 import java.util.prefs.Preferences;
 import java.util.Date;
-import java.lang.System;
 import java.awt.Rectangle;
 
-import mmcorej.MMCoreJ;
 import mmcorej.StrVector;
 
 import org.micromanager.api.Autofocus;
 import org.micromanager.api.ScriptInterface;
-import org.micromanager.acquisition.AcquisitionData;
-import org.micromanager.utils.AutofocusManager;
 import org.micromanager.utils.AutofocusBase;
 import org.micromanager.utils.MMException;
 import org.micromanager.utils.PropertyItem;
@@ -540,7 +536,7 @@ public class AutofocusTB extends AutofocusBase implements Autofocus {
     *@return    The verboseStatus value
     */
    public String getVerboseStatus() {
-      return new String("OK");
+      return "OK";
    }
 
 
@@ -566,6 +562,7 @@ public class AutofocusTB extends AutofocusBase implements Autofocus {
    /**
     *  Description of the Method
     */
+   @Override
    public PropertyItem[] getProperties() {
 
       channelGroup_ = core_.getChannelGroup();
