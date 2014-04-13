@@ -25,13 +25,13 @@ import org.micromanager.utils.ReportingUtils;
  */
 public class HyperstackControls extends DisplayControls {
 
-   private final VirtualAcquisitionDisplay acq_;
+   private final VirtualAcquisitionDisplay display_;
 
    /** Creates new form HyperstackControls */
    public HyperstackControls(VirtualAcquisitionDisplay acq) {
       initComponents();
-      acq_ = acq;
-      fpsField.setText(NumberUtils.doubleToDisplayString(acq_.getPlaybackFPS()));
+      display_ = acq;
+      fpsField.setText(NumberUtils.doubleToDisplayString(display_.getPlaybackFPS()));
    }
 
    /** This method is called from within the constructor to
@@ -166,7 +166,7 @@ public class HyperstackControls extends DisplayControls {
    }// </editor-fold>//GEN-END:initComponents
 
    private void showFolderButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_showFolderButtonActionPerformed
-      acq_.showFolder();
+      display_.showFolder();
    }//GEN-LAST:event_showFolderButtonActionPerformed
 
    private void fpsFieldFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_fpsFieldFocusLost
@@ -178,18 +178,18 @@ public class HyperstackControls extends DisplayControls {
    }//GEN-LAST:event_fpsFieldKeyReleased
 
    private void abortButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_abortButtonActionPerformed
-      acq_.abort();
+      display_.abort();
    }//GEN-LAST:event_abortButtonActionPerformed
 
    private void pauseAndResumeToggleButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pauseAndResumeToggleButtonActionPerformed
-      acq_.pause();
+      display_.pause();
 }//GEN-LAST:event_pauseAndResumeToggleButtonActionPerformed
 
    private void saveButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveButtonActionPerformed
       new Thread() {
          @Override
          public void run() {
-            acq_.saveAs();
+            display_.saveAs();
          }
       }.start();
    }//GEN-LAST:event_saveButtonActionPerformed
@@ -197,7 +197,7 @@ public class HyperstackControls extends DisplayControls {
    private void updateFPS() {
       try {
          double fps = NumberUtils.displayStringToDouble(fpsField.getText());
-         acq_.setPlaybackFPS(fps);
+         display_.setPlaybackFPS(fps);
       } catch (ParseException ex) {
       }
    }
@@ -303,8 +303,8 @@ public class HyperstackControls extends DisplayControls {
       }
       updateStatusLine(tags);
       try {
-         if (acq_.acquisitionIsRunning() && acq_.getNextWakeTime() > 0) {
-            final long nextImageTime = acq_.getNextWakeTime();
+         if (display_.acquisitionIsRunning() && display_.getNextWakeTime() > 0) {
+            final long nextImageTime = display_.getNextWakeTime();
             if (System.nanoTime() / 1000000 < nextImageTime) {
                final Timer timer = new Timer("Next frame display");
                TimerTask task = new TimerTask() {
@@ -312,7 +312,7 @@ public class HyperstackControls extends DisplayControls {
                   @Override
                   public void run() {
                      double timeRemainingS = (nextImageTime - System.nanoTime() / 1000000) / 1000;
-                     if (timeRemainingS > 0 && acq_.acquisitionIsRunning()) {
+                     if (timeRemainingS > 0 && display_.acquisitionIsRunning()) {
                         setStatusLabel("Next frame: " + NumberUtils.doubleToDisplayString(1 + timeRemainingS) + " s");
                      } else {
                         timer.cancel();
