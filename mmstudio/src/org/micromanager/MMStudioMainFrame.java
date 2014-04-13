@@ -266,9 +266,9 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
                  "Micro-Manager Image Location",
                  System.getProperty("user.home") + "/Untitled",
                  false, (String[]) null);
-   private Thread acquisitionEngine2010LoadingThread = null;
-   private Class<?> acquisitionEngine2010Class = null;
-   private IAcquisitionEngine2010 acquisitionEngine2010 = null;
+   private Thread acquisitionEngine2010LoadingThread_ = null;
+   private Class<?> acquisitionEngine2010Class_ = null;
+   private IAcquisitionEngine2010 acquisitionEngine2010_ = null;
    private final JSplitPane splitPane_;
    private volatile boolean ignorePropertyChanges_; 
    private PluginLoader pluginLoader_;
@@ -1584,18 +1584,18 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
 
    private void startLoadingPipelineClass() {
       Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
-      acquisitionEngine2010LoadingThread = new Thread("Pipeline Class loading thread") {
+      acquisitionEngine2010LoadingThread_ = new Thread("Pipeline Class loading thread") {
          @Override
          public void run() {
             try {
-               acquisitionEngine2010Class  = Class.forName("org.micromanager.AcquisitionEngine2010");
+               acquisitionEngine2010Class_  = Class.forName("org.micromanager.AcquisitionEngine2010");
             } catch (Exception ex) {
                ReportingUtils.logError(ex);
-               acquisitionEngine2010Class = null;
+               acquisitionEngine2010Class_ = null;
             }
          }
       };
-      acquisitionEngine2010LoadingThread.start();
+      acquisitionEngine2010LoadingThread_.start();
    }
 
 
@@ -2811,8 +2811,8 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
 
    //TODO: Deprecated @Override
    public void stopAllActivity() {
-        if (this.acquisitionEngine2010 != null) {
-            this.acquisitionEngine2010.stop();
+        if (this.acquisitionEngine2010_ != null) {
+            this.acquisitionEngine2010_.stop();
         }
       enableLiveMode(false);
    }
@@ -4262,11 +4262,11 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    @Override
    public IAcquisitionEngine2010 getAcquisitionEngine2010() {
       try {
-         acquisitionEngine2010LoadingThread.join();
-         if (acquisitionEngine2010 == null) {
-            acquisitionEngine2010 = (IAcquisitionEngine2010) acquisitionEngine2010Class.getConstructor(ScriptInterface.class).newInstance(this);
+         acquisitionEngine2010LoadingThread_.join();
+         if (acquisitionEngine2010_ == null) {
+            acquisitionEngine2010_ = (IAcquisitionEngine2010) acquisitionEngine2010Class_.getConstructor(ScriptInterface.class).newInstance(this);
          }
-         return acquisitionEngine2010;
+         return acquisitionEngine2010_;
       } catch (Exception e) {
          ReportingUtils.logError(e);
          return null;

@@ -35,7 +35,6 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Iterator;
-import java.util.Vector;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
@@ -79,7 +78,8 @@ import org.micromanager.utils.TooltipTextMaker;
  * This dialog specifies all parameters for the MDA acquisition. 
  *
  */
-public class AcqControlDlg extends JFrame implements PropertyChangeListener, AcqSettingsListener { 
+public class AcqControlDlg extends JFrame implements PropertyChangeListener, 
+        AcqSettingsListener { 
 
    private static final long serialVersionUID = 1L;
    protected JButton listButton_;
@@ -195,7 +195,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener, Acq
    private ComponentTitledPanel commentsPanel_;
    private Border dayBorder_;
    private Border nightBorder_;
-   private Vector<JPanel> panelList_;
+   private ArrayList<JPanel> panelList_;
    private boolean disableGUItoSettings_ = false;
 
 
@@ -798,7 +798,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener, Acq
    }
 
    public final void createEmptyPanels() {
-      panelList_ = new Vector<JPanel>();
+      panelList_ = new ArrayList<JPanel>();
 
       framesPanel_ = (CheckBoxPanel) createPanel("Time points", 5, 5, 220, 91, true); // (text, left, top, right, bottom)
       positionsPanel_ = (CheckBoxPanel) createPanel("Multiple positions (XY)", 5, 93, 220, 154, true);
