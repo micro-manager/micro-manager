@@ -778,7 +778,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
             }
             initializeSimpleAcquisition(SIMPLE_ACQ, width, height, depth, bitDepth, numCamChannels);
             getAcquisition(SIMPLE_ACQ).promptToSave(false);
-            getAcquisition(SIMPLE_ACQ).toFront();
+            getAcquisition(SIMPLE_ACQ).getAcquisitionWindow().getHyperImage().getWindow().toFront();
             this.updateCenterAndDragListener();
          }
       } catch (Exception ex) {
@@ -820,7 +820,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
             }
             initializeSimpleAcquisition(SIMPLE_ACQ, width, height, depth, bitDepth, numCamChannels);
             getAcquisition(SIMPLE_ACQ).promptToSave(false);
-            getAcquisition(SIMPLE_ACQ).toFront();
+            getAcquisition(SIMPLE_ACQ).getAcquisitionWindow().getHyperImage().getWindow().toFront();
             this.updateCenterAndDragListener();
          }
       } catch (Exception ex) {

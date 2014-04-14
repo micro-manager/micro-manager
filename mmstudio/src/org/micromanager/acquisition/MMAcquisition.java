@@ -249,7 +249,7 @@ public class MMAcquisition {
       MMImageCache imageCache = new MMImageCache(imageFileManager);
 
       if (!existing_) {
-         createDefaultAcqSettings(name_, imageCache);
+         createDefaultAcqSettings(imageCache);
       }
       MMStudioMainFrame.createSimpleDisplay(name_, imageCache);
       if (show_) {
@@ -352,7 +352,7 @@ public class MMAcquisition {
                }
             }
          }
-         createDefaultAcqSettings(name, imageCache_);
+         createDefaultAcqSettings(imageCache_);
       }
 
       if (imageCache_.getSummaryMetadata() != null) {
@@ -367,7 +367,7 @@ public class MMAcquisition {
    }
    
   
-   private void createDefaultAcqSettings(String name, ImageCache imageCache) {
+   private void createDefaultAcqSettings(ImageCache imageCache) {
 
       String keys[] = new String[summary_.length()];
       Iterator<String> it = summary_.keys();
@@ -694,41 +694,7 @@ public class MMAcquisition {
       return true;
    }
 
-   /**
-    * Brings the window displaying this acquisition to the front
-    */
-   public void toFront() {
-      if (show_) {
-         virtAcq_.getHyperImage().getWindow().toFront();
-      }
-   }
-
-   /**
-    * Adds a comment to the metadata associated with this acquisition
-    * @param comment Comment that will be added
-    * @throws MMScriptException 
-    */
-   public void setComment(String comment) throws MMScriptException {
-      if (isInitialized()) {
-         try {
-            imageCache_.getSummaryMetadata().put("COMMENT", comment);
-         } catch (JSONException e) {
-            throw new MMScriptException("Failed to set Comment");
-         }
-      } else {
-         comment_ = comment;
-      }
-
-   }
-
-   /**
-    * @Deprecated 
-    * @return AcquisitionData
-    */
-   public AcquisitionData getAcqData() {
-      return null;
-   }
-
+   
    public ImageCache getImageCache() {
       return imageCache_;
    }
@@ -860,25 +826,6 @@ public class MMAcquisition {
    }
 
    /**
-    * Gets a property from the summary metadata
-    */
-   public String getProperty(String propertyName) throws MMScriptException {
-      if (isInitialized()) {
-         try {
-            return imageCache_.getSummaryMetadata().getString(propertyName);
-         } catch (JSONException e) {
-            throw new MMScriptException("Failed to get property: " + propertyName);
-         }
-      } else {
-         try {
-            return summary_.getString(propertyName);
-         } catch (JSONException e) {
-            throw new MMScriptException("Failed to get property: " + propertyName);
-         }
-      }
-   }
-
-   /**
     * Sets a property in the metadata of the specified image
     * 
     * @param frame
@@ -899,45 +846,6 @@ public class MMAcquisition {
          }
       } else {
          throw new MMScriptException("Can not set property before acquisition is initialized");
-      }
-   }
-
-   public void setSystemState(int frame, int channel, int slice, JSONObject state) throws MMScriptException {
-      if (isInitialized()) {
-         try {
-            JSONObject tags = imageCache_.getImage(channel, slice, frame, 0).tags;
-            Iterator<String> iState = state.keys();
-            while (iState.hasNext()) {
-               String key = iState.next();
-               tags.put(key, state.get(key));
-            }
-         } catch (JSONException e) {
-            throw new MMScriptException(e);
-         }
-      } else {
-         throw new MMScriptException("Can not set system state before acquisition is initialized");
-      }
-   }
-
-   public String getProperty(int frame, int channel, int slice, String propName) throws MMScriptException {
-      if (isInitialized()) {
-         try {
-            JSONObject tags = imageCache_.getImage(channel, slice, frame, 0).tags;
-            return tags.getString(propName);
-         } catch (JSONException ex) {
-            throw new MMScriptException(ex);
-         }
-
-      } else {
-      }
-      return "";
-   }
-
-   public boolean hasActiveImage5D() {
-      if (show_) {
-         return virtAcq_.windowClosed();
-      } else {
-         return false;
       }
    }
 
