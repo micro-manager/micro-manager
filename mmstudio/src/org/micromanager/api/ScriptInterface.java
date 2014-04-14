@@ -32,12 +32,18 @@ import java.awt.geom.Point2D;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 
+// These ought not be part of the public API and methods that refer to them are
+// deprecated.
 import org.json.JSONObject;
 import org.micromanager.AcqControlDlg;
 import org.micromanager.PositionListDlg;
 import org.micromanager.acquisition.MMAcquisition;
 import org.micromanager.utils.AutofocusManager;
+
+// For historical reasons, this exception class is not in the
+// org.micromanager.api package even though it is part of the public API.
 import org.micromanager.utils.MMScriptException;
+
 
 /**
  * Interface to execute commands in the main panel. Implemented by
@@ -108,6 +114,8 @@ public interface ScriptInterface {
     * @param diskCached True if images are cached on disk; false if they are kept in RAM only.
     * @param displayOff True if no display is to be created or shown.
     * @throws MMScriptException
+    *
+    * @deprecated Use openAcquisition() instead.
     */
    public String createAcquisition(JSONObject summaryMetadata, boolean diskCached, boolean displayOff);
 
@@ -153,6 +161,8 @@ public interface ScriptInterface {
     * Intended use is within advanced plugins.
     * @param name - data set name
     * @throws MMScriptException
+    *
+    * @deprecated Because it returns an internal object that is subject to change.
     */
    public MMAcquisition getAcquisition(String name) throws MMScriptException;
    
@@ -579,6 +589,8 @@ public interface ScriptInterface {
     * AcqControlDlg dlg = gui.getAcqDlg();
     * dlg.setVisible(true);
     * @return Handle to the MDA acquisition dialog
+    *
+    * @deprecated Use the get/setAcquisitionSettings() interface instead.
     */
    public AcqControlDlg getAcqDlg();
 
@@ -587,6 +599,8 @@ public interface ScriptInterface {
     * If the Dialog did not yet exist, it will be created.
     * The Dialog will not necessarily be shown, call the setVisibile method of the dialog to do so
     * @return Handle to the positionList Dialog
+    *
+    * @deprecated Use the get/setPositionList() interface instead.
     */
    public PositionListDlg getXYPosListDlg();
 
