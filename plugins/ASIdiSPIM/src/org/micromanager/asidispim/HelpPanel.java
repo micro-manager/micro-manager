@@ -32,9 +32,9 @@ import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 
 import org.micromanager.asidispim.Utils.ListeningJPanel;
-//import org.micromanager.utils.ReportingUtils;
 
 import net.miginfocom.swing.MigLayout;
+
 import org.micromanager.api.ScriptInterface;
 
 /**

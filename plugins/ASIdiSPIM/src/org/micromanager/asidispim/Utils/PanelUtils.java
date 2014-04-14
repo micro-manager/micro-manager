@@ -38,11 +38,12 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import org.micromanager.api.ScriptInterface;
+
 import org.micromanager.asidispim.Data.Devices;
 import org.micromanager.asidispim.Data.Joystick;
 import org.micromanager.asidispim.Data.Positions;
 import org.micromanager.asidispim.Data.Properties;
-import org.micromanager.utils.ReportingUtils;
 
 /**
  *
@@ -50,7 +51,11 @@ import org.micromanager.utils.ReportingUtils;
  * @author Jon
  */
 public class PanelUtils {
+   private ScriptInterface gui_;
    
+   public PanelUtils(ScriptInterface gui) {
+      gui_ = gui;
+   }
    
    /**
     * makes JSlider for double values where the values are multiplied by a scale factor
@@ -365,7 +370,7 @@ public class PanelUtils {
             try {
                positions_.setPosition(key_, dir_, ((Number)evt.getNewValue()).doubleValue());
             } catch (Exception e) {
-               ReportingUtils.showError(e);
+               gui_.showError(e);
             }
          }
 

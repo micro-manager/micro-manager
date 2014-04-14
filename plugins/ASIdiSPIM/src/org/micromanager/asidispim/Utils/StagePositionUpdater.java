@@ -29,8 +29,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.swing.Timer;
 
-import org.micromanager.MMStudioMainFrame;
-import org.micromanager.acquisition.AcquisitionEngine;
+import org.micromanager.api.ScriptInterface;
+
 import org.micromanager.asidispim.Data.Devices;
 import org.micromanager.asidispim.Data.Positions;
 import org.micromanager.asidispim.Data.Properties;
@@ -46,7 +46,7 @@ public class StagePositionUpdater {
    private Timer timer_;
    private Positions positions_;
    private final Properties props_;
-   private final AcquisitionEngine acqEngine_;
+   private final ScriptInterface gui_;
    private AtomicBoolean acqRunning_ = new AtomicBoolean(false);
    
    /**
@@ -58,11 +58,11 @@ public class StagePositionUpdater {
     * 
     * @param positions
     */
-   public StagePositionUpdater(Positions positions, Properties props) {
+   public StagePositionUpdater(ScriptInterface gui, Positions positions, Properties props) {
+      gui_ = gui;
       positions_ = positions;
       props_ = props;
       panels_ = new ArrayList<ListeningJPanel>();
-      acqEngine_ = MMStudioMainFrame.getInstance().getAcquisitionEngine();
       updateInterval();
    }
    
@@ -126,7 +126,7 @@ public class StagePositionUpdater {
     * If acquisition is running then does nothing.
     */
    public void oneTimeUpdate() {
-      if (!acqEngine_.isAcquisitionRunning() && !acqRunning_.get() ) {  // 
+      if (!gui_.isAcquisitionRunning() ) {  // 
          // update stage positions in devices
          positions_.refreshStagePositions();
          // notify listeners that positions are updated

@@ -22,7 +22,6 @@
 package org.micromanager.asidispim;
 
 import org.micromanager.utils.ReportingUtils;
-//import org.micromanager.MMStudioMainFrame;
 import org.micromanager.asidispim.Data.Devices;
 import org.micromanager.asidispim.Data.Properties;
 import org.micromanager.asidispim.Utils.ListeningJPanel;
@@ -40,7 +39,9 @@ import javax.swing.JSeparator;
 
 import mmcorej.CMMCore;
 import mmcorej.StrVector;
+
 import net.miginfocom.swing.MigLayout;
+
 import org.micromanager.api.ScriptInterface;
 
 

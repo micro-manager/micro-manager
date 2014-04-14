@@ -46,7 +46,6 @@ import org.micromanager.api.ScriptInterface;
 
 import org.micromanager.asidispim.Utils.StagePositionUpdater;
 import org.micromanager.internalinterfaces.LiveModeListener;
-//import org.micromanager.utils.ReportingUtils;
 
 
 /**
@@ -102,7 +101,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       cameras_ = cameras;
       gui_ = gui;
       core_ = gui_.getMMCore();
-      PanelUtils pu = new PanelUtils();
+      PanelUtils pu = new PanelUtils(gui_);
       
       joystickPanel_ = new JoystickSubPanel(joystick_, devices_, panelName_, Devices.Sides.NONE, prefs_);
       add(joystickPanel_, "span 2 4");  // make artificially tall to keep stage positions in line with each other

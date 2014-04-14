@@ -132,12 +132,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       cameras_ = cameras;
       prefs_ = prefs;
       stagePosUpdater_ = stagePosUpdater;
-      //acqEngine_ = gui_.getAcquisitionEngine();
       core_ = gui_.getMMCore();
-      //gui_ = MMStudioMainFrame.getInstance();
       numTimePointsDone_ = 0;
 
-      PanelUtils pu = new PanelUtils();
+      PanelUtils pu = new PanelUtils(gui_);
            
       
       // start volume sub-panel

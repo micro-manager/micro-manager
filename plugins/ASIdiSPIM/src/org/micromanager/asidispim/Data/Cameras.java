@@ -26,7 +26,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 
 import org.micromanager.api.ScriptInterface;
-import org.micromanager.utils.ReportingUtils;
 
 /**
  * Holds utility functions for cameras
@@ -143,7 +142,7 @@ public class Cameras {
                   enableLiveMode(true);
                } 
             } catch (Exception ex) { 
-               ReportingUtils.showError("Failed to set Core Camera property"); 
+               gui_.showError("Failed to set Core Camera property"); 
             }
          }
       }

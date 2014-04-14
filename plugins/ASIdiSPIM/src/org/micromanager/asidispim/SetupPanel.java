@@ -43,7 +43,6 @@ import net.miginfocom.swing.MigLayout;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.internalinterfaces.LiveModeListener;
 import org.micromanager.utils.NumberUtils;
-import org.micromanager.utils.ReportingUtils;
 
 /**
  *
@@ -100,7 +99,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       prefs_ = prefs;
       gui_ = gui;
       core_ = gui_.getMMCore();
-      PanelUtils pu = new PanelUtils();
+      PanelUtils pu = new PanelUtils(gui_);
 
       piezoImagingDeviceKey_ = Devices.getSideSpecificKey(Devices.Keys.PIEZOA, side);
       piezoIlluminationDeviceKey_ = Devices.getSideSpecificKey(Devices.Keys.PIEZOA, Devices.getOppositeSide(side));
@@ -140,7 +139,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
                positions_.setPosition(
                        micromirrorDeviceKey_, Joystick.Directions.Y, sheetStartPos_);
             } catch (Exception ex) {
-               ReportingUtils.showError(ex);
+               gui_.showError(ex);
             }
          }
       });
@@ -154,7 +153,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
             try {
                positions_.setPosition(micromirrorDeviceKey_, Joystick.Directions.Y, sheetStopPos_);
             } catch (Exception ex) {
-               ReportingUtils.showError(ex);
+               gui_.showError(ex);
             }
          }
       });
@@ -179,7 +178,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
                updateImagingSAParams();
                updateStartStopPositions();
             } catch (Exception ex) {
-               ReportingUtils.showError(ex);
+               gui_.showError(ex);
             }
          }
       });
@@ -206,7 +205,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
                updateImagingSAParams();
                updateStartStopPositions();
             } catch (Exception ex) {
-               ReportingUtils.showError(ex);
+               gui_.showError(ex);
             }
          }
       });
@@ -227,7 +226,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
             try {
                positions_.setPosition(piezoImagingDeviceKey_, Joystick.Directions.NONE, imagingStartPos_);
             } catch (Exception ex) {
-               ReportingUtils.showError(ex);
+               gui_.showError(ex);
             }
          }
       });
@@ -244,7 +243,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
             try {
                positions_.setPosition(piezoImagingDeviceKey_, Joystick.Directions.NONE, imagingStopPos_);
             } catch (Exception ex) {
-               ReportingUtils.showError(ex);
+               gui_.showError(ex);
             }
          }
       });
@@ -269,7 +268,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
                letter = props_.getPropValueString(piezoIlluminationDeviceKey_, Properties.Keys.AXIS_LETTER);
                core_.setSerialPortCommand(port_, "HM " + letter + "+", "\r");
             } catch (Exception ex) {
-               ReportingUtils.showError("could not execute core function set home here for axis " + letter);
+               gui_.showError("could not execute core function set home here for axis " + letter);
             }
          }
       });
@@ -289,7 +288,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
                letter = props_.getPropValueString(piezoIlluminationDeviceKey_, Properties.Keys.AXIS_LETTER);
                core_.setSerialPortCommand(port_, "! " + letter, "\r");
             } catch (Exception ex) {
-               ReportingUtils.showError("could not execute core function move to home for axis " + letter);
+               gui_.showError("could not execute core function move to home for axis " + letter);
             }
          }
       });
@@ -436,7 +435,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
          String hubname = core_.getParentLabel(mmDevice);
          port_ = core_.getProperty(hubname, Properties.Keys.SERIAL_COM_PORT.toString());
       } catch (Exception ex) {
-         ReportingUtils.showError("Could not get COM port in SetupPanel constructor.");
+         gui_.showError("Could not get COM port in SetupPanel constructor.");
       }
    }
 
@@ -488,7 +487,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
             // It would be nice to check the answer
             core_.getSerialPortAnswer(port_, "\r\n");
          } catch (Exception ex) {
-            ReportingUtils.showError("could not execute core function move to home for axis " + letter);
+            gui_.showError("could not execute core function move to home for axis " + letter);
          }
       }
 

@@ -35,6 +35,7 @@ import org.micromanager.asidispim.Utils.PanelUtils;
 import org.micromanager.asidispim.Utils.StagePositionUpdater;
 
 import net.miginfocom.swing.MigLayout;
+import org.micromanager.api.ScriptInterface;
 
 /**
  *
@@ -50,12 +51,13 @@ public class GuiSettingsPanel extends ListeningJPanel {
    private final JSpinner scannerFilterX_;
    private final JSpinner scannerFilterY_;
    private final StagePositionUpdater stagePosUpdater_;
+   private final ScriptInterface gui_;
      
    /**
     * 
     * @param devices the (single) instance of the Devices class
     */
-   public GuiSettingsPanel(Devices devices, Properties props, Prefs prefs,
+   public GuiSettingsPanel(ScriptInterface gui, Devices devices, Properties props, Prefs prefs,
          StagePositionUpdater stagePosUpdater) {    
       super ("GUI Settings", 
             new MigLayout(
@@ -66,6 +68,7 @@ public class GuiSettingsPanel extends ListeningJPanel {
       devices_ = devices;
       props_ = props;
       prefs_ = prefs;
+      gui_ = gui;
       stagePosUpdater_ = stagePosUpdater;
       
       // copy plugin "property" values from prefs to props
@@ -74,7 +77,7 @@ public class GuiSettingsPanel extends ListeningJPanel {
             prefs_.getFloat(panelName_, Properties.Keys.PLUGIN_POSITION_REFRESH_INTERVAL, 1));
       
       
-      PanelUtils pu = new PanelUtils();
+      PanelUtils pu = new PanelUtils(gui_);
       
       add(new JLabel("Position refresh interval (s):"));
       positionRefreshInterval_ = pu.makeSpinnerFloat(0.5, 1000, 0.5, props_, devices_, 
