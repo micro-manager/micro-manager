@@ -26,7 +26,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.BorderFactory;
 
-import org.micromanager.MMStudioMainFrame;
 import org.micromanager.asidispim.Data.Cameras;
 import org.micromanager.asidispim.Data.Devices;
 import org.micromanager.asidispim.Data.Joystick;
@@ -43,10 +42,11 @@ import javax.swing.JCheckBox;
 
 import mmcorej.CMMCore;
 import net.miginfocom.swing.MigLayout;
+import org.micromanager.api.ScriptInterface;
 
 import org.micromanager.asidispim.Utils.StagePositionUpdater;
 import org.micromanager.internalinterfaces.LiveModeListener;
-import org.micromanager.utils.ReportingUtils;
+//import org.micromanager.utils.ReportingUtils;
 
 
 /**
@@ -62,6 +62,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
    private final Positions positions_;
    private final Prefs prefs_;
    private final Cameras cameras_;
+   private final ScriptInterface gui_;
    private final CMMCore core_;
    
    private final JoystickSubPanel joystickPanel_;
@@ -84,7 +85,8 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
    /**
     * Navigation panel constructor.
     */
-   public NavigationPanel(Devices devices, Properties props, Joystick joystick, Positions positions,
+   public NavigationPanel(ScriptInterface gui, Devices devices, Properties props, 
+           Joystick joystick, Positions positions, 
            StagePositionUpdater stagePosUpdater, Prefs prefs, Cameras cameras) {    
       super ("Navigation",
             new MigLayout(
@@ -98,7 +100,8 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       stagePosUpdater_ = stagePosUpdater;
       prefs_ = prefs;
       cameras_ = cameras;
-      core_ = MMStudioMainFrame.getInstance().getCore();
+      gui_ = gui;
+      core_ = gui_.getMMCore();
       PanelUtils pu = new PanelUtils();
       
       joystickPanel_ = new JoystickSubPanel(joystick_, devices_, panelName_, Devices.Sides.NONE, prefs_);
@@ -168,7 +171,8 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       add(makeIncrementButton(Devices.Keys.GALVOA, Joystick.Directions.X, 0.2, "+"));
       add(makeMoveToOriginButton(Devices.Keys.GALVOA, Joystick.Directions.X), "wrap");
       
-      cameraPanel_ = new CameraSubPanel(cameras_, devices_, panelName_, Devices.Sides.NONE, prefs_, true);
+      cameraPanel_ = new CameraSubPanel(gui_, cameras_, devices_, panelName_, 
+              Devices.Sides.NONE, prefs_, true);
       cameraPanel_.setBorder(BorderFactory.createLineBorder(ASIdiSPIM.borderColor)); 
       add(cameraPanel_, "center, span 2 2");
       
@@ -242,7 +246,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
                   core_.setSerialPortCommand(port, "\\",  "\r");
                }
             } catch (Exception ex) {
-               ReportingUtils.showError("could not halt motion");
+               gui_.showError("could not halt motion");
             }
          }
       });
@@ -270,7 +274,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
             try {
                positions_.setPosition(key_, dir_, 0.0);
             } catch (Exception ex) {
-               ReportingUtils.showError(ex);
+               gui_.showError(ex);
             }
          }
 
@@ -334,7 +338,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
             try {
                positions_.setPositionRelative(key_, dir_, delta_);
             } catch (Exception ex) {
-               ReportingUtils.showError(ex);
+               gui_.showError(ex);
             }
          }
 

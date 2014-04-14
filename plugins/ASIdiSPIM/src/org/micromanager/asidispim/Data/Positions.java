@@ -25,10 +25,9 @@ import java.awt.geom.Point2D;
 import java.util.HashMap;
 
 import mmcorej.CMMCore;
+import org.micromanager.api.ScriptInterface;
 
-import org.micromanager.MMStudioMainFrame;
 import org.micromanager.utils.NumberUtils;
-import org.micromanager.utils.ReportingUtils;
 
 /**
  * Holds information about device positions
@@ -39,14 +38,16 @@ public class Positions {
    private HashMap<Devices.Keys, Double> oneAxisDrivePositions_;
    private HashMap<Devices.Keys, Point2D.Double> twoAxisDrivePositions_;
    Devices devices_;
+   private ScriptInterface gui_;
    private CMMCore core_;
    
    /**
     * Constructor
     */
-   public Positions(Devices devices) {
+   public Positions(ScriptInterface gui, Devices devices) {
       devices_ = devices;
-      core_ = MMStudioMainFrame.getInstance().getCore();
+      gui_ = gui;
+      core_ = gui_.getMMCore();
       
       // fill the hashmaps with correct keys, leave values blank for now
       oneAxisDrivePositions_ = new HashMap<Devices.Keys, Double>();
@@ -140,7 +141,7 @@ public class Positions {
             return pt.y;
          }
       } catch (Exception ex) {
-         ReportingUtils.showError(ex);
+         gui_.showError(ex);
       }
       return 0;
    }
@@ -220,7 +221,7 @@ public class Positions {
             }
          }
       } catch (Exception ex) {
-         ReportingUtils.showError(ex);
+         gui_.showError(ex);
       }
    }
    
@@ -250,7 +251,7 @@ public class Positions {
             }
          }
       } catch (Exception ex) {
-         ReportingUtils.showError(ex);
+         gui_.showError(ex);
       }
    }
    
@@ -284,7 +285,7 @@ public class Positions {
             break;
          }
       } catch (Exception ex) {
-         ReportingUtils.showError(ex);
+         gui_.showError(ex);
       }
    }
 
@@ -316,7 +317,7 @@ public class Positions {
             }
             twoAxisDrivePositions_.put(devKey, pt);
          } catch (Exception ex) {
-            ReportingUtils.logError("Problem getting position of " + mmDevice);
+            gui_.logError("Problem getting position of " + mmDevice);
          }
       }
    }
@@ -334,7 +335,7 @@ public class Positions {
                oneAxisDrivePositions_.put(devKey, pt);
             }
          } catch (Exception ex) {
-            ReportingUtils.logError("Problem getting position of " + mmDevice);
+            gui_.logError("Problem getting position of " + mmDevice);
          }
       }
    }

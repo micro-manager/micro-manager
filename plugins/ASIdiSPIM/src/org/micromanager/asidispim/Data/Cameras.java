@@ -25,7 +25,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 
-import org.micromanager.MMStudioMainFrame;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.ReportingUtils;
 
@@ -47,10 +46,10 @@ public class Cameras {
       INTERNAL;
    }
    
-   public Cameras(Devices devices, Properties props) {
+   public Cameras(ScriptInterface gui, Devices devices, Properties props) {
       devices_ = devices;
       props_ = props;
-      gui_ = MMStudioMainFrame.getInstance();
+      gui_ = gui;
    }//constructor
    
    /**

@@ -25,7 +25,6 @@ import java.awt.Color;
 import java.awt.event.WindowEvent;
 import org.micromanager.api.MMPlugin;
 import org.micromanager.api.ScriptInterface;
-import org.micromanager.utils.ReportingUtils;
 
 
 public class ASIdiSPIM implements MMPlugin {
@@ -51,7 +50,7 @@ public class ASIdiSPIM implements MMPlugin {
             gui_.addMMListener(myFrame_);
             gui_.addMMBackgroundListener(myFrame_);
          } catch (Exception e) {
-            ReportingUtils.showError(e);
+            gui_.showError(e);
          }
       }
       myFrame_.setVisible(true);

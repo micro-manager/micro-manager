@@ -32,10 +32,10 @@ import java.util.Set;
 import mmcorej.CMMCore;
 import mmcorej.DeviceType;
 import mmcorej.StrVector;
+import org.micromanager.api.ScriptInterface;
 
-import org.micromanager.MMStudioMainFrame;
 import org.micromanager.asidispim.Utils.DevicesListenerInterface;
-import org.micromanager.utils.ReportingUtils;
+
 
 // TODO implement fast axis reverse checkbox (may need device adapter change and possibly even firmware-level change)
 
@@ -51,6 +51,13 @@ import org.micromanager.utils.ReportingUtils;
  */
 public class Devices {
 
+   private List<String> loadedDevices_;
+   private Prefs prefs_;
+   private ScriptInterface gui_;
+   private CMMCore core_;
+   private List<DevicesListenerInterface> listeners_;
+   private boolean listenersEnabled_;
+   
    /**
     * A, B, or N for not associated with either side specifically. Now sides are
     * labeled as "paths" in GUI to avoid confusion, but code still has "sides"
@@ -301,7 +308,7 @@ public class Devices {
                         + core_.getProperty(mmDevice, "AxisLetterY");
                }
             } catch (Exception ex) {
-               ReportingUtils.showError(ex);
+               gui_.showError(ex);
             }
          }
       }
@@ -667,15 +674,11 @@ public class Devices {
       }
    }
 
-   private List<String> loadedDevices_;
-   private Prefs prefs_;
-   private CMMCore core_;
-   private List<DevicesListenerInterface> listeners_;
-   private boolean listenersEnabled_;
 
-   public Devices(Prefs prefs) {
+   public Devices(ScriptInterface gui, Prefs prefs) {
       prefs_ = prefs;
-      core_ = MMStudioMainFrame.getInstance().getCore();
+      gui_ = gui;
+      core_ = gui.getMMCore();
 
       // create synchronized version of data structure containing Device
       // information and populate it

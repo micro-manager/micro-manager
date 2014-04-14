@@ -20,11 +20,7 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 package org.micromanager.asidispim;
 
-import java.awt.Insets;
 
-import org.micromanager.MMStudioMainFrame;
-import org.micromanager.acquisition.AcquisitionWrapperEngine;
-import org.micromanager.api.ScriptInterface;
 import org.micromanager.asidispim.Data.Cameras;
 import org.micromanager.asidispim.Data.Devices;
 import org.micromanager.asidispim.Data.Prefs;
@@ -32,9 +28,19 @@ import org.micromanager.asidispim.Data.Properties;
 import org.micromanager.asidispim.Utils.DevicesListenerInterface;
 import org.micromanager.asidispim.Utils.ListeningJPanel;
 import org.micromanager.asidispim.Utils.PanelUtils;
-import org.micromanager.utils.NumberUtils;
-import org.micromanager.utils.ReportingUtils;
+import org.micromanager.asidispim.Utils.StagePositionUpdater;
 
+import java.awt.Insets;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.File;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JFormattedTextField;
+import javax.swing.JTextField;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JLabel;
@@ -44,31 +50,22 @@ import javax.swing.JSeparator;
 import javax.swing.JSpinner;
 import javax.swing.border.TitledBorder;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.io.File;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.atomic.AtomicBoolean;
-import javax.swing.JCheckBox;
-import javax.swing.JComponent;
-
-import javax.swing.JFormattedTextField;
-import javax.swing.JTextField;
-
-import mmcorej.CMMCore;
-import mmcorej.TaggedImage;
 import net.miginfocom.swing.MigLayout;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import mmcorej.CMMCore;
+import mmcorej.TaggedImage;
+import org.micromanager.api.ScriptInterface;
+import org.micromanager.api.ImageCache;
+import org.micromanager.api.MMTags;
+
+import org.micromanager.MMStudioMainFrame;
 import org.micromanager.acquisition.DefaultTaggedImageSink;
 import org.micromanager.acquisition.MMAcquisition;
 import org.micromanager.acquisition.TaggedImageQueue;
 import org.micromanager.acquisition.VirtualAcquisitionDisplay;
-import org.micromanager.api.ImageCache;
-import org.micromanager.api.MMTags;
-
-import org.micromanager.asidispim.Utils.StagePositionUpdater;
+import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.FileDialogs;
 import org.micromanager.utils.MMScriptException;
 
@@ -84,7 +81,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private final Properties props_;
    private final Cameras cameras_;
    private final Prefs prefs_;
-   private final AcquisitionWrapperEngine acqEngine_;
    private final CMMCore core_;
    private final ScriptInterface gui_;
    private final JSpinner numSlices_;
@@ -119,21 +115,26 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    //private static final String ZSTEPTAG = "z-step_um";
    private static final String ELAPSEDTIME = "ElapsedTime-ms";
 
-   public AcquisitionPanel(Devices devices, Properties props, Cameras cameras, 
-           Prefs prefs, StagePositionUpdater stagePosUpdater) {
+   public AcquisitionPanel(ScriptInterface gui, 
+           Devices devices, 
+           Properties props, 
+           Cameras cameras, 
+           Prefs prefs, 
+           StagePositionUpdater stagePosUpdater) {
       super("Acquisition",
               new MigLayout(
               "",
               "[right]16[center]16[center]16[center]16[center]",
-              "[]12[]"));
+              "[]8[]"));
+      gui_ = gui;
       devices_ = devices;
       props_ = props;
       cameras_ = cameras;
       prefs_ = prefs;
       stagePosUpdater_ = stagePosUpdater;
-      acqEngine_ = MMStudioMainFrame.getInstance().getAcquisitionEngine();
-      core_ = MMStudioMainFrame.getInstance().getCore();
-      gui_ = MMStudioMainFrame.getInstance();
+      //acqEngine_ = gui_.getAcquisitionEngine();
+      core_ = gui_.getMMCore();
+      //gui_ = MMStudioMainFrame.getInstance();
       numTimePointsDone_ = 0;
 
       PanelUtils pu = new PanelUtils();
@@ -144,7 +145,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       volPanel_ = new JPanel(new MigLayout(
               "",
               "[right]16[center]",
-              "[]12[]"));
+              "[]8[]"));
 
       volPanel_.setBorder(makeTitledBorder("Volume Settings"));
 
@@ -187,7 +188,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       slicePanel_ = new JPanel(new MigLayout(
               "",
               "[right]16[center]",
-              "[]12[]"));
+              "[]8[]"));
 
       slicePanel_.setBorder(makeTitledBorder("Slice Settings"));
 
@@ -236,7 +237,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       try {
          exposureField_.setValue((Double) core_.getExposure());
       } catch (Exception ex) {
-         ReportingUtils.showError(ex, "Error getting exposure time from core");
+         gui_.showError(ex, "Error getting exposure time from core");
       }
       exposureField_.setColumns(6);
       slicePanel_.add(exposureField_, "wrap");
@@ -249,7 +250,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       repeatPanel_ = new JPanel(new MigLayout(
               "",
               "[right]16[center]",
-              "[]12[]"));
+              "[]8[]"));
 
       repeatPanel_.setBorder(makeTitledBorder("Repeat Settings"));
 
@@ -279,7 +280,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       savePanel_ = new JPanel(new MigLayout(
               "",
               "[right]16[center]16[left]",
-              "[]12[]"));
+              "[]8[]"));
       savePanel_.setBorder(makeTitledBorder("Data saving Settings"));
       
       separateTimePointsCB_ = new JCheckBox("Separate viewer for each time point");
@@ -425,8 +426,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     * @return
     */
    private boolean runAcquisition() {
-      if (acqEngine_.isAcquisitionRunning()) {
-         ReportingUtils.showError("An acquisition is already running");
+      if (gui_.isAcquisitionRunning()) {
+         gui_.showError("An acquisition is already running");
          return false;
       }
 
@@ -440,7 +441,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       }
       double exposure = (Double) exposureField_.getValue();
       if (exposure > lineScanTime) {
-         ReportingUtils.showError("Exposure time is longer than time needed for a line scan. " +
+         gui_.showError("Exposure time is longer than time needed for a line scan. " +
                  "\n" + "This will result in dropped frames. " + "\n" +
                  "Please change input");
          return false;
@@ -487,11 +488,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
 
       // Sanity checks
       if (firstCamera == null) {
-         ReportingUtils.showError("Please set up a camera first on the Devices Panel");
+         gui_.showError("Please set up a camera first on the Devices Panel");
          return false;
       }
       if (nrSides == 2 && secondCamera == null) {
-         ReportingUtils.showError("2 Sides requested, but second camera is not configured."
+         gui_.showError("2 Sides requested, but second camera is not configured."
                  + "\nPlease configure the Imaging Path B camera on the Devices Panel");
          return false;
       }
@@ -504,7 +505,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             core_.popNextImage();
          }
       } catch (Exception ex) {
-         ReportingUtils.showError(ex, "Error emptying out the circular buffer");
+         gui_.showError(ex, "Error emptying out the circular buffer");
          return false;
       }
 
@@ -642,7 +643,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                      done = true;
                   }
                   if (now - start >= timeout2) {
-                     ReportingUtils.showError("No image arrived withing a reasonable period");
+                     gui_.showError("No image arrived withing a reasonable period");
                      stop_.set(true);
                   }
                }
@@ -662,9 +663,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                }
             }
          } catch (MMScriptException mex) {
-            ReportingUtils.showError(mex);
+            gui_.showError(mex);
          } catch (Exception ex) {
-            ReportingUtils.showError(ex);
+            gui_.showError(ex);
          } finally {
             try {
                if (core_.isSequenceRunning(firstCamera)) {
@@ -687,12 +688,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                stagePosUpdater_.setAcqRunning(false);
                bq.add(TaggedImageQueue.POISON);
                gui_.closeAcquisition(acqName);
-               ReportingUtils.logMessage("Acquisition took: " + 
+               gui_.logMessage("Acquisition took: " + 
                        (System.currentTimeMillis() - acqStart) + "ms");
                
             } catch (Exception ex) {
                // exception while stopping sequence acquisition, not sure what to do...
-               ReportingUtils.showError(ex, "Problem while finsihing acquisition");
+               gui_.showError(ex, "Problem while finsihing acquisition");
             }
          }
 

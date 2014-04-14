@@ -32,9 +32,10 @@ import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 
 import org.micromanager.asidispim.Utils.ListeningJPanel;
-import org.micromanager.utils.ReportingUtils;
+//import org.micromanager.utils.ReportingUtils;
 
 import net.miginfocom.swing.MigLayout;
+import org.micromanager.api.ScriptInterface;
 
 /**
  *
@@ -42,18 +43,18 @@ import net.miginfocom.swing.MigLayout;
  */
 @SuppressWarnings("serial")
 public class HelpPanel extends ListeningJPanel {
-     
+   private final ScriptInterface gui_;
    /**
     * 
     * @param devices the (single) instance of the Devices class
     */
-   public HelpPanel() {    
+   public HelpPanel(ScriptInterface gui) {    
       super ("Help", 
             new MigLayout(
               "", 
               "[right]",
               "[]16[]"));
-     
+      gui_ = gui;
       final JTextPane textPane = new JTextPane();
       textPane.setEditable(false);
       textPane.setContentType("text/html");
@@ -70,7 +71,7 @@ public class HelpPanel extends ListeningJPanel {
                try {
                    Desktop.getDesktop().browse(new URI(hle.getURL().toString()));
                } catch (Exception ex) {
-                  ReportingUtils.showError("Could not open web browser."); 
+                  gui_.showError("Could not open web browser."); 
                }
 
            }

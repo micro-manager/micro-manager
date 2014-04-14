@@ -28,10 +28,9 @@ import java.util.List;
 
 import mmcorej.CMMCore;
 
-import org.micromanager.MMStudioMainFrame;
+import org.micromanager.api.ScriptInterface;
 import org.micromanager.asidispim.Utils.UpdateFromPropertyListenerInterface;
 import org.micromanager.utils.NumberUtils;
-import org.micromanager.utils.ReportingUtils;
 
 
 /**
@@ -47,7 +46,15 @@ import org.micromanager.utils.ReportingUtils;
  * @author nico
  */
 public class Properties {
-
+   
+   private ScriptInterface gui_;
+   private Devices devices_;
+   private CMMCore core_;
+   private List<UpdateFromPropertyListenerInterface> listeners_;
+   private HashMap<Keys, Float> pluginFloats_;
+   private HashMap<Keys, Integer> pluginInts_;
+   private HashMap<Keys, String> pluginStrings_;
+   
    /**
     * List of all device adapter properties used.  The enum value (all caps) 
     * is used in the Java code.  The corresponding string value (in quotes) is 
@@ -147,21 +154,16 @@ public class Properties {
       }
    }
    
-   // variables
-   private Devices devices_;
-   private CMMCore core_;
-   private List<UpdateFromPropertyListenerInterface> listeners_;
-   private HashMap<Keys, Float> pluginFloats_;
-   private HashMap<Keys, Integer> pluginInts_;
-   private HashMap<Keys, String> pluginStrings_;
+  
    
    /**
     * Constructor.
     * @param devices
     * @author Jon
     */
-   public Properties (Devices devices) {
-      core_ = MMStudioMainFrame.getInstance().getCore();
+   public Properties (ScriptInterface gui, Devices devices) {
+      gui_ = gui;
+      core_ = gui_.getMMCore();
       devices_ = devices;
       listeners_ = new ArrayList<UpdateFromPropertyListenerInterface>();
       
@@ -196,7 +198,7 @@ public class Properties {
                mmDevice = devices_.getMMDeviceException(device);
                return core_.hasProperty(mmDevice, name.toString());
             } catch (Exception ex) {
-               ReportingUtils.showError(ex, "Couldn't find property " + 
+               gui_.showError(ex, "Couldn't find property " + 
                      name.toString() + " in device " + mmDevice);
             }
          }
@@ -233,7 +235,7 @@ public class Properties {
                   core_.setProperty(mmDevice, name.toString(), strVal);
                } catch (Exception ex) {
                   // log to file but nothing else
-                  ReportingUtils.logMessage("Device " + mmDevice + 
+                  gui_.logMessage("Device " + mmDevice + 
                         " does not have property: " + name.toString());
                }
             }
@@ -242,7 +244,7 @@ public class Properties {
                mmDevice = devices_.getMMDeviceException(device);
                core_.setProperty(mmDevice, name.toString(), strVal);
             } catch (Exception ex) {
-               ReportingUtils.showError(ex, "Error setting string property " + 
+               gui_.showError(ex, "Error setting string property " + 
                     name.toString() + " to " + strVal + " in device " + mmDevice);
             }
          }
@@ -275,7 +277,7 @@ public class Properties {
                mmDevice = devices_.getMMDeviceException(device);
                core_.setProperty(mmDevice, name.toString(), val.toString());
             } catch (Exception ex) {
-               ReportingUtils.showError(ex, "Error setting string property " + 
+               gui_.showError(ex, "Error setting string property " + 
                     name.toString() + " to " + val.toString() + " in device " + 
                     mmDevice);
             }
@@ -329,7 +331,7 @@ public class Properties {
                mmDevice = devices_.getMMDeviceException(device);
                core_.setProperty(mmDevice, name.toString(), intVal);
             } catch (Exception ex) {
-               ReportingUtils.showError(ex, "Error setting int property " + 
+               gui_.showError(ex, "Error setting int property " + 
                     name.toString() + " in device " + mmDevice);
             }
          }
@@ -372,7 +374,7 @@ public class Properties {
                mmDevice = devices_.getMMDeviceException(device);
                core_.setProperty(mmDevice, name.toString(), floatVal);
             } catch (Exception ex) {
-               ReportingUtils.showError(ex, "Error setting float property " + 
+               gui_.showError(ex, "Error setting float property " + 
                     name.toString() + " in device " + mmDevice);
             }
          }
@@ -419,7 +421,7 @@ public class Properties {
                mmDevice = devices_.getMMDeviceException(device);
                val = core_.getProperty(mmDevice, name.toString());
             } catch (Exception ex) {
-               ReportingUtils.showError(ex, "Could not get property " + 
+               gui_.showError(ex, "Could not get property " + 
                        name.toString() + " from device " + mmDevice);
             }
          }
@@ -489,11 +491,11 @@ public class Properties {
                val = NumberUtils.coreStringToInt(strVal);
             }
          } catch (ParseException ex) {
-            ReportingUtils.showError(ex, "Could not parse int value of " + 
+            gui_.showError(ex, "Could not parse int value of " + 
                     strVal + " for " + name.toString() + " in device " + 
                     device.toString());
          } catch (NullPointerException ex) {
-            ReportingUtils.showError(ex, "Null Pointer error in function getPropValueInteger");
+            gui_.showError(ex, "Null Pointer error in function getPropValueInteger");
          }
       }
       return val;
@@ -532,11 +534,11 @@ public class Properties {
               val = (float)NumberUtils.coreStringToDouble(strVal);
            }
         } catch (ParseException ex) {
-           ReportingUtils.showError(ex, "Could not parse int value of " + 
+           gui_.showError(ex, "Could not parse int value of " + 
                    strVal + " for " + name.toString() + " in device " + 
                    device.toString());
         } catch (NullPointerException ex) {
-           ReportingUtils.showError(ex, "Null Pointer error in function getPropValueFLoat");
+           gui_.showError(ex, "Null Pointer error in function getPropValueFLoat");
         }
      }
      return val;

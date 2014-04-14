@@ -68,7 +68,7 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
    private Cameras cameras_;
    
    private final DevicesPanel devicesPanel_;
-   private final AcquisitionPanel spimParamsPanel_;
+   private final AcquisitionPanel acquisitionPanel_;
    private final SetupPanel setupPanelA_;
    private final SetupPanel setupPanelB_;
    private final NavigationPanel navigationPanel_;
@@ -86,35 +86,35 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
 
       // create interface objects used by panels
       prefs_ = new Prefs(Preferences.userNodeForPackage(this.getClass()));
-      devices_ = new Devices(prefs_);
-      props_ = new Properties(devices_);
-      positions_ = new Positions(devices_);
-      joystick_ = new Joystick(devices_, props_);
-      cameras_ = new Cameras(devices_, props_);
+      devices_ = new Devices(gui, prefs_);
+      props_ = new Properties(gui, devices_);
+      positions_ = new Positions(gui, devices_);
+      joystick_ = new Joystick(gui, devices_, props_);
+      cameras_ = new Cameras(gui, devices_, props_);
       
       // create the panels themselves
       // in some cases dependencies create required ordering
-      devicesPanel_ = new DevicesPanel(devices_, props_);
-      
-      setupPanelA_ = new SetupPanel(devices_, props_, joystick_, 
+      devicesPanel_ = new DevicesPanel(gui, devices_, props_);
+      setupPanelA_ = new SetupPanel(gui, devices_, props_, joystick_, 
             Devices.Sides.A, positions_, cameras_, prefs_);
-      setupPanelB_ = new SetupPanel(devices_, props_, joystick_,
+      setupPanelB_ = new SetupPanel(gui, devices_, props_, joystick_,
             Devices.Sides.B, positions_, cameras_, prefs_);
       // get initial positions, even if user doesn't want continual refresh
       stagePosUpdater_ = new StagePositionUpdater(positions_, props_);  // needed for setup and navigation
-      spimParamsPanel_ = new AcquisitionPanel(devices_, props_, cameras_, prefs_, stagePosUpdater_);
+      acquisitionPanel_ = new AcquisitionPanel(gui, devices_, props_, cameras_, 
+              prefs_, stagePosUpdater_);
       guiSettingsPanel_ = new GuiSettingsPanel(devices_, props_, prefs_, stagePosUpdater_);
       stagePosUpdater_.oneTimeUpdate();  // needed for NavigationPanel
-      navigationPanel_ = new NavigationPanel(devices_, props_, joystick_,
+      navigationPanel_ = new NavigationPanel(gui, devices_, props_, joystick_,
             positions_, stagePosUpdater_, prefs_, cameras_);
-      helpPanel_ = new HelpPanel();
+      helpPanel_ = new HelpPanel(gui);
       
       // now add tabs to GUI
       // all added tabs must be of type ListeningJPanel
       // only use addLTab, not addTab to guarantee this
       final ListeningJTabbedPane tabbedPane = new ListeningJTabbedPane();
       tabbedPane.addLTab(devicesPanel_);
-      tabbedPane.addLTab(spimParamsPanel_);
+      tabbedPane.addLTab(acquisitionPanel_);
       tabbedPane.addLTab(setupPanelA_);
       tabbedPane.addLTab(setupPanelB_);
       tabbedPane.addLTab(navigationPanel_);
@@ -173,7 +173,7 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
             setupPanelA_.saveSettings();
             setupPanelB_.saveSettings();
             navigationPanel_.saveSettings();
-            spimParamsPanel_.saveSettings();
+            acquisitionPanel_.saveSettings();
             guiSettingsPanel_.saveSettings();
 
             // save pane location in prefs

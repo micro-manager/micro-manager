@@ -40,7 +40,7 @@ import javax.swing.*;
 
 import net.miginfocom.swing.MigLayout;
 
-import org.micromanager.MMStudioMainFrame;
+import org.micromanager.api.ScriptInterface;
 import org.micromanager.internalinterfaces.LiveModeListener;
 import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.ReportingUtils;
@@ -59,6 +59,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
    private final Positions positions_;
    private final Cameras cameras_;
    private final Prefs prefs_;
+   private final ScriptInterface gui_;
    private final CMMCore core_;
    private String port_;  // needed to send serial commands directly
    private final JoystickSubPanel joystickPanel_;
@@ -82,8 +83,9 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
    private final JLabel piezoStartPositionLabel_;
    final JLabel piezoEndPositionLabel_;
 
-   public SetupPanel(Devices devices, Properties props, Joystick joystick, Devices.Sides side,
-           Positions positions, Cameras cameras, Prefs prefs) {
+   public SetupPanel(ScriptInterface gui, Devices devices, Properties props, 
+           Joystick joystick, Devices.Sides side, Positions positions, 
+           Cameras cameras, Prefs prefs) {
       super("Setup Path " + side.toString(),
               new MigLayout(
               "",
@@ -96,7 +98,8 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       positions_ = positions;
       cameras_ = cameras;
       prefs_ = prefs;
-      core_ = MMStudioMainFrame.getInstance().getCore();
+      gui_ = gui;
+      core_ = gui_.getMMCore();
       PanelUtils pu = new PanelUtils();
 
       piezoImagingDeviceKey_ = Devices.getSideSpecificKey(Devices.Keys.PIEZOA, side);
@@ -325,7 +328,8 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
 
 
       // Layout of the SetupPanel
-      joystickPanel_ = new JoystickSubPanel(joystick_, devices_, panelName_, side, prefs_);
+      joystickPanel_ = new JoystickSubPanel(joystick_, devices_, panelName_, side, 
+              prefs_);
       add(joystickPanel_, "center");
 
       sheetPanel.setBorder(BorderFactory.createLineBorder(ASIdiSPIM.borderColor));
@@ -336,12 +340,14 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       add(beamPanel_, "center, wrap");
 
 
-      cameraPanel_ = new CameraSubPanel(cameras_, devices_, panelName_, side, prefs_, true);
+      cameraPanel_ = new CameraSubPanel(gui_, cameras_, devices_, panelName_, 
+              side, prefs_, true);
       cameraPanel_.setBorder(BorderFactory.createLineBorder(ASIdiSPIM.borderColor));
       add(cameraPanel_, "center");
 
       // set scan waveform to be triangle, just like SPIM is
-      props_.setPropValue(micromirrorDeviceKey_, Properties.Keys.SA_PATTERN_X, Properties.Values.SAM_TRIANGLE, true);
+      props_.setPropValue(micromirrorDeviceKey_, Properties.Keys.SA_PATTERN_X, 
+              Properties.Values.SAM_TRIANGLE, true);
 
    }// end of SetupPanel constructor
 

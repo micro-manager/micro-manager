@@ -30,18 +30,20 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JToggleButton;
 
-import org.micromanager.MMStudioMainFrame;
-import org.micromanager.api.ScriptInterface;
+
 import org.micromanager.asidispim.Data.Cameras;
 import org.micromanager.asidispim.Data.Devices;
 import org.micromanager.asidispim.Data.Prefs;
 import org.micromanager.asidispim.Utils.DevicesListenerInterface;
 import org.micromanager.asidispim.Utils.ListeningJPanel;
-import org.micromanager.internalinterfaces.LiveModeListener;
 
 import com.swtdesigner.SwingResourceManager;
 
 import net.miginfocom.swing.MigLayout;
+
+import org.micromanager.api.ScriptInterface;
+import org.micromanager.MMStudioMainFrame;
+import org.micromanager.internalinterfaces.LiveModeListener;
 
 /**
  *
@@ -65,8 +67,13 @@ public final class CameraSubPanel extends ListeningJPanel implements LiveModeLis
     * @param devices the (single) instance of the Devices class
     * @param showLiveButton if false then the live button is omitted
     */
-   public CameraSubPanel(Cameras cameras, Devices devices, String instanceLabel, 
-         Devices.Sides side, Prefs prefs, boolean showLiveButton) {    
+   public CameraSubPanel(ScriptInterface gui, 
+           Cameras cameras, 
+           Devices devices, 
+           String instanceLabel,
+           Devices.Sides side, 
+           Prefs prefs, 
+           boolean showLiveButton) {    
       super ("Camera_"+instanceLabel,
             new MigLayout(
               "", 
@@ -79,7 +86,7 @@ public final class CameraSubPanel extends ListeningJPanel implements LiveModeLis
       prefs_ = prefs;
       showLiveButton_ = showLiveButton;
       instanceLabel_ = instanceLabel;
-      gui_ = MMStudioMainFrame.getInstance();
+      gui_ = gui;
       
       add(new JLabel("Camera:"));
       cameraBox_ = makeCameraSelectionBox();
@@ -116,7 +123,8 @@ public final class CameraSubPanel extends ListeningJPanel implements LiveModeLis
    * @param enable - true: live mode is switched on 
    */ 
    public final void setLiveButtonAppearance(boolean enable) {
-      toggleButtonLive_.setIcon(enable ? SwingResourceManager.getIcon(MMStudioMainFrame.class,
+      toggleButtonLive_.setIcon(enable ? SwingResourceManager.getIcon(
+              MMStudioMainFrame.class,
             "/org/micromanager/icons/cancel.png")
             : SwingResourceManager.getIcon(MMStudioMainFrame.class,
                   "/org/micromanager/icons/camera_go.png"));
