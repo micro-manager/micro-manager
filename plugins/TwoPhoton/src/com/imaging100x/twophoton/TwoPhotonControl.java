@@ -28,6 +28,7 @@
 package com.imaging100x.twophoton;
 
 import MMCustomization.AcquisitionWrapperEngineAdapter;
+import MMCustomization.CustomAcqEngine;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
@@ -269,18 +270,22 @@ private JCheckBox drawGrid_, drawPosNames_;
               });
       acitvateDynamicStitching();
    }
+   
+   private CustomAcqEngine acqEng_;
 
    private void addDynamicStitchControls() {
       createProgressPanels();
-//      JButton exploreButton = new JButton("Explore");
-//      getContentPane().add(exploreButton);
-//      exploreButton.setBounds(410, 450, 130, 20);
-//      exploreButton.addActionListener(new ActionListener() {
-//
-//         @Override
-//         public void actionPerformed(ActionEvent e) {
-//         }
-//      });
+      
+      acqEng_ = new CustomAcqEngine(MMStudioMainFrame.getInstance().getMMCore());
+      JButton exploreButton = new JButton("Explore");
+      getContentPane().add(exploreButton);
+      exploreButton.setBounds(410, 450, 130, 20);
+      exploreButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            acqEng_.newExploreWindow();
+         }
+      });
    }
 
    public void acitvateDynamicStitching() {

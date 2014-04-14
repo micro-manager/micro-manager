@@ -20,33 +20,30 @@ import org.micromanager.utils.ReportingUtils;
 public class ZoomableVirtualStack extends AcquisitionVirtualStack {
    
    //width and height are both fixed for now
-   public static final int WIDTH_HEIGHT_MAX = 512;
+   public static final int WIDTH_HEIGHT_MAX = 1024;
    
    private boolean zoomed_ = false;
-   private TaggedImageStorage imageCache_;
    private int displayImageWidth_, displayImageHeight_;
-   private int downsampleFactor_;
-   private int fullResWidth_, fullResHeight_; 
    private double fullResXStart_ = 0, fullResYStart_ = 0;  
    private DynamicStitchingImageStorage storage_;
    
-   public ZoomableVirtualStack(int fullResWidth, int fullResHeight, int type, TaggedImageStorage imageCache,
+   public ZoomableVirtualStack(int type, TaggedImageStorage imageCache,
            int nSlices, VirtualAcquisitionDisplay vad, DynamicStitchingImageStorage storage) {
-      super(fullResWidth / Math.max(1, Math.max(fullResWidth, fullResHeight) / WIDTH_HEIGHT_MAX), 
-              fullResHeight / Math.max(1, Math.max(fullResWidth, fullResHeight) / WIDTH_HEIGHT_MAX), 
+      
+      super(storage.getFullResWidth() / Math.max(1, 
+              Math.max(storage.getFullResWidth(), storage.getFullResHeight()) / WIDTH_HEIGHT_MAX), 
+              storage.getFullResHeight() / Math.max(1, 
+              Math.max(storage.getFullResWidth(), storage.getFullResHeight()) / WIDTH_HEIGHT_MAX), 
               type, null, imageCache, nSlices, vad);
-      downsampleFactor_ = Math.max(1, Math.max(fullResWidth, fullResHeight) / WIDTH_HEIGHT_MAX);
-      displayImageWidth_ = fullResWidth / downsampleFactor_;
-      displayImageHeight_ = fullResHeight / downsampleFactor_;
-      imageCache_ = imageCache;
-      fullResWidth_ = fullResWidth;
-      fullResHeight_ = fullResHeight;
+      
       storage_ = storage;
+      displayImageWidth_ = storage.getFullResWidth() / storage_.getDSFactor();
+      displayImageHeight_ = storage.getFullResHeight() / storage_.getDSFactor();
    }  
    
    public void translateZoomPosition(int dx, int dy) {
-      fullResXStart_ = Math.min(Math.max(fullResXStart_ + dx, 0.0), fullResWidth_ - displayImageWidth_);
-      fullResYStart_ = Math.min(Math.max(fullResYStart_ + dy, 0.0), fullResHeight_ - displayImageHeight_);
+      fullResXStart_ = Math.min(Math.max(fullResXStart_ + dx, 0.0), storage_.getFullResWidth() - displayImageWidth_);
+      fullResYStart_ = Math.min(Math.max(fullResYStart_ + dy, 0.0), storage_.getFullResHeight() - displayImageHeight_);
    }
    
    public void activateFullImageMode() {
@@ -56,12 +53,10 @@ public class ZoomableVirtualStack extends AcquisitionVirtualStack {
    public void activateZoomMode(int fullResX, int fullResY) {
       zoomed_ = true;
       //reset to top left corner for now
-      fullResXStart_ = Math.min(Math.max(fullResX*downsampleFactor_ - displayImageWidth_ / 2, 0.0), fullResWidth_ - displayImageWidth_);
-      fullResYStart_ = Math.min(Math.max(fullResY*downsampleFactor_ - displayImageHeight_ / 2, 0.0), fullResHeight_ - displayImageHeight_);
-   }
-   
-   public int getDownsampleFactor() {
-      return downsampleFactor_;
+      fullResXStart_ = Math.min(Math.max(fullResX*storage_.getDSFactor() - displayImageWidth_ / 2, 0.0), 
+              storage_.getFullResWidth() - displayImageWidth_);
+      fullResYStart_ = Math.min(Math.max(fullResY*storage_.getDSFactor() - displayImageHeight_ / 2, 0.0), 
+              storage_.getFullResHeight() - displayImageHeight_);
    }
    
    public Point getZoomPosition() {

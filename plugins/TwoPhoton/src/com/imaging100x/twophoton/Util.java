@@ -132,7 +132,7 @@ public class Util {
             ReportingUtils.showError("Couldn't read position list");
          }
       }
-      return 0;
+      return -1;
    }
    
    public static int rowFromPosIndex(JSONArray positionList, int index) {
@@ -155,12 +155,16 @@ public class Util {
       }
    }
 
+   public static int getStitchedImageLength(int numTiles, int tileLength, int overlap) {
+      return numTiles * tileLength - (numTiles - 1) * overlap;
+   }
+
    //get the tile index from the pixel index in larger stitched image
-   public static int stitchedPixelToTile(int i, int overlap, int tileLength, int numTiles, int imageLength) {
+   public static int stitchedPixelToTile(int i, int overlap, int tileLength, int numTiles) {
       int tile;
       if (i < tileLength - overlap / 2) {
          tile = 0;
-      } else if (i > imageLength - (tileLength - overlap / 2)) {
+      } else if (i > getStitchedImageLength(numTiles, tileLength, overlap) - (tileLength - overlap / 2)) {
          tile = numTiles - 1;
       } else {
          tile = 1 + (i - (tileLength - overlap / 2)) / (tileLength - overlap);

@@ -36,61 +36,31 @@ import org.micromanager.utils.*;
 
 public class DisplayPlus implements ImageCacheListener {
 
-   private static final Color TRANSPARENT_BLUE = new Color(0, 0, 255, 60);
+   private static final Color TRANSPARENT_BLUE = new Color(0, 0, 255, 100);
+   private static final Color TRANSPARENT_MAGENTA = new Color(255, 0, 255, 100);
    //VirtualAcquisitionDisplay on top of which this display is built
    private VirtualAcquisitionDisplay vad_;
+   private DynamicStitchingImageStorage storage_;
    private ImageCanvas canvas_;
    private Controls controls_;
-   private AcquisitionEngine eng_;
+   private CustomAcqEngine eng_;
    private JSpinner gridXSpinner_, gridYSpinner_;
-   private int tileWidth_, tileHeight_;
    private Point clickStart_;
-   private Point gridStart_, zoomDragPoint_;
-   private JSONArray positionList_;
-   private int numRows_ = 1, numCols_ = 1;
+   private Point gridStart_, mouseDragStartPoint_;
    private boolean suspendUpdates_ = false;
-   private int yOverlap_, xOverlap_;
-   private int fullResWidth_, fullResHeight_;
    private int mouseRowIndex_ = -1, mouseColIndex_ = -1;
    private ArrayList<Point> selectedPositions_ = new ArrayList<Point>();
    private ScrollbarWithLabel tSelector_;
-   private boolean positionSelectMode_ = false, gotoMode_ = false, newGridMode_ = false,
+   private boolean gotoMode_ = false, newGridMode_ = false,
            zoomMode_ = false, zoomAreaSelectMode_ = false;
    private ZoomableVirtualStack zoomableStack_;
+   private final boolean exploreMode_;
 
-   public DisplayPlus(final ImageCache stitchedCache, AcquisitionEngine eng, JSONObject summaryMD, 
-           DynamicStitchingImageStorage storage) {
+   public DisplayPlus(final ImageCache stitchedCache, CustomAcqEngine eng, JSONObject summaryMD, 
+           DynamicStitchingImageStorage storage, boolean exploreMode) {
+      exploreMode_ = exploreMode;
       //Set parameters for tile dimensions, num rows and columns, overlap, and image dimensions
-      yOverlap_ = SettingsDialog.getYOverlap();
-      xOverlap_ = SettingsDialog.getXOverlap();
       eng_ = eng;
-      try {
-         tileWidth_ = MDUtils.getWidth(summaryMD);
-         tileHeight_ = MDUtils.getHeight(summaryMD);
-      } catch (JSONException ex) {
-         ReportingUtils.showError("Width and height missing form summary MD");
-      }
-
-      try {
-         if (summaryMD.has("InitialPositionList") && !summaryMD.isNull("InitialPositionList")) {
-            positionList_ = summaryMD.getJSONArray("InitialPositionList");
-            //get grid parameters
-            for (int i = 0; i < positionList_.length(); i++) {
-               long colInd = positionList_.getJSONObject(i).getLong("GridColumnIndex");
-               long rowInd = positionList_.getJSONObject(i).getLong("GridRowIndex");
-               if (colInd >= numCols_) {
-                  numCols_ = (int) (colInd + 1);
-               }
-               if (rowInd >= numRows_) {
-                  numRows_ = (int) (rowInd + 1);
-               }
-            }
-         }
-      } catch (Exception e) {
-         ReportingUtils.showError("Couldnt get grid info");
-      }      
-      fullResHeight_ = numRows_ * tileHeight_ - (numRows_ - 1) * yOverlap_;
-      fullResWidth_ = numCols_ * tileWidth_ - (numCols_ - 1) * xOverlap_;
 
       String name = "Untitled";
       try {
@@ -100,8 +70,9 @@ public class DisplayPlus implements ImageCacheListener {
          }
       } catch (Exception e) {
       }
-
-      vad_ = new VirtualAcquisitionDisplay(stitchedCache, eng, name);
+      
+      storage_ = storage;
+      vad_ = new VirtualAcquisitionDisplay(stitchedCache, null, name);
       controls_ = new Controls();
 
       //Add in custom controls
@@ -114,9 +85,7 @@ public class DisplayPlus implements ImageCacheListener {
       //add in customized zoomable acquisition virtual stack
       try {
          int nSlices = MDUtils.getNumChannels(summaryMD) * MDUtils.getNumFrames(summaryMD) * MDUtils.getNumSlices(summaryMD);
-         zoomableStack_ = new ZoomableVirtualStack(fullResWidth_, fullResHeight_,
-                 MDUtils.getIJType(summaryMD), stitchedCache, nSlices, vad_, storage);
-
+         zoomableStack_ = new ZoomableVirtualStack(MDUtils.getIJType(summaryMD), stitchedCache, nSlices, vad_, storage);
          vad_.show(zoomableStack_);
       } catch (Exception e) {
          ReportingUtils.showError("Problem with initialization due to missing summary metadata tags");
@@ -142,61 +111,85 @@ public class DisplayPlus implements ImageCacheListener {
 
       stitchedCache.addImageCacheListener(this);
    }
+//
+//   public void readGridInfoFromPositionList(JSONArray posList) {
+//      try {
+//         //get grid parameters
+//         for (int i = 0; i < posList.length(); i++) {
+//            long colInd = posList.getJSONObject(i).getLong("GridColumnIndex");
+//            long rowInd = posList.getJSONObject(i).getLong("GridRowIndex");
+//            if (colInd >= numCols_) {
+//               numCols_ = (int) (colInd + 1);
+//            }
+//            if (rowInd >= numRows_) {
+//               numRows_ = (int) (rowInd + 1);
+//            }
+//
+//         }
+//      } catch (Exception e) {
+//         ReportingUtils.showError("Couldnt get grid info");
+//      }
+//      fullResHeight_ = numRows_ * tileHeight_ - (numRows_ - 1) * yOverlap_;
+//      fullResWidth_ = numCols_ * tileWidth_ - (numCols_ - 1) * xOverlap_;
+//   }
 
    private Roi makeROIRect(int rowIndex, int colIndex) {
-      int y, x;
-      int width = tileWidth_ - xOverlap_ / 2, height = tileHeight_ - yOverlap_ / 2;
-      int canvasWidth = (int) (canvas_.getWidth() / canvas_.getMagnification()),
-              canvasHeight = (int) (canvas_.getHeight() / canvas_.getMagnification());
-
-      if (rowIndex == 0) {
-         y = 0;
-      } else if (rowIndex == numRows_ - 1) {
-         y = canvasHeight - (tileHeight_ - yOverlap_ / 2);
-      } else {
-         height = tileHeight_ - yOverlap_;
-         y = (tileHeight_ - yOverlap_ / 2) + (rowIndex - 1) * (tileHeight_ - yOverlap_);
-      }
-      if (colIndex == 0) {
-         x = 0;
-      } else if (colIndex == numCols_ - 1) {
-         x = canvasWidth - (tileWidth_ - xOverlap_ / 2);
-      } else {
-         width = tileWidth_ - xOverlap_;
-         x = (tileWidth_ - xOverlap_ / 2) + (colIndex - 1) * (tileWidth_ - xOverlap_);
-      }
-      return new Roi(x, y, width, height);
+//      int y, x;
+//      int width = tileWidth_ - xOverlap_ / 2, height = tileHeight_ - yOverlap_ / 2;
+//      int canvasWidth = (int) (canvas_.getWidth() / canvas_.getMagnification()),
+//              canvasHeight = (int) (canvas_.getHeight() / canvas_.getMagnification());
+//
+//      if (rowIndex == 0) {
+//         y = 0;
+//      } else if (rowIndex == numRows_ - 1) {
+//         y = canvasHeight - (tileHeight_ - yOverlap_ / 2);
+//      } else {
+//         height = tileHeight_ - yOverlap_;
+//         y = (tileHeight_ - yOverlap_ / 2) + (rowIndex - 1) * (tileHeight_ - yOverlap_);
+//      }
+//      if (colIndex == 0) {
+//         x = 0;
+//      } else if (colIndex == numCols_ - 1) {
+//         x = canvasWidth - (tileWidth_ - xOverlap_ / 2);
+//      } else {
+//         width = tileWidth_ - xOverlap_;
+//         x = (tileWidth_ - xOverlap_ / 2) + (colIndex - 1) * (tileWidth_ - xOverlap_);
+//      }
+//      return new Roi(x, y, width, height);
+      
+      return null;
    }
    
    private TextRoi makeTextRoi(int rowIndex, int colIndex, int offset) {
-      int y, x;
-      int width = tileWidth_ - xOverlap_ / 2, height = tileHeight_ - yOverlap_ / 2;
-      ImageCanvas canvas = canvas_;
-      int canvasWidth = (int) (canvas.getWidth() / canvas.getMagnification()),
-              canvasHeight = (int) (canvas.getHeight() / canvas.getMagnification());
-
-      if (rowIndex == 0) {
-         y = 0;
-      } else if (rowIndex == numRows_ - 1) {
-         y = canvasHeight - (tileHeight_ - yOverlap_ / 2);
-      } else {
-         height = tileHeight_ - yOverlap_;
-         y = (tileHeight_ - yOverlap_ / 2) + (rowIndex - 1) * (tileHeight_ - yOverlap_);
-      }
-      if (colIndex == 0) {
-         x = 0;
-      } else if (colIndex == numCols_ - 1) {
-         x = canvasWidth - (tileWidth_ - xOverlap_ / 2);
-      } else {
-         width = tileWidth_ - xOverlap_;
-         x = (tileWidth_ - xOverlap_ / 2) + (colIndex - 1) * (tileWidth_ - xOverlap_);
-      }
-      double mag = canvas_.getMagnification();
-      TextRoi tr = new TextRoi(x + width / 2, y + height / 2, "Offset: " + offset + " um");
-      tr.setCurrentFont(tr.getCurrentFont().deriveFont((float) (tr.getCurrentFont().getSize() / mag)));
-      tr.setJustification(TextRoi.CENTER);
-      tr.setLocation(x + width / 2, y + height / 2 - (height / 40 / mag));
-      return tr;
+//      int y, x;
+//      int width = tileWidth_ - xOverlap_ / 2, height = tileHeight_ - yOverlap_ / 2;
+//      ImageCanvas canvas = canvas_;
+//      int canvasWidth = (int) (canvas.getWidth() / canvas.getMagnification()),
+//              canvasHeight = (int) (canvas.getHeight() / canvas.getMagnification());
+//
+//      if (rowIndex == 0) {
+//         y = 0;
+//      } else if (rowIndex == numRows_ - 1) {
+//         y = canvasHeight - (tileHeight_ - yOverlap_ / 2);
+//      } else {
+//         height = tileHeight_ - yOverlap_;
+//         y = (tileHeight_ - yOverlap_ / 2) + (rowIndex - 1) * (tileHeight_ - yOverlap_);
+//      }
+//      if (colIndex == 0) {
+//         x = 0;
+//      } else if (colIndex == numCols_ - 1) {
+//         x = canvasWidth - (tileWidth_ - xOverlap_ / 2);
+//      } else {
+//         width = tileWidth_ - xOverlap_;
+//         x = (tileWidth_ - xOverlap_ / 2) + (colIndex - 1) * (tileWidth_ - xOverlap_);
+//      }
+//      double mag = canvas_.getMagnification();
+//      TextRoi tr = new TextRoi(x + width / 2, y + height / 2, "Offset: " + offset + " um");
+//      tr.setCurrentFont(tr.getCurrentFont().deriveFont((float) (tr.getCurrentFont().getSize() / mag)));
+//      tr.setJustification(TextRoi.CENTER);
+//      tr.setLocation(x + width / 2, y + height / 2 - (height / 40 / mag));
+//      return tr;
+      return null;
    }
 
    private void drawDepthListOverlay() {
@@ -205,15 +198,6 @@ public class DisplayPlus implements ImageCacheListener {
          Roi rect = makeROIRect(mouseRowIndex_, mouseColIndex_);
          rect.setFillColor(TRANSPARENT_BLUE);
          overlay.add(rect);
-      }
-
-      if (positionSelectMode_) {
-         for (int row = 0; row < numRows_; row++) {
-            for (int col = 0; col < numCols_; col++) {
-               overlay.add(makeTextRoi(row, col, Util.getDepthListOffset(
-                       Util.getPosIndex(positionList_,row, col))));
-            }
-         }
       }
 
       if (!selectedPositions_.isEmpty()) {
@@ -232,17 +216,17 @@ public class DisplayPlus implements ImageCacheListener {
       Overlay overlay = new Overlay();
       Point zoomPos = zoomableStack_.getZoomPosition();      
       int outerWidth = 100;
-      int outerHeight = (int) ((double) fullResHeight_ / (double) fullResWidth_ * outerWidth);
+      int outerHeight = (int) ((double) storage_.getFullResHeight() / (double) storage_.getFullResWidth() * outerWidth);
       //draw outer rectangle representing full image
       Roi outerRect = new Roi(10, 10, outerWidth, outerHeight);
       outerRect.setStrokeColor(new Color(255, 0, 255)); //magenta
       overlay.add(outerRect);
-      int innerX = (int) Math.round(( (double) outerWidth / (double) fullResWidth_ ) * zoomPos.x);
-      int innerY = (int) Math.round(( (double) outerHeight / (double) fullResHeight_ ) * zoomPos.y);
-      int innerWidth = (int) Math.round(((double) outerWidth / (double) fullResWidth_ ) * 
-              (fullResWidth_ / zoomableStack_.getDownsampleFactor()));
-      int innerHeight = (int) Math.round(((double) outerHeight / (double) fullResHeight_ ) * 
-              (fullResHeight_ / zoomableStack_.getDownsampleFactor()));
+      int innerX = (int) Math.round(( (double) outerWidth / (double) storage_.getFullResWidth() ) * zoomPos.x);
+      int innerY = (int) Math.round(( (double) outerHeight / (double) storage_.getFullResHeight() ) * zoomPos.y);
+      int innerWidth = (int) Math.round(((double) outerWidth / (double) storage_.getFullResWidth() ) * 
+              (storage_.getFullResWidth() / storage_.getDSFactor()));
+      int innerHeight = (int) Math.round(((double) outerHeight / (double) storage_.getFullResHeight() ) * 
+              (storage_.getFullResHeight() / storage_.getDSFactor()));
       Roi innerRect = new Roi(10+innerX,10+innerY,innerWidth,innerHeight );
       innerRect.setStrokeColor(new Color(255, 0, 255)); 
       overlay.add(innerRect);
@@ -260,11 +244,63 @@ public class DisplayPlus implements ImageCacheListener {
    }
    
    private void zoomOut() {
+      zoomMode_ = false;
       zoomableStack_.activateFullImageMode();
       redrawPixels();
       canvas_.setOverlay(null);
    }
 
+   private void addExploreOverlay(int x, int y, int width, int height, Color color) {
+      //need to convert from canvas coordinates to pixel coordinates
+      final ImageCanvas canvas = vad_.getImagePlus().getCanvas();
+      Roi rect = new Roi(x, y, width, height);
+      rect.setFillColor(color);
+      Overlay overlay = new Overlay();
+      overlay.add(rect);
+      //      Arrow arrow = new Arrow(40, 10, 10, 10);
+//      overlay.add(arrow);
+      canvas.setOverlay(overlay);
+   }
+   
+
+   //TODO account for overlap?
+    private void highlightTiles(int row1, int row2, int col1, int col2, Color color) {
+      //need to convert from canvas coordinates to pixel coordinates
+      final ImageCanvas canvas = vad_.getImagePlus().getCanvas();
+       double tileHeight = storage_.getTileHeight() / (double) storage_.getDSFactor(),
+               tileWidth = storage_.getTileWidth() / (double) storage_.getDSFactor();
+       int x = (int) Math.round(col1 * tileWidth);
+       int y = (int) Math.round(row1 * tileHeight);
+       int width = (int) Math.round(tileWidth * (col2 - col1 + 1));
+       int height = (int) Math.round(tileHeight * (row2 - row1 + 1));
+      Roi rect = new Roi(x, y, width, height);
+      rect.setFillColor(color);
+      Overlay overlay = new Overlay();
+      overlay.add(rect);
+      canvas.setOverlay(overlay);
+   }
+   
+   private Point getExploreIndicesFromLoResPixel(Point p) {
+      //first get tile indices
+      int row = storage_.tileIndicesFromLoResPixel(p.x, p.y).x;
+      int col = storage_.tileIndicesFromLoResPixel(p.x, p.y).y;
+      
+      //now check if its on the edges
+      if (row == 0 && p.y < storage_.getTileHeight() / storage_.getDSFactor() / 3) {
+         row--;
+      } else if (row == storage_.getNumRows() - 1 && p.y > zoomableStack_.getHeight() 
+              - storage_.getTileHeight() / storage_.getDSFactor() / 3 ) {
+         row++;
+      }
+      if (col == 0 && p.x < storage_.getTileWidth() / storage_.getDSFactor() / 3) {
+         col--;
+      } else if (col == storage_.getNumCols()  - 1 && p.x > zoomableStack_.getWidth() 
+              - storage_.getTileWidth() / storage_.getDSFactor() / 3 ) {
+         col++;
+      }
+      return new Point(row,col);
+   }
+   
    private void setupMouseListeners() {  
       //remove channel switching scroll wheel listener
       vad_.getImagePlus().getWindow().removeMouseWheelListener(
@@ -289,37 +325,29 @@ public class DisplayPlus implements ImageCacheListener {
                   canvas_.paint(canvas_.getGraphics());
                }
             } else if  (zoomMode_) {
-               zoomableStack_.translateZoomPosition(zoomDragPoint_.x - currentPoint.x, 
-                       zoomDragPoint_.y - currentPoint.y);
+               zoomableStack_.translateZoomPosition(mouseDragStartPoint_.x - currentPoint.x, 
+                       mouseDragStartPoint_.y - currentPoint.y);
                redrawPixels();
-               zoomDragPoint_ = currentPoint;
+               mouseDragStartPoint_ = currentPoint;
                drawZoomIndicatorOverlay();               
-            }  
+            } else if (exploreMode_) {
+               Point p2 = e.getPoint();
+               //find top left row and column and number of columns spanned by drage event
+               Point topLeftTile = storage_.tileIndicesFromLoResPixel(Math.min(p2.x, mouseDragStartPoint_.x),
+                       Math.min(p2.y, mouseDragStartPoint_.y));
+               Point bottomRightTile = storage_.tileIndicesFromLoResPixel(Math.max(p2.x, mouseDragStartPoint_.x),
+                       Math.max(p2.y, mouseDragStartPoint_.y));
+               highlightTiles(topLeftTile.x, bottomRightTile.x, topLeftTile.y, bottomRightTile.y, TRANSPARENT_MAGENTA);              
+            }
          }
 
          @Override
          public void mouseMoved(MouseEvent e) {
-            if (positionSelectMode_) {
-               
-               //TODO: fix this to reflect downsampling of image means pixel coords at 100%
-               //zoom don't neccessarly correpesnd to full res image coordinates
-               
-//               ImageCanvas canvas = canvas_;
-//               int canvasWidth = (int) (canvas.getWidth() / canvas.getMagnification()),
-//                       canvasHeight = (int) (canvas.getHeight() / canvas.getMagnification());
-//               Point p = e.getPoint();
-//               p.x = (int) (p.x / canvas.getMagnification());
-//               p.y = (int) (p.y / canvas.getMagnification());
-//               Point gridCoords = Util.gridIndicesFromPixelIndices(p.x, p.y, xOverlap_, yOverlap_, 
-//                       tileWidth_,tileHeight_,numRows_,numCols_,canvasWidth,canvasHeight);                            
-//               mouseRowIndex_ = Util.stitchedPixelToTile(p.y, yOverlap_, tileHeight_, numRows_, tileHeight_)
-//               mouseColIndex_ = gridCoords.x;
-//               drawDepthListOverlay(canvas);
-            } else if (zoomAreaSelectMode_) {
+            if (zoomAreaSelectMode_) {
                //draw rectangle of area that will be zoomed in on
                Overlay overlay = new Overlay();
-               int width = zoomableStack_.getWidth() / zoomableStack_.getDownsampleFactor();
-               int height = zoomableStack_.getHeight() / zoomableStack_.getDownsampleFactor();
+               int width = zoomableStack_.getWidth() / storage_.getDSFactor();
+               int height = zoomableStack_.getHeight() / storage_.getDSFactor();
                Point center = e.getPoint();
                Roi rect = new Roi(Math.min(Math.max(0,center.x - width / 2), canvas_.getWidth() - width),
                        Math.min(Math.max(0,center.y - height / 2), canvas_.getHeight() - height),
@@ -327,7 +355,35 @@ public class DisplayPlus implements ImageCacheListener {
                rect.setFillColor(TRANSPARENT_BLUE);
                overlay.add(rect);
                canvas_.setOverlay(overlay);
-            } 
+            } else if (exploreMode_ && !zoomMode_) {
+               Point coords = getExploreIndicesFromLoResPixel(e.getPoint());
+               int row = coords.x, col = coords.y;
+               double tileHeight = storage_.getTileHeight() / (double) storage_.getDSFactor(), 
+                       tileWidth = storage_.getTileWidth()/ (double) storage_.getDSFactor();
+               int numCols = storage_.getNumCols(), numRows = storage_.getNumRows(),
+                       totalWidth = zoomableStack_.getWidth(), totalHeight = zoomableStack_.getHeight();               
+               if (col == -1) {
+                  //left
+                  addExploreOverlay(0, (int)Math.round(row * tileHeight), (int)Math.round(tileWidth / 3),
+                          (int)Math.round(tileHeight), TRANSPARENT_BLUE);
+               } else if (col == numCols) {
+                  //right
+                  addExploreOverlay((int)Math.round(totalWidth - tileWidth / 3),
+                          (int) Math.round(row * tileHeight),
+                          (int) Math.round(tileWidth / 3), (int)Math.round(tileHeight), TRANSPARENT_BLUE);
+               } else if (row == -1) {
+                  //top                                     
+                  addExploreOverlay((int)Math.round(col*tileWidth), 0,(int) Math.round(tileWidth),
+                          (int) Math.round(tileHeight / 3), TRANSPARENT_BLUE);                  
+               } else if (row == numRows) {
+                  //bottom      
+                  addExploreOverlay((int)Math.round(col * tileWidth),(int)Math.round(totalHeight - tileHeight / 3),
+                          (int)Math.round(tileWidth), (int)Math.round(tileHeight / 3), TRANSPARENT_BLUE);
+               } else {
+                  //highlight a tile
+                  highlightTiles(row, row, col, col, TRANSPARENT_MAGENTA);
+               }
+            }
          }
       });
 
@@ -335,62 +391,77 @@ public class DisplayPlus implements ImageCacheListener {
 
          @Override
          public void mouseClicked(MouseEvent e) {
-            if (positionSelectMode_) {
-               Point p = new Point();
-               p.x = mouseRowIndex_;
-               p.y = mouseColIndex_;
-               if (e.getModifiersEx() != MouseEvent.SHIFT_DOWN_MASK) {
-                  selectedPositions_.clear();
-               }
-               selectedPositions_.add(p);
-               drawDepthListOverlay();
-               int i = Util.getPosIndex(positionList_, p.x, p.y);
-               try {
-                  controls_.updateSelectedPosition(positionList_.getJSONObject(i).getString("Label"));
-               } catch (JSONException ex) {
-                  ReportingUtils.showError("couldnt update dpeth list offset");
-               }
-            } else if (gotoMode_) {
-               //translate point into stage coordinates and move there
-               Point p = e.getPoint();
-               double xPixelDisp = (p.x / canvas_.getMagnification())
-                       + canvas_.getSrcRect().x - vad_.getImagePlus().getWidth() / 2;
-               double yPixelDisp = (p.y / canvas_.getMagnification())
-                       + canvas_.getSrcRect().y - vad_.getImagePlus().getHeight() / 2;
-
-               Point2D stagePos = stagePositionFromPixelPosition(xPixelDisp, yPixelDisp);
-               try {
-                  MMStudioMainFrame.getInstance().setXYStagePosition(stagePos.getX(), stagePos.getY());
-               } catch (MMScriptException ex) {
-                  ReportingUtils.showError("Couldn't move xy stage");
-               }
-               controls_.clearSelectedButtons();
+            if (gotoMode_) {
+//               //translate point into stage coordinates and move there
+//               Point p = e.getPoint();
+//               double xPixelDisp = (p.x / canvas_.getMagnification())
+//                       + canvas_.getSrcRect().x - vad_.getImagePlus().getWidth() / 2;
+//               double yPixelDisp = (p.y / canvas_.getMagnification())
+//                       + canvas_.getSrcRect().y - vad_.getImagePlus().getHeight() / 2;
+//
+//               Point2D stagePos = stagePositionFromPixelPosition(xPixelDisp, yPixelDisp);
+//               try {
+//                  MMStudioMainFrame.getInstance().setXYStagePosition(stagePos.getX(), stagePos.getY());
+//               } catch (MMScriptException ex) {
+//                  ReportingUtils.showError("Couldn't move xy stage");
+//               }
+//               controls_.clearSelectedButtons();
             } else if (zoomAreaSelectMode_) {
                zoomIn(e.getPoint());
             } else {
-               //no special mode, default to zoom
                if (e.getClickCount() > 1) {
-                  zoomIn(e.getPoint());
-               } else if (SwingUtilities.isRightMouseButton(e)) {
-                  zoomOut();
-               }
+                  if (zoomMode_) {
+                     zoomOut();
+                  } else {
+                     zoomIn(e.getPoint());
+                  }
+               }  
             }
          }
 
          @Override
          public void mousePressed(MouseEvent e) {
-            if (zoomMode_) {
-               zoomDragPoint_ = e.getPoint();
+            if (zoomMode_ || exploreMode_) {
+               mouseDragStartPoint_ = e.getPoint();
             } else if (newGridMode_) {
                clickStart_ = e.getPoint();
                Roi rect = vad_.getImagePlus().getOverlay().get(0);
                Rectangle2D bounds = rect.getFloatBounds();
                gridStart_ = new Point((int) bounds.getX(), (int) bounds.getY());
-            }
+            } 
          }
 
          @Override
          public void mouseReleased(MouseEvent e) {
+            if (exploreMode_ && !e.isShiftDown()) {
+               Point exploreCoordinates = getExploreIndicesFromLoResPixel(e.getPoint());
+               if (exploreCoordinates.x == -1 || exploreCoordinates.y == -1
+                       || exploreCoordinates.x == storage_.getNumRows() || exploreCoordinates.y == storage_.getNumCols()) {
+                  //explore outside exisitn area
+                  eng_.acquireTile(exploreCoordinates.x, exploreCoordinates.y);
+               } else {
+
+                  Point p2 = e.getPoint();
+                  //find top left row and column and number of columns spanned by drage event
+                  final Point topLeftTile = storage_.tileIndicesFromLoResPixel(Math.min(p2.x, mouseDragStartPoint_.x),
+                          Math.min(p2.y, mouseDragStartPoint_.y));
+                  final Point bottomRightTile = storage_.tileIndicesFromLoResPixel(Math.max(p2.x, mouseDragStartPoint_.x),
+                          Math.max(p2.y, mouseDragStartPoint_.y));
+                  new Thread(new Runnable() {
+
+                     @Override
+                     public void run() {
+                        for (int row = topLeftTile.x; row <= bottomRightTile.x; row++) {
+                           for (int col = topLeftTile.y; col <= bottomRightTile.y; col++) {
+                              eng_.acquireTile(row, col);
+                           }
+                        }
+                     }
+                  }).start();
+               }
+               //redraw overlay to potentially reflect new grid
+               
+            }
          }
 
          @Override
@@ -399,7 +470,7 @@ public class DisplayPlus implements ImageCacheListener {
 
          @Override
          public void mouseExited(MouseEvent e) {
-            if (!(positionSelectMode_ || gotoMode_)) {
+            if (!gotoMode_) {
                return;
             }
             mouseRowIndex_ = -1;
@@ -407,106 +478,91 @@ public class DisplayPlus implements ImageCacheListener {
             drawDepthListOverlay();
          }
       });
-
-      canvas_.addMouseWheelListener(new MouseWheelListener() {
-
-         @Override
-         public void mouseWheelMoved(MouseWheelEvent e) {
-            if (!selectedPositions_.isEmpty()) {
-               for (Point p : selectedPositions_) {
-                  int numClicks = e.getWheelRotation();
-                  Util.setDepthListOffset(Util.getPosIndex(positionList_,p.x, p.y), Util.getDepthListOffset(
-                          Util.getPosIndex(positionList_, p.x, p.y)) + numClicks);
-               }
-               drawDepthListOverlay();
-            }
-         }
-      });
    }
 
    private void createGrid() {
-      try {
-         //get displacements of center of rectangle from center of stitched image
-         double rectCenterXDisp = vad_.getImagePlus().getOverlay().get(0).getFloatBounds().getCenterX()
-                 - vad_.getImagePlus().getWidth() / 2;
-         double rectCenterYDisp = vad_.getImagePlus().getOverlay().get(0).getFloatBounds().getCenterY()
-                 - vad_.getImagePlus().getHeight() / 2;
-
-         Point2D.Double stagePos = stagePositionFromPixelPosition(rectCenterXDisp, rectCenterYDisp);
-
-         int xOverlap = SettingsDialog.getXOverlap(), yOverlap = SettingsDialog.getYOverlap();
-         Util.createGrid(stagePos.x, stagePos.y,
-                 (Integer) gridXSpinner_.getValue(), (Integer) gridYSpinner_.getValue(),
-                 xOverlap, yOverlap);
-         controls_.clearSelectedButtons();
-
-      } catch (Exception e) {
-         ReportingUtils.showError("Couldnt create grid");
-      }
+//      try {
+//         //get displacements of center of rectangle from center of stitched image
+//         double rectCenterXDisp = vad_.getImagePlus().getOverlay().get(0).getFloatBounds().getCenterX()
+//                 - vad_.getImagePlus().getWidth() / 2;
+//         double rectCenterYDisp = vad_.getImagePlus().getOverlay().get(0).getFloatBounds().getCenterY()
+//                 - vad_.getImagePlus().getHeight() / 2;
+//
+//         Point2D.Double stagePos = stagePositionFromPixelPosition(rectCenterXDisp, rectCenterYDisp);
+//
+//         int xOverlap = SettingsDialog.getXOverlap(), yOverlap = SettingsDialog.getYOverlap();
+//         Util.createGrid(stagePos.x, stagePos.y,
+//                 (Integer) gridXSpinner_.getValue(), (Integer) gridYSpinner_.getValue(),
+//                 xOverlap, yOverlap);
+//         controls_.clearSelectedButtons();
+//
+//      } catch (Exception e) {
+//         ReportingUtils.showError("Couldnt create grid");
+//      }
    }
 
    private Point2D.Double stagePositionFromPixelPosition(double xPixelDispFromCenter, double yPixelDispFromCenter) {
-      try {
-         //get coordinates of center of exisitng grid
-         String xyStage = MMStudioMainFrame.getInstance().getCore().getXYStageDevice();
-
-         //row column map to coordinates for exisiting stage positiions
-         Point2D.Double[][] coordinates = new Point2D.Double[numCols_][numRows_];
-         for (int i = 0; i < positionList_.length(); i++) {
-            int colInd = (int) positionList_.getJSONObject(i).getLong("GridColumnIndex");
-            int rowInd = (int) positionList_.getJSONObject(i).getLong("GridRowIndex");
-            JSONArray coords = positionList_.getJSONObject(i).getJSONObject("DeviceCoordinatesUm").getJSONArray(xyStage);
-            coordinates[colInd][rowInd] = new Point2D.Double(coords.getDouble(0), coords.getDouble(1));
-         }
-
-         //find stage coordinate of center of existing grid
-         double currentCenterX, currentCenterY;
-         if (coordinates.length % 2 == 0 && coordinates[0].length % 2 == 0) {
-            //even number of tiles in both directions
-            currentCenterX = 0.25 * coordinates[numCols_ / 2 - 1][numRows_ / 2 - 1].x + 0.25 * coordinates[numCols_ / 2 - 1][numRows_ / 2].x
-                    + 0.25 * coordinates[numCols_ / 2][numRows_ / 2 - 1].x + 0.25 * coordinates[numCols_ / 2][numRows_ / 2].x;
-            currentCenterY = 0.25 * coordinates[numCols_ / 2 - 1][numRows_ / 2 - 1].y + 0.25 * coordinates[numCols_ / 2 - 1][numRows_ / 2].y
-                    + 0.25 * coordinates[numCols_ / 2][numRows_ / 2 - 1].y + 0.25 * coordinates[numCols_ / 2][numRows_ / 2].y;
-         } else if (coordinates.length % 2 == 0) {
-            //even number of columns
-            currentCenterX = 0.5 * coordinates[numCols_ / 2 - 1][numRows_ / 2].x + 0.5 * coordinates[numCols_ / 2][numRows_ / 2].x;
-            currentCenterY = 0.5 * coordinates[numCols_ / 2 - 1][numRows_ / 2].y + 0.5 * coordinates[numCols_ / 2][numRows_ / 2].y;
-         } else if (coordinates[0].length % 2 == 0) {
-            //even number of rows
-            currentCenterX = 0.5 * coordinates[numCols_ / 2][numRows_ / 2 - 1].x + 0.5 * coordinates[numCols_ / 2][numRows_ / 2].x;
-            currentCenterY = 0.5 * coordinates[numCols_ / 2][numRows_ / 2 - 1].y + 0.5 * coordinates[numCols_ / 2][numRows_ / 2].y;
-         } else {
-            //odd number of both
-            currentCenterX = coordinates[numCols_ / 2][numRows_ / 2].x;
-            currentCenterY = coordinates[numCols_ / 2][numRows_ / 2].y;
-         }
-
-         //use affine transform to convert to stage coordinate of center of new grid
-         AffineTransform transform = null;
-         Preferences prefs = Preferences.userNodeForPackage(MMStudioMainFrame.class);
-         try {
-            transform = (AffineTransform) JavaUtils.getObjectFromPrefs(prefs, "affine_transform_"
-                    + MMStudioMainFrame.getInstance().getCore().getCurrentPixelSizeConfig(), null);
-            //set map origin to current stage position
-            double[] matrix = new double[6];
-            transform.getMatrix(matrix);
-            matrix[4] = currentCenterX;
-            matrix[5] = currentCenterY;
-            transform = new AffineTransform(matrix);
-         } catch (Exception ex) {
-            ReportingUtils.logError(ex);
-            ReportingUtils.showError("Couldnt get affine transform");
-         }
-
-         //convert pixel displacement of center of new grid to new center stage position
-         Point2D.Double pixelPos = new Point2D.Double(xPixelDispFromCenter, yPixelDispFromCenter);
-         Point2D.Double stagePos = new Point2D.Double();
-         transform.transform(pixelPos, stagePos);
-         return stagePos;
-      } catch (Exception e) {
-         ReportingUtils.showError("Couldn't convert pixel coordinates to stage coordinates");
+//      try {
+//         //get coordinates of center of exisitng grid
+//         String xyStage = MMStudioMainFrame.getInstance().getCore().getXYStageDevice();
+//
+//         //row column map to coordinates for exisiting stage positiions
+//         Point2D.Double[][] coordinates = new Point2D.Double[numCols_][numRows_];
+//         for (int i = 0; i < positionList_.length(); i++) {
+//            int colInd = (int) positionList_.getJSONObject(i).getLong("GridColumnIndex");
+//            int rowInd = (int) positionList_.getJSONObject(i).getLong("GridRowIndex");
+//            JSONArray coords = positionList_.getJSONObject(i).getJSONObject("DeviceCoordinatesUm").getJSONArray(xyStage);
+//            coordinates[colInd][rowInd] = new Point2D.Double(coords.getDouble(0), coords.getDouble(1));
+//         }
+//
+//         //find stage coordinate of center of existing grid
+//         double currentCenterX, currentCenterY;
+//         if (coordinates.length % 2 == 0 && coordinates[0].length % 2 == 0) {
+//            //even number of tiles in both directions
+//            currentCenterX = 0.25 * coordinates[numCols_ / 2 - 1][numRows_ / 2 - 1].x + 0.25 * coordinates[numCols_ / 2 - 1][numRows_ / 2].x
+//                    + 0.25 * coordinates[numCols_ / 2][numRows_ / 2 - 1].x + 0.25 * coordinates[numCols_ / 2][numRows_ / 2].x;
+//            currentCenterY = 0.25 * coordinates[numCols_ / 2 - 1][numRows_ / 2 - 1].y + 0.25 * coordinates[numCols_ / 2 - 1][numRows_ / 2].y
+//                    + 0.25 * coordinates[numCols_ / 2][numRows_ / 2 - 1].y + 0.25 * coordinates[numCols_ / 2][numRows_ / 2].y;
+//         } else if (coordinates.length % 2 == 0) {
+//            //even number of columns
+//            currentCenterX = 0.5 * coordinates[numCols_ / 2 - 1][numRows_ / 2].x + 0.5 * coordinates[numCols_ / 2][numRows_ / 2].x;
+//            currentCenterY = 0.5 * coordinates[numCols_ / 2 - 1][numRows_ / 2].y + 0.5 * coordinates[numCols_ / 2][numRows_ / 2].y;
+//         } else if (coordinates[0].length % 2 == 0) {
+//            //even number of rows
+//            currentCenterX = 0.5 * coordinates[numCols_ / 2][numRows_ / 2 - 1].x + 0.5 * coordinates[numCols_ / 2][numRows_ / 2].x;
+//            currentCenterY = 0.5 * coordinates[numCols_ / 2][numRows_ / 2 - 1].y + 0.5 * coordinates[numCols_ / 2][numRows_ / 2].y;
+//         } else {
+//            //odd number of both
+//            currentCenterX = coordinates[numCols_ / 2][numRows_ / 2].x;
+//            currentCenterY = coordinates[numCols_ / 2][numRows_ / 2].y;
+//         }
+//
+//         //use affine transform to convert to stage coordinate of center of new grid
+//         AffineTransform transform = null;
+//         Preferences prefs = Preferences.userNodeForPackage(MMStudioMainFrame.class);
+//         try {
+//            transform = (AffineTransform) JavaUtils.getObjectFromPrefs(prefs, "affine_transform_"
+//                    + MMStudioMainFrame.getInstance().getCore().getCurrentPixelSizeConfig(), null);
+//            //set map origin to current stage position
+//            double[] matrix = new double[6];
+//            transform.getMatrix(matrix);
+//            matrix[4] = currentCenterX;
+//            matrix[5] = currentCenterY;
+//            transform = new AffineTransform(matrix);
+//         } catch (Exception ex) {
+//            ReportingUtils.logError(ex);
+//            ReportingUtils.showError("Couldnt get affine transform");
+//         }
+//
+//         //convert pixel displacement of center of new grid to new center stage position
+//         Point2D.Double pixelPos = new Point2D.Double(xPixelDispFromCenter, yPixelDispFromCenter);
+//         Point2D.Double stagePos = new Point2D.Double();
+//         transform.transform(pixelPos, stagePos);
+//         return stagePos;
+//      } catch (Exception e) {
+//         ReportingUtils.showError("Couldn't convert pixel coordinates to stage coordinates");
          return null;
-      }
+//      }
    }
 
    private void makeGridOverlay(int centerX, int centerY) {
@@ -517,17 +573,17 @@ public class DisplayPlus implements ImageCacheListener {
          overlay.clear();
       }
 
-      int gridWidth = (Integer) gridXSpinner_.getValue();
-      int gridHeight = (Integer) gridYSpinner_.getValue();
-      int xOverlap = SettingsDialog.getXOverlap();
-      int yOverlap = SettingsDialog.getYOverlap();
-      int roiWidth = (gridWidth * tileWidth_) - (gridWidth - 1) * xOverlap;
-      int roiHeight = gridHeight * tileHeight_ - (gridHeight - 1) * yOverlap;
-
-      Roi rectangle = new Roi(centerX - roiWidth / 2, centerY - roiHeight / 2, roiWidth, roiHeight);
-      rectangle.setStrokeWidth(20f);
-      overlay.add(rectangle);
-      vad_.getImagePlus().setOverlay(overlay);
+//      int gridWidth = (Integer) gridXSpinner_.getValue();
+//      int gridHeight = (Integer) gridYSpinner_.getValue();
+//      int xOverlap = SettingsDialog.getXOverlap();
+//      int yOverlap = SettingsDialog.getYOverlap();
+//      int roiWidth = (gridWidth * tileWidth_) - (gridWidth - 1) * xOverlap;
+//      int roiHeight = gridHeight * tileHeight_ - (gridHeight - 1) * yOverlap;
+//
+//      Roi rectangle = new Roi(centerX - roiWidth / 2, centerY - roiHeight / 2, roiWidth, roiHeight);
+//      rectangle.setStrokeWidth(20f);
+//      overlay.add(rectangle);
+//      vad_.getImagePlus().setOverlay(overlay);
    }
 
    private void gridSizeChanged() {
@@ -744,7 +800,7 @@ public class DisplayPlus implements ImageCacheListener {
                     + ":" + twoDigitFormat(s % 60) + "." + threeDigitFormat(ms % 1000);
             timeStampLabel_.setText("Elapsed time: " + time + " ");
          } catch (JSONException ex) {
-            ReportingUtils.logError("MetaData did not contain ElapsedTime-ms field");
+//            ReportingUtils.logE  rror("MetaData did not contain ElapsedTime-ms field");
          }
       }
 
@@ -869,11 +925,9 @@ public class DisplayPlus implements ImageCacheListener {
                   clearSelectedButtons();
                   dlOffsetsButton_.setSelected(true);
                   dlOffsetsButton_.setText("Select XY position");
-                  positionSelectMode_ = true;
                } else {
                   posNameLabel_.setText("");
                   dlOffsetsButton_.setText("Set depth list offsets");
-                  positionSelectMode_ = false;
                   canvas_.setOverlay(null);
                   selectedPositions_.clear();
                }
@@ -935,11 +989,11 @@ public class DisplayPlus implements ImageCacheListener {
                } catch (Exception ex) {
                   ReportingUtils.showError("Couldn't pause");
                }
-               if (eng_.isPaused()) {
-                  pauseButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/icons/resultset_next.png"))); // NOI18N
-               } else {
-                  pauseButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/icons/control_pause.png"))); // NOI18N
-               }
+//               if (eng_.isPaused()) {
+//                  pauseButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/icons/resultset_next.png"))); // NOI18N
+//               } else {
+//                  pauseButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/icons/control_pause.png"))); // NOI18N
+//               }
             }
          });
 
