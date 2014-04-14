@@ -4305,14 +4305,19 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    }
    
    @Override
-   public SequenceSettings getAcqusitionSettings() {
+   public SequenceSettings getAcquisitionSettings() {
 	   if (engine_ == null)
 		   return new SequenceSettings();
 	   return engine_.getSequenceSettings();
    }
+
+   // Deprecated; use correctly spelled version. (Used to be part of API.)
+   public SequenceSettings getAcqusitionSettings() {
+      return getAcquisitionSettings();
+   }
    
    @Override
-   public void setAcqusitionSettings(SequenceSettings ss) {
+   public void setAcquisitionSettings(SequenceSettings ss) {
       if (engine_ == null)
          return;
       
@@ -4320,6 +4325,10 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       acqControlWin_.updateGUIContents();
    }
 
+   // Deprecated; use correctly spelled version. (Used to be part of API.)
+   public void setAcqusitionSettings(SequenceSettings ss) {
+      setAcquisitionSettings(ss);
+   }
    
    @Override
    public String getAcquisitionPath() {
@@ -4329,8 +4338,13 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    }
    
    @Override
+   public void promptToSaveAcquisition(String name, boolean prompt) throws MMScriptException {
+      getAcquisition(name).promptToSave(prompt);
+   }
+
+   // Deprecated; use correctly spelled version. (Used to be part of API.)
    public void promptToSaveAcqusition(String name, boolean prompt) throws MMScriptException {
-	   getAcquisition(name).promptToSave(prompt);
+      promptToSaveAcquisition(name, prompt);
    }
 
     @Override

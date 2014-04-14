@@ -115,7 +115,7 @@ public interface ScriptInterface {
     * Set up image physical dimensions for the data set that has already been opened.
     * Once dimensions of the image has been set, they can't be changed, i.e. subsequent calls to this method will generate an error.
     * Typically there is no need to call this method, except when display options have to be set before the first image is inserted.
-    * If this method is not explicitly called after openAcqusition(), the image dimensions will be automatically initialized based
+    * If this method is not explicitly called after openAcquisition(), the image dimensions will be automatically initialized based
     * on the first image inserted in the data set.
     * 
     * @param name - Name of the data set
@@ -735,12 +735,12 @@ public interface ScriptInterface {
    /**
     * Return current acquisition settings
     */ 
-    SequenceSettings getAcqusitionSettings();
+    SequenceSettings getAcquisitionSettings();
     
     /**
      * Apply new acquisition settings
      */ 
-    public void setAcqusitionSettings(SequenceSettings settings);
+    public void setAcquisitionSettings(SequenceSettings settings);
  
     /**
      * Return the current acquisition path, or null if not applicable
@@ -750,6 +750,6 @@ public interface ScriptInterface {
     /**
      * Display dialog to save data for one of the currently open acquisitions
      */
-    public void promptToSaveAcqusition(String name, boolean prompt) throws MMScriptException;
+    public void promptToSaveAcquisition(String name, boolean prompt) throws MMScriptException;
     
 }

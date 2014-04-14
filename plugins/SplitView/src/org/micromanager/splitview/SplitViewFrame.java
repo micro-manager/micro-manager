@@ -280,7 +280,7 @@ public class SplitViewFrame extends javax.swing.JFrame {
 
       gui_.openAcquisition(ACQNAME, "", 1, 2, 1, 1, true, false);
       gui_.initializeAcquisition(ACQNAME, newWidth_, newHeight_, (int) imgDepth_, 8 * (int)imgDepth_);
-      gui_.promptToSaveAcqusition(ACQNAME, false);
+      gui_.promptToSaveAcquisition(ACQNAME, false);
       gui_.setChannelColor(ACQNAME, 0, col1_);
       gui_.setChannelColor(ACQNAME, 1, col2_);
       if (orientation_.equals(LR)) {

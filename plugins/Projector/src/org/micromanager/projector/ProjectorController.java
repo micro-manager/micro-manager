@@ -789,7 +789,7 @@ public class ProjectorController {
 
       gui.clearRunnables();
       if (repeat) {
-         for (int i = frameOn; i < gui.getAcqusitionSettings().numFrames * 10; i += repeatInterval) {
+         for (int i = frameOn; i < gui.getAcquisitionSettings().numFrames * 10; i += repeatInterval) {
             gui.attachRunnable(i, -1, 0, 0, runPolygons);
          }
       } else {
