@@ -228,19 +228,17 @@ autolase.jar: \
 	$(JAVAC) $(JAVACFLAGS) -sourcepath $(srcdir):. -classpath ../mmstudio/MMJ_.jar:$(IJJARPATH):. $(srcdir)/autolase/src/ch/epfl/leb/autolase/*.java -d build
 	cd build && jar cf ../autolase.jar *
 
-all: ${TARGETS}
 
-install:
-	test -d $(DESTDIR)$(IJPATH)/mmplugins || mkdir $(DESTDIR)$(IJPATH)/mmplugins
-	for thisjar in $(TARGETS); \
-	do \
-		cp $$thisjar $(DESTDIR)$(IJPATH)/mmplugins; \
-	done
+plugindir = $(pkgdatadir)/mmplugins
+plugin_DATA = $(TARGETS)
 
-clean:
-	for f in $(TARGETS); \
-	do \
-		test -f $$f && rm $$f || echo "$$f not found"; \
-	done
 
- EXTRA_DIST = src build.xml
+CLEANFILES = $(TARGETS)
+
+# TODO Builds are done all over the place (yuck), and there is no proper clean
+# for the class files yet.
+clean-local:
+	-rm -rf build
+
+
+EXTRA_DIST = src
