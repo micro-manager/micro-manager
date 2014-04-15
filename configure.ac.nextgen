@@ -18,8 +18,13 @@ AC_PROG_MKDIR_P
 
 m4_include([configure.common])
 
-# TODO This conditional should ask whether we are building MMCoreJ
-AM_CONDITIONAL(BUILD_MMCOREJ, [test "$IMAGEJDIR" != "no"])
+
+# TODO Add a --with-java, and proper autodetection of Java; use result to
+# determine whether to build MMCoreJ.
+AC_ARG_ENABLE([mmcorej],
+   [AS_HELP_STRING([--disable-mmcorej], [do not build MMCoreJ])],
+   [], [enable_mmcorej=yes])
+AM_CONDITIONAL([BUILD_MMCOREJ], [test "x$enable_mmcorej" != xno])
 
 
 AC_ARG_ENABLE([hardcoded-mmcorej-library-path],
@@ -39,8 +44,14 @@ fi
 AC_SUBST([MMCOREJ_LIBRARY_PATH])
 
 
-# TODO This conditional should ask whether we are building the Java app.
-if test "$IMAGEJDIR" != "no" ; then
+AC_ARG_ENABLE([java-app],
+   [AS_HELP_STRING([--disable-java-app], [do not build the Java app])],
+   [], [enable_java_app=yes])
+AM_CONDITIONAL([BUILD_JAVA_APP], [test "x$enable_java_app" != xno])
+
+# TODO Use proper autodetection, and use the results to determine wheter to
+# build the Java app.
+if test "x$enable_java_app" != xno; then
 
    #----------------------------------------------------------------
    # Set the CLASSEXT location

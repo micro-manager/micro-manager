@@ -17,18 +17,3 @@ case $host in
    ;;
 esac
 AC_SUBST(LPTHREAD)
-
-
-#----------------------------------------------------------------
-# ImageJ
-#----------------------------------------------------------------
-
-# Determine if we need to look for ImageJ
-AC_MSG_CHECKING(whether to build for ImageJ)
-AC_ARG_WITH([imagej], [AS_HELP_STRING([--with-imagej=path],[path to ImageJ directory])], [IMAGEJDIR="$withval"], [IMAGEJDIR="no"])
-AC_MSG_RESULT($IMAGEJDIR)
-
-# TODO Building the Java app should have nothing to do with IMAGEJDIR - all it
-# requires is that ij.jar be available. Also note that --disable-core is
-# incompatible with --enable-java-app.
-AM_CONDITIONAL(BUILD_JAVA_APP, [test "$IMAGEJDIR" != "no"])
