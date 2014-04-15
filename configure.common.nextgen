@@ -25,32 +25,10 @@ AC_SUBST(LPTHREAD)
 
 # Determine if we need to look for ImageJ
 AC_MSG_CHECKING(whether to build for ImageJ)
-AC_ARG_WITH([imagej], [AS_HELP_STRING([--with-imagej=path],[path to ImageJ directory])], [IMAGEJDIR="$withval"], [IMAGEJDIR="yes"])
+AC_ARG_WITH([imagej], [AS_HELP_STRING([--with-imagej=path],[path to ImageJ directory])], [IMAGEJDIR="$withval"], [IMAGEJDIR="no"])
 AC_MSG_RESULT($IMAGEJDIR)
 
 # TODO Building the Java app should have nothing to do with IMAGEJDIR - all it
 # requires is that ij.jar be available. Also note that --disable-core is
 # incompatible with --enable-java-app.
 AM_CONDITIONAL(BUILD_JAVA_APP, [test "$IMAGEJDIR" != "no"])
-if test "$IMAGEJDIR" != "no" ; then
-   AC_MSG_CHECKING(for ImageJ directory)
-
-   if test "$IMAGEJDIR" = "yes"; then
-      IMAGEJDIR="/Applications/ImageJ /usr/local/ImageJ /usr/local/imagej "
-   fi
-   IJPATH=""
-   for d in $IMAGEJDIR ; do
-     if test -d "$d" ; then
-       AC_MSG_RESULT($d)
-       IJPATH=$d
-       break
-     fi
-   done
-
-   if test "$IJPATH" = "" ; then
-     AC_MSG_ERROR([not found, use the --without-imagej option to build without ImageJ or install ImageJ (http://rsb.info.nih.gov/ij/ and rerun configure, possibly using the --with-imagej=path option])
-   fi
-fi
-
-
-AC_SUBST(IJPATH)

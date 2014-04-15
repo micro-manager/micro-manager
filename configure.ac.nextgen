@@ -60,7 +60,7 @@ if test "$IMAGEJDIR" != "no" ; then
    fi
 
    if test -z "$IJJARPATH"; then
-     AC_MSG_ERROR([not found, Use the without-imagej directive to build without ImageJ or install ImageJ (http://rsb.info.nih.gov/ij/ and rerun configure, possibly using the --with-imagej=path directive])
+     AC_MSG_ERROR([not found])
    fi
 
    #----------------------------------------------------------------
@@ -76,7 +76,7 @@ if test "$IMAGEJDIR" != "no" ; then
       AC_MSG_RESULT($BSHJARPATH)
    fi
    if test "$BSHJARPATH" = "" ; then
-      AC_MSG_ERROR([not found, Use the without-imagej directive to build without ImageJ GUI, or download Beanshell (http://www.beanshell.org/download.html) and copy bsh-2.0b4.jar to $IJPATH/plugins])
+      AC_MSG_ERROR([not found])
    fi
 
    #----------------------------------------------------------------
@@ -92,7 +92,7 @@ if test "$IMAGEJDIR" != "no" ; then
       AC_MSG_RESULT($SWINGXJARPATH)
    fi
    if test "$SWINGXJARPATH" = "" ; then
-      AC_MSG_ERROR([not found, Use the without-imagej directive to build without ImageJ GUI, or download swingx and copy to $IJPATH/plugins])
+      AC_MSG_ERROR([not found])
    fi
    
    #----------------------------------------------------------------
@@ -113,7 +113,7 @@ if test "$IMAGEJDIR" != "no" ; then
       AC_MSG_RESULT($COMMONSMATHJARPATH)
    fi
    if test "$COMMONSMATHJARPATH" = "" ; then
-      AC_MSG_ERROR([commons-math-2.0.jar not found. It should be in the classext directory.])
+      AC_MSG_ERROR([not found])
    fi
 
    #----------------------------------------------------------------
@@ -133,7 +133,7 @@ if test "$IMAGEJDIR" != "no" ; then
       AC_MSG_RESULT($SWINGLAYOUTJARPATH)
    fi
    if test "$SWINGLAYOUTJARPATH" = "" ; then
-      AC_MSG_ERROR([swing-layout-1.0.4.jar not found.  It should be in the classext directory.])
+      AC_MSG_ERROR([not found])
    fi
    
    #----------------------------------------------------------------
@@ -153,7 +153,7 @@ if test "$IMAGEJDIR" != "no" ; then
       AC_MSG_RESULT($ABSOLUTEJARPATH)
    fi
    if test "$ABSOLUTEJARPATH" = "" ; then
-      AC_MSG_ERROR([AbsoluteLayout.jar not found.  It should be in the classext directory.])
+      AC_MSG_ERROR([not found])
    fi
    #----------------------------------------------------------------
    # Find JFreeChart 

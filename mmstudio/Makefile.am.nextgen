@@ -167,7 +167,7 @@ javadoc:
 	$(MKDIR_P) doc
 	rm -rf doc/*
 	javadoc -public \
-		-classpath $(IJJARPATH):$(BSHJARPATH):$(IJPATH)/plugins/Micro-Manager/MMCoreJ.jar:$(IJPATH)/plugins/Micro-Manager/MMJ_.jar:$(CLASSEXT)/scifio.jar:$(CLASSEXT)/commons-math-2.0.jar:. \
+		-classpath ../MMCoreJ_wrap/MMCoreJ.jar:MMJ_.jar:$(IJJARPATH):$(BSHJARPATH):$(CLASSEXT)/scifio.jar:$(CLASSEXT)/commons-math-2.0.jar:. \
 		-d doc \
 		-sourcepath $(srcdir)/src \
 		-subpackages org.micromanager
