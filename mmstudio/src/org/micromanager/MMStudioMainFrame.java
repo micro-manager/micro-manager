@@ -2316,6 +2316,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
     * Implements ScriptInterface
     */
    @Override
+   @Deprecated
    public AcqControlDlg getAcqDlg() {
       return acqControlWin_;
    }
@@ -2325,6 +2326,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
     * Implements ScriptInterface
     */
    @Override
+   @Deprecated
    public PositionListDlg getXYPosListDlg() {
       checkPosListDlg();
       return posListDlg_;
@@ -3657,6 +3659,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    }
    
    @Override
+   @Deprecated
    public String createAcquisition(JSONObject summaryMetadata, boolean diskCached, boolean displayOff) {
       return acqMgr_.createAcquisition(summaryMetadata, diskCached, engine_, displayOff);
    }
@@ -4049,6 +4052,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    }
    
    @Override
+   @Deprecated
    public MMAcquisition getAcquisition(String name) throws MMScriptException {
       return acqMgr_.getAcquisition(name);
    }

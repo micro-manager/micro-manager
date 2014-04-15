@@ -2368,7 +2368,8 @@ public class VirtualAcquisitionDisplay implements
       private void removeMeFromAcquisitionManager(MMStudioMainFrame gui) {
          for (String name : gui.getAcquisitionNames()) {
             try {
-               if (gui.getAcquisition(name).getAcquisitionWindow() == VirtualAcquisitionDisplay.this) {
+               if (gui.getAcquisition(name).getAcquisitionWindow() == 
+                       VirtualAcquisitionDisplay.this) {
                   gui.closeAcquisition(name);
                }
             } catch (MMScriptException ex) {

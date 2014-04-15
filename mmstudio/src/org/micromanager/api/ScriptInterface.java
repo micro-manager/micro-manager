@@ -115,7 +115,7 @@ public interface ScriptInterface {
     * @param displayOff True if no display is to be created or shown.
     * @throws MMScriptException
     *
-    * @deprecated Use openAcquisition() instead.
+    * @Deprecated Use openAcquisition() instead.
     */
    public String createAcquisition(JSONObject summaryMetadata, boolean diskCached, boolean displayOff);
 
@@ -162,7 +162,7 @@ public interface ScriptInterface {
     * @param name - data set name
     * @throws MMScriptException
     *
-    * @deprecated Because it returns an internal object that is subject to change.
+    * @Deprecated Because it returns an internal object that is subject to change.
     */
    public MMAcquisition getAcquisition(String name) throws MMScriptException;
    
@@ -590,7 +590,7 @@ public interface ScriptInterface {
     * dlg.setVisible(true);
     * @return Handle to the MDA acquisition dialog
     *
-    * @deprecated Use the get/setAcquisitionSettings() interface instead.
+    * @Deprecated Use the get/setAcquisitionSettings() interface instead.
     */
    public AcqControlDlg getAcqDlg();
 
@@ -600,7 +600,7 @@ public interface ScriptInterface {
     * The Dialog will not necessarily be shown, call the setVisibile method of the dialog to do so
     * @return Handle to the positionList Dialog
     *
-    * @deprecated Use the get/setPositionList() interface instead.
+    * @Deprecated Use the get/setPositionList() interface instead.
     */
    public PositionListDlg getXYPosListDlg();
 
