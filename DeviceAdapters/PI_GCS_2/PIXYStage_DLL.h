@@ -19,7 +19,7 @@
 //                IN NO EVENT SHALL THE COPYRIGHT OWNER OR
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
-// CVS:           $Id: PIXYStage_DLL.h,v 1.7, 2011-10-12 11:48:46Z, Steffen Rau$
+// CVS:           $Id: PIXYStage_DLL.h,v 1.8, 2014-03-31 12:51:24Z, Steffen Rau$
 //
 
 #ifndef _PI_XYSTAGE_DLL_H_
@@ -74,6 +74,8 @@ public:
 
 
 private:
+   void CreateProperties();
+
    std::string axisXName_;
    std::string axisXStageType_;
    std::string axisXHomingMode_;
@@ -89,10 +91,7 @@ private:
    double stepSize_um_;
    double originX_;
    double originY_;
-   //bool busy_;
    bool initialized_;
-   //double lowerLimit_;
-   //double upperLimit_;
 };
 
 

@@ -19,38 +19,48 @@
 //                IN NO EVENT SHALL THE COPYRIGHT OWNER OR
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
-// CVS:           $Id: Controller.cpp,v 1.10, 2013-09-11 14:38:49Z, Richard Montbrun$
+// CVS:           $Id: Controller.cpp,v 1.14, 2014-03-31 12:51:24Z, Steffen Rau$
 //
-
-#ifdef WIN32
-   #include <windows.h>
-   #define snprintf _snprintf 
-#endif
 
 #include "Controller.h"
 
 const char* g_msg_CNTR_POS_OUT_OF_LIMITS = "Position out of limits";
 const char* g_msg_CNTR_MOVE_WITHOUT_REF_OR_NO_SERVO = "Unallowable move attempted on unreferenced axis, or move attempted with servo off";
 const char* g_msg_CNTR_AXIS_UNDER_JOYSTICK_CONTROL = "Selected axis is controlled by joystick";
+const char* g_msg_CNTR_INVALID_AXIS_IDENTIFIER = "Invalid axis identifier";
+const char* g_msg_CNTR_ILLEGAL_AXIS = "Illegal axis";
+const char* g_msg_CNTR_VEL_OUT_OF_LIMITS= "Velocity out of limits";
+const char* g_msg_CNTR_ON_LIMIT_SWITCH= "The connected stage has driven into a limit switch, some controllers need CLR to resume operation";
+const char* g_msg_CNTR_MOTION_ERROR= "Motion error: position error too large, servo is switched off automatically";
+const char* g_msg_MOTION_ERROR= "Motion error: position error too large, servo is switched off automatically";
+const char* g_msg_CNTR_PARAM_OUT_OF_RANGE= "Parameter out of range";
+const char* g_msg_NO_CONTROLLER_FOUND= "No controller found with specified name";
+const char* g_msg_DLL_NOT_FOUND= "Invalid DLL Name or DLL not found";
+const char* g_msg_INVALID_INTERFACE_NAME= "Invalid Interface Type";
+const char* g_msg_INVALID_INTERFACE_PARAMETER= "Invalid Interface Parameter";
+
 
 //////////////////////////////////
 
 std::map<std::string, PIController*> PIController::allControllersByLabel_;
 
-PIController::PIController(const std::string& label):
-umToDefaultUnit_(0.001),
-logsink_(NULL),
-logdevice_(NULL),
-gcs2_(true),
-label_(label),
-onlyIDSTAGEvalid_(false),
-referenceMoveActive_(false)
+PIController::PIController(const std::string& label)
+   : umToDefaultUnit_(0.001)
+   , logsink_(NULL)
+   , logdevice_(NULL)
+   , gcs2_(true)
+   , label_(label)
+   , onlyIDSTAGEvalid_(false)
+   , referenceMoveActive_(false)
+   , m_ControllerError(PI_CNTR_NO_ERROR)
 {
 	allControllersByLabel_[label_] = this;
 }
 
 PIController::~PIController()
 {
+    logsink_   = NULL;
+    logdevice_ = NULL;
 }
 
 void PIController::LogMessage(const std::string& msg) const
@@ -62,46 +72,54 @@ void PIController::LogMessage(const std::string& msg) const
 
 PIController* PIController::GetByLabel(const std::string& label)
 {
-	if (allControllersByLabel_.find(label) == allControllersByLabel_.end())
+    std::map< std::string, PIController*>::iterator ctrl = allControllersByLabel_.find (label);
+	if ( ctrl == allControllersByLabel_.end())
 		return NULL;
-	return allControllersByLabel_[label];
+	return (*ctrl).second;
 }
 
 void PIController::DeleteByLabel(const std::string& label)
 {
-	if (allControllersByLabel_.find(label) == allControllersByLabel_.end())
+    std::map< std::string, PIController*>::iterator ctrl = allControllersByLabel_.find (label);
+	if ( ctrl == allControllersByLabel_.end())
 		return;
-	delete allControllersByLabel_[label];
+	delete (*ctrl).second;
 	allControllersByLabel_.erase(label);
 }
 
 int PIController::InitStage(const std::string& axisName, const std::string& stageType)
 {
-   if (HasCST())
-   {
-      std::string stageType_local = stageType;
-      if (onlyIDSTAGEvalid_)
-      {
-         if (strcmp(stageType.c_str(), "NOSTAGE") != 0)
-         {
-            stageType_local = "ID-STAGE";
-         }
-      }
-      
-      if (!CST(axisName, stageType_local))
-         return DEVICE_INVALID_PROPERTY_VALUE;
-	}
-	if (HasINI())
-	{
-		if (!INI(axisName))
-			return DEVICE_ERR;
-	}
-	if (HasSVO())
-	{
-		if (!SVO(axisName, TRUE))
-			return DEVICE_ERR;
-	}
-	return DEVICE_OK;
+    if (HasCST())
+    {
+        std::string stageType_local = stageType;
+        if (onlyIDSTAGEvalid_)
+        {
+            if (strcmp(stageType.c_str(), "NOSTAGE") != 0)
+            {
+                stageType_local = "ID-STAGE";
+            }
+        }
+        if (!CST(axisName, stageType_local))
+        {
+            return GetTranslatedError();
+        }
+    }
+    if (HasINI())
+    {
+        if (!INI(axisName))
+        {
+            return GetTranslatedError();
+        }
+
+    }
+    if (HasSVO())
+    {
+        if (!SVO(axisName, TRUE))
+        {
+            return GetTranslatedError();
+        }
+    }
+    return DEVICE_OK;
 }
 
 bool PIController::IsBusy()
@@ -141,7 +159,7 @@ bool PIController::IsBusy()
 	return false;
 }
 
-std::string PIController::MakeAxesString(const std::string &axis1Name, const std::string &axis2Name)
+std::string PIController::MakeAxesString(const std::string &axis1Name, const std::string &axis2Name) const
 {
 	if (gcs2_)
 		return axis1Name + " \n" + axis2Name;
@@ -154,7 +172,7 @@ int PIController::Home(const std::string &axesNames, const std::string &homingMo
 	if (homingMode.empty())
 	     return DEVICE_OK;
 
-	if (homingMode == "REF")
+	if ( (homingMode == "REF") || (homingMode == "FRF") )
 	{
 		if (HasFRF())
 		{
@@ -164,7 +182,7 @@ int PIController::Home(const std::string &axesNames, const std::string &homingMo
 				return DEVICE_OK;
 			}
 			else
-				return DEVICE_ERR;
+				return GetTranslatedError();
 		}
 		else if (HasREF())
 		{
@@ -174,12 +192,12 @@ int PIController::Home(const std::string &axesNames, const std::string &homingMo
 				return DEVICE_OK;
 			}
 			else
-				return DEVICE_ERR;
+				return GetTranslatedError();
 		}
 		else
 			return DEVICE_OK;
 	}
-	else if (homingMode == "MNL")
+	else if ( (homingMode == "MNL") || (homingMode == "FNL") )
 	{
 		if (HasFNL())
 		{
@@ -189,7 +207,7 @@ int PIController::Home(const std::string &axesNames, const std::string &homingMo
 				return DEVICE_OK;
 			}
 			else
-				return DEVICE_ERR;
+				return GetTranslatedError();
 		}
 		else if (HasMNL())
 		{
@@ -199,12 +217,12 @@ int PIController::Home(const std::string &axesNames, const std::string &homingMo
 				return DEVICE_OK;
 			}
 			else
-				return DEVICE_ERR;
+				return GetTranslatedError();
 		}
 		else
 			return DEVICE_OK;
 	}
-	else if (homingMode == "MPL")
+	else if ( (homingMode == "MPL") || (homingMode == "FPL") )
 	{
 		if (HasFPL())
 		{
@@ -214,7 +232,7 @@ int PIController::Home(const std::string &axesNames, const std::string &homingMo
 				return DEVICE_OK;
 			}
 			else
-				return DEVICE_ERR;
+				return GetTranslatedError();
 		}
 		else if (HasMPL())
 		{
@@ -224,12 +242,20 @@ int PIController::Home(const std::string &axesNames, const std::string &homingMo
 				return DEVICE_OK;
 			}
 			else
-				return DEVICE_ERR;
+				return GetTranslatedError();
 		}
 		else
 			return DEVICE_OK;
 	}
-	else return DEVICE_INVALID_PROPERTY_VALUE;
+	else
+	{
+		return DEVICE_INVALID_PROPERTY_VALUE;
+	}
+}
+
+int PIController::GetTranslatedError()
+{
+	return TranslateError(GetError());
 }
 
 int PIController::TranslateError( int err /*= PI_CNTR_NO_ERROR*/ )
@@ -241,15 +267,29 @@ int PIController::TranslateError( int err /*= PI_CNTR_NO_ERROR*/ )
 
 	switch (err)
 	{
+	case(PI_CNTR_NO_ERROR):
+		return DEVICE_OK;
 	case(PI_CNTR_POS_OUT_OF_LIMITS):
 		return ERR_GCS_PI_CNTR_POS_OUT_OF_LIMITS;
-		break;
 	case(PI_CNTR_MOVE_WITHOUT_REF_OR_NO_SERVO):
 		return ERR_GCS_PI_CNTR_MOVE_WITHOUT_REF_OR_NO_SERVO;
-		break;
+	case(PI_CNTR_INVALID_AXIS_IDENTIFIER):
+		return ERR_GCS_PI_CNTR_INVALID_AXIS_IDENTIFIER;
+	case(PI_CNTR_ILLEGAL_AXIS):
+		return ERR_GCS_PI_CNTR_ILLEGAL_AXIS;
 	case(PI_CNTR_AXIS_UNDER_JOYSTICK_CONTROL):
 		return ERR_GCS_PI_CNTR_AXIS_UNDER_JOYSTICK_CONTROL;
-		break;
+	case(PI_CNTR_VEL_OUT_OF_LIMITS):
+		return ERR_GCS_PI_CNTR_VEL_OUT_OF_LIMITS;
+	case(PI_CNTR_ON_LIMIT_SWITCH):
+		return ERR_GCS_PI_CNTR_ON_LIMIT_SWITCH;
+	case(PI_CNTR_MOTION_ERROR):
+		return ERR_GCS_PI_CNTR_MOTION_ERROR;
+	case(PI_MOTION_ERROR):
+		return ERR_GCS_PI_MOTION_ERROR;
+	case(PI_CNTR_PARAM_OUT_OF_RANGE):
+		return ERR_GCS_PI_CNTR_PARAM_OUT_OF_RANGE;
+
 	default:
 		return DEVICE_ERR;
 	}
@@ -288,33 +328,33 @@ int PIController::FindNrJoysticks()
 	{
 		nrJoysticks++;
 	}
-	GetError();
+	GetTranslatedError();
 	return nrJoysticks;
 }
 
 int PIController::OnJoystick(MM::PropertyBase* pProp, MM::ActionType eAct, int joystick)
 {
-   if (eAct == MM::BeforeGet)
-   {
-	   int state;
-	   if (!qJON(joystick, state))
-	   {
-		   return TranslateError( GetError() );
-	   }
-      pProp->Set(long(state));
-   }
-   else if (eAct == MM::AfterSet)
-   {
-	   long lstate;
-	   pProp->Get(lstate);
-	   int state = int(lstate);
-    	if (!JON( joystick, state ))
-	   {
-		   return TranslateError( GetError() );
-	   }
-   }
+    if (eAct == MM::BeforeGet)
+    {
+        int state;
+        if (!qJON(joystick, state))
+        {
+            return GetTranslatedError();
+        }
+        pProp->Set(long(state));
+    }
+    else if (eAct == MM::AfterSet)
+    {
+        long lstate;
+        pProp->Get(lstate);
+        int state = int(lstate);
+        if (!JON( joystick, state ))
+        {
+            return GetTranslatedError();
+        }
+    }
 
-   return DEVICE_OK;
+    return DEVICE_OK;
 }
 
 int PIController::GetNrOutputChannels()

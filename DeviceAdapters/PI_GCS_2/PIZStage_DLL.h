@@ -19,7 +19,7 @@
 //                IN NO EVENT SHALL THE COPYRIGHT OWNER OR
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
-// CVS:           $Id: PIZStage_DLL.h,v 1.5, 2011-10-12 11:48:46Z, Steffen Rau$
+// CVS:           $Id: PIZStage_DLL.h,v 1.6, 2014-03-31 12:51:24Z, Steffen Rau$
 //
 
 #ifndef _PI_ZSTAGE_DLL_H_
@@ -70,7 +70,7 @@ public:
    int GetStageSequenceMaxLength(long& nrEvents) const  {nrEvents = 0; return DEVICE_OK;}
    int StartStageSequence() const {return DEVICE_OK;}
    int StopStageSequence() const {return DEVICE_OK;}
-   int LoadStageSequence(std::vector<double> positions) const {return DEVICE_OK;}
+   int LoadStageSequence(std::vector<double> /*positions*/) const {return DEVICE_OK;}
 
    bool IsContinuousFocusDrive() const {return false;}
 
@@ -81,8 +81,6 @@ private:
    bool initialized_;
    double axisLimitUm_;
    std::string stageType_;
-   // homing not (yet) implemented in micro-manager
-   //std::string homingMode_;
    std::string controllerName_;
    PIController* ctrl_;
 };

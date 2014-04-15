@@ -19,14 +19,8 @@
 //                IN NO EVENT SHALL THE COPYRIGHT OWNER OR
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
-// CVS:           $Id: PI_GCS_2.cpp,v 1.14, 2011-12-20 09:09:12Z, Steffen Rau$
+// CVS:           $Id: PI_GCS_2.cpp,v 1.20, 2014-04-01 11:20:28Z, Steffen Rau$
 //
-
-#ifdef WIN32
-   #include <windows.h>
-   #define snprintf _snprintf 
-#else
-#endif
 
 // this adapter can use PI modules to communicate with older firmware
 // versions or with interface not supported by micro-manager
@@ -59,7 +53,7 @@ size_t ci_find(const std::string& str1, const std::string& str2)
 	if (pos == str1. end ( ))
 		return std::string::npos;
 	else
-		return pos - str1. begin ( );
+		return size_t (pos - str1. begin ( ));
 }
 
 bool GetValue(const std::string& sMessage, long& lval)
@@ -151,27 +145,31 @@ std::string ExtractValue(const std::string& sMessage)
 ///////////////////////////////////////////////////////////////////////////////
 // Exported MMDevice API
 ///////////////////////////////////////////////////////////////////////////////
+
+extern "C" {
 MODULE_API void InitializeModuleData()
 {
-   RegisterDevice(PIZStage::DeviceName_, MM::StageDevice, "PI GCS Z-stage");
-   RegisterDevice(PIXYStage::DeviceName_, MM::XYStageDevice, "PI GCS XY-stage");
+   RegisterDevice(PIZStage::DeviceName_,                    MM::StageDevice,    "PI GCS Z-stage");
+   RegisterDevice(PIXYStage::DeviceName_,                   MM::XYStageDevice,  "PI GCS XY-stage");
 #ifndef __APPLE__
-   RegisterDevice(PIGCSControllerDLLDevice::DeviceName_, MM::GenericDevice, "PI GCS DLL Controller");
+   RegisterDevice(PIGCSControllerDLLDevice::DeviceName_,    MM::GenericDevice,  "PI GCS DLL Controller");
 #endif
-   RegisterDevice(PIGCSControllerComDevice::DeviceName_, MM::GenericDevice, "PI GCS Controller");
+   RegisterDevice(PIGCSControllerComDevice::DeviceName_,    MM::GenericDevice,  "PI GCS Controller");
 
+   RegisterDevice("C-663.11",                               MM::GenericDevice,  "PI C-663.11 Controller");
 #ifndef __APPLE__
-   RegisterDevice("C-843", MM::GenericDevice, "PI C-843 Controller");
+   RegisterDevice("C-843",                                  MM::GenericDevice,  "PI C-843 Controller");
 #endif
-   RegisterDevice("C-663.11", MM::GenericDevice, "PI C-663.11 Controller");
-   RegisterDevice("C-863.11", MM::GenericDevice, "PI C-863.11 Controller");
-   RegisterDevice("C-867", MM::GenericDevice, "PI C-867 Controller");
-   RegisterDevice("E-517/E-545", MM::GenericDevice, "PI E-517/E-545 Controller");
+   RegisterDevice("C-863.11",                               MM::GenericDevice,  "PI C-863.11 Controller");
+   RegisterDevice("C-867",                                  MM::GenericDevice,  "PI C-867 Controller");
+   RegisterDevice("C-884",                                  MM::GenericDevice,  "PI C-884 Controller");
+   RegisterDevice("E-517/E-545",                            MM::GenericDevice,  "PI E-517/E-545 Controller");
+   RegisterDevice("E-709",                                  MM::GenericDevice,  "PI E-709 Controller");
 #ifndef __APPLE__
-   RegisterDevice("E-710", MM::GenericDevice, "PI E-710 Controller");
+   RegisterDevice("E-710",                                  MM::GenericDevice,  "PI E-710 Controller");
 #endif
-   RegisterDevice("E-712", MM::GenericDevice, "PI E-712 Controller");
-   RegisterDevice("E-753", MM::GenericDevice, "PI E-753 Controller");
+   RegisterDevice("E-712",                                  MM::GenericDevice,  "PI E-712 Controller");
+   RegisterDevice("E-753",                                  MM::GenericDevice,  "PI E-753 Controller");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)
@@ -207,6 +205,7 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
    }
 
    if (	(strcmp(deviceName, "C-867") == 0)
+	||	(strcmp(deviceName, "C-884") == 0)
 	||	(strcmp(deviceName, "C-663.11") == 0)
 	||	(strcmp(deviceName, "C-863.11") == 0)	)
    {
@@ -246,7 +245,8 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
    }
 #endif  
 
-   if( (strcmp(deviceName, "E-712") == 0)
+   if( (strcmp(deviceName, "E-709") == 0)
+    || (strcmp(deviceName, "E-712") == 0)
     || (strcmp(deviceName, "E-753") == 0) )
    {
       PIGCSControllerComDevice* s = new PIGCSControllerComDevice();
@@ -263,3 +263,4 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
    delete pDevice;
 }
  
+}

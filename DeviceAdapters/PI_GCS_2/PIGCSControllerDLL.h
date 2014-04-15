@@ -19,7 +19,7 @@
 //                IN NO EVENT SHALL THE COPYRIGHT OWNER OR
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
-// CVS:           $Id: PIGCSControllerDLL.h,v 1.10, 2012-01-09 15:25:33Z, Steffen Rau$
+// CVS:           $Id: PIGCSControllerDLL.h,v 1.11, 2014-03-31 12:51:24Z, Steffen Rau$
 //
 
 #ifndef _PI_GCS_CONTROLLER_DLL_H_
@@ -63,17 +63,17 @@ public:
    int OnInterfaceParameter(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
-	int OnJoystick1(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnJoystick2(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnJoystick3(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnJoystick4(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnJoystick1(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnJoystick2(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnJoystick3(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnJoystick4(MM::PropertyBase* pProp, MM::ActionType eAct);
 
-	PIGCSControllerDLL* ctrl_;
-   std::string dllName_;
-   std::string interfaceType_;
-   std::string interfaceParameter_;
-   bool initialized_;
-   bool bShowInterfaceProperties_;
+    PIGCSControllerDLL* ctrl_;
+    std::string dllName_;
+    std::string interfaceType_;
+    std::string interfaceParameter_;
+    bool initialized_;
+    bool bShowInterfaceProperties_;
 };
 
 class PIGCSControllerDLL: public PIController
@@ -94,7 +94,6 @@ public:
 	virtual bool FPL(const std::string& axes);
 	virtual bool MPL(const std::string& axes);
 	virtual int GetError();
-	//virtual bool IsReferenceOK(const std::string& axes, BOOL* );
 	virtual bool IsReferencing(const std::string& axes, BOOL* );
 	virtual bool IsControllerReady( BOOL* );
 	virtual bool IsMoving(const std::string& axes, BOOL* );
@@ -107,13 +106,12 @@ public:
 	virtual bool qJON(int joystick, int& state);
 	virtual bool VEL(const std::string& axis, const double* velocity);
 	virtual bool qVEL(const std::string& axis, double* velocity);
-	virtual bool qTPC(int* nrOutputChannels);
+	virtual bool qTPC(int& nrOutputChannels);
 
 	virtual bool HasINI() {return INI_ != NULL;}
 	virtual bool HasSVO() {return SVO_ != NULL;}
 	virtual bool HasCST() {return CST_ != NULL;}
-	bool HasqCST() {return qCST_ != NULL;}
-	//virtual bool HasIsReferenceOK() { return IsReferenceOK_ != NULL; }
+	bool HasqCST() const {return qCST_ != NULL;}
 	virtual bool HasIsReferencing() { return IsReferencing_ != NULL; }
 	virtual bool HasIsControllerReady() { return IsControllerReady_ != NULL; }
 	virtual bool HasIsMoving() { return IsMoving_ != NULL; }
@@ -149,7 +147,6 @@ private:
 	typedef int ( WINAPI *FP_FRF ) ( int, const char* );
 	typedef int ( WINAPI *FP_FPL ) ( int, const char* );
 	typedef int ( WINAPI *FP_FNL ) ( int, const char* );
-	//typedef int ( WINAPI *FP_IsReferenceOK ) ( int, const char*, BOOL* );
 	typedef int ( WINAPI *FP_IsReferencing ) ( int, const char*, BOOL* );
 	typedef int ( WINAPI *FP_IsControllerReady ) ( int, BOOL* );
 	typedef int ( WINAPI *FP_IsMoving ) ( int, const char*, BOOL* );
@@ -183,7 +180,6 @@ private:
 	FP_FRF FRF_;
 	FP_FPL FPL_;
 	FP_FNL FNL_;
-	//FP_IsReferenceOK IsReferenceOK_;
 	FP_IsReferencing IsReferencing_;
 	FP_IsControllerReady IsControllerReady_;
 	FP_IsMoving IsMoving_;
@@ -199,14 +195,14 @@ private:
 	FP_qJON qJON_;
 	FP_VEL VEL_;
 	FP_qVEL qVEL_;
-   FP_qTPC qTPC_;
+    FP_qTPC qTPC_;
 
 
 	void* LoadDLLFunc( const char* funcName );
 	int ConnectPCI(const std::string& interfaceParameter);
 	int ConnectRS232(const std::string& interfaceParameter);
 	int ConnectUSB(const std::string& interfaceParameter);
-	std::string FindDeviceNameInUSBList(char* szDevices, std::string interfaceParameter);
+	std::string FindDeviceNameInUSBList(const char* szDevices, std::string interfaceParameter) const;
 
    std::string dllPrefix_;
    int ID_;
@@ -221,6 +217,9 @@ private:
 	void* module_;
 #endif
 
+protected:
+   //lint -e{1401} // dummy ctor without any initialization
+   PIGCSControllerDLL () {}
 };
 
 

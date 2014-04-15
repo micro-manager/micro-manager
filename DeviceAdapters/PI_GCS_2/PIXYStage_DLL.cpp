@@ -19,13 +19,8 @@
 //                IN NO EVENT SHALL THE COPYRIGHT OWNER OR
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
-// CVS:           $Id: PIXYStage_DLL.cpp,v 1.11, 2011-12-20 09:09:47Z, Steffen Rau$
+// CVS:           $Id: PIXYStage_DLL.cpp,v 1.15, 2014-03-31 12:51:24Z, Steffen Rau$
 //
-
-#ifdef WIN32
-   #include <windows.h>
-   #define snprintf _snprintf 
-#endif
 
 #include "PIXYStage_DLL.h"
 #include "Controller.h"
@@ -51,21 +46,22 @@ const char* g_PI_XYStageControllerNameYAxis = "Controller Name for Y axis";
 ///////////////////////////////////////////////////////////////////////////////
 // PIXYStage
 
-PIXYStage::PIXYStage() :
-   CXYStageBase<PIXYStage>(),
-   axisXName_("A"),
-   axisXStageType_("DEFAULT_STAGE"),
-   axisXHomingMode_("REF"),
-   axisYName_("B"),
-   axisYStageType_("DEFAULT_STAGE"),
-   axisYHomingMode_("REF"),
-   controllerName_(""),
-   controllerNameYAxis_(""),
-   ctrl_(NULL),
-   stepSize_um_(0.01),
-   originX_(0.0),
-   originY_(0.0),
-   initialized_(false)
+PIXYStage::PIXYStage()
+    : CXYStageBase<PIXYStage>()
+    , axisXName_("1")
+    , axisXStageType_("DEFAULT_STAGE")
+    , axisXHomingMode_("REF")
+    , axisYName_("2")
+    , axisYStageType_("DEFAULT_STAGE")
+    , axisYHomingMode_("REF")
+    , controllerName_("")
+    , controllerNameYAxis_("")
+    , ctrl_(NULL)
+    , ctrlYAxis_(NULL)
+    , stepSize_um_(0.01)
+    , originX_(0.0)
+    , originY_(0.0)
+    , initialized_(false)
 {
    InitializeDefaultErrorMessages();
 
@@ -75,7 +71,21 @@ PIXYStage::PIXYStage() :
    SetErrorText(ERR_GCS_PI_CNTR_POS_OUT_OF_LIMITS, g_msg_CNTR_POS_OUT_OF_LIMITS);
    SetErrorText(ERR_GCS_PI_CNTR_MOVE_WITHOUT_REF_OR_NO_SERVO, g_msg_CNTR_MOVE_WITHOUT_REF_OR_NO_SERVO);
    SetErrorText(ERR_GCS_PI_CNTR_AXIS_UNDER_JOYSTICK_CONTROL, g_msg_CNTR_AXIS_UNDER_JOYSTICK_CONTROL);
+   SetErrorText(ERR_GCS_PI_CNTR_INVALID_AXIS_IDENTIFIER, g_msg_CNTR_INVALID_AXIS_IDENTIFIER);
+   SetErrorText(ERR_GCS_PI_CNTR_ILLEGAL_AXIS, g_msg_CNTR_ILLEGAL_AXIS);
+   SetErrorText(ERR_GCS_PI_CNTR_VEL_OUT_OF_LIMITS, g_msg_CNTR_VEL_OUT_OF_LIMITS);
+   SetErrorText(ERR_GCS_PI_CNTR_ON_LIMIT_SWITCH, g_msg_CNTR_ON_LIMIT_SWITCH);
+   SetErrorText(ERR_GCS_PI_CNTR_MOTION_ERROR, g_msg_CNTR_MOTION_ERROR);
+   SetErrorText(ERR_GCS_PI_MOTION_ERROR, g_msg_MOTION_ERROR);
+   SetErrorText(ERR_GCS_PI_CNTR_PARAM_OUT_OF_RANGE, g_msg_CNTR_PARAM_OUT_OF_RANGE);
+   SetErrorText(ERR_GCS_PI_NO_CONTROLLER_FOUND, g_msg_NO_CONTROLLER_FOUND);
 
+   CreateProperties ();
+
+}
+
+void PIXYStage::CreateProperties()
+{
    // Name
    CreateProperty(MM::g_Keyword_Name, DeviceName_, MM::String, true);
 
@@ -120,6 +130,8 @@ PIXYStage::PIXYStage() :
 PIXYStage::~PIXYStage()
 {
    Shutdown();
+   ctrl_ = NULL;
+   ctrlYAxis_ = NULL;
 }
 
 void PIXYStage::GetName(char* Name) const
@@ -131,7 +143,7 @@ int PIXYStage::Initialize()
 {
    MM::Device* device = GetDevice(controllerName_.c_str());
    if (device == NULL)
-	   return DEVICE_ERR;//ERR_GCS_PI_NO_CONTROLLER_FOUND;
+	   return ERR_GCS_PI_NO_CONTROLLER_FOUND;
 
    int ret = device->Initialize();
    if (ret != DEVICE_OK)
@@ -139,7 +151,7 @@ int PIXYStage::Initialize()
 
    ctrl_ = PIController::GetByLabel(controllerName_);
    if (ctrl_ == NULL)
-	   return DEVICE_ERR;//ERR_GCS_PI_NO_CONTROLLER_FOUND;
+	   return ERR_GCS_PI_NO_CONTROLLER_FOUND;
 
    std::string sBuffer;
    ctrl_->qIDN(sBuffer);
@@ -149,19 +161,18 @@ int PIXYStage::Initialize()
    PIController* ctrlForYAxis = ctrl_;
    if (controllerNameYAxis_ != "")
    {
-	   MM::Device* device = GetDevice(controllerNameYAxis_.c_str());
+	   device = GetDevice(controllerNameYAxis_.c_str());
 	   if (device == NULL)
-		   return DEVICE_ERR;//ERR_GCS_PI_NO_CONTROLLER_FOUND;
+		   return ERR_GCS_PI_NO_CONTROLLER_FOUND;
 
-	   int ret = device->Initialize();
+	   ret = device->Initialize();
 	   if (ret != DEVICE_OK)
 		   return ret;
 
 	   ctrlYAxis_ = PIController::GetByLabel(controllerNameYAxis_);
 	   if (ctrlYAxis_ == NULL)
-		   return DEVICE_ERR;//ERR_GCS_PI_NO_CONTROLLER_FOUND;
+		   return ERR_GCS_PI_NO_CONTROLLER_FOUND;
 
-	   std::string sBuffer;
 	   ctrlYAxis_->qIDN(sBuffer);
 	   LogMessage(std::string("Y axis Connected to: ") + sBuffer);
 	   ctrlForYAxis = ctrlYAxis_;
@@ -206,7 +217,7 @@ bool PIXYStage::Busy()
    if (ctrlYAxis_ != NULL)
    {
 	   // different controller is used for Y axis, so busy state of this one needs to be asked also
-	   busy |= ctrlYAxis_->IsBusy();
+	   busy = busy || ctrlYAxis_->IsBusy();
    }
    return busy;
 }
@@ -218,9 +229,6 @@ double PIXYStage::GetStepSize()
 
 int PIXYStage::SetPositionSteps(long x, long y)
 {
-	//if (ctrl_->MOV_ == NULL)
-	//	return DEVICE_UNSUPPORTED_COMMAND;
-
 	double umToDefaultUnitYAxis = ctrl_->umToDefaultUnit_;
 	if (ctrlYAxis_ != NULL)
 	{
@@ -236,14 +244,14 @@ int PIXYStage::SetPositionSteps(long x, long y)
 	if (ctrlYAxis_ == NULL)
 	{
 		if (!ctrl_->MOV(axisXName_, axisYName_, pos))
-			return ctrl_->TranslateError();
+    	    return ctrl_->GetTranslatedError();
 	}
 	else
 	{
 		if (!ctrl_->MOV(axisXName_, &(pos[0])))
-			return ctrl_->TranslateError();
+			return ctrl_->GetTranslatedError();
 		if (!ctrlYAxis_->MOV(axisYName_, &(pos[1])))
-			return ctrlYAxis_->TranslateError();
+			return ctrl_->GetTranslatedError();
 	}
 
 	return DEVICE_OK;
@@ -257,14 +265,14 @@ int PIXYStage::GetPositionSteps(long &x, long &y)
 	if (ctrlYAxis_ == NULL)
 	{
 		if (!ctrl_->qPOS(axisXName_, axisYName_, pos))
-			return ctrl_->TranslateError();
+			return ctrl_->GetTranslatedError();
 	}
 	else
 	{
 		if (!ctrl_->qPOS(axisXName_, &(pos[0])))
-			return ctrl_->TranslateError();
+			return ctrl_->GetTranslatedError();
 		if (!ctrlYAxis_->qPOS(axisYName_, &(pos[1])))
-			return ctrlYAxis_->TranslateError();
+			return ctrl_->GetTranslatedError();
 		umToDefaultUnitYAxis = ctrlYAxis_->umToDefaultUnit_;
 	}
 
@@ -345,12 +353,12 @@ int PIXYStage::SetOrigin()
 	return DEVICE_OK;
 }
 
-int PIXYStage::GetLimitsUm(double&, double&, double&, double&)
+int PIXYStage::GetLimitsUm(double& /*xMin*/, double& /*xMax*/, double& /*yMin*/, double& /*yMax*/)
 {
 	return DEVICE_UNSUPPORTED_COMMAND;
 }
 
-int PIXYStage::GetStepLimits(long&, long&, long&, long&)
+int PIXYStage::GetStepLimits(long& /*xMin*/, long& /*xMax*/, long& /*yMin*/, long& /*yMax*/)
 {
 	return DEVICE_UNSUPPORTED_COMMAND;
 }
@@ -498,7 +506,7 @@ int PIXYStage::OnXVelocity(MM::PropertyBase* pProp, MM::ActionType eAct)
       double velocity = 0.0;
 	  pProp->Get(velocity);
       if (!ctrl_->VEL( axisXName_, &velocity ))
-         return ctrl_->TranslateError();
+		return ctrl_->GetTranslatedError();
    }
 
    return DEVICE_OK;
@@ -523,9 +531,8 @@ int PIXYStage::OnYVelocity(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       double velocity = 0.0;
 	  pProp->Get(velocity);
-      if (!ctrl->VEL( axisYName_, &velocity ))
-         return ctrl_->TranslateError();
-      return DEVICE_OK;
+      if(!ctrl->VEL( axisYName_, &velocity ))
+        return ctrl_->GetTranslatedError();
    }
 
    return DEVICE_OK;

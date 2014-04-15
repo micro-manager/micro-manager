@@ -19,21 +19,12 @@
 //                IN NO EVENT SHALL THE COPYRIGHT OWNER OR
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
-// CVS:           $Id: PI_GCS_2.h,v 1.8, 2011-12-20 09:43:41Z, Steffen Rau$
+// CVS:           $Id: PI_GCS_2.h,v 1.9, 2014-03-31 12:51:24Z, Steffen Rau$
 //
 
 #ifndef _PI_GCS_DLL_H_
 #define _PI_GCS_DLL_H_
 
-#define PI_CNTR_NO_ERROR  0L
-#define PI_CNTR_MOVE_WITHOUT_REF_OR_NO_SERVO 5L
-#define PI_CNTR_POS_OUT_OF_LIMITS  7L
-
-#define ERR_GCS_PI_CNTR_POS_OUT_OF_LIMITS 102
-#define ERR_GCS_PI_CNTR_MOVE_WITHOUT_REF_OR_NO_SERVO 103
-
-extern const char* g_msg_CNTR_POS_OUT_OF_LIMITS;
-extern const char* g_msg_CNTR_MOVE_WITHOUT_REF_OR_NO_SERVO;
 
 #include <string>
 
@@ -51,7 +42,6 @@ extern const char* g_msg_CNTR_MOVE_WITHOUT_REF_OR_NO_SERVO;
 #define FALSE 0
 #endif
 
-size_t ci_find(const std::string& str1, const std::string& str2);
 bool GetValue(const std::string& sMessage, double& dval);
 bool GetValue(const std::string& sMessage, long& lval);
 std::string ExtractValue(const std::string& sMessage);

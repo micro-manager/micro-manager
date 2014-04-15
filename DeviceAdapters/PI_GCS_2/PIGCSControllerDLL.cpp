@@ -19,15 +19,12 @@
 //                IN NO EVENT SHALL THE COPYRIGHT OWNER OR
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
-// CVS:           $Id: PIGCSControllerDLL.cpp,v 1.14, 2012-01-09 15:25:33Z, Steffen Rau$
+// CVS:           $Id: PIGCSControllerDLL.cpp,v 1.17, 2014-03-31 12:51:24Z, Steffen Rau$
 //
 
 #ifndef __APPLE__
 
-#ifdef WIN32
-   #include <windows.h>
-   #define snprintf _snprintf 
-#else
+#ifndef WIN32
     #include <dlfcn.h>
 #endif
 
@@ -43,23 +40,37 @@ const char* PIGCSControllerDLLDevice::PropName_ = "DLL Name";
 const char* PIGCSControllerDLLDevice::PropInterfaceType_ = "Interface Type";
 const char* PIGCSControllerDLLDevice::PropInterfaceParameter_ = "Interface Parameter";
 
-int toupper_classic_locale(int c) { return std::toupper(c, std::locale::classic()); }
+struct ToUpper
+{
+	ToUpper (std::locale const& l) : loc(l) {;}
+	char operator() (char c) const { return std::toupper(c,loc); }
+private:
+	std::locale const loc;
+    ToUpper& operator=(const ToUpper&);
+    ToUpper ();
+};
 
-PIGCSControllerDLLDevice::PIGCSControllerDLLDevice() :
-   dllName_("GCS_DLL.dll"),
-   interfaceType_(""),
-   interfaceParameter_(""),
-   initialized_(false),
-   ctrl_(NULL),
-   bShowInterfaceProperties_(true)
+
+PIGCSControllerDLLDevice::PIGCSControllerDLLDevice()
+    : ctrl_(NULL)
+    , dllName_("GCS_DLL.dll")
+    , interfaceType_("")
+    , interfaceParameter_("")
+    , initialized_(false)
+    , bShowInterfaceProperties_(true)
 {
    InitializeDefaultErrorMessages();
+   
+   SetErrorText(ERR_DLL_PI_DLL_NOT_FOUND, g_msg_DLL_NOT_FOUND);
+   SetErrorText(ERR_DLL_PI_INVALID_INTERFACE_NAME, g_msg_INVALID_INTERFACE_NAME);
+   SetErrorText(ERR_DLL_PI_INVALID_INTERFACE_PARAMETER, g_msg_INVALID_INTERFACE_PARAMETER);
 }
 
 
 PIGCSControllerDLLDevice::~PIGCSControllerDLLDevice()
 {
 	Shutdown();
+    ctrl_ = NULL;
 }
 
 void PIGCSControllerDLLDevice::SetDLL(std::string dll_name)
@@ -249,29 +260,77 @@ int PIGCSControllerDLLDevice::OnInterfaceParameter(MM::PropertyBase* pProp, MM::
 
 int PIGCSControllerDLLDevice::OnJoystick1(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
+    if (NULL == ctrl_)
+    {
+        return DEVICE_ERR;
+    }
 	return ctrl_->OnJoystick(pProp, eAct, 1);
 }
 
 int PIGCSControllerDLLDevice::OnJoystick2(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
+    if (NULL == ctrl_)
+    {
+        return DEVICE_ERR;
+    }
 	return ctrl_->OnJoystick(pProp, eAct, 2);
 }
 
 int PIGCSControllerDLLDevice::OnJoystick3(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
+    if (NULL == ctrl_)
+    {
+        return DEVICE_ERR;
+    }
 	return ctrl_->OnJoystick(pProp, eAct, 3);
 }
 
 int PIGCSControllerDLLDevice::OnJoystick4(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
+    if (NULL == ctrl_)
+    {
+        return DEVICE_ERR;
+    }
 	return ctrl_->OnJoystick(pProp, eAct, 4);
 }
 
-PIGCSControllerDLL::PIGCSControllerDLL(const std::string& label, PIGCSControllerDLLDevice* proxy, MM::Core* logsink):
-PIController(label),
-module_(NULL),
-ID_(-1),
-needResetStages_(false)
+PIGCSControllerDLL::PIGCSControllerDLL(const std::string& label, PIGCSControllerDLLDevice* proxy, MM::Core* logsink)
+    : PIController(label)
+	, ConnectRS232_(NULL)
+	, Connect_(NULL)
+	, IsConnected_(NULL)
+	, CloseConnection_(NULL)
+	, EnumerateUSB_(NULL)
+	, ConnectUSB_(NULL)
+	, GetError_(NULL)
+	, qIDN_(NULL)
+	, qVER_(NULL)
+	, INI_(NULL)
+	, CST_(NULL)
+	, qCST_(NULL)
+	, qFRF_(NULL)
+	, FRF_(NULL)
+	, FPL_(NULL)
+	, FNL_(NULL)
+	, IsReferencing_(NULL)
+	, IsControllerReady_(NULL)
+	, IsMoving_(NULL)
+	, REF_(NULL)
+	, MPL_(NULL)
+	, MNL_(NULL)
+	, qPOS_(NULL)
+	, MOV_(NULL)
+	, STP_(NULL)
+	, SVO_(NULL)
+	, qSVO_(NULL)
+	, JON_(NULL)
+	, qJON_(NULL)
+	, VEL_(NULL)
+	, qVEL_(NULL)
+    , qTPC_(NULL)
+    , ID_(-1)
+    , needResetStages_(false)
+    , module_(NULL)
 {
 	PIController::logsink_ = logsink;
 	PIController::logdevice_= proxy;
@@ -286,77 +345,88 @@ PIGCSControllerDLL::~PIGCSControllerDLL()
 
 int PIGCSControllerDLL::LoadDLL(const std::string& dllName)
 {
-printf("PIGCSControllerDLL::LoadDLL(%s)\n",dllName.c_str());
-	if (ci_find(dllName, "C843_GCS_DLL") != std::string::npos)
-	{
-		dllPrefix_ = "C843_";
-		gcs2_ = false;
-	}
-	else if (ci_find(dllName, "PI_Mercury_GCS") != std::string::npos)
-	{
-printf("found Mercury\n");
-		dllPrefix_ = "Mercury_";
-		gcs2_ = false;
-	}
-	else if (ci_find(dllName, "E7XX_GCS_DLL") != std::string::npos)
-	{
-		dllPrefix_ = "E7XX_";
-		gcs2_ = false;
-		umToDefaultUnit_ = 1.0;
-		needResetStages_ = true;
-      onlyIDSTAGEvalid_ = true;
-	}
-	else if (ci_find(dllName, "E816_DLL") != std::string::npos)
-	{
-		dllPrefix_ = "E816_";
-		umToDefaultUnit_ = 1.0;
-	}
+    if (ci_find(dllName, "C843_GCS_DLL") != std::string::npos)
+    {
+        dllPrefix_ = "C843_";
+        gcs2_ = false;
+    }
+    else if (ci_find(dllName, "PI_Mercury_GCS") != std::string::npos)
+    {
+        dllPrefix_ = "Mercury_";
+        gcs2_ = false;
+    }
+    else if (ci_find(dllName, "E7XX_GCS_DLL") != std::string::npos)
+    {
+        dllPrefix_ = "E7XX_";
+        gcs2_ = false;
+        umToDefaultUnit_ = 1.0;
+        needResetStages_ = true;
+        onlyIDSTAGEvalid_ = true;
+    }
+    else if (ci_find(dllName, "E816_DLL") != std::string::npos)
+    {
+        dllPrefix_ = "E816_";
+        umToDefaultUnit_ = 1.0;
+    }
+    else if (ci_find(dllName, "PI_HydraPollux_GCS2_DLL") != std::string::npos)
+    {
+        dllPrefix_ = "Hydra_";
+    }
+    else if (ci_find(dllName, "C865_GCS_DLL") != std::string::npos)
+    {
+        dllPrefix_ = "C865_";
+        gcs2_ = false;
+    }
+    else if (ci_find(dllName, "C866_GCS_DLL") != std::string::npos)
+    {
+        dllPrefix_ = "C866_";
+        gcs2_ = false;
+    }
 
 #ifdef WIN32
-	module_ = LoadLibrary(dllName.c_str());
+    module_ = LoadLibrary(dllName.c_str());
 #else
-        module_ = dlopen(dllName.c_str(), RTLD_LAZY);
+    module_ = dlopen(dllName.c_str(), RTLD_LAZY);
 #endif
-	if (module_ == NULL)
-{
-printf("load module failed\n");
-		return DEVICE_INVALID_PROPERTY_VALUE;
-}
-	ConnectRS232_ = (FP_ConnectRS232)LoadDLLFunc("ConnectRS232");
-	Connect_ = (FP_Connect)LoadDLLFunc("Connect");
-	IsConnected_ = (FP_IsConnected)LoadDLLFunc("IsConnected");
-	CloseConnection_ = (FP_CloseConnection)LoadDLLFunc("CloseConnection");
-	EnumerateUSB_ = (FP_EnumerateUSB)LoadDLLFunc("EnumerateUSB");
-	ConnectUSB_ = (FP_ConnectUSB)LoadDLLFunc("ConnectUSB");
-	GetError_ = (FP_GetError)LoadDLLFunc("GetError");
-	qIDN_ = (FP_qIDN)LoadDLLFunc("qIDN");
-	qVER_ = (FP_qVER)LoadDLLFunc("qVER");
-	INI_ = (FP_INI)LoadDLLFunc("INI");
-	CST_ = (FP_CST)LoadDLLFunc("CST");
-	qCST_ = (FP_qCST)LoadDLLFunc("qCST");
-	qFRF_ = (FP_qFRF)LoadDLLFunc("qFRF");
-	FRF_ = (FP_FRF)LoadDLLFunc("FRF");
-	FPL_ = (FP_FPL)LoadDLLFunc("FPL");
-	FNL_ = (FP_FNL)LoadDLLFunc("FNL");
-	//IsReferenceOK_ = (FP_IsReferenceOK)LoadDLLFunc("IsReferenceOK");
-	IsReferencing_ = (FP_IsReferencing)LoadDLLFunc("IsReferencing");
-	IsControllerReady_ = (FP_IsControllerReady)LoadDLLFunc("IsControllerReady");
-	IsMoving_ = (FP_IsMoving)LoadDLLFunc("IsMoving");
-	REF_ = (FP_REF)LoadDLLFunc("REF");
-	MPL_ = (FP_MPL)LoadDLLFunc("MPL");
-	MNL_ = (FP_MNL)LoadDLLFunc("MNL");
-	qPOS_ = (FP_qPOS)LoadDLLFunc("qPOS");
-	MOV_ = (FP_MOV)LoadDLLFunc("MOV");
-	STP_ = (FP_STP)LoadDLLFunc("STP");
-	SVO_ = (FP_SVO)LoadDLLFunc("SVO");
-	qSVO_ = (FP_qSVO)LoadDLLFunc("qSVO");
-	JON_ = (FP_JON)LoadDLLFunc("JON");
-	qJON_ = (FP_qJON)LoadDLLFunc("qJON");
-	qVEL_ = (FP_qVEL)LoadDLLFunc("qVEL");
-	VEL_ = (FP_VEL)LoadDLLFunc("VEL");
-	qTPC_ = (FP_qTPC)LoadDLLFunc("qTPC");
+    if (module_ == NULL)
+    {
+        printf("load module failed\n");
+        return ERR_DLL_PI_DLL_NOT_FOUND;
+    }
+    ConnectRS232_ = (FP_ConnectRS232)LoadDLLFunc("ConnectRS232");
+    Connect_ = (FP_Connect)LoadDLLFunc("Connect");
+    IsConnected_ = (FP_IsConnected)LoadDLLFunc("IsConnected");
+    CloseConnection_ = (FP_CloseConnection)LoadDLLFunc("CloseConnection");
+    EnumerateUSB_ = (FP_EnumerateUSB)LoadDLLFunc("EnumerateUSB");
+    ConnectUSB_ = (FP_ConnectUSB)LoadDLLFunc("ConnectUSB");
+    GetError_ = (FP_GetError)LoadDLLFunc("GetError");
+    qIDN_ = (FP_qIDN)LoadDLLFunc("qIDN");
+    qVER_ = (FP_qVER)LoadDLLFunc("qVER");
+    INI_ = (FP_INI)LoadDLLFunc("INI");
+    CST_ = (FP_CST)LoadDLLFunc("CST");
+    qCST_ = (FP_qCST)LoadDLLFunc("qCST");
+    qFRF_ = (FP_qFRF)LoadDLLFunc("qFRF");
+    FRF_ = (FP_FRF)LoadDLLFunc("FRF");
+    FPL_ = (FP_FPL)LoadDLLFunc("FPL");
+    FNL_ = (FP_FNL)LoadDLLFunc("FNL");
+    IsReferencing_ = (FP_IsReferencing)LoadDLLFunc("IsReferencing");
+    IsControllerReady_ = (FP_IsControllerReady)LoadDLLFunc("IsControllerReady");
+    IsMoving_ = (FP_IsMoving)LoadDLLFunc("IsMoving");
+    REF_ = (FP_REF)LoadDLLFunc("REF");
+    MPL_ = (FP_MPL)LoadDLLFunc("MPL");
+    MNL_ = (FP_MNL)LoadDLLFunc("MNL");
+    qPOS_ = (FP_qPOS)LoadDLLFunc("qPOS");
+    MOV_ = (FP_MOV)LoadDLLFunc("MOV");
+    STP_ = (FP_STP)LoadDLLFunc("STP");
+    SVO_ = (FP_SVO)LoadDLLFunc("SVO");
+    qSVO_ = (FP_qSVO)LoadDLLFunc("qSVO");
+    JON_ = (FP_JON)LoadDLLFunc("JON");
+    qJON_ = (FP_qJON)LoadDLLFunc("qJON");
+    qVEL_ = (FP_qVEL)LoadDLLFunc("qVEL");
+    VEL_ = (FP_VEL)LoadDLLFunc("VEL");
+    qTPC_ = (FP_qTPC)LoadDLLFunc("qTPC");
 
-	return DEVICE_OK;
+    return DEVICE_OK;
 }
 
 void* PIGCSControllerDLL::LoadDLLFunc( const char* funcName )
@@ -427,7 +497,7 @@ int PIGCSControllerDLL::ConnectInterface(const std::string &interfaceType, const
 #else
 #endif
 
-	int ret = DEVICE_INVALID_PROPERTY_VALUE;
+	int ret = ERR_DLL_PI_INVALID_INTERFACE_NAME;
 	if (interfaceType == "PCI")
 		ret = ConnectPCI(interfaceParameter);
 	if (interfaceType == "RS-232")
@@ -443,12 +513,11 @@ int PIGCSControllerDLL::ConnectInterface(const std::string &interfaceType, const
 		char szStages[1024];
 		qCST_(ID_, "", szStages, 1023);
 		std::vector<std::string> lines = tokenize(szStages);
-		int nAxes = 0;
+
 		std::string axisNames, stagetypes;
 		std::vector<std::string>::iterator line;
 		for(line = lines.begin(); line != lines.end(); ++line)
 		{
-			nAxes++;
 			stagetypes += "NOSTAGE \n";
 			axisNames += (*line)[0];
 		}
@@ -467,7 +536,7 @@ int PIGCSControllerDLL::ConnectPCI(const std::string &interfaceParameter)
 
 	long board;
 	if (!GetValue(interfaceParameter, board))
-		return DEVICE_INVALID_PROPERTY_VALUE;
+		return ERR_DLL_PI_INVALID_INTERFACE_PARAMETER;
 	ID_ = Connect_((int)board);
 	if (ID_<0)
 		return DEVICE_NOT_CONNECTED;
@@ -481,7 +550,7 @@ int PIGCSControllerDLL::ConnectRS232(const std::string &interfaceParameter)
 
 	size_t pos = interfaceParameter.find(';');
 	if (pos == std::string::npos)
-		return DEVICE_INVALID_PROPERTY_VALUE;
+		return ERR_DLL_PI_INVALID_INTERFACE_PARAMETER;
 	std::string sport = interfaceParameter.substr(0,pos);
 	std::string sbaud = interfaceParameter.substr(pos+1);
 
@@ -516,7 +585,7 @@ int PIGCSControllerDLL::ConnectUSB(const std::string&  interfaceParameter)
 	if (interfaceParameter_.empty())
 	{
 		if (nrDevices != 1)
-			return DEVICE_INVALID_PROPERTY_VALUE;
+			return ERR_DLL_PI_INVALID_INTERFACE_PARAMETER;
 		deviceName = szDevices;
 	}
 	else
@@ -533,11 +602,12 @@ int PIGCSControllerDLL::ConnectUSB(const std::string&  interfaceParameter)
 	return DEVICE_OK;
 }
 
-std::string PIGCSControllerDLL::FindDeviceNameInUSBList(char* szDevices, std::string interfaceParameter)
+std::string PIGCSControllerDLL::FindDeviceNameInUSBList(const char* szDevices, std::string interfaceParameter) const
 {
 	std::string sDevices(szDevices);
-	std::transform(interfaceParameter.begin(), interfaceParameter.end(), interfaceParameter.begin(), toupper_classic_locale);
-	std::transform(sDevices.begin(), sDevices.end(), sDevices.begin(), toupper_classic_locale);
+	static ToUpper up(std::locale::classic());
+	std::transform(interfaceParameter.begin(), interfaceParameter.end(), interfaceParameter.begin(), up);
+	std::transform(sDevices.begin(), sDevices.end(), sDevices.begin(), up);
 
 	std::vector<std::string> lines = tokenize(sDevices);
 	std::vector<std::string>::iterator line;
@@ -584,149 +654,142 @@ bool PIGCSControllerDLL::SVO(const std::string& axis, BOOL svo)
 
 bool PIGCSControllerDLL::FRF(const std::string& axes)
 {
-   if(FRF_ == NULL)
-      return false;
-	return (FRF_(ID_, axes.c_str()) == TRUE);
+    if(FRF_ == NULL)
+        return false;
+    return (FRF_(ID_, axes.c_str()) == TRUE);
 }
 
 bool PIGCSControllerDLL::REF(const std::string& axes)
 {
-   if(REF_ == NULL)
-      return false;
-	return (REF_(ID_, axes.c_str()) == TRUE);
+    if(REF_ == NULL)
+        return false;
+    return (REF_(ID_, axes.c_str()) == TRUE);
 }
 
 bool PIGCSControllerDLL::MNL(const std::string& axes)
 {
-   if(MNL_ == NULL)
-      return false;
-	return (MNL_(ID_, axes.c_str()) == TRUE);
+    if(MNL_ == NULL)
+        return false;
+    return (MNL_(ID_, axes.c_str()) == TRUE);
 }
 
 bool PIGCSControllerDLL::FNL(const std::string& axes)
 {
-   if(FNL_ == NULL)
-      return false;
-	return (FNL_(ID_, axes.c_str()) == TRUE);
+    if(FNL_ == NULL)
+        return false;
+    return (FNL_(ID_, axes.c_str()) == TRUE);
 }
 
 bool PIGCSControllerDLL::FPL(const std::string& axes)
 {
-   if(FPL_ == NULL)
-      return false;
-	return (FPL_(ID_, axes.c_str()) == TRUE);
+    if(FPL_ == NULL)
+        return false;
+    return (FPL_(ID_, axes.c_str()) == TRUE);
 }
 
 bool PIGCSControllerDLL::MPL(const std::string& axes)
 {
-   if(MPL_ == NULL)
-      return false;
-	return (MPL_(ID_, axes.c_str()) == TRUE);
+    if(MPL_ == NULL)
+        return false;
+    return (MPL_(ID_, axes.c_str()) == TRUE);
 }
 
 int PIGCSControllerDLL::GetError()
 {
-	if (GetError_ == NULL)
-		return PI_CNTR_NO_ERROR;
-	return GetError_(ID_);
+    if (GetError_ == NULL)
+        return PI_CNTR_NO_ERROR;
+    return GetError_(ID_);
 }
-
-//bool PIGCSControllerDLL::IsReferenceOK(const std::string& axes, BOOL* bOK)
-//{
-//   if(IsReferenceOK_ == NULL)
-//      return false;
-//	return (IsReferenceOK_(ID_, axes.c_str(), bOK) == TRUE);
-//}
 
 bool PIGCSControllerDLL::IsReferencing(const std::string& axes, BOOL* bReferencing)
 {
-   if(IsReferencing_ == NULL)
-      return false;
-	return (IsReferencing_(ID_, axes.c_str(), bReferencing) == TRUE);
+    if(IsReferencing_ == NULL)
+        return false;
+    return (IsReferencing_(ID_, axes.c_str(), bReferencing) == TRUE);
 }
 
 bool PIGCSControllerDLL::IsControllerReady( BOOL* bReady)
 {
-   if(IsControllerReady_ == NULL)
-      return false;
-	return (IsControllerReady_(ID_, bReady) == TRUE);
+    if(IsControllerReady_ == NULL)
+        return false;
+    return (IsControllerReady_(ID_, bReady) == TRUE);
 }
 
 bool PIGCSControllerDLL::IsMoving(const std::string& axes, BOOL* bIsMoving)
 {
-   if(IsMoving_ == NULL)
-      return false;
-	return (IsMoving_(ID_, axes.c_str(), bIsMoving) == TRUE);
+    if(IsMoving_ == NULL)
+        return false;
+    return (IsMoving_(ID_, axes.c_str(), bIsMoving) == TRUE);
 }
 
 bool PIGCSControllerDLL::MOV(const std::string& axis, const double* target)
 {
-   if(MOV_ == NULL)
-      return false;
-	return (MOV_(ID_, axis.c_str(), target) == TRUE);
+    if(MOV_ == NULL)
+        return false;
+    return (MOV_(ID_, axis.c_str(), target) == TRUE);
 }
 
 bool PIGCSControllerDLL::MOV(const std::string& axis1, const std::string& axis2, const double* target)
 {
-   if(MOV_ == NULL)
-      return false;
-	return (MOV_(ID_, MakeAxesString(axis1, axis2).c_str(), target) == TRUE);
+    if(MOV_ == NULL)
+        return false;
+    return (MOV_(ID_, MakeAxesString(axis1, axis2).c_str(), target) == TRUE);
 }
 
 bool PIGCSControllerDLL::qPOS(const std::string& axis, double* position)
 {
-   if(qPOS_ == NULL)
-      return false;
-	return (qPOS_(ID_, axis.c_str(), position) == TRUE);
+    if(qPOS_ == NULL)
+        return false;
+    return (qPOS_(ID_, axis.c_str(), position) == TRUE);
 }
 
 bool PIGCSControllerDLL::qPOS(const std::string& axis1, const std::string& axis2, double* position)
 {
-   if(qPOS_ == NULL)
-      return false;
-	return (qPOS_(ID_, MakeAxesString(axis1, axis2).c_str(), position) == TRUE);
+    if(qPOS_ == NULL)
+        return false;
+    return (qPOS_(ID_, MakeAxesString(axis1, axis2).c_str(), position) == TRUE);
 }
 
 bool PIGCSControllerDLL::STP()
 {
-   if(STP_ == NULL)
-      return false;
-   return (STP_(ID_) == TRUE);
+    if(STP_ == NULL)
+        return false;
+    return (STP_(ID_) == TRUE);
 }
 
 bool PIGCSControllerDLL::JON(int joystick, int state)
 {
-	if (JON_ == NULL)
-		return false;
-	return (JON_(ID_, &joystick, &state, 1) == TRUE);
+    if (JON_ == NULL)
+        return false;
+    return (JON_(ID_, &joystick, &state, 1) == TRUE);
 }
 
 bool PIGCSControllerDLL::qJON(int joystick, int& state)
 {
-	if (qJON_ == NULL)
-		return false;
-	return (qJON_(ID_, &joystick, &state, 1) == TRUE);
+    if (qJON_ == NULL)
+        return false;
+    return (qJON_(ID_, &joystick, &state, 1) == TRUE);
 }
 
 bool PIGCSControllerDLL::VEL(const std::string& axis, const double* velocity)
 {
-   if(VEL_ == NULL)
-      return false;
-	return (VEL_(ID_, axis.c_str(), velocity) == TRUE);
+    if(VEL_ == NULL)
+        return false;
+    return (VEL_(ID_, axis.c_str(), velocity) == TRUE);
 }
 
 bool PIGCSControllerDLL::qVEL(const std::string& axis, double* velocity)
 {
-   if(qVEL_ == NULL)
-      return false;
-	return (qVEL_(ID_, axis.c_str(), velocity) == TRUE);
+    if(qVEL_ == NULL)
+        return false;
+    return (qVEL_(ID_, axis.c_str(), velocity) == TRUE);
 }
 
-bool PIGCSControllerDLL::qTPC(int* nrOutputChannels)
+bool PIGCSControllerDLL::qTPC(int& nrOutputChannels)
 {
-   if (qTPC_ == NULL)
-      return false;
-	return (qTPC_(ID_, nrOutputChannels) == TRUE);
+    if (qTPC_ == NULL)
+        return false;
+    return (qTPC_(ID_, &nrOutputChannels) == TRUE);
 }
 
 #endif
