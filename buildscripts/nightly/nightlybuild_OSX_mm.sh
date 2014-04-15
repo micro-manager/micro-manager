@@ -2,6 +2,19 @@
 
 set -e
 
+# To incrementally test the build, use the -r (remake) flag. Without it, it is
+# assumed that the source tree is clean.
+usage() { echo "Usage: $0 [-r]" 1>&2; exit 1; }
+
+do_remake=no
+while getopts ":r" o; do
+   case $o in
+      r) do_remake=yes ;;
+      *) usage ;;
+   esac
+done
+
+
 ##
 ## Setup
 ##
@@ -27,8 +40,13 @@ export SDKROOT=$MM_MACOSX_SDKROOT
 ##
 
 cd "$MM_SRCDIR"
+if [ "$do_remake" = yes ]; then
+buildscripts/nextgen-gnubuild/activate.py -r
+autoreconf -v
+else
 buildscripts/nextgen-gnubuild/activate.py -a
 sh autogen.sh
+fi
 
 # Note on OpenCV library flags.
 # Since OpenCV is a CMake project, it does not produce the convenient libtool
