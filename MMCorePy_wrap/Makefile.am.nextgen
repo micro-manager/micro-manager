@@ -52,7 +52,7 @@ _MMCorePy_la_CPPFLAGS = $(BOOST_CPPFLAGS) $(PYTHON_CPPFLAGS) $(NUMPY_CPPFLAGS)
 _MMCorePy_la_LDFLAGS = -module -avoid-version -shrext .so
 _MMCorePy_la_LIBADD = ../MMCore/libMMCore.la
 
-install-exec-local:
+install-exec-hook:
 	$(INSTALL) MMCorePy.py $(DESTDIR)$(pkglibdir)
 
 CLEANFILES = MMCorePy.stamp MMCorePy.py MMCorePy_wrap.h MMCorePy_wrap.cxx
