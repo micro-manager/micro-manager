@@ -7,7 +7,6 @@
 # %nextgen_build_filename = Makefile.am
 # %nextgen_build_replaces = Makefile.am e855b3ea972a6511b685c7421fc3e2fc
 
-pkglibdir = $(DEVICEADAPTERPATH)
 
 AM_CPPFLAGS = $(OPENCV_CPPFLAGS)
 AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS) $(OPENCV_CFLAGS)

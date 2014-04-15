@@ -1,0 +1,10 @@
+# This file is part of a progressive rewrite of the GNU (autotools) build
+# scripts. Please do not modify this file. Instead, please modify the legacy
+# build files (without the .nextgen suffix). Changes to legacy files will be
+# automatically detected and manually applied to the next-gen files.
+# - Mark Tsuchida
+#
+# %nextgen_build_filename = Makefile.am
+# %nextgen_build_replaces = Makefile.am 2e8621baf31f53fa0b89715d43dbb74b
+
+EXTRA_DIST = ParallelPort.vcproj license.txt ParallelPort.h ParallelPort.cpp

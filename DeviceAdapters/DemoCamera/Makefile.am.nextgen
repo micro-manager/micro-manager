@@ -1,0 +1,16 @@
+# This file is part of a progressive rewrite of the GNU (autotools) build
+# scripts. Please do not modify this file. Instead, please modify the legacy
+# build files (without the .nextgen suffix). Changes to legacy files will be
+# automatically detected and manually applied to the next-gen files.
+# - Mark Tsuchida
+#
+# %nextgen_build_filename = Makefile.am
+# %nextgen_build_replaces = Makefile.am efc1ddd15730ec94051ef3cf229e2d90
+
+AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS) -fpermissive $(BOOST_CPPFLAGS)
+pkglib_LTLIBRARIES = libmmgr_dal_DemoCamera.la
+libmmgr_dal_DemoCamera_la_SOURCES = DemoCamera.cpp DemoCamera.h ../../MMDevice/MMDevice.h
+libmmgr_dal_DemoCamera_la_LDFLAGS = $(MMDEVAPI_LDFLAGS) 
+libmmgr_dal_DemoCamera_la_LIBADD = $(MMDEVAPI_LIBADD)
+
+EXTRA_DIST = DemoCamera.vcproj license.txt

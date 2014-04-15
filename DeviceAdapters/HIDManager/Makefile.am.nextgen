@@ -7,7 +7,6 @@
 # %nextgen_build_filename = Makefile.am
 # %nextgen_build_replaces = Makefile.am 790b2d0f6e58ca3a4f9ddf6d255c20c2
 
-pkglibdir = $(DEVICEADAPTERPATH)
 
 AM_CPPFLAGS = $(HIDAPI_CPPFLAGS)
 AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS) $(HIDAPI_CFLAGS)

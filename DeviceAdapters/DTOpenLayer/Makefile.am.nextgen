@@ -1,0 +1,10 @@
+# This file is part of a progressive rewrite of the GNU (autotools) build
+# scripts. Please do not modify this file. Instead, please modify the legacy
+# build files (without the .nextgen suffix). Changes to legacy files will be
+# automatically detected and manually applied to the next-gen files.
+# - Mark Tsuchida
+#
+# %nextgen_build_filename = Makefile.am
+# %nextgen_build_replaces = Makefile.am c7e5d4d3ba5373d438c34cbba0c80e89
+
+EXTRA_DIST = DTOpenLayer.vcproj license.txt DTOpenLayer.cpp DTOpenLayer.h
