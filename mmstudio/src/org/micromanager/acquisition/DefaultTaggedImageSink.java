@@ -4,7 +4,6 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 import mmcorej.TaggedImage;
 import org.micromanager.api.ImageCache;
-import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ReportingUtils;
 
 /**
@@ -18,7 +17,7 @@ public class DefaultTaggedImageSink  {
    private ImageCache imageCache_ = null;
 
    public DefaultTaggedImageSink(BlockingQueue<TaggedImage> imageProducingQueue,
-                  ImageCache imageCache) throws MMScriptException {
+                  ImageCache imageCache) {
       imageProducingQueue_ = imageProducingQueue;
          imageCache_ = imageCache;
    }
