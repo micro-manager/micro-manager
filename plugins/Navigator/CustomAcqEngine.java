@@ -2,9 +2,7 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package MMCustomization;
 
-import com.imaging100x.twophoton.SettingsDialog;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -42,16 +40,15 @@ public class CustomAcqEngine {
       core_ = core;
    }
    
+   public DisplayPlus getCurentExploreDisplay() {
+      return currentExploreDisplay_;
+   }
+   
    public void newExploreWindow() {
       new Thread(new Runnable() {
          @Override
          public void run() {
-            try {
-               createExploreAcquisition();
-            } catch (MMScriptException ex) {
-               ex.printStackTrace();
-               ReportingUtils.showError("couldn't run acquisition");
-            }
+            createExploreAcquisition();
          }
       }).start();
    }
@@ -72,7 +69,7 @@ public class CustomAcqEngine {
    
    
    
-   public void createExploreAcquisition() throws MMScriptException {
+   private void createExploreAcquisition()  {
       // Start up the acquisition engine
       engineOutputQueue_ = new LinkedBlockingQueue<TaggedImage>();
 
@@ -199,8 +196,8 @@ public class CustomAcqEngine {
          summary.put("InitialPositionList", pList);
          
          //write pixel overlap into metadata
-         summary.put("GridPixelOverlapX", SettingsDialog.getXOverlap());
-         summary.put("GridPixelOverlapY", SettingsDialog.getYOverlap());
+//         summary.put("GridPixelOverlapX", SettingsDialog.getXOverlap());
+//         summary.put("GridPixelOverlapY", SettingsDialog.getYOverlap());
          return summary;
       } catch (Exception ex) {
          ReportingUtils.showError("couldnt make summary metadata");

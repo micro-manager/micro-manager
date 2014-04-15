@@ -1,10 +1,6 @@
 /*
  * Master stitched window to display real time stitched images, allow navigating of XY more easily
  */
-package MMCustomization;
-
-import com.imaging100x.twophoton.SettingsDialog;
-import com.imaging100x.twophoton.Util;
 import ij.CompositeImage;
 import ij.IJ;
 import ij.gui.*;
@@ -665,6 +661,17 @@ public class DisplayPlus implements ImageCacheListener {
       vad_.updateAndDraw(true);
    }
 
+   public void newGridButtonAction(boolean selected) {
+      if (selected) {
+         newGridMode_ = true;
+         makeGridOverlay(vad_.getImagePlus().getWidth() / 2, vad_.getImagePlus().getHeight() / 2);
+      } else {
+         newGridMode_ = false;
+         vad_.getImagePlus().setOverlay(null);
+         canvas_.repaint();
+      }
+   }
+
    class Controls extends DisplayControls {
 
       private JButton pauseButton_, abortButton_, createGridButton_;
@@ -704,18 +711,10 @@ public class DisplayPlus implements ImageCacheListener {
          nextFrameTimer_.start();
       }
 
-      private void zoomButtonAction() {
-         if (zoomButton_.isSelected()) {
-            clearSelectedButtons();
-            zoomAreaSelectMode_ = true;
-         } else {
-            zoomOut();
-         }
-      }
+
 
       private void gotoButtonAction() {
          if (gotoButton_.isSelected()) {
-            clearSelectedButtons();
             gotoButton_.setSelected(true);
             gotoMode_ = true;
             canvas_.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR), 0);
@@ -725,28 +724,8 @@ public class DisplayPlus implements ImageCacheListener {
          }
       }
 
-      private void newGridButtonAction() {
-         if (newGridButton_.isSelected()) {
-            clearSelectedButtons();
-            newGridMode_ = true;
-            newGridButton_.setSelected(true);
-            makeGridOverlay(vad_.getImagePlus().getWidth() / 2, vad_.getImagePlus().getHeight() / 2);
-            newGridButton_.setText("Cancel");
-         } else {
-            newGridMode_ = false;
-            vad_.getImagePlus().setOverlay(null);
-            canvas_.repaint();
-            newGridButton_.setText("New grid");
-         }
-         gridLabel_.setEnabled(newGridMode_);
-         byLabel_.setEnabled(newGridMode_);
-         gridXSpinner_.setEnabled(newGridMode_);
-         gridYSpinner_.setEnabled(newGridMode_);
-         createGridButton_.setEnabled(newGridMode_);
-      }
 
-      private void depthListOffsetButtonAction() {
-      }
+
 
       public void acquiringImagesUpdate(boolean state) {
          abortButton_.setEnabled(state);
@@ -830,15 +809,7 @@ public class DisplayPlus implements ImageCacheListener {
          updateLabels(tags);
       }
 
-      private void clearSelectedButtons() {
-         newGridButton_.setSelected(false);
-         newGridButton_.getActionListeners()[0].actionPerformed(null);
-         dlOffsetsButton_.setSelected(false);
-         dlOffsetsButton_.getActionListeners()[0].actionPerformed(null);
-         gotoButton_.setSelected(false);
-         gotoButton_.getActionListeners()[0].actionPerformed(null);
-         IJ.setTool(Toolbar.SPARE2);
-      }
+
 
       private void initComponents() {
          setPreferredSize(new java.awt.Dimension(700, 110));
@@ -893,7 +864,6 @@ public class DisplayPlus implements ImageCacheListener {
 
             @Override
             public void actionPerformed(ActionEvent e) {
-               newGridButtonAction();
             }
          });
 
@@ -922,7 +892,6 @@ public class DisplayPlus implements ImageCacheListener {
             @Override
             public void actionPerformed(ActionEvent e) {
                if (dlOffsetsButton_.isSelected()) {
-                  clearSelectedButtons();
                   dlOffsetsButton_.setSelected(true);
                   dlOffsetsButton_.setText("Select XY position");
                } else {
@@ -1049,7 +1018,6 @@ public class DisplayPlus implements ImageCacheListener {
 
             @Override
             public void actionPerformed(ActionEvent ae) {
-               zoomButtonAction();
             }
          });
 

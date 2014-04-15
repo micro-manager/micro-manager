@@ -2,8 +2,6 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package gui;
-
 import org.micromanager.api.MMPlugin;
 import org.micromanager.api.ScriptInterface;
 
@@ -13,6 +11,14 @@ import org.micromanager.api.ScriptInterface;
  */
 public class Navigator implements MMPlugin{
 
+   private static final String VERSION = "1.0";
+   
+   public static final String menuName = "Navigator";
+   public static final String tooltipDescription = "Navigator plugin";
+
+   
+   
+   
    @Override
    public void dispose() {
    }
@@ -28,22 +34,22 @@ public class Navigator implements MMPlugin{
 
    @Override
    public String getDescription() {
-      throw new UnsupportedOperationException("Not supported yet.");
+      return "test description";
    }
 
    @Override
    public String getInfo() {
-      throw new UnsupportedOperationException("Not supported yet.");
+      return "test info";
    }
 
    @Override
    public String getVersion() {
-      throw new UnsupportedOperationException("Not supported yet.");
+      return VERSION;
    }
 
    @Override
    public String getCopyright() {
-      throw new UnsupportedOperationException("Not supported yet.");
+      return "Henry Pinkard UCSF 2014";
    }
    
 }

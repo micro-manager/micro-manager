@@ -2,10 +2,6 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package MMCustomization;
-
-import com.imaging100x.twophoton.SettingsDialog;
-import com.imaging100x.twophoton.Util;
 import java.awt.Point;
 import java.io.File;
 import java.io.IOException;
@@ -48,11 +44,11 @@ public class DynamicStitchingImageStorage implements TaggedImageStorage {
    private int tileWidth_, tileHeight_, displayImageWidth_, displayImageHeight_;
    private TreeSet<String> imageKeys_;
    private JSONArray positionList_;
-   private int xOverlap_, yOverlap_, numRows_, numCols_;
+   private int xOverlap_ =0 , yOverlap_ = 0, numRows_, numCols_;
 
    public DynamicStitchingImageStorage(JSONObject summaryMetadata) {
-      xOverlap_ = SettingsDialog.getXOverlap();
-      yOverlap_ = SettingsDialog.getYOverlap();
+//      xOverlap_ = SettingsDialog.getXOverlap();
+//      yOverlap_ = SettingsDialog.getYOverlap();
       imageKeys_ = new TreeSet<String>();
       
       try {
