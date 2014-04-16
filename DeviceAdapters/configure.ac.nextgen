@@ -5,7 +5,7 @@
 # - Mark Tsuchida
 #
 # %nextgen_build_filename = configure.ac
-# %nextgen_build_replaces = configure.in 6a5c8ae459a90385c40d913c3ec21b0e
+# %nextgen_build_replaces = configure.in 7eff24cbecd45d4f346406dbfe8180db
 # %nextgen_build_replaces = MMDEVAPI.rules d7c8f39a3d64d6155ed51cd3a754fec3
 
 AC_PREREQ([2.64])
@@ -342,7 +342,7 @@ AC_CHECK_FUNCS([memset])
 
 
 # Please keep the list of device adapter directories in ASCII-lexical order,
-# with an indent of 3 spaces (no tabs)!
+# with an indent of 3 spaces (no tabs)! (Just pass through sort(1).)
 m4_define([device_adapter_dirs], [m4_strip([
    AAAOTF
    AOTF
@@ -356,6 +356,7 @@ m4_define([device_adapter_dirs], [m4_strip([
    Aquinas
    Arduino
    CARVII
+   CONEX
    CSUW1
    Cobolt
    CoherentCube

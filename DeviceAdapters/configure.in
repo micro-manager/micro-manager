@@ -404,6 +404,7 @@ AC_CONFIG_FILES(
 	[CARVII/Makefile:CARVII/Makefile.in:MMDEVAPI.rules]
 	[Cobolt/Makefile:Cobolt/Makefile.in:MMDEVAPI.rules]
 	[CoherentCube/Makefile:CoherentCube/Makefile.in:MMDEVAPI.rules]
+	[CONEX/Makefile:CONEX/Makefile.in:MMDEVAPI.rules]
 	[Conix/Makefile:Conix/Makefile.in:MMDEVAPI.rules]
 	[Corvus/Makefile:Corvus/Makefile.in:MMDEVAPI.rules]
 	[CSUW1/Makefile:CSUW1/Makefile.in:MMDEVAPI.rules]
