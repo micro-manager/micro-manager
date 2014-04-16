@@ -14,7 +14,8 @@ AC_CANONICAL_HOST
 AM_INIT_AUTOMAKE
 LT_INIT([disable-static])
 
-m4_include([../configure.common])
+AC_PROG_CXX([clang++ llvm-g++ g++ c++])
+AC_PROG_CC([clang llvm-gcc gcc cc])
 
 AX_BOOST_BASE
 AX_BOOST_DATE_TIME

@@ -16,7 +16,8 @@ AC_CANONICAL_HOST
 AM_INIT_AUTOMAKE
 LT_INIT([disable-static])
 
-m4_include([../configure.common])
+AC_PROG_CXX([clang++ llvm-g++ g++ c++])
+AC_PROG_CC([clang llvm-gcc gcc cc])
 
 # TODO: Following should decide whether adapters depending on BOOST get build
 AX_BOOST_BASE([1.40.0])

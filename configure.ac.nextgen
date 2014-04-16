@@ -6,6 +6,7 @@
 #
 # %nextgen_build_filename = configure.ac
 # %nextgen_build_replaces = configure.in 7bfca1ee4c30fc410ff1d5e5e6062190
+# %nextgen_build_replaces = configure.common 077a489eb345d835812214d086346f15
 
 AC_PREREQ([2.64])
 AC_INIT([Micro-Manager], [1.4], [info@micro-manager.org])
@@ -16,7 +17,8 @@ AM_INIT_AUTOMAKE
 LT_INIT([disable-static])
 AC_PROG_MKDIR_P
 
-m4_include([configure.common])
+AC_PROG_CXX([clang++ llvm-g++ g++ c++])
+AC_PROG_CC([clang llvm-gcc gcc cc])
 
 
 # TODO Add a --with-java, and proper autodetection of Java; use result to
