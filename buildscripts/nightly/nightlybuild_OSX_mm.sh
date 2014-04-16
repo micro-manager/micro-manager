@@ -12,7 +12,7 @@ usage() {
 
 do_remake=no
 use_release_version=no
-while getopts ":r" o; do
+while getopts ":rRv:" o; do
    case $o in
       r) do_remake=yes ;;
       R) use_release_version=yes ;;
