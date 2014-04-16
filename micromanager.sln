@@ -320,6 +320,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "IIDC", "DeviceAdapters\IIDC
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PICAM", "DeviceAdapters\PICAM\PICAM.vcxproj", "{DC09C991-D279-4A37-9332-5F7767621D5C}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CONEX", "DeviceAdapters\CONEX\CONEX.vcxproj", "{9953A884-2927-4E91-B414-FC773102FE6D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -1575,6 +1577,14 @@ Global
 		{DC09C991-D279-4A37-9332-5F7767621D5C}.Release|Win32.ActiveCfg = Release|x64
 		{DC09C991-D279-4A37-9332-5F7767621D5C}.Release|x64.ActiveCfg = Release|x64
 		{DC09C991-D279-4A37-9332-5F7767621D5C}.Release|x64.Build.0 = Release|x64
+		{9953A884-2927-4E91-B414-FC773102FE6D}.Debug|Win32.ActiveCfg = Debug|Win32
+		{9953A884-2927-4E91-B414-FC773102FE6D}.Debug|Win32.Build.0 = Debug|Win32
+		{9953A884-2927-4E91-B414-FC773102FE6D}.Debug|x64.ActiveCfg = Debug|x64
+		{9953A884-2927-4E91-B414-FC773102FE6D}.Debug|x64.Build.0 = Debug|x64
+		{9953A884-2927-4E91-B414-FC773102FE6D}.Release|Win32.ActiveCfg = Release|Win32
+		{9953A884-2927-4E91-B414-FC773102FE6D}.Release|Win32.Build.0 = Release|Win32
+		{9953A884-2927-4E91-B414-FC773102FE6D}.Release|x64.ActiveCfg = Release|x64
+		{9953A884-2927-4E91-B414-FC773102FE6D}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
