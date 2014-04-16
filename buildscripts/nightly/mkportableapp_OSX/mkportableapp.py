@@ -62,7 +62,7 @@ def is_macho_file(file):
    if (b"Mach-O dynamically linked shared library" in output or
        b"Mach-O 64-bit dynamically linked shared library" in output):
       return True
-   if b"Mach-O bundle" in output or "Mach-O 64-bit bundle" in output:
+   if b"Mach-O bundle" in output or b"Mach-O 64-bit bundle" in output:
       return True
    return False
 

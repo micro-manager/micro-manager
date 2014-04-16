@@ -2,14 +2,21 @@
 
 set -e
 
-# To incrementally test the build, use the -r (remake) flag. Without it, it is
-# assumed that the source tree is clean.
-usage() { echo "Usage: $0 [-r]" 1>&2; exit 1; }
+usage() {
+   echo "Usage: $0 [-r] [-R | -v VERSION]" 1>&2
+   echo "   -r         -- incremental build (for testing only)" 1>&2
+   echo "   -R         -- use release version string (no date)" 1>&2
+   echo "   -v VERSION -- set version string" 1>&2
+   exit 1
+}
 
 do_remake=no
+use_release_version=no
 while getopts ":r" o; do
    case $o in
       r) do_remake=yes ;;
+      R) use_release_version=yes ;;
+      v) MM_VERSION="$OPTARG" ;;
       *) usage ;;
    esac
 done
@@ -39,7 +46,14 @@ export SDKROOT=$MM_MACOSX_SDKROOT
 ## Build
 ##
 
-cd "$MM_SRCDIR"
+cd $MM_SRCDIR
+
+if [ -z "$MM_VERSION" ]; then
+   MM_VERSION="$(cat version.txt)"
+   [ "$use_release_version" = yes ] || MM_VERSION="$MM_VERSION-$(date +%Y%m%d)"
+fi
+sed -e "s/@VERSION_STRING@/$MM_VERSION/" buildscripts/MMVersion.java.in > mmstudio/src/org/micromanager/MMVersion.java || exit
+
 if [ "$do_remake" = yes ]; then
 buildscripts/nextgen-gnubuild/activate.py -r
 autoreconf -v
@@ -64,15 +78,12 @@ fi
 # It looks like both libusb-1.0 and libusb-compat fail to include IOKit and
 # CoreFoundation in their respective .la files.
 
-# TODO Add ImageJ
-# TODO Proper stage directory (stage/Release/OSX)
 # TODO Python: use Python.org version
 eval ./configure \
    --prefix=$MM_BUILDDIR/it-is-a-bug-if-files-go-in-here \
    --disable-hardcoded-mmcorej-library-path \
    --with-boost=$MM_DEPS_PREFIX \
    --with-zlib=$MM_MACOSX_SDKROOT/usr \
-   --with-ltdl=$MM_DEPS_PREFIX \
    --with-libdc1394 \
    --with-libusb-0-1 \
    --with-hidapi \
@@ -102,7 +113,6 @@ do
 done
 
 
-
 ##
 ## Stage application
 ##
@@ -110,6 +120,11 @@ done
 MM_JARDIR=$MM_STAGEDIR/plugins/Micro-Manager
 make install pkglibdir=$MM_STAGEDIR pkgdatadir=$MM_STAGEDIR jardir=$MM_JARDIR
 rm -f $MM_STAGEDIR/*.la
+
+
+# Stage other files
+cp -R $MM_SRCDIR/bindist/any-platform/* $MM_STAGEDIR/
+cp -R $MM_SRCDIR/bindist/MacOSX/* $MM_STAGEDIR/
 
 
 # Stage the libgphoto2 dylibs.
@@ -130,16 +145,23 @@ buildscripts/nightly/mkportableapp_OSX/mkportableapp.py \
 
 # Stage third-party JARs.
 cp $MM_SRCDIR/../3rdpartypublic/classext/*.jar $MM_JARDIR
+mv $MM_JARDIR/ij.jar $MM_STAGEDIR
+
+# Ensure no SVN data gets into the installer (e.g. when copying from bindist/)
+find $MM_STAGEDIR -name .svn -exec rm -rf {} \;
 
 
-echo "Finished building Micro-Manager"
+##
+## Create disk image
+##
 
+cd $MM_BUILDDIR
+rm -f Micro-Manager.dmg Micro-Manager.sparseimage
 
-# TODO Put this in an appropriate place for testing; add tests for
-# non-device-adapter binaries (scan all Mach-O files)
-#for arch in i386 x86_64; do
-#   echo "Check $arch device adapters for suspicious undefined symbols..."
-#   for file in $MM_STAGEDIR/lib/micro-manager/libmmgr_dal_*; do
-#      nm -muA -arch $arch $file | grep 'dynamically looked up' | c++filt
-#   done
-#done
+hdiutil convert $MM_SRCDIR/MacInstaller/Micro-Manager1.4.dmg -format UDSP -o Micro-Manager.sparseimage
+mkdir -p mm-mnt
+hdiutil attach Micro-Manager.sparseimage -mountpoint mm-mnt
+cp -R $MM_STAGEDIR/* mm-mnt/Micro-Manager1.4
+hdiutil detach mm-mnt
+rmdir mm-mnt
+hdiutil convert Micro-Manager.sparseimage -format UDBZ -o Micro-Manager$MM_VERSION.dmg
