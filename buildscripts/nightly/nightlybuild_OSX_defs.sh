@@ -4,6 +4,7 @@
 
 MM_BUILDDIR=`pwd`
 MM_DEPS_PREFIX="$MM_BUILDDIR/dependencies"
+MM_STAGEDIR="$MM_BUILDDIR/stage"
 
 # The correct minimum Mac OS X version is critical when building
 # backward-compatible binaries. Omitting this will produce binaries that will
