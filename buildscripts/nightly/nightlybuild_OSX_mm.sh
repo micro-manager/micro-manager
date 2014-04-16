@@ -5,6 +5,7 @@ set -e
 usage() {
    echo "Usage: $0 [-r] [-R | -v VERSION]" 1>&2
    echo "   -r         -- incremental build (for testing only)" 1>&2
+   echo "   -D PATH    -- use dependencies at prefix PATH" 1>&2
    echo "   -R         -- use release version string (no date)" 1>&2
    echo "   -v VERSION -- set version string" 1>&2
    exit 1
@@ -12,9 +13,10 @@ usage() {
 
 do_remake=no
 use_release_version=no
-while getopts ":rRv:" o; do
+while getopts ":rD:Rv:" o; do
    case $o in
       r) do_remake=yes ;;
+      D) MM_DEPS_PREFIX="$OPTARG" ;;
       R) use_release_version=yes ;;
       v) MM_VERSION="$OPTARG" ;;
       *) usage ;;

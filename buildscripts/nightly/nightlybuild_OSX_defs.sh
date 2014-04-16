@@ -3,7 +3,7 @@
 # Common definitions for Micro-Manager OS X binary package build
 
 MM_BUILDDIR=`pwd`
-MM_DEPS_PREFIX="$MM_BUILDDIR/dependencies"
+[ test -z "$MM_DEPS_PREFIX" ] && MM_DEPS_PREFIX="$MM_BUILDDIR/dependencies"
 MM_STAGEDIR="$MM_BUILDDIR/stage"
 
 # The correct minimum Mac OS X version is critical when building
