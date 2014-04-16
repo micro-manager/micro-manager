@@ -10,10 +10,3 @@
 # Check for programs.
 AC_PROG_CXX([clang++ llvm-g++ g++ c++])
 AC_PROG_CC([clang llvm-gcc gcc cc])
-
-case $host in
-   *-*-linux*)
-   LPTHREAD="-lpthread"
-   ;;
-esac
-AC_SUBST(LPTHREAD)
