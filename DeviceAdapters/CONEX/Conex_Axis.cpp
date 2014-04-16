@@ -9,7 +9,8 @@
 //                Z Stage
 //
 // AUTHORS:       Jean_Pierre Gaillet JPG Micro-Services
-// COPYRIGHT:     JPG Micro-Services Newport 2013// LICENSE:       This library is free software; you can redistribute it and/or
+// COPYRIGHT:     JPG Micro-Services Newport 2013
+// LICENSE:       This library is free software; you can redistribute it and/or
 //                modify it under the terms of the GNU Lesser General Public
 //                License as published by the Free Software Foundation.
 //                
