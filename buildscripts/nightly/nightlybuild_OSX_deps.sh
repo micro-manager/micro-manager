@@ -80,7 +80,7 @@ if [ "$do_download" = yes ]; then
 fi
    cat >sha1sums <<EOF
 cef9a0cc7084b1d639e06cd3bc34e4251524c840  boost_1_55_0.tar.bz2
-9ab8e6c041b4ecc291b2dd1a3c93e9b342d5e0e4  6bb71fdd.patch
+8dfaf4d123f1161c83fff91d4ef70b8f95a4ef94  6bb71fdd.patch
 f206e7261d00503788ae8ec3a0635ced8a816293  e4bde20f.patch
 5f7bbf42a4d6e6b88d5e7666958c80f8455ee915  libusb-1.0.18.tar.bz2
 062319276d913c753a4b1341036e6a2e42abccc9  libusb-compat-0.1.5.tar.bz2
