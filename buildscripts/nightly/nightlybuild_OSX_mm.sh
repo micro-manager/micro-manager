@@ -150,7 +150,7 @@ cp $MM_SRCDIR/../3rdpartypublic/classext/*.jar $MM_JARDIR
 mv $MM_JARDIR/ij.jar $MM_STAGEDIR
 
 # Ensure no SVN data gets into the installer (e.g. when copying from bindist/)
-find $MM_STAGEDIR -name .svn -exec rm -rf {} \;
+find $MM_STAGEDIR -name .svn -prune -exec rm -rf {} +
 
 
 ##
