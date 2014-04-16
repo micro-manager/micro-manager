@@ -28,18 +28,14 @@
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.  
 //
 
-#ifdef WIN32
-//   #include <windows.h>
-   #define snprintf _snprintf 
+#ifdef _MSC_VER
 #pragma warning(disable: 4355)
 #endif
 
 #include "Conex_Axis.h"
 #include <string>
-//#include <math.h>
 #include "../../MMDevice/ModuleInterface.h"
 #include <sstream>
-#include <winuser.h>
 
 const char* g_X_AxisDeviceName  = "XAxis";
 const char* g_Y_AxisDeviceName  = "YAxis";
