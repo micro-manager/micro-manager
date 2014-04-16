@@ -122,7 +122,7 @@ def deactivate():
 
 
 def iterate_nextgen_files():
-    for root, dirs, files in os.walk("."):
+    for root, dirs, files in os.walk(".", followlinks=True):
         for name in files:
             if name.endswith(".nextgen"):
                 yield os.path.join(root, name)
