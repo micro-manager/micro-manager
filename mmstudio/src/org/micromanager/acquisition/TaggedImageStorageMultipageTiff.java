@@ -486,12 +486,19 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
          if (finished_) {
             return;
          }
-         //fill in missing tiffdata tags for OME
-         for (int p = 0; p <= lastAcquiredPosition_; p++) {
-            //set sizeT in case of aborted acq
-            omeMetadata_.setNumFrames(p, currentFrame_ + 1);
-            omeMetadata_.fillInMissingTiffDatas(lastAcquiredFrame(), p);
+         try {
+            //fill in missing tiffdata tags for OME
+            for (int p = 0; p <= lastAcquiredPosition_; p++) {
+               //set sizeT in case of aborted acq
+               omeMetadata_.setNumFrames(p, currentFrame_ + 1);
+               omeMetadata_.fillInMissingTiffDatas(lastAcquiredFrame(), p);
+            }
+         } catch (Exception e) {
+            //don't want errors in this code to trip up correct file finishing
+            e.printStackTrace();
+            ReportingUtils.logError("Couldn't fill in missing frames in OME");
          }
+         
 
          
          try {
@@ -501,8 +508,12 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
          } catch (JSONException ex) {
             ReportingUtils.logError("Problem finishing metadata.txt");
          }
-         if (omeXML_ == null) {
-            omeXML_ = omeMetadata_.toString();
+         try {
+            if (omeXML_ == null) {
+               omeXML_ = omeMetadata_.toString();
+            }
+         } catch (Exception e) {
+            omeXML_ = " ";
          }
          tiffWriters_.getLast().finish();
          for (MultipageTiffWriter w : tiffWriters_) {
