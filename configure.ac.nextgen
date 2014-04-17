@@ -54,131 +54,25 @@ AM_CONDITIONAL([BUILD_JAVA_APP], [test "x$enable_java_app" != xno])
 # TODO Use proper autodetection, and use the results to determine wheter to
 # build the Java app.
 if test "x$enable_java_app" != xno; then
+   # TODO This path should be configurable. And we should have an automated way
+   # to fetch dependencies, but that is a future project.
+   CLASSEXT="$srcdir/../3rdpartypublic/classext"
 
-   #----------------------------------------------------------------
-   # Set the CLASSEXT location
-   #----------------------------------------------------------------
-   CLASSEXT=$PWD"/../3rdpartypublic/classext"
-   echo "CLASSEXT="$CLASSEXT
+   # For now, just use hard-coded locations for dependency JARs. Ideally, we
+   # would just use a user-provided classpath and check for classes, not JARs.
+   # (In addition to that, there should be a way to fetch dependencies using
+   # Ivy.)
 
-   #----------------------------------------------------------------
-   # Find ij.jar in directory
-   #----------------------------------------------------------------
-   AC_MSG_CHECKING(for ij.jar)
-   IJJARDIR="$CLASSEXT/ij.jar"
-   echo "IJJARDDIR="$IJJARDIR
-   if test -r "$IJJARDIR" ; then
-      IJJARPATH="$IJJARDIR"
-      AC_MSG_RESULT($IJJARPATH)
-   fi
-
-   if test -z "$IJJARPATH"; then
-     AC_MSG_ERROR([not found])
-   fi
-
-   #----------------------------------------------------------------
-   # Find beanshell.jar in ImageJ plugins directory
-   #----------------------------------------------------------------
-   AC_MSG_CHECKING(for beanshell jar file in ImageJ plugins directory)
-   if test -r "$CLASSEXT/bsh-2.0b4.jar" ; then
-      BSHJARPATH="$CLASSEXT/bsh-2.0b4.jar"
-      AC_MSG_RESULT($BSHJARPATH)
-   fi
-   if test -r "/usr/share/java/bsh.jar" ; then
-      BSHJARPATH="/usr/share/java/bsh.jar"
-      AC_MSG_RESULT($BSHJARPATH)
-   fi
-   if test "$BSHJARPATH" = "" ; then
-      AC_MSG_ERROR([not found])
-   fi
-
-   #----------------------------------------------------------------
-   # Find swingx.jar in ImageJ plugins directory
-   #----------------------------------------------------------------
-   AC_MSG_CHECKING(for swingx jar file in ImageJ plugins directory)
-   if test -r "$CLASSEXT/swingx-0.9.5.jar" ; then
-      SWINGXJARPATH="$CLASSEXT/swingx-0.9.5.jar"
-      AC_MSG_RESULT($SWINGXJARPATH)
-   fi
-   if test -r "/usr/share/java/swingx.jar" ; then
-      SWINGXJARPATH="/usr/share/java/swingx.jar"
-      AC_MSG_RESULT($SWINGXJARPATH)
-   fi
-   if test "$SWINGXJARPATH" = "" ; then
-      AC_MSG_ERROR([not found])
-   fi
-   
-   #----------------------------------------------------------------
-   # Find commons-math-2.0.jar in ImageJ plugins directory
-   #----------------------------------------------------------------
-
-   AC_MSG_CHECKING(for apache commons math jar file)
-   if test -r "$CLASSEXT/commons-math-2.0.jar" ; then
-      COMMONSMATHJARPATH="$CLASSEXT/plugins/commons-math-2.0.jar"
-      AC_MSG_RESULT($COMMONSMATHJARPATH)
-   fi
-   if test -r "/usr/share/java/commons-math-2.0.jar" ; then
-      COMMONSMATHJARPATH="/usr/share/java/commons-math-2.0.jar"
-      AC_MSG_RESULT($COMMONSMATHJARPATH)
-   fi
-   if test -r $CLASSEXT"/commons-math-2.0.jar" ; then
-      COMMONSMATHJARPATH=$CLASSEXT"/commons-math-2.0.jar"
-      AC_MSG_RESULT($COMMONSMATHJARPATH)
-   fi
-   if test "$COMMONSMATHJARPATH" = "" ; then
-      AC_MSG_ERROR([not found])
-   fi
-
-   #----------------------------------------------------------------
-   # Find swing-layout-1.0.4.jar in ImageJ plugins directory
-   #----------------------------------------------------------------
-   AC_MSG_CHECKING(for swing-layout jar file)
-   if test -r "$CLASSEXT/swing-layout-1.0.4.jar" ; then
-      SWINGLAYOUTJARPATH="$CLASSEXT/swing-layout-1.0.4.jar"
-      AC_MSG_RESULT($SWINGLAYOUTJARPATH)
-   fi
-   if test -r "/usr/share/java/swing-layout-1.0.4.jar" ; then
-      SWINGLAYOUTJARPATH="/usr/share/java/swing-layout-1.0.4.jar"
-      AC_MSG_RESULT($SWINGLAYOUTJARPATH)
-   fi
-   if test -r $CLASSEXT"/swing-layout-1.0.4.jar" ; then
-      SWINGLAYOUTJARPATH=$CLASSEXT"/swing-layout-1.0.4.jar"
-      AC_MSG_RESULT($SWINGLAYOUTJARPATH)
-   fi
-   if test "$SWINGLAYOUTJARPATH" = "" ; then
-      AC_MSG_ERROR([not found])
-   fi
-   
-   #----------------------------------------------------------------
-   # Find AbsoluteLayout.jar 
-   #----------------------------------------------------------------
-   AC_MSG_CHECKING(for AbsoluteLayout jar file)
-   if test -r "$CLASSEXT/AbsoluteLayout.jar" ; then
-      ABSOLUTEJARPATH="$CLASSEXT/AbsoluteLayout.jar"
-      AC_MSG_RESULT($ABSOLUTEJARPATH)
-   fi
-   if test -r "/usr/share/java/AbsoluteLayout.jar" ; then
-      ABSOLUTEJARPATH="/usr/share/java/AbsoluteLayout.jar"
-      AC_MSG_RESULT($ABOSLUTEJARPATH)
-   fi
-   if test -r $CLASSEXT"/AbsoluteLayout.jar" ; then
-      ABSOLUTEJARPATH=$CLASSEXT"/AbsoluteLayout.jar"
-      AC_MSG_RESULT($ABSOLUTEJARPATH)
-   fi
-   if test "$ABSOLUTEJARPATH" = "" ; then
-      AC_MSG_ERROR([not found])
-   fi
-   #----------------------------------------------------------------
-   # Find JFreeChart 
-   #----------------------------------------------------------------
-   AC_MSG_CHECKING(for JFreeChart jar file)
-   if test -r "$CLASSEXT/jfreechart-1.0.13.jar" ; then
-      JFREECHARTJARPATH="$CLASSEXT/jfreechart-1.0.13.jar:$CLASSEXT/jcommon-1.0.16.jar"
-      AC_MSG_RESULT($JFREECHARTJARPATH)
-   fi
-   # TODO: look in other paths
+   IJJARPATH="$CLASSEXT/ij.jar"
+   BSHJARPATH="$CLASSEXT/bsh-2.0b4.jar"
+   SWINGXJARPATH="$CLASSEXT/swingx-0.9.5.jar"
+   COMMONSMATHJARPATH="$CLASSEXT/commons-math-2.0.jar"
+   SWINGLAYOUTJARPATH="$CLASSEXT/swing-layout-1.0.4.jar"
+   ABSOLUTEJARPATH="$CLASSEXT/AbsoluteLayout.jar"
+   JFREECHARTJARPATH="$CLASSEXT/jfreechart-1.0.13.jar:$CLASSEXT/jcommon-1.0.16.jar"
+   # TODO This list is incomplete, and various Makefile.am's are using CLASSEXT
+   # with the JAR name.
 fi
-
 
 AC_SUBST(CLASSEXT)
 AC_SUBST(BSHJARPATH)
