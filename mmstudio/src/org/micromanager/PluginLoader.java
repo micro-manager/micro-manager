@@ -36,6 +36,7 @@ import org.micromanager.utils.ReportingUtils;
  */
 public class PluginLoader {
    public static final String MMPLUGINSDIR = "mmplugins";
+   public static final String MMAUTOFOCUSDIR = "mmautofocus";
    
    private ArrayList<PluginItem> plugins_ = new ArrayList<PluginItem>();
 
@@ -228,11 +229,13 @@ public class PluginLoader {
     * Adds these to the plugins menu
     */
    public void loadPlugins() {
+      File pluginRootDir = new File(System.getProperty("org.micromanager.plugin.path", MMPLUGINSDIR));
+      File autofocusRootDir = new File(System.getProperty("org.micromanager.autofocus.path", MMAUTOFOCUSDIR));
+
       ArrayList<Class<?>> autofocusClasses = new ArrayList<Class<?>>();
       List<Class<?>> classes;
       ArrayList<PluginItem> pis = new ArrayList<PluginItem>();
       
-      File pluginRootDir = new File(MMPLUGINSDIR);
       FilenameFilter dirFilter = new FilenameFilter() {
          @Override
          public boolean accept(File current, String name) {
@@ -277,7 +280,7 @@ public class PluginLoader {
 
       // Install Autofocus classes found in mmautofocus
       try {
-         classes = JavaUtils.findClasses(new File("mmautofocus"), 2);
+         classes = JavaUtils.findClasses(autofocusRootDir, 2);
          for (Class<?> clazz : classes) {
             for (Class<?> iface : clazz.getInterfaces()) {
                if (iface == Autofocus.class) {
