@@ -129,11 +129,13 @@ def deactivate(no_git=False):
                 secrets.append(os.path.relpath(deleted, "./SecretDeviceAdapters"))
             else:
                 main.append(deleted)
-        subprocess.call(["svn", "revert"] + main)
-        oldcwd = os.getcwd()
-        os.chdir("./SecretDeviceAdapters")
-        subprocess.call(["svn", "revert"] + secrets)
-        os.chdir(oldcwd)
+        if main:
+            subprocess.call(["svn", "revert"] + main)
+        if secrets:
+            oldcwd = os.getcwd()
+            os.chdir("./SecretDeviceAdapters")
+            subprocess.call(["svn", "revert"] + secrets)
+            os.chdir(oldcwd)
 
 
 def iterate_nextgen_files():
