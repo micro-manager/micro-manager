@@ -38,10 +38,14 @@ public class NewImageFlippingProcessor extends DataProcessor<TaggedImage> {
 
       R0, R90, R180, R270
    }
-   NewImageFlipperControls controls_;
+   String camera_;
+   boolean isMirrored_;
+   Rotation rotation_;
 
-   public NewImageFlippingProcessor(NewImageFlipperControls controls) {
-      this.controls_ = controls;
+   public NewImageFlippingProcessor(String camera, boolean isMirrored, Rotation rotation) {
+      this.camera_ = camera;
+      this.isMirrored_ = isMirrored;
+      this.rotation_ = rotation;
    }
 
    /**
@@ -56,19 +60,19 @@ public class NewImageFlippingProcessor extends DataProcessor<TaggedImage> {
          if (nextImage != TaggedImageQueue.POISON) {
             try {
                String camera = nextImage.tags.getString("Core-Camera");
-               if (!camera.equals(controls_.getCamera())) {
+               if (!camera.equals(camera_)) {
                   if (nextImage.tags.has("Camera")) {
                      camera = nextImage.tags.getString("Camera");
                   }
                }
-               if (!camera.equals(controls_.getCamera())) {
+               if (!camera.equals(camera_)) {
                   produce(nextImage);
                   return;
 
                }
 
-               produce(proccessTaggedImage(nextImage, controls_.getMirror(),
-                       controls_.getRotate()));
+               produce(proccessTaggedImage(nextImage, isMirrored_,
+                       rotation_));
 
             } catch (Exception ex) {
                produce(nextImage);

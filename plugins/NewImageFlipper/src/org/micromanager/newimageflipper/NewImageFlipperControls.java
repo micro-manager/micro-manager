@@ -86,7 +86,8 @@ public class NewImageFlipperControls extends javax.swing.JFrame {
       updateCameras();
       
       setBackground(MMStudioMainFrame.getInstance().getBackgroundColor());
-      processor_ = new NewImageFlippingProcessor(this);
+      processor_ = new NewImageFlippingProcessor(this.getCamera(), 
+            getMirror(), getRotate());
    }
 
    public DataProcessor<TaggedImage> getProcessor() {

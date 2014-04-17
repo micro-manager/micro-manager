@@ -40,13 +40,13 @@ public class NewTaggedImageFlipper implements MMPlugin {
    public static String menuName = "Image Flipper";
    public static String tooltipDescription = "Mirrors, flips and rotates images on the fly";
    private ScriptInterface gui_;
-   private NewImageFlipperControls ctls_;
+   private NewImageFlipperControls controls_;
 
    
 
    public void dispose() {
-      if (ctls_ != null)
-         ctls_.safePrefs();
+      if (controls_ != null)
+         controls_.safePrefs();
    }
 
    public void setApp(ScriptInterface app) {
@@ -54,15 +54,15 @@ public class NewTaggedImageFlipper implements MMPlugin {
    }
 
    public void show() {
-      if (ctls_ == null) {
-         ctls_ = new NewImageFlipperControls();
-         MMStudioMainFrame.getInstance().addMMBackgroundListener(ctls_);
+      if (controls_ == null) {
+         controls_ = new NewImageFlipperControls();
+         MMStudioMainFrame.getInstance().addMMBackgroundListener(controls_);
       }
       else {
-         ctls_.updateCameras();
+         controls_.updateCameras();
       }
-      gui_.addImageProcessor(ctls_.getProcessor());
-      ctls_.setVisible(true);
+      gui_.addImageProcessor(controls_.getProcessor());
+      controls_.setVisible(true);
    }
 
    public void configurationChanged() {
