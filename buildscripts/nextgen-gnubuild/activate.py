@@ -93,7 +93,7 @@ def activate(initial=True):
             print("no new file from " + src)
 
 
-def deactivate():
+def deactivate(no_git=False):
     all_deleted, all_renamed = [], []
     for nextgen_filename in iterate_nextgen_files():
         print("reading " + nextgen_filename)
@@ -112,13 +112,28 @@ def deactivate():
             except:
                 pass
 
-    for deleted in all_deleted:
-        print("reinstate " + deleted)
-        # Change to the containing directory so that split repository for
-        # SecretDeviceAdapters works.
-        subprocess.call("cd '{}'; git checkout '{}'".
-                        format(*os.path.split(deleted)),
-                        shell=True)
+    is_git_svn = not os.path.exists(".svn")
+    if is_git_svn:
+        for deleted in all_deleted:
+            print("reinstate " + deleted)
+            # Change to the containing directory so that split repository for
+            # SecretDeviceAdapters works.
+            subprocess.call("cd '{}'; git checkout '{}'".
+                            format(*os.path.split(deleted)),
+                            shell=True)
+    else:
+        # One-by-one 'svn revert' is way too slow.
+        main, secrets = [], []
+        for deleted in all_deleted:
+            if "SecretDeviceAdapters/" in deleted:
+                secrets.append(os.path.relpath(deleted, "./SecretDeviceAdapters"))
+            else:
+                main.append(deleted)
+        subprocess.call(["svn", "revert"] + main)
+        oldcwd = os.getcwd()
+        os.chdir("./SecretDeviceAdapters")
+        subprocess.call(["svn", "revert"] + secrets)
+        os.chdir(oldcwd)
 
 
 def iterate_nextgen_files():
