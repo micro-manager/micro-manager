@@ -62,7 +62,7 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
         @Override
         public Object getElementAt(int index) {
             Region r = regions_.getRegion(index);
-            return r.directory.concat("\\").concat(r.filename);
+            return r.name();
         }
         
         public void addRegion(Region r) {
@@ -110,14 +110,16 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
         statusText.setText("Acquisition finished");
         }
     }
-
+ /* 
+   Convenience function for logging errors.
+   */
    private void handleError(Exception e) {
       ReportingUtils.showError(e);
    }
    
  /* 
    Convenience function for logging messages with prefix indicating message 
-   is from AcquireMultipleRegions
+   is from AcquireMultipleRegions.
    */
    private void logMessage(String message){
        ReportingUtils.logMessage(msgPrefix_ + message);
@@ -205,7 +207,7 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
         jLabel1.setText("Regions to Acquire");
         jLabel1.setFocusable(false);
 
-        AddPositionList.setText("Add Current Region to Acquire list");
+        AddPositionList.setText("Save Region for Acquisition");
         AddPositionList.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 AddPositionListActionPerformed(evt);

@@ -6,6 +6,7 @@
 
 package org.micromanager.acquiremultipleregions;
 
+import java.io.File;
 import org.micromanager.api.MultiStagePosition;
 import org.micromanager.api.PositionList;
 import org.micromanager.api.StagePosition;
@@ -23,6 +24,15 @@ public class Region {
         this.positions = PositionList.newInstance(PL);
         this.directory = directory;
         this.filename = filename;
+    }
+    
+    /*
+    Return a name for the region, by concatenating Directory and Filename
+    */
+    public String name() {
+        File loc = new File(directory, filename);
+        String fullfile = loc.getPath();
+        return fullfile;        
     }
     
     public PositionList boundingBox() {

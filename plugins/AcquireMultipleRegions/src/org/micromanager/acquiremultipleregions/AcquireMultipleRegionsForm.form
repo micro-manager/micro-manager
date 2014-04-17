@@ -146,7 +146,7 @@
     </Component>
     <Component class="javax.swing.JButton" name="AddPositionList">
       <Properties>
-        <Property name="text" type="java.lang.String" value="Add Current Region to Acquire list"/>
+        <Property name="text" type="java.lang.String" value="Save Region for Acquisition"/>
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="AddPositionListActionPerformed"/>
