@@ -296,14 +296,11 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
       new Thread(beanshellREPLint_, "Beanshell interpreter").start();
 
       try {
-       File f = new File("scripts/mm_beanshell_startup.bsh");
-       if (f.exists())
-          beanshellREPLint_.source("scripts/mm_beanshell_startup.bsh");
-        else {
-          f = new File("../scripts/mm_beanshell_startup.bsh");
-          if (f.exists())
-             beanshellREPLint_.source("../scripts/mm_beanshell_startup.bsh");
-        }
+         String startupScript = System.getProperty("org.micromanager.beanshell.startup.script",
+               "scripts/mm_beanshell_startup.bsh");
+         if (new File(startupScript).exists()) {
+            beanshellREPLint_.source(startupScript);
+         }
       } catch (FileNotFoundException e) {
          ReportingUtils.showError(e);
       } catch (IOException e) {

@@ -245,7 +245,10 @@ public class PluginLoader {
 
       List<String> dirs = new ArrayList<String>();
       dirs.add("");
-      dirs.addAll(Arrays.asList(pluginRootDir.list(dirFilter)));
+      String[] dirNames = pluginRootDir.list(dirFilter);
+      if (dirNames != null) {
+         dirs.addAll(Arrays.asList(dirNames));
+      }
       
       for (String dir : dirs) {
          try {
