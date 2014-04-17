@@ -56,7 +56,7 @@ AM_CONDITIONAL([BUILD_JAVA_APP], [test "x$enable_java_app" != xno])
 if test "x$enable_java_app" != xno; then
    # TODO This path should be configurable. And we should have an automated way
    # to fetch dependencies, but that is a future project.
-   CLASSEXT="$srcdir/../3rdpartypublic/classext"
+   CLASSEXT="\$(top_srcdir)/../3rdpartypublic/classext"
 
    # For now, just use hard-coded locations for dependency JARs. Ideally, we
    # would just use a user-provided classpath and check for classes, not JARs.
