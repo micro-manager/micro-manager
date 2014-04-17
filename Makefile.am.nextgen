@@ -31,7 +31,7 @@ endif
 # Note: The dependencies between MMCOREJ_DIR and JAVA_APP_DIRS is handled in
 # configure. The same should be done for MMCORE_DIR and MMCORE{J,PY}_DIR. Also,
 # building of DeviceAdapters could be made optional.
-SUBDIRS = MMDevice $(MMCORE_DIR) $(MMCOREJ_DIR) $(MMCOREPY_DIR) $(JAVA_APP_DIRS) DeviceAdapters $(SECRETDEVICEADAPTERS)
+SUBDIRS = MMDevice $(MMCORE_DIR) $(MMCOREJ_DIR) $(MMCOREPY_DIR) $(JAVA_APP_DIRS) DeviceAdapters $(SECRETDEVICEADAPTERS) bindist
 
 dox:
 	test -d $(srcdir)/doxygen/out/MMDevice || mkdir $(srcdir)/doxygen/out/MMDevice

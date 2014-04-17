@@ -264,6 +264,7 @@ AC_CONFIG_FILES(m4_strip([
    plugins/Makefile
    autofocus/Makefile
    scripts/Makefile
+   bindist/Makefile
 ]))
 
 AC_OUTPUT
