@@ -2690,9 +2690,8 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
     * @param plugin_ - plugin_ to be added to the menu
     */
    public void addPluginToMenu(final PluginLoader.PluginItem plugin) {
-               
-      String[] path = plugin.getDirectory().split(Pattern.quote(File.separator));
-      if (path.length == 1) {
+      List<String> path = plugin.getMenuPath();
+      if (path.size() == 1) {
          GUIUtils.addMenuItem(pluginMenu_, plugin.getMenuItem(), plugin.getTooltip(),
                  new Runnable() {
             public void run() {
@@ -2702,14 +2701,15 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
             }
          });
       }
-      if (path.length == 2) {
+      if (path.size() == 2) {
          if (pluginSubMenus_ == null) {
             pluginSubMenus_ = new HashMap<String, JMenu>();
          }
-         JMenu submenu = pluginSubMenus_.get(path[1]);
+         String groupName = path.get(0);
+         JMenu submenu = pluginSubMenus_.get(groupName);
          if (submenu == null) {
-            submenu = new JMenu(path[1]);
-            pluginSubMenus_.put(path[1], submenu);
+            submenu = new JMenu(groupName);
+            pluginSubMenus_.put(groupName, submenu);
             submenu.validate();
             pluginMenu_.add(submenu);
          }
@@ -2721,7 +2721,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
                plugin.getMMPlugin().show();
             }
          });
-
       }
       
       pluginMenu_.validate();

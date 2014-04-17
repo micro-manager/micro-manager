@@ -20,6 +20,7 @@ import java.io.File;
 import java.io.FilenameFilter;
 import java.text.Collator;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -48,7 +49,7 @@ public class PluginLoader {
       private String className_ = "";       // className deduced from pluginClass
       private String menuItem_ = "undefined";  // menuText deduced from plugin_
       private String tooltip_ = "";         // tooltip deduced from plugin_
-      private String directory_ = "";       // dir in which the class lives (start at mmplugins)
+      private String directory_ = "";       // dir in which the class lives (relative to plugin root dir)
       private String msg_ = "";             // message generated during insepction of pluginClass_
 
       public PluginItem(Class<?> pluginClass, String className, String menuItem, 
@@ -61,7 +62,7 @@ public class PluginLoader {
          msg_ = msg;
       }
       
-      public PluginItem (PluginItem pio) {
+      public PluginItem(PluginItem pio) {
          pluginClass_ = pio.pluginClass_;
          menuItem_ = pio.menuItem_;
          plugin_ = pio.plugin_;
@@ -72,10 +73,27 @@ public class PluginLoader {
       
       public String getMenuItem() { return menuItem_; }
       public String getMessage() { return msg_; }
-      public String getDirectory() { return directory_; }
       public String getClassName() { return className_; }
       public String getTooltip() {return tooltip_; }
       public MMPlugin getMMPlugin() {return plugin_; }
+
+      /**
+       * Return the menu hierarchy path, including the leaf item name.
+       */
+      public List<String> getMenuPath() {
+         final String sepPat = Pattern.quote(File.separator);
+         List<String> menuPath = new ArrayList<String>(Arrays.asList(directory_.split(sepPat)));
+         if (directory_.equals("")) {
+            // String.split returns a length 1 array containing the empty
+            // string when invoked on the empty string. We don't want that.
+            menuPath.clear();
+         }
+         for (int i = 0; i < menuPath.size(); i++) {
+            menuPath.set(i, menuPath.get(i).replace('_', ' '));
+         }
+         menuPath.add(menuItem_);
+         return menuPath;
+      }
       
       public void instantiate() {
          try {
@@ -93,40 +111,25 @@ public class PluginLoader {
 
 
    /**
-    * Used to sort list of plugins
-    * TODO: sort directories correctly
+    * Compare plugin items based on menu path.
     */
    private class PluginItemComparator implements Comparator<PluginItem> {
-      
       public int compare(PluginItem t1, PluginItem t2) {
-         try {
-            Collator collator = Collator.getInstance();
-            collator.setStrength(Collator.PRIMARY);
-            String m1 = t1.menuItem_;
-            String m2 = t2.menuItem_;
-            String path1[] = t1.getDirectory().split(Pattern.quote(File.separator));
-            String path2[] = t2.getDirectory().split(Pattern.quote(File.separator));
-            if (path1.length == 1 && path2.length == 1) {       
-               return collator.compare(m1, m2);
+         List<String> path1 = new ArrayList<String>(t1.getMenuPath());
+         List<String> path2 = new ArrayList<String>(t2.getMenuPath());
+         int commonLength = Math.min(path1.size(), path2.size());
+
+         Collator collator = Collator.getInstance();
+         collator.setStrength(Collator.PRIMARY);
+
+         for (int i = 0; i < commonLength; i++) {
+            int c = collator.compare(path1.get(i), path2.get(i));
+            if (c == 0) {
+               continue;
             }
-            if (path1.length == 2 && path2.length == 1) {
-               return collator.compare(path1[1], m2);
-            }
-            if (path1.length == 1 && path2.length == 2) {
-               return collator.compare(m1, path2[1]);
-            }
-            if (path1.length == 2 && path2.length == 2) {
-               int res = collator.compare(path1[1], path2[1]);
-               if (res == 0) {
-                  return collator.compare(m1, m2);
-               }
-               return res;
-            }
-            
-         } catch (NullPointerException npe) {
-            ReportingUtils.logError("NullPointerException in PluginItemAndClassCopmarator");
+            return c;
          }
-         return 0;
+         return new Integer(path1.size()).compareTo(path2.size());
       }
    }
 
@@ -136,7 +139,7 @@ public class PluginLoader {
     * @return - Message generated while inspecting class, or error  
     */
    public String installPlugin(Class<?> cl) {
-      final PluginItem pi = declarePlugin(cl, "mmplugins");
+      final PluginItem pi = declarePlugin(cl, "");
       if (pi != null) {
          addPluginToMenuLater(pi);
       
@@ -152,7 +155,7 @@ public class PluginLoader {
    /**
     * Inspects the provided class and transforms it into a PluginItem instance
     * @param cl - Class that potentially is a plugin
-    * @param dir - directory in which it was found (start at mmplugins)
+    * @param dir - Relative directory (empty string if at root of plugin dir)
     * @return - PluginItem constructed from provided data
     */
    private PluginItem declarePlugin(Class<?> cl, String dir) {
@@ -199,7 +202,7 @@ public class PluginLoader {
          }
 
          menuItem = menuItem.replace("_", " ");
-         PluginItem pi = new PluginItem (cl, className, menuItem, 
+         PluginItem pi = new PluginItem(cl, className, menuItem, 
                  toolTipDescription, dir, msg);
          plugins_.add(pi);
          return pi;
@@ -229,22 +232,21 @@ public class PluginLoader {
       List<Class<?>> classes;
       ArrayList<PluginItem> pis = new ArrayList<PluginItem>();
       
-      File file = new File(MMPLUGINSDIR);
-      String[] tmpDirs = file.list(new FilenameFilter() {
+      File pluginRootDir = new File(MMPLUGINSDIR);
+      FilenameFilter dirFilter = new FilenameFilter() {
          @Override
          public boolean accept(File current, String name) {
             return new File(current, name).isDirectory();
          }
-      });
+      };
+
       List<String> dirs = new ArrayList<String>();
-      dirs.add(MMPLUGINSDIR);
-      for (String dir: tmpDirs) {
-         dirs.add(MMPLUGINSDIR + File.separator + dir);
-      }
+      dirs.add("");
+      dirs.addAll(Arrays.asList(pluginRootDir.list(dirFilter)));
       
       for (String dir : dirs) {
          try {
-            classes = JavaUtils.findClasses(new File(dir), 0);
+            classes = JavaUtils.findClasses(new File(pluginRootDir, dir), 0);
             for (Class<?> clazz : classes) {
                for (Class<?> iface : clazz.getInterfaces()) {
                   if (iface == MMPlugin.class) {
