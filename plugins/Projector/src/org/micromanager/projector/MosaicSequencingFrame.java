@@ -145,7 +145,7 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
          rowVector.add(i);
          rowVector.add(name);
          rowVector.add("FRAP");
-         rowVector.add("100%");
+         rowVector.add("15/15");
          tableModel.addRow(rowVector);
       }
    }
@@ -179,12 +179,11 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
    private static List<String> generateIntensityNames() {
       ArrayList<String> intensities = new ArrayList<String>();
       for (int i = 0; i <= 15; ++i) {
-         int percentage = (int) Math.round(100. * i / 15.);
-         intensities.add("" + percentage + "%");
+         intensities.add("" + i + "/15");
       }
       return intensities;
    }
-   
+     
    // Create the ROI list table
    private void setupRoiListTable() {
       String roiTypes[] = {"FRAP", "Image"};
@@ -193,9 +192,20 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
       intensityNames.addAll(intensityNames_);
       Collections.reverse(intensityNames);      
       setComboBoxColumn(roiListTable_, 3, intensityNames.toArray(new String[0]));
-      // TODO: Stop hiding this column, and implement grayscale sequencing.
-      roiListTable_.removeColumn(roiListTable_.getColumnModel().getColumn(3));
       mirrorRoiManager();      
+   }
+   
+   // Get the intensity given the ROI number (zero-based). Intensities values
+   // are always provided as 8-bit, so that in BlackAndWhite mode, white pixels
+   // have bit7 = 1.
+   private int getRoiIntensity(int roiIndex) {
+      String intensityName = (String) roiListTable_.getValueAt(roiIndex, 3);
+      for (int i = 0; i < intensityNames_.size(); ++i) {
+         if (intensityNames_.get(i).contentEquals(intensityName)) {
+            return i << 4;
+         }
+      }
+      return 0;
    }
    
    // Returns true if ROI at a particular index is considered an "Imaging" ROI.
@@ -225,6 +235,17 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
          }
       }
       return frapROIs;      
+   }
+   
+   // Returns true iff all ROIs are set to 100% or 0% intensity.
+   private boolean canUseBlackAndWhite() {
+      for (int i = 0; i < roiListTable_.getRowCount(); ++i) {
+         int intensity = getRoiIntensity(i);
+         if (intensity > 0 && intensity < 240) {
+            return false;
+         }
+      }
+      return true;
    }
 
    // ## Generate ROI grid panel.
@@ -411,20 +432,7 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
    private int integerAt(int rowIndex, int columnIndex) {
       return Integer.parseInt(sequenceTableModel_.getValueAt(rowIndex, columnIndex).toString());
    }
-   
-   // Get the intensity given the ROI number (zero-based). Intensities values
-   // are always provided as 8-bit, so that in BlackAndWhite mode, white pixels
-   // have bit7 = 1.
-   private int getRoiIntensity(int roiIndex) {
-      String intensityName = (String) roiListTable_.getValueAt(roiIndex, 3);
-      for (int i = 0; i < intensityNames_.size(); ++i) {
-         if (intensityNames_.get(i).contentEquals(intensityName)) {
-            return i << 4;
-         }
-      }
-      return 0;
-   }
-   
+     
    // Convert a row from the sequenceTable_ to a SequenceEvent object.
    private SequenceEvent sequenceRowToSequenceEvent(int rowIndex, List<Polygon> availableRoiPolygons) {
       final ArrayList<Integer> roiIndexList = frameStringToRoiIndexList(sequenceTableModel_.getValueAt(rowIndex, 1).toString());
@@ -445,7 +453,7 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
       sequenceEvent.loopCount = integerAt(rowIndex, 4);
       return sequenceEvent;
    }
-   
+     
    // Get a list of SequenceEvents by extracting information from the sequenceTable_.
    private ArrayList<SequenceEvent> getSequenceEvents() {
       final ImageWindow snapLiveWin = gui_.getSnapLiveWin();
@@ -492,6 +500,7 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
    private void uploadSequence(final ArrayList<SequenceEvent> events) {
       try {
          core_.stopSLMSequence(mosaicName_);
+         core_.setProperty(mosaicName_, "PixelMode", canUseBlackAndWhite() ? "BlackAndWhite" : "16GraysLinear");
          core_.setProperty(mosaicName_, "SequenceSettings", sequenceEventsToString(events));
          core_.loadSLMSequence(mosaicName_, imageListFromSequenceEvents(events));  
       } catch (Exception ex) {
@@ -880,9 +889,16 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
             "Time Slot", "ROIs", "On Duration (ms)", "Off Duration (ms)", "Loops"
          }
       ) {
-         boolean[] canEdit = new boolean [] {
-            false, true, true, true, false
+         Class[] types = new Class [] {
+            java.lang.Integer.class, java.lang.String.class, java.lang.Integer.class, java.lang.Integer.class, java.lang.Integer.class
          };
+         boolean[] canEdit = new boolean [] {
+            false, true, true, true, true
+         };
+
+         public Class getColumnClass(int columnIndex) {
+            return types [columnIndex];
+         }
 
          public boolean isCellEditable(int rowIndex, int columnIndex) {
             return canEdit [columnIndex];
