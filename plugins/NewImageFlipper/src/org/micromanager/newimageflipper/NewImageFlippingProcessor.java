@@ -153,4 +153,30 @@ public class NewImageFlippingProcessor extends DataProcessor<TaggedImage> {
 
       return new TaggedImage(proc.getPixels(), newTags);
    }
+
+   /**
+    * Update which camera is to be processed.
+    * @param camera - Camera name
+    */
+   public void setCamera(String camera) {
+      camera_ = camera;
+   }
+
+
+   /**
+    * Update the rotation parameter.
+    * @param rotation - Rotation (R0, R90, R180, R270)
+    */
+   public void setRotation(Rotation rotation) {
+      rotation_ = rotation;
+   }
+
+   /**
+    * Update the mirroring.
+    * @param isMirrored - true if image should be mirrored.
+    */
+   public void setIsMirrored(boolean isMirrored) {
+      isMirrored_ = isMirrored;
+   }
+  
 }

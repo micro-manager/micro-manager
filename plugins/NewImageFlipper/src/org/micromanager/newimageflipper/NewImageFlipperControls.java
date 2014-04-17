@@ -218,20 +218,31 @@ public class NewImageFlipperControls extends javax.swing.JFrame {
     private void mirrorCheckBox_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mirrorCheckBox_ActionPerformed
        processExample();
        String camera = (String) cameraComboBox_.getSelectedItem();
-       if (camera != null)
-       prefs_.putBoolean(camera + MIRROR, mirrorCheckBox_.isSelected());
+       if (camera != null) {
+          prefs_.putBoolean(camera + MIRROR, mirrorCheckBox_.isSelected());
+          if (processor_ != null) {
+             processor_.setIsMirrored(getMirror());
+          }
+       }
     }//GEN-LAST:event_mirrorCheckBox_ActionPerformed
 
    private void rotateComboBox_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rotateComboBox_ActionPerformed
       processExample();
       String camera = (String) cameraComboBox_.getSelectedItem();
-      if (camera != null && rotateComboBox_.getSelectedItem() != null)
+      if (camera != null && rotateComboBox_.getSelectedItem() != null) {
          prefs_.put(camera + ROTATE, (String) rotateComboBox_.getSelectedItem());
+         if (processor_ != null) {
+            processor_.setRotation(getRotate());
+         }
+      }
    }//GEN-LAST:event_rotateComboBox_ActionPerformed
 
    private void cameraComboBox_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cameraComboBox_ActionPerformed
       String camera = (String) cameraComboBox_.getSelectedItem();
       if (camera != null) {
+         if (processor_ != null) {
+            processor_.setCamera(camera);
+         }
          mirrorCheckBox_.setSelected(prefs_.getBoolean(camera + MIRROR, false));
          rotateComboBox_.setSelectedItem(prefs_.get(camera + ROTATE, R0));
          prefs_.put(SELECTEDCAMERA, camera);
