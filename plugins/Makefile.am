@@ -1,6 +1,6 @@
 ## Process this file with automake to produce Makefile.in
 
-TARGETS= ASIdiSPIM.jar PixelCalibrator.jar Projector.jar RecallPlugin.jar StageControl.jar MultiCamera.jar CRISP.jar Big.jar NewImageFlipper.jar SlideExplorer.jar DataBrowser.jar ClojureEditor.jar SplitView.jar Gaussian.jar IntelligentAcquisition.jar BFCorrector.jar MultiChannelShading.jar HCS.jar MMTracker.jar pgFocus.jar autolase.jar
+TARGETS= ASIdiSPIM.jar PixelCalibrator.jar Projector.jar RecallPlugin.jar StageControl.jar MultiCamera.jar CRISP.jar Big.jar NewImageFlipper.jar SlideExplorer.jar DataBrowser.jar ClojureEditor.jar SplitView.jar Gaussian.jar IntelligentAcquisition.jar BFCorrector.jar MultiChannelShading.jar HCS.jar MMTracker.jar pgFocus.jar autolase.jar AcquireMultipleRegions.jar
 
 ASIdiSPIM.jar:  \
 	$(srcdir)/ASIdiSPIM/src/org/micromanager/asidispim/*.java \
@@ -218,6 +218,16 @@ autolase.jar: \
 	rm -rf build/*
 	$(JAVAC) $(JAVACFLAGS) -source 1.5 -target 1.5 -sourcepath $(srcdir):. -classpath ../mmstudio/MMJ_.jar:$(IJJARPATH):. $(srcdir)/autolase/src/ch/epfl/leb/autolase/*.java -d build
 	cd build && jar cf ../autolase.jar * 
+
+AcquireMultipleRegions.jar: \
+	$(srcdir)/AcquireMultipleRegions/src/org/micromanager/acquiremultipleregions/AcquireMultipleRegions.java \
+	$(srcdir)/AcquireMultipleRegions/src/org/micromanager/acquiremultipleregions/AcquireMultipleRegionsForm.java \
+	$(srcdir)/AcquireMultipleRegions/src/org/micromanager/acquiremultipleregions/Region.java \
+	$(srcdir)/AcquireMultipleRegions/src/org/micromanager/acquiremultipleregions/RegionList.java 
+	test -d build || mkdir build
+	rm -rf build/*
+	$(JAVAC) $(JAVACFLAGS) -source 1.5 -target 1.5 -sourcepath $(srcdir):. -classpath ../mmstudio/MMJ_.jar:$(IJJARPATH):$(SWINGLAYOUTJARPATH):. $(srcdir)/AcquireMultipleRegions/src/org/micromanager/acquiremultipleregions/*.java -d build
+	cd build && jar cf ../AcquireMultipleRegions.jar * 
 
 all: ${TARGETS}
 
