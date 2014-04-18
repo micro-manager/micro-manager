@@ -1500,7 +1500,7 @@ int EpiShutter::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 UniblitzShutter::UniblitzShutter() : 
    initialized_(false), 
-   name_(g_EpiShutterName), 
+   name_(g_UniblitzShutterName),
    shutterNr_(1), 
    state_(0),
    changedTime_(0)
