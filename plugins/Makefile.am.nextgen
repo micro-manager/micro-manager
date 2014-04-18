@@ -5,7 +5,7 @@
 # - Mark Tsuchida
 #
 # %nextgen_build_filename = Makefile.am
-# %nextgen_build_replaces = Makefile.am 968216719bbfa29e688d06617869c6d0
+# %nextgen_build_replaces = Makefile.am 1377fbc7de557172f9e65287a1daac4b
 
 ## Process this file with automake to produce Makefile.in
 
@@ -227,6 +227,16 @@ autolase.jar: \
 	rm -rf build/*
 	$(JAVAC) $(JAVACFLAGS) -sourcepath $(srcdir):. -classpath ../mmstudio/MMJ_.jar:$(IJJARPATH):. $(srcdir)/autolase/src/ch/epfl/leb/autolase/*.java -d build
 	cd build && jar cf ../autolase.jar *
+
+AcquireMultipleRegions.jar: \
+	$(srcdir)/AcquireMultipleRegions/src/org/micromanager/acquiremultipleregions/AcquireMultipleRegions.java \
+	$(srcdir)/AcquireMultipleRegions/src/org/micromanager/acquiremultipleregions/AcquireMultipleRegionsForm.java \
+	$(srcdir)/AcquireMultipleRegions/src/org/micromanager/acquiremultipleregions/Region.java \
+	$(srcdir)/AcquireMultipleRegions/src/org/micromanager/acquiremultipleregions/RegionList.java
+	test -d build || mkdir build
+	rm -rf build/*
+	$(JAVAC) $(JAVACFLAGS) -sourcepath $(srcdir):. -classpath ../mmstudio/MMJ_.jar:$(IJJARPATH):$(SWINGLAYOUTJARPATH):. $(srcdir)/AcquireMultipleRegions/src/org/micromanager/acquiremultipleregions/*.java -d build
+	cd build && jar cf ../AcquireMultipleRegions.jar *
 
 
 plugindir = $(pkgdatadir)/mmplugins
