@@ -28,6 +28,21 @@ if BUILD_SECRETDEVICEADAPTERS
 SECRETDEVICEADAPTERS = SecretDeviceAdapters
 endif
 
+bin_SCRIPTS = buildscripts/launchers/micromanager
+
+# TODO Define this in configure script? (See other uses.)
+jardir = $(pkgdatadir)/jars
+
+buildscripts/launchers/micromanager: $(srcdir)/buildscripts/launchers/micromanager.in
+	sed \
+		-e 's%@pkglibdir[@]%$(pkglibdir)%g' \
+		-e 's%@pkgdatadir[@]%$(pkgdatadir)%g' \
+		-e 's%@jardir[@]%$(jardir)%g' \
+		$(srcdir)/buildscripts/launchers/micromanager.in >$@
+	chmod +x $@
+
+CLEANFILES = buildscripts/launchers/micromanager
+
 # Note: The dependencies between MMCOREJ_DIR and JAVA_APP_DIRS is handled in
 # configure. The same should be done for MMCORE_DIR and MMCORE{J,PY}_DIR. Also,
 # building of DeviceAdapters could be made optional.
