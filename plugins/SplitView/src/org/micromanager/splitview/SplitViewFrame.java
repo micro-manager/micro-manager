@@ -561,8 +561,10 @@ public class SplitViewFrame extends javax.swing.JFrame {
          return;
       
       if (applyToMDACheckBox_.isSelected() && !appliedToMDA_) {
-         mmImageProcessor_ = new SplitViewProcessor(this);
-         mmImageProcessor_.setName("SplitView");
+         if (mmImageProcessor_ == null) {
+            mmImageProcessor_ = new SplitViewProcessor(this);
+            mmImageProcessor_.setName("SplitView");
+         }
          gui_.addImageProcessor(mmImageProcessor_);
          appliedToMDA_ = true;
       } else if (!applyToMDACheckBox_.isSelected() && appliedToMDA_) {
