@@ -135,6 +135,7 @@ implements MMListenerInterface {
          width += 250;
       }
       
+      boolean zDriveFound = false;
       if (!zDrives.isEmpty()) {
          zPanel_.setLocation(width,0);
          zPanel_.setVisible(true);
@@ -144,7 +145,6 @@ implements MMListenerInterface {
             zDriveSelect_.setVisible(false);
          }
 
-         boolean zDriveFound = false;
          if (zDriveSelect_.getItemCount() != 0) {
             zDriveSelect_.removeAllItems();
          }
@@ -168,7 +168,7 @@ implements MMListenerInterface {
          } else {
             zDriveSelect_.setSelectedItem(currentZDrive_);
          }
-                  for (ActionListener l : zDriveActionListeners) {
+         for (ActionListener l : zDriveActionListeners) {
             zDriveSelect_.addActionListener(l);
          }
          updateZMovements();
@@ -197,6 +197,12 @@ implements MMListenerInterface {
       this.setSize(width, 349);
 
       initialized_ = true;
+      
+      // guarantee that the z-position shown is correct:
+      if (zDriveFound) {
+            zDriveSelect_ActionPerformed(null);
+      }
+      
    }
 
    private void updateZMovements() {
