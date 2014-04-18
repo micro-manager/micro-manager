@@ -301,6 +301,17 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       taggedImageProcessors_.remove(taggedImageProcessor);
    }
 
+   @Override
+   public void setImageProcessorPipeline(List<DataProcessor<TaggedImage>> pipeline) {
+      taggedImageProcessors_.clear();
+      taggedImageProcessors_.addAll(pipeline);
+   }
+
+   @Override
+   public ArrayList<DataProcessor<TaggedImage>> getImageProcessorPipeline() {
+      return new ArrayList<DataProcessor<TaggedImage>>(taggedImageProcessors_);
+   }
+
    public SequenceSettings getSequenceSettings() {
       SequenceSettings acquisitionSettings = new SequenceSettings();
 

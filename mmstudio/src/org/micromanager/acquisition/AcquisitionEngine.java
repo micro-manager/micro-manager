@@ -514,6 +514,16 @@ public interface AcquisitionEngine {
    public void removeImageProcessor(DataProcessor<TaggedImage> taggedImageProcessor);
 
    /*
+    * Replace the current DataProcessor pipeline with the provided one.
+    */
+   public void setImageProcessorPipeline(List<DataProcessor<TaggedImage>> pipeline);
+
+   /*
+    * Return a copy of the entire DataProcessor pipeline.
+    */
+   public ArrayList<DataProcessor<TaggedImage>> getImageProcessorPipeline();
+
+   /*
     * Returns true if abortRequest() has been called -- the acquisition may
     * still be running.
     */
