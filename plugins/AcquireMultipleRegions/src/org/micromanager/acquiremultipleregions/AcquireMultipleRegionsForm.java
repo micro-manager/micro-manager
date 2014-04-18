@@ -6,10 +6,16 @@
 
 package org.micromanager.acquiremultipleregions;
 
+import java.awt.Font;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.prefs.Preferences;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.swing.AbstractListModel;
+import javax.swing.JTable;
+import javax.swing.SpringLayout;
+import javax.swing.table.AbstractTableModel;
 import mmcorej.DeviceType;
 import mmcorej.StrVector;
 import org.micromanager.api.MultiStagePosition;
@@ -33,6 +39,11 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
    private RegionListModel rlm_;
    private Region currentRegion_;
    private static final String msgPrefix_ = "AcquireMultipleRegions: ";
+   private JTable posTable_;
+   private JTable axisTable_;
+   private AxisTableModel axisModel_;
+   private Preferences prefs_;
+   private AxisList axisList_;
    
     /**
      * Creates new form AcquireMultipleRegionsForm
@@ -45,7 +56,128 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
         initComponents();        
         currentRegion_ = new Region(new PositionList(), DirectoryText.getText(), FilenameText.getText());
         setBackground(gui_.getBackgroundColor());   
+      
+        //From PositionListDlg
+        axisTable_ = new JTable();
+        axisTable_.setFont(new Font("Arial", Font.PLAIN, 10));
+        axisList_ = new AxisList();
+        axisModel_ = new AxisTableModel();
+        axisTable_.setModel(axisModel_);
+        axisPane.setViewportView(axisTable_);
     }
+    
+    //From PositionListDlg  
+    private class AxisData {
+      private boolean use_;
+      private final String axisName_;
+      
+      public AxisData(boolean use, String axisName) {
+         use_ = use;
+         axisName_ = axisName;
+      }
+      public boolean getUse() {return use_;}
+      public String getAxisName() {return axisName_;}  
+      public void setUse(boolean use) {use_ = use;}
+   }
+    
+    //From PositionListDlg
+    public class AxisList {
+      private ArrayList<AxisData> axisList_;
+      
+      public AxisList() {
+         this.axisList_ = new ArrayList<AxisData>();
+         // Initialize the axisList.
+         try {
+            // add 1D stages
+            StrVector stages = mmc_.getLoadedDevicesOfType(DeviceType.StageDevice);
+            for (int i=0; i<stages.size(); i++) {
+               axisList_.add(new AxisData(true, stages.get(i)));
+            }
+         } catch (Exception e) {
+            handleError(e);
+         }
+      }
+      public AxisData get(int i) {
+         if (i >=0 && i < axisList_.size()) {
+            return axisList_.get(i);
+         }
+         return null;
+      }
+      public int getNumberOfPositions() {
+         return axisList_.size();
+      }
+      public boolean use(String axisName) {
+         for (int i=0; i< axisList_.size(); i++) {
+            if (axisName.equals(get(i).getAxisName())) {
+               return get(i).getUse();
+            }
+         }
+         // not in the list??  It might be time to refresh the list.  
+         return true;
+      }         
+   }
+    
+    //From PositionListDlg
+    private class AxisTableModel extends AbstractTableModel {
+      private boolean isEditable_ = true;
+      public final String[] COLUMN_NAMES = new String[] {
+            "Use",
+            "Axis"
+      };
+      
+      @Override
+      public int getRowCount() {
+         return axisList_.getNumberOfPositions();
+      }
+      @Override
+      public int getColumnCount() {
+         return COLUMN_NAMES.length;
+      }
+      @Override
+      public String getColumnName(int columnIndex) {
+         return COLUMN_NAMES[columnIndex];
+      }
+      @Override
+      public Object getValueAt(int rowIndex, int columnIndex) {
+         AxisData aD = axisList_.get(rowIndex);
+         if (aD != null) {
+            if (columnIndex == 0) {
+               return aD.getUse();
+            } else if (columnIndex == 1) {
+               return aD.getAxisName();
+            }
+         }
+         return null;
+      }
+      @Override
+      public Class<?> getColumnClass(int c) {
+         return getValueAt(0, c).getClass();
+      }
+      public void setEditable(boolean state) {
+         isEditable_ = state;
+         if (state) {
+            for (int i=0; i < getRowCount(); i++) {
+               
+            }
+         }
+      }
+      @Override
+      public boolean isCellEditable(int rowIndex, int columnIndex) {
+         if (columnIndex == 0) {
+            return isEditable_;
+         }
+         return false;
+      }
+      @Override
+      public void setValueAt(Object value, int rowIndex, int columnIndex) {
+         if (columnIndex == 0) {
+            axisList_.get(rowIndex).setUse( (Boolean) value);
+           // prefs_.putBoolean(axisList_.get(rowIndex).getAxisName(), (Boolean) value); 
+         }
+         fireTableCellUpdated(rowIndex, columnIndex);
+//         axisTable_.clearSelection();
+      }
+   }
     
     private class RegionListModel extends AbstractListModel {
         public RegionList regions_;
@@ -99,7 +231,7 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
                 currSettings.usePositionList = true;
                 currSettings.numFrames = 1;
                 gui_.setAcquisitionSettings(currSettings);
-                gui_.setPositionList(currRegion.tileGrid(getXFieldSize(), getYFieldSize()));               
+                gui_.setPositionList(currRegion.tileGrid(getXFieldSize(), getYFieldSize(), axisList_));               
                 gui_.refreshGUI();
                 String acqName = gui_.runAcquisition(currRegion.filename, currRegion.directory);
                 gui_.closeAcquisitionWindow(acqName);
@@ -170,13 +302,21 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jButton1 = new javax.swing.JButton();
+        jTabbedPane2 = new javax.swing.JTabbedPane();
+        mainPanel = new javax.swing.JPanel();
+        DirectoryText = new javax.swing.JTextField();
+        jLabel4 = new javax.swing.JLabel();
+        DirectoryButton = new javax.swing.JButton();
+        jLabel1 = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
         AcquireList = new javax.swing.JList();
-        jLabel1 = new javax.swing.JLabel();
-        AddPositionList = new javax.swing.JButton();
-        FilenameText = new javax.swing.JTextField();
         jLabel2 = new javax.swing.JLabel();
+        FilenameText = new javax.swing.JTextField();
+        addPointToRegion = new javax.swing.JButton();
+        regionText = new javax.swing.JLabel();
+        AddPositionList = new javax.swing.JButton();
+        DeleteRegion = new javax.swing.JButton();
+        deleteAllButton = new javax.swing.JButton();
         StartAcquisition = new javax.swing.JButton();
         jPanel1 = new javax.swing.JPanel();
         jLabel3 = new javax.swing.JLabel();
@@ -185,27 +325,49 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
         GotoBottom = new javax.swing.JButton();
         GotoRight = new javax.swing.JButton();
         GotoLeft = new javax.swing.JButton();
-        DeleteRegion = new javax.swing.JButton();
-        jLabel4 = new javax.swing.JLabel();
-        DirectoryText = new javax.swing.JTextField();
-        DirectoryButton = new javax.swing.JButton();
         statusText = new javax.swing.JLabel();
-        deleteAllButton = new javax.swing.JButton();
+        configPanel = new javax.swing.JPanel();
         overlapText = new javax.swing.JTextField();
         jLabel5 = new javax.swing.JLabel();
-        addPointToRegion = new javax.swing.JButton();
-        regionText = new javax.swing.JLabel();
-
-        jButton1.setText("jButton1");
+        axisPane = new javax.swing.JScrollPane();
+        jLabel6 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+
+        DirectoryText.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                DirectoryTextActionPerformed(evt);
+            }
+        });
+
+        jLabel4.setText("Directory:");
+        jLabel4.setFocusable(false);
+
+        DirectoryButton.setText("...");
+        DirectoryButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                DirectoryButtonActionPerformed(evt);
+            }
+        });
+
+        jLabel1.setText("Regions to Acquire");
+        jLabel1.setFocusable(false);
 
         AcquireList.setModel(rlm_);
         AcquireList.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         jScrollPane1.setViewportView(AcquireList);
 
-        jLabel1.setText("Regions to Acquire");
-        jLabel1.setFocusable(false);
+        jLabel2.setText("Filename:");
+        jLabel2.setFocusable(false);
+
+        addPointToRegion.setText("Add Point to Current Region");
+        addPointToRegion.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                addPointToRegionActionPerformed(evt);
+            }
+        });
+
+        regionText.setText("Current Region: 0 images");
 
         AddPositionList.setText("Save Region for Acquisition");
         AddPositionList.addActionListener(new java.awt.event.ActionListener() {
@@ -214,8 +376,19 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
             }
         });
 
-        jLabel2.setText("Filename:");
-        jLabel2.setFocusable(false);
+        DeleteRegion.setText("Delete Selected Region");
+        DeleteRegion.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                DeleteRegionActionPerformed(evt);
+            }
+        });
+
+        deleteAllButton.setText("Clear Regions");
+        deleteAllButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                deleteAllButtonActionPerformed(evt);
+            }
+        });
 
         StartAcquisition.setText("Acquire All Regions");
         StartAcquisition.addActionListener(new java.awt.event.ActionListener() {
@@ -313,127 +486,137 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
                 .add(0, 12, Short.MAX_VALUE))
         );
 
-        DeleteRegion.setText("Delete Selected Region");
-        DeleteRegion.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                DeleteRegionActionPerformed(evt);
-            }
-        });
-
-        jLabel4.setText("Directory:");
-        jLabel4.setFocusable(false);
-
-        DirectoryText.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                DirectoryTextActionPerformed(evt);
-            }
-        });
-
-        DirectoryButton.setText("...");
-        DirectoryButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                DirectoryButtonActionPerformed(evt);
-            }
-        });
-
         statusText.setText("Waiting for user to enter regions...");
 
-        deleteAllButton.setText("Clear Regions");
-        deleteAllButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                deleteAllButtonActionPerformed(evt);
-            }
-        });
+        org.jdesktop.layout.GroupLayout mainPanelLayout = new org.jdesktop.layout.GroupLayout(mainPanel);
+        mainPanel.setLayout(mainPanelLayout);
+        mainPanelLayout.setHorizontalGroup(
+            mainPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(mainPanelLayout.createSequentialGroup()
+                .add(mainPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(mainPanelLayout.createSequentialGroup()
+                        .add(mainPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(mainPanelLayout.createSequentialGroup()
+                                .add(10, 10, 10)
+                                .add(mainPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                                    .add(jLabel4)
+                                    .add(FilenameText, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 191, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                    .add(jLabel2)))
+                            .add(mainPanelLayout.createSequentialGroup()
+                                .addContainerGap()
+                                .add(DirectoryText, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 140, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                .add(18, 18, 18)
+                                .add(DirectoryButton)))
+                        .add(0, 26, Short.MAX_VALUE))
+                    .add(mainPanelLayout.createSequentialGroup()
+                        .addContainerGap()
+                        .add(mainPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(org.jdesktop.layout.GroupLayout.TRAILING, AddPositionList, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .add(org.jdesktop.layout.GroupLayout.TRAILING, DeleteRegion, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .add(org.jdesktop.layout.GroupLayout.TRAILING, deleteAllButton, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .add(org.jdesktop.layout.GroupLayout.TRAILING, StartAcquisition, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .add(addPointToRegion, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .add(mainPanelLayout.createSequentialGroup()
+                                .add(statusText)
+                                .add(0, 0, Short.MAX_VALUE))
+                            .add(regionText, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(mainPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(jScrollPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 232, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(jLabel1)
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap())
+        );
+        mainPanelLayout.setVerticalGroup(
+            mainPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(mainPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .add(mainPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(mainPanelLayout.createSequentialGroup()
+                        .add(jLabel4)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(mainPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                            .add(DirectoryButton)
+                            .add(DirectoryText, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(jLabel2)
+                        .add(1, 1, 1)
+                        .add(FilenameText, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .add(44, 44, 44)
+                        .add(addPointToRegion, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 41, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(regionText, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 27, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                        .add(AddPositionList, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 41, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(DeleteRegion, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 41, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                    .add(mainPanelLayout.createSequentialGroup()
+                        .add(jLabel1)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(jScrollPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 274, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(mainPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(mainPanelLayout.createSequentialGroup()
+                        .add(deleteAllButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 41, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .add(18, 18, 18)
+                        .add(StartAcquisition, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 41, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(statusText))
+                    .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+
+        jTabbedPane2.addTab("Main", mainPanel);
 
         overlapText.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
         overlapText.setText("10");
 
         jLabel5.setText("% overlap between tiles");
 
-        addPointToRegion.setText("Add Point to Current Region");
-        addPointToRegion.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                addPointToRegionActionPerformed(evt);
-            }
-        });
+        jLabel6.setText("Which axes should be set at each position?");
 
-        regionText.setText("Current Region: 0 images");
+        org.jdesktop.layout.GroupLayout configPanelLayout = new org.jdesktop.layout.GroupLayout(configPanel);
+        configPanel.setLayout(configPanelLayout);
+        configPanelLayout.setHorizontalGroup(
+            configPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(configPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .add(configPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(axisPane, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 299, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(configPanelLayout.createSequentialGroup()
+                        .add(overlapText, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 24, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(jLabel5))
+                    .add(jLabel6))
+                .addContainerGap(178, Short.MAX_VALUE))
+        );
+        configPanelLayout.setVerticalGroup(
+            configPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(configPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .add(configPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(overlapText, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(jLabel5))
+                .add(7, 7, 7)
+                .add(jLabel6)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(axisPane, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 100, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(291, Short.MAX_VALUE))
+        );
+
+        jTabbedPane2.addTab("Config", configPanel);
 
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
-                .addContainerGap()
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(addPointToRegion, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 244, Short.MAX_VALUE)
-                    .add(layout.createSequentialGroup()
-                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
-                            .add(AddPositionList, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 241, Short.MAX_VALUE)
-                            .add(DeleteRegion, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .add(StartAcquisition, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .add(jLabel4)
-                            .add(layout.createSequentialGroup()
-                                .add(DirectoryText, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 140, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .add(DirectoryButton))
-                            .add(statusText)
-                            .add(deleteAllButton, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .add(FilenameText, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 191, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                            .add(jLabel2)
-                            .add(layout.createSequentialGroup()
-                                .add(overlapText, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 24, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(jLabel5))
-                            .add(regionText, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                        .add(0, 3, Short.MAX_VALUE)))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(jScrollPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 232, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(jLabel1))
-                .add(0, 1, Short.MAX_VALUE))
+            .add(layout.createSequentialGroup()
+                .add(jTabbedPane2)
+                .add(1, 1, 1))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(layout.createSequentialGroup()
-                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(jLabel4)
-                    .add(jLabel1))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
-                    .add(jScrollPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 274, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(layout.createSequentialGroup()
-                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                            .add(DirectoryText, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                            .add(DirectoryButton))
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(jLabel2)
-                        .add(1, 1, 1)
-                        .add(FilenameText, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                            .add(overlapText, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                            .add(jLabel5))
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(addPointToRegion, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 41, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(regionText, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 27, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .add(AddPositionList, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 41, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .add(37, 37, 37)))
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(layout.createSequentialGroup()
-                        .add(DeleteRegion, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 41, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(deleteAllButton)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(StartAcquisition, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 43, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(statusText))
-                    .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap())
+            .add(jTabbedPane2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 477, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
         );
 
         pack();
@@ -653,15 +836,19 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
     private javax.swing.JButton GotoTop;
     private javax.swing.JButton StartAcquisition;
     private javax.swing.JButton addPointToRegion;
+    private javax.swing.JScrollPane axisPane;
+    private javax.swing.JPanel configPanel;
     private javax.swing.JButton deleteAllButton;
-    private javax.swing.JButton jButton1;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
+    private javax.swing.JLabel jLabel6;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JTabbedPane jTabbedPane2;
+    private javax.swing.JPanel mainPanel;
     private javax.swing.JTextField overlapText;
     private javax.swing.JLabel regionText;
     private javax.swing.JLabel statusText;

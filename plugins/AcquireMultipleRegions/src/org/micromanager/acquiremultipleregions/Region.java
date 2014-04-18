@@ -7,6 +7,7 @@
 package org.micromanager.acquiremultipleregions;
 
 import java.io.File;
+import org.micromanager.acquiremultipleregions.AcquireMultipleRegionsForm.AxisList;
 import org.micromanager.api.MultiStagePosition;
 import org.micromanager.api.PositionList;
 import org.micromanager.api.StagePosition;
@@ -109,10 +110,11 @@ public class Region {
      *
      * @param   xStepSize   the step size in the X dimension
      * @param   yStepSize   the step size in the Y dimension
+     * @param   axisList    1-D axes to include
      * @return  a PositionList comprising the tiling positions
      * 
      **/
-    public PositionList tileGrid(double xStepSize, double yStepSize) {
+    public PositionList tileGrid(double xStepSize, double yStepSize, AxisList axisList) {
         //generate tiling grid to cover bounding box in steps of xStepSize 
         //and yStepSize
         PositionList bBox, PL;
@@ -138,7 +140,7 @@ public class Region {
         averageMSP.setDefaultZStage(MSP0.getDefaultZStage());        
         for (int a=0; a<MSP0.size(); a++){
             SP = MSP0.get(a);
-            if (SP.numAxes == 1){
+            if (SP.numAxes == 1 && axisList.use(SP.stageName)){
                C = SP.x;
                //Calculate sum of positions for current axis
                for (int p=1; p<positions.getNumberOfPositions(); p++){
