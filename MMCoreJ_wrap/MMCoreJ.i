@@ -146,16 +146,41 @@
       return System.getProperty("os.name").toLowerCase().startsWith("linux");
    }
 
-   private static boolean loadNativeLibrary(File dirPath) {
-      String libraryName = System.mapLibraryName(NATIVE_LIBRARY_NAME);
-      String libraryPath = new File(dirPath, libraryName).getAbsolutePath();
+   // Return false if search should be continued
+   private static boolean loadNamedNativeLibrary(File dirPath, String libraryName) {
+      final String libraryPath = new File(dirPath, libraryName).getAbsolutePath();
       if (new File(libraryPath).exists()) {
+         logLibraryLoading("Try loading: " + libraryPath);
          System.load(libraryPath);
+         // We let exceptions (usually UnsatisfiedLinkError) propagate, because
+         // it is a fatal error to have a library that exists but cannot be
+         // loaded.
+         logLibraryLoading("Successfully loaded: " + libraryPath);
          return true;
       }
+      logLibraryLoading("Skipping nonexistent candidate: " + libraryPath);
       return false;
    }
+
+   // Return false if search should be continued
+   private static boolean loadNativeLibrary(File dirPath) {
+      final String libraryName = System.mapLibraryName(NATIVE_LIBRARY_NAME);
+
+      // On OS X, System.mapLibraryName() can return a name with a .dylib
+      // suffix (since Java 7?). But our native library is expected to have a
+      // .jnilib suffix (traditional on OS X). Try both to be safe.
+      if (libraryName.endsWith(".dylib")) {
+         final String altLibraryName = "lib" + NATIVE_LIBRARY_NAME + ".jnilib";
+         boolean ret = loadNamedNativeLibrary(dirPath, altLibraryName);
+         if (ret) {
+            return true;
+         }
+      }
+
+      return loadNamedNativeLibrary(dirPath, libraryName);
+   }
       
+   // Return false if search should be continued
    private static boolean checkIfAlreadyLoaded() {
       boolean loaded = true;
       try {
@@ -175,6 +200,7 @@
       return false;
    }
 
+   // Return false if search should be continued
    private static boolean loadFromPathSetBySystemProperty() {
       final File preferredPath = getPreferredLibraryPath();
       if (preferredPath != null) {
@@ -185,6 +211,7 @@
       return false;
    }
 
+   // Return false if search should be continued
    private static boolean loadFromHardCodedPaths() {
       final List<File> searchPaths = new ArrayList<File>();
 
