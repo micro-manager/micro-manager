@@ -110,18 +110,22 @@
    }
 
    private final static String MM_PROPERTY_MMCOREJ_LIB_PATH = "mmcorej.library.path";
+   private final static String MM_PROPERTY_MMCOREJ_LIB_STDERR_LOG = "mmcorej.library.loading.stderr.log";
    private final static String NATIVE_LIBRARY_NAME = "MMCoreJ_wrap";
 
-   private static List<String> libraryLoadLog_ = new ArrayList<String>();
    private static void logLibraryLoading(String message) {
-      libraryLoadLog_.add(message);
-   }
+      boolean useStdErr = true;
 
-   public static String getNativeLibraryLoadLog() {
-      String ret = "";
-      for (String s : libraryLoadLog_)
-         ret = ret + "\n" + s;
-      return ret.substring(1);
+      final String useStdErrProp = System.getProperty(MM_PROPERTY_MMCOREJ_LIB_STDERR_LOG, "0");
+      if (useStdErrProp.equals("0") ||
+            useStdErrProp.equalsIgnoreCase("false") ||
+            useStdErrProp.equalsIgnoreCase("no")) {
+         useStdErr = false;
+      }
+
+      if (useStdErr) {
+         System.err.println("Load " + NATIVE_LIBRARY_NAME + ": " + message);
+      }
    }
 
    private static File getPreferredLibraryPath() {
@@ -165,7 +169,7 @@
          // TODO If the library is already loaded, we still want to make sure
          // that it was loaded from the right copy. The Core now has this
          // information, so we should check it.
-         logLibraryLoading(NATIVE_LIBRARY_NAME + " was already loaded");
+         logLibraryLoading("Already loaded");
          return true;
       }
       return false;
@@ -174,16 +178,8 @@
    private static boolean loadFromPathSetBySystemProperty() {
       final File preferredPath = getPreferredLibraryPath();
       if (preferredPath != null) {
-         if (loadNativeLibrary(preferredPath)) {
-            logLibraryLoading("Loaded " + NATIVE_LIBRARY_NAME + " from " +
-               preferredPath.getAbsolutePath() +
-               ", given by " + MM_PROPERTY_MMCOREJ_LIB_PATH);
-         }
-         else {
-            logLibraryLoading("Failed to load " + NATIVE_LIBRARY_NAME + " from " +
-               preferredPath.getAbsolutePath() +
-               ", given by " + MM_PROPERTY_MMCOREJ_LIB_PATH);
-         }
+         logLibraryLoading("Try path given by " + MM_PROPERTY_MMCOREJ_LIB_PATH);
+         loadNativeLibrary(preferredPath);
          return true;
       }
       return false;
@@ -208,24 +204,22 @@
             searchPaths.add(hardCodedPath);
       }
 
-      logLibraryLoading(NATIVE_LIBRARY_NAME + " will be searched for in:");
+      logLibraryLoading("Will search in hard-coded paths:");
       for (File path : searchPaths) {
          logLibraryLoading("  " + path.getPath());
       }
 
       for (File path : searchPaths) {
          if (loadNativeLibrary(path)) {
-            logLibraryLoading("Loaded " + NATIVE_LIBRARY_NAME + " from " +
-               path.getAbsolutePath());
             return true;
          }
       }
-      logLibraryLoading("Failed to load " + NATIVE_LIBRARY_NAME + " from listed paths");
       return false;
    }
 
    // Load the MMCoreJ_wrap native library.
    static {
+      logLibraryLoading("Start loading...");
       if (!checkIfAlreadyLoaded()) {
          // The most reliable method for locating (the correct copy of)
          // MMCoreJ_wrap is to look in the single path given as a Java system
@@ -239,14 +233,12 @@
                // which will use java.library.path. This is necessary for
                // backward compatibility, and it is also what people will
                // generally expect.
-               logLibraryLoading("Falling back to loading " + NATIVE_LIBRARY_NAME +
-                  " using system default method");
+               logLibraryLoading("Falling back to loading using system default method");
                try {
                   System.loadLibrary(NATIVE_LIBRARY_NAME);
                }
                catch (UnsatisfiedLinkError e) {
-                  logLibraryLoading("Failed to load " + NATIVE_LIBRARY_NAME);
-                  System.err.println(getNativeLibraryLoadLog());
+                  logLibraryLoading("System default loading method failed");
                }
             }
          }
