@@ -106,7 +106,7 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
       guiSettingsPanel_ = new GuiSettingsPanel(gui, devices_, props_, prefs_, stagePosUpdater_);
       stagePosUpdater_.oneTimeUpdate();  // needed for NavigationPanel
       navigationPanel_ = new NavigationPanel(gui, devices_, props_, joystick_,
-            positions_, stagePosUpdater_, prefs_, cameras_);
+            positions_, prefs_, cameras_);
       helpPanel_ = new HelpPanel(gui);
       
       // now add tabs to GUI
