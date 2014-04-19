@@ -584,17 +584,20 @@ int SerialPort::SetCommand(const char* command, const char* term)
    if (term != 0)
       sendText += term;
 
+   if (sendText.size() == 0) {
+      return DEVICE_OK;
+   }
+
    if (transmitCharWaitMs_ < 0.001)
    {
-      pPort_->WriteCharactersAsynchronously(sendText.c_str(), (int) sendText.length() );
+      pPort_->WriteCharactersAsynchronously(sendText.c_str(), sendText.length());
    }
    else
    {
-      for( std::string::iterator jj = sendText.begin(); jj != sendText.end(); ++jj)
+      for (std::string::iterator jj = sendText.begin(); jj != sendText.end(); ++jj)
       {
-         const MM::MMTime maxTime (5, 0);
-         pPort_->WriteOneCharacterAsynchronously(*jj );
-         CDeviceUtils::SleepMs((long)(0.5+transmitCharWaitMs_));         
+         pPort_->WriteOneCharacterAsynchronously(*jj);
+         CDeviceUtils::SleepMs(static_cast<long>(0.5 + transmitCharWaitMs_));
       }
    }
 
@@ -699,31 +702,27 @@ int SerialPort::Write(const unsigned char* buf, unsigned long bufLen)
    if (!initialized_)
       return ERR_PORT_NOTINITIALIZED;
 
-   int ret = DEVICE_OK;
-   // send characters one by one to accomodate slow devices
-   std::ostringstream logMsg;
-   unsigned i;
-   for (i=0; i<bufLen; i++)
-   {
-
-      pPort_->WriteOneCharacterAsynchronously(*(buf + i));
-      /*{
-         LogMessage("write error!",false);
-         ret = DEVICE_ERR;
-         break;
-         
-      }*/
-      if( 0.001 < transmitCharWaitMs_)
-         CDeviceUtils::SleepMs((unsigned long)(0.5+transmitCharWaitMs_));
-      logMsg << (int) *(buf + i) << " ";
-   }
-   if( 0 < i)
-   {
-      if (verbose_)
-         LogBinaryCommunication("Write", false, buf, i);
+   if (bufLen == 0) {
+      return DEVICE_OK;
    }
 
-   return ret;
+   if (transmitCharWaitMs_ < 0.001)
+   {
+      pPort_->WriteCharactersAsynchronously(reinterpret_cast<const char*>(buf), bufLen);
+   }
+   else
+   {
+      for (size_t i = 0; i < bufLen; ++i)
+      {
+         pPort_->WriteOneCharacterAsynchronously(buf[i]);
+         CDeviceUtils::SleepMs(static_cast<long>(0.5 + transmitCharWaitMs_));
+      }
+   }
+
+   if (verbose_)
+      LogBinaryCommunication("Write", false, buf, bufLen);
+
+   return DEVICE_OK;
 }
  
 int SerialPort::Read(unsigned char* buf, unsigned long bufLen, unsigned long& charsRead)

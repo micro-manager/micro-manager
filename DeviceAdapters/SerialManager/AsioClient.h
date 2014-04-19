@@ -29,11 +29,14 @@
 
 #include "SerialManager.h"
 
-#include <deque> 
-#include <boost/bind.hpp> 
-#include <boost/asio.hpp> 
-#include <boost/asio/serial_port.hpp> 
-#include <boost/lexical_cast.hpp> 
+#include <boost/asio.hpp>
+#include <boost/asio/serial_port.hpp>
+#include <boost/bind.hpp>
+#include <boost/lexical_cast.hpp>
+#include <deque>
+#include <exception>
+#include <string>
+#include <vector>
 
 
 class AsioClient 
@@ -135,23 +138,15 @@ public:
          pSerialPortAdapter_->LogMessage(("error setting flow_control in AsioClient(): "+boost::lexical_cast<std::string,int>(anError.value()) + " " + anError.message()).c_str(), false);
    }
 
-   void WriteOneCharacterAsynchronously(const char msg) // pass the write data to the DoWrite function via the io service in the other thread 
-   { 
-	   int cz = sizeof(msg);
-	   if( 1!=cz)
-	   {
-		   return;
-	   }
-      io_service_.post(boost::bind(&AsioClient::DoWrite, this, msg)); 
+   void WriteOneCharacterAsynchronously(const char ch)
+   {
+      io_service_.post(boost::bind(&AsioClient::DoWriteCh, this, ch));
    }
 
-   void WriteCharactersAsynchronously(const char* pmsg, int len) // pass the write data to the DoWrite function via the io service in the other thread 
-   { 
-
-      for( int ii =0; ii < len; ++ii)
-      {
-         io_service_.post(boost::bind(&AsioClient::DoWrite, this, *(pmsg+ii))); 
-      }
+   void WriteCharactersAsynchronously(const char* pmsg, size_t len)
+   {
+      std::vector<char> msg(pmsg, pmsg + len);
+      io_service_.post(boost::bind(&AsioClient::DoWriteMsg, this, msg));
    }
 
 
@@ -271,7 +266,7 @@ private:
 
 
    // for asynchronous write operations:
-   void DoWrite(const char msg) 
+   void DoWriteMsg(const std::vector<char>& msg)
    { // callback to handle write call from outside this class 
       MMThreadGuard writeBufferGuard(writeBufferLock_);
       bool write_in_progress = !write_msgs_.empty(); // is there anything currently being written?
@@ -281,11 +276,17 @@ private:
          WriteStart(); 
    } 
 
+   void DoWriteCh(const char ch)
+   {
+      std::vector<char> msg(1, ch);
+      DoWriteMsg(msg);
+   }
+
    // Must be called with writeBufferLock_ acquired!
    void WriteStart(void) 
    { // Start an asynchronous write and call WriteComplete when it completes or fails 
       boost::asio::async_write(serialPortImplementation_, 
-         boost::asio::buffer(&write_msgs_.front(), 1), 
+         boost::asio::buffer(&write_msgs_.front()[0], write_msgs_.front().size()),
          boost::bind(&AsioClient::WriteComplete, 
          this, 
          boost::asio::placeholders::error)); 
@@ -339,7 +340,7 @@ private:
    boost::asio::io_service& io_service_; // the main IO service that runs this connection 
    boost::asio::serial_port serialPortImplementation_; // the serial port this instance is connected to 
    char read_msg_[max_read_length]; // data read from the socket 
-   std::deque<char> write_msgs_; // buffered write data 
+   std::deque< std::vector<char> > write_msgs_; // buffered write data
    std::deque<char> data_read_;
    SerialPort* pSerialPortAdapter_;
    std::string device_;
