@@ -223,7 +223,8 @@ public final class BeamSubPanel extends ListeningJPanel {
          }
       }
       
-      boolean startSelected = prefs_.getBoolean(instanceLabel_, prefKey, false);
+      boolean startSelected = prefs_.getBoolean(instanceLabel_, prefKey, false) &&
+            props_.hasProperty(devKey, propKey, true);  // don't start selected despite prefs if device/prop doesn't exist anymore
       JCheckBox jc = new JCheckBox(label, startSelected);
       checkBoxListener l = new checkBoxListener(jc, offValue, onValue, devKey, propKey);
       jc.addItemListener(l);
@@ -250,7 +251,7 @@ public final class BeamSubPanel extends ListeningJPanel {
          boolean boxVal = box.isSelected();
          boolean propVal = props_.getPropValueString(devKey, propKey).equals(onValue.toString());
          if (boxVal != propVal) {  // if property value is "wrong" then change it
-            props_.setPropValue(devKey, propKey, (boxVal ? onValue : offValue));
+            props_.setPropValue(devKey, propKey, (boxVal ? onValue : offValue), true);
          }
       }
    }
