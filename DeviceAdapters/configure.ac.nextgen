@@ -234,8 +234,8 @@ AM_CONDITIONAL([BUILD_SIMPLECAM], [test "x$build_simplecam" = xyes])
 
 # Video4linux
 AC_MSG_CHECKING(for Video4linux2)
-AM_CONDITIONAL([BUILD_V4L2],[test -f "/usr/include/libv4l2.h"])
-if test -f "/usr/include/libv4l2.h"; then
+AM_CONDITIONAL([BUILD_V4L2],[test -f "/usr/include/linux/videodev2.h"])
+if test -f "/usr/include/linux/videodev2.h"; then
    AC_MSG_RESULT([found])
 else
    AC_MSG_RESULT([not found])
