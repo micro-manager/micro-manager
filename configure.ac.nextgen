@@ -156,56 +156,30 @@ AS_IF([test "x$want_python" != xno],
 
 AM_CONDITIONAL([BUILD_MMCOREPY], [test "x$use_python" = xyes])
 
-#----------------------------------------------------------------
-# Look for java binaries and headers
-#----------------------------------------------------------------
 
-AC_CHECK_PROGS(JAVA, java kaffe guavac)
-AC_CHECK_PROGS(JAVAC, javac)
-AC_CHECK_PROGS(JAR, jar)
+# Java
 
-# Find Java header files:
-AC_MSG_CHECKING(for java include file jni.h)
-AC_ARG_WITH([javaincl], [AS_HELP_STRING([--with-javaincl=path],[set location of Java include directory])], [JAVAINCDIR="$withval"], [JAVAINCDIR=])
+# TODO Make these vars precious
+# TODO We should be finding the Java binaries in JAVA_HOME.
+AC_CHECK_PROGS([JAVA], [java])
+AC_CHECK_PROGS([JAVAC], [javac])
+AC_CHECK_PROGS([JAR], [jar])
 
-if test -z "$JAVAINCDIR"; then  
-   JAVAINCDIR="/usr/j2sdk*/include /usr/local/j2sdk*/include /usr/jdk*/include /usr/local/jdk*/include /opt/j2sdk*/include /opt/jdk*/include /usr/java/include /usr/java/j2sdk*/include /usr/java/jdk*/include /usr/local/java/include /opt/java/include /usr/include/java /usr/local/include/java /usr/lib/java/include /usr/lib/jvm/java*/include /usr/include/kaffe /usr/local/include/kaffe /usr/include"                                                                             
-  # Add in default installation directory on Windows for Cygwin              
-  case $host in                                                              
-  *-*-cygwin* | *-*-mingw*) JAVAINCDIR="c:/Program*Files/Java/jdk*/include d:/Program*Files/Java/jdk*/include c:/j2sdk*/include d:/j2sdk*/include c:/jdk*/include d:/jdk*/include $JAVAINCDIR";;
-  *-*-darwin*) JAVAINCDIR="/System/Library/Frameworks/JavaVM.framework/Headers $JAVAINCDIR";;
-  *);;                                                                       
-  esac                                                                       
-fi  
-
-
-JAVAINC=""                                                                   
-for d in $JAVAINCDIR ; do                                                    
-  if test -r "$d/jni.h" ; then 
-    AC_MSG_RESULT($d)
-    JAVAINCDIR=$d
-    JAVAINC=-I\"$d\"
-    break
-  fi
+# TODO Make JNI_CPPFLAGS precious
+AX_JNI_INCLUDE_DIR
+JNI_CPPFLAGS=
+for dir in $JNI_INCLUDE_DIRS
+do
+   JNI_CPPFLAGS="$JNI_CPPFLAGS -I$dir"
 done
+AC_SUBST([JNI_CPPFLAGS])
 
-if test "$JAVAINC" = "" ; then
-  AC_MSG_RESULT(not found)
-else
-  # now look for <arch>/jni_md.h
-  AC_MSG_CHECKING(for java include file jni_md.h)
-  JAVAMDDIR=`find "$JAVAINCDIR" -follow -name jni_md.h -print`
-  if test "$JAVAMDDIR" = "" ; then
-    AC_MSG_RESULT(not found)
-  else
-    JAVAMDDIR=`dirname "$JAVAMDDIR" | tail -n 1`
-    JAVAINC="${JAVAINC} -I\"$JAVAMDDIR\""
-    AC_MSG_RESULT($JAVAMDDIR)
-  fi
-fi
-AC_SUBST([JAVAINC])
-
-
+# Get the prefix and suffix for JNI native library filename.
+# In theory we can get this "correctly" by compiling and running a Java program
+# (using System.mapLibraryName("ZZZ")), but it is not worth the trouble, and
+# there are complications (such as Oracle Java 7 for OS X returning a .dylib
+# suffix instead of .jnilib). Given that MMCoreJ by default loads its native
+# library by exact name anyway, it is safe for us to dictate the naming scheme.
 case $host in
    *-*-darwin*)
       JNI_PREFIX=lib
