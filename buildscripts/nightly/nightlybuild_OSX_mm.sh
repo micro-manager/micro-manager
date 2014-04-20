@@ -94,6 +94,7 @@ eval ./configure \
    --with-freeimageplus \
    --with-python=/usr \
    $MM_CONFIGUREFLAGS \
+   "JAVACFLAGS=\"-Xlint:all,-serial -source 1.6 -target 1.6\"" \
    "OPENCV_LDFLAGS=\"-framework Cocoa -framework QTKit -framework QuartzCore -framework AppKit\"" \
    "OPENCV_LIBS=\"$MM_DEPS_PREFIX/lib/libopencv_highgui.a $MM_DEPS_PREFIX/lib/libopencv_imgproc.a $MM_DEPS_PREFIX/lib/libopencv_core.a -lz $MM_DEPS_PREFIX/lib/libdc1394.la\"" \
    PKG_CONFIG=$MM_DEPS_PREFIX/bin/pkg-config \

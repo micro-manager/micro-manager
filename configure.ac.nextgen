@@ -165,6 +165,8 @@ AC_CHECK_PROGS([JAVA], [java])
 AC_CHECK_PROGS([JAVAC], [javac])
 AC_CHECK_PROGS([JAR], [jar])
 
+AC_ARG_VAR([JAVACFLAGS], [Java compiler flags])
+
 # TODO Make JNI_CPPFLAGS precious
 AX_JNI_INCLUDE_DIR
 JNI_CPPFLAGS=
@@ -194,9 +196,6 @@ esac
 AC_SUBST([JNI_PREFIX])
 AC_SUBST([JNI_SUFFIX])
 AM_CONDITIONAL([NONSTD_JNI_PREFIX], [test "x$JNI_PREFIX" != xlib])
-
-JAVACFLAGS="-Xlint:all,-serial -source 1.6 -target 1.6"
-AC_SUBST([JAVACFLAGS])
 
 
 AC_HEADER_STDC
