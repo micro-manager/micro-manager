@@ -319,3 +319,29 @@ AC_CONFIG_FILES(m4_strip([
 ]))
 
 AC_OUTPUT
+
+echo ""
+echo "m4_text_box([Micro-Manager configuration])"
+echo ""
+echo "m4_text_wrap([$build_mmcorej],
+                   [                                             ],
+		   [    Build MMCoreJ (MMCore Java wrapper):     ])"
+echo "m4_text_wrap([$build_mmcorepy],
+                   [                                             ],
+		   [    Build MMCorePy (MMCore Python wrapper):  ])"
+echo "m4_text_wrap([$build_java_app],
+                   [                                             ],
+		   [    Build Java application (MMStudio):       ])"
+echo "m4_text_wrap([yes],
+                   [                                             ],
+		   [    Build device adapters:                   ])"
+echo "m4_text_wrap([$build_secretdeviceadapters],
+                   [                                             ],
+		   [    Build closed-source device adapters:     ])"
+echo ""
+echo "Type 'make' to build."
+echo "Then type 'make install' to install in $prefix."
+if test "x$enable_imagej_plugin" != "xno"; then
+echo "Or type 'make install-ijplugin' to install as ImageJ plugin"
+echo "in $imagejdir."
+fi
