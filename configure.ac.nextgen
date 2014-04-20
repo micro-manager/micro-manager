@@ -74,7 +74,7 @@ AS_IF([test "x$want_java" != xno],
       ])
    ],
    [
-      AS_IF([test -n "$JAVA_HOME"],
+      AS_IF([test -z "$JAVA_HOME"],
       [
          case "$build_os" in
             darwin*) JAVA_HOME=`/usr/libexec/java_home`;;
