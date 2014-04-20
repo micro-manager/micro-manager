@@ -64,6 +64,11 @@ buildscripts/nextgen-gnubuild/activate.py -a
 sh autogen.sh
 fi
 
+# Note on Java variables.
+# JDK 1.6 from Apple and its development kit need to be installed. We could
+# conceivably use JDK 1.7 to cross-compile to 1.6, but that would still need
+# the 1.6 classpath and a -bootclasspath flag to javac.
+
 # Note on OpenCV library flags.
 # Since OpenCV is a CMake project, it does not produce the convenient libtool
 # .la files that specify the link dependencies for its static libraries. It
@@ -94,6 +99,7 @@ eval ./configure \
    --with-freeimageplus \
    --with-python=/usr \
    $MM_CONFIGUREFLAGS \
+   "JAVA_HOME=\"/System/Library/Java/JavaVirtualMachines/1.6.0.jdk/Contents/Home\"" \
    "JAVACFLAGS=\"-Xlint:all,-serial -source 1.6 -target 1.6\"" \
    "OPENCV_LDFLAGS=\"-framework Cocoa -framework QTKit -framework QuartzCore -framework AppKit\"" \
    "OPENCV_LIBS=\"$MM_DEPS_PREFIX/lib/libopencv_highgui.a $MM_DEPS_PREFIX/lib/libopencv_imgproc.a $MM_DEPS_PREFIX/lib/libopencv_core.a -lz $MM_DEPS_PREFIX/lib/libdc1394.la\"" \
