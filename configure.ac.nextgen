@@ -12,6 +12,7 @@ AC_PREREQ([2.64])
 AC_INIT([Micro-Manager], [1.4], [info@micro-manager.org])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_SRCDIR([MMCore/MMCore.cpp])
+AC_CANONICAL_BUILD
 AC_CANONICAL_HOST
 AM_INIT_AUTOMAKE
 LT_INIT([disable-static])
@@ -21,12 +22,96 @@ AC_PROG_CXX([clang++ llvm-g++ g++ c++])
 AC_PROG_CC([clang llvm-gcc gcc cc])
 
 
-# TODO Add a --with-java, and proper autodetection of Java; use result to
-# determine whether to build MMCoreJ.
-AC_ARG_ENABLE([mmcorej],
-   [AS_HELP_STRING([--disable-mmcorej], [do not build MMCoreJ])],
-   [], [enable_mmcorej=yes])
-AM_CONDITIONAL([BUILD_MMCOREJ], [test "x$enable_mmcorej" != xno])
+# Boost
+# TODO Reflect results in configuration
+AX_BOOST_BASE([1.48.0])
+AX_BOOST_DATE_TIME
+AX_BOOST_SYSTEM
+
+
+# zlib
+# TODO Make optional (MMDevice and device adapters do not need zlib)
+MM_ARG_WITH_REQUIRED_LIB([zlib], [zlib], [ZLIB])
+MM_LIB_Z([$ZLIB_PREFIX], [], [MM_MSG_REQUIRED_LIB_FAILURE([zlib], [zlib])])
+
+
+# AppleHost dependencies
+case $host in
+   *apple-darwin*) MMCORE_APPLEHOST_LDFLAGS="-framework CoreFoundation -framework IOKit" ;;
+   *) MMCORE_APPLEHOST_LDFLAGS="" ;;
+esac
+AC_SUBST([MMCORE_APPLEHOST_LDFLAGS])
+
+
+# TODO Make conditional
+can_build_mmcore=yes
+
+
+##
+## MMCoreJ and MMCorePy
+##
+
+# SWIG
+AC_ARG_VAR([SWIG], [Simple Wrapper and Interface Generator])
+AC_CHECK_PROGS([SWIG], [swig])
+# TODO Provide SWIGFLAGS as precious variable
+
+
+# Java
+AC_ARG_VAR([JAVA_HOME], [JDK home directory])
+AC_ARG_VAR([JAVACFLAGS], [Java compiler flags])
+MM_ARG_WITH_JAVA
+AS_IF([test "x$want_java" != xno],
+[
+   AS_IF([test -n "$JAVA_PREFIX"],
+   [
+      AS_IF([test -n "$JAVA_HOME"],
+      [
+         AC_MSG_FAILURE([--with-java argument and JAVA_HOME both given. Try --with-java without argument])
+      ],
+      [
+         JAVA_HOME="$JAVA_PREFIX"
+      ])
+   ],
+   [
+      AS_IF([test -n "$JAVA_HOME"],
+      [
+         case "$build_os" in
+            darwin*) JAVA_HOME=`/usr/libexec/java_home`;;
+         esac
+      ])
+   ])
+   have_java=no
+   MM_PROGS_JAVA(
+   [
+      MM_HEADERS_JNI(
+      [
+         have_java=yes
+      ])
+   ])
+
+   AS_IF([test "x$want_java" = xyes],
+   [
+      AS_IF([test "x$have_java" = xno],
+      [
+         AC_MSG_FAILURE([--with-java was given, but test for Java and JNI failed])
+      ])
+   ])
+   use_java=$have_java
+],
+[
+   use_java=no
+])
+
+MM_JNI_LIBRARY_PREFIX_SUFFIX
+AM_CONDITIONAL([NONSTD_JNI_PREFIX], [test "x$JNI_PREFIX" != xlib])
+
+
+build_mmcorej=yes
+test "x$can_build_mmcore" = xno && build_mmcorej=no
+test "x$use_java" = xno && build_mmcorej=no
+test -z "$SWIG" && build_mmcorej=no
+AM_CONDITIONAL([BUILD_MMCOREJ], [test "x$build_mmcorej" = xyes])
 
 
 AC_ARG_ENABLE([hardcoded-mmcorej-library-path],
@@ -44,77 +129,6 @@ else
    MMCOREJ_LIBRARY_PATH=
 fi
 AC_SUBST([MMCOREJ_LIBRARY_PATH])
-
-
-AC_ARG_ENABLE([java-app],
-   [AS_HELP_STRING([--disable-java-app], [do not build the Java app])],
-   [], [enable_java_app=yes])
-AM_CONDITIONAL([BUILD_JAVA_APP], [test "x$enable_java_app" != xno])
-
-# TODO Use proper autodetection, and use the results to determine wheter to
-# build the Java app.
-if test "x$enable_java_app" != xno; then
-   # TODO This path should be configurable. And we should have an automated way
-   # to fetch dependencies, but that is a future project.
-   CLASSEXT="\$(top_srcdir)/../3rdpartypublic/classext"
-
-   # For now, just use hard-coded locations for dependency JARs. Ideally, we
-   # would just use a user-provided classpath and check for classes, not JARs.
-   # (In addition to that, there should be a way to fetch dependencies using
-   # Ivy.)
-
-   IJJARPATH="$CLASSEXT/ij.jar"
-   BSHJARPATH="$CLASSEXT/bsh-2.0b4.jar"
-   SWINGXJARPATH="$CLASSEXT/swingx-0.9.5.jar"
-   COMMONSMATHJARPATH="$CLASSEXT/commons-math-2.0.jar"
-   SWINGLAYOUTJARPATH="$CLASSEXT/swing-layout-1.0.4.jar"
-   ABSOLUTEJARPATH="$CLASSEXT/AbsoluteLayout.jar"
-   JFREECHARTJARPATH="$CLASSEXT/jfreechart-1.0.13.jar:$CLASSEXT/jcommon-1.0.16.jar"
-   # TODO This list is incomplete, and various Makefile.am's are using CLASSEXT
-   # with the JAR name.
-fi
-
-AC_SUBST(CLASSEXT)
-AC_SUBST(BSHJARPATH)
-AC_SUBST(SWINGXJARPATH)
-AC_SUBST(COMMONSMATHJARPATH)
-AC_SUBST(SWINGLAYOUTJARPATH)
-AC_SUBST(ABSOLUTEJARPATH)
-AC_SUBST(JFREECHARTJARPATH)
-AC_SUBST(IJJARPATH)
-
-
-# TODO Reinstate --disable-core flag, and skip Core-associated tests (but not
-# all of the indented checks below are truly associated with the Core only)
-
-   #---------------------------------------------------
-   # Check for BOOST
-   #---------------------------------------------------
-   AX_BOOST_BASE([1.40.0])
-   AX_BOOST_DATE_TIME
-   AX_BOOST_SYSTEM
-
-
-   # zlib
-   MM_ARG_WITH_REQUIRED_LIB([zlib], [zlib], [ZLIB])
-   MM_LIB_Z([$ZLIB_PREFIX], [], [MM_MSG_REQUIRED_LIB_FAILURE([zlib], [zlib])])
-
-   # AppleHost dependencies
-   case $host in
-      *apple-darwin*) MMCORE_APPLEHOST_LDFLAGS="-framework CoreFoundation -framework IOKit" ;;
-      *) MMCORE_APPLEHOST_LDFLAGS="" ;;
-   esac
-   AC_SUBST([MMCORE_APPLEHOST_LDFLAGS])
-
-
-   #---------------------------------------------------
-   # Check for SWIG
-   #---------------------------------------------------
-   AC_CHECK_PROGS(SWIG, swig)
-   if test "$SWIG" = "" ; then
-      AC_MSG_ERROR([not found, swig is needed to build this application.  Please download (http://www.swig.org/download.html) and install])
-   fi
-
 
 
 # Python and NumPy
@@ -154,49 +168,77 @@ AS_IF([test "x$want_python" != xno],
 ])
 
 
-AM_CONDITIONAL([BUILD_MMCOREPY], [test "x$use_python" = xyes])
+build_mmcorepy=yes
+test "x$can_build_mmcore" = xno && build_mmcorepy=no
+test "x$use_python" = xno && build_mmcorepy=no
+test -z "$SWIG" && build_mmcorepy=no
+AM_CONDITIONAL([BUILD_MMCOREPY], [test "x$build_mmcorepy" = xyes])
 
 
-# Java
+build_mmcore=no
+test "x$build_mmcorej" = xyes && build_mmcore=yes
+test "x$build_mmcorepy" = xyes && build_mmcore=yes
+AM_CONDITIONAL([BUILD_MMCORE], [test "x$build_mmcore" = xyes])
 
-# TODO Make these vars precious
-# TODO We should be finding the Java binaries in JAVA_HOME.
-AC_CHECK_PROGS([JAVA], [java])
-AC_CHECK_PROGS([JAVAC], [javac])
-AC_CHECK_PROGS([JAR], [jar])
 
-AC_ARG_VAR([JAVACFLAGS], [Java compiler flags])
+##
+## Java application (MMStudio and plugins)
+##
 
-# TODO Make JNI_CPPFLAGS precious
-AX_JNI_INCLUDE_DIR
-JNI_CPPFLAGS=
-for dir in $JNI_INCLUDE_DIRS
-do
-   JNI_CPPFLAGS="$JNI_CPPFLAGS -I$dir"
-done
-AC_SUBST([JNI_CPPFLAGS])
+AC_ARG_ENABLE([java-app],
+   [AS_HELP_STRING([--disable-java-app], [do not build the Java app])],
+   [], [enable_java_app=auto])
 
-# Get the prefix and suffix for JNI native library filename.
-# In theory we can get this "correctly" by compiling and running a Java program
-# (using System.mapLibraryName("ZZZ")), but it is not worth the trouble, and
-# there are complications (such as Oracle Java 7 for OS X returning a .dylib
-# suffix instead of .jnilib). Given that MMCoreJ by default loads its native
-# library by exact name anyway, it is safe for us to dictate the naming scheme.
-case $host in
-   *-*-darwin*)
-      JNI_PREFIX=lib
-      JNI_SUFFIX=.jnilib ;;
-   *-*-cygwin* | *-*-mingw*)
-      JNI_PREFIX=
-      JNI_SUFFIX=.dll ;;
-   *)
-      JNI_PREFIX=lib
-      JNI_SUFFIX=.so ;;
-esac
-AC_SUBST([JNI_PREFIX])
-AC_SUBST([JNI_SUFFIX])
-AM_CONDITIONAL([NONSTD_JNI_PREFIX], [test "x$JNI_PREFIX" != xlib])
+build_java_app=yes
+test "x$enable_java_app" = xno && build_java_app=no
+test "x$build_mmcorej" = xno && build_java_app=no
+# TODO Require dependency JARs
 
+AS_IF([test "x$enable_java_app" = xyes],
+[
+   AS_IF([test "x$build_java_app" = xno],
+   [
+      AC_MSG_FAILURE([--enable-java-app was given, but prerequisites were not satisfied])
+   ])
+])
+
+AM_CONDITIONAL([BUILD_JAVA_APP], [test "x$build_java_app" = xyes])
+
+
+if test "x$build_java_app" = xyes; then
+   # TODO This path should be configurable. And we should have an automated way
+   # to fetch dependencies, but that is a future project.
+   CLASSEXT="\$(top_srcdir)/../3rdpartypublic/classext"
+
+   # For now, just use hard-coded locations for dependency JARs. Ideally, we
+   # would just use a user-provided classpath and check for classes, not JARs.
+   # (In addition to that, there should be a way to fetch dependencies using
+   # Ivy.)
+
+   IJJARPATH="$CLASSEXT/ij.jar"
+   BSHJARPATH="$CLASSEXT/bsh-2.0b4.jar"
+   SWINGXJARPATH="$CLASSEXT/swingx-0.9.5.jar"
+   COMMONSMATHJARPATH="$CLASSEXT/commons-math-2.0.jar"
+   SWINGLAYOUTJARPATH="$CLASSEXT/swing-layout-1.0.4.jar"
+   ABSOLUTEJARPATH="$CLASSEXT/AbsoluteLayout.jar"
+   JFREECHARTJARPATH="$CLASSEXT/jfreechart-1.0.13.jar:$CLASSEXT/jcommon-1.0.16.jar"
+   # TODO This list is incomplete, and various Makefile.am's are using CLASSEXT
+   # with the JAR name.
+fi
+
+AC_SUBST(CLASSEXT)
+AC_SUBST(BSHJARPATH)
+AC_SUBST(SWINGXJARPATH)
+AC_SUBST(COMMONSMATHJARPATH)
+AC_SUBST(SWINGLAYOUTJARPATH)
+AC_SUBST(ABSOLUTEJARPATH)
+AC_SUBST(JFREECHARTJARPATH)
+AC_SUBST(IJJARPATH)
+
+
+##
+## Leftover stuff (needs cleanup)
+##
 
 AC_HEADER_STDC
 AC_HEADER_STDBOOL
@@ -214,6 +256,11 @@ install_mmdevapi=false
 #    [ install_mmdevapi=true ])
 AM_CONDITIONAL([INSTALL_MMDEVAPI], [test x$install_mmdevapi = xtrue])
 
+
+##
+## Subdirectory configuration
+##
+
 AC_MSG_CHECKING([for proprietary device adapter source])
 AS_IF([test -f "$srcdir/SecretDeviceAdapters/configure"],
    [build_secretdeviceadapters=yes], [build_secretdeviceadapters=no])
@@ -225,6 +272,11 @@ AS_IF([test "x$build_secretdeviceadapters" = xyes], [
    AC_CONFIG_SUBDIRS([SecretDeviceAdapters])
 ])
 AC_CONFIG_SUBDIRS([DeviceKit])
+
+
+##
+## Output generation
+##
 
 AC_CONFIG_FILES(m4_strip([
    Makefile

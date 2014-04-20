@@ -59,6 +59,8 @@ AC_DEFUN([MM_PROG_PYTHON],
 ])
 
 
+# MM_HEADERS_PYTHON([action-if-found], [action-if-not-found])
+# Set precious variable PYTHON_CPPFLAGS
 AC_DEFUN([MM_HEADERS_PYTHON], [
    _MM_PYTHON_CPPFLAGS([PYTHON], [Python],
       ['import distutils.sysconfig as dusc, sys; sys.stdout.write(dusc.get_python_inc(True))'],
@@ -67,6 +69,8 @@ AC_DEFUN([MM_HEADERS_PYTHON], [
 ])
 
 
+# MM_HEADERS_NUMPY([action-if-found], [action-if-not-found])
+# Set precious variable NUMPY_CPPFLAGS
 AC_DEFUN([MM_HEADERS_NUMPY], [
    # Push state
    mm_python_numpy_python_old_cppflags="$CPPFLAGS"

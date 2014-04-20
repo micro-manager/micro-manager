@@ -1,3 +1,11 @@
+# This file is a modified version of ax_jni_include_dir.m4 from the Autoconf
+# archive.
+# The changes
+# - prevent failure when JAVAC is set to an absolute path,
+# - when JAVA_HOME is set, disable OS X specific handling of javac-relative
+#   paths, and
+# - adds 'darwin' as possible platform-specific subdirectory.
+
 # ===========================================================================
 #    http://www.gnu.org/software/autoconf-archive/ax_jni_include_dir.html
 # ===========================================================================
@@ -38,13 +46,14 @@
 # LICENSE
 #
 #   Copyright (c) 2008 Don Anderson <dda@sleepycat.com>
+#   Copyright (c) 2014 University of California, San Francisco
 #
 #   Copying and distribution of this file, with or without modification, are
 #   permitted in any medium without royalty provided the copyright notice
 #   and this notice are preserved. This file is offered as-is, without any
 #   warranty.
 
-#serial 10
+# based on: serial 10
 
 AU_ALIAS([AC_JNI_INCLUDE_DIR], [AX_JNI_INCLUDE_DIR])
 AC_DEFUN([AX_JNI_INCLUDE_DIR],[
@@ -53,23 +62,25 @@ JNI_INCLUDE_DIRS=""
 
 if test "x$JAVA_HOME" != x; then
 	_JTOPDIR="$JAVA_HOME"
+	_JINC="$_JTOPDIR/include"
 else
-	if test "x$JAVAC" = x; then
-		JAVAC=javac
+	_ACJNI_JAVAC="$JAVAC"
+	if test "x$_ACJNI_JAVAC" = x; then
+		AC_PATH_PROG([_ACJNI_JAVAC], [javac], [no])
 	fi
-	AC_PATH_PROG([_ACJNI_JAVAC], [$JAVAC], [no])
 	if test "x$_ACJNI_JAVAC" = xno; then
 		AC_MSG_ERROR([cannot find JDK; try setting \$JAVAC or \$JAVA_HOME])
 	fi
 	_ACJNI_FOLLOW_SYMLINKS("$_ACJNI_JAVAC")
 	_JTOPDIR=`echo "$_ACJNI_FOLLOWED" | sed -e 's://*:/:g' -e 's:/[[^/]]*$::'`
+
+	case "$host_os" in
+		darwin*)        _JTOPDIR=`echo "$_JTOPDIR" | sed -e 's:/[[^/]]*$::'`
+				_JINC="$_JTOPDIR/Headers";;
+		*)              _JINC="$_JTOPDIR/include";;
+	esac
 fi
 
-case "$host_os" in
-        darwin*)        _JTOPDIR=`echo "$_JTOPDIR" | sed -e 's:/[[^/]]*$::'`
-                        _JINC="$_JTOPDIR/Headers";;
-        *)              _JINC="$_JTOPDIR/include";;
-esac
 _AS_ECHO_LOG([_JTOPDIR=$_JTOPDIR])
 _AS_ECHO_LOG([_JINC=$_JINC])
 
@@ -93,6 +104,7 @@ osf*)           _JNI_INC_SUBDIRS="alpha";;
 solaris*)       _JNI_INC_SUBDIRS="solaris";;
 mingw*)		_JNI_INC_SUBDIRS="win32";;
 cygwin*)	_JNI_INC_SUBDIRS="win32";;
+darwin*)        _JNI_INC_SUBDIRS="darwin";;
 *)              _JNI_INC_SUBDIRS="genunix";;
 esac
 

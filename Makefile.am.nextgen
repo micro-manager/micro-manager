@@ -10,13 +10,15 @@
 AUTOMAKE_OPTIONS = foreign
 ACLOCAL_AMFLAGS = -I m4
 
-if BUILD_MMCOREJ
+if BUILD_MMCORE
 MMCORE_DIR = MMCore
+endif
+
+if BUILD_MMCOREJ
 MMCOREJ_DIR = MMCoreJ_wrap
 endif
 
 if BUILD_MMCOREPY
-MMCORE_DIR = MMCore
 MMCOREPY_DIR = MMCorePy_wrap
 endif
 
@@ -55,9 +57,7 @@ endif # BUILD_JAVA_APP
 CLEANFILES = buildscripts/launchers/micromanager buildscripts/launchers/mmimagej
 
 
-# TODO: The dependencies between MMCOREJ_DIR and JAVA_APP_DIRS is handled in
-# configure. The same should be done for MMCORE_DIR and MMCORE{J,PY}_DIR. Also,
-# building of DeviceAdapters could be made optional.
+# TODO: Building of DeviceAdapters could be made optional.
 SUBDIRS = MMDevice $(MMCORE_DIR) $(MMCOREJ_DIR) $(MMCOREPY_DIR) $(JAVA_APP_DIRS) DeviceAdapters $(SECRETDEVICEADAPTERS) bindist
 
 
