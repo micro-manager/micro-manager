@@ -8,7 +8,6 @@
 #
 # %nextgen_build_filename = autogen.sh
 # %nextgen_build_filemode = 7
-# %nextgen_build_replaces = mmUnixBuild.sh 3ca884a4fe4a532ae9a199b702a1ea71
 
 echo "Bootstrapping autoconf/automake build system for Micro-Manager..." 1>&2
 
