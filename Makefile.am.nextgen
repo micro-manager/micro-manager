@@ -31,6 +31,7 @@ if BUILD_JAVA_APP
 
 JAVA_APP_DIRS = mmstudio acqEngine autofocus plugins scripts
 bin_SCRIPTS = buildscripts/launchers/micromanager
+noinst_SCRIPTS = buildscripts/launchers/mmimagej
 
 # TODO Define jardir in configure script (See other uses.)
 jardir = $(pkgdatadir)/jars
@@ -41,7 +42,25 @@ buildscripts/launchers/micromanager: $(srcdir)/buildscripts/launchers/micromanag
 		-e 's%@pkgdatadir[@]%$(pkgdatadir)%g' \
 		-e 's%@jardir[@]%$(jardir)%g' \
 		$(srcdir)/buildscripts/launchers/micromanager.in >$@
-	chmod +x $@
+
+# Launcher as ImageJ plugin. For imagejdir, fall back to run time location of
+# script if not set at build time. The shell variable imagejjar is set so as to
+# account for the case where ij.jar is embedded within ImageJ.app on OS X.
+buildscripts/launchers/mmimagej: $(srcdir)/buildscripts/launchers/mmimagej.in
+	if test -z "$(imagejdir)"; then \
+		imagejdir='`dirname $$0`'; \
+		imagejjar='`dirname $$0`/ij.jar'; \
+	else \
+		imagejdir=$(imagejdir); \
+		imagejjar=`find "$(imagejdir)" -name ij.jar | head -n 1`; \
+	fi; \
+	if test -z "$$imagejjar"; then \
+		imagejjar="$(imagejdir)/ij.jar"; \
+	fi; \
+	sed \
+		-e "s%@imagejdir[@]%$$imagejdir%g" \
+		-e "s%@imagejjar[@]%$$imagejjar%g" \
+		$(srcdir)/buildscripts/launchers/mmimagej.in >$@
 
 endif # BUILD_JAVA_APP
 
@@ -64,32 +83,12 @@ CLEANFILES = buildscripts/launchers/micromanager buildscripts/launchers/mmimagej
 SUBDIRS = MMDevice $(MMCORE_DIR) $(MMCOREJ_DIR) $(MMCOREPY_DIR) $(JAVA_APP_DIRS) DeviceAdapters $(SECRETDEVICEADAPTERS) bindist
 
 
-# Target to install Micro-Manager into an existing ImageJ application folder,
-# as an ImageJ plugin.
-#
-# Typical usage:
-# make install-ijplugin imagejdir=/path/to/imagejdir
-#
-# Note to maintainer:
-# Note that the `mmimagej' script is generated here as part of the
-# installation because we do not want to generate it if not installing into
-# ImageJ. The alternative would be to decide whether to generate it at
-# configuration time, but we also do not want to make the choice of `install'
-# vs `install-ijplugin' at configuration time, because that would play poorly
-# with how autoconf/automake-based installation is supposed to work (especially
-# in terms of how and when destination directories are selected).
-#
-# But we could use noinst_SCRIPTS to build mmimagej, provided that we know
-# imagejdir at build time (through --enable-imagej-plugin).
-#
-# Another note to maintainer:
-# The shell variable imagejjar below is set so as to account for the case where
-# ij.jar is embedded within ImageJ.app on OS X.
+# Install Micro-Manager into an existing ImageJ application folder, as an
+# ImageJ plugin.
 install-ijplugin:
-	@if test -z "$$imagejdir"; then \
-		echo "Please run:" 1>&2; \
-		echo "  make imagejdir=DESTDIR $@" 1>&2; \
-		echo "with an appropriate DESTDIR" 1>&2; \
+	@if test -z "$(imagejdir)"; then \
+		echo "ImageJ location not set." 1>&2; \
+		echo "Use './configure --enable-imagej-plugin=DESTDIR'." 1>&2; \
 		exit 1; \
 	fi
 	$(MAKE) pkglibdir=$(imagejdir) pkgdatadir=$(imagejdir) \
@@ -98,18 +97,9 @@ install-ijplugin:
 	rm -f $(DESTDIR)$(imagejdir)/*.la
 	rm -f $(DESTDIR)$(imagejdir)/plugins/Micro-Manager/ij.jar
 	rm -f $(DESTDIR)$(imagejdir)/micromanager
-	imagejjar=`find "$(imagejdir)" -name ij.jar | head -n 1`; \
-	if test -z "$$imagejjar"; then \
-		imagejjar="$(imagejdir)/ij.jar"; \
-	fi; \
-	sed \
-		-e 's%@imagejdir[@]%$(imagejdir)%g' \
-		-e "s%@imagejjar[@]%$$imagejjar%g" \
-		$(srcdir)/buildscripts/launchers/mmimagej.in \
-		>buildscripts/launchers/mmimagej
 	$(INSTALL) buildscripts/launchers/mmimagej $(DESTDIR)$(imagejdir)
-	-rm -f buildscripts/launchers/mmimagej
-	@echo "##############################################################################" 1>&2; \
+	@echo "" 1>&2; \
+	echo "##############################################################################" 1>&2; \
 	echo "Micro-Manager has been installed as an ImageJ plugin in" 1>&2; \
 	echo "$(imagejdir)" 1>&2; \
 	echo "" 1>&2; \

@@ -240,8 +240,26 @@ AC_ARG_ENABLE([install-dependency-jars],
    [AS_HELP_STRING([--disable-install-dependency-jars],
       [Do not install third-party library JARs])],
    [], [enable_install_dependency_jars=yes])
+test "x$build_java_app" = xno && enable_install_dependency_jars=no
 AM_CONDITIONAL([INSTALL_DEPENDENCY_JARS],
       [test "x$enable_install_dependency_jars" != xno])
+
+
+AC_ARG_VAR([imagejdir], [Location of ImageJ, for use with 'make install-ijplugin'])
+AC_ARG_ENABLE([imagej-plugin],
+   [AS_HELP_STRING([--enable-imagej-plugin=IMAGEJDIR],
+      [Prepare to install as plugin for ImageJ at IMAGEJDIR. This will not
+       change what is built, but will enable the use of the install-ijplugin
+       make target (default: no)])],
+   [], [enable_imagej_plugin=no])
+AS_IF([test "x$build_java_app" = xno],
+   [AS_IF([test "x$enable_imagej_plugin" != xno],
+      [AC_MSG_ERROR([--enable-imagej-plugin given but Java app will not be built])])])
+case $enable_imagej_plugin in
+   yes) AC_MSG_ERROR([--enable-imagej-plugin requires argument (ImageJ directory)]) ;;
+   no)  ;;
+   *)   imagejdir="$enable_imagej_plugin";;
+esac
 
 
 ##
