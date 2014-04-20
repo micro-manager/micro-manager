@@ -43,15 +43,18 @@ buildscripts/launchers/micromanager: $(srcdir)/buildscripts/launchers/micromanag
 		$(srcdir)/buildscripts/launchers/micromanager.in >$@
 	chmod +x $@
 
-# Install the dependency library JARs.
-# TODO Provide ./configure --disable-install-dependency-jars
+endif # BUILD_JAVA_APP
+
+
+if INSTALL_DEPENDENCY_JARS
+
 install-data-hook:
 	$(INSTALL) -d $(DESTDIR)$(jardir)
 	for jar in $(CLASSEXT)/*.jar; do \
 		$(INSTALL_DATA) -c $$jar $(DESTDIR)$(jardir); \
 	done
 
-endif # BUILD_JAVA_APP
+endif # INSTALL_DEPENDENCY_JARS
 
 
 CLEANFILES = buildscripts/launchers/micromanager buildscripts/launchers/mmimagej
