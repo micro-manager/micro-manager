@@ -20,17 +20,17 @@ MMCORE_DIR = MMCore
 MMCOREPY_DIR = MMCorePy_wrap
 endif
 
-if BUILD_JAVA_APP
-JAVA_APP_DIRS = mmstudio acqEngine autofocus plugins scripts
-endif
-
 if BUILD_SECRETDEVICEADAPTERS
 SECRETDEVICEADAPTERS = SecretDeviceAdapters
 endif
 
+
+if BUILD_JAVA_APP
+
+JAVA_APP_DIRS = mmstudio acqEngine autofocus plugins scripts
 bin_SCRIPTS = buildscripts/launchers/micromanager
 
-# TODO Define this in configure script? (See other uses.)
+# TODO Define jardir in configure script (See other uses.)
 jardir = $(pkgdatadir)/jars
 
 buildscripts/launchers/micromanager: $(srcdir)/buildscripts/launchers/micromanager.in
@@ -41,9 +41,13 @@ buildscripts/launchers/micromanager: $(srcdir)/buildscripts/launchers/micromanag
 		$(srcdir)/buildscripts/launchers/micromanager.in >$@
 	chmod +x $@
 
+endif # BUILD_JAVA_APP
+
+
 CLEANFILES = buildscripts/launchers/micromanager buildscripts/launchers/mmimagej
 
-# Note: The dependencies between MMCOREJ_DIR and JAVA_APP_DIRS is handled in
+
+# TODO: The dependencies between MMCOREJ_DIR and JAVA_APP_DIRS is handled in
 # configure. The same should be done for MMCORE_DIR and MMCORE{J,PY}_DIR. Also,
 # building of DeviceAdapters could be made optional.
 SUBDIRS = MMDevice $(MMCORE_DIR) $(MMCOREJ_DIR) $(MMCOREPY_DIR) $(JAVA_APP_DIRS) DeviceAdapters $(SECRETDEVICEADAPTERS) bindist
@@ -64,6 +68,9 @@ SUBDIRS = MMDevice $(MMCORE_DIR) $(MMCOREJ_DIR) $(MMCOREPY_DIR) $(JAVA_APP_DIRS)
 # with how autoconf/automake-based installation is supposed to work (especially
 # in terms of how and when destination directories are selected).
 #
+# But we could use noinst_SCRIPTS to build mmimagej, provided that we know
+# imagejdir at build time (through --enable-imagej-plugin).
+#
 # Another note to maintainer:
 # The shell variable imagejjar below is set so as to account for the case where
 # ij.jar is embedded within ImageJ.app on OS X.
@@ -74,7 +81,9 @@ install-ijplugin:
 		echo "with an appropriate DESTDIR" 1>&2; \
 		exit 1; \
 	fi
-	$(MAKE) pkglibdir=$(imagejdir) pkgdatadir=$(imagejdir) jardir=$(imagejdir)/plugins/Micro-Manager bindir=$(imagejdir) install
+	$(MAKE) pkglibdir=$(imagejdir) pkgdatadir=$(imagejdir) \
+		jardir=$(imagejdir)/plugins/Micro-Manager \
+		bindir=$(imagejdir) install
 	rm -f $(DESTDIR)$(imagejdir)/*.la
 	rm -f $(DESTDIR)$(imagejdir)/plugins/Micro-Manager/ij.jar
 	rm -f $(DESTDIR)$(imagejdir)/micromanager
