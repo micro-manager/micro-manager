@@ -48,6 +48,19 @@ CLEANFILES = buildscripts/launchers/micromanager
 # building of DeviceAdapters could be made optional.
 SUBDIRS = MMDevice $(MMCORE_DIR) $(MMCOREJ_DIR) $(MMCOREPY_DIR) $(JAVA_APP_DIRS) DeviceAdapters $(SECRETDEVICEADAPTERS) bindist
 
+#TODO: install an `mmimagej' script to start MM inside ImageJ
+install-ijplugin:
+	@if test -z "$$imagejdir"; then \
+		echo "Please run:" 1>&2; \
+		echo "  make imagejdir=DESTDIR $@" 1>&2; \
+		echo "with an appropriate DESTDIR" 1>&2; \
+	else \
+		$(MAKE) pkglibdir=$(imagejdir) pkgdatadir=$(imagejdir) jardir=$(imagejdir)/plugins/Micro-Manager bindir=$(imagejdir) install; \
+		rm -f $(imagejdir)/*.la; \
+		rm -f $(imagejdir)/plugins/Micro-Manager/ij.jar; \
+		rm -f $(imagejdir)/micromanager; \
+	fi
+
 dox:
 	test -d $(srcdir)/doxygen/out/MMDevice || mkdir $(srcdir)/doxygen/out/MMDevice
 	rm -rf $(srcdir)/doxygen/out/MMDevice/*
