@@ -41,25 +41,63 @@ buildscripts/launchers/micromanager: $(srcdir)/buildscripts/launchers/micromanag
 		$(srcdir)/buildscripts/launchers/micromanager.in >$@
 	chmod +x $@
 
-CLEANFILES = buildscripts/launchers/micromanager
+CLEANFILES = buildscripts/launchers/micromanager buildscripts/launchers/mmimagej
 
 # Note: The dependencies between MMCOREJ_DIR and JAVA_APP_DIRS is handled in
 # configure. The same should be done for MMCORE_DIR and MMCORE{J,PY}_DIR. Also,
 # building of DeviceAdapters could be made optional.
 SUBDIRS = MMDevice $(MMCORE_DIR) $(MMCOREJ_DIR) $(MMCOREPY_DIR) $(JAVA_APP_DIRS) DeviceAdapters $(SECRETDEVICEADAPTERS) bindist
 
-#TODO: install an `mmimagej' script to start MM inside ImageJ
+
+# Target to install Micro-Manager into an existing ImageJ application folder,
+# as an ImageJ plugin.
+#
+# Typical usage:
+# make install-ijplugin imagejdir=/path/to/imagejdir
+#
+# Note to maintainer:
+# Note that the `mmimagej' script is generated here as part of the
+# installation because we do not want to generate it if not installing into
+# ImageJ. The alternative would be to decide whether to generate it at
+# configuration time, but we also do not want to make the choice of `install'
+# vs `install-ijplugin' at configuration time, because that would play poorly
+# with how autoconf/automake-based installation is supposed to work (especially
+# in terms of how and when destination directories are selected).
+#
+# Another note to maintainer:
+# The shell variable imagejjar below is set so as to account for the case where
+# ij.jar is embedded within ImageJ.app on OS X.
 install-ijplugin:
 	@if test -z "$$imagejdir"; then \
 		echo "Please run:" 1>&2; \
 		echo "  make imagejdir=DESTDIR $@" 1>&2; \
 		echo "with an appropriate DESTDIR" 1>&2; \
-	else \
-		$(MAKE) pkglibdir=$(imagejdir) pkgdatadir=$(imagejdir) jardir=$(imagejdir)/plugins/Micro-Manager bindir=$(imagejdir) install; \
-		rm -f $(imagejdir)/*.la; \
-		rm -f $(imagejdir)/plugins/Micro-Manager/ij.jar; \
-		rm -f $(imagejdir)/micromanager; \
+		exit 1; \
 	fi
+	$(MAKE) pkglibdir=$(imagejdir) pkgdatadir=$(imagejdir) jardir=$(imagejdir)/plugins/Micro-Manager bindir=$(imagejdir) install
+	rm -f $(DESTDIR)$(imagejdir)/*.la
+	rm -f $(DESTDIR)$(imagejdir)/plugins/Micro-Manager/ij.jar
+	rm -f $(DESTDIR)$(imagejdir)/micromanager
+	imagejjar=`find "$(imagejdir)" -name ij.jar | head -n 1`; \
+	if test -z "$$imagejjar"; then \
+		imagejjar="$(imagejdir)/ij.jar"; \
+	fi; \
+	sed \
+		-e 's%@imagejdir[@]%$(imagejdir)%g' \
+		-e "s%@imagejjar[@]%$$imagejjar%g" \
+		$(srcdir)/buildscripts/launchers/mmimagej.in \
+		>buildscripts/launchers/mmimagej
+	$(INSTALL) buildscripts/launchers/mmimagej $(DESTDIR)$(imagejdir)
+	-rm -f buildscripts/launchers/mmimagej
+	@echo "##############################################################################" 1>&2; \
+	echo "Micro-Manager has been installed as an ImageJ plugin in" 1>&2; \
+	echo "$(imagejdir)" 1>&2; \
+	echo "" 1>&2; \
+	echo "You can run Micro-Manager from the command line by typing" 1>&2; \
+	echo "$(imagejdir)/mmimagej" 1>&2; \
+	echo "or from the ImageJ menu (Plugins > Micro-Manager > Micro-Manager Studio)." 1>&2; \
+	echo "##############################################################################" 1>&2
+
 
 dox:
 	test -d $(srcdir)/doxygen/out/MMDevice || mkdir $(srcdir)/doxygen/out/MMDevice
