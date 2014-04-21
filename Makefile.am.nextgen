@@ -50,7 +50,9 @@ buildscripts/launchers/mmimagej: $(srcdir)/buildscripts/launchers/mmimagej.in
 install-ijplugin:
 	$(MAKE) pkglibdir=$(imagejdir) pkgdatadir=$(imagejdir) \
 		jardir=$(imagejdir)/plugins/Micro-Manager \
-		bindir=$(imagejdir) install
+		bindir=$(imagejdir) \
+		force_plain_install=yes \
+		install
 	rm -f $(DESTDIR)$(imagejdir)/*.la
 	rm -f $(DESTDIR)$(imagejdir)/plugins/Micro-Manager/ij.jar
 	@echo "" 1>&2; \
@@ -63,6 +65,33 @@ install-ijplugin:
 	echo "or from the ImageJ menu (Plugins > Micro-Manager > Micro-Manager Studio)." 1>&2; \
 	echo "##############################################################################" 1>&2; \
 	echo "" 1>&2
+
+# If the user types 'make install', they probably didn't mean it.
+install-check-ijplugin:
+	@if test "x$(force_plain_install)" != xyes; then \
+		echo "############################################################" 1>&2; \
+		echo "You just ran 'make install'." 1>&2; \
+		echo "Did you mean to run 'make install-ijplugin'?" 1>&2; \
+		echo "" 1>&2; \
+		echo "I'm sorry I couldn't warn you before starting;" 1>&2; \
+		echo "it is due to the limitations of Automake, which" 1>&2; \
+		echo "really wasn't designed for a task like this." 1>&2; \
+		echo "" 1>&2; \
+		echo "Some (not necessarily all) of the files got installed" 1>&2; \
+		echo "in $(pkglibdir)," 1>&2; \
+		echo "in $(pkgdatadir), and" 1>&2; \
+		echo "at $(bindir)/mmimagej" 1>&2; \
+		echo "" 1>&2; \
+		echo "You can uninstall them with 'make uninstall'." 1>&2; \
+		echo "" 1>&2; \
+		echo "To force 'make install' (e.g. for testing), you can run" 1>&2; \
+		echo "'make install force_plain_install=yes'"; 1>&2; \
+		echo "############################################################" 1>&2; \
+		exit 1; \
+	fi
+
+install-exec-local: install-check-ijplugin
+install-data-local: install-check-ijplugin
 
 else # INSTALL_AS_IMAGEJ_PLUGIN
 
@@ -98,6 +127,11 @@ install-data-hook:
 	$(INSTALL) -d $(DESTDIR)$(jardir)
 	for jar in $(CLASSEXT)/*.jar; do \
 		$(INSTALL_DATA) -c $$jar $(DESTDIR)$(jardir); \
+	done
+
+uninstall-hook:
+	for jar in $(CLASSEXT)/*.jar; do \
+		rm -f $(DESTDIR)$(jardir)/`basename $$jar`; \
 	done
 
 endif # INSTALL_DEPENDENCY_JARS

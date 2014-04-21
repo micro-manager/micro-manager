@@ -55,6 +55,9 @@ _MMCorePy_la_LIBADD = ../MMCore/libMMCore.la
 install-exec-hook:
 	$(INSTALL_DATA) MMCorePy.py $(DESTDIR)$(pkglibdir)
 
+uninstall-hook:
+	rm -f $(DESTDIR)$(pkglibdir)/MMCorePy.py
+
 CLEANFILES = MMCorePy.stamp MMCorePy.py MMCorePy_wrap.h MMCorePy_wrap.cxx
 
 EXTRA_DIST = license.txt
