@@ -24,8 +24,7 @@
 
 CLASSPATH=
 jardir=@jardir@
-if test -z "$jardir"; then :
-else
+if test -n "$jardir"; then
    for jar in "$jardir"/*.jar; do
       if test -z "$CLASSPATH"; then
          CLASSPATH="$jar"
@@ -33,6 +32,11 @@ else
          CLASSPATH="$CLASSPATH:$jar"
       fi
    done
+fi
+
+imagejjar=@imagejjar@
+if test -n "$imagejjar"; then
+   CLASSPATH="$imagejjar:$CLASSPATH"
 fi
 
 echo "class path = $CLASSPATH" 1>&2
