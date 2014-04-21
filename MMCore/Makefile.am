@@ -15,7 +15,7 @@ libMMCore_a_SOURCES = MMCore.cpp MMCore.h \
 	LoadableModules/LoadedModuleImpl.h LoadableModules/LoadedModuleImpl.cpp \
 	LoadableModules/LoadedModuleImplUnix.h LoadableModules/LoadedModuleImplUnix.cpp \
 	LoadableModules/LoadedDeviceAdapter.h LoadableModules/LoadedDeviceAdapter.cpp \
-	IMLogger.h \
+	IMMLogger.h \
 	FastLogger.h FastLogger.cpp \
         Compressor.h \
 	../MMDevice/MMDevice.h ../MMDevice/MMDeviceConstants.h \

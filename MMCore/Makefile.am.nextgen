@@ -5,7 +5,7 @@
 # - Mark Tsuchida
 #
 # %nextgen_build_filename = Makefile.am
-# %nextgen_build_replaces = Makefile.am 92a9ff09e3296430e2118a4af45b6302
+# %nextgen_build_replaces = Makefile.am 0f947f18e10ac0d1eccf8f9b9a2dde51
 
 AUTOMAKE_OPTIONS = foreign subdir-objects
 
@@ -42,7 +42,7 @@ libMMCore_la_SOURCES = \
        FastLogger.h \
        Host.cpp \
        Host.h \
-       IMLogger.h \
+       IMMLogger.h \
        LibraryInfo/LibraryPaths.h \
        LibraryInfo/LibraryPathsUnix.cpp \
        LoadableModules/LoadedDeviceAdapter.cpp \
