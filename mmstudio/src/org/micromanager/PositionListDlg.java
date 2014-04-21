@@ -885,8 +885,11 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
    protected void removeSelectedPositions() {
       PosTableModel ptm = (PosTableModel)posTable_.getModel();
       int[] selectedRows = posTable_.getSelectedRows();
-      for (int row : selectedRows) {
-         ptm.getPositionList().removePosition(row - 1);
+      // Reverse the rows so that we delete from the end; if we delete from
+      // the front then the position list gets re-ordered as we go and we 
+      // delete the wrong positions!
+      for (int i = selectedRows.length - 1; i >= 0; --i) {
+         ptm.getPositionList().removePosition(selectedRows[i] - 1);
       }
       ptm.fireTableDataChanged();
       gui_.getAcqDlg().updateGUIContents();
