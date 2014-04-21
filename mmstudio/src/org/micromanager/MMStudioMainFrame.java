@@ -346,8 +346,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
             sysConfigFile_);
 
       if (options_.startupScript_.length() > 0) {
-         startupScriptFile_ = System.getProperty("user.dir") + "/"
-                 + options_.startupScript_;
+         startupScriptFile_ = new File(options_.startupScript_).getAbsolutePath();
       } else {
          startupScriptFile_ = "";
       }
