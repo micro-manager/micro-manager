@@ -162,15 +162,14 @@ jardir = $(pkgdatadir)/jars
 jar_DATA = MMJ_.jar
 
 
-# TODO Fix classpath.
 javadoc:
+	-rm -rf doc
 	$(MKDIR_P) doc
-	rm -rf doc/*
 	javadoc -public \
-		-classpath ../MMCoreJ_wrap/MMCoreJ.jar:MMJ_.jar:$(IJJARPATH):$(BSHJARPATH):$(CLASSEXT)/scifio.jar:$(CLASSEXT)/commons-math-2.0.jar:. \
+		-classpath ../MMCoreJ_wrap/MMCoreJ.jar:MMJ_.jar:$(IJJARPATH):$(CLASSEXT)/"*" \
 		-d doc \
 		-sourcepath $(srcdir)/src \
-		-subpackages org.micromanager
+		-subpackages org.micromanager.api
 
 
 CLEANFILES = MMJ_.jar MMReader_.jar

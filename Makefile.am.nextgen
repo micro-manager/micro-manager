@@ -145,9 +145,8 @@ SUBDIRS = MMDevice $(MMCORE_DIR) $(MMCOREJ_DIR) $(MMCOREPY_DIR) $(JAVA_APP_DIRS)
 
 
 dox:
-	test -d $(srcdir)/doxygen/out/MMDevice || mkdir $(srcdir)/doxygen/out/MMDevice
-	rm -rf $(srcdir)/doxygen/out/MMDevice/*
+	-rm -rf doxygen/out
+	$(MKDIR_P) doxygen/out/MMDevice
+	$(MKDIR_P) doxygen/out/MMCore
 	doxygen doxygen/MMDevice
-	test -d $(srcdir)/doxygen/out/MMCore || mkdir $(srcdir)/doxygen/out/MMCore
-	rm -rf $(srcdir)/doxygen/out/MMCore/*
 	doxygen doxygen/MMCore
