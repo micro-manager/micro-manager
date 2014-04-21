@@ -179,3 +179,18 @@ cp -R $MM_STAGEDIR/* mm-mnt/Micro-Manager1.4
 hdiutil detach mm-mnt
 rmdir mm-mnt
 hdiutil convert Micro-Manager.sparseimage -format UDBZ -o Micro-Manager$MM_VERSION.dmg
+
+
+##
+## Generate HTML API documentation
+##
+
+cd $MM_SRCDIR
+
+make dox
+pushd swig-doc-converter
+./convert
+popd
+pushd mmstudio
+make javadoc
+popd
