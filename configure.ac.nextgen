@@ -58,6 +58,16 @@ AC_CHECK_PROGS([SWIG], [swig])
 
 
 # Java
+
+if test -n "$with_javaincl"; then
+   AC_MSG_ERROR([--with-javaincl has been removed. You can use one of the following:
+  ./configure --with-java=/path/to/java/home
+  ./configure JNI_CPPFLAGS="-I/path/to/jni/include"
+If you set the Java home, bin/javac and include/jni.h in that directory will be
+used. If you set JNI_CPPFLAGS, it will override any automatic detection.
+See ./configure --help for more options.])
+fi
+
 AC_ARG_VAR([JAVA_HOME], [JDK home directory])
 AC_ARG_VAR([JAVACFLAGS], [Java compiler flags])
 MM_ARG_WITH_JAVA
@@ -67,7 +77,7 @@ AS_IF([test "x$want_java" != xno],
    [
       AS_IF([test -n "$JAVA_HOME"],
       [
-         AC_MSG_ERROR([--with-java argument and JAVA_HOME both given. Try --with-java without argument])
+         AC_MSG_ERROR([--with-java argument and JAVA_HOME both given. Try removing argument from --with-java])
       ],
       [
          JAVA_HOME="$JAVA_PREFIX"

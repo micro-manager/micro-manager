@@ -155,3 +155,48 @@ normally have to be done with a separate shell script.)
 
 When the installation is finished, a message will be printed telling you how
 to run Micro-Manager Studio (if it was configured to be built).
+
+
+### Common configuration issues
+
+#### Failure to detect Java
+
+If `./configure` does not find your JDK (Java Development Kit), try the
+following.
+
+1. If the environment variable `$JAVA_HOME` is set, try unsetting it before
+   running `configure`. It might be pointing to a Java installation that
+   doesn't contain all the required files (e.g. it may be pointing to a JRE
+   (Java Runtime Environment) rather than a JDK). Not setting `JAVA_HOME` may
+   allow `configure` to autodetect a suitable Java home.
+
+2. Find the desirable Java home on your system. This is a directory that
+   usually has "jdk" and the Java version number (such as 1.6) in its name and
+   contains the directories `bin` (in which `java`, `javac`, and `jar` are
+   found) and `include` (in which `jni.h` is found). Pass
+   `--with-java=JAVA_HOME` to `configure`. For example:
+
+      ./configure --with-java=/usr/lib64/jvm/java-1.7.0-openjdk-1.7.0
+      # or
+      ./configure --with-java=/Library/Java/JavaVirtualMachines/1.6.0_65-b14-462.jdk/Contents/Home
+
+3. If the previous step is not possible, because the Java files are spread
+   across several directories (this is the case with older versions of Apple
+   JDK), then you can leave `JAVA_HOME` (and `--with-java`) unset, but override
+   the include path for JNI headers, like this:
+
+      ./configure JNI_CPPFLAGS="-I/System/Library/Frameworks/JavaVM.framework/Versions/A/Headers"
+
+4. Finally (and this is an uncommon case), if you needed to override
+   `JNI_CPPFLAGS` but `configure` also cannot find `javac` and other tools, you
+   can manually set the absolute path to the necessary tools:
+
+      ./configure JAVA=/path/to/java JAVAC=/path/to/javac JAR=/path/to/jar
+
+
+#### Specifying where to find external packages
+
+As a general rule, the `--with-foo` flags to `configure` (e.g.
+`--with-python=PREFIX`) will try to autodetect the package, whereas the
+capitalized variables listed at the end of `./configure --help` (e.g. `PYTHON`)
+will override any automatic detection and be used unmodified.
