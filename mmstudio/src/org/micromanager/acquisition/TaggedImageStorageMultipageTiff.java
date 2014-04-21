@@ -495,7 +495,6 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
             }
          } catch (Exception e) {
             //don't want errors in this code to trip up correct file finishing
-            e.printStackTrace();
             ReportingUtils.logError("Couldn't fill in missing frames in OME");
          }
          
