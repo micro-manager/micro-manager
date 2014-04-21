@@ -44,4 +44,5 @@ java -Xmx1024M \
    -Dorg.micromanager.plugin.path="@pkgdatadir@/mmplugins" \
    -Dorg.micromanager.autofocus.path="@pkgdatadir@/mmautofocus" \
    -Dorg.micromanager.beanshell.start.script="@pkgdatadir@/scripts/mm_beanshell_startup.bsh" \
+   -Dorg.micromanager.default.config.file="@pkgdatadir@/MMConfig_demo.cfg" \
    org.micromanager.MMStudioMainFrame
