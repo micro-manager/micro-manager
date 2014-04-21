@@ -83,6 +83,18 @@ CLEANFILES = buildscripts/launchers/micromanager buildscripts/launchers/mmimagej
 SUBDIRS = MMDevice $(MMCORE_DIR) $(MMCOREJ_DIR) $(MMCOREPY_DIR) $(JAVA_APP_DIRS) DeviceAdapters $(SECRETDEVICEADAPTERS) bindist
 
 
+install-exec-hook:
+	@echo "" 1>&2; \
+	echo "##############################################################################" 1>&2; \
+	echo "Micro-Manager has been installed in" 1>&2; \
+	echo "$(prefix)" 1>&2; \
+	echo "" 1>&2; \
+	echo "You can run Micro-Manager by typing" 1>&2; \
+	echo "$(bindir)/micromanager" 1>&2; \
+	echo "##############################################################################" 1>&2; \
+	echo "" 1>&2
+
+
 # Install Micro-Manager into an existing ImageJ application folder, as an
 # ImageJ plugin.
 install-ijplugin:
@@ -103,10 +115,11 @@ install-ijplugin:
 	echo "Micro-Manager has been installed as an ImageJ plugin in" 1>&2; \
 	echo "$(imagejdir)" 1>&2; \
 	echo "" 1>&2; \
-	echo "You can run Micro-Manager from the command line by typing" 1>&2; \
+	echo "You can start Micro-Manager from the command line by typing" 1>&2; \
 	echo "$(imagejdir)/mmimagej" 1>&2; \
 	echo "or from the ImageJ menu (Plugins > Micro-Manager > Micro-Manager Studio)." 1>&2; \
-	echo "##############################################################################" 1>&2
+	echo "##############################################################################" 1>&2; \
+	echo "" 1>&2
 
 
 dox:
