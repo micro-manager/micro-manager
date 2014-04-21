@@ -51,7 +51,7 @@ public class MMKeyDispatcher implements KeyEventDispatcher{
       Class [] forbiddenClasses = {
          java.awt.TextComponent.class,
          javax.swing.text.JTextComponent.class,
-         org.jeditsyntax.JEditTextArea.class,
+         org.fife.ui.rsyntaxtextarea.RSyntaxTextArea.class,
          textCanvasClass
       };
       forbiddenClasses_ = forbiddenClasses;
