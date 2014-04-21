@@ -12,6 +12,7 @@
 		<pathelement location="${mm.java.lib.gson}"/>
 		<pathelement location="${mm.java.lib.imagej}"/>
 		<pathelement location="${mm.java.lib.mmcorej}"/>
+		<pathelement location="${mm.java.lib.rsyntaxtextarea}"/>
 		<pathelement location="${mm.java.lib.scifio}"/>
 		<pathelement location="${mm.java.lib.swing-layout}"/>
 	</path>
