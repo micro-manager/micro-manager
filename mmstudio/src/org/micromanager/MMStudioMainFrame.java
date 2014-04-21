@@ -202,11 +202,11 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
            = Collections.synchronizedList(new ArrayList<Component>());
    private AutofocusManager afMgr_;
    private final static String DEFAULT_CONFIG_FILE_NAME = "MMConfig_demo.cfg";
+   private final static String DEFAULT_CONFIG_FILE_PROPERTY = "org.micromanager.default.config.file";
    private ArrayList<String> MRUConfigFiles_;
    private static final int maxMRUCfgs_ = 5;
    private String sysConfigFile_;
    private String startupScriptFile_;
-   private String sysStateFile_ = "MMSystemState.cfg";
    private ConfigGroupPad configPad_;
    private LiveModeTimer liveModeTimer_;
    private GraphData lineProfileData_;
@@ -341,8 +341,9 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
 
       acqMgr_ = new AcquisitionManager();
       
-      sysConfigFile_ = System.getProperty("user.dir") + "/"
-            + DEFAULT_CONFIG_FILE_NAME;
+      sysConfigFile_ = new File(DEFAULT_CONFIG_FILE_NAME).getAbsolutePath();
+      sysConfigFile_ = System.getProperty(DEFAULT_CONFIG_FILE_PROPERTY,
+            sysConfigFile_);
 
       if (options_.startupScript_.length() > 0) {
          startupScriptFile_ = System.getProperty("user.dir") + "/"
