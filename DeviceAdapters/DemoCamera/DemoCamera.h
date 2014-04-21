@@ -216,7 +216,6 @@ private:
 	double fractionOfPixelsToDropOrSaturate_;
 
 	double testProperty_[10];
-   MMThreadLock* pDemoResourceLock_;
    MMThreadLock imgPixelsLock_;
    friend class MySequenceThread;
    int nComponents_;

@@ -217,7 +217,6 @@ CDemoCamera::CDemoCamera() :
    fastImage_(false),
    saturatePixels_(false),
 	fractionOfPixelsToDropOrSaturate_(0.002),
-   pDemoResourceLock_(0),
    nComponents_(1)
 {
    memset(testProperty_,0,sizeof(testProperty_));
@@ -225,7 +224,6 @@ CDemoCamera::CDemoCamera() :
    // call the base class method to set-up default error codes/messages
    InitializeDefaultErrorMessages();
    readoutStartTime_ = GetCurrentMMTime();
-   pDemoResourceLock_ = new MMThreadLock();
    thd_ = new MySequenceThread(this);
 
    // parent ID display
@@ -243,7 +241,6 @@ CDemoCamera::~CDemoCamera()
 {
    StopSequenceAcquisition();
    delete thd_;
-   delete pDemoResourceLock_;
 }
 
 /**
@@ -1933,7 +1930,6 @@ void CDemoCamera::GenerateSyntheticImage(ImgBuffer& img, double exp)
 
 void CDemoCamera::TestResourceLocking(const bool recurse)
 {
-   MMThreadGuard g(*pDemoResourceLock_);
    if(recurse)
       TestResourceLocking(false);
 }
