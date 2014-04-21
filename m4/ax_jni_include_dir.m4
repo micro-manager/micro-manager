@@ -3,8 +3,9 @@
 # The changes
 # - prevent failure when JAVAC is set to an absolute path,
 # - when JAVA_HOME is set, disable OS X specific handling of javac-relative
-#   paths, and
+#   paths,
 # - adds 'darwin' as possible platform-specific subdirectory.
+# - avoids fatal error when JDK not found
 
 # ===========================================================================
 #    http://www.gnu.org/software/autoconf-archive/ax_jni_include_dir.html
@@ -60,6 +61,10 @@ AC_DEFUN([AX_JNI_INCLUDE_DIR],[
 
 JNI_INCLUDE_DIRS=""
 
+# Fake loop to bail via `break'
+while true
+do
+
 if test "x$JAVA_HOME" != x; then
 	_JTOPDIR="$JAVA_HOME"
 	_JINC="$_JTOPDIR/include"
@@ -69,7 +74,8 @@ else
 		AC_PATH_PROG([_ACJNI_JAVAC], [javac], [no])
 	fi
 	if test "x$_ACJNI_JAVAC" = xno; then
-		AC_MSG_ERROR([cannot find JDK; try setting \$JAVAC or \$JAVA_HOME])
+		AC_MSG_WARN([cannot find JDK; try setting \$JAVAC or \$JAVA_HOME])
+		break
 	fi
 	_ACJNI_FOLLOW_SYMLINKS("$_ACJNI_JAVAC")
 	_JTOPDIR=`echo "$_ACJNI_FOLLOWED" | sed -e 's://*:/:g' -e 's:/[[^/]]*$::'`
@@ -92,7 +98,8 @@ AC_CHECK_FILE([$_JINC/jni.h],
 	[_JTOPDIR=`echo "$_JTOPDIR" | sed -e 's:/[[^/]]*$::'`
 	 AC_CHECK_FILE([$_JTOPDIR/include/jni.h],
 		[JNI_INCLUDE_DIRS="$JNI_INCLUDE_DIRS $_JTOPDIR/include"],
-                AC_MSG_ERROR([cannot find JDK header files]))
+		AC_MSG_WARN([cannot find JDK header files]))
+		break
 	])
 
 # get the likely subdirectories for system specific java includes
@@ -115,6 +122,9 @@ do
          JNI_INCLUDE_DIRS="$JNI_INCLUDE_DIRS $_JTOPDIR/include/$JINCSUBDIR"
     fi
 done
+
+break
+done # fake loop
 ])
 
 # _ACJNI_FOLLOW_SYMLINKS <path>
