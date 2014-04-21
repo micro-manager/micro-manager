@@ -155,9 +155,8 @@ public:
 
    // action interface
    // ----------------
-	// floating point read-only properties for testing
+   int OnMaxExposure(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnTestProperty(MM::PropertyBase* pProp, MM::ActionType eAct, long);
-	//int OnSwitch(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnBitDepth(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -183,6 +182,7 @@ private:
 
    static const double nominalPixelSizeUm_;
 
+   double exposureMaximum_;
    double dPhase_;
    ImgBuffer img_;
    bool busy_;

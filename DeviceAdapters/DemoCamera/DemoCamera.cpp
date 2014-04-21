@@ -195,6 +195,7 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 */
 CDemoCamera::CDemoCamera() :
    CCameraBase<CDemoCamera> (),
+   exposureMaximum_(10000.0),
    dPhase_(0),
    initialized_(false),
    readoutUs_(0.0),
@@ -228,6 +229,10 @@ CDemoCamera::CDemoCamera() :
 
    // parent ID display
    CreateHubIDProperty();
+
+   CreateFloatProperty("MaximumExposureMs", exposureMaximum_, false,
+         new CPropertyAction(this, &CDemoCamera::OnMaxExposure),
+         true);
 }
 
 /**
@@ -344,7 +349,7 @@ int CDemoCamera::Initialize()
    // exposure
    nRet = CreateFloatProperty(MM::g_Keyword_Exposure, 10.0, false);
    assert(nRet == DEVICE_OK);
-   SetPropertyLimits(MM::g_Keyword_Exposure, 0, 10000);
+   SetPropertyLimits(MM::g_Keyword_Exposure, 0.0, exposureMaximum_);
 
 	CPropertyActionEx *pActX = 0;
 	// create an extended (i.e. array) properties 1 through 4
@@ -1115,6 +1120,20 @@ int MySequenceThread::svc(void) throw()
 // CDemoCamera Action handlers
 ///////////////////////////////////////////////////////////////////////////////
 
+int CDemoCamera::OnMaxExposure(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(exposureMaximum_);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      pProp->Get(exposureMaximum_);
+   }
+   return DEVICE_OK;
+}
+
+
 /*
 * this Read Only property will update whenever any property is modified
 */
@@ -1137,11 +1156,6 @@ int CDemoCamera::OnTestProperty(MM::PropertyBase* pProp, MM::ActionType eAct, lo
 
 }
 
-//int CDemoCamera::OnSwitch(MM::PropertyBase* pProp, MM::ActionType eAct)
-//{
-   // use cached values
-//   return DEVICE_OK;
-//}
 
 /**
 * Handles "Binning" property.
