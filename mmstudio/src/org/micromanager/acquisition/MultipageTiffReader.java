@@ -577,7 +577,8 @@ public class MultipageTiffReader {
       }
       filePosition += writeDisplaySettings(settings, filePosition);
       
-      raFile_.setLength(filePosition + 8);
+      
+//      raFile_.setLength(filePosition + 8);
       
       fileChannel_.close();
       raFile_.close();
