@@ -235,8 +235,6 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
           @Override
           public void actionPerformed(ActionEvent arg0) {
               centerGridHere();
-              savePosition();
-              addToPositionList();
           }
       });
       getContentPane().add(gridCenteredHereButton);
@@ -249,7 +247,7 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
           @Override
           public void actionPerformed(ActionEvent arg0) {
               ++centeredFrames_;
-              labelWidth_.setText(Integer.toString(centeredFrames_));
+              labelWidth_.setText(String.format("%dx%d", centeredFrames_, centeredFrames_));
               updateCenteredSizeLabel();
   
           }
@@ -272,7 +270,7 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
               --centeredFrames_;
               if(centeredFrames_ < 1)
                  centeredFrames_ = 1;
-              labelWidth_.setText(Integer.toString(centeredFrames_));
+              labelWidth_.setText(String.format("%dx%d", centeredFrames_, centeredFrames_));
               updateCenteredSizeLabel();
           }
       });
