@@ -1,4 +1,4 @@
-pkglibdir = $(DEVICEADAPTERPATH)
+
 
 # To allow building with outdated versions of Boost (present by default on many
 # Linux distributions), use the older Boost.Thread interface, even though it

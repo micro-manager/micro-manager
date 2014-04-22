@@ -1,4 +1,4 @@
-pkglibdir = $(DEVICEADAPTERPATH)
+
 AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS) -fpermissive $(BOOST_CPPFLAGS)
 pkglib_LTLIBRARIES = libmmgr_dal_SerialManager.la
 libmmgr_dal_SerialManager_la_SOURCES = SerialManager.cpp SerialManager.h \

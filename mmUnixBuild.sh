@@ -1,31 +1,9 @@
-#!/bin/bash
-# enable error handling
-set -e
+#!/bin/sh
 
 
-# bootstrap autotools
-mkdir SecretDeviceAdapters || echo "SecretDeviceAdapters present"
-aclocal -I m4
-libtoolize --force
-automake --foreign --add-missing
-autoconf -I m4
-cd DeviceAdapters
-aclocal -I ../m4
-libtoolize --force
-automake --foreign --add-missing
-autoconf -I ../m4
-cd ..
-cd DeviceKit
-aclocal -I ../m4
-libtoolize --force
-automake --foreign --add-missing
-autoconf -I ../m4
-cd ..
-if test -r "SecretDeviceAdapters/configure.in" ;  then
-   cd SecretDeviceAdapters
-   aclocal -I ../m4
-   libtoolize --force
-   automake --foreign --add-missing
-   autoconf -I ../m4
-   cd ..
-fi
+echo "Micro-Manager has a new set of autoconf/automake build scripts, and the" 1>&2
+echo "mmUnixBuild.sh script has been retired. It will be removed in the near" 1>&2
+echo "future. Please run ./autogen.sh instead." 1>&2
+echo "Note that the ./configure options have changed. See the build documentation" 1>&2
+echo "for details." 1>&2
+exit 1

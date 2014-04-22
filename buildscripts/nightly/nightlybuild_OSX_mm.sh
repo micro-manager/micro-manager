@@ -57,10 +57,8 @@ fi
 sed -e "s/@VERSION_STRING@/$MM_VERSION/" buildscripts/MMVersion.java.in > mmstudio/src/org/micromanager/MMVersion.java || exit
 
 if [ "$do_remake" = yes ]; then
-buildscripts/nextgen-gnubuild/activate.py -r
 autoreconf -v
 else
-buildscripts/nextgen-gnubuild/activate.py -a
 sh autogen.sh
 fi
 

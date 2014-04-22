@@ -1,4 +1,4 @@
-pkglibdir = $(DEVICEADAPTERPATH)
+
 AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS) -fpermissive
 pkglib_LTLIBRARIES = libmmgr_dal_Aladdin.la
 libmmgr_dal_Aladdin_la_SOURCES = Aladdin.cpp Aladdin.h

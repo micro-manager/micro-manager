@@ -1,4 +1,4 @@
-pkglibdir = $(DEVICEADAPTERPATH)
+
 AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS) -fpermissive
 pkglib_LTLIBRARIES = libmmgr_dal_MicroPoint.la
 libmmgr_dal_MicroPoint_la_SOURCES = MicroPoint.cpp MicroPoint.h

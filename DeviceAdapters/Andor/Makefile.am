@@ -1,4 +1,4 @@
-pkglibdir = $(DEVICEADAPTERPATH)
+
 AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS) -fpermissive
 pkglib_LTLIBRARIES = libmmgr_dal_Andor.la
 libmmgr_dal_Andor_la_SOURCES =  Andor.cpp Andor.h

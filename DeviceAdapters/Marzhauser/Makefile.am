@@ -1,4 +1,4 @@
-pkglibdir = $(DEVICEADAPTERPATH)
+
 AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS) -fpermissive
 pkglib_LTLIBRARIES = libmmgr_dal_Marzhauser.la
 libmmgr_dal_Marzhauser_la_SOURCES = Marzhauser.cpp Marzhauser.h

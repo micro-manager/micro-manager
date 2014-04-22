@@ -1,4 +1,4 @@
-pkglibdir = $(DEVICEADAPTERPATH)
+
 AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS) -fpermissive
 pkglib_LTLIBRARIES = libmmgr_dal_PIGCS.la
 libmmgr_dal_PIGCS_la_SOURCES = PI_GCS.cpp PI_GCS.h

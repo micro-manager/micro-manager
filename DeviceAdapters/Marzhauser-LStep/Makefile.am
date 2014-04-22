@@ -1,4 +1,4 @@
-pkglibdir = $(DEVICEADAPTERPATH)
+
 AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS) -fpermissive
 pkglib_LTLIBRARIES = libmmgr_dal_MarzhauserLStep.la
 libmmgr_dal_MarzhauserLStep_la_SOURCES = LStep.cpp LStep.h

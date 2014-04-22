@@ -1,4 +1,4 @@
-pkglibdir = $(DEVICEADAPTERPATH)
+
 AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS) -fpermissive
 pkglib_LTLIBRARIES = libmmgr_dal_MaestroServo.la
 libmmgr_dal_MaestroServo_la_SOURCES = MaestroServo.cpp MaestroServo.h

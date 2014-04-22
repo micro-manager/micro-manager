@@ -1,4 +1,4 @@
-pkglibdir = $(DEVICEADAPTERPATH)
+
 AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS) -fpermissive $(BOOST_CPPFLAGS)
 pkglib_LTLIBRARIES = libmmgr_dal_MoticUCam.la
 libmmgr_dal_MoticUCam_la_SOURCES = MUCamSource.cpp MUCamSource.h MoticUCam.h

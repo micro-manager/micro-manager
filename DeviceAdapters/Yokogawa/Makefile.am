@@ -1,4 +1,4 @@
-pkglibdir = $(DEVICEADAPTERPATH)
+
 AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS) -fpermissive 
 pkglib_LTLIBRARIES = libmmgr_dal_CSU22.la libmmgr_dal_CSUX.la
 libmmgr_dal_CSU22_la_SOURCES = CSU22.cpp CSU22.h CSU22Hub.h CSU22Hub.cpp

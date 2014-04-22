@@ -1,4 +1,6 @@
-# Process this file with automake to produce Makefile.in
+
+
+# TODO Fix classpath (avoid magic).
 MMJ_.jar:  \
 	$(srcdir)/src/MMStudioPlugin.java \
 	$(srcdir)/src/MANIFEST.MF \
@@ -130,39 +132,43 @@ MMJ_.jar:  \
 	$(srcdir)/src/org/micromanager/utils/SliderPanel.java \
 	$(srcdir)/src/org/micromanager/utils/TextUtils.java \
 	$(srcdir)/src/org/micromanager/utils/WaitDialog.java \
-	$(srcdir)/bin/plugins_mmstudio.config 
+	$(srcdir)/bin/plugins_mmstudio.config
 	test -d build || mkdir build
 	rm -rf build/*
 	cp $(srcdir)/bin/plugins_mmstudio.config build/plugins.config
 	$(JAVAC) $(JAVACFLAGS) -sourcepath ../MMCoreJ_wrap:$(srcdir)/src:. -classpath $(IJJARPATH):$(BSHJARPATH):$(SWINGXJARPATH):$(COMMONSMATHJARPATH):$(SWINGLAYOUTJARPATH):$(CLASSEXT)/*:. $(srcdir)/src/*.java $(srcdir)/src/org/micromanager/acquisition/*.java $(srcdir)/src/org/micromanager/utils/*.java $(srcdir)/src/org/micromanager/api/*.java $(srcdir)/src/org/micromanager/conf2/*.java -d build
 	cp -rf $(srcdir)/src/org/micromanager/icons build/org/micromanager
 	cp -rf $(srcdir)/src/org/micromanager/conf2/*html build/org/micromanager/conf2
-	## Work around bug in 'jar': jar cf MM_.jar -C bin/ bin/* does not work
-	cd build && jar cf ../MMJ_.jar * 
+	cd build && jar cf ../MMJ_.jar *
 
+
+# TODO Remove together with plugins_reader.config (obsolete)
 MMReader_.jar: \
    $(srcdir)/MMJ_.jar  \
-	$(srcdir)/bin/plugins_reader.config 
+	$(srcdir)/bin/plugins_reader.config
 	cp -f $(srcdir)/bin/plugins_reader.config build/plugins.config
-	cd build && jar cf ../MMReader_.jar * 
+	cd build && jar cf ../MMReader_.jar *
 
-all: MMJ_.jar MMReader_.jar
 
-install: 
-	test -d $(DESTDIR)$(IJPATH)/plugins/Micro-Manager || mkdir -p $(DESTDIR)$(IJPATH)/plugins/Micro-Manager
-	cp MMJ_.jar $(DESTDIR)$(IJPATH)/plugins/Micro-Manager
-	cp $(IJJARPATH) $(DESTDIR)$(IJPATH)
-	cp $(CLASSEXT)/*.jar $(DESTDIR)$(IJPATH)/plugins/
-	rm $(DESTDIR)$(IJPATH)/plugins/ij.jar
+jardir = $(pkgdatadir)/jars
+jar_DATA = MMJ_.jar
 
-clean:
-	test -e MMJ_.jar && rm MMJ_.jar || echo "MMJ_.jar not found"
-	test -e MMReader_.jar && rm MMReader_.jar || echo "MMReader_.jar not found"
-	find . -name \*.class -exec rm {} \;
 
 javadoc:
-	test -d $(srcdir)/doc || mkdir $(srcdir)/doc
-	rm -rf $(srcdir)/doc/*
-	javadoc -public -classpath $(IJJARPATH):$(BSHJARPATH):$(IJPATH)/plugins/Micro-Manager/MMCoreJ.jar:$(IJPATH)/plugins/Micro-Manager/MMJ_.jar:$(CLASSEXT)/scifio.jar:$(CLASSEXT)/commons-math-2.0.jar:. -d doc $(srcdir)/src/org/micromanager/*.java $(srcdir)/src/org/micromanager/*/*.java
+	-rm -rf doc
+	$(MKDIR_P) doc
+	javadoc -public \
+		-classpath ../MMCoreJ_wrap/MMCoreJ.jar:MMJ_.jar:$(IJJARPATH):$(CLASSEXT)/"*" \
+		-d doc \
+		-sourcepath $(srcdir)/src \
+		-subpackages org.micromanager.api
+
+
+CLEANFILES = MMJ_.jar MMReader_.jar
+
+clean-local:
+	-find . -name \*.class -exec rm {} \;
+	-rm -rf doc
+
 
 EXTRA_DIST = bin src build.xml license.txt

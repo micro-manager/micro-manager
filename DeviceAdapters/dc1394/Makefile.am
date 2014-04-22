@@ -1,9 +1,11 @@
-pkglibdir = $(DEVICEADAPTERPATH)
+
 AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS) -fpermissive 
 pkglib_LTLIBRARIES = libmmgr_dal_dc1394.la
 libmmgr_dal_dc1394_la_SOURCES = dc1394.cpp dc1394.h 
-##TODO: find the library in configure
-libmmgr_dal_dc1394_la_LIBADD = $(MMDEVAPI_LIBADD) $(LIBDC1394)
-libmmgr_dal_dc1394_la_LDFLAGS = $(MMDEVAPI_LDFLAGS)
+
+libmmgr_dal_dc1394_la_CPPFLAGS=$(LIBDC1394_CPPFLAGS)
+libmmgr_dal_dc1394_la_CXXFLAGS=$(AM_CXXFLAGS) $(LIBDC1394_CFLAGS)
+libmmgr_dal_dc1394_la_LDFLAGS=$(MMDEVAPI_LDFLAGS) $(LIBDC1394_LDFLAGS)
+libmmgr_dal_dc1394_la_LIBADD=$(MMDEVAPI_LIBADD) $(LIBDC1394_LIBS)
 
 EXTRA_DIST = license.txt

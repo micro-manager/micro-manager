@@ -1,9 +1,11 @@
-pkglibdir = $(DEVICEADAPTERPATH)
-AM_CFLAGS = -I$(HIDAPIINCDIR)/hidapi
-AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS) -I$(HIDAPIINCDIR) -fpermissive
+
+
+AM_CPPFLAGS = $(HIDAPI_CPPFLAGS)
+AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS) $(HIDAPI_CFLAGS)
+AM_LDFLAGS = $(MMDEVAPI_LDFLAGS) $(HIDAPI_LDFLAGS)
+
 pkglib_LTLIBRARIES = libmmgr_dal_HIDManager.la
-libmmgr_dal_HIDManager_la_SOURCES = HIDManager.cpp HIDManager.h $(HIDAPICDIR)/hid.c
-libmmgr_dal_HIDManager_la_LIBADD = $(MMDEVAPI_LIBADD) $(SERIALFRAMEWORKS)
-libmmgr_dal_HIDManager_la_LDFLAGS = $(MMDEVAPI_LDFLAGS)
+libmmgr_dal_HIDManager_la_SOURCES = HIDManager.cpp HIDManager.h
+libmmgr_dal_HIDManager_la_LIBADD = $(MMDEVAPI_LIBADD) $(HIDAPI_LIBS)
 
 EXTRA_DIST = license.txt

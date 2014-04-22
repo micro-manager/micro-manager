@@ -1,3 +1,6 @@
+
+AUTOMAKE_OPTIONS = foreign subdir-objects
+
 # We use -fno-strict-aliasing (which disables certain optimizations in GCC and
 # Clang), because SWIG documentation calls for it (when wrapping for Java).
 # Strictly speaking, this should only be necessary when compiling
@@ -7,9 +10,17 @@
 # (We used to globally use -O by default, rather than -O2, on Linux, presumably
 # for the above reason (though the intent was never documented). But there is
 # nothing Linux-specific about this.)
-AM_CXXFLAGS = $(BOOST_CPPFLAGS) -fno-strict-aliasing
+# TODO The flag should come from configure.
+AM_CXXFLAGS = -fno-strict-aliasing
+AM_CPPFLAGS = $(JNI_CPPFLAGS) $(BOOST_CPPFLAGS)
 
-SWIGLIB_SOURCES = MMCoreJ.i \
+
+# This ugly list of headers is necessary to trigger the rebuild of the
+# SWIG-generated source when a header is modified. The issue cannot be fixed
+# here; it is a result of poor implementation hiding in the MMCore headers.
+# Unfortunately this list needs to be repeated in MMCorePy_wrap/Makefile.am, so
+# don't forget to update that file.
+swig_sources = MMCoreJ.i \
 	../MMCore/CircularBuffer.h  \
 	../MMCore/ConfigGroup.h  \
 	../MMCore/Configuration.h \
@@ -18,79 +29,69 @@ SWIGLIB_SOURCES = MMCoreJ.i \
 	../MMCore/CoreUtils.h \
 	../MMCore/Error.h \
 	../MMCore/ErrorCodes.h \
-	../MMCore/MMCore.h  \
 	../MMCore/Host.h  \
-	../MMDevice/MMDeviceConstants.h 
+	../MMCore/MMCore.h  \
+	../MMCore/MMEventCallback.h \
+	../MMCore/PluginManager.h \
+	../MMDevice/ImageMetadata.h \
+	../MMDevice/MMDevice.h \
+	../MMDevice/MMDeviceConstants.h
 
-# DEVICEADAPTERPATH is poorly named: it actually means "where to put all MM
-# libraries, including device adapters".
-MMCoreJ_wrap.cxx: $(SWIGLIB_SOURCES)
-	test -d mmcorej || mkdir mmcorej
-	touch $(srcdir)/MMCoreJ_wrap.cxx || (chmod +wrx $(srcdir) && touch $(srcdir)/MMCoreJ_wrap.cxx)
+
+# Use MMCoreJ.stamp to manage multiple outputs. A fully parallel-safe rule
+# would be complex (see Automake manual), but this implementation works most of
+# the time and 'make clean' can recover from any problems.
+MMCoreJ.stamp: $(swig_sources)
+	@rm -f MMCoreJ.tmp
+	@touch MMCoreJ.tmp
+	$(MKDIR_P) mmcorej
 	$(SWIG) -c++ -java -package mmcorej -outdir mmcorej -module MMCoreJ \
-		"-DMMCOREJ_LIBRARY_PATH=\"$(DEVICEADAPTERPATH)\"" \
-		-o $(srcdir)/MMCoreJ_wrap.cxx $(srcdir)/MMCoreJ.i 
-	cp $(srcdir)/MMCoreJ_wrap.cxx MMCoreJ_wrap.cxx || echo "No problem"
-	
-AM_CPPFLAGS = $(JAVAINC)
-lib_LTLIBRARIES = libMMCoreJ_wrap.la
-nodist_libMMCoreJ_wrap_la_SOURCES = MMCoreJ_wrap.cxx
-libMMCoreJ_wrap_la_SOURCES = $(SWIGLIB_SOURCES) \
-	$(top_srcdir)/MMDevice/DeviceUtils.cpp \
-	$(top_srcdir)/MMDevice/ImgBuffer.cpp \
-	$(top_srcdir)/MMDevice/Property.cpp \
-	$(top_srcdir)/MMCore/CircularBuffer.cpp \
-	$(top_srcdir)/MMCore/Configuration.cpp \
-	$(top_srcdir)/MMCore/CoreCallback.cpp \
-	$(top_srcdir)/MMCore/CoreProperty.cpp \
-	$(top_srcdir)/MMCore/Error.cpp \
-	$(top_srcdir)/MMCore/FastLogger.cpp \
-	$(top_srcdir)/MMCore/MMCore.cpp \
-	$(top_srcdir)/MMCore/PluginManager.cpp \
-	$(top_srcdir)/MMCore/LibraryInfo/LibraryPathsUnix.cpp \
-	$(top_srcdir)/MMCore/LoadableModules/LoadedModule.cpp \
-	$(top_srcdir)/MMCore/LoadableModules/LoadedModuleImpl.cpp \
-	$(top_srcdir)/MMCore/LoadableModules/LoadedModuleImplUnix.cpp \
-	$(top_srcdir)/MMCore/LoadableModules/LoadedDeviceAdapter.cpp \
-	$(top_srcdir)/MMCore/Host.cpp
-libMMCoreJ_wrap_la_LIBADD = $(BOOST_SYSTEM_LIB)
-libMMCoreJ_wrap_la_LDFLAGS = -Wl, -module -ldl $(BOOST_LDFLAGS)
+		"-DMMCOREJ_LIBRARY_PATH=\"$(MMCOREJ_LIBRARY_PATH)\"" \
+		-o MMCoreJ_wrap.cxx $(srcdir)/MMCoreJ.i
+	@mv -f MMCoreJ.tmp $@
+MMCoreJ_wrap.h MMCoreJ_wrap.cxx: MMCoreJ.stamp
+	@if test -f $@; then :; else \
+		rm -f MMCoreJ.stamp; \
+		$(MAKE) $(AM_MAKEFLAGS) MMCoreJ.stamp; \
+	fi
 
-$(srcdir)/MMCoreJ.jar:  MMCoreJ_wrap.cxx \
-	libMMCoreJ_wrap.la \
-	TaggedImage.java
-	mkdir -p mmcorej
-	cp TaggedImage.java mmcorej/
-	$(JAVAC) -source 1.5 -target 1.5 ../mmstudio/src/org/json/*.java mmcorej/*.java
-	$(JAR) cvf MMCoreJ.jar mmcorej/*.class
 
-all:
-	make $(srcdir)/MMCoreJ_wrap.cxx
-	make $(srcdir)/MMCoreJ.jar
-	cp MMCoreJ.jar ../bin
+pkglib_LTLIBRARIES = libMMCoreJ_wrap.la
+libMMCoreJ_wrap_la_SOURCES = MMCoreJ_wrap.h MMCoreJ_wrap.cxx
+libMMCoreJ_wrap_la_LDFLAGS = -module -avoid-version -shrext $(JNI_SUFFIX)
+libMMCoreJ_wrap_la_LIBADD = ../MMCore/libMMCore.la
 
-macinstall:
-	cp .libs/libMMCoreJ_wrap.so $(top_srcdir)/MacInstaller/Package_contents/libMMCoreJ_wrap$(JAVASO)
 
-install:
-	install -d $(DESTDIR)$(DEVICEADAPTERPATH)
-	install .libs/libMMCoreJ_wrap.so $(DESTDIR)$(DEVICEADAPTERPATH)/libMMCoreJ_wrap$(JAVASO) 
-	install -d $(DESTDIR)$(JARPATH)
-	install MMCoreJ.jar $(DESTDIR)$(JARPATH)/MMCoreJ.jar 
+jardir = $(pkgdatadir)/jars
+jar_DATA = MMCoreJ.jar
 
-###IJ-dependent! #todo: split IJ and pure-java code
+MMCoreJ.jar: MMCoreJ_wrap.h TaggedImage.java
+	$(MKDIR_P) mmcorej
+	cp $(srcdir)/TaggedImage.java mmcorej
+	$(JAVAC) $(JAVACFLAGS) -d . $(srcdir)/../mmstudio/src/org/json/*.java
+	$(JAVAC) $(JAVACFLAGS) -cp . -d . mmcorej/*.java
+	$(JAR) cf MMCoreJ.jar org/json/*.class mmcorej/*.class
 
-EXTRA_DIST = license.txt MMCoreJ_wrap.vcproj
 
-clean:
-	test -z "libMMCoreJ_wrap.la" || rm -f libMMCoreJ_wrap.la
-	rm -rf mmcorej/
-	rm -f MMCoreJ_wrap.cxx
-	rm -f "./so_locations"
-	rm -rf .libs _libs
-	rm -f *.o
-	rm -f *.lo
+if NONSTD_JNI_PREFIX
+# The suffix (.so vs .jnilib vs .dll) can be handled by libtool's -shrext flag,
+# but there is no clean way to parameterize the prefix in the Automake rules.
+# We adjust it at install time instead:
 
-dist-hook:
-	test -d $(distdir)/mmcorej || mkdir $(distdir)/mmcorej
-	touch $(distdir)/mmcorej/empty.txt
+install-exec-hook:
+	cd $(DESTDIR)$(jardir); \
+	mv -f libMMCoreJ_wrap$(JNI_SUFFIX) $(JNI_PREFIX)MMCoreJ_wrap$(JNI_SUFFIX)
+
+uninstall-hook:
+	-rm -f $(DESTDIR)$(jardir)/$(JNI_PREFIX)MMCoreJ_wrap$(JNI_SUFFIX)
+
+endif # NONSTD_JNI_PREFIX
+
+
+CLEANFILES = MMCoreJ.stamp MMCoreJ_wrap.h MMCoreJ_wrap.cxx MMCoreJ.jar
+
+clean-local:
+	-rm -rf mmcorej org
+
+
+EXTRA_DIST = license.txt

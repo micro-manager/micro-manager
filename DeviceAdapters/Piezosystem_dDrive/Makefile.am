@@ -1,4 +1,4 @@
-pkglibdir = $(DEVICEADAPTERPATH)
+
 AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS) -fpermissive
 pkglib_LTLIBRARIES = libmmgr_dal_Piezosystem_dDrive.la
 libmmgr_dal_Piezosystem_dDrive_la_SOURCES = Piezosystem_dDrive.cpp \

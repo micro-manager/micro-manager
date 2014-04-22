@@ -1,4 +1,4 @@
-pkglibdir = $(DEVICEADAPTERPATH)
+
 AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS) -fpermissive
 pkglib_LTLIBRARIES = libmmgr_dal_SutterLambda.la
 libmmgr_dal_SutterLambda_la_SOURCES = SutterLambda.cpp SutterLambda.h

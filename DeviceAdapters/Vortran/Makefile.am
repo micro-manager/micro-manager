@@ -1,4 +1,4 @@
-pkglibdir = $(DEVICEADAPTERPATH)
+
 AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS) -fpermissive
 pkglib_LTLIBRARIES = libmmgr_dal_Stradus.la libmmgr_dal_VersaLase.la
 libmmgr_dal_Stradus_la_SOURCES = Stradus.cpp Stradus.h

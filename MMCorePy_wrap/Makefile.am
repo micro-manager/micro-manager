@@ -1,5 +1,10 @@
-## Process this file with automake to produce Makefile.in
-SWIGLIBSOURCES = MMCorePy.i \
+
+# This ugly list of headers is necessary to trigger the rebuild of the
+# SWIG-generated source when a header is modified. The issue cannot be fixed
+# here; it is a result of poor implementation hiding in the MMCore headers.
+# Unfortunately this list needs to be repeated in MMCoreJ_wrap/Makefile.am, so
+# don't forget to update that file.
+swig_sources = MMCorePy.i \
 	../MMCore/CircularBuffer.h  \
 	../MMCore/ConfigGroup.h  \
 	../MMCore/Configuration.h \
@@ -8,50 +13,42 @@ SWIGLIBSOURCES = MMCorePy.i \
 	../MMCore/CoreUtils.h \
 	../MMCore/Error.h \
 	../MMCore/ErrorCodes.h \
-	../MMCore/Host.h \
+	../MMCore/Host.h  \
 	../MMCore/MMCore.h  \
+	../MMCore/MMEventCallback.h \
+	../MMCore/PluginManager.h \
+	../MMDevice/ImageMetadata.h \
+	../MMDevice/MMDevice.h \
 	../MMDevice/MMDeviceConstants.h
 
-MMCorePy_wrap.cxx MMCorePy.py: $(SWIGLIBSOURCES)
-	$(SWIG) -c++ -python MMCorePy.i 
-	
-MMCOREPYSOURCES = $(SWIGLIBSOURCES) \
-	$(top_srcdir)/MMDevice/DeviceUtils.cpp \
-	$(top_srcdir)/MMDevice/ImgBuffer.cpp \
-	$(top_srcdir)/MMDevice/Property.cpp \
-	$(top_srcdir)/MMCore/CircularBuffer.cpp \
-	$(top_srcdir)/MMCore/Configuration.cpp \
-	$(top_srcdir)/MMCore/CoreCallback.cpp \
-	$(top_srcdir)/MMCore/CoreProperty.cpp \
-	$(top_srcdir)/MMCore/Error.cpp \
-	$(top_srcdir)/MMCore/FastLogger.cpp \
-	$(top_srcdir)/MMCore/Host.cpp \
-	$(top_srcdir)/MMCore/MMCore.cpp \
-	$(top_srcdir)/MMCore/PluginManager.cpp \
-	$(top_srcdir)/MMCore/LibraryInfo/LibraryPathsUnix.cpp \
-	$(top_srcdir)/MMCore/LoadableModules/LoadedModule.cpp \
-	$(top_srcdir)/MMCore/LoadableModules/LoadedModuleImpl.cpp \
-	$(top_srcdir)/MMCore/LoadableModules/LoadedModuleImplUnix.cpp \
-	$(top_srcdir)/MMCore/LoadableModules/LoadedDeviceAdapter.cpp
 
-_MMCorePy.so: MMCorePy_wrap.cxx $(MMCOREPYSOURCES)
-	python setup.py build_ext --inplace
+# Use MMCorePy.stamp to manage multiple outputs. A fully parallel-safe rule
+# would be complex (see Automake manual), but this implementation works most of
+# the time and 'make clean' can recover from any problems.
+MMCorePy.stamp: $(swig_sources)
+	@rm -f MMCorePy.tmp
+	@touch MMCorePy.tmp
+	$(SWIG) -c++ -python -outdir . -o MMCorePy_wrap.cxx $(srcdir)/MMCorePy.i
+	@mv -f MMCorePy.tmp $@
+MMCorePy_wrap.h MMCorePy_wrap.cxx MMCorePy.py: MMCorePy.stamp
+	@if test -f $@; then :; else \
+		rm -f MMCorePy.stamp; \
+		$(MAKE) $(AM_MAKEFLAGS) MMCorePy.stamp; \
+	fi
 
-all:
-	make MMCorePy_wrap.cxx
-	make MMCorePy.py
-	make _MMCorePy.so
-	cp MMCorePy.py ../bin
-	cp _MMCorePy.so ../bin
 
-install:
-	cp MMCorePy.py $(DEVICEADAPTERPATH)
-	cp _MMCorePy.so $(DEVICEADAPTERPATH)
+pkglib_LTLIBRARIES = _MMCorePy.la
+nodist__MMCorePy_la_SOURCES = MMCorePy_wrap.h MMCorePy_wrap.cxx
+_MMCorePy_la_CPPFLAGS = $(BOOST_CPPFLAGS) $(PYTHON_CPPFLAGS) $(NUMPY_CPPFLAGS)
+_MMCorePy_la_LDFLAGS = -module -avoid-version -shrext .so
+_MMCorePy_la_LIBADD = ../MMCore/libMMCore.la
 
-clean:
-	rm MMCorePy_wrap.cxx || echo "Not found, no problem"
-	rm MMCorePy.py || echo "Not found, no problem"
-	rm _MMCorePy.so || echo "Not found, no problem"
-	rm -rf build || echo "Not found, no problem"
-	rm -f *.so || echo "Not found, no problem"
+install-exec-hook:
+	$(INSTALL_DATA) MMCorePy.py $(DESTDIR)$(pkglibdir)
 
+uninstall-hook:
+	rm -f $(DESTDIR)$(pkglibdir)/MMCorePy.py
+
+CLEANFILES = MMCorePy.stamp MMCorePy.py MMCorePy_wrap.h MMCorePy_wrap.cxx
+
+EXTRA_DIST = license.txt

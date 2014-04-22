@@ -1,4 +1,4 @@
-pkglibdir = $(DEVICEADAPTERPATH)
+
 AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS) -fpermissive
 pkglib_LTLIBRARIES = libmmgr_dal_Scientifica.la
 libmmgr_dal_Scientifica_la_SOURCES = Scientifica.cpp Scientifica.h

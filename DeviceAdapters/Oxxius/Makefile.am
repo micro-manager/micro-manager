@@ -1,4 +1,4 @@
-pkglibdir = $(DEVICEADAPTERPATH)
+
 AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS) -fpermissive
 pkglib_LTLIBRARIES = libmmgr_dal_Oxxius.la
 libmmgr_dal_Oxxius_la_SOURCES = Oxxius.cpp Oxxius.h

@@ -1,4 +1,4 @@
-pkglibdir = $(DEVICEADAPTERPATH)
+
 AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS) -fpermissive
 pkglib_LTLIBRARIES = libmmgr_dal_Aquinas.la
 libmmgr_dal_Aquinas_la_SOURCES = Aquinas.cpp Aquinas.h \

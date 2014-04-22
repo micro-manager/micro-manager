@@ -1,4 +1,4 @@
-pkglibdir = $(DEVICEADAPTERPATH)
+
 AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS) -fpermissive
 pkglib_LTLIBRARIES = libmmgr_dal_SutterStage.la
 libmmgr_dal_SutterStage_la_SOURCES = SutterStage.cpp SutterStage.h

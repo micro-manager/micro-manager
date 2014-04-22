@@ -1,23 +1,47 @@
+
 ## Process this file with automake to produce Makefile.in
 
-TARGETS= ASIdiSPIM.jar PixelCalibrator.jar Projector.jar RecallPlugin.jar StageControl.jar MultiCamera.jar CRISP.jar Big.jar NewImageFlipper.jar SlideExplorer.jar DataBrowser.jar ClojureEditor.jar SplitView.jar Gaussian.jar IntelligentAcquisition.jar BFCorrector.jar MultiChannelShading.jar HCS.jar MMTracker.jar pgFocus.jar autolase.jar AcquireMultipleRegions.jar
+TARGETS = \
+	ASIdiSPIM.jar \
+	AcquireMultipleRegions.jar \
+	BFCorrector.jar \
+	Big.jar \
+	CRISP.jar \
+	ClojureEditor.jar \
+	DataBrowser.jar \
+	Gaussian.jar \
+	HCS.jar \
+	IntelligentAcquisition.jar \
+	MMTracker.jar \
+	MultiCamera.jar \
+	MultiChannelShading.jar \
+	NewImageFlipper.jar \
+	PixelCalibrator.jar \
+	Projector.jar \
+	RecallPlugin.jar \
+	SlideExplorer.jar \
+	SplitView.jar \
+	StageControl.jar \
+	autolase.jar \
+	pgFocus.jar
+
 
 ASIdiSPIM.jar:  \
 	$(srcdir)/ASIdiSPIM/src/org/micromanager/asidispim/*.java \
 	$(srcdir)/ASIdiSPIM/src/org/micromanager/asidispim/Data/*.java \
-	$(srcdir)/ASIdiSPIM/src/org/micromanager/asidispim/Utils/*.java 
+	$(srcdir)/ASIdiSPIM/src/org/micromanager/asidispim/Utils/*.java
 	test -d build || mkdir build
 	rm -rf build/*
 	$(JAVAC) $(JAVACFLAGS) -sourcepath $(srcdir):. -classpath $(IJJARPATH):$(BSHJARPATH):$(COMMONSMATHJARPATH):$(SWINGLAYOUTJARPATH):$(JFREECHARTJARPATH):$(CLASSEXT)/miglayout-4.0-swing.jar:../mmstudio/MMJ_.jar:. $(srcdir)/ASIdiSPIM/src/org/micromanager/asidispim/*.java $(srcdir)/ASIdiSPIM/src/org/micromanager/asidispim/Utils/*.java $(srcdir)/ASIdiSPIM/src/org/micromanager/asidispim/Data/*.java -d build
 	cp -r $(srcdir)/ASIdiSPIM/src/org/micromanager/asidispim/icons build/org/micromanager/asidispim/
-	cd build && jar cf ../ASIdiSPIM.jar * 
+	cd build && jar cf ../ASIdiSPIM.jar *
 
 IntelligentAcquisition.jar:  \
 	$(srcdir)/IntelligentAcquisition/src/org/micromanager/intelligentacquisition/*.java
 	test -d build || mkdir build
 	rm -rf build/*
 	$(JAVAC) $(JAVACFLAGS) -sourcepath $(srcdir):. -classpath $(IJJARPATH):$(BSHJARPATH):$(COMMONSMATHJARPATH):$(SWINGLAYOUTJARPATH):$(JFREECHARTJARPATH):../mmstudio/MMJ_.jar:. $(srcdir)/IntelligentAcquisition/src/org/micromanager/intelligentacquisition/*.java -d build
-	cd build && jar cf ../IntelligentAcquisition.jar * 
+	cd build && jar cf ../IntelligentAcquisition.jar *
 
 MMTracker.jar:  \
 	$(srcdir)/Tracker/src/com/imaging100x/tracker/TrackerControl.java
@@ -25,18 +49,18 @@ MMTracker.jar:  \
 	rm -rf build/*
 	$(JAVAC) $(JAVACFLAGS) -sourcepath $(srcdir):. -classpath $(IJJARPATH):$(BSHJARPATH):$(JFREECHARTJARPATH):../mmstudio/MMJ_.jar:. $(srcdir)/Tracker/src/com/imaging100x/tracker/*.java -d build
 	## Work around bug in 'jar': jar cf MM_.jar -C bin/ bin/* does not work
-	cd build && jar cf ../MMTracker.jar * 
+	cd build && jar cf ../MMTracker.jar *
 
 PixelCalibrator.jar:  \
 	$(srcdir)/PixelCalibrator/src/org/micromanager/pixelcalibrator/CalibrationThread.java \
 	$(srcdir)/PixelCalibrator/src/org/micromanager/pixelcalibrator/PixelCalibratorDialog.java \
 	$(srcdir)/PixelCalibrator/src/org/micromanager/pixelcalibrator/PixelCalibratorPlugin.java \
-	$(srcdir)/PixelCalibrator/src/org/micromanager/pixelcalibrator/PixelCalibratorDialog.form 
+	$(srcdir)/PixelCalibrator/src/org/micromanager/pixelcalibrator/PixelCalibratorDialog.form
 	test -d build || mkdir build
 	rm -rf build/*
 	$(JAVAC) $(JAVACFLAGS) -sourcepath $(srcdir):. -classpath $(IJJARPATH):$(BSHJARPATH):$(COMMONSMATHJARPATH):$(SWINGLAYOUTJARPATH):../mmstudio/MMJ_.jar:. $(srcdir)/PixelCalibrator/src/org/micromanager/pixelcalibrator/*.java -d build
 	## Work around bug in 'jar': jar cf MM_.jar -C bin/ bin/* does not work
-	cd build && jar cf ../PixelCalibrator.jar * 
+	cd build && jar cf ../PixelCalibrator.jar *
 
 Projector.jar:  \
 	$(srcdir)/Projector/src/org/micromanager/projector/Galvo.java  \
@@ -50,7 +74,7 @@ Projector.jar:  \
 	rm -rf build-Projector/*
 	$(JAVAC) $(JAVACFLAGS) -sourcepath $(srcdir):. -classpath $(IJJARPATH):$(BSHJARPATH):$(COMMONSMATHJARPATH):$(SWINGLAYOUTJARPATH):../mmstudio/MMJ_.jar:. $(srcdir)/Projector/src/org/micromanager/projector/*.java -d build-Projector
 	## Work around bug in 'jar': jar cf MM_.jar -C bin/ bin/* does not work
-	cd build-Projector && jar cf ../Projector.jar * 
+	cd build-Projector && jar cf ../Projector.jar *
 
 SlideExplorer.jar:  \
 	$(srcdir)/SlideExplorer/src/org/micromanager/slideexplorer/*.java \
@@ -59,7 +83,7 @@ SlideExplorer.jar:  \
 	rm -rf build/*
 	$(JAVAC) $(JAVACFLAGS) -sourcepath $(srcdir):. -classpath $(srcdir)/PixelCalibrator.jar:$(IJJARPATH):$(BSHJARPATH):$(COMMONSMATHJARPATH):$(SWINGLAYOUTJARPATH):../mmstudio/MMJ_.jar:. $(srcdir)/SlideExplorer/src/org/micromanager/slideexplorer/*.java -d build
 	## Work around bug in 'jar': jar cf MM_.jar -C bin/ bin/* does not work
-	cd build && jar cf ../SlideExplorer.jar * 
+	cd build && jar cf ../SlideExplorer.jar *
 
 RecallPlugin.jar:  \
 	$(srcdir)/Recall/src/org/micromanager/recall/*.java
@@ -67,7 +91,7 @@ RecallPlugin.jar:  \
 	rm -rf build/*
 	$(JAVAC) $(JAVACFLAGS) -sourcepath $(srcdir):. -classpath $(IJJARPATH):$(BSHJARPATH):$(COMMONSMATHJARPATH):$(SWINGLAYOUTJARPATH):../mmstudio/MMJ_.jar:. $(srcdir)/Recall/src/org/micromanager/recall/*.java -d build
 	## Work around bug in 'jar': jar cf MM_.jar -C bin/ bin/* does not work
-	cd build && jar cf ../RecallPlugin.jar * 
+	cd build && jar cf ../RecallPlugin.jar *
 
 StageControl.jar:  \
 	$(srcdir)/StageControl/src/org/micromanager/stagecontrol/*.java
@@ -75,28 +99,28 @@ StageControl.jar:  \
 	rm -rf build/*
 	$(JAVAC) $(JAVACFLAGS) -sourcepath $(srcdir):. -classpath $(IJJARPATH):$(BSHJARPATH):$(COMMONSMATHJARPATH):$(SWINGLAYOUTJARPATH):../mmstudio/MMJ_.jar:. $(srcdir)/StageControl/src/org/micromanager/stagecontrol/*.java -d build
 	cp -r $(srcdir)/StageControl/src/org/micromanager/stagecontrol/icons build/org/micromanager/stagecontrol/
-	cd build && jar cf ../StageControl.jar * 
+	cd build && jar cf ../StageControl.jar *
 
 MultiCamera.jar:  \
 	$(srcdir)/MultiCamera/src/org/micromanager/multicamera/*.java
 	test -d build || mkdir build
 	rm -rf build/*
 	$(JAVAC) $(JAVACFLAGS) -sourcepath $(srcdir):. -classpath $(IJJARPATH):$(BSHJARPATH):$(COMMONSMATHJARPATH):$(SWINGLAYOUTJARPATH):../mmstudio/MMJ_.jar:. $(srcdir)/MultiCamera/src/org/micromanager/multicamera/*.java -d build
-	cd build && jar cf ../MultiCamera.jar * 
+	cd build && jar cf ../MultiCamera.jar *
 
 SplitView.jar:  \
 	$(srcdir)/SplitView/src/org/micromanager/splitview/*.java
 	test -d build || mkdir build
 	rm -rf build/*
 	$(JAVAC) $(JAVACFLAGS) -sourcepath $(srcdir):. -classpath $(srcdir)/SplitView.jar:$(IJJARPATH):$(BSHJARPATH):$(COMMONSMATHJARPATH):$(SWINGLAYOUTJARPATH):../mmstudio/MMJ_.jar:. $(srcdir)/SplitView/src/org/micromanager/splitview/*.java -d build
-	cd build && jar cf ../SplitView.jar * 
+	cd build && jar cf ../SplitView.jar *
 
 NewImageFlipper.jar:  \
 	$(srcdir)/NewImageFlipper/src/org/micromanager/newimageflipper/*.java
 	test -d build || mkdir build
 	rm -rf build/*
 	$(JAVAC) $(JAVACFLAGS) -sourcepath $(srcdir):. -classpath $(IJJARPATH):$(BSHJARPATH):$(COMMONSMATHJARPATH):$(SWINGLAYOUTJARPATH):../mmstudio/MMJ_.jar:. $(srcdir)/NewImageFlipper/src/org/micromanager/newimageflipper/*.java -d build
-	cd build && jar cf ../NewImageFlipper.jar * 
+	cd build && jar cf ../NewImageFlipper.jar *
 
 Big.jar:  \
 	$(srcdir)/Big/src/edu/umassmed/big/*.java
@@ -104,21 +128,21 @@ Big.jar:  \
 	rm -rf build/*
 	$(JAVAC) $(JAVACFLAGS) -sourcepath $(srcdir):. -classpath $(IJJARPATH):$(BSHJARPATH):$(COMMONSMATHJARPATH):$(SWINGLAYOUTJARPATH):../mmstudio/MMJ_.jar:. $(srcdir)/Big/src/edu/umassmed/big/*.java -d build
 	## Work around bug in 'jar': jar cf MM_.jar -C bin/ bin/* does not work
-	cd build && jar cf ../Big.jar * 
+	cd build && jar cf ../Big.jar *
 
 CRISP.jar:  \
 	$(srcdir)/CRISP/src/org/micromanager/CRISP/*.java
 	test -d build || mkdir build
 	rm -rf build/*
 	$(JAVAC) $(JAVACFLAGS) -sourcepath $(srcdir):. -classpath $(IJJARPATH):$(BSHJARPATH):$(COMMONSMATHJARPATH):$(SWINGLAYOUTJARPATH):$(JFREECHARTJARPATH):../mmstudio/MMJ_.jar:. $(srcdir)/CRISP/src/org/micromanager/CRISP/*.java -d build
-	cd build && jar cf ../CRISP.jar * 
+	cd build && jar cf ../CRISP.jar *
 
 BFCorrector.jar:  \
 	$(srcdir)/BFCorrector/src/org/micromanager/bfcorrector/*.java
 	test -d build || mkdir build
 	rm -rf build/*
 	$(JAVAC) $(JAVACFLAGS) -sourcepath $(srcdir):. -classpath $(IJJARPATH):$(BSHJARPATH):$(COMMONSMATHJARPATH):$(SWINGLAYOUTJARPATH):../mmstudio/MMJ_.jar:. $(srcdir)/BFCorrector/src/org/micromanager/bfcorrector/*.java -d build
-	cd build && jar cf ../BFCorrector.jar * 
+	cd build && jar cf ../BFCorrector.jar *
 
 MultiChannelShading.jar: \
 	$(srcdir)/MultiChannelShading/src/org/micromanager/multichannelshading/*.java \
@@ -151,7 +175,7 @@ Gaussian.jar:  \
 	rm -rf build/*
 	$(JAVAC) $(JAVACFLAGS) -sourcepath $(srcdir):. -classpath $(IJJARPATH):$(BSHJARPATH):$(COMMONSMATHJARPATH):$(SWINGLAYOUTJARPATH):$(JFREECHARTJARPATH):../mmstudio/MMJ_.jar:$(CLASSEXT)/TSFProto.jar:$(CLASSEXT)/gproto.jar:$(CLASSEXT)/lwm.jar:. $(srcdir)/Gaussian/source/GaussianTrack_.java $(srcdir)/Gaussian/source/edu/valelab/GaussianFit/*.java $(srcdir)/Gaussian/source/edu/valelab/GaussianFit/utils/*.java $(srcdir)/Gaussian/source/ags/utils/*.java -d build
 	cp $(srcdir)/Gaussian/source/edu/valelab/GaussianFit/*.txt build/edu/valelab/GaussianFit/
-	cd build && jar cf ../Gaussian.jar * 
+	cd build && jar cf ../Gaussian.jar *
 
 DataBrowser.jar: \
 	$(srcdir)/DataBrowser/src/org/micromanager/browser/*.clj
@@ -166,9 +190,9 @@ ClojureEditor.jar:  \
 	$(srcdir)/ClojureEditor/src/org/micromanager/clojureeditor/*.java
 	test -d build || mkdir build
 	rm -rf build/*
-	$(JAVAC) $(JAVACFLAGS) -source 1.5 -target 1.5 -sourcepath $(srcdir):. -classpath $(srcdir)/ClojureEditor.jar:$(CLASSEXT)/*:../mmstudio/MMJ_.jar:. $(srcdir)/ClojureEditor/src/org/micromanager/clojureeditor/*.java -d build
+	$(JAVAC) $(JAVACFLAGS) -sourcepath $(srcdir):. -classpath $(srcdir)/ClojureEditor.jar:$(CLASSEXT)/*:../mmstudio/MMJ_.jar:. $(srcdir)/ClojureEditor/src/org/micromanager/clojureeditor/*.java -d build
 	## Work around bug in 'jar': jar cf MM_.jar -C bin/ bin/* does not work
-	cd build && jar cf ../ClojureEditor.jar * 
+	cd build && jar cf ../ClojureEditor.jar *
 
 
 HCS.jar:  \
@@ -180,21 +204,21 @@ HCS.jar:  \
 	$(srcdir)/HCS/src/org/micromanager/hcs/SBSPlate.java \
 	$(srcdir)/HCS/src/org/micromanager/hcs/SiteGenerator.java \
 	$(srcdir)/HCS/src/org/micromanager/hcs/TestSBSPlate.java \
-	$(srcdir)/HCS/src/org/micromanager/hcs/WellPositionList.java 
+	$(srcdir)/HCS/src/org/micromanager/hcs/WellPositionList.java
 	test -d build || mkdir build
 	rm -rf build/*
-	$(JAVAC) $(JAVACFLAGS) -source 1.5 -target 1.5 -sourcepath $(srcdir):. -classpath ../mmstudio/MMJ_.jar:. $(srcdir)/HCS/src/org/micromanager/hcs/*.java -d build
+	$(JAVAC) $(JAVACFLAGS) -sourcepath $(srcdir):. -classpath ../mmstudio/MMJ_.jar:. $(srcdir)/HCS/src/org/micromanager/hcs/*.java -d build
 	## Work around bug in 'jar': jar cf MM_.jar -C bin/ bin/* does not work
-	cd build && jar cf ../HCS.jar * 
+	cd build && jar cf ../HCS.jar *
 
 pgFocus.jar: \
 	$(srcdir)/pgFocus/src/edu/umassmed/pgFocus/pgFocus.java \
-	$(srcdir)/pgFocus/src/edu/umassmed/pgFocus/pgFocusFrame.java 
+	$(srcdir)/pgFocus/src/edu/umassmed/pgFocus/pgFocusFrame.java
 	test -d build || mkdir build
 	rm -rf build/*
-	$(JAVAC) $(JAVACFLAGS) -source 1.5 -target 1.5 -sourcepath $(srcdir):. -classpath ../mmstudio/MMJ_.jar:$(JFREECHARTJARPATH):. $(srcdir)/pgFocus/src/edu/umassmed/pgFocus/*.java -d build
+	$(JAVAC) $(JAVACFLAGS) -sourcepath $(srcdir):. -classpath ../mmstudio/MMJ_.jar:$(JFREECHARTJARPATH):. $(srcdir)/pgFocus/src/edu/umassmed/pgFocus/*.java -d build
 	cp -r $(srcdir)/pgFocus/src/edu/umassmed/pgFocus/umass_logo.png build/edu/umassmed/pgfocus/
-	cd build && jar cf ../pgFocus.jar * 
+	cd build && jar cf ../pgFocus.jar *
 
 autolase.jar: \
 	$(srcdir)/autolase/src/ch/epfl/leb/autolase/AutoLase.java \
@@ -216,32 +240,30 @@ autolase.jar: \
 	$(srcdir)/autolase/src/ch/epfl/leb/autolase/TiffCamera.java
 	test -d build || mkdir build
 	rm -rf build/*
-	$(JAVAC) $(JAVACFLAGS) -source 1.5 -target 1.5 -sourcepath $(srcdir):. -classpath ../mmstudio/MMJ_.jar:$(IJJARPATH):. $(srcdir)/autolase/src/ch/epfl/leb/autolase/*.java -d build
-	cd build && jar cf ../autolase.jar * 
+	$(JAVAC) $(JAVACFLAGS) -sourcepath $(srcdir):. -classpath ../mmstudio/MMJ_.jar:$(IJJARPATH):. $(srcdir)/autolase/src/ch/epfl/leb/autolase/*.java -d build
+	cd build && jar cf ../autolase.jar *
 
 AcquireMultipleRegions.jar: \
 	$(srcdir)/AcquireMultipleRegions/src/org/micromanager/acquiremultipleregions/AcquireMultipleRegions.java \
 	$(srcdir)/AcquireMultipleRegions/src/org/micromanager/acquiremultipleregions/AcquireMultipleRegionsForm.java \
 	$(srcdir)/AcquireMultipleRegions/src/org/micromanager/acquiremultipleregions/Region.java \
-	$(srcdir)/AcquireMultipleRegions/src/org/micromanager/acquiremultipleregions/RegionList.java 
+	$(srcdir)/AcquireMultipleRegions/src/org/micromanager/acquiremultipleregions/RegionList.java
 	test -d build || mkdir build
 	rm -rf build/*
-	$(JAVAC) $(JAVACFLAGS) -source 1.5 -target 1.5 -sourcepath $(srcdir):. -classpath ../mmstudio/MMJ_.jar:$(IJJARPATH):$(SWINGLAYOUTJARPATH):. $(srcdir)/AcquireMultipleRegions/src/org/micromanager/acquiremultipleregions/*.java -d build
-	cd build && jar cf ../AcquireMultipleRegions.jar * 
+	$(JAVAC) $(JAVACFLAGS) -sourcepath $(srcdir):. -classpath ../mmstudio/MMJ_.jar:$(IJJARPATH):$(SWINGLAYOUTJARPATH):. $(srcdir)/AcquireMultipleRegions/src/org/micromanager/acquiremultipleregions/*.java -d build
+	cd build && jar cf ../AcquireMultipleRegions.jar *
 
-all: ${TARGETS}
 
-install: 
-	test -d $(DESTDIR)$(IJPATH)/mmplugins || mkdir $(DESTDIR)$(IJPATH)/mmplugins
-	for thisjar in $(TARGETS); \
-	do \
-		cp $$thisjar $(DESTDIR)$(IJPATH)/mmplugins; \
-	done
-	
-clean:
-	for f in $(TARGETS); \
-	do \
-		test -f $$f && rm $$f || echo "$$f not found"; \
-	done
+plugindir = $(pkgdatadir)/mmplugins
+plugin_DATA = $(TARGETS)
 
- EXTRA_DIST = src build.xml
+
+CLEANFILES = $(TARGETS)
+
+# TODO Builds are done all over the place (yuck), and there is no proper clean
+# for the class files yet.
+clean-local:
+	-rm -rf build
+
+
+EXTRA_DIST = src

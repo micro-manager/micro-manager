@@ -1,4 +1,4 @@
-pkglibdir = $(DEVICEADAPTERPATH)
+
 AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS) -fpermissive
 pkglib_LTLIBRARIES = libmmgr_dal_ZeissCAN.la
 libmmgr_dal_ZeissCAN_la_SOURCES = ZeissCAN.cpp mcu28.cpp ZStage.cpp ZeissCAN.h

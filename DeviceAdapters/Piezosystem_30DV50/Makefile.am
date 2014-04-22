@@ -1,4 +1,4 @@
-pkglibdir = $(DEVICEADAPTERPATH)
+
 AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS) -fpermissive
 pkglib_LTLIBRARIES = libmmgr_dal_Piezosystem_30DV50.la
 libmmgr_dal_Piezosystem_30DV50_la_SOURCES = Piezosystem_30DV50.cpp \

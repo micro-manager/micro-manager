@@ -1,7 +1,12 @@
+
+AUTOMAKE_OPTIONS = foreign subdir-objects
+
 bin_PROGRAMS = mm_librarytest
 mm_librarytest_SOURCES = LibraryTest.cpp ../../MMCore/PluginManager.cpp
-mm_librarytest_LDADD = ../../MMCore/libMMCore.a ../../MMDevice/libMMDevice.la $(LPTHREAD) $(LIBZLIB)
-mm_librarytest_LDFLAGS = $(SERIALFRAMEWORKS)
+mm_librarytest_CPPFLAGS = $(ZLIB_CPPFLAGS)
+mm_librarytest_CXXFLAGS = $(ZLIB_CFLAGS)
+mm_librarytest_LDFLAGS = $(SERIALFRAMEWORKS) $(ZLIB_LDFLAGS)
+mm_librarytest_LDADD = ../../MMCore/libMMCore.la ../../MMDevice/libMMDevice.la $(ZLIB_LIBS)
 
 install:
 	echo "Nothing to do"

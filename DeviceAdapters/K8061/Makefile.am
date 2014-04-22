@@ -1,4 +1,4 @@
-pkglibdir = $(DEVICEADAPTERPATH)
+
 AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS) -fpermissive
 pkglib_LTLIBRARIES = libmmgr_dal_K8061.la
 libmmgr_dal_K8061_la_SOURCES = K8061.cpp K8061.h K8061Interface.h K8061Interface.cpp \

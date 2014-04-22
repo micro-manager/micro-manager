@@ -1,4 +1,4 @@
-pkglibdir = $(DEVICEADAPTERPATH)
+
 AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS) -fpermissive $(BOOST_CPPFLAGS)
 pkglib_LTLIBRARIES = libmmgr_dal_DemoCamera.la
 libmmgr_dal_DemoCamera_la_SOURCES = DemoCamera.cpp DemoCamera.h ../../MMDevice/MMDevice.h

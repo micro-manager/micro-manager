@@ -1,4 +1,4 @@
-pkglibdir = $(DEVICEADAPTERPATH)
+
 AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS) -fpermissive
 UEYELIB = -lueye_api
 pkglib_LTLIBRARIES = libmmgr_dal_IDS_uEye.la

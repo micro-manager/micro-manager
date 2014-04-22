@@ -1,4 +1,4 @@
-pkglibdir = $(DEVICEADAPTERPATH)
+
 AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS) -fpermissive
 pkglib_LTLIBRARIES = libmmgr_dal_ASIFW1000.la
 libmmgr_dal_ASIFW1000_la_SOURCES = ASIFW1000.cpp ASIFW1000.h ASIFW1000Hub.cpp ASIFW1000Hub.h

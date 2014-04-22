@@ -1,35 +1,144 @@
+
 AUTOMAKE_OPTIONS = foreign
 ACLOCAL_AMFLAGS = -I m4
 
-if BUILD_WITH_JAVA
-MMJAVACODE = MMCoreJ_wrap mmstudio acqEngine autofocus plugins scripts
+if BUILD_MMCORE
+MMCORE_DIR = MMCore
 endif
 
-if BUILD_APP
-APP = MMCore $(MMJAVACODE) 
+if BUILD_MMCOREJ
+MMCOREJ_DIR = MMCoreJ_wrap
 endif
 
-if BUILD_PYTHON
-PYTHONDIR = MMCorePy_wrap
+if BUILD_MMCOREPY
+MMCOREPY_DIR = MMCorePy_wrap
 endif
 
 if BUILD_SECRETDEVICEADAPTERS
 SECRETDEVICEADAPTERS = SecretDeviceAdapters
 endif
 
-EXTRA_DIST = mmbuild.bat lib/empty.txt build_instructions_win.html build_instructions_unix.txt
 
-SUBDIRS =  MMDevice $(APP) DeviceAdapters $(SECRETDEVICEADAPTERS) $(PYTHONDIR)
+# TODO Define jardir in configure script (See other uses.)
+jardir = $(pkgdatadir)/jars
 
-devicekit: 
-	cd DeviceKit
-	make
-	cd ..
+if BUILD_JAVA_APP
 
-dox: 
-	test -d $(srcdir)/doxygen/out/MMDevice || mkdir $(srcdir)/doxygen/out/MMDevice
-	rm -rf $(srcdir)/doxygen/out/MMDevice/*
+JAVA_APP_DIRS = mmstudio acqEngine autofocus plugins scripts
+
+if INSTALL_AS_IMAGEJ_PLUGIN
+
+bin_SCRIPTS = buildscripts/launchers/mmimagej
+
+# Script to launch as ImageJ plugin
+buildscripts/launchers/mmimagej: $(srcdir)/buildscripts/launchers/mmimagej.in
+	sed \
+		-e 's%@imagejdir[@]%$(imagejdir)%g' \
+		-e 's%@imagejjar[@]%$(imagejjar)%g' \
+		$(srcdir)/buildscripts/launchers/mmimagej.in >$@
+
+# Install Micro-Manager into an existing ImageJ application folder, as an
+# ImageJ plugin.
+install-ijplugin:
+	$(MAKE) pkglibdir=$(imagejdir) pkgdatadir=$(imagejdir) \
+		jardir=$(imagejdir)/plugins/Micro-Manager \
+		bindir=$(imagejdir) \
+		force_plain_install=yes \
+		install
+	rm -f $(DESTDIR)$(imagejdir)/*.la
+	rm -f $(DESTDIR)$(imagejdir)/plugins/Micro-Manager/ij.jar
+	@echo "" 1>&2; \
+	echo "##############################################################################" 1>&2; \
+	echo "Micro-Manager has been installed as an ImageJ plugin in" 1>&2; \
+	echo "$(imagejdir)" 1>&2; \
+	echo "" 1>&2; \
+	echo "You can start Micro-Manager from the command line by typing" 1>&2; \
+	echo "$(imagejdir)/mmimagej" 1>&2; \
+	echo "or from the ImageJ menu (Plugins > Micro-Manager > Micro-Manager Studio)." 1>&2; \
+	echo "##############################################################################" 1>&2; \
+	echo "" 1>&2
+
+# If the user types 'make install', they probably didn't mean it.
+install-check-ijplugin:
+	@if test "x$(force_plain_install)" != xyes; then \
+		echo "############################################################" 1>&2; \
+		echo "You just ran 'make install'." 1>&2; \
+		echo "Did you mean to run 'make install-ijplugin'?" 1>&2; \
+		echo "" 1>&2; \
+		echo "I'm sorry I couldn't warn you before starting;" 1>&2; \
+		echo "it is due to the limitations of Automake, which" 1>&2; \
+		echo "really wasn't designed for a task like this." 1>&2; \
+		echo "" 1>&2; \
+		echo "Some (not necessarily all) of the files got installed" 1>&2; \
+		echo "in $(pkglibdir)," 1>&2; \
+		echo "in $(pkgdatadir), and" 1>&2; \
+		echo "at $(bindir)/mmimagej" 1>&2; \
+		echo "" 1>&2; \
+		echo "You can uninstall them with 'make uninstall'." 1>&2; \
+		echo "" 1>&2; \
+		echo "To force 'make install' (e.g. for testing), you can run" 1>&2; \
+		echo "'make install force_plain_install=yes'"; 1>&2; \
+		echo "############################################################" 1>&2; \
+		exit 1; \
+	fi
+
+install-exec-local: install-check-ijplugin
+install-data-local: install-check-ijplugin
+
+else # INSTALL_AS_IMAGEJ_PLUGIN
+
+bin_SCRIPTS = buildscripts/launchers/micromanager
+
+# Launch script for running outside of ImageJ
+buildscripts/launchers/micromanager: $(srcdir)/buildscripts/launchers/micromanager.in
+	sed \
+		-e 's%@pkglibdir[@]%$(pkglibdir)%g' \
+		-e 's%@pkgdatadir[@]%$(pkgdatadir)%g' \
+		-e 's%@jardir[@]%$(jardir)%g' \
+		-e 's%@imagejjar[@]%$(imagejjar)%g' \
+		$(srcdir)/buildscripts/launchers/micromanager.in >$@
+
+install-exec-hook:
+	@echo "" 1>&2; \
+	echo "##############################################################################" 1>&2; \
+	echo "Micro-Manager has been installed in" 1>&2; \
+	echo "$(prefix)" 1>&2; \
+	echo "" 1>&2; \
+	echo "You can run Micro-Manager by typing" 1>&2; \
+	echo "$(bindir)/micromanager" 1>&2; \
+	echo "##############################################################################" 1>&2; \
+	echo "" 1>&2
+
+endif # INSTALL_AS_IMAGEJ_PLUGIN
+endif # BUILD_JAVA_APP
+
+
+if INSTALL_DEPENDENCY_JARS
+
+install-data-hook:
+	$(INSTALL) -d $(DESTDIR)$(jardir)
+	for jar in $(CLASSEXT)/*.jar; do \
+		$(INSTALL_DATA) -c $$jar $(DESTDIR)$(jardir); \
+	done
+
+uninstall-hook:
+	for jar in $(CLASSEXT)/*.jar; do \
+		rm -f $(DESTDIR)$(jardir)/`basename $$jar`; \
+	done
+
+endif # INSTALL_DEPENDENCY_JARS
+
+
+CLEANFILES = buildscripts/launchers/micromanager buildscripts/launchers/mmimagej
+
+
+# TODO: Building of DeviceAdapters could be made optional.
+SUBDIRS = MMDevice $(MMCORE_DIR) $(MMCOREJ_DIR) $(MMCOREPY_DIR) $(JAVA_APP_DIRS) DeviceAdapters $(SECRETDEVICEADAPTERS) bindist
+
+
+dox:
+	-rm -rf doxygen/out
+	$(MKDIR_P) doxygen/out/MMDevice
+	$(MKDIR_P) doxygen/out/MMCore
 	doxygen doxygen/MMDevice
-	test -d $(srcdir)/doxygen/out/MMCore || mkdir $(srcdir)/doxygen/out/MMCore
-	rm -rf $(srcdir)/doxygen/out/MMCore/*
 	doxygen doxygen/MMCore
