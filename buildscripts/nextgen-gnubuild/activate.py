@@ -54,7 +54,7 @@ import subprocess
 import sys
 
 
-def activate(initial=True):
+def activate(initial=True, git_add=False):
     all_deletes, all_renames = [], []
     for nextgen_filename in iterate_nextgen_files():
         print("reading " + nextgen_filename)
@@ -74,7 +74,12 @@ def activate(initial=True):
     if all_deletes:
         print("delete files: " + " ".join(all_deletes))
         for filename in all_deletes:
-            os.unlink(filename)
+            if git_add:
+                subprocess.call("cd '{}'; git rm '{}'".
+                                format(*os.path.split(filename)),
+                                shell=True)
+            else:
+                os.unlink(filename)
 
     umask = os.umask(0o777); os.umask(umask)
     for src, dst, mode in all_renames:
@@ -86,6 +91,10 @@ def activate(initial=True):
                 print("copy", src, "->", dst, "(0{:03o})".format(masked_mode))
                 copy_for_activation(src, dst)
                 os.chmod(dst, masked_mode)
+                if git_add:
+                    subprocess.call("cd '{}'; git add '{}'".
+                                    format(*os.path.split(dst)),
+                                    shell=True)
             else:
                 print("up to date: " + dst + " (from " + src + ")")
         else:
@@ -279,6 +288,7 @@ def ngize(filename, header=None):
 def run():
     p = argparse.ArgumentParser()
     p.add_argument("-a", "--activate", action="store_true")
+    p.add_argument("-A", "--activate-and-git-add", action="store_true")
     p.add_argument("-r", "--reactivate", action="store_true")
     p.add_argument("-d", "--deactivate", action="store_true")
     p.add_argument("-s", "--sum", nargs="+")
@@ -286,11 +296,14 @@ def run():
     p.add_argument("-H", "--header", nargs=1)
     args = p.parse_args()
     if sum(1 for _ in filter(None, [args.activate, args.reactivate,
+                                    args.activate_and_git_add,
                                     args.deactivate, args.sum, args.ngize])) > 1:
         print("multiple verbs not allowed")
         sys.exit(1)
     if args.activate:
         activate()
+    elif args.activate_and_git_add:
+        activate(git_add=True)
     elif args.reactivate:
         activate(False)
     elif args.deactivate:
