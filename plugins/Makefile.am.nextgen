@@ -9,7 +9,30 @@
 
 ## Process this file with automake to produce Makefile.in
 
-TARGETS= ASIdiSPIM.jar PixelCalibrator.jar Projector.jar RecallPlugin.jar StageControl.jar MultiCamera.jar CRISP.jar Big.jar NewImageFlipper.jar SlideExplorer.jar DataBrowser.jar ClojureEditor.jar SplitView.jar Gaussian.jar IntelligentAcquisition.jar BFCorrector.jar MultiChannelShading.jar HCS.jar MMTracker.jar pgFocus.jar autolase.jar
+TARGETS = \
+	ASIdiSPIM.jar \
+	AcquireMultipleRegions.jar \
+	BFCorrector.jar \
+	Big.jar \
+	CRISP.jar \
+	ClojureEditor.jar \
+	DataBrowser.jar \
+	Gaussian.jar \
+	HCS.jar \
+	IntelligentAcquisition.jar \
+	MMTracker.jar \
+	MultiCamera.jar \
+	MultiChannelShading.jar \
+	NewImageFlipper.jar \
+	PixelCalibrator.jar \
+	Projector.jar \
+	RecallPlugin.jar \
+	SlideExplorer.jar \
+	SplitView.jar \
+	StageControl.jar \
+	autolase.jar \
+	pgFocus.jar
+
 
 ASIdiSPIM.jar:  \
 	$(srcdir)/ASIdiSPIM/src/org/micromanager/asidispim/*.java \
