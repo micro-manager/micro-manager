@@ -100,12 +100,12 @@ public interface ImageCache extends TaggedImageStorage {
 
    /**
     * Store the display settings for a particular channel.
-    * @channelIndex - The channel index for which settings are being specified
-    * @min - The minimum display intensity value (shown as black)
-    * @max - The maximum display intensity value (shown as full-intensity color)
-    * @gamma - The gamma value (curvature of the value-to-display curve)
-    * @histMax - The preferred maximum value at which the histogram is displayed.
-    * @displayMode - Composite, Color, or Gray-scale
+    * @param channelIndex - The channel index for which settings are being specified
+    * @param min - The minimum display intensity value (shown as black)
+    * @param max - The maximum display intensity value (shown as full-intensity color)
+    * @param gamma - The gamma value (curvature of the value-to-display curve)
+    * @param histMax - The preferred maximum value at which the histogram is displayed.
+    * @param displayMode - Composite, Color, or Gray-scale
     */
    public void storeChannelDisplaySettings(int channelIndex, int min, int max, 
            double gamma, int histMax, int displayMode);
@@ -133,8 +133,8 @@ public interface ImageCache extends TaggedImageStorage {
 
    /**
     * Sets the preferred display color for a channel
-    * @channel - The channel index
-    * @rgb - A 6-byte integer specifying the color: e.g., 0xFFFFFF is white.
+    * @param channel - The channel index
+    * @param rgb - A 6-byte integer specifying the color: e.g., 0xFFFFFF is white.
     */
    public void setChannelColor(int channel, int rgb);
 

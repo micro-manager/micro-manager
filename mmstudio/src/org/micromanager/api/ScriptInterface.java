@@ -115,7 +115,7 @@ public interface ScriptInterface {
     * @param displayOff True if no display is to be created or shown.
     * @throws MMScriptException
     *
-    * @Deprecated Use openAcquisition() instead.
+    * @deprecated Use openAcquisition() instead.
     */
    public String createAcquisition(JSONObject summaryMetadata, boolean diskCached, boolean displayOff);
 
@@ -162,7 +162,7 @@ public interface ScriptInterface {
     * @param name - data set name
     * @throws MMScriptException
     *
-    * @Deprecated Because it returns an internal object that is subject to change.
+    * @deprecated Because it returns an internal object that is subject to change.
     */
    public MMAcquisition getAcquisition(String name) throws MMScriptException;
    
@@ -175,8 +175,8 @@ public interface ScriptInterface {
    /**
     * Returns the name of the current album (i.e. the most recently created one)
     * In addition to their use through the scripting interface, Albums are used
-    * by the "Camera --> Album" button in the main window of Micro-Manager and 
-    * the "--> Album" button on the snap/live window
+    * by the "Camera --&gt; Album" button in the main window of Micro-Manager and 
+    * the "--&gt; Album" button on the snap/live window
     * @return Name of the current Album.
     */
    public String getCurrentAlbum();
@@ -185,8 +185,8 @@ public interface ScriptInterface {
     * Add a TaggedImage to an album; creates a new album if the image and current album
     * do not match in image dimensions, bits per pixel, bytes per pixel, or number of channels.
     * The current album is the most recently created one
-    * Albums are also used by the "Camera --> Album" button in the main window of Micro-Manager and 
-    * the "--> Album" button on the snap/live window
+    * Albums are also used by the "Camera --&gt; Album" button in the main window of Micro-Manager and 
+    * the "--&gt; Album" button on the snap/live window
     */
    public void addToAlbum(TaggedImage image) throws MMScriptException;
    
@@ -590,7 +590,7 @@ public interface ScriptInterface {
     * dlg.setVisible(true);
     * @return Handle to the MDA acquisition dialog
     *
-    * @Deprecated Use the get/setAcquisitionSettings() interface instead.
+    * @deprecated Use the get/setAcquisitionSettings() interface instead.
     */
    public AcqControlDlg getAcqDlg();
 
@@ -600,13 +600,13 @@ public interface ScriptInterface {
     * The Dialog will not necessarily be shown, call the setVisibile method of the dialog to do so
     * @return Handle to the positionList Dialog
     *
-    * @Deprecated Use the get/setPositionList() interface instead.
+    * @deprecated Use the get/setPositionList() interface instead.
     */
    public PositionListDlg getXYPosListDlg();
 
    /**
     * Returns true when an acquisition is currently running (note: this function will
-    * not return true if live mode, snap, or "Camera --> Album" is currently running
+    * not return true if live mode, snap, or "Camera --&gt; Album" is currently running
     */
    public boolean isAcquisitionRunning();
 
