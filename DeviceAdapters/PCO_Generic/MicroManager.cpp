@@ -84,6 +84,7 @@ MODULE_API MM::Device* CreateDevice(const char* pszDeviceName)
   if (strName == g_CameraDeviceName)
   {
     CPCOCam *pcam = new CPCOCam();
+
     PCO_CamList.push_front(pcam);
     return pcam;
   }
@@ -130,6 +131,7 @@ pictime_(0.0)
   m_pCamera = NULL;
   m_nTimesLen = MM_PCO_GENERIC_MAX_STRLEN;
   m_pCamera = new CCamera();
+  memset(&m_pCamera->strCam.wSize, 0, sizeof(PCO_Camera));
   m_bDemoMode = FALSE;
   m_bStartStopMode = TRUE;
   m_iFpsMode = 0;
@@ -167,6 +169,9 @@ CPCOCam::~CPCOCam()
       g_iSC2Count--;
     Shutdown();
   }
+  m_bInitialized = false;
+  delete(m_pCamera);
+  m_pCamera = NULL;
 
   if(g_iCameraCount <= 0)
   {
@@ -1431,15 +1436,12 @@ int CPCOCam::Initialize()
 int CPCOCam::Shutdown()
 {
   int istopresult = 0;
-  m_bInitialized = false;
 
   if(m_pCamera != NULL)
   {
     if(!m_bDemoMode)
       m_pCamera->StopCam(&istopresult);
     m_pCamera->CloseCam();
-    delete(m_pCamera);
-    m_pCamera = NULL;
   }
   EnableConvert(FALSE);
   return DEVICE_OK;
@@ -2042,6 +2044,7 @@ int CPCOCam::SnapImage()
   if(m_bDemoMode)
     return DEVICE_OK;
 
+
   for(int i = 0; i < 4; i++)
   {
     m_iNextBufferToUse[i] = m_iLastBufferUsed[i];
@@ -2063,7 +2066,6 @@ int CPCOCam::SnapImage()
 
     m_pCamera->StartCam();
   }
-
   if(!m_bSequenceRunning)              // Don't do it when sequenceing
     m_pCamera->ResetEvWait();
 
