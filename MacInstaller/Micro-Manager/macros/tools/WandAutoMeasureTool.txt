@@ -1,9 +1,0 @@
-// This tool is a wand tool that also runs the Measure command
-
-    macro "Wand Auto-Measure Tool -C00b-Lee22-o2244" {
-        requires("1.30k");
-        getCursorLoc(x, y, z, flags);
-        doWand(x,y);
-        if (selectionType!=0)
-            run("Measure");
-    }
