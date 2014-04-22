@@ -138,7 +138,7 @@ BFCorrector.jar:  \
 	rm -rf build/BFCorrector
 	$(MKDIR_P) build/BFCorrector
 	$(JAVAC) $(JAVACFLAGS) -classpath $(IJJARPATH):$(BSHJARPATH):$(COMMONSMATHJARPATH):$(SWINGLAYOUTJARPATH):../mmstudio/MMJ_.jar:. $(srcdir)/BFCorrector/src/org/micromanager/bfcorrector/*.java -d build/BFCorrector
-	cd build && jar cf ../../BFCorrector.jar *
+	cd build/BFCorrector && jar cf ../../BFCorrector.jar *
 
 MultiChannelShading.jar: \
 	$(srcdir)/MultiChannelShading/src/org/micromanager/multichannelshading/*.java \
