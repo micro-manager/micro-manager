@@ -117,6 +117,7 @@ public interface ScriptInterface {
     *
     * @deprecated Use openAcquisition() instead.
     */
+   @Deprecated
    public String createAcquisition(JSONObject summaryMetadata, boolean diskCached, boolean displayOff);
 
    /**
@@ -164,6 +165,7 @@ public interface ScriptInterface {
     *
     * @deprecated Because it returns an internal object that is subject to change.
     */
+   @Deprecated
    public MMAcquisition getAcquisition(String name) throws MMScriptException;
    
    /**
@@ -592,6 +594,7 @@ public interface ScriptInterface {
     *
     * @deprecated Use the get/setAcquisitionSettings() interface instead.
     */
+   @Deprecated
    public AcqControlDlg getAcqDlg();
 
    /**
@@ -602,6 +605,7 @@ public interface ScriptInterface {
     *
     * @deprecated Use the get/setPositionList() interface instead.
     */
+   @Deprecated
    public PositionListDlg getXYPosListDlg();
 
    /**
