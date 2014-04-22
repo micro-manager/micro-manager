@@ -50,7 +50,6 @@ import collections
 import hashlib
 import os, os.path
 import re
-import shutil
 import subprocess
 import sys
 
@@ -85,7 +84,7 @@ def activate(initial=True):
                 os.stat(src).st_mtime > os.stat(dst).st_mtime):
                 masked_mode = mode & ~umask
                 print("copy", src, "->", dst, "(0{:03o})".format(masked_mode))
-                shutil.copyfile(src, dst)
+                copy_for_activation(src, dst)
                 os.chmod(dst, masked_mode)
             else:
                 print("up to date: " + dst + " (from " + src + ")")
@@ -211,6 +210,36 @@ def process_nextgen(hdr, do_removal=True, check_removal=None):
             deletes.append(old_path)
     new_path = os.path.join(dirname, hdr.rename_to) if hdr.rename_to else None
     return deletes, [(hdr.filename, new_path, hdr.file_mode)]
+
+
+def copy_for_activation(srcfile, dstfile):
+    # Copy srcfile to dst file, but leave out any continuous block of comment
+    # lines that contain %nextgen_build_ directives.
+    block_comment_lines = None
+    with open(srcfile) as src:
+        with open(dstfile, "w") as dst:
+            for line in src:
+                if block_comment_lines is None:
+                    if line.startswith("#") and not line.startswith("#!"):
+                        block_comment_lines = [line]
+                        block_comment_is_nextgen_header = line.startswith("# %nextgen_build_")
+                        continue
+                    dst.write(line)
+                else: # in block comment
+                    if not line.startswith("#"): # ended
+                        if not block_comment_is_nextgen_header:
+                            for comment_line in block_comment_lines:
+                                dst.write(comment_line)
+                        block_comment_lines = None
+                        dst.write(line)
+                        continue
+                    if line.startswith("# %nextgen_build_"):
+                        block_comment_is_nextgen_header = True
+                    block_comment_lines.append(line)
+            if block_comment_lines is not None:
+                if not block_comment_is_nextgen_header:
+                    for comment_line in block_comment_lines:
+                        dst.write(comment_line)
 
 
 def get_md5(filename):
