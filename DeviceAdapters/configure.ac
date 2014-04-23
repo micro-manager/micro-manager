@@ -35,6 +35,9 @@ AC_SUBST(MMDEVAPI_LDFLAGS)
 thirdpartypublic="${micromanager_path}/../3rdpartypublic"
 
 
+MM_INSTALL_DIRS
+
+
 # libusb 0.1 or libusb-compat
 MM_ARG_WITH_OPTIONAL_LIB([libusb 0.1 or libusb-compat], [libusb-0-1], [LIBUSB_0_1])
 AS_IF([test "x$want_libusb_0_1" != xno],

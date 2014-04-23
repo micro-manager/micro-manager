@@ -1,6 +1,6 @@
 
 AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS)
-pkglib_LTLIBRARIES = libmmgr_dal_Zaber.la
+deviceadapter_LTLIBRARIES = libmmgr_dal_Zaber.la
 libmmgr_dal_Zaber_la_SOURCES = \
 			       XYStage.cpp \
 			       XYStage.h \

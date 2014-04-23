@@ -1,3 +1,1 @@
-
-configdir = $(pkgdatadir)
-config_DATA = any-platform/MMConfig_demo.cfg
+mmdata_DATA = any-platform/MMConfig_demo.cfg

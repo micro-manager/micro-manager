@@ -1,6 +1,6 @@
 
 AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS) -fpermissive
-pkglib_LTLIBRARIES = libmmgr_dal_PIGCS2.la
+deviceadapter_LTLIBRARIES = libmmgr_dal_PIGCS2.la
 libmmgr_dal_PIGCS2_la_SOURCES = Controller.cpp Controller.h \
     PIGCSControllerCom.cpp PIGCSControllerCom.h \
 	 PIGCSControllerDLL.cpp PIGCSControllerDLL.h \

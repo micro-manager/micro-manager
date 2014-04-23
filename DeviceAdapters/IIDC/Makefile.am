@@ -7,7 +7,7 @@
 AM_CPPFLAGS = $(BOOST_CPPFLAGS) -DBOOST_THREAD_VERSION=2
 
 AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS)
-pkglib_LTLIBRARIES = libmmgr_dal_IIDC.la
+deviceadapter_LTLIBRARIES = libmmgr_dal_IIDC.la
 libmmgr_dal_IIDC_la_SOURCES = \
 	IIDCCapture.cpp \
 	IIDCCapture.h \

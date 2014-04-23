@@ -150,7 +150,6 @@ MMReader_.jar: \
 	cd build && jar cf ../MMReader_.jar *
 
 
-jardir = $(pkgdatadir)/jars
 jar_DATA = MMJ_.jar
 
 

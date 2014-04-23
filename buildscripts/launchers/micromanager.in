@@ -36,9 +36,9 @@ echo "class path = $CLASSPATH" 1>&2
 @JAVA@ -Xmx1024M \
    -classpath "$CLASSPATH" \
    -Dmmcorej.library.loading.stderr.log=yes \
-   -Dmmcorej.library.path="@pkglibdir@" \
-   -Dorg.micromanager.plugin.path="@pkgdatadir@/mmplugins" \
-   -Dorg.micromanager.autofocus.path="@pkgdatadir@/mmautofocus" \
-   -Dorg.micromanager.beanshell.start.script="@pkgdatadir@/scripts/mm_beanshell_startup.bsh" \
-   -Dorg.micromanager.default.config.file="@pkgdatadir@/MMConfig_demo.cfg" \
+   -Dmmcorej.library.path="@wrappermoduledir@" \
+   -Dorg.micromanager.plugin.path="@mmplugindir@" \
+   -Dorg.micromanager.autofocus.path="@mmautofocusdir@" \
+   -Dorg.micromanager.beanshell.start.script="@mmscriptdir@/mm_beanshell_startup.bsh" \
+   -Dorg.micromanager.default.config.file="@mmdatadir@/MMConfig_demo.cfg" \
    org.micromanager.MMStudioMainFrame

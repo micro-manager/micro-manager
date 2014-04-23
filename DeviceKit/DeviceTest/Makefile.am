@@ -1,7 +1,7 @@
 
 AUTOMAKE_OPTIONS = foreign subdir-objects
 
-bin_PROGRAMS = mm_devicetest 
+noinst_PROGRAMS = mm_devicetest 
 mm_devicetest_SOURCES = DeviceTest.cpp ../../MMCore/PluginManager.cpp
 mm_devicetest_CPPFLAGS = $(ZLIB_CPPFLAGS)
 mm_devicetest_CXXFLAGS = $(ZLIB_CFLAGS)

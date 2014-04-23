@@ -56,13 +56,12 @@ MMCoreJ_wrap.h MMCoreJ_wrap.cxx: MMCoreJ.stamp
 	fi
 
 
-pkglib_LTLIBRARIES = libMMCoreJ_wrap.la
+wrappermodule_LTLIBRARIES = libMMCoreJ_wrap.la
 libMMCoreJ_wrap_la_SOURCES = MMCoreJ_wrap.h MMCoreJ_wrap.cxx
 libMMCoreJ_wrap_la_LDFLAGS = -module -avoid-version -shrext $(JNI_SUFFIX)
 libMMCoreJ_wrap_la_LIBADD = ../MMCore/libMMCore.la
 
 
-jardir = $(pkgdatadir)/jars
 jar_DATA = MMCoreJ.jar
 
 MMCoreJ.jar: MMCoreJ_wrap.h TaggedImage.java

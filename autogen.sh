@@ -11,5 +11,3 @@ autoreconf --force --install --verbose
 echo "Bootstrapping complete; now you can run ./configure" 1>&2
 echo "If you would like to install Micro-Manager as an ImageJ plugin, run" 1>&2
 echo "  ./configure --enable-imagej-plugin=/path/to/ImageJ" 1>&2
-echo "  make" 1>&2
-echo "  make install-ijplugin" 1>&2

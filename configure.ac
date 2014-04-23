@@ -215,21 +215,8 @@ if test -n "$with_imagej"; then
 fi
 
 
-AC_ARG_ENABLE([imagej-plugin],
-   [AS_HELP_STRING([--enable-imagej-plugin=IMAGEJDIR],
-      [Build for installation as plugin for ImageJ at IMAGEJDIR. To install
-       into IMAGEJDIR, run 'make install-ijplugin' instead of 'make install'.])],
-   [], [enable_imagej_plugin=no])
-AS_IF([test "x$build_java_app" = xno],
-   [AS_IF([test "x$enable_imagej_plugin" != xno],
-      [AC_MSG_ERROR([--enable-imagej-plugin given but Java app will not be built])])])
-case $enable_imagej_plugin in
-   yes) AC_MSG_ERROR([--enable-imagej-plugin requires argument (ImageJ directory)]) ;;
-   no)  ;;
-   *)   imagejdir="$enable_imagej_plugin";;
-esac
-AC_SUBST([imagejdir])
-AM_CONDITIONAL([INSTALL_AS_IMAGEJ_PLUGIN], [test -n "$imagejdir"])
+# Set the default install directories used in Makefile.am's.
+MM_INSTALL_DIRS
 
 
 # Allow user to override location of ij.jar (whether or not we are building as
@@ -237,7 +224,7 @@ AM_CONDITIONAL([INSTALL_AS_IMAGEJ_PLUGIN], [test -n "$imagejdir"])
 # the target ImageJ directory. Otherwise do not set imagejjar, and use the copy
 # in CLASSEXT.
 AC_ARG_WITH([ij-jar],
-	[AS_HELP_STRING([--with-ij-jar=FILE],
+   [AS_HELP_STRING([--with-ij-jar=FILE],
       [Use specified ImageJ ij.jar for building and running])],
    [], [with_ij_jar=auto])
 case $with_ij_jar in
@@ -431,11 +418,4 @@ echo ""
 fi # build_java_app
 
 echo "Now type 'make' to build."
-AM_COND_IF([INSTALL_AS_IMAGEJ_PLUGIN],
-[
-   echo "IMPORTANT: To install as an ImageJ plugin, use 'make install-ijplugin'"
-   echo "instead of 'make install'."
-],
-[
-   echo "Then type 'make install' to install."
-])
+echo "Then type 'make install' to install."

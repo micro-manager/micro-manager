@@ -6,7 +6,7 @@ AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS) $(GPHOTO2_CFLAGS) $(FREEIMAGEPLUS_CXXFLAGS) -
 # TODO -framework CoreFoundation (used by gphoto/SimpleCam.cpp) should be Apple-only
 AM_LDFLAGS = $(MMDEVAPI_LDFLAGS) $(GPHOTO2_LDFLAGS) $(FREEIMAGEPLUS_LDFLAGS) -framework CoreFoundation
 
-pkglib_LTLIBRARIES = libmmgr_dal_GPhoto.la
+deviceadapter_LTLIBRARIES = libmmgr_dal_GPhoto.la
 libmmgr_dal_GPhoto_la_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)/gphoto
 libmmgr_dal_GPhoto_la_SOURCES = \
 	CameraFrontend.cpp \

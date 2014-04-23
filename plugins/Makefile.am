@@ -248,8 +248,7 @@ AcquireMultipleRegions.jar: \
 	cd build/AcquireMultipleRegions && jar cf ../../AcquireMultipleRegions.jar *
 
 
-plugindir = $(pkgdatadir)/mmplugins
-plugin_DATA = $(TARGETS)
+mmplugin_DATA = $(TARGETS)
 
 
 CLEANFILES = $(TARGETS)

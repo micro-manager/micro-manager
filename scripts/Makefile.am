@@ -1,13 +1,12 @@
-
-scriptdir = $(pkgdatadir)/scripts
-
-install-data-hook:
-	$(INSTALL) -d $(DESTDIR)$(scriptdir)
-	for script in $(srcdir)/*.bsh; do \
-		$(INSTALL_DATA) -c $$script $(DESTDIR)$(scriptdir); \
+install-data-local:
+	$(INSTALL) -d $(DESTDIR)$(mmscriptdir)
+	@for script in $(srcdir)/*.bsh; do \
+		echo $(INSTALL_DATA) -c $$script $(DESTDIR)$(mmscriptdir); \
+		$(INSTALL_DATA) -c $$script $(DESTDIR)$(mmscriptdir); \
 	done
 
-uninstall-hook:
-	for script in $(srcdir)/*.bsh; do \
-		rm -f $(DESTDIR)$(scriptdir)/`basename $$script`; \
+uninstall-local:
+	@for script in $(srcdir)/*.bsh; do \
+		echo rm -f $(DESTDIR)$(mmscriptdir)/`basename $$script`; \
+		rm -f $(DESTDIR)$(mmscriptdir)/`basename $$script`; \
 	done

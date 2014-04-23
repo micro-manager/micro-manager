@@ -1,4 +1,3 @@
-
 How to build and install Micro-Manager
 ======================================
 
@@ -117,9 +116,6 @@ To configure for installation as an ImageJ plugin, type
 
 The ImageJ path should be an existing (prefereably fresh) copy of ImageJ 1.48.
 
-IMPORTANT: When using --enable-imagej-plugin, you will need to run `make
-install-ijplugin` instead of the usual `make install`. See below.
-
 To get more information about the possible options to `configure`, type
 
   ./configure --help
@@ -138,19 +134,9 @@ Assuming `configure` succeeded, you can now run
 
 to build.
 
-To install (in the traditional Unix style), type
+To install, type
 
   make install
-
-However, if you have used `configure --enable-imagej-plugin`, you will need to
-instead run
-
-  make install-ijplugin
-
-(This is because this style of installation is not supported by the GNU build
-system out of the box. The `install-ijplugin` target is a convenience that
-runs `install` with some special default settings -- something that would
-normally have to be done with a separate shell script.)
 
 When the installation is finished, a message will be printed telling you how
 to run Micro-Manager Studio (if it was configured to be built).

@@ -10,7 +10,6 @@ MMAcqEngine.jar: \
 	jar cf MMAcqEngine.jar -C classes/ .
 
 
-jardir = $(pkgdatadir)/jars
 jar_DATA = MMAcqEngine.jar
 
 

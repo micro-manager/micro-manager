@@ -19,16 +19,13 @@ SECRETDEVICEADAPTERS = SecretDeviceAdapters
 endif
 
 
-# TODO Define jardir in configure script (See other uses.)
-jardir = $(pkgdatadir)/jars
-
 if BUILD_JAVA_APP
 
 JAVA_APP_DIRS = mmstudio acqEngine autofocus plugins scripts
 
 if INSTALL_AS_IMAGEJ_PLUGIN
 
-bin_SCRIPTS = buildscripts/launchers/mmimagej
+launcher_SCRIPTS = buildscripts/launchers/mmimagej
 
 # Script to launch as ImageJ plugin
 buildscripts/launchers/mmimagej: $(srcdir)/buildscripts/launchers/mmimagej.in
@@ -38,63 +35,37 @@ buildscripts/launchers/mmimagej: $(srcdir)/buildscripts/launchers/mmimagej.in
 		-e 's%@JAVA[@]%$(JAVA)%g' \
 		$(srcdir)/buildscripts/launchers/mmimagej.in >$@
 
-# Install Micro-Manager into an existing ImageJ application folder, as an
-# ImageJ plugin.
-install-ijplugin:
-	$(MAKE) pkglibdir=$(imagejdir) pkgdatadir=$(imagejdir) \
-		jardir=$(imagejdir)/plugins/Micro-Manager \
-		bindir=$(imagejdir) \
-		force_plain_install=yes \
-		install
-	rm -f $(DESTDIR)$(imagejdir)/*.la
-	rm -f $(DESTDIR)$(imagejdir)/plugins/Micro-Manager/ij.jar
+# We don't want our copy if ij.jar, because we are using an existing ImageJ.
+install-data-hook:
+	rm -f $(DESTDIR)$(jardir)/ij.jar
+
+# There is no reason to keep the .la files when installing into ImageJ.
+install-exec-hook:
+	rm -f $(DESTDIR)$(wrappermoduledir)/*.la
+	rm -f $(DESTDIR)$(deviceadapterdir)/*.la
 	@echo "" 1>&2; \
 	echo "##############################################################################" 1>&2; \
 	echo "Micro-Manager has been installed as an ImageJ plugin in" 1>&2; \
 	echo "$(imagejdir)" 1>&2; \
 	echo "" 1>&2; \
 	echo "You can start Micro-Manager from the command line by typing" 1>&2; \
-	echo "$(imagejdir)/mmimagej" 1>&2; \
+	echo "$(launcherdir)/mmimagej" 1>&2; \
 	echo "or from the ImageJ menu (Plugins > Micro-Manager > Micro-Manager Studio)." 1>&2; \
 	echo "##############################################################################" 1>&2; \
 	echo "" 1>&2
 
-# If the user types 'make install', they probably didn't mean it.
-install-check-ijplugin:
-	@if test "x$(force_plain_install)" != xyes; then \
-		echo "############################################################" 1>&2; \
-		echo "You just ran 'make install'." 1>&2; \
-		echo "Did you mean to run 'make install-ijplugin'?" 1>&2; \
-		echo "" 1>&2; \
-		echo "I'm sorry I couldn't warn you before starting;" 1>&2; \
-		echo "it is due to the limitations of Automake, which" 1>&2; \
-		echo "really wasn't designed for a task like this." 1>&2; \
-		echo "" 1>&2; \
-		echo "Some (not necessarily all) of the files got installed" 1>&2; \
-		echo "in $(pkglibdir)," 1>&2; \
-		echo "in $(pkgdatadir), and" 1>&2; \
-		echo "at $(bindir)/mmimagej" 1>&2; \
-		echo "" 1>&2; \
-		echo "You can uninstall them with 'make uninstall'." 1>&2; \
-		echo "" 1>&2; \
-		echo "To force 'make install' (e.g. for testing), you can run" 1>&2; \
-		echo "'make install force_plain_install=yes'"; 1>&2; \
-		echo "############################################################" 1>&2; \
-		exit 1; \
-	fi
-
-install-exec-local: install-check-ijplugin
-install-data-local: install-check-ijplugin
-
 else # INSTALL_AS_IMAGEJ_PLUGIN
 
-bin_SCRIPTS = buildscripts/launchers/micromanager
+launcher_SCRIPTS = buildscripts/launchers/micromanager
 
 # Launch script for running outside of ImageJ
 buildscripts/launchers/micromanager: $(srcdir)/buildscripts/launchers/micromanager.in
 	sed \
-		-e 's%@pkglibdir[@]%$(pkglibdir)%g' \
-		-e 's%@pkgdatadir[@]%$(pkgdatadir)%g' \
+		-e 's%@wrappermoduledir[@]%$(wrappermoduledir)%g' \
+		-e 's%@mmplugindir[@]%$(mmplugindir)%g' \
+		-e 's%@mmautofocusdir[@]%$(mmautofocusdir)%g' \
+		-e 's%@mmscriptdir[@]%$(mmscriptdir)%g' \
+		-e 's%@mmdatadir[@]%$(mmdatadir)%g' \
 		-e 's%@jardir[@]%$(jardir)%g' \
 		-e 's%@imagejjar[@]%$(imagejjar)%g' \
 		-e 's%@JAVA[@]%$(JAVA)%g' \
@@ -107,7 +78,7 @@ install-exec-hook:
 	echo "$(prefix)" 1>&2; \
 	echo "" 1>&2; \
 	echo "You can run Micro-Manager by typing" 1>&2; \
-	echo "$(bindir)/micromanager" 1>&2; \
+	echo "$(launcherdir)/micromanager" 1>&2; \
 	echo "##############################################################################" 1>&2; \
 	echo "" 1>&2
 
@@ -117,21 +88,23 @@ endif # BUILD_JAVA_APP
 
 if INSTALL_DEPENDENCY_JARS
 
-install-data-hook:
+install-data-local:
 	$(INSTALL) -d $(DESTDIR)$(jardir)
-	for jar in $(CLASSEXT)/*.jar; do \
+	@for jar in $(CLASSEXT)/*.jar; do \
+		echo $(INSTALL_DATA) -c $$jar $(DESTDIR)$(jardir); \
 		$(INSTALL_DATA) -c $$jar $(DESTDIR)$(jardir); \
 	done
 
-uninstall-hook:
-	for jar in $(CLASSEXT)/*.jar; do \
+uninstall-local:
+	@for jar in $(CLASSEXT)/*.jar; do \
+		echo rm -f $(DESTDIR)$(jardir)/`basename $$jar`; \
 		rm -f $(DESTDIR)$(jardir)/`basename $$jar`; \
 	done
 
 endif # INSTALL_DEPENDENCY_JARS
 
 
-CLEANFILES = buildscripts/launchers/micromanager buildscripts/launchers/mmimagej
+CLEANFILES = $(launcher_SCRIPTS)
 
 
 # TODO: Building of DeviceAdapters could be made optional.

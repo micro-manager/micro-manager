@@ -37,17 +37,17 @@ MMCorePy_wrap.h MMCorePy_wrap.cxx MMCorePy.py: MMCorePy.stamp
 	fi
 
 
-pkglib_LTLIBRARIES = _MMCorePy.la
+wrappermodule_LTLIBRARIES = _MMCorePy.la
 nodist__MMCorePy_la_SOURCES = MMCorePy_wrap.h MMCorePy_wrap.cxx
 _MMCorePy_la_CPPFLAGS = $(BOOST_CPPFLAGS) $(PYTHON_CPPFLAGS) $(NUMPY_CPPFLAGS)
 _MMCorePy_la_LDFLAGS = -module -avoid-version -shrext .so
 _MMCorePy_la_LIBADD = ../MMCore/libMMCore.la
 
 install-exec-hook:
-	$(INSTALL_DATA) MMCorePy.py $(DESTDIR)$(pkglibdir)
+	$(INSTALL_DATA) MMCorePy.py $(DESTDIR)$(wrappermoduledir)
 
 uninstall-hook:
-	rm -f $(DESTDIR)$(pkglibdir)/MMCorePy.py
+	rm -f $(DESTDIR)$(wrappermoduledir)/MMCorePy.py
 
 CLEANFILES = MMCorePy.stamp MMCorePy.py MMCorePy_wrap.h MMCorePy_wrap.cxx
 
