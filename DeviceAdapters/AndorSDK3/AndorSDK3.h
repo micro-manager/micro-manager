@@ -112,7 +112,7 @@ public:
    void RestartLiveAcquisition();
 
 private:
-   typedef enum CameraId { CIDNeo = 0, CIDZyla = 1 };
+   enum CameraId { CIDNeo = 0, CIDZyla = 1 };
    std::wstring currentSoftwareVersion_;
    std::wstring PerformReleaseVersionCheck();
    double CalculateDefaultExposure(std::wstring & interfaceType);

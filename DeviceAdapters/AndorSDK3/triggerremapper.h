@@ -39,7 +39,7 @@ private:
    int extStart_index;
 
 private:
-   int findIndexFor(AT_WC * _pTriggerMode)
+   int findIndexFor(const std::wstring & _pTriggerMode)
    {
       for (int i=0; i<m_enum->Count(); i++)
       {

@@ -2,6 +2,7 @@
 #include "EventsManager.h"
 #include "EventsManagerHelper.h"
 #include <algorithm>
+#include <string.h>
 
 using namespace andor;
 using namespace std;

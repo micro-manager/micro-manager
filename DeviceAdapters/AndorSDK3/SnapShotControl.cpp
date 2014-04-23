@@ -1,6 +1,8 @@
 #include "SnapShotControl.h"
 #include "EventsManager.h"
 #include "atcore++.h"
+#include "DeviceUtils.h"
+#include <string.h>
 
 using namespace andor;
 using namespace std;
@@ -208,7 +210,7 @@ bool SnapShotControl::takeSnapShot()
          if (in_software_)
          {
             // wait until event is set
-            b_ret = eventsManager_->WaitForEvent(CEventsManager::EV_EXPOSURE_END_EVENT, INFINITE);
+            b_ret = eventsManager_->WaitForEvent(CEventsManager::EV_EXPOSURE_END_EVENT, AT_INFINITE);
          }
          else
          {
@@ -218,7 +220,7 @@ bool SnapShotControl::takeSnapShot()
       }
       else
       {
-         Sleep(exposure_ms);
+         CDeviceUtils::SleepMs(exposure_ms);
          b_ret = true;
       }
    }

@@ -30,6 +30,7 @@
 #include <string>
 #include <sstream>
 #include <algorithm>
+#include <stdexcept>
 #include "atcore++.h"
 #include "SnapShotControl.h"
 #include "EnumProperty.h"
@@ -38,7 +39,11 @@
 #include "AOIProperty.h"
 #include "BooleanProperty.h"
 
+#ifdef _WINDOWS
 #include "atunpacker.h"
+#else
+#include "atutility.h"
+#endif
 #include "triggerremapper.h"
 #include "AndorSDK3Strings.h"
 #include "EventsManager.h"
@@ -434,6 +439,9 @@ int CAndorSDK3Camera::Initialize()
       bufferControl = cameraDevice->GetBufferControl();
       startAcquisitionCommand = cameraDevice->GetCommand(L"AcquisitionStart");
       sendSoftwareTrigger = cameraDevice->GetCommand(L"SoftwareTrigger");
+#ifdef linux
+      AT_InitialiseUtilityLibrary();
+#endif
    }
    else
    {
@@ -631,7 +639,9 @@ int CAndorSDK3Camera::Shutdown()
       cameraDevice->ReleaseBufferControl(bufferControl);
       cameraDevice->Release(startAcquisitionCommand);
       cameraDevice->Release(sendSoftwareTrigger);
-      
+#ifdef linux
+      AT_FinaliseUtilityLibrary();
+#endif
       deviceManager->CloseDevice(cameraDevice);
       DEVICE_IN_USE[deviceInUseIndex_] = false;
    }
@@ -651,10 +661,13 @@ void CAndorSDK3Camera::UnpackDataWithPadding(unsigned char * _pucSrcBuffer)
    
    MMThreadGuard g(imgPixelsLock_);
    unsigned char * pucDstData = const_cast<unsigned char *>(img_.GetPixels());
-   
+#ifdef _WINDOWS
    unsigned int ret_code = AT_UnpackBuffer(_pucSrcBuffer, pucDstData, aoi_property_->GetWidth(), aoi_property_->GetHeight(), 
                                           aoi_property_->GetStride(), ws_pixelEncoding.c_str(), L"Mono16", 0);
-                                          
+#else
+   unsigned int ret_code = AT_ConvertBuffer(_pucSrcBuffer, pucDstData, aoi_property_->GetWidth(), aoi_property_->GetHeight(), 
+                                          aoi_property_->GetStride(), ws_pixelEncoding.c_str(), L"Mono16");
+#endif                                          
    if (AT_SUCCESS != ret_code)
    {
       stringstream ss;
@@ -1211,7 +1224,7 @@ bool CAndorSDK3Camera::waitForData(unsigned char *& return_buffer, int & buffer_
    //if support events & SW, wait for end exp and fire next trigger
    if (softwareTrigger && eventsManager_->IsEventRegistered(CEventsManager::EV_EXPOSURE_END_EVENT) )
    {
-      endExpEventFired = eventsManager_->WaitForEvent(CEventsManager::EV_EXPOSURE_END_EVENT, INFINITE);
+      endExpEventFired = eventsManager_->WaitForEvent(CEventsManager::EV_EXPOSURE_END_EVENT, AT_INFINITE);
       
       if (endExpEventFired)
       {
