@@ -8,6 +8,9 @@ endif
 if BUILD_ANDORLASERCOMBINER
    ANDORLASERCOMBINER = AndorLaserCombiner
 endif
+if BUILD_ANDORSDK3
+   ANDORSDK3 = AndorSDK3
+endif
 if BUILD_DC1394
    DC1394 = dc1394
 endif
@@ -55,6 +58,7 @@ endif
 SUBDIRS = \
 	$(ANDOR) \
 	$(ANDORLASERCOMBINER) \
+	$(ANDORSDK3) \
 	$(DC1394) \
 	$(HIDMANAGER) \
 	$(IDSUEYE) \

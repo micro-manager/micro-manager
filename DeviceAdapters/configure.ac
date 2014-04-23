@@ -154,6 +154,23 @@ else
    AC_MSG_RESULT([not found])
 fi
 
+# Andor sCMOS cameras on Linux
+AC_MSG_CHECKING([for Andor sCMOS cameras])
+AM_CONDITIONAL([BUILD_ANDORSDK3], [test -f "/usr/local/include/atcore.h"])
+if test -f "/usr/local/include/atcore.h"; then
+   AC_MSG_RESULT([found])
+   if test -z "$LIBATCORE"; then
+      case $host in
+         *-*-linux*)
+            LIBATCORE="-latcore"
+            LIBATUTILITY="-latutility"
+            ;;
+      esac
+   fi
+else
+   AC_MSG_RESULT([not found])
+fi
+
 # Andor laser combiner on linux 
 AC_MSG_CHECKING(for Andor laser combiner)
 AM_CONDITIONAL([BUILD_ANDORLASERCOMBINER],[test -f "/usr/local/include/ALC_REV.h"])
@@ -347,6 +364,7 @@ m4_define([device_adapter_dirs], [m4_strip([
    Aladdin
    Andor
    AndorLaserCombiner
+   AndorSDK3
    Aquinas
    Arduino
    CARVII
