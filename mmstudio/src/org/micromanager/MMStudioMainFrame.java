@@ -43,7 +43,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.prefs.Preferences;
-import java.util.regex.Pattern;
 
 import javax.swing.AbstractButton;
 import javax.swing.BorderFactory;
@@ -2231,7 +2230,8 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    
    private void checkPosListDlg() {
       if (posListDlg_ == null) {
-         posListDlg_ = new PositionListDlg(core_, this, posList_, options_);
+         posListDlg_ = new PositionListDlg(core_, this, posList_, 
+                 acqControlWin_,options_);
          GUIUtils.recallPosition(posListDlg_);
          posListDlg_.setBackground(gui_.getBackgroundColor());
          gui_.addMMBackgroundListener(posListDlg_);

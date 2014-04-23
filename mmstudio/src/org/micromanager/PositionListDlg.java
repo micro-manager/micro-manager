@@ -95,6 +95,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
    private SpringLayout springLayout;
    private CMMCore core_;
    private ScriptInterface gui_;
+   private AcqControlDlg acqControlDlg_;
    private MMOptions opts_;
    private Preferences prefs_;
    private GUIColors guiColors_;
@@ -364,7 +365,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
     * Create the dialog
     */
    public PositionListDlg(CMMCore core, ScriptInterface gui, 
-                           PositionList posList, MMOptions opts) {
+                     PositionList posList, AcqControlDlg acd, MMOptions opts) {
       super();
       addWindowListener(new WindowAdapter() {
          @Override
@@ -375,6 +376,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       core_ = core;
       gui_ = gui;
       opts_ = opts;
+      acqControlDlg_ = acd;
       guiColors_ = new GUIColors();
       setTitle("Stage-position List");
       springLayout = new SpringLayout();
@@ -838,7 +840,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       PosTableModel ptm = (PosTableModel)posTable_.getModel();
       ptm.getPositionList().clearAllPositions();
       ptm.fireTableDataChanged();
-      gui_.getAcqDlg().updateGUIContents();
+      acqControlDlg_.updateGUIContents();
    }
 
    
@@ -892,7 +894,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
          ptm.getPositionList().removePosition(selectedRows[i] - 1);
       }
       ptm.fireTableDataChanged();
-      gui_.getAcqDlg().updateGUIContents();
+      acqControlDlg_.updateGUIContents();
    }
 
    /**
@@ -911,7 +913,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
          msp.setLabel(ptm.getPositionList().generateLabel());
          ptm.getPositionList().addPosition(msp);
          ptm.fireTableDataChanged();
-         gui_.getAcqDlg().updateGUIContents();
+         acqControlDlg_.updateGUIContents();
       } else { // replace instead of add 
          msp.setLabel(ptm.getPositionList().getPosition(
                  posTable_.getSelectedRow() - 1).getLabel() );
@@ -949,7 +951,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
          }
       }
       ptm.fireTableDataChanged();
-      gui_.getAcqDlg().updateGUIContents();
+      acqControlDlg_.updateGUIContents();
       
    }
 
