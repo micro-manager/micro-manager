@@ -1,4 +1,6 @@
 <project name="DLLAutoReloader" default="jar">
+	<include file="../../buildscripts/buildprops.xml"/>
+	<property name="installdir" location="${mm.java.plugin.installdir}/Developer_Tools"/>
 	<property name="namespace" value="DLLAutoReloader.plugin"/>
 	<import file="../clojurepluginbuild.xml"/>
 	<path id="plugin.classpath">

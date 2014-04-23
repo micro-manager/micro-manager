@@ -1,4 +1,7 @@
 <project name="SlideExplorer2" default="jar">
+	<include file="../../buildscripts/buildprops.xml"/>
+	<property name="installdir" location="${mm.java.plugin.installdir}/Beta"/>
+
 	<!-- AOT compilation of this plugin appears to cause trouble when
 	     loading clojure.core.cache, so we package the Clojure source. -->
 	<property name="namespace" value="slide-explorer.plugin"/>

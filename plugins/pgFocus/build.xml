@@ -1,4 +1,7 @@
 <project name="pgFocus" default="jar">
+	<include file="../../buildscripts/buildprops.xml"/>
+	<property name="installdir" location="${mm.java.plugin.installdir}/Device_Control"/>
+
 	<import file="../javapluginbuild.xml"/>
 
 	<path id="plugin.classpath">

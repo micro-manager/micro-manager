@@ -78,6 +78,33 @@ Filename: "{app}\vcredist_{#MMArch_x86x64}_2010SP1.exe"; Parameters: "/q"; Descr
 ;; Micro-Manager application files
 ;;
 
+[InstallDelete]
+; Remove plugins from toplevel, where they used to reside; at least some of
+; them will now be installed in subdirectories of mmplugins.
+Type: files; Name: "{app}\mmplugins\ASIdiSPIM.jar"
+Type: files; Name: "{app}\mmplugins\AcquireMultipleRegions.jar"
+Type: files; Name: "{app}\mmplugins\BFCorrector.jar"
+Type: files; Name: "{app}\mmplugins\Big.jar"
+Type: files; Name: "{app}\mmplugins\CRISP.jar"
+Type: files; Name: "{app}\mmplugins\ClojureEditor.jar"
+Type: files; Name: "{app}\mmplugins\DLLAutoReloader.jar"
+Type: files; Name: "{app}\mmplugins\DataBrowser.jar"
+Type: files; Name: "{app}\mmplugins\Gaussian.jar"
+Type: files; Name: "{app}\mmplugins\HCS.jar"
+Type: files; Name: "{app}\mmplugins\ImageFlipper.jar"
+Type: files; Name: "{app}\mmplugins\IntelligentAcquisition.jar"
+Type: files; Name: "{app}\mmplugins\MMTracker.jar"
+Type: files; Name: "{app}\mmplugins\MultiCamera.jar"
+Type: files; Name: "{app}\mmplugins\MultiChannelShading.jar"
+Type: files; Name: "{app}\mmplugins\PixelCalibrator.jar"
+Type: files; Name: "{app}\mmplugins\Projector.jar"
+Type: files; Name: "{app}\mmplugins\Recall.jar"
+Type: files; Name: "{app}\mmplugins\SlideExplorer.jar"
+Type: files; Name: "{app}\mmplugins\SlideExplorer2.jar"
+Type: files; Name: "{app}\mmplugins\SplitView.jar"
+Type: files; Name: "{app}\mmplugins\StageControl.jar"
+Type: files; Name: "{app}\mmplugins\pgFocus.jar"
+
 [Files]
 
 ; ImageJ files

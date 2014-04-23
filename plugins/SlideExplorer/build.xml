@@ -1,4 +1,6 @@
 <project name="SlideExplorer" default="jar">
+	<include file="../../buildscripts/buildprops.xml"/>
+	<property name="installdir" location="${mm.java.plugin.installdir}/Acquisition_Tools"/>
 	<import file="../javapluginbuild.xml"/>
 
 	<path id="plugin.classpath">

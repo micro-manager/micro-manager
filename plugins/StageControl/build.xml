@@ -1,4 +1,7 @@
 <project name="StageControl" default="jar">
+	<include file="../../buildscripts/buildprops.xml"/>
+	<property name="installdir" location="${mm.java.plugin.installdir}/Device_Control"/>
+
 	<import file="../javapluginbuild.xml"/>
 
 	<target name="copy-files" depends="mm.javabuild.copy-files">

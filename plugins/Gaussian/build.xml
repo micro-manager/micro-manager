@@ -1,6 +1,9 @@
 <project name="Gaussian" basedir="." default="jar">
+	<include file="../../buildscripts/buildprops.xml"/>
+
 	<!-- TODO Should just move 'source' to 'src' and remove this line -->
 	<property name="srcdir" location="source"/>
+	<property name="installdir" location="${mm.java.plugin.installdir}/Acquisition_Tools"/>
 
 	<import file="../javapluginbuild.xml"/>
 
