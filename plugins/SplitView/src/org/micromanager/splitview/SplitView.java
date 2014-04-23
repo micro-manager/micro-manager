@@ -32,11 +32,10 @@ import org.micromanager.api.ScriptInterface;
  * @author nico
  */
 public class SplitView implements MMPlugin {
-   public static String menuName = "SplitView";
-   public static String tooltipDescription = "Used with Dual View or Optosplit microscopes, which" +
-   		" projects 2 channels from a single sample side by side onto a single camera.  This plugin " +
-   		"opens a viewer that displays both " +
-   		"components overlayed in a single, 2-channel image";
+   public static final String menuName = "Split View";
+   public static final String tooltipDescription =
+      "Split images vertically or horizontally into two channels";
+
    private CMMCore core_;
    private ScriptInterface gui_;
    private SplitViewFrame myFrame_;

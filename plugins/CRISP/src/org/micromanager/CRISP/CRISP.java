@@ -15,8 +15,9 @@ import org.micromanager.api.ScriptInterface;
  */
 
 public class CRISP implements MMPlugin {
-   public static String menuName = "ASI CRISP Control";
-   public static String tooltipDescription = "Plugin to control the ASI CRISP";
+   public static final String menuName = "ASI CRISP Control";
+   public static final String tooltipDescription =
+      "Control the ASI CRISP Autofocus System";
    private CMMCore core_;
    private ScriptInterface gui_;
    private CRISPFrame myFrame_;

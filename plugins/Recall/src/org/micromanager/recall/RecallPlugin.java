@@ -50,10 +50,9 @@ import org.micromanager.utils.ReportingUtils;
 
 
 public class RecallPlugin implements MMPlugin {
-   public static String menuName = "Live Replay";
-   public static String tooltipDescription = "Recalls live images remaining in internal"
-		   +" buffer.  The size of Micromanager's internal buffer can be changed" +
-		   " in options (under Tools menu)";
+   public static final String menuName = "Live Replay";
+   public static final String tooltipDescription =
+      "Recalls (live) images left over in the internal sequence buffer";
    private CMMCore core_;
    private MMStudioMainFrame gui_;
    private MMStudioMainFrame.DisplayImageRoutine displayImageRoutine_;

@@ -24,8 +24,10 @@ import org.micromanager.api.ScriptInterface;
 
 
 public class IntelligentAcquisition implements MMPlugin {
-   public static String menuName = "Intelligent Acquisition";
-   public static String tooltipDescription = "Drive image acquisition with image analysis.";
+   public static final String menuName = "Intelligent Acquisition";
+   public static final String tooltipDescription =
+      "Use image analysis to drive image acquisition";
+
    private CMMCore core_;
    private ScriptInterface gui_;
    private IntelligentAcquisitionFrame myFrame_;

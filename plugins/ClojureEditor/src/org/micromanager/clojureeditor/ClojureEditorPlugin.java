@@ -8,8 +8,9 @@ import org.micromanager.api.MMPlugin;
 import org.micromanager.api.ScriptInterface;
 
 public class ClojureEditorPlugin implements MMPlugin {
-   public static String menuName = "Clojure editor";
-   public static String tooltipDescription = "Opens editor window for Clojure scripts";
+   public static final String menuName = "Clojure editor";
+   public static final String tooltipDescription =
+      "Clojure script editor and REPL";
    
    public void dispose() {
       // do nothing

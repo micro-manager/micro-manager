@@ -17,12 +17,11 @@ import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.ReportingUtils;
 
 public class PixelCalibratorPlugin implements MMPlugin {
+   public static final String menuName = "Pixel Calibrator";
+   public static final String tooltipDescription =
+      "Calibrate pixel size by moving XY stage and computing " +
+      "image displacement";
 
-   public static String menuName = "Pixel Calibrator";
-   public static String tooltipDescription = "The Pixel Calibrator Plugin automatically measures the size of " +
-           "your camera's pixels in microns at the sample plane, by moving " +
-           "the XY-stage and observing displacements in the image.  This calibration is saved and" +
-           "automatically used for all acquisitions taken with the same objective lens ";
    private CMMCore core_;
    private MMStudioMainFrame app_;
    private CalibrationThread calibrationThread_;

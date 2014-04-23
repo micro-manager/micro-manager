@@ -28,9 +28,10 @@ import org.micromanager.api.ScriptInterface;
 
 
 public class BFCorrector implements MMPlugin {
-   public static String menuName = "BFCorrector";
-   public static String tooltipDescription = "This Micro-Manager plugin does nothing. "
-		   +"Its only purpose is to be an example for developers wishing to write their own plugin.";
+   public static final String menuName = "BF Corrector";
+   public static final String tooltipDescription =
+      "Use Muiti-Channel Shading instead; this plugin will be removed in " +
+      "future releases";
    private CMMCore core_;
    private ScriptInterface gui_;
    private BFCorrectorFrame myFrame_;

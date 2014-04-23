@@ -19,9 +19,10 @@ import org.micromanager.api.ScriptInterface;
  * @author nico
  */
 public class GaussianTrack_ implements PlugIn, MMPlugin {
-    public static String menuName = "Localization Microscopy";
-    public static String tooltipDescription = "Toolbox for analysis of spots using Gaussian Fitting";
-    //private ScriptInterface gui_;
+    public static final String menuName = "Localization Microscopy";
+    public static final String tooltipDescription =
+       "Toolbox for analyzing spots using Gaussian fitting";
+
     private MainForm theForm_;
 
     public void run(String arg) {

@@ -78,6 +78,8 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
 	private final String PLATE_DIR = "plate";
 	private final String INCREMENTAL_AF = "incremental_af";
 	public static final String menuName = "HCS Site Generator";
+	public static final String tooltipDescription =
+		"Generate position list for multi-well plates";
 	//private JCheckBox lockAspectCheckBox_;
 	private JLabel statusLabel_;
 

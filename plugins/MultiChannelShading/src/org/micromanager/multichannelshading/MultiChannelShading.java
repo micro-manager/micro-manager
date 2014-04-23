@@ -14,8 +14,10 @@ import org.micromanager.api.ScriptInterface;
  * @author kthorn
  */
 public class MultiChannelShading implements org.micromanager.api.MMPlugin {
-   public static String menuName = "MultiChannelShading";
-   public static String tooltipDescription = "Allows independent shading correction for multiple channels";
+   public static final String menuName = "Multi-Channel Shading";
+   public static final String tooltipDescription =
+      "Apply dark subtraction and flat-field correction";
+
    public static String versionNumber = "0.1";
    private ScriptInterface gui_;
    private MultiChannelShadingForm myFrame_;

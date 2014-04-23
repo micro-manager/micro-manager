@@ -7,11 +7,11 @@ import org.micromanager.utils.ReportingUtils;
 
 
 public class MultiCamera implements MMPlugin {
-   public static String menuName = "Multi-Andor Control";
-   public static String tooltipDescription = "This plugin lets your control multiple "
-           + "cameras simultanuously.  It is specifically written for Andor cameras. "
-           + "Use the Utilities->Multi Camera adapter to combine multiple Andor cameras "
-           + "into a single logical camera."; 
+   public static final String menuName = "Multi-Andor Control";
+   public static final String tooltipDescription =
+      "Control settings for one or more Andor EM-CCD cameras via the " +
+      "Multi Camera device"; 
+
    private CMMCore core_;
    private ScriptInterface gui_;
    private MultiCameraFrame myFrame_;

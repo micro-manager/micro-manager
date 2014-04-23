@@ -11,8 +11,9 @@ import org.micromanager.api.ScriptInterface;
  * @see AutoLase
  */
 public class AutoLasePlugin implements org.micromanager.api.MMPlugin {
-   public static String menuName = "AutoLase";
-   public static String tooltipDescription= "Closed loop imaged-based photoactivation control for PALM";
+   public static final String menuName = "AutoLase";
+   public static final String tooltipDescription =
+      "Closed-loop imaged-based photoactivation control for PALM";
 
     @Override
     public void dispose() {

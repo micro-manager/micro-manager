@@ -29,7 +29,7 @@ import org.micromanager.api.ScriptInterface;
 
 public class ASIdiSPIM implements MMPlugin {
    public final static String menuName = "ASI diSPIM";
-   public final static String tooltipDescription = "Control the ASI diSPIM ";
+   public final static String tooltipDescription = "Control the ASI diSPIM";
    public final static Color borderColor = Color.gray;
 
    private ScriptInterface gui_;

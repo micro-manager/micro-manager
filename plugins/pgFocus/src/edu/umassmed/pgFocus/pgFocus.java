@@ -16,8 +16,11 @@ import org.jfree.ui.RefineryUtilities;
  */
 
 public class pgFocus implements MMPlugin {
-   public static String menuName = "pgFocus";
-   public static String tooltipDescription = "Open Source Software and Open Hardware focus stabization plugin";
+   public static final String menuName = "pgFocus";
+   public static final String tooltipDescription =
+      "Control the pgFocus open-source software and open hardware " +
+      "focus stabization device";
+
    private CMMCore core_;
    private ScriptInterface gui_;
    private pgFocusFrame myFrame_;

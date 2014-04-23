@@ -20,10 +20,10 @@ import org.micromanager.utils.ReportingUtils;
  * @author arthur
  */
 public class ProjectorPlugin implements MMPlugin {
-   public static String menuName = "Projector";
-   public static String tooltipDescription = "Plugin that allows for light to be targeted"+
-   " to specific locations on the sample. Requires a microscope with a Spatial Light Modulator"
-         + " or a galvo-based phototargeting device.";
+   public static final String menuName = "Projector";
+   public static final String tooltipDescription =
+      "Control galvo or SLM devices that project a spot or pattern " +
+      "on the sample";
    
    private ScriptInterface app_;
    private CMMCore core_;

@@ -7,12 +7,11 @@ import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.ReportingUtils;
 
 public class SlideExplorerPlugin implements MMPlugin {
+	public static final String menuName = "Slide Explorer";
+	public static final String tooltipDescription =
+		"Automatically acquire images as you pan and zoom, " +
+		"constructing a tiled map of the sample";
 
-	public static String menuName = "Slide Explorer";
-	public static String tooltipDescription = 
-			"Develop real-time map of slide by panning and zooming, move " +
-			"stage with a single click, and acquire tiled images with arbitrary"
-					+" shapes.  (Pixel calibrator plugin must be run before this plugin is used)";
 	private CMMCore core_;
 	private Hub hub_;
     private ScriptInterface app_;

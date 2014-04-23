@@ -13,8 +13,9 @@ import org.micromanager.api.ScriptInterface;
  * @author kthorn
  */
 public class AcquireMultipleRegions  implements org.micromanager.api.MMPlugin {
-   public static String menuName = "AcquireMultipleRegions";
-   public static String tooltipDescription = "Automatically collect multiple areas in a sample";
+   public static final String menuName = "Acquire Multiple Regions";
+   public static final String tooltipDescription =
+      "Automatically acquire multiple regions of a sample";
    public static String versionNumber = "0.1";
    private ScriptInterface gui_;
    private AcquireMultipleRegionsForm myFrame_;

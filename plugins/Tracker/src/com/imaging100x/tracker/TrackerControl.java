@@ -64,6 +64,10 @@ import org.micromanager.utils.ReportingUtils;
 import org.micromanager.utils.TextUtils;
 
 public class TrackerControl extends MMFrame implements MMPlugin {
+   public static final String menuName = "Live Tracking";
+   public static final String tooltipDescription =
+      "Use image correlation based tracking to countersteer the XY stage";
+
    private JTextField nameField_;
    private JTextField rootField_;
    private final ButtonGroup buttonGroup = new ButtonGroup();
@@ -761,6 +765,4 @@ public class TrackerControl extends MMFrame implements MMPlugin {
    public String getVersion() {
       return VERSION_INFO;
    }
-
-   public static String menuName = "Live Tracking";
 }

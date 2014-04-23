@@ -37,8 +37,9 @@ import org.micromanager.api.ScriptInterface;
  * @author arthur
  */
 public class NewTaggedImageFlipper implements MMPlugin {
-   public static String menuName = "Image Flipper";
-   public static String tooltipDescription = "Mirrors, flips and rotates images on the fly";
+   public static final String menuName = "Image Flipper";
+   public static final String tooltipDescription =
+      "Mirrors, flips and rotates images on the fly";
    private ScriptInterface gui_;
    private NewImageFlipperControls controls_;
 
