@@ -35,6 +35,7 @@ buildscripts/launchers/mmimagej: $(srcdir)/buildscripts/launchers/mmimagej.in
 	sed \
 		-e 's%@imagejdir[@]%$(imagejdir)%g' \
 		-e 's%@imagejjar[@]%$(imagejjar)%g' \
+		-e 's%@JAVA[@]%$(JAVA)%g' \
 		$(srcdir)/buildscripts/launchers/mmimagej.in >$@
 
 # Install Micro-Manager into an existing ImageJ application folder, as an
@@ -96,6 +97,7 @@ buildscripts/launchers/micromanager: $(srcdir)/buildscripts/launchers/micromanag
 		-e 's%@pkgdatadir[@]%$(pkgdatadir)%g' \
 		-e 's%@jardir[@]%$(jardir)%g' \
 		-e 's%@imagejjar[@]%$(imagejjar)%g' \
+		-e 's%@JAVA[@]%$(JAVA)%g' \
 		$(srcdir)/buildscripts/launchers/micromanager.in >$@
 
 install-exec-hook:

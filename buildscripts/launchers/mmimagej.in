@@ -1,6 +1,5 @@
 #!/bin/sh
 
-
 # Micro-Manager launcher for running as ImageJ plugin.
 
 # Note: we could conceivably generate this script so that it will use
@@ -15,7 +14,7 @@
 # assumption it makes.
 cd "@imagejdir@"
 
-java -Xmx1024M \
+@JAVA@ -Xmx1024M \
    -Dmmcorej.library.loading.stderr.log=yes \
    -jar "@imagejjar@" \
    -eval 'run("Micro-Manager Studio");'

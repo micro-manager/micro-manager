@@ -1,6 +1,5 @@
 #!/bin/sh
 
-
 # Micro-Manager launcher for traditional-style Unix installation.
 #
 # (By traditional-style I mean that libraries and modules are in e.g.
@@ -34,7 +33,7 @@ fi
 
 echo "class path = $CLASSPATH" 1>&2
 
-java -Xmx1024M \
+@JAVA@ -Xmx1024M \
    -classpath "$CLASSPATH" \
    -Dmmcorej.library.loading.stderr.log=yes \
    -Dmmcorej.library.path="@pkglibdir@" \
