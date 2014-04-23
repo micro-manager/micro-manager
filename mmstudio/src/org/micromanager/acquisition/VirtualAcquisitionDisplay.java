@@ -2030,11 +2030,16 @@ public class VirtualAcquisitionDisplay implements
     * @return false if canceled by user, true otherwise 
     */
    public boolean close() {
-      if (hyperImage_ != null) {
-         if (!hyperImage_.getWindow().close()) {
-            return false;
+      try {
+         if (hyperImage_ != null) {
+            if (!hyperImage_.getWindow().close()) {
+               return false;
+            }
+            hyperImage_.close();
          }
-         hyperImage_.close();
+      } catch (NullPointerException npe) {
+         // instead of handing when exiting MM, log the issue
+         ReportingUtils.logError(npe);
       }
       return true;
    }
