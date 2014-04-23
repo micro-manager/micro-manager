@@ -166,8 +166,8 @@ int ZeissHub::Initialize(MM::Device& device, MM::Core& core)
       deviceInfo_[devId].maxPos = maxPosition;
       // hack to work around issue with Condensor Contrast
       // investigate when a microscope is available
-      if ( (devId == 0x22) && (deviceInfo_[devId].maxPos == 8) )
-         deviceInfo_[devId].maxPos = 7;
+      // if ( (devId == 0x22) && (deviceInfo_[devId].maxPos == 8) )
+      //   deviceInfo_[devId].maxPos = 7;
       if ((commandGroup_[devId] == (ZeissUByte) 0xA2) || (commandGroup_[devId] == (ZeissUByte) 0xA3)) { // only Axis and Servos have scaling information
          GetDeviceScalings(device, core, commandGroup_[devId], devId, deviceInfo_[devId]);
          for (unsigned int j=0; j<deviceInfo_[devId].deviceScalings.size(); j++) {
