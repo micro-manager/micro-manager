@@ -28,7 +28,6 @@
 package com.imaging100x.twophoton;
 
 import MMCustomization.AcquisitionWrapperEngineAdapter;
-import MMCustomization.CustomAcqEngine;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
@@ -208,7 +207,7 @@ private JCheckBox drawGrid_, drawPosNames_;
       setResizable(false);
 
       setTitle("Two Photon Control v " + VERSION_INFO);
-      setSize(680, 580);
+      setSize(660, 580);
       loadPosition(100, 100);
       
       createExcitationPanel();
@@ -268,24 +267,19 @@ private JCheckBox drawGrid_, drawPosNames_;
                     applyDepthSetting(-1,0);                  
                  }
               });
-      acitvateDynamicStitching();
    }
-   
-   private CustomAcqEngine acqEng_;
 
    private void addDynamicStitchControls() {
       createProgressPanels();
-      
-      acqEng_ = new CustomAcqEngine(MMStudioMainFrame.getInstance().getMMCore());
-      JButton exploreButton = new JButton("Explore");
-      getContentPane().add(exploreButton);
-      exploreButton.setBounds(410, 450, 130, 20);
-      exploreButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            acqEng_.newExploreWindow();
-         }
-      });
+//      JButton exploreButton = new JButton("Explore");
+//      getContentPane().add(exploreButton);
+//      exploreButton.setBounds(410, 450, 130, 20);
+//      exploreButton.addActionListener(new ActionListener() {
+//
+//         @Override
+//         public void actionPerformed(ActionEvent e) {
+//         }
+//      });
    }
 
    public void acitvateDynamicStitching() {
@@ -442,7 +436,7 @@ private JCheckBox drawGrid_, drawPosNames_;
    }
 
    private void createGridPanel() {
-      JPanel panel = createPanel("Create multi-position grid", 405, 140, 670, 235);
+      JPanel panel = createPanel("Create multi-position grid", 405, 140, 650, 235);
       panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 
       JPanel row1 = new JPanel(new FlowLayout(FlowLayout.LEFT));

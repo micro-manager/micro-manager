@@ -51,7 +51,8 @@ public class AcquisitionWrapperEngineAdapter extends AcquisitionWrapperEngine {
     private double focusOffset_ = 0;
     private CMMCore core_ = MMStudioMainFrame.getInstance().getCore();
     private boolean runAutofocus_ = false;
-    private DynamicStitchingImageStorage storage_;
+    //most recent storage
+    private TaggedImageStorage storage_;
 
     public AcquisitionWrapperEngineAdapter(TwoPhotonControl twoP, Preferences prefs) throws NoSuchFieldException {
         super((AcquisitionManager) JavaUtils.getRestrictedFieldValue(
@@ -209,32 +210,48 @@ public class AcquisitionWrapperEngineAdapter extends AcquisitionWrapperEngine {
         // BlockingQueue<TaggedImage> procStackOutputQueue = ProcessorStack.run(engineOutputQueue, imageProcessors);
 
         // create storage     
+        try {
+            if (settings.save) {
+                //MPTiff storage
+                String acqDirectory = createAcqDirectory(summaryMetadata.getString("Directory"), summaryMetadata.getString("Prefix"));
+                summaryMetadata.put("Prefix", acqDirectory);
+                String acqPath = summaryMetadata.getString("Directory") + File.separator + acqDirectory;
+                storage_ = new DoubleTaggedImageStorage(summaryMetadata, acqPath, prefs_);
+            } else {
+                //RAM storage
+                storage_ = new DoubleTaggedImageStorage(summaryMetadata, null, prefs_);
+            }
 
-//            if (settings.save) {                                
-       storage_ = new DynamicStitchingImageStorage(summaryMetadata);
+//            final int numChannels = MDUtils.getNumChannels(summaryMetadata);
+//            final int numPositions = MDUtils.getNumPositions(summaryMetadata);
+//            final int numSlices = MDUtils.getNumSlices(summaryMetadata);
+            ImageCache imageCache = new MMImageCache(storage_) {
+                @Override
+                public JSONObject getLastImageTags() {
+                    //So that display doesnt show a position scrollbar when imaging finished
+                    JSONObject newTags = null;
+                    try {
+                        newTags = new JSONObject(super.getLastImageTags().toString());
+                        MDUtils.setPositionIndex(newTags, 0);
+                    } catch (JSONException ex) {
+                        ReportingUtils.showError("Unexpected JSON Error");
+                    }
+                    return newTags;
+                }
+            };
+            imageCache.setSummaryMetadata(summaryMetadata);
 
-       ImageCache imageCache = new MMImageCache(storage_) {
 
-          @Override
-          public JSONObject getLastImageTags() {
-             //So that display doesnt show a position scrollbar when imaging finished
-             JSONObject newTags = null;
-             try {
-                newTags = new JSONObject(super.getLastImageTags().toString());
-                MDUtils.setPositionIndex(newTags, 0);
-             } catch (JSONException ex) {
-                ReportingUtils.showError("Unexpected JSON Error");
-             }
-             return newTags;
-          }
-       };
-       imageCache.setSummaryMetadata(summaryMetadata);
+            DisplayPlus stitchedDisplay = new DisplayPlus(imageCache, this, summaryMetadata);
 
-//       DisplayPlus stitchedDisplay = new DisplayPlus(imageCache, this, summaryMetadata, storage_);
+            DefaultTaggedImageSink sink = new DefaultTaggedImageSink(engineOutputQueue, imageCache);
+            sink.start();
 
-       DefaultTaggedImageSink sink = new DefaultTaggedImageSink(engineOutputQueue, imageCache);
-       sink.start();
-   }
+
+        } catch (IOException ex) {
+            ReportingUtils.showError("Couldn't create image storage or start acquisition");
+        }
+    }
 
     protected String runAcquisition(SequenceSettings acquisitionSettings, AcquisitionManager acqManager) {
         //refresh GUI so that z returns to original position after acq
@@ -263,12 +280,42 @@ public class AcquisitionWrapperEngineAdapter extends AcquisitionWrapperEngine {
             runAcquisition(acquisitionSettings);
         } catch (Exception ex) {
             ReportingUtils.showError("Probelem running acquisiton: " + ex.getMessage());
-            ex.printStackTrace();
         }
 
         return "";
     }
- 
+    
+        //Copied from MMAcquisition
+    private String createAcqDirectory(String root, String prefix) throws Exception {
+        File rootDir = JavaUtils.createDirectory(root);
+        int curIndex = getCurrentMaxDirIndex(rootDir, prefix + "_");
+        return prefix + "_" + (1 + curIndex);
+    }
+
+    private int getCurrentMaxDirIndex(File rootDir, String prefix) throws NumberFormatException {
+        int maxNumber = 0;
+        int number;
+        String theName;
+        for (File acqDir : rootDir.listFiles()) {
+            theName = acqDir.getName();
+            if (theName.startsWith(prefix)) {
+                try {
+                    //e.g.: "blah_32.ome.tiff"
+                    Pattern p = Pattern.compile("\\Q" + prefix + "\\E" + "(\\d+).*+");
+                    Matcher m = p.matcher(theName);
+                    if (m.matches()) {
+                        number = Integer.parseInt(m.group(1));
+                        if (number >= maxNumber) {
+                            maxNumber = number;
+                        }
+                    }
+                } catch (NumberFormatException e) {
+                } // Do nothing.
+            }
+        }
+        return maxNumber;
+    }
+
     @Override
     public void setPause(boolean pause) {
         if (pause) {
