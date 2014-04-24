@@ -146,13 +146,8 @@ AM_CONDITIONAL([BUILD_IIDC], [test "x$use_libdc1394" = xyes])
 
 
 # Andor cameras on linux 
-AC_MSG_CHECKING(for Andor cameras)
-AM_CONDITIONAL([BUILD_ANDOR],[test -f "/usr/local/include/atmcdLXd.h"])
-if test -f "/usr/local/include/atmcdLXd.h" ; then
-   AC_MSG_RESULT([found])
-else
-   AC_MSG_RESULT([not found])
-fi
+AC_SEARCH_LIBS([SaveAsSif], [andor], [ANDORFOUND=yes], [ANDORFOUND=no])
+AM_CONDITIONAL([BUILD_ANDOR], [test "x$ANDORFOUND" = xyes])
 
 # Andor sCMOS cameras on Linux
 AC_MSG_CHECKING([for Andor sCMOS cameras])
