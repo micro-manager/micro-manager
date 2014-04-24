@@ -1,7 +1,10 @@
+package main;
+
 /*
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
+import gui.GUI;
 import org.micromanager.api.MMPlugin;
 import org.micromanager.api.ScriptInterface;
 

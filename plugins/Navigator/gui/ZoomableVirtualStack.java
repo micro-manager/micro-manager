@@ -1,7 +1,10 @@
+package gui;
+
 /*
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
+import acq.DynamicStitchingImageStorage;
 import java.awt.Point;
 import java.awt.image.ColorModel;
 import mmcorej.TaggedImage;
@@ -16,9 +19,8 @@ import org.micromanager.utils.ReportingUtils;
  * @author henrypinkard
  */
 public class ZoomableVirtualStack extends AcquisitionVirtualStack {
-   
-   //width and height are both fixed for now
-   public static final int WIDTH_HEIGHT_MAX = 1024;
+      
+   public static int DISPLAY_IMAGE_LENGTH_MAX = 800;
    
    private boolean zoomed_ = false;
    private int displayImageWidth_, displayImageHeight_;
@@ -27,16 +29,13 @@ public class ZoomableVirtualStack extends AcquisitionVirtualStack {
    
    public ZoomableVirtualStack(int type, TaggedImageStorage imageCache,
            int nSlices, VirtualAcquisitionDisplay vad, DynamicStitchingImageStorage storage) {
-      
-      super(storage.getFullResWidth() / Math.max(1, 
-              Math.max(storage.getFullResWidth(), storage.getFullResHeight()) / WIDTH_HEIGHT_MAX), 
-              storage.getFullResHeight() / Math.max(1, 
-              Math.max(storage.getFullResWidth(), storage.getFullResHeight()) / WIDTH_HEIGHT_MAX), 
+      super((int) Math.round(storage.getFullResWidth() / storage.getDSFactor()), 
+              (int) Math.round(storage.getFullResHeight() / storage.getDSFactor()), 
               type, null, imageCache, nSlices, vad);
       
       storage_ = storage;
-      displayImageWidth_ = storage.getFullResWidth() / storage_.getDSFactor();
-      displayImageHeight_ = storage.getFullResHeight() / storage_.getDSFactor();
+      displayImageWidth_ = (int) Math.round(storage.getFullResWidth() / storage.getDSFactor());
+      displayImageHeight_ = (int) Math.round(storage.getFullResHeight() / storage.getDSFactor());
    }  
    
    public void translateZoomPosition(int dx, int dy) {
