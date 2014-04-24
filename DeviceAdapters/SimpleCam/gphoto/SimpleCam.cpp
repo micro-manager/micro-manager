@@ -35,7 +35,7 @@
 #include "CoreFoundation/CoreFoundation.h"
 #include <sys/param.h>
 #include <sys/stat.h>
-#endif __APPLE__
+#endif // __APPLE__
 
 using namespace std;
 
@@ -115,7 +115,7 @@ int CSimpleCam::setLibPaths()
    }
    else
       gp_log(GP_LOG_ERROR, "SimpleCam", "Failed to get path of executable. Using default libgphoto2 and libgphoto2_port driver directory.");
-#endif __APPLE__
+#endif // __APPLE__
 return 0;
 }
 
