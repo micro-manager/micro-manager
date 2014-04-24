@@ -49,9 +49,9 @@ using namespace std;
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(g_X_AxisDeviceName,  "Conex_Axis X Axis");
-   AddAvailableDeviceName(g_Y_AxisDeviceName,  "Conex_Axis Y Axis");
-   AddAvailableDeviceName(g_Z_AxisDeviceName,  "Conex_Axis Z Axis");
+   RegisterDevice(g_X_AxisDeviceName, MM::StageDevice, "Conex_Axis X Axis");
+   RegisterDevice(g_Y_AxisDeviceName, MM::StageDevice, "Conex_Axis Y Axis");
+   RegisterDevice(g_Z_AxisDeviceName, MM::StageDevice, "Conex_Axis Z Axis");
 }                                                                            
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)                  
