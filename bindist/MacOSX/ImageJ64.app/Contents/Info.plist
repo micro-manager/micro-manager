@@ -6,8 +6,6 @@
 	<string>true</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>English</string>
-	<key>CFBundleIdentifier</key>
-	<string>gov.nih.info.rsb.ImageJ</string>
 	<key>CFBundleDocumentTypes</key>
 	<array>
 		<dict>
@@ -29,6 +27,8 @@
 	<string>http://rsb.info.nih.gov</string>
 	<key>CFBundleIconFile</key>
 	<string>MicroManager.icns</string>
+	<key>CFBundleIdentifier</key>
+	<string>gov.nih.info.rsb.ImageJ</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
@@ -44,8 +44,6 @@
 		<key>JVMArchs</key>
 		<array>
 			<string>x86_64</string>
-			<string>i386</string>
-			<string>ppc</string>
 		</array>
 		<key>ClassPath</key>
       <string>$APP_PACKAGE/../ij.jar:/System/Library/Java/Extensions/QTJava.zip</string>

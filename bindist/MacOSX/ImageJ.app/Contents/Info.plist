@@ -41,12 +41,10 @@
 	<string>10.2</string>
 	<key>Java</key>
 	<dict>
-      <key>JVMArchs</key>
-      <array>
-         <string>i386</string>
-         <string>ppc</string>
-         <string>x86_64</string>
-      </array>
+		<key>JVMArchs</key>
+		<array>
+			<string>i386</string>
+		</array>
 		<key>ClassPath</key>
       <string>$APP_PACKAGE/../ij.jar:/System/Library/Java/Extensions/QTJava.zip</string>
 		<key>JVMVersion</key>
