@@ -16,7 +16,7 @@ Express for the C++ components, and Apache Ant for the Java components and
 for automating the entire build.
 
 (Instructions are to be written here. For now, please refer to the
-[wiki page](https://micro-manager.org/wiki/Building_MM_on_Windows).
+[wiki page](https://micro-manager.org/wiki/Building_MM_on_Windows)).
 
 
 Building on Unix
@@ -48,8 +48,8 @@ Packages required for building are:
 - pkg-config
 - swig
 
-(On OS X, do not confuse Apple's /usr/bin/libtool with GNU Libtool. We need the
-latter. Homebrew installs GNU Libtool as `glibtool`.)
+(On OS X, do not confuse Apple's `/usr/bin/libtool` with GNU Libtool. We need
+the latter. Homebrew installs GNU Libtool as `glibtool`.)
 
 You will also need subversion to obtain Micro-Manager source code.
 
@@ -69,7 +69,7 @@ Python 2 or Python 3 should work.
 
 Many Linux distributions split library packages into runtimes and development
 files. If you are using such a distribution, make sure to get the packages
-with the -dev suffix.
+with the `-dev` suffix.
 
 Some device adapters require additional external libraries. (TODO Document
 these.)
@@ -78,7 +78,7 @@ these.)
 ### Obtaining the source code
 
 Please see the Micro-Manager website for instructions. You will need the main
-Micro-Manager source code and the 3rdpartypublic repository, side by side in
+Micro-Manager source code and the `3rdpartypublic` repository, side by side in
 the same parent directory.
 
 
@@ -87,14 +87,14 @@ the same parent directory.
 To build from an SVN working copy, you will first need to generate the
 `configure` script. This can be done with the command
 
-  ./autogen.sh
+    ./autogen.sh
 
 Now, you will run `./configure`. There are many ways to configure
 Micro-Manager, but you will most likely want to choose one of two major
 installation styles: a traditional Unix-style installation and installation as
 an ImageJ plugin.
 
-The traditional Unix-styel will put Micro-Manager libraries (includeing device
+The traditional Unix-style will put Micro-Manager libraries (includeing device
 adapters) into `$prefix/lib/micro-manager` and other files (including JARs)
 into `$prefix/share/micro-manager` (`$prefix` is `/usr/local` by default). If
 you build the Java application, a script will be installed at
@@ -108,35 +108,35 @@ directory.
 
 To configure Micro-Manager for a traditionaly Unix-style install, type
 
-  ./configure --prefix=/where/to/install
+    ./configure --prefix=/where/to/install
 
 To configure for installation as an ImageJ plugin, type
 
-  ./configure --enable-imagej-plugin=/path/to/ImageJ
+    ./configure --enable-imagej-plugin=/path/to/ImageJ
 
 The ImageJ path should be an existing (prefereably fresh) copy of ImageJ 1.48.
 
 To get more information about the possible options to `configure`, type
 
-  ./configure --help
+    ./configure --help
 
 You can get help on the flags controlling device-adapter-specific dependency
 libraries by typing
 
-  ./configure --help=recursive
+    ./configure --help=recursive
 
 
 ### Building and installing
 
 Assuming `configure` succeeded, you can now run
 
-  make
+    make
 
 to build.
 
 To install, type
 
-  make install
+    make install
 
 When the installation is finished, a message will be printed telling you how
 to run Micro-Manager Studio (if it was configured to be built).
@@ -156,27 +156,27 @@ following.
    allow `configure` to autodetect a suitable Java home.
 
 2. Find the desirable Java home on your system. This is a directory that
-   usually has "jdk" and the Java version number (such as 1.6) in its name and
+   usually has "jdk" and the Java version number (such as 1.6) in its name, and
    contains the directories `bin` (in which `java`, `javac`, and `jar` are
    found) and `include` (in which `jni.h` is found). Pass
-   `--with-java=JAVA_HOME` to `configure`. For example:
+   `--with-java=/path/to/java/home` to `configure`. For example:
 
-      ./configure --with-java=/usr/lib64/jvm/java-1.7.0-openjdk-1.7.0
-      # or
-      ./configure --with-java=/Library/Java/JavaVirtualMachines/1.6.0_65-b14-462.jdk/Contents/Home
+       ./configure --with-java=/usr/lib64/jvm/java-1.7.0-openjdk-1.7.0
+       # or
+       ./configure --with-java=/Library/Java/JavaVirtualMachines/1.6.0_65-b14-462.jdk/Contents/Home
 
 3. If the previous step is not possible, because the Java files are spread
    across several directories (this is the case with older versions of Apple
    JDK), then you can leave `JAVA_HOME` (and `--with-java`) unset, but override
    the include path for JNI headers, like this:
 
-      ./configure JNI_CPPFLAGS="-I/System/Library/Frameworks/JavaVM.framework/Versions/A/Headers"
+       ./configure JNI_CPPFLAGS="-I/System/Library/Frameworks/JavaVM.framework/Versions/A/Headers"
 
 4. Finally (and this is an uncommon case), if you needed to override
    `JNI_CPPFLAGS` but `configure` also cannot find `javac` and other tools, you
    can manually set the absolute path to the necessary tools:
 
-      ./configure JAVA=/path/to/java JAVAC=/path/to/javac JAR=/path/to/jar
+       ./configure JAVA=/path/to/java JAVAC=/path/to/javac JAR=/path/to/jar
 
 
 #### Specifying where to find external packages
