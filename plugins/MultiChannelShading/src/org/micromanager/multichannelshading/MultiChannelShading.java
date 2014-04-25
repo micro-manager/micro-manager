@@ -24,7 +24,6 @@ public class MultiChannelShading implements org.micromanager.api.MMPlugin {
    
     @Override
     public void dispose() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
