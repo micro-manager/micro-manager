@@ -231,6 +231,9 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
                 currSettings.usePositionList = true;
                 currSettings.numFrames = 1;
                 gui_.setAcquisitionSettings(currSettings);
+                //save as multipage tiff file
+                gui_.setImageSavingFormat(org.micromanager.acquisition.TaggedImageStorageMultipageTiff.class);
+                //update positionlist with grid
                 gui_.setPositionList(currRegion.tileGrid(getXFieldSize(), getYFieldSize(), axisList_));               
                 gui_.refreshGUI();
                 String acqName = gui_.runAcquisition(currRegion.filename, currRegion.directory);
