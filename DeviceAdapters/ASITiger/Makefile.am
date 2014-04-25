@@ -1,5 +1,5 @@
 
-AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS) -fpermissive
+AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS)
 deviceadapter_LTLIBRARIES = libmmgr_dal_ASITiger.la
 libmmgr_dal_ASITiger_la_SOURCES = \
 	ASICRISP.cpp \

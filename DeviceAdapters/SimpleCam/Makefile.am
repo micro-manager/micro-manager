@@ -2,6 +2,7 @@
 AUTOMAKE_OPTIONS = foreign subdir-objects
 
 AM_CPPFLAGS = $(GPHOTO2_CPPFLAGS) $(FREEIMAGEPLUS_CPPFLAGS)
+# TODO Fix CameraFrontend.cpp so that it compiles with g++ -fno-permissive.
 AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS) $(GPHOTO2_CFLAGS) $(FREEIMAGEPLUS_CXXFLAGS) -fpermissive
 # TODO -framework CoreFoundation (used by gphoto/SimpleCam.cpp) should be Apple-only
 AM_LDFLAGS = $(MMDEVAPI_LDFLAGS) $(GPHOTO2_LDFLAGS) $(FREEIMAGEPLUS_LDFLAGS) -framework CoreFoundation

@@ -1,4 +1,4 @@
-AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS) -fpermissive
+AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS)
 deviceadapter_LTLIBRARIES = libmmgr_dal_NIDAQ.la
 libmmgr_dal_NIDAQ_la_SOURCES = NIDAQ.cpp NIDAQ.h \
    ../../MMDevice/MMDevice.h ../../MMDevice/DeviceBase.h

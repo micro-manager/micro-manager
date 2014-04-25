@@ -1,5 +1,5 @@
 
-AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS) -fpermissive
+AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS)
 deviceadapter_LTLIBRARIES = libmmgr_dal_Cobolt.la
 libmmgr_dal_Cobolt_la_SOURCES = Cobolt.cpp Cobolt.h \
    ../../MMDevice/MMDevice.h ../../MMDevice/DeviceBase.h

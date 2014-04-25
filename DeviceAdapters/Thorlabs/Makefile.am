@@ -1,5 +1,5 @@
 
-AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS) -fpermissive
+AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS)
 deviceadapter_LTLIBRARIES = libmmgr_dal_ThorLabs.la
 libmmgr_dal_ThorLabs_la_SOURCES = \
 	Thorlabs.cpp Thorlabs.h \

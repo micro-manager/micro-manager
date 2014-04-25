@@ -1,5 +1,5 @@
 
-AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS) -fpermissive
+AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS)
 deviceadapter_LTLIBRARIES = libmmgr_dal_Piezosystem_30DV50.la
 libmmgr_dal_Piezosystem_30DV50_la_SOURCES = Piezosystem_30DV50.cpp \
                                             Piezosystem_30DV50.h

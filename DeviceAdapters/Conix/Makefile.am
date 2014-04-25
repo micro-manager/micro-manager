@@ -1,5 +1,5 @@
 
-AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS) -fpermissive
+AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS)
 deviceadapter_LTLIBRARIES = libmmgr_dal_Conix.la
 libmmgr_dal_Conix_la_SOURCES = Conix.cpp Conix.h
 libmmgr_dal_Conix_la_LIBADD = $(MMDEVAPI_LIBADD)

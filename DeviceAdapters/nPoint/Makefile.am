@@ -1,5 +1,5 @@
 
-AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS) -fpermissive
+AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS)
 deviceadapter_LTLIBRARIES = libmmgr_dal_nPoint.la
 libmmgr_dal_nPoint_la_SOURCES = nPC400.cpp nPC400.h nPC400Ctrl.cpp nPC400Ctrl.h nPC400Channel.cpp nPC400Channel.h
 libmmgr_dal_nPoint_la_LIBADD = $(MMDEVAPI_LIBADD)

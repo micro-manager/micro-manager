@@ -1,5 +1,5 @@
 
-AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS) -fpermissive 
+AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS) 
 deviceadapter_LTLIBRARIES = libmmgr_dal_dc1394.la
 libmmgr_dal_dc1394_la_SOURCES = dc1394.cpp dc1394.h 
 

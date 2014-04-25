@@ -1,5 +1,5 @@
 
-AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS) -fpermissive $(BOOST_CPPFLAGS)
+AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS) $(BOOST_CPPFLAGS)
 deviceadapter_LTLIBRARIES = libmmgr_dal_SerialManager.la
 libmmgr_dal_SerialManager_la_SOURCES = SerialManager.cpp SerialManager.h \
          AsioClient.h

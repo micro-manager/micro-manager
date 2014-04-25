@@ -1,4 +1,4 @@
-AM_CXXFLAGS = -fpermissive $(BOOST_CPPFLAGS)
+AM_CXXFLAGS = $(BOOST_CPPFLAGS)
 lib_LTLIBRARIES = libmmgr_dal_Mightex.la
 libmmgr_dal_Mightex_la_SOURCES = Mightex.cpp Mightex.h ../../MMDevice/MMDevice.h
 libmmgr_dal_Mightex_la_LDFLAGS = -module 

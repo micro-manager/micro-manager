@@ -1,5 +1,5 @@
 
-AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS) -fpermissive
+AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS)
 deviceadapter_LTLIBRARIES = libmmgr_dal_K8055.la
 libmmgr_dal_K8055_la_SOURCES = K8055.cpp K8055.h K8055Interface.h K8055Interface.cpp
 libmmgr_dal_K8055_la_LIBADD = $(MMDEVAPI_LIBADD)

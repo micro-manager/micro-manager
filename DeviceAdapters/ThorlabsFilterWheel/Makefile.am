@@ -1,5 +1,5 @@
 
-AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS) -fpermissive
+AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS)
 deviceadapter_LTLIBRARIES = libmmgr_dal_ThorlabsFilterWheel.la
 libmmgr_dal_ThorlabsFilterWheel_la_SOURCES = FilterWheel.cpp FilterWheel.h
 libmmgr_dal_ThorlabsFilterWheel_la_LDFLAGS = $(MMDEVAPI_LDFLAGS) 

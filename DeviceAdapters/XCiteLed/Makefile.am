@@ -1,5 +1,5 @@
 
-AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS) -fpermissive
+AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS)
 deviceadapter_LTLIBRARIES = libmmgr_dal_XCiteLed.la
 libmmgr_dal_XCiteLed_la_SOURCES = XLed.cpp XLed.h XLedCtrl.cpp XLedCtrl.h XLedDev.cpp XLedDev.h
 libmmgr_dal_XCiteLed_la_LIBADD = $(MMDEVAPI_LIBADD)

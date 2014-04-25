@@ -1,5 +1,5 @@
 
-AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS) -fpermissive
+AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS)
 deviceadapter_LTLIBRARIES = libmmgr_dal_PIGCS2.la
 libmmgr_dal_PIGCS2_la_SOURCES = Controller.cpp Controller.h \
     PIGCSControllerCom.cpp PIGCSControllerCom.h \

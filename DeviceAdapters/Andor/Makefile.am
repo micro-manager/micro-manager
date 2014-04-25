@@ -1,5 +1,5 @@
 
-AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS) -fpermissive
+AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS)
 deviceadapter_LTLIBRARIES = libmmgr_dal_Andor.la
 libmmgr_dal_Andor_la_SOURCES =  Andor.cpp Andor.h
 libmmgr_dal_Andor_la_LIBADD = $(MMDEVAPI_LIBADD)

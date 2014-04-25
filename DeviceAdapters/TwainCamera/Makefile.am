@@ -1,4 +1,4 @@
-AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS) -fpermissive
+AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS)
 deviceadapter_LTLIBRARIES = libmmgr_dal_TwainRGBCamera.la
 libmmgr_dal_TwainRGBCamera_la_SOURCES = TwainRGBCamera.cpp TwainRGBCamera.h RGBSignalGenerator.cpp
 libmmgr_dal_TwainRGBCamera_la_LDFLAGS = $(MMDEVAPI_LDFLAGS) 
