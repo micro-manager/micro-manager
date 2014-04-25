@@ -4,7 +4,8 @@ AC_INIT([Micro-Manager], [1.4], [info@micro-manager.org])
 AC_CONFIG_MACRO_DIR([../m4])
 AC_CONFIG_SRCDIR([DemoCamera/DemoCamera.cpp])
 AC_CANONICAL_HOST
-AM_INIT_AUTOMAKE
+AM_INIT_AUTOMAKE([foreign 1.11])
+LT_PREREQ([2.2.6])
 LT_INIT([disable-static])
 
 AC_PROG_CXX([clang++ llvm-g++ g++ c++])
