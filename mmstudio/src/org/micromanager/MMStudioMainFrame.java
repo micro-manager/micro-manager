@@ -1079,14 +1079,22 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       });
 
       // add a listener to the main ImageJ window to catch it quitting out on us
+      /*
+       * The current version of ImageJ calls the command "Quit", which we 
+       * handle in MMStudioPlugin.  Calling the closeSequence from here as well
+       * leads to crashes since the core will be cleaned up by one of the two
+       * threads doing the same thing.  I do not know since which version of 
+       * ImageJ introduced this behavior - NS, 2014-04-26
+      
       if (ij.IJ.getInstance() != null) {
          ij.IJ.getInstance().addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
-               closeSequence(true);
+               //closeSequence(true);
             };
          });
       }
+      */
    }
 
    private JSplitPane createSplitPane(int dividerPos) {

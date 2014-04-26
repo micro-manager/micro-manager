@@ -35,6 +35,7 @@ import mmcorej.CMMCore;
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.acquisition.AcquisitionVirtualStack;
 import org.micromanager.utils.AutofocusManager;
+import org.micromanager.utils.GUIUtils;
 import org.micromanager.utils.JavaUtils;
 import org.micromanager.utils.ReportingUtils;
 
@@ -46,11 +47,11 @@ public class MMStudioPlugin implements PlugIn, CommandListener {
    static MMStudioMainFrame frame_;
 
    @SuppressWarnings("unchecked")
-    @Override
+   @Override
    public void run(final String arg) {
 
       SwingUtilities.invokeLater(new Runnable() {
-            @Override
+         @Override
          public void run() {
             try {
                if (frame_ == null || !frame_.isRunning()) {
@@ -85,16 +86,30 @@ public class MMStudioPlugin implements PlugIn, CommandListener {
          }
       });
    }
-    
-    @Override
+   
+   private boolean frameSuccessfullyClosed = true;
+   private void setFrameClosingResult(boolean res) {
+      frameSuccessfullyClosed = res;
+   }
+   
+   @Override
    public String commandExecuting(String command) { 
       if (command.equalsIgnoreCase("Quit") && frame_ != null) {
          try {
-            if (!frame_.closeSequence(true)) {
-               return null;
-            }
+            GUIUtils.invokeAndWait(new Runnable() {
+               public void run() {
+                  boolean result = true;
+                  if (!frame_.closeSequence(true)) {
+                     result = false;
+                  }
+                  setFrameClosingResult(result);
+               }
+            });
          } catch (Exception ex) {
             // do nothing, just make sure to continue quitting
+         }
+         if (!frameSuccessfullyClosed) {
+            return null;
          }
          return command;
       }  else if (command.equals("Crop")) {

@@ -90,7 +90,8 @@ public class ContrastPanel extends JPanel {
    }
 
    private void showCurrentHistograms() {
-      histDisplayScrollPane_.setViewportView(currentHistograms_ != null ? (JPanel) currentHistograms_ : new JPanel());
+      histDisplayScrollPane_.setViewportView(
+              currentHistograms_ != null ? (JPanel) currentHistograms_ : new JPanel());
       if (currentDisplay_ != null && currentDisplay_.getImageCache().getNumDisplayChannels() > 1) {
          histDisplayScrollPane_.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
       } else {
