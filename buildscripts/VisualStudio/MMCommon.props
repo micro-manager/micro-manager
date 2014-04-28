@@ -4,6 +4,7 @@
   <PropertyGroup Label="UserMacros">
     <MM_SRCROOT>$(MSBuildThisFileDirectory)\..\..</MM_SRCROOT>
     <MM_3RDPARTYPUBLIC>$(MM_SRCROOT)\..\3rdpartypublic</MM_3RDPARTYPUBLIC>
+    <MM_MMDEVICE_INCLUDEDIR>$(MM_SRCROOT)\MMDevice</MM_MMDEVICE_INCLUDEDIR>
     <MM_BOOST_INCLUDEDIR>$(MM_3RDPARTYPUBLIC)\boost-versions\boost_1_55_0</MM_BOOST_INCLUDEDIR>
     <MM_BOOST_LIBDIR>$(MM_3RDPARTYPUBLIC)\boost-versions\boost_1_55_0-lib-$(Platform)</MM_BOOST_LIBDIR>
     <MM_ZLIB_INCLUDEDIR>$(MM_3RDPARTYPUBLIC)\zlib\zlib-1.2.8</MM_ZLIB_INCLUDEDIR>
@@ -41,6 +42,9 @@
     </BuildMacro>
     <BuildMacro Include="MM_3RDPARTYPUBLIC">
       <Value>$(MM_3RDPARTYPUBLIC)</Value>
+    </BuildMacro>
+    <BuildMacro Include="MM_MMDEVICE_INCLUDEDIR">
+      <Value>$(MM_MMDEVICE_INCLUDEDIR)</Value>
     </BuildMacro>
     <BuildMacro Include="MM_BOOST_INCLUDEDIR">
       <Value>$(MM_BOOST_INCLUDEDIR)</Value>

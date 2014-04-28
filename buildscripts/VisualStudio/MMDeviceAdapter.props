@@ -8,6 +8,7 @@
   <ItemDefinitionGroup>
     <ClCompile>
       <PreprocessorDefinitions>MODULE_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(MM_MMDEVICE_INCLUDEDIR);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup />
