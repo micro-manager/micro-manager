@@ -1550,28 +1550,29 @@ int AndorCamera::GetListOfAvailableCameras()
    {
       unsigned int ret;
       float fReadOutTime,fKeepCleanTime, fAccumTime, fExposure, fKinetic;
+      //TODO: remove fix when 2.97 is released
+      //ret = GetReadOutTime(&fReadOutTime);
+      //if(DRV_SUCCESS!=ret)
+      //   return ret;
+      SetExposureTime(0.0f);
+      ret = GetAcquisitionTimings(&fExposure,&fAccumTime,&fKinetic);
+      if(DRV_SUCCESS!=ret)
+        return ret;
+      fReadOutTime = fKinetic;
+      SetExposureTime(currentExpMS_/1000.0f);
+
       
       ret = GetAcquisitionTimings(&fExposure,&fAccumTime,&fKinetic);
       if(DRV_SUCCESS!=ret)
         return ret;
 
-      ret = GetReadOutTime(&fReadOutTime);
-      if(DRV_SUCCESS!=ret)
-         return ret;
-      
       ret = GetKeepCleanTime(&fKeepCleanTime);
       if(DRV_NOT_AVAILABLE == ret)
-      {
          fKeepCleanTime=0.000f; 
-      }
       else if(DRV_SUCCESS!=ret)
          return ret; 
-
-      //reset exposure time (until Andor #7705 is fixed)
       //TODO: remove fix when 2.97 is released
-      ret = SetExposureTime(fExposure);
-      if(DRV_SUCCESS!=ret)
-         return ret; 
+      fReadOutTime = fReadOutTime - fKeepCleanTime;
 
       //convert to ms      
       fReadOutTime *= 1000.f;
@@ -1589,11 +1590,6 @@ int AndorCamera::GetListOfAvailableCameras()
          {
             fExposure = 0.f; //set by trigger pulse
          }
-
-         if(FASTEXTERNAL == iCurrentTriggerMode_)
-         {
-            fKeepCleanTime = 0.f;
-         }         
       }
 
       if(bFrameTransfer_)
@@ -3488,13 +3484,14 @@ int AndorCamera::GetListOfAvailableCameras()
                      return ERR_NO_AVAIL_AMPS;
                   }
                }
-               UpdateHSSpeeds();
 
                
             }
             ret = UpdatePreampGains();
             if(DRV_SUCCESS != ret)
                return ret;
+
+            UpdateHSSpeeds();
             
             if (initialized_) {
                OnPropertiesChanged();
@@ -3647,7 +3644,7 @@ int AndorCamera::GetListOfAvailableCameras()
       DriverGuard dg(this);
       ret = GetAcquisitionTimings(&actualExp, &actualAccumulate, &actualKinetic);
       if (DRV_SUCCESS != ret)
-			return (int)ret;
+         return (int)ret;
 
       if(fabs(currentExpMS_ - actualExp*1000.0f)>0.01)
       {
@@ -3905,11 +3902,6 @@ int AndorCamera::GetListOfAvailableCameras()
       if (ret != DRV_SUCCESS)
          return ret;
       LogMessage("Set acquisition mode to 5", true);
-
-      LogMessage("Setting Frame Transfer mode on", true);
-      if(bFrameTransfer_ && (iCurrentTriggerMode_ == SOFTWARE))
-         ret0 = SetFrameTransferMode(1);  //FT mode might be turned off in SnapImage when Software trigger mode is used. Resume it here
-
 
       ret = SetReadMode(4); // image mode
       if (ret != DRV_SUCCESS)
@@ -4946,6 +4938,7 @@ unsigned int AndorCamera::PopulateROIDropdown()
       }
       else
       {
+
          if(HasProperty(m_str_frameTransferProp.c_str()))
          {
             ret = SetFrameTransferMode(bFrameTransfer_==1?1:0);
