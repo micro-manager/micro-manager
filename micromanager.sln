@@ -326,6 +326,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ObjectiveImaging", "DeviceA
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ThorlabsAPTStage", "DeviceAdapters\ThorlabsAPTStage\ThorlabsAPTStage.vcxproj", "{788C63FE-C4C5-442C-9F56-A9326118D9BA}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ThorlabsMFC1", "DeviceAdapters\ThorlabsMFC1\ThorlabsMFC1.vcxproj", "{9B70CD73-70F0-420F-8709-A50706DB2C2F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -1603,6 +1605,12 @@ Global
 		{788C63FE-C4C5-442C-9F56-A9326118D9BA}.Release|Win32.ActiveCfg = Release|Win32
 		{788C63FE-C4C5-442C-9F56-A9326118D9BA}.Release|Win32.Build.0 = Release|Win32
 		{788C63FE-C4C5-442C-9F56-A9326118D9BA}.Release|x64.ActiveCfg = Release|x64
+		{9B70CD73-70F0-420F-8709-A50706DB2C2F}.Debug|Win32.ActiveCfg = Debug|Win32
+		{9B70CD73-70F0-420F-8709-A50706DB2C2F}.Debug|Win32.Build.0 = Debug|Win32
+		{9B70CD73-70F0-420F-8709-A50706DB2C2F}.Debug|x64.ActiveCfg = Debug|Win32
+		{9B70CD73-70F0-420F-8709-A50706DB2C2F}.Release|Win32.ActiveCfg = Release|Win32
+		{9B70CD73-70F0-420F-8709-A50706DB2C2F}.Release|Win32.Build.0 = Release|Win32
+		{9B70CD73-70F0-420F-8709-A50706DB2C2F}.Release|x64.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
