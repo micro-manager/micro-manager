@@ -296,7 +296,7 @@ int XIMEACamera::Initialize()
 	for(int i = 1; i <= maxBin; i++){
 		if(xiSetParamInt(handle, XI_PRM_DOWNSAMPLING, i) == XI_OK){
 			char buf[16];
-			itoa( i, buf, 10);
+			sprintf(buf, "%d", i);
 			binningValues.push_back(buf);
 		}
 	}
