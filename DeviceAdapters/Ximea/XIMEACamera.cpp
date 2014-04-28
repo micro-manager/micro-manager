@@ -789,7 +789,7 @@ unsigned XIMEACamera::GetImageBytesPerPixel() const
 */
 unsigned XIMEACamera::GetBitDepth() const
 {
-	return img_->Depth();
+	return adc_;
 }
 
 /***********************************************************************
