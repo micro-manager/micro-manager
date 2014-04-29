@@ -44,6 +44,8 @@ ASIDevice::ASIDevice(MM::Device *device, const char* name) :
       initialized_(false),
       refreshProps_(false),
       firmwareVersion_(0.0),
+      firmwareDate_(""),
+      firmwareBuild_(""),
       hub_(NULL),
       ret_(DEVICE_OK),
       addressString_(g_EmptyCardAddressStr)
@@ -87,6 +89,7 @@ int ASIDevice::Initialize(bool skipFirmware)
       return DEVICE_COMM_HUB_MISSING;
 
    // get the firmware version and expose that as property plus store it
+   // also the firmware compile date and build name
    // skip in special cases (when called with true flag, false is default) including
    //    FWheel: different serial terminator => own Initialize() handles
    //    TigerCommTub: needs to return different value plus doesn't have address
@@ -99,6 +102,21 @@ int ASIDevice::Initialize(bool skipFirmware)
       command.str("");
       command << firmwareVersion_;
       RETURN_ON_MM_ERROR ( deviceASI_->CreateProperty(g_FirmwareVersionPropertyName, command.str().c_str(), MM::Float, true) );
+
+      // also grab the firmware compile date
+      // currently for user information only, stored as a string so would need to convert it to proper type to use in comparisons, etc.
+      command.str("");
+      command << addressChar_ << "CD";
+      RETURN_ON_MM_ERROR ( hub_->QueryCommand(command.str()) );
+      firmwareDate_ = hub_->LastSerialAnswer();
+      RETURN_ON_MM_ERROR ( deviceASI_->CreateProperty(g_FirmwareDatePropertyName, firmwareDate_.c_str(), MM::String, true) );
+
+      // also grab the firmware build name
+      command.str("");
+      command << addressChar_ << "BU";
+      RETURN_ON_MM_ERROR ( hub_->QueryCommand(command.str()) );
+      firmwareBuild_ = hub_->LastSerialAnswer();
+      RETURN_ON_MM_ERROR ( deviceASI_->CreateProperty(g_FirmwareBuildPropertyName, firmwareBuild_.c_str(), MM::String, true) );
    }
 
    return DEVICE_OK;

@@ -71,7 +71,9 @@ protected:
 
    bool initialized_;      // used to signal that device properties have been read from controller
    bool refreshProps_;     // true when property values should be read anew from controller each time
-   double firmwareVersion_;
+   double firmwareVersion_; // firmware version
+   string firmwareDate_;    // firmware compile date
+   string firmwareBuild_;   // firmware build name
    ASIHub *hub_;           // used for serial communication
    int ret_;               // return code for use with Micro-manager functions
    string addressString_;  // address within hub, in hex format

@@ -121,6 +121,8 @@ const char g_NameInfoDelimiter = ':';
 
 // general device property names
 const char* const g_FirmwareVersionPropertyName = "FirmwareVersion";
+const char* const g_FirmwareDatePropertyName = "FirmwareDate";
+const char* const g_FirmwareBuildPropertyName = "FirmwareBuild";
 const char* const g_SaveSettingsPropertyName = "SaveCardSettings";
 const char* const g_RefreshPropValsPropertyName = "RefreshPropertyValues";
 const char* const g_AxisLetterXPropertyName = "AxisLetterX";
@@ -293,8 +295,8 @@ const char* const g_SPIMStateRunning = "Running";
 const char g_SPIMStateCode_Idle = 'I';
 const char g_SPIMStateCode_Stop = 'P';
 const char g_SPIMStateCode_Start = 'S';
-const char g_SPIMStateCode_Arm =  'a';
-const char g_SPIMStateCode_Armed ='A';
+const char g_SPIMStateCode_Arm =  'a';  // state we put it in to arm
+const char g_SPIMStateCode_Armed ='A';  // it reports this state when armed
 // SPIM laser output modes
 const char* const g_SPIMLaserOutputMode_0 = "individual shutters";
 const char* const g_SPIMLaserOutputMode_1 = "shutter + side";
