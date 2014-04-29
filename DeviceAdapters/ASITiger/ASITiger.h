@@ -294,7 +294,7 @@ const char* const g_SPIMStateRunning = "Running";
 // SPIM state on micromirror card
 const char g_SPIMStateCode_Idle = 'I';
 const char g_SPIMStateCode_Stop = 'P';
-const char g_SPIMStateCode_Start = 'S';
+const char g_SPIMStateCode_Start ='S';
 const char g_SPIMStateCode_Arm =  'a';  // state we put it in to arm
 const char g_SPIMStateCode_Armed ='A';  // it reports this state when armed
 // SPIM laser output modes
@@ -305,7 +305,8 @@ const char* const g_SPIMLaserOutputMode_2 = "side + side";
 const char g_PZSPIMStateCode_Idle = 'I';
 const char g_PZSPIMStateCode_Arm =  'a';
 const char g_PZSPIMStateCode_Armed ='A';
-const char g_PZSPIMStateCode_TimingPulse ='P';
+const char g_PZSPIMStateCode_Stop = 'P';
+const char g_PZSPIMStateCode_Timing='t';
 
 
 // property descriptions for enums

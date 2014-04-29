@@ -1307,8 +1307,10 @@ int CPiezo::OnSPIMState(MM::PropertyBase* pProp, MM::ActionType eAct)
       switch ( c )
       {
          case g_PZSPIMStateCode_Idle:  success = pProp->Set(g_SPIMStateIdle); break;
-         case g_PZSPIMStateCode_Arm:   success = pProp->Set(g_SPIMStateArmed); break;
+         case g_PZSPIMStateCode_Arm:   success = pProp->Set(g_SPIMStateArmed); break;  // about to be armed so report that
          case g_PZSPIMStateCode_Armed: success = pProp->Set(g_SPIMStateArmed); break;
+         case g_PZSPIMStateCode_Stop:  success = pProp->Set(g_SPIMStateIdle); break;  // about to be idle so report that
+         case g_PZSPIMStateCode_Timing:success = pProp->Set(g_SPIMStateArmed); break;  // this is part of being armed, caught it it middle of pulse
          default:                      success = false;                        break;
       }
       if (!success)
@@ -1316,19 +1318,31 @@ int CPiezo::OnSPIMState(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    else if (eAct == MM::AfterSet) {
       string tmpstr;
+      char c;
       pProp->Get(tmpstr);
       if (tmpstr.compare(g_SPIMStateIdle) == 0)
       {
-         // can stop directly for piezo, don't have to go through special stop state and it can't stop by itself like micromirror card
-         // don't worry about seeing if it is already idle or not
-         command.str("");
-         command << addressChar_ << "SN X=" << (int)g_PZSPIMStateCode_Idle;
+         // check status and stop if it's not idle already
+         command << addressChar_ << "SN X?";
          RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
+         RETURN_ON_MM_ERROR( hub_->GetAnswerCharAtPosition3(c) );
+         if (c!=g_SPIMStateCode_Idle)
+         {
+            command.str("");
+            if(firmwareVersion_ > 2.865)
+            {
+               command << addressChar_ << "SN X=" << (int)g_PZSPIMStateCode_Stop;
+            }
+            else  // older version
+            {
+               command << addressChar_ << "SN X=" << (int)g_PZSPIMStateCode_Idle;
+            }
+            RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
+         }
       }
       else if (tmpstr.compare(g_SPIMStateArmed) == 0)
       {
-         // can arm directly for piezo, don't have to go through special stop state and it can't stop itself like micromirror card
-         // don't worry about whether it is already armed or not
+         // can arm directly for piezo even if it is already running
          command.str("");
          command << addressChar_ << "SN X=" << (int)g_PZSPIMStateCode_Arm;
          RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
@@ -1406,10 +1420,10 @@ int CPiezo::OnRBRunning(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    ostringstream command; command.str("");
    long tmp = 0;
-   static bool updateAgain;
+   static bool justSet;
    if (eAct == MM::BeforeGet)
    {
-      if (!refreshProps_ && initialized_ && !updateAgain)
+      if (!refreshProps_ && initialized_ && !justSet)
          return DEVICE_OK;
       command << addressChar_ << "RM X?";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A X="));
@@ -1425,11 +1439,11 @@ int CPiezo::OnRBRunning(MM::PropertyBase* pProp, MM::ActionType eAct)
       }
       if (!success)
          return DEVICE_INVALID_PROPERTY_VALUE;
-      updateAgain = false;
+      justSet = false;
    }
    else if (eAct == MM::AfterSet)
    {
-      updateAgain = true;
+      justSet = true;
       return OnRBRunning(pProp, MM::BeforeGet);
    }
    return DEVICE_OK;

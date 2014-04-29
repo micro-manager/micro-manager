@@ -2519,8 +2519,9 @@ int CScanner::OnSPIMState(MM::PropertyBase* pProp, MM::ActionType eAct)
       switch ( c )
       {
          case g_SPIMStateCode_Idle:  success = pProp->Set(g_SPIMStateIdle); break;
-         case g_SPIMStateCode_Arm:   success = pProp->Set(g_SPIMStateArmed); break;
+         case g_SPIMStateCode_Arm:   success = pProp->Set(g_SPIMStateArmed); break; // about to be armed so go ahead and report that
          case g_SPIMStateCode_Armed: success = pProp->Set(g_SPIMStateArmed); break;
+         case g_SPIMStateCode_Stop : success = pProp->Set(g_SPIMStateIdle); break;  // about to be idle so go ahead and report that
          default:                    success = pProp->Set(g_SPIMStateRunning); break;  // a bunch of different letter codes are possible while running
       }
       if (!success)
@@ -2528,8 +2529,8 @@ int CScanner::OnSPIMState(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    else if (eAct == MM::AfterSet) {
       string tmpstr;
-      pProp->Get(tmpstr);
       char c;
+      pProp->Get(tmpstr);
       if (tmpstr.compare(g_SPIMStateIdle) == 0)
       {
          // check status and stop if it's not idle already
@@ -2551,7 +2552,7 @@ int CScanner::OnSPIMState(MM::PropertyBase* pProp, MM::ActionType eAct)
          command << addressChar_ << "SN X?";
          RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
          RETURN_ON_MM_ERROR( hub_->GetAnswerCharAtPosition3(c) );
-         if (c==g_SPIMStateCode_Idle)
+         if (c!=g_SPIMStateCode_Idle)
          {
             // this will stop state machine if it's running, if we do SN without args we run the risk of it stopping itself (e.g. finishing) before we send the next command
             command.str("");
@@ -2651,10 +2652,10 @@ int CScanner::OnRBRunning(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    ostringstream command; command.str("");
    long tmp = 0;
-   static bool updateAgain;
+   static bool justSet;
    if (eAct == MM::BeforeGet)
    {
-      if (!refreshProps_ && initialized_ && !updateAgain)
+      if (!refreshProps_ && initialized_ && !justSet)
          return DEVICE_OK;
       command << addressChar_ << "RM X?";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A X="));
@@ -2670,11 +2671,11 @@ int CScanner::OnRBRunning(MM::PropertyBase* pProp, MM::ActionType eAct)
       }
       if (!success)
          return DEVICE_INVALID_PROPERTY_VALUE;
-      updateAgain = false;
+      justSet = false;
    }
    else if (eAct == MM::AfterSet)
    {
-      updateAgain = true;
+      justSet = true;
       return OnRBRunning(pProp, MM::BeforeGet);
    }
    return DEVICE_OK;
