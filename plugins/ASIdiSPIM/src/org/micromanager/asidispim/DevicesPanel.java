@@ -156,7 +156,8 @@ public class DevicesPanel extends ListeningJPanel {
                // firmware version property wasn't found, maybe device hasn't been selected
             } else if (firmwareVersion < (float) 2.829) {
                ReportingUtils.showError("Device " + devices_.getMMDevice(key)
-                       + ": Piezo firmware is old; piezo may not move correctly in sync with sheet");
+                       + ": Piezo firmware is old; piezo may not move correctly in sync with sheet."
+                       + " Contact ASI for updated firmware.");
             }
             break;
          case GALVOA:
@@ -165,10 +166,16 @@ public class DevicesPanel extends ListeningJPanel {
                // firmware version property wasn't found, maybe device hasn't been selected
             } else if (firmwareVersion < (float) 2.809) {
                ReportingUtils.showError("Device " + devices_.getMMDevice(key)
-                       + ": Micromirror firmware is old; wheel control of some scanner axes may not work");
+                       + ": Micromirror firmware is old; wheel control of some scanner axes may not work."
+                       + " Contact ASI for updated firmware.");
             } else if (firmwareVersion < (float) 2.829) {
                ReportingUtils.showError("Device " + devices_.getMMDevice(key)
-                       + ": Micromirror firmware is old; imaging piezo not set correctly the first stack");
+                       + ": Micromirror firmware is old; imaging piezo not set correctly the first stack."
+                       + " Contact ASI for updated firmware.");
+            } else if (firmwareVersion < (float) 2.859) {
+               ReportingUtils.showError("Device " + devices_.getMMDevice(key)
+                       + ": Micromirror firmware is old; not all timing parameters are supported."
+                       + " Contact ASI for updated firmware.");
             }
             break;
          default:
