@@ -18,6 +18,7 @@ import java.util.prefs.Preferences;
 import javax.swing.*;
 import javax.swing.text.DefaultFormatter;
 import mmcorej.CMMCore;
+import mmcorej.DeviceType;
 import org.micromanager.utils.GUIUtils;
 
 /**
@@ -52,9 +53,11 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
       pointAndShootOffButton.setSelected(true);
       updateROISettings();
       populateChannelComboBox(Preferences.userNodeForPackage(this.getClass()).get("channel", ""));
+      populateShutterComboBox(Preferences.userNodeForPackage(this.getClass()).get("shutter", ""));
       this.addWindowFocusListener(new WindowAdapter() {
           public void windowGainedFocus(WindowEvent e) {
               populateChannelComboBox(null);
+              populateShutterComboBox(null);
           }
       });
       
@@ -124,6 +127,8 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
       centerButton = new javax.swing.JButton();
       channelComboBox = new javax.swing.JComboBox();
       jLabel4 = new javax.swing.JLabel();
+      shutterComboBox = new javax.swing.JComboBox();
+      jLabel5 = new javax.swing.JLabel();
 
       setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
       setTitle("Projector Controls");
@@ -459,6 +464,15 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
 
       jLabel4.setText("Phototargeting channel:");
 
+      shutterComboBox.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+      shutterComboBox.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            shutterComboBoxActionPerformed(evt);
+         }
+      });
+
+      jLabel5.setText("Phototargeting shutter:");
+
       org.jdesktop.layout.GroupLayout jPanel2Layout = new org.jdesktop.layout.GroupLayout(jPanel2);
       jPanel2.setLayout(jPanel2Layout);
       jPanel2Layout.setHorizontalGroup(
@@ -467,16 +481,20 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
             .addContainerGap()
             .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                .add(jPanel2Layout.createSequentialGroup()
-                  .add(jLabel4)
-                  .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                  .add(channelComboBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 126, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-               .add(jPanel2Layout.createSequentialGroup()
                   .add(onButton)
                   .add(98, 98, 98)
                   .add(calibrateButton))
                .add(offButton)
                .add(centerButton)
-               .add(allPixelsButton))
+               .add(allPixelsButton)
+               .add(jPanel2Layout.createSequentialGroup()
+                  .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                     .add(jLabel4)
+                     .add(jLabel5))
+                  .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                  .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                     .add(shutterComboBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 126, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                     .add(channelComboBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 126, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))))
             .addContainerGap(235, Short.MAX_VALUE))
       );
       jPanel2Layout.setVerticalGroup(
@@ -492,11 +510,15 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
             .add(centerButton)
             .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
             .add(allPixelsButton)
-            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 38, Short.MAX_VALUE)
             .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                .add(jLabel4)
                .add(channelComboBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-            .add(125, 125, 125))
+            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+            .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+               .add(shutterComboBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+               .add(jLabel5))
+            .add(99, 99, 99))
       );
 
       mainTabbedPane.addTab("Setup", jPanel2);
@@ -623,16 +645,24 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
    }//GEN-LAST:event_startFrameSpinnerStateChanged
 
     private void channelComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_channelComboBoxActionPerformed
-        final String channel = (String) channelComboBox.getSelectedItem();
-        controller_.setTargetingChannel(channel);
-        if (channel != null) {
-            Preferences.userNodeForPackage(this.getClass()).put("channel", channel);
-        }
+       final String channel = (String) channelComboBox.getSelectedItem();
+       controller_.setTargetingChannel(channel);
+       if (channel != null) {
+          Preferences.userNodeForPackage(this.getClass()).put("channel", channel);
+       }
     }//GEN-LAST:event_channelComboBoxActionPerformed
 
    private void sequencingButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_sequencingButtonActionPerformed
       controller_.showMosaicSequencingFrame();
    }//GEN-LAST:event_sequencingButtonActionPerformed
+
+   private void shutterComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_shutterComboBoxActionPerformed
+      final String shutter = (String) shutterComboBox.getSelectedItem();
+      controller_.setTargetingShutter(shutter);
+      if (shutter != null) {
+         Preferences.userNodeForPackage(this.getClass()).put("shutter", shutter);
+      }
+   }//GEN-LAST:event_shutterComboBoxActionPerformed
 
    private int getRoiRepetitionsSetting() {
       return getSpinnerValue(roiLoopSpinner);
@@ -707,6 +737,7 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
    private javax.swing.JLabel jLabel2;
    private javax.swing.JLabel jLabel3;
    private javax.swing.JLabel jLabel4;
+   private javax.swing.JLabel jLabel5;
    private javax.swing.JPanel jPanel1;
    private javax.swing.JPanel jPanel2;
    private javax.swing.JPanel jPanel3;
@@ -727,6 +758,7 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
    private javax.swing.JButton runROIsNowButton;
    private javax.swing.JButton sequencingButton;
    private javax.swing.JButton setRoiButton;
+   private javax.swing.JComboBox shutterComboBox;
    private javax.swing.JLabel spotDwellTimeLabel;
    private javax.swing.JSpinner spotDwellTimeSpinner;
    private javax.swing.JLabel spotDwellTimeUnitsLabel;
@@ -752,22 +784,34 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
          }
       });
    }
-   
-    void populateChannelComboBox(String initialChannel) {
-        if (initialChannel == null) {
-           initialChannel = (String) channelComboBox.getSelectedItem();
-        }
-        channelComboBox.removeAllItems();
-        channelComboBox.addItem("");
-        for (String preset : core_.getAvailableConfigs(core_.getChannelGroup())) {
-            channelComboBox.addItem(preset);
-        }
-        channelComboBox.setSelectedItem(initialChannel);
-    }
 
-    @Override
-    public void calibrationDone() {
-        calibrateButton.setText("Calibrate");
-    }
+   void populateChannelComboBox(String initialChannel) {
+      if (initialChannel == null) {
+         initialChannel = (String) channelComboBox.getSelectedItem();
+      }
+      channelComboBox.removeAllItems();
+      channelComboBox.addItem("");
+      for (String preset : core_.getAvailableConfigs(core_.getChannelGroup())) {
+         channelComboBox.addItem(preset);
+      }
+      channelComboBox.setSelectedItem(initialChannel);
+   }
+
+   void populateShutterComboBox(String initialShutter) {
+      if (initialShutter == null) {
+         initialShutter = (String) shutterComboBox.getSelectedItem();
+         shutterComboBox.removeAllItems();
+         shutterComboBox.addItem("");
+         for (String shutter : core_.getLoadedDevicesOfType(DeviceType.ShutterDevice)) {
+            shutterComboBox.addItem(shutter);
+         }
+         shutterComboBox.setSelectedItem(initialShutter);
+      }
+   }
+
+   @Override
+   public void calibrationDone() {
+      calibrateButton.setText("Calibrate");
+   }
 
 }

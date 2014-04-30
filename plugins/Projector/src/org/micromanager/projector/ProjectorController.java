@@ -72,6 +72,7 @@ public class ProjectorController {
    AtomicBoolean stopRequested_ = new AtomicBoolean(false);
    AtomicBoolean isRunning_ = new AtomicBoolean(false);
    private MosaicSequencingFrame mosaicSequencingFrame_;
+   private String targetingShutter_;
 
    // ### ProjectorController constructor.
    
@@ -568,7 +569,7 @@ public class ProjectorController {
       }
       return originalConfig;
    }
-
+   
    // Should be called with the value returned by prepareChannel.
    public void returnChannel(Configuration originalConfig) {
       if (originalConfig != null) {
@@ -582,7 +583,36 @@ public class ProjectorController {
          }
       }
    }
+   
+   public boolean prepareShutter() {
+      try {
+         if (targetingShutter_ != null && targetingShutter_.length() > 0) {
+            boolean originallyOpen = mmc.getShutterOpen(targetingShutter_);
+            if (!originallyOpen) {
+               mmc.setShutterOpen(targetingShutter_, true);
+               mmc.waitForDevice(targetingShutter_);
+            }
+            return originallyOpen;
+         }
+      } catch (Exception ex) {
+         ReportingUtils.logError(ex);
+      }
+      return true; // by default, say it was already open
+   }
 
+   // Should be called with the value returned by prepareShutter.
+   public void returnShutter(boolean originallyOpen) {
+      try {
+         if (targetingShutter_ != null &&
+               (targetingShutter_.length() > 0) &&
+               !originallyOpen) {
+            mmc.setShutterOpen(targetingShutter_, false);
+            mmc.waitForDevice(targetingShutter_);
+         }
+      } catch (Exception ex) {
+         ReportingUtils.logError(ex);
+      }
+   }
 
    public final MouseListener setupPointAndShootMouseListener() {
       final ProjectorController thisController = this;
@@ -590,15 +620,17 @@ public class ProjectorController {
          @Override
          public void mouseClicked(MouseEvent e) {
             if (e.isControlDown()) {
-               Configuration originalConfig = prepareChannel();
                Point p = e.getPoint();
                ImageCanvas canvas = (ImageCanvas) e.getSource();
                Point pOffscreen = new Point(canvas.offScreenX(p.x), canvas.offScreenY(p.y));
                Point devP = transformAndFlip(loadMapping(), canvas.getImage(), 
                        new Point(pOffscreen.x, pOffscreen.y));
+               Configuration originalConfig = prepareChannel();
+               boolean originalShutterState = prepareShutter();
                if (devP != null) {
                   displaySpot(devP.x, devP.y, thisController.getPointAndShootInterval());
                }
+               returnShutter(originalShutterState);
                returnChannel(originalConfig);
             }
          }
@@ -636,9 +668,11 @@ public class ProjectorController {
 
    void runPolygons() {
       Configuration originalConfig = prepareChannel();
+      boolean originalShutterState = prepareShutter();
       dev.runPolygons();
-      recordPolygons();
+      returnShutter(originalShutterState);
       returnChannel(originalConfig);
+      recordPolygons();
    }
 
    void addOnStateListener(OnStateListener listener) {
@@ -659,6 +693,10 @@ public class ProjectorController {
 
    void setTargetingChannel(Object selectedItem) {
       targetingChannel_ = (String) selectedItem;
+   }
+   
+   void setTargetingShutter(Object selectedItem) {
+      targetingShutter_ = (String) selectedItem;
    }
 
    private void saveROIs(File path) {
