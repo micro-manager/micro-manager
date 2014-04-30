@@ -75,7 +75,8 @@ const char* g_Keyword_StepSizeY = "Y-StepSize";
 #define PICARD_MIN_VELOCITY 1
 #define PICARD_MAX_VELOCITY 10
 
-#define DEFAULT_SERIAL_UNKNOWN -1 // This is the default serial value.
+#define DEFAULT_SERIAL_UNKNOWN -1 // This is the default serial value, before serial numbers are pinged.
+#define MAX_SERIAL_IDX 250 // Highest serial number index to ping.
 
 #define PICARDSTAGE_ERROR_OFFSET 1327 // Error codes are unique to device classes, but MM defines some basic ones (see MMDeviceConstants.h). Make sure we're past them.
 
@@ -91,6 +92,97 @@ inline static char* VarFormat(const char* fmt, ...)
 
 	return buffer;
 }
+
+class CPiDetector
+{
+	private:
+	CPiDetector(MM::Core& core, MM::Device& device)
+	{
+		core.LogMessage(&device, "Pinging motors...", false);
+
+		m_pMotorList = new int[16];
+		m_pTwisterList = new int[4];
+
+		int error = PingDevices(core, device, &piConnectMotor, &piDisconnectMotor, m_pMotorList, 16, &m_iMotorCount);
+		if(error > 1)
+			core.LogMessage(&device, VarFormat(" Error detecting motors: %d", error), false);
+
+		error = PingDevices(core, device, &piConnectTwister, &piDisconnectTwister, m_pTwisterList, 4, &m_iTwisterCount);
+		if(error > 1)
+			core.LogMessage(&device, VarFormat(" Error detecting twisters: %d", error), false);
+
+		core.LogMessage(&device, VarFormat("Found %d motors and %d twisters.", m_iMotorCount, m_iTwisterCount), false);
+	}
+
+	~CPiDetector()
+	{
+		delete[] m_pMotorList;
+		delete[] m_pTwisterList;
+	}
+
+	public:
+	int GetMotorSerial(int idx)
+	{
+		if(idx < m_iMotorCount)
+			return m_pMotorList[idx];
+
+		return DEFAULT_SERIAL_UNKNOWN;
+	}
+
+	int GetTwisterSerial(int idx)
+	{
+		if(idx < m_iTwisterCount)
+			return m_pTwisterList[idx];
+
+		return DEFAULT_SERIAL_UNKNOWN;
+	}
+
+	private:
+	int PingDevices(MM::Core& core, MM::Device& device, void* (__stdcall* connfn)(int*, int), void (__stdcall* discfn)(void*), int* pOutArray, const int iMax, int* pOutCount)
+	{
+		void* handle = NULL;
+		int error = 0;
+		int count = 0;
+		for(int idx = 0; idx < MAX_SERIAL_IDX && count < iMax; ++idx)
+		{
+			if((handle = (*connfn)(&error, idx)) != NULL && error <= 1)
+			{
+				pOutArray[count++] = idx;
+				(*discfn)(handle);
+				handle = NULL;
+			}
+			else if(error > 1)
+			{
+				core.LogMessage(&device, VarFormat("Error scanning index %d: %d", idx, error), false);
+				*pOutCount = count;
+				return error;
+			}
+		}
+
+		*pOutCount = count;
+		return 0;
+	}
+
+	int *m_pMotorList;
+	int m_iMotorCount;
+
+	int *m_pTwisterList;
+	int m_iTwisterCount;
+
+	private:
+	static CPiDetector *pPiDetector;
+
+	public:
+	static CPiDetector *GetInstance(MM::Core& core, MM::Device& device)
+	{
+		if(pPiDetector == NULL)
+			pPiDetector = new CPiDetector(core, device);
+
+		return pPiDetector;
+	}
+};
+
+CPiDetector* CPiDetector::pPiDetector;
 
 inline static void GenerateAllowedVelocities(vector<string>& vels)
 {
@@ -135,12 +227,24 @@ inline static int OnVelocityGeneric(MM::PropertyBase* pProp, MM::ActionType eAct
 }
 
 // Similar to the above routine, this one handles the OnSerialNumber PropertyAction.
-inline static int OnSerialGeneric(MM::PropertyBase* pProp, MM::ActionType eAct, int& serial, bool twister)
+inline static int OnSerialGeneric(MM::PropertyBase* pProp, MM::ActionType eAct, MM::Core& core, MM::Device& self, int& serial, bool twister, int serialidx)
 {
 	switch(eAct)
 	{
 	case MM::BeforeGet:
 		{
+			if(serial == DEFAULT_SERIAL_UNKNOWN)
+			{
+				if(twister)
+					serial = CPiDetector::GetInstance(core, self)->GetTwisterSerial(serialidx);
+				else
+					serial = CPiDetector::GetInstance(core, self)->GetMotorSerial(serialidx);
+
+				int error = self.Initialize();
+				if(error != DEVICE_OK)
+					return error;
+			}
+
 			pProp->Set(static_cast<long>(serial));
 
 			break;
@@ -250,7 +354,7 @@ CPiTwister::~CPiTwister()
 int CPiTwister::OnSerialNumber(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
 	// Usually only 1 twister, so expect index 0.
-	return OnSerialGeneric(pProp, eAct, serial_, true);
+	return OnSerialGeneric(pProp, eAct, *GetCoreCallback(), *this, serial_, true, 0);
 }
 
 int CPiTwister::OnVelocity(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -454,7 +558,7 @@ CPiStage::~CPiStage()
 int CPiStage::OnSerialNumber(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
 	// Index derived via magic. (The Z stage is presumed to be the 3rd index in numerical order.)
-	return OnSerialGeneric(pProp, eAct, serial_, false);
+	return OnSerialGeneric(pProp, eAct, *GetCoreCallback(), *this, serial_, false, 2);
 }
 
 int CPiStage::OnVelocity(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -709,12 +813,12 @@ void CPiXYStage::ShutdownStage(void** handleptr)
 
 int CPiXYStage::OnSerialNumberX(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-	return OnSerialGeneric(pProp, eAct, serialX_, false);
+	return OnSerialGeneric(pProp, eAct, *GetCoreCallback(), *this, serialX_, false, 0); // X is (usually) the first stage serial.
 }
 
 int CPiXYStage::OnSerialNumberY(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-	return OnSerialGeneric(pProp, eAct, serialY_, false);
+	return OnSerialGeneric(pProp, eAct, *GetCoreCallback(), *this, serialY_, false, 1); // And Y is (usually) the second stage serial.
 }
 
 int CPiXYStage::OnVelocityX(MM::PropertyBase *pProp, MM::ActionType eAct)
