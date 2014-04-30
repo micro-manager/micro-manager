@@ -55,6 +55,9 @@ const char* g_Keyword_StepSizeY = "Y-StepSize";
 #define TO_STRING_INTERNAL(x) #x
 #define FIXED_TO_STRING(x) TO_STRING_INTERNAL(x)
 
+#define CLOCKDIFF(now, then) ((static_cast<double>(now) - static_cast<double>(then))/(static_cast<double>(CLOCKS_PER_SEC)))
+#define MAX_WAIT 0.05 // Maximum time to wait for the motors to begin motion, in seconds.
+
 // These constants are per the Picard Industries documentation.
 #define TWISTER_STEP_SIZE 1.8 // deg/step
 #define TWISTER_LOWER_LIMIT_STEPS -32767
@@ -342,6 +345,27 @@ int CPiTwister::SetPositionSteps(long steps)
 	int to = static_cast<int>(steps);
 	int pi_error = piRunTwisterToPosition(to, velocity_, handle_); // Be sure not to confuse errors...
 
+	if(pi_error != PI_NO_ERROR)
+		return InterpretPiUsbError(pi_error);
+
+	int at = 0;
+	if((pi_error = piGetTwisterPosition(&at, handle_)) != PI_NO_ERROR)
+		return InterpretPiUsbError(pi_error);;
+
+	if(at != to) {
+		clock_t start = clock();
+		clock_t last = start;
+		while(!Busy() && at != to && CLOCKDIFF(last = clock(), start) < MAX_WAIT) {
+			CDeviceUtils::SleepMs(0);
+
+			if((pi_error = piGetTwisterPosition(&at, handle_)) != PI_NO_ERROR)
+				return InterpretPiUsbError(pi_error);
+		};
+
+		if(CLOCKDIFF(last, start) >= MAX_WAIT)
+			LogMessage(VarFormat("Long wait (twister): %d / %d (%d != %d).", last - start, static_cast<int>(MAX_WAIT*CLOCKS_PER_SEC), at, to), true);
+	};
+
 	return InterpretPiUsbError(pi_error);
 }
 
@@ -525,6 +549,29 @@ int CPiStage::SetPositionSteps(long steps)
 	int to = static_cast<int>(steps);
 
 	int pi_error = piRunMotorToPosition(to, velocity_, handle_);
+
+	if(pi_error != PI_NO_ERROR)
+		return InterpretPiUsbError(pi_error);
+
+	int at = 0;
+	if((pi_error = piGetMotorPosition(&at, handle_)) != PI_NO_ERROR)
+		return InterpretPiUsbError(pi_error);
+
+	// WORKAROUND: piRunMotorToPosition doesn't wait for the motor to get
+	// underway. Wait a bit here.
+	if(at != to) {
+		clock_t start = clock();
+		clock_t last = start;
+		while(!Busy() && at != to && CLOCKDIFF(last = clock(), start) < MAX_WAIT) {
+			CDeviceUtils::SleepMs(0);
+
+			if((pi_error = piGetMotorPosition(&at, handle_)) != PI_NO_ERROR)
+				return InterpretPiUsbError(pi_error);
+		};
+
+		if(CLOCKDIFF(last, start) >= MAX_WAIT)
+			LogMessage(VarFormat("Long wait (Z stage): %d / %d (%d != %d).", last - start, static_cast<int>(MAX_WAIT*CLOCKS_PER_SEC), at, to), true);
+	};
 
 	return InterpretPiUsbError(pi_error);
 }
@@ -782,6 +829,31 @@ int CPiXYStage::SetPositionSteps(long x, long y)
 
 	int pi_error_x = piRunMotorToPosition(toX, velocityX_, handleX_);
 	int pi_error_y = piRunMotorToPosition(toY, velocityY_, handleY_) << 1;
+
+	int atX, atY;
+
+	if((pi_error_x = piGetMotorPosition(&atX, handleX_)) != PI_NO_ERROR)
+		return InterpretPiUsbError(pi_error_x);
+
+	if((pi_error_y = piGetMotorPosition(&atY, handleY_)) != PI_NO_ERROR)
+		return InterpretPiUsbError(pi_error_y);
+
+	if(atX != toX || atY != toY) {
+		clock_t start = clock();
+		clock_t last = start;
+		while(!Busy() && (atX != toX || atY != toY) && CLOCKDIFF(last = clock(), start) < MAX_WAIT) {
+			CDeviceUtils::SleepMs(0);
+
+			if((pi_error_x = piGetMotorPosition(&atX, handleX_)) != PI_NO_ERROR)
+				return InterpretPiUsbError(pi_error_x);
+
+			if((pi_error_y = piGetMotorPosition(&atY, handleY_)) != PI_NO_ERROR)
+				return InterpretPiUsbError(pi_error_y);
+		};
+
+		if(CLOCKDIFF(last, start) >= MAX_WAIT)
+			LogMessage(VarFormat("Long wait (XY): %d / %d (%d != %d || %d != %d).", last - start, static_cast<int>(MAX_WAIT*CLOCKS_PER_SEC), atX, toX, atY, toY), true);
+	};
 
 	return InterpretPiUsbError(pi_error_x != PI_NO_ERROR ? pi_error_x : pi_error_y);
 }
