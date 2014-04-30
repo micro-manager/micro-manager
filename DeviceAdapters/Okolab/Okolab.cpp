@@ -11,7 +11,11 @@
 //
 // LICENSE:       This file is distributed under the BSD license.
 //
-// LAST REVISION: 2013-09-23
+// REVISION 2014-04-30:
+//					Increased UDP receive timeout to 5 seconds (it was 1 second).
+//							
+// REVISION 2013-09-23:
+//					First release.
 //
 
 #include "Okolab.h"
@@ -27,6 +31,11 @@
 #include "../../MMDevice/ModuleInterface.h"
 // #include <sstream>
 
+/* Total receive timeout is (RCV_RETRIES * RCV_SLEEP_TIME_MS)
+ * To increase the timeout, increase retries number.
+ */
+#define RCV_RETRIES			100
+#define RCV_SLEEP_TIME_MS	50
 
 #ifdef WIN32
  #include <windows.h>
@@ -264,10 +273,10 @@ bool OkolabDevice::OCSSendRcvdCommand(char *cmd, char *par1, char *par2, char *p
    if(ires==-1)
     {
      t++;
-     Sleep(50);
+     Sleep(RCV_SLEEP_TIME_MS);
     }
   }
- while((ires<0)&&(t<20));
+ while((ires<0)&&(t<RCV_RETRIES));
  if(ires>0) recvbuf[ires]='\0';
 
  // parse answer
