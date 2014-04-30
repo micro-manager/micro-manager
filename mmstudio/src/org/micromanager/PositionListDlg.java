@@ -328,7 +328,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
             }
          }
       }
-      if ( n2DStages == 1 && n1DStages == 1) {
+      if (n2DStages == 1 && n1DStages <= 1) {
          tileButton_.setEnabled(true);
       } else {
          tileButton_.setEnabled(false);

@@ -381,28 +381,28 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
     */
    private MultiStagePosition markPosition(int location) {
       MultiStagePosition msp = new MultiStagePosition();
-      msp.setDefaultXYStage(positionListDlg_.get2DAxis());
-      msp.setDefaultZStage(positionListDlg_.get1DAxis());
       
       try {
          // read 1-axis stages
-         String stage = positionListDlg_.get1DAxis();
-         if (stage != null) {
+         final String zStage = positionListDlg_.get1DAxis();
+         if (zStage != null) {
+            msp.setDefaultZStage(zStage);
             StagePosition sp = new StagePosition();
-            sp.stageName = stage;
+            sp.stageName = zStage;
             sp.numAxes = 1;
-            sp.x = core_.getPosition(stage);
+            sp.x = core_.getPosition(zStage);
             msp.add(sp);
          }
 
          // and 2 axis default stage
-         stage = positionListDlg_.get2DAxis();
-         if (stage != null) {
+         final String xyStage = positionListDlg_.get2DAxis();
+         if (xyStage != null) {
+            msp.setDefaultXYStage(xyStage);
             StagePosition sp = new StagePosition();
-            sp.stageName = stage;
+            sp.stageName = xyStage;
             sp.numAxes = 2;
-            sp.x = core_.getXPosition(stage);
-            sp.y = core_.getYPosition(stage);
+            sp.x = core_.getXPosition(xyStage);
+            sp.y = core_.getYPosition(xyStage);
             msp.add(sp);
          }
       } catch (Exception e) {
@@ -491,29 +491,29 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
          // get the current position
          MultiStagePosition msp = new MultiStagePosition();
          StringBuilder sb = new StringBuilder();
-         msp.setDefaultXYStage(positionListDlg_.get2DAxis());
-         msp.setDefaultZStage(positionListDlg_.get1DAxis());
 
          // read 1-axis stages
          try {
-            String stage = positionListDlg_.get1DAxis();
-            if (stage != null) {
+            final String zStage = positionListDlg_.get1DAxis();
+            if (zStage != null) {
+               msp.setDefaultZStage(zStage);
                StagePosition sp = new StagePosition();
-               sp.stageName = stage;
+               sp.stageName = zStage;
                sp.numAxes = 1;
-               sp.x = core_.getPosition(stage);
+               sp.x = core_.getPosition(zStage);
                msp.add(sp);
                sb.append(sp.getVerbose()).append("\n");
             }
 
             // read 2-axis stages
-            stage = positionListDlg_.get2DAxis();
-            if (stage != null) {
+            final String xyStage = positionListDlg_.get2DAxis();
+            if (xyStage != null) {
+               msp.setDefaultXYStage(xyStage);
                StagePosition sp = new StagePosition();
-               sp.stageName = stage;
+               sp.stageName = xyStage;
                sp.numAxes = 2;
-               sp.x = core_.getXPosition(stage);
-               sp.y = core_.getYPosition(stage);
+               sp.x = core_.getXPosition(xyStage);
+               sp.y = core_.getYPosition(xyStage);
 
                switch (location) {
                   case 0: // top
@@ -667,6 +667,11 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
     * Create the tile list based on user input, pixelsize, and imagesize
     */
    private void addToPositionList() {
+      // Sanity check: don't create any positions if there is no XY stage to
+      // use.
+      if (positionListDlg_.get2DAxis() == null) {
+         return;
+      }
 
       // Make sure at least two corners were set
       int nrSet = 0;
@@ -678,6 +683,8 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
          JOptionPane.showMessageDialog(this, "At least two corners should be set");
          return;
       }
+
+      boolean hasZPlane = (nrSet >= 3) && (positionListDlg_.get1DAxis() != null);
 
       // Calculate a bounding rectangle around the defaultXYStage positions
       // TODO: develop method to deal with multiple axis
@@ -698,8 +705,10 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
                   minY = sp.y;
               if (sp.y > maxY)
                   maxY = sp.y;
-              sp = endPosition_[i].get(endPosition_[i].getDefaultZStage());
-              meanZ += sp.x;
+              if (hasZPlane) {
+                 sp = endPosition_[i].get(endPosition_[i].getDefaultZStage());
+                 meanZ += sp.x;
+              }
           }
       }
 
@@ -709,12 +718,8 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
       // focus plane: a, b, c such that z = f(x, y) = a*x + b*y + c.
 
       double zPlaneA = 0.0, zPlaneB = 0.0, zPlaneC = 0.0;
-      boolean hasZPlane = false;
 
-      if (nrSet >= 3)
-      {
-         hasZPlane = true;
-
+      if (hasZPlane) {
          double x1 = 0.0, y1 = 0.0, z1 = 0.0;
          double x2 = 0.0, y2 = 0.0, z2 = 0.0;
          double x3 = 0.0, y3 = 0.0, z3 = 0.0;
@@ -794,27 +799,6 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
          zPlaneC = d / (-1 * c);
       }
 
-      // make sure the user wants to continue if they've asked for Z positions
-      // but haven't defined enough (non-colinear!) points for a Z plane
-/*
-      if(positionListDlg_.get1DAxis() != null && !hasZPlane)
-      {
-          int choice = JOptionPane.showConfirmDialog(this, 
-                  "You are creating a position list that includes\n" +
-                  "a Z (focus) position, but the grid locations\n" +
-                  "you've chosen are co-linear!  If you continue,\n" +
-                  "the focus for the new positions will be\n" +
-                  "the average focus for the grid locations you set.\n\n" +
-                  "If you want to calculate the focus for the new\n" +
-                  "positions, you must select at least three grid corners\n" +
-                  "that aren't co-linear!\n\nContinue?", 
-                  "Continue with co-linear focus?",
-                  JOptionPane.YES_NO_OPTION);
-          if(choice == JOptionPane.NO_OPTION || choice == JOptionPane.CLOSED_OPTION)
-              return;
-
-      }
-*/
       double pixSizeUm = getPixelSizeUm();
 
       double imageSizeXUm = getImageSize()[0];
@@ -854,23 +838,22 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
             MultiStagePosition msp = new MultiStagePosition();
 
             // Add XY position
-            msp.setDefaultXYStage(positionListDlg_.get2DAxis());
-            msp.setDefaultZStage(positionListDlg_.get1DAxis());
+            final String xyStage = positionListDlg_.get2DAxis();
+            // xyStage is not null; we've checked above.
+            msp.setDefaultXYStage(xyStage);
             StagePosition spXY = new StagePosition();
-            String stage = positionListDlg_.get2DAxis();
-            spXY.stageName = stage;
-            if (stage != null) {
-               spXY.numAxes = 2;
-               spXY.x = minX - offsetXUm + (tmpX * tileSizeXUm);
-               spXY.y = minY - offsetYUm + (y * tileSizeYUm);
-               msp.add(spXY);
-            }
+            spXY.stageName = xyStage;
+            spXY.numAxes = 2;
+            spXY.x = minX - offsetXUm + (tmpX * tileSizeXUm);
+            spXY.y = minY - offsetYUm + (y * tileSizeYUm);
+            msp.add(spXY);
 
             // Add Z position
-            StagePosition spZ = new StagePosition();
-            stage = positionListDlg_.get1DAxis();
-            if (stage != null) {
-               spZ.stageName = stage;
+            final String zStage = positionListDlg_.get1DAxis();
+            if (zStage != null) {
+               msp.setDefaultZStage(zStage);
+               StagePosition spZ = new StagePosition();
+               spZ.stageName = zStage;
                spZ.numAxes = 1;
 
                if (hasZPlane) {
