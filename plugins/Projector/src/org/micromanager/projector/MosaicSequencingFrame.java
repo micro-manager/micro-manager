@@ -28,9 +28,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Vector;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicBoolean;
 import javax.swing.DefaultCellEditor;
 import javax.swing.JComboBox;
 import javax.swing.JList;
@@ -72,7 +69,7 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
                            new String[] {"Time Slot", "Roi Indices", "On Duration (ms)",
                               "Off Duration (ms)", "Loop count"}));
    private final List<String> intensityNames_;
-   private final ExecutorService mosaicExecutor_;  
+  
    
    // ## Utility functions.
    
@@ -180,7 +177,7 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
    // Generates a list of intensity percentages, that correspond to 4-bits
    // of grayscale. There are 
    private static List<String> generateIntensityNames() {
-      final ArrayList<String> intensities = new ArrayList<String>();
+      ArrayList<String> intensities = new ArrayList<String>();
       for (int i = 0; i <= 15; ++i) {
          intensities.add("" + i + "/15");
       }
@@ -501,18 +498,14 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
    // Upload the provided SequenceEvents to the Mosaic, by using the
    // "SequenceSettings" property.
    private void uploadSequence(final ArrayList<SequenceEvent> events) {
-      mosaicExecutor_.submit(new Runnable() {
-         public void run() {
-            try {
-               core_.stopSLMSequence(mosaicName_);
-               core_.setProperty(mosaicName_, "PixelMode", canUseBlackAndWhite() ? "BlackAndWhite" : "16GraysLinear");
-               core_.setProperty(mosaicName_, "SequenceSettings", sequenceEventsToString(events));
-               core_.loadSLMSequence(mosaicName_, imageListFromSequenceEvents(events));
-            } catch (Exception ex) {
-               ReportingUtils.showError(ex);
-            }
-         }
-      });
+      try {
+         core_.stopSLMSequence(mosaicName_);
+         core_.setProperty(mosaicName_, "PixelMode", canUseBlackAndWhite() ? "BlackAndWhite" : "16GraysLinear");
+         core_.setProperty(mosaicName_, "SequenceSettings", sequenceEventsToString(events));
+         core_.loadSLMSequence(mosaicName_, imageListFromSequenceEvents(events));  
+      } catch (Exception ex) {
+         ReportingUtils.showError(ex);
+      }
    }
    
    // Upload the sequence from the sequence table to the Mosaic.
@@ -522,41 +515,21 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
    
    // Run the Mosaic Sequence. Called by Run button.
    private void runSequence() {
-      mosaicExecutor_.submit(new Runnable() {
-         public void run() {
-            try {
-               core_.stopSLMSequence(mosaicName_);
-               final String selectedItem = sequenceTriggerComboBox.getSelectedItem().toString();
-               core_.setProperty(mosaicName_, "SequenceLoopCount", GUIUtils.getIntValue(sequenceLoopCountTextField_));
-               core_.setProperty(mosaicName_, "TriggerMode", triggerProperties_.get(selectedItem));
-               core_.setProperty(mosaicName_, "OperationMode", "FrameSequence");
-               // Open the Phototargeting shutter, if needed.
-               final boolean shutterOriginallyOpen = projectorController_.prepareShutter();
-               // Run the SLM sequence according to uploaded
-               // settings. startSLMSequence returns immediately,
-               // but waitForDevice will block.
-               core_.startSLMSequence(mosaicName_);
-               // waitForDevice should block until the end
-               // of the sequence. If stopSequence is called
-               // during the sequence, then waitForDevice should
-               // return, and the shutter state will be returned
-               // to its original setting.
-               core_.waitForDevice(mosaicName_);
-               // Close phototargeting shutter if it was
-               // originallyOpen.
-               projectorController_.returnShutter(shutterOriginallyOpen);
-            } catch (Exception ex) {
-               ReportingUtils.showError(ex);
-            }
-         }
-      });
+      try {
+         core_.stopSLMSequence(mosaicName_);
+         final String selectedItem = sequenceTriggerComboBox.getSelectedItem().toString();
+         core_.setProperty(mosaicName_, "SequenceLoopCount", GUIUtils.getIntValue(sequenceLoopCountTextField_));
+         core_.setProperty(mosaicName_, "TriggerMode", triggerProperties_.get(selectedItem));
+         core_.setProperty(mosaicName_, "OperationMode", "FrameSequence");
+         core_.startSLMSequence(mosaicName_);
+      } catch (Exception ex) {
+         ReportingUtils.showError(ex);
+      }
    }
-
+   
    // Abort the Mosaic sequence. Called by Stop button.
    private void stopSequence() {
       try {
-         // We don't run this on the Mosaic Executor because
-         // we want to interrupt any running sequences.
          core_.stopSLMSequence(mosaicName_);
       } catch (Exception ex) {
          ReportingUtils.showError(ex);
@@ -740,9 +713,6 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
       mosaicHeight_ = (int) core.getSLMHeight(mosaicName_);
       sequenceTableModel_ = (DefaultTableModel) sequenceTable_.getModel();
       intensityNames_ = generateIntensityNames();
-      // The mosaic executor service makes sure everything happens
-      // in sequence, but off the GUI thread.
-      mosaicExecutor_ = Executors.newFixedThreadPool(1);
       
       GUIUtils.recallPosition(this);
       GUIUtils.enforceIntegerTextField(onDurationTextField_, 0, 200000);
