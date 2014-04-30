@@ -641,8 +641,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                      done = true;
                   }
                   if (now - start >= timeout2) {
-                     gui_.showError("No image arrived withing a reasonable period");
-                     stop_.set(true);
+                     gui_.logError("No image arrived withing a reasonable period");
+                     // stop_.set(true);
+                     done = true;
                   }
                }
 
