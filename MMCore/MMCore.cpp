@@ -4316,7 +4316,7 @@ void CMMCore::defineConfig(const char* groupName, const char* configName, const 
  * @param propName property name
  * @param value property value
 */
-void CMMCore::definePixelSizeConfig(const char* resolutionID, const char* deviceLabel, const char* propName, const char* value)
+void CMMCore::definePixelSizeConfig(const char* resolutionID, const char* deviceLabel, const char* propName, const char* value) throw (CMMError)
 {
    CheckConfigPresetName(resolutionID);
    CheckDeviceLabel(deviceLabel);
@@ -4331,7 +4331,7 @@ void CMMCore::definePixelSizeConfig(const char* resolutionID, const char* device
  * Defines an empty pixel size entry.
 */
 
-void CMMCore::definePixelSizeConfig(const char* resolutionID)
+void CMMCore::definePixelSizeConfig(const char* resolutionID) throw (CMMError)
 {
    CheckConfigPresetName(resolutionID);
 
@@ -4344,7 +4344,7 @@ void CMMCore::definePixelSizeConfig(const char* resolutionID)
  *
  * @return true if the configuration is already defined
  */
-bool CMMCore::isPixelSizeConfigDefined(const char* resolutionID) const
+bool CMMCore::isPixelSizeConfigDefined(const char* resolutionID) const throw (CMMError)
 {
    CheckConfigPresetName(resolutionID);
 

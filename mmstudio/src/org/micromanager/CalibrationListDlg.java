@@ -187,13 +187,13 @@ public class CalibrationListDlg extends MMDialog {
                return "";
             CalTableModel ptm = (CalTableModel)calTable_.getModel();
             String label = (String)ptm.getValueAt(rowIndex, 0);
-            if (core_.isPixelSizeConfigDefined(label)) {
-               try {
+            try {
+               if (core_.isPixelSizeConfigDefined(label)) {
                   Configuration cfg = core_.getPixelSizeConfigData(label);
                   tip = cfg.getVerbose();
-               } catch (Exception ex) {
-                  handleException(ex);
                }
+            } catch (Exception ex) {
+               handleException(ex);
             }
             return tip;
          }

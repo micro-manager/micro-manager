@@ -268,10 +268,10 @@ public:
    double getPixelSizeUmByID(const char* resolutionID) throw (CMMError);
    double getMagnificationFactor() const;
    void setPixelSizeUm(const char* resolutionID, double pixSize)  throw (CMMError);
-   void definePixelSizeConfig(const char* resolutionID, const char* deviceName, const char* propName, const char* value);
-   void definePixelSizeConfig(const char* resolutionID);
+   void definePixelSizeConfig(const char* resolutionID, const char* deviceName, const char* propName, const char* value) throw (CMMError);
+   void definePixelSizeConfig(const char* resolutionID) throw (CMMError);
    std::vector<std::string> getAvailablePixelSizeConfigs() const;
-   bool isPixelSizeConfigDefined(const char* resolutionID) const;
+   bool isPixelSizeConfigDefined(const char* resolutionID) const throw (CMMError);
    void setPixelSizeConfig(const char* resolutionID) throw (CMMError);
    void renamePixelSizeConfig(const char* oldConfigName, const char* newConfigName) throw (CMMError);
    void deletePixelSizeConfig(const char* configName) throw (CMMError);

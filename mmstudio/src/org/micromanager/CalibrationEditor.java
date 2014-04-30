@@ -346,12 +346,12 @@ public class CalibrationEditor extends MMDialog {
       scrollPane_.setViewportView(table_);
       table_.setModel(data_);
 
-      if (core.isPixelSizeConfigDefined(label_)) {
-         try {
+      try {
+         if (core.isPixelSizeConfigDefined(label_)) {
             core.setPixelSizeConfig(label_);
-         } catch (Exception e) {
-            ReportingUtils.showError(e);
          }
+      } catch (Exception e) {
+         ReportingUtils.showError(e);
       }
  
       PropertyCellEditor cellEditor = new PropertyCellEditor();
