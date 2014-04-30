@@ -2092,50 +2092,70 @@ bool CMMCore::getAutoShutter()
 }
 
 /**
- * Opens or closes the currently selected shutter.
- * @param  state     the desired state of the shutter (true for open)
- */
-void CMMCore::setShutterOpen(bool state) throw (CMMError)
+* Opens or closes the specified shutter.
+* @param  state     the desired state of the shutter (true for open)
+*/
+void CMMCore::setShutterOpen(const char* shutterLabel, bool state) throw (CMMError)
 {
-   if (shutter_)
+   MM::Shutter* pShutter = GetDeviceWithCheckedLabelAndType<MM::Shutter>(shutterLabel);
+   if (pShutter)
    {
-      MMThreadGuard guard(pluginManager_.getModuleLock(shutter_));
-      int ret = shutter_->SetOpen(state);
+      MMThreadGuard guard(pluginManager_.getModuleLock(pShutter));
+      int ret = pShutter->SetOpen(state);
       if (ret != DEVICE_OK)
       {
-         logError("CMMCore::setShutterOpen()", getDeviceErrorText(ret, shutter_).c_str());
-         throw CMMError(getDeviceErrorText(ret, shutter_).c_str(), MMERR_DEVICE_GENERIC);
+         logError("CMMCore::setShutterOpen()", getDeviceErrorText(ret, pShutter).c_str());
+         throw CMMError(getDeviceErrorText(ret, pShutter).c_str(), MMERR_DEVICE_GENERIC);
       }
 
-      if (shutter_->HasProperty(MM::g_Keyword_State))
+      if (pShutter->HasProperty(MM::g_Keyword_State))
       {
-         char shutterName[MM::MaxStrLength];
-         shutter_->GetLabel(shutterName);
-         {
-            MMThreadGuard scg(stateCacheLock_);
-            stateCache_.addSetting(PropertySetting(shutterName, MM::g_Keyword_State, CDeviceUtils::ConvertToString(state)));
-         }
+         MMThreadGuard scg(stateCacheLock_);
+         stateCache_.addSetting(PropertySetting(shutterLabel, MM::g_Keyword_State, CDeviceUtils::ConvertToString(state)));
       }
    }
 }
 
 /**
- * Returns the state of the currently selected shutter.
+ * Opens or closes the currently selected (default) shutter.
+ * @param  state     the desired state of the shutter (true for open)
  */
-bool CMMCore::getShutterOpen() throw (CMMError)
+void CMMCore::setShutterOpen(bool state) throw (CMMError)
 {
+   std::string shutterLabel = getShutterDevice();
+   if (shutterLabel.empty()) return;
+   setShutterOpen(shutterLabel.c_str(), state);
+}
+
+/**
+ * Returns the state of the specified shutter.
+ * @param  shutterLabel   the name of the shutter
+ */
+bool CMMCore::getShutterOpen(const char* shutterLabel) throw (CMMError)
+{
+   MM::Shutter* pShutter = GetDeviceWithCheckedLabelAndType<MM::Shutter>(shutterLabel);
    bool state = true; // default open
-   if (shutter_)
+   if (pShutter)
    {
-      MMThreadGuard guard(pluginManager_.getModuleLock(shutter_));
-      int ret = shutter_->GetOpen(state);
+      MMThreadGuard guard(pluginManager_.getModuleLock(pShutter));
+      int ret = pShutter->GetOpen(state);
       if (ret != DEVICE_OK)
       {
-         logError("CMMCore::getShutterOpen()", getDeviceErrorText(ret, shutter_).c_str());
-         throw CMMError(getDeviceErrorText(ret, shutter_).c_str(), MMERR_DEVICE_GENERIC);
+         logError("CMMCore::getShutterOpen()", getDeviceErrorText(ret, pShutter).c_str());
+         throw CMMError(getDeviceErrorText(ret, pShutter).c_str(), MMERR_DEVICE_GENERIC);
       }
    }
    return state;
+}
+
+/**
+ * Returns the state of the currently selected (default) shutter.
+ */
+bool CMMCore::getShutterOpen() throw (CMMError)
+{
+   std::string shutterLabel = getShutterDevice();
+   if (shutterLabel.empty()) return true;
+   return getShutterOpen(shutterLabel.c_str());
 }
 
 /**

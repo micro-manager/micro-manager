@@ -307,6 +307,8 @@ public:
    bool getAutoShutter();
    void setShutterOpen(bool state) throw (CMMError);
    bool getShutterOpen() throw (CMMError);
+   void setShutterOpen(const char* shutterLabel, bool state) throw (CMMError);
+   bool getShutterOpen(const char* shutterLabel) throw (CMMError);
 
    void startSequenceAcquisition(long numImages, double intervalMs, bool stopOnOverflow) throw (CMMError);
    void startSequenceAcquisition(const char* cameraLabel, long numImages, double intervalMs, bool stopOnOverflow) throw (CMMError);
