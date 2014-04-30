@@ -536,25 +536,32 @@ int CoreCallback::GetImageDimensions(int& width, int& height, int& depth)
 
 int CoreCallback::GetFocusPosition(double& pos)
 {
-   if (core_->focusStage_)
-   {
-      return core_->focusStage_->GetPositionUm(pos);
+   std::string stage = core_->getFocusDevice();
+   if (stage.empty()) {
+      pos = 0.0;
+      return DEVICE_CORE_FOCUS_STAGE_UNDEF;
    }
-   pos = 0.0;
-   return DEVICE_CORE_FOCUS_STAGE_UNDEF;
+   try {
+      pos = core_->getPosition(stage.c_str());
+      return DEVICE_OK;
+   } catch (CMMError& /*e*/) {
+      pos = 0.0;
+      return DEVICE_ERR;
+   }
 }
 
 int CoreCallback::SetFocusPosition(double pos)
 {
-   if (core_->focusStage_)
-   {
-      int ret = core_->focusStage_->SetPositionUm(pos);
-      if (ret != DEVICE_OK)
-         return ret;
-      core_->waitForDevice(core_->focusStage_);
-      return DEVICE_OK;
+   std::string stage = core_->getFocusDevice();
+   if (stage.empty()) {
+      return DEVICE_CORE_FOCUS_STAGE_UNDEF;
    }
-   return DEVICE_CORE_FOCUS_STAGE_UNDEF;
+   try {
+      core_->setPosition(stage.c_str(), pos);
+   } catch (CMMError& /*e*/) {
+      return DEVICE_ERR;
+   }
+   return DEVICE_OK;
 }
 
 

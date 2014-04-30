@@ -1237,12 +1237,19 @@ void CMMCore::waitForDevice(MM::Device* pDev) throw (CMMError)
    CORE_DEBUG("Waiting for device %s...\n", pluginManager_.GetDeviceLabel(*pDev).c_str());
 
    MM::TimeoutMs timeout(GetMMTimeNow(),timeoutMs_);
-   MMThreadGuard guard(pluginManager_.getModuleLock(pDev));
    
-   while (pDev->Busy())
+   for (;;)
    {
+      {
+         // We obtain a lock for each Busy() call, so that it's
+         // (hopefully) safe to talk to a device from another
+         // thread while we're waiting.
+         MMThreadGuard guard(pluginManager_.getModuleLock(pDev));
+         if (!pDev->Busy()) break;
+      }
       if (timeout.expired(GetMMTimeNow()))
       {
+         MMThreadGuard guard(pluginManager_.getModuleLock(pDev));
          string label = pluginManager_.GetDeviceLabel(*pDev);
          std::ostringstream mez;
          mez << "wait timed out after " << timeoutMs_ << " ms. ";
@@ -1251,9 +1258,7 @@ void CMMCore::waitForDevice(MM::Device* pDev) throw (CMMError)
                ToString(timeoutMs_) + "ms",
                MMERR_DevicePollingTimeout);
       }
-
-     //CORE_DEBUG("Polling...\n");
-     sleep(pollingIntervalMs_);
+      sleep(pollingIntervalMs_);
    }
    CORE_DEBUG("Finished waiting.\n");
 }
