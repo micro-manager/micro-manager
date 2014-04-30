@@ -66,11 +66,11 @@ public class PanelUtils {
          Devices.Keys devKey, Properties.Keys propKey) {
       
       class sliderListener implements ChangeListener, UpdateFromPropertyListenerInterface, DevicesListenerInterface {
-         JSlider js_;
-         int scalefactor_;
-         Properties props_;
-         Devices.Keys devKey_;
-         Properties.Keys propKey_;
+         private final JSlider js_;
+         private final int scalefactor_;
+         private final Properties props_;
+         private final Devices.Keys devKey_;
+         private final Properties.Keys propKey_;
          
          public sliderListener(JSlider js, int scalefactor, Properties props, 
                  Devices.Keys devKey, Properties.Keys propKey) {
@@ -132,10 +132,10 @@ public class PanelUtils {
          Devices.Keys [] devKeys, Properties.Keys propKey) {
 
       class SpinnerListenerInt implements ChangeListener, UpdateFromPropertyListenerInterface, DevicesListenerInterface {
-         JSpinner sp_;
-         Properties props_;
-         Devices.Keys [] devKeys_;
-         Properties.Keys propKey_;
+         private final JSpinner sp_;
+         private final Properties props_;
+         private final Devices.Keys [] devKeys_;
+         private final Properties.Keys propKey_;
          
          public SpinnerListenerInt(JSpinner sp, Properties props, 
                Devices.Keys [] devKeys, Properties.Keys propKey) {
@@ -222,10 +222,10 @@ public class PanelUtils {
       //  - different getSpinnerValue() implementation
       //  - getPropValueFloat in stateChanged()
       class SpinnerListenerFloat implements ChangeListener, UpdateFromPropertyListenerInterface, DevicesListenerInterface {
-         JSpinner sp_;
-         Properties props_;
-         Devices.Keys [] devKeys_;
-         Properties.Keys propKey_;
+         private final JSpinner sp_;
+         private final Properties props_;
+         private final Devices.Keys [] devKeys_;
+         private final Properties.Keys propKey_;
 
          public SpinnerListenerFloat(JSpinner sp, Properties props, Devices.Keys [] devKeys, Properties.Keys propKey) {
             sp_ = sp;
@@ -302,10 +302,10 @@ public class PanelUtils {
        * Updates the model in the params class with any GUI changes
        */
       class StringBoxListener implements ActionListener, UpdateFromPropertyListenerInterface, DevicesListenerInterface {
-         JComboBox box_;
-         Properties props_;
-         Devices.Keys [] devKeys_;
-         Properties.Keys propKey_;
+         private final JComboBox box_;
+         private final Properties props_;
+         private final Devices.Keys [] devKeys_;
+         private final Properties.Keys propKey_;
 
          public StringBoxListener(JComboBox box, Properties props, Devices.Keys [] devKeys, Properties.Keys propKey) {
             box_ = box;
@@ -389,7 +389,6 @@ public class PanelUtils {
       return tf;
    }
    
-
    /**
     * takes a JSpinner and adds a listener that is guaranteed to be called after the other listeners.
     * Modifies the JSpinner!!
