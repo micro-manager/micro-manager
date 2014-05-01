@@ -563,7 +563,7 @@ public interface AcquisitionEngine {
 
    /**
     * Return the String under which the given DataProcessor type is 
-    * registered, or null if it is not registered.
+    * registered, or null if there is none.
     */
    public String getNameForProcessorClass(Class<?> processor);
 
