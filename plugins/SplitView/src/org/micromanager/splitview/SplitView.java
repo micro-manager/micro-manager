@@ -33,7 +33,7 @@ import org.micromanager.api.ScriptInterface;
  *
  * @author nico
  */
-public class SplitView implements MMPlugin {
+public class SplitView implements MMProcessorPlugin {
    public static final String menuName = "Split View";
    public static final String tooltipDescription =
       "Split images vertically or horizontally into two channels";
