@@ -90,9 +90,8 @@ public class ProcessorPanel extends javax.swing.JPanel {
    }
 
    // Overriding this method so that layout of these panels works properly.
-   public java.awt.Dimension getPreferredSize() {
-      return new java.awt.Dimension(
-            ProcessorPanel.preferredWidth, ProcessorPanel.preferredHeight);
+   public Dimension getPreferredSize() {
+      return new Dimension(ProcessorPanel.preferredWidth, ProcessorPanel.preferredHeight);
    }
 
    // Toggle whether or not this Processor belongs in the pipeline.
