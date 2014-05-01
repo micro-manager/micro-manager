@@ -1,4 +1,6 @@
-package org.micromanager;
+package org.micromanager.pipelineUI;
+
+import java.awt.Dimension;
 
 import java.lang.reflect.Method;
 
@@ -21,18 +23,19 @@ public class PipelinePanel extends javax.swing.JFrame {
    ScriptInterface gui_;
    AcquisitionEngine engine_;
    static PipelinePanel panelSingleton_;
+   // Panel that contains all of our UI elements.
+   javax.swing.JPanel subPanel_;
    // Listbox that holds all the DataProcessor types we know about.
    JList registeredProcessorsList_;
    // Name model for the above.
    DefaultListModel processorNameModel_;
 
-   // Listbox that holds all of the DataProcessor instances currently in the 
-   // pipeline.
-   JList pipelineList_;
-   // Name model for the above. 
-   DefaultListModel pipelineNameModel_;
+   // Panel that holds all the ProcessorPanels for instanced DataProcessors.
+   javax.swing.JPanel processorsPanel_;
+   // Scrolling view of the above panel.
+   JScrollPane processorsScroller_;
 
-   PipelinePanel(ScriptInterface gui, AcquisitionEngine engine) {
+   public PipelinePanel(ScriptInterface gui, AcquisitionEngine engine) {
       super("Image pipeline");
       gui_ = gui;
       engine_ = engine;
@@ -41,24 +44,32 @@ public class PipelinePanel extends javax.swing.JFrame {
       setDefaultCloseOperation(javax.swing.WindowConstants.DO_NOTHING_ON_CLOSE);
       setLocationRelativeTo(null);
 
+      // Create a panel to hold all our contents (with a horizontal layout).
+      subPanel_ = new javax.swing.JPanel(
+            new net.miginfocom.swing.MigLayout());
+
+      // Set up the panel that holds the current active pipeline
+      processorsPanel_ = new javax.swing.JPanel(
+            new net.miginfocom.swing.MigLayout("wrap 1"));
+
+      processorsScroller_ = new JScrollPane(processorsPanel_, 
+            JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, 
+            JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+      // Make it wide enough to hold each ProcessorPanel, and tall enough to
+      // show 3 without scrolling.
+      processorsScroller_.setPreferredSize(
+            new java.awt.Dimension(ProcessorPanel.preferredWidth,
+               ProcessorPanel.preferredHeight * 3));
+      subPanel_.add(processorsScroller_);
+
+      // Set up the listbox for available DataProcessor types.
       processorNameModel_ = new DefaultListModel();
 
       registeredProcessorsList_ = new JList(processorNameModel_);
       registeredProcessorsList_.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
       registeredProcessorsList_.setLayoutOrientation(JList.VERTICAL);
       JScrollPane processorScroller = new JScrollPane(registeredProcessorsList_);
-
-      pipelineNameModel_ = new DefaultListModel();
-
-      pipelineList_ = new JList(pipelineNameModel_);
-      pipelineList_.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-      pipelineList_.setLayoutOrientation(JList.VERTICAL);
-      JScrollPane pipelineScroller = new JScrollPane(pipelineList_);
-
-      javax.swing.JPanel subPanel = new javax.swing.JPanel(
-            new net.miginfocom.swing.MigLayout());
-      subPanel.add(pipelineScroller);
-      subPanel.add(processorScroller);
+      subPanel_.add(processorScroller);
 
       // Add a button to let the user make new processors.
       JButton newButton = new JButton("New");
@@ -67,9 +78,11 @@ public class PipelinePanel extends javax.swing.JFrame {
             makeNewProcessor();
          }
       });
-      subPanel.add(newButton);
+      subPanel_.add(newButton);
       
-      add(subPanel);
+      add(subPanel_);
+
+      setMinimumSize(getPreferredSize());
 
       // Set up listening to the registration of new DataProcessors
       try {
@@ -133,11 +146,15 @@ public class PipelinePanel extends javax.swing.JFrame {
     * Re-generate our list of active processors.
     */
    private void reloadPipeline(List<DataProcessor<TaggedImage>> pipeline) {
-      pipelineNameModel_.clear();
+      processorsPanel_.removeAll();
       for (DataProcessor<TaggedImage> processor : pipeline) {
          String name = engine_.getNameForProcessorClass(processor.getClass());
-         pipelineNameModel_.addElement(name);
+         ProcessorPanel panel = new ProcessorPanel(name, processor, gui_);
+         processorsPanel_.add(panel);
       }
+      processorsPanel_.validate();
+      processorsPanel_.repaint();
+      subPanel_.revalidate();
    }
 
    /**
@@ -147,6 +164,8 @@ public class PipelinePanel extends javax.swing.JFrame {
    void makeNewProcessor() {
       int index = registeredProcessorsList_.getSelectedIndex();
       String name = (String) processorNameModel_.get(index);
+      // Note this will invoke our listener and make us recreate our pipeline
+      // display.
       engine_.makeProcessor(name, gui_);
    }
 }
