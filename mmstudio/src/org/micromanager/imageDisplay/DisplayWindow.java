@@ -21,9 +21,6 @@ import org.micromanager.utils.ReportingUtils;
 
 public class DisplayWindow extends StackWindow {
 
-   // This gets set to true when close() finishes execution, to prevent
-   // double-closes (why is this a problem? I don't know). 
-   private boolean windowClosingDone_ = false;
    private boolean closed_ = false;
    private boolean isAnimated_ = false;
    private EventBus bus_;
@@ -66,24 +63,19 @@ public class DisplayWindow extends StackWindow {
 
    @Override
    public void windowClosing(WindowEvent e) {
-      if (windowClosingDone_) {
-         return;
-      }
       bus_.post(new WindowClosingEvent(this));
+   }
 
-      super.windowClosing(e);
+   // Force this window to go away.
+   public void forceClosed() {
       MMStudioMainFrame.getInstance().removeMMBackgroundListener(this);
-
-      windowClosingDone_ = true;         
+      dispose();
       closed_ = true;
    }
 
    @Override
    public void windowClosed(WindowEvent E) {
       try {
-         // NS: I do not know why this line was here.  It causes problems since the windowClosing
-         // function now will often run twice 
-         //this.windowClosing(E);
          super.windowClosed(E);
       } catch (NullPointerException ex) {
             ReportingUtils.showError(ex, "Null pointer error in ImageJ code while closing window");

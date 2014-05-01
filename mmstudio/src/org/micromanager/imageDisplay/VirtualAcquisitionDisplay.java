@@ -1713,20 +1713,29 @@ public class VirtualAcquisitionDisplay implements
       win.setLocation(newLocation);
    }
 
-   // Our window is closing; prompt the user if they want to save data.
+   // A window wants to close; check if it's okay. If it is, then we call its
+   // forceClosed() function.
+   // TODO: for now, assuming we only have one window.
+   @Subscribe
    public void onWindowClose(DisplayWindow.WindowClosingEvent event) {
       if (eng_ != null && eng_.isAcquisitionRunning()) {
          if (!abort()) {
+            // Can't close now; the acquisition is still running.
             return;
          }
       }
+      // Ask if the user wants to save data.
 
-      if (imageCache_.getDiskLocation() == null && promptToSave_ && !albumSaved_) {
-         String[] options = {"Save single","Save multi","No","Cancel"};
-         int result = JOptionPane.showOptionDialog(event.window_, "This data set has not yet been saved.  "
-                 + "Do you want to save it?\nData can be saved as single-image files or multi-image files.",
-                 "Micro-Manager",JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null,
-                 options, options[0]);
+      if (imageCache_.getDiskLocation() == null && 
+            promptToSave_ && !albumSaved_) {
+         String[] options = {"Save single", "Save multi", "No", "Cancel"};
+         int result = JOptionPane.showOptionDialog(
+               event.window_, "This data set has not yet been saved. " + 
+               "Do you want to save it?\n" + 
+               "Data can be saved as single-image files or multi-image files.",
+               "Micro-Manager", 
+               JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null,
+               options, options[0]);
 
          if (result == 0) {
             if (!saveAs(TaggedImageStorageDiskDefault.class, true)) {
@@ -1741,7 +1750,9 @@ public class VirtualAcquisitionDisplay implements
          }
       }
 
-      if (simple_ && hyperImage_ != null && hyperImage_.getWindow() != null && hyperImage_.getWindow().getLocation() != null) {
+      // Record window position information.
+      if (simple_ && hyperImage_ != null && hyperImage_.getWindow() != null && 
+            hyperImage_.getWindow().getLocation() != null) {
          Point loc = hyperImage_.getWindow().getLocation();
          prefs_.putInt(SIMPLE_WIN_X, loc.x);
          prefs_.putInt(SIMPLE_WIN_Y, loc.y);
@@ -1757,6 +1768,10 @@ public class VirtualAcquisitionDisplay implements
       mdPanel_.displayChanged(null);
       animationTimer_.cancel();
       animationTimer_.cancel();
+
+      // Finally, tell the window to close now.
+      DisplayWindow window = event.window_;
+      window.forceClosed();
    }
 
    // Toggle one of our animation bits. Publish an event so our DisplayWindows
