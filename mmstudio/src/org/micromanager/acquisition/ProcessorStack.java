@@ -49,11 +49,13 @@ public class ProcessorStack<E> {
       BlockingQueue<E> left = input_;
       BlockingQueue<E> right = left;
       if (processors_ != null) {
-         for (DataProcessor<E> processor:processors_) {
-            right = new LinkedBlockingQueue<E>(1);
-            processor.setInput(left);
-            processor.setOutput(right);
-            left = right;
+         for (DataProcessor<E> processor : processors_) {
+            if (processor.getIsEnabled()) {
+               right = new LinkedBlockingQueue<E>(1);
+               processor.setInput(left);
+               processor.setOutput(right);
+               left = right;
+            }
          }
       }
       output_ = right;

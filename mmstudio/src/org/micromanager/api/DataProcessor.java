@@ -41,6 +41,7 @@ public abstract class DataProcessor<E> extends Thread {
    private BlockingQueue<E> output_;
    private boolean stopRequested_ = false;
    private boolean started_ = false;
+   private boolean isEnabled_ = true;
    protected ScriptInterface gui_;
 
    /*
@@ -177,5 +178,19 @@ public abstract class DataProcessor<E> extends Thread {
     */
    protected synchronized boolean stopRequested() {
       return stopRequested_;
+   }
+
+   /**
+    * Turn the Processor on or off.
+    */
+   public void setEnabled(boolean isEnabled) {
+      isEnabled_ = isEnabled;
+   }
+
+   /**
+    * Get whether or not this Processor is enabled.
+    */
+   public boolean getIsEnabled() {
+      return isEnabled_;
    }
 }
