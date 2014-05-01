@@ -55,7 +55,7 @@ public class ProcessorPanel extends javax.swing.JPanel {
       add(label);
 
       // Move the processor up (earlier) in the pipeline.
-      javax.swing.plaf.basic.BasicArrowButton upButton = new javax.swing.plaf.basic.BasicArrowButton(javax.swing.plaf.basic.BasicArrowButton.NORTH);
+      BasicArrowButton upButton = new BasicArrowButton(BasicArrowButton.NORTH);
       upButton.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent e) {
             moveProcessor(-1);
@@ -80,8 +80,7 @@ public class ProcessorPanel extends javax.swing.JPanel {
       add(deleteButton);
 
       // Move the processor down (later) in the pipeline.
-      javax.swing.plaf.basic.BasicArrowButton downButton = new javax.swing.plaf.basic.BasicArrowButton(
-            javax.swing.plaf.basic.BasicArrowButton.SOUTH);
+      BasicArrowButton downButton = new BasicArrowButton(BasicArrowButton.SOUTH);
       downButton.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent e) {
             moveProcessor(1);
