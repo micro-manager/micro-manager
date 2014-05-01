@@ -10,6 +10,7 @@
 	<property name="mm.java.lib.clojure" location="${mm.java.libs}/clojure.jar"/>
 	<property name="mm.java.lib.commons-math" location="${mm.java.libs}/commons-math-2.0.jar"/>
 	<property name="mm.java.lib.gson" location="${mm.java.libs}/gson-2.2.4.jar"/>
+	<property name="mm.java.lib.guava" location="${mm.java.libs}/guava-17.0.jar"/>
 	<property name="mm.java.lib.imagej" location="${mm.java.libs}/ij.jar"/>
 	<property name="mm.java.lib.jcommon" location="${mm.java.libs}/jcommon-1.0.16.jar"/>
 	<property name="mm.java.lib.jfreechart" location="${mm.java.libs}/jfreechart-1.0.13.jar"/>
