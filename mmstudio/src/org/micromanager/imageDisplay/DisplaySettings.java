@@ -12,7 +12,6 @@ import org.micromanager.utils.ReportingUtils;
 public class DisplaySettings {
 
    public static JSONObject getDisplaySettingsFromSummary(JSONObject summaryMetadata) throws Exception {
-      ReportingUtils.logError("Display settings get!");
       JSONObject displaySettings = new JSONObject();
 
       //create empty display and comments object  

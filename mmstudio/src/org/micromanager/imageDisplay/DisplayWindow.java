@@ -70,9 +70,13 @@ public class DisplayWindow extends StackWindow {
 
    // Force this window to go away.
    public void forceClosed() {
-      closed_ = true;
+      try {
+         super.close();
+      } catch (NullPointerException ex) {
+         ReportingUtils.showError(ex, "Null pointer error in ImageJ code while closing window");
+      }
       MMStudioMainFrame.getInstance().removeMMBackgroundListener(this); 
-      dispose();
+      closed_ = true;
    }
 
    @Override
