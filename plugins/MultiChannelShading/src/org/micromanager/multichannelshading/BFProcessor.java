@@ -29,7 +29,7 @@ import java.lang.System;
  *
  * @author nico
  */
-class BFProcessor extends DataProcessor<TaggedImage> {
+public class BFProcessor extends DataProcessor<TaggedImage> {
    private final FlatFieldCollection flatFieldImages = new FlatFieldCollection();
    private String channelGroup_;
    private int flatFieldWidth_;
