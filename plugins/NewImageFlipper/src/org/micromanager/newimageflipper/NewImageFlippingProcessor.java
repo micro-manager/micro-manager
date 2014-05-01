@@ -25,8 +25,10 @@ import ij.process.ImageProcessor;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.micromanager.MMStudioMainFrame;
 import org.micromanager.acquisition.TaggedImageQueue;
 import org.micromanager.api.DataProcessor;
+import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMScriptException;
@@ -41,11 +43,11 @@ public class NewImageFlippingProcessor extends DataProcessor<TaggedImage> {
    String camera_;
    boolean isMirrored_;
    Rotation rotation_;
+   NewImageFlipperControls controls_;
+   ScriptInterface gui_;
 
-   public NewImageFlippingProcessor(String camera, boolean isMirrored, Rotation rotation) {
-      this.camera_ = camera;
-      this.isMirrored_ = isMirrored;
-      this.rotation_ = rotation;
+   public NewImageFlippingProcessor(ScriptInterface gui) {
+      gui_ = gui;
    }
 
    /**
@@ -178,5 +180,20 @@ public class NewImageFlippingProcessor extends DataProcessor<TaggedImage> {
    public void setIsMirrored(boolean isMirrored) {
       isMirrored_ = isMirrored;
    }
-  
+
+   /** 
+    * Generate the configuration UI for this processor.
+    */
+   @Override
+   public void makeConfigurationGUI() {
+      if (controls_ == null) {
+         controls_ = new NewImageFlipperControls(this);
+         MMStudioMainFrame.getInstance().addMMBackgroundListener(controls_);
+      }
+      else {
+         controls_.updateCameras();
+      }
+      controls_.setVisible(true);
+   }
+
 }

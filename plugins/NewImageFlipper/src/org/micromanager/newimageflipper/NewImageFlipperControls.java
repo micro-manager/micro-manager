@@ -62,7 +62,8 @@ public class NewImageFlipperControls extends javax.swing.JFrame {
    /** 
     * Creates form NewImageFlipperControls 
     */
-   public NewImageFlipperControls() {
+   public NewImageFlipperControls(NewImageFlippingProcessor processor) {
+      processor_ = processor;
 
       prefs_ = Preferences.userNodeForPackage(this.getClass());
 
@@ -86,8 +87,11 @@ public class NewImageFlipperControls extends javax.swing.JFrame {
       updateCameras();
       
       setBackground(MMStudioMainFrame.getInstance().getBackgroundColor());
-      processor_ = new NewImageFlippingProcessor(this.getCamera(), 
-            getMirror(), getRotate());
+
+      // Update the processor with our current settings.
+      processor_.setRotation(getRotate());
+      processor_.setIsMirrored(getMirror());
+      processor_.setCamera((String) cameraComboBox_.getSelectedItem());
    }
 
    public DataProcessor<TaggedImage> getProcessor() {
@@ -253,17 +257,6 @@ public class NewImageFlipperControls extends javax.swing.JFrame {
       MMStudioMainFrame.getInstance().removeImageProcessor(getProcessor());
    }//GEN-LAST:event_formWindowClosed
 
-   /**
-    * @param args the command line arguments
-    */
-   public static void main(String args[]) {
-      java.awt.EventQueue.invokeLater(new Runnable() {
-
-         public void run() {
-            new NewImageFlipperControls().setVisible(true);
-         }
-      });
-   }
    // Variables declaration - do not modify//GEN-BEGIN:variables
    private javax.swing.JComboBox cameraComboBox_;
    private javax.swing.JLabel exampleImageSource_;

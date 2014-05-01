@@ -21,8 +21,10 @@
 
 package org.micromanager.newimageflipper;
 
-import org.micromanager.MMStudioMainFrame;
-import org.micromanager.api.MMPlugin;
+import mmcorej.TaggedImage;
+
+import org.micromanager.api.DataProcessor;
+import org.micromanager.api.MMProcessorPlugin;
 import org.micromanager.api.ScriptInterface;
 
 /**
@@ -31,39 +33,15 @@ import org.micromanager.api.ScriptInterface;
  * are inserted into the ImageCache.  DataProcessors can modify images 
  * or even generate totally new ones.
  * 
- * This specific example has grown out to modify images only from a specific camera
- * and is therefore very useful when using multiple cameras
  * 
  * @author arthur
  */
-public class NewTaggedImageFlipper implements MMPlugin {
-   public static final String menuName = "Image Flipper";
-   public static final String tooltipDescription =
-      "Mirrors, flips and rotates images on the fly";
-   private ScriptInterface gui_;
-   private NewImageFlipperControls controls_;
-
-   
-
-   public void dispose() {
-      if (controls_ != null)
-         controls_.safePrefs();
-   }
-
-   public void setApp(ScriptInterface app) {
-      gui_ = app;
-   }
-
-   public void show() {
-      if (controls_ == null) {
-         controls_ = new NewImageFlipperControls();
-         MMStudioMainFrame.getInstance().addMMBackgroundListener(controls_);
-      }
-      else {
-         controls_.updateCameras();
-      }
-      gui_.addImageProcessor(controls_.getProcessor());
-      controls_.setVisible(true);
+public class NewTaggedImageFlipper implements MMProcessorPlugin {
+   public static String menuName = "Image Flipper";
+   public static String tooltipDescription = "Mirrors, flips and rotates images on the fly";
+  
+   public DataProcessor<TaggedImage> makeProcessor(ScriptInterface gui) {
+      return new NewImageFlippingProcessor(gui);
    }
 
    public void configurationChanged() {
@@ -79,11 +57,11 @@ public class NewTaggedImageFlipper implements MMPlugin {
    }
 
    public String getVersion() {
-      return "Version 0.1";
+      return "Version 0.2";
    }
 
    public String getCopyright() {
-      return "Copyright University of California San Francisco, 2012";
+      return "Copyright University of California San Francisco, 2014";
    }
 
 }
