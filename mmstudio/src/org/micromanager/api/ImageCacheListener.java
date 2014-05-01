@@ -41,7 +41,7 @@ public interface ImageCacheListener {
    /*
     * Implement this method to be informed when no more TaggedImages are
     * expected to be added the image cache (i.e., that acquisition has
-    * finished. After this method is call, no more images or image metadata
+    * finished). After this method is call, no more images or image metadata
     * will be added to the image storage object. Called once.
     */
    public void imagingFinished(String path);

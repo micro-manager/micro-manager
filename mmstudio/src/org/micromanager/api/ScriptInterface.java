@@ -784,5 +784,12 @@ public interface ScriptInterface {
      * Display dialog to save data for one of the currently open acquisitions
      */
     public void promptToSaveAcquisition(String name, boolean prompt) throws MMScriptException;
-    
+
+   /**
+    * Request that the given object be added to our EventBus for notification
+    * of events occurring. The available event types that subscribers can
+    * listen for is in the org.micromanager.api.events package.
+    */
+    public void registerForEvents(Object obj);
+
 }

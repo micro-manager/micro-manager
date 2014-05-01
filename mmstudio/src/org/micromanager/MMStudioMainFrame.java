@@ -4406,6 +4406,11 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       promptToSaveAcquisition(name, prompt);
    }
 
+   @Override
+   public void registerForEvents(Object obj) {
+      EventManager.register(obj);
+   }
+
     @Override
    public void setROI(Rectangle r) throws MMScriptException {
       boolean liveRunning = false;
