@@ -34,7 +34,11 @@ public class ProcessorPanel extends javax.swing.JPanel {
 
    ProcessorPanel(String name, DataProcessor<TaggedImage> processor,
          ScriptInterface gui) {
-      super(new net.miginfocom.swing.MigLayout("wrap 3"));
+      // The central element is the processor name, i.e. the only element
+      // of variable size. We want it to be of fixed size so that elements
+      // to its right are properly-aligned.
+      super(new net.miginfocom.swing.MigLayout("wrap 3", 
+               "[][200!][]"));
       processor_ = processor;
       gui_ = gui;
 
