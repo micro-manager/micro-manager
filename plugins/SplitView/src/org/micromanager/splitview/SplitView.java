@@ -21,11 +21,7 @@
 
 package org.micromanager.splitview;
 
-import mmcorej.TaggedImage;
-
-import org.micromanager.api.DataProcessor;
 import org.micromanager.api.MMProcessorPlugin;
-import org.micromanager.api.ScriptInterface;
 
 /** 
  * Micro-Manager plugin that can split the acquired image top-down or left-right
@@ -37,9 +33,6 @@ public class SplitView implements MMProcessorPlugin {
    public static final String menuName = "Split View";
    public static final String tooltipDescription =
       "Split images vertically or horizontally into two channels";
-
-   private CMMCore core_;
-   private ScriptInterface gui_;
 
    public static Class<?> getProcessorClass() {
       return SplitViewProcessor.class;

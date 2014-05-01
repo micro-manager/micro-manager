@@ -21,11 +21,7 @@
 
 package org.micromanager.newimageflipper;
 
-import mmcorej.TaggedImage;
-
-import org.micromanager.api.DataProcessor;
 import org.micromanager.api.MMProcessorPlugin;
-import org.micromanager.api.ScriptInterface;
 
 /**
  * Example demonstrating the use of DataProcessors.  DataProcessors can 

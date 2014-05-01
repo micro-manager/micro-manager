@@ -6,11 +6,7 @@
 
 package org.micromanager.multichannelshading;
 
-import mmcorej.TaggedImage;
-
-import org.micromanager.api.DataProcessor;
 import org.micromanager.api.MMProcessorPlugin;
-import org.micromanager.api.ScriptInterface;
 
 /**
  *
@@ -22,9 +18,9 @@ public class MultiChannelShading implements org.micromanager.api.MMProcessorPlug
       "Apply dark subtraction and flat-field correction";
 
    public static String versionNumber = "0.1";
-  
-   public DataProcessor<TaggedImage> makeProcessor(ScriptInterface gui) {
-      return new BFProcessor(gui);
+
+   public static Class<?> getProcessorClass() {
+      return BFProcessor.class;
    }
 
    @Override
