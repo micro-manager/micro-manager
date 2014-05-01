@@ -67,9 +67,9 @@ public class AcquisitionManager {
       try {
          GUIUtils.invokeAndWait(new Runnable() {
             public void run() {
-               
                if (!acqs_.containsKey(name)) {
-                 ex[0] = new MMScriptException("The name does not exist");
+                 ex[0] = new MMScriptException(
+                    "The acquisition named \"" + name + "\" does not exist");
                } else {
                   acqs_.get(name).close();
                   acqs_.remove(name);
