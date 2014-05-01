@@ -47,7 +47,6 @@ public class PipelinePanel extends JFrame {
       engine_ = engine;
       panelSingleton_ = this;
 
-      setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
       setLocationRelativeTo(null);
 
       // Create a panel to hold all our contents (with a horizontal layout).
