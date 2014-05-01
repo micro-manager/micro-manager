@@ -21,7 +21,6 @@ nobase_mmplugin_DATA = \
 	Image_Processing/MultiChannelShading.jar \
 	Image_Processing/NewImageFlipper.jar \
 	Image_Processing/SplitView.jar \
-	Obsolete/BFCorrector.jar \
 	RecallPlugin.jar
 
 
@@ -143,14 +142,6 @@ Device_Control/CRISP.jar: \
 	$(JAVAC) $(JAVACFLAGS) -classpath $(IJJARPATH):$(BSHJARPATH):$(COMMONSMATHJARPATH):$(SWINGLAYOUTJARPATH):$(JFREECHARTJARPATH):../mmstudio/MMJ_.jar:. $(srcdir)/CRISP/src/org/micromanager/CRISP/*.java -d build/CRISP
 	$(MKDIR_P) Device_Control
 	cd build/CRISP && jar cf ../../Device_Control/CRISP.jar *
-
-Obsolete/BFCorrector.jar: \
-	$(srcdir)/BFCorrector/src/org/micromanager/bfcorrector/*.java
-	rm -rf build/BFCorrector
-	$(MKDIR_P) build/BFCorrector
-	$(JAVAC) $(JAVACFLAGS) -classpath $(IJJARPATH):$(BSHJARPATH):$(COMMONSMATHJARPATH):$(SWINGLAYOUTJARPATH):../mmstudio/MMJ_.jar:. $(srcdir)/BFCorrector/src/org/micromanager/bfcorrector/*.java -d build/BFCorrector
-	$(MKDIR_P) Obsolete
-	cd build/BFCorrector && jar cf ../../Obsolete/BFCorrector.jar *
 
 Image_Processing/MultiChannelShading.jar: \
 	$(srcdir)/MultiChannelShading/src/org/micromanager/multichannelshading/*.java \
