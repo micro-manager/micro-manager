@@ -21,8 +21,10 @@
 
 package org.micromanager.splitview;
 
-import mmcorej.CMMCore;
-import org.micromanager.api.MMPlugin;
+import mmcorej.TaggedImage;
+
+import org.micromanager.api.DataProcessor;
+import org.micromanager.api.MMProcessorPlugin;
 import org.micromanager.api.ScriptInterface;
 
 /** 
@@ -38,33 +40,10 @@ public class SplitView implements MMPlugin {
 
    private CMMCore core_;
    private ScriptInterface gui_;
-   private SplitViewFrame myFrame_;
 
    @Override
-   public void setApp(ScriptInterface app) {
-      gui_ = app;                                        
-      core_ = app.getMMCore();
-      if (myFrame_ == null) {
-         try {
-            myFrame_ = new SplitViewFrame(gui_);
-            gui_.addMMBackgroundListener(myFrame_);
-         } catch (Exception e) {
-            e.printStackTrace();
-            return;
-         }
-      }
-      myFrame_.setVisible(true);
-   }
-
-   @Override
-   public void dispose() {
-      //if (myFrame_ != null)
-         //myFrame_.safePrefs();
-   }
-
-   @Override
-   public void show() {
-         String ig = "SplitView";
+   public DataProcessor<TaggedImage> makeProcessor(ScriptInterface gui) {
+      return new SplitViewProcessor(gui);
    }
 
    @Override
@@ -79,11 +58,11 @@ public class SplitView implements MMPlugin {
    
    @Override
    public String getVersion() {
-      return "0.1";
+      return "0.2";
    }
    
    @Override
    public String getCopyright() {
-      return "University of California, 2011";
+      return "University of California, 2014";
    }
 }

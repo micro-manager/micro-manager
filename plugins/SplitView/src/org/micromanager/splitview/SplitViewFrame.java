@@ -40,7 +40,6 @@ import java.awt.event.ActionListener;
 
 import javax.swing.Timer;
 
-import java.text.NumberFormat;
 import java.util.prefs.Preferences;
 
 import javax.swing.JColorChooser;
@@ -68,7 +67,6 @@ public class SplitViewFrame extends javax.swing.JFrame {
    private final ScriptInterface gui_;
    private final CMMCore core_;
    private Preferences prefs_;
-   private NumberFormat nf_;
    private long imgDepth_;
    private int width_;
    private int height_;
@@ -93,19 +91,21 @@ public class SplitViewFrame extends javax.swing.JFrame {
    private String shutterLabel_;
    private boolean shutterOrg_;
    private boolean appliedToMDA_ = false;
-   private SplitViewProcessor mmImageProcessor_;
+   private SplitViewProcessor processor_;
 
    
 
-   public SplitViewFrame(ScriptInterface gui) throws Exception {
+   public SplitViewFrame(SplitViewProcessor processor, 
+         ScriptInterface gui) throws Exception {
+      processor_ = processor;
       gui_ = gui;
       core_ = gui_.getMMCore();
-      nf_ = NumberFormat.getInstance();
       prefs_ = Preferences.userNodeForPackage(this.getClass());
 
       col1_ = new Color(prefs_.getInt(TOPLEFTCOLOR, Color.red.getRGB()));
       col2_ = new Color(prefs_.getInt(BOTTOMRIGHTCOLOR, Color.green.getRGB()));
       orientation_ = prefs_.get(ORIENTATION, LR);
+      processor_.setOrientation(orientation_);
 
       // initialize timer
       // TODO: Replace with Sequence-based live mode
@@ -163,6 +163,10 @@ public class SplitViewFrame extends javax.swing.JFrame {
       snapButton.setFont(buttonFont);
       snapButton.setToolTipText("Snap single image");
 
+      // Disable the processor if necessary.
+      if (!appliedToMDA_) {
+         gui_.removeImageProcessor(processor_);
+      }
    }
 
    private void doSnap() {
@@ -242,40 +246,10 @@ public class SplitViewFrame extends javax.swing.JFrame {
       width_ = (int) core_.getImageWidth();
       height_ = (int) core_.getImageHeight();
 
-      newWidth_ = calculateWidth(width_);
-      newHeight_ = calculateHeight(height_);
-   }
-
-   public int calculateWidth(int width) {
-      int newWidth = width;
-      if (!orientation_.equals(LR) && !orientation_.equals(TB)) {
-         orientation_ = LR;
-      }
-      if (orientation_.equals(LR)) {
-         newWidth = width / 2;
-      } else if (orientation_.equals(TB)) {
-         newWidth = width;
-      }
-      return newWidth;
+      newWidth_ = processor_.calculateWidth(width_);
+      newHeight_ = processor_.calculateHeight(height_);
    }
    
-   public int calculateHeight(int height) {
-      int newHeight = height;
-      if (!orientation_.equals(LR) && !orientation_.equals(TB)) {
-         orientation_ = LR;
-      }
-      if (orientation_.equals(LR)) {
-         newHeight = height;
-      } else if (orientation_.equals(TB)) {
-         newHeight = height / 2;
-      }
-      return newHeight;
-   }
-   
-   public String getOrientation() {
-      return orientation_;
-   }
-
    private void openAcq() throws MMScriptException {
 
       gui_.openAcquisition(ACQNAME, "", 1, 2, 1, 1, true, false);
@@ -487,6 +461,7 @@ public class SplitViewFrame extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void lrRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_lrRadioButtonActionPerformed
+       processor_.setOrientation(LR);
        orientation_ = LR;
        prefs_.put(ORIENTATION, LR);
        topLeftColorButton.setText("Left Color");
@@ -494,6 +469,7 @@ public class SplitViewFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_lrRadioButtonActionPerformed
 
     private void tbRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_tbRadioButtonActionPerformed
+       processor_.setOrientation(TB);
        orientation_ = TB;
        prefs_.put(ORIENTATION, TB);
        topLeftColorButton.setText("Top Color");
@@ -561,15 +537,10 @@ public class SplitViewFrame extends javax.swing.JFrame {
          return;
       
       if (applyToMDACheckBox_.isSelected() && !appliedToMDA_) {
-         if (mmImageProcessor_ == null) {
-            mmImageProcessor_ = new SplitViewProcessor(this);
-            mmImageProcessor_.setName("SplitView");
-         }
-         gui_.addImageProcessor(mmImageProcessor_);
+         gui_.addImageProcessor(processor_);
          appliedToMDA_ = true;
       } else if (!applyToMDACheckBox_.isSelected() && appliedToMDA_) {
-         if (mmImageProcessor_ != null)
-            gui_.removeImageProcessor(mmImageProcessor_);
+         gui_.removeImageProcessor(processor_);
          appliedToMDA_ = false;
       }
    }//GEN-LAST:event_applyToMDACheckBox_StateChanged

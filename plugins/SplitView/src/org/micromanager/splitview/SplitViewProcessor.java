@@ -31,6 +31,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.acquisition.TaggedImageQueue;
 import org.micromanager.api.DataProcessor;
+import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ReportingUtils;
@@ -42,22 +43,42 @@ import org.micromanager.utils.ReportingUtils;
  */
 public class SplitViewProcessor extends DataProcessor<TaggedImage> {
 
-   private SplitViewFrame parent_;
+   private ScriptInterface gui_;
+   private SplitViewFrame myFrame_;
+   private String orientation_ = SplitViewFrame.LR;
 
-   public SplitViewProcessor(SplitViewFrame frame) {
-      parent_ = frame;
+   public SplitViewProcessor(ScriptInterface gui) {
+      gui_ = gui;
+   }
+
+   @Override
+   public void makeConfigurationGUI() {
+      if (myFrame_ == null) {
+         try {
+            myFrame_ = new SplitViewFrame(this, gui_);
+            gui_.addMMBackgroundListener(myFrame_);
+         }
+         catch (Exception ex) {
+            ReportingUtils.logError("Failed to make GUI for SplitViewProcessor: " + ex);
+         }
+      }
+      myFrame_.setVisible(true);
+   }
+
+   public void setOrientation(String orientation) {
+      orientation_ = orientation;
    }
 
    private String getChannelSuffix(int channelIndex) {
       String token;
-      if (parent_.getOrientation().equals(SplitViewFrame.LR)) {
+      if (orientation_.equals(SplitViewFrame.LR)) {
 
          if ((channelIndex % 2) == 0) {
             token = "Left";
          } else {
             token = "Right";
          }
-      } else { // if (parent_.getOrientation().equals(SplitViewFrame.TB)) {
+      } else { // orientation is "TB"
          if ((channelIndex % 2) == 0) {
             token = "Top";
          } else {
@@ -100,8 +121,8 @@ public class SplitViewProcessor extends DataProcessor<TaggedImage> {
 
             tmpImg.setPixels(taggedImage.pix);
 
-            height = parent_.calculateHeight(height);
-            width = parent_.calculateWidth(width);
+            height = calculateHeight(height);
+            width = calculateWidth(width);
 
             tmpImg.setRoi(0, 0, width, height);
             
@@ -122,9 +143,9 @@ public class SplitViewProcessor extends DataProcessor<TaggedImage> {
             JSONObject tags2 = new JSONObject(tags.toString());
             tags2.put("Channel", MDUtils.getChannelName(taggedImage.tags)  + getChannelSuffix(channelIndex*2+1));
 
-            if (parent_.getOrientation().equals(SplitViewFrame.LR)) {
+            if (orientation_.equals(SplitViewFrame.LR)) {
                tmpImg.setRoi(width, 0, width, height);
-            } else if (parent_.getOrientation().equals(SplitViewFrame.TB)) {
+            } else if (orientation_.equals(SplitViewFrame.TB)) {
                tmpImg.setRoi(0, height, width, height);
             }
             MDUtils.setWidth(tags2, width);
@@ -143,5 +164,21 @@ public class SplitViewProcessor extends DataProcessor<TaggedImage> {
          ReportingUtils.logError(ex);
          produce(taggedImage);
       }
+   }
+
+   public int calculateWidth(int width) {
+      int newWidth = width;
+      if (orientation_.equals(SplitViewFrame.LR)) {
+         newWidth = width / 2;
+      }
+      return newWidth;
+   }
+
+   public int calculateHeight(int height) {
+      int newHeight = height;
+      if (orientation_.equals(SplitViewFrame.TB)) {
+         newHeight = height / 2;
+      }
+      return newHeight;
    }
 }
