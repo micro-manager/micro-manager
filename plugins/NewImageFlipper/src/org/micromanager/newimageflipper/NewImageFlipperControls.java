@@ -143,11 +143,6 @@ public class NewImageFlipperControls extends javax.swing.JFrame {
       setBounds(new java.awt.Rectangle(300, 300, 150, 150));
       setMinimumSize(new java.awt.Dimension(200, 200));
       setResizable(false);
-      addWindowListener(new java.awt.event.WindowAdapter() {
-         public void windowClosed(java.awt.event.WindowEvent evt) {
-            formWindowClosed(evt);
-         }
-      });
 
       mirrorCheckBox_.setText("Mirror");
       mirrorCheckBox_.addActionListener(new java.awt.event.ActionListener() {
@@ -252,10 +247,6 @@ public class NewImageFlipperControls extends javax.swing.JFrame {
          prefs_.put(SELECTEDCAMERA, camera);
       }
    }//GEN-LAST:event_cameraComboBox_ActionPerformed
-
-   private void formWindowClosed(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosed
-      MMStudioMainFrame.getInstance().removeImageProcessor(getProcessor());
-   }//GEN-LAST:event_formWindowClosed
 
    // Variables declaration - do not modify//GEN-BEGIN:variables
    private javax.swing.JComboBox cameraComboBox_;
