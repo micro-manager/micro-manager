@@ -33,7 +33,7 @@ import javax.swing.UIManager;
 import mmcorej.CMMCore;
 
 import org.micromanager.MMStudioMainFrame;
-import org.micromanager.acquisition.AcquisitionVirtualStack;
+import org.micromanager.imageDisplay.AcquisitionVirtualStack;
 import org.micromanager.utils.AutofocusManager;
 import org.micromanager.utils.GUIUtils;
 import org.micromanager.utils.JavaUtils;
