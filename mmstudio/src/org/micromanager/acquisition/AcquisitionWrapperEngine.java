@@ -3,6 +3,7 @@ package org.micromanager.acquisition;
 
 import java.awt.Color;
 import java.io.File;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -67,6 +68,8 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    private int afSkipInterval_;
    protected HashMap<String, Class<?>> nameToProcessorClass_;
    protected List<DataProcessor<TaggedImage>> taggedImageProcessors_;
+   protected List<Method> registrationListeners_;
+   protected List<Method> pipelineChangedListeners_;
    private List<Class> imageRequestProcessors_;
    private boolean absoluteZ_;
    private IAcquisitionEngine2010 acquisitionEngine2010;
@@ -81,6 +84,8 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       imageRequestProcessors_ = new ArrayList<Class>();
       nameToProcessorClass_ = new HashMap<String, Class<?>>();
       taggedImageProcessors_ = new ArrayList<DataProcessor<TaggedImage>>();
+      registrationListeners_ = new ArrayList<Method>();
+      pipelineChangedListeners_ = new ArrayList<Method>();
       useCustomIntervals_ = false;
       settingsListeners_ = new ArrayList<AcqSettingsListener>();
       acqManager_ = mgr;
@@ -266,38 +271,11 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       }
    }
 
-   /**
-    * @Deprecated
-    */
-   @Override
-   @SuppressWarnings("unchecked")
-   public void addImageProcessor(Class taggedImageProcessorClass) {
-      try {        
-         taggedImageProcessors_.add(
-                 (DataProcessor<TaggedImage>) taggedImageProcessorClass.newInstance());
-      } catch (InstantiationException ex) {
-         ReportingUtils.logError(ex);
-      } catch (IllegalAccessException ex) {
-         ReportingUtils.logError(ex);
-      }
-   }
-
-   /**
-    * @Deprecated
-    */
-   @Override
-   public void removeImageProcessor(Class taggedImageProcessorClass) {
-      for (DataProcessor<TaggedImage> proc:taggedImageProcessors_) {
-         if (proc.getClass() == taggedImageProcessorClass) {
-            taggedImageProcessors_.remove(proc);
-         }
-      }
-   }
-
    @Override
    public void addImageProcessor(DataProcessor<TaggedImage> taggedImageProcessor) {
       if (!taggedImageProcessors_.contains(taggedImageProcessor)) {
          taggedImageProcessors_.add(taggedImageProcessor);
+         notifyOnPipelineChanged("Processor added");
       }
    }
 
@@ -305,12 +283,14 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    public void removeImageProcessor(DataProcessor<TaggedImage> taggedImageProcessor) {
       taggedImageProcessors_.remove(taggedImageProcessor);
       taggedImageProcessor.dispose();
+      notifyOnPipelineChanged("Processor removed");
    }
 
    @Override
    public void setImageProcessorPipeline(List<DataProcessor<TaggedImage>> pipeline) {
       taggedImageProcessors_.clear();
       taggedImageProcessors_.addAll(pipeline);
+      notifyOnPipelineChanged("Pipeline replaced");
    }
 
    @Override
@@ -324,22 +304,46 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
          ReportingUtils.logError("Tried to register an additional DataProcessor under the name \"" + name + "\"; ignoring it.");
       }
       else {
-         ReportingUtils.logMessage("Registered new DataProcessor class " + name);
          nameToProcessorClass_.put(name, processorClass);
-         ReportingUtils.logError(this.hashCode() + "After registering, is it there? " + nameToProcessorClass_.containsKey(name));
+         for (Method listener : registrationListeners_) {
+            try {
+               listener.invoke(null, name);
+            } 
+            catch (Exception ex) {
+               ReportingUtils.logError("Failed to notify method [" + 
+                     listener + "] of newly-registered processor [" + name +
+                     "]: " + ex);
+            }
+         }
       }
    }
 
    @Override
+   public void addRegistrationListener(Method listener) {
+      registrationListeners_.add(listener);
+   }
+
+   @Override
+   public void removeRegistrationListener(Method listener) {
+      registrationListeners_.remove(listener);
+   }
+   
+   @Override
+   public void addPipelineChangedListener(Method listener) {
+      pipelineChangedListeners_.add(listener);
+   }
+
+   @Override
+   public void removePipelineChangedListener(Method listener) {
+      pipelineChangedListeners_.remove(listener);
+   }
+
+   @Override
    public List<String> getSortedDataProcessorNames() {
-      ReportingUtils.logError(this.hashCode() + "Is registry empty?" + nameToProcessorClass_.isEmpty());
       Set<String> keys = nameToProcessorClass_.keySet();
-      ReportingUtils.logError("Keys are" + keys);
       ArrayList<String> sortedKeys = new ArrayList<String>();
       sortedKeys.addAll(keys);
-      ReportingUtils.logError("Pre-sorted keys are " + sortedKeys);
       Collections.sort(sortedKeys);
-      ReportingUtils.logError("Post-sorted keys are" + sortedKeys);
       return sortedKeys;
    }
 
@@ -359,12 +363,39 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       return newProcessor;
    }
 
+   /**
+    * The pipeline has been changed somehow; send out notifications to our
+    * listeners.
+    */
+   private void notifyOnPipelineChanged(String message) {
+      for (Method listener : pipelineChangedListeners_) {
+         try {
+            listener.invoke(null, taggedImageProcessors_);
+         } 
+         catch (Exception ex) {
+            ReportingUtils.logError("Failed to notify method [" + 
+                  listener + "] of change in pipeline [" + message + 
+                  "]: " + ex);
+         }
+      }
+   }
+
    @Override
    public DataProcessor<TaggedImage> getProcessorRegisteredAs(String name) {
       Class<?> processorClass = nameToProcessorClass_.get(name);
       for (DataProcessor<TaggedImage> processor : taggedImageProcessors_) {
          if (processor.getClass() == processorClass) {
             return processor;
+         }
+      }
+      return null;
+   }
+
+   @Override
+   public String getNameForProcessorClass(Class<?> processorClass) {
+      for (String name : nameToProcessorClass_.keySet()) {
+         if (nameToProcessorClass_.get(name) == processorClass) {
+            return name;
          }
       }
       return null;

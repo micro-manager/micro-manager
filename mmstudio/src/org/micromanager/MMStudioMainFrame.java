@@ -2117,7 +2117,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
 
    private void createPipelinePanel() {
       if (pipelinePanel_ == null) {
-         pipelinePanel_ = new PipelinePanel(engine_);
+         pipelinePanel_ = new PipelinePanel(this, engine_);
          pipelinePanel_.setBackground(guiColors_.background.get((options_.displayBackground_)));
          addMMBackgroundListener(pipelinePanel_);
       }
