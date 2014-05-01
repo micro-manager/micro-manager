@@ -10,12 +10,13 @@
  */
 package org.micromanager.projector;
 
-import ij.IJ;
-import ij.plugin.frame.RoiManager;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.prefs.Preferences;
-import javax.swing.*;
+import javax.swing.JFormattedTextField;
+import javax.swing.JSpinner;
+import javax.swing.SpinnerNumberModel;
+import javax.swing.SwingUtilities;
 import javax.swing.text.DefaultFormatter;
 import mmcorej.CMMCore;
 import mmcorej.DeviceType;
@@ -680,10 +681,6 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
    public void dispose() {
       super.dispose();
    }
-
-   private void formWindowClosing(java.awt.event.WindowEvent evt) {
-      plugin_.dispose();
-   }
   
    public void updateROISettings() {
       boolean roisSubmitted = false;
@@ -800,13 +797,13 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
    void populateShutterComboBox(String initialShutter) {
       if (initialShutter == null) {
          initialShutter = (String) shutterComboBox.getSelectedItem();
-         shutterComboBox.removeAllItems();
-         shutterComboBox.addItem("");
-         for (String shutter : core_.getLoadedDevicesOfType(DeviceType.ShutterDevice)) {
-            shutterComboBox.addItem(shutter);
-         }
-         shutterComboBox.setSelectedItem(initialShutter);
       }
+      shutterComboBox.removeAllItems();
+      shutterComboBox.addItem("");
+      for (String shutter : core_.getLoadedDevicesOfType(DeviceType.ShutterDevice)) {
+         shutterComboBox.addItem(shutter);
+      }
+      shutterComboBox.setSelectedItem(initialShutter);
    }
 
    @Override
