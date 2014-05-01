@@ -536,12 +536,13 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
                // settings. startSLMSequence returns immediately,
                // but waitForDevice will block.
                core_.startSLMSequence(mosaicName_);
-               // waitForDevice should block until the end
-               // of the sequence. If stopSequence is called
-               // during the sequence, then waitForDevice should
-               // return, and the shutter state will be returned
-               // to its original setting.
-               core_.waitForDevice(mosaicName_);
+               // Wait until the end of the sequence. We don't use
+               // waitForDevice(...) here, because it uses a module lock
+               // and would prevent stopSequence from terminating the
+               // sequence early.
+               while(core_.deviceBusy(mosaicName_)) {
+                  Thread.sleep(10);
+               }
                // Close phototargeting shutter if it was
                // originallyOpen.
                projectorController_.returnShutter(shutterOriginallyOpen);
