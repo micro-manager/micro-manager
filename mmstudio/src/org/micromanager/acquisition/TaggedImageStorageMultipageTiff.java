@@ -28,7 +28,7 @@ import java.util.*;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.micromanager.imageDisplay.VirtualAcquisitionDisplay;
+import org.micromanager.imageDisplay.DisplaySettings;
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.api.TaggedImageStorage;
 import org.micromanager.utils.*;
@@ -106,7 +106,7 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
    
    private void processSummaryMD() {
       try {
-         displayAndComments_ = VirtualAcquisitionDisplay.getDisplaySettingsFromSummary(summaryMetadata_);    
+         displayAndComments_ = DisplaySettings.getDisplaySettingsFromSummary(summaryMetadata_);    
       } catch (Exception ex) {
          ReportingUtils.logError(ex, "Problems setting displaySettings from Summery");
       }

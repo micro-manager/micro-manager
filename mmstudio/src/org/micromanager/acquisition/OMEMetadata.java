@@ -246,7 +246,7 @@ public class OMEMetadata {
                        DateTools.formatDate(tags.getString("Time"), "yyyy-MM-dd HH:mm:ss")), position);
             }
          } catch (Exception e) {
-            ReportingUtils.logError("Problem adding System state cahce metadata to OME Metadata");
+            ReportingUtils.logError("Problem adding System state cache metadata to OME Metadata: " + e);
          }
       }
 

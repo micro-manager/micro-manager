@@ -69,7 +69,6 @@ import javax.swing.Timer;
 
 import mmcorej.TaggedImage;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.MMStudioMainFrame;
@@ -293,7 +292,7 @@ public class VirtualAcquisitionDisplay implements
 
       if (imageCache_.getDisplayAndComments() == null || imageCache_.getDisplayAndComments().isNull("Channels")) {
          try {
-            imageCache_.setDisplayAndComments(getDisplaySettingsFromSummary(summaryMetadata));
+            imageCache_.setDisplayAndComments(DisplaySettings.getDisplaySettingsFromSummary(summaryMetadata));
          } catch (Exception ex) {
             ReportingUtils.logError(ex, "Problem setting display and Comments");
          }
@@ -943,72 +942,6 @@ public class VirtualAcquisitionDisplay implements
          ReportingUtils.logError(ex);
          return 0;
       }
-   }
-
-   public static JSONObject getDisplaySettingsFromSummary(JSONObject summaryMetadata) throws Exception {
-      JSONObject displaySettings = new JSONObject();
-      try {
-         //create empty display and comments object  
-         JSONArray channels = new JSONArray();            
-         JSONObject comments = new JSONObject();
-         displaySettings.put("Channels", channels);  
-         String summary = "";
-         try {
-            summary = summaryMetadata.getString("Comment");
-         } catch (JSONException ex) {}
-         comments.put("Summary", summary);
-         displaySettings.put("Comments", comments);
-         
-         int numDisplayChannels;
-         JSONArray chColors = null, chMaxes = null, chMins = null, chNames = null;
-         if (summaryMetadata.has("ChNames")) {
-            chNames = MDUtils.getJSONArrayMember(summaryMetadata, "ChNames");
-            numDisplayChannels = chNames.length();
-         } else {
-            numDisplayChannels = MDUtils.getNumChannels(summaryMetadata);
-            if (MDUtils.isRGB(summaryMetadata)) {
-               numDisplayChannels *= 3;
-            }
-         }
-         if (summaryMetadata.has("ChColors")) {
-             chColors = MDUtils.getJSONArrayMember(summaryMetadata, "ChColors");
-         } 
-         if (summaryMetadata.has("ChContrastMin")) {
-            chMins = MDUtils.getJSONArrayMember(summaryMetadata, "ChContrastMin");
-         } 
-         if ( summaryMetadata.has("ChContrastMax")) {
-            chMaxes = MDUtils.getJSONArrayMember(summaryMetadata, "ChContrastMax");
-         }      
-         
-         // boolean rgb = MDUtils.isRGB(summaryMetadata);
-
-         for (int k = 0; k < numDisplayChannels; ++k) {
-            String name = chNames != null ? chNames.getString(k) :"channel " + k;    
-            int color = (chColors != null && k < chColors.length()) ? 
-                    chColors.getInt(k) : Color.white.getRGB();
-            int min = (chMins != null) ? chMins.getInt(k) : 0;
-            int bitDepth = 16;
-            if (summaryMetadata.has("BitDepth")) {
-               bitDepth = MDUtils.getBitDepth(summaryMetadata);
-            } else if (summaryMetadata.has("PixelType")) {
-               if (MDUtils.isGRAY8(summaryMetadata) || MDUtils.isRGB32(summaryMetadata)) {
-                  bitDepth = 8;
-               }
-            }
-            int max = chMaxes != null ? chMaxes.getInt(k) : (int) (Math.pow(2, bitDepth) - 1);
-            JSONObject channelObject = new JSONObject();
-            channelObject.put("Color", color);
-            channelObject.put("Name", name);
-            channelObject.put("Gamma", 1.0);
-            channelObject.put("Min", min);
-            channelObject.put("Max", max);
-            channels.put(channelObject);
-         }
-      } catch (Exception e) {
-         // ReportingUtils.showError("Problem creating display and comments from summary metadata");       
-         throw(e);
-      }
-      return displaySettings;
    }
 
    /**

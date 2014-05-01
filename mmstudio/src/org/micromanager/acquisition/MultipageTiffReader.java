@@ -37,7 +37,7 @@ import mmcorej.TaggedImage;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.micromanager.imageDisplay.VirtualAcquisitionDisplay;
+import org.micromanager.imageDisplay.DisplaySettings;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMException;
 import org.micromanager.utils.ProgressBar;
@@ -571,8 +571,8 @@ public class MultipageTiffReader {
       
       JSONArray settings = null;
       try {
-         settings = VirtualAcquisitionDisplay.
-              getDisplaySettingsFromSummary(summaryMetadata_).getJSONArray("Channels");
+         settings = DisplaySettings.getDisplaySettingsFromSummary(
+               summaryMetadata_).getJSONArray("Channels");
       } catch (Exception ex) {
          ReportingUtils.showError(ex, "Problem saving file.  PLease test to make sure file can be opened");
       }
