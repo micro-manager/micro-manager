@@ -299,6 +299,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    @Override
    public void removeImageProcessor(DataProcessor<TaggedImage> taggedImageProcessor) {
       taggedImageProcessors_.remove(taggedImageProcessor);
+      taggedImageProcessor.dispose();
    }
 
    @Override
@@ -320,6 +321,13 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
          }
       }
       return null;
+   }
+
+   @Override
+   public void disposeProcessors() {
+      for (DataProcessor<TaggedImage> processor : taggedImageProcessors_) {
+         processor.dispose();
+      }
    }
 
    public SequenceSettings getSequenceSettings() {

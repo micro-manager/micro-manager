@@ -36,12 +36,7 @@ class BFProcessor extends DataProcessor<TaggedImage> {
    private int flatFieldHeight_;
    private int flatFieldType_;
    private ImagePlus background_;
-   private ScriptInterface gui_;
    private MultiChannelShadingForm myFrame_;
-   
-   public BFProcessor(ScriptInterface gui) {
-      gui_ = gui;
-   }
    
    /**
     * Set the flatfield image that will be used in flatfielding
@@ -196,5 +191,13 @@ class BFProcessor extends DataProcessor<TaggedImage> {
       }
       gui_.addMMBackgroundListener(myFrame_);
       myFrame_.setVisible(true);
+   }
+
+   @Override
+   public void dispose() {
+      if (myFrame_ != null) {
+         myFrame_.dispose();
+         myFrame_ = null;
+      }
    }
 }

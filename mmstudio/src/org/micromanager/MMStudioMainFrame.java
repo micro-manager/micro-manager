@@ -2710,16 +2710,21 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
                   case PLUGIN_PROCESSOR:
                      // Processor plugin; check for existing processor of 
                      // this type and show its UI if applicable; otherwise
-                     // create a new one. 
-                     // FOR NOW JUST CREATING A NEW ONE BLINDLY.
+                     // create a new one.
                      MMProcessorPlugin procPlugin = (MMProcessorPlugin) plugin.getPlugin();
-                     DataProcessor<TaggedImage> newProcessor = procPlugin.makeProcessor(localFrame);
-                     DataProcessor<TaggedImage> pipelineProcessor = localFrame.engine_.getProcessorOfClass(newProcessor.getClass());
+                     Class<?> procClass = procPlugin.getProcessorClass();
+                     DataProcessor<TaggedImage> pipelineProcessor = localFrame.engine_.getProcessorOfClass(procClass);
                      if (pipelineProcessor == null) {
-                        // No extant processor of this type; add our new one
-                        // to the pipeline.
-                        localFrame.engine_.addImageProcessor(newProcessor);
-                        pipelineProcessor = newProcessor;
+                        // No extant processor of this type; make a new one
+                        // and add it to the pipeline.
+                        try {
+                           pipelineProcessor = (DataProcessor<TaggedImage>) procClass.newInstance();
+                           pipelineProcessor.setApp(localFrame);
+                           localFrame.engine_.addImageProcessor(pipelineProcessor);
+                        }
+                        catch (Exception ex) {
+                           ReportingUtils.logError("Failed to create processor " + procClass + ": " + ex);
+                        }
                      }
                      // Show the GUI for this processor.
                      pipelineProcessor.makeConfigurationGUI();
@@ -2909,6 +2914,8 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       if (afMgr_ != null) {
          afMgr_.closeOptionsDialog();
       }
+
+      engine_.disposeProcessors();
 
       pluginLoader_.disposePlugins();
 

@@ -43,13 +43,8 @@ import org.micromanager.utils.ReportingUtils;
  */
 public class SplitViewProcessor extends DataProcessor<TaggedImage> {
 
-   private ScriptInterface gui_;
    private SplitViewFrame myFrame_;
    private String orientation_ = SplitViewFrame.LR;
-
-   public SplitViewProcessor(ScriptInterface gui) {
-      gui_ = gui;
-   }
 
    @Override
    public void makeConfigurationGUI() {
@@ -63,6 +58,14 @@ public class SplitViewProcessor extends DataProcessor<TaggedImage> {
          }
       }
       myFrame_.setVisible(true);
+   }
+
+   @Override
+   public void dispose() {
+      if (myFrame_ != null) {
+         myFrame_.dispose();
+         myFrame_ = null;
+      }
    }
 
    public void setOrientation(String orientation) {

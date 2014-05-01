@@ -11,7 +11,12 @@ import mmcorej.TaggedImage;
  */
 public interface MMProcessorPlugin extends MMBasePlugin {
    /** 
-    * Generate a DataProcessor instance that can be used to modify images.
+    * Return the .class field of the DataProcessor child class that will 
+    * be processing images. For example, if your plugin's processor class 
+    * is named "FooProcessor", then this function should have the body:
+    * 
+    * return FooProcessor.class;
+    * 
     */
-   public DataProcessor<TaggedImage> makeProcessor(ScriptInterface app);
+   public Class<?> getProcessorClass();
 }

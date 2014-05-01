@@ -42,8 +42,8 @@ public class SplitView implements MMPlugin {
    private ScriptInterface gui_;
 
    @Override
-   public DataProcessor<TaggedImage> makeProcessor(ScriptInterface gui) {
-      return new SplitViewProcessor(gui);
+   public Class<?> getProcessorClass() {
+      return SplitViewProcessor.class;
    }
 
    @Override
