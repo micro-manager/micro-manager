@@ -29,6 +29,8 @@ import java.awt.Component;
 import java.awt.Rectangle;
 import java.awt.geom.Point2D;
 
+import java.util.List;
+
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 
@@ -721,6 +723,16 @@ public interface ScriptInterface {
     * Removes an image processor from the DataProcessor pipeline.
     */
    public void removeImageProcessor(DataProcessor<TaggedImage> taggedImageProcessor);
+
+   /**
+    * Retrieve a copy of the current DataProcessor pipeline.
+    */
+   public List<DataProcessor<TaggedImage>> getImageProcessorPipeline();
+
+   /**
+    * Replace the current DataProcessor pipeline with the provided one.
+    */
+   public void setImageProcessorPipeline(List<DataProcessor<TaggedImage>> pipeline);
    
    /**
     * Pause/Unpause a running acquistion
