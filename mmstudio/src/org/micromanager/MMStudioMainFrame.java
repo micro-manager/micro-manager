@@ -1980,18 +1980,11 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
          } else {
             openAcqDirectory_ = f.getParent();
          }
-         String acq = null;
          try {
-            acq = openAcquisitionData(openAcqDirectory_, inRAM);
+            openAcquisitionData(openAcqDirectory_, inRAM);
          } catch (MMScriptException ex) {
             ReportingUtils.showError(ex);
-         } finally {
-            try {
-               acqMgr_.closeAcquisition(acq);
-            } catch (MMScriptException ex) {
-               ReportingUtils.logError(ex);
-            }
-         }
+         } 
          
       }
    }
