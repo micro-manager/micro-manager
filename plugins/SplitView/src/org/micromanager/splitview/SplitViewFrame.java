@@ -90,7 +90,6 @@ public class SplitViewFrame extends javax.swing.JFrame {
    private boolean autoShutterOrg_;
    private String shutterLabel_;
    private boolean shutterOrg_;
-   private boolean appliedToMDA_ = false;
    private SplitViewProcessor processor_;
 
    
@@ -163,10 +162,6 @@ public class SplitViewFrame extends javax.swing.JFrame {
       snapButton.setFont(buttonFont);
       snapButton.setToolTipText("Snap single image");
 
-      // Disable the processor if necessary.
-      if (!appliedToMDA_) {
-         gui_.removeImageProcessor(processor_);
-      }
    }
 
    private void doSnap() {
@@ -343,7 +338,6 @@ public class SplitViewFrame extends javax.swing.JFrame {
         bottomRightColorButton = new javax.swing.JButton();
         snapButton = new javax.swing.JButton();
         liveButton = new javax.swing.JButton();
-        applyToMDACheckBox_ = new javax.swing.JCheckBox();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("SplitView");
@@ -397,20 +391,12 @@ public class SplitViewFrame extends javax.swing.JFrame {
             }
         });
 
-        applyToMDACheckBox_.setText("Apply to Acquisition");
-        applyToMDACheckBox_.addChangeListener(new javax.swing.event.ChangeListener() {
-            public void stateChanged(javax.swing.event.ChangeEvent evt) {
-                applyToMDACheckBox_StateChanged(evt);
-            }
-        });
-
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(layout.createSequentialGroup()
                 .addContainerGap()
-                .add(applyToMDACheckBox_)
                 .addContainerGap(135, Short.MAX_VALUE))
             .add(layout.createSequentialGroup()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
@@ -453,7 +439,6 @@ public class SplitViewFrame extends javax.swing.JFrame {
                     .add(liveButton)
                     .add(snapButton))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                .add(applyToMDACheckBox_)
                 .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -529,23 +514,7 @@ public class SplitViewFrame extends javax.swing.JFrame {
        return myColors;
     }
     
-   private void applyToMDACheckBox_StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_applyToMDACheckBox_StateChanged
-       
-      Object source = evt.getSource();
-      
-      if (source != applyToMDACheckBox_)
-         return;
-      
-      if (applyToMDACheckBox_.isSelected() && !appliedToMDA_) {
-         gui_.addImageProcessor(processor_);
-         appliedToMDA_ = true;
-      } else if (!applyToMDACheckBox_.isSelected() && appliedToMDA_) {
-         gui_.removeImageProcessor(processor_);
-         appliedToMDA_ = false;
-      }
-   }//GEN-LAST:event_applyToMDACheckBox_StateChanged
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JCheckBox applyToMDACheckBox_;
     private javax.swing.JButton bottomRightColorButton;
     private javax.swing.ButtonGroup buttonGroup1;
     private javax.swing.ButtonGroup buttonGroup2;
