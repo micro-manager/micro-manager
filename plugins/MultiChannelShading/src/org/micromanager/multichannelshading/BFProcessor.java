@@ -18,6 +18,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.acquisition.TaggedImageQueue;
 import org.micromanager.api.DataProcessor;
+import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMScriptException;
@@ -35,10 +36,11 @@ class BFProcessor extends DataProcessor<TaggedImage> {
    private int flatFieldHeight_;
    private int flatFieldType_;
    private ImagePlus background_;
-   private final CMMCore mmc_;
+   private ScriptInterface gui_;
+   private MultiChannelShadingForm myFrame_;
    
-   public BFProcessor(CMMCore core){
-       mmc_ = core;
+   public BFProcessor(ScriptInterface gui) {
+      gui_ = gui;
    }
    
    /**
@@ -128,7 +130,7 @@ class BFProcessor extends DataProcessor<TaggedImage> {
         imageChannel = (String) newTags.get(CHANNELNAME);
       } else {
         //work out channel from core; get channel corresponding to selected group
-        imageChannel = mmc_.getCurrentConfig(channelGroup_);
+        imageChannel = gui_.getMMCore().getCurrentConfig(channelGroup_);
       }      
       //get flat field image; returns null if no image found
       if (flatFieldImages.getFlatFieldNormalize(imageChannel)){
@@ -185,5 +187,14 @@ class BFProcessor extends DataProcessor<TaggedImage> {
           return nextImage;
       }
 
-   }   
+   }
+
+   @Override
+   public void makeConfigurationGUI() {
+      if (myFrame_ == null) {
+         myFrame_ = new MultiChannelShadingForm(this, gui_);
+      }
+      gui_.addMMBackgroundListener(myFrame_);
+      myFrame_.setVisible(true);
+   }
 }

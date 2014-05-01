@@ -48,13 +48,13 @@ public class MultiChannelShadingForm extends javax.swing.JFrame {
      * Creates new form MultiChannelShadingForm
      * @param gui
      */
-   public MultiChannelShadingForm(ScriptInterface gui) {
+   public MultiChannelShadingForm(BFProcessor processor, ScriptInterface gui) {
+      processor_ = processor;
       gui_ = gui;
       mmc_ = gui_.getMMCore();
       prefs_ = Preferences.userNodeForPackage(this.getClass());
       initComponents();
       setBackground(gui_.getBackgroundColor());   
-      processor_ = new BFProcessor(mmc_);
        
       // Read preferences and apply to the dialog
       frameXPos_ = prefs_.getInt(FRAMEXPOS, frameXPos_);

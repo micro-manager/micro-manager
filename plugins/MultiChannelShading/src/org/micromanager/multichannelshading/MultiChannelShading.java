@@ -6,59 +6,45 @@
 
 package org.micromanager.multichannelshading;
 
-import mmcorej.CMMCore;
+import mmcorej.TaggedImage;
+
+import org.micromanager.api.DataProcessor;
+import org.micromanager.api.MMProcessorPlugin;
 import org.micromanager.api.ScriptInterface;
 
 /**
  *
  * @author kthorn
  */
-public class MultiChannelShading implements org.micromanager.api.MMPlugin {
+public class MultiChannelShading implements org.micromanager.api.MMProcessorPlugin {
    public static final String menuName = "Multi-Channel Shading";
    public static final String tooltipDescription =
       "Apply dark subtraction and flat-field correction";
 
    public static String versionNumber = "0.1";
-   private ScriptInterface gui_;
-   private MultiChannelShadingForm myFrame_;
+  
+   public DataProcessor<TaggedImage> makeProcessor(ScriptInterface gui) {
+      return new BFProcessor(gui);
+   }
+
+   @Override
+   public String getDescription() {
+      return tooltipDescription;
+   }
+
+   @Override
+   public String getInfo() {
+      return tooltipDescription;
+   }
+
+   @Override
+   public String getVersion() {
+      return versionNumber;
+   }
+
+   @Override
+   public String getCopyright() {
+      return "University of California, 2014";
+   }
    
-    @Override
-    public void dispose() {
-    }
-
-    @Override
-    public void setApp(ScriptInterface si) {
-      gui_ = si;                                        
-      if (myFrame_ == null)
-         myFrame_ = new MultiChannelShadingForm(gui_);
-      myFrame_.setVisible(true);
-      
-      // Used to change the background layout of the form.  Does not work on Windows
-      gui_.addMMBackgroundListener(myFrame_);    
-    }
-
-    @Override
-    public void show() {
-    }
-
-    @Override
-    public String getDescription() {
-        return tooltipDescription;
-    }
-
-    @Override
-    public String getInfo() {
-        return tooltipDescription;
-    }
-
-    @Override
-    public String getVersion() {
-        return versionNumber;
-    }
-
-    @Override
-    public String getCopyright() {
-       return "University of California, 2014";
-    }
-    
 }
