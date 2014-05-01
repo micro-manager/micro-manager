@@ -312,6 +312,16 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       return new ArrayList<DataProcessor<TaggedImage>>(taggedImageProcessors_);
    }
 
+   @Override
+   public DataProcessor<TaggedImage> getProcessorOfClass(Class<?> altClass) {
+      for (DataProcessor<TaggedImage> processor : taggedImageProcessors_) {
+         if (processor.getClass() == altClass) {
+            return processor;
+         }
+      }
+      return null;
+   }
+
    public SequenceSettings getSequenceSettings() {
       SequenceSettings acquisitionSettings = new SequenceSettings();
 

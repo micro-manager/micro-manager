@@ -57,7 +57,12 @@ public abstract class DataProcessor<E> extends Thread {
     * object on unchanged.
     */
    protected abstract void process();
- 
+
+   /** 
+    * Generate and show the GUI needed to configure the DataProcessor. 
+    */
+   public abstract void makeConfigurationGUI();
+
 
    /*
     * The run method that causes images to be processed. As DataProcessor
@@ -159,5 +164,4 @@ public abstract class DataProcessor<E> extends Thread {
    protected synchronized boolean stopRequested() {
       return stopRequested_;
    }
-
 }

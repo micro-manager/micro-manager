@@ -523,6 +523,13 @@ public interface AcquisitionEngine {
     */
    public ArrayList<DataProcessor<TaggedImage>> getImageProcessorPipeline();
 
+   /**
+    * Return the first DataProcessor in the pipeline of the same class as the
+    * specified one, or null if there is none.
+    */
+   public DataProcessor<TaggedImage> getProcessorOfClass(Class<?> altProcessor);
+
+
    /*
     * Returns true if abortRequest() has been called -- the acquisition may
     * still be running.

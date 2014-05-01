@@ -2700,6 +2700,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
                  new Runnable() {
             public void run() {
                ReportingUtils.logMessage("Plugin command: " + plugin.getMenuItem());
+               MMStudioMainFrame localFrame = MMStudioMainFrame.this;
                plugin.instantiate();
                switch (plugin.getPluginType()) {
                   case PLUGIN_STANDARD:
@@ -2712,8 +2713,16 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
                      // create a new one. 
                      // FOR NOW JUST CREATING A NEW ONE BLINDLY.
                      MMProcessorPlugin procPlugin = (MMProcessorPlugin) plugin.getPlugin();
-                     DataProcessor<TaggedImage> processor = procPlugin.makeProcessor(MMStudioMainFrame.this);
-                     engine_.addImageProcessor(processor);
+                     DataProcessor<TaggedImage> newProcessor = procPlugin.makeProcessor(localFrame);
+                     DataProcessor<TaggedImage> pipelineProcessor = localFrame.engine_.getProcessorOfClass(newProcessor.getClass());
+                     if (pipelineProcessor == null) {
+                        // No extant processor of this type; add our new one
+                        // to the pipeline.
+                        localFrame.engine_.addImageProcessor(newProcessor);
+                        pipelineProcessor = newProcessor;
+                     }
+                     // Show the GUI for this processor.
+                     pipelineProcessor.makeConfigurationGUI();
                      break;
                   default:
                      // Unrecognized plugin type; just skip it. 
