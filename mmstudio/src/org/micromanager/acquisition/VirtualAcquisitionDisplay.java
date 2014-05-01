@@ -22,6 +22,8 @@
 //
 package org.micromanager.acquisition;
 
+import com.google.common.eventbus.EventBus;
+
 import ij.CompositeImage;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -75,6 +77,7 @@ import org.micromanager.api.ImageCache;
 import org.micromanager.api.ImageCacheListener;
 import org.micromanager.api.MMListenerInterface;
 import org.micromanager.api.TaggedImageStorage;
+import org.micromanager.events.MouseIntensityEvent;
 import org.micromanager.graph.HistogramControlsState;
 import org.micromanager.graph.HistogramSettings;
 import org.micromanager.graph.MultiChannelHistograms;
@@ -101,8 +104,6 @@ public class VirtualAcquisitionDisplay implements
          return null;
       }
    }
-   //private static final Color[] DEFAULT_COLORS = {Color.blue, Color.green, Color.red};
-   //private final static int SLOW_UPDATE_TIME = 1500;
    private static final int ANIMATION_AND_LOCK_RESTART_DELAY = 800;
    final static Color[] rgb = {Color.red, Color.green, Color.blue};
    final static String[] rgbNames = {"Red", "Blue", "Green"};
@@ -148,6 +149,8 @@ public class VirtualAcquisitionDisplay implements
    private AtomicBoolean updatePixelSize_ = new AtomicBoolean(false);
    private AtomicLong newPixelSize_ = new AtomicLong();
    private final Object imageReceivedObject_ = new Object();
+
+   private EventBus bus_;
 
    @Override
    public void propertiesChangedAlert() {
@@ -216,9 +219,17 @@ public class VirtualAcquisitionDisplay implements
    }
 
    public class MMCompositeImage extends CompositeImage implements IMMImagePlus {
+      private EventBus bus_;
                   
-      MMCompositeImage(ImagePlus imgp, int type) {
+      MMCompositeImage(ImagePlus imgp, int type, EventBus bus) {
          super(imgp, type);
+         bus_ = bus;
+      }
+      
+      @Override
+      public void mouseMoved(int x, int y) {
+         super.mouseMoved(x, y);
+         bus_.post(new MouseIntensityEvent(x, y, getPixel(x, y)));
       }
 
       @Override
@@ -402,9 +413,11 @@ public class VirtualAcquisitionDisplay implements
 
    public class MMImagePlus extends ImagePlus implements IMMImagePlus {
 
+      private EventBus bus_;
 
-      MMImagePlus(String title, ImageStack stack) {
+      MMImagePlus(String title, ImageStack stack, EventBus bus) {
          super(title, stack);
+         bus_ = bus;
       }
 
       @Override
@@ -435,6 +448,12 @@ public class VirtualAcquisitionDisplay implements
       @Override
       public int getNFramesUnverified() {
          return super.nFrames;
+      }
+
+      @Override
+      public void mouseMoved(int x, int y) {
+         super.mouseMoved(x, y);
+         bus_.post(new MouseIntensityEvent(x, y, getPixel(x, y)));
       }
 
       @Override
@@ -474,6 +493,7 @@ public class VirtualAcquisitionDisplay implements
 
    public VirtualAcquisitionDisplay(ImageCache imageCache, AcquisitionEngine eng) {
       this(imageCache, eng, WindowManager.getUniqueName("Untitled"));
+      setupEventBus();
    }
 
    public VirtualAcquisitionDisplay(ImageCache imageCache, AcquisitionEngine eng, String name) {
@@ -482,7 +502,18 @@ public class VirtualAcquisitionDisplay implements
       eng_ = eng;
       pSelector_ = createPositionScrollbar();
       mda_ = eng != null;
-      this.albumSaved_ = imageCache.isFinished();    
+      this.albumSaved_ = imageCache.isFinished();
+      setupEventBus();
+   }
+
+   private void setupEventBus() {
+      bus_ = new EventBus();
+      bus_.register(this);
+   }
+
+   // Retrieve our EventBus.
+   public EventBus getEventBus() {
+      return bus_;
    }
 
    //used for snap and live
@@ -494,6 +525,7 @@ public class VirtualAcquisitionDisplay implements
       mda_ = false;
       this.albumSaved_ = imageCache.isFinished();
       MMStudioMainFrame.getInstance().addMMListener(this);
+      setupEventBus();
    }
    
    private void startup(JSONObject firstImageMetadata, AcquisitionVirtualStack avs) {
@@ -573,9 +605,9 @@ public class VirtualAcquisitionDisplay implements
       //Hack: only add controls if null to allow overriding classes to implement custom controls
       if (controls_ == null) {
          if (simple_) {
-            controls_ = new SimpleWindowControls(this);
+            controls_ = new SimpleWindowControls(this, bus_);
          } else {
-            controls_ = new HyperstackControls(this);
+            controls_ = new HyperstackControls(this, bus_);
          }
       }
       hyperImage_ = createHyperImage(createMMImagePlus(virtualStack_),
@@ -1826,7 +1858,8 @@ public class VirtualAcquisitionDisplay implements
    }
 
    final public MMImagePlus createMMImagePlus(AcquisitionVirtualStack virtualStack) {
-      MMImagePlus img = new MMImagePlus(imageCache_.getDiskLocation(), virtualStack);
+      MMImagePlus img = new MMImagePlus(imageCache_.getDiskLocation(), 
+            virtualStack, virtualStack.getVirtualAcquisitionDisplay().getEventBus());
       FileInfo fi = new FileInfo();
       fi.width = virtualStack.getWidth();
       fi.height = virtualStack.getHeight();
@@ -1843,7 +1876,7 @@ public class VirtualAcquisitionDisplay implements
       mmIP.setNFramesUnverified(frames);
       mmIP.setNSlicesUnverified(slices);
       if (channels > 1) {        
-         hyperImage = new MMCompositeImage(mmIP, imageCache_.getDisplayMode());
+         hyperImage = new MMCompositeImage(mmIP, imageCache_.getDisplayMode(), bus_);
          hyperImage.setOpenAsHyperStack(true);
       } else {
          hyperImage = mmIP;

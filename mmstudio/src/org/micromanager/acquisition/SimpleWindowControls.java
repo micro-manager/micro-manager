@@ -21,18 +21,26 @@
 //
 package org.micromanager.acquisition;
 
-import org.micromanager.internalinterfaces.DisplayControls;
+import com.google.common.eventbus.EventBus;
+import com.google.common.eventbus.Subscribe;
+
 import com.swtdesigner.SwingResourceManager;
+
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+
 import org.json.JSONObject;
+
+import org.micromanager.events.MouseIntensityEvent;
+import org.micromanager.internalinterfaces.DisplayControls;
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.utils.ReportingUtils;
 
@@ -44,16 +52,18 @@ public class SimpleWindowControls extends DisplayControls {
    private JButton snapButton_;
    private JButton liveButton_;
    private JLabel statusLabel_;
+   private JLabel pixelInfoLabel_;
    
    /**
     * Draws buttons at the bottom of the live/snap window
     * 
     * @param virtAcq - acquisition displayed in the live/snap window
     */
-   public SimpleWindowControls(VirtualAcquisitionDisplay virtAcq) {
+   public SimpleWindowControls(VirtualAcquisitionDisplay virtAcq, EventBus bus) {
       virtAcq_ = virtAcq;
       initComponents();
       showFolderButton_.setEnabled(false);
+      bus.register(this);
    }
    
    
@@ -150,18 +160,26 @@ public class SimpleWindowControls extends DisplayControls {
             addToSeriesButtonActionPerformed();
          }});
 
-      statusLabel_ = new JLabel("                                            ");     
+      // Put in a single space; otherwise no vertical space is 
+      // allocated for the label and it can't display properly. Actual
+      // text will be filled in when onMouseMoved() is called.
+      pixelInfoLabel_ = new JLabel(" ");
+      pixelInfoLabel_.setFocusable(false);
+      pixelInfoLabel_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
+
+      statusLabel_ = new JLabel("                                            ");
       statusLabel_.setFocusable(false);
       statusLabel_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
       
       this.setLayout(new BorderLayout());
 
-      JPanel buttonPanel = new JPanel();     
+      JPanel buttonPanel = new JPanel();
       buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.X_AXIS));
       
       JPanel textPanel = new JPanel();
       textPanel.setLayout(new BorderLayout());
-      
+
+      this.add(pixelInfoLabel_, BorderLayout.NORTH);
       this.add(buttonPanel, BorderLayout.CENTER);
       this.add(textPanel,BorderLayout.SOUTH); 
       
@@ -179,7 +197,15 @@ public class SimpleWindowControls extends DisplayControls {
       textPanel.add(new JLabel(" "));
       textPanel.add(statusLabel_, BorderLayout.CENTER);      
    }
-   
+  
+   @Subscribe 
+   public void onMouseMoved(MouseIntensityEvent event) {
+      // TODO: Ideally there'd be some way to recognize multi-channel images 
+      // and display each channel's intensity at this point. 
+      pixelInfoLabel_.setText(String.format("<%d, %d>: %s", 
+               event.x_, event.y_, event.intensities_[0]));
+   }
+
    
    private void showFolderButtonActionPerformed() {
       virtAcq_.showFolder();

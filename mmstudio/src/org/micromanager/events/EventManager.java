@@ -2,7 +2,8 @@ package org.micromanager.events;
 
 import com.google.common.eventbus.EventBus;
 
-// This is a singleton wrapper around the Guava library's EventBus. 
+// This is a singleton wrapper around the Guava library's EventBus. It exposes
+// a global EventBus for system-wide events.
 public class EventManager {
    // Singleton.
    public static EventBus bus_;

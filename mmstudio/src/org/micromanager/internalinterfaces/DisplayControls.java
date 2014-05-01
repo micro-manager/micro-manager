@@ -25,6 +25,12 @@ import java.awt.Panel;
 import org.json.JSONObject;
 
 public abstract class DisplayControls extends Panel {
+
+   public DisplayControls() {};
+
+   public DisplayControls(java.awt.LayoutManager manager) {
+      super(manager);
+   }
    
    abstract public void imagesOnDiskUpdate(boolean onDisk);
    
