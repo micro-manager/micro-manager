@@ -4329,14 +4329,18 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       getAcquisitionEngine().removeImageProcessor(processor);
    }
 
-   // NB will need @Override tags once these functions are exposed in the 
-   // ScriptInterface.
+   @Override
    public ArrayList<DataProcessor<TaggedImage>> getImageProcessorPipeline() {
       return getAcquisitionEngine().getImageProcessorPipeline();
    }
 
+   public void registerProcessorClass(Class<?> processorClass, String name) {
+      getAcquisitionEngine().registerProcessorClass(processorClass, name);
+   }
+
    // NB will need @Override tags once these functions are exposed in the 
    // ScriptInterface.
+   @Override
    public void setImageProcessorPipeline(List<DataProcessor<TaggedImage>> pipeline) {
       getAcquisitionEngine().setImageProcessorPipeline(pipeline);
    }

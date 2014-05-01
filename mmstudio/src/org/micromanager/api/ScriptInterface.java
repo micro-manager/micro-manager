@@ -733,6 +733,14 @@ public interface ScriptInterface {
     * Replace the current DataProcessor pipeline with the provided one.
     */
    public void setImageProcessorPipeline(List<DataProcessor<TaggedImage>> pipeline);
+
+   /**
+    * Register a new DataProcessor class with the Acquisition Engine. For
+    * example, if your processor class is named MyProcessor, then you would
+    * call this function as:
+    * gui.registerProcessorClass(MyProcessor.class, "My Processor");
+    */
+   public void registerProcessorClass(Class<?> processorClass, String name);
    
    /**
     * Pause/Unpause a running acquistion
