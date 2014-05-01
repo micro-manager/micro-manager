@@ -234,6 +234,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
 
    private JButton saveConfigButton_;
    private ScriptPanel scriptPanel_;
+   private PipelinePanel pipelinePanel_;
    private org.micromanager.utils.HotKeys hotKeys_;
    private CenterAndDragListener centerAndDragListener_;
    private ZWheelListener zWheelListener_;
@@ -510,6 +511,8 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
             engine_.setPositionList(posList_);
             // load (but do no show) the scriptPanel
             createScriptPanel();
+            // Ditto with the image pipeline panel.
+            createPipelinePanel();
 
             // Create an instance of HotKeys so that they can be read in from prefs
             hotKeys_ = new org.micromanager.utils.HotKeys();
@@ -1327,6 +1330,14 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       
       toolsMenu.addSeparator();
       
+      GUIUtils.addMenuItem(toolsMenu, "Image Pipeline...",
+            "Display the image processing pipeline",
+            new Runnable() {
+               public void run() {
+                  pipelinePanel_.setVisible(true);
+               }
+            });
+
       GUIUtils.addMenuItem(toolsMenu, "Script Panel...",
               "Open Micro-Manager script editor window",
               new Runnable() {
@@ -2101,7 +2112,14 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
          scriptPanel_.setParentGUI(this);
          scriptPanel_.setBackground(guiColors_.background.get((options_.displayBackground_)));
          addMMBackgroundListener(scriptPanel_);
+      }
+   }
 
+   private void createPipelinePanel() {
+      if (pipelinePanel_ == null) {
+         pipelinePanel_ = new PipelinePanel(engine_);
+         pipelinePanel_.setBackground(guiColors_.background.get((options_.displayBackground_)));
+         addMMBackgroundListener(pipelinePanel_);
       }
    }
 
@@ -2712,22 +2730,18 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
                      // this type and show its UI if applicable; otherwise
                      // create a new one.
                      MMProcessorPlugin procPlugin = (MMProcessorPlugin) plugin.getPlugin();
-                     Class<?> procClass = procPlugin.getProcessorClass();
-                     DataProcessor<TaggedImage> pipelineProcessor = localFrame.engine_.getProcessorOfClass(procClass);
+                     String procName = PluginLoader.getNameForPluginClass(procPlugin.getClass());
+                     DataProcessor<TaggedImage> pipelineProcessor = localFrame.engine_.getProcessorRegisteredAs(procName);
                      if (pipelineProcessor == null) {
-                        // No extant processor of this type; make a new one
-                        // and add it to the pipeline.
-                        try {
-                           pipelineProcessor = (DataProcessor<TaggedImage>) procClass.newInstance();
-                           pipelineProcessor.setApp(localFrame);
-                           localFrame.engine_.addImageProcessor(pipelineProcessor);
-                        }
-                        catch (Exception ex) {
-                           ReportingUtils.logError("Failed to create processor " + procClass + ": " + ex);
-                        }
+                        // No extant processor of this type; make a new one,
+                        // which automatically adds it to the pipeline.
+                        pipelineProcessor = localFrame.engine_.makeProcessor(procName, localFrame);
                      }
-                     // Show the GUI for this processor.
-                     pipelineProcessor.makeConfigurationGUI();
+                     if (pipelineProcessor != null) {
+                        // Show the GUI for this processor. It could be null
+                        // if making the processor, above, failed.
+                        pipelineProcessor.makeConfigurationGUI();
+                     }
                      break;
                   default:
                      // Unrecognized plugin type; just skip it. 
@@ -2895,6 +2909,11 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       if (scriptPanel_ != null) {
          removeMMBackgroundListener(scriptPanel_);
          scriptPanel_.closePanel();
+      }
+
+      if (pipelinePanel_ != null) {
+         removeMMBackgroundListener(pipelinePanel_);
+         pipelinePanel_.dispose();
       }
 
       if (propertyBrowser_ != null) {

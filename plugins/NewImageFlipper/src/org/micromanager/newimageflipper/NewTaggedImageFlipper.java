@@ -40,7 +40,7 @@ public class NewTaggedImageFlipper implements MMProcessorPlugin {
    public static String menuName = "Image Flipper";
    public static String tooltipDescription = "Mirrors, flips and rotates images on the fly";
   
-   public Class<?> getProcessorClass() {
+   public static Class<?> getProcessorClass() {
       return NewImageFlippingProcessor.class;
    }
 

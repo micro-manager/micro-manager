@@ -17,6 +17,8 @@ public interface MMProcessorPlugin extends MMBasePlugin {
     * 
     * return FooProcessor.class;
     * 
+    * This method is required to be static and thus cannot be actually 
+    * declared in this interface; you must implement it "manually" so to speak.
     */
-   public Class<?> getProcessorClass();
+//   public static Class<?> getProcessorClass();
 }

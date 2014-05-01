@@ -4,9 +4,12 @@ package org.micromanager.acquisition;
 import java.awt.Color;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.prefs.Preferences;
+import java.util.Set;
 
 import javax.swing.JOptionPane;
 
@@ -62,6 +65,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    private int acqOrderMode_;
    private boolean useAutoFocus_;
    private int afSkipInterval_;
+   protected HashMap<String, Class<?>> nameToProcessorClass_;
    protected List<DataProcessor<TaggedImage>> taggedImageProcessors_;
    private List<Class> imageRequestProcessors_;
    private boolean absoluteZ_;
@@ -75,6 +79,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
 
    public AcquisitionWrapperEngine(AcquisitionManager mgr) {
       imageRequestProcessors_ = new ArrayList<Class>();
+      nameToProcessorClass_ = new HashMap<String, Class<?>>();
       taggedImageProcessors_ = new ArrayList<DataProcessor<TaggedImage>>();
       useCustomIntervals_ = false;
       settingsListeners_ = new ArrayList<AcqSettingsListener>();
@@ -314,9 +319,51 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    }
 
    @Override
-   public DataProcessor<TaggedImage> getProcessorOfClass(Class<?> altClass) {
+   public void registerProcessorClass(Class<?> processorClass, String name) {
+      if (nameToProcessorClass_.get(name) != null) {
+         ReportingUtils.logError("Tried to register an additional DataProcessor under the name \"" + name + "\"; ignoring it.");
+      }
+      else {
+         ReportingUtils.logMessage("Registered new DataProcessor class " + name);
+         nameToProcessorClass_.put(name, processorClass);
+         ReportingUtils.logError(this.hashCode() + "After registering, is it there? " + nameToProcessorClass_.containsKey(name));
+      }
+   }
+
+   @Override
+   public List<String> getSortedDataProcessorNames() {
+      ReportingUtils.logError(this.hashCode() + "Is registry empty?" + nameToProcessorClass_.isEmpty());
+      Set<String> keys = nameToProcessorClass_.keySet();
+      ReportingUtils.logError("Keys are" + keys);
+      ArrayList<String> sortedKeys = new ArrayList<String>();
+      sortedKeys.addAll(keys);
+      ReportingUtils.logError("Pre-sorted keys are " + sortedKeys);
+      Collections.sort(sortedKeys);
+      ReportingUtils.logError("Post-sorted keys are" + sortedKeys);
+      return sortedKeys;
+   }
+
+   @Override
+   public DataProcessor<TaggedImage> makeProcessor(String name, ScriptInterface gui) {
+      Class<?> processorClass = nameToProcessorClass_.get(name);
+      DataProcessor<TaggedImage> newProcessor;
+      try {
+         newProcessor = (DataProcessor<TaggedImage>) processorClass.newInstance();
+         newProcessor.setApp(gui);
+         addImageProcessor(newProcessor);
+      }
+      catch (Exception ex) {
+         ReportingUtils.logError("Failed to create processor " + name + " mapped to class " + processorClass + ": " + ex);
+         newProcessor = null;
+      }
+      return newProcessor;
+   }
+
+   @Override
+   public DataProcessor<TaggedImage> getProcessorRegisteredAs(String name) {
+      Class<?> processorClass = nameToProcessorClass_.get(name);
       for (DataProcessor<TaggedImage> processor : taggedImageProcessors_) {
-         if (processor.getClass() == altClass) {
+         if (processor.getClass() == processorClass) {
             return processor;
          }
       }

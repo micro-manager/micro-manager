@@ -41,8 +41,7 @@ public class SplitView implements MMPlugin {
    private CMMCore core_;
    private ScriptInterface gui_;
 
-   @Override
-   public Class<?> getProcessorClass() {
+   public static Class<?> getProcessorClass() {
       return SplitViewProcessor.class;
    }
 

@@ -18,6 +18,7 @@ package org.micromanager;
 
 import java.io.File;
 import java.io.FilenameFilter;
+import java.lang.reflect.Method;
 import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -26,6 +27,8 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.regex.Pattern;
 import javax.swing.SwingUtilities;
+import org.micromanager.MMStudioMainFrame;
+import org.micromanager.acquisition.AcquisitionEngine;
 import org.micromanager.api.Autofocus;
 import org.micromanager.api.MMBasePlugin;
 import org.micromanager.api.MMPlugin;
@@ -134,9 +137,9 @@ public class PluginLoader {
                }
             }
          } catch (InstantiationException e) {
-            ReportingUtils.logError(e);
+            ReportingUtils.logError("Failed instantiating plugin: " + e);
          } catch (IllegalAccessException e) {
-            ReportingUtils.logError(e);
+            ReportingUtils.logError("Failed instantiating plugin: " + e);
          }
          if (pluginType_ == PluginType.PLUGIN_STANDARD) {
             ((MMPlugin) plugin_).setApp(MMStudioMainFrame.getInstance());
@@ -188,20 +191,11 @@ public class PluginLoader {
             }
          }
 
-         String menuItem = className;
-         try {
-            // Get this static field from the class implementing MMPlugin.
-            menuItem = (String) cl.getDeclaredField("menuName").get(null);
-         } catch (SecurityException e) {
-            ReportingUtils.logError(e);
-            menuItem = className;
-         } catch (NoSuchFieldException e) {
-            menuItem = className;
-            ReportingUtils.logMessage(className + " fails to implement static String menuName.");
-         } catch (IllegalArgumentException e) {
-            ReportingUtils.logError(e);
-         } catch (IllegalAccessException e) {
-            ReportingUtils.logError(e);
+         String menuItem = getNameForPluginClass(cl);
+         if (menuItem == null) {
+            // No accessible menuName field; disallow this plugin.
+            ReportingUtils.logError("No \"menuName\" field for plugin with class name " + className);
+            return null;
          }
        
          String toolTipDescription = "";
@@ -290,6 +284,20 @@ public class PluginLoader {
                   try {
                      ReportingUtils.logMessage("Attempting to install plugin " + clazz.getName());
                      PluginItem pi = declarePlugin(clazz, dir, pluginType);
+                     if (pi == null) {
+                        // Declaring the plugin failed.
+                        continue;
+                     }
+                     if (pluginType == PluginType.PLUGIN_PROCESSOR) {
+                        // Register the plugin with the acquisition engine.
+                        AcquisitionEngine engine = MMStudioMainFrame.getInstance().getAcquisitionEngine();
+                        MMProcessorPlugin plugin = (MMProcessorPlugin) pi.getPlugin();
+                        String processorName = getNameForPluginClass(clazz);
+                        Class<?> processorClass = getProcessorClassForPluginClass(clazz);
+                        if (processorClass != null) {
+                           engine.registerProcessorClass(processorClass, processorName);
+                        }
+                     }
                      if (pi != null && !pi.getClassName().isEmpty()) {
                         pis.add(pi);
                      }
@@ -347,5 +355,34 @@ public class PluginLoader {
             }
          }
       }
+   }
+
+   /** 
+    * Call the static "getProcessorClass" function on the provided Class,
+    * which is presumed to be an MMProcessorPlugin class. Return null on 
+    * failure. 
+    */
+   public static Class<?> getProcessorClassForPluginClass(Class<?> cl) {
+      try {
+          Method procMethod = cl.getDeclaredMethod("getProcessorClass");
+          return (Class<?>) procMethod.invoke(null);
+      } catch (Exception e) {
+         ReportingUtils.logError(e);
+      }
+      return null;
+   }
+   
+   /** 
+    * Extract the "menuName" field from the given Class, presumed to be for
+    * a plugin. Return null on failure.
+    */
+   public static String getNameForPluginClass(Class<?> cl) {
+      try {
+         // Get this static field from the class implementing MMPlugin.
+         return (String) cl.getDeclaredField("menuName").get(null);
+      } catch (Exception e) {
+         ReportingUtils.logError(e);
+      }
+      return null;
    }
 }
