@@ -19,4 +19,8 @@ public class EventManager {
    public static void post(Object obj) {
       bus_.post(obj);
    }
+
+   public static EventBus getBus() {
+      return bus_;
+   }
 }

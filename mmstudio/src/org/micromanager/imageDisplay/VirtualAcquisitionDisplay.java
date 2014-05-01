@@ -75,11 +75,12 @@ import org.micromanager.MMStudioMainFrame;
 import org.micromanager.acquisition.AcquisitionEngine;
 import org.micromanager.acquisition.TaggedImageStorageDiskDefault;
 import org.micromanager.acquisition.TaggedImageStorageMultipageTiff;
+import org.micromanager.api.events.PixelSizeChangedEvent;
 import org.micromanager.api.ImageCache;
 import org.micromanager.api.ImageCacheListener;
-import org.micromanager.api.MMListenerInterface;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.api.TaggedImageStorage;
+import org.micromanager.events.EventManager;
 import org.micromanager.graph.HistogramControlsState;
 import org.micromanager.graph.HistogramSettings;
 import org.micromanager.graph.MultiChannelHistograms;
@@ -95,8 +96,7 @@ import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ReportingUtils;
 
-public class VirtualAcquisitionDisplay implements 
-        ImageCacheListener, MMListenerInterface {
+public class VirtualAcquisitionDisplay implements ImageCacheListener {
 
    public static VirtualAcquisitionDisplay getDisplay(ImagePlus imgp) {
       ImageStack stack = imgp.getStack();
@@ -164,48 +164,14 @@ public class VirtualAcquisitionDisplay implements
 
    private EventBus bus_;
 
-   @Override
-   public void propertiesChangedAlert() {
-      //throw new UnsupportedOperationException("Not supported yet.");
-   }
-
-   @Override
-   public void propertyChangedAlert(String device, String property, String value) {
-      //throw new UnsupportedOperationException("Not supported yet.");
-   }
-   
-   @Override
-   public void systemConfigurationLoaded() {
-   }
-
-   @Override
-   public void configGroupChangedAlert(String groupName, String newConfig) {
-      //throw new UnsupportedOperationException("Not supported yet.");
-   }
-
-   @Override
-   public void pixelSizeChangedAlert(double newPixelSizeUm) {    
+   @Subscribe
+   public void onPixelSizeChanged(PixelSizeChangedEvent event) {
       // Signal that pixel size has changed so that the next image will update
       // metadata and scale bar
-      newPixelSize_.set(Double.doubleToLongBits(newPixelSizeUm));
+      newPixelSize_.set(Double.doubleToLongBits(event.getNewPixelSizeUm()));
       updatePixelSize_.set(true);
    }
 
-   @Override
-   public void stagePositionChangedAlert(String deviceName, double pos) {
-      //throw new UnsupportedOperationException("Not supported yet.");
-   }
-
-   @Override
-   public void xyStagePositionChanged(String deviceName, double xPos, double yPos) {
-      //throw new UnsupportedOperationException("Not supported yet.");
-   }
-
-   @Override
-   public void exposureChanged(String cameraName, double newExposureTime) {
-      //throw new UnsupportedOperationException("Not supported yet.");
-   }
-   
    public VirtualAcquisitionDisplay(ImageCache imageCache, AcquisitionEngine eng) {
       this(imageCache, eng, WindowManager.getUniqueName("Untitled"));
       setupEventBus();
@@ -245,8 +211,9 @@ public class VirtualAcquisitionDisplay implements
       name_ = name;
       mda_ = false;
       this.albumSaved_ = imageCache.isFinished();
-      MMStudioMainFrame.getInstance().addMMListener(this);
       setupEventBus();
+      // Also register us for pixel size change events on the global EventBus.
+      EventManager.register(this);
    }
    
    private void startup(JSONObject firstImageMetadata, AcquisitionVirtualStack avs) {

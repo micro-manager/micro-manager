@@ -87,6 +87,7 @@ import org.micromanager.conf2.ConfiguratorDlg2;
 import org.micromanager.conf2.MMConfigFileException;
 import org.micromanager.conf2.MicroscopeModel;
 import org.micromanager.events.EventManager;
+import org.micromanager.events.MMListenerProxy;
 import org.micromanager.graph.GraphData;
 import org.micromanager.graph.GraphFrame;
 import org.micromanager.imageDisplay.DisplayWindow;
@@ -325,6 +326,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       // Set up event handling early, so following code can subscribe/publish
       // events as needed.
       EventManager manager = new EventManager();
+      addMMListener(new MMListenerProxy(manager.getBus()));
 
       startLoadingPipelineClass();
 
