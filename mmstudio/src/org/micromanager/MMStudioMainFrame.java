@@ -89,6 +89,9 @@ import org.micromanager.conf2.MicroscopeModel;
 import org.micromanager.events.EventManager;
 import org.micromanager.graph.GraphData;
 import org.micromanager.graph.GraphFrame;
+import org.micromanager.imageDisplay.DisplayWindow;
+import org.micromanager.imageDisplay.MetadataPanel;
+import org.micromanager.imageDisplay.VirtualAcquisitionDisplay;
 import org.micromanager.navigation.CenterAndDragListener;
 import org.micromanager.navigation.XYZKeyListener;
 import org.micromanager.navigation.ZWheelListener;
@@ -2498,7 +2501,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
 
    public void displayStatusLine(String statusLine) {
       ImagePlus ip = WindowManager.getCurrentImage();
-      if (!(ip.getWindow() instanceof VirtualAcquisitionDisplay.DisplayWindow)) {
+      if (!(ip.getWindow() instanceof DisplayWindow)) {
          return;
       }
       VirtualAcquisitionDisplay.getDisplay(ip).displayStatusLine(statusLine);

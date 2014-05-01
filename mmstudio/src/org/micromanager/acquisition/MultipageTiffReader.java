@@ -37,6 +37,7 @@ import mmcorej.TaggedImage;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.micromanager.imageDisplay.VirtualAcquisitionDisplay;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMException;
 import org.micromanager.utils.ProgressBar;

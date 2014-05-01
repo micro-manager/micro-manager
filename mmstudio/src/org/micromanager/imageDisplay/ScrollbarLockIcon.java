@@ -1,4 +1,4 @@
-package org.micromanager.acquisition;
+package org.micromanager.imageDisplay;
 
 import java.awt.Color;
 import java.awt.Dimension;

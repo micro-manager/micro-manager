@@ -1,5 +1,5 @@
 
-package org.micromanager.acquisition;
+package org.micromanager.imageDisplay;
 
 import java.awt.BasicStroke;
 import java.awt.Canvas;

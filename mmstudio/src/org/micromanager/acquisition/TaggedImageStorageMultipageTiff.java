@@ -28,6 +28,7 @@ import java.util.*;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.micromanager.imageDisplay.VirtualAcquisitionDisplay;
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.api.TaggedImageStorage;
 import org.micromanager.utils.*;

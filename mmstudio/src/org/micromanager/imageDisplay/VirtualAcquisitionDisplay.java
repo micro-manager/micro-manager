@@ -20,9 +20,10 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-package org.micromanager.acquisition;
+package org.micromanager.imageDisplay;
 
 import com.google.common.eventbus.EventBus;
+import com.google.common.eventbus.Subscribe;
 
 import ij.CompositeImage;
 import ij.ImagePlus;
@@ -35,7 +36,6 @@ import ij.gui.StackWindow;
 import ij.gui.Toolbar;
 import ij.io.FileInfo;
 import ij.measure.Calibration;
-import ij.plugin.frame.ContrastAdjuster;
 import ij.process.LUT;
 
 import java.awt.BorderLayout;
@@ -73,11 +73,14 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.MMStudioMainFrame;
+import org.micromanager.acquisition.AcquisitionEngine;
+import org.micromanager.acquisition.TaggedImageStorageDiskDefault;
+import org.micromanager.acquisition.TaggedImageStorageMultipageTiff;
 import org.micromanager.api.ImageCache;
 import org.micromanager.api.ImageCacheListener;
 import org.micromanager.api.MMListenerInterface;
+import org.micromanager.api.ScriptInterface;
 import org.micromanager.api.TaggedImageStorage;
-import org.micromanager.events.MouseIntensityEvent;
 import org.micromanager.graph.HistogramControlsState;
 import org.micromanager.graph.HistogramSettings;
 import org.micromanager.graph.MultiChannelHistograms;
@@ -104,6 +107,16 @@ public class VirtualAcquisitionDisplay implements
          return null;
       }
    }
+
+   // This class is used to signal when the animation state of our display
+   // (potentially) changes.
+   public class AnimationSetEvent {
+      public boolean isAnimated_;
+      public AnimationSetEvent(boolean isAnimated) {
+         isAnimated_ = isAnimated;
+      }
+   }
+
    private static final int ANIMATION_AND_LOCK_RESTART_DELAY = 800;
    final static Color[] rgb = {Color.red, Color.green, Color.blue};
    final static String[] rgbNames = {"Red", "Blue", "Green"};
@@ -193,304 +206,7 @@ public class VirtualAcquisitionDisplay implements
    public void exposureChanged(String cameraName, double newExposureTime) {
       //throw new UnsupportedOperationException("Not supported yet.");
    }
-
    
-   /**
-    * This interface and the following two classes
-    * allow us to manipulate the dimensions
-    * in an ImagePlus without it throwing conniptions.
-    */
-   public interface IMMImagePlus {
-
-      public int getNChannelsUnverified();
-
-      public int getNSlicesUnverified();
-
-      public int getNFramesUnverified();
-
-      public void setNChannelsUnverified(int nChannels);
-
-      public void setNSlicesUnverified(int nSlices);
-
-      public void setNFramesUnverified(int nFrames);
-
-      public void drawWithoutUpdate();
-      
-   }
-
-   public class MMCompositeImage extends CompositeImage implements IMMImagePlus {
-      private EventBus bus_;
-                  
-      MMCompositeImage(ImagePlus imgp, int type, EventBus bus) {
-         super(imgp, type);
-         bus_ = bus;
-      }
-      
-      @Override
-      public void mouseMoved(int x, int y) {
-         super.mouseMoved(x, y);
-         bus_.post(new MouseIntensityEvent(x, y, getPixel(x, y)));
-      }
-
-      @Override
-      public String getTitle() {
-         return name_;
-      }
-
-      @Override
-      public int getImageStackSize() {
-         return super.nChannels * super.nSlices * super.nFrames;
-      }
-
-      @Override
-      public int getStackSize() {
-         return getImageStackSize();
-      }
-
-      @Override
-      public int getNChannelsUnverified() {
-         return super.nChannels;
-      }
-
-      @Override
-      public int getNSlicesUnverified() {
-         return super.nSlices;
-      }
-
-      @Override
-      public int getNFramesUnverified() {
-         return super.nFrames;
-      }
-
-      @Override
-      public void setNChannelsUnverified(int nChannels) {
-         super.nChannels = nChannels;
-      }
-
-      @Override
-      public void setNSlicesUnverified(int nSlices) {
-         super.nSlices = nSlices;
-      }
-
-      @Override
-      public void setNFramesUnverified(int nFrames) {
-         super.nFrames = nFrames;
-      }
-
-      private void superReset() {
-         super.reset();
-      }
-
-      //Must be called on EDT so to prevent exception that occurs when currentChannel gets
-      //set to -1 while updateImage() is running
-      @Override
-      public void reset() {
-         if (SwingUtilities.isEventDispatchThread()) {
-            super.reset();
-         } else {
-            SwingUtilities.invokeLater(new Runnable() {
-               @Override
-               public void run() {
-                  superReset();
-               }
-            });
-         }
-      }
-
-      @Override
-      public synchronized void setMode(final int mode) {
-         superSetMode(mode);
-      }
-
-      private void superSetMode(int mode) {
-         super.setMode(mode);
-      }
-
-      @Override
-      public synchronized void setChannelLut(final LUT lut) {
-         superSetLut(lut);
-      }
-
-      private void superSetLut(LUT lut) {
-         super.setChannelLut(lut);
-      }
-
-      @Override
-      public synchronized void updateImage() {
-           superUpdateImage();
-      }
-
-      private void superUpdateImage() {
-         //Need to set this field to null, or else an infintie loop can be entered when 
-         //The imageJ contrast adjuster is open
-         try {
-            JavaUtils.setRestrictedFieldValue(null, ContrastAdjuster.class, "instance", null);
-         } catch (NoSuchFieldException ex) {
-            ReportingUtils.logError("ImageJ ContrastAdjuster doesn't have field named instance");
-         }
-         super.updateImage();
-      }
-      
-      public void updateAndDraw(boolean forceUpdateAndPaint) {
-         if (forceUpdateAndPaint) {
-            //there may be a paint pending, but we want to make sure this update gets called regardless
-            CanvasPaintPending.removePaintPending(hyperImage_.getCanvas(), this);
-            updateAndDraw();
-         } else {    
-            updateAndDraw();
-         }
-      }
-
-      /*
-       * called when image pixels change
-       */
-      @Override
-      public void updateAndDraw() {
-         if (CanvasPaintPending.isMyPaintPending(
-                 hyperImage_.getCanvas(), this) ) {
-            return;
-         }
-         CanvasPaintPending.setPaintPending(hyperImage_.getCanvas(), this);
-         /*  // this sleep may help in some circumstances
-         try {
-            Thread.sleep(25);
-         } catch (InterruptedException ex) {
-            ReportingUtils.logError(ex, "Sleeping Thread was woken");
-         }
-         */
-         
-         superUpdateImage(); 
-         imageChangedUpdate(); //updates histograms, metadata panel, calculates LUTS and applies to image
-         try {
-            GUIUtils.invokeLater(new Runnable() {
-               @Override
-               public void run() {
-                  try {
-                     JavaUtils.invokeRestrictedMethod(this, ImagePlus.class, "notifyListeners", 2);
-                  } catch (NoSuchMethodException ex) {
-                  } catch (IllegalAccessException ex) {
-                  } catch (IllegalArgumentException ex) {
-                  } catch (InvocationTargetException ex) {
-                  }
-                  superDraw();
-               }
-            });
-         } catch (InterruptedException e) {
-            ReportingUtils.logError(e);
-         } catch (InvocationTargetException e) {
-            ReportingUtils.logError(e);
-         }
-      }
-
-      private void superDraw() {
-         if (super.win != null) {
-            super.getCanvas().repaint();
-         }
-      }
-
-      /*
-       * Doesn't get called during acquisition, animation, contrast adjustment, but 
-       * may get called sometimes by internal imageJ functions
-       */
-      @Override
-      public void draw() {
-         imageChangedUpdate(); //updates histograms, metadata panel, calculates LUTS and applies to image
-         superDraw();
-      }
-
-      /*
-       * Called when images changes due to changes in contrast, but not pixels themselves
-       * Histogram controls tell image to update without LUTS without updating pixels, metadata, etc
-       */
-      @Override
-      public void drawWithoutUpdate() {
-         //dont check for paint pending because always want this to reflect the most recent changes
-         hyperImage_.getCanvas().setPaintPending(true);
-         getWindow().getCanvas().setImageUpdated();
-         superDraw();
-      }
-   }
-
-   public class MMImagePlus extends ImagePlus implements IMMImagePlus {
-
-      private EventBus bus_;
-
-      MMImagePlus(String title, ImageStack stack, EventBus bus) {
-         super(title, stack);
-         bus_ = bus;
-      }
-
-      @Override
-      public String getTitle() {
-         return name_;
-      }
-
-      @Override
-      public int getImageStackSize() {
-         return super.nChannels * super.nSlices * super.nFrames;
-      }
-
-      @Override
-      public int getStackSize() {
-         return getImageStackSize();
-      }
-
-      @Override
-      public int getNChannelsUnverified() {
-         return super.nChannels;
-      }
-
-      @Override
-      public int getNSlicesUnverified() {
-         return super.nSlices;
-      }
-
-      @Override
-      public int getNFramesUnverified() {
-         return super.nFrames;
-      }
-
-      @Override
-      public void mouseMoved(int x, int y) {
-         super.mouseMoved(x, y);
-         bus_.post(new MouseIntensityEvent(x, y, getPixel(x, y)));
-      }
-
-      @Override
-      public void setNChannelsUnverified(int nChannels) {
-         super.nChannels = nChannels;
-      }
-
-      @Override
-      public void setNSlicesUnverified(int nSlices) {
-         super.nSlices = nSlices;
-      }
-
-      @Override
-      public void setNFramesUnverified(int nFrames) {
-         super.nFrames = nFrames;
-      }
-
-      private void superDraw() {
-         if (super.win != null ) {
-            super.getCanvas().repaint();
-         } 
-      }
-
-      @Override
-      public void draw() {
-         imageChangedUpdate();
-         getWindow().getCanvas().setImageUpdated();
-         superDraw();
-      }
-
-      @Override
-      public void drawWithoutUpdate() {
-         getWindow().getCanvas().setImageUpdated();
-         superDraw();
-      }
-   }
-
    public VirtualAcquisitionDisplay(ImageCache imageCache, AcquisitionEngine eng) {
       this(imageCache, eng, WindowManager.getUniqueName("Untitled"));
       setupEventBus();
@@ -514,6 +230,12 @@ public class VirtualAcquisitionDisplay implements
    // Retrieve our EventBus.
    public EventBus getEventBus() {
       return bus_;
+   }
+
+   // Prepare for a drawing event.
+   @Subscribe
+   public void onDraw(DrawEvent event) {
+      imageChangedUpdate();
    }
 
    //used for snap and live
@@ -702,7 +424,7 @@ public class VirtualAcquisitionDisplay implements
    private synchronized void animateSlices(final boolean animate) {
       if (!animate) {
          animationTimer_.cancel();
-         zAnimated_ = false;
+         setZAnimated(false);
          refreshScrollbarIcons();
          moveScrollBarsToLockedPositions();
       } else {
@@ -728,7 +450,7 @@ public class VirtualAcquisitionDisplay implements
             }
          };
          animationTimer_.schedule(task, 0, interval);
-         zAnimated_ = true;
+         setZAnimated(true);
          refreshScrollbarIcons();
       }
    }
@@ -736,7 +458,7 @@ public class VirtualAcquisitionDisplay implements
    private synchronized void animateFrames(final boolean animate) {
       if (!animate) {
          animationTimer_.cancel();
-         tAnimated_ = false;
+         setTAnimated(false);
          refreshScrollbarIcons();
          moveScrollBarsToLockedPositions();
       } else {
@@ -764,7 +486,7 @@ public class VirtualAcquisitionDisplay implements
             }
          };
          animationTimer_.schedule(task, 0, interval);
-         tAnimated_ = true;
+         setTAnimated(true);
          refreshScrollbarIcons();
       }
    }
@@ -888,19 +610,20 @@ public class VirtualAcquisitionDisplay implements
 
    private void moveScrollBarsToLockedPositions() {
       int c = lockedChannel_ == -1 ? hyperImage_.getChannel() : lockedChannel_;
-               int s = lockedSlice_ == -1 ? hyperImage_.getSlice() : lockedSlice_;
-               int f = lockedFrame_ == -1 ? hyperImage_.getFrame() : lockedFrame_;
-               hyperImage_.setPosition(c, zAnimated_ ? hyperImage_.getSlice() : s, 
-                       tAnimated_ ? hyperImage_.getFrame() : f);
-               if (pSelector_ != null && lockedPosition_ > -1) {
-                  setPosition(lockedPosition_);
-               }
+      int s = lockedSlice_ == -1 ? hyperImage_.getSlice() : lockedSlice_;
+      int f = lockedFrame_ == -1 ? hyperImage_.getFrame() : lockedFrame_;
+      hyperImage_.setPosition(c, zAnimated_ ? hyperImage_.getSlice() : s, 
+              tAnimated_ ? hyperImage_.getFrame() : f);
+      if (pSelector_ != null && lockedPosition_ > -1) {
+         setPosition(lockedPosition_);
+      }
    }
    
    private void resumeLocksAndAnimationAfterImageArrival() {
       //if no locks activated or previous animation running, dont execute
-      if (lockedFrame_ == -1 && lockedChannel_ == -1 && lockedSlice_ == -1 && lockedPosition_ == -1
-              && animatedSliceIndex_ == -1 && animatedFrameIndex_ == -1) {
+      if (lockedFrame_ == -1 && lockedChannel_ == -1 && lockedSlice_ == -1 && 
+            lockedPosition_ == -1 && animatedSliceIndex_ == -1 && 
+            animatedFrameIndex_ == -1) {
          return;
       }
       
@@ -1486,7 +1209,8 @@ public class VirtualAcquisitionDisplay implements
                ReportingUtils.logError(ex);
             }
 
-            //This block allows animation to be reset to where it was before images were added
+            // This block allows animation to be reset to where it was before
+            // images were added
             if (isTAnimated()) {
                animatedFrameIndex_ = hyperImage_.getFrame();
                animateFrames(false);
@@ -1668,7 +1392,7 @@ public class VirtualAcquisitionDisplay implements
       return false;
    }
 
-   boolean abort() {
+   public boolean abort() {
       if (eng_ != null) {
          if (eng_.abortRequest()) {
             updateWindowTitleAndStatus();
@@ -1876,7 +1600,8 @@ public class VirtualAcquisitionDisplay implements
       mmIP.setNFramesUnverified(frames);
       mmIP.setNSlicesUnverified(slices);
       if (channels > 1) {        
-         hyperImage = new MMCompositeImage(mmIP, imageCache_.getDisplayMode(), bus_);
+         hyperImage = new MMCompositeImage(mmIP, imageCache_.getDisplayMode(), 
+               name_, bus_);
          hyperImage.setOpenAsHyperStack(true);
       } else {
          hyperImage = mmIP;
@@ -1893,7 +1618,7 @@ public class VirtualAcquisitionDisplay implements
 
    private void createWindow() {
       makeHistograms();
-      final DisplayWindow win = new DisplayWindow(hyperImage_);
+      final DisplayWindow win = new DisplayWindow(hyperImage_, bus_);
       win.getCanvas().addMouseListener(new MouseListener() {
 
          @Override
@@ -1986,6 +1711,87 @@ public class VirtualAcquisitionDisplay implements
       }
       
       win.setLocation(newLocation);
+   }
+
+   // Our window is closing; prompt the user if they want to save data.
+   public void onWindowClose(DisplayWindow.WindowClosingEvent event) {
+      if (eng_ != null && eng_.isAcquisitionRunning()) {
+         if (!abort()) {
+            return;
+         }
+      }
+
+      if (imageCache_.getDiskLocation() == null && promptToSave_ && !albumSaved_) {
+         String[] options = {"Save single","Save multi","No","Cancel"};
+         int result = JOptionPane.showOptionDialog(event.window_, "This data set has not yet been saved.  "
+                 + "Do you want to save it?\nData can be saved as single-image files or multi-image files.",
+                 "Micro-Manager",JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null,
+                 options, options[0]);
+
+         if (result == 0) {
+            if (!saveAs(TaggedImageStorageDiskDefault.class, true)) {
+               return;
+            }
+         } else if (result == 1) {
+            if (!saveAs(TaggedImageStorageMultipageTiff.class, true)) {
+               return;
+            }
+         } else if (result == 3) {
+            return;
+         }
+      }
+
+      if (simple_ && hyperImage_ != null && hyperImage_.getWindow() != null && hyperImage_.getWindow().getLocation() != null) {
+         Point loc = hyperImage_.getWindow().getLocation();
+         prefs_.putInt(SIMPLE_WIN_X, loc.x);
+         prefs_.putInt(SIMPLE_WIN_Y, loc.y);
+      }
+
+      if (imageCache_ != null) {
+         imageCache_.close();
+      }
+
+      removeFromAcquisitionManager(MMStudioMainFrame.getInstance());
+
+      //Call this because for some reason WindowManager doesnt always fire
+      mdPanel_.displayChanged(null);
+      animationTimer_.cancel();
+      animationTimer_.cancel();
+   }
+
+   // Toggle one of our animation bits. Publish an event so our DisplayWindows
+   // (and anyone else who cares) can be notified.
+   private void setTAnimated(boolean isTAnimated) {
+      tAnimated_ = isTAnimated;
+      bus_.post(new AnimationSetEvent(isAnimated()));
+   }
+
+   // Toggle one of our animation bits. Publish an event so our DisplayWindows
+   // (and anyone else who cares) can be notified.
+   private void setZAnimated(boolean isZAnimated) {
+      zAnimated_ = isZAnimated;
+      bus_.post(new AnimationSetEvent(isAnimated()));
+   }
+   
+   // Animation needs to be turned on/off.
+   @Subscribe
+   public void setAnimated(DisplayWindow.ToggleAnimatedEvent event) {
+      if (((IMMImagePlus) hyperImage_).getNFramesUnverified() > 1) {
+         animateFrames(event.shouldSetAnimated_);
+      } else {
+         animateSlices(event.shouldSetAnimated_);
+      }
+   }
+
+   /*
+    * Removes the VirtualAcquisitionDisplay from the Acquisition Manager.
+    */
+   private void removeFromAcquisitionManager(ScriptInterface gui) {
+      try {
+         gui.closeAcquisition(name_);
+      } catch (MMScriptException ex) {
+         ReportingUtils.logError(ex);
+      }
    }
 
    //Return metadata associated with image currently shown in the viewer
@@ -2105,10 +1911,7 @@ public class VirtualAcquisitionDisplay implements
 
    public void setPlaybackFPS(double fps) {
       framesPerSec_ = fps;
-      if (zAnimated_) {
-         animateSlices(false);
-         animateSlices(true);
-      } else if (tAnimated_) {
+      if (zAnimated_ || tAnimated_) {
          animateFrames(false);
          animateFrames(true);
       }
@@ -2318,135 +2121,5 @@ public class VirtualAcquisitionDisplay implements
    
    public ContrastSettings getChannelContrastSettings(int channel) {
       return histograms_.getChannelContrastSettings(channel);
-   }
-           
-   public class DisplayWindow extends StackWindow {
-
-      private boolean windowClosingDone_ = false;
-      private boolean closed_ = false;
-
-      public DisplayWindow(ImagePlus ip) {
-         super(ip);
-      }
-
-      @Override
-      public boolean close() {
-         windowClosing(null);
-         return closed_;
-      }
-
-      @Override
-      public void windowClosing(WindowEvent e) {
-         if (windowClosingDone_) {
-            return;
-         }
-
-         if (eng_ != null && eng_.isAcquisitionRunning()) {
-            if (!abort()) {
-               return;
-            }
-         }
-
-         if (imageCache_.getDiskLocation() == null && promptToSave_ && !albumSaved_) {
-            String[] options = {"Save single","Save multi","No","Cancel"};
-            int result = JOptionPane.showOptionDialog(this, "This data set has not yet been saved.  "
-                    + "Do you want to save it?\nData can be saved as single-image files or multi-image files.",
-                    "Micro-Manager",JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null,
-                    options, options[0]);
-
-            if (result == 0) {                          
-               if (!saveAs(TaggedImageStorageDiskDefault.class, true)) {
-                  return;           
-               }
-            } else if (result == 1) {
-               if (!saveAs(TaggedImageStorageMultipageTiff.class, true)) {
-                  return;           
-               }
-            } else if (result == 3) {
-               return;
-            }
-         }
-
-         if (simple_ && hyperImage_ != null && hyperImage_.getWindow() != null && hyperImage_.getWindow().getLocation() != null) {
-            Point loc = hyperImage_.getWindow().getLocation();
-            prefs_.putInt(SIMPLE_WIN_X, loc.x);
-            prefs_.putInt(SIMPLE_WIN_Y, loc.y);
-         }
-
-         if (imageCache_ != null) {
-            imageCache_.close();
-         }
-
-         
-         removeMeFromAcquisitionManager(MMStudioMainFrame.getInstance());
-         
-         if (!closed_) {
-            try {
-               super.close();
-            } catch (NullPointerException ex) {
-               ReportingUtils.showError(ex, "Null pointer error in ImageJ code while closing window");
-            }
-         }
-
-         //Call this because for some reason WindowManager doesnt always fire
-         mdPanel_.displayChanged(null);
-         animationTimer_.cancel();
-         animationTimer_.cancel();
-
-         super.windowClosing(e);
-         MMStudioMainFrame.getInstance().removeMMBackgroundListener(this);
-
-         windowClosingDone_ = true;         
-         closed_ = true;
-      }
-
-      /*
-       * Removes the VirtualAcquisitionDisplay from the Acquisition Manager.
-       */
-      private void removeMeFromAcquisitionManager(MMStudioMainFrame gui) {
-         for (String name : gui.getAcquisitionNames()) {
-            try {
-               if (gui.getAcquisition(name).getAcquisitionWindow() == 
-                       VirtualAcquisitionDisplay.this) {
-                  gui.closeAcquisition(name);
-               }
-            } catch (MMScriptException ex) {
-               ReportingUtils.logError(ex);
-            }
-         }
-      }
-
-      @Override
-      public void windowClosed(WindowEvent E) {
-         try {
-            // NS: I do not know why this line was here.  It causes problems since the windowClosing
-            // function now will often run twice 
-            //this.windowClosing(E);
-            super.windowClosed(E);
-         } catch (NullPointerException ex) {
-               ReportingUtils.showError(ex, "Null pointer error in ImageJ code while closing window");
-         }
-      }
-
-      @Override
-      public void windowActivated(WindowEvent e) {
-         if (!isClosed()) {
-            super.windowActivated(e);
-         }
-      }
-
-      @Override
-      public void setAnimate(boolean b) {
-         if (((IMMImagePlus) hyperImage_).getNFramesUnverified() > 1) {
-            animateFrames(b);
-         } else {
-            animateSlices(b);
-         }
-      }
-
-      @Override
-      public boolean getAnimate() {
-         return isAnimated();
-      }
-   };
+   }           
 }

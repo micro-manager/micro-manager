@@ -19,7 +19,7 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-package org.micromanager.acquisition;
+package org.micromanager.imageDisplay;
 
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
@@ -39,7 +39,6 @@ import javax.swing.JPanel;
 
 import org.json.JSONObject;
 
-import org.micromanager.events.MouseIntensityEvent;
 import org.micromanager.internalinterfaces.DisplayControls;
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.utils.ReportingUtils;

@@ -45,6 +45,7 @@ import org.micromanager.AcqControlDlg;
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.api.ImageCache;
 import org.micromanager.api.TaggedImageStorage;
+import org.micromanager.imageDisplay.VirtualAcquisitionDisplay;
 import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.JavaUtils;
 import org.micromanager.utils.MDUtils;

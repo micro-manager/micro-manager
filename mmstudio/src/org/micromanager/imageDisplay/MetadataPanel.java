@@ -19,7 +19,7 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-package org.micromanager.acquisition;
+package org.micromanager.imageDisplay;
 
 import ij.ImagePlus;
 import ij.gui.ImageWindow;
@@ -474,7 +474,7 @@ public class MetadataPanel extends JPanel
          return;
       }
       currentWindow_ = win;
-      if (win == null || !(win instanceof VirtualAcquisitionDisplay.DisplayWindow)) {
+      if (win == null || !(win instanceof DisplayWindow)) {
          currentDisplay_ = null;
          contrastPanel_.displayChanged(null);
          imageChangedUpdate(currentDisplay_);

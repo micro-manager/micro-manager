@@ -5,7 +5,7 @@
  *
  * Created on Jul 15, 2010, 2:54:37 PM
  */
-package org.micromanager.acquisition;
+package org.micromanager.imageDisplay;
 
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
@@ -26,7 +26,6 @@ import net.miginfocom.swing.MigLayout;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import org.micromanager.events.MouseIntensityEvent;
 import org.micromanager.internalinterfaces.DisplayControls;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.NumberUtils;

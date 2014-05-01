@@ -27,8 +27,8 @@ package org.micromanager.api;
 import ij.ImagePlus;
 import ij.process.ImageProcessor;
 import org.json.JSONObject;
-import org.micromanager.acquisition.AcquisitionVirtualStack;
-import org.micromanager.acquisition.VirtualAcquisitionDisplay;
+import org.micromanager.imageDisplay.AcquisitionVirtualStack;
+import org.micromanager.imageDisplay.VirtualAcquisitionDisplay;
 import org.micromanager.utils.MMScriptException;
 
 /*
