@@ -28,7 +28,7 @@ import org.json.JSONObject;
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.acquisition.AcquisitionEngine;
 
-import org.micromanager.acquisition.VirtualAcquisitionDisplay;
+import org.micromanager.imageDisplay.VirtualAcquisitionDisplay;
 import org.micromanager.api.ImageCache;
 import org.micromanager.api.ImageCacheListener;
 

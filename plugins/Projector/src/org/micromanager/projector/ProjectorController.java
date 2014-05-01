@@ -43,7 +43,7 @@ import mmcorej.CMMCore;
 import mmcorej.Configuration;
 import mmcorej.TaggedImage;
 
-import org.micromanager.acquisition.VirtualAcquisitionDisplay;
+import org.micromanager.imageDisplay.VirtualAcquisitionDisplay;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.JavaUtils;

@@ -63,7 +63,7 @@ import mmcorej.MMCoreJ;
 import mmcorej.StrVector;
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.acquisition.ComponentTitledBorder;
-import org.micromanager.acquisition.VirtualAcquisitionDisplay;
+import org.micromanager.imageDisplay.VirtualAcquisitionDisplay;
 import org.micromanager.api.MMPlugin;
 import org.micromanager.api.MultiStagePosition;
 import org.micromanager.api.PositionList;

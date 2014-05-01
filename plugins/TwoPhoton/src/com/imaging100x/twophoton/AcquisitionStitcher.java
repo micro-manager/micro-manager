@@ -26,7 +26,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.MMStudioMainFrame;
-import org.micromanager.acquisition.VirtualAcquisitionDisplay;
+import org.micromanager.imageDisplay.VirtualAcquisitionDisplay;
 import org.micromanager.api.ImageCache;
 import org.micromanager.utils.GUIUtils;
 import org.micromanager.utils.MDUtils;

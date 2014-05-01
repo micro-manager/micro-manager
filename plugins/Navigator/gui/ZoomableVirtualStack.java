@@ -9,7 +9,7 @@ import java.awt.Point;
 import java.awt.image.ColorModel;
 import mmcorej.TaggedImage;
 import org.micromanager.acquisition.AcquisitionVirtualStack;
-import org.micromanager.acquisition.VirtualAcquisitionDisplay;
+import org.micromanager.imageDisplay.VirtualAcquisitionDisplay;
 import org.micromanager.api.TaggedImageStorage;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.ReportingUtils;

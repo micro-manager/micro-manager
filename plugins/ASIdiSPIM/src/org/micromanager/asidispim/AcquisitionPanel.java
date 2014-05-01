@@ -64,7 +64,7 @@ import org.micromanager.MMStudioMainFrame;
 import org.micromanager.acquisition.DefaultTaggedImageSink;
 import org.micromanager.acquisition.MMAcquisition;
 import org.micromanager.acquisition.TaggedImageQueue;
-import org.micromanager.acquisition.VirtualAcquisitionDisplay;
+import org.micromanager.imageDisplay.VirtualAcquisitionDisplay;
 import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.FileDialogs;
 import org.micromanager.utils.MMScriptException;
