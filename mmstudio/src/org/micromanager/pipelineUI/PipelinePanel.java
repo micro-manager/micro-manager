@@ -1,8 +1,8 @@
 package org.micromanager.pipelineUI;
 
-import java.awt.Dimension;
+import com.google.common.eventbus.Subscribe;
 
-import java.lang.reflect.Method;
+import java.awt.Dimension;
 
 import java.util.List;
 
@@ -17,6 +17,9 @@ import mmcorej.TaggedImage;
 import org.micromanager.acquisition.AcquisitionEngine;
 import org.micromanager.api.DataProcessor;
 import org.micromanager.api.ScriptInterface;
+import org.micromanager.events.EventManager;
+import org.micromanager.events.PipelineEvent;
+import org.micromanager.events.ProcessorEvent;
 import org.micromanager.utils.ReportingUtils;
 
 public class PipelinePanel extends javax.swing.JFrame {
@@ -84,30 +87,9 @@ public class PipelinePanel extends javax.swing.JFrame {
 
       setMinimumSize(getPreferredSize());
 
-      // Set up listening to the registration of new DataProcessors
-      try {
-         Class[] params = new Class[1];
-         params[0] = String.class;
-         Method listener = getClass().getDeclaredMethod(
-               "newProcessorRegistered", params);
-         engine_.addRegistrationListener(listener);
-      }
-      catch (Exception ex) {
-         ReportingUtils.logError("Failed to add listener for DataProcessor registration: " + ex);
-      }
-
-      // Set up listening to the creation/destruction/reordering of the 
-      // image pipeline.
-      try {
-         Class [] params = new Class[1];
-         params[0] = List.class;
-         Method listener = getClass().getDeclaredMethod(
-               "pipelineChanged", params);
-         engine_.addPipelineChangedListener(listener);
-      }
-      catch (Exception ex) {
-         ReportingUtils.logError("Failed to add listener for DataProcessor creation: " + ex);
-      }
+      // Set up listening to the registration of new DataProcessors and
+      // modification of the image pipeline.
+      EventManager.register(this);
 
       reloadProcessors();
    }
@@ -116,15 +98,17 @@ public class PipelinePanel extends javax.swing.JFrame {
     * A new ProcessorPlugin was registered; re-load our list of registered
     * processors. 
     */
-   public static void newProcessorRegistered(String name) {
+   @Subscribe
+   public void newProcessorRegistered(ProcessorEvent event) {
       panelSingleton_.reloadProcessors();
    }
 
    /**
     * The image pipeline was modified; reload our display of it.
     */
-   public static void pipelineChanged(List<DataProcessor<TaggedImage>> pipeline) {
-      panelSingleton_.reloadPipeline(pipeline);
+   @Subscribe
+   public void pipelineChanged(PipelineEvent event) {
+      panelSingleton_.reloadPipeline(event.getPipeline());
    }
 
    /**

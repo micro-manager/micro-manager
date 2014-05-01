@@ -86,6 +86,7 @@ import org.micromanager.api.SequenceSettings;
 import org.micromanager.conf2.ConfiguratorDlg2;
 import org.micromanager.conf2.MMConfigFileException;
 import org.micromanager.conf2.MicroscopeModel;
+import org.micromanager.events.EventManager;
 import org.micromanager.graph.GraphData;
 import org.micromanager.graph.GraphFrame;
 import org.micromanager.navigation.CenterAndDragListener;
@@ -317,6 +318,10 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    @SuppressWarnings("LeakingThisInConstructor")
    public MMStudioMainFrame(boolean pluginStatus) {
       org.micromanager.diagnostics.ThreadExceptionLogger.setUp();
+
+      // Set up event handling early, so following code can subscribe/publish
+      // events as needed.
+      EventManager manager = new EventManager();
 
       startLoadingPipelineClass();
 

@@ -27,6 +27,9 @@ import org.micromanager.api.IAcquisitionEngine2010;
 import org.micromanager.api.PositionList;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.api.SequenceSettings;
+import org.micromanager.events.EventManager;
+import org.micromanager.events.PipelineEvent;
+import org.micromanager.events.ProcessorEvent;
 import org.micromanager.internalinterfaces.AcqSettingsListener;
 import org.micromanager.utils.AcqOrderMode;
 import org.micromanager.utils.AutofocusManager;
@@ -68,8 +71,6 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    private int afSkipInterval_;
    protected HashMap<String, Class<?>> nameToProcessorClass_;
    protected List<DataProcessor<TaggedImage>> taggedImageProcessors_;
-   protected List<Method> registrationListeners_;
-   protected List<Method> pipelineChangedListeners_;
    private List<Class> imageRequestProcessors_;
    private boolean absoluteZ_;
    private IAcquisitionEngine2010 acquisitionEngine2010;
@@ -84,8 +85,6 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       imageRequestProcessors_ = new ArrayList<Class>();
       nameToProcessorClass_ = new HashMap<String, Class<?>>();
       taggedImageProcessors_ = new ArrayList<DataProcessor<TaggedImage>>();
-      registrationListeners_ = new ArrayList<Method>();
-      pipelineChangedListeners_ = new ArrayList<Method>();
       useCustomIntervals_ = false;
       settingsListeners_ = new ArrayList<AcqSettingsListener>();
       acqManager_ = mgr;
@@ -275,7 +274,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    public void addImageProcessor(DataProcessor<TaggedImage> taggedImageProcessor) {
       if (!taggedImageProcessors_.contains(taggedImageProcessor)) {
          taggedImageProcessors_.add(taggedImageProcessor);
-         notifyOnPipelineChanged("Processor added");
+         EventManager.post(new PipelineEvent(taggedImageProcessors_));
       }
    }
 
@@ -283,14 +282,14 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    public void removeImageProcessor(DataProcessor<TaggedImage> taggedImageProcessor) {
       taggedImageProcessors_.remove(taggedImageProcessor);
       taggedImageProcessor.dispose();
-      notifyOnPipelineChanged("Processor removed");
+      EventManager.post(new PipelineEvent(taggedImageProcessors_));
    }
 
    @Override
    public void setImageProcessorPipeline(List<DataProcessor<TaggedImage>> pipeline) {
       taggedImageProcessors_.clear();
       taggedImageProcessors_.addAll(pipeline);
-      notifyOnPipelineChanged("Pipeline replaced");
+      EventManager.post(new PipelineEvent(taggedImageProcessors_));
    }
 
    @Override
@@ -305,37 +304,10 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       }
       else {
          nameToProcessorClass_.put(name, processorClass);
-         for (Method listener : registrationListeners_) {
-            try {
-               listener.invoke(null, name);
-            } 
-            catch (Exception ex) {
-               ReportingUtils.logError("Failed to notify method [" + 
-                     listener + "] of newly-registered processor [" + name +
-                     "]: " + ex);
-            }
-         }
+         // Post an event informing listeners that there's a newly-registered
+         // DataProcessor class.
+         EventManager.post(new ProcessorEvent(name, processorClass));
       }
-   }
-
-   @Override
-   public void addRegistrationListener(Method listener) {
-      registrationListeners_.add(listener);
-   }
-
-   @Override
-   public void removeRegistrationListener(Method listener) {
-      registrationListeners_.remove(listener);
-   }
-   
-   @Override
-   public void addPipelineChangedListener(Method listener) {
-      pipelineChangedListeners_.add(listener);
-   }
-
-   @Override
-   public void removePipelineChangedListener(Method listener) {
-      pipelineChangedListeners_.remove(listener);
    }
 
    @Override
@@ -361,23 +333,6 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
          newProcessor = null;
       }
       return newProcessor;
-   }
-
-   /**
-    * The pipeline has been changed somehow; send out notifications to our
-    * listeners.
-    */
-   private void notifyOnPipelineChanged(String message) {
-      for (Method listener : pipelineChangedListeners_) {
-         try {
-            listener.invoke(null, taggedImageProcessors_);
-         } 
-         catch (Exception ex) {
-            ReportingUtils.logError("Failed to notify method [" + 
-                  listener + "] of change in pipeline [" + message + 
-                  "]: " + ex);
-         }
-      }
    }
 
    @Override

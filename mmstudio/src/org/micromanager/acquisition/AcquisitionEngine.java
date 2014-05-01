@@ -519,32 +519,6 @@ public interface AcquisitionEngine {
    public void registerProcessorClass(Class<?> processorClass, String name);
 
    /**
-    * Add a function to be called when a new DataProcessor is 
-    * registered. The function must be public and static, and takes a String 
-    * as a parameter (the name of the new DataProcessor). 
-    */
-   public void addRegistrationListener(Method listener);
-
-   /**
-    * Remove a function that was previously added via addRegistrationListener.
-    */
-   public void removeRegistrationListener(Method listener);
-
-   /**
-    * Add a function to be called when the image pipeline is changed (i.e. 
-    * a DataProcessor is added or removed, or the pipeline is replaced
-    * wholesale). The function must be public and static, and takes a
-    * List<DataProcessor<TaggedImage>> as a parameter.
-    */
-   public void addPipelineChangedListener(Method listener);
-
-   /**
-    * Remove a function that was previously added via 
-    * addPipelineChangedListener.
-    */
-   public void removePipelineChangedListener(Method listener);
-   
-   /**
     * Get a sorted list of registered DataProcessor names.
     */
    public List<String> getSortedDataProcessorNames();
