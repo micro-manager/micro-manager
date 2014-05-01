@@ -5,7 +5,7 @@ public class ConfigGroupChangedEvent {
    private String groupName_;
    private String newConfig_;
 
-   pubilc ConfigGroupChangedEvent(String groupName, String newConfig) {
+   public ConfigGroupChangedEvent(String groupName, String newConfig) {
       groupName_ = groupName;
       newConfig_ = newConfig;
    }
