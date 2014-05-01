@@ -76,6 +76,8 @@ import org.json.JSONObject;
 import org.micromanager.acquisition.AcquisitionManager;
 import org.micromanager.api.Autofocus;
 import org.micromanager.api.DataProcessor;
+import org.micromanager.api.MMPlugin;
+import org.micromanager.api.MMProcessorPlugin;
 import org.micromanager.api.MMTags;
 import org.micromanager.api.PositionList;
 import org.micromanager.api.ScriptInterface;
@@ -2699,7 +2701,24 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
             public void run() {
                ReportingUtils.logMessage("Plugin command: " + plugin.getMenuItem());
                plugin.instantiate();
-               plugin.getMMPlugin().show();
+               switch (plugin.getPluginType()) {
+                  case PLUGIN_STANDARD:
+                     // Standard plugin; create its UI.
+                     ((MMPlugin) plugin.getPlugin()).show();
+                     break;
+                  case PLUGIN_PROCESSOR:
+                     // Processor plugin; check for existing processor of 
+                     // this type and show its UI if applicable; otherwise
+                     // create a new one. 
+                     // FOR NOW JUST CREATING A NEW ONE BLINDLY.
+                     MMProcessorPlugin procPlugin = (MMProcessorPlugin) plugin.getPlugin();
+                     DataProcessor<TaggedImage> processor = procPlugin.makeProcessor(MMStudioMainFrame.this);
+                     engine_.addImageProcessor(processor);
+                     break;
+                  default:
+                     // Unrecognized plugin type; just skip it. 
+                     ReportingUtils.logError("Unrecognized plugin type " + plugin.getPluginType());
+               }
             }
          });
       }
@@ -2720,7 +2739,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
             public void run() {
                ReportingUtils.logMessage("Plugin command: " + plugin.getMenuItem());
                plugin.instantiate();
-               plugin.getMMPlugin().show();
+               ((MMPlugin) plugin.getPlugin()).show();
             }
          });
       }
@@ -4212,25 +4231,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
 
    public AcquisitionWrapperEngine getAcquisitionEngine() {
       return engine_;
-   }
-
-   public String installPlugin(String className, String menuName) {
-      String msg = "installPlugin(String className, String menuName) is Deprecated. Use installPlugin(String className) instead.";
-      core_.logMessage(msg);
-      installPlugin(className);
-      return msg;
-   }
-
-   @Override
-   public String installPlugin(String className) {
-      try {
-         Class clazz = Class.forName(className);
-         return pluginLoader_.installPlugin(clazz);
-      } catch (ClassNotFoundException e) {
-         String msg = className + " plugin not found.";
-         ReportingUtils.logError(e, msg);
-         return msg;
-      }
    }
 
    @Override

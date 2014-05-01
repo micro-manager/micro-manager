@@ -27,8 +27,11 @@ import java.util.List;
 import java.util.regex.Pattern;
 import javax.swing.SwingUtilities;
 import org.micromanager.api.Autofocus;
+import org.micromanager.api.MMBasePlugin;
 import org.micromanager.api.MMPlugin;
+import org.micromanager.api.MMProcessorPlugin;
 import org.micromanager.utils.JavaUtils;
+import org.micromanager.utils.MMException;
 import org.micromanager.utils.ReportingUtils;
 
 /**
@@ -37,46 +40,66 @@ import org.micromanager.utils.ReportingUtils;
 public class PluginLoader {
    public static final String MMPLUGINSDIR = "mmplugins";
    public static final String MMAUTOFOCUSDIR = "mmautofocus";
-   
+
+   // Enum of the different kinds of plugins (i.e. implementors of the 
+   // MMBasePlugin interface), so we can treat them differently, as required. 
+   public static enum PluginType {
+      PLUGIN_STANDARD,
+      PLUGIN_PROCESSOR
+   }
+
    private ArrayList<PluginItem> plugins_ = new ArrayList<PluginItem>();
 
    /**
     * Utility class used to to assemble information about the plugin
     */
    public class PluginItem {
+      // raw class as input by caller
+      private Class<?> pluginClass_ = null; 
+      // MMBasePlugin instance generated in PluginItem
+      private MMBasePlugin plugin_ = null;
+      // Enum indicating the type of this plugin for when we need to treat
+      // different kinds differently (e.g. standard plugin vs. ProcessorPlugin).
+      private PluginType pluginType_ = PluginType.PLUGIN_STANDARD;
+      // className deduced from pluginClass
+      private String className_ = "";
+      // menuText deduced from plugin_
+      private String menuItem_ = "undefined";
+      // tooltip deduced from plugin_
+      private String tooltip_ = "";
+      // dir in which the class lives (relative to plugin root dir)
+      private String directory_ = "";
+      // message generated during inspection of pluginClass_
+      private String msg_ = "";
 
-      private Class<?> pluginClass_ = null; // raw class as input by caller
-      private MMPlugin plugin_ = null;      // MMPlugin instance generated in PluginItem
-      private String className_ = "";       // className deduced from pluginClass
-      private String menuItem_ = "undefined";  // menuText deduced from plugin_
-      private String tooltip_ = "";         // tooltip deduced from plugin_
-      private String directory_ = "";       // dir in which the class lives (relative to plugin root dir)
-      private String msg_ = "";             // message generated during insepction of pluginClass_
-
-      public PluginItem(Class<?> pluginClass, String className, String menuItem, 
-               String tooltip, String directory,  String msg) {
+      public PluginItem(Class<?> pluginClass, String className, 
+            PluginType pluginType, String menuItem, String tooltip, 
+            String directory, String msg) {
          pluginClass_ = pluginClass;
+         className_ = className;
+         pluginType_ = pluginType;
          menuItem_ = menuItem;
          tooltip_ = tooltip;
-         className_ = className;
          directory_ = directory;
          msg_ = msg;
       }
       
       public PluginItem(PluginItem pio) {
          pluginClass_ = pio.pluginClass_;
+         className_ = pio.className_;
+         pluginType_ = pio.pluginType_;
          menuItem_ = pio.menuItem_;
          plugin_ = pio.plugin_;
-         className_ = pio.className_;
          directory_ = pio.directory_;
          msg_ = pio.msg_;
       }
       
+      public PluginType getPluginType() {return pluginType_; }
       public String getMenuItem() { return menuItem_; }
       public String getMessage() { return msg_; }
       public String getClassName() { return className_; }
       public String getTooltip() {return tooltip_; }
-      public MMPlugin getMMPlugin() {return plugin_; }
+      public MMBasePlugin getPlugin() {return plugin_; }
 
       /**
        * Return the menu hierarchy path, including the leaf item name.
@@ -99,14 +122,25 @@ public class PluginLoader {
       public void instantiate() {
          try {
             if (plugin_ == null) {
-               plugin_ = (MMPlugin) pluginClass_.newInstance();
+               switch (pluginType_) {
+                  case PLUGIN_STANDARD:
+                     plugin_ = (MMPlugin) pluginClass_.newInstance();
+                     break;
+                  case PLUGIN_PROCESSOR:
+                     plugin_ = (MMProcessorPlugin) pluginClass_.newInstance();
+                     break;
+                  default:
+                     ReportingUtils.logError("Can't instantiate unrecognized plugin type " + pluginType_);
+               }
             }
          } catch (InstantiationException e) {
             ReportingUtils.logError(e);
          } catch (IllegalAccessException e) {
             ReportingUtils.logError(e);
          }
-         plugin_.setApp(MMStudioMainFrame.getInstance());
+         if (pluginType_ == PluginType.PLUGIN_STANDARD) {
+            ((MMPlugin) plugin_).setApp(MMStudioMainFrame.getInstance());
+         }
       }
    }
 
@@ -135,38 +169,22 @@ public class PluginLoader {
    }
 
    /**
-    * Adds class (which should be a MMPlugin instance) to the plugins menu
-    * @param cl - Class (which should be an instance of a MMPlugin
-    * @return - Message generated while inspecting class, or error  
-    */
-   public String installPlugin(Class<?> cl) {
-      final PluginItem pi = declarePlugin(cl, "");
-      if (pi != null) {
-         addPluginToMenuLater(pi);
-      
-         if (pi.msg_ != null) {
-            return pi.msg_;
-         }
-      }
-      String error = "In PluginLoader:installPlugin, msg was null";
-      ReportingUtils.logError(error);
-      return error;
-   }
-
-   /**
     * Inspects the provided class and transforms it into a PluginItem instance
     * @param cl - Class that potentially is a plugin
     * @param dir - Relative directory (empty string if at root of plugin dir)
+    * @param pluginType - Type of plugin (currently either MMPlugin or 
+    *        MMProcessorPlugin). 
     * @return - PluginItem constructed from provided data
     */
-   private PluginItem declarePlugin(Class<?> cl, String dir) {
+   private PluginItem declarePlugin(Class<?> cl, String dir, 
+         PluginType pluginType) {
       String className = cl.getSimpleName();
       String msg = className + " module loaded.";
       try {
          for (PluginItem plugin : plugins_) {
             if (plugin.getClassName().contentEquals(className)) {
                msg = className + " already loaded";
-               return new PluginItem(cl, "", "", "", dir, msg);
+               return new PluginItem(cl, "", pluginType, "", "", dir, msg);
             }
          }
 
@@ -188,7 +206,7 @@ public class PluginLoader {
        
          String toolTipDescription = "";
          try {
-            // Get this static field from the class implementing MMPlugin.
+            // Get this static field from the class implementing MMBasePlugin.
             toolTipDescription = (String) cl.getDeclaredField("tooltipDescription").get(null);
          } catch (SecurityException e) {
             ReportingUtils.logError(e);
@@ -203,7 +221,7 @@ public class PluginLoader {
          }
 
          menuItem = menuItem.replace("_", " ");
-         PluginItem pi = new PluginItem(cl, className, menuItem, 
+         PluginItem pi = new PluginItem(cl, className, pluginType, menuItem, 
                  toolTipDescription, dir, msg);
          plugins_.add(pi);
          return pi;
@@ -211,7 +229,10 @@ public class PluginLoader {
          msg = className + " class definition not found.";
          ReportingUtils.logError(e, msg);
       }
-      return new PluginItem(cl, "", "", "", "", msg);
+      // Give up on providing extra information; just return a "bare" 
+      // PluginItem.
+      return new PluginItem(cl, "", pluginType, "", "", "", 
+            msg);
    }
 
    private static void addPluginToMenuLater(final PluginItem pi) {
@@ -254,17 +275,26 @@ public class PluginLoader {
          try {
             classes = JavaUtils.findClasses(new File(pluginRootDir, dir), 0);
             for (Class<?> clazz : classes) {
+               PluginType pluginType = null;
                for (Class<?> iface : clazz.getInterfaces()) {
                   if (iface == MMPlugin.class) {
-                     try {
-                        ReportingUtils.logMessage("Attempting to install plugin " + clazz.getName());
-                        PluginItem pi = declarePlugin(clazz, dir);
-                        if (pi != null && !pi.getClassName().isEmpty()) {
-                           pis.add(pi);
-                        }
-                     } catch (Exception e) {
-                        ReportingUtils.logError(e, "Failed to install the \"" + clazz.getName() + "\" plugin .");
+                     pluginType = PluginType.PLUGIN_STANDARD;
+                  }
+                  else if (iface == MMProcessorPlugin.class) {
+                     pluginType = PluginType.PLUGIN_PROCESSOR;
+                  }
+               }
+               if (pluginType != null) {
+                  // This class implements a valid plugin type; make a 
+                  // PluginItem out of it.
+                  try {
+                     ReportingUtils.logMessage("Attempting to install plugin " + clazz.getName());
+                     PluginItem pi = declarePlugin(clazz, dir, pluginType);
+                     if (pi != null && !pi.getClassName().isEmpty()) {
+                        pis.add(pi);
                      }
+                  } catch (Exception e) {
+                     ReportingUtils.logError(e, "Failed to install the \"" + clazz.getName() + "\" plugin .");
                   }
                }
             }
@@ -306,11 +336,15 @@ public class PluginLoader {
 
    }
 
+   // Dispose of the UIs of extant plugins. Only valid for standard plugins
+   // (implementing MMPlugin). 
    public void disposePlugins() {
       for (int i = 0; i < plugins_.size(); i++) {
-         MMPlugin plugin = plugins_.get(i).plugin_;
-         if (plugin != null) {
-            plugin.dispose();
+         if (plugins_.get(i).pluginType_ == PluginType.PLUGIN_STANDARD) {
+            MMPlugin plugin = (MMPlugin) plugins_.get(i).plugin_;
+            if (plugin != null) {
+               plugin.dispose();
+            }
          }
       }
    }

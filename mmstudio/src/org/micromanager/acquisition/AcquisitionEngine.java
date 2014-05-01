@@ -503,22 +503,22 @@ public interface AcquisitionEngine {
    public void removeImageProcessor(Class processor);
    
 
-   /*
+   /**
     * Adds an image processor to the DataProcessor pipeline.
     */
    public void addImageProcessor(DataProcessor<TaggedImage> processor);
 
-   /*
+   /**
     * Removes an image processor from the DataProcessor pipeline.
     */
    public void removeImageProcessor(DataProcessor<TaggedImage> taggedImageProcessor);
 
-   /*
+   /**
     * Replace the current DataProcessor pipeline with the provided one.
     */
    public void setImageProcessorPipeline(List<DataProcessor<TaggedImage>> pipeline);
 
-   /*
+   /**
     * Return a copy of the entire DataProcessor pipeline.
     */
    public ArrayList<DataProcessor<TaggedImage>> getImageProcessorPipeline();

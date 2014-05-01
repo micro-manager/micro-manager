@@ -432,11 +432,6 @@ public interface ScriptInterface {
    public ImageWindow getSnapLiveWin();
    
    /**
-   * Installs a plugin class from the class path.
-   */
-   public String installPlugin(String className);
-   
-   /**
    * Installs an autofocus plugin class from the class path.
    */
    public String installAutofocusPlugin(String className);
