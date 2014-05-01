@@ -8,9 +8,12 @@ import java.util.List;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
+import javax.swing.JFrame;
 import javax.swing.JList;
+import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.ListSelectionModel;
+import javax.swing.WindowConstants;
 
 import mmcorej.TaggedImage;
 
@@ -22,19 +25,19 @@ import org.micromanager.events.PipelineEvent;
 import org.micromanager.events.ProcessorEvent;
 import org.micromanager.utils.ReportingUtils;
 
-public class PipelinePanel extends javax.swing.JFrame {
+public class PipelinePanel extends JFrame {
    ScriptInterface gui_;
    AcquisitionEngine engine_;
    static PipelinePanel panelSingleton_;
    // Panel that contains all of our UI elements.
-   javax.swing.JPanel subPanel_;
+   JPanel subPanel_;
    // Listbox that holds all the DataProcessor types we know about.
    JList registeredProcessorsList_;
    // Name model for the above.
    DefaultListModel processorNameModel_;
 
    // Panel that holds all the ProcessorPanels for instanced DataProcessors.
-   javax.swing.JPanel processorsPanel_;
+   JPanel processorsPanel_;
    // Scrolling view of the above panel.
    JScrollPane processorsScroller_;
 
@@ -44,16 +47,14 @@ public class PipelinePanel extends javax.swing.JFrame {
       engine_ = engine;
       panelSingleton_ = this;
 
-      setDefaultCloseOperation(javax.swing.WindowConstants.DO_NOTHING_ON_CLOSE);
+      setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
       setLocationRelativeTo(null);
 
       // Create a panel to hold all our contents (with a horizontal layout).
-      subPanel_ = new javax.swing.JPanel(
-            new net.miginfocom.swing.MigLayout());
+      subPanel_ = new JPanel(new net.miginfocom.swing.MigLayout());
 
       // Set up the panel that holds the current active pipeline
-      processorsPanel_ = new javax.swing.JPanel(
-            new net.miginfocom.swing.MigLayout("wrap 1"));
+      processorsPanel_ = new JPanel(new net.miginfocom.swing.MigLayout("wrap 1"));
 
       processorsScroller_ = new JScrollPane(processorsPanel_, 
             JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, 

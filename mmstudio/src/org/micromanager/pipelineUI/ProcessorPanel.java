@@ -7,6 +7,7 @@ import java.awt.event.ActionListener;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.plaf.basic.BasicArrowButton;
 
 import java.util.List;
@@ -19,13 +20,13 @@ import org.micromanager.api.DataProcessor;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.ReportingUtils;
 
-public class ProcessorPanel extends javax.swing.JPanel {
+public class ProcessorPanel extends JPanel {
    // The DataProcessor we are displaying controls for. 
    DataProcessor<TaggedImage> processor_;
    // We need access to the ScriptInterface to enable/disable the Processor.
    ScriptInterface gui_;
    // Checkbox for enabling/disabling the Processor.
-   javax.swing.JCheckBox activeBox_;
+   JCheckBox activeBox_;
 
    // Preferred width of the panel.
    public static int preferredWidth = 400;
@@ -42,8 +43,7 @@ public class ProcessorPanel extends javax.swing.JPanel {
       processor_ = processor;
       gui_ = gui;
 
-      activeBox_ = new javax.swing.JCheckBox(
-            "Active:", processor.getIsEnabled());
+      activeBox_ = new JCheckBox("Active:", processor.getIsEnabled());
       activeBox_.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent e) {
             toggleActive();
