@@ -63,14 +63,16 @@ public class DisplayWindow extends StackWindow {
 
    @Override
    public void windowClosing(WindowEvent e) {
-      bus_.post(new WindowClosingEvent(this));
+      if (!closed_) {
+         bus_.post(new WindowClosingEvent(this));
+      }
    }
 
    // Force this window to go away.
    public void forceClosed() {
-      MMStudioMainFrame.getInstance().removeMMBackgroundListener(this);
-      dispose();
       closed_ = true;
+      MMStudioMainFrame.getInstance().removeMMBackgroundListener(this); 
+      dispose();
    }
 
    @Override
