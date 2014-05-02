@@ -758,6 +758,38 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       simpleDisplay_ = new VirtualAcquisitionDisplay(cache, name); 
    }
 
+   private void checkSimpleAcquisition(int width, int height, int depth, 
+         int bitDepth, int numCamChannels) {
+      try {
+         if (acquisitionExists(SIMPLE_ACQ)) {
+            if ((getAcquisitionImageWidth(SIMPLE_ACQ) != width)
+                    || (getAcquisitionImageHeight(SIMPLE_ACQ) != height)
+                    || (getAcquisitionImageByteDepth(SIMPLE_ACQ) != depth)
+                    || (getAcquisitionImageBitDepth(SIMPLE_ACQ) != bitDepth)
+                    || (getAcquisitionMultiCamNumChannels(SIMPLE_ACQ) != numCamChannels)) {  //Need to close and reopen simple window
+               closeAcquisitionWindow(SIMPLE_ACQ);
+            }
+         }
+         if (!acquisitionExists(SIMPLE_ACQ)) {
+            openAcquisition(SIMPLE_ACQ, "", 1, numCamChannels, 1, true);
+            if (numCamChannels > 1) {
+               for (long i = 0; i < numCamChannels; i++) {
+                  String chName = core_.getCameraChannelName(i);
+                  int defaultColor = multiCameraColors_[(int) i % multiCameraColors_.length].getRGB();
+                  setChannelColor(SIMPLE_ACQ, (int) i, getChannelColor(chName, defaultColor));
+                  setChannelName(SIMPLE_ACQ, (int) i, chName);
+               }
+            }
+            initializeSimpleAcquisition(SIMPLE_ACQ, width, height, depth, bitDepth, numCamChannels);
+            getAcquisition(SIMPLE_ACQ).promptToSave(false);
+            getAcquisition(SIMPLE_ACQ).getAcquisitionWindow().getHyperImage().getWindow().toFront();
+            this.updateCenterAndDragListener();
+         }
+      } catch (Exception ex) {
+         ReportingUtils.showError(ex);
+      }
+   }
+
    
    public void checkSimpleAcquisition() {
       if (core_.getCameraDevice().length() == 0) {
@@ -770,77 +802,24 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       int bitDepth = (int) core_.getImageBitDepth();
       int numCamChannels = (int) core_.getNumberOfCameraChannels();
 
-      try {
-         if (acquisitionExists(SIMPLE_ACQ)) {
-            if ((getAcquisitionImageWidth(SIMPLE_ACQ) != width)
-                    || (getAcquisitionImageHeight(SIMPLE_ACQ) != height)
-                    || (getAcquisitionImageByteDepth(SIMPLE_ACQ) != depth)
-                    || (getAcquisitionImageBitDepth(SIMPLE_ACQ) != bitDepth)
-                    || (getAcquisitionMultiCamNumChannels(SIMPLE_ACQ) != numCamChannels)) {  //Need to close and reopen simple window
-               closeAcquisitionWindow(SIMPLE_ACQ);
-            }
-         }
-         if (!acquisitionExists(SIMPLE_ACQ)) {
-            openAcquisition(SIMPLE_ACQ, "", 1, numCamChannels, 1, true);
-            if (numCamChannels > 1) {
-               for (long i = 0; i < numCamChannels; i++) {
-                  String chName = core_.getCameraChannelName(i);
-                  int defaultColor = multiCameraColors_[(int) i % multiCameraColors_.length].getRGB();
-                  setChannelColor(SIMPLE_ACQ, (int) i, getChannelColor(chName, defaultColor));
-                  setChannelName(SIMPLE_ACQ, (int) i, chName);
-               }
-            }
-            initializeSimpleAcquisition(SIMPLE_ACQ, width, height, depth, bitDepth, numCamChannels);
-            getAcquisition(SIMPLE_ACQ).promptToSave(false);
-            getAcquisition(SIMPLE_ACQ).getAcquisitionWindow().getHyperImage().getWindow().toFront();
-            this.updateCenterAndDragListener();
-         }
-      } catch (Exception ex) {
-         ReportingUtils.showError(ex);
-      }
-
+      checkSimpleAcquisition(width, height, depth, bitDepth, numCamChannels);
    }
 
 
    public void checkSimpleAcquisition(TaggedImage image) {
+      JSONObject tags = image.tags;
       try {
-         JSONObject tags = image.tags;
          int width = MDUtils.getWidth(tags);
          int height = MDUtils.getHeight(tags);
          int depth = MDUtils.getDepth(tags);
          int bitDepth = MDUtils.getBitDepth(tags);
          int numCamChannels = (int) core_.getNumberOfCameraChannels();
-
-         if (acquisitionExists(SIMPLE_ACQ)) {
-            if ((getAcquisitionImageWidth(SIMPLE_ACQ) != width)
-                    || (getAcquisitionImageHeight(SIMPLE_ACQ) != height)
-                    || (getAcquisitionImageByteDepth(SIMPLE_ACQ) != depth)
-                    || (getAcquisitionImageBitDepth(SIMPLE_ACQ) != bitDepth)
-                    || (getAcquisitionMultiCamNumChannels(SIMPLE_ACQ) != numCamChannels)) {  //Need to close and reopen simple window
-               closeAcquisitionWindow(SIMPLE_ACQ);
-               // Seems that closeAcquisitionWindow also closes the acquisition...
-               //closeAcquisition(SIMPLE_ACQ);
-            }
-         }
-         if (!acquisitionExists(SIMPLE_ACQ)) {
-            openAcquisition(SIMPLE_ACQ, "", 1, numCamChannels, 1, true);
-            if (numCamChannels > 1) {
-               for (long i = 0; i < numCamChannels; i++) {
-                  String chName = core_.getCameraChannelName(i);
-                  int defaultColor = multiCameraColors_[(int) i % multiCameraColors_.length].getRGB();
-                  setChannelColor(SIMPLE_ACQ, (int) i, getChannelColor(chName, defaultColor));
-                  setChannelName(SIMPLE_ACQ, (int) i, chName);
-               }
-            }
-            initializeSimpleAcquisition(SIMPLE_ACQ, width, height, depth, bitDepth, numCamChannels);
-            getAcquisition(SIMPLE_ACQ).promptToSave(false);
-            getAcquisition(SIMPLE_ACQ).getAcquisitionWindow().getHyperImage().getWindow().toFront();
-            this.updateCenterAndDragListener();
-         }
-      } catch (Exception ex) {
-         ReportingUtils.showError(ex);
+      
+         checkSimpleAcquisition(width, height, depth, bitDepth, numCamChannels);
       }
-
+      catch (Exception ex) {
+         ReportingUtils.showError("Error extracting image info in checkSimpleAcquisition: " + ex);
+      }
    }
 
    public void saveChannelColor(String chName, int rgb)
