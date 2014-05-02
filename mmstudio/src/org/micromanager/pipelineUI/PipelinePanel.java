@@ -50,10 +50,16 @@ public class PipelinePanel extends JFrame {
       setLocationRelativeTo(null);
 
       // Create a panel to hold all our contents (with a horizontal layout).
-      subPanel_ = new JPanel(new net.miginfocom.swing.MigLayout());
+      subPanel_ = new JPanel(new net.miginfocom.swing.MigLayout("", 
+               "[left][left][left]", 
+               "[top][top]"));
+
+      subPanel_.add(new javax.swing.JLabel("Current image pipeline:"));
+      subPanel_.add(new javax.swing.JLabel("Registered Processors:"), "wrap, span 2");
 
       // Set up the panel that holds the current active pipeline
-      processorsPanel_ = new JPanel(new net.miginfocom.swing.MigLayout("wrap 1"));
+      processorsPanel_ = new JPanel(new net.miginfocom.swing.MigLayout(
+               "wrap 1", "0[]0", "0[]0"));
 
       processorsScroller_ = new JScrollPane(processorsPanel_, 
             JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, 
@@ -71,11 +77,12 @@ public class PipelinePanel extends JFrame {
       registeredProcessorsList_ = new JList(processorNameModel_);
       registeredProcessorsList_.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
       registeredProcessorsList_.setLayoutOrientation(JList.VERTICAL);
-      JScrollPane processorScroller = new JScrollPane(registeredProcessorsList_);
-      subPanel_.add(processorScroller);
+      JScrollPane registeredScroller = new JScrollPane(registeredProcessorsList_);
+      subPanel_.add(registeredScroller);
 
       // Add a button to let the user make new processors.
       JButton newButton = new JButton("New");
+      newButton.setToolTipText("Create a new DataProcessor of the selected type, and add it to the end of the pipeline");
       newButton.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent e) {
             makeNewProcessor();
@@ -147,6 +154,10 @@ public class PipelinePanel extends JFrame {
     */
    void makeNewProcessor() {
       int index = registeredProcessorsList_.getSelectedIndex();
+      if (index == -1) {
+         // No selected processor type.
+         return;
+      }
       String name = (String) processorNameModel_.get(index);
       // Note this will invoke our listener and make us recreate our pipeline
       // display.

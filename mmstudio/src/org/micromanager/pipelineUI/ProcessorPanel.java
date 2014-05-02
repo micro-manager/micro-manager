@@ -31,7 +31,7 @@ public class ProcessorPanel extends JPanel {
    // Preferred width of the panel.
    public static int preferredWidth = 400;
    // Preferred height of the panel.
-   public static int preferredHeight = 100;
+   public static int preferredHeight = 80;
 
    ProcessorPanel(String name, DataProcessor<TaggedImage> processor,
          ScriptInterface gui) {
@@ -40,10 +40,12 @@ public class ProcessorPanel extends JPanel {
       // to its right are properly-aligned.
       super(new net.miginfocom.swing.MigLayout("wrap 3", 
                "[][200!][]"));
+      setBorder(javax.swing.BorderFactory.createRaisedBevelBorder());
       processor_ = processor;
       gui_ = gui;
 
       activeBox_ = new JCheckBox("Active:", processor.getIsEnabled());
+      activeBox_.setToolTipText("Toggle whether or not this DataProcessor is allowed to modify images.");
       activeBox_.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent e) {
             toggleActive();
@@ -56,6 +58,7 @@ public class ProcessorPanel extends JPanel {
 
       // Move the processor up (earlier) in the pipeline.
       BasicArrowButton upButton = new BasicArrowButton(BasicArrowButton.NORTH);
+      upButton.setToolTipText("Move this DataProcessor earlier in the pipeline.");
       upButton.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent e) {
             moveProcessor(-1);
@@ -64,6 +67,7 @@ public class ProcessorPanel extends JPanel {
       add(upButton);
 
       JButton configButton = new JButton("Configure");
+      configButton.setToolTipText("Bring up the configuration interface for this DataProcessor, if applicable.");
       configButton.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent e) {
             processor_.makeConfigurationGUI();
@@ -72,6 +76,7 @@ public class ProcessorPanel extends JPanel {
       add(configButton);
 
       JButton deleteButton = new JButton("Delete");
+      deleteButton.setToolTipText("Delete this DataProcessor, removing it from the pipeline.");
       deleteButton.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent e) {
             gui_.removeImageProcessor(processor_);
@@ -81,6 +86,7 @@ public class ProcessorPanel extends JPanel {
 
       // Move the processor down (later) in the pipeline.
       BasicArrowButton downButton = new BasicArrowButton(BasicArrowButton.SOUTH);
+      downButton.setToolTipText("Move this DataProcessor later in the pipeline.");
       downButton.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent e) {
             moveProcessor(1);
