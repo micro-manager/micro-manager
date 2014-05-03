@@ -358,7 +358,7 @@ public class PanelUtils {
    /**
     * Creates formatted text field for user to enter decimal (double)
     */
-   public JFormattedTextField makeFormattedTextField(String prefNode, String prefKey, double defaultValue, int numColumns) {
+   public JFormattedTextField makeFloatEntryField(String prefNode, String prefKey, double defaultValue, int numColumns) {
       
       class FieldListener implements PropertyChangeListener {
          private final JFormattedTextField tf_;

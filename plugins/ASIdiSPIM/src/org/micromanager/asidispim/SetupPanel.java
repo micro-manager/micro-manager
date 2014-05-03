@@ -158,6 +158,10 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
          }
       });
       sheetPanel.add(tmp_but, "wrap");
+      
+      sheetPanel.add(new JLabel("Ratio:"));
+      final JFormattedTextField ratioField = pu.makeFloatEntryField(panelName_, "Ratio", 0.0, 7);
+      sheetPanel.add(ratioField);
 
 
       tmp_but = new JButton("Set start");
@@ -182,7 +186,25 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
             }
          }
       });
-      sheetPanel.add(tmp_but, "skip 3");
+      sheetPanel.add(tmp_but, "skip 1");
+      
+      tmp_but = new JButton("Compute");
+      tmp_but.setToolTipText("Computes ratio from start and end positions");
+      tmp_but.setContentAreaFilled(false);
+      tmp_but.setOpaque(true);
+      tmp_but.setBackground(Color.green);
+      tmp_but.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            try {
+               double ratio = (sheetStopPos_ - sheetStartPos_)/(imagingStopPos_ - imagingStartPos_);
+               ratioField.setValue((Double)ratio);
+            } catch (Exception ex) {
+               gui_.showError(ex);
+            }
+         }
+      });
+      sheetPanel.add(tmp_but);
 
 
       tmp_but = new JButton("Set end");
@@ -209,7 +231,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
             }
          }
       });
-      sheetPanel.add(tmp_but, "skip 1, wrap");
+      sheetPanel.add(tmp_but, "wrap");
 
       sheetPanel.add(new JLabel("Imaging piezo:"));
       imagingPiezoPositionLabel_ = new JLabel("");
@@ -389,6 +411,8 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
     * to start/end settings made elsewhere (notably using joystick with scan
     * enabled) will be clobbered
     */
+   // TODO remove this, should not be needed any more because we aren't setting
+   //    up single axis values in this tab anymore but just calculating the ratio
    public void updateStartStopPositions() {
       if (devices_.getMMDevice(piezoImagingDeviceKey_) == null) {
          return;
