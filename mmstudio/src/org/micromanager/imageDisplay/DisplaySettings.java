@@ -7,7 +7,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import org.micromanager.utils.MDUtils;
-import org.micromanager.utils.ReportingUtils;
 
 public class DisplaySettings {
 

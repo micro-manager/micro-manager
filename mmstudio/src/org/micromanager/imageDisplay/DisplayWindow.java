@@ -5,18 +5,9 @@ import com.google.common.eventbus.Subscribe;
 
 import ij.ImagePlus;
 import ij.gui.StackWindow;
-import ij.plugin.frame.ContrastAdjuster;
-
-import java.awt.Point;
 import java.awt.event.WindowEvent;
 
-import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
-
 import org.micromanager.MMStudioMainFrame;
-import org.micromanager.acquisition.TaggedImageStorageDiskDefault;
-import org.micromanager.acquisition.TaggedImageStorageMultipageTiff;
-import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ReportingUtils;
 
 public class DisplayWindow extends StackWindow {

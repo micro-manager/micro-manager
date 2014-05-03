@@ -36,7 +36,6 @@ import ij.gui.StackWindow;
 import ij.gui.Toolbar;
 import ij.io.FileInfo;
 import ij.measure.Calibration;
-import ij.process.LUT;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -51,7 +50,6 @@ import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;

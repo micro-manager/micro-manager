@@ -124,11 +124,13 @@ public class HyperstackControls extends DisplayControls {
       fpsField_.setToolTipText(
             "Set the speed at which the acquisition is played back.");
       fpsField_.addFocusListener(new java.awt.event.FocusAdapter() {
+         @Override
          public void focusLost(java.awt.event.FocusEvent evt) {
             fpsField_FocusLost(evt);
          }
       });
       fpsField_.addKeyListener(new java.awt.event.KeyAdapter() {
+         @Override
          public void keyReleased(java.awt.event.KeyEvent evt) {
             fpsField_KeyReleased(evt);
          }
@@ -303,7 +305,7 @@ public class HyperstackControls extends DisplayControls {
          minutesString = minutes + "m ";
       }
 
-      String secondsString = "";
+      String secondsString;
       if (hours == 0 && fraction > 0.0001) {
          secondsString = NumberUtils.doubleToDisplayString(wholeSeconds + fraction) + "s";
       }
