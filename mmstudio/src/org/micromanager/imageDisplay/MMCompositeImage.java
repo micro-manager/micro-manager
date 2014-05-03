@@ -149,10 +149,10 @@ public class MMCompositeImage extends CompositeImage implements IMMImagePlus {
    @Override
    public void updateAndDraw() {
       if (CanvasPaintPending.isMyPaintPending(
-              hyperImage_.getCanvas(), this) ) {
+              super.getCanvas(), this) ) {
          return;
       }
-      CanvasPaintPending.setPaintPending(hyperImage_.getCanvas(), this);
+      CanvasPaintPending.setPaintPending(super.getCanvas(), this);
       /*  // this sleep may help in some circumstances
       try {
          Thread.sleep(25);
@@ -207,7 +207,7 @@ public class MMCompositeImage extends CompositeImage implements IMMImagePlus {
    @Override
    public void drawWithoutUpdate() {
       //dont check for paint pending because always want this to reflect the most recent changes
-      hyperImage_.getCanvas().setPaintPending(true);
+      super.getCanvas().setPaintPending(true);
       getWindow().getCanvas().setImageUpdated();
       superDraw();
    }
