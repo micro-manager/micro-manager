@@ -135,7 +135,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       core_ = gui_.getMMCore();
       numTimePointsDone_ = 0;
 
-      PanelUtils pu = new PanelUtils(gui_);
+      PanelUtils pu = new PanelUtils(gui_, prefs_);
            
       
       // start volume sub-panel

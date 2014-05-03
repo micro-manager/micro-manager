@@ -82,7 +82,7 @@ public class GuiSettingsPanel extends ListeningJPanel {
             prefs_.getFloat(panelName_, Properties.Keys.PLUGIN_POSITION_REFRESH_INTERVAL, 1));
       
       
-      PanelUtils pu = new PanelUtils(gui_);
+      PanelUtils pu = new PanelUtils(gui_, prefs_);
       
       final JCheckBox activeTimerCheckBox = new JCheckBox("Update positions continually");
       ActionListener ae = new ActionListener() {

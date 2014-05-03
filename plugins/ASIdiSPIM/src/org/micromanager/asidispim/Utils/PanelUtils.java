@@ -39,10 +39,10 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import org.micromanager.api.ScriptInterface;
-
 import org.micromanager.asidispim.Data.Devices;
 import org.micromanager.asidispim.Data.Joystick;
 import org.micromanager.asidispim.Data.Positions;
+import org.micromanager.asidispim.Data.Prefs;
 import org.micromanager.asidispim.Data.Properties;
 
 /**
@@ -52,9 +52,11 @@ import org.micromanager.asidispim.Data.Properties;
  */
 public class PanelUtils {
    private ScriptInterface gui_;
+   private Prefs prefs_;
    
-   public PanelUtils(ScriptInterface gui) {
+   public PanelUtils(ScriptInterface gui, Prefs prefs) {
       gui_ = gui;
+      prefs_ = prefs;
    }
    
    /**
@@ -350,6 +352,40 @@ public class PanelUtils {
       devs.addListener(l);
       props.addListener(l);
       return jcb;
+   }
+   
+   
+   /**
+    * Creates formatted text field for user to enter decimal (double)
+    */
+   public JFormattedTextField makeFormattedTextField(String prefNode, String prefKey, double defaultValue, int numColumns) {
+      
+      class FieldListener implements PropertyChangeListener {
+         private final JFormattedTextField tf_;
+         private final String prefNode_;
+         private final String prefKey_;
+
+         public void propertyChange(PropertyChangeEvent evt) {
+            try {
+               prefs_.putFloat(prefNode_, prefKey_, ((Double)tf_.getValue()).floatValue());
+            } catch (Exception e) {
+               gui_.showError(e);
+            }
+         }
+         
+         public FieldListener(JFormattedTextField tf, String prefNode, String prefKey) {
+            prefNode_ = prefNode;
+            prefKey_ = prefKey;
+            tf_ = tf;
+         }
+      }
+      
+      JFormattedTextField tf = new JFormattedTextField();
+      tf.setValue(new Double(prefs_.getFloat(prefNode, prefKey, (float)defaultValue)));
+      tf.setColumns(numColumns);
+      PropertyChangeListener listener = new FieldListener(tf, prefNode, prefKey);
+      tf.addPropertyChangeListener("value", listener);
+      return tf;
    }
    
    

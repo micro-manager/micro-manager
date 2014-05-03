@@ -25,8 +25,6 @@ package org.micromanager.asidispim;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 
 import javax.swing.BorderFactory;
 
@@ -101,7 +99,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       cameras_ = cameras;
       gui_ = gui;
       core_ = gui_.getMMCore();
-      PanelUtils pu = new PanelUtils(gui_);
+      PanelUtils pu = new PanelUtils(gui_, prefs_);
       
       joystickPanel_ = new JoystickSubPanel(joystick_, devices_, panelName_, Devices.Sides.NONE, prefs_);
       add(joystickPanel_, "span 2 4");  // make artificially tall to keep stage positions in line with each other
@@ -110,7 +108,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       xPositionLabel_ = new JLabel("");
       add(xPositionLabel_);
       add(pu.makeSetPositionField(Devices.Keys.XYSTAGE, Joystick.Directions.X, positions_));
-      JFormattedTextField deltaXField = makeFormattedTextField("DeltaX", 10.0, 3);
+      JFormattedTextField deltaXField = pu.makeFormattedTextField(panelName_, "DeltaX", 10.0, 3);
       add(makeIncrementButton(Devices.Keys.XYSTAGE, Joystick.Directions.X, deltaXField, "-", -1));
       add(deltaXField);
       add(makeIncrementButton(Devices.Keys.XYSTAGE, Joystick.Directions.X, deltaXField, "+", 1));
@@ -121,7 +119,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       yPositionLabel_ = new JLabel("");
       add(yPositionLabel_);
       add(pu.makeSetPositionField(Devices.Keys.XYSTAGE, Joystick.Directions.Y, positions_));
-      JFormattedTextField deltaYField = makeFormattedTextField("DeltaY", 10.0, 3);
+      JFormattedTextField deltaYField = pu.makeFormattedTextField(panelName_, "DeltaY", 10.0, 3);
       add(makeIncrementButton(Devices.Keys.XYSTAGE, Joystick.Directions.Y, deltaYField, "-", -1));
       add(deltaYField);
       add(makeIncrementButton(Devices.Keys.XYSTAGE, Joystick.Directions.Y, deltaYField, "+", 1));
@@ -132,7 +130,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       lowerZPositionLabel_ = new JLabel("");
       add(lowerZPositionLabel_);
       add(pu.makeSetPositionField(Devices.Keys.LOWERZDRIVE, Joystick.Directions.NONE, positions_));
-      JFormattedTextField deltaZField = makeFormattedTextField("DeltaZ", 10.0, 3);
+      JFormattedTextField deltaZField = pu.makeFormattedTextField(panelName_, "DeltaZ", 10.0, 3);
       add(makeIncrementButton(Devices.Keys.LOWERZDRIVE, Joystick.Directions.NONE, deltaZField, "-", -1));
       add(deltaZField);
       add(makeIncrementButton(Devices.Keys.LOWERZDRIVE, Joystick.Directions.NONE, deltaZField, "+", 1));
@@ -143,7 +141,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       upperZPositionLabel_ = new JLabel("");
       add(upperZPositionLabel_);
       add(pu.makeSetPositionField(Devices.Keys.UPPERZDRIVE, Joystick.Directions.NONE, positions_));
-      JFormattedTextField deltaFField = makeFormattedTextField("DeltaF", 10.0, 3);
+      JFormattedTextField deltaFField = pu.makeFormattedTextField(panelName_, "DeltaF", 10.0, 3);
       add(makeIncrementButton(Devices.Keys.UPPERZDRIVE, Joystick.Directions.NONE, deltaFField, "-", -1));
       add(deltaFField);
       add(makeIncrementButton(Devices.Keys.UPPERZDRIVE, Joystick.Directions.NONE, deltaFField, "+", 1));
@@ -157,7 +155,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       add(new JLabel(devices_.getDeviceDisplayVerbose(Devices.Keys.PIEZOA) + ":"));
       piezoAPositionLabel_ = new JLabel("");
       add(piezoAPositionLabel_);
-      JFormattedTextField deltaPField = makeFormattedTextField("DeltaP", 5.0, 3);
+      JFormattedTextField deltaPField = pu.makeFormattedTextField(panelName_, "DeltaP", 5.0, 3);
       add(pu.makeSetPositionField(Devices.Keys.PIEZOA, Joystick.Directions.NONE, positions_));
       add(makeIncrementButton(Devices.Keys.PIEZOA, Joystick.Directions.NONE, deltaPField, "-", -1));
       add(deltaPField);
@@ -168,7 +166,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       piezoBPositionLabel_ = new JLabel("");
       add(piezoBPositionLabel_);
       add(pu.makeSetPositionField(Devices.Keys.PIEZOB, Joystick.Directions.NONE, positions_));
-      JFormattedTextField deltaQField = makeFormattedTextField("DeltaQ", 5.0, 3);
+      JFormattedTextField deltaQField = pu.makeFormattedTextField(panelName_, "DeltaQ", 5.0, 3);
       add(makeIncrementButton(Devices.Keys.PIEZOB, Joystick.Directions.NONE, deltaQField, "-", -1));
       add(deltaQField);
       add(makeIncrementButton(Devices.Keys.PIEZOB, Joystick.Directions.NONE, deltaQField, "+", 1));
@@ -178,7 +176,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       galvoAxPositionLabel_ = new JLabel("");
       add(galvoAxPositionLabel_);
       add(pu.makeSetPositionField(Devices.Keys.GALVOA, Joystick.Directions.X, positions_));
-      JFormattedTextField deltaAField = makeFormattedTextField("DeltaA", 0.2, 3);
+      JFormattedTextField deltaAField = pu.makeFormattedTextField(panelName_, "DeltaA", 0.2, 3);
       add(makeIncrementButton(Devices.Keys.GALVOA, Joystick.Directions.X, deltaAField, "-", -1));
       add(deltaAField);
       add(makeIncrementButton(Devices.Keys.GALVOA, Joystick.Directions.X, deltaAField, "+", 1));
@@ -193,7 +191,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       galvoAyPositionLabel_ = new JLabel("");
       add(galvoAyPositionLabel_);
       add(pu.makeSetPositionField(Devices.Keys.GALVOA, Joystick.Directions.Y, positions_));
-      JFormattedTextField deltaBField = makeFormattedTextField("DeltaB", 0.2, 3);
+      JFormattedTextField deltaBField = pu.makeFormattedTextField(panelName_, "DeltaB", 0.2, 3);
       add(makeIncrementButton(Devices.Keys.GALVOA, Joystick.Directions.Y, deltaBField, "-", -1));
       add(deltaBField);
       add(makeIncrementButton(Devices.Keys.GALVOA, Joystick.Directions.Y, deltaBField, "+", 1));
@@ -203,7 +201,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       galvoBxPositionLabel_ = new JLabel("");
       add(galvoBxPositionLabel_);
       add(pu.makeSetPositionField(Devices.Keys.GALVOB, Joystick.Directions.X, positions_));
-      JFormattedTextField deltaCField = makeFormattedTextField("DeltaC", 0.2, 3);
+      JFormattedTextField deltaCField = pu.makeFormattedTextField(panelName_, "DeltaC", 0.2, 3);
       add(makeIncrementButton(Devices.Keys.GALVOB, Joystick.Directions.X, deltaCField, "-", -1));
       add(deltaCField);
       add(makeIncrementButton(Devices.Keys.GALVOB, Joystick.Directions.X, deltaCField, "+", 1));
@@ -213,7 +211,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       galvoByPositionLabel_ = new JLabel("");
       add(galvoByPositionLabel_);
       add(pu.makeSetPositionField(Devices.Keys.GALVOB, Joystick.Directions.Y, positions_));
-      JFormattedTextField deltaDField = makeFormattedTextField("DeltaD", 0.2, 3);
+      JFormattedTextField deltaDField = pu.makeFormattedTextField(panelName_, "DeltaD", 0.2, 3);
       add(makeIncrementButton(Devices.Keys.GALVOB, Joystick.Directions.Y, deltaDField, "-", -1));
       add(deltaDField);
       add(makeIncrementButton(Devices.Keys.GALVOB, Joystick.Directions.Y, deltaDField, "+", 1));
@@ -363,39 +361,6 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       return jb;
    }
    
-   /**
-    * Creates formatted text field for user to enter decimal (double)
-    */
-   private JFormattedTextField makeFormattedTextField(String prefKey, double defaultValue, int numColumns) {
-      
-      class FieldListener implements PropertyChangeListener {
-         private final JFormattedTextField tf_;
-         private final String prefNode_;
-         private final String prefKey_;
-
-         public void propertyChange(PropertyChangeEvent evt) {
-            try {
-               prefs_.putFloat(prefNode_, prefKey_, ((Double)tf_.getValue()).floatValue());
-            } catch (Exception e) {
-               gui_.showError(e);
-            }
-         }
-         
-         public FieldListener(JFormattedTextField tf, String prefNode, String prefKey) {
-            prefNode_ = prefNode;
-            prefKey_ = prefKey;
-            tf_ = tf;
-         }
-      }
-      
-      JFormattedTextField tf = new JFormattedTextField();
-      tf.setValue(new Double(prefs_.getFloat(panelName_, prefKey, (float)defaultValue)));
-      tf.setColumns(numColumns);
-      PropertyChangeListener listener = new FieldListener(tf, panelName_, prefKey);
-      tf.addPropertyChangeListener("value", listener);
-      return tf;
-   }
-
    /**
     * required by LiveModeListener interface; just pass call along to camera panel
     */
