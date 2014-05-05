@@ -2061,7 +2061,7 @@ int CPCOCam::SnapImage()
     //m_iNextBufferToUse[0] = 0;
     m_iNextBuffer = 0;
 
-    unsigned int uiMode = 0x10000 + 0x0010;//Avoid adding buffers, Preview, Single
+    unsigned int uiMode = 0x10000 + 0x0040 + 0x0010;//Avoid adding buffers, Preview, Single
     nErr = m_pCamera->PreStartCam(uiMode, 0, 0, 0);            // schaltet automatisch auf internen Trigger
 
     m_pCamera->StartCam();
