@@ -540,8 +540,11 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
          });
       }
    }
-   
-      private void setNumPositions(int n) {
+
+   /**
+    * Update the number of sites this display handles. 
+    */
+   private void setNumPositions(int n) {
       if (isSimpleDisplay_) {
          return;
       }
@@ -549,25 +552,32 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       pSelector_.setMaximum(n);
       ImageWindow win = hyperImage_.getWindow();
       if (n > 1 && pSelector_.getParent() == null) {
+         // Make certain that the site selector scrollbar is displayed.
          win.add(pSelector_, win.getComponentCount() - 1);
       } else if (n <= 1 && pSelector_.getParent() != null) {
+         // Conversely, make certain the site selector scrollbar *isn't*
+         // displayed, because there's only one site. 
          win.remove(pSelector_);
       }
       win.pack();
    }
 
+   /**
+    * Update the number of timepoints this display handles.
+    */
    private void setNumFrames(int n) {
       if (isSimpleDisplay_) {
          return;
       }
       if (tSelector_ != null) {
-         //ImageWindow win = hyperImage_.getWindow();
          ((IMMImagePlus) hyperImage_).setNFramesUnverified(n);
          tSelector_.setMaximum(n + 1);
-         // JavaUtils.setRestrictedFieldValue(win, StackWindow.class, "nFrames", n);
       }
    }
 
+   /**
+    * Update the number of Z slices this display handles.
+    */
    private void setNumSlices(int n) {
       if (isSimpleDisplay_) {
          return;
@@ -578,6 +588,9 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       }
    }
 
+   /**
+    * Update the number of channels this display handles.
+    */
    private void setNumChannels(int n) {
       if (cSelector_ != null) {
          ((IMMImagePlus) hyperImage_).setNChannelsUnverified(n);
@@ -587,31 +600,44 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
  
    /**
     * If animation was running prior to showImage, restarts it with sliders at
-    * appropriate positions
+    * appropriate positions.
     */
-   private void restartAnimation(int frame, int slice, boolean framesAnimated, boolean slicesAnimated) {
-      if (framesAnimated) {
-         hyperImage_.setPosition(hyperImage_.getChannel(), hyperImage_.getSlice(), frame+1);
+   private void restartAnimation(int frame, int slice, 
+         boolean areFramesAnimated, boolean areSlicesAnimated) {
+      if (areFramesAnimated) {
+         hyperImage_.setPosition(hyperImage_.getChannel(), 
+               hyperImage_.getSlice(), frame + 1);
          setTimepointAnimation(true);
-      } else if (slicesAnimated) {
-         hyperImage_.setPosition(hyperImage_.getChannel(), slice+1, hyperImage_.getFrame());
+      } else if (areSlicesAnimated) {
+         hyperImage_.setPosition(hyperImage_.getChannel(), 
+               slice + 1, hyperImage_.getFrame());
          setStackAnimation(true);
       }
       animatedSliceIndex_ = -1;
       animatedFrameIndex_ = -1;
    }
 
+   /**
+    * Reset the positions of the scrollbars to where they were when they were
+    * locked. 
+    */
    private void moveScrollBarsToLockedPositions() {
       int c = lockedChannel_ == -1 ? hyperImage_.getChannel() : lockedChannel_;
       int s = lockedSlice_ == -1 ? hyperImage_.getSlice() : lockedSlice_;
       int f = lockedFrame_ == -1 ? hyperImage_.getFrame() : lockedFrame_;
-      hyperImage_.setPosition(c, zAnimated_ ? hyperImage_.getSlice() : s, 
-              tAnimated_ ? hyperImage_.getFrame() : f);
+      hyperImage_.setPosition(c, 
+            zAnimated_ ? hyperImage_.getSlice() : s, 
+            tAnimated_ ? hyperImage_.getFrame() : f);
       if (pSelector_ != null && lockedPosition_ > -1) {
          setPosition(lockedPosition_);
       }
    }
-   
+
+   /**
+    * If we have active locks, set up a timer to reset our scrollbars to their
+    * locked positions if no new images arrive within 
+    * ANIMATION_AND_LOCK_RESTART_DELAY milliseconds. 
+    */
    private void resumeLocksAndAnimationAfterImageArrival() {
       //if no locks activated or previous animation running, dont execute
       if (lockedFrame_ == -1 && lockedChannel_ == -1 && lockedSlice_ == -1 && 
@@ -620,19 +646,24 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
          return;
       }
       
-      //If no new images have arrived for 500 ms, reset to locked positions
+      //If no new images have arrived for some time, reset to locked positions
       if (resetToLockedTimer_ == null) {
-         resetToLockedTimer_ = new Timer(ANIMATION_AND_LOCK_RESTART_DELAY, new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-               moveScrollBarsToLockedPositions();
-               restartAnimation(animatedFrameIndex_,animatedSliceIndex_,animatedFrameIndex_ > -1,
-                       animatedSliceIndex_ > -1);
-               resetToLockedTimer_.stop();
-            }
-         });
+         // Create a new timer to perform the reset after the specified delay.
+         resetToLockedTimer_ = new Timer(ANIMATION_AND_LOCK_RESTART_DELAY, 
+               new ActionListener() {
+                  @Override
+                  public void actionPerformed(ActionEvent e) {
+                     moveScrollBarsToLockedPositions();
+                     restartAnimation(animatedFrameIndex_, animatedSliceIndex_,
+                           animatedFrameIndex_ > -1,
+                           animatedSliceIndex_ > -1);
+                     resetToLockedTimer_.stop();
+                  }
+               }
+         );
       }
       if (resetToLockedTimer_.isRunning()) {
+         // Already have a timer running; just reset its time-to-wait. 
          resetToLockedTimer_.restart();
       } else {
          resetToLockedTimer_.start();
@@ -641,7 +672,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
 
    /**
     * Generate a scrollbar for navigating between the different 
-    * timepoints/Z-slices/colors of the stack.
+    * timepoints/Z-slices/colors of the stack, as appropriate. 
     * @param label Label of the scrollbar; expected to be "t", "z", or "c".
     * @return an ij.gui.ScrollbarWithLabel, with its events set up to adjust
     *         the appropriate view axis when scrolled.
