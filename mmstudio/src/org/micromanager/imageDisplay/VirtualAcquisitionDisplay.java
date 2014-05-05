@@ -49,7 +49,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -59,6 +58,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.prefs.Preferences;
 
+import javax.swing.event.MouseInputAdapter;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
@@ -361,7 +361,8 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    ///////Scrollbars and animation controls section///////
    ///////////////////////////////////////////////////////
    /**
-    * Force all of our controls to repaint themselves.
+    * Force all of our controls to repaint themselves, and block until they
+    * have finished doing so. 
     */
    private void forceControlsRepaint() {
       Runnable forcePaint = new Runnable() {
@@ -449,7 +450,9 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
 
    /**
     * Set up animationTimer_ to update our display according to the provided
-    * settings.
+    * settings. As a general rule, one of zStep or tStep will be 0 and the 
+    * other will be 1, but theoretically we could call this function to step
+    * backwards or to step through both "dimensions" at the same time. 
     */
    private synchronized void setAnimationTimer(final int zStep, final int tStep) {
       animationTimer_ = new java.util.Timer();
@@ -491,6 +494,9 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       animationTimer_.schedule(task, 0, interval);
    }
 
+   /**
+    * Repaint all of our icons related to the scrollbars. Non-blocking.
+    */
    private void refreshScrollbarIcons() {
       if (zAnimationIcon_ != null) {
          zAnimationIcon_.repaint();
@@ -512,38 +518,25 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       }
    }
 
+   /**
+    * Set up the handling of the animation buttons, to turn animation on and 
+    * off for Z and Time.
+    */
    private void configureAnimationControls() {
       if (zAnimationIcon_ != null) {
-         zAnimationIcon_.addMouseListener(new MouseListener() {
+         zAnimationIcon_.addMouseListener(new MouseInputAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
                setStackAnimation(!zAnimated_);
             }
-            @Override
-            public void mouseClicked(MouseEvent e) {}
-            @Override
-            public void mouseReleased(MouseEvent e) {}
-            @Override
-            public void mouseEntered(MouseEvent e) {}
-            @Override
-            public void mouseExited(MouseEvent e) {}
          });
       }
       if (tAnimationIcon_ != null) {
-         tAnimationIcon_.addMouseListener(new MouseListener() {
-
+         tAnimationIcon_.addMouseListener(new MouseInputAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
                setTimepointAnimation(!tAnimated_);
             }
-            @Override
-            public void mouseClicked(MouseEvent e) {}
-            @Override
-            public void mouseReleased(MouseEvent e) {}
-            @Override
-            public void mouseEntered(MouseEvent e) {}
-            @Override
-            public void mouseExited(MouseEvent e) {}
          });
       }
    }
@@ -728,8 +721,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
          tLockIcon_ = icon;
       }
       
-      icon.addMouseListener(new MouseListener() {
-
+      icon.addMouseListener(new MouseInputAdapter() {
          @Override
          public void mouseClicked(MouseEvent e) {
             if (label.equals("p")) {
@@ -763,14 +755,6 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
             resumeLocksAndAnimationAfterImageArrival();
             refreshScrollbarIcons();
          }
-         @Override
-         public void mousePressed(MouseEvent e) {}
-         @Override
-         public void mouseReleased(MouseEvent e) {}
-         @Override
-         public void mouseEntered(MouseEvent e) {}
-         @Override
-         public void mouseExited(MouseEvent e) {}  
       }); 
    }
    
@@ -1407,14 +1391,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
             ai.set(2);
          }
       });
-      MouseListener highlighter = new MouseListener() {
-         @Override
-         public void mouseClicked(MouseEvent e) {
-         }
-         @Override
-         public void mousePressed(MouseEvent e) {}
-         @Override
-         public void mouseReleased(MouseEvent e) {}
+      MouseInputAdapter highlighter = new MouseInputAdapter() {
          @Override
          public void mouseEntered(MouseEvent e) {
             ((JMenuItem) e.getComponent()).setArmed(true);
@@ -1559,12 +1536,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    private void createWindow() {
       makeHistograms();
       final DisplayWindow win = new DisplayWindow(hyperImage_, bus_);
-      win.getCanvas().addMouseListener(new MouseListener() {
-
-         @Override
-         public void mouseClicked(MouseEvent me) {
-         }
-
+      win.getCanvas().addMouseListener(new MouseInputAdapter() {
          //used to store preferred zoom
          @Override
          public void mousePressed(MouseEvent me) {
@@ -1582,14 +1554,6 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
             } else {
                hyperImage_.updateAndDraw();
             }
-         }
-
-         @Override
-         public void mouseEntered(MouseEvent me) {
-         }
-
-         @Override
-         public void mouseExited(MouseEvent me) {
          }
       });
 
