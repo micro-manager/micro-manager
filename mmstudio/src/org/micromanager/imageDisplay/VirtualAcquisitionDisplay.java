@@ -115,8 +115,6 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    }
 
    private static final int ANIMATION_AND_LOCK_RESTART_DELAY = 800;
-   final static Color[] rgb = {Color.red, Color.green, Color.blue};
-   final static String[] rgbNames = {"Red", "Blue", "Green"};
    final ImageCache imageCache_;
    final Preferences prefs_ = Preferences.userNodeForPackage(this.getClass());
    private static final String SIMPLE_WIN_X = "simple_x";
@@ -138,7 +136,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    private ScrollbarWithLabel cSelector_;
    private DisplayControls controls_;
    public AcquisitionVirtualStack virtualStack_;
-   private boolean simple_ = false;
+   private boolean isSimpleDisplay_ = false;
    private boolean mda_ = false; //flag if display corresponds to MD acquisition
    private MetadataPanel mdPanel_;
    private boolean contrastInitialized_ = false; //used for autostretching on window opening
@@ -170,11 +168,18 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       updatePixelSize_.set(true);
    }
 
+   /**
+    * Constructor that doesn't provide a title; an automatically-generated one
+    * is used instead.
+    */
    public VirtualAcquisitionDisplay(ImageCache imageCache, AcquisitionEngine eng) {
       this(imageCache, eng, WindowManager.getUniqueName("Untitled"));
       setupEventBus();
    }
 
+   /**
+    * Standard constructor.
+    */
    public VirtualAcquisitionDisplay(ImageCache imageCache, AcquisitionEngine eng, String name) {
       name_ = name;
       imageCache_ = imageCache;
@@ -185,6 +190,10 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       setupEventBus();
    }
 
+   /**
+    * Create a new EventBus that will be used for all events related to this
+    * display system.
+    */
    private void setupEventBus() {
       bus_ = new EventBus();
       bus_.register(this);
@@ -201,10 +210,16 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       imageChangedUpdate();
    }
 
-   //used for snap and live
+   /**
+    * This constructor is used for the Snap and Live views. The main
+    * differences:
+    * - eng_ is null
+    * - isSimpleDisplay_ is true
+    * - We subscribe to the "pixel size changed" event. 
+    */
    @SuppressWarnings("LeakingThisInConstructor")
    public VirtualAcquisitionDisplay(ImageCache imageCache, String name) throws MMScriptException {
-      simple_ = true;
+      isSimpleDisplay_ = true;
       imageCache_ = imageCache;
       name_ = name;
       mda_ = false;
@@ -213,8 +228,12 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       // Also register us for pixel size change events on the global EventBus.
       EventManager.register(this);
    }
-   
-   private void startup(JSONObject firstImageMetadata, AcquisitionVirtualStack avs) {
+  
+   /**
+    * Extract a lot of fields from the provided metadata (or, failing that, 
+    * from getSummaryMetadata()), and set up our controls and view window.
+    */
+   private void startup(JSONObject firstImageMetadata, AcquisitionVirtualStack virtualStack) {
       mdPanel_ = MMStudioMainFrame.getInstance().getMetadataPanel();
       JSONObject summaryMetadata = getSummaryMetadata();
       int numSlices = 1;
@@ -255,7 +274,8 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       numComponents_ = numComponents;
       numGrayChannels = numComponents_ * numChannels;
 
-      if (imageCache_.getDisplayAndComments() == null || imageCache_.getDisplayAndComments().isNull("Channels")) {
+      if (imageCache_.getDisplayAndComments() == null || 
+            imageCache_.getDisplayAndComments().isNull("Channels")) {
          try {
             imageCache_.setDisplayAndComments(DisplaySettings.getDisplaySettingsFromSummary(summaryMetadata));
          } catch (Exception ex) {
@@ -275,22 +295,24 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       } catch (MMScriptException ex) {
          ReportingUtils.showError(ex, "Unable to determine acquisition type.");
       }
-      if (avs != null) {
-         virtualStack_ = avs;
+      if (virtualStack != null) {
+         virtualStack_ = virtualStack;
       } else {
          virtualStack_ = new AcquisitionVirtualStack(width, height, type, null,
                  imageCache_, numGrayChannels * numSlices * numFrames, this);
       }
       if (summaryMetadata.has("PositionIndex")) {
          try {
-            virtualStack_.setPositionIndex(MDUtils.getPositionIndex(summaryMetadata));
+            virtualStack_.setPositionIndex(
+                  MDUtils.getPositionIndex(summaryMetadata));
          } catch (JSONException ex) {
             ReportingUtils.logError(ex);
          }
       }
-      //Hack: only add controls if null to allow overriding classes to implement custom controls
+      // Hack: allow controls_ to be already set, so that overriding classes
+      // can implement their own custom controls.
       if (controls_ == null) {
-         if (simple_) {
+         if (isSimpleDisplay_) {
             controls_ = new SimpleWindowControls(this, bus_);
          } else {
             controls_ = new HyperstackControls(this, bus_);
@@ -301,15 +323,12 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
 
       applyPixelSizeCalibration(hyperImage_);
 
-      
       histogramControlsState_ =  mdPanel_.getContrastPanel().createDefaultControlsState();
       createWindow();
-      //Make sure contrast panel sets up correctly here
       windowToFront();
 
-
       cSelector_ = getSelector("c");
-      if (!simple_) {
+      if (!isSimpleDisplay_) {
          tSelector_ = getSelector("t");
          zSelector_ = getSelector("z");
 
@@ -325,7 +344,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       updateAndDraw(true);
       updateWindowTitleAndStatus();
 
-      forcePainting();
+      forceControlsRepaint();
    }
 
    /*
@@ -338,10 +357,13 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       mdPanel_.getContrastPanel().setDisplayMode(displayMode);
    }
 
-   ///////////////////////////////////////////////////////////////////////////////////////////////
-   /////////////////Scrollbars and animation controls section/////////////////////////////////////
-   //////////////////////////////////////////////////////////////////////////////////////////////
-   private void forcePainting() {
+   ///////////////////////////////////////////////////////
+   ///////Scrollbars and animation controls section///////
+   ///////////////////////////////////////////////////////
+   /**
+    * Force all of our controls to repaint themselves.
+    */
+   private void forceControlsRepaint() {
       Runnable forcePaint = new Runnable() {
 
          @Override
@@ -385,74 +407,88 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       }
    }
 
-   private synchronized void animateSlices(final boolean animate) {
-      if (!animate) {
+   /**
+    * Toggle animation of Z-slices on and off.
+    */
+   private synchronized void setStackAnimation(final boolean shouldAnimate) {
+      if (!shouldAnimate) {
+         // Just shut down current animation.
          animationTimer_.cancel();
          setZAnimated(false);
          refreshScrollbarIcons();
          moveScrollBarsToLockedPositions();
       } else {
-         animateFrames(false);
-         animationTimer_ = new java.util.Timer();
-         final int slicesPerStep;
-         long interval = (long) (1000.0 / framesPerSec_);
-         if (interval < 33) {
-            interval = 33;
-            slicesPerStep = (int) Math.round(framesPerSec_*33.0/1000.0);
-         } else {
-            slicesPerStep = 1;
-         }
-         TimerTask task = new TimerTask() {
-            @Override
-            public void run() {
-               int slice = hyperImage_.getSlice();
-               if (slice >= zSelector_.getMaximum() - 1) {
-                  hyperImage_.setPosition(hyperImage_.getChannel(), 1, hyperImage_.getFrame());
-               } else {
-                  hyperImage_.setPosition(hyperImage_.getChannel(), slice + slicesPerStep, hyperImage_.getFrame());
-               }
-            }
-         };
-         animationTimer_.schedule(task, 0, interval);
+         // Disable timewise animation now. 
+         setTimepointAnimation(false);
+         // Create a new animation timer that steps through Z.
+         setAnimationTimer(1, 0);
          setZAnimated(true);
          refreshScrollbarIcons();
       }
    }
 
-   private synchronized void animateFrames(final boolean animate) {
-      if (!animate) {
+   /**
+    * As setStackAnimation, except that we animate across timepoints instead.
+    */
+   private synchronized void setTimepointAnimation(final boolean shouldAnimate) {
+      if (!shouldAnimate) {
+         // Just shut down current animation.
          animationTimer_.cancel();
          setTAnimated(false);
          refreshScrollbarIcons();
          moveScrollBarsToLockedPositions();
       } else {
-         animateSlices(false);
-         animationTimer_ = new java.util.Timer();
-         final int framesPerStep;
-         long interval = (long) (1000.0 / framesPerSec_);
-         if (interval < 33) {
-            interval = 33;
-            framesPerStep = (int) Math.round(framesPerSec_*33.0/1000.0);
-         } else {
-            framesPerStep = 1;
-         }
-         TimerTask task = new TimerTask() {
-            @Override
-            public void run() {
-               int frame = hyperImage_.getFrame();
-               int channel = lockedChannel_ == -1 ? hyperImage_.getChannel() : lockedChannel_;
-               int slice = lockedSlice_ == -1 ? hyperImage_.getSlice() : lockedSlice_;
-               if (frame >= tSelector_.getMaximum() - 1) {
-                  hyperImage_.setPosition(channel,slice, 1);
-               } else {
-                  hyperImage_.setPosition(channel,slice, frame + framesPerStep);
-               }
-            }
-         };
-         animationTimer_.schedule(task, 0, interval);
+         // Disable stack animation now. 
+         setStackAnimation(false);
+         // Create a new animation timer that steps through T.
+         setAnimationTimer(0, 1);
          setTAnimated(true);
          refreshScrollbarIcons();
       }
+   }
+
+   /**
+    * Set up animationTimer_ to update our display according to the provided
+    * settings.
+    */
+   private synchronized void setAnimationTimer(final int zStep, final int tStep) {
+      animationTimer_ = new java.util.Timer();
+      final int framesPerStep;
+      long interval = (long) (1000.0 / framesPerSec_);
+      if (interval < 33) {
+         // Enforce a maximum displayed framerate of 30FPS, but skip over 
+         // images to make the perceived animation faster. 
+         interval = 33;
+         framesPerStep = (int) Math.round(framesPerSec_ * 33.0 / 1000.0);
+      } else {
+         framesPerStep = 1;
+      }
+      TimerTask task = new TimerTask() {
+         @Override
+         public void run() {
+            int channel = lockedChannel_ == -1 ? hyperImage_.getChannel() : lockedChannel_;
+            int slice = lockedSlice_ == -1 ? hyperImage_.getSlice() : lockedSlice_;
+            int frame = lockedFrame_ == -1 ? hyperImage_.getFrame() : lockedFrame_;
+            if (lockedSlice_ == -1 && zSelector_ != null) {
+               // Advance the slice position.
+               slice += framesPerStep * zStep;
+               if (slice >= zSelector_.getMaximum()) {
+                  // Wrap around to the other end of the stack
+                  slice = 1;
+               }
+            }
+            if (lockedFrame_ == -1 && tSelector_ != null) {
+               // Advance the timepoint position.
+               frame += framesPerStep * tStep;
+               if (frame >= tSelector_.getMaximum()) {
+                  // Wrap around to the other end of the timeseries
+                  frame = 1;
+               }
+            }
+            hyperImage_.setPosition(channel, slice, frame);
+         }
+      };
+      animationTimer_.schedule(task, 0, interval);
    }
 
    private void refreshScrollbarIcons() {
@@ -481,7 +517,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
          zAnimationIcon_.addMouseListener(new MouseListener() {
             @Override
             public void mousePressed(MouseEvent e) {
-               animateSlices(!zAnimated_);
+               setStackAnimation(!zAnimated_);
             }
             @Override
             public void mouseClicked(MouseEvent e) {}
@@ -498,7 +534,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
 
             @Override
             public void mousePressed(MouseEvent e) {
-               animateFrames(!tAnimated_);
+               setTimepointAnimation(!tAnimated_);
             }
             @Override
             public void mouseClicked(MouseEvent e) {}
@@ -513,7 +549,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    }
    
       private void setNumPositions(int n) {
-      if (simple_) {
+      if (isSimpleDisplay_) {
          return;
       }
       pSelector_.setMinimum(0);
@@ -528,7 +564,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    }
 
    private void setNumFrames(int n) {
-      if (simple_) {
+      if (isSimpleDisplay_) {
          return;
       }
       if (tSelector_ != null) {
@@ -540,7 +576,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    }
 
    private void setNumSlices(int n) {
-      if (simple_) {
+      if (isSimpleDisplay_) {
          return;
       }
       if (zSelector_ != null) {
@@ -563,10 +599,10 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    private void restartAnimation(int frame, int slice, boolean framesAnimated, boolean slicesAnimated) {
       if (framesAnimated) {
          hyperImage_.setPosition(hyperImage_.getChannel(), hyperImage_.getSlice(), frame+1);
-         animateFrames(true);
+         setTimepointAnimation(true);
       } else if (slicesAnimated) {
          hyperImage_.setPosition(hyperImage_.getChannel(), slice+1, hyperImage_.getFrame());
-         animateSlices(true);
+         setStackAnimation(true);
       }
       animatedSliceIndex_ = -1;
       animatedFrameIndex_ = -1;
@@ -610,8 +646,14 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       }
    }
 
+   /**
+    * Generate a scrollbar for navigating between the different 
+    * timepoints/Z-slices/colors of the stack.
+    * @param label Label of the scrollbar; expected to be "t", "z", or "c".
+    * @return an ij.gui.ScrollbarWithLabel, with its events set up to adjust
+    *         the appropriate view axis when scrolled.
+    */
     private ScrollbarWithLabel getSelector(String label) {
-      // label should be "t", "z", or "c"
       ScrollbarWithLabel selector = null;
       ImageWindow win = hyperImage_.getWindow();
       int slices = ((IMMImagePlus) hyperImage_).getNSlicesUnverified();
@@ -699,7 +741,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
             } else if (label.equals("z")) {
                if (lockedSlice_ == -1) {
                   if (isZAnimated()) {
-                     animateSlices(false);
+                     setStackAnimation(false);
                   }
                   lockedSlice_ = zSelector_.getValue();
                } else {
@@ -985,7 +1027,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    }
 
    public void updateWindowTitleAndStatus() {
-      if (simple_) {
+      if (isSimpleDisplay_) {
          int mag = (int) (100 * hyperImage_.getCanvas().getMagnification());
          String title = hyperImage_.getTitle() + " ("+mag+"%)";
          hyperImage_.getWindow().setTitle(title);
@@ -1111,11 +1153,11 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
             // images were added
             if (isTAnimated()) {
                animatedFrameIndex_ = hyperImage_.getFrame();
-               animateFrames(false);
+               setTimepointAnimation(false);
             }
             if (isZAnimated()) {
                animatedSliceIndex_ = hyperImage_.getSlice();
-               animateSlices(false);
+               setStackAnimation(false);
             }
 
             //make sure pixels get properly set
@@ -1149,7 +1191,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
                }
             }
 
-            if (!simple_) {
+            if (!isSimpleDisplay_) {
                if (tSelector_ != null) {
                   if (tSelector_.getMaximum() <= (1 + frame)) {
                      VirtualAcquisitionDisplay.this.setNumFrames(1 + frame);
@@ -1167,8 +1209,8 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
             }
 
             //dont't force an update with live win
-            boolean forceUpdate = ! simple_;
-            if (simple_ && !MMStudioMainFrame.getInstance().isLiveModeOn()) {
+            boolean forceUpdate = ! isSimpleDisplay_;
+            if (isSimpleDisplay_ && !MMStudioMainFrame.getInstance().isLiveModeOn()) {
                //unless this is a snap or live mode has stopped
                forceUpdate = true;
             }     
@@ -1225,7 +1267,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       //store for this dataset
       imageCache_.storeChannelDisplaySettings(channelIndex, min, max, gamma, histMax, displayMode);
       //store global preference for channel contrast settings
-      if (mda_ || simple_) {
+      if (mda_ || isSimpleDisplay_) {
          //only store for datasets that were just acquired or snap/live (i.e. no loaded datasets)
          MMStudioMainFrame.getInstance().saveChannelHistogramSettings(channelGroup_, 
                  imageCache_.getChannelName(channelIndex), mda_,
@@ -1234,7 +1276,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    }
 
    private void updatePosition(int p) {
-      if (simple_) {
+      if (isSimpleDisplay_) {
          return;
       }
       virtualStack_.setPositionIndex(p);
@@ -1258,14 +1300,14 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    }
 
    public void setPosition(int p) {
-      if (simple_) {
+      if (isSimpleDisplay_) {
          return;
       }
       pSelector_.setValue(p);
    }
 
    public void setSliceIndex(int i) {
-      if (simple_) {
+      if (isSimpleDisplay_) {
          return;
       }
       final int f = hyperImage_.getFrame();
@@ -1509,7 +1551,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    }
 
    public void liveModeEnabled(boolean enabled) {
-      if (simple_) {
+      if (isSimpleDisplay_) {
          controls_.acquiringImagesUpdate(enabled);
       }
    }
@@ -1557,7 +1599,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       win.add(controls_);
       win.pack();
 
-       if (simple_) {
+       if (isSimpleDisplay_) {
            win.setLocation(prefs_.getInt(SIMPLE_WIN_X, 0), prefs_.getInt(SIMPLE_WIN_Y, 0));
        }
 
@@ -1570,7 +1612,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    }
    
    public void storeWindowSizeAfterZoom(ImageWindow win) {
-      if (simple_) {
+      if (isSimpleDisplay_) {
          snapWinMag_ = win.getCanvas().getMagnification();
       }
    }
@@ -1580,7 +1622,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       win.setLocation(new Point(0,0));
       
       double mag;
-      if (simple_ && snapWinMag_ != -1) {
+      if (isSimpleDisplay_ && snapWinMag_ != -1) {
          mag = snapWinMag_;
       } else {
          mag = MMStudioMainFrame.getInstance().getPreferredWindowMag();
@@ -1649,7 +1691,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       }
 
       // Record window position information.
-      if (simple_ && hyperImage_ != null && hyperImage_.getWindow() != null && 
+      if (isSimpleDisplay_ && hyperImage_ != null && hyperImage_.getWindow() != null && 
             hyperImage_.getWindow().getLocation() != null) {
          Point loc = hyperImage_.getWindow().getLocation();
          prefs_.putInt(SIMPLE_WIN_X, loc.x);
@@ -1690,9 +1732,9 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    @Subscribe
    public void setAnimated(DisplayWindow.ToggleAnimatedEvent event) {
       if (((IMMImagePlus) hyperImage_).getNFramesUnverified() > 1) {
-         animateFrames(event.shouldSetAnimated_);
+         setTimepointAnimation(event.shouldSetAnimated_);
       } else {
-         animateSlices(event.shouldSetAnimated_);
+         setStackAnimation(event.shouldSetAnimated_);
       }
    }
 
@@ -1722,21 +1764,21 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    }
 
    public int getNumSlices() {
-      if (simple_) {
+      if (isSimpleDisplay_) {
          return 1;
       }
       return hyperImage_ == null ? 1 : ((IMMImagePlus) hyperImage_).getNSlicesUnverified();
    }
 
    public int getNumFrames() {
-      if (simple_) {
+      if (isSimpleDisplay_) {
          return 1;
       }
       return ((IMMImagePlus) hyperImage_).getNFramesUnverified();
    }
 
    public int getNumPositions() {
-      if (simple_) {
+      if (isSimpleDisplay_) {
          return 1;
       }
       return pSelector_.getMaximum();
@@ -1825,8 +1867,8 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    public void setPlaybackFPS(double fps) {
       framesPerSec_ = fps;
       if (zAnimated_ || tAnimated_) {
-         animateFrames(false);
-         animateFrames(true);
+         setTimepointAnimation(false);
+         setTimepointAnimation(true);
       }
    }
 
@@ -1879,14 +1921,14 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    // so that plugins can utilize virtual acqusition display with a custom virtual stack
    //allowing manipulation of displayed images without changing underlying data
    //should probably be reconfigured to work through some sort of interface in the future
-   public void show(final AcquisitionVirtualStack avs) {
+   public void show(final AcquisitionVirtualStack virtualStack) {
       if (hyperImage_ == null) {
          try {
             GUIUtils.invokeAndWait(new Runnable() {
 
                @Override
                public void run() {
-                  startup(null, avs);
+                  startup(null, virtualStack);
                }
             });
          } catch (InterruptedException ex) {
@@ -1918,7 +1960,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    }
 
    public boolean isSimpleDisplay() {
-      return simple_;
+      return isSimpleDisplay_;
    }
 
    public void displayStatusLine(String status) {
