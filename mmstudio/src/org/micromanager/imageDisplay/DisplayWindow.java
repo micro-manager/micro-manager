@@ -15,7 +15,6 @@ public class DisplayWindow extends StackWindow {
    private boolean closed_ = false;
    private boolean isAnimated_ = false;
    private EventBus bus_;
-   private ImagePlus hyperImage_;
 
    // This class is used to signal that a window is closing.
    public class WindowClosingEvent {
@@ -35,7 +34,6 @@ public class DisplayWindow extends StackWindow {
 
    public DisplayWindow(ImagePlus ip, EventBus bus) {
       super(ip);
-      hyperImage_ = ip;
       bus_ = bus;
       bus.register(this);
    }
@@ -66,7 +64,7 @@ public class DisplayWindow extends StackWindow {
       } catch (NullPointerException ex) {
          ReportingUtils.showError(ex, "Null pointer error in ImageJ code while closing window");
       }
-      MMStudioMainFrame.getInstance().removeMMBackgroundListener(this); 
+      MMStudioMainFrame.getInstance().removeMMBackgroundListener(this);
       closed_ = true;
    }
 
