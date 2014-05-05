@@ -97,6 +97,8 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
       shutdownHook_ = new Thread() {
          @Override
          public void run() {
+            //for debugging
+            ReportingUtils.logMessage("Running Multpage tiff shutdown hook");
             finished();
             writeDisplaySettings();
          }
@@ -236,6 +238,7 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
    @Override
    public void putImage(TaggedImage taggedImage) throws MMException {
       if (!newDataSet_) {
+         ReportingUtils.showError("Tried to write image to a finished data set");
          throw new MMException("This ImageFileManager is read-only.");
       }
       int fileSetIndex = 0;
@@ -294,6 +297,12 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
     */
    @Override
    public synchronized void finished() {
+      //extra log to try and find a finishing bug
+      ReportingUtils.logMessage("Finishing multipage Tiff dataset");
+      StackTraceElement[] el = Thread.currentThread().getStackTrace();
+      for (StackTraceElement e : el)
+      ReportingUtils.logMessage("Stack trace: " + e.toString());
+      //////////////////////////////////////////////////////////////
       if (finished_) {
          return;
       }
