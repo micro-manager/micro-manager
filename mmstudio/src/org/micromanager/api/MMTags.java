@@ -22,6 +22,7 @@ public class MMTags {
       public static final String WIDTH = "Width"; // image width
       public static final String HEIGHT = "Height"; // image height
       public static final String FRAMES = "Frames"; // number of frames
+      public static final String SLICES = "Slices"; // number of (z) slices
       public static final String CHANNELS = "Channels"; // number of channels
       public static final String POSITIONS = "Positions"; // number of positions
 
@@ -31,7 +32,6 @@ public class MMTags {
       
       public static final String PIXEL_ASPECT = "PixelAspect";
       public static final String SOURCE = "Source";
-      public static final String SLICES = "Slices";
       public static final String COLORS = "ChColors";
       public static final String CHANNEL_MINS = "ChMins";
       public static final String CHANNEL_MAXES = "ChMaxes";
