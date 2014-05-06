@@ -180,13 +180,13 @@ int CScanner::Initialize()
 
    // joystick fast speed (JS X=) (per-card, not per-axis)
    pAct = new CPropertyAction (this, &CScanner::OnJoystickFastSpeed);
-   CreateProperty(g_JoystickFastSpeedPropertyName, "100", MM::Integer, false, pAct);
+   CreateProperty(g_JoystickFastSpeedPropertyName, "100", MM::Float, false, pAct);
    UpdateProperty(g_JoystickFastSpeedPropertyName);
    SetPropertyLimits(g_JoystickFastSpeedPropertyName, 0, 100);
 
    // joystick slow speed (JS Y=) (per-card, not per-axis)
    pAct = new CPropertyAction (this, &CScanner::OnJoystickSlowSpeed);
-   CreateProperty(g_JoystickSlowSpeedPropertyName, "10", MM::Integer, false, pAct);
+   CreateProperty(g_JoystickSlowSpeedPropertyName, "10", MM::Float, false, pAct);
    UpdateProperty(g_JoystickSlowSpeedPropertyName);
    SetPropertyLimits(g_JoystickSlowSpeedPropertyName, 0, 100);
 
