@@ -1738,7 +1738,9 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
     */
    private void removeFromAcquisitionManager(ScriptInterface gui) {
       try {
-         gui.closeAcquisition(name_);
+         if (gui.acquisitionExists(name_)) {
+            gui.closeAcquisition(name_);
+         }
       } catch (MMScriptException ex) {
          ReportingUtils.logError(ex);
       }
