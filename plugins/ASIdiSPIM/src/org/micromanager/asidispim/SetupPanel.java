@@ -43,6 +43,7 @@ import net.miginfocom.swing.MigLayout;
 import org.micromanager.MMStudioMainFrame;
 
 import org.micromanager.api.ScriptInterface;
+import org.micromanager.asidispim.Utils.StoredFloatLabel;
 import org.micromanager.internalinterfaces.LiveModeListener;
 import org.micromanager.utils.NumberUtils;
 
@@ -112,15 +113,14 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       port_ = null;
       updatePort();
 
-      // These labels will be updated in the updateStartStopPositions function
-      sheetStartPositionLabel_ = pu.makeFloatLabel(panelName_, 
-              Properties.Keys.PLUGIN_SHEET_START_POS.toString(), -1);
-      sheetEndPositionLabel_ = pu.makeFloatLabel(panelName_, 
-              Properties.Keys.PLUGIN_SHEET_END_POS.toString(), 1);
-      piezoStartPositionLabel_ = pu.makeFloatLabel(panelName_, 
-              Properties.Keys.PLUGIN_PIEZO_START_POS.toString(), -40);
-      piezoEndPositionLabel_ = pu.makeFloatLabel(panelName_, 
-              Properties.Keys.PLUGIN_PIEZO_END_POS.toString(), 40);
+      sheetStartPositionLabel_ = new StoredFloatLabel(panelName_, 
+              Properties.Keys.PLUGIN_SHEET_START_POS.toString(), -1, prefs_, gui_);
+      sheetEndPositionLabel_ = new StoredFloatLabel(panelName_, 
+              Properties.Keys.PLUGIN_SHEET_END_POS.toString(), 1, prefs_, gui_);
+      piezoStartPositionLabel_ = new StoredFloatLabel(panelName_, 
+              Properties.Keys.PLUGIN_PIEZO_START_POS.toString(), -40, prefs_, gui_);
+      piezoEndPositionLabel_ = new StoredFloatLabel(panelName_, 
+              Properties.Keys.PLUGIN_PIEZO_END_POS.toString(), 40, prefs_, gui_);
       
       //updateStartStopPositions();
 
@@ -138,7 +138,33 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       final JFormattedTextField rateField = pu.makeFloatEntryField(panelName_, 
               Properties.Keys.PLUGIN_RATE_PIEZO_SHEET.toString(), -80, 8);
 
-      JButton setMiddleButton = new JButton("Set Acquisition Center");
+      sheetPanel.add(new JLabel("Acquisition Middle"));
+      
+      JButton goToMiddleButton = new JButton("Go to");
+      goToMiddleButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            try {
+               sheetCenterPos_ = props_.getPropValueFloat(micromirrorDeviceKey_,
+                       Properties.Keys.SA_OFFSET_Y_DEG);
+               core_.setGalvoPosition(
+                       devices_.getMMDeviceException(micromirrorDeviceKey_),
+                       0, sheetCenterPos_);
+               imagingCenterPos_ = props_.getPropValueFloat(piezoImagingDeviceKey_,
+                       Properties.Keys.SA_OFFSET);
+               core_.setPosition(devices_.getMMDeviceException(piezoImagingDeviceKey_), 
+                       imagingCenterPos_);
+            } catch (Exception ex) {
+               gui_.showError(ex);
+            }
+         }
+      } );
+      sheetPanel.add(goToMiddleButton, "span 3, center");
+      
+      JButton setMiddleButton = new JButton("Set");
+      setMiddleButton.setContentAreaFilled(false);
+      setMiddleButton.setOpaque(true);
+      setMiddleButton.setBackground(Color.red);
       setMiddleButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
@@ -157,7 +183,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
             }
          }
       });
-      sheetPanel.add(setMiddleButton, "span 7, center");
+      sheetPanel.add(setMiddleButton, "span 3, center");
       
       // TODO: let the user choose galvodelta
       final double galvoDelta = 0.05;

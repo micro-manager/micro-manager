@@ -570,7 +570,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                // We get these through the preferences
 
                int numSlices = (Integer) numSlices_.getValue();
-               float piezoAmplitude = (float) (numSlices * 
+               float piezoAmplitude = (float) ( (numSlices - 1) * 
                        (Double) stepSizeField_.getValue());
                
                float sheetARate = prefs_.getFloat(
