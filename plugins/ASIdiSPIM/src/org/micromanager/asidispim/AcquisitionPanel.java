@@ -577,11 +577,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                        Properties.Keys.PLUGIN_SETUP_PANEL_NAME.toString() + Devices.Sides.A, 
                        Properties.Keys.PLUGIN_RATE_PIEZO_SHEET, -80);
                // catch divide by 0 errors
-               float sheetAmplitudeA = numSlices * ( 1 / sheetARate);
+               float sheetAmplitudeA = piezoAmplitude / sheetARate;
                float sheetBRate = prefs_.getFloat(
                        Properties.Keys.PLUGIN_SETUP_PANEL_NAME.toString() + Devices.Sides.B, 
                        Properties.Keys.PLUGIN_RATE_PIEZO_SHEET, -80);
-               float sheetAmplitudeB = numSlices * ( 1/ sheetBRate) ;
+               float sheetAmplitudeB = piezoAmplitude / sheetBRate ;
                
                props_.setPropValue(Devices.Keys.GALVOA, Properties.Keys.SA_AMPLITUDE_Y_DEG,
                        sheetAmplitudeA);

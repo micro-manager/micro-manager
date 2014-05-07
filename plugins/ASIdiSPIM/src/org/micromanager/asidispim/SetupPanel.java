@@ -81,7 +81,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
    private JLabel imagingPiezoPositionLabel_;
    private JLabel illuminationPiezoPositionLabel_;
    private JLabel sheetPositionLabel_;
-   private final JLabel sheetStartPosLabel_;
+   private final JLabel sheetStartPositionLabel_;
    private final JLabel sheetEndPositionLabel_;
    private final JLabel piezoStartPositionLabel_;
    final JLabel piezoEndPositionLabel_;
@@ -113,12 +113,16 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       updatePort();
 
       // These labels will be updated in the updateStartStopPositions function
-      sheetStartPosLabel_ = new JLabel("");
-      sheetEndPositionLabel_ = new JLabel("");
-      piezoStartPositionLabel_ = new JLabel("");
-      piezoEndPositionLabel_ = new JLabel("");
+      sheetStartPositionLabel_ = pu.makeFloatLabel(panelName_, 
+              Properties.Keys.PLUGIN_SHEET_START_POS.toString(), -1);
+      sheetEndPositionLabel_ = pu.makeFloatLabel(panelName_, 
+              Properties.Keys.PLUGIN_SHEET_END_POS.toString(), 1);
+      piezoStartPositionLabel_ = pu.makeFloatLabel(panelName_, 
+              Properties.Keys.PLUGIN_PIEZO_START_POS.toString(), -40);
+      piezoEndPositionLabel_ = pu.makeFloatLabel(panelName_, 
+              Properties.Keys.PLUGIN_PIEZO_END_POS.toString(), 40);
       
-      updateStartStopPositions();
+      //updateStartStopPositions();
 
 
       // Create sheet Panel with sheet and piezo controls
@@ -239,7 +243,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       sheetPanel.add(pu.makeSetPositionField(micromirrorDeviceKey_, Joystick.Directions.Y, positions_));
       
       sheetPanel.add(new JSeparator(SwingConstants.VERTICAL), "spany 2, growy, shrinkx");
-      sheetPanel.add(sheetStartPosLabel_);
+      sheetPanel.add(sheetStartPositionLabel_);
 
       // Go to start button
       tmp_but = new JButton("Go to");
@@ -282,12 +286,11 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       sheetPanel.add(new JLabel("Imaging piezo:"));
       imagingPiezoPositionLabel_ = new JLabel("");
       sheetPanel.add(imagingPiezoPositionLabel_);
-      sheetPanel.add(pu.makeSetPositionField(piezoImagingDeviceKey_, Joystick.Directions.NONE, positions_));
-
+      sheetPanel.add(pu.makeSetPositionField(piezoImagingDeviceKey_, 
+              Joystick.Directions.NONE, positions_));
 
       sheetPanel.add(piezoStartPositionLabel_);
-      
-      
+            
       tmp_but = new JButton("Set");
       tmp_but.setToolTipText("Saves start position for imaging piezo and scanner slice (should be focused)");
       tmp_but.setContentAreaFilled(false);
@@ -301,11 +304,12 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
                Point2D.Double pt = core_.getGalvoPosition(
                        devices_.getMMDeviceException(micromirrorDeviceKey_));
                sheetStartPos_ = pt.y;
-               updateSheetSAParams();
+               sheetStartPositionLabel_.setText(
+                       NumberUtils.doubleToDisplayString(sheetStartPos_));
                imagingStartPos_ = core_.getPosition(
                        devices_.getMMDeviceException(piezoImagingDeviceKey_));
-               // updateImagingSAParams();
-               // updateStartStopPositions();
+               piezoStartPositionLabel_.setText(
+                       NumberUtils.doubleToDisplayString(imagingStartPos_));
             } catch (Exception ex) {
                gui_.showError(ex);
             }
@@ -328,10 +332,13 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
                Point2D.Double pt = core_.getGalvoPosition(
                        devices_.getMMDeviceException(micromirrorDeviceKey_));
                sheetStopPos_ = pt.y;
-               updateSheetSAParams();
+               sheetEndPositionLabel_.setText(
+                       NumberUtils.doubleToDisplayString(sheetStopPos_));
+               // updateSheetSAParams();
                imagingStopPos_ = core_.getPosition(
                        devices_.getMMDeviceException(piezoImagingDeviceKey_));
-              
+               piezoEndPositionLabel_.setText(
+                       NumberUtils.doubleToDisplayString(imagingStopPos_));
                // updateImagingSAParams();
                // updateStartStopPositions();
             } catch (Exception ex) {
@@ -502,6 +509,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
          return;
       }
       // compute initial start/stop positions from properties
+      /*
       double amplitude = (double) props_.getPropValueFloat(
               piezoImagingDeviceKey_, Properties.Keys.SA_AMPLITUDE);
       double offset = (double) props_.getPropValueFloat(
@@ -522,6 +530,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       sheetStopPos_ = offset + amplitude / 2;
       sheetEndPositionLabel_.setText(
               NumberUtils.doubleToDisplayString(sheetStopPos_));
+      */
    }
 
    /**

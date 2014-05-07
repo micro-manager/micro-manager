@@ -44,6 +44,7 @@ import org.micromanager.asidispim.Data.Joystick;
 import org.micromanager.asidispim.Data.Positions;
 import org.micromanager.asidispim.Data.Prefs;
 import org.micromanager.asidispim.Data.Properties;
+import org.micromanager.utils.NumberUtils;
 
 /**
  *
@@ -398,6 +399,37 @@ public class PanelUtils {
    }
    
    
+   public JLabel makeFloatLabel(String prefNode, String prefKey, 
+           float defaultValue) {
+      
+      class FieldListener implements PropertyChangeListener {
+         private final JLabel l_;
+         private final String prefNode_;
+         private final String prefKey_;
+
+         public void propertyChange(PropertyChangeEvent evt) {
+            try {
+               prefs_.putFloat(prefNode_, prefKey_, 
+                       ( (Double)NumberUtils.displayStringToDouble(l_.getText())).floatValue());
+            } catch (Exception e) {
+               gui_.showError(e);
+            }
+         }
+         
+         public FieldListener(JLabel l, String prefNode, String prefKey) {
+            prefNode_ = prefNode;
+            prefKey_ = prefKey;
+            l_ = l;
+         }
+      }
+      
+      JLabel j = new JLabel("");
+      j.setText("" + (prefs_.getFloat(prefNode, prefKey, (float)defaultValue)));
+      PropertyChangeListener listener = new FieldListener(j, prefNode, prefKey);
+      j.addPropertyChangeListener("value", listener);
+      return j;
+   }
+   
    /**
     * Creates field for user to type in new position for an axis, with default value of 0
     * @param key
@@ -433,6 +465,8 @@ public class PanelUtils {
       tf.addPropertyChangeListener("value", pc);
       return tf;
    }
+   
+  
    
    /**
     * takes a JSpinner and adds a listener that is guaranteed to be called after the other listeners.
