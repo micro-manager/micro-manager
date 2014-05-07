@@ -174,6 +174,9 @@ const char* const g_JoystickRotatePropertyName = "JoystickRotate";
 const char* const g_JoystickSlowSpeedPropertyName = "JoystickSlowSpeed";
 const char* const g_JoystickFastSpeedPropertyName = "JoystickFastSpeed";
 const char* const g_JoystickEnabledPropertyName = "JoystickEnabled";
+const char* const g_WheelSlowSpeedPropertyName = "WheelSlowSpeed";
+const char* const g_WheelFastSpeedPropertyName = "WheelFastSpeed";
+const char* const g_WheelMirrorPropertyName = "WheelReverse";
 
 // Z stage property names
 const char* const g_StepSizePropertyName = "StepSize(um)";
@@ -204,6 +207,7 @@ const char* const g_ScannerCutoffFilterYPropertyName = "FilterFreqY(kHz)";
 const char* const g_ScannerAttenuateXPropertyName = "AttenuateX(0..1)";
 const char* const g_ScannerAttenuateYPropertyName = "AttenuateY(0..1)";
 const char* const g_ScannerBeamEnabledPropertyName = "BeamEnabled";
+const char* const g_ScannerTravelRangePropertyName = "ScannerTravelRange(deg)";
 
 // pizeo property names
 const char* const g_CardVoltagePropertyName = "CardVoltage(V)"; // also used for micromirror

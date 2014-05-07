@@ -175,13 +175,13 @@ int CPiezo::Initialize()
    pAct = new CPropertyAction (this, &CPiezo::OnJoystickFastSpeed);
    CreateProperty(g_JoystickFastSpeedPropertyName, "100", MM::Float, false, pAct);
    UpdateProperty(g_JoystickFastSpeedPropertyName);
-   SetPropertyLimits(g_JoystickFastSpeedPropertyName, 0, 100);
+   SetPropertyLimits(g_JoystickFastSpeedPropertyName, 0.1, 100);
 
    // joystick slow speed (JS Y=) (per-card, not per-axis)
    pAct = new CPropertyAction (this, &CPiezo::OnJoystickSlowSpeed);
    CreateProperty(g_JoystickSlowSpeedPropertyName, "10", MM::Float, false, pAct);
    UpdateProperty(g_JoystickSlowSpeedPropertyName);
-   SetPropertyLimits(g_JoystickSlowSpeedPropertyName, 0, 100);
+   SetPropertyLimits(g_JoystickSlowSpeedPropertyName, 0.1, 100);
 
    // joystick mirror (changes joystick fast/slow speeds to negative) (per-card, not per-axis)
    pAct = new CPropertyAction (this, &CPiezo::OnJoystickMirror);
@@ -190,7 +190,7 @@ int CPiezo::Initialize()
    AddAllowedValue(g_JoystickMirrorPropertyName, g_NoState);
    AddAllowedValue(g_JoystickMirrorPropertyName, g_YesState);
 
-   // joystick disable and select which knob
+   // select which joystick or wheel is attached
    pAct = new CPropertyAction (this, &CPiezo::OnJoystickSelect);
    CreateProperty(g_JoystickSelectPropertyName, g_JSCode_0, MM::String, false, pAct);
    UpdateProperty(g_JoystickSelectPropertyName);
@@ -199,6 +199,28 @@ int CPiezo::Initialize()
    AddAllowedValue(g_JoystickSelectPropertyName, g_JSCode_3);
    AddAllowedValue(g_JoystickSelectPropertyName, g_JSCode_22);
    AddAllowedValue(g_JoystickSelectPropertyName, g_JSCode_23);
+
+   if (firmwareVersion_ > 2.865)  // changed behavior of JS F and T as of v2.87
+   {
+      // fast wheel speed (JS F) (per-card, not per-axis)
+      pAct = new CPropertyAction (this, &CPiezo::OnWheelFastSpeed);
+      CreateProperty(g_WheelFastSpeedPropertyName, "10", MM::Float, false, pAct);
+      UpdateProperty(g_WheelFastSpeedPropertyName);
+      SetPropertyLimits(g_WheelFastSpeedPropertyName, 0.1, 1000);
+
+      // slow wheel speed (JS T) (per-card, not per-axis)
+      pAct = new CPropertyAction (this, &CPiezo::OnWheelSlowSpeed);
+      CreateProperty(g_WheelSlowSpeedPropertyName, "5", MM::Float, false, pAct);
+      UpdateProperty(g_WheelSlowSpeedPropertyName);
+      SetPropertyLimits(g_WheelSlowSpeedPropertyName, 0.1, 100);
+
+      // wheel mirror (changes wheel fast/slow speeds to negative) (per-card, not per-axis)
+      pAct = new CPropertyAction (this, &CPiezo::OnWheelMirror);
+      CreateProperty(g_WheelMirrorPropertyName, g_NoState, MM::String, false, pAct);
+      UpdateProperty(g_WheelMirrorPropertyName);
+      AddAllowedValue(g_WheelMirrorPropertyName, g_NoState);
+      AddAllowedValue(g_WheelMirrorPropertyName, g_YesState);
+   }
 
    // is negative towards sample (ASI firmware convention) or away from sample (Micro-manager convention)
    pAct = new CPropertyAction (this, &CPiezo::OnAxisPolarity);
@@ -592,15 +614,13 @@ int CPiezo::OnJoystickFastSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
 // note that this setting is per-card, not per-axis
 {
    ostringstream command; command.str("");
-   ostringstream response; response.str("");
    double tmp = 0;
    if (eAct == MM::BeforeGet)
    {
       if (!refreshProps_ && initialized_)
          return DEVICE_OK;
       command << addressChar_ << "JS X?";
-      response << ":A X=";
-      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A X="));
       RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
       tmp = abs(tmp);
       if (!pProp->Set(tmp))
@@ -625,15 +645,13 @@ int CPiezo::OnJoystickSlowSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
 // note that this setting is per-card, not per-axis
 {
    ostringstream command; command.str("");
-   ostringstream response; response.str("");
    double tmp = 0;
    if (eAct == MM::BeforeGet)
    {
       if (!refreshProps_ && initialized_)
          return DEVICE_OK;
       command << addressChar_ << "JS Y?";
-      response << ":A Y=";
-      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A Y="));
       RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
       tmp = abs(tmp);
       if (!pProp->Set(tmp))
@@ -658,15 +676,13 @@ int CPiezo::OnJoystickMirror(MM::PropertyBase* pProp, MM::ActionType eAct)
 // note that this setting is per-card, not per-axis
 {
    ostringstream command; command.str("");
-   ostringstream response; response.str("");
    double tmp = 0;
    if (eAct == MM::BeforeGet)
    {
       if (!refreshProps_ && initialized_)
          return DEVICE_OK;
       command << addressChar_ << "JS X?";  // query only the fast setting to see if already mirrored
-      response << ":A X=";
-      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A X="));
       RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
       bool success = 0;
       if (tmp < 0) // speed negative <=> mirrored
@@ -741,10 +757,109 @@ int CPiezo::OnJoystickSelect(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
+int CPiezo::OnWheelFastSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
+// ASI controller mirrors by having negative speed, but here we have separate property for mirroring
+//   and for speed (which is strictly positive)... that makes this code a bit odd
+// note that this setting is per-card, not per-axis
+{
+   ostringstream command; command.str("");
+   double tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << addressChar_ << "JS F?";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A F="));
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
+      tmp = abs(tmp);
+      if (!pProp->Set(tmp))
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      pProp->Get(tmp);
+      char wheelMirror[MM::MaxStrLength];
+      RETURN_ON_MM_ERROR ( GetProperty(g_WheelMirrorPropertyName, wheelMirror) );
+      if (strcmp(wheelMirror, g_YesState) == 0)
+         command << addressChar_ << "JS F=-" << tmp;
+      else
+         command << addressChar_ << "JS F=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}
+
+int CPiezo::OnWheelSlowSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
+// ASI controller mirrors by having negative speed, but here we have separate property for mirroring
+//   and for speed (which is strictly positive)... that makes this code a bit odd
+// note that this setting is per-card, not per-axis
+{
+   ostringstream command; command.str("");
+   double tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << addressChar_ << "JS T?";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A T="));
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
+      tmp = abs(tmp);
+      if (!pProp->Set(tmp))
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      pProp->Get(tmp);
+      char wheelMirror[MM::MaxStrLength];
+      RETURN_ON_MM_ERROR ( GetProperty(g_JoystickMirrorPropertyName, wheelMirror) );
+      if (strcmp(wheelMirror, g_YesState) == 0)
+         command << addressChar_ << "JS T=-" << tmp;
+      else
+         command << addressChar_ << "JS T=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}
+
+int CPiezo::OnWheelMirror(MM::PropertyBase* pProp, MM::ActionType eAct)
+// ASI controller mirrors by having negative speed, but here we have separate property for mirroring
+//   and for speed (which is strictly positive)... that makes this code a bit odd
+// note that this setting is per-card, not per-axis
+{
+   ostringstream command; command.str("");
+   double tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << addressChar_ << "JS F?";  // query only the fast setting to see if already mirrored
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A F="));
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
+      bool success = 0;
+      if (tmp < 0) // speed negative <=> mirrored
+         success = pProp->Set(g_YesState);
+      else
+         success = pProp->Set(g_NoState);
+      if (!success)
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      string tmpstr;
+      pProp->Get(tmpstr);
+      double wheelFast = 0.0;
+      RETURN_ON_MM_ERROR ( GetProperty(g_WheelFastSpeedPropertyName, wheelFast) );
+      double wheelSlow = 0.0;
+      RETURN_ON_MM_ERROR ( GetProperty(g_WheelSlowSpeedPropertyName, wheelSlow) );
+      if (tmpstr.compare(g_YesState) == 0)
+         command << addressChar_ << "JS F=-" << wheelFast << " T=-" << wheelSlow;
+      else
+         command << addressChar_ << "JS F=" << wheelFast << " T=" << wheelSlow;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}
+
 int CPiezo::OnAxisPolarity(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    ostringstream command; command.str("");
-   ostringstream response; response.str("");
    if (eAct == MM::BeforeGet)
    {
       // do nothing
@@ -766,15 +881,13 @@ int CPiezo::OnAxisPolarity(MM::PropertyBase* pProp, MM::ActionType eAct)
 int CPiezo::OnModeFourOvershoot(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    ostringstream command; command.str("");
-   ostringstream response; response.str("");
    long tmp = 0;
    if (eAct == MM::BeforeGet)
    {
       if (!refreshProps_ && initialized_)
          return DEVICE_OK;
       command << addressChar_ << "PZ T?";
-      response << "T=";
-      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), "T="));
       RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
@@ -790,15 +903,13 @@ int CPiezo::OnModeFourOvershoot(MM::PropertyBase* pProp, MM::ActionType eAct)
 int CPiezo::OnModeFourMaxTime(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    ostringstream command; command.str("");
-   ostringstream response; response.str("");
    long tmp = 0;
    if (eAct == MM::BeforeGet)
    {
       if (!refreshProps_ && initialized_)
          return DEVICE_OK;
       command << addressChar_ << "PZ F?";
-      response << "F=";
-      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), "F="));
       RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;

@@ -228,6 +228,28 @@ int CXYStage::Initialize()
    AddAllowedValue(g_JoystickEnabledPropertyName, g_NoState);
    AddAllowedValue(g_JoystickEnabledPropertyName, g_YesState);
 
+   if (firmwareVersion_ > 2.865)  // changed behavior of JS F and T as of v2.87
+   {
+      // fast wheel speed (JS F) (per-card, not per-axis)
+      pAct = new CPropertyAction (this, &CXYStage::OnWheelFastSpeed);
+      CreateProperty(g_WheelFastSpeedPropertyName, "10", MM::Float, false, pAct);
+      UpdateProperty(g_WheelFastSpeedPropertyName);
+      SetPropertyLimits(g_WheelFastSpeedPropertyName, 0.1, 1000);
+
+      // slow wheel speed (JS T) (per-card, not per-axis)
+      pAct = new CPropertyAction (this, &CXYStage::OnWheelSlowSpeed);
+      CreateProperty(g_WheelSlowSpeedPropertyName, "5", MM::Float, false, pAct);
+      UpdateProperty(g_WheelSlowSpeedPropertyName);
+      SetPropertyLimits(g_WheelSlowSpeedPropertyName, 0.1, 100);
+
+      // wheel mirror (changes wheel fast/slow speeds to negative) (per-card, not per-axis)
+      pAct = new CPropertyAction (this, &CXYStage::OnWheelMirror);
+      CreateProperty(g_WheelMirrorPropertyName, g_NoState, MM::String, false, pAct);
+      UpdateProperty(g_WheelMirrorPropertyName);
+      AddAllowedValue(g_WheelMirrorPropertyName, g_NoState);
+      AddAllowedValue(g_WheelMirrorPropertyName, g_YesState);
+   }
+
 
    // generates a set of additional advanced properties that are rarely used
    pAct = new CPropertyAction (this, &CXYStage::OnAdvancedProperties);
@@ -1159,6 +1181,106 @@ int CXYStage::OnJoystickEnableDisable(MM::PropertyBase* pProp, MM::ActionType eA
       }
       else  // No = disabled
          command << "J " << axisLetterX_ << "=0" << " " << axisLetterY_ << "=0";
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}
+
+int CXYStage::OnWheelFastSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
+// ASI controller mirrors by having negative speed, but here we have separate property for mirroring
+//   and for speed (which is strictly positive)... that makes this code a bit odd
+// note that this setting is per-card, not per-axis
+{
+   ostringstream command; command.str("");
+   double tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << addressChar_ << "JS F?";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A F="));
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
+      tmp = abs(tmp);
+      if (!pProp->Set(tmp))
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      pProp->Get(tmp);
+      char wheelMirror[MM::MaxStrLength];
+      RETURN_ON_MM_ERROR ( GetProperty(g_WheelMirrorPropertyName, wheelMirror) );
+      if (strcmp(wheelMirror, g_YesState) == 0)
+         command << addressChar_ << "JS F=-" << tmp;
+      else
+         command << addressChar_ << "JS F=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}
+
+int CXYStage::OnWheelSlowSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
+// ASI controller mirrors by having negative speed, but here we have separate property for mirroring
+//   and for speed (which is strictly positive)... that makes this code a bit odd
+// note that this setting is per-card, not per-axis
+{
+   ostringstream command; command.str("");
+   double tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << addressChar_ << "JS T?";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A T="));
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
+      tmp = abs(tmp);
+      if (!pProp->Set(tmp))
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      pProp->Get(tmp);
+      char wheelMirror[MM::MaxStrLength];
+      RETURN_ON_MM_ERROR ( GetProperty(g_JoystickMirrorPropertyName, wheelMirror) );
+      if (strcmp(wheelMirror, g_YesState) == 0)
+         command << addressChar_ << "JS T=-" << tmp;
+      else
+         command << addressChar_ << "JS T=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}
+
+int CXYStage::OnWheelMirror(MM::PropertyBase* pProp, MM::ActionType eAct)
+// ASI controller mirrors by having negative speed, but here we have separate property for mirroring
+//   and for speed (which is strictly positive)... that makes this code a bit odd
+// note that this setting is per-card, not per-axis
+{
+   ostringstream command; command.str("");
+   double tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << addressChar_ << "JS F?";  // query only the fast setting to see if already mirrored
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A F="));
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
+      bool success = 0;
+      if (tmp < 0) // speed negative <=> mirrored
+         success = pProp->Set(g_YesState);
+      else
+         success = pProp->Set(g_NoState);
+      if (!success)
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      string tmpstr;
+      pProp->Get(tmpstr);
+      double wheelFast = 0.0;
+      RETURN_ON_MM_ERROR ( GetProperty(g_WheelFastSpeedPropertyName, wheelFast) );
+      double wheelSlow = 0.0;
+      RETURN_ON_MM_ERROR ( GetProperty(g_WheelSlowSpeedPropertyName, wheelSlow) );
+      if (tmpstr.compare(g_YesState) == 0)
+         command << addressChar_ << "JS F=-" << wheelFast << " T=-" << wheelSlow;
+      else
+         command << addressChar_ << "JS F=" << wheelFast << " T=" << wheelSlow;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
    }
    return DEVICE_OK;
