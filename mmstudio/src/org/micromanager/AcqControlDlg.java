@@ -78,59 +78,60 @@ import org.micromanager.utils.TooltipTextMaker;
  * This dialog specifies all parameters for the MDA acquisition. 
  *
  */
+
 public class AcqControlDlg extends JFrame implements PropertyChangeListener, 
         AcqSettingsListener { 
 
    private static final long serialVersionUID = 1L;
    protected JButton listButton_;
-   private JButton afButton_;
+   private final JButton afButton_;
    private JSpinner afSkipInterval_;
-   private JComboBox acqOrderBox_;
+   private final JComboBox acqOrderBox_;
    public static final String NEW_ACQFILE_NAME = "MMAcquistion.xml";
    public static final String ACQ_SETTINGS_NODE = "AcquistionSettings";
    public static final String COLOR_SETTINGS_NODE = "ColorSettings";
    private static final String EXPOSURE_SETTINGS_NODE = "AcqExposureSettings";
    private JComboBox channelGroupCombo_;
-   private JTextArea commentTextArea_;
-   private JComboBox zValCombo_;
-   private JTextField nameField_;
-   private JTextField rootField_;
-   private JTextArea summaryTextArea_;
-   private JComboBox timeUnitCombo_;
-   private JFormattedTextField interval_;
-   private JFormattedTextField zStep_;
-   private JFormattedTextField zTop_;
-   private JFormattedTextField zBottom_;
+   private final JTextArea commentTextArea_;
+   private final JComboBox zValCombo_;
+   private final JTextField nameField_;
+   private final JTextField rootField_;
+   private final JTextArea summaryTextArea_;
+   private final JComboBox timeUnitCombo_;
+   private final JFormattedTextField interval_;
+   private final JFormattedTextField zStep_;
+   private final JFormattedTextField zTop_;
+   private final JFormattedTextField zBottom_;
    private AcquisitionEngine acqEng_;
-   private JScrollPane channelTablePane_;
+   private final JScrollPane channelTablePane_;
    private JTable channelTable_;
-   private JSpinner numFrames_;
+   private final JSpinner numFrames_;
    private ChannelTableModel model_;
-   private MMOptions options_;
-   private Preferences prefs_;
-   private Preferences acqPrefs_;
-   private Preferences colorPrefs_;
-   private Preferences exposurePrefs_;
+   private final MMOptions options_;
+   private final Preferences prefs_;
+   private final Preferences acqPrefs_;
+   private final Preferences colorPrefs_;
+   private final Preferences exposurePrefs_;
    private File acqFile_;
    private String acqDir_;
    private int zVals_ = 0;
-   private JButton acquireButton_;
-   private JButton setBottomButton_;
-   private JButton setTopButton_;
+   private final JButton acquireButton_;
+   private final JButton setBottomButton_;
+   private final JButton setTopButton_;
    protected JComboBox displayModeCombo_;
    private ScriptInterface gui_;
-   private GUIColors guiColors_;
-   private NumberFormat numberFormat_;
-   private JLabel namePrefixLabel_;
-   private JLabel saveTypeLabel_;
-   private JRadioButton singleButton_;
-   private JRadioButton multiButton_;
-   private JLabel rootLabel_;
-   private JButton browseRootButton_;
-   private JLabel displayMode_;
-   private JCheckBox stackKeepShutterOpenCheckBox_;
-   private JCheckBox chanKeepShutterOpenCheckBox_;
-   private AcqOrderMode[] acqOrderModes_;
+   private final GUIColors guiColors_;
+   private final NumberFormat numberFormat_;
+   private final JLabel namePrefixLabel_;
+   private final JLabel saveTypeLabel_;
+   private final JRadioButton singleButton_;
+   private final JRadioButton multiButton_;
+   private final JLabel rootLabel_;
+   private final JButton browseRootButton_;
+   private final JLabel displayMode_;
+   private final JCheckBox stackKeepShutterOpenCheckBox_;
+   private final JCheckBox chanKeepShutterOpenCheckBox_;
+   private final AcqOrderMode[] acqOrderModes_;
    private AdvancedOptionsDialog advancedOptionsWindow_;
    // persistent properties (app settings)
    private static final String ACQ_CONTROL_X = "acq_x";
@@ -181,8 +182,8 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener,
    private int columnWidth_[];
    private int columnOrder_[];
    private CheckBoxPanel framesPanel_;
-   private JPanel framesSubPanel_;
-   private CardLayout framesSubPanelLayout_;
+   private final JPanel framesSubPanel_;
+   private final CardLayout framesSubPanelLayout_;
    private static final String DEFAULT_FRAMES_PANEL_NAME = "Default frames panel";
    private static final String OVERRIDE_FRAMES_PANEL_NAME = "Override frames panel";
    private CheckBoxPanel channelsPanel_;
@@ -207,7 +208,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener,
 
       private static final long serialVersionUID = 3290621191844925827L;
       private ArrayList<ChannelSpec> channels_;
-      private AcquisitionEngine acqEng_;
+      private final AcquisitionEngine acqEng_;
       public final String[] COLUMN_NAMES = new String[]{
          "Use?",
          "Configuration",
@@ -268,13 +269,13 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener,
             } else if (columnIndex == 1) {
                return channels_.get(rowIndex).config;
             } else if (columnIndex == 2) {
-               return new Double(channels_.get(rowIndex).exposure);
+               return channels_.get(rowIndex).exposure;
             } else if (columnIndex == 3) {
-               return new Double(channels_.get(rowIndex).zOffset);
+               return channels_.get(rowIndex).zOffset;
             } else if (columnIndex == 4) {
                return channels_.get(rowIndex).doZStack;
             } else if (columnIndex == 5) {
-               return new Integer(channels_.get(rowIndex).skipFactorFrame);
+               return channels_.get(rowIndex).skipFactorFrame;
             } else if (columnIndex == 6) {
                return channels_.get(rowIndex).color;
             }
@@ -295,14 +296,14 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener,
 
          ChannelSpec channel = channels_.get(row);
          if (col == 0) {
-            channel.useChannel = ((Boolean) value).booleanValue();
+            channel.useChannel = ((Boolean) value);
          } else if (col == 1) {
             channel.config = value.toString();
             channel.exposure = exposurePrefs_.getDouble(
                     "Exposure_" + acqEng_.getChannelGroup() + "_" + 
                     channel.config, 10.0);
          } else if (col == 2) {
-            channel.exposure = ((Double) value).doubleValue();
+            channel.exposure = ((Double) value);
             exposurePrefs_.putDouble("Exposure_" + acqEng_.getChannelGroup() 
                     + "_" + channel.config,channel.exposure);
             if (options_.syncExposureMainAndMDA_) {
@@ -310,11 +311,11 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener,
                        channel.config, channel.exposure);
             }
          } else if (col == 3) {
-            channel.zOffset = ((Double) value).doubleValue();
+            channel.zOffset = ((Double) value);
          } else if (col == 4) {
             channel.doZStack = (Boolean) value;
          } else if (col == 5) {
-            channel.skipFactorFrame = ((Integer) value).intValue();
+            channel.skipFactorFrame = ((Integer) value);
          } else if (col == 6) {
             channel.color = (Color) value;
          }
@@ -405,6 +406,8 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener,
 
       /**
        * Used to change the order of the channels in the MDA window
+       * @param rowIdx
+       * @return 
        */
       public int rowDown(int rowIdx) {
          if (rowIdx >= 0 && rowIdx < channels_.size() - 1) {
@@ -579,6 +582,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener,
        * This method is called when editing is completed.
        * It must return the new value to be stored in the cell.
        */
+      @Override
       public Object getCellEditorValue() {
          // TODO: if content of column does not match type we get an exception
          try {
@@ -716,9 +720,9 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener,
       model_.addTableModelListener(model_);
 
       channelTable_ = new JTable() {
-
          @Override
-         protected JTableHeader createDefaultTableHeader() {
+         @SuppressWarnings("serial")
+         protected JTableHeader createDefaultTableHeader() {          
             return new JTableHeader(columnModel) {
 
                @Override
@@ -910,6 +914,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener,
       JButton disableCustomIntervalsButton = new JButton("Disable custom intervals");
       disableCustomIntervalsButton.addActionListener(new ActionListener() {
 
+         @Override
          public void actionPerformed(ActionEvent e) {
             acqEng_.enableCustomTimeIntervals(false);
             updateGUIContents();
@@ -1035,7 +1040,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener,
       zBottom_ = new JFormattedTextField(numberFormat_);
       zBottom_.setFont(new Font("Arial", Font.PLAIN, 10));
       zBottom_.setBounds(95, 27, 54, 21);
-      zBottom_.setValue(new Double(1.0));
+      zBottom_.setValue(1.0);
       zBottom_.addPropertyChangeListener("value", this);
       slicesPanel_.add(zBottom_);
 
@@ -1192,7 +1197,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener,
       afSkipInterval_ = new JSpinner(new SpinnerNumberModel(0, 0, null, 1));
       ((JSpinner.DefaultEditor) afSkipInterval_.getEditor()).getTextField().setFont(new Font("Arial", Font.PLAIN, 10));
       afSkipInterval_.setBounds(105, 54, 55, 22);
-      afSkipInterval_.setValue(new Integer(acqEng_.getAfSkipInterval()));
+      afSkipInterval_.setValue(acqEng_.getAfSkipInterval());
       afSkipInterval_.addChangeListener(new ChangeListener() {
 
          @Override
@@ -2249,8 +2254,8 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener,
       afSkipInterval_.setEnabled(acqEng_.isAutoFocusEnabled());
 
       // These values need to be cached or we will loose them due to the Spinners OnChanged methods calling applySetting
-      Integer numFrames = new Integer(acqEng_.getNumFrames());
-      Integer afSkipInterval = new Integer(acqEng_.getAfSkipInterval());
+      Integer numFrames = acqEng_.getNumFrames();
+      Integer afSkipInterval = acqEng_.getAfSkipInterval();
       if (acqEng_.isFramesSettingEnabled()) {
          numFrames_.setValue(numFrames);
       }
@@ -2341,7 +2346,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener,
        }
     }
     
-        @Override      
+    @Override      
     public void settingsChanged() {
             /*
         String comment = acqEng_.getComment();
@@ -2519,6 +2524,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener,
       advancedOptionsWindow_.setVisible(true);
    }
 
+   @SuppressWarnings("serial")
    public class ComponentTitledPanel extends JPanel {
 
       public ComponentTitledBorder compTitledBorder;
@@ -2544,6 +2550,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener,
       }
    }
 
+   @SuppressWarnings("serial")
    public class LabelPanel extends ComponentTitledPanel {
 
       LabelPanel(String title) {
@@ -2556,8 +2563,13 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener,
          this.setBorder(compTitledBorder);
          borderSet_ = true;
       }
+      
+      public void writeObject(java.io.ObjectOutputStream stream) throws MMException  {
+         throw new MMException("Do not serialize this class");
+      }
    }
 
+   @SuppressWarnings("serial")
    public class CheckBoxPanel extends ComponentTitledPanel {
 
       JCheckBox checkBox;
@@ -2575,12 +2587,19 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener,
 
          checkBox.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                boolean enable = checkBox.isSelected();
                thisPanel.setChildrenEnabled(enable);
             }
+            
+            public void writeObject(java.io.ObjectOutputStream stream) throws MMException  {
+               throw new MMException("Do not serialize this class");
+            }
+            
          });
 
+         
       }
 
       public void setChildrenEnabled(boolean enabled) {
