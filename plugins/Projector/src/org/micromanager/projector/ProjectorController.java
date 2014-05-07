@@ -47,6 +47,7 @@ import org.micromanager.imageDisplay.VirtualAcquisitionDisplay;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.JavaUtils;
+import org.micromanager.utils.MMException;
 import org.micromanager.utils.MathFunctions;
 import org.micromanager.utils.ReportingUtils;
 
@@ -269,8 +270,8 @@ public class ProjectorController {
             map.put(resultPoint[i][j + 1], dmdPoint[i][j + 1]);
             map.put(resultPoint[i + 1][j], dmdPoint[i + 1][j]);
             map.put(resultPoint[i + 1][j + 1], dmdPoint[i + 1][j + 1]);
-            double srcDX = (resultPoint[i+1][j].x - resultPoint[i][j].x)/4; 
-            double srcDY = (resultPoint[i][j+1].y - resultPoint[i][j].y)/4;
+            double srcDX = Math.abs((resultPoint[i+1][j].x - resultPoint[i][j].x))/4; 
+            double srcDY = Math.abs((resultPoint[i][j+1].y - resultPoint[i][j].y))/4;
             double srcTol = Math.max(srcDX, srcDY);
 
             try {
@@ -403,6 +404,9 @@ public class ProjectorController {
             bestPoly = poly;
             minDistance = distance;
          }
+      }
+      if (bestPoly == null) {
+         throw new RuntimeException("Unable to map point to device.");
       }
       return toIntPoint((Point2D.Double) mapping.get(bestPoly).transform(toDoublePoint(pt), null));
    }

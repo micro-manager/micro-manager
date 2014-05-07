@@ -525,6 +525,7 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
       mosaicExecutor_.submit(new Runnable() {
          public void run() {
             try {
+               // Make sure a sequence isn't running.
                core_.stopSLMSequence(mosaicName_);
                final String selectedItem = sequenceTriggerComboBox.getSelectedItem().toString();
                core_.setProperty(mosaicName_, "SequenceLoopCount", GUIUtils.getIntValue(sequenceLoopCountTextField_));
