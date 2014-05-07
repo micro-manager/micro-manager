@@ -132,8 +132,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
               Properties.Keys.PLUGIN_OFFSET_PIEZO_SHEET.toString(), 0.1, 8);  
 
       final JFormattedTextField rateField = pu.makeFloatEntryField(panelName_, 
-              "Rate", prefs_.getFloat(panelName_, 
-              Properties.Keys.PLUGIN_RATE_PIEZO_SHEET.toString(), -10), 8);
+              Properties.Keys.PLUGIN_RATE_PIEZO_SHEET.toString(), -80, 8);
 
       JButton setMiddleButton = new JButton("Set Acquisition Center");
       setMiddleButton.addActionListener(new ActionListener() {
