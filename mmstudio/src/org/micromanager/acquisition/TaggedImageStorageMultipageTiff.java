@@ -99,8 +99,10 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
          public void run() {
             //for debugging
             ReportingUtils.logMessage("Running Multpage tiff shutdown hook");
-            finished();
-            writeDisplaySettings();
+            //don't actually run this shutdown hook for now because its not clear that it actually helps
+            //and it may lead to strange problems
+//            finished();
+//            writeDisplaySettings();
          }
       };    
       Runtime.getRuntime().addShutdownHook(this.shutdownHook_); 
@@ -300,8 +302,9 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
       //extra log to try and find a finishing bug
       ReportingUtils.logMessage("Finishing multipage Tiff dataset");
       StackTraceElement[] el = Thread.currentThread().getStackTrace();
-      for (StackTraceElement e : el)
-      ReportingUtils.logMessage("Stack trace: " + e.toString());
+      for (StackTraceElement e : el) {
+         ReportingUtils.logMessage("Stack trace: " + e.toString());
+      }
       //////////////////////////////////////////////////////////////
       if (finished_) {
          return;
