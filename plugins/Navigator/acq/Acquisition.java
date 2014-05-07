@@ -16,6 +16,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.acquisition.DefaultTaggedImageSink;
+import org.micromanager.acquisition.MMAcquisition;
 import org.micromanager.acquisition.MMImageCache;
 import org.micromanager.api.ImageCache;
 import org.micromanager.utils.MDUtils;
@@ -30,10 +31,12 @@ public class Acquisition {
    private final boolean explore_;
    private volatile double zTop_, zBottom_, zStep_ = 1, zAbsoluteTop_ = 0, zAbsoluteBottom_ = 50;
    private BlockingQueue<TaggedImage> engineOutputQueue_;
+   private BlockingQueue<AcquisitionEvent> events_;
    private DynamicStitchingImageStorage storage_;
    private CMMCore core_ = MMStudioMainFrame.getInstance().getCore();
    private CustomAcqEngine eng_;
    private String xyStage_, zStage_;
+   private Thread acquisitionThread_;
 
    public Acquisition(boolean explore, CustomAcqEngine eng, double zTop, double zBottom, double zStep) {
       eng_ = eng;
@@ -47,7 +50,7 @@ public class Acquisition {
          //TODO: add limit to this queue in case saving and display goes much slower than acquisition?
          engineOutputQueue_ = new LinkedBlockingQueue<TaggedImage>();
 
-         JSONObject summaryMetadata = makeSummaryMD(1,1);
+         JSONObject summaryMetadata = makeSummaryMD(1,(int)core_.getNumberOfCameraChannels());
          storage_ = new DynamicStitchingImageStorage(summaryMetadata, true);
          ImageCache imageCache = new MMImageCache(storage_) {
             @Override
@@ -65,7 +68,7 @@ public class Acquisition {
 
             @Override
             public void close() {
-               eng_.finishExploreAcquisition();
+               finish();
                super.close();
             }
          };
@@ -76,11 +79,39 @@ public class Acquisition {
          DefaultTaggedImageSink sink = new DefaultTaggedImageSink(engineOutputQueue_, imageCache);
          sink.start();
          
+         events_ = new LinkedBlockingQueue<AcquisitionEvent>();
+         
+         acquisitionThread_ = new Thread(new Runnable() {
+               @Override
+               public void run() {
+                  while (!Thread.interrupted()) {
+                     if (events_.size() > 0) {
+                        eng_.runEvent(events_.poll());
+                     } else {
+                        try {
+                           //wait for more events to acquire
+                           Thread.sleep(5);
+                        } catch (InterruptedException ex) {
+                           Thread.currentThread().interrupt();
+                        }
+                     }
+                  }
+               }
+            }, "Explorer acquisition thread");
+            acquisitionThread_.start();
+         
+         
       } else {
 
       //TODO   
       }
       
+      
+      
+   }
+   
+   public void addEvent(AcquisitionEvent e) {
+       events_.add(e); 
    }
   
    public double getXPosition(int posIndex) throws JSONException {
@@ -126,8 +157,8 @@ public class Acquisition {
 
    public void finish() {
       if (explore_) {
-         engineOutputQueue_.add(new TaggedImage(null, null));
-
+          acquisitionThread_.interrupt();
+          engineOutputQueue_.add(new TaggedImage(null, null));
       } else {
          //TODO: non explore acquisitions
       }
@@ -154,7 +185,7 @@ public class Acquisition {
          summary.put("Width", core_.getImageWidth());
          summary.put("Height", core_.getImageHeight());
          summary.put("Prefix", "ExplorerTest");
-         summary.put("Directory", "C:/Users/Henry/Desktop/HiResDump");
+         summary.put("Directory", DynamicStitchingImageStorage.HI_RES_SAVING_DIR);
 
          //make intitial position list
          JSONArray pList = new JSONArray();
@@ -170,6 +201,15 @@ public class Acquisition {
          pos.put("GridColumnIndex", 1);
          pos.put("GridRowIndex", 1);          
          pList.put(pos);
+         
+          JSONArray chNames = new JSONArray();
+          JSONArray chColors = new JSONArray();
+          for (int i = 0; i < core_.getNumberOfCameraChannels(); i++) {
+              chNames.put(core_.getCameraChannelName(i));
+              chColors.put(MMAcquisition.getMultiCamDefaultChannelColor(i, core_.getCameraChannelName(i)));
+          }
+          summary.put("ChNames", chNames);
+          summary.put("ChColors", chColors);
          
          summary.put("InitialPositionList", pList);
          

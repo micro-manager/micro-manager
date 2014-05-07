@@ -252,9 +252,14 @@ public class DoubleTaggedImageStorage implements TaggedImageStorage {
    }
 
    @Override
-   public void finished() {
-      storage_.finished();
-      finished_ = true;
+    public void finished() {
+        //Why are things closing before they are supposed to?
+        StackTraceElement[] e = Thread.currentThread().getStackTrace();
+        for (StackTraceElement s : e) {
+            ReportingUtils.logError(s.toString());
+        }
+        storage_.finished();
+        finished_ = true;
    }
 
    @Override

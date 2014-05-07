@@ -31,6 +31,7 @@ import org.micromanager.acquisition.AcquisitionEngine;
 import org.micromanager.imageDisplay.VirtualAcquisitionDisplay;
 import org.micromanager.api.ImageCache;
 import org.micromanager.api.ImageCacheListener;
+import org.micromanager.imageDisplay.IMMImagePlus;
 
 
 import org.micromanager.internalinterfaces.DisplayControls;
@@ -493,7 +494,7 @@ public class DisplayPlus implements ImageCacheListener {
                 if (tSelector_ != null) {
                     int frame = MDUtils.getFrameIndex(taggedImage.tags);
                     if (tSelector_.getMaximum() <= (1 + frame)) {
-                        ((VirtualAcquisitionDisplay.IMMImagePlus) vad_.getHyperImage()).setNFramesUnverified(frame + 1);
+                        ((IMMImagePlus) vad_.getHyperImage()).setNFramesUnverified(frame + 1);
                         tSelector_.setMaximum(frame + 2);
                         tSelector_.invalidate();
                         tSelector_.validate();

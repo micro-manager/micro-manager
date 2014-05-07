@@ -10,26 +10,16 @@ import ij.IJ;
 import ij.gui.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.geom.AffineTransform;
-import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.prefs.Preferences;
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-import main.Util;
 import mmcorej.TaggedImage;
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.micromanager.MMStudioMainFrame;
-import org.micromanager.acquisition.AcquisitionEngine;
 
 import org.micromanager.imageDisplay.VirtualAcquisitionDisplay;
 import org.micromanager.api.ImageCache;
-import org.micromanager.api.ImageCacheListener;
 
 
 import org.micromanager.internalinterfaces.DisplayControls;

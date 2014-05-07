@@ -5,24 +5,17 @@ package acq;
  * and open the template in the editor.
  */
 
-import gui.DisplayPlus;
 import ij.IJ;
 import java.awt.geom.Point2D;
+import java.util.Arrays;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import main.Util;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
-import org.micromanager.acquisition.DefaultTaggedImageSink;
-import org.micromanager.acquisition.MMImageCache;
-import org.micromanager.api.ImageCache;
 import org.micromanager.api.MMTags;
-import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.ReportingUtils;
 
 /**
@@ -32,15 +25,12 @@ import org.micromanager.utils.ReportingUtils;
 public class CustomAcqEngine {
    
    private CMMCore core_;
-   private BlockingQueue<AcquisitionEvent> acqEvents_;
    private AcquisitionEvent lastEvent_;
-   private Thread exploreAcquisitionThread_;
    private Acquisition exploreAcquisition_;
    private String xyStageName_, zName_;
 
    public CustomAcqEngine(CMMCore core) {
       core_ = core;
-      acqEvents_ = new LinkedBlockingQueue<AcquisitionEvent>();
       updateDevicesForAcquisition();
    }
    
@@ -60,33 +50,18 @@ public class CustomAcqEngine {
             //TODO: check if existing open explore that should be finished?
             lastEvent_ = null;
 
-            exploreAcquisition_ = new Acquisition(true, CustomAcqEngine.this, zTop, zBottom, 1);
-            exploreAcquisitionThread_ = new Thread(new Runnable() {
-               @Override
-               public void run() {
-                  while (!Thread.interrupted()) {
-                     if (acqEvents_.size() > 0) {
-                        AcquisitionEvent event = acqEvents_.poll();
-                        updateHardware(event);
-                        acquireImage(event);
-                     } else {
-                        try {
-                           //wait for more events to acquire
-                           Thread.sleep(5);
-                        } catch (InterruptedException ex) {
-                           Thread.currentThread().interrupt();
-                        }
-                     }
-                  }
-               }
-            }, "Explorer acquisition thread");
-            exploreAcquisitionThread_.start();
+            exploreAcquisition_ = new Acquisition(true, CustomAcqEngine.this, zTop, zBottom, 1);           
 
             //acquire first tile
             acquireTiles(1, 1, 1, 1);
          }
       }).start();
    }
+
+    public void runEvent(AcquisitionEvent event) {
+        updateHardware(event);
+        acquireImage(event);
+    }
 
    public void acquireTiles(final int row1, final int col1, final int row2, final int col2) {
       try {
@@ -124,7 +99,7 @@ public class CustomAcqEngine {
             for (double z = zTop; z <= zBottom; z += zStep) {
                //move focus
                int sliceIndex = (int) ((z - zAbsoluteTop) / zStep);
-               acqEvents_.add(new AcquisitionEvent(0, 0, sliceIndex, posIndices[i], z, x, y,
+               exploreAcquisition_.addEvent(new AcquisitionEvent(0, 0, sliceIndex, posIndices[i], z, x, y,
                        newPositionsAdded));
             }
          }
@@ -133,15 +108,6 @@ public class CustomAcqEngine {
          ReportingUtils.showError("Couldn't create acquistion events");
       }
    }
-
-   public void finishExploreAcquisition() {
-      if (exploreAcquisitionThread_ != null) {
-         exploreAcquisitionThread_.interrupt();
-      }
-      
-      //Poison image to end sink
-      exploreAcquisition_.finish();
-   }
    
    private void acquireImage(AcquisitionEvent event) {
       try {
@@ -149,21 +115,24 @@ public class CustomAcqEngine {
          core_.snapImage();
          //TODO: close shutter?
          
-         //send to storage
-         TaggedImage img = core_.getTaggedImage();
-         //add tags
-         img.tags.put(MMTags.Image.POS_INDEX, event.positionIndex_);
-         img.tags.put(MMTags.Image.SLICE_INDEX, event.sliceIndex_);
-         img.tags.put(MMTags.Image.FRAME_INDEX, event.frameIndex_);
-         img.tags.put(MMTags.Image.CHANNEL_INDEX, event.channelIndex_);
-         img.tags.put(MMTags.Image.ZUM, event.zPosition_);
-         if (event.posListToMD_) {
-            //write position list to metadata
-            img.tags.put("PositionList", exploreAcquisition_.getPositionList());
-         }
-         
-         //TODO: add elapsed time tag
-         exploreAcquisition_.addImage(img);
+         int numCamChannels = (int) core_.getNumberOfCameraChannels();
+          for (int c = 0; c < numCamChannels; c++) {
+              //send to storage
+              TaggedImage img = core_.getTaggedImage(c) ;
+              //add tags
+              img.tags.put(MMTags.Image.POS_INDEX, event.positionIndex_);
+              img.tags.put(MMTags.Image.SLICE_INDEX, event.sliceIndex_);
+              img.tags.put(MMTags.Image.FRAME_INDEX, event.frameIndex_);
+              img.tags.put(MMTags.Image.CHANNEL_INDEX, event.channelIndex_ * numCamChannels + c);
+              img.tags.put(MMTags.Image.ZUM, event.zPosition_);
+              if (event.posListToMD_) {
+                  //write position list to metadata
+                  img.tags.put("PositionList", exploreAcquisition_.getPositionList());
+              }
+                           
+              //TODO: add elapsed time tag
+              exploreAcquisition_.addImage(img);
+          }
            
       } catch (Exception ex) {
          ReportingUtils.showError("Couldn't acquire Z stack");
@@ -187,6 +156,7 @@ public class CustomAcqEngine {
             core_.setXYPosition(xyStageName_, event.xPosition_, event.yPosition_);
          } catch (Exception ex) {
             ReportingUtils.showError("Couldn't move XY stage");
+            ex.printStackTrace();
          }
       }
       
@@ -204,11 +174,11 @@ public class CustomAcqEngine {
       
       //Channels
       if (lastEvent_ == null || event.channelIndex_ != lastEvent_.channelIndex_) {
-         try {
-            core_.setConfig("Channel", event.channelIndex_ == 0 ? "DAPI" : "FITC");
-         } catch (Exception ex) {
-            ReportingUtils.showError("Couldn't change channel group");
-         }
+//         try {
+//            core_.setConfig("Channel", event.channelIndex_ == 0 ? "DAPI" : "FITC");
+//         } catch (Exception ex) {
+//            ReportingUtils.showError("Couldn't change channel group");
+//         }
       }
    }
 

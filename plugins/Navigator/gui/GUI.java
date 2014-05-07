@@ -41,6 +41,10 @@ public class GUI extends javax.swing.JFrame implements ImageFocusListener {
      
    @Override
    public void focusReceived(ImageWindow focusedWindow) {
+       if (focusedWindow == null) {
+           currentDisplay_ = null;
+           return;
+       }
       Object disp = VirtualAcquisitionDisplay.getDisplay(focusedWindow.getImagePlus());
       if (disp == null || !(disp instanceof DisplayPlus) ) {
          currentDisplay_ = null;

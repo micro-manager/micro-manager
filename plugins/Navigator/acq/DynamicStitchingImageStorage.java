@@ -35,7 +35,8 @@ import org.micromanager.utils.ReportingUtils;
  */
 public class DynamicStitchingImageStorage implements TaggedImageStorage {
 
-   public static String LO_RES_SAVING_DIR = "C:/Users/Henry/Desktop/HiResDump";
+   public static String LO_RES_SAVING_DIR = "C:/Users/bidc/Desktop/testDataDump";
+   public static String HI_RES_SAVING_DIR = "C:/Users/bidc/Desktop/testDataDump";
    public static String LOW_RES_METADATA_KEY = "Low resolution stitched storage";
    
    private TaggedImageStorage imageStorage_;

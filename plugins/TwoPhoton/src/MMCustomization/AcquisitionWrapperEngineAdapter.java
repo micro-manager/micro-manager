@@ -91,7 +91,7 @@ public class AcquisitionWrapperEngineAdapter extends AcquisitionWrapperEngine {
         return focusOffset_;
     }
     
-    public void setFocusOffset(double offset) {
+    public double setFocusOffset(double offset) {
        //image moves up = negative offset
         focusOffset_ = offset;
         try {
@@ -101,6 +101,7 @@ public class AcquisitionWrapperEngineAdapter extends AcquisitionWrapperEngine {
         } catch (Exception e) {
             IJ.log("Couldnt set focus offset, initial z pos: " + initialZPosition_ + " focusOffset: " + focusOffset_);
         }
+        return initialZPosition_ + focusOffset_;
     }
     
    private void addRunnables(SequenceSettings settings) {
