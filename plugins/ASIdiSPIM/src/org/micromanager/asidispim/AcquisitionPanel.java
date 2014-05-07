@@ -109,6 +109,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private AtomicBoolean stop_ = new AtomicBoolean(false);
    private final StagePositionUpdater stagePosUpdater_;
    private final JFormattedTextField exposureField_;
+   private final JFormattedTextField stepSizeField_;
    private final JCheckBox separateTimePointsCB_;
    private final JCheckBox saveCB_;
    
@@ -160,17 +161,15 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
               Properties.Keys.SPIM_FIRSTSIDE);
       volPanel_.add(firstSide_, "wrap");
 
-      // acqPanel_.add(new JLabel("Number of volumes per acquisition:"));
-      // numRepeats_ = pu.makeSpinnerInteger(1, 32000, props_, devices_,
-      //        new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
-      //        Properties.Keys.SPIM_NUM_REPEATS);
-      // acqPanel_.add(numRepeats_, "wrap");
-
       volPanel_.add(new JLabel("Number of slices per volume:"));
       numSlices_ = pu.makeSpinnerInteger(1, 1000, props_, devices_,
               new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
               Properties.Keys.SPIM_NUM_SLICES);
       volPanel_.add(numSlices_, "wrap");
+      
+      volPanel_.add(new JLabel("Stepsize [um]:"));
+      stepSizeField_ = pu.makeFloatEntryField(panelName_, "StepSize", 1.0, 6);
+      volPanel_.add(stepSizeField_, "wrap");
 
       volPanel_.add(new JLabel("Delay before each side (ms):"));
       delaySide_ = pu.makeSpinnerFloat(0, 10000, 0.25, props_, devices_,
@@ -383,9 +382,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
 
       // set up tabbed pane
       add(slicePanel_, "spany 2, top");
-      add(volPanel_, "top");
+      add(volPanel_, "spany2, top");
       add(repeatPanel_, "top, wrap");
-      add(savePanel_, "spanx 2, wrap");
+      add(savePanel_, "wrap");
       add(buttonStart_, "cell 0 2, split 2, center");
       add(buttonStop_, "center");
       add(numTimePointsDoneLabel_, "center");
@@ -566,14 +565,40 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                }
 
                // get controller armed
+               // Need to calculate the sheet amplitude based on settings 
+               // in the Setup panels
+               // We get these through the preferences
+
+               int numSlices = (Integer) numSlices_.getValue();
+               float piezoAmplitude = (float) (numSlices * 
+                       (Double) stepSizeField_.getValue());
+               
+               float sheetARate = prefs_.getFloat(
+                       Properties.Keys.PLUGIN_SETUP_PANEL_NAME.toString() + Devices.Sides.A, 
+                       Properties.Keys.PLUGIN_RATE_PIEZO_SHEET, -80);
+               // catch divide by 0 errors
+               float sheetAmplitudeA = numSlices * ( 1 / sheetARate);
+               float sheetBRate = prefs_.getFloat(
+                       Properties.Keys.PLUGIN_SETUP_PANEL_NAME.toString() + Devices.Sides.B, 
+                       Properties.Keys.PLUGIN_RATE_PIEZO_SHEET, -80);
+               float sheetAmplitudeB = numSlices * ( 1/ sheetBRate) ;
+               
+               props_.setPropValue(Devices.Keys.GALVOA, Properties.Keys.SA_AMPLITUDE_Y_DEG,
+                       sheetAmplitudeA);
                props_.setPropValue(Devices.Keys.GALVOA, Properties.Keys.BEAM_ENABLED,
                        Properties.Values.NO, true);
+               props_.setPropValue(Devices.Keys.GALVOB, Properties.Keys.SA_AMPLITUDE_Y_DEG,
+                       sheetAmplitudeB);
                props_.setPropValue(Devices.Keys.GALVOB, Properties.Keys.BEAM_ENABLED,
                        Properties.Values.NO, true);
                props_.setPropValue(Devices.Keys.PIEZOA, Properties.Keys.SPIM_NUM_SLICES,
                        (Integer) numSlices_.getValue(), true);
+               props_.setPropValue(Devices.Keys.PIEZOA, Properties.Keys.SA_AMPLITUDE,
+                       piezoAmplitude );
                props_.setPropValue(Devices.Keys.PIEZOB, Properties.Keys.SPIM_NUM_SLICES,
                        (Integer) numSlices_.getValue(), true);
+               props_.setPropValue(Devices.Keys.PIEZOB, Properties.Keys.SA_AMPLITUDE,
+                       piezoAmplitude );
                props_.setPropValue(Devices.Keys.PIEZOA, Properties.Keys.SPIM_STATE,
                        Properties.Values.SPIM_ARMED, true);
                props_.setPropValue(Devices.Keys.PIEZOB, Properties.Keys.SPIM_STATE,

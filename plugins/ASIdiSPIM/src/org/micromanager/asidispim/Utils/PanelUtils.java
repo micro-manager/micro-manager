@@ -112,6 +112,7 @@ public class PanelUtils {
 
       js.setMajorTickSpacing(intmax-intmin);
       js.setMinorTickSpacing(scalefactor);
+      
       //Create the label table
       Hashtable<Integer, JLabel> labelTable = new Hashtable<Integer, JLabel>();
       labelTable.put( new Integer(intmax), new JLabel(Double.toString(max)) );
@@ -355,10 +356,18 @@ public class PanelUtils {
    }
    
    
-   /**
-    * Creates formatted text field for user to enter decimal (double)
-    */
-   public JFormattedTextField makeFloatEntryField(String prefNode, String prefKey, double defaultValue, int numColumns) {
+  /**
+   * Creates formatted text field for user to enter decimal (double) values.
+   * @param prefNode - String identifying preference node where this variable 
+   *                    be store such that its value can be retrieved on restart
+   * @param prefKey - String used to identify this preference
+   * @param defaultValue - initial (default) value.  Will be overwritten by
+   *                       value in Preferences
+   * @param numColumns - width of the GUI element
+   * @return - JFormattedTextField element
+   */
+   public JFormattedTextField makeFloatEntryField(String prefNode, String prefKey, 
+           double defaultValue, int numColumns) {
       
       class FieldListener implements PropertyChangeListener {
          private final JFormattedTextField tf_;

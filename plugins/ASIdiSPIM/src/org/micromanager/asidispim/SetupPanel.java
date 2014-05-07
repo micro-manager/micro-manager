@@ -89,7 +89,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
    public SetupPanel(ScriptInterface gui, Devices devices, Properties props, 
            Joystick joystick, Devices.Sides side, Positions positions, 
            Cameras cameras, Prefs prefs) {
-      super("Setup Path " + side.toString(),
+      super(Properties.Keys.PLUGIN_SETUP_PANEL_NAME.toString() + side.toString(),
               new MigLayout(
               "",
               "[center]8[align center]",
@@ -129,20 +129,26 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       JPanel sheetPanel = new JPanel(ml);
       
       final JFormattedTextField offsetField = pu.makeFloatEntryField(panelName_, 
-              "Offset", 0.1, 8);  
+              Properties.Keys.PLUGIN_OFFSET_PIEZO_SHEET.toString(), 0.1, 8);  
+
       final JFormattedTextField rateField = pu.makeFloatEntryField(panelName_, 
-              "Rate", -10, 8);
+              "Rate", prefs_.getFloat(panelName_, 
+              Properties.Keys.PLUGIN_RATE_PIEZO_SHEET.toString(), -10), 8);
 
       JButton setMiddleButton = new JButton("Set Acquisition Center");
       setMiddleButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
             try {
-            Point2D.Double pt = core_.getGalvoPosition(
+               Point2D.Double pt = core_.getGalvoPosition(
                     devices_.getMMDeviceException(micromirrorDeviceKey_));
-            sheetCenterPos_ = pt.y;
-            imagingCenterPos_ = core_.getPosition(
+               sheetCenterPos_ = pt.y;
+               props_.setPropValue(micromirrorDeviceKey_, 
+                     Properties.Keys.SA_OFFSET_Y_DEG, (float) sheetCenterPos_);
+               imagingCenterPos_ = core_.getPosition(
                     devices_.getMMDeviceException(piezoImagingDeviceKey_));
+               props_.setPropValue(piezoImagingDeviceKey_, 
+                        Properties.Keys.SA_OFFSET, (float) imagingCenterPos_);
             } catch (Exception ex) {
                gui_.showError(ex);
             }
@@ -299,8 +305,8 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
                updateSheetSAParams();
                imagingStartPos_ = core_.getPosition(
                        devices_.getMMDeviceException(piezoImagingDeviceKey_));
-               updateImagingSAParams();
-               updateStartStopPositions();
+               // updateImagingSAParams();
+               // updateStartStopPositions();
             } catch (Exception ex) {
                gui_.showError(ex);
             }
@@ -327,8 +333,8 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
                imagingStopPos_ = core_.getPosition(
                        devices_.getMMDeviceException(piezoImagingDeviceKey_));
               
-               updateImagingSAParams();
-               updateStartStopPositions();
+               // updateImagingSAParams();
+               // updateStartStopPositions();
             } catch (Exception ex) {
                gui_.showError(ex);
             }

@@ -109,7 +109,10 @@ public class Properties {
       PLUGIN_DIRECTORY_ROOT("DirectoryRoot"),
       PLUGIN_NAME_PREFIX("NamePrefix"),
       PLUGIN_SAVE_WHILE_ACQUIRING("SaveWhileAcquiring"),
-      PLUGIN_SEPARATE_VIEWERS_FOR_TIMEPOINTS("SeparateViewersForTimePoints")
+      PLUGIN_SEPARATE_VIEWERS_FOR_TIMEPOINTS("SeparateViewersForTimePoints"),
+      PLUGIN_OFFSET_PIEZO_SHEET("OffsetPiezoSheet"),  // Offset in piezo/sheet relation
+      PLUGIN_RATE_PIEZO_SHEET ("RatePiezoSheet"),     // Rate in piezo/sheet 
+      PLUGIN_SETUP_PANEL_NAME ("Setup Path ")              // Setup Panel Name
       ;
       private final String text;
       Keys(String text) {
