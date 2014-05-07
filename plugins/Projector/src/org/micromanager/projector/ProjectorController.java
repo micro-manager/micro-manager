@@ -7,6 +7,7 @@ package org.micromanager.projector;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
+import ij.gui.EllipseRoi;
 import ij.gui.ImageCanvas;
 import ij.gui.ImageWindow;
 import ij.gui.PointRoi;
@@ -437,42 +438,58 @@ public class ProjectorController {
       return transform(mapping, pOffscreen);
    }
    
+   // Converts an ROI to a Polygon.
+   private static Polygon asPolygon(Roi roi) {
+      if ((roi.getType() == Roi.POINT)
+               || (roi.getType() == Roi.FREEROI)
+               || (roi.getType() == Roi.POLYGON)
+            || (roi.getType() == Roi.RECTANGLE)) {
+         return roi.getPolygon();
+      } else if (roi.getType() == Roi.OVAL) {
+         Rectangle bounds = roi.getBounds();
+         double aspectRatio = bounds.width / (double) bounds.height;
+         if (aspectRatio < 1) {
+            return new EllipseRoi(bounds.x + bounds.width / 2,
+                  bounds.y,
+                  bounds.x + bounds.width / 2,
+                  bounds.y + bounds.height,
+                  aspectRatio).getPolygon();
+         } else {
+            return new EllipseRoi(bounds.x,
+                  bounds.y + bounds.height / 2,
+                  bounds.x + bounds.width,
+                  bounds.y + bounds.height / 2,
+                  1 / aspectRatio).getPolygon();
+         }
+      } else {
+         throw new RuntimeException("Can't use this type of ROI.");
+      }
+   }
+
    private static List<Polygon> transformROIs(ImagePlus imgp, Roi[] rois, Map<Polygon, AffineTransform> mapping) {
       ArrayList<Polygon> transformedROIs = new ArrayList<Polygon>();
       for (Roi roi : rois) {
-         if ((roi.getType() == Roi.POINT)
-               || (roi.getType() == Roi.FREEROI)
-               || (roi.getType() == Roi.POLYGON)
-               || (roi.getType() == Roi.RECTANGLE)
-               //|| (roi.getType() == Roi.OVAL)
-                 ) {
-
-            Polygon poly = roi.getPolygon();
-            Polygon newPoly = new Polygon();
-            try {
-               Point2D galvoPoint;
-               for (int i = 0; i < poly.npoints; ++i) {
-                  Point imagePoint = new Point(poly.xpoints[i], poly.ypoints[i]);
-                  galvoPoint = transformAndFlip(mapping, imgp, imagePoint);
-                  if (galvoPoint == null) {
-                     throw new Exception();
-                  }
-                  newPoly.addPoint((int) galvoPoint.getX(), (int) galvoPoint.getY());
+         Polygon poly = asPolygon(roi);
+         Polygon newPoly = new Polygon();
+         try {
+            Point2D galvoPoint;
+            for (int i = 0; i < poly.npoints; ++i) {
+               Point imagePoint = new Point(poly.xpoints[i], poly.ypoints[i]);
+               galvoPoint = transformAndFlip(mapping, imgp, imagePoint);
+               if (galvoPoint == null) {
+                  throw new Exception();
                }
-               transformedROIs.add(newPoly);
-            } catch (Exception ex) {
-               ReportingUtils.showError(ex);
-               break;
+               newPoly.addPoint((int) galvoPoint.getX(), (int) galvoPoint.getY());
             }
-
-         } else {
-            ReportingUtils.showError("Can't use this type of ROI.");
+            transformedROIs.add(newPoly);
+         } catch (Exception ex) {
+            ReportingUtils.showError(ex);
             break;
          }
       }
       return transformedROIs;
    }
-   
+
       /* Returns the currently selected ROIs for a given ImageWindow. */
    public static Roi[] getRois(ImageWindow window) {
       Roi[] rois = new Roi[]{};
