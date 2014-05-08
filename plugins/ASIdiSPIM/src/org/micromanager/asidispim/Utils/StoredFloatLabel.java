@@ -1,6 +1,7 @@
 
 package org.micromanager.asidispim.Utils;
 
+import java.text.ParseException;
 import javax.swing.JLabel;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.asidispim.Data.Prefs;
@@ -52,6 +53,17 @@ import org.micromanager.utils.NumberUtils;
       public void setFloat(float val) {
          super.setText(NumberUtils.doubleToDisplayString(val));
          prefs_.putFloat(prefNode_, prefKey_, val);
+      }
+      
+      public float getFloat() {
+         String txt = getText();
+         float result = 0;
+         try {
+            result = (float) NumberUtils.displayStringToDouble(txt);
+         } catch (ParseException pe) {
+            // do nothing
+         }
+         return result;
       }
    }
      
