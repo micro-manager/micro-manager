@@ -64,6 +64,7 @@ public class ListeningJPanel extends JPanel {
    
    /**
     * returns the name of the panel 
+    * @return - panelName
     */
    public String getPanelName() { return panelName_; }
    

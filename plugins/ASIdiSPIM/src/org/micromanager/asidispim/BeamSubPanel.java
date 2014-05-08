@@ -60,7 +60,7 @@ public final class BeamSubPanel extends ListeningJPanel {
    private final ItemListener disableSheetA_;
    private final ItemListener disableSheetB_;
    
-   private List<UpdateFromPropertyListenerInterface> propListeners_;
+   private final List<UpdateFromPropertyListenerInterface> propListeners_;
    
    /**
     * 
@@ -154,6 +154,7 @@ public final class BeamSubPanel extends ListeningJPanel {
          }
          
          // only called when the user selects/deselects from GUI or the value _changes_ programmatically
+         @Override
          public void itemStateChanged(ItemEvent e) {
             if (e.getStateChange() == ItemEvent.SELECTED) {
                sheetBox_.setEnabled(true);
@@ -205,6 +206,7 @@ public final class BeamSubPanel extends ListeningJPanel {
          }
          
          // only called when the user selects/deselects from GUI or the value _changes_ programmatically
+         @Override
          public void itemStateChanged(ItemEvent e) {
             if (e.getStateChange() == ItemEvent.SELECTED) {
                props_.setPropValue(devKey_, propKey_, onValue_);
@@ -213,11 +215,13 @@ public final class BeamSubPanel extends ListeningJPanel {
             }
          }
          
+         @Override
          public void updateFromProperty() {
             jc_.setEnabled(devices_.getMMDevice(devKey_)!=null);
             jc_.setSelected(props_.getPropValueString(devKey_, propKey_, true).equals(onValue_.toString()));
          }
          
+         @Override
          public void devicesChangedAlert() {
             updateFromProperty();
          }

@@ -60,10 +60,14 @@ public class GuiSettingsPanel extends ListeningJPanel {
      
    /**
     * 
+    * @param gui - implementation of Micro-Manager ScriptInterface api
     * @param devices the (single) instance of the Devices class
+    * @param props 
+    * @param prefs
+    * @param stagePosUpdater
     */
-   public GuiSettingsPanel(ScriptInterface gui, Devices devices, Properties props, Prefs prefs,
-         StagePositionUpdater stagePosUpdater) {    
+   public GuiSettingsPanel(ScriptInterface gui, Devices devices, 
+           Properties props, Prefs prefs, StagePositionUpdater stagePosUpdater) {    
       super ("GUI Settings", 
             new MigLayout(
               "", 
@@ -86,6 +90,7 @@ public class GuiSettingsPanel extends ListeningJPanel {
       
       final JCheckBox activeTimerCheckBox = new JCheckBox("Update positions continually");
       ActionListener ae = new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent e) { 
             if (activeTimerCheckBox.isSelected()) {
                stagePosUpdater_.start();

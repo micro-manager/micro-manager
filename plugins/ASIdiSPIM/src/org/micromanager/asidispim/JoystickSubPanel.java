@@ -129,8 +129,9 @@ public final class JoystickSubPanel extends ListeningJPanel {
        * the tab to which this selectionbox belongs is selected (via gotSelected() method)
        * Save the selection to preferences every time (probably inefficient)
        *
-       * @param ae
+       * @param ae - ActionEvent that generated this callback
        */
+      @Override
       public void actionPerformed(ActionEvent ae) {
          if (updatingList_ == true) {
             return;  // don't go through this if we are rebuilding selections
@@ -148,6 +149,7 @@ public final class JoystickSubPanel extends ListeningJPanel {
       }
       
       // have both actionlistener and itemlistener because need to do deselect operation
+      @Override
       public void itemStateChanged(ItemEvent e) {
          if (updatingList_ == true) {
             return;  // don't go through this if we are rebuilding selections
@@ -163,6 +165,7 @@ public final class JoystickSubPanel extends ListeningJPanel {
       /**
        * called whenever one of the devices is changed in the "Devices" tab
        */
+      @Override
       public void devicesChangedAlert() {
          updateStageSelections();
       }

@@ -111,7 +111,9 @@ public final class CameraSubPanel extends ListeningJPanel implements LiveModeLis
    
    /**
     * required by LiveModeListener interface
+    * @param enable
     */
+   @Override
    public void liveModeEnabled(boolean enable) { 
       if (showLiveButton_) {
          setLiveButtonAppearance(enable);
@@ -165,6 +167,7 @@ public final class CameraSubPanel extends ListeningJPanel implements LiveModeLis
        *
        * @param ae
        */
+      @Override
       public void actionPerformed(ActionEvent ae) {
          if (updatingList_ == true) {
             return;  // don't go through this if we are rebuilding selections
@@ -177,6 +180,7 @@ public final class CameraSubPanel extends ListeningJPanel implements LiveModeLis
       /**
        * called whenever one of the devices is changed in the "Devices" tab
        */
+      @Override
       public void devicesChangedAlert() {
          updateCameraSelections();
       }

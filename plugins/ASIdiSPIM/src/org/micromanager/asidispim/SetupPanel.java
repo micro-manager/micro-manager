@@ -45,7 +45,6 @@ import org.micromanager.MMStudioMainFrame;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.asidispim.Utils.StoredFloatLabel;
 import org.micromanager.internalinterfaces.LiveModeListener;
-import org.micromanager.utils.NumberUtils;
 
 /**
  *
@@ -335,12 +334,10 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
                Point2D.Double pt = core_.getGalvoPosition(
                        devices_.getMMDeviceException(micromirrorDeviceKey_));
                sheetStartPos_ = pt.y;
-               sheetStartPositionLabel_.setText(
-                       NumberUtils.doubleToDisplayString(sheetStartPos_));
+               sheetStartPositionLabel_.setFloat((float)sheetStartPos_);
                imagingPiezoStartPos_ = core_.getPosition(
                        devices_.getMMDeviceException(piezoImagingDeviceKey_));
-               imagingPiezoStartPositionLabel_.setText(
-                       NumberUtils.doubleToDisplayString(imagingPiezoStartPos_));
+               imagingPiezoStartPositionLabel_.setFloat((float)imagingPiezoStartPos_);
             } catch (Exception ex) {
                gui_.showError(ex);
             }
@@ -363,13 +360,11 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
                Point2D.Double pt = core_.getGalvoPosition(
                        devices_.getMMDeviceException(micromirrorDeviceKey_));
                sheetStopPos_ = pt.y;
-               sheetStopPositionLabel_.setText(
-                       NumberUtils.doubleToDisplayString(sheetStopPos_));
+               sheetStopPositionLabel_.setFloat((float)sheetStopPos_);
                // updateSheetSAParams();
                imagingPiezoStopPos_ = core_.getPosition(
                        devices_.getMMDeviceException(piezoImagingDeviceKey_));
-               imagingPiezoStopPositionLabel_.setText(
-                       NumberUtils.doubleToDisplayString(imagingPiezoStopPos_));
+               imagingPiezoStopPositionLabel_.setFloat((float)imagingPiezoStopPos_);
                // updateImagingSAParams();
                // updateStartStopPositions();
             } catch (Exception ex) {
@@ -429,6 +424,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
 
       final JCheckBox illumPiezoHomeEnable = new JCheckBox("Go home on tab activate");
       ActionListener ae = new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent e) {
             illumPiezoHomeEnable_ = illumPiezoHomeEnable.isSelected();
             prefs_.putBoolean(panelName_, Prefs.Keys.ENABLE_ILLUM_PIEZO_HOME, illumPiezoHomeEnable.isSelected());
@@ -486,6 +482,13 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
    
    /**
     * Utility function that moves the galvo and piezo together
+    * Calculates piezoposition based on establised offset and rate:
+    * 
+    * piezoPosition = offset + rate * newGalvoPos 
+    * 
+    * @param newGalvoPos - MicroMirror position to move to
+    * @param offset - See function description
+    * @param rate - See function description
     */
    public void setGalvoAndPiezo(double newGalvoPos, double offset, double rate) {
        positions_.setPosition(micromirrorDeviceKey_, 
@@ -537,7 +540,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
    //    up single axis values in this tab anymore but just calculating the ratio
    public void updateStartStopPositions() {
       if (devices_.getMMDevice(piezoImagingDeviceKey_) == null) {
-         return;
+         //return;
       }
       // compute initial start/stop positions from properties
       /*
@@ -603,7 +606,9 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
    /**
     * required by LiveModeListener interface; just pass call along to camera
     * panel
+    * @param enable - signals whether or not live mode is enabled
     */
+   @Override
    public void liveModeEnabled(boolean enable) {
       cameraPanel_.liveModeEnabled(enable);
    }

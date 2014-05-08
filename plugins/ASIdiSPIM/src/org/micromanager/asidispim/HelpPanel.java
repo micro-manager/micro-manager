@@ -24,7 +24,9 @@ package org.micromanager.asidispim;
 
 import java.awt.Desktop;
 import java.awt.Dimension;
+import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
 
 import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
@@ -46,7 +48,7 @@ public class HelpPanel extends ListeningJPanel {
    private final ScriptInterface gui_;
    /**
     * 
-    * @param devices the (single) instance of the Devices class
+    * @param gui -implementation of the Micro-Manager ScriptInterface api
     */
    public HelpPanel(ScriptInterface gui) {    
       super ("Help", 
@@ -70,8 +72,10 @@ public class HelpPanel extends ListeningJPanel {
             if (HyperlinkEvent.EventType.ACTIVATED.equals(hle.getEventType())) {
                try {
                    Desktop.getDesktop().browse(new URI(hle.getURL().toString()));
-               } catch (Exception ex) {
+               } catch (URISyntaxException ex) {
                   gui_.showError("Could not open web browser."); 
+               } catch (IOException ex) {
+                  gui_.showError("Could not open web browser.");
                }
 
            }

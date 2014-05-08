@@ -42,12 +42,12 @@ import org.micromanager.asidispim.Data.Properties;
  */
 public class StagePositionUpdater {
    private int interval_;
-   private List<ListeningJPanel> panels_;
+   private final List<ListeningJPanel> panels_;
    private Timer timer_;
-   private Positions positions_;
+   private final Positions positions_;
    private final Properties props_;
    private final ScriptInterface gui_;
-   private AtomicBoolean acqRunning_ = new AtomicBoolean(false);
+   private final AtomicBoolean acqRunning_ = new AtomicBoolean(false);
    
    /**
     * Utility class for stage position timer.
@@ -56,9 +56,12 @@ public class StagePositionUpdater {
     * Panels to be informed of updated stage positions should be added
     * using the addPanel function.
     * 
+    * @param gui - Micro-Manager ScriptInterface api implementation
     * @param positions
+    * @param props
     */
-   public StagePositionUpdater(ScriptInterface gui, Positions positions, Properties props) {
+   public StagePositionUpdater(ScriptInterface gui, 
+           Positions positions, Properties props) {
       gui_ = gui;
       positions_ = positions;
       props_ = props;
@@ -94,6 +97,7 @@ public class StagePositionUpdater {
       }
       updateInterval();
       timer_ = new Timer(interval_, new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent ae) {
             oneTimeUpdate();
          }

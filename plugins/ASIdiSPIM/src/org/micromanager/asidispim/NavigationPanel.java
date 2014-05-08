@@ -70,16 +70,16 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
    private final BeamSubPanel beamPanel_;
    
    
-   private JLabel xPositionLabel_;
-   private JLabel yPositionLabel_;
-   private JLabel lowerZPositionLabel_;
-   private JLabel upperZPositionLabel_;
-   private JLabel piezoAPositionLabel_;
-   private JLabel piezoBPositionLabel_;
-   private JLabel galvoAxPositionLabel_;
-   private JLabel galvoAyPositionLabel_;
-   private JLabel galvoBxPositionLabel_;
-   private JLabel galvoByPositionLabel_;
+   private final JLabel xPositionLabel_;
+   private final JLabel yPositionLabel_;
+   private final JLabel lowerZPositionLabel_;
+   private final JLabel upperZPositionLabel_;
+   private final JLabel piezoAPositionLabel_;
+   private final JLabel piezoBPositionLabel_;
+   private final JLabel galvoAxPositionLabel_;
+   private final JLabel galvoAyPositionLabel_;
+   private final JLabel galvoBxPositionLabel_;
+   private final JLabel galvoByPositionLabel_;
    
    /**
     * Navigation panel constructor.
@@ -269,6 +269,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
          private final Devices.Keys key_;
          private final Joystick.Directions dir_;
          
+         @Override
          public void actionPerformed(ActionEvent e) {
             try {
                positions_.setPosition(key_, dir_, 0.0);
@@ -305,6 +306,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
          private final Devices.Keys key_;
          private final Joystick.Directions dir_;
          
+         @Override
          public void actionPerformed(ActionEvent e) {
             int dialogResult = JOptionPane.showConfirmDialog(null,
                   "This will change the coordinate system.  Are you sure you want to proceed?",
@@ -337,9 +339,11 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
          private final JFormattedTextField field_;
          private final double scaleFactor_;
          
+         @Override
          public void actionPerformed(ActionEvent e) {
             try {
-               positions_.setPositionRelative(key_, dir_, ((Double)field_.getValue()).doubleValue() * scaleFactor_);
+               positions_.setPositionRelative(key_, dir_, 
+                       ((Double)field_.getValue()) * scaleFactor_);
             } catch (Exception ex) {
                gui_.showError(ex);
             }
@@ -363,7 +367,9 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
    
    /**
     * required by LiveModeListener interface; just pass call along to camera panel
+    * @param enable
     */
+   @Override
    public void liveModeEnabled(boolean enable) { 
       cameraPanel_.liveModeEnabled(enable);
    } 

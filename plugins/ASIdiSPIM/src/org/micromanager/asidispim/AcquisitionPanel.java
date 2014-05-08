@@ -328,6 +328,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       setDataSavingComponents(saveComponents);
       
       saveCB_.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent e) {
             setDataSavingComponents(saveComponents);
          }
@@ -794,7 +795,20 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    /**
     * The basic method for adding images to an existing data set. If the
     * acquisition was not previously initialized, it will attempt to initialize
-    * it from the available image data
+    * it from the available image data. This version uses a blocking queue and is 
+    * much faster than the one currently implemented in the ScriptInterface
+    * Eventually, this function should be replaced by the ScriptInterface version
+    * of the same.
+    * @param name - named acquisition to add image to
+    * @param frame - frame nr at which to insert the image
+    * @param channel - channel at which to insert image
+    * @param slice - (z) slice at which to insert image
+    * @param position - position at which to insert image
+    * @param ms - Time stamp to be added to the image metadata
+    * @param taggedImg - image + metadata to be added
+    * @param bq - Blocking queue to which the image should be added.  This queue
+    * should be hooked up to the ImageCache belonging to this acquisitions
+    * @throws org.micromanager.utils.MMScriptException
     */
    public void addImageToAcquisition(String name,
            int frame,

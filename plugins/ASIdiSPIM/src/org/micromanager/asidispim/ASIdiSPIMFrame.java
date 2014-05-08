@@ -60,12 +60,12 @@ import org.micromanager.internalinterfaces.LiveModeListener;
 public class ASIdiSPIMFrame extends javax.swing.JFrame  
       implements MMListenerInterface {
    
-   private Properties props_; 
+   private final Properties props_; 
    private Prefs prefs_;
    private Devices devices_;
-   private Joystick joystick_;
-   private Positions positions_;
-   private Cameras cameras_;
+   private final Joystick joystick_;
+   private final Positions positions_;
+   private final Cameras cameras_;
    
    private final DevicesPanel devicesPanel_;
    private final AcquisitionPanel acquisitionPanel_;
@@ -134,6 +134,7 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
       // make sure gotSelected() gets called whenever we switch tabs
       tabbedPane.addChangeListener(new ChangeListener() {
          int lastSelectedIndex_ = tabbedPane.getSelectedIndex();
+         @Override
          public void stateChanged(ChangeEvent e) {
             ((ListeningJPanel) tabbedPane.getComponentAt(lastSelectedIndex_)).gotDeSelected();
             ((ListeningJPanel) tabbedPane.getSelectedComponent()).gotSelected();
@@ -187,30 +188,38 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
   
 
    // MMListener mandated member functions
+   @Override
    public void propertiesChangedAlert() {
       // doesn't seem to actually be called by core when property changes
      // props_.callListeners();
    }
 
+   @Override
    public void propertyChangedAlert(String device, String property, String value) {
      // props_.callListeners();
    }
 
+   @Override
    public void configGroupChangedAlert(String groupName, String newConfig) {
    }
 
+   @Override
    public void systemConfigurationLoaded() {
    }
 
+   @Override
    public void pixelSizeChangedAlert(double newPixelSizeUm) {
    }
 
+   @Override
    public void stagePositionChangedAlert(String deviceName, double pos) {
    }
 
+   @Override
    public void xyStagePositionChanged(String deviceName, double xPos, double yPos) {
    }
 
+   @Override
    public void exposureChanged(String cameraName, double newExposureTime) {
    }
 
