@@ -12,15 +12,16 @@ import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
+import java.util.concurrent.ExecutionException;
 import javax.swing.JButton;
-import javax.swing.JComponent;
+import javax.swing.JComboBox;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.JTextField;
 import javax.swing.SwingWorker;
 import net.miginfocom.swing.MigLayout;
-import org.micromanager.MMStudioMainFrame;
 import org.micromanager.api.MMWindow;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.asidispim.Data.Prefs;
@@ -28,7 +29,6 @@ import org.micromanager.asidispim.Data.Properties;
 import org.micromanager.asidispim.Utils.ListeningJPanel;
 import org.micromanager.asidispim.Utils.PanelUtils;
 import org.micromanager.utils.FileDialogs;
-import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ReportingUtils;
 
 /**
@@ -46,11 +46,18 @@ public class DataAnalysisPanel extends ListeningJPanel {
    private final JPanel mipavPanel_;
    private final JTextField saveDestinationField_;
    private Prefs prefs_;
+   public static final String[] TRANSFORMOPTIONS = 
+      {"None", "Rotate Right 90\u00B0", "Rotate Left 90\u00B0"};
+   public static FileDialogs.FileType MIPAV_DATA_SET 
+           = new FileDialogs.FileType("MIPAV_DATA_SET",
+                 "Export to mipav Location",
+                 System.getProperty("user.home") + "/Untitled",
+                 false, (String[]) null);
    
    /**
     * 
     * @param gui - implementation of the Micro-Manager ScriptInterface api
-    * @param prefs - Plugin wide preferences
+    * @param prefs - Plugin-wide preferences
     */
    public DataAnalysisPanel(ScriptInterface gui, Prefs prefs) {    
       super("Data Analysis",
@@ -60,9 +67,8 @@ public class DataAnalysisPanel extends ListeningJPanel {
               "[]16[]"));
       gui_ = gui;
       prefs_ = prefs;
-      
-      
-      int textFieldWidth = 20;
+            
+      int textFieldWidth = 35;
 
       // start volume sub-panel
       mipavPanel_ = new JPanel(new MigLayout(
@@ -72,16 +78,23 @@ public class DataAnalysisPanel extends ListeningJPanel {
       
       mipavPanel_.setBorder(PanelUtils.makeTitledBorder("Export to mipav"));
       
-      JLabel instructions = new JLabel("Exports selected data set to a format \n"
+      JLabel instructions = new JLabel("Exports data to a format \n"
               + "compatible with the mipav GenerateFusion Plugin");
       mipavPanel_.add(instructions, "span 3, wrap");
       
-      mipavPanel_.add(new JLabel("Target directory:"), "");
+      mipavPanel_.add(new JLabel("Export directory:"), "");
       
       saveDestinationField_ = new JTextField();
       saveDestinationField_.setText(prefs_.getString(panelName_,
-              Properties.Keys.PLUGIN_DIRECTORY_ROOT, ""));
+              Properties.Keys.PLUGIN_EXPORT_MIPAV_DATA_DIR, ""));
       saveDestinationField_.setColumns(textFieldWidth);
+      saveDestinationField_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(final ActionEvent e) {
+             prefs_.putString(panelName_, Properties.Keys.PLUGIN_EXPORT_MIPAV_DATA_DIR,
+                    saveDestinationField_.getText());
+         }
+      });
       mipavPanel_.add(saveDestinationField_);
       
       JButton browseToSaveDestinationButton = new JButton();
@@ -98,24 +111,55 @@ public class DataAnalysisPanel extends ListeningJPanel {
       browseToSaveDestinationButton.setText("...");
       mipavPanel_.add(browseToSaveDestinationButton, "wrap");
       
+      // row with transform options
+      JLabel transformLabel = new JLabel("Transform:");
+      mipavPanel_.add(transformLabel);
+      final JComboBox transformSelect = new JComboBox();
+      for (String item : TRANSFORMOPTIONS) {
+         transformSelect.addItem(item);
+      }
+      String transformOption = prefs_.getString(
+              panelName_, Properties.Keys.PLUGIN_EXPORT_MIPAV_TRANSFORM_OPTION, 
+              TRANSFORMOPTIONS[1]);
+      transformSelect.setSelectedItem(transformOption);
+      transformSelect.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            prefs_.putString(panelName_, 
+                    Properties.Keys.PLUGIN_EXPORT_MIPAV_TRANSFORM_OPTION, 
+                    (String)transformSelect.getSelectedItem());
+         }
+      });
+      mipavPanel_.add(transformSelect, "left, wrap");
+      
       final JProgressBar progBar = new JProgressBar();
       progBar.setStringPainted(true);
+      progBar.setVisible(false);
+      final JLabel infoLabel = new JLabel("");
+      
       
       JButton exportButton = new JButton("Export");
       exportButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
             setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-            SaveTask task = new SaveTask(saveDestinationField_.getText());
+            SaveTask task = new SaveTask(saveDestinationField_.getText(),
+                    transformSelect.getSelectedIndex());
             task.addPropertyChangeListener(new PropertyChangeListener() {
 
                @Override
                public void propertyChange(PropertyChangeEvent evt) {
                   if ("progress".equals(evt.getPropertyName())) {
                      int progress = (Integer) evt.getNewValue();
+                     if (!progBar.isVisible()) {
+                        progBar.setVisible(true);
+                        infoLabel.setText("Saving...");
+                        infoLabel.setVisible(true);
+                     }
                      progBar.setValue(progress);
                      if (progress == 100) {
-                        progBar.setString("Done!");
+                        progBar.setVisible(false);
+                        infoLabel.setText("Done Saving...");
                      }
                   }
                }
@@ -124,126 +168,53 @@ public class DataAnalysisPanel extends ListeningJPanel {
          }
       });
       mipavPanel_.add(exportButton, "span 3, center, wrap");
-      mipavPanel_.add(progBar, "span3, center, wrap");
-      
-      
-      
+      mipavPanel_.add(infoLabel,"");
+      mipavPanel_.add(progBar, "span3, center, wrap");    
+            
        
       this.add(mipavPanel_);
    }
    
+   /**
+    * Worker thread that executes file saving.  Updates the progress bar
+    * using the setProgress method, which results in a PropertyChangedEvent
+    * in attached listeners
+    */
    class SaveTask extends SwingWorker<Void, Void> {
       final String targetDirectory_;
-      SaveTask (String targetDirectory) {
+      final int transformIndex_;
+      SaveTask (String targetDirectory, int transformIndex) {
          targetDirectory_ = targetDirectory;
+         transformIndex_ = transformIndex;
       }
    
       @Override
       protected Void doInBackground() throws Exception {
          setProgress(0);
-         boolean rotateRight = true;
          ImagePlus ip = IJ.getImage();
          MMWindow mmW = new MMWindow(ip);
-         try {
-            if (!mmW.isMMWindow()) {
-               gui_.message("Can only convert Micro-Manager data set ");
-               return null;
-            }
 
-            String spimADir = targetDirectory_ + "\\" + "SPIMA";
-            String spimBDir = targetDirectory_ + "\\" + "SPIMB";
-
-            if (new File(spimADir).exists()
-                    || new File(spimBDir).exists()) {
-               gui_.message("Output directory already exists");
-               return null;
-            }
-
-            new File(spimADir).mkdirs();
-            new File(spimBDir).mkdir();
-
-            String acqName = ip.getShortTitle();
-            acqName = acqName.replace("/", "-");
-
-            ImageProcessor iProc = ip.getProcessor();
-            int totalNr = 2 * mmW.getNumberOfFrames() * mmW.getNumberOfSlices();
-            int counter = 0;
-
-            for (int c = 0; c < 2; c++) {
-               for (int t = 0; t < mmW.getNumberOfFrames(); t++) {
-                  ImageStack stack = new ImageStack(iProc.getWidth(), iProc.getHeight());
-                  for (int i = 0; i < mmW.getNumberOfSlices(); i++) {
-                     ImageProcessor iProc2;
-
-                     iProc2 = mmW.getImageProcessor(c, i, t, 1);
-
-                     if (rotateRight) {
-                        iProc2 = iProc2.rotateRight();
-                     }
-                     stack.addSlice(iProc2);
-                     counter++;
-                     setProgress(counter / totalNr * 100);
-                  }
-                  ImagePlus ipN = new ImagePlus("tmp", stack);
-                  if (c == 0) {
-                     ij.IJ.save(ipN, spimADir + "\\" + acqName + "_" + "SPIMA-" + t + ".tif");
-                  } else if (c == 1) {
-                     ij.IJ.save(ipN, spimBDir + "\\" + acqName + "_" + "SPIMB-" + t + ".tif");
-                  }
-
-               }
-            }
-         } catch (MMScriptException ex) {
-            ReportingUtils.showError(ex, "Problem saving data");
-         }
-
-         return null;
-      }
-
-      @Override
-      public void done() {
-         setProgress(100);
-         setCursor(null);
-      }
-   }
-
-   private void setSaveDestinationDirectory(JTextField rootField) {
-      File result = FileDialogs.openDir(null,
-              "Please choose a directory root for image data",
-              MMStudioMainFrame.MM_DATA_SET);
-      if (result != null) {
-         rootField.setText(result.getAbsolutePath());
-      }
-   }
-
-   // needs to be put on its own thread, untested code
-   private void exportMipav(String targetDirectory) {
-      boolean rotateRight = true;
-      ImagePlus ip = IJ.getImage();
-      MMWindow mmW = new MMWindow(ip);
-      try {
          if (!mmW.isMMWindow()) {
-            gui_.message("Can only convert Micro-Manager data set ");
-            return;
+            throw new SaveTaskException("Can only convert Micro-Manager data set ");
          }
 
-         String spimADir = targetDirectory + "\\" + "SPIMA";
-         String spimBDir = targetDirectory + "\\" + "SPIMB";
+         String acqName = ip.getShortTitle();
+         acqName = acqName.replace("/", "-");
+
+         String spimADir = targetDirectory_ + "\\" + acqName + "\\" + "SPIMA";
+         String spimBDir = targetDirectory_ + "\\" + acqName + "\\" + "SPIMB";
 
          if (new File(spimADir).exists()
                  || new File(spimBDir).exists()) {
-            gui_.message("Output directory already exists");
-            return;
+            throw new SaveTaskException("Output directory already exists");
          }
 
          new File(spimADir).mkdirs();
          new File(spimBDir).mkdir();
 
-         String acqName = ip.getShortTitle();
-         acqName = acqName.replace("/", "-");
-
          ImageProcessor iProc = ip.getProcessor();
-         //gui.message("NrSlices: " + mmW.getNumberOfSlices());
+         int totalNr = 2 * mmW.getNumberOfFrames() * mmW.getNumberOfSlices();
+         int counter = 0;
 
          for (int c = 0; c < 2; c++) {
             for (int t = 0; t < mmW.getNumberOfFrames(); t++) {
@@ -252,11 +223,23 @@ public class DataAnalysisPanel extends ListeningJPanel {
                   ImageProcessor iProc2;
 
                   iProc2 = mmW.getImageProcessor(c, i, t, 1);
-           
-                  if (rotateRight) {
-                     iProc2 = iProc2.rotateRight();
+
+                  // optional transformation
+                  switch (transformIndex_) {
+                     case 1: {
+                        iProc2 = iProc2.rotateRight();
+                        break;
+                     }
+                     case 2: {
+                        iProc2 = iProc2.rotateLeft();
+                        break;
+                     }  
                   }
+                  
                   stack.addSlice(iProc2);
+                  counter++;
+                  double rate = ( (double) counter / (double) totalNr ) * 100.0;
+                  setProgress( (int) Math.round(rate));
                }
                ImagePlus ipN = new ImagePlus("tmp", stack);
                if (c == 0) {
@@ -264,12 +247,62 @@ public class DataAnalysisPanel extends ListeningJPanel {
                } else if (c == 1) {
                   ij.IJ.save(ipN, spimBDir + "\\" + acqName + "_" + "SPIMB-" + t + ".tif");
                }
-               
+
             }
          }
-      } catch (MMScriptException ex) {
-         ReportingUtils.showError(ex, "Problem saving data");
+         return null;
       }
+
+      @Override
+      public void done() {
+         setCursor(null);
+         try {
+            get();
+            setProgress(100);
+         } catch (ExecutionException ex) {
+            Throwable cause = ex.getCause();
+            if (!cause.getMessage().equals("Macro canceled")) {
+               if (cause instanceof SaveTaskException) {
+                  JOptionPane.showMessageDialog(null, cause.getMessage(), 
+                          "Data Export Error", JOptionPane.ERROR_MESSAGE);
       
+               } else {
+                  ReportingUtils.showError(ex);
+               }
+            }
+         } catch (InterruptedException ex) {
+             ReportingUtils.showError(ex, "Interrupted while saving data");
+         }
+      }
    }
+
+   private void setSaveDestinationDirectory(JTextField rootField) {
+      File result = FileDialogs.openDir(null,
+              "Please choose a directory root for image data",
+              MIPAV_DATA_SET);
+      if (result != null) {
+         rootField.setText(result.getAbsolutePath());
+      }
+   }
+
+   public class SaveTaskException extends Exception {
+
+      private static final long serialVersionUID = -8472323699461107823L;
+      private Throwable cause;
+
+      public SaveTaskException(String message) {
+         super(message);
+      }
+
+      public SaveTaskException(Throwable t) {
+         super(t.getMessage());
+         this.cause = t;
+      }
+
+      @Override
+      public Throwable getCause() {
+         return this.cause;
+      }
+   }
+  
 }

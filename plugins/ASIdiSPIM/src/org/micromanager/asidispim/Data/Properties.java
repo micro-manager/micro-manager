@@ -118,7 +118,10 @@ public class Properties {
       PLUGIN_SHEET_END_POS ("SheetEndPosition"),      // Sheet end position for internal use
       PLUGIN_PIEZO_START_POS ("PiezoStartPosition"),  // Piezo start position for internal use
       PLUGIN_PIEZO_END_POS ("PiezoEndPosition"),      // Piezo end position for internal use
-      PLUGIN_EXPORT_MIPAV_DATA_DIR ("ExportMipavDataDirectory") // Place data are saved in mipav format
+      PLUGIN_EXPORT_MIPAV_DATA_DIR ("ExportMipavDataDirectory"), 
+                                                      // Place data are saved in mipav format
+      PLUGIN_EXPORT_MIPAV_TRANSFORM_OPTION("ExportMipavTransformOption")
+                                                      // Transform to be applied while saving in mipavb format
       ;
       private final String text;
       Keys(String text) {
