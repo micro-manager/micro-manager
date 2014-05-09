@@ -5,16 +5,20 @@ import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.process.ImageProcessor;
+import java.awt.Cursor;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.File;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JProgressBar;
 import javax.swing.JTextField;
+import javax.swing.SwingWorker;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.api.MMWindow;
@@ -45,7 +49,8 @@ public class DataAnalysisPanel extends ListeningJPanel {
    
    /**
     * 
-    * @param gui -implementation of the Micro-Manager ScriptInterface api
+    * @param gui - implementation of the Micro-Manager ScriptInterface api
+    * @param prefs - Plugin wide preferences
     */
    public DataAnalysisPanel(ScriptInterface gui, Prefs prefs) {    
       super("Data Analysis",
@@ -93,18 +98,115 @@ public class DataAnalysisPanel extends ListeningJPanel {
       browseToSaveDestinationButton.setText("...");
       mipavPanel_.add(browseToSaveDestinationButton, "wrap");
       
+      final JProgressBar progBar = new JProgressBar();
+      progBar.setStringPainted(true);
+      
       JButton exportButton = new JButton("Export");
       exportButton.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent e) {
-            exportMipav(saveDestinationField_.getText());
+            setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+            SaveTask task = new SaveTask(saveDestinationField_.getText());
+            task.addPropertyChangeListener(new PropertyChangeListener() {
+
+               @Override
+               public void propertyChange(PropertyChangeEvent evt) {
+                  if ("progress".equals(evt.getPropertyName())) {
+                     int progress = (Integer) evt.getNewValue();
+                     progBar.setValue(progress);
+                     if (progress == 100) {
+                        progBar.setString("Done!");
+                     }
+                  }
+               }
+            });
+            task.execute();
          }
       });
       mipavPanel_.add(exportButton, "span 3, center, wrap");
+      mipavPanel_.add(progBar, "span3, center, wrap");
       
       
+      
+       
       this.add(mipavPanel_);
    }
    
+   class SaveTask extends SwingWorker<Void, Void> {
+      final String targetDirectory_;
+      SaveTask (String targetDirectory) {
+         targetDirectory_ = targetDirectory;
+      }
+   
+      @Override
+      protected Void doInBackground() throws Exception {
+         setProgress(0);
+         boolean rotateRight = true;
+         ImagePlus ip = IJ.getImage();
+         MMWindow mmW = new MMWindow(ip);
+         try {
+            if (!mmW.isMMWindow()) {
+               gui_.message("Can only convert Micro-Manager data set ");
+               return null;
+            }
+
+            String spimADir = targetDirectory_ + "\\" + "SPIMA";
+            String spimBDir = targetDirectory_ + "\\" + "SPIMB";
+
+            if (new File(spimADir).exists()
+                    || new File(spimBDir).exists()) {
+               gui_.message("Output directory already exists");
+               return null;
+            }
+
+            new File(spimADir).mkdirs();
+            new File(spimBDir).mkdir();
+
+            String acqName = ip.getShortTitle();
+            acqName = acqName.replace("/", "-");
+
+            ImageProcessor iProc = ip.getProcessor();
+            int totalNr = 2 * mmW.getNumberOfFrames() * mmW.getNumberOfSlices();
+            int counter = 0;
+
+            for (int c = 0; c < 2; c++) {
+               for (int t = 0; t < mmW.getNumberOfFrames(); t++) {
+                  ImageStack stack = new ImageStack(iProc.getWidth(), iProc.getHeight());
+                  for (int i = 0; i < mmW.getNumberOfSlices(); i++) {
+                     ImageProcessor iProc2;
+
+                     iProc2 = mmW.getImageProcessor(c, i, t, 1);
+
+                     if (rotateRight) {
+                        iProc2 = iProc2.rotateRight();
+                     }
+                     stack.addSlice(iProc2);
+                     counter++;
+                     setProgress(counter / totalNr * 100);
+                  }
+                  ImagePlus ipN = new ImagePlus("tmp", stack);
+                  if (c == 0) {
+                     ij.IJ.save(ipN, spimADir + "\\" + acqName + "_" + "SPIMA-" + t + ".tif");
+                  } else if (c == 1) {
+                     ij.IJ.save(ipN, spimBDir + "\\" + acqName + "_" + "SPIMB-" + t + ".tif");
+                  }
+
+               }
+            }
+         } catch (MMScriptException ex) {
+            ReportingUtils.showError(ex, "Problem saving data");
+         }
+
+         return null;
+      }
+
+      @Override
+      public void done() {
+         setProgress(100);
+         setCursor(null);
+      }
+   }
+
    private void setSaveDestinationDirectory(JTextField rootField) {
       File result = FileDialogs.openDir(null,
               "Please choose a directory root for image data",
@@ -113,7 +215,7 @@ public class DataAnalysisPanel extends ListeningJPanel {
          rootField.setText(result.getAbsolutePath());
       }
    }
-   
+
    // needs to be put on its own thread, untested code
    private void exportMipav(String targetDirectory) {
       boolean rotateRight = true;
@@ -124,34 +226,33 @@ public class DataAnalysisPanel extends ListeningJPanel {
             gui_.message("Can only convert Micro-Manager data set ");
             return;
          }
-         
+
          String spimADir = targetDirectory + "\\" + "SPIMA";
          String spimBDir = targetDirectory + "\\" + "SPIMB";
-         
+
          if (new File(spimADir).exists()
                  || new File(spimBDir).exists()) {
             gui_.message("Output directory already exists");
             return;
          }
-         
+
          new File(spimADir).mkdirs();
          new File(spimBDir).mkdir();
-         
+
          String acqName = ip.getShortTitle();
          acqName = acqName.replace("/", "-");
-         
+
          ImageProcessor iProc = ip.getProcessor();
          //gui.message("NrSlices: " + mmW.getNumberOfSlices());
 
-         
          for (int c = 0; c < 2; c++) {
             for (int t = 0; t < mmW.getNumberOfFrames(); t++) {
                ImageStack stack = new ImageStack(iProc.getWidth(), iProc.getHeight());
                for (int i = 0; i < mmW.getNumberOfSlices(); i++) {
                   ImageProcessor iProc2;
-                  
+
                   iProc2 = mmW.getImageProcessor(c, i, t, 1);
-                  
+           
                   if (rotateRight) {
                      iProc2 = iProc2.rotateRight();
                   }
