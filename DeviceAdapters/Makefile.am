@@ -110,6 +110,7 @@ SUBDIRS = \
 	MicroPoint \
 	Motic_mac \
 	Neos \
+	NewportSMC \
 	Nikon \
 	NikonTE2000 \
 	Omicron \

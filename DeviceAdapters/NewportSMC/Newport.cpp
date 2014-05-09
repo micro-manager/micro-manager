@@ -70,7 +70,6 @@ NewportZStage::NewportZStage() :
 	port_("COM5"),			//need to recompile with COM5 listed.
 	stepSizeUm_(1),
 	initialized_(false),
-	answerTimeoutMs_(1000),
 	lowerLimit_(0),
 	upperLimit_(25)
 {

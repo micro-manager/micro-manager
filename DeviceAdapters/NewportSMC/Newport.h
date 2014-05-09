@@ -75,7 +75,6 @@ private:
 	std::string port_;
 	double stepSizeUm_;
 	bool initialized_;
-	double answerTimeoutMs_;
 	double lowerLimit_;
 	double upperLimit_;
 };

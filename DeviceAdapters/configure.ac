@@ -394,6 +394,7 @@ m4_define([device_adapter_dirs], [m4_strip([
    MicroPoint
    Motic_mac
    Neos
+   NewportSMC
    Nikon
    NikonTE2000
    Omicron
