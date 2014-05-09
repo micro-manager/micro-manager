@@ -51,7 +51,7 @@ const char* g_textLogIniFiled = "Logging initialization failed\n";
 class LoggerThread : public MMDeviceThreadBase
 {
    public:
-      LoggerThread(FastLogger* l) : log_(l), busy_(false), stop_(false) {}
+      LoggerThread(FastLogger* l) : log_(l), stop_(false) {}
       ~LoggerThread() {}
       int svc (void);
 
@@ -60,7 +60,6 @@ class LoggerThread : public MMDeviceThreadBase
 
    private:
       FastLogger* log_;
-      bool busy_;
       bool stop_;
 };
 
@@ -99,7 +98,6 @@ FastLogger::FastLogger()
 :debugLoggingEnabled_(true)
 ,stderrLoggingEnabled_(true)
 ,fileLoggingEnabled_(false)
-,plogFile_(NULL)
 ,failureReported(false),
 plogFile_g(0)
 {

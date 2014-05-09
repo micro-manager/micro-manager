@@ -61,7 +61,6 @@ private:
    bool stderrLoggingEnabled_;
    bool fileLoggingEnabled_;
    std::string    logFileName_;
-   std::ofstream * plogFile_;
    bool           failureReported;
    std::string    logInstanceName_;
    MMThreadLock logFileLock_g;
