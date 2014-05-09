@@ -367,7 +367,6 @@ void SerialManager::DestroyPort(MM::Device* port)
 SerialPort::SerialPort(const char* portName) :
    initialized_(false),
    busy_(false),
-   portTimeoutMs_(2000.0),
    answerTimeoutMs_(500),
    refCount_(0),
    transmitCharWaitMs_(0.0),

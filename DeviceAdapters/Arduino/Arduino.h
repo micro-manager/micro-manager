@@ -202,8 +202,6 @@ private:
    double maxV_;
    double volts_;
    double gatedVolts_;
-   unsigned int encoding_;
-   unsigned int resolution_;
    unsigned channel_;
    unsigned maxChannel_;
    bool gateOpen_;
@@ -258,10 +256,8 @@ class ArduinoInputMonitorThread : public MMDeviceThreadBase
 
 
    private:
-      MM_THREAD_HANDLE thread_;
       long state_;
       CArduinoInput& aInput_;
-      bool debug_;
       bool stop_;
 };
 

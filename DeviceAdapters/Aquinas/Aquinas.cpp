@@ -47,7 +47,6 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 AqController::AqController() :                                 
    port_("Undefined"),                                        
    initialized_(false),                                       
-   busy_(false),                                              
    pressureSetPoint_(0.0),
    valveState_(0),
    id_("A")

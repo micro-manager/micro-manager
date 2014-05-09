@@ -65,7 +65,6 @@ class LeicaScope : public HubBase<LeicaScope>
 
    private:
       bool initialized_;
-      double answerTimeoutMs_;
       std::vector<std::string> discoveredDevices_;
 
       void AttemptToDiscover(int deviceCode, const char* deviceName);
@@ -217,7 +216,6 @@ private:
    bool initialized_;
    std::string name_;
    std::string description_;
-   long pos_;
    long filterWheelID_;
 };
 
@@ -295,7 +293,6 @@ public:
 
 
 private:
-   bool busy_;
    bool initialized_;
    std::string name_;
    std::string description_;
@@ -356,7 +353,6 @@ private:
    bool initialized_;
    std::string name_;
    std::string description_;
-   long pos_;
 };
 
 class TLPolarizer : public CStateDeviceBase<TLPolarizer>
@@ -540,7 +536,6 @@ private:
    bool initialized_;
    std::string name_;
    std::string description_;
-   long pos_;
 };
 
 #endif // _LeicaDMI_H_

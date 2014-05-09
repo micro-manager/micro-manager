@@ -247,7 +247,6 @@ int clearPort(MM::Device& device, MM::Core& core, const char* port)
 }
 Hub::Hub(const char* devicename) :
    name_(devicename),
-   transmissionDelay_(10),
    initialized_(false)
 {
 	LogMessage ("PSJ new Hub");

@@ -529,7 +529,6 @@ id_(id),
 name_(name), 
 curPos_(0), 
 speed_(3), 
-busy_(false),
 answerTimeoutMs_(500)
 {
    assert(id==0 || id==1 || id==2);
@@ -1882,8 +1881,11 @@ int DG4Shutter::OnDelay(MM::PropertyBase* pProp, MM::ActionType eAct)
 // ~~~~~~~~~~~~~~~~~~~~~~~
 
 DG4Wheel::DG4Wheel() :
-initialized_(false), numPos_(13), name_(g_DG4WheelName), curPos_(0), busy_(false),
-answerTimeoutMs_(500)
+   initialized_(false),
+   numPos_(13),
+   name_(g_DG4WheelName),
+   curPos_(0),
+   answerTimeoutMs_(500)
 {
    InitializeDefaultErrorMessages();
 

@@ -54,7 +54,6 @@ Omicron::Omicron() :
    port_("Undefined"),
    initialized_(false),
    busy_(false),
-   answerTimeoutMs_(2500),
    power1_(0.00),
    power2_(0.00),
    laserOn_("On"),

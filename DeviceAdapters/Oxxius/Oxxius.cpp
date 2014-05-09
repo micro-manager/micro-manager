@@ -52,8 +52,7 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 OxxLBXDPSS::OxxLBXDPSS() :
    port_("Undefined"),
    initialized_(false),
-   busy_(false),
-   answerTimeoutMs_(1000)
+   busy_(false)
 {
      InitializeDefaultErrorMessages();
      SetErrorText(ERR_PORT_CHANGE_FORBIDDEN, "You can't change the port after device has been initialized.");
@@ -470,8 +469,7 @@ int OxxLBXDPSS::OnLaserStatus(MM::PropertyBase* pProp, MM::ActionType )
 OxxLBXLD::OxxLBXLD() :
    port_("Undefined"),
    initialized_(false),
-   busy_(false),
-   answerTimeoutMs_(1000)
+   busy_(false)
 {
      InitializeDefaultErrorMessages();
      SetErrorText(ERR_PORT_CHANGE_FORBIDDEN, "You can't change the port after device has been initialized.");

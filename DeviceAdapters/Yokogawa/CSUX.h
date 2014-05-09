@@ -72,8 +72,6 @@ private:
    std::string port_;
    // Command exchange with MMCore
    std::string command_;
-   // Has a command been sent to which no answer has been received yet?
-   bool pendingCommand_;
 };
 
 
@@ -189,12 +187,11 @@ public:
 private:
    bool initialized_;
    bool running_;
-   bool driveSpeedBusy_;
    unsigned numPos_; 
    std::string name_;
    long min_, max_;
    double autoAdjustMs_;
-   long current_, requested_;
+   long current_;
 };
 
 // TODO: Implement external IO capabilities

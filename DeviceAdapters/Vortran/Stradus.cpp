@@ -65,7 +65,6 @@ Stradus::Stradus() :
    port_("Undefined"),
    initialized_(false),
    busy_(false),
-   answerTimeoutMs_(1000),
    power_(1.00),
    pulPwr_(1),
    laserOn_("Undefined"),

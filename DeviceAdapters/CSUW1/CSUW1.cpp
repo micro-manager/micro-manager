@@ -710,7 +710,6 @@ int Shutter::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 // CSUW1 DriveSpeed
 ///////////////////////////////////////////////////////////////////////////////
 DriveSpeed::DriveSpeed () :
-   pos_ (0),
    numPos_ (0),
    initialized_ (false),
    name_ (g_CSUW1DriveSpeed)
@@ -835,7 +834,6 @@ int DriveSpeed::OnRun(MM::PropertyBase* pProp, MM::ActionType eAct)
 ///////////////////////////////////////////////////////////////////////////////
 BrightField::BrightField () :
    initialized_ (false),
-   pos_ (1),
    name_ (g_CSUW1BrightField),
    numPos_ (2)
 {
@@ -935,7 +933,6 @@ int BrightField::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 ///////////////////////////////////////////////////////////////////////////////
 Disk::Disk () :
    initialized_ (false),
-   pos_ (1),
    name_ (g_CSUW1Disk),
    numPos_ (2)
 {
@@ -1037,7 +1034,6 @@ int Disk::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 ///////////////////////////////////////////////////////////////////////////////
 Port::Port () :
    initialized_ (false),
-   pos_ (1),
    name_ (g_CSUW1Port),
    numPos_ (3)
 {
@@ -1135,7 +1131,6 @@ int Port::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 ///////////////////////////////////////////////////////////////////////////////
 Aperture::Aperture () :
    initialized_ (false),
-   pos_ (9),
    name_ (g_CSUW1Aperture),
    numPos_ (10)
 {
@@ -1225,7 +1220,6 @@ int Aperture::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 ///////////////////////////////////////////////////////////////////////////////
 Frap::Frap () :
    initialized_ (false),
-   pos_ (0),
    name_ (g_CSUW1Frap),
    numPos_ (3)
 {
@@ -1324,7 +1318,6 @@ int Frap::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 Magnifier::Magnifier () :
    initialized_ (false),
    nr_ (1),
-   pos_ (0),
    name_ (g_CSUW1Magnifier),
    numPos_ (2)
 {

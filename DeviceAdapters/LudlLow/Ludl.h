@@ -132,7 +132,6 @@ private:
    int GetWheelPosition(int &position);
    int HomeWheel();
    std::string name_;
-   long pos_;
    bool initialized_;
    unsigned deviceNumber_;
    unsigned char moduleId_;
@@ -173,7 +172,6 @@ private:
    bool initialized_;
    unsigned deviceNumber_;
    unsigned char moduleId_;
-   long openTimeUs_;
 };
   
 class XYStage : public CXYStageBase<XYStage>

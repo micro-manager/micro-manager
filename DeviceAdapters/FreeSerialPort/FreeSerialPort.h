@@ -84,7 +84,6 @@ private:
 
    bool busy_;
    bool initialized_;
-   bool detailedLog_;
 
    std::string TokenizeControlCharacters(const std::string ) const;
    std::string DetokenizeControlCharacters(const std::string ) const;

@@ -125,7 +125,6 @@ private:
     std::string port_;
     bool initialized_;
     bool busy_;
-    double answerTimeoutMs_;
     double powerA_;
     double powerB_;
     double powerC_;
@@ -174,5 +173,4 @@ private:
     std::string currentB_;
     std::string currentC_;
     std::string currentD_;
-    int serial_;
 };

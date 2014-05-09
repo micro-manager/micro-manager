@@ -65,12 +65,7 @@ private:
     std::string port_;
     bool initialized_;
     bool busy_;
-    double answerTimeoutMs_;
-    double hours_;
-    double power_;
 	double powerSP_;
-	double baseTemp_;
-	double controllerTemp_;
 
     std::string laserOn_;
     std::string laserStatus_;
@@ -122,13 +117,8 @@ private:
     std::string port_;
     bool initialized_;
     bool busy_;
-    double answerTimeoutMs_;
-    double hours_;
-    double power_;
 	double powerSP_;
-	double current_;
 	double currentSP_;
-	double baseTemp_;
 	double maxCurrent_;
 	double maxPower_;
 

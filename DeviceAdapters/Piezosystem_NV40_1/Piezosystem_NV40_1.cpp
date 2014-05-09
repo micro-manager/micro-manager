@@ -125,7 +125,6 @@ void splitString(char* string, const char* delimiter, char** dest){
  * Single axis stage.
  */
 Stage::Stage(int nr):
-	nr_(nr),
    initialized_(false),
 	pos_(0.0),
 	voltage_(0),
@@ -133,9 +132,7 @@ Stage::Stage(int nr):
 	min_V_(0.0),
 	max_V_(100.0),
 	min_um_(0.0),
-	max_um_(100.0),
-	answerTimeoutMs_(500)
-
+	max_um_(100.0)
 {
 	InitializeDefaultErrorMessages();
 	 // Name

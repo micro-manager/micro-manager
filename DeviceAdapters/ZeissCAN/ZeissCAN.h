@@ -121,7 +121,6 @@ class ZeissScope : public HubBase<ZeissScope>
 
    private:
       bool initialized_;
-      double answerTimeoutMs_;
       bool IsMCU28Present();
       int GetMCU28Version(std::string& ver);
       std::vector<std::string> peripherals_;
@@ -519,7 +518,6 @@ private:
    double stepSize_um_;
    std::string focusFirmware_;
    std::string firmware_;
-   bool busy_;
    bool initialized_;
    double lowerLimit_;
    double upperLimit_;
@@ -598,7 +596,6 @@ private:
    int GetXYFirmwareVersion();
    std::string xyFirmware_;
    std::string firmware_;
-   bool busy_;
    bool initialized_;
    double stepSizeUm_;
 };
@@ -654,7 +651,6 @@ private:
    double stepSize_um_;
    std::string focusFirmware_;
    std::string firmware_;
-   bool busy_;
    bool initialized_;
    double lowerLimit_;
    double upperLimit_;

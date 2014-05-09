@@ -120,8 +120,6 @@ DC2xxx::DC2xxx() :
 	m_pwmFrequency(0),
 	m_pwmDutyCycle(0),
 	m_pwmCounts(0),
-	//m_displayBrightness(0),
-   m_busy(false),
    m_initialized(false)
 {
 	InitializeDefaultErrorMessages();
@@ -1011,7 +1009,6 @@ DC3100::DC3100() :
 	m_moduCurrent(0),
 	m_moduFrequency(10.0),
 	m_moduDepth(0),
-   m_busy(false),
    m_initialized(false)
 {
 	InitializeDefaultErrorMessages();
@@ -1829,7 +1826,6 @@ DC4100::DC4100() :
    m_status("No Fault"),
 	m_serialNumber("n/a"),
    m_firmwareRev("n/a"),
-   m_busy(false),
    m_initialized(false)
 {
 	InitializeDefaultErrorMessages();

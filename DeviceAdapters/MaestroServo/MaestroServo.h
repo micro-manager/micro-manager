@@ -123,7 +123,6 @@ private:
    std::string command_;
    // Time that last command was sent to device
    MM::MMTime changedTime_;
-   double position_;
 };
 
 #endif //_MaestroServo_H_

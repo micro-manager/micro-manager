@@ -166,11 +166,6 @@ private:
    std::string port_;
    double stepSizeXUm_;
    double stepSizeYUm_;
-   double answerTimeoutMs_;
-   double originX_;
-   double originY_;
-   bool mirrorX_;
-   bool mirrorY_;
    MM::MMTime changedTime_;
 };
 

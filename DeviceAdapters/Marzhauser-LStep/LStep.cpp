@@ -185,7 +185,6 @@ XYStage::XYStage() :
    CXYStageBase<XYStage>(),
    LStepBase(this),
    range_measured_(false),
-   answerTimeoutMs_(2000),
 
    stepSizeXUm_(0.02), //=1000*pitch[mm]/gear/(motorsteps*250)  (assume gear=1 motorsteps=200 => stepsize=pitch/50.0)
    stepSizeYUm_(0.02),
@@ -1091,7 +1090,6 @@ ZStage::ZStage() :
    CStageBase<ZStage>(),
    LStepBase(this),
    range_measured_(false),
-   answerTimeoutMs_(2000),
    stepSizeUm_(0.1),
    speedZ_(20.0), //[mm/s]
    accelZ_(0.2), //[m/s²]

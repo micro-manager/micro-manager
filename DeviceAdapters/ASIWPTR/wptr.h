@@ -67,8 +67,7 @@ public:
    int OnCommand(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
-	unsigned numPos_;
-   bool busy_;                                                               
+   unsigned numPos_;
    bool initialized_;                                                        
   // MMCore name of serial port
    std::string port_;

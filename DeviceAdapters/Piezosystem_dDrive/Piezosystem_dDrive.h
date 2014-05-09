@@ -481,11 +481,8 @@ private:
    
    bool initialized_;
    double stepSizeUm_;
-   double answerTimeoutMs_;
    std::string id_;
    char* ac_name_;		//actuator name
-   char* acsn_;			//serial number actuator
-   char* devsn_;		//serial number device
    EVD chx_;
   
 };
@@ -621,7 +618,6 @@ public:
 private:
    bool initialized_;
    int nr_;
-   double stepSize_;
    long xStep_;
    long yStep_;   
    EVD chx_;

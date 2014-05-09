@@ -78,10 +78,6 @@ private:
 
    // MMCore name of serial port
    std::string port_;
-   // Time it takes after issuing Close command to close the shutter         
-   double closingTimeMs_;                                                    
-   // Time it takes after issuing Open command to open the shutter           
-   double openingTimeMs_;                                                    
    // Command exchange with MMCore                                           
    std::string command_;           
    // close (0) or open (1)
@@ -89,9 +85,6 @@ private:
    bool initialized_;
    // channel that we are currently working on 
    std::string activeChannel_;
-   // version string returned by device
-   //std::string version_;
-   double answerTimeoutMs_;
    //intensity
    double intensity_;
    int maxintensity_; 
@@ -137,10 +130,6 @@ private:
 
    // MMCore name of serial port
    std::string port_;
-   // Time it takes after issuing Close command to close the shutter         
-   double closingTimeMs_;                                                    
-   // Time it takes after issuing Open command to open the shutter           
-   double openingTimeMs_;                                                    
    // Command exchange with MMCore                                           
    std::string command_;           
    // close (0) or open (1)
@@ -148,9 +137,6 @@ private:
    bool initialized_;
    // channels that we are currently working on 
    int activeMultiChannels_;
-   // version string returned by device
-   //std::string version_;
-   double answerTimeoutMs_;
    // milliseconds to wait between the per-channel on/off commands
    double delayBetweenChannels_;
 };

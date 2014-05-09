@@ -207,7 +207,6 @@ extern const char* g_WheelDeviceName;
 
 IntegratedFilterWheel::IntegratedFilterWheel() : 
    numberOfPositions_(0), 
-   busy_(false),
    home_(false),
    initialized_(false), 
    position_(0),

@@ -122,9 +122,7 @@ private:
     //int GetCommand(const std::string& cmd, std::string& response);
     //bool GetValue(std::string& sMessage, double& pos);
 
-    //std::string m_sPort;              // serial port
     bool        m_yInitialized;         // x-y stage initialized flag
-    bool        m_yRangeMeasured;       // x-y stage range measured flag
     int         m_nAnswerTimeoutMs;     // time out value of waiting response message
     int         m_nAnswerTimeoutTrys;   // time out trys
     double      m_dStepSizeUm;          // coverting unit between step and um

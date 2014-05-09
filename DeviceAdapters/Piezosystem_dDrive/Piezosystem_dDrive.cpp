@@ -1338,8 +1338,7 @@ int Hub::OnBright(MM::PropertyBase* pProp, MM::ActionType pAct)
 Stage::Stage():
    EVDBase(this),
    initialized_(false),
-   stepSizeUm_(0.1),   
-   answerTimeoutMs_(2000)
+   stepSizeUm_(0.1)
 {
    LogMessage ("new Stage");
    chx_.channel_=0;
@@ -1402,10 +1401,7 @@ Stage::Stage():
 Stage::Stage(int channel) :
    EVDBase(this),
    initialized_(false),
-   stepSizeUm_(0.1),
-   //ac_name_(name),
-   //port_("Undefined"),
-   answerTimeoutMs_(2000)
+   stepSizeUm_(0.1)
 {
    LogMessage ("new Stage(ch)");
    chx_.channel_=channel;
@@ -1474,8 +1470,7 @@ Stage::Stage(int channel, std::string name) :
    EVDBase(this),
    name_(name),
    initialized_(false),
-   stepSizeUm_(0.1),
-   answerTimeoutMs_(2000)
+   stepSizeUm_(0.1)
 {
    LogMessage ("new Stage(ch)");
    chx_.channel_=channel;

@@ -615,7 +615,6 @@ int Lamp::OnIntensity(MM::PropertyBase* pProp, MM::ActionType eAct)
 RLShutter::RLShutter () :
    initialized_ (false),
    name_ (g_LeicaDMRShutter),
-   open_(false),
    changedTime_(0.0)
 {
    InitializeDefaultErrorMessages();

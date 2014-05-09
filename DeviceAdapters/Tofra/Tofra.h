@@ -78,7 +78,6 @@ private:
 	long RunCurrent;
 	long NumPos;
 
-	bool busy_;
 	bool initialized_;
 	MM::MMTime changedTime_;
 	long position_;
@@ -148,7 +147,6 @@ private:
 	std::string Position;
 	double Speed;
 
-	bool busy_;
 	bool initialized_;
 	MM::MMTime changedTime_;
 	double stepSizeUm_;
@@ -267,7 +265,6 @@ private:
 	double stepSizeUmY_;
 	std::string ExecuteY;
 
-	bool busy_;
 	bool initialized_;
 	MM::MMTime changedTime_;
 	std::string port_;
@@ -354,7 +351,6 @@ private:
 	long MotorSteps;
 	long StepDivide;
 
-	bool busy_;
 	bool initialized_;
 	MM::MMTime changedTime_;
 	long position_;
@@ -388,7 +384,6 @@ public:
 	int OnChannel4Intensity(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
-	bool busy_;
 	bool initialized_;
 	MM::MMTime changedTime_;
 	long position_;

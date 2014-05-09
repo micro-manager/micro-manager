@@ -68,7 +68,6 @@ private:
    std::string port_;    
    bool initialized_;
 	bool busy_;
-   double answerTimeoutMs_;
 	double power1_;
 	double power2_;
    std::string laserOn_;
@@ -82,7 +81,6 @@ private:
 	std::string suboperatingmode_;
     
    int specpower;
-	int serial_;
 	int device_;
     
 

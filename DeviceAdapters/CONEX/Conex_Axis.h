@@ -133,9 +133,6 @@ public:
    // action interface
    // ----------------
    int OnPort     (MM::PropertyBase* pProp, MM::ActionType eAct);
-
-private:
-   double answerTimeoutMs_;
 };
 
 
@@ -172,11 +169,6 @@ public:
    // action interface
    // ----------------
    int OnPort     (MM::PropertyBase* pProp, MM::ActionType eAct);
-
-
-
-private:
-   double answerTimeoutMs_;
 };
 
 
@@ -213,9 +205,6 @@ public:
    // action interface
    // ----------------
    int OnPort     (MM::PropertyBase* pProp, MM::ActionType eAct);
-  
-private:
-   double answerTimeoutMs_;
 };
 
 

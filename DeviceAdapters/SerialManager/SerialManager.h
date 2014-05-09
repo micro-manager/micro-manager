@@ -128,7 +128,6 @@ private:
    // thread locking for the port 
    MMThreadLock portLock_;
 
-   double portTimeoutMs_;
    double answerTimeoutMs_;
    int refCount_;
    double transmitCharWaitMs_;

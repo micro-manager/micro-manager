@@ -127,10 +127,6 @@ private:
 
    // MMCore name of serial port
    std::string port_;
-   // Time it takes after issuing Close command to close the shutter         
-   double closingTimeMs_;                                                    
-   // Time it takes after issuing Open command to open the shutter           
-   double openingTimeMs_;                                                    
    // Command exchange with MMCore                                           
    std::string command_;           
    // close (0) or open (1)
@@ -140,7 +136,6 @@ private:
    std::string activeChannel_;
    // version string returned by device
    std::string version_;
-   double answerTimeoutMs_;
    
 };
 
@@ -179,10 +174,6 @@ private:
    int GetND(int& nd);
    int GetVersion();
 
-   // Time it takes after issuing Close command to close the shutter         
-   double closingTimeMs_;                                                    
-   // Time it takes after issuing Open command to open the shutter           
-   double openingTimeMs_;                                                    
    // Command exchange with MMCore                                           
    std::string command_;           
    bool initialized_;
@@ -192,7 +183,6 @@ private:
    int state_;
    // version string returned by device
    std::string version_;
-   double answerTimeoutMs_;
    
 };
 #endif //_NIKON_H_

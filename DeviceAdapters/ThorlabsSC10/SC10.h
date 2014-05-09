@@ -66,9 +66,6 @@ private:
    
    // Last command sent to the controller
    std::string lastCommand_;
-
-   // Delay between issuing command and shutter opening/closing
-   double actionDelay_;
 };
 
 

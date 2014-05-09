@@ -60,7 +60,6 @@ private:
    int RetrieveCurrentPosition(long& pos);
 
    long numberOfPositions_;
-   bool busy_;
    bool home_;
    bool initialized_;
    long position_;
@@ -68,7 +67,6 @@ private:
    double answerTimeoutMs_;      // max wait for the device to answer
 
    static const unsigned int stepsTurn_ = 1774933; // steps in one wheel turn
-   double offset_;   // offset in steps for the "0" position
 };
 
 #endif //_INTEGRATEDFILTERWHEEL_H_

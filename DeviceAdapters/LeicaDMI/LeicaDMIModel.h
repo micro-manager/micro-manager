@@ -144,10 +144,6 @@ public:
 
    int SetPositionLabel(int position, std::string label);
    std::string GetPositionLabel(int position);
-
-
-private:
-   long filterWheelID_;
 };
 
 /*
@@ -272,7 +268,6 @@ public:
 private:
    double offset_;
    bool mode_;
-   double diff_;
    int topLEDColor_;
    int bottomLEDColor_;
 };

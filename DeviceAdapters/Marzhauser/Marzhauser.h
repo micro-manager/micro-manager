@@ -127,7 +127,6 @@ int Move(double vx, double vy);
 
 private:
    bool range_measured_;
-   double answerTimeoutMs_;
    double stepSizeXUm_;
    double stepSizeYUm_;
    double speedX_;
@@ -190,7 +189,6 @@ public:
 
 private:
    bool range_measured_;
-   double answerTimeoutMs_;
    double stepSizeUm_;
    double speedZ_;
    double accelZ_;
@@ -198,7 +196,6 @@ private:
 
    bool sequenceable_;
    long nrEvents_;
-   long curSteps_;
    std::vector<double> sequence_;
 };
 
@@ -244,7 +241,6 @@ public:
 
 private:
    bool range_measured_;
-   double answerTimeoutMs_;
    double speed_;
    double accel_;
    double origin_;
@@ -277,7 +273,6 @@ private:
    int SetShutterPosition(bool state);
    int GetShutterPosition(bool& state);
    std::string name_;
-   double answerTimeoutMs_;
 };
 
 
@@ -310,8 +305,6 @@ private:
    std::string name_;  
    const int id_;
    double intensity_;
-   double answerTimeoutMs_;
-   int usec_;
    double fireT_;
    LED100& operator=(LED100&) {assert(false); return *this;} 
 };
@@ -348,7 +341,6 @@ private:
    int  DACPort_;
    std::string name_;  
    bool open_;
-   double answerTimeoutMs_;
    double volts_;
 };
 
@@ -384,7 +376,6 @@ private:
    std::string name_;  
    double volts_;
    int ADCPort_;
-   double answerTimeoutMs_;
 };
 
 

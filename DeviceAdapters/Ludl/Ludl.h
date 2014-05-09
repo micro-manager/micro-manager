@@ -247,7 +247,6 @@ private:
    double stepSizeUm_;
    double speed_, startSpeed_;
    long accel_;
-   double answerTimeoutMs_;
    unsigned idX_;
    unsigned idY_;
    double originX_;

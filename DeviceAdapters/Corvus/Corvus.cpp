@@ -121,7 +121,6 @@ int ClearPort(MM::Device& device, MM::Core& core, std::string port)
 ///////////////////////////////////////////////////////////////////////////////
 
 Hub::Hub() :
-  answerTimeoutMs_(1000),
   initialized_(false)
 {
    InitializeDefaultErrorMessages();

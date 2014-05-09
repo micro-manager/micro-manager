@@ -148,7 +148,6 @@ private:
 
    long int cameraID_;
    ImgBuffer img_;
-   bool busy_;
    bool initialized_;
    double readoutUs_;
    MM::MMTime readoutStartTime_;

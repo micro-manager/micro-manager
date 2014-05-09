@@ -87,7 +87,6 @@ private:
    std::string port_;
    double stepSizeXUm_;
    double stepSizeYUm_;
-   double answerTimeoutMs_;
 };
 
 class ZStage : public CStageBase<ZStage>
@@ -126,6 +125,5 @@ private:
    std::string port_;
    double stepSizeUm_;
    long curSteps_;
-   double answerTimeoutMs_;
 };
 #endif

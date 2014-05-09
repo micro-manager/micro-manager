@@ -72,9 +72,7 @@ private:
     std::string port_;
     bool initialized_;
     bool busy_;
-    double answerTimeoutMs_;
     std::string hours_;
-    double power_;
     double maxPower_;
     std::string laserOn_;
     std::string laserStatus_;
@@ -83,7 +81,6 @@ private:
     std::string fault_;
     std::string serialNumber_;
     std::string version_;
-    int serial_;
     
     int GetState(int &value);
     int SetPowerSetpoint(double requestedPowerSetpoint);

@@ -62,8 +62,7 @@ SC10::SC10() :
    initialized_(false),
    deviceInfo_(""),
    port_("Undefined"),
-   lastCommand_("Undefined"),
-   actionDelay_(2.0)
+   lastCommand_("Undefined")
 {
    InitializeDefaultErrorMessages();
 

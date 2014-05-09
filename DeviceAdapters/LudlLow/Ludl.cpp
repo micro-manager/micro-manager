@@ -458,7 +458,6 @@ int Hub::OnTransmissionDelay(MM::PropertyBase* pProp, MM::ActionType pAct)
 
 Wheel::Wheel() : 
    name_(g_Wheel), 
-   pos_(1),
    initialized_(false), 
    deviceNumber_(1),
    moduleId_(17),
@@ -808,8 +807,7 @@ Shutter::Shutter() :
    name_(g_Shutter), 
    shutterNumber_(1), 
    initialized_(false), 
-   moduleId_(17),
-   openTimeUs_(0)
+   moduleId_(17)
 {
    InitializeDefaultErrorMessages();
    SetErrorText(ERR_UNRECOGNIZED_ANSWER, "Unrecognized answer received from the device");

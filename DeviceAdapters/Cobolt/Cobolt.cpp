@@ -47,8 +47,6 @@ Cobolt::Cobolt() :
 port_("Undefined"),
 initialized_(false),
 busy_(false),
-answerTimeoutMs_(1000),
-power_(0.00),
 maxPower_(0.00),
 laserOn_("On"),
 laserStatus_("Undefined"),

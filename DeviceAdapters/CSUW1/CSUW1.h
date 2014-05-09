@@ -71,8 +71,6 @@ private:
    std::string port_;
    // Command exchange with MMCore
    std::string command_;
-   // Has a command been sent to which no answer has been received yet?
-   bool pendingCommand_;
 };
 
 
@@ -186,9 +184,7 @@ public:
 
 private:
    bool running_;
-   long current_;
 
-   long pos_;
    unsigned numPos_;
    bool initialized_;
    std::string name_;
@@ -215,7 +211,6 @@ public:
 
 private:
    bool initialized_;
-   long pos_;
    std::string name_;
    unsigned numPos_;
 };
@@ -241,7 +236,6 @@ public:
 
 private:
    bool initialized_;
-   long pos_;
    std::string name_;
    unsigned numPos_;
 };
@@ -267,7 +261,6 @@ public:
 
 private:
    bool initialized_;
-   long pos_;
    std::string name_;
    unsigned numPos_;
 };
@@ -293,7 +286,6 @@ public:
 
 private:
    bool initialized_;
-   long pos_;
    std::string name_;
    unsigned numPos_;
 };
@@ -319,7 +311,6 @@ public:
 
 private:
    bool initialized_;
-   long pos_;
    std::string name_;
    unsigned numPos_;
 };
@@ -347,7 +338,6 @@ public:
 private:
    bool initialized_;
    long nr_;
-   long pos_;
    std::string name_;
    unsigned numPos_;
 };

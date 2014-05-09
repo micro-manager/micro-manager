@@ -225,7 +225,6 @@ public:
 
 private:
    int stepSize_nm_;
-   bool busy_;
    bool initialized_;
    double lowerLimit_;
    double upperLimit_;
@@ -435,7 +434,6 @@ public:
 
 private:
    double stepSize_nm_;
-   bool busy_;
    bool initialized_;
    double lowerLimit_;
    double upperLimit_;

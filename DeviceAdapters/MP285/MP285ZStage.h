@@ -110,13 +110,9 @@ private:
     int CheckError(unsigned char bErrorCode);
     //int GetCommand(const std::string& cmd, std::string& response);
 
-    //std::string m_sPort;              // serial port
     bool        m_yInitialized;         // z stage initialization flag
     int         m_nAnswerTimeoutMs;     // timeout value of Z stage waiting for response message
     int         m_nAnswerTimeoutTrys;   // timeout trys
-    long        m_lSpeed;               // z stage move speed (same as XY stage move speed   
-    double      m_dStepSizeUm;          // Z stage converting unit betweek step and um
-    //double    m_dOriginZ;             // Z stage origin
 };
 
 #endif  // _MP285ZSTAGE_H_

@@ -106,7 +106,6 @@ private:
    unsigned curPos_;
    bool open_;
    unsigned speed_;
-   bool busy_;
    double answerTimeoutMs_;
    Wheel& operator=(Wheel& /*rhs*/) {assert(false); return *this;}
 };
@@ -229,7 +228,6 @@ private:
    std::string name_;
    std::string port_;
    unsigned curPos_;
-   bool busy_;
    double answerTimeoutMs_;
 };
 

@@ -83,7 +83,6 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 
 CDemoFilterWheel::CDemoFilterWheel() : 
    numPos_(6), 
-   busy_(false), 
    initialized_(false), 
    changedTime_(0.0),
    position_(0),

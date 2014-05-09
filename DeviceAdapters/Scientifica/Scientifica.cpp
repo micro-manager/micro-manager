@@ -99,8 +99,7 @@ XYStage::XYStage() :
    initialized_(false), 
    port_("Undefined"), 
    stepSizeXUm_(0.1), 
-   stepSizeYUm_(0.1), 
-   answerTimeoutMs_(1000)
+   stepSizeYUm_(0.1)
 {
    InitializeDefaultErrorMessages();
 
@@ -549,8 +548,7 @@ int XYStage::GetPositionStepsSingle(char axis, long& steps)
 ZStage::ZStage() :
    initialized_(false),
    port_("Undefined"),
-   stepSizeUm_(0.1),
-   answerTimeoutMs_(1000)
+   stepSizeUm_(0.1)
 {
    InitializeDefaultErrorMessages();
 

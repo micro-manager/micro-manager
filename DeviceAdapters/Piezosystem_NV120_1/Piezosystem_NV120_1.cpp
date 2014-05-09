@@ -175,9 +175,7 @@ Stage::Stage(int nr):
 	min_V_(-20.0),
 	max_V_(130.0),
 	min_um_(0.0),
-	max_um_(100.0),
-	answerTimeoutMs_(1000)
-
+	max_um_(100.0)
 {
 	InitializeDefaultErrorMessages();
 	

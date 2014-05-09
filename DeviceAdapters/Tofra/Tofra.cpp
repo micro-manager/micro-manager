@@ -103,7 +103,6 @@ TofraFilterWheel::TofraFilterWheel() :
 	HoldCurrent(5), // in % of max (which is 2A)
 	RunCurrent (60),
 	NumPos(10), 
-	busy_(false), 
 	initialized_(false), 
 	changedTime_(0.0),
 	position_(0),
@@ -530,7 +529,6 @@ ZStage::ZStage() :
 	WithLimits(0),	 // 1 if Z-drive includes limits
 	Position(""),	 // Numeric or symbolic (ORIGIN, HOME, LIM1, LIM2) position
 	Speed(0),		 // Speed for continuous move in microns/sec; to stop set to 0
-	busy_(false),   
 	initialized_(false),
 	changedTime_(0.0),   
 	stepSizeUm_(0.0009765625), //assuming 100um full turn of focus knob and 400 step motor; actual value is calculated
@@ -1137,11 +1135,6 @@ XYStage::XYStage() :
 	Out2Y(0),	// Output 2
 	LimitPolarityY(0), // limit polarity: 0 normally closed, 1 mormally open
 	stepSizeUmY_(0.01953125), // assuming 1000um lead and 200 step motor; actual value is calculated
-	//originX_(0),
-	//originY_(0),
-	//mirrorX_(false),
-	//mirrorY_(false),
-	busy_(false),   
 	initialized_(false),
 	changedTime_(0.0),   
 	port_("")
@@ -2284,7 +2277,6 @@ CubeSlider::CubeSlider() :
 	LeadUm(25400),		 // microns of linear motion per full motor turn
 	MotorSteps(200),	 // steps in one revolution
 	StepDivide(16),		 // microsteps in one full step
-	busy_(false), 
 	initialized_(false), 
 	changedTime_(0.0),
 	position_(0),
@@ -2710,7 +2702,6 @@ int CubeSlider::InitializeCubeSlider()
 ///////////////////////////////////////////////////////////////////////////////
 
 rgbLED::rgbLED() : 
-	busy_(false),
 	initialized_(false), 
 	changedTime_(0.0),
 	position_(0),

@@ -204,7 +204,6 @@ XYStage::XYStage() :
    CXYStageBase<XYStage>(),
    TangoBase(this),
    range_measured_(false),
-   answerTimeoutMs_(2000),
    stepSizeXUm_(0.0012), //=1000*pitch[mm]/gear/(motorsteps*4096)  (assume gear=1 motorsteps=200 => stepsize=pitch/819.2)
    stepSizeYUm_(0.0012),
    speedX_(20.0), //[mm/s]
@@ -1203,7 +1202,6 @@ ZStage::ZStage() :
    CStageBase<ZStage>(),
    TangoBase(this),
    range_measured_(false),
-   answerTimeoutMs_(2000),
    stepSizeUm_(0.1),
    speedZ_(20.0), //[mm/s]
    accelZ_(0.2), //[m/s²]
@@ -2038,7 +2036,6 @@ AStage::AStage() :
    CStageBase<AStage>(),
    TangoBase(this),
    range_measured_(false),
-   answerTimeoutMs_(2000),
    speed_(20.0), //[mm/s]
    accel_(0.2), //[m/s²]
    origin_(0),
@@ -2648,8 +2645,7 @@ int AStage::OnStepSize(MM::PropertyBase* pProp, MM::ActionType eAct)
 Shutter::Shutter() : 
    CShutterBase<Shutter>(),
    TangoBase(this),
-   name_(g_ShutterName), 
-   answerTimeoutMs_(2000)
+   name_(g_ShutterName)
 {
    InitializeDefaultErrorMessages();
 
@@ -2873,8 +2869,6 @@ LED100::LED100 (const char* name, int id) :
    name_ (name),
    id_(id), 
    intensity_(0),
-   answerTimeoutMs_(2000),
-   usec_(0),
    fireT_(0)
 {
    InitializeDefaultErrorMessages();
@@ -3181,8 +3175,7 @@ DAC::DAC () :
    TangoBase(this),
    DACPort_(0),
    name_ (g_DACName),
-   open_(false),
-   answerTimeoutMs_(2000)
+   open_(false)
 {
    InitializeDefaultErrorMessages();
 
@@ -3463,8 +3456,7 @@ ADC::ADC () :
    TangoBase(this),
    name_ (g_ADCName),
    volts_(0.0),
-   ADCPort_(0),
-   answerTimeoutMs_(2000)
+   ADCPort_(0)
 {
    InitializeDefaultErrorMessages();
 

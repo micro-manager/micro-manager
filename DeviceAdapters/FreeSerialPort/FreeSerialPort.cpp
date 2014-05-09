@@ -71,7 +71,9 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 // FreeSerialPort implementation
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-FreeSerialPort::FreeSerialPort() : busy_(false), initialized_(false), detailedLog_(true)
+FreeSerialPort::FreeSerialPort() :
+   busy_(false),
+   initialized_(false)
 {
 	InitializeDefaultErrorMessages();
 

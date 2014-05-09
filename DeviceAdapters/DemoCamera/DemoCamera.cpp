@@ -1954,7 +1954,6 @@ void CDemoCamera::TestResourceLocking(const bool recurse)
 
 CDemoFilterWheel::CDemoFilterWheel() : 
 numPos_(10), 
-busy_(false), 
 initialized_(false), 
 changedTime_(0.0),
 position_(0)
@@ -2113,7 +2112,6 @@ int CDemoFilterWheel::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 CDemoStateDevice::CDemoStateDevice() : 
 numPos_(10), 
-busy_(false), 
 initialized_(false), 
 changedTime_(0.0),
 position_(0)

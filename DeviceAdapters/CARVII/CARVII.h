@@ -61,8 +61,6 @@ private:
     std::string port_;
     // Command exchange with MMCore
     std::string command_;
-    // Has a command been sent to which no answer has been received yet?
-    bool pendingCommand_;
 };
 
 class Shutter : public CShutterBase<Shutter> {

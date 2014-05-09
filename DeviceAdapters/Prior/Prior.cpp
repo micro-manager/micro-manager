@@ -725,13 +725,7 @@ XYStage::XYStage() :
    initialized_(false), 
    port_("Undefined"), 
    stepSizeXUm_(0.0), 
-   stepSizeYUm_(0.0), 
-   answerTimeoutMs_(1000),
-   originX_(0),
-   originY_(0),
-   mirrorX_(false),
-   mirrorY_(false)
-
+   stepSizeYUm_(0.0)
 {
    InitializeDefaultErrorMessages();
 

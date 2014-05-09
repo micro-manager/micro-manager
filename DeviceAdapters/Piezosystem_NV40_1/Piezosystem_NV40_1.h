@@ -117,7 +117,6 @@ private:
    int SetCommandValue(const char* c,double fkt);
    //int SetCommandValue(const char* c,int fkt);
 	bool initialized_;
-	double answerTimeoutMs_;
 	std::string ver_;
    bool loop_;
 	bool remote_;
@@ -128,10 +127,6 @@ private:
    double max_um_;
 	//channel
 	double pos_;		//position value in micron
-
-	int nr_;
-	
- 
 };
 
 #endif //_PIEZOSYSTEM_NV40_1_H_

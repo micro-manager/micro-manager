@@ -640,8 +640,7 @@ int ZeissAxis::StopMove(MM::Device& device, MM::Core& core, ZeissUByte devId, Ze
 //
 ZeissScope::ZeissScope() :
    initialized_(false),
-   port_("Undefined"),                                                       
-   answerTimeoutMs_(500)
+   port_("Undefined")
 {
    InitializeDefaultErrorMessages();
    SetErrorText(ERR_ANSWER_TIMEOUT, "The Zeiss microscope does not answer.  Is it switched on and connected to this computer?");
@@ -2354,9 +2353,7 @@ int DefiniteFocus::OnFocusMethod(MM::PropertyBase* pProp, MM::ActionType eAct)
  */
 
 DFOffsetStage::DFOffsetStage() :
-   initialized_ (false),
-   pos_ (0.0),
-   originPos_ (0.0)
+   initialized_(false)
 {
    InitializeDefaultErrorMessages();
 

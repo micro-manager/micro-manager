@@ -331,7 +331,6 @@ XYStage::XYStage() :
    joyStickSpeedFast_(60),
    joyStickSpeedSlow_(5),
    joyStickMirror_(false),
-   joyStickSwapXY_(false),
    nrMoveRepetitions_(0),
    answerTimeoutMs_(1000)
 {
@@ -2550,9 +2549,7 @@ int CRIF::OnWaitAfterLock(MM::PropertyBase* pProp, MM::ActionType eAct)
 ////
 CRISP::CRISP() :
    ASIBase(this, "" /* LX-4000 Prefix Unknown */),
-   justCalibrated_(false),
    axis_("Z"),
-   stepSizeUm_(0.1),
    ledIntensity_(50),
    na_(0.65),
    waitAfterLock_(1000),

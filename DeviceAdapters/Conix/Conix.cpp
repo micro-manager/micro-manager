@@ -85,8 +85,7 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 QuadFluor::QuadFluor() :
    initialized_(false),
    numPos_(4),
-   port_("Undefined"),
-   pendingCommand_(false)
+   port_("Undefined")
 {
    InitializeDefaultErrorMessages();
 
@@ -331,7 +330,6 @@ HexaFluor::HexaFluor() :
    initialized_(false),
    numPos_(6),
    port_("Undefined"),
-   pendingCommand_(false),
    baseCommand_("Cube "),
    changedTime_(0)
 {
@@ -551,7 +549,6 @@ port_("Undefined"),
 stepSize_um_(0.015),
 posX_um_(0.0),
 posY_um_(0.0),
-busy_(false),
 initialized_(false),
 lowerLimit_(0.0),
 upperLimit_(20000.0)
@@ -902,10 +899,7 @@ CStageBase<ConixZStage>(),
 port_("Undefined"),
 stepSize_um_(0.1),
 posZ_um_(0.0),
-busy_(false),
-initialized_(false),
-lowerLimit_(0.0),
-upperLimit_(20000.0)
+initialized_(false)
 {
 	InitializeDefaultErrorMessages();
 

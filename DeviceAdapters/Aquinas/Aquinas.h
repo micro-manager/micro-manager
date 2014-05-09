@@ -49,7 +49,6 @@ private:
 
    std::string port_;
    bool initialized_;
-   bool busy_;
    double pressureSetPoint_;
    unsigned char valveState_;
    std::string id_;

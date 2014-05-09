@@ -172,8 +172,7 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 // LeicaScope
 //
 LeicaScope::LeicaScope() :
-   initialized_(false),                                                 
-   answerTimeoutMs_(250)
+   initialized_(false)
 {
    InitializeDefaultErrorMessages();
    SetErrorText(ERR_ANSWER_TIMEOUT, "The Leica microscope does not answer.  Is it switched on and connected to this computer?");
@@ -1193,7 +1192,6 @@ FastFilterWheel::FastFilterWheel() :
    initialized_(false),
    name_(g_LeicaFastFilterWheel),
    description_("Fast Filter Wheel"),
-   pos_(1),
    filterWheelID_(0)
 {
    InitializeDefaultErrorMessages();
@@ -1515,7 +1513,6 @@ int ZDrive::OnSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
 */
 XYStage::XYStage (): 
    CXYStageBase<XYStage>(),
-   busy_ (false),
    initialized_ (false),
    originXSteps_(0),
    originYSteps_(0)
@@ -2025,8 +2022,7 @@ MagChanger::MagChanger() :
    numPos_(4),
    initialized_ (false),
    name_("Magnifier"),
-   description_("Motorized Magnifier"),
-   pos_(1)
+   description_("Motorized Magnifier")
 {
    InitializeDefaultErrorMessages();
 
@@ -3081,8 +3077,7 @@ SidePort::SidePort():
    numPos_(3),
    initialized_ (false),
    name_("Side Port"),
-   description_("Side Port"),
-   pos_(1)
+   description_("Side Port")
 {
    InitializeDefaultErrorMessages();
 

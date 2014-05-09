@@ -991,8 +991,6 @@ CArduinoDA::CArduinoDA(int channel) :
       maxV_(5.0), 
       volts_(0.0),
       gatedVolts_(0.0),
-      encoding_(0), 
-      resolution_(8), 
       channel_(channel), 
       maxChannel_(2),
       gateOpen_(true)
@@ -1667,10 +1665,9 @@ int CArduinoInput::ReadNBytes(CArduinoHub* hub, unsigned int n, unsigned char* a
 
 ArduinoInputMonitorThread::ArduinoInputMonitorThread(CArduinoInput& aInput, bool debug) :
    state_(0),
-   aInput_(aInput),
-   debug_(debug)
+   aInput_(aInput)
 {
-};
+}
 
 ArduinoInputMonitorThread::~ArduinoInputMonitorThread()
 {

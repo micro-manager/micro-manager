@@ -91,7 +91,6 @@ private:
     double exposureMs_;
     float exposureMin_;
     float exposureMax_;
-    bool stopOnOverflow_;
     ImgBuffer img_;
     int roiX_, roiY_;
     int cameraCnt_, currentCam_;

@@ -139,7 +139,6 @@ public:
    //int OnStop(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:                                                                     
-   bool busy_;
    bool initialized_;
    double stepSize_um_;
    std::string name_;  

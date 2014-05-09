@@ -70,8 +70,6 @@ private:
    std::string port_;
    // Command exchange with MMCore
    std::string command_;
-   // Has a command been sent to which no answer has been received yet?
-   bool pendingCommand_;
 };
 
 
@@ -112,8 +110,6 @@ private:
    std::string port_;
    // Command exchange with MMCore
    std::string command_;
-   // Has a command been sent to which no answer has been received yet?
-   bool pendingCommand_;
    std::string baseCommand_;
    MM::MMTime changedTime_;
 };
@@ -190,7 +186,6 @@ private:
 	double stepSize_um_;
 	double posX_um_;
 	double posY_um_;
-	bool busy_;
 	bool initialized_;
 	double lowerLimit_;
 	double upperLimit_;
@@ -257,10 +252,7 @@ private:
 
 	double stepSize_um_;
 	double posZ_um_;
-	bool busy_;
 	bool initialized_;
-	double lowerLimit_;
-	double upperLimit_;
 
 	long curSteps_;
 	ConixControllerType m_ControllerType;

@@ -149,7 +149,6 @@ class Hub :   public CGenericBase<Hub>	 // public HubBase<Hub>
 		const char* name_;
 		bool fready_;
 		bool initialized_;
-		int transmissionDelay_;
 		int bright_;
 	  
 };

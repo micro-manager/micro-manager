@@ -65,7 +65,6 @@ VersaLase::VersaLase() :
    port_("Undefined"),
    initialized_(false),
    busy_(false),
-   answerTimeoutMs_(1000),
    powerA_(1.00),
    powerB_(1.00),
    powerC_(1.00),

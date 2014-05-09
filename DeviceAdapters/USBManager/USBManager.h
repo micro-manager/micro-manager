@@ -144,7 +144,6 @@ private:
    bool busy_;
    bool open_;
    bool initialized_;
-   double portTimeoutMs_;
    std::vector<std::string> availableDevices_;
    USBDeviceLister* deviceLister;
    usb_dev_handle *deviceHandle_;

@@ -43,7 +43,6 @@ private:
    std::string port_;
    bool initialized_;
    bool laserLinesDetected_;
-   uint8_t lineSwitch_;
    MM::PortType portType_;
    int nrLines_;
 };

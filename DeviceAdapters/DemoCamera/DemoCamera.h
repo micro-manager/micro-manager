@@ -282,7 +282,6 @@ public:
 
 private:
    long numPos_;
-   bool busy_;
    bool initialized_;
    MM::MMTime changedTime_;
    long position_;
@@ -381,7 +380,6 @@ public:
 
 private:
    long numPos_;
-   bool busy_;
    bool initialized_;
    MM::MMTime changedTime_;
    long position_;

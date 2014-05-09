@@ -158,7 +158,6 @@ private:
    int joyStickSpeedFast_;
    int joyStickSpeedSlow_;
    bool joyStickMirror_;
-   bool joyStickSwapXY_;
    long nrMoveRepetitions_;
    double answerTimeoutMs_;
    bool stopSignal_;
@@ -321,9 +320,7 @@ private:
 
    static const int SIZE_OF_FC_ARRAY = 24;
    std::string focusCurveData_[SIZE_OF_FC_ARRAY];
-   bool justCalibrated_;
    std::string axis_;
-   double stepSizeUm_;
    long ledIntensity_;
    double na_;
    std::string focusState_;
@@ -350,7 +347,6 @@ public:
 
 private:
    long numPos_;                                                             
-   bool busy_;       
    MM::MMTime changedTime_;                                                  
    long position_; 
 };

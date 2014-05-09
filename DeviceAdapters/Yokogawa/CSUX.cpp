@@ -697,7 +697,6 @@ int Shutter::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 ///////////////////////////////////////////////////////////////////////////////
 DriveSpeed::DriveSpeed () :
    initialized_ (false),
-   driveSpeedBusy_ (false),
    name_ (g_CSUXDriveSpeed),
    min_ (0),
    max_ (5000),

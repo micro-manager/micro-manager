@@ -75,7 +75,6 @@ public:
    int OnCOMPort(MM::PropertyBase* pProp, MM::ActionType eAct);
 private:
    long numPos_;
-   bool busy_;
    bool initialized_;
    MM::MMTime changedTime_;
    long position_;

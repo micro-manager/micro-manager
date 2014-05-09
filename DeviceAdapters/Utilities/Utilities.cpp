@@ -268,7 +268,6 @@ int MultiShutter::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 // Multi Shutter implementation
 ///////////////////////////////////////////////////////////////////////////////
 MultiCamera::MultiCamera() :
-   bufferSize_(0),
    imageBuffer_(0),
    nrCamerasInUse_(0),
    initialized_(false)
@@ -2236,10 +2235,8 @@ int DAXYStage::OnStageMaxVoltY(MM::PropertyBase* pProp, MM::ActionType eAct)
  */
 
 AutoFocusStage::AutoFocusStage() :
-   AutoFocusDeviceName_ (""),
-   initialized_ (false),
-   pos_ (0.0),
-   originPos_ (0.0)
+   AutoFocusDeviceName_(""),
+   initialized_(false)
 {
    InitializeDefaultErrorMessages();
 

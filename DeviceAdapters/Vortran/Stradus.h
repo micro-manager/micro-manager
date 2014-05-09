@@ -80,7 +80,6 @@ private:
     std::string port_;
     bool initialized_;
     bool busy_;
-    double answerTimeoutMs_;
     double power_;
     int pulPwr_;
     std::string laserOn_;
@@ -96,5 +95,4 @@ private:
     std::string baseT_;
     std::string hours_;
     std::string current_;
-    int serial_;
 };

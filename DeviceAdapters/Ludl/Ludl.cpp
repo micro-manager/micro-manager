@@ -1599,7 +1599,6 @@ XYStage::XYStage() :
    speed_(2500.0),
    startSpeed_(500.0),
    accel_(75),
-   answerTimeoutMs_(1000), 
    idX_(1), 
    idY_(2),
    originX_(0),

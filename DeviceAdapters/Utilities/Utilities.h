@@ -152,15 +152,12 @@ public:
 
 private:
    int Logical2Physical(int logical);
-   unsigned long bufferSize_;
    unsigned char* imageBuffer_;
 
    std::vector<std::string> availableCameras_;
    std::vector<std::string> usedCameras_;
    std::vector<int> cameraWidths_;
    std::vector<int> cameraHeights_;
-   unsigned  width_;
-   unsigned height_;
    std::vector<MM::Camera*> physicalCameras_;
    unsigned int nrCamerasInUse_;
    bool initialized_;
@@ -470,8 +467,6 @@ private:
    std::string AutoFocusDeviceName_;
    MM::AutoFocus* AutoFocusDevice_;
    bool initialized_;
-   double pos_;
-   double originPos_;
 };
 
 /**

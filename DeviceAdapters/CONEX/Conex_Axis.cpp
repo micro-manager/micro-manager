@@ -438,9 +438,7 @@ void Conex_AxisBase::test()
 
 X_Axis::X_Axis() :
    CStageBase<X_Axis>(),
-   Conex_AxisBase(this),
-   answerTimeoutMs_(2000)
-
+   Conex_AxisBase(this)
 {
    InitializeDefaultErrorMessages();
    // create pre-initialization properties
@@ -594,9 +592,7 @@ int X_Axis::OnPort(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 Y_Axis::Y_Axis() :
    CStageBase<Y_Axis>(),
-   Conex_AxisBase(this),
-   answerTimeoutMs_(2000)
-
+   Conex_AxisBase(this)
 {
    InitializeDefaultErrorMessages();
    // create pre-initialization properties
@@ -731,9 +727,7 @@ int Y_Axis::OnPort(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 Z_Axis::Z_Axis() :
    CStageBase<Z_Axis>(),
-   Conex_AxisBase(this),
-   answerTimeoutMs_(2000)
-
+   Conex_AxisBase(this)
 {
    InitializeDefaultErrorMessages();
    // create pre-initialization properties

@@ -71,8 +71,6 @@ private:
    std::string port_;
    // Command exchange with MMCore
    std::string command_;
-   // Has a command been sent to which no answer has been received yet?
-   bool pendingCommand_;
    int minSpeed_, maxSpeed_, currentSpeed_;
 };
 
@@ -180,10 +178,9 @@ public:
 
 private:
    bool initialized_;
-   bool driveSpeedBusy_;
    unsigned numPos_; 
    std::string name_;
-   int min_, max_, current_, requested_;
+   int min_, max_, current_;
 };
 
 

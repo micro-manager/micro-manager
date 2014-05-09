@@ -340,20 +340,12 @@ class ColibriModel
    private:
       MMThreadLock dfLock_;
       ZeissShort calibrationValue_[NRLEDS];
-      ZeissShort calibrationReferenceValue_[NRLEDS];
       ZeissShort brightness_[NRLEDS];
-      ZeissULong duration_[NRLEDS];
-      ZeissByte triggerChannel_[NRLEDS];
       ZeissByte onOff_[NRLEDS];
       std::string name_[NRLEDS];
       ZeissByte operationMode_;
       ZeissULong status_;
       ZeissByte externalShutterState_;
-      ZeissByte triggerSignalSignIn_;
-      ZeissByte triggerSignalSignOut_;
-      ZeissByte shutterTriggerChannel_;
-      ZeissByte triggerBufferPointer_;
-      TriggerBufferEntry triggerBufferEntry_[NRLEDS];
       bool busy_[NRLEDS];
       bool busyExternal_;
 };
@@ -510,7 +502,6 @@ class ZeissMonitoringThread : public MMDeviceThreadBase
 
    private:
       ZeissDeviceInfo * deviceInfo_;
-      MM_THREAD_HANDLE thread_;
       void interpretMessage(unsigned char* message);
       MM::Device& device_;
       MM::Core& core_;
@@ -610,7 +601,6 @@ class ZeissScope : public CGenericBase<ZeissScope>
    private:
       bool initialized_;
       std::string port_;
-      double answerTimeoutMs_;
 };
 
 
@@ -797,7 +787,6 @@ private:
    //int GetUpperLimit();
    //int GetLowerLimit();
    double stepSize_um_;
-   bool busy_;
    bool initialized_;
    double lowerLimit_;
    double upperLimit_;
@@ -847,12 +836,7 @@ private:
    ZeissAxis xAxis_;
    ZeissAxis yAxis_;
    double stepSize_um_;
-   bool busy_;
    bool initialized_;
-   double lowerLimitX_;
-   double upperLimitX_;
-   double lowerLimitY_;
-   double upperLimitY_;
    long moveMode_;
    long velocity_;
    std::string name_;
@@ -945,8 +929,6 @@ private:
    MM::AutoFocus* autoFocusDevice_;
    std::string autoFocusDeviceName_;
    bool initialized_;
-   double pos_;
-   double originPos_;
 };
 
 class Colibri : public CShutterBase<Colibri>

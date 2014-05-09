@@ -125,7 +125,6 @@ public:
 
 private:
    bool range_measured_;
-   double answerTimeoutMs_;
    double stepSizeXUm_;
    double stepSizeYUm_;
    double speedX_;
@@ -183,7 +182,6 @@ public:
 
 private:
    bool range_measured_;
-   double answerTimeoutMs_;
    double stepSizeUm_;
    double speedZ_;
    double accelZ_;

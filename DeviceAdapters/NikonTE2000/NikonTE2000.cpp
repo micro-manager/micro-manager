@@ -699,7 +699,6 @@ int FilterBlock::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 FocusStage::FocusStage() : 
    stepSize_nm_(100),
-   busy_(false),
    initialized_(false),
    lowerLimit_(0.0),
    upperLimit_(20000.0)
@@ -1857,7 +1856,6 @@ int PerfectFocus::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 PFSOffset::PFSOffset() : 
    stepSize_nm_(0.5),
-   busy_(false),
    initialized_(false),
    lowerLimit_(-20000.0),
    upperLimit_(20000.0)

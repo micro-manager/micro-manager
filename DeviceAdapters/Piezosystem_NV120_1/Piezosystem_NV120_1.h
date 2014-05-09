@@ -148,7 +148,6 @@ private:
    int SetCommandValue(const char* c,double fkt);
    //int SetCommandValue(char* c,int fkt);
 	bool initialized_;
-	double answerTimeoutMs_;
 	std::string dev_;
 	std::string acname_;
 	std::string axisname_;

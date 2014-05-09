@@ -93,7 +93,6 @@ private:
 
    std::string port_;            // communications port
    int axis_;                    // which axis to control (0 = x, 1 = y, etc.)
-   double answerTimeoutMs_;      // max wait for the device to answer
    double moveTimeoutMs_;        //
    HWINFO info_;                 // device information
    MOTTYPE type_;                // type of stage (servo, stepper)
