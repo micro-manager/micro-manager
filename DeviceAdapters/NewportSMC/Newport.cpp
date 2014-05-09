@@ -39,7 +39,7 @@ using namespace std;
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-	AddAvailableDeviceName(g_Newport_ZStageDeviceName, "Newport SMC100CC controller");
+	RegisterDevice(g_Newport_ZStageDeviceName, MM::StageDevice, "Newport SMC100CC controller");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)
@@ -276,7 +276,7 @@ int NewportZStage::SetOrigin()
 	return DEVICE_UNSUPPORTED_COMMAND;
 }
 
-int NewportZStage::GetLimits(double& min, double& max)
+int NewportZStage::GetLimits(double&, double&)
 {
 	return DEVICE_UNSUPPORTED_COMMAND;
 }
