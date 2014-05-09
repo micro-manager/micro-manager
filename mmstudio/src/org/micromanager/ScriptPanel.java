@@ -295,9 +295,10 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
       cons_ = new JConsole();
       if (gui_.defaultScriptFont_ != null)
          cons_.setFont(gui_.defaultScriptFont_);
+
+      // TODO Some of the following might belong in BeanShellEngine.
       
       beanshellREPLint_ = new Interpreter(cons_);
-      new Thread(beanshellREPLint_, "Beanshell interpreter").start();
 
       try {
          String startupScript = System.getProperty("org.micromanager.beanshell.startup.script",
@@ -316,7 +317,8 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
       // This command allows variables to be inspected in the command-line
       // (e.g., typing "x;" causes the value of x to be returned):
       beanshellREPLint_.setShowResults(true);
-      
+
+      new Thread(beanshellREPLint_, "Beanshell interpreter").start();
    }
    
    public JConsole getREPLCons() {
