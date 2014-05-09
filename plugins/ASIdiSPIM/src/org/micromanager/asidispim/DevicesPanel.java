@@ -201,6 +201,11 @@ public class DevicesPanel extends ListeningJPanel {
                ReportingUtils.showError("Device " + devices_.getMMDevice(key) + 
                      ": Hamamatsu device adapter doesn't have external trigger property");
             }
+            if (! (props_.getPropValueString(key, Properties.Keys.TRIGGER_POLARITY)                  
+                  .equals(Properties.Values.POSITIVE.toString()))) {
+               ReportingUtils.showError("Device " + devices_.getMMDevice(key) + 
+                     ": set TriggerPolarity property to POSITIVE for desired behavior");
+            }
             break;
          case PCOCAM:
             if (! devices_.hasProperty(key, Properties.Keys.TRIGGER_MODE) ) {
