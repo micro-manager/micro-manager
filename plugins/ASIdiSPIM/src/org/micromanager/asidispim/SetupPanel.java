@@ -6,7 +6,7 @@
 //
 // AUTHOR:       Nico Stuurman, Jon Daniels
 //
-// COPYRIGHT:    University of California, San Francisco, & ASI, 2013
+// COPYRIGHT:    University of California, San Francisco, & ASI, 2013, 2014
 //
 // LICENSE:      This file is distributed under the BSD license.
 //               License text is included with the source distribution.

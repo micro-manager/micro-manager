@@ -26,6 +26,7 @@ import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Hashtable;
+import javax.swing.BorderFactory;
 
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
@@ -35,10 +36,12 @@ import javax.swing.JSlider;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerModel;
 import javax.swing.SpinnerNumberModel;
+import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import org.micromanager.api.ScriptInterface;
+import org.micromanager.asidispim.ASIdiSPIM;
 import org.micromanager.asidispim.Data.Devices;
 import org.micromanager.asidispim.Data.Joystick;
 import org.micromanager.asidispim.Data.Positions;
@@ -488,6 +491,13 @@ public class PanelUtils {
          }
       };
       js.addChangeListener(newListener);
+   }
+   
+   public static TitledBorder makeTitledBorder(String title) {
+      TitledBorder myBorder = BorderFactory.createTitledBorder(
+              BorderFactory.createLineBorder(ASIdiSPIM.borderColor), title);
+      myBorder.setTitleJustification(TitledBorder.CENTER);
+      return myBorder;
    }
    
 }

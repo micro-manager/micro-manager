@@ -73,6 +73,7 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
    private final SetupPanel setupPanelB_;
    private final NavigationPanel navigationPanel_;
    private final GuiSettingsPanel guiSettingsPanel_;
+   private final DataAnalysisPanel dataAnalysisPanel_;
    private final HelpPanel helpPanel_;
    private final StagePositionUpdater stagePosUpdater_;
    
@@ -104,6 +105,7 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
       acquisitionPanel_ = new AcquisitionPanel(gui, devices_, props_, cameras_, 
               prefs_, stagePosUpdater_);
       guiSettingsPanel_ = new GuiSettingsPanel(gui, devices_, props_, prefs_, stagePosUpdater_);
+      dataAnalysisPanel_ = new DataAnalysisPanel(gui, prefs_);
       stagePosUpdater_.oneTimeUpdate();  // needed for NavigationPanel
       navigationPanel_ = new NavigationPanel(gui, devices_, props_, joystick_,
             positions_, prefs_, cameras_);
@@ -119,6 +121,7 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
       tabbedPane.addLTab(setupPanelB_);
       tabbedPane.addLTab(navigationPanel_);
       tabbedPane.addLTab(guiSettingsPanel_);
+      tabbedPane.addLTab(dataAnalysisPanel_);
       tabbedPane.addLTab(helpPanel_);
 
       // attach position updaters

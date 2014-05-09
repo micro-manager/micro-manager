@@ -41,14 +41,12 @@ import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JFormattedTextField;
 import javax.swing.JTextField;
-import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JComboBox;
 import javax.swing.JPanel;
 import javax.swing.JSeparator;
 import javax.swing.JSpinner;
-import javax.swing.border.TitledBorder;
 
 import net.miginfocom.swing.MigLayout;
 import org.json.JSONException;
@@ -146,7 +144,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
               "[right]16[center]",
               "[]8[]"));
 
-      volPanel_.setBorder(makeTitledBorder("Volume Settings"));
+      volPanel_.setBorder(PanelUtils.makeTitledBorder("Volume Settings"));
 
       volPanel_.add(new JLabel("Number of sides:"));
       numSides_ = pu.makeSpinnerInteger(1, 2, props_, devices_,
@@ -187,7 +185,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
               "[right]16[center]",
               "[]8[]"));
 
-      slicePanel_.setBorder(makeTitledBorder("Slice Settings"));
+      slicePanel_.setBorder(PanelUtils.makeTitledBorder("Slice Settings"));
 
       slicePanel_.add(new JLabel("Delay before starting scan (ms):"));
       delayScan_ = pu.makeSpinnerFloat(0, 10000, 0.25, props_, devices_,
@@ -249,7 +247,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
               "[right]16[center]",
               "[]8[]"));
 
-      repeatPanel_.setBorder(makeTitledBorder("Repeat Settings"));
+      repeatPanel_.setBorder(PanelUtils.makeTitledBorder("Repeat Settings"));
 
       repeatPanel_.add(new JLabel("Time points:"));
       // create plugin "property" for number of acquisitions
@@ -278,7 +276,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
               "",
               "[right]16[center]16[left]",
               "[]8[]"));
-      savePanel_.setBorder(makeTitledBorder("Data saving Settings"));
+      savePanel_.setBorder(PanelUtils.makeTitledBorder("Data saving Settings"));
       
       separateTimePointsCB_ = new JCheckBox("Separate viewer for each time point");
       separateTimePointsCB_.setSelected(prefs_.getBoolean(panelName_, 
@@ -323,8 +321,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       nameField_.setColumns(textFieldWidth);
       savePanel_.add(nameField_, "wrap");
       
-      final JComponent[] saveComponents = {nameField_, namePrefixLabel, 
-         browseRootButton, rootField_, dirRootLabel};
+      final JComponent[] saveComponents = { browseRootButton, rootField_, 
+                                            dirRootLabel };
       setDataSavingComponents(saveComponents);
       
       saveCB_.addActionListener(new ActionListener() {
@@ -393,12 +391,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
 
    }//end constructor
 
-   private TitledBorder makeTitledBorder(String title) {
-      TitledBorder myBorder = BorderFactory.createTitledBorder(
-              BorderFactory.createLineBorder(ASIdiSPIM.borderColor), title);
-      myBorder.setTitleJustification(TitledBorder.CENTER);
-      return myBorder;
-   }
 
    private void updateTimePointsDoneLabel(int timePointsDone) {
       numTimePointsDoneLabel_.setText("Current time point: "
