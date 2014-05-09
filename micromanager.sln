@@ -330,6 +330,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ThorlabsMFC1", "DeviceAdapt
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PicardStage", "DeviceAdapters\PicardStage\PicardStage.vcxproj", "{FB87D337-AFA5-4DA8-8D99-84461B363108}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NewportSMC", "DeviceAdapters\NewportSMC\NewportSMC.vcxproj", "{94D2DA0B-304D-4B92-AE12-1749EBD6F5F0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -1621,6 +1623,14 @@ Global
 		{FB87D337-AFA5-4DA8-8D99-84461B363108}.Release|Win32.Build.0 = Release|Win32
 		{FB87D337-AFA5-4DA8-8D99-84461B363108}.Release|x64.ActiveCfg = Release|x64
 		{FB87D337-AFA5-4DA8-8D99-84461B363108}.Release|x64.Build.0 = Release|x64
+		{94D2DA0B-304D-4B92-AE12-1749EBD6F5F0}.Debug|Win32.ActiveCfg = Debug|Win32
+		{94D2DA0B-304D-4B92-AE12-1749EBD6F5F0}.Debug|Win32.Build.0 = Debug|Win32
+		{94D2DA0B-304D-4B92-AE12-1749EBD6F5F0}.Debug|x64.ActiveCfg = Debug|x64
+		{94D2DA0B-304D-4B92-AE12-1749EBD6F5F0}.Debug|x64.Build.0 = Debug|x64
+		{94D2DA0B-304D-4B92-AE12-1749EBD6F5F0}.Release|Win32.ActiveCfg = Release|Win32
+		{94D2DA0B-304D-4B92-AE12-1749EBD6F5F0}.Release|Win32.Build.0 = Release|Win32
+		{94D2DA0B-304D-4B92-AE12-1749EBD6F5F0}.Release|x64.ActiveCfg = Release|x64
+		{94D2DA0B-304D-4B92-AE12-1749EBD6F5F0}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
