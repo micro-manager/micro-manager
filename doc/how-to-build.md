@@ -94,7 +94,7 @@ Micro-Manager, but you will most likely want to choose one of two major
 installation styles: a traditional Unix-style installation and installation as
 an ImageJ plugin.
 
-The traditional Unix-style will put Micro-Manager libraries (includeing device
+The traditional Unix-style will put Micro-Manager libraries (including device
 adapters) into `$prefix/lib/micro-manager` and other files (including JARs)
 into `$prefix/share/micro-manager` (`$prefix` is `/usr/local` by default). If
 you build the Java application, a script will be installed at
@@ -106,7 +106,7 @@ tell `configure` where to find the target ImageJ application directory. In
 this case, all Micro-Manager files will be installed inside that ImageJ
 directory.
 
-To configure Micro-Manager for a traditionaly Unix-style install, type
+To configure Micro-Manager for a traditional Unix-style install, type
 
     ./configure --prefix=/where/to/install
 
@@ -114,7 +114,7 @@ To configure for installation as an ImageJ plugin, type
 
     ./configure --enable-imagej-plugin=/path/to/ImageJ
 
-The ImageJ path should be an existing (prefereably fresh) copy of ImageJ 1.48.
+The ImageJ path should be an existing (preferably fresh) copy of ImageJ 1.48.
 
 To get more information about the possible options to `configure`, type
 
@@ -161,22 +161,22 @@ following.
    found) and `include` (in which `jni.h` is found). Pass
    `--with-java=/path/to/java/home` to `configure`. For example:
 
-       ./configure --with-java=/usr/lib64/jvm/java-1.7.0-openjdk-1.7.0
-       # or
-       ./configure --with-java=/Library/Java/JavaVirtualMachines/1.6.0_65-b14-462.jdk/Contents/Home
+        ./configure --with-java=/usr/lib64/jvm/java-1.7.0-openjdk-1.7.0
+        # or
+        ./configure --with-java=/Library/Java/JavaVirtualMachines/1.6.0_65-b14-462.jdk/Contents/Home
 
 3. If the previous step is not possible, because the Java files are spread
    across several directories (this is the case with older versions of Apple
    JDK), then you can leave `JAVA_HOME` (and `--with-java`) unset, but override
    the include path for JNI headers, like this:
 
-       ./configure JNI_CPPFLAGS="-I/System/Library/Frameworks/JavaVM.framework/Versions/A/Headers"
+        ./configure JNI_CPPFLAGS="-I/System/Library/Frameworks/JavaVM.framework/Versions/A/Headers"
 
 4. Finally (and this is an uncommon case), if you needed to override
    `JNI_CPPFLAGS` but `configure` also cannot find `javac` and other tools, you
    can manually set the absolute path to the necessary tools:
 
-       ./configure JAVA=/path/to/java JAVAC=/path/to/javac JAR=/path/to/jar
+        ./configure JAVA=/path/to/java JAVAC=/path/to/javac JAR=/path/to/jar
 
 
 #### Specifying where to find external packages
