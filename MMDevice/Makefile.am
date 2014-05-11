@@ -1,8 +1,3 @@
-AM_CXXFLAGS = $(BOOST_CPPFLAGS)
-
-# Note: It is very important to build a special libtool "convenience" library
-# (using noinst_LTLIBRARIES) due to the way the MM Device API works. Building a
-# normal static library WILL NOT WORK.
 noinst_LTLIBRARIES = libMMDevice.la
 noinst_HEADERS = DeviceBase.h MMDevice.h MMDeviceConstants.h \
 	ModuleInterface.h Property.h DeviceUtils.h ImgBuffer.h DeviceThreads.h \

@@ -23,7 +23,6 @@
 
 #pragma once
 #include <assert.h>
-#include <boost/utility.hpp>
 
 #ifdef WIN32
    #define WIN32_LEAN_AND_MEAN
@@ -67,7 +66,7 @@
 /**
  * Base class for threads in MM devices
  */
-class MMDeviceThreadBase : boost::noncopyable
+class MMDeviceThreadBase
 {
 public:
    MMDeviceThreadBase() : thread_(0) {}
@@ -83,6 +82,10 @@ public:
    void wait() {MM_THREAD_JOIN(thread_);}
 
 private:
+   // Forbid copying
+   MMDeviceThreadBase(const MMDeviceThreadBase&);
+   MMDeviceThreadBase& operator=(const MMDeviceThreadBase&);
+
    MM_THREAD_HANDLE thread_;
    static MM_THREAD_FUNC_DECL ThreadProc(void* param)
    {
@@ -99,7 +102,7 @@ private:
 /**
  * Critical section lock.
  */
-class MMThreadLock : boost::noncopyable
+class MMThreadLock
 {
 public:
    MMThreadLock()
@@ -115,12 +118,15 @@ public:
    void Lock() {MM_THREAD_GUARD_LOCK(&lock_)};
    void Unlock() {MM_THREAD_GUARD_UNLOCK(&lock_)};
 
-
 private:
+   // Forbid copying
+   MMThreadLock(const MMThreadLock&);
+   MMThreadLock& operator=(const MMThreadLock&);
+
    MM_THREAD_GUARD lock_;
 };
 
-class MMThreadGuard : boost::noncopyable
+class MMThreadGuard
 {
 public:
    MMThreadGuard(MMThreadLock& lock) : lock_(&lock)
@@ -143,6 +149,9 @@ public:
    }
 
 private:
-   MMThreadGuard& operator=(MMThreadGuard& /*rhs*/) {assert(false); return *this;}
+   // Forbid copying
+   MMThreadGuard(const MMThreadGuard&);
+   MMThreadGuard& operator=(const MMThreadGuard&);
+
    MMThreadLock* lock_;
 };
