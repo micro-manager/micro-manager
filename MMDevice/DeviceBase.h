@@ -1589,14 +1589,14 @@ protected:
       ~BaseSequenceThread() {}
 
       void Stop() {
-         MMThreadGuard(this->stopLock_);
+         MMThreadGuard g(this->stopLock_);
          stop_=true;
       }
 
       void Start(long numImages, double intervalMs)
       {
-         MMThreadGuard(this->stopLock_);
-         MMThreadGuard(this->suspendLock_);
+         MMThreadGuard g1(this->stopLock_);
+         MMThreadGuard g2(this->suspendLock_);
          numImages_=numImages;
          intervalMs_=intervalMs;
          imageCounter_=0;
@@ -1608,19 +1608,19 @@ protected:
          lastFrameTime_ = 0;
       }
       bool IsStopped(){
-         MMThreadGuard(this->stopLock_);
+         MMThreadGuard g(this->stopLock_);
          return stop_;
       }
       void Suspend() {
-         MMThreadGuard(this->suspendLock_);
+         MMThreadGuard g(this->suspendLock_);
          suspend_ = true;
       }
       bool IsSuspended() {
-         MMThreadGuard(this->suspendLock_);
+         MMThreadGuard g(this->suspendLock_);
          return suspend_;
       }
       void Resume() {
-         MMThreadGuard(this->suspendLock_);
+         MMThreadGuard g(this->suspendLock_);
          suspend_ = false;
       }
       double GetIntervalMs(){return intervalMs_;}
