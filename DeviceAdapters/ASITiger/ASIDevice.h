@@ -68,6 +68,7 @@ public:
 protected:
    ASIDeviceBase *deviceASI_;    // used to call functions in CDeviceBase (e.g. property methods)
    string addressChar_;    // address within hub, in single character (possibly extended ASCII)
+                           // in case of XY device, the MM device is split across two HW cards so it will be two characters
 
    bool initialized_;      // used to signal that device properties have been read from controller
    bool refreshProps_;     // true when property values should be read anew from controller each time
@@ -77,6 +78,7 @@ protected:
    ASIHub *hub_;           // used for serial communication
    int ret_;               // return code for use with Micro-manager functions
    string addressString_;  // address within hub, in hex format
+                           // generally two characters (e.g. '31') but could be four characters (e.g. '3132') if device axes are split between cards
 
    void InitializeASIErrorMessages();
 
@@ -86,6 +88,7 @@ protected:
    string GetHexAddrFromExtName(const char* name) const;
 
 private:
+   string ConvertTwoCharStringToHexChar(const string &s) const;
    string ConvertToTigerRawAddress(const string &s) const;
 };
 

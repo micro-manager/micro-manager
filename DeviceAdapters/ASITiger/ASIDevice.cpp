@@ -166,17 +166,13 @@ string ASIDevice::GetHexAddrFromExtName(const char* name) const
       return g_EmptyCardAddressStr;
 }
 
-string ASIDevice::ConvertToTigerRawAddress(const string &s) const
+string ASIDevice::ConvertTwoCharStringToHexChar(const string &s) const
+// does the dirty work of converting a two-character hex (e.g. F5) into the single character
+// see ConvertToTigerRawAddress comments for more details
 {
-   // Tiger addresses are 0x31 to 0x39 and then 0x81 to 0xF5 (i.e. '1' to '9' and then extended ASCII)
-   // these addresses are appended (in extended ASCII char) to serial commands that are addressed
-   // MM doesn't handle names with with extended ASCII, and we need to include address in MM's device name
-   // so in MM device names we represent the address in 2-digit hex string (31..39, 81..F5)
-   // use this function to get the serial char to send from a MM 2-digit hex string
-   // returns g_EmptyCardAddressCode in case of error (set to space for minimum impact on Tiger operation)
-
    if (s.size() != 2)
       return g_EmptyCardAddressCode;
+
    unsigned int code;
    stringstream ss;
    ss << hex << s;
@@ -192,6 +188,28 @@ string ASIDevice::ConvertToTigerRawAddress(const string &s) const
    }
    else
       return g_EmptyCardAddressCode;
+}
+
+string ASIDevice::ConvertToTigerRawAddress(const string &s) const
+{
+   // Tiger addresses are 0x31 to 0x39 and then 0x81 to 0xF5 (i.e. '1' to '9' and then extended ASCII)
+   // these addresses are prepended (in extended ASCII char) to serial commands that are addressed
+   // MM doesn't handle names with with extended ASCII, and we need to include address in MM's device name
+   // so in MM device names we represent the address in 2-digit hex string (31..39, 81..F5)
+   // use this function to get the serial char to send from a MM 2-digit hex string
+   // returns g_EmptyCardAddressCode in case of error (set to space for minimum impact on Tiger operation)
+
+   // make sure the number of characters is even and strictly positive
+   if ((s.size() == 0) || (s.size() % 2))
+      return g_EmptyCardAddressCode;
+
+   string s2 = "";
+   for(std::string::size_type iii = 0; iii < s.size()/2; ++iii)
+   {
+      // operate on chunks of two characters
+      s2.append(ConvertTwoCharStringToHexChar(s.substr(iii*2, 2)));
+   }
+   return s2;
 }
 
 void ASIDevice::InitializeASIErrorMessages()

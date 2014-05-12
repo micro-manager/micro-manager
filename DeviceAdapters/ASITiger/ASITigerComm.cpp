@@ -171,18 +171,56 @@ int CTigerCommHub::DetectInstalledDevices()
    MM::Device* pDev;
    string name;
    bool twoaxis = 0;
+   char splitAxisLetter = ' '; // used only if XY stage split across two cards
+   string splitAddrHex = "";  // used only if XY stage split across two cards
    for (unsigned int i=0; i<build.numAxes; i++)
    {
       twoaxis = 0;
       name = "";
+      ostringstream command;
+      command << build.vAxesType[i];
+      LogMessage(command.str(), false);
       switch (build.vAxesType[i])
       {
          case 'x': // XYMotor type
-            if (build.vAxesType[i+1] == 'x')  // make sure we have a pair
+            if (build.vAxesType[i+1] == 'x')
             {
+               // we have an XY pair
                name = g_XYStageDeviceName;
                twoaxis = 1;
                i++; // skip one code because we added two axes in one step
+            }
+            else if (build.vAxesType[i+1] == 'z')
+            {
+               // we have one XY axis on this card (and presumably corresponding axis on other card)
+               if(splitAxisLetter != ' ')
+               {
+                  // we already saw another unpaired axis, pair it with this one
+                  name = g_XYStageDeviceName;
+                  name.push_back(g_NameInfoDelimiter);
+                  name.push_back(splitAxisLetter);  // prior unpaired axis
+                  name.push_back(build.vAxesLetter[i]);
+                  name.push_back(g_NameInfoDelimiter);
+                  name.append(splitAddrHex); // prior unpaired address
+                  name.append(build.vAxesAddrHex[i]);
+                  pDev = CreateDevice(name.c_str());
+                  AddInstalledDevice(pDev);
+
+                  // we found our awaited match, get ready to look for any other split XY pairs
+                  splitAxisLetter = ' ';
+                  splitAddrHex = "";
+
+                  continue;  // skip ahead to next axis; already created device
+               }
+               else
+               {
+                  // we haven't seen the corresponding axis yet
+                  // start looking for next unpaired one
+                  splitAxisLetter = build.vAxesLetter[i];
+                  splitAddrHex = build.vAxesAddrHex[i];
+
+                  continue;  // skip ahead to next axis without creating device
+               }
             }
             else
                return ERR_TIGER_PAIR_NOT_PRESENT;
@@ -267,11 +305,5 @@ bool CTigerCommHub::Busy()
    // this is a query that the MM core can make of our device, i.e. it's a required part of our public API
    // define the hub to never be busy, i.e. it can always accept a new command or query
    return false;
-//   // we choose to define it as equivalent of issuing the STATUS command or /
-//   //       which reports whether any of the motors are moving by replying "B" or "N"
-//   int ret = QueryCommand("/");
-//   // not sure how to answer if there was a comm error; let's say we are not busy
-//   if (ret != DEVICE_OK)
-//      return false;
-//   return (LastSerialAnswer().substr(0,1).compare("B") == 0);
+
 }
