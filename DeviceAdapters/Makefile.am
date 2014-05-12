@@ -84,7 +84,6 @@ SUBDIRS = \
 	Aquinas \
 	Arduino \
 	CARVII \
-	CONEX \
 	CSUW1 \
 	Cobolt \
 	CoherentCube \
@@ -110,6 +109,7 @@ SUBDIRS = \
 	MicroPoint \
 	Motic_mac \
 	Neos \
+	NewportCONEX \
 	NewportSMC \
 	Nikon \
 	NikonTE2000 \

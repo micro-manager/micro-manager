@@ -364,7 +364,6 @@ m4_define([device_adapter_dirs], [m4_strip([
    Aquinas
    Arduino
    CARVII
-   CONEX
    CSUW1
    Cobolt
    CoherentCube
@@ -394,6 +393,7 @@ m4_define([device_adapter_dirs], [m4_strip([
    MicroPoint
    Motic_mac
    Neos
+   NewportCONEX
    NewportSMC
    Nikon
    NikonTE2000
