@@ -295,7 +295,7 @@ Camera::Enable1394B(bool flag)
 {
    EnsureNotCapturing();
 
-   if (!Is1394BCapable())
+   if (flag && !Is1394BCapable())
       throw Error("The camera is not compatible with 1394B");
    dc1394operation_mode_t mode = flag ? DC1394_OPERATION_MODE_1394B : DC1394_OPERATION_MODE_LEGACY;
    dc1394error_t err;
