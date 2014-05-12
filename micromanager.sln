@@ -320,7 +320,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "IIDC", "DeviceAdapters\IIDC
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PICAM", "DeviceAdapters\PICAM\PICAM.vcxproj", "{DC09C991-D279-4A37-9332-5F7767621D5C}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CONEX", "DeviceAdapters\CONEX\CONEX.vcxproj", "{9953A884-2927-4E91-B414-FC773102FE6D}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NewportCONEX", "DeviceAdapters\NewportCONEX\NewportCONEX.vcxproj", "{9953A884-2927-4E91-B414-FC773102FE6D}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ObjectiveImaging", "DeviceAdapters\ObjectiveImaging\ObjectiveImaging.vcxproj", "{36B74175-48F3-4157-BE5D-84C88DAF40D9}"
 EndProject

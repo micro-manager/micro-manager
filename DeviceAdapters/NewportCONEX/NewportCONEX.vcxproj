@@ -19,9 +19,9 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectName>CONEX</ProjectName>
+    <ProjectName>NewportCONEX</ProjectName>
     <ProjectGuid>{9953A884-2927-4E91-B414-FC773102FE6D}</ProjectGuid>
-    <RootNamespace>CONEX</RootNamespace>
+    <RootNamespace>NewportCONEX</RootNamespace>
     <Keyword>Win32Proj</Keyword>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />

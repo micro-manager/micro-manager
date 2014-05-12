@@ -105,6 +105,12 @@ Type: files; Name: "{app}\mmplugins\SplitView.jar"
 Type: files; Name: "{app}\mmplugins\StageControl.jar"
 Type: files; Name: "{app}\mmplugins\pgFocus.jar"
 
+; Renamed to NewportCONEX
+Type: files; Name: "{app}\mmgr_dal_CONEX.dll"
+
+; Retired
+Type: files; Name: "{app}\mmgr_dal_Hamamatsu.dll"
+
 [Files]
 
 ; ImageJ files
