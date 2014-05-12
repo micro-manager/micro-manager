@@ -333,6 +333,7 @@ public:
    double getBufferIntervalMs() const;
    bool isBufferOverflowed() const;
    void setCircularBufferMemoryFootprint(unsigned sizeMB) throw (CMMError);
+   unsigned getCircularBufferMemoryFootprint();
    void initializeCircularBuffer() throw (CMMError);
    void clearCircularBuffer() throw (CMMError);
 

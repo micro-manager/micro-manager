@@ -49,6 +49,8 @@ public:
    CircularBuffer(unsigned int memorySizeMB);
    ~CircularBuffer();
 
+   unsigned GetMemorySizeMB() const { return memorySizeMB_; }
+
    bool Initialize(unsigned channels, unsigned slices, unsigned int xSize, unsigned int ySize, unsigned int pixDepth);
    unsigned long GetSize() const;
    unsigned long GetFreeSize() const;

@@ -59,6 +59,7 @@ public final class SystemInfo {
       sections.add(new JVMMemoryInfoSection());
       sections.add(new JVMThreadInfoSection());
       sections.add(new JVMDeadlockedThreadInfoSection());
+      sections.add(new CoreBasicInfoSection());
 
       // TODO system state cache; maybe also hardware properties
 

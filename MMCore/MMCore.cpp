@@ -2629,6 +2629,7 @@ void CMMCore::setCircularBufferMemoryFootprint(unsigned sizeMB ///< n megabytes
 	}
 	catch(bad_alloc& ex)
 	{
+      // This is an out-of-memory error before even allocating the buffers.
 		ostringstream messs;
 		messs << getCoreErrorText(MMERR_OutOfMemory).c_str() << " " << ex.what() << endl;
 		throw CMMError(messs.str().c_str() , MMERR_OutOfMemory);
@@ -2658,6 +2659,15 @@ void CMMCore::setCircularBufferMemoryFootprint(unsigned sizeMB ///< n megabytes
 	if (NULL == cbuf_) throw CMMError(getCoreErrorText(MMERR_OutOfMemory).c_str(), MMERR_OutOfMemory);
 
 
+}
+
+unsigned CMMCore::getCircularBufferMemoryFootprint()
+{
+   if (cbuf_)
+   {
+      return cbuf_->GetMemorySizeMB();
+   }
+   return 0;
 }
 
 long CMMCore::getRemainingImageCount()
