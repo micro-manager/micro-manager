@@ -551,47 +551,47 @@ void splitString(char* string, const char* delimiter,char** dest){
 }
 
 EVDBase::EVDBase(MM::Device *device):
-initialized_(false)
+initialized_(false),
+device_(device),
+core_(0)
 {
-	device_=static_cast<EVDDeviceBase *>(device);
 }
 EVDBase::~EVDBase()
 {
 }
-int EVDBase::Shutdown()
-{
-   if (initialized_)
-      initialized_ = false;
 
-   return DEVICE_OK;
-}
 int EVDBase::SendCommand(const char* cmd,std::string &result){
 	int ret;
 	//ret =PurgeComPort(port_.c_str());
 	//CDeviceUtils::SleepMs(2);
 	//Send Command	
-	device_->LogMessage (cmd,true);
-	ret = device_->SendSerialCommand(port_.c_str(), cmd, g_Mesg_Send_term);
+	core_->LogMessage(device_, cmd, true);
+	ret = core_->SetSerialCommand(device_, port_.c_str(), cmd, g_Mesg_Send_term);
 	if (ret != DEVICE_OK) 
       return ret;
-	ret = device_->GetSerialAnswer(port_.c_str(), g_Mesg_Receive_term, result);
+
+    const size_t BUFSIZE = 2048;
+    char buf[BUFSIZE] = {'\0'};
+	ret = core_->GetSerialAnswer(device_, port_.c_str(), BUFSIZE, buf, g_Mesg_Receive_term);
 	if (ret != DEVICE_OK) 
       return ret;
+    result = buf;
+
 	return DEVICE_OK;
 }
 int EVDBase::SendServiceCommand(const char* cmd,std::string& result){	
 	int ret;	
-	ret = device_->SendSerialCommand(port_.c_str(), g_cmdsmon, g_Mesg_Send_term);
+	ret = core_->SetSerialCommand(device_, port_.c_str(), g_cmdsmon, g_Mesg_Send_term);
 	if (ret != DEVICE_OK) 
       return ret;		
 	ret = SendCommand(cmd, result);		
-	ret = device_->SendSerialCommand(port_.c_str(), g_cmdsmoff, g_Mesg_Send_term);
+	ret = core_->SetSerialCommand(device_, port_.c_str(), g_cmdsmoff, g_Mesg_Send_term);
 	if (ret != DEVICE_OK) 
       return ret;
 	return DEVICE_OK;
 }
 int EVDBase::GetCommandValue(const char* c,int channel,double& d){
-	device_->LogMessage ("Get command value double",true);
+	core_->LogMessage(device_, "Get command value double", true);
 
 	char str[50]="";
 	sprintf(str,"%s,%d",c,channel);	
@@ -604,7 +604,7 @@ int EVDBase::GetCommandValue(const char* c,int channel,double& d){
 	if (result.length() < 1)
       return ERR_NO_ANSWER;
 	//TODO: Error or no result
-	device_->LogMessage (result,true);
+	core_->LogMessage(device_, result.c_str(), true);
 	char* dest[50];
 	splitString((char*)result.c_str()," ,\n",dest);
 	std::string type;
@@ -612,16 +612,16 @@ int EVDBase::GetCommandValue(const char* c,int channel,double& d){
 	if(type==c){			
 		d=atof(dest[2]);
 	}else{
-		device_->LogMessage ("Wrong Result",true);	
-		device_->LogMessage (dest[0],true);
+		core_->LogMessage(device_, "Wrong Result", true);
+		core_->LogMessage(device_, dest[0], true);
 		d=0.0;
-		ret =device_->PurgeComPort(port_.c_str());
+		ret = core_->PurgeSerial(device_, port_.c_str());
 		CDeviceUtils::SleepMs(10);
 	}		
 	return DEVICE_OK;
 }
 int EVDBase::GetCommandValue(const char* c,int channel,int& i){
-	device_->LogMessage ("Get command value integer",true);
+	core_->LogMessage(device_, "Get command value integer", true);
 	char cmd[50]="";
 	sprintf(cmd,"%s,%d",c,channel);	
     int ret;
@@ -632,29 +632,29 @@ int EVDBase::GetCommandValue(const char* c,int channel,int& i){
 		return ret;	
 	if (result.length() < 1)
       return ERR_NO_ANSWER;
-	device_->LogMessage (result,true);
+	core_->LogMessage(device_, result.c_str(), true);
 	char* dest[50];
 	splitString((char*)result.c_str()," ,\n",dest);
 	type=dest[0];
 	if(type==c){
 		i=atoi(dest[2]);
 	}else{
-		device_->LogMessage ("Wrong Result",true);	
-		device_->LogMessage (dest[0],true);
+		core_->LogMessage(device_, "Wrong Result", true);
+		core_->LogMessage(device_, dest[0], true);
 		i=0;
-		ret =device_->PurgeComPort(port_.c_str());
+		ret = core_->PurgeSerial(device_, port_.c_str());
 		CDeviceUtils::SleepMs(10);
 	}
 	return ret;
 }
 int EVDBase::SetCommandValue(const char* c,int channel,double fkt){
-	device_->LogMessage ("Set command value double",true);
+	core_->LogMessage(device_, "Set command value double", true);
 	char str[50]="";
 	sprintf(str,"%s,%d,%lf",c,channel,fkt);	
 	const char* cmd = str; 
-	device_->LogMessage (cmd,true);
+	core_->LogMessage(device_, cmd, true);
     int ret;
-    ret = device_->SendSerialCommand(port_.c_str(), cmd, g_Mesg_Send_term);
+    ret = core_->SetSerialCommand(device_, port_.c_str(), cmd, g_Mesg_Send_term);
 	if (ret != DEVICE_OK){	  
       return ret;
 	}
@@ -669,13 +669,13 @@ int EVDBase::SetCommandValue(const char* c,int channel,double fkt){
 	return DEVICE_OK;
 }
 int EVDBase::SetCommandValue(const char* c,int channel,int fkt){
-	device_->LogMessage ("Set command value integer",true);
+	core_->LogMessage(device_, "Set command value integer", true);
 	char str[50]="";
 	sprintf(str,"%s,%d,%d",c,channel,fkt);	
 	const char* cmd = str; 
-	device_->LogMessage (cmd,true);
+	core_->LogMessage(device_, cmd, true);
     int ret;
-    ret = device_->SendSerialCommand(port_.c_str(), cmd, g_Mesg_Send_term);
+    ret = core_->SetSerialCommand(device_, port_.c_str(), cmd, g_Mesg_Send_term);
 	if (ret != DEVICE_OK){	  
       return ret;
 	}
@@ -692,18 +692,18 @@ int EVDBase::SetCommandValue(const char* c,int channel,int fkt){
 	return DEVICE_OK;
 }
 int EVDBase::GetStatus(int& stat, EVD* struc){
-	device_->LogMessage ("GetStatus",true);
+	core_->LogMessage(device_, "GetStatus", true);
 	//int stat;
 	char s[30];
 	sprintf(s,"stat,%d",struc->channel_);	
 	const char* cmd = s; 
-	device_->LogMessage (cmd,true);
+	core_->LogMessage(device_, cmd, true);
     int ret;
 	std::string str;
 	std::string type;
 
 	ret = SendCommand(cmd,str);    
-	device_->LogMessage (str,true);	
+	core_->LogMessage(device_, str.c_str(), true);
 	char* dest[20];
 	splitString((char*)str.c_str()," ,\n",dest);
 	//If there is a Modul, look of the stat
@@ -711,13 +711,13 @@ int EVDBase::GetStatus(int& stat, EVD* struc){
 	std::size_t found;
 	found=type.find("unit");
 	if(found!=std::string::npos){
-		device_->LogMessage ("No Modul found",true);
+		core_->LogMessage(device_, "No Modul found", true);
 		stat=0;
 		return ERR_MODULE_NOT_FOUND;
 	}
 	found=type.find("stat");
 	if(found!=std::string::npos){
-		device_->LogMessage ("Modul found",true);
+		core_->LogMessage(device_, "Modul found", true);
 		stat=atoi(dest[2]);
 		struc->stat_=stat;
 		//if Bit4 is set, close loop
@@ -727,8 +727,8 @@ int EVDBase::GetStatus(int& stat, EVD* struc){
 		//if Bit13 is set
 		struc->lpon_=((stat &LOW_PASS_FILTER_ON)==LOW_PASS_FILTER_ON)? true:false;
 	}else{
-		device_->LogMessage ("ERROR ",true);
-		device_->LogMessage (dest[0],true);
+		core_->LogMessage(device_, "ERROR ", true);
+		core_->LogMessage(device_, dest[0], true);
 		stat=-1;
 		//return ERR_MODULE_NOT_FOUND;
 	}
@@ -736,7 +736,7 @@ int EVDBase::GetStatus(int& stat, EVD* struc){
 }
 int EVDBase::GetLimitsValues(EVD *struc){	
 	int ret;	
-	ret = device_->SendSerialCommand(port_.c_str(), g_cmdsmon, g_Mesg_Send_term);
+	ret = core_->SetSerialCommand(device_, port_.c_str(), g_cmdsmon, g_Mesg_Send_term);
 	if (ret != DEVICE_OK) 
       return ret;	
 	//min_um_
@@ -770,27 +770,27 @@ int EVDBase::GetLimitsValues(EVD *struc){
 	splitString((char*)result.c_str()," ,\n",dest);
 	struc->max_V_=atof(dest[2]);		
 	
-	ret = device_->SendSerialCommand(port_.c_str(), g_cmdsmoff, g_Mesg_Send_term);
+	ret = core_->SetSerialCommand(device_, port_.c_str(), g_cmdsmoff, g_Mesg_Send_term);
 	if (ret != DEVICE_OK) 
       return ret;
 	return DEVICE_OK;
 }
 int EVDBase::GetActuatorName(char* id,int ch){
-	device_->LogMessage ("GetActuatorName",true);
+	core_->LogMessage(device_, "GetActuatorName", true);
 	std::string result;
 	char s[20];
 	sprintf(s,"acdescr,%d",ch);	
 	const char* cmd = s;
 	SendServiceCommand(cmd,result);
-	device_->LogMessage(result,true);
+	core_->LogMessage(device_, result.c_str(), true);
 	char* dest[30];
 	splitString((char*)result.c_str()," ,\n",dest);	
 	sprintf(id,"%s", dest[2]);	
-	device_->LogMessage(id,true);
+	core_->LogMessage(device_, id, true);
 	return DEVICE_OK;
 }
 int EVDBase::GetPos(double& pos, EVD* struc){
-	device_->LogMessage ("EVDBase GetPos",true);
+	core_->LogMessage(device_, "EVDBase GetPos", true);
 	int ret;
 	int stat;
 	ret = GetStatus(stat,struc);
@@ -806,7 +806,7 @@ int EVDBase::GetPos(double& pos, EVD* struc){
 	return DEVICE_OK;
 }
 int EVDBase::SetPos(double pos, EVD* struc){
-	device_->LogMessage ("EVDBase SetPos",true);
+	core_->LogMessage(device_, "EVDBase SetPos", true);
 	int ret;
 	int stat;
 	ret = GetStatus(stat,struc);
@@ -823,7 +823,7 @@ int EVDBase::SetPos(double pos, EVD* struc){
 	return DEVICE_OK;
 }
 int EVDBase::GetLoop(bool& loop,int ch){
-	device_->LogMessage ("GetLoop",true);	
+	core_->LogMessage(device_, "GetLoop", true);
     int ret;
 	int stat;    
 	ret = GetCommandValue("stat",ch,stat);
@@ -833,7 +833,7 @@ int EVDBase::GetLoop(bool& loop,int ch){
 	return DEVICE_OK;
 }
 int EVDBase::SetLoop(bool loop,int ch){
-	device_->LogMessage ("SetLoop",true);
+	core_->LogMessage(device_, "SetLoop", true);
 	int i=(loop)?1:0;
 	int ret = SetCommandValue("cl",ch,i);	
 	if (ret != DEVICE_OK)	  
@@ -1556,6 +1556,8 @@ void Stage::GetName(char* Name) const
 }
 int Stage::Initialize()
 {
+    core_ = GetCoreCallback();
+
 	//LogMessage ("PSJ Stage Init");
    // set property list
    // -----------------
@@ -3708,6 +3710,8 @@ void XYStage::GetName(char* Name) const
  */
 int XYStage::Initialize()
 {
+    core_ = GetCoreCallback();
+
    LogMessage ("Initialize",true);
    char c[5];   
    sprintf(c,"%d",xChannel_+1);
@@ -6137,6 +6141,8 @@ void Tritor::GetName(char* Name) const
 }
 int Tritor::Initialize()
 {
+    core_ = GetCoreCallback();
+
 	CreateProperty(g_ChannelX_, CDeviceUtils::ConvertToString(xChannel_+1), MM::Integer, true);	//read-only 
 	CreateProperty(g_ChannelY_, CDeviceUtils::ConvertToString(yChannel_+1), MM::Integer, true);	//read-only 
 	CreateProperty(g_ChannelZ_, CDeviceUtils::ConvertToString(zChannel_+1), MM::Integer, true);	//read-only 
@@ -9399,6 +9405,8 @@ void Shutter::GetName(char* Name) const
 
 int Shutter::Initialize()
 {
+    core_ = GetCoreCallback();
+
 	GetLimitsValues(&chx_);   
    CreateProperty(g_Limit_V_Min, CDeviceUtils::ConvertToString(chx_.min_V_), MM::Float, true);		
    CreateProperty(g_Limit_V_Max , CDeviceUtils::ConvertToString(chx_.max_V_), MM::Float, true);			
@@ -10653,6 +10661,8 @@ void Mirror::GetName(char* Name) const
 }
 int Mirror::Initialize()
 {
+    core_ = GetCoreCallback();
+
 	//X-Achse
 	CreateProperty(g_ChannelX_, CDeviceUtils::ConvertToString(xChannel_+1), MM::Integer, true);	//read-only 
 	

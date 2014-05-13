@@ -36,7 +36,6 @@
 #include "../../MMDevice/MMDevice.h"
 #include "../../MMDevice/DeviceBase.h"
 #include <string>
-#include <map>
 
 //////////////////////////////////////////////////////////////////////////////
 // Error codes
@@ -201,24 +200,20 @@ struct EVD{
 						//3 = trigger at both edges
 
 };
-class EVDBase;
-class EVDDeviceBase : public CDeviceBase<MM::Device,EVDBase>
-{
-public:
-	EVDDeviceBase(){ }
-	~EVDDeviceBase(){ }
 
-	friend class EVDBase;
-};
+// N.B. Concrete device classes deriving EVDBase must set core_ in
+// Initialize().
 class EVDBase 
 {
 public:
 	EVDBase(MM::Device *device);	
-    ~EVDBase();
-	int Shutdown();	
+    virtual ~EVDBase();
+
 protected:	
 	bool initialized_;
-	EVDDeviceBase *device_;
+    MM::Device *device_;
+    MM::Core *core_;
+
 	int SendCommand(const char* cmd,std::string &result);
     int SendServiceCommand(const char* cmd,std::string& result);  
     int GetCommandValue(const char* c,int ch,double& d);
@@ -232,7 +227,6 @@ protected:
 	int SetPos(double pos, EVD* struc);
     int GetLoop(bool& loop,int ch);
     int SetLoop(bool loop,int ch);
-//private:  
 };
 
 class PSJdevice
