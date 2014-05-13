@@ -480,8 +480,6 @@
           :top 20
           :text (.getMessage e)}]))  
 
-(def count-paints (atom 0))
-
 (defn canvas
   "Create a blank JPanel \"canvas\" for automatic painting. The
   canvas is automatically updated with the graphics description
@@ -491,24 +489,18 @@
         panel (proxy [JPanel clojure.lang.IReference] []
                 (paintComponent [^Graphics graphics]
                   (proxy-super paintComponent graphics)
-                   ; (println "draw" (now))
                   (paint/paint-buffered graphics
-                  #(try
-                     (draw % @reference)
-                    (catch Throwable e (draw-error % e)))))
+                    #(try
+                       (draw % @reference)
+                       (catch Throwable e (draw-error % e)))))
                 (alterMeta [alter args]
                   (apply swap! meta-atom alter args))
                 (resetMeta [m]
                   (reset! meta-atom m))
                 (meta []
                   @meta-atom))]
-    ;(.setDoubleBuffered panel true)
     (add-watch reference panel (fn [_ _ old-val new-val]
-                                 (swap! count-paints inc)
-                                 ;(println "count: " @count-paints)
-                                 ;(clojure.pprint/pprint new-val)
                                  (when (not= old-val new-val)
-                                   ;(println "repaint")
                                    (.repaint panel))))
     (alter-meta! panel assoc ::data-source reference)
     panel))
@@ -521,28 +513,34 @@
     (fn [x y] ((widget action-type)
                  (- x offset-x) (- y offset-y)))))
 
-(defn match-shapes [[x y] data]
+(defn shapes-containing-point
+  "Returns the shapes in data that contain the
+   point [x y]."
+  [[x y] data]
   (->> data
        (filter #(-> (.createTransformedShape
-                           (% :transform) (% :shape)) (.contains x y)))))
+                       (% :transform) (% :shape))
+                    (.contains x y)))))
 
-(defn triggered-mouse-actions [action-type [x y] data]
+(defn shape-by-action [action-type [x y] data]
   (->> data
        expand-memo
        (filter action-type)
-       (match-shapes [x y])
-       (map #(create-action % action-type))))
+       (shapes-containing-point [x y])))
 
 (defn run-mouse-actions [e action-type reference]
   (let [x (.getX e) y (.getY e)]                    
-    (doseq [action (triggered-mouse-actions action-type [x y] @reference)]
-      (action x y))))
+    (doseq [shape (shape-by-action action-type [x y] @reference)]
+      ((:action-type shape) x y))))
 
-(defn mouse-is-over [[x y] data]
+(defn mouse-is-over
+  "Returns the shapes that contain the point [x y] and
+   expect a hovering mouse."
+  [[x y] data]
   (->> data
        expand-memo
        (remove #(empty? (select-keys % [:mouse-in :mouse-out])))
-       (match-shapes [x y])))
+       (shapes-containing-point [x y])))
 
 (defn handle-mouse-move [e reference canvas]
   ;(println "move" (now))
@@ -557,26 +555,32 @@
     (doseq [action (map :mouse-in in)] (when action (action)))
     (doseq [action (map :mouse-out out)] (when action (action)))))
     
-(defn activate-dragging! [e reference canvas]
-  (let [x (.getX e) y (.getY e)]
-    (alter-meta! canvas assoc
-                 ::dragging-action
-                   (last (triggered-mouse-actions
-                           :on-mouse-drag [x y] @reference))
-                 ::last-drag-position [x y])))
-
-(defn stop-dragging! [canvas]
-  (alter-meta! canvas dissoc ::dragging-action))
-
-(defn continue-dragging [e canvas]
-  (let [x (.getX e) y (.getY e)
-        canvas-meta (meta canvas)
-        [x0 y0] (::last-drag-position canvas-meta)
+(defn initiate-dragging!
+  "Initiates a dragging session."
+  [e reference canvas]
+  (let [x0 (.getX e) y0 (.getY e)
+        dragee (last (shape-by-action :on-mouse-drag [x0 y0] @reference))
+        {:keys [x y]} dragee
         dx (- x x0) dy (- y y0)]
     (alter-meta! canvas assoc
-                 ::last-drag-position [x y])
+                 ::dragging-action
+                 (:on-mouse-drag dragee)
+                 ::dragging-offset [dx dy])))
+
+(defn continue-dragging!
+  "Updates a dragging session."
+  [e canvas]
+  (let [x (.getX e) y (.getY e)
+        canvas-meta (meta canvas)
+        [dx dy] (::dragging-offset canvas-meta)
+        xnew (+ x dx) ynew (+ y dy)]
     (when-let [action (canvas-meta ::dragging-action)]
-      (action dx dy))))
+      (action xnew ynew))))
+
+(defn finish-dragging!
+  "Halts a dragging session."
+  [canvas]
+  (alter-meta! canvas dissoc ::dragging-action))
 
 (defn interactive-canvas
   [reference]
@@ -585,13 +589,13 @@
         mouse-adapter
         (proxy [MouseAdapter] []
           (mouseClicked [e] (run-mouse-actions e :mouse-click reference))
-          (mousePressed [e] (activate-dragging! e reference canvas)
+          (mousePressed [e] (initiate-dragging! e reference canvas)
                             (run-mouse-actions e :mouse-down reference))
-          (mouseReleased [e] (stop-dragging! canvas)
+          (mouseReleased [e] (finish-dragging! canvas)
                              (run-mouse-actions e :mouse-up reference))
           (mouseMoved [e] (handle-mouse-move e reference canvas))
           (mouseDragged [e] 
-                        (continue-dragging e canvas)
+                        (continue-dragging! e canvas)
                         (handle-mouse-move e reference canvas)))]
     (doto canvas
       (.addMouseListener mouse-adapter)
@@ -675,11 +679,11 @@
        :alpha 0.6
     :mouse-in #(swap! grafix assoc-in [2 :fill] :red)
     :mouse-out #(swap! grafix assoc-in [2 :fill] :pink)
-    :on-mouse-drag (fn [dx dy]
+    :on-mouse-drag (fn [x y]
                      (swap! grafix
                             #(-> %
-                                 (update-in [2 :x] + dx)
-                                 (update-in [2 :y] + dy))))
+                                 (assoc-in [2 :x] x)
+                                 (assoc-in [2 :y] y))))
     :scale 3
       :mouse-up (fn [x y] )
      :x 200
