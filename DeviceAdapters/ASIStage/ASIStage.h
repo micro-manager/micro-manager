@@ -28,7 +28,6 @@
 #include "../../MMDevice/MMDevice.h"
 #include "../../MMDevice/DeviceBase.h"
 #include <string>
-#include <map>
 
 //////////////////////////////////////////////////////////////////////////////
 // Error codes
@@ -56,22 +55,13 @@
 
 MM::DeviceDetectionStatus ASICheckSerialPort(MM::Device& device, MM::Core& core, std::string port, double ato);
 
-class ASIBase;
-
-class ASIDeviceBase : public CDeviceBase<MM::Device, ASIDeviceBase>
-{
-public:
-   ASIDeviceBase() { }
-   ~ASIDeviceBase() { }
-
-   friend class ASIBase;
-};
-
+// N.B. Concrete device classes deriving ASIBase must set core_ in
+// Initialize().
 class ASIBase
 {
 public:
    ASIBase(MM::Device *device, const char *prefix);
-   ~ASIBase();
+   virtual ~ASIBase();
 
    int ClearPort(void);
    int CheckDeviceStatus(void);
@@ -83,7 +73,7 @@ protected:
    bool oldstage_;
    MM::Core *core_;
    bool initialized_;
-   ASIDeviceBase *device_;
+   MM::Device *device_;
    std::string oldstagePrefix_;
    std::string port_;
 };

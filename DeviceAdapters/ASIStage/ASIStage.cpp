@@ -221,11 +221,13 @@ MM::DeviceDetectionStatus ASICheckSerialPort(MM::Device& device, MM::Core& core,
 // ASIBase (convenience parent class)
 //
 ASIBase::ASIBase(MM::Device *device, const char *prefix) :
+   oldstage_(false),
+   core_(0),
    initialized_(false),
+   device_(device),
    oldstagePrefix_(prefix),
    port_("Undefined")
 {
-   device_ = static_cast<ASIDeviceBase *>(device);
 }
 
 ASIBase::~ASIBase()
@@ -242,7 +244,7 @@ int ASIBase::ClearPort(void)
    int ret;
    while ((int) read == bufSize)
    {
-      ret = device_->ReadFromComPort(port_.c_str(), clear, bufSize, read);
+      ret = core_->ReadFromSerial(device_, port_.c_str(), clear, bufSize, read);
       if (ret != DEVICE_OK)
          return ret;
    }
@@ -259,7 +261,7 @@ int ASIBase::SendCommand(const char *command) const
       base_command += oldstagePrefix_;
    base_command += command;
    // send command
-   ret = device_->SendSerialCommand(port_.c_str(), base_command.c_str(), "\r");
+   ret = core_->SetSerialCommand(device_, port_.c_str(), base_command.c_str(), "\r");
    return ret;
 }
 
@@ -278,7 +280,12 @@ int ASIBase::QueryCommand(const char *command, std::string &answer) const
       terminator = "\r\n\3";
    else
       terminator = "\r\n";
-   ret = device_->GetSerialAnswer(port_.c_str(), terminator, answer);
+
+   const size_t BUFSIZE = 2048;
+   char buf[BUFSIZE] = {'\0'};
+   ret = core_->GetSerialAnswer(device_, port_.c_str(), BUFSIZE, buf, terminator);
+   answer = buf;
+
    return ret;
 }
 
@@ -321,7 +328,6 @@ int ASIBase::CheckDeviceStatus(void)
 // XYStage
 //
 XYStage::XYStage() :
-   CXYStageBase<XYStage>(),
    ASIBase(this, "2H"),
    stepSizeXUm_(0.0), 
    stepSizeYUm_(0.0), 
@@ -371,6 +377,8 @@ MM::DeviceDetectionStatus XYStage::DetectDevice(void)
 
 int XYStage::Initialize()
 {
+   core_ = GetCoreCallback();
+
    // empty the Rx serial buffer before sending command
    ClearPort(); 
 
@@ -1560,6 +1568,8 @@ MM::DeviceDetectionStatus ZStage::DetectDevice(void)
 
 int ZStage::Initialize()
 {
+   core_ = GetCoreCallback();
+
    // empty the Rx serial buffer before sending command
    ClearPort();
 
@@ -2076,6 +2086,8 @@ CRIF::~CRIF()
 
 int CRIF::Initialize()
 {
+   core_ = GetCoreCallback();
+
    if (initialized_)
       return DEVICE_OK;
 
@@ -2594,6 +2606,8 @@ MM::DeviceDetectionStatus CRISP::DetectDevice(void)
 
 int CRISP::Initialize()
 {
+   core_ = GetCoreCallback();
+
    if (initialized_)
       return DEVICE_OK;
 
@@ -3347,6 +3361,8 @@ void AZ100Turret::GetName(char* Name) const
 
 int AZ100Turret::Initialize()
 {
+   core_ = GetCoreCallback();
+
    // state
    CPropertyAction* pAct = new CPropertyAction (this, &AZ100Turret::OnState);
    int ret = CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct);
@@ -3468,7 +3484,6 @@ int AZ100Turret::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 
 LED::LED() :
-   CShutterBase<LED>(),
    ASIBase(this, "" /* LX-4000 Prefix Unknown */),
    open_(false),
    intensity_(1),
@@ -3509,6 +3524,8 @@ LED::~LED()
 
 int LED::Initialize()
 {
+   core_ = GetCoreCallback();
+
    // empty the Rx serial buffer before sending command
    ClearPort();
 
