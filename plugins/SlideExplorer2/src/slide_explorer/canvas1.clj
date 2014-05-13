@@ -15,6 +15,7 @@
                           Rectangle2D$Double
                           RoundRectangle2D$Double))
     (:require [slide-explorer.widgets :as widgets]
+              [slide-explorer.paint :as paint]
               [slide-explorer.bind :as bind]))
 
 ; Create a default font render context, that can be rebound.
@@ -30,6 +31,11 @@
 (defn show [x]
   (do (pr x)
       x))
+
+(defn now []
+  (System/currentTimeMillis))
+
+(def degrees-to-radians (/ Math/PI 180))
 
 (defn clip-value
   "Clips a value between min-value and max-value."
@@ -182,8 +188,6 @@
   `(with-g2d-state-fn ~g2d ~params (fn [] ~@body)))
 
 ;; widgets ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(def degrees-to-radians (/ Math/PI 180))
 
 (defn update-in-if
   "Like update-in, but only applies the
@@ -476,6 +480,8 @@
           :top 20
           :text (.getMessage e)}]))  
 
+(def count-paints (atom 0))
+
 (defn canvas
   "Create a blank JPanel \"canvas\" for automatic painting. The
   canvas is automatically updated with the graphics description
@@ -485,17 +491,25 @@
         panel (proxy [JPanel clojure.lang.IReference] []
                 (paintComponent [^Graphics graphics]
                   (proxy-super paintComponent graphics)
-                  (try
-                    (draw graphics @reference)
-                    (catch Throwable e (draw-error graphics e))))
+                   ; (println "draw" (now))
+                  (paint/paint-buffered graphics
+                  #(try
+                     (draw % @reference)
+                    (catch Throwable e (draw-error % e)))))
                 (alterMeta [alter args]
                   (apply swap! meta-atom alter args))
                 (resetMeta [m]
                   (reset! meta-atom m))
                 (meta []
                   @meta-atom))]
-    (add-watch reference panel (fn [_ _ _ _]
-                                 (.repaint panel)))
+    ;(.setDoubleBuffered panel true)
+    (add-watch reference panel (fn [_ _ old-val new-val]
+                                 (swap! count-paints inc)
+                                 ;(println "count: " @count-paints)
+                                 ;(clojure.pprint/pprint new-val)
+                                 (when (not= old-val new-val)
+                                   ;(println "repaint")
+                                   (.repaint panel))))
     (alter-meta! panel assoc ::data-source reference)
     panel))
 
@@ -531,9 +545,11 @@
        (match-shapes [x y])))
 
 (defn handle-mouse-move [e reference canvas]
+  ;(println "move" (now))
   (let [data @reference
         last-widgets-under-mouse ((meta canvas) ::last-widgets-under-mouse)
-        widgets-under-mouse (set (map #(select-keys % [:mouse-in :mouse-out :shape]) (mouse-is-over [(.getX e) (.getY e)] data)))
+        widgets-under-mouse (set (map #(select-keys % [:mouse-in :mouse-out :shape])
+                                      (mouse-is-over [(.getX e) (.getY e)] data)))
         in (clojure.set/difference widgets-under-mouse last-widgets-under-mouse)
         out (clojure.set/difference last-widgets-under-mouse widgets-under-mouse)]
     (alter-meta! canvas assoc ::last-widgets-under-mouse
@@ -583,10 +599,11 @@
 
 ;; animation
 
-(defn now []
-  (System/currentTimeMillis))
 
-(defn animate! [reference value-address duration min-val max-val]
+(defn animate!
+  "Slowly alters reference at value-address, linearly
+   with time from min-val to max-val."
+  [reference value-address duration min-val max-val]
   (let [start-time (now)]
     (loop []
       (let [elapsed (- (now) start-time)
