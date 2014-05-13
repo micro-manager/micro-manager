@@ -35,7 +35,6 @@
 #include "../../MMDevice/MMDevice.h"
 #include "../../MMDevice/DeviceBase.h"
 #include <string>
-#include <map>
 
 
 
@@ -45,26 +44,17 @@
 #define ERR_PORT_CHANGE_FORBIDDEN    10004
 
 
-class Conex_AxisBase;
-
-class Conex_AxisDeviceBase : public CDeviceBase<MM::Device, Conex_AxisDeviceBase>
-{
-public:
-   Conex_AxisDeviceBase() { }
-   ~Conex_AxisDeviceBase() { }
-   friend class Conex_AxisBase;
-};
-
+// N.B. Concrete device classes deriving Conex_AxisBase must set core_ in
+// Initialize().
 class Conex_AxisBase
 {
 public:
    Conex_AxisBase(MM::Device *device);
-   ~Conex_AxisBase();
+   virtual ~Conex_AxisBase();
 
    int ClearPort(void);
    int CheckDeviceStatus(void);
    int SendCommand(const char *command) const;
-   int QueryCommandACK(const char *command);
    int QueryCommand(const char *command, std::string &answer) const;
    double GetSpeed();
    double GetAcceleration(void);
@@ -89,11 +79,11 @@ public:
    int Disable();
    void test();
 
-   protected:
-   MM::Core *core_;
+protected:
    bool initialized_;
    std::string port_;
-   Conex_AxisDeviceBase *device_;
+   MM::Device *device_;
+   MM::Core *core_;
    double speed_;
    double acceleration_;
    double coef_;
