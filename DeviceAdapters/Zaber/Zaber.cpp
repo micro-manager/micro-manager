@@ -68,9 +68,10 @@ ZaberBase::ZaberBase(MM::Device *device) :
    initialized_(false),
    peripheralID1_(0),
    peripheralID2_(0),
-   port_("Undefined")
+   port_("Undefined"),
+   device_(device),
+   core_(0)
 {
-   device_ = static_cast<ZaberDeviceBase *>(device);
 }
 
 // DESTRUCTOR
@@ -88,7 +89,7 @@ int ZaberBase::ClearPort(void)
    int ret;
    while ((int) read == bufSize)
    {
-      ret = device_->ReadFromComPort(port_.c_str(), clear, bufSize, read);
+      ret = core_->ReadFromSerial(device_, port_.c_str(), clear, bufSize, read);
       if (ret != DEVICE_OK)
          return ret;
    }
@@ -104,7 +105,7 @@ int ZaberBase::SendCommand(const char *command) const
    std::string base_command = "";
    base_command += command;
    // send command
-   ret = device_->SendSerialCommand(port_.c_str(), base_command.c_str(), g_TxTerm);
+   ret = core_->SetSerialCommand(device_, port_.c_str(), base_command.c_str(), g_TxTerm);
 
    return ret;
 }
@@ -119,7 +120,10 @@ int ZaberBase::QueryCommand(const char *command, std::string &answer) const
    if((ret = SendCommand(command)) == DEVICE_OK)
    {
       // block/wait for acknowledge (or until we time out)
-      ret = device_->GetSerialAnswer(port_.c_str(), g_RxTerm, answer);
+      const size_t BUFSIZE = 2048;
+      char buf[BUFSIZE] = {'\0'};
+      ret = core_->GetSerialAnswer(device_, port_.c_str(), BUFSIZE, buf, g_RxTerm);
+      answer = buf;
    }
    return ret;
 }

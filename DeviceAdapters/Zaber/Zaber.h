@@ -25,7 +25,6 @@
 #include <MMDevice.h>
 #include <DeviceBase.h>
 #include <string>
-#include <map>
 
 //////////////////////////////////////////////////////////////////////////////
 // Error codes
@@ -58,36 +57,26 @@
 #define ERR_NO_CONTROLLER            10027
 
 
-class ZaberBase;
-
-class ZaberDeviceBase : public CDeviceBase<MM::Device, ZaberDeviceBase>
-{
-public:
-   ZaberDeviceBase() { }
-   ~ZaberDeviceBase() { }
-
-   friend class ZaberBase;
-};
-
+// N.B. Concrete device classes deriving ZaberBase must set core_ in
+// Initialize().
 class ZaberBase
 {
 public:
    ZaberBase(MM::Device *device);
-   ~ZaberBase();
+   virtual ~ZaberBase();
 
    int ClearPort(void);
    int CheckDeviceStatus(void);
    int SendCommand(const char *command) const;
-   int QueryCommandACK(const char *command);
    int QueryCommand(const char *command, std::string &answer) const;
 
 protected:
-   MM::Core *core_;
    bool initialized_;
    int peripheralID1_;
    int peripheralID2_;
    std::string port_;
-   ZaberDeviceBase *device_;
+   MM::Device *device_;
+   MM::Core *core_;
 };
 
 #endif //_ZABER_H_

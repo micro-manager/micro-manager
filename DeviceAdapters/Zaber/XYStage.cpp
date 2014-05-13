@@ -46,7 +46,6 @@ const char *XYStageName = "XYStage";
 
 // CONSTRUCTOR
 XYStage::XYStage() :
-   CXYStageBase<XYStage>(),
    ZaberBase(this),
    range_measured_(false),
    answerTimeoutMs_(2000),
@@ -106,6 +105,8 @@ void XYStage::GetName(char* Name) const
 
 int XYStage::Initialize()
 {
+   core_ = GetCoreCallback();
+
    CPropertyAction* pAct;
 
    this->LogMessage("XYStage::Initialize\n", true);
