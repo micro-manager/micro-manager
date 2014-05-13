@@ -190,8 +190,8 @@ void XYStage::GetName(char* name) const
 int XYStage::Initialize()
 {
    // initialize individual stages
-   xstage_ = new MotorStage(this, port_, 0, answerTimeoutMs_, moveTimeoutMs_);
-   ystage_ = new MotorStage(this, port_, 1, answerTimeoutMs_, moveTimeoutMs_);
+   xstage_ = new MotorStage(this, GetCoreCallback(), port_, 0, answerTimeoutMs_, moveTimeoutMs_);
+   ystage_ = new MotorStage(this, GetCoreCallback(), port_, 1, answerTimeoutMs_, moveTimeoutMs_);
 
    // initialize device and get hardware information
    int ret = xstage_->Initialize(&info_);

@@ -77,12 +77,13 @@ const unsigned char getVelocityProfileSgn = 0x15;
 // set velocity profile
 const ThorlabsCommand setVelocityProfileCmd = {0x0413, 0x0E, 0x00, DEVICE_CHANNEL0, true, DEVICE_HOSTPC};
 
-MotorStage::MotorStage(MM::Device *parent, std::string port, int axis, double aTimeoutMs, double mTimeoutMs) :
+MotorStage::MotorStage(MM::Device *parent, MM::Core *core, std::string port, int axis, double aTimeoutMs, double mTimeoutMs) :
    port_(port), 
    axis_(axis), 
-   type_(MOTORSTAGE_UNDEFINED)
+   type_(MOTORSTAGE_UNDEFINED),
+   parent_(parent),
+   core_(core)
 {
-   parent_ = static_cast<ThorlabsDeviceBase *>(parent);
 }
 
 
@@ -91,7 +92,7 @@ MotorStage::MotorStage(MM::Device *parent, std::string port, int axis, double aT
  */
 int MotorStage::ClearPort(void)
 {
-   return ::ClearPort(*parent_, *parent_->GetCoreCallback(), port_);
+   return ::ClearPort(*parent_, *core_, port_);
 }
 
 /**
@@ -111,7 +112,7 @@ int MotorStage::SendCommand(const ThorlabsCommand cmd)
  */
 int MotorStage::SetCommand(const unsigned char* command, unsigned length)
 {
-   int ret = parent_->WriteToComPort(port_.c_str(), command, length);
+   int ret = core_->WriteToSerial(parent_, port_.c_str(), command, length);
 #if 0
 {
 unsigned char *c = (unsigned char *)command;
@@ -121,7 +122,7 @@ msg << "CMD(" << length << "):";
 for (i=0;i<length;i++)
 	msg << " 0x" << hex << (int)c[i];
 msg << "\n";
-parent_->LogMessage(msg.str().c_str());
+core_->LogMessage(parent_, msg.str().c_str());
 }
 #endif
    if (ret != DEVICE_OK)
@@ -138,7 +139,7 @@ parent_->LogMessage(msg.str().c_str());
  */
 int MotorStage::GetCommandAnswer(unsigned char *response, int length, double timeout)
 {
-   MM::MMTime startTime = parent_->GetCurrentMMTime();
+   MM::MMTime startTime = core_->GetCurrentMMTime();
    long totalBytesRead = 0;
 
    if (timeout == -1)
@@ -146,11 +147,11 @@ int MotorStage::GetCommandAnswer(unsigned char *response, int length, double tim
 
    while ((totalBytesRead < length))
    {
-      if ((parent_->GetCurrentMMTime() - startTime).getMsec() > timeout)
+      if ((core_->GetCurrentMMTime() - startTime).getMsec() > timeout)
          return ERR_RESPONSE_TIMEOUT;
 
       unsigned long bytesRead(0);
-      int ret = parent_->ReadFromComPort(port_.c_str(), response + totalBytesRead, length-totalBytesRead, bytesRead);
+      int ret = core_->ReadFromSerial(parent_, port_.c_str(), response + totalBytesRead, length-totalBytesRead, bytesRead);
       if (ret != DEVICE_OK)
          return ret;
       totalBytesRead += bytesRead;
@@ -164,7 +165,7 @@ msg << "RPL(" << totalBytesRead << "): ";
 for (i=0;i<totalBytesRead;i++)
 	msg << " 0x" << hex << (int)c[i];
 msg << "\n";
-parent_->LogMessage(msg.str().c_str());
+core_->LogMessage(parent_, msg.str().c_str());
 }
 #endif
    return DEVICE_OK;
@@ -268,7 +269,7 @@ int MotorStage::GetStatus(DCMOTSTATUS& stat)
    {
       ostringstream os;
       os << "GetStatus command does not appear to be supported for this stage type!";
-      parent_->LogMessage(os.str().c_str(), true);
+      core_->LogMessage(parent_, os.str().c_str(), true);
       stat.dwStatusBits = 0x0; // Require that a "Home" operation be performed
       return DEVICE_OK;
    }
@@ -424,7 +425,7 @@ int MotorStage::GetPositionSteps(long& p)
    {
       ostringstream os;
       os << "GetPosition invalid response: " << hex << answer;
-      parent_->LogMessage(os.str().c_str(), true);
+      core_->LogMessage(parent_, os.str().c_str(), true);
       return ERR_UNRECOGNIZED_ANSWER;
    }
 

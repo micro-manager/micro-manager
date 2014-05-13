@@ -65,12 +65,10 @@ typedef enum {
   MOTORSTAGE_UNDEFINED
 } MOTTYPE;
 
-class ThorlabsDeviceBase;
-
 class MotorStage
 {
 public:
-   MotorStage(MM::Device *parent, std::string port, int axis, double answerTimeoutMs, double moveTimeoutMs);
+   MotorStage(MM::Device *parent, MM::Core *core, std::string port, int axis, double answerTimeoutMs, double moveTimeoutMs);
    ~MotorStage() { }
 
    int Stop();
@@ -96,17 +94,8 @@ private:
    double moveTimeoutMs_;        //
    HWINFO info_;                 // device information
    MOTTYPE type_;                // type of stage (servo, stepper)
-   ThorlabsDeviceBase *parent_;  // parent device (XYStage, MotorXStage)
-};
-
-
-class ThorlabsDeviceBase : public CDeviceBase<MM::Device, ThorlabsDeviceBase>
-{
-public:
-   ThorlabsDeviceBase() { }
-   ~ThorlabsDeviceBase() { }
-
-   friend class MotorStage;
+   MM::Device *parent_;  // parent device (XYStage, MotorXStage)
+   MM::Core *core_;
 };
 
 #endif //_MOTORSTAGE_H_

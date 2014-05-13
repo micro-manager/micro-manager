@@ -239,7 +239,7 @@ int MotorZStage::Initialize()
    int ret;
 
    // initialize stage device
-   zstage_ = new MotorStage(this, port_, 0, answerTimeoutMs_, moveTimeoutMs_);
+   zstage_ = new MotorStage(this, GetCoreCallback(), port_, 0, answerTimeoutMs_, moveTimeoutMs_);
 
    // for some strange reason the device requires the flow control to be toggled before first communications
    GetCoreCallback()->SetDeviceProperty(port_.c_str(), MM::g_Keyword_Handshaking, g_Handshaking_Hardware);
