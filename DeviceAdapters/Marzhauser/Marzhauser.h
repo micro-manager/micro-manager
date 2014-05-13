@@ -34,7 +34,6 @@
 #include "../../MMDevice/MMDevice.h"
 #include "../../MMDevice/DeviceBase.h"
 #include <string>
-#include <map>
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -44,35 +43,25 @@
 #define ERR_PORT_CHANGE_FORBIDDEN    10004
 
 
-class TangoBase;
-
-class TangoDeviceBase : public CDeviceBase<MM::Device, TangoDeviceBase>
-{
-public:
-   TangoDeviceBase() { }
-   ~TangoDeviceBase() { }
-
-   friend class TangoBase;
-};
-
+// N.B. Concrete device classes deriving TangoBase must set core_ in
+// Initialize().
 class TangoBase
 {
 public:
    TangoBase(MM::Device *device);
-   ~TangoBase();
+   virtual ~TangoBase();
 
    int ClearPort(void);
    int CheckDeviceStatus(void);
    int SendCommand(const char *command) const;
-   int QueryCommandACK(const char *command);
    int QueryCommand(const char *command, std::string &answer) const;
 
 protected:
-   MM::Core *core_;
    bool initialized_;
    int  Configuration_;
    std::string port_;
-   TangoDeviceBase *device_;
+   MM::Device *device_;
+   MM::Core *core_;
 };
 
 
