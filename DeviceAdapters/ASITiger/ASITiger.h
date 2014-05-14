@@ -37,7 +37,12 @@ using namespace std;
 //////////////////////////////////////////////////////////////////////////////
 // ASI-specific macros
 //
-#define RETURN_ON_MM_ERROR( result ) if( DEVICE_OK != result ) return result;
+#define RETURN_ON_MM_ERROR( result ) do { \
+   int ret = (result); \
+   if (ret != DEVICE_OK) { \
+      return ret; \
+   } \
+} while (0)
 
 // NB: assert shouldn't be used to do useful work because release version strips it out
 // e.g. instead of "assert(foo() == 1);" should do "int tmp = foo(); assert(tmp==1);"
