@@ -739,7 +739,14 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       return selector;
    }
    
-   private void addSelectorLockIcon(ScrollbarWithLabel selector, final String label) {
+   /** 
+    * Generate the icon to lock one of the scrollbars (for position, 
+    * Z, channel, or T). Set the appropriate member field.
+    * @param label Indicates which scrollbar this lock is for; must be one of 
+    *        "p", "z", "c", or "t".
+    */
+   private void addSelectorLockIcon(ScrollbarWithLabel selector, 
+         final String label) {
       final ScrollbarLockIcon icon = new ScrollbarLockIcon(this, label);
       selector.add(icon, BorderLayout.EAST);
       if (label.equals("p")) {
