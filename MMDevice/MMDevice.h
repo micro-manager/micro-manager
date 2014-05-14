@@ -6,14 +6,9 @@
 // DESCRIPTION:   The interface to the Micro-Manager devices. Defines the 
 //                plugin API for all devices.
 //
-// NOTE:          This file is also used in the main control module MMCore.
-//                Do not change it undless as a part of the MMCore module
-//                revision. Discrepancy between this file and the one used to
-//                build MMCore will cause a malfunction and likely a crash too.
-// 
 // AUTHOR:        Nenad Amodaj, nenad@amodaj.com, 06/08/2005
 //
-// COPYRIGHT:     University of California, San Francisco, 2006
+// COPYRIGHT:     University of California, San Francisco, 2006-2014
 //                100X Imaging Inc, 2008
 //
 // LICENSE:       This file is distributed under the BSD license.
@@ -26,13 +21,11 @@
 //                IN NO EVENT SHALL THE COPYRIGHT OWNER OR
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
-//
-// CVS:           $Id$
-//
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // Header version
-// If any of the class declarations changes, the interface version
+// If any of the class definitions changes, the interface version
 // must be incremented
 #define DEVICE_INTERFACE_VERSION 58
 ///////////////////////////////////////////////////////////////////////////////
@@ -42,7 +35,7 @@
 //
 // Never add parameters or return values that are not POD
 // (http://stackoverflow.com/a/146454) to any method of class Device and its
-// derived classes declared in this file. For example, a std::string parameter
+// derived classes defined in this file. For example, a std::string parameter
 // is not acceptable (use const char*). This is to prevent inter-DLL
 // incompatibilities.
 
@@ -383,7 +376,7 @@ namespace MM {
       Camera() {}
       virtual ~Camera() {}
 
-      virtual DeviceType GetType() const {return Type;}
+      virtual DeviceType GetType() const { return Type; }
       static const DeviceType Type = CameraDevice;
 
       // Camera API
@@ -602,7 +595,7 @@ namespace MM {
       virtual ~Shutter() {}
    
       // Device API
-      virtual DeviceType GetType() const {return Type;}
+      virtual DeviceType GetType() const { return Type; }
       static const DeviceType Type = ShutterDevice;
    
       // Shutter API
@@ -625,7 +618,7 @@ namespace MM {
       virtual ~Stage() {}
    
       // Device API
-      virtual DeviceType GetType() const {return Type;}
+      virtual DeviceType GetType() const { return Type; }
       static const DeviceType Type = StageDevice;
    
       // Stage API
@@ -677,7 +670,7 @@ namespace MM {
       virtual ~XYStage() {}
 
       // Device API
-      virtual DeviceType GetType() const {return Type;}
+      virtual DeviceType GetType() const { return Type; }
       static const DeviceType Type = XYStageDevice;
 
       // XYStage API
@@ -738,7 +731,7 @@ namespace MM {
       virtual ~State() {}
       
       // MMDevice API
-      virtual DeviceType GetType() const {return Type;}
+      virtual DeviceType GetType() const { return Type; }
       static const DeviceType Type = StateDevice;
       
       // MMStateDevice API
@@ -764,7 +757,7 @@ namespace MM {
       virtual ~Serial() {}
       
       // MMDevice API
-      virtual DeviceType GetType() const {return Type;}
+      virtual DeviceType GetType() const { return Type; }
       static const DeviceType Type = SerialDevice;
       
       // Serial API
@@ -786,7 +779,7 @@ namespace MM {
       virtual ~AutoFocus() {}
       
       // MMDevice API
-      virtual DeviceType GetType() const {return AutoFocusDevice;}
+      virtual DeviceType GetType() const { return Type; }
       static const DeviceType Type = AutoFocusDevice;
 
       // AutoFocus API
@@ -812,7 +805,7 @@ namespace MM {
          virtual ~ImageProcessor() {}
 
       // MMDevice API
-      virtual DeviceType GetType() const {return ImageProcessorDevice;}
+      virtual DeviceType GetType() const { return Type; }
       static const DeviceType Type = ImageProcessorDevice;
 
       // image processor API
@@ -831,7 +824,7 @@ namespace MM {
       virtual ~SignalIO() {}
 
       // MMDevice API
-      virtual DeviceType GetType() const {return SignalIODevice;}
+      virtual DeviceType GetType() const { return Type; }
       static const DeviceType Type = SignalIODevice;
 
       // signal io API
@@ -915,7 +908,7 @@ namespace MM {
       virtual ~Magnifier() {}
 
       // MMDevice API
-      virtual DeviceType GetType() const {return MagnifierDevice;}
+      virtual DeviceType GetType() const { return Type; }
       static const DeviceType Type = MagnifierDevice;
 
       virtual double GetMagnification() = 0;
@@ -931,7 +924,7 @@ namespace MM {
       SLM() {}
       virtual ~SLM() {}
 
-      virtual DeviceType GetType() const {return Type;}
+      virtual DeviceType GetType() const { return Type; }
       static const DeviceType Type = SLMDevice;
 
       // SLM API
@@ -1079,7 +1072,7 @@ namespace MM {
       Galvo() {}
       virtual ~Galvo() {}
 
-      virtual DeviceType GetType() const {return Type;}
+      virtual DeviceType GetType() const { return Type; }
       static const DeviceType Type = GalvoDevice;
       
    //Galvo API:
@@ -1111,7 +1104,7 @@ namespace MM {
       virtual ~Hub() {}
 
       // MMDevice API
-      virtual DeviceType GetType() const {return HubDevice;}
+      virtual DeviceType GetType() const { return Type; }
       static const DeviceType Type = HubDevice;
 
       /**

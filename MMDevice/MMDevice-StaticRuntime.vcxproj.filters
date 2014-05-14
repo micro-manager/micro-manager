@@ -20,6 +20,9 @@
     <ClCompile Include="ImgBuffer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="MMDevice.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="ModuleInterface.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

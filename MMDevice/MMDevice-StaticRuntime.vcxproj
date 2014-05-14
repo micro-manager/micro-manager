@@ -22,6 +22,7 @@
     <ClCompile Include="Debayer.cpp" />
     <ClCompile Include="DeviceUtils.cpp" />
     <ClCompile Include="ImgBuffer.cpp" />
+    <ClCompile Include="MMDevice.cpp" />
     <ClCompile Include="ModuleInterface.cpp" />
     <ClCompile Include="Property.cpp" />
   </ItemGroup>
