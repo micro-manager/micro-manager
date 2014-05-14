@@ -58,7 +58,7 @@ MMCoreJ_wrap.h MMCoreJ_wrap.cxx: MMCoreJ.stamp
 
 wrappermodule_LTLIBRARIES = libMMCoreJ_wrap.la
 libMMCoreJ_wrap_la_SOURCES = MMCoreJ_wrap.h MMCoreJ_wrap.cxx
-libMMCoreJ_wrap_la_LDFLAGS = -module -avoid-version -shrext $(JNI_SUFFIX)
+libMMCoreJ_wrap_la_LDFLAGS = -module -avoid-version -shrext $(JNI_SUFFIX) -no-undefined
 libMMCoreJ_wrap_la_LIBADD = ../MMCore/libMMCore.la
 
 
