@@ -327,7 +327,6 @@ public class MMAcquisition {
             throw new MMScriptException(ex);
          }
 
-         System.gc();
          imageCache_ = new MMImageCache(tempImageFileManager);
          if (tempImageFileManager.getDataSetSize() > 0.9 * JavaUtils.getAvailableUnusedMemory()) {
             throw new MMScriptException("Not enough room in memory for this data set.\nTry opening as a virtual data set instead.");

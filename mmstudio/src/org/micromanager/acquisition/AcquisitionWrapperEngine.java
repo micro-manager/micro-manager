@@ -996,9 +996,6 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       int mins = (int) (remainSec / 60);
       remainSec = remainSec - mins * 60;
 
-      Runtime rt = Runtime.getRuntime();
-      rt.gc();
-
       String txt;
       txt =
               "Number of time points: " + (!useCustomIntervals_
