@@ -25,11 +25,11 @@
 #ifndef _ASIScanner_H_
 #define _ASIScanner_H_
 
-#include "ASIDevice.h"
+#include "ASIPeripheralBase.h"
 #include "../../MMDevice/MMDevice.h"
 #include "../../MMDevice/DeviceBase.h"
 
-class CScanner : public CGalvoBase<CScanner>, ASIDevice
+class CScanner : public ASIPeripheralBase<CGalvoBase, CScanner>
 {
 public:
    CScanner(const char* name);
@@ -39,8 +39,6 @@ public:
    // ----------
    int Initialize();
    bool Busy();
-   int Shutdown() { return ASIDevice::Shutdown(); }
-   void GetName(char* pszName) const { ASIDevice::GetName(pszName); }
 
    // Galvo API
    // -----------

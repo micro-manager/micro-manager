@@ -25,11 +25,11 @@
 #ifndef _ASICRISP_H_
 #define _ASICRISP_H_
 
-#include "ASIDevice.h"
+#include "ASIPeripheralBase.h"
 #include "../../MMDevice/MMDevice.h"
 #include "../../MMDevice/DeviceBase.h"
 
-class CCRISP : public CAutoFocusBase<CCRISP>, ASIDevice
+class CCRISP : public ASIPeripheralBase<CAutoFocusBase, CCRISP>
 {
 public:
    CCRISP(const char* name);
@@ -39,8 +39,6 @@ public:
    // ----------
    int Initialize();
    bool Busy();
-   int Shutdown() { return ASIDevice::Shutdown(); }
-   void GetName(char* pszName) const { ASIDevice::GetName(pszName); }
 
    // AutoFocus API
    // -------------

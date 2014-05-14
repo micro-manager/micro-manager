@@ -46,7 +46,7 @@ using namespace std;
 //   including turrets and filter sliders
 //
 CClocked::CClocked(const char* name) :
-   ASIDevice(this, name),
+   ASIPeripheralBase(name),
    numPositions_(0),  // will read actual number of positions
    curPosition_(0),   // will read actual position
    axisLetter_(g_EmptyAxisLetterStr)
@@ -61,7 +61,7 @@ CClocked::CClocked(const char* name) :
 int CClocked::Initialize()
 {
    // call generic Initialize first, this gets hub
-   RETURN_ON_MM_ERROR( ASIDevice::Initialize() );
+   RETURN_ON_MM_ERROR( PeripheralInitialize() );
 
    ostringstream command;
 

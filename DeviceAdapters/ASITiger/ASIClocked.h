@@ -25,13 +25,13 @@
 #ifndef _ASIClocked_H_
 #define _ASIClocked_H_
 
-#include "ASIDevice.h"
+#include "ASIPeripheralBase.h"
 #include "../../MMDevice/MMDevice.h"
 #include "../../MMDevice/DeviceBase.h"
 
 using namespace std;
 
-class CClocked : public CStateDeviceBase<CClocked>, protected ASIDevice
+class CClocked : public ASIPeripheralBase<CStateDeviceBase, CClocked>
 {
 public:
    CClocked(const char* name);
@@ -41,8 +41,6 @@ public:
    // ----------
    int Initialize();
    bool Busy();
-   int Shutdown() { return ASIDevice::Shutdown(); }
-   void GetName(char* pszName) const { ASIDevice::GetName(pszName); }
 
    // State device API
    // -----------

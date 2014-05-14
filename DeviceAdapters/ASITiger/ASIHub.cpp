@@ -29,7 +29,6 @@
 #endif
 
 #include "ASITiger.h"
-#include "ASIDevice.h"
 #include "ASIHub.h"
 #include "../../MMDevice/MMDevice.h"
 #include "../../MMDevice/DeviceBase.h"
@@ -46,7 +45,7 @@ using namespace std;
 // this implements serial communication, and could be used as parent class
 //   for future hubs besides TigerComm
 ASIHub::ASIHub() :
-      ASIDevice(this,""),  // don't pass a name
+      ASIBase(""),  // don't pass a name
       port_("Undefined"),
       serialAnswer_(""),
       serialCommand_(""),
@@ -87,8 +86,6 @@ ASIHub::ASIHub() :
    AddAllowedValue(g_SerialTerminatorPropertyName, g_SerialTerminator_2);
    AddAllowedValue(g_SerialTerminatorPropertyName, g_SerialTerminator_3);
    AddAllowedValue(g_SerialTerminatorPropertyName, g_SerialTerminator_4);
-
-   hub_ = this;
 }
 
 int ASIHub::ClearComPort(void)
@@ -332,14 +329,14 @@ int ASIHub::GetBuildInfo(const string addressLetter, build_info_type &build)
    //      Axis Props:   1   0   0   0   0   0   0   1   0<CR>
 
    // parse the reply into vectors containing axis types, letters, and card addresses (binary and hex)
-   vector<string> vReply = hub_->SplitAnswerOnCR();
+   vector<string> vReply = SplitAnswerOnCR();
 
    // get buildname
    build.buildname = vReply[0];
 
    // get axis letters "Motor Axes:"
-   hub_->SetLastSerialAnswer(vReply[1]);
-   vector<string> vAxesLetter = hub_->SplitAnswerOnSpace();
+   SetLastSerialAnswer(vReply[1]);
+   vector<string> vAxesLetter = SplitAnswerOnSpace();
    if (vAxesLetter.size() < 3)
       return ERR_NOT_ENOUGH_AXES;
    vAxesLetter.erase(vAxesLetter.begin()); vAxesLetter.erase(vAxesLetter.begin()); // remove "Motor Axes:"
@@ -352,13 +349,13 @@ int ASIHub::GetBuildInfo(const string addressLetter, build_info_type &build)
    }
 
    // get axis types "Axis Types:"
-   hub_->SetLastSerialAnswer(vReply[2]);
-   vector<string> vAxesType = hub_->SplitAnswerOnSpace();
+   SetLastSerialAnswer(vReply[2]);
+   vector<string> vAxesType = SplitAnswerOnSpace();
    vAxesType.erase(vAxesType.begin()); vAxesType.erase(vAxesType.begin()); // remove "Axis Types:"
    build.vAxesType = ConvertStringVector2CharVector(vAxesType);
 
-   hub_->SetLastSerialAnswer(vReply[3]);
-   vector<string> vAxesAddr = hub_->SplitAnswerOnSpace();
+   SetLastSerialAnswer(vReply[3]);
+   vector<string> vAxesAddr = SplitAnswerOnSpace();
    vAxesAddr.erase(vAxesAddr.begin()); vAxesAddr.erase(vAxesAddr.begin());      // remove "Axis Addr:"
    build.vAxesAddr = vAxesAddr;
 
@@ -366,8 +363,8 @@ int ASIHub::GetBuildInfo(const string addressLetter, build_info_type &build)
    vector<string> vAxesAddrHex;
    if (vReply.size() > 4) // firmware Sep2013 onward, required for addresses beyond '9' = 0x39
    {
-      hub_->SetLastSerialAnswer(vReply[4]);
-      vAxesAddrHex = hub_->SplitAnswerOnSpace();
+      SetLastSerialAnswer(vReply[4]);
+      vAxesAddrHex = SplitAnswerOnSpace();
       vAxesAddrHex.erase(vAxesAddrHex.begin()); vAxesAddrHex.erase(vAxesAddrHex.begin());      // remove "Hex Addr:"
    }
    else // old firmware doesn't have hex addresses so we create them here
@@ -388,8 +385,8 @@ int ASIHub::GetBuildInfo(const string addressLetter, build_info_type &build)
    vector<string> vAxesProps;
    if (vReply.size() > 5)   // present in firmware Oct2013 onward, required for CRISP detection and SPIM
    {
-      hub_->SetLastSerialAnswer(vReply[5]);
-      vAxesProps = hub_->SplitAnswerOnSpace();
+      SetLastSerialAnswer(vReply[5]);
+      vAxesProps = SplitAnswerOnSpace();
       vAxesProps.erase(vAxesProps.begin()); vAxesProps.erase(vAxesProps.begin());      // remove "Axis Props:"
    }
    else  // with older firmware then we are done, just leave a blank vector (CRISP, SPIM, etc. not supported)

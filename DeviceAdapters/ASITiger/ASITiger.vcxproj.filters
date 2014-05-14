@@ -21,9 +21,6 @@
     <ClCompile Include="ASICRISP.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ASIDevice.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="ASIFWheel.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -50,19 +47,22 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ASIBase.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="ASIClocked.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ASICRISP.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ASIDevice.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="ASIFWheel.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ASIHub.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ASIPeripheralBase.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ASIPiezo.h">

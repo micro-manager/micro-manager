@@ -44,7 +44,7 @@ using namespace std;
 // CSlider
 //
 CFWheel::CFWheel(const char* name) :
-   ASIDevice(this, name),
+   ASIPeripheralBase(name),
    numPositions_(0),  // will read actual number of positions
    curPosition_(0),   // will read actual position
    spinning_(0),
@@ -60,7 +60,7 @@ CFWheel::CFWheel(const char* name) :
 int CFWheel::Initialize()
 {
    // call generic Initialize first, this gets hub
-   RETURN_ON_MM_ERROR( ASIDevice::Initialize(true) );
+   RETURN_ON_MM_ERROR( PeripheralInitialize(true) );
 
    ostringstream command;
 

@@ -30,7 +30,6 @@
 #include "ASIXYStage.h"
 #include "ASITiger.h"
 #include "ASIHub.h"
-#include "ASIDevice.h"
 #include "../../MMDevice/ModuleInterface.h"
 #include "../../MMDevice/DeviceUtils.h"
 #include "../../MMDevice/DeviceBase.h"
@@ -47,8 +46,7 @@ using namespace std;
 // CXYStage
 //
 CXYStage::CXYStage(const char* name) :
-   CXYStageBase<CXYStage>(),
-   ASIDevice(this,name),
+   ASIPeripheralBase(name),
    unitMultX_(g_StageDefaultUnitMult),  // later will try to read actual setting
    unitMultY_(g_StageDefaultUnitMult),  // later will try to read actual setting
    stepSizeXUm_(g_StageMinStepSize),    // we'll use 1 nm as our smallest possible step size, this is somewhat arbitrary
@@ -68,7 +66,7 @@ CXYStage::CXYStage(const char* name) :
 int CXYStage::Initialize()
 {
    // call generic Initialize first, this gets hub
-   RETURN_ON_MM_ERROR( ASIDevice::Initialize() );
+   RETURN_ON_MM_ERROR( PeripheralInitialize() );
 
    // read the unit multiplier for X and Y axes
    // ASI's unit multiplier is how many units per mm, so divide by 1000 here to get units per micron

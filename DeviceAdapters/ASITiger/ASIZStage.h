@@ -25,11 +25,11 @@
 #ifndef _ASIZStage_H_
 #define _ASIZStage_H_
 
-#include "ASIDevice.h"
+#include "ASIPeripheralBase.h"
 #include "../../MMDevice/MMDevice.h"
 #include "../../MMDevice/DeviceBase.h"
 
-class CZStage : public CStageBase<CZStage>, ASIDevice
+class CZStage : public ASIPeripheralBase<CStageBase, CZStage>
 {
 public:
    CZStage(const char* name);
@@ -39,8 +39,6 @@ public:
    // ----------
    int Initialize();
    bool Busy();
-   int Shutdown() { return ASIDevice::Shutdown(); }
-   void GetName(char* pszName) const { ASIDevice::GetName(pszName); }
 
    // ZStage API
    // -----------

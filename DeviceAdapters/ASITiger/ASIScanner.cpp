@@ -30,7 +30,6 @@
 #include "ASIScanner.h"
 #include "ASITiger.h"
 #include "ASIHub.h"
-#include "ASIDevice.h"
 #include "../../MMDevice/ModuleInterface.h"
 #include "../../MMDevice/DeviceUtils.h"
 #include "../../MMDevice/DeviceBase.h"
@@ -46,7 +45,7 @@ using namespace std;
 // CScanner
 //
 CScanner::CScanner(const char* name) :
-   ASIDevice(this,name),
+   ASIPeripheralBase(name),
    axisLetterX_(g_EmptyAxisLetterStr),    // value determined by extended name
    axisLetterY_(g_EmptyAxisLetterStr),    // value determined by extended name
    unitMultX_(g_ScannerDefaultUnitMult),  // later will try to read actual setting
@@ -73,7 +72,7 @@ CScanner::CScanner(const char* name) :
 int CScanner::Initialize()
 {
    // call generic Initialize first, this gets hub
-   RETURN_ON_MM_ERROR( ASIDevice::Initialize() );
+   RETURN_ON_MM_ERROR( PeripheralInitialize() );
 
    // read the unit multiplier for X and Y axes
    // ASI's unit multiplier is how many units per degree rotation for the micromirror card

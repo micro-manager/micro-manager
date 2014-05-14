@@ -25,11 +25,11 @@
 #ifndef _ASIPiezo_H_
 #define _ASIPiezo_H_
 
-#include "ASIDevice.h"
+#include "ASIPeripheralBase.h"
 #include "../../MMDevice/MMDevice.h"
 #include "../../MMDevice/DeviceBase.h"
 
-class CPiezo : public CStageBase<CPiezo>, ASIDevice
+class CPiezo : public ASIPeripheralBase<CStageBase, CPiezo>
 {
 public:
    CPiezo(const char* name);
@@ -39,8 +39,6 @@ public:
    // ----------
    int Initialize();
    bool Busy();
-   int Shutdown() { return ASIDevice::Shutdown(); }
-   void GetName(char* pszName) const { ASIDevice::GetName(pszName); }
 
    // Piezo API
    // -----------

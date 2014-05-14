@@ -25,7 +25,7 @@
 #ifndef _ASIHub_H_
 #define _ASIHub_H_
 
-#include "ASIDevice.h"
+#include "ASIBase.h"
 #include "../../MMDevice/MMDevice.h"
 #include "../../MMDevice/DeviceBase.h"
 #include <string>
@@ -38,7 +38,7 @@ using namespace std;
 // also acts like a device itself
 ////////////////////////////////////////////////////////////////
 
-class ASIHub : public HubBase<ASIHub>, public ASIDevice
+class ASIHub : public ASIBase<HubBase, ASIHub>
 {
 public:
 	ASIHub();

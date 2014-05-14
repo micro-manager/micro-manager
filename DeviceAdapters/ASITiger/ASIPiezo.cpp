@@ -30,7 +30,6 @@
 #include "ASIPiezo.h"
 #include "ASITiger.h"
 #include "ASIHub.h"
-#include "ASIDevice.h"
 #include "../../MMDevice/ModuleInterface.h"
 #include "../../MMDevice/DeviceUtils.h"
 #include "../../MMDevice/DeviceBase.h"
@@ -48,7 +47,7 @@ using namespace std;
 // CPiezo
 //
 CPiezo::CPiezo(const char* name) :
-   ASIDevice(this,name),
+   ASIPeripheralBase(name),
    unitMult_(g_StageDefaultUnitMult),  // later will try to read actual setting
    stepSizeUm_(g_StageMinStepSize),    // we'll use 1 nm as our smallest possible step size, this is somewhat arbitrary and doesn't change during the program
    axisLetter_(g_EmptyAxisLetterStr),  // value determined by extended name
@@ -64,7 +63,7 @@ CPiezo::CPiezo(const char* name) :
 int CPiezo::Initialize()
 {
    // call generic Initialize first, this gets hub
-   RETURN_ON_MM_ERROR( ASIDevice::Initialize() );
+   RETURN_ON_MM_ERROR( PeripheralInitialize() );
 
    // read the unit multiplier
    // ASI's unit multiplier is how many units per mm, so divide by 1000 here to get units per micron

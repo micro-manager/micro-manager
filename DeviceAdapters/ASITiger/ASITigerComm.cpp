@@ -52,9 +52,6 @@ CTigerCommHub::CTigerCommHub()
 
 int CTigerCommHub::Initialize()
 {
-   // call generic Initialize first (getting hub not needed here because we are a hub already)
-   RETURN_ON_MM_ERROR ( ASIDevice::Initialize(true) );
-
    // if we can communicate over serial and get back the controller version then we're in good shape
    // make sure we are on Tiger
    RETURN_ON_MM_ERROR ( TalkToTiger() );
@@ -70,7 +67,7 @@ int CTigerCommHub::Initialize()
    if(ret_ == ERR_UNRECOGNIZED_ANSWER)
       ret_ = DEVICE_NOT_SUPPORTED;
    RETURN_ON_MM_ERROR (ret_);
-   RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterPosition(4, firmwareVersion_) );
+   RETURN_ON_MM_ERROR ( ParseAnswerAfterPosition(4, firmwareVersion_) );
    stringstream command; command.str("");
    command << firmwareVersion_;
    RETURN_ON_MM_ERROR ( CreateProperty(g_FirmwareVersionPropertyName, command.str().c_str(), MM::Float, true) );
@@ -289,9 +286,6 @@ int CTigerCommHub::DetectInstalledDevices()
 
 int CTigerCommHub::TalkToTiger()
 {
-   // N.B. because we are descended from the ASIHub class we can call QueryCommandVerify directly
-   //    but in other non-hub classes we would need to access method via hub_ (defined in ASIDevice)
-
    RETURN_ON_MM_ERROR( ClearComPort() );
    // make sure we are on Tiger
    ret_ = QueryCommandVerify("BU", "TIGER_COMM");

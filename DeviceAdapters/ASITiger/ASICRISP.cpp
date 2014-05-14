@@ -28,9 +28,7 @@
 #endif
 
 #include "ASICRISP.h"
-#include "ASITiger.h"
 #include "ASIHub.h"
-#include "ASIDevice.h"
 #include "../../MMDevice/ModuleInterface.h"
 #include "../../MMDevice/DeviceUtils.h"
 #include "../../MMDevice/DeviceBase.h"
@@ -47,7 +45,7 @@ using namespace std;
 // CCRISP
 //
 CCRISP::CCRISP(const char* name) :
-   ASIDevice(this,name),
+   ASIPeripheralBase(name),
    axisLetter_(g_EmptyAxisLetterStr),    // value determined by extended name
    waitAfterLock_(1000)
 {
@@ -61,7 +59,7 @@ CCRISP::CCRISP(const char* name) :
 int CCRISP::Initialize()
 {
    // call generic Initialize first, this gets hub
-   RETURN_ON_MM_ERROR( ASIDevice::Initialize() );
+   RETURN_ON_MM_ERROR( PeripheralInitialize() );
 
    // create MM description; this doesn't work during hardware configuration wizard but will work afterwards
    ostringstream command;

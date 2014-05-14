@@ -25,7 +25,6 @@
 #ifndef _ASITigerComm_H_
 #define _ASITigerComm_H_
 
-#include "ASIDevice.h"
 #include "ASIHub.h"
 #include "../../MMDevice/MMDevice.h"
 #include "../../MMDevice/DeviceBase.h"
@@ -44,8 +43,6 @@ public:
    // Device API
    int Initialize();
    bool Busy();                               // we'll define say the Hub is busy when motors attached to it are running
-   int Shutdown() { return ASIDevice::Shutdown(); }                      // probably OK to let this implementation stand
-   void GetName(char* pszName) const { ASIDevice::GetName(pszName); }    // probably OK to let this implementation stand
 
    // Hub API
    MM::DeviceDetectionStatus DetectDevice();

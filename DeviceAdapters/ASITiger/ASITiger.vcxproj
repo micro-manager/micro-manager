@@ -162,7 +162,6 @@
   <ItemGroup>
     <ClCompile Include="ASIClocked.cpp" />
     <ClCompile Include="ASICRISP.cpp" />
-    <ClCompile Include="ASIDevice.cpp" />
     <ClCompile Include="ASIFWheel.cpp" />
     <ClCompile Include="ASIHub.cpp" />
     <ClCompile Include="ASIPiezo.cpp" />
@@ -173,11 +172,12 @@
     <ClCompile Include="ASIZStage.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ASIBase.h" />
     <ClInclude Include="ASIClocked.h" />
     <ClInclude Include="ASICRISP.h" />
-    <ClInclude Include="ASIDevice.h" />
     <ClInclude Include="ASIFWheel.h" />
     <ClInclude Include="ASIHub.h" />
+    <ClInclude Include="ASIPeripheralBase.h" />
     <ClInclude Include="ASIPiezo.h" />
     <ClInclude Include="ASIScanner.h" />
     <ClInclude Include="ASITiger.h" />

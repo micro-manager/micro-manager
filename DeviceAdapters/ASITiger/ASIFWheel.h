@@ -25,13 +25,13 @@
 #ifndef _ASIFWheel_H_
 #define _ASIFWheel_H_
 
-#include "ASIDevice.h"
+#include "ASIPeripheralBase.h"
 #include "../../MMDevice/MMDevice.h"
 #include "../../MMDevice/DeviceBase.h"
 
 using namespace std;
 
-class CFWheel : public CStateDeviceBase<CFWheel>, ASIDevice
+class CFWheel : public ASIPeripheralBase<CStateDeviceBase, CFWheel>
 {
 public:
    CFWheel(const char* name);
@@ -41,8 +41,6 @@ public:
    // ----------
    int Initialize();
    bool Busy();
-   int Shutdown() { return ASIDevice::Shutdown(); }
-   void GetName(char* pszName) const { ASIDevice::GetName(pszName); }
 
    // State device API
    // -----------
