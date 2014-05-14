@@ -167,8 +167,7 @@ int CCRISP::GetContinuousFocusing(bool& state)
 bool CCRISP::IsContinuousFocusLocked()
 {
    // this returns true if focus already locked
-   ret_ = UpdateFocusState();
-   if (ret_ == DEVICE_OK)
+   if (UpdateFocusState() == DEVICE_OK)
       return (focusState_ == g_CRISP_F);
    else
       return false;

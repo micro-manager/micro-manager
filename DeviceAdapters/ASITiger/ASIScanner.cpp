@@ -554,8 +554,7 @@ void CScanner::UpdateIlluminationState()
    {
       ostringstream command; command.str("");
       command << "RS " << axisLetterX_ << "-";
-      ret_ = hub_->QueryCommandVerify(command.str(),":A");
-      if (ret_ != DEVICE_OK)  // don't choke on comm error
+      if (hub_->QueryCommandVerify(command.str(),":A") != DEVICE_OK)  // don't choke on comm error
          return;
       if (hub_->LastSerialAnswer().at(3) != 'U')
       {
@@ -564,8 +563,7 @@ void CScanner::UpdateIlluminationState()
       }
       command.str("");
       command << "RS " << axisLetterY_ << "-";
-      ret_ = hub_->QueryCommandVerify(command.str(),":A");
-      if (ret_ != DEVICE_OK)  // don't choke on comm error
+      if (hub_->QueryCommandVerify(command.str(),":A") != DEVICE_OK)  // don't choke on comm error
          return;
       if (hub_->LastSerialAnswer().at(3) != 'U')
       {

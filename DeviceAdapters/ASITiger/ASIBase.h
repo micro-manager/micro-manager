@@ -60,8 +60,7 @@ public:
    ASIBase(const char* name) :
       initialized_(false),
       refreshProps_(false),
-      firmwareVersion_(0.0),
-      ret_(DEVICE_OK)
+      firmwareVersion_(0.0)
    {
       this->InitializeDefaultErrorMessages();
       InitializeASIErrorMessages();
@@ -98,7 +97,6 @@ protected:
    double firmwareVersion_; // firmware version
    string firmwareDate_;    // firmware compile date
    string firmwareBuild_;   // firmware build name
-   int ret_;               // return code for use with Micro-manager functions
 
    void InitializeASIErrorMessages()
    {

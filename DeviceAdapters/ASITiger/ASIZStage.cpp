@@ -315,24 +315,20 @@ bool CZStage::Busy()
    if (firmwareVersion_ > 2.7) // can use more accurate RS <axis>?
    {
       command << "RS " << axisLetter_ << "?";
-      ret_ = hub_->QueryCommandVerify(command.str(),":A");
-      if (ret_ != DEVICE_OK)  // say we aren't busy if we can't communicate
+      if (hub_->QueryCommandVerify(command.str(),":A") != DEVICE_OK)  // say we aren't busy if we can't communicate
          return false;
       char c;
-      ret_ = hub_->GetAnswerCharAtPosition3(c);
-      if (ret_ != DEVICE_OK)
+      if (hub_->GetAnswerCharAtPosition3(c) != DEVICE_OK)
          return false;
       return (c == 'B');
    }
    else  // use LSB of the status byte as approximate status, not quite equivalent
    {
       command << "RS " << axisLetter_;
-      ret_ = hub_->QueryCommandVerify(command.str(),":A");
-      if (ret_ != DEVICE_OK)  // say we aren't busy if we can't communicate
+      if (hub_->QueryCommandVerify(command.str(),":A") != DEVICE_OK)  // say we aren't busy if we can't communicate
          return false;
       unsigned int i;
-      ret_ = hub_->ParseAnswerAfterPosition2(i);
-      if (ret_ != DEVICE_OK)  // say we aren't busy if we can't parse
+      if (hub_->ParseAnswerAfterPosition2(i) != DEVICE_OK)  // say we aren't busy if we can't parse
          return false;
       return (i & (int)BIT0);  // mask everything but LSB
    }

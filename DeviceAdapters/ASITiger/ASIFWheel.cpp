@@ -169,15 +169,12 @@ bool CFWheel::Busy()
 {
    // this actually will return status of the two wheels on the same card
    // this is a firmware limitation
-   ret_ = SelectWheel();
-   if (ret_ != DEVICE_OK)  // say we aren't busy if we can't communicate
+   if (SelectWheel() != DEVICE_OK)  // say we aren't busy if we can't communicate
       return false;
-   ret_ = hub_->QueryCommand("?", g_SerialTerminatorFW);
-   if (ret_ != DEVICE_OK)  // say we aren't busy if we can't communicate
+   if (hub_->QueryCommand("?", g_SerialTerminatorFW) != DEVICE_OK)  // say we aren't busy if we can't communicate
       return false;
    unsigned int i;
-   ret_ = hub_->ParseAnswerAfterPosition(0, i);
-   if (ret_ != DEVICE_OK)  // say we aren't busy if we can't parse
+   if (hub_->ParseAnswerAfterPosition(0, i) != DEVICE_OK)  // say we aren't busy if we can't parse
       return false;
    // ASI documentation seems to be out of date here, but we'll take codes 1-3 or 12 as moving
    return (i==12 || (i>=1 && i<=3));
@@ -227,10 +224,9 @@ int CFWheel::SelectWheel()
 {
    ostringstream command; command.str("");
    command << "FW" << axisLetter_;
-   ret_ = hub_->QueryCommandVerify(command.str(),"FW", g_SerialTerminatorFW);
    // if we sent an invalid address then Tiger responds with a <NAK>-terminated reply
    //   which leads to a timeout.  note this is different in Tiger than in stand-alone filterwheel
-   if (ret_ != DEVICE_OK)
+   if (hub_->QueryCommandVerify(command.str(),"FW", g_SerialTerminatorFW) != DEVICE_OK)
       return ERR_FILTER_WHEEL_NOT_READY;
    return DEVICE_OK;
 }

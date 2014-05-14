@@ -63,10 +63,10 @@ int CTigerCommHub::Initialize()
    RETURN_ON_MM_ERROR ( QueryCommand("VB F=0") );
 
    // get version information from the controller, this is just for TigerComm (hub/serial card)
-   ret_ = QueryCommandVerify("0 V", ":A v");  // N.B. this is different for non-Tiger controllers like MS/WK-2000
-   if(ret_ == ERR_UNRECOGNIZED_ANSWER)
-      ret_ = DEVICE_NOT_SUPPORTED;
-   RETURN_ON_MM_ERROR (ret_);
+   int ret = QueryCommandVerify("0 V", ":A v");  // N.B. this is different for non-Tiger controllers like MS/WK-2000
+   if(ret == ERR_UNRECOGNIZED_ANSWER)
+      ret = DEVICE_NOT_SUPPORTED;
+   RETURN_ON_MM_ERROR (ret);
    RETURN_ON_MM_ERROR ( ParseAnswerAfterPosition(4, firmwareVersion_) );
    stringstream command; command.str("");
    command << firmwareVersion_;
@@ -288,10 +288,10 @@ int CTigerCommHub::TalkToTiger()
 {
    RETURN_ON_MM_ERROR( ClearComPort() );
    // make sure we are on Tiger
-   ret_ = QueryCommandVerify("BU", "TIGER_COMM");
-   if(ret_ == ERR_UNRECOGNIZED_ANSWER)
-      ret_ = DEVICE_NOT_SUPPORTED;
-   return ret_;
+   int ret = QueryCommandVerify("BU", "TIGER_COMM");
+   if(ret == ERR_UNRECOGNIZED_ANSWER)
+      ret = DEVICE_NOT_SUPPORTED;
+   return ret;
 }
 
 bool CTigerCommHub::Busy()
