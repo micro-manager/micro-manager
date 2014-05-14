@@ -119,11 +119,6 @@ MODULE_API bool GetDeviceDescription(const char* deviceName, char* description, 
    return true;
 }
 
-void AddAvailableDeviceName(const char* name, const char* descr)
-{
-   RegisterDevice(name, MM::UnknownType, descr);
-}
-
 void RegisterDevice(const char* deviceName, MM::DeviceType deviceType, const char* deviceDescription)
 {
    if (!deviceName)

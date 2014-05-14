@@ -49,7 +49,7 @@
 // If any of the exported module API calls (below) changes, the interface
 // version must be incremented. Note that the signature and name of
 // GetModuleVersion() must never change.
-#define MODULE_INTERFACE_VERSION 9
+#define MODULE_INTERFACE_VERSION 10
 
 
 /*
@@ -124,27 +124,6 @@ extern "C" {
 /*
  * Functions for use by the device adapter module
  */
-
-/// Deprecated interface for device registration.
-/**
- * Use RegisterDevice() instead.
- *
- * \see RegisterDevice()
- */
-// TODO (All at the same time)
-// - Remove AddAvailableDeviceName(),
-// - Modify Core to always get type from GetDeviceType() rather than by
-//   instantiating the device, and
-// - Increment the module interface version (to ensure that modules are no
-//   longer registering devices without type information).
-#ifdef _MSC_VER
-__declspec(deprecated("Use RegisterDevice() instead"))
-#endif
-void AddAvailableDeviceName(const char* deviceName, const char* description = "Description N/A")
-#ifdef __GNUC__
-__attribute__((deprecated()))
-#endif
-;
 
 /// Register a device class provided by the device adapter library.
 /**

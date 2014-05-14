@@ -756,22 +756,6 @@ vector<long> CPluginManager::GetAvailableDeviceTypes(const char* moduleName) thr
             types.push_back(typeInt);
             continue;
          }
-
-         // instantiate the device
-         MM::Device* pDevice = module->CreateDevice(deviceName);
-         if (pDevice == 0)
-            types.push_back((long)MM::AnyType);
-         else
-         {
-            types.push_back((long)pDevice->GetType());
-
-
-            // release device resources
-            //pDevice->Shutdown();
-            
-            // delete device
-            module->DeleteDevice(pDevice);
-         }
       }
    }
    catch (CMMError& err)
