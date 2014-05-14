@@ -15,18 +15,12 @@ inline std::string getDeviceTypeVerbose(MM::DeviceType t)
          return std::string("Core");
       case (MM::AutoFocusDevice):
          return std::string("Autofocus");
-      case (MM::CommandDispatchDevice):
-         return std::string("CommandDispatch");
       case (MM::HubDevice):
          return std::string("Hub");
       case (MM::GenericDevice):
          return std::string("Generic");
       case (MM::ImageProcessorDevice):
          return std::string("ImageProcessor");
-      case (MM::ImageStreamerDevice):
-         return std::string("ImageStreamer");
-      case (MM::ProgrammableIODevice):
-         return std::string("ProgrammableIO");
       case (MM::SerialDevice):
          return std::string("SerialPort");
       case (MM::ShutterDevice):
