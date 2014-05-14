@@ -114,8 +114,6 @@ import org.micromanager.utils.ReportingUtils;
          devType = "Micro-manager Core";
       } else if (type_ == DeviceType.AutoFocusDevice) {
          devType = "Autofocus";
-      } else if (type_ == DeviceType.CommandDispatchDevice ) {
-         devType = "Command Dispatcher";
       } else if (type_ == DeviceType.HubDevice) {
          devType = "Motorized scope or Hub";
       } else if (type_ == DeviceType.GenericDevice) {
@@ -124,10 +122,6 @@ import org.micromanager.utils.ReportingUtils;
          devType = "Misc.";    
       } else if (type_ == DeviceType.ImageProcessorDevice) {
          devType = "Image Processor";    
-      } else if (type_ == DeviceType.ImageStreamerDevice) {
-         devType = "Image Streamer";    
-      } else if (type_ == DeviceType.ProgrammableIODevice) {
-         devType = "Programmable I/O Device";    
       } else if (type_ == DeviceType.SignalIODevice) {
          devType = "Signal I/O Device";    
       } else if (type_ == DeviceType.SLMDevice) {

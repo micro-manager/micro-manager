@@ -210,12 +210,9 @@ namespace MM {
       AutoFocusDevice,
       CoreDevice,
       ImageProcessorDevice,
-      ImageStreamerDevice,
       SignalIODevice,
       MagnifierDevice,
-      ProgrammableIODevice,
       SLMDevice,
-      CommandDispatchDevice,
       HubDevice,
       GalvoDevice
    };

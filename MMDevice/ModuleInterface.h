@@ -49,7 +49,7 @@
 // If any of the exported module API calls (below) changes, the interface
 // version must be incremented. Note that the signature and name of
 // GetModuleVersion() must never change.
-#define MODULE_INTERFACE_VERSION 8
+#define MODULE_INTERFACE_VERSION 9
 
 
 /*

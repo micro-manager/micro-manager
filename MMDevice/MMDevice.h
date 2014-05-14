@@ -745,71 +745,6 @@ namespace MM {
    };
 
    /**
-    * Programmable I/O device API, for programmable I/O boards with patterns
-    * and sequences
-    */
-   class ProgrammableIO : public Device
-   {
-   public:
-      ProgrammableIO() {}
-      virtual ~ProgrammableIO() {}
-      
-      // MMDevice API
-      virtual DeviceType GetType() const {return Type;}
-      static const DeviceType Type = ProgrammableIODevice;
-      
-      // ProgrammableIO API
-
-      /**
-       * Stores the current set of properties (state) into a specified slot.
-       * The device should automatically resize its internal pattern array to the highest
-       * requested index, or return error if it can't.
-       * NOTE: the device must handle the concept of the 'undefined'or 'default' pattern in order to
-       * pad the pattern array if necessary
-       */
-      virtual int DefineCurrentStateAsPattern(long index) = 0;
-
-      /**
-       * Cycles through the pattern array.
-       * Convenient to use for external triggering.
-       */
-      virtual int SetNextPattern() = 0;
-
-      /**
-       * Set the pattern based either on the index.
-       */
-      virtual int SetPattern(long index) = 0;
-      /**
-       * Set the pattern based either on the label.
-       */
-      virtual int SetPattern(const char* label) = 0;
-
-      /**
-       * Get current pattern index.
-       */
-      virtual int GetPattern(long& index) const = 0;
-      /**
-       * Get current pattern label.
-       */
-      virtual int GetPattern(char* label) const = 0;
-
-      /**
-       * Get the label assigned to a specific position.
-       */
-      virtual int GetPatternLabel(long pos, char* label) const = 0;
-      /**
-       * Assign a label to the specific position.
-       */
-      virtual int SetPatternLabel(long pos, const char* label) = 0;
-
-      /**
-       * Returns size of the pattern array.
-       */
-      virtual unsigned long GetNumberOfPatterns() const = 0;
-   };
-
-
-   /**
     * Serial port API.
     */
    class Serial : public Device
@@ -855,25 +790,6 @@ namespace MM {
       virtual int AutoSetParameters() = 0;
       virtual int GetOffset(double &offset) = 0;
       virtual int SetOffset(double offset) = 0;
-   };
-
-   /**
-    * Streaming API.
-    */
-   class ImageStreamer : public Device
-   {
-   public:
-      ImageStreamer();
-      virtual ~ImageStreamer();
-
-      // MM Device API
-      virtual DeviceType GetType() const {return ImageStreamerDevice;}
-      static const DeviceType Type = ImageStreamerDevice;
-
-      // image streaming API
-      virtual int OpenContext(unsigned width, unsigned height, unsigned depth, const char* path, const Metadata* contextMd = 0);
-      virtual int CloseContext();
-      virtual int SaveImage(unsigned char* buffer, unsigned width, unsigned height, unsigned depth, const Metadata* imageMd = 0);
    };
 
    /**
@@ -1172,23 +1088,6 @@ namespace MM {
       virtual int RunPolygons() = 0;
       virtual int StopSequence() = 0;
       virtual int GetChannel(char* channelName) = 0;
-   };
-
-   /**
-    * Command monitoring and control device.
-    */
-   class CommandDispatch : public Device
-   {
-   public:
-      CommandDispatch() {}
-      virtual ~CommandDispatch() {}
-
-      // MMDevice API
-      virtual DeviceType GetType() const {return CommandDispatchDevice;}
-      static const DeviceType Type = CommandDispatchDevice;
-
-      // Command dispatch API
-      virtual int LogCommand(const char* logCommandText) = 0;
    };
 
    /**

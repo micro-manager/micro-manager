@@ -2082,17 +2082,6 @@ class CGalvoBase : public CDeviceBase<MM::Galvo, U>
 
 };
 
-
-
-/**
-* Base class for creating CommandDispatch adapters.
-*/
-template <class U>
-class CommandDispatchBase : public CDeviceBase<MM::CommandDispatch, U>
-{
-
-};
-
 /**
 * Base class for creating special HUB devices for managing device libraries.
 */
