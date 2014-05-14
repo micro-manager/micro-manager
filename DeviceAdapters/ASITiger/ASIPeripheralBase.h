@@ -40,8 +40,7 @@ public:
    ASIPeripheralBase(const char* name) :
       ASIBase<TDeviceBase, UConcreteDevice>(name),
       hub_(NULL),
-      addressString_(g_EmptyCardAddressStr),
-      ret_(DEVICE_OK) // TODO Remove this; should use local var
+      addressString_(g_EmptyCardAddressStr)
    {
       // sometimes constructor gets called without the full name like in the case of the hub
       //   so only set up these properties if we have the required information
@@ -103,16 +102,14 @@ public:
    }
 
 protected:
-   ASIHub *hub_;           // used for serial communication
+   ASIHub *hub_;           // pointer to hub object used for serial communication
    string addressString_;  // address within hub, in hex format
                            // generally two characters (e.g. '31') but could be four characters (e.g. '3132') if device axes are split between cards
    string addressChar_;    // address within hub, in single character (possibly extended ASCII)
                            // in case of XY device, the MM device is split across two HW cards so it will be two characters
-   int ret_;               // return code for use with Micro-manager functions
-
 
    // related to creating "extended" names containing address and axis letters
-   bool IsExtendedName(const char* name) const
+   static bool IsExtendedName(const char* name)
    {
       vector<string> vName;
       CDeviceUtils::Tokenize(name, vName, ":");
@@ -120,7 +117,7 @@ protected:
    }
 
    // returns single-character string
-   string GetAxisLetterFromExtName(const char* name, int position = 0) const
+   static string GetAxisLetterFromExtName(const char* name, int position = 0)
    {
       vector<string> vName;
       CDeviceUtils::Tokenize(name, vName, ":");
@@ -130,7 +127,7 @@ protected:
          return g_EmptyAxisLetterStr;
    }
 
-   string GetHexAddrFromExtName(const char* name) const
+   static string GetHexAddrFromExtName(const char* name)
    {
       vector<string> vName;
       CDeviceUtils::Tokenize(name, vName, ":");
@@ -140,10 +137,12 @@ protected:
          return g_EmptyCardAddressStr;
    }
 
+
 private:
    // does the dirty work of converting a two-character hex (e.g. F5) into the single character
+   // only works for valid TG-1000 addresses
    // see ConvertToTigerRawAddress comments for more details
-   string ConvertTwoCharStringToHexChar(const string &s) const
+   static string ConvertTwoCharStringToHexChar(const string &s)
    {
       if (s.size() != 2)
          return g_EmptyCardAddressCode;
@@ -165,7 +164,7 @@ private:
          return g_EmptyCardAddressCode;
    }
 
-   string ConvertToTigerRawAddress(const string &s) const
+   static string ConvertToTigerRawAddress(const string &s)
    {
       // Tiger addresses are 0x31 to 0x39 and then 0x81 to 0xF5 (i.e. '1' to '9' and then extended ASCII)
       // these addresses are prepended (in extended ASCII char) to serial commands that are addressed

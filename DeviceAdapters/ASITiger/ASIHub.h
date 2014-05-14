@@ -36,6 +36,9 @@ using namespace std;
 // *********** generic ASI comm class *************************
 // implements a "hub" device with communication abilities
 // also acts like a device itself
+// Decided to leave this separate from TigerComm in case we
+// can use it separately from TG-1000 somehow, but TigerComm
+// inherits from this class.
 ////////////////////////////////////////////////////////////////
 
 class ASIHub : public ASIBase<HubBase, ASIHub>
@@ -43,9 +46,6 @@ class ASIHub : public ASIBase<HubBase, ASIHub>
 public:
 	ASIHub();
 	~ASIHub() { }
-
-	// Property handlers
-	int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 	// Communication base functions
    int ClearComPort();
@@ -112,6 +112,7 @@ public:
    bool IsDefinePresent(const build_info_type build, const string defineToLookFor);
 
    // action/property handlers
+   int OnPort                       (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSerialTerminator           (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSerialCommand              (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSerialCommandRepeatDuration(MM::PropertyBase* pProp, MM::ActionType eAct);

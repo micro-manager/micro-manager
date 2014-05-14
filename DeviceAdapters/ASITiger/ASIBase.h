@@ -61,7 +61,7 @@ public:
       initialized_(false),
       refreshProps_(false),
       firmwareVersion_(0.0),
-      ret_(DEVICE_OK) // TODO Remove this; should use local var
+      ret_(DEVICE_OK)
    {
       this->InitializeDefaultErrorMessages();
       InitializeASIErrorMessages();
@@ -98,7 +98,7 @@ protected:
    double firmwareVersion_; // firmware version
    string firmwareDate_;    // firmware compile date
    string firmwareBuild_;   // firmware build name
-   int ret_;               // return code for use with Micro-manager functions
+   int ret_;               // return code for use with Micro-manager functions; needed for RETURN_ON_MM_ERROR macro
 
    void InitializeASIErrorMessages()
    {
