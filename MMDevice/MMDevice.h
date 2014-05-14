@@ -34,7 +34,7 @@
 // Header version
 // If any of the class declarations changes, the interface version
 // must be incremented
-#define DEVICE_INTERFACE_VERSION 57
+#define DEVICE_INTERFACE_VERSION 58
 ///////////////////////////////////////////////////////////////////////////////
 
 
@@ -363,6 +363,16 @@ namespace MM {
       virtual void GetParentID(char* parentID) const = 0;
       // virtual void SetID(const char* id) = 0;
       // virtual void GetID(char* id) const = 0;
+   };
+
+   /**
+    * Generic Device
+    */
+   class Generic : public Device
+   {
+   public:
+      virtual DeviceType GetType() const { return Type; }
+      static const DeviceType Type = GenericDevice;
    };
 
    /** 

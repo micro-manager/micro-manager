@@ -1266,14 +1266,20 @@ private:
    std::string parentID_;
 };
 
+// Forbid instantiation of CDeviceBase<MM::Device, U>
+// (It was abused in the past.)
+template <class U>
+class CDeviceBase<MM::Device, U>
+{
+   CDeviceBase(); // private; construction disallowed
+};
+
 /**
 * Base class for creating generic devices.
 */
 template <class U>
-class CGenericBase : public CDeviceBase<MM::Device, U>
+class CGenericBase : public CDeviceBase<MM::Generic, U>
 {
-   virtual MM::DeviceType GetType() const { return Type; }
-   static const MM::DeviceType Type = MM::GenericDevice;
 };
 
 /**
