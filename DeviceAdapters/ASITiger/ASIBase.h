@@ -98,7 +98,7 @@ protected:
    double firmwareVersion_; // firmware version
    string firmwareDate_;    // firmware compile date
    string firmwareBuild_;   // firmware build name
-   int ret_;               // return code for use with Micro-manager functions; needed for RETURN_ON_MM_ERROR macro
+   int ret_;               // return code for use with Micro-manager functions
 
    void InitializeASIErrorMessages()
    {
