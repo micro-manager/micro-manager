@@ -43,8 +43,6 @@ public:
 
 	int DetectInstalledDevices();
 
-	MM::Device* CreatePeripheralDevice(const char* adapterName);
-
 	void MicroscopeEventHandler(int eventId, int data);
 
 	void SetOn();

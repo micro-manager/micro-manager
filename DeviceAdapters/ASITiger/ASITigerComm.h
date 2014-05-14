@@ -57,7 +57,6 @@ public:
    // Hub API
    MM::DeviceDetectionStatus DetectDevice();
    int DetectInstalledDevices();
-   MM::Device* CreatePeripheralDevice(const char* adapterName);
 
 private:
    int TalkToTiger();

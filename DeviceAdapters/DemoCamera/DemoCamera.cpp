@@ -3779,21 +3779,6 @@ int DemoHub::DetectInstalledDevices()
    return DEVICE_OK; 
 }
 
-MM::Device* DemoHub::CreatePeripheralDevice(const char* adapterName)
-{
-   for (unsigned i=0; i<GetNumberOfInstalledDevices(); i++)
-   {
-      MM::Device* d = GetInstalledDevice(i);
-      char name[MM::MaxStrLength];
-      d->GetName(name);
-      if (strcmp(adapterName, name) == 0)
-         return CreateDevice(adapterName);
-
-   }
-   return 0; // adapter name not found
-}
-
-
 void DemoHub::GetName(char* pName) const
 {
    CDeviceUtils::CopyLimitedString(pName, g_HubDeviceName);

@@ -176,19 +176,6 @@ int Hub::DetectInstalledDevices()
 	return DEVICE_OK;
 }
 
-MM::Device* Hub::CreatePeripheralDevice(const char* adapterName)
-{
-	for(unsigned i = 0; i < GetNumberOfInstalledDevices(); i++)
-	{
-		MM::Device* d = GetInstalledDevice(i);
-		char name[MM::MaxStrLength];
-		d->GetName(name);
-		if(strcmp(adapterName, name) == 0)
-			return CreateDevice(adapterName);
-	}
-	return 0;
-}
-
 void Hub::MicroscopeEventHandler(int eventId, int data)
 {
 	for(set<EventReceiver*>::iterator i = _ers.begin(); i != _ers.end(); i++)

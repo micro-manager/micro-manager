@@ -73,7 +73,6 @@ public:
 
    // HUB api
    int DetectInstalledDevices();
-   MM::Device* CreatePeripheralDevice(const char* adapterName);
 
    // action interface
    int OnErrorRate(MM::PropertyBase* pProp, MM::ActionType eAct);
