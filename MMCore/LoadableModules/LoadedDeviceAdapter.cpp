@@ -21,14 +21,16 @@
 
 #include "LoadedDeviceAdapter.h"
 
+#include "../Devices/DeviceInstances.h"
 #include "../CoreUtils.h"
 #include "../Error.h"
 
+#include <boost/bind.hpp>
 #include <boost/make_shared.hpp>
 
 
-LoadedDeviceAdapter::LoadedDeviceAdapter(const std::string& label, const std::string& filename) :
-   label_(label),
+LoadedDeviceAdapter::LoadedDeviceAdapter(const std::string& name, const std::string& filename) :
+   name_(name),
    useLock_(true),
    InitializeModuleData_(0),
    CreateDevice_(0),
@@ -47,7 +49,7 @@ LoadedDeviceAdapter::LoadedDeviceAdapter(const std::string& label, const std::st
    catch (const CMMError& e)
    {
       module_.reset();
-      throw CMMError("Failed to load device adapter " + ToQuotedString(label_), e);
+      throw CMMError("Failed to load device adapter " + ToQuotedString(name_), e);
    }
 
    try
@@ -57,7 +59,7 @@ LoadedDeviceAdapter::LoadedDeviceAdapter(const std::string& label, const std::st
    catch (const CMMError& e)
    {
       module_.reset();
-      throw CMMError("Failed to load device adapter " + ToQuotedString(label_) +
+      throw CMMError("Failed to load device adapter " + ToQuotedString(name_) +
             " from " + ToQuotedString(filename), e);
    }
 
@@ -81,8 +83,72 @@ LoadedDeviceAdapter::RemoveLock()
 }
 
 
+boost::shared_ptr<DeviceInstance>
+LoadedDeviceAdapter::LoadDevice(CMMCore* core, const std::string& name, const std::string& label)
+{
+   MM::Device* pDevice = CreateDevice(name.c_str());
+   if (!pDevice)
+      throw CMMError("Device adapter " + ToQuotedString(GetName()) +
+            " failed to instantiate device " + ToQuotedString(name));
+
+   MM::DeviceType expectedType = GetAdvertisedDeviceType(name);
+   MM::DeviceType actualType = pDevice->GetType();
+   if (expectedType == MM::UnknownType)
+      expectedType = actualType;
+
+   boost::shared_ptr<LoadedDeviceAdapter> shared_this(shared_from_this());
+   DeleteDeviceFunction deleter = boost::bind<void>(&LoadedDeviceAdapter::DeleteDevice, this, _1);
+
+   switch (expectedType)
+   {
+      case MM::CameraDevice:
+         return boost::make_shared<CameraInstance>(core, shared_this, name, pDevice, deleter, label);
+      case MM::ShutterDevice:
+         return boost::make_shared<ShutterInstance>(core, shared_this, name, pDevice, deleter, label);
+      case MM::StageDevice:
+         return boost::make_shared<StageInstance>(core, shared_this, name, pDevice, deleter, label);
+      case MM::XYStageDevice:
+         return boost::make_shared<XYStageInstance>(core, shared_this, name, pDevice, deleter, label);
+      case MM::StateDevice:
+         return boost::make_shared<StateInstance>(core, shared_this, name, pDevice, deleter, label);
+      case MM::SerialDevice:
+         return boost::make_shared<SerialInstance>(core, shared_this, name, pDevice, deleter, label);
+      case MM::GenericDevice:
+         return boost::make_shared<GenericInstance>(core, shared_this, name, pDevice, deleter, label);
+      case MM::AutoFocusDevice:
+         return boost::make_shared<AutoFocusInstance>(core, shared_this, name, pDevice, deleter, label);
+      case MM::ImageProcessorDevice:
+         return boost::make_shared<ImageProcessorInstance>(core, shared_this, name, pDevice, deleter, label);
+      case MM::SignalIODevice:
+         return boost::make_shared<SignalIOInstance>(core, shared_this, name, pDevice, deleter, label);
+      case MM::MagnifierDevice:
+         return boost::make_shared<MagnifierInstance>(core, shared_this, name, pDevice, deleter, label);
+      case MM::SLMDevice:
+         return boost::make_shared<SLMInstance>(core, shared_this, name, pDevice, deleter, label);
+      case MM::GalvoDevice:
+         return boost::make_shared<GalvoInstance>(core, shared_this, name, pDevice, deleter, label);
+      case MM::HubDevice:
+         return boost::make_shared<HubInstance>(core, shared_this, name, pDevice, deleter, label);
+      default:
+         deleter(pDevice);
+         throw CMMError("Device " + ToQuotedString(name) +
+               " of device adapter " + ToQuotedString(GetName()) +
+               " has invalid or unknown type (" + ToQuotedString(actualType) + ")");
+   }
+}
+
+
+MM::DeviceType
+LoadedDeviceAdapter::GetAdvertisedDeviceType(const std::string& deviceName) const
+{
+   int typeInt = MM::UnknownType;
+   GetDeviceType(deviceName.c_str(), &typeInt);
+   return static_cast<MM::DeviceType>(typeInt);
+}
+
+
 void
-LoadedDeviceAdapter::CheckInterfaceVersion()
+LoadedDeviceAdapter::CheckInterfaceVersion() const
 {
    long moduleInterfaceVersion, deviceInterfaceVersion;
    try
@@ -117,14 +183,13 @@ LoadedDeviceAdapter::InitializeModuleData()
 }
 
 
-boost::shared_ptr<MM::Device>
+MM::Device*
 LoadedDeviceAdapter::CreateDevice(const char* deviceName)
 {
    if (!CreateDevice_)
       CreateDevice_ = reinterpret_cast<fnCreateDevice>
          (module_->GetFunction("CreateDevice"));
-   MM::Device* pDevice = CreateDevice_(deviceName);
-   return boost::shared_ptr<MM::Device>(pDevice, DeviceDeleter(this));
+   return CreateDevice_(deviceName);
 }
 
 
@@ -139,7 +204,7 @@ LoadedDeviceAdapter::DeleteDevice(MM::Device* device)
 
 
 long
-LoadedDeviceAdapter::GetModuleVersion()
+LoadedDeviceAdapter::GetModuleVersion() const
 {
    if (!GetModuleVersion_)
       GetModuleVersion_ = reinterpret_cast<fnGetModuleVersion>
@@ -149,7 +214,7 @@ LoadedDeviceAdapter::GetModuleVersion()
 
 
 long
-LoadedDeviceAdapter::GetDeviceInterfaceVersion()
+LoadedDeviceAdapter::GetDeviceInterfaceVersion() const
 {
    if (!GetDeviceInterfaceVersion_)
       GetDeviceInterfaceVersion_ = reinterpret_cast<fnGetDeviceInterfaceVersion>
@@ -159,7 +224,7 @@ LoadedDeviceAdapter::GetDeviceInterfaceVersion()
 
 
 unsigned
-LoadedDeviceAdapter::GetNumberOfDevices()
+LoadedDeviceAdapter::GetNumberOfDevices() const
 {
    if (!GetNumberOfDevices_)
       GetNumberOfDevices_ = reinterpret_cast<fnGetNumberOfDevices>
@@ -169,7 +234,7 @@ LoadedDeviceAdapter::GetNumberOfDevices()
 
 
 bool
-LoadedDeviceAdapter::GetDeviceName(unsigned index, char* buf, unsigned bufLen)
+LoadedDeviceAdapter::GetDeviceName(unsigned index, char* buf, unsigned bufLen) const
 {
    if (!GetDeviceName_)
       GetDeviceName_ = reinterpret_cast<fnGetDeviceName>
@@ -179,7 +244,7 @@ LoadedDeviceAdapter::GetDeviceName(unsigned index, char* buf, unsigned bufLen)
 
 
 bool
-LoadedDeviceAdapter::GetDeviceType(const char* deviceName, int* type)
+LoadedDeviceAdapter::GetDeviceType(const char* deviceName, int* type) const
 {
    if (!GetDeviceType_)
       GetDeviceType_ = reinterpret_cast<fnGetDeviceType>
@@ -189,7 +254,7 @@ LoadedDeviceAdapter::GetDeviceType(const char* deviceName, int* type)
 
 
 bool
-LoadedDeviceAdapter::GetDeviceDescription(const char* deviceName, char* buf, unsigned bufLen)
+LoadedDeviceAdapter::GetDeviceDescription(const char* deviceName, char* buf, unsigned bufLen) const
 {
    if (!GetDeviceDescription_)
       GetDeviceDescription_ = reinterpret_cast<fnGetDeviceDescription>

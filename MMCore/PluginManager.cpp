@@ -29,6 +29,7 @@
 #endif // WIN32
 
 #include "../MMDevice/ModuleInterface.h"
+#include "Devices/HubInstance.h"
 #include "CoreUtils.h"
 #include "Error.h"
 #include "LibraryInfo/LibraryPaths.h"
@@ -176,7 +177,7 @@ void CPluginManager::UnloadPluginLibrary(const char* moduleName)
  * Unloads the specified device from the core.
  * @param pDevice pointer to the device to unload
  */
-void CPluginManager::UnloadDevice(boost::shared_ptr<MM::Device> device)
+void CPluginManager::UnloadDevice(boost::shared_ptr<DeviceInstance> device)
 {
    if (device == 0)
       return;
@@ -209,12 +210,8 @@ void CPluginManager::UnloadDevice(boost::shared_ptr<MM::Device> device)
       devVector_ = newDevVector;
    }
 
-   // release device resources
+   // TODO This should be automatic
    device->Shutdown();
-
-   // delete device
-   boost::shared_ptr<LoadedDeviceAdapter> module = deviceModules_[device.get()];
-   deviceModules_.erase(device.get());
 }
 
 /**
@@ -241,9 +238,11 @@ void CPluginManager::UnloadAllDevices()
    // Now the only remaining references to the device objects should be in
    // unloadStack.
    while (unloadStack.size() > 0) {
-      boost::shared_ptr<MM::Device> device = unloadStack.back();
+      boost::shared_ptr<DeviceInstance> device = unloadStack.back();
       unloadStack.pop_back();
-      UnloadDevice(device);
+
+      // TODO This should be automatic
+      device->Shutdown();
    }
 }
 
@@ -255,8 +254,8 @@ void CPluginManager::UnloadAllDevices()
  *                   by the specific plugin library.
  * @return a pointer to the new device
  */
-boost::shared_ptr<MM::Device>
-CPluginManager::LoadDevice(const char* label, const char* moduleName, const char* deviceName)
+boost::shared_ptr<DeviceInstance>
+CPluginManager::LoadDevice(CMMCore* core, const char* label, const char* moduleName, const char* deviceName)
 {
    // check if the requested label is already taken
    CDeviceMap::const_iterator it;
@@ -273,42 +272,16 @@ CPluginManager::LoadDevice(const char* label, const char* moduleName, const char
    
    boost::shared_ptr<LoadedDeviceAdapter> module = LoadPluginLibrary(moduleName);
 
-   // instantiate the new device
-   boost::shared_ptr<MM::Device> pDevice(module->CreateDevice(deviceName));
-   if (pDevice == 0)
-      throw CMMError("CreateDevice() failed for device " + ToQuotedString(deviceName),
-            MMERR_CreateFailed);
-
-   // Since it is up to the module to advertise the device with the correct
-   // device type, we check that the created device is in fact of the expected
-   // type.
-   int typeInt = MM::UnknownType;
-   module->GetDeviceType(deviceName, &typeInt);
-   if (typeInt != MM::UnknownType)
-   {
-      MM::DeviceType actualType = pDevice->GetType();
-      if (actualType != static_cast<MM::DeviceType>(typeInt))
-      {
-         throw CMMError("Tried to load device " + ToQuotedString(deviceName) +
-               " of type " + ToString(typeInt) +
-               " from module " + ToQuotedString(moduleName) +
-               " but got a device of type " + ToString(actualType));
-      }
-   }
+   boost::shared_ptr<DeviceInstance> pDevice = module->LoadDevice(core, deviceName, label);
 
    char descr[MM::MaxStrLength] = "N/A";
    module->GetDeviceDescription(deviceName, descr, MM::MaxStrLength);
-
-   // make sure that each device carries a reference to the module it belongs to!!!
-   deviceModules_[pDevice.get()] = module;
-   pDevice->SetLabel(label);
-   pDevice->SetModuleName(moduleName);
    pDevice->SetDescription(descr);
 
    // assign label
    devices_[label] = pDevice;
    devVector_.push_back(pDevice);
-   deviceSharedPtrs_[pDevice.get()] = pDevice;
+   deviceRawPtrIndex_[pDevice->GetRawPtr()] = pDevice;
 
    return pDevice;
 }
@@ -318,7 +291,7 @@ CPluginManager::LoadDevice(const char* label, const char* moduleName, const char
  * @param label device label
  * @return pointer to the device or 0 if the label is not recognized
  */
-boost::shared_ptr<MM::Device>
+boost::shared_ptr<DeviceInstance>
 CPluginManager::GetDevice(const std::string& label) const throw (CMMError)
 {
    CDeviceMap::const_iterator it;
@@ -332,37 +305,16 @@ CPluginManager::GetDevice(const std::string& label) const throw (CMMError)
    return it->second;
 }
 
-boost::shared_ptr<MM::Device>
+boost::shared_ptr<DeviceInstance>
 CPluginManager::GetDevice(const MM::Device* rawPtr) const throw (CMMError)
 {
-   typedef std::map< const MM::Device*, boost::weak_ptr<MM::Device> >::const_iterator Iterator;
-   Iterator it = deviceSharedPtrs_.find(rawPtr);
-   if (it == deviceSharedPtrs_.end())
+   typedef std::map< const MM::Device*, boost::weak_ptr<DeviceInstance> >::const_iterator Iterator;
+   Iterator it = deviceRawPtrIndex_.find(rawPtr);
+   if (it == deviceRawPtrIndex_.end())
       throw CMMError("Invalid device pointer");
    return it->second.lock();
 }
 
-
-/**
- * Obtains the label corresponding to the device pointer
- * @param pDevice device pointer
- * @param label device label
- * @return true on success, false if the device pointer does not correspond
- *         to the currently loaded device
- */
-string CPluginManager::GetDeviceLabel(const MM::Device& device) const
-{
-   CDeviceMap::const_iterator it;
-   for (it=devices_.begin(); it != devices_.end(); it++)
-   {
-      if (it->second.get() == &device)
-      {
-         return it->first;
-      }
-   }
-   
-   throw CMMError("Unexpected device instance encountered", MMERR_UnexpectedDevice);
-}
 
 /**
  * Obtains the list of labels for all currently loaded devices of the specific type.
@@ -376,11 +328,9 @@ vector<string> CPluginManager::GetDeviceList(MM::DeviceType type) const
    DeviceVector::const_iterator it;
    for (it = devVector_.begin(); it != devVector_.end(); ++it)
    {
-      char buf[MM::MaxStrLength];
       if (type == MM::AnyType || type == (*it)->GetType())
       {
-         (*it)->GetLabel(buf);
-         labels.push_back(buf);
+         labels.push_back((*it)->GetLabel());
       }
    }
    return labels;
@@ -391,31 +341,28 @@ vector<string> CPluginManager::GetDeviceList(MM::DeviceType type) const
  * Makes sure that returned hub belongs to the same module (library)
  * as the device dev.
  */
-boost::shared_ptr<MM::Hub>
-CPluginManager::GetParentDevice(const MM::Device& dev) const
+boost::shared_ptr<HubInstance>
+CPluginManager::GetParentDevice(boost::shared_ptr<DeviceInstance> dev) const
 {
    char parentLabel[MM::MaxStrLength];
-   dev.GetParentID(parentLabel);
-   char module[MM::MaxStrLength] = "";
-   dev.GetModuleName(module);
+   dev->GetParentID(parentLabel);
 
    if (strlen(parentLabel) == 0)
    {
       // no parent specified, but we will try to infer one anyway
       vector<string> hubList = GetDeviceList(MM::HubDevice);
-      boost::shared_ptr<MM::Hub> parentHub;
+      boost::shared_ptr<HubInstance> parentHub;
       for (vector<string>::size_type i = 0; i<hubList.size(); i++)
       {
-         boost::shared_ptr<MM::Hub> pHub = boost::static_pointer_cast<MM::Hub>(devices_.find(hubList[i])->second);
-         char hubModule[MM::MaxStrLength];
-         pHub->GetModuleName(hubModule);
-         if (strlen(module) > 0 && strncmp(module, hubModule, MM::MaxStrLength) == 0)
+         boost::shared_ptr<HubInstance> pHub = boost::static_pointer_cast<HubInstance>(devices_.find(hubList[i])->second);
+
+         if (dev->GetAdapterModule() == pHub->GetAdapterModule())
          {
             if (parentHub == 0)
                parentHub = pHub;
             else
                // XXX This should be a throw
-               return boost::shared_ptr<MM::Hub>(); // more than one hub matches, so we can't really tell
+               return boost::shared_ptr<HubInstance>(); // more than one hub matches, so we can't really tell
          }
       }
       return parentHub;
@@ -427,19 +374,18 @@ CPluginManager::GetParentDevice(const MM::Device& dev) const
       it = devices_.find(parentLabel);
       if (it == devices_.end() || it->second == 0 || it->second->GetType() != MM::HubDevice)
          // XXX This should be a throw
-         return boost::shared_ptr<MM::Hub>(); // no such device
+         return boost::shared_ptr<HubInstance>(); // no such device
       else
       {
          // make sure that hub belongs to the same library
          // (this is to avoid using dynamic_cast<> in device code)
-         boost::shared_ptr<MM::Hub> pHub = boost::static_pointer_cast<MM::Hub>(it->second);
-         char hubModule[MM::MaxStrLength] = "";
-         pHub->GetModuleName(hubModule);
-         if (strlen(module) > 0 && strncmp(module, hubModule, MM::MaxStrLength) == 0)
+         boost::shared_ptr<HubInstance> pHub = boost::static_pointer_cast<HubInstance>(it->second);
+
+         if (dev->GetAdapterModule() == pHub->GetAdapterModule())
             return pHub;
          else
             // XXX This sould be a throw
-            return boost::shared_ptr<MM::Hub>(); // the hub is from a different library, so it won;t work
+            return boost::shared_ptr<HubInstance>(); // the hub is from a different library, so it won;t work
       }
    }
 }
@@ -456,7 +402,7 @@ vector<string> CPluginManager::GetLoadedPeripherals(const char* label) const
    vector<string> labels;
 
    // get hub
-   boost::shared_ptr<MM::Device> pDev;
+   boost::shared_ptr<DeviceInstance> pDev;
    try
    {
       pDev = GetDevice(label);
@@ -475,9 +421,7 @@ vector<string> CPluginManager::GetLoadedPeripherals(const char* label) const
       (*it)->GetParentID(parentID);
       if (strncmp(label, parentID, MM::MaxStrLength) == 0)
       {
-         char buf[MM::MaxStrLength];
-         (*it)->GetLabel(buf);
-         labels.push_back(buf);
+         labels.push_back((*it)->GetLabel());
       }
    }
 
@@ -756,11 +700,10 @@ vector<long> CPluginManager::GetAvailableDeviceTypes(const char* moduleName) thr
             continue;
          }
 
-         int typeInt = static_cast<int>(MM::UnknownType);
-         if (module->GetDeviceType(deviceName, &typeInt) &&
-               static_cast<MM::DeviceType>(typeInt) != MM::UnknownType)
+         MM::DeviceType advertisedType = module->GetAdvertisedDeviceType(deviceName);
+         if (advertisedType != MM::UnknownType)
          {
-            types.push_back(typeInt);
+            types.push_back(static_cast<long>(advertisedType));
             continue;
          }
       }
@@ -779,16 +722,12 @@ vector<long> CPluginManager::GetAvailableDeviceTypes(const char* moduleName) thr
  * Returns appropriate module-level lock for a given device.
  * If a lock does not exist for a particular device, returns 0
  */
-MMThreadLock* CPluginManager::getModuleLock(boost::shared_ptr<MM::Device> pDev)
+MMThreadLock* CPluginManager::getModuleLock(boost::shared_ptr<DeviceInstance> pDev)
 {
    if (pDev == 0)
       return 0;
 
-   std::map< const MM::Device*, boost::shared_ptr<LoadedDeviceAdapter> >::iterator it =
-      deviceModules_.find(pDev.get());
-   if (it == deviceModules_.end())
-      return 0;
-   return it->second->GetLock();
+   return pDev->GetAdapterModule()->GetLock();
 }
 
 /**

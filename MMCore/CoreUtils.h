@@ -56,6 +56,34 @@ inline std::string ToString<const char*>(char const* const& d)
    return d;
 }
 
+template <>
+inline std::string ToString<const MM::DeviceType>(const MM::DeviceType& d)
+{
+   // TODO Any good way to ensure this doesn't get out of sync with the enum
+   // definition?
+   switch (d)
+   {
+      case MM::UnknownType: return "Unknown";
+      case MM::AnyType: return "Any";
+      case MM::CameraDevice: return "Camera";
+      case MM::ShutterDevice: return "Shutter";
+      case MM::StateDevice: return "State";
+      case MM::StageDevice: return "Stage";
+      case MM::XYStageDevice: return "XYStageDevice";
+      case MM::SerialDevice: return "Serial";
+      case MM::GenericDevice: return "Generic";
+      case MM::AutoFocusDevice: return "Autofocus";
+      case MM::CoreDevice: return "Core";
+      case MM::ImageProcessorDevice: return "ImageProcessor";
+      case MM::SignalIODevice: return "SignalIO";
+      case MM::MagnifierDevice: return "Magnifier";
+      case MM::SLMDevice: return "SLM";
+      case MM::HubDevice: return "Hub";
+      case MM::GalvoDevice: return "Galvo";
+   }
+   return "Invalid";
+}
+
 template <typename T>
 inline std::string ToQuotedString(const T& d)
 { return "\"" + ToString(d) + "\""; }

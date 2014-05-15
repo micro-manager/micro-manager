@@ -25,6 +25,7 @@
 #ifndef _CORECALLBACK_H_
 #define _CORECALLBACK_H_
 
+#include "Devices/DeviceInstances.h"
 #include "IMMLogger.h"
 #include "CoreUtils.h"
 #include "MMCore.h"
@@ -82,7 +83,7 @@ public:
 
       try
       {
-         MM::Device* pDevice = core_->GetDeviceWithCheckedLabel(label).get();
+         MM::Device* pDevice = core_->GetDeviceWithCheckedLabel(label)->GetRawPtr();
          if (pDevice == caller)
             return 0;
          return pDevice;
@@ -95,10 +96,10 @@ public:
    
    MM::PortType GetSerialPortType(const char* portName) const
    {
-      boost::shared_ptr<MM::Serial> pSerial;
+      boost::shared_ptr<SerialInstance> pSerial;
       try
       {
-         pSerial = core_->GetDeviceWithCheckedLabelAndType<MM::Serial>(portName);
+         pSerial = core_->GetDeviceWithCheckedLabelAndType<SerialInstance>(portName);
       }
       catch (...)
       {
@@ -186,32 +187,44 @@ public:
    // device management
    MM::ImageProcessor* GetImageProcessor(const MM::Device* /* caller */)
    {
-      return core_->imageProcessor_.get();
+      if (core_->imageProcessor_)
+         return core_->imageProcessor_->GetRawPtr();
+      return 0;
    }
 
    MM::State* GetStateDevice(const MM::Device* /* caller */, const char* deviceName)
    {
+      boost::shared_ptr<StateInstance> device;
       try {
-         return core_->GetDeviceWithCheckedLabelAndType<MM::State>(deviceName).get();
+         device = core_->GetDeviceWithCheckedLabelAndType<StateInstance>(deviceName);
       } catch(...) {
          //trap all exceptions
          return 0;
       }
+      if (device)
+         return device->GetRawPtr();
+      return 0;
    }
 
    MM::SignalIO* GetSignalIODevice(const MM::Device* /* caller */, const char* deviceName)
    {
+      boost::shared_ptr<SignalIOInstance> device;
       try {
-         return core_->GetDeviceWithCheckedLabelAndType<MM::SignalIO>(deviceName).get();
+         device = core_->GetDeviceWithCheckedLabelAndType<SignalIOInstance>(deviceName);
       } catch(...) {
          //trap all exceptions
          return 0;
       }
+      if (device)
+         return device->GetRawPtr();
+      return 0;
    }
 
    MM::AutoFocus* GetAutoFocus(const MM::Device* /* caller */)
    {
-      return core_->autoFocus_.get();
+      if (core_->autoFocus_)
+         return core_->autoFocus_->GetRawPtr();
+      return 0;
    }
 
    MM::Hub* GetParentHub(const MM::Device* caller) const
@@ -219,19 +232,30 @@ public:
       if (caller == 0)
          return 0;
 
-      return core_->pluginManager_.GetParentDevice(*caller).get();
+      boost::shared_ptr<HubInstance> hubDevice;
+      try
+      {
+         hubDevice = core_->pluginManager_.GetParentDevice(core_->pluginManager_.GetDevice(caller));
+      }
+      catch (const CMMError&)
+      {
+         return 0;
+      }
+      if (hubDevice)
+         return hubDevice->GetRawPtr();
+      return 0;
    }
 
    MM::Device* GetPeripheral(const MM::Device* caller, unsigned idx) const
    {
-      std::vector<MM::Device*> peripherals;
       char hubLabel[MM::MaxStrLength];
       caller->GetLabel(hubLabel);
       std::vector<std::string> peripheralLabels = core_->pluginManager_.GetLoadedPeripherals(hubLabel);
+      boost::shared_ptr<DeviceInstance> peripheral;
       try
       {
          if (idx < peripheralLabels.size())
-            return core_->pluginManager_.GetDevice(peripheralLabels[idx]).get();
+            peripheral = core_->pluginManager_.GetDevice(peripheralLabels[idx]);
          else
             return 0;
       }
@@ -241,6 +265,9 @@ public:
          assert(false);
          return 0;
       }
+      if (peripheral)
+         return peripheral->GetRawPtr();
+      return 0;
    }
 
    unsigned GetNumberOfPeripherals(const MM::Device* caller)

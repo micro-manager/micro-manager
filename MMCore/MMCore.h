@@ -57,6 +57,7 @@
 #include "CoreUtils.h"
 #include "Error.h"
 #include "ErrorCodes.h"
+#include "Devices/DeviceInstances.h"
 
 #include "../MMDevice/DeviceThreads.h"
 
@@ -515,14 +516,14 @@ private:
    typedef std::map<std::string, PropertyBlock*> CPropBlockMap;
 
    bool everSnapped_;
-   boost::shared_ptr<MM::Camera> camera_;
-   boost::shared_ptr<MM::Shutter> shutter_;
-   boost::shared_ptr<MM::Stage> focusStage_;
-   boost::shared_ptr<MM::XYStage> xyStage_;
-   boost::shared_ptr<MM::AutoFocus> autoFocus_;
-   boost::shared_ptr<MM::SLM> slm_;
-   boost::shared_ptr<MM::Galvo> galvo_;
-   boost::shared_ptr<MM::ImageProcessor> imageProcessor_;
+   boost::shared_ptr<CameraInstance> camera_;
+   boost::shared_ptr<ShutterInstance> shutter_;
+   boost::shared_ptr<StageInstance> focusStage_;
+   boost::shared_ptr<XYStageInstance> xyStage_;
+   boost::shared_ptr<AutoFocusInstance> autoFocus_;
+   boost::shared_ptr<SLMInstance> slm_;
+   boost::shared_ptr<GalvoInstance> galvo_;
+   boost::shared_ptr<ImageProcessorInstance> imageProcessor_;
 
    std::string channelGroup_;
    long pollingIntervalMs_;
@@ -535,7 +536,7 @@ private:
    PixelSizeConfigGroup* pixelSizeGroup_;
    CircularBuffer* cbuf_;
 
-   std::vector< boost::shared_ptr<MM::Device> > imageSynchro_;
+   std::vector< boost::shared_ptr<DeviceInstance> > imageSynchro_;
    CPluginManager pluginManager_;
    std::map<int, std::string> errorText_;
    CConfigMap configs_;
@@ -556,26 +557,26 @@ private:
    static void CheckConfigPresetName(const char* presetName) throw (CMMError);
    static void CheckPropertyBlockName(const char* blockName) throw (CMMError);
    bool IsCoreDeviceLabel(const char* label) const throw (CMMError);
-   boost::shared_ptr<MM::Device> GetDeviceWithCheckedLabel(const char* label) const throw (CMMError);
-   template <class TDevice>
-   boost::shared_ptr<TDevice> GetDeviceWithCheckedLabelAndType(const char* label) const throw (CMMError)
+   boost::shared_ptr<DeviceInstance> GetDeviceWithCheckedLabel(const char* label) const throw (CMMError);
+   template <class TDeviceInstance>
+   boost::shared_ptr<TDeviceInstance> GetDeviceWithCheckedLabelAndType(const char* label) const throw (CMMError)
    {
-      boost::shared_ptr<MM::Device> pDevice = GetDeviceWithCheckedLabel(label);
-      if (pDevice->GetType() != TDevice::Type)
+      boost::shared_ptr<DeviceInstance> device = GetDeviceWithCheckedLabel(label);
+      if (device->GetType() != TDeviceInstance::RawDeviceClass::Type)
          throw CMMError("Device " + ToQuotedString(label) + " is of the wrong type for the requested operation");
-      return boost::static_pointer_cast<TDevice>(pDevice);
+      return boost::static_pointer_cast<TDeviceInstance>(device);
    }
 
    bool isConfigurationCurrent(const Configuration& config);
    void applyConfiguration(const Configuration& config) throw (CMMError);
    int applyProperties(std::vector<PropertySetting>& props, std::string& lastError);
-   void waitForDevice(boost::shared_ptr<MM::Device> pDev) throw (CMMError);
+   void waitForDevice(boost::shared_ptr<DeviceInstance> pDev) throw (CMMError);
    Configuration getConfigGroupState(const char* group, bool fromCache) throw (CMMError);
-   std::string getDeviceErrorText(int deviceCode, boost::shared_ptr<MM::Device> pDevice);
-   std::string getDeviceName(boost::shared_ptr<MM::Device> pDev);
+   std::string getDeviceErrorText(int deviceCode, boost::shared_ptr<DeviceInstance> pDevice);
+   std::string getDeviceName(boost::shared_ptr<DeviceInstance> pDev);
    void logError(const char* device, const char* msg, const char* file=0, int line=0);
    void updateAllowedChannelGroups();
-   void assignDefaultRole(boost::shared_ptr<MM::Device> pDev);
+   void assignDefaultRole(boost::shared_ptr<DeviceInstance> pDev);
    void updateCoreProperty(const char* propName, MM::DeviceType devType) throw (CMMError);
    void initializeLogging();
 

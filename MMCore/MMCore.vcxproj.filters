@@ -13,6 +13,18 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx</Extensions>
     </Filter>
+    <Filter Include="Header Files\Devices">
+      <UniqueIdentifier>{92b7b56d-c949-4beb-9ce1-d32c769e2ed4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\LoadableModules">
+      <UniqueIdentifier>{c8813221-f12d-4a9c-9e21-4de446e1faa4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Devices">
+      <UniqueIdentifier>{b904f289-ebd6-4d88-95cc-993614b2eca7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\LoadableModules">
+      <UniqueIdentifier>{764ae36a-5168-425f-b711-03a01fe55b5e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CircularBuffer.cpp">
@@ -48,17 +60,59 @@
     <ClCompile Include="Error.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="LoadableModules\LoadedModule.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="LoadableModules\LoadedModuleImpl.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="LoadableModules\LoadedDeviceAdapter.cpp">
+      <Filter>Source Files\LoadableModules</Filter>
     </ClCompile>
     <ClCompile Include="LoadableModules\LoadedModuleImplWindows.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\LoadableModules</Filter>
     </ClCompile>
-    <ClCompile Include="LoadableModules\LoadedDeviceAdapter.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="LoadableModules\LoadedModule.cpp">
+      <Filter>Source Files\LoadableModules</Filter>
+    </ClCompile>
+    <ClCompile Include="LoadableModules\LoadedModuleImpl.cpp">
+      <Filter>Source Files\LoadableModules</Filter>
+    </ClCompile>
+    <ClCompile Include="Devices\DeviceInstance.cpp">
+      <Filter>Source Files\Devices</Filter>
+    </ClCompile>
+    <ClCompile Include="Devices\AutoFocusInstance.cpp">
+      <Filter>Source Files\Devices</Filter>
+    </ClCompile>
+    <ClCompile Include="Devices\CameraInstance.cpp">
+      <Filter>Source Files\Devices</Filter>
+    </ClCompile>
+    <ClCompile Include="Devices\GalvoInstance.cpp">
+      <Filter>Source Files\Devices</Filter>
+    </ClCompile>
+    <ClCompile Include="Devices\HubInstance.cpp">
+      <Filter>Source Files\Devices</Filter>
+    </ClCompile>
+    <ClCompile Include="Devices\ImageProcessorInstance.cpp">
+      <Filter>Source Files\Devices</Filter>
+    </ClCompile>
+    <ClCompile Include="Devices\MagnifierInstance.cpp">
+      <Filter>Source Files\Devices</Filter>
+    </ClCompile>
+    <ClCompile Include="Devices\SerialInstance.cpp">
+      <Filter>Source Files\Devices</Filter>
+    </ClCompile>
+    <ClCompile Include="Devices\ShutterInstance.cpp">
+      <Filter>Source Files\Devices</Filter>
+    </ClCompile>
+    <ClCompile Include="Devices\SignalIOInstance.cpp">
+      <Filter>Source Files\Devices</Filter>
+    </ClCompile>
+    <ClCompile Include="Devices\SLMInstance.cpp">
+      <Filter>Source Files\Devices</Filter>
+    </ClCompile>
+    <ClCompile Include="Devices\StageInstance.cpp">
+      <Filter>Source Files\Devices</Filter>
+    </ClCompile>
+    <ClCompile Include="Devices\StateInstance.cpp">
+      <Filter>Source Files\Devices</Filter>
+    </ClCompile>
+    <ClCompile Include="Devices\XYStageInstance.cpp">
+      <Filter>Source Files\Devices</Filter>
     </ClCompile>
     <ClCompile Include="LibraryInfo\LibraryPathsWindows.cpp">
       <Filter>Source Files</Filter>
@@ -119,17 +173,68 @@
     <ClInclude Include="PluginManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="LoadableModules\LoadedModule.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Devices\AutoFocusInstance.h">
+      <Filter>Header Files\Devices</Filter>
     </ClInclude>
-    <ClInclude Include="LoadableModules\LoadedModuleImpl.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Devices\CameraInstance.h">
+      <Filter>Header Files\Devices</Filter>
     </ClInclude>
-    <ClInclude Include="LoadableModules\LoadedModuleImplWindows.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Devices\DeviceInstance.h">
+      <Filter>Header Files\Devices</Filter>
+    </ClInclude>
+    <ClInclude Include="Devices\DeviceInstances.h">
+      <Filter>Header Files\Devices</Filter>
+    </ClInclude>
+    <ClInclude Include="Devices\GalvoInstance.h">
+      <Filter>Header Files\Devices</Filter>
+    </ClInclude>
+    <ClInclude Include="Devices\HubInstance.h">
+      <Filter>Header Files\Devices</Filter>
+    </ClInclude>
+    <ClInclude Include="Devices\ImageProcessorInstance.h">
+      <Filter>Header Files\Devices</Filter>
+    </ClInclude>
+    <ClInclude Include="Devices\MagnifierInstance.h">
+      <Filter>Header Files\Devices</Filter>
+    </ClInclude>
+    <ClInclude Include="Devices\SerialInstance.h">
+      <Filter>Header Files\Devices</Filter>
+    </ClInclude>
+    <ClInclude Include="Devices\ShutterInstance.h">
+      <Filter>Header Files\Devices</Filter>
+    </ClInclude>
+    <ClInclude Include="Devices\SignalIOInstance.h">
+      <Filter>Header Files\Devices</Filter>
+    </ClInclude>
+    <ClInclude Include="Devices\SLMInstance.h">
+      <Filter>Header Files\Devices</Filter>
+    </ClInclude>
+    <ClInclude Include="Devices\StageInstance.h">
+      <Filter>Header Files\Devices</Filter>
+    </ClInclude>
+    <ClInclude Include="Devices\StateInstance.h">
+      <Filter>Header Files\Devices</Filter>
+    </ClInclude>
+    <ClInclude Include="Devices\XYStageInstance.h">
+      <Filter>Header Files\Devices</Filter>
     </ClInclude>
     <ClInclude Include="LoadableModules\LoadedDeviceAdapter.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\LoadableModules</Filter>
+    </ClInclude>
+    <ClInclude Include="LoadableModules\LoadedModuleImplWindows.h">
+      <Filter>Header Files\LoadableModules</Filter>
+    </ClInclude>
+    <ClInclude Include="LoadableModules\LoadedModule.h">
+      <Filter>Header Files\LoadableModules</Filter>
+    </ClInclude>
+    <ClInclude Include="LoadableModules\LoadedModuleImpl.h">
+      <Filter>Header Files\LoadableModules</Filter>
+    </ClInclude>
+    <ClInclude Include="Devices\GenericInstance.h">
+      <Filter>Header Files\Devices</Filter>
+    </ClInclude>
+    <ClInclude Include="Devices\DeviceInstanceBase.h">
+      <Filter>Header Files\Devices</Filter>
     </ClInclude>
     <ClInclude Include="LibraryInfo\LibraryPaths.h">
       <Filter>Header Files</Filter>

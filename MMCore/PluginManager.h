@@ -43,6 +43,11 @@
 #include <string>
 #include <vector>
 
+class DeviceInstance;
+class HubInstance;
+class CMMCore;
+
+
 /**
  * Manages the device collection. Responsible for handling plugin libraries
  * and device construction and destruction
@@ -53,17 +58,16 @@ public:
    CPluginManager();
    ~CPluginManager();
    
-   boost::shared_ptr<MM::Device> LoadDevice(const char* label, const char* moduleName, const char* deviceName);
-   void UnloadDevice(boost::shared_ptr<MM::Device> device);
+   boost::shared_ptr<DeviceInstance> LoadDevice(CMMCore* core, const char* label, const char* moduleName, const char* deviceName);
+   void UnloadDevice(boost::shared_ptr<DeviceInstance> device);
    void UnloadAllDevices();
 
-   boost::shared_ptr<MM::Device> GetDevice(const std::string& label) const throw (CMMError);
-   boost::shared_ptr<MM::Device> GetDevice(const MM::Device* rawPtr) const throw (CMMError);
-   std::string GetDeviceLabel(const MM::Device& device) const;
+   boost::shared_ptr<DeviceInstance> GetDevice(const std::string& label) const throw (CMMError);
+   boost::shared_ptr<DeviceInstance> GetDevice(const MM::Device* rawPtr) const throw (CMMError);
    std::vector<std::string> GetDeviceList(MM::DeviceType t = MM::AnyType) const;
 
    std::vector<std::string> GetLoadedPeripherals(const char* hubLabel) const;
-   boost::shared_ptr<MM::Hub> GetParentDevice(const MM::Device& dev) const;
+   boost::shared_ptr<HubInstance> GetParentDevice(boost::shared_ptr<DeviceInstance> dev) const;
 
    void UnloadPluginLibrary(const char* moduleName);
 
@@ -84,7 +88,7 @@ public:
    std::vector<long> GetAvailableDeviceTypes(const char* moduleName) throw (CMMError);
 
    // module level thread locking
-   MMThreadLock* getModuleLock(const boost::shared_ptr<MM::Device> pDev);
+   MMThreadLock* getModuleLock(const boost::shared_ptr<DeviceInstance> pDev);
    bool removeModuleLock(const char* moduleName);
 
 private:
@@ -94,8 +98,8 @@ private:
    boost::shared_ptr<LoadedDeviceAdapter> LoadPluginLibrary(const char* libName);
    std::string FindInSearchPath(std::string filename);
 
-   typedef std::map< std::string, boost::shared_ptr<MM::Device> > CDeviceMap;
-   typedef std::vector< boost::shared_ptr<MM::Device> > DeviceVector;
+   typedef std::map< std::string, boost::shared_ptr<DeviceInstance> > CDeviceMap;
+   typedef std::vector< boost::shared_ptr<DeviceInstance> > DeviceVector;
 
    std::vector<std::string> preferredSearchPaths_;
    static std::vector<std::string> fallbackSearchPaths_;
@@ -104,14 +108,9 @@ private:
    DeviceVector devVector_;
    std::map< std::string, boost::shared_ptr<LoadedDeviceAdapter> > moduleMap_;
 
-   // This is a temporary kludge. I've factored out LoadedDeviceAdapter from
-   // PluginManager, but can't store a shared_ptr in MM::Device, so I need a
-   // way to get the module from the device ptr, until we have a wrapper class
-   // for attached ("loaded") devices. - Mark
-   std::map< const MM::Device*, boost::shared_ptr<LoadedDeviceAdapter> > deviceModules_;
-
-   // Also a temporary measure: map raw pointers to shared pointers.
-   std::map< const MM::Device*, boost::weak_ptr<MM::Device> > deviceSharedPtrs_;
+   // Map raw device pointers to DeviceInstance objects, for those few places
+   // where we need to retrieve device information from raw pointers.
+   std::map< const MM::Device*, boost::weak_ptr<DeviceInstance> > deviceRawPtrIndex_;
 };
 
 #endif //_PLUGIN_MANAGER_H_

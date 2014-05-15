@@ -399,10 +399,10 @@ int CoreCallback::SetSerialProperties(const char* portName,
  */
 int CoreCallback::WriteToSerial(const MM::Device* caller, const char* portName, const unsigned char* buf, unsigned long length)
 {
-   boost::shared_ptr<MM::Serial> pSerial;
+   boost::shared_ptr<SerialInstance> pSerial;
    try
    {
-      pSerial = core_->GetDeviceWithCheckedLabelAndType<MM::Serial>(portName);
+      pSerial = core_->GetDeviceWithCheckedLabelAndType<SerialInstance>(portName);
    }
    catch (CMMError& err)
    {
@@ -414,7 +414,7 @@ int CoreCallback::WriteToSerial(const MM::Device* caller, const char* portName, 
    }
 
    // don't allow self reference
-   if (pSerial.get() == caller)
+   if (pSerial->GetRawPtr() == caller)
       return DEVICE_SELF_REFERENCE;
 
    return pSerial->Write(buf, length);
@@ -425,10 +425,10 @@ int CoreCallback::WriteToSerial(const MM::Device* caller, const char* portName, 
   */
 int CoreCallback::ReadFromSerial(const MM::Device* caller, const char* portName, unsigned char* buf, unsigned long bufLength, unsigned long &bytesRead)
 {
-   boost::shared_ptr<MM::Serial> pSerial;
+   boost::shared_ptr<SerialInstance> pSerial;
    try
    {
-      pSerial = core_->GetDeviceWithCheckedLabelAndType<MM::Serial>(portName);
+      pSerial = core_->GetDeviceWithCheckedLabelAndType<SerialInstance>(portName);
    }
    catch (CMMError& err)
    {
@@ -440,7 +440,7 @@ int CoreCallback::ReadFromSerial(const MM::Device* caller, const char* portName,
    }
 
    // don't allow self reference
-   if (pSerial.get() == caller)
+   if (pSerial->GetRawPtr() == caller)
       return DEVICE_SELF_REFERENCE;
 
    return pSerial->Read(buf, bufLength, bytesRead);
@@ -451,10 +451,10 @@ int CoreCallback::ReadFromSerial(const MM::Device* caller, const char* portName,
  */
 int CoreCallback::PurgeSerial(const MM::Device* caller, const char* portName)
 {
-   boost::shared_ptr<MM::Serial> pSerial;
+   boost::shared_ptr<SerialInstance> pSerial;
    try
    {
-      pSerial = core_->GetDeviceWithCheckedLabelAndType<MM::Serial>(portName);
+      pSerial = core_->GetDeviceWithCheckedLabelAndType<SerialInstance>(portName);
    }
    catch (CMMError& err)
    {
@@ -466,7 +466,7 @@ int CoreCallback::PurgeSerial(const MM::Device* caller, const char* portName)
    }
 
    // don't allow self reference
-   if (pSerial.get() == caller)
+   if (pSerial->GetRawPtr() == caller)
       return DEVICE_SELF_REFERENCE;
 
    return pSerial->Purge();
@@ -791,7 +791,7 @@ MMThreadLock* CoreCallback::getModuleLock(const MM::Device* caller)
 {
    try
    {
-      boost::shared_ptr<MM::Device> pCaller = core_->pluginManager_.GetDevice(caller);
+      boost::shared_ptr<DeviceInstance> pCaller = core_->pluginManager_.GetDevice(caller);
       return core_->pluginManager_.getModuleLock(pCaller);
    }
    catch (const CMMError&)
