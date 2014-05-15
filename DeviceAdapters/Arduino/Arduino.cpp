@@ -222,7 +222,6 @@ MM::DeviceDetectionStatus CArduinoHub::DetectDevice(void)
          int v = 0;
          int ret = GetControllerVersion(v);
          // later, Initialize will explicitly check the version #
-         v = v;
          if( DEVICE_OK != ret )
          {
             LogMessageCode(ret,true);
