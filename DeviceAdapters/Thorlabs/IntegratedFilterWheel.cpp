@@ -27,6 +27,13 @@
    #define snprintf _snprintf 
 #endif
 
+// Prevent "unused variable" warnings.
+#ifdef __GNUC__
+   #define MAYBE_UNUSED __attribute__((unused))
+#else
+   #define MAYBE_UNUSED
+#endif
+
 #include "IntegratedFilterWheel.h"
 #include "Thorlabs.h"
 #include <cstdio>
@@ -88,7 +95,8 @@ const unsigned char setPosCmd[] =  {         0x53, // cmd low byte
                                           };             
 
 // MGMSG_MOT_REQ_DEVPARAMS (Tx)
-const unsigned char reqParamsCmd[] =  {      0x15, // cmd low byte
+const unsigned char reqParamsCmd[] MAYBE_UNUSED = {
+                                             0x15, // cmd low byte
                                              0x00, // cmd high byte
                                              0x20, // num bytes low
                                              0x00, // num bytes hi
@@ -96,7 +104,8 @@ const unsigned char reqParamsCmd[] =  {      0x15, // cmd low byte
                                              0x01
                                           };             
 // MGMSG_MOT_GET_ DEVPARAMS (Rx) - response
-const unsigned char getParamsRsp[] = {       0x16, // cmd low
+const unsigned char getParamsRsp[] MAYBE_UNUSED = {
+	                                     0x16, // cmd low
                                              0x00, //
                                              0x28, // 
                                              0x00, // 
@@ -119,7 +128,8 @@ const unsigned char getParamsRsp[] = {       0x16, // cmd low
                                              0x00 // num pos hi
                                           };
 // MGMSG_MOT_REQ_STATUSUPDATE (Tx)
-const unsigned char reqStatusCmd[] = {       0x80, // cmd low
+const unsigned char reqStatusCmd[] MAYBE_UNUSED = {
+	                                     0x80, // cmd low
                                              0x04, // cmd hi
                                              0x01, // ch id low
                                              0x00, // ch id hi
@@ -127,7 +137,8 @@ const unsigned char reqStatusCmd[] = {       0x80, // cmd low
                                              0x01  // src
                                              };
 // MGMSG_MOT_GET_ STATUSUPDATE (Rx)
-const unsigned char getStatusRsp[] = {       0x81, // cmd low
+const unsigned char getStatusRsp[] MAYBE_UNUSED = {
+	                                     0x81, // cmd low
                                              0x04, // cmd hi
                                              0x0E, // ch id low
                                              0x00, // ch id hi
@@ -164,16 +175,16 @@ const unsigned char getJogparamsRsp[] = {    0x18, // cmd low
                                              0x81,
                                              0x50,
 
-											            0x01,
-											            0x00,
+                                             0x01,
+                                             0x00,
 
-										               0x02,
-											            0x00,
+                                             0x02,
+                                             0x00,
 
-											            0xAB, // jog step size
-											            0x62,
-											            0x03,
-											            0x00 };
+                                             0xAB, // jog step size
+                                             0x62,
+                                             0x03,
+                                             0x00 };
 
 // MGMSG_MOT_MOVE_COMPLETED (0x0464) (Rx)
 const unsigned char moveCompletedRsp[] = {   0x64, // header
