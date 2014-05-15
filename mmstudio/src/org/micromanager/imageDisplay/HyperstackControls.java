@@ -81,6 +81,7 @@ public class HyperstackControls extends DisplayControls {
       subPanel.setPreferredSize(new Dimension(512, 100));
 
       pixelInfoLabel_ = new JLabel("                                         ");
+      pixelInfoLabel_.setMinimumSize(new Dimension(150, 10));
       pixelInfoLabel_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
       subPanel.add(pixelInfoLabel_, "span, wrap");
 
