@@ -41,4 +41,10 @@ public abstract class DisplayControls extends Panel {
    abstract public void newImageUpdate(JSONObject tags);
    
    abstract public void prepareForClose();
+
+   public int getPosition() {
+      return 0;
+   }
+
+   public void setPosition(int p) {}
 }

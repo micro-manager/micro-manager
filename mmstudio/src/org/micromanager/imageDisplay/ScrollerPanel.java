@@ -189,4 +189,29 @@ class ScrollerPanel extends JPanel {
       framesPerSec_ = newFPS;
       resetAnimationTimer();
    }
+
+   /**
+    * Set the scroller with the given axis to the specified position.
+    */
+   public void setPosition(String axis, int position) {
+      for (AxisScroller scroller : scrollers_) {
+         if (scroller.getAxis() == axis) {
+            scroller.setPosition(position);
+            break;
+         }
+      }
+   }
+
+   /**
+    * Return the position of the scroller for the specified axis, or 0 if 
+    * we have no scroller for that axis.
+    */
+   public int getPosition(String axis) {
+      for (AxisScroller scroller : scrollers_) {
+         if (scroller.getAxis() == axis) {
+            return scroller.getPosition();
+         }
+      }
+      return 0;
+   }
 }

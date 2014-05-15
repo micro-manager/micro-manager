@@ -97,6 +97,31 @@ public class MMWindow {
       return virtAcq_.getImagePlus().getNFrames();
    }
 
+    /**
+    * Sets the display to the given position
+    * Position are 1-based
+    * @param position
+    * @throws MMScriptException
+    */
+   public void setPosition(int position) throws MMScriptException {
+      if (position < 1 || position > getNumberOfPositions())
+         throw new MMScriptException ("Invalid position requested");
+      if (virtAcq_ != null)
+         virtAcq_.setPosition(position - 1);
+   }
+
+   /**
+    * Returns the current position of the image viewer
+    * Positions are 1-based
+    * @return The current position of the image viewer
+    * @throws MMScriptException
+    */
+   public int getPosition() throws MMScriptException{
+      if (virtAcq_ != null)
+         return virtAcq_. getCurrentPosition() + 1;
+      throw new MMScriptException("This is not a MMWindow");
+   }
+
    /**
     * Returns an ImageJ ImagePlus for a given position
     * Does not update the display
@@ -113,6 +138,7 @@ public class MMWindow {
     */
    public ImageProcessor getImageProcessor(int channel, int slice, int frame, int position)
       throws MMScriptException {
+      setPosition(position);
       if (channel >= getNumberOfChannels() || slice >= getNumberOfSlices() ||
               frame >= getNumberOfFrames())
          throw new MMScriptException ("Parameters out of bounds");

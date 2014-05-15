@@ -793,6 +793,17 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       updateAndDraw(true);
    }
 
+   // TODO: remove this function and all others that adjust the image index 
+   // via the VirtualAcquisitionDisplay. It should not know or care about this
+   // kind of thing.
+   public void setPosition(int p) {
+      controls_.setPosition(p);
+   }
+
+   public int getPosition() {
+      return controls_.getPosition();
+   }
+
    public void setSliceIndex(int i) {
       final int f = hyperImage_.getFrame();
       final int c = hyperImage_.getChannel();
@@ -1446,5 +1457,5 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    
    public ContrastSettings getChannelContrastSettings(int channel) {
       return histograms_.getChannelContrastSettings(channel);
-   }           
+   }
 }

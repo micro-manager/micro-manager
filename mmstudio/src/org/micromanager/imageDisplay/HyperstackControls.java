@@ -518,4 +518,12 @@ public class HyperstackControls extends DisplayControls {
       scrollerPanel_.prepareForClose();
       bus_.unregister(this);
    }
+
+   public void setPosition(int p) {
+      scrollerPanel_.setPosition("position", p);
+   }
+
+   public int getPosition() {
+      return scrollerPanel_.getPosition("position");
+   }
 }
