@@ -1295,13 +1295,13 @@ public:
    using CDeviceBase<MM::Camera, U>::SetAllowedValues;
    using CDeviceBase<MM::Camera, U>::GetBinning;
    using CDeviceBase<MM::Camera, U>::GetCoreCallback;
-   using CDeviceBase<MM::Camera, U>::GetImageBuffer;
-   using CDeviceBase<MM::Camera, U>::GetImageWidth;
-   using CDeviceBase<MM::Camera, U>::GetImageHeight;
-   using CDeviceBase<MM::Camera, U>::GetImageBytesPerPixel;
-   using CDeviceBase<MM::Camera, U>::SnapImage;
    using CDeviceBase<MM::Camera, U>::SetProperty;
    using CDeviceBase<MM::Camera, U>::LogMessage;
+   virtual const unsigned char* GetImageBuffer() = 0;
+   virtual unsigned GetImageWidth() const = 0;
+   virtual unsigned GetImageHeight() const = 0;
+   virtual unsigned GetImageBytesPerPixel() const = 0;
+   virtual int SnapImage() = 0;
 
    CCameraBase() : busy_(false), stopWhenCBOverflows_(false), thd_(0)
    {
@@ -1696,11 +1696,12 @@ private:
 template <class U>
 class CStageBase : public CDeviceBase<MM::Stage, U>
 {
+   virtual int GetPositionUm(double& pos) = 0;
+   virtual int SetPositionUm(double pos) = 0;
+
    /**
    * Default implementation for relative motion
    */
-   using CDeviceBase<MM::Stage, U>::GetPositionUm;
-   using CDeviceBase<MM::Stage, U>::SetPositionUm;
    virtual int SetRelativePositionUm(double d)
    {
       double pos;
@@ -1760,9 +1761,6 @@ class CStageBase : public CDeviceBase<MM::Stage, U>
 template <class U>
 class CXYStageBase : public CDeviceBase<MM::XYStage, U>
 {
-   using CDeviceBase<MM::XYStage, U>::GetPositionUm;
-   using CDeviceBase<MM::XYStage, U>::SetPositionUm;
-
 public:
    CXYStageBase() : originXSteps_(0), originYSteps_(0), xPos_(0), yPos_(0)
    {
