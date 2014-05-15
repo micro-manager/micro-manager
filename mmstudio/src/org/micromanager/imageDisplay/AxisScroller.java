@@ -63,6 +63,8 @@ public class AxisScroller extends JPanel {
    // Indicates if the position of the scrollbar is currently locked (which
    // in turn excludes animation).
    private boolean isLocked_;
+   // Timer for temporarily overriding our lock.
+   private java.util.Timer lockOverrideTimer_ = null;
    // Indicates if we should ignore the next scrollbar position update event
    // we receive.
    private boolean shouldIgnoreScrollbarEvent_;
@@ -195,8 +197,33 @@ public class AxisScroller extends JPanel {
       return scrollbar_.getValue();
    }
 
-   public void setPosition(int newPosition) {
-      if (!isLocked_) {
+   /**
+    * Set the position of this scroller to the specified position.
+    * @param shouldOverrideLockTemporarily - If true, then if we're locked, 
+    *        we still move to the given position, but will snap back to the 
+    *        locked position after 500ms. If false, then we won't move if 
+    *        we're locked.
+    */
+   public void setPosition(int newPosition, boolean shouldOverrideLockTemporarily) {
+      final int origPosition = scrollbar_.getValue();
+      if (shouldOverrideLockTemporarily) {
+         scrollbar_.setValue(newPosition);
+         if (isLocked_) {
+            // Set up a timer to snap us back. 
+            if (lockOverrideTimer_ != null) {
+               lockOverrideTimer_.cancel();
+            }
+            lockOverrideTimer_ = new java.util.Timer();
+            java.util.TimerTask task = new java.util.TimerTask() {
+               @Override
+                  public void run() {
+                     scrollbar_.setValue(origPosition);
+                  }
+            };
+            lockOverrideTimer_.schedule(task, 500);
+         }
+      }
+      else if (!isLocked_) {
          scrollbar_.setValue(newPosition);
       }
    }

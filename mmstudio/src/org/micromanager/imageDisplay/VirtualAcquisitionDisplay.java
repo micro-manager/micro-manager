@@ -592,7 +592,6 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    /**
     * Displays tagged image in the multi-D viewer
     * Optionally waits for the display to draw the image
-    *     * 
     * @param taggedImg 
     * @param waitForDisplay 
     * @throws java.lang.InterruptedException 

@@ -175,7 +175,7 @@ class ScrollerPanel extends JPanel {
             // the current maximum, so we need a new maximum.
             scroller.setMaximum(imagePosition + 1);
          }
-         scroller.setPosition(imagePosition);
+         scroller.setPosition(imagePosition, true);
       }
       if (didShowNewScrollers) {
          bus_.post(new LayoutChangedEvent());
@@ -196,7 +196,7 @@ class ScrollerPanel extends JPanel {
    public void setPosition(String axis, int position) {
       for (AxisScroller scroller : scrollers_) {
          if (scroller.getAxis().equals(axis)) {
-            scroller.setPosition(position);
+            scroller.setPosition(position, false);
             break;
          }
       }
