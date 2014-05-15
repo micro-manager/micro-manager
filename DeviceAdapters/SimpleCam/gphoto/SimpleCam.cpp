@@ -60,7 +60,6 @@ int CSimpleCam::setLibPaths()
       This allows packaging the gphoto2 drivers with the application.
    */
    char executablePath[MAXPATHLEN];
-   uint32_t bufSize = sizeof(executablePath); 
    CFBundleRef mainBundle = CFBundleGetMainBundle();
    CFURLRef resourcesURL = CFBundleCopyResourcesDirectoryURL(mainBundle); // get path of bundle
    bool dirFound = CFURLGetFileSystemRepresentation(resourcesURL, TRUE, (UInt8 *)executablePath, MAXPATHLEN);
