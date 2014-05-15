@@ -36,6 +36,7 @@ public class HyperstackControls extends DisplayControls {
 
    private final VirtualAcquisitionDisplay display_;
    private JLabel pixelInfoLabel_;
+   private ScrollerPanel scrollerPanel_;
    private JLabel statusLineLabel_;
    private javax.swing.JTextField fpsField_;
    private JButton showFolderButton_;
@@ -53,7 +54,6 @@ public class HyperstackControls extends DisplayControls {
       super(new FlowLayout(FlowLayout.LEADING));
       initComponents(bus);
       display_ = display;
-      fpsField_.setText(NumberUtils.doubleToDisplayString(display_.getPlaybackFPS()));
       bus.register(this);
    }
 
@@ -64,16 +64,16 @@ public class HyperstackControls extends DisplayControls {
 
       pixelInfoLabel_ = new JLabel("                                     ");
       pixelInfoLabel_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
-      subPanel.add(pixelInfoLabel_, "span 5, wrap");
+      subPanel.add(pixelInfoLabel_, "span, wrap");
 
-      subPanel.add(new ScrollerPanel(
+      scrollerPanel_ = new ScrollerPanel(
                bus, new String[]{"channel", "position", "time", "z"}, 
-               new Integer[]{1, 1, 1, 1}), 
-            "span, growx, wrap 0px");
+               new Integer[]{1, 1, 1, 1});
+      subPanel.add(scrollerPanel_, "span, growx, wrap 0px");
 
       showFolderButton_ = new JButton();
       saveButton_ = new JButton();
-      fpsField_ = new javax.swing.JTextField();
+      fpsField_ = new javax.swing.JTextField(8);
       fpsLabel_ = new JLabel();
       abortButton_ = new JButton();
       statusLineLabel_ = new JLabel();
@@ -257,7 +257,7 @@ public class HyperstackControls extends DisplayControls {
    private void updateFPS() {
       try {
          double fps = NumberUtils.displayStringToDouble(fpsField_.getText());
-         display_.setPlaybackFPS(fps);
+         scrollerPanel_.setFramesPerSecond(fps);
       } catch (ParseException ex) {
       }
    }

@@ -53,7 +53,7 @@ class ScrollerPanel extends JPanel {
    // Timer for handling animation.
    private java.util.Timer timer_ = null;
    // Rate at which we update images when animating. Defaults to 10.
-   private int framesPerSec_ = 10;
+   private double framesPerSec_ = 10;
 
    /**
     * @param axes List of Strings labeling the axes that the caller wants to 
@@ -101,6 +101,14 @@ class ScrollerPanel extends JPanel {
     */
    @Subscribe
    public void onAnimationToggle(AxisScroller.AnimationToggleEvent event) {
+      resetAnimationTimer();
+   }
+
+   /**
+    * Generate a new AnimationTimer that updates each active (i.e. animated)
+    * scroller according to our update rate (FPS). 
+    */
+   private void resetAnimationTimer() {
       if (timer_ != null) {
          // Stop the previous timer.
          timer_.cancel();
@@ -168,7 +176,8 @@ class ScrollerPanel extends JPanel {
    /**
     * Set a new animation rate.
     */
-   public void setFramesPerSecond(int newFPS) {
+   public void setFramesPerSecond(double newFPS) {
       framesPerSec_ = newFPS;
+      resetAnimationTimer();
    }
 }

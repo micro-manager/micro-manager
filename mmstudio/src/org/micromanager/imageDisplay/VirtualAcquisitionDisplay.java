@@ -1327,14 +1327,6 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       }
    }
 
-   public void setPlaybackFPS(double fps) {
-      framesPerSec_ = fps;
-   }
-
-   public double getPlaybackFPS() {
-      return framesPerSec_;
-   }
-
    public String getSummaryComment() {
       return imageCache_.getComment();
    }
