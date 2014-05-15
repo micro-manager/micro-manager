@@ -10,6 +10,13 @@ import java.awt.event.WindowEvent;
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.utils.ReportingUtils;
 
+
+/**
+ * This class is the Frame that handles image viewing: it contains the 
+ * canvas and controls for determining which channel, Z-slice, etc. is shown. 
+ * HACK: we have overridden getComponents() on this function to "fix" bugs
+ * in other bits of code; see that function's comment.
+ */
 public class DisplayWindow extends StackWindow {
 
    private boolean closed_ = false;
@@ -102,5 +109,20 @@ public class DisplayWindow extends StackWindow {
    @Override
    public boolean getAnimate() {
       return isAnimated_;
+   }
+
+   /**
+    * HACK HACK HACK HACK HACK HACK ACK HACK HACK HACK HACK HACK ACK HACK
+    * Overriding this function "fixes" ImageJ code that assumes it knows what
+    * the components in the window are, even though we've changed them. 
+    * (Specifically, the "Orthogonal Views" functionality is what made us do
+    * this). 
+    * Who knows what ramifications this change has? Who else calls 
+    * getComponents and makes assumptions about what it will find there? 
+    * HACK HACK HACK HACK HACK HACK ACK HACK HACK HACK HACK HACK ACK HACK
+    */
+   @Override
+   public java.awt.Component[] getComponents() {
+      return new java.awt.Component[] {ic, cSelector, tSelector, zSelector};
    }
 }
