@@ -23,7 +23,6 @@ import org.micromanager.utils.ReportingUtils;
 public class DisplayWindow extends StackWindow {
 
    private boolean closed_ = false;
-   private boolean isAnimated_ = false;
    private EventBus bus_;
 
    // This class is used to signal that a window is closing.
@@ -33,14 +32,6 @@ public class DisplayWindow extends StackWindow {
          window_ = window;
       }
    };
-
-   // This class is used to signal that animation should be turned on/off.
-   public class ToggleAnimatedEvent {
-      public boolean shouldSetAnimated_;
-      public ToggleAnimatedEvent(boolean shouldSetAnimated) {
-         shouldSetAnimated_ = shouldSetAnimated;
-      }
-   }
 
    public DisplayWindow(ImagePlus ip, EventBus bus) {
       super(ip);
@@ -56,12 +47,6 @@ public class DisplayWindow extends StackWindow {
       if (zSelector != null) {
          remove(zSelector);
       }
-   }
-
-   // Receive notification that animation status has changed.
-   @Subscribe
-   public void onSetAnimated(VirtualAcquisitionDisplay.AnimationSetEvent event) {
-      isAnimated_ = event.isAnimated_;
    }
 
    @Override
@@ -102,16 +87,6 @@ public class DisplayWindow extends StackWindow {
       if (!isClosed()) {
          super.windowActivated(e);
       }
-   }
-
-   @Override
-   public void setAnimate(boolean b) {
-      bus_.post(new ToggleAnimatedEvent(b));
-   }
-
-   @Override
-   public boolean getAnimate() {
-      return isAnimated_;
    }
 
    /**

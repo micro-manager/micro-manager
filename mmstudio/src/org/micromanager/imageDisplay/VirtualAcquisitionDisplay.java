@@ -112,17 +112,6 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       }
    }
 
-   /**
-    * This class is used to signal when the animation state of our display
-    * (potentially) changes.
-    */
-   public class AnimationSetEvent {
-      public boolean isAnimated_;
-      public AnimationSetEvent(boolean isAnimated) {
-         isAnimated_ = isAnimated;
-      }
-   }
-
    private static final int ANIMATION_AND_LOCK_RESTART_DELAY = 800;
    final ImageCache imageCache_;
    final Preferences prefs_ = Preferences.userNodeForPackage(this.getClass());
