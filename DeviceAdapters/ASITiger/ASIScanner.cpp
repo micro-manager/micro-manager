@@ -45,7 +45,7 @@ using namespace std;
 // CScanner
 //
 CScanner::CScanner(const char* name) :
-   ASIPeripheralBase<CGalvoBase, CScanner>(name),
+   ASIPeripheralBase< ::CGalvoBase, CScanner >(name),
    axisLetterX_(g_EmptyAxisLetterStr),    // value determined by extended name
    axisLetterY_(g_EmptyAxisLetterStr),    // value determined by extended name
    unitMultX_(g_ScannerDefaultUnitMult),  // later will try to read actual setting

@@ -45,7 +45,7 @@ using namespace std;
 // CCRISP
 //
 CCRISP::CCRISP(const char* name) :
-   ASIPeripheralBase<CAutoFocusBase, CCRISP>(name),
+   ASIPeripheralBase< ::CAutoFocusBase, CCRISP >(name),
    axisLetter_(g_EmptyAxisLetterStr),    // value determined by extended name
    waitAfterLock_(1000)
 {

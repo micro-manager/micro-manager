@@ -44,7 +44,7 @@ using namespace std;
 // CSlider
 //
 CFWheel::CFWheel(const char* name) :
-   ASIPeripheralBase<CStateDeviceBase, CFWheel>(name),
+   ASIPeripheralBase< ::CStateDeviceBase, CFWheel >(name),
    numPositions_(0),  // will read actual number of positions
    curPosition_(0),   // will read actual position
    spinning_(0),
