@@ -29,33 +29,41 @@ public class DirectBuffers {
    }
       
    public static byte[] bytesFromBuffer(ByteBuffer buffer) {
-      byte[] bytes = new byte[buffer.capacity()];
-      buffer.rewind();
-      buffer.get(bytes);
-      return bytes;
+      synchronized(buffer) {
+         byte[] bytes = new byte[buffer.capacity()];
+         buffer.rewind();
+         buffer.get(bytes);
+         return bytes;
+      }
    }
    
    public static short[] shortsFromBuffer(ShortBuffer buffer) {
-      short[] shorts = new short[buffer.capacity()];
-      buffer.rewind();
-      buffer.get(shorts);
-      return shorts;
+      synchronized(buffer) {
+         short[] shorts = new short[buffer.capacity()];
+         buffer.rewind();
+         buffer.get(shorts);
+         return shorts;
+      }
    }
 
    public static int[] intsFromBuffer(IntBuffer buffer) {
-      int[] ints = new int[buffer.capacity()];
-      buffer.rewind();
-      buffer.get(ints);
-      return ints;
+      synchronized(buffer) {
+         int[] ints = new int[buffer.capacity()];
+         buffer.rewind();
+         buffer.get(ints);
+         return ints;
+      }
    }
 
    public static Object arrayFromBuffer(Buffer buffer) {
-      if (buffer instanceof ByteBuffer) {
-         return bytesFromBuffer((ByteBuffer) buffer);
-      } else if (buffer instanceof ShortBuffer) {
-         return shortsFromBuffer((ShortBuffer) buffer);
-      } else if (buffer instanceof IntBuffer) {
-         return intsFromBuffer((IntBuffer) buffer);
+      synchronized(buffer) {
+         if (buffer instanceof ByteBuffer) {
+            return bytesFromBuffer((ByteBuffer) buffer);
+         } else if (buffer instanceof ShortBuffer) {
+            return shortsFromBuffer((ShortBuffer) buffer);
+         } else if (buffer instanceof IntBuffer) {
+            return intsFromBuffer((IntBuffer) buffer);
+         }
       }
       return null;
    }
