@@ -89,7 +89,9 @@ public class HyperstackControls extends DisplayControls {
 
       showFolderButton_ = new JButton();
       saveButton_ = new JButton();
-      statusLineLabel_ = new JLabel();
+      // Fill in a bunch of empty space here so enough is allocated in the
+      // layout for us to put in proper labels later.
+      statusLineLabel_ = new JLabel("                             ");
 
       subPanel.add(showFolderButton_);
       subPanel.add(saveButton_);
