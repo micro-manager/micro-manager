@@ -235,7 +235,7 @@ int QuadFluor::OnPort(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 
 
-int QuadFluor::GetPosition(int& position) 
+int QuadFluor::GetDevicePosition(int& position) 
 {
    const char* command="Quad ";
 
@@ -269,7 +269,7 @@ int QuadFluor::GetPosition(int& position)
 
 
 
-int QuadFluor::SetPosition(int position)
+int QuadFluor::SetDevicePosition(int position)
 {
    ostringstream command;
    command << "Quad " << position;
@@ -305,7 +305,7 @@ int QuadFluor::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet) {
       int position, ret;
-      ret = GetPosition(position);
+      ret = GetDevicePosition(position);
       if (ret != DEVICE_OK)
          return ret;
       pProp->Set((long) position - 1);
@@ -314,7 +314,7 @@ int QuadFluor::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
       long position;
       int ret;
       pProp->Get(position);
-      ret = SetPosition((int) position + 1);
+      ret = SetDevicePosition((int) position + 1);
       if (ret != DEVICE_OK)
          return ret;
    }
@@ -453,7 +453,7 @@ int HexaFluor::OnPort(MM::PropertyBase* pProp, MM::ActionType eAct)
 }
 
 
-int HexaFluor::GetPosition(int& position) 
+int HexaFluor::GetDevicePosition(int& position) 
 {
    // send command
    int ret = SendSerialCommand(port_.c_str(), baseCommand_.c_str(), "\r");
@@ -485,7 +485,7 @@ int HexaFluor::GetPosition(int& position)
 
 
 
-int HexaFluor::SetPosition(int position)
+int HexaFluor::SetDevicePosition(int position)
 {
    ostringstream command;
    command << baseCommand_ << position;
@@ -522,7 +522,7 @@ int HexaFluor::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet) {
       int position, ret;
-      ret = GetPosition(position);
+      ret = GetDevicePosition(position);
       if (ret != DEVICE_OK)
          return ret;
       pProp->Set((long) position - 1);
@@ -531,7 +531,7 @@ int HexaFluor::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
       long position;
       int ret;
       pProp->Get(position);
-      ret = SetPosition((int) position + 1);
+      ret = SetDevicePosition((int) position + 1);
       if (ret != DEVICE_OK)
          return ret;
    }

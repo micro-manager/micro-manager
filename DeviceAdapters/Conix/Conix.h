@@ -61,8 +61,8 @@ public:
    int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
-   int GetPosition(int& position);
-   int SetPosition(int position);
+   int GetDevicePosition(int& position);
+   int SetDevicePosition(int position);
 
    bool initialized_;
    unsigned numPos_;
@@ -101,8 +101,8 @@ public:
    int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
-   int GetPosition(int& position);
-   int SetPosition(int position);
+   int GetDevicePosition(int& position);
+   int SetDevicePosition(int position);
 
    bool initialized_;
    unsigned numPos_;
