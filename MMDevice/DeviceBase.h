@@ -2096,10 +2096,7 @@ class HubBase : public CDeviceBase<MM::Hub, U>
 {
 public:
    HubBase() {}
-   virtual ~HubBase()
-   {
-      ClearInstalledDevices();
-   }
+   virtual ~HubBase() {}
 
    /**
    * To provide automatic child device discovery,

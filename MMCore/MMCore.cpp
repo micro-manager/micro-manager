@@ -6807,6 +6807,11 @@ MM::DeviceDetectionStatus CMMCore::detectDevice(char* deviceName)
  * report that Z-stage, filter changer and objective turrent are currently installed and return three
  * device names in the string list.
  *
+ * Currently, this method can only be called once, right after loading the hub
+ * device. Doing otherwise results in undefined behavior. This function was
+ * intended for use during initial configuration, not routine loading of
+ * devices. These restrictions may be relaxed in the future if possible.
+ *
  * @param hubDeviceLabel    the label for the device of type Hub
  */
 std::vector<std::string> CMMCore::getInstalledDevices(const char* hubDeviceLabel)

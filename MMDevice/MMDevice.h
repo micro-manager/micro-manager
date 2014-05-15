@@ -27,7 +27,7 @@
 // Header version
 // If any of the class definitions changes, the interface version
 // must be incremented
-#define DEVICE_INTERFACE_VERSION 58
+#define DEVICE_INTERFACE_VERSION 59
 ///////////////////////////////////////////////////////////////////////////////
 
 
@@ -1108,24 +1108,42 @@ namespace MM {
       static const DeviceType Type = HubDevice;
 
       /**
-       * Attempts to detect child device hardware by communicating with hub hardware.
-       * If any child hardware is detected, causes module to instantiate
-       * appropriate child Device instance(s).
+       * Instantiate all available child peripheral devices.
+       *
+       * The implementation must instantiate all available child devices and
+       * register them by calling AddInstalledDevice() (currently in HubBase).
+       *
+       * Instantiated peripherals are owned by the Core, and will be destroyed
+       * by calling the usual ModuleInterface DeleteDevice() function.
+       *
+       * The result of calling this function more than once for a given hub
+       * instance is undefined.
        */
       virtual int DetectInstalledDevices() = 0;
 
       /**
-       * Removes all Device instances that were created by DetectInstalledDevices()
+       * Removes all Device instances that were created by
+       * DetectInstalledDevices(). Not used.
+       *
+       * Note: Device adapters traditionally call this function at the
+       * beginning of their DetectInstalledDevices implementation. This is not
+       * necessary but is permissible.
        */
       virtual void ClearInstalledDevices() = 0;
 
       /**
-       * Returns the number of child Devices after DetectInstalledDevices was called.
+       * Returns the number of child Devices after DetectInstalledDevices was
+       * called.
+       *
+       * Must not be called from device adapters.
        */
       virtual unsigned GetNumberOfInstalledDevices() = 0;
       
       /**
-       * Returns a pointer to the Device with index devIdx. 0 <= devIdx < GetNumberOfInstalledDevices().
+       * Returns a pointer to the Device with index devIdx. 0 <= devIdx <
+       * GetNumberOfInstalledDevices().
+       *
+       * Must not be called from device adapters.
        */
       virtual Device* GetInstalledDevice(int devIdx) = 0;
    };
