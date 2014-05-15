@@ -81,8 +81,7 @@ int writeCompactTiffRGB( const int nx, const int ny, const unsigned char* pdata,
 		putc((offset & 0x0000ff00) / 256,fptr);
 		putc((offset & 0x000000ff),fptr);
 
-		size_t wereWritten = fwrite( pdata, sizeof( *pdata), nx*ny*3, fptr);
-		wereWritten = wereWritten; // avoid a compile warning....
+		fwrite(pdata, sizeof(*pdata), nx*ny*3, fptr);
 
 		/* Write the footer */
 		WriteHexString(fptr,"000e");  /* The number of directory entries (14) */
