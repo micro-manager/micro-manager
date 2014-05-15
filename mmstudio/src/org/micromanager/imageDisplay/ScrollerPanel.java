@@ -74,7 +74,7 @@ class ScrollerPanel extends JPanel {
       // TODO: for now assuming all axes can animate.
       for (int i = 0; i < maximums.length; ++i) {
          AxisScroller scroller = new AxisScroller(axes[i], 
-               axes[i].substring(0, 1), maximums[i], bus, true);
+               maximums[i], bus, true);
          scrollers_.add(scroller);
       }
    }

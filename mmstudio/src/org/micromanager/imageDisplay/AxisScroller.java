@@ -4,7 +4,9 @@ import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 
 import java.awt.Dimension;
+import java.awt.event.MouseEvent;
 
+import javax.swing.event.MouseInputAdapter;
 import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.JScrollBar;
@@ -65,7 +67,7 @@ public class AxisScroller extends JPanel {
    // we receive.
    private boolean shouldIgnoreScrollbarEvent_;
    // Used to turn animation on/off.
-   private JButton labelButton_;
+   private ScrollbarAnimateIcon animateIcon_;
    // Used to select an image to view along our axis.
    final private JScrollBar scrollbar_;
    private ScrollbarLockIcon lock_;
@@ -75,29 +77,31 @@ public class AxisScroller extends JPanel {
    // Width of the label/animate button.
    private static final int LABEL_WIDTH = 24;
 
-   public AxisScroller(String axis, String label, int maximum, 
-         final EventBus bus, boolean canAnimate) {
+   public AxisScroller(String axis, int maximum, final EventBus bus, 
+         boolean canAnimate) {
       super(new net.miginfocom.swing.MigLayout("", "0[]0[]0", "0[]0"));
       axis_ = axis;
       bus_ = bus;
       shouldIgnoreScrollbarEvent_ = false;
       
-      labelButton_ = new JButton(label);
+      animateIcon_ = new ScrollbarAnimateIcon(axis);
       Dimension size = new Dimension(LABEL_WIDTH, HEIGHT);
-      labelButton_.setPreferredSize(size);
-      labelButton_.setMaximumSize(size);
+      animateIcon_.setPreferredSize(size);
+      animateIcon_.setMaximumSize(size);
       if (canAnimate) {
-         labelButton_.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent e) {
+         animateIcon_.addMouseListener(new MouseInputAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
                if (!isLocked_) {
                   // Don't allow animation when the axis is locked.
                   isAnimated_ = !isAnimated_;
+                  animateIcon_.setIsAnimated(isAnimated_);
                }
                bus.post(new AnimationToggleEvent(AxisScroller.this, isAnimated_));
             }
          });
       }
-      add(labelButton_);
+      add(animateIcon_);
 
       scrollbar_ = new JScrollBar(JScrollBar.HORIZONTAL, 0, 1, 
             0, maximum);
@@ -148,9 +152,10 @@ public class AxisScroller extends JPanel {
       if (isLocked_ && isAnimated_) {
          // Cancel active animation.
          isAnimated_ = false;
+         animateIcon_.setIsAnimated(isAnimated_);
          bus_.post(new AnimationToggleEvent(this, isAnimated_));
       }
-      labelButton_.setEnabled(!isLocked_);
+      animateIcon_.setEnabled(!isLocked_);
    }
 
    /**
@@ -174,6 +179,7 @@ public class AxisScroller extends JPanel {
 
    public void setIsAnimated(boolean isAnimated) {
       isAnimated_ = isAnimated;
+      animateIcon_.setIsAnimated(isAnimated);
       if (isLocked_ && isAnimated_) {
          // Disable the lock. 
          lock_.setIsLocked(false);
