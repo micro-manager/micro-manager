@@ -38,6 +38,13 @@ class ScrollerPanel extends JPanel {
       }
    }
 
+   /**
+    * This class signifies that our layout has changed and our owner needs to 
+    * revalidate.
+    */
+   public class LayoutChangedEvent {
+   }
+
    // We'll be communicating with our owner and with our AxisScrollers via
    // this bus.
    private EventBus bus_;
@@ -62,12 +69,12 @@ class ScrollerPanel extends JPanel {
       scrollers_ = new ArrayList<AxisScroller>();
 
       // Create all desired AxisScrollers. Use the first character of the 
-      // axis as the label.
+      // axis as the label. Default all scrollers to invisible; they'll be 
+      // shown once there's more than one option along that axis.
       // TODO: for now assuming all axes can animate.
       for (int i = 0; i < maximums.length; ++i) {
          AxisScroller scroller = new AxisScroller(axes[i], 
                axes[i].substring(0, 1), maximums[i], bus, true);
-         add(scroller, "wrap 0px");
          scrollers_.add(scroller);
       }
    }
@@ -138,14 +145,23 @@ class ScrollerPanel extends JPanel {
     */
    @Subscribe
    public void onNewImageEvent(NewImageEvent event) {
+      boolean didShowNewScrollers = false;
       for (AxisScroller scroller : scrollers_) {
          int imagePosition = event.getPositionForAxis(scroller.getAxis());
          if (scroller.getMaximum() <= imagePosition) {
+            if (scroller.getMaximum() == 1) {
+               // This scroller was previously hidden and needs to be shown now.
+               add(scroller, "wrap 0px");
+               didShowNewScrollers = true;
+            }
             // This image is further along the axis for this scrollbar than 
             // the current maximum, so we need a new maximum.
             scroller.setMaximum(imagePosition + 1);
          }
          scroller.setPosition(imagePosition);
+      }
+      if (didShowNewScrollers) {
+         bus_.post(new LayoutChangedEvent());
       }
    }
 

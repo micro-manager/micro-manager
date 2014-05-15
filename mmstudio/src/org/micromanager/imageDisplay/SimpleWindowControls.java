@@ -71,7 +71,7 @@ public class SimpleWindowControls extends DisplayControls {
    
    private void initComponents() {
       
-      setPreferredSize(new java.awt.Dimension(512, 150));
+      setPreferredSize(new java.awt.Dimension(512, 100));
      
       showFolderButton_ = new JButton();
       showFolderButton_.setBackground(new java.awt.Color(255, 255, 255));

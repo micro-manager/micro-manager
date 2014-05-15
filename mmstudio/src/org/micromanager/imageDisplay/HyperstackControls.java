@@ -59,8 +59,7 @@ public class HyperstackControls extends DisplayControls {
 
    private void initComponents(EventBus bus) {
       // This layout minimizes space between components.
-      JPanel subPanel = new JPanel(
-            new MigLayout("", "0[]", "0[]0[]0[]0"));
+      JPanel subPanel = new JPanel(new MigLayout("", "0[]", "0[]0[]0[]0"));
       subPanel.setPreferredSize(new Dimension(512, 100));
 
       pixelInfoLabel_ = new JLabel("                                     ");
@@ -215,6 +214,15 @@ public class HyperstackControls extends DisplayControls {
       int frame = event.getPositionForAxis("time") + 1;
       int slice = event.getPositionForAxis("z") + 1;
       display_.getHyperImage().setPosition(channel, slice, frame);
+   }
+
+   /**
+    * Our ScrollerPanel is informing us that its layout has changed.
+    */
+   @Subscribe
+   public void onLayoutChange(ScrollerPanel.LayoutChangedEvent event) {
+      invalidate();
+      validate();
    }
 
    private void showFolderButton_ActionPerformed(java.awt.event.ActionEvent evt) {
