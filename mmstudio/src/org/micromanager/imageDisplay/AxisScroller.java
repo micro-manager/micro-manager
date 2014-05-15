@@ -4,7 +4,6 @@ import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 
 import java.awt.Dimension;
-import java.lang.Comparable;
 
 import javax.swing.JButton;
 import javax.swing.JPanel;
@@ -17,7 +16,7 @@ import org.micromanager.utils.ReportingUtils;
  * different "axes" of a data set (for example: Z slice, timepoint, channel).
  * Communication with the parent is handled by way of events using an EventBus.
  */
-public class AxisScroller extends JPanel implements Comparable<AxisScroller> {
+public class AxisScroller extends JPanel {
    /**
     * This class is used to communicate with our master when the animation
     * button is clicked.
@@ -192,12 +191,5 @@ public class AxisScroller extends JPanel implements Comparable<AxisScroller> {
    
    public void setMaximum(int newMax) {
       scrollbar_.setMaximum(newMax);
-   }
-
-   /**
-    * We sort by axis name.
-    */
-   public int compareTo(AxisScroller alt) {
-      return axis_.compareTo(alt.getAxis());
    }
 }

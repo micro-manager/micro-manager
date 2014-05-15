@@ -4,7 +4,6 @@ import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 
 import javax.swing.JPanel;
@@ -50,8 +49,6 @@ class ScrollerPanel extends JPanel {
    private EventBus bus_;
    // All AxisScrollers we manage.
    private ArrayList<AxisScroller> scrollers_;
-   // All AxisScrollers that we are currently displaying.
-   private ArrayList<AxisScroller> shownScrollers_;
    // Timer for handling animation.
    private java.util.Timer timer_ = null;
    // Rate at which we update images when animating. Defaults to 10.
@@ -69,7 +66,6 @@ class ScrollerPanel extends JPanel {
       bus_ = bus;
       bus_.register(this);
       scrollers_ = new ArrayList<AxisScroller>();
-      shownScrollers_ = new ArrayList<AxisScroller>();
 
       // Create all desired AxisScrollers. Use the first character of the 
       // axis as the label. Default all scrollers to invisible; they'll be 
@@ -162,7 +158,7 @@ class ScrollerPanel extends JPanel {
          if (scroller.getMaximum() <= imagePosition) {
             if (scroller.getMaximum() == 1) {
                // This scroller was previously hidden and needs to be shown now.
-               shownScrollers_.add(scroller);
+               add(scroller, "wrap 0px");
                didShowNewScrollers = true;
             }
             // This image is further along the axis for this scrollbar than 
@@ -172,21 +168,7 @@ class ScrollerPanel extends JPanel {
          scroller.setPosition(imagePosition);
       }
       if (didShowNewScrollers) {
-         resetShownScrollers();
          bus_.post(new LayoutChangedEvent());
-      }
-   }
-
-   /**
-    * We need to reset which scrollers we display, because a new scroller
-    * has been added and we need to display the scrollers in a consistent 
-    * order. 
-    */
-   private void resetShownScrollers() {
-      Collections.sort(shownScrollers_);
-      removeAll();
-      for (AxisScroller scroller : shownScrollers_) {
-         add(scroller, "wrap 0px");
       }
    }
 
