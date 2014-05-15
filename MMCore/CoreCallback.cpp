@@ -11,8 +11,8 @@
 //                and has full access to CMMCore private members.
 //              
 // AUTHOR:        Nenad Amodaj, nenad@amodaj.com, 01/05/2007
-
-// COPYRIGHT:     University of California, San Francisco, 2007
+//
+// COPYRIGHT:     University of California, San Francisco, 2007-2014
 //
 // LICENSE:       This file is distributed under the "Lesser GPL" (LGPL) license.
 //                License text is included with the source distribution.
@@ -24,9 +24,6 @@
 //                IN NO EVENT SHALL THE COPYRIGHT OWNER OR
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
-//
-// CVS:           $Id: CoreCallback.h 2 2007-02-27 23:33:17Z nenad $
-//
 
 #include "CoreCallback.h"
 #include "CircularBuffer.h"
@@ -402,7 +399,7 @@ int CoreCallback::SetSerialProperties(const char* portName,
  */
 int CoreCallback::WriteToSerial(const MM::Device* caller, const char* portName, const unsigned char* buf, unsigned long length)
 {
-   MM::Serial* pSerial = 0;
+   boost::shared_ptr<MM::Serial> pSerial;
    try
    {
       pSerial = core_->GetDeviceWithCheckedLabelAndType<MM::Serial>(portName);
@@ -417,7 +414,7 @@ int CoreCallback::WriteToSerial(const MM::Device* caller, const char* portName, 
    }
 
    // don't allow self reference
-   if (pSerial == caller)
+   if (pSerial.get() == caller)
       return DEVICE_SELF_REFERENCE;
 
    return pSerial->Write(buf, length);
@@ -428,7 +425,7 @@ int CoreCallback::WriteToSerial(const MM::Device* caller, const char* portName, 
   */
 int CoreCallback::ReadFromSerial(const MM::Device* caller, const char* portName, unsigned char* buf, unsigned long bufLength, unsigned long &bytesRead)
 {
-   MM::Serial* pSerial = 0;
+   boost::shared_ptr<MM::Serial> pSerial;
    try
    {
       pSerial = core_->GetDeviceWithCheckedLabelAndType<MM::Serial>(portName);
@@ -443,7 +440,7 @@ int CoreCallback::ReadFromSerial(const MM::Device* caller, const char* portName,
    }
 
    // don't allow self reference
-   if (pSerial == caller)
+   if (pSerial.get() == caller)
       return DEVICE_SELF_REFERENCE;
 
    return pSerial->Read(buf, bufLength, bytesRead);
@@ -454,7 +451,7 @@ int CoreCallback::ReadFromSerial(const MM::Device* caller, const char* portName,
  */
 int CoreCallback::PurgeSerial(const MM::Device* caller, const char* portName)
 {
-   MM::Serial* pSerial = 0;
+   boost::shared_ptr<MM::Serial> pSerial;
    try
    {
       pSerial = core_->GetDeviceWithCheckedLabelAndType<MM::Serial>(portName);
@@ -469,7 +466,7 @@ int CoreCallback::PurgeSerial(const MM::Device* caller, const char* portName)
    }
 
    // don't allow self reference
-   if (pSerial == caller)
+   if (pSerial.get() == caller)
       return DEVICE_SELF_REFERENCE;
 
    return pSerial->Purge();
@@ -792,7 +789,15 @@ MM::MMTime CoreCallback::GetCurrentMMTime()
 
 MMThreadLock* CoreCallback::getModuleLock(const MM::Device* caller)
 {
-   return core_->pluginManager_.getModuleLock(caller);
+   try
+   {
+      boost::shared_ptr<MM::Device> pCaller = core_->pluginManager_.GetDevice(caller);
+      return core_->pluginManager_.getModuleLock(pCaller);
+   }
+   catch (const CMMError&)
+   {
+      return 0;
+   }
 }
 
 void CoreCallback::removeModuleLock(const MM::Device* caller)
@@ -801,4 +806,3 @@ void CoreCallback::removeModuleLock(const MM::Device* caller)
    caller->GetModuleName(module);
    core_->pluginManager_.removeModuleLock(module);
 }
-

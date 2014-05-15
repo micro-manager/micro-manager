@@ -6,8 +6,7 @@
 // DESCRIPTION:   Loading/unloading of plugins(module libraries) and creation
 //                of devices.
 //              
-// COPYRIGHT:     University of California, San Francisco, 2006,
-//                All Rights reserved
+// COPYRIGHT:     University of California, San Francisco, 2006-2014
 //
 // LICENSE:       This file is distributed under the "Lesser GPL" (LGPL) license.
 //                License text is included with the source distribution.
@@ -38,6 +37,8 @@
 #include "ErrorCodes.h"
 #include "Error.h"
 
+#include <boost/shared_ptr.hpp>
+#include <boost/weak_ptr.hpp>
 #include <map>
 #include <string>
 #include <vector>
@@ -52,16 +53,17 @@ public:
    CPluginManager();
    ~CPluginManager();
    
-   MM::Device* LoadDevice(const char* label, const char* moduleName, const char* deviceName);
-   void UnloadDevice(MM::Device* device);
+   boost::shared_ptr<MM::Device> LoadDevice(const char* label, const char* moduleName, const char* deviceName);
+   void UnloadDevice(boost::shared_ptr<MM::Device> device);
    void UnloadAllDevices();
 
-   MM::Device* GetDevice(const std::string& label) const throw (CMMError);
+   boost::shared_ptr<MM::Device> GetDevice(const std::string& label) const throw (CMMError);
+   boost::shared_ptr<MM::Device> GetDevice(const MM::Device* rawPtr) const throw (CMMError);
    std::string GetDeviceLabel(const MM::Device& device) const;
    std::vector<std::string> GetDeviceList(MM::DeviceType t = MM::AnyType) const;
 
    std::vector<std::string> GetLoadedPeripherals(const char* hubLabel) const;
-   MM::Hub* GetParentDevice(const MM::Device& dev) const;
+   boost::shared_ptr<MM::Hub> GetParentDevice(const MM::Device& dev) const;
 
    void UnloadPluginLibrary(const char* moduleName);
 
@@ -82,7 +84,7 @@ public:
    std::vector<long> GetAvailableDeviceTypes(const char* moduleName) throw (CMMError);
 
    // module level thread locking
-   MMThreadLock* getModuleLock(const MM::Device* pDev);
+   MMThreadLock* getModuleLock(const boost::shared_ptr<MM::Device> pDev);
    bool removeModuleLock(const char* moduleName);
 
 private:
@@ -92,8 +94,8 @@ private:
    boost::shared_ptr<LoadedDeviceAdapter> LoadPluginLibrary(const char* libName);
    std::string FindInSearchPath(std::string filename);
 
-   typedef std::map<std::string, MM::Device*> CDeviceMap;
-   typedef std::vector<MM::Device*> DeviceVector;
+   typedef std::map< std::string, boost::shared_ptr<MM::Device> > CDeviceMap;
+   typedef std::vector< boost::shared_ptr<MM::Device> > DeviceVector;
 
    std::vector<std::string> preferredSearchPaths_;
    static std::vector<std::string> fallbackSearchPaths_;
@@ -107,6 +109,9 @@ private:
    // way to get the module from the device ptr, until we have a wrapper class
    // for attached ("loaded") devices. - Mark
    std::map< const MM::Device*, boost::shared_ptr<LoadedDeviceAdapter> > deviceModules_;
+
+   // Also a temporary measure: map raw pointers to shared pointers.
+   std::map< const MM::Device*, boost::weak_ptr<MM::Device> > deviceSharedPtrs_;
 };
 
 #endif //_PLUGIN_MANAGER_H_

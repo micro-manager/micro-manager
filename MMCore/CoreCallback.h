@@ -9,7 +9,7 @@
 //              
 // AUTHOR:        Nenad Amodaj, nenad@amodaj.com, 01/23/2006
 
-// COPYRIGHT:     University of California, San Francisco, 2006
+// COPYRIGHT:     University of California, San Francisco, 2006-2014
 //
 // LICENSE:       This file is distributed under the "Lesser GPL" (LGPL) license.
 //                License text is included with the source distribution.
@@ -21,9 +21,6 @@
 //                IN NO EVENT SHALL THE COPYRIGHT OWNER OR
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
-//
-// CVS:           $Id$
-//
 
 #ifndef _CORECALLBACK_H_
 #define _CORECALLBACK_H_
@@ -85,7 +82,7 @@ public:
 
       try
       {
-         MM::Device* pDevice = core_->GetDeviceWithCheckedLabel(label);
+         MM::Device* pDevice = core_->GetDeviceWithCheckedLabel(label).get();
          if (pDevice == caller)
             return 0;
          return pDevice;
@@ -98,7 +95,7 @@ public:
    
    MM::PortType GetSerialPortType(const char* portName) const
    {
-      MM::Serial* pSerial = 0;
+      boost::shared_ptr<MM::Serial> pSerial;
       try
       {
          pSerial = core_->GetDeviceWithCheckedLabelAndType<MM::Serial>(portName);
@@ -189,13 +186,13 @@ public:
    // device management
    MM::ImageProcessor* GetImageProcessor(const MM::Device* /* caller */)
    {
-      return core_->imageProcessor_;
+      return core_->imageProcessor_.get();
    }
 
    MM::State* GetStateDevice(const MM::Device* /* caller */, const char* deviceName)
    {
       try {
-         return core_->GetDeviceWithCheckedLabelAndType<MM::State>(deviceName);
+         return core_->GetDeviceWithCheckedLabelAndType<MM::State>(deviceName).get();
       } catch(...) {
          //trap all exceptions
          return 0;
@@ -205,7 +202,7 @@ public:
    MM::SignalIO* GetSignalIODevice(const MM::Device* /* caller */, const char* deviceName)
    {
       try {
-         return core_->GetDeviceWithCheckedLabelAndType<MM::SignalIO>(deviceName);
+         return core_->GetDeviceWithCheckedLabelAndType<MM::SignalIO>(deviceName).get();
       } catch(...) {
          //trap all exceptions
          return 0;
@@ -214,7 +211,7 @@ public:
 
    MM::AutoFocus* GetAutoFocus(const MM::Device* /* caller */)
    {
-      return core_->autoFocus_;
+      return core_->autoFocus_.get();
    }
 
    MM::Hub* GetParentHub(const MM::Device* caller) const
@@ -222,7 +219,7 @@ public:
       if (caller == 0)
          return 0;
 
-      return core_->pluginManager_.GetParentDevice(*caller);
+      return core_->pluginManager_.GetParentDevice(*caller).get();
    }
 
    MM::Device* GetPeripheral(const MM::Device* caller, unsigned idx) const
@@ -234,7 +231,7 @@ public:
       try
       {
          if (idx < peripheralLabels.size())
-            return core_->pluginManager_.GetDevice(peripheralLabels[idx]);
+            return core_->pluginManager_.GetDevice(peripheralLabels[idx]).get();
          else
             return 0;
       }
