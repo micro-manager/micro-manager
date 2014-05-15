@@ -69,7 +69,7 @@ public class HyperstackControls extends DisplayControls {
       subPanel.add(new ScrollerPanel(
                bus, new String[]{"channel", "position", "time", "z"}, 
                new Integer[]{1, 1, 1, 1}), 
-            "wrap 0px");
+            "span, growx, wrap 0px");
 
       showFolderButton_ = new JButton();
       saveButton_ = new JButton();
