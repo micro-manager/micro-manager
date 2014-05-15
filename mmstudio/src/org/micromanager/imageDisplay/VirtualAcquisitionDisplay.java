@@ -140,6 +140,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    private int numComponents_;
    private ImagePlus hyperImage_;
    private DisplayControls controls_;
+   private boolean shouldUseSimpleControls_ = false;
    public AcquisitionVirtualStack virtualStack_;
    private boolean mda_ = false; //flag if display corresponds to MD acquisition
    private MetadataPanel mdPanel_;
@@ -218,12 +219,15 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
     * differences:
     * - eng_ is null
     * - We subscribe to the "pixel size changed" event. 
+    * - Later, when we create controls_, it will be told to use the 
+    *   Snap/Live buttons.
     */
    @SuppressWarnings("LeakingThisInConstructor")
    public VirtualAcquisitionDisplay(ImageCache imageCache, String name) throws MMScriptException {
       imageCache_ = imageCache;
       name_ = name;
       mda_ = false;
+      shouldUseSimpleControls_ = true;
       this.albumSaved_ = imageCache.isFinished();
       setupEventBus();
       // Also register us for pixel size change events on the global EventBus.
@@ -313,7 +317,8 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       // Hack: allow controls_ to be already set, so that overriding classes
       // can implement their own custom controls.
       if (controls_ == null) {
-         controls_ = new HyperstackControls(this, bus_);
+         controls_ = new HyperstackControls(this, bus_, 
+               shouldUseSimpleControls_);
       }
       hyperImage_ = createHyperImage(createMMImagePlus(virtualStack_),
               numGrayChannels, numSlices, numFrames, virtualStack_);

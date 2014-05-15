@@ -9,9 +9,13 @@ package org.micromanager.imageDisplay;
 
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
+import com.swtdesigner.SwingResourceManager;
 
 import java.awt.Dimension;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.FlowLayout;
+import java.awt.Font;
 import java.text.ParseException;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -27,6 +31,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import org.micromanager.internalinterfaces.DisplayControls;
+import org.micromanager.MMStudioMainFrame;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.ReportingUtils;
@@ -35,27 +40,40 @@ import org.micromanager.utils.ReportingUtils;
 public class HyperstackControls extends DisplayControls {
 
    private final VirtualAcquisitionDisplay display_;
-   private JLabel pixelInfoLabel_;
-   private ScrollerPanel scrollerPanel_;
-   private JLabel statusLineLabel_;
-   private javax.swing.JTextField fpsField_;
-   private JButton showFolderButton_;
-   private JButton saveButton_;
-   private JLabel fpsLabel_;
-   private JButton abortButton_;
-   private javax.swing.JToggleButton pauseAndResumeToggleButton_;
    private EventBus bus_;
 
+   // Controls common to both control sets
+   private ScrollerPanel scrollerPanel_;
+   private JLabel pixelInfoLabel_;
+   private JButton showFolderButton_;
+   private JButton saveButton_;
+   private JLabel statusLineLabel_;
+
+   // Standard control set
+   private JLabel fpsLabel_;
+   private javax.swing.JTextField fpsField_;
+   private JButton abortButton_;
+   private javax.swing.JToggleButton pauseAndResumeToggleButton_;
+
+   // Snap/live control set
+   private JButton snapButton_;
+   private JButton snapToAlbumButton_;
+   private JButton liveButton_;
+
+   /**
+    * @param shouldUseLiveButtons - indicates if we should use the buttons for 
+    *        the "Snap/Live" window or the buttons for normal displays.
+    */
    public HyperstackControls(VirtualAcquisitionDisplay display, 
-         EventBus bus) {
+         EventBus bus, boolean shouldUseLiveButtons) {
       super(new FlowLayout(FlowLayout.LEADING));
       bus_ = bus;
-      initComponents();
+      initComponents(shouldUseLiveButtons);
       display_ = display;
       bus_.register(this);
    }
 
-   private void initComponents() {
+   private void initComponents(boolean shouldUseLiveButtons) {
       // This layout minimizes space between components.
       JPanel subPanel = new JPanel(new MigLayout("", "0[]", "0[]0[]0[]0"));
       subPanel.setPreferredSize(new Dimension(512, 100));
@@ -71,21 +89,10 @@ public class HyperstackControls extends DisplayControls {
 
       showFolderButton_ = new JButton();
       saveButton_ = new JButton();
-      fpsField_ = new javax.swing.JTextField(8);
-      fpsLabel_ = new JLabel();
-      abortButton_ = new JButton();
       statusLineLabel_ = new JLabel();
-      pauseAndResumeToggleButton_ = new javax.swing.JToggleButton();
-      
+
       subPanel.add(showFolderButton_);
       subPanel.add(saveButton_);
-      subPanel.add(abortButton_);
-      subPanel.add(pauseAndResumeToggleButton_);
-      subPanel.add(fpsLabel_);
-      subPanel.add(fpsField_);
-      subPanel.add(statusLineLabel_);
-
-      add(subPanel);
 
       showFolderButton_.setBackground(new java.awt.Color(255, 255, 255));
       showFolderButton_.setIcon(
@@ -102,7 +109,7 @@ public class HyperstackControls extends DisplayControls {
             javax.swing.SwingConstants.BOTTOM);
       showFolderButton_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            showFolderButton_ActionPerformed(evt);
+            showFolderButtonActionPerformed(evt);
          }
       });
 
@@ -119,9 +126,103 @@ public class HyperstackControls extends DisplayControls {
       saveButton_.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
       saveButton_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            saveButton_ActionPerformed(evt);
+            saveButtonActionPerformed(evt);
          }
       });
+
+      if (shouldUseLiveButtons) {
+         makeSnapLiveButtons(subPanel);
+      }
+      else {
+         makeStandardButtons(subPanel);
+      }
+      
+      statusLineLabel_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
+      statusLineLabel_.setHorizontalTextPosition(
+            javax.swing.SwingConstants.LEFT);
+      subPanel.add(statusLineLabel_);
+
+      add(subPanel);
+   }
+
+   /**
+    * Generate the controls used for the "Snap/Live" window.
+    */
+   private void makeSnapLiveButtons(JPanel subPanel) {
+      snapButton_ = new JButton();
+      snapButton_.setFocusable(false);
+      snapButton_.setIconTextGap(6);
+      snapButton_.setText("Snap");
+      snapButton_.setMinimumSize(new Dimension(99,28));
+      snapButton_.setPreferredSize(new Dimension(99,28));
+      snapButton_.setMaximumSize(new Dimension(99,28));
+      snapButton_.setIcon(SwingResourceManager.getIcon(
+            MMStudioMainFrame.class, "/org/micromanager/icons/camera.png"));
+      snapButton_.setFont(new Font("Arial", Font.PLAIN, 10));
+      snapButton_.setToolTipText("Snap single image");
+      snapButton_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            MMStudioMainFrame.getInstance().doSnap();
+         }
+
+      });
+
+      liveButton_ = new JButton();
+      liveButton_.setIcon(SwingResourceManager.getIcon(
+            MMStudioMainFrame.class,
+            "/org/micromanager/icons/camera_go.png"));
+      liveButton_.setIconTextGap(6);
+      liveButton_.setText("Live");
+      liveButton_.setMinimumSize(new Dimension(99,28));
+      liveButton_.setPreferredSize(new Dimension(99,28));
+      liveButton_.setMaximumSize(new Dimension(99,28));
+      liveButton_.setFocusable(false);
+      liveButton_.setToolTipText("Continuous live view");
+      liveButton_.setFont(new Font("Arial", Font.PLAIN, 10));
+      liveButton_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            liveButtonAction();
+         }
+      });
+    
+      snapToAlbumButton_ = new JButton("Album");
+      snapToAlbumButton_.setIcon(SwingResourceManager.getIcon(MMStudioMainFrame.class,
+              "/org/micromanager/icons/arrow_right.png"));
+      snapToAlbumButton_.setIconTextGap(6);
+      snapToAlbumButton_.setToolTipText("Add current image to album");
+      snapToAlbumButton_.setFocusable(false);
+      snapToAlbumButton_.setMaximumSize(new Dimension(90, 28));
+      snapToAlbumButton_.setMinimumSize(new Dimension(90, 28));
+      snapToAlbumButton_.setPreferredSize(new Dimension(90, 28));
+      snapToAlbumButton_.setFont(new Font("Arial", Font.PLAIN, 10));
+      snapToAlbumButton_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent evt) {
+            snapToAlbumButtonActionPerformed();
+         }
+      });
+
+      subPanel.add(snapButton_);
+      subPanel.add(liveButton_);
+      subPanel.add(snapToAlbumButton_);
+   }
+
+   /**
+    * Generate the controls used on a standard dataset display (i.e. not the 
+    * snap/live window).
+    */
+   private void makeStandardButtons(JPanel subPanel) {
+      fpsField_ = new javax.swing.JTextField(8);
+      fpsLabel_ = new JLabel();
+      abortButton_ = new JButton();
+      pauseAndResumeToggleButton_ = new javax.swing.JToggleButton();
+      
+      subPanel.add(abortButton_);
+      subPanel.add(pauseAndResumeToggleButton_);
+      subPanel.add(fpsLabel_);
+      subPanel.add(fpsField_);
 
       fpsField_.setToolTipText(
             "Set the speed at which the acquisition is played back.");
@@ -154,13 +255,9 @@ public class HyperstackControls extends DisplayControls {
       abortButton_.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
       abortButton_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            abortButton_ActionPerformed(evt);
+            abortButtonActionPerformed(evt);
          }
       });
-
-      statusLineLabel_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
-      statusLineLabel_.setHorizontalTextPosition(
-            javax.swing.SwingConstants.LEFT);
 
       pauseAndResumeToggleButton_.setIcon(
             new javax.swing.ImageIcon(getClass().getResource(
@@ -181,7 +278,7 @@ public class HyperstackControls extends DisplayControls {
       pauseAndResumeToggleButton_.addActionListener(
             new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            pauseAndResumeToggleButton_ActionPerformed(evt);
+            pauseAndResumeToggleButtonActionPerformed(evt);
          }
       });
 
@@ -223,7 +320,7 @@ public class HyperstackControls extends DisplayControls {
       validate();
    }
 
-   private void showFolderButton_ActionPerformed(java.awt.event.ActionEvent evt) {
+   private void showFolderButtonActionPerformed(java.awt.event.ActionEvent evt) {
       display_.showFolder();
    }
 
@@ -235,15 +332,15 @@ public class HyperstackControls extends DisplayControls {
       updateFPS();
    }
 
-   private void abortButton_ActionPerformed(java.awt.event.ActionEvent evt) {
+   private void abortButtonActionPerformed(java.awt.event.ActionEvent evt) {
       display_.abort();
    }
 
-   private void pauseAndResumeToggleButton_ActionPerformed(java.awt.event.ActionEvent evt) {
+   private void pauseAndResumeToggleButtonActionPerformed(java.awt.event.ActionEvent evt) {
       display_.pause();
 }
 
-   private void saveButton_ActionPerformed(java.awt.event.ActionEvent evt) {
+   private void saveButtonActionPerformed(java.awt.event.ActionEvent evt) {
       new Thread() {
          @Override
          public void run() {
@@ -252,11 +349,29 @@ public class HyperstackControls extends DisplayControls {
       }.start();
    }
 
-   private void updateFPS() {
+   private void snapToAlbumButtonActionPerformed() {
       try {
-         double fps = NumberUtils.displayStringToDouble(fpsField_.getText());
-         scrollerPanel_.setFramesPerSecond(fps);
-      } catch (ParseException ex) {
+         MMStudioMainFrame gui = MMStudioMainFrame.getInstance();
+         gui.copyFromLiveModeToAlbum(display_);
+      } catch (Exception ex) {
+         ReportingUtils.logError(ex);
+      }
+   }
+
+   private void liveButtonAction() {
+       MMStudioMainFrame.getInstance().enableLiveMode(!MMStudioMainFrame.getInstance().isLiveModeOn());
+    }
+
+   private void updateFPS() {
+      // There's no FPS field when using the Snap/Live window
+      if (fpsField_ != null) {
+         try {
+            double fps = NumberUtils.displayStringToDouble(fpsField_.getText());
+            scrollerPanel_.setFramesPerSecond(fps);
+         } catch (ParseException ex) {
+            // No recognizable number (e.g. because the field is empty); just
+            // do nothing.
+         }
       }
    }
 
@@ -381,8 +496,15 @@ public class HyperstackControls extends DisplayControls {
 
    @Override
    public void acquiringImagesUpdate(boolean state) {
-      abortButton_.setEnabled(state);
-      pauseAndResumeToggleButton_.setEnabled(state);
+      // NB currently there's no situation in which one of these will be null
+      // when the other isn't, but on the other hand who knows what the future
+      // will bring?
+      if (abortButton_ != null) {
+         abortButton_.setEnabled(state);
+      }
+      if (pauseAndResumeToggleButton_ != null) {
+         pauseAndResumeToggleButton_.setEnabled(state);
+      }
    }
 
    @Override
