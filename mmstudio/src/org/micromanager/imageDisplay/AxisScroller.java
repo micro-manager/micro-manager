@@ -135,7 +135,7 @@ public class AxisScroller extends JPanel {
 
    /**
     * The lock icon was clicked; update our state to suit. Locking cancels 
-    * animations and disables the scrollbar and label button.
+    * animations and disables the animate button.
     */
    @Subscribe
    public void onLockToggle(ScrollbarLockIcon.LockEvent event) {
@@ -150,7 +150,6 @@ public class AxisScroller extends JPanel {
          bus_.post(new AnimationToggleEvent(this, isAnimated_));
       }
       labelButton_.setEnabled(!isLocked_);
-      scrollbar_.setEnabled(!isLocked_);
    }
 
    /**

@@ -207,6 +207,8 @@ public class HyperstackControls extends DisplayControls {
     */
    @Subscribe
    public void onSetImage(ScrollerPanel.SetImageEvent event) {
+      int position = event.getPositionForAxis("position");
+      display_.updatePosition(position);
       // Positions for ImageJ are 1-indexed but positions from the event are 
       // 0-indexed.
       int channel = event.getPositionForAxis("channel") + 1;

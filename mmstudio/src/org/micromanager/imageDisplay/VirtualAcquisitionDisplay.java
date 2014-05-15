@@ -784,7 +784,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       }   
    }
 
-   private void updatePosition(int p) {
+   protected void updatePosition(int p) {
       if (isSimpleDisplay_) {
          return;
       }
