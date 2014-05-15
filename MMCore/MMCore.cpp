@@ -38,32 +38,31 @@
 //                programming environments (Java or Python).
 
 
+#include "../MMDevice/DeviceThreads.h"
+#include "../MMDevice/DeviceUtils.h"
+#include "../MMDevice/ImageMetadata.h"
+#include "../MMDevice/ModuleInterface.h"
 #include "CircularBuffer.h"
 #include "Compressor.h"
-#include "Configuration.h"
 #include "ConfigGroup.h"
+#include "Configuration.h"
 #include "CoreCallback.h"
 #include "CoreProperty.h"
 #include "CoreUtils.h"
-#include "FastLogger.h"
-
 #include "Devices/DeviceInstances.h"
+#include "FastLogger.h"
 #include "Host.h"
 #include "MMCore.h"
 #include "MMEventCallback.h"
-#include "../MMDevice/DeviceUtils.h"
-#include "../MMDevice/DeviceThreads.h"
-#include "../MMDevice/ModuleInterface.h"
-#include "../MMDevice/ImageMetadata.h"
-#include <assert.h>
-#include <sstream>
+
+#include <boost/date_time/posix_time/posix_time.hpp>
+
 #include <algorithm>
+#include <assert.h>
+#include <fstream>
 #include <set>
+#include <sstream>
 #include <vector>
-#include <ostream>
-
-#include "boost/date_time/posix_time/posix_time.hpp"
-
 
 
 #ifndef _WINDOWS

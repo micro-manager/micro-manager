@@ -39,33 +39,33 @@
 #ifndef _MMCORE_H_
 #define _MMCORE_H_
 
-// disable exception scpecification warnings in MSVC
-#ifdef WIN32
-#pragma warning( disable : 4290 )
+#ifdef _MSC_VER
+// We use exception specifications to instruct SWIG to generate the correct
+// exception specifications for Java. Turn off the warnings that VC++ issues by
+// the mere use of exception specifications (which VC++ does not implement).
+#pragma warning(disable : 4290)
 #endif
 
-#include <string>
-#include <cstring>
-#include <vector>
-#include <deque>
-#include <map>
-#include <fstream>
-#include "../MMDevice/MMDeviceConstants.h"
+#include "../MMDevice/DeviceThreads.h"
 #include "../MMDevice/MMDevice.h"
-#include "PluginManager.h"
+#include "../MMDevice/MMDeviceConstants.h"
 #include "Configuration.h"
 #include "CoreUtils.h"
+#include "Devices/DeviceInstances.h"
 #include "Error.h"
 #include "ErrorCodes.h"
-#include "Devices/DeviceInstances.h"
+#include "PluginManager.h"
 
-#include "../MMDevice/DeviceThreads.h"
+#include <cstring>
+#include <deque>
+#include <map>
+#include <string>
+#include <vector>
 
 // forward declarations
 class CircularBuffer;
 class Configuration;
 class PropertyBlock;
-class CSerial;
 class ConfigGroupCollection;
 class CorePropertyCollection;
 class CoreCallback;
