@@ -52,6 +52,7 @@ import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.util.HashMap;
 import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -110,8 +111,10 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       }
    }
 
-   // This class is used to signal when the animation state of our display
-   // (potentially) changes.
+   /**
+    * This class is used to signal when the animation state of our display
+    * (potentially) changes.
+    */
    public class AnimationSetEvent {
       public boolean isAnimated_;
       public AnimationSetEvent(boolean isAnimated) {
@@ -677,6 +680,14 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
                position = MDUtils.getPositionIndex(tags);
                superChannel = VirtualAcquisitionDisplay.this.rgbToGrayChannel(
                        MDUtils.getChannelIndex(tags));
+               // Construct a mapping of axis to position so we can post an 
+               // event informing others of the new image.
+               HashMap<String, Integer> axisToPosition = new HashMap<String, Integer>();
+               axisToPosition.put("channel", channel);
+               axisToPosition.put("position", position);
+               axisToPosition.put("time", frame);
+               axisToPosition.put("z", slice);
+               bus_.post(new NewImageEvent(axisToPosition));
             } catch (JSONException ex) {
                ReportingUtils.logError(ex);
             }

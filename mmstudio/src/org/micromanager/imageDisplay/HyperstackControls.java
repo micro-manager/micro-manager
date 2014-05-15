@@ -68,7 +68,8 @@ public class HyperstackControls extends DisplayControls {
       subPanel.add(pixelInfoLabel_, "span 5, wrap");
 
       subPanel.add(new ScrollerPanel(
-               bus, new String[]{"z", "t"}, new Integer[]{10, 10}), 
+               bus, new String[]{"channel", "position", "time", "z"}, 
+               new Integer[]{1, 1, 1, 1}), 
             "wrap 0px");
 
       showFolderButton_ = new JButton();
@@ -208,8 +209,8 @@ public class HyperstackControls extends DisplayControls {
    public void onSetImage(ScrollerPanel.SetImageEvent event) {
       // Positions for ImageJ are 1-indexed but positions from the event are 
       // 0-indexed.
-      int channel = event.getPositionForAxis("c") + 1;
-      int frame = event.getPositionForAxis("t") + 1;
+      int channel = event.getPositionForAxis("channel") + 1;
+      int frame = event.getPositionForAxis("time") + 1;
       int slice = event.getPositionForAxis("z") + 1;
       display_.getHyperImage().setPosition(channel, slice, frame);
    }

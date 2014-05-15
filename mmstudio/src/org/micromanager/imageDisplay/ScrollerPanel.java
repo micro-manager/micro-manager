@@ -133,6 +133,23 @@ class ScrollerPanel extends JPanel {
    }
 
    /**
+    * A new image has been made available; we need to adjust our scrollbars
+    * to suit.
+    */
+   @Subscribe
+   public void onNewImageEvent(NewImageEvent event) {
+      for (AxisScroller scroller : scrollers_) {
+         int imagePosition = event.getPositionForAxis(scroller.getAxis());
+         if (scroller.getMaximum() <= imagePosition) {
+            // This image is further along the axis for this scrollbar than 
+            // the current maximum, so we need a new maximum.
+            scroller.setMaximum(imagePosition);
+         }
+         scroller.setPosition(imagePosition);
+      }
+   }
+
+   /**
     * Set a new animation rate.
     */
    public void setFramesPerSecond(int newFPS) {

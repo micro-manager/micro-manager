@@ -98,7 +98,7 @@ public class AxisScroller extends JPanel {
       }
       add(labelButton_);
 
-      scrollbar_ = new JScrollBar(JScrollBar.HORIZONTAL, 0, maximum / 10, 
+      scrollbar_ = new JScrollBar(JScrollBar.HORIZONTAL, 0, 1, 
             0, maximum);
       scrollbar_.addAdjustmentListener(new java.awt.event.AdjustmentListener() {
          @Override
@@ -178,5 +178,19 @@ public class AxisScroller extends JPanel {
 
    public int getPosition() {
       return scrollbar_.getValue();
+   }
+
+   public void setPosition(int newPosition) {
+      if (!isLocked_) {
+         scrollbar_.setValue(newPosition);
+      }
+   }
+
+   public int getMaximum() {
+      return scrollbar_.getMaximum();
+   }
+   
+   public void setMaximum(int newMax) {
+      scrollbar_.setMaximum(newMax);
    }
 }
