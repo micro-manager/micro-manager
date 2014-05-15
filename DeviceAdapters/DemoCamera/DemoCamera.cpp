@@ -1056,14 +1056,14 @@ MySequenceThread::MySequenceThread(CDemoCamera* pCam)
 MySequenceThread::~MySequenceThread() {};
 
 void MySequenceThread::Stop() {
-   MMThreadGuard(this->stopLock_);
+   MMThreadGuard g(this->stopLock_);
    stop_=true;
 }
 
 void MySequenceThread::Start(long numImages, double intervalMs)
 {
-   MMThreadGuard(this->stopLock_);
-   MMThreadGuard(this->suspendLock_);
+   MMThreadGuard g1(this->stopLock_);
+   MMThreadGuard g2(this->suspendLock_);
    numImages_=numImages;
    intervalMs_=intervalMs;
    imageCounter_=0;
@@ -1076,22 +1076,22 @@ void MySequenceThread::Start(long numImages, double intervalMs)
 }
 
 bool MySequenceThread::IsStopped(){
-   MMThreadGuard(this->stopLock_);
+   MMThreadGuard g(this->stopLock_);
    return stop_;
 }
 
 void MySequenceThread::Suspend() {
-   MMThreadGuard(this->suspendLock_);
+   MMThreadGuard g(this->suspendLock_);
    suspend_ = true;
 }
 
 bool MySequenceThread::IsSuspended() {
-   MMThreadGuard(this->suspendLock_);
+   MMThreadGuard g(this->suspendLock_);
    return suspend_;
 }
 
 void MySequenceThread::Resume() {
-   MMThreadGuard(this->suspendLock_);
+   MMThreadGuard g(this->suspendLock_);
    suspend_ = false;
 }
 
