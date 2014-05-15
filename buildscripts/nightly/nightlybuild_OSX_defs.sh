@@ -18,7 +18,7 @@ MM_MACOSX_SDKROOT="/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.p
 # TODO Third-party frameworks should be in $MM_DEPS_PREFIX/Library/Frameworks,
 # once build supports it.
 MM_CPPFLAGS="-I$MM_DEPS_PREFIX/include -F/Library/Frameworks"
-MM_CFLAGS="-O2 -g"
+MM_CFLAGS="-O2 -g -Wall"
 MM_CXXFLAGS="$MM_CFLAGS"
 MM_LDFLAGS="-L$MM_DEPS_PREFIX/lib -F/Library/Frameworks"
 
