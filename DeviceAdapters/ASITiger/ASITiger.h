@@ -37,10 +37,12 @@ using namespace std;
 //////////////////////////////////////////////////////////////////////////////
 // ASI-specific macros
 //
+
+// Use the name 'return_value' that is unlikely to appear within 'result'.
 #define RETURN_ON_MM_ERROR( result ) do { \
-   int ret = (result); \
-   if (ret != DEVICE_OK) { \
-      return ret; \
+   int return_value = (result); \
+   if (return_value != DEVICE_OK) { \
+      return return_value; \
    } \
 } while (0)
 
