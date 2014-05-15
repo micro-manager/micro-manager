@@ -167,15 +167,15 @@ int clearPort(MM::Device& device, MM::Core& core, const char* port)
  * Single axis stage.
  */
 Stage::Stage(int nr):
-	nr_(nr),
    initialized_(false),
-	pos_(0.0),
-	voltage_(0),
 	loop_(false),
+	voltage_(0),
 	min_V_(-20.0),
 	max_V_(130.0),
 	min_um_(0.0),
-	max_um_(100.0)
+	max_um_(100.0),
+	pos_(0.0),
+	nr_(nr)
 {
 	InitializeDefaultErrorMessages();
 	

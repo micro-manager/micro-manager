@@ -126,13 +126,13 @@ void splitString(char* string, const char* delimiter, char** dest){
  */
 Stage::Stage(int nr):
    initialized_(false),
-	pos_(0.0),
-	voltage_(0),
 	loop_(false),
+	voltage_(0),
 	min_V_(0.0),
 	max_V_(100.0),
 	min_um_(0.0),
-	max_um_(100.0)
+	max_um_(100.0),
+	pos_(0.0)
 {
 	InitializeDefaultErrorMessages();
 	 // Name

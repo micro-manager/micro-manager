@@ -1055,16 +1055,16 @@ int Hub::OnSoftstart(MM::PropertyBase* pProp, MM::ActionType eAct){
  * Single axis stage.
  */
 Stage::Stage(int nr):
-	nr_(nr),
+	answerTimeoutMs_(500),
    initialized_(false),
-	pos_(0.0),
-	voltage_(0),
 	loop_(false),
 	min_V_(-20.0),
 	max_V_(130.0),
 	min_um_(0.0),
 	max_um_(100.0),
-	answerTimeoutMs_(500) 
+	nr_(nr),
+	pos_(0.0),
+	voltage_(0)
 {
 	InitializeDefaultErrorMessages();
 
