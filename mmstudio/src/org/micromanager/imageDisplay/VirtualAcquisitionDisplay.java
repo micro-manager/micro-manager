@@ -96,6 +96,11 @@ import org.micromanager.utils.ReportingUtils;
 
 public class VirtualAcquisitionDisplay implements ImageCacheListener {
 
+   /**
+    * Given an ImagePlus, retrieve the associated VirtualAcquisitionDisplay.
+    * This only works if the ImagePlus is actually an AcquisitionVirtualStack;
+    * otherwise you just get null.
+    */
    public static VirtualAcquisitionDisplay getDisplay(ImagePlus imgp) {
       ImageStack stack = imgp.getStack();
       if (stack instanceof AcquisitionVirtualStack) {
@@ -130,10 +135,6 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    private int lockedSlice_ = -1, lockedPosition_ = -1, lockedChannel_ = -1, lockedFrame_ = -1;;
    private int numComponents_;
    private ImagePlus hyperImage_;
-   private ScrollbarWithLabel pSelector_;
-   private ScrollbarWithLabel tSelector_;
-   private ScrollbarWithLabel zSelector_;
-   private ScrollbarWithLabel cSelector_;
    private DisplayControls controls_;
    public AcquisitionVirtualStack virtualStack_;
    private boolean isSimpleDisplay_ = false;
@@ -184,7 +185,6 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       name_ = name;
       imageCache_ = imageCache;
       eng_ = eng;
-      pSelector_ = createPositionScrollbar();
       mda_ = eng != null;
       this.albumSaved_ = imageCache.isFinished();
       setupEventBus();
@@ -327,24 +327,8 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       createWindow();
       windowToFront();
 
-      cSelector_ = getSelector("c");
-      if (!isSimpleDisplay_) {
-         tSelector_ = getSelector("t");
-         zSelector_ = getSelector("z");
-
-         if (imageCache_.lastAcquiredFrame() > 0) {
-            setNumFrames(1 + imageCache_.lastAcquiredFrame());
-         } else {
-            setNumFrames(1);
-         }
-         configureAnimationControls();
-         setNumPositions(numPositions);
-      }
-
       updateAndDraw(true);
       updateWindowTitleAndStatus();
-
-      forceControlsRepaint();
    }
 
    /*
@@ -356,144 +340,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    public void setDisplayMode(int displayMode) {
       mdPanel_.getContrastPanel().setDisplayMode(displayMode);
    }
-
-   ///////////////////////////////////////////////////////
-   ///////Scrollbars and animation controls section///////
-   ///////////////////////////////////////////////////////
-   /**
-    * Force all of our controls to repaint themselves, and block until they
-    * have finished doing so. 
-    */
-   private void forceControlsRepaint() {
-      Runnable forcePaint = new Runnable() {
-
-         @Override
-         public void run() {
-            if (zAnimationIcon_ != null) {
-               zAnimationIcon_.repaint();
-            }
-            if (tAnimationIcon_ != null) {
-               tAnimationIcon_.repaint();
-            }
-            if (tLockIcon_ != null) {
-               tLockIcon_.repaint();
-            }
-            if (cIcon_ != null) {
-               cIcon_.repaint();
-            }
-            if (cLockIcon_ != null) {
-               cLockIcon_.repaint();
-            }
-            if (zLockIcon_ != null) {
-               zLockIcon_.repaint();
-            }
-            if (pLockIcon_ != null) {
-               pLockIcon_.repaint();
-            }
-            if (controls_ != null) {
-               controls_.repaint();
-            }
-            if (pIcon_ != null && pIcon_.isValid()) {
-               pIcon_.repaint();
-            }
-         }
-      };
-
-      try {
-         GUIUtils.invokeAndWait(forcePaint);
-      } catch (InterruptedException ex) {
-         ReportingUtils.logError(ex);
-      } catch (InvocationTargetException ex) {
-         ReportingUtils.logError(ex);
-      }
-   }
-
-   /**
-    * Toggle animation of Z-slices on and off.
-    */
-   private synchronized void setStackAnimation(final boolean shouldAnimate) {
-      if (!shouldAnimate) {
-         // Just shut down current animation.
-         animationTimer_.cancel();
-         setZAnimated(false);
-         refreshScrollbarIcons();
-         moveScrollBarsToLockedPositions();
-      } else {
-         // Disable timewise animation now. 
-         setTimepointAnimation(false);
-         // Create a new animation timer that steps through Z.
-         setAnimationTimer(1, 0);
-         setZAnimated(true);
-         refreshScrollbarIcons();
-      }
-   }
-
-   /**
-    * As setStackAnimation, except that we animate across timepoints instead.
-    */
-   private synchronized void setTimepointAnimation(final boolean shouldAnimate) {
-      if (!shouldAnimate) {
-         // Just shut down current animation.
-         animationTimer_.cancel();
-         setTAnimated(false);
-         refreshScrollbarIcons();
-         moveScrollBarsToLockedPositions();
-      } else {
-         // Disable stack animation now. 
-         setStackAnimation(false);
-         // Create a new animation timer that steps through T.
-         setAnimationTimer(0, 1);
-         setTAnimated(true);
-         refreshScrollbarIcons();
-      }
-   }
-
-   /**
-    * Set up animationTimer_ to update our display according to the provided
-    * settings. As a general rule, one of zStep or tStep will be 0 and the 
-    * other will be 1, but theoretically we could call this function to step
-    * backwards or to step through both "dimensions" at the same time. 
-    */
-   private synchronized void setAnimationTimer(final int zStep, final int tStep) {
-      animationTimer_ = new java.util.Timer();
-      final int framesPerStep;
-      long interval = (long) (1000.0 / framesPerSec_);
-      if (interval < 33) {
-         // Enforce a maximum displayed framerate of 30FPS, but skip over 
-         // images to make the perceived animation faster. 
-         interval = 33;
-         framesPerStep = (int) Math.round(framesPerSec_ * 33.0 / 1000.0);
-      } else {
-         framesPerStep = 1;
-      }
-      TimerTask task = new TimerTask() {
-         @Override
-         public void run() {
-            int channel = lockedChannel_ == -1 ? hyperImage_.getChannel() : lockedChannel_;
-            int slice = lockedSlice_ == -1 ? hyperImage_.getSlice() : lockedSlice_;
-            int frame = lockedFrame_ == -1 ? hyperImage_.getFrame() : lockedFrame_;
-            if (lockedSlice_ == -1 && zSelector_ != null) {
-               // Advance the slice position.
-               slice += framesPerStep * zStep;
-               if (slice >= zSelector_.getMaximum()) {
-                  // Wrap around to the other end of the stack
-                  slice = 1;
-               }
-            }
-            if (lockedFrame_ == -1 && tSelector_ != null) {
-               // Advance the timepoint position.
-               frame += framesPerStep * tStep;
-               if (frame >= tSelector_.getMaximum()) {
-                  // Wrap around to the other end of the timeseries
-                  frame = 1;
-               }
-            }
-            hyperImage_.setPosition(channel, slice, frame);
-         }
-      };
-      animationTimer_.schedule(task, 0, interval);
-   }
-
+   
    /**
     * Repaint all of our icons related to the scrollbars. Non-blocking.
     */
@@ -518,343 +365,6 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       }
    }
 
-   /**
-    * Set up the handling of the animation buttons, to turn animation on and 
-    * off for Z and Time.
-    */
-   private void configureAnimationControls() {
-      if (zAnimationIcon_ != null) {
-         zAnimationIcon_.addMouseListener(new MouseInputAdapter() {
-            @Override
-            public void mousePressed(MouseEvent e) {
-               setStackAnimation(!zAnimated_);
-            }
-         });
-      }
-      if (tAnimationIcon_ != null) {
-         tAnimationIcon_.addMouseListener(new MouseInputAdapter() {
-            @Override
-            public void mousePressed(MouseEvent e) {
-               setTimepointAnimation(!tAnimated_);
-            }
-         });
-      }
-   }
-
-   /**
-    * Update the number of sites this display handles. 
-    */
-   private void setNumPositions(int n) {
-      if (isSimpleDisplay_) {
-         return;
-      }
-      pSelector_.setMinimum(0);
-      pSelector_.setMaximum(n);
-      ImageWindow win = hyperImage_.getWindow();
-      if (n > 1 && pSelector_.getParent() == null) {
-         // Make certain that the site selector scrollbar is displayed.
-         win.add(pSelector_, win.getComponentCount() - 1);
-      } else if (n <= 1 && pSelector_.getParent() != null) {
-         // Conversely, make certain the site selector scrollbar *isn't*
-         // displayed, because there's only one site. 
-         win.remove(pSelector_);
-      }
-      win.pack();
-   }
-
-   /**
-    * Update the number of timepoints this display handles.
-    */
-   private void setNumFrames(int n) {
-      if (isSimpleDisplay_) {
-         return;
-      }
-      if (tSelector_ != null) {
-         ((IMMImagePlus) hyperImage_).setNFramesUnverified(n);
-         tSelector_.setMaximum(n + 1);
-      }
-   }
-
-   /**
-    * Update the number of Z slices this display handles.
-    */
-   private void setNumSlices(int n) {
-      if (isSimpleDisplay_) {
-         return;
-      }
-      if (zSelector_ != null) {
-         ((IMMImagePlus) hyperImage_).setNSlicesUnverified(n);
-         zSelector_.setMaximum(n + 1);
-      }
-   }
-
-   /**
-    * Update the number of channels this display handles.
-    */
-   private void setNumChannels(int n) {
-      if (cSelector_ != null) {
-         ((IMMImagePlus) hyperImage_).setNChannelsUnverified(n);
-         cSelector_.setMaximum(1 + n);
-      }
-   }
- 
-   /**
-    * If animation was running prior to showImage, restarts it with sliders at
-    * appropriate positions.
-    */
-   private void restartAnimation(int frame, int slice, 
-         boolean areFramesAnimated, boolean areSlicesAnimated) {
-      if (areFramesAnimated) {
-         hyperImage_.setPosition(hyperImage_.getChannel(), 
-               hyperImage_.getSlice(), frame + 1);
-         setTimepointAnimation(true);
-      } else if (areSlicesAnimated) {
-         hyperImage_.setPosition(hyperImage_.getChannel(), 
-               slice + 1, hyperImage_.getFrame());
-         setStackAnimation(true);
-      }
-      animatedSliceIndex_ = -1;
-      animatedFrameIndex_ = -1;
-   }
-
-   /**
-    * Reset the positions of the scrollbars to where they were when they were
-    * locked. 
-    */
-   private void moveScrollBarsToLockedPositions() {
-      int c = lockedChannel_ == -1 ? hyperImage_.getChannel() : lockedChannel_;
-      int s = lockedSlice_ == -1 ? hyperImage_.getSlice() : lockedSlice_;
-      int f = lockedFrame_ == -1 ? hyperImage_.getFrame() : lockedFrame_;
-      hyperImage_.setPosition(c, 
-            zAnimated_ ? hyperImage_.getSlice() : s, 
-            tAnimated_ ? hyperImage_.getFrame() : f);
-      if (pSelector_ != null && lockedPosition_ > -1) {
-         setPosition(lockedPosition_);
-      }
-   }
-
-   /**
-    * If we have active locks, set up a timer to reset our scrollbars to their
-    * locked positions if no new images arrive within 
-    * ANIMATION_AND_LOCK_RESTART_DELAY milliseconds. 
-    */
-   private void resumeLocksAndAnimationAfterImageArrival() {
-      //if no locks activated or previous animation running, dont execute
-      if (lockedFrame_ == -1 && lockedChannel_ == -1 && lockedSlice_ == -1 && 
-            lockedPosition_ == -1 && animatedSliceIndex_ == -1 && 
-            animatedFrameIndex_ == -1) {
-         return;
-      }
-      
-      //If no new images have arrived for some time, reset to locked positions
-      if (resetToLockedTimer_ == null) {
-         // Create a new timer to perform the reset after the specified delay.
-         resetToLockedTimer_ = new Timer(ANIMATION_AND_LOCK_RESTART_DELAY, 
-               new ActionListener() {
-                  @Override
-                  public void actionPerformed(ActionEvent e) {
-                     moveScrollBarsToLockedPositions();
-                     restartAnimation(animatedFrameIndex_, animatedSliceIndex_,
-                           animatedFrameIndex_ > -1,
-                           animatedSliceIndex_ > -1);
-                     resetToLockedTimer_.stop();
-                  }
-               }
-         );
-      }
-      if (resetToLockedTimer_.isRunning()) {
-         // Already have a timer running; just reset its time-to-wait. 
-         resetToLockedTimer_.restart();
-      } else {
-         resetToLockedTimer_.start();
-      }
-   }
-
-   /**
-    * Generate a scrollbar for navigating between the different 
-    * timepoints/Z-slices/colors of the stack, as appropriate. 
-    * @param label Label of the scrollbar; expected to be "t", "z", or "c".
-    * @return an ij.gui.ScrollbarWithLabel, with its events set up to adjust
-    *         the appropriate view axis when scrolled.
-    */
-    private ScrollbarWithLabel getSelector(String label) {
-      ScrollbarWithLabel selector = null;
-      ImageWindow win = hyperImage_.getWindow();
-      int slices = ((IMMImagePlus) hyperImage_).getNSlicesUnverified();
-      int frames = ((IMMImagePlus) hyperImage_).getNFramesUnverified();
-      int channels = ((IMMImagePlus) hyperImage_).getNChannelsUnverified();
-      if (win instanceof StackWindow) {
-         try {
-            //ImageJ bug workaround
-            if (frames > 1 && slices == 1 && channels == 1 && label.equals("t")) {
-               selector = (ScrollbarWithLabel) JavaUtils.getRestrictedFieldValue((StackWindow) win, StackWindow.class, "zSelector");
-            } else {
-               selector = (ScrollbarWithLabel) JavaUtils.getRestrictedFieldValue((StackWindow) win, StackWindow.class, label + "Selector");
-            }
-         } catch (NoSuchFieldException ex) {
-            selector = null;
-            ReportingUtils.logError(ex);
-         }
-      }
-      //replace default icon with custom one
-      if (selector != null) {
-         try {
-            Component icon = (Component) JavaUtils.getRestrictedFieldValue(
-                    selector, ScrollbarWithLabel.class, "icon");
-            selector.remove(icon);
-         } catch (NoSuchFieldException ex) {
-            ReportingUtils.logError(ex);
-         }
-         ScrollbarAnimateIcon newIcon = new ScrollbarAnimateIcon(label.charAt(0), this);
-         if (label.equals("z")) {
-            zAnimationIcon_ = newIcon;
-         } else if (label.equals("t")) {
-            tAnimationIcon_ = newIcon;
-         } else if (label.equals("c")) {
-            cIcon_ = newIcon;
-         }
-
-         selector.add(newIcon, BorderLayout.WEST);
-         addSelectorLockIcon(selector, label);
-         
-         //add adjustment so locks respond to mouse input
-         selector.addAdjustmentListener(new AdjustmentListener() {
-            @Override
-            public void adjustmentValueChanged(AdjustmentEvent e) {
-               if (lockedSlice_ != -1) {
-                  lockedSlice_ = zSelector_.getValue();
-               }
-               if (lockedChannel_ != -1) {
-                  lockedChannel_ = cSelector_.getValue();
-               }
-               if (lockedFrame_ != -1) {
-                  lockedFrame_ = tSelector_.getValue();
-               }
-            }  
-         });
-                
-         selector.invalidate();
-         selector.validate();
-      }
-      return selector;
-   }
-   
-   /** 
-    * Generate the icon to lock one of the scrollbars (for position, 
-    * Z, channel, or T). Set the appropriate member field.
-    * @param label Indicates which scrollbar this lock is for; must be one of 
-    *        "p", "z", "c", or "t".
-    */
-   private void addSelectorLockIcon(ScrollbarWithLabel selector, 
-         final String label) {
-      final ScrollbarLockIcon icon = new ScrollbarLockIcon(this, label);
-      selector.add(icon, BorderLayout.EAST);
-      if (label.equals("p")) {
-         pLockIcon_ = icon;
-      } else if (label.equals("z")) {
-         zLockIcon_ = icon;
-      } else if (label.equals("c")) {
-         cLockIcon_ = icon;
-      } else if (label.equals("t")) {
-         tLockIcon_ = icon;
-      }
-      
-      icon.addMouseListener(new MouseInputAdapter() {
-         @Override
-         public void mouseClicked(MouseEvent e) {
-            if (label.equals("p")) {
-               if (lockedPosition_ == -1) {
-                  lockedPosition_ = pSelector_.getValue();
-               } else {
-                  lockedPosition_ = -1;
-               }
-            } else if (label.equals("z")) {
-               if (lockedSlice_ == -1) {
-                  if (isZAnimated()) {
-                     setStackAnimation(false);
-                  }
-                  lockedSlice_ = zSelector_.getValue();
-               } else {
-                  lockedSlice_ = -1;
-               }
-            } else if (label.equals("c")) {
-               if (lockedChannel_ == -1) {
-                  lockedChannel_ = cSelector_.getValue();
-               } else {
-                  lockedChannel_ = -1;
-               }
-            } else if (label.equals("t")) {
-               if (lockedFrame_ == -1) {
-                  lockedFrame_ = tSelector_.getValue();
-               } else {
-                  lockedFrame_ = -1;
-               }
-            }
-            resumeLocksAndAnimationAfterImageArrival();
-            refreshScrollbarIcons();
-         }
-      }); 
-   }
-   
-   //Used by icon to know hoe to paint itself
-   boolean isScrollbarLocked(String label) {
-      if (label.equals("z")) {
-         return lockedSlice_ > -1;
-      } else if (label.equals("c")) {
-         return lockedChannel_ > -1;
-      } else if (label.equals("p")) {
-         return lockedPosition_ > -1;
-      } else {
-         return lockedFrame_ > -1;
-      }
-   }
-
-   private ScrollbarWithLabel createPositionScrollbar() {
-      final ScrollbarWithLabel pSelector = new ScrollbarWithLabel(null, 1, 1, 1, 2, 'p') {
-         @Override
-         public void setValue(int v) {
-            if (this.getValue() != v) {
-               super.setValue(v);
-               updatePosition(v);
-            }
-         }
-      };
-
-      // prevents scroll bar from blinking on Windows:
-      pSelector.setFocusable(false);
-      pSelector.setUnitIncrement(1);
-      pSelector.setBlockIncrement(1);
-      pSelector.addAdjustmentListener(new AdjustmentListener() {
-         @Override
-         public void adjustmentValueChanged(AdjustmentEvent e) {
-            if (lockedPosition_ != -1) {
-               lockedPosition_ = pSelector_.getValue();
-            }
-            updatePosition(pSelector.getValue());
-         }
-      });
-
-      try {
-         Component icon = (Component) JavaUtils.getRestrictedFieldValue(
-                 pSelector, ScrollbarWithLabel.class, "icon");
-         pSelector.remove(icon);
-      } catch (NoSuchFieldException ex) {
-         ReportingUtils.logError(ex);
-      }
-
-      pIcon_ = new ScrollbarAnimateIcon('p', this);
-      pSelector.add(pIcon_, BorderLayout.WEST);
-      addSelectorLockIcon(pSelector, "p");
-      pSelector.invalidate();
-      pSelector.validate();
-
-
-      return pSelector;
-   }
-   ////////////////////////////////////////////////////////////////////////////////
-   ////////End of animation controls and scrollbars section///////////////////////
-   ////////////////////////////////////////////////////////////////////////////////
-   
    /**
     * Allows bypassing the prompt to Save
     * @param promptToSave boolean flag
@@ -1171,17 +681,6 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
                ReportingUtils.logError(ex);
             }
 
-            // This block allows animation to be reset to where it was before
-            // images were added
-            if (isTAnimated()) {
-               animatedFrameIndex_ = hyperImage_.getFrame();
-               setTimepointAnimation(false);
-            }
-            if (isZAnimated()) {
-               animatedSliceIndex_ = hyperImage_.getSlice();
-               setStackAnimation(false);
-            }
-
             //make sure pixels get properly set
             if (hyperImage_ != null && frame == 0) {
                IMMImagePlus img = (IMMImagePlus) hyperImage_;
@@ -1202,30 +701,6 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
                ci.reset();
             }
 
-
-
-            if (cSelector_ != null) {
-               if (cSelector_.getMaximum() <= (1 + superChannel)) {
-                  VirtualAcquisitionDisplay.this.setNumChannels(1 + superChannel);
-                  ((CompositeImage) hyperImage_).reset();
-                  //JavaUtils.invokeRestrictedMethod(hyperImage_, CompositeImage.class,
-                  //       "setupLuts", 1 + superChannel, Integer.TYPE);
-               }
-            }
-
-            if (!isSimpleDisplay_) {
-               if (tSelector_ != null) {
-                  if (tSelector_.getMaximum() <= (1 + frame)) {
-                     VirtualAcquisitionDisplay.this.setNumFrames(1 + frame);
-                  }
-               }
-               if (position + 1 > getNumPositions()) {
-                  setNumPositions(position + 1);
-               }
-               setPosition(position);
-               hyperImage_.setPosition(1 + superChannel, 1 + slice, 1 + frame);
-            }
-            
             if (frame == 0) {
                initializeContrast();
             }
@@ -1237,8 +712,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
                forceUpdate = true;
             }     
             updateAndDraw(forceUpdate);
-            resumeLocksAndAnimationAfterImageArrival();
-                      
+
             //get channelgroup name for use in loading contrast setttings
             if (firstImage_) {
                try {
@@ -1248,15 +722,6 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
                }
                firstImage_ = false;
             }
-            
-            if (cSelector_ != null) {
-               if (histograms_.getNumberOfChannels() < (1 + superChannel)) {
-                  if (histograms_ != null) {
-                     histograms_.setupChannelControls(imageCache_);
-                  }
-               }
-            }
-
          }
       });
    }
@@ -1325,7 +790,6 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       if (isSimpleDisplay_) {
          return;
       }
-      pSelector_.setValue(p);
    }
 
    public void setSliceIndex(int i) {
@@ -1716,30 +1180,6 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       window.forceClosed();
    }
 
-   // Toggle one of our animation bits. Publish an event so our DisplayWindows
-   // (and anyone else who cares) can be notified.
-   private void setTAnimated(boolean isTAnimated) {
-      tAnimated_ = isTAnimated;
-      bus_.post(new AnimationSetEvent(isAnimated()));
-   }
-
-   // Toggle one of our animation bits. Publish an event so our DisplayWindows
-   // (and anyone else who cares) can be notified.
-   private void setZAnimated(boolean isZAnimated) {
-      zAnimated_ = isZAnimated;
-      bus_.post(new AnimationSetEvent(isAnimated()));
-   }
-   
-   // Animation needs to be turned on/off.
-   @Subscribe
-   public void setAnimated(DisplayWindow.ToggleAnimatedEvent event) {
-      if (((IMMImagePlus) hyperImage_).getNFramesUnverified() > 1) {
-         setTimepointAnimation(event.shouldSetAnimated_);
-      } else {
-         setStackAnimation(event.shouldSetAnimated_);
-      }
-   }
-
    /*
     * Removes the VirtualAcquisitionDisplay from the Acquisition Manager.
     */
@@ -1782,10 +1222,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    }
 
    public int getNumPositions() {
-      if (isSimpleDisplay_) {
-         return 1;
-      }
-      return pSelector_.getMaximum();
+      return 1;
    }
 
    public ImagePlus getImagePlus() {
@@ -1870,26 +1307,10 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
 
    public void setPlaybackFPS(double fps) {
       framesPerSec_ = fps;
-      if (zAnimated_ || tAnimated_) {
-         setTimepointAnimation(false);
-         setTimepointAnimation(true);
-      }
    }
 
    public double getPlaybackFPS() {
       return framesPerSec_;
-   }
-
-   public boolean isZAnimated() {
-      return zAnimated_;
-   }
-
-   public boolean isTAnimated() {
-      return tAnimated_;
-   }
-
-   public boolean isAnimated() {
-      return isTAnimated() || isZAnimated();
    }
 
    public String getSummaryComment() {

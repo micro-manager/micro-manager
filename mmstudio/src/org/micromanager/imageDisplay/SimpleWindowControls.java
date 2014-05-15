@@ -52,6 +52,8 @@ public class SimpleWindowControls extends DisplayControls {
    private JButton liveButton_;
    private JLabel statusLabel_;
    private JLabel pixelInfoLabel_;
+
+   private EventBus bus_;
    
    /**
     * Draws buttons at the bottom of the live/snap window
@@ -60,6 +62,7 @@ public class SimpleWindowControls extends DisplayControls {
     */
    public SimpleWindowControls(VirtualAcquisitionDisplay virtAcq, EventBus bus) {
       virtAcq_ = virtAcq;
+      bus_ = bus;
       initComponents();
       showFolderButton_.setEnabled(false);
       bus.register(this);
@@ -68,8 +71,8 @@ public class SimpleWindowControls extends DisplayControls {
    
    private void initComponents() {
       
-      setPreferredSize(new java.awt.Dimension(512, 45));
-      
+      setPreferredSize(new java.awt.Dimension(512, 150));
+     
       showFolderButton_ = new JButton();
       showFolderButton_.setBackground(new java.awt.Color(255, 255, 255));
       showFolderButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/icons/folder.png"))); // NOI18N
@@ -179,6 +182,9 @@ public class SimpleWindowControls extends DisplayControls {
       textPanel.setLayout(new BorderLayout());
 
       this.add(pixelInfoLabel_, BorderLayout.NORTH);
+      this.add(new ScrollerPanel(
+               bus_, new String[]{"z"}, new Integer[]{10}), 
+            BorderLayout.NORTH);
       this.add(buttonPanel, BorderLayout.CENTER);
       this.add(textPanel,BorderLayout.SOUTH); 
       
@@ -196,7 +202,19 @@ public class SimpleWindowControls extends DisplayControls {
       textPanel.add(new JLabel(" "));
       textPanel.add(statusLabel_, BorderLayout.CENTER);      
    }
-  
+
+   /**
+    * Our ScrollerPanel is informing us that we need to display a different
+    * image.
+    */
+   @Subscribe
+   public void onSetImage(ScrollerPanel.SetImageEvent event) {
+      int channel = event.getPositionForAxis("c");
+      int frame = event.getPositionForAxis("t");
+      int slice = event.getPositionForAxis("z");
+      virtAcq_.getHyperImage().setPosition(channel, slice, frame);
+   }
+
    @Subscribe 
    public void onMouseMoved(MouseIntensityEvent event) {
       // TODO: Ideally there'd be some way to recognize multi-channel images 

@@ -51,21 +51,25 @@ public class HyperstackControls extends DisplayControls {
    public HyperstackControls(VirtualAcquisitionDisplay display, 
          EventBus bus) {
       super(new FlowLayout(FlowLayout.LEADING));
-      initComponents();
+      initComponents(bus);
       display_ = display;
       fpsField_.setText(NumberUtils.doubleToDisplayString(display_.getPlaybackFPS()));
       bus.register(this);
    }
 
-   private void initComponents() {
+   private void initComponents(EventBus bus) {
       // This layout minimizes space between components.
       JPanel subPanel = new JPanel(
             new MigLayout("", "0[]", "0[]0[]0"));
-      subPanel.setPreferredSize(new Dimension(512, 50));
+      subPanel.setPreferredSize(new Dimension(512, 100));
 
       pixelInfoLabel_ = new JLabel("                                     ");
       pixelInfoLabel_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
       subPanel.add(pixelInfoLabel_, "span 5, wrap");
+
+      subPanel.add(new ScrollerPanel(
+               bus, new String[]{"z", "t"}, new Integer[]{10, 10}), 
+            "wrap");
 
       showFolderButton_ = new JButton();
       saveButton_ = new JButton();
@@ -185,15 +189,29 @@ public class HyperstackControls extends DisplayControls {
 
    }
 
-   // User moused over the display; update our indication of pixel intensities.
-   // TODO: only providing the first intensity; what about multichannel 
-   // images?
+   /**
+    * User moused over the display; update our indication of pixel intensities.
+    * TODO: only providing the first intensity; what about multichannel 
+    * images?
+    */
    @Subscribe
    public void onMouseMoved(MouseIntensityEvent event) {
       pixelInfoLabel_.setText(String.format(
                "<%d, %d>: %d", event.x_, event.y_, event.intensities_[0]));
    }
-   
+  
+   /**
+    * Our ScrollerPanel is informing us that we need to display a different
+    * image.
+    */
+   @Subscribe
+   public void onSetImage(ScrollerPanel.SetImageEvent event) {
+      int channel = event.getPositionForAxis("c");
+      int frame = event.getPositionForAxis("t");
+      int slice = event.getPositionForAxis("z");
+      display_.getHyperImage().setPosition(channel, slice, frame);
+   }
+
    private void showFolderButton_ActionPerformed(java.awt.event.ActionEvent evt) {
       display_.showFolder();
    }
