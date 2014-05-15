@@ -54,6 +54,9 @@ public:
   int SetOrigin();
   int GetLimits(double& min, double& max);
 
+   int IsStageSequenceable(bool& isSequenceable) const { isSequenceable = false; return DEVICE_OK; }
+   bool IsContinuousFocusDrive() const { return false; }
+
    // action interface
    // ----------------
    int OnControllerName(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -64,16 +67,6 @@ public:
    int OnStageType(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnHoming(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnVelocity(MM::PropertyBase* pProp, MM::ActionType eAct);
-
-   // Sequence functions
-   int IsStageSequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
-   int GetStageSequenceMaxLength(long& nrEvents) const  {nrEvents = 0; return DEVICE_OK;}
-   int StartStageSequence() const {return DEVICE_OK;}
-   int StopStageSequence() const {return DEVICE_OK;}
-   int LoadStageSequence(std::vector<double> /*positions*/) const {return DEVICE_OK;}
-
-   bool IsContinuousFocusDrive() const {return false;}
-
 
 private:
    std::string axisName_;
