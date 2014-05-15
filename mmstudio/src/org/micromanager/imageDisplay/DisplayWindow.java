@@ -5,7 +5,10 @@ import com.google.common.eventbus.Subscribe;
 
 import ij.ImagePlus;
 import ij.gui.StackWindow;
+import java.awt.Component;
 import java.awt.event.WindowEvent;
+import java.lang.StackTraceElement;
+import java.lang.Thread;
 
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.utils.ReportingUtils;
@@ -113,16 +116,21 @@ public class DisplayWindow extends StackWindow {
 
    /**
     * HACK HACK HACK HACK HACK HACK ACK HACK HACK HACK HACK HACK ACK HACK
-    * Overriding this function "fixes" ImageJ code that assumes it knows what
-    * the components in the window are, even though we've changed them. 
-    * (Specifically, the "Orthogonal Views" functionality is what made us do
-    * this). 
-    * Who knows what ramifications this change has? Who else calls 
-    * getComponents and makes assumptions about what it will find there? 
+    * We override this function to "fix" the Orthogonal Views plugin, which
+    * assumes that item #2 in the array returned by getComponents() is the 
+    * cSelector object of an ImageJ StackWindow. Of course, actually changing
+    * this behavior for everyone else causes *them* to break horribly, hence
+    * why we have to examine the stack trace to determine our caller. Ugh!
     * HACK HACK HACK HACK HACK HACK ACK HACK HACK HACK HACK HACK ACK HACK
     */
    @Override
-   public java.awt.Component[] getComponents() {
-      return new java.awt.Component[] {ic, cSelector, tSelector, zSelector};
+   public Component[] getComponents() {
+      StackTraceElement[] stack = Thread.currentThread().getStackTrace();
+      for (StackTraceElement element : stack) {
+         if (element.getClassName().contains("Orthogonal_Views")) {
+            return new Component[] {ic, cSelector};
+         }
+      }
+      return super.getComponents();
    }
 }
