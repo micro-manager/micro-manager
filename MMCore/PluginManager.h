@@ -98,15 +98,19 @@ private:
    boost::shared_ptr<LoadedDeviceAdapter> LoadPluginLibrary(const char* libName);
    std::string FindInSearchPath(std::string filename);
 
-   typedef std::map< std::string, boost::shared_ptr<DeviceInstance> > CDeviceMap;
-   typedef std::vector< boost::shared_ptr<DeviceInstance> > DeviceVector;
-
    std::vector<std::string> preferredSearchPaths_;
    static std::vector<std::string> fallbackSearchPaths_;
 
-   CDeviceMap devices_;
-   DeviceVector devVector_;
    std::map< std::string, boost::shared_ptr<LoadedDeviceAdapter> > moduleMap_;
+
+   // Store devices in an ordered container. We could use a map or hash map to
+   // retrieve by name, but the number of devices is so small that it is not
+   // known to be worth it.
+   std::vector< std::pair<std::string, boost::shared_ptr<DeviceInstance> > > devices_;
+   typedef std::vector< std::pair<std::string, boost::shared_ptr<DeviceInstance> > >::const_iterator
+      DeviceConstIterator;
+   typedef std::vector< std::pair<std::string, boost::shared_ptr<DeviceInstance> > >::iterator
+      DeviceIterator;
 
    // Map raw device pointers to DeviceInstance objects, for those few places
    // where we need to retrieve device information from raw pointers.

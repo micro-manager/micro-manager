@@ -29,6 +29,7 @@
 #endif // WIN32
 
 #include "../MMDevice/ModuleInterface.h"
+#include "Devices/DeviceInstance.h"
 #include "Devices/HubInstance.h"
 #include "CoreUtils.h"
 #include "Error.h"
@@ -182,36 +183,16 @@ void CPluginManager::UnloadDevice(boost::shared_ptr<DeviceInstance> device)
    if (device == 0)
       return;
 
+   for (DeviceIterator it = devices_.begin(), end = devices_.end(); it != end; ++it)
    {
-      // remove the entry from the device map
-      CDeviceMap newDeviceMap;
-      CDeviceMap::const_iterator it;
-      for (it=devices_.begin(); it != devices_.end(); it++)
+      if (it->second == device)
       {
-         if (it->second != device)
-         {
-            newDeviceMap[it->first] = it->second;
-         }
+         deviceRawPtrIndex_.erase(it->second->GetRawPtr());
+         devices_.erase(it);
+         device->Shutdown(); // TODO Should be automatic
+         break;
       }
-      devices_ = newDeviceMap;
    }
-
-   {
-      // remove the entry from the device set
-      DeviceVector newDevVector;
-      DeviceVector::const_iterator it;
-      for (it = devVector_.begin(); it != devVector_.end(); it++)
-      {
-         if (*it != device)
-         {
-            newDevVector.push_back(*it);
-         }
-      }
-      devVector_ = newDevVector;
-   }
-
-   // TODO This should be automatic
-   device->Shutdown();
 }
 
 /**
@@ -223,26 +204,37 @@ void CPluginManager::UnloadAllDevices()
    // We plan unloading, and then carry it out, so as not to iterate
    // over a changing collection. Down with mutable collections.
    // XXX This ordering should be handled by strong references from device to
-   // device.
-   DeviceVector unloadStack;
+   // device. Also, peripehrals should explicitly be unloaded before hubs
+   // instead of relying on the load order.
 
-   DeviceVector::const_iterator it;
-   for (it = devVector_.begin(); it != devVector_.end(); ++it)
-      if (*it != 0 && (*it)->GetType() == MM::SerialDevice)
-         unloadStack.push_back(*it);
+   std::vector< boost::shared_ptr<DeviceInstance> > nonSerialDevices;
+   std::vector< boost::shared_ptr<DeviceInstance> > serialDevices;
+   for (DeviceIterator it = devices_.begin(), end = devices_.end(); it != end; ++it)
+   {
+      if (it->second->GetType() == MM::SerialDevice)
+      {
+         serialDevices.push_back(it->second);
+      }
+      else
+      {
+         nonSerialDevices.push_back(it->second);
+      }
+   }
 
-   for (it = devVector_.begin(); it != devVector_.end(); ++it)
-      if (*it != 0 && (*it)->GetType() != MM::SerialDevice)
-         unloadStack.push_back(*it);
+   deviceRawPtrIndex_.clear();
+   devices_.clear();
 
    // Now the only remaining references to the device objects should be in
-   // unloadStack.
-   while (unloadStack.size() > 0) {
-      boost::shared_ptr<DeviceInstance> device = unloadStack.back();
-      unloadStack.pop_back();
-
-      // TODO This should be automatic
-      device->Shutdown();
+   // serialDevices and nonSerialDevices.
+   while (nonSerialDevices.size() > 0)
+   {
+      nonSerialDevices.back()->Shutdown(); // TODO Should be automatic
+      nonSerialDevices.pop_back();
+   }
+   while (serialDevices.size() > 0)
+   {
+      serialDevices.back()->Shutdown(); // TODO Should be automatic
+      serialDevices.pop_back();
    }
 }
 
@@ -257,12 +249,9 @@ void CPluginManager::UnloadAllDevices()
 boost::shared_ptr<DeviceInstance>
 CPluginManager::LoadDevice(CMMCore* core, const char* label, const char* moduleName, const char* deviceName)
 {
-   // check if the requested label is already taken
-   CDeviceMap::const_iterator it;
-   it = devices_.find(label);
-   if (it != devices_.end())
+   for (DeviceConstIterator it = devices_.begin(), end = devices_.end(); it != end; ++it)
    {
-      if( NULL != it->second)
+      if (it->first == label)
          throw CMMError("The specified label " + ToQuotedString(label) + " is already in use",
                MMERR_DuplicateLabel);
    }
@@ -278,11 +267,8 @@ CPluginManager::LoadDevice(CMMCore* core, const char* label, const char* moduleN
    module->GetDeviceDescription(deviceName, descr, MM::MaxStrLength);
    pDevice->SetDescription(descr);
 
-   // assign label
-   devices_[label] = pDevice;
-   devVector_.push_back(pDevice);
-   deviceRawPtrIndex_[pDevice->GetRawPtr()] = pDevice;
-
+   devices_.push_back(std::make_pair(label, pDevice));
+   deviceRawPtrIndex_.insert(std::make_pair(pDevice->GetRawPtr(), pDevice));
    return pDevice;
 }
 
@@ -294,15 +280,16 @@ CPluginManager::LoadDevice(CMMCore* core, const char* label, const char* moduleN
 boost::shared_ptr<DeviceInstance>
 CPluginManager::GetDevice(const std::string& label) const throw (CMMError)
 {
-   CDeviceMap::const_iterator it;
-   it = devices_.find(label);
-   if (it == devices_.end() || it->second == 0)
+   for (DeviceConstIterator it = devices_.begin(), end = devices_.end(); it != end; ++it)
    {
-      string msg = string("No device with label \"") + label + "\"";
-      throw CMMError(msg.c_str(), MMERR_InvalidLabel);
+      if (it->first == label)
+      {
+         return it->second;
+      }
    }
 
-   return it->second;
+   string msg = string("No device with label \"") + label + "\"";
+   throw CMMError(msg.c_str(), MMERR_InvalidLabel);
 }
 
 boost::shared_ptr<DeviceInstance>
@@ -325,12 +312,11 @@ CPluginManager::GetDevice(const MM::Device* rawPtr) const throw (CMMError)
 vector<string> CPluginManager::GetDeviceList(MM::DeviceType type) const
 {
    vector<string> labels;
-   DeviceVector::const_iterator it;
-   for (it = devVector_.begin(); it != devVector_.end(); ++it)
+   for (DeviceConstIterator it = devices_.begin(), end = devices_.end(); it != end; ++it)
    {
-      if (type == MM::AnyType || type == (*it)->GetType())
+      if (type == MM::AnyType || it->second->GetType() == type)
       {
-         labels.push_back((*it)->GetLabel());
+         labels.push_back(it->first);
       }
    }
    return labels;
@@ -350,43 +336,35 @@ CPluginManager::GetParentDevice(boost::shared_ptr<DeviceInstance> dev) const
    if (strlen(parentLabel) == 0)
    {
       // no parent specified, but we will try to infer one anyway
-      vector<string> hubList = GetDeviceList(MM::HubDevice);
+      // TODO So what happens if there is more than one hub in a given device
+      // adapter? Answer: bad things.
       boost::shared_ptr<HubInstance> parentHub;
-      for (vector<string>::size_type i = 0; i<hubList.size(); i++)
+      for (DeviceConstIterator it = devices_.begin(), end = devices_.end(); it != end; ++it)
       {
-         boost::shared_ptr<HubInstance> pHub = boost::static_pointer_cast<HubInstance>(devices_.find(hubList[i])->second);
-
-         if (dev->GetAdapterModule() == pHub->GetAdapterModule())
+         if (it->second->GetType() == MM::HubDevice &&
+               dev->GetAdapterModule() == it->second->GetAdapterModule())
          {
-            if (parentHub == 0)
-               parentHub = pHub;
-            else
-               // XXX This should be a throw
-               return boost::shared_ptr<HubInstance>(); // more than one hub matches, so we can't really tell
+            parentHub = boost::static_pointer_cast<HubInstance>(it->second);
          }
       }
+      // This returns the last matching hub; not sure why it was coded that
+      // way, and it probably should be an error if there are more than 1.
+      // TODO We should probably throw when parentHub is null.
       return parentHub;
    }
    else
    {
-      // parent label is specified, we'll try to get the actual device
-      CDeviceMap::const_iterator it;
-      it = devices_.find(parentLabel);
-      if (it == devices_.end() || it->second == 0 || it->second->GetType() != MM::HubDevice)
-         // XXX This should be a throw
-         return boost::shared_ptr<HubInstance>(); // no such device
-      else
+      for (DeviceConstIterator it = devices_.begin(), end = devices_.end(); it != end; ++it)
       {
-         // make sure that hub belongs to the same library
-         // (this is to avoid using dynamic_cast<> in device code)
-         boost::shared_ptr<HubInstance> pHub = boost::static_pointer_cast<HubInstance>(it->second);
-
-         if (dev->GetAdapterModule() == pHub->GetAdapterModule())
-            return pHub;
-         else
-            // XXX This sould be a throw
-            return boost::shared_ptr<HubInstance>(); // the hub is from a different library, so it won;t work
+         if (it->first == parentLabel &&
+               it->second->GetType() == MM::HubDevice &&
+               it->second->GetAdapterModule() == dev->GetAdapterModule())
+         {
+            return boost::static_pointer_cast<HubInstance>(it->second);
+         }
       }
+      // TODO We should probably throw when the parent is missing.
+      return boost::shared_ptr<HubInstance>();
    }
 }
 
@@ -414,14 +392,13 @@ vector<string> CPluginManager::GetLoadedPeripherals(const char* label) const
       return labels;
    }
 
-   DeviceVector::const_iterator it;
-   for (it = devVector_.begin(); it != devVector_.end(); it++)
+   for (DeviceConstIterator it = devices_.begin(), end = devices_.end(); it != end; ++it)
    {
       char parentID[MM::MaxStrLength];
-      (*it)->GetParentID(parentID);
+      it->second->GetParentID(parentID);
       if (strncmp(label, parentID, MM::MaxStrLength) == 0)
       {
-         labels.push_back((*it)->GetLabel());
+         labels.push_back(it->second->GetLabel());
       }
    }
 
