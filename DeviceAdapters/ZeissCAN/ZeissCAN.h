@@ -249,8 +249,8 @@ public:
    int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
-   int SetPosition(int position);
-   int GetPosition(int &position);
+   int SetTurretPosition(int position);
+   int GetTurretPosition(int &position);
    bool GetPresence(bool& present);
    bool initialized_;
    std::string name_;
@@ -279,8 +279,8 @@ public:
    int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
-   int SetPosition(int position);
-   int GetPosition(int &position);
+   int SetTurretPosition(int position);
+   int GetTurretPosition(int &position);
    bool initialized_;
    std::string name_;
    long pos_;
@@ -308,8 +308,8 @@ public:
    int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
-   int SetPosition(int position);
-   int GetPosition(int &position);
+   int SetTurretPosition(int position);
+   int GetTurretPosition(int &position);
    bool initialized_;
    std::string name_;
    long pos_;
@@ -337,8 +337,8 @@ public:
    int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
-   int SetPosition(int position);
-   int GetPosition(int &position);
+   int SetTurretPosition(int position);
+   int GetTurretPosition(int &position);
    bool GetPresence(bool& present);
    bool initialized_;
    std::string name_;
@@ -368,8 +368,8 @@ public:
    int OnAperture(MM::PropertyBase *pProp, MM::ActionType eAct);
 
 private:
-   int SetPosition(int position);
-   int GetPosition(int &position);
+   int SetTurretPosition(int position);
+   int GetTurretPosition(int &position);
    bool GetPresence(bool& present);
 
    int SetAperture(long aperture);
@@ -405,8 +405,8 @@ public:
    int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
-   int SetPosition(int position);
-   int GetPosition(int &position);
+   int SetTurretPosition(int position);
+   int GetTurretPosition(int &position);
    bool GetPresence(bool& present);
    bool initialized_;
    std::string name_;
@@ -435,8 +435,8 @@ public:
    int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
-   int SetPosition(int position);
-   int GetPosition(int &position);
+   int SetTurretPosition(int position);
+   int GetTurretPosition(int &position);
    bool GetPresence(bool& present);
    bool initialized_;
    std::string name_;
@@ -465,8 +465,8 @@ public:
    int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
-   int SetPosition(int position);
-   int GetPosition(int &position);
+   int SetTurretPosition(int position);
+   int GetTurretPosition(int &position);
    bool GetPresence(bool& present);
    bool initialized_;
    std::string name_;
@@ -549,8 +549,8 @@ public:
    int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
-   int SetPosition(int position);
-   int GetPosition(int &position);
+   int SetTurretPosition(int position);
+   int GetTurretPosition(int &position);
    bool GetPresence(bool& present);
    int wheelNr_;
    bool initialized_;

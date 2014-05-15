@@ -1788,7 +1788,7 @@ bool ReflectorTurret::Busy()
    return busy;
 }
 
-int ReflectorTurret::SetPosition(int position)
+int ReflectorTurret::SetTurretPosition(int position)
 {
    int ret = g_turret.SetPosition(*this, *GetCoreCallback(), turretId_, position);
    if (ret != DEVICE_OK)
@@ -1797,7 +1797,7 @@ int ReflectorTurret::SetPosition(int position)
    return DEVICE_OK;
 }
 
-int ReflectorTurret::GetPosition(int& position)
+int ReflectorTurret::GetTurretPosition(int& position)
 {
    position = 0;
    int count = 0;
@@ -1833,7 +1833,7 @@ int ReflectorTurret::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
    if (eAct == MM::BeforeGet)
    {
       int pos;
-      int ret = GetPosition(pos);
+      int ret = GetTurretPosition(pos);
       if (ret != DEVICE_OK)
          return ret;
       pos_ = pos -1;
@@ -1844,7 +1844,7 @@ int ReflectorTurret::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
       pProp->Get(pos_);
       int pos = pos_ + 1;
       if ((pos > 0) && (pos <= numPos_))
-         return SetPosition(pos);
+         return SetTurretPosition(pos);
       else
          return ERR_INVALID_TURRET_POSITION;
    }
@@ -1964,7 +1964,7 @@ bool SidePortTurret::Busy()
    return busy;
 }
 
-int SidePortTurret::SetPosition(int position)
+int SidePortTurret::SetTurretPosition(int position)
 {
    int ret = g_turret.SetPosition(*this, *GetCoreCallback(), turretId_, position);
    if (ret != DEVICE_OK)
@@ -1973,7 +1973,7 @@ int SidePortTurret::SetPosition(int position)
    return DEVICE_OK;
 }
 
-int SidePortTurret::GetPosition(int& position)
+int SidePortTurret::GetTurretPosition(int& position)
 {
    int ret = g_turret.GetPosition(*this, *GetCoreCallback(), turretId_, position);
    if (ret != DEVICE_OK)
@@ -1990,7 +1990,7 @@ int SidePortTurret::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
    if (eAct == MM::BeforeGet)
    {
       int pos;
-      int ret = GetPosition(pos);
+      int ret = GetTurretPosition(pos);
       if (ret != DEVICE_OK)
          return ret;
       pos_ = pos -1;
@@ -2001,7 +2001,7 @@ int SidePortTurret::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
       pProp->Get(pos_);
       int pos = pos_ + 1;
       if ((pos > 0) && (pos <= numPos_))
-         return SetPosition(pos);
+         return SetTurretPosition(pos);
       else
          return ERR_INVALID_TURRET_POSITION;
    }
@@ -2120,7 +2120,7 @@ bool BasePortSlider::Busy()
    return busy;
 }
 
-int BasePortSlider::SetPosition(int position)
+int BasePortSlider::SetTurretPosition(int position)
 {
    int ret = g_turret.SetPosition(*this, *GetCoreCallback(), turretId_, position);
    if (ret != DEVICE_OK)
@@ -2129,7 +2129,7 @@ int BasePortSlider::SetPosition(int position)
    return DEVICE_OK;
 }
 
-int BasePortSlider::GetPosition(int& position)
+int BasePortSlider::GetTurretPosition(int& position)
 {
    int ret = g_turret.GetPosition(*this, *GetCoreCallback(), turretId_, position);
    if (ret != DEVICE_OK)
@@ -2147,7 +2147,7 @@ int BasePortSlider::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
    if (eAct == MM::BeforeGet)
    {
       int pos;
-      int ret = GetPosition(pos);
+      int ret = GetTurretPosition(pos);
       if (ret != DEVICE_OK)
          return ret;
       pos_ = pos -1;
@@ -2158,7 +2158,7 @@ int BasePortSlider::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
       pProp->Get(pos_);
       int pos = pos_ + 1;
       if ((pos > 0) && (pos <= numPos_))
-         return SetPosition(pos);
+         return SetTurretPosition(pos);
       else
          return ERR_INVALID_TURRET_POSITION;
    }
@@ -2278,7 +2278,7 @@ bool ObjectiveTurret::Busy()
    return busy;
 }
 
-int ObjectiveTurret::SetPosition(int position)
+int ObjectiveTurret::SetTurretPosition(int position)
 {
    int ret = g_turret.SetPosition(*this, *GetCoreCallback(), turretId_, position);
    if (ret != DEVICE_OK)
@@ -2287,7 +2287,7 @@ int ObjectiveTurret::SetPosition(int position)
    return DEVICE_OK;
 }
 
-int ObjectiveTurret::GetPosition(int& position)
+int ObjectiveTurret::GetTurretPosition(int& position)
 {
    int ret = g_turret.GetPosition(*this, *GetCoreCallback(), turretId_, position);
    if (ret != DEVICE_OK)
@@ -2305,7 +2305,7 @@ int ObjectiveTurret::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
    if (eAct == MM::BeforeGet)
    {
       int pos;
-      int ret = GetPosition(pos);
+      int ret = GetTurretPosition(pos);
       if (ret != DEVICE_OK)
          return ret;
       pos_ = pos -1;
@@ -2316,7 +2316,7 @@ int ObjectiveTurret::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
       pProp->Get(pos_);
       int pos = pos_ + 1;
       if ((pos > 0) && (pos <= numPos_))
-         return SetPosition(pos);
+         return SetTurretPosition(pos);
       else
          return ERR_INVALID_TURRET_POSITION;
    }
@@ -2435,7 +2435,7 @@ bool OptovarTurret::Busy()
    return busy;
 }
 
-int OptovarTurret::SetPosition(int position)
+int OptovarTurret::SetTurretPosition(int position)
 {
    int ret = g_turret.SetPosition(*this, *GetCoreCallback(), turretId_, position);
    if (ret != DEVICE_OK)
@@ -2444,7 +2444,7 @@ int OptovarTurret::SetPosition(int position)
    return DEVICE_OK;
 }
 
-int OptovarTurret::GetPosition(int& position)
+int OptovarTurret::GetTurretPosition(int& position)
 {
    int ret = g_turret.GetPosition(*this, *GetCoreCallback(), turretId_, position);
    if (ret != DEVICE_OK)
@@ -2462,7 +2462,7 @@ int OptovarTurret::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
    if (eAct == MM::BeforeGet)
    {
       int pos;
-      int ret = GetPosition(pos);
+      int ret = GetTurretPosition(pos);
       if (ret != DEVICE_OK)
          return ret;
       pos_ = pos -1;
@@ -2473,7 +2473,7 @@ int OptovarTurret::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
       pProp->Get(pos_);
       int pos = pos_ + 1;
       if ((pos > 0) && (pos <= numPos_))
-         return SetPosition(pos);
+         return SetTurretPosition(pos);
       else
          return ERR_INVALID_TURRET_POSITION;
    }
@@ -2592,7 +2592,7 @@ bool TubelensTurret::Busy()
    return busy;
 }
 
-int TubelensTurret::SetPosition(int position)
+int TubelensTurret::SetTurretPosition(int position)
 {
    int ret = g_turret.SetPosition(*this, *GetCoreCallback(), turretId_, position);
    if (ret != DEVICE_OK)
@@ -2601,7 +2601,7 @@ int TubelensTurret::SetPosition(int position)
    return DEVICE_OK;
 }
 
-int TubelensTurret::GetPosition(int& position)
+int TubelensTurret::GetTurretPosition(int& position)
 {
    int ret = g_turret.GetPosition(*this, *GetCoreCallback(), turretId_, position);
    if (ret != DEVICE_OK)
@@ -2619,7 +2619,7 @@ int TubelensTurret::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
    if (eAct == MM::BeforeGet)
    {
       int pos;
-      int ret = GetPosition(pos);
+      int ret = GetTurretPosition(pos);
       if (ret != DEVICE_OK)
          return ret;
       pos_ = pos -1;
@@ -2630,7 +2630,7 @@ int TubelensTurret::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
       pProp->Get(pos_);
       int pos = pos_ + 1;
       if ((pos > 0) && (pos <= numPos_))
-         return SetPosition(pos);
+         return SetTurretPosition(pos);
       else
          return ERR_INVALID_TURRET_POSITION;
    }
@@ -2763,7 +2763,7 @@ bool CondenserTurret::Busy()
    return aperture_busy || turret_busy;
 }
 
-int CondenserTurret::SetPosition(int position)
+int CondenserTurret::SetTurretPosition(int position)
 {
    int ret = g_turret.SetPosition(*this, *GetCoreCallback(), turretId_, position);
    if (ret != DEVICE_OK)
@@ -2772,7 +2772,7 @@ int CondenserTurret::SetPosition(int position)
    return DEVICE_OK;
 }
 
-int CondenserTurret::GetPosition(int& position)
+int CondenserTurret::GetTurretPosition(int& position)
 {
    int ret = g_turret.GetPosition(*this, *GetCoreCallback(), turretId_, position);
    if (ret != DEVICE_OK)
@@ -2836,7 +2836,7 @@ int CondenserTurret::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
    if (eAct == MM::BeforeGet)
    {
       int pos;
-      int ret = GetPosition(pos);
+      int ret = GetTurretPosition(pos);
       if (ret != DEVICE_OK)
          return ret;
       pos_ = pos -1;
@@ -2847,7 +2847,7 @@ int CondenserTurret::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
       pProp->Get(pos_);
       int pos = pos_ + 1;
       if ((pos > 0) && (pos <= numPos_))
-         return SetPosition(pos);
+         return SetTurretPosition(pos);
       else
          return ERR_INVALID_TURRET_POSITION;
    }
@@ -2989,7 +2989,7 @@ bool LampMirror::Busy()
    return busy;
 }
 
-int LampMirror::SetPosition(int position)
+int LampMirror::SetTurretPosition(int position)
 {
    int ret = g_turret.SetPosition(*this, *GetCoreCallback(), turretId_, position);
    if (ret != DEVICE_OK)
@@ -2998,7 +2998,7 @@ int LampMirror::SetPosition(int position)
    return DEVICE_OK;
 }
 
-int LampMirror::GetPosition(int& position)
+int LampMirror::GetTurretPosition(int& position)
 {
    int ret = g_turret.GetPosition(*this, *GetCoreCallback(), turretId_, position);
    if (ret != DEVICE_OK)
@@ -3016,7 +3016,7 @@ int LampMirror::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
    if (eAct == MM::BeforeGet)
    {
       int pos;
-      int ret = GetPosition(pos);
+      int ret = GetTurretPosition(pos);
       if (ret != DEVICE_OK)
          return ret;
       pos_ = pos -1;
@@ -3027,7 +3027,7 @@ int LampMirror::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
       pProp->Get(pos_);
       int pos = pos_ + 1;
       if ((pos > 0) && (pos <= numPos_))
-         return SetPosition(pos);
+         return SetTurretPosition(pos);
       else
          return ERR_INVALID_TURRET_POSITION;
    }
@@ -3521,7 +3521,7 @@ bool FilterWheel::Busy()
    return busy;
 }
 
-int FilterWheel::SetPosition(int position)
+int FilterWheel::SetTurretPosition(int position)
 {
    int ret = g_turret.SetPosition(*this, *GetCoreCallback(), turretId_, position);
    if (ret != DEVICE_OK)
@@ -3530,7 +3530,7 @@ int FilterWheel::SetPosition(int position)
    return DEVICE_OK;
 }
 
-int FilterWheel::GetPosition(int& position)
+int FilterWheel::GetTurretPosition(int& position)
 {
    int ret = g_turret.GetPosition(*this, *GetCoreCallback(), turretId_, position);
    if (ret != DEVICE_OK)
@@ -3548,7 +3548,7 @@ int FilterWheel::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
    if (eAct == MM::BeforeGet)
    {
       int pos;
-      int ret = GetPosition(pos);
+      int ret = GetTurretPosition(pos);
       if (ret != DEVICE_OK)
          return ret;
       pos_ = pos -1;
@@ -3559,7 +3559,7 @@ int FilterWheel::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
       pProp->Get(pos_);
       int pos = pos_ + 1;
       if ((pos > 0) && (pos <= numPos_))
-         return SetPosition(pos);
+         return SetTurretPosition(pos);
       else
          return ERR_INVALID_TURRET_POSITION;
    }
