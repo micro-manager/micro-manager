@@ -1092,15 +1092,13 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       // Ask if the user wants to save data.
       if (imageCache_.getDiskLocation() == null && 
             promptToSave_ && !albumSaved_) {
-         String[] options = {"Save single", "Save multi", "No", "Cancel"};
-         int result = JOptionPane.showOptionDialog(
-               event.window_, "This data set has not yet been saved. " + 
-               "Do you want to save it?\n" + 
-               "Data can be saved as single-image files or multi-image files.",
+         String[] options = { "Save Separate Files", "Save Stack File", "Discard", "Cancel" };
+         int result = JOptionPane.showOptionDialog(event.window_,
+               "Do you want to save this data set before closing?",
                "Micro-Manager", 
-               JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null,
-               options, options[0]);
-
+               JOptionPane.DEFAULT_OPTION,
+	       JOptionPane.QUESTION_MESSAGE, null,
+               options, options[1]);
          if (result == 0) {
             if (!saveAs(TaggedImageStorageDiskDefault.class, true)) {
                return;
