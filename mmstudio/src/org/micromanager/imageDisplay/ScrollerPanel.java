@@ -5,6 +5,8 @@ import com.google.common.eventbus.Subscribe;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import javax.swing.JPanel;
 
@@ -50,9 +52,11 @@ class ScrollerPanel extends JPanel {
    // All AxisScrollers we manage.
    private ArrayList<AxisScroller> scrollers_;
    // Timer for handling animation.
-   private java.util.Timer timer_ = null;
+   private Timer animationUpdateTimer_ = null;
+   // Timer for restoring scrollbars after forcing their positions.
+   private Timer snapBackTimer_ = null;
    // Rate at which we update images when animating. Defaults to 10.
-   private double framesPerSec_ = 10;
+   private double framesPerSec_;
 
    /**
     * @param axes List of Strings labeling the axes that the caller wants to 
@@ -60,12 +64,14 @@ class ScrollerPanel extends JPanel {
     * @param maximums List of Integers indicating the number of images along
     *        that axis. 
     */
-   public ScrollerPanel(EventBus bus, String[] axes, Integer[] maximums) {
+   public ScrollerPanel(EventBus bus, String[] axes, Integer[] maximums, 
+         double framesPerSec) {
       // Minimize whitespace around our components.
       super(new net.miginfocom.swing.MigLayout("", "0[]0", "0[]0"));
       
       bus_ = bus;
       bus_.register(this);
+      framesPerSec_ = framesPerSec;
       scrollers_ = new ArrayList<AxisScroller>();
 
       // Create all desired AxisScrollers. Use the first character of the 
@@ -118,11 +124,11 @@ class ScrollerPanel extends JPanel {
     * scroller according to our update rate (FPS). 
     */
    private void resetAnimationTimer() {
-      if (timer_ != null) {
+      if (animationUpdateTimer_ != null) {
          // Stop the previous timer.
-         timer_.cancel();
+         animationUpdateTimer_.cancel();
       }
-      timer_ = new java.util.Timer();
+      animationUpdateTimer_ = new Timer();
       // Enforce a maximum displayed framerate of 30FPS; for higher rates, we
       // instead skip over images in animation.
       int stepSize = 1;
@@ -139,7 +145,7 @@ class ScrollerPanel extends JPanel {
          // can't cast a boolean to an int.
          offsets[i] = (scrollers_.get(i).getIsAnimated() ? 1 : 0) * stepSize;
       }
-      java.util.TimerTask task = new java.util.TimerTask() {
+      TimerTask task = new TimerTask() {
          @Override
          public void run() {
             for (int i = 0; i < scrollers_.size(); ++i) {
@@ -153,7 +159,7 @@ class ScrollerPanel extends JPanel {
             postSetImageEvent();
          }
       };
-      timer_.schedule(task, 0, interval);
+      animationUpdateTimer_.schedule(task, 0, interval);
    }
 
    /**
@@ -175,11 +181,26 @@ class ScrollerPanel extends JPanel {
             // the current maximum, so we need a new maximum.
             scroller.setMaximum(imagePosition + 1);
          }
-         scroller.setPosition(imagePosition, true);
+         scroller.forcePosition(imagePosition);
       }
       if (didShowNewScrollers) {
          bus_.post(new LayoutChangedEvent());
       }
+      // Start up a timer to restore the scrollers to their original positions,
+      // if applicable. 
+      if (snapBackTimer_ != null) {
+         snapBackTimer_.cancel();
+      }
+      snapBackTimer_ = new Timer();
+      TimerTask task = new TimerTask() {
+         @Override
+         public void run() {
+            for (AxisScroller scroller : scrollers_) {
+               scroller.restorePosition();
+            }
+         }
+      };
+      snapBackTimer_.schedule(task, 500);
    }
 
    /**
@@ -196,7 +217,7 @@ class ScrollerPanel extends JPanel {
    public void setPosition(String axis, int position) {
       for (AxisScroller scroller : scrollers_) {
          if (scroller.getAxis().equals(axis)) {
-            scroller.setPosition(position, false);
+            scroller.setPosition(position);
             break;
          }
       }

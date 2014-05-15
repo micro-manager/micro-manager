@@ -63,8 +63,12 @@ public class AxisScroller extends JPanel {
    // Indicates if the position of the scrollbar is currently locked (which
    // in turn excludes animation).
    private boolean isLocked_;
-   // Timer for temporarily overriding our lock.
-   private java.util.Timer lockOverrideTimer_ = null;
+   // A scrollbar position that we remembered, for later use. This is used so
+   // that we can snap to a new image when it arrives, and then restore our
+   // original position after awhile (see the ScrollerPanel which handles the
+   // relevant timer).
+   // We use -1 to indicate "we have no remembered position currently".
+   private int rememberedPosition_ = -1;
    // Indicates if we should ignore the next scrollbar position update event
    // we receive.
    private boolean shouldIgnoreScrollbarEvent_;
@@ -198,33 +202,39 @@ public class AxisScroller extends JPanel {
    }
 
    /**
-    * Set the position of this scroller to the specified position.
-    * @param shouldOverrideLockTemporarily - If true, then if we're locked, 
-    *        we still move to the given position, but will snap back to the 
-    *        locked position after 500ms. If false, then we won't move if 
-    *        we're locked.
+    * Set the position of this scroller to the specified position. Do not 
+    * move, if we are locked.
     */
-   public void setPosition(int newPosition, boolean shouldOverrideLockTemporarily) {
-      final int origPosition = scrollbar_.getValue();
-      if (shouldOverrideLockTemporarily) {
+   public void setPosition(int newPosition) {
+      if (!isLocked_) {
          scrollbar_.setValue(newPosition);
-         if (isLocked_) {
-            // Set up a timer to snap us back. 
-            if (lockOverrideTimer_ != null) {
-               lockOverrideTimer_.cancel();
-            }
-            lockOverrideTimer_ = new java.util.Timer();
-            java.util.TimerTask task = new java.util.TimerTask() {
-               @Override
-                  public void run() {
-                     scrollbar_.setValue(origPosition);
-                  }
-            };
-            lockOverrideTimer_.schedule(task, 500);
-         }
       }
-      else if (!isLocked_) {
-         scrollbar_.setValue(newPosition);
+   }
+
+   /**
+    * Set the position of this scroller to the specified position, even if 
+    * we are locked -- but remember our original position so it can be 
+    * restored later. Only remember if we don't already have a remembered
+    * position (i.e. don't overwrite existing remembered positions), and we 
+    * are currently animated or locked -- i.e. we have a position we would 
+    * rather be at than the one we're being told to be at. 
+    */
+   public void forcePosition(int newPosition) {
+      if (rememberedPosition_ == -1 && (isAnimated_ || isLocked_)) {
+         rememberedPosition_ = scrollbar_.getValue();
+      }
+      scrollbar_.setValue(newPosition);
+   }
+
+   /**
+    * Restore a position that we remembered previously, and then delete the 
+    * remembered position so it can be re-set by a future call to 
+    * forcePosition.
+    */
+   public void restorePosition() {
+      if (rememberedPosition_ != -1) {
+         scrollbar_.setValue(rememberedPosition_);
+         rememberedPosition_ = -1;
       }
    }
 

@@ -39,6 +39,8 @@ import org.micromanager.utils.ReportingUtils;
 
 public class HyperstackControls extends DisplayControls {
 
+   private final static int DEFAULT_FPS = 10;
+
    private final VirtualAcquisitionDisplay display_;
    private EventBus bus_;
 
@@ -84,7 +86,7 @@ public class HyperstackControls extends DisplayControls {
 
       scrollerPanel_ = new ScrollerPanel(
                bus_, new String[]{"channel", "position", "time", "z"}, 
-               new Integer[]{1, 1, 1, 1});
+               new Integer[]{1, 1, 1, 1}, DEFAULT_FPS);
       subPanel.add(scrollerPanel_, "span, growx, wrap 0px");
 
       showFolderButton_ = new JButton();
@@ -216,7 +218,7 @@ public class HyperstackControls extends DisplayControls {
     * snap/live window).
     */
    private void makeStandardButtons(JPanel subPanel) {
-      fpsField_ = new javax.swing.JTextField(8);
+      fpsField_ = new javax.swing.JTextField(String.valueOf(DEFAULT_FPS), 8);
       fpsLabel_ = new JLabel();
       abortButton_ = new JButton();
       pauseAndResumeToggleButton_ = new javax.swing.JToggleButton();
