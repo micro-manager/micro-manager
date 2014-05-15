@@ -61,7 +61,8 @@ class ScrollerPanel extends JPanel {
     *        that axis. 
     */
    public ScrollerPanel(EventBus bus, String[] axes, Integer[] maximums) {
-      super(new net.miginfocom.swing.MigLayout());
+      // Minimize whitespace around our components.
+      super(new net.miginfocom.swing.MigLayout("", "0[]0", "0[]0"));
       
       bus_ = bus;
       bus_.register(this);
