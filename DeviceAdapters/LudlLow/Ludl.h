@@ -74,8 +74,10 @@ int changeCommandLevel(MM::Device& device, MM::Core& core, const char* commandLe
 const int nrShuttersPerDevice = 3;
 const int nrWheelsPerDevice = 2;
 const int nrDevicesPerController = 5;
-bool shuttersUsed [nrDevicesPerController][nrShuttersPerDevice] = { false };
-bool wheelsUsed [nrDevicesPerController][nrWheelsPerDevice] = { false };
+
+// Rely on zero initialization
+bool shuttersUsed [nrDevicesPerController][nrShuttersPerDevice];
+bool wheelsUsed [nrDevicesPerController][nrWheelsPerDevice];
 
 class Hub : public CGenericBase<Hub>
 {
