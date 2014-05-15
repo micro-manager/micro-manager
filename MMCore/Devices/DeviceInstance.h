@@ -21,6 +21,8 @@
 
 #include "../../MMDevice/MMDeviceConstants.h"
 
+#include <string>
+#include <vector>
 #include <boost/function.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/utility.hpp>
@@ -122,6 +124,11 @@ protected:
       void ThrowBufferOverflowError() const;
    };
 
+public:
+   /*
+    * High-level interface to MM::Device methods.
+    */
+   std::vector<std::string> GetPropertyNames() const;
 
    /*
     * Wrappers for MM::Device member functions.
@@ -142,13 +149,15 @@ protected:
     * TODO Error handling
     * TODO Type conversion (char* <-> std::string) (need to update client code)
     */
-
-public:
+private:
    unsigned GetNumberOfProperties() const;
+public:
    int GetProperty(const char* name, char* value) const;
    int SetProperty(const char* name, const char* value) const;
    bool HasProperty(const char* name) const;
-   bool GetPropertyName(unsigned idx, char* name) const;
+private:
+   std::string GetPropertyName(size_t idx) const;
+public:
    int GetPropertyReadOnly(const char* name, bool& readOnly) const;
    int GetPropertyInitStatus(const char* name, bool& preInit) const;
    int HasPropertyLimits(const char* name, bool& hasLimits) const;

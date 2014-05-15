@@ -444,16 +444,16 @@ Configuration CMMCore::getSystemState()
    {
       boost::shared_ptr<DeviceInstance> pDev = pluginManager_.GetDevice(*i);
       MMThreadGuard guard(pluginManager_.getModuleLock(pDev));
-      for (unsigned j=0; j<pDev->GetNumberOfProperties(); j++)
+      std::vector<std::string> propertyNames = pDev->GetPropertyNames();
+      for (std::vector<std::string>::const_iterator it = propertyNames.begin(), end = propertyNames.end();
+            it != end; ++it)
       {
-         char name[MM::MaxStrLength]="";
          char val[MM::MaxStrLength]="";
          bool readOnly;
-         pDev->GetPropertyName(j, name);
-         pDev->GetPropertyReadOnly(name, readOnly);
-         pDev->GetProperty(name, val);
-         config.addSetting(PropertySetting(i->c_str(), name, val, readOnly));
-     }   
+         pDev->GetPropertyReadOnly(it->c_str(), readOnly);
+         pDev->GetProperty(it->c_str(), val);
+         config.addSetting(PropertySetting(i->c_str(), it->c_str(), val, readOnly));
+      }
    }
 
    // add core properties
@@ -3080,19 +3080,10 @@ vector<string> CMMCore::getDevicePropertyNames(const char* label) throw (CMMErro
       return properties_->GetNames();
    boost::shared_ptr<DeviceInstance> pDevice = GetDeviceWithCheckedLabel(label);
 
-   vector<string> propList;
-
    {
       MMThreadGuard guard(pluginManager_.getModuleLock(pDevice));
-      for (unsigned i=0; i<pDevice->GetNumberOfProperties(); i++)
-      {
-         char Name[MM::MaxStrLength];
-         pDevice->GetPropertyName(i, Name);
-         propList.push_back(string(Name));
-      }   
+      return pDevice->GetPropertyNames();
    }
-
-   return propList;
 }
 
 /**

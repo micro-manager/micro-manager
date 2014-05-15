@@ -65,6 +65,17 @@ DeviceInstance::DeviceStringBuffer::ThrowBufferOverflowError() const
          " while calling " + funcName_ + "(); this is a bug in the device adapter");
 }
 
+std::vector<std::string>
+DeviceInstance::GetPropertyNames() const
+{
+   std::vector<std::string> result;
+   size_t nrProperties = GetNumberOfProperties();
+   result.reserve(nrProperties);
+   for (size_t i = 0; i < nrProperties; ++i)
+      result.push_back(GetPropertyName(i));
+   return result;
+}
+
 unsigned
 DeviceInstance::GetNumberOfProperties() const
 { return pImpl_->GetNumberOfProperties(); }
@@ -81,9 +92,15 @@ bool
 DeviceInstance::HasProperty(const char* name) const
 { return pImpl_->HasProperty(name); }
 
-bool
-DeviceInstance::GetPropertyName(unsigned idx, char* name) const
-{ return pImpl_->GetPropertyName(idx, name); }
+std::string
+DeviceInstance::GetPropertyName(size_t idx) const
+{
+   DeviceStringBuffer nameBuf(this, "GetPropertyName");
+   bool ok = pImpl_->GetPropertyName(static_cast<unsigned>(idx), nameBuf.GetBuffer());
+   if (!ok)
+      throw CMMError("Cannot get property name at index " + ToString(idx));
+   return nameBuf.Get();
+}
 
 int
 DeviceInstance::GetPropertyReadOnly(const char* name, bool& readOnly) const
