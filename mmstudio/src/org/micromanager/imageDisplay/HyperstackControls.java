@@ -60,7 +60,7 @@ public class HyperstackControls extends DisplayControls {
    private void initComponents(EventBus bus) {
       // This layout minimizes space between components.
       JPanel subPanel = new JPanel(
-            new MigLayout("", "0[]", "0[]0[]0"));
+            new MigLayout("", "0[]", "0[]0[]0[]0"));
       subPanel.setPreferredSize(new Dimension(512, 100));
 
       pixelInfoLabel_ = new JLabel("                                     ");
@@ -69,7 +69,7 @@ public class HyperstackControls extends DisplayControls {
 
       subPanel.add(new ScrollerPanel(
                bus, new String[]{"z", "t"}, new Integer[]{10, 10}), 
-            "wrap");
+            "wrap 0px");
 
       showFolderButton_ = new JButton();
       saveButton_ = new JButton();
@@ -206,9 +206,11 @@ public class HyperstackControls extends DisplayControls {
     */
    @Subscribe
    public void onSetImage(ScrollerPanel.SetImageEvent event) {
-      int channel = event.getPositionForAxis("c");
-      int frame = event.getPositionForAxis("t");
-      int slice = event.getPositionForAxis("z");
+      // Positions for ImageJ are 1-indexed but positions from the event are 
+      // 0-indexed.
+      int channel = event.getPositionForAxis("c") + 1;
+      int frame = event.getPositionForAxis("t") + 1;
+      int slice = event.getPositionForAxis("z") + 1;
       display_.getHyperImage().setPosition(channel, slice, frame);
    }
 

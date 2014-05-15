@@ -76,7 +76,7 @@ public class AxisScroller extends JPanel {
 
    public AxisScroller(String axis, String label, int maximum, 
          final EventBus bus, boolean canAnimate) {
-      super(new net.miginfocom.swing.MigLayout());
+      super(new net.miginfocom.swing.MigLayout("", "0[]0[]0", "0[]0"));
       axis_ = axis;
       bus_ = bus;
       shouldIgnoreScrollbarEvent_ = false;
@@ -88,7 +88,10 @@ public class AxisScroller extends JPanel {
       if (canAnimate) {
          labelButton_.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent e) {
-               isAnimated_ = !isAnimated_;
+               if (!isLocked_) {
+                  // Don't allow animation when the axis is locked.
+                  isAnimated_ = !isAnimated_;
+               }
                bus.post(new AnimationToggleEvent(AxisScroller.this, isAnimated_));
             }
          });
@@ -131,13 +134,23 @@ public class AxisScroller extends JPanel {
    }
 
    /**
-    * The lock icon was clicked; update our state to suit.
+    * The lock icon was clicked; update our state to suit. Locking cancels 
+    * animations and disables the scrollbar and label button.
     */
    @Subscribe
    public void onLockToggle(ScrollbarLockIcon.LockEvent event) {
+      if (event.getAxis() != axis_) {
+         // Ignore; event is for a different axis.
+         return;
+      }
       isLocked_ = event.getIsLocked();
-      labelButton_.setEnabled(isLocked_);
-      scrollbar_.setEnabled(isLocked_);
+      if (isLocked_ && isAnimated_) {
+         // Cancel active animation.
+         isAnimated_ = false;
+         bus_.post(new AnimationToggleEvent(this, isAnimated_));
+      }
+      labelButton_.setEnabled(!isLocked_);
+      scrollbar_.setEnabled(!isLocked_);
    }
 
    /**

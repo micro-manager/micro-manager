@@ -44,7 +44,7 @@ class ScrollerPanel extends JPanel {
    // All AxisScrollers we manage.
    private ArrayList<AxisScroller> scrollers_;
    // Timer for handling animation.
-   private java.util.Timer timer_;
+   private java.util.Timer timer_ = null;
    // Rate at which we update images when animating. Defaults to 10.
    private int framesPerSec_ = 10;
 
@@ -94,6 +94,10 @@ class ScrollerPanel extends JPanel {
     */
    @Subscribe
    public void onAnimationToggle(AxisScroller.AnimationToggleEvent event) {
+      if (timer_ != null) {
+         // Stop the previous timer.
+         timer_.cancel();
+      }
       timer_ = new java.util.Timer();
       // Enforce a maximum displayed framerate of 30FPS; for higher rates, we
       // instead skip over images in animation.
