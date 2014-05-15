@@ -44,20 +44,18 @@ public class HyperstackControls extends DisplayControls {
    private JLabel fpsLabel_;
    private JButton abortButton_;
    private javax.swing.JToggleButton pauseAndResumeToggleButton_;
+   private EventBus bus_;
 
-   /** Create the object. We need the bus so we can listen to 
-    * MouseIntensityEvents and display pixel intensity information for our
-    * image.
-    */
    public HyperstackControls(VirtualAcquisitionDisplay display, 
          EventBus bus) {
       super(new FlowLayout(FlowLayout.LEADING));
-      initComponents(bus);
+      bus_ = bus;
+      initComponents();
       display_ = display;
-      bus.register(this);
+      bus_.register(this);
    }
 
-   private void initComponents(EventBus bus) {
+   private void initComponents() {
       // This layout minimizes space between components.
       JPanel subPanel = new JPanel(new MigLayout("", "0[]", "0[]0[]0[]0"));
       subPanel.setPreferredSize(new Dimension(512, 100));
@@ -67,7 +65,7 @@ public class HyperstackControls extends DisplayControls {
       subPanel.add(pixelInfoLabel_, "span, wrap");
 
       scrollerPanel_ = new ScrollerPanel(
-               bus, new String[]{"channel", "position", "time", "z"}, 
+               bus_, new String[]{"channel", "position", "time", "z"}, 
                new Integer[]{1, 1, 1, 1});
       subPanel.add(scrollerPanel_, "span, growx, wrap 0px");
 
@@ -390,5 +388,10 @@ public class HyperstackControls extends DisplayControls {
    @Override
    public void imagesOnDiskUpdate(boolean enabled) {
       showFolderButton_.setEnabled(enabled);
+   }
+
+   public void prepareForClose() {
+      scrollerPanel_.prepareForClose();
+      bus_.unregister(this);
    }
 }

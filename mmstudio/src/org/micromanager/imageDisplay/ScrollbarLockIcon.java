@@ -39,19 +39,21 @@ public class ScrollbarLockIcon extends JComponent   {
 
    private static final int WIDTH = 17, HEIGHT = 14;
    private boolean isLocked_;
+   private String axis_;
+   private EventBus bus_;
    private Color foreground_ = Color.black, background_ = Color.white;
    
    public ScrollbarLockIcon(final String axis, final EventBus bus) {
       isLocked_ = false;
+      axis_ = axis;
+      bus_ = bus;
       setSize(WIDTH, HEIGHT);
       this.setToolTipText(TooltipTextMaker.addHTMLBreaksForTooltip(
               "Lock the scrollbar to its current postion"));
       this.addMouseListener(new MouseInputAdapter() {
          @Override
          public void mouseClicked(MouseEvent e) {
-            isLocked_ = !isLocked_;
-            bus.post(new LockEvent(axis, isLocked_));
-            repaint();
+            setIsLocked(!isLocked_);
          }
          @Override
          public void mouseEntered(MouseEvent e) {
@@ -64,6 +66,12 @@ public class ScrollbarLockIcon extends JComponent   {
             repaint();
          }         
       });
+   }
+
+   public void setIsLocked(boolean isLocked) {
+      isLocked_ = isLocked;
+      bus_.post(new LockEvent(axis_, isLocked_));
+      repaint();
    }
 
    public boolean getIsLocked() {

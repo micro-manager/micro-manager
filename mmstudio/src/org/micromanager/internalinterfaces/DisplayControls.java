@@ -40,5 +40,5 @@ public abstract class DisplayControls extends Panel {
    
    abstract public void newImageUpdate(JSONObject tags);
    
-   
+   abstract public void prepareForClose();
 }

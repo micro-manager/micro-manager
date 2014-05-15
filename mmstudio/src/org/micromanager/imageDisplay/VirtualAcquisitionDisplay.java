@@ -1129,6 +1129,9 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       animationTimer_.cancel();
       animationTimer_.cancel();
 
+      // Shut down our controls.
+      controls_.prepareForClose();
+
       // Finally, tell the window to close now.
       DisplayWindow window = event.window_;
       window.forceClosed();
@@ -1138,12 +1141,12 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
     * Removes the VirtualAcquisitionDisplay from the Acquisition Manager.
     */
    private void removeFromAcquisitionManager(ScriptInterface gui) {
-      try {
-         if (gui.acquisitionExists(name_)) {
+      if (gui.acquisitionExists(name_)) {
+         try {
             gui.closeAcquisition(name_);
+         } catch (MMScriptException ex) {
+            ReportingUtils.logError(ex);
          }
-      } catch (MMScriptException ex) {
-         ReportingUtils.logError(ex);
       }
    }
 
@@ -1215,7 +1218,8 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    public boolean close() {
       try {
          if (hyperImage_ != null) {
-            if (!hyperImage_.getWindow().close()) {
+            if (hyperImage_.getWindow() != null && 
+                  !hyperImage_.getWindow().close()) {
                return false;
             }
             hyperImage_.close();

@@ -104,6 +104,15 @@ class ScrollerPanel extends JPanel {
    }
 
    /**
+    * The window we're in is closing; cancel animations.
+    */
+   public void prepareForClose() {
+      for (AxisScroller scroller : scrollers_) {
+         scroller.setIsAnimated(false);
+      }
+   }
+
+   /**
     * Generate a new AnimationTimer that updates each active (i.e. animated)
     * scroller according to our update rate (FPS). 
     */

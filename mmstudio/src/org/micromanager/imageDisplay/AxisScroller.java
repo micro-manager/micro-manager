@@ -68,6 +68,7 @@ public class AxisScroller extends JPanel {
    private JButton labelButton_;
    // Used to select an image to view along our axis.
    final private JScrollBar scrollbar_;
+   private ScrollbarLockIcon lock_;
 
    // Height of components in the panel. 
    private static final int HEIGHT = 14;
@@ -112,8 +113,8 @@ public class AxisScroller extends JPanel {
       scrollbar_.setPreferredSize(new Dimension(512, HEIGHT));
       add(scrollbar_);
 
-      ScrollbarLockIcon lock = new ScrollbarLockIcon(axis, bus_);
-      add(lock);
+      lock_ = new ScrollbarLockIcon(axis, bus_);
+      add(lock_);
 
       bus.register(this);
    }
@@ -169,6 +170,15 @@ public class AxisScroller extends JPanel {
 
    public String getAxis() {
       return axis_;
+   }
+
+   public void setIsAnimated(boolean isAnimated) {
+      isAnimated_ = isAnimated;
+      if (isLocked_ && isAnimated_) {
+         // Disable the lock. 
+         lock_.setIsLocked(false);
+      }
+      bus_.post(new AnimationToggleEvent(this, isAnimated_));
    }
 
    public boolean getIsAnimated() {
