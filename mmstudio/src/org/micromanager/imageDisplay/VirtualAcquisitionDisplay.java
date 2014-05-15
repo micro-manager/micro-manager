@@ -51,6 +51,7 @@ import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.ReentrantLock;
 
 import javax.swing.event.MouseInputAdapter;
 import javax.swing.JMenuItem;
@@ -133,6 +134,8 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    private final Object imageReceivedObject_ = new Object();
 
    private EventBus bus_;
+   // Lock around our ImageJ canvas.
+   private ReentrantLock canvasLock_ = new ReentrantLock();
 
    @Subscribe
    public void onPixelSizeChanged(PixelSizeChangedEvent event) {
@@ -328,17 +331,29 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
          updateDisplay(taggedImage, false);
          return;
       }
-      if (!CanvasPaintPending.isMyPaintPending(hyperImage_.getCanvas(), imageReceivedObject_)) {
-         // If we do not sleep here, the window never updates
-         // I do not understand why, but this fixes it
-         try {
-            Thread.sleep(25);
-         } catch (InterruptedException ex) {
-            ReportingUtils.logError(ex, "Sleeping Thread was woken");
+      canvasLock_.lock();
+      try {
+         boolean isDisplayOccupied = CanvasPaintPending.isMyPaintPending(hyperImage_.getCanvas(), imageReceivedObject_);
+         if (!isDisplayOccupied) {
+            try {
+               // This sleep fixes a display "break" that causes images to 
+               // stop getting drawn, if display updates happen too quickly
+               // (possibly only on machines with more than 2 cores?), 
+               // especially if the "Slow hist" checkbox is marked (thereby
+               // speeding up draw updates as the histogram isn't calculated
+               // as often). We'd love to remove this; we just don't know how
+               // to fix the underlying problem. 
+               Thread.sleep(25);
+            }
+            catch (InterruptedException e) {
+               // Do nothing. 
+            }
+            CanvasPaintPending.setPaintPending(hyperImage_.getCanvas(), imageReceivedObject_);
+            updateDisplay(taggedImage, false);         
          }
-         CanvasPaintPending.setPaintPending(hyperImage_.getCanvas(), imageReceivedObject_);
-         updateDisplay(taggedImage, false);
-         
+      }
+      finally {
+         canvasLock_.unlock();
       }
    }
 
