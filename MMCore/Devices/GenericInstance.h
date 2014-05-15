@@ -31,6 +31,6 @@ public:
          MM::Device* pDevice,
          DeleteDeviceFunction deleteFunction,
          const std::string& label) :
-      DeviceInstanceBase(core, adapter, name, pDevice, deleteFunction, label)
+      DeviceInstanceBase<MM::Generic>(core, adapter, name, pDevice, deleteFunction, label)
    {}
 };

@@ -31,7 +31,7 @@ public:
          MM::Device* pDevice,
          DeleteDeviceFunction deleteFunction,
          const std::string& label) :
-      DeviceInstanceBase(core, adapter, name, pDevice, deleteFunction, label)
+      DeviceInstanceBase<MM::XYStage>(core, adapter, name, pDevice, deleteFunction, label)
    {}
 
    int SetPositionUm(double x, double y);

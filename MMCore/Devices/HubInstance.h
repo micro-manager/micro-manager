@@ -34,7 +34,7 @@ public:
          MM::Device* pDevice,
          DeleteDeviceFunction deleteFunction,
          const std::string& label) :
-      DeviceInstanceBase(core, adapter, name, pDevice, deleteFunction, label),
+      DeviceInstanceBase<MM::Hub>(core, adapter, name, pDevice, deleteFunction, label),
       hasDetectedInstalledDevices_(false)
    {}
 

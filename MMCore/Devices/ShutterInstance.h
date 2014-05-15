@@ -31,7 +31,7 @@ public:
          MM::Device* pDevice,
          DeleteDeviceFunction deleteFunction,
          const std::string& label) :
-      DeviceInstanceBase(core, adapter, name, pDevice, deleteFunction, label)
+      DeviceInstanceBase<MM::Shutter>(core, adapter, name, pDevice, deleteFunction, label)
    {}
 
    int SetOpen(bool open = true);

@@ -31,7 +31,7 @@ public:
          MM::Device* pDevice,
          DeleteDeviceFunction deleteFunction,
          const std::string& label) :
-      DeviceInstanceBase(core, adapter, name, pDevice, deleteFunction, label)
+      DeviceInstanceBase<MM::Serial>(core, adapter, name, pDevice, deleteFunction, label)
    {}
 
    MM::PortType GetPortType() const;
