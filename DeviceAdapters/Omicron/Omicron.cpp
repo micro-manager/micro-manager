@@ -984,7 +984,7 @@ int Omicron::OnReset(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 bool Omicron::PharseAnswerString(std::string &InputBuffer, const std::string &Kommando, std::vector<std::string> &ParameterVec)
 {
-    std::string Seperator = "§";
+    std::string Seperator = "\xA7";
 
     size_t StrIndex = InputBuffer.find(Kommando);
     if( StrIndex != std::string::npos )
