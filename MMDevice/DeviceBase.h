@@ -1040,7 +1040,7 @@ protected:
    /**
    * Not to be confused with MM::PortType MM::Serial::GetPortType() const.
    */
-   MM::PortType GetPortType(const char* portLabel)
+   MM::PortType GetSerialPortType(const char* portLabel)
    {
       if (callback_)
          return callback_->GetSerialPortType(portLabel);

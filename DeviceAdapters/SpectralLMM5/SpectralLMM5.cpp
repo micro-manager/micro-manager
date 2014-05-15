@@ -205,7 +205,7 @@ int LMM5Hub::OnPort(MM::PropertyBase* pProp, MM::ActionType pAct)
    else if (pAct == MM::AfterSet)
    {
       pProp->Get(port_);
-      MM::PortType portType = GetPortType(port_.c_str());
+      MM::PortType portType = GetSerialPortType(port_.c_str());
       g_Interface = new SpectralLMM5Interface(port_, portType);
    }
    return DEVICE_OK;
