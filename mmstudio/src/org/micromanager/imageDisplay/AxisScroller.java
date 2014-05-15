@@ -23,7 +23,7 @@ public class AxisScroller extends JPanel {
     * This class is used to communicate with our master when the animation
     * button is clicked.
     */
-   public class AnimationToggleEvent {
+   public static class AnimationToggleEvent {
       private boolean isAnimated_;
       public AxisScroller scroller_;
       public AnimationToggleEvent(AxisScroller scroller, boolean isAnimated) {
@@ -40,7 +40,7 @@ public class AxisScroller extends JPanel {
     * This class is used to communicate with our master when the scrollbar is
     * moved to a different position.
     */
-   public class ScrollPositionEvent {
+   public static class ScrollPositionEvent {
       private int value_;
       public AxisScroller scroller_;
       public ScrollPositionEvent(AxisScroller scroller, int value) {
@@ -144,7 +144,7 @@ public class AxisScroller extends JPanel {
     */
    @Subscribe
    public void onLockToggle(ScrollbarLockIcon.LockEvent event) {
-      if (event.getAxis() != axis_) {
+      if (!event.getAxis().equals(axis_)) {
          // Ignore; event is for a different axis.
          return;
       }

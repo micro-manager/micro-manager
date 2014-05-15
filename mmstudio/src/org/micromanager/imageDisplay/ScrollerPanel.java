@@ -20,7 +20,7 @@ class ScrollerPanel extends JPanel {
     * This class signifies that the currently-displayed image needs to be 
     * updated.
     */
-   public class SetImageEvent {
+   public static class SetImageEvent {
       // Maps axis labels to their positions. 
       private HashMap<String, Integer> axisToPosition_;
       public SetImageEvent(HashMap<String, Integer> axisToPosition) {
@@ -42,7 +42,7 @@ class ScrollerPanel extends JPanel {
     * This class signifies that our layout has changed and our owner needs to 
     * revalidate.
     */
-   public class LayoutChangedEvent {}
+   public static class LayoutChangedEvent {}
 
    // We'll be communicating with our owner and with our AxisScrollers via
    // this bus.
@@ -195,7 +195,7 @@ class ScrollerPanel extends JPanel {
     */
    public void setPosition(String axis, int position) {
       for (AxisScroller scroller : scrollers_) {
-         if (scroller.getAxis() == axis) {
+         if (scroller.getAxis().equals(axis)) {
             scroller.setPosition(position);
             break;
          }
@@ -208,7 +208,7 @@ class ScrollerPanel extends JPanel {
     */
    public int getPosition(String axis) {
       for (AxisScroller scroller : scrollers_) {
-         if (scroller.getAxis() == axis) {
+         if (scroller.getAxis().equals(axis)) {
             return scroller.getPosition();
          }
       }

@@ -22,7 +22,7 @@ public class ScrollbarLockIcon extends JComponent   {
    /**
     * This event informs listeners of when the lock button is toggled.
     */
-   public class LockEvent {
+   public static class LockEvent {
       private String axis_;
       private boolean isLocked_;
       public LockEvent(String axis, boolean isLocked) {

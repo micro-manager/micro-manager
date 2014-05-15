@@ -477,7 +477,7 @@ public class HyperstackControls extends DisplayControls {
 
                   @Override
                   public void run() {
-                     double timeRemainingS = (nextImageTime - System.nanoTime() / 1000000) / 1000;
+                     double timeRemainingS = (nextImageTime - System.nanoTime() / 1000000.0) / 1000;
                      if (timeRemainingS > 0 && display_.acquisitionIsRunning()) {
                         setStatusLabel("Next frame: " + NumberUtils.doubleToDisplayString(1 + timeRemainingS) + " s");
                      } else {

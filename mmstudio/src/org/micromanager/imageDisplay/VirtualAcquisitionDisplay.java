@@ -114,9 +114,6 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
 
    private static final int ANIMATION_AND_LOCK_RESTART_DELAY = 800;
    final ImageCache imageCache_;
-   final Preferences prefs_ = Preferences.userNodeForPackage(this.getClass());
-   private static final String SIMPLE_WIN_X = "simple_x";
-   private static final String SIMPLE_WIN_Y = "simple_y";
    private AcquisitionEngine eng_;
    private boolean finished_ = false;
    private boolean promptToSave_ = true;
@@ -125,7 +122,6 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    private int lastFrameShown_ = 0;
    private int lastSliceShown_ = 0;
    private int lastPositionShown_ = 0;
-   private int lockedSlice_ = -1, lockedPosition_ = -1, lockedChannel_ = -1, lockedFrame_ = -1;;
    private int numComponents_;
    private ImagePlus hyperImage_;
    private DisplayControls controls_;
@@ -136,13 +132,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    private boolean contrastInitialized_ = false; //used for autostretching on window opening
    private boolean firstImage_ = true;
    private String channelGroup_ = "none";
-   private double framesPerSec_ = 7;
    private java.util.Timer animationTimer_ = new java.util.Timer();
-   private boolean zAnimated_ = false, tAnimated_ = false;
-   private int animatedSliceIndex_ = -1, animatedFrameIndex_ = -1;
-   private Component zAnimationIcon_, pIcon_, tAnimationIcon_, cIcon_;
-   private Component zLockIcon_, cLockIcon_, pLockIcon_, tLockIcon_;
-   private Timer resetToLockedTimer_;
    private Histograms histograms_;
    private HistogramControlsState histogramControlsState_;
    private boolean albumSaved_ = false;
@@ -234,7 +224,6 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       int numFrames = 1;
       int numChannels = 1;
       int numGrayChannels;
-      int numPositions = 1;
       int width = 0;
       int height = 0;
       int numComponents = 1;
@@ -258,7 +247,6 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
 
          numChannels = Math.max(1 + imageChannelIndex,
                  Math.max(summaryMetadata.getInt("Channels"), 1));
-         numPositions = Math.max(summaryMetadata.getInt("Positions"), 1);
          numComponents = Math.max(MDUtils.getNumberOfComponents(summaryMetadata), 1);
       } catch (JSONException e) {
          ReportingUtils.showError(e);
@@ -332,30 +320,6 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       mdPanel_.getContrastPanel().setDisplayMode(displayMode);
    }
    
-   /**
-    * Repaint all of our icons related to the scrollbars. Non-blocking.
-    */
-   private void refreshScrollbarIcons() {
-      if (zAnimationIcon_ != null) {
-         zAnimationIcon_.repaint();
-      }
-      if (tAnimationIcon_ != null) {
-         tAnimationIcon_.repaint();
-      }
-      if (zLockIcon_ != null) {
-         zLockIcon_.repaint();
-      }
-      if (cLockIcon_ != null) {
-         cLockIcon_.repaint();
-      }
-      if (pLockIcon_ != null) {
-         pLockIcon_.repaint();
-      }
-      if (tLockIcon_ != null) {
-         tLockIcon_.repaint();
-      }
-   }
-
    /**
     * Allows bypassing the prompt to Save
     * @param promptToSave boolean flag
@@ -654,14 +618,12 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
                startup(tags, null);
             }
 
-            int channel = 0, frame = 0, slice = 0, position = 0, superChannel = 0;
+            int channel = 0, frame = 0, slice = 0, position = 0;
             try {
                frame = MDUtils.getFrameIndex(tags);
                slice = MDUtils.getSliceIndex(tags);
                channel = MDUtils.getChannelIndex(tags);
                position = MDUtils.getPositionIndex(tags);
-               superChannel = VirtualAcquisitionDisplay.this.rgbToGrayChannel(
-                       MDUtils.getChannelIndex(tags));
                // Construct a mapping of axis to position so we can post an 
                // event informing others of the new image.
                HashMap<String, Integer> axisToPosition = new HashMap<String, Integer>();
@@ -694,16 +656,18 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
                ci.reset();
             }
 
-            IMMImagePlus immi = (IMMImagePlus) hyperImage_;
-            // Ensure proper dimensions are set on the image.
-            if (immi.getNFramesUnverified() <= frame) {
-               immi.setNFramesUnverified(frame);
-            }  
-            if (immi.getNSlicesUnverified() <= slice) {
-               immi.setNSlicesUnverified(slice);
-            }  
-            if (immi.getNChannelsUnverified() <= channel) {
-               immi.setNChannelsUnverified(channel);
+            if (hyperImage_ != null) {
+               IMMImagePlus immi = (IMMImagePlus) hyperImage_;
+               // Ensure proper dimensions are set on the image.
+               if (immi.getNFramesUnverified() <= frame) {
+                  immi.setNFramesUnverified(frame);
+               }  
+               if (immi.getNSlicesUnverified() <= slice) {
+                  immi.setNSlicesUnverified(slice);
+               }  
+               if (immi.getNChannelsUnverified() <= channel) {
+                  immi.setNChannelsUnverified(channel);
+               }
             }
 
             if (frame == 0) {
@@ -1098,7 +1062,6 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
          }
       }
       // Ask if the user wants to save data.
-
       if (imageCache_.getDiskLocation() == null && 
             promptToSave_ && !albumSaved_) {
          String[] options = {"Save single", "Save multi", "No", "Cancel"};
@@ -1123,9 +1086,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
          }
       }
 
-      if (imageCache_ != null) {
-         imageCache_.close();
-      }
+      imageCache_.close();
 
       removeFromAcquisitionManager(MMStudioMainFrame.getInstance());
 

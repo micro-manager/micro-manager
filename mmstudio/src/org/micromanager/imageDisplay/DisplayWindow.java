@@ -26,7 +26,7 @@ public class DisplayWindow extends StackWindow {
    private EventBus bus_;
 
    // This class is used to signal that a window is closing.
-   public class WindowClosingEvent {
+   public static class WindowClosingEvent {
       public DisplayWindow window_;
       public WindowClosingEvent(DisplayWindow window) {
          window_ = window;
