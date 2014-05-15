@@ -44,9 +44,9 @@ const char* g_ShutterAName = "Shutter-A";
 const char* g_ShutterBName = "Shutter-B";
 
 #ifdef DefineShutterOnTenDashTwo
-
 const char* g_ShutterAName10dash2 = "Shutter-A 10-2";
 const char* g_ShutterBName10dash2 = "Shutter-B 10-2";
+const double g_busyTimeoutMs = 500;
 #endif
 
 const char* g_DG4WheelName = "Wheel-DG4";
