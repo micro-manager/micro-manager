@@ -143,7 +143,7 @@ class ScrollerPanel extends JPanel {
          if (scroller.getMaximum() <= imagePosition) {
             // This image is further along the axis for this scrollbar than 
             // the current maximum, so we need a new maximum.
-            scroller.setMaximum(imagePosition);
+            scroller.setMaximum(imagePosition + 1);
          }
          scroller.setPosition(imagePosition);
       }
