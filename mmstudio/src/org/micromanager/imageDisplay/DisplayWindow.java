@@ -36,6 +36,16 @@ public class DisplayWindow extends StackWindow {
       super(ip);
       bus_ = bus;
       bus.register(this);
+      // HACK: hide ImageJ's native scrollbars; we provide our own.
+      if (cSelector != null) {
+         remove(cSelector);
+      }
+      if (tSelector != null) {
+         remove(tSelector);
+      }
+      if (zSelector != null) {
+         remove(zSelector);
+      }
    }
 
    // Receive notification that animation status has changed.
