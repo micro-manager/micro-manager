@@ -97,7 +97,7 @@ inline void CoverImage8( unsigned char* pSour, unsigned char* pDest, int sz, int
                 *pD ++ = ((*pSour)<<8);
                 *pD ++ = ((*pSour)<<8);
                 *pD ++ = ((*pSour)<<8);
-                *pD ++;
+                pD ++;
                 pSour++;
             }
         }
@@ -197,7 +197,7 @@ inline void CoverImage24( unsigned char* pSour, unsigned char* pDest, int sz, in
                 *pD ++ = ((pSour[1])<<8);
                 *pD ++ = ((pSour[0])<<8);
                 pSour += 3;
-                *pD ++;
+                pD ++;
             }
         }
             break;
@@ -249,7 +249,7 @@ inline void CoverImage48( unsigned char* pSour, unsigned char* pDest, int sz, in
                 *pD ++ = pS[1];
                 *pD ++ = pS[0];
                 pS += 3;
-                *pD ++;     
+                pD ++;     
             }
         }
             break;
