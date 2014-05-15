@@ -698,16 +698,18 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
             } else if (hyperImage_ instanceof MMCompositeImage) {
                MMCompositeImage ci = ((MMCompositeImage) hyperImage_);
                ci.reset();
-               // Ensure proper dimensions are set on the image.
-               if (ci.getNFramesUnverified() <= frame) {
-                  ci.setNFramesUnverified(frame);
-               }
-               if (ci.getNSlicesUnverified() <= slice) {
-                  ci.setNSlicesUnverified(slice);
-               }
-               if (ci.getNChannelsUnverified() <= channel) {
-                  ci.setNChannelsUnverified(channel);
-               }
+            }
+
+            IMMImagePlus immi = (IMMImagePlus) hyperImage_;
+            // Ensure proper dimensions are set on the image.
+            if (immi.getNFramesUnverified() <= frame) {
+               immi.setNFramesUnverified(frame);
+            }  
+            if (immi.getNSlicesUnverified() <= slice) {
+               immi.setNSlicesUnverified(slice);
+            }  
+            if (immi.getNChannelsUnverified() <= channel) {
+               immi.setNChannelsUnverified(channel);
             }
 
             if (frame == 0) {

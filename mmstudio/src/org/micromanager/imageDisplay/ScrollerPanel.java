@@ -42,8 +42,7 @@ class ScrollerPanel extends JPanel {
     * This class signifies that our layout has changed and our owner needs to 
     * revalidate.
     */
-   public class LayoutChangedEvent {
-   }
+   public class LayoutChangedEvent {}
 
    // We'll be communicating with our owner and with our AxisScrollers via
    // this bus.
