@@ -990,9 +990,6 @@ double pgFocusHub::GetSlope()
 
 int pgFocusHub::SetSlope(double slope)
 {
-
-	double answer;
-
 	MM_THREAD_GUARD_LOCK(&mutex);
 	slope_ = slope;
 	MM_THREAD_GUARD_UNLOCK(&mutex);
@@ -2030,8 +2027,6 @@ int pgFocusMonitoringThread::svc()
 	char rcvBuf[pgFocusHub::RCV_BUF_LENGTH];
 	std::string message;
 	memset(rcvBuf, 0, pgFocusHub::RCV_BUF_LENGTH);
-
-	static const int messageMaxLength = 64;
 
 	while (!threadStop_)
 	{
