@@ -22,6 +22,8 @@ public:
        initialize();
     }
 
+    virtual ~PvParamBase() {}
+
     bool IsAvailable() { return (mAvail == TRUE); }
     bool IsReadOnly()  { return (mAccess == ACC_READ_ONLY); }
     bool IsEnum()      { return (mType == TYPE_ENUM); }
