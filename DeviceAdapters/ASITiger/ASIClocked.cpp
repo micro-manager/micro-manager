@@ -46,7 +46,7 @@ using namespace std;
 //   including turrets and filter sliders
 //
 CClocked::CClocked(const char* name) :
-   ASIPeripheralBase(name),
+   ASIPeripheralBase<CStateDeviceBase, CClocked>(name),
    numPositions_(0),  // will read actual number of positions
    curPosition_(0),   // will read actual position
    axisLetter_(g_EmptyAxisLetterStr)

@@ -46,7 +46,7 @@ using namespace std;
 // CZStage
 //
 CZStage::CZStage(const char* name) :
-   ASIPeripheralBase(name),
+   ASIPeripheralBase<CStageBase, CZStage>(name),
    unitMult_(g_StageDefaultUnitMult),  // later will try to read actual setting
    stepSizeUm_(g_StageMinStepSize),    // we'll use 1 nm as our smallest possible step size, this is somewhat arbitrary and doesn't change during the program
    axisLetter_(g_EmptyAxisLetterStr)    // value determined by extended name

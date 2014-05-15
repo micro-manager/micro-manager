@@ -46,7 +46,7 @@ using namespace std;
 // CXYStage
 //
 CXYStage::CXYStage(const char* name) :
-   ASIPeripheralBase(name),
+   ASIPeripheralBase<CXYStageBase, CXYStage>(name),
    unitMultX_(g_StageDefaultUnitMult),  // later will try to read actual setting
    unitMultY_(g_StageDefaultUnitMult),  // later will try to read actual setting
    stepSizeXUm_(g_StageMinStepSize),    // we'll use 1 nm as our smallest possible step size, this is somewhat arbitrary

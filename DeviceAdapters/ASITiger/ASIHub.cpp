@@ -45,7 +45,7 @@ using namespace std;
 // this implements serial communication, and could be used as parent class
 //   for future hubs besides TigerComm
 ASIHub::ASIHub() :
-      ASIBase(""),  // don't pass a name
+      ASIBase<HubBase, ASIHub>(""), // do not pass a name
       port_("Undefined"),
       serialAnswer_(""),
       serialCommand_(""),
