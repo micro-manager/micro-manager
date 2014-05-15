@@ -148,7 +148,6 @@
     <ClCompile Include="Configuration.cpp" />
     <ClCompile Include="CoreCallback.cpp" />
     <ClCompile Include="CoreProperty.cpp" />
-    <ClCompile Include="..\MMDevice\DeviceUtils.cpp" />
     <ClCompile Include="Devices\AutoFocusInstance.cpp" />
     <ClCompile Include="Devices\CameraInstance.cpp" />
     <ClCompile Include="Devices\DeviceInstance.cpp" />
@@ -166,7 +165,6 @@
     <ClCompile Include="Error.cpp" />
     <ClCompile Include="FastLogger.cpp" />
     <ClCompile Include="Host.cpp" />
-    <ClCompile Include="..\MMDevice\ImgBuffer.cpp" />
     <ClCompile Include="LibraryInfo\LibraryPathsWindows.cpp" />
     <ClCompile Include="LoadableModules\LoadedDeviceAdapter.cpp" />
     <ClCompile Include="LoadableModules\LoadedModule.cpp" />
@@ -183,7 +181,6 @@
     <ClInclude Include="CoreCallback.h" />
     <ClInclude Include="CoreProperty.h" />
     <ClInclude Include="CoreUtils.h" />
-    <ClInclude Include="..\MMDevice\DeviceUtils.h" />
     <ClInclude Include="Devices\AutoFocusInstance.h" />
     <ClInclude Include="Devices\CameraInstance.h" />
     <ClInclude Include="Devices\DeviceInstance.h" />
@@ -204,8 +201,6 @@
     <ClInclude Include="Error.h" />
     <ClInclude Include="FastLogger.h" />
     <ClInclude Include="Host.h" />
-    <ClInclude Include="..\MMDevice\ImageMetadata.h" />
-    <ClInclude Include="..\MMDevice\ImgBuffer.h" />
     <ClInclude Include="IMMLogger.h" />
     <ClInclude Include="LibraryInfo\LibraryPaths.h" />
     <ClInclude Include="LoadableModules\LoadedDeviceAdapter.h" />
@@ -213,9 +208,13 @@
     <ClInclude Include="LoadableModules\LoadedModuleImpl.h" />
     <ClInclude Include="LoadableModules\LoadedModuleImplWindows.h" />
     <ClInclude Include="MMCore.h" />
-    <ClInclude Include="..\MMDevice\MMDevice.h" />
     <ClInclude Include="MMEventCallback.h" />
     <ClInclude Include="PluginManager.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\MMDevice\MMDevice-SharedRuntime.vcxproj">
+      <Project>{b8c95f39-54bf-40a9-807b-598df2821d55}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
