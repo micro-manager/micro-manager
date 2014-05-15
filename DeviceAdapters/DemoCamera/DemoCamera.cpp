@@ -782,7 +782,7 @@ int CDemoCamera::IsExposureSequenceable(bool& isSequenceable) const
    return DEVICE_OK;
 }
 
-int CDemoCamera::GetExposureSequenceMaxLength(long& nrEvents)
+int CDemoCamera::GetExposureSequenceMaxLength(long& nrEvents) const
 {
    if (!isSequenceable_) {
       return DEVICE_UNSUPPORTED_COMMAND;

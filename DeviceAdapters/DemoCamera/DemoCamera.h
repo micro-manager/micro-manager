@@ -143,7 +143,7 @@ public:
    int SetBinning(int bS);
 
    int IsExposureSequenceable(bool& isSequenceable) const;
-   int GetExposureSequenceMaxLength(long& nrEvents);
+   int GetExposureSequenceMaxLength(long& nrEvents) const;
    int StartExposureSequence();
    int StopExposureSequence();
    int ClearExposureSequence();
@@ -737,7 +737,7 @@ public:
       nrEvents = 256;
       return DEVICE_OK;
    }
-   int StartDASequence() const
+   int StartDASequence()
    {
       DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
       if (pHub && pHub->GenerateRandomError())
@@ -746,7 +746,7 @@ public:
       (const_cast<DemoDA *>(this))->SetSequenceStateOn();
       return DEVICE_OK;
    }
-   int StopDASequence() const
+   int StopDASequence()
    {
       DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
       if (pHub && pHub->GenerateRandomError())
