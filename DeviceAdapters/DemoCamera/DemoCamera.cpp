@@ -983,7 +983,7 @@ int CDemoCamera::InsertImage()
  * Do actual capturing
  * Called from inside the thread  
  */
-int CDemoCamera::ThreadRun (MM::MMTime startTime)
+int CDemoCamera::RunSequenceOnThread(MM::MMTime startTime)
 {
    DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
    if (pHub && pHub->GenerateRandomError())
@@ -1102,7 +1102,7 @@ int MySequenceThread::svc(void) throw()
    {
       do
       {  
-         ret=camera_->ThreadRun(startTime_);
+         ret = camera_->RunSequenceOnThread(startTime_);
       } while (DEVICE_OK == ret && !IsStopped() && imageCounter_++ < numImages_-1);
       if (IsStopped())
          camera_->LogMessage("SeqAcquisition interrupted by the user\n");
