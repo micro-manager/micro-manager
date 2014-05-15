@@ -73,7 +73,7 @@ public class HyperstackControls extends DisplayControls {
       bus_.register(this);
    }
 
-   private void initComponents(boolean shouldUseLiveButtons) {
+   private void initComponents(final boolean shouldUseLiveButtons) {
       // This layout minimizes space between components.
       JPanel subPanel = new JPanel(new MigLayout("", "0[]", "0[]0[]0[]0"));
       subPanel.setPreferredSize(new Dimension(512, 100));
@@ -126,7 +126,7 @@ public class HyperstackControls extends DisplayControls {
       saveButton_.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
       saveButton_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            saveButtonActionPerformed(evt);
+            saveButtonActionPerformed(evt, shouldUseLiveButtons);
          }
       });
 
@@ -340,11 +340,13 @@ public class HyperstackControls extends DisplayControls {
       display_.pause();
 }
 
-   private void saveButtonActionPerformed(java.awt.event.ActionEvent evt) {
+   private void saveButtonActionPerformed(java.awt.event.ActionEvent evt, final boolean isSimpleDisplay) {
       new Thread() {
          @Override
          public void run() {
-            display_.saveAs();
+            // We don't want to tie the Snap/Live display to a specific
+            // file since its contents get overwritten regularly.
+            display_.saveAs(!isSimpleDisplay);
          }
       }.start();
    }
