@@ -176,13 +176,10 @@ void CPluginManager::UnloadPluginLibrary(const char* moduleName)
  * Unloads the specified device from the core.
  * @param pDevice pointer to the device to unload
  */
-void CPluginManager::UnloadDevice(boost::shared_ptr<MM::Device> pDevice)
+void CPluginManager::UnloadDevice(boost::shared_ptr<MM::Device> device)
 {
-   if (pDevice == 0)
+   if (device == 0)
       return;
-
-   // Remove all references to the device first, in order to avoid dangling pointers
-   // in the case where the device destructor throws.
 
    {
       // remove the entry from the device map
@@ -190,7 +187,7 @@ void CPluginManager::UnloadDevice(boost::shared_ptr<MM::Device> pDevice)
       CDeviceMap::const_iterator it;
       for (it=devices_.begin(); it != devices_.end(); it++)
       {
-         if (it->second != pDevice)
+         if (it->second != device)
          {
             newDeviceMap[it->first] = it->second;
          }
@@ -204,7 +201,7 @@ void CPluginManager::UnloadDevice(boost::shared_ptr<MM::Device> pDevice)
       DeviceVector::const_iterator it;
       for (it = devVector_.begin(); it != devVector_.end(); it++)
       {
-         if (*it != pDevice)
+         if (*it != device)
          {
             newDevVector.push_back(*it);
          }
@@ -213,13 +210,11 @@ void CPluginManager::UnloadDevice(boost::shared_ptr<MM::Device> pDevice)
    }
 
    // release device resources
-   pDevice->Shutdown();
+   device->Shutdown();
 
    // delete device
-   boost::shared_ptr<LoadedDeviceAdapter> module = deviceModules_[pDevice.get()];
-   module->DeleteDevice(pDevice.get());
-
-   deviceModules_.erase(pDevice.get());
+   boost::shared_ptr<LoadedDeviceAdapter> module = deviceModules_[device.get()];
+   deviceModules_.erase(device.get());
 }
 
 /**
@@ -227,33 +222,29 @@ void CPluginManager::UnloadDevice(boost::shared_ptr<MM::Device> pDevice)
  */
 void CPluginManager::UnloadAllDevices()
 {
-   DeviceVector unloadingSequence;
-   {
-      DeviceVector::reverse_iterator it;
-      // do a two pass unloading so that USB ports and com ports unload last.
-      // We plan unloading, and then carry it out, so as not to iterate
-      // over a changing collection. Down with mutable collections.
+   // do a two pass unloading so that USB ports and com ports unload last.
+   // We plan unloading, and then carry it out, so as not to iterate
+   // over a changing collection. Down with mutable collections.
+   // XXX This ordering should be handled by strong references from device to
+   // device.
+   DeviceVector unloadStack;
 
-      // first plan to unload all devices but serial ports
-      for (it=devVector_.rbegin(); it != devVector_.rend(); it++)
-         if (*it != 0 && (*it)->GetType() != MM::SerialDevice)
-            unloadingSequence.push_back(*it);
+   DeviceVector::const_iterator it;
+   for (it = devVector_.begin(); it != devVector_.end(); ++it)
+      if (*it != 0 && (*it)->GetType() == MM::SerialDevice)
+         unloadStack.push_back(*it);
 
-      // then plan to unload remaining ports
-      for (it=devVector_.rbegin(); it != devVector_.rend(); it++)
-         if (*it != 0 && (*it)->GetType() == MM::SerialDevice)
-            unloadingSequence.push_back(*it);
+   for (it = devVector_.begin(); it != devVector_.end(); ++it)
+      if (*it != 0 && (*it)->GetType() != MM::SerialDevice)
+         unloadStack.push_back(*it);
+
+   // Now the only remaining references to the device objects should be in
+   // unloadStack.
+   while (unloadStack.size() > 0) {
+      boost::shared_ptr<MM::Device> device = unloadStack.back();
+      unloadStack.pop_back();
+      UnloadDevice(device);
    }
-
-   {
-      DeviceVector::const_iterator it;
-      for (it=unloadingSequence.begin(); it != unloadingSequence.end(); it++)
-      {
-         UnloadDevice(*it);
-      }
-   }
-   devices_.clear();
-   devVector_.clear();
 }
 
 /**
@@ -298,7 +289,6 @@ CPluginManager::LoadDevice(const char* label, const char* moduleName, const char
       MM::DeviceType actualType = pDevice->GetType();
       if (actualType != static_cast<MM::DeviceType>(typeInt))
       {
-         module->DeleteDevice(pDevice.get());
          throw CMMError("Tried to load device " + ToQuotedString(deviceName) +
                " of type " + ToString(typeInt) +
                " from module " + ToQuotedString(moduleName) +

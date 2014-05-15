@@ -3,8 +3,7 @@
 //
 // DESCRIPTION:   Device adapter module
 //
-// COPYRIGHT:     University of California, San Francisco, 2013,
-//                All Rights reserved
+// COPYRIGHT:     University of California, San Francisco, 2013-2014
 //
 // LICENSE:       This file is distributed under the "Lesser GPL" (LGPL) license.
 //                License text is included with the source distribution.
@@ -118,13 +117,14 @@ LoadedDeviceAdapter::InitializeModuleData()
 }
 
 
-MM::Device*
+boost::shared_ptr<MM::Device>
 LoadedDeviceAdapter::CreateDevice(const char* deviceName)
 {
    if (!CreateDevice_)
       CreateDevice_ = reinterpret_cast<fnCreateDevice>
          (module_->GetFunction("CreateDevice"));
-   return CreateDevice_(deviceName);
+   MM::Device* pDevice = CreateDevice_(deviceName);
+   return boost::shared_ptr<MM::Device>(pDevice, DeviceDeleter(this));
 }
 
 

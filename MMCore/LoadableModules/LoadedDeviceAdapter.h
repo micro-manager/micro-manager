@@ -3,8 +3,7 @@
 //
 // DESCRIPTION:   Device adapter module
 //
-// COPYRIGHT:     University of California, San Francisco, 2013,
-//                All Rights reserved
+// COPYRIGHT:     University of California, San Francisco, 2013-2014
 //
 // LICENSE:       This file is distributed under the "Lesser GPL" (LGPL) license.
 //                License text is included with the source distribution.
@@ -45,9 +44,9 @@ public:
    MMThreadLock* GetLock();
    void RemoveLock(); // XXX I'm not sure it is a good idea to expose this.
 
+   boost::shared_ptr<MM::Device> CreateDevice(const char* deviceName);
+
    // TODO Make these private and provide higher-level interface
-   MM::Device* CreateDevice(const char* deviceName);
-   void DeleteDevice(MM::Device* device);
    unsigned GetNumberOfDevices();
    bool GetDeviceName(unsigned index, char* buf, unsigned bufLen);
    bool GetDeviceType(const char* deviceName, int* type);
@@ -60,12 +59,21 @@ private:
    void InitializeModuleData();
    long GetModuleVersion();
    long GetDeviceInterfaceVersion();
+   void DeleteDevice(MM::Device* device);
 
    const std::string label_;
    boost::shared_ptr<LoadedModule> module_;
 
    MMThreadLock lock_;
    bool useLock_;
+
+   // Shared pointer deleter
+   class DeviceDeleter {
+      LoadedDeviceAdapter* self_;
+   public:
+      DeviceDeleter(LoadedDeviceAdapter* self) : self_(self) {}
+      void operator()(MM::Device* pDevice) { self_->DeleteDevice(pDevice); }
+   };
 
    // Cached function pointers
    fnInitializeModuleData InitializeModuleData_;
