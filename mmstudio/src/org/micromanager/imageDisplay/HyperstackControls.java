@@ -80,7 +80,7 @@ public class HyperstackControls extends DisplayControls {
       JPanel subPanel = new JPanel(new MigLayout("", "0[]", "0[]0[]0[]0"));
       subPanel.setPreferredSize(new Dimension(512, 100));
 
-      pixelInfoLabel_ = new JLabel("                                     ");
+      pixelInfoLabel_ = new JLabel("                                         ");
       pixelInfoLabel_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
       subPanel.add(pixelInfoLabel_, "span, wrap");
 
@@ -91,9 +91,7 @@ public class HyperstackControls extends DisplayControls {
 
       showFolderButton_ = new JButton();
       saveButton_ = new JButton();
-      // Fill in a bunch of empty space here so enough is allocated in the
-      // layout for us to put in proper labels later.
-      statusLineLabel_ = new JLabel("                             ");
+      statusLineLabel_ = new JLabel("                                        ");
 
       subPanel.add(showFolderButton_);
       subPanel.add(saveButton_);
@@ -144,7 +142,10 @@ public class HyperstackControls extends DisplayControls {
       statusLineLabel_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
       statusLineLabel_.setHorizontalTextPosition(
             javax.swing.SwingConstants.LEFT);
-      subPanel.add(statusLineLabel_);
+      // Force the status line to be large enough to display statuses without
+      // auto-truncating them.
+      statusLineLabel_.setMinimumSize(new Dimension(150, 10));
+      subPanel.add(statusLineLabel_, "span, wrap");
 
       add(subPanel);
    }
@@ -157,9 +158,9 @@ public class HyperstackControls extends DisplayControls {
       snapButton_.setFocusable(false);
       snapButton_.setIconTextGap(6);
       snapButton_.setText("Snap");
-      snapButton_.setMinimumSize(new Dimension(99,28));
-      snapButton_.setPreferredSize(new Dimension(99,28));
-      snapButton_.setMaximumSize(new Dimension(99,28));
+      snapButton_.setMinimumSize(new Dimension(80,28));
+      snapButton_.setPreferredSize(new Dimension(80,28));
+      snapButton_.setMaximumSize(new Dimension(80,28));
       snapButton_.setIcon(SwingResourceManager.getIcon(
             MMStudioMainFrame.class, "/org/micromanager/icons/camera.png"));
       snapButton_.setFont(new Font("Arial", Font.PLAIN, 10));
@@ -178,9 +179,9 @@ public class HyperstackControls extends DisplayControls {
             "/org/micromanager/icons/camera_go.png"));
       liveButton_.setIconTextGap(6);
       liveButton_.setText("Live");
-      liveButton_.setMinimumSize(new Dimension(99,28));
-      liveButton_.setPreferredSize(new Dimension(99,28));
-      liveButton_.setMaximumSize(new Dimension(99,28));
+      liveButton_.setMinimumSize(new Dimension(80,28));
+      liveButton_.setPreferredSize(new Dimension(80,28));
+      liveButton_.setMaximumSize(new Dimension(80,28));
       liveButton_.setFocusable(false);
       liveButton_.setToolTipText("Continuous live view");
       liveButton_.setFont(new Font("Arial", Font.PLAIN, 10));
@@ -197,9 +198,9 @@ public class HyperstackControls extends DisplayControls {
       snapToAlbumButton_.setIconTextGap(6);
       snapToAlbumButton_.setToolTipText("Add current image to album");
       snapToAlbumButton_.setFocusable(false);
-      snapToAlbumButton_.setMaximumSize(new Dimension(90, 28));
-      snapToAlbumButton_.setMinimumSize(new Dimension(90, 28));
-      snapToAlbumButton_.setPreferredSize(new Dimension(90, 28));
+      snapToAlbumButton_.setMaximumSize(new Dimension(80, 28));
+      snapToAlbumButton_.setMinimumSize(new Dimension(80, 28));
+      snapToAlbumButton_.setPreferredSize(new Dimension(80, 28));
       snapToAlbumButton_.setFont(new Font("Arial", Font.PLAIN, 10));
       snapToAlbumButton_.addActionListener(new ActionListener() {
          @Override
