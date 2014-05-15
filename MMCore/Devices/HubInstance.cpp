@@ -41,15 +41,12 @@ HubInstance::GetInstalledPeripheralNames()
    for (std::vector<MM::Device*>::iterator it = peripherals.begin(), end = peripherals.end();
          it != end; ++it)
    {
-      char name[MM::MaxStrLength];
-      memset(name, 0, sizeof(name));
-      (*it)->GetName(name);
-      if (name[MM::MaxStrLength - 1] != '\0')
+      DeviceStringBuffer nameBuf(0, "GetName");
+      (*it)->GetName(nameBuf.GetBuffer());
+      if (!nameBuf.IsEmpty())
       {
-         // TODO Device corrupted our stack!
+         names.push_back(nameBuf.Get());
       }
-      if (name[0] != '\0')
-         names.push_back(name);
    }
 
    return names;
@@ -62,23 +59,13 @@ HubInstance::GetInstalledPeripheralDescription(const std::string& peripheralName
    for (std::vector<MM::Device*>::iterator it = peripherals.begin(), end = peripherals.end();
          it != end; ++it)
    {
-      char name[MM::MaxStrLength];
-      memset(name, 0, sizeof(name));
-      (*it)->GetName(name);
-      if (name[MM::MaxStrLength - 1] != '\0')
+      DeviceStringBuffer nameBuf(0, "GetName");
+      (*it)->GetName(nameBuf.GetBuffer());
+      if (nameBuf.Get() == peripheralName)
       {
-         // TODO Device corrupted our stack!
-      }
-      if (name == peripheralName)
-      {
-         char description[MM::MaxStrLength];
-         memset(description, 0, sizeof(description));
-         (*it)->GetDescription(description);
-         if (description[MM::MaxStrLength - 1] != '\0')
-         {
-            // TODO Device corrupted our stack!
-         }
-         return description;
+         DeviceStringBuffer descBuf(0, "GetDescription");
+         (*it)->GetDescription(descBuf.GetBuffer());
+         return descBuf.Get();
       }
    }
 

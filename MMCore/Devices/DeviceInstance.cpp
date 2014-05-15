@@ -56,6 +56,15 @@ DeviceInstance::~DeviceInstance()
    deleteFunction_(pImpl_);
 }
 
+void
+DeviceInstance::DeviceStringBuffer::ThrowBufferOverflowError() const
+{
+   // TODO Log the error before crashing
+   std::string label(instance_ ? instance_->GetLabel() : "<unknown>");
+   throw CMMError("Buffer overflow in device " + ToQuotedString(label) +
+         " while calling " + funcName_ + "(); this is a bug in the device adapter");
+}
+
 unsigned
 DeviceInstance::GetNumberOfProperties() const
 { return pImpl_->GetNumberOfProperties(); }
@@ -171,10 +180,9 @@ DeviceInstance::GetType() const
 std::string
 DeviceInstance::GetName() const
 {
-   char buf[MM::MaxStrLength + 1];
-   memset(buf, 0, sizeof(buf));
-   pImpl_->GetName(buf);
-   return buf;
+   DeviceStringBuffer nameBuf(this, "GetName");
+   pImpl_->GetName(nameBuf.GetBuffer());
+   return nameBuf.Get();
 }
 
 void

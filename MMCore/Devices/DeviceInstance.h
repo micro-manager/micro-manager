@@ -89,6 +89,40 @@ protected:
 
    CMMCore* GetCore() const /* final */ { return core_; }
 
+   /// Utility class for getting fixed-length strings from the device interface.
+   /**
+    * This class should be used in all places where a device member function
+    * takes a char* into which it returns a string of length at most
+    * MM::MaxStrLength. It initializes an appropriate buffer and checks for
+    * buffer overrun (not that we can necessarily recover from an overrun...).
+    *
+    * For usage, see, e.g., the definition for DeviceInstance::GetName().
+    */
+   class DeviceStringBuffer : boost::noncopyable
+   {
+      char buf_[MM::MaxStrLength + 1];
+      const DeviceInstance* instance_;
+      const std::string& funcName_;
+
+   public:
+      /**
+       * instance and functionName must stay in scope during the lifetime of
+       * the DeviceStringBuffer.
+       */
+      DeviceStringBuffer(const DeviceInstance* instance, const std::string& functionName) :
+         instance_(instance), funcName_(functionName)
+      { memset(buf_, 0, sizeof(buf_)); }
+
+      char* GetBuffer() { return buf_; }
+      std::string Get() const { Check(); return buf_; }
+      bool IsEmpty() const { Check(); return (buf_[0] != '\0'); }
+
+   private:
+      void Check() const { if (buf_[sizeof(buf_) - 1] != '\0') ThrowBufferOverflowError(); }
+      void ThrowBufferOverflowError() const;
+   };
+
+
    /*
     * Wrappers for MM::Device member functions.
     *
