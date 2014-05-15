@@ -31,13 +31,9 @@ import ij.ImageStack;
 import ij.WindowManager;
 import ij.gui.ImageCanvas;
 import ij.gui.ImageWindow;
-import ij.gui.ScrollbarWithLabel;
-import ij.gui.StackWindow;
-import ij.gui.Toolbar;
 import ij.io.FileInfo;
 import ij.measure.Calibration;
 
-import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -46,26 +42,21 @@ import java.awt.Point;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.AdjustmentEvent;
-import java.awt.event.AdjustmentListener;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
 import java.lang.Math;
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
-import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.prefs.Preferences;
 
 import javax.swing.event.MouseInputAdapter;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
-import javax.swing.Timer;
 
 import mmcorej.TaggedImage;
 
@@ -132,7 +123,6 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    private boolean contrastInitialized_ = false; //used for autostretching on window opening
    private boolean firstImage_ = true;
    private String channelGroup_ = "none";
-   private java.util.Timer animationTimer_ = new java.util.Timer();
    private Histograms histograms_;
    private HistogramControlsState histogramControlsState_;
    private boolean albumSaved_ = false;
@@ -1091,8 +1081,6 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
 
       //Call this because for some reason WindowManager doesnt always fire
       mdPanel_.displayChanged(null);
-      animationTimer_.cancel();
-      animationTimer_.cancel();
 
       // Shut down our controls.
       controls_.prepareForClose();
