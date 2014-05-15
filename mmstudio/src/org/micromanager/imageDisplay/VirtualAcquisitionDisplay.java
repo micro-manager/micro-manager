@@ -51,6 +51,7 @@ import java.awt.event.AdjustmentListener;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
+import java.lang.Math;
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.TimerTask;
@@ -710,6 +711,16 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
             } else if (hyperImage_ instanceof MMCompositeImage) {
                MMCompositeImage ci = ((MMCompositeImage) hyperImage_);
                ci.reset();
+               // Ensure proper dimensions are set on the image.
+               if (ci.getNFramesUnverified() <= frame) {
+                  ci.setNFramesUnverified(frame);
+               }
+               if (ci.getNSlicesUnverified() <= slice) {
+                  ci.setNSlicesUnverified(slice);
+               }
+               if (ci.getNChannelsUnverified() <= channel) {
+                  ci.setNChannelsUnverified(channel);
+               }
             }
 
             if (frame == 0) {
