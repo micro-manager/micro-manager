@@ -663,8 +663,8 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
    @Override
     public void imageChanged() {
         boolean update = true;
-        if ( display_.acquisitionIsRunning()
-                || (MMStudioMainFrame.getInstance().isLiveModeOn() && display_.isSimpleDisplay()) ) {
+        if (display_.acquisitionIsRunning() ||
+                (MMStudioMainFrame.getInstance().isLiveModeOn())) {
             if (display_.getHistogramControlsState().slowHist) {
                 long time = System.currentTimeMillis();
                 if (time - lastUpdateTime_ < SLOW_HIST_UPDATE_INTERVAL_MS) {

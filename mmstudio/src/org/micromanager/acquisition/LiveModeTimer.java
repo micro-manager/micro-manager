@@ -187,7 +187,6 @@ public class LiveModeTimer {
 
          imageQueue_ = new LinkedBlockingQueue<TaggedImage>(10);
          timer_.schedule(task_, 0, delay);
-         win_.liveModeEnabled(true);
          
          win_.getImagePlus().getWindow().toFront();
          running_ = true;
@@ -217,10 +216,8 @@ public class LiveModeTimer {
            ReportingUtils.logError(ex); 
       }      
       try {
-         if (core_.isSequenceRunning())
+         if (core_.isSequenceRunning()) {
             core_.stopSequenceAcquisition();
-         if (win_ != null) {
-            win_.liveModeEnabled(false);
          }
          running_ = false;
       } catch (Exception ex) {

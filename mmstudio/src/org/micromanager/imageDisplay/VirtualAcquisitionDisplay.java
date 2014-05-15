@@ -141,7 +141,6 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    private ImagePlus hyperImage_;
    private DisplayControls controls_;
    public AcquisitionVirtualStack virtualStack_;
-   private boolean isSimpleDisplay_ = false;
    private boolean mda_ = false; //flag if display corresponds to MD acquisition
    private MetadataPanel mdPanel_;
    private boolean contrastInitialized_ = false; //used for autostretching on window opening
@@ -218,12 +217,10 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
     * This constructor is used for the Snap and Live views. The main
     * differences:
     * - eng_ is null
-    * - isSimpleDisplay_ is true
     * - We subscribe to the "pixel size changed" event. 
     */
    @SuppressWarnings("LeakingThisInConstructor")
    public VirtualAcquisitionDisplay(ImageCache imageCache, String name) throws MMScriptException {
-      isSimpleDisplay_ = true;
       imageCache_ = imageCache;
       name_ = name;
       mda_ = false;
@@ -316,11 +313,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       // Hack: allow controls_ to be already set, so that overriding classes
       // can implement their own custom controls.
       if (controls_ == null) {
-         if (isSimpleDisplay_) {
-            controls_ = new SimpleWindowControls(this, bus_);
-         } else {
-            controls_ = new HyperstackControls(this, bus_);
-         }
+         controls_ = new HyperstackControls(this, bus_);
       }
       hyperImage_ = createHyperImage(createMMImagePlus(virtualStack_),
               numGrayChannels, numSlices, numFrames, virtualStack_);
@@ -563,12 +556,6 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    }
 
    public void updateWindowTitleAndStatus() {
-      if (isSimpleDisplay_) {
-         int mag = (int) (100 * hyperImage_.getCanvas().getMagnification());
-         String title = hyperImage_.getTitle() + " ("+mag+"%)";
-         hyperImage_.getWindow().setTitle(title);
-         return;
-      }
       if (controls_ == null) {
          return;
       }
@@ -727,13 +714,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
                initializeContrast();
             }
 
-            //dont't force an update with live win
-            boolean forceUpdate = ! isSimpleDisplay_;
-            if (isSimpleDisplay_ && !MMStudioMainFrame.getInstance().isLiveModeOn()) {
-               //unless this is a snap or live mode has stopped
-               forceUpdate = true;
-            }     
-            updateAndDraw(forceUpdate);
+            updateAndDraw(true);
 
             //get channelgroup name for use in loading contrast setttings
             if (firstImage_) {
@@ -776,7 +757,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       //store for this dataset
       imageCache_.storeChannelDisplaySettings(channelIndex, min, max, gamma, histMax, displayMode);
       //store global preference for channel contrast settings
-      if (mda_ || isSimpleDisplay_) {
+      if (mda_) {
          //only store for datasets that were just acquired or snap/live (i.e. no loaded datasets)
          MMStudioMainFrame.getInstance().saveChannelHistogramSettings(channelGroup_, 
                  imageCache_.getChannelName(channelIndex), mda_,
@@ -785,9 +766,6 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    }
 
    protected void updatePosition(int p) {
-      if (isSimpleDisplay_) {
-         return;
-      }
       virtualStack_.setPositionIndex(p);
       if (!hyperImage_.isComposite()) {
          Object pixels = virtualStack_.getPixels(hyperImage_.getCurrentSlice());
@@ -808,16 +786,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       updateAndDraw(true);
    }
 
-   public void setPosition(int p) {
-      if (isSimpleDisplay_) {
-         return;
-      }
-   }
-
    public void setSliceIndex(int i) {
-      if (isSimpleDisplay_) {
-         return;
-      }
       final int f = hyperImage_.getFrame();
       final int c = hyperImage_.getChannel();
       hyperImage_.setPosition(c, i + 1, f);
@@ -1051,30 +1020,15 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       return hyperImage;
    }
 
-   public void liveModeEnabled(boolean enabled) {
-      if (isSimpleDisplay_) {
-         controls_.acquiringImagesUpdate(enabled);
-      }
-   }
-
    private void createWindow() {
       makeHistograms();
       final DisplayWindow win = new DisplayWindow(hyperImage_, bus_);
       win.getCanvas().addMouseListener(new MouseInputAdapter() {
-         //used to store preferred zoom
-         @Override
-         public void mousePressed(MouseEvent me) {
-            if (Toolbar.getToolId() == 11) {//zoom tool selected
-               storeWindowSizeAfterZoom(win);
-            }
-            updateWindowTitleAndStatus();
-         }
-
          //updates the histogram after an ROI is drawn
          @Override
          public void mouseReleased(MouseEvent me) {
             if (hyperImage_ instanceof MMCompositeImage) {
-            ((MMCompositeImage) hyperImage_).updateAndDraw(true);
+               ((MMCompositeImage) hyperImage_).updateAndDraw(true);
             } else {
                hyperImage_.updateAndDraw();
             }
@@ -1087,34 +1041,18 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       win.add(controls_);
       win.pack();
 
-       if (isSimpleDisplay_) {
-           win.setLocation(prefs_.getInt(SIMPLE_WIN_X, 0), prefs_.getInt(SIMPLE_WIN_Y, 0));
-       }
-
       //Set magnification
       zoomToPreferredSize(win);
-      
    
       mdPanel_.displayChanged(win);
       imageChangedUpdate();
-   }
-   
-   public void storeWindowSizeAfterZoom(ImageWindow win) {
-      if (isSimpleDisplay_) {
-         snapWinMag_ = win.getCanvas().getMagnification();
-      }
    }
    
    private void zoomToPreferredSize(DisplayWindow win) {
       Point location = win.getLocation();
       win.setLocation(new Point(0,0));
       
-      double mag;
-      if (isSimpleDisplay_ && snapWinMag_ != -1) {
-         mag = snapWinMag_;
-      } else {
-         mag = MMStudioMainFrame.getInstance().getPreferredWindowMag();
-      }
+      double mag = MMStudioMainFrame.getInstance().getPreferredWindowMag();
 
       ImageCanvas canvas = win.getCanvas();
       if (mag < canvas.getMagnification()) {
@@ -1178,14 +1116,6 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
          }
       }
 
-      // Record window position information.
-      if (isSimpleDisplay_ && hyperImage_ != null && hyperImage_.getWindow() != null && 
-            hyperImage_.getWindow().getLocation() != null) {
-         Point loc = hyperImage_.getWindow().getLocation();
-         prefs_.putInt(SIMPLE_WIN_X, loc.x);
-         prefs_.putInt(SIMPLE_WIN_Y, loc.y);
-      }
-
       if (imageCache_ != null) {
          imageCache_.close();
       }
@@ -1230,16 +1160,10 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    }
 
    public int getNumSlices() {
-      if (isSimpleDisplay_) {
-         return 1;
-      }
       return hyperImage_ == null ? 1 : ((IMMImagePlus) hyperImage_).getNSlicesUnverified();
    }
 
    public int getNumFrames() {
-      if (isSimpleDisplay_) {
-         return 1;
-      }
       return ((IMMImagePlus) hyperImage_).getNFramesUnverified();
    }
 
@@ -1396,10 +1320,6 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    public void setWindowTitle(String name) {
       name_ = name;
       updateWindowTitleAndStatus();
-   }
-
-   public boolean isSimpleDisplay() {
-      return isSimpleDisplay_;
    }
 
    public void displayStatusLine(String status) {
