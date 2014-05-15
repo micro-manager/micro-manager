@@ -63,7 +63,6 @@ using namespace std;
 std::map<std::string, bool> g_Busy;
 std::map<std::string, MMThreadLock*> gplocks_;
 
-const double g_busyTimeoutMs = 500;
 int g_DG4Position = 0;
 bool g_DG4State = false;
 
