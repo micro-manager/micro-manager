@@ -15,25 +15,37 @@
 
 #include "MMDevice.h"
 
-// Definitions for static const data members.
-// The initializer is given in the header, but we still need the definitions
-// for these to work in all casees.
-
 namespace MM {
 
-const DeviceType Generic::Type;
-const DeviceType Camera::Type;
-const DeviceType Shutter::Type;
-const DeviceType Stage::Type;
-const DeviceType XYStage::Type;
-const DeviceType State::Type;
-const DeviceType Serial::Type;
-const DeviceType AutoFocus::Type;
-const DeviceType ImageProcessor::Type;
-const DeviceType SignalIO::Type;
-const DeviceType Magnifier::Type;
-const DeviceType SLM::Type;
-const DeviceType Galvo::Type;
-const DeviceType Hub::Type;
+// Definitions for static const data members.
+//
+// Note: Do not try to move these initializers to the header. The C++ standard
+// allows initializing a static const enum data member inline (inside the class
+// definition, where the member is _declared_), but still requires a
+// _definition_ (in which case, the definition should not have an initializer).
+// However, Microsoft VC++ has a nonstandard extension that allows you to leave
+// out the definition altogether, if an initializer is supplied at the
+// declaration. Because of that nonstandard behavior, VC++ issues a warning
+// (LNK4006) if the initializer is supplied with the declaration _and_ a
+// definition is (correctly) provided. So, to compile correctly with a
+// standards-confomant compiler _and_ avoid warnings from VC++, we need to
+// leave the initializers out of the declarations, and supply them here with
+// the definitions. See:
+// http://connect.microsoft.com/VisualStudio/feedback/details/802091/lnk4006-reported-for-static-const-members-that-is-initialized-in-the-class-definition
+
+const DeviceType Generic::Type = GenericDevice;
+const DeviceType Camera::Type = CameraDevice;
+const DeviceType Shutter::Type = ShutterDevice;
+const DeviceType Stage::Type = StageDevice;
+const DeviceType XYStage::Type = XYStageDevice;
+const DeviceType State::Type = StateDevice;
+const DeviceType Serial::Type = SerialDevice;
+const DeviceType AutoFocus::Type = AutoFocusDevice;
+const DeviceType ImageProcessor::Type = ImageProcessorDevice;
+const DeviceType SignalIO::Type = SignalIODevice;
+const DeviceType Magnifier::Type = MagnifierDevice;
+const DeviceType SLM::Type = SLMDevice;
+const DeviceType Galvo::Type = GalvoDevice;
+const DeviceType Hub::Type = HubDevice;
 
 } // namespace MM

@@ -365,7 +365,7 @@ namespace MM {
    {
    public:
       virtual DeviceType GetType() const { return Type; }
-      static const DeviceType Type = GenericDevice;
+      static const DeviceType Type;
    };
 
    /** 
@@ -377,7 +377,7 @@ namespace MM {
       virtual ~Camera() {}
 
       virtual DeviceType GetType() const { return Type; }
-      static const DeviceType Type = CameraDevice;
+      static const DeviceType Type;
 
       // Camera API
       /**
@@ -596,7 +596,7 @@ namespace MM {
    
       // Device API
       virtual DeviceType GetType() const { return Type; }
-      static const DeviceType Type = ShutterDevice;
+      static const DeviceType Type;
    
       // Shutter API
       virtual int SetOpen(bool open = true) = 0;
@@ -619,7 +619,7 @@ namespace MM {
    
       // Device API
       virtual DeviceType GetType() const { return Type; }
-      static const DeviceType Type = StageDevice;
+      static const DeviceType Type;
    
       // Stage API
       virtual int SetPositionUm(double pos) = 0;
@@ -671,7 +671,7 @@ namespace MM {
 
       // Device API
       virtual DeviceType GetType() const { return Type; }
-      static const DeviceType Type = XYStageDevice;
+      static const DeviceType Type;
 
       // XYStage API
       // it is recommended that device adapters implement the  "Steps" methods taking
@@ -732,7 +732,7 @@ namespace MM {
       
       // MMDevice API
       virtual DeviceType GetType() const { return Type; }
-      static const DeviceType Type = StateDevice;
+      static const DeviceType Type;
       
       // MMStateDevice API
       virtual int SetPosition(long pos) = 0;
@@ -758,7 +758,7 @@ namespace MM {
       
       // MMDevice API
       virtual DeviceType GetType() const { return Type; }
-      static const DeviceType Type = SerialDevice;
+      static const DeviceType Type;
       
       // Serial API
       virtual PortType GetPortType() const = 0;
@@ -780,7 +780,7 @@ namespace MM {
       
       // MMDevice API
       virtual DeviceType GetType() const { return Type; }
-      static const DeviceType Type = AutoFocusDevice;
+      static const DeviceType Type;
 
       // AutoFocus API
       virtual int SetContinuousFocusing(bool state) = 0;
@@ -806,7 +806,7 @@ namespace MM {
 
       // MMDevice API
       virtual DeviceType GetType() const { return Type; }
-      static const DeviceType Type = ImageProcessorDevice;
+      static const DeviceType Type;
 
       // image processor API
       virtual int Process(unsigned char* buffer, unsigned width, unsigned height, unsigned byteDepth) = 0;
@@ -825,7 +825,7 @@ namespace MM {
 
       // MMDevice API
       virtual DeviceType GetType() const { return Type; }
-      static const DeviceType Type = SignalIODevice;
+      static const DeviceType Type;
 
       // signal io API
       virtual int SetGateOpen(bool open = true) = 0;
@@ -909,7 +909,7 @@ namespace MM {
 
       // MMDevice API
       virtual DeviceType GetType() const { return Type; }
-      static const DeviceType Type = MagnifierDevice;
+      static const DeviceType Type;
 
       virtual double GetMagnification() = 0;
    };
@@ -925,7 +925,7 @@ namespace MM {
       virtual ~SLM() {}
 
       virtual DeviceType GetType() const { return Type; }
-      static const DeviceType Type = SLMDevice;
+      static const DeviceType Type;
 
       // SLM API
       /**
@@ -1073,7 +1073,7 @@ namespace MM {
       virtual ~Galvo() {}
 
       virtual DeviceType GetType() const { return Type; }
-      static const DeviceType Type = GalvoDevice;
+      static const DeviceType Type;
       
    //Galvo API:
       virtual int PointAndFire(double x, double y, double time_us) = 0;
@@ -1105,7 +1105,7 @@ namespace MM {
 
       // MMDevice API
       virtual DeviceType GetType() const { return Type; }
-      static const DeviceType Type = HubDevice;
+      static const DeviceType Type;
 
       /**
        * Instantiate all available child peripheral devices.
