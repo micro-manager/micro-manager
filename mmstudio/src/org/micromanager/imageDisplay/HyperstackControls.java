@@ -189,7 +189,7 @@ public class HyperstackControls extends DisplayControls {
     
       snapToAlbumButton_ = new JButton("Album");
       snapToAlbumButton_.setIcon(SwingResourceManager.getIcon(MMStudioMainFrame.class,
-              "/org/micromanager/icons/arrow_right.png"));
+              "/org/micromanager/icons/camera_plus_arrow.png"));
       snapToAlbumButton_.setIconTextGap(6);
       snapToAlbumButton_.setToolTipText("Add current image to album");
       snapToAlbumButton_.setFocusable(false);
