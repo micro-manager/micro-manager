@@ -136,6 +136,8 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    private EventBus bus_;
    // Lock around our ImageJ canvas.
    private ReentrantLock canvasLock_ = new ReentrantLock();
+   // Boolean that indicates if doShowImage is currently running.
+   private AtomicBoolean isDoShowImageRunning_ = new AtomicBoolean(false);
 
    @Subscribe
    public void onPixelSizeChanged(PixelSizeChangedEvent event) {
@@ -349,7 +351,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
                // Do nothing. 
             }
             CanvasPaintPending.setPaintPending(hyperImage_.getCanvas(), imageReceivedObject_);
-            updateDisplay(taggedImage, false);         
+            updateDisplay(taggedImage, false);
          }
       }
       finally {
@@ -606,91 +608,113 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       showImage(taggedImg.tags, waitForDisplay);
    }
    
-   public void showImage(final JSONObject tags, boolean waitForDisplay) throws InterruptedException, InvocationTargetException {
-      SwingUtilities.invokeLater( new Runnable() {
+   public void showImage(final JSONObject tags, final boolean waitForDisplay) throws InterruptedException, InvocationTargetException {
+      if (isDoShowImageRunning_.get()) {
+         // Forget it; someone else is already busy with this function and
+         // we don't want to jam Swing's event queue full of events.
+         // Note that this check isn't quite perfect (there's a small gap where
+         // multiple events can get posted if this function is called rapidly).
+         // but it should serve adequate for rate-limiting the creation of 
+         // events.
+         return;
+      }
+      SwingUtilities.invokeLater(new Runnable() {
          @Override
          public void run() {
-
-            updateWindowTitleAndStatus();
-
-            if (tags == null) {
+            if (isDoShowImageRunning_.get()) {
+               // Someone else beat us here; give up.
                return;
             }
-
-            if (hyperImage_ == null) {
-               // this has to run on the EDT
-               startup(tags, null);
-            }
-
-            int channel = 0, frame = 0, slice = 0, position = 0;
+            isDoShowImageRunning_.set(true);
             try {
-               frame = MDUtils.getFrameIndex(tags);
-               slice = MDUtils.getSliceIndex(tags);
-               channel = MDUtils.getChannelIndex(tags);
-               position = MDUtils.getPositionIndex(tags);
-               // Construct a mapping of axis to position so we can post an 
-               // event informing others of the new image.
-               HashMap<String, Integer> axisToPosition = new HashMap<String, Integer>();
-               axisToPosition.put("channel", channel);
-               axisToPosition.put("position", position);
-               axisToPosition.put("time", frame);
-               axisToPosition.put("z", slice);
-               bus_.post(new NewImageEvent(axisToPosition));
-            } catch (JSONException ex) {
-               ReportingUtils.logError(ex);
+               doShowImage(tags, waitForDisplay);
             }
-
-            //make sure pixels get properly set
-            if (hyperImage_ != null && frame == 0) {
-               IMMImagePlus img = (IMMImagePlus) hyperImage_;
-               if (img.getNChannelsUnverified() == 1) {
-                  if (img.getNSlicesUnverified() == 1) {
-                     hyperImage_.getProcessor().setPixels(virtualStack_.getPixels(1));
-                  }
-               } else if (hyperImage_ instanceof MMCompositeImage) {
-                  //reset rebuilds each of the channel ImageProcessors with the correct pixels
-                  //from AcquisitionVirtualStack
-                  MMCompositeImage ci = ((MMCompositeImage) hyperImage_);
-                  ci.reset();
-                  //This line is neccessary for image processor to have correct pixels in grayscale mode
-                  ci.getProcessor().setPixels(virtualStack_.getPixels(ci.getCurrentSlice()));
-               }
-            } else if (hyperImage_ instanceof MMCompositeImage) {
-               MMCompositeImage ci = ((MMCompositeImage) hyperImage_);
-               ci.reset();
-            }
-
-            if (hyperImage_ != null) {
-               IMMImagePlus immi = (IMMImagePlus) hyperImage_;
-               // Ensure proper dimensions are set on the image.
-               if (immi.getNFramesUnverified() <= frame) {
-                  immi.setNFramesUnverified(frame);
-               }  
-               if (immi.getNSlicesUnverified() <= slice) {
-                  immi.setNSlicesUnverified(slice);
-               }  
-               if (immi.getNChannelsUnverified() <= channel) {
-                  immi.setNChannelsUnverified(channel);
-               }
-            }
-
-            if (frame == 0) {
-               initializeContrast();
-            }
-
-            updateAndDraw(true);
-
-            //get channelgroup name for use in loading contrast setttings
-            if (firstImage_) {
-               try {
-                  channelGroup_ = tags.getString("Core-ChannelGroup");
-               } catch (JSONException ex) {
-                  ReportingUtils.logError("Couldn't find Core-ChannelGroup in image metadata");
-               }
-               firstImage_ = false;
+            finally {
+               isDoShowImageRunning_.set(false);
             }
          }
       });
+   }
+   
+   private void doShowImage(final JSONObject tags, boolean waitForDisplay) {
+      updateWindowTitleAndStatus();
+
+      if (tags == null) {
+         return;
+      }
+
+      if (hyperImage_ == null) {
+         // this has to run on the EDT
+         startup(tags, null);
+      }
+
+      int channel = 0, frame = 0, slice = 0, position = 0;
+      try {
+         frame = MDUtils.getFrameIndex(tags);
+         slice = MDUtils.getSliceIndex(tags);
+         channel = MDUtils.getChannelIndex(tags);
+         position = MDUtils.getPositionIndex(tags);
+         // Construct a mapping of axis to position so we can post an 
+         // event informing others of the new image.
+         HashMap<String, Integer> axisToPosition = new HashMap<String, Integer>();
+         axisToPosition.put("channel", channel);
+         axisToPosition.put("position", position);
+         axisToPosition.put("time", frame);
+         axisToPosition.put("z", slice);
+         bus_.post(new NewImageEvent(axisToPosition));
+      } catch (JSONException ex) {
+         ReportingUtils.logError(ex);
+      }
+
+      //make sure pixels get properly set
+      if (hyperImage_ != null && frame == 0) {
+         IMMImagePlus img = (IMMImagePlus) hyperImage_;
+         if (img.getNChannelsUnverified() == 1) {
+            if (img.getNSlicesUnverified() == 1) {
+               hyperImage_.getProcessor().setPixels(virtualStack_.getPixels(1));
+            }
+         } else if (hyperImage_ instanceof MMCompositeImage) {
+            //reset rebuilds each of the channel ImageProcessors with the correct pixels
+            //from AcquisitionVirtualStack
+            MMCompositeImage ci = ((MMCompositeImage) hyperImage_);
+            ci.reset();
+            //This line is neccessary for image processor to have correct pixels in grayscale mode
+            ci.getProcessor().setPixels(virtualStack_.getPixels(ci.getCurrentSlice()));
+         }
+      } else if (hyperImage_ instanceof MMCompositeImage) {
+         MMCompositeImage ci = ((MMCompositeImage) hyperImage_);
+         ci.reset();
+      }
+
+      if (hyperImage_ != null) {
+         IMMImagePlus immi = (IMMImagePlus) hyperImage_;
+         // Ensure proper dimensions are set on the image.
+         if (immi.getNFramesUnverified() <= frame) {
+            immi.setNFramesUnverified(frame);
+         }  
+         if (immi.getNSlicesUnverified() <= slice) {
+            immi.setNSlicesUnverified(slice);
+         }  
+         if (immi.getNChannelsUnverified() <= channel) {
+            immi.setNChannelsUnverified(channel);
+         }
+      }
+
+      if (frame == 0) {
+         initializeContrast();
+      }
+
+      updateAndDraw(true);
+
+      //get channelgroup name for use in loading contrast setttings
+      if (firstImage_) {
+         try {
+            channelGroup_ = tags.getString("Core-ChannelGroup");
+         } catch (JSONException ex) {
+            ReportingUtils.logError("Couldn't find Core-ChannelGroup in image metadata");
+         }
+         firstImage_ = false;
+      }
    }
 
    private void initializeContrast() {
