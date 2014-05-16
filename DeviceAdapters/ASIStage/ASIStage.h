@@ -120,6 +120,7 @@ public:
 
 
 private:
+   int OnAcceleration(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnBacklash(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnFinishError(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnError(MM::PropertyBase* pProp, MM::ActionType eAct);

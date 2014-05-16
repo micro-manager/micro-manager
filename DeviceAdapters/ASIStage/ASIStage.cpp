@@ -438,6 +438,12 @@ int XYStage::Initialize()
       CreateProperty("Error-E(nm)", "0", MM::Float, false, pAct);
    }
 
+   // acceleration (sets both x and y)
+   if (hasCommand("AC X?")) {
+      pAct = new CPropertyAction (this, &XYStage::OnAcceleration);
+      CreateProperty("Acceleration-AC(ms)", "0", MM::Integer, false, pAct);
+   }
+
    // Finish Error (sets both x and y)
    if (hasCommand("PC X?")) {
       pAct = new CPropertyAction (this, &XYStage::OnFinishError);
@@ -1106,6 +1112,58 @@ int XYStage::OnFinishError(MM::PropertyBase* pProp, MM::ActionType eAct)
       error = error/1000000;
       ostringstream command;
       command << "PC X=" << error << " Y=" << error;
+      string answer;
+      // query command
+      int ret = QueryCommand(command.str().c_str(), answer);
+      if (ret != DEVICE_OK)
+         return ret;
+
+      if (answer.substr(0,2).compare(":A") == 0)
+         return DEVICE_OK;
+      else if (answer.substr(0, 2).compare(":N") == 0 && answer.length() > 2)
+      {
+         int errNo = atoi(answer.substr(3).c_str());
+         return ERR_OFFSET + errNo;
+      }
+      return ERR_UNRECOGNIZED_ANSWER;
+   }
+   return DEVICE_OK;
+}
+
+int XYStage::OnAcceleration(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      // To simplify our life we only read out acceleration for the X axis, but set for both
+      ostringstream command;
+      command << "AC X?";
+      string answer;
+      // query command
+      int ret = QueryCommand(command.str().c_str(), answer);
+      if (ret != DEVICE_OK)
+         return ret;
+
+      if (answer.substr(0,2).compare(":X") == 0)
+      {
+         double speed = atof(answer.substr(3, 8).c_str());
+         pProp->Set(speed);
+         return DEVICE_OK;
+      }
+      // deal with error later
+      else if (answer.substr(0, 2).compare(":N") == 0 && answer.length() > 2)
+      {
+         int errNo = atoi(answer.substr(3).c_str());
+         return ERR_OFFSET + errNo;
+      }
+      return ERR_UNRECOGNIZED_ANSWER;
+   }
+   else if (eAct == MM::AfterSet) {
+      double backlash;
+      pProp->Get(backlash);
+      if (backlash < 0.0)
+         backlash = 0.0;
+      ostringstream command;
+      command << "AC X=" << backlash << " Y=" << backlash;
       string answer;
       // query command
       int ret = QueryCommand(command.str().c_str(), answer);
