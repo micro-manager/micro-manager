@@ -11,6 +11,7 @@ nobase_mmplugin_DATA = \
 	Big.jar \
 	DataBrowser.jar \
 	Developer_Tools/ClojureEditor.jar \
+	Developer_Tools/SequenceBufferMonitor.jar \
 	Device_Control/ASIdiSPIM.jar \
 	Device_Control/CRISP.jar \
 	Device_Control/MultiCamera.jar \
@@ -256,6 +257,15 @@ Acquisition_Tools/AcquireMultipleRegions.jar: \
 	$(JAVAC) $(JAVACFLAGS) -classpath ../mmstudio/MMJ_.jar:$(IJJARPATH):$(SWINGLAYOUTJARPATH):. $(srcdir)/AcquireMultipleRegions/src/org/micromanager/acquiremultipleregions/*.java -d build/AcquireMultipleRegions
 	$(MKDIR_P) Acquisition_Tools
 	cd build/AcquireMultipleRegions && jar cf ../../Acquisition_Tools/AcquireMultipleRegions.jar *
+
+Developer_Tools/SequenceBufferMonitor.jar: \
+	$(srcdir)/SequenceBufferMonitor/src/org/micromanager/plugins/sequencebuffermonitor/*.java
+	rm -rf build/SequenceBufferMonitor
+	$(MKDIR_P) build/SequenceBufferMonitor
+	$(JAVAC) $(JAVACFLAGS) -classpath $(IJJARPATH):$(BSHJARPATH):$(COMMONSMATHJARPATH):$(SWINGLAYOUTJARPATH):$(JFREECHARTJARPATH):$(CLASSEXT)/miglayout-4.0-swing.jar:../mmstudio/MMJ_.jar:. $(srcdir)/SequenceBufferMonitor/src/org/micromanager/plugins/sequencebuffermonitor/*.java -d build/SequenceBufferMonitor
+	$(MKDIR_P) Developer_Tools
+	cd build/SequenceBufferMonitor && jar cf ../../Developer_Tools/SequenceBufferMonitor.jar *
+
 
 CLEANFILES = $(nobase_mmplugin_DATA)
 
