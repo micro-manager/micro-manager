@@ -16,7 +16,7 @@ import org.micromanager.utils.ReportingUtils;
  * This class is responsible for containing and managing groups of 
  * AxisScrollers, and how they affect the display of a collection of images.
  */
-class ScrollerPanel extends JPanel {
+public class ScrollerPanel extends JPanel {
    
    /**
     * This class signifies that the currently-displayed image needs to be 

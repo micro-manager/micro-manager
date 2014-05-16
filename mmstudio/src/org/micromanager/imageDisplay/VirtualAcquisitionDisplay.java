@@ -795,7 +795,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       return hyperImage_.getSlice() - 1;
    }
 
-   boolean pause() {
+   public boolean pause() {
       if (eng_ != null) {
          if (eng_.isPaused()) {
             eng_.setPause(false);
