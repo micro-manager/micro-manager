@@ -753,7 +753,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       }   
    }
 
-   protected void updatePosition(int p) {
+   public void updatePosition(int p) {
       virtualStack_.setPositionIndex(p);
       if (!hyperImage_.isComposite()) {
          Object pixels = virtualStack_.getPixels(hyperImage_.getCurrentSlice());
