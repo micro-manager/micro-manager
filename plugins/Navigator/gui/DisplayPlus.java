@@ -20,6 +20,8 @@ import org.json.JSONObject;
 
 import org.micromanager.imageDisplay.VirtualAcquisitionDisplay;
 import org.micromanager.api.ImageCache;
+import org.micromanager.imageDisplay.IMMImagePlus;
+import org.micromanager.imageDisplay.MMCompositeImage;
 
 
 import org.micromanager.internalinterfaces.DisplayControls;
@@ -31,7 +33,7 @@ public class DisplayPlus extends VirtualAcquisitionDisplay  {
    private static final Color TRANSPARENT_MAGENTA = new Color(255, 0, 255, 100);
    private DynamicStitchingImageStorage storage_;
    private ImageCanvas canvas_;
-   private Controls controls_;
+   private DisplayPlusControls controls_;
    private CustomAcqEngine eng_;
    private JSpinner gridXSpinner_, gridYSpinner_;
    private Point clickStart_;
@@ -39,7 +41,6 @@ public class DisplayPlus extends VirtualAcquisitionDisplay  {
    private boolean suspendUpdates_ = false;
    private int mouseRowIndex_ = -1, mouseColIndex_ = -1;
    private ArrayList<Point> selectedPositions_ = new ArrayList<Point>();
-   private ScrollbarWithLabel tSelector_;
    private boolean gotoMode_ = false, newGridMode_ = false,
            zoomMode_ = false, zoomAreaSelectMode_ = false;
    private ZoomableVirtualStack zoomableStack_;
@@ -63,7 +64,7 @@ public class DisplayPlus extends VirtualAcquisitionDisplay  {
 //      }
       
       storage_ = storage;
-      controls_ = new Controls();
+      controls_ = new DisplayPlusControls(this, this.getEventBus());
 
       //Add in custom controls
       try {
@@ -82,14 +83,6 @@ public class DisplayPlus extends VirtualAcquisitionDisplay  {
          return;
       }
 
-      try {
-         //get reference to tSelector so it can be updated without showing latest images         
-         tSelector_ = (ScrollbarWithLabel) JavaUtils.getRestrictedFieldValue(
-                 this, VirtualAcquisitionDisplay.class, "tSelector_");
-      } catch (NoSuchFieldException ex) {
-         ReportingUtils.showError("Couldnt get refernce to t Selctor");
-      }
-      
       canvas_ = this.getImagePlus().getCanvas();
       
       //Zoom to 100%
@@ -401,20 +394,20 @@ public class DisplayPlus extends VirtualAcquisitionDisplay  {
       if (!suspendUpdates_) {
          super.imageReceived(taggedImage);
       } else {
-         try {
-            //tSelector will be null on first frame
-            if (tSelector_ != null) {
-               int frame = MDUtils.getFrameIndex(taggedImage.tags);
-               if (tSelector_.getMaximum() <= (1 + frame)) {
-                  ((VirtualAcquisitionDisplay.IMMImagePlus) this.getHyperImage()).setNFramesUnverified(frame + 1);
-                  tSelector_.setMaximum(frame + 2);
-                  tSelector_.invalidate();
-                  tSelector_.validate();
-               }
-            }
-         } catch (Exception ex) {
-            ReportingUtils.showError("Couldn't suspend updates");
-         }
+//         try {
+//            //tSelector will be null on first frame
+//            if (tSelector_ != null) {
+//               int frame = MDUtils.getFrameIndex(taggedImage.tags);
+//               if (tSelector_.getMaximum() <= (1 + frame)) {
+//                  ((IMMImagePlus) this.getHyperImage()).setNFramesUnverified(frame + 1);
+//                  tSelector_.setMaximum(frame + 2);
+//                  tSelector_.invalidate();
+//                  tSelector_.validate();
+//               }
+//            }
+//         } catch (Exception ex) {
+//            ReportingUtils.showError("Couldn't suspend updates");
+//         }
       }
 
    }
@@ -427,7 +420,7 @@ public class DisplayPlus extends VirtualAcquisitionDisplay  {
       } else {
          CompositeImage ci = (CompositeImage) this.getHyperImage();
          if (ci.getMode() == CompositeImage.COMPOSITE) {
-            for (int i = 0; i < ((VirtualAcquisitionDisplay.MMCompositeImage) ci).getNChannelsUnverified(); i++) {
+            for (int i = 0; i < ((MMCompositeImage) ci).getNChannelsUnverified(); i++) {
                //Dont need to set pixels if processor is null because it will get them from stack automatically  
                Object pixels = zoomableStack_.getPixels(ci.getCurrentSlice() - ci.getChannel() + i + 1);
                if (ci.getProcessor(i + 1) != null && pixels != null) {
@@ -445,265 +438,5 @@ public class DisplayPlus extends VirtualAcquisitionDisplay  {
       }
       CanvasPaintPending.setPaintPending(canvas_, this);
       this.updateAndDraw(true);
-   }
-
-   class Controls extends DisplayControls {
-
-      private JButton pauseButton_, abortButton_;
-      private JTextField fpsField_;
-      private JLabel zPosLabel_, timeStampLabel_, nextFrameLabel_, posNameLabel_;
-      private JToggleButton gotoButton_, suspendUpdatesButton_;
-              
-      private Timer nextFrameTimer_;
-
-      public Controls() {
-         initComponents();
-         nextFrameTimer_ = new Timer(1000, new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-               long nextImageTime = 0;
-               try {
-                  nextImageTime = DisplayPlus.this.getNextWakeTime();
-               } catch (NullPointerException ex) {
-                  nextFrameTimer_.stop();
-               }
-               if (!DisplayPlus.this.acquisitionIsRunning()) {
-                  nextFrameTimer_.stop();
-               }
-               double timeRemainingS = (nextImageTime - System.nanoTime() / 1000000) / 1000;
-               if (timeRemainingS > 0 && DisplayPlus.this.acquisitionIsRunning()) {
-                  nextFrameLabel_.setText("Next frame: " + NumberUtils.doubleToDisplayString(1 + timeRemainingS) + " s");
-                  nextFrameTimer_.setDelay(100);
-               } else {
-                  nextFrameTimer_.setDelay(1000);
-                  nextFrameLabel_.setText("");
-               }
-
-            }
-         });
-         nextFrameTimer_.start();
-      }
-
-
-
-      private void gotoButtonAction() {
-         if (gotoButton_.isSelected()) {
-            gotoButton_.setSelected(true);
-            gotoMode_ = true;
-            canvas_.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR), 0);
-         } else {
-            gotoMode_ = false;
-            canvas_.setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR), 0);
-         }
-      }
-
-
-      public void acquiringImagesUpdate(boolean state) {
-         abortButton_.setEnabled(state);
-         pauseButton_.setEnabled(state);
-      }
-
-      private void updateFPS() {
-         try {
-            double fps = NumberUtils.displayStringToDouble(fpsField_.getText());
-            DisplayPlus.this.setPlaybackFPS(fps);
-         } catch (ParseException ex) {
-         }
-      }
-
-      public void updateSelectedPosition(String posName) {
-         posNameLabel_.setText(posName);
-      }
-
-      @Override
-      public void imagesOnDiskUpdate(boolean bln) {
-//         abortButton_.setEnabled(bln);
-//         pauseButton_.setEnabled(bln);
-      }
-
-      @Override
-      public void setStatusLabel(String string) {
-      }
-
-      private void updateLabels(JSONObject tags) {
-         //Z position label
-         String zPosition = "";
-         try {
-            zPosition = NumberUtils.doubleStringCoreToDisplay(tags.getString("ZPositionUm"));
-         } catch (Exception e) {
-            try {
-               zPosition = NumberUtils.doubleStringCoreToDisplay(tags.getString("Z-um"));
-            } catch (Exception e1) {
-               // Do nothing...
-            }
-         }
-         zPosLabel_.setText("Z Position: " + zPosition + " um ");
-
-         //time label
-         try {
-            int ms = (int) tags.getDouble("ElapsedTime-ms");
-            int s = ms / 1000;
-            int min = s / 60;
-            int h = min / 60;
-
-            String time = twoDigitFormat(h) + ":" + twoDigitFormat(min % 60)
-                    + ":" + twoDigitFormat(s % 60) + "." + threeDigitFormat(ms % 1000);
-            timeStampLabel_.setText("Elapsed time: " + time + " ");
-         } catch (JSONException ex) {
-//            ReportingUtils.logError("MetaData did not contain ElapsedTime-ms field");
-         }
-      }
-
-      private String twoDigitFormat(int i) {
-         String ret = i + "";
-         if (ret.length() == 1) {
-            ret = "0" + ret;
-         }
-         return ret;
-      }
-
-      private String threeDigitFormat(int i) {
-         String ret = i + "";
-         if (ret.length() == 1) {
-            ret = "00" + ret;
-         } else if (ret.length() == 2) {
-            ret = "0" + ret;
-         }
-         return ret;
-      }
-
-      @Override
-      public void newImageUpdate(JSONObject tags) {
-         if (tags == null) {
-            return;
-         }
-         updateLabels(tags);
-      }
-
-
-
-      private void initComponents() {
-         setPreferredSize(new java.awt.Dimension(700, 40));
-         this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-         final JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-         this.add(panel);
-     
-         suspendUpdatesButton_ = new JToggleButton("Suspend updates");
-         suspendUpdatesButton_.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-               if (suspendUpdatesButton_.isSelected()) {
-                  suspendUpdatesButton_.setText("Resume updates");
-                  suspendUpdates_ = true;
-               } else {
-                  suspendUpdatesButton_.setText("Suspend updates");
-                  suspendUpdates_ = false;
-               }
-            }
-         });
-
-
-         //button area
-         abortButton_ = new JButton();
-         abortButton_.setBackground(new java.awt.Color(255, 255, 255));
-         abortButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/icons/cancel.png"))); // NOI18N
-         abortButton_.setToolTipText("Abort acquisition");
-         abortButton_.setFocusable(false);
-         abortButton_.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-         abortButton_.setMaximumSize(new java.awt.Dimension(25, 25));
-         abortButton_.setMinimumSize(new java.awt.Dimension(25, 25));
-         abortButton_.setPreferredSize(new java.awt.Dimension(25, 25));
-         abortButton_.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-         abortButton_.addActionListener(new ActionListener() {
-
-            public void actionPerformed(ActionEvent e) {
-               try {
-                  JavaUtils.invokeRestrictedMethod(DisplayPlus.this, VirtualAcquisitionDisplay.class, "abort");
-               } catch (Exception ex) {
-                  ReportingUtils.showError("Couldn't abort. Try pressing stop on Multi-Dimensional acquisition Window");
-               }
-            }
-         });
-
-         pauseButton_ = new JButton();
-         pauseButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/icons/control_pause.png"))); // NOI18N
-         pauseButton_.setToolTipText("Pause acquisition");
-         pauseButton_.setFocusable(false);
-         pauseButton_.setMargin(new java.awt.Insets(0, 0, 0, 0));
-         pauseButton_.setMaximumSize(new java.awt.Dimension(25, 25));
-         pauseButton_.setMinimumSize(new java.awt.Dimension(25, 25));
-         pauseButton_.setPreferredSize(new java.awt.Dimension(25, 25));
-         pauseButton_.addActionListener(new java.awt.event.ActionListener() {
-
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-               try {
-                  JavaUtils.invokeRestrictedMethod(DisplayPlus.this, VirtualAcquisitionDisplay.class, "pause");
-               } catch (Exception ex) {
-                  ReportingUtils.showError("Couldn't pause");
-               }
-//               if (eng_.isPaused()) {
-//                  pauseButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/icons/resultset_next.png"))); // NOI18N
-//               } else {
-//                  pauseButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/icons/control_pause.png"))); // NOI18N
-//               }
-            }
-         });
-
-         //text area
-         zPosLabel_ = new JLabel("Z position:") {
-
-            @Override
-            public void setText(String s) {
-               Controls.this.invalidate();
-               super.setText(s);
-               Controls.this.validate();
-            }
-         };
-         timeStampLabel_ = new JLabel("Elapsed time:") {
-
-            @Override
-            public void setText(String s) {
-               Controls.this.invalidate();
-               super.setText(s);
-               Controls.this.validate();
-            }
-         };
-         nextFrameLabel_ = new JLabel("Next frame: ") {
-
-            @Override
-            public void setText(String s) {
-               Controls.this.invalidate();
-               super.setText(s);
-               Controls.this.validate();
-            }
-         };
-         fpsField_ = new JTextField();
-         fpsField_.setText("7");
-         fpsField_.setToolTipText("Set the speed at which the acquisition is played back.");
-         fpsField_.setPreferredSize(new Dimension(25, 18));
-         fpsField_.addFocusListener(new java.awt.event.FocusAdapter() {
-
-            public void focusLost(java.awt.event.FocusEvent evt) {
-               updateFPS();
-            }
-         });
-         fpsField_.addKeyListener(new java.awt.event.KeyAdapter() {
-
-            public void keyReleased(java.awt.event.KeyEvent evt) {
-               updateFPS();
-            }
-         });
-         JLabel fpsLabel = new JLabel("Animation playback FPS: ");
-
-         panel.add(abortButton_);
-         panel.add(pauseButton_);
-         panel.add(fpsLabel);
-         panel.add(fpsField_);
-         panel.add(zPosLabel_);
-         panel.add(timeStampLabel_);
-         panel.add(nextFrameLabel_);
-      }
    }
 }
