@@ -48,6 +48,8 @@ DeviceInstance::DeviceInstance(CMMCore* core,
             " from device adapter " + ToQuotedString(adapter->GetName()) +
             " but got an instance named " + ToQuotedString(actualName));
    }
+
+   pImpl_->SetLabel(label_.c_str());
 }
 
 DeviceInstance::~DeviceInstance()
