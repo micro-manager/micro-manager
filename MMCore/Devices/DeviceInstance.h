@@ -117,7 +117,7 @@ protected:
 
       char* GetBuffer() { return buf_; }
       std::string Get() const { Check(); return buf_; }
-      bool IsEmpty() const { Check(); return (buf_[0] != '\0'); }
+      bool IsEmpty() const { Check(); return (buf_[0] == '\0'); }
 
    private:
       void Check() const { if (buf_[sizeof(buf_) - 1] != '\0') ThrowBufferOverflowError(); }
