@@ -110,6 +110,7 @@ FastLogger::~FastLogger()
       pLogThread_g->Stop();
       pLogThread_g->wait();
       delete pLogThread_g;
+      pLogThread_g = 0;
    }
    Shutdown();
 }
