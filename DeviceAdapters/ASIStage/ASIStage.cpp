@@ -167,6 +167,7 @@ MM::DeviceDetectionStatus ASICheckSerialPort(MM::Device& device, MM::Core& core,
          MM::Device* pS = core.GetDevice(&device, portToCheck.c_str());
          std::vector< std::string> possibleBauds;
          possibleBauds.push_back("9600");
+         possibleBauds.push_back("115200");
          for( std::vector< std::string>::iterator bit = possibleBauds.begin(); bit!= possibleBauds.end(); ++bit )
          {
             core.SetDeviceProperty(portToCheck.c_str(), MM::g_Keyword_BaudRate, (*bit).c_str() );
