@@ -43,10 +43,9 @@ DeviceInstance::DeviceInstance(CMMCore* core,
    const std::string actualName = GetName();
    if (actualName != name)
    {
-      deleteFunction_(pImpl_);
-      throw CMMError("Requested device " + ToQuotedString(name) +
-            " from device adapter " + ToQuotedString(adapter->GetName()) +
-            " but got an instance named " + ToQuotedString(actualName));
+      // TODO Log a warning message. This should be an error, but currently it
+      // breaks some device adapters. Probably best to remove GetName() from
+      // MM::Device entirely and handle it solely in the Core.
    }
 
    pImpl_->SetLabel(label_.c_str());
