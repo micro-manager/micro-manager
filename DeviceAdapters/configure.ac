@@ -148,6 +148,9 @@ build_IIDC=$use_libdc1394
 case $host in 
    *apple-darwin*) build_IIDC=no ;;
 esac
+if test -z "$BOOST_CHRONO_LIB"; then
+   build_IIDC=no
+fi
 # TODO BUILD_IIDC should also check for Boost libraries
 AM_CONDITIONAL([BUILD_IIDC], [test "x$build_IIDC" = xyes])
 
