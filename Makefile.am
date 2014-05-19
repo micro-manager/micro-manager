@@ -108,7 +108,16 @@ CLEANFILES = $(launcher_SCRIPTS)
 
 
 # TODO: Building of DeviceAdapters could be made optional.
-SUBDIRS = MMDevice $(MMCORE_DIR) $(MMCOREJ_DIR) $(MMCOREPY_DIR) $(JAVA_APP_DIRS) DeviceAdapters $(SECRETDEVICEADAPTERS) bindist
+SUBDIRS = \
+	testing \
+	MMDevice \
+	$(MMCORE_DIR) \
+	$(MMCOREJ_DIR) \
+	$(MMCOREPY_DIR) \
+	$(JAVA_APP_DIRS) \
+	DeviceAdapters \
+	$(SECRETDEVICEADAPTERS) \
+	bindist
 
 
 dox:

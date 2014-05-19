@@ -354,8 +354,10 @@ AC_CONFIG_SUBDIRS([DeviceKit])
 
 AC_CONFIG_FILES(m4_strip([
    Makefile
+   testing/Makefile
    MMDevice/Makefile
    MMCore/Makefile
+   MMCore/unittest/Makefile
    MMCoreJ_wrap/Makefile
    MMCorePy_wrap/Makefile
    mmstudio/Makefile
