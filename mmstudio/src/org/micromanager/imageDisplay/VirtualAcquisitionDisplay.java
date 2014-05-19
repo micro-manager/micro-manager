@@ -51,7 +51,8 @@ import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 import javax.swing.event.MouseInputAdapter;
 import javax.swing.JMenuItem;
@@ -107,14 +108,12 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    private static final int ANIMATION_AND_LOCK_RESTART_DELAY = 800;
    final ImageCache imageCache_;
    private AcquisitionEngine eng_;
-   private boolean finished_ = false;
+   private boolean isAcquisitionFinished_ = false;
    private boolean promptToSave_ = true;
    private String name_;
-   private long lastDisplayTime_;
-   private int lastFrameShown_ = 0;
-   private int lastSliceShown_ = 0;
-   private int lastPositionShown_ = 0;
    private int numComponents_;
+   // This queue holds images waiting to be displayed.
+   private LinkedBlockingQueue<JSONObject> imageTagsQueue_;
    private ImagePlus hyperImage_;
    private DisplayControls controls_;
    private boolean shouldUseSimpleControls_ = false;
@@ -134,8 +133,6 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    private final Object imageReceivedObject_ = new Object();
 
    private EventBus bus_;
-   // Lock around our ImageJ canvas.
-   private ReentrantLock canvasLock_ = new ReentrantLock();
    // Boolean that indicates if doShowImage is currently running.
    private AtomicBoolean isDoShowImageRunning_ = new AtomicBoolean(false);
 
@@ -153,7 +150,6 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
     */
    public VirtualAcquisitionDisplay(ImageCache imageCache, AcquisitionEngine eng) {
       this(imageCache, eng, WindowManager.getUniqueName("Untitled"));
-      setupEventBus();
    }
 
    /**
@@ -166,6 +162,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       mda_ = eng != null;
       this.albumSaved_ = imageCache.isFinished();
       setupEventBus();
+      setupDisplayThread();
    }
 
    /**
@@ -175,6 +172,50 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    private void setupEventBus() {
       bus_ = new EventBus();
       bus_.register(this);
+   }
+
+   /**
+    * Start the thread that will be used to update our display. This thread
+    * extracts the newest image from imageTagsQueue_, displays it, and waits for
+    * display to stop, then repeats (all other images in the queue are 
+    * discarded). 
+    */
+   private void setupDisplayThread() {
+      imageTagsQueue_ = new LinkedBlockingQueue<JSONObject>();
+      new Thread(new Runnable() {
+         @Override
+         public void run() {
+            JSONObject tags;
+            while (true) {
+               // Extract images from the queue until we get to the end.
+               do {
+                  try {
+                     // This will block until an image is available.
+                     tags = imageTagsQueue_.take();
+                  }
+                  catch (InterruptedException e) {
+                     ReportingUtils.logError("VirtualAcquisitionDisplay display thread interrupted");
+                     return;
+                  }
+               } while (imageTagsQueue_.peek() != null);
+               if (hyperImage_ != null && hyperImage_.getCanvas() != null) {
+                  // Wait for the canvas to be available. If we don't do this,
+                  // then our framerate tanks, possibly because of repaint
+                  // events piling up in the EDT. It's hard to tell. 
+                  while (CanvasPaintPending.isMyPaintPending(
+                        hyperImage_.getCanvas(), imageReceivedObject_)) {
+                     try {
+                        Thread.sleep(10);
+                     }
+                     catch (InterruptedException e) {}
+                  }
+                  CanvasPaintPending.setPaintPending(
+                        hyperImage_.getCanvas(), imageReceivedObject_);
+               }
+               showImage(tags, true);
+            }
+         }
+   }).start();
    }
 
    // Retrieve our EventBus.
@@ -194,7 +235,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
     * - eng_ is null
     * - We subscribe to the "pixel size changed" event. 
     * - Later, when we create controls_, it will be told to use the 
-    *   Snap/Live buttons.
+    *   Snap/Live buttons (because shouldUseSimpleControls_ is true).
     */
    @SuppressWarnings("LeakingThisInConstructor")
    public VirtualAcquisitionDisplay(ImageCache imageCache, String name) throws MMScriptException {
@@ -204,6 +245,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       shouldUseSimpleControls_ = true;
       this.albumSaved_ = imageCache.isFinished();
       setupEventBus();
+      setupDisplayThread();
       // Also register us for pixel size change events on the global EventBus.
       EventManager.register(this);
    }
@@ -328,35 +370,12 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
     * @param taggedImage 
     */
    @Override
-   public  void imageReceived(final TaggedImage taggedImage) {
+   public void imageReceived(final TaggedImage taggedImage) {
       if (hyperImage_ == null) {
-         updateDisplay(taggedImage, false);
+         updateDisplay(taggedImage);
          return;
       }
-      canvasLock_.lock();
-      try {
-         boolean isDisplayOccupied = CanvasPaintPending.isMyPaintPending(hyperImage_.getCanvas(), imageReceivedObject_);
-         if (!isDisplayOccupied) {
-            try {
-               // This sleep fixes a display "break" that causes images to 
-               // stop getting drawn, if display updates happen too quickly
-               // (possibly only on machines with more than 2 cores?), 
-               // especially if the "Slow hist" checkbox is marked (thereby
-               // speeding up draw updates as the histogram isn't calculated
-               // as often). We'd love to remove this; we just don't know how
-               // to fix the underlying problem. 
-               Thread.sleep(25);
-            }
-            catch (InterruptedException e) {
-               // Do nothing. 
-            }
-            CanvasPaintPending.setPaintPending(hyperImage_.getCanvas(), imageReceivedObject_);
-            updateDisplay(taggedImage, false);
-         }
-      }
-      finally {
-         canvasLock_.unlock();
-      }
+      updateDisplay(taggedImage);
    }
 
    /**
@@ -365,50 +384,31 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
     */
    @Override
    public void imagingFinished(String path) {
-      updateDisplay(null, true);
+      updateDisplay(null);
       updateAndDraw(true);
       if (!(eng_ != null && eng_.abortRequested())) {
          updateWindowTitleAndStatus();
       }
    }
 
-   private void updateDisplay(TaggedImage taggedImage, boolean finalUpdate) {
+   /**
+    * A new image has arrived; toss it onto our queue for display.
+    */
+   private void updateDisplay(TaggedImage taggedImage) {
+      JSONObject tags;
+      if (taggedImage == null || taggedImage.tags == null) {
+         tags = imageCache_.getLastImageTags();
+      }
+      else {
+         tags = taggedImage.tags;
+      }
       try {
-         long t = System.currentTimeMillis();
-         JSONObject tags;
-         if (taggedImage != null) {
-            tags = taggedImage.tags;
-         } else {
-            tags = imageCache_.getLastImageTags();
-         }
-         if (tags == null) {
-            return;
-         }
-         int frame = MDUtils.getFrameIndex(tags);
-         int ch = MDUtils.getChannelIndex(tags);
-         int slice = MDUtils.getSliceIndex(tags);
-         int position = MDUtils.getPositionIndex(tags);
-
-         int updateTime = 30;
-         //update display if: final update, frame is 0, more than 30 ms since last update, 
-         //last channel for given frame/slice/position, or final slice and channel for first frame and position
-         boolean show = finalUpdate || frame == 0 || (Math.abs(t - lastDisplayTime_) > updateTime)
-                 || (ch == getNumChannels() - 1 && lastFrameShown_ == frame && lastSliceShown_ == slice && lastPositionShown_ == position)
-                 || (slice == getNumSlices() - 1 && frame == 0 && position == 0 && ch == getNumChannels() - 1);
-
-         if (show) {
-            showImage(tags, true);
-            lastFrameShown_ = frame;
-            lastSliceShown_ = slice;
-            lastPositionShown_ = position;
-            lastDisplayTime_ = t;
-         }  
-      } catch (JSONException e) {
-         ReportingUtils.logError(e);
-      } catch (InterruptedException e) {
-         ReportingUtils.logError(e);
-      } catch (InvocationTargetException e) {
-         ReportingUtils.logError(e);
+         imageTagsQueue_.add(tags);
+      }
+      catch (IllegalStateException e) {
+         // The queue was full. This should never happen as the queue has
+         // MAXINT size. 
+         ReportingUtils.logError("Ran out of space in the imageQueue! Inconceivable!");
       }
    }
 
@@ -553,10 +553,10 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
          status += ", ";
          if (eng.isFinished()) {
             eng_ = null;
-            finished_ = true;
+            isAcquisitionFinished_ = true;
          }
       } else {
-         if (finished_ == true) {
+         if (isAcquisitionFinished_ == true) {
             status = "finished, ";
          }
          controls_.acquiringImagesUpdate(false);
@@ -590,9 +590,8 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
     * Will wait for the screen update
     *      
     * @param taggedImg
-    * @throws Exception 
     */
-   public void showImage(TaggedImage taggedImg) throws Exception {
+   public void showImage(TaggedImage taggedImg) {
       showImage(taggedImg, true);
    }
 
@@ -601,31 +600,20 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
     * Optionally waits for the display to draw the image
     * @param taggedImg 
     * @param waitForDisplay 
-    * @throws java.lang.InterruptedException 
-    * @throws java.lang.reflect.InvocationTargetException 
     */
-   public void showImage(TaggedImage taggedImg, boolean waitForDisplay) throws InterruptedException, InvocationTargetException {
+   public void showImage(TaggedImage taggedImg, boolean waitForDisplay) {
       showImage(taggedImg.tags, waitForDisplay);
    }
    
-   public void showImage(final JSONObject tags, final boolean waitForDisplay) throws InterruptedException, InvocationTargetException {
-      if (isDoShowImageRunning_.get()) {
-         // Forget it; someone else is already busy with this function and
-         // we don't want to jam Swing's event queue full of events.
-         // Note that this check isn't quite perfect (there's a small gap where
-         // multiple events can get posted if this function is called rapidly).
-         // but it should serve adequate for rate-limiting the creation of 
-         // events.
-         return;
-      }
+   /**
+    * This is a wrapper around doShowImage() that sets and unsets 
+    * isDoShowImageRunning_ to indicate when the display is complete.
+    */
+   public void showImage(final JSONObject tags, final boolean waitForDisplay) {
+      isDoShowImageRunning_.set(true);
       SwingUtilities.invokeLater(new Runnable() {
          @Override
          public void run() {
-            if (isDoShowImageRunning_.get()) {
-               // Someone else beat us here; give up.
-               return;
-            }
-            isDoShowImageRunning_.set(true);
             try {
                doShowImage(tags, waitForDisplay);
             }
@@ -644,7 +632,6 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       }
 
       if (hyperImage_ == null) {
-         // this has to run on the EDT
          startup(tags, null);
       }
 

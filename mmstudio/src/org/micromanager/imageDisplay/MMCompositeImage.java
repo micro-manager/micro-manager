@@ -153,13 +153,6 @@ public class MMCompositeImage extends CompositeImage implements IMMImagePlus {
          return;
       }
       CanvasPaintPending.setPaintPending(super.getCanvas(), this);
-      /*  // this sleep may help in some circumstances
-      try {
-         Thread.sleep(25);
-      } catch (InterruptedException ex) {
-         ReportingUtils.logError(ex, "Sleeping Thread was woken");
-      }
-      */
       
       superUpdateImage(); 
       bus_.post(new DrawEvent());
