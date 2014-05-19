@@ -20,9 +20,9 @@ endif
 if BUILD_IDSUEYE
    IDSUEYE = IDS_uEye
 endif
-# if BUILD_IIDC
-#    IIDC = IIDC
-# endif
+if BUILD_IIDC
+   IIDC = IIDC
+endif
 if BUILD_ITC
    ITC = ITC18
 endif

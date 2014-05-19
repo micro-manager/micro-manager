@@ -1,5 +1,3 @@
-
-
 # To allow building with outdated versions of Boost (present by default on many
 # Linux distributions), use the older Boost.Thread interface, even though it
 # differs more from C++11. Another way around this might be to use G++'s C++11
@@ -20,5 +18,8 @@ libmmgr_dal_IIDC_la_SOURCES = \
 	IIDCVideoMode.h \
 	MMIIDCCamera.cpp \
 	MMIIDCCamera.h
-libmmgr_dal_IIDC_la_LIBADD = $(MMDEVAPI_LIBADD) $(LIBDC1394) $(BOOST_THREAD_LIB) $(BOOST_SYSTEM_LIB) $(BOOST_DATE_TIME_LIB) $(BOOST_CHRONO_LIB)
-libmmgr_dal_IIDC_la_LDFLAGS = $(MMDEVAPI_LDFLAGS) $(BOOST_LDFLAGS)
+
+libmmgr_dal_IIDC_la_CPPFLAGS = $(AM_CPPFLAGS) $(LIBDC1394_CPPFLAGS)
+libmmgr_dal_IIDC_la_CXXFLAGS = $(AM_CXXFLAGS) $(LIBDC1394_CFLAGS)
+libmmgr_dal_IIDC_la_LIBADD = $(MMDEVAPI_LIBADD) $(BOOST_THREAD_LIB) $(BOOST_SYSTEM_LIB) $(BOOST_DATE_TIME_LIB) $(BOOST_CHRONO_LIB) $(LIBDC1394_LIBS)
+libmmgr_dal_IIDC_la_LDFLAGS = $(MMDEVAPI_LDFLAGS) $(BOOST_LDFLAGS) $(LIBDC1394_LDFLAGS)

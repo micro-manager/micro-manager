@@ -142,8 +142,14 @@ AS_IF([test "x$want_libdc1394" != xno],
 # libraries; they might depend on multiple libraries. Should collect them at
 # the end of this file
 AM_CONDITIONAL([BUILD_DC1394], [test "x$use_libdc1394" = xyes])
+
+build_IIDC=$use_libdc1394
+# IIDC Doesn't work on OS X yet.
+case $host in 
+   *apple-darwin*) build_IIDC=no ;;
+esac
 # TODO BUILD_IIDC should also check for Boost libraries
-AM_CONDITIONAL([BUILD_IIDC], [test "x$use_libdc1394" = xyes])
+AM_CONDITIONAL([BUILD_IIDC], [test "x$build_IIDC" = xyes])
 
 
 # Andor cameras on linux 
