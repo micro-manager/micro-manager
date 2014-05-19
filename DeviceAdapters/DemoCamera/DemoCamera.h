@@ -169,6 +169,7 @@ public:
    int OnFastImage(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSaturatePixels(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnFractionOfPixelsToDropOrSaturate(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnShouldRotateImages(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnCCDTemp(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnIsSequenceable(MM::PropertyBase* pProp, MM::ActionType eAct);
 
@@ -213,6 +214,7 @@ private:
    bool fastImage_;
 	bool saturatePixels_;
 	double fractionOfPixelsToDropOrSaturate_;
+    bool shouldRotateImages_;
 
 	double testProperty_[10];
    MMThreadLock imgPixelsLock_;

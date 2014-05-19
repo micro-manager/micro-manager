@@ -218,6 +218,7 @@ CDemoCamera::CDemoCamera() :
    fastImage_(false),
    saturatePixels_(false),
 	fractionOfPixelsToDropOrSaturate_(0.002),
+    shouldRotateImages_(false),
    nComponents_(1)
 {
    memset(testProperty_,0,sizeof(testProperty_));
@@ -436,6 +437,11 @@ int CDemoCamera::Initialize()
    pAct = new CPropertyAction (this, &CDemoCamera::OnFractionOfPixelsToDropOrSaturate);
    CreateFloatProperty("FractionOfPixelsToDropOrSaturate", 0.002, false, pAct);
 	SetPropertyLimits("FractionOfPixelsToDropOrSaturate", 0., 0.1);
+
+   pAct = new CPropertyAction(this, &CDemoCamera::OnShouldRotateImages);
+   CreateIntegerProperty("RotateImages", 0, false, pAct);
+   AddAllowedValue("RotateImages", "0");
+   AddAllowedValue("RotateImages", "1");
 
    // Whether or not to use exposure time sequencing
    pAct = new CPropertyAction (this, &CDemoCamera::OnIsSequenceable);
@@ -1504,6 +1510,22 @@ int CDemoCamera::OnFractionOfPixelsToDropOrSaturate(MM::PropertyBase* pProp, MM:
    return DEVICE_OK;
 }
 
+int CDemoCamera::OnShouldRotateImages(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::AfterSet)
+   {
+      long tvalue = 0;
+      pProp->Get(tvalue);
+      shouldRotateImages_ = (bool) tvalue;
+   }
+   else if (eAct == MM::BeforeGet)
+   {
+      pProp->Set((long) shouldRotateImages_);
+   }
+
+   return DEVICE_OK;
+}
+
 /*
 * Handles "ScanMode" property.
 * Changes allowed Binning values to test whether the UI updates properly
@@ -1722,7 +1744,12 @@ void CDemoCamera::GenerateSyntheticImage(ImgBuffer& img, double exp)
    long lPeriod = img.Width()/2;
    double dLinePhase = 0.0;
    const double dAmp = exp;
-   const double cLinePhaseInc = 2.0 * cPi / 4.0 / img.Height();
+   double cLinePhaseInc = 2.0 * cPi / 4.0 / img.Height();
+   if (shouldRotateImages_) {
+      // Adjust the angle of the sin wave pattern based on how many images
+      // we've taken, to increase the period (i.e. time between repeat images).
+      cLinePhaseInc *= (((int) dPhase_ / 6) % 24) - 12;
+   }
 
    static bool debugRGB = false;
 #ifdef TIFFDEMO
