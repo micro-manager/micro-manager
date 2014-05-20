@@ -192,11 +192,6 @@ public class PluginLoader {
          }
 
          String menuItem = getNameForPluginClass(cl);
-         if (menuItem == null) {
-            // No accessible menuName field; disallow this plugin.
-            ReportingUtils.logError("No \"menuName\" field for plugin with class name " + className);
-            return null;
-         }
        
          String toolTipDescription = "";
          try {
@@ -383,6 +378,7 @@ public class PluginLoader {
       } catch (Exception e) {
          ReportingUtils.logError(e);
       }
-      return null;
+      // Fake it using the class name, with underscores replaced by spaces.
+      return cl.getSimpleName().replace("_", " ");
    }
 }
