@@ -16,6 +16,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.FlowLayout;
 import java.awt.Font;
+import java.lang.Math;
 import java.text.ParseException;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -42,6 +43,7 @@ import org.micromanager.utils.ReportingUtils;
 public class HyperstackControls extends DisplayControls implements LiveModeListener {
 
    private final static int DEFAULT_FPS = 10;
+   private final static double MAX_FPS = 5000;
 
    private final VirtualAcquisitionDisplay display_;
    private EventBus bus_;
@@ -382,6 +384,8 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
       if (fpsField_ != null) {
          try {
             double fps = NumberUtils.displayStringToDouble(fpsField_.getText());
+            // Constrain the FPS to a sane range.
+            fps = Math.max(1.0, Math.min(fps, MAX_FPS));
             scrollerPanel_.setFramesPerSecond(fps);
          } catch (ParseException ex) {
             // No recognizable number (e.g. because the field is empty); just
