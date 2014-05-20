@@ -405,10 +405,6 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
     */
    @Override
    public void imageReceived(final TaggedImage taggedImage) {
-      if (hyperImage_ == null) {
-         updateDisplay(taggedImage);
-         return;
-      }
       updateDisplay(taggedImage);
    }
 
