@@ -12,4 +12,6 @@ public interface IMMImagePlus {
    public void setNSlicesUnverified(int nSlices);
    public void setNFramesUnverified(int nFrames);
    public void drawWithoutUpdate();
+
+   public int[] getPixelIntensities(int x, int y);
 }

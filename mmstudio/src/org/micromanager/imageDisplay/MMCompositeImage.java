@@ -204,5 +204,10 @@ public class MMCompositeImage extends CompositeImage implements IMMImagePlus {
       getWindow().getCanvas().setImageUpdated();
       superDraw();
    }
+
+   @Override
+   public int[] getPixelIntensities(int x, int y) {
+      return super.getPixel(x, y);
+   }
 }
 

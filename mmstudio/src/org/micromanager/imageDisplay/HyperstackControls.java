@@ -48,6 +48,10 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
    private final VirtualAcquisitionDisplay display_;
    private EventBus bus_;
 
+   // Last known mouse positions.
+   private int mouseX_ = -1;
+   private int mouseY_ = -1;
+
    // Controls common to both control sets
    private ScrollerPanel scrollerPanel_;
    private JLabel pixelInfoLabel_;
@@ -306,10 +310,18 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
     */
    @Subscribe
    public void onMouseMoved(MouseIntensityEvent event) {
-      pixelInfoLabel_.setText(String.format(
-               "<%d, %d>: %d", event.x_, event.y_, event.intensities_[0]));
+      mouseX_ = event.x_;
+      mouseY_ = event.y_;
+      setPixelInfo(mouseX_, mouseY_, event.intensities_[0]);
    }
-  
+ 
+   /**
+    * Update our pixel info text.
+    */
+   private void setPixelInfo(int x, int y, int intensity) {
+      pixelInfoLabel_.setText(String.format("<%d, %d>: %d", x, y, intensity));
+   }
+
    /**
     * Our ScrollerPanel is informing us that we need to display a different
     * image.
@@ -324,6 +336,18 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
       int frame = event.getPositionForAxis("time") + 1;
       int slice = event.getPositionForAxis("z") + 1;
       display_.getHyperImage().setPosition(channel, slice, frame);
+   }
+
+   /**
+    * A new image has been made available. Update our pixel info, assuming
+    * we have a valid mouse position.
+    */
+   @Subscribe
+   public void onNewImage(NewImageEvent event) {
+      if (mouseX_ != -1 && mouseY_ != -1) {
+         int intensity = display_.getIntensityAt(mouseX_, mouseY_);
+         setPixelInfo(mouseX_, mouseY_, intensity);
+      }
    }
 
    /**
