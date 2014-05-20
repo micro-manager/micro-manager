@@ -59,23 +59,23 @@ int LoggerThread::svc(void)
 {
    do
    {
-		std::string stmp;
-		{
-			MMThreadGuard stringGuard(log_->logStringLock_);
-			stmp = log_->stringToWrite_;
-			log_->stringToWrite_.clear();
-		}
+      std::string stmp;
+      {
+         MMThreadGuard stringGuard(log_->logStringLock_);
+         stmp = log_->stringToWrite_;
+         log_->stringToWrite_.clear();
+      }
 
-		if (0 < stmp.length())
-		{
+      if (0 < stmp.length())
+      {
          if (log_->stderrLoggingEnabled_)
-				std::cerr << stmp << '\n' << std::flush;
-                                
-			MMThreadGuard fileGuard(log_->logFileLock_);
+            std::cerr << stmp << '\n' << std::flush;
+
+         MMThreadGuard fileGuard(log_->logFileLock_);
          if (log_->plogFile_)
-				*log_->plogFile_ << stmp << '\n' << std::flush;
-		}
-		CDeviceUtils::SleepMs(30);
+            *log_->plogFile_ << stmp << '\n' << std::flush;
+      }
+      CDeviceUtils::SleepMs(30);
    } while (!stop_ );
 
    return 0;
@@ -172,7 +172,7 @@ bool FastLogger::EnableLogToStderr(bool enable)
    pLogThread_->Stop();
    pLogThread_->wait();
    stderrLoggingEnabled_ = enable;
-	pLogThread_->Start();
+   pLogThread_->Start();
 
    return bRet;
 };
@@ -247,8 +247,8 @@ void FastLogger::LogF(bool isDebug, const char* format, ...)
 
 void FastLogger::Log(bool isDebug, const char* entry)
 {
-	{
-		MMThreadGuard guard(logFileLock_);
+   {
+      MMThreadGuard guard(logFileLock_);
       if (!plogFile_)
       {
          return;
