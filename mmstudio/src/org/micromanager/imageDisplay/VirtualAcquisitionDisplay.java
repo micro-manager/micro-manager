@@ -197,12 +197,14 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
          public void run() {
             JSONObject tags = null;
             while (!shouldStopDisplayThread_.get()) {
+               boolean haveValidImage = false;
                // Extract images from the queue until we get to the end.
                do {
                   try {
                      // This will block until an image is available or we need
                      // to send a new FPS update.
                      tags = imageTagsQueue_.poll(500, TimeUnit.MILLISECONDS);
+                     haveValidImage = (tags != null);
                      if (tags == null) {
                         try {
                            // We still need to generate an FPS update at 
@@ -228,8 +230,8 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
                   }
                } while (imageTagsQueue_.peek() != null);
 
-               // Paranoia check (makes the compiler happy).
-               if (tags == null) {
+               if (tags == null || !haveValidImage) {
+                  // Nothing to show. 
                   continue;
                }
       
