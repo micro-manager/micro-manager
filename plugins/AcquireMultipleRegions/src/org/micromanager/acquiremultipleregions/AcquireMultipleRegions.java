@@ -16,21 +16,13 @@ public class AcquireMultipleRegions  implements org.micromanager.api.MMPlugin {
    public static final String menuName = "Acquire Multiple Regions";
    public static final String tooltipDescription =
       "Automatically acquire multiple regions of a sample";
-   public static String versionNumber = "0.4";
+   public static String versionNumber = "0.1";
    private ScriptInterface gui_;
    private AcquireMultipleRegionsForm myFrame_;
-   //Static variables so we can use script panel to tweak interpolation params
-   //Exponent for Shepard interpolation
- 
-    /**
-     *
-     */
-       public static double shepardExponent = 2; 
    
     @Override
     public void dispose() {
-      if (myFrame_ != null)
-         myFrame_.dispose();
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
@@ -39,7 +31,6 @@ public class AcquireMultipleRegions  implements org.micromanager.api.MMPlugin {
       if (myFrame_ == null)
          myFrame_ = new AcquireMultipleRegionsForm(gui_);
       myFrame_.setVisible(true);
-      
       
       // Used to change the background layout of the form.  Does not work on Windows
       gui_.addMMBackgroundListener(myFrame_);    
