@@ -104,12 +104,10 @@ FastLogger::~FastLogger()
 }
 
 
-bool FastLogger::Initialize(const std::string& logFileName,
-      const std::string& logInstanceName)
+bool FastLogger::Initialize(const std::string& logFileName)
 {
    bool bRet =false;
 
-   logInstanceName_=logInstanceName;
    {
       MMThreadGuard guard(logFileLock_);
       bRet = Open(logFileName);

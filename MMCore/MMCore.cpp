@@ -6479,7 +6479,7 @@ void CMMCore::initializeLogging()
   
    std::string logName = g_logFileName + sout.str() + std::string(".txt");
 
-   getLoggerInstance()->Initialize(logName, g_CoreName);
+   getLoggerInstance()->Initialize(logName);
    getLoggerInstance()->EnableLogToStderr(true);
 }
 

@@ -38,8 +38,7 @@ public:
 
    friend class LoggerThread;
 
-   bool Initialize(const std::string& logFileName,
-         const std::string& logInstanceName);
+   bool Initialize(const std::string& logFileName);
    void Shutdown();
    bool Reset();
    bool Open(const std::string& f_a);
@@ -65,7 +64,6 @@ private:
    bool stderrLoggingEnabled_;
    bool fileLoggingEnabled_;
    std::string logFileName_;
-   std::string logInstanceName_;
    MMThreadLock logFileLock_;
    MMThreadLock logStringLock_;
    std::string stringToWrite_;
