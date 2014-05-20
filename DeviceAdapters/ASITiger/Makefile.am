@@ -11,6 +11,7 @@ libmmgr_dal_ASITiger_la_SOURCES = \
 	ASIFWheel.h \
 	ASIHub.cpp \
 	ASIHub.h \
+	ASILED.h \
 	ASIPeripheralBase.h \
 	ASIPiezo.cpp \
 	ASIPiezo.h \

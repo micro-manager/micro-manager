@@ -281,6 +281,21 @@ int CTigerCommHub::DetectInstalledDevices()
       }
    }
 
+   // look for LED
+   for (unsigned int i=0; i<build.numAxes; i++)
+   {
+      if (build.vAxesProps[i] & BIT6)  // BIT6 indicates LED, will only appear once per card address (enforced by firmware)
+      {
+         name = g_LEDDeviceName;
+         name.push_back(g_NameInfoDelimiter);
+         name.push_back(build.vAxesLetter[i]);  // need a char between colons for extended name functions to work, but LED device actually associated with card, not an axis
+         name.push_back(g_NameInfoDelimiter);
+         name.append(build.vAxesAddrHex[i]);
+         pDev = CreateDevice(name.c_str());
+         AddInstalledDevice(pDev);
+      }
+   }
+
    return DEVICE_OK;
 }
 

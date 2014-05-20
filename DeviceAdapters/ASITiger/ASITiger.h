@@ -104,6 +104,7 @@ const char* const g_ScannerDeviceName =  "Scanner";
 const char* const g_MMirrorDeviceName = "MicroMirror";  // deprecated
 const char* const g_PiezoDeviceName = "PiezoStage";
 const char* const g_CRISPDeviceName = "CRISPAFocus";
+const char* const g_LEDDeviceName = "LED";
 
 // corresponding device descriptions
 const char* const g_TigerCommHubDescription = "ASI TigerComm Hub (TG-1000)";
@@ -115,6 +116,7 @@ const char* const g_TurretDeviceDescription =   "ASI Turret";
 const char* const g_ScannerDeviceDescription = "ASI 2-axis Scanner";
 const char* const g_PiezoDeviceDescription = "ASI Piezo Stage";
 const char* const g_CRISPDeviceDescription = "ASI CRISP AutoFocus";
+const char* const g_LEDDeviceDescription = "ASI LED Illuminator";
 
 // constant values
 const double g_StageMinStepSize = 0.001;   // in units of um
@@ -264,7 +266,7 @@ const char* const g_WaitAfterLockPropertyName = "Wait time after Lock(ms)";
 const char* const g_ObjectiveNAPropertyName = "Objective NA";
 const char* const g_LockRangePropertyName = "Lock Range(mm)";
 const char* const g_CalibrationGainPropertyName = "Calibration Gain";
-const char* const g_LEDIntensityPropertyName = "LED Intensity";
+const char* const g_LEDIntensityPropertyName = "LED Intensity(%)";
 const char* const g_LoopGainMultiplierPropertyName = "LoopGainMultiplier";
 const char* const g_NumberAveragesPropertyName = "Number of Averages";
 const char* const g_SNRPropertyName = "Signal to Noise Ratio";
@@ -294,6 +296,10 @@ const char* const g_SPIMDelayBeforeCameraPropertyName = "SPIMDelayBeforeCamera(m
 const char* const g_SPIMDelayBeforeLaserPropertyName = "SPIMDelayBeforeLaser(ms)";
 const char* const g_SPIMCameraDurationPropertyName = "SPIMCameraDuration(ms)";
 const char* const g_SPIMLaserDurationPropertyName = "SPIMLaserDuration(ms)";
+
+// LED property names
+//const char* const g_LEDIntensityPropertyName = "LEDIntensity(%)";  // already in CRISP
+const char* const g_ShutterState = "State";
 
 // SPIM enums
 // which side first
@@ -351,6 +357,9 @@ const char* const g_OnState = "On";
 // yes/no control settings
 const char* const g_YesState = "Yes";
 const char* const g_NoState = "No";
+// shutter states
+const char* const g_OpenState = "Open";
+const char* const g_ClosedState = "Closed";
 // single-axis mode
 const char* const g_SAMode_0 = "0 - Disabled";
 const char* const g_SAMode_1 = "1 - Enabled";

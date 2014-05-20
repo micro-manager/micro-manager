@@ -39,6 +39,7 @@
 #include "ASIScanner.h"
 #include "ASIPiezo.h"
 #include "ASICRISP.h"
+#include "ASILED.h"
 #include <cstdio>
 #include <string>
 #include "../../MMDevice/MMDevice.h"
@@ -53,8 +54,6 @@ using namespace std;
 //    name constant declarations in the corresponding .h file
 //    MODULE_API MM::Device* CreateDevice(const char* deviceName) in this file
 //    DetectInstalledDevices in TigerComm (or other hub)
-// todo add LED
-// todo add shutter
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -72,7 +71,9 @@ MODULE_API void InitializeModuleData()
    RegisterDevice(g_ScannerDeviceName, MM::GalvoDevice, g_ScannerDeviceDescription);
    RegisterDevice(g_PiezoDeviceName, MM::StageDevice, g_PiezoDeviceDescription);
    RegisterDevice(g_CRISPDeviceName, MM::AutoFocusDevice, g_CRISPDeviceDescription);
+   RegisterDevice(g_LEDDeviceName, MM::ShutterDevice, g_LEDDeviceDescription);
 }
+
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)
 {
@@ -99,6 +100,8 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
       return new CPiezo(deviceName);
    else if (deviceStr.compare(0, strlen(g_CRISPDeviceName), (string)g_CRISPDeviceName) == 0)
       return new CCRISP(deviceName);
+   else if (deviceStr.compare(0, strlen(g_LEDDeviceName), (string)g_LEDDeviceName) == 0)
+      return new CLED(deviceName);
    else
       return 0;
 }
