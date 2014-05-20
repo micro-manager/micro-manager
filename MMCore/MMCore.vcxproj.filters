@@ -143,9 +143,6 @@
     <ClInclude Include="Host.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="IMMLogger.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="MMCore.h">
       <Filter>Header Files</Filter>
     </ClInclude>

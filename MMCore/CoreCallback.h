@@ -26,7 +26,6 @@
 #define _CORECALLBACK_H_
 
 #include "Devices/DeviceInstances.h"
-#include "IMMLogger.h"
 #include "CoreUtils.h"
 #include "MMCore.h"
 #include "MMEventCallback.h"
@@ -61,9 +60,9 @@ public:
       char label[MM::MaxStrLength];
       caller->GetLabel(label);
       if (debugOnly)
-         core_->getLoggerInstance()->Log(true, "Device %s debug message: %s\n", label, msg);
+         core_->getLoggerInstance()->LogF(true, "Device %s debug message: %s\n", label, msg);
       else
-         core_->getLoggerInstance()->Log(false, "Device %s message: %s\n", label, msg);
+         core_->getLoggerInstance()->LogF(false, "Device %s message: %s\n", label, msg);
       return DEVICE_OK;
    }
 

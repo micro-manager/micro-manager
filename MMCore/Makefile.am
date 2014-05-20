@@ -65,7 +65,6 @@ libMMCore_la_SOURCES = \
 	FastLogger.h \
 	Host.cpp \
 	Host.h \
-	IMMLogger.h \
 	LibraryInfo/LibraryPaths.h \
 	LibraryInfo/LibraryPathsUnix.cpp \
 	LoadableModules/LoadedDeviceAdapter.cpp \

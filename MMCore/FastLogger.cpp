@@ -3,8 +3,8 @@
 // PROJECT:       Micro-Manager
 // SUBSYSTEM:     MMCore
 //-----------------------------------------------------------------------------
-// DESCRIPTION:   Implementation of the IMMLogger interface
-// COPYRIGHT:     University of California, San Francisco, 2009
+// DESCRIPTION:   Logger implementation
+// COPYRIGHT:     University of California, San Francisco, 2009-2014
 // LICENSE:       This file is distributed under the "Lesser GPL" (LGPL) license.
 //                License text is included with the source distribution.
 //
@@ -17,36 +17,27 @@
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 // AUTHOR:        Karl Hoover, karl.hoover@ucsf.edu, 2009 11 11
-
-
-
-
-#include <stdarg.h>
-#include <string>
-#include <iostream>
-#include <fstream>
-
-#include <limits.h>
+//                Mark Tsuchida, 2013-14.
 
 #include "FastLogger.h"
 #include "CoreUtils.h"
 #include "../MMDevice/DeviceUtils.h"
 
-#include <boost/algorithm/string.hpp>
-#include <boost/lexical_cast.hpp>
-#include <boost/thread/thread.hpp>
-
-// TODO Stop relying on Boost internals
-#include "boost/interprocess/detail/os_thread_functions.hpp" 
-#include "boost/version.hpp"
-#if BOOST_VERSION >= 104800
-#  define BOOST_IPC_DETAIL boost::interprocess::ipcdetail
+#ifdef _WIN32
+#include <windows.h>
 #else
-#  define BOOST_IPC_DETAIL boost::interprocess::detail
+#include <sys/types.h>
+#include <unistd.h>
 #endif
 
-using namespace std;
-const char* g_textLogIniFiled = "Logging initialization failed\n";
+#include <boost/algorithm/string.hpp>
+#include <boost/lexical_cast.hpp>
+#include <boost/scoped_array.hpp>
+#include <boost/thread/thread.hpp>
+
+#include <climits>
+#include <iostream>
+
 
 class LoggerThread : public MMDeviceThreadBase
 {
@@ -70,19 +61,19 @@ int LoggerThread::svc(void)
    {
 		std::string stmp;
 		{
-			MMThreadGuard stringGuard(log_->logStringLock_g);
-			stmp = log_->stringToWrite_g;
-			log_->stringToWrite_g.clear();
+			MMThreadGuard stringGuard(log_->logStringLock_);
+			stmp = log_->stringToWrite_;
+			log_->stringToWrite_.clear();
 		}
 
 		if (0 < stmp.length())
 		{
          if (log_->stderrLoggingEnabled_)
-				std::cerr << stmp << '\n' << flush;
+				std::cerr << stmp << '\n' << std::flush;
                                 
-			MMThreadGuard fileGuard(log_->logFileLock_g);
-			if( NULL != log_->plogFile_g)
-				*log_->plogFile_g << stmp << '\n' << flush;
+			MMThreadGuard fileGuard(log_->logFileLock_);
+         if (log_->plogFile_)
+				*log_->plogFile_ << stmp << '\n' << std::flush;
 		}
 		CDeviceUtils::SleepMs(30);
    } while (!stop_ );
@@ -91,202 +82,193 @@ int LoggerThread::svc(void)
 }
 
 
-LoggerThread* pLogThread_g = NULL;
-
-
-FastLogger::FastLogger()
-:debugLoggingEnabled_(true)
-,stderrLoggingEnabled_(true)
-,fileLoggingEnabled_(false)
-,failureReported(false),
-plogFile_g(0)
+FastLogger::FastLogger() :
+   pLogThread_(0),
+   debugLoggingEnabled_(true),
+   stderrLoggingEnabled_(true),
+   fileLoggingEnabled_(false),
+   plogFile_(0)
 {
 }
 
 FastLogger::~FastLogger()
 {
-   if( NULL != pLogThread_g)
+   if (pLogThread_)
    {
-      pLogThread_g->Stop();
-      pLogThread_g->wait();
-      delete pLogThread_g;
-      pLogThread_g = 0;
+      pLogThread_->Stop();
+      pLogThread_->wait();
+      delete pLogThread_;
+      pLogThread_ = 0;
    }
    Shutdown();
 }
 
-/**
-* methods declared in IMMLogger as pure virtual
-* Refere to IMMLogger declaration
-*/
 
-
-bool FastLogger::Initialize(std::string logFileName, std::string logInstanceName)throw(IMMLogger::runtime_exception)
+bool FastLogger::Initialize(const std::string& logFileName,
+      const std::string& logInstanceName)
 {
    bool bRet =false;
-   try
-   {
-      failureReported=false;
-      logInstanceName_=logInstanceName;
-		{
-			MMThreadGuard guard(logFileLock_g);
-         bRet = Open(logFileName);
-         if(bRet)
-            fileLoggingEnabled_ = true;
-		}
 
-      if( NULL == pLogThread_g)
-      {
-		   pLogThread_g = new LoggerThread(this);
-		   pLogThread_g->Start();
-      }
-
-   }
-   catch(...)
+   logInstanceName_=logInstanceName;
    {
-      ReportLogFailure();
-      throw(IMMLogger::runtime_exception(g_textLogIniFiled));
+      MMThreadGuard guard(logFileLock_);
+      bRet = Open(logFileName);
+      if(bRet)
+         fileLoggingEnabled_ = true;
    }
+
+   if (!pLogThread_)
+   {
+      pLogThread_ = new LoggerThread(this);
+      pLogThread_->Start();
+   }
+
    return bRet;
 };
 
 
-void FastLogger::Shutdown()throw(IMMLogger::runtime_exception)
+void FastLogger::Shutdown()
 {
-   try
-   {
-      MMThreadGuard guard(logFileLock_g);
-      failureReported=false;
+   MMThreadGuard guard(logFileLock_);
 
-      if(NULL != plogFile_g)
-      {
-         fileLoggingEnabled_ = false;
-         plogFile_g->close();
-         delete plogFile_g;
-         plogFile_g = NULL;
-      }
-   }
-   catch(...)
+   if (plogFile_)
    {
-      plogFile_g = NULL;
-      ReportLogFailure();
-      throw(IMMLogger::runtime_exception(g_textLogIniFiled));
+      fileLoggingEnabled_ = false;
+      plogFile_->close();
+      delete plogFile_;
+      plogFile_ = NULL;
    }
 }
 
-bool FastLogger::Reset()throw(IMMLogger::runtime_exception)
+bool FastLogger::Reset()
 {
    bool bRet =false;
-   try{
-		MMThreadGuard guard(logFileLock_g);
-      failureReported=false;
-      if(NULL != plogFile_g)
-      {
-         if (plogFile_g->is_open())
-         {
-            plogFile_g->close();
-         }
-         //re-open same file but truncate old log content
-         plogFile_g->open(logFileName_.c_str(), ios_base::trunc);
-         bRet = true;
-      }
-   }
-   catch(...)
-   {
-      ReportLogFailure();
-      throw(IMMLogger::runtime_exception(g_textLogIniFiled));
-   }
 
+   MMThreadGuard guard(logFileLock_);
+   if (plogFile_)
+   {
+      if (plogFile_->is_open())
+      {
+         plogFile_->close();
+      }
+      //re-open same file but truncate old log content
+      plogFile_->open(logFileName_.c_str(), std::ios_base::trunc);
+      bRet = true;
+   }
    return bRet;
 };
 
-void FastLogger::SetPriorityLevel(bool includeDebug) throw()
+void FastLogger::SetPriorityLevel(bool includeDebug)
 {
    debugLoggingEnabled_ = includeDebug;
 }
 
-bool FastLogger::EnableLogToStderr(bool enable)throw()
+bool FastLogger::EnableLogToStderr(bool enable)
 {
    if (stderrLoggingEnabled_ == enable)
       return stderrLoggingEnabled_;
 
    bool bRet = stderrLoggingEnabled_;
-   pLogThread_g->Stop();
-   pLogThread_g->wait();
+   pLogThread_->Stop();
+   pLogThread_->wait();
    stderrLoggingEnabled_ = enable;
-	pLogThread_g->Start();
+	pLogThread_->Start();
 
    return bRet;
 };
 
 
-const size_t MaxBuf = 32767;
-struct BigBuffer { char buffer[MaxBuf]; };
+void FastLogger::VLogF(bool isDebug, const char* format, va_list ap)
+{
+   // We avoid dynamic allocation in the vast majority of cases.
+   const size_t smallBufSize = 1024;
+   char smallBuf[smallBufSize];
+   int n = vsnprintf(smallBuf, smallBufSize, format, ap);
+   if (n >= 0 && n < smallBufSize)
+   {
+      Log(isDebug, smallBuf);
+      return;
+   }
+
+   // Okay, now we deal with some nastiness due to the non-standard
+   // implementation of Microsoft's vsnprintf() (vsnprintf_s() is no better).
+
+#ifdef _MSC_VER
+   // With Microsoft's C Runtime, n is always -1 (whether error or overflow).
+   // Try a fixed-size buffer and give up if it is not large enough.
+   const size_t bigBufSize = 65536;
+#else
+   // With C99/C++11 compliant vsnprintf(), n is -1 if error but on overflow it
+   // is the required string length.
+   if (n < 0)
+   {
+      Log(isDebug, ("Error in vsnprintf() while formatting log entry with "
+               "format string " + ToQuotedString(format)).c_str());
+      return;
+   }
+   size_t bigBufSize = n + 1;
+#endif
+
+   boost::scoped_array<char> bigBuf(new char[bigBufSize]);
+   if (!bigBuf)
+   {
+      Log(isDebug, ("Error: could not allocate " + ToString(bigBufSize/1024) +
+               " kilobytes to format log entry with format string " +
+               ToQuotedString(format)).c_str());
+      return;
+   }
+
+   n = vsnprintf(bigBuf.get(), bigBufSize, format, ap);
+   if (n >= 0 && n < bigBufSize)
+   {
+      Log(isDebug, bigBuf.get());
+      return;
+   }
+
+#ifdef _MSC_VER
+   Log(isDebug, ("Error or overflow in vsnprintf() (buffer size " +
+            ToString(bigBufSize / 1024) + " kilobytes) while formatting "
+            "log entry with format string " + ToQuotedString(format)).c_str());
+#else
+   Log(isDebug, ("Error in vsnprintf() while formatting log entry with "
+            "format string " + ToQuotedString(format)).c_str());
+#endif
+}
 
 
-void FastLogger::Log(bool isDebug, const char* format, ...) throw()
+void FastLogger::LogF(bool isDebug, const char* format, ...)
+{
+   va_list ap;
+   va_start(ap, format);
+   VLogF(isDebug, format, ap);
+   va_end(ap);
+}
+
+
+void FastLogger::Log(bool isDebug, const char* entry)
 {
 	{
-		MMThreadGuard guard(logFileLock_g);
-		if( NULL == plogFile_g) 
-		{
-			cerr<< " log file is NULL!" << endl;
-			return;
-		}
-	}
-
-	try
-	{
-      if (isDebug && !debugLoggingEnabled_)
-			return;
-
-		std::string entryPrefix = GetEntryPrefix(isDebug);
-
-		std::auto_ptr<BigBuffer> pB (new BigBuffer());
-
-		va_list argp;
-      va_start(argp, format);
-#ifdef WIN32
-      int n = vsnprintf_s(pB->buffer, MaxBuf, MaxBuf - 1, format, argp);
-#else
-      int n = vsnprintf(pB->buffer, MaxBuf - 1, format, argp);
-#endif
-      va_end(argp);
-      if (n <= -1) {
-         ReportLogFailure();
+		MMThreadGuard guard(logFileLock_);
+      if (!plogFile_)
+      {
          return;
       }
-
-      std::string entryString = entryPrefix + pB->buffer;
-      boost::algorithm::trim_right(entryString);
-
-		{
-			MMThreadGuard stringGuard(logStringLock_g);
-			if ( 0 <stringToWrite_g.size())
-				stringToWrite_g += '\n';
-			stringToWrite_g += entryString;
-		}
    }
-   catch(...)
+
+   if (isDebug && !debugLoggingEnabled_)
+      return;
+
+   std::string entryString = GetEntryPrefix(isDebug);
+   entryString += entry;
+   boost::algorithm::trim_right(entryString);
+
    {
-      ReportLogFailure();
+      MMThreadGuard stringGuard(logStringLock_);
+      if (stringToWrite_.size() > 0)
+         stringToWrite_ += '\n';
+      stringToWrite_ += entryString;
    }
-};
-
-void FastLogger::ReportLogFailure()throw()
-{
-   if(!failureReported)
-   {
-      failureReported=true;
-
-      MMThreadGuard guard(logFileLock_g);
-      try {
-         std::cerr << g_textLogIniFiled;
-      }
-      catch (...) {
-      }
-   }
-};
+}
 
 
 std::string FastLogger::GetEntryPrefix(bool isDebug)
@@ -301,16 +283,18 @@ std::string FastLogger::GetEntryPrefix(bool isDebug)
    entryPrefix += todaysDate;
 
    // PID
-   // XXX Avoid using Boost 'detail' classes!
-   BOOST_IPC_DETAIL::OS_process_id_t pidd = BOOST_IPC_DETAIL::get_current_process_id();
    entryPrefix += " p:";
-   entryPrefix += boost::lexical_cast<std::string>(pidd);
+#ifdef _WIN32
+   entryPrefix += boost::lexical_cast<std::string>(GetCurrentProcessId());
+#else
+   entryPrefix += boost::lexical_cast<std::string>(getpid());
+#endif
 
    // TID
    entryPrefix += " t:";
    // Use the platform thread id where available, so that it can be compared
    // with debugger, etc.
-#ifdef WIN32
+#ifdef _WIN32
    entryPrefix += boost::lexical_cast<std::string>(GetCurrentThreadId());
 #else
    entryPrefix += boost::lexical_cast<std::string>(pthread_self());
@@ -326,53 +310,43 @@ std::string FastLogger::GetEntryPrefix(bool isDebug)
 }
 
 
-bool FastLogger::Open(const std::string specifiedFile)
+bool FastLogger::Open(const std::string& specifiedFile)
 {
-
    bool bRet = false;
-   try
+
+   if (!plogFile_)
    {
-		if(NULL == plogFile_g)
-		{
-			plogFile_g = new std::ofstream();
-		}
-		if (!plogFile_g->is_open())
-		{
-         // N.B. we do NOT handle re-opening of the log file on a different path!!
-         
-         if(logFileName_.length() < 1) // if log file path has not yet been specified:
-         {
-            logFileName_ = specifiedFile;
-         }
+      plogFile_ = new std::ofstream();
+   }
+   if (!plogFile_->is_open())
+   {
+      // N.B. we do NOT handle re-opening of the log file on a different path!!
 
-         // first try to open the specified file without any assumption about the path
-	      plogFile_g->open(logFileName_.c_str(), ios_base::app);
-         //std::cout << "first attempt to open  " << logFileName_.c_str() << (plogFile_g->is_open()?" OK":" FAILED")  << std::endl;
-
-         // if the open failed, assume that this is because the ordinary user does not have write access to the application / program directory
-	 if (!plogFile_g->is_open())
-         {
-            std::string homePath;
-#ifdef _WINDOWS
-            homePath = std::string(getenv("HOMEDRIVE")) + std::string(getenv("HOMEPATH")) + "\\";
-#else
-            homePath = std::string(getenv("HOME")) + "/";
-#endif
-            logFileName_ = homePath + specifiedFile;
-				plogFile_g->open(logFileName_.c_str(), ios_base::app);
-         }
-
-		}
-      else
+      if(logFileName_.length() < 1) // if log file path has not yet been specified:
       {
-         ;//std::cout << "log file " << logFileName_.c_str() << " was open already" << std::endl;
+         logFileName_ = specifiedFile;
       }
 
-      bRet = plogFile_g->is_open();
-   }
-   catch(...){}
-   return bRet;
+      // first try to open the specified file without any assumption about the path
+      plogFile_->open(logFileName_.c_str(), std::ios_base::app);
 
+      // if the open failed, assume that this is because the ordinary user
+      // does not have write access to the application / program directory
+      if (!plogFile_->is_open())
+      {
+         std::string homePath;
+#ifdef _WINDOWS
+         homePath = std::string(getenv("HOMEDRIVE")) + std::string(getenv("HOMEPATH")) + "\\";
+#else
+         homePath = std::string(getenv("HOME")) + "/";
+#endif
+         logFileName_ = homePath + specifiedFile;
+         plogFile_->open(logFileName_.c_str(), std::ios_base::app);
+      }
+   }
+
+   bRet = plogFile_->is_open();
+   return bRet;
 }
 
 void FastLogger::LogContents(char** ppContents, unsigned long& len)
@@ -380,16 +354,17 @@ void FastLogger::LogContents(char** ppContents, unsigned long& len)
    *ppContents = 0;
    len = 0;
 
-   MMThreadGuard guard(logFileLock_g);
+   MMThreadGuard guard(logFileLock_);
 
-   if (plogFile_g->is_open())
+   if (plogFile_->is_open())
    {
-      plogFile_g->close();
+      plogFile_->close();
    }
 
    // open to read, and position at the end of the file
    // XXX We simply return NULL if cannot open file or size is too large!
-   std::ifstream ifile(logFileName_.c_str(), ios::in | ios::binary | ios::ate);
+   std::ifstream ifile(logFileName_.c_str(),
+         std::ios::in | std::ios::binary | std::ios::ate);
    if (ifile.is_open())
    {
       std::ifstream::pos_type pos = ifile.tellg();
@@ -404,7 +379,7 @@ void FastLogger::LogContents(char** ppContents, unsigned long& len)
          *ppContents = new char[len];
          if (0 != *ppContents)
          {
-            ifile.seekg(0, ios::beg);
+            ifile.seekg(0, std::ios::beg);
             ifile.read(*ppContents, len);
             ifile.close();
          }
@@ -412,7 +387,7 @@ void FastLogger::LogContents(char** ppContents, unsigned long& len)
    }
 
    // re-open for logging
-   plogFile_g->open(logFileName_.c_str(), ios_base::app);
+   plogFile_->open(logFileName_.c_str(), std::ios_base::app);
 
    return;
 }
@@ -423,4 +398,3 @@ std::string FastLogger::LogPath(void)
    return logFileName_;
 
 }
-

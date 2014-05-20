@@ -201,7 +201,6 @@
     <ClInclude Include="Error.h" />
     <ClInclude Include="FastLogger.h" />
     <ClInclude Include="Host.h" />
-    <ClInclude Include="IMMLogger.h" />
     <ClInclude Include="LibraryInfo\LibraryPaths.h" />
     <ClInclude Include="LoadableModules\LoadedDeviceAdapter.h" />
     <ClInclude Include="LoadableModules\LoadedModule.h" />

@@ -94,8 +94,8 @@ const int MMCore_versionBuild = 2;
 
 // Legacy macros for logging.
 // (Note: the '##' before the __VA_ARGS__ is required for GCC, though not for MSVC.)
-#define CORE_DEBUG(FMT, ...) (this->getLoggerInstance()->Log(true, (FMT), ## __VA_ARGS__))
-#define CORE_LOG(FMT, ...)   (this->getLoggerInstance()->Log(false,  (FMT), ## __VA_ARGS__))
+#define CORE_DEBUG(FMT, ...) (this->getLoggerInstance()->LogF(true, (FMT), ## __VA_ARGS__))
+#define CORE_LOG(FMT, ...)   (this->getLoggerInstance()->LogF(false,  (FMT), ## __VA_ARGS__))
 
 
 ///////////////////////////////////////////////////////////////////////////////

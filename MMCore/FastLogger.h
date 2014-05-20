@@ -3,8 +3,8 @@
 // PROJECT:       Micro-Manager
 // SUBSYSTEM:     MMCore
 //-----------------------------------------------------------------------------
-// DESCRIPTION:   Definitions for an implementation of the IMMLogger interface
-// COPYRIGHT:     University of California, San Francisco, 2009
+// DESCRIPTION:   Logger interface
+// COPYRIGHT:     University of California, San Francisco, 2009-2014
 // LICENSE:       This file is distributed under the "Lesser GPL" (LGPL) license.
 //                License text is included with the source distribution.
 //
@@ -17,34 +17,37 @@
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 // AUTHOR:        Karl Hoover, karl.hoover@ucsf.edu, 20091111
+//                Mark Tsuchida, 2013-14.
 
 #pragma once
 
-#include "IMMLogger.h"
 #include "../MMDevice/DeviceThreads.h"
+
+#include <cstdarg>
+#include <fstream>
+#include <string>
 
 
 class LoggerThread;
 
-class FastLogger: public IMMLogger
+class FastLogger
 {
 public:
-
    FastLogger();
    virtual ~FastLogger();
 
    friend class LoggerThread;
-   /**
-   * methods declared in IMMLogger as pure virtual
-   * refere to IMMLogger declaration
-   */
-   bool Initialize(std::string logFileName, std::string logInstanceName)throw(IMMLogger::runtime_exception);
-   void Shutdown()throw(IMMLogger::runtime_exception);
-   bool Reset()throw(IMMLogger::runtime_exception);
-   bool Open(const std::string f_a);
-   void SetPriorityLevel(bool includeDebug)throw();
-   bool EnableLogToStderr(bool enable)throw();
-   void Log(bool isDebug, const char*, ...) throw();
+
+   bool Initialize(const std::string& logFileName,
+         const std::string& logInstanceName);
+   void Shutdown();
+   bool Reset();
+   bool Open(const std::string& f_a);
+   void SetPriorityLevel(bool includeDebug);
+   bool EnableLogToStderr(bool enable);
+   void VLogF(bool isDebug, const char* format, va_list ap);
+   void LogF(bool isDebug, const char* format, ...);
+   void Log(bool isDebug, const char* entry);
 
    // read the current log into memory ( for automated trouble report )
    // since the log file can be extremely large, pass back exactly the buffer that was read
@@ -54,17 +57,17 @@ public:
 
 private:
    std::string GetEntryPrefix(bool isDebug);
-   void ReportLogFailure()throw();
 
 private:
+   LoggerThread* pLogThread_;
+
    bool debugLoggingEnabled_;
    bool stderrLoggingEnabled_;
    bool fileLoggingEnabled_;
-   std::string    logFileName_;
-   bool           failureReported;
-   std::string    logInstanceName_;
-   MMThreadLock logFileLock_g;
-   MMThreadLock logStringLock_g;
-   std::string stringToWrite_g;
-   std::ofstream * plogFile_g;
+   std::string logFileName_;
+   std::string logInstanceName_;
+   MMThreadLock logFileLock_;
+   MMThreadLock logStringLock_;
+   std::string stringToWrite_;
+   std::ofstream* plogFile_;
 };
