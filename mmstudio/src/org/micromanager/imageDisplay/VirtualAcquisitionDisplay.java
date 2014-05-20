@@ -114,6 +114,10 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    private int numComponents_;
    // This queue holds images waiting to be displayed.
    private LinkedBlockingQueue<JSONObject> imageTagsQueue_;
+   // This thread consumes images from the above queue.
+   private Thread displayThread_;
+   // This boolean is used to tell the display thread to stop what it's doing.
+   private AtomicBoolean shouldStopDisplayThread_ = new AtomicBoolean(false);
    // We need to track how many images we've received and how many images we've
    // displayed, for FPS display purposes.
    private long lastImageIndex_ = 0;
@@ -188,11 +192,11 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
     */
    private void setupDisplayThread() {
       imageTagsQueue_ = new LinkedBlockingQueue<JSONObject>();
-      new Thread(new Runnable() {
+      displayThread_ = new Thread(new Runnable() {
          @Override
          public void run() {
-            JSONObject tags;
-            while (true) {
+            JSONObject tags = null;
+            while (!shouldStopDisplayThread_.get()) {
                // Extract images from the queue until we get to the end.
                do {
                   try {
@@ -201,20 +205,34 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
                      tags = imageTagsQueue_.poll(500, TimeUnit.MILLISECONDS);
                      if (tags == null) {
                         try {
+                           // We still need to generate an FPS update at 
+                           // regular intervals; just use the most recent 
+                           // image.
                            tags = MMStudioMainFrame.getInstance().getCore().getLastTaggedImage().tags;
                            sendFPSUpdate(tags);
                         }
                         catch (Exception e) {
-                           // Do nothing, to avoid spamming the error logs.
+                           // Can't get image tags, apparently; give up.
+                           break;
                         }
                         continue;
                      }
                   }
                   catch (InterruptedException e) {
-                     ReportingUtils.logError("VirtualAcquisitionDisplay display thread interrupted");
-                     return;
+                     // Interrupted while waiting for the queue to be 
+                     // populated. 
+                     if (shouldStopDisplayThread_.get()) {
+                        // Time to stop.
+                        return;
+                     }
                   }
                } while (imageTagsQueue_.peek() != null);
+
+               // Paranoia check (makes the compiler happy).
+               if (tags == null) {
+                  continue;
+               }
+      
                if (hyperImage_ != null && hyperImage_.getCanvas() != null) {
                   // Wait for the canvas to be available. If we don't do this,
                   // then our framerate tanks, possibly because of repaint
@@ -224,7 +242,12 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
                      try {
                         Thread.sleep(10);
                      }
-                     catch (InterruptedException e) {}
+                     catch (InterruptedException e) {
+                        if (shouldStopDisplayThread_.get()) {
+                           // Time to stop.
+                           return;
+                        }
+                     }
                   }
                   CanvasPaintPending.setPaintPending(
                         hyperImage_.getCanvas(), imageReceivedObject_);
@@ -234,7 +257,8 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
                sendFPSUpdate(tags);
             }
          }
-   }).start();
+      });
+      displayThread_.start();
    }
 
    /**
@@ -1146,6 +1170,9 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
          }
       }
 
+      // Tell our display thread to stop what it's doing.
+      shouldStopDisplayThread_.set(true);
+      displayThread_.interrupt();
       imageCache_.close();
 
       removeFromAcquisitionManager(MMStudioMainFrame.getInstance());
