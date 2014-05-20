@@ -2413,7 +2413,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener,
 
       acqEng_.setSaveFiles(savePanel_.isSelected());    
       // avoid dangerous characters in the name that will be used as a directory name
-      String name = nameField_.getText().replaceAll("[/\\*!']", "-");
+      String name = nameField_.getText().replaceAll("[/\\*!':]", "-");
       acqEng_.setDirName(name);
       acqEng_.setRootName(rootField_.getText());
 
