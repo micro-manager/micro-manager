@@ -315,6 +315,11 @@ public class MMImageCache implements ImageCache {
    }
 
    @Override
+   public boolean getIsOpen() {
+      return (getDisplayAndComments() != null);
+   }
+
+   @Override
    public void setComment(String text) {
       JSONObject comments = getCommentsJSONObject();
       try {

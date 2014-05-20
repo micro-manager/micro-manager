@@ -82,6 +82,11 @@ public interface ImageCache extends TaggedImageStorage {
    void saveAs(TaggedImageStorage newImageFileManager, boolean moveToNewStorage);
 
    /**
+    * Return true if the ImageCache is still valid, false otherwise.
+    */
+   boolean getIsOpen();
+
+   /**
     * Set the data set's comment string for this image cache.
     */
    void setComment(String text);
