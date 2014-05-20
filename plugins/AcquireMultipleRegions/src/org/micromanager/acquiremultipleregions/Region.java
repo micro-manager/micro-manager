@@ -8,6 +8,7 @@ package org.micromanager.acquiremultipleregions;
 
 import java.io.File;
 import org.micromanager.acquiremultipleregions.AcquireMultipleRegionsForm.AxisList;
+import org.micromanager.acquiremultipleregions.ZGenerator.ZGeneratorType;
 import org.micromanager.api.MultiStagePosition;
 import org.micromanager.api.PositionList;
 import org.micromanager.api.StagePosition;
@@ -16,7 +17,7 @@ import org.micromanager.api.StagePosition;
  *
  * @author kthorn
  */
-public class Region {
+class Region {
     public PositionList positions;
     public String directory;
     public String filename;
@@ -111,17 +112,35 @@ public class Region {
      * @param   xStepSize   the step size in the X dimension
      * @param   yStepSize   the step size in the Y dimension
      * @param   axisList    1-D axes to include
+     * @param   zType       type of ZGenerator to use (average, interpolate)
      * @return  a PositionList comprising the tiling positions
      * 
      **/
-    public PositionList tileGrid(double xStepSize, double yStepSize, AxisList axisList) {
+    public PositionList tileGrid(double xStepSize, double yStepSize, AxisList axisList, ZGeneratorType zType) {
         //generate tiling grid to cover bounding box in steps of xStepSize 
         //and yStepSize
         PositionList bBox, PL;
-        MultiStagePosition MSP0, averageMSP;
+        MultiStagePosition MSP0;
         StagePosition SP, newSP;
-        double minX, maxX, minY, C;
+        double minX, maxX, minY;
         int numXImages, numYImages;
+        ZGenerator zGen;
+        
+        switch (zType) {               
+                
+            case SHEPINTERPOLATE:
+                zGen = new ZGeneratorShepard(positions, zType, AcquireMultipleRegions.shepardExponent);
+                break;
+                
+            case AVERAGE:
+            default:
+                zGen = new ZGeneratorAverage(positions, zType);
+                break;
+        }
+        
+        //should test ZGenerator and catch java.lang.IllegalStateException
+        //in case interpolator is set up with bad points (i.e. identical X Y with
+        //different Z
         
         bBox = this.boundingBox();
         minX = bBox.getPosition(0).getX();
@@ -130,29 +149,8 @@ public class Region {
         numYImages = this.getNumYTiles(yStepSize);        
         //update maxX to cover an integer number of fields
         maxX = minX + (numXImages-1) * xStepSize;
-        
-        //Loop over single axis stages and calculate their mean value
-        //Eventually we may want to interpolate single axis positions as a function 
-        //of X and Y, but this is a good starting point.        
-        MSP0 =  positions.getPosition(0);
-        averageMSP = new MultiStagePosition();
-        averageMSP.setDefaultXYStage(MSP0.getDefaultXYStage());
-        averageMSP.setDefaultZStage(MSP0.getDefaultZStage());        
-        for (int a=0; a<MSP0.size(); a++){
-            SP = MSP0.get(a);
-            if (SP.numAxes == 1 && axisList.use(SP.stageName)){
-               C = SP.x;
-               //Calculate sum of positions for current axis
-               for (int p=1; p<positions.getNumberOfPositions(); p++){
-                   C = C + positions.getPosition(p).get(a).x;                
-               }
-               newSP = new StagePosition();
-               newSP.numAxes = 1;
-               newSP.stageName = SP.stageName;
-               newSP.x = C / positions.getNumberOfPositions(); //average
-               averageMSP.add(newSP);
-            }
-        }        
+  
+        MSP0 =  positions.getPosition(0); 
         
         //initial conditions
         double startX = minX;
@@ -164,11 +162,22 @@ public class Region {
 		double X = startX + direction * xidx * xStepSize;
                 newSP = new StagePosition();
                 newSP.numAxes = 2;
-                newSP.stageName = averageMSP.getDefaultXYStage();
+                newSP.stageName = MSP0.getDefaultXYStage();
                 newSP.x = X;
                 newSP.y = Y;
-                MultiStagePosition MSP = MultiStagePosition.newInstance(averageMSP);
+                MultiStagePosition MSP = new MultiStagePosition();
                 MSP.add(newSP);
+                //loop over Z coordinates and add the correct positions for any we are using
+                for (int a=0; a<MSP0.size(); a++){
+                    SP = MSP0.get(a);
+                    if (SP.numAxes == 1 && axisList.use(SP.stageName)){
+                        newSP = new StagePosition();
+                        newSP.numAxes = 1;
+                        newSP.stageName = SP.stageName;
+                        newSP.x = zGen.getZ(X, Y, SP.stageName);
+                        MSP.add(newSP);
+                    }
+                }
 		PL.addPosition(MSP);
             }
             //Update Y coordinate

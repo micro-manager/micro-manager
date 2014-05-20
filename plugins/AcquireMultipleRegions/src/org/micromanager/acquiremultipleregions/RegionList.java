@@ -8,13 +8,12 @@ package org.micromanager.acquiremultipleregions;
 
 import java.util.ArrayList;
 
-
 /**
  *
  * @author kthorn
  */
-public class RegionList {
-    private ArrayList<Region> regions_;
+class RegionList {
+    private final ArrayList<Region> regions_;
     
    public RegionList() {
       regions_ = new ArrayList<Region>();
