@@ -254,9 +254,10 @@ public class MMAcquisition {
       }
       MMStudioMainFrame.createSimpleDisplay(name_, imageCache);
       if (show_) {
-          virtAcq_ = MMStudioMainFrame.getSimpleDisplay();
-          virtAcq_.show();
-          imageCache_ = virtAcq_.getImageCache();
+         virtAcq_ = MMStudioMainFrame.getSimpleDisplay();
+         virtAcq_.show();
+         imageCache_ = virtAcq_.getImageCache();
+         imageCache_.addImageCacheListener(virtAcq_);
       }
 
       initialized_ = true;
@@ -358,6 +359,7 @@ public class MMAcquisition {
       if (imageCache_.getSummaryMetadata() != null) {
          if (show_) {
             virtAcq_ = new VirtualAcquisitionDisplay(imageCache_, null, name);
+            imageCache_.addImageCacheListener(virtAcq_);
             virtAcq_.show();
          }
 

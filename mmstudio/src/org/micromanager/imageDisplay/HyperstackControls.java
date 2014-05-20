@@ -52,9 +52,9 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
    private JButton showFolderButton_;
    private JButton saveButton_;
    private JLabel statusLineLabel_;
+   private JLabel fpsLabel_;
 
    // Standard control set
-   private JLabel fpsLabel_;
    private javax.swing.JTextField fpsField_;
    private JButton abortButton_;
    private javax.swing.JToggleButton pauseAndResumeToggleButton_;
@@ -65,20 +65,20 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
    private JButton liveButton_;
 
    /**
-    * @param shouldUseLiveButtons - indicates if we should use the buttons for 
+    * @param shouldUseLiveControls - indicates if we should use the buttons for 
     *        the "Snap/Live" window or the buttons for normal displays.
     */
    public HyperstackControls(VirtualAcquisitionDisplay display, 
-         EventBus bus, boolean shouldUseLiveButtons) {
+         EventBus bus, boolean shouldUseLiveControls) {
       super(new FlowLayout(FlowLayout.LEADING));
       bus_ = bus;
-      initComponents(shouldUseLiveButtons);
+      initComponents(shouldUseLiveControls);
       display_ = display;
       bus_.register(this);
       MMStudioMainFrame.getInstance().addLiveModeListener(this);
    }
 
-   private void initComponents(final boolean shouldUseLiveButtons) {
+   private void initComponents(final boolean shouldUseLiveControls) {
       // This layout minimizes space between components.
       JPanel subPanel = new JPanel(new MigLayout("", "0[]", "0[]0[]0[]0"));
       subPanel.setPreferredSize(new Dimension(512, 100));
@@ -132,15 +132,21 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
       saveButton_.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
       saveButton_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            saveButtonActionPerformed(evt, shouldUseLiveButtons);
+            saveButtonActionPerformed(evt, shouldUseLiveControls);
          }
       });
 
-      if (shouldUseLiveButtons) {
-         makeSnapLiveButtons(subPanel);
+      // This control is added by both Snap/Live, and Standard, but in 
+      // different places on each. 
+      fpsLabel_ = new JLabel("", SwingConstants.RIGHT);
+      fpsLabel_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
+      fpsLabel_.setFocusable(false);
+
+      if (shouldUseLiveControls) {
+         makeSnapLiveControls(subPanel);
       }
       else {
-         makeStandardButtons(subPanel);
+         makeStandardControls(subPanel);
       }
       
       statusLineLabel_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
@@ -157,7 +163,7 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
    /**
     * Generate the controls used for the "Snap/Live" window.
     */
-   private void makeSnapLiveButtons(JPanel subPanel) {
+   private void makeSnapLiveControls(JPanel subPanel) {
       snapButton_ = new JButton();
       snapButton_.setFocusable(false);
       snapButton_.setIconTextGap(6);
@@ -215,17 +221,17 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
 
       subPanel.add(snapButton_);
       subPanel.add(liveButton_);
-      subPanel.add(snapToAlbumButton_);
+      subPanel.add(snapToAlbumButton_, "wrap");
+      fpsLabel_.setText("                          ");
+      subPanel.add(fpsLabel_, "span 3, width 130px");
    }
 
    /**
     * Generate the controls used on a standard dataset display (i.e. not the 
     * snap/live window).
     */
-   private void makeStandardButtons(JPanel subPanel) {
+   private void makeStandardControls(JPanel subPanel) {
       fpsField_ = new javax.swing.JTextField(String.valueOf(DEFAULT_FPS), 8);
-      fpsLabel_ = new JLabel("", SwingConstants.RIGHT);
-      fpsLabel_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
       abortButton_ = new JButton();
       pauseAndResumeToggleButton_ = new javax.swing.JToggleButton();
       
@@ -248,9 +254,6 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
             fpsField_KeyReleased(evt);
          }
       });
-
-      fpsLabel_.setText("");
-      fpsLabel_.setFocusable(false);
 
       abortButton_.setBackground(new java.awt.Color(255, 255, 255));
       abortButton_.setIcon(
@@ -542,15 +545,18 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
     */
    @Subscribe
    public void onFPSUpdate(FPSEvent event) {
-      if (event.getDataFPS() == 0) {
-         // No new data; revert to displaying animations.
-         fpsLabel_.setText("playback FPS:");
+      // Default to assuming we'll be blanking the label.
+      String newLabel = "";
+      if (event.getDataFPS() != 0) {
+         newLabel = String.format("FPS: %.1f (display %.1f)", 
+               event.getDataFPS(), event.getDisplayFPS());
       }
-      else {
-         fpsLabel_.setText(String.format(
-                  "FPS: %.1f (display %.1f)", event.getDataFPS(), 
-                  event.getDisplayFPS()));
+      else if (fpsField_ != null) {
+         // No new data, but we do have an FPS text field for animations, so
+         // switch fpsLabel_ to being an indicator for that. 
+         newLabel = "Playback FPS:";
       }
+      fpsLabel_.setText(newLabel);
    }
 
    /**

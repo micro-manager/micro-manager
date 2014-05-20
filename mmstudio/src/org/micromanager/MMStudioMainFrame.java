@@ -2454,7 +2454,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
             int byteDepth = getAcquisition(SIMPLE_ACQ).getByteDepth();          
             TaggedImage ti = ImageUtils.makeTaggedImage(pixels, 0, 0, 0,0, width, height, byteDepth);
             simpleDisplay_.getImageCache().putImage(ti);
-            simpleDisplay_.showImage(ti, wait);
+            simpleDisplay_.imageReceived(ti);
             return true;
       } catch (Exception ex) {
          ReportingUtils.showError(ex);

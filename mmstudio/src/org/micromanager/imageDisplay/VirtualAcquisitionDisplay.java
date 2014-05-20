@@ -116,7 +116,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    private LinkedBlockingQueue<JSONObject> imageTagsQueue_;
    // We need to track how many images we've received and how many images we've
    // displayed, for FPS display purposes.
-   private int imagesReceived_ = 0;
+   private long lastImageIndex_ = 0;
    private int imagesDisplayed_ = 0;
    // Tracks when we last sent an FPS update.
    private long lastFPSUpdateTimestamp_ = -1;
@@ -200,7 +200,13 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
                      // to send a new FPS update.
                      tags = imageTagsQueue_.poll(500, TimeUnit.MILLISECONDS);
                      if (tags == null) {
-                        sendFPSUpdate();
+                        try {
+                           tags = MMStudioMainFrame.getInstance().getCore().getLastTaggedImage().tags;
+                           sendFPSUpdate(tags);
+                        }
+                        catch (Exception e) {
+                           // Do nothing, to avoid spamming the error logs.
+                        }
                         continue;
                      }
                   }
@@ -225,7 +231,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
                }
                showImage(tags, true);
                imagesDisplayed_++;
-               sendFPSUpdate();
+               sendFPSUpdate(tags);
             }
          }
    }).start();
@@ -235,7 +241,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
     * Send an update on our FPS, both data rate and image display rate. Only
     * if it has been at least 500ms since our last update.
     */
-   private void sendFPSUpdate() {
+   private void sendFPSUpdate(JSONObject tags) {
       long curTimestamp = System.currentTimeMillis();
       if (lastFPSUpdateTimestamp_ == -1) {
          // No data to operate on yet.
@@ -244,9 +250,15 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       else if (curTimestamp - lastFPSUpdateTimestamp_ >= 500) {
          // More than 500ms since last update.
          double elapsedTime = (curTimestamp - lastFPSUpdateTimestamp_) / 1000.0;
-         bus_.post(new FPSEvent(imagesReceived_ / elapsedTime, 
-                  imagesDisplayed_ / elapsedTime));
-         imagesReceived_ = 0;
+         try {
+            long imageIndex = tags.getLong("ImageNumber");
+            bus_.post(new FPSEvent((imageIndex - lastImageIndex_) / elapsedTime, 
+                     imagesDisplayed_ / elapsedTime));
+            lastImageIndex_ = imageIndex;
+         }
+         catch (Exception e) {
+            // Do nothing, to avoid spamming the error logs. 
+         }
          imagesDisplayed_ = 0;
          lastFPSUpdateTimestamp_ = curTimestamp;
       }
@@ -434,7 +446,6 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       }
       try {
          imageTagsQueue_.add(tags);
-         imagesReceived_++;
       }
       catch (IllegalStateException e) {
          // The queue was full. This should never happen as the queue has
@@ -685,7 +696,8 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       }
 
       //make sure pixels get properly set
-      if (hyperImage_ != null && frame == 0) {
+      if (hyperImage_ != null && hyperImage_.getProcessor() != null && 
+            frame == 0) {
          IMMImagePlus img = (IMMImagePlus) hyperImage_;
          if (img.getNChannelsUnverified() == 1) {
             if (img.getNSlicesUnverified() == 1) {
@@ -757,18 +769,22 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
 
    public void storeChannelHistogramSettings(int channelIndex, int min, int max, 
            double gamma, int histMax, int displayMode) {
-     if (!contrastInitialized_ ) {
-        return; //don't erroneously initialize c   ontrast
-     }
-      //store for this dataset
-      imageCache_.storeChannelDisplaySettings(channelIndex, min, max, gamma, histMax, displayMode);
-      //store global preference for channel contrast settings
-      if (mda_) {
-         //only store for datasets that were just acquired or snap/live (i.e. no loaded datasets)
-         MMStudioMainFrame.getInstance().saveChannelHistogramSettings(channelGroup_, 
-                 imageCache_.getChannelName(channelIndex), mda_,
-                 new HistogramSettings(min,max, gamma, histMax, displayMode));    
-      }   
+      if (!contrastInitialized_ ) {
+         return; //don't erroneously initialize contrast
+      }
+      // store for this dataset
+      // TODO: why is this necessary? We get NullPointerExceptions if we don't
+      // do this check. 
+      if (imageCache_.getDisplayAndComments() != null) {
+         imageCache_.storeChannelDisplaySettings(channelIndex, min, max, gamma, histMax, displayMode);
+         //store global preference for channel contrast settings
+         if (mda_) {
+            //only store for datasets that were just acquired or snap/live (i.e. no loaded datasets)
+            MMStudioMainFrame.getInstance().saveChannelHistogramSettings(channelGroup_, 
+                    imageCache_.getChannelName(channelIndex), mda_,
+                    new HistogramSettings(min,max, gamma, histMax, displayMode));    
+         }
+      }
    }
 
    public void updatePosition(int p) {
