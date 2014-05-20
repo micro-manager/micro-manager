@@ -180,6 +180,14 @@ bool FastLogger::EnableLogToStderr(bool enable)
 
 void FastLogger::VLogF(bool isDebug, const char* format, va_list ap)
 {
+   // Keep a copy of the argument list
+   va_list apCopy;
+#ifdef _MSC_VER
+   apCopy = ap;
+#else
+   va_copy(apCopy, ap);
+#endif
+
    // We avoid dynamic allocation in the vast majority of cases.
    const size_t smallBufSize = 1024;
    char smallBuf[smallBufSize];
@@ -218,7 +226,7 @@ void FastLogger::VLogF(bool isDebug, const char* format, va_list ap)
       return;
    }
 
-   n = vsnprintf(bigBuf.get(), bigBufSize, format, ap);
+   n = vsnprintf(bigBuf.get(), bigBufSize, format, apCopy);
    if (n >= 0 && n < bigBufSize)
    {
       Log(isDebug, bigBuf.get());
