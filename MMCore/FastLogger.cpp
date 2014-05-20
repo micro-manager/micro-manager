@@ -59,21 +59,20 @@ int LoggerThread::svc(void)
 {
    do
    {
-      std::string stmp;
+      std::string entries;
       {
-         MMThreadGuard stringGuard(log_->logStringLock_);
-         stmp = log_->stringToWrite_;
-         log_->stringToWrite_.clear();
+         MMThreadGuard stringGuard(log_->entriesLock_);
+         std::swap(entries, log_->pendingEntries_);
       }
 
-      if (0 < stmp.length())
+      if (!entries.empty())
       {
          if (log_->stderrLoggingEnabled_)
-            std::cerr << stmp << '\n' << std::flush;
+            std::cerr << entries << std::flush;
 
          MMThreadGuard fileGuard(log_->logFileLock_);
          if (log_->plogFile_)
-            *log_->plogFile_ << stmp << '\n' << std::flush;
+            *log_->plogFile_ << entries << std::flush;
       }
       CDeviceUtils::SleepMs(30);
    } while (!stop_ );
@@ -264,55 +263,51 @@ void FastLogger::Log(bool isDebug, const char* entry)
    if (isDebug && !debugLoggingEnabled_)
       return;
 
-   std::string entryString = GetEntryPrefix(isDebug);
-   entryString += entry;
+   std::ostringstream entryStream;
+   WriteEntryPrefix(entryStream, isDebug);
+   entryStream << entry;
+
+   std::string entryString = entryStream.str();
    boost::algorithm::trim_right(entryString);
+   entryString += '\n';
 
    {
-      MMThreadGuard stringGuard(logStringLock_);
-      if (stringToWrite_.size() > 0)
-         stringToWrite_ += '\n';
-      stringToWrite_ += entryString;
+      MMThreadGuard stringGuard(entriesLock_);
+      pendingEntries_ += entryString;
    }
 }
 
 
-std::string FastLogger::GetEntryPrefix(bool isDebug)
+void FastLogger::WriteEntryPrefix(std::ostream& stream, bool isDebug)
 {
-   // date, pid, tid, and log level
-   std::string entryPrefix;
-   entryPrefix.reserve(100);
-
    // Date
-   boost::posix_time::ptime bt = boost::posix_time::microsec_clock::local_time();
-   std::string todaysDate = boost::posix_time::to_iso_extended_string(bt);
-   entryPrefix += todaysDate;
+   boost::posix_time::ptime pt =
+      boost::posix_time::microsec_clock::local_time();
+   stream << boost::posix_time::to_iso_extended_string(pt);
 
    // PID
-   entryPrefix += " p:";
+   stream << " p:";
 #ifdef _WIN32
-   entryPrefix += boost::lexical_cast<std::string>(GetCurrentProcessId());
+   stream << GetCurrentProcessId();
 #else
-   entryPrefix += boost::lexical_cast<std::string>(getpid());
+   stream << getpid();
 #endif
 
    // TID
-   entryPrefix += " t:";
+   stream << " t:";
    // Use the platform thread id where available, so that it can be compared
    // with debugger, etc.
 #ifdef _WIN32
-   entryPrefix += boost::lexical_cast<std::string>(GetCurrentThreadId());
+   stream << GetCurrentThreadId();
 #else
-   entryPrefix += boost::lexical_cast<std::string>(pthread_self());
+   stream << pthread_self();
 #endif
 
    // Log level
    if (isDebug)
-      entryPrefix += " [dbg] ";
+      stream << " [dbg] ";
    else
-      entryPrefix += " [LOG] ";
-
-   return entryPrefix;
+      stream << " [LOG] ";
 }
 
 

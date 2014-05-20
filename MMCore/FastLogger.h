@@ -56,7 +56,7 @@ public:
    std::string LogPath(void);
 
 private:
-   std::string GetEntryPrefix(bool isDebug);
+   void WriteEntryPrefix(std::ostream& stream, bool isDebug);
    bool Open(const std::string& f_a); // Called with logFileLock_ held
 
 private:
@@ -70,6 +70,6 @@ private:
    std::string logFileName_; // Access synchronized by logFileLock_
    std::ofstream* plogFile_; // Access synchronized by logFileLock_
 
-   MMThreadLock logStringLock_;
-   std::string stringToWrite_; // Access synchronized by logStringLock_
+   MMThreadLock entriesLock_;
+   std::string pendingEntries_; // Access synchronized by entriesLock_
 };
