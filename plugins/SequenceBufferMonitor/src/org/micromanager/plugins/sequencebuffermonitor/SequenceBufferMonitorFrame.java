@@ -25,18 +25,18 @@ import javax.swing.Timer;
 
 
 class SequenceBufferMonitorFrame extends javax.swing.JFrame {
-   mmcorej.CMMCore core_;
+   org.micromanager.api.ScriptInterface app_;
    JProgressBar usageBar_;
    Timer timer_;
 
    int previousTotalCapacity_ = -1;
    int updateIntervalMs_ = 100;
 
-   SequenceBufferMonitorFrame(mmcorej.CMMCore core) {
+   SequenceBufferMonitorFrame(org.micromanager.api.ScriptInterface app) {
       super("Sequence Buffer Monitor");
       setLocationRelativeTo(null);
 
-      core_ = core;
+      app_ = app;
 
       usageBar_ = new JProgressBar();
       usageBar_.setStringPainted(true);
@@ -90,8 +90,15 @@ class SequenceBufferMonitorFrame extends javax.swing.JFrame {
    }
 
    private void update() {
-      int total = core_.getBufferTotalCapacity();
-      int free = core_.getBufferFreeCapacity();
+      mmcorej.CMMCore core = app_.getMMCore();
+      if (core == null) {
+         usageBar_.setValue(0);
+         usageBar_.setString("Core unavailable");
+         return;
+      }
+
+      int total = core.getBufferTotalCapacity();
+      int free = core.getBufferFreeCapacity();
       double percentage = 100.0 * (total - free) / total;
 
       if (total != previousTotalCapacity_) {

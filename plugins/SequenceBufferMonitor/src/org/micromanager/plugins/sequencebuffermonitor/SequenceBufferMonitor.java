@@ -28,21 +28,21 @@ public class SequenceBufferMonitor implements MMPlugin {
    public static final String tooltipDescription =
       "Display sequence buffer usage";
 
-   private mmcorej.CMMCore core_;
+   private ScriptInterface app_;
 
    @Override
    public void setApp(ScriptInterface app) {
-      core_ = app.getMMCore();
+      app_ = app;
    }
 
    @Override
    public void dispose() {
-      core_ = null;
+      app_ = null;
    }
 
    @Override
    public void show() {
-      SequenceBufferMonitorFrame frame = new SequenceBufferMonitorFrame(core_);
+      SequenceBufferMonitorFrame frame = new SequenceBufferMonitorFrame(app_);
       frame.setVisible(true);
       frame.start();
    }

@@ -2639,17 +2639,29 @@ unsigned CMMCore::getCircularBufferMemoryFootprint()
 
 long CMMCore::getRemainingImageCount()
 {
-   return cbuf_->GetRemainingImageCount();
+   if (cbuf_)
+   {
+      return cbuf_->GetRemainingImageCount();
+   }
+   return 0;
 }
 
 long CMMCore::getBufferTotalCapacity()
 {
-   return cbuf_->GetSize();
+   if (cbuf_)
+   {
+      return cbuf_->GetSize();
+   }
+   return 0;
 }
 
 long CMMCore::getBufferFreeCapacity()
 {
-   return cbuf_->GetFreeSize();
+   if (cbuf_)
+   {
+      return cbuf_->GetFreeSize();
+   }
+   return 0;
 }
 
 /**
