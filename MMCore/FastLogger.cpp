@@ -401,6 +401,6 @@ void FastLogger::LogContents(char** ppContents, unsigned long& len)
 
 std::string FastLogger::LogPath(void)
 {
+   MMThreadGuard guard(logFileLock_);
    return logFileName_;
-
 }
