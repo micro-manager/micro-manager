@@ -24,6 +24,7 @@ import java.util.concurrent.TimeUnit;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.SwingConstants;
 
 import net.miginfocom.swing.MigLayout;
 
@@ -223,13 +224,14 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
     */
    private void makeStandardButtons(JPanel subPanel) {
       fpsField_ = new javax.swing.JTextField(String.valueOf(DEFAULT_FPS), 8);
-      fpsLabel_ = new JLabel();
+      fpsLabel_ = new JLabel("", SwingConstants.RIGHT);
+      fpsLabel_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
       abortButton_ = new JButton();
       pauseAndResumeToggleButton_ = new javax.swing.JToggleButton();
       
       subPanel.add(abortButton_);
       subPanel.add(pauseAndResumeToggleButton_);
-      subPanel.add(fpsLabel_);
+      subPanel.add(fpsLabel_, "width 130px");
       subPanel.add(fpsField_);
 
       fpsField_.setToolTipText(
@@ -247,7 +249,7 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
          }
       });
 
-      fpsLabel_.setText("playback fps:");
+      fpsLabel_.setText("");
       fpsLabel_.setFocusable(false);
 
       abortButton_.setBackground(new java.awt.Color(255, 255, 255));
@@ -533,6 +535,22 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
 
    public int getPosition() {
       return scrollerPanel_.getPosition("position");
+   }
+
+   /**
+    * New information on our FPS; update a label.
+    */
+   @Subscribe
+   public void onFPSUpdate(FPSEvent event) {
+      if (event.getDataFPS() == 0) {
+         // No new data; revert to displaying animations.
+         fpsLabel_.setText("playback FPS:");
+      }
+      else {
+         fpsLabel_.setText(String.format(
+                  "FPS: %.1f (display %.1f)", event.getDataFPS(), 
+                  event.getDisplayFPS()));
+      }
    }
 
    /**

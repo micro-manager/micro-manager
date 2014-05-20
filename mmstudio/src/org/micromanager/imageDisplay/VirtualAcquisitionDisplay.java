@@ -114,6 +114,12 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    private int numComponents_;
    // This queue holds images waiting to be displayed.
    private LinkedBlockingQueue<JSONObject> imageTagsQueue_;
+   // We need to track how many images we've received and how many images we've
+   // displayed, for FPS display purposes.
+   private int imagesReceived_ = 0;
+   private int imagesDisplayed_ = 0;
+   // Tracks when we last sent an FPS update.
+   private long lastFPSUpdateTimestamp_ = -1;
    private ImagePlus hyperImage_;
    private DisplayControls controls_;
    private boolean shouldUseSimpleControls_ = false;
@@ -190,8 +196,13 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
                // Extract images from the queue until we get to the end.
                do {
                   try {
-                     // This will block until an image is available.
-                     tags = imageTagsQueue_.take();
+                     // This will block until an image is available or we need
+                     // to send a new FPS update.
+                     tags = imageTagsQueue_.poll(500, TimeUnit.MILLISECONDS);
+                     if (tags == null) {
+                        sendFPSUpdate();
+                        continue;
+                     }
                   }
                   catch (InterruptedException e) {
                      ReportingUtils.logError("VirtualAcquisitionDisplay display thread interrupted");
@@ -213,9 +224,32 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
                         hyperImage_.getCanvas(), imageReceivedObject_);
                }
                showImage(tags, true);
+               imagesDisplayed_++;
+               sendFPSUpdate();
             }
          }
    }).start();
+   }
+
+   /**
+    * Send an update on our FPS, both data rate and image display rate. Only
+    * if it has been at least 500ms since our last update.
+    */
+   private void sendFPSUpdate() {
+      long curTimestamp = System.currentTimeMillis();
+      if (lastFPSUpdateTimestamp_ == -1) {
+         // No data to operate on yet.
+         lastFPSUpdateTimestamp_ = curTimestamp;
+      }
+      else if (curTimestamp - lastFPSUpdateTimestamp_ >= 500) {
+         // More than 500ms since last update.
+         double elapsedTime = (curTimestamp - lastFPSUpdateTimestamp_) / 1000.0;
+         bus_.post(new FPSEvent(imagesReceived_ / elapsedTime, 
+                  imagesDisplayed_ / elapsedTime));
+         imagesReceived_ = 0;
+         imagesDisplayed_ = 0;
+         lastFPSUpdateTimestamp_ = curTimestamp;
+      }
    }
 
    // Retrieve our EventBus.
@@ -404,6 +438,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       }
       try {
          imageTagsQueue_.add(tags);
+         imagesReceived_++;
       }
       catch (IllegalStateException e) {
          // The queue was full. This should never happen as the queue has
