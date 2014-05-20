@@ -31,13 +31,14 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import org.micromanager.internalinterfaces.DisplayControls;
+import org.micromanager.internalinterfaces.LiveModeListener;
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.ReportingUtils;
 
 
-public class HyperstackControls extends DisplayControls {
+public class HyperstackControls extends DisplayControls implements LiveModeListener {
 
    private final static int DEFAULT_FPS = 10;
 
@@ -73,6 +74,7 @@ public class HyperstackControls extends DisplayControls {
       initComponents(shouldUseLiveButtons);
       display_ = display;
       bus_.register(this);
+      MMStudioMainFrame.getInstance().addLiveModeListener(this);
    }
 
    private void initComponents(final boolean shouldUseLiveButtons) {
@@ -159,9 +161,9 @@ public class HyperstackControls extends DisplayControls {
       snapButton_.setFocusable(false);
       snapButton_.setIconTextGap(6);
       snapButton_.setText("Snap");
-      snapButton_.setMinimumSize(new Dimension(80,28));
-      snapButton_.setPreferredSize(new Dimension(80,28));
-      snapButton_.setMaximumSize(new Dimension(80,28));
+      snapButton_.setMinimumSize(new Dimension(90,28));
+      snapButton_.setPreferredSize(new Dimension(90,28));
+      snapButton_.setMaximumSize(new Dimension(90,28));
       snapButton_.setIcon(SwingResourceManager.getIcon(
             MMStudioMainFrame.class, "/org/micromanager/icons/camera.png"));
       snapButton_.setFont(new Font("Arial", Font.PLAIN, 10));
@@ -180,9 +182,9 @@ public class HyperstackControls extends DisplayControls {
             "/org/micromanager/icons/camera_go.png"));
       liveButton_.setIconTextGap(6);
       liveButton_.setText("Live");
-      liveButton_.setMinimumSize(new Dimension(80,28));
-      liveButton_.setPreferredSize(new Dimension(80,28));
-      liveButton_.setMaximumSize(new Dimension(80,28));
+      liveButton_.setMinimumSize(new Dimension(90,28));
+      liveButton_.setPreferredSize(new Dimension(90,28));
+      liveButton_.setMaximumSize(new Dimension(90,28));
       liveButton_.setFocusable(false);
       liveButton_.setToolTipText("Continuous live view");
       liveButton_.setFont(new Font("Arial", Font.PLAIN, 10));
@@ -199,9 +201,9 @@ public class HyperstackControls extends DisplayControls {
       snapToAlbumButton_.setIconTextGap(6);
       snapToAlbumButton_.setToolTipText("Add current image to album");
       snapToAlbumButton_.setFocusable(false);
-      snapToAlbumButton_.setMaximumSize(new Dimension(80, 28));
-      snapToAlbumButton_.setMinimumSize(new Dimension(80, 28));
-      snapToAlbumButton_.setPreferredSize(new Dimension(80, 28));
+      snapToAlbumButton_.setMaximumSize(new Dimension(90, 28));
+      snapToAlbumButton_.setMinimumSize(new Dimension(90, 28));
+      snapToAlbumButton_.setPreferredSize(new Dimension(90, 28));
       snapToAlbumButton_.setFont(new Font("Arial", Font.PLAIN, 10));
       snapToAlbumButton_.addActionListener(new ActionListener() {
          @Override
@@ -531,5 +533,20 @@ public class HyperstackControls extends DisplayControls {
 
    public int getPosition() {
       return scrollerPanel_.getPosition("position");
+   }
+
+   /**
+    * Live mode was toggled; if we have a "live mode" button, it needs to be 
+    * toggled on/off.
+    */
+   public void liveModeEnabled(boolean isEnabled) {
+      if (liveButton_ == null) {
+         return;
+      }
+      String label = isEnabled ? "Stop Live" : "Live";
+      String iconPath = isEnabled ? "/org/micromanager/icons/cancel.png" : "/org/micromanager/icons/camera_go.png";
+      liveButton_.setIcon(
+            SwingResourceManager.getIcon(MMStudioMainFrame.class, iconPath));
+      liveButton_.setText(label);
    }
 }
