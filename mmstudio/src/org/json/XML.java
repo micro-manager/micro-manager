@@ -26,41 +26,40 @@ SOFTWARE.
 
 import java.util.Iterator;
 
-
 /**
  * This provides static methods to convert an XML text into a JSONObject,
  * and to covert a JSONObject into an XML text.
  * @author JSON.org
- * @version 2
+ * @version 2014-05-03
  */
 public class XML {
 
-    /** The Character '&'. */
-    public static final Character AMP   = new Character('&');
+    /** The Character '&amp;'. */
+    public static final Character AMP   = '&';
 
     /** The Character '''. */
-    public static final Character APOS  = new Character('\'');
+    public static final Character APOS  = '\'';
 
     /** The Character '!'. */
-    public static final Character BANG  = new Character('!');
+    public static final Character BANG  = '!';
 
     /** The Character '='. */
-    public static final Character EQ    = new Character('=');
+    public static final Character EQ    = '=';
 
     /** The Character '>'. */
-    public static final Character GT    = new Character('>');
+    public static final Character GT    = '>';
 
-    /** The Character '<'. */
-    public static final Character LT    = new Character('<');
+    /** The Character '&lt;'. */
+    public static final Character LT    = '<';
 
     /** The Character '?'. */
-    public static final Character QUEST = new Character('?');
+    public static final Character QUEST = '?';
 
     /** The Character '"'. */
-    public static final Character QUOT  = new Character('"');
+    public static final Character QUOT  = '"';
 
     /** The Character '/'. */
-    public static final Character SLASH = new Character('/');
+    public static final Character SLASH = '/';
 
     /**
      * Replace special characters with XML escapes:
@@ -74,8 +73,8 @@ public class XML {
      * @return The escaped string.
      */
     public static String escape(String string) {
-        StringBuffer sb = new StringBuffer();
-        for (int i = 0, len = string.length(); i < len; i++) {
+        StringBuilder sb = new StringBuilder(string.length());
+        for (int i = 0, length = string.length(); i < length; i++) {
             char c = string.charAt(i);
             switch (c) {
             case '&':
@@ -90,11 +89,33 @@ public class XML {
             case '"':
                 sb.append("&quot;");
                 break;
+            case '\'':
+                sb.append("&apos;");
+                break;
             default:
                 sb.append(c);
             }
         }
         return sb.toString();
+    }
+
+    /**
+     * Throw an exception if the string contains whitespace.
+     * Whitespace is not allowed in tagNames and attributes.
+     * @param string A string.
+     * @throws JSONException
+     */
+    public static void noSpace(String string) throws JSONException {
+        int i, length = string.length();
+        if (length == 0) {
+            throw new JSONException("Empty string.");
+        }
+        for (i = 0; i < length; i += 1) {
+            if (Character.isWhitespace(string.charAt(i))) {
+                throw new JSONException("'" + string +
+                        "' contains a space character.");
+            }
+        }
     }
 
     /**
@@ -109,10 +130,10 @@ public class XML {
                                  String name) throws JSONException {
         char       c;
         int        i;
-        String     n;
-        JSONObject o = null;
-        String     s;
-        Object     t;
+        JSONObject jsonobject = null;
+        String     string;
+        String     tagName;
+        Object     token;
 
 // Test for and skip past these forms:
 //      <!-- ... -->
@@ -124,11 +145,11 @@ public class XML {
 //      <=
 //      <<
 
-        t = x.nextToken();
+        token = x.nextToken();
 
 // <!
 
-        if (t == BANG) {
+        if (token == BANG) {
             c = x.next();
             if (c == '-') {
                 if (x.next() == '-') {
@@ -137,12 +158,12 @@ public class XML {
                 }
                 x.back();
             } else if (c == '[') {
-                t = x.nextToken();
-                if (t.equals("CDATA")) {
+                token = x.nextToken();
+                if ("CDATA".equals(token)) {
                     if (x.next() == '[') {
-                        s = x.nextCDATA();
-                        if (s.length() > 0) {
-                            context.accumulate("content", s);
+                        string = x.nextCDATA();
+                        if (string.length() > 0) {
+                            context.accumulate("content", string);
                         }
                         return false;
                     }
@@ -151,100 +172,111 @@ public class XML {
             }
             i = 1;
             do {
-                t = x.nextMeta();
-                if (t == null) {
+                token = x.nextMeta();
+                if (token == null) {
                     throw x.syntaxError("Missing '>' after '<!'.");
-                } else if (t == LT) {
+                } else if (token == LT) {
                     i += 1;
-                } else if (t == GT) {
+                } else if (token == GT) {
                     i -= 1;
                 }
             } while (i > 0);
             return false;
-        } else if (t == QUEST) {
+        } else if (token == QUEST) {
 
 // <?
 
             x.skipPast("?>");
             return false;
-        } else if (t == SLASH) {
+        } else if (token == SLASH) {
 
 // Close tag </
 
-            if (name == null || !x.nextToken().equals(name)) {
-                throw x.syntaxError("Mismatched close tag");
+            token = x.nextToken();
+            if (name == null) {
+                throw x.syntaxError("Mismatched close tag " + token);
+            }
+            if (!token.equals(name)) {
+                throw x.syntaxError("Mismatched " + name + " and " + token);
             }
             if (x.nextToken() != GT) {
                 throw x.syntaxError("Misshaped close tag");
             }
             return true;
 
-        } else if (t instanceof Character) {
+        } else if (token instanceof Character) {
             throw x.syntaxError("Misshaped tag");
 
 // Open tag <
 
         } else {
-            n = (String)t;
-            t = null;
-            o = new JSONObject();
+            tagName = (String)token;
+            token = null;
+            jsonobject = new JSONObject();
             for (;;) {
-                if (t == null) {
-                    t = x.nextToken();
+                if (token == null) {
+                    token = x.nextToken();
                 }
 
 // attribute = value
 
-                if (t instanceof String) {
-                    s = (String)t;
-                    t = x.nextToken();
-                    if (t == EQ) {
-                        t = x.nextToken();
-                        if (!(t instanceof String)) {
+                if (token instanceof String) {
+                    string = (String)token;
+                    token = x.nextToken();
+                    if (token == EQ) {
+                        token = x.nextToken();
+                        if (!(token instanceof String)) {
                             throw x.syntaxError("Missing value");
                         }
-                        o.accumulate(s, t);
-                        t = null;
+                        jsonobject.accumulate(string,
+                                XML.stringToValue((String)token));
+                        token = null;
                     } else {
-                        o.accumulate(s, "");
+                        jsonobject.accumulate(string, "");
                     }
 
 // Empty tag <.../>
 
-                } else if (t == SLASH) {
+                } else if (token == SLASH) {
                     if (x.nextToken() != GT) {
                         throw x.syntaxError("Misshaped tag");
                     }
-                    context.accumulate(n, o);
+                    if (jsonobject.length() > 0) {
+                        context.accumulate(tagName, jsonobject);
+                    } else {
+                        context.accumulate(tagName, "");
+                    }
                     return false;
 
 // Content, between <...> and </...>
 
-                } else if (t == GT) {
+                } else if (token == GT) {
                     for (;;) {
-                        t = x.nextContent();
-                        if (t == null) {
-                            if (name != null) {
-                                throw x.syntaxError("Unclosed tag " + name);
+                        token = x.nextContent();
+                        if (token == null) {
+                            if (tagName != null) {
+                                throw x.syntaxError("Unclosed tag " + tagName);
                             }
                             return false;
-                        } else if (t instanceof String) {
-                            s = (String)t;
-                            if (s.length() > 0) {
-                                o.accumulate("content", s);
+                        } else if (token instanceof String) {
+                            string = (String)token;
+                            if (string.length() > 0) {
+                                jsonobject.accumulate("content",
+                                        XML.stringToValue(string));
                             }
 
 // Nested element
 
-                        } else if (t == LT) {
-                            if (parse(x, o, n)) {
-                                if (o.length() == 0) {
-                                    context.accumulate(n, "");
-                                } else if (o.length() == 1 &&
-                                       o.opt("content") != null) {
-                                    context.accumulate(n, o.opt("content"));
+                        } else if (token == LT) {
+                            if (parse(x, jsonobject, tagName)) {
+                                if (jsonobject.length() == 0) {
+                                    context.accumulate(tagName, "");
+                                } else if (jsonobject.length() == 1 &&
+                                       jsonobject.opt("content") != null) {
+                                    context.accumulate(tagName,
+                                            jsonobject.opt("content"));
                                 } else {
-                                    context.accumulate(n, o);
+                                    context.accumulate(tagName, jsonobject);
                                 }
                                 return false;
                             }
@@ -255,6 +287,50 @@ public class XML {
                 }
             }
         }
+    }
+
+
+    /**
+     * Try to convert a string into a number, boolean, or null. If the string
+     * can't be converted, return the string. This is much less ambitious than
+     * JSONObject.stringToValue, especially because it does not attempt to
+     * convert plus forms, octal forms, hex forms, or E forms lacking decimal
+     * points.
+     * @param string A String.
+     * @return A simple JSON value.
+     */
+    public static Object stringToValue(String string) {
+        if ("true".equalsIgnoreCase(string)) {
+            return Boolean.TRUE;
+        }
+        if ("false".equalsIgnoreCase(string)) {
+            return Boolean.FALSE;
+        }
+        if ("null".equalsIgnoreCase(string)) {
+            return JSONObject.NULL;
+        }
+
+// If it might be a number, try converting it, first as a Long, and then as a
+// Double. If that doesn't work, return the string.
+
+        try {
+            char initial = string.charAt(0);
+            if (initial == '-' || (initial >= '0' && initial <= '9')) {
+                Long value = new Long(string);
+                if (value.toString().equals(string)) {
+                    return value;
+                }
+            }
+        }  catch (Exception ignore) {
+            try {
+                Double value = new Double(string);
+                if (value.toString().equals(string)) {
+                    return value;
+                }
+            }  catch (Exception ignoreAlso) {
+            }
+        }
+        return string;
     }
 
 
@@ -273,129 +349,142 @@ public class XML {
      * @throws JSONException
      */
     public static JSONObject toJSONObject(String string) throws JSONException {
-        JSONObject o = new JSONObject();
+        JSONObject jo = new JSONObject();
         XMLTokener x = new XMLTokener(string);
-        while (x.more()) {
-            x.skipPast("<");
-            parse(x, o, null);
+        while (x.more() && x.skipPast("<")) {
+            parse(x, jo, null);
         }
-        return o;
+        return jo;
     }
 
 
     /**
      * Convert a JSONObject into a well-formed, element-normal XML string.
-     * @param o A JSONObject.
+     * @param object A JSONObject.
      * @return  A string.
      * @throws  JSONException
      */
-    public static String toString(Object o) throws JSONException {
-        return toString(o, null);
+    public static String toString(Object object) throws JSONException {
+        return toString(object, null);
     }
 
 
     /**
      * Convert a JSONObject into a well-formed, element-normal XML string.
-     * @param o A JSONObject.
+     * @param object A JSONObject.
      * @param tagName The optional name of the enclosing tag.
      * @return A string.
      * @throws JSONException
      */
-    public static String toString(Object o, String tagName)
+    public static String toString(Object object, String tagName)
             throws JSONException {
-        StringBuffer b = new StringBuffer();
-        int          i;
-        JSONArray    ja;
-        JSONObject   jo;
-        String       k;
-        Iterator<?>     keys;
-        int          len;
-        String       s;
-        Object       v;
-        if (o instanceof JSONObject) {
+        StringBuilder       sb = new StringBuilder();
+        int                 i;
+        JSONArray           ja;
+        JSONObject          jo;
+        String              key;
+        Iterator<String>    keys;
+        int                 length;
+        String              string;
+        Object              value;
+        if (object instanceof JSONObject) {
 
 // Emit <tagName>
 
             if (tagName != null) {
-                b.append('<');
-                b.append(tagName);
-                b.append('>');
+                sb.append('<');
+                sb.append(tagName);
+                sb.append('>');
             }
 
 // Loop thru the keys.
 
-            jo = (JSONObject)o;
+            jo = (JSONObject)object;
             keys = jo.keys();
             while (keys.hasNext()) {
-                k = keys.next().toString();
-                v = jo.get(k);
-                if (v instanceof String) {
-                    s = (String)v;
-                } else {
-                    s = null;
+                key = keys.next();
+                value = jo.opt(key);
+                if (value == null) {
+                    value = "";
                 }
+                string = value instanceof String ? (String)value : null;
 
 // Emit content in body
 
-                if (k.equals("content")) {
-                    if (v instanceof JSONArray) {
-                        ja = (JSONArray)v;
-                        len = ja.length();
-                        for (i = 0; i < len; i += 1) {
+                if ("content".equals(key)) {
+                    if (value instanceof JSONArray) {
+                        ja = (JSONArray)value;
+                        length = ja.length();
+                        for (i = 0; i < length; i += 1) {
                             if (i > 0) {
-                                b.append('\n');
+                                sb.append('\n');
                             }
-                            b.append(escape(ja.get(i).toString()));
+                            sb.append(escape(ja.get(i).toString()));
                         }
                     } else {
-                        b.append(escape(v.toString()));
+                        sb.append(escape(value.toString()));
                     }
 
 // Emit an array of similar keys
 
-                } else if (v instanceof JSONArray) {
-                    ja = (JSONArray)v;
-                    len = ja.length();
-                    for (i = 0; i < len; i += 1) {
-                        b.append(toString(ja.get(i), k));
+                } else if (value instanceof JSONArray) {
+                    ja = (JSONArray)value;
+                    length = ja.length();
+                    for (i = 0; i < length; i += 1) {
+                        value = ja.get(i);
+                        if (value instanceof JSONArray) {
+                            sb.append('<');
+                            sb.append(key);
+                            sb.append('>');
+                            sb.append(toString(value));
+                            sb.append("</");
+                            sb.append(key);
+                            sb.append('>');
+                        } else {
+                            sb.append(toString(value, key));
+                        }
                     }
-                } else if (v.equals("")) {
-                    b.append('<');
-                    b.append(k);
-                    b.append("/>");
+                } else if ("".equals(value)) {
+                    sb.append('<');
+                    sb.append(key);
+                    sb.append("/>");
 
 // Emit a new tag <k>
 
                 } else {
-                    b.append(toString(v, k));
+                    sb.append(toString(value, key));
                 }
             }
             if (tagName != null) {
 
 // Emit the </tagname> close tag
 
-                b.append("</");
-                b.append(tagName);
-                b.append('>');
+                sb.append("</");
+                sb.append(tagName);
+                sb.append('>');
             }
-            return b.toString();
+            return sb.toString();
 
 // XML does not have good support for arrays. If an array appears in a place
 // where XML is lacking, synthesize an <array> element.
 
-        } else if (o instanceof JSONArray) {
-            ja = (JSONArray)o;
-            len = ja.length();
-            for (i = 0; i < len; ++i) {
-                b.append(toString(
-                    ja.opt(i), (tagName == null) ? "array" : tagName));
-            }
-            return b.toString();
         } else {
-            s = (o == null) ? "null" : escape(o.toString());
-            return (tagName == null) ? "\"" + s + "\"" :
-                (s.length() == 0) ? "<" + tagName + "/>" :
-                "<" + tagName + ">" + s + "</" + tagName + ">";
+            if (object.getClass().isArray()) {
+                object = new JSONArray(object);
+            }
+            if (object instanceof JSONArray) {
+                ja = (JSONArray)object;
+                length = ja.length();
+                for (i = 0; i < length; i += 1) {
+                    sb.append(toString(ja.opt(i), tagName == null ? "array" : tagName));
+                }
+                return sb.toString();
+            } else {
+                string = (object == null) ? "null" : escape(object.toString());
+                return (tagName == null) ? "\"" + string + "\"" :
+                    (string.length() == 0) ? "<" + tagName + "/>" :
+                    "<" + tagName + ">" + string + "</" + tagName + ">";
+            }
         }
     }
 }
