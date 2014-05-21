@@ -28,7 +28,7 @@ SOFTWARE.
  * The XMLTokener extends the JSONTokener to provide additional methods
  * for the parsing of XML texts.
  * @author JSON.org
- * @version 2014-05-03
+ * @version 2
  */
 public class XMLTokener extends JSONTokener {
 
@@ -63,11 +63,11 @@ public class XMLTokener extends JSONTokener {
     public String nextCDATA() throws JSONException {
         char         c;
         int          i;
-        StringBuilder sb = new StringBuilder();
+        StringBuffer sb = new StringBuffer();
         for (;;) {
             c = next();
-            if (end()) {
-                throw syntaxError("Unclosed CDATA");
+            if (c == 0) {
+                throw syntaxError("Unclosed CDATA.");
             }
             sb.append(c);
             i = sb.length() - 3;
@@ -91,7 +91,7 @@ public class XMLTokener extends JSONTokener {
      */
     public Object nextContent() throws JSONException {
         char         c;
-        StringBuilder sb;
+        StringBuffer sb;
         do {
             c = next();
         } while (Character.isWhitespace(c));
@@ -101,7 +101,7 @@ public class XMLTokener extends JSONTokener {
         if (c == '<') {
             return XML.LT;
         }
-        sb = new StringBuilder();
+        sb = new StringBuffer();
         for (;;) {
             if (c == '<' || c == 0) {
                 back();
@@ -120,12 +120,12 @@ public class XMLTokener extends JSONTokener {
     /**
      * Return the next entity. These entities are translated to Characters:
      *     <code>&amp;  &apos;  &gt;  &lt;  &quot;</code>.
-     * @param ampersand An ampersand character.
+     * @param a An ampersand character.
      * @return  A Character or an entity String if the entity is not recognized.
      * @throws JSONException If missing ';' in XML entity.
      */
-    public Object nextEntity(char ampersand) throws JSONException {
-        StringBuilder sb = new StringBuilder();
+    public Object nextEntity(char a) throws JSONException {
+        StringBuffer sb = new StringBuffer();
         for (;;) {
             char c = next();
             if (Character.isLetterOrDigit(c) || c == '#') {
@@ -136,9 +136,9 @@ public class XMLTokener extends JSONTokener {
                 throw syntaxError("Missing ';' in XML entity: &" + sb);
             }
         }
-        String string = sb.toString();
-        Object object = entity.get(string);
-        return object != null ? object : ampersand + string + ";";
+        String s = sb.toString();
+        Object e = entity.get(s);
+        return e != null ? e : a + s + ";";
     }
 
 
@@ -159,7 +159,7 @@ public class XMLTokener extends JSONTokener {
         } while (Character.isWhitespace(c));
         switch (c) {
         case 0:
-            throw syntaxError("Misshaped meta tag");
+            throw syntaxError("Misshaped meta tag.");
         case '<':
             return XML.LT;
         case '>':
@@ -178,7 +178,7 @@ public class XMLTokener extends JSONTokener {
             for (;;) {
                 c = next();
                 if (c == 0) {
-                    throw syntaxError("Unterminated string");
+                    throw syntaxError("Unterminated string.");
                 }
                 if (c == q) {
                     return Boolean.TRUE;
@@ -219,15 +219,15 @@ public class XMLTokener extends JSONTokener {
     public Object nextToken() throws JSONException {
         char c;
         char q;
-        StringBuilder sb;
+        StringBuffer sb;
         do {
             c = next();
         } while (Character.isWhitespace(c));
         switch (c) {
         case 0:
-            throw syntaxError("Misshaped element");
+            throw syntaxError("Misshaped element.");
         case '<':
-            throw syntaxError("Misplaced '<'");
+            throw syntaxError("Misplaced '<'.");
         case '>':
             return XML.GT;
         case '/':
@@ -244,11 +244,11 @@ public class XMLTokener extends JSONTokener {
         case '"':
         case '\'':
             q = c;
-            sb = new StringBuilder();
+            sb = new StringBuffer();
             for (;;) {
                 c = next();
                 if (c == 0) {
-                    throw syntaxError("Unterminated string");
+                    throw syntaxError("Unterminated string.");
                 }
                 if (c == q) {
                     return sb.toString();
@@ -263,7 +263,7 @@ public class XMLTokener extends JSONTokener {
 
 // Name
 
-            sb = new StringBuilder();
+            sb = new StringBuffer();
             for (;;) {
                 sb.append(c);
                 c = next();
@@ -272,7 +272,6 @@ public class XMLTokener extends JSONTokener {
                 }
                 switch (c) {
                 case 0:
-                    return sb.toString();
                 case '>':
                 case '/':
                 case '=':
@@ -285,80 +284,8 @@ public class XMLTokener extends JSONTokener {
                 case '<':
                 case '"':
                 case '\'':
-                    throw syntaxError("Bad character in a name");
+                    throw syntaxError("Bad character in a name.");
                 }
-            }
-        }
-    }
-
-
-    /**
-     * Skip characters until past the requested string.
-     * If it is not found, we are left at the end of the source with a result of false.
-     * @param to A string to skip past.
-     * @throws JSONException
-     */
-    public boolean skipPast(String to) throws JSONException {
-        boolean b;
-        char c;
-        int i;
-        int j;
-        int offset = 0;
-        int length = to.length();
-        char[] circle = new char[length];
-
-        /*
-         * First fill the circle buffer with as many characters as are in the
-         * to string. If we reach an early end, bail.
-         */
-
-        for (i = 0; i < length; i += 1) {
-            c = next();
-            if (c == 0) {
-                return false;
-            }
-            circle[i] = c;
-        }
-
-        /* We will loop, possibly for all of the remaining characters. */
-
-        for (;;) {
-            j = offset;
-            b = true;
-
-            /* Compare the circle buffer with the to string. */
-
-            for (i = 0; i < length; i += 1) {
-                if (circle[j] != to.charAt(i)) {
-                    b = false;
-                    break;
-                }
-                j += 1;
-                if (j >= length) {
-                    j -= length;
-                }
-            }
-
-            /* If we exit the loop with b intact, then victory is ours. */
-
-            if (b) {
-                return true;
-            }
-
-            /* Get the next character. If there isn't one, then defeat is ours. */
-
-            c = next();
-            if (c == 0) {
-                return false;
-            }
-            /*
-             * Shove the character in the circle buffer and advance the
-             * circle offset. The offset is mod n.
-             */
-            circle[offset] = c;
-            offset += 1;
-            if (offset >= length) {
-                offset -= length;
             }
         }
     }
