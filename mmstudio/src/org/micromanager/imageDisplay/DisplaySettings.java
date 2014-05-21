@@ -7,6 +7,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import org.micromanager.utils.MDUtils;
+import org.micromanager.utils.ReportingUtils;
 
 public class DisplaySettings {
 
@@ -28,6 +29,8 @@ public class DisplaySettings {
       JSONArray chColors = null, chMaxes = null, chMins = null, chNames = null;
       if (summaryMetadata.has("ChNames")) {
          chNames = MDUtils.getJSONArrayMember(summaryMetadata, "ChNames");
+         // HACK: derive the number of channels from the number of channel
+         // names. 
          numDisplayChannels = chNames.length();
       } else {
          numDisplayChannels = MDUtils.getNumChannels(summaryMetadata);
@@ -46,7 +49,7 @@ public class DisplaySettings {
       }      
       
       for (int k = 0; k < numDisplayChannels; ++k) {
-         String name = chNames != null ? chNames.getString(k) :"channel " + k;    
+         String name = chNames != null ? chNames.getString(k) :"channel " + k;
          int color = (chColors != null && k < chColors.length()) ? 
                  chColors.getInt(k) : Color.white.getRGB();
          int min = (chMins != null) ? chMins.getInt(k) : 0;

@@ -456,19 +456,53 @@ public class MMAcquisition {
       JSONArray channelMaxes = new JSONArray();
       JSONArray channelMins = new JSONArray(); 
 
-      // Both channelColors_ and channelNames_ may, or may not yet contain values
-      // Since we don't know the size in the constructor, we can not pre-initialize
-      // the data.  Therefore, fill in the blanks with defaults here:
-      channelColors_ = new JSONArray();
-      
+      // Both channelColors_ and channelNames_ may, or may not yet contain 
+      // values (currently they should only contain values we actually care 
+      // about if a Beanshell script sets them prior to adding any images to
+      // the acquisition). Augment any existing values with additional
+      // defaults, if not enough information is provided. But first make
+      // certain we don't have more entries than we have channels.
+      // If we upgraded our JSON library then we could use the .remove() method
+      // of JSONArray instead of having to build separate arrays that only
+      // include the elements we want; however, the new version raises an
+      // exception in JSONObject.getString() if the object isn't a string,
+      // which breaks us rather horribly.
+      JSONArray newColors = new JSONArray();
+      JSONArray newNames = new JSONArray();
+      for (int i = 0; i < numChannels_; ++i) {
+         try {
+            if (i < channelColors_.length()) {
+               newColors.put(i, channelColors_.get(i));
+            }
+            if (i < channelNames_.length()) {
+               newNames.put(i, channelNames_.get(i));
+            }
+         }
+         catch (JSONException e) {
+            // Should never happen since we're doing our own bounds checking.
+            ReportingUtils.logError(e, "Couldn't copy over names and colors!");
+         }
+      }
+      channelColors_ = newColors;
+      channelNames_ = newNames;
       if (numChannels_ == 1)
          try {
-            channelColors_.put(0, Color.white.getRGB());
-            channelNames_.put(0,"Default");
+            if (channelColors_.length() == 0) {
+               // No preset color for this channel.
+               channelColors_.put(0, Color.white.getRGB());
+            }
+            if (channelNames_.length() == 0) {
+               // No preset name for this channel.
+               channelNames_.put(0, "Default");
+            }
             try {
                CMMCore core = MMStudioMainFrame.getInstance().getCore();
                String name = core.getCurrentConfigFromCache(core.getChannelGroup());
-               channelNames_.put(0, name);
+               // Only use empty-string names (caused by having a null channel
+               // group) if we don't already have a better name.
+               if (!name.equals("") || channelNames_.length() == 0) {
+                  channelNames_.put(0, name);
+               }
             } catch (Exception e) {}
             channelMins.put(0);
             channelMaxes.put( Math.pow(2, md.getInt("BitDepth"))-1 );
@@ -477,10 +511,12 @@ public class MMAcquisition {
          }
       else
          for (Integer i = 0; i < numChannels_; i++) {
-            try {
-               channelColors_.put(getMultiCamDefaultChannelColor(i, channelNames_.getString(i)));
-            } catch (JSONException ex) {
-               ReportingUtils.logError(ex);
+            if (channelColors_.length() <= i) {
+               try {
+                  channelColors_.put(getMultiCamDefaultChannelColor(i, channelNames_.getString(i)));
+               } catch (JSONException ex) {
+                  ReportingUtils.logError(ex);
+               }
             }
             
             try {
