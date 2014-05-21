@@ -124,11 +124,9 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
 
    /*
     * Draws a dashed vertical line at minimum and maximum pixel value
-    * position.  Not sure if this is useful
+    * position.
     */
    public void drawCursor(Graphics2D g, Rectangle box, float xPos) {
-
-
       // correct if Y range is zero
       if (bounds_.getRangeY() == 0.0) {
          if (bounds_.yMax > 0.0)
@@ -139,7 +137,6 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
       }
 
       if (bounds_.getRangeX() <= 0.0 || bounds_.getRangeY() <= 0.0) {
-         //ReportingUtils.logMessage("Out of range " + bounds_.getRangeX() + ", " + bounds_.getRangeY());
          return; // invalid range data
       }
 
@@ -157,7 +154,8 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
       g.setColor(new Color(120,120,120));
 
       float dash1[] = {3.0f};
-      BasicStroke dashed = new BasicStroke(1.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 3.0f, dash1, 0.0f);
+      BasicStroke dashed = new BasicStroke(1.0f, BasicStroke.CAP_BUTT,
+            BasicStroke.JOIN_MITER, 3.0f, dash1, 0.0f);
       g.setStroke(dashed);
       g.draw(new Line2D.Float(ptDevBottom, ptDevTop));
       g.setColor(oldColor);
@@ -169,8 +167,8 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
     * Draws a line showing the mapping between pixel values and display
     * intensity on the screen. 
     */
-   public void drawMapping(Graphics2D g, Rectangle box, float xStart, float xEnd, double gamma) {
-       
+   public void drawMapping(Graphics2D g, Rectangle box, 
+         float xStart, float xEnd, double gamma) {
       // correct if Y range is zero
       if (bounds_.getRangeY() == 0.0) {
          if (bounds_.yMax > 0.0)
@@ -181,7 +179,6 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
       }
 
       if (bounds_.getRangeX() <= 0.0 || bounds_.getRangeY() <= 1.e-10) {
-         //ReportingUtils.logMessage("Out of range " + bounds_.getRangeX() + ", " + bounds_.getRangeY());
          return; // invalid range data
       }
 
@@ -189,20 +186,23 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
       float xUnit = (float) (box.width / bounds_.getRangeX());
       float yUnit = (float) (box.height / bounds_.getRangeY());
 
-      Point2D.Float ptPosBottom = new Point2D.Float(xStart, (float)bounds_.yMin);
+      Point2D.Float ptPosBottom = new Point2D.Float(xStart, 
+            (float) bounds_.yMin);
       ptDevBottom_ = getDevicePoint(ptPosBottom, box, xUnit, yUnit);
-      Point2D.Float ptPosTop = new Point2D.Float(xEnd, (float)bounds_.yMax);
+      Point2D.Float ptPosTop = new Point2D.Float(xEnd, (float) bounds_.yMax);
       ptDevTop_ = getDevicePoint(ptPosTop, box, xUnit, yUnit);
-      ptDevTopUnclippedX_ = getDevicePointUnclippedXMax(ptPosTop, box, xUnit, yUnit);
+      ptDevTopUnclippedX_ = getDevicePointUnclippedXMax(
+            ptPosTop, box, xUnit, yUnit);
       
-      
-      GeneralPath path = generateGammaCurvePath(ptDevTopUnclippedX_, ptDevBottom_, gamma);
+      GeneralPath path = generateGammaCurvePath(
+            ptDevTopUnclippedX_, ptDevBottom_, gamma);
 
       Color oldColor = g.getColor();
       Stroke oldStroke = g.getStroke();
-      g.setColor(new Color(120,120,120));
+      g.setColor(new Color(120, 120, 120));
 
-      BasicStroke solid = new BasicStroke(2.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER);
+      BasicStroke solid = new BasicStroke(2.0f, BasicStroke.CAP_BUTT, 
+            BasicStroke.JOIN_MITER);
       g.setStroke(solid);
       g.draw(path);
       g.setColor(oldColor);
@@ -212,7 +212,8 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
               (int) ptDevTop_.x, (int) ptDevTop_.y);
    }
 
-   private void drawLUTHandles(Graphics2D g, int xmin, int ymin, int xmax, int ymax) {
+   private void drawLUTHandles(Graphics2D g, int xmin, int ymin, 
+         int xmax, int ymax) {
       drawTopHandle(g, xmax, ymax);
       drawBottomHandle(g, xmin, ymin);
    }
@@ -231,12 +232,12 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
          g.setColor(HIGHLIGHT_COLOR);
          g.fillRect(x - width, y - LUT_HANDLE_SIZE, width, LUT_HANDLE_SIZE);
          g.setColor(UIManager.getColor("Panel.background"));
-         g.drawString(text, x - PIXELS_PER_HANDLE_DIGIT * text.length() - TOP_HANDLE_OFFSET , y - 1);
+         g.drawString(text, x - width, y - 1);
       } else {
          g.setColor(UIManager.getColor("Panel.background"));
          g.fillRect(x - width, y - LUT_HANDLE_SIZE, width, LUT_HANDLE_SIZE);
          g.setColor(Color.black);
-         g.drawString(text, x - PIXELS_PER_HANDLE_DIGIT * text.length() - TOP_HANDLE_OFFSET, y - 1);
+         g.drawString(text, x - width, y - 1);
       }
    }
 
@@ -252,7 +253,8 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
          g.setColor(HIGHLIGHT_COLOR);
          g.fillRect(x, y, width, LUT_HANDLE_SIZE + 1);
          g.setColor(UIManager.getColor("Panel.background"));
-         g.drawString(newContrast_.length() != 0 ? newContrast_ : text, x + BOTTOM_HANDLE_OFFSET, y + 10);
+         g.drawString(newContrast_.length() != 0 ? newContrast_ : text, 
+               x + BOTTOM_HANDLE_OFFSET, y + 10);
       } else {
          g.setColor(UIManager.getColor("Panel.background"));
          g.fillRect(x, y, width, LUT_HANDLE_SIZE + 1);
@@ -298,11 +300,11 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
    @Override
    public void keyTyped(KeyEvent e) {
       try {
-      int i = Integer.parseInt("" + e.getKeyChar());
-      if (contrastMaxEditable_ || contrastMinEditable_) {
-         newContrast_ += i;
-         repaint();
-      }
+         int i = Integer.parseInt("" + e.getKeyChar());
+         if (contrastMaxEditable_ || contrastMinEditable_) {
+            newContrast_ += i;
+            repaint();
+         }
       } catch (Exception ex) {} // not a digit
    }
 
@@ -458,8 +460,9 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
    }
 
       private double getGammaFromMousePosition(int x, int y) {
-         if ((ptDevTopUnclippedX_ == null) || (ptDevBottom_ == null))
+         if ((ptDevTopUnclippedX_ == null) || (ptDevBottom_ == null)) {
             return 0;
+         }
          double width = ptDevTopUnclippedX_.x - ptDevBottom_.x;
          double height = ptDevBottom_.y - ptDevTopUnclippedX_.y;
          double xn = (x - ptDevBottom_.x) / width;
@@ -487,23 +490,25 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
 
    private void getClickBand(int x, int y) {
       Rectangle box = getBox();
-      //int xmin = box.x;
-      //int xmax = box.x + box.width;
       int ymin = box.y + box.height;
       int ymax = box.y;
       float xUnit = (float) (box.width / bounds_.getRangeX());
-      float deviceCursorLoX = getDevicePoint(new Point2D.Float(cursorLoPos_, 0), box, xUnit, (float) 1.0).x;
-      float deviceCursorHiX = getDevicePoint(new Point2D.Float(cursorHiPos_, 0), box, xUnit, (float) 1.0).x;
+      float deviceCursorLoX = getDevicePoint(
+            new Point2D.Float(cursorLoPos_, 0), box, xUnit, (float) 1.0).x;
+      float deviceCursorHiX = getDevicePoint(
+            new Point2D.Float(cursorHiPos_, 0), box, xUnit, (float) 1.0).x;
       clickLocation_ = 0;
       if (y < ymin + 10 && y >= ymin) {
-         if (x > deviceCursorLoX && x < deviceCursorLoX + getHistogramBottomNumbersWidth()) {
+         if (x > deviceCursorLoX && 
+               x < deviceCursorLoX + getHistogramBottomNumbersWidth()) {
             clickLocation_ = 1;
             currentHandle_ = 0; //low cursor text field
             return;
          }
          currentHandle_ = 1; // Low cursor margin
       } else if (y <= ymax && y > ymax - 10) {
-         if (x < deviceCursorHiX && x > deviceCursorHiX - getHistogramTopNumbersWidth()) {
+         if (x < deviceCursorHiX && 
+               x > deviceCursorHiX - getHistogramTopNumbersWidth()) {
             clickLocation_ = 2;
             currentHandle_ = 0; //hi cursor text field
             return;
@@ -570,12 +575,11 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
       bounds_ = b;
       AdjustCursors();
    }
-   
+
+   // Note: doesn't adjust cursorHiPos_, so that the contrast line can have an
+   // endpoint past the end of the histogram.
    private void AdjustCursors() {
       cursorLoPos_ = Math.max(cursorLoPos_, (float) bounds_.xMin);
-//      cursorHiPos_ = Math.min(cursorHiPos_, (float) bounds_.xMax);
-      //took this line out so contrast line can have an endpoint beyond
-      //length of  histogram
    }
    
    /**
@@ -593,11 +597,9 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
       g.fillRect(box.x, box.y, box.width, box.height);
       g.setColor(oldC);
 
-
       Color oldColor = g.getColor();
       g.setColor(traceColor_);
-      
-      
+            
       // correct if Y range is zero
       if (bounds_.getRangeY() == 0.0) {
          if (bounds_.yMax > 0.0)
@@ -616,18 +618,24 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
       float xUnit = (float) (box.width / bounds_.getRangeX());
       float yUnit = (float) (box.height / bounds_.getRangeY());
       
-      GeneralPath trace = new GeneralPath(GeneralPath.WIND_EVEN_ODD, data_.getSize() + 1);
+      GeneralPath trace = new GeneralPath(
+            GeneralPath.WIND_EVEN_ODD, data_.getSize() + 1);
       // we need to start and end at y=0 to avoid strange display issues
-      Point2D.Float pt0 = getDevicePoint(new Point2D.Float(0.0f, 0.0f), box, xUnit, yUnit);
+      Point2D.Float pt0 = getDevicePoint(
+            new Point2D.Float(0.0f, 0.0f), box, xUnit, yUnit);
       trace.moveTo(pt0.x, pt0.y);
-      Point2D.Float pt1 = getDevicePoint(new Point2D.Float(1.0f, 0.0f), box, xUnit, yUnit);
-      float halfWidth = (pt1.x - pt0.x)/2;
-      for (int i=0; i<data_.getSize(); i++){
-         Point2D.Float pt = getDevicePoint(data_.getPoint(i), box, xUnit, yUnit);
+      Point2D.Float pt1 = getDevicePoint(
+            new Point2D.Float(1.0f, 0.0f), box, xUnit, yUnit);
+      float halfWidth = (pt1.x - pt0.x) / 2;
+      for (int i = 0; i < data_.getSize(); i++) {
+         Point2D.Float pt = getDevicePoint(
+               data_.getPoint(i), box, xUnit, yUnit);
          trace.lineTo(pt.x - halfWidth, pt.y);
          trace.lineTo(pt.x + halfWidth, pt.y);
       }
-      pt0 = getDevicePoint(new Point2D.Float((float)data_.getPoint(data_.getSize()-1).getX(), 0.0f), box, xUnit, yUnit);
+      pt0 = getDevicePoint(
+            new Point2D.Float((float) data_.getPoint(data_.getSize() - 1).getX(), 0.0f), 
+            box, xUnit, yUnit);
       trace.lineTo(pt0.x, pt0.y);
 
       if (fillTrace_)
@@ -638,19 +646,27 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
       g.setColor(oldColor);
    }
 
-   public Point2D.Float getDevicePointUnclippedXMax(Point2D.Float pt, Rectangle box, float xUnit, float yUnit){
-      Point2D.Float ptDev = new Point2D.Float((float)(pt.x - bounds_.xMin)*xUnit + box.x, box.height - (float)(pt.y - bounds_.yMin)*yUnit + box.y);
+   public Point2D.Float getDevicePointUnclippedXMax(
+         Point2D.Float pt, Rectangle box, float xUnit, float yUnit) {
+      Point2D.Float ptDev = new Point2D.Float(
+            (float) (pt.x - bounds_.xMin) * xUnit + box.x, box.height - (float) (pt.y - bounds_.yMin) * yUnit + box.y);
       // clip the drawing region
-      ptDev.x = Math.max(ptDev.x, (float)box.x);
-      ptDev.y = Math.max(Math.min(ptDev.y, (float)box.y + box.height), (float)box.y);
+      ptDev.x = Math.max(ptDev.x, (float) box.x);
+      ptDev.y = Math.max(Math.min(ptDev.y, (float) box.y + box.height), 
+            (float) box.y);
       return ptDev;
    }
    
-   public Point2D.Float getDevicePoint(Point2D.Float pt, Rectangle box, float xUnit, float yUnit){
-      Point2D.Float ptDev = new Point2D.Float((float)(pt.x - bounds_.xMin)*xUnit + box.x, box.height - (float)(pt.y - bounds_.yMin)*yUnit + box.y);
+   public Point2D.Float getDevicePoint(Point2D.Float pt, Rectangle box, 
+         float xUnit, float yUnit){
+      Point2D.Float ptDev = new Point2D.Float(
+            (float) (pt.x - bounds_.xMin) * xUnit + box.x, 
+            box.height - (float) (pt.y - bounds_.yMin) * yUnit + box.y);
       // clip the drawing region
-      ptDev.x = Math.max(Math.min(ptDev.x, (float)box.x + box.width), (float)box.x);
-      ptDev.y = Math.max(Math.min(ptDev.y, (float)box.y + box.height), (float)box.y);
+      ptDev.x = Math.max(Math.min(ptDev.x, (float) box.x + box.width), 
+            (float) box.x);
+      ptDev.y = Math.max(Math.min(ptDev.y, (float) box.y + box.height), 
+            (float) box.y);
       return ptDev;
    }
 
@@ -662,14 +678,12 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
       return posPt;
    }
    
-  
-
    public Rectangle getBox() {
       Rectangle box = getBounds();
-      box.x = (int)xMargin_;
-      box.y = (int)yMargin_;
-      box.height -= 2*yMargin_;
-      box.width -= 2*xMargin_;
+      box.x = (int) xMargin_;
+      box.y = (int) yMargin_;
+      box.height -= 2 * yMargin_;
+      box.width -= 2 * xMargin_;
       return box;
    }
 
@@ -679,8 +693,8 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
       super.paintComponent(g); // JPanel draws background
       Graphics2D  g2d = (Graphics2D) g;
 
-       g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
+      g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, 
+            RenderingHints.VALUE_ANTIALIAS_ON);
 
       // get drawing rectangle
       Rectangle box = getBox();
@@ -691,8 +705,8 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
       Stroke oldStroke = g2d.getStroke();
 
       g2d.setPaint(Color.black);
-      g2d.setStroke(new BasicStroke((float)2));
-      
+      g2d.setStroke(new BasicStroke(2.0f));
+
       drawGraph(g2d, box);
       drawCursor(g2d, box, cursorLoPos_);
       drawCursor(g2d, box, cursorHiPos_);
