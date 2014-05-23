@@ -62,6 +62,14 @@ public class DisplayWindow extends StackWindow {
       }
    }
 
+   /**
+    * Our controls have changed size; repack the window.
+    */
+   @Subscribe
+   public void onLayoutChange(ScrollerPanel.LayoutChangedEvent event) {
+      pack();
+   }
+
    // Force this window to go away.
    public void forceClosed() {
       try {

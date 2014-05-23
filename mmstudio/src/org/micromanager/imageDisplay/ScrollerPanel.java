@@ -3,6 +3,7 @@ package org.micromanager.imageDisplay;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 
+import java.awt.Dimension;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Timer;
@@ -44,7 +45,16 @@ public class ScrollerPanel extends JPanel {
     * This class signifies that our layout has changed and our owner needs to 
     * revalidate.
     */
-   public static class LayoutChangedEvent {}
+   public static class LayoutChangedEvent {
+      private Dimension preferredSize_;
+      public LayoutChangedEvent(Dimension preferredSize) {
+         preferredSize_ = preferredSize;
+      }
+
+      public Dimension getPreferredSize() {
+         return preferredSize_;
+      }
+   }
 
    // We'll be communicating with our owner and with our AxisScrollers via
    // this bus.
@@ -81,6 +91,7 @@ public class ScrollerPanel extends JPanel {
       for (int i = 0; i < maximums.length; ++i) {
          AxisScroller scroller = new AxisScroller(axes[i], 
                maximums[i], bus, true);
+         scroller.setVisible(false);
          scrollers_.add(scroller);
       }
    }
@@ -169,11 +180,13 @@ public class ScrollerPanel extends JPanel {
    @Subscribe
    public void onNewImageEvent(NewImageEvent event) {
       boolean didShowNewScrollers = false;
+      int height = 0;
       for (AxisScroller scroller : scrollers_) {
          int imagePosition = event.getPositionForAxis(scroller.getAxis());
          if (scroller.getMaximum() <= imagePosition) {
             if (scroller.getMaximum() == 1) {
                // This scroller was previously hidden and needs to be shown now.
+               scroller.setVisible(true);
                add(scroller, "wrap 0px");
                didShowNewScrollers = true;
             }
@@ -182,9 +195,15 @@ public class ScrollerPanel extends JPanel {
             scroller.setMaximum(imagePosition + 1);
          }
          scroller.forcePosition(imagePosition);
+         if (scroller.isVisible()) {
+            height += scroller.getPreferredSize().height;
+         }
       }
       if (didShowNewScrollers) {
-         bus_.post(new LayoutChangedEvent());
+         // Post an event informing our masters of our new preferred size.
+         Dimension size = new Dimension(512, height);
+         setPreferredSize(size);
+         bus_.post(new LayoutChangedEvent(size));
       }
       // Start up a timer to restore the scrollers to their original positions,
       // if applicable. 

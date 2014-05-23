@@ -44,6 +44,8 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
 
    private final static int DEFAULT_FPS = 10;
    private final static double MAX_FPS = 5000;
+   // Height in pixels of our controls, not counting scrollbars.
+   private final static int CONTROLS_HEIGHT = 60;
 
    private final VirtualAcquisitionDisplay display_;
    private EventBus bus_;
@@ -52,6 +54,8 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
    private int mouseX_ = -1;
    private int mouseY_ = -1;
 
+   // JPanel that holds all controls.
+   private JPanel subPanel_;
    // Controls common to both control sets
    private ScrollerPanel scrollerPanel_;
    private JLabel pixelInfoLabel_;
@@ -86,25 +90,25 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
 
    private void initComponents(final boolean shouldUseLiveControls) {
       // This layout minimizes space between components.
-      JPanel subPanel = new JPanel(new MigLayout("", "0[]", "0[]0[]0[]0"));
-      subPanel.setPreferredSize(new Dimension(512, 100));
+      subPanel_ = new JPanel(new MigLayout("", "0[]", "0[]0[]0[]0"));
+      subPanel_.setPreferredSize(new Dimension(512, CONTROLS_HEIGHT));
 
       pixelInfoLabel_ = new JLabel("                                         ");
       pixelInfoLabel_.setMinimumSize(new Dimension(150, 10));
       pixelInfoLabel_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
-      subPanel.add(pixelInfoLabel_, "span, wrap");
+      subPanel_.add(pixelInfoLabel_, "span, wrap");
 
       scrollerPanel_ = new ScrollerPanel(
                bus_, new String[]{"channel", "position", "time", "z"}, 
                new Integer[]{1, 1, 1, 1}, DEFAULT_FPS);
-      subPanel.add(scrollerPanel_, "span, growx, wrap 0px");
+      subPanel_.add(scrollerPanel_, "span, growx, wrap 0px");
 
       showFolderButton_ = new JButton();
       saveButton_ = new JButton();
       statusLineLabel_ = new JLabel("                                        ");
 
-      subPanel.add(showFolderButton_);
-      subPanel.add(saveButton_);
+      subPanel_.add(showFolderButton_);
+      subPanel_.add(saveButton_);
 
       showFolderButton_.setBackground(new java.awt.Color(255, 255, 255));
       showFolderButton_.setIcon(
@@ -149,10 +153,10 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
       fpsLabel_.setFocusable(false);
 
       if (shouldUseLiveControls) {
-         makeSnapLiveControls(subPanel);
+         makeSnapLiveControls();
       }
       else {
-         makeStandardControls(subPanel);
+         makeStandardControls();
       }
       
       statusLineLabel_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
@@ -161,15 +165,15 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
       // Force the status line to be large enough to display statuses without
       // auto-truncating them.
       statusLineLabel_.setMinimumSize(new Dimension(150, 10));
-      subPanel.add(statusLineLabel_, "span, wrap");
+      subPanel_.add(statusLineLabel_, "span, wrap");
 
-      add(subPanel);
+      add(subPanel_);
    }
 
    /**
     * Generate the controls used for the "Snap/Live" window.
     */
-   private void makeSnapLiveControls(JPanel subPanel) {
+   private void makeSnapLiveControls() {
       snapButton_ = new JButton();
       snapButton_.setFocusable(false);
       snapButton_.setIconTextGap(6);
@@ -225,26 +229,26 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
          }
       });
 
-      subPanel.add(snapButton_);
-      subPanel.add(liveButton_);
-      subPanel.add(snapToAlbumButton_, "wrap");
+      subPanel_.add(snapButton_);
+      subPanel_.add(liveButton_);
+      subPanel_.add(snapToAlbumButton_, "wrap");
       fpsLabel_.setText("                          ");
-      subPanel.add(fpsLabel_, "span 3, width 130px");
+      subPanel_.add(fpsLabel_, "span 3, width 130px");
    }
 
    /**
     * Generate the controls used on a standard dataset display (i.e. not the 
     * snap/live window).
     */
-   private void makeStandardControls(JPanel subPanel) {
+   private void makeStandardControls() {
       fpsField_ = new javax.swing.JTextField(String.valueOf(DEFAULT_FPS), 8);
       abortButton_ = new JButton();
       pauseAndResumeToggleButton_ = new javax.swing.JToggleButton();
       
-      subPanel.add(abortButton_);
-      subPanel.add(pauseAndResumeToggleButton_);
-      subPanel.add(fpsLabel_, "width 130px");
-      subPanel.add(fpsField_);
+      subPanel_.add(abortButton_);
+      subPanel_.add(pauseAndResumeToggleButton_);
+      subPanel_.add(fpsLabel_, "width 130px");
+      subPanel_.add(fpsField_);
 
       fpsField_.setToolTipText(
             "Set the speed at which the acquisition is played back.");
@@ -296,11 +300,10 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
                   "/org/micromanager/icons/resultset_next.png")));
       pauseAndResumeToggleButton_.addActionListener(
             new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            pauseAndResumeToggleButtonActionPerformed(evt);
-         }
-      });
-
+               public void actionPerformed(java.awt.event.ActionEvent evt) {
+                  pauseAndResumeToggleButtonActionPerformed(evt);
+               }
+            });
    }
 
    /**
@@ -314,7 +317,7 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
       mouseY_ = event.y_;
       setPixelInfo(mouseX_, mouseY_, event.intensities_[0]);
    }
- 
+
    /**
     * Update our pixel info text.
     */
@@ -345,8 +348,13 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
    @Subscribe
    public void onNewImage(NewImageEvent event) {
       if (mouseX_ != -1 && mouseY_ != -1) {
-         int intensity = display_.getIntensityAt(mouseX_, mouseY_);
-         setPixelInfo(mouseX_, mouseY_, intensity);
+         try {
+            int intensity = display_.getIntensityAt(mouseX_, mouseY_);
+            setPixelInfo(mouseX_, mouseY_, intensity);
+         }
+         catch (Exception e) {
+            ReportingUtils.logError(e, "Error in HyperstackControls onNewImage");
+         }
       }
    }
 
@@ -355,6 +363,9 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
     */
    @Subscribe
    public void onLayoutChange(ScrollerPanel.LayoutChangedEvent event) {
+      subPanel_.setPreferredSize(
+            new Dimension(512, 
+               CONTROLS_HEIGHT + event.getPreferredSize().height));
       invalidate();
       validate();
    }
