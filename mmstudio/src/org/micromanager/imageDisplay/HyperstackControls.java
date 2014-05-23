@@ -91,7 +91,6 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
    private void initComponents(final boolean shouldUseLiveControls) {
       // This layout minimizes space between components.
       subPanel_ = new JPanel(new MigLayout("", "0[]", "0[]0[]0[]0"));
-      subPanel_.setPreferredSize(new Dimension(512, CONTROLS_HEIGHT));
 
       pixelInfoLabel_ = new JLabel("                                         ");
       pixelInfoLabel_.setMinimumSize(new Dimension(150, 10));
@@ -368,9 +367,6 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
     */
    @Subscribe
    public void onLayoutChange(ScrollerPanel.LayoutChangedEvent event) {
-      subPanel_.setPreferredSize(
-            new Dimension(512, 
-               CONTROLS_HEIGHT + event.getPreferredSize().height));
       invalidate();
       validate();
    }
