@@ -175,11 +175,19 @@ public class ScrollerPanel extends JPanel {
 
    /**
     * A new image has been made available; we need to adjust our scrollbars
-    * to suit.
+    * to suit. We only show the new image (i.e. update scrollbar positions)
+    * if none of our scrollers are superlocked.
     */
    @Subscribe
    public void onNewImageEvent(NewImageEvent event) {
       boolean didShowNewScrollers = false;
+      boolean canShowNewImage = true;
+      for (AxisScroller scroller : scrollers_) {
+         if (scroller.getIsSuperlocked()) {
+            canShowNewImage = false;
+            break;
+         }
+      }
       int height = 0;
       for (AxisScroller scroller : scrollers_) {
          int imagePosition = event.getPositionForAxis(scroller.getAxis());
@@ -194,7 +202,9 @@ public class ScrollerPanel extends JPanel {
             // the current maximum, so we need a new maximum.
             scroller.setMaximum(imagePosition + 1);
          }
-         scroller.forcePosition(imagePosition);
+         if (canShowNewImage) {
+            scroller.forcePosition(imagePosition);
+         }
          if (scroller.isVisible()) {
             height += scroller.getPreferredSize().height;
          }
@@ -205,21 +215,23 @@ public class ScrollerPanel extends JPanel {
          setPreferredSize(size);
          bus_.post(new LayoutChangedEvent(size));
       }
-      // Start up a timer to restore the scrollers to their original positions,
-      // if applicable. 
-      if (snapBackTimer_ != null) {
-         snapBackTimer_.cancel();
-      }
-      snapBackTimer_ = new Timer();
-      TimerTask task = new TimerTask() {
-         @Override
-         public void run() {
-            for (AxisScroller scroller : scrollers_) {
-               scroller.restorePosition();
-            }
+      if (canShowNewImage) {
+         // Start up a timer to restore the scrollers to their original
+         // positions, if applicable. 
+         if (snapBackTimer_ != null) {
+            snapBackTimer_.cancel();
          }
-      };
-      snapBackTimer_.schedule(task, 500);
+         snapBackTimer_ = new Timer();
+         TimerTask task = new TimerTask() {
+            @Override
+            public void run() {
+               for (AxisScroller scroller : scrollers_) {
+                  scroller.restorePosition();
+               }
+            }
+         };
+         snapBackTimer_.schedule(task, 500);
+      }
    }
 
    /**

@@ -60,9 +60,6 @@ public class AxisScroller extends JPanel {
    private EventBus bus_;
    // Indicates if animation is currently ongoing.
    private boolean isAnimated_;
-   // Indicates if the position of the scrollbar is currently locked (which
-   // in turn excludes animation).
-   private boolean isLocked_;
    // A scrollbar position that we remembered, for later use. This is used so
    // that we can snap to a new image when it arrives, and then restore our
    // original position after awhile (see the ScrollerPanel which handles the
@@ -98,7 +95,7 @@ public class AxisScroller extends JPanel {
          animateIcon_.addMouseListener(new MouseInputAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
-               if (!isLocked_) {
+               if (!lock_.getIsLocked()) {
                   // Don't allow animation when the axis is locked.
                   isAnimated_ = !isAnimated_;
                   animateIcon_.setIsAnimated(isAnimated_);
@@ -154,14 +151,13 @@ public class AxisScroller extends JPanel {
          // Ignore; event is for a different axis.
          return;
       }
-      isLocked_ = event.getIsLocked();
-      if (isLocked_ && isAnimated_) {
-         // Cancel active animation.
+      if (lock_.getIsLocked() && isAnimated_) {
+         // We're locked; cancel active animation.
          isAnimated_ = false;
          animateIcon_.setIsAnimated(isAnimated_);
          bus_.post(new AnimationToggleEvent(this, isAnimated_));
       }
-      animateIcon_.setEnabled(!isLocked_);
+      animateIcon_.setEnabled(!lock_.getIsLocked());
    }
 
    /**
@@ -170,7 +166,7 @@ public class AxisScroller extends JPanel {
     * ScrollPositionEvent if so instructed.
     */
    public void advancePosition(int offset, boolean shouldPostEvent) {
-      if (isLocked_) {
+      if (lock_.getIsLocked()) {
          // Currently locked, ergo we cannot move.
          return;
       }
@@ -186,15 +182,19 @@ public class AxisScroller extends JPanel {
    public void setIsAnimated(boolean isAnimated) {
       isAnimated_ = isAnimated;
       animateIcon_.setIsAnimated(isAnimated);
-      if (isLocked_ && isAnimated_) {
+      if (lock_.getIsLocked() && isAnimated_) {
          // Disable the lock. 
-         lock_.setIsLocked(false);
+         lock_.setLockedState(ScrollbarLockIcon.LockedState.UNLOCKED);
       }
       bus_.post(new AnimationToggleEvent(this, isAnimated_));
    }
 
    public boolean getIsAnimated() {
       return isAnimated_;
+   }
+
+   public boolean getIsSuperlocked() {
+      return lock_.getLockedState() == ScrollbarLockIcon.LockedState.SUPERLOCKED;
    }
 
    public int getPosition() {
@@ -206,7 +206,7 @@ public class AxisScroller extends JPanel {
     * move, if we are locked.
     */
    public void setPosition(int newPosition) {
-      if (!isLocked_) {
+      if (!lock_.getIsLocked()) {
          scrollbar_.setValue(newPosition);
       }
    }
@@ -220,7 +220,7 @@ public class AxisScroller extends JPanel {
     * rather be at than the one we're being told to be at. 
     */
    public void forcePosition(int newPosition) {
-      if (rememberedPosition_ == -1 && (isAnimated_ || isLocked_)) {
+      if (rememberedPosition_ == -1 && (isAnimated_ || lock_.getIsLocked())) {
          rememberedPosition_ = scrollbar_.getValue();
       }
       scrollbar_.setValue(newPosition);

@@ -20,31 +20,43 @@ import org.micromanager.utils.TooltipTextMaker;
 public class ScrollbarLockIcon extends JComponent   {
 
    /**
+    * This enum tracks the possible states of the lock icon. The difference
+    * between "locked" and "superlocked" is that in the locked state, we will
+    * still flash the display to newly-acquired images for a brief period.
+    */
+   public enum LockedState {
+      UNLOCKED, LOCKED, SUPERLOCKED
+   }
+
+   /**
     * This event informs listeners of when the lock button is toggled.
     */
    public static class LockEvent {
       private String axis_;
-      private boolean isLocked_;
-      public LockEvent(String axis, boolean isLocked) {
+      private LockedState lockedState_;
+      public LockEvent(String axis, LockedState lockedState) {
          axis_ = axis;
-         isLocked_ = isLocked;
+         lockedState_ = lockedState;
       }
       public String getAxis() {
          return axis_;
       }
-      public boolean getIsLocked() {
-         return isLocked_;
+      public LockedState getLockedState() {
+         return lockedState_;
       }
    }
 
    private static final int WIDTH = 17, HEIGHT = 14;
-   private boolean isLocked_;
+   private LockedState lockedState_;
    private String axis_;
    private EventBus bus_;
-   private Color foreground_ = Color.black, background_ = Color.white;
+   private final Color BACKGROUND_COLOR = Color.white;
+   private final Color LOCK_COLOR = Color.black;
+   private final Color SUPERLOCK_COLOR = Color.red;
+   private Color foreground_ = LOCK_COLOR;
    
    public ScrollbarLockIcon(final String axis, final EventBus bus) {
-      isLocked_ = false;
+      lockedState_ = LockedState.UNLOCKED;
       axis_ = axis;
       bus_ = bus;
       setSize(WIDTH, HEIGHT);
@@ -53,29 +65,42 @@ public class ScrollbarLockIcon extends JComponent   {
       this.addMouseListener(new MouseInputAdapter() {
          @Override
          public void mouseClicked(MouseEvent e) {
-            setIsLocked(!isLocked_);
+            advanceLockedState();
          }
-         @Override
-         public void mouseEntered(MouseEvent e) {
-            foreground_ = Color.blue;
-            repaint();
-         }
-         @Override
-         public void mouseExited(MouseEvent e) {
-            foreground_ = Color.black;
-            repaint();
-         }         
       });
    }
 
-   public void setIsLocked(boolean isLocked) {
-      isLocked_ = isLocked;
-      bus_.post(new LockEvent(axis_, isLocked_));
+   private void advanceLockedState() {
+      switch (lockedState_) {
+         case UNLOCKED:
+            setLockedState(LockedState.LOCKED);
+            break;
+         case LOCKED:
+            setLockedState(LockedState.SUPERLOCKED);
+            break;
+         default:
+            setLockedState(LockedState.UNLOCKED);
+            break;
+      }
+   }
+
+   public void setLockedState(LockedState state) {
+      lockedState_ = state;
+      foreground_ = (lockedState_ == LockedState.SUPERLOCKED) ? SUPERLOCK_COLOR : LOCK_COLOR;
+      bus_.post(new LockEvent(axis_, lockedState_));
       repaint();
    }
 
+   public LockedState getLockedState() {
+      return lockedState_;
+   }
+
+   /**
+    * Return true if we are in LOCKED or SUPERLOCKED state.
+    */
    public boolean getIsLocked() {
-      return isLocked_;
+      return (lockedState_ == LockedState.LOCKED || 
+            lockedState_ == LockedState.SUPERLOCKED);
    }
 
    /**
@@ -105,10 +130,11 @@ public class ScrollbarLockIcon extends JComponent   {
       g.fillRect(0, 0, WIDTH, HEIGHT);
       Graphics2D g2d = (Graphics2D) g;
       g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-      if (isLocked_) {
-         drawLocked(g2d);
-      } else {
+      if (lockedState_ == LockedState.UNLOCKED) {
          drawUnlocked(g2d);
+      } 
+      else {
+         drawLocked(g2d);
       }
    }
    
@@ -122,7 +148,7 @@ public class ScrollbarLockIcon extends JComponent   {
       g.fillRect(14, 4, 2, 3);
 
       g.fillArc(8, 1, 8, 8, 0, 180);
-      g.setColor(background_);
+      g.setColor(BACKGROUND_COLOR);
       g.fillArc(10, 3, 4, 4, 0, 180);
    }
 
@@ -136,7 +162,7 @@ public class ScrollbarLockIcon extends JComponent   {
       g.fillRect(8, 4, 2, 3);
       
       g.fillArc(2, 1, 8, 8, 0, 180);
-      g.setColor(background_);
+      g.setColor(BACKGROUND_COLOR);
       g.fillArc(4, 3, 4, 4, 0, 180);
    }
 }
