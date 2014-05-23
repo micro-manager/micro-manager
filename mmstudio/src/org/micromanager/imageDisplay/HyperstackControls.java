@@ -45,7 +45,7 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
    private final static int DEFAULT_FPS = 10;
    private final static double MAX_FPS = 5000;
    // Height in pixels of our controls, not counting scrollbars.
-   private final static int CONTROLS_HEIGHT = 60;
+   private final static int CONTROLS_HEIGHT = 65;
 
    private final VirtualAcquisitionDisplay display_;
    private EventBus bus_;
@@ -331,14 +331,19 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
     */
    @Subscribe
    public void onSetImage(ScrollerPanel.SetImageEvent event) {
-      int position = event.getPositionForAxis("position");
-      display_.updatePosition(position);
-      // Positions for ImageJ are 1-indexed but positions from the event are 
-      // 0-indexed.
-      int channel = event.getPositionForAxis("channel") + 1;
-      int frame = event.getPositionForAxis("time") + 1;
-      int slice = event.getPositionForAxis("z") + 1;
-      display_.getHyperImage().setPosition(channel, slice, frame);
+      try {
+         int position = event.getPositionForAxis("position");
+         display_.updatePosition(position);
+         // Positions for ImageJ are 1-indexed but positions from the event are 
+         // 0-indexed.
+         int channel = event.getPositionForAxis("channel") + 1;
+         int frame = event.getPositionForAxis("time") + 1;
+         int slice = event.getPositionForAxis("z") + 1;
+         display_.getHyperImage().setPosition(channel, slice, frame);
+      }
+      catch (Exception e) {
+         ReportingUtils.logError(e, "Failed to set image in HyperstackControls");
+      }
    }
 
    /**
