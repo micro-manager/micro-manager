@@ -698,7 +698,17 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                      core_.setShutterOpen(false);
                   }
                }
-
+               
+               // the controller will end with both beams disabled and scan off so reflect that here
+               props_.setPropValue(Devices.Keys.GALVOA, Properties.Keys.BEAM_ENABLED,
+                     Properties.Values.NO, true);
+               props_.setPropValue(Devices.Keys.GALVOB, Properties.Keys.BEAM_ENABLED,
+                     Properties.Values.NO, true);
+               props_.setPropValue(Devices.Keys.GALVOA, Properties.Keys.SA_MODE_X,
+                     Properties.Values.SAM_DISABLED, true);
+               props_.setPropValue(Devices.Keys.GALVOB, Properties.Keys.SA_MODE_X,
+                     Properties.Values.SAM_DISABLED, true);
+               
                nextTimePointLabel_.setText("Acquisition finished");
                numTimePointsDone_ = 0;
                updateTimePointsDoneLabel(numTimePointsDone_);
