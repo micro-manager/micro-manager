@@ -124,10 +124,10 @@ protected:
 
 private:
 	int ParseErrorReply() const;
-	string EscapeControlCharacters(const string v ) const;
-	string UnescapeControlCharacters(const string v0 ) const;
-	vector<char> ConvertStringVector2CharVector(const vector<string> v) const;
-	vector<int> ConvertStringVector2IntVector(const vector<string> v) const;
+	static string EscapeControlCharacters(const string v);
+	static string UnescapeControlCharacters(const string v0 );
+	static vector<char> ConvertStringVector2CharVector(const vector<string> v);
+	static vector<int> ConvertStringVector2IntVector(const vector<string> v);
 
    string serialAnswer_;      // the last answer received
    string serialCommand_;     // the last command sent, or can be set for calling commands without args

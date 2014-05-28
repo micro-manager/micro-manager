@@ -550,7 +550,7 @@ int ASIHub::OnSerialCommandOnlySendChanged(MM::PropertyBase* pProp, MM::ActionTy
    return DEVICE_OK;
 }
 
-string ASIHub::EscapeControlCharacters(const string v ) const
+string ASIHub::EscapeControlCharacters(const string v)
 // based on similar function in FreeSerialPort.cpp
 {
    ostringstream mess;  mess.str("");
@@ -570,7 +570,7 @@ string ASIHub::EscapeControlCharacters(const string v ) const
    return mess.str();
 }
 
-string ASIHub::UnescapeControlCharacters(const string v0 ) const
+string ASIHub::UnescapeControlCharacters(const string v0)
 // based on similar function in FreeSerialPort.cpp
 {
    // the string input from the GUI can contain escaped control characters, currently these are always preceded with \ (0x5C)
@@ -649,7 +649,7 @@ string ASIHub::UnescapeControlCharacters(const string v0 ) const
    return detokenized;
 }
 
-vector<char> ASIHub::ConvertStringVector2CharVector(const vector<string> v) const
+vector<char> ASIHub::ConvertStringVector2CharVector(const vector<string> v)
 {
    vector<char> result;
    result.reserve(v.size());
@@ -659,7 +659,7 @@ vector<char> ASIHub::ConvertStringVector2CharVector(const vector<string> v) cons
    return result;
 }
 
-vector<int> ASIHub::ConvertStringVector2IntVector(const vector<string> v) const
+vector<int> ASIHub::ConvertStringVector2IntVector(const vector<string> v)
 {
    vector<int> result;
    result.reserve(v.size());
