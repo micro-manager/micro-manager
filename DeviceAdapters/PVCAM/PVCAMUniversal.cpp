@@ -112,6 +112,7 @@ const char* g_Keyword_CCDParSize      = "Y-dimension";
 const char* g_Keyword_FWellCapacity   = "FullWellCapacity";
 const char* g_Keyword_TriggerMode     = "TriggerMode";
 const char* g_Keyword_ExposeOutMode   = "ExposeOutMode";
+const char* g_Keyword_ClearCycles     = "ClearCycles";
 const char* g_Keyword_ColorMode       = "ColorMode";
 const char* g_Keyword_TriggerTimeout  = "Trigger Timeout (secs)";
 const char* g_Keyword_ActualGain      = "Actual Gain e/ADU";
@@ -146,7 +147,6 @@ const char* g_Keyword_CircBufFrameCnt     = "CircularBufferFrameCount";
 // a simple readonly MM property without a handler (see examples in Initialize())
 ParamNameIdPair g_UniversalParams[] = {
    {MM::g_Keyword_Offset, PARAM_ADC_OFFSET},         // INT16
-   {"ClearCycles",        PARAM_CLEAR_CYCLES},       // UNS16
    {"PMode",              PARAM_PMODE},              // ENUM
    {"ClearMode",          PARAM_CLEAR_MODE},         // ENUM
    {"PreampDelay",        PARAM_PREAMP_DELAY},       // UNS16
@@ -209,6 +209,7 @@ rgbaColor_(false)
    prmExpRes_         = NULL;
    prmTriggerMode_    = NULL;
    prmExposeOutMode_  = NULL;
+   prmClearCycles_    = NULL;
    prmReadoutPort_    = NULL;
    prmColorMode_      = NULL;
 }
@@ -246,6 +247,8 @@ Universal::~Universal()
        delete prmTriggerMode_;
    if ( prmExposeOutMode_ )
        delete prmExposeOutMode_;
+   if ( prmClearCycles_ )
+       delete prmClearCycles_;
    if ( prmReadoutPort_ )
        delete prmReadoutPort_;
    if ( prmColorMode_ )
@@ -384,6 +387,21 @@ int Universal::Initialize()
    // the code that still uses the param should first check the variable for NULL, then try to call it. We need to flag this
    // part of the code because the PARAM_EXPOSE_OUT_MODE is defined for WIN only and compilation on other platforms would fail.
 #endif
+
+   /// CLEAR CYCLES
+   // The Clear Cycles needs a bit different handling, the PVCAM allows range of 0-65535 but we want to limit it to 
+   // 0-16 in the UI because users can easily hang the camera just by clicking on the property scrollbar - which
+   // increases the value by a huge amount.
+   prmClearCycles_ = new PvParam<uns16>(g_Keyword_ClearCycles, PARAM_CLEAR_CYCLES, this);
+   if (prmClearCycles_->IsAvailable())
+   {
+      pAct = new CPropertyAction (this, &Universal::OnClearCycles);
+      nRet = CreateProperty(g_Keyword_ClearCycles, "1", MM::Integer, false, pAct);
+      assert(nRet == DEVICE_OK);
+      nRet = SetPropertyLimits(g_Keyword_ClearCycles, 0, 16);
+      if (nRet != DEVICE_OK)
+         return nRet;
+   }
 
    /// CAMERA TEMPERATURE
    /// The actual value is read out from the camera in OnTemperature(). Please note
@@ -619,7 +637,15 @@ int Universal::Shutdown()
 {
    if (initialized_)
    {
-      rs_bool ret = pl_exp_uninit_seq();
+      rs_bool ret;
+
+#ifdef PVCAM_CALLBACKS_SUPPORTED
+      if ( isUsingCallbacks_ )
+      {
+         pl_cam_deregister_callback( hPVCAM_, PL_CALLBACK_EOF );
+      }
+#endif
+      ret = pl_exp_uninit_seq();
       if (!ret)
          LogCamError(__LINE__, "pl_exp_uninit_seq");
       assert(ret);
@@ -635,12 +661,6 @@ int Universal::Shutdown()
             LogCamError(__LINE__, "pl_pvcam_uninit");
          PVCAM_initialized_ = false;
       }      
-#ifdef PVCAM_CALLBACKS_SUPPORTED
-      if ( isUsingCallbacks_ )
-      {
-         pl_cam_deregister_callback( hPVCAM_, PL_CALLBACK_EOF );
-      }
-#endif
 #ifdef PVCAM_FRAME_INFO_SUPPORTED
       if ( pFrameInfo_ )
       {
@@ -1150,6 +1170,38 @@ int Universal::OnExposeOutMode(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
+/**
+* PARAM_CLEAR_CYCLES
+*/
+int Universal::OnClearCycles(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   START_ONPROPERTY("Universal::OnClearCycles", eAct);
+
+   if (eAct == MM::AfterSet)
+   {
+      // The acquisition must be stopped, and will be automatically started again by MMCore
+      if (IsCapturing())
+         StopSequenceAcquisition();
+
+      // this param requires reconfiguration of the acquisition
+      singleFrameModeReady_ = false;
+      sequenceModeReady_ = false;
+
+      long val;
+      pProp->Get( val );
+      uns16 pvVal = (uns16)val;
+
+      prmClearCycles_->Set( pvVal );
+      prmClearCycles_->Apply();
+   }
+   else if (eAct == MM::BeforeGet)
+   {
+      pProp->Set( prmClearCycles_->ToString().c_str() );
+   }
+
+   return DEVICE_OK;
+}
+
 
 // Gain
 int Universal::OnGain(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -1286,6 +1338,9 @@ int Universal::OnUniversalProperty(MM::PropertyBase* pProp, MM::ActionType eAct,
       // The parameter value is cached internaly and as soon as MM resumes the streaming we return
       // this cached value and do not touch the camera at all.
       param->Read();
+
+      // Force the reinitialization of the acquisition
+      singleFrameModeReady_ = false;
    }
    else if (eAct == MM::BeforeGet)
    {

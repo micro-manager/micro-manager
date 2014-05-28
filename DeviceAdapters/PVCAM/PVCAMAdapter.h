@@ -265,6 +265,7 @@ public:
 #endif
    int OnTriggerMode(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnExposeOutMode(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnClearCycles(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnTriggerTimeOut(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnOutputTriggerFirstMissing(MM::PropertyBase* pProp, MM::ActionType eAct); 
    int OnCircBufferFrameCount(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -363,6 +364,7 @@ private:
    PvParam<uns16>* prmExpResIndex_;
    PvEnumParam*    prmExpRes_;
    PvEnumParam*    prmExposeOutMode_;
+   PvParam<uns16>* prmClearCycles_;
    PvEnumParam*    prmReadoutPort_;
    PvEnumParam*    prmColorMode_;
 
