@@ -1,5 +1,10 @@
 #include "SpuriousNoiseFilterControl.h"
+#ifdef WIN32
+#include <windows.h>
 #include "atmcd32d.h"
+#else
+#include "atmcdLXd.h"
+#endif
 #include "Andor.h"
 
 using namespace std;
