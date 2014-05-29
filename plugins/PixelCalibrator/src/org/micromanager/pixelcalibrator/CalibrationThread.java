@@ -217,6 +217,12 @@ public class CalibrationThread extends Thread {
       pointPairs_.clear();
       pointPairs_.put(new Point2D.Double(0.,0.),new Point2D.Double(x,y));
       runSearch(0.1,0,sim);
+
+      // Re-acquire the reference image, since we may not be exactly where 
+      // we started from after having called runSearch().
+      referenceImage_ = getSubImage(baseImage, (-side_small/2+w/2),
+            (-side_small/2+h/2),side_small,side_small);
+
       runSearch(0,0.1,sim);
 
       return MathFunctions.generateAffineTransformFromPointPairs(pointPairs_);
