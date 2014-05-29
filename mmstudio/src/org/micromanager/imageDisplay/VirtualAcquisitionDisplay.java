@@ -1146,7 +1146,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    // forceClosed() function.
    // TODO: for now, assuming we only have one window.
    @Subscribe
-   public void onWindowClose(DisplayWindow.WindowClosingEvent event) {
+   public void onWindowClose(DisplayWindow.RequestToCloseEvent event) {
       if (eng_ != null && eng_.isAcquisitionRunning()) {
          if (!abort()) {
             // Can't close now; the acquisition is still running.

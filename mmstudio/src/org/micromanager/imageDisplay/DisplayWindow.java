@@ -26,9 +26,9 @@ public class DisplayWindow extends StackWindow {
    private EventBus bus_;
 
    // This class is used to signal that a window is closing.
-   public static class WindowClosingEvent {
+   public static class RequestToCloseEvent {
       public DisplayWindow window_;
-      public WindowClosingEvent(DisplayWindow window) {
+      public RequestToCloseEvent(DisplayWindow window) {
          window_ = window;
       }
    };
@@ -58,7 +58,7 @@ public class DisplayWindow extends StackWindow {
    @Override
    public void windowClosing(WindowEvent e) {
       if (!closed_) {
-         bus_.post(new WindowClosingEvent(this));
+         bus_.post(new RequestToCloseEvent(this));
       }
    }
 
