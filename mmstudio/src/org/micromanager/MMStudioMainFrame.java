@@ -1850,10 +1850,32 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
          }
 
          Rectangle r = roi.getBounds();
-         // if we already had an ROI defined, correct for the offsets
-         Rectangle cameraR =  getROI();
-         r.x += cameraR.x;
-         r.y += cameraR.y;
+
+         // If the image has ROI info attached to it, correct for the offsets.
+         // Otherwise, assume the image was taken with the current camera ROI
+         // (which is a horrendously buggy way to do things, but that was the
+         // old behavior and I'm leaving it in case there are cases where it is
+         // necessary).
+         Rectangle originalROI = null;
+
+         VirtualAcquisitionDisplay virtAcq =
+            VirtualAcquisitionDisplay.getDisplay(curImage);
+         JSONObject tags = virtAcq.getCurrentMetadata();
+         try {
+            originalROI = MDUtils.getROI(tags);
+         }
+         catch (JSONException e) {
+         }
+         catch (MMScriptException e) {
+         }
+
+         if (originalROI == null) {
+            originalROI = getROI();
+         }
+
+         r.x += originalROI.x;
+         r.y += originalROI.y;
+
          // Stop (and restart) live mode if it is running
          setROI(r);
 

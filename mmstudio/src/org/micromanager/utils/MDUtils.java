@@ -7,6 +7,7 @@ package org.micromanager.utils;
 
 import ij.ImagePlus;
 
+import java.awt.Rectangle;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -428,19 +429,19 @@ public class MDUtils {
       return getTime(new Date());
    }
 
-   public static String getROI (CMMCore core) {
-      String roi = "";
-      int [] x = new int[1];
-      int [] y = new int[1];
-      int [] xSize = new int[1];
-      int [] ySize = new int[1];
-      try {
-         core.getROI(x, y, xSize, ySize);
-         roi += x[0] + "-" + y[0] + "-" + xSize[0] + "-" + ySize[0];
-      } catch (Exception ex) {
-         ReportingUtils.logError(ex, "Error in MDUtils::getROI");
+   public static Rectangle getROI(JSONObject tags)
+      throws MMScriptException, JSONException {
+      String roiString = tags.getString("ROI");
+      String[] xywh = roiString.split("-");
+      if (xywh.length != 4) {
+         throw new MMScriptException("Invalid ROI tag");
       }
-      return roi;
+      int x, y, w, h;
+      x = Integer.parseInt(xywh[0]);
+      y = Integer.parseInt(xywh[1]);
+      w = Integer.parseInt(xywh[2]);
+      h = Integer.parseInt(xywh[3]);
+      return new Rectangle(x, y, w, h);
    }
 
    public static int getDepth(JSONObject tags) throws MMScriptException, JSONException {
