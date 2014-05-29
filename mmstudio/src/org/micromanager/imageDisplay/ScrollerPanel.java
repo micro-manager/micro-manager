@@ -122,11 +122,17 @@ public class ScrollerPanel extends JPanel {
    }
 
    /**
-    * The window we're in is closing; cancel animations.
+    * The window we're in is closing; cancel animations and timers.
     */
    public void prepareForClose() {
       for (AxisScroller scroller : scrollers_) {
          scroller.setIsAnimated(false);
+      }
+      if (animationUpdateTimer_ != null) {
+         animationUpdateTimer_.cancel();
+      }
+      if (snapBackTimer_ != null) {
+         snapBackTimer_.cancel();
       }
    }
 
