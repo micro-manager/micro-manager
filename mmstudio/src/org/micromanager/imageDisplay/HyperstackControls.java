@@ -234,9 +234,9 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
 
       subPanel_.add(snapButton_);
       subPanel_.add(liveButton_);
-      subPanel_.add(snapToAlbumButton_, "wrap");
+      subPanel_.add(snapToAlbumButton_);
       fpsLabel_.setText("                          ");
-      subPanel_.add(fpsLabel_, "span 3, width 130px");
+      subPanel_.add(fpsLabel_, "span, wrap, width 120px, align right");
    }
 
    /**
@@ -244,13 +244,13 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
     * snap/live window).
     */
    private void makeStandardControls() {
-      fpsField_ = new javax.swing.JTextField(String.valueOf(DEFAULT_FPS), 8);
+      fpsField_ = new javax.swing.JTextField(String.valueOf(DEFAULT_FPS), 4);
       abortButton_ = new JButton();
       pauseAndResumeToggleButton_ = new javax.swing.JToggleButton();
       
       subPanel_.add(abortButton_);
       subPanel_.add(pauseAndResumeToggleButton_);
-      subPanel_.add(fpsLabel_, "width 130px");
+      subPanel_.add(fpsLabel_, "align right, span -1, width 120px");
       subPanel_.add(fpsField_);
 
       fpsField_.setToolTipText(
@@ -349,9 +349,11 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
          display_.getHyperImage().setPosition(channel, slice, frame);
       }
       catch (Exception e) {
-         ReportingUtils.logError(e, "Failed to set image at indices (" + 
-               position + ", " + channel + ", " + frame + ", " + slice + 
-               ") in HyperstackControls");
+         // This can happen, rarely, with an ArrayIndexOutOfBoundsException
+         // in IJ code that draws the new image. Best guess is that we're
+         // trying to set an image that the IJ code doesn't yet have access
+         // to, maybe?
+         // TODO: Just swallowing the error for now.
       }
    }
 
@@ -494,7 +496,7 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
    }
 
    public static String elapsedTimeDisplayString(double seconds) {
-      // Use "12.3456s" up to 60 s; "12m 34.5678s" up to 1 h, and
+      // Use "12.34s" up to 60 s; "12m 34.56s" up to 1 h, and
       // "1h 23m 45s" beyond that.
 
       long wholeSeconds = (long) Math.floor(seconds);
@@ -515,8 +517,8 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
       }
 
       String secondsString;
-      if (hours == 0 && fraction > 0.0001) {
-         secondsString = NumberUtils.doubleToDisplayString(wholeSeconds + fraction) + "s";
+      if (hours == 0 && fraction > 0.01) {
+         secondsString = String.format("%.2fs", wholeSeconds + fraction);
       }
       else {
          secondsString = wholeSeconds + "s";
@@ -551,16 +553,14 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
                if (timeRemainingS > 0 && 
                      display_.acquisitionIsRunning()) {
                   countdownLabel_.setText(
-                        "Next frame: " + 
-                        NumberUtils.doubleToDisplayString(timeRemainingS) +
-                        " s");
+                        String.format("Next frame: %.2fs", timeRemainingS));
                } else {
                   timer.cancel();
                   countdownLabel_.setText("");
                }
             }
          };
-         timer.schedule(task, 2000, 100);
+         timer.schedule(task, 500, 100);
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
       }
@@ -619,7 +619,7 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
 
    /**
     * Live mode was toggled; if we have a "live mode" button, it needs to be 
-    * toggled on/off.
+    * toggled on/off; likewise, the Snap button should be disabled/enabled.
     */
    public void liveModeEnabled(boolean isEnabled) {
       if (liveButton_ == null) {
@@ -630,5 +630,8 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
       liveButton_.setIcon(
             SwingResourceManager.getIcon(MMStudioMainFrame.class, iconPath));
       liveButton_.setText(label);
+      if (snapButton_ != null) {
+         snapButton_.setEnabled(!isEnabled);
+      }
    }
 }
