@@ -134,6 +134,8 @@ import org.micromanager.utils.ReportingUtils;
           devType = "Discrete State Device";    
       } else if (type_ == DeviceType.MagnifierDevice) {
           devType = "Magnifier";    
+      } else if (type_ == DeviceType.GalvoDevice) {
+         devType = "Galvo";
       } else {
          ReportingUtils.logError("Unercongized device type: " + this.adapterName_);
       }
