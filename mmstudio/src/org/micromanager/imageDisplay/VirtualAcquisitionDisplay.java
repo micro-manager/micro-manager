@@ -287,7 +287,9 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
             lastImageIndex_ = imageIndex;
          }
          catch (Exception e) {
-            // Do nothing, to avoid spamming the error logs. 
+            // Post a "blank" event. This likely happens because the image
+            // tags don't contain an "ImageNumber" field.
+            bus_.post(new FPSEvent(0, 0));
          }
          imagesDisplayed_ = 0;
          lastFPSUpdateTimestamp_ = curTimestamp;
