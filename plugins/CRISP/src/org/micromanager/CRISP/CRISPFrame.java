@@ -72,7 +72,8 @@ public class CRISPFrame extends javax.swing.JFrame {
        for (String af : afs) {
          try {
             if (core_.hasProperty(af, "Description")) {
-               if (core_.getProperty(af, "Description").equals("ASI CRISP Autofocus adapter")) {
+               if (core_.getProperty(af, "Description").equals("ASI CRISP Autofocus adapter") ||
+                     core_.getProperty(af, "Description").startsWith("ASI CRISP AutoFocus")) {  // this line is for Tiger
                   found = true;
                   CRISP_ = af;
                }
