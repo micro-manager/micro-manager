@@ -1386,7 +1386,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    }
 
    public void displayStatusLine(String status) {
-      controls_.setStatusLabel(status);
+      controls_.setImageInfoLabel(status);
    }
 
    public void setChannelContrast(int channelIndex, int min, int max, double gamma) {

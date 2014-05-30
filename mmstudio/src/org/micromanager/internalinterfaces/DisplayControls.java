@@ -36,8 +36,8 @@ public abstract class DisplayControls extends Panel {
    
    abstract public void acquiringImagesUpdate(boolean acquiring);
    
-   abstract public void setStatusLabel(String text);
-   
+   abstract public void setImageInfoLabel(String text);
+
    abstract public void newImageUpdate(JSONObject tags);
    
    abstract public void prepareForClose();

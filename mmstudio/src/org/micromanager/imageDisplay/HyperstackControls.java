@@ -18,9 +18,9 @@ import java.awt.FlowLayout;
 import java.awt.Font;
 import java.lang.Math;
 import java.text.ParseException;
+import java.util.concurrent.TimeUnit;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.TimeUnit;
 
 import javax.swing.JButton;
 import javax.swing.JLabel;
@@ -59,9 +59,12 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
    // Controls common to both control sets
    private ScrollerPanel scrollerPanel_;
    private JLabel pixelInfoLabel_;
+   // Displays information on the currently-displayed image.
+   private JLabel imageInfoLabel_;
+   // Displays the countdown to the next frame.
+   private JLabel countdownLabel_;
    private JButton showFolderButton_;
    private JButton saveButton_;
-   private JLabel statusLineLabel_;
    private JLabel fpsLabel_;
 
    // Standard control set
@@ -95,7 +98,17 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
       pixelInfoLabel_ = new JLabel("                                         ");
       pixelInfoLabel_.setMinimumSize(new Dimension(150, 10));
       pixelInfoLabel_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
-      subPanel_.add(pixelInfoLabel_, "span, wrap");
+      subPanel_.add(pixelInfoLabel_, "span 4");
+      
+      imageInfoLabel_ = new JLabel("                                         ");
+      imageInfoLabel_.setMinimumSize(new Dimension(150, 10));
+      imageInfoLabel_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
+      subPanel_.add(imageInfoLabel_, "span 2");
+      
+      countdownLabel_ = new JLabel("                                         ");
+      countdownLabel_.setMinimumSize(new Dimension(150, 10));
+      countdownLabel_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
+      subPanel_.add(countdownLabel_, "span, wrap");
 
       scrollerPanel_ = new ScrollerPanel(
                bus_, new String[]{"channel", "position", "time", "z"}, 
@@ -104,7 +117,6 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
 
       showFolderButton_ = new JButton();
       saveButton_ = new JButton();
-      statusLineLabel_ = new JLabel("                                        ");
 
       subPanel_.add(showFolderButton_);
       subPanel_.add(saveButton_);
@@ -158,14 +170,6 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
          makeStandardControls();
       }
       
-      statusLineLabel_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
-      statusLineLabel_.setHorizontalTextPosition(
-            javax.swing.SwingConstants.LEFT);
-      // Force the status line to be large enough to display statuses without
-      // auto-truncating them.
-      statusLineLabel_.setMinimumSize(new Dimension(150, 10));
-      subPanel_.add(statusLineLabel_, "span, wrap");
-
       add(subPanel_);
    }
 
@@ -330,18 +334,24 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
     */
    @Subscribe
    public void onSetImage(ScrollerPanel.SetImageEvent event) {
+      int position = -1;
+      int channel = -1;
+      int frame = -1;
+      int slice = -1;
       try {
-         int position = event.getPositionForAxis("position");
+         position = event.getPositionForAxis("position");
          display_.updatePosition(position);
          // Positions for ImageJ are 1-indexed but positions from the event are 
          // 0-indexed.
-         int channel = event.getPositionForAxis("channel") + 1;
-         int frame = event.getPositionForAxis("time") + 1;
-         int slice = event.getPositionForAxis("z") + 1;
+         channel = event.getPositionForAxis("channel") + 1;
+         frame = event.getPositionForAxis("time") + 1;
+         slice = event.getPositionForAxis("z") + 1;
          display_.getHyperImage().setPosition(channel, slice, frame);
       }
       catch (Exception e) {
-         ReportingUtils.logError(e, "Failed to set image in HyperstackControls");
+         ReportingUtils.logError(e, "Failed to set image at indices (" + 
+               position + ", " + channel + ", " + frame + ", " + slice + 
+               ") in HyperstackControls");
       }
    }
 
@@ -431,8 +441,8 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
    }
 
    @Override
-   public synchronized void setStatusLabel(String text) {
-      statusLineLabel_.setText(text);
+   public synchronized void setImageInfoLabel(String text) {
+      imageInfoLabel_.setText(text);
    }
 
    private void updateStatusLine(JSONObject tags) {
@@ -476,7 +486,7 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
          } catch (Exception ex) {
          }
 
-         setStatusLabel(status);
+         setImageInfoLabel(status);
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
       }
@@ -521,28 +531,36 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
          return;
       }
       updateStatusLine(tags);
+      if (!display_.acquisitionIsRunning() || display_.getNextWakeTime() <= 0) {
+         // No acquisition to display a countdown for.
+         return;
+      }
+      final long nextImageTime = display_.getNextWakeTime();
+      if (System.nanoTime() / 1000000 >= nextImageTime) {
+         // Already past the next image time.
+         return;
+      }
+      // TODO: why the try/catch block here?
       try {
-         if (display_.acquisitionIsRunning() && display_.getNextWakeTime() > 0) {
-            final long nextImageTime = display_.getNextWakeTime();
-            if (System.nanoTime() / 1000000 < nextImageTime) {
-               final Timer timer = new Timer("Next frame display");
-               TimerTask task = new TimerTask() {
+         final Timer timer = new Timer("Next frame display");
+         TimerTask task = new TimerTask() {
 
-                  @Override
-                  public void run() {
-                     double timeRemainingS = (nextImageTime - System.nanoTime() / 1000000.0) / 1000;
-                     if (timeRemainingS > 0 && display_.acquisitionIsRunning()) {
-                        setStatusLabel("Next frame: " + NumberUtils.doubleToDisplayString(1 + timeRemainingS) + " s");
-                     } else {
-                        timer.cancel();
-                        setStatusLabel("");
-                     }
-                  }
-               };
-               timer.schedule(task, 2000, 100);
+            @Override
+            public void run() {
+               double timeRemainingS = (nextImageTime - System.nanoTime() / 1000000.0) / 1000;
+               if (timeRemainingS > 0 && 
+                     display_.acquisitionIsRunning()) {
+                  countdownLabel_.setText(
+                        "Next frame: " + 
+                        NumberUtils.doubleToDisplayString(timeRemainingS) +
+                        " s");
+               } else {
+                  timer.cancel();
+                  countdownLabel_.setText("");
+               }
             }
-         }
-
+         };
+         timer.schedule(task, 2000, 100);
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
       }
