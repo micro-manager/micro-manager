@@ -5,8 +5,9 @@
 //-----------------------------------------------------------------------------
 //
 // AUTHOR:       Nenad Amodaj, nenad@amodaj.com, September 12, 2006
+//               Mark Tsuchida (Layout, June 2014)
 //
-// COPYRIGHT:    University of California, San Francisco, 2006
+// COPYRIGHT:    University of California, San Francisco, 2006-2014
 //
 // LICENSE:      This file is distributed under the BSD license.
 //               License text is included with the source distribution.
@@ -18,8 +19,7 @@
 //               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
-//
-// CVS:          $Id$
+
 package org.micromanager;
 
 import java.awt.Dimension;
@@ -39,7 +39,6 @@ import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JTextField;
-import javax.swing.SpringLayout;
 
 import mmcorej.CMMCore;
 
@@ -61,7 +60,6 @@ public class OptionsDlg extends MMDialog {
    private JTextField bufSizeField_;
    private MMOptions opts_;
    private CMMCore core_;
-   private SpringLayout springLayout;
    private Preferences mainPrefs_;
    private JComboBox comboDisplayBackground_;
    private ScriptInterface parent_;
@@ -87,11 +85,7 @@ public class OptionsDlg extends MMDialog {
       core_ = core;
       mainPrefs_ = mainPrefs;
       setTitle("Micro-Manager Options");
-      springLayout = new SpringLayout();
-      getContentPane().setLayout(springLayout);
-      setBounds(100, 100, 380, 400);
       guiColors_ = new GUIColors();
-      Dimension buttonSize = new Dimension(120, 20);
 
       if (opts_.displayBackground_.equals("Day")) {
          setBackground(java.awt.SystemColor.control);
@@ -105,9 +99,10 @@ public class OptionsDlg extends MMDialog {
       loadPosition(r.x, r.y);
 
       final JCheckBox debugLogEnabledCheckBox = new JCheckBox();
-      debugLogEnabledCheckBox.setToolTipText("Set extra verbose logging for debugging purposes");
+      debugLogEnabledCheckBox.setText("Enable debug logging");
+      debugLogEnabledCheckBox.setToolTipText("Enable verbose logging for troubleshooting and debugging");
+      debugLogEnabledCheckBox.setSelected(opts_.debugLogEnabled_);
       debugLogEnabledCheckBox.addActionListener(new ActionListener() {
-
          @Override
          public void actionPerformed(final ActionEvent e) {
             opts_.debugLogEnabled_ = debugLogEnabledCheckBox.isSelected();
@@ -115,51 +110,32 @@ public class OptionsDlg extends MMDialog {
             UIMonitor.enable(opts_.debugLogEnabled_);
          }
       });
-      debugLogEnabledCheckBox.setText("Debug log enabled");
-      getContentPane().add(debugLogEnabledCheckBox);
-      springLayout.putConstraint(SpringLayout.SOUTH, debugLogEnabledCheckBox, 30, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.NORTH, debugLogEnabledCheckBox, 7, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.EAST, debugLogEnabledCheckBox, 190, SpringLayout.WEST, getContentPane());
-      springLayout.putConstraint(SpringLayout.WEST, debugLogEnabledCheckBox, 10, SpringLayout.WEST, getContentPane());
-      debugLogEnabledCheckBox.setSelected(opts_.debugLogEnabled_);
 
       final JCheckBox doNotAskForConfigFileCheckBox = new JCheckBox();
+      doNotAskForConfigFileCheckBox.setText("Do not ask for config file at startup");
+      doNotAskForConfigFileCheckBox.setSelected(opts_.doNotAskForConfigFile_);
       doNotAskForConfigFileCheckBox.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent arg0) {
             opts_.doNotAskForConfigFile_ = doNotAskForConfigFileCheckBox.isSelected();
          }
       });
-      doNotAskForConfigFileCheckBox.setText("Do not ask for config file");
-      getContentPane().add(doNotAskForConfigFileCheckBox);
-      springLayout.putConstraint(SpringLayout.EAST, doNotAskForConfigFileCheckBox, 220, SpringLayout.WEST, getContentPane());
-      springLayout.putConstraint(SpringLayout.WEST, doNotAskForConfigFileCheckBox, 0, SpringLayout.WEST, debugLogEnabledCheckBox);
-      springLayout.putConstraint(SpringLayout.SOUTH, doNotAskForConfigFileCheckBox, 50, SpringLayout.NORTH, getContentPane());
-      doNotAskForConfigFileCheckBox.setSelected(opts_.doNotAskForConfigFile_);
 
       final JButton clearLogFileButton = new JButton();
-      clearLogFileButton.setMargin(new Insets(0, 0, 0, 0));
-      clearLogFileButton.setToolTipText("Erases all entries in the current log file (recommended)");
+      clearLogFileButton.setText("Clear Log File");
+      clearLogFileButton.setToolTipText("Erase the contents of the current log file");
       clearLogFileButton.addActionListener(new ActionListener() {
-
          @Override
          public void actionPerformed(final ActionEvent e) {
             core_.clearLog();
             parent_.logStartupProperties();
          }
       });
-      clearLogFileButton.setFont(new Font("", Font.PLAIN, 10));
-      clearLogFileButton.setText("Clear log file");
-      clearLogFileButton.setPreferredSize(buttonSize);
-      getContentPane().add(clearLogFileButton);
-      //springLayout.putConstraint(SpringLayout.SOUTH, clearLogFileButton, 166, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.NORTH, clearLogFileButton, 175, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.WEST, clearLogFileButton, 20, SpringLayout.NORTH, getContentPane());
 
       final JButton clearRegistryButton = new JButton();
-      clearRegistryButton.setToolTipText("Clears all persistent settings and returns to defaults");
+      clearRegistryButton.setText("Reset Preferences");
+      clearRegistryButton.setToolTipText("Clear all preference settings and restore defaults");
       clearRegistryButton.addActionListener(new ActionListener() {
-
          @Override
          public void actionPerformed(final ActionEvent e) {
             try {
@@ -176,18 +152,10 @@ public class OptionsDlg extends MMDialog {
             }
          }
       });
-      clearRegistryButton.setText("Clear registry");
-      clearRegistryButton.setFont(new Font("", Font.PLAIN, 10));
-      clearRegistryButton.setPreferredSize(buttonSize);
-      getContentPane().add(clearRegistryButton);
-      springLayout.putConstraint(SpringLayout.EAST, clearRegistryButton, 0, SpringLayout.EAST, clearLogFileButton);
-      springLayout.putConstraint(SpringLayout.WEST, clearRegistryButton, 0, SpringLayout.WEST, clearLogFileButton);
-      springLayout.putConstraint(SpringLayout.NORTH, clearRegistryButton, 5, SpringLayout.SOUTH, clearLogFileButton);
-      //springLayout.putConstraint(SpringLayout.EAST, clearRegistryButton, 80, SpringLayout.WEST, getContentPane());
 
       final JButton okButton = new JButton();
+      okButton.setText("Close");
       okButton.addActionListener(new ActionListener() {
-
          @Override
          public void actionPerformed(final ActionEvent e) {
             try {
@@ -202,87 +170,33 @@ public class OptionsDlg extends MMDialog {
             dispose();
          }
       });
-      okButton.setText("Close");
-      okButton.setFont(new Font("", Font.PLAIN, 10));
-      okButton.setPreferredSize(buttonSize);
-      getContentPane().add(okButton);
-      springLayout.putConstraint(SpringLayout.NORTH, okButton, 12, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.SOUTH, okButton, 35, SpringLayout.NORTH, getContentPane());
 
-
-
-      final JLabel sequenceBufferSizeLabel = new JLabel();
-      sequenceBufferSizeLabel.setText("Sequence buffer size [MB]");
-      getContentPane().add(sequenceBufferSizeLabel);
-      springLayout.putConstraint(SpringLayout.EAST, sequenceBufferSizeLabel, 180, SpringLayout.WEST, getContentPane());
-      springLayout.putConstraint(SpringLayout.WEST, sequenceBufferSizeLabel, 15, SpringLayout.WEST, getContentPane());
-      springLayout.putConstraint(SpringLayout.SOUTH, sequenceBufferSizeLabel, 84, SpringLayout.NORTH, getContentPane());
-      //springLayout.putConstraint(SpringLayout.NORTH, sequenceBufferSizeLabel, 95, SpringLayout.NORTH, getContentPane());
-
-      bufSizeField_ = new JTextField(Integer.toString(opts_.circularBufferSizeMB_));
-      getContentPane().add(bufSizeField_);
-      springLayout.putConstraint(SpringLayout.SOUTH, bufSizeField_, 85, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.NORTH, bufSizeField_, 65, SpringLayout.NORTH, getContentPane());
-
-      final JLabel displayLabel = new JLabel();
-      //displayLabel.setFont(new Font("Arial", Font.PLAIN, 10));
-      displayLabel.setText("Display-Background");
-      getContentPane().add(displayLabel);
-      springLayout.putConstraint(SpringLayout.EAST, displayLabel, 170, SpringLayout.WEST, getContentPane());
-      springLayout.putConstraint(SpringLayout.WEST, displayLabel, 15, SpringLayout.WEST, getContentPane());
-      springLayout.putConstraint(SpringLayout.SOUTH, displayLabel, 108, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.NORTH, displayLabel, 92, SpringLayout.NORTH, getContentPane());
+      bufSizeField_ = new JTextField(Integer.toString(opts_.circularBufferSizeMB_), 5);
 
       comboDisplayBackground_ = new JComboBox(guiColors_.styleOptions);
-      comboDisplayBackground_.setFont(new Font("Arial", Font.PLAIN, 10));
       comboDisplayBackground_.setMaximumRowCount(2);
       comboDisplayBackground_.setSelectedItem(opts_.displayBackground_);
       comboDisplayBackground_.addActionListener(new ActionListener() {
-
          @Override
          public void actionPerformed(ActionEvent e) {
             changeBackground();
          }
       });
-      getContentPane().add(comboDisplayBackground_);
-      springLayout.putConstraint(SpringLayout.EAST, bufSizeField_, 0, SpringLayout.EAST, comboDisplayBackground_);
-      springLayout.putConstraint(SpringLayout.WEST, bufSizeField_, 220, SpringLayout.WEST, getContentPane());
-      springLayout.putConstraint(SpringLayout.EAST, comboDisplayBackground_, 331, SpringLayout.WEST, getContentPane());
-      springLayout.putConstraint(SpringLayout.WEST, comboDisplayBackground_, 220, SpringLayout.WEST, getContentPane());
-      springLayout.putConstraint(SpringLayout.SOUTH, comboDisplayBackground_, 114, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.NORTH, comboDisplayBackground_, 91, SpringLayout.NORTH, getContentPane());
 
-      final JLabel startupScriptLabel = new JLabel();
-      startupScriptLabel.setText("Startup script");
-      getContentPane().add(startupScriptLabel);
-      springLayout.putConstraint(SpringLayout.EAST, startupScriptLabel, 115, SpringLayout.WEST, getContentPane());
-      springLayout.putConstraint(SpringLayout.WEST, startupScriptLabel, 0, SpringLayout.WEST, displayLabel);
-      springLayout.putConstraint(SpringLayout.SOUTH, startupScriptLabel, 135, SpringLayout.NORTH, getContentPane());
-
-      startupScriptFile_ = new JTextField(opts_.startupScript_);
-      getContentPane().add(startupScriptFile_);
-      springLayout.putConstraint(SpringLayout.EAST, okButton, 0, SpringLayout.EAST, startupScriptFile_);
-      springLayout.putConstraint(SpringLayout.WEST, okButton, 250, SpringLayout.WEST, getContentPane());
-      springLayout.putConstraint(SpringLayout.EAST, startupScriptFile_, 131, SpringLayout.WEST, comboDisplayBackground_);
-      springLayout.putConstraint(SpringLayout.WEST, startupScriptFile_, 140, SpringLayout.WEST, getContentPane());
-      springLayout.putConstraint(SpringLayout.SOUTH, startupScriptFile_, 137, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.NORTH, startupScriptFile_, 5, SpringLayout.SOUTH, comboDisplayBackground_);
-
+      startupScriptFile_ = new JTextField(opts_.startupScript_, 10);
 
       final JCheckBox autoreloadDevicesCheckBox = new JCheckBox();
+      autoreloadDevicesCheckBox.setText("Auto-reload devices (Danger!)");
       autoreloadDevicesCheckBox.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent arg0) {
             opts_.autoreloadDevices_ = autoreloadDevicesCheckBox.isSelected();
          }
       });
-      autoreloadDevicesCheckBox.setText("Auto-reload devices (Danger!)");
-      getContentPane().add(autoreloadDevicesCheckBox);
-      springLayout.putConstraint(SpringLayout.NORTH, autoreloadDevicesCheckBox, 0, SpringLayout.NORTH, clearLogFileButton);
-      springLayout.putConstraint(SpringLayout.WEST, autoreloadDevicesCheckBox, 5, SpringLayout.EAST, clearLogFileButton);
-      autoreloadDevicesCheckBox.setSelected(opts_.autoreloadDevices_);
 
       final JCheckBox closeOnExitCheckBox = new JCheckBox();
+      closeOnExitCheckBox.setText("Close app when quitting MM");
+      closeOnExitCheckBox.setSelected(opts_.closeOnExit_);
       closeOnExitCheckBox.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent arg0) {
@@ -290,21 +204,11 @@ public class OptionsDlg extends MMDialog {
             MMStudioMainFrame.getInstance().setExitStrategy(opts_.closeOnExit_);
          }
       });
-      closeOnExitCheckBox.setText("Close app when quitting MM");
-      getContentPane().add(closeOnExitCheckBox);
-      //springLayout.putConstraint(SpringLayout.EAST, closeOnExitCheckBox, 220, SpringLayout.WEST, getContentPane());
-      //springLayout.putConstraint(SpringLayout.WEST, closeOnExitCheckBox, 0, SpringLayout.WEST, debugLogEnabledCheckBox);
-      //springLayout.putConstraint(SpringLayout.SOUTH, closeOnExitCheckBox, 60, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.NORTH, closeOnExitCheckBox, 20, SpringLayout.NORTH, autoreloadDevicesCheckBox);
-      springLayout.putConstraint(SpringLayout.WEST, closeOnExitCheckBox, 0, SpringLayout.WEST, autoreloadDevicesCheckBox);
-      closeOnExitCheckBox.setSelected(opts_.closeOnExit_);
-
 
       final JComboBox prefZoomCombo = new JComboBox();
       prefZoomCombo.setModel(new DefaultComboBoxModel(new String[]{
          "8%", "12%", "16%",  "25%",  "33%", "50%", "75%", "100%", "150%","200%","300%","400%","600%"
       }));
-    
       double mag = opts_.windowMag_;
       int index = 0;
       if (mag == 0.25 / 3.0) {
@@ -335,7 +239,6 @@ public class OptionsDlg extends MMDialog {
          index = 12;
       }
       prefZoomCombo.setSelectedIndex(index);
-      
       prefZoomCombo.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
@@ -367,7 +270,7 @@ public class OptionsDlg extends MMDialog {
                case (8):
                   opts_.windowMag_ = 1.5;
                   break;
-              case (9):
+               case (9):
                   opts_.windowMag_ = 2.0;
                   break;
                case (10):
@@ -380,73 +283,74 @@ public class OptionsDlg extends MMDialog {
                   opts_.windowMag_ = 6.0;
                   break;
             }
-            }
          }
-      );
-      
-      getContentPane().add(prefZoomCombo);
-      springLayout.putConstraint(SpringLayout.NORTH, prefZoomCombo, 30, SpringLayout.NORTH, closeOnExitCheckBox);
-      springLayout.putConstraint(SpringLayout.WEST, prefZoomCombo, 90, SpringLayout.WEST, autoreloadDevicesCheckBox);
-      
-      JLabel prefZoomLabel = new JLabel("Preferred image window zoom:");
-      getContentPane().add(prefZoomLabel);
-      
-      springLayout.putConstraint(SpringLayout.WEST, prefZoomLabel, 20, SpringLayout.WEST, getContentPane());
-      springLayout.putConstraint(SpringLayout.NORTH, prefZoomLabel, 5, SpringLayout.NORTH, prefZoomCombo);
-      
+      });
       
       final JCheckBox metadataFileWithMultipageTiffCheckBox = new JCheckBox();
+      metadataFileWithMultipageTiffCheckBox.setText("Create metadata.txt file with Image Stack Files");
+      metadataFileWithMultipageTiffCheckBox.setSelected(opts_.mpTiffMetadataFile_);
       metadataFileWithMultipageTiffCheckBox.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent arg0) {
             opts_.mpTiffMetadataFile_ = metadataFileWithMultipageTiffCheckBox.isSelected();
          }
       });
-      metadataFileWithMultipageTiffCheckBox.setText("Create metadata txt file with image stack file saving");
-      getContentPane().add(metadataFileWithMultipageTiffCheckBox);
-      springLayout.putConstraint(SpringLayout.WEST, metadataFileWithMultipageTiffCheckBox, 20, SpringLayout.WEST, getContentPane());
-      springLayout.putConstraint(SpringLayout.NORTH, metadataFileWithMultipageTiffCheckBox, 10, SpringLayout.SOUTH, prefZoomLabel);
-      metadataFileWithMultipageTiffCheckBox.setSelected(opts_.mpTiffMetadataFile_);
       
       final JCheckBox separateFilesForPositionsMPTiffCheckBox = new JCheckBox();
+      separateFilesForPositionsMPTiffCheckBox.setText("Save XY positions in separate Image Stack Files");
+      separateFilesForPositionsMPTiffCheckBox.setSelected(opts_.mpTiffSeparateFilesForPositions_);
       separateFilesForPositionsMPTiffCheckBox.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent arg0) {
             opts_.mpTiffSeparateFilesForPositions_ = separateFilesForPositionsMPTiffCheckBox.isSelected();
          }
       });
-      separateFilesForPositionsMPTiffCheckBox.setText("Save XY Positions in separate image stack files");
-      getContentPane().add(separateFilesForPositionsMPTiffCheckBox);
-      springLayout.putConstraint(SpringLayout.WEST, separateFilesForPositionsMPTiffCheckBox, 20, SpringLayout.WEST, getContentPane());
-      springLayout.putConstraint(SpringLayout.NORTH, separateFilesForPositionsMPTiffCheckBox, 5, SpringLayout.SOUTH, metadataFileWithMultipageTiffCheckBox);
-      separateFilesForPositionsMPTiffCheckBox.setSelected(opts_.mpTiffSeparateFilesForPositions_);
   
       final JCheckBox syncExposureMainAndMDA = new JCheckBox();
+      syncExposureMainAndMDA.setText("Sync exposure between Main and MDA windows");
+      syncExposureMainAndMDA.setSelected(opts_.syncExposureMainAndMDA_);
       syncExposureMainAndMDA.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent arg0) {
             opts_.syncExposureMainAndMDA_ = syncExposureMainAndMDA.isSelected();
          }
       });
-      syncExposureMainAndMDA.setText("Sync exposure between Main and MDA windows");
-      getContentPane().add(syncExposureMainAndMDA);
-      springLayout.putConstraint(SpringLayout.WEST, syncExposureMainAndMDA, 20, SpringLayout.WEST, getContentPane());
-      springLayout.putConstraint(SpringLayout.NORTH, syncExposureMainAndMDA, 5, SpringLayout.SOUTH, separateFilesForPositionsMPTiffCheckBox);
-      syncExposureMainAndMDA.setSelected(opts_.syncExposureMainAndMDA_);
   
-      
       final JCheckBox hideMDAdisplay = new JCheckBox();
+      hideMDAdisplay.setText("Hide MDA display");
+      hideMDAdisplay.setSelected(opts_.hideMDADisplay_);
       hideMDAdisplay.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent arg0) {
             opts_.hideMDADisplay_ = hideMDAdisplay.isSelected();
          }
       });
-      hideMDAdisplay.setText("Hide MDA display");
-      getContentPane().add(hideMDAdisplay);
-      springLayout.putConstraint(SpringLayout.WEST, hideMDAdisplay, 20, SpringLayout.WEST, getContentPane());
-      springLayout.putConstraint(SpringLayout.NORTH, hideMDAdisplay, 5, SpringLayout.SOUTH, syncExposureMainAndMDA);
-      hideMDAdisplay.setSelected(opts_.hideMDADisplay_);
+
+      setLayout(new net.miginfocom.swing.MigLayout(
+               "fill, insets dialog",
+               "[fill]"));
+      add(debugLogEnabledCheckBox, "wrap");
+      add(doNotAskForConfigFileCheckBox, "wrap");
+      add(new JLabel("Sequence Buffer Size:"), "split 3, gapright push");
+      add(bufSizeField_, "gapright related");
+      add(new JLabel("MB"), "wrap");
+      add(new JLabel("Display Background:"), "split 2, gapright push");
+      add(comboDisplayBackground_, "wrap");
+      add(new JLabel("Startup Script:"), "split 2, gapright push");
+      add(startupScriptFile_, "wrap");
+      add(clearLogFileButton, "sizegroup clearBtns, split 2");
+      add(clearRegistryButton, "sizegroup clearBtns, wrap");
+      add(autoreloadDevicesCheckBox, "wrap");
+      add(closeOnExitCheckBox, "wrap");
+      add(new JLabel("Preferred Image Window Zoom:"),
+         "split 2, gapright push");
+      add(prefZoomCombo, "wrap");
+      add(metadataFileWithMultipageTiffCheckBox, "wrap");
+      add(separateFilesForPositionsMPTiffCheckBox, "wrap");
+      add(syncExposureMainAndMDA, "wrap");
+      add(hideMDAdisplay, "wrap");
+      add(okButton, "gapleft push");
+      pack();
    }
 
    private void changeBackground() {
