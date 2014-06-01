@@ -69,9 +69,8 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    private int acqOrderMode_;
    private boolean useAutoFocus_;
    private int afSkipInterval_;
-   protected HashMap<String, Class<?>> nameToProcessorClass_;
+   protected HashMap<String, Class<? extends DataProcessor<TaggedImage>>> nameToProcessorClass_;
    protected List<DataProcessor<TaggedImage>> taggedImageProcessors_;
-   private List<Class> imageRequestProcessors_;
    private boolean absoluteZ_;
    private IAcquisitionEngine2010 acquisitionEngine2010;
    private ArrayList<Double> customTimeIntervalsMs_;
@@ -82,8 +81,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    private AcquisitionManager acqManager_;
 
    public AcquisitionWrapperEngine(AcquisitionManager mgr) {
-      imageRequestProcessors_ = new ArrayList<Class>();
-      nameToProcessorClass_ = new HashMap<String, Class<?>>();
+      nameToProcessorClass_ = new HashMap<String, Class<? extends DataProcessor<TaggedImage>>>();
       taggedImageProcessors_ = new ArrayList<DataProcessor<TaggedImage>>();
       useCustomIntervals_ = false;
       settingsListeners_ = new ArrayList<AcqSettingsListener>();
@@ -298,7 +296,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    }
 
    @Override
-   public void registerProcessorClass(Class<?> processorClass, String name) {
+   public void registerProcessorClass(Class<? extends DataProcessor<TaggedImage>> processorClass, String name) {
       if (nameToProcessorClass_.get(name) != null) {
          ReportingUtils.logError("Tried to register an additional DataProcessor under the name \"" + name + "\"; ignoring it.");
       }
@@ -321,10 +319,10 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
 
    @Override
    public DataProcessor<TaggedImage> makeProcessor(String name, ScriptInterface gui) {
-      Class<?> processorClass = nameToProcessorClass_.get(name);
+      Class<? extends DataProcessor<TaggedImage>> processorClass = nameToProcessorClass_.get(name);
       DataProcessor<TaggedImage> newProcessor;
       try {
-         newProcessor = (DataProcessor<TaggedImage>) processorClass.newInstance();
+         newProcessor = processorClass.newInstance();
          newProcessor.setApp(gui);
          addImageProcessor(newProcessor);
       }
@@ -337,7 +335,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
 
    @Override
    public DataProcessor<TaggedImage> getProcessorRegisteredAs(String name) {
-      Class<?> processorClass = nameToProcessorClass_.get(name);
+      Class<? extends DataProcessor<TaggedImage>> processorClass = nameToProcessorClass_.get(name);
       for (DataProcessor<TaggedImage> processor : taggedImageProcessors_) {
          if (processor.getClass() == processorClass) {
             return processor;
@@ -347,7 +345,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    }
 
    @Override
-   public String getNameForProcessorClass(Class<?> processorClass) {
+   public String getNameForProcessorClass(Class<? extends DataProcessor<TaggedImage>> processorClass) {
       for (String name : nameToProcessorClass_.keySet()) {
          if (nameToProcessorClass_.get(name) == processorClass) {
             return name;

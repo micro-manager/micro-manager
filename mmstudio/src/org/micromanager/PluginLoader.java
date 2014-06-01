@@ -27,9 +27,11 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.regex.Pattern;
 import javax.swing.SwingUtilities;
+import mmcorej.TaggedImage;
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.acquisition.AcquisitionEngine;
 import org.micromanager.api.Autofocus;
+import org.micromanager.api.DataProcessor;
 import org.micromanager.api.MMBasePlugin;
 import org.micromanager.api.MMPlugin;
 import org.micromanager.api.MMProcessorPlugin;
@@ -288,7 +290,7 @@ public class PluginLoader {
                         AcquisitionEngine engine = MMStudioMainFrame.getInstance().getAcquisitionEngine();
                         MMProcessorPlugin plugin = (MMProcessorPlugin) pi.getPlugin();
                         String processorName = getNameForPluginClass(clazz);
-                        Class<?> processorClass = getProcessorClassForPluginClass(clazz);
+                        Class<? extends DataProcessor<TaggedImage>> processorClass = getProcessorClassForPluginClass(clazz);
                         if (processorClass != null) {
                            engine.registerProcessorClass(processorClass, processorName);
                         }
@@ -357,10 +359,16 @@ public class PluginLoader {
     * which is presumed to be an MMProcessorPlugin class. Return null on 
     * failure. 
     */
-   public static Class<?> getProcessorClassForPluginClass(Class<?> cl) {
+   public static Class<? extends DataProcessor<TaggedImage>> getProcessorClassForPluginClass(Class<?> cl) {
       try {
-          Method procMethod = cl.getDeclaredMethod("getProcessorClass");
-          return (Class<?>) procMethod.invoke(null);
+         Method procMethod = cl.getDeclaredMethod("getProcessorClass");
+
+         @SuppressWarnings("unchecked")
+         Class<? extends DataProcessor<TaggedImage>> procClass =
+               (Class<? extends DataProcessor<TaggedImage>>)
+               procMethod.invoke(null);
+
+         return procClass;
       } catch (Exception e) {
          ReportingUtils.logError(e);
       }

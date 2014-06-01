@@ -4323,7 +4323,8 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       return getAcquisitionEngine().getImageProcessorPipeline();
    }
 
-   public void registerProcessorClass(Class<?> processorClass, String name) {
+   @Override
+   public void registerProcessorClass(Class<? extends DataProcessor<TaggedImage>> processorClass, String name) {
       getAcquisitionEngine().registerProcessorClass(processorClass, name);
    }
 

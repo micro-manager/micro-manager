@@ -139,7 +139,11 @@ public class PipelinePanel extends JFrame {
    private void reloadPipeline(List<DataProcessor<TaggedImage>> pipeline) {
       processorsPanel_.removeAll();
       for (DataProcessor<TaggedImage> processor : pipeline) {
-         String name = engine_.getNameForProcessorClass(processor.getClass());
+         @SuppressWarnings("unchecked")
+         Class<? extends DataProcessor<TaggedImage>> procCls =
+            (Class<? extends DataProcessor<TaggedImage>>) processor.getClass();
+
+         String name = engine_.getNameForProcessorClass(procCls);
          ProcessorPanel panel = new ProcessorPanel(name, processor, gui_);
          processorsPanel_.add(panel);
       }

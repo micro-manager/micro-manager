@@ -740,7 +740,7 @@ public interface ScriptInterface {
     * call this function as:
     * gui.registerProcessorClass(MyProcessor.class, "My Processor");
     */
-   public void registerProcessorClass(Class<?> processorClass, String name);
+   public void registerProcessorClass(Class<? extends DataProcessor<TaggedImage>> processorClass, String name);
    
    /**
     * Pause/Unpause a running acquistion
