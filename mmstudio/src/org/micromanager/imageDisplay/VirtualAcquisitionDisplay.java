@@ -406,14 +406,16 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
             ReportingUtils.logError(ex);
          }
       }
+
+      hyperImage_ = createHyperImage(createMMImagePlus(virtualStack_),
+              numGrayChannels, numSlices, numFrames, virtualStack_);
+
       // Hack: allow controls_ to be already set, so that overriding classes
       // can implement their own custom controls.
       if (controls_ == null) {
          controls_ = new HyperstackControls(this, bus_, 
                shouldUseSimpleControls_);
       }
-      hyperImage_ = createHyperImage(createMMImagePlus(virtualStack_),
-              numGrayChannels, numSlices, numFrames, virtualStack_);
 
       applyPixelSizeCalibration(hyperImage_);
 

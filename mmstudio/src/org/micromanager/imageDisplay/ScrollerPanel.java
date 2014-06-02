@@ -85,13 +85,19 @@ public class ScrollerPanel extends JPanel {
       scrollers_ = new ArrayList<AxisScroller>();
 
       // Create all desired AxisScrollers. Use the first character of the 
-      // axis as the label. Default all scrollers to invisible; they'll be 
-      // shown once there's more than one option along that axis.
+      // axis as the label. Default all scrollers to invisible unless they have
+      // at least 2, um, "ticks"; they'll be shown once there's more than one
+      // option along that axis.
       // TODO: for now assuming all axes can animate.
       for (int i = 0; i < maximums.length; ++i) {
          AxisScroller scroller = new AxisScroller(axes[i], 
                maximums[i], bus, true);
-         scroller.setVisible(false);
+         if (maximums[i] <= 1) {
+            scroller.setVisible(false);
+         }
+         else {
+            add(scroller, "wrap 0px");
+         }
          scrollers_.add(scroller);
       }
    }

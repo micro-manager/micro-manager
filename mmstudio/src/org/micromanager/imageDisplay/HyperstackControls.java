@@ -85,13 +85,14 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
          EventBus bus, boolean shouldUseLiveControls) {
       super(new FlowLayout(FlowLayout.LEADING));
       bus_ = bus;
-      initComponents(shouldUseLiveControls);
+      initComponents(display, shouldUseLiveControls);
       display_ = display;
       bus_.register(this);
       MMStudioMainFrame.getInstance().addLiveModeListener(this);
    }
 
-   private void initComponents(final boolean shouldUseLiveControls) {
+   private void initComponents(VirtualAcquisitionDisplay display, 
+         final boolean shouldUseLiveControls) {
       // This layout minimizes space between components.
       subPanel_ = new JPanel(new MigLayout("", "0[]", "0[]0[]0[]0"));
 
@@ -110,9 +111,14 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
       countdownLabel_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
       subPanel_.add(countdownLabel_, "span, wrap");
 
+      int numChannels = display.getNumChannels();
+      int numPositions = display.getNumPositions();
+      int numFrames = display.getNumFrames();
+      int numSlices = display.getNumSlices();
       scrollerPanel_ = new ScrollerPanel(
                bus_, new String[]{"channel", "position", "time", "z"}, 
-               new Integer[]{1, 1, 1, 1}, DEFAULT_FPS);
+               new Integer[]{numChannels, numPositions, numFrames, numSlices}, 
+               DEFAULT_FPS);
       subPanel_.add(scrollerPanel_, "span, growx, wrap 0px");
 
       showFolderButton_ = new JButton();
