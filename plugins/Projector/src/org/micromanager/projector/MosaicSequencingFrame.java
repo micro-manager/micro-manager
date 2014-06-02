@@ -108,7 +108,7 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
       } catch (Exception e) {
          return new Roi[0]; // empty array
       }
-      return ProjectorController.getRois(win);  
+      return ProjectorController.getRois(win, false);  
    }
    
    // Get the total number of ROIs available in the Snap/Live window.

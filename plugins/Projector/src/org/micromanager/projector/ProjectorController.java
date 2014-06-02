@@ -491,13 +491,20 @@ public class ProjectorController {
    }
 
       /* Returns the currently selected ROIs for a given ImageWindow. */
-   public static Roi[] getRois(ImageWindow window) {
+   public static Roi[] getRois(ImageWindow window, boolean selectedOnly) {
       Roi[] rois = new Roi[]{};
       Roi[] roiMgrRois = {};
       Roi singleRoi = window.getImagePlus().getRoi();
       final RoiManager mgr = RoiManager.getInstance();
       if (mgr != null) {
-         roiMgrRois = mgr.getRoisAsArray();
+         if (selectedOnly) {
+            roiMgrRois = mgr.getSelectedRoisAsArray();
+            if (roiMgrRois.length == 0) {
+               roiMgrRois = mgr.getRoisAsArray();
+            }
+         } else {
+            roiMgrRois = mgr.getRoisAsArray();
+         }
       }
       if (roiMgrRois.length > 0) {
          rois = roiMgrRois;
@@ -505,9 +512,8 @@ public class ProjectorController {
          rois = new Roi[]{singleRoi};
       }
       return rois;
-
    }
-   
+      
    public List<Polygon> getTransformedRois(ImagePlus contextImagePlus, Roi[] rois) {
       return transformROIs(contextImagePlus, rois, mapping_);
    }
@@ -537,7 +543,7 @@ public class ProjectorController {
             return 0;
          } else {
             ImagePlus imgp = window.getImagePlus();
-            Roi[] rois = getRois(window);
+            Roi[] rois = getRois(window, true);
             if (rois.length == 0) {
                ReportingUtils.showMessage("Please first draw the desired phototargeting ROIs.");
             }
