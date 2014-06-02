@@ -187,9 +187,9 @@ void CPluginManager::UnloadDevice(boost::shared_ptr<DeviceInstance> device)
    {
       if (it->second == device)
       {
+         device->Shutdown(); // TODO Should be automatic
          deviceRawPtrIndex_.erase(it->second->GetRawPtr());
          devices_.erase(it);
-         device->Shutdown(); // TODO Should be automatic
          break;
       }
    }
@@ -221,19 +221,35 @@ void CPluginManager::UnloadAllDevices()
       }
    }
 
+   // Call Shutdown before removing devices from index, so that the deivce's
+   // Shutdown() has access (through the CoreCallback) to its own
+   // DeviceInstance.
+   // TODO We need a mechanism to ensure automatic Shutdown (1:1 with
+   // Initialize()).
+   for (std::vector< boost::shared_ptr<DeviceInstance> >::reverse_iterator
+         it = nonSerialDevices.rbegin(), end = nonSerialDevices.rend();
+         it != end; ++it)
+   {
+      (*it)->Shutdown();
+   }
+   for (std::vector< boost::shared_ptr<DeviceInstance> >::reverse_iterator
+         it = serialDevices.rbegin(), end = serialDevices.rend();
+         it != end; ++it)
+   {
+      (*it)->Shutdown();
+   }
+
    deviceRawPtrIndex_.clear();
    devices_.clear();
 
    // Now the only remaining references to the device objects should be in
-   // serialDevices and nonSerialDevices.
+   // serialDevices and nonSerialDevices. Release the devices in order.
    while (nonSerialDevices.size() > 0)
    {
-      nonSerialDevices.back()->Shutdown(); // TODO Should be automatic
       nonSerialDevices.pop_back();
    }
    while (serialDevices.size() > 0)
    {
-      serialDevices.back()->Shutdown(); // TODO Should be automatic
       serialDevices.pop_back();
    }
 }
