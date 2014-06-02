@@ -47,4 +47,8 @@ public abstract class DisplayControls extends Panel {
    }
 
    public void setPosition(int p) {}
+
+   public int getNumPositions() {
+      return 1;
+   }
 }

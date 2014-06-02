@@ -278,4 +278,17 @@ public class ScrollerPanel extends JPanel {
       }
       return 0;
    }
+
+   /**
+    * Return the maximum position for the specified axis, or 0 if we have
+    * no scroller for that axis.
+    */
+   public int getMaxPosition(String axis) {
+      for (AxisScroller scroller : scrollers_) {
+         if (scroller.getAxis().equals(axis)) {
+            return scroller.getMaximum();
+         }
+      }
+      return 0;
+   }
 }

@@ -112,9 +112,18 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
       subPanel_.add(countdownLabel_, "span, wrap");
 
       int numChannels = display.getNumChannels();
-      int numPositions = display.getNumPositions();
       int numFrames = display.getNumFrames();
       int numSlices = display.getNumSlices();
+      // Positions have to be handled specially, since our display doesn't
+      // actually know about them -- it normally relies on us! 
+      JSONObject tags = display.getImageCache().getSummaryMetadata();
+      int numPositions = 0;
+      try {
+         numPositions = MDUtils.getNumPositions(tags);
+      }
+      catch (JSONException e) {
+         // Oh well, no positions for us.
+      }
       scrollerPanel_ = new ScrollerPanel(
                bus_, new String[]{"channel", "position", "time", "z"}, 
                new Integer[]{numChannels, numPositions, numFrames, numSlices}, 
@@ -639,5 +648,9 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
       if (snapButton_ != null) {
          snapButton_.setEnabled(!isEnabled);
       }
+   }
+
+   public int getNumPositions() {
+      return scrollerPanel_.getMaxPosition("position");
    }
 }
