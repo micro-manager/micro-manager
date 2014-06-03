@@ -29,11 +29,12 @@
 
 class FastLogger
 {
-   mm::LogManager manager_;
+   mm::LogManager& manager_;
    boost::shared_ptr<mm::logging::Logger> defaultLogger_;
 
 public:
-   FastLogger() :
+   FastLogger(mm::LogManager& manager) :
+      manager_(manager),
       defaultLogger_(manager_.NewLogger("Core"))
    {}
 

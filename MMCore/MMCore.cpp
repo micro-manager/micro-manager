@@ -114,7 +114,7 @@ CMMCore::CMMCore() :
    configGroups_ = new ConfigGroupCollection();
    pixelSizeGroup_ = new PixelSizeConfigGroup();
    pPostedErrorsLock_ = new MMThreadLock();
-   logger_ = new FastLogger();
+   logger_ = new FastLogger(logManager_);
 
    // build list of error strings
    errorText_[MMERR_OK] = "No errors.";

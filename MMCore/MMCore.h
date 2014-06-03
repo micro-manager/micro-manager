@@ -54,6 +54,7 @@
 #include "Devices/DeviceInstances.h"
 #include "Error.h"
 #include "ErrorCodes.h"
+#include "LogManager.h"
 #include "PluginManager.h"
 
 #include <cstring>
@@ -514,6 +515,11 @@ private:
 
    typedef std::map<std::string, Configuration*> CConfigMap;
    typedef std::map<std::string, PropertyBlock*> CPropBlockMap;
+
+private:
+   // LogManager should be the first data member, so that it is available for
+   // as long as possible during construction and (especially) destruction.
+   mm::LogManager logManager_;
 
    bool everSnapped_;
    boost::shared_ptr<CameraInstance> camera_;
