@@ -148,26 +148,25 @@ public class GUIUtils {
       return false;
 
    }
-    
+   
    public static void recallPosition(final Window win) {
-      Preferences prefs = Preferences.userNodeForPackage(win.getClass());
+      Preferences prefs = Preferences.userRoot().node(win.getClass().getName());
       Point dialogPosition = JavaUtils.getObjectFromPrefs(prefs, DIALOG_POSITION, (Point) null);
       if (dialogPosition == null || !isLocationInScreenBounds(dialogPosition)) {
          Dimension screenDims = JavaUtils.getScreenDimensions();
          dialogPosition = new Point((screenDims.width - win.getWidth()) / 2, (screenDims.height - win.getHeight()) / 2);
       }
       win.setLocation(dialogPosition);
-
-      win.addWindowListener(new WindowAdapter() {
+      win.addComponentListener(new ComponentAdapter() {
          @Override
-         public void windowClosing(WindowEvent e) {
+         public void componentMoved(ComponentEvent e) {
             storePosition(win);
          }
       });
    }
 
    private static void storePosition(final Window win) {
-      Preferences prefs = Preferences.userNodeForPackage(win.getClass());
+      Preferences prefs = Preferences.userRoot().node(win.getClass().getName());
       JavaUtils.putObjectInPrefs(prefs, DIALOG_POSITION, win.getLocation());
    }
 
