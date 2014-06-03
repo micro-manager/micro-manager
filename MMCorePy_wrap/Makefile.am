@@ -39,7 +39,7 @@ MMCorePy_wrap.h MMCorePy_wrap.cxx MMCorePy.py: MMCorePy.stamp
 
 wrappermodule_LTLIBRARIES = _MMCorePy.la
 nodist__MMCorePy_la_SOURCES = MMCorePy_wrap.h MMCorePy_wrap.cxx
-_MMCorePy_la_CPPFLAGS = $(BOOST_CPPFLAGS) $(PYTHON_CPPFLAGS) $(NUMPY_CPPFLAGS)
+_MMCorePy_la_CPPFLAGS = $(BOOST_CPPFLAGS) $(PYTHON_CPPFLAGS) $(NUMPY_CPPFLAGS) -DBOOST_THREAD_VERSION=2
 _MMCorePy_la_LDFLAGS = -module -avoid-version -shrext .so
 _MMCorePy_la_LIBADD = ../MMCore/libMMCore.la
 

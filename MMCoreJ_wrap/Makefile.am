@@ -12,7 +12,7 @@ AUTOMAKE_OPTIONS = foreign subdir-objects
 # nothing Linux-specific about this.)
 # TODO The flag should come from configure.
 AM_CXXFLAGS = -fno-strict-aliasing
-AM_CPPFLAGS = $(JNI_CPPFLAGS) $(BOOST_CPPFLAGS)
+AM_CPPFLAGS = $(JNI_CPPFLAGS) $(BOOST_CPPFLAGS) -DBOOST_THREAD_VERSION=2
 
 
 # This ugly list of headers is necessary to trigger the rebuild of the
