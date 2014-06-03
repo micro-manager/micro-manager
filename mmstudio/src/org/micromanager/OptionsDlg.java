@@ -39,6 +39,7 @@ import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JSeparator;
 import javax.swing.JTextField;
 import javax.swing.WindowConstants;
 
@@ -215,7 +216,7 @@ public class OptionsDlg extends MMDialog {
          }
       });
 
-      startupScriptFile_ = new JTextField(opts_.startupScript_, 10);
+      startupScriptFile_ = new JTextField(opts_.startupScript_);
 
       final JCheckBox autoreloadDevicesCheckBox = new JCheckBox();
       autoreloadDevicesCheckBox.setText("Auto-reload devices (Danger!)");
@@ -372,39 +373,55 @@ public class OptionsDlg extends MMDialog {
                "fill, insets dialog",
                "[fill]"));
 
-      add(debugLogEnabledCheckBox, "wrap");
-      add(doNotAskForConfigFileCheckBox, "wrap");
+      add(new JLabel("Display Background:"), "split 2, gapright push");
+      add(comboDisplayBackground_, "wrap");
+
+      add(new JLabel("Preferred Image Window Zoom:"),
+            "split 2, gapright push");
+      add(prefZoomCombo, "wrap");
+
+      add(new JSeparator(), "wrap");
 
       add(new JLabel("Sequence Buffer Size:"), "split 3, gapright push");
       add(bufSizeField_, "gapright related");
       add(new JLabel("MB"), "wrap");
 
-      add(new JLabel("Display Background:"), "split 2, gapright push");
-      add(comboDisplayBackground_, "wrap");
+      add(new JSeparator(), "wrap");
 
-      add(new JLabel("Startup Script:"), "split 2, gapright push");
+      add(metadataFileWithMultipageTiffCheckBox, "wrap");
+      add(separateFilesForPositionsMPTiffCheckBox, "wrap");
+
+      add(new JSeparator(), "wrap");
+
+      add(doNotAskForConfigFileCheckBox, "wrap");
+
+      add(new JLabel("Startup Script:"), "split 2, grow 0, gapright related");
       add(startupScriptFile_, "wrap");
+
+      add(closeOnExitCheckBox, "wrap");
+
+      add(new JSeparator(), "wrap");
+
+      add(debugLogEnabledCheckBox, "wrap");
 
       add(deleteLogCheckBox, "split 3, gapright related");
       add(logDeleteDaysField_, "gapright related");
       add(new JLabel("days"), "gapright push, wrap");
 
-      add(deleteLogFilesButton, "sizegroup clearBtns, split 2");
-      add(clearRegistryButton, "sizegroup clearBtns, wrap");
+      add(deleteLogFilesButton,
+            "split 3, gapleft push, gapright push, wrap");
 
-      add(autoreloadDevicesCheckBox, "wrap");
-      add(closeOnExitCheckBox, "wrap");
+      add(new JSeparator(), "wrap");
 
-      add(new JLabel("Preferred Image Window Zoom:"),
-         "split 2, gapright push");
-      add(prefZoomCombo, "wrap");
-
-      add(metadataFileWithMultipageTiffCheckBox, "wrap");
-      add(separateFilesForPositionsMPTiffCheckBox, "wrap");
       add(syncExposureMainAndMDA, "wrap");
       add(hideMDAdisplay, "wrap");
+      add(autoreloadDevicesCheckBox, "wrap");
 
-      add(closeButton, "gapleft push");
+      add(new JSeparator(), "wrap");
+
+      add(clearRegistryButton,
+            "split 2, sizegroup bottomBtns, gapright unrelated");
+      add(closeButton, "sizegroup bottomBtns");
 
       pack();
    }
