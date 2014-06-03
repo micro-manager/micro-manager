@@ -293,7 +293,16 @@ CMMCore::~CMMCore()
  */
 void CMMCore::clearLog()
 {
-   getLoggerInstance()->Reset();
+   try
+   {
+      logManager_.TruncatePrimaryLogFile();
+   }
+   catch (const CMMError&)
+   {
+      // Bug! We have no way to notify the caller of an error.
+      // Don't bother to fix it; we will deprecate this function anyway.
+   }
+
    CORE_LOG("-------->>\n");
    CORE_LOG("Log cleared and re-started by %s on %s\n", getUserId().c_str(), getHostName().c_str());
 }
@@ -327,11 +336,13 @@ void CMMCore::logMessage(const char* msg, bool debugOnly)
  */
 void CMMCore::enableDebugLog(bool enable)
 {
-   debugLog_ = enable;
+   logManager_.SetPrimaryLogLevel(enable ? mm::logging::LogLevelTrace :
+         mm::logging::LogLevelInfo);
+}
 
-   getLoggerInstance()->SetPriorityLevel(enable);
-
-   CORE_LOG("Debug logging %s\n", enable ? "enabled" : "disabled");
+bool CMMCore::debugLogEnabled()
+{
+   return (logManager_.GetPrimaryLogLevel() < mm::logging::LogLevelInfo);
 }
 
 /**
@@ -340,7 +351,7 @@ void CMMCore::enableDebugLog(bool enable)
  */
 void CMMCore::enableStderrLog(bool enable)
 {
-   getLoggerInstance()->EnableLogToStderr(enable);
+   logManager_.SetUseStdErr(enable);
 }
 
 /*!
@@ -6491,8 +6502,16 @@ void CMMCore::initializeLogging()
   
    std::string logName = g_logFileName + sout.str() + std::string(".txt");
 
-   getLoggerInstance()->Initialize(logName);
-   getLoggerInstance()->EnableLogToStderr(true);
+   logManager_.SetUseStdErr(true);
+   try
+   {
+      logManager_.SetPrimaryLogFilename(logName, false);
+   }
+   catch (const CMMError&)
+   {
+      // LogManager will have printed message to stderr. There is nothing much
+      // more we can do until we allow client to manage log filename.
+   }
 }
 
 

@@ -38,13 +38,6 @@ public:
       defaultLogger_(manager_.NewLogger("Core"))
    {}
 
-   bool Initialize(const std::string& logFileName);
-   void Shutdown() {}
-   bool Reset();
-
-   void SetPriorityLevel(bool includeDebug);
-   bool EnableLogToStderr(bool enable);
-
    void VLogF(bool isDebug, const char* format, va_list ap);
    void LogF(bool isDebug, const char* format, ...);
    void Log(bool isDebug, const char* entry);

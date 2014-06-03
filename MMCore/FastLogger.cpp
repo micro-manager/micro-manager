@@ -28,49 +28,6 @@
 #include <fstream>
 
 
-bool FastLogger::Initialize(const std::string& logFileName)
-{
-   manager_.SetUseStdErr(true);
-   try
-   {
-      manager_.SetPrimaryLogFilename(logFileName, false);
-   }
-   catch (const CMMError&)
-   {
-      return false;
-   }
-   return true;
-}
-
-
-bool FastLogger::Reset()
-{
-   try
-   {
-      manager_.TruncatePrimaryLogFile();
-   }
-   catch (const CMMError&)
-   {
-      return false;
-   }
-   return true;
-}
-
-
-void FastLogger::SetPriorityLevel(bool includeDebug)
-{
-   manager_.SetPrimaryLogLevel(includeDebug ? mm::logging::LogLevelTrace :
-         mm::logging::LogLevelInfo);
-}
-
-
-bool FastLogger::EnableLogToStderr(bool enable)
-{
-   manager_.SetUseStdErr(enable);
-   return true;
-}
-
-
 void FastLogger::VLogF(bool isDebug, const char* format, va_list ap)
 {
    // Keep a copy of the argument list

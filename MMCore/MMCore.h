@@ -116,7 +116,7 @@ public:
    void reset() throw (CMMError);
    void clearLog();
    void enableDebugLog(bool enable);
-   bool debugLogEnabled(void) { return debugLog_;};
+   bool debugLogEnabled();
    void enableStderrLog(bool enable);
    std::string getUserId() const;
    std::string getHostName() const;
@@ -547,7 +547,6 @@ private:
    std::map<int, std::string> errorText_;
    CConfigMap configs_;
    CPropBlockMap propBlocks_;
-   bool debugLog_;
 
    // Must be unlocked when calling MMEventCallback or calling device methods
    // or acquiring a module lock
