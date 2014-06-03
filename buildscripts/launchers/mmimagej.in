@@ -16,5 +16,6 @@ cd "@imagejdir@"
 
 @JAVA@ -Xmx1024M \
    -Dmmcorej.library.loading.stderr.log=yes \
+   -Dorg.micromanager.corelog.dir=/tmp \
    -jar "@imagejjar@" \
    -eval 'run("Micro-Manager Studio");'

@@ -41,4 +41,5 @@ echo "class path = $CLASSPATH" 1>&2
    -Dorg.micromanager.autofocus.path="@mmautofocusdir@" \
    -Dorg.micromanager.beanshell.start.script="@mmscriptdir@/mm_beanshell_startup.bsh" \
    -Dorg.micromanager.default.config.file="@mmdatadir@/MMConfig_demo.cfg" \
+   -Dorg.micromanager.corelog.dir=/tmp \
    org.micromanager.MMStudioMainFrame
