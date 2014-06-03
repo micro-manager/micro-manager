@@ -291,6 +291,10 @@ CMMCore::~CMMCore()
 
 /**
  * Delete an existing log file and start a new one.
+ *
+ * \deprecated There is no good reason for the application to clear the log. To
+ * obtain a particular section of the log, use the facilities provided by the
+ * secondary log file API.
  */
 void CMMCore::clearLog()
 {
@@ -2677,6 +2681,8 @@ long CMMCore::getBufferFreeCapacity()
 
 /**
  * Deprecated and broken. Do not call.
+ *
+ * \deprecated Broken.
  */
 double CMMCore::getBufferIntervalMs() const
 {
@@ -6533,9 +6539,10 @@ string CMMCore::getDeviceName(boost::shared_ptr<DeviceInstance> pDev)
 //
 
 /**
-* Compress the core log into a gz archive return the path of the archive
-* 
-*/
+ * Compress the core log into a gz archive return the path of the archive
+ *
+ * \deprecated Instead, use the secondary log file API.
+ */
 
 std::string CMMCore::saveLogArchive(void)
 {
@@ -6578,9 +6585,10 @@ std::string CMMCore::saveLogArchive(void)
 }
 
 /**
-* just like saveLogArchive, but client can add whatever header desired
-* 
-*/
+ * Just like saveLogArchive, but client can add whatever header desired
+ *
+ * \deprecated Instead, use the secondary log file API.
+ */
 std::string CMMCore::saveLogArchiveWithPreamble(char* preamble, ///< beginning of a header to be prepended to the corelog
                                                 int preambleLength ///< length of the header
                                                 )

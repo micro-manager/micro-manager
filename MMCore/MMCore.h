@@ -63,6 +63,20 @@
 #include <string>
 #include <vector>
 
+
+#ifndef SWIG
+#   ifdef _MSC_VER
+#      define MMCORE_DEPRECATED(prototype) __declspec(deprecated) prototype
+#   elif defined(__GNUC__)
+#      define MMCORE_DEPRECATED(prototype) prototype __attribute__((deprecated))
+#   else
+#      define MMCORE_DEPRECATED(prototype) prototype
+#   endif
+#else
+#   define MMCORE_DEPRECATED(prototype) prototype
+#endif
+
+
 // forward declarations
 class CircularBuffer;
 class Configuration;
@@ -114,7 +128,7 @@ public:
    void initializeDevice(const char* label) throw (CMMError);
    void updateCoreProperties() throw (CMMError);
    void reset() throw (CMMError);
-   void clearLog();
+   MMCORE_DEPRECATED(void clearLog());
    void enableDebugLog(bool enable);
    bool debugLogEnabled();
    void enableStderrLog(bool enable);
@@ -122,9 +136,9 @@ public:
    std::string getHostName() const;
    void logMessage(const char* msg);
    void logMessage(const char* msg, bool debugOnly);
-   // this creates an archive of the current log contents and returns the path created
-   std::string saveLogArchive(void);
-   std::string saveLogArchiveWithPreamble(char* preamble, int length);
+   MMCORE_DEPRECATED(std::string saveLogArchive(void));
+   MMCORE_DEPRECATED(std::string saveLogArchiveWithPreamble(
+            char* preamble, int length));
 
    std::string getVersionInfo() const;
    std::string getAPIVersionInfo() const;
@@ -324,7 +338,7 @@ public:
    long getRemainingImageCount();
    long getBufferTotalCapacity();
    long getBufferFreeCapacity();
-   double getBufferIntervalMs() const;
+   MMCORE_DEPRECATED(double getBufferIntervalMs() const);
    bool isBufferOverflowed() const;
    void setCircularBufferMemoryFootprint(unsigned sizeMB) throw (CMMError);
    unsigned getCircularBufferMemoryFootprint();
