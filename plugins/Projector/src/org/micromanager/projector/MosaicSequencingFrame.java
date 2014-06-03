@@ -1,12 +1,24 @@
+///////////////////////////////////////////////////////////////////////////////
+//FILE:          MosaicSequencingFrame.java
+//PROJECT:       Micro-Manager
+//SUBSYSTEM:     Projector plugin
+//-----------------------------------------------------------------------------
+//COPYRIGHT:     Andor Technology, Inc., 2014
+//               Contributed as open source to the Micro-Manager code base.
+//AUTHOR:        Code written by Arthur Edelstein.
+//LICENSE:       This file is distributed under the BSD license.
+//               License text is included with the source distribution.
+//               This file is distributed in the hope that it will be useful,
+//               but WITHOUT ANY WARRANTY; without even the implied warranty
+//               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+
 /*
- * Copyright 2014, Andor Technology, Inc.
- * Contributed as open source to the Micro-Manager
- * code base.
- * Code written by Arthur Edelstein.
  * The functions in this file are written in call
  * stack order: functions declared earlier in the file are
  * called by those declared later.
- * 
  */
 
 package org.micromanager.projector;
