@@ -768,24 +768,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
      
    }
 
-   private void handleException(Exception e, String msg) {
-      String errText = "Exception occurred: ";
-      if (msg.length() > 0) {
-         errText += msg + " -- ";
-      }
-      if (options_.debugLogEnabled_) {
-         errText += e.getMessage();
-      } else {
-         errText += e.toString() + "\n";
-         ReportingUtils.showError(e);
-      }
-      handleError(errText);
-   }
-
-   private void handleException(Exception e) {
-      handleException(e, "");
-   }
-
    private void handleError(String message) {
       if (isLiveModeOn()) {
          // Should we always stop live mode on any error?
@@ -2243,7 +2225,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
             core_.getXYPosition(xyStageLabel_, x, y);
          }
       } catch (Exception e) {
-         handleException(e);
+         ReportingUtils.showError(e, "Failed to get stage position");
       }
 
       staticInfo_.width_ = core_.getImageWidth();
