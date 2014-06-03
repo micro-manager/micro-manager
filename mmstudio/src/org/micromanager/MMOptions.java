@@ -42,6 +42,9 @@ public class MMOptions {
    private static final String MPTIFF_SEPARATE_FILES_FOR_POSITIONS = "SplitXYPostionsInFilesMPTiff";
    private static final String SYNCEXPOSUREMAINANDMDA = "SyncExposureBetweenMainAndMDAWindows";
    private static final String FAST_STORAGE = "FastStorage"; // No longer used but should not be reused
+   private static final String DELETE_OLD_CORELOGS = "DeleteOldCoreLogs";
+   private static final String DELETE_CORELOG_AFTER_DAYS =
+      "DeleteCoreLogAfterDays";
    
    public boolean debugLogEnabled_ = false;
    public boolean doNotAskForConfigFile_ = false;
@@ -55,6 +58,8 @@ public class MMOptions {
    public boolean mpTiffSeparateFilesForPositions_ = true;
    public boolean syncExposureMainAndMDA_ = false;
    public boolean hideMDADisplay_ = false;
+   public boolean deleteOldCoreLogs_ = false;
+   public int deleteCoreLogAfterDays_ = 7;
    
    public void saveSettings() {
       Preferences root = Preferences.userNodeForPackage( this.getClass());
@@ -71,6 +76,8 @@ public class MMOptions {
       prefs.putBoolean(MPTIFF_METADATA_FILE, mpTiffMetadataFile_);
       prefs.putBoolean(MPTIFF_SEPARATE_FILES_FOR_POSITIONS, mpTiffSeparateFilesForPositions_);
       prefs.putBoolean (SYNCEXPOSUREMAINANDMDA, syncExposureMainAndMDA_);
+      prefs.putBoolean(DELETE_OLD_CORELOGS, deleteOldCoreLogs_);
+      prefs.putInt(DELETE_CORELOG_AFTER_DAYS, deleteCoreLogAfterDays_);
    }
    
    public void loadSettings() {
@@ -88,5 +95,9 @@ public class MMOptions {
       mpTiffMetadataFile_ = prefs.getBoolean(MPTIFF_METADATA_FILE, mpTiffMetadataFile_);
       mpTiffSeparateFilesForPositions_ = prefs.getBoolean(MPTIFF_SEPARATE_FILES_FOR_POSITIONS, mpTiffSeparateFilesForPositions_);
       syncExposureMainAndMDA_ = prefs.getBoolean(SYNCEXPOSUREMAINANDMDA, syncExposureMainAndMDA_);
+      deleteOldCoreLogs_ =
+         prefs.getBoolean(DELETE_OLD_CORELOGS, deleteOldCoreLogs_);
+      deleteCoreLogAfterDays_ =
+         prefs.getInt(DELETE_CORELOG_AFTER_DAYS, deleteCoreLogAfterDays_);
    }
 }

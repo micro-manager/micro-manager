@@ -93,6 +93,7 @@ import org.micromanager.graph.GraphFrame;
 import org.micromanager.imageDisplay.DisplayWindow;
 import org.micromanager.imageDisplay.MetadataPanel;
 import org.micromanager.imageDisplay.VirtualAcquisitionDisplay;
+import org.micromanager.logging.LogFileManager;
 import org.micromanager.navigation.CenterAndDragListener;
 import org.micromanager.navigation.XYZKeyListener;
 import org.micromanager.navigation.ZWheelListener;
@@ -447,45 +448,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
 
    }
 
-   private String makeLogFileName() {
-      File file;
-
-      String filename = System.getProperty("org.micromanager.corelog.file");
-      if (filename != null && filename.length() > 0) {
-         file = new File(filename);
-      }
-      else {
-         String dirname = System.getProperty("org.micromanager.corelog.dir");
-         if (dirname == null || dirname.length() == 0) {
-            dirname = "CoreLogs";
-         }
-
-         String dateTime = new java.text.SimpleDateFormat("yyyyMMdd'T'HHmmss").
-            format(new java.util.Date());
-
-         // Try to get the process id. This method is not guaranteed to give
-         // the pid on all platforms/JVMs, but then, having the pid is not
-         // essential either. Just make sure not to fail if it doesn't work.
-         java.lang.management.RuntimeMXBean rtMXB =
-            java.lang.management.ManagementFactory.getRuntimeMXBean();
-         // jvmName is usually a string like 1234@host.example.com
-         String jvmName = rtMXB.getName();
-         String pidStr;
-         try {
-            pidStr = "_pid" + Integer.parseInt(jvmName.split("@")[0]);
-         }
-         catch (NumberFormatException e) {
-            pidStr = "";
-         }
-
-         String leafName = "CoreLog" + dateTime + pidStr + ".txt";
-
-         file = new File(new File(dirname), leafName);
-      }
-
-      return file.getAbsolutePath();
-   }
-   
    private void setupWindowHandlers() {
       // add window listeners
       addWindowListener(new WindowAdapter() {
@@ -507,7 +469,8 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
             }
 
             core_.enableStderrLog(true);
-            String logFileName = makeLogFileName();
+            String logFileName =
+               LogFileManager.makeLogFileNameForCurrentSession();
             new File(logFileName).getParentFile().mkdirs();
             try {
                core_.setPrimaryLogFile(logFileName);
@@ -516,6 +479,11 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
                // The Core will have logged the error to stderr.
             }
             core_.enableDebugLog(options_.debugLogEnabled_);
+
+            if (options_.deleteOldCoreLogs_) {
+               LogFileManager.deleteLogFilesDaysOld(
+                     options_.deleteCoreLogAfterDays_, logFileName);
+            }
 
             ReportingUtils.setCore(core_);
             logStartupProperties();

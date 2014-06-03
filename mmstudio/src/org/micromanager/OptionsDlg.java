@@ -43,6 +43,7 @@ import javax.swing.JTextField;
 import mmcorej.CMMCore;
 
 import org.micromanager.api.ScriptInterface;
+import org.micromanager.logging.LogFileManager;
 import org.micromanager.utils.GUIColors;
 import org.micromanager.utils.MMDialog;
 import org.micromanager.utils.NumberUtils;
@@ -54,14 +55,16 @@ import org.micromanager.utils.UIMonitor;
  *
  */
 public class OptionsDlg extends MMDialog {
+   private static final long serialVersionUID = 1L;
 
    private JTextField startupScriptFile_;
-   private static final long serialVersionUID = 1L;
    private JTextField bufSizeField_;
+   private JTextField logDeleteDaysField_;
+   private JComboBox comboDisplayBackground_;
+
    private MMOptions opts_;
    private CMMCore core_;
    private Preferences mainPrefs_;
-   private JComboBox comboDisplayBackground_;
    private ScriptInterface parent_;
    private GUIColors guiColors_;
 
@@ -121,14 +124,27 @@ public class OptionsDlg extends MMDialog {
          }
       });
 
-      final JButton clearLogFileButton = new JButton();
-      clearLogFileButton.setText("Clear Log File");
-      clearLogFileButton.setToolTipText("Erase the contents of the current log file");
-      clearLogFileButton.addActionListener(new ActionListener() {
+      final JCheckBox deleteLogCheckBox = new JCheckBox();
+      deleteLogCheckBox.setText("Delete log files after");
+      deleteLogCheckBox.setSelected(opts_.deleteOldCoreLogs_);
+      deleteLogCheckBox.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            opts_.deleteOldCoreLogs_ = deleteLogCheckBox.isSelected();
+         }
+      });
+
+      logDeleteDaysField_ =
+         new JTextField(Integer.toString(opts_.deleteCoreLogAfterDays_), 2);
+
+      final JButton deleteLogFilesButton = new JButton();
+      deleteLogFilesButton.setText("Delete Log Files Now");
+      deleteLogFilesButton.setToolTipText("Delete all CoreLog files except " +
+            "for the current one");
+      deleteLogFilesButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(final ActionEvent e) {
-            core_.clearLog();
-            parent_.logStartupProperties();
+            LogFileManager.deleteLogFilesDaysOld(0, core_.getPrimaryLogFile());
          }
       });
 
@@ -150,24 +166,6 @@ public class OptionsDlg extends MMDialog {
             } catch (BackingStoreException exc) {
                ReportingUtils.showError(e);
             }
-         }
-      });
-
-      final JButton okButton = new JButton();
-      okButton.setText("Close");
-      okButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(final ActionEvent e) {
-            try {
-               opts_.circularBufferSizeMB_ = NumberUtils.displayStringToInt(bufSizeField_.getText());
-            } catch (Exception e1) {
-               ReportingUtils.showError(e1);
-               return;
-            }
-            opts_.startupScript_ = startupScriptFile_.getText();
-            savePosition();
-            parent_.makeActive();
-            dispose();
          }
       });
 
@@ -326,30 +324,73 @@ public class OptionsDlg extends MMDialog {
          }
       });
 
+      final JButton closeButton = new JButton();
+      closeButton.setText("Close");
+      closeButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(final ActionEvent ev) {
+            int seqBufSize;
+            int deleteLogDays;
+            try {
+               seqBufSize =
+                  NumberUtils.displayStringToInt(bufSizeField_.getText());
+               deleteLogDays =
+                  NumberUtils.displayStringToInt(logDeleteDaysField_.getText());
+            }
+            catch (Exception ex) {
+               ReportingUtils.showError(ex);
+               return;
+            }
+
+            opts_.circularBufferSizeMB_ = seqBufSize;
+            opts_.startupScript_ = startupScriptFile_.getText();
+            opts_.deleteCoreLogAfterDays_ = deleteLogDays;
+
+            savePosition();
+            parent_.makeActive();
+            dispose();
+         }
+      });
+
+
       setLayout(new net.miginfocom.swing.MigLayout(
                "fill, insets dialog",
                "[fill]"));
+
       add(debugLogEnabledCheckBox, "wrap");
       add(doNotAskForConfigFileCheckBox, "wrap");
+
       add(new JLabel("Sequence Buffer Size:"), "split 3, gapright push");
       add(bufSizeField_, "gapright related");
       add(new JLabel("MB"), "wrap");
+
       add(new JLabel("Display Background:"), "split 2, gapright push");
       add(comboDisplayBackground_, "wrap");
+
       add(new JLabel("Startup Script:"), "split 2, gapright push");
       add(startupScriptFile_, "wrap");
-      add(clearLogFileButton, "sizegroup clearBtns, split 2");
+
+      add(deleteLogCheckBox, "split 3, gapright related");
+      add(logDeleteDaysField_, "gapright related");
+      add(new JLabel("days"), "gapright push, wrap");
+
+      add(deleteLogFilesButton, "sizegroup clearBtns, split 2");
       add(clearRegistryButton, "sizegroup clearBtns, wrap");
+
       add(autoreloadDevicesCheckBox, "wrap");
       add(closeOnExitCheckBox, "wrap");
+
       add(new JLabel("Preferred Image Window Zoom:"),
          "split 2, gapright push");
       add(prefZoomCombo, "wrap");
+
       add(metadataFileWithMultipageTiffCheckBox, "wrap");
       add(separateFilesForPositionsMPTiffCheckBox, "wrap");
       add(syncExposureMainAndMDA, "wrap");
       add(hideMDAdisplay, "wrap");
-      add(okButton, "gapleft push");
+
+      add(closeButton, "gapleft push");
+
       pack();
    }
 
