@@ -580,7 +580,7 @@ private:
    Configuration getConfigGroupState(const char* group, bool fromCache) throw (CMMError);
    std::string getDeviceErrorText(int deviceCode, boost::shared_ptr<DeviceInstance> pDevice);
    std::string getDeviceName(boost::shared_ptr<DeviceInstance> pDev);
-   void logError(const char* device, const char* msg, const char* file=0, int line=0);
+   void logError(const char* device, const char* msg);
    void updateAllowedChannelGroups();
    void assignDefaultRole(boost::shared_ptr<DeviceInstance> pDev);
    void updateCoreProperty(const char* propName, MM::DeviceType devType) throw (CMMError);

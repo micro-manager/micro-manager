@@ -917,14 +917,14 @@ void CMMCore::initializeAllDevices() throw (CMMError)
          pDevice = pluginManager_.GetDevice(devices[i].c_str());
       }
       catch (CMMError& err) {
-         logError(devices[i].c_str(), err.getMsg().c_str(), __FILE__, __LINE__);
+         logError(devices[i].c_str(), err.getMsg().c_str());
          throw;
       }
       MMThreadGuard guard(pluginManager_.getModuleLock(pDevice));
       int nRet = pDevice->Initialize();
       if (nRet != DEVICE_OK)
       {
-         logError(devices[i].c_str(), getDeviceErrorText(nRet, pDevice).c_str(), __FILE__, __LINE__);
+         logError(devices[i].c_str(), getDeviceErrorText(nRet, pDevice).c_str());
          throw CMMError(getDeviceErrorText(nRet, pDevice).c_str(), MMERR_DEVICE_GENERIC);
       }
       assignDefaultRole(pDevice);
@@ -974,7 +974,7 @@ void CMMCore::initializeDevice(const char* label ///< the device to initialize
    int nRet = pDevice->Initialize();
    if (nRet != DEVICE_OK)
    {
-      logError(label, getDeviceErrorText(nRet, pDevice).c_str(), __FILE__, __LINE__);
+      logError(label, getDeviceErrorText(nRet, pDevice).c_str());
       throw CMMError(getDeviceErrorText(nRet, pDevice).c_str(), MMERR_DEVICE_GENERIC);
    }
    
@@ -1053,7 +1053,7 @@ void CMMCore::unloadLibrary(const char* moduleName) throw (CMMError)
    }
    catch (CMMError& /* err */)
    {
-      logError(moduleName, "Library updating failed.", __FILE__, __LINE__);
+      logError(moduleName, "Library updating failed.");
       throw;
    }
 }
@@ -1234,7 +1234,7 @@ void CMMCore::waitForDevice(boost::shared_ptr<DeviceInstance> pDev) throw (CMMEr
          string label = pDev->GetLabel();
          std::ostringstream mez;
          mez << "wait timed out after " << timeoutMs_ << " ms. ";
-         logError(label.c_str(), mez.str().c_str(), __FILE__, __LINE__);
+         logError(label.c_str(), mez.str().c_str());
          throw CMMError("Wait for device " + ToQuotedString(label) + " timed out after " +
                ToString(timeoutMs_) + "ms",
                MMERR_DevicePollingTimeout);
@@ -1958,7 +1958,7 @@ void CMMCore::snapImage() throw (CMMError)
             int sret = shutter_->SetOpen(true);
             if (DEVICE_OK != sret)
             {
-               logError("CMMCore::snapImage", getDeviceErrorText(sret, shutter_).c_str(), __FILE__, __LINE__);
+               logError("CMMCore::snapImage", getDeviceErrorText(sret, shutter_).c_str());
                throw CMMError(getDeviceErrorText(sret, shutter_).c_str(), MMERR_DEVICE_GENERIC);
             }               
             waitForDevice(shutter_);
@@ -1972,7 +1972,7 @@ void CMMCore::snapImage() throw (CMMError)
             int sret  = shutter_->SetOpen(false);
             if (DEVICE_OK != sret)
             {
-               logError("CMMCore::snapImage", getDeviceErrorText(sret, shutter_).c_str(), __FILE__, __LINE__);
+               logError("CMMCore::snapImage", getDeviceErrorText(sret, shutter_).c_str());
                throw CMMError(getDeviceErrorText(sret, shutter_).c_str(), MMERR_DEVICE_GENERIC);
             }
             waitForDevice(shutter_);
@@ -1981,13 +1981,13 @@ void CMMCore::snapImage() throw (CMMError)
 			throw e;
 		}
 		catch (...) {
-         logError("CMMCore::snapImage", getCoreErrorText(MMERR_UnhandledException).c_str(), __FILE__, __LINE__);
+         logError("CMMCore::snapImage", getCoreErrorText(MMERR_UnhandledException).c_str());
          throw CMMError(getCoreErrorText(MMERR_UnhandledException).c_str(), MMERR_UnhandledException);
       }
 
       if (ret != DEVICE_OK)
       {
-         logError("CMMCore::snapImage", getDeviceErrorText(ret, camera_).c_str(), __FILE__, __LINE__);
+         logError("CMMCore::snapImage", getDeviceErrorText(ret, camera_).c_str());
          throw CMMError(getDeviceErrorText(ret, camera_).c_str(), MMERR_DEVICE_GENERIC);
       }
 
@@ -6512,14 +6512,11 @@ void CMMCore::initializeLogging()
 }
 
 
-void CMMCore::logError(const char* device, const char* msg, const char* fileName, int line)
+void CMMCore::logError(const char* device, const char* msg)
 {
    ostringstream os;
    os << "Device " << device << ". " << msg << endl;
-   if (fileName == 0)
-      CORE_LOG("Error occurred. %s\n", os.str().c_str());
-   else
-      CORE_LOG("Error occurred. %s, file %s, line %d\n", os.str().c_str(), fileName, line);
+   CORE_LOG("Error occurred. %s\n", os.str().c_str());
 }
 
 string CMMCore::getDeviceName(boost::shared_ptr<DeviceInstance> pDev)
