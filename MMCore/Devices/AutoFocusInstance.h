@@ -30,8 +30,9 @@ public:
          const std::string& name,
          MM::Device* pDevice,
          DeleteDeviceFunction deleteFunction,
-         const std::string& label) :
-      DeviceInstanceBase<MM::AutoFocus>(core, adapter, name, pDevice, deleteFunction, label)
+         const std::string& label,
+         boost::shared_ptr<mm::logging::Logger> logger) :
+      DeviceInstanceBase<MM::AutoFocus>(core, adapter, name, pDevice, deleteFunction, label, logger)
    {}
 
    int SetContinuousFocusing(bool state);

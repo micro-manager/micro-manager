@@ -263,7 +263,7 @@ void CPluginManager::UnloadAllDevices()
  * @return a pointer to the new device
  */
 boost::shared_ptr<DeviceInstance>
-CPluginManager::LoadDevice(CMMCore* core, const char* label, const char* moduleName, const char* deviceName)
+CPluginManager::LoadDevice(CMMCore* core, const char* label, const char* moduleName, const char* deviceName, boost::shared_ptr<mm::logging::Logger> logger)
 {
    for (DeviceConstIterator it = devices_.begin(), end = devices_.end(); it != end; ++it)
    {
@@ -277,7 +277,7 @@ CPluginManager::LoadDevice(CMMCore* core, const char* label, const char* moduleN
    
    boost::shared_ptr<LoadedDeviceAdapter> module = LoadPluginLibrary(moduleName);
 
-   boost::shared_ptr<DeviceInstance> pDevice = module->LoadDevice(core, deviceName, label);
+   boost::shared_ptr<DeviceInstance> pDevice = module->LoadDevice(core, deviceName, label, logger);
 
    char descr[MM::MaxStrLength] = "N/A";
    module->GetDeviceDescription(deviceName, descr, MM::MaxStrLength);

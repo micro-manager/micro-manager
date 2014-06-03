@@ -84,7 +84,7 @@ LoadedDeviceAdapter::RemoveLock()
 
 
 boost::shared_ptr<DeviceInstance>
-LoadedDeviceAdapter::LoadDevice(CMMCore* core, const std::string& name, const std::string& label)
+LoadedDeviceAdapter::LoadDevice(CMMCore* core, const std::string& name, const std::string& label, boost::shared_ptr<mm::logging::Logger> logger)
 {
    MM::Device* pDevice = CreateDevice(name.c_str());
    if (!pDevice)
@@ -102,33 +102,33 @@ LoadedDeviceAdapter::LoadDevice(CMMCore* core, const std::string& name, const st
    switch (expectedType)
    {
       case MM::CameraDevice:
-         return boost::make_shared<CameraInstance>(core, shared_this, name, pDevice, deleter, label);
+         return boost::make_shared<CameraInstance>(core, shared_this, name, pDevice, deleter, label, logger);
       case MM::ShutterDevice:
-         return boost::make_shared<ShutterInstance>(core, shared_this, name, pDevice, deleter, label);
+         return boost::make_shared<ShutterInstance>(core, shared_this, name, pDevice, deleter, label, logger);
       case MM::StageDevice:
-         return boost::make_shared<StageInstance>(core, shared_this, name, pDevice, deleter, label);
+         return boost::make_shared<StageInstance>(core, shared_this, name, pDevice, deleter, label, logger);
       case MM::XYStageDevice:
-         return boost::make_shared<XYStageInstance>(core, shared_this, name, pDevice, deleter, label);
+         return boost::make_shared<XYStageInstance>(core, shared_this, name, pDevice, deleter, label, logger);
       case MM::StateDevice:
-         return boost::make_shared<StateInstance>(core, shared_this, name, pDevice, deleter, label);
+         return boost::make_shared<StateInstance>(core, shared_this, name, pDevice, deleter, label, logger);
       case MM::SerialDevice:
-         return boost::make_shared<SerialInstance>(core, shared_this, name, pDevice, deleter, label);
+         return boost::make_shared<SerialInstance>(core, shared_this, name, pDevice, deleter, label, logger);
       case MM::GenericDevice:
-         return boost::make_shared<GenericInstance>(core, shared_this, name, pDevice, deleter, label);
+         return boost::make_shared<GenericInstance>(core, shared_this, name, pDevice, deleter, label, logger);
       case MM::AutoFocusDevice:
-         return boost::make_shared<AutoFocusInstance>(core, shared_this, name, pDevice, deleter, label);
+         return boost::make_shared<AutoFocusInstance>(core, shared_this, name, pDevice, deleter, label, logger);
       case MM::ImageProcessorDevice:
-         return boost::make_shared<ImageProcessorInstance>(core, shared_this, name, pDevice, deleter, label);
+         return boost::make_shared<ImageProcessorInstance>(core, shared_this, name, pDevice, deleter, label, logger);
       case MM::SignalIODevice:
-         return boost::make_shared<SignalIOInstance>(core, shared_this, name, pDevice, deleter, label);
+         return boost::make_shared<SignalIOInstance>(core, shared_this, name, pDevice, deleter, label, logger);
       case MM::MagnifierDevice:
-         return boost::make_shared<MagnifierInstance>(core, shared_this, name, pDevice, deleter, label);
+         return boost::make_shared<MagnifierInstance>(core, shared_this, name, pDevice, deleter, label, logger);
       case MM::SLMDevice:
-         return boost::make_shared<SLMInstance>(core, shared_this, name, pDevice, deleter, label);
+         return boost::make_shared<SLMInstance>(core, shared_this, name, pDevice, deleter, label, logger);
       case MM::GalvoDevice:
-         return boost::make_shared<GalvoInstance>(core, shared_this, name, pDevice, deleter, label);
+         return boost::make_shared<GalvoInstance>(core, shared_this, name, pDevice, deleter, label, logger);
       case MM::HubDevice:
-         return boost::make_shared<HubInstance>(core, shared_this, name, pDevice, deleter, label);
+         return boost::make_shared<HubInstance>(core, shared_this, name, pDevice, deleter, label, logger);
       default:
          deleter(pDevice);
          throw CMMError("Device " + ToQuotedString(name) +

@@ -33,8 +33,9 @@ public:
          const std::string& name,
          MM::Device* pDevice,
          DeleteDeviceFunction deleteFunction,
-         const std::string& label) :
-      DeviceInstanceBase<MM::Hub>(core, adapter, name, pDevice, deleteFunction, label),
+         const std::string& label,
+         boost::shared_ptr<mm::logging::Logger> logger) :
+      DeviceInstanceBase<MM::Hub>(core, adapter, name, pDevice, deleteFunction, label, logger),
       hasDetectedInstalledDevices_(false)
    {}
 

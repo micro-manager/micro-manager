@@ -28,17 +28,28 @@
 #include "../MMCore.h"
 
 
+int
+DeviceInstance::LogMessage(const char* msg, bool debugOnly)
+{
+   logger_->Log(debugOnly ? mm::logging::LogLevelDebug :
+         mm::logging::LogLevelInfo, msg);
+   return DEVICE_OK;
+}
+
+
 DeviceInstance::DeviceInstance(CMMCore* core,
       boost::shared_ptr<LoadedDeviceAdapter> adapter,
       const std::string& name,
       MM::Device* pDevice,
       DeleteDeviceFunction deleteFunction,
-      const std::string& label) :
+      const std::string& label,
+      boost::shared_ptr<mm::logging::Logger> logger) :
+   pImpl_(pDevice),
    core_(core),
    adapter_(adapter),
    label_(label),
    deleteFunction_(deleteFunction),
-   pImpl_(pDevice)
+   logger_(logger)
 {
    const std::string actualName = GetName();
    if (actualName != name)

@@ -25,6 +25,7 @@
 #include "../../MMDevice/DeviceThreads.h"
 #include "../../MMDevice/MMDevice.h"
 #include "../../MMDevice/ModuleInterface.h"
+#include "../Logging/Logging.h"
 
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/shared_ptr.hpp>
@@ -54,7 +55,9 @@ public:
    MMThreadLock* GetLock();
    void RemoveLock(); // XXX I'm not sure it is a good idea to expose this.
 
-   boost::shared_ptr<DeviceInstance> LoadDevice(CMMCore* core, const std::string& name, const std::string& label);
+   boost::shared_ptr<DeviceInstance> LoadDevice(CMMCore* core,
+         const std::string& name, const std::string& label,
+         boost::shared_ptr<mm::logging::Logger> logger);
 
    MM::DeviceType GetAdvertisedDeviceType(const std::string& deviceName) const;
 

@@ -57,13 +57,9 @@ public:
     */
    int LogMessage(const MM::Device* caller, const char* msg, bool debugOnly) const
    {
-      char label[MM::MaxStrLength];
-      caller->GetLabel(label);
-      if (debugOnly)
-         core_->getLoggerInstance()->LogF(true, "Device %s debug message: %s\n", label, msg);
-      else
-         core_->getLoggerInstance()->LogF(false, "Device %s message: %s\n", label, msg);
-      return DEVICE_OK;
+      boost::shared_ptr<DeviceInstance> device =
+         core_->pluginManager_.GetDevice(caller);
+      return device->LogMessage(msg, debugOnly);
    }
 
    long GetNumberOfDevices() const

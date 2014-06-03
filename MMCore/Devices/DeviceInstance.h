@@ -20,6 +20,7 @@
 #pragma once
 
 #include "../../MMDevice/MMDeviceConstants.h"
+#include "../Logging/Logging.h"
 
 #include <string>
 #include <vector>
@@ -58,14 +59,16 @@ typedef boost::function<void (MM::Device*)> DeleteDeviceFunction;
  */
 class DeviceInstance : boost::noncopyable
 {
+protected:
+   MM::Device* pImpl_;
+
+private:
    CMMCore* core_; // Weak reference
    boost::shared_ptr<LoadedDeviceAdapter> adapter_;
    const std::string label_;
    std::string description_;
    DeleteDeviceFunction deleteFunction_;
-
-protected:
-   MM::Device* pImpl_;
+   boost::shared_ptr<mm::logging::Logger> logger_;
 
 public:
    boost::shared_ptr<LoadedDeviceAdapter> GetAdapterModule() const /* final */ { return adapter_; }
@@ -77,6 +80,9 @@ public:
    // need it for the few CoreCallback methods that return a device pointer.
    MM::Device* GetRawPtr() const /* final */ { return pImpl_; }
 
+   // Callback API
+   int LogMessage(const char* msg, bool debugOnly);
+
 protected:
    // The DeviceInstance object owns the raw device pointer (pDevice) as soon
    // as the constructor is called, even if the constructor throws.
@@ -85,7 +91,8 @@ protected:
          const std::string& name,
          MM::Device* pDevice,
          DeleteDeviceFunction deleteFunction,
-         const std::string& label);
+         const std::string& label,
+	 boost::shared_ptr<mm::logging::Logger> logger);
 
    virtual ~DeviceInstance();
 
