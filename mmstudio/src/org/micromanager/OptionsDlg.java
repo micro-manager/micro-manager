@@ -39,6 +39,7 @@ import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JTextField;
+import javax.swing.WindowConstants;
 
 import mmcorej.CMMCore;
 
@@ -74,32 +75,33 @@ public class OptionsDlg extends MMDialog {
    public OptionsDlg(MMOptions opts, CMMCore core, Preferences mainPrefs, ScriptInterface parent) {
       super();
       parent_ = parent;
-      addWindowListener(new WindowAdapter() {
-
-         @Override
-         public void windowClosing(final WindowEvent e) {
-            savePosition();
-            parent_.makeActive();
-         }
-      });
-      setResizable(false);
-      setModal(true);
       opts_ = opts;
       core_ = core;
       mainPrefs_ = mainPrefs;
-      setTitle("Micro-Manager Options");
       guiColors_ = new GUIColors();
 
+      setResizable(false);
+      setModal(true);
+      setTitle("Micro-Manager Options");
       if (opts_.displayBackground_.equals("Day")) {
          setBackground(java.awt.SystemColor.control);
       } else if (opts_.displayBackground_.equals("Night")) {
          setBackground(java.awt.Color.gray);
       }
+
       Preferences root = Preferences.userNodeForPackage(this.getClass());
       setPrefsNode(root.node(root.absolutePath() + "/OptionsDlg"));
 
       Rectangle r = getBounds();
       loadPosition(r.x, r.y);
+
+      setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+      addWindowListener(new WindowAdapter() {
+         @Override
+         public void windowClosing(final WindowEvent e) {
+            closeRequested();
+         }
+      });
 
       final JCheckBox debugLogEnabledCheckBox = new JCheckBox();
       debugLogEnabledCheckBox.setText("Enable debug logging");
@@ -329,26 +331,7 @@ public class OptionsDlg extends MMDialog {
       closeButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(final ActionEvent ev) {
-            int seqBufSize;
-            int deleteLogDays;
-            try {
-               seqBufSize =
-                  NumberUtils.displayStringToInt(bufSizeField_.getText());
-               deleteLogDays =
-                  NumberUtils.displayStringToInt(logDeleteDaysField_.getText());
-            }
-            catch (Exception ex) {
-               ReportingUtils.showError(ex);
-               return;
-            }
-
-            opts_.circularBufferSizeMB_ = seqBufSize;
-            opts_.startupScript_ = startupScriptFile_.getText();
-            opts_.deleteCoreLogAfterDays_ = deleteLogDays;
-
-            savePosition();
-            parent_.makeActive();
-            dispose();
+            closeRequested();
          }
       });
 
@@ -404,5 +387,29 @@ public class OptionsDlg extends MMDialog {
          // set background and trigger redraw of parent and its descendant windows
          MMStudioMainFrame.getInstance().setBackgroundStyle(background);
       }
+   }
+
+   private void closeRequested() {
+      int seqBufSize;
+      int deleteLogDays;
+      try {
+         seqBufSize =
+            NumberUtils.displayStringToInt(bufSizeField_.getText());
+         deleteLogDays =
+            NumberUtils.displayStringToInt(logDeleteDaysField_.getText());
+      }
+      catch (Exception ex) {
+         ReportingUtils.showError(ex);
+         return;
+      }
+
+      opts_.circularBufferSizeMB_ = seqBufSize;
+      opts_.startupScript_ = startupScriptFile_.getText();
+      opts_.deleteCoreLogAfterDays_ = deleteLogDays;
+      opts_.saveSettings();
+
+      savePosition();
+      parent_.makeActive();
+      dispose();
    }
 }
