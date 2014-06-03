@@ -442,6 +442,9 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
       SequenceEvent sequenceEvent = new SequenceEvent();
       ArrayList<Polygon> selectedRoiPolygons = new ArrayList<Polygon>();
       for (int roiIndex : roiIndexList) {
+         if ((roiIndex < 0) || (roiIndex >= availableRoiPolygons.size())) {
+            throw new RuntimeException("An ROI that does not exist was specified in a sequence event.");
+         }
          selectedRoiPolygons.add(availableRoiPolygons.get(roiIndex));
       }
       ArrayList<Integer> selectedRoiIntensities = new ArrayList<Integer>();
