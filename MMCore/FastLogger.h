@@ -23,11 +23,13 @@
 
 #include "LogManager.h"
 
+#include <boost/utility.hpp>
+
 #include <cstdarg>
 #include <string>
 
 
-class FastLogger
+class FastLogger : boost::noncopyable
 {
    mm::LogManager& manager_;
    boost::shared_ptr<mm::logging::Logger> defaultLogger_;
