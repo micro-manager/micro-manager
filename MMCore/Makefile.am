@@ -9,7 +9,7 @@ noinst_LTLIBRARIES = libMMCore.la
 
 # libMMCore currently requires libMMDevice, due to use of CDeviceUtils,
 # ImgBuffer, and FrameBuffer. This dependency should probably be removed.
-libMMCore_la_LIBADD = $(BOOST_SYSTEM_LIB) $(BOOST_DATE_TIME_LIB) $(ZLIB_LIBS) ../MMDevice/libMMDevice.la
+libMMCore_la_LIBADD = $(BOOST_SYSTEM_LIB) $(BOOST_DATE_TIME_LIB) $(BOOST_THREAD_LIB) $(ZLIB_LIBS) ../MMDevice/libMMDevice.la
 
 libMMCore_la_SOURCES = \
 	../MMDevice/MMDevice.h \
@@ -75,6 +75,16 @@ libMMCore_la_SOURCES = \
 	LoadableModules/LoadedModuleImpl.h \
 	LoadableModules/LoadedModuleImplUnix.cpp \
 	LoadableModules/LoadedModuleImplUnix.h \
+	LogManager.cpp \
+	LogManager.h \
+	Logging/AsyncLoggingQueue.h \
+	Logging/LogEntryFilter.h \
+	Logging/LogEntryMetadata.h \
+	Logging/LogLine.h \
+	Logging/LogSink.h \
+	Logging/Logger.h \
+	Logging/Logging.h \
+	Logging/LoggingCore.h \
 	MMCore.cpp \
 	MMCore.h \
 	PluginManager.cpp \

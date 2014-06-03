@@ -19,6 +19,7 @@ AC_PROG_CC([clang llvm-gcc gcc cc])
 AX_BOOST_BASE([1.46.0])
 AX_BOOST_DATE_TIME
 AX_BOOST_SYSTEM
+AX_BOOST_THREAD
 
 
 # zlib

@@ -21,25 +21,24 @@
 
 #pragma once
 
-#include "../MMDevice/DeviceThreads.h"
+#include "LogManager.h"
 
 #include <cstdarg>
-#include <fstream>
 #include <string>
 
 
-class LoggerThread;
-
 class FastLogger
 {
-public:
-   FastLogger();
-   virtual ~FastLogger();
+   mm::LogManager manager_;
+   boost::shared_ptr<mm::logging::Logger> defaultLogger_;
 
-   friend class LoggerThread;
+public:
+   FastLogger() :
+      defaultLogger_(manager_.NewLogger("Core"))
+   {}
 
    bool Initialize(const std::string& logFileName);
-   void Shutdown();
+   void Shutdown() {}
    bool Reset();
 
    void SetPriorityLevel(bool includeDebug);
@@ -53,23 +52,5 @@ public:
    // since the log file can be extremely large, pass back exactly the buffer that was read
    // CALLER IS RESPONSIBLE FOR delete[] of the array!!
    void LogContents(char** ppContents, unsigned long& len);
-   std::string LogPath(void);
-
-private:
-   void WriteEntryPrefix(std::ostream& stream, bool isDebug);
-   bool Open(const std::string& f_a); // Called with logFileLock_ held
-
-private:
-   LoggerThread* pLogThread_;
-
-   bool debugLoggingEnabled_; // Not correctly synchronized
-   bool stderrLoggingEnabled_; // Not correctly synchronized
-
-   MMThreadLock logFileLock_;
-   bool fileLoggingEnabled_; // Access synchronized by logFileLock_
-   std::string logFileName_; // Access synchronized by logFileLock_
-   std::ofstream* plogFile_; // Access synchronized by logFileLock_
-
-   MMThreadLock entriesLock_;
-   std::string pendingEntries_; // Access synchronized by entriesLock_
+   std::string LogPath();
 };

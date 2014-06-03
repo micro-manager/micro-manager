@@ -27,8 +27,8 @@
 class MMEventCallback
 {
 public:
-   MMEventCallback() {std::cout << "MMEventCallback()" << std::endl; }
-   virtual ~MMEventCallback() {std::cout << "~MMEventCallback()" << std::endl; }
+   MMEventCallback() {}
+   virtual ~MMEventCallback() {}
 
    virtual void onPropertiesChanged()
    {

@@ -25,6 +25,9 @@
     <Filter Include="Source Files\LoadableModules">
       <UniqueIdentifier>{764ae36a-5168-425f-b711-03a01fe55b5e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Logging">
+      <UniqueIdentifier>{00ee4ab9-5b43-400c-915c-0ac80094558b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CircularBuffer.cpp">
@@ -109,6 +112,9 @@
       <Filter>Source Files\Devices</Filter>
     </ClCompile>
     <ClCompile Include="LibraryInfo\LibraryPathsWindows.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="LogManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -217,6 +223,33 @@
     </ClInclude>
     <ClInclude Include="LibraryInfo\LibraryPaths.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Logging\AsyncLoggingQueue.h">
+      <Filter>Header Files\Logging</Filter>
+    </ClInclude>
+    <ClInclude Include="Logging\LogEntryMetadata.h">
+      <Filter>Header Files\Logging</Filter>
+    </ClInclude>
+    <ClInclude Include="Logging\Logger.h">
+      <Filter>Header Files\Logging</Filter>
+    </ClInclude>
+    <ClInclude Include="Logging\LoggingCore.h">
+      <Filter>Header Files\Logging</Filter>
+    </ClInclude>
+    <ClInclude Include="Logging\LogLine.h">
+      <Filter>Header Files\Logging</Filter>
+    </ClInclude>
+    <ClInclude Include="Logging\LogSink.h">
+      <Filter>Header Files\Logging</Filter>
+    </ClInclude>
+    <ClInclude Include="LogManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Logging\LogEntryFilter.h">
+      <Filter>Header Files\Logging</Filter>
+    </ClInclude>
+    <ClInclude Include="Logging\Logging.h">
+      <Filter>Header Files\Logging</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
