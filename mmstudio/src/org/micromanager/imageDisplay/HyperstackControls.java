@@ -174,7 +174,7 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
 
       // This control is added by both Snap/Live, and Standard, but in 
       // different places on each. 
-      fpsLabel_ = new JLabel("", SwingConstants.RIGHT);
+      fpsLabel_ = new JLabel("                      ", SwingConstants.RIGHT);
       fpsLabel_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
       fpsLabel_.setFocusable(false);
 
@@ -265,8 +265,13 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
       
       subPanel_.add(abortButton_);
       subPanel_.add(pauseAndResumeToggleButton_);
-      subPanel_.add(fpsLabel_, "align right, span -1, width 120px");
-      subPanel_.add(fpsField_);
+      // Make a new panel to hold the FPS info, since they need to be 
+      // together.
+      JPanel fpsPanel = new JPanel(new MigLayout());
+      fpsPanel.add(fpsLabel_);
+      fpsPanel.add(fpsField_);
+
+      subPanel_.add(fpsPanel, "span, gapleft push, wrap");
 
       fpsField_.setToolTipText(
             "Set the speed at which the acquisition is played back.");
