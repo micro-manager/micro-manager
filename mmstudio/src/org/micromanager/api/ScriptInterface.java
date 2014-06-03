@@ -699,12 +699,6 @@ public interface ScriptInterface {
    public void setImageSavingFormat(Class imageSavingClass) throws MMScriptException;
 
    /*
-    * Returns true if the user has chosen to allow MM to autoreload devices
-    * that throw an error.
-    */
-   public boolean getAutoreloadOption();
-
-   /*
     * Returns the pipeline
     */
    public IAcquisitionEngine2010 getAcquisitionEngine2010();

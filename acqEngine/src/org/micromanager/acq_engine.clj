@@ -19,7 +19,7 @@
           [when-lets map-config get-config get-positions load-mm store-mmcore
            get-default-devices core log log-cmd mmc gui with-core-setting
            do-when if-args get-system-config-cached select-values-match?
-           get-property get-camera-roi parse-core-metadata reload-device
+           get-property get-camera-roi parse-core-metadata
            json-to-data get-pixel-type get-msp-z-position set-msp-z-position
            get-msp MultiStagePosition-to-map ChannelSpec-to-map
            get-pixel-type get-current-time-str rekey
@@ -189,10 +189,7 @@
     (when-not
       (or
         (successful? (attempt#)) ; first attempt
-        (do (log "second attempt") (successful? (attempt#)))
-        (when false
-          (do (log "reload and try a third time")
-          (successful? (reload-device ~device) (attempt#))))) ; third attempt after reloading
+        (do (log "second attempt") (successful? (attempt#))))
       (throw-exception (str "Device failure: " ~device))
       (swap! state assoc :stop true)
       nil)))

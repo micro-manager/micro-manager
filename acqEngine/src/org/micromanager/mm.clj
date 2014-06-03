@@ -284,32 +284,6 @@
     (for [k (.GetKeys m)]
       [k (.. m (GetSingleTag k) GetValue)])))
 
-(defn reload-device
-  "Unload a device, and reload it, preserving its property settings."
-  [dev]
-  (when (and gui (. gui getAutoreloadOption))
-    (log "Attempting to reload " dev "...")
-    (let [props (filter #(= (first %) dev)
-                        (get-system-config-cached))
-          prop-map (into {} (map #(-> % next vec) props))
-          library (core getDeviceLibrary dev)
-          name-in-library (core getDeviceName dev)
-          state-device (eval 'mmcorej.DeviceType/StateDevice) ; load at runtime
-          state-labels (when (= state-device (core getDeviceType dev))
-                         (vec (core getStateLabels dev)))]
-      (core unloadDevice dev)
-      (core loadDevice dev library name-in-library)
-      (let [init-props (select-keys prop-map
-                                    (filter #(core isPropertyPreInit dev %)
-                                            (core getDevicePropertyNames dev)))]
-        (doseq [[prop val] init-props]
-          (core setProperty dev prop val)))
-      (core initializeDevice dev)
-      (when state-labels
-        (dotimes [i (count state-labels)]
-          (core defineStateLabel dev i (get state-labels i)))))
-    (log "...reloading of " dev " has apparently succeeded.")))
-
 (defn json-to-data
   "Take a JSON object and convert it to a clojure data object."
   [json]

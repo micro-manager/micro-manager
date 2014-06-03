@@ -3488,11 +3488,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
        });
    }
 
-   @Override
-   public boolean getAutoreloadOption() {
-      return options_.autoreloadDevices_;
-   }
-
    /**
     * Returns the current background color
     * @return current background color

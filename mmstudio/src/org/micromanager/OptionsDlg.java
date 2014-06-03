@@ -218,15 +218,6 @@ public class OptionsDlg extends MMDialog {
 
       startupScriptFile_ = new JTextField(opts_.startupScript_);
 
-      final JCheckBox autoreloadDevicesCheckBox = new JCheckBox();
-      autoreloadDevicesCheckBox.setText("Auto-reload devices (Danger!)");
-      autoreloadDevicesCheckBox.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent arg0) {
-            opts_.autoreloadDevices_ = autoreloadDevicesCheckBox.isSelected();
-         }
-      });
-
       final JCheckBox closeOnExitCheckBox = new JCheckBox();
       closeOnExitCheckBox.setText("Close app when quitting MM");
       closeOnExitCheckBox.setSelected(opts_.closeOnExit_);
@@ -415,7 +406,6 @@ public class OptionsDlg extends MMDialog {
 
       add(syncExposureMainAndMDA, "wrap");
       add(hideMDAdisplay, "wrap");
-      add(autoreloadDevicesCheckBox, "wrap");
 
       add(new JSeparator(), "wrap");
 
