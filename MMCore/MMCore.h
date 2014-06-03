@@ -128,18 +128,8 @@ public:
    void initializeDevice(const char* label) throw (CMMError);
    void updateCoreProperties() throw (CMMError);
    void reset() throw (CMMError);
-   MMCORE_DEPRECATED(void clearLog());
-   void enableDebugLog(bool enable);
-   bool debugLogEnabled();
-   void enableStderrLog(bool enable);
    std::string getUserId() const;
    std::string getHostName() const;
-   void logMessage(const char* msg);
-   void logMessage(const char* msg, bool debugOnly);
-   MMCORE_DEPRECATED(std::string saveLogArchive(void));
-   MMCORE_DEPRECATED(std::string saveLogArchiveWithPreamble(
-            char* preamble, int length));
-
    std::string getVersionInfo() const;
    std::string getAPIVersionInfo() const;
    Configuration getSystemState();
@@ -155,6 +145,27 @@ public:
    void loadSystemConfiguration(const char* fileName) throw (CMMError);
    void registerCallback(MMEventCallback* cb);
    //@ }
+
+   /**
+    * @name Logging
+    */
+   // @{
+   void logMessage(const char* msg);
+   void logMessage(const char* msg, bool debugOnly);
+   void enableDebugLog(bool enable);
+   bool debugLogEnabled();
+   void enableStderrLog(bool enable);
+   bool stderrLogEnabled();
+
+   int startSecondaryLogFile(const char* filename, bool enableDebug,
+         bool truncate = true, bool synchronous = false) throw (CMMError);
+   void stopSecondaryLogFile(int handle) throw (CMMError);
+
+   MMCORE_DEPRECATED(void clearLog());
+   MMCORE_DEPRECATED(std::string saveLogArchive(void));
+   MMCORE_DEPRECATED(std::string saveLogArchiveWithPreamble(
+            char* preamble, int length));
+   // @}
 
    /** @name Device discovery and configuration interface.
    */

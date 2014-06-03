@@ -355,6 +355,55 @@ void CMMCore::enableStderrLog(bool enable)
    logManager_.SetUseStdErr(enable);
 }
 
+bool CMMCore::stderrLogEnabled()
+{
+   return logManager_.IsUsingStdErr();
+}
+
+
+/**
+ * Start capturing logging output into an additional file.
+ *
+ * @param filename The filename to which the log will be captured
+ * @param enableDebug Whether to include debug logging (regardless of whether
+ * debug logging is enabled for the primary log).
+ * @param truncate If false, append to the file.
+ * @param synchronous If true, enable synchronous logging for this file
+ * (logging calls will not return until the output is written to the file,
+ * facilitating the debugging of crashes in some cases, but with a performance
+ * cost).
+ * @returns A handle required when calling stopSecondaryLogFile().
+ */
+int CMMCore::startSecondaryLogFile(const char* filename, bool enableDebug,
+      bool truncate, bool synchronous) throw (CMMError)
+{
+   if (!filename)
+      throw CMMError("Filename is null");
+
+   using namespace mm::logging;
+   typedef mm::LogManager::LogFileHandle LogFileHandle;
+
+   LogFileHandle handle = logManager_.AddSecondaryLogFile(
+            (enableDebug ? LogLevelTrace : LogLevelInfo),
+            filename, truncate,
+            (synchronous ? SinkModeSynchronous : SinkModeAsynchronous));
+   return static_cast<int>(handle);
+}
+
+
+/**
+ * Stop capturing logging output into an additional file.
+ *
+ * @param handle The secondary log handle returned by startSecondaryLogFile().
+ */
+void CMMCore::stopSecondaryLogFile(int handle) throw (CMMError)
+{
+   typedef mm::LogManager::LogFileHandle LogFileHandle;
+   LogFileHandle h = static_cast<LogFileHandle>(handle);
+   logManager_.RemoveSecondaryLogFile(h);
+}
+
+
 /*!
  Displays current user name.
  */
