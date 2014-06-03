@@ -166,11 +166,6 @@ CMMCore::CMMCore() :
    errorText_[MMERR_NullPointerException] = "Null Pointer Exception.";
    errorText_[MMERR_CreatePeripheralFailed] = "Hub failed to create specified peripheral device.";
 
-   initializeLogging();
-   CORE_LOG("-------->>\n");
-   CORE_LOG("Core session started by %s on %s\n", getUserId().c_str(), getHostName().c_str());
-   enableDebugLog(false);
-
 	try
 	{
 		callback_ = new CoreCallback(this);
@@ -290,6 +285,29 @@ CMMCore::~CMMCore()
 }
 
 /**
+ * Set the primary Core log file.
+ *
+ * @param filename The log filename. If empty or null, the primary log file is
+ * disabled.
+ */
+void CMMCore::setPrimaryLogFile(const char* filename, bool truncate) throw (CMMError)
+{
+   std::string filenameStr;
+   if (filename)
+      filenameStr = filename;
+
+   logManager_.SetPrimaryLogFilename(filenameStr, truncate);
+}
+
+/**
+ * Return the name of the primary Core log file.
+ */
+std::string CMMCore::getPrimaryLogFile() const
+{
+   return logManager_.GetPrimaryLogFilename();
+}
+
+/**
  * Delete an existing log file and start a new one.
  *
  * \deprecated There is no good reason for the application to clear the log. To
@@ -307,9 +325,6 @@ void CMMCore::clearLog()
       // Bug! We have no way to notify the caller of an error.
       // Don't bother to fix it; we will deprecate this function anyway.
    }
-
-   CORE_LOG("-------->>\n");
-   CORE_LOG("Log cleared and re-started by %s on %s\n", getUserId().c_str(), getHostName().c_str());
 }
 
 /**
@@ -6543,32 +6558,6 @@ string CMMCore::getCoreErrorText(int code) const
 
    return txt;
 }
-
-void CMMCore::initializeLogging()
-{
-   // append start day to corelog name
-   boost::gregorian::date today( boost::gregorian::day_clock::local_day());
-
-   std::ostringstream sout; 
-	sout.fill('0'); 
-	sout.width(4);
-   sout<<today.year();
-   sout << std::setw(2) << today.month().as_number() << std::setw(2) << today.day() ; 
-  
-   std::string logName = g_logFileName + sout.str() + std::string(".txt");
-
-   logManager_.SetUseStdErr(true);
-   try
-   {
-      logManager_.SetPrimaryLogFilename(logName, false);
-   }
-   catch (const CMMError&)
-   {
-      // LogManager will have printed message to stderr. There is nothing much
-      // more we can do until we allow client to manage log filename.
-   }
-}
-
 
 void CMMCore::logError(const char* device, const char* msg)
 {

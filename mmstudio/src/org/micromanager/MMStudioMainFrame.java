@@ -446,6 +446,45 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       DropTarget dropTarget = new DropTarget(this, new DragDropUtil());
 
    }
+
+   private String makeLogFileName() {
+      File file;
+
+      String filename = System.getProperty("org.micromanager.corelog.file");
+      if (filename != null && filename.length() > 0) {
+         file = new File(filename);
+      }
+      else {
+         String dirname = System.getProperty("org.micromanager.corelog.dir");
+         if (dirname == null || dirname.length() == 0) {
+            dirname = "CoreLogs";
+         }
+
+         String dateTime = new java.text.SimpleDateFormat("yyyyMMdd'T'HHmmss").
+            format(new java.util.Date());
+
+         // Try to get the process id. This method is not guaranteed to give
+         // the pid on all platforms/JVMs, but then, having the pid is not
+         // essential either. Just make sure not to fail if it doesn't work.
+         java.lang.management.RuntimeMXBean rtMXB =
+            java.lang.management.ManagementFactory.getRuntimeMXBean();
+         // jvmName is usually a string like 1234@host.example.com
+         String jvmName = rtMXB.getName();
+         String pidStr;
+         try {
+            pidStr = "_pid" + Integer.parseInt(jvmName.split("@")[0]);
+         }
+         catch (NumberFormatException e) {
+            pidStr = "";
+         }
+
+         String leafName = "CoreLog" + dateTime + pidStr + ".txt";
+
+         file = new File(new File(dirname), leafName);
+      }
+
+      return file.getAbsolutePath();
+   }
    
    private void setupWindowHandlers() {
       // add window listeners
@@ -467,8 +506,18 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
                return;
             }
 
-            ReportingUtils.setCore(core_);
+            core_.enableStderrLog(true);
+            String logFileName = makeLogFileName();
+            new File(logFileName).getParentFile().mkdirs();
+            try {
+               core_.setPrimaryLogFile(logFileName);
+            }
+            catch (Exception ignore) {
+               // The Core will have logged the error to stderr.
+            }
             core_.enableDebugLog(options_.debugLogEnabled_);
+
+            ReportingUtils.setCore(core_);
             logStartupProperties();
                     
             cameraLabel_ = "";
@@ -3362,6 +3411,15 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
     */
    @Override
    public void logStartupProperties() {
+      core_.logMessage("User: " + System.getProperty("user.name"));
+      String hostname;
+      try {
+         hostname = java.net.InetAddress.getLocalHost().getHostName();
+      }
+      catch (java.net.UnknownHostException e) {
+         hostname = "unknown";
+      }
+      core_.logMessage("Host: " + hostname);
       core_.logMessage("MM Studio version: " + getVersion());
       core_.logMessage(core_.getVersionInfo());
       core_.logMessage(core_.getAPIVersionInfo());

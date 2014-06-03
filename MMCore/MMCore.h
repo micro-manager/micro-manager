@@ -150,6 +150,9 @@ public:
     * @name Logging
     */
    // @{
+   void setPrimaryLogFile(const char* filename, bool truncate = false) throw (CMMError);
+   std::string getPrimaryLogFile() const;
+
    void logMessage(const char* msg);
    void logMessage(const char* msg, bool debugOnly);
    void enableDebugLog(bool enable);
@@ -609,7 +612,6 @@ private:
    void updateAllowedChannelGroups();
    void assignDefaultRole(boost::shared_ptr<DeviceInstance> pDev);
    void updateCoreProperty(const char* propName, MM::DeviceType devType) throw (CMMError);
-   void initializeLogging();
 
    MMThreadLock* pPostedErrorsLock_;
    mutable std::deque<std::pair< int, std::string> > postedErrors_;
