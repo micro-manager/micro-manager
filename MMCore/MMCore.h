@@ -520,6 +520,7 @@ private:
    // LogManager should be the first data member, so that it is available for
    // as long as possible during construction and (especially) destruction.
    mm::LogManager logManager_;
+   boost::shared_ptr<mm::logging::Logger> appLogger_;
 
    bool everSnapped_;
    boost::shared_ptr<CameraInstance> camera_;

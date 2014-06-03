@@ -108,6 +108,7 @@ const int MMCore_versionBuild = 2;
  * devices at this point.
  */
 CMMCore::CMMCore() :
+   appLogger_(logManager_.NewLogger("App")),
    everSnapped_(false), pollingIntervalMs_(10), timeoutMs_(5000),
    autoShutter_(true), callback_(0), configGroups_(0), properties_(0), externalCallback_(0), pixelSizeGroup_(0), cbuf_(0), pPostedErrorsLock_(NULL)
 {
@@ -312,7 +313,7 @@ void CMMCore::clearLog()
  */
 void CMMCore::logMessage(const char* msg)
 {
-   CORE_LOG("> %s\n", msg);
+   appLogger_->Log(mm::logging::LogLevelInfo, msg);
 }
 
 
@@ -321,13 +322,9 @@ void CMMCore::logMessage(const char* msg)
  */
 void CMMCore::logMessage(const char* msg, bool debugOnly)
 {
-  if (debugOnly) {
-    CORE_DEBUG("> %s\n", msg);
-  } else {
-    CORE_LOG("> %s\n", msg);
-  }
+   appLogger_->Log(debugOnly ? mm::logging::LogLevelDebug :
+         mm::logging::LogLevelInfo, msg);
 }
-
 
 
 /**
@@ -6757,7 +6754,7 @@ MM::DeviceDetectionStatus CMMCore::detectDevice(char* deviceName)
       if (strlen(p) > 0)
          port = p;
       txt << "Device Detection: error testing ports " << port << " for device " << deviceName;  
-      logMessage(txt.str().c_str());
+      CORE_LOG("%s", txt.str().c_str());
    }
 
    // if the device is not there, restore the parameters to the original settings
@@ -6775,7 +6772,7 @@ MM::DeviceDetectionStatus CMMCore::detectDevice(char* deviceName)
             {
                ostringstream txt;
                txt << "Device Detection: error restoring port " << p << " state after testing for device " << deviceName;  
-               logMessage(txt.str().c_str());
+               CORE_LOG("%s", txt.str().c_str());
             }
          }
       }
@@ -6848,7 +6845,7 @@ std::vector<std::string> CMMCore::getMACAddresses(void)
          {
             std::ostringstream m;
             m << "error retrieving MAC address " << status;
-            logMessage(m.str().c_str());
+            CORE_LOG("%s", m.str().c_str());
          }
          delete pHost;
       }
