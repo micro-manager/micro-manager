@@ -90,9 +90,14 @@ public class ScrollerPanel extends JPanel {
       // option along that axis.
       // TODO: for now assuming all axes can animate.
       for (int i = 0; i < maximums.length; ++i) {
+         int max = maximums[i];
+         if (max < 1) {
+            // Scroll bars do not allow zero "ticks".
+            max = 1;
+         }
          AxisScroller scroller = new AxisScroller(axes[i], 
-               maximums[i], bus, true);
-         if (maximums[i] <= 1) {
+               max, bus, true);
+         if (max <= 1) {
             scroller.setVisible(false);
          }
          else {
