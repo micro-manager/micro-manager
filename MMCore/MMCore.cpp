@@ -77,15 +77,6 @@
 
 using namespace std;
 
-// constants
-#ifdef linux
-const char* g_logFileName = "/tmp/CoreLog";
-#else
-const char* g_logFileName = "CoreLog";
-#endif
-
-const char* g_CoreName = "MMCore";
-
 // version info
 const int MMCore_versionMajor = 2;
 const int MMCore_versionMinor = 3;
