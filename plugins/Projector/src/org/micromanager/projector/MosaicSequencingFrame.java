@@ -501,6 +501,9 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
    // Upload the provided SequenceEvents to the Mosaic, by using the
    // "SequenceSettings" property.
    private void uploadSequence(final ArrayList<SequenceEvent> events) {
+      if (events.size() == 0) {
+         throw new RuntimeException("Please first define a sequence for the Mosaic.");
+      }
       mosaicExecutor_.submit(new Runnable() {
          public void run() {
             try {
@@ -1291,7 +1294,11 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
    }//GEN-LAST:event_addTimeSlotButton_ActionPerformed
 
    private void uploadButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_uploadButton_ActionPerformed
-      uploadSequence();
+      try {
+         uploadSequence();
+      } catch (Exception e) {
+         ReportingUtils.showError(e);
+      }
    }//GEN-LAST:event_uploadButton_ActionPerformed
 
    private void generateROIGridButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_generateROIGridButton_ActionPerformed
