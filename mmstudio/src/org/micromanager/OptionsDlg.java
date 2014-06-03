@@ -38,6 +38,7 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JTextField;
 import javax.swing.WindowConstants;
 
@@ -146,7 +147,29 @@ public class OptionsDlg extends MMDialog {
       deleteLogFilesButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(final ActionEvent e) {
-            LogFileManager.deleteLogFilesDaysOld(0, core_.getPrimaryLogFile());
+            String dir1 =
+               LogFileManager.getLogFileDirectory().getAbsolutePath();
+            String dir2 =
+               LogFileManager.getLegacyLogFileDirectory().getAbsolutePath();
+            String dirs;
+            if (dir1.equals(dir2)) {
+               dirs = dir1;
+            }
+            else {
+               dirs = dir1 + " and " + dir2;
+            }
+
+            int answer = JOptionPane.showConfirmDialog(OptionsDlg.this,
+               "<html><body><p style='width: 400px;'>" +
+               "Delete all CoreLog files in " + dirs + "?" +
+               "</p></body></html>",
+               "Delete Log Files",
+               JOptionPane.YES_NO_OPTION,
+               JOptionPane.QUESTION_MESSAGE);
+            if (answer == JOptionPane.YES_OPTION) {
+               LogFileManager.deleteLogFilesDaysOld(0,
+                  core_.getPrimaryLogFile());
+            }
          }
       });
 
@@ -156,6 +179,15 @@ public class OptionsDlg extends MMDialog {
       clearRegistryButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(final ActionEvent e) {
+            int answer = JOptionPane.showConfirmDialog(OptionsDlg.this,
+               "Reset all preference settings?",
+               "Reset Preferences",
+               JOptionPane.YES_NO_OPTION,
+               JOptionPane.QUESTION_MESSAGE);
+            if (answer != JOptionPane.YES_OPTION) {
+               return;
+            }
+
             try {
                boolean previouslyRegistered = mainPrefs_.getBoolean(RegistrationDlg.REGISTRATION, false);
                mainPrefs_.clear();

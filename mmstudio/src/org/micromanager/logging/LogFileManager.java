@@ -71,7 +71,7 @@ public final class LogFileManager {
       }
    }
 
-   private static File getLogFileDirectory() {
+   public static File getLogFileDirectory() {
       String dirname = System.getProperty("org.micromanager.corelog.dir");
       if (dirname == null || dirname.length() == 0) {
          dirname = "CoreLogs";
@@ -80,10 +80,11 @@ public final class LogFileManager {
    }
 
    // Return the directory where old-style CoreLogYYYYMMDD.txt were saved.
-   private static File getLegacyLogFileDirectory() {
+   // (But don't assume current dir if corelog dir is set.)
+   public static File getLegacyLogFileDirectory() {
       String dirname = System.getProperty("org.micromanager.corelog.dir");
       if (dirname == null || dirname.length() == 0) {
-         dirname = ".";
+         dirname = System.getProperty("user.dir");
       }
       return new File(dirname);
    }
