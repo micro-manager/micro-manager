@@ -384,7 +384,7 @@ public class PluginLoader {
          // Get this static field from the class implementing MMPlugin.
          return (String) cl.getDeclaredField("menuName").get(null);
       } catch (Exception e) {
-         ReportingUtils.logError(e);
+         ReportingUtils.logError("Plugin [" + cl.getName() + "] has no menuName field");
       }
       // Fake it using the class name, with underscores replaced by spaces.
       return cl.getSimpleName().replace("_", " ");
