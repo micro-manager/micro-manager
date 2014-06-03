@@ -113,6 +113,13 @@ public class ProblemReportFormatter {
    }
 
    private static String fileSection(String title, String content) {
+      if (title == null) {
+         title = "null";
+      }
+      if (content == null) {
+         content = "null";
+      }
+
       StringBuilder sb = new StringBuilder(title.length() + content.length() + 128);
       sb.append("***** BEGIN " + title + " *****\n");
       sb.append(content);

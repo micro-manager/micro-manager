@@ -11,10 +11,18 @@
 
 package org.micromanager.diagnostics;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.nio.MappedByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.charset.Charset;
+
 
 public class ProblemReport {
    private final mmcorej.CMMCore core_;
-   private final org.micromanager.MMOptions prefs_;
+
+   private Integer logFileHandle_;
+   private String logFileName_;
 
    private String userName_;
    private String userOrganization_;
@@ -31,9 +39,14 @@ public class ProblemReport {
    private String capturedLogContent_;
    private ConfigFile endCfg_;
 
+   private static class ProblemReportException extends Exception {
+      public ProblemReportException(String msg) {
+         super(msg);
+      }
+   }
+
    public ProblemReport(mmcorej.CMMCore core, org.micromanager.MMOptions prefs) {
       core_ = core;
-      prefs_ = prefs;
 
       date_ = new java.util.Date();
 
@@ -74,34 +87,83 @@ public class ProblemReport {
 
    public void startCapturingLog() {
       startCfg_ = getCurrentConfigFile();
-      core_.clearLog();
-      core_.logMessage("CoreLog cleared by problem reporter");
-      core_.enableDebugLog(true);
+
+      // Should not happen, but in case we are called erroneously:
+      if (logFileHandle_ != null) {
+         cancelLogCapture();
+      }
+
+      // TODO If the standard CoreLog location is writable, we should create
+      // the temporary file there so that the user (and, in the future, the
+      // application) can find it after a crash.
+      File logFile;
+      try {
+         logFile =
+            File.createTempFile("MMCoreLogCapture", ".txt");
+      }
+      catch (java.io.IOException e) {
+         capturedLogContent_ =
+            "<<<Failed to create temporary file for log capture>>>";
+         return;
+      }
+      String filename = logFile.getAbsolutePath();
+
+      try {
+         logFileHandle_ = core_.startSecondaryLogFile(filename, true, true);
+      }
+      catch (Exception e) {
+         capturedLogContent_ = "<<<Failed to start log capture>>>";
+      }
+      logFileName_ = filename;
       core_.logMessage("Problem Report: Start of log capture");
    }
 
    public void cancelLogCapture() {
-      core_.enableDebugLog(prefs_.debugLogEnabled_);
+      if (logFileHandle_ == null) {
+         return;
+      }
+
+      core_.logMessage("Problem Report: Canceling log capture");
+      try {
+         core_.stopSecondaryLogFile(logFileHandle_);
+      }
+      catch (Exception ignore) {
+         // Errors will be logged by the Core; there is not much else we can
+         // do.
+      }
+      logFileHandle_ = null;
    }
 
    public void finishCapturingLog() {
-      core_.logMessage("Problem Report: End of log capture");
-
-      // Hack: The end of the logged info gets truncated, due to the behavior
-      // of the Core logger. Until it is fixed, just wait a bit to remedy.
-      for (;;) {
-         try {
-            Thread.sleep(200);
-            break;
-         }
-         catch (InterruptedException e) {
-         }
+      if (logFileHandle_ == null) {
+         // Either starting the capture failed, or we were erroneously called
+         // when capture is not running.
+         endCfg_ = getCurrentConfigFile();
+         return;
       }
 
-      core_.enableDebugLog(prefs_.debugLogEnabled_);
-      java.io.File logGzFile = new java.io.File(core_.saveLogArchive());
-      capturedLogContent_ = readCapturedLogContent(logGzFile);
-      logGzFile.delete();
+      String logFileName = logFileName_;
+
+      core_.logMessage("Problem Report: End of log capture");
+      try {
+         core_.stopSecondaryLogFile(logFileHandle_);
+      }
+      catch (Exception ignore) {
+         // This is an unlikely error unless there are programming errors.
+         // Let's continue and see if we can read the file anyway.
+      }
+      logFileHandle_ = null;
+      logFileName_ = null;
+
+      java.io.File logFile = new java.io.File(logFileName);
+      try {
+         capturedLogContent_ = readCapturedLogContent(logFile);
+      }
+      catch (ProblemReportException e) {
+         capturedLogContent_ = "<<<Failed to read captured log file (" +
+            e.getMessage() + ")>>>";
+      }
+      logFile.delete();
 
       endCfg_ = getCurrentConfigFile();
    }
@@ -122,22 +184,37 @@ public class ProblemReport {
     */
 
    boolean configChangedDuringLogCapture() {
+      if (startCfg_ == null || endCfg_ == null) {
+         return startCfg_ != endCfg_;
+      }
       return !startCfg_.equals(endCfg_);
    }
 
    String getStartingConfigFileName() {
+      if (startCfg_ == null) {
+         return null;
+      }
       return startCfg_.getFileName();
    }
 
    String getEndingConfigFileName() {
+      if (endCfg_ == null) {
+         return null;
+      }
       return endCfg_.getFileName();
    }
 
    String getStartingConfig() {
+      if (startCfg_ == null) {
+         return null;
+      }
       return startCfg_.getContent();
    }
 
    String getEndingConfig() {
+      if (endCfg_ == null) {
+         return null;
+      }
       return endCfg_.getContent();
    }
 
@@ -194,36 +271,44 @@ public class ProblemReport {
       }
    }
 
-   private static String readCapturedLogContent(java.io.File gzFile) {
-      // This is a hack. It is rather pointless to gzip-compress the
-      // communication between the Core and us and this should be removed.
+   private static String readCapturedLogContent(java.io.File file)
+      throws ProblemReportException {
 
-      java.io.FileInputStream compressedInput;
+      // Java 7 has java.nio.charset.StandardCharsets.UTF_8.
+      // In Java 6, you need 10 lines to get the same thing.
+      Charset utf8Charset = null;
       try {
-         compressedInput = new java.io.FileInputStream(gzFile);
+         utf8Charset = Charset.forName("UTF-8");
+      }
+      catch (java.nio.charset.IllegalCharsetNameException wontHappen) {
+         // "UTF-8" is guaranteed to be available.
+      }
+      catch (java.nio.charset.UnsupportedCharsetException wontHappen) {
+         // "UTF-8" is guaranteed to be supported.
+      }
+      catch (IllegalArgumentException wontHappen) {
+         // This could only happen if we say Charset.forName(null).
+      }
+
+      FileInputStream inputStream;
+      try {
+         inputStream = new FileInputStream(file);
       }
       catch (java.io.FileNotFoundException e) {
-         return e.getMessage();
+         throw new ProblemReportException(e.getMessage());
       }
-
       try {
-         java.io.InputStream logInput = new java.util.zip.GZIPInputStream(compressedInput);
-         java.io.Reader reader = new java.io.InputStreamReader(logInput, "UTF-8");
-
-         char[] cbuf = new char[8192];
-         StringBuilder sb = new StringBuilder();
-         int read;
-         while ((read = reader.read(cbuf)) > 0) {
-            sb.append(cbuf, 0, read);
-         }
-         return sb.toString();
+         FileChannel fChan = inputStream.getChannel();
+         MappedByteBuffer mappedBuf =
+            fChan.map(FileChannel.MapMode.READ_ONLY, 0, fChan.size());
+         return utf8Charset.decode(mappedBuf).toString();
       }
       catch (java.io.IOException e) {
-         return e.getMessage();
+         throw new ProblemReportException(e.getMessage());
       }
       finally {
          try {
-            compressedInput.close();
+            inputStream.close();
          }
          catch (java.io.IOException ignore) {
          }
@@ -289,7 +374,6 @@ public class ProblemReport {
             return false;
          }
 
-         // This could be optimized using MD5 hashes, but why bother.
          return content_.equals(rhs.content_);
       }
 
