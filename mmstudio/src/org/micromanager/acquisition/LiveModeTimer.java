@@ -33,6 +33,7 @@ import mmcorej.TaggedImage;
 import org.micromanager.imageDisplay.VirtualAcquisitionDisplay;
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.utils.CanvasPaintPending;
+import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ReportingUtils;
 
@@ -182,7 +183,7 @@ public class LiveModeTimer {
          
          fpsCounter_ = 0;
          fpsTimer_ = System.currentTimeMillis();
-         imageNumber_ = timg.tags.getLong("ImageNumber");
+         imageNumber_ = MDUtils.getSequenceNumber(timg.tags);
          oldImageNumber_ = imageNumber_;
 
          imageQueue_ = new LinkedBlockingQueue<TaggedImage>(10);
@@ -298,7 +299,7 @@ public class LiveModeTimer {
                   timerLock_.set(true);
                   TaggedImage ti = core_.getLastTaggedImage();
                   // if we have already shown this image, do not do it again.
-                  long imageNumber = ti.tags.getLong("ImageNumber");
+                  long imageNumber = MDUtils.getSequenceNumber(ti.tags);
                   if (imageNumber > imageNumber_ ) {
                      setImageNumber(imageNumber);
                      imageQueue_.put(ti);
@@ -340,7 +341,7 @@ public class LiveModeTimer {
                            int ccIndex = ti.tags.getInt(camera + "-CameraChannelIndex");
                            ti.tags.put("ChannelIndex", ccIndex);
                            if (ccIndex == 0) {
-                              setImageNumber(ti.tags.getLong("ImageNumber"));
+                              setImageNumber(MDUtils.getSequenceNumber(ti.tags));
                            }
                            imageQueue_.put(ti);
                            cameraChannelsAcquired.add(channelName);

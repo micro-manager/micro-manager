@@ -78,6 +78,10 @@ public class MDUtils {
       map.put("Binning", binning);
    }
 
+   public static long getSequenceNumber(JSONObject map) throws JSONException {
+      return map.getLong("ImageNumber");
+   }
+
    public static int getSliceIndex(JSONObject map) throws JSONException {
       if (map.has("SliceIndex")) {
          return map.getInt("SliceIndex");

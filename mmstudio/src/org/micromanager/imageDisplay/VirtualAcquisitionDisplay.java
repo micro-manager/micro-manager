@@ -277,7 +277,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
          // More than 500ms since last update.
          double elapsedTime = (curTimestamp - lastFPSUpdateTimestamp_) / 1000.0;
          try {
-            long imageIndex = tags.getLong("ImageNumber");
+            long imageIndex = MDUtils.getSequenceNumber(tags);
             // HACK: Ignore the first FPS display event, to prevent us from
             // showing FPS for the Snap window. 
             if (lastImageIndex_ != 0) {
@@ -288,7 +288,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
          }
          catch (Exception e) {
             // Post a "blank" event. This likely happens because the image
-            // tags don't contain an "ImageNumber" field.
+            // tags don't contain a sequence number (e.g. during an MDA).
             bus_.post(new FPSEvent(0, 0));
          }
          imagesDisplayed_ = 0;
