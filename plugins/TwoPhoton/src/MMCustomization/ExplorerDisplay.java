@@ -444,14 +444,11 @@ public class ExplorerDisplay implements ImageCacheListener  {
          //Z position label
          String zPosition = "";
          try {
-            zPosition = NumberUtils.doubleStringCoreToDisplay(tags.getString("ZPositionUm"));
+            zPosition = NumberUtils.doubleToDisplayString(MDUtils.getZPositionUm(tags));
          } catch (Exception e) {
-            try {
-               zPosition = NumberUtils.doubleStringCoreToDisplay(tags.getString("Z-um"));
-            } catch (Exception e1) {
-               // Do nothing...
-            }
+            // Do nothing...
          }
+
          zPosLabel_.setText("Z Position: " + zPosition + " um        ");
          
          //time label

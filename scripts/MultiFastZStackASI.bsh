@@ -134,7 +134,7 @@ for (frame=0; frame < nrFrames; frame++) {
          img = mmc.popNextImage();
          if (counter > 0 && (slice < nrSlices)) {
             gui.addImage(acqName, img, frame, channel, slice);
-            gui.setImageProperty(acqName, frame, channel, slice, "Z-um", Double.toString(basePos + (slice * distance)));
+            gui.setImageProperty(acqName, frame, channel, slice, "ZPositionUm", Double.toString(basePos + (slice * distance)));
             gui.setImageProperty(acqName, frame, channel, slice, "Exposure", Double.toString(mmc.getExposure()));
             if (channel == (nrChannels - 1)) {
                if (slice == (nrSlices /2) + 1)

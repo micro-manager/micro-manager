@@ -19,6 +19,7 @@ import org.micromanager.imageDisplay.ScrollerPanel;
 import org.micromanager.imageDisplay.VirtualAcquisitionDisplay;
 import org.micromanager.internalinterfaces.DisplayControls;
 import org.micromanager.utils.JavaUtils;
+import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.ReportingUtils;
 
@@ -287,13 +288,9 @@ public class DisplayPlusControls extends DisplayControls {
       //Z position label
       String zPosition = "";
       try {
-         zPosition = NumberUtils.doubleStringCoreToDisplay(tags.getString("ZPositionUm"));
+         zPosition = NumberUtils.doubleToDisplayString(MDUtils.getZPositionUm(tags));
       } catch (Exception e) {
-         try {
-            zPosition = NumberUtils.doubleStringCoreToDisplay(tags.getString("Z-um"));
-         } catch (Exception e1) {
-            // Do nothing...
-         }
+         // Do nothing...
       }
       zPosLabel_.setText("Z Position: " + zPosition + " um ");
 
