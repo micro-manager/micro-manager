@@ -257,7 +257,7 @@ int pgFocusHub::Shutdown()
    initialized_ = false;
 
    if (monitoringThread_ != NULL) {
-	   GetCoreCallback()->LogMessage(this, "Waiting for service thread to stop", true);
+	   GetCoreCallback()->LogMessage(this, "Waiting for service thread to stop", false);
 	   monitoringThread_->Stop();
 	   CDeviceUtils::SleepMs(monitoringThread_->getWaitTime());
 	   delete(monitoringThread_);
@@ -477,7 +477,8 @@ double pgFocusHub::standard_deviation ()
 
 	double mean=0.0, sum_deviation=0.0;
 
-	int i, n;
+	int i;
+	size_t n;
 
 	n = qoffsets_.size();
 
@@ -954,13 +955,18 @@ long pgFocusHub::GetDAC()
 }
 
 
-
 int pgFocusHub::SetDAC(long DAU, bool hardware)
 {
 
 	MM_THREAD_GUARD_LOCK(&mutex);
 	DAC_ = DAU;
 	MM_THREAD_GUARD_UNLOCK(&mutex);
+
+	if (hardware) {
+                std::ostringstream oss;
+                oss << "voltage " << DAU;
+                SendCommand(oss.str().c_str());
+        }
 
 	return DEVICE_OK;
 }
@@ -1172,9 +1178,154 @@ int pgFocusHub::SetLight(long index, long light)
 	return DEVICE_OK;
 }
 
+//////////////////////////////////////////////////////////////////////
+// pgFocus: Z Axis
+// ---
+
+/*************************************************************
+ * ZeissFocusStage: Micro-Manager implementation of focus drive
+ */
+/*pgFocusAxis::pgFocusAxis ():
+   stepSize_um_(0.001),
+   initialized_ (false),
+{
+
+	InitializeDefaultErrorMessages();
+
+	SetErrorText(ERR_SCOPE_NOT_ACTIVE, "Zeiss Scope is not initialized.  It is needed for this Zeiss Axis to work");
+	SetErrorText(ERR_MODULE_NOT_FOUND, "This Axis is not installed in this Zeiss microscope");
+
+	// Name
+	CreateProperty(MM::g_Keyword_Name, g_DeviceNamepgFocusAxis, MM::String, true);
+
+	// Description
+	CreateProperty(MM::g_Keyword_Description, "Open Source and Open Hardware Focus Stabilization Device", MM::String, true);
+
+	// parent ID display
+	CreateHubIDProperty();
+}
+
+pgFocusAxis::~pgFocusAxis()
+{
+	Shutdown();
+}
+
+bool pgFocusAxis::Busy()
+{
+	return false;
+}
+
+void pgFocusAxis::GetName (char* Name) const
+{
+   CDeviceUtils::CopyLimitedString(Name, g_DeviceNamepgFocusAxis);
+}
+
+
+int pgFocusAxis::Initialize()
+{
+
+
+	// set property list
+	// ----------------
+	// Position
+	CPropertyAction* pAct = new CPropertyAction(this, &pgFocusAxis::OnPosition);
+	int ret = CreateProperty(MM::g_Keyword_Position, "0", MM::Float, false, pAct);
+	if (ret != DEVICE_OK)
+	  return ret;
+
+	ret = UpdateStatus();
+	if (ret!= DEVICE_OK)
+	  return ret;
+
+	initialized_ = true;
+
+	return DEVICE_OK;
+}
+
+int pgFocusAxis::Shutdown()
+{
+	if (initialized_) initialized_ = false;
+	return DEVICE_OK;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Axis API
+///////////////////////////////////////////////////////////////////////////////
+
+int pgFocusAxis::SetPositionUm(double pos)
+{
+	pgFocusHub* hub = static_cast<pgFocusHub*>(GetParentHub());
+	if (!hub || !hub->IsPortAvailable())
+		return ERR_NO_PORT_SET;
+
+	long steps = (long)(pos / stepSize_um_);
+	int ret = SetPositionSteps(steps);
+	if (ret != DEVICE_OK)
+	  return ret;
+
+	return DEVICE_OK;
+}
+
+int pgFocusAxis::GetPositionUm(double& pos)
+{
+	long steps;
+	int ret = GetPositionSteps(steps);
+	if (ret != DEVICE_OK)
+	  return ret;
+	pos = steps * stepSize_um_;
+
+	return DEVICE_OK;
+}
+
+int pgFocusAxis::SetPositionSteps(long steps)
+{
+	pgFocusHub* hub = static_cast<pgFocusHub*>(GetParentHub());
+	if (!hub || !hub->IsPortAvailable())
+		return ERR_NO_PORT_SET;
+
+	return ZeissAxis::SetPosition(*this, *GetCoreCallback(), devId_, steps, (ZeissByte) (moveMode_ & velocity_));
+}
+
+int pgFocusAxis::GetPositionSteps(long& steps)
+{
+	pgFocusHub* hub = static_cast<pgFocusHub*>(GetParentHub());
+	if (!hub || !hub->IsPortAvailable())
+		return ERR_NO_PORT_SET;
+
+	return ZeissDevice::GetPosition(*this, *GetCoreCallback(), devId_, (ZeissLong&) steps);
+}
+
+int pgFocusAxis::SetOrigin()
+{
+	return DEVICE_OK;
+}
+*/
+///////////////////////////////////////////////////////////////////////////////
+// Action handlers
+///////////////////////////////////////////////////////////////////////////////
+int pgFocusAxis::OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	if (eAct == MM::BeforeGet)   {
+		double pos;
+		int ret = GetPositionUm(pos);
+		if (ret != DEVICE_OK)
+		 return ret;
+		pProp->Set(pos);
+	}
+	else if (eAct == MM::AfterSet)
+	{
+		double pos;
+		pProp->Get(pos);
+		int ret = SetPositionUm(pos);
+		if (ret != DEVICE_OK)
+		 return ret;
+	}
+
+	return DEVICE_OK;
+}
 
 //////////////////////////////////////////////////////////////////////
-// pgFocus: Open Source and Open Hardware reflection-based auto focusing.
+// pgFocus: Focus Stabilization
 // ----------------
 
 pgFocusStabilization::pgFocusStabilization() :
@@ -1206,8 +1357,8 @@ pgFocusStabilization::pgFocusStabilization() :
 	// Description
 	CreateProperty(MM::g_Keyword_Description, "Open Source and Open Hardware Focus Stabilization Device", MM::String, true);
 
-   // parent ID display
-   CreateHubIDProperty();
+	// parent ID display
+	CreateHubIDProperty();
 }
 
 pgFocusStabilization::~pgFocusStabilization()
@@ -1219,6 +1370,7 @@ int pgFocusStabilization::Shutdown()
 {
 
 	initialized_ = false;
+	GetCoreCallback()->LogMessage(this, "pgFocusStabilization::Shutdown()", false);
 
 	return DEVICE_OK;
 }
@@ -1358,7 +1510,8 @@ bool pgFocusStabilization::IsContinuousFocusLocked()
 
 	pgFocusHub* hub = static_cast<pgFocusHub*>(GetParentHub());
 	if (!hub || !hub->IsPortAvailable())
-		return ERR_NO_PORT_SET;
+		return false;
+		//return ERR_NO_PORT_SET;
 
 	bool continuousFocusing_;
 	hub->GetContinuousFocusing(continuousFocusing_);
@@ -1902,7 +2055,8 @@ int pgFocusStabilization::OnLastError(MM::PropertyBase* pProp, MM::ActionType eA
 
 	pgFocusHub* hub = static_cast<pgFocusHub*>(GetParentHub());
 	if (!hub || !hub->IsPortAvailable())
-		return ERR_NO_PORT_SET;
+		//return ERR_NO_PORT_SET;
+		return false;
 
 	if (eAct == MM::BeforeGet)
 	{
@@ -2041,7 +2195,7 @@ int pgFocusMonitoringThread::svc()
 					core_.LogMessage(&pgfocushub_, os.str().c_str(), true);
 				}
 				if (charsRead > 0) {
-					for (int x = 0; x < charsRead; x++) {
+					for (unsigned int x = 0; x < charsRead; x++) {
 						if (rcvBuf[x] != '\r' && rcvBuf[x] != '\n' ) message += rcvBuf[x];
 						else if (rcvBuf[x] == '\r') {
 							// found carriage return

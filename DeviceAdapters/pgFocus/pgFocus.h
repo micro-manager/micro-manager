@@ -84,7 +84,7 @@
 //
 const char * const g_DeviceNamepgFocusHub = "pgFocus";
 const char * const g_DeviceNamepgFocusStabilization = "pgFocus-Stabilization";
-
+const char * const g_DeviceNamepgFocusAxis = "pgFocus-Axis";
 
 //////////////////////////////////////////////////////////////////////////////
 // General Property Identifiers
@@ -153,6 +153,54 @@ const char* g_versionProp = "Version";
 
 
 class pgFocusMonitoringThread;
+
+class pgFocusAxis : public CStageBase<pgFocusAxis>
+{
+public:
+	pgFocusAxis();
+   ~pgFocusAxis();
+
+   bool Busy();
+   void GetName(char* pszName) const;
+
+   int Initialize();
+   int Shutdown();
+
+   // Stage API
+   virtual int SetPositionUm(double pos);
+   virtual int GetPositionUm(double& pos);
+   virtual double GetStepSize() const {return stepSize_um_;}
+   virtual int SetPositionSteps(long steps) ;
+   virtual int GetPositionSteps(long& steps);
+   virtual int SetOrigin();
+   virtual int GetLimits(double& lower, double& upper)
+   {
+      lower = lowerLimit_;
+      upper = upperLimit_;
+      return DEVICE_OK;
+   }
+
+   int IsStageSequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
+   bool IsContinuousFocusDrive() const {return true;}
+
+   // action interface
+   // ----------------
+   int OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+private:
+   //int GetUpperLimit();
+   //int GetLowerLimit();
+   double stepSize_um_;
+   bool busy_;
+   bool initialized_;
+   double lowerLimit_;
+   double upperLimit_;
+   long moveMode_;
+   long velocity_;
+   std::string name_;
+   std::string description_;
+
+};
 
 class pgFocusStabilization : public CAutoFocusBase<pgFocusStabilization>
 {
@@ -323,8 +371,8 @@ class pgFocusHub :  public HubBase<pgFocusHub>
 		// update local variables and/or hardware
 		int SetExposure(long exposure) {return(SetExposure(exposure,true));};
 		int SetDAC(long DAU) {return(SetDAC(DAU,true));};
-		int SetOffset(long offset) {return(SetOffset(offset,true));};
-		int SetGain(long gain) {return(SetGain(gain,true));};
+		int SetOffset(double offset) {return(SetOffset(offset,true));};
+		int SetGain(double gain) {return(SetGain(gain,true));};
 		int SetMicronPerVolt(long mpv) {return(SetMicronPerVolt(mpv,true));};
 
 	protected: // functions used by monitoring thread to update values, but not trigger sending those values back
