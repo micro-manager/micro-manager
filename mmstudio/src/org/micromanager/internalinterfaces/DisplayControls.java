@@ -42,6 +42,8 @@ public abstract class DisplayControls extends Panel {
    
    abstract public void prepareForClose();
 
+   public void setChannel(int c) {}
+
    public int getPosition() {
       return 0;
    }

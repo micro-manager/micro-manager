@@ -474,7 +474,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
             channelNameCheckbox_.setSelected(true);
             return;
          } else {
-            img_.setPosition(channelIndex_ + 1, img_.getSlice(), img_.getFrame());
+            display_.setChannel(channelIndex_);
          }
       } else {
          img_.getActiveChannels()[channelIndex_] = channelNameCheckbox_.isSelected();

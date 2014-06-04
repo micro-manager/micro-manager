@@ -604,12 +604,19 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
       bus_.unregister(this);
    }
 
+   @Override
    public void setPosition(int p) {
       scrollerPanel_.setPosition("position", p);
    }
 
+   @Override
    public int getPosition() {
       return scrollerPanel_.getPosition("position");
+   }
+
+   @Override
+   public void setChannel(int c) {
+      scrollerPanel_.setPosition("channel", c);
    }
 
    /**
