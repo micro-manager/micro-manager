@@ -265,6 +265,10 @@ public class MDUtils {
       }
    }
 
+   public static void setPixelTypeFromString(JSONObject map, String type) throws JSONException {
+      map.put("PixelType", type);
+   }
+
       public static void setPixelTypeFromByteDepth(JSONObject map, int depth) throws JSONException {
       switch (depth) {
          case 1:
@@ -525,9 +529,12 @@ public class MDUtils {
             return Math.max(1, summary.getInt("Channels"));
       }
       if (tags.has("Channels"))
-         return Math.max(1,tags.getInt("Channels"));
+         return Math.max(1, tags.getInt("Channels"));
       return 1;
-      
+   }
+
+   public static void setNumChannels(JSONObject tags, int numChannels) throws JSONException {
+      tags.put("Channels", numChannels);
    }
 
    public static boolean hasPixelSizeUm(JSONObject map) {
@@ -645,5 +652,12 @@ public class MDUtils {
    }
    public static void setTimeFirst(JSONObject map, boolean val) throws JSONException {
       map.put("TimeFirst", val);
+   }
+
+   public static JSONObject getSummary(JSONObject map) throws JSONException {
+      return map.getJSONObject("Summary");
+   }
+   public static void setSummary(JSONObject map, JSONObject summary) throws JSONException {
+      map.put("Summary", summary);
    }
 }

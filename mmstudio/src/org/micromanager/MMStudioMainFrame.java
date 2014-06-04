@@ -2544,7 +2544,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
          
          for (int i = 0; i < c; ++i) {
             TaggedImage img = core_.getTaggedImage(i);
-            img.tags.put("Channels", c);
+            MDUtils.setNumChannels(img.tags, (int) c);
             snapImageQueue.put(img);
          }
          
@@ -2592,7 +2592,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       try {
          checkSimpleAcquisition(ti);
          setCursor(new Cursor(Cursor.WAIT_CURSOR));
-         ti.tags.put("Summary", getAcquisition(SIMPLE_ACQ).getSummaryMetadata());
+         MDUtils.setSummary(ti.tags, getAcquisition(SIMPLE_ACQ).getSummaryMetadata());
          addStagePositionToTags(ti);
          addImage(SIMPLE_ACQ, ti, update, true);
       } catch (Exception ex) {
@@ -2608,11 +2608,11 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    
    public void addStagePositionToTags(TaggedImage ti) throws JSONException {
       if (gui_.xyStageLabel_.length() > 0) {
-         ti.tags.put("XPositionUm", gui_.staticInfo_.x_);
-         ti.tags.put("YPositionUm", gui_.staticInfo_.y_);
+         MDUtils.setXPositionUm(ti.tags, gui_.staticInfo_.x_);
+         MDUtils.setYPositionUm(ti.tags, gui_.staticInfo_.y_);
       }
       if (gui_.zStageLabel_.length() > 0) {
-         ti.tags.put("ZPositionUm", gui_.staticInfo_.zPos_);
+         MDUtils.setZPositionUm(ti.tags, gui_.staticInfo_.zPos_);
       }
    }
 

@@ -337,9 +337,9 @@ public class LiveModeTimer {
                      if (ti.tags.has(camera + "-CameraChannelName")) {
                         channelName = ti.tags.getString(camera + "-CameraChannelName");
                         if (!cameraChannelsAcquired.contains(channelName)) {
-                           ti.tags.put("Channel", channelName);
+                           MDUtils.setChannelName(ti.tags, channelName);
                            int ccIndex = ti.tags.getInt(camera + "-CameraChannelIndex");
-                           ti.tags.put("ChannelIndex", ccIndex);
+                           MDUtils.setChannelIndex(ti.tags, ccIndex);
                            if (ccIndex == 0) {
                               setImageNumber(MDUtils.getSequenceNumber(ti.tags));
                            }

@@ -211,7 +211,7 @@ public class AcquisitionManager {
 
          try {
             JSONObject summary = new JSONObject();
-            summary.put("PixelType", MDUtils.getPixelType(tags));
+            MDUtils.setPixelTypeFromString(summary, MDUtils.getPixelType(tags));
             acq.setSummaryProperties(summary);
          } catch (JSONException ex) {
             ReportingUtils.logError(ex);
