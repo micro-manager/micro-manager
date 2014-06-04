@@ -1,8 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
-
 package org.micromanager.utils;
 
 import ij.ImagePlus;
@@ -25,12 +20,26 @@ import org.json.JSONObject;
 import org.micromanager.api.MMTags;
 
 /**
+ * This class is intended to standardize interactions with the tags in 
+ * TaggedImages and the image summary metadata. Ideally all tags that have any
+ * effect on program flow would only be accessed by way of this module; the
+ * eventual goal being to promote those tags to being proper member fields and
+ * deprecate the corresponding bits of JSON.
  *
- * @author arthur
+ * By using this module, type safety is enforced, redundant tags can be 
+ * identified (e.g. "Frame" vs. "FrameIndex"), and it becomes much easier to
+ * track which bits of code are relying on which tags. 
  */
 public class MDUtils {
    private final static SimpleDateFormat iso8601modified_ =
            new SimpleDateFormat("yyyy-MM-dd E HH:mm:ss Z");
+
+   /**
+    * Helper function to test if a given key exists and has a non-null value.
+    */
+   private static boolean isValid(JSONObject map, String key) {
+      return (map.has(key) && !map.isNull(key));
+   }
 
    public static JSONObject copy(JSONObject map) {
       try {
@@ -46,6 +55,10 @@ public class MDUtils {
 
    public static void setPositionIndex(JSONObject map, int positionIndex) throws JSONException {
       map.put("PositionIndex", positionIndex);
+   }
+
+   public static boolean hasBitDepth(JSONObject map) {
+      return isValid(map, "BitDepth");
    }
 
    public static int getBitDepth(JSONObject map) throws JSONException {
@@ -123,8 +136,11 @@ public class MDUtils {
       throw new JSONException("Positions tag not found in summary metadata");
    }
 
+   public static boolean hasPositionName(JSONObject map) {
+      return isValid(map, "PositionName");
+   }
    public static String getPositionName(JSONObject map) throws JSONException {
-      if (map.has("PositionName") && !map.isNull("PositionName")) {
+      if (isValid(map, "PositionName")) {
          return map.getString("PositionName");
       } else if (map.has("PositionIndex")) {
          return "Pos" + map.getString("PositionIndex");
@@ -138,19 +154,27 @@ public class MDUtils {
    }
 
    public static String getChannelName(JSONObject map) throws JSONException {
-      if (map.has("Channel") && !map.isNull("Channel")) {
+      if (isValid(map, "Channel")) {
          return map.getString("Channel");
       } else {
          return "";
       }
    }
 
+   public static void setChannelName(JSONObject map, String channel) throws JSONException {
+      map.put("Channel", channel);
+   }
+
    public static int getChannelColor(JSONObject map) throws JSONException {
-      if (map.has("ChColor") && !map.isNull("ChColor")) {
+      if (isValid(map, "ChColor")) {
          return map.getInt("ChColor");
       } else {
          return -1;
       }
+   }
+
+   public static void setChannelColor(JSONObject map, int color) throws JSONException {
+      map.put("ChColor", color);
    }
 
    public static String getFileName(JSONObject map) throws JSONException {
@@ -433,8 +457,14 @@ public class MDUtils {
       return getTime(new Date());
    }
 
-   public static String getImageTime(JSONObject tags) throws JSONException {
-      return tags.getString("Time");
+   public static boolean hasImageTime(JSONObject map) {
+      return isValid(map, "Time");
+   }
+   public static String getImageTime(JSONObject map) throws JSONException {
+      return map.getString("Time");
+   }
+   public static void setImageTime(JSONObject map, String time) throws JSONException {
+      map.put("Time", time);
    }
 
    public static Rectangle getROI(JSONObject tags)
@@ -500,4 +530,120 @@ public class MDUtils {
       
    }
 
+   public static boolean hasPixelSizeUm(JSONObject map) {
+      return (isValid(map, "PixelSize_um") || isValid(map, "PixelSizeUm"));
+   }
+   public static double getPixelSizeUm(JSONObject map) throws JSONException {
+      if (isValid(map, "PixelSize_um")) {
+         return map.getDouble("PixelSize_um");
+      }
+      return map.getDouble("PixelSizeUm");
+   }
+   public static void setPixelSizeUm(JSONObject map, double val) throws JSONException {
+      map.put("PixelSize_um", val);
+   }
+   
+   public static boolean hasZStepUm(JSONObject map) {
+      return (isValid(map, "z-step_um"));
+   }
+   public static double getZStepUm(JSONObject map) throws JSONException {
+      return map.getDouble("z-step_um");
+   }
+   public static void setZStepUm(JSONObject map, double val) throws JSONException {
+      map.put("z-step_um", val);
+   }
+   
+   public static boolean hasExposureMs(JSONObject map) {
+      return (isValid(map, "Exposure-ms"));
+   }
+   public static double getExposureMs(JSONObject map) throws JSONException {
+      return map.getDouble("Exposure-ms");
+   }
+   public static void setExposureMs(JSONObject map, double val) throws JSONException {
+      map.put("Exposure-ms", val);
+   }
+   
+   public static boolean hasXPositionUm(JSONObject map) {
+      return (isValid(map, "XPositionUm"));
+   }
+   public static double getXPositionUm(JSONObject map) throws JSONException {
+      return map.getDouble("XPositionUm");
+   }
+   public static void setXPositionUm(JSONObject map, double val) throws JSONException {
+      map.put("XPositionUm", val);
+   }
+
+   public static boolean hasYPositionUm(JSONObject map) {
+      return (isValid(map, "YPositionUm"));
+   }
+   public static double getYPositionUm(JSONObject map) throws JSONException {
+      return map.getDouble("YPositionUm");
+   }
+   public static void setYPositionUm(JSONObject map, double val) throws JSONException {
+      map.put("YPositionUm", val);
+   }
+
+   public static boolean hasZPositionUm(JSONObject map) {
+      return (isValid(map, "ZPositionUm"));
+   }
+   public static double getZPositionUm(JSONObject map) throws JSONException {
+      return map.getDouble("ZPositionUm");
+   }
+   public static void setZPositionUm(JSONObject map, double val) throws JSONException {
+      map.put("ZPositionUm", val);
+   }
+
+   public static boolean hasElapsedTimeMs(JSONObject map) {
+      return (isValid(map, "ElapsedTime-ms"));
+   }
+   public static double getElapsedTimeMs(JSONObject map) throws JSONException {
+      return map.getDouble("ElapsedTime-ms");
+   }
+   public static void setElapsedTimeMs(JSONObject map, double val) throws JSONException {
+      map.put("ElapsedTime-ms", val);
+   }
+
+   public static boolean hasCoreCamera(JSONObject map) {
+      return (isValid(map, "Core-Camera"));
+   }
+   public static String getCoreCamera(JSONObject map) throws JSONException {
+      return map.getString("Core-Camera");
+   }
+   public static void setCoreCamera(JSONObject map, String val) throws JSONException {
+      map.put("Core-Camera", val);
+   }
+   
+   public static double getIntervalMs(JSONObject map) throws JSONException {
+      return map.getDouble("Interval_ms");
+   }
+   public static void setIntervalMs(JSONObject map, double val) throws JSONException {
+      map.put("Interval_ms", val);
+   }
+   public static boolean hasIntervalMs(JSONObject map) throws JSONException {
+      return (isValid(map, "Interval_ms"));
+   }
+
+   public static String getChannelGroup(JSONObject map) throws JSONException {
+      return map.getString("Core-ChannelGroup");
+   }
+
+   public static boolean hasSlicesFirst(JSONObject map) {
+      return (isValid(map, "SlicesFirst"));
+   }
+   public static boolean getSlicesFirst(JSONObject map) throws JSONException {
+      return map.getBoolean("SlicesFirst");
+   }
+   public static void setSlicesFirst(JSONObject map, boolean val) throws JSONException {
+      map.put("SlicesFirst", val);
+   }
+   
+   public static boolean hasTimeFirst(JSONObject map) {
+      return (isValid(map, "TimeFirst"));
+   }
+   public static boolean getTimeFirst(JSONObject map) throws JSONException {
+      return map.getBoolean("TimeFirst");
+   }
+   public static void setTimeFirst(JSONObject map, boolean val) throws JSONException {
+      map.put("TimeFirst", val);
+   }
 }

@@ -211,7 +211,7 @@ public class AcquisitionManager {
 
          try {
             JSONObject summary = new JSONObject();
-            summary.put("PixelType", tags.get("PixelType"));
+            summary.put("PixelType", MDUtils.getPixelType(tags));
             acq.setSummaryProperties(summary);
          } catch (JSONException ex) {
             ReportingUtils.logError(ex);
@@ -303,13 +303,16 @@ public class AcquisitionManager {
             double gamma = channelSetting.getDouble("Gamma");
             String name = channelSetting.getString("Name");
             int histMax;
-            if (channelSetting.has("HistogramMax"))      
+            if (channelSetting.has("HistogramMax")) {
                histMax = channelSetting.getInt("HistogramMax");
-            else
+            }
+            else {
                histMax = -1;
+            }
             int displayMode = CompositeImage.COMPOSITE;
-            if (channelSetting.has("DisplayMode"))
+            if (channelSetting.has("DisplayMode")) {
                displayMode = channelSetting.getInt("DisplayMode");
+            }
             
             ic.storeChannelDisplaySettings(i, min, max, gamma, histMax, displayMode);
             acq.getAcquisitionWindow().setChannelHistogramDisplayMax(i,histMax);

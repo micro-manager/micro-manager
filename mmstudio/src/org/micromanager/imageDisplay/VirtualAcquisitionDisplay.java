@@ -534,7 +534,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
          if (tags != null && tags.has(pixSizeTag)) {
             pixSizeUm = tags.getDouble(pixSizeTag);
          } else {
-            pixSizeUm = summary.getDouble("PixelSize_um");
+            pixSizeUm = MDUtils.getPixelSizeUm(summary);
          }
          if (pixSizeUm > 0) {
             Calibration cal = new Calibration();
@@ -773,7 +773,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       //get channelgroup name for use in loading contrast setttings
       if (firstImage_) {
          try {
-            channelGroup_ = tags.getString("Core-ChannelGroup");
+            channelGroup_ = MDUtils.getChannelGroup(tags);
          } catch (JSONException ex) {
             ReportingUtils.logError("Couldn't find Core-ChannelGroup in image metadata");
          }
@@ -1439,7 +1439,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
             JSONObject tags = this.getCurrentMetadata();
             if (tags != null) {
                try {
-                  double imgPixSize = tags.getDouble("PixelSizeUm");
+                  double imgPixSize = MDUtils.getPixelSizeUm(tags);
                   if (calPixSize != imgPixSize) {
                      applyPixelSizeCalibration(hyperImage_);
                   }

@@ -3724,7 +3724,22 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       acq.setImagePhysicalDimensions(width, height, byteDepth, bitDepth, multiCamNumCh);
       acq.initializeSimpleAcq();
    }
-      
+
+   /**
+    * Call the below function with values extracted from the provided 
+    * JSONObject.
+    */
+   private void initializeAcquisitionFromTags(String name, JSONObject tags) throws JSONException, MMScriptException {
+      int width = MDUtils.getWidth(tags);
+      int height = MDUtils.getHeight(tags);
+      int byteDepth = MDUtils.getDepth(tags);
+      int bitDepth = byteDepth * 8;
+      if (MDUtils.hasBitDepth(tags)) {
+         bitDepth = MDUtils.getBitDepth(tags);
+      }
+      initializeAcquisition(name, width, height, byteDepth, bitDepth);
+   }
+
    @Override
    public void initializeAcquisition(String name, int width, int height, int byteDepth, int bitDepth) throws MMScriptException {
       MMAcquisition acq = acqMgr_.getAcquisition(name);
@@ -3910,11 +3925,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
          
          // initialize physical dimensions of the image
          try {
-            int width = tags.getInt(MMTags.Image.WIDTH);
-            int height = tags.getInt(MMTags.Image.HEIGHT);
-            int byteDepth = MDUtils.getDepth(tags);
-            int bitDepth = tags.getInt(MMTags.Image.BIT_DEPTH);
-            initializeAcquisition(name, width, height, byteDepth, bitDepth);
+            initializeAcquisitionFromTags(name, tags);
          } catch (JSONException e) {
             throw new MMScriptException(e);
          }
@@ -3959,14 +3970,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
 
          // automatically initialize physical dimensions of the image
          try {
-            int width = tags.getInt(MMTags.Image.WIDTH);
-            int height = tags.getInt(MMTags.Image.HEIGHT);
-            int byteDepth = MDUtils.getDepth(tags);
-            int bitDepth = byteDepth * 8;
-            if (tags.has(MMTags.Image.BIT_DEPTH)) {
-               bitDepth = tags.getInt(MMTags.Image.BIT_DEPTH);
-            }
-            initializeAcquisition(name, width, height, byteDepth, bitDepth);
+            initializeAcquisitionFromTags(name, tags);
          } catch (JSONException e) {
             throw new MMScriptException(e);
          }
@@ -3974,22 +3978,21 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
 
       // create required coordinate tags
       try {
-         tags.put(MMTags.Image.FRAME_INDEX, frame);
-         tags.put(MMTags.Image.FRAME, frame);
-         tags.put(MMTags.Image.CHANNEL_INDEX, channel);
-         tags.put(MMTags.Image.SLICE_INDEX, slice);
-         tags.put(MMTags.Image.POS_INDEX, position);
+         MDUtils.setFrameIndex(tags, frame);
+         MDUtils.setChannelIndex(tags, channel);
+         MDUtils.setSliceIndex(tags, slice);
+         MDUtils.setPositionIndex(tags, position);
 
-         if (!tags.has(MMTags.Summary.SLICES_FIRST) && !tags.has(MMTags.Summary.TIME_FIRST)) {
+         if (!MDUtils.hasSlicesFirst(tags) && !MDUtils.hasTimeFirst(tags)) {
             // add default setting
-            tags.put(MMTags.Summary.SLICES_FIRST, true);
-            tags.put(MMTags.Summary.TIME_FIRST, false);
+            MDUtils.setSlicesFirst(tags, true);
+            MDUtils.setTimeFirst(tags, false);
          }
 
          if (acq.getPositions() > 1) {
             // if no position name is defined we need to insert a default one
-            if (tags.has(MMTags.Image.POS_NAME)) {
-               tags.put(MMTags.Image.POS_NAME, "Pos" + position);
+            if (!MDUtils.hasPositionName(tags)) {
+               MDUtils.setPositionName(tags, "Pos" + position);
             }
          }
 
@@ -4002,7 +4005,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
          throw new MMScriptException(e);
       }
 
-      // System.out.println("Inserting frame: " + frame + ", channel: " + channel + ", slice: " + slice + ", pos: " + position);
       acq.insertImage(taggedImg);
    }
 

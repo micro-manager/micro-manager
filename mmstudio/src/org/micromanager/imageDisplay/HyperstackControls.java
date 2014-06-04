@@ -472,7 +472,7 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
       try {
          String xyPosition;
          try {
-            xyPosition = tags.getString("PositionName");
+            xyPosition = MDUtils.getPositionName(tags);
             if (xyPosition != null && !xyPosition.contentEquals("null")) {
                status += xyPosition + ", ";
             }
@@ -481,7 +481,7 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
          }
 
          try {
-            double seconds = tags.getDouble("ElapsedTime-ms") / 1000;
+            double seconds = MDUtils.getElapsedTimeMs(tags) / 1000;
             status += elapsedTimeDisplayString(seconds);
          } catch (JSONException ex) {
             ReportingUtils.logError("MetaData did not contain ElapsedTime-ms field");
@@ -489,15 +489,9 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
 
          String zPosition;
          try {
-            zPosition = NumberUtils.doubleStringCoreToDisplay(tags.getString("ZPositionUm"));
+            zPosition = NumberUtils.doubleToDisplayString(MDUtils.getZPositionUm(tags));
             status += ", z: " + zPosition + " um";
          } catch (Exception e) {
-            try {
-               zPosition = NumberUtils.doubleStringCoreToDisplay(tags.getString("Z-um"));
-               status += ", z: " + zPosition + " um";
-            } catch (Exception e1) {
-               // Do nothing...
-            }
          }
          String chan;
          try {

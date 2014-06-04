@@ -566,19 +566,17 @@ public class MMAcquisition {
 
          JSONObject tags = new JSONObject();
 
-         tags.put("Channel", getChannelName(channel));
-         tags.put("ChannelIndex", channel);
-         tags.put("Frame", frame);
-         tags.put("FrameIndex", frame);
-         tags.put("Height", height_);
-         tags.put("PositionIndex", position);
+         MDUtils.setChannelName(tags, getChannelName(channel));
+         MDUtils.setChannelIndex(tags, channel);
+         MDUtils.setFrameIndex(tags, frame);
+         MDUtils.setPositionIndex(tags, position);
          // the following influences the format data will be saved!
          if (numPositions_ > 1) {
-            tags.put("PositionName", "Pos" + position);
+            MDUtils.setPositionName(tags, "Pos" + position);
          }
-         tags.put("Slice", slice);
-         tags.put("SliceIndex", slice);
-         tags.put("Width", width_);
+         MDUtils.setSliceIndex(tags, slice);
+         MDUtils.setHeight(tags, height_);
+         MDUtils.setWidth(tags, width_);
          MDUtils.setPixelTypeFromByteDepth(tags, byteDepth_);
 
          TaggedImage tg = new TaggedImage(pixels, tags);
@@ -672,14 +670,14 @@ public class MMAcquisition {
             throw new MMScriptException("Pixel type does not match MMAcquisition.");
          }
 
-         int channel = tags.getInt("ChannelIndex");
+         int channel = MDUtils.getChannelIndex(tags);
          int frame = MDUtils.getFrameIndex(tags);
          if (!MDUtils.getPixelType(tags).startsWith("RGB")) {
-            tags.put("Channel", getChannelName(channel));
+            MDUtils.setChannelName(tags, getChannelName(channel));
          }
          long elapsedTimeMillis = System.currentTimeMillis() - startTimeMs_;
-         tags.put("ElapsedTime-ms", elapsedTimeMillis);
-         tags.put("Time", MDUtils.getCurrentTime());
+         MDUtils.setElapsedTimeMs(tags, elapsedTimeMillis);
+         MDUtils.setImageTime(tags, MDUtils.getCurrentTime());
                   
          imageCache_.putImage(taggedImg);
       } catch (Exception ex) {

@@ -221,8 +221,8 @@ public class MMImageCache implements ImageCache {
             int chanIndex = MDUtils.getChannelIndex(imageTags);
             if (chanIndex >= channelSettings.length()) {
                JSONObject newChanObject = new JSONObject();
-               newChanObject.put("Name", MDUtils.getChannelName(imageTags));
-               newChanObject.put("Color", MDUtils.getChannelColor(imageTags));
+               MDUtils.setChannelName(newChanObject, MDUtils.getChannelName(imageTags));
+               MDUtils.setChannelColor(newChanObject, MDUtils.getChannelColor(imageTags));
                channelSettings.put(chanIndex, newChanObject);
             }
          }

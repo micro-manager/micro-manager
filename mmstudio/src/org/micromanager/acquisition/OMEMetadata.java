@@ -97,22 +97,22 @@ public class OMEMetadata {
               MDUtils.getWidth(summaryMD), MDUtils.getHeight(summaryMD),
               numSlices_, MDUtils.getNumChannels(summaryMD), MDUtils.getNumFrames(summaryMD), 1);
 
-      if (summaryMD.has("PixelSize_um") && !summaryMD.isNull("PixelSize_um")) {
-         double pixelSize = summaryMD.getDouble("PixelSize_um");
+      if (MDUtils.hasPixelSizeUm(summaryMD)) {
+         double pixelSize = MDUtils.getPixelSizeUm(summaryMD);
          if (pixelSize > 0) {
             metadata_.setPixelsPhysicalSizeX(new PositiveFloat(pixelSize), seriesIndex);
             metadata_.setPixelsPhysicalSizeY(new PositiveFloat(pixelSize), seriesIndex);
          }
       }
-      if (summaryMD.has("z-step_um") && !summaryMD.isNull("z-step_um")) {
-         double zStep = summaryMD.getDouble("z-step_um");
-	 if (zStep != 0) {
+      if (MDUtils.hasZStepUm(summaryMD)) {
+         double zStep = MDUtils.getZStepUm(summaryMD);
+         if (zStep != 0) {
             metadata_.setPixelsPhysicalSizeZ(new PositiveFloat(Math.abs(zStep)), seriesIndex);
          }
       }
 
-      if (summaryMD.has("Interval_ms")) {
-         double interval = summaryMD.getDouble("Interval_ms");
+      if (MDUtils.hasIntervalMs(summaryMD)) {
+         double interval = MDUtils.getIntervalMs(summaryMD);
          if (interval > 0) { //don't write it for burst mode because it won't be true
             metadata_.setPixelsTimeIncrement(interval / 1000.0, seriesIndex);
          }
@@ -241,9 +241,11 @@ public class OMEMetadata {
          try {
             //Add these tags in only once, but need to get them from image rather than summary metadata
             setOMEDetectorMetadata(tags);
-            if (tags.has("Time") && !tags.isNull("Time")) {
+            if (MDUtils.hasImageTime(tags)) {
                metadata_.setImageAcquisitionDate(new Timestamp(
-                       DateTools.formatDate(tags.getString("Time"), "yyyy-MM-dd HH:mm:ss")), position);
+                       DateTools.formatDate(MDUtils.getImageTime(tags), 
+                          "yyyy-MM-dd HH:mm:ss")
+                       ), position);
             }
          } catch (Exception e) {
             ReportingUtils.logError("Problem adding System state cache metadata to OME Metadata: " + e);
@@ -280,26 +282,31 @@ public class OMEMetadata {
       //Optional tags
       try {
 
-         if (tags.has("Exposure-ms") && !tags.isNull("Exposure-ms")) {
-            metadata_.setPlaneExposureTime(tags.getDouble("Exposure-ms") / 1000.0, position, indices.planeIndex_);
+         if (MDUtils.hasExposureMs(tags)) {
+            metadata_.setPlaneExposureTime(MDUtils.getExposureMs(tags) / 1000.0,
+                  position, indices.planeIndex_);
          }
-         if (tags.has("XPositionUm") && !tags.isNull("XPositionUm")) {
-            metadata_.setPlanePositionX(tags.getDouble("XPositionUm"), position, indices.planeIndex_);
+         if (MDUtils.hasXPositionUm(tags)) {
+            metadata_.setPlanePositionX(MDUtils.getXPositionUm(tags), 
+                  position, indices.planeIndex_);
             if (indices.planeIndex_ == 0) { //should be set at start, but dont have position coordinates then
-               metadata_.setStageLabelX(tags.getDouble("XPositionUm"), position);
+               metadata_.setStageLabelX(MDUtils.getXPositionUm(tags), position);
             }
          }
-         if (tags.has("YPositionUm") && !tags.isNull("YPositionUm")) {
-            metadata_.setPlanePositionY(tags.getDouble("YPositionUm"), position, indices.planeIndex_);
+         if (MDUtils.hasYPositionUm(tags)) {
+            metadata_.setPlanePositionY(MDUtils.getYPositionUm(tags), 
+                  position, indices.planeIndex_);
             if (indices.planeIndex_ == 0) {
-               metadata_.setStageLabelY(tags.getDouble("YPositionUm"), position);
+               metadata_.setStageLabelY(MDUtils.getYPositionUm(tags), position);
             }
          }
-         if (tags.has("ZPositionUm") && !tags.isNull("ZPositionUm")) {
-            metadata_.setPlanePositionZ(tags.getDouble("ZPositionUm"), position, indices.planeIndex_);
+         if (MDUtils.hasZPositionUm(tags)) {
+            metadata_.setPlanePositionZ(MDUtils.getZPositionUm(tags), 
+                  position, indices.planeIndex_);
          }
-         if (tags.has("ElapsedTime-ms") && !tags.isNull("ElapsedTime-ms")) {
-            metadata_.setPlaneDeltaT(tags.getDouble("ElapsedTime-ms") / 1000.0, position, indices.planeIndex_);
+         if (MDUtils.hasElapsedTimeMs(tags)) {
+            metadata_.setPlaneDeltaT(MDUtils.getElapsedTimeMs(tags) / 1000.0, 
+                  position, indices.planeIndex_);
          }
 
       } catch (JSONException e) {
@@ -324,10 +331,10 @@ public class OMEMetadata {
    }
 
    private void setOMEDetectorMetadata(JSONObject tags) throws JSONException {
-      if (!tags.has("Core-Camera") || tags.isNull("Core-Camera")) {
+      if (!MDUtils.hasCoreCamera(tags)) {
          return;
       }
-      String coreCam = tags.getString("Core-Camera");
+      String coreCam = MDUtils.getCoreCamera(tags);
       String[] cameras;
       if (tags.has(coreCam + "-Physical Camera 1")) {       //Multicam mode
          int numCams = 1;
