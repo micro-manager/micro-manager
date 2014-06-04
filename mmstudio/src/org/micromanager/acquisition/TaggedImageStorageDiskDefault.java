@@ -348,7 +348,7 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
    }
 
    private void openNewDataSet(TaggedImage firstImage) throws IOException, Exception {
-      String time = firstImage.tags.getString("Time");
+      String time = MDUtils.getImageTime(firstImage.tags);
       int pos;
       String posName = getPosition(firstImage);
       

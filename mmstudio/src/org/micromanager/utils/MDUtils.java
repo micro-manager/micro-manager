@@ -433,6 +433,10 @@ public class MDUtils {
       return getTime(new Date());
    }
 
+   public static String getImageTime(JSONObject tags) throws JSONException {
+      return tags.getString("Time");
+   }
+
    public static Rectangle getROI(JSONObject tags)
       throws MMScriptException, JSONException {
       String roiString = tags.getString("ROI");
