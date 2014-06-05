@@ -6,10 +6,16 @@ import com.google.common.eventbus.Subscribe;
 import ij.ImagePlus;
 import ij.gui.StackWindow;
 import java.awt.Component;
+import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
 import java.lang.StackTraceElement;
 import java.lang.Thread;
 
+import javax.swing.event.MouseInputAdapter;
+
+import net.miginfocom.swing.MigLayout;
+
+import org.micromanager.internalinterfaces.DisplayControls;
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.utils.ReportingUtils;
 
@@ -33,10 +39,9 @@ public class DisplayWindow extends StackWindow {
       }
    };
 
-   public DisplayWindow(ImagePlus ip, EventBus bus) {
+   public DisplayWindow(final ImagePlus ip, DisplayControls controls, 
+         EventBus bus) {
       super(ip);
-      bus_ = bus;
-      bus.register(this);
       // HACK: hide ImageJ's native scrollbars; we provide our own.
       if (cSelector != null) {
          remove(cSelector);
@@ -47,6 +52,32 @@ public class DisplayWindow extends StackWindow {
       if (zSelector != null) {
          remove(zSelector);
       }
+      // Override the default layout with our own, so we can do more 
+      // customized controls. 
+      // This layout is intended to minimize distances between elements.
+      setLayout(new MigLayout("insets 1"));
+      // Re-add the ImageJ canvas.
+      add(ic, "wrap");
+      add(controls, "wrap");
+      pack();
+
+      // Add a listener so we can update the histogram when an ROI is drawn.
+      ic.addMouseListener(new MouseInputAdapter() {
+         @Override
+         public void mouseReleased(MouseEvent me) {
+            if (ip instanceof MMCompositeImage) {
+               ((MMCompositeImage) ip).updateAndDraw(true);
+            } else {
+               ip.updateAndDraw();
+            }
+         }
+      });
+
+      setBackground(MMStudioMainFrame.getInstance().getBackgroundColor());
+      MMStudioMainFrame.getInstance().addMMBackgroundListener(this);
+
+      bus_ = bus;
+      bus.register(this);
    }
 
    @Override

@@ -1093,24 +1093,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
 
    private void createWindow() {
       makeHistograms();
-      final DisplayWindow win = new DisplayWindow(hyperImage_, bus_);
-      win.getCanvas().addMouseListener(new MouseInputAdapter() {
-         //updates the histogram after an ROI is drawn
-         @Override
-         public void mouseReleased(MouseEvent me) {
-            if (hyperImage_ instanceof MMCompositeImage) {
-               ((MMCompositeImage) hyperImage_).updateAndDraw(true);
-            } else {
-               hyperImage_.updateAndDraw();
-            }
-         }
-      });
-
-      win.setBackground(MMStudioMainFrame.getInstance().getBackgroundColor());
-      MMStudioMainFrame.getInstance().addMMBackgroundListener(win);
-
-      win.add(controls_);
-      win.pack();
+      DisplayWindow win = new DisplayWindow(hyperImage_, controls_, bus_);
 
       //Set magnification
       zoomToPreferredSize(win);

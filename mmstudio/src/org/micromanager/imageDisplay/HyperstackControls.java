@@ -94,7 +94,7 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
    private void initComponents(VirtualAcquisitionDisplay display, 
          final boolean shouldUseLiveControls) {
       // This layout minimizes space between components.
-      subPanel_ = new JPanel(new MigLayout("", "0[]", "0[]0[]0[]0"));
+      subPanel_ = new JPanel(new MigLayout("insets 0"));
 
       pixelInfoLabel_ = new JLabel("                                         ");
       pixelInfoLabel_.setMinimumSize(new Dimension(150, 10));
@@ -267,7 +267,7 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
       subPanel_.add(pauseAndResumeToggleButton_);
       // Make a new panel to hold the FPS info, since they need to be 
       // together.
-      JPanel fpsPanel = new JPanel(new MigLayout());
+      JPanel fpsPanel = new JPanel(new MigLayout("insets 0"));
       fpsPanel.add(fpsLabel_);
       fpsPanel.add(fpsField_);
 
