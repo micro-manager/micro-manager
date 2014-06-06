@@ -346,6 +346,9 @@ public class MultipageTiffReader {
          int frame = mapBuffer.getInt(i*20+8);
          int position = mapBuffer.getInt(i*20+12);
          long imageOffset = unsignInt(mapBuffer.getInt(i*20+16));
+         if (imageOffset == 0) {
+            break; // end of index map reached
+         }
          indexMap_.put(MDUtils.generateLabel(channel, slice, frame, position), imageOffset);
       }
    }

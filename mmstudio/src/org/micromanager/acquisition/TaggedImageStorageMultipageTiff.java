@@ -477,7 +477,7 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
          currentTiffUUID_ = "urn:uuid:" + UUID.randomUUID().toString();
          //make first writer
          tiffWriters_.add(new MultipageTiffWriter(directory_, currentTiffFilename_, summaryMetadata_, mpt,
-                 fastStorageMode_));
+                 fastStorageMode_, splitByXYPosition_));
    
          try {
             if (separateMetadataFile_) {
@@ -549,7 +549,7 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
             currentTiffUUID_ = "urn:uuid:" + UUID.randomUUID().toString();
             ifdCount_ = 0;
             tiffWriters_.add(new MultipageTiffWriter(directory_ ,currentTiffFilename_, summaryMetadata_, mpTiff_,
-                    fastStorageMode_));
+                    fastStorageMode_, splitByXYPosition_));
          }      
 
          //Add filename to image tags
