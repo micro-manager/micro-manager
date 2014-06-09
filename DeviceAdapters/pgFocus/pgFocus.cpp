@@ -1351,13 +1351,10 @@ pgFocusStabilization::pgFocusStabilization() :
 	// ------------------------------------
 
 	// Name
-	int ret = CreateProperty(MM::g_Keyword_Name, g_DeviceNamepgFocusStabilization, MM::String, true);
-   if (DEVICE_OK != ret)
-      return ret;
+   CreateProperty(MM::g_Keyword_Name, g_DeviceNamepgFocusStabilization, MM::String, true);
+ 
 	// Description
-	ret = CreateProperty(MM::g_Keyword_Description, "Open Source and Open Hardware Focus Stabilization Device", MM::String, true);
-   if (DEVICE_OK != ret)
-      return ret;
+	CreateProperty(MM::g_Keyword_Description, "Open Source and Open Hardware Focus Stabilization Device", MM::String, true);
    
 	// parent ID display
 	CreateHubIDProperty();
