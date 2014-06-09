@@ -74,7 +74,7 @@ initialized_ (false)
 	ret_ = DEVICE_OK;
 	monitoringThread_ = NULL;
 	pgFocusStabilizationDevice = NULL;
-	debug_ = true;
+	debug_ = false;
 	mode_ = 0;
 	loopTime_ = 0;
 	runningTime_ = 0;
@@ -142,20 +142,23 @@ int pgFocusHub::Initialize()
    CPropertyAction* pAct;
 
    pAct = new CPropertyAction(this, &pgFocusHub::OnFirmwareVersion);
-	RETURN_ON_MM_ERROR(CreateProperty(g_pgFocus_Firmware, g_Default_String, MM::String, true, pAct));
+	ret = CreateProperty(g_pgFocus_Firmware, g_Default_String, MM::String, true, pAct);
+   if (ret != DEVICE_OK)
+      return ret;
 
    pAct = new CPropertyAction (this, &pgFocusHub::OnSerialTerminator);
-   CreateProperty(g_SerialTerminator, g_SerialTerminator_0_Text, MM::String, false, pAct);
-   	   AddAllowedValue(g_SerialTerminator, g_SerialTerminator_0_Text);
-   	   AddAllowedValue(g_SerialTerminator, g_SerialTerminator_1_Text);
-   	   AddAllowedValue(g_SerialTerminator, g_SerialTerminator_2_Text);
-   	   AddAllowedValue(g_SerialTerminator, g_SerialTerminator_3_Text);
-
+   ret = CreateProperty(g_SerialTerminator, g_SerialTerminator_0_Text, MM::String, false, pAct);
+   if (ret != DEVICE_OK)
+      return ret;
+   
+   AddAllowedValue(g_SerialTerminator, g_SerialTerminator_0_Text);
+   AddAllowedValue(g_SerialTerminator, g_SerialTerminator_1_Text);
+   AddAllowedValue(g_SerialTerminator, g_SerialTerminator_2_Text);
+   AddAllowedValue(g_SerialTerminator, g_SerialTerminator_3_Text);
 
    ret = UpdateStatus();
    if (ret != DEVICE_OK)
       return ret;
-
 
    monitoringThread_ = new pgFocusMonitoringThread(*this,*GetCoreCallback(), debug_);
    monitoringThread_->Start();
@@ -168,6 +171,7 @@ int pgFocusHub::Initialize()
    SendCommand("l");
 
    initialized_ = true;
+   
    return DEVICE_OK;
 }
 
@@ -254,18 +258,14 @@ int pgFocusHub::DetectInstalledDevices()
 
 int pgFocusHub::Shutdown()
 {
-   initialized_ = false;
-
-   if (monitoringThread_ != NULL) {
-	   GetCoreCallback()->LogMessage(this, "Waiting for service thread to stop", false);
-	   monitoringThread_->Stop();
-	   CDeviceUtils::SleepMs(monitoringThread_->getWaitTime());
+   
+   if (initialized_) {
 	   delete(monitoringThread_);
    }
+   initialized_ = false;
 
-   monitoringThread_ = NULL;
    pgFocusStabilizationDevice = NULL;
-
+   
    return DEVICE_OK;
 }
 
@@ -1181,9 +1181,11 @@ int pgFocusHub::SetLight(long index, long light)
 //////////////////////////////////////////////////////////////////////
 // pgFocus: Z Axis
 // ---
+//
+// Inspired by ZeissCAN9 Class by Nico
 
 /*************************************************************
- * ZeissFocusStage: Micro-Manager implementation of focus drive
+ * FocusStage: Micro-Manager implementation of focus drive
  */
 /*pgFocusAxis::pgFocusAxis ():
    stepSize_um_(0.001),
@@ -1191,9 +1193,6 @@ int pgFocusHub::SetLight(long index, long light)
 {
 
 	InitializeDefaultErrorMessages();
-
-	SetErrorText(ERR_SCOPE_NOT_ACTIVE, "Zeiss Scope is not initialized.  It is needed for this Zeiss Axis to work");
-	SetErrorText(ERR_MODULE_NOT_FOUND, "This Axis is not installed in this Zeiss microscope");
 
 	// Name
 	CreateProperty(MM::g_Keyword_Name, g_DeviceNamepgFocusAxis, MM::String, true);
@@ -1283,7 +1282,7 @@ int pgFocusAxis::SetPositionSteps(long steps)
 	if (!hub || !hub->IsPortAvailable())
 		return ERR_NO_PORT_SET;
 
-	return ZeissAxis::SetPosition(*this, *GetCoreCallback(), devId_, steps, (ZeissByte) (moveMode_ & velocity_));
+	return pgFocusAxis::SetPosition(*this, *GetCoreCallback(), devId_, steps, (moveMode_ & velocity_));
 }
 
 int pgFocusAxis::GetPositionSteps(long& steps)
@@ -1292,7 +1291,7 @@ int pgFocusAxis::GetPositionSteps(long& steps)
 	if (!hub || !hub->IsPortAvailable())
 		return ERR_NO_PORT_SET;
 
-	return ZeissDevice::GetPosition(*this, *GetCoreCallback(), devId_, (ZeissLong&) steps);
+	return pgFocusAxis::GetPosition(*this, *GetCoreCallback(), devId_,  steps);
 }
 
 int pgFocusAxis::SetOrigin()
@@ -1342,8 +1341,8 @@ pgFocusStabilization::pgFocusStabilization() :
 
 	InitializeDefaultErrorMessages();
 
-	SetErrorText(ERR_HUB_NOT_FOUND,			"This device need the pgFocus Hub to be installed");
-	SetErrorText(ERR_NOT_LOCKED, 			"The pgFocus failed to lock");
+	SetErrorText(ERR_HUB_NOT_FOUND,			"Hub Device not found. This device need the pgFocus Hub to be installed");
+	SetErrorText(ERR_NOT_LOCKED,  			"The pgFocus failed to lock");
 	SetErrorText(ERR_NOT_CALIBRATED, 		"pgFocus is not calibrated. Try focusing close to a coverslip and selecting 'Calibrate'");
 	SetErrorText(ERR_OUT_OF_RANGE, 			"The number you entered is outside of the range");
 	SetErrorText(ERR_STILL_CALIBRATING,		"pgFocus is calibrating. Please wait...");
@@ -1352,11 +1351,14 @@ pgFocusStabilization::pgFocusStabilization() :
 	// ------------------------------------
 
 	// Name
-	CreateProperty(MM::g_Keyword_Name, g_DeviceNamepgFocusStabilization, MM::String, true);
-
+	int ret = CreateProperty(MM::g_Keyword_Name, g_DeviceNamepgFocusStabilization, MM::String, true);
+   if (DEVICE_OK != ret)
+      return ret;
 	// Description
-	CreateProperty(MM::g_Keyword_Description, "Open Source and Open Hardware Focus Stabilization Device", MM::String, true);
-
+	ret = CreateProperty(MM::g_Keyword_Description, "Open Source and Open Hardware Focus Stabilization Device", MM::String, true);
+   if (DEVICE_OK != ret)
+      return ret;
+   
 	// parent ID display
 	CreateHubIDProperty();
 }
@@ -1370,8 +1372,7 @@ int pgFocusStabilization::Shutdown()
 {
 
 	initialized_ = false;
-	GetCoreCallback()->LogMessage(this, "pgFocusStabilization::Shutdown()", false);
-
+	
 	return DEVICE_OK;
 }
 
@@ -1380,7 +1381,7 @@ int pgFocusStabilization::Initialize()
 
 	pgFocusHub* hub = static_cast<pgFocusHub*>(GetParentHub());
 	if (!hub || !hub->IsPortAvailable()) {
-		   return ERR_NO_PORT_SET;
+		   return ERR_HUB_NOT_FOUND;
 	}
 	char hubLabel[MM::MaxStrLength];
 	hub->GetLabel(hubLabel);
@@ -1389,7 +1390,6 @@ int pgFocusStabilization::Initialize()
 	hub->SetFocusDevice(this); // introduce ourselves to our hub
 
 	CPropertyAction* pAct;
-	LogMessage("pgFocus::Initialize()");
 
 	if (initialized_)
 	  return DEVICE_OK;
@@ -1526,7 +1526,7 @@ int pgFocusStabilization::SetOffset(double offset)
 
 	pgFocusHub* hub = static_cast<pgFocusHub*>(GetParentHub());
 	if (!hub || !hub->IsPortAvailable())
-		return ERR_NO_PORT_SET;
+		return ERR_HUB_NOT_FOUND;
 
 	return (hub->SetOffset(offset));
 
@@ -1537,7 +1537,7 @@ int pgFocusStabilization::GetOffset(double& offset)
 {
 	pgFocusHub* hub = static_cast<pgFocusHub*>(GetParentHub());
 	if (!hub || !hub->IsPortAvailable())
-		return ERR_NO_PORT_SET;
+		return ERR_HUB_NOT_FOUND;
 
 	offset = hub->GetOffset();
 
@@ -1579,7 +1579,7 @@ int pgFocusStabilization::GetLastFocusScore(double& score)
 
 	pgFocusHub* hub = static_cast<pgFocusHub*>(GetParentHub());
 	if (!hub || !hub->IsPortAvailable())
-		return ERR_NO_PORT_SET;
+		return ERR_HUB_NOT_FOUND;
 	// Perhaps return standard deviation?
 	score = hub->GetStandardDeviation();
 
@@ -1610,7 +1610,7 @@ int pgFocusStabilization::SetContinuousFocusing(bool mode)
 {
 	pgFocusHub* hub = static_cast<pgFocusHub*>(GetParentHub());
 	if (!hub || !hub->IsPortAvailable())
-		return ERR_NO_PORT_SET;
+		return ERR_HUB_NOT_FOUND;
 
 	hub->SetContinuousFocusing(mode);
 
@@ -1623,7 +1623,7 @@ int pgFocusStabilization::GetContinuousFocusing(bool& state)
 {
 	pgFocusHub* hub = static_cast<pgFocusHub*>(GetParentHub());
 	if (!hub || !hub->IsPortAvailable())
-		return ERR_NO_PORT_SET;
+		return ERR_HUB_NOT_FOUND;
 
 	hub->GetContinuousFocusing(state);
 	return DEVICE_OK;
@@ -1638,7 +1638,7 @@ int pgFocusStabilization::OnFirmwareVersion(MM::PropertyBase* pProp, MM::ActionT
 {
 	pgFocusHub* hub = static_cast<pgFocusHub*>(GetParentHub());
 	if (!hub || !hub->IsPortAvailable())
-		return ERR_NO_PORT_SET;
+		return ERR_HUB_NOT_FOUND;
 
 	if (eAct == MM::BeforeGet)
 	{
@@ -1651,7 +1651,7 @@ int pgFocusStabilization::OnMicronsPerVolt(MM::PropertyBase* pProp, MM::ActionTy
 {
 	pgFocusHub* hub = static_cast<pgFocusHub*>(GetParentHub());
 	if (!hub || !hub->IsPortAvailable())
-		return ERR_NO_PORT_SET;
+		return ERR_HUB_NOT_FOUND;
 
 
 	if (eAct == MM::BeforeGet)
@@ -1676,7 +1676,7 @@ int pgFocusStabilization::OnSD(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 	pgFocusHub* hub = static_cast<pgFocusHub*>(GetParentHub());
 	if (!hub || !hub->IsPortAvailable())
-		return ERR_NO_PORT_SET;
+		return ERR_HUB_NOT_FOUND;
 
 	if (eAct == MM::BeforeGet)
 	{
@@ -1694,7 +1694,7 @@ int pgFocusStabilization::OnSDnM(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 	pgFocusHub* hub = static_cast<pgFocusHub*>(GetParentHub());
 	if (!hub || !hub->IsPortAvailable())
-		return ERR_NO_PORT_SET;
+		return ERR_HUB_NOT_FOUND;
 
 	if (eAct == MM::BeforeGet)
 	{
@@ -1711,7 +1711,7 @@ int pgFocusStabilization::OnFocusMode(MM::PropertyBase* pProp, MM::ActionType eA
 
 	pgFocusHub* hub = static_cast<pgFocusHub*>(GetParentHub());
 	if (!hub || !hub->IsPortAvailable())
-		return ERR_NO_PORT_SET;
+		return ERR_HUB_NOT_FOUND;
 
 	focusMode_ = hub->GetFocusMode();
 
@@ -1753,7 +1753,7 @@ int pgFocusStabilization::OnWaitAfterMessage(MM::PropertyBase* pProp, MM::Action
 {
 	pgFocusHub* hub = static_cast<pgFocusHub*>(GetParentHub());
 	if (!hub || !hub->IsPortAvailable())
-		return ERR_NO_PORT_SET;
+		return ERR_HUB_NOT_FOUND;
 
 	if (eAct == MM::BeforeGet)
 	{
@@ -1797,7 +1797,7 @@ int pgFocusStabilization::OnExposure(MM::PropertyBase* pProp, MM::ActionType eAc
 
 	pgFocusHub* hub = static_cast<pgFocusHub*>(GetParentHub());
 	if (!hub || !hub->IsPortAvailable())
-		return ERR_NO_PORT_SET;
+		return ERR_HUB_NOT_FOUND;
 
 	if (eAct == MM::BeforeGet)
 	{
@@ -1821,7 +1821,7 @@ int pgFocusStabilization::OnAutoExposure(MM::PropertyBase* pProp, MM::ActionType
 
 	pgFocusHub* hub = static_cast<pgFocusHub*>(GetParentHub());
 	if (!hub || !hub->IsPortAvailable())
-		return ERR_NO_PORT_SET;
+		return ERR_HUB_NOT_FOUND;
 
 	if (eAct == MM::BeforeGet)
 	{
@@ -1850,7 +1850,7 @@ int pgFocusStabilization::OnCurrentExposure(MM::PropertyBase* pProp, MM::ActionT
 
 	pgFocusHub* hub = static_cast<pgFocusHub*>(GetParentHub());
 	if (!hub || !hub->IsPortAvailable())
-		return ERR_NO_PORT_SET;
+		return ERR_HUB_NOT_FOUND;
 
 	if (eAct == MM::BeforeGet)
 	{
@@ -1865,7 +1865,7 @@ int pgFocusStabilization::OnCalibrationCurve(MM::PropertyBase* pProp, MM::Action
 
 	pgFocusHub* hub = static_cast<pgFocusHub*>(GetParentHub());
 	if (!hub || !hub->IsPortAvailable())
-		return ERR_NO_PORT_SET;
+		return ERR_HUB_NOT_FOUND;
 
 	if (eAct == MM::BeforeGet)
 	{
@@ -1889,7 +1889,7 @@ int pgFocusStabilization::OnInputGain(MM::PropertyBase* pProp, MM::ActionType eA
 
 	pgFocusHub* hub = static_cast<pgFocusHub*>(GetParentHub());
 	if (!hub || !hub->IsPortAvailable())
-		return ERR_NO_PORT_SET;
+		return ERR_HUB_NOT_FOUND;
 
 	if (eAct == MM::BeforeGet)
 	{
@@ -1917,7 +1917,7 @@ int pgFocusStabilization::OnInputVoltage(MM::PropertyBase* pProp, MM::ActionType
 
 	pgFocusHub* hub = static_cast<pgFocusHub*>(GetParentHub());
 	if (!hub || !hub->IsPortAvailable())
-		return ERR_NO_PORT_SET;
+		return ERR_HUB_NOT_FOUND;
 
 	if (eAct == MM::BeforeGet)
 	{
@@ -1933,7 +1933,7 @@ int pgFocusStabilization::OnOutputVoltage(MM::PropertyBase* pProp, MM::ActionTyp
 
 	pgFocusHub* hub = static_cast<pgFocusHub*>(GetParentHub());
 	if (!hub || !hub->IsPortAvailable())
-		return ERR_NO_PORT_SET;
+		return ERR_HUB_NOT_FOUND;
 
 	if (eAct == MM::BeforeGet)
 	{
@@ -1947,7 +1947,7 @@ int pgFocusStabilization::OnInputnM(MM::PropertyBase* pProp, MM::ActionType eAct
 {
 	pgFocusHub* hub = static_cast<pgFocusHub*>(GetParentHub());
 	if (!hub || !hub->IsPortAvailable())
-		return ERR_NO_PORT_SET;
+		return ERR_HUB_NOT_FOUND;
 
 	if (eAct == MM::BeforeGet)
 	{
@@ -1963,7 +1963,7 @@ int pgFocusStabilization::OnOutputnM(MM::PropertyBase* pProp, MM::ActionType eAc
 
 	pgFocusHub* hub = static_cast<pgFocusHub*>(GetParentHub());
 	if (!hub || !hub->IsPortAvailable())
-		return ERR_NO_PORT_SET;
+		return ERR_HUB_NOT_FOUND;
 
 	if (eAct == MM::BeforeGet)
 	{
@@ -1979,7 +1979,7 @@ int pgFocusStabilization::OnSlope(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
 	pgFocusHub* hub = static_cast<pgFocusHub*>(GetParentHub());
 	if (!hub || !hub->IsPortAvailable())
-		return ERR_NO_PORT_SET;
+		return ERR_HUB_NOT_FOUND;
 
 	if (eAct == MM::BeforeGet)
 	{
@@ -1993,7 +1993,7 @@ int pgFocusStabilization::OnResiduals(MM::PropertyBase* pProp, MM::ActionType eA
 {
 	pgFocusHub* hub = static_cast<pgFocusHub*>(GetParentHub());
 	if (!hub || !hub->IsPortAvailable())
-		return ERR_NO_PORT_SET;
+		return ERR_HUB_NOT_FOUND;
 
 	if (eAct == MM::BeforeGet)
 	{
@@ -2008,7 +2008,7 @@ int pgFocusStabilization::OnIntercept(MM::PropertyBase* pProp, MM::ActionType eA
 {
 	pgFocusHub* hub = static_cast<pgFocusHub*>(GetParentHub());
 	if (!hub || !hub->IsPortAvailable())
-		return ERR_NO_PORT_SET;
+		return ERR_HUB_NOT_FOUND;
 
 
 	if (eAct == MM::BeforeGet)
@@ -2024,7 +2024,7 @@ int pgFocusStabilization::OnMin(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
 	pgFocusHub* hub = static_cast<pgFocusHub*>(GetParentHub());
 	if (!hub || !hub->IsPortAvailable())
-		return ERR_NO_PORT_SET;
+		return ERR_HUB_NOT_FOUND;
 
 	if (eAct == MM::BeforeGet)
 	{
@@ -2039,7 +2039,7 @@ int pgFocusStabilization::OnMax(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
 	pgFocusHub* hub = static_cast<pgFocusHub*>(GetParentHub());
 	if (!hub || !hub->IsPortAvailable())
-		return ERR_NO_PORT_SET;
+		return ERR_HUB_NOT_FOUND;
 
 	if (eAct == MM::BeforeGet)
 	{
@@ -2072,7 +2072,7 @@ int pgFocusStabilization::OnLastStatus(MM::PropertyBase* pProp, MM::ActionType e
 
 	pgFocusHub* hub = static_cast<pgFocusHub*>(GetParentHub());
 	if (!hub || !hub->IsPortAvailable())
-		return ERR_NO_PORT_SET;
+		return ERR_HUB_NOT_FOUND;
 
 	if (eAct == MM::BeforeGet)
 	{
@@ -2088,7 +2088,7 @@ int pgFocusStabilization::OnLight(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
 	pgFocusHub* hub = static_cast<pgFocusHub*>(GetParentHub());
 	if (!hub || !hub->IsPortAvailable())
-		return ERR_NO_PORT_SET;
+		return ERR_HUB_NOT_FOUND;
 
 	hub->SendCommand("l"); // get new light profile
 
