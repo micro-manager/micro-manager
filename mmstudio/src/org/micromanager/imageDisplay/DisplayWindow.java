@@ -6,12 +6,18 @@ import com.google.common.eventbus.Subscribe;
 import ij.ImagePlus;
 import ij.gui.StackWindow;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
+import java.awt.Point;
+import java.awt.Toolkit;
 import java.lang.StackTraceElement;
 import java.lang.Thread;
 
+import javax.swing.SwingConstants;
 import javax.swing.event.MouseInputAdapter;
+import javax.swing.JLabel;
+import javax.swing.plaf.basic.BasicArrowButton;
 
 import net.miginfocom.swing.MigLayout;
 
@@ -59,6 +65,7 @@ public class DisplayWindow extends StackWindow {
       // Re-add the ImageJ canvas.
       add(ic, "wrap");
       add(controls, "wrap");
+
       pack();
 
       // Add a listener so we can update the histogram when an ROI is drawn.
@@ -78,6 +85,42 @@ public class DisplayWindow extends StackWindow {
 
       bus_ = bus;
       bus.register(this);
+
+      zoomToPreferredSize();
+   }
+
+   /**
+    * Set our canvas' magnification based on the preferred window
+    * magnification.
+    */
+   private void zoomToPreferredSize() {
+      Point location = getLocation();
+      setLocation(new Point(0,0));
+
+      double mag = MMStudioMainFrame.getInstance().getPreferredWindowMag();
+
+      if (mag < ic.getMagnification()) {
+         while (mag < ic.getMagnification()) {
+            ic.zoomOut(ic.getWidth() / 2, ic.getHeight() / 2);
+         }
+      } else if (mag > ic.getMagnification()) {
+
+         while (mag > ic.getMagnification()) {
+            ic.zoomIn(ic.getWidth() / 2, ic.getHeight() / 2);
+         }
+      }
+
+      //Make sure the window is fully on the screen
+      Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+      Point newLocation = new Point(location.x,location.y);
+      if (newLocation.x + getWidth() > screenSize.width && getWidth() < screenSize.width) {
+          newLocation.x = screenSize.width - getWidth();
+      }
+      if (newLocation.y + getHeight() > screenSize.height && getHeight() < screenSize.height) {
+          newLocation.y = screenSize.height - getHeight();
+      }
+
+      setLocation(newLocation);
    }
 
    @Override

@@ -1095,42 +1095,8 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       makeHistograms();
       DisplayWindow win = new DisplayWindow(hyperImage_, controls_, bus_);
 
-      //Set magnification
-      zoomToPreferredSize(win);
-   
       mdPanel_.displayChanged(win);
       imageChangedUpdate();
-   }
-   
-   private void zoomToPreferredSize(DisplayWindow win) {
-      Point location = win.getLocation();
-      win.setLocation(new Point(0,0));
-      
-      double mag = MMStudioMainFrame.getInstance().getPreferredWindowMag();
-
-      ImageCanvas canvas = win.getCanvas();
-      if (mag < canvas.getMagnification()) {
-         while (mag < canvas.getMagnification()) {
-            canvas.zoomOut(canvas.getWidth() / 2, canvas.getHeight() / 2);
-         }
-      } else if (mag > canvas.getMagnification()) {
-
-         while (mag > canvas.getMagnification()) {
-            canvas.zoomIn(canvas.getWidth() / 2, canvas.getHeight() / 2);
-         }
-      }
-
-      //Make sure the window is fully on the screen
-      Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-      Point newLocation = new Point(location.x,location.y);
-      if (newLocation.x + win.getWidth() > screenSize.width && win.getWidth() < screenSize.width) {
-          newLocation.x = screenSize.width - win.getWidth();
-      }
-      if (newLocation.y + win.getHeight() > screenSize.height && win.getHeight() < screenSize.height) {
-          newLocation.y = screenSize.height - win.getHeight();
-      }
-      
-      win.setLocation(newLocation);
    }
 
    // A window wants to close; check if it's okay. If it is, then we call its
