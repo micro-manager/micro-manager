@@ -2114,7 +2114,7 @@ void CMMCore::setAutoShutter(bool state)
       MMThreadGuard scg(stateCacheLock_);
       stateCache_.addSetting(PropertySetting(MM::g_Keyword_CoreDevice, MM::g_Keyword_CoreAutoShutter, state ? "1" : "0"));
    }
-   CORE_LOG("Auto shutter %s.\n", state ? "ON" : "OFF");
+   CORE_DEBUG("Auto shutter %s.\n", state ? "ON" : "OFF");
 }
 
 /**
