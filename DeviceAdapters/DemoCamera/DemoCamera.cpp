@@ -2750,14 +2750,13 @@ int CDemoStage::SetPositionUm(double pos)
    return OnStagePositionChanged(pos_um_);
 }
 
+// Have "focus" (i.e. max intensity) at Z=0, getting gradually dimmer as we
+// get further away, without ever actually hitting 0.
+// We cap the intensity factor to between .1 and 1.
 void CDemoStage::SetIntensityFactor(double pos)
 {
    pos = fabs(pos);
-   pos = 10.0 - pos;
-   if (pos < 0)
-      g_IntensityFactor_ = 1.0;
-   else
-      g_IntensityFactor_ = pos/10.0;
+   g_IntensityFactor_ = max(.1, min(1.0, 1.0 - .2 * log(pos)));
 }
 
 int CDemoStage::IsStageSequenceable(bool& isSequenceable) const
