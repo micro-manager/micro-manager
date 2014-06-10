@@ -128,7 +128,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    private DisplayControls controls_;
    private boolean shouldUseSimpleControls_ = false;
    public AcquisitionVirtualStack virtualStack_;
-   private boolean mda_ = false; //flag if display corresponds to MD acquisition
+   private boolean isMDA_ = false; //flag if display corresponds to MD acquisition
    private MetadataPanel mdPanel_;
    private boolean contrastInitialized_ = false; //used for autostretching on window opening
    private boolean firstImage_ = true;
@@ -169,7 +169,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       name_ = name;
       imageCache_ = imageCache;
       eng_ = eng;
-      mda_ = eng != null;
+      isMDA_ = eng != null;
       this.albumSaved_ = imageCache.isFinished();
       setupEventBus();
       setupDisplayThread();
@@ -319,7 +319,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    public VirtualAcquisitionDisplay(ImageCache imageCache, String name) throws MMScriptException {
       imageCache_ = imageCache;
       name_ = name;
-      mda_ = false;
+      isMDA_ = false;
       shouldUseSimpleControls_ = true;
       this.albumSaved_ = imageCache.isFinished();
       setupEventBus();
@@ -414,7 +414,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       // can implement their own custom controls.
       if (controls_ == null) {
          controls_ = new HyperstackControls(this, bus_, 
-               shouldUseSimpleControls_);
+               shouldUseSimpleControls_, isMDA_);
       }
 
       applyPixelSizeCalibration(hyperImage_);
@@ -790,7 +790,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       for (int channel = 0; channel < numChannels; channel++) {
          String channelName = imageCache_.getChannelName(channel);
          HistogramSettings settings = MMStudioMainFrame.getInstance().loadStoredChannelHisotgramSettings(
-                 channelGroup_, channelName, mda_);
+                 channelGroup_, channelName, isMDA_);
          histograms_.setChannelContrast(channel, settings.min_, settings.max_, settings.gamma_);
          histograms_.setChannelHistogramDisplayMax(channel, settings.histMax_);
          if (imageCache_.getNumDisplayChannels() > 1) {
@@ -812,10 +812,10 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       if (imageCache_.getDisplayAndComments() != null) {
          imageCache_.storeChannelDisplaySettings(channelIndex, min, max, gamma, histMax, displayMode);
          //store global preference for channel contrast settings
-         if (mda_) {
+         if (isMDA_) {
             //only store for datasets that were just acquired or snap/live (i.e. no loaded datasets)
             MMStudioMainFrame.getInstance().saveChannelHistogramSettings(channelGroup_, 
-                    imageCache_.getChannelName(channelIndex), mda_,
+                    imageCache_.getChannelName(channelIndex), isMDA_,
                     new HistogramSettings(min,max, gamma, histMax, displayMode));    
          }
       }

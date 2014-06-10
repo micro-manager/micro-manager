@@ -203,7 +203,7 @@ public class ScrollerPanel extends JPanel {
             if (scroller.getMaximum() == 1) {
                // This scroller was previously hidden and needs to be shown now.
                scroller.setVisible(true);
-               add(scroller, "wrap 0px");
+               add(scroller, "wrap 0px, align center, growx");
                didShowNewScrollers = true;
             }
             // This image is further along the axis for this scrollbar than 

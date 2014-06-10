@@ -82,19 +82,22 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
    /**
     * @param shouldUseLiveControls - indicates if we should use the buttons for 
     *        the "Snap/Live" window or the buttons for normal displays.
+    * @param isAcquisition - indicates if we should auto-size the scrollbars
+    *        to the dataset or not (in an acquisition we resize them as images
+    *        come in, instead). 
     */
    public HyperstackControls(VirtualAcquisitionDisplay display, 
-         EventBus bus, boolean shouldUseLiveControls) {
+         EventBus bus, boolean shouldUseLiveControls, boolean isAcquisition) {
       super(new FlowLayout(FlowLayout.LEADING));
       bus_ = bus;
-      initComponents(display, shouldUseLiveControls);
+      initComponents(display, shouldUseLiveControls, isAcquisition);
       display_ = display;
       bus_.register(this);
       MMStudioMainFrame.getInstance().addLiveModeListener(this);
    }
 
    private void initComponents(VirtualAcquisitionDisplay display, 
-         final boolean shouldUseLiveControls) {
+         final boolean shouldUseLiveControls, boolean isAcquisition) {
       // This layout minimizes space between components.
       subPanel_ = new JPanel(new MigLayout("insets 0, fillx, align center"));
 
@@ -116,18 +119,26 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
 
       subPanel_.add(labelsPanel, "span, growx, align center, wrap");
 
-      int numChannels = display.getNumChannels();
-      int numFrames = display.getNumFrames();
-      int numSlices = display.getNumSlices();
-      // Positions have to be handled specially, since our display doesn't
-      // actually know about them -- it normally relies on us! 
-      JSONObject tags = display.getImageCache().getSummaryMetadata();
-      int numPositions = 0;
-      try {
-         numPositions = MDUtils.getNumPositions(tags);
-      }
-      catch (JSONException e) {
-         // Oh well, no positions for us.
+      // During an acquisition, we want the scrollbars to grow automatically
+      // as new images show up. When showing a fixed dataset, though, we want
+      // to show all the available image coordinates from the start. 
+      int numChannels = 0, numFrames = 0, numSlices = 0, numPositions = 0;
+      if (!isAcquisition) {
+         // Loading a proper dataset; extract the dataset dimensions from the
+         // metadata.
+         numChannels = display.getNumChannels();
+         numFrames = display.getNumFrames();
+         numSlices = display.getNumSlices();
+         // Positions have to be handled specially, since our display doesn't
+         // actually know about them -- it normally relies on us! 
+         JSONObject tags = display.getImageCache().getSummaryMetadata();
+         numPositions = 0;
+         try {
+            numPositions = MDUtils.getNumPositions(tags);
+         }
+         catch (JSONException e) {
+            // Oh well, no positions for us.
+         }
       }
       scrollerPanel_ = new ScrollerPanel(
                bus_, new String[]{"channel", "position", "time", "z"}, 
@@ -196,14 +207,13 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
       
       subPanel_.add(buttonPanel);
       add(subPanel_);
-     
-      // Propagate resizing through to our JPanel.
+      
+      // Propagate resizing through to our JPanel, adjusting slightly the 
+      // amount of space we give them to create a border.
       addComponentListener(new ComponentAdapter() {
          public void componentResized(ComponentEvent e) {
-            // HACK: set the preferred size for the controls to be a bit less
-            // than our displayed size.
             Dimension curSize = getSize();
-            subPanel_.setPreferredSize(new Dimension(curSize.width - 10, curSize.height - 10));
+            subPanel_.setPreferredSize(new Dimension(curSize.width - 10, curSize.height - 2));
             invalidate();
             validate();
          }
