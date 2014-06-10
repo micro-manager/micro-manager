@@ -102,6 +102,8 @@ initialized_ (false)
 	serialTerminator_ = g_SerialTerminator_2;
 	serialTerminatorText_ = g_SerialTerminator_2_Text;
 
+   MM_THREAD_INITIALIZE_GUARD(&mutex);
+   
 	//	"The communication port to the microscope can not be opened");
 	SetErrorText(ERR_PORT_CHANGE_FORBIDDEN, "You can't change the port after device has been initialized.");
 	SetErrorText(ERR_NO_PORT_SET, "Port not set. The pgFocus Hub needs to use a Serial Port");
@@ -129,15 +131,31 @@ bool pgFocusHub::Busy()
 
 int pgFocusHub::Initialize()
 {
+   
+   PurgeComPort(GetPort().c_str());
+
+   LogMessage("Starting serial port thread 1");
+   monitoringThread_ = new pgFocusMonitoringThread(*this,*GetCoreCallback(), debug_);
+   LogMessage("Starting serial port thread 2");
+   monitoringThread_->Start();
+   
+   
+   SendCommand("version");
+   CDeviceUtils::SleepMs(100);
+   SendCommand("slope");
+   CDeviceUtils::SleepMs(100);
+   SendCommand("gain");
+   CDeviceUtils::SleepMs(100);
+   SendCommand("intercept");
+   CDeviceUtils::SleepMs(100);
+   SendCommand("residuals");
+   CDeviceUtils::SleepMs(100);
+   SendCommand("l"); 
+   
    // Name
    int ret = CreateProperty(MM::g_Keyword_Name, g_DeviceNamepgFocusHub, MM::String, true);
    if (DEVICE_OK != ret)
       return ret;
-
-   CDeviceUtils::SleepMs(2000);
-
-   // Check that we have a controller:
-   PurgeComPort(port_.c_str());
 
    CPropertyAction* pAct;
 
@@ -155,20 +173,10 @@ int pgFocusHub::Initialize()
    AddAllowedValue(g_SerialTerminator, g_SerialTerminator_1_Text);
    AddAllowedValue(g_SerialTerminator, g_SerialTerminator_2_Text);
    AddAllowedValue(g_SerialTerminator, g_SerialTerminator_3_Text);
-
+   
    ret = UpdateStatus();
    if (ret != DEVICE_OK)
       return ret;
-
-   monitoringThread_ = new pgFocusMonitoringThread(*this,*GetCoreCallback(), debug_);
-   monitoringThread_->Start();
-
-   SendCommand("version");
-   SendCommand("slope");
-   SendCommand("gain");
-   SendCommand("intercept");
-   SendCommand("residuals");
-   SendCommand("l");
 
    initialized_ = true;
    
@@ -188,7 +196,7 @@ MM::DeviceDetectionStatus pgFocusHub::DetectDevice(void)
 
    try
    {
-      std::string portLowerCase = port_;
+      std::string portLowerCase = GetPort();
       for( std::string::iterator its = portLowerCase.begin(); its != portLowerCase.end(); ++its)
       {
          *its = (char)tolower(*its);
@@ -197,18 +205,18 @@ MM::DeviceDetectionStatus pgFocusHub::DetectDevice(void)
       {
          result = MM::CanNotCommunicate;
          // record the default answer time out
-         GetCoreCallback()->GetDeviceProperty(port_.c_str(), "AnswerTimeout", answerTO);
+         GetCoreCallback()->GetDeviceProperty(GetPort().c_str(), "AnswerTimeout", answerTO);
          CDeviceUtils::SleepMs(2000);
-         GetCoreCallback()->SetDeviceProperty(port_.c_str(), MM::g_Keyword_Handshaking, g_Off);
-         GetCoreCallback()->SetDeviceProperty(port_.c_str(), MM::g_Keyword_BaudRate, "57600" );
-         GetCoreCallback()->SetDeviceProperty(port_.c_str(), MM::g_Keyword_StopBits, "1");
-         GetCoreCallback()->SetDeviceProperty(port_.c_str(), "AnswerTimeout", "500.0");
-         GetCoreCallback()->SetDeviceProperty(port_.c_str(), "DelayBetweenCharsMs", "0");
-         MM::Device* pS = GetCoreCallback()->GetDevice(this, port_.c_str());
+         GetCoreCallback()->SetDeviceProperty(GetPort().c_str(), MM::g_Keyword_Handshaking, g_Off);
+         GetCoreCallback()->SetDeviceProperty(GetPort().c_str(), MM::g_Keyword_BaudRate, "57600" );
+         GetCoreCallback()->SetDeviceProperty(GetPort().c_str(), MM::g_Keyword_StopBits, "1");
+         GetCoreCallback()->SetDeviceProperty(GetPort().c_str(), "AnswerTimeout", "500.0");
+         GetCoreCallback()->SetDeviceProperty(GetPort().c_str(), "DelayBetweenCharsMs", "0");
+         MM::Device* pS = GetCoreCallback()->GetDevice(this, GetPort().c_str());
          pS->Initialize();
 
          CDeviceUtils::SleepMs(2000);
-         PurgeComPort(port_.c_str());
+         PurgeComPort(GetPort().c_str());
 
          ret_ = GetIdentity();
 
@@ -223,7 +231,7 @@ MM::DeviceDetectionStatus pgFocusHub::DetectDevice(void)
          }
          pS->Shutdown();
          // always restore the AnswerTimeout to the default
-         GetCoreCallback()->SetDeviceProperty(port_.c_str(), "AnswerTimeout", answerTO);
+         GetCoreCallback()->SetDeviceProperty(GetPort().c_str(), "AnswerTimeout", answerTO);
 
       }
    }
@@ -276,7 +284,7 @@ int pgFocusHub::GetIdentity()
 
 	if (identity_.compare(g_Default_String) == 0 ) {
 		SendCommand("i");
-		RETURN_ON_MM_ERROR(GetSerialAnswer(port_.c_str(), "\r\n", answer));
+		RETURN_ON_MM_ERROR(GetSerialAnswer(GetPort().c_str(), "\r\n", answer));
 
 		if (answer != g_pgFocus_Identity) {
 			identity_ = g_Default_String;
@@ -296,7 +304,7 @@ const char * pgFocusHub::GetFirmwareVersion() {
 		SendCommand("version");
 		if (monitoringThread_ != NULL) {
 			if (monitoringThread_->isRunning() == false) {
-				GetSerialAnswer(port_.c_str(), "\r\n", answer);
+				GetSerialAnswer(GetPort().c_str(), "\r\n", answer);
 
 				MM_THREAD_GUARD_LOCK(&mutex);
 				version_ = answer;
@@ -390,6 +398,7 @@ int pgFocusHub::OnSerialTerminator(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 int pgFocusHub::OnPort(MM::PropertyBase* pProp, MM::ActionType pAct)
 {
+   MM_THREAD_GUARD_LOCK(&mutex);
    if (pAct == MM::BeforeGet)
    {
       pProp->Set(port_.c_str());
@@ -399,6 +408,7 @@ int pgFocusHub::OnPort(MM::PropertyBase* pProp, MM::ActionType pAct)
       pProp->Get(port_);
       portAvailable_ = true;
    }
+   MM_THREAD_GUARD_UNLOCK(&mutex);
    return DEVICE_OK;
 }
 
@@ -426,7 +436,7 @@ int pgFocusHub::SendCommand(const char *command)
 
 	RETURN_ON_MM_ERROR ( ClearPort() );
 	// send command
-	RETURN_ON_MM_ERROR (SendSerialCommand(port_.c_str(), command, "\r"));
+	RETURN_ON_MM_ERROR (SendSerialCommand(GetPort().c_str(), command, "\r"));
 
 	return DEVICE_OK;
 }
@@ -437,7 +447,7 @@ int pgFocusHub::SendCommand(std::string command)
 
 	RETURN_ON_MM_ERROR ( ClearPort() );
 	// send command
-	RETURN_ON_MM_ERROR (SendSerialCommand(port_.c_str(), command.c_str(), "\r"));
+	RETURN_ON_MM_ERROR (SendSerialCommand(GetPort().c_str(), command.c_str(), "\r"));
 
 	return DEVICE_OK;
 }
@@ -451,7 +461,7 @@ int pgFocusHub::ClearPort()
 	int ret;
 	while (read == bufSize)
 	{
-	  ret = GetCoreCallback()->ReadFromSerial(this, port_.c_str(), clear, bufSize, read);
+	  ret = GetCoreCallback()->ReadFromSerial(this, GetPort().c_str(), clear, bufSize, read);
 	  if (ret != DEVICE_OK)
 		 return ret;
 	}
@@ -2138,7 +2148,9 @@ pgFocusMonitoringThread::pgFocusMonitoringThread(pgFocusHub &pgfocushub, MM::Cor
 	threadStop_ (true),
 	intervalMs_(250) // check every 100 ms for new messages,
 {
+   core_.LogMessage(&pgfocushub_, "pgFocusMonitoringThread: Destructing pgFocus MonitoringThread 1", true);
 	port_ = pgfocushub_.GetPort();
+   core_.LogMessage(&pgfocushub_, "pgFocusMonitoringThread: Destructing pgFocus MonitoringThread 2", true);
 }
 
 pgFocusMonitoringThread::~pgFocusMonitoringThread()
@@ -2178,12 +2190,12 @@ int pgFocusMonitoringThread::svc()
 	char rcvBuf[pgFocusHub::RCV_BUF_LENGTH];
 	std::string message;
 	memset(rcvBuf, 0, pgFocusHub::RCV_BUF_LENGTH);
-
+   
 	while (!threadStop_)
 	{
 		do {
 
-			int ret = core_.ReadFromSerial(&pgfocushub_, pgfocushub_.port_.c_str(), (unsigned char *)rcvBuf, pgFocusHub::RCV_BUF_LENGTH, charsRead);
+			int ret = core_.ReadFromSerial(&pgfocushub_, port_.c_str(), (unsigned char *)rcvBuf, pgFocusHub::RCV_BUF_LENGTH, charsRead);
 
 			if (ret == DEVICE_OK) {
 				if (debug_) {
@@ -2199,9 +2211,12 @@ int pgFocusMonitoringThread::svc()
 							parseMessage(message);
 							// only clear if found a carriage return, otherwise, save for next ReadFromSerial
 							message.clear();
+                     
 						}
 					}
 				}
+				if (charsRead > pgFocusHub::RCV_BUF_LENGTH) core_.LogMessage(&pgfocushub_, "pgFocusMonitoringThread: Buffer Overrun!", false);
+				
 
 			} else
 			{
