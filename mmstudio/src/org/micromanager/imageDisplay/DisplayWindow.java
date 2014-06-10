@@ -64,7 +64,7 @@ public class DisplayWindow extends StackWindow {
       setLayout(new MigLayout("insets 1, fillx"));
       // Re-add the ImageJ canvas.
       add(ic, "align center, wrap");
-      add(controls, "align center, wrap");
+      add(controls, "align center, wrap, growx");
 
       pack();
 

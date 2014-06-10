@@ -45,16 +45,7 @@ public class ScrollerPanel extends JPanel {
     * This class signifies that our layout has changed and our owner needs to 
     * revalidate.
     */
-   public static class LayoutChangedEvent {
-      private Dimension preferredSize_;
-      public LayoutChangedEvent(Dimension preferredSize) {
-         preferredSize_ = preferredSize;
-      }
-
-      public Dimension getPreferredSize() {
-         return preferredSize_;
-      }
-   }
+   public static class LayoutChangedEvent {}
 
    // We'll be communicating with our owner and with our AxisScrollers via
    // this bus.
@@ -77,7 +68,7 @@ public class ScrollerPanel extends JPanel {
    public ScrollerPanel(EventBus bus, String[] axes, Integer[] maximums, 
          double framesPerSec) {
       // Minimize whitespace around our components.
-      super(new net.miginfocom.swing.MigLayout("", "0[]0", "0[]0"));
+      super(new net.miginfocom.swing.MigLayout("insets 0, fillx"));
       
       bus_ = bus;
       bus_.register(this);
@@ -101,7 +92,7 @@ public class ScrollerPanel extends JPanel {
             scroller.setVisible(false);
          }
          else {
-            add(scroller, "wrap 0px");
+            add(scroller, "wrap 0px, align center, growx");
          }
          scrollers_.add(scroller);
       }
@@ -227,10 +218,8 @@ public class ScrollerPanel extends JPanel {
          }
       }
       if (didShowNewScrollers) {
-         // Post an event informing our masters of our new preferred size.
-         Dimension size = new Dimension(512, height);
-         setPreferredSize(size);
-         bus_.post(new LayoutChangedEvent(size));
+         // Post an event informing our masters that our layout has changed.
+         bus_.post(new LayoutChangedEvent());
       }
       if (canShowNewImage) {
          // Start up a timer to restore the scrollers to their original

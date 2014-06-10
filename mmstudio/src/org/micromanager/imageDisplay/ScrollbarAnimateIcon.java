@@ -16,7 +16,7 @@ import java.awt.geom.GeneralPath;
  * and is used for handling animation of an AxisScroller.
  */
 public class ScrollbarAnimateIcon extends Canvas {
-   private static final int WIDTH = 24, HEIGHT=14;
+   private static final int WIDTH = 24, HEIGHT = 14;
    private BasicStroke stroke = new BasicStroke(2f);
    private String label_;
    private boolean isAnimated_;

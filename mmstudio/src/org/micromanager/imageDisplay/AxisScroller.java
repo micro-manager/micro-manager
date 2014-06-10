@@ -82,7 +82,9 @@ public class AxisScroller extends JPanel {
 
    public AxisScroller(String axis, int maximum, final EventBus bus, 
          boolean canAnimate) {
-      super(new net.miginfocom.swing.MigLayout("", "0[]0[]0", "0[]0"));
+      // Only allow the scrollbar (not the buttons on either side) to grow.
+      super(new net.miginfocom.swing.MigLayout("insets 0, fillx",
+               "[][grow][]"));
       axis_ = axis;
       bus_ = bus;
       shouldIgnoreScrollbarEvent_ = false;
@@ -104,7 +106,7 @@ public class AxisScroller extends JPanel {
             }
          });
       }
-      add(animateIcon_);
+      add(animateIcon_, "grow 0");
 
       scrollbar_ = new JScrollBar(JScrollBar.HORIZONTAL, 0, 1, 
             0, maximum);
@@ -115,13 +117,10 @@ public class AxisScroller extends JPanel {
          }
       });
 
-      // TODO: hardcoding the width for now. Ideally would autoscale based on
-      // image dimensions.
-      scrollbar_.setPreferredSize(new Dimension(512, HEIGHT));
-      add(scrollbar_);
+      add(scrollbar_, "growx");
 
       lock_ = new ScrollbarLockIcon(axis, bus_);
-      add(lock_);
+      add(lock_, "grow 0");
 
       bus.register(this);
    }

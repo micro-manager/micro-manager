@@ -14,6 +14,8 @@ import com.swtdesigner.SwingResourceManager;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentAdapter;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.lang.Math;
@@ -94,22 +96,25 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
    private void initComponents(VirtualAcquisitionDisplay display, 
          final boolean shouldUseLiveControls) {
       // This layout minimizes space between components.
-      subPanel_ = new JPanel(new MigLayout("insets 0"));
+      subPanel_ = new JPanel(new MigLayout("insets 0, fillx, align center"));
 
+      JPanel labelsPanel = new JPanel(new MigLayout("insets 0"));
       pixelInfoLabel_ = new JLabel("                                         ");
       pixelInfoLabel_.setMinimumSize(new Dimension(150, 10));
       pixelInfoLabel_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
-      subPanel_.add(pixelInfoLabel_, "span 4");
+      labelsPanel.add(pixelInfoLabel_);
       
       imageInfoLabel_ = new JLabel("                                         ");
       imageInfoLabel_.setMinimumSize(new Dimension(150, 10));
       imageInfoLabel_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
-      subPanel_.add(imageInfoLabel_, "span 2");
+      labelsPanel.add(imageInfoLabel_);
       
       countdownLabel_ = new JLabel("                                         ");
       countdownLabel_.setMinimumSize(new Dimension(150, 10));
       countdownLabel_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
-      subPanel_.add(countdownLabel_, "span, wrap");
+      labelsPanel.add(countdownLabel_);
+
+      subPanel_.add(labelsPanel, "span, growx, align center, wrap");
 
       int numChannels = display.getNumChannels();
       int numFrames = display.getNumFrames();
@@ -130,11 +135,15 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
                DEFAULT_FPS);
       subPanel_.add(scrollerPanel_, "span, growx, wrap 0px");
 
+      // Hacky layout to minimize gaps between components. 
+      JPanel buttonPanel = new JPanel(new MigLayout("insets 0", 
+               "[]0[]0[]0[]0[]0[]"));
+
       showFolderButton_ = new JButton();
       saveButton_ = new JButton();
 
-      subPanel_.add(showFolderButton_);
-      subPanel_.add(saveButton_);
+      buttonPanel.add(showFolderButton_);
+      buttonPanel.add(saveButton_);
 
       showFolderButton_.setBackground(new java.awt.Color(255, 255, 255));
       showFolderButton_.setIcon(
@@ -179,19 +188,32 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
       fpsLabel_.setFocusable(false);
 
       if (shouldUseLiveControls) {
-         makeSnapLiveControls();
+         makeSnapLiveControls(buttonPanel);
       }
       else {
-         makeStandardControls();
+         makeStandardControls(buttonPanel);
       }
       
+      subPanel_.add(buttonPanel);
       add(subPanel_);
+     
+      // Propagate resizing through to our JPanel.
+      addComponentListener(new ComponentAdapter() {
+         public void componentResized(ComponentEvent e) {
+            // HACK: set the preferred size for the controls to be a bit less
+            // than our displayed size.
+            Dimension curSize = getSize();
+            subPanel_.setPreferredSize(new Dimension(curSize.width - 10, curSize.height - 10));
+            invalidate();
+            validate();
+         }
+      });
    }
 
    /**
     * Generate the controls used for the "Snap/Live" window.
     */
-   private void makeSnapLiveControls() {
+   private void makeSnapLiveControls(JPanel buttonPanel) {
       snapButton_ = new JButton();
       snapButton_.setFocusable(false);
       snapButton_.setIconTextGap(6);
@@ -247,31 +269,31 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
          }
       });
 
-      subPanel_.add(snapButton_);
-      subPanel_.add(liveButton_);
-      subPanel_.add(snapToAlbumButton_);
+      buttonPanel.add(snapButton_);
+      buttonPanel.add(liveButton_);
+      buttonPanel.add(snapToAlbumButton_);
       fpsLabel_.setText("                          ");
-      subPanel_.add(fpsLabel_, "span, wrap, width 120px, align right");
+      buttonPanel.add(fpsLabel_, "span, wrap, width 120px, align right");
    }
 
    /**
     * Generate the controls used on a standard dataset display (i.e. not the 
     * snap/live window).
     */
-   private void makeStandardControls() {
+   private void makeStandardControls(JPanel buttonPanel) {
       fpsField_ = new javax.swing.JTextField(String.valueOf(DEFAULT_FPS), 4);
       abortButton_ = new JButton();
       pauseAndResumeToggleButton_ = new javax.swing.JToggleButton();
       
-      subPanel_.add(abortButton_);
-      subPanel_.add(pauseAndResumeToggleButton_);
+      buttonPanel.add(abortButton_);
+      buttonPanel.add(pauseAndResumeToggleButton_);
       // Make a new panel to hold the FPS info, since they need to be 
       // together.
       JPanel fpsPanel = new JPanel(new MigLayout("insets 0"));
       fpsPanel.add(fpsLabel_);
       fpsPanel.add(fpsField_);
 
-      subPanel_.add(fpsPanel, "span, gapleft push, wrap");
+      buttonPanel.add(fpsPanel, "span, gapleft push, wrap");
 
       fpsField_.setToolTipText(
             "Set the speed at which the acquisition is played back.");
