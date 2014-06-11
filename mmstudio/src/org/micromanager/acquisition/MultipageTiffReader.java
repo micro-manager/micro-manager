@@ -205,6 +205,10 @@ public class MultipageTiffReader {
    
    public TaggedImage readImage(String label) {
       if (indexMap_.containsKey(label)) {
+         if (fileChannel_ == null) {
+            ReportingUtils.logError("Attempted to read image on FileChannel that is null");
+            return null;
+         }
          try {
             long byteOffset = indexMap_.get(label);
             

@@ -410,6 +410,11 @@ public class MultipageTiffWriter {
       writeIFD(img);
       addToIndexMap(MDUtils.getLabel(img.tags), offset);
       writeBuffers();
+      //wait until image has finished writing to return
+//      int size = writingExecutor_.getQueue().size();
+//      while (size > 0) {
+//         size = writingExecutor_.getQueue().size();
+//      }
    }
    
    private void addToIndexMap(String label, long offset) {

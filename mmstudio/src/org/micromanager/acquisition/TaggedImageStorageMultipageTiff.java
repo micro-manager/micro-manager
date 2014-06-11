@@ -259,10 +259,11 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
       FileSet set = fileSets_.get(fileSetIndex);
       try {
          set.writeImage(taggedImage);
+         tiffReadersByLabel_.put(label, set.getCurrentReader());
       } catch (IOException ex) {
         ReportingUtils.showError("problem writing image to file");
       }
-      tiffReadersByLabel_.put(label, set.getCurrentReader());
+
          
       int frame;
       try {
