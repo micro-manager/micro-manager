@@ -41,6 +41,7 @@ public class MMOptions {
    private static final String MPTIFF_METADATA_FILE = "MakeMetadataFileWithMultipageTiff";
    private static final String MPTIFF_SEPARATE_FILES_FOR_POSITIONS = "SplitXYPostionsInFilesMPTiff";
    private static final String SYNCEXPOSUREMAINANDMDA = "SyncExposureBetweenMainAndMDAWindows";
+   private static final String HIDE_MDA_DISPLAY = "HideMDADisplay";
    private static final String FAST_STORAGE = "FastStorage"; // No longer used but should not be reused
    private static final String DELETE_OLD_CORELOGS = "DeleteOldCoreLogs";
    private static final String DELETE_CORELOG_AFTER_DAYS =
@@ -73,7 +74,8 @@ public class MMOptions {
       prefs.putDouble(PREF_WINDOW_MAG, windowMag_);
       prefs.putBoolean(MPTIFF_METADATA_FILE, mpTiffMetadataFile_);
       prefs.putBoolean(MPTIFF_SEPARATE_FILES_FOR_POSITIONS, mpTiffSeparateFilesForPositions_);
-      prefs.putBoolean (SYNCEXPOSUREMAINANDMDA, syncExposureMainAndMDA_);
+      prefs.putBoolean(SYNCEXPOSUREMAINANDMDA, syncExposureMainAndMDA_);
+      prefs.putBoolean(HIDE_MDA_DISPLAY, hideMDADisplay_);
       prefs.putBoolean(DELETE_OLD_CORELOGS, deleteOldCoreLogs_);
       prefs.putInt(DELETE_CORELOG_AFTER_DAYS, deleteCoreLogAfterDays_);
    }
@@ -92,6 +94,7 @@ public class MMOptions {
       mpTiffMetadataFile_ = prefs.getBoolean(MPTIFF_METADATA_FILE, mpTiffMetadataFile_);
       mpTiffSeparateFilesForPositions_ = prefs.getBoolean(MPTIFF_SEPARATE_FILES_FOR_POSITIONS, mpTiffSeparateFilesForPositions_);
       syncExposureMainAndMDA_ = prefs.getBoolean(SYNCEXPOSUREMAINANDMDA, syncExposureMainAndMDA_);
+      hideMDADisplay_ = prefs.getBoolean(HIDE_MDA_DISPLAY, hideMDADisplay_);
       deleteOldCoreLogs_ =
          prefs.getBoolean(DELETE_OLD_CORELOGS, deleteOldCoreLogs_);
       deleteCoreLogAfterDays_ =
