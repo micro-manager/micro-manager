@@ -402,10 +402,10 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
       }
       catch (Exception e) {
          // This can happen, rarely, with an ArrayIndexOutOfBoundsException
-         // in IJ code that draws the new image. Best guess is that we're
-         // trying to set an image that the IJ code doesn't yet have access
-         // to, maybe?
-         // TODO: Just swallowing the error for now.
+         // in IJ code that draws the new image, called by way of the 
+         // updatePosition() call above. No idea what causes it, but it's
+         // rare enough that debugging is a pain.
+         ReportingUtils.logError(e, String.format("Failed to set image at %d, %d, %d, %d", position, frame, slice, channel));
       }
    }
 

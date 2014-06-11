@@ -822,6 +822,18 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    }
 
    public void updatePosition(int p) {
+      if (virtualStack_.getPositionIndex() == p) {
+         // Already on this position; skip doing anything. This minor 
+         // optimization makes a display bug (some kind of corruption of the
+         // CompositeImage) sufficiently rare as to be nigh-impossible to 
+         // reproduce.
+         // TODO: That doesn't mean the bug is *gone*. Removing this return
+         // statement and running a multi-channel, multi-timepoint, multi-Z
+         // acquisition while playing with the scrollbars and locks should 
+         // eventually reproduce the bug (wherein the display will stop 
+         // updating).
+         return;
+      }
       virtualStack_.setPositionIndex(p);
       if (!hyperImage_.isComposite()) {
          Object pixels = virtualStack_.getPixels(hyperImage_.getCurrentSlice());
