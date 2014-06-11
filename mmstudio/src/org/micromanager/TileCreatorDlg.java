@@ -67,7 +67,7 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
    private final JLabel labelBottom_ = new JLabel();
    private final JLabel labelWidth_ = new JLabel();
    private final JLabel labelWidthUmPx_ = new JLabel();
-   private int prefix_ = 0;
+   private static int prefix_ = 0;
 
    private static final DecimalFormat FMT_POS = new DecimalFormat("000");
 
