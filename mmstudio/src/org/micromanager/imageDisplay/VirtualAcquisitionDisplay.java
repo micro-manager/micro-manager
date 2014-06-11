@@ -1148,6 +1148,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       // Tell our display thread to stop what it's doing.
       shouldStopDisplayThread_.set(true);
       displayThread_.interrupt();
+      imageCache_.finished();
       imageCache_.close();
 
       removeFromAcquisitionManager(MMStudioMainFrame.getInstance());
