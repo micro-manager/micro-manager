@@ -33,6 +33,7 @@ import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.CharBuffer;
+import java.nio.channels.ClosedChannelException;
 import java.nio.channels.FileChannel;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -236,7 +237,7 @@ public class MultipageTiffWriter {
                 }
               } catch (IOException e) {
                 ReportingUtils.logError(e);
-              }
+              } 
            }
         });
    }
@@ -318,8 +319,7 @@ public class MultipageTiffWriter {
    }
 
    /**
-    * called when entire set of files (i.e. acquisition) is finished. Reopens file and writes
-    * OME metadata, then closes it
+    * Called when entire set of files (i.e. acquisition) is finished. Writes OME/IJ metadata
     */
    public void close(String omeXML) throws IOException {
       String summaryComment = "";

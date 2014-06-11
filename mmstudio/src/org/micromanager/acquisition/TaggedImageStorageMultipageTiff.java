@@ -43,12 +43,11 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
    private boolean newDataSet_;
    private int lastFrameOpenedDataSet_ = -1;
    private String directory_;
-   private Thread shutdownHook_;
    private int numPositions_;
    final public boolean omeTiff_;
    final private boolean separateMetadataFile_;
    private boolean splitByXYPosition_ = true;
-   private boolean finished_ = false;
+   private volatile boolean finished_ = false;
    private boolean expectedImageOrder_ = true;
    private int numChannels_, numSlices_;
    private String omeXML_ = null;
@@ -93,19 +92,6 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
          openExistingDataSet();
       }    
       
-      //add shutdown hook --> thread to be run when JVM shuts down
-      shutdownHook_ = new Thread() {
-         @Override
-         public void run() {
-            //for debugging
-            ReportingUtils.logMessage("Running Multpage tiff shutdown hook");
-            //don't actually run this shutdown hook for now because its not clear that it actually helps
-            //and it may lead to strange problems
-//            finished();
-//            writeDisplaySettings();
-         }
-      };    
-      Runtime.getRuntime().addShutdownHook(this.shutdownHook_); 
    }
    
    private void processSummaryMD() {
@@ -307,7 +293,7 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
          if (fileSets_ != null) {
               
             int count = 0;
-            ProgressBar progressBar = new ProgressBar("Closing Files", 0, fileSets_.size());
+            ProgressBar progressBar = new ProgressBar("Finishing Files", 0, fileSets_.size());
             progressBar.setProgress(count);
             progressBar.setVisible(true);
             for (FileSet p : fileSets_.values()) {
@@ -401,8 +387,6 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
     */
    @Override
    public void close() {
-      shutdownHook_.run();
-      Runtime.getRuntime().removeShutdownHook(shutdownHook_);
       for (MultipageTiffReader r : new HashSet<MultipageTiffReader>(tiffReadersByLabel_.values())) {
          try {
             r.close();
@@ -503,16 +487,17 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
             //don't want errors in this code to trip up correct file finishing
             ReportingUtils.logError("Couldn't fill in missing frames in OME");
          }
-         
 
-         
-         try {
-            if (separateMetadataFile_) {
+
+         if (separateMetadataFile_) {
+            try {
                finishMetadataFile();
+
+            } catch (JSONException ex) {
+               ReportingUtils.logError("Problem finishing metadata.txt");
             }
-         } catch (JSONException ex) {
-            ReportingUtils.logError("Problem finishing metadata.txt");
          }
+         
          try {
             if (omeXML_ == null) {
                omeXML_ = omeMetadata_.toString();
@@ -520,6 +505,7 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
          } catch (Exception e) {
             omeXML_ = " ";
          }
+         //only need to finish last one here because previous ones in set are finished as they fill up with images
          tiffWriters_.getLast().finish();
          for (MultipageTiffWriter w : tiffWriters_) {
             w.close(omeXML_);
