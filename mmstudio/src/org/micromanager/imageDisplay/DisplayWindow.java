@@ -7,6 +7,8 @@ import ij.ImagePlus;
 import ij.gui.StackWindow;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
 import java.awt.Point;
@@ -77,6 +79,14 @@ public class DisplayWindow extends StackWindow {
             } else {
                ip.updateAndDraw();
             }
+         }
+      });
+
+      // Repack on window size change, since our controls may have also changed
+      // size.
+      addComponentListener(new ComponentAdapter() {
+         public void componentResized(ComponentEvent e) {
+            pack();
          }
       });
 

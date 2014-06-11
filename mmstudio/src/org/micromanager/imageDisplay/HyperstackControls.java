@@ -213,7 +213,7 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
       addComponentListener(new ComponentAdapter() {
          public void componentResized(ComponentEvent e) {
             Dimension curSize = getSize();
-            subPanel_.setPreferredSize(new Dimension(curSize.width - 10, curSize.height - 2));
+            subPanel_.setPreferredSize(new Dimension(curSize.width - 10, curSize.height - 10));
             invalidate();
             validate();
          }
