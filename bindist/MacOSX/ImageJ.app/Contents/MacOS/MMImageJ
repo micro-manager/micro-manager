@@ -1,0 +1,27 @@
+#!/bin/bash
+
+arch_flag=-d32
+
+packagedir="$(dirname "$0")/../.."
+
+# Get the -Xmx flag saved by ImageJ Memory Options
+mem_flag=$(/usr/bin/awk '/^MMImageJLauncherMemoryFlag/ { print $2 }' "$packagedir"/Contents/Info.plist)
+
+unset JAVA
+if [ -z "$JAVA_HOME" ]; then
+	if [ -x /usr/libexec/java_home ]; then
+		JAVA_HOME=$(/usr/libexec/java_home -v1.6* $arch_flag)
+	fi
+fi
+if [ -n "$JAVA_HOME" ]; then
+	JAVA="$JAVA_HOME/bin/java"
+fi
+if [ -z "$JAVA" -o ! -x "$JAVA" ]; then
+	JAVA=/usr/bin/java
+fi
+if [ -x "$JAVA" ]; then
+	cd "$packagedir/.."
+	exec "$JAVA" $mem_flag $arch_flag -server -Xdock:name=ImageJ -jar "$packagedir/../ij.jar"
+else
+	/usr/bin/osascript -e 'tell app "System Events" to display dialog "ImageJ and Micro-Manager require a Java Runtime Environment. Please download and install Apple Java for OS X or Oracle Java SE JRE."'
+fi

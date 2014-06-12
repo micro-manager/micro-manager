@@ -1,34 +1,28 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+The following memory flag will be modified by ImageJ Memory Options.
+It will also be parsed and used by the launch script (MMImageJ).
+MMImageJLauncherMemoryFlag -Xmx768m
+-->
 <plist version="1.0">
 <dict>
 	<key>CFBundleAllowMixedLocalizations</key>
 	<string>true</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>English</string>
-	<key>CFBundleDocumentTypes</key>
+	<key>CFBundleIdentifier</key>
+	<string>org.micro-manager.MMImageJ</string>
+	<key>LSArchitecturePriority</key>
 	<array>
-		<dict>
-			<key>CFBundleTypeIconFile</key>
-			<string>text.icns</string>
-			<key>CFBundleTypeName</key>
-			<string>ImageJ Document</string>
-			<key>CFBundleTypeOSTypes</key>
-			<array>
-				<string>****</string>
-			</array>
-			<key>CFBundleTypeRole</key>
-			<string>Editor</string>
-		</dict>
+		<string>i386</string>
 	</array>
 	<key>CFBundleExecutable</key>
-	<string>JavaApplicationStub</string>
+	<string>MMImageJ</string>
 	<key>CFBundleGetInfoString</key>
-	<string>http://rsb.info.nih.gov</string>
+	<string>http://micro-manager.org/</string>
 	<key>CFBundleIconFile</key>
 	<string>MicroManager.icns</string>
-	<key>CFBundleIdentifier</key>
-	<string>gov.nih.info.rsb.ImageJ</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
@@ -36,40 +30,8 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleSignature</key>
-	<string>imgJ</string>
+	<string>????</string>
 	<key>CFBundleVersion</key>
-	<string>10.2</string>
-	<key>Java</key>
-	<dict>
-		<key>JVMArchs</key>
-		<array>
-			<string>i386</string>
-		</array>
-		<key>ClassPath</key>
-      <string>$APP_PACKAGE/../ij.jar:/System/Library/Java/Extensions/QTJava.zip</string>
-		<key>JVMVersion</key>
-		<string>1.5+</string>
-		<key>MainClass</key>
-		<string>ij.ImageJ</string>
-		<key>Properties</key>
-		<dict>
-			<key>apple.awt.Antialiasing</key>
-			<string>false</string>
-			<key>apple.awt.brushMetalLook</key>
-			<string>false</string>
-			<key>com.apple.hwaccel</key>
-			<string>false</string>
-			<key>com.apple.macos.useScreenMenuBar</key>
-			<string>false</string>
-			<key>com.apple.mrj.application.growbox.intrudes</key>
-			<string>false</string>
-			<key>com.apple.mrj.application.live-resize</key>
-			<string>true</string>
-			<key>com.apple.smallTabs</key>
-			<string>true</string>
-		</dict>
-		<key>VMOptions</key>
-		<string>-Xms32m -Xmx640m -XX:SoftRefLRUPolicyMSPerMB=1000000</string>
-	</dict>
+	<string>1.4</string>
 </dict>
 </plist>
