@@ -23,7 +23,11 @@ package org.micromanager.acquisition;
 
 import java.nio.ByteOrder;
 import java.util.TreeMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import loci.common.DateTools;
+import loci.common.services.DependencyException;
+import loci.common.services.ServiceException;
 import loci.common.services.ServiceFactory;
 import loci.formats.MetadataTools;
 import loci.formats.meta.IMetadata;
@@ -41,8 +45,6 @@ public class OMEMetadata {
    private IMetadata metadata_;
    private TaggedImageStorageMultipageTiff mptStorage_;
    private TreeMap<Integer, Indices> seriesIndices_ = new TreeMap<Integer, Indices>();
-   private int omeXMLBaseLength_ = -1;
-   private int omeXMLImageLength_ = -1;
    private int numSlices_, numChannels_;
    private TreeMap<String, Integer> tiffDataIndexMap_;
    
@@ -58,6 +60,18 @@ public class OMEMetadata {
       tiffDataIndexMap_ = new TreeMap<String,Integer>();
       metadata_ = MetadataTools.createOMEXMLMetadata();
    }
+   
+   public static String getOMEStringPointerToMasterFile(String filename, String uuid)  {
+      try {
+         IMetadata md = MetadataTools.createOMEXMLMetadata();
+         md.setBinaryOnlyMetadataFile(filename);
+         md.setBinaryOnlyUUID(uuid);
+         return new ServiceFactory().getInstance(OMEXMLService.class).getOMEXML(md) + " ";
+      } catch (Exception ex) {
+         ReportingUtils.logError("Couldn't generate partial OME block");
+         return " ";
+      }
+   }
 
    @Override
    public String toString() {
@@ -68,14 +82,6 @@ public class OMEMetadata {
          ReportingUtils.logError(ex);
          return "";
       }
-   }
-   
-   public int getOMEMetadataBaseLenght() {
-      return omeXMLBaseLength_;  
-   }
-   
-   public int getOMEMetadataImageLength() {
-      return omeXMLImageLength_;
    }
 
    public void setNumFrames(int seriesIndex, int numFrames) {
@@ -142,15 +148,6 @@ public class OMEMetadata {
          JSONObject channel = channels.getJSONObject(channelIndex);
          metadata_.setChannelColor(new Color(channel.getInt("Color")), seriesIndex, channelIndex);
          metadata_.setChannelName(channel.getString("Name"), seriesIndex, channelIndex);
-      }
-      //used to estimate the final length of the OME xml string
-      if (omeXMLBaseLength_ == -1) {
-         try {
-            OMEXMLService service = new ServiceFactory().getInstance(OMEXMLService.class);
-            omeXMLBaseLength_ = service.getOMEXML(metadata_).length();
-         } catch (Exception ex) {
-            ReportingUtils.logError("Unable to calculate OME XML Base length");
-         }
       }
    }
    
@@ -315,19 +312,6 @@ public class OMEMetadata {
 
       indices.planeIndex_++;
       indices.tiffDataIndex_++;
-
-      //This code is used is estimating the length of OME XML to be added in, so
-      //images arent written into file space reserved for it
-       if (omeXMLImageLength_ == -1) {
-         //This is the first image plane to be written, so calculate the change in length from the base OME
-         //XML length to estimate the approximate memory needed per an image plane
-         try {
-            OMEXMLService service = new ServiceFactory().getInstance(OMEXMLService.class);
-            omeXMLImageLength_ = (int) (1.1 * (service.getOMEXML(metadata_).length() - omeXMLBaseLength_));
-         } catch (Exception ex) {
-            ReportingUtils.logError("Unable to calculate OME XML Image length");
-         }
-      }
    }
 
    private void setOMEDetectorMetadata(JSONObject tags) throws JSONException {

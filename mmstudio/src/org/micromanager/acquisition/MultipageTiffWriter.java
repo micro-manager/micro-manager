@@ -101,7 +101,7 @@ public class MultipageTiffWriter {
    private long indexMapPosition_; //current position of the dynamically written index map
    private long indexMapFirstEntry_; // mark position of first entry so that number of entries can be written at end
    private int bufferPosition_;
-   private int numChannels_ = 1, numFrames_ = 1, numSlices_ = 1, numPositions_ = 1;
+   private int numChannels_ = 1, numFrames_ = 1, numSlices_ = 1;
    private HashMap<String, Long> indexMap_;
    private long nextIFDOffsetLocation_ = -1;
    private boolean rgb_ = false;
@@ -363,10 +363,20 @@ public class MultipageTiffWriter {
       });
    }
    
+   public boolean hasSpaceForFullOMEMetadata(int length) {
+      //5 MB extra padding..just to be safe
+      int extraPadding = 5000000; 
+      long size = length + SPACE_FOR_COMMENTS + numChannels_ * DISPLAY_SETTINGS_BYTES_PER_CHANNEL + extraPadding + filePosition_;
+      if ( size >= MAX_FILE_SIZE) {
+         return false;
+      }
+      return true;
+   }
+   
    public boolean hasSpaceToWrite(TaggedImage img, int omeMDLength) {
       int mdLength = img.tags.toString().length();
       int IFDSize = ENTRIES_PER_IFD*12 + 4 + 16;
-      //5 MB extra padding
+      //5 MB extra padding...just to be safe...
       int extraPadding = 5000000; 
       long size = mdLength+IFDSize+bytesPerImagePixels_+SPACE_FOR_COMMENTS+
       numChannels_ * DISPLAY_SETTINGS_BYTES_PER_CHANNEL + extraPadding + filePosition_;
@@ -641,7 +651,6 @@ public class MultipageTiffWriter {
       numChannels_ = MDUtils.getNumChannels(summaryMD);
       numFrames_ = MDUtils.getNumFrames(summaryMD);
       numSlices_ = MDUtils.getNumSlices(summaryMD);
-      numPositions_ = splitByPosition ? 1 : MDUtils.getNumPositions(summaryMD);
       imageWidth_ = MDUtils.getWidth(summaryMD);
       imageHeight_ = MDUtils.getHeight(summaryMD);
       String pixelType = MDUtils.getPixelType(summaryMD);
