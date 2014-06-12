@@ -120,8 +120,10 @@ for file in DeviceAdapters/PVCAM/.libs/libmmgr_dal_PVCAM \
             DeviceAdapters/ScionCam/.libs/libmmgr_dal_ScionCam \
             DeviceAdapters/Spot/.libs/libmmgr_dal_Spot 
 do
-   lipo -extract i386 -output $file.i386 $file
-   mv $file.i386 $file
+   if [ -f $file ]; then
+      lipo -extract i386 -output $file.i386 $file
+      mv $file.i386 $file
+   fi
 done
 
 
