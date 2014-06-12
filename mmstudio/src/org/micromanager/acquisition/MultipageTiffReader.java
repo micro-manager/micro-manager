@@ -353,6 +353,8 @@ public class MultipageTiffReader {
          if (imageOffset == 0) {
             break; // end of index map reached
          }
+         //If a duplicate label is read, forget about the previous one
+         //if data has been intentionally overwritten, this gives the most current version
          indexMap_.put(MDUtils.generateLabel(channel, slice, frame, position), imageOffset);
       }
    }

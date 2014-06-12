@@ -428,6 +428,8 @@ public class MultipageTiffWriter {
    }
    
    private void addToIndexMap(String label, long offset) {
+      //If a duplicate label is received, forget about the previous one
+      //this allows overwriting of images without loss of data
       indexMap_.put(label, offset);
       ByteBuffer buffer = allocateByteBuffer( 20 );
       String[] indices = label.split("_");
