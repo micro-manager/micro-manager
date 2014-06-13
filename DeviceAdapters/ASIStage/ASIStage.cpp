@@ -414,7 +414,7 @@ int XYStage::Initialize()
    if (hasCommand("WT X?")) {
       pAct = new CPropertyAction (this, &XYStage::OnWait);
       CreateProperty("Wait_Cycles", "5", MM::Integer, false, pAct);
-      SetPropertyLimits("Wait_Cycles", 0, 255);
+//      SetPropertyLimits("Wait_Cycles", 0, 255);  // don't artificially restrict range
    }
 
    // Speed (sets both x and y)
