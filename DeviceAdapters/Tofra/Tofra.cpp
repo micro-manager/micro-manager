@@ -119,23 +119,9 @@ TofraFilterWheel::TofraFilterWheel() :
 	// Com port
 	pAct = new CPropertyAction (this, &TofraFilterWheel::OnCOMPort);
 	CreateProperty(MM::g_Keyword_Port, "", MM::String, false, pAct, true);
-	// State
-	pAct = new CPropertyAction (this, &TofraFilterWheel::OnState);
-	CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct, true);
-	// Label
-	pAct = new CPropertyAction (this, &CStateBase::OnLabel);
-	CreateProperty(MM::g_Keyword_Label, "", MM::String, false, pAct, true);
 	// Number of positions
 	pAct = new CPropertyAction (this, &TofraFilterWheel::OnNumPos);
 	CreateProperty("NumPos", "10", MM::Integer, false, pAct, true);
-	// Create default positions and labels
-	const int bufSize = 1024;
-	char buf[bufSize];
-	for (long i=0; i<NumPos; i++)
-	{
-		snprintf(buf, bufSize, "Filter-%.2ld", i + 1);
-		SetPositionLabel(i, buf);
-	}
 	// ControllerName - Name (number) of the motor controller on the serial line
 	pAct = new CPropertyAction (this, &TofraFilterWheel::OnControllerName);
 	CreateProperty("ControllerName", "1", MM::String, false, pAct, true);
@@ -174,6 +160,26 @@ void TofraFilterWheel::GetName(char* Name) const
 int TofraFilterWheel::Initialize()
 {
 	int ret;
+	CPropertyAction* pAct;
+
+	// State
+	pAct = new CPropertyAction (this, &TofraFilterWheel::OnState);
+	ret = CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct);
+	if (ret != DEVICE_OK) return ret;
+
+	// Label
+	pAct = new CPropertyAction (this, &CStateBase::OnLabel);
+	ret = CreateProperty(MM::g_Keyword_Label, "", MM::String, false, pAct);
+	if (ret != DEVICE_OK) return ret;
+
+	// Create default positions and labels
+	const int bufSize = 1024;
+	char buf[bufSize];
+	for (long i=0; i<NumPos; i++)
+	{
+		snprintf(buf, bufSize, "Filter-%.2ld", i + 1);
+		SetPositionLabel(i, buf);
+	}
 
 	// Update Status 
 	ret = UpdateStatus();
@@ -2293,23 +2299,9 @@ CubeSlider::CubeSlider() :
 	// Com port
 	pAct = new CPropertyAction (this, &CubeSlider::OnCOMPort);
 	CreateProperty(MM::g_Keyword_Port, "", MM::String, false, pAct, true);
-	// State
-	pAct = new CPropertyAction (this, &CubeSlider::OnState);
-	CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct, true);
-	// Label
-	pAct = new CPropertyAction (this, &CStateBase::OnLabel);
-	CreateProperty(MM::g_Keyword_Label, "", MM::String, false, pAct, true);
 	// Number of positions
 	pAct = new CPropertyAction (this, &CubeSlider::OnNumPos);
 	CreateProperty("NumPos", "6", MM::Integer, false, pAct, true);
-	// Create default positions and labels
-	const int bufSize = 1024;
-	char buf[bufSize];
-	for (long i=0; i<NumPos; i++)
-	{
-		snprintf(buf, bufSize, "Cube-%.2ld", i + 1);
-		SetPositionLabel(i, buf);
-	}
 	// ControllerName - Name (number) of the motor controller on the serial line
 	pAct = new CPropertyAction (this, &CubeSlider::OnControllerName);
 	CreateProperty("ControllerName", "6", MM::String, false, pAct, true);
@@ -2369,6 +2361,26 @@ void CubeSlider::GetName(char* Name) const
 int CubeSlider::Initialize()
 {
 	int ret;
+	CPropertyAction* pAct;
+
+	// State
+	pAct = new CPropertyAction (this, &CubeSlider::OnState);
+	ret = CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct);
+	if (ret != DEVICE_OK) return ret;
+
+	// Label
+	pAct = new CPropertyAction (this, &CStateBase::OnLabel);
+	ret = CreateProperty(MM::g_Keyword_Label, "", MM::String, false, pAct);
+	if (ret != DEVICE_OK) return ret;
+
+	// Create default positions and labels
+	const int bufSize = 1024;
+	char buf[bufSize];
+	for (long i=0; i<NumPos; i++)
+	{
+		snprintf(buf, bufSize, "Cube-%.2ld", i + 1);
+		SetPositionLabel(i, buf);
+	}
 
 	// Update Status 
 	ret = UpdateStatus();
@@ -2725,33 +2737,9 @@ rgbLED::rgbLED() :
 	// Com port
 	pAct = new CPropertyAction (this, &rgbLED::OnCOMPort);
 	CreateProperty(MM::g_Keyword_Port, "", MM::String, false, pAct, true);
-	// State
-	pAct = new CPropertyAction (this, &rgbLED::OnState);
-	CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct, true);
-	// Label
-	pAct = new CPropertyAction (this, &CStateBase::OnLabel);
-	CreateProperty(MM::g_Keyword_Label, "", MM::String, false, pAct, true);
 	// Number of positions
 	pAct = new CPropertyAction (this, &rgbLED::OnNumPos);
 	CreateProperty("NumPos", "5", MM::Integer, false, pAct, true);
-	// Create default positions and labels
-	SetPositionLabel(0, "Off");
-	SetPositionLabel(1, "R");
-	SetPositionLabel(2, "G");
-	SetPositionLabel(3, "B");
-	SetPositionLabel(4, "A");
-	// Channel1Intensity
-	pAct = new CPropertyAction (this, &rgbLED::OnChannel1Intensity);
-	CreateProperty("Channel1Intensity", "0", MM::Float, false, pAct, true);
-	// Channel2Intensity
-	pAct = new CPropertyAction (this, &rgbLED::OnChannel2Intensity);
-	CreateProperty("Channel2Intensity", "0", MM::Float, false, pAct, true);
-	// Channel3Intensity
-	pAct = new CPropertyAction (this, &rgbLED::OnChannel3Intensity);
-	CreateProperty("Channel3Intensity", "0", MM::Float, false, pAct, true);
-	// Channel4Intensity
-	pAct = new CPropertyAction (this, &rgbLED::OnChannel4Intensity);
-	CreateProperty("Channel4Intensity", "0", MM::Float, false, pAct, true);
 
 	EnableDelay(); // signals that the delay setting will be used
 }
@@ -2768,9 +2756,49 @@ void rgbLED::GetName(char* Name) const
 int rgbLED::Initialize()
 {
 	int ret;
+	CPropertyAction* pAct;
+
+	// State
+	pAct = new CPropertyAction (this, &rgbLED::OnState);
+	ret = CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct);
+	if (ret != DEVICE_OK) return ret;
+
+	// Label
+	pAct = new CPropertyAction (this, &CStateBase::OnLabel);
+	ret = CreateProperty(MM::g_Keyword_Label, "", MM::String, false, pAct);
+	if (ret != DEVICE_OK) return ret;
+
+	// Create default positions and labels
+	SetPositionLabel(0, "Off");
+	SetPositionLabel(1, "R");
+	SetPositionLabel(2, "G");
+	SetPositionLabel(3, "B");
+	SetPositionLabel(4, "A");
+
+	// Channel1Intensity
+	pAct = new CPropertyAction (this, &rgbLED::OnChannel1Intensity);
+	ret = CreateProperty("Channel1Intensity", "0", MM::Float, false, pAct);
+	if (ret != DEVICE_OK) return ret;
+
+	// Channel2Intensity
+	pAct = new CPropertyAction (this, &rgbLED::OnChannel2Intensity);
+	ret = CreateProperty("Channel2Intensity", "0", MM::Float, false, pAct);
+	if (ret != DEVICE_OK) return ret;
+
+	// Channel3Intensity
+	pAct = new CPropertyAction (this, &rgbLED::OnChannel3Intensity);
+	ret = CreateProperty("Channel3Intensity", "0", MM::Float, false, pAct);
+	if (ret != DEVICE_OK) return ret;
+
+	// Channel4Intensity
+	pAct = new CPropertyAction (this, &rgbLED::OnChannel4Intensity);
+	ret = CreateProperty("Channel4Intensity", "0", MM::Float, false, pAct);
+	if (ret != DEVICE_OK) return ret;
+
 	// Update Status 
 	ret = UpdateStatus();
 	if (ret != DEVICE_OK) return ret;
+
 	// Initialize
 	position_ = 0;
 	ret = InitializergbLED();
