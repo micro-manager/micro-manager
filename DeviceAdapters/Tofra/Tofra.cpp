@@ -143,8 +143,6 @@ TofraFilterWheel::TofraFilterWheel() :
 	// RunCurrent
 	pAct = new CPropertyAction (this, &TofraFilterWheel::OnRunCurrent);
 	CreateProperty("RunCurrent", "60", MM::Integer, false, pAct, true);
-
-	EnableDelay(); // signals that the delay setting will be used
 }
 
 TofraFilterWheel::~TofraFilterWheel()
@@ -578,8 +576,6 @@ ZStage::ZStage() :
 	// WithLimits
 	pAct = new CPropertyAction (this, &ZStage::OnWithLimits);
 	CreateProperty("WithLimits", "0", MM::Integer, false, pAct, true);
-
-	//EnableDelay(); // signals that the delay setting will be used ????
 }
 
 ZStage::~ZStage()
@@ -1207,8 +1203,6 @@ XYStage::XYStage() :
 	CreateProperty("LimitPolarityX", "", MM::Integer, false, pAct, true);
 	pAct = new CPropertyAction (this, &XYStage::OnLimitPolarityY);
 	CreateProperty("LimitPolarityY", "", MM::Integer, false, pAct, true);
-
-	//EnableDelay(); // signals that the delay setting will be used ????
 }
 XYStage::~XYStage()
 {
@@ -2344,8 +2338,6 @@ CubeSlider::CubeSlider() :
 	// StepDivide
 	pAct = new CPropertyAction (this, &CubeSlider::OnStepDivide);
 	CreateProperty("StepDivide", "16", MM::Integer, false, pAct, true);
-
-	EnableDelay(); // signals that the delay setting will be used
 }
 
 CubeSlider::~CubeSlider()
@@ -2740,8 +2732,6 @@ rgbLED::rgbLED() :
 	// Number of positions
 	pAct = new CPropertyAction (this, &rgbLED::OnNumPos);
 	CreateProperty("NumPos", "5", MM::Integer, false, pAct, true);
-
-	EnableDelay(); // signals that the delay setting will be used
 }
 
 rgbLED::~rgbLED()
