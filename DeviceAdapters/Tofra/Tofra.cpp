@@ -2769,20 +2769,28 @@ int rgbLED::Initialize()
 	pAct = new CPropertyAction (this, &rgbLED::OnChannel1Intensity);
 	ret = CreateProperty("Channel1Intensity", "0", MM::Float, false, pAct);
 	if (ret != DEVICE_OK) return ret;
+	ret = SetPropertyLimits("Channel1Intensity", 0.0, 1.0);
+	if (ret != DEVICE_OK) return ret;
 
 	// Channel2Intensity
 	pAct = new CPropertyAction (this, &rgbLED::OnChannel2Intensity);
 	ret = CreateProperty("Channel2Intensity", "0", MM::Float, false, pAct);
+	if (ret != DEVICE_OK) return ret;
+	ret = SetPropertyLimits("Channel2Intensity", 0.0, 1.0);
 	if (ret != DEVICE_OK) return ret;
 
 	// Channel3Intensity
 	pAct = new CPropertyAction (this, &rgbLED::OnChannel3Intensity);
 	ret = CreateProperty("Channel3Intensity", "0", MM::Float, false, pAct);
 	if (ret != DEVICE_OK) return ret;
+	ret = SetPropertyLimits("Channel3Intensity", 0.0, 1.0);
+	if (ret != DEVICE_OK) return ret;
 
 	// Channel4Intensity
 	pAct = new CPropertyAction (this, &rgbLED::OnChannel4Intensity);
 	ret = CreateProperty("Channel4Intensity", "0", MM::Float, false, pAct);
+	if (ret != DEVICE_OK) return ret;
+	ret = SetPropertyLimits("Channel4Intensity", 0.0, 1.0);
 	if (ret != DEVICE_OK) return ret;
 
 	// Update Status 
@@ -2919,7 +2927,8 @@ int rgbLED::OnChannel1Intensity(MM::PropertyBase* pProp, MM::ActionType eAct)
 	}
 	else if (eAct == MM::AfterSet) {
 		pProp->Get(Channel1Intensity);  
-		ChannelIntensity(1,Channel1Intensity);
+		int ret = ChannelIntensity(1,Channel1Intensity);
+		if (ret != DEVICE_OK) return ret;
    }                                                                         
    return DEVICE_OK;                                                         
 } 
@@ -2930,7 +2939,8 @@ int rgbLED::OnChannel2Intensity(MM::PropertyBase* pProp, MM::ActionType eAct)
 	}
 	else if (eAct == MM::AfterSet) {
 		pProp->Get(Channel2Intensity);
-		ChannelIntensity(2,Channel2Intensity);
+		int ret = ChannelIntensity(2,Channel2Intensity);
+		if (ret != DEVICE_OK) return ret;
    }                                                                         
    return DEVICE_OK;                                                         
 } 
@@ -2941,7 +2951,8 @@ int rgbLED::OnChannel3Intensity(MM::PropertyBase* pProp, MM::ActionType eAct)
 	}
 	else if (eAct == MM::AfterSet) {
 		pProp->Get(Channel3Intensity);
-		ChannelIntensity(3,Channel3Intensity);
+		int ret = ChannelIntensity(3,Channel3Intensity);
+		if (ret != DEVICE_OK) return ret;
    }                                                                         
    return DEVICE_OK;                                                         
 } 
@@ -2952,7 +2963,8 @@ int rgbLED::OnChannel4Intensity(MM::PropertyBase* pProp, MM::ActionType eAct)
 	}
 	else if (eAct == MM::AfterSet) {
 		pProp->Get(Channel4Intensity);
-		ChannelIntensity(4,Channel4Intensity);
+		int ret = ChannelIntensity(4,Channel4Intensity);
+		if (ret != DEVICE_OK) return ret;
    }                                                                         
    return DEVICE_OK;                                                         
 } 
