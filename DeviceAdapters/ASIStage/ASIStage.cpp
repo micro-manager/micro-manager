@@ -3250,7 +3250,7 @@ int CRISP::OnGainMultiplier(MM::PropertyBase* pProp, MM::ActionType eAct)
       long nr;
       pProp->Get(nr);
       ostringstream command;
-      command << fixed << "KA Z=" << nr;
+      command << fixed << "KA " << axis_ << "=" << nr;
 
       return SetCommand(command.str());
    }
