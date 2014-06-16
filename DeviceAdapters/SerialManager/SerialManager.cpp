@@ -561,6 +561,7 @@ int SerialPort::Initialize()
    return DEVICE_OK;
 }
 
+#ifdef _WIN32
 int SerialPort::OpenWin32SerialPort(const std::string& portName,
       HANDLE& portHandle)
 {
@@ -637,6 +638,7 @@ int SerialPort::OpenWin32SerialPort(const std::string& portName,
 
    return DEVICE_OK;
 }
+#endif // _WIN32
 
 int SerialPort::Shutdown()
 {

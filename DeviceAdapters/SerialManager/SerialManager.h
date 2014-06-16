@@ -143,7 +143,9 @@ private:
    boost::thread* pThread_;
    bool verbose_; // if false, turn off LogBinaryMessage even in Debug Log
 
+#ifdef _WIN32
    int OpenWin32SerialPort(const std::string& portName, HANDLE& portHandle);
+#endif
    void LogAsciiCommunication(const char* prefix, bool isInput, const std::string& content);
    void LogBinaryCommunication(const char* prefix, bool isInput, const unsigned char* content, std::size_t length);
 };
