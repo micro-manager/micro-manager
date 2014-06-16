@@ -504,22 +504,48 @@ int SerialPort::Initialize()
 
    try
    {
-      pPort_ = new AsioClient (*pService_, boost::lexical_cast<unsigned int>(baud), this->portName_,
-          boost::asio::serial_port_base::flow_control::type(handshake),
-          boost::asio::serial_port_base::parity::type(parity),
-          boost::asio::serial_port_base::stop_bits::type(sb),
-          this
-            ); 
+#ifdef _WIN32
+      // On Windows, we create the native port ourselves, instead of letting
+      // Boost.Asio do it. This is in order to work around an incompatibility
+      // between certain USB-serial drivers (some versions of Silicon Labs) and
+      // the manner in which Boost.Asio
+      // (boost::asio::detail::win_iocp_serial_port_service) initializes serial
+      // ports (the bug results in a stackoverflow or an error).
+      HANDLE portHandle;
+      int ret = OpenWin32SerialPort(portName_, portHandle);
+      if (ret != DEVICE_OK)
+      {
+         return ret;
+      }
+
+      pPort_ = new AsioClient(*pService_,
+            this->portName_,
+            portHandle,
+            boost::lexical_cast<unsigned int>(baud),
+            boost::asio::serial_port::flow_control::type(handshake),
+            boost::asio::serial_port::parity::type(parity),
+            boost::asio::serial_port::stop_bits::type(sb),
+            this);
+#else
+      pPort_ = new AsioClient(*pService_,
+            boost::lexical_cast<unsigned int>(baud),
+            this->portName_,
+            boost::asio::serial_port::flow_control::type(handshake),
+            boost::asio::serial_port::parity::type(parity),
+            boost::asio::serial_port::stop_bits::type(sb),
+            this);
+#endif
    }
-   catch( std::exception& what)
+   catch (std::exception& e)
    {
-      LogMessage(what.what(),false);
+      LogMessage(e.what());
       return DEVICE_ERR;
    }
 
    try
    {
-      pThread_ = new boost::thread(boost::bind(&boost::asio::io_service::run, pService_)); 
+      pThread_ = new boost::thread(boost::bind(
+               &boost::asio::io_service::run, pService_));
    }
    catch(std::exception& what)
    {
@@ -532,6 +558,83 @@ int SerialPort::Initialize()
       return ret;
 
    initialized_ = true;
+   return DEVICE_OK;
+}
+
+int SerialPort::OpenWin32SerialPort(const std::string& portName,
+      HANDLE& portHandle)
+{
+   std::string portPath = portName[0] == '\\' ?
+      portName : "\\\\.\\" + portName;
+
+   portHandle = CreateFileA(portName.c_str(),
+         GENERIC_READ | GENERIC_WRITE, 0, 0,
+         OPEN_EXISTING, FILE_FLAG_OVERLAPPED, 0);
+   if (portHandle == INVALID_HANDLE_VALUE)
+   {
+      DWORD err = GetLastError();
+      LogMessage(("Failed to open serial port " + portName + ": "
+            "CreateFileA() returned Windows system error code " +
+            boost::lexical_cast<std::string>(err)).c_str());
+      return DEVICE_ERR;
+   }
+
+   DCB dcb;
+   memset(&dcb, 0, sizeof(DCB));
+   dcb.DCBlength = sizeof(DCB);
+   if (!GetCommState(portHandle, &dcb))
+   {
+      DWORD err = GetLastError();
+      LogMessage(("Failed to read serial port parameters: "
+            "GetCommState() returned Windows system error code " +
+            boost::lexical_cast<std::string>(err)).c_str());
+      CloseHandle(portHandle);
+      return DEVICE_ERR;
+   }
+
+   dcb.fBinary = TRUE;
+   dcb.fDsrSensitivity = FALSE;
+   dcb.fNull = FALSE;
+   dcb.fAbortOnError = FALSE;
+
+   // The following lines work around crashes caused by invalid or incorrect
+   // values returned by some serial port drivers (some versions of Silicon
+   // Labs USB-serial drivers).
+   if (dcb.XonLim > 4096)
+   {
+      dcb.XonLim = 2048;
+   }
+   if (dcb.XoffLim > 4096)
+   {
+      dcb.XoffLim = 512;
+   }
+   dcb.ByteSize = 8;
+   dcb.BaudRate = CBR_9600;
+   // End of workaround settings.
+
+   if (!SetCommState(portHandle, &dcb))
+   {
+      DWORD err = GetLastError();
+      LogMessage(("Failed to set serial port parameters: "
+            "SetCommState() returned Windows system error code " +
+            boost::lexical_cast<std::string>(err)).c_str());
+      CloseHandle(portHandle);
+      return DEVICE_ERR;
+   }
+
+   COMMTIMEOUTS timeouts;
+   memset(&timeouts, 0, sizeof(timeouts));
+   timeouts.ReadIntervalTimeout = 1;
+   if (!SetCommTimeouts(portHandle, &timeouts))
+   {
+      DWORD err = GetLastError();
+      LogMessage(("Failed to set serial port parameters: "
+            "SetCommTimeouts() returned Windows system error code " +
+            boost::lexical_cast<std::string>(err)).c_str());
+      CloseHandle(portHandle);
+      return DEVICE_ERR;
+   }
+
    return DEVICE_OK;
 }
 

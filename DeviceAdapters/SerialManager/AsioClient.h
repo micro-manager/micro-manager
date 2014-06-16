@@ -42,19 +42,49 @@
 class AsioClient 
 { 
 public: 
-   AsioClient(boost::asio::io_service& io_service,
+   // Construct from an already open native handle.
+   AsioClient(boost::asio::io_service& ioService,
+         const std::string& deviceName,
+         boost::asio::serial_port::native_handle_type nativeHandle,
          unsigned int baud,
-         const std::string& device,
-         const boost::asio::serial_port_base::flow_control::type& flow,
-         const boost::asio::serial_port_base::parity::type& parity,
-         const boost::asio::serial_port_base::stop_bits::type& stopBits,
+         boost::asio::serial_port::flow_control::type flow,
+         boost::asio::serial_port::parity::type parity,
+         boost::asio::serial_port::stop_bits::type stopBits,
          SerialPort* pPort) :
       active_(true),
-      io_service_(io_service),
-      serialPortImplementation_(io_service, device),
+      io_service_(ioService),
+      serialPortImplementation_(ioService, nativeHandle),
       pSerialPortAdapter_(pPort),
-      device_(device),
+      device_(deviceName),
       shutDownInProgress_(false)
+   {
+      Construct(deviceName, baud, flow, parity, stopBits);
+   }
+
+   // Construct and open the given device name.
+   AsioClient(boost::asio::io_service& ioService,
+         unsigned int baud,
+         const std::string& deviceName,
+         boost::asio::serial_port::flow_control::type flow,
+         boost::asio::serial_port::parity::type parity,
+         boost::asio::serial_port::stop_bits::type stopBits,
+         SerialPort* pPort) :
+      active_(true),
+      io_service_(ioService),
+      serialPortImplementation_(ioService, deviceName),
+      pSerialPortAdapter_(pPort),
+      device_(deviceName),
+      shutDownInProgress_(false)
+   {
+      Construct(deviceName, baud, flow, parity, stopBits);
+   }
+
+private:
+   void Construct(const std::string& deviceName,
+         unsigned int baud,
+         boost::asio::serial_port::flow_control::type flow,
+         boost::asio::serial_port::parity::type parity,
+         boost::asio::serial_port::stop_bits::type stopBits)
    {
       {
          MMThreadGuard g(implementationLock_);
@@ -66,7 +96,7 @@ public:
          boost::asio::serial_port_base::baud_rate baud_option(baud); 
          boost::system::error_code anError;
 
-         LogMessage(("Attempting to set baud of " + device + " to " + boost::lexical_cast<std::string,int>(baud)).c_str(), true);
+         LogMessage(("Attempting to set baud of " + deviceName + " to " + boost::lexical_cast<std::string,int>(baud)).c_str(), true);
          serialPortImplementation_.set_option(baud_option, anError); // set the baud rate after the port has been opened 
          if( !!anError)
             LogMessage(("error setting baud in AsioClient(): "+boost::lexical_cast<std::string,int>(anError.value()) + " " + anError.message()).c_str(), false);
@@ -86,7 +116,7 @@ public:
             sparity = "even";
             break;
          };
-         LogMessage(("Attempting to set parity of " + device + " to " + sparity).c_str(), true);
+         LogMessage(("Attempting to set parity of " + deviceName + " to " + sparity).c_str(), true);
          serialPortImplementation_.set_option( boost::asio::serial_port_base::parity(parity), anError); 
          if( !!anError)
             LogMessage(("error setting parity in AsioClient(): " + boost::lexical_cast<std::string,int>(anError.value()) + " " + anError.message()).c_str(), false);
@@ -104,7 +134,7 @@ public:
             sstopbits = "2";
             break;
          };      
-         LogMessage(("Attempting to set stopBits of " + device + " to " + sstopbits).c_str(), true);
+         LogMessage(("Attempting to set stopBits of " + deviceName + " to " + sstopbits).c_str(), true);
          serialPortImplementation_.set_option( boost::asio::serial_port_base::stop_bits(stopBits), anError ); 
          if( !!anError)
             LogMessage(("error setting stop_bits in AsioClient(): "+boost::lexical_cast<std::string,int>(anError.value()) + " " + anError.message()).c_str(), false);
@@ -116,6 +146,7 @@ public:
       ReadStart(); 
    } 
 
+public:
    void ChangeFlowControl(const boost::asio::serial_port_base::flow_control::type& flow)
    {
       boost::system::error_code anError;
