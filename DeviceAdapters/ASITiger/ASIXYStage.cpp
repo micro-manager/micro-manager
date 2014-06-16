@@ -190,11 +190,10 @@ int CXYStage::Initialize()
    AddAllowedValue(g_MaintainStatePropertyName, g_StageMaintain_2);
    AddAllowedValue(g_MaintainStatePropertyName, g_StageMaintain_3);
 
-   // Wait cycles, default is 0 (WT)
-   pAct = new CPropertyAction (this, &CXYStage::OnWait);
+   // Wait time, default is 0 (WT)
+   pAct = new CPropertyAction (this, &CXYStage::OnWaitTime);
    CreateProperty(g_StageWaitTimePropertyName, "0", MM::Integer, false, pAct);
    UpdateProperty(g_StageWaitTimePropertyName);
-   SetPropertyLimits(g_StageWaitTimePropertyName, 0, 250);  // don't let the user set too high, though there is no actual limit
 
    // joystick fast speed (JS X=)
    pAct = new CPropertyAction (this, &CXYStage::OnJoystickFastSpeed);
@@ -523,7 +522,7 @@ int CXYStage::OnAdvancedProperties(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
-int CXYStage::OnWait(MM::PropertyBase* pProp, MM::ActionType eAct)
+int CXYStage::OnWaitTime(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    ostringstream command; command.str("");
    ostringstream response; response.str("");
@@ -536,7 +535,6 @@ int CXYStage::OnWait(MM::PropertyBase* pProp, MM::ActionType eAct)
       response << ":" << axisLetterX_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
       RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
-      // don't complain if value is larger than MM's "artificial" limits, it just won't be set
       pProp->Set(tmp);
    }
    else if (eAct == MM::AfterSet) {

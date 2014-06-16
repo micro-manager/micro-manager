@@ -157,7 +157,7 @@ const char* const g_SerialComPortPropertyName = "SerialComPort";
 // XY stage property names
 const char* const g_StepSizeXPropertyName = "StepSizeX(um)";
 const char* const g_StepSizeYPropertyName = "StepSizeY(um)";
-const char* const g_StageWaitTimePropertyName = "WaitTime_when_MaintainState=3(ms)";
+const char* const g_StageWaitTimePropertyName = "WaitTime(ms)";
 const char* const g_NrExtraMoveRepsPropertyName = "ExtraMoveRepetitions";
 const char* const g_MotorSpeedPropertyName = "MotorSpeed-S(mm/s)";
 const char* const g_MaxMotorSpeedPropertyName = "MotorSpeedMaximum(mm/s)";
