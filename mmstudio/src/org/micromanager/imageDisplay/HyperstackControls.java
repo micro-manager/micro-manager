@@ -127,7 +127,12 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
          // Loading a proper dataset; extract the dataset dimensions from the
          // metadata.
          numChannels = display.getNumChannels();
-         numFrames = display.getNumFrames();
+         // We use a special method to get the number of frames, since the
+         // display object will just return the claimed number of frames,
+         // which may be inaccurate if e.g. acquisition was aborted partway
+         // through the experiment. 
+         // TODO: should we be using similar methods for other axes?
+         numFrames = display.getImageCache().lastAcquiredFrame() + 1;
          numSlices = display.getNumSlices();
          // Positions have to be handled specially, since our display doesn't
          // actually know about them -- it normally relies on us! 
