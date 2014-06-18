@@ -225,5 +225,8 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
    @Override
    public void exposureChanged(String cameraName, double newExposureTime) {
    }
-
+   
+   @Override
+   public void slmExposureChanged(String cameraName, double newExposureTime) {
+   }
 }
