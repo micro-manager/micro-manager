@@ -941,6 +941,10 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
    public void exposureChanged(String string, double d) { 
    }
 
+   @Override
+   public void slmExposureChanged(String cameraName, double newExposureTime) {
+   }
+   
    private void setPropertyIfPossible(String device, String property, String value) {
       try {
          if (core_.hasProperty(device, property)) {
