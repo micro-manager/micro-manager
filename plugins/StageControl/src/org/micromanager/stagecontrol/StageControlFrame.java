@@ -1206,32 +1206,43 @@ implements MMListenerInterface {
     private javax.swing.JLabel zPositionLabel_;
     // End of variables declaration//GEN-END:variables
 
+   @Override
    public void propertiesChangedAlert() {
    }
 
+   @Override
    public void propertyChangedAlert(String device, String property, String value) {
    }
 
+   @Override
    public void configGroupChangedAlert(String groupName, String newConfig) {
    }
 
+   @Override
    public void systemConfigurationLoaded() {
       initialize();
    }
 
+   @Override
    public void pixelSizeChangedAlert(double newPixelSizeUm) {
    }
 
+   @Override
    public void stagePositionChangedAlert(String deviceName, double pos) {
       if (deviceName.equals(currentZDrive_)) {
          zPositionLabel_.setText(nf_.format(pos) + " \u00B5m" );
       }
    }
 
+   @Override
    public void xyStagePositionChanged(String deviceName, double xPos, double yPos) {
    }
 
+   @Override
    public void exposureChanged(String cameraName, double newExposureTime) {
    }
-
+   
+   @Override
+   public void slmExposureChanged(String cameraName, double newExposureTime) {
+   }
 }
