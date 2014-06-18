@@ -42,7 +42,6 @@ import java.util.Collections;
 import java.util.Vector;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicBoolean;
 import javax.swing.DefaultCellEditor;
 import javax.swing.JComboBox;
 import javax.swing.JList;
@@ -538,8 +537,15 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
       uploadSequence(getSequenceEvents());
    }
    
+   private int getSequenceCount() throws Exception {
+      return Integer.parseInt(core_.getProperty(mosaicName_, "SequenceEventCount"));
+   }
+   
    // Run the Mosaic Sequence. Called by Run button.
-   private void runSequence() {
+   private void runSequence() throws Exception {
+      if (getSequenceCount() == 0) {
+         throw new Exception("Please upload a sequence to the Mosaic before pressing \"Run\".");
+      }
       mosaicExecutor_.submit(new Runnable() {
          public void run() {
             try {
@@ -725,12 +731,19 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
    // multi-dimensional acquisition sequences.
    
    // Starts the sequence when the acquisition engine starts.
-   public void attachToAcquisition() {
+   public void attachToAcquisition() throws Exception {
+      if (getSequenceCount() == 0) {
+         throw new Exception("Please upload a sequence to the Mosaic for attaching to multi-dimensional acquisition.");
+      }
       gui_.attachRunnable(0, 0, 0, 0, new Runnable() {
          public void run() {
             new Thread() {
                public void run() {
-                  runSequence();
+                  try {
+                     runSequence();
+                  } catch (Exception e) {
+                     ReportingUtils.showError(e);
+                  }
                }
             }.start();
          }
@@ -822,7 +835,7 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
       upButton = new javax.swing.JButton();
       deleteButton = new javax.swing.JButton();
       jLabel8 = new javax.swing.JLabel();
-      jButton1 = new javax.swing.JButton();
+      detachFromAcquisitionButton_ = new javax.swing.JButton();
       loadButton_ = new javax.swing.JButton();
       uploadButton_ = new javax.swing.JButton();
       jLabel7 = new javax.swing.JLabel();
@@ -831,7 +844,7 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
       stopButton_ = new javax.swing.JButton();
       jLabel6 = new javax.swing.JLabel();
       sequenceLoopCountTextField_ = new javax.swing.JTextField();
-      jButton3 = new javax.swing.JButton();
+      attachToAcquisitionButton_ = new javax.swing.JButton();
       saveButton_ = new javax.swing.JButton();
       jSeparator1 = new javax.swing.JSeparator();
       jPanel5 = new javax.swing.JPanel();
@@ -980,10 +993,10 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
 
       jLabel8.setText("Time slot:");
 
-      jButton1.setText("Detach");
-      jButton1.addActionListener(new java.awt.event.ActionListener() {
+      detachFromAcquisitionButton_.setText("Detach");
+      detachFromAcquisitionButton_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            jButton1ActionPerformed(evt);
+            detachFromAcquisitionButton_ActionPerformed(evt);
          }
       });
 
@@ -1028,10 +1041,10 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
 
       sequenceLoopCountTextField_.setText("1");
 
-      jButton3.setText("Attach to Acquisition");
-      jButton3.addActionListener(new java.awt.event.ActionListener() {
+      attachToAcquisitionButton_.setText("Attach to Acquisition");
+      attachToAcquisitionButton_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            jButton3ActionPerformed(evt);
+            attachToAcquisitionButton_ActionPerformed(evt);
          }
       });
 
@@ -1060,9 +1073,9 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
                   .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                      .addGroup(jPanel2Layout.createSequentialGroup()
                         .addGap(10, 10, 10)
-                        .addComponent(jButton3)
+                        .addComponent(attachToAcquisitionButton_)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton1)
+                        .addComponent(detachFromAcquisitionButton_)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(loadButton_)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -1119,10 +1132,10 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
             .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                .addComponent(runButton_)
-               .addComponent(jButton3)
+               .addComponent(attachToAcquisitionButton_)
                .addComponent(stopButton_)
                .addComponent(loadButton_)
-               .addComponent(jButton1)
+               .addComponent(detachFromAcquisitionButton_)
                .addComponent(saveButton_))
             .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
       );
@@ -1297,7 +1310,11 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
    }//GEN-LAST:event_generateSequenceButtonActionPerformed
 
    private void runButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_runButton_ActionPerformed
-      runSequence();
+      try {
+         runSequence();
+      } catch (Exception e) {
+         ReportingUtils.showError(e);
+      }
    }//GEN-LAST:event_runButton_ActionPerformed
 
    private void stopButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_stopButton_ActionPerformed
@@ -1328,13 +1345,17 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
       save();
    }//GEN-LAST:event_saveButton_ActionPerformed
 
-   private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
-      attachToAcquisition();
-   }//GEN-LAST:event_jButton3ActionPerformed
+   private void attachToAcquisitionButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_attachToAcquisitionButton_ActionPerformed
+      try {
+         attachToAcquisition();
+      } catch (Exception e) {
+         ReportingUtils.showError(e);
+      }
+   }//GEN-LAST:event_attachToAcquisitionButton_ActionPerformed
 
-   private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+   private void detachFromAcquisitionButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_detachFromAcquisitionButton_ActionPerformed
       detachFromAcquisition();
-   }//GEN-LAST:event_jButton1ActionPerformed
+   }//GEN-LAST:event_detachFromAcquisitionButton_ActionPerformed
 
     private void sequenceTriggerComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_sequenceTriggerComboBoxActionPerformed
         // TODO add your handling code here:
@@ -1343,13 +1364,13 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
 
    // Variables declaration - do not modify//GEN-BEGIN:variables
    private javax.swing.JButton addTimeSlotButton_;
+   private javax.swing.JButton attachToAcquisitionButton_;
    private javax.swing.JButton cloneButton;
    private javax.swing.JButton deleteButton;
+   private javax.swing.JButton detachFromAcquisitionButton_;
    private javax.swing.JButton downButton;
    private javax.swing.JButton generateROIGridButton_;
    private javax.swing.JButton generateSequenceButton;
-   private javax.swing.JButton jButton1;
-   private javax.swing.JButton jButton3;
    private javax.swing.JLabel jLabel1;
    private javax.swing.JLabel jLabel2;
    private javax.swing.JLabel jLabel3;

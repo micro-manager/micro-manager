@@ -1,7 +1,18 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
+///////////////////////////////////////////////////////////////////////////////
+//FILE:          ProjectorPlugin.java
+//PROJECT:       Micro-Manager
+//SUBSYSTEM:     Projector plugin
+//-----------------------------------------------------------------------------
+//AUTHOR:        Arthur Edelstein
+//COPYRIGHT:     University of California, San Francisco, 2010-2014
+//LICENSE:       This file is distributed under the BSD license.
+//               License text is included with the source distribution.
+//               This file is distributed in the hope that it will be useful,
+//               but WITHOUT ANY WARRANTY; without even the implied warranty
+//               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
 package org.micromanager.projector;
 
@@ -61,7 +72,7 @@ public class ProjectorPlugin implements MMPlugin {
       }
 
       ProjectorController controller = new ProjectorController(app_);
-      ProjectorControlForm form = new ProjectorControlForm(this, controller, core_);
+      ProjectorControlForm form = new ProjectorControlForm(controller, core_, app_);
       controller.addOnStateListener(form);
       form.setVisible(true);
    }

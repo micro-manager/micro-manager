@@ -71,9 +71,15 @@ public interface MMListenerInterface{
    /**
     * Implement to be notified that the exposure time given camera has changed
     * @param cameraName - label of camera whose exposure changed
-    * @param newExposureTime - ne exposure time
+    * @param newExposureTime - new exposure time
     */
    public void exposureChanged(String cameraName, double newExposureTime);
-   
+
+   /**
+    * Implement to be notified that the exposure time given camera has changed
+    * @param slmName - label of SLM/Galvo whose exposure changed
+    * @param newExposureTime - new exposure time
+    */
+   public void slmExposureChanged(String slmName, double newExposureTime);
 }
 

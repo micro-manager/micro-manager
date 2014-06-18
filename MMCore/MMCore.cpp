@@ -79,8 +79,8 @@ using namespace std;
 
 // version info
 const int MMCore_versionMajor = 2;
-const int MMCore_versionMinor = 3;
-const int MMCore_versionBuild = 2;
+const int MMCore_versionMinor = 4;
+const int MMCore_versionBuild = 0;
 
 
 // Legacy macros for logging.

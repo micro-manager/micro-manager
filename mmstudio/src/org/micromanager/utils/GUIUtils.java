@@ -30,9 +30,11 @@ import ij.gui.ImageWindow;
 import java.awt.*;
 import java.awt.event.*;
 import java.lang.reflect.InvocationTargetException;
+import java.util.HashSet;
 import java.util.Vector;
 import java.util.prefs.Preferences;
 import javax.swing.*;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.event.ListSelectionEvent;
@@ -75,6 +77,25 @@ public class GUIUtils {
          cb.addActionListener(listeners[i]);
    }
    
+   public static ChangeListener[] detachChangeListeners(JSpinner spinner) {
+      ChangeListener[] listeners = spinner.getChangeListeners();
+      for (ChangeListener listener : listeners) {
+         spinner.removeChangeListener(listener);
+      }
+      return listeners;
+   }
+   
+   public static void reattachChangeListeners(JSpinner spinner, ChangeListener[] listeners) {
+      for (ChangeListener listener : listeners) {
+         spinner.addChangeListener(listener);
+      }
+   }
+   
+   public static void replaceSpinnerValue(JSpinner spinner, double value) {
+      ChangeListener[] listeners = detachChangeListeners(spinner);
+      spinner.setValue(value);
+      reattachChangeListeners(spinner, listeners);      
+   }
 
    /* 
     * This takes care of a Java bug that would throw several exceptions when a Projector device 
@@ -149,25 +170,32 @@ public class GUIUtils {
 
    }
    
-   public static void recallPosition(final Window win) {
-      Preferences prefs = Preferences.userRoot().node(win.getClass().getName());
-      Point dialogPosition = JavaUtils.getObjectFromPrefs(prefs, DIALOG_POSITION, (Point) null);
-      if (dialogPosition == null || !isLocationInScreenBounds(dialogPosition)) {
-         Dimension screenDims = JavaUtils.getScreenDimensions();
-         dialogPosition = new Point((screenDims.width - win.getWidth()) / 2, (screenDims.height - win.getHeight()) / 2);
-      }
-      win.setLocation(dialogPosition);
-      win.addComponentListener(new ComponentAdapter() {
-         @Override
-         public void componentMoved(ComponentEvent e) {
-            storePosition(win);
-         }
-      });
-   }
-
+   // ******* Utility methods for persisting windows *******
+   
+   private static HashSet windowsWithPersistedPositions = new HashSet<Class>();
+   
    private static void storePosition(final Window win) {
       Preferences prefs = Preferences.userRoot().node(win.getClass().getName());
       JavaUtils.putObjectInPrefs(prefs, DIALOG_POSITION, win.getLocation());
+   }
+   
+   public static void recallPosition(final Window win) {
+      if (!windowsWithPersistedPositions.contains(win.getClass())) {
+         Preferences prefs = Preferences.userRoot().node(win.getClass().getName());
+         Point dialogPosition = JavaUtils.getObjectFromPrefs(prefs, DIALOG_POSITION, (Point) null);
+         if (dialogPosition == null || !isLocationInScreenBounds(dialogPosition)) {
+            Dimension screenDims = JavaUtils.getScreenDimensions();
+            dialogPosition = new Point((screenDims.width - win.getWidth()) / 2, (screenDims.height - win.getHeight()) / 2);
+         }
+         win.setLocation(dialogPosition);
+         win.addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentMoved(ComponentEvent e) {
+               storePosition(win);
+            }
+         });
+         windowsWithPersistedPositions.add(win.getClass());
+      }
    }
 
    public static void registerImageFocusListener(final ImageFocusListener listener) {

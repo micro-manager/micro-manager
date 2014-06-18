@@ -1110,6 +1110,15 @@ protected:
       return DEVICE_NO_CALLBACK_REGISTERED;
    }
 
+   /*
+    */
+   int OnSLMExposureChanged(double exposure)
+   {
+      if (callback_)
+         return callback_->OnSLMExposureChanged(this, exposure);
+      return DEVICE_NO_CALLBACK_REGISTERED;
+   }
+
    /**
     */
    int OnMagnifierChanged()

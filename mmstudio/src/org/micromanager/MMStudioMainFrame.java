@@ -733,6 +733,13 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
             mmIntf.exposureChanged(deviceName, exposure);
          }
       }
+      
+      @Override
+      public void onSLMExposureChanged(String deviceName, double exposure) {
+         for (MMListenerInterface mmIntf:MMListeners_) {
+            mmIntf.slmExposureChanged(deviceName, exposure);
+         }
+      }
      
    }
 

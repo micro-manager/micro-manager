@@ -965,4 +965,8 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
    public void exposureChanged(String cameraName, double newExposureTime) {
    }
 
+   @Override
+   public void slmExposureChanged(String cameraName, double newExposureTime) {
+   }
+   
 }

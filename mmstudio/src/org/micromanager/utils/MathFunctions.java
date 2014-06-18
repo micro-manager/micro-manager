@@ -99,7 +99,7 @@ public class MathFunctions {
             destDevSqSum += destPt.distanceSq(destPt2);
 
          } catch (NoninvertibleTransformException ex) {
-            throw new Exception();
+            throw new Exception("Singular matrix encountered.");
          }
       }
 

@@ -27,7 +27,7 @@
 // Header version
 // If any of the class definitions changes, the interface version
 // must be incremented
-#define DEVICE_INTERFACE_VERSION 59
+#define DEVICE_INTERFACE_VERSION 60
 ///////////////////////////////////////////////////////////////////////////////
 
 
@@ -1197,6 +1197,10 @@ namespace MM {
        * When the exposure time has changed, use this callback to inform the UI
        */
       virtual int OnExposureChanged(const Device* caller, double newExposure) = 0;
+      /**
+       * When the SLM exposure time has changed, use this callback to inform the UI
+       */
+      virtual int OnSLMExposureChanged(const Device* caller, double newExposure) = 0;
       /**
        * Magnifiers can use this to signal changes in magnification
        */

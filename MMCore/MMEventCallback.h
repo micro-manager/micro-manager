@@ -85,4 +85,9 @@ public:
       std::cout << "onExposureChanged()" << name << " " << newExposure << "\n";
    }
 
+   virtual void onSLMExposureChanged(char* name, double newExposure)
+   {
+      std::cout << "onSLMExposureChanged()" << name << " " << newExposure << "\n";
+   }
+
 };

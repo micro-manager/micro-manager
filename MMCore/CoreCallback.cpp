@@ -219,7 +219,7 @@ int CoreCallback::OnPropertyChanged(const MM::Device* device, const char* propNa
          core_->stateCache_.addSetting(*ps);
       }
       core_->externalCallback_->onPropertyChanged(label, propName, value);
-      
+
       // find all configs that contain this property and callback to indicate 
       // that the config group changed
       // TODO: assess whether performace is better by maintaining a map tying 
@@ -345,6 +345,21 @@ int CoreCallback::OnExposureChanged(const MM::Device* device, double newExposure
       char label[MM::MaxStrLength];
       device->GetLabel(label);
       core_->externalCallback_->onExposureChanged(label, newExposure);
+   }
+   return DEVICE_OK;
+}
+
+/**
+ * Handler for SLM exposure update
+ * 
+ */
+int CoreCallback::OnSLMExposureChanged(const MM::Device* device, double newExposure)
+{
+   if (core_->externalCallback_) {
+      MMThreadGuard g(*pValueChangeLock_);
+      char label[MM::MaxStrLength];
+      device->GetLabel(label);
+      core_->externalCallback_->onSLMExposureChanged(label, newExposure);
    }
    return DEVICE_OK;
 }

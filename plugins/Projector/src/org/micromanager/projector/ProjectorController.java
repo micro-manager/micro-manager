@@ -60,7 +60,6 @@ import org.micromanager.imageDisplay.VirtualAcquisitionDisplay;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.JavaUtils;
-import org.micromanager.utils.MMException;
 import org.micromanager.utils.MathFunctions;
 import org.micromanager.utils.ReportingUtils;
 
@@ -76,10 +75,8 @@ public class ProjectorController {
    private final MouseListener pointAndShootMouseListener;
    private final Set<OnStateListener> listeners_ = new HashSet<OnStateListener>();
    private final AtomicBoolean pointAndShooteModeOn_ = new AtomicBoolean(false);
-   private double pointAndShootInterval;
    private Roi[] individualRois_ = {};
    private int reps_ = 1;
-   private long interval_us_ = 500000;
    private Map<Polygon, AffineTransform> mapping_ = null;
    private String mappingNode_ = null;
    private String targetingChannel_;
@@ -103,7 +100,7 @@ public class ProjectorController {
       } else {
          dev = null;
       }
-
+     
       loadMapping();
       pointAndShootMouseListener = setupPointAndShootMouseListener();
 
@@ -162,9 +159,11 @@ public class ProjectorController {
          mmc.snapImage();
          TaggedImage image = mmc.getTaggedImage();
          ImageProcessor proc1 = ImageUtils.makeMonochromeProcessor(image);
-         displaySpot(projectionPoint.x, projectionPoint.y, 500000);
+         long originalExposure = dev.getExposure();
+         dev.setExposure(500000);
+         displaySpot(projectionPoint.x, projectionPoint.y);
          Thread.sleep(300);
-
+         dev.setExposure(500000);
          mmc.snapImage();
          TaggedImage taggedImage2 = mmc.getTaggedImage();
          ImageProcessor proc2 = ImageUtils.makeMonochromeProcessor(taggedImage2);
@@ -574,7 +573,6 @@ public class ProjectorController {
             List<Polygon> rois = transformROIs(imgp, individualRois_, mapping_);
             dev.loadRois(rois);
             dev.setPolygonRepetitions(reps_);
-            dev.setDwellTime(interval_us_);
          }
       }
    }
@@ -584,9 +582,9 @@ public class ProjectorController {
       sendRoiData(IJ.getImage());
    }
 
-   private void displaySpot(double x, double y, double intervalUs) {
+   private void displaySpot(double x, double y) {
       if (x >= 0 && x < dev.getWidth() && y >= 0 && y < dev.getHeight()) {
-         dev.displaySpot(x, y, intervalUs);
+         dev.displaySpot(x, y);
       }
    }
 
@@ -667,7 +665,7 @@ public class ProjectorController {
                Configuration originalConfig = prepareChannel();
                boolean originalShutterState = prepareShutter();
                if (devP != null) {
-                  displaySpot(devP.x, devP.y, thisController.getPointAndShootInterval());
+                  displaySpot(devP.x, devP.y);
                }
                returnShutter(originalShutterState);
                returnChannel(originalConfig);
@@ -725,11 +723,6 @@ public class ProjectorController {
       dev.displaySpot(x, y);
    }
 
-   void setSpotInterval(long interval_us) {
-      interval_us_ = interval_us;
-      this.sendRoiData(IJ.getImage());
-   }
-
    void setTargetingChannel(Object selectedItem) {
       targetingChannel_ = (String) selectedItem;
    }
@@ -744,7 +737,6 @@ public class ProjectorController {
          ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(path));
          DataOutputStream out = new DataOutputStream(new BufferedOutputStream(zos));
          RoiEncoder re = new RoiEncoder(out);
-         int count = 0;
          for (Roi roi : individualRois_) {
             String label = getROILabel(imgp, roi, 0);
             if (!label.endsWith(".roi")) {
@@ -753,7 +745,6 @@ public class ProjectorController {
             zos.putNextEntry(new ZipEntry(label));
             re.write(roi);
             out.flush();
-            ++count;
          }
          out.close();
       } catch (Exception e) {
@@ -878,12 +869,16 @@ public class ProjectorController {
       gui.clearRunnables();
    }
 
-   public void setPointAndShootInterval(double intervalUs) {
-      this.pointAndShootInterval = intervalUs;
+   public void setExposure(double intervalUs) {
+      long previousExposure = dev.getExposure();
+      long newExposure = (long) intervalUs;
+      if (previousExposure != newExposure) {
+         dev.setExposure((long) newExposure);
+      }
    }
 
    public double getPointAndShootInterval() {
-      return this.pointAndShootInterval;
+      return dev.getExposure();
    }
 
    void showMosaicSequencingFrame() {
@@ -891,6 +886,10 @@ public class ProjectorController {
          mosaicSequencingFrame_ = new MosaicSequencingFrame(this.gui, this.mmc, this, (SLM) this.dev);
       }
       mosaicSequencingFrame_.setVisible(true);
+   }
+
+   String getDeviceName() {
+      return dev.getName();
    }
 
 }

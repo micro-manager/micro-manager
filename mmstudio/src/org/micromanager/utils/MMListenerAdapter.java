@@ -50,4 +50,7 @@ public class MMListenerAdapter implements MMListenerInterface {
    @Override
    public void exposureChanged(String cameraName, double newExposure){
    };
+   @Override
+   public void slmExposureChanged(String cameraName, double newExposure){
+   };
 }

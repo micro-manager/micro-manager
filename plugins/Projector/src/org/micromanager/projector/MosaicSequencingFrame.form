@@ -238,9 +238,9 @@
                           <Group type="103" groupAlignment="0" attributes="0">
                               <Group type="102" attributes="0">
                                   <EmptySpace min="10" pref="10" max="-2" attributes="0"/>
-                                  <Component id="jButton3" min="-2" max="-2" attributes="0"/>
+                                  <Component id="attachToAcquisitionButton_" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
-                                  <Component id="jButton1" min="-2" max="-2" attributes="0"/>
+                                  <Component id="detachFromAcquisitionButton_" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace max="32767" attributes="0"/>
                                   <Component id="loadButton_" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
@@ -309,10 +309,10 @@
                   <EmptySpace type="unrelated" max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="3" attributes="0">
                       <Component id="runButton_" alignment="3" min="-2" max="-2" attributes="0"/>
-                      <Component id="jButton3" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="attachToAcquisitionButton_" alignment="3" min="-2" max="-2" attributes="0"/>
                       <Component id="stopButton_" alignment="3" min="-2" max="-2" attributes="0"/>
                       <Component id="loadButton_" alignment="3" min="-2" max="-2" attributes="0"/>
-                      <Component id="jButton1" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="detachFromAcquisitionButton_" alignment="3" min="-2" max="-2" attributes="0"/>
                       <Component id="saveButton_" alignment="3" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <EmptySpace max="32767" attributes="0"/>
@@ -408,12 +408,12 @@
             <Property name="text" type="java.lang.String" value="Time slot:"/>
           </Properties>
         </Component>
-        <Component class="javax.swing.JButton" name="jButton1">
+        <Component class="javax.swing.JButton" name="detachFromAcquisitionButton_">
           <Properties>
             <Property name="text" type="java.lang.String" value="Detach"/>
           </Properties>
           <Events>
-            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jButton1ActionPerformed"/>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="detachFromAcquisitionButton_ActionPerformed"/>
           </Events>
         </Component>
         <Component class="javax.swing.JButton" name="loadButton_">
@@ -478,12 +478,12 @@
             <Property name="text" type="java.lang.String" value="1"/>
           </Properties>
         </Component>
-        <Component class="javax.swing.JButton" name="jButton3">
+        <Component class="javax.swing.JButton" name="attachToAcquisitionButton_">
           <Properties>
             <Property name="text" type="java.lang.String" value="Attach to Acquisition"/>
           </Properties>
           <Events>
-            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jButton3ActionPerformed"/>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="attachToAcquisitionButton_ActionPerformed"/>
           </Events>
         </Component>
         <Component class="javax.swing.JButton" name="saveButton_">

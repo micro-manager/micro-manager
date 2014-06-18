@@ -9,6 +9,7 @@ import org.micromanager.api.events.ExposureChangedEvent;
 import org.micromanager.api.events.PixelSizeChangedEvent;
 import org.micromanager.api.events.PropertiesChangedEvent;
 import org.micromanager.api.events.PropertyChangedEvent;
+import org.micromanager.api.events.SLMExposureChangedEvent;
 import org.micromanager.api.events.StagePositionChangedEvent;
 import org.micromanager.api.events.SystemConfigurationLoadedEvent;
 import org.micromanager.api.events.XYStagePositionChangedEvent;
@@ -63,6 +64,11 @@ public class MMListenerProxy implements MMListenerInterface {
    @Override
    public void exposureChanged(String cameraName, double newExposureTime) {
       bus_.post(new ExposureChangedEvent(cameraName, newExposureTime));
+   }
+   
+   @Override
+   public void slmExposureChanged(String cameraName, double newExposureTime) {
+      bus_.post(new SLMExposureChangedEvent(cameraName, newExposureTime));
    }
 }
 

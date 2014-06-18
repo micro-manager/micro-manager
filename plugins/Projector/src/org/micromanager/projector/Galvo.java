@@ -38,6 +38,7 @@ public class Galvo implements ProjectionDevice {
    int side_ = 4096;
    ExecutorService galvoExecutor_;
    HashSet<OnStateListener> onStateListeners_ = new HashSet<OnStateListener>();
+   long interval_us_;
 
    public Galvo(CMMCore mmc) {
       mmc_ = mmc;
@@ -50,24 +51,10 @@ public class Galvo implements ProjectionDevice {
    }
    
    public void displaySpot(final double x, final double y) {
-      turnOn();
-      galvoExecutor_.execute(new Runnable() {
-
-         public void run() {
-            try {
-               mmc_.setGalvoPosition(galvo_, x, y);
-            } catch (Exception ex) {
-               ReportingUtils.showError(ex);
-            }
-         }
-      });
-   }
-
-   public void displaySpot(final double x, final double y, final double intervalUs) {
       galvoExecutor_.execute(new Runnable() {
          public void run() {
             try {
-               mmc_.pointGalvoAndFire(galvo_, x, y, intervalUs);
+               mmc_.pointGalvoAndFire(galvo_, x, y, Galvo.this.getExposure());
             } catch (Exception ex) {
                ReportingUtils.logError(ex);
             }
@@ -258,12 +245,18 @@ public class Galvo implements ProjectionDevice {
     }
 
    @Override
-   public void setDwellTime(long interval_us) {
+   public void setExposure(long interval_us) {
       try {
+         interval_us_ = interval_us;
          mmc_.setGalvoSpotInterval(galvo_, interval_us);
       } catch (Exception ex) {
          ReportingUtils.showError(ex);
       }
+   }
+   
+      // Reads the exposure time.
+   public long getExposure() {
+      return interval_us_;
    }
 
     @Override

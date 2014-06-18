@@ -16,7 +16,6 @@
 
 package org.micromanager.projector;
 
-import ij.ImagePlus;
 import ij.gui.PolygonRoi;
 import ij.gui.Roi;
 import ij.process.ByteProcessor;
@@ -36,8 +35,8 @@ public class SLM implements ProjectionDevice {
 
    String slm_;
    CMMCore mmc_;
-   int slmWidth_;
-   int slmHeight_;
+   final int slmWidth_;
+   final int slmHeight_;
    private double spotDiameter_;
    private boolean imageOn_ = false;
    HashSet<OnStateListener> onStateListeners_ = new HashSet<OnStateListener>();
@@ -89,14 +88,24 @@ public class SLM implements ProjectionDevice {
       }
    }
 
-   // Determines how long the SLM will be illuminated when we display an
+   // Sets how long the SLM will be illuminated when we display an
    // image.
-   public void setDwellTime(long interval_us) {
+   public void setExposure(long interval_us) {
       try {
          mmc_.setSLMExposure(slm_, interval_us / 1000.);
       } catch (Exception ex) {
          ReportingUtils.showError(ex);
       }
+   }
+   
+   // Reads the exposure time in microseconds.
+   public long getExposure() {
+      try {
+         return (long) (mmc_.getSLMExposure(slm_) * 1000.);
+      } catch (Exception ex) {
+         ReportingUtils.showError(ex);
+      }
+      return 0;
    }
 
    // Makes sure all pixels are illuminated at maximum intensity (white).
@@ -131,15 +140,9 @@ public class SLM implements ProjectionDevice {
       }
    }
 
-   // Display a spot at location x,y. Version that accepts x,y as doubles.
+   // Display a spot at location x,y for the given duration.
    public void displaySpot(double x, double y) {
       displaySpot((int) x, (int) y);
-   }
-
-   // Display a spot at location x,y for the given duration.
-   public void displaySpot(double x, double y, double interval_us) {
-      setDwellTime((long) interval_us);
-      displaySpot(x, y);
    }
 
    // Set all pixels to off.
