@@ -386,6 +386,10 @@ int XYStage::Initialize()
    CPropertyAction* pAct = new CPropertyAction (this, &XYStage::OnVersion);
    CreateProperty("Version", "", MM::String, true, pAct);
 
+   pAct = new CPropertyAction (this, &XYStage::OnCompileDate);
+   CreateProperty("CompileDate", "", MM::String, true, pAct);
+   UpdateProperty("CompileDate");
+
    // check status first (test for communication protocol)
    int ret = CheckDeviceStatus();
    if (ret != DEVICE_OK)
@@ -922,6 +926,29 @@ int XYStage::OnVersion(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
+// Get the version of this controller
+int XYStage::OnCompileDate(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      if (initialized_)
+         return DEVICE_OK;
+
+      ostringstream command;
+      command << "CD";
+      string answer;
+      // query the device
+      int ret = QueryCommand(command.str().c_str(), answer);
+      if (ret != DEVICE_OK)
+         return ret;
+
+      pProp->Set(answer.c_str());
+
+   }
+
+   return DEVICE_OK;
+}
+
 
 // This sets how often the stage will approach the same position (0 = 1!!)
 int XYStage::OnNrMoveRepetitions(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -994,10 +1021,27 @@ int XYStage::OnWait(MM::PropertyBase* pProp, MM::ActionType eAct)
    else if (eAct == MM::AfterSet) {
       long waitCycles;
       pProp->Get(waitCycles);
+
+      // enforce positive
       if (waitCycles < 0)
          waitCycles = 0;
-      else if (waitCycles > 255)
-         waitCycles = 255;
+
+      // if firmware date is 201x  then use msec/int definition of WaitCycles
+      // would be better to parse firmware (8.4 and earlier used unsigned char)
+      // and that transition occurred ~2008 but this is easier than trying to
+      // parse version strings
+      char compile_date[MM::MaxStrLength];
+      if (GetProperty("CompileDate", compile_date) == DEVICE_OK
+            && compile_date[9]=='1')  // i.e. between 2010 and 2019
+      {
+         // don't enforce upper limit
+      }
+      else  // enforce limit for 2009 and earlier firmware or
+      {     // if getting compile date wasn't successful
+         if (waitCycles > 255)
+            waitCycles = 255;
+      }
+
       ostringstream command;
       command << "WT X=" << waitCycles << " Y=" << waitCycles;
       string answer;

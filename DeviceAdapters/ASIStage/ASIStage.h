@@ -130,6 +130,7 @@ private:
    int OnMaxSpeed(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnMotorCtrl(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnVersion(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnCompileDate(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnNrMoveRepetitions(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnJSMirror(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnJSSwapXY(MM::PropertyBase* pProp, MM::ActionType eAct);
