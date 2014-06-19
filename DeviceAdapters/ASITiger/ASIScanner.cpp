@@ -597,6 +597,50 @@ void CScanner::UpdateIlluminationState()
    }
 }
 
+int CScanner::SetIlluminationStateHelper(bool on)
+// takes care of setting LED X appropriately, preserving existing setting for other scanner
+{
+   ostringstream command; command.str("");
+   long tmp;
+   if (firmwareVersion_ < 2.879) // only applies 2.88+
+      return DEVICE_OK;
+   command << addressChar_ << "LED X?";
+   RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),"X=") );
+   RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
+   tmp &= 0x03;  // strip all but the two LSBs
+   if (laser_side_ == 1)
+   {
+      if(on)
+      {
+         tmp |= 0x01;
+      }
+      else
+      {
+         tmp &= ~0x01;
+      }
+   }
+   else if (laser_side_ == 2)
+   {
+      if(on)
+      {
+         tmp |= 0x02;
+      }
+      else
+      {
+         tmp &= ~0x02;
+      }
+   }
+   else
+   {
+      // should only get here if laser_side_ didn't get properly read somehow
+      return DEVICE_OK;
+   }
+   command.str("");
+   command << addressChar_ << "LED X=" << tmp;
+   RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
+   return DEVICE_OK;
+}
+
 int CScanner::SetIlluminationState(bool on)
 // we can't turn off beam but we can steer beam to corner where hopefully it is blocked internally
 {
@@ -604,6 +648,7 @@ int CScanner::SetIlluminationState(bool on)
    if (on && !illuminationState_)  // was off, turning on
    {
       illuminationState_ = true;
+      RETURN_ON_MM_ERROR ( SetIlluminationStateHelper(true) );
       return SetPosition(lastX_, lastY_);  // move to where it was when last turned off
    }
    else if (!on && illuminationState_) // was on, turning off
@@ -616,6 +661,7 @@ int CScanner::SetIlluminationState(bool on)
       illuminationState_ = false;
       ostringstream command; command.str("");
       command << "! " << axisLetterX_ << " " << axisLetterY_;
+      RETURN_ON_MM_ERROR ( SetIlluminationStateHelper(false) );
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
       return DEVICE_OK;
    }

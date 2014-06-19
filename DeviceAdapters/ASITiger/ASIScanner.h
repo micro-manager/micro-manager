@@ -151,6 +151,8 @@ private:
    vector< pair<double,double> > polygons_;
    long polygonRepetitions_;
    bool ring_buffer_supported_;
+
+   int SetIlluminationStateHelper(bool on);
 };
 
 #endif //_ASIScanner_H_
