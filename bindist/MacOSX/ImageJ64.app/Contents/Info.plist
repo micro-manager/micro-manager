@@ -1,10 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<!--
-The following memory flag will be modified by ImageJ Memory Options.
-It will also be parsed and used by the launch script (MMImageJ).
-MMImageJLauncherMemoryFlag -Xmx2048m
--->
 <plist version="1.0">
 <dict>
 	<key>CFBundleAllowMixedLocalizations</key>
@@ -18,7 +13,7 @@ MMImageJLauncherMemoryFlag -Xmx2048m
 		<string>x86_64</string>
 	</array>
 	<key>CFBundleExecutable</key>
-	<string>MMImageJ</string>
+	<string>JavaApplicationStub</string>
 	<key>CFBundleGetInfoString</key>
 	<string>http://micro-manager.org/</string>
 	<key>CFBundleIconFile</key>
@@ -33,5 +28,41 @@ MMImageJLauncherMemoryFlag -Xmx2048m
 	<string>????</string>
 	<key>CFBundleVersion</key>
 	<string>1.4</string>
+	<key>CFBundleDocumentTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeName</key>
+			<string>Document</string>
+			<key>CFBundleTypeOSTypes</key>
+			<array>
+				<string>****</string>
+			</array>
+			<key>CFBundleTypeExtensions</key>
+			<array>
+				<string>*</string>
+			</array>
+			<key>CFBundleTypeMIMETypes</key>
+			<array>
+				<string>*</string>
+			</array>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+		</dict>
+	</array>
+	<key>Java</key>
+	<dict>
+		<key>JVMArchs</key>
+		<array>
+			<string>x86_64</string>
+		</array>
+		<key>ClassPath</key>
+		<string>$APP_PACKAGE/../ij.jar</string>
+		<key>JVMVersion</key>
+		<string>1.6*</string>
+		<key>MainClass</key>
+		<string>ij.ImageJ</string>
+		<key>VMOptions</key>
+		<string>-Xmx2048m</string>
+	</dict>
 </dict>
 </plist>
