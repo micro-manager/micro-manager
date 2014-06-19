@@ -77,7 +77,7 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
    private final SLM mosaicDevice_;
    private final int mosaicWidth_;
    private final int mosaicHeight_;
-   private final ProjectorController projectorController_;
+   private final ProjectorControlForm projectorControlForm_;
    private final DefaultTableModel sequenceTableModel_;
    private final Vector<String> headerNames = new Vector<String>(Arrays.asList(         
                            new String[] {"Time Slot", "Roi Indices", "On Duration (ms)",
@@ -119,7 +119,7 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
       } catch (Exception e) {
          return new Roi[0]; // empty array
       }
-      return ProjectorController.getRois(win, false);  
+      return ProjectorControlForm.getRois(win, false);  
    }
    
    // Get the total number of ROIs available in the Snap/Live window.
@@ -475,7 +475,7 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
    private ArrayList<SequenceEvent> getSequenceEvents() {
       final ImageWindow snapLiveWin = gui_.getSnapLiveWin();
       final ImagePlus snapLiveImage = snapLiveWin.getImagePlus();
-      List<Polygon> availableRoiPolygons = projectorController_.getTransformedRois(snapLiveImage, getRois());
+      List<Polygon> availableRoiPolygons = projectorControlForm_.getTransformedRois(snapLiveImage, getRois());
       ArrayList<SequenceEvent> events = new ArrayList<SequenceEvent>();
       for (int i = 0; i < sequenceTableModel_.getRowCount(); ++i) {
          events.add(sequenceRowToSequenceEvent(i, availableRoiPolygons));
@@ -556,7 +556,7 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
                core_.setProperty(mosaicName_, "TriggerMode", triggerProperties_.get(selectedItem));
                core_.setProperty(mosaicName_, "OperationMode", "FrameSequence");
                // Open the Phototargeting shutter, if needed.
-               final boolean shutterOriginallyOpen = projectorController_.prepareShutter();
+               final boolean shutterOriginallyOpen = projectorControlForm_.prepareShutter();
                // Run the SLM sequence according to uploaded
                // settings. startSLMSequence returns immediately,
                // but waitForDevice will block.
@@ -570,7 +570,7 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
                }
                // Close phototargeting shutter if it was
                // originallyOpen.
-               projectorController_.returnShutter(shutterOriginallyOpen);
+               projectorControlForm_.returnShutter(shutterOriginallyOpen);
             } catch (Exception ex) {
                ReportingUtils.showError(ex);
             }
@@ -761,11 +761,11 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
    // Creates a new window, the MosaicSequencingFrame. This frame allows the
    // user to generate sequences of ROIs, and optionally, generate ROIs in
    // a grid pattern.
-   public MosaicSequencingFrame(ScriptInterface gui, CMMCore core, ProjectorController projectorController, SLM mosaicDevice) {
+   public MosaicSequencingFrame(ScriptInterface gui, CMMCore core, ProjectorControlForm projectorControlForm, SLM mosaicDevice) {
       initComponents();
       gui_ = gui;
       core_ = core;
-      projectorController_ = projectorController;
+      projectorControlForm_ = projectorControlForm;
       mosaicDevice_ = mosaicDevice;
       // Get the first available Mosaic device for now.
       mosaicName_ = getMosaicDevices(core_).get(0);
