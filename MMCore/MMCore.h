@@ -36,6 +36,13 @@
 //                because public method names appear as wrapped methods in other
 //                languages, in particular Java.
 
+/*
+ * Important! Read this before changing this file.
+ *
+ * Please see the version number and explanatory comment in the implementation
+ * file (MMCore.cpp).
+ */
+
 #ifndef _MMCORE_H_
 #define _MMCORE_H_
 

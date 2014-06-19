@@ -77,10 +77,34 @@
 
 using namespace std;
 
-// version info
-const int MMCore_versionMajor = 2;
-const int MMCore_versionMinor = 4;
-const int MMCore_versionBuild = 0;
+/*
+ * Important! Read this before changing this file:
+ *
+ * The following (major, minor, patch) triplet is the MMCore API version. Since
+ * 3.0.0, this is maintained according to the rules outlined at
+ * http://semver.org/ . Briefely,
+ *
+ * - Incremant the major version when making backward-incompatible changes
+ *   (changes that will require any existing code to be modified, or that may
+ *   change behavior).
+ * - Increment the minor version when adding methods or functionality without
+ *   breaking backward-compatibility.
+ * - Incremant the patch version when fixing incorrect behavior in a
+ *   backward-compatible manner.
+ *
+ * There is no need to increment the patch number when making changes that do
+ * not change behavior (such as internal refactoring).
+ *
+ * There is no particular correspondence between the Core API version number
+ * and the device/module interface version numbers or the MMStudio application
+ * version number (each version is incremented independently of each other).
+ *
+ * This applies to all classes exposed through the SWIG layer (i.e. the whole
+ * of the public API of the Core), not just CMMCore.
+ */
+const int MMCore_versionMajor = 3;
+const int MMCore_versionMinor = 0;
+const int MMCore_versionPatch = 0;
 
 
 // Legacy macros for logging.
@@ -450,7 +474,7 @@ string CMMCore::getVersionInfo() const
 {
    ostringstream txt;
    string debug;
-   txt << "MMCore version " << MMCore_versionMajor << "." << MMCore_versionMinor << "." << MMCore_versionBuild;
+   txt << "MMCore version " << MMCore_versionMajor << "." << MMCore_versionMinor << "." << MMCore_versionPatch;
    #ifdef _DEBUG
    txt << " (debug)";
    #endif
