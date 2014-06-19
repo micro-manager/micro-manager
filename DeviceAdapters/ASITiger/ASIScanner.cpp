@@ -58,7 +58,8 @@ CScanner::CScanner(const char* name) :
    lastY_(0),    // cached position before blanking, used for SetIlluminationState
    illuminationState_(true),
    polygonRepetitions_(0),
-   ring_buffer_supported_(false)
+   ring_buffer_supported_(false),
+   laser_side_(0)
 {
    if (IsExtendedName(name))  // only set up these properties if we have the required information in the name
    {
@@ -452,6 +453,26 @@ int CScanner::Initialize()
       AddAllowedValue(g_RB_AutoplayRunningPropertyName, g_NoState);
       AddAllowedValue(g_RB_AutoplayRunningPropertyName, g_YesState);
       UpdateProperty(g_RB_AutoplayRunningPropertyName);
+   }
+
+   if (firmwareVersion_ > 2.875)  // 2.88+
+   {
+      // populate laser_side_ appropriately
+      command.str("");
+      command << "Z2B " << axisLetterX_ << "?";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
+      long axis_index;
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(axis_index) );
+      // pre-1.94 comm firmware with 2.88+ micro-mirror firmware doesn't give back equals
+      //  => we assume comm/stage firmwares are updated together
+      // 1.94+ comm firmware with pre-2.88 stage firmware reports back 0 for all axis indexes
+      switch (axis_index)
+      {
+         case 1:
+         case 0: laser_side_ = 1; break;
+         case 3:
+         case 2: laser_side_ = 2; break;
+      }
    }
 
    initialized_ = true;
@@ -1018,7 +1039,7 @@ int CScanner::OnBeamEnabled(MM::PropertyBase* pProp, MM::ActionType eAct)
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
    else if (eAct == MM::AfterSet) {
-      UpdateIlluminationState();
+//      UpdateIlluminationState();  // not needed, done in SetIlluminationState() now
       pProp->Get(tmpstr);
       if (tmpstr.compare(g_YesState) == 0)
          SetIlluminationState(true);
@@ -2403,45 +2424,89 @@ int CScanner::OnSPIMLaserOutputMode(MM::PropertyBase* pProp, MM::ActionType eAct
    ostringstream command; command.str("");
    long tmp = 0;
    bool success;
-   if (eAct == MM::BeforeGet)
+   if (firmwareVersion_ < 2.879)  // setting changed corresponding serial command starting in v2.88
    {
-      if (!refreshProps_ && initialized_)
-         return DEVICE_OK;
-      command << addressChar_ << "NR Z?";
-      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A Z="));
-      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
-      tmp = tmp >> 2;   // shift left to get bits 2 and 3 in position of two LSBs
-      tmp &= (0x03);    // mask off all but what used to be bits 2 and 3; this mitigates uncertainty of whether 1 or 0 was shifted in
-      switch (tmp)
+      if (eAct == MM::BeforeGet)
       {
-         case 0: success = pProp->Set(g_SPIMLaserOutputMode_0); break;
-         case 1: success = pProp->Set(g_SPIMLaserOutputMode_1); break;
-         case 2: success = pProp->Set(g_SPIMLaserOutputMode_2); break;
-         default: success = 0;
+         if (!refreshProps_ && initialized_)
+            return DEVICE_OK;
+         command << addressChar_ << "NR Z?";
+         RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A Z="));
+         RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
+         tmp = tmp >> 2;   // shift left to get bits 2 and 3 in position of two LSBs
+         tmp &= (0x03);    // mask off all but what used to be bits 2 and 3; this mitigates uncertainty of whether 1 or 0 was shifted in
+         switch (tmp)
+         {
+            case 0: success = pProp->Set(g_SPIMLaserOutputMode_0); break;
+            case 1: success = pProp->Set(g_SPIMLaserOutputMode_1); break;
+            case 2: success = pProp->Set(g_SPIMLaserOutputMode_2); break;
+            default: success = 0;
+         }
+         if (!success)
+            return DEVICE_INVALID_PROPERTY_VALUE;
       }
-      if (!success)
-         return DEVICE_INVALID_PROPERTY_VALUE;
+      else if (eAct == MM::AfterSet) {
+         string tmpstr;
+         pProp->Get(tmpstr);
+         if (tmpstr.compare(g_SPIMLaserOutputMode_0) == 0)
+            tmp = 0;
+         else if (tmpstr.compare(g_SPIMLaserOutputMode_1) == 0)
+            tmp = 1;
+         else if (tmpstr.compare(g_SPIMLaserOutputMode_2) == 0)
+            tmp = 2;
+         else
+            return DEVICE_INVALID_PROPERTY_VALUE;
+         tmp = tmp << 2;  // right shift to get the value to bits 2 and 3
+         command << addressChar_ << "NR Z?";
+         long tmp2;
+         RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A Z="));
+         RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp2) );
+         tmp += (tmp2 & (0xF3));  // preserve the upper 4 bits and the two LSBs from prior setting, add bits 2 and 3 in manually
+         command.str("");
+         command << addressChar_ << "NR Z=" << tmp;
+         RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+      }
    }
-   else if (eAct == MM::AfterSet) {
-      string tmpstr;
-      pProp->Get(tmpstr);
-      if (tmpstr.compare(g_SPIMLaserOutputMode_0) == 0)
-         tmp = 0;
-      else if (tmpstr.compare(g_SPIMLaserOutputMode_1) == 0)
-         tmp = 1;
-      else if (tmpstr.compare(g_SPIMLaserOutputMode_2) == 0)
-         tmp = 2;
-      else
-         return DEVICE_INVALID_PROPERTY_VALUE;
-      tmp = tmp << 2;  // right shift to get the value to bits 2 and 3
-      command << addressChar_ << "NR Z?";
-      long tmp2;
-      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A Z="));
-      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp2) );
-      tmp += (tmp2 & (0xF3));  // preserve the upper 4 bits and the two LSBs from prior setting, add bits 2 and 3 in manually
-      command.str("");
-      command << addressChar_ << "NR Z=" << tmp;
-      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   else  // v2.88+
+   {
+      if (eAct == MM::BeforeGet)
+      {
+         if (!refreshProps_ && initialized_)
+            return DEVICE_OK;
+         command << addressChar_ << "LED Z?";
+         RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), "Z="));
+         RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
+         tmp &= (0x03);    // only care about 2 LSBs
+         switch (tmp)
+         {
+            case 0: success = pProp->Set(g_SPIMLaserOutputMode_0); break;
+            case 1: success = pProp->Set(g_SPIMLaserOutputMode_1); break;
+            case 2: success = pProp->Set(g_SPIMLaserOutputMode_2); break;
+            default: success = 0;
+         }
+         if (!success)
+            return DEVICE_INVALID_PROPERTY_VALUE;
+      }
+      else if (eAct == MM::AfterSet) {
+         string tmpstr;
+         pProp->Get(tmpstr);
+         if (tmpstr.compare(g_SPIMLaserOutputMode_0) == 0)
+            tmp = 0;
+         else if (tmpstr.compare(g_SPIMLaserOutputMode_1) == 0)
+            tmp = 1;
+         else if (tmpstr.compare(g_SPIMLaserOutputMode_2) == 0)
+            tmp = 2;
+         else
+            return DEVICE_INVALID_PROPERTY_VALUE;
+         command << addressChar_ << "LED Z?";
+         long tmp2;
+         RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), "Z="));
+         RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp2) );
+         tmp += (tmp2 & (0xFC));  // preserve the upper 6 bits from prior setting
+         command.str("");
+         command << addressChar_ << "LED Z=" << tmp;
+         RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), "Z=") );
+      }
    }
    return DEVICE_OK;
 }

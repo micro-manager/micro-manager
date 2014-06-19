@@ -145,6 +145,7 @@ private:
    double lastX_;   // used to cache position
    double lastY_;   // used to cache position
    bool illuminationState_;  // true if on, false if beam is turned off
+   unsigned char laser_side_;  // code for corresponding laser line: 0 for none, 1 for side0, 2 for side1
 
    // for polygons
    vector< pair<double,double> > polygons_;
