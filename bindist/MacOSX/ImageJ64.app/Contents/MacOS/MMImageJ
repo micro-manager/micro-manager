@@ -21,7 +21,7 @@ if [ -z "$JAVA" -o ! -x "$JAVA" ]; then
 fi
 if [ -x "$JAVA" ]; then
 	cd "$packagedir/.."
-	exec "$JAVA" $mem_flag $arch_flag -server -Xdock:name=ImageJ -jar "$packagedir/../ij.jar"
+	exec "$JAVA" $mem_flag $arch_flag -server -Xdock:name=ImageJ -Xdock:icon="$packagedir"/Contents/Resources/MicroManager.icns -jar "$packagedir/../ij.jar"
 else
 	/usr/bin/osascript -e 'tell app "System Events" to display dialog "ImageJ and Micro-Manager require a Java Runtime Environment. Please download and install Apple Java for OS X or Oracle Java SE JRE."'
 fi
