@@ -616,8 +616,11 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
 
             if (img_.getChannel() == channelIndex_ + 1) {
                LUT grayLut = ImageUtils.makeLUT(Color.white, gamma_);
-               img_.getProcessor().setColorModel(grayLut);
-               img_.getProcessor().setMinAndMax(contrastMin_, contrastMax_);
+               ImageProcessor processor = img_.getProcessor();
+               if (processor != null) {
+                  processor.setColorModel(grayLut);
+                  processor.setMinAndMax(contrastMin_, contrastMax_);
+               }
                if (img_.getMode() == CompositeImage.GRAYSCALE) {
                   img_.updateImage();
                }
