@@ -584,5 +584,6 @@ public class ContrastPanel extends JPanel {
 
    public void disableAutostretch() {
       autostretchCheckBox_.setSelected(false);
+      saveCheckBoxStates();
    }
 }
