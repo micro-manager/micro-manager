@@ -478,6 +478,10 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       else {
          tags = taggedImage.tags;
       }
+      if (tags == null) {
+         // No valid tags, ergo no valid image, ergo give up.
+         return;
+      }
       try {
          imageTagsQueue_.add(tags);
       }
