@@ -65,14 +65,8 @@ Beta/PixelCalibrator.jar: \
 	cd build/PixelCalibrator && $(JAR) cf ../../Beta/PixelCalibrator.jar *
 
 Device_Control/Projector.jar: \
-	$(srcdir)/Projector/src/org/micromanager/projector/Galvo.java  \
-	$(srcdir)/Projector/src/org/micromanager/projector/MosaicSequencingFrame.java \
-	$(srcdir)/Projector/src/org/micromanager/projector/OnStateListener.java  \
-	$(srcdir)/Projector/src/org/micromanager/projector/ProjectionDevice.java  \
-	$(srcdir)/Projector/src/org/micromanager/projector/ProjectorControlForm.java  \
-	$(srcdir)/Projector/src/org/micromanager/projector/ProjectorController.java  \
-	$(srcdir)/Projector/src/org/micromanager/projector/ProjectorPlugin.java  \
-	$(srcdir)/Projector/src/org/micromanager/projector/SLM.java
+	$(srcdir)/Projector/src/org/micromanager/projector/*.java \
+	$(srcdir)/Projector/src/org/micromanager/projector/*.form
 	rm -rf build/Projector
 	$(MKDIR_P) build/Projector
 	$(JAVAC) $(JAVACFLAGS) -classpath $(IJJARPATH):$(BSHJARPATH):$(COMMONSMATHJARPATH):$(SWINGLAYOUTJARPATH):../mmstudio/MMJ_.jar:. $(srcdir)/Projector/src/org/micromanager/projector/*.java -d build/Projector
