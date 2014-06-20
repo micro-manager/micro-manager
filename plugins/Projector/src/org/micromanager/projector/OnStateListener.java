@@ -17,13 +17,6 @@
 
 package org.micromanager.projector;
 
-/**
- *
- * @author Valelab
- */
 public interface OnStateListener {
-   public void turnedOn();
-   public void turnedOff();
-
-    public void calibrationDone();
+   public void stateChanged(boolean onState);
 }

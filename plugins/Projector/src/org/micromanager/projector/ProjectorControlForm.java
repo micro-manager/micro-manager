@@ -22,6 +22,7 @@ import ij.WindowManager;
 import ij.gui.EllipseRoi;
 import ij.gui.ImageCanvas;
 import ij.gui.ImageWindow;
+import ij.gui.OvalRoi;
 import ij.gui.PointRoi;
 import ij.gui.Roi;
 import ij.io.RoiEncoder;
@@ -47,7 +48,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -64,6 +64,7 @@ import mmcorej.CMMCore;
 import mmcorej.Configuration;
 import mmcorej.DeviceType;
 import mmcorej.TaggedImage;
+import org.json.JSONException;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.imageDisplay.VirtualAcquisitionDisplay;
 import org.micromanager.utils.GUIUtils;
@@ -73,18 +74,18 @@ import org.micromanager.utils.MMListenerAdapter;
 import org.micromanager.utils.MathFunctions;
 import org.micromanager.utils.ReportingUtils;
 
-
+// The main window for the Projector plugin. Contains logic for calibration,
+// and control for SLMs and Galvos.
 public class ProjectorControlForm extends javax.swing.JFrame implements OnStateListener {
-   private final ProjectionDevice dev;
+   private static ProjectorControlForm formSingleton_;
+   private final ProjectionDevice dev_;
    private final MouseListener pointAndShootMouseListener;
-   private final Set<OnStateListener> listeners_ = new HashSet<OnStateListener>();
    private final AtomicBoolean pointAndShooteModeOn_ = new AtomicBoolean(false);
    private final CMMCore core_;
    private final ScriptInterface app_;
+   private final boolean isSLM_;
    private int numROIs_;
-   private boolean isSLM_;
    private Roi[] individualRois_ = {};
-   private int reps_ = 1;
    private Map<Polygon, AffineTransform> mapping_ = null;
    private String mappingNode_ = null;
    private String targetingChannel_;
@@ -93,14 +94,32 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
    private MosaicSequencingFrame mosaicSequencingFrame_;
    private String targetingShutter_;
 
-   // ### ProjectorController constructor.
-
-
-   // ### Simple point manipulation utility methods
+   // ## Simple utility methods for points
    
    // Add a point to an existing polygon.
-   private static void addVertex(Polygon poly, Point p) {
-      poly.addPoint(p.x, p.y);
+   private static void addVertex(Polygon polygon, Point p) {
+      polygon.addPoint(p.x, p.y);
+   }
+   
+   // Return the vertices of the given polygon as a series of points.
+   private static Point[] getVertices(Polygon polygon) {
+      Point vertices[] = new Point[polygon.npoints];
+      for (int i = 0; i < polygon.npoints; ++i) {
+         vertices[i] = new Point(polygon.xpoints[i], polygon.ypoints[i]);
+      }   
+      return vertices;
+   }
+   
+   // Gets the vectorial mean of an array of Points.
+   private static Point2D.Double meanPosition2D(Point[] points) {
+      double xsum = 0;
+      double ysum = 0;
+      int n = points.length;
+      for (int i = 0; i < n; ++i) {
+         xsum += points[i].x;
+         ysum += points[i].y;
+      }
+      return new Point2D.Double(xsum/n, ysum/n);
    }
 
    // Convert a Point with double values for x,y to a point
@@ -113,13 +132,195 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
    private static Point2D.Double toDoublePoint(Point pt) {
       return new Point2D.Double(pt.x, pt.y);
    }
+
+   // ## Methods for handling targeting channel and shutter
    
+   // Read the available channels from Micro-Manager Channel Group
+   // and populate the targeting channel drop-down menu.
+   final void populateChannelComboBox(String initialChannel) {
+      if (initialChannel == null) {
+         initialChannel = (String) channelComboBox.getSelectedItem();
+      }
+      channelComboBox.removeAllItems();
+      channelComboBox.addItem("");
+      for (String preset : core_.getAvailableConfigs(core_.getChannelGroup())) {
+         channelComboBox.addItem(preset);
+      }
+      channelComboBox.setSelectedItem(initialChannel);
+   }
+
+   // Read the available shutters from Micro-Manager and
+   // list them in the targeting shutter drop-down menu.
+   final void populateShutterComboBox(String initialShutter) {
+      if (initialShutter == null) {
+         initialShutter = (String) shutterComboBox.getSelectedItem();
+      }
+      shutterComboBox.removeAllItems();
+      shutterComboBox.addItem("");
+      for (String shutter : core_.getLoadedDevicesOfType(DeviceType.ShutterDevice)) {
+         shutterComboBox.addItem(shutter);
+      }
+      shutterComboBox.setSelectedItem(initialShutter);
+   }
+   
+   // Sets the targeting channel. channelName should be
+   // a channel from the current ChannelGroup.
+   void setTargetingChannel(String channelName) {
+      targetingChannel_ = channelName;
+       if (channelName != null) {
+          Preferences.userNodeForPackage(this.getClass()).put("channel", channelName);
+       }
+   }
+   
+   // Sets the targeting shutter. Should be the name of a loaded Shutter device.
+   void setTargetingShutter(String shutterNAme) {
+      targetingShutter_ = (String) shutterNAme;
+      if (shutterNAme != null) {
+         Preferences.userNodeForPackage(this.getClass()).put("shutter", shutterNAme);
+      }
+   }
+   
+   // Set the Channel Group to the targeting channel, if it exists.
+   public Configuration prepareChannel() {
+      Configuration originalConfig = null;
+      String channelGroup = core_.getChannelGroup();
+      try {
+         if (targetingChannel_.length() > 0) {
+            originalConfig = core_.getConfigGroupState(channelGroup);
+            if (!originalConfig.isConfigurationIncluded(core_.getConfigData(channelGroup, targetingChannel_))) {
+               if (app_.isAcquisitionRunning()) {
+                  app_.setPause(true);
+               }
+               core_.setConfig(channelGroup, targetingChannel_);
+            }
+         }
+      } catch (Exception ex) {
+         ReportingUtils.logError(ex);
+      }
+      return originalConfig;
+   }
+   
+   // Should be called with the value returned by prepareChannel.
+   // Returns Channel Group to its original settings, if needed.
+   public void returnChannel(Configuration originalConfig) {
+      if (originalConfig != null) {
+         try {
+            core_.setSystemState(originalConfig);
+            if (app_.isAcquisitionRunning() && app_.isPaused()) {
+               app_.setPause(false);
+            }
+         } catch (Exception ex) {
+            ReportingUtils.logError(ex);
+         }
+      }
+   }
+   
+   // Open the targeting shutter, if it has been specified.
+   public boolean prepareShutter() {
+      try {
+         if (targetingShutter_ != null && targetingShutter_.length() > 0) {
+            boolean originallyOpen = core_.getShutterOpen(targetingShutter_);
+            if (!originallyOpen) {
+               core_.setShutterOpen(targetingShutter_, true);
+               core_.waitForDevice(targetingShutter_);
+            }
+            return originallyOpen;
+         }
+      } catch (Exception ex) {
+         ReportingUtils.logError(ex);
+      }
+      return true; // by default, say it was already open
+   }
+
+   // Close a targeting shutter if it exists and if
+   // it was originally closed.
+   // Should be called with the value returned by prepareShutter.
+   public void returnShutter(boolean originallyOpen) {
+      try {
+         if (targetingShutter_ != null &&
+               (targetingShutter_.length() > 0) &&
+               !originallyOpen) {
+            core_.setShutterOpen(targetingShutter_, false);
+            core_.waitForDevice(targetingShutter_);
+         }
+      } catch (Exception ex) {
+         ReportingUtils.logError(ex);
+      }
+   }
+   
+   // ## Simple methods for device control.
      
-   // ### Methods for generating a calibration mapping.
+   // Set the exposure time for the phototargeting device.
+   public void setExposure(double intervalUs) {
+      long previousExposure = dev_.getExposure();
+      long newExposure = (long) intervalUs;
+      if (previousExposure != newExposure) {
+         dev_.setExposure((long) newExposure);
+      }
+   }
    
-   // Find the peak in an ImageProcessor. The image is first blurred
-   // to avoid finding a peak in noise.
-   private Point findPeak(ImageProcessor proc) {
+   // Turn the projection device on or off.
+   private void setOnState(boolean onState) {
+      if (onState) {
+         dev_.turnOn();
+      } else {
+         dev_.turnOff();
+      }
+   }
+   
+   // Illuminate a spot at position x,y.
+   private void displaySpot(double x, double y) {
+      if (x >= 0 && x < dev_.getWidth() && y >= 0 && y < dev_.getHeight()) {
+         dev_.displaySpot(x, y);
+      }
+   }
+   
+   // Illuminate a spot at the center of the Galvo/SLM range, for
+   // the exposure time.
+   void displayCenterSpot() {
+      double x = dev_.getWidth() / 2;
+      double y = dev_.getHeight() / 2;
+      dev_.displaySpot(x, y);
+   }
+   
+   // ## Generating, loading and saving calibration mappings
+   
+   // Returns the java Preferences node where we store the Calibration mapping.
+   // Each channel/camera combination is assigned a different node.
+   private Preferences getCalibrationNode() {
+      return Preferences.userNodeForPackage(ProjectorPlugin.class)
+            .node("calibration")
+            .node(dev_.getChannel())
+            .node(core_.getCameraDevice());
+   }
+   
+   // Load the mapping for the current calibration node. The mapping
+   // maps each polygon cell to an AffineTransform.
+   private Map<Polygon, AffineTransform> loadMapping() {
+      String nodeStr = getCalibrationNode().toString();
+      if (mappingNode_ == null || !nodeStr.contentEquals(mappingNode_)) {
+         mappingNode_ = nodeStr;
+         mapping_ = (Map<Polygon, AffineTransform>) JavaUtils.getObjectFromPrefs(
+                 getCalibrationNode(), 
+                 dev_.getName(), 
+                 new HashMap<Polygon, AffineTransform>());
+      }
+      return  mapping_;
+   }
+
+   // Save the mapping for the current calibration node. The mapping
+   // maps each polygon cell to an AffineTransform.
+   private void saveMapping(HashMap<Polygon, AffineTransform> mapping) {
+      JavaUtils.putObjectInPrefs(getCalibrationNode(), dev_.getName(), mapping);
+      mapping_ = mapping;
+      mappingNode_ = getCalibrationNode().toString();
+   }
+   
+   // ## Methods for generating a calibration mapping.
+   
+   // Find the brightest spot in an ImageProcessor. The image is first blurred
+   // and then the pixel with maximum intensity is returned.
+   private static Point findPeak(ImageProcessor proc) {
       ImageProcessor blurImage = proc.duplicate();
       blurImage.setRoi((Roi) null);
       GaussianBlur blur = new GaussianBlur();
@@ -136,23 +337,21 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
       if (stopRequested_.get()) {
          return null;
       }
-
       try {
-         dev.turnOff();
+         dev_.turnOff();
          Thread.sleep(300);
          core_.snapImage();
          TaggedImage image = core_.getTaggedImage();
          ImageProcessor proc1 = ImageUtils.makeMonochromeProcessor(image);
-         long originalExposure = dev.getExposure();
-         dev.setExposure(500000);
+         long originalExposure = dev_.getExposure();
+         dev_.setExposure(500000);
          displaySpot(projectionPoint.x, projectionPoint.y);
          Thread.sleep(300);
-         dev.setExposure(500000);
+         dev_.setExposure(originalExposure);
          core_.snapImage();
          TaggedImage taggedImage2 = core_.getTaggedImage();
          ImageProcessor proc2 = ImageUtils.makeMonochromeProcessor(taggedImage2);
          app_.displayImage(taggedImage2);
-
          ImageProcessor diffImage = ImageUtils.subtractImageProcessors(proc2.convertToFloatProcessor(), proc1.convertToFloatProcessor());
          Point peak = findPeak(diffImage);
          Point maxPt = peak;
@@ -184,10 +383,12 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
       }
    }
 
-   
-   private AffineTransform getFirstApproxTransform() {
-      double x = dev.getWidth() / 2;
-      double y = dev.getHeight() / 2;
+   // Illuminates and images five control points, and returns
+   // an affine transform mapping from image coordinates to
+   // phototargeter coordinates.
+   private AffineTransform generateLinearMapping() {
+      double x = dev_.getWidth() / 2;
+      double y = dev_.getHeight() / 2;
 
       int s = 50;
       Map<Point2D.Double, Point2D.Double> spotMap
@@ -204,7 +405,7 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
       return MathFunctions.generateAffineTransformFromPointPairs(spotMap);
    }
 
-   // Generate a calibration mapping for the current device settings.
+   // Generate a nonlinear calibration mapping for the current device settings.
    // A rectangular lattice of points is illuminated one-by-one on the
    // projection device, and locations in camera pixels of corresponding
    // spots on the camera image are recorded. For each rectangular
@@ -212,12 +413,12 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
    // and generate a local AffineTransform using linear least squares.
    // Cells with suspect measured corner positions are discarded.
    // A mapping of cell polygon to AffineTransform is generated. 
-   private Map<Polygon, AffineTransform> getMapping(AffineTransform firstApprox) {
+   private Map<Polygon, AffineTransform> generateNonlinearMapping(AffineTransform firstApprox) {
       if (firstApprox == null) {
          return null;
       }
-      int devWidth = (int) dev.getWidth() - 1;
-      int devHeight = (int) dev.getHeight() - 1;
+      int devWidth = (int) dev_.getWidth() - 1;
+      int devHeight = (int) dev_.getHeight() - 1;
       Point2D.Double camCorner1 = (Point2D.Double) firstApprox.transform(new Point2D.Double(0, 0), null);
       Point2D.Double camCorner2 = (Point2D.Double) firstApprox.transform(new Point2D.Double((int) core_.getImageWidth(), (int) core_.getImageHeight()), null);
       int camLeft = Math.min((int) camCorner1.x, (int) camCorner2.x);
@@ -280,47 +481,16 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
       }
       return bigMap;
    }
-   
-   
-   // ### Loading and saving calibration mappings to java preferences.
-   
-   // Returns the java Preferences node where we store the Calibration mapping.
-   // Each channel/camera combination is assigned a different node.
-   private Preferences getCalibrationNode() {
-      return Preferences.userNodeForPackage(ProjectorPlugin.class)
-            .node("calibration")
-            .node(dev.getChannel())
-            .node(core_.getCameraDevice());
-   }
-   
-   // Load the mapping for the current calibration node. The mapping
-   // maps each polygon cell to an AffineTransform.
-   private Map<Polygon, AffineTransform> loadMapping() {
-      String nodeStr = getCalibrationNode().toString();
-      if (mappingNode_ == null || !nodeStr.contentEquals(mappingNode_)) {
-         mappingNode_ = nodeStr;
-         mapping_ = (Map<Polygon, AffineTransform>) JavaUtils.getObjectFromPrefs(
-                 getCalibrationNode(), 
-                 dev.getName(), 
-                 new HashMap<Polygon, AffineTransform>());
-      }
-      return  mapping_;
-   }
 
-   // Save the mapping for the current calibration node. The mapping
-   // maps each polygon cell to an AffineTransform.
-   private void saveMapping(HashMap<Polygon, AffineTransform> mapping) {
-      JavaUtils.putObjectInPrefs(getCalibrationNode(), dev.getName(), mapping);
-      mapping_ = mapping;
-      mappingNode_ = getCalibrationNode().toString();
-   }
-
-   // Runs the full calibration, and saves it to Java Preferences.
-   public void calibrate() {
+   // Runs the full calibration. First
+   // generates a linear mapping (a first approximation) and then runs
+   // a second, non-linear, mapping using the first mapping as a guide. Saves
+   // the mapping to Java Preferences.
+   public void runCalibration() {
       final boolean liveModeRunning = app_.isLiveModeOn();
       app_.enableLiveMode(false);
       if (!isRunning_.get()) {
-         this.stopRequested_.set(false);
+         stopRequested_.set(false);
          Thread th = new Thread("Projector calibration thread") {
             @Override
             public void run() {
@@ -329,12 +499,12 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
                   Roi originalROI = IJ.getImage().getRoi();
                   app_.snapSingleImage();
 
-                  AffineTransform firstApproxAffine = getFirstApproxTransform();
+                  AffineTransform firstApproxAffine = generateLinearMapping();
 
-                  HashMap<Polygon, AffineTransform> mapping = (HashMap<Polygon, AffineTransform>) getMapping(firstApproxAffine);
+                  HashMap<Polygon, AffineTransform> mapping = (HashMap<Polygon, AffineTransform>) generateNonlinearMapping(firstApproxAffine);
                   //LocalWeightedMean lwm = multipleAffineTransforms(mapping_);
                   //AffineTransform affineTransform = MathFunctions.generateAffineTransformFromPointPairs(mapping_);
-                  dev.turnOff();
+                  dev_.turnOff();
                   try {
                      Thread.sleep(500);
                   } catch (InterruptedException ex) {
@@ -348,10 +518,7 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
                   JOptionPane.showMessageDialog(IJ.getImage().getWindow(), "Calibration "
                         + (!stopRequested_.get() ? "finished." : "canceled."));
                   IJ.getImage().setRoi(originalROI);
-
-                  for (OnStateListener listener : listeners_) {
-                     listener.calibrationDone();
-                  }
+                  calibrateButton_.setText("Calibrate");
                } catch (Exception e) {
                   ReportingUtils.showError(e);
                } finally {
@@ -364,24 +531,21 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
       }
    }
    
-   // ### Transforming points according to a calibration mapping.
-   
-   // Roughly gets the center of a Polygon, given that it is more or less
-   // a rectangle.
-   private static Point2D.Double getApproximateCenter(Polygon polygon) {
-      int n = polygon.npoints;
-      double xsum = 0;
-      double ysum = 0;
-      for (int i = 0; i < n; ++i) {
-         xsum += polygon.xpoints[i];
-         ysum += polygon.ypoints[i];
-      }
-      return new Point2D.Double(xsum/n, ysum/n);
+   // Returns true if the calibration is currently running.
+   public boolean isCalibrating() {
+      return isRunning_.get();
    }
    
+   // Requests an interruption to calibration while it is running.
+   public void stopCalibration() {
+      stopRequested_.set(true);
+   }
+   
+   // ## Transforming points according to a nonlinear calibration mapping.
+     
    // Transform a point, pt, given the mapping, which is a Map of polygon cells
    // to AffineTransforms.
-   private static Point transform(Map<Polygon, AffineTransform> mapping, Point pt) {
+   private static Point transformPoint(Map<Polygon, AffineTransform> mapping, Point pt) {
       Set<Polygon> set = mapping.keySet();
       // First find out if the given point is inside a cell, and if so,
       // transform it with that cell's AffineTransform.
@@ -395,7 +559,7 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
       double minDistance = Double.MAX_VALUE;
       Polygon bestPoly = null;
       for (Polygon poly : set) {
-         double distance = getApproximateCenter(poly).distance(pt.x, pt.y);
+         double distance = meanPosition2D(getVertices(poly)).distance(pt.x, pt.y);
          if (minDistance > distance) {
             bestPoly = poly;
             minDistance = distance;
@@ -407,235 +571,40 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
       return toIntPoint((Point2D.Double) mapping.get(bestPoly).transform(toDoublePoint(pt), null));
    }
    
+      
    // Returns true if a particular image is mirrored.
-   private static boolean isMirrored(ImagePlus imgp) {
+   private static boolean isImageMirrored(ImagePlus imgp) {
       try {
          String mirrorString = VirtualAcquisitionDisplay.getDisplay(imgp)
                .getCurrentMetadata().getString("ImageFlipper-Mirror");
          return (mirrorString.contentEquals("On"));
-      } catch (Exception e) {
+      } catch (JSONException e) {
          return false;
       }
    }
 
    // Flips a point if it has been mirrored.
    private static Point mirrorIfNecessary(Point pOffscreen, ImagePlus imgp) {
-      if (isMirrored(imgp)) {
+      if (isImageMirrored(imgp)) {
          return new Point(imgp.getWidth() - pOffscreen.x, pOffscreen.y);
       } else {
          return pOffscreen;
       }
    }
    
-   
-   private static Point transformAndFlip(Map<Polygon, AffineTransform> mapping, ImagePlus imgp, Point pt) {
+   // Transform and mirror (if necessary) a point on an image to 
+   // a point on phototargeter coordinates.
+   private static Point transformAndMirrorPoint(Map<Polygon, AffineTransform> mapping, ImagePlus imgp, Point pt) {
       Point pOffscreen = mirrorIfNecessary(pt, imgp);
-      return transform(mapping, pOffscreen);
+      return transformPoint(mapping, pOffscreen);
    }
+
+   // ## Point and shoot
    
-   // Converts an ROI to a Polygon.
-   private static Polygon asPolygon(Roi roi) {
-      if ((roi.getType() == Roi.POINT)
-               || (roi.getType() == Roi.FREEROI)
-               || (roi.getType() == Roi.POLYGON)
-            || (roi.getType() == Roi.RECTANGLE)) {
-         return roi.getPolygon();
-      } else if (roi.getType() == Roi.OVAL) {
-         Rectangle bounds = roi.getBounds();
-         double aspectRatio = bounds.width / (double) bounds.height;
-         if (aspectRatio < 1) {
-            return new EllipseRoi(bounds.x + bounds.width / 2,
-                  bounds.y,
-                  bounds.x + bounds.width / 2,
-                  bounds.y + bounds.height,
-                  aspectRatio).getPolygon();
-         } else {
-            return new EllipseRoi(bounds.x,
-                  bounds.y + bounds.height / 2,
-                  bounds.x + bounds.width,
-                  bounds.y + bounds.height / 2,
-                  1 / aspectRatio).getPolygon();
-         }
-      } else {
-         throw new RuntimeException("Can't use this type of ROI.");
-      }
-   }
-
-   private static List<Polygon> transformROIs(ImagePlus imgp, Roi[] rois, Map<Polygon, AffineTransform> mapping) {
-      ArrayList<Polygon> transformedROIs = new ArrayList<Polygon>();
-      for (Roi roi : rois) {
-         Polygon poly = asPolygon(roi);
-         Polygon newPoly = new Polygon();
-         try {
-            Point2D galvoPoint;
-            for (int i = 0; i < poly.npoints; ++i) {
-               Point imagePoint = new Point(poly.xpoints[i], poly.ypoints[i]);
-               galvoPoint = transformAndFlip(mapping, imgp, imagePoint);
-               if (galvoPoint == null) {
-                  throw new Exception();
-               }
-               newPoly.addPoint((int) galvoPoint.getX(), (int) galvoPoint.getY());
-            }
-            transformedROIs.add(newPoly);
-         } catch (Exception ex) {
-            ReportingUtils.showError(ex);
-            break;
-         }
-      }
-      return transformedROIs;
-   }
-
-      /* Returns the currently selected ROIs for a given ImageWindow. */
-   public static Roi[] getRois(ImageWindow window, boolean selectedOnly) {
-      Roi[] rois = new Roi[]{};
-      Roi[] roiMgrRois = {};
-      Roi singleRoi = window.getImagePlus().getRoi();
-      final RoiManager mgr = RoiManager.getInstance();
-      if (mgr != null) {
-         if (selectedOnly) {
-            roiMgrRois = mgr.getSelectedRoisAsArray();
-            if (roiMgrRois.length == 0) {
-               roiMgrRois = mgr.getRoisAsArray();
-            }
-         } else {
-            roiMgrRois = mgr.getRoisAsArray();
-         }
-      }
-      if (roiMgrRois.length > 0) {
-         rois = roiMgrRois;
-      } else if (singleRoi != null) {
-         rois = new Roi[]{singleRoi};
-      }
-      return rois;
-   }
-      
-   public List<Polygon> getTransformedRois(ImagePlus contextImagePlus, Roi[] rois) {
-      return transformROIs(contextImagePlus, rois, mapping_);
-   }
-
-   public static Roi[] separateOutPointRois(Roi[] rois) {
-      List<Roi> roiList = new ArrayList<Roi>();
-      for (Roi roi : rois) {
-         if (roi.getType() == Roi.POINT) {
-            Polygon poly = ((PointRoi) roi).getPolygon();
-            for (int i = 0; i < poly.npoints; ++i) {
-               roiList.add(new PointRoi(
-                     poly.xpoints[i],
-                     poly.ypoints[i]));
-            }
-         } else {
-            roiList.add(roi);
-         }
-      }
-      return roiList.toArray(rois);
-   }
-
-   public int setRois(int reps) {
-      if (mapping_ != null) {
-         ImageWindow window = WindowManager.getCurrentWindow();
-         if (window == null) {
-            ReportingUtils.showError("No image window with ROIs is open.");
-            return 0;
-         } else {
-            ImagePlus imgp = window.getImagePlus();
-            Roi[] rois = getRois(window, true);
-            if (rois.length == 0) {
-               ReportingUtils.showMessage("Please first draw the desired phototargeting ROIs.");
-            }
-            individualRois_ = separateOutPointRois(rois);
-            sendRoiData(imgp);
-            return individualRois_.length;
-         }
-      } else {
-         return 0;
-      }
-   }
-
-   private void sendRoiData(ImagePlus imgp) {
-      if (individualRois_.length > 0) {
-         if (mapping_ != null) {
-            List<Polygon> rois = transformROIs(imgp, individualRois_, mapping_);
-            dev.loadRois(rois);
-            dev.setPolygonRepetitions(reps_);
-         }
-      }
-   }
-
-   public void setRoiRepetitions(int reps) {
-      reps_ = reps;
-      sendRoiData(IJ.getImage());
-   }
-
-   private void displaySpot(double x, double y) {
-      if (x >= 0 && x < dev.getWidth() && y >= 0 && y < dev.getHeight()) {
-         dev.displaySpot(x, y);
-      }
-   }
-
-   public Configuration prepareChannel() {
-      Configuration originalConfig = null;
-      String channelGroup = core_.getChannelGroup();
-      try {
-         if (targetingChannel_.length() > 0) {
-            originalConfig = core_.getConfigGroupState(channelGroup);
-            if (!originalConfig.isConfigurationIncluded(core_.getConfigData(channelGroup, targetingChannel_))) {
-               if (app_.isAcquisitionRunning()) {
-                  app_.setPause(true);
-               }
-               core_.setConfig(channelGroup, targetingChannel_);
-            }
-         }
-      } catch (Exception ex) {
-         ReportingUtils.logError(ex);
-      }
-      return originalConfig;
-   }
-   
-   // Should be called with the value returned by prepareChannel.
-   public void returnChannel(Configuration originalConfig) {
-      if (originalConfig != null) {
-         try {
-            core_.setSystemState(originalConfig);
-            if (app_.isAcquisitionRunning() && app_.isPaused()) {
-               app_.setPause(false);
-            }
-         } catch (Exception ex) {
-            ReportingUtils.logError(ex);
-         }
-      }
-   }
-   
-   public boolean prepareShutter() {
-      try {
-         if (targetingShutter_ != null && targetingShutter_.length() > 0) {
-            boolean originallyOpen = core_.getShutterOpen(targetingShutter_);
-            if (!originallyOpen) {
-               core_.setShutterOpen(targetingShutter_, true);
-               core_.waitForDevice(targetingShutter_);
-            }
-            return originallyOpen;
-         }
-      } catch (Exception ex) {
-         ReportingUtils.logError(ex);
-      }
-      return true; // by default, say it was already open
-   }
-
-   // Should be called with the value returned by prepareShutter.
-   public void returnShutter(boolean originallyOpen) {
-      try {
-         if (targetingShutter_ != null &&
-               (targetingShutter_.length() > 0) &&
-               !originallyOpen) {
-            core_.setShutterOpen(targetingShutter_, false);
-            core_.waitForDevice(targetingShutter_);
-         }
-      } catch (Exception ex) {
-         ReportingUtils.logError(ex);
-      }
-   }
-
-   public final MouseListener setupPointAndShootMouseListener() {
+   // Creates a MouseListener instance for future use with Point and Shoot
+   // mode. When the MouseListener is attached to an ImageJ window, any
+   // clicks will result in a spot being illuminated.
+   private MouseListener createPointAndShootMouseListenerInstance() {
       return new MouseAdapter() {
          @Override
          public void mouseClicked(MouseEvent e) {
@@ -643,7 +612,7 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
                Point p = e.getPoint();
                ImageCanvas canvas = (ImageCanvas) e.getSource();
                Point pOffscreen = new Point(canvas.offScreenX(p.x), canvas.offScreenY(p.y));
-               Point devP = transformAndFlip(loadMapping(), canvas.getImage(), 
+               Point devP = transformAndMirrorPoint(loadMapping(), canvas.getImage(), 
                        new Point(pOffscreen.x, pOffscreen.y));
                Configuration originalConfig = prepareChannel();
                boolean originalShutterState = prepareShutter();
@@ -657,7 +626,11 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
       };
    }
 
+   // Turn on/off point and shoot mode.
    public void enablePointAndShootMode(boolean on) {
+      if (on && (mapping_ == null)) {
+         throw new RuntimeException("Please calibrate the phototargeting device first, using the Setup tab.");
+      }
       pointAndShooteModeOn_.set(on);
       ImageWindow window = WindowManager.getCurrentWindow();
       if (window != null) {
@@ -683,76 +656,73 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
          }
       }
    }
-
-
-
-   void runPolygons() {
-      Configuration originalConfig = prepareChannel();
-      boolean originalShutterState = prepareShutter();
-      dev.runPolygons();
-      returnShutter(originalShutterState);
-      returnChannel(originalConfig);
-      recordPolygons();
-   }
-
-   void addOnStateListener(OnStateListener listener) {
-      dev.addOnStateListener(listener);
-      listeners_.add(listener);
-   }
-
-   void moveToCenter() {
-      double x = dev.getWidth() / 2;
-      double y = dev.getHeight() / 2;
-      dev.displaySpot(x, y);
-   }
-
-   void setTargetingChannel(Object selectedItem) {
-      targetingChannel_ = (String) selectedItem;
-   }
    
-   void setTargetingShutter(Object selectedItem) {
-      targetingShutter_ = (String) selectedItem;
-   }
-
-   private void saveROIs(File path) {
-      try {
-         ImagePlus imgp = IJ.getImage();
-         ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(path));
-         DataOutputStream out = new DataOutputStream(new BufferedOutputStream(zos));
-         RoiEncoder re = new RoiEncoder(out);
-         for (Roi roi : individualRois_) {
-            String label = getROILabel(imgp, roi, 0);
-            if (!label.endsWith(".roi")) {
-               label += ".roi";
-            }
-            zos.putNextEntry(new ZipEntry(label));
-            re.write(roi);
-            out.flush();
-         }
-         out.close();
-      } catch (Exception e) {
-         ReportingUtils.logError(e);
+   // ## Manipulating ROIs
+   
+   // Convert an OvalRoi to an EllipseRoi.
+   private static Roi asEllipseRoi(OvalRoi roi) {
+      Rectangle bounds = roi.getBounds();
+      double aspectRatio = bounds.width / (double) bounds.height;
+      if (aspectRatio < 1) {
+         return new EllipseRoi(bounds.x + bounds.width / 2,
+               bounds.y,
+               bounds.x + bounds.width / 2,
+               bounds.y + bounds.height,
+               aspectRatio);
+      } else {
+         return new EllipseRoi(bounds.x,
+               bounds.y + bounds.height / 2,
+               bounds.x + bounds.width,
+               bounds.y + bounds.height / 2,
+               1 / aspectRatio);
       }
    }
-
    
-   private void recordPolygons() {
-      if (app_.isAcquisitionRunning()) {
-         String location = app_.getAcquisitionPath();
-         if (location != null) {
-            try {
-               File f = new File(location, "ProjectorROIs.zip");
-               if (!f.exists()) {
-                  saveROIs(f);
-               }
-            } catch (Exception ex) {
-               ReportingUtils.logError(ex);
-            }
-         }
+   // Converts an ROI to a Polygon.
+   private static Polygon asPolygon(Roi roi) {
+      if ((roi.getType() == Roi.POINT)
+               || (roi.getType() == Roi.FREEROI)
+               || (roi.getType() == Roi.POLYGON)
+            || (roi.getType() == Roi.RECTANGLE)) {
+         return roi.getPolygon();
+      } else {
+         throw new RuntimeException("Can't use this type of ROI.");
       }
    }
-
-   private String getROILabel(ImagePlus imp, Roi roi, int n) {
+   
+   // We can't handle Ellipse Rois and compounds PointRois directly.
+   private static Roi[] homogenizeROIs(Roi[] rois) {
+      List<Roi> roiList = new ArrayList<Roi>();
+      for (Roi roi : rois) {
+         if (roi.getType() == Roi.POINT) {
+            Polygon poly = ((PointRoi) roi).getPolygon();
+            for (int i = 0; i < poly.npoints; ++i) {
+               roiList.add(new PointRoi(
+                     poly.xpoints[i],
+                     poly.ypoints[i]));
+            }
+         } else if (roi.getType() == Roi.OVAL) {
+            roiList.add(asEllipseRoi((OvalRoi) roi));
+         } else {
+            roiList.add(roi);
+         }
+      }
+      return roiList.toArray(rois);
+   }
+   
+   // Coverts an array of ImageJ Rois to an array of Polygons.
+   // Handles EllipseRois and compound Point ROIs.
+   public static Polygon[] roisAsPolygons(Roi[] rois) {
+      Roi[] cleanROIs = homogenizeROIs(rois);
+      List<Polygon> roiPolygons = new ArrayList<Polygon>();
+      for (Roi roi : cleanROIs) {
+         roiPolygons.add(asPolygon(roi));
+      }
+      return roiPolygons.toArray(new Polygon[0]);
+   }
+   
+   // Gets the label of an ROI with the given index n. Borrowed from ImageJ.
+   private static String getROILabel(ImagePlus imp, Roi roi, int n) {
       Rectangle r = roi.getBounds();
       int xc = r.x + r.width / 2;
       int yc = r.y + r.height / 2;
@@ -792,93 +762,253 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
       }
       return label;
    }
-
-
-  // ### Public methods for interfacing with the UI.
-   
-   // Returns true if the device we are controlling is an SLM (not galvo-based).
-   public  boolean isSLM() {
-      return (dev instanceof SLM);
-   }
-   
-   // Turn the projection device off.
-   public void turnOff() {
-      dev.turnOff();
-   }
-
-   // Turn the projection device on.
-   public void turnOn() {
-      dev.turnOn();
-   }
-
-   // Activate all pixels in an SLM.
-   void activateAllPixels() {
-      dev.activateAllPixels();
-   }
-   
-   // Returns true if the calibration is currently running.
-   public boolean isCalibrating() {
-      return isRunning_.get();
-   }
-
-   // Requests an interruption to calibration while it is running.
-   public void stopCalibration() {
-      stopRequested_.set(true);
-   }
-
-   public void attachToMDA(int frameOn, boolean repeat, int repeatInterval) {
-      Runnable runPolygons = new Runnable() {
-         public void run() {
-            runPolygons();
+     
+   // Save a list of ROIs to a given path.
+   private static void saveROIs(File path, Roi[] rois) {
+      try {
+         ImagePlus imgp = IJ.getImage();
+         ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(path));
+         DataOutputStream out = new DataOutputStream(new BufferedOutputStream(zos));
+         RoiEncoder re = new RoiEncoder(out);
+         for (Roi roi : rois) {
+            String label = getROILabel(imgp, roi, 0);
+            if (!label.endsWith(".roi")) {
+               label += ".roi";
+            }
+            zos.putNextEntry(new ZipEntry(label));
+            re.write(roi);
+            out.flush();
          }
+         out.close();
+      } catch (Exception e) {
+         ReportingUtils.logError(e);
+      }
+   }
+   
+   // Returns the current ROIs for a given ImageWindow. If selectedOnly
+   // is true, then returns only those ROIs selected in the ROI Manager.
+   // If no ROIs are selected, then all ROIs are returned.
+   public static Roi[] getRois(ImageWindow window, boolean selectedOnly) {
+      Roi[] rois = new Roi[]{};
+      Roi[] roiMgrRois = {};
+      Roi singleRoi = window.getImagePlus().getRoi();
+      final RoiManager mgr = RoiManager.getInstance();
+      if (mgr != null) {
+         if (selectedOnly) {
+            roiMgrRois = mgr.getSelectedRoisAsArray();
+            if (roiMgrRois.length == 0) {
+               roiMgrRois = mgr.getRoisAsArray();
+            }
+         } else {
+            roiMgrRois = mgr.getRoisAsArray();
+         }
+      }
+      if (roiMgrRois.length > 0) {
+         rois = roiMgrRois;
+      } else if (singleRoi != null) {
+         rois = new Roi[]{singleRoi};
+      }
+      return rois;
+   }
+   
+   // Transform the Roi polygons with the given nonlinear mapping.
+   private static List<Polygon> transformRoiPolygons(final ImagePlus imgp, Polygon[] roiPolygons, Map<Polygon, AffineTransform> mapping) {
+      ArrayList<Polygon> transformedROIs = new ArrayList<Polygon>();
+      for (Polygon roiPolygon : roiPolygons) {
+         Polygon targeterPolygon = new Polygon();
+         try {
+            Point2D targeterPoint;
+            for (int i = 0; i < roiPolygon.npoints; ++i) {
+               Point imagePoint = new Point(roiPolygon.xpoints[i], roiPolygon.ypoints[i]);
+               targeterPoint = transformAndMirrorPoint(mapping, imgp, imagePoint);
+               if (targeterPoint == null) {
+                  throw new Exception();
+               }
+               targeterPolygon.addPoint((int) (0.5 + targeterPoint.getX()), (int) (0.5 + targeterPoint.getY()));
+            }
+            transformedROIs.add(targeterPolygon);
+         } catch (Exception ex) {
+            ReportingUtils.showError(ex);
+            break;
+         }
+      }
+      return transformedROIs;
+   }
+       
+   // ## Saving, sending, and running ROIs.
+     
+   // Returns ROIs, transformed by the current mapping.
+   public List<Polygon> transformROIs(ImagePlus contextImagePlus, Roi[] rois) {
+      return transformRoiPolygons(contextImagePlus, roisAsPolygons(rois), mapping_);
+   }
+   
+   // Save ROIs in the acquisition path, if it exists.
+   private void recordPolygons() {
+      if (app_.isAcquisitionRunning()) {
+         String location = app_.getAcquisitionPath();
+         if (location != null) {
+            try {
+               File f = new File(location, "ProjectorROIs.zip");
+               if (!f.exists()) {
+                  saveROIs(f, individualRois_);
+               }
+            } catch (Exception ex) {
+               ReportingUtils.logError(ex);
+            }
+         }
+      }
+   }
+   
+   // Upload current Window's ROIs, transformed, to the phototargeting device.
+   public void sendCurrentImageWindowRois() {
+      if (mapping_ == null) {
+         throw new RuntimeException("Please calibrate the phototargeting device first, using the Setup tab.");
+      }
+      ImageWindow window = WindowManager.getCurrentWindow();
+      if (window == null) {
+         throw new RuntimeException("No image window with ROIs is open.");
+      }
+      ImagePlus imgp = window.getImagePlus();
+      Roi[] rois = getRois(window, true);
+      if (rois.length == 0) {
+         throw new RuntimeException("Please first draw the desired phototargeting ROIs.");
+      }
+      List<Polygon> transformedRois = transformROIs(imgp, rois);
+      dev_.loadRois(transformedRois);
+      individualRois_ = rois;
+   }
+   
+   // Illuminate the polygons ROIs that have been previously uploaded to
+   // phototargeter.
+   void runRois() {
+      Configuration originalConfig = prepareChannel();
+      boolean originalShutterState = prepareShutter();
+      dev_.runPolygons();
+      returnShutter(originalShutterState);
+      returnChannel(originalConfig);
+      recordPolygons();
+   }
 
+   // ## Attach/detach MDA
+       
+   // Attaches phototargeting ROIs to a multi-dimensional acquisition, so that
+   // they will run on a particular firstFrame and, if repeat is true,
+   // thereafter again every frameRepeatInterval frames.
+   public void attachRoisToMDA(int firstFrame, boolean repeat, int frameRepeatInveral) {
+      Runnable runPolygons = new Runnable() {
+         @Override
+         public void run() {
+            runRois();
+         }
          @Override
          public String toString() {
             return "Phototargeting of ROIs";
          }
       };
-
       app_.clearRunnables();
       if (repeat) {
-         for (int i = frameOn; i < app_.getAcquisitionSettings().numFrames * 10; i += repeatInterval) {
+         for (int i = firstFrame; i < app_.getAcquisitionSettings().numFrames * 10; i += frameRepeatInveral) {
             app_.attachRunnable(i, -1, 0, 0, runPolygons);
          }
       } else {
-         app_.attachRunnable(frameOn, -1, 0, 0, runPolygons);
+         app_.attachRunnable(firstFrame, -1, 0, 0, runPolygons);
       }
    }
 
+   // Remove the attached ROIs from the multi-dimensional acquisition.
    public void removeFromMDA() {
       app_.clearRunnables();
    }
-
-   public void setExposure(double intervalUs) {
-      long previousExposure = dev.getExposure();
-      long newExposure = (long) intervalUs;
-      if (previousExposure != newExposure) {
-         dev.setExposure((long) newExposure);
+  
+   // ## GUI
+   
+   // Forces a JSpinner to fire a change event reflecting the new value
+   // whenver user types a valid entry.
+   private static void commitSpinnerOnValidEdit(final JSpinner spinner) {
+      ((DefaultFormatter) ((JSpinner.DefaultEditor) spinner.getEditor())
+            .getTextField().getFormatter()).setCommitsOnValidEdit(true);
+   }
+   
+   // Return the value of a spinner displaying an integer.
+   private static int getSpinnerIntegerValue(JSpinner spinner) {
+      return Integer.parseInt(spinner.getValue().toString());
+   }
+   
+   // Sets the Point and Shoot "On and Off" buttons to a given state.
+   public void updatePointAndShoot(boolean turnedOn) {
+      pointAndShootOnButton.setSelected(turnedOn);
+      pointAndShootOffButton.setSelected(!turnedOn);
+      enablePointAndShootMode(turnedOn);
+   }
+   
+   // Update the GUI's roi settings so they reflect the user's current choices.
+   public final void updateROISettings() {
+      boolean roisSubmitted = false;
+      int numROIs = individualRois_.length;
+      if (numROIs == 0) {
+         roiStatusLabel.setText("No ROIs submitted");
+         roisSubmitted = false;
+      } else if (numROIs == 1) {
+         roiStatusLabel.setText("One ROI submitted");
+         roisSubmitted = true;
+      } else { // numROIs > 1
+         roiStatusLabel.setText("" + numROIs + " ROIs submitted");
+         roisSubmitted = true;
       }
-   }
 
-   public double getPointAndShootInterval() {
-      return dev.getExposure();
-   }
+      roiLoopLabel.setEnabled(roisSubmitted);
+      roiLoopSpinner.setEnabled(!isSLM_ && roisSubmitted);
+      roiLoopTimesLabel.setEnabled(!isSLM_ && roisSubmitted);
+      runROIsNowButton.setEnabled(roisSubmitted);
+      useInMDAcheckBox.setEnabled(roisSubmitted);
 
-   void showMosaicSequencingFrame() {
+      boolean useInMDA = roisSubmitted && useInMDAcheckBox.isSelected();
+      startFrameLabel.setEnabled(useInMDA);
+      startFrameSpinner.setEnabled(useInMDA);
+      repeatCheckBox.setEnabled(useInMDA);
+
+      boolean repeatInMDA = useInMDA && repeatCheckBox.isSelected();
+      repeatEveryFrameSpinner.setEnabled(repeatInMDA);
+      framesLabel.setEnabled(repeatInMDA);
+      
+      if (useInMDAcheckBox.isSelected()) {
+         removeFromMDA();
+         attachRoisToMDA(getSpinnerIntegerValue(startFrameSpinner) - 1,
+            repeatCheckBox.isSelected(),
+            getSpinnerIntegerValue(repeatEveryFrameSpinner));
+      } else {
+         removeFromMDA();
+      }
+      dev_.setPolygonRepetitions(repeatCheckBox.isSelected()
+         ? getSpinnerIntegerValue(roiLoopSpinner) : 0);
+   }
+    
+   // Set the exposure to whatever value is currently in the Exposure field.
+   private void updateExposure() {
+       setExposure(1000 * Double.parseDouble(pointAndShootIntervalSpinner.getValue().toString()));
+   }
+   
+   // Method called if the phototargeting device has turned on or off.
+   public void stateChanged(final boolean onState) {
+      SwingUtilities.invokeLater(new Runnable() {
+         public void run() {
+            onButton.setSelected(onState);
+            offButton.setSelected(!onState);
+         }
+      });
+   }
+   
+   // Show the Mosaic Sequencing window (a JFrame). Should only be called
+   // if we already know the Mosaic is attached.
+   void showMosaicSequencingWindow() {
       if (mosaicSequencingFrame_ == null) {
-         mosaicSequencingFrame_ = new MosaicSequencingFrame(app_, core_, this, (SLM) dev);
+         mosaicSequencingFrame_ = new MosaicSequencingFrame(app_, core_, this, (SLM) dev_);
       }
       mosaicSequencingFrame_.setVisible(true);
    }
-
-   String getDeviceName() {
-      return dev.getName();
-   }
-
-   /**
-    * Creates new form ProjectorControlForm
-    */
-   public ProjectorControlForm(CMMCore core, ScriptInterface app) {
+   
+   // Constructor. Creates the main window for the Projector plugin.
+   private ProjectorControlForm(CMMCore core, ScriptInterface app) {
       initComponents();
       app_ = app;
       core_ = app.getMMCore();
@@ -886,26 +1016,24 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
       String galvo = core_.getGalvoDevice();
 
       if (slm.length() > 0) {
-         dev = new SLM(core_, 20);
+         dev_ = new SLM(core_, 20);
       } else if (galvo.length() > 0) {
-         dev = new Galvo(core_);
+         dev_ = new Galvo(core_);
       } else {
-         dev = null;
+         dev_ = null;
       }
      
       loadMapping();
-      pointAndShootMouseListener = setupPointAndShootMouseListener();
+      pointAndShootMouseListener = createPointAndShootMouseListenerInstance();
 
       Toolkit.getDefaultToolkit().addAWTEventListener(new AWTEventListener() {
          @Override
          public void eventDispatched(AWTEvent e) {
-            ProjectorControlForm.this.enablePointAndShootMode(ProjectorControlForm.this.pointAndShooteModeOn_.get());
+            enablePointAndShootMode(pointAndShooteModeOn_.get());
          }
       }, AWTEvent.WINDOW_EVENT_MASK);
       
-      // Place window where it was last.
-      GUIUtils.recallPosition(this);
-      isSLM_ = isSLM();
+      isSLM_ = dev_ instanceof SLM;
       // Only an SLM (not a galvo) has pixels.
       allPixelsButton.setVisible(isSLM_);
       // No point in looping ROIs on an SLM.
@@ -913,42 +1041,47 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
       roiLoopLabel.setVisible(!isSLM_);
       roiLoopTimesLabel.setVisible(!isSLM_);
       pointAndShootOffButton.setSelected(true);
-      updateROISettings();
       populateChannelComboBox(Preferences.userNodeForPackage(this.getClass()).get("channel", ""));
       populateShutterComboBox(Preferences.userNodeForPackage(this.getClass()).get("shutter", ""));
       this.addWindowFocusListener(new WindowAdapter() {
-          public void windowGainedFocus(WindowEvent e) {
-              populateChannelComboBox(null);
-              populateShutterComboBox(null);
-          }
+         @Override
+         public void windowGainedFocus(WindowEvent e) {
+            populateChannelComboBox(null);
+            populateShutterComboBox(null);
+         }
       });
       
       commitSpinnerOnValidEdit(pointAndShootIntervalSpinner);
       commitSpinnerOnValidEdit(startFrameSpinner);
       commitSpinnerOnValidEdit(repeatEveryFrameSpinner);
       commitSpinnerOnValidEdit(roiLoopSpinner);
-      
+      pointAndShootIntervalSpinner.setValue(dev_.getExposure() / 1000);
       sequencingButton.setVisible(MosaicSequencingFrame.getMosaicDevices(core).size() > 0);
      
       app_.addMMListener(new MMListenerAdapter() {
          @Override
          public void slmExposureChanged(String deviceName, double exposure) {
-            if (deviceName.equals(getDeviceName())) {
+            if (deviceName.equals(dev_.getName())) {
                pointAndShootIntervalSpinner.setValue(exposure * 1000);
             }
          }
       });
 
+      updateROISettings();
    }
-
-   /*
-    * Makes a JSpinner fire a change event reflecting the new value
-    * whenver user types a valid entry. Why the hell isn't that the default setting?
-    */
-   private static void commitSpinnerOnValidEdit(final JSpinner spinner) {
-      ((DefaultFormatter) ((JSpinner.DefaultEditor) spinner.getEditor())
-            .getTextField().getFormatter()).setCommitsOnValidEdit(true);
+   
+   // Show the form, which is a singleton.
+   public static ProjectorControlForm showSingleton(CMMCore core, ScriptInterface app) {
+      if (formSingleton_ == null) {
+         formSingleton_ = new ProjectorControlForm(core, app);
+         // Place window where it was last.
+         GUIUtils.recallPosition(formSingleton_);
+      }
+      formSingleton_.setVisible(true);
+      return formSingleton_;
    }
+   
+   // ## Generated code
    
    /**
     * This method is called from within the constructor to initialize the form.
@@ -962,10 +1095,10 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
       onButton = new javax.swing.JButton();
       mainTabbedPane = new javax.swing.JTabbedPane();
       pointAndShootTab = new javax.swing.JPanel();
-      jLabel1 = new javax.swing.JLabel();
+      pointAndShootModeLabel = new javax.swing.JLabel();
       pointAndShootOnButton = new javax.swing.JToggleButton();
       pointAndShootOffButton = new javax.swing.JToggleButton();
-      jLabel3 = new javax.swing.JLabel();
+      phototargetInstructionsLabel = new javax.swing.JLabel();
       roisTab = new javax.swing.JPanel();
       roiLoopLabel = new javax.swing.JLabel();
       roiLoopTimesLabel = new javax.swing.JLabel();
@@ -980,23 +1113,22 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
       jSeparator1 = new javax.swing.JSeparator();
       useInMDAcheckBox = new javax.swing.JCheckBox();
       roiStatusLabel = new javax.swing.JLabel();
-      jButton1 = new javax.swing.JButton();
+      roiManagerButton = new javax.swing.JButton();
       jSeparator3 = new javax.swing.JSeparator();
       sequencingButton = new javax.swing.JButton();
       setupTab = new javax.swing.JPanel();
-      calibrateButton = new javax.swing.JButton();
+      calibrateButton_ = new javax.swing.JButton();
       allPixelsButton = new javax.swing.JButton();
       centerButton = new javax.swing.JButton();
       channelComboBox = new javax.swing.JComboBox();
-      jLabel4 = new javax.swing.JLabel();
+      phototargetingChannelDropdownLabel = new javax.swing.JLabel();
       shutterComboBox = new javax.swing.JComboBox();
-      jLabel5 = new javax.swing.JLabel();
+      phototargetingShutterDropdownLabel = new javax.swing.JLabel();
       offButton = new javax.swing.JButton();
-      closeShutterLabel = new javax.swing.JLabel();
+      ExposureTimeLabel = new javax.swing.JLabel();
       pointAndShootIntervalSpinner = new javax.swing.JSpinner();
       jLabel2 = new javax.swing.JLabel();
 
-      setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
       setTitle("Projector Controls");
       setResizable(false);
 
@@ -1013,7 +1145,7 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
          }
       });
 
-      jLabel1.setText("Point and shoot mode:");
+      pointAndShootModeLabel.setText("Point and shoot mode:");
 
       pointAndShootOnButton.setText("On");
       pointAndShootOnButton.setMaximumSize(new java.awt.Dimension(75, 23));
@@ -1033,7 +1165,7 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
          }
       });
 
-      jLabel3.setText("(To phototarget, Control + click on the image.)");
+      phototargetInstructionsLabel.setText("(To phototarget, Control + click on the image.)");
 
       org.jdesktop.layout.GroupLayout pointAndShootTabLayout = new org.jdesktop.layout.GroupLayout(pointAndShootTab);
       pointAndShootTab.setLayout(pointAndShootTabLayout);
@@ -1043,12 +1175,12 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
             .add(25, 25, 25)
             .add(pointAndShootTabLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                .add(pointAndShootTabLayout.createSequentialGroup()
-                  .add(jLabel1)
+                  .add(pointAndShootModeLabel)
                   .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                   .add(pointAndShootOnButton, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                   .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                   .add(pointAndShootOffButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-               .add(jLabel3))
+               .add(phototargetInstructionsLabel))
             .addContainerGap(179, Short.MAX_VALUE))
       );
       pointAndShootTabLayout.setVerticalGroup(
@@ -1056,11 +1188,11 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
          .add(pointAndShootTabLayout.createSequentialGroup()
             .add(43, 43, 43)
             .add(pointAndShootTabLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-               .add(jLabel1)
+               .add(pointAndShootModeLabel)
                .add(pointAndShootOnButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                .add(pointAndShootOffButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
             .add(18, 18, 18)
-            .add(jLabel3)
+            .add(phototargetInstructionsLabel)
             .addContainerGap(140, Short.MAX_VALUE))
       );
 
@@ -1126,10 +1258,10 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
 
       roiStatusLabel.setText("No ROIs submitted yet");
 
-      jButton1.setText("ROI Manager >>");
-      jButton1.addActionListener(new java.awt.event.ActionListener() {
+      roiManagerButton.setText("ROI Manager >>");
+      roiManagerButton.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            jButton1ActionPerformed(evt);
+            roiManagerButtonActionPerformed(evt);
          }
       });
 
@@ -1156,7 +1288,7 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
                .add(roisTabLayout.createSequentialGroup()
                   .add(setRoiButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 108, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                   .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                  .add(jButton1)))
+                  .add(roiManagerButton)))
             .add(24, 24, 24))
          .add(roisTabLayout.createSequentialGroup()
             .addContainerGap()
@@ -1201,7 +1333,7 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
             .add(21, 21, 21)
             .add(roisTabLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                .add(setRoiButton)
-               .add(jButton1))
+               .add(roiManagerButton))
             .add(18, 18, 18)
             .add(roisTabLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                .add(roiStatusLabel)
@@ -1236,10 +1368,10 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
 
       mainTabbedPane.addTab("ROIs", roisTab);
 
-      calibrateButton.setText("Calibrate!");
-      calibrateButton.addActionListener(new java.awt.event.ActionListener() {
+      calibrateButton_.setText("Calibrate!");
+      calibrateButton_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            calibrateButtonActionPerformed(evt);
+            calibrateButton_ActionPerformed(evt);
          }
       });
 
@@ -1264,7 +1396,7 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
          }
       });
 
-      jLabel4.setText("Phototargeting channel:");
+      phototargetingChannelDropdownLabel.setText("Phototargeting channel:");
 
       shutterComboBox.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
       shutterComboBox.addActionListener(new java.awt.event.ActionListener() {
@@ -1273,7 +1405,7 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
          }
       });
 
-      jLabel5.setText("Phototargeting shutter:");
+      phototargetingShutterDropdownLabel.setText("Phototargeting shutter:");
 
       org.jdesktop.layout.GroupLayout setupTabLayout = new org.jdesktop.layout.GroupLayout(setupTab);
       setupTab.setLayout(setupTabLayout);
@@ -1288,13 +1420,13 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
                   .add(allPixelsButton))
                .add(setupTabLayout.createSequentialGroup()
                   .add(setupTabLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                     .add(jLabel4)
-                     .add(jLabel5))
+                     .add(phototargetingChannelDropdownLabel)
+                     .add(phototargetingShutterDropdownLabel))
                   .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                   .add(setupTabLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                      .add(shutterComboBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 126, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                      .add(channelComboBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 126, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
-               .add(calibrateButton))
+               .add(calibrateButton_))
             .addContainerGap(197, Short.MAX_VALUE))
       );
       setupTabLayout.setVerticalGroup(
@@ -1305,15 +1437,15 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
                .add(centerButton)
                .add(allPixelsButton))
             .add(18, 18, 18)
-            .add(calibrateButton)
+            .add(calibrateButton_)
             .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 18, Short.MAX_VALUE)
             .add(setupTabLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-               .add(jLabel4)
+               .add(phototargetingChannelDropdownLabel)
                .add(channelComboBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
             .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
             .add(setupTabLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                .add(shutterComboBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-               .add(jLabel5))
+               .add(phototargetingShutterDropdownLabel))
             .add(83, 83, 83))
       );
 
@@ -1327,7 +1459,7 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
          }
       });
 
-      closeShutterLabel.setText("Exposure time:");
+      ExposureTimeLabel.setText("Exposure time:");
 
       pointAndShootIntervalSpinner.setModel(new SpinnerNumberModel(500, 1, 1000000000, 1));
       pointAndShootIntervalSpinner.setMaximumSize(new java.awt.Dimension(75, 20));
@@ -1355,7 +1487,7 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
             .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                .add(mainTabbedPane)
                .add(layout.createSequentialGroup()
-                  .add(closeShutterLabel)
+                  .add(ExposureTimeLabel)
                   .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                   .add(pointAndShootIntervalSpinner, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 75, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                   .add(18, 18, 18)
@@ -1375,7 +1507,7 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
                .add(onButton)
                .add(offButton)
                .add(pointAndShootIntervalSpinner, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 20, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-               .add(closeShutterLabel)
+               .add(ExposureTimeLabel)
                .add(jLabel2))
             .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
             .add(mainTabbedPane, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 266, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
@@ -1385,83 +1517,79 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
       pack();
    }// </editor-fold>//GEN-END:initComponents
 
-    private void calibrateButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_calibrateButtonActionPerformed
+    private void calibrateButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_calibrateButton_ActionPerformed
        boolean running = isCalibrating();
        if (running) {
            stopCalibration();
-           calibrateButton.setText("Calibrate");
+           calibrateButton_.setText("Calibrate");
        } else {
-           calibrate();
-           calibrateButton.setText("Stop calibration");
+           runCalibration();
+           calibrateButton_.setText("Stop calibration");
        }
-    }//GEN-LAST:event_calibrateButtonActionPerformed
+    }//GEN-LAST:event_calibrateButton_ActionPerformed
 
     private void onButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_onButtonActionPerformed
-       turnOn();
-       offButton.setSelected(false);
-       onButton.setSelected(true);
+       setOnState(true);
        pointAndShootOffButtonActionPerformed(null);
     }//GEN-LAST:event_onButtonActionPerformed
 
     private void offButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_offButtonActionPerformed
-       turnOff();
-       offButton.setSelected(true);
-       onButton.setSelected(false);
+       setOnState(false);
     }//GEN-LAST:event_offButtonActionPerformed
 
     private void allPixelsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_allPixelsButtonActionPerformed
-       activateAllPixels();
+       dev_.activateAllPixels();
     }//GEN-LAST:event_allPixelsButtonActionPerformed
 
    private void mainTabbedPaneStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_mainTabbedPaneStateChanged
-         pointAndShootOnButton.setSelected(false);
-         pointAndShootOffButton.setSelected(true);
-         updatePointAndShoot();
+      updatePointAndShoot(false);
    }//GEN-LAST:event_mainTabbedPaneStateChanged
 
-   private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+   private void roiManagerButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_roiManagerButtonActionPerformed
       ProjectorPlugin.showRoiManager();
-   }//GEN-LAST:event_jButton1ActionPerformed
+   }//GEN-LAST:event_roiManagerButtonActionPerformed
 
    private void useInMDAcheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_useInMDAcheckBoxActionPerformed
       updateROISettings();
    }//GEN-LAST:event_useInMDAcheckBoxActionPerformed
 
    private void repeatCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_repeatCheckBoxActionPerformed
-      setRoiRepetitions(repeatCheckBox.isSelected()
-         ? getRoiRepetitionsSetting() : 0);
       updateROISettings();
    }//GEN-LAST:event_repeatCheckBoxActionPerformed
 
    private void roiLoopSpinnerStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_roiLoopSpinnerStateChanged
-      setRoiRepetitions(getRoiRepetitionsSetting());
+      updateROISettings();
    }//GEN-LAST:event_roiLoopSpinnerStateChanged
 
    private void runROIsNowButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_runROIsNowButtonActionPerformed
-      runPolygons();
+      runRois();
    }//GEN-LAST:event_runROIsNowButtonActionPerformed
 
    private void setRoiButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_setRoiButtonActionPerformed
-      numROIs_ = setRois(getRoiRepetitionsSetting());
-      this.updateROISettings();
+      try {
+         sendCurrentImageWindowRois();
+         updateROISettings();
+      } catch (RuntimeException e) {
+         ReportingUtils.showError(e);
+      }
    }//GEN-LAST:event_setRoiButtonActionPerformed
 
    private void centerButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_centerButtonActionPerformed
       offButtonActionPerformed(null);
-      moveToCenter();
+      displayCenterSpot();
    }//GEN-LAST:event_centerButtonActionPerformed
 
    private void pointAndShootOffButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pointAndShootOffButtonActionPerformed
-      pointAndShootOnButton.setSelected(false);
-      pointAndShootOffButton.setSelected(true);
-      updatePointAndShoot();
+      updatePointAndShoot(false);
    }//GEN-LAST:event_pointAndShootOffButtonActionPerformed
 
    private void pointAndShootOnButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pointAndShootOnButtonActionPerformed
-      pointAndShootOnButton.setSelected(true);
-      pointAndShootOffButton.setSelected(false);
       offButtonActionPerformed(null);
-      updatePointAndShoot();
+      try {
+         updatePointAndShoot(true);
+      } catch (RuntimeException e) {
+         ReportingUtils.showError(e);
+      }
    }//GEN-LAST:event_pointAndShootOnButtonActionPerformed
 
    private void pointAndShootIntervalSpinnerVetoableChange(java.beans.PropertyChangeEvent evt)throws java.beans.PropertyVetoException {//GEN-FIRST:event_pointAndShootIntervalSpinnerVetoableChange
@@ -1469,7 +1597,7 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
    }//GEN-LAST:event_pointAndShootIntervalSpinnerVetoableChange
 
    private void pointAndShootIntervalSpinnerStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_pointAndShootIntervalSpinnerStateChanged
-   updateExposure();
+      updateExposure();
    }//GEN-LAST:event_pointAndShootIntervalSpinnerStateChanged
 
    private void repeatEveryFrameSpinnerStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_repeatEveryFrameSpinnerStateChanged
@@ -1483,95 +1611,36 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
     private void channelComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_channelComboBoxActionPerformed
        final String channel = (String) channelComboBox.getSelectedItem();
        setTargetingChannel(channel);
-       if (channel != null) {
-          Preferences.userNodeForPackage(this.getClass()).put("channel", channel);
-       }
     }//GEN-LAST:event_channelComboBoxActionPerformed
 
    private void sequencingButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_sequencingButtonActionPerformed
-      showMosaicSequencingFrame();
+      showMosaicSequencingWindow();
    }//GEN-LAST:event_sequencingButtonActionPerformed
 
    private void shutterComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_shutterComboBoxActionPerformed
       final String shutter = (String) shutterComboBox.getSelectedItem();
       setTargetingShutter(shutter);
-      if (shutter != null) {
-         Preferences.userNodeForPackage(this.getClass()).put("shutter", shutter);
-      }
    }//GEN-LAST:event_shutterComboBoxActionPerformed
 
-   private int getRoiRepetitionsSetting() {
-      return getSpinnerValue(roiLoopSpinner);
-   }
 
-   private int getSpinnerValue(JSpinner spinner) {
-      return Integer.parseInt(spinner.getValue().toString());
-   }
-
-   public void updatePointAndShoot() {
-      enablePointAndShootMode(pointAndShootOnButton.isSelected());
-   }
-
-   public void dispose() {
-      super.dispose();
-   }
-  
-   public void updateROISettings() {
-      boolean roisSubmitted = false;
-      if (numROIs_ == 0) {
-         roiStatusLabel.setText("No ROIs submitted");
-         roisSubmitted = false;
-      } else if (numROIs_ == 1) {
-         roiStatusLabel.setText("One ROI submitted");
-         roisSubmitted = true;
-      } else { // numROIs_ > 1
-         roiStatusLabel.setText("" + numROIs_ + " ROIs submitted");
-         roisSubmitted = true;
-      }
-
-      roiLoopLabel.setEnabled(roisSubmitted);
-      roiLoopSpinner.setEnabled(!isSLM_ && roisSubmitted);
-      roiLoopTimesLabel.setEnabled(!isSLM_ && roisSubmitted);
-      runROIsNowButton.setEnabled(roisSubmitted);
-      useInMDAcheckBox.setEnabled(roisSubmitted);
-
-      boolean useInMDA = roisSubmitted && useInMDAcheckBox.isSelected();
-      startFrameLabel.setEnabled(useInMDA);
-      startFrameSpinner.setEnabled(useInMDA);
-      repeatCheckBox.setEnabled(useInMDA);
-
-      boolean repeatInMDA = useInMDA && repeatCheckBox.isSelected();
-      repeatEveryFrameSpinner.setEnabled(repeatInMDA);
-      framesLabel.setEnabled(repeatInMDA);
-      
-      if (useInMDAcheckBox.isSelected()) {
-         removeFromMDA();
-         attachToMDA(getSpinnerValue(this.startFrameSpinner) - 1,
-            this.repeatCheckBox.isSelected(),
-            getSpinnerValue(this.repeatEveryFrameSpinner));
-      } else {
-         removeFromMDA();
-      }
-   }
    // Variables declaration - do not modify//GEN-BEGIN:variables
+   private javax.swing.JLabel ExposureTimeLabel;
    private javax.swing.JButton allPixelsButton;
-   private javax.swing.JButton calibrateButton;
+   private javax.swing.JButton calibrateButton_;
    private javax.swing.JButton centerButton;
    private javax.swing.JComboBox channelComboBox;
-   private javax.swing.JLabel closeShutterLabel;
    private javax.swing.JLabel framesLabel;
-   private javax.swing.JButton jButton1;
-   private javax.swing.JLabel jLabel1;
    private javax.swing.JLabel jLabel2;
-   private javax.swing.JLabel jLabel3;
-   private javax.swing.JLabel jLabel4;
-   private javax.swing.JLabel jLabel5;
    private javax.swing.JSeparator jSeparator1;
    private javax.swing.JSeparator jSeparator3;
    private javax.swing.JTabbedPane mainTabbedPane;
    private javax.swing.JButton offButton;
    private javax.swing.JButton onButton;
+   private javax.swing.JLabel phototargetInstructionsLabel;
+   private javax.swing.JLabel phototargetingChannelDropdownLabel;
+   private javax.swing.JLabel phototargetingShutterDropdownLabel;
    private javax.swing.JSpinner pointAndShootIntervalSpinner;
+   private javax.swing.JLabel pointAndShootModeLabel;
    private javax.swing.JToggleButton pointAndShootOffButton;
    private javax.swing.JToggleButton pointAndShootOnButton;
    private javax.swing.JPanel pointAndShootTab;
@@ -1580,6 +1649,7 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
    private javax.swing.JLabel roiLoopLabel;
    private javax.swing.JSpinner roiLoopSpinner;
    private javax.swing.JLabel roiLoopTimesLabel;
+   private javax.swing.JButton roiManagerButton;
    private javax.swing.JLabel roiStatusLabel;
    private javax.swing.JPanel roisTab;
    private javax.swing.JButton runROIsNowButton;
@@ -1591,58 +1661,5 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
    private javax.swing.JSpinner startFrameSpinner;
    private javax.swing.JCheckBox useInMDAcheckBox;
    // End of variables declaration//GEN-END:variables
-
-   public void turnedOn() {
-      SwingUtilities.invokeLater(new Runnable() {
-         public void run() {
-            onButton.setSelected(true);
-            offButton.setSelected(false);
-         }
-      });
-   }
-
-   public void turnedOff() {
-      SwingUtilities.invokeLater(new Runnable() {
-         public void run() {
-            onButton.setSelected(false);
-            offButton.setSelected(true);
-         }
-      });
-   }
-
-   void populateChannelComboBox(String initialChannel) {
-      if (initialChannel == null) {
-         initialChannel = (String) channelComboBox.getSelectedItem();
-      }
-      channelComboBox.removeAllItems();
-      channelComboBox.addItem("");
-      for (String preset : core_.getAvailableConfigs(core_.getChannelGroup())) {
-         channelComboBox.addItem(preset);
-      }
-      channelComboBox.setSelectedItem(initialChannel);
-   }
-
-   void populateShutterComboBox(String initialShutter) {
-      if (initialShutter == null) {
-         initialShutter = (String) shutterComboBox.getSelectedItem();
-      }
-      shutterComboBox.removeAllItems();
-      shutterComboBox.addItem("");
-      for (String shutter : core_.getLoadedDevicesOfType(DeviceType.ShutterDevice)) {
-         shutterComboBox.addItem(shutter);
-      }
-      shutterComboBox.setSelectedItem(initialShutter);
-   }
-
-   @Override
-   public void calibrationDone() {
-      calibrateButton.setText("Calibrate");
-   }
-
-   private void updateExposure() {
-       setExposure(1000 * Double.parseDouble(this.pointAndShootIntervalSpinner.getValue().toString()));
-   }
-
-
 
 }

@@ -27,10 +27,6 @@ import java.util.List;
 import mmcorej.CMMCore;
 import org.micromanager.utils.ReportingUtils;
 
-/**
- *
- * @author Arthur Edelstein, (C) UCSF 2011-2014.
- */
 public class SLM implements ProjectionDevice {
 
    String slm_;
@@ -151,7 +147,7 @@ public class SLM implements ProjectionDevice {
          mmc_.setSLMPixelsTo(slm_, (byte) 0);
          imageOn_ = false;
          for (OnStateListener listener : onStateListeners_) {
-            listener.turnedOff();
+            listener.stateChanged(false);
          }
       } catch (Exception ex) {
          ReportingUtils.showError(ex);
@@ -167,7 +163,7 @@ public class SLM implements ProjectionDevice {
             imageOn_ = true;
          }
          for (OnStateListener listener : onStateListeners_) {
-            listener.turnedOn();
+            listener.stateChanged(true);
          }
       } catch (Exception ex) {
          ReportingUtils.showError(ex);

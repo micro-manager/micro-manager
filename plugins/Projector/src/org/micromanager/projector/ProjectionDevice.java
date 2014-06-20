@@ -19,10 +19,6 @@ package org.micromanager.projector;
 import java.awt.Polygon;
 import java.util.List;
 
-/**
- *
- * @author arthur
- */
 public interface ProjectionDevice {
    // Properties of device.
    public String getName();
@@ -48,5 +44,5 @@ public interface ProjectionDevice {
    public void setPolygonRepetitions(int reps);
    public void runPolygons();
 
-    public void waitForDevice();
+   public void waitForDevice();
 }

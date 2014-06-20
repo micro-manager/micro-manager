@@ -27,10 +27,9 @@ import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.GUIUtils;
 import org.micromanager.utils.ReportingUtils;
 
-/**
- *
- * @author arthur
- */
+// The Projector plugin provides a user interface for calibration and control
+// of SLM- and Galvo-based phototargeting devices. Phototargeting can be
+// ad-hoc or planned as part of a multi-dimensional acquisition.
 public class ProjectorPlugin implements MMPlugin {
    public static final String menuName = "Projector";
    public static final String tooltipDescription =
@@ -63,6 +62,8 @@ public class ProjectorPlugin implements MMPlugin {
       core_ = app_.getMMCore();
    }
 
+   // Instantiate the ProjectorControlForm window if necessary, and show it
+   // if it's not visible.
    public void show() {
       if (core_.getSLMDevice().length()==0 && core_.getGalvoDevice().length()==0) {
          ReportingUtils.showMessage("Please load an SLM (Spatial Light Modulator) " +
@@ -70,10 +71,7 @@ public class ProjectorPlugin implements MMPlugin {
                "before using the Projector plugin.");
          return;
       }
-
-      ProjectorControlForm form = new ProjectorControlForm(core_, app_);
-      form.addOnStateListener(form);
-      form.setVisible(true);
+      ProjectorControlForm.showSingleton(core_, app_);
    }
 
    public void configurationChanged() {

@@ -27,10 +27,6 @@ import java.util.concurrent.Future;
 import mmcorej.CMMCore;
 import org.micromanager.utils.ReportingUtils;
 
-/**
- *
- * @author arthur
- */
 public class Galvo implements ProjectionDevice {
 
    String galvo_;
@@ -131,7 +127,7 @@ public class Galvo implements ProjectionDevice {
          }
       });
       for (OnStateListener listener:onStateListeners_) {
-        listener.turnedOn();
+        listener.stateChanged(true);
       }
    }
 
@@ -146,7 +142,7 @@ public class Galvo implements ProjectionDevice {
          }
       });
       for (OnStateListener listener:onStateListeners_) {
-        listener.turnedOff();
+        listener.stateChanged(false);
       }
    }
 
