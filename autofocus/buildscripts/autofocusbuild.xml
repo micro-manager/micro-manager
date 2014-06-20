@@ -1,7 +1,10 @@
 <project name="mm.autofocusbuild">
 	<include file="../../buildscripts/buildprops.xml"/>
 
+	<property name="product" value="${ant.project.name}"/>
 	<property name="srcdir" location=".."/>
+	<property name="intdir" location="${mm.java.autofocus.intdir}/${product}"/>
+	<property name="outdir" location="${mm.java.autofocus.outdir}"/>
 	<property name="installdir" location="${mm.java.autofocus.installdir}"/>
 
 	<import file="../../buildscripts/javabuild.xml"/>

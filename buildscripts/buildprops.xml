@@ -90,6 +90,8 @@
 	<property name="mm.java.plugin.intdir" location="${mm.java.intdir}/plugins"/>
 	<property name="mm.java.plugin.outdir" location="${mm.java.outdir}/plugins"/>
 	<property name="mm.java.plugin.installdir" location="${mm.installdir}/mmplugins"/>
+	<property name="mm.java.autofocus.intdir" location="${mm.java.intdir}/autofocus"/>
+	<property name="mm.java.autofocus.outdir" location="${mm.java.outdir}/autofocus"/>
 	<property name="mm.java.autofocus.installdir" location="${mm.installdir}/mmautofocus"/>
 
 	<!-- Java library classpaths -->
