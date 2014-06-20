@@ -297,6 +297,12 @@ const char* const g_SPIMDelayBeforeLaserPropertyName = "SPIMDelayBeforeLaser(ms)
 const char* const g_SPIMCameraDurationPropertyName = "SPIMCameraDuration(ms)";
 const char* const g_SPIMLaserDurationPropertyName = "SPIMLaserDuration(ms)";
 
+// Temporarily added to fix build
+const char* const g_LaserOutputModePropertyName = "LaserMode";
+const char* const g_LaserSwitchTimePropertyName = "LaserSwitchTime(ms)";
+// End: temporarily added to fix build
+
+
 // LED property names
 //const char* const g_LEDIntensityPropertyName = "LEDIntensity(%)";  // already in CRISP
 const char* const g_ShutterState = "State";
