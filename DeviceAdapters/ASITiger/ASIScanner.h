@@ -115,7 +115,6 @@ public:
    int OnSPIMNumSlices        (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSPIMNumSides         (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSPIMFirstSide        (MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnSPIMLaserOutputMode  (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSPIMModeByte         (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSPIMNumRepeats       (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSPIMState            (MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -131,7 +130,9 @@ public:
    int OnRBMode               (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnRBTrigger            (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnRBRunning            (MM::PropertyBase* pProp, MM::ActionType eAct);
-
+   // laser TTL properties
+   int OnLaserOutputMode      (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnLaserSwitchTime      (MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    string axisLetterX_;
@@ -145,12 +146,14 @@ private:
    double lastX_;   // used to cache position
    double lastY_;   // used to cache position
    bool illuminationState_;  // true if on, false if beam is turned off
-   unsigned char laser_side_;  // code for corresponding laser line: 0 for none, 1 for side0, 2 for side1
 
    // for polygons
    vector< pair<double,double> > polygons_;
    long polygonRepetitions_;
    bool ring_buffer_supported_;
+
+   unsigned char laser_side_;  // code for corresponding laser line: 0 for none, 1 for side0, 2 for side1
+   bool laserTTLenabled_;      // whether it has MM_LASER_TTL module
 
    int SetIlluminationStateHelper(bool on);
 };

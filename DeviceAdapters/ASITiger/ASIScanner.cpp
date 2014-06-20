@@ -414,12 +414,15 @@ int CScanner::Initialize()
          CreateProperty(g_SPIMLaserDurationPropertyName, "0", MM::Float, false, pAct);
          UpdateProperty(g_SPIMLaserDurationPropertyName);
 
-         pAct = new CPropertyAction (this, &CScanner::OnSPIMLaserOutputMode);
-         CreateProperty(g_SPIMLaserOutputModePropertyName, "0", MM::String, false, pAct);
-         AddAllowedValue(g_SPIMLaserOutputModePropertyName, g_SPIMLaserOutputMode_0);
-         AddAllowedValue(g_SPIMLaserOutputModePropertyName, g_SPIMLaserOutputMode_1);
-         AddAllowedValue(g_SPIMLaserOutputModePropertyName, g_SPIMLaserOutputMode_2);
-         UpdateProperty(g_SPIMLaserOutputModePropertyName);
+         if (firmwareVersion_ < 2.879)  // as of v2.88 this changed a bit and will be added later if define present
+         {
+            pAct = new CPropertyAction (this, &CScanner::OnLaserOutputMode);
+            CreateProperty(g_LaserOutputModePropertyName, "0", MM::String, false, pAct);
+            AddAllowedValue(g_LaserOutputModePropertyName, g_SPIMLaserOutputMode_0);
+            AddAllowedValue(g_LaserOutputModePropertyName, g_SPIMLaserOutputMode_1);
+            AddAllowedValue(g_LaserOutputModePropertyName, g_SPIMLaserOutputMode_2);
+            UpdateProperty(g_LaserOutputModePropertyName);
+         }
       }
 
    }
@@ -457,6 +460,25 @@ int CScanner::Initialize()
 
    if (firmwareVersion_ > 2.875)  // 2.88+
    {
+      // get build info so we can add optional properties
+      build_info_type build;
+      RETURN_ON_MM_ERROR( hub_->GetBuildInfo(addressChar_, build) );
+
+      laserTTLenabled_ = hub_->IsDefinePresent(build, "MM_LASER_TTL");
+      if (laserTTLenabled_)
+      {
+         pAct = new CPropertyAction (this, &CScanner::OnLaserOutputMode);
+         CreateProperty(g_LaserOutputModePropertyName, "0", MM::String, false, pAct);
+         AddAllowedValue(g_LaserOutputModePropertyName, g_SPIMLaserOutputMode_0);
+         AddAllowedValue(g_LaserOutputModePropertyName, g_SPIMLaserOutputMode_1);
+         AddAllowedValue(g_LaserOutputModePropertyName, g_SPIMLaserOutputMode_2);
+         UpdateProperty(g_LaserOutputModePropertyName);
+
+         pAct = new CPropertyAction (this, &CScanner::OnLaserSwitchTime);
+         CreateProperty(g_LaserSwitchTimePropertyName, "0", MM::Float, false, pAct);
+         UpdateProperty(g_LaserSwitchTimePropertyName);
+      }
+
       // populate laser_side_ appropriately
       command.str("");
       command << "Z2B " << axisLetterX_ << "?";
@@ -603,6 +625,8 @@ int CScanner::SetIlluminationStateHelper(bool on)
    ostringstream command; command.str("");
    long tmp;
    if (firmwareVersion_ < 2.879) // only applies 2.88+
+      return DEVICE_OK;
+   if(!laserTTLenabled_)
       return DEVICE_OK;
    command << addressChar_ << "LED X?";
    RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),"X=") );
@@ -2465,12 +2489,34 @@ int CScanner::OnSPIMFirstSide(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
-int CScanner::OnSPIMLaserOutputMode(MM::PropertyBase* pProp, MM::ActionType eAct)
+int CScanner::OnLaserSwitchTime(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   double tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << addressChar_ << "LED Y?";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), "Y="));
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
+      if (!pProp->Set(tmp))
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      pProp->Get(tmp);
+      command << addressChar_ << "LED Y=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}
+
+int CScanner::OnLaserOutputMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    ostringstream command; command.str("");
    long tmp = 0;
    bool success;
-   if (firmwareVersion_ < 2.879)  // setting changed corresponding serial command starting in v2.88
+   if (firmwareVersion_ < 2.879)  // corresponding serial command changed in v2.88
    {
       if (eAct == MM::BeforeGet)
       {
@@ -2520,9 +2566,11 @@ int CScanner::OnSPIMLaserOutputMode(MM::PropertyBase* pProp, MM::ActionType eAct
          if (!refreshProps_ && initialized_)
             return DEVICE_OK;
          command << addressChar_ << "LED Z?";
+         if(!laserTTLenabled_)
+            return DEVICE_UNSUPPORTED_COMMAND;
          RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), "Z="));
          RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
-         tmp &= (0x03);    // only care about 2 LSBs
+         tmp &= (0x07);    // only care about 3 LSBs
          switch (tmp)
          {
             case 0: success = pProp->Set(g_SPIMLaserOutputMode_0); break;
@@ -2551,7 +2599,7 @@ int CScanner::OnSPIMLaserOutputMode(MM::PropertyBase* pProp, MM::ActionType eAct
          tmp += (tmp2 & (0xFC));  // preserve the upper 6 bits from prior setting
          command.str("");
          command << addressChar_ << "LED Z=" << tmp;
-         RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), "Z=") );
+         RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
       }
    }
    return DEVICE_OK;
