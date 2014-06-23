@@ -27,6 +27,7 @@ import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.GUIUtils;
 import org.micromanager.utils.ReportingUtils;
 
+
 // The Projector plugin provides a user interface for calibration and control
 // of SLM- and Galvo-based phototargeting devices. Phototargeting can be
 // ad-hoc or planned as part of a multi-dimensional acquisition.

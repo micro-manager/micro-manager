@@ -16,6 +16,15 @@
 
 package org.micromanager.projector;
 
+// This file is written in call stack order: methods declared later in the
+// file call methods earlier in the file, with the exception of generated
+// code (found at the end of file).
+
+// This source file is formatted to be processed
+// with [docco](http://jashkenas.github.io/docco/),
+// which generates nice HTML documentation side-by-side with the
+// source code.
+
 import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
@@ -1062,7 +1071,7 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
          @Override
          public void slmExposureChanged(String deviceName, double exposure) {
             if (deviceName.equals(dev_.getName())) {
-               pointAndShootIntervalSpinner.setValue(exposure * 1000);
+               pointAndShootIntervalSpinner.setValue(exposure);
             }
          }
       });
@@ -1082,6 +1091,8 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
    }
    
    // ## Generated code
+   // Warning: the computer-generated code below this line should not be edited
+   // by hand. Instead, use the Netbeans Form Editor to make changes.
    
    /**
     * This method is called from within the constructor to initialize the form.

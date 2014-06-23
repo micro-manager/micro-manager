@@ -15,11 +15,14 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-/*
- * The functions in this file are written in call
- * stack order: functions declared earlier in the file are
- * called by those declared later.
- */
+// The functions in this file are written in call
+// stack order: functions declared earlier in the file are
+// called by those declared later.
+
+// This source file is formatted to be processed
+// with [docco](http://jashkenas.github.io/docco/),
+// which generates nice HTML documentation side-by-side with the
+// source code.
 
 package org.micromanager.projector;
 
@@ -802,9 +805,9 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
       setupRoiListTable();
    }
 
-   
-   // Warning: code below this line should not be edited by hand.
-   // Instead, use the Netbeans Form Editor to make changes.
+   // ## Generated code
+   // Warning: the computer-generated code below this line should not be edited
+   // by hand. Instead, use the Netbeans Form Editor to make changes.
    
    /**
     * This method is called from within the constructor to initialize the form.
