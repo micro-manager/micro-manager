@@ -114,9 +114,8 @@
                       item
                       (form-to-log-string item)))]
     (->> converted
-         (interpose " ")
-         (apply str)
-         handle-multiline
+         (join-string " ")
+         cleanup-multiline
          send-to-log)))
 
 (defmacro log-cmd
