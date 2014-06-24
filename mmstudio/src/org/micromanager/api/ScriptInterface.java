@@ -38,7 +38,7 @@ import mmcorej.TaggedImage;
 // deprecated.
 import org.json.JSONObject;
 import org.micromanager.AcqControlDlg;
-import org.micromanager.PositionListDlg;
+import org.micromanager.positionlist.PositionListDlg;
 import org.micromanager.acquisition.MMAcquisition;
 import org.micromanager.utils.AutofocusManager;
 

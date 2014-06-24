@@ -20,7 +20,7 @@
 //INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
 
-package org.micromanager;
+package org.micromanager.positionlist;
 
 import java.awt.Font;
 import java.awt.Rectangle;
@@ -43,6 +43,7 @@ import mmcorej.MMCoreJ;
 import org.micromanager.api.MMListenerInterface;
 import org.micromanager.api.MultiStagePosition;
 import org.micromanager.api.StagePosition;
+import org.micromanager.MMOptions;
 import org.micromanager.utils.MMDialog;
 import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.ReportingUtils;

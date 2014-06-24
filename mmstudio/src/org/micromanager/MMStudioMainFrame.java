@@ -98,6 +98,7 @@ import org.micromanager.navigation.CenterAndDragListener;
 import org.micromanager.navigation.XYZKeyListener;
 import org.micromanager.navigation.ZWheelListener;
 import org.micromanager.pipelineUI.PipelinePanel;
+import org.micromanager.positionlist.PositionListDlg;
 import org.micromanager.utils.AutofocusManager;
 import org.micromanager.utils.ContrastSettings;
 import org.micromanager.utils.GUIColors;
