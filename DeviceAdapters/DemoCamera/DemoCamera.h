@@ -26,9 +26,6 @@
 //                IN NO EVENT SHALL THE COPYRIGHT OWNER OR
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
-//
-// CVS:           $Id$
-//
 
 #ifndef _DEMOCAMERA_H_
 #define _DEMOCAMERA_H_
@@ -48,7 +45,6 @@
 #define ERR_IN_SEQUENCE          104
 #define ERR_SEQUENCE_INACTIVE    105
 #define ERR_STAGE_MOVING         106
-#define SIMULATED_ERROR          200
 #define HUB_NOT_AVAILABLE        107
 
 const char* NoHubError = "Parent Hub not defined.";
@@ -62,8 +58,7 @@ class DemoHub : public HubBase<DemoHub>
 public:
    DemoHub() :
       initialized_(false),
-      busy_(false),
-      errorRate_(0.0)
+      busy_(false)
    {}
    ~DemoHub() {}
 
@@ -73,13 +68,9 @@ public:
    int Shutdown() {return DEVICE_OK;};
    void GetName(char* pName) const; 
    bool Busy() { return busy_;} ;
-   bool GenerateRandomError();
 
    // HUB api
    int DetectInstalledDevices();
-
-   // action interface
-   int OnErrorRate(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    void GetPeripheralInventory();
@@ -87,7 +78,6 @@ private:
    std::vector<std::string> peripherals_;
    bool initialized_;
    bool busy_;
-   double errorRate_;
 };
 
 
@@ -125,13 +115,7 @@ public:
    int SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize); 
    int GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySize); 
    int ClearROI();
-   int PrepareSequenceAcqusition()
-   {
-      DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
-      if (pHub && pHub->GenerateRandomError())
-         return SIMULATED_ERROR;
-      return DEVICE_OK;
-   }
+   int PrepareSequenceAcqusition() { return DEVICE_OK; }
    int StartSequenceAcquisition(double interval);
    int StartSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow);
    int StopSequenceAcquisition();
@@ -411,35 +395,17 @@ public:
    double GetStepSize() {return stepSize_um_;}
    int SetPositionSteps(long steps) 
    {
-      DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
-      if (pHub && pHub->GenerateRandomError())
-         return SIMULATED_ERROR;
-
       pos_um_ = steps * stepSize_um_; 
       return  OnStagePositionChanged(pos_um_);
    }
    int GetPositionSteps(long& steps)
    {
-      DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
-      if (pHub && pHub->GenerateRandomError())
-         return SIMULATED_ERROR;
-
       steps = (long)(pos_um_ / stepSize_um_);
       return DEVICE_OK;
    }
-   int SetOrigin()
-   {
-      DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
-      if (pHub && pHub->GenerateRandomError())
-         return SIMULATED_ERROR;
-      return DEVICE_OK;
-   }
+   int SetOrigin() { return DEVICE_OK; }
    int GetLimits(double& lower, double& upper)
    {
-      DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
-      if (pHub && pHub->GenerateRandomError())
-         return SIMULATED_ERROR;
-
       lower = lowerLimit_;
       upper = upperLimit_;
       return DEVICE_OK;
@@ -501,10 +467,6 @@ public:
    virtual double GetStepSize() {return stepSize_um_;}
    virtual int SetPositionSteps(long x, long y)
    {
-      DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
-      if (pHub && pHub->GenerateRandomError())
-         return SIMULATED_ERROR;
-
       if (timeOutTimer_ != 0)
       {
          if (!timeOutTimer_->expired(GetCurrentMMTime()))
@@ -528,41 +490,19 @@ public:
    }
    virtual int GetPositionSteps(long& x, long& y)
    {
-      DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
-      if (pHub && pHub->GenerateRandomError())
-         return SIMULATED_ERROR;
-
       x = (long)(posX_um_ / stepSize_um_);
       y = (long)(posY_um_ / stepSize_um_);
       return DEVICE_OK;
    }
    int SetRelativePositionSteps(long x, long y)                                                           
    {                                                                                                      
-      DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
-      if (pHub && pHub->GenerateRandomError())
-         return SIMULATED_ERROR;
-
       long xSteps, ySteps;                                                                                
       GetPositionSteps(xSteps, ySteps);                                                   
 
       return this->SetPositionSteps(xSteps+x, ySteps+y);                                                  
    } 
-   virtual int Home()
-   {
-      DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
-      if (pHub && pHub->GenerateRandomError())
-         return SIMULATED_ERROR;
-
-      return DEVICE_OK;
-   }
-   virtual int Stop()
-   {
-      DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
-      if (pHub && pHub->GenerateRandomError())
-         return SIMULATED_ERROR;
-
-      return DEVICE_OK;
-   }
+   virtual int Home() { return DEVICE_OK; }
+   virtual int Stop() { return DEVICE_OK; }
 
    /* This sets the 0,0 position of the adapter to the current position.  
     * If possible, the stage controller itself should also be set to 0,0
@@ -570,50 +510,19 @@ public:
     * sets the coordinate system used by the adapter
     * to values different from the system used by the stage controller
     */
-   virtual int SetOrigin()
-   {
-      DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
-      if (pHub && pHub->GenerateRandomError())
-         return SIMULATED_ERROR;
-
-      return DEVICE_OK;
-   }
+   virtual int SetOrigin() { return DEVICE_OK; }
 
    virtual int GetLimitsUm(double& xMin, double& xMax, double& yMin, double& yMax)
    {
-      DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
-      if (pHub && pHub->GenerateRandomError())
-         return SIMULATED_ERROR;
-
       xMin = lowerLimit_; xMax = upperLimit_;
       yMin = lowerLimit_; yMax = upperLimit_;
       return DEVICE_OK;
    }
 
    virtual int GetStepLimits(long& /*xMin*/, long& /*xMax*/, long& /*yMin*/, long& /*yMax*/)
-   {
-      DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
-      if (pHub && pHub->GenerateRandomError())
-         return SIMULATED_ERROR;
-
-      return DEVICE_UNSUPPORTED_COMMAND;
-   }
-   double GetStepSizeXUm()
-   {
-      DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
-      if (pHub && pHub->GenerateRandomError())
-         return SIMULATED_ERROR;
-
-      return stepSize_um_;
-   }
-   double GetStepSizeYUm()
-   {
-      DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
-      if (pHub && pHub->GenerateRandomError())
-         return SIMULATED_ERROR;
-
-      return stepSize_um_;
-   }
+   { return DEVICE_UNSUPPORTED_COMMAND; }
+   double GetStepSizeXUm() { return stepSize_um_; }
+   double GetStepSizeYUm() { return stepSize_um_; }
    int Move(double /*vx*/, double /*vy*/) {return DEVICE_OK;}
 
    int IsXYStageSequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
@@ -660,31 +569,17 @@ public:
    // Shutter API
    int SetOpen (bool open = true)
    {
-      DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
-      if (pHub && pHub->GenerateRandomError())
-         return SIMULATED_ERROR;
-
       state_ = open;
       changedTime_ = GetCurrentMMTime();
       return DEVICE_OK;
    }
    int GetOpen(bool& open)
    {
-      DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
-      if (pHub && pHub->GenerateRandomError())
-         return SIMULATED_ERROR;
-
       open = state_;
       return DEVICE_OK;
    }
    int Fire(double /*deltaT*/)
-   {
-      DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
-      if (pHub && pHub->GenerateRandomError())
-         return SIMULATED_ERROR;
-
-      return DEVICE_UNSUPPORTED_COMMAND;
-   }
+   { return DEVICE_UNSUPPORTED_COMMAND; }
 
    // action interface
    int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -713,11 +608,8 @@ public:
    int GetSignal(double& volts);
    int GetLimits(double& minVolts, double& maxVolts)
    {
-      DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
-      if (pHub && pHub->GenerateRandomError())
-         return SIMULATED_ERROR;
-
-      minVolts=0.0; maxVolts= 10.0; return DEVICE_OK;
+      minVolts=0.0; maxVolts= 10.0;
+      return DEVICE_OK;
    }
    bool Busy() {return false;}
    int Initialize();
@@ -725,37 +617,21 @@ public:
    // Sequence functions
    int IsDASequenceable(bool& isSequenceable) const
    {
-      DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
-      if (pHub && pHub->GenerateRandomError())
-         return SIMULATED_ERROR;
-
       isSequenceable = true;
       return DEVICE_OK;
    }
    int GetDASequenceMaxLength(long& nrEvents) const 
    {
-      DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
-      if (pHub && pHub->GenerateRandomError())
-         return SIMULATED_ERROR;
-
       nrEvents = 256;
       return DEVICE_OK;
    }
    int StartDASequence()
    {
-      DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
-      if (pHub && pHub->GenerateRandomError())
-         return SIMULATED_ERROR;
-
       (const_cast<DemoDA *>(this))->SetSequenceStateOn();
       return DEVICE_OK;
    }
    int StopDASequence()
    {
-      DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
-      if (pHub && pHub->GenerateRandomError())
-         return SIMULATED_ERROR;
-   
       (const_cast<DemoDA *>(this))->SetSequenceStateOff();
       return DEVICE_OK;
    }
@@ -794,14 +670,7 @@ public:
 
    ~DemoMagnifier () {};
 
-   int Shutdown()
-   {
-      DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
-      if (pHub && pHub->GenerateRandomError())
-         return SIMULATED_ERROR;
-
-      return DEVICE_OK;
-   }
+   int Shutdown() { return DEVICE_OK; }
 
    void GetName(char* name) const;
 
@@ -1154,74 +1023,29 @@ public:
    // AutoFocus API
    virtual int SetContinuousFocusing(bool state)
    {
-      DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
-      if (pHub && pHub->GenerateRandomError())
-         return SIMULATED_ERROR;
-
-      running_ = state; return DEVICE_OK;
+      running_ = state;
+      return DEVICE_OK;
    }
    virtual int GetContinuousFocusing(bool& state)
    {
-      DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
-      if (pHub && pHub->GenerateRandomError())
-         return SIMULATED_ERROR;
-
-      state = running_; return DEVICE_OK;
-   }
-   virtual bool IsContinuousFocusLocked()
-   {
-      return running_;
-   }
-   virtual int FullFocus()
-   {
-      DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
-      if (pHub && pHub->GenerateRandomError())
-         return SIMULATED_ERROR;
-
+      state = running_;
       return DEVICE_OK;
    }
-   virtual int IncrementalFocus()
-   {
-      DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
-      if (pHub && pHub->GenerateRandomError())
-         return SIMULATED_ERROR;
-
-      return DEVICE_OK;
-   }
+   virtual bool IsContinuousFocusLocked() { return running_; }
+   virtual int FullFocus() { return DEVICE_OK; }
+   virtual int IncrementalFocus() { return DEVICE_OK; }
    virtual int GetLastFocusScore(double& score)
    {
-      DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
-      if (pHub && pHub->GenerateRandomError())
-         return SIMULATED_ERROR;
-
       score = 0.0;
       return DEVICE_OK;
    }
    virtual int GetCurrentFocusScore(double& score)
    {
-      DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
-      if (pHub && pHub->GenerateRandomError())
-         return SIMULATED_ERROR;
-
       score = 1.0;
       return DEVICE_OK;
    }
-   virtual int GetOffset(double& /*offset*/)
-   {
-      DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
-      if (pHub && pHub->GenerateRandomError())
-         return SIMULATED_ERROR;
-
-      return DEVICE_OK;
-   }
-   virtual int SetOffset(double /*offset*/)
-   {
-      DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
-      if (pHub && pHub->GenerateRandomError())
-         return SIMULATED_ERROR;
-
-      return DEVICE_OK;
-   }
+   virtual int GetOffset(double& /*offset*/) { return DEVICE_OK; }
+   virtual int SetOffset(double /*offset*/) { return DEVICE_OK; }
 
 private:
    bool running_;
