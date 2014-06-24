@@ -60,8 +60,12 @@ const char* NoHubError = "Parent Hub not defined.";
 class DemoHub : public HubBase<DemoHub>
 {
 public:
-   DemoHub():initialized_(false), busy_(false), errorRate_(0.0), divideOneByMe_(1) {} ;
-   ~DemoHub() {};
+   DemoHub() :
+      initialized_(false),
+      busy_(false),
+      errorRate_(0.0)
+   {}
+   ~DemoHub() {}
 
    // Device API
    // ---------
@@ -76,7 +80,6 @@ public:
 
    // action interface
    int OnErrorRate(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnDivideOneByMe(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    void GetPeripheralInventory();
@@ -85,7 +88,6 @@ private:
    bool initialized_;
    bool busy_;
    double errorRate_;
-   long divideOneByMe_;
 };
 
 

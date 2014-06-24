@@ -3773,9 +3773,6 @@ int DemoHub::Initialize()
 	AddAllowedValue("SimulatedErrorRate", "0.5000");
 	AddAllowedValue("SimulatedErrorRate", "1.0000");
 
-   pAct = new CPropertyAction (this, &DemoHub::OnDivideOneByMe);
-   CreateIntegerProperty("DivideOneByMe", this->divideOneByMe_, false, pAct);
-
   	initialized_ = true;
  
 	return DEVICE_OK;
@@ -3831,25 +3828,3 @@ int DemoHub::OnErrorRate(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    return DEVICE_OK;
 }
-
-int DemoHub::OnDivideOneByMe(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-   // Don't simulate an error here!!!!
-
-   if (eAct == MM::AfterSet)
-   {
-      pProp->Get(divideOneByMe_);
-      static volatile long result = 0;
-      bool crashtest = CDeviceUtils::CheckEnvironment("MICROMANAGERCRASHTEST");
-      if((0 != divideOneByMe_) || crashtest)
-         result = 1/divideOneByMe_;
-
-   }
-   else if (eAct == MM::BeforeGet)
-   {
-      pProp->Set(divideOneByMe_);
-   }
-   return DEVICE_OK;
-}
-
-
