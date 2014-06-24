@@ -86,14 +86,20 @@
 (defn send-to-log [s]
     (.logMessage mmc s true))
 
-(defn handle-multiline [x]
-  (let [x-trimmed (.trim x)]
-    (if (< 1 (count (.split x-trimmed "\n")))
-      (str "\n" x-trimmed)
-      x-trimmed)))
+(defn cleanup-multiline
+  "Takes a string, removes empty lines and redundant newline-like
+   characters, and re-assembles into a multiline string. Prepended
+   by a newline if it has more than one line."
+  [x]
+  (let [lines (.split x "\n")
+        trimmed-lines (remove empty? (map #(.trim %) lines))
+        reassembled (clojure.string/join "\n" trimmed-lines)]
+    (if (< 1 (count trimmed-lines))
+      (str "\n" reassembled)
+      reassembled)))
 
 (defn form-to-log-string [x]
-  (handle-multiline
+  (cleanup-multiline
     (with-out-str
       (very-pretty-print x))))
 
@@ -412,17 +418,27 @@
       (map :label position)
       (map :axes position))))
 
+(defn swig-vector-contents
+  "Returns a string containing all values in a swig vector
+   with spaces in between."
+  [v]
+  (->> (range (.size v))
+       (map #(.get v %))
+       (clojure.string/join " ")))
+
 (defn str-vector
   "Convert a sequence of strings into a Micro-Manager StrVector."
   [str-seq]
-  (let [v (StrVector.)]
+  (let [v (proxy [StrVector] []
+            (toString [] (swig-vector-contents this)))]
     (doseq [item str-seq]
       (.add v item))
     v))
 
 (defn double-vector [doubles]
   "Convert a sequence of numbers to a Micro-Manager DoubleVector."
-  (let [v (DoubleVector.)]
+  (let [v (proxy [DoubleVector] []
+            (toString [] (swig-vector-contents this)))]
     (doseq [item doubles]
       (.add v item))
     v))

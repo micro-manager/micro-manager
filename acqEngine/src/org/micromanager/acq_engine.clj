@@ -288,11 +288,9 @@
         (wait-for-device shutter)))))
 
 (defn load-property-sequences [property-sequences]
-  (let [new-seq (not= property-sequences @active-property-sequences)]
+  (when (not= property-sequences @active-property-sequences)
     (doseq [[[d p] s] property-sequences]
-      (log "property sequence:" (seq (str-vector s)))
-      (when new-seq
-        (core loadPropertySequence d p (str-vector s))))
+      (core loadPropertySequence d p (str-vector s)))
     (reset! active-property-sequences property-sequences)))
 
 (defn load-slice-sequence [slice-sequence relative-z]
@@ -301,9 +299,8 @@
           ref (@state :reference-z)
           adjusted-slices (vec (if relative-z
                                  (map #(+ ref %) slice-sequence)
-                                 slice-sequence))
-          new-seq (not= [z adjusted-slices] @active-slice-sequence)]
-      (when new-seq
+                                 slice-sequence))]
+      (when (not= [z adjusted-slices] @active-slice-sequence)
         (core loadStageSequence z (double-vector adjusted-slices))
         (reset! active-slice-sequence [z adjusted-slices]))
       adjusted-slices)))
@@ -435,7 +432,7 @@
    burst-events))
 
 (defn burst-cleanup []
-  (println "burst-cleanup")
+  (log "burst-cleanup")
   (when (core isBufferOverflowed)
     (throw-exception "Circular buffer overflowed."))
   (core stopSequenceAcquisition)
@@ -519,13 +516,11 @@
       (set (@state :init-system-state))
       (set (get-system-config-cached))))))
 
-(defn stop-trigger []
+(defn stop-triggering []
   (doseq [[[d p] _] @active-property-sequences]
-    (core stopPropertySequence d p)
-    (reset! active-property-sequences nil))
+    (core stopPropertySequence d p))
   (when @active-slice-sequence
-    (core stopStageSequence (first @active-slice-sequence))
-    (reset! active-slice-sequence nil)))
+    (core stopStageSequence (first @active-slice-sequence))))
 
 ;; sleeping
 
@@ -670,7 +665,9 @@
       (swap! state assoc :finished true :display nil)
       (when (core isSequenceRunning)
         (core stopSequenceAcquisition))
-      (stop-trigger)
+      (stop-triggering)
+      (reset! active-property-sequences nil)
+      (reset! active-slice-sequence nil)
       (return-config)
       (core setAutoShutter (@state :init-auto-shutter))
       (set-exposure (core getCameraDevice) (@state :init-exposure))
@@ -725,7 +722,7 @@
             (wait-for-pending-devices)
             (expose event)
             (collect event out-queue)
-            (stop-trigger)))))))
+            (stop-triggering)))))))
 
 (defn execute [event-fns]
   (doseq [event-fn event-fns :while (not (:stop @state))]
