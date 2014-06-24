@@ -23,14 +23,14 @@
 
 package org.micromanager.positionlist;
 
-import java.awt.Color;
-import java.awt.Component;
+import com.google.common.eventbus.EventBus;
+import com.google.common.eventbus.Subscribe;
+
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.WindowAdapter;
@@ -38,17 +38,12 @@ import java.awt.event.WindowEvent;
 import java.io.File;
 import java.util.prefs.Preferences;
 
-import javax.swing.AbstractCellEditor;
 import javax.swing.JButton;
-import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
-import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
-import javax.swing.table.AbstractTableModel;
-import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 
 import mmcorej.CMMCore;
@@ -64,7 +59,6 @@ import org.micromanager.utils.GUIColors;
 import org.micromanager.utils.MMDialog;
 
 import com.swtdesigner.SwingResourceManager;
-import java.util.ArrayList;
 
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -80,8 +74,6 @@ import org.micromanager.utils.JavaUtils;
 import org.micromanager.utils.MMException;
 import org.micromanager.utils.ReportingUtils;
 
-
-enum AxisType {oneD, twoD};
 
 public class PositionListDlg extends MMDialog implements MouseListener, ChangeListener {
    private static final long serialVersionUID = 1L;
@@ -109,225 +101,25 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
 
    private MultiStagePosition curMsp_;
    public JButton markButton_;
+   private PositionTableModel model_;
 
+   private EventBus bus_;
 
-   private class PosTableModel extends AbstractTableModel {
-      private static final long serialVersionUID = 1L;
-      public final String[] COLUMN_NAMES = new String[] {
-            "Label",
-            "Position [um]"
-      };
-      private PositionList posList_;
+   @Subscribe
+   public void onTileUpdate(MoversChangedEvent event) {
+      setTileButtonEnabled();
+   }
 
-      public void setData(PositionList pl) {
-         posList_ = pl;
-      }
-
-      public PositionList getPositionList() {
-         return posList_;
-      }
-
-      @Override
-      public int getRowCount() {
-         return posList_.getNumberOfPositions() + 1;
-      }
-      @Override
-      public int getColumnCount() {
-         return COLUMN_NAMES.length;
-      }
-      @Override
-      public String getColumnName(int columnIndex) {
-         return COLUMN_NAMES[columnIndex];
-      }
-      @Override
-      public Object getValueAt(int rowIndex, int columnIndex) {
-         MultiStagePosition msp;
-         if (rowIndex == 0) {
-            msp = curMsp_;
-         }
-         else {
-            msp = posList_.getPosition(rowIndex -1);
-         }
-         if (columnIndex == 0) {
-            if (rowIndex == 0) {
-               return ("Current");
-            }
-            return msp.getLabel();
-         } else if (columnIndex == 1) {
-            StringBuilder sb = new StringBuilder();
-            for (int i=0; i<msp.size(); i++) {
-               StagePosition sp = msp.get(i);
-               if (i!=0) {
-                  sb.append(";");
-               }
-               sb.append(sp.getVerbose());
-            }
-            return sb.toString();
-         } else {
-            return null;
-         }
-      }
-      @Override
-      public boolean isCellEditable(int rowIndex, int columnIndex) {
-         if (rowIndex == 0) {
-            return false;
-         }
-         if (columnIndex == 0) {
-            return true;
-         }
-         return false;
-      }
-      @Override
-      public void setValueAt(Object value, int rowIndex, int columnIndex) {
-         if (columnIndex == 0) {
-            MultiStagePosition msp = posList_.getPosition(rowIndex - 1);
-            if (msp != null) {
-               msp.setLabel(((String) value).replaceAll("[^0-9a-zA-Z_]", "-"));
-            }
-         }
-      }
-   } // End PosTableModel class
-
-   private class AxisData {
-      private boolean use_;
-      private String axisName_;
-      private AxisType type_;
-      
-      public AxisData(boolean use, String axisName, AxisType type) {
-         use_ = use;
-         axisName_ = axisName;
-         type_ = type;
-      }
-      public boolean getUse() {return use_;}
-      public String getAxisName() {return axisName_;}
-      public AxisType getType() {return type_;}
-      
-      public void setUse(boolean use) {use_ = use;}
-   } // End AxisData class
-
-   /**
-    * List with Axis data.  Currently, we use only a single global instance 
-    * of this class
-    */
-   private class AxisList {
-      private ArrayList<AxisData> axisList_ = new ArrayList<AxisData>();
-      
-      public AxisList() {
-         // Initialize the axisList.
-         try {
-            // add 1D stages
-            StrVector stages = core_.getLoadedDevicesOfType(DeviceType.StageDevice);
-            for (int i=0; i<stages.size(); i++) {
-               axisList_.add(new AxisData(prefs_.getBoolean(stages.get(i),true), 
-                       stages.get(i), AxisType.oneD));
-            }
-            // read 2-axis stages
-            StrVector stages2D = core_.getLoadedDevicesOfType(DeviceType.XYStageDevice);
-            for (int i=0; i<stages2D.size(); i++) {
-               axisList_.add(new AxisData(prefs_.getBoolean(stages2D.get(i),true), 
-                       stages2D.get(i), AxisType.twoD));
-            }
-         } catch (Exception e) {
-            handleError(e);
-         }
-      }
-      public AxisData get(int i) {
-         if (i >=0 && i < axisList_.size()) {
-            return axisList_.get(i);
-         }
-         return null;
-      }
-      public int getNumberOfPositions() {
-         return axisList_.size();
-      }
-      public boolean use(String axisName) {
-         for (int i=0; i< axisList_.size(); i++) {
-            if (axisName.equals(get(i).getAxisName())) {
-               return get(i).getUse();
-            }
-         }
-         // not in the list??  It might be time to refresh the list.  
-         return true;
-      }
-         
-   } // End AxisList class
-
-   /**
-    * Model holding axis data, used to determine which axis will be recorded
-    */
-   private class AxisTableModel extends AbstractTableModel {
-      private static final long serialVersionUID = 1L;
-      private boolean isEditable_ = true;
-      public final String[] COLUMN_NAMES = new String[] {
-            "Use",
-            "Axis"
-      };
-      
-      @Override
-      public int getRowCount() {
-         return axisList_.getNumberOfPositions();
-      }
-      @Override
-      public int getColumnCount() {
-         return COLUMN_NAMES.length;
-      }
-      @Override
-      public String getColumnName(int columnIndex) {
-         return COLUMN_NAMES[columnIndex];
-      }
-      @Override
-      public Object getValueAt(int rowIndex, int columnIndex) {
-         AxisData aD = axisList_.get(rowIndex);
-         if (aD != null) {
-            if (columnIndex == 0) {
-               return aD.getUse();
-            } else if (columnIndex == 1) {
-               return aD.getAxisName();
-            }
-         }
-         return null;
-      }
-      @Override
-      public Class<?> getColumnClass(int c) {
-         return getValueAt(0, c).getClass();
-      }
-      public void setEditable(boolean state) {
-         isEditable_ = state;
-         if (state) {
-            for (int i=0; i < getRowCount(); i++) {
-               
-            }
-         }
-      }
-      @Override
-      public boolean isCellEditable(int rowIndex, int columnIndex) {
-         if (columnIndex == 0) {
-            return isEditable_;
-         }
-         return false;
-      }
-      @Override
-      public void setValueAt(Object value, int rowIndex, int columnIndex) {
-         if (columnIndex == 0) {
-            axisList_.get(rowIndex).setUse( (Boolean) value);
-            prefs_.putBoolean(axisList_.get(rowIndex).getAxisName(), (Boolean) value); 
-            updateTileButton();
-         }
-         fireTableCellUpdated(rowIndex, columnIndex);
-         axisTable_.clearSelection();
-      }
-   } // End AxisTableModel class
-
-   private void updateTileButton() {
+   private void setTileButtonEnabled() {
       int n2DStages = 0;
       int n1DStages = 0;
       for (int i = 0; i < axisList_.getNumberOfPositions(); i++) {
          AxisData ad = axisList_.get(i);
          if (ad.getUse()) {
-            if (ad.getType() == AxisType.oneD) {
+            if (ad.getType() == AxisData.AxisType.oneD) {
                n1DStages++;
             }
-            if (ad.getType() == AxisType.twoD) {
+            if (ad.getType() == AxisData.AxisType.twoD) {
                n2DStages++;
             }
          }
@@ -337,31 +129,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       } else {
          tileButton_.setEnabled(false);
       }
-      
    }
-   
-   /**
-    * Renders the first row of the position list table
-    */
-   public class FirstRowRenderer extends JLabel implements TableCellRenderer {
-      private static final long serialVersionUID = 1L;
-
-      public FirstRowRenderer() {
-         setFont(arialSmallFont_);
-         setOpaque(true);
-      }
-
-      @Override
-      public Component getTableCellRendererComponent(JTable table, 
-            Object text, boolean isSelected, boolean hasFocus, 
-            int row, int column) {
-
-         setText((String) text);
-         setBackground(Color.lightGray);
-         return this;
-      }
-   } // End FirstRowRenderer class
-
 
    /**
     * Create the dialog
@@ -377,6 +145,8 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       });
       core_ = core;
       gui_ = gui;
+      bus_ = new EventBus();
+      bus_.register(this);
       opts_ = opts;
       acqControlDlg_ = acd;
       guiColors_ = new GUIColors();
@@ -396,7 +166,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       final JScrollPane axisPane = new JScrollPane();
       add(axisPane, "height 60, growy 0, wrap");
 
-      final TableCellRenderer firstRowRenderer = new FirstRowRenderer();
+      final TableCellRenderer firstRowRenderer = new FirstRowRenderer(arialSmallFont_);
       posTable_ = new JTable() {
       private static final long serialVersionUID = -3873504142761785021L;
 
@@ -409,9 +179,9 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
          }
       };
       posTable_.setFont(arialSmallFont_);
-      PosTableModel model = new PosTableModel();
-      model.setData(posList);
-      posTable_.setModel(model);
+      model_ = new PositionTableModel();
+      model_.setData(posList);
+      posTable_.setModel(model_);
       CellEditor cellEditor_ = new CellEditor();
       cellEditor_.addListener();
       posTable_.setDefaultEditor(Object.class, cellEditor_);
@@ -420,8 +190,8 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
 
       axisTable_ = new JTable();
       axisTable_.setFont(arialSmallFont_);
-      axisList_ = new AxisList();
-      axisModel_ = new AxisTableModel();
+      axisList_ = new AxisList(core_, prefs_);
+      axisModel_ = new AxisTableModel(axisList_, axisTable_, bus_, prefs_);
       axisTable_.setModel(axisModel_);
       axisPane.setViewportView(axisTable_);
 
@@ -451,12 +221,10 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       
       posTable_.addFocusListener(
               new java.awt.event.FocusAdapter() {
-
                  @Override
                  public void focusLost(java.awt.event.FocusEvent evt) {
                     updateMarkButtonText();
                  }
-
                  @Override
                  public void focusGained(java.awt.event.FocusEvent evt) {
                     updateMarkButtonText();
@@ -647,7 +415,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       tileButton_.setText("Create Grid");
       tileButton_.setToolTipText("Open new window to create grid of equally spaced positions");
       add(tileButton_);
-      updateTileButton();
+      setTileButtonEnabled();
 
       final JButton closeButton = new JButton();
       closeButton.setMinimumSize(buttonSize);
@@ -686,7 +454,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
     }
 
    protected void updateMarkButtonText() {
-      PosTableModel tm = (PosTableModel) posTable_.getModel();
+      PositionTableModel tm = (PositionTableModel) posTable_.getModel();
       MultiStagePosition msp = tm.getPositionList().getPosition(posTable_.getSelectedRow() - 1);
       if (markButton_ != null) {
          if (msp == null) {
@@ -699,14 +467,14 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
    
 
    public void addPosition(MultiStagePosition msp, String label) {
-      PosTableModel ptm = (PosTableModel)posTable_.getModel();
+      PositionTableModel ptm = (PositionTableModel) posTable_.getModel();
       msp.setLabel(label);
       ptm.getPositionList().addPosition(msp);
       ptm.fireTableDataChanged();
    }
 
    public void addPosition(MultiStagePosition msp) {
-      PosTableModel ptm = (PosTableModel)posTable_.getModel();
+      PositionTableModel ptm = (PositionTableModel) posTable_.getModel();
       msp.setLabel(ptm.getPositionList().generateLabel());
       ptm.getPositionList().addPosition(msp);
       ptm.fireTableDataChanged();
@@ -730,7 +498,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
             getPositionList().save(fileName);
             posListDir_ = curFile_.getParent();
          } catch (MMException e) {
-            handleError(e);
+            ReportingUtils.showError(e);
             return false;
          }
          return true;
@@ -747,7 +515,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
             getPositionList().load(curFile_.getAbsolutePath());
             posListDir_ = curFile_.getParent();
          } catch (MMException e) {
-            handleError(e);
+            ReportingUtils.showError(e);
          } finally {
             updatePositionData();            
          }
@@ -755,12 +523,12 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
    }
 
    public void updatePositionData() {
-      PosTableModel ptm = (PosTableModel)posTable_.getModel();
+      PositionTableModel ptm = (PositionTableModel) posTable_.getModel();
       ptm.fireTableDataChanged();
    }
    
    public void rebuildAxisList() {
-      axisList_ = new AxisList();
+      axisList_ = new AxisList(core_, prefs_);
       AxisTableModel axm = (AxisTableModel)axisTable_.getModel();
       axm.fireTableDataChanged();
    }
@@ -771,13 +539,13 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
    }
    
    public void setPositionList(PositionList pl) {
-      PosTableModel ptm = (PosTableModel)posTable_.getModel();
+      PositionTableModel ptm = (PositionTableModel) posTable_.getModel();
       ptm.setData(pl);
       ptm.fireTableDataChanged();
    }
 
    protected void goToCurrentPosition() {
-      PosTableModel ptm = (PosTableModel)posTable_.getModel();
+      PositionTableModel ptm = (PositionTableModel) posTable_.getModel();
       MultiStagePosition msp = ptm.getPositionList().getPosition(posTable_.getSelectedRow() - 1);
       if (msp == null)
          return;
@@ -785,13 +553,13 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       try {
          MultiStagePosition.goToPosition(msp, core_);
       } catch (Exception e) {
-         handleError(e);
+         ReportingUtils.showError(e);
       }
       refreshCurrentPosition();
    }
 
    protected void clearAllPositions() {
-      PosTableModel ptm = (PosTableModel)posTable_.getModel();
+      PositionTableModel ptm = (PositionTableModel) posTable_.getModel();
       ptm.getPositionList().clearAllPositions();
       ptm.fireTableDataChanged();
       acqControlDlg_.updateGUIContents();
@@ -799,7 +567,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
 
    
    protected void incrementOrderOfSelectedPosition(int direction) {
-      PosTableModel ptm = (PosTableModel) posTable_.getModel();
+      PositionTableModel ptm = (PositionTableModel) posTable_.getModel();
       int currentRow = posTable_.getSelectedRow() - 1;
       int newEdittingRow = -1;
 
@@ -839,7 +607,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
    
    
    protected void removeSelectedPositions() {
-      PosTableModel ptm = (PosTableModel)posTable_.getModel();
+      PositionTableModel ptm = (PositionTableModel) posTable_.getModel();
       int[] selectedRows = posTable_.getSelectedRows();
       // Reverse the rows so that we delete from the end; if we delete from
       // the front then the position list gets re-ordered as we go and we 
@@ -859,7 +627,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       refreshCurrentPosition();
       MultiStagePosition msp = curMsp_;
 
-      PosTableModel ptm = (PosTableModel)posTable_.getModel();
+      PositionTableModel ptm = (PositionTableModel) posTable_.getModel();
       MultiStagePosition selMsp = 
               ptm.getPositionList().getPosition(posTable_.getSelectedRow() -1);
 
@@ -887,7 +655,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
     * with the current position
     */
    public void mergePositions() {
-      PosTableModel ptm = (PosTableModel)posTable_.getModel();
+      PositionTableModel ptm = (PositionTableModel) posTable_.getModel();
       int[] selectedRows = posTable_.getSelectedRows();
       
       refreshCurrentPosition();
@@ -907,61 +675,6 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       ptm.fireTableDataChanged();
       acqControlDlg_.updateGUIContents();
       
-   }
-
-   /**
-    * Editor component for the position list table
-    */
-   public class CellEditor extends AbstractCellEditor implements TableCellEditor, 
-           FocusListener {
-      private static final long serialVersionUID = 3L;
-      // This is the component that will handle editing of the cell's value
-      JTextField text_ = new JTextField();
-      int editingCol_;
-
-      public CellEditor() {
-         super();       
-      }
-      
-      public void addListener() {
-         text_.addFocusListener(this);
-      }
-
-      @Override
-      public void focusLost(FocusEvent e) {
-         fireEditingStopped();
-      }
-
-      @Override
-      public void focusGained(FocusEvent e) {
- 
-      }
-
-      // This method is called when a cell value is edited by the user.
-      @Override
-      public Component getTableCellEditorComponent(JTable table, Object value,
-            boolean isSelected, int rowIndex, int colIndex) {
-
-        editingCol_ = colIndex;
-
-         // Configure the component with the specified value
-         if (colIndex == 0) {
-            text_.setText((String)value);
-            return text_;
-         }
-
-         return null;
-      }
-                                                                             
-      // This method is called when editing is completed.
-      // It must return the new value to be stored in the cell. 
-      @Override
-      public Object getCellEditorValue() {
-         if (editingCol_ == 0) {
-               return text_.getText();
-         }
-         return null;
-      }
    }
  
    /**
@@ -1001,12 +714,13 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
             }
          }
       } catch (Exception e) {
-         handleError(e);
+         ReportingUtils.showError(e);
       }
 
       curMsp_ = msp;
+      model_.setCurrentMSP(curMsp_);
 
-      PosTableModel ptm = (PosTableModel)posTable_.getModel();
+      PositionTableModel ptm = (PositionTableModel) posTable_.getModel();
       int selectedRow = posTable_.getSelectedRow();
       ptm.fireTableCellUpdated(0, 1);
       if (selectedRow > 0)
@@ -1025,7 +739,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
     * @param type
     * @return 
     */
-   private String getAxis(AxisType type) {
+   private String getAxis(AxisData.AxisType type) {
       for (int i = 0; i < axisList_.getNumberOfPositions(); i++) {
          AxisData axis = axisList_.get(i);
          if (axis.getUse() && axis.getType() == type) {
@@ -1040,7 +754,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
     * @return 
     */
    public String get2DAxis() {
-      return getAxis(AxisType.twoD);
+      return getAxis(AxisData.AxisType.twoD);
    }
    
     /**
@@ -1048,7 +762,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
     * @return 
     */
    public String get1DAxis() {
-      return getAxis(AxisType.oneD);
+      return getAxis(AxisData.AxisType.oneD);
    }
 
    protected void showCreateTileDlg() {
@@ -1059,15 +773,10 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       tileCreatorDlg.setVisible(true);
    }
 
-
    private PositionList getPositionList() {
-      PosTableModel ptm = (PosTableModel)posTable_.getModel();
+      PositionTableModel ptm = (PositionTableModel) posTable_.getModel();
       return ptm.getPositionList();
 
-   }
-
-   private void handleError(Exception e) {
-      ReportingUtils.showError(e);
    }
 
    /**
@@ -1107,7 +816,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
             calThread.start();
          }
       } catch (Exception e) {
-         handleError(e);
+         ReportingUtils.showError(e);
       }
 
    }
@@ -1226,7 +935,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
             }           
          } catch (InterruptedException e) { ReportingUtils.logError(e);}
          catch (Exception e) {
-            handleError(e);
+            ReportingUtils.showError(e);
          }
       }
    } // End StopCalThread class
@@ -1302,7 +1011,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
          } catch (InterruptedException e) {
             ReportingUtils.logError(e);
          } catch (Exception e) {
-            handleError(e);
+            ReportingUtils.showError(e);
          }
       }
    } // End CalThread class
