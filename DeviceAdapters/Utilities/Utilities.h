@@ -49,7 +49,7 @@
 //////////////////////////////////////////////////////////////////////////////
 // Max number of physical cameras
 //
-#define MAX_NUMBER_PHYSICAL_CAMERAS       3
+#define MAX_NUMBER_PHYSICAL_CAMERAS       4
 
 /*
  * MultiShutter: Combines multiple physical shutters into one logical device
