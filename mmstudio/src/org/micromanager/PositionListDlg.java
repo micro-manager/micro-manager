@@ -46,7 +46,6 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
-import javax.swing.SpringLayout;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
@@ -54,6 +53,8 @@ import javax.swing.table.TableCellRenderer;
 import mmcorej.CMMCore;
 import mmcorej.DeviceType;
 import mmcorej.StrVector;
+
+import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.utils.GUIColors;
 import org.micromanager.utils.MMDialog;
@@ -89,10 +90,10 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
                         System.getProperty("user.home") + "/PositionList.pos",
                         true, POS);
 
+   private Font arialSmallFont_;
    private JTable posTable_;
    private JTable axisTable_;
    private AxisTableModel axisModel_;
-   private SpringLayout springLayout;
    private CMMCore core_;
    private ScriptInterface gui_;
    private AcqControlDlg acqControlDlg_;
@@ -103,7 +104,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
    private final JButton tileButton_;
 
    private MultiStagePosition curMsp_;
-   public JButton markButtonRef;
+   public JButton markButton_;
 
 
    private class PosTableModel extends AbstractTableModel {
@@ -343,7 +344,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
    private static final long serialVersionUID = 1L;
 
    public FirstRowRenderer() {
-          setFont(new Font("Arial", Font.PLAIN, 10));
+          setFont(arialSmallFont_);
           setOpaque(true);
        }
 
@@ -379,24 +380,20 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       acqControlDlg_ = acd;
       guiColors_ = new GUIColors();
       setTitle("Stage-position List");
-      springLayout = new SpringLayout();
-      getContentPane().setLayout(springLayout);
+      setLayout(new MigLayout("flowy, filly", "[grow][]"));
       setBounds(100, 100, 362, 595);
 
       Preferences root = Preferences.userNodeForPackage(this.getClass());
       prefs_ = root.node(root.absolutePath() + "/XYPositionListDlg");
       setPrefsNode(prefs_);
 
-      // Rectangle r = getBounds();
-          
-
-      Font arialSmallFont = new Font("Arial", Font.PLAIN, 10);
+      arialSmallFont_ = new Font("Arial", Font.PLAIN, 10);
       
       final JScrollPane scrollPane = new JScrollPane();
-      getContentPane().add(scrollPane);
+      add(scrollPane, "growy, split 2");
 
       final JScrollPane axisPane = new JScrollPane();
-      getContentPane().add(axisPane);
+      add(axisPane, "height 150, growy 0, wrap");
 
       final TableCellRenderer firstRowRenderer = new FirstRowRenderer();
       posTable_ = new JTable() {
@@ -410,7 +407,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
             return super.getCellRenderer(row, column);
          }
       };
-      posTable_.setFont(new Font("Arial", Font.PLAIN, 10));
+      posTable_.setFont(arialSmallFont_);
       PosTableModel model = new PosTableModel();
       model.setData(posList);
       posTable_.setModel(model);
@@ -421,7 +418,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       scrollPane.setViewportView(posTable_);
 
       axisTable_ = new JTable();
-      axisTable_.setFont(new Font("Arial", Font.PLAIN, 10));
+      axisTable_.setFont(arialSmallFont_);
       axisList_ = new AxisList();
       axisModel_ = new AxisTableModel();
       axisTable_.setModel(axisModel_);
@@ -431,45 +428,26 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       if (JavaUtils.isMac()) {
          axisPaneLineOffset = 22;
       }
-      springLayout.putConstraint(SpringLayout.SOUTH, axisPane, -10, 
-              SpringLayout.SOUTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.SOUTH, scrollPane, -10, 
-              SpringLayout.NORTH, axisPane);
-      springLayout.putConstraint(SpringLayout.NORTH, scrollPane, 10, 
-              SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.NORTH, axisPane, 
-              -(axisPaneLineOffset + axisPaneLineOffset*axisModel_.getRowCount()), SpringLayout.SOUTH, getContentPane());
 
+      Dimension buttonSize = new Dimension(100, 27);
       // mark / replace button:
-      JButton markButton = new JButton();
-      this.markButtonRef  = markButton;
-      markButton.setFont(new Font("Arial", Font.PLAIN, 10));
-      markButton.setMaximumSize(new Dimension(0,0));
-      markButton.addActionListener(new ActionListener() {
+      JButton markButton_ = new JButton();
+      markButton_.setMinimumSize(buttonSize);
+      markButton_.setFont(arialSmallFont_);
+      markButton_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent arg0) {
             markPosition();
             posTable_.clearSelection();
          }
       });
-      markButton.setIcon(SwingResourceManager.getIcon(PositionListDlg.class, "icons/flag_green.png"));
-      markButton.setText("Mark");
-      markButton.setToolTipText("Adds point with coordinates of current stage position");
-      getContentPane().add(markButton);
+      markButton_.setIcon(SwingResourceManager.getIcon(PositionListDlg.class, "icons/flag_green.png"));
+      markButton_.setText("Mark");
+      markButton_.setToolTipText("Adds point with coordinates of current stage position");
+      // Separate the layout of the buttons from the layout of the panels to 
+      // their left.
+      add(markButton_, "split, spany");
       
-      int northConstraint = 17;
-      final int buttonHeight = 27;
-      
-      springLayout.putConstraint(SpringLayout.NORTH, markButton, northConstraint, SpringLayout.NORTH, getContentPane());     
-      springLayout.putConstraint(SpringLayout.SOUTH, markButton, northConstraint+=buttonHeight, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.EAST, markButton, -9, SpringLayout.EAST, getContentPane());
-      springLayout.putConstraint(SpringLayout.WEST, markButton, -105, SpringLayout.EAST, getContentPane());
-
-      springLayout.putConstraint(SpringLayout.EAST, scrollPane, -9, SpringLayout.WEST, markButton);
-      springLayout.putConstraint(SpringLayout.WEST, scrollPane, 10, SpringLayout.WEST, getContentPane());
-      springLayout.putConstraint(SpringLayout.EAST, axisPane, -9, SpringLayout.WEST, markButton);
-      springLayout.putConstraint(SpringLayout.WEST, axisPane, 10, SpringLayout.WEST, getContentPane());
-
       posTable_.addFocusListener(
               new java.awt.event.FocusAdapter() {
 
@@ -485,10 +463,11 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
               });
 
       // the re-ordering buttons:
-      
+
       // move selected row up one row
       final JButton upButton = new JButton();
-      upButton.setFont(new Font("Arial", Font.PLAIN, 10));
+      upButton.setMinimumSize(buttonSize);
+      upButton.setFont(arialSmallFont_);
       upButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent arg0) {
@@ -498,16 +477,12 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       upButton.setIcon(SwingResourceManager.getIcon(PositionListDlg.class, "icons/arrow_up.png"));
       upButton.setText(""); // "Up"
       upButton.setToolTipText("Move currently selected position up list (positions higher on list are acquired earlier)");
-      getContentPane().add(upButton);
-      springLayout.putConstraint(SpringLayout.NORTH, upButton, northConstraint, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.SOUTH, upButton, northConstraint+buttonHeight, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.EAST, upButton, -48, SpringLayout.EAST, markButton);
-      springLayout.putConstraint(SpringLayout.WEST, upButton, 0, SpringLayout.WEST, markButton);
-      
+      add(upButton);
   
       // move selected row down one row
       final JButton downButton = new JButton();
-      downButton.setFont(new Font("Arial", Font.PLAIN, 10));
+      downButton.setMinimumSize(buttonSize);
+      downButton.setFont(arialSmallFont_);
       downButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent arg0) {
@@ -517,18 +492,12 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       downButton.setIcon(SwingResourceManager.getIcon(PositionListDlg.class, "icons/arrow_down.png"));
       downButton.setText(""); // "Down"
       downButton.setToolTipText("Move currently selected position down list (lower positions on list are acquired later)");
-      getContentPane().add(downButton);
-      springLayout.putConstraint(SpringLayout.NORTH, downButton, northConstraint, SpringLayout.NORTH, getContentPane());
-      // increment northConstraint for next button....
-      springLayout.putConstraint(SpringLayout.SOUTH, downButton, northConstraint+=buttonHeight, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.EAST, downButton, 0, SpringLayout.EAST, markButton);
-      springLayout.putConstraint(SpringLayout.WEST, downButton, 48, SpringLayout.WEST, markButton);      
-      
-                
+      add(downButton);
       
       // from this point on, the top right button's positions are computed
       final JButton mergeButton = new JButton();
-      mergeButton.setFont(arialSmallFont);
+      mergeButton.setMinimumSize(buttonSize);
+      mergeButton.setFont(arialSmallFont_);
       mergeButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent arg0) {
@@ -538,16 +507,12 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       mergeButton.setIcon(SwingResourceManager.getIcon(PositionListDlg.class, "icons/asterisk_orange.png"));
       mergeButton.setText("Merge");
       mergeButton.setToolTipText("Merges selected position with current position of the system");
-      getContentPane().add(mergeButton);
-      springLayout.putConstraint(SpringLayout.NORTH, mergeButton, northConstraint, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.SOUTH, mergeButton, northConstraint+=buttonHeight, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.EAST, mergeButton, 0, SpringLayout.EAST, markButton);
-      springLayout.putConstraint(SpringLayout.WEST, mergeButton, 0, SpringLayout.WEST, markButton);
-
+      add(mergeButton);
       
       // the Go To button:
       final JButton gotoButton = new JButton();
-      gotoButton.setFont(new Font("Arial", Font.PLAIN, 10));
+      gotoButton.setMinimumSize(buttonSize);
+      gotoButton.setFont(arialSmallFont_);
       gotoButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent arg0) {
@@ -557,14 +522,11 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       gotoButton.setIcon(SwingResourceManager.getIcon(PositionListDlg.class, "icons/resultset_next.png"));
       gotoButton.setText("Go to");
       gotoButton.setToolTipText("Moves stage to currently selected position");
-      getContentPane().add(gotoButton);
-      springLayout.putConstraint(SpringLayout.NORTH, gotoButton, northConstraint, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.SOUTH, gotoButton, northConstraint+=buttonHeight, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.EAST, gotoButton, 0, SpringLayout.EAST, markButton);
-      springLayout.putConstraint(SpringLayout.WEST, gotoButton, 0, SpringLayout.WEST, markButton);
+      add(gotoButton);
 
       final JButton refreshButton = new JButton();
-      refreshButton.setFont(new Font("Arial", Font.PLAIN, 10));
+      refreshButton.setMinimumSize(buttonSize);
+      refreshButton.setFont(arialSmallFont_);
       refreshButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent arg0) {
@@ -573,16 +535,13 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       });
       refreshButton.setIcon(SwingResourceManager.getIcon(PositionListDlg.class, "icons/arrow_refresh.png"));
       refreshButton.setText("Refresh");
-      getContentPane().add(refreshButton);
-      springLayout.putConstraint(SpringLayout.NORTH, refreshButton, northConstraint, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.SOUTH, refreshButton, northConstraint+=buttonHeight, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.EAST, refreshButton, 0, SpringLayout.EAST, markButton);
-      springLayout.putConstraint(SpringLayout.WEST, refreshButton, 0, SpringLayout.WEST, markButton);
+      add(refreshButton);
 
       refreshCurrentPosition();
 
       final JButton removeButton = new JButton();
-      removeButton.setFont(new Font("Arial", Font.PLAIN, 10));
+      removeButton.setMinimumSize(buttonSize);
+      removeButton.setFont(arialSmallFont_);
       removeButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent arg0) {
@@ -592,15 +551,11 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       removeButton.setIcon(SwingResourceManager.getIcon(PositionListDlg.class, "icons/cross.png"));
       removeButton.setText("Remove");
       removeButton.setToolTipText("Removes currently selected position from list");
-      getContentPane().add(removeButton);
-      springLayout.putConstraint(SpringLayout.NORTH, removeButton, northConstraint, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.SOUTH, removeButton, northConstraint+=buttonHeight, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.EAST, removeButton, 0, SpringLayout.EAST, markButton);
-      springLayout.putConstraint(SpringLayout.WEST, removeButton, 0, SpringLayout.WEST, markButton);
-
+      add(removeButton);
 
       final JButton setOriginButton = new JButton();
-      setOriginButton.setFont(new Font("Arial", Font.PLAIN, 10));
+      setOriginButton.setMinimumSize(buttonSize);
+      setOriginButton.setFont(arialSmallFont_);
       setOriginButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent arg0) {
@@ -611,15 +566,11 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       setOriginButton.setIcon(SwingResourceManager.getIcon(PositionListDlg.class, "icons/empty.png"));
       setOriginButton.setText("Set Origin");
       setOriginButton.setToolTipText("Drives X and Y stages back to their original positions and zeros their position values");
-      getContentPane().add(setOriginButton);
-      springLayout.putConstraint(SpringLayout.NORTH, setOriginButton, northConstraint, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.SOUTH, setOriginButton, northConstraint+=buttonHeight, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.EAST, setOriginButton, 0, SpringLayout.EAST, markButton);
-      springLayout.putConstraint(SpringLayout.WEST, setOriginButton, 0, SpringLayout.WEST, markButton);
-
+      add(setOriginButton);
 
       final JButton removeAllButton = new JButton();
-      removeAllButton.setFont(new Font("Arial", Font.PLAIN, 10));
+      removeAllButton.setMinimumSize(buttonSize);
+      removeAllButton.setFont(arialSmallFont_);
       removeAllButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent arg0) {
@@ -632,16 +583,11 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       removeAllButton.setIcon(SwingResourceManager.getIcon(PositionListDlg.class, "icons/delete.png"));
       removeAllButton.setText("Clear All");
       removeAllButton.setToolTipText("Removes all positions from list");
-      getContentPane().add(removeAllButton);
-      springLayout.putConstraint(SpringLayout.NORTH, removeAllButton, northConstraint, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.SOUTH, removeAllButton, northConstraint+=buttonHeight, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.EAST, removeAllButton, 0, SpringLayout.EAST, markButton);
-      springLayout.putConstraint(SpringLayout.WEST, removeAllButton, 0, SpringLayout.WEST, markButton);
-
-  
+      add(removeAllButton);
 
       final JButton closeButton = new JButton();
-      closeButton.setFont(new Font("Arial", Font.PLAIN, 10));
+      closeButton.setMinimumSize(buttonSize);
+      closeButton.setFont(arialSmallFont_);
       closeButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent arg0) {
@@ -650,14 +596,11 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       });
       closeButton.setIcon(SwingResourceManager.getIcon(PositionListDlg.class, "icons/empty.png"));
       closeButton.setText("Close");
-      getContentPane().add(closeButton);
-      springLayout.putConstraint(SpringLayout.SOUTH, closeButton, 0, SpringLayout.SOUTH, axisPane);
-      springLayout.putConstraint(SpringLayout.NORTH, closeButton, -27, SpringLayout.SOUTH, axisPane);
-      springLayout.putConstraint(SpringLayout.EAST, closeButton, 0, SpringLayout.EAST, markButton);
-      springLayout.putConstraint(SpringLayout.WEST, closeButton, 0, SpringLayout.WEST, markButton);
+      add(closeButton, "gaptop 1:push");
 
       tileButton_ = new JButton();
-      tileButton_.setFont(new Font("Arial", Font.PLAIN, 10));
+      tileButton_.setMinimumSize(buttonSize);
+      tileButton_.setFont(arialSmallFont_);
       tileButton_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent arg0) {
@@ -667,15 +610,12 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       tileButton_.setIcon(SwingResourceManager.getIcon(PositionListDlg.class, "icons/empty.png"));
       tileButton_.setText("Create Grid");
       tileButton_.setToolTipText("Open new window to create grid of equally spaced positions");
-      getContentPane().add(tileButton_);
-      springLayout.putConstraint(SpringLayout.SOUTH, tileButton_, -1, SpringLayout.NORTH, closeButton);
-      springLayout.putConstraint(SpringLayout.NORTH, tileButton_, -27, SpringLayout.NORTH, closeButton);
-      springLayout.putConstraint(SpringLayout.EAST, tileButton_, 0, SpringLayout.EAST, markButton);
-      springLayout.putConstraint(SpringLayout.WEST, tileButton_, 0, SpringLayout.WEST, markButton);
+      add(tileButton_);
       updateTileButton();
 
       final JButton saveAsButton = new JButton();
-      saveAsButton.setFont(new Font("Arial", Font.PLAIN, 10));
+      saveAsButton.setMinimumSize(buttonSize);
+      saveAsButton.setFont(arialSmallFont_);
       saveAsButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent arg0) {
@@ -685,14 +625,11 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       saveAsButton.setIcon(SwingResourceManager.getIcon(PositionListDlg.class, "icons/empty.png"));
       saveAsButton.setText("Save As...");
       saveAsButton.setToolTipText("Save position list as");
-      getContentPane().add(saveAsButton);
-      springLayout.putConstraint(SpringLayout.SOUTH, saveAsButton, -28, SpringLayout.NORTH, closeButton);
-      springLayout.putConstraint(SpringLayout.NORTH, saveAsButton, -55, SpringLayout.NORTH, closeButton);
-      springLayout.putConstraint(SpringLayout.EAST, saveAsButton, 0, SpringLayout.EAST, markButton);
-      springLayout.putConstraint(SpringLayout.WEST, saveAsButton, 0, SpringLayout.WEST, markButton);
+      add(saveAsButton);
 
       final JButton loadButton = new JButton();
-      loadButton.setFont(new Font("Arial", Font.PLAIN, 10));
+      loadButton.setMinimumSize(buttonSize);
+      loadButton.setFont(arialSmallFont_);
       loadButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent arg0) {
@@ -702,12 +639,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       loadButton.setIcon(SwingResourceManager.getIcon(PositionListDlg.class, "icons/empty.png"));
       loadButton.setText("Load...");
       loadButton.setToolTipText("Load position list");
-      getContentPane().add(loadButton);
-      springLayout.putConstraint(SpringLayout.SOUTH, loadButton, -56, SpringLayout.NORTH, closeButton);
-      springLayout.putConstraint(SpringLayout.NORTH, loadButton, -83, SpringLayout.NORTH, closeButton);
-      springLayout.putConstraint(SpringLayout.EAST, loadButton, 0, SpringLayout.EAST, markButton);
-      springLayout.putConstraint(SpringLayout.WEST, loadButton, 0, SpringLayout.WEST, markButton);
-      
+      add(loadButton);
    }
    
    public void addListeners() {   
@@ -735,12 +667,13 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
    protected void updateMarkButtonText() {
       PosTableModel tm = (PosTableModel) posTable_.getModel();
       MultiStagePosition msp = tm.getPositionList().getPosition(posTable_.getSelectedRow() - 1);
-      if (null == msp) {
-         markButtonRef.setText("Mark");
-      } else {
-         markButtonRef.setText("Replace");
+      if (markButton_ != null) {
+         if (msp == null) {
+            markButton_.setText("Mark");
+         } else {
+            markButton_.setText("Replace");
+         }
       }
-
    }
    
 
