@@ -2759,6 +2759,45 @@ bool CDemoXYStage::Busy()
    return true;
 }
 
+int CDemoXYStage::SetPositionSteps(long x, long y)
+{
+   if (timeOutTimer_ != 0)
+   {
+      if (!timeOutTimer_->expired(GetCurrentMMTime()))
+         return ERR_STAGE_MOVING;
+      delete (timeOutTimer_);
+   }
+   double newPosX = x * stepSize_um_;
+   double newPosY = y * stepSize_um_;
+   double difX = newPosX - posX_um_;
+   double difY = newPosY - posY_um_;
+   double distance = sqrt( (difX * difX) + (difY * difY) );
+   long timeOut = (long) (distance / velocity_);
+   timeOutTimer_ = new MM::TimeoutMs(GetCurrentMMTime(),  timeOut);
+   posX_um_ = x * stepSize_um_;
+   posY_um_ = y * stepSize_um_;
+   int ret = OnXYStagePositionChanged(posX_um_, posY_um_);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   return DEVICE_OK;
+}
+
+int CDemoXYStage::GetPositionSteps(long& x, long& y)
+{
+   x = (long)(posX_um_ / stepSize_um_);
+   y = (long)(posY_um_ / stepSize_um_);
+   return DEVICE_OK;
+}
+
+int CDemoXYStage::SetRelativePositionSteps(long x, long y)
+{
+   long xSteps, ySteps;
+   GetPositionSteps(xSteps, ySteps);
+
+   return this->SetPositionSteps(xSteps+x, ySteps+y);
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // Action handlers

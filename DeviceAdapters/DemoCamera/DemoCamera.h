@@ -465,42 +465,9 @@ public:
 
    // This must be correct or the conversions between steps and Um will go wrong
    virtual double GetStepSize() {return stepSize_um_;}
-   virtual int SetPositionSteps(long x, long y)
-   {
-      if (timeOutTimer_ != 0)
-      {
-         if (!timeOutTimer_->expired(GetCurrentMMTime()))
-               return ERR_STAGE_MOVING;
-         delete (timeOutTimer_);
-      }
-      double newPosX = x * stepSize_um_;
-      double newPosY = y * stepSize_um_;
-      double difX = newPosX - posX_um_;
-      double difY = newPosY - posY_um_;
-      double distance = sqrt( (difX * difX) + (difY * difY) );
-      long timeOut = (long) (distance / velocity_);
-      timeOutTimer_ = new MM::TimeoutMs(GetCurrentMMTime(),  timeOut);
-      posX_um_ = x * stepSize_um_;
-      posY_um_ = y * stepSize_um_;
-      int ret = OnXYStagePositionChanged(posX_um_, posY_um_);
-      if (ret != DEVICE_OK)
-         return ret;
-
-      return DEVICE_OK;
-   }
-   virtual int GetPositionSteps(long& x, long& y)
-   {
-      x = (long)(posX_um_ / stepSize_um_);
-      y = (long)(posY_um_ / stepSize_um_);
-      return DEVICE_OK;
-   }
-   int SetRelativePositionSteps(long x, long y)                                                           
-   {                                                                                                      
-      long xSteps, ySteps;                                                                                
-      GetPositionSteps(xSteps, ySteps);                                                   
-
-      return this->SetPositionSteps(xSteps+x, ySteps+y);                                                  
-   } 
+   virtual int SetPositionSteps(long x, long y);
+   virtual int GetPositionSteps(long& x, long& y);
+   virtual int SetRelativePositionSteps(long x, long y);
    virtual int Home() { return DEVICE_OK; }
    virtual int Stop() { return DEVICE_OK; }
 
@@ -714,7 +681,8 @@ public:
    bool Busy(void) { return busy_;};
 
     // really primative image transpose algorithm which will work fine for non-square images... 
-   template <typename PixelType> int TransposeRectangleOutOfPlace( PixelType* pI, unsigned int width, unsigned int height)
+   template <typename PixelType>
+   int TransposeRectangleOutOfPlace(PixelType* pI, unsigned int width, unsigned int height)
    {
       int ret = DEVICE_OK;
       unsigned long tsize = width*height*sizeof(PixelType);
@@ -749,7 +717,8 @@ public:
    }
 
    
-   template <typename PixelType> void TransposeSquareInPlace( PixelType* pI, unsigned int dim) 
+   template <typename PixelType>
+   void TransposeSquareInPlace(PixelType* pI, unsigned int dim)
    { 
       PixelType tmp;
       for( unsigned long ix = 0; ix < dim; ++ix)
@@ -797,8 +766,8 @@ public:
    int Initialize();
    bool Busy(void) { return busy_;};
 
-    // 
-   template <typename PixelType> int Flip( PixelType* pI, unsigned int width, unsigned int height)
+   template <typename PixelType>
+   int Flip(PixelType* pI, unsigned int width, unsigned int height)
    {
       PixelType tmp;
       int ret = DEVICE_OK;
@@ -841,7 +810,8 @@ public:
    int Initialize();
    bool Busy(void) { return busy_;};
 
-   template <typename PixelType> int Flip( PixelType* pI, unsigned int width, unsigned int height)
+   template <typename PixelType>
+   int Flip(PixelType* pI, unsigned int width, unsigned int height)
    {
       PixelType tmp;
       int ret = DEVICE_OK;
@@ -900,7 +870,8 @@ public:
    };
 
 
-   template <typename PixelType> int Filter( PixelType* pI, unsigned int width, unsigned int height)
+   template <typename PixelType>
+   int Filter(PixelType* pI, unsigned int width, unsigned int height)
    {
       int ret = DEVICE_OK;
       int x[9];
