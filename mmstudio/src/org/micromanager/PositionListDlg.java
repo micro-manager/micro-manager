@@ -183,7 +183,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
             }
          }
       }
-   }
+   } // End PosTableModel class
 
    private class AxisData {
       private boolean use_;
@@ -200,8 +200,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       public AxisType getType() {return type_;}
       
       public void setUse(boolean use) {use_ = use;}
-
-   }
+   } // End AxisData class
 
    /**
     * List with Axis data.  Currently, we use only a single global instance 
@@ -248,7 +247,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
          return true;
       }
          
-   }
+   } // End AxisList class
 
    /**
     * Model holding axis data, used to determine which axis will be recorded
@@ -314,7 +313,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
          fireTableCellUpdated(rowIndex, columnIndex);
          axisTable_.clearSelection();
       }
-   }
+   } // End AxisTableModel class
 
    private void updateTileButton() {
       int n2DStages = 0;
@@ -342,25 +341,23 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
     * Renders the first row of the position list table
     */
    public class FirstRowRenderer extends JLabel implements TableCellRenderer {
-   private static final long serialVersionUID = 1L;
+      private static final long serialVersionUID = 1L;
 
-   public FirstRowRenderer() {
-          setFont(arialSmallFont_);
-          setOpaque(true);
-       }
+      public FirstRowRenderer() {
+         setFont(arialSmallFont_);
+         setOpaque(true);
+      }
 
       @Override
-       public Component getTableCellRendererComponent(
-                            JTable table, Object text,
-                            boolean isSelected, boolean hasFocus,
-                            int row, int column) {
+      public Component getTableCellRendererComponent(JTable table, 
+            Object text, boolean isSelected, boolean hasFocus, 
+            int row, int column) {
 
-           setText((String) text);
-           setBackground(Color.lightGray);
-        
-           return this;
-        }
-    }
+         setText((String) text);
+         setBackground(Color.lightGray);
+         return this;
+      }
+   } // End FirstRowRenderer class
 
 
    /**
@@ -574,6 +571,21 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       setOriginButton.setToolTipText("Drives X and Y stages back to their original positions and zeros their position values");
       add(setOriginButton);
 
+      final JButton offsetButton = new JButton();
+      offsetButton.setMinimumSize(buttonSize);
+      offsetButton.setFont(arialSmallFont_);
+      offsetButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent arg0) {
+            offsetPositions();
+         }
+      });
+       
+      offsetButton.setIcon(SwingResourceManager.getIcon(PositionListDlg.class, "icons/empty.png"));
+      offsetButton.setText("Add Offset");
+      offsetButton.setToolTipText("Add an offset to the selected positions.");
+      add(offsetButton);
+      
       final JButton removeAllButton = new JButton();
       removeAllButton.setMinimumSize(buttonSize);
       removeAllButton.setFont(arialSmallFont_);
@@ -1097,7 +1109,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
 
    }
 
-   class StopCalThread extends Thread{
+   class StopCalThread extends Thread {
       double [] x1;
       double [] y1;
       String deviceName;
@@ -1214,9 +1226,9 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
             handleError(e);
          }
       }
-   }
+   } // End StopCalThread class
 
-   class CalThread extends Thread{
+   class CalThread extends Thread {
 
       double [] x1;
       double [] y1;
@@ -1290,10 +1302,9 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
             handleError(e);
          }
       }
-   }
+   } // End CalThread class
 
-   class BackThread extends Thread{
-
+   class BackThread extends Thread {
       MMDialog d;
 
       public void setPara(MMDialog d) {
@@ -1303,7 +1314,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       public void run() {
          JOptionPane.showMessageDialog(d, "Going back to the original position!");              
       }
-   }      
+   } // End BackThread class
 
    /*
     * Implementation of MouseListener
@@ -1334,5 +1345,8 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
             lastRowClicked_ = rowIndex;
       }
       updateMarkButtonText();
+   }
+
+   private void offsetPositions() {
    }
 }
