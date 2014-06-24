@@ -658,34 +658,44 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
     * invoke mergePositionsAlongAxis, below.
     */
    public void mergePositions(MouseEvent event) {
-      SelectAxisPopupMenu menu = new SelectAxisPopupMenu(this);
+      MergeStageDevicePopupMenu menu = new MergeStageDevicePopupMenu(this, core_);
       menu.show(event.getComponent(), event.getX(), event.getY());
    }
 
    /**
-    * Set the selected stage positions' value along the provided axis to be the
-    * current stage position. E.g. if the stage is at X=100 and the input
-    * axis is the X axis, then all selected positions will be moved to X=100.
+    * Given a device name, change all currently-selected positions so that
+    * their positions for that device match the current stage position for
+    * that device.
     */
-   public void mergePositionsAlongAxis(String axis) {
-      PositionTableModel ptm = (PositionTableModel) posTable_.getModel();
+   public void mergePositionsWithDevice(String deviceName) {
       int[] selectedRows = posTable_.getSelectedRows();
+      double x = 0, y = 0, z = 0;
+      // Find the current position for that device in curMsp_
+      for (int posIndex = 0; posIndex < curMsp_.size(); ++posIndex) {
+         StagePosition subPos = curMsp_.get(posIndex);
+         if (!subPos.stageName.equals(deviceName)) {
+            continue;
+         }
+         x = subPos.x;
+         y = subPos.y;
+         z = subPos.z;
+      }
       
-      refreshCurrentPosition();
       for (int row : selectedRows) {
-         MultiStagePosition listPos = ptm.getPositionList().getPosition(row - 1);
-         // TODO: implement
-         for (int i=0; i < curMsp_.size(); i++) {
-            StagePosition sp = StagePosition.newInstance(curMsp_.get(i));
-            StagePosition lpsp = listPos.get(sp.stageName);
-            if (lpsp != null) {
-               listPos.remove(lpsp);
+         // Find the appropriate StagePosition in this MultiStagePosition and
+         // update its values.
+         MultiStagePosition listPos = positionModel_.getPositionList().getPosition(row - 1);
+         for (int posIndex = 0; posIndex < listPos.size(); ++posIndex) {
+            StagePosition subPos = listPos.get(posIndex);
+            if (!subPos.stageName.equals(deviceName)) {
+               continue;
             }
-            listPos.add(sp);
-               
+            subPos.x = x;
+            subPos.y = y;
+            subPos.z = z;
          }
       }
-      ptm.fireTableDataChanged();
+      positionModel_.fireTableDataChanged();
       acqControlDlg_.updateGUIContents();
    }
  

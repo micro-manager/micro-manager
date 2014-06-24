@@ -21,7 +21,7 @@ class AxisTableModel extends AbstractTableModel {
    private Preferences prefs_;
    public final String[] COLUMN_NAMES = new String[] {
          "Use",
-         "Axis"
+         "Stage name"
    };
   
    public AxisTableModel(AxisList list, JTable table, EventBus bus, 
