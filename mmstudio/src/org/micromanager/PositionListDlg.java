@@ -42,6 +42,7 @@ import javax.swing.AbstractCellEditor;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
@@ -393,7 +394,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       add(scrollPane, "growy, split 2");
 
       final JScrollPane axisPane = new JScrollPane();
-      add(axisPane, "height 150, growy 0, wrap");
+      add(axisPane, "height 60, growy 0, wrap");
 
       final TableCellRenderer firstRowRenderer = new FirstRowRenderer();
       posTable_ = new JTable() {
@@ -429,7 +430,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
          axisPaneLineOffset = 22;
       }
 
-      Dimension buttonSize = new Dimension(100, 27);
+      Dimension buttonSize = new Dimension(90, 27);
       // mark / replace button:
       JButton markButton_ = new JButton();
       markButton_.setMinimumSize(buttonSize);
@@ -464,9 +465,13 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
 
       // the re-ordering buttons:
 
+      Dimension arrowSize = new Dimension(40, buttonSize.height);
+      // There should be a way to do this without a secondary panel, but I
+      // couldn't figure one out, so whatever.
+      JPanel arrowPanel = new JPanel(new MigLayout("insets 0, fillx"));
       // move selected row up one row
       final JButton upButton = new JButton();
-      upButton.setMinimumSize(buttonSize);
+      upButton.setMinimumSize(arrowSize);
       upButton.setFont(arialSmallFont_);
       upButton.addActionListener(new ActionListener() {
          @Override
@@ -477,11 +482,11 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       upButton.setIcon(SwingResourceManager.getIcon(PositionListDlg.class, "icons/arrow_up.png"));
       upButton.setText(""); // "Up"
       upButton.setToolTipText("Move currently selected position up list (positions higher on list are acquired earlier)");
-      add(upButton);
+      arrowPanel.add(upButton, "dock west");
   
       // move selected row down one row
       final JButton downButton = new JButton();
-      downButton.setMinimumSize(buttonSize);
+      downButton.setMinimumSize(arrowSize);
       downButton.setFont(arialSmallFont_);
       downButton.addActionListener(new ActionListener() {
          @Override
@@ -492,8 +497,9 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       downButton.setIcon(SwingResourceManager.getIcon(PositionListDlg.class, "icons/arrow_down.png"));
       downButton.setText(""); // "Down"
       downButton.setToolTipText("Move currently selected position down list (lower positions on list are acquired later)");
-      add(downButton);
-      
+      arrowPanel.add(downButton, "dock east");
+      add(arrowPanel, "growx");
+
       // from this point on, the top right button's positions are computed
       final JButton mergeButton = new JButton();
       mergeButton.setMinimumSize(buttonSize);
@@ -585,18 +591,33 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       removeAllButton.setToolTipText("Removes all positions from list");
       add(removeAllButton);
 
-      final JButton closeButton = new JButton();
-      closeButton.setMinimumSize(buttonSize);
-      closeButton.setFont(arialSmallFont_);
-      closeButton.addActionListener(new ActionListener() {
+      final JButton loadButton = new JButton();
+      loadButton.setMinimumSize(buttonSize);
+      loadButton.setFont(arialSmallFont_);
+      loadButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent arg0) {
-            dispose();
+            loadPositionList();
          }
       });
-      closeButton.setIcon(SwingResourceManager.getIcon(PositionListDlg.class, "icons/empty.png"));
-      closeButton.setText("Close");
-      add(closeButton, "gaptop 1:push");
+      loadButton.setIcon(SwingResourceManager.getIcon(PositionListDlg.class, "icons/empty.png"));
+      loadButton.setText("Load...");
+      loadButton.setToolTipText("Load position list");
+      add(loadButton, "gaptop 1:push");
+
+      final JButton saveAsButton = new JButton();
+      saveAsButton.setMinimumSize(buttonSize);
+      saveAsButton.setFont(arialSmallFont_);
+      saveAsButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent arg0) {
+            savePositionListAs();
+         }
+      });
+      saveAsButton.setIcon(SwingResourceManager.getIcon(PositionListDlg.class, "icons/empty.png"));
+      saveAsButton.setText("Save As...");
+      saveAsButton.setToolTipText("Save position list as");
+      add(saveAsButton);
 
       tileButton_ = new JButton();
       tileButton_.setMinimumSize(buttonSize);
@@ -613,33 +634,18 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       add(tileButton_);
       updateTileButton();
 
-      final JButton saveAsButton = new JButton();
-      saveAsButton.setMinimumSize(buttonSize);
-      saveAsButton.setFont(arialSmallFont_);
-      saveAsButton.addActionListener(new ActionListener() {
+      final JButton closeButton = new JButton();
+      closeButton.setMinimumSize(buttonSize);
+      closeButton.setFont(arialSmallFont_);
+      closeButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent arg0) {
-            savePositionListAs();
+            dispose();
          }
       });
-      saveAsButton.setIcon(SwingResourceManager.getIcon(PositionListDlg.class, "icons/empty.png"));
-      saveAsButton.setText("Save As...");
-      saveAsButton.setToolTipText("Save position list as");
-      add(saveAsButton);
-
-      final JButton loadButton = new JButton();
-      loadButton.setMinimumSize(buttonSize);
-      loadButton.setFont(arialSmallFont_);
-      loadButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent arg0) {
-            loadPositionList();
-         }
-      });
-      loadButton.setIcon(SwingResourceManager.getIcon(PositionListDlg.class, "icons/empty.png"));
-      loadButton.setText("Load...");
-      loadButton.setToolTipText("Load position list");
-      add(loadButton);
+      closeButton.setIcon(SwingResourceManager.getIcon(PositionListDlg.class, "icons/empty.png"));
+      closeButton.setText("Close");
+      add(closeButton);
    }
    
    public void addListeners() {   
