@@ -70,6 +70,7 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
    private static final String PHYSCAM1 = "Physical Camera 1";
    private static final String PHYSCAM2 = "Physical Camera 2";
    private static final String PHYSCAM3 = "Physical Camera 3";
+   private static final String PHYSCAM4 = "Physical Camera 4";
 
    /** Creates new form MultiCameraFrame
      * @param gui - handle to instance of the ScriptInterface
@@ -718,7 +719,7 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
       } else if (core_.getNumberOfCameraChannels() > 1) {
          try {
             if (core_.hasProperty(camera, PHYSCAM1)) {
-               for (String prop : new String[]{PHYSCAM1, PHYSCAM2, PHYSCAM3}) {
+               for (String prop : new String[]{PHYSCAM1, PHYSCAM2, PHYSCAM3, PHYSCAM4}) {
                   if (core_.hasProperty(camera, prop)) {
                      String cam = core_.getProperty(camera, prop);
                      if (!cam.equals("Undefined")) {
