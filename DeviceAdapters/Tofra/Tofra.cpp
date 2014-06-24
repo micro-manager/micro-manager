@@ -251,21 +251,34 @@ int TofraFilterWheel::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 		if (position_ == pos) return DEVICE_OK;
 		
 		// form relative move command
-		int msteps,d1,d2;
 		double mstepsperfilt;
+		int msfiltpos[50],d1,d2,d;
 		const int bufSize = 40;
+		const int turnmsteps = 3200;
 		char buf[bufSize];
-	  	mstepsperfilt = (double)3200./NumPos;
-		d1 = pos - position_;
-		if (d1<0) d1 = d1 + NumPos;
-		d2 = position_ - pos;
-		if (d2<0) d2 = d2 + NumPos;
-		if (d1<=d2) {
-			msteps = (int)floor(d1*mstepsperfilt+0.5);
-			snprintf(buf, bufSize, "/%sP%dR", ControllerName.c_str(), msteps);
+		mstepsperfilt = (double)turnmsteps/(double)NumPos;
+		for (int i=0; i<NumPos; i++)
+		{
+			msfiltpos[i] = (int)floor(mstepsperfilt*(double)i+0.5);
+		}
+		d1 = msfiltpos[pos] - msfiltpos[position_];
+		if (d1>0) {
+			d2 = d1-turnmsteps;
+		}
+		else {
+			d2 = turnmsteps - d1;
+		}
+		if(abs(d1)>abs(d2)) {
+			d = d2;
+		}
+		else {
+			d = d1;
+		}
+
+		if (d>0) {
+			snprintf(buf, bufSize, "/%sP%dR", ControllerName.c_str(), d);
 		} else {
-			msteps = (int)floor(d2*mstepsperfilt+0.5);
-			snprintf(buf, bufSize, "/%sD%dR", ControllerName.c_str(), msteps);
+			snprintf(buf, bufSize, "/%sD%dR", ControllerName.c_str(), -d);
 		}
 
 		// Clear serial port from previous stuff
