@@ -568,13 +568,13 @@ int SerialPort::OpenWin32SerialPort(const std::string& portName,
    std::string portPath = portName[0] == '\\' ?
       portName : "\\\\.\\" + portName;
 
-   portHandle = CreateFileA(portName.c_str(),
+   portHandle = CreateFileA(portPath.c_str(),
          GENERIC_READ | GENERIC_WRITE, 0, 0,
          OPEN_EXISTING, FILE_FLAG_OVERLAPPED, 0);
    if (portHandle == INVALID_HANDLE_VALUE)
    {
       DWORD err = GetLastError();
-      LogMessage(("Failed to open serial port " + portName + ": "
+      LogMessage(("Failed to open serial port " + portPath + ": "
             "CreateFileA() returned Windows system error code " +
             boost::lexical_cast<std::string>(err)).c_str());
       return DEVICE_ERR;
