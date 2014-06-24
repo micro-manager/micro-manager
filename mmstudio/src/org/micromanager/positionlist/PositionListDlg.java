@@ -31,6 +31,7 @@ import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.WindowAdapter;
@@ -272,15 +273,17 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       final JButton mergeButton = new JButton();
       mergeButton.setMinimumSize(buttonSize);
       mergeButton.setFont(arialSmallFont_);
-      mergeButton.addActionListener(new ActionListener() {
+      // We need to use addMouseListener instead of addActionListener because
+      // we'll need the mouse's position for generating a popup menu. 
+      mergeButton.addMouseListener(new MouseAdapter() {
          @Override
-         public void actionPerformed(ActionEvent arg0) {
-            mergePositions();
+         public void mousePressed(MouseEvent event) {
+            mergePositions(event);
          }
       });
       mergeButton.setIcon(SwingResourceManager.getIcon(MMStudioMainFrame.class, "/org/micromanager/icons/asterisk_orange.png"));
       mergeButton.setText("Merge");
-      mergeButton.setToolTipText("Merges selected position with current position of the system");
+      mergeButton.setToolTipText("Select an axis, and set the selected positions' value along that axis to the current stage position.");
       add(mergeButton);
       
       // the Go To button:
@@ -650,11 +653,20 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
    }
    
    /**
-    * To all selected positions, add the current position of any selected drive
-    * If that drive is already recorded in a multi-stageposition, update it 
-    * with the current position
+    * Displays a popup menu to let the user select an axis, which will then
+    * invoke mergePositionsAlongAxis, below.
     */
-   public void mergePositions() {
+   public void mergePositions(MouseEvent event) {
+      SelectAxisPopupMenu menu = new SelectAxisPopupMenu(this);
+      menu.show(event.getComponent(), event.getX(), event.getY());
+   }
+
+   /**
+    * Set the selected stage positions' value along the provided axis to be the
+    * current stage position. E.g. if the stage is at X=100 and the input
+    * axis is the X axis, then all selected positions will be moved to X=100.
+    */
+   public void mergePositionsAlongAxis(String axis) {
       PositionTableModel ptm = (PositionTableModel) posTable_.getModel();
       int[] selectedRows = posTable_.getSelectedRows();
       

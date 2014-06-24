@@ -29,7 +29,14 @@ package org.micromanager.api;
 
 import org.micromanager.utils.NumberUtils;
 
+
 public class StagePosition {
+   /**
+    * NOTE: despite what the name fields in this class may suggest, every 
+    * StagePosition in practice has only 1 or 2 axes, and thus only uses either
+    * the x, or the x and y fields. That is, the "x" field means "z" when
+    * using a 1-axis positioner! 
+    */
    public double x;
    public double y;
    public double z;
