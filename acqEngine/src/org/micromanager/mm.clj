@@ -38,6 +38,9 @@
     (def gui nil)
     (def mmc mmc))
 
+(defn join-string [sep coll]
+  (apply str (interpose sep coll)))
+
 (defn load-mm
   "Load Micro-Manager gui and mmc objects."
   ([gui]
@@ -93,7 +96,7 @@
   [x]
   (let [lines (.split x "\n")
         trimmed-lines (remove empty? (map #(.trim %) lines))
-        reassembled (clojure.string/join "\n" trimmed-lines)]
+        reassembled (join-string "\n" trimmed-lines)]
     (if (< 1 (count trimmed-lines))
       (str "\n" reassembled)
       reassembled)))
@@ -424,7 +427,7 @@
   [v]
   (->> (range (.size v))
        (map #(.get v %))
-       (clojure.string/join " ")))
+       (join-string " ")))
 
 (defn str-vector
   "Convert a sequence of strings into a Micro-Manager StrVector."
