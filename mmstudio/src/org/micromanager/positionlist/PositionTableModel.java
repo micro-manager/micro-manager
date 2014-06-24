@@ -45,9 +45,6 @@ class PositionTableModel extends AbstractTableModel {
          msp = posList_.getPosition(rowIndex -1);
       }
       if (columnIndex == 0) {
-         if (rowIndex == 0) {
-            return ("Current");
-         }
          return msp.getLabel();
       } else if (columnIndex == 1) {
          StringBuilder sb = new StringBuilder();

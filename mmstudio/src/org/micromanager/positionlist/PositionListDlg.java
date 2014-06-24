@@ -1059,6 +1059,49 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       updateMarkButtonText();
    }
 
+   /** 
+    * Generate a dialog that will call our offsetSelectedSites() function
+    * with a set of X/Y/Z offsets to apply.
+    */
    private void offsetPositions() {
+      new OffsetPositionsDialog(this);
+   }
+
+   /**
+    * Apply the given length-3 array of offsets to our sites.
+    * TODO: lacking any better mechanism for identifying which axes a given
+    * StagePosition supports (e.g. recognizing if an axis is XY-only and thus
+    * can't move along the Z axis), we'll just find the first StagePosition
+    * that has a nonzero value along each axis, and add the appropriate offset. 
+    */
+   public void offsetSelectedSites(float[] offsets) {
+      assert(offsets.length == 3);
+      PositionList newList = new PositionList();
+      for (int rowIndex : posTable_.getSelectedRows()) {
+         // Y'know, if we did StagePositions using an array instead of via
+         // specially-named properties, I wouldn't need to track these booleans
+         // separately either...
+         boolean didX = false, didY = false, didZ = false;
+         MultiStagePosition multiPos = MultiStagePosition.newInstance(
+               model_.getPositionList().getPosition(rowIndex - 1));
+         for (int subIndex = 0; subIndex < multiPos.size(); ++subIndex) {
+            StagePosition subPos = multiPos.get(subIndex);
+            if (!didX && subPos.x != 0) {
+               subPos.x += offsets[0];
+               didX = true;
+            }
+            if (!didY && subPos.y != 0) {
+               subPos.y += offsets[1];
+               didY = true;
+            }
+            if (!didZ && subPos.z != 0) {
+               subPos.z += offsets[2];
+               didZ = true;
+            }
+         }
+         newList.addPosition(multiPos);
+      }
+      model_.setData(newList);
+      model_.fireTableDataChanged();
    }
 }
