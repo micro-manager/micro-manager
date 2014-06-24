@@ -55,6 +55,9 @@ import mmcorej.StrVector;
 import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.AcqControlDlg;
+import org.micromanager.api.events.StagePositionChangedEvent;
+import org.micromanager.api.events.XYStagePositionChangedEvent;
+import org.micromanager.events.EventManager;
 import org.micromanager.MMOptions;
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.utils.GUIColors;
@@ -315,8 +318,6 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       refreshButton.setText("Refresh");
       add(refreshButton);
 
-      refreshCurrentPosition();
-
       final JButton removeButton = new JButton();
       removeButton.setMinimumSize(buttonSize);
       removeButton.setFont(arialSmallFont_);
@@ -433,6 +434,10 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       closeButton.setIcon(SwingResourceManager.getIcon(MMStudioMainFrame.class, "/org/micromanager/icons/empty.png"));
       closeButton.setText("Close");
       add(closeButton);
+
+      // Register to be informed when the current stage position changes.
+      EventManager.register(this);
+      refreshCurrentPosition();
    }
    
    public void addListeners() {   
@@ -699,8 +704,20 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       acqControlDlg_.updateGUIContents();
    }
  
+   // The stage position changed; update curMsp_.
+   @Subscribe
+   public void onStagePositionChanged(StagePositionChangedEvent event) {
+      refreshCurrentPosition();
+   }
+
+   // The stage position changed; update curMsp_.
+   @Subscribe
+   public void onXYStagePositionChanged(XYStagePositionChangedEvent event) {
+      refreshCurrentPosition();
+   }
+
    /**
-    * Update display of the current xy position.
+    * Update display of the current stage position.
     */
    private void refreshCurrentPosition() {
       StringBuilder sb = new StringBuilder();
