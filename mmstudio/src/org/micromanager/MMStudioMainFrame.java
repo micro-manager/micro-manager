@@ -600,25 +600,18 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
 
          private Thread initializePlugins() {
             pluginMenu_ = GUIUtils.createMenuInMenuBar(menuBar_, "Plugins");
-            Thread myThread = new ThreadPluginLoading("Plugin loading");
-            myThread.start();
-            return myThread;
+            Thread loadThread = new Thread(new ThreadGroup("Plugin loading"),
+                  new Runnable() {
+                     @Override
+                     public void run() {
+                        // Needed for loading clojure-based jars:
+                        Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
+                        pluginLoader_.loadPlugins();
+                     }
+            });
+            loadThread.start();
+            return loadThread;
          }
-
-         class ThreadPluginLoading extends Thread {
-
-            public ThreadPluginLoading(String string) {
-               super(string);
-            }
-
-            @Override
-            public void run() {
-               // Needed for loading clojure-based jars:
-               Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
-               pluginLoader_.loadPlugins();
-            }
-         }
-  
       });
         
    }
