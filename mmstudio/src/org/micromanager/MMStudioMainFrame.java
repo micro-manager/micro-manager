@@ -4039,14 +4039,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       }
    }
 
-   public void clearOutput() throws MMScriptException {
-      clearMessageWindow();
-   }
-
-   public void clear() throws MMScriptException {
-      clearMessageWindow();
-   }
-
    @Override
    public void setChannelContrast(String title, int channel, int min, int max)
          throws MMScriptException {
@@ -4108,7 +4100,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    }
 
    @Override
-      public void setRelativeXYStagePosition(double x, double y) throws MMScriptException {
+   public void setRelativeXYStagePosition(double x, double y) throws MMScriptException {
       try {
          core_.setRelativeXYPosition(core_.getXYStageDevice(), x, y);
          core_.waitForDevice(core_.getXYStageDevice());
