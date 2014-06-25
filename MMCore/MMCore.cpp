@@ -4142,54 +4142,6 @@ void CMMCore::defineConfiguration(const char* configName, const char* deviceLabe
 }
 
 /**
- * Applies a configuration. The command will fail if the
- * configuration was not previously defined.
- *
- * @param configName      the configuration name
- */
-void CMMCore::setConfiguration(const char* configName) throw (CMMError)
-{
-   // tolerate empty configuration names
-   if (configName == 0 || strlen(configName) == 0)
-      return;
-
-   CConfigMap::const_iterator it = configs_.find(configName);
-   if (it == configs_.end())
-      throw CMMError(ToQuotedString(configName) + ": " + getCoreErrorText(MMERR_NoConfiguration),
-            MMERR_NoConfiguration);
-   
-   try {
-      applyConfiguration(*it->second);
-   } catch (CMMError&) {
-      throw;
-   }
-
-   LOG_DEBUG(coreLogger_) << "Applied configuration " << configName;
-}
-
-/**
- * Deletes a configuration. The command will fail if the
- * configuration was not previously defined.
- *
- * @param configName      the configuration name
- */
-void CMMCore::deleteConfiguration(const char* configName) throw (CMMError)
-{
-   // tolerate empty configuration names
-   if (configName == 0 || strlen(configName) == 0)
-      return;
-
-   CConfigMap::const_iterator it = configs_.find(configName);
-   if (it == configs_.end())
-      throw CMMError(ToQuotedString(configName) + ": " + getCoreErrorText(MMERR_NoConfiguration),
-            MMERR_NoConfiguration);
-   configs_.erase(configName);
-
-   LOG_DEBUG(coreLogger_) << "Deleted configuration " << configName;
-}
-
-
-/**
  * Returns all defined configuration names.
  * @return an array of configuration names
  */
@@ -4201,42 +4153,6 @@ std::vector<string> CMMCore::getAvailableConfigurations() const
       configList.push_back(it++->first);
 
    return configList;
-}
-
-/**
- * Returns the current configuration.
- * An empty string is a valid return value, since the system state will not
- * always correspond to any of the defined configurations.
- * Also, in general it is possible that the system state fits multiple configurations.
- * This method will return only the first maching configuration, if any.
- *
- * @return the name of the current configuration
- */
-string CMMCore::getConfiguration()
-{
-
-
-   // Here we find all configurations that "fit" the current state of the system
-   // but return only the first one.
-   // Still not sure how to treat multiple configurations fitting the system state -
-   // but for the time being we will assume that all configurations are unique and
-   // therefore we need to return only one. In the future we may revert to returning
-   // a vector of mathcing configurations...
-
-   vector<string> configList;
-   string empty("");
-
-   CConfigMap::const_iterator it = configs_.begin();
-   while(it != configs_.end())
-   {
-      if (isConfigurationCurrent(*it->second))
-         configList.push_back(it->first);
-      it++;
-   }
-   if (configList.empty())
-      return empty;
-   else
-      return configList[0];
 }
 
 /**
@@ -4255,18 +4171,6 @@ Configuration CMMCore::getConfigurationData(const char* configName) const throw 
       throw CMMError(ToQuotedString(configName) + ": " + getCoreErrorText(MMERR_NoConfiguration),
             MMERR_NoConfiguration);
    return *it->second;
-}
-
-/**
- * Checks if the configuration already exists.
- *
- * @return true if the configuration is already defined
- * @param configName configuration name 
- */
-bool CMMCore::isConfigurationDefined(const char* configName)
-{
-   CConfigMap::const_iterator it = configs_.find(configName);
-   return it == configs_.end() ? false : true;
 }
 
 /**

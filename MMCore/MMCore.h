@@ -628,11 +628,7 @@ private:
 private:
    // >>>>> OBSOLETE >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
    void defineConfiguration(const char* configName, const char* deviceName, const char* propName, const char* value);
-   bool isConfigurationDefined(const char* configName);
-   void setConfiguration(const char* configName) throw (CMMError);
-   void deleteConfiguration(const char* configName) throw (CMMError);
    std::vector<std::string> getAvailableConfigurations() const;
-   std::string getConfiguration();
    Configuration getConfigurationData(const char* config) const throw (CMMError);
 };
 
