@@ -2147,23 +2147,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       doSnap();
    }
 
-   public Object getPixels() {
-      ImagePlus ip = WindowManager.getCurrentImage();
-      if (ip != null) {
-         return ip.getProcessor().getPixels();
-      }
-
-      return null;
-   }
-
-   public void setPixels(Object obj) {
-      ImagePlus ip = WindowManager.getCurrentImage();
-      if (ip == null) {
-         return;
-      }
-      ip.getProcessor().setPixels(obj);
-   }
-
    private boolean isCameraAvailable() {
       return cameraLabel_.length() > 0;
    }
