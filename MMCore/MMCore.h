@@ -545,8 +545,8 @@ public:
 
 private:
    // make object non-copyable
-   CMMCore(const CMMCore& /*c*/) {}
-   CMMCore& operator=(const CMMCore& /*rhs*/);
+   CMMCore(const CMMCore&);
+   CMMCore& operator=(const CMMCore&);
 
    typedef std::map<std::string, Configuration*> CConfigMap;
    typedef std::map<std::string, PropertyBlock*> CPropBlockMap;
