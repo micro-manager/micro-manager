@@ -3723,16 +3723,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       acq.setProperty(propertyName, value);
    }
 
-   public void setAcquisitionSystemState(String acqName, JSONObject md) throws MMScriptException {
-//      acqMgr_.getAcquisition(acqName).setSystemState(md);
-      setAcquisitionSummary(acqName, md);
-   }
-
-   //@Override
-   public void setAcquisitionSummary(String acqName, JSONObject md) throws MMScriptException {
-      acqMgr_.getAcquisition(acqName).setSummaryProperties(md);
-   }
-
    @Override
    public void setImageProperty(String acqName, int frame, int channel,
          int slice, String propName, String value) throws MMScriptException {
