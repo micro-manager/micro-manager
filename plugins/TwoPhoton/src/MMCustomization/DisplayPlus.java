@@ -28,10 +28,10 @@ import org.json.JSONObject;
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.acquisition.AcquisitionEngine;
 
-import org.micromanager.imageDisplay.VirtualAcquisitionDisplay;
+import org.micromanager.imagedisplay.VirtualAcquisitionDisplay;
 import org.micromanager.api.ImageCache;
 import org.micromanager.api.ImageCacheListener;
-import org.micromanager.imageDisplay.IMMImagePlus;
+import org.micromanager.imagedisplay.IMMImagePlus;
 
 
 import org.micromanager.internalinterfaces.DisplayControls;

@@ -20,7 +20,7 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-package org.micromanager.imageDisplay;
+package org.micromanager.imagedisplay;
 
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;

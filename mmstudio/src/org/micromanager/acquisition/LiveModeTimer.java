@@ -30,7 +30,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
-import org.micromanager.imageDisplay.VirtualAcquisitionDisplay;
+import org.micromanager.imagedisplay.VirtualAcquisitionDisplay;
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.utils.CanvasPaintPending;
 import org.micromanager.utils.MDUtils;

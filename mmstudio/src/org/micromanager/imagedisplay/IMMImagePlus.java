@@ -1,4 +1,4 @@
-package org.micromanager.imageDisplay;
+package org.micromanager.imagedisplay;
 
 /**
  * This interface allows us to manipulate the dimensions

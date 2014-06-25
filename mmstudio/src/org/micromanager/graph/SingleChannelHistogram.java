@@ -44,7 +44,7 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import org.micromanager.MMStudioMainFrame;
-import org.micromanager.imageDisplay.VirtualAcquisitionDisplay;
+import org.micromanager.imagedisplay.VirtualAcquisitionDisplay;
 import org.micromanager.internalinterfaces.Histograms;
 import org.micromanager.api.ImageCache;
 import org.micromanager.graph.HistogramPanel.CursorListener;

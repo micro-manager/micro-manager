@@ -1,4 +1,4 @@
-package org.micromanager.imageDisplay;
+package org.micromanager.imagedisplay;
 
 import java.awt.Color;
 

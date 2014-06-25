@@ -1,5 +1,5 @@
 
-package org.micromanager.imageDisplay;
+package org.micromanager.imagedisplay;
 
 import ij.ImagePlus;
 import ij.process.ImageProcessor;

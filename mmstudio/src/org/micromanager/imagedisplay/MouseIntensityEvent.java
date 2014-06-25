@@ -1,4 +1,4 @@
-package org.micromanager.imageDisplay;
+package org.micromanager.imagedisplay;
 
 // This class provides information when the mouse moves over an image.
 public class MouseIntensityEvent {

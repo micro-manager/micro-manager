@@ -40,7 +40,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.jdesktop.layout.GroupLayout;
 import org.jdesktop.layout.LayoutStyle;
-import org.micromanager.imageDisplay.VirtualAcquisitionDisplay;
+import org.micromanager.imagedisplay.VirtualAcquisitionDisplay;
 import org.micromanager.internalinterfaces.Histograms;
 import org.micromanager.utils.MMScaleBar;
 

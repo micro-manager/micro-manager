@@ -5,7 +5,7 @@
  *
  * Created on Jul 15, 2010, 2:54:37 PM
  */
-package org.micromanager.imageDisplay;
+package org.micromanager.imagedisplay;
 
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;

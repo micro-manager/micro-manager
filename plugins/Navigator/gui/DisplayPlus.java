@@ -18,10 +18,10 @@ import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import org.micromanager.imageDisplay.VirtualAcquisitionDisplay;
+import org.micromanager.imagedisplay.VirtualAcquisitionDisplay;
 import org.micromanager.api.ImageCache;
-import org.micromanager.imageDisplay.IMMImagePlus;
-import org.micromanager.imageDisplay.MMCompositeImage;
+import org.micromanager.imagedisplay.IMMImagePlus;
+import org.micromanager.imagedisplay.MMCompositeImage;
 
 
 import org.micromanager.internalinterfaces.DisplayControls;

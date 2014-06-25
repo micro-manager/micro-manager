@@ -16,7 +16,7 @@ import org.jdesktop.swingx.*;
 import org.jdesktop.swingx.multislider.DefaultMultiThumbModel;
 import org.jdesktop.swingx.multislider.MultiThumbModel;
 import org.micromanager.MMStudioMainFrame;
-import org.micromanager.imageDisplay.VirtualAcquisitionDisplay;
+import org.micromanager.imagedisplay.VirtualAcquisitionDisplay;
 import org.micromanager.utils.GUIUtils;
 import org.micromanager.utils.ImageFocusListener;
 

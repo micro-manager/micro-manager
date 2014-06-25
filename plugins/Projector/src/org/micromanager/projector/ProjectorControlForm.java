@@ -75,7 +75,7 @@ import mmcorej.DeviceType;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.micromanager.api.ScriptInterface;
-import org.micromanager.imageDisplay.VirtualAcquisitionDisplay;
+import org.micromanager.imagedisplay.VirtualAcquisitionDisplay;
 import org.micromanager.utils.GUIUtils;
 import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.JavaUtils;
