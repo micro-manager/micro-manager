@@ -2311,38 +2311,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       return isLiveModeOn();
    }
 
-   public boolean updateImage() {
-      try {
-         if (isLiveModeOn()) {
-               enableLiveMode(false);
-               return true; // nothing to do, just show the last image
-         }
-
-         if (WindowManager.getCurrentWindow() == null) {
-            return false;
-         }
-
-         ImagePlus ip = WindowManager.getCurrentImage();
-         
-         core_.snapImage();
-         Object img = core_.getImage();
-
-         ip.getProcessor().setPixels(img);
-         ip.updateAndRepaintWindow();
-
-         if (!isCurrentImageFormatSupported()) {
-            return false;
-         }
-       
-         updateLineProfile();
-      } catch (Exception e) {
-         ReportingUtils.showError(e);
-         return false;
-      }
-
-      return true;
-   }
-
    public boolean displayImage(final Object pixels) {
       if (pixels instanceof TaggedImage) {
          return displayTaggedImage((TaggedImage) pixels, true);
@@ -2350,7 +2318,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
          return displayImage(pixels, true);
       }
    }
-
 
    public boolean displayImage(final Object pixels, boolean wait) {
       checkSimpleAcquisition();
@@ -2383,23 +2350,22 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    }
 
    private boolean isCurrentImageFormatSupported() {
-      boolean ret = false;
       long channels = core_.getNumberOfComponents();
       long bpp = core_.getBytesPerPixel();
 
       if (channels > 1 && channels != 4 && bpp != 1) {
          handleError("Unsupported image format.");
       } else {
-         ret = true;
+         return true;
       }
-      return ret;
+      return false;
    }
 
    public void doSnap() {
       doSnap(false);
    }
 
-   public void doSnap(final boolean album) {
+   public void doSnap(final boolean shouldAddToAlbum) {
       if (core_.getCameraDevice().length() == 0) {
          ReportingUtils.showError("No camera configured");
          return;
@@ -2414,7 +2380,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
          runDisplayThread(snapImageQueue, new DisplayImageRoutine() {
             @Override
             public void show(final TaggedImage image) {
-                  if (album) {
+                  if (shouldAddToAlbum) {
                      try {
                         addToAlbum(image);
                      } catch (MMScriptException ex) {
