@@ -1,4 +1,4 @@
-package org.micromanager.pipelineUI;
+package org.micromanager.pipelineinterface;
 
 import com.google.common.eventbus.Subscribe;
 
