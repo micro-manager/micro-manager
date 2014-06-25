@@ -302,8 +302,6 @@ public class ConfigDialog extends MMDialog {
       super.dispose();
       savePosition();
       gui_.refreshGUI();
-      // NS: Can this really be removed?
-      // gui_.selectConfigGroup(groupName_);
    }
 
    public void update() {

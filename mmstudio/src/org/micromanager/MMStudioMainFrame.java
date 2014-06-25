@@ -4361,10 +4361,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       return afMgr_;
    }
 
-   public void selectConfigGroup(String groupName) {
-      configPad_.setGroup(groupName);
-   }
-
    @Override
    public void setImageSavingFormat(Class imageSavingClass) throws MMScriptException {
       if (! (imageSavingClass.equals(TaggedImageStorageDiskDefault.class) || 
