@@ -3,7 +3,7 @@
 // PROJECT:       Micro-Manager
 // SUBSYSTEM:     MMCore
 //-----------------------------------------------------------------------------
-// DESCRIPTION:   Logger interface
+// DESCRIPTION:   Legacy logger interface
 // COPYRIGHT:     University of California, San Francisco, 2009-2014
 // LICENSE:       This file is distributed under the "Lesser GPL" (LGPL) license.
 //                License text is included with the source distribution.
@@ -25,24 +25,17 @@
 
 #include <boost/utility.hpp>
 
-#include <cstdarg>
 #include <string>
 
 
 class FastLogger : boost::noncopyable
 {
    mm::LogManager& manager_;
-   boost::shared_ptr<mm::logging::Logger> defaultLogger_;
 
 public:
    FastLogger(mm::LogManager& manager) :
-      manager_(manager),
-      defaultLogger_(manager_.NewLogger("Core"))
+      manager_(manager)
    {}
-
-   void VLogF(bool isDebug, const char* format, va_list ap);
-   void LogF(bool isDebug, const char* format, ...);
-   void Log(bool isDebug, const char* entry);
 
    // read the current log into memory ( for automated trouble report )
    // since the log file can be extremely large, pass back exactly the buffer that was read

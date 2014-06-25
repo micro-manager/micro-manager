@@ -556,8 +556,11 @@ private:
    // as long as possible during construction and (especially) destruction.
    mm::LogManager logManager_;
    boost::shared_ptr<mm::logging::Logger> appLogger_;
+   boost::shared_ptr<mm::logging::Logger> coreLogger_;
 
    bool everSnapped_;
+
+   // "Default" or "current" devices.
    boost::shared_ptr<CameraInstance> camera_;
    boost::shared_ptr<ShutterInstance> shutter_;
    boost::shared_ptr<StageInstance> focusStage_;

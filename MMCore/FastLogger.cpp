@@ -3,7 +3,7 @@
 // PROJECT:       Micro-Manager
 // SUBSYSTEM:     MMCore
 //-----------------------------------------------------------------------------
-// DESCRIPTION:   Logger implementation
+// DESCRIPTION:   Legacy logger adapter
 // COPYRIGHT:     University of California, San Francisco, 2009-2014
 // LICENSE:       This file is distributed under the "Lesser GPL" (LGPL) license.
 //                License text is included with the source distribution.
@@ -26,88 +26,6 @@
 
 #include <climits>
 #include <fstream>
-
-
-void FastLogger::VLogF(bool isDebug, const char* format, va_list ap)
-{
-   // Keep a copy of the argument list
-   va_list apCopy;
-#ifdef _MSC_VER
-   apCopy = ap;
-#else
-   va_copy(apCopy, ap);
-#endif
-
-   // We avoid dynamic allocation in the vast majority of cases.
-   const size_t smallBufSize = 1024;
-   char smallBuf[smallBufSize];
-   int n = vsnprintf(smallBuf, smallBufSize, format, ap);
-   if (n >= 0 && n < smallBufSize)
-   {
-      Log(isDebug, smallBuf);
-      return;
-   }
-
-   // Okay, now we deal with some nastiness due to the non-standard
-   // implementation of Microsoft's vsnprintf() (vsnprintf_s() is no better).
-
-#ifdef _MSC_VER
-   // With Microsoft's C Runtime, n is always -1 (whether error or overflow).
-   // Try a fixed-size buffer and give up if it is not large enough.
-   const size_t bigBufSize = 65536;
-#else
-   // With C99/C++11 compliant vsnprintf(), n is -1 if error but on overflow it
-   // is the required string length.
-   if (n < 0)
-   {
-      Log(isDebug, ("Error in vsnprintf() while formatting log entry with "
-               "format string " + ToQuotedString(format)).c_str());
-      return;
-   }
-   size_t bigBufSize = n + 1;
-#endif
-
-   boost::scoped_array<char> bigBuf(new char[bigBufSize]);
-   if (!bigBuf)
-   {
-      Log(isDebug, ("Error: could not allocate " + ToString(bigBufSize/1024) +
-               " kilobytes to format log entry with format string " +
-               ToQuotedString(format)).c_str());
-      return;
-   }
-
-   n = vsnprintf(bigBuf.get(), bigBufSize, format, apCopy);
-   if (n >= 0 && n < bigBufSize)
-   {
-      Log(isDebug, bigBuf.get());
-      return;
-   }
-
-#ifdef _MSC_VER
-   Log(isDebug, ("Error or overflow in vsnprintf() (buffer size " +
-            ToString(bigBufSize / 1024) + " kilobytes) while formatting "
-            "log entry with format string " + ToQuotedString(format)).c_str());
-#else
-   Log(isDebug, ("Error in vsnprintf() while formatting log entry with "
-            "format string " + ToQuotedString(format)).c_str());
-#endif
-}
-
-
-void FastLogger::LogF(bool isDebug, const char* format, ...)
-{
-   va_list ap;
-   va_start(ap, format);
-   VLogF(isDebug, format, ap);
-   va_end(ap);
-}
-
-
-void FastLogger::Log(bool isDebug, const char* entry)
-{
-   defaultLogger_->Log(isDebug ? mm::logging::LogLevelDebug :
-         mm::logging::LogLevelInfo, entry);
-}
 
 
 void FastLogger::LogContents(char** ppContents, unsigned long& len)
