@@ -4284,11 +4284,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       getAcquisition(name).promptToSave(prompt);
    }
 
-   // Deprecated; use correctly spelled version. (Used to be part of API.)
-   public void promptToSaveAcqusition(String name, boolean prompt) throws MMScriptException {
-      promptToSaveAcquisition(name, prompt);
-   }
-
    @Override
    public void registerForEvents(Object obj) {
       EventManager.register(obj);
