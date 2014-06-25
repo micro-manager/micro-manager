@@ -1456,20 +1456,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       engine_.setRootName(originalRoot);
    }
 
-   /**
-    * @Deprecated
-    * @throws MMScriptException
-    */
-   public void startBurstAcquisition() throws MMScriptException {
-      runAcquisition();
-   }
-
-   public boolean isBurstAcquisitionRunning() throws MMScriptException {
-      if (engine_ == null)
-         return false;
-      return engine_.isAcquisitionRunning();
-   }
-
    private void startLoadingPipelineClass() {
       Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
       acquisitionEngine2010LoadingThread_ = new Thread("Pipeline Class loading thread") {
@@ -1486,8 +1472,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       acquisitionEngine2010LoadingThread_.start();
    }
 
-
-   
    /**
     * Shows images as they appear in the default display window. Uses
     * the default processor stack to process images as they arrive on
@@ -1515,8 +1499,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
                 }
             }
         }.start();
-    }
-
+   }
 
    private static JLabel createLabel(String text, boolean big,
            JPanel parentPanel, int west, int north, int east, int south) {
