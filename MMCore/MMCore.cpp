@@ -104,7 +104,7 @@ using namespace std;
  */
 const int MMCore_versionMajor = 4;
 const int MMCore_versionMinor = 0;
-const int MMCore_versionPatch = 0;
+const int MMCore_versionPatch = 1;
 
 
 // Legacy macros for logging.
@@ -788,42 +788,45 @@ void CMMCore::assignDefaultRole(boost::shared_ptr<DeviceInstance> pDevice)
       case MM::CameraDevice:
          camera_ = boost::static_pointer_cast<CameraInstance>(pDevice);
          CORE_LOG("Device %s set as default camera.\n", label.c_str());
-      break;
-
-      case MM::StateDevice:
-         // nothing to do for now
-      break;
+         break;
 
       case MM::ShutterDevice:
          shutter_ = boost::static_pointer_cast<ShutterInstance>(pDevice);
-         //assignImageSynchro(label);
          CORE_LOG("Device %s set as default shutter.\n", label.c_str());
-      break;
+         break;
+
+      case MM::StageDevice:
+         focusStage_ = boost::static_pointer_cast<StageInstance>(pDevice);
+         CORE_LOG("Device %s set as default stage.\n", label.c_str());
+         break;
 
       case MM::XYStageDevice:
          xyStage_ = boost::static_pointer_cast<XYStageInstance>(pDevice);
          CORE_LOG("Device %s set as default xyStage.\n", label.c_str());
-      break;
+         break;
 
       case MM::AutoFocusDevice:
          autoFocus_ = boost::static_pointer_cast<AutoFocusInstance>(pDevice);
          CORE_LOG("Device %s set as default auto-focus.\n", label.c_str());
-      break;
+         break;
 
       case MM::SLMDevice:
          slm_ = boost::static_pointer_cast<SLMInstance>(pDevice);
          CORE_LOG("Device %s set as default SLM.\n", label.c_str());
-      break;
+         break;
 
       case MM::GalvoDevice:
          galvo_ = boost::static_pointer_cast<GalvoInstance>(pDevice);
          CORE_LOG("Device %s set as default Galvo.\n", label.c_str());
-      break;
+         break;
+
+      case MM::ImageProcessorDevice:
+         imageProcessor_ = boost::static_pointer_cast<ImageProcessorInstance>(pDevice);
+         CORE_LOG("Device %s set as default image processor.\n", label.c_str());
 
       default:
          // no action on unrecognized device
-         //CORE_LOG("%s: unknown device type\n", label.c_str());
-     break;
+         break;
    }
 }
 
@@ -834,44 +837,42 @@ void CMMCore::unloadDevice(const char* label///< the name of the device to unloa
                            ) throw (CMMError)
 {
    boost::shared_ptr<DeviceInstance> pDevice = GetDeviceWithCheckedLabel(label);
+
+   // Remove any references we might hold to the device.
+   if (pDevice == camera_)
+   {
+      camera_.reset();
+   }
+   else if (pDevice == shutter_)
+   {
+      shutter_.reset();
+   }
+   else if (pDevice == focusStage_)
+   {
+      focusStage_.reset();
+   }
+   else if (pDevice == xyStage_)
+   {
+      xyStage_.reset();
+   }
+   else if (pDevice == autoFocus_)
+   {
+      autoFocus_.reset();
+   }
+   else if (pDevice == slm_)
+   {
+      slm_.reset();
+   }
+   else if (pDevice == galvo_)
+   {
+      galvo_.reset();
+   }
+   else if (pDevice == imageProcessor_)
+   {
+      imageProcessor_.reset();
+   }
    
    try {
-   
-      switch(pDevice->GetType())
-      {
-         case MM::CameraDevice:
-            camera_.reset();
-            CORE_LOG("default camera unloaded.\n");
-         break;
-
-         case MM::StateDevice:
-            // nothing to do for now
-         break;
-
-         case MM::ShutterDevice:
-            shutter_.reset();
-            CORE_LOG("default shutter unloaded.\n");
-         break;
-
-         case MM::XYStageDevice:
-            xyStage_.reset();
-            CORE_LOG("default xyStage unloaded.\n");
-         break;
-
-         case MM::AutoFocusDevice:
-            autoFocus_.reset();
-            CORE_LOG("default auto-focus unloaded.\n");
-         break;
-
-         case MM::SLMDevice:
-            slm_.reset();
-            CORE_LOG("default SLM unloaded.\n");
-         break;
-
-         default:
-            // no action on unrecognized device
-         break;
-      }
       MMThreadGuard guard(pluginManager_.getModuleLock(pDevice));
       pluginManager_.UnloadDevice(pDevice);
         
@@ -890,15 +891,15 @@ void CMMCore::unloadDevice(const char* label///< the name of the device to unloa
 void CMMCore::unloadAllDevices() throw (CMMError)
 {
    try {
-
       // clear all roles
       camera_.reset();
       shutter_.reset();
       focusStage_.reset();
       xyStage_.reset();
       autoFocus_.reset();
-      imageProcessor_.reset();
       slm_.reset();
+      galvo_.reset();
+      imageProcessor_.reset();
 
       // unload modules
       pluginManager_.UnloadAllDevices();
