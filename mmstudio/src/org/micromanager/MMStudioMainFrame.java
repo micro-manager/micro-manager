@@ -3682,28 +3682,9 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       acqMgr_.closeAcquisition(name);
    }
 
-   /**
-    * @Deprecated  use closeAcquisitionWindow instead
-    * @Deprecated - used to be in api/AcquisitionEngine
-    */
-   public void closeAcquisitionImage5D(String acquisitionName) throws MMScriptException {
-      acqMgr_.closeImageWindow(acquisitionName);
-   }
-
    @Override
    public void closeAcquisitionWindow(String acquisitionName) throws MMScriptException {
       acqMgr_.closeImageWindow(acquisitionName);
-   }
-
-   /**
-    * @Deprecated - used to be in api/AcquisitionEngine
-    * Since Burst and normal acquisition are now carried out by the same engine,
-    * loadBurstAcquistion simply calls loadAcquisition
-    * t
-    * @param path - path to file specifying acquisition settings
-    */
-   public void loadBurstAcquisition(String path) throws MMScriptException {
-      this.loadAcquisition(path);
    }
 
    @Override
