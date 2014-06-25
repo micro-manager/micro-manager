@@ -2185,13 +2185,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       return 0;
    }
 
-   public ImageProcessor getImageProcessor() {
-      ImagePlus ip = WindowManager.getCurrentImage();
-      if (ip == null)
-         return null;
-      return ip.getProcessor();
-   }
-
    private boolean isCameraAvailable() {
       return cameraLabel_.length() > 0;
    }
@@ -2219,11 +2212,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    public AcqControlDlg getAcqDlg() {
       return acqControlWin_;
    }
-
    
-   /**
-    * Implements ScriptInterface
-    */
    @Override
    @Deprecated
    public PositionListDlg getXYPosListDlg() {
@@ -2231,9 +2220,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       return posListDlg_;
    }
 
-   /**
-    * Implements ScriptInterface
-    */
    @Override
    public boolean isAcquisitionRunning() {
       if (engine_ == null)
@@ -2241,9 +2227,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       return engine_.isAcquisitionRunning();
    }
 
-   /**
-    * Implements ScriptInterface
-    */
    @Override
    public boolean versionLessThan(String version) throws MMScriptException {
       try {
@@ -2278,18 +2261,9 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    } 
 
    @Override
-    public boolean isLiveModeOn() {
-        return liveModeTimer_ != null && liveModeTimer_.isRunning();
+   public boolean isLiveModeOn() {
+      return (liveModeTimer_ != null && liveModeTimer_.isRunning());
    }
-    
-   public LiveModeTimer getLiveModeTimer() {
-      if (liveModeTimer_ == null) {
-         liveModeTimer_ = new LiveModeTimer();
-      }
-      return liveModeTimer_;
-   }
-   
-   
 
    public void updateButtonsForLiveMode(boolean enable) {
       autoShutterCheckBox_.setEnabled(!enable);
@@ -2297,7 +2271,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
          toggleShutterButton_.setText(enable ? "Close" : "Open" );
       }
       snapButton_.setEnabled(!enable);
-      //toAlbumButton_.setEnabled(!enable);
       liveButton_.setIcon(enable ? SwingResourceManager.getIcon(MMStudioMainFrame.class,
               "/org/micromanager/icons/cancel.png")
               : SwingResourceManager.getIcon(MMStudioMainFrame.class,

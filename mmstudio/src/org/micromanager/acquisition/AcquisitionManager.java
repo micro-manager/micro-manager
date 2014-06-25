@@ -328,8 +328,7 @@ public class AcquisitionManager {
          }
       }
    }
-
-   
+ 
    public String[] getAcquisitionNames() {
       Set<String> keySet = acqs_.keySet();
       String keys[] = new String[keySet.size()];
