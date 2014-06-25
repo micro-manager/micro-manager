@@ -3780,21 +3780,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       updateButtonsForLiveMode(enable);
    }
 
-   public String createNewAlbum() {
-      return acqMgr_.createNewAlbum();
-   }
-
-   public void appendImage(String name, TaggedImage taggedImg) throws MMScriptException {
-      MMAcquisition acq = acqMgr_.getAcquisition(name);
-      int f = 1 + acq.getLastAcquiredFrame();
-      try {
-         MDUtils.setFrameIndex(taggedImg.tags, f);
-         } catch (JSONException e) {
-            throw new MMScriptException("Unable to set the frame index.");
-         }
-      acq.insertTaggedImage(taggedImg, f, 0, 0);
-   }
-
    @Override
    public void addToAlbum(TaggedImage taggedImg) throws MMScriptException {
       addToAlbum(taggedImg, null);
