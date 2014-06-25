@@ -104,7 +104,7 @@ public class AcquisitionManager {
     * @throws MMScriptException 
     */
    public boolean closeAllImageWindows() throws MMScriptException {
-      String[] acqNames = getAcqusitionNames();
+      String[] acqNames = getAcquisitionNames();
       for (String acqName : acqNames) {
          if (!closeImageWindow(acqName)) {
             return false;
@@ -330,7 +330,7 @@ public class AcquisitionManager {
    }
 
    
-   public String[] getAcqusitionNames() {
+   public String[] getAcquisitionNames() {
       Set<String> keySet = acqs_.keySet();
       String keys[] = new String[keySet.size()];
       return keySet.toArray(keys);

@@ -3997,7 +3997,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    @Override
    public String[] getAcquisitionNames()
    {
-      return acqMgr_.getAcqusitionNames();
+      return acqMgr_.getAcquisitionNames();
    }
    
    @Override
@@ -4253,11 +4253,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
 	   return engine_.getSequenceSettings();
    }
 
-   // Deprecated; use correctly spelled version. (Used to be part of API.)
-   public SequenceSettings getAcqusitionSettings() {
-      return getAcquisitionSettings();
-   }
-   
    @Override
    public void setAcquisitionSettings(SequenceSettings ss) {
       if (engine_ == null)
