@@ -4333,17 +4333,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       engine_ = eng;
    }
    
-   public void suspendLiveMode() {
-      liveModeSuspended_ = isLiveModeOn();
-      enableLiveMode(false);
-   }
-
-   public void resumeLiveMode() {
-      if (liveModeSuspended_) {
-         enableLiveMode(true);
-      }
-   }
-
    @Override
    public Autofocus getAutofocus() {
       return afMgr_.getDevice();
