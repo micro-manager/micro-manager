@@ -2043,8 +2043,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       updateStaticInfoFromCache();
    }
 
-   public void updateXYStagePosition(){
-
+   public void updateXYStagePosition() {
       double x[] = new double[1];
       double y[] = new double[1];
       try {
@@ -2056,12 +2055,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
 
       staticInfo_.x_ = x[0];
       staticInfo_.y_ = y[0];
-      updateStaticInfoFromCache();
-   }
-
-   private void updatePixSizeUm (double pixSizeUm) {
-      staticInfo_.pixSizeUm_ = pixSizeUm;
-
       updateStaticInfoFromCache();
    }
 
@@ -2126,7 +2119,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       }
    }
    
-   
+   // Ensure that the "XY list..." dialog exists.
    private void checkPosListDlg() {
       if (posListDlg_ == null) {
          posListDlg_ = new PositionListDlg(core_, this, posList_, 
@@ -2560,7 +2553,8 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
 
    @Subscribe
    public void onPixelSizeChanged(PixelSizeChangedEvent event) {
-      updatePixSizeUm(event.getNewPixelSizeUm());
+      staticInfo_.pixSizeUm_ = event.getNewPixelSizeUm();
+      updateStaticInfoFromCache();
    }
 
    @Subscribe
@@ -3465,7 +3459,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       return acqMgr_.createAcquisition(summaryMetadata, diskCached, engine_, displayOff);
    }
    
-   public void initializeSimpleAcquisition(String name, int width, int height,
+   private void initializeSimpleAcquisition(String name, int width, int height,
          int byteDepth, int bitDepth, int multiCamNumCh) throws MMScriptException {
       MMAcquisition acq = acqMgr_.getAcquisition(name);
       acq.setImagePhysicalDimensions(width, height, byteDepth, bitDepth, multiCamNumCh);
@@ -3614,11 +3608,12 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       acqMgr_.addToAlbum(taggedImg,displaySettings);
    }
 
-   @Override
    /**
     * The basic method for adding images to an existing data set.
-    * If the acquisition was not previously initialized, it will attempt to initialize it from the available image data
+    * If the acquisition was not previously initialized, it will attempt to 
+    * initialize it from the available image data
     */
+   @Override
    public void addImageToAcquisition(String name,
            int frame,
            int channel,
@@ -3689,11 +3684,11 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       acq.insertImage(taggedImg);
    }
 
-   @Override
    /**
     * A quick way to implicitly snap an image and add it to the data set. Works
     * in the same way as above.
     */
+   @Override
    public void snapAndAddImage(String name, int frame, int channel, int slice, int position) throws MMScriptException {
       TaggedImage ti;
       try {
