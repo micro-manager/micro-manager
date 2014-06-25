@@ -3487,13 +3487,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    }
 
    /**
-    * @Deprecated used to be part of api
-    */
-   public String runAcqusition(String name, String root) throws MMScriptException {
-      return runAcquisition(name, root);
-   }
-
-   /**
     * Loads acquisition settings from file
     * @param path file containing previously saved acquisition settings
     * @throws MMScriptException 
@@ -3600,18 +3593,12 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       this.openAcquisition(name, rootDir, nrFrames, nrChannels, nrSlices, 0, show, virtual);
    }
 
-   //@Override
-   public String createAcquisition(JSONObject summaryMetadata, boolean diskCached) {
-      return createAcquisition(summaryMetadata, diskCached, false);
-   }
-   
    @Override
    @Deprecated
    public String createAcquisition(JSONObject summaryMetadata, boolean diskCached, boolean displayOff) {
       return acqMgr_.createAcquisition(summaryMetadata, diskCached, engine_, displayOff);
    }
    
-   //@Override
    public void initializeSimpleAcquisition(String name, int width, int height,
          int byteDepth, int bitDepth, int multiCamNumCh) throws MMScriptException {
       MMAcquisition acq = acqMgr_.getAcquisition(name);
@@ -3620,7 +3607,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    }
 
    /**
-    * Call the below function with values extracted from the provided 
+    * Call initializeAcquisition with values extracted from the provided 
     * JSONObject.
     */
    private void initializeAcquisitionFromTags(String name, JSONObject tags) throws JSONException, MMScriptException {
