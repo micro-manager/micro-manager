@@ -494,7 +494,7 @@ vector<long> CMMCore::getAvailableDeviceTypes(const char* library) throw (CMMErr
 }
 
 /**
- * Displays the module and device interface versions.
+ * Returns the module and device interface versions.
  */
 string CMMCore::getAPIVersionInfo() const
 {

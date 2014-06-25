@@ -84,7 +84,6 @@
 #endif
 
 
-// forward declarations
 class CircularBuffer;
 class Configuration;
 class PropertyBlock;
@@ -98,45 +97,48 @@ class FastLogger;
 
 typedef unsigned int* imgRGB32;
 
+
+/// The Micro-Manager Core.
 /**
-* The interface to the core image acquisition services.
-* This class is intended as the top-most level interface to the core services.
-* Its public methods define the programmatic API, typically wrapped into the
-* high-level language wrapper (Python, Java, etc.). Public methods are designed
-* to conform to default processing conventions for the automatic wrapper generator
-* SWIG (http://www.swig.org).
-*/
+ * Provides a device-independent interface for hardware control. Additionally,
+ * provides some facilities (such as configuration groups) for application
+ * programming.
+ *
+ * The signatures of most of the public member functions are designed to be
+ * wrapped by SWIG with minimal manual configuration.
+ */
 class CMMCore
 {
    friend class CoreCallback;
    friend class CorePropertyCollection;
 
 public:
-
    CMMCore();
    ~CMMCore();
 
+   /// A static method that does nothing.
    /**
-    * A method that does nothing.
-    *
     * This method can be called as a sanity check when dynamically loading the
-    * Core library.
+    * Core library (e.g. through a foreign function interface for a high-level
+    * language).
     */
    static void noop() {}
 
-   /** @name Initialization and set-up
-   * Loading of drivers, initialization and setting-up the environment.
-   */
-   //@ {
+   /** \name Initialization and setup. */
+   ///@{
    void loadDevice(const char* label, const char* library, const char* adapterName) throw (CMMError);
    void unloadDevice(const char* label) throw (CMMError);
    void unloadAllDevices() throw (CMMError);
    void initializeAllDevices() throw (CMMError);
    void initializeDevice(const char* label) throw (CMMError);
-   void updateCoreProperties() throw (CMMError);
    void reset() throw (CMMError);
-   std::string getUserId() const;
-   std::string getHostName() const;
+
+   void unloadLibrary(const char* moduleName) throw (CMMError);
+
+   void updateCoreProperties() throw (CMMError);
+
+   std::string getCoreErrorText(int code) const;
+
    std::string getVersionInfo() const;
    std::string getAPIVersionInfo() const;
    Configuration getSystemState();
@@ -151,12 +153,10 @@ public:
    void saveSystemConfiguration(const char* fileName) throw (CMMError);
    void loadSystemConfiguration(const char* fileName) throw (CMMError);
    void registerCallback(MMEventCallback* cb);
-   //@ }
+   ///@}
 
-   /**
-    * @name Logging
-    */
-   // @{
+   /** \name Logging and log management. */
+   ///@{
    void setPrimaryLogFile(const char* filename, bool truncate = false) throw (CMMError);
    std::string getPrimaryLogFile() const;
 
@@ -175,38 +175,44 @@ public:
    MMCORE_DEPRECATED(std::string saveLogArchive(void));
    MMCORE_DEPRECATED(std::string saveLogArchiveWithPreamble(
             char* preamble, int length));
-   // @}
+   ///@}
 
-   /** @name Device discovery and configuration interface.
-   */
+   /** \name Device listing. */
+   ///@{
+   std::vector<std::string> getDeviceAdapterSearchPaths();
+   void setDeviceAdapterSearchPaths(const std::vector<std::string>& paths);
+   MMCORE_DEPRECATED(static void addSearchPath(const char *path));
+
+   std::vector<std::string> getDeviceAdapterNames() throw (CMMError);
+   MMCORE_DEPRECATED(static std::vector<std::string> getDeviceLibraries() throw (CMMError));
+
    std::vector<std::string> getAvailableDevices(const char* library) throw (CMMError);
    std::vector<std::string> getAvailableDeviceDescriptions(const char* library) throw (CMMError);
    std::vector<long> getAvailableDeviceTypes(const char* library) throw (CMMError);
+   ///@}
 
-   /** @name Generic device interface
-   * API guaranteed to work for all devices.
-   */
-   //@ {
-   std::vector<std::string> getDeviceAdapterSearchPaths();
-   void setDeviceAdapterSearchPaths(const std::vector<std::string>& paths);
-   std::vector<std::string> getDeviceAdapterNames() throw (CMMError);
-
-   static void addSearchPath(const char *path); // Deprecated
-   static std::vector<std::string> getDeviceLibraries() throw (CMMError); // Deprecated
-
+   /** \name Generic device control.
+    *
+    * Functionality supported by all devices.
+    */
+   ///@{
    std::vector<std::string> getLoadedDevices() const;
    std::vector<std::string> getLoadedDevicesOfType(MM::DeviceType devType) const;
+   MM::DeviceType getDeviceType(const char* label) throw (CMMError);
+   std::string getDeviceLibrary(const char* label) throw (CMMError);
+   std::string getDeviceName(const char* label) throw (CMMError);
+   std::string getDeviceDescription(const char* label) throw (CMMError);
+
    std::vector<std::string> getDevicePropertyNames(const char* label) throw (CMMError);
+   bool hasProperty(const char* label, const char* propName) throw (CMMError);
    std::string getProperty(const char* label, const char* propName) throw (CMMError);
    std::string getPropertyFromCache(const char* label, const char* propName) const throw (CMMError);
    void setProperty(const char* label, const char* propName, const char* propValue) throw (CMMError);
-
    void setProperty(const char* label, const char* propName, const bool propValue) throw (CMMError);
    void setProperty(const char* label, const char* propName, const long propValue) throw (CMMError);
    void setProperty(const char* label, const char* propName, const float propValue) throw (CMMError);
    void setProperty(const char* label, const char* propName, const double propValue) throw (CMMError);
 
-   bool hasProperty(const char* label, const char* propName) throw (CMMError);
    std::vector<std::string> getAllowedPropertyValues(const char* label, const char* propName) throw (CMMError);
    bool isPropertyReadOnly(const char* label, const char* propName) throw (CMMError);
    bool isPropertyPreInit(const char* label, const char* propName) throw (CMMError);
@@ -214,18 +220,13 @@ public:
    bool hasPropertyLimits(const char* label, const char* propName) throw (CMMError);
    double getPropertyLowerLimit(const char* label, const char* propName) throw (CMMError);
    double getPropertyUpperLimit(const char* label, const char* propName) throw (CMMError);
+   MM::PropertyType getPropertyType(const char* label, const char* propName) throw (CMMError);
+
    void startPropertySequence(const char* label, const char* propName) throw (CMMError);
    void stopPropertySequence(const char* label, const char* propName) throw (CMMError);
    long getPropertySequenceMaxLength(const char* label, const char* propName) throw (CMMError);
    void loadPropertySequence(const char* label, const char* propName, std::vector<std::string> eventSequence) throw (CMMError);
-   MM::PropertyType getPropertyType(const char* label, const char* propName) throw (CMMError);
-   MM::DeviceType getDeviceType(const char* label) throw (CMMError);
-   std::string getDeviceLibrary(const char* label) throw (CMMError);
-   void unloadLibrary(const char* moduleName) throw (CMMError);
-   std::string getDeviceName(const char* label) throw (CMMError);
-   std::string getParentLabel(const char* label) throw (CMMError);
-   void setParentLabel(const char* label, const char* parentLabel) throw (CMMError);
-   std::string getDeviceDescription(const char* label) throw (CMMError);
+
    bool deviceBusy(const char* deviceName) throw (CMMError);
    void waitForDevice(const char* deviceName) throw (CMMError);
    void waitForConfig(const char* group, const char* configName) throw (CMMError);
@@ -234,21 +235,19 @@ public:
    void waitForImageSynchro() throw (CMMError);
    bool deviceTypeBusy(MM::DeviceType devType) throw (CMMError);
    void waitForDeviceType(MM::DeviceType devType) throw (CMMError);
-   void sleep(double intervalMs) const;
+
    double getDeviceDelayMs(const char* label) throw (CMMError);
    void setDeviceDelayMs(const char* label, double delayMs) throw (CMMError);
+   bool usesDeviceDelay(const char* label) throw (CMMError);
+
    void setTimeoutMs(long timeoutMs) {if (timeoutMs > 0) timeoutMs_ = timeoutMs;}
    long getTimeoutMs() { return timeoutMs_;}
-   bool usesDeviceDelay(const char* label) throw (CMMError);
-   std::string getCoreErrorText(int code) const;
 
+   void sleep(double intervalMs) const;
+   ///@}
 
-   //@ }
-
-   /**
-   * @name System role identification for devices.
-   */
-   //@ {
+   /** \name Management of 'current' device for specific roles. */
+   ///@{
    std::string getCameraDevice();
    std::string getShutterDevice();
    std::string getFocusDevice();
@@ -267,13 +266,11 @@ public:
    void setSLMDevice(const char* slmLabel) throw (CMMError);
    void setGalvoDevice(const char* galvoLabel) throw (CMMError);
    void setChannelGroup(const char* channelGroup) throw (CMMError);
-   //@ }
+   ///@}
 
 
-   /** @name Multiple property settings
-   * A single configuration applies to multiple devices at the same time.
-   */
-   //@ {
+   /** \name Configuration groups. */
+   ///@{
    void defineConfig(const char* groupName, const char* configName) throw (CMMError);
    void defineConfig(const char* groupName, const char* configName, const char* deviceName, const char* propName, const char* value) throw (CMMError);
    void defineConfigGroup(const char* groupName) throw (CMMError);
@@ -290,6 +287,10 @@ public:
    std::string getCurrentConfig(const char* groupName) throw (CMMError);
    std::string getCurrentConfigFromCache(const char* groupName) throw (CMMError);
    Configuration getConfigData(const char* configGroup, const char* configName) throw (CMMError);
+   ///@}
+
+   /** \name The pixel size configuration group. */
+   ///@{
    std::string getCurrentPixelSizeConfig() throw (CMMError);
    std::string getCurrentPixelSizeConfig(bool cached) throw (CMMError);
    double getPixelSizeUm();
@@ -305,22 +306,29 @@ public:
    void renamePixelSizeConfig(const char* oldConfigName, const char* newConfigName) throw (CMMError);
    void deletePixelSizeConfig(const char* configName) throw (CMMError);
    Configuration getPixelSizeConfigData(const char* configName) throw (CMMError);
+   ///@}
 
-   //@ }
+   /** \name Property blocks. */
+   ///@{
+   void definePropertyBlock(const char* blockName, const char* propertyName, const char* propertyValue);
+   std::vector<std::string> getAvailablePropertyBlocks() const;
+   PropertyBlock getPropertyBlockData(const char* blockName);
+   ///@}
 
-   /** @name Imaging support
-   * Imaging related API.
-   */
-   //@ {
+   /** \name Image acquisition. */
+   ///@{
    void setROI(int x, int y, int xSize, int ySize) throw (CMMError); 
    void getROI(int& x, int& y, int& xSize, int& ySize) throw (CMMError); 
    void clearROI() throw (CMMError);
+
    void setExposure(double exp) throw (CMMError);
    void setExposure(const char* label, double dExp) throw (CMMError);
    double getExposure() throw (CMMError);
+
+   void snapImage() throw (CMMError);
    void* getImage() throw (CMMError);
    void* getImage(unsigned numChannel) throw (CMMError);
-   void snapImage() throw (CMMError);
+
    unsigned getImageWidth();
    unsigned getImageHeight();
    unsigned getBytesPerPixel();
@@ -329,9 +337,11 @@ public:
    unsigned getNumberOfCameraChannels();
    std::string getCameraChannelName(unsigned int channelNr);
    long getImageBufferSize();
+
    void assignImageSynchro(const char* deviceLabel) throw (CMMError);
    void removeImageSynchro(const char* label) throw (CMMError);
    void removeImageSynchroAll();
+
    void setAutoShutter(bool state);
    bool getAutoShutter();
    void setShutterOpen(bool state) throw (CMMError);
@@ -347,9 +357,9 @@ public:
    void stopSequenceAcquisition(const char* label) throw (CMMError);
    bool isSequenceRunning() throw ();
    bool isSequenceRunning(const char* label) throw (CMMError);
+
    void* getLastImage() throw (CMMError);
    void* popNextImage() throw (CMMError);
-
    void* getLastImageMD(unsigned channel, unsigned slice, Metadata& md) const throw (CMMError);
    void* popNextImageMD(unsigned channel, unsigned slice, Metadata& md) throw (CMMError);
    void* getLastImageMD(Metadata& md) const throw (CMMError);
@@ -371,12 +381,10 @@ public:
    void stopExposureSequence(const char* cameraLabel) throw (CMMError);
    long getExposureSequenceMaxLength(const char* cameraLabel) throw (CMMError);
    void loadExposureSequence(const char* cameraLabel, std::vector<double> exposureSequence_ms) throw (CMMError);
-   //@ }
+   ///@}
 
-   /** @name Auto-focusing
-   * API for controlling auto-focusing devices or software modules.
-   */
-   //@ {
+   /** \name Autofocus control. */
+   ///@{
    double getLastFocusScore();
    double getCurrentFocusScore();
    void enableContinuousFocus(bool enable) throw (CMMError);
@@ -387,12 +395,10 @@ public:
    void incrementalFocus() throw (CMMError);
    void setAutoFocusOffset(double offset) throw (CMMError);
    double getAutoFocusOffset() throw (CMMError);
-   //@}
+   ///@}
 
-   /** @name State device support
-   * API for controlling state devices (filters, turrets, etc.)
-   */
-   //@ {
+   /** \name State device control. */
+   ///@{
    void setState(const char* deviceLabel, long state) throw (CMMError);
    long getState(const char* deviceLabel) throw (CMMError);
    long getNumberOfStates(const char* deviceLabel);
@@ -403,32 +409,25 @@ public:
    long getStateFromLabel(const char* deviceLabel, const char* stateLabel) throw (CMMError);
    PropertyBlock getStateLabelData(const char* deviceLabel, const char* stateLabel);
    PropertyBlock getData(const char* deviceLabel);
-   //@ }
+   ///@}
 
-   /** @name Property blocks
-   * API for defining interchangeable equipment attributes
-   */
-   //@ {
-   void definePropertyBlock(const char* blockName, const char* propertyName, const char* propertyValue);
-   std::vector<std::string> getAvailablePropertyBlocks() const;
-   PropertyBlock getPropertyBlockData(const char* blockName);
-   //@ }
-
-   /** @name Stage control
-   * API for controlling one-dimensional stages
-   */
-   //@ {
+   /** \name Focus (Z) stage control. */
+   ///@{
    void setPosition(const char* deviceLabel, double position) throw (CMMError);
    double getPosition(const char* deviceLabel) throw (CMMError);
    void setRelativePosition(const char* deviceLabel, double d) throw (CMMError);
    void setOrigin(const char* deviceLabel) throw (CMMError);
    void setAdapterOrigin(const char* deviceLabel, double d) throw (CMMError);
-   //@ }
+
+   bool isStageSequenceable(const char* label) throw (CMMError);
+   void startStageSequence(const char* label) throw (CMMError);
+   void stopStageSequence(const char* label) throw (CMMError);
+   long getStageSequenceMaxLength(const char* label) throw (CMMError);
+   void loadStageSequence(const char* label, std::vector<double> positionSequence) throw (CMMError);
+   ///@}
    
-   /** @name XYStage control
-   * API for controlling XY stages
-   */
-   //@ {
+   /** \name XY stage control. */
+   ///@{
    void setXYPosition(const char* deviceLabel, double x, double y) throw (CMMError);
    void setRelativeXYPosition(const char* deviceLabel, double dx, double dy) throw (CMMError);
    void getXYPosition(const char* deviceLabel, double &x_stage, double &y_stage) throw (CMMError);
@@ -438,23 +437,7 @@ public:
    void home(const char* deviceLabel) throw (CMMError);
    void setOriginXY(const char* deviceLabel) throw (CMMError);
    void setAdapterOriginXY(const char* deviceName, double x, double y) throw (CMMError);
-   //@ }
 
-   /** @name Stage sequencing
-   * API for loading sequences onto single-axis stages
-   */
-   //@ {
-   bool isStageSequenceable(const char* label) throw (CMMError);
-   void startStageSequence(const char* label) throw (CMMError);
-   void stopStageSequence(const char* label) throw (CMMError);
-   long getStageSequenceMaxLength(const char* label) throw (CMMError);
-   void loadStageSequence(const char* label, std::vector<double> positionSequence) throw (CMMError);
-   //@ }
-
-   /** @name XY Stage sequencing
-   * API for loading sequences onto XY stages
-   */
-   //@ {
    bool isXYStageSequenceable(const char* label) throw (CMMError);
    void startXYStageSequence(const char* label) throw (CMMError);
    void stopXYStageSequence(const char* label) throw (CMMError);
@@ -462,12 +445,10 @@ public:
    void loadXYStageSequence(const char* label,
                             std::vector<double> xSequence,
                             std::vector<double> ySequence) throw (CMMError);
-   //@ }
+   ///@}
 
-   /** @name Serial port control
-   * API for serial ports
-   */
-   //@ {
+   /** \name Serial port control. */
+   ///@{
    void setSerialProperties(const char* portName,
       const char* answerTimeout,
       const char* baudRate,
@@ -480,12 +461,14 @@ public:
    std::string getSerialPortAnswer(const char* deviceLabel, const char* term) throw (CMMError);
    void writeToSerialPort(const char* deviceLabel, const std::vector<char> &data) throw (CMMError);
    std::vector<char> readFromSerialPort(const char* deviceLabel) throw (CMMError);
-   //@ }
+   ///@}
 
-   /** @name SLM control
-   * API for spatial light modulators such as liquid crystal on silicon (LCoS), digital micromirror devices (DMD), or multimedia projectors. 
-   */
-   //@ {
+   /** \name SLM control.
+    *
+    * Control of spatial light modulators such as liquid crystal on silicon
+    * (LCoS), digital micromirror devices (DMD), or multimedia projectors. 
+    */
+   ///@{
    void setSLMImage(const char* deviceLabel, unsigned char * pixels) throw (CMMError);
    void setSLMImage(const char* deviceLabel, imgRGB32 pixels) throw (CMMError);
    void setSLMPixelsTo(const char* deviceLabel, unsigned char intensity) throw (CMMError);
@@ -497,16 +480,18 @@ public:
    unsigned getSLMHeight(const char* deviceLabel);
    unsigned getSLMNumberOfComponents(const char* deviceLabel);
    unsigned getSLMBytesPerPixel(const char* deviceLabel);
+
    long getSLMSequenceMaxLength(const char* deviceLabel);
    void startSLMSequence(const char* deviceLabel) throw (CMMError);
    void stopSLMSequence(const char* deviceLabel) throw (CMMError);
    void loadSLMSequence(const char* label, std::vector<unsigned char*> imageSequence) throw (CMMError);
-   //@ }
+   ///@}
 
-   /** @name Galvo control
-   * API for Galvo-based phototargeting devices
-   */
-   //@ {
+   /** \name Galvo control.
+    *
+    * Control of beam-steering devices.
+    */
+   ///@{
    void pointGalvoAndFire(const char* deviceLabel, double x, double y, double pulseTime_us) throw (CMMError);
    void setGalvoSpotInterval(const char* deviceLabel, double pulseTime_us) throw (CMMError);
    void setGalvoPosition(const char* deviceLabel, double x, double y) throw (CMMError);
@@ -521,27 +506,38 @@ public:
    void runGalvoPolygons(const char* deviceLabel) throw (CMMError);
    void runGalvoSequence(const char* deviceLabel) throw (CMMError);
    std::string getGalvoChannel(const char* deviceLabel) throw (CMMError);
-   //@ }
+   ///@}
 
-   /** @name Acquisition context API
-   * NOTE: experimental feature
-   * API notifying core of acquisition context events
-   */
-   //@ {
-   void acqBeforeFrame() throw (CMMError);
-   void acqAfterFrame() throw (CMMError);
-   //@ }
+   /** \name Acquisition context.
+    *
+    * Experimental feature. Not functional. Deprecated.
+    */
+   ///@{
+   MMCORE_DEPRECATED(void acqBeforeFrame() throw (CMMError));
+   MMCORE_DEPRECATED(void acqAfterFrame() throw (CMMError));
+   ///@}
 
-   // device discovery
+   /** \name Device discovery. */
+   ///@{
    MM::DeviceDetectionStatus detectDevice(char* deviceName);
+   ///@}
 
-   // hubs can provide a list of peripheral devices currently attached
+   /** \name Hub and peripheral devices. */
+   ///@{
+   std::string getParentLabel(const char* label) throw (CMMError);
+   void setParentLabel(const char* label, const char* parentLabel) throw (CMMError);
+
    std::vector<std::string> getInstalledDevices(const char* hubDeviceLabel); 
    std::string getInstalledDeviceDescription(const char* hubLabel, const char* deviceLabel);
    std::vector<std::string> getLoadedPeripheralDevices(const char* hubLabel);
+   ///@}
 
+   /** \name Miscellaneous. */
+   ///@{
+   std::string getUserId() const;
+   std::string getHostName() const;
    std::vector<std::string> getMACAddresses(void);
-
+   ///@}
 
 private:
    // make object non-copyable
@@ -594,6 +590,10 @@ private:
    mutable MMThreadLock stateCacheLock_;
    mutable Configuration stateCache_; // Synchronized by stateCacheLock_
 
+   MMThreadLock* pPostedErrorsLock_;
+   mutable std::deque<std::pair< int, std::string> > postedErrors_;
+
+private:
    // Parameter/value validation
    static void CheckDeviceLabel(const char* label) throw (CMMError);
    static void CheckPropertyName(const char* propName) throw (CMMError);
@@ -625,9 +625,7 @@ private:
    void assignDefaultRole(boost::shared_ptr<DeviceInstance> pDev);
    void updateCoreProperty(const char* propName, MM::DeviceType devType) throw (CMMError);
 
-   MMThreadLock* pPostedErrorsLock_;
-   mutable std::deque<std::pair< int, std::string> > postedErrors_;
-
+private:
    // >>>>> OBSOLETE >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
    void defineConfiguration(const char* configName, const char* deviceName, const char* propName, const char* value);
    bool isConfigurationDefined(const char* configName);
