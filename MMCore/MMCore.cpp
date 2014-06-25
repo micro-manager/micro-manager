@@ -104,7 +104,7 @@ using namespace std;
  */
 const int MMCore_versionMajor = 4;
 const int MMCore_versionMinor = 0;
-const int MMCore_versionPatch = 3;
+const int MMCore_versionPatch = 4;
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -781,11 +781,6 @@ void CMMCore::assignDefaultRole(boost::shared_ptr<DeviceInstance> pDevice)
          LOG_INFO(coreLogger_) << "Default shutter set to " << label;
          break;
 
-      case MM::StageDevice:
-         focusStage_ = boost::static_pointer_cast<StageInstance>(pDevice);
-         LOG_INFO(coreLogger_) << "Default stage set to " << label;
-         break;
-
       case MM::XYStageDevice:
          xyStage_ = boost::static_pointer_cast<XYStageInstance>(pDevice);
          LOG_INFO(coreLogger_) << "Default xy stage set to " << label;
@@ -805,10 +800,6 @@ void CMMCore::assignDefaultRole(boost::shared_ptr<DeviceInstance> pDevice)
          galvo_ = boost::static_pointer_cast<GalvoInstance>(pDevice);
          LOG_INFO(coreLogger_) << "Default galvo set to " << label;
          break;
-
-      case MM::ImageProcessorDevice:
-         imageProcessor_ = boost::static_pointer_cast<ImageProcessorInstance>(pDevice);
-         LOG_INFO(coreLogger_) << "Default image processor set to " << label;
 
       default:
          // no action on unrecognized device
