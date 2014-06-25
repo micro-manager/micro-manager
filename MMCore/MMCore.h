@@ -558,6 +558,8 @@ private:
    boost::shared_ptr<mm::logging::Logger> appLogger_;
    boost::shared_ptr<mm::logging::Logger> coreLogger_;
 
+   FastLogger* legacyLogger_;
+
    bool everSnapped_;
 
    // "Default" or "current" devices.
@@ -625,8 +627,6 @@ private:
 
    MMThreadLock* pPostedErrorsLock_;
    mutable std::deque<std::pair< int, std::string> > postedErrors_;
-   FastLogger* logger_;
-   FastLogger* getLoggerInstance() {return logger_;}
 
    // >>>>> OBSOLETE >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
    void defineConfiguration(const char* configName, const char* deviceName, const char* propName, const char* value);

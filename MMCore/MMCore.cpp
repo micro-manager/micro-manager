@@ -125,7 +125,7 @@ CMMCore::CMMCore() :
    configGroups_ = new ConfigGroupCollection();
    pixelSizeGroup_ = new PixelSizeConfigGroup();
    pPostedErrorsLock_ = new MMThreadLock();
-   logger_ = new FastLogger(logManager_);
+   legacyLogger_ = new FastLogger(logManager_);
 
    // build list of error strings
    errorText_[MMERR_OK] = "No errors.";
@@ -269,7 +269,7 @@ CMMCore::~CMMCore()
       LOG_ERROR(coreLogger_) << "Exception caught in CMMCore destructor.";
    }
 
-   delete logger_;
+   delete legacyLogger_;
    delete callback_;
    delete configGroups_;
    delete properties_;
@@ -6615,7 +6615,7 @@ std::string CMMCore::saveLogArchive(void)
 {
    char* pLogContents = 0;
    unsigned long logLength = 0;
-   getLoggerInstance()->LogContents(&pLogContents, logLength);
+   legacyLogger_->LogContents(&pLogContents, logLength);
    if( 0 == pLogContents) // file reading failed
    {
       const char* pWarning =
@@ -6634,7 +6634,7 @@ std::string CMMCore::saveLogArchive(void)
    delete [] pLogContents;
    pLogContents = 0;
 
-   std::string payLoadPath = getLoggerInstance()->LogPath() + ".gz";
+   std::string payLoadPath = legacyLogger_->LogPath() + ".gz";
 
    std::ofstream ofile( payLoadPath.c_str(), ios::out|ios::binary);
    if (ofile.is_open())
@@ -6664,7 +6664,7 @@ std::string CMMCore::saveLogArchiveWithPreamble(char* preamble, ///< beginning o
 
    char* pLogContents = 0;
    unsigned long logLength = 0;
-   getLoggerInstance()->LogContents(&pLogContents, logLength);
+   legacyLogger_->LogContents(&pLogContents, logLength);
    if( 0 == pLogContents) // file reading failed
    {
       const char* pWarning =
@@ -6690,7 +6690,7 @@ std::string CMMCore::saveLogArchiveWithPreamble(char* preamble, ///< beginning o
    // prepare a gz archive
    Compressor::CompressData(pEntireMessage, preambleLength + logLength, &pCompressedContents, compressedLength);
 
-   std::string payLoadPath = getLoggerInstance()->LogPath() + ".gz";
+   std::string payLoadPath = legacyLogger_->LogPath() + ".gz";
 
    std::ofstream ofile( payLoadPath.c_str(), ios::out|ios::binary);
    if (ofile.is_open())
