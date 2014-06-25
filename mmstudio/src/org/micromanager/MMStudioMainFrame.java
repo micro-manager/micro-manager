@@ -3944,51 +3944,12 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       }
    }
 
-   //@Override
-   public void addImage(String name, TaggedImage img, boolean updateDisplay) throws MMScriptException {
-      acqMgr_.getAcquisition(name).insertImage(img, updateDisplay);
-   }
-
-   //@Override
    public void addImage(String name, TaggedImage taggedImg,
            boolean updateDisplay,
            boolean waitForDisplay) throws MMScriptException {
       acqMgr_.getAcquisition(name).insertImage(taggedImg, updateDisplay, waitForDisplay);
    }
 
-   //@Override
-   public void addImage(String name, TaggedImage taggedImg, int frame, int channel,
-           int slice, int position) throws MMScriptException {
-      try {
-         acqMgr_.getAcquisition(name).insertImage(taggedImg, frame, channel, slice, position);
-      } catch (JSONException ex) {
-         ReportingUtils.showError(ex);
-      }
-   }
-
-   //@Override
-   public void addImage(String name, TaggedImage taggedImg, int frame, int channel, 
-           int slice, int position, boolean updateDisplay) throws MMScriptException {
-      try {
-         acqMgr_.getAcquisition(name).insertImage(taggedImg, frame, channel, slice, position, updateDisplay);
-      } catch (JSONException ex) {
-         ReportingUtils.showError(ex);
-      }  
-   }
-
-   //@Override
-   public void addImage(String name, TaggedImage taggedImg, int frame, int channel,
-           int slice, int position, boolean updateDisplay, boolean waitForDisplay) throws MMScriptException {
-      try {
-         acqMgr_.getAcquisition(name).insertImage(taggedImg, frame, channel, slice, position, updateDisplay, waitForDisplay);
-      } catch (JSONException ex) {
-         ReportingUtils.showError(ex);
-      }
-   }
-
-   /**
-    * Closes all acquisitions
-    */
    @Override
    public void closeAllAcquisitions() {
       acqMgr_.closeAll();
