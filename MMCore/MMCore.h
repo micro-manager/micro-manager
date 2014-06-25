@@ -544,7 +544,6 @@ private:
    CMMCore(const CMMCore&);
    CMMCore& operator=(const CMMCore&);
 
-   typedef std::map<std::string, Configuration*> CConfigMap;
    typedef std::map<std::string, PropertyBlock*> CPropBlockMap;
 
 private:
@@ -582,7 +581,6 @@ private:
    std::vector< boost::shared_ptr<DeviceInstance> > imageSynchro_;
    CPluginManager pluginManager_;
    std::map<int, std::string> errorText_;
-   CConfigMap configs_;
    CPropBlockMap propBlocks_;
 
    // Must be unlocked when calling MMEventCallback or calling device methods
@@ -624,12 +622,6 @@ private:
    void updateAllowedChannelGroups();
    void assignDefaultRole(boost::shared_ptr<DeviceInstance> pDev);
    void updateCoreProperty(const char* propName, MM::DeviceType devType) throw (CMMError);
-
-private:
-   // >>>>> OBSOLETE >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-   void defineConfiguration(const char* configName, const char* deviceName, const char* propName, const char* value);
-   std::vector<std::string> getAvailableConfigurations() const;
-   Configuration getConfigurationData(const char* config) const throw (CMMError);
 };
 
 #endif //_MMCORE_H_

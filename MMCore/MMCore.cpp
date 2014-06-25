@@ -880,14 +880,6 @@ void CMMCore::unloadAllDevices() throw (CMMError)
 
       imageSynchro_.clear();
       
-      // clear configurations
-      CConfigMap::const_iterator it;
-      for (it = configs_.begin(); it != configs_.end(); it++)
-      {
-         delete it->second;
-      }
-      configs_.clear();
-
       configGroups_->Clear();
 
       //selected channel group is no longer valid
@@ -952,12 +944,6 @@ void CMMCore::reset() throw (CMMError)
    for (i = propBlocks_.begin(); i != propBlocks_.end(); i++)
       delete i->second;
    propBlocks_.clear();
-
-   // clear configurations
-   CConfigMap::const_iterator j;
-   for (j = configs_.begin(); j != configs_.end(); j++)
-      delete j->second;
-   configs_.clear();
 
    properties_->Refresh();
 
@@ -4097,83 +4083,6 @@ long CMMCore::getStateFromLabel(const char* deviceLabel, const char* stateLabel)
 }
 
 /**
- * Defines a single configuration entry (setting). If the configuration name
- * was not previously defined a new configuration will be automatically created.
- * If the name was previously defined the new setting will be added to its list of
- * property settings. The new setting will override previously defined ones if it
- * refers to the same property name.
- *
- * @param configName   the configuration name
- * @param deviceLabel  the device label
- * @param propName     the property name
- * @param value        the property value
- */
-void CMMCore::defineConfiguration(const char* configName, const char* deviceLabel, const char* propName, const char* value)
-{
-   // check if the configuration allready exists
-   CConfigMap::const_iterator it = configs_.find(configName);
-   Configuration* pConf;
-
-   if (it == configs_.end())
-   {
-		try
-		{
-			pConf = new Configuration();
-		}
-		catch(bad_alloc& ex)
-		{
-			ostringstream messs;
-			messs << getCoreErrorText(MMERR_OutOfMemory).c_str() << " " << ex.what() << endl;
-			throw CMMError(messs.str().c_str() , MMERR_OutOfMemory);
-		}
-		if (NULL == pConf) throw CMMError(getCoreErrorText(MMERR_OutOfMemory).c_str(), MMERR_OutOfMemory);
-      configs_[configName] = pConf; // add new configuration
-   }   
-   else
-      pConf = it->second;
-
-   // add the setting
-   PropertySetting setting(deviceLabel, propName, value);
-   pConf->addSetting(setting);
-
-   LOG_DEBUG(coreLogger_) << "Configuration " << configName <<
-      ": added setting: " << deviceLabel << "=" << propName <<
-      " = " << value;
-}
-
-/**
- * Returns all defined configuration names.
- * @return an array of configuration names
- */
-std::vector<string> CMMCore::getAvailableConfigurations() const
-{
-   vector<string> configList;
-   CConfigMap::const_iterator it = configs_.begin();
-   while(it != configs_.end())
-      configList.push_back(it++->first);
-
-   return configList;
-}
-
-/**
- * Returns the configuration object for a given name.
- *
- * @return The configuration object
- * @param configName        the configuration name
- */
-Configuration CMMCore::getConfigurationData(const char* configName) const throw (CMMError)
-{
-
-
-
-   CConfigMap::const_iterator it = configs_.find(configName);
-   if (it == configs_.end())
-      throw CMMError(ToQuotedString(configName) + ": " + getCoreErrorText(MMERR_NoConfiguration),
-            MMERR_NoConfiguration);
-   return *it->second;
-}
-
-/**
  * Creates an empty configuration group.
  */
 void CMMCore::defineConfigGroup(const char* groupName) throw (CMMError)
@@ -5719,19 +5628,6 @@ void CMMCore::saveSystemConfiguration(const char* fileName) throw (CMMError)
       }
    }
 
-   // save global configurations
-   os << "# Global configurations" << endl;
-   vector<string> configs = getAvailableConfigurations();
-   for (size_t i=0; i<configs.size(); i++)
-   {
-      Configuration c = getConfigurationData(configs[i].c_str());
-      for (size_t j=0; j<c.size(); j++)
-      {
-         PropertySetting s = c.getSetting(j);
-         os << MM::g_CFGCommand_Configuration << ',' << configs[i] << ',' << s.getDeviceLabel() << ',' << s.getPropertyName() << ',' << s.getPropertyValue() << endl;
-      }
-   }
-
    // save configuration groups
    os << "# Group configurations" << endl;
    vector<string> groups = getAvailableConfigGroups();
@@ -5786,7 +5682,7 @@ void CMMCore::saveSystemConfiguration(const char* fileName) throw (CMMError)
  *    Label - executes defineStateLabel() command
  *    Equipment - executes definePropertyBlockCommand()
  *    Property - executes setPropertyCommand()
- *    Configuration - executes defineConfiguration()
+ *    Configuration - ignored for backward compatibility
  *  
  * The remaining fields in the line will be used for corresponding command parameters.
  * The number of parameters depends on the actual command used.
@@ -5896,9 +5792,8 @@ void CMMCore::loadSystemConfiguration(const char* fileName) throw (CMMError)
                   throw CMMError(getCoreErrorText(MMERR_InvalidCFGEntry) + " (" +
                         ToQuotedString(line) + ")",
                         MMERR_InvalidCFGEntry);
-               defineConfiguration(tokens[1].c_str(), tokens[2].c_str(), tokens[3].c_str(), tokens[4].c_str());
                LOG_WARNING(coreLogger_) << "Obsolete command " << tokens[0] <<
-                  " used in configuration file";
+                  " ignored in configuration file";
             }
             else if(tokens[0].compare(MM::g_CFGCommand_ConfigGroup) == 0)
             {
