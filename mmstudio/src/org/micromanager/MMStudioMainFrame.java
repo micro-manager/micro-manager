@@ -19,6 +19,8 @@
 //
 package org.micromanager;
 
+import com.google.common.eventbus.Subscribe;
+
 import ij.IJ;
 import ij.ImageJ;
 import ij.ImagePlus;
@@ -73,9 +75,17 @@ import mmcorej.MMEventCallback;
 import mmcorej.StrVector;
 
 import org.json.JSONObject;
+
 import org.micromanager.acquisition.AcquisitionManager;
+
 import org.micromanager.api.Autofocus;
 import org.micromanager.api.DataProcessor;
+import org.micromanager.api.events.ConfigGroupChangedEvent;
+import org.micromanager.api.events.ExposureChangedEvent;
+import org.micromanager.api.events.PixelSizeChangedEvent;
+import org.micromanager.api.events.PropertiesChangedEvent;
+import org.micromanager.api.events.StagePositionChangedEvent;
+import org.micromanager.api.events.XYStagePositionChangedEvent;
 import org.micromanager.api.MMPlugin;
 import org.micromanager.api.MMProcessorPlugin;
 import org.micromanager.api.MMTags;
@@ -83,22 +93,31 @@ import org.micromanager.api.PositionList;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.api.MMListenerInterface;
 import org.micromanager.api.SequenceSettings;
+
 import org.micromanager.conf2.ConfiguratorDlg2;
 import org.micromanager.conf2.MMConfigFileException;
 import org.micromanager.conf2.MicroscopeModel;
+
 import org.micromanager.events.EventManager;
 import org.micromanager.events.MMListenerProxy;
+
 import org.micromanager.graph.GraphData;
 import org.micromanager.graph.GraphFrame;
+
 import org.micromanager.imagedisplay.DisplayWindow;
 import org.micromanager.imagedisplay.MetadataPanel;
 import org.micromanager.imagedisplay.VirtualAcquisitionDisplay;
+
 import org.micromanager.logging.LogFileManager;
+
 import org.micromanager.navigation.CenterAndDragListener;
 import org.micromanager.navigation.XYZKeyListener;
 import org.micromanager.navigation.ZWheelListener;
+
 import org.micromanager.pipelineinterface.PipelinePanel;
+
 import org.micromanager.positionlist.PositionListDlg;
+
 import org.micromanager.utils.AutofocusManager;
 import org.micromanager.utils.ContrastSettings;
 import org.micromanager.utils.GUIColors;
@@ -202,8 +221,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
 
    private JMenu pluginMenu_;
    private Map<String, JMenu> pluginSubMenus_;
-   private List<MMListenerInterface> MMListeners_
-           = Collections.synchronizedList(new ArrayList<MMListenerInterface>());
    private List<LiveModeListener> liveModeListeners_
            = Collections.synchronizedList(new ArrayList<LiveModeListener>());
    private List<Component> MMFrames_
@@ -262,7 +279,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    // Our instance
    private static MMStudioMainFrame gui_;
    // Callback
-   private CoreEventCallback cb_;
+   private CoreEventCallback coreCallback_;
    // Lock invoked while shutting down
    private final Object shutdownLock_ = new Object();
 
@@ -279,7 +296,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    private Class<?> acquisitionEngine2010Class_ = null;
    private IAcquisitionEngine2010 acquisitionEngine2010_ = null;
    private final JSplitPane splitPane_;
-   private volatile boolean ignorePropertyChanges_; 
    private PluginLoader pluginLoader_;
 
    private AbstractButton setRoiButton_;
@@ -328,7 +344,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       // Set up event handling early, so following code can subscribe/publish
       // events as needed.
       EventManager manager = new EventManager();
-      addMMListener(new MMListenerProxy(manager.getBus()));
+      manager.register(this);
 
       startLoadingPipelineClass();
 
@@ -503,10 +519,8 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       xyStageLabel_ = "";
       engine_ = new AcquisitionWrapperEngine(acqMgr_);
 
-      // register callback for MMCore notifications, this is a global
-      // to avoid garbage collection
-      cb_ = new CoreEventCallback();
-      core_.registerCallback(cb_);
+      // This entity is a class property to avoid garbage collection.
+      coreCallback_ = new CoreEventCallback(core_, engine_);
 
       try {
          core_.setCircularBufferMemoryFootprint(options_.circularBufferSizeMB_);
@@ -621,124 +635,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       return loadThread;
    }
    
- 
-   /**
-    * Callback to update GUI when a change happens in the MMCore.
-    */
-   public class CoreEventCallback extends MMEventCallback {
-
-      public CoreEventCallback() {
-         super();
-      }
-
-      @Override
-      public void onPropertiesChanged() {
-         // TODO: remove test once acquisition engine is fully multithreaded
-         if (engine_ != null && engine_.isAcquisitionRunning()) {
-            core_.logMessage("Notification from MMCore ignored because acquistion is running!", true);
-         } else {
-            if (ignorePropertyChanges_) {
-               core_.logMessage("Notification from MMCore ignored since the system is still loading", true);
-            } else {
-               core_.updateSystemStateCache();
-               updateGUI(true);
-               // update all registered listeners 
-               for (MMListenerInterface mmIntf : MMListeners_) {
-                  mmIntf.propertiesChangedAlert();
-               }
-               core_.logMessage("Notification from MMCore!", true);
-            }
-         }
-      }
-
-      @Override
-      public void onPropertyChanged(String deviceName, String propName, String propValue) {
-         core_.logMessage("Notification for Device: " + deviceName + " Property: " +
-               propName + " changed to value: " + propValue, true);
-         // update all registered listeners
-         for (MMListenerInterface mmIntf:MMListeners_) {
-            mmIntf.propertyChangedAlert(deviceName, propName, propValue);
-         }
-      }
-
-      @Override
-      public void onConfigGroupChanged(String groupName, String newConfig) {
-         try {
-            configPad_.refreshGroup(groupName, newConfig);
-            for (MMListenerInterface mmIntf:MMListeners_) {
-               mmIntf.configGroupChangedAlert(groupName, newConfig);
-            }
-         } catch (Exception e) {
-         }
-      }
-      
-      @Override
-      public void onSystemConfigurationLoaded() {
-         for (MMListenerInterface mmIntf:MMListeners_) {
-            mmIntf.systemConfigurationLoaded();
-         }
-      }
-
-      @Override
-      public void onPixelSizeChanged(double newPixelSizeUm) {
-         updatePixSizeUm (newPixelSizeUm);
-         for (MMListenerInterface mmIntf:MMListeners_) {
-            mmIntf.pixelSizeChangedAlert(newPixelSizeUm);
-         }
-      }
-
-      @Override
-      public void onStagePositionChanged(String deviceName, double pos) {
-         if (deviceName.equals(zStageLabel_)) {
-            updateZPos(pos);
-            for (MMListenerInterface mmIntf:MMListeners_) {
-               mmIntf.stagePositionChangedAlert(deviceName, pos);
-            }
-         }
-      }
-
-      @Override
-      public void onStagePositionChangedRelative(String deviceName, double pos) {
-         if (deviceName.equals(zStageLabel_))
-            updateZPosRelative(pos);
-      }
-
-      @Override
-      public void onXYStagePositionChanged(String deviceName, double xPos, double yPos) {
-         if (deviceName.equals(xyStageLabel_)) {
-            updateXYPos(xPos, yPos);
-            for (MMListenerInterface mmIntf:MMListeners_) {
-               mmIntf.xyStagePositionChanged(deviceName, xPos, yPos);
-            }
-         }
-      }
-
-      @Override
-      public void onXYStagePositionChangedRelative(String deviceName, double xPos, double yPos) {
-         if (deviceName.equals(xyStageLabel_))
-            updateXYPosRelative(xPos, yPos);
-      }
-      
-      @Override
-      public void onExposureChanged(String deviceName, double exposure) {
-         if (deviceName.equals(cameraLabel_)){
-            // update exposure in gui
-            textFieldExp_.setText(NumberUtils.doubleToDisplayString(exposure));  
-         }
-         for (MMListenerInterface mmIntf:MMListeners_) {
-            mmIntf.exposureChanged(deviceName, exposure);
-         }
-      }
-      
-      @Override
-      public void onSLMExposureChanged(String deviceName, double exposure) {
-         for (MMListenerInterface mmIntf:MMListeners_) {
-            mmIntf.slmExposureChanged(deviceName, exposure);
-         }
-      }
-     
-   }
-
    private void handleError(String message) {
       if (isLiveModeOn()) {
          // Should we always stop live mode on any error?
@@ -2762,7 +2658,39 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
             ReportingUtils.logError("Unrecognized plugin type " + plugin.getPluginType());
       }
    }
-   
+ 
+   @Subscribe
+   public void onConfigGroupChanged(ConfigGroupChangedEvent event) {
+      configPad_.refreshGroup(event.getGroupName(), event.getNewConfig());
+   }
+
+   @Subscribe
+   public void onPixelSizeChanged(PixelSizeChangedEvent event) {
+      updatePixSizeUm(event.getNewPixelSizeUm());
+   }
+
+   @Subscribe
+   public void onPropertiesChanged(PropertiesChangedEvent event) {
+      updateGUI(true);
+   }
+
+   @Subscribe
+   public void onStagePositionChanged(StagePositionChangedEvent event) {
+      updateZPos(event.getPos());
+   }
+
+   @Subscribe
+   public void onXYStagePositionChanged(XYStagePositionChangedEvent event) {
+      updateXYPos(event.getXPos(), event.getYPos());
+   }
+
+   @Subscribe
+   public void onExposureChanged(ExposureChangedEvent event) {
+      if (event.getCameraName() == cameraLabel_) {
+         textFieldExp_.setText(NumberUtils.doubleToDisplayString(event.getNewExposureTime()));
+      }
+   }
+
    public void updateGUI(boolean updateConfigPadStructure) {
       updateGUI(updateConfigPadStructure, false);
    }
@@ -3132,9 +3060,9 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
          if (sysConfigFile_.length() > 0) {
             GUIUtils.preventDisplayAdapterChangeExceptions();
             core_.waitForSystem();
-            ignorePropertyChanges_ = true;
+            coreCallback_.setIgnoring(true);
             core_.loadSystemConfiguration(sysConfigFile_);
-            ignorePropertyChanges_ = false;
+            coreCallback_.setIgnoring(false);
             GUIUtils.preventDisplayAdapterChangeExceptions();
 
          }
@@ -4501,9 +4429,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
     */
    @Override
    public void addMMListener(MMListenerInterface newL) {
-      if (MMListeners_.contains(newL))
-         return;
-      MMListeners_.add(newL);
+      coreCallback_.addMMListener(newL);
    }
 
    /**
@@ -4511,9 +4437,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
     */
    @Override
    public void removeMMListener(MMListenerInterface oldL) {
-      if (!MMListeners_.contains(oldL))
-         return;
-      MMListeners_.remove(oldL);
+      coreCallback_.removeMMListener(oldL);
    }
 
    @Override
