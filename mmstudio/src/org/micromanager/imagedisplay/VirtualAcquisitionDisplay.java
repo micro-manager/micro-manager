@@ -793,7 +793,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       
       for (int channel = 0; channel < numChannels; channel++) {
          String channelName = imageCache_.getChannelName(channel);
-         HistogramSettings settings = MMStudioMainFrame.getInstance().loadStoredChannelHisotgramSettings(
+         HistogramSettings settings = MMStudioMainFrame.getInstance().loadStoredChannelHistogramSettings(
                  channelGroup_, channelName, isMDA_);
          histograms_.setChannelContrast(channel, settings.min_, settings.max_, settings.gamma_);
          histograms_.setChannelHistogramDisplayMax(channel, settings.histMax_);

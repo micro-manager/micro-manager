@@ -1551,7 +1551,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       contrastPrefs_.putInt("ContrastHistDisplayMode_" + channelGroup + "_" + type + channel, settings.displayMode_);
    }
 
-   public HistogramSettings loadStoredChannelHisotgramSettings(String channelGroup, String channel, boolean mda) {
+   public HistogramSettings loadStoredChannelHistogramSettings(String channelGroup, String channel, boolean mda) {
       String type = mda ? "MDA_" : "SnapLive_";
       if (options_.syncExposureMainAndMDA_) {
          type = "";  //only one group of contrast settings
@@ -1602,8 +1602,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
          // Do nothing.
       }
    }
-   
-
 
    public double getPreferredWindowMag() {
       return options_.windowMag_;
@@ -1698,8 +1696,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       }
       lineProfileData_.setData(line.getPixels());
    }
-
-  
 
    private void setROI() {
       ImagePlus curImage = WindowManager.getCurrentImage();
@@ -1839,10 +1835,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       saveConfigButton_.setEnabled(changed);
    }
 
-   public String getAcqDirectory() {
-      return openAcqDirectory_;
-   }
-   
    /**
     * Get currently used configuration file
     * @return - Path to currently used configuration file
@@ -1855,27 +1847,25 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       openAcqDirectory_ = dir;
    }
 
-    /**
+   /**
     * Open an existing acquisition directory and build viewer window.
     *
     */
    public void openAcquisitionData(boolean inRAM) {
-
-      // choose the directory
-      // --------------------
       File f = FileDialogs.openDir(this, "Please select an image data set", MM_DATA_SET);
-      if (f != null) {
-         if (f.isDirectory()) {
-            openAcqDirectory_ = f.getAbsolutePath();
-         } else {
-            openAcqDirectory_ = f.getParent();
-         }
-         try {
-            openAcquisitionData(openAcqDirectory_, inRAM);
-         } catch (MMScriptException ex) {
-            ReportingUtils.showError(ex);
-         } 
-         
+      if (f == null) {
+         return;
+      }
+      if (f.isDirectory()) {
+         openAcqDirectory_ = f.getAbsolutePath();
+      } else {
+         openAcqDirectory_ = f.getParent();
+      }
+
+      try {
+         openAcquisitionData(openAcqDirectory_, inRAM);
+      } catch (MMScriptException ex) {
+         ReportingUtils.showError(ex);
       }
    }
 
@@ -1947,8 +1937,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       } catch (Exception e) {
          ReportingUtils.showError(e);
       }
-
-      
    }
 
    private void createPropertyEditor() {
