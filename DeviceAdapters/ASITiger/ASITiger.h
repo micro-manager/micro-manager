@@ -285,7 +285,6 @@ const char* const g_SPIMNumScansPerSlicePropertyName = "SPIMNumScansPerSlice";
 const char* const g_SPIMNumSidesPropertyName = "SPIMNumSides";
 const char* const g_SPIMFirstSidePropertyName = "SPIMFirstSide";
 const char* const g_SPIMNumRepeatsPropertyName = "SPIMNumRepeats";
-const char* const g_SPIMLaserOutputModePropertyName = "SPIMLaserMode";
 const char* const g_SPIMArmForTTLPropertyName = "SPIMArm";
 const char* const g_SPIMStatePropertyName = "SPIMState";
 const char* const g_SPIMModePropertyName = "SPIMModeByte";
@@ -297,11 +296,9 @@ const char* const g_SPIMDelayBeforeLaserPropertyName = "SPIMDelayBeforeLaser(ms)
 const char* const g_SPIMCameraDurationPropertyName = "SPIMCameraDuration(ms)";
 const char* const g_SPIMLaserDurationPropertyName = "SPIMLaserDuration(ms)";
 
-// Temporarily added to fix build
-const char* const g_LaserOutputModePropertyName = "LaserMode";
+// SPIM laser TTL property names
+const char* const g_LaserOutputModePropertyName = "LaserOutputMode";
 const char* const g_LaserSwitchTimePropertyName = "LaserSwitchTime(ms)";
-// End: temporarily added to fix build
-
 
 // LED property names
 //const char* const g_LEDIntensityPropertyName = "LEDIntensity(%)";  // already in CRISP
