@@ -3244,20 +3244,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       }
    }
    
-
-   private class ExecuteAcq implements Runnable {
-
-      public ExecuteAcq() {
-      }
-
-      @Override
-      public void run() {
-         if (acqControlWin_ != null) {
-            acqControlWin_.runAcquisition();
-         }
-      }
-   }
-
    private void testForAbortRequests() throws MMScriptException {
       if (scriptPanel_ != null) {
          if (scriptPanel_.stopRequestPending()) {
@@ -3447,15 +3433,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       return simpleDisplay_.getHyperImage().getWindow();
    }
    
-   
-   /**
-    * @Deprecated - used to be in api/AcquisitionEngine
-    */
-   public void startAcquisition() throws MMScriptException {
-      testForAbortRequests();
-      SwingUtilities.invokeLater(new ExecuteAcq());
-   }
-
    @Override
    public String runAcquisition() throws MMScriptException {
       if (SwingUtilities.isEventDispatchThread()) {
