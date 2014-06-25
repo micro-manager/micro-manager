@@ -494,7 +494,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
             zStageLabel_ = "";
             xyStageLabel_ = "";
             engine_ = new AcquisitionWrapperEngine(acqMgr_);
-           // processorStackManager_ = new ProcessorStackManager(engine_);
 
             // register callback for MMCore notifications, this is a global
             // to avoid garbage collection
@@ -1404,16 +1403,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
                     createCalibrationListDlg();
                  }
               });
-     /* 
-      GUIUtils.addMenuItem(toolsMenu, "Image Processor Manager",
-              "Control the order in which Image Processor plugins"
-              + "are applied to incoming images.",
-              new Runnable() {
-                 public void run() {
-                   processorStackManager_.show();
-                 }
-              });
-*/
       toolsMenu.addSeparator();
 
       GUIUtils.addMenuItem(toolsMenu, "Hardware Configuration Wizard...",
