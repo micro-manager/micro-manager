@@ -3805,28 +3805,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       acqMgr_.addToAlbum(taggedImg,displaySettings);
    }
 
-   public void addImage(String name, Object img, int frame, int channel,
-         int slice) throws MMScriptException {
-      MMAcquisition acq = acqMgr_.getAcquisition(name);
-      acq.insertImage(img, frame, channel, slice);
-   }
-
-   //@Override
-   public void addImage(String name, TaggedImage taggedImg) throws MMScriptException {
-      MMAcquisition acq = acqMgr_.getAcquisition(name);
-      if (!acq.isInitialized()) {
-         JSONObject tags = taggedImg.tags;
-         
-         // initialize physical dimensions of the image
-         try {
-            initializeAcquisitionFromTags(name, tags);
-         } catch (JSONException e) {
-            throw new MMScriptException(e);
-         }
-      }
-      acq.insertImage(taggedImg);
-   }
-   
    @Override
    /**
     * The basic method for adding images to an existing data set.
