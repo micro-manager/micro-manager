@@ -453,170 +453,173 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       // add window listeners
       addWindowListener(new WindowAdapter() {
          @Override
-         public void windowClosing(WindowEvent e) {
+         public void windowClosing(WindowEvent event) {
             closeSequence(false);
          }
 
          @Override
-         public void windowOpened(WindowEvent e) {
-            // -------------------
-            // initialize hardware
-            // -------------------
-            try {
-               core_ = new CMMCore();
-            } catch(UnsatisfiedLinkError ex) {
-               ReportingUtils.showError(ex, "Failed to load the MMCoreJ_wrap native library");
-               return;
-            }
-
-            core_.enableStderrLog(true);
-            String logFileName =
-               LogFileManager.makeLogFileNameForCurrentSession();
-            new File(logFileName).getParentFile().mkdirs();
-            try {
-               core_.setPrimaryLogFile(logFileName);
-            }
-            catch (Exception ignore) {
-               // The Core will have logged the error to stderr.
-            }
-            core_.enableDebugLog(options_.debugLogEnabled_);
-
-            if (options_.deleteOldCoreLogs_) {
-               LogFileManager.deleteLogFilesDaysOld(
-                     options_.deleteCoreLogAfterDays_, logFileName);
-            }
-
-            ReportingUtils.setCore(core_);
-            logStartupProperties();
-                    
-            cameraLabel_ = "";
-            shutterLabel_ = "";
-            zStageLabel_ = "";
-            xyStageLabel_ = "";
-            engine_ = new AcquisitionWrapperEngine(acqMgr_);
-
-            // register callback for MMCore notifications, this is a global
-            // to avoid garbage collection
-            cb_ = new CoreEventCallback();
-            core_.registerCallback(cb_);
-
-            try {
-               core_.setCircularBufferMemoryFootprint(options_.circularBufferSizeMB_);
-            } catch (Exception e2) {
-               ReportingUtils.showError(e2);
-            }
-
-            MMStudioMainFrame parent = (MMStudioMainFrame) e.getWindow();
-            if (parent != null) {
-               engine_.setParentGUI(parent);
-            }
-
-            loadMRUConfigFiles();
-            afMgr_ = new AutofocusManager(gui_);
-            Thread pluginInitializer = initializePlugins();
-
-            toFront();
-            
-            if (!options_.doNotAskForConfigFile_) {
-               MMIntroDlg introDlg = new MMIntroDlg(MMVersion.VERSION_STRING, MRUConfigFiles_);
-               introDlg.setConfigFile(sysConfigFile_);
-               introDlg.setBackground(guiColors_.background.get((options_.displayBackground_)));
-               introDlg.setVisible(true);
-               if (!introDlg.okChosen()) {
-                  closeSequence(false);
-                  return;
-               }
-               sysConfigFile_ = introDlg.getConfigFile();
-            }
-            saveMRUConfigFiles();
-
-            mainPrefs_.put(SYSTEM_CONFIG_FILE, sysConfigFile_);
-
-            paint(MMStudioMainFrame.this.getGraphics());
-
-            engine_.setCore(core_, afMgr_);
-            posList_ = new PositionList();
-            engine_.setPositionList(posList_);
-            // load (but do no show) the scriptPanel
-            createScriptPanel();
-            // Ditto with the image pipeline panel.
-            createPipelinePanel();
-
-            // Create an instance of HotKeys so that they can be read in from prefs
-            hotKeys_ = new org.micromanager.utils.HotKeys();
-            hotKeys_.loadSettings();
-            
-            // before loading the system configuration, we need to wait 
-            // until the plugins are loaded
-            try {  
-               pluginInitializer.join(2000);
-            } catch (InterruptedException ex) {
-               ReportingUtils.logError(ex, "Plugin loader thread was interupted");
-            }
-            
-            // if an error occurred during config loading, 
-            // do not display more errors than needed
-            if (!loadSystemConfiguration())
-               ReportingUtils.showErrorOn(false);
-
-            executeStartupScript();
-
-
-            // Create Multi-D window here but do not show it.
-            // This window needs to be created in order to properly set the "ChannelGroup"
-            // based on the Multi-D parameters
-            acqControlWin_ = new AcqControlDlg(engine_, mainPrefs_, MMStudioMainFrame.this, options_);
-            addMMBackgroundListener(acqControlWin_);
-
-            configPad_.setCore(core_);
-            if (parent != null) {
-               configPad_.setParentGUI(parent);
-            }
-
-            configPadButtonPanel_.setCore(core_);
-
-            // initialize controls
-            initializeHelpMenu();
-            
-            String afDevice = mainPrefs_.get(AUTOFOCUS_DEVICE, "");
-            if (afMgr_.hasDevice(afDevice)) {
-               try {
-                  afMgr_.selectDevice(afDevice);
-               } catch (MMException e1) {
-                  // this error should never happen
-                  ReportingUtils.showError(e1);
-               }
-            }
-
-            centerAndDragListener_ = new CenterAndDragListener(gui_);
-            zWheelListener_ = new ZWheelListener(core_, gui_);
-            gui_.addLiveModeListener(zWheelListener_);
-            xyzKeyListener_ = new XYZKeyListener(core_, gui_);
-            gui_.addLiveModeListener(xyzKeyListener_);
-
-            // switch error reporting back on
-            ReportingUtils.showErrorOn(true);
-         }
-
-         private Thread initializePlugins() {
-            pluginMenu_ = GUIUtils.createMenuInMenuBar(menuBar_, "Plugins");
-            Thread loadThread = new Thread(new ThreadGroup("Plugin loading"),
-                  new Runnable() {
-                     @Override
-                     public void run() {
-                        // Needed for loading clojure-based jars:
-                        Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
-                        pluginLoader_.loadPlugins();
-                     }
-            });
-            loadThread.start();
-            return loadThread;
+         public void windowOpened(WindowEvent event) {
+            initializationSequence();
          }
       });
         
    }
    
-   
+   /**
+    * Initialize the program.
+    */
+   private void initializationSequence() {
+      // Initialize hardware.
+      try {
+         core_ = new CMMCore();
+      } catch(UnsatisfiedLinkError ex) {
+         ReportingUtils.showError(ex, 
+               "Failed to load the MMCoreJ_wrap native library");
+         return;
+      }
+
+      core_.enableStderrLog(true);
+      String logFileName = LogFileManager.makeLogFileNameForCurrentSession();
+      new File(logFileName).getParentFile().mkdirs();
+      try {
+         core_.setPrimaryLogFile(logFileName);
+      }
+      catch (Exception ignore) {
+         // The Core will have logged the error to stderr, so do nothing.
+      }
+      core_.enableDebugLog(options_.debugLogEnabled_);
+
+      if (options_.deleteOldCoreLogs_) {
+         LogFileManager.deleteLogFilesDaysOld(
+               options_.deleteCoreLogAfterDays_, logFileName);
+      }
+
+      ReportingUtils.setCore(core_);
+      logStartupProperties();
+              
+      cameraLabel_ = "";
+      shutterLabel_ = "";
+      zStageLabel_ = "";
+      xyStageLabel_ = "";
+      engine_ = new AcquisitionWrapperEngine(acqMgr_);
+
+      // register callback for MMCore notifications, this is a global
+      // to avoid garbage collection
+      cb_ = new CoreEventCallback();
+      core_.registerCallback(cb_);
+
+      try {
+         core_.setCircularBufferMemoryFootprint(options_.circularBufferSizeMB_);
+      } catch (Exception ex) {
+         ReportingUtils.showError(ex);
+      }
+
+      engine_.setParentGUI(this);
+
+      loadMRUConfigFiles();
+      afMgr_ = new AutofocusManager(gui_);
+      Thread pluginInitializer = initializePlugins();
+
+      toFront();
+      
+      if (!options_.doNotAskForConfigFile_) {
+         // Ask the user for a configuration file.
+         MMIntroDlg introDlg = new MMIntroDlg(
+               MMVersion.VERSION_STRING, MRUConfigFiles_);
+         introDlg.setConfigFile(sysConfigFile_);
+         introDlg.setBackground(
+               guiColors_.background.get((options_.displayBackground_)));
+         introDlg.setVisible(true);
+         if (!introDlg.okChosen()) {
+            // User aborted; close the program down.
+            closeSequence(false);
+            return;
+         }
+         sysConfigFile_ = introDlg.getConfigFile();
+      }
+      saveMRUConfigFiles();
+
+      mainPrefs_.put(SYSTEM_CONFIG_FILE, sysConfigFile_);
+
+      paint(getGraphics());
+
+      engine_.setCore(core_, afMgr_);
+      posList_ = new PositionList();
+      engine_.setPositionList(posList_);
+      // load (but do no show) the scriptPanel
+      createScriptPanel();
+      // Ditto with the image pipeline panel.
+      createPipelinePanel();
+
+      // Create an instance of HotKeys so that they can be read in from prefs
+      hotKeys_ = new org.micromanager.utils.HotKeys();
+      hotKeys_.loadSettings();
+      
+      // before loading the system configuration, we need to wait 
+      // until the plugins are loaded
+      try {  
+         pluginInitializer.join(2000);
+      } catch (InterruptedException ex) {
+         ReportingUtils.logError(ex, "Plugin loader thread was interupted");
+      }
+      
+      // if an error occurred during config loading, do not display more 
+      // errors than needed
+      if (!loadSystemConfiguration()) {
+         ReportingUtils.showErrorOn(false);
+      }
+
+      executeStartupScript();
+
+      // Create Multi-D window here but do not show it.
+      // This window needs to be created in order to properly set the 
+      // "ChannelGroup" based on the Multi-D parameters
+      acqControlWin_ = new AcqControlDlg(engine_, mainPrefs_, 
+            this, options_);
+      addMMBackgroundListener(acqControlWin_);
+
+      configPad_.setCore(core_);
+      configPad_.setParentGUI(this);
+
+      configPadButtonPanel_.setCore(core_);
+
+      // initialize controls
+      initializeHelpMenu();
+      
+      String afDevice = mainPrefs_.get(AUTOFOCUS_DEVICE, "");
+      if (afMgr_.hasDevice(afDevice)) {
+         try {
+            afMgr_.selectDevice(afDevice);
+         } catch (MMException ex) {
+            // this error should never happen
+            ReportingUtils.showError(ex);
+         }
+      }
+
+      centerAndDragListener_ = new CenterAndDragListener(gui_);
+      zWheelListener_ = new ZWheelListener(core_, gui_);
+      gui_.addLiveModeListener(zWheelListener_);
+      xyzKeyListener_ = new XYZKeyListener(core_, gui_);
+      gui_.addLiveModeListener(xyzKeyListener_);
+
+      // switch error reporting back on
+      ReportingUtils.showErrorOn(true);
+   }
+
+   private Thread initializePlugins() {
+      pluginMenu_ = GUIUtils.createMenuInMenuBar(menuBar_, "Plugins");
+      Thread loadThread = new Thread(new ThreadGroup("Plugin loading"),
+            new Runnable() {
+               @Override
+               public void run() {
+                  // Needed for loading clojure-based jars:
+                  Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
+                  pluginLoader_.loadPlugins();
+               }
+      });
+      loadThread.start();
+      return loadThread;
+   }
    
  
    /**
