@@ -949,26 +949,22 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       citePleaLabel.setFont(new Font("Arial", Font.PLAIN, 11));
       GUIUtils.addWithEdges(topPanel, citePleaLabel, 7, 119, 270, 139);
 
-      class Pleader extends Thread{
-         Pleader(){
-            super("pleader");
-         }
-         @Override
-         public void run(){
-          try {
-               ij.plugin.BrowserLauncher.openURL("https://micro-manager.org/wiki/Citing_Micro-Manager");
-            } catch (IOException e1) {
-               ReportingUtils.showError(e1);
-            }
-         }
-
-      }
+      // When users click on the citation plea, we spawn a new thread to send
+      // their browser to the MM wiki.
       citePleaLabel.addMouseListener(new MouseAdapter() {
          @Override
-          public void mousePressed(MouseEvent e) {
-             Pleader p = new Pleader();
-             p.start();
-          }
+         public void mousePressed(MouseEvent e) {
+            new Thread(new Runnable() {
+               @Override
+               public void run(){
+                  try {
+                     ij.plugin.BrowserLauncher.openURL("https://micro-manager.org/wiki/Citing_Micro-Manager");
+                  } catch (IOException e1) {
+                     ReportingUtils.showError(e1);
+                  }
+               }
+            }).start();
+         }
       });
 
       // add a listener to the main ImageJ window to catch it quitting out on us
@@ -4015,29 +4011,21 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       return getAcquisition(acquisitionName).getImageCache();
    }
 
-   private class ScriptConsoleMessage implements Runnable {
-
-      String msg_;
-
-      public ScriptConsoleMessage(String text) {
-         msg_ = text;
-      }
-
-      @Override
-      public void run() {
-         if (scriptPanel_ != null)
-            scriptPanel_.message(msg_);
-      }
-   }
-
    @Override
-   public void message(String text) throws MMScriptException {
+   public void message(final String text) throws MMScriptException {
       if (scriptPanel_ != null) {
          if (scriptPanel_.stopRequestPending()) {
             throw new MMScriptException("Script interrupted by the user!");
          }
 
-         SwingUtilities.invokeLater(new ScriptConsoleMessage(text));
+         SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+               if (scriptPanel_ != null) {
+                  scriptPanel_.message(text);
+               }
+            }
+         });            
       }
    }
 
