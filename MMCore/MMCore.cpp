@@ -104,7 +104,7 @@ using namespace std;
  */
 const int MMCore_versionMajor = 4;
 const int MMCore_versionMinor = 0;
-const int MMCore_versionPatch = 1;
+const int MMCore_versionPatch = 2;
 
 
 // Legacy macros for logging.
@@ -3086,15 +3086,10 @@ void CMMCore::setShutterDevice(const char* shutterLabel) throw (CMMError)
       // if old shutter was open, open the new one
       if (shutterOpen)
          setShutterOpen(true);
-      //assignImageSynchro(shutterLabel);
       CORE_LOG("Shutter device set to %s\n", shutterLabel);
    }
    else
    {
-      if (shutter_)
-      {
-         removeImageSynchro(shutter_->GetLabel().c_str());
-      }
       shutter_.reset();
       CORE_LOG("Shutter device removed.\n");
    }
