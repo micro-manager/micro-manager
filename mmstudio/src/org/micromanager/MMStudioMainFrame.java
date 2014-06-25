@@ -4365,17 +4365,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       configPad_.setGroup(groupName);
    }
 
-   public String regenerateDeviceList()   {
-            Cursor oldc = Cursor.getDefaultCursor();
-            Cursor waitc = new Cursor(Cursor.WAIT_CURSOR);
-            setCursor(waitc);
-            StringBuffer resultFile = new StringBuffer();
-            MicroscopeModel.generateDeviceListFile(resultFile, core_);
-            //MicroscopeModel.generateDeviceListFile();
-            setCursor(oldc);
-            return resultFile.toString();
-   }
-   
    @Override
    public void setImageSavingFormat(Class imageSavingClass) throws MMScriptException {
       if (! (imageSavingClass.equals(TaggedImageStorageDiskDefault.class) || 
