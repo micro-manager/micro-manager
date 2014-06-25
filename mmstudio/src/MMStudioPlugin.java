@@ -54,7 +54,7 @@ public class MMStudioPlugin implements PlugIn, CommandListener {
          @Override
          public void run() {
             try {
-               if (frame_ == null || !frame_.isRunning()) {
+               if (frame_ == null || !frame_.getIsProgramRunning()) {
                   // OS-specific stuff
                   if (JavaUtils.isMac()) {
                      System.setProperty("apple.laf.useScreenMenuBar", "true");
@@ -146,14 +146,14 @@ public class MMStudioPlugin implements PlugIn, CommandListener {
    }
 
    public static CMMCore getMMCoreInstance() {
-      if (frame_ == null || !frame_.isRunning())
+      if (frame_ == null || !frame_.getIsProgramRunning())
          return null;
       else
          return frame_.getMMCore();
    }
 
    public static AutofocusManager getAutofocusManager() {
-      if (frame_ == null || !frame_.isRunning())
+      if (frame_ == null || !frame_.getIsProgramRunning())
          return null;
       else
          return frame_.getAutofocusManager();

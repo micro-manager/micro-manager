@@ -253,7 +253,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    private PositionList posList_;
    private PositionListDlg posListDlg_;
    private String openAcqDirectory_ = "";
-   private boolean running_;
+   private boolean isProgramRunning_;
    private boolean configChanged_ = false;
    private StrVector shutters_ = null;
 
@@ -367,7 +367,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       runsAsPlugin_ = pluginStatus;
       setIconImage(SwingResourceManager.getImage(MMStudioMainFrame.class,
             "icons/microscope.gif"));
-      running_ = true;
+      isProgramRunning_ = true;
 
       acqMgr_ = new AcquisitionManager();
       
@@ -2491,7 +2491,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       return true;
    }
    
-   public void addStagePositionToTags(TaggedImage ti) throws JSONException {
+   private void addStagePositionToTags(TaggedImage ti) throws JSONException {
       if (gui_.xyStageLabel_.length() > 0) {
          MDUtils.setXPositionUm(ti.tags, gui_.staticInfo_.x_);
          MDUtils.setYPositionUm(ti.tags, gui_.staticInfo_.y_);
@@ -2534,7 +2534,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
 
    public void initializeGUI() {
       try {
-
          // establish device roles
          cameraLabel_ = core_.getCameraDevice();
          shutterLabel_ = core_.getShutterDevice();
@@ -2580,13 +2579,11 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
          ReportingUtils.showError(e);
       }
    }
-
-
    
-    /**
-    * Adds plugin_ items to the plugins menu
+   /**
+    * Adds plugin items to the plugins menu
     * Adds submenus (currently only 1 level deep)
-    * @param plugin_ - plugin_ to be added to the menu
+    * @param plugin - plugin to be added to the menu
     */
    public void addPluginToMenu(final PluginLoader.PluginItem plugin) {
       List<String> path = plugin.getMenuPath();
@@ -2692,7 +2689,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    }
 
    public void updateGUI(boolean updateConfigPadStructure, boolean fromCache) {
-
       try {
          // establish device roles
          cameraLabel_ = core_.getCameraDevice();
@@ -2762,15 +2758,9 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
 
       updateStaticInfo();
       updateTitle();
-
    }
 
-   //TODO: Deprecated @Override
-   public boolean okToAcquire() {
-      return !isLiveModeOn();
-   }
-
-   //TODO: Deprecated @Override
+   // Cancel acquisitions and stop live mode.
    public void stopAllActivity() {
         if (this.acquisitionEngine2010_ != null) {
             this.acquisitionEngine2010_.stop();
@@ -2782,7 +2772,8 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
     * Cleans up resources while shutting down 
     * 
     * @param calledByImageJ
-    * @return flag indicating success.  Shut down should abort when flag is false 
+    * @return Whether or not cleanup was successful. Shutdown should abort
+    *         on failure.
     */
    private boolean cleanupOnClose(boolean calledByImageJ) {
       // Save config presets if they were changed.
@@ -2902,9 +2893,9 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
 
    public synchronized boolean closeSequence(boolean calledByImageJ) {
 
-      if (!this.isRunning()) {
+      if (!this.getIsProgramRunning()) {
          if (core_ != null) {
-            core_.logMessage("MMStudioMainFrame::closeSequence called while running_ is false");
+            core_.logMessage("MMStudioMainFrame::closeSequence called while isProgramRunning_ is false");
          }
          return true;
       }
@@ -2937,7 +2928,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
          return false;
       }
 
-      running_ = false;
+      isProgramRunning_ = false;
 
       saveSettings();
       try {
@@ -2966,22 +2957,8 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       return true;
    }
 
-   /*
-   public void applyContrastSettings(ContrastSettings contrast8,
-         ContrastSettings contrast16) {
-      ImagePlus img = WindowManager.getCurrentImage();
-      if (img == null|| VirtualAcquisitionDisplay.getDisplay(img) == null )
-         return;
-      if (img.getBytesPerPixel() == 1)     
-         VirtualAcquisitionDisplay.getDisplay(img).setChannelContrast(0,
-                 contrast8.min, contrast8.max, contrast8.gamma);
-      else
-         VirtualAcquisitionDisplay.getDisplay(img).setChannelContrast(0, 
-                 contrast16.min, contrast16.max, contrast16.gamma);
-   }
-   */
-
    //TODO: Deprecated @Override
+   // Last I checked, this is only used by the SlideExplorer plugin.
    public ContrastSettings getContrastSettings() {
       ImagePlus img = WindowManager.getCurrentImage();
       if (img == null || VirtualAcquisitionDisplay.getDisplay(img) == null )
@@ -2989,18 +2966,8 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       return VirtualAcquisitionDisplay.getDisplay(img).getChannelContrastSettings(0);
    }
    
-/*
-   public boolean is16bit() {
-      ImagePlus ip = WindowManager.getCurrentImage();
-      if (ip != null && ip.getProcessor() instanceof ShortProcessor) {
-         return true;
-      }
-      return false;
-   }
-   * */
-
-   public boolean isRunning() {
-      return running_;
+   public boolean getIsProgramRunning() {
+      return isProgramRunning_;
    }
 
    /**
@@ -3100,10 +3067,12 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       }
    }
 
+   /**
+    * Load the most recently used config file(s) to help the user when
+    * selecting which one to use.
+    */
    private void loadMRUConfigFiles() {
       sysConfigFile_ = mainPrefs_.get(SYSTEM_CONFIG_FILE, sysConfigFile_);
-      // startupScriptFile_ = mainPrefs_.get(STARTUP_SCRIPT_FILE,
-      // startupScriptFile_);
       MRUConfigFiles_ = new ArrayList<String>();
       for (Integer icfg = 0; icfg < maxMRUCfgs_; ++icfg) {
          String value = "";
@@ -3118,7 +3087,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
          }
       }
       // initialize MRU list from old persistant data containing only SYSTEM_CONFIG_FILE
-      if (0 < sysConfigFile_.length()) {
+      if (sysConfigFile_.length() > 0) {
          if (!MRUConfigFiles_.contains(sysConfigFile_)) {
             // in case persistant data is inconsistent
             if (maxMRUCfgs_ <= MRUConfigFiles_.size()) {
@@ -3129,9 +3098,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       }
    }
 
-   /**
-    * Opens Acquisition dialog.
-    */
    private void openAcqControlDialog() {
       try {
          if (acqControlWin_ == null) {
@@ -3151,7 +3117,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
                + "Try resetting registry settings to factory defaults (Menu Tools|Options).");
       }
    }
-   
 
    private void updateChannelCombos() {
       if (this.acqControlWin_ != null) {
@@ -3236,7 +3201,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
                   ReportingUtils.logError(ex);
                }
             }
-         }.start(); // or any other method from Autofocus.java API
+         }.start();
       }
    }
    
