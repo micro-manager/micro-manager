@@ -1654,6 +1654,16 @@ int XYStage::Initialize()
    if (ret != DEVICE_OK)
       return ret;
 
+   pAct = new CPropertyAction (this, &XYStage::OnStepSizeX);
+   ret = CreateProperty("StepSize-X", "0.1", MM::Float, false, pAct);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   pAct = new CPropertyAction (this, &XYStage::OnStepSizeY);
+   ret = CreateProperty("StepSize-Y", "0.1", MM::Float, false, pAct);
+   if (ret != DEVICE_OK)
+      return ret;
+
    // Speed (in um/sec)
    // -----
    pAct = new CPropertyAction (this, &XYStage::OnSpeed);
