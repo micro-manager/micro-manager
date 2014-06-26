@@ -60,7 +60,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -903,17 +906,7 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
    // Attaches phototargeting ROIs to a multi-dimensional acquisition, so that
    // they will run on a particular firstFrame and, if repeat is true,
    // thereafter again every frameRepeatInterval frames.
-   public void attachRoisToMDA(int firstFrame, boolean repeat, int frameRepeatInveral) {
-      Runnable runPolygons = new Runnable() {
-         @Override
-         public void run() {
-            runRois();
-         }
-         @Override
-         public String toString() {
-            return "Phototargeting of ROIs";
-         }
-      };
+   public void attachRoisToMDA(int firstFrame, boolean repeat, int frameRepeatInveral, Runnable runPolygons) {
       app_.clearRunnables();
       if (repeat) {
          for (int i = firstFrame; i < app_.getAcquisitionSettings().numFrames * 10; i += frameRepeatInveral) {
@@ -942,12 +935,81 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
    private static int getSpinnerIntegerValue(JSpinner spinner) {
       return Integer.parseInt(spinner.getValue().toString());
    }
+
+   // Return the value of a spinner displaying an integer.
+   private static double getSpinnerDoubleValue(JSpinner spinner) {
+      return Double.parseDouble(spinner.getValue().toString());
+   }
    
    // Sets the Point and Shoot "On and Off" buttons to a given state.
    public void updatePointAndShoot(boolean turnedOn) {
       pointAndShootOnButton.setSelected(turnedOn);
       pointAndShootOffButton.setSelected(!turnedOn);
       enablePointAndShootMode(turnedOn);
+   }
+   
+   // Generates a runnable that runs the selected ROIs.
+   private Runnable phototargetROIsRunnable(final String runnableName) {
+      return new Runnable() {
+         @Override
+         public void run() {
+            runRois();
+         }
+         @Override
+         public String toString() {
+            return runnableName;
+         }
+      };
+   }
+   
+   // Converts a Runnable to one that runs asynchronously.
+   private static Runnable makeRunnableAsync(final Runnable runnable) { 
+      return new Runnable() {
+         public void run() {
+            new Thread() {
+               public void run() {
+                  runnable.run();            
+               }
+            }.start();
+         }
+      };
+   }  
+   
+   // Sleep until the designated clock time.
+   private static void sleepUntil(long clockTimeMillis) {
+      long delta = clockTimeMillis - System.currentTimeMillis();
+      if (delta > 0) {
+         try {
+            Thread.sleep(delta);
+         } catch (InterruptedException ex) {
+            ReportingUtils.logError(ex);
+         }
+      }
+   }
+   
+   // Runs runnable starting at firstTimeMs after this function is called, and
+   // then, if repeat is true, every intervalTimeMs thereafter until
+   // shouldContinue.call() returns false.
+   private Runnable runAtIntervals(final long firstTimeMs, final boolean repeat,
+      final long intervalTimeMs, final Runnable runnable, final Callable<Boolean> shouldContinue) {
+      return new Runnable() {
+         public void run() {
+            try {
+               final long startTime = System.currentTimeMillis() + firstTimeMs;
+               int reps = 0;
+               while (shouldContinue.call()) {
+                  sleepUntil(startTime + reps * intervalTimeMs);
+                  runnable.run();
+                  ++reps;
+                  if (!repeat) {
+                     break;
+                  }
+               }
+            } catch (Exception ex) {
+               ReportingUtils.logError(ex);
+            }
+         }
+      };
    }
    
    // Update the GUI's roi settings so they reflect the user's current choices.
@@ -972,19 +1034,46 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
       useInMDAcheckBox.setEnabled(roisSubmitted);
 
       boolean useInMDA = roisSubmitted && useInMDAcheckBox.isSelected();
+      attachToMdaTabbedPane.setEnabled(useInMDA);
       startFrameLabel.setEnabled(useInMDA);
       startFrameSpinner.setEnabled(useInMDA);
       repeatCheckBox.setEnabled(useInMDA);
-
+      startTimeLabel.setEnabled(useInMDA);
+      startTimeUnitLabel.setEnabled(useInMDA);
+      startTimeSpinner.setEnabled(useInMDA);
+      repeatCheckBoxTime.setEnabled(useInMDA);
+      
       boolean repeatInMDA = useInMDA && repeatCheckBox.isSelected();
       repeatEveryFrameSpinner.setEnabled(repeatInMDA);
-      framesLabel.setEnabled(repeatInMDA);
+      repeatEveryFrameUnitLabel.setEnabled(repeatInMDA);
       
+      boolean repeatInMDATime = useInMDA && repeatCheckBoxTime.isSelected();
+      repeatEveryIntervalSpinner.setEnabled(repeatInMDATime);
+      repeatEveryIntervalUnitLabel.setEnabled(repeatInMDATime);
+      
+      boolean synchronous = attachToMdaTabbedPane.getSelectedComponent() == syncRoiPanel;
+
       if (useInMDAcheckBox.isSelected()) {
          removeFromMDA();
-         attachRoisToMDA(getSpinnerIntegerValue(startFrameSpinner) - 1,
-            repeatCheckBox.isSelected(),
-            getSpinnerIntegerValue(repeatEveryFrameSpinner));
+         if (synchronous) {
+            attachRoisToMDA(getSpinnerIntegerValue(startFrameSpinner) - 1,
+                  repeatCheckBox.isSelected(),
+                  getSpinnerIntegerValue(repeatEveryFrameSpinner),
+                  phototargetROIsRunnable("Synchronous phototargeting of ROIs"));
+         } else {
+            final Callable<Boolean> mdaRunning = new Callable<Boolean>() {
+               public Boolean call() throws Exception {
+                  return app_.isAcquisitionRunning();
+               }
+            };
+            attachRoisToMDA(1, false, 0,
+                  makeRunnableAsync(
+                        runAtIntervals((long) (1000. * getSpinnerDoubleValue(startTimeSpinner)),
+                        repeatCheckBoxTime.isSelected(),
+                        (long) (1000 * getSpinnerDoubleValue(repeatEveryIntervalSpinner)),
+                        phototargetROIsRunnable("Asynchronous phototargeting of ROIs"),
+                        mdaRunning)));
+         }
       } else {
          removeFromMDA();
       }
@@ -1110,23 +1199,6 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
       pointAndShootOnButton = new javax.swing.JToggleButton();
       pointAndShootOffButton = new javax.swing.JToggleButton();
       phototargetInstructionsLabel = new javax.swing.JLabel();
-      roisTab = new javax.swing.JPanel();
-      roiLoopLabel = new javax.swing.JLabel();
-      roiLoopTimesLabel = new javax.swing.JLabel();
-      setRoiButton = new javax.swing.JButton();
-      runROIsNowButton = new javax.swing.JButton();
-      roiLoopSpinner = new javax.swing.JSpinner();
-      repeatCheckBox = new javax.swing.JCheckBox();
-      startFrameLabel = new javax.swing.JLabel();
-      startFrameSpinner = new javax.swing.JSpinner();
-      repeatEveryFrameSpinner = new javax.swing.JSpinner();
-      framesLabel = new javax.swing.JLabel();
-      jSeparator1 = new javax.swing.JSeparator();
-      useInMDAcheckBox = new javax.swing.JCheckBox();
-      roiStatusLabel = new javax.swing.JLabel();
-      roiManagerButton = new javax.swing.JButton();
-      jSeparator3 = new javax.swing.JSeparator();
-      sequencingButton = new javax.swing.JButton();
       setupTab = new javax.swing.JPanel();
       calibrateButton_ = new javax.swing.JButton();
       allPixelsButton = new javax.swing.JButton();
@@ -1135,6 +1207,32 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
       phototargetingChannelDropdownLabel = new javax.swing.JLabel();
       shutterComboBox = new javax.swing.JComboBox();
       phototargetingShutterDropdownLabel = new javax.swing.JLabel();
+      roisTab = new javax.swing.JPanel();
+      roiLoopLabel = new javax.swing.JLabel();
+      roiLoopTimesLabel = new javax.swing.JLabel();
+      setRoiButton = new javax.swing.JButton();
+      runROIsNowButton = new javax.swing.JButton();
+      roiLoopSpinner = new javax.swing.JSpinner();
+      jSeparator1 = new javax.swing.JSeparator();
+      useInMDAcheckBox = new javax.swing.JCheckBox();
+      roiStatusLabel = new javax.swing.JLabel();
+      roiManagerButton = new javax.swing.JButton();
+      jSeparator3 = new javax.swing.JSeparator();
+      sequencingButton = new javax.swing.JButton();
+      attachToMdaTabbedPane = new javax.swing.JTabbedPane();
+      asyncRoiPanel = new javax.swing.JPanel();
+      startTimeLabel = new javax.swing.JLabel();
+      startTimeSpinner = new javax.swing.JSpinner();
+      repeatCheckBoxTime = new javax.swing.JCheckBox();
+      repeatEveryIntervalSpinner = new javax.swing.JSpinner();
+      repeatEveryIntervalUnitLabel = new javax.swing.JLabel();
+      startTimeUnitLabel = new javax.swing.JLabel();
+      syncRoiPanel = new javax.swing.JPanel();
+      startFrameLabel = new javax.swing.JLabel();
+      repeatCheckBox = new javax.swing.JCheckBox();
+      startFrameSpinner = new javax.swing.JSpinner();
+      repeatEveryFrameSpinner = new javax.swing.JSpinner();
+      repeatEveryFrameUnitLabel = new javax.swing.JLabel();
       offButton = new javax.swing.JButton();
       ExposureTimeLabel = new javax.swing.JLabel();
       pointAndShootIntervalSpinner = new javax.swing.JSpinner();
@@ -1192,7 +1290,7 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
                   .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                   .add(pointAndShootOffButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                .add(phototargetInstructionsLabel))
-            .addContainerGap(179, Short.MAX_VALUE))
+            .addContainerGap(109, Short.MAX_VALUE))
       );
       pointAndShootTabLayout.setVerticalGroup(
          pointAndShootTabLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -1204,180 +1302,10 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
                .add(pointAndShootOffButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
             .add(18, 18, 18)
             .add(phototargetInstructionsLabel)
-            .addContainerGap(140, Short.MAX_VALUE))
+            .addContainerGap(211, Short.MAX_VALUE))
       );
 
       mainTabbedPane.addTab("Point and Shoot", pointAndShootTab);
-
-      roiLoopLabel.setText("Loop:");
-
-      roiLoopTimesLabel.setText("times");
-
-      setRoiButton.setText("Set ROI(s)");
-      setRoiButton.setToolTipText("Specify an ROI you wish to be phototargeted by using the ImageJ ROI tools (point, rectangle, oval, polygon). Then press Set ROI(s) to send the ROIs to the phototargeting device. To initiate phototargeting, press Go!");
-      setRoiButton.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            setRoiButtonActionPerformed(evt);
-         }
-      });
-
-      runROIsNowButton.setText("Run ROIs now!");
-      runROIsNowButton.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            runROIsNowButtonActionPerformed(evt);
-         }
-      });
-
-      roiLoopSpinner.setModel(new SpinnerNumberModel(1, 1, 1000000000, 1));
-      roiLoopSpinner.addChangeListener(new javax.swing.event.ChangeListener() {
-         public void stateChanged(javax.swing.event.ChangeEvent evt) {
-            roiLoopSpinnerStateChanged(evt);
-         }
-      });
-
-      repeatCheckBox.setText("Repeat every");
-      repeatCheckBox.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            repeatCheckBoxActionPerformed(evt);
-         }
-      });
-
-      startFrameLabel.setText("Start Frame");
-
-      startFrameSpinner.setModel(new SpinnerNumberModel(1, 1, 1000000000, 1));
-      startFrameSpinner.addChangeListener(new javax.swing.event.ChangeListener() {
-         public void stateChanged(javax.swing.event.ChangeEvent evt) {
-            startFrameSpinnerStateChanged(evt);
-         }
-      });
-
-      repeatEveryFrameSpinner.setModel(new SpinnerNumberModel(1, 1, 1000000000, 1));
-      repeatEveryFrameSpinner.addChangeListener(new javax.swing.event.ChangeListener() {
-         public void stateChanged(javax.swing.event.ChangeEvent evt) {
-            repeatEveryFrameSpinnerStateChanged(evt);
-         }
-      });
-
-      framesLabel.setText("frames");
-
-      useInMDAcheckBox.setText("Run ROIs in Multi-Dimensional Acquisition");
-      useInMDAcheckBox.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            useInMDAcheckBoxActionPerformed(evt);
-         }
-      });
-
-      roiStatusLabel.setText("No ROIs submitted yet");
-
-      roiManagerButton.setText("ROI Manager >>");
-      roiManagerButton.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            roiManagerButtonActionPerformed(evt);
-         }
-      });
-
-      jSeparator3.setOrientation(javax.swing.SwingConstants.VERTICAL);
-
-      sequencingButton.setText("Sequencing...");
-      sequencingButton.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            sequencingButtonActionPerformed(evt);
-         }
-      });
-
-      org.jdesktop.layout.GroupLayout roisTabLayout = new org.jdesktop.layout.GroupLayout(roisTab);
-      roisTab.setLayout(roisTabLayout);
-      roisTabLayout.setHorizontalGroup(
-         roisTabLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-         .add(roisTabLayout.createSequentialGroup()
-            .add(25, 25, 25)
-            .add(roisTabLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-               .add(roisTabLayout.createSequentialGroup()
-                  .add(roiStatusLabel)
-                  .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                  .add(sequencingButton))
-               .add(roisTabLayout.createSequentialGroup()
-                  .add(setRoiButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 108, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                  .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                  .add(roiManagerButton)))
-            .add(24, 24, 24))
-         .add(roisTabLayout.createSequentialGroup()
-            .addContainerGap()
-            .add(roisTabLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-               .add(roisTabLayout.createSequentialGroup()
-                  .add(10, 10, 10)
-                  .add(runROIsNowButton)
-                  .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                  .add(jSeparator3, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                  .add(15, 15, 15)
-                  .add(roisTabLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                     .add(roisTabLayout.createSequentialGroup()
-                        .add(29, 29, 29)
-                        .add(roisTabLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                           .add(roisTabLayout.createSequentialGroup()
-                              .add(startFrameLabel)
-                              .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                              .add(startFrameSpinner, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 46, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                           .add(roisTabLayout.createSequentialGroup()
-                              .add(repeatCheckBox)
-                              .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                              .add(repeatEveryFrameSpinner, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 50, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                              .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                              .add(framesLabel))))
-                     .add(useInMDAcheckBox))
-                  .add(0, 0, Short.MAX_VALUE))
-               .add(roisTabLayout.createSequentialGroup()
-                  .add(jSeparator1)
-                  .addContainerGap())
-               .add(roisTabLayout.createSequentialGroup()
-                  .add(15, 15, 15)
-                  .add(roiLoopLabel)
-                  .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                  .add(roiLoopSpinner, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 36, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                  .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                  .add(roiLoopTimesLabel)
-                  .add(107, 349, Short.MAX_VALUE))))
-      );
-      roisTabLayout.setVerticalGroup(
-         roisTabLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-         .add(roisTabLayout.createSequentialGroup()
-            .add(21, 21, 21)
-            .add(roisTabLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-               .add(setRoiButton)
-               .add(roiManagerButton))
-            .add(18, 18, 18)
-            .add(roisTabLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-               .add(roiStatusLabel)
-               .add(sequencingButton))
-            .add(18, 18, 18)
-            .add(roisTabLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-               .add(roiLoopLabel)
-               .add(roiLoopTimesLabel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 14, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-               .add(roiLoopSpinner, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-            .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-            .add(jSeparator1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-            .add(roisTabLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-               .add(jSeparator3, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 84, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-               .add(roisTabLayout.createSequentialGroup()
-                  .add(6, 6, 6)
-                  .add(roisTabLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                     .add(runROIsNowButton)
-                     .add(roisTabLayout.createSequentialGroup()
-                        .add(useInMDAcheckBox)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                        .add(roisTabLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                           .add(startFrameLabel)
-                           .add(startFrameSpinner, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(roisTabLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                           .add(repeatCheckBox)
-                           .add(repeatEveryFrameSpinner, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                           .add(framesLabel))))))
-            .addContainerGap(12, Short.MAX_VALUE))
-      );
-
-      mainTabbedPane.addTab("ROIs", roisTab);
 
       calibrateButton_.setText("Calibrate!");
       calibrateButton_.addActionListener(new java.awt.event.ActionListener() {
@@ -1438,7 +1366,7 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
                      .add(shutterComboBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 126, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                      .add(channelComboBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 126, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
                .add(calibrateButton_))
-            .addContainerGap(197, Short.MAX_VALUE))
+            .addContainerGap(127, Short.MAX_VALUE))
       );
       setupTabLayout.setVerticalGroup(
          setupTabLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -1449,7 +1377,7 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
                .add(allPixelsButton))
             .add(18, 18, 18)
             .add(calibrateButton_)
-            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 18, Short.MAX_VALUE)
+            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 89, Short.MAX_VALUE)
             .add(setupTabLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                .add(phototargetingChannelDropdownLabel)
                .add(channelComboBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
@@ -1461,6 +1389,255 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
       );
 
       mainTabbedPane.addTab("Setup", setupTab);
+
+      roiLoopLabel.setText("Loop:");
+
+      roiLoopTimesLabel.setText("times");
+
+      setRoiButton.setText("Set ROI(s)");
+      setRoiButton.setToolTipText("Specify an ROI you wish to be phototargeted by using the ImageJ ROI tools (point, rectangle, oval, polygon). Then press Set ROI(s) to send the ROIs to the phototargeting device. To initiate phototargeting, press Go!");
+      setRoiButton.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            setRoiButtonActionPerformed(evt);
+         }
+      });
+
+      runROIsNowButton.setText("Run ROIs now!");
+      runROIsNowButton.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            runROIsNowButtonActionPerformed(evt);
+         }
+      });
+
+      roiLoopSpinner.setModel(new SpinnerNumberModel(1, 1, 1000000000, 1));
+      roiLoopSpinner.addChangeListener(new javax.swing.event.ChangeListener() {
+         public void stateChanged(javax.swing.event.ChangeEvent evt) {
+            roiLoopSpinnerStateChanged(evt);
+         }
+      });
+
+      useInMDAcheckBox.setText("Run ROIs in Multi-Dimensional Acquisition");
+      useInMDAcheckBox.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            useInMDAcheckBoxActionPerformed(evt);
+         }
+      });
+
+      roiStatusLabel.setText("No ROIs submitted yet");
+
+      roiManagerButton.setText("ROI Manager >>");
+      roiManagerButton.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            roiManagerButtonActionPerformed(evt);
+         }
+      });
+
+      jSeparator3.setOrientation(javax.swing.SwingConstants.VERTICAL);
+
+      sequencingButton.setText("Sequencing...");
+      sequencingButton.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            sequencingButtonActionPerformed(evt);
+         }
+      });
+
+      startTimeLabel.setText("Start Time");
+
+      startFrameSpinner.setModel(new SpinnerNumberModel(1, 1, 1000000000, 1));
+      startTimeSpinner.addChangeListener(new javax.swing.event.ChangeListener() {
+         public void stateChanged(javax.swing.event.ChangeEvent evt) {
+            startTimeSpinnerStateChanged(evt);
+         }
+      });
+
+      repeatCheckBoxTime.setText("Repeat every");
+      repeatCheckBoxTime.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            repeatCheckBoxTimeActionPerformed(evt);
+         }
+      });
+
+      repeatEveryFrameSpinner.setModel(new SpinnerNumberModel(1, 1, 1000000000, 1));
+      repeatEveryIntervalSpinner.addChangeListener(new javax.swing.event.ChangeListener() {
+         public void stateChanged(javax.swing.event.ChangeEvent evt) {
+            repeatEveryIntervalSpinnerStateChanged(evt);
+         }
+      });
+
+      repeatEveryIntervalUnitLabel.setText("seconds");
+
+      startTimeUnitLabel.setText("seconds");
+
+      org.jdesktop.layout.GroupLayout asyncRoiPanelLayout = new org.jdesktop.layout.GroupLayout(asyncRoiPanel);
+      asyncRoiPanel.setLayout(asyncRoiPanelLayout);
+      asyncRoiPanelLayout.setHorizontalGroup(
+         asyncRoiPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+         .add(asyncRoiPanelLayout.createSequentialGroup()
+            .addContainerGap()
+            .add(asyncRoiPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
+               .add(asyncRoiPanelLayout.createSequentialGroup()
+                  .add(startTimeLabel)
+                  .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                  .add(startTimeSpinner, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 57, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                  .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                  .add(startTimeUnitLabel))
+               .add(asyncRoiPanelLayout.createSequentialGroup()
+                  .add(repeatCheckBoxTime)
+                  .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                  .add(repeatEveryIntervalSpinner)))
+            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+            .add(repeatEveryIntervalUnitLabel)
+            .addContainerGap(28, Short.MAX_VALUE))
+      );
+      asyncRoiPanelLayout.setVerticalGroup(
+         asyncRoiPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+         .add(asyncRoiPanelLayout.createSequentialGroup()
+            .addContainerGap()
+            .add(asyncRoiPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+               .add(startTimeLabel)
+               .add(startTimeSpinner, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+               .add(startTimeUnitLabel))
+            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+            .add(asyncRoiPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+               .add(repeatCheckBoxTime)
+               .add(repeatEveryIntervalSpinner, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+               .add(repeatEveryIntervalUnitLabel))
+            .addContainerGap(26, Short.MAX_VALUE))
+      );
+
+      attachToMdaTabbedPane.addTab("During imaging", asyncRoiPanel);
+
+      startFrameLabel.setText("Start Frame");
+
+      repeatCheckBox.setText("Repeat every");
+      repeatCheckBox.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            repeatCheckBoxActionPerformed(evt);
+         }
+      });
+
+      startFrameSpinner.setModel(new SpinnerNumberModel(1, 1, 1000000000, 1));
+      startFrameSpinner.addChangeListener(new javax.swing.event.ChangeListener() {
+         public void stateChanged(javax.swing.event.ChangeEvent evt) {
+            startFrameSpinnerStateChanged(evt);
+         }
+      });
+
+      repeatEveryFrameSpinner.setModel(new SpinnerNumberModel(1, 1, 1000000000, 1));
+      repeatEveryFrameSpinner.addChangeListener(new javax.swing.event.ChangeListener() {
+         public void stateChanged(javax.swing.event.ChangeEvent evt) {
+            repeatEveryFrameSpinnerStateChanged(evt);
+         }
+      });
+
+      repeatEveryFrameUnitLabel.setText("frames");
+
+      org.jdesktop.layout.GroupLayout syncRoiPanelLayout = new org.jdesktop.layout.GroupLayout(syncRoiPanel);
+      syncRoiPanel.setLayout(syncRoiPanelLayout);
+      syncRoiPanelLayout.setHorizontalGroup(
+         syncRoiPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+         .add(syncRoiPanelLayout.createSequentialGroup()
+            .addContainerGap()
+            .add(syncRoiPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+               .add(syncRoiPanelLayout.createSequentialGroup()
+                  .add(startFrameLabel)
+                  .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                  .add(startFrameSpinner, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 46, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+               .add(syncRoiPanelLayout.createSequentialGroup()
+                  .add(repeatCheckBox)
+                  .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                  .add(repeatEveryFrameSpinner, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 50, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                  .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                  .add(repeatEveryFrameUnitLabel)))
+            .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+      );
+      syncRoiPanelLayout.setVerticalGroup(
+         syncRoiPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+         .add(syncRoiPanelLayout.createSequentialGroup()
+            .addContainerGap()
+            .add(syncRoiPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+               .add(startFrameLabel)
+               .add(startFrameSpinner, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+            .add(syncRoiPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+               .add(repeatCheckBox)
+               .add(repeatEveryFrameSpinner, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+               .add(repeatEveryFrameUnitLabel))
+            .addContainerGap(26, Short.MAX_VALUE))
+      );
+
+      attachToMdaTabbedPane.addTab("Between images", syncRoiPanel);
+
+      org.jdesktop.layout.GroupLayout roisTabLayout = new org.jdesktop.layout.GroupLayout(roisTab);
+      roisTab.setLayout(roisTabLayout);
+      roisTabLayout.setHorizontalGroup(
+         roisTabLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+         .add(roisTabLayout.createSequentialGroup()
+            .add(roisTabLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
+               .add(jSeparator1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 389, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+               .add(org.jdesktop.layout.GroupLayout.LEADING, roisTabLayout.createSequentialGroup()
+                  .add(20, 20, 20)
+                  .add(runROIsNowButton)
+                  .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                  .add(jSeparator3, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                  .add(15, 15, 15)
+                  .add(roisTabLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                     .add(useInMDAcheckBox)
+                     .add(attachToMdaTabbedPane, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 247, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))))
+            .add(0, 13, Short.MAX_VALUE))
+         .add(roisTabLayout.createSequentialGroup()
+            .add(25, 25, 25)
+            .add(roisTabLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+               .add(roisTabLayout.createSequentialGroup()
+                  .add(roisTabLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                     .add(roisTabLayout.createSequentialGroup()
+                        .add(roiStatusLabel)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .add(sequencingButton))
+                     .add(roisTabLayout.createSequentialGroup()
+                        .add(setRoiButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 108, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .add(roiManagerButton)))
+                  .add(93, 93, 93))
+               .add(roisTabLayout.createSequentialGroup()
+                  .add(roiLoopLabel)
+                  .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                  .add(roiLoopSpinner, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 36, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                  .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                  .add(roiLoopTimesLabel)
+                  .add(115, 115, 115))))
+      );
+      roisTabLayout.setVerticalGroup(
+         roisTabLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+         .add(roisTabLayout.createSequentialGroup()
+            .add(21, 21, 21)
+            .add(roisTabLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+               .add(setRoiButton)
+               .add(roiManagerButton))
+            .add(18, 18, 18)
+            .add(roisTabLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+               .add(roiStatusLabel)
+               .add(sequencingButton))
+            .add(18, 18, 18)
+            .add(roisTabLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+               .add(roiLoopLabel)
+               .add(roiLoopTimesLabel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 14, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+               .add(roiLoopSpinner, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+            .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+            .add(jSeparator1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+            .add(roisTabLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
+               .add(roisTabLayout.createSequentialGroup()
+                  .add(roisTabLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                     .add(runROIsNowButton)
+                     .add(useInMDAcheckBox))
+                  .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                  .add(attachToMdaTabbedPane, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 113, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+               .add(jSeparator3, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 148, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+            .addContainerGap(19, Short.MAX_VALUE))
+      );
+
+      mainTabbedPane.addTab("ROIs", roisTab);
 
       offButton.setText("Off");
       offButton.setSelected(true);
@@ -1496,7 +1673,9 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
          .add(layout.createSequentialGroup()
             .addContainerGap()
             .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-               .add(mainTabbedPane)
+               .add(layout.createSequentialGroup()
+                  .add(mainTabbedPane)
+                  .addContainerGap())
                .add(layout.createSequentialGroup()
                   .add(ExposureTimeLabel)
                   .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
@@ -1507,8 +1686,7 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
                   .add(onButton)
                   .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                   .add(offButton)
-                  .add(0, 0, Short.MAX_VALUE)))
-            .addContainerGap())
+                  .add(0, 0, Short.MAX_VALUE))))
       );
       layout.setVerticalGroup(
          layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -1521,8 +1699,8 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
                .add(ExposureTimeLabel)
                .add(jLabel2))
             .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-            .add(mainTabbedPane, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 266, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-            .addContainerGap(20, Short.MAX_VALUE))
+            .add(mainTabbedPane, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 337, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+            .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
       );
 
       pack();
@@ -1633,14 +1811,27 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
       setTargetingShutter(shutter);
    }//GEN-LAST:event_shutterComboBoxActionPerformed
 
+   private void startTimeSpinnerStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_startTimeSpinnerStateChanged
+      updateROISettings();
+   }//GEN-LAST:event_startTimeSpinnerStateChanged
+
+   private void repeatCheckBoxTimeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_repeatCheckBoxTimeActionPerformed
+      updateROISettings();
+   }//GEN-LAST:event_repeatCheckBoxTimeActionPerformed
+
+   private void repeatEveryIntervalSpinnerStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_repeatEveryIntervalSpinnerStateChanged
+      updateROISettings();
+   }//GEN-LAST:event_repeatEveryIntervalSpinnerStateChanged
+
 
    // Variables declaration - do not modify//GEN-BEGIN:variables
    private javax.swing.JLabel ExposureTimeLabel;
    private javax.swing.JButton allPixelsButton;
+   private javax.swing.JPanel asyncRoiPanel;
+   private javax.swing.JTabbedPane attachToMdaTabbedPane;
    private javax.swing.JButton calibrateButton_;
    private javax.swing.JButton centerButton;
    private javax.swing.JComboBox channelComboBox;
-   private javax.swing.JLabel framesLabel;
    private javax.swing.JLabel jLabel2;
    private javax.swing.JSeparator jSeparator1;
    private javax.swing.JSeparator jSeparator3;
@@ -1656,7 +1847,11 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
    private javax.swing.JToggleButton pointAndShootOnButton;
    private javax.swing.JPanel pointAndShootTab;
    private javax.swing.JCheckBox repeatCheckBox;
+   private javax.swing.JCheckBox repeatCheckBoxTime;
    private javax.swing.JSpinner repeatEveryFrameSpinner;
+   private javax.swing.JLabel repeatEveryFrameUnitLabel;
+   private javax.swing.JSpinner repeatEveryIntervalSpinner;
+   private javax.swing.JLabel repeatEveryIntervalUnitLabel;
    private javax.swing.JLabel roiLoopLabel;
    private javax.swing.JSpinner roiLoopSpinner;
    private javax.swing.JLabel roiLoopTimesLabel;
@@ -1670,6 +1865,10 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
    private javax.swing.JComboBox shutterComboBox;
    private javax.swing.JLabel startFrameLabel;
    private javax.swing.JSpinner startFrameSpinner;
+   private javax.swing.JLabel startTimeLabel;
+   private javax.swing.JSpinner startTimeSpinner;
+   private javax.swing.JLabel startTimeUnitLabel;
+   private javax.swing.JPanel syncRoiPanel;
    private javax.swing.JCheckBox useInMDAcheckBox;
    // End of variables declaration//GEN-END:variables
 

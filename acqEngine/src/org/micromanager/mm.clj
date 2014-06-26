@@ -329,7 +329,8 @@
 (defn get-pixel-type
   "Get the current pixel type."
   []
-  (str ({1 "GRAY", 4 "RGB"} (int (core getNumberOfComponents))) (* 8 (core getBytesPerPixel))))
+  (str ({1 "GRAY", 4 "RGB"} (int (core getNumberOfComponents)))
+       (* 8 (core getBytesPerPixel))))
 
 (defn ChannelSpec-to-map
   "Convert a Micro-Manager ChannelSpec object to a clojure data map
