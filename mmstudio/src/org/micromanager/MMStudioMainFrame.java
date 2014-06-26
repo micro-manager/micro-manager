@@ -207,7 +207,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    private JToggleButton liveButton_;
    private JCheckBox autoShutterCheckBox_;
    private MMOptions options_;
-   private boolean runsAsPlugin_;
+   private boolean amRunningAsPlugin_;
    private JCheckBoxMenuItem centerAndDragMenuItem_;
    private JButton snapButton_;
    private JButton autofocusNowButton_;
@@ -335,10 +335,10 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
 
    /**
     * MMStudioMainframe constructor
-    * @param pluginStatus 
+    * @param shouldRunAsPlugin 
     */
    @SuppressWarnings("LeakingThisInConstructor")
-   public MMStudioMainFrame(boolean pluginStatus) {
+   public MMStudioMainFrame(boolean shouldRunAsPlugin) {
       org.micromanager.diagnostics.ThreadExceptionLogger.setUp();
 
       // Set up event handling early, so following code can subscribe/publish
@@ -364,7 +364,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
 
       gui_ = this;
 
-      runsAsPlugin_ = pluginStatus;
+      amRunningAsPlugin_ = shouldRunAsPlugin;
       setIconImage(SwingResourceManager.getImage(MMStudioMainFrame.class,
             "icons/microscope.gif"));
       isProgramRunning_ = true;
@@ -634,7 +634,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       loadThread.start();
       return loadThread;
    }
-   
+
    private void handleError(String message) {
       if (isLiveModeOn()) {
          // Should we always stop live mode on any error?
@@ -660,11 +660,12 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
          int bitDepth, int numCamChannels) {
       try {
          if (acquisitionExists(SIMPLE_ACQ)) {
-            if ((getAcquisitionImageWidth(SIMPLE_ACQ) != width)
-                    || (getAcquisitionImageHeight(SIMPLE_ACQ) != height)
-                    || (getAcquisitionImageByteDepth(SIMPLE_ACQ) != depth)
-                    || (getAcquisitionImageBitDepth(SIMPLE_ACQ) != bitDepth)
-                    || (getAcquisitionMultiCamNumChannels(SIMPLE_ACQ) != numCamChannels)) {  //Need to close and reopen simple window
+            if ((getAcquisitionImageWidth(SIMPLE_ACQ) != width) || 
+                  (getAcquisitionImageHeight(SIMPLE_ACQ) != height) ||
+                  (getAcquisitionImageByteDepth(SIMPLE_ACQ) != depth) ||
+                  (getAcquisitionImageBitDepth(SIMPLE_ACQ) != bitDepth) ||
+                  (getAcquisitionMultiCamNumChannels(SIMPLE_ACQ) != numCamChannels)) {
+               //Need to close and reopen simple window
                closeAcquisitionWindow(SIMPLE_ACQ);
             }
          }
@@ -678,7 +679,8 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
                   setChannelName(SIMPLE_ACQ, (int) i, chName);
                }
             }
-            initializeSimpleAcquisition(SIMPLE_ACQ, width, height, depth, bitDepth, numCamChannels);
+            initializeSimpleAcquisition(SIMPLE_ACQ, 
+                  width, height, depth, bitDepth, numCamChannels);
             getAcquisition(SIMPLE_ACQ).promptToSave(false);
             getAcquisition(SIMPLE_ACQ).getAcquisitionWindow().getHyperImage().getWindow().toFront();
             this.updateCenterAndDragListener();
@@ -687,7 +689,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
          ReportingUtils.showError(ex);
       }
    }
-
    
    public void checkSimpleAcquisition() {
       if (core_.getCameraDevice().length() == 0) {
@@ -702,7 +703,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
 
       checkSimpleAcquisition(width, height, depth, bitDepth, numCamChannels);
    }
-
 
    public void checkSimpleAcquisition(TaggedImage image) {
       JSONObject tags = image.tags;
@@ -720,33 +720,24 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       }
    }
 
-   public void saveChannelColor(String chName, int rgb)
-   {
+   public void saveChannelColor(String chName, int rgb) {
       if (colorPrefs_ != null) {
          colorPrefs_.putInt("Color_" + chName, rgb);      
       }          
    }
    
-   public Color getChannelColor(String chName, int defaultColor)
-   {  
+   public Color getChannelColor(String chName, int defaultColor) {  
       if (colorPrefs_ != null) {
          defaultColor = colorPrefs_.getInt("Color_" + chName, defaultColor);
       }
       return new Color(defaultColor);
    }
 
-
    public void copyFromLiveModeToAlbum(VirtualAcquisitionDisplay display) throws MMScriptException, JSONException {
       ImageCache ic = display.getImageCache();
       int channels = ic.getSummaryMetadata().getInt("Channels");
-      if (channels == 1) {
-         //RGB or monchrome
-         addToAlbum(ic.getImage(0, 0, 0, 0), ic.getDisplayAndComments());
-      } else {
-         //multicamera
-         for (int i = 0; i < channels; i++) {
-            addToAlbum(ic.getImage(i, 0, 0, 0), ic.getDisplayAndComments());
-         }
+      for (int i = 0; i < channels; i++) {
+         addToAlbum(ic.getImage(i, 0, 0, 0), ic.getDisplayAndComments());
       }
    }
 
@@ -852,13 +843,14 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       GUIUtils.addWithEdges(topPanel, autoShutterCheckBox_, 107, 96, 199, 119);
 
       toggleShutterButton_ = (JToggleButton) GUIUtils.createButton(true,
-              "toggleShutterButton", "Open",
-              "Open/close the shutter",
-              new Runnable() {
-                 public void run() {
-                    toggleShutter();
-                 }
-              }, null, topPanel, 203, 96, 275, 117);      // Shutter button
+         "toggleShutterButton", "Open", "Open/close the shutter",
+         new Runnable() {
+            @Override
+            public void run() {
+               toggleShutter();
+            }
+         },
+         null, topPanel, 203, 96, 275, 117);
    }
 
    private void createCameraSettingsWidgets(JPanel topPanel) {
@@ -873,13 +865,15 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       createLabel("Configuration settings", true, topPanel, 280, 2, 430, 22);
 
       saveConfigButton_ = (JButton) GUIUtils.createButton(false,
-              "saveConfigureButton", "Save",
-              "Save current presets to the configuration file",
-              new Runnable() {
-                 public void run() {
-                  saveConfigPresets();
-                 }
-              }, null, topPanel, -80, 2, -5, 20);
+         "saveConfigureButton", "Save",
+         "Save current presets to the configuration file",
+         new Runnable() {
+            @Override
+            public void run() {
+             saveConfigPresets();
+            }
+         }, 
+         null, topPanel, -80, 2, -5, 20);
       
       configPad_ = new ConfigGroupPad();
       configPadButtonPanel_ = new ConfigPadButtonPanel();
@@ -892,49 +886,62 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       GUIUtils.addWithEdges(topPanel, configPadButtonPanel_, 280, -40, -4, -20);
    }
 
-   private void createMainButtons(JPanel topPanel) {
+   /** 
+    * Generate the "Snap", "Live", "Snap to album", "MDA", and "Refresh"
+    * buttons.
+    */
+   private void createCommonActionButtons(JPanel topPanel) {
       snapButton_ = (JButton) GUIUtils.createButton(false, "Snap", "Snap",
-              "Snap single image",
-              new Runnable() {
-                 public void run() {
-                    doSnap();
-                 }
-              }, "camera.png", topPanel, 7, 4, 95, 25);
+         "Snap single image",
+         new Runnable() {
+            @Override
+            public void run() {
+               doSnap();
+            }
+         }, 
+         "camera.png", topPanel, 7, 4, 95, 25);
 
       liveButton_ = (JToggleButton) GUIUtils.createButton(true,
-              "Live", "Live",
-              "Continuous live view",
-              new Runnable() {
-                 public void run() {
-                    enableLiveMode(!isLiveModeOn());
-                 }
-              }, "camera_go.png", topPanel, 7, 26, 95, 47);
+         "Live", "Live", "Continuous live view",
+         new Runnable() {
+            @Override
+            public void run() {
+               enableLiveMode(!isLiveModeOn());
+            }
+         },
+         "camera_go.png", topPanel, 7, 26, 95, 47);
 
-      /* toAlbumButton_ = (JButton) */ GUIUtils.createButton(false, "Album", "Album",
-              "Acquire single frame and add to an album",
-              new Runnable() {
-                 public void run() {
-                    snapAndAddToImage5D();
-                 }
-              }, "camera_plus_arrow.png", topPanel, 7, 48, 95, 69);
+      GUIUtils.createButton(false, "Album", "Album",
+         "Acquire single frame and add to an album",
+         new Runnable() {
+            @Override
+            public void run() {
+               snapAndAddToImage5D();
+            }
+         }, 
+         "camera_plus_arrow.png", topPanel, 7, 48, 95, 69);
 
-      /* MDA Button = */ GUIUtils.createButton(false,
-              "Multi-D Acq.", "Multi-D Acq.",
-              "Open multi-dimensional acquisition window",
-              new Runnable() {
-                 public void run() {
-                    openAcqControlDialog();
-                 }
-              }, "film.png", topPanel, 7, 70, 95, 91);
+      GUIUtils.createButton(false,
+         "Multi-D Acq.", "Multi-D Acq.",
+         "Open multi-dimensional acquisition window",
+         new Runnable() {
+            @Override
+            public void run() {
+               openAcqControlDialog();
+            }
+         }, 
+         "film.png", topPanel, 7, 70, 95, 91);
 
-      /* Refresh = */ GUIUtils.createButton(false, "Refresh", "Refresh",
-              "Refresh all GUI controls directly from the hardware",
-              new Runnable() {
-                 public void run() {
-                    core_.updateSystemStateCache();
-                    updateGUI(true);
-                 }
-              }, "arrow_refresh.png", topPanel, 7, 92, 95, 113);
+      GUIUtils.createButton(false, "Refresh", "Refresh",
+         "Refresh all GUI controls directly from the hardware",
+         new Runnable() {
+            @Override
+            public void run() {
+               core_.updateSystemStateCache();
+               updateGUI(true);
+            }
+         },
+         "arrow_refresh.png", topPanel, 7, 92, 95, 113);
    }
 
    private static MetadataPanel createMetadataPanel(JPanel bottomPanel) {
@@ -954,36 +961,9 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       citePleaLabel.addMouseListener(new MouseAdapter() {
          @Override
          public void mousePressed(MouseEvent e) {
-            new Thread(new Runnable() {
-               @Override
-               public void run(){
-                  try {
-                     ij.plugin.BrowserLauncher.openURL("https://micro-manager.org/wiki/Citing_Micro-Manager");
-                  } catch (IOException e1) {
-                     ReportingUtils.showError(e1);
-                  }
-               }
-            }).start();
+            new Thread(makeURLRunnable("https://micro-manager.org/wiki/Citing_Micro-Manager")).start();
          }
       });
-
-      // add a listener to the main ImageJ window to catch it quitting out on us
-      /*
-       * The current version of ImageJ calls the command "Quit", which we 
-       * handle in MMStudioPlugin.  Calling the closeSequence from here as well
-       * leads to crashes since the core will be cleaned up by one of the two
-       * threads doing the same thing.  I do not know since which version of 
-       * ImageJ introduced this behavior - NS, 2014-04-26
-      
-      if (ij.IJ.getInstance() != null) {
-         ij.IJ.getInstance().addWindowListener(new WindowAdapter() {
-            @Override
-            public void windowClosing(WindowEvent e) {
-               //closeSequence(true);
-            };
-         });
-      }
-      */
    }
 
    private JSplitPane createSplitPane(int dividerPos) {
@@ -1001,7 +981,7 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    }
 
    private void createTopPanelWidgets(JPanel topPanel) {
-      createMainButtons(topPanel);
+      createCommonActionButtons(topPanel);
       createCameraSettingsWidgets(topPanel);
       createPleaLabel(topPanel);
       createUtilityButtons(topPanel);
@@ -1011,116 +991,127 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
 
    private void createUtilityButtons(JPanel topPanel) {
       // ROI
-      
       createLabel("ROI", true, topPanel, 8, 140, 71, 154);
-      
       setRoiButton_ = GUIUtils.createButton(false, "setRoiButton", null,
-              "Set Region Of Interest to selected rectangle",
-              new Runnable() {
-                 public void run() {
-                    setROI();
-                 }
-              }, "shape_handles.png", topPanel, 7, 154, 37, 174);
+         "Set Region Of Interest to selected rectangle",
+         new Runnable() {
+            @Override
+            public void run() {
+               setROI();
+            }
+         }, 
+         "shape_handles.png", topPanel, 7, 154, 37, 174);
 
       clearRoiButton_ = GUIUtils.createButton(false, "clearRoiButton", null,
-              "Reset Region of Interest to full frame",
-              new Runnable() {
-                 public void run() {
-                    clearROI();
-                 }
-              }, "arrow_out.png", topPanel, 40, 154, 70, 174);
+         "Reset Region of Interest to full frame",
+         new Runnable() {
+            @Override
+            public void run() {
+               clearROI();
+            }
+         },
+         "arrow_out.png", topPanel, 40, 154, 70, 174);
       
       // Zoom
-      
       createLabel("Zoom", true, topPanel, 81, 140, 139, 154);
 
       GUIUtils.createButton(false, "zoomInButton", null,
-              "Zoom in",
-              new Runnable() {
-                 public void run() {
-                    zoomIn();
-                 }
-              }, "zoom_in.png", topPanel, 80, 154, 110, 174);
+         "Zoom in",
+         new Runnable() {
+            @Override
+            public void run() {
+               zoomIn();
+            }
+         },
+         "zoom_in.png", topPanel, 80, 154, 110, 174);
 
       GUIUtils.createButton(false, "zoomOutButton", null,
-              "Zoom out",
-              new Runnable() {
-                 public void run() {
-                    zoomOut();
-                 }
-              }, "zoom_out.png", topPanel, 113, 154, 143, 174);
+         "Zoom out",
+         new Runnable() {
+            @Override
+            public void run() {
+               zoomOut();
+            }
+         },
+         "zoom_out.png", topPanel, 113, 154, 143, 174);
 
-      // Profile
-      
+      // Line profile.
       createLabel("Profile", true, topPanel, 154, 140, 217, 154);
 
       GUIUtils.createButton(false, "lineProfileButton", null,
-              "Open line profile window (requires line selection)",
-              new Runnable() {
-                 public void run() {
-                    openLineProfileWindow();
-                 }
-              }, "chart_curve.png", topPanel, 153, 154, 183, 174);
+         "Open line profile window (requires line selection)",
+         new Runnable() {
+            @Override
+            public void run() {
+               openLineProfileWindow();
+            }
+         },
+         "chart_curve.png", topPanel, 153, 154, 183, 174);
 
       // Autofocus
-
       createLabel("Autofocus", true, topPanel, 194, 140, 276, 154);
-
       autofocusNowButton_ = (JButton) GUIUtils.createButton(false,
-              "autofocusNowButton", null,
-              "Autofocus now",
-              new Runnable() {
-                 public void run() {
-                    autofocusNow();
-                 }
-              }, "find.png", topPanel, 193, 154, 223, 174);
-
+         "autofocusNowButton", null, "Autofocus now",
+         new Runnable() {
+            @Override
+            public void run() {
+               autofocusNow();
+            }
+         }, 
+         "find.png", topPanel, 193, 154, 223, 174);
 
       autofocusConfigureButton_ = (JButton) GUIUtils.createButton(false,
-              "autofocusConfigureButton", null,
-              "Set autofocus options",
-              new Runnable() {
-                 public void run() {
-                    showAutofocusDialog();
-                 }
-              }, "wrench_orange.png", topPanel, 226, 154, 256, 174);
+         "autofocusConfigureButton", null,
+         "Set autofocus options",
+         new Runnable() {
+            @Override
+            public void run() {
+               showAutofocusDialog();
+            }
+         },
+         "wrench_orange.png", topPanel, 226, 154, 256, 174);
    }
 
    private void initializeFileMenu() {
       JMenu fileMenu = GUIUtils.createMenuInMenuBar(menuBar_, "File");
 
       GUIUtils.addMenuItem(fileMenu, "Open (Virtual)...", null,
-              new Runnable() {
-                 public void run() {
-                    new Thread() {
-                       @Override
-                       public void run() {
-                          openAcquisitionData(false);
-                       }
-                    }.start();
-                 }
-              });
+         new Runnable() {
+            @Override
+            public void run() {
+               new Thread() {
+                  @Override
+                  public void run() {
+                     openAcquisitionData(false);
+                  }
+               }.start();
+            }
+         }
+      );
 
       GUIUtils.addMenuItem(fileMenu, "Open (RAM)...", null,
-              new Runnable() {
-                 public void run() {
-                    new Thread() {
-                       @Override
-                       public void run() {
-                          openAcquisitionData(true);
-                       }
-                    }.start();
-                 }
-              });
+         new Runnable() {
+            @Override
+            public void run() {
+               new Thread() {
+                  @Override
+                  public void run() {
+                     openAcquisitionData(true);
+                  }
+               }.start();
+            }
+         }
+      );
 
       fileMenu.addSeparator();
 
       GUIUtils.addMenuItem(fileMenu, "Exit", null,
-              new Runnable() {
-                 public void run() {
-                    closeSequence(false);
-                 }
-              });
+         new Runnable() {
+            public void run() {
+               closeSequence(false);
+            }
+         }
+      );
    }
 
    /**
@@ -2767,11 +2758,9 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       } catch (NullPointerException e) {
          if (core_ != null)
             this.logError(e);
-      }     
-      // disposing sometimes hangs ImageJ!
-      // this.dispose();
+      }
       if (options_.closeOnExit_) {
-         if (!runsAsPlugin_) {
+         if (!amRunningAsPlugin_) {
             System.exit(0);
          } else {
             ImageJ ij = IJ.getInstance();

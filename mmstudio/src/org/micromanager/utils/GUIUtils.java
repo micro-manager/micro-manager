@@ -368,14 +368,13 @@ public class GUIUtils {
               (north >= 0) ? SpringLayout.NORTH : SpringLayout.SOUTH, parentContainer);
    }
       
-    /* Add a component to the parent panel, set positions of the edges of
-     * component relative to panel. If edges are positive, then they are
-     * positioned relative to north and west edges of parent container. If edges
-     * are negative, then they are positioned relative to south and east
-     * edges of parent container.
-     * Requires that parent container uses SpringLayout.
-     */
-
+   /** Add a component to the parent panel, set positions of the edges of
+    * component relative to panel. If edges are positive, then they are
+    * positioned relative to north and west edges of parent container. If edges
+    * are negative, then they are positioned relative to south and east
+    * edges of parent container.
+    * Requires that parent container uses SpringLayout.
+    */
    public static AbstractButton createButton(final boolean isToggleButton,
            final String name,
            final String text,
