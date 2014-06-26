@@ -1,5 +1,4 @@
 check_PROGRAMS = \
-	LoggerSanityTests \
 	CoreSanityTests \
 	LoggingSplitEntryIntoLinesTests \
 	LoggerTests
