@@ -198,6 +198,9 @@ int CoreCallback::OnPropertiesChanged(const MM::Device* /* caller */)
    if (core_->externalCallback_)
       core_->externalCallback_->onPropertiesChanged();
 
+   // TODO It is inconsistent that we do not update the system state cache in
+   // this case. However, doing so would be time-consuming (if not unsafe).
+
    return DEVICE_OK;
 }
 

@@ -142,12 +142,9 @@ public:
    std::string getVersionInfo() const;
    std::string getAPIVersionInfo() const;
    Configuration getSystemState();
-   Configuration getSystemStateCache() const;
-   void updateSystemStateCache();
    void setSystemState(const Configuration& conf);
    Configuration getConfigState(const char* group, const char* config) throw (CMMError);
    Configuration getConfigGroupState(const char* group) throw (CMMError);
-   Configuration getConfigGroupStateFromCache(const char* group) throw (CMMError);
    void saveSystemState(const char* fileName) throw (CMMError);
    void loadSystemState(const char* fileName) throw (CMMError);
    void saveSystemConfiguration(const char* fileName) throw (CMMError);
@@ -206,7 +203,6 @@ public:
    std::vector<std::string> getDevicePropertyNames(const char* label) throw (CMMError);
    bool hasProperty(const char* label, const char* propName) throw (CMMError);
    std::string getProperty(const char* label, const char* propName) throw (CMMError);
-   std::string getPropertyFromCache(const char* label, const char* propName) const throw (CMMError);
    void setProperty(const char* label, const char* propName, const char* propValue) throw (CMMError);
    void setProperty(const char* label, const char* propName, const bool propValue) throw (CMMError);
    void setProperty(const char* label, const char* propName, const long propValue) throw (CMMError);
@@ -268,6 +264,18 @@ public:
    void setChannelGroup(const char* channelGroup) throw (CMMError);
    ///@}
 
+   /** \name System state cache.
+    *
+    * The system state cache retains the last-set or last-read value of each
+    * device property.
+    */
+   ///@{
+   Configuration getSystemStateCache() const;
+   void updateSystemStateCache();
+   std::string getPropertyFromCache(const char* label, const char* propName) const throw (CMMError);
+   std::string getCurrentConfigFromCache(const char* groupName) throw (CMMError);
+   Configuration getConfigGroupStateFromCache(const char* group) throw (CMMError);
+   ///@}
 
    /** \name Configuration groups. */
    ///@{
@@ -285,7 +293,6 @@ public:
    std::vector<std::string> getAvailableConfigGroups() const;
    std::vector<std::string> getAvailableConfigs(const char* configGroup) const;
    std::string getCurrentConfig(const char* groupName) throw (CMMError);
-   std::string getCurrentConfigFromCache(const char* groupName) throw (CMMError);
    Configuration getConfigData(const char* configGroup, const char* configName) throw (CMMError);
    ///@}
 
