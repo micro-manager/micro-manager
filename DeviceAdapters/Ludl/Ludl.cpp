@@ -1596,6 +1596,8 @@ int Shutter::OnShutterNumber(MM::PropertyBase* pProp, MM::ActionType eAct)
 XYStage::XYStage() :
    initialized_(false), 
    stepSizeUm_(0.1), 
+   stepSizeXUm_(0.1), 
+   stepSizeYUm_(0.1), 
    speed_(2500.0),
    startSpeed_(500.0),
    accel_(75),
@@ -1913,8 +1915,8 @@ int XYStage::SetAdapterOrigin()
    int ret = GetPositionSteps(xStep, yStep);
    if (ret != DEVICE_OK)
       return ret;
-   originX_ = xStep * stepSizeUm_;
-   originY_ = yStep * stepSizeUm_;
+   originX_ = xStep * stepSizeXUm_;
+   originY_ = yStep * stepSizeYUm_;
 
    return DEVICE_OK;
 }
@@ -2053,6 +2055,9 @@ int XYStage::ExecuteCommand(const string& cmd, string& response)
 // Handle changes and updates to property values.
 ///////////////////////////////////////////////////////////////////////////////
 
+/**
+ * Deprecated.  Used OnStepSizeXUm and OnStepSizeYUm instead
+ */
 int XYStage::OnStepSize(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)
@@ -2071,10 +2076,61 @@ int XYStage::OnStepSize(MM::PropertyBase* pProp, MM::ActionType eAct)
          return ERR_INVALID_STEP_SIZE;
       }
       stepSizeUm_ = stepSize;
+      // to stay backwards compatible:
+      stepSizeXUm_ = stepSize;
+      stepSizeYUm_ = stepSize;
    }
 
    return DEVICE_OK;
 }
+
+int XYStage::OnStepSizeX(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      // TODO: modify this method to query the step size
+      // from the controller
+      pProp->Set(stepSizeXUm_);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      double stepSize;
+      pProp->Get(stepSize);
+      if (stepSize <=0.0)
+      {
+         pProp->Set(stepSizeXUm_);
+         return ERR_INVALID_STEP_SIZE;
+      }
+      stepSizeXUm_ = stepSize;
+   }
+
+   return DEVICE_OK;
+}
+
+
+int XYStage::OnStepSizeY(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      // TODO: modify this method to query the step size
+      // from the controller
+      pProp->Set(stepSizeYUm_);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      double stepSize;
+      pProp->Get(stepSize);
+      if (stepSize <=0.0)
+      {
+         pProp->Set(stepSizeYUm_);
+         return ERR_INVALID_STEP_SIZE;
+      }
+      stepSizeYUm_ = stepSize;
+   }
+
+   return DEVICE_OK;
+}
+
 
 /*
  * Speed as returned by device is in pulses per second

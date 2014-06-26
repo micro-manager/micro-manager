@@ -228,8 +228,8 @@ public:
   int Stop();
   int GetStepLimits(long& xMin, long& xMax, long& yMin, long& yMax);
   int GetLimitsUm(double& xMin, double& xMax, double& yMin, double& yMax);
-  double GetStepSizeXUm() {return stepSizeUm_;}
-  double GetStepSizeYUm() {return stepSizeUm_;}
+  double GetStepSizeXUm() {return stepSizeXUm_;}
+  double GetStepSizeYUm() {return stepSizeYUm_;}
   int IsXYStageSequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
 
    // action interface
@@ -237,6 +237,8 @@ public:
    int OnIDX(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnIDY(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnStepSize(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnStepSizeX(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnStepSizeY(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSpeed(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnStartSpeed(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnAccel(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -247,6 +249,8 @@ private:
    
    bool initialized_;
    double stepSizeUm_;
+   double stepSizeXUm_;
+   double stepSizeYUm_;
    double speed_, startSpeed_;
    long accel_;
    unsigned idX_;
