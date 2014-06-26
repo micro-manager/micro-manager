@@ -68,6 +68,10 @@ public:
       return ReadFromComPort(port_.c_str(), answer, maxLen, bytesRead);
    }
    static MMThreadLock& GetLock() {return lock_;}
+   void SetShutterState(unsigned state) {shutterState_ = state;}
+   void SetSwitchState(unsigned state) {switchState_ = state;}
+   unsigned GetShutterState() {return shutterState_;}
+   unsigned GetSwitchState() {return switchState_;}
 
 private:
    int GetControllerVersion(int&);
@@ -78,6 +82,8 @@ private:
    bool timedOutputActive_;
    int version_;
    static MMThreadLock lock_;
+   unsigned switchState_;
+   unsigned shutterState_;
 };
 
 class CArduinoShutter : public CShutterBase<CArduinoShutter>  

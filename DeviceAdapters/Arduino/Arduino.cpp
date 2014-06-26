@@ -32,8 +32,6 @@ const char* g_DeviceNameArduinoInput = "Arduino-Input";
 
 
 // Global info about the state of the Arduino.  This should be folded into a class
-unsigned g_switchState = 0;
-unsigned g_shutterState = 0;
 const int g_Min_MMVersion = 1;
 const int g_Max_MMVersion = 2;
 const char* g_versionProp = "Version";
@@ -102,7 +100,9 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~
 //
 CArduinoHub::CArduinoHub() :
-initialized_ (false)
+   initialized_ (false),
+   switchState_ (0),
+   shutterState_ (0)
 {
    portAvailable_ = false;
    invertedLogic_ = false;
@@ -631,8 +631,8 @@ int CArduinoSwitch::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       long pos;
       pProp->Get(pos);
-      g_switchState = pos;
-      if (g_shutterState > 0)
+      hub->SetSwitchState(pos);
+      if (hub->GetSwitchState() > 0)
          return WriteToPort(pos);
    }
    else if (eAct == MM::IsSequenceable)                                      
@@ -1369,10 +1369,11 @@ int CArduinoShutter::WriteToPort(long value)
 
 int CArduinoShutter::OnOnOff(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
+   CArduinoHub* hub = static_cast<CArduinoHub*>(GetParentHub());
    if (eAct == MM::BeforeGet)
    {
       // use cached state
-      pProp->Set((long)g_shutterState);
+      pProp->Set((long)hub->GetShutterState());
    }
    else if (eAct == MM::AfterSet)
    {
@@ -1382,10 +1383,10 @@ int CArduinoShutter::OnOnOff(MM::PropertyBase* pProp, MM::ActionType eAct)
       if (pos == 0)
          ret = WriteToPort(0); // turn everything off
       else
-         ret = WriteToPort(g_switchState); // restore old setting
+         ret = WriteToPort(hub->GetSwitchState()); // restore old setting
       if (ret != DEVICE_OK)
          return ret;
-      g_shutterState = pos;
+      hub->SetShutterState(pos);
       changedTime_ = GetCurrentMMTime();
    }
 
