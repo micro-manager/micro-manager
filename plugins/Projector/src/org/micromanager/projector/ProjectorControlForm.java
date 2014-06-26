@@ -963,7 +963,7 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
    }
    
    // Converts a Runnable to one that runs asynchronously.
-   private static Runnable makeRunnableAsync(final Runnable runnable) { 
+   public static Runnable makeRunnableAsync(final Runnable runnable) { 
       return new Runnable() {
          public void run() {
             new Thread() {

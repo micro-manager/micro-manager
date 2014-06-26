@@ -738,19 +738,17 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
       if (getSequenceCount() == 0) {
          throw new Exception("Please upload a sequence to the Mosaic for attaching to multi-dimensional acquisition.");
       }
-      gui_.attachRunnable(0, 0, 0, 0, new Runnable() {
-         public void run() {
-            new Thread() {
-               public void run() {
-                  try {
-                     runSequence();
-                  } catch (Exception e) {
-                     ReportingUtils.showError(e);
-                  }
-               }
-            }.start();
-         }
-      });
+      gui_.attachRunnable(0, 0, 0, 0,
+            ProjectorControlForm.makeRunnableAsync(
+                  new Runnable() {
+                     public void run() {
+                        try {
+                           runSequence();
+                        } catch (Exception e) {
+                           ReportingUtils.showError(e);
+                        }
+                     }
+                  }));
    }
    
    // The acquisition engine will no longer run phototargeting after this
