@@ -44,6 +44,7 @@ import javax.swing.JButton;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.table.TableCellRenderer;
@@ -164,12 +165,18 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       setPrefsNode(prefs_);
 
       arialSmallFont_ = new Font("Arial", Font.PLAIN, 10);
+
+      JSplitPane columnPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, true);
+      // Favor allocating space to the list of stage positions, not the 
+      // list of positioners.
+      columnPane.setResizeWeight(.9);
       
       final JScrollPane scrollPane = new JScrollPane();
-      add(scrollPane, "growy, split 2");
+      columnPane.add(scrollPane);
 
       final JScrollPane axisPane = new JScrollPane();
-      add(axisPane, "height 60, growy 0, wrap");
+      columnPane.add(axisPane);
+      add(columnPane, "growy, wrap");
 
       final TableCellRenderer firstRowRenderer = new FirstRowRenderer(arialSmallFont_);
       posTable_ = new JTable() {
