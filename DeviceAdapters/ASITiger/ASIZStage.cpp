@@ -208,7 +208,7 @@ int CZStage::Initialize()
       pAct = new CPropertyAction (this, &CZStage::OnWheelFastSpeed);
       CreateProperty(g_WheelFastSpeedPropertyName, "10", MM::Float, false, pAct);
       UpdateProperty(g_WheelFastSpeedPropertyName);
-      SetPropertyLimits(g_WheelFastSpeedPropertyName, 0.1, 1000);
+      SetPropertyLimits(g_WheelFastSpeedPropertyName, 0.1, 100);
 
       // slow wheel speed (JS T) (per-card, not per-axis)
       pAct = new CPropertyAction (this, &CZStage::OnWheelSlowSpeed);
