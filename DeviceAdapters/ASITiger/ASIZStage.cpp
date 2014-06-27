@@ -208,13 +208,13 @@ int CZStage::Initialize()
       pAct = new CPropertyAction (this, &CZStage::OnWheelFastSpeed);
       CreateProperty(g_WheelFastSpeedPropertyName, "10", MM::Float, false, pAct);
       UpdateProperty(g_WheelFastSpeedPropertyName);
-      SetPropertyLimits(g_WheelFastSpeedPropertyName, 0.1, 100);
+      SetPropertyLimits(g_WheelFastSpeedPropertyName, 0, 100);
 
       // slow wheel speed (JS T) (per-card, not per-axis)
       pAct = new CPropertyAction (this, &CZStage::OnWheelSlowSpeed);
       CreateProperty(g_WheelSlowSpeedPropertyName, "5", MM::Float, false, pAct);
       UpdateProperty(g_WheelSlowSpeedPropertyName);
-      SetPropertyLimits(g_WheelSlowSpeedPropertyName, 0.1, 100);
+      SetPropertyLimits(g_WheelSlowSpeedPropertyName, 0, 100);
 
       // wheel mirror (changes wheel fast/slow speeds to negative) (per-card, not per-axis)
       pAct = new CPropertyAction (this, &CZStage::OnWheelMirror);
