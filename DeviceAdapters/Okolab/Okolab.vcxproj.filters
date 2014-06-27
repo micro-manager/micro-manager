@@ -42,6 +42,9 @@
     <ClCompile Include="TestControl.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ActiveHmdControl.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CO2BLControl.h">
@@ -69,6 +72,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="TestControl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ActiveHmdControl.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

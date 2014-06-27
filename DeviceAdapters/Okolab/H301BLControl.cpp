@@ -41,8 +41,10 @@ H301BLControl::H301BLControl()
  CreateProperty(MM::g_Keyword_Name, g_H301BLControl , MM::String, true);
  CreateProperty(MM::g_Keyword_Description, "Okolab H301 T Unit-BL", MM::String, true);
 
+
  CPropertyAction* pAct = new CPropertyAction (this, &H301BLControl::OnPort);      
- CreateProperty(MM::g_Keyword_Port, "Undefined", MM::String, false, pAct, true);         
+ CreateProperty("COM Port", "Undefined", MM::String, false, pAct, true);
+   
 }
 
 

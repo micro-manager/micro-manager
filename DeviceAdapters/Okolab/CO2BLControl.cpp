@@ -42,7 +42,7 @@ CO2BLControl::CO2BLControl()
  CreateProperty(MM::g_Keyword_Description, "Okolab CO2 Unit-BL", MM::String, true);
 
  CPropertyAction* pAct = new CPropertyAction (this, &CO2BLControl::OnPort);      
- CreateProperty(MM::g_Keyword_Port, "Undefined", MM::String, false, pAct, true);         
+ CreateProperty("COM Port", "Undefined", MM::String, false, pAct, true);      
 }
 
 

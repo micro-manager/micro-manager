@@ -42,7 +42,7 @@ O2BLControl::O2BLControl()
  CreateProperty(MM::g_Keyword_Description, "Okolab O2 Unit-BL [1-20]", MM::String, true);
 
  CPropertyAction* pAct = new CPropertyAction (this, &O2BLControl::OnPort);      
- CreateProperty(MM::g_Keyword_Port, "Undefined", MM::String, false, pAct, true);         
+ CreateProperty("COM Port", "Undefined", MM::String, false, pAct, true);         
 }
 
 
