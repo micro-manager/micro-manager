@@ -545,6 +545,8 @@ CPiStage::CPiStage()
 	CreateProperty(g_Keyword_Min, FIXED_TO_STRING(MOTOR_LOWER_LIMIT), MM::Integer, false, NULL, true);
 	CreateProperty(g_Keyword_Max, FIXED_TO_STRING(MOTOR_UPPER_LIMIT), MM::Integer, false, NULL, true);
 
+	CreateProperty("GoHome", "0", MM::Integer, false, new CPropertyAction(this, &CPiStage::OnGoHomeProp), false);
+
 	SetErrorText(1, "Could not initialize motor (Z stage)");
 }
 
@@ -563,10 +565,61 @@ int CPiStage::OnVelocity(MM::PropertyBase* pProp, MM::ActionType eAct)
 	return OnVelocityGeneric(pProp, eAct, handle_, velocity_, &piGetMotorVelocity, &piSetMotorVelocity);
 }
 
+int CPiStage::OnGoHomeProp(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	if(handle_ == NULL)
+		return (eAct == MM::BeforeGet ? DEVICE_OK : DEVICE_ERR);
+
+	long lval = -1;
+	if(!(pProp->Get(lval)))
+		return DEVICE_ERR;
+
+	switch(eAct)
+	{
+	case MM::AfterSet:
+		{
+			if(lval == 1)
+			{
+				return InterpretPiUsbError(piHomeMotor(10, handle_));
+			}
+			else
+			{
+				pProp->Set((long)0);
+				return DEVICE_OK;
+			}
+		};
+	case MM::BeforeGet:
+		{
+			if(lval == 1)
+			{
+				BOOL home = FALSE;
+				if(piGetMotorHomeStatus(&home, handle_) != PI_NO_ERROR)
+					return DEVICE_ERR;
+
+				pProp->Set((long)(home ? 0 : 1));
+			}
+
+			return DEVICE_OK;
+		};
+	default:
+		return DEVICE_OK; // Don't care.
+	};
+}
+
 bool CPiStage::Busy()
 {
 	if(handle_ == NULL)
 		return false;
+
+	long homing = 0;
+	if(GetProperty("GoHome", homing) == DEVICE_OK && homing == 1)
+	{
+		BOOL home = FALSE;
+		if(piGetMotorHomeStatus(&home, handle_) != PI_NO_ERROR)
+			return false;
+
+		return !home;
+	}
 
 	BOOL moving;
 	if (piGetMotorMovingStatus(&moving, handle_) == PI_NO_ERROR)
