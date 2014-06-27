@@ -58,13 +58,14 @@ const char* g_Keyword_StepSizeY = "Y-StepSize";
 #define CLOCKDIFF(now, then) ((static_cast<double>(now) - static_cast<double>(then))/(static_cast<double>(CLOCKS_PER_SEC)))
 #define MAX_WAIT 0.05 // Maximum time to wait for the motors to begin motion, in seconds.
 
-// These constants are per the Picard Industries documentation.
-#define TWISTER_STEP_SIZE 1.8 // deg/step
+// Something in the PiUsb routines changed, and now twister values are in degrees. For now, default step size to that value.
+#define TWISTER_STEP_SIZE 1.0 // deg/step
 #define TWISTER_LOWER_LIMIT_STEPS -32767
 #define TWISTER_UPPER_LIMIT_STEPS 32767
-#define TWISTER_LOWER_LIMIT -58980.6 // TWISTER_LOWER_LIMIT_STEPS * TWISTER_STEP_SIZE
-#define TWISTER_UPPER_LIMIT 58980.6 // TWISTER_UPPER_LIMIT_STEPS * TWISTER_STEP_SIZE
+#define TWISTER_LOWER_LIMIT -32767.6 // TWISTER_LOWER_LIMIT_STEPS * TWISTER_STEP_SIZE
+#define TWISTER_UPPER_LIMIT 32767.6 // TWISTER_UPPER_LIMIT_STEPS * TWISTER_STEP_SIZE
 
+// These constants are per the Picard Industries documentation.
 #define MOTOR_STEP_SIZE 1.5 // um/step
 #define MOTOR_LOWER_LIMIT_STEPS 0
 #define MOTOR_UPPER_LIMIT_STEPS 5200 // Officially, the limit is 5800; leave a physical margin.
@@ -76,7 +77,7 @@ const char* g_Keyword_StepSizeY = "Y-StepSize";
 #define PICARD_MAX_VELOCITY 10
 
 #define DEFAULT_SERIAL_UNKNOWN -1 // This is the default serial value, before serial numbers are pinged.
-#define MAX_SERIAL_IDX 250 // Highest serial number index to ping.
+#define MAX_SERIAL_IDX 500 // Highest serial number index to ping.
 
 #define PICARDSTAGE_ERROR_OFFSET 1327 // Error codes are unique to device classes, but MM defines some basic ones (see MMDeviceConstants.h). Make sure we're past them.
 
@@ -239,10 +240,6 @@ inline static int OnSerialGeneric(MM::PropertyBase* pProp, MM::ActionType eAct, 
 					serial = CPiDetector::GetInstance(core, self)->GetTwisterSerial(serialidx);
 				else
 					serial = CPiDetector::GetInstance(core, self)->GetMotorSerial(serialidx);
-
-				int error = self.Initialize();
-				if(error != DEVICE_OK)
-					return error;
 			}
 
 			pProp->Set(static_cast<long>(serial));
