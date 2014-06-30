@@ -20,6 +20,7 @@
 #pragma once
 
 #include "../../MMDevice/MMDeviceConstants.h"
+#include "../Error.h"
 #include "../Logging/Logging.h"
 
 #include <string>
@@ -98,6 +99,12 @@ protected:
 
    CMMCore* GetCore() const /* final */ { return core_; }
 
+   CMMError MakeException() const;
+   CMMError MakeExceptionForCode(int code) const;
+   void ThrowError(const std::string& message) const;
+   void ThrowIfError(int code) const;
+   void ThrowIfError(int code, const std::string& message) const;
+
    /// Utility class for getting fixed-length strings from the device interface.
    /**
     * This class should be used in all places where a device member function
@@ -157,12 +164,14 @@ public:
     * TODO Type conversion (char* <-> std::string) (need to update client code)
     */
 private:
+   // Exposed through GetPropertyNames() only
    unsigned GetNumberOfProperties() const;
 public:
-   int GetProperty(const char* name, char* value) const;
-   int SetProperty(const char* name, const char* value) const;
-   bool HasProperty(const char* name) const;
+   std::string GetProperty(const std::string& name) const;
+   void SetProperty(const std::string& name, const std::string& value) const;
+   bool HasProperty(const std::string& name) const;
 private:
+   // Exposed through GetPropertyNames() only
    std::string GetPropertyName(size_t idx) const;
 public:
    int GetPropertyReadOnly(const char* name, bool& readOnly) const;
@@ -180,7 +189,7 @@ public:
    int ClearPropertySequence(const char* propertyName);
    int AddToPropertySequence(const char* propertyName, const char* value);
    int SendPropertySequence(const char* propertyName);
-   bool GetErrorText(int errorCode, char* errMessage) const;
+   std::string GetErrorText(int code) const;
    bool Busy();
    double GetDelayMs() const;
    void SetDelayMs(double delay);

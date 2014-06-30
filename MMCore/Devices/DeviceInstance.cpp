@@ -68,13 +68,62 @@ DeviceInstance::~DeviceInstance()
    deleteFunction_(pImpl_);
 }
 
+CMMError
+DeviceInstance::MakeException() const
+{
+   return CMMError("Error in device " + ToQuotedString(GetLabel()));
+}
+
+CMMError
+DeviceInstance::MakeExceptionForCode(int code) const
+{
+   return CMMError("Error in device " + ToQuotedString(GetLabel()) + ": " +
+         GetErrorText(code) + " (" + ToString(code) + ")");
+}
+
+void
+DeviceInstance::ThrowError(const std::string& message) const
+{
+   CMMError e = CMMError(message, MakeException());
+   // TODO Log
+   throw e;
+}
+
+void
+DeviceInstance::ThrowIfError(int code) const
+{
+   if (code == DEVICE_OK)
+   {
+      return;
+   }
+
+   CMMError e = MakeExceptionForCode(code);
+   // TODO Log
+   throw e;
+}
+
+void
+DeviceInstance::ThrowIfError(int code, const std::string& message) const
+{
+   if (code == DEVICE_OK)
+   {
+      return;
+   }
+
+   CMMError e = CMMError(message, MakeExceptionForCode(code));
+   // TODO Log
+   throw e;
+}
+
 void
 DeviceInstance::DeviceStringBuffer::ThrowBufferOverflowError() const
 {
-   // TODO Log the error before crashing
    std::string label(instance_ ? instance_->GetLabel() : "<unknown>");
-   throw CMMError("Buffer overflow in device " + ToQuotedString(label) +
-         " while calling " + funcName_ + "(); this is a bug in the device adapter");
+   CMMError e = CMMError("Buffer overflow in device " + ToQuotedString(label) +
+         " while calling " + funcName_ + "(); "
+         "this is most likely a bug in the device adapter");
+   // TODO Log
+   throw e;
 }
 
 std::vector<std::string>
@@ -92,17 +141,28 @@ unsigned
 DeviceInstance::GetNumberOfProperties() const
 { return pImpl_->GetNumberOfProperties(); }
 
-int
-DeviceInstance::GetProperty(const char* name, char* value) const
-{ return pImpl_->GetProperty(name, value); }
+std::string
+DeviceInstance::GetProperty(const std::string& name) const
+{
+   DeviceStringBuffer valueBuf(this, "GetProperty");
+   int err = pImpl_->GetProperty(name.c_str(), valueBuf.GetBuffer());
+   ThrowIfError(err, "Cannot get value of property " +
+         ToQuotedString(name));
+   return valueBuf.Get();
+}
 
-int
-DeviceInstance::SetProperty(const char* name, const char* value) const
-{ return pImpl_->SetProperty(name, value); }
+void
+DeviceInstance::SetProperty(const std::string& name,
+      const std::string& value) const
+{
+   int err = pImpl_->SetProperty(name.c_str(), value.c_str());
+   ThrowIfError(err, "Cannot set property " + ToQuotedString(name) +
+         " to " + ToQuotedString(value));
+}
 
 bool
-DeviceInstance::HasProperty(const char* name) const
-{ return pImpl_->HasProperty(name); }
+DeviceInstance::HasProperty(const std::string& name) const
+{ return pImpl_->HasProperty(name.c_str()); }
 
 std::string
 DeviceInstance::GetPropertyName(size_t idx) const
@@ -110,7 +170,7 @@ DeviceInstance::GetPropertyName(size_t idx) const
    DeviceStringBuffer nameBuf(this, "GetPropertyName");
    bool ok = pImpl_->GetPropertyName(static_cast<unsigned>(idx), nameBuf.GetBuffer());
    if (!ok)
-      throw CMMError("Cannot get property name at index " + ToString(idx));
+      ThrowError("Cannot get property name at index " + ToString(idx));
    return nameBuf.Get();
 }
 
@@ -174,9 +234,19 @@ int
 DeviceInstance::SendPropertySequence(const char* propertyName)
 { return pImpl_->SendPropertySequence(propertyName); }
 
-bool
-DeviceInstance::GetErrorText(int errorCode, char* errMessage) const
-{ return pImpl_->GetErrorText(errorCode, errMessage); }
+std::string
+DeviceInstance::GetErrorText(int code) const
+{
+   DeviceStringBuffer msgBuf(this, "GetErrorText");
+   bool ok = pImpl_->GetErrorText(code, msgBuf.GetBuffer());
+   if (ok)
+   {
+      std::string msg = msgBuf.Get();
+      if (!msg.empty())
+         return msg;
+   }
+   return "(Error message unavailable)";
+}
 
 bool
 DeviceInstance::Busy()

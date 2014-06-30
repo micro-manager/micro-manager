@@ -519,11 +519,21 @@ Configuration CMMCore::getSystemState()
       for (std::vector<std::string>::const_iterator it = propertyNames.begin(), end = propertyNames.end();
             it != end; ++it)
       {
-         char val[MM::MaxStrLength]="";
+         std::string val;
+         try
+         {
+            val = pDev->GetProperty(*it);
+         }
+         catch (const CMMError&)
+         {
+            // XXX BUG This should not be ignored, but the interface does not
+            // allow throwing from this function. Keeping old behavior for now.
+         }
+
          bool readOnly;
          pDev->GetPropertyReadOnly(it->c_str(), readOnly);
-         pDev->GetProperty(it->c_str(), val);
-         config.addSetting(PropertySetting(i->c_str(), it->c_str(), val, readOnly));
+
+         config.addSetting(PropertySetting(i->c_str(), it->c_str(), val.c_str(), readOnly));
       }
    }
 
@@ -3227,20 +3237,17 @@ string CMMCore::getProperty(const char* label, const char* propName) throw (CMME
    CheckPropertyName(propName);
 
    MMThreadGuard guard(pluginManager_.getModuleLock(pDevice));
-   char value[MM::MaxStrLength];
-   int nRet = pDevice->GetProperty(propName, value);
-   if (nRet != DEVICE_OK)
-      throw CMMError(getDeviceErrorText(nRet, pDevice));
+   std::string value = pDevice->GetProperty(propName);
    
    // use the opportunity to update the cache
    // Note, stateCache is mutable so that we can update it from this const function
-   PropertySetting s(label, propName, value);
+   PropertySetting s(label, propName, value.c_str());
    {
       MMThreadGuard scg(stateCacheLock_);
       stateCache_.addSetting(s);
    }
 
-   return string(value);
+   return value;
 }
 
 /**
@@ -3299,14 +3306,8 @@ void CMMCore::setProperty(const char* label, const char* propName,
       
       MMThreadGuard guard(pluginManager_.getModuleLock(pDevice));
 
-      int nRet = pDevice->SetProperty(propName, propValue);
-      if (nRet != DEVICE_OK) {
-         // TODO Log details
-         std::ostringstream se;
-         se << getDeviceErrorText(nRet, pDevice).c_str() << "(Error code: " << nRet << ")";
-         logError(label, se.str().c_str());
-         throw CMMError(se.str().c_str(), MMERR_DEVICE_GENERIC);
-      }
+      pDevice->SetProperty(propName, propValue);
+
       {
          MMThreadGuard scg(stateCacheLock_);
          stateCache_.addSetting(PropertySetting(label, propName, propValue));
@@ -6244,13 +6245,18 @@ bool CMMCore::isConfigurationCurrent(const Configuration& config)
 
       // then fetch property
       MMThreadGuard guard(pluginManager_.getModuleLock(pDevice));
-      char value[MM::MaxStrLength];
-      int ret = pDevice->GetProperty(setting.getPropertyName().c_str(), value);
-      if (ret != DEVICE_OK)
-         return false; // property not found
+      std::string value;
+      try
+      {
+         value = pDevice->GetProperty(setting.getPropertyName());
+      }
+      catch (const CMMError&)
+      {
+         return false;
+      }
 
       // and finally check the value
-      if (setting.getPropertyValue().compare(value) != 0)
+      if (setting.getPropertyValue().compare(value.c_str()) != 0)
          return false; // value does not match
    }
    return true;
@@ -6284,17 +6290,21 @@ void CMMCore::applyConfiguration(const Configuration& config) throw (CMMError)
       {
          // normal processing
          boost::shared_ptr<DeviceInstance> pDevice = pluginManager_.GetDevice(setting.getDeviceLabel().c_str());
-		 MMThreadGuard guard(pluginManager_.getModuleLock(pDevice));
-         int ret = pDevice->SetProperty(setting.getPropertyName().c_str(), setting.getPropertyValue().c_str());
-         if (ret != DEVICE_OK)
+         MMThreadGuard guard(pluginManager_.getModuleLock(pDevice));
+         try
+         {
+            pDevice->SetProperty(setting.getPropertyName(),
+                  setting.getPropertyValue());
+
+            {
+               MMThreadGuard scg(stateCacheLock_);
+               stateCache_.addSetting(setting);
+            }
+         }
+         catch (const CMMError&)
          {
             failedProps.push_back(setting);
             error = true;
-         }
-         else
-         {
-            MMThreadGuard scg(stateCacheLock_);
-            stateCache_.addSetting(setting);
          }
       }
    }
@@ -6326,20 +6336,23 @@ int CMMCore::applyProperties(vector<PropertySetting>& props, string& lastError)
    {
       // normal processing
       boost::shared_ptr<DeviceInstance> pDevice = pluginManager_.GetDevice(props[i].getDeviceLabel().c_str());
-	  MMThreadGuard guard(pluginManager_.getModuleLock(pDevice));
-      int ret = pDevice->SetProperty(props[i].getPropertyName().c_str(), props[i].getPropertyValue().c_str());
-      if (ret != DEVICE_OK)
+      MMThreadGuard guard(pluginManager_.getModuleLock(pDevice));
+      try
+      {
+         pDevice->SetProperty(props[i].getPropertyName(),
+               props[i].getPropertyValue());
+
+         {
+            MMThreadGuard scg(stateCacheLock_);
+            stateCache_.addSetting(props[i]);
+         }
+      }
+      catch (const CMMError& e)
       {
          failedProps.push_back(props[i]);
-         std::ostringstream se;
-         se << getDeviceErrorText(ret, pDevice).c_str() << "(Error code: " << ret << ")";
-         logError(props[i].getDeviceLabel().c_str(), se.str().c_str());
-         lastError = se.str();
-      }
-      else
-      {
-         MMThreadGuard scg(stateCacheLock_);
-         stateCache_.addSetting(props[i]);
+         std::string message = e.getFullMsg();
+         logError(props[i].getDeviceLabel().c_str(), message.c_str());
+         lastError = message;
       }
    }
    props = failedProps;
@@ -6349,22 +6362,16 @@ int CMMCore::applyProperties(vector<PropertySetting>& props, string& lastError)
 
 
 
-string CMMCore::getDeviceErrorText(int deviceCode, boost::shared_ptr<DeviceInstance> pDevice)
+string CMMCore::getDeviceErrorText(int deviceCode, boost::shared_ptr<DeviceInstance> device)
 {
-   ostringstream txt;
-   if (pDevice)
+   if (!device)
    {
-      MMThreadGuard guard(pluginManager_.getModuleLock(pDevice));
-      // device specific error
-      txt <<  "Error in device " << pDevice->GetLabel()  << ": ";
-
-      char text[MM::MaxStrLength];
-      pDevice->GetErrorText(deviceCode, text);
-      if (strlen(text) > 0)
-         txt << text << ". ";
+      return "Cannot get error message for null device";
    }
 
-   return txt.str();
+   MMThreadGuard guard(pluginManager_.getModuleLock(device));
+   return "Error in device " + ToQuotedString(device->GetLabel()) + ": " +
+      device->GetErrorText(deviceCode) + " (" + ToString(deviceCode) + ")";
 }
 
 string CMMCore::getCoreErrorText(int code) const
@@ -6565,8 +6572,7 @@ MM::DeviceDetectionStatus CMMCore::detectDevice(char* deviceName)
    MM::DeviceDetectionStatus result = MM::Unimplemented; 
    std::vector< std::string> propertiesToRestore;
    std::map< std::string, std::string> valuesToRestore;
-   char p[MM::MaxStrLength];
-   p[0] = 0;
+   std::string port;
 
    try
    {
@@ -6581,29 +6587,38 @@ MM::DeviceDetectionStatus CMMCore::detectDevice(char* deviceName)
       if( NULL != pDevice)
       {
          MMThreadGuard guard(pluginManager_.getModuleLock(pDevice));
-         if (DEVICE_OK == pDevice->GetProperty(MM::g_Keyword_Port, p))
+         try
          {
-            if( 0 < strlen(p))
+            port = pDevice->GetProperty(MM::g_Keyword_Port);
+         }
+         catch (const CMMError&)
+         {
+            // XXX BUG There was a comment here saying that we ignore errors
+            // "if the port property does not exist", but the behavior is to
+            // ignore any error in getting the _value_ of that property. I'm
+            // keeping the behavior for now, since in practice the two are
+            // usually equivalent, and fixing all the error handling in this
+            // function would be more than a small project.
+         }
+         if (!port.empty())
+         {
+            // there is a valid serial port setting for this device, so 
+            // gather the properties that will be restored if we don't find the device
+
+            propertiesToRestore.push_back(MM::g_Keyword_BaudRate);
+            propertiesToRestore.push_back(MM::g_Keyword_DataBits);
+            propertiesToRestore.push_back(MM::g_Keyword_StopBits);
+            propertiesToRestore.push_back(MM::g_Keyword_Parity);
+            propertiesToRestore.push_back(MM::g_Keyword_Handshaking);
+            propertiesToRestore.push_back(MM::g_Keyword_AnswerTimeout);
+            propertiesToRestore.push_back(MM::g_Keyword_DelayBetweenCharsMs);
+            // record the current settings before running device detection.
+            std::string previousValue;
+            for( std::vector< std::string>::iterator sit = propertiesToRestore.begin(); sit!= propertiesToRestore.end(); ++sit)
             {
-               // there is a valid serial port setting for this device, so 
-               // gather the properties that will be restored if we don't find the device
-
-
-               propertiesToRestore.push_back(MM::g_Keyword_BaudRate);
-               propertiesToRestore.push_back(MM::g_Keyword_DataBits);
-               propertiesToRestore.push_back(MM::g_Keyword_StopBits);
-               propertiesToRestore.push_back(MM::g_Keyword_Parity);
-               propertiesToRestore.push_back(MM::g_Keyword_Handshaking);
-               propertiesToRestore.push_back(MM::g_Keyword_AnswerTimeout);
-               propertiesToRestore.push_back(MM::g_Keyword_DelayBetweenCharsMs);
-               // record the current settings before running device detection.
-               std::string previousValue;
-               for( std::vector< std::string>::iterator sit = propertiesToRestore.begin(); sit!= propertiesToRestore.end(); ++sit)
-               {
-                  previousValue = getProperty(p,(*sit).c_str());
-                  valuesToRestore[*sit] = std::string(previousValue);
-               }  
-            }
+               previousValue = getProperty(port.c_str(), (*sit).c_str());
+               valuesToRestore[*sit] = std::string(previousValue);
+            }  
          }
       }
 
@@ -6612,11 +6627,8 @@ MM::DeviceDetectionStatus CMMCore::detectDevice(char* deviceName)
    }
    catch(...)
    {
-      string port("none");
-      if (strlen(p) > 0)
-         port = p;
       LOG_ERROR(coreLogger_) << "Device detection: error testing ports " <<
-         port << " for device " << deviceName;
+         (port.empty() ? "none" : port) << " for device " << deviceName;
    }
 
    // if the device is not there, restore the parameters to the original settings
@@ -6624,16 +6636,16 @@ MM::DeviceDetectionStatus CMMCore::detectDevice(char* deviceName)
    {
       for( std::vector< std::string>::iterator sit = propertiesToRestore.begin(); sit!= propertiesToRestore.end(); ++sit)
       {
-         if( 0 <strlen(p))
+         if (!port.empty())
          {
             try
             {
-               setProperty(p, (*sit).c_str(), (valuesToRestore[*sit]).c_str());
+               setProperty(port.c_str(), (*sit).c_str(), (valuesToRestore[*sit]).c_str());
             }
             catch(...)
             {
                LOG_ERROR(coreLogger_) <<
-                  "Device detection: error restoring port " << p <<
+                  "Device detection: error restoring port " << port <<
                   " state after testing for device " << deviceName;
             }
          }
