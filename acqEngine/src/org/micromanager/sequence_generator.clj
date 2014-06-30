@@ -356,7 +356,6 @@
                                       channels slices default-exposure
                                       property-triggers position-index
                                       relative-slices]
-  (println "simple")
   (let [numChannels (max 1 (count channels))
         numSlices (max 1 (count slices))
         numFrames (max 1 numFrames)
@@ -424,7 +423,6 @@
                                  (sequence-fits-stage? (.getFocusDevice mmc) n-slices))
         no-channel-skips-frames (all-equal? 0 (map :skip-frames channels))
         all-channels-do-z-stack (all-equal? true (map :use-z-stack channels))]
-    (println slices-first)
     (if
       (and
         (or
