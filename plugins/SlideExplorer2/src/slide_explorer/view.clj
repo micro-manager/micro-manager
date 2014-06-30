@@ -121,16 +121,20 @@
         (paint/draw-image g image x y)
         ))))
 
-(defn paint-position [^Graphics2D g
-                      {[w h] :tile-dimensions
-                       :keys [zoom] :as screen-state}
-                      x y color]
-    (when (and x y w h color)
-      (canvas/draw g
-                   [{:type :rect :l (inc (* zoom x)) :t (inc (* zoom y))
-                     :w (* zoom w) :h (* zoom h)
-                     :color color
-                     :stroke {:width 2}}])))
+(defn paint-position
+  "Paints a rectangle outlining the camera's field of view at a
+   given position (x,y). The rectangle contains a stroke of the
+   given color, edged by a black background for better visibility."
+  [^Graphics2D graphics
+   {[w h] :tile-dimensions
+    :keys [zoom] :as screen-state}
+   x y color]
+  (when (and x y w h color)
+    (let [rect {:type :rect :l (inc (* zoom x)) :t (inc (* zoom y))
+                :w (* zoom w) :h (* zoom h)}]
+      (canvas/draw graphics
+                   [(assoc rect :color :black :stroke {:width 4})
+                    (assoc rect :color color :stroke {:width 3})]))))
 
 (defn paint-stage-position [^Graphics2D g screen-state]
   (let [[x y] (:xy-stage-position screen-state)
