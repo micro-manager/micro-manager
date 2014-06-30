@@ -33,6 +33,12 @@
 
 ; ImageProcessor-related utilities
 
+(defn clone
+  "Duplicates and ImageProcessor."
+  [processor]
+  (when processor
+    (.duplicate processor)))
+
 (defn insert-image!
   "Inserts one ImageProcessor into another."
   [proc-host proc-guest x-host y-host]
@@ -151,7 +157,7 @@
 
 (defn insert-half-tile
   [tile [left? upper?] mosaic]
-  (let [dest (black-processor-like mosaic)]
+  (let [dest (or (clone mosaic) (black-processor-like tile))]
     (insert-half-tile! dest tile [left? upper?])))
 
 ;; stats
@@ -283,7 +289,7 @@
 (defn gaussian-blur
   "Applys a gaussian blur to ImageProcessor, with given radius."
   [processor radius]
-  (let [new-proc (.duplicate processor)]
+  (let [new-proc (clone processor)]
     (.blurGaussian (GaussianBlur.) new-proc radius radius 0.0002)
     new-proc))
 
@@ -312,7 +318,7 @@
 (defn multiply
   "Multiply an image processor by a factor."
   [processor factor]
-  (doto (.duplicate processor)
+  (doto (clone processor)
     (.multiply factor)))
 
 (def add-processors
