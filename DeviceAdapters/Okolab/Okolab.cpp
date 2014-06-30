@@ -27,6 +27,7 @@
 #include "CO2BLControl.h"
 #include "CO2O2BLControl.h"
 #include "CO2O2BL13Control.h"
+#include "ActiveHmdControl.h"
 
 #include "../../MMDevice/ModuleInterface.h"
 // #include <sstream>
@@ -63,6 +64,7 @@ extern const char* g_CO2BLControl;
 extern const char* g_CO2O2BLControl;
 extern const char* g_CO2O2BL13Control;
 extern const char* g_O2BLControl;
+extern const char* g_HmdControl;
 
 
 #ifdef WIN32
@@ -109,6 +111,7 @@ MODULE_API void InitializeModuleData()
  RegisterDevice(g_CO2O2BLControl, MM::GenericDevice, "Okolab CO2-O2 Unit-BL [0-10;1-18]");
  RegisterDevice(g_CO2O2BL13Control, MM::GenericDevice, "Okolab CO2-O2 Unit-BL [0-20;1-95]");
  RegisterDevice(g_H301BLControl, MM::GenericDevice, "Okolab H301 T Unit-BL");
+ RegisterDevice(g_HmdControl, MM::GenericDevice, "Okolab H301-HM-ACTIVE");
  SockSetup();
 }
 
@@ -145,6 +148,10 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
  if(strcmp(deviceName, g_H301BLControl)==0)
   {
    return new H301BLControl();
+  }
+  if(strcmp(deviceName, g_HmdControl)==0)
+  {
+	  return new HmdControl();
   }
 
  #ifdef _DEBUG_
