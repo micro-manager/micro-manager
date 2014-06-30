@@ -122,16 +122,15 @@
         ))))
 
 (defn paint-position [^Graphics2D g
-                      {[w h] :tile-dimensions :keys [zoom scale] :as screen-state}
+                      {[w h] :tile-dimensions
+                       :keys [zoom] :as screen-state}
                       x y color]
     (when (and x y w h color)
       (canvas/draw g
-                   [:rect
-                    {:l (inc (* zoom x)) :t (inc (* zoom y))
+                   [{:type :rect :l (inc (* zoom x)) :t (inc (* zoom y))
                      :w (* zoom w) :h (* zoom h)
-                     :alpha 1
-                     :stroke {:color color
-                              :width 2}}])))
+                     :color color
+                     :stroke {:width 2}}])))
 
 (defn paint-stage-position [^Graphics2D g screen-state]
   (let [[x y] (:xy-stage-position screen-state)
@@ -224,7 +223,8 @@
       (paintComponent [^Graphics graphics]
         (proxy-super paintComponent graphics)
         (paint-screen-buffered graphics screen-state-atom display-tiles-atom)))
-    (.setBackground Color/BLACK)))
+    (.setBackground Color/BLACK)
+))
     
 (defn main-frame
   "Creates an empty JFrame."

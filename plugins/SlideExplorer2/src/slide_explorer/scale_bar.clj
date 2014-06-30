@@ -39,18 +39,19 @@
   [screen-height pixel-size-um]
   (when pixel-size-um
     (let [{:keys [width-pixels text]} (bar-settings pixel-size-um)]
-      [:compound
-       {:x 10 :y (- screen-height 10)}
-       [:text
-        {:text text
-         :r width-pixels
-         :b -3
-         :color :white
-         :fill true
-         :font {:name "Arial"
-                :size 18}}]
-       [:line {:l 0 :t 0 :w width-pixels :h 0 
-               :stroke {:color :white :width 2.0}}]])))
+      [{:type :compound
+        :l 10 :b (- screen-height 10)
+        :w 100 :h 0
+        :children [{:type :text
+                    :text text
+                    :r width-pixels
+                    :t -10
+                    :color :white
+                    :fill true
+                    :font {:name "Arial"
+                           :size 18}}
+                   {:type :line :l 0 :t 0 :w width-pixels :h 0 
+                    :stroke {:color :white :width 2.0}}]}])))
 
 ;; tests
 

@@ -1,5 +1,5 @@
 (ns slide-explorer.contrast
-  (require [slide-explorer.canvas1 :as canvas1]
+  (require [slide-explorer.canvas :as canvas]
            [slide-explorer.image :as image]
            [slide-explorer.reactive :as reactive]
            [slide-explorer.utils :as utils]))
@@ -61,14 +61,14 @@
       
 (defn update-limit [{:keys [min max] :as channel-map}
                     handle val]
-  (let [val (canvas1/clip-value val 0 255)]
+  (let [val (canvas/clip-value val 0 255)]
     (if (= handle :min)
       (assoc channel-map
              :min val
-             :max (canvas1/clip-value (inc val) max 255))
+             :max (canvas/clip-value (inc val) max 255))
       (assoc channel-map
              :max val
-             :min (canvas1/clip-value (dec val) 0 min)))))           
+             :min (canvas/clip-value (dec val) 0 min)))))           
 
 (defn update-limit! [handle val]
   (swap! channel-atom update-limit handle val))
@@ -127,7 +127,7 @@
   (reactive/handle-update channel-atom update-contrast-graph)) 
 
 (defn test-frame []
-  (let [panel (canvas1/canvas-frame test-graphics)]
+  (let [panel (canvas/canvas-frame test-graphics)]
     (handle-settings)
     (reset! data-atom (test-data))))
 

@@ -17,7 +17,6 @@
             [slide-explorer.affine :as affine]
             [slide-explorer.image :as image]
             [slide-explorer.tile-cache :as tile-cache]
-            [slide-explorer.canvas :as canvas]
             [slide-explorer.tiles :as tiles]
             [slide-explorer.persist :as persist]
             [slide-explorer.disk :as disk]
