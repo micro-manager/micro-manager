@@ -749,15 +749,19 @@ void CMMCore::loadDevice(const char* label, const char* library, const char* dev
    if (!device)
       throw CMMError("Null device name");
 
-   boost::shared_ptr<mm::logging::Logger> logger =
+   boost::shared_ptr<mm::logging::Logger> deviceLogger =
       logManager_.NewLogger("dev:" + std::string(label));
+   boost::shared_ptr<mm::logging::Logger> coreLogger =
+      logManager_.NewLogger("Core:dev:" + std::string(label));
 
    try
    {
       LOG_DEBUG(coreLogger_) << "Will load device " << device <<
          " from " << library;
 
-      boost::shared_ptr<DeviceInstance> pDevice = pluginManager_.LoadDevice(this, label, library, device, logger);
+      boost::shared_ptr<DeviceInstance> pDevice =
+         pluginManager_.LoadDevice(this, label, library, device,
+               deviceLogger, coreLogger);
 
       LOG_INFO(coreLogger_) << "Did load device " << device <<
          " from " << library << "; label = " << label;

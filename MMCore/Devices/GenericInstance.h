@@ -31,7 +31,8 @@ public:
          MM::Device* pDevice,
          DeleteDeviceFunction deleteFunction,
          const std::string& label,
-         boost::shared_ptr<mm::logging::Logger> logger) :
-      DeviceInstanceBase<MM::Generic>(core, adapter, name, pDevice, deleteFunction, label, logger)
+         boost::shared_ptr<mm::logging::Logger> deviceLogger,
+         boost::shared_ptr<mm::logging::Logger> coreLogger) :
+      DeviceInstanceBase<MM::Generic>(core, adapter, name, pDevice, deleteFunction, label, deviceLogger, coreLogger)
    {}
 };

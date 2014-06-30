@@ -25,13 +25,14 @@
 #include "../CoreUtils.h"
 #include "../Error.h"
 #include "../LoadableModules/LoadedDeviceAdapter.h"
+#include "../Logging/Logging.h"
 #include "../MMCore.h"
 
 
 int
 DeviceInstance::LogMessage(const char* msg, bool debugOnly)
 {
-   logger_->Log(debugOnly ? mm::logging::LogLevelDebug :
+   deviceLogger_->Log(debugOnly ? mm::logging::LogLevelDebug :
          mm::logging::LogLevelInfo, msg);
    return DEVICE_OK;
 }
@@ -43,20 +44,25 @@ DeviceInstance::DeviceInstance(CMMCore* core,
       MM::Device* pDevice,
       DeleteDeviceFunction deleteFunction,
       const std::string& label,
-      boost::shared_ptr<mm::logging::Logger> logger) :
+      boost::shared_ptr<mm::logging::Logger> deviceLogger,
+      boost::shared_ptr<mm::logging::Logger> coreLogger) :
    pImpl_(pDevice),
    core_(core),
    adapter_(adapter),
    label_(label),
    deleteFunction_(deleteFunction),
-   logger_(logger)
+   deviceLogger_(deviceLogger),
+   coreLogger_(coreLogger)
 {
    const std::string actualName = GetName();
    if (actualName != name)
    {
-      // TODO Log a warning message. This should be an error, but currently it
-      // breaks some device adapters. Probably best to remove GetName() from
-      // MM::Device entirely and handle it solely in the Core.
+      LOG_WARNING(Logger()) << "Requested device named \"" << name <<
+         "\" but the actual device is named \"" << actualName << "\"";
+
+      // TODO This should ideally be an error, but currently it breaks some
+      // device adapters. Probably best to remove GetName() from MM::Device
+      // entirely and handle it solely in the Core.
    }
 
    pImpl_->SetLabel(label_.c_str());
@@ -85,7 +91,7 @@ void
 DeviceInstance::ThrowError(const std::string& message) const
 {
    CMMError e = CMMError(message, MakeException());
-   // TODO Log
+   LOG_ERROR(Logger()) << e.getFullMsg();
    throw e;
 }
 
@@ -98,7 +104,7 @@ DeviceInstance::ThrowIfError(int code) const
    }
 
    CMMError e = MakeExceptionForCode(code);
-   // TODO Log
+   LOG_ERROR(Logger()) << e.getFullMsg();
    throw e;
 }
 
@@ -111,7 +117,7 @@ DeviceInstance::ThrowIfError(int code, const std::string& message) const
    }
 
    CMMError e = CMMError(message, MakeExceptionForCode(code));
-   // TODO Log
+   LOG_ERROR(Logger()) << e.getFullMsg();
    throw e;
 }
 
@@ -122,7 +128,6 @@ DeviceInstance::DeviceStringBuffer::ThrowBufferOverflowError() const
    CMMError e = CMMError("Buffer overflow in device " + ToQuotedString(label) +
          " while calling " + funcName_ + "(); "
          "this is most likely a bug in the device adapter");
-   // TODO Log
    throw e;
 }
 

@@ -58,7 +58,10 @@ public:
    CPluginManager();
    ~CPluginManager();
    
-   boost::shared_ptr<DeviceInstance> LoadDevice(CMMCore* core, const char* label, const char* moduleName, const char* deviceName, boost::shared_ptr<mm::logging::Logger> logger);
+   boost::shared_ptr<DeviceInstance> LoadDevice(CMMCore* core,
+         const char* label, const char* moduleName, const char* deviceName,
+         boost::shared_ptr<mm::logging::Logger> deviceLogger,
+         boost::shared_ptr<mm::logging::Logger> coreLogger);
    void UnloadDevice(boost::shared_ptr<DeviceInstance> device);
    void UnloadAllDevices();
 
