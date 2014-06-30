@@ -160,9 +160,16 @@ void
 DeviceInstance::SetProperty(const std::string& name,
       const std::string& value) const
 {
+   LOG_DEBUG(Logger()) << "Will set property \"" << name << "\" to \"" <<
+      value << "\"";
+
    int err = pImpl_->SetProperty(name.c_str(), value.c_str());
+
    ThrowIfError(err, "Cannot set property " + ToQuotedString(name) +
          " to " + ToQuotedString(value));
+
+   LOG_DEBUG(Logger()) << "Did set property \"" << name << "\" to \"" <<
+      value << "\"";
 }
 
 bool

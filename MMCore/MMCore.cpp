@@ -3293,16 +3293,19 @@ void CMMCore::setProperty(const char* label, const char* propName,
    CheckPropertyName(propName);
    CheckPropertyValue(propValue);
 
-   LOG_DEBUG(coreLogger_) << "Will set property: " <<
-      label << "-" << propName << " = " << propValue;
-
    if (IsCoreDeviceLabel(label))
    {
+      LOG_DEBUG(coreLogger_) << "Will set Core property: " <<
+         propName << " = " << propValue;
+
       properties_->Execute(propName, propValue);
       {
          MMThreadGuard scg(stateCacheLock_);
          stateCache_.addSetting(PropertySetting(MM::g_Keyword_CoreDevice, propName, propValue));
       }
+
+      LOG_DEBUG(coreLogger_) << "Did set Core property: " <<
+         propName << " = " << propValue;
    }
    else
    {
@@ -3317,9 +3320,6 @@ void CMMCore::setProperty(const char* label, const char* propName,
          stateCache_.addSetting(PropertySetting(label, propName, propValue));
       }
    }
-
-   LOG_DEBUG(coreLogger_) << "Did set property: " <<
-      label << "-" << propName << " = " << propValue;
 }
 
 /**
