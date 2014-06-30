@@ -145,6 +145,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="ActiveHmdControl.cpp" />
     <ClCompile Include="CO2BLControl.cpp" />
     <ClCompile Include="CO2O2BL13Control.cpp" />
     <ClCompile Include="CO2O2BLControl.cpp" />
@@ -156,6 +157,7 @@
     <ClCompile Include="TestControl.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ActiveHmdControl.h" />
     <ClInclude Include="CO2BLControl.h" />
     <ClInclude Include="CO2O2BL13Control.h" />
     <ClInclude Include="CO2O2BLControl.h" />
