@@ -31,7 +31,7 @@
     (filter #(-> %
                  (grid-distances pos)
                  (tile-distances w h)
-                 (in-tile))
+                 in-tile)
             available-positions)))
 
 (defn add-position-to-list [screen-state-atom position-map]

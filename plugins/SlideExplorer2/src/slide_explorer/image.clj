@@ -307,7 +307,6 @@
   "Arithmetically combine processor 1 with processor 2, where op
    is :add, :subtract, :multiply, :divide."
   [op proc1 proc2]
-  (println proc1 proc2)
   (-> (ImageCalculator.)
       (.run 
         (str (name op) " float")
