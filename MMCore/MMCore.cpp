@@ -6218,54 +6218,6 @@ CMMCore::GetDeviceWithCheckedLabel(const char* label) const throw (CMMError)
    return pluginManager_.GetDevice(label);
 }
 
-bool CMMCore::isConfigurationCurrent(const Configuration& config)
-{
-   // to dermine whether the current state of the system matches our configuration
-   // we need to check property settings one by one
-   for (size_t i=0; i<config.size(); i++)
-   {
-      PropertySetting setting = config.getSetting(i);
-
-      // perform special processing for core commands
-      if (setting.getDeviceLabel().compare(MM::g_Keyword_CoreDevice) == 0)
-      {
-         string coreValue = properties_->Get(setting.getPropertyName().c_str());
-         if (coreValue.compare(setting.getPropertyValue()) != 0)
-            return false;
-         else
-            continue;
-      }
-
-      // first get device
-      boost::shared_ptr<DeviceInstance> pDevice;
-	   try {
-		   // >>> TODO: is throwing an exception an efficient way of doing this???
-	      // (is getting a wrong device is going to happen a lot?)
-		   pDevice = pluginManager_.GetDevice(setting.getDeviceLabel().c_str());
-	   } catch (CMMError&) {
-	      // trap exception and return "device not found"
-         return false;
-	   }
-
-      // then fetch property
-      MMThreadGuard guard(pluginManager_.getModuleLock(pDevice));
-      std::string value;
-      try
-      {
-         value = pDevice->GetProperty(setting.getPropertyName());
-      }
-      catch (const CMMError&)
-      {
-         return false;
-      }
-
-      // and finally check the value
-      if (setting.getPropertyValue().compare(value.c_str()) != 0)
-         return false; // value does not match
-   }
-   return true;
-}
-
 /**
  * Set all properties in a configuration
  * Upon error, don't stop, but try to set all failed properties again

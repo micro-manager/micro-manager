@@ -618,7 +618,6 @@ private:
       return boost::static_pointer_cast<TDeviceInstance>(device);
    }
 
-   bool isConfigurationCurrent(const Configuration& config);
    void applyConfiguration(const Configuration& config) throw (CMMError);
    int applyProperties(std::vector<PropertySetting>& props, std::string& lastError);
    void waitForDevice(boost::shared_ptr<DeviceInstance> pDev) throw (CMMError);
