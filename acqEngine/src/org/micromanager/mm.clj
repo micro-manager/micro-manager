@@ -393,7 +393,7 @@
   ([position-list idx]
     (.removePosition position-list idx))
   ([idx]
-    (remove-msp (.getPositionList gui))))
+    (remove-msp (.getPositionList gui) idx)))
 
 (defn get-msp-z-position
   "Get the z position for a given z-stage from the MultiStagePosition
