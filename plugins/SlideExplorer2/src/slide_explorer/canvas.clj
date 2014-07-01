@@ -237,23 +237,22 @@
     (* a 2)))
 
 (def complete-coordinates
-  (memoize
-    (fn [{:keys [l left t top r right b bottom
-                 x y
-                 w width h height]
-          :as the-map}]
-      (let [l (or l left) t (or t top) r (or r right) b (or b bottom)
-            w (or (-? r l) (twice? (-? x l)) (twice? (-? r x)) w width)
-            h (or (-? b t) (twice? (-? y t)) (twice? (-? b y)) h height)
-            l (or l (-? r w) (-? x (half? w)))
-            t (or t (-? b h) (-? y (half? h)))
-            r (or r (+? l w) (+? x (half? w)))
-            b (or b (+? t h) (+? y (half? h)))
-            x (or x (+? l (half? w)))
-            y (or y (+? t (half? h)))]
-        (->> (merge the-map {:w w :h h :l l :t t :r r :b b :x x :y y})
-             (filter second)
-             (into {}))))))
+  (fn [{:keys [l left t top r right b bottom
+               x y
+               w width h height]
+        :as the-map}]
+    (let [l (or l left) t (or t top) r (or r right) b (or b bottom)
+          w (or (-? r l) (twice? (-? x l)) (twice? (-? r x)) w width)
+          h (or (-? b t) (twice? (-? y t)) (twice? (-? b y)) h height)
+          l (or l (-? r w) (-? x (half? w)))
+          t (or t (-? b h) (-? y (half? h)))
+          r (or r (+? l w) (+? x (half? w)))
+          b (or b (+? t h) (+? y (half? h)))
+          x (or x (+? l (half? w)))
+          y (or y (+? t (half? h)))]
+      (->> (merge the-map {:w w :h h :l l :t t :r r :b b :x x :y y})
+           (filter second)
+           (into {})))))
 
 ;; Little widget language
 
@@ -383,26 +382,34 @@
             (if underline TextAttribute/UNDERLINE_ON -1)))
     (Font. attributes)))
 
-(defn string-bounds
+(defn string-bounds [font-object text]
+  "Measures the true bounds of a string."
+  (-> font-object
+    (.createGlyphVector *font-render-context* text)
+    .getVisualBounds))
+
+(defn string-metrics
   "Measure the bounds of a string."
   [font-obj text]
-  (.getStringBounds font-obj text *font-render-context*))
+  (let [bounds-M (string-bounds font-obj "M")
+        bounds (string-bounds font-obj text)]
+    {:h (.getHeight bounds-M)
+     :w (.getWidth bounds)
+     :shape-obj bounds}))
+
+(def string-metrics-memo (memoize string-metrics))
 
 (defmethod widget :text
   [{:keys [text font] :as m}]
   (let [font-obj (font-object font)
-        shape-obj (string-bounds font-obj text)
-        w (.getWidth shape-obj)
-        h (.getHeight shape-obj)
-        m+ (assoc m :w w :h h)
+        m+ (merge m (string-metrics font-obj text))
         m++ (complete-coordinates m+)
         new-transform (affine-transform m++)]
-    (-> m+
+    (-> m++
         (assoc :type :text-primitive
                :transform new-transform
                :text text
-               :font-obj font-obj
-               :shape shape-obj)
+               :font-obj font-obj)
         (update-in-if [:children]
                    (fn [children]
                      (->> children
@@ -471,9 +478,10 @@
       (.drawImage g2d image (- (/ w 2)) (- (/ h 2)) w h nil))))
 
 (defmethod draw-primitive :text-primitive
-  [g2d {:keys [text l t font-obj shape] :as params}]
+  [g2d {:keys [text font-obj h] :as params}]
   (.setFont g2d font-obj)
-  (.drawString g2d text 0 0))
+  ;(println h)
+  (.drawString g2d text (float 0) (float h)))
 
 (defn draw
   "Draw in the Graphics2D reference, according to the data
@@ -681,11 +689,16 @@
     :rotate 0
     :scale-y 2
     :side 100}
-   {:type :text
-    :text "hello"
-    :color :red
+   {:type :rect
     :x 100
     :y 100
+    :w 100
+    :h 100 :children
+   [{:type :text :rotate 0
+    :text "Hello"
+     :font {:size 24}
+    :color :red
+    :l 0 :y 0
     }
       {:type :arc
        :fill :pink
@@ -705,7 +718,7 @@
      :h 70
      :start-angle 20
      :arc-angle 140
-     :arc-boundary :pie}
+     :arc-boundary :pie}]}
    ])
 
 (defn test-binding []

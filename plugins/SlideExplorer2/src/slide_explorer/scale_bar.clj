@@ -45,7 +45,7 @@
         :children [{:type :text
                     :text text
                     :r width-pixels
-                    :t -10
+                    :b -10
                     :color :white
                     :fill true
                     :font {:name "Arial"
