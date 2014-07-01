@@ -208,10 +208,9 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
                      if (tags == null) {
                         try {
                            // We still need to generate an FPS update at 
-                           // regular intervals; just use the most recent 
-                           // image.
-                           tags = MMStudioMainFrame.getInstance().getCore().getLastTaggedImage().tags;
-                           sendFPSUpdate(tags);
+                           // regular intervals; we just have to do it without
+                           // any image tags.
+                           sendFPSUpdate(null);
                         }
                         catch (Exception e) {
                            // Can't get image tags, apparently; give up.
@@ -269,6 +268,11 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
     */
    private void sendFPSUpdate(JSONObject tags) {
       long curTimestamp = System.currentTimeMillis();
+      // Hack: if we have null tags, then post a "blank" FPS event.
+      if (tags == null) {
+         bus_.post(new FPSEvent(0, 0));
+         return;
+      }
       if (lastFPSUpdateTimestamp_ == -1) {
          // No data to operate on yet.
          lastFPSUpdateTimestamp_ = curTimestamp;
