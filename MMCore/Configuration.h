@@ -75,8 +75,6 @@ struct PropertySetting
 
    static std::string generateKey(const char* device, const char* prop);
 
-   std::string Serialize() const;
-   void Restore(const std::string& data);
    std::string getVerbose() const;
    bool isEqualTo(const PropertySetting& ps);
 
@@ -147,8 +145,6 @@ public:
     */
    size_t size() const {return settings_.size();}
    std::string getVerbose() const;
-   std::string Serialize() const;
-   void Restore(const std::string& data);
  
 private:
    std::vector<PropertySetting> settings_;

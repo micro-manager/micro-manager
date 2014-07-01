@@ -102,9 +102,9 @@ using namespace std;
  * This applies to all classes exposed through the SWIG layer (i.e. the whole
  * of the public API of the Core), not just CMMCore.
  */
-const int MMCore_versionMajor = 4;
+const int MMCore_versionMajor = 5;
 const int MMCore_versionMinor = 0;
-const int MMCore_versionPatch = 4;
+const int MMCore_versionPatch = 0;
 
 
 ///////////////////////////////////////////////////////////////////////////////
