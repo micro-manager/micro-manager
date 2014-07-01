@@ -205,7 +205,6 @@ public final class CameraSubPanel extends ListeningJPanel implements LiveModeLis
          for (Cameras.CameraData a : CameraDataItems) {
             String s = a.displayString;
             if (side_ != Devices.Sides.NONE) {  // add imaging/epi label as appropriate
-               
                if (side_ == a.side) {
                   s += " (Imaging)";
                } else if (Devices.getOppositeSide(side_) == a.side){

@@ -104,7 +104,7 @@ public class DevicesPanel extends ListeningJPanel {
       add(boxLowerCam_, "span 2, center, wrap");
             
       add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.MULTICAMERA) + ":", null, JLabel.RIGHT));
-      boxMultiCam_ = makeDualCameraDeviceBox(Devices.Keys.MULTICAMERA);
+      boxMultiCam_ = makeMultiCameraDeviceBox(Devices.Keys.MULTICAMERA);
       add(boxMultiCam_, "span 2, center, wrap");
 
       add(new JLabel("Imaging Path A"), "skip 1");
@@ -290,11 +290,9 @@ public class DevicesPanel extends ListeningJPanel {
     * @param deviceName
     * @return
     */
-   private JComboBox makeDualCameraDeviceBox(Devices.Keys deviceName) {
+   private JComboBox makeMultiCameraDeviceBox(Devices.Keys deviceName) {
       List<String> multiCameras = new ArrayList<String>();
       multiCameras.add(0, "");
-      // loop through all cameras to see which have more than 1 channel;
-      //   these we consider to be be our multi cameras
       String originalCamera = props_.getPropValueString(Devices.Keys.CORE, Properties.Keys.CAMERA); 
       try {
          StrVector strvDevices = core_.getLoadedDevicesOfType(mmcorej.DeviceType.CameraDevice);
@@ -324,80 +322,5 @@ public class DevicesPanel extends ListeningJPanel {
       return deviceBox;
    }
    
-
-   
-   // below is code for features that have been removed, specifically
-   // changing which axis generates the sheet (now always X) and
-   // changing the sign of X axis (maybe will add back later)
-   
-//   /**
-//    * Listener for the Axis directions combox boxes
-//    * Updates the model in the Devices class with any GUI changes
-//    */
-//   class AxisDirBoxListener implements ActionListener {
-//      String axis_;
-//      JComboBox box_;
-//
-//      public AxisDirBoxListener(String axis, JComboBox box) {
-//         axis_ = axis;
-//         box_ = box;
-//      }
-//
-//      @Override
-//      public void actionPerformed(ActionEvent ae) {
-//         devices_.putAxisDirInfo(axis_, (String) box_.getSelectedItem());
-//      }
-//   }
-//   
-//   /**
-//    * Constructs a DropDown box containing X/Y.
-//    * Sets selection based on info in the Devices class and attaches
-//    * a Listener
-//    * 
-//    * @param axis - Name under which this axis is known in the Device class
-//    * @return constructed JComboBox
-//    */
-//   private JComboBox makeXYBox(String axis) {
-//      String[] xy = {"X", "Y"};
-//      JComboBox jcb = new JComboBox(xy);
-//      jcb.setSelectedItem(devices_.getAxisDirInfo(axis));
-//      jcb.addActionListener(new DevicesPanel.AxisDirBoxListener(axis, jcb));
-// 
-//      return jcb;
-//   }
-//   
-//   /**
-//    * Listener for the Checkbox indicating whether this axis should be reversed
-//    * Updates the Devices model with GUI selections
-//    */
-//   class ReverseCheckBoxListener implements ActionListener {
-//      String axis_;
-//      JCheckBox box_;
-//
-//      public ReverseCheckBoxListener(String axis, JCheckBox box) {
-//         axis_ = axis;
-//         box_ = box;
-//      }
-//
-//      @Override
-//      public void actionPerformed(ActionEvent ae) {
-//         devices_.putFastAxisRevInfo(axis_, box_.isSelected());
-//      }
-//   };
-//   
-//   /**
-//    * Constructs the JCheckBox through which the user can set the direction of
-//    * the sheet
-//    * @param fastAxisDir name under which this axis is known in the Devices class
-//    * @return constructed JCheckBox
-//    */
-//   private JCheckBox makeReverseCheckBox(String fastAxisDir) {
-//      JCheckBox jc = new JCheckBox("Reverse");
-//      jc.setSelected(devices_.getFastAxisRevInfo(fastAxisDir));
-//      jc.addActionListener(new DevicesPanel.ReverseCheckBoxListener(fastAxisDir, jc));
-//      
-//      return jc;
-//   }
-
    
 }
