@@ -23,6 +23,7 @@ package org.micromanager.asidispim;
 
 import org.micromanager.asidispim.Data.Cameras;
 import org.micromanager.asidispim.Data.Devices;
+import org.micromanager.asidispim.Data.Joystick;
 import org.micromanager.asidispim.Data.Prefs;
 import org.micromanager.asidispim.Data.Properties;
 import org.micromanager.asidispim.Utils.DevicesListenerInterface;
@@ -79,6 +80,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
 
    private final Devices devices_;
    private final Properties props_;
+   private final Joystick joystick_;
    private final Cameras cameras_;
    private final Prefs prefs_;
    private final CMMCore core_;
@@ -114,11 +116,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private final JCheckBox saveCB_;
    
    //private static final String ZSTEPTAG = "z-step_um";
-   private static final String ELAPSEDTIME = "ElapsedTime-ms";
+//   private static final String ELAPSEDTIME = "ElapsedTime-ms";
 
    public AcquisitionPanel(ScriptInterface gui, 
            Devices devices, 
            Properties props, 
+           Joystick joystick,
            Cameras cameras, 
            Prefs prefs, 
            StagePositionUpdater stagePosUpdater) {
@@ -130,6 +133,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       gui_ = gui;
       devices_ = devices;
       props_ = props;
+      joystick_ = joystick;
       cameras_ = cameras;
       prefs_ = prefs;
       stagePosUpdater_ = stagePosUpdater;
@@ -444,8 +448,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       // TODO: get camera trigger mode and reset after acquisition
       cameras_.setSPIMCameraTriggerMode(Cameras.TriggerModes.EXTERNAL_START);
       
-      // disable 
-
       String cameraA = devices_.getMMDevice(Devices.Keys.CAMERAA);
       String cameraB = devices_.getMMDevice(Devices.Keys.CAMERAB);
       String firstSide = (String) firstSide_.getSelectedItem();
@@ -774,6 +776,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    @Override
    public void gotSelected() {
       props_.callListeners();
+      joystick_.unsetAllJoysticks();  // disable all joysticks on this tab
    }
 
    /**
