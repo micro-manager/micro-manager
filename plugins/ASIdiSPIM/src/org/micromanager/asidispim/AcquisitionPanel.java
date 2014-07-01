@@ -37,6 +37,7 @@ import java.io.File;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
+
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JFormattedTextField;
@@ -49,20 +50,21 @@ import javax.swing.JSeparator;
 import javax.swing.JSpinner;
 
 import net.miginfocom.swing.MigLayout;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
+
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.api.ImageCache;
 import org.micromanager.api.MMTags;
-
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.acquisition.DefaultTaggedImageSink;
 import org.micromanager.acquisition.MMAcquisition;
 import org.micromanager.acquisition.TaggedImageQueue;
-import org.micromanager.imagedisplay.VirtualAcquisitionDisplay;
+import org.micromanager.imageDisplay.VirtualAcquisitionDisplay;
 import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.FileDialogs;
 import org.micromanager.utils.MMScriptException;
