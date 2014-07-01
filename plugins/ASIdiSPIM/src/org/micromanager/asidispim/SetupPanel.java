@@ -21,7 +21,9 @@
 package org.micromanager.asidispim;
 
 import com.swtdesigner.SwingResourceManager;
+
 import java.awt.Color;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.geom.Point2D;
@@ -40,8 +42,8 @@ import mmcorej.CMMCore;
 import javax.swing.*;
 
 import net.miginfocom.swing.MigLayout;
-import org.micromanager.MMStudioMainFrame;
 
+import org.micromanager.MMStudioMainFrame;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.asidispim.Utils.StoredFloatLabel;
 import org.micromanager.internalinterfaces.LiveModeListener;
@@ -437,22 +439,26 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
 
 
       sheetPanel.add(new JLabel("Sheet width:"));
-      sheetPanel.add(new JLabel(""), "span 2");   // TODO update this label with current value
+      sheetPanel.add(new JLabel(""), "span 2");   // TODO update this label with current value and/or allow user to directly enter value
+      sheetPanel.add(makeIncrementButton(micromirrorDeviceKey_, Properties.Keys.SA_AMPLITUDE_X_DEG, "-", (float)-0.01), "skip 1, split 2");
+      sheetPanel.add(makeIncrementButton(micromirrorDeviceKey_, Properties.Keys.SA_AMPLITUDE_X_DEG, "+", (float)0.01));
       JSlider tmp_sl = pu.makeSlider(0, // 0 is min amplitude
               props_.getPropValueFloat(micromirrorDeviceKey_,Properties.Keys.MAX_DEFLECTION_X) - props_.getPropValueFloat(micromirrorDeviceKey_, Properties.Keys.MIN_DEFLECTION_X), // compute max amplitude
               1000, // the scale factor between internal integer representation and float representation
               props_, devices_, micromirrorDeviceKey_, Properties.Keys.SA_AMPLITUDE_X_DEG);
-      sheetPanel.add(tmp_sl, "skip 1, span 5, growx, center, wrap");
+      sheetPanel.add(tmp_sl, "span 5, growx, center, wrap");
 
 
       sheetPanel.add(new JLabel("Sheet offset:"));
-      sheetPanel.add(new JLabel(""), "span 2");   // TODO update this label with current value
+      sheetPanel.add(new JLabel(""), "span 2");   // TODO update this label with current value and/or allow user to directly enter value
+      sheetPanel.add(makeIncrementButton(micromirrorDeviceKey_, Properties.Keys.SA_OFFSET_X_DEG, "-", (float)-0.01), "skip 1, split 2");
+      sheetPanel.add(makeIncrementButton(micromirrorDeviceKey_, Properties.Keys.SA_OFFSET_X_DEG, "+", (float)0.01));
       tmp_sl = pu.makeSlider(
               props.getPropValueFloat(micromirrorDeviceKey_, Properties.Keys.MIN_DEFLECTION_X), // min value
               props.getPropValueFloat(micromirrorDeviceKey_, Properties.Keys.MAX_DEFLECTION_X), // max value
               1000, // the scale factor between internal integer representation and float representation
               props_, devices_, micromirrorDeviceKey_, Properties.Keys.SA_OFFSET_X_DEG);
-      sheetPanel.add(tmp_sl, "skip 1, span 5, growx, center, wrap");
+      sheetPanel.add(tmp_sl, "span 5, growx, center, wrap");
 
 
       // Layout of the SetupPanel
@@ -496,6 +502,38 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
        positions_.setPosition(piezoImagingDeviceKey_, 
                        Joystick.Directions.NONE, offset + rate * newGalvoPos);   
    } 
+   
+   
+   private JButton makeIncrementButton(Devices.Keys devKey, Properties.Keys propKey, 
+         String label, float incrementAmount) {
+      class incrementButtonActionListener implements ActionListener {
+         private final Devices.Keys devKey_;
+         private final Properties.Keys propKey_;
+         private final float incrementAmount_;
+         
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            try {
+               props_.setPropValue(devKey_, propKey_, incrementAmount_ + props_.getPropValueFloat(devKey_, propKey_), true);
+            } catch (Exception ex) {
+               gui_.showError(ex);
+            }
+         }
+
+         private incrementButtonActionListener(Devices.Keys devKey, Properties.Keys propKey, 
+               float incrementAmount) {
+            devKey_ = devKey;
+            propKey_ = propKey;
+            incrementAmount_ = incrementAmount;
+         }
+      }
+      
+      JButton jb = new JButton(label);
+      jb.setMargin(new Insets(4,8,4,8));
+      ActionListener l = new incrementButtonActionListener(devKey, propKey, incrementAmount);
+      jb.addActionListener(l);
+      return jb;
+   }
                        
    /**
     * updates single-axis parameters for stepped piezos according to
@@ -622,7 +660,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       joystickPanel_.gotSelected();
       cameraPanel_.gotSelected();
       beamPanel_.gotSelected();
-//      props_.callListeners();  // not used yet, only for SPIM Params
+      props_.callListeners();
       updateStartStopPositions();  // I'm undecided if this is wise or not, see updateStartStopPositions() JavaDoc
 
       // moves illumination piezo to home
