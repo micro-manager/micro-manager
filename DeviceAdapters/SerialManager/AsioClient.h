@@ -39,13 +39,21 @@
 #include <vector>
 
 
+#include <boost/version.hpp>
+#if BOOST_VERSION >= 104700
+typedef boost::asio::serial_port::native_handle_type SerialNativeHandle;
+#else
+typedef boost::asio::serial_port::native_type SerialNativeHandle;
+#endif
+
+
 class AsioClient 
 { 
 public: 
    // Construct from an already open native handle.
    AsioClient(boost::asio::io_service& ioService,
          const std::string& deviceName,
-         boost::asio::serial_port::native_handle_type nativeHandle,
+         SerialNativeHandle nativeHandle,
          unsigned int baud,
          boost::asio::serial_port::flow_control::type flow,
          boost::asio::serial_port::parity::type parity,
