@@ -64,7 +64,7 @@ import org.micromanager.MMStudioMainFrame;
 import org.micromanager.acquisition.DefaultTaggedImageSink;
 import org.micromanager.acquisition.MMAcquisition;
 import org.micromanager.acquisition.TaggedImageQueue;
-import org.micromanager.imageDisplay.VirtualAcquisitionDisplay;
+import org.micromanager.imagedisplay.VirtualAcquisitionDisplay;
 import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.FileDialogs;
 import org.micromanager.utils.MMScriptException;
@@ -443,6 +443,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       gui_.enableLiveMode(false);
       // TODO: get camera trigger mode and reset after acquisition
       cameras_.setSPIMCameraTriggerMode(Cameras.TriggerModes.EXTERNAL_START);
+      
+      // disable 
 
       String cameraA = devices_.getMMDevice(Devices.Keys.CAMERAA);
       String cameraB = devices_.getMMDevice(Devices.Keys.CAMERAB);
