@@ -8,6 +8,8 @@ usage() {
    echo "   -D PATH    -- use dependencies at prefix PATH" 1>&2
    echo "   -R         -- use release version string (no date)" 1>&2
    echo "   -v VERSION -- set version string" 1>&2
+   echo "Environment:" 1>&2
+   echo "   MAKEFLAGS  -- flags to pass to make(1) for building" 1>&2
    exit 1
 }
 
@@ -111,7 +113,7 @@ eval ./configure \
    LIBUSB_0_1_LIBS=$MM_DEPS_PREFIX/lib/libusb.la \
    HIDAPI_LIBS=$MM_DEPS_PREFIX/lib/libhidapi.la
 
-make
+make $MAKEFLAGS
 
 # Remove x86_64 from device adapters that depend on 32-bit only frameworks.
 # Hamamatsu is 32-bit only even though dcamapi.framework contains an
