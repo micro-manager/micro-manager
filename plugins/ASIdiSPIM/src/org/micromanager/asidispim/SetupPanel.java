@@ -127,10 +127,6 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
               Properties.Keys.PLUGIN_PIEZO_END_POS.toString(), 40, prefs_, gui_);
       imagingPiezoStopPos_ = imagingPiezoStopPositionLabel_.getFloat();
       
-      
-      //updateStartStopPositions();
-
-
       // Create sheet Panel with sheet and piezo controls
       MigLayout ml = new MigLayout(
               "",
@@ -191,7 +187,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       });
       sheetPanel.add(setMiddleButton, "span 3, center");
       
-      // TODO: let the user choose galvodelta
+      // TODO: let the user choose galvo delta
       final double galvoDelta = 0.05;
       
       JButton upButton = new JButton();
@@ -363,12 +359,9 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
                        devices_.getMMDeviceException(micromirrorDeviceKey_));
                sheetStopPos_ = pt.y;
                sheetStopPositionLabel_.setFloat((float)sheetStopPos_);
-               // updateSheetSAParams();
                imagingPiezoStopPos_ = core_.getPosition(
                        devices_.getMMDeviceException(piezoImagingDeviceKey_));
                imagingPiezoStopPositionLabel_.setFloat((float)imagingPiezoStopPos_);
-               // updateImagingSAParams();
-               // updateStartStopPositions();
             } catch (Exception ex) {
                gui_.showError(ex);
             }
@@ -568,44 +561,6 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
    }
 
    /**
-    * updates start/stop positions from the present values of properties i'm
-    * undecided if this should be called when tab is selected if yes, then
-    * start/end settings are clobbered when you change tabs if no, then changes
-    * to start/end settings made elsewhere (notably using joystick with scan
-    * enabled) will be clobbered
-    */
-   // TODO remove this, should not be needed any more because we aren't setting
-   //    up single axis values in this tab anymore but just calculating the ratio
-   public void updateStartStopPositions() {
-      if (devices_.getMMDevice(piezoImagingDeviceKey_) == null) {
-         //return;
-      }
-      // compute initial start/stop positions from properties
-      /*
-      double amplitude = (double) props_.getPropValueFloat(
-              piezoImagingDeviceKey_, Properties.Keys.SA_AMPLITUDE);
-      double offset = (double) props_.getPropValueFloat(
-              piezoImagingDeviceKey_, Properties.Keys.SA_OFFSET);
-      imagingStartPos_ = offset - amplitude / 2;
-      piezoStartPositionLabel_.setText(
-              NumberUtils.doubleToDisplayString(imagingStartPos_));
-      imagingStopPos_ = offset + amplitude / 2;
-      piezoEndPositionLabel_.setText(
-              NumberUtils.doubleToDisplayString(imagingStopPos_));
-      amplitude = props_.getPropValueFloat(
-              micromirrorDeviceKey_, Properties.Keys.SA_AMPLITUDE_Y_DEG);
-      offset = props_.getPropValueFloat(
-              micromirrorDeviceKey_, Properties.Keys.SA_OFFSET_Y_DEG);
-      sheetStartPos_ = offset - amplitude / 2;
-      sheetStartPosLabel_.setText(
-              NumberUtils.doubleToDisplayString(sheetStartPos_));
-      sheetStopPos_ = offset + amplitude / 2;
-      sheetEndPositionLabel_.setText(
-              NumberUtils.doubleToDisplayString(sheetStopPos_));
-      */
-   }
-
-   /**
     * finds the appropriate COM port, because we have to send "home" (!) and
     * "sethome" (HM) commands "manually" over serial since the right API calls
     * don't yet exist // TODO pester Nico et al. for API
@@ -661,7 +616,6 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       cameraPanel_.gotSelected();
       beamPanel_.gotSelected();
       props_.callListeners();
-      updateStartStopPositions();  // I'm undecided if this is wise or not, see updateStartStopPositions() JavaDoc
 
       // moves illumination piezo to home
       // TODO do this more elegantly (ideally MM API would add Home() function)
