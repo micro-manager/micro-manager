@@ -166,8 +166,8 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       sheetPanel.add(goToMiddleButton, "span 3, center");
       
       JButton setMiddleButton = new JButton("Set");
-      setMiddleButton.setContentAreaFilled(false);
-      setMiddleButton.setOpaque(true);
+//      setMiddleButton.setContentAreaFilled(false);
+//      setMiddleButton.setOpaque(true);
       setMiddleButton.setBackground(Color.red);
       setMiddleButton.addActionListener(new ActionListener() {
          @Override
@@ -243,8 +243,8 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       
       JButton tmp_but = new JButton("Compute");
       tmp_but.setToolTipText("Computes ratio from start and end positions");
-      tmp_but.setContentAreaFilled(false);
-      tmp_but.setOpaque(true);
+//      tmp_but.setContentAreaFilled(false);
+//      tmp_but.setOpaque(true);
       tmp_but.setBackground(Color.green);
       tmp_but.addActionListener(new ActionListener() {
          @Override
@@ -264,8 +264,8 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       
       sheetPanel.add(new JSeparator(SwingConstants.HORIZONTAL), "span 9, growx, wrap");
       
-      sheetPanel.add(new JLabel("Start"), "skip 4, span2, center");
-      sheetPanel.add(new JLabel("End"), "skip 1, span 2, center, wrap");
+      sheetPanel.add(new JLabel("Calibration Start Position"), "skip 4, span2, center");
+      sheetPanel.add(new JLabel("Calibration End Position"), "skip 1, span 2, center, wrap");
       
       sheetPanel.add(new JLabel("Sheet/slice position:"));
       sheetPositionLabel_ = new JLabel("");
@@ -322,9 +322,9 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       sheetPanel.add(imagingPiezoStartPositionLabel_);
             
       tmp_but = new JButton("Set");
-      tmp_but.setToolTipText("Saves start position for imaging piezo and scanner slice (should be focused)");
-      tmp_but.setContentAreaFilled(false);
-      tmp_but.setOpaque(true);
+      tmp_but.setToolTipText("Saves calibration start position for imaging piezo and scanner slice (should be focused)");
+//      tmp_but.setContentAreaFilled(false);
+//      tmp_but.setOpaque(true);
       tmp_but.setBackground(Color.red);
       tmp_but.addActionListener(new ActionListener() {
          @Override
@@ -348,9 +348,9 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       sheetPanel.add(imagingPiezoStopPositionLabel_);
       
       tmp_but = new JButton("Set");
-      tmp_but.setToolTipText("Saves end position for imaging piezo and scanner slice (should be focused)");
-      tmp_but.setContentAreaFilled(false);
-      tmp_but.setOpaque(true);
+      tmp_but.setToolTipText("Saves calibration end position for imaging piezo and scanner slice (should be focused)");
+//      tmp_but.setContentAreaFilled(false);
+//      tmp_but.setOpaque(true);
       tmp_but.setBackground(Color.red);
       tmp_but.addActionListener(new ActionListener() {
          @Override
