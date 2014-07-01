@@ -606,21 +606,42 @@ Configuration CMMCore::getConfigGroupState(const char* group, bool fromCache) th
 {
    CheckConfigGroupName(group);
 
-   vector<string> configs = configGroups_->GetAvailableConfigs(group);
+   std::vector<std::string> allPresets =
+      configGroups_->GetAvailableConfigs(group);
+
    Configuration state;
-   for (size_t i=0; i<configs.size(); i++) {
-      Configuration cfgData = getConfigData(group, configs[i].c_str());
-      for (size_t i=0; i < cfgData.size(); i++)
+
+   // Loop over every property that appears in every preset, and collect the
+   // value (from cache or from devices).
+   for (std::vector<std::string>::const_iterator
+         it = allPresets.begin(), end = allPresets.end(); it != end; ++it)
+   {
+      Configuration preset = getConfigData(group, it->c_str());
+
+      for (size_t i = 0; i < preset.size(); i++)
       {
-         PropertySetting cs = cfgData.getSetting(i); // config setting
-         if (!state.isPropertyIncluded(cs.getDeviceLabel().c_str(), cs.getPropertyName().c_str()))
+         PropertySetting cs = preset.getSetting(i);
+         std::string deviceLabel = cs.getDeviceLabel();
+         std::string propertyName = cs.getPropertyName();
+
+         // Skip properties that we have already added.
+         if (!state.isPropertyIncluded(deviceLabel.c_str(),
+                  propertyName.c_str()))
          {
-            string value = "";
+            std::string value;
             if (fromCache)
-               value = getPropertyFromCache(cs.getDeviceLabel().c_str(), cs.getPropertyName().c_str());
+            {
+               value = getPropertyFromCache(deviceLabel.c_str(),
+                     propertyName.c_str());
+            }
             else
-               value = getProperty(cs.getDeviceLabel().c_str(), cs.getPropertyName().c_str());
-            PropertySetting ss(cs.getDeviceLabel().c_str(), cs.getPropertyName().c_str(), value.c_str()); // state setting
+            {
+               value = getProperty(deviceLabel.c_str(),
+                     propertyName.c_str());
+            }
+
+            PropertySetting ss(deviceLabel.c_str(), propertyName.c_str(),
+                  value.c_str());
             state.addSetting(ss);
          }
       }
