@@ -8,7 +8,6 @@ usage() {
    echo "   -C         -- skip ./configure" 1>&2
    echo "   -I         -- do not create disk image" 1>&2
    echo "   -c         -- print the ./configure command line and exit" 1>&2
-   echo "                 (note: quotes will be lost)" 1>&2
    echo "   -D PATH    -- use dependencies at prefix PATH" 1>&2
    echo "   -R         -- use release version string (no date)" 1>&2
    echo "   -v VERSION -- set version string" 1>&2
@@ -41,7 +40,7 @@ done
 ##
 
 source "`dirname $0`/nightlybuild_OSX_defs.sh"
-pushd "`dirname $0`/../.."; MM_SRCDIR=`pwd`; popd
+pushd "`dirname $0`/../.." >/dev/null; MM_SRCDIR=`pwd`; popd >/dev/null
 
 # GNU libtool (i.e. any libtoolized project) can mess around with the value of
 # MACOSX_DEPLOYMENT_TARGET, so passing the correct compiler and linker flags
@@ -100,13 +99,16 @@ fi
 # TODO Python: use Python.org version
 
 if [ "$print_config_only" = yes ]; then
-   EVAL="eval echo"
+   EVAL="eval printf '\"%s\" '"
 else
    EVAL=eval
 fi
 
 if [ "$skip_config" != yes ]; then
 
+if [ "$print_config_only" = yes ]; then
+   printf "MACOSX_DEPLOYMENT_TARGET=\"$MM_MACOSX_VERSION_MIN\" SDKROOT=\"$MM_MACOSX_SDKROOT\" "
+fi
 $EVAL ./configure \
    --prefix=$MM_BUILDDIR/it-is-a-bug-if-files-go-in-here \
    --disable-hardcoded-mmcorej-library-path \
@@ -129,6 +131,9 @@ $EVAL ./configure \
    "LIBUSB_0_1_LDFLAGS=\"-framework IOKit -framework CoreFoundation\"" \
    LIBUSB_0_1_LIBS=$MM_DEPS_PREFIX/lib/libusb.la \
    HIDAPI_LIBS=$MM_DEPS_PREFIX/lib/libhidapi.la
+if [ "$print_config_only" = yes ]; then
+   printf \\n
+fi
 
 fi # skip_config
 
