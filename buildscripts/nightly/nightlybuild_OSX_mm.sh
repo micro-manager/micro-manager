@@ -3,8 +3,12 @@
 set -e
 
 usage() {
-   echo "Usage: $0 [-r] [-R | -v VERSION]" 1>&2
-   echo "   -r         -- incremental build (for testing only)" 1>&2
+   echo "Usage: $0 [-cCIr] [-D PATH] [-R | -v VERSION]" 1>&2
+   echo "   -r         -- skip autogen.sh" 1>&2
+   echo "   -C         -- skip ./configure" 1>&2
+   echo "   -I         -- do not create disk image" 1>&2
+   echo "   -c         -- print the ./configure command line and exit" 1>&2
+   echo "                 (note: quotes will be lost)" 1>&2
    echo "   -D PATH    -- use dependencies at prefix PATH" 1>&2
    echo "   -R         -- use release version string (no date)" 1>&2
    echo "   -v VERSION -- set version string" 1>&2
@@ -13,11 +17,17 @@ usage() {
    exit 1
 }
 
-do_remake=no
+skip_autogen=no
+skip_config=no
+make_disk_image=yes
+print_config_only=no
 use_release_version=no
-while getopts ":rD:Rv:" o; do
+while getopts ":rIcCD:Rv:" o; do
    case $o in
-      r) do_remake=yes ;;
+      r) skip_autogen=yes ;;
+      C) skip_config=yes ;;
+      I) make_disk_image=no ;;
+      c) print_config_only=yes ;;
       D) MM_DEPS_PREFIX="$OPTARG" ;;
       R) use_release_version=yes ;;
       v) MM_VERSION="$OPTARG" ;;
@@ -58,10 +68,8 @@ if [ -z "$MM_VERSION" ]; then
 fi
 sed -e "s/@VERSION_STRING@/$MM_VERSION/" buildscripts/MMVersion.java.in > mmstudio/src/org/micromanager/MMVersion.java || exit
 
-if [ "$do_remake" = yes ]; then
-autoreconf -v
-else
-sh autogen.sh
+if [ "$skip_autogen" != yes ]; then
+   sh autogen.sh
 fi
 
 # Note on Java variables.
@@ -90,7 +98,16 @@ fi
 # CoreFoundation in their respective .la files.
 
 # TODO Python: use Python.org version
-eval ./configure \
+
+if [ "$print_config_only" = yes ]; then
+   EVAL="eval echo"
+else
+   EVAL=eval
+fi
+
+if [ "$skip_config" != yes ]; then
+
+$EVAL ./configure \
    --prefix=$MM_BUILDDIR/it-is-a-bug-if-files-go-in-here \
    --disable-hardcoded-mmcorej-library-path \
    --with-boost=$MM_DEPS_PREFIX \
@@ -112,6 +129,13 @@ eval ./configure \
    "LIBUSB_0_1_LDFLAGS=\"-framework IOKit -framework CoreFoundation\"" \
    LIBUSB_0_1_LIBS=$MM_DEPS_PREFIX/lib/libusb.la \
    HIDAPI_LIBS=$MM_DEPS_PREFIX/lib/libhidapi.la
+
+fi # skip_config
+
+if [ "$print_config_only" = yes ]; then
+   exit 0
+fi
+
 
 make $MAKEFLAGS
 
@@ -173,6 +197,10 @@ find $MM_STAGEDIR -name .svn -prune -exec rm -rf {} +
 # Mountain Lion and later.
 codesign -s - -f $MM_STAGEDIR/ImageJ.app/Contents/MacOS/JavaApplicationStub
 codesign -s - -f $MM_STAGEDIR/ImageJ64.app/Contents/MacOS/JavaApplicationStub
+
+if [ "$make_disk_image" != yes ]; then
+   exit 0
+fi
 
 
 ##
