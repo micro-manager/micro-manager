@@ -48,6 +48,7 @@ ASIHub::ASIHub() :
       ASIBase< ::HubBase, ASIHub >(""), // do not pass a name
       port_("Undefined"),
       serialAnswer_(""),
+      manualSerialAnswer_(""),
       serialCommand_(""),
       serialTerminator_(g_SerialTerminatorDefault),
       serialRepeatDuration_(0),
@@ -60,8 +61,11 @@ ASIHub::ASIHub() :
    // property to allow sending arbitrary serial commands and receiving response
    pAct = new CPropertyAction (this, &ASIHub::OnSerialCommand);
    CreateProperty(g_SerialCommandPropertyName, "", MM::String, false, pAct);
+
    // this is only changed programmatically, never by user
-   CreateProperty(g_SerialResponsePropertyName, "", MM::String, false);
+   // contains last response to the OnSerialCommand action
+   pAct = new CPropertyAction (this, &ASIHub::OnSerialResponse);
+   CreateProperty(g_SerialResponsePropertyName, "", MM::String, true, pAct);
 
    // property to allow repeated sending of same command; 0 disables repeat sending
    pAct = new CPropertyAction (this, &ASIHub::OnSerialCommandRepeatDuration);
@@ -94,10 +98,9 @@ int ASIHub::ClearComPort(void)
 }
 
 int ASIHub::SendCommand(const char *command)
-// changed from early implementation
+// changed from early implementation; calls QueryCommand
 {
    RETURN_ON_MM_ERROR ( QueryCommand(command, serialTerminator_) );
-   SetProperty(g_SerialResponsePropertyName, EscapeControlCharacters(LastSerialAnswer()).c_str());
    return DEVICE_OK;
 }
 
@@ -106,12 +109,8 @@ int ASIHub::QueryCommand(const char *command, const char *replyTerminator, const
    RETURN_ON_MM_ERROR ( ClearComPort() );
    RETURN_ON_MM_ERROR ( SendSerialCommand(port_.c_str(), command, "\r") );
    serialCommand_ = command;
-   // if in debug mode then echo serialCommand_ to log file
-//   LogMessage("SerialCommand:\t" + serialCommand_, true);  // already done by COM port
    if (delayMs >= 0)  CDeviceUtils::SleepMs(delayMs);
    RETURN_ON_MM_ERROR ( GetSerialAnswer(port_.c_str(), replyTerminator, serialAnswer_) );
-   // if in debug mode then echo serialCommand_ to log file
-//   LogMessage("SerialReponse:\t" + serialAnswer_, true);  // already done by COM port
    return DEVICE_OK;
 }
 
@@ -484,7 +483,20 @@ int ASIHub::OnSerialCommand(MM::PropertyBase* pProp, MM::ActionType eAct)
       {
          last_command = tmpstr;
          SendCommand(tmpstr);
+         // TODO add some sort of check if command was successful, update manualSerialAnswer_ accordingly (e.g. leave blank for invalid command like aoeu)
+         manualSerialAnswer_ = serialAnswer_;  // remember this reply even if SendCommand is called elsewhere
       }
+   }
+   return DEVICE_OK;
+}
+
+int ASIHub::OnSerialResponse(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet || eAct == MM::AfterSet)
+   {
+      // always read
+      if (!pProp->Set(EscapeControlCharacters(manualSerialAnswer_).c_str()))
+         return DEVICE_INVALID_PROPERTY_VALUE;
    }
    return DEVICE_OK;
 }

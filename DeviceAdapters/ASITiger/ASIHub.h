@@ -50,7 +50,8 @@ public:
 	// Communication base functions
    int ClearComPort();
 
-   // SendCommand doesn't look for response
+   // SendCommand ignores response (currently implemented as call to QueryCommand
+   // TODO remove entirely and replace by call to QueryCommand
 	int SendCommand(const char *command);
    int SendCommand(const string &command) { return SendCommand(command.c_str()); }
 
@@ -115,6 +116,7 @@ public:
    int OnPort                       (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSerialTerminator           (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSerialCommand              (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSerialResponse             (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSerialCommandRepeatDuration(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSerialCommandRepeatPeriod  (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSerialCommandOnlySendChanged(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -129,7 +131,8 @@ private:
 	static vector<char> ConvertStringVector2CharVector(const vector<string> v);
 	static vector<int> ConvertStringVector2IntVector(const vector<string> v);
 
-   string serialAnswer_;      // the last answer received
+   string serialAnswer_;      // the last answer received from any call of
+   string manualSerialAnswer_; // last answer received when the SerialCommand property was used
    string serialCommand_;     // the last command sent, or can be set for calling commands without args
    string serialTerminator_;  // only used when parsing command sent via OnSerialCommand action handler
    long serialRepeatDuration_; // for how long total time the command is repeatedly sent
