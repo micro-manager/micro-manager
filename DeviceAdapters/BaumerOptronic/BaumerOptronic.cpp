@@ -853,7 +853,8 @@ int BOImplementationThread::svc(void)
                   if (timerOut.expired(CurrentMMTimeMM())) 
                      break;
 
-                  Sleep(0);
+                  // Avoid hogging the CPU
+                  CDeviceUtils::SleepMs(5);
                }
 
 
@@ -880,7 +881,9 @@ int BOImplementationThread::svc(void)
             CameraState(Idle);
             break;
       }
-      CDeviceUtils::SleepMs(0);
+
+      // Avoid hogging the CPU
+      CDeviceUtils::SleepMs(5);
    }
 
    Command(Noop);
