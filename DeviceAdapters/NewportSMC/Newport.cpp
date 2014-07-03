@@ -169,6 +169,7 @@ bool NewportZStage::Busy()
 	string answer;
 	double setPos;
 	double curPos;
+	int ret;
 
 	// Ask for set point position
 	command = "\n1TH";
@@ -176,7 +177,9 @@ bool NewportZStage::Busy()
     CDeviceUtils::SleepMs(10);
 	SendSerialCommand(port_.c_str(), "\n", "\n");
     CDeviceUtils::SleepMs(10);
-	GetSerialAnswer(port_.c_str(), "\n", answer);
+	ret = GetSerialAnswer(port_.c_str(), "\n", answer);
+	if (ret != DEVICE_OK)
+		return false;
 	setPos = atof(answer.substr(3,15).c_str());
 
 	// Ask for current position
@@ -186,6 +189,8 @@ bool NewportZStage::Busy()
 	SendSerialCommand(port_.c_str(), "\n", "\n");
     CDeviceUtils::SleepMs(10);
 	GetSerialAnswer(port_.c_str(), "\n", answer);
+	if (ret != DEVICE_OK)
+		return false;
 	curPos = atof(answer.substr(3,15).c_str());
 
 	// Still moving if the positions are not equal
