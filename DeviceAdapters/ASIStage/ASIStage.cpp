@@ -386,14 +386,18 @@ int XYStage::Initialize()
    CPropertyAction* pAct = new CPropertyAction (this, &XYStage::OnVersion);
    CreateProperty("Version", "", MM::String, true, pAct);
 
-   pAct = new CPropertyAction (this, &XYStage::OnCompileDate);
-   CreateProperty("CompileDate", "", MM::String, true, pAct);
-   UpdateProperty("CompileDate");
-
    // check status first (test for communication protocol)
    int ret = CheckDeviceStatus();
    if (ret != DEVICE_OK)
       return ret;
+
+   pAct = new CPropertyAction (this, &XYStage::OnCompileDate);
+   CreateProperty("CompileDate", "", MM::String, true, pAct);
+   UpdateProperty("CompileDate");
+
+   pAct = new CPropertyAction (this, &XYStage::OnBuildName);
+   CreateProperty("BuildName", "", MM::String, true, pAct);
+   UpdateProperty("BuildName");
 
    // Most ASIStages have the origin in the top right corner, the following reverses direction of the X-axis:
    ret = SetAxisDirection();
@@ -926,7 +930,7 @@ int XYStage::OnVersion(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
-// Get the version of this controller
+// Get the compile date of this controller
 int XYStage::OnCompileDate(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)
@@ -945,7 +949,28 @@ int XYStage::OnCompileDate(MM::PropertyBase* pProp, MM::ActionType eAct)
       pProp->Set(answer.c_str());
 
    }
+   return DEVICE_OK;
+}
 
+// Get the build name of this controller
+int XYStage::OnBuildName(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      if (initialized_)
+         return DEVICE_OK;
+
+      ostringstream command;
+      command << "BU";
+      string answer;
+      // query the device
+      int ret = QueryCommand(command.str().c_str(), answer);
+      if (ret != DEVICE_OK)
+         return ret;
+
+      pProp->Set(answer.c_str());
+
+   }
    return DEVICE_OK;
 }
 
