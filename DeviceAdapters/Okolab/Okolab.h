@@ -61,6 +61,7 @@ class OkolabDevice
 
 	int IsDeviceConnected(int product_id); 
     int IsDeviceWorking(int product_id);
+	int UnconnectDevice();
 
 	int GetCommPort(char *strcommport);
     int SetCommPort(int port);

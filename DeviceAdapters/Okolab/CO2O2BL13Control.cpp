@@ -154,6 +154,7 @@ int CO2O2BL13Control::Shutdown()
   {
    RefreshThread_Stop();
    delete(rthread_);
+   UnconnectDevice();
   }
  initialized_=false;
  return DEVICE_OK;

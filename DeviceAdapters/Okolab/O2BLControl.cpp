@@ -133,6 +133,7 @@ int O2BLControl::Shutdown()
   {
    RefreshThread_Stop();
    delete(rthread_);
+   UnconnectDevice();
   }
  initialized_=false;
  return DEVICE_OK;

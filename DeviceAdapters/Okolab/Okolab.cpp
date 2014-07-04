@@ -35,7 +35,7 @@
 /* Total receive timeout is (RCV_RETRIES * RCV_SLEEP_TIME_MS)
  * To increase the timeout, increase retries number.
  */
-#define RCV_RETRIES			100
+#define RCV_RETRIES			200
 #define RCV_SLEEP_TIME_MS	50
 
 #ifdef WIN32
@@ -191,6 +191,7 @@ OkolabDevice::OkolabDevice() :
 
 OkolabDevice::~OkolabDevice()
 {
+ OCSStop();
  OCSConnectionClose();
 }
 
@@ -480,10 +481,9 @@ int OkolabDevice::TryConnectDevice(int iport)
  sprintf(param[1],"%d",device_id);
 
  if(iport<0) return -1;
- // disconnect first 
- if(!OCSConnectionOpen(ipport_,ipaddress_)) return -1;
- if(!OCSSendRcvdCommand("connect",param[0],"0","")) return -1; 
- OCSConnectionClose();
+ 
+ // disconnect first to be sure
+ UnconnectDevice();
 
  sprintf(strPort,"%d",iport);
  if(!OCSConnectionOpen(ipport_,ipaddress_)) return -1;
@@ -502,6 +502,22 @@ int OkolabDevice::TryConnectDevice(int iport)
 }
 
 
+/**
+*  Unconnect the device 
+*  @return int  1 if successful unconnected
+*/
+int OkolabDevice::UnconnectDevice()
+{
+ char prod_id_str[10];
+ sprintf(prod_id_str,"%d",product_id);
+
+	 // disconnect first 
+ if(!OCSConnectionOpen(ipport_,ipaddress_)) return -1;
+ if(!OCSSendRcvdCommand("connect",prod_id_str,"0","")) return -1; 
+ OCSConnectionClose();
+	
+ return 1;
+}
 
 /**
 *  Detect device status (connection status)
@@ -633,19 +649,21 @@ void OkolabDevice::OCSStart()
 
  char value[400]; 
  WideCharToMultiByte(CP_ACP,0,wvalue,255,value,400,NULL,NULL);
-// snprintf(cmdline,500,"\"%s\\OKOlab\\OKO-Control Server\\OKO-Control Server.exe\"",value);
  snprintf(cmdline,500,"\"%s\\OKO-Control Server.exe\"",value);
 
-/*
-FILE *fp;
-fp=fopen("registry_log.txt","a");
-fprintf(fp,"cmdline=%s\n",cmdline);
-fclose(fp);
-*/
 
  if(OCSRunning()) return;
  TCHAR path[500];
  MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, cmdline, -1, path, 500);
+
+
+ WideCharToMultiByte(CP_ACP,0,wvalue,255,value,400,NULL,NULL);
+
+// snprintf(cmdline,500,"\"%sautoconnect=n\"",value);
+  snprintf(cmdline,500,"%sdebug=y",value);
+
+ TCHAR params[500];
+  MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, cmdline, -1, params, 500);
 
  SHELLEXECUTEINFO ShExecInfo;
  ShExecInfo.cbSize = sizeof(SHELLEXECUTEINFO);
@@ -671,7 +689,7 @@ int OkolabDevice::OCSStop()
 {
  if(!OCSRunning()) return -1;
  if(!OCSConnectionOpen(ipport_,ipaddress_)) return -2;
- if(!OCSSendRcvdCommand("close", "", "", "")) return -3;
+ //if(!OCSSendRcvdCommand("close", "", "", "")) return -3;
  OCSConnectionClose();
  if(rcv_statuscode!=0) return -4;
  return 1;
