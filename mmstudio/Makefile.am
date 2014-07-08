@@ -6,6 +6,7 @@ MMJ_.jar: $(shell find $(srcdir)/src -name '*.java') \
 	$(srcdir)/src/org/micromanager/license.txt \
 	$(srcdir)/src/org/micromanager/conf2/*.html \
 	$(srcdir)/src/org/micromanager/icons/*.png \
+	$(srcdir)/src/org/micromanager/scriptpanel/*.bsh \
 	$(srcdir)/bin/plugins_mmstudio.config
 	rm -rf build
 	$(MKDIR_P) build
@@ -13,6 +14,8 @@ MMJ_.jar: $(shell find $(srcdir)/src -name '*.java') \
 	$(JAVAC) $(JAVACFLAGS) -sourcepath ../MMCoreJ_wrap:$(srcdir)/src:. -classpath $(IJJARPATH):$(BSHJARPATH):$(SWINGXJARPATH):$(COMMONSMATHJARPATH):$(SWINGLAYOUTJARPATH):$(CLASSEXT)/*:. $(srcdir)/src/*.java $(srcdir)/src/org/micromanager/acquisition/*.java $(srcdir)/src/org/micromanager/utils/*.java $(srcdir)/src/org/micromanager/api/*.java $(srcdir)/src/org/micromanager/conf2/*.java -d build
 	cp -rf $(srcdir)/src/org/micromanager/icons build/org/micromanager
 	cp -rf $(srcdir)/src/org/micromanager/conf2/*html build/org/micromanager/conf2
+	$(MKDIR_P) build/org/micromanager/scriptpanel
+	cp -rf $(srcdir)/src/org/micromanager/scriptpanel/*.bsh build/org/micromanager/scriptpanel
 	cd build && $(JAR) cf ../MMJ_.jar *
 
 

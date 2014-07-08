@@ -1,0 +1,266 @@
+// BeanShell startup script for Micro-Manager.
+// This script runs when the beanshell interpreter is started in the Scripting Panel
+// Arthur Edelstein, UCSF, 2009
+
+
+class dummyClassToForceBeanshellToUseAHashtableInItsNamespaceMethodsList {;} 
+
+setAccessibility(true);
+
+clear(String objName) {
+	ns = this.caller.namespace;
+	if (ns.variables.containsKey(objName))
+		ns.variables.remove(objName);
+	if (ns.methods.containsKey(objName))
+		ns.methods.remove(objName);
+}
+
+// The global update() method removes old cached method definitions.
+
+void update() {
+	// Use the caller's namespace:
+	update(this.caller.namespace);	
+}
+
+void update(bsh.NameSpace ns) {
+	// Go through all methods in the namespace:
+	for (meth:ns.methods.keys())
+		update(meth.toString(),ns);
+}
+
+void update(String x) {
+	// Use the caller's namespace:
+	update(x,this.caller.namespace);
+}
+
+void update(String x, bsh.NameSpace ns) {
+	methIncarnations = ns.methods.get(x);
+
+	// We only need to look at vectors of multiple method definitions.
+	// Sometimes there is a single definition stored as a bsh.BshMethod, rather than a Vector.
+	if (methIncarnations instanceof Vector) {
+		// Make a vector of method strings, e.g., "computeSquare( float )"
+		methodStrings = new Vector();
+		// Go through all versions of this method and add its method string to our vector
+		for (methIncarnation : methIncarnations)
+			methodStrings.add(methIncarnation.toString());
+	
+		// Now delete duplicate methods with the same method string (i.e., the same signature):
+		int ndeleted = 0;
+		for (int i=0;i<methodStrings.size();i++) {
+			// If we aren't looking at the last (most recent) version of the method:
+			if (i != methodStrings.lastIndexOf(methodStrings.get(i))) {
+				// Delete the method:
+				methIncarnations.remove(i-ndeleted);
+				ndeleted++; // Adjust index for deletion
+			}
+		}
+	}
+}
+
+
+////
+//// Load Documentation
+////
+
+import bsh.ClassIdentifier;
+import ij.plugin.BrowserLauncher;
+
+
+
+getClassName(bsh.ClassIdentifier o) {
+	return getClassName(o,this.caller.namespace);
+}
+
+getClassName(Object o) {
+	return getClassName(o,this.caller.namespace);
+}
+
+getClassName(bsh.ClassIdentifier o, namespace) {
+	return namespace.identifierToClass(o).getName();
+}
+
+getClassName(Object o, namespace) {
+	if (o instanceof String)
+		return namespace.getClass((String) o).getName();
+	else if (o instanceof Class)
+		return o.getName();
+	else
+		return o.getClass().getName();
+}
+
+doc(bsh.ClassIdentifier o) {
+	className = getClassName(o,this.caller.namespace);
+	doc_className(className);
+}
+
+doc(Object o) {
+	className = getClassName(o,this.caller.namespace);
+	doc_className(className);
+}
+
+doc_className(String className) {
+	print(className);
+	String [] sunAPIpkgs = {"java","javax","org.ietf","org.omg","org.w3c","org.xml"};
+
+	boolean sunAPI = false;
+	boolean ijAPI = false;
+	for (sunAPIpkg : sunAPIpkgs) {
+		sunAPI = sunAPI || className.startsWith(sunAPIpkg + ".");
+		}
+	
+	suffix = className.replace(".","/") + ".html";
+
+	theUrl = null;
+	if (sunAPI)	
+		theUrl = "http://java.sun.com/javase/6/docs/api/" + suffix;
+	if (className.startsWith("ij.")) // ImageJ API
+		theUrl = "http://rsb.info.nih.gov/ij/developer/api/" + suffix;
+	if (className.startsWith("bsh.")) // Beanshell API
+		theUrl = "http://odelacot.homelinux.org/doc/bsh-doc/api/" + suffix;
+	if (className.startsWith("org.micromanager")) // Micro-Manager API
+		theUrl = "http://micro-manager.org/content/doc/mmstudio/" + suffix;
+	if (className.startsWith("mmcorej.CMMCore"))
+		theUrl = "http://micro-manager.org/content/doc/CMMCore.html";
+	if (className.startsWith("org.jdesktop.swingx"))
+		theUrl = "http://download.java.net/javadesktop/swinglabs/releases/0.8/docs/api/index.html?" + suffix;
+
+	if (theUrl!=null)
+		BrowserLauncher.openURL(theUrl);
+	else
+		print("No docs found.");
+}
+
+update();
+
+
+////
+//// Beanshell object inspector for Micro-Manager
+////
+
+import javax.swing.table.JTable;
+import javax.swing.table.DefaultTableModel;
+import org.jdesktop.swingx.*;
+import org.jdesktop.swingx.decorator.*;
+
+
+MemberViewer () {
+	String [] fieldColNames = {"Name","Value","Type","Declared in"};
+	String [] methodColNames = {"Name","Return type","Parameter types","Declared in"};
+	Vector fieldColNamesVec;
+	Vector methodColNamesVec;
+	Object theObject;
+
+	MembersTab (String name, JTabbedPane tabbedPane) { 
+		JPanel panel;
+		JXTable table;
+		DefaultTableModel tableModel;
+		JScrollPane scrollPane;
+	
+		table = new JXTable();
+		//table = new JTable();
+		tableModel = new DefaultTableModel();
+		table.setModel(tableModel);
+		scrollPane = new JScrollPane(table);
+		tabbedPane.addTab(name,scrollPane);
+		return this;
+	}
+
+
+	void inspect(obj) {
+		theObject = obj;
+		fieldsData = getFieldsData();
+		methodsData = getMethodsData();
+
+		fieldsTab.tableModel.setDataVector(fieldsData,fieldColNamesVec);
+		methodsTab.tableModel.setDataVector(methodsData,methodColNamesVec);
+		theFrame.show();
+		
+	}
+
+	Vector arrayToVector(Object [] ObjectArray) {
+		theVec = new Vector();
+		for (item : ObjectArray) {
+			theVec.add(item);
+		}
+		return theVec;
+	}
+
+	Vector getFieldsData() {
+		rows = new Vector();
+		row = new Vector();
+		
+		curClass = theObject.Class;
+		while (curClass != null) {
+			fields = curClass.DeclaredFields;
+			for (field : fields) {
+				row = new Vector();
+				row.add(field.name);
+				val = eval("theObject."+field.Name);
+				if (val!=null)
+					row.add(val.toString());
+				else
+					row.add("null");
+
+				row.add(field.type);
+				row.add(curClass.Name);
+				rows.add(row);
+			}
+			curClass = curClass.Superclass;
+		}
+	return rows;
+	}
+
+	Vector getMethodsData() {
+		rows = new Vector();
+		row = new Vector();
+		String parameterTypeList;
+
+		curClass = theObject.Class;
+		while (curClass != null) {
+			methods = curClass.DeclaredMethods;
+			for (method : methods) {
+				row = new Vector();
+				row.add(method.name);
+				row.add(method.returnType);
+				parameterTypeList = "";
+				for (parameterType : method.parameterTypes)
+					parameterTypeList = parameterTypeList + parameterType + ", ";
+				if (parameterTypeList.length()>0)
+					parameterTypeList = parameterTypeList.substring(0,parameterTypeList.length()-2);
+				row.add(parameterTypeList);
+				row.add(curClass.Name);
+				rows.add(row);
+			}
+			curClass = curClass.Superclass;
+		}
+		return rows;
+	}
+
+	setAccessibility(true);
+	searchBox = new JTextField(25);
+	theFrame = new JFrame();
+	theTabbedPane = new JTabbedPane();
+	methodsTab = MembersTab("Methods",theTabbedPane);
+	fieldsTab = MembersTab("Fields",theTabbedPane);
+	fieldColNamesVec = arrayToVector(fieldColNames);
+	methodColNamesVec = arrayToVector(methodColNames);
+	theFrame.add(theTabbedPane);
+	theFrame.pack();
+	theFrame.setBounds(100,100,800,500);
+
+
+	return this;
+}
+
+__mv = null;
+
+void inspect(obj) {
+	if (super.__mv == null) {
+		print("Please wait while inspector is generated...");
+		super.__mv = MemberViewer();
+		}
+	super.__mv.inspect(obj);
+}
+
+update();

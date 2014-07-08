@@ -39,7 +39,6 @@ echo "class path = $CLASSPATH" 1>&2
    -Dmmcorej.library.path="@wrappermoduledir@" \
    -Dorg.micromanager.plugin.path="@mmplugindir@" \
    -Dorg.micromanager.autofocus.path="@mmautofocusdir@" \
-   -Dorg.micromanager.beanshell.start.script="@mmscriptdir@/mm_beanshell_startup.bsh" \
    -Dorg.micromanager.default.config.file="@mmdatadir@/MMConfig_demo.cfg" \
    -Dorg.micromanager.corelog.dir=/tmp \
    org.micromanager.MMStudioMainFrame

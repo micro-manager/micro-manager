@@ -37,6 +37,9 @@
 		<copy todir="${int.pkgroot}/conf2">
 			<fileset dir="${src.pkgroot}/conf2" includes="*.html"/>
 		</copy>
+		<copy todir="${int.pkgroot}/scriptpanel">
+			<fileset dir="${src.pkgroot}/scriptpanel" includes="*.bsh"/>
+		</copy>
 		<copy tofile="${intdir}/plugins.config" file="bin/plugins_mmstudio.config"/>
 	</target>
 

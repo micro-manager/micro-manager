@@ -64,7 +64,6 @@ buildscripts/launchers/micromanager: $(srcdir)/buildscripts/launchers/micromanag
 		-e 's%@wrappermoduledir[@]%$(wrappermoduledir)%g' \
 		-e 's%@mmplugindir[@]%$(mmplugindir)%g' \
 		-e 's%@mmautofocusdir[@]%$(mmautofocusdir)%g' \
-		-e 's%@mmscriptdir[@]%$(mmscriptdir)%g' \
 		-e 's%@mmdatadir[@]%$(mmdatadir)%g' \
 		-e 's%@jardir[@]%$(jardir)%g' \
 		-e 's%@imagejjar[@]%$(imagejjar)%g' \

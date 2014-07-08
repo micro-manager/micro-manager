@@ -300,25 +300,42 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
       
       beanshellREPLint_ = new Interpreter(cons_);
 
+      File tmpFile = null;
       try {
-         String startupScript = System.getProperty("org.micromanager.beanshell.startup.script",
-               "scripts/mm_beanshell_startup.bsh");
-         if (new File(startupScript).exists()) {
-            beanshellREPLint_.source(startupScript);
+         java.io.InputStream input = getClass().
+            getResourceAsStream("/org/micromanager/scriptpanel/scriptpanel_startup.bsh");
+         if (input != null) {
+            tmpFile = File.createTempFile("mm_scriptpanel_startup", ".bsh");
+            java.io.OutputStream output = new java.io.FileOutputStream(tmpFile);
+            int read;
+            byte[] bytes = new byte[4096];
+            while ((read = input.read(bytes)) != -1) {
+               output.write(bytes, 0, read);
+            }
+            output.close();
+            tmpFile.deleteOnExit();
          }
-      } catch (FileNotFoundException e) {
-         ReportingUtils.showError(e);
       } catch (IOException e) {
-         ReportingUtils.showError(e);
-      } catch (EvalError e) {
-         ReportingUtils.showError(e);
+         ReportingUtils.showError("Failed to read Script Panel BeanShell startup script");
+      }
+
+      if (tmpFile != null) {
+         try {
+            beanshellREPLint_.source(tmpFile.getAbsolutePath());
+         } catch (FileNotFoundException e) {
+            ReportingUtils.showError(e);
+         } catch (IOException e) {
+            ReportingUtils.showError(e);
+         } catch (EvalError e) {
+            ReportingUtils.showError(e);
+         }
       }
       
       // This command allows variables to be inspected in the command-line
       // (e.g., typing "x;" causes the value of x to be returned):
       beanshellREPLint_.setShowResults(true);
 
-      new Thread(beanshellREPLint_, "Beanshell interpreter").start();
+      new Thread(beanshellREPLint_, "BeanShell interpreter").start();
    }
    
    public JConsole getREPLCons() {
