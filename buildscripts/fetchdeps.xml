@@ -1,0 +1,38 @@
+<project xmlns:ivy="antlib:org.apache.ivy.ant" name="mm.fetchdeps" default="resolve">
+	<dirname property="mm.basedir" file="${ant.file.mm.fetchdeps}/.."/>
+	<property name="ivy.dep.file" location="${mm.basedir}/ivy.xml"/>
+	<property name="ivy.lib.dir" location="${mm.basedir}/lib"/>
+
+	<target name="download-ivy" unless="offline">
+		<property name="ivy.install.version" value="2.3.0"/>
+		<mkdir dir="${mm.basedir}/dependencies/ivy"/>
+		<get src="http://repo2.maven.org/maven2/org/apache/ivy/ivy/${ivy.install.version}/ivy-${ivy.install.version}.jar"
+			dest="${mm.basedir}/dependencies/ivy"
+			usetimestamp="true"/>
+		<checksum file="${mm.basedir}/dependencies/ivy/ivy-${ivy.install.version}.jar"
+			algorithm="sha1" property="ivy.install.checksum"/>
+		<fail message="checksum verification failed for ivy-${ivy.install.version}.jar">
+			<condition>
+				<not>
+					<!-- SHA1 checksum for ivy-2.3.0.jar -->
+					<equals arg1="${ivy.install.checksum}"
+						arg2="c5ebf1c253ad4959a29f4acfe696ee48cdd9f473"
+						forcestring="yes" casesensitive="no"/>
+				</not>
+			</condition>
+		</fail>
+	</target>
+
+	<target name="init-ivy" depends="download-ivy">
+		<path id="ivy.lib.path">
+			<fileset dir="${mm.basedir}/dependencies/ivy" includes="*.jar"/>
+		</path>
+		<taskdef resource="org/apache/ivy/ant/antlib.xml"
+			uri="antlib:org.apache.ivy.ant"
+			classpathref="ivy.lib.path"/>
+	</target>
+
+	<target name="resolve" depends="init-ivy">
+		<ivy:retrieve />
+	</target>
+</project>

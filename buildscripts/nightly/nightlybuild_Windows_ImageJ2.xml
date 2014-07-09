@@ -1,0 +1,47 @@
+<project name="mm.nightly.windows" basedir="../..">
+	<!-- Import OS environment variables -->
+	<property environment="env"/>
+
+	<property name="mm.platform" value="Windows"/>
+	<property name="mm.configuration" value="Release"/>
+
+	<!-- Use the nightly-build-style version string -->
+	<property name="mm.build.mode" value="nightly"/>
+
+	<!-- Keep compiler command lines and other details -->
+	<property name="mm.build.msbuild.verbosity" value="normal"/>
+
+	<!-- Don't give up build if a device adapter or plugin is broken -->
+	<property name="mm.build.failonerror" value="false"/>
+
+	<!-- Default name for XML log file -->
+	<!-- Specify -listener org.apache.tools.ant.XmlLogger on the command
+	     line to enable. -->
+	<tstamp/>
+	<property name="XmlLogger.file" location="buildlog_${DSTAMP}T${TSTAMP}.xml"/>
+
+	<property name="mm.build.for.imagej2updater" value="true"/>
+	<property name="mm.installdir" location="stage/ImageJ2.app"/>
+
+	<!-- Fetch a clean copy of ImageJ2 -->
+	<mkdir dir="${mm.installdir}"/>
+	<get src="http://update.imagej.net/bootstrap.js" dest="${mm.installdir}"/>
+	<property name="jrunscript" location="${env.JAVA_HOME}/bin/jrunscript"/>
+	<exec executable="${jrunscript}" dir="${mm.installdir}">
+		<arg value="-Dskip.fiji=true"/>
+		<arg value="bootstrap.js"/>
+		<arg value="update-force-pristine"/>
+	</exec>
+
+	<!-- Build Win32 and x64 and stage in same directory -->
+
+	<ant antfile="build.xml" useNativeBaseDir="true">
+		<property name="mm.architecture" value="x64"/>
+		<target name="stage"/>
+	</ant>
+
+	<ant antfile="build.xml" useNativeBaseDir="true">
+		<property name="mm.architecture" value="Win32"/>
+		<target name="stage"/>
+	</ant>
+</project>

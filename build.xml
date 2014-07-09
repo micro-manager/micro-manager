@@ -1,6 +1,6 @@
 <!-- Build all components of Micro-Manager -->
 <!-- Run 'ant -p' for usage -->
-<project xmlns:ivy="antlib:org.apache.ivy.ant" name="mm" basedir="." default="build">
+<project name="mm" basedir="." default="build">
 	<include file="buildscripts/buildprops.xml"/>
 	<import file="buildscripts/version.xml"/>
 
@@ -11,7 +11,10 @@
 	<macrodef name="run-all-java-projects">
 		<attribute name="target"/>
 		<sequential>
-			<subant target="@{target}">
+			<subant target="@{target}" inheritall="true">
+				<property name="mm.java.installdir" value="${mm.java.installdir}"/>
+				<property name="mm.java.plugin.installdir" value="${mm.java.plugin.installdir}"/>
+				<property name="mm.java.autofocus.installdir" value="${mm.java.autofocus.installdir}"/>
 				<filelist dir="${mm.basedir}">
 					<!-- Note: Order matters -->
 					<file name="MMCoreJ_wrap/build.xml"/>
@@ -23,39 +26,6 @@
 			</subant>
 		</sequential>
 	</macrodef>
-
-	<target name="download-ivy" unless="offline">
-		<property name="ivy.install.version" value="2.3.0"/>
-		<mkdir dir="dependencies/ivy"/>
-		<get src="http://repo2.maven.org/maven2/org/apache/ivy/ivy/${ivy.install.version}/ivy-${ivy.install.version}.jar"
-			dest="dependencies/ivy"
-			usetimestamp="true"/>
-		<checksum file="dependencies/ivy/ivy-${ivy.install.version}.jar"
-			algorithm="sha1" property="ivy.install.checksum"/>
-		<fail message="checksum verification failed for ivy-${ivy.install.version}.jar">
-			<condition>
-				<not>
-					<!-- SHA1 checksum for ivy-2.3.0.jar -->
-					<equals arg1="${ivy.install.checksum}"
-						arg2="c5ebf1c253ad4959a29f4acfe696ee48cdd9f473"
-						forcestring="yes" casesensitive="no"/>
-				</not>
-			</condition>
-		</fail>
-	</target>
-
-	<target name="init-ivy" depends="download-ivy">
-		<path id="ivy.lib.path">
-			<fileset dir="dependencies/ivy" includes="*.jar"/>
-		</path>
-		<taskdef resource="org/apache/ivy/ant/antlib.xml"
-			uri="antlib:org.apache.ivy.ant"
-			classpathref="ivy.lib.path"/>
-	</target>
-
-	<target name="resolve" depends="init-ivy">
-		<ivy:retrieve />
-	</target>
 
 	<target name="build-buildtools">
 		<ant antfile="buildscripts/AntExtensions/build.xml" useNativeBasedir="true" target="jar"/>
@@ -77,7 +47,9 @@
 		<copy todir="${mm.dll.installdir}">
 			<fileset dir="${mm.cpp.outdir}" includes="mmgr_dal_*.dll"/>
 		</copy>
-		<ant antfile="DeviceAdapters/build.xml" useNativeBasedir="true" target="install"/>
+		<ant antfile="DeviceAdapters/build.xml" useNativeBasedir="true" target="install">
+			<property name="mm.dll.installdir" value="${mm.dll.installdir}"/>
+		</ant>
 	</target>
 
 	<target name="stage-only" description="Gather files to be installed (will NOT trigger build)">
@@ -99,14 +71,26 @@
 		</copy>
 
 		<!-- Files to distribute as is -->
-		<copy todir="${mm.installdir}">
-			<fileset dir="${mm.bindistdir}" includes="**"/>
-			<fileset dir="${mm.platform.bindistdir}" includes="**"/>
-			<fileset dir="${mm.common.bindistdir}" includes="**"/>
-		</copy>
+		<if>
+			<istrue value="${mm.build.for.imagej2updater}"/>
+			<then></then>
+			<else>
+				<copy todir="${mm.installdir}" failonerror="false">
+					<fileset dir="${mm.bindistdir}" includes="**"/>
+					<fileset dir="${mm.platform.bindistdir}" includes="**"/>
+					<fileset dir="${mm.common.bindistdir}" includes="**"/>
+				</copy>
+			</else>
+		</if>
 
 		<!-- XXX Remaining files to copy; should put elsewhere -->
-		<copy todir="${mm.installdir}" file="${mm.thirdpartypublic}/JavaLauncher/ImageJ.exe"/>
+		<if>
+			<istrue value="${mm.build.for.imagej2updater}"/>
+			<then></then>
+			<else>
+				<copy todir="${mm.installdir}" file="${mm.thirdpartypublic}/JavaLauncher/ImageJ.exe"/>
+			</else>
+		</if>
 		<copy todir="${mm.installdir}" file="${mm.java.lib.imagej}"/>
 		<copy todir="${mm.java.installdir}">
 			<!-- XXX Should limit to the Jars that are actually
@@ -114,15 +98,27 @@
 			<fileset dir="${mm.java.libs}" includes="*.jar" excludes="ij.jar"/>
 		</copy>
 
-		<mkdir dir="${mm.scripts.installdir}"/>
-		<copy todir="${mm.scripts.installdir}">
-			<fileset dir="${mm.scripts.srcdir}" includes="*.bsh"/>
-		</copy>
+		<if>
+			<istrue value="${mm.build.for.imagej2updater}"/>
+			<then></then>
+			<else>
+				<mkdir dir="${mm.scripts.installdir}"/>
+				<copy todir="${mm.scripts.installdir}">
+					<fileset dir="${mm.scripts.srcdir}" includes="*.bsh"/>
+				</copy>
+			</else>
+		</if>
 
 		<!-- Java runtime -->
-		<copy todir="${mm.installdir}/jre">
-			<fileset dir="${mm.java.runtime}"/>
-		</copy>
+		<if>
+			<istrue value="${mm.build.for.imagej2updater}"/>
+			<then></then>
+			<else>
+				<copy todir="${mm.installdir}/jre" failonerror="false">
+					<fileset dir="${mm.java.runtime}"/>
+				</copy>
+			</else>
+		</if>
 	</target>
 
 	<target name="stage" depends="build-buildtools,set-version,build-cpp,build-java,stage-only"

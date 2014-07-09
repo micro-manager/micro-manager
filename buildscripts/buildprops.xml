@@ -1,4 +1,21 @@
 <project name="mm.props">
+	<!-- Path of repository root, from the project basedir -->
+	<dirname property="mm.basedir" file="${ant.file.mm.props}/.."/>
+
+	<!-- Extra tasks from ant-contrib -->
+	<condition property="mm.build.ant-contrib-available">
+		<resourceexists>
+			<file file="${mm.basedir}/lib/ant-contrib-1.0b3.jar"/>
+		</resourceexists>
+	</condition>
+	<fail unless="mm.build.ant-contrib-available"
+		message="Please run 'ant -f buildscripts/fetchdeps.xml' first"/>
+	<taskdef resource="net/sf/antcontrib/antcontrib.properties">
+		<classpath>
+			<pathelement location="${mm.basedir}/lib/ant-contrib-1.0b3.jar"/>
+		</classpath>
+	</taskdef>
+
 	<!-- Global definitions for building Micro-Manager -->
 
 	<!-- This file should contain property, reference, and macro
@@ -17,8 +34,8 @@
 	<!-- Verbosity setting for MSBuild (VC++); e.g. minimal or normal -->
 	<property name="mm.build.msbuild.verbosity" value="minimal"/>
 
-	<!-- Path of repository root, from the project basedir -->
-	<dirname property="mm.basedir" file="${ant.file.mm.props}/.."/>
+	<!-- Whether to use Fiji-compatible directory structure -->
+	<property name="mm.build.for.imagej2updater" value="false"/>
 
 	<!-- Logging (override with e.g. build id) -->
 	<property name="mm.build.logsuffix" value=""/>
@@ -36,6 +53,9 @@
 			<equals arg1="${mm.architecture}" arg2="x86_64"/> <!-- OS X, Linux -->
 		</or>
 	</condition>
+
+	<!-- XXX Only Windows implemented -->
+	<property name="mm.imagej2.architecture" value="win${mm.architecture.bits}"/>
 
 	<!-- The JVM architecture on which the build is running -->
 	<condition property="mm.build.architecture" value="x64" else="Win32">
@@ -71,7 +91,15 @@
 	<!-- C++ components -->
 	<property name="mm.cpp.intdir" location="${mm.intdir}/${mm.configuration}/${mm.architecture}"/>
 	<property name="mm.cpp.outdir" location="${mm.outdir}/${mm.configuration}/${mm.architecture}"/>
-	<property name="mm.dll.installdir" location="${mm.installdir}"/>
+	<if>
+		<istrue value="${mm.build.for.imagej2updater}"/>
+		<then>
+			<property name="mm.dll.installdir" location="${mm.installdir}/mm/${mm.imagej2.architecture}"/>
+		</then>
+		<else>
+			<property name="mm.dll.installdir" location="${mm.installdir}"/>
+		</else>
+	</if>
 
 	<!-- C++ DLLs matching the build system architecture -->
 	<property name="mm.build.cpp.outdir" location="${mm.outdir}/${mm.configuration}/${mm.build.architecture}"/>
