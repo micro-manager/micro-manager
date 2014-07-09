@@ -1,6 +1,6 @@
 <project xmlns:ivy="antlib:org.apache.ivy.ant" name="mm.fetchdeps" default="resolve">
 	<dirname property="mm.basedir" file="${ant.file.mm.fetchdeps}/.."/>
-	<property name="ivy.dep.file" location="${mm.basedir}/ivy.xml"/>
+	<property name="ivy.dep.file" location="${mm.basedir}/buildscripts/ivy.xml"/>
 	<property name="ivy.lib.dir" location="${mm.basedir}/lib"/>
 
 	<target name="download-ivy" unless="offline">
