@@ -1,6 +1,6 @@
 <!-- Build all components of Micro-Manager -->
 <!-- Run 'ant -p' for usage -->
-<project name="mm" basedir="." default="build">
+<project xmlns:ivy="antlib:org.apache.ivy.ant" name="mm" basedir="." default="build">
 	<include file="buildscripts/buildprops.xml"/>
 	<import file="buildscripts/version.xml"/>
 
@@ -23,6 +23,39 @@
 			</subant>
 		</sequential>
 	</macrodef>
+
+	<target name="download-ivy" unless="offline">
+		<property name="ivy.install.version" value="2.3.0"/>
+		<mkdir dir="dependencies/ivy"/>
+		<get src="http://repo2.maven.org/maven2/org/apache/ivy/ivy/${ivy.install.version}/ivy-${ivy.install.version}.jar"
+			dest="dependencies/ivy"
+			usetimestamp="true"/>
+		<checksum file="dependencies/ivy/ivy-${ivy.install.version}.jar"
+			algorithm="sha1" property="ivy.install.checksum"/>
+		<fail message="checksum verification failed for ivy-${ivy.install.version}.jar">
+			<condition>
+				<not>
+					<!-- SHA1 checksum for ivy-2.3.0.jar -->
+					<equals arg1="${ivy.install.checksum}"
+						arg2="c5ebf1c253ad4959a29f4acfe696ee48cdd9f473"
+						forcestring="yes" casesensitive="no"/>
+				</not>
+			</condition>
+		</fail>
+	</target>
+
+	<target name="init-ivy" depends="download-ivy">
+		<path id="ivy.lib.path">
+			<fileset dir="dependencies/ivy" includes="*.jar"/>
+		</path>
+		<taskdef resource="org/apache/ivy/ant/antlib.xml"
+			uri="antlib:org.apache.ivy.ant"
+			classpathref="ivy.lib.path"/>
+	</target>
+
+	<target name="resolve" depends="init-ivy">
+		<ivy:retrieve />
+	</target>
 
 	<target name="build-buildtools">
 		<ant antfile="buildscripts/AntExtensions/build.xml" useNativeBasedir="true" target="jar"/>
