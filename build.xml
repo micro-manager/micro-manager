@@ -49,6 +49,7 @@
 		</copy>
 		<ant antfile="DeviceAdapters/build.xml" useNativeBasedir="true" target="install">
 			<property name="mm.dll.installdir" value="${mm.dll.installdir}"/>
+			<property name="mm.dll.helper.installdir" value="${mm.dll.helper.installdir}"/>
 		</ant>
 	</target>
 

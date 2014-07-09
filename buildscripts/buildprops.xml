@@ -100,6 +100,7 @@
 			<property name="mm.dll.installdir" location="${mm.installdir}"/>
 		</else>
 	</if>
+	<property name="mm.dll.helper.installdir" location="${mm.dll.installdir}"/>
 
 	<!-- C++ DLLs matching the build system architecture -->
 	<property name="mm.build.cpp.outdir" location="${mm.outdir}/${mm.configuration}/${mm.build.architecture}"/>
