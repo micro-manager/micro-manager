@@ -358,9 +358,9 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
          long originalExposure = dev_.getExposure();
          dev_.setExposure(500000);
          displaySpot(projectionPoint.x, projectionPoint.y);
-         Thread.sleep(300);
-         dev_.setExposure(originalExposure);
          core_.snapImage();
+         Thread.sleep(500);
+         dev_.setExposure(originalExposure);
          TaggedImage taggedImage2 = core_.getTaggedImage();
          ImageProcessor proc2 = ImageUtils.makeMonochromeProcessor(taggedImage2);
          app_.displayImage(taggedImage2);
@@ -414,7 +414,11 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
       if (stopRequested_.get()) {
          return null;
       }
-      return MathFunctions.generateAffineTransformFromPointPairs(spotMap);
+      try {
+         return MathFunctions.generateAffineTransformFromPointPairs(spotMap, s, Double.MAX_VALUE);
+      } catch (Exception e) {
+         throw new RuntimeException("Spots aren't detected as expected. Is DMD in focus and roughly centered in camera's field of view?");
+      }
    }
 
    // Generate a nonlinear calibration mapping for the current device settings.
@@ -1707,13 +1711,17 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
    }// </editor-fold>//GEN-END:initComponents
 
     private void calibrateButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_calibrateButton_ActionPerformed
-       boolean running = isCalibrating();
-       if (running) {
-           stopCalibration();
-           calibrateButton_.setText("Calibrate");
-       } else {
-           runCalibration();
-           calibrateButton_.setText("Stop calibration");
+       try {
+          boolean running = isCalibrating();
+          if (running) {
+             stopCalibration();
+             calibrateButton_.setText("Calibrate");
+          } else {
+             runCalibration();
+             calibrateButton_.setText("Stop calibration");
+          }
+       } catch (Exception e) {
+          ReportingUtils.showError(e);
        }
     }//GEN-LAST:event_calibrateButton_ActionPerformed
 
