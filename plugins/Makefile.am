@@ -31,7 +31,7 @@ Device_Control/ASIdiSPIM.jar: \
 	$(srcdir)/ASIdiSPIM/src/org/micromanager/asidispim/Utils/*.java
 	rm -rf build/ASIdiSPIM
 	$(MKDIR_P) build/ASIdiSPIM
-	$(JAVAC) $(JAVACFLAGS) -classpath $(IJJARPATH):$(BSHJARPATH):$(COMMONSMATHJARPATH):$(SWINGLAYOUTJARPATH):$(JFREECHARTJARPATH):$(CLASSEXT)/miglayout-4.0-swing.jar:../mmstudio/MMJ_.jar:. $(srcdir)/ASIdiSPIM/src/org/micromanager/asidispim/*.java $(srcdir)/ASIdiSPIM/src/org/micromanager/asidispim/Utils/*.java $(srcdir)/ASIdiSPIM/src/org/micromanager/asidispim/Data/*.java -d build/ASIdiSPIM
+	$(JAVAC) $(JAVACFLAGS) -classpath $(IJJARPATH):$(BSHJARPATH):$(COMMONSMATHJARPATH):$(JFREECHARTJARPATH):$(CLASSEXT)/miglayout-4.0-swing.jar:../mmstudio/MMJ_.jar:. $(srcdir)/ASIdiSPIM/src/org/micromanager/asidispim/*.java $(srcdir)/ASIdiSPIM/src/org/micromanager/asidispim/Utils/*.java $(srcdir)/ASIdiSPIM/src/org/micromanager/asidispim/Data/*.java -d build/ASIdiSPIM
 	cp -r $(srcdir)/ASIdiSPIM/src/org/micromanager/asidispim/icons build/ASIdiSPIM/org/micromanager/asidispim
 	$(MKDIR_P) Device_Control
 	cd build/ASIdiSPIM && $(JAR) cf ../../Device_Control/ASIdiSPIM.jar *
@@ -40,7 +40,7 @@ Acquisition_Tools/IntelligentAcquisition.jar: \
 	$(srcdir)/IntelligentAcquisition/src/org/micromanager/intelligentacquisition/*.java
 	rm -rf build/IntelligentAcquisition
 	$(MKDIR_P) build/IntelligentAcquisition
-	$(JAVAC) $(JAVACFLAGS) -classpath $(IJJARPATH):$(BSHJARPATH):$(COMMONSMATHJARPATH):$(SWINGLAYOUTJARPATH):$(JFREECHARTJARPATH):../mmstudio/MMJ_.jar:. $(srcdir)/IntelligentAcquisition/src/org/micromanager/intelligentacquisition/*.java -d build/IntelligentAcquisition
+	$(JAVAC) $(JAVACFLAGS) -classpath $(IJJARPATH):$(BSHJARPATH):$(COMMONSMATHJARPATH):$(JFREECHARTJARPATH):../mmstudio/MMJ_.jar:. $(srcdir)/IntelligentAcquisition/src/org/micromanager/intelligentacquisition/*.java -d build/IntelligentAcquisition
 	$(MKDIR_P) Acquisition_Tools
 	cd build/IntelligentAcquisition && $(JAR) cf ../../Acquisition_Tools/IntelligentAcquisition.jar *
 
@@ -60,7 +60,7 @@ Beta/PixelCalibrator.jar: \
 	$(srcdir)/PixelCalibrator/src/org/micromanager/pixelcalibrator/PixelCalibratorDialog.form
 	rm -rf build/PixelCalibrator
 	$(MKDIR_P) build/PixelCalibrator
-	$(JAVAC) $(JAVACFLAGS) -classpath $(IJJARPATH):$(BSHJARPATH):$(COMMONSMATHJARPATH):$(SWINGLAYOUTJARPATH):../mmstudio/MMJ_.jar:. $(srcdir)/PixelCalibrator/src/org/micromanager/pixelcalibrator/*.java -d build/PixelCalibrator
+	$(JAVAC) $(JAVACFLAGS) -classpath $(IJJARPATH):$(BSHJARPATH):$(COMMONSMATHJARPATH):../mmstudio/MMJ_.jar:. $(srcdir)/PixelCalibrator/src/org/micromanager/pixelcalibrator/*.java -d build/PixelCalibrator
 	$(MKDIR_P) Beta
 	cd build/PixelCalibrator && $(JAR) cf ../../Beta/PixelCalibrator.jar *
 
@@ -69,7 +69,7 @@ Device_Control/Projector.jar: \
 	$(srcdir)/Projector/src/org/micromanager/projector/*.form
 	rm -rf build/Projector
 	$(MKDIR_P) build/Projector
-	$(JAVAC) $(JAVACFLAGS) -classpath $(IJJARPATH):$(BSHJARPATH):$(COMMONSMATHJARPATH):$(SWINGLAYOUTJARPATH):../mmstudio/MMJ_.jar:. $(srcdir)/Projector/src/org/micromanager/projector/*.java -d build/Projector
+	$(JAVAC) $(JAVACFLAGS) -classpath $(IJJARPATH):$(BSHJARPATH):$(COMMONSMATHJARPATH):../mmstudio/MMJ_.jar:. $(srcdir)/Projector/src/org/micromanager/projector/*.java -d build/Projector
 	$(MKDIR_P) Device_Control
 	cd build/Projector && $(JAR) cf ../../Device_Control/Projector.jar *
 
@@ -79,7 +79,7 @@ Acquisition_Tools/SlideExplorer.jar: \
 	$(srcdir)/SlideExplorer/src/org/micromanager/slideexplorer/*.form
 	rm -rf build/SlideExplorer
 	$(MKDIR_P) build/SlideExplorer
-	$(JAVAC) $(JAVACFLAGS) -classpath Beta/PixelCalibrator.jar:$(IJJARPATH):$(BSHJARPATH):$(COMMONSMATHJARPATH):$(SWINGLAYOUTJARPATH):../mmstudio/MMJ_.jar:. $(srcdir)/SlideExplorer/src/org/micromanager/slideexplorer/*.java -d build/SlideExplorer
+	$(JAVAC) $(JAVACFLAGS) -classpath Beta/PixelCalibrator.jar:$(IJJARPATH):$(BSHJARPATH):$(COMMONSMATHJARPATH):../mmstudio/MMJ_.jar:. $(srcdir)/SlideExplorer/src/org/micromanager/slideexplorer/*.java -d build/SlideExplorer
 	$(MKDIR_P) Acquisition_Tools
 	cd build/SlideExplorer && $(JAR) cf ../../Acquisition_Tools/SlideExplorer.jar *
 
@@ -87,14 +87,14 @@ RecallPlugin.jar: \
 	$(srcdir)/Recall/src/org/micromanager/recall/*.java
 	rm -rf build/RecallPlugin
 	$(MKDIR_P) build/RecallPlugin
-	$(JAVAC) $(JAVACFLAGS) -classpath $(IJJARPATH):$(BSHJARPATH):$(COMMONSMATHJARPATH):$(SWINGLAYOUTJARPATH):../mmstudio/MMJ_.jar:. $(srcdir)/Recall/src/org/micromanager/recall/*.java -d build/RecallPlugin
+	$(JAVAC) $(JAVACFLAGS) -classpath $(IJJARPATH):$(BSHJARPATH):$(COMMONSMATHJARPATH):../mmstudio/MMJ_.jar:. $(srcdir)/Recall/src/org/micromanager/recall/*.java -d build/RecallPlugin
 	cd build/RecallPlugin && $(JAR) cf ../../RecallPlugin.jar *
 
 Device_Control/StageControl.jar: \
 	$(srcdir)/StageControl/src/org/micromanager/stagecontrol/*.java
 	rm -rf build/StageControl
 	$(MKDIR_P) build/StageControl
-	$(JAVAC) $(JAVACFLAGS) -classpath $(IJJARPATH):$(BSHJARPATH):$(COMMONSMATHJARPATH):$(SWINGLAYOUTJARPATH):../mmstudio/MMJ_.jar:. $(srcdir)/StageControl/src/org/micromanager/stagecontrol/*.java -d build/StageControl
+	$(JAVAC) $(JAVACFLAGS) -classpath $(IJJARPATH):$(BSHJARPATH):$(COMMONSMATHJARPATH):../mmstudio/MMJ_.jar:. $(srcdir)/StageControl/src/org/micromanager/stagecontrol/*.java -d build/StageControl
 	cp -r $(srcdir)/StageControl/src/org/micromanager/stagecontrol/icons build/StageControl/org/micromanager/stagecontrol
 	$(MKDIR_P) Device_Control
 	cd build/StageControl && $(JAR) cf ../../Device_Control/StageControl.jar *
@@ -103,7 +103,7 @@ Device_Control/MultiCamera.jar: \
 	$(srcdir)/MultiCamera/src/org/micromanager/multicamera/*.java
 	rm -rf build/MultiCamera
 	$(MKDIR_P) build/MultiCamera
-	$(JAVAC) $(JAVACFLAGS) -classpath $(IJJARPATH):$(BSHJARPATH):$(COMMONSMATHJARPATH):$(SWINGLAYOUTJARPATH):../mmstudio/MMJ_.jar:. $(srcdir)/MultiCamera/src/org/micromanager/multicamera/*.java -d build/MultiCamera
+	$(JAVAC) $(JAVACFLAGS) -classpath $(IJJARPATH):$(BSHJARPATH):$(COMMONSMATHJARPATH):../mmstudio/MMJ_.jar:. $(srcdir)/MultiCamera/src/org/micromanager/multicamera/*.java -d build/MultiCamera
 	$(MKDIR_P) Device_Control
 	cd build/MultiCamera && $(JAR) cf ../../Device_Control/MultiCamera.jar *
 
@@ -111,7 +111,7 @@ Image_Processing/SplitView.jar: \
 	$(srcdir)/SplitView/src/org/micromanager/splitview/*.java
 	rm -rf build/SplitView
 	$(MKDIR_P) build/SplitView
-	$(JAVAC) $(JAVACFLAGS) -classpath $(srcdir)/SplitView.jar:$(IJJARPATH):$(BSHJARPATH):$(COMMONSMATHJARPATH):$(SWINGLAYOUTJARPATH):../mmstudio/MMJ_.jar:. $(srcdir)/SplitView/src/org/micromanager/splitview/*.java -d build/SplitView
+	$(JAVAC) $(JAVACFLAGS) -classpath $(srcdir)/SplitView.jar:$(IJJARPATH):$(BSHJARPATH):$(COMMONSMATHJARPATH):../mmstudio/MMJ_.jar:. $(srcdir)/SplitView/src/org/micromanager/splitview/*.java -d build/SplitView
 	$(MKDIR_P) Image_Processing
 	cd build/SplitView && $(JAR) cf ../../Image_Processing/SplitView.jar *
 
@@ -119,7 +119,7 @@ Image_Processing/NewImageFlipper.jar: \
 	$(srcdir)/NewImageFlipper/src/org/micromanager/newimageflipper/*.java
 	rm -rf build/NewImageFlipper
 	$(MKDIR_P) build/NewImageFlipper
-	$(JAVAC) $(JAVACFLAGS) -classpath $(IJJARPATH):$(BSHJARPATH):$(COMMONSMATHJARPATH):$(SWINGLAYOUTJARPATH):../mmstudio/MMJ_.jar:. $(srcdir)/NewImageFlipper/src/org/micromanager/newimageflipper/*.java -d build/NewImageFlipper
+	$(JAVAC) $(JAVACFLAGS) -classpath $(IJJARPATH):$(BSHJARPATH):$(COMMONSMATHJARPATH):../mmstudio/MMJ_.jar:. $(srcdir)/NewImageFlipper/src/org/micromanager/newimageflipper/*.java -d build/NewImageFlipper
 	$(MKDIR_P) Image_Processing
 	cd build/NewImageFlipper && $(JAR) cf ../../Image_Processing/NewImageFlipper.jar *
 
@@ -127,14 +127,14 @@ Big.jar: \
 	$(srcdir)/Big/src/edu/umassmed/big/*.java
 	rm -rf build/Big
 	$(MKDIR_P) build/Big
-	$(JAVAC) $(JAVACFLAGS) -classpath $(IJJARPATH):$(BSHJARPATH):$(COMMONSMATHJARPATH):$(SWINGLAYOUTJARPATH):../mmstudio/MMJ_.jar:. $(srcdir)/Big/src/edu/umassmed/big/*.java -d build/Big
+	$(JAVAC) $(JAVACFLAGS) -classpath $(IJJARPATH):$(BSHJARPATH):$(COMMONSMATHJARPATH):../mmstudio/MMJ_.jar:. $(srcdir)/Big/src/edu/umassmed/big/*.java -d build/Big
 	cd build/Big && $(JAR) cf ../../Big.jar *
 
 Device_Control/CRISP.jar: \
 	$(srcdir)/CRISP/src/org/micromanager/CRISP/*.java
 	rm -rf build/CRISP
 	$(MKDIR_P) build/CRISP
-	$(JAVAC) $(JAVACFLAGS) -classpath $(IJJARPATH):$(BSHJARPATH):$(COMMONSMATHJARPATH):$(SWINGLAYOUTJARPATH):$(JFREECHARTJARPATH):../mmstudio/MMJ_.jar:. $(srcdir)/CRISP/src/org/micromanager/CRISP/*.java -d build/CRISP
+	$(JAVAC) $(JAVACFLAGS) -classpath $(IJJARPATH):$(BSHJARPATH):$(COMMONSMATHJARPATH):$(JFREECHARTJARPATH):../mmstudio/MMJ_.jar:. $(srcdir)/CRISP/src/org/micromanager/CRISP/*.java -d build/CRISP
 	$(MKDIR_P) Device_Control
 	cd build/CRISP && $(JAR) cf ../../Device_Control/CRISP.jar *
 
@@ -143,7 +143,7 @@ Image_Processing/MultiChannelShading.jar: \
 	$(srcdir)/MultiChannelShading/src/org/micromanager/multichannelshading/*.form
 	rm -rf build/MultiChannelShading
 	$(MKDIR_P) build/MultiChannelShading
-	$(JAVAC) $(JAVACFLAGS) -classpath $(IJJARPATH):$(BSHJARPATH):$(COMMONSMATHJARPATH):$(SWINGLAYOUTJARPATH):../mmstudio/MMJ_.jar:. $(srcdir)/MultiChannelShading/src/org/micromanager/multichannelshading/*.java -d build/MultiChannelShading
+	$(JAVAC) $(JAVACFLAGS) -classpath $(IJJARPATH):$(BSHJARPATH):$(COMMONSMATHJARPATH):../mmstudio/MMJ_.jar:. $(srcdir)/MultiChannelShading/src/org/micromanager/multichannelshading/*.java -d build/MultiChannelShading
 	$(MKDIR_P) Image_Processing
 	cd build/MultiChannelShading && $(JAR) cf ../../Image_Processing/MultiChannelShading.jar *
 
@@ -168,7 +168,7 @@ Acquisition_Tools/Gaussian.jar: \
 	$(srcdir)/Gaussian/source/ags/utils/KdTree.java
 	rm -rf build/Gaussian
 	$(MKDIR_P) build/Gaussian
-	$(JAVAC) $(JAVACFLAGS) -classpath $(IJJARPATH):$(BSHJARPATH):$(COMMONSMATHJARPATH):$(SWINGLAYOUTJARPATH):$(JFREECHARTJARPATH):../mmstudio/MMJ_.jar:$(CLASSEXT)/TSFProto.jar:$(CLASSEXT)/gproto.jar:$(CLASSEXT)/lwm.jar:. $(srcdir)/Gaussian/source/GaussianTrack_.java $(srcdir)/Gaussian/source/edu/valelab/GaussianFit/*.java $(srcdir)/Gaussian/source/edu/valelab/GaussianFit/utils/*.java $(srcdir)/Gaussian/source/ags/utils/*.java -d build/Gaussian
+	$(JAVAC) $(JAVACFLAGS) -classpath $(IJJARPATH):$(BSHJARPATH):$(COMMONSMATHJARPATH):$(JFREECHARTJARPATH):../mmstudio/MMJ_.jar:$(CLASSEXT)/TSFProto.jar:$(CLASSEXT)/gproto.jar:$(CLASSEXT)/lwm.jar:. $(srcdir)/Gaussian/source/GaussianTrack_.java $(srcdir)/Gaussian/source/edu/valelab/GaussianFit/*.java $(srcdir)/Gaussian/source/edu/valelab/GaussianFit/utils/*.java $(srcdir)/Gaussian/source/ags/utils/*.java -d build/Gaussian
 	cp $(srcdir)/Gaussian/source/edu/valelab/GaussianFit/*.txt build/Gaussian/edu/valelab/GaussianFit
 	$(MKDIR_P) Acquisition_Tools
 	cd build/Gaussian && $(JAR) cf ../../Acquisition_Tools/Gaussian.jar *
@@ -248,7 +248,7 @@ Acquisition_Tools/AcquireMultipleRegions.jar: \
 	$(srcdir)/AcquireMultipleRegions/src/org/micromanager/acquiremultipleregions/RegionList.java
 	rm -rf build/AcquireMultipleRegions
 	$(MKDIR_P) build/AcquireMultipleRegions
-	$(JAVAC) $(JAVACFLAGS) -classpath ../mmstudio/MMJ_.jar:$(IJJARPATH):$(SWINGLAYOUTJARPATH):. $(srcdir)/AcquireMultipleRegions/src/org/micromanager/acquiremultipleregions/*.java -d build/AcquireMultipleRegions
+	$(JAVAC) $(JAVACFLAGS) -classpath ../mmstudio/MMJ_.jar:$(IJJARPATH):. $(srcdir)/AcquireMultipleRegions/src/org/micromanager/acquiremultipleregions/*.java -d build/AcquireMultipleRegions
 	$(MKDIR_P) Acquisition_Tools
 	cd build/AcquireMultipleRegions && $(JAR) cf ../../Acquisition_Tools/AcquireMultipleRegions.jar *
 
@@ -256,7 +256,7 @@ Developer_Tools/SequenceBufferMonitor.jar: \
 	$(srcdir)/SequenceBufferMonitor/src/org/micromanager/plugins/sequencebuffermonitor/*.java
 	rm -rf build/SequenceBufferMonitor
 	$(MKDIR_P) build/SequenceBufferMonitor
-	$(JAVAC) $(JAVACFLAGS) -classpath $(IJJARPATH):$(BSHJARPATH):$(COMMONSMATHJARPATH):$(SWINGLAYOUTJARPATH):$(JFREECHARTJARPATH):$(CLASSEXT)/miglayout-4.0-swing.jar:../mmstudio/MMJ_.jar:. $(srcdir)/SequenceBufferMonitor/src/org/micromanager/plugins/sequencebuffermonitor/*.java -d build/SequenceBufferMonitor
+	$(JAVAC) $(JAVACFLAGS) -classpath $(IJJARPATH):$(BSHJARPATH):$(COMMONSMATHJARPATH):$(JFREECHARTJARPATH):$(CLASSEXT)/miglayout-4.0-swing.jar:../mmstudio/MMJ_.jar:. $(srcdir)/SequenceBufferMonitor/src/org/micromanager/plugins/sequencebuffermonitor/*.java -d build/SequenceBufferMonitor
 	$(MKDIR_P) Developer_Tools
 	cd build/SequenceBufferMonitor && $(JAR) cf ../../Developer_Tools/SequenceBufferMonitor.jar *
 

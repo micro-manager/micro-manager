@@ -145,7 +145,6 @@
 		<pathelement location="${mm.java.lib.imagej}"/>
 		<pathelement location="${mm.java.lib.mmcorej}"/>
 		<pathelement location="${mm.java.lib.mmstudio}"/>
-		<pathelement location="${mm.java.lib.swing-layout}"/>
 	</path>
 
 	<!-- Location of Java Runtime to package -->

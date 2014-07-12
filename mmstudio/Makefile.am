@@ -11,7 +11,7 @@ MMJ_.jar: $(shell find $(srcdir)/src -name '*.java') \
 	rm -rf build
 	$(MKDIR_P) build
 	cp $(srcdir)/bin/plugins_mmstudio.config build/plugins.config
-	$(JAVAC) $(JAVACFLAGS) -sourcepath ../MMCoreJ_wrap:$(srcdir)/src:. -classpath $(IJJARPATH):$(BSHJARPATH):$(SWINGXJARPATH):$(COMMONSMATHJARPATH):$(SWINGLAYOUTJARPATH):$(CLASSEXT)/*:. $(srcdir)/src/*.java $(srcdir)/src/org/micromanager/acquisition/*.java $(srcdir)/src/org/micromanager/utils/*.java $(srcdir)/src/org/micromanager/api/*.java $(srcdir)/src/org/micromanager/conf2/*.java -d build
+	$(JAVAC) $(JAVACFLAGS) -sourcepath ../MMCoreJ_wrap:$(srcdir)/src:. -classpath $(IJJARPATH):$(BSHJARPATH):$(SWINGXJARPATH):$(COMMONSMATHJARPATH):$(CLASSEXT)/*:. $(srcdir)/src/*.java $(srcdir)/src/org/micromanager/acquisition/*.java $(srcdir)/src/org/micromanager/utils/*.java $(srcdir)/src/org/micromanager/api/*.java $(srcdir)/src/org/micromanager/conf2/*.java -d build
 	cp -rf $(srcdir)/src/org/micromanager/icons build/org/micromanager
 	cp -rf $(srcdir)/src/org/micromanager/conf2/*html build/org/micromanager/conf2
 	$(MKDIR_P) build/org/micromanager/scriptpanel

@@ -20,7 +20,6 @@
 	<property name="mm.java.lib.protobuf" location="${mm.java.libs}/gproto.jar"/>
 	<property name="mm.java.lib.rsyntaxtextarea" location="${mm.java.libs}/rsyntaxtextarea.jar"/>
 	<property name="mm.java.lib.scifio" location="${mm.java.libs}/scifio.jar"/>
-	<property name="mm.java.lib.swing-layout" location="${mm.java.libs}/swing-layout-1.0.4.jar"/>
 	<property name="mm.java.lib.swingx" location="${mm.java.libs}/swingx-0.9.5.jar"/>
 	<property name="mm.java.lib.tsfproto" location="${mm.java.libs}/TSFProto.jar"/>
 
