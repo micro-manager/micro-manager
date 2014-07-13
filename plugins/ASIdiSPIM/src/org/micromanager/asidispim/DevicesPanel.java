@@ -148,6 +148,10 @@ public class DevicesPanel extends ListeningJPanel {
     * @param key
     */
    private void checkFirmwareVersion(Devices.Keys key) {
+      // firmware version check only for ASI devices => safely discard cameras
+      if (Devices.CAMERAS.contains(key)) {
+         return;
+      }
       float firmwareVersion = props_.getPropValueFloat(key, Properties.Keys.FIRMWARE_VERSION);
       switch (key) {
          case PIEZOA:

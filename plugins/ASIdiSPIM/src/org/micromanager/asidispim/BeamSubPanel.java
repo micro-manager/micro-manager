@@ -209,16 +209,21 @@ public final class BeamSubPanel extends ListeningJPanel {
          @Override
          public void itemStateChanged(ItemEvent e) {
             if (e.getStateChange() == ItemEvent.SELECTED) {
-               props_.setPropValue(devKey_, propKey_, onValue_);
+               props_.setPropValue(devKey_, propKey_, onValue_, true);
             } else {
-               props_.setPropValue(devKey_, propKey_, offValue_);
+               props_.setPropValue(devKey_, propKey_, offValue_, true);
             }
          }
          
          @Override
          public void updateFromProperty() {
-            jc_.setEnabled(devices_.getMMDevice(devKey_)!=null);
-            jc_.setSelected(props_.getPropValueString(devKey_, propKey_, true).equals(onValue_.toString()));
+            if (devices_.getMMDevice(devKey_)==null) {
+               jc_.setEnabled(false);
+               jc_.setSelected(false);
+            } else {
+               jc_.setEnabled(true);
+               jc_.setSelected(props_.getPropValueString(devKey_, propKey_, true).equals(onValue_.toString()));
+            }
          }
          
          @Override

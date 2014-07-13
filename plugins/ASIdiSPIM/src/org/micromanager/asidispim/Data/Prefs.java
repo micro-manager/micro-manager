@@ -21,11 +21,17 @@
 
 package org.micromanager.asidispim.Data;
 
+import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
+
+import org.micromanager.utils.ReportingUtils;
 
 
 /**
- * Central class for reading/writing preferences
+ * Central class for reading/writing preferences.
+ * 
+ * Our "node" isn't the same as a Java preference node, but we
+ * implement as a prefix to the preference name.
  * 
  * @author Jon
  */
@@ -170,4 +176,29 @@ public class Prefs {
       return myPrefs_.getFloat(getPrefKey(node, strKey), defaultValue);
    }
    
+   
+   /**
+    * Searches for key in preferences.
+    * 
+    * @param node
+    * @param key
+    * @return
+    */
+   public boolean keyExists(String node, Properties.Keys key) {
+      String allKeys[] = null;
+      try {
+         // this gets all the keys; our "node" is a privately-implemented thing, 
+         // not the same as Java nodes which would be a sub-folder within regedit
+         allKeys = myPrefs_.keys();
+      } catch (BackingStoreException e) {
+         ReportingUtils.showError(e);
+      }
+      String lookFor = getPrefKey(node, key);
+      for (String cur : allKeys) {
+         if(cur.equals(lookFor)) {
+            return true;
+         }
+      }
+      return false;
+   }
 }

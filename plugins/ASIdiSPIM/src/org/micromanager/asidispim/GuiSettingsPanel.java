@@ -80,12 +80,6 @@ public class GuiSettingsPanel extends ListeningJPanel {
       gui_ = gui;
       stagePosUpdater_ = stagePosUpdater;
       
-      // copy plugin "property" values from prefs to props
-      props_.setPropValue(Devices.Keys.PLUGIN,
-            Properties.Keys.PLUGIN_POSITION_REFRESH_INTERVAL, // in seconds
-            prefs_.getFloat(panelName_, Properties.Keys.PLUGIN_POSITION_REFRESH_INTERVAL, 1));
-      
-      
       PanelUtils pu = new PanelUtils(gui_, prefs_);
       
       final JCheckBox activeTimerCheckBox = new JCheckBox("Update positions continually");
@@ -97,11 +91,13 @@ public class GuiSettingsPanel extends ListeningJPanel {
             } else {
                stagePosUpdater_.stop();
             }
-            prefs_.putBoolean(panelName_, Prefs.Keys.ENABLE_POSITION_UPDATES, activeTimerCheckBox.isSelected());
+            prefs_.putBoolean(panelName_, Prefs.Keys.ENABLE_POSITION_UPDATES,
+                  activeTimerCheckBox.isSelected());
          }
       }; 
       activeTimerCheckBox.addActionListener(ae);
-      activeTimerCheckBox.setSelected(prefs_.getBoolean(panelName_, Prefs.Keys.ENABLE_POSITION_UPDATES, true));
+      activeTimerCheckBox.setSelected(prefs_.getBoolean(panelName_,
+            Prefs.Keys.ENABLE_POSITION_UPDATES, true));
       // programmatically click twice to make sure the action handler is called;
       //   it is not called by setSelected unless there is a change in the value
       activeTimerCheckBox.doClick();
@@ -110,8 +106,8 @@ public class GuiSettingsPanel extends ListeningJPanel {
       
       add(new JLabel("Position refresh interval (s):"));
       positionRefreshInterval_ = pu.makeSpinnerFloat(0.5, 1000, 0.5, props_, devices_, 
-            new Devices.Keys [] {Devices.Keys.PLUGIN},
-            Properties.Keys.PLUGIN_POSITION_REFRESH_INTERVAL);
+            new Devices.Keys [] {Devices.Keys.PLUGIN,},
+            Properties.Keys.PLUGIN_POSITION_REFRESH_INTERVAL, 1);
       ChangeListener listenerLast = new ChangeListener() {
          @Override
          public void stateChanged(ChangeEvent e) {
@@ -127,16 +123,16 @@ public class GuiSettingsPanel extends ListeningJPanel {
       
       add(new JSeparator(JSeparator.VERTICAL), "growy, cell 2 0 1 9");
       
-      add(new JLabel("Scanner filter freq, sheet axis (kHz):"), "cell 3 0");
+      add(new JLabel("Scanner filter freq, sheet axis [kHz]:"), "cell 3 0");
       scannerFilterX_ = pu.makeSpinnerFloat(0.1, 5, 0.1, props_, devices_, 
             new Devices.Keys [] {Devices.Keys.GALVOA, Devices.Keys.GALVOB},
-            Properties.Keys.SCANNER_FILTER_X);
+            Properties.Keys.SCANNER_FILTER_X, 0.8);
       add(scannerFilterX_, "wrap");
       
-      add(new JLabel("Scanner filter freq, slice axis (kHz):"), "cell 3 1");
+      add(new JLabel("Scanner filter freq, slice axis [kHz]:"), "cell 3 1");
       scannerFilterY_ = pu.makeSpinnerFloat(0.1, 5, 0.1, props_, devices_, 
             new Devices.Keys [] {Devices.Keys.GALVOA, Devices.Keys.GALVOB},
-            Properties.Keys.SCANNER_FILTER_Y);
+            Properties.Keys.SCANNER_FILTER_Y, 0.4);
       add(scannerFilterY_, "wrap");
       
       
@@ -148,7 +144,8 @@ public class GuiSettingsPanel extends ListeningJPanel {
    public void saveSettings() {
       // save 
       prefs_.putFloat(panelName_, Properties.Keys.PLUGIN_POSITION_REFRESH_INTERVAL,
-            props_.getPropValueFloat(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_POSITION_REFRESH_INTERVAL));
+            props_.getPropValueFloat(Devices.Keys.PLUGIN, 
+                  Properties.Keys.PLUGIN_POSITION_REFRESH_INTERVAL));
    }
    
    

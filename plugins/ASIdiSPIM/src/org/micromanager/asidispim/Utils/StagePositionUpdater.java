@@ -29,8 +29,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.swing.Timer;
 
-import org.micromanager.api.ScriptInterface;
-
 import org.micromanager.asidispim.Data.Devices;
 import org.micromanager.asidispim.Data.Positions;
 import org.micromanager.asidispim.Data.Properties;
@@ -46,7 +44,6 @@ public class StagePositionUpdater {
    private Timer timer_;
    private final Positions positions_;
    private final Properties props_;
-   private final ScriptInterface gui_;
    private final AtomicBoolean acqRunning_ = new AtomicBoolean(false);
    
    /**
@@ -56,17 +53,14 @@ public class StagePositionUpdater {
     * Panels to be informed of updated stage positions should be added
     * using the addPanel function.
     * 
-    * @param gui - Micro-Manager ScriptInterface api implementation
     * @param positions
     * @param props
     */
-   public StagePositionUpdater(ScriptInterface gui, 
-           Positions positions, Properties props) {
-      gui_ = gui;
+   public StagePositionUpdater(Positions positions, Properties props) {
       positions_ = positions;
       props_ = props;
       panels_ = new ArrayList<ListeningJPanel>();
-      updateInterval();
+      acqRunning_.set(false);
    }
    
    private void updateInterval() {
@@ -130,7 +124,7 @@ public class StagePositionUpdater {
     * If acquisition is running then does nothing.
     */
    public void oneTimeUpdate() {
-      if (!gui_.isAcquisitionRunning() ) {  // 
+         if (!acqRunning_.get()) {  // 
          // update stage positions in devices
          positions_.refreshStagePositions();
          // notify listeners that positions are updated

@@ -23,7 +23,6 @@ package org.micromanager.asidispim.Data;
 
 import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 import mmcorej.CMMCore;
@@ -35,12 +34,15 @@ import org.micromanager.utils.NumberUtils;
 
 /**
  * Contains data and methods related to getting and setting device properties.
- * Ideally this is the only place where properties are read and set.
+ * Ideally this is the only place where MM properties are read and set.
  * One instance of this class exists in the top-level class.
  * 
  * Currently the property "reads" default to ignoring errors due to missing
  *  device or property, but property "writes" default to reporting errors
  *  due to missing device or property
+ *  
+ *  For the special case of the "PLUGIN" device which doesn't have properties
+ *   we store the values using preferences.
  * 
  * @author Jon
  * @author nico
@@ -51,9 +53,9 @@ public class Properties {
    private Devices devices_;
    private CMMCore core_;
    private List<UpdateFromPropertyListenerInterface> listeners_;
-   private HashMap<Keys, Float> pluginFloats_;
-   private HashMap<Keys, Integer> pluginInts_;
-   private HashMap<Keys, String> pluginStrings_;
+   private final Prefs prefs_;
+   
+   public static String PLUGIN_PREF_NODE = "Plugin";
    
    /**
     * List of all device adapter properties used.  The enum value (all caps) 
@@ -100,6 +102,8 @@ public class Properties {
       SAVE_CARD_SETTINGS("SaveCardSettings"),
       TRIGGER_SOURCE("TRIGGER SOURCE"),   // for Hamamatsu
       TRIGGER_POLARITY("TriggerPolarity"),// for Hamamatsu
+      TRIGGER_ACTIVE("TRIGGER ACTIVE"),   // for Hamamatsu
+      READOUTTIME("ReadoutTime"),         // for Hamamatsu
       TRIGGER_MODE("Triggermode"),        // for PCO
       TRIGGER_MODE_ANDOR("TriggerMode"),  // for Andor sCMOS
       FIRMWARE_VERSION("FirmwareVersion"),
@@ -113,15 +117,19 @@ public class Properties {
       PLUGIN_SEPARATE_VIEWERS_FOR_TIMEPOINTS("SeparateViewersForTimePoints"),
       PLUGIN_OFFSET_PIEZO_SHEET("OffsetPiezoSheet"),  // Offset in piezo/sheet relation
       PLUGIN_RATE_PIEZO_SHEET ("RatePiezoSheet"),     // Rate in piezo/sheet 
-      PLUGIN_SETUP_PANEL_NAME ("Setup Path "),        // Setup Panel Name
+      PLUGIN_SETUP_PANEL_NAME ("Setup Path"),        // Setup Panel Name
       PLUGIN_SHEET_START_POS ("SheetStartPosition"),  // Sheet start position for internal use
       PLUGIN_SHEET_END_POS ("SheetEndPosition"),      // Sheet end position for internal use
       PLUGIN_PIEZO_START_POS ("PiezoStartPosition"),  // Piezo start position for internal use
       PLUGIN_PIEZO_END_POS ("PiezoEndPosition"),      // Piezo end position for internal use
       PLUGIN_EXPORT_MIPAV_DATA_DIR ("ExportMipavDataDirectory"), 
                                                       // Place data are saved in mipav format
-      PLUGIN_EXPORT_MIPAV_TRANSFORM_OPTION("ExportMipavTransformOption")
-                                                      // Transform to be applied while saving in mipavb format
+      PLUGIN_EXPORT_MIPAV_TRANSFORM_OPTION("ExportMipavTransformOption"),
+                                                      // Transform to be applied while saving in mipav format
+      PLUGIN_ADVANCED_SLICE_TIMING("AdvancedSliceTiming"),
+      PLUGIN_SLICE_STEP_SIZE("SliceStepSize"),
+      PLUGIN_DESIRED_EXPOSURE("DesiredExposure"),
+      PLUGIN_DESIRED_SLICE_PERIOD("DesiredSlicePeriod"),
       ;
       private final String text;
       Keys(String text) {
@@ -152,6 +160,7 @@ public class Properties {
       DO_SSZ("Z - save settings to card (partial)"),
       INTERNAL("INTERNAL"),
       EXTERNAL("EXTERNAL"),
+      SYNCREADOUT("SYNCREADOUT"),
       INTERNAL_LC("Internal"),
       EXTERNAL_LC("External"),
       INTERNAL_ANDOR("Internal (Recommended for fast acquisitions)"),
@@ -175,15 +184,12 @@ public class Properties {
     * @param devices
     * @author Jon
     */
-   public Properties (ScriptInterface gui, Devices devices) {
+   public Properties (ScriptInterface gui, Devices devices, Prefs prefs) {
       gui_ = gui;
       core_ = gui_.getMMCore();
       devices_ = devices;
+      prefs_ = prefs;
       listeners_ = new ArrayList<UpdateFromPropertyListenerInterface>();
-      
-      pluginFloats_ = new HashMap<Keys, Float>();
-      pluginInts_ = new HashMap<Keys, Integer>();
-      pluginStrings_ = new HashMap<Keys, String>();
    }
 
    /**
@@ -195,9 +201,7 @@ public class Properties {
     */
    public boolean hasProperty(Devices.Keys device, Properties.Keys name, boolean ignoreError) {
       if (device == Devices.Keys.PLUGIN) {
-         return pluginStrings_.containsKey(name) 
-               || pluginFloats_.containsKey(name) 
-               || pluginInts_.containsKey(name);
+         return prefs_.keyExists(PLUGIN_PREF_NODE, name);
       } else {
          String mmDevice = null;
          if (ignoreError) {
@@ -216,8 +220,8 @@ public class Properties {
                      name.toString() + " in device " + mmDevice);
             }
          }
-         return false;
       }
+      return false;
    }
    
    /**
@@ -239,8 +243,9 @@ public class Properties {
     */
    public void setPropValue(Devices.Keys device, Properties.Keys name, String strVal, boolean ignoreError) {
       if (device == Devices.Keys.PLUGIN) {
-         pluginStrings_.put(name, strVal);
-      } else {
+         prefs_.putString(PLUGIN_PREF_NODE, name, strVal);
+      }
+      else {
          String mmDevice = null;
          if (ignoreError) {
             mmDevice = devices_.getMMDevice(device);
@@ -259,7 +264,7 @@ public class Properties {
                core_.setProperty(mmDevice, name.toString(), strVal);
             } catch (Exception ex) {
                gui_.showError(ex, "Error setting string property " + 
-                    name.toString() + " to " + strVal + " in device " + mmDevice);
+                     name.toString() + " to " + strVal + " in device " + mmDevice);
             }
          }
       }
@@ -274,8 +279,9 @@ public class Properties {
     */
    public void setPropValue(Devices.Keys device, Properties.Keys name, Properties.Values val, boolean ignoreError) {
       if (device == Devices.Keys.PLUGIN) {
-         pluginStrings_.put(name, val.toString());
-      } else {
+         prefs_.putString(PLUGIN_PREF_NODE, name, val.toString());
+      }
+      else {
          String mmDevice = null;
          if (ignoreError) {
             mmDevice = devices_.getMMDevice(device);
@@ -292,8 +298,8 @@ public class Properties {
                core_.setProperty(mmDevice, name.toString(), val.toString());
             } catch (Exception ex) {
                gui_.showError(ex, "Error setting string property " + 
-                    name.toString() + " to " + val.toString() + " in device " + 
-                    mmDevice);
+                     name.toString() + " to " + val.toString() + " in device " + 
+                     mmDevice);
             }
          }
       }
@@ -310,6 +316,18 @@ public class Properties {
    }
    
    /**
+    * writes string property value to multiple device adapters using a core call, with error checking
+    * @param devices array of enum keys for device 
+    * @param name enum key for property 
+    * @param strVal value in string form, sent to core using setProperty()
+    */
+   public void setPropValue(Devices.Keys [] devices, Properties.Keys name, String strVal) {
+      for (Devices.Keys device : devices) {
+         setPropValue(device, name, strVal, false);
+      }
+   }
+   
+   /**
     * writes string property value to the device adapter using a core call, with error checking
     * @param device enum key for device 
     * @param name enum key for property 
@@ -317,6 +335,18 @@ public class Properties {
     */
    public void setPropValue(Devices.Keys device, Properties.Keys name, Properties.Values val) {
       setPropValue(device, name, val.toString(), false);
+   }
+   
+   /**
+    * writes string property value to multiple device adapters using a core call, with error checking
+    * @param devices array of enum key for device 
+    * @param name enum key for property 
+    * @param val value in Properties.Values enum form, sent to core using setProperty() after toString() call
+    */
+   public void setPropValue(Devices.Keys [] devices, Properties.Keys name, Properties.Values val) {
+      for (Devices.Keys device : devices) {
+         setPropValue(device, name, val.toString(), false);
+      }
    }
  
    /**
@@ -328,8 +358,9 @@ public class Properties {
     */
    public void setPropValue(Devices.Keys device, Properties.Keys name, int intVal, boolean ignoreError) {
       if (device == Devices.Keys.PLUGIN) {
-         pluginInts_.put(name, (Integer)intVal);
-      } else {
+         prefs_.putInt(PLUGIN_PREF_NODE, name, intVal);
+      }
+      else {
          String mmDevice = null;
          if (ignoreError) {
             mmDevice = devices_.getMMDevice(device);
@@ -346,7 +377,7 @@ public class Properties {
                core_.setProperty(mmDevice, name.toString(), intVal);
             } catch (Exception ex) {
                gui_.showError(ex, "Error setting int property " + 
-                    name.toString() + " in device " + mmDevice);
+                     name.toString() + " in device " + mmDevice);
             }
          }
       }
@@ -361,6 +392,18 @@ public class Properties {
    public void setPropValue(Devices.Keys device, Properties.Keys name, int intVal) {
       setPropValue(device, name, intVal, false);
    }
+   
+   /**
+    * writes integer property value to several device adapters using a core call, with error checking
+    * @param devices array of enum key for device 
+    * @param name enum key for property 
+    * @param intVal value in integer form, sent to core using setProperty()
+    */
+   public void setPropValue(Devices.Keys [] devices, Properties.Keys name, int intVal) {
+      for (Devices.Keys device : devices) {
+         setPropValue(device, name, intVal, false);
+      }
+   }
 
    /**
     * writes float property value to the device adapter using a core call
@@ -371,8 +414,9 @@ public class Properties {
     */
    public void setPropValue(Devices.Keys device, Properties.Keys name, float floatVal, boolean ignoreError) {
       if (device == Devices.Keys.PLUGIN) {
-         pluginFloats_.put(name, (Float)floatVal);
-      } else {
+         prefs_.putFloat(PLUGIN_PREF_NODE, name, floatVal);
+      }
+      else {
          String mmDevice = null;
          if (ignoreError) {
             mmDevice = devices_.getMMDevice(device);
@@ -389,7 +433,7 @@ public class Properties {
                core_.setProperty(mmDevice, name.toString(), floatVal);
             } catch (Exception ex) {
                gui_.showError(ex, "Error setting float property " + 
-                    name.toString() + " in device " + mmDevice);
+                     name.toString() + " in device " + mmDevice);
             }
          }
       }
@@ -404,6 +448,18 @@ public class Properties {
    public void setPropValue(Devices.Keys device, Properties.Keys name, float floatVal) {
       setPropValue(device, name, floatVal, false);
    }
+   
+   /**
+    * writes float property value to several device adapters using a core call, with error checking
+    * @param devices array of enum key for device 
+    * @param name enum key for property 
+    * @param intVal value in integer form, sent to core using setProperty()
+    */
+   public void setPropValue(Devices.Keys [] devices, Properties.Keys name, float floatVal) {
+      for (Devices.Keys device : devices) {
+         setPropValue(device, name, floatVal, false);
+      }
+   }
 
    /**
     * reads the property value from the device adapter using a core call, 
@@ -415,9 +471,11 @@ public class Properties {
    private String getPropValue(Devices.Keys device, Properties.Keys name, boolean ignoreError) {
       String val = "";
       if (device == Devices.Keys.PLUGIN) {
-         if (pluginStrings_.containsKey(name)) {
-            val = pluginStrings_.get(name);
+         if (!ignoreError & !prefs_.keyExists(PLUGIN_PREF_NODE, name)) {
+            gui_.showError("Could not get property " + 
+                  name.toString() + " from special plugin \"device\"");
          }
+         val = prefs_.getString(PLUGIN_PREF_NODE, name, "");
       } else {
          String mmDevice = null;
          if (ignoreError) {
@@ -436,7 +494,7 @@ public class Properties {
                val = core_.getProperty(mmDevice, name.toString());
             } catch (Exception ex) {
                gui_.showError(ex, "Could not get property " + 
-                       name.toString() + " from device " + mmDevice);
+                     name.toString() + " from device " + mmDevice);
             }
          }
       }
@@ -449,7 +507,6 @@ public class Properties {
     * @param device enum key for device 
     * @param name enum key for property 
     * @return
-    * @throws ParseException
     */
    public String getPropValueString(Devices.Keys device, Properties.Keys name) {
       return getPropValue(device, name, true);
@@ -462,7 +519,6 @@ public class Properties {
     * @param name enum key for property 
     * @param ignoreError false (default) will do error checking, true means ignores non-existing device property
     * @return
-    * @throws ParseException
     */
    public String getPropValueString(Devices.Keys device, Properties.Keys name, 
            boolean ignoreError) {
@@ -475,7 +531,6 @@ public class Properties {
     * @param device enum key for device 
     * @param name enum key for property 
     * @return
-    * @throws ParseException
     */
    public int getPropValueInteger(Devices.Keys device, Properties.Keys name) {
       return getPropValueInteger(device, name, true);
@@ -489,15 +544,17 @@ public class Properties {
     * @param name enum key for property 
     * @param ignoreError false (default) will do error checking, true means ignores non-existing property
     * @return
-    * @throws ParseException
     */
    public int getPropValueInteger(Devices.Keys device, Properties.Keys name, boolean ignoreError) {
       int val = 0;
       if (device == Devices.Keys.PLUGIN) {
-         if (pluginInts_.containsKey(name)) {
-            val = pluginInts_.get(name).intValue();
+         if (!ignoreError & !prefs_.keyExists(PLUGIN_PREF_NODE, name)) {
+            gui_.showError("Could not get property " + 
+                  name.toString() + " from special plugin \"device\"");
          }
-      } else {
+         val = prefs_.getInt(PLUGIN_PREF_NODE, name, 0);
+      }
+      else {
          String strVal = null;
          try {
             strVal = getPropValue(device, name, ignoreError);
@@ -506,8 +563,8 @@ public class Properties {
             }
          } catch (ParseException ex) {
             gui_.showError(ex, "Could not parse int value of " + 
-                    strVal + " for " + name.toString() + " in device " + 
-                    device.toString());
+                  strVal + " for " + name.toString() + " in device " + 
+                  device.toString());
          } catch (NullPointerException ex) {
             gui_.showError(ex, "Null Pointer error in function getPropValueInteger");
          }
@@ -537,10 +594,13 @@ public class Properties {
   public float getPropValueFloat(Devices.Keys device, Properties.Keys name, boolean ignoreError) {
      float val = 0;
      if (device == Devices.Keys.PLUGIN) {
-        if (pluginFloats_.containsKey(name)) {
-           val = pluginFloats_.get(name).floatValue();
+        if (!ignoreError & !prefs_.keyExists(PLUGIN_PREF_NODE, name)) {
+           gui_.showError("Could not get property " + 
+                 name.toString() + " from special plugin \"device\"");
         }
-     } else {
+        val = prefs_.getFloat(PLUGIN_PREF_NODE, name, 0);
+     }
+     else {
         String strVal = null;
         try {
            strVal = getPropValue(device, name, ignoreError);
@@ -549,8 +609,8 @@ public class Properties {
            }
         } catch (ParseException ex) {
            gui_.showError(ex, "Could not parse int value of " + 
-                   strVal + " for " + name.toString() + " in device " + 
-                   device.toString());
+                 strVal + " for " + name.toString() + " in device " + 
+                 device.toString());
         } catch (NullPointerException ex) {
            gui_.showError(ex, "Null Pointer error in function getPropValueFLoat");
         }

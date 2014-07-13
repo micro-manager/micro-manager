@@ -188,6 +188,8 @@ public class Cameras {
                      Properties.Values.EXTERNAL : 
                      Properties.Values.INTERNAL),
                true);
+//         // this mode useful for maximum speed: exposure is ended by start of next frame => requires one extra trigger pulse? 
+//         props_.setPropValue(devKey, Properties.Keys.TRIGGER_ACTIVE, Properties.Values.SYNCREADOUT);
          break;
       case PCOCAM:
          props_.setPropValue(devKey, Properties.Keys.TRIGGER_MODE, 

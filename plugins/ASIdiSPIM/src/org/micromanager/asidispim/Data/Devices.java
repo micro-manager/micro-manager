@@ -82,7 +82,7 @@ public class Devices {
    /**
     * Enum containing Device keys, representing role of each device (each key is
     * mapped to a particular Micro-manager device according to the ComboBoxes in
-    * DevicesPanel)
+    * DevicesPanel).
     */
    public static enum Keys {
       NONE, CORE, PLUGIN,
@@ -90,7 +90,7 @@ public class Devices {
       PIEZOA, PIEZOB, GALVOA, GALVOB, XYSTAGE, LOWERZDRIVE, UPPERZDRIVE
       // ASGALVOA, ASGALVOB,
    };
-
+   
    public final static Set<Devices.Keys> STAGES1D = EnumSet.of(
          Devices.Keys.LOWERZDRIVE, Devices.Keys.UPPERZDRIVE,
          Devices.Keys.PIEZOA, Devices.Keys.PIEZOB);
@@ -330,7 +330,7 @@ public class Devices {
       }
       return mmDevice;
    }
-
+   
    /**
     * Looks up the Micro-Manager device name currently set for particular Device
     * key.
@@ -387,7 +387,7 @@ public class Devices {
    public Libraries getMMDeviceLibrary(Devices.Keys key) {
       return deviceInfo_.get(key).deviceLibrary;
    }
-
+   
    /**
     * call core's hasProperty, just with our keys as inputs
     * 

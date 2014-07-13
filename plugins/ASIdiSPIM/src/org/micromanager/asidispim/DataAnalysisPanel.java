@@ -42,7 +42,6 @@ import org.micromanager.utils.ReportingUtils;
  */
 @SuppressWarnings("serial")
 public class DataAnalysisPanel extends ListeningJPanel {
-   private final ScriptInterface gui_;
    private final JPanel mipavPanel_;
    private final JTextField saveDestinationField_;
    private Prefs prefs_;
@@ -56,7 +55,6 @@ public class DataAnalysisPanel extends ListeningJPanel {
    
    /**
     * 
-    * @param gui - implementation of the Micro-Manager ScriptInterface api
     * @param prefs - Plugin-wide preferences
     */
    public DataAnalysisPanel(ScriptInterface gui, Prefs prefs) {    
@@ -65,7 +63,6 @@ public class DataAnalysisPanel extends ListeningJPanel {
               "",
               "[right]",
               "[]16[]"));
-      gui_ = gui;
       prefs_ = prefs;
             
       int textFieldWidth = 35;
