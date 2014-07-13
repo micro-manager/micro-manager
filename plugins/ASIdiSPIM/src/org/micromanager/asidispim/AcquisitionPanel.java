@@ -205,7 +205,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       numTimePointsDone_ = 0;
       
       PanelUtils pu = new PanelUtils(gui_, prefs_);
-      
 
       // added to spinner controls where we should re-calculate the displayed
       // slice period and/or volume duration
@@ -764,7 +763,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       case HAMCAM:
          // device adapter provides rounded to nearest 0.1ms
          // we may need to add small increment as buffer or calculate ourselves based on the ROI
-         readout = props_.getPropValueFloat(camKey, Properties.Keys.READOUTTIME);
+         readout = props_.getPropValueFloat(camKey, Properties.Keys.READOUTTIME) * (float) 1000;
          break;
       case PCOCAM:
          JOptionPane.showMessageDialog(null,
