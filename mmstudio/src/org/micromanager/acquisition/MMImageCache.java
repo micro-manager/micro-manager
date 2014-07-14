@@ -86,22 +86,7 @@ public class MMImageCache implements ImageCache {
       imageStorage_ = imageStorage;
       changingKeys_ = new HashSet<String>();
       listenerExecutor_ = Executors.newFixedThreadPool(1);
-
    }
-
-   /*
-   private void preloadImages() {
-      new Thread() {
-         @Override
-         public void run() {
-            for (String label : MMImageCache.this.imageKeys()) {
-               int pos[] = MDUtils.getIndices(label);
-            }
-         }
-      }.start();
-   }
-   */
-
 
    @Override
    public void finished() {
@@ -120,7 +105,6 @@ public class MMImageCache implements ImageCache {
       return imageStorage_.isFinished();
    }
 
-   @Override
    public int lastAcquiredFrame() {
       synchronized (this) {
          lastFrame_ = Math.max(imageStorage_.lastAcquiredFrame(), lastFrame_);
