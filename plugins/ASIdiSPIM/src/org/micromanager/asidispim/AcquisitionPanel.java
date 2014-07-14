@@ -207,12 +207,13 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       PanelUtils pu = new PanelUtils(gui_, prefs_);
 
       // added to spinner controls where we should re-calculate the displayed
-      // slice period and/or volume duration
+      // slice period, volume duration, and time lapse duration
       ChangeListener recalculateTimingDisplay = new ChangeListener() {
          @Override
          public void stateChanged(ChangeEvent e) {
             updateActualSlicePeriodLabel();
             updateActualVolumeDurationLabel();
+            updateActualTimeLapseDurationLabel();
          }
       };
       
@@ -737,8 +738,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     * @return duration in s
     */
    private double computeActualTimeLapseDuration() {
-      double duration = ((Integer) numAcquisitions_.getValue() * 
-            PanelUtils.getSpinnerFloatValue(acquisitionInterval_));
+      double duration = ((Integer) numAcquisitions_.getValue() - 1) * 
+            PanelUtils.getSpinnerFloatValue(acquisitionInterval_)
+            + computeActualVolumeDuration()/1000;
       return duration;
    }
    
@@ -746,9 +748,18 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     * Update the displayed time lapse duration.
     */
    private void updateActualTimeLapseDurationLabel() {
-      actualTimeLapseDurationLabel_.setText("Time lapse duration: " + 
-            NumberUtils.doubleToDisplayString(computeActualTimeLapseDuration()/60) +
-            " min");
+      String s = "Time lapse duration: ";
+      double duration = computeActualTimeLapseDuration();
+      if (duration < 60) {  // less than 1 min
+         s += NumberUtils.doubleToDisplayString(duration) + " s";
+      } else if (duration < 60*60) { // between 1 min and 1 hour
+         s += NumberUtils.doubleToDisplayString(Math.floor(duration/60)) + " min ";
+         s += NumberUtils.doubleToDisplayString(Math.round(duration %  60)) + " s";
+      } else { // longer than 1 hour
+         s += NumberUtils.doubleToDisplayString(Math.floor(duration/(60*60))) + " hr ";
+         s +=  NumberUtils.doubleToDisplayString(Math.round((duration % (60*60))/60)) + " min";
+      }
+      actualTimeLapseDurationLabel_.setText(s);
    }
    
    /**
