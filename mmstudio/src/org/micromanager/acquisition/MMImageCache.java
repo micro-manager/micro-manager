@@ -88,7 +88,6 @@ public class MMImageCache implements ImageCache {
       listenerExecutor_ = Executors.newFixedThreadPool(1);
    }
 
-   @Override
    public void finished() {
       imageStorage_.finished();
       String path = getDiskLocation();
@@ -100,7 +99,6 @@ public class MMImageCache implements ImageCache {
       listenerExecutor_.shutdown();
    }
 
-   @Override
    public boolean isFinished() {
       return imageStorage_.isFinished();
    }
@@ -112,27 +110,22 @@ public class MMImageCache implements ImageCache {
       }
    }
 
-   @Override
    public String getDiskLocation() {
       return imageStorage_.getDiskLocation();
    }
 
-   @Override
    public void setDisplayAndComments(JSONObject settings) {
       imageStorage_.setDisplayAndComments(settings);
    }
 
-   @Override
    public JSONObject getDisplayAndComments() {
       return imageStorage_.getDisplayAndComments();
    }
    
-   @Override
    public void writeDisplaySettings() {
       imageStorage_.writeDisplaySettings();
    }
 
-   @Override
    public void close() {
       imageStorage_.close();
       synchronized (imageStorageListeners_) {
@@ -185,7 +178,6 @@ public class MMImageCache implements ImageCache {
       
    }
 
-   @Override
    public void putImage(final TaggedImage taggedImg) {
       try {
          
@@ -232,7 +224,6 @@ public class MMImageCache implements ImageCache {
       }
    }
 
-   @Override
    public TaggedImage getImage(int channel, int slice, int frame, int position) {
       TaggedImage taggedImg = null;
       if (taggedImg == null) {
@@ -244,7 +235,6 @@ public class MMImageCache implements ImageCache {
       return taggedImg;
    }
 
-   @Override
    public JSONObject getImageTags(int channel, int slice, int frame, int position) {
       String label = MDUtils.generateLabel(channel, slice, frame, position);
       JSONObject tags = null;
@@ -345,7 +335,6 @@ public class MMImageCache implements ImageCache {
       }
    }
 
-   @Override
    public JSONObject getSummaryMetadata() {
       if (imageStorage_ == null) {
          ReportingUtils.logError("imageStorage_ is null in getSummaryMetadata");
@@ -354,7 +343,6 @@ public class MMImageCache implements ImageCache {
       return imageStorage_.getSummaryMetadata();
    }
 
-   @Override
    public void setSummaryMetadata(JSONObject tags) {
       if (imageStorage_ == null) {
          ReportingUtils.logError("imageStorage_ is null in setSummaryMetadata");
@@ -368,7 +356,6 @@ public class MMImageCache implements ImageCache {
       return changingKeys_;
    }
 
-   @Override
    public Set<String> imageKeys() {
      return imageStorage_.imageKeys();
    }
@@ -552,7 +539,6 @@ public class MMImageCache implements ImageCache {
       return array.length();
    }
 
-   @Override
    public long getDataSetSize() {
       throw new UnsupportedOperationException("Not supported yet.");
    }
