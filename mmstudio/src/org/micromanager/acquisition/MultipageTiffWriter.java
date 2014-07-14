@@ -322,6 +322,10 @@ public class MultipageTiffWriter {
     * Called when entire set of files (i.e. acquisition) is finished. Writes OME/IJ metadata
     */
    public void close(String omeXML) throws IOException {
+      //mkae sure all images have finished writing if they are on seperate thread
+      if (writingExecutor_ != null && !writingExecutor_.isShutdown() ) {
+         writingExecutor_.shutdown();
+      }
       String summaryComment = "";
       try 
       {
