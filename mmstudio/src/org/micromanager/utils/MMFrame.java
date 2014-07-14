@@ -23,7 +23,9 @@
 //
 package org.micromanager.utils;
 
+import java.awt.Dimension;
 import java.awt.Rectangle;
+import java.awt.Toolkit;
 import java.util.prefs.Preferences;
 
 import javax.swing.JFrame;
@@ -47,6 +49,16 @@ public class MMFrame extends JFrame {
    public void loadPosition(int x, int y, int width, int height) {
       if (prefs_ == null)
          return;
+
+      // if a saved position exists then make sure it falls on the screen
+      // (useful when screen size changes between invocations)
+      Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+      if (screenSize.width < prefs_.getInt(WINDOW_X, 0)) {
+         prefs_.putInt(WINDOW_X, x);
+      }
+      if (screenSize.height < prefs_.getInt(WINDOW_Y, 0)) {
+         prefs_.putInt(WINDOW_Y, y);
+      }
       
       setBounds(prefs_.getInt(WINDOW_X, x),
                 prefs_.getInt(WINDOW_Y, y),
