@@ -44,8 +44,7 @@ public class TaggedImageStorageRamFast implements TaggedImageStorage {
          return super.size() > max_size_;
       }
    }
-   
-   public static String menuName_ = null;
+
    private boolean finished_ = false;
 
    private TreeMap<String, DirectTaggedImage> imageMap_;

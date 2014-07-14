@@ -52,8 +52,6 @@ import org.micromanager.utils.ReportingUtils;
  * @author arthur
  */
 public class MMImageCache implements ImageCache {
-
-   public static String menuName_ = null;
    public final List<ImageCacheListener> imageStorageListeners_ = 
            Collections.synchronizedList(new ArrayList<ImageCacheListener>());
    private TaggedImageStorage imageStorage_;

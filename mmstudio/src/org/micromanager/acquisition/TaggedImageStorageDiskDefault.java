@@ -31,7 +31,6 @@ import org.micromanager.utils.*;
  * @author arthur
  */
 public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
-   public static String menuName_ = "Micro-Manager default file format";
    private final String dir_;
    private boolean firstElement_;
    private HashMap<Integer,Writer> metadataStreams_;
