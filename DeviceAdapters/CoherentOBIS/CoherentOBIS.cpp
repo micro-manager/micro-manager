@@ -5,11 +5,11 @@
 //-----------------------------------------------------------------------------
 // DESCRIPTION:   CoherentObis controller adapter
 // COPYRIGHT:     
-//				  MBL, Woods Hole, MA 2014
-//				  University of California, San Francisco, 2009 (Hoover)
+//                MBL, Woods Hole, MA 2014
+//                University of California, San Francisco, 2009 (Hoover)
 //
-// AUTHOR:		  Forrest Collman        
-//				  Adapted from CoherentCube driver written by Karl Hoover, UCSF
+// AUTHOR:        Forrest Collman
+//                Adapted from CoherentCube driver written by Karl Hoover, UCSF
 //
 // LICENSE:       This file is distributed under the BSD license.
 //                License text is included with the source distribution.
@@ -21,11 +21,6 @@
 //                IN NO EVENT SHALL THE COPYRIGHT OWNER OR
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
-//
-// CVS:           
-//
-
-
 
 #ifdef WIN32
    #include <windows.h>
@@ -91,25 +86,20 @@ CoherentObis::CoherentObis(const char* name) :
    busy_(false),
    error_(0),
    changedTime_(0.0),
-	queryToken_("?"),
-	powerSetpointToken_("SOUR1:POW:LEV:IMM:AMPL"),
-	powerReadbackToken_("SOUR1:POW:LEV:IMM:AMPL"),
-	CDRHToken_("CDRH"),  // if this is on, laser delays 5 SEC before turning on
-    CWToken_("CW"),
-	laserOnToken_("SOUR1:AM:STATE"),
-	TECServoToken_("T"),
-	headSerialNoToken_("SYST:INF:SNUM"),
-	headUsageHoursToken_("SYST1:DIOD:HOUR"),
-	wavelengthToken_("SYST1:INF:WAV"),
-	externalPowerControlToken_("SOUR1:POW:LEV:IMM:AMPL"),
-	maxPowerToken_("SOUR1:POW:LIM:HIGH"),
-    minPowerToken_("SOUR1:POW:LIM:LOW")
-
-
-
-
+   queryToken_("?"),
+   powerSetpointToken_("SOUR1:POW:LEV:IMM:AMPL"),
+   powerReadbackToken_("SOUR1:POW:LEV:IMM:AMPL"),
+   CDRHToken_("CDRH"),  // if this is on, laser delays 5 SEC before turning on
+   CWToken_("CW"),
+   laserOnToken_("SOUR1:AM:STATE"),
+   TECServoToken_("T"),
+   headSerialNoToken_("SYST:INF:SNUM"),
+   headUsageHoursToken_("SYST1:DIOD:HOUR"),
+   wavelengthToken_("SYST1:INF:WAV"),
+   externalPowerControlToken_("SOUR1:POW:LEV:IMM:AMPL"),
+   maxPowerToken_("SOUR1:POW:LIM:HIGH"),
+   minPowerToken_("SOUR1:POW:LIM:LOW")
 {
-	//pDevImpl = new DevImpl(*this);
    assert(strlen(name) < (unsigned int) MM::MaxStrLength);
 
    InitializeDefaultErrorMessages();
@@ -133,7 +123,6 @@ CoherentObis::CoherentObis(const char* name) :
 
 CoherentObis::~CoherentObis()
 {
-	//delete pDevImpl;
    Shutdown();
 }
 
@@ -156,72 +145,32 @@ void CoherentObis::GetName(char* name) const
 
 int CoherentObis::Initialize()
 {
-
    LogMessage("CoherentObis::Initialize()yes??");
 
    GeneratePowerProperties();
    GeneratePropertyState();
-	GenerateReadOnlyIDProperties();
-	std::stringstream msg;
+   GenerateReadOnlyIDProperties();
+   std::stringstream msg;
 
 
-	//Initialize laser??
-	setLaser("SYST1:COMM:HAND","On");
-	setLaser("SYST1:COMM:PROM","Off");
-	msg << "SYST1:ERR:CLE" ;
-	Send(msg.str());
+   //Initialize laser??
+   setLaser("SYST1:COMM:HAND","On");
+   setLaser("SYST1:COMM:PROM","Off");
+   msg << "SYST1:ERR:CLE" ;
+   Send(msg.str());
 
-	//ReadGreeting();
+   // query laser for power limits
+   this->initLimits();
 
-	//disable echo from the controller
-	//msg << "E" << "=" << 0;
-  // Send(msg.str());
-   //if (ReceiveOneLine() != DEVICE_OK)
-    //  return ERR_DEVICE_NOT_FOUND;
+   double llimit = this->minlp();
+   double ulimit = this->maxlp();
 
-
-	//disable command prompt from controller
-	//msg.str("");
-	//msg << ">" << "=" << 0;
-   //Send(msg.str());
-   //ReceiveOneLine();
-
-	//msg.str("");
-	//msg << CDRHToken_ << "=" << 0;
-   //Send(msg.str());
-  // ReceiveOneLine();
-
-	// enable control of the laser diode
-	//msg.str("");
-	//msg << TECServoToken_ << "=" << 1;
-   //Send(msg.str());
-   //ReceiveOneLine();
-
-	//disable external 'analogue' control of the laser
-
-	// enable control of the laser diode
-	//msg.str("");
-	//msg << externalPowerControlToken_ << "=" << 0;
-   //Send(msg.str());
-   //ReceiveOneLine();
-
-	// query laser for power limits
-	this->initLimits();
-
-	double llimit = this->minlp();
-	double ulimit = this->maxlp();
-	//if ( 1. > ulimit)
-	//	ulimit = 100.; // for off-line test
-
-	// set the limits as interrogated from the laser controller.
+   // set the limits as interrogated from the laser controller.
    SetPropertyLimits(g_Keyword_PowerSetpoint, llimit, ulimit);  // milliWatts
    
    initialized_ = true;
 
-
-
    return HandleErrors();
-
 }
 
 void CoherentObis::ReadGreeting()
@@ -232,16 +181,13 @@ void CoherentObis::ReadGreeting()
 }
 
 
-
-
 /////////////////////////////////////////////
 // Property Generators
 /////////////////////////////////////////////
 
 void CoherentObis::GeneratePropertyState()
 {
-   
-	CPropertyAction* pAct = new CPropertyAction (this, &CoherentObis::OnState);
+   CPropertyAction* pAct = new CPropertyAction (this, &CoherentObis::OnState);
    CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct);
    AddAllowedValue(MM::g_Keyword_State, "0");
    AddAllowedValue(MM::g_Keyword_State, "1");
@@ -252,35 +198,21 @@ void CoherentObis::GeneratePowerProperties()
 {
    string powerName;
 
-	// Power Setpoint
+   // Power Setpoint
    CPropertyActionEx* pActEx = new CPropertyActionEx(this, &CoherentObis::OnPowerSetpoint, 0);
    powerName = g_Keyword_PowerSetpoint;
    CreateProperty(powerName.c_str(), "0", MM::Float, false, pActEx);
-	
-	// Power Setpoint
+
+   // Power Setpoint
    pActEx = new CPropertyActionEx(this, &CoherentObis::OnPowerReadback, 0);
    powerName = g_Keyword_PowerReadback;
    CreateProperty(powerName.c_str(), "0", MM::Float, true, pActEx);
-
-	// External Laser Power Control ( if EXT = 1, then an 'analogue' trigger line will control power on
-   //CPropertyAction* pAct = new CPropertyAction(this, &CoherentObis::OnExternalLaserPowerControl);
-   //powerName = "ExternalLaserPowerControl";
-	//CreateProperty(powerName.c_str(), "0", MM::Integer, false, pAct);
-	//AddAllowedValue("ExternalLaserPowerControl", "0");
-   //AddAllowedValue("ExternalLaserPowerControl", "1");
-  
-   // CW (1) or pulsed (0) mode 
-   //pAct = new CPropertyAction(this, &CoherentObis::OnCWMode);
-   //powerName = "CWMode";
-	//CreateProperty(powerName.c_str(), "0", MM::Integer, false, pAct);
-	//AddAllowedValue(powerName.c_str(), "0");
-   //AddAllowedValue(powerName.c_str(), "1");
 }
 
 
 void CoherentObis::GenerateReadOnlyIDProperties()
 {
-	CPropertyAction* pAct; 
+   CPropertyAction* pAct; 
    pAct = new CPropertyAction(this, &CoherentObis::OnHeadID);
    CreateProperty("HeadID", "", MM::String, true, pAct);
 
@@ -290,13 +222,11 @@ void CoherentObis::GenerateReadOnlyIDProperties()
    pAct = new CPropertyAction(this, &CoherentObis::OnMinimumLaserPower);
    CreateProperty("Minimum Laser Power", "", MM::Float, true, pAct);
    
-	pAct = new CPropertyAction(this, &CoherentObis::OnMaximumLaserPower);
+   pAct = new CPropertyAction(this, &CoherentObis::OnMaximumLaserPower);
    CreateProperty("Maximum Laser Power", "", MM::Float, true, pAct);
 
-	pAct = new CPropertyAction(this, &CoherentObis::OnWaveLength);
+   pAct = new CPropertyAction(this, &CoherentObis::OnWaveLength);
    CreateProperty("Wavelength", "", MM::Float, true, pAct);
-
-
 }
 
 int CoherentObis::Shutdown()
@@ -310,49 +240,8 @@ int CoherentObis::Shutdown()
 
 
 ///////////////////////////////////////////////////////////////////////////////
-// String utilities
-///////////////////////////////////////////////////////////////////////////////
-
-
-//void CoherentObis::StripString(string& StringToModify)
-//{
-//   if(StringToModify.empty()) return;
-
-//   size_t startIndex = StringToModify.find_first_not_of(" ");
-//   size_t endIndex = StringToModify.find_last_not_of(" ");
-//   string tempString = StringToModify;
-///   StringToModify.erase();
-
-//   StringToModify = tempString.substr(startIndex, (endIndex-startIndex+ 1) );
-//}
-
-//void CoherentObis::Tokenize(const string& str, vector<string>& tokens, const string& delimiters)
-//{
-//    tokens.clear();
-     // Borrowed from http://oopweb.com/CPP/Documents/CPPHOWTO/Volume/C++Programming-HOWTO-7.html
-    // Skip delimiters at beginning.
-//    string::size_type lastPos = str.find_first_not_of(delimiters, 0);
-    // Find first "non-delimiter".
-//    string::size_type pos     = str.find_first_of(delimiters, lastPos);
-
-//    while (string::npos != pos || string::npos != lastPos)
-//    {
-        // Found a token, add it to the vector.
-//        tokens.push_back(str.substr(lastPos, pos - lastPos));
-        // Skip delimiters.  Note the "not_of"
-//        lastPos = str.find_first_not_of(delimiters, pos);
-        // Find next "non-delimiter"
-//        pos = str.find_first_of(delimiters, lastPos);
-//    }
-//}
-
-
-
-
-///////////////////////////////////////////////////////////////////////////////
 // Action handlers
 ///////////////////////////////////////////////////////////////////////////////
-
 
 int CoherentObis::OnPort(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
@@ -375,9 +264,6 @@ int CoherentObis::OnPort(MM::PropertyBase* pProp, MM::ActionType eAct)
    return HandleErrors();
 }
 
-// Detect...
-// GetCoreCallback()->SetDeviceProperty(port_.c_str(), MM::g_Keyword_BaudRate, "19200" );
-
 
 int CoherentObis::OnPowerReadback(MM::PropertyBase* pProp, MM::ActionType eAct, long /*index*/)
 {
@@ -390,7 +276,7 @@ int CoherentObis::OnPowerReadback(MM::PropertyBase* pProp, MM::ActionType eAct, 
    }
    else if (eAct == MM::AfterSet)
    {
-			// never do anything!!
+      // never do anything!!
    }
    return HandleErrors();
 }
@@ -407,14 +293,14 @@ int CoherentObis::OnPowerSetpoint(MM::PropertyBase* pProp, MM::ActionType eAct, 
    else if (eAct == MM::AfterSet)
    {
       pProp->Get(powerSetpoint);
-		double achievedSetpoint;
+      double achievedSetpoint;
       SetPowerSetpoint(powerSetpoint, achievedSetpoint);
-		if( 0. != powerSetpoint)
-		{
-			double fractionError = fabs(achievedSetpoint - powerSetpoint) / powerSetpoint;
-			if (( 0.05 < fractionError ) && (fractionError  < 0.10))
-				pProp->Set(achievedSetpoint);
-		}
+      if( 0. != powerSetpoint)
+      {
+         double fractionError = fabs(achievedSetpoint - powerSetpoint) / powerSetpoint;
+         if (( 0.05 < fractionError ) && (fractionError  < 0.10))
+            pProp->Set(achievedSetpoint);
+      }
    }
    return HandleErrors();
 }
@@ -429,13 +315,13 @@ int CoherentObis::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    else if (eAct == MM::AfterSet)
    {
-		long requestedState;
+      long requestedState;
       pProp->Get(requestedState);
       SetState(requestedState);
-		if (state_ != requestedState)
-		{
-			//error_ = DEVICE_CAN_NOT_SET_PROPERTY;
-		}
+      if (state_ != requestedState)
+      {
+         // error
+      }
    }
    
    return HandleErrors();
@@ -446,11 +332,11 @@ int CoherentObis::OnHeadID(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)
    {
-		pProp->Set((this->queryLaser(headSerialNoToken_)).c_str());
+      pProp->Set((this->queryLaser(headSerialNoToken_)).c_str());
    }
    else if (eAct == MM::AfterSet)
    {
-			// never do anything!!
+      // never do anything!!
    }
    return HandleErrors();
 }
@@ -460,13 +346,13 @@ int CoherentObis::OnHeadUsageHours(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)
    {
-		std::string svalue = this->queryLaser(headUsageHoursToken_);
-		double dvalue = atof(svalue.c_str());
-		pProp->Set(dvalue);
+      std::string svalue = this->queryLaser(headUsageHoursToken_);
+      double dvalue = atof(svalue.c_str());
+      pProp->Set(dvalue);
    }
    else if (eAct == MM::AfterSet)
    {
-			// never do anything!!
+      // never do anything!!
    }
    return HandleErrors();
 }
@@ -476,11 +362,11 @@ int CoherentObis::OnMinimumLaserPower(MM::PropertyBase* pProp, MM::ActionType eA
 {
    if (eAct == MM::BeforeGet)
    {
-		pProp->Set(atof((this->queryLaser(minPowerToken_)).c_str()));
+      pProp->Set(atof((this->queryLaser(minPowerToken_)).c_str()));
    }
    else if (eAct == MM::AfterSet)
    {
-			// never do anything!!
+      // never do anything!!
    }
    return HandleErrors();
 }
@@ -489,63 +375,25 @@ int CoherentObis::OnMaximumLaserPower(MM::PropertyBase* pProp, MM::ActionType eA
 {
    if (eAct == MM::BeforeGet)
    {
-		pProp->Set(atof((this->queryLaser(maxPowerToken_)).c_str()));
+      pProp->Set(atof((this->queryLaser(maxPowerToken_)).c_str()));
    }
    else if (eAct == MM::AfterSet)
    {
-			// never do anything!!
+      // never do anything!!
    }
    return HandleErrors();
 }
 
-//int CoherentObis::OnExternalLaserPowerControl(MM::PropertyBase* pProp, MM::ActionType eAct)
-//{
-//
-//   long externalLaserPowerControl;
-//	int itmp;
-//   if (eAct == MM::BeforeGet)
-//   {
-//      GetExternalLaserPowerControl(itmp);
-//		externalLaserPowerControl = itmp;
-//      pProp->Set(externalLaserPowerControl);
-//   }
-//   else if (eAct == MM::AfterSet)
-//   {
-//      pProp->Get(externalLaserPowerControl);
-//		itmp = externalLaserPowerControl;
-//      SetExternalLaserPowerControl(itmp);
-//   }
-//   return HandleErrors();
-//}
-//
-//int CoherentObis::OnCWMode(MM::PropertyBase* pProp, MM::ActionType eAct)
-//{
-//   long CWMode;
-//   if (eAct == MM::BeforeGet)
-//   {
-//	   string ans = this->queryLaser(CWToken_);
-//      CWMode = atol(ans.c_str());
-//      pProp->Set(CWMode);
-//   }
-//   else if (eAct == MM::AfterSet)
-//   {
-//      pProp->Get(CWMode);
-//	   std::ostringstream atoken;
-//	   atoken << CWMode;
-//	   this->setLaser( CWToken_, atoken.str());
-//   }
-//   return HandleErrors();
-//}
 
 int CoherentObis::OnWaveLength(MM::PropertyBase* pProp, MM::ActionType eAct /* , long */)
 {
    if (eAct == MM::BeforeGet)
    {
-		pProp->Set(atof((this->queryLaser(wavelengthToken_)).c_str()));
+      pProp->Set(atof((this->queryLaser(wavelengthToken_)).c_str()));
    }
    else if (eAct == MM::AfterSet)
    {
-			// never do anything!!
+      // never do anything!!
    }
    return HandleErrors();
 }
@@ -554,50 +402,46 @@ int CoherentObis::OnWaveLength(MM::PropertyBase* pProp, MM::ActionType eAct /* ,
 void CoherentObis::GetPowerReadback(double& value)
 {
    string ans = this->queryLaser(powerReadbackToken_);
-	value = POWERCONVERSION*atof(ans.c_str());
+   value = POWERCONVERSION*atof(ans.c_str());
 }
 
 void CoherentObis::SetPowerSetpoint(double requestedPowerSetpoint, double& achievedPowerSetpoint)
 {
-	std::string result;
-	std::ostringstream setpointString;
-	// number like 100.00
-	setpointString << setprecision(6) << requestedPowerSetpoint/POWERCONVERSION;
-	result = this->setLaser(powerSetpointToken_, setpointString.str());
-	//compare quantized setpoint to requested setpoint
-	// the difference can be rather large
+   std::string result;
+   std::ostringstream setpointString;
+   // number like 100.00
+   setpointString << setprecision(6) << requestedPowerSetpoint/POWERCONVERSION;
+   result = this->setLaser(powerSetpointToken_, setpointString.str());
+   //compare quantized setpoint to requested setpoint
+   // the difference can be rather large
 
-	//if( 0. < requestedPowerSetpoint)
-	//{
-		achievedPowerSetpoint = POWERCONVERSION*atof( result.c_str());
+   achievedPowerSetpoint = POWERCONVERSION*atof( result.c_str());
 
-		// if device echos a setpoint more the 10% of full scale from requested setpoint, log a warning message
-		if ( this->maxlp()/10. < fabs( achievedPowerSetpoint-POWERCONVERSION*requestedPowerSetpoint))
-		{
-			std::ostringstream messs;
-			messs << "requested setpoint: " << requestedPowerSetpoint << " but echo setpoint is: " << achievedPowerSetpoint;
-			LogMessage(messs.str().c_str());
-		}
-	//}
-
+   // if device echos a setpoint more the 10% of full scale from requested setpoint, log a warning message
+   if ( this->maxlp()/10. < fabs( achievedPowerSetpoint-POWERCONVERSION*requestedPowerSetpoint))
+   {
+      std::ostringstream messs;
+      messs << "requested setpoint: " << requestedPowerSetpoint << " but echo setpoint is: " << achievedPowerSetpoint;
+      LogMessage(messs.str().c_str());
+   }
 }
 
 void CoherentObis::GetPowerSetpoint(double& value)
 {
-	string ans = this->queryLaser(powerSetpointToken_);
-	value = POWERCONVERSION*atof(ans.c_str());
+   string ans = this->queryLaser(powerSetpointToken_);
+   value = POWERCONVERSION*atof(ans.c_str());
 }
 
 void CoherentObis::SetState(long state)
 {
-	std::ostringstream atoken;
-	if (state==1){
-		atoken << "On";
-	}
-	else{
-		atoken << "Off";
-	}
-	this->setLaser( laserOnToken_, atoken.str());
+   std::ostringstream atoken;
+   if (state==1){
+      atoken << "On";
+   }
+   else{
+      atoken << "Off";
+   }
+   this->setLaser( laserOnToken_, atoken.str());
    // Set timer for the Busy signal
    changedTime_ = GetCurrentMMTime();
 }
@@ -606,29 +450,27 @@ void CoherentObis::GetState(long &value)
 {
    string ans = this->queryLaser(laserOnToken_);
    if (ans.compare("On")){
-	   value = 1;
+      value = 1;
    }
    else if (ans.compare("Off")){
       value = 0;
    }
    else{
-	  value = 2;
+      value = 2;
    }
-   
 }
 
 void CoherentObis::SetExternalLaserPowerControl(int value)
-
 {
-	std::ostringstream atoken;
-	atoken << value;
-	this->setLaser( externalPowerControlToken_, atoken.str());
+   std::ostringstream atoken;
+   atoken << value;
+   this->setLaser( externalPowerControlToken_, atoken.str());
 }
 
 void CoherentObis::GetExternalLaserPowerControl(int& value)
 {
-	string ans = this->queryLaser(externalPowerControlToken_);
-	value = atol(ans.c_str());
+   string ans = this->queryLaser(externalPowerControlToken_);
+   value = atol(ans.c_str());
 }
 
 int CoherentObis::HandleErrors()
@@ -647,10 +489,9 @@ int CoherentObis::HandleErrors()
 
 void CoherentObis::Send(string cmd)
 {
-
-	std::ostringstream messs;
-	messs << "CoherentObis::Send           " << cmd;
-	LogMessage( messs.str().c_str(), true);
+   std::ostringstream messs;
+   messs << "CoherentObis::Send           " << cmd;
+   LogMessage( messs.str().c_str(), true);
 
    int ret = SendSerialCommand(port_.c_str(), cmd.c_str(), carriage_return);
    if (ret!=DEVICE_OK)
@@ -664,9 +505,9 @@ int CoherentObis::ReceiveOneLine()
    int ret = GetSerialAnswer(port_.c_str(), line_feed, buf_string_);
    if (ret != DEVICE_OK)
       return ret;
-	std::ostringstream messs;
-	messs << "CoherentObis::ReceiveOneLine " << buf_string_;
-	LogMessage( messs.str().c_str(), true);
+   std::ostringstream messs;
+   messs << "CoherentObis::ReceiveOneLine " << buf_string_;
+   LogMessage( messs.str().c_str(), true);
 
    return DEVICE_OK;
 }
@@ -707,8 +548,8 @@ int CoherentObis::GetOpen(bool& open)
 // is this perhaps because this blocking call is not appropriate
 int CoherentObis::Fire(double deltaT)
 {
-	SetOpen(true);
-	CDeviceUtils::SleepMs((long)(deltaT+.5));
-	SetOpen(false);
+   SetOpen(true);
+   CDeviceUtils::SleepMs((long)(deltaT+.5));
+   SetOpen(false);
    return HandleErrors();
 }
