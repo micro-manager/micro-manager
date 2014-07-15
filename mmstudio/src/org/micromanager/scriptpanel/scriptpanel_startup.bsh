@@ -88,17 +88,17 @@ doc_className(String className) {
 
 	theUrl = null;
 	if (sunAPI)	
-		theUrl = "http://java.sun.com/javase/6/docs/api/" + suffix;
-	if (className.startsWith("ij.")) // ImageJ API
+		theUrl = "http://docs.oracle.com/javase/6/docs/api/" + suffix;
+	if (className.startsWith("ij."))
 		theUrl = "http://rsb.info.nih.gov/ij/developer/api/" + suffix;
-	if (className.startsWith("bsh.")) // Beanshell API
-		theUrl = "http://odelacot.homelinux.org/doc/bsh-doc/api/" + suffix;
-	if (className.startsWith("org.micromanager")) // Micro-Manager API
-		theUrl = "http://micro-manager.org/content/doc/mmstudio/" + suffix;
-	if (className.startsWith("mmcorej.CMMCore"))
-		theUrl = "http://micro-manager.org/content/doc/CMMCore.html";
-	if (className.startsWith("org.jdesktop.swingx"))
-		theUrl = "http://download.java.net/javadesktop/swinglabs/releases/0.8/docs/api/index.html?" + suffix;
+	if (className.startsWith("bsh."))
+		theUrl = "http://www.beanshell.org/javadoc/" + suffix;
+	if (className.startsWith("org.micromanager."))
+		theUrl = "http://valelab.ucsf.edu/~MM/doc/mmstudio/" + suffix;
+	if (className.startsWith("mmcorej."))
+		theUrl = "http://valelab.ucsf.edu/~MM/doc/mmcorej/" + suffix;
+	if (className.startsWith("org.jdesktop.swingx."))
+		theUrl = "http://download.java.net/javadesktop/swinglabs/releases/0.8/docs/api/" + suffix;
 
 	if (theUrl!=null)
 		BrowserLauncher.openURL(theUrl);
