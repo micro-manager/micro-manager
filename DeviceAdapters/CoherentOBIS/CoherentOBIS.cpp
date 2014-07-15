@@ -83,7 +83,6 @@ CoherentObis::CoherentObis(const char* name) :
    initialized_(false), 
    state_(0),
    name_(name), 
-   busy_(false),
    error_(0),
    changedTime_(0.0),
    queryToken_("?"),
@@ -171,13 +170,6 @@ int CoherentObis::Initialize()
    initialized_ = true;
 
    return HandleErrors();
-}
-
-void CoherentObis::ReadGreeting()
-{
-   do {
-      ReceiveOneLine();
-   } while (! buf_string_.empty());
 }
 
 

@@ -108,16 +108,10 @@ public:
    
    // action interface
    // ----------------
-   int OnAddress(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnPowerSetpoint(MM::PropertyBase* pProp, MM::ActionType eAct, long index);
    int OnPowerReadback(MM::PropertyBase* pProp, MM::ActionType eAct, long index);
-   int OnConnectionType(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnReceivedData(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
-
-   int OnExternalLaserPowerControl(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnCWMode(MM::PropertyBase* pProp, MM::ActionType eAct);
 
    // some important read-only properties
    int OnHeadID(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -136,7 +130,6 @@ private:
    bool initialized_;
    long state_;
    std::string name_;
-   bool busy_;
    int error_;
    MM::MMTime changedTime_;
 
@@ -157,19 +150,12 @@ private:
 
    std::string port_;
 
-   unsigned char buf_[1000];
    string buf_string_;
-   vector<string> buf_tokens_;
-   unsigned long buf_bytes_;
-   long armState_;
-
-   double answerTimeoutMs_;
 
 
    void SetPowerSetpoint(double powerSetpoint__, double& achievedSetpoint__);
    void GetPowerSetpoint(double& powerSetpoint__);
    void GetPowerReadback(double& value__);
-   void ReadGreeting();
 
    void GeneratePowerProperties();
    void GeneratePropertyState();
