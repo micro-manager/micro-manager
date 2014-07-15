@@ -31,7 +31,7 @@
 
 class dummyClassToForceBeanshellToUseAHashtableInItsNamespaceMethodsList {}
 
-setAccessibility(true);
+setAccessibility(false);
 
 
 ////
