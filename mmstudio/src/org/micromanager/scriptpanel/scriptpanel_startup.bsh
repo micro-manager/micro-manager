@@ -113,7 +113,8 @@ doc_className(String className) {
 
 inspect(obj) {
    object_ = obj;
-   frame_ = new javax.swing.JFrame();
+   frame_ = new javax.swing.JFrame("Inspector for instance of class " +
+         object_.getClass().getName());
    methodsModel_ = new javax.swing.table.DefaultTableModel();
    fieldsModel_ = new javax.swing.table.DefaultTableModel();
 
