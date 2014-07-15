@@ -334,6 +334,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NewportSMC", "DeviceAdapter
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pgFocus", "DeviceAdapters\pgFocus\pgFocus.vcxproj", "{BECF37AD-77C3-4BD4-83EF-E5B0A2DC4188}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CoherentOBIS", "DeviceAdapters\CoherentOBIS\CoherentOBIS.vcxproj", "{D8296B7C-9580-4AD6-A79C-A5660680A9FF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -1643,6 +1645,14 @@ Global
 		{BECF37AD-77C3-4BD4-83EF-E5B0A2DC4188}.Release|Win32.Build.0 = Release|Win32
 		{BECF37AD-77C3-4BD4-83EF-E5B0A2DC4188}.Release|x64.ActiveCfg = Release|x64
 		{BECF37AD-77C3-4BD4-83EF-E5B0A2DC4188}.Release|x64.Build.0 = Release|x64
+		{D8296B7C-9580-4AD6-A79C-A5660680A9FF}.Debug|Win32.ActiveCfg = Debug|Win32
+		{D8296B7C-9580-4AD6-A79C-A5660680A9FF}.Debug|Win32.Build.0 = Debug|Win32
+		{D8296B7C-9580-4AD6-A79C-A5660680A9FF}.Debug|x64.ActiveCfg = Debug|x64
+		{D8296B7C-9580-4AD6-A79C-A5660680A9FF}.Debug|x64.Build.0 = Debug|x64
+		{D8296B7C-9580-4AD6-A79C-A5660680A9FF}.Release|Win32.ActiveCfg = Release|Win32
+		{D8296B7C-9580-4AD6-A79C-A5660680A9FF}.Release|Win32.Build.0 = Release|Win32
+		{D8296B7C-9580-4AD6-A79C-A5660680A9FF}.Release|x64.ActiveCfg = Release|x64
+		{D8296B7C-9580-4AD6-A79C-A5660680A9FF}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
