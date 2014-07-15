@@ -82,130 +82,116 @@ doc_className(String className) {
 
 
 ////
-//// Beanshell object inspector for Micro-Manager
+//// Object inspector
 ////
 
-import javax.swing.table.JTable;
-import javax.swing.table.DefaultTableModel;
-import org.jdesktop.swingx.*;
-import org.jdesktop.swingx.decorator.*;
+inspect(obj) {
+   object_ = obj;
+   frame_ = new javax.swing.JFrame();
+   methodsModel_ = new javax.swing.table.DefaultTableModel();
+   fieldsModel_ = new javax.swing.table.DefaultTableModel();
 
+   void makeUI() {
+      tabbedPane = new javax.swing.JTabbedPane();
 
-MemberViewer () {
-	String [] fieldColNames = {"Name","Value","Type","Declared in"};
-	String [] methodColNames = {"Name","Return type","Parameter types","Declared in"};
-	Vector fieldColNamesVec;
-	Vector methodColNamesVec;
-	Object theObject;
+      methodsTable = new org.jdesktop.swingx.JXTable();
+      methodsTable.setModel(methodsModel_);
+      tabbedPane.addTab("Methods", new javax.swing.JScrollPane(methodsTable));
 
-	MembersTab (String name, JTabbedPane tabbedPane) { 
-		JPanel panel;
-		JXTable table;
-		DefaultTableModel tableModel;
-		JScrollPane scrollPane;
-	
-		table = new JXTable();
-		//table = new JTable();
-		tableModel = new DefaultTableModel();
-		table.setModel(tableModel);
-		scrollPane = new JScrollPane(table);
-		tabbedPane.addTab(name,scrollPane);
-		return this;
-	}
+      fieldsTable = new org.jdesktop.swingx.JXTable();
+      fieldsTable.setModel(fieldsModel_);
+      tabbedPane.addTab("Fields", new javax.swing.JScrollPane(fieldsTable));
 
+      frame_.add(tabbedPane);
+      frame_.pack();
+      frame_.setBounds(100, 100, 900, 700);
+      frame_.show();
+   }
 
-	void inspect(obj) {
-		theObject = obj;
-		fieldsData = getFieldsData();
-		methodsData = getMethodsData();
+   void update() {
+      // If we add a "Refresh" button, it would be nice to preserve the JXTable
+      // sorting and column reordring. This is not currently done.
+      methodsModel_.setDataVector(getMethodsData(object_), getMethodsCols());
+      fieldsModel_.setDataVector(getFieldsData(object_), getFieldsCols());
+   }
 
-		fieldsTab.tableModel.setDataVector(fieldsData,fieldColNamesVec);
-		methodsTab.tableModel.setDataVector(methodsData,methodColNamesVec);
-		theFrame.show();
-		
-	}
+   Vector getMethodsCols() {
+      cols = new Vector();
+      cols.add("Name");
+      cols.add("Return Type");
+      cols.add("Parameter Types");
+      cols.add("Declared in");
+      return cols;
+   }
 
-	Vector arrayToVector(Object [] ObjectArray) {
-		theVec = new Vector();
-		for (item : ObjectArray) {
-			theVec.add(item);
-		}
-		return theVec;
-	}
+   Vector getMethodRow(obj, cls, method) {
+      sb = new StringBuilder();
+      for (paramType : method.getParameterTypes()) {
+         if (sb.length() > 0) {
+            sb.append(", ");
+         }
+         sb.append(paramType);
+      }
+      paramTypes = sb.toString();
 
-	Vector getFieldsData() {
-		rows = new Vector();
-		row = new Vector();
-		
-		curClass = theObject.Class;
-		while (curClass != null) {
-			fields = curClass.DeclaredFields;
-			for (field : fields) {
-				row = new Vector();
-				row.add(field.name);
-				val = eval("theObject."+field.Name);
-				if (val!=null)
-					row.add(val.toString());
-				else
-					row.add("null");
+      row = new Vector();
+      row.add(method.getName());
+      row.add(method.getReturnType());
+      row.add(paramTypes);
+      row.add(cls.getName());
+      return row;
+   }
 
-				row.add(field.type);
-				row.add(curClass.Name);
-				rows.add(row);
-			}
-			curClass = curClass.Superclass;
-		}
-	return rows;
-	}
+   Vector getMethodsData(obj) {
+      rows = new Vector();
+      for (cls = obj.getClass(); cls != null; cls = cls.getSuperclass()) {
+         methods = cls.getDeclaredMethods();
+         for (method : methods) {
+            // TODO We do not currently hide or provide any indication of
+            // overridden methods in superclasses.
+            rows.add(getMethodRow(obj, cls, method));
+         }
+      }
+      return rows;
+   }
 
-	Vector getMethodsData() {
-		rows = new Vector();
-		row = new Vector();
-		String parameterTypeList;
+   Vector getFieldsCols() {
+      cols = new Vector();
+      cols.add("Name");
+      cols.add("Value");
+      cols.add("Type");
+      cols.add("Declared in");
+      return cols;
+   }
 
-		curClass = theObject.Class;
-		while (curClass != null) {
-			methods = curClass.DeclaredMethods;
-			for (method : methods) {
-				row = new Vector();
-				row.add(method.name);
-				row.add(method.returnType);
-				parameterTypeList = "";
-				for (parameterType : method.parameterTypes)
-					parameterTypeList = parameterTypeList + parameterType + ", ";
-				if (parameterTypeList.length()>0)
-					parameterTypeList = parameterTypeList.substring(0,parameterTypeList.length()-2);
-				row.add(parameterTypeList);
-				row.add(curClass.Name);
-				rows.add(row);
-			}
-			curClass = curClass.Superclass;
-		}
-		return rows;
-	}
+   Vector getFieldRow(obj, cls, field) {
+      v = eval("obj." + field.getName());
+      value = (v != null ? v.toString() : "null");
 
-	setAccessibility(true);
-	searchBox = new JTextField(25);
-	theFrame = new JFrame();
-	theTabbedPane = new JTabbedPane();
-	methodsTab = MembersTab("Methods",theTabbedPane);
-	fieldsTab = MembersTab("Fields",theTabbedPane);
-	fieldColNamesVec = arrayToVector(fieldColNames);
-	methodColNamesVec = arrayToVector(methodColNames);
-	theFrame.add(theTabbedPane);
-	theFrame.pack();
-	theFrame.setBounds(100,100,800,500);
+      row = new Vector();
+      row.add(field.getName());
+      row.add(value);
+      row.add(field.getType());
+      row.add(cls.getName());
+      return row;
+   }
 
+   Vector getFieldsData(obj) {
+      rows = new Vector();
+      for (cls = obj.getClass(); cls != null; cls = cls.getSuperclass()) {
+         fields = cls.getDeclaredFields();
+         for (field : fields) {
+            rows.add(getFieldRow(obj, cls, field));
+         }
+      }
+      return rows;
+   }
 
-	return this;
-}
+   print("Starting inspector...");
+   update();
+   makeUI();
 
-__mv = null;
-
-void inspect(obj) {
-	if (super.__mv == null) {
-		print("Please wait while inspector is generated...");
-		super.__mv = MemberViewer();
-		}
-	super.__mv.inspect(obj);
+   // Although not normally needed, it might be handy for testing if we return
+   // this object.
+   return this;
 }
