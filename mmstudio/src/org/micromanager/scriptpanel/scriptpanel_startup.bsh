@@ -34,82 +34,93 @@ class dummyClassToForceBeanshellToUseAHashtableInItsNamespaceMethodsList {}
 setAccessibility(false);
 
 
-////
-//// Load Documentation
-////
+//
+// Open Javadoc in browser
+//
 
-import bsh.ClassIdentifier;
-import ij.plugin.BrowserLauncher;
+void doc(o) {
+   getClassName(o, namespace) {
+      Class cls = null;
+      if (o instanceof Class) {
+         cls = o;
+      }
+      else if (o instanceof bsh.ClassIdentifier) {
+         cls = namespace.identifierToClass(o);
+      }
+      else if (o instanceof String) {
+         cls = namespace.getClass((String) o);
+      }
+      else {
+         cls = o.getClass();
+      }
+      if (cls != null) {
+         return cls.getName();
+      }
+      return null;
+   }
 
+   boolean isJavaAPIClass(className) {
+      String[] javaAPIPackages = {
+         "java", "javax", "org.ietf", "org.omg", "org.w3c", "org.xml"
+      };
+      for (pkg : javaAPIPackages) {
+         if (className.startsWith(pkg + ".")) {
+            return true;
+         }
+      }
+      return false;
+   }
 
+   String getJavadocRoot(className) {
+      if (isJavaAPIClass(className)) {
+         return "http://docs.oracle.com/javase/6/docs/api/";
+      }
+      else if (className.startsWith("ij.")) {
+         return "http://rsb.info.nih.gov/ij/developer/api/";
+      }
+      else if (className.startsWith("bsh.")) {
+         return "http://www.beanshell.org/javadoc/";
+      }
+      else if (className.startsWith("org.micromanager.")) {
+         return "http://valelab.ucsf.edu/~MM/doc/mmstudio/";
+      }
+      else if (className.startsWith("mmcorej.")) {
+         return "http://valelab.ucsf.edu/~MM/doc/mmcorej/";
+      }
+      else if (className.startsWith("org.jdesktop.swingx.")) {
+         return "http://download.java.net/javadesktop/swinglabs/releases/0.8/docs/api/";
+      }
+      return null;
+   }
 
-getClassName(bsh.ClassIdentifier o) {
-	return getClassName(o,this.caller.namespace);
+   String getJavadocURL(className) {
+      root = getJavadocRoot(className);
+      if (root == null) {
+         return null;
+      }
+      return root + className.replace(".", "/") + ".html";
+   }
+
+   String className = getClassName(o, this.caller.namespace);
+   if (className == null) {
+      print("Cannot find class for " + o.toString());
+      return;
+   }
+   String url = getJavadocURL(className);
+   if (url != null) {
+      print("Opening Javadoc for " + className);
+      print(url);
+      ij.plugin.BrowserLauncher.openURL(url);
+   }
+   else {
+      print("Don't know how to find Javadoc for " + className);
+   }
 }
 
-getClassName(Object o) {
-	return getClassName(o,this.caller.namespace);
-}
 
-getClassName(bsh.ClassIdentifier o, namespace) {
-	return namespace.identifierToClass(o).getName();
-}
-
-getClassName(Object o, namespace) {
-	if (o instanceof String)
-		return namespace.getClass((String) o).getName();
-	else if (o instanceof Class)
-		return o.getName();
-	else
-		return o.getClass().getName();
-}
-
-doc(bsh.ClassIdentifier o) {
-	className = getClassName(o,this.caller.namespace);
-	doc_className(className);
-}
-
-doc(Object o) {
-	className = getClassName(o,this.caller.namespace);
-	doc_className(className);
-}
-
-doc_className(String className) {
-	print(className);
-	String [] sunAPIpkgs = {"java","javax","org.ietf","org.omg","org.w3c","org.xml"};
-
-	boolean sunAPI = false;
-	boolean ijAPI = false;
-	for (sunAPIpkg : sunAPIpkgs) {
-		sunAPI = sunAPI || className.startsWith(sunAPIpkg + ".");
-		}
-	
-	suffix = className.replace(".","/") + ".html";
-
-	theUrl = null;
-	if (sunAPI)	
-		theUrl = "http://docs.oracle.com/javase/6/docs/api/" + suffix;
-	if (className.startsWith("ij."))
-		theUrl = "http://rsb.info.nih.gov/ij/developer/api/" + suffix;
-	if (className.startsWith("bsh."))
-		theUrl = "http://www.beanshell.org/javadoc/" + suffix;
-	if (className.startsWith("org.micromanager."))
-		theUrl = "http://valelab.ucsf.edu/~MM/doc/mmstudio/" + suffix;
-	if (className.startsWith("mmcorej."))
-		theUrl = "http://valelab.ucsf.edu/~MM/doc/mmcorej/" + suffix;
-	if (className.startsWith("org.jdesktop.swingx."))
-		theUrl = "http://download.java.net/javadesktop/swinglabs/releases/0.8/docs/api/" + suffix;
-
-	if (theUrl!=null)
-		BrowserLauncher.openURL(theUrl);
-	else
-		print("No docs found.");
-}
-
-
-////
-//// Object inspector
-////
+//
+// Object inspector
+//
 
 inspect(obj) {
    object_ = obj;
