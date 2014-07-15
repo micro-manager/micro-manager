@@ -90,10 +90,10 @@ public:
    }
 
    // power setting limits:
-   double minlp(){ return minlp_;};
-   void minlp(double v__) { minlp_= v__;};
-   double maxlp(){ return maxlp_;};
-   void maxlp(double v__) { maxlp_= v__;};
+   double minlp() { return minlp_; }
+   void minlp(double v__) { minlp_= v__; }
+   double maxlp() { return maxlp_; }
+   void maxlp(double v__) { maxlp_= v__; }
    CoherentObis(const char* name);
    ~CoherentObis();
   
@@ -104,7 +104,7 @@ public:
   
    void GetName(char* pszName) const;
    bool Busy();
-   const std::string currentIOBuffer(){ return buf_string_;};
+   const std::string currentIOBuffer() { return buf_string_; }
    
    // action interface
    // ----------------
