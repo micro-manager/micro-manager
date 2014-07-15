@@ -250,6 +250,7 @@ public class PanelUtils {
    public static void setSpinnerFloatValue(JSpinner sp, float f) {
       // TODO figure out why the type of value in the numbermodel is 
       // changing type to float which necessitates this code
+      // this should call change listener
       try {
          sp.setValue((Double)((double)f));
       } catch (Exception ex) {

@@ -104,6 +104,7 @@ public class Properties {
       TRIGGER_POLARITY("TriggerPolarity"),// for Hamamatsu
       TRIGGER_ACTIVE("TRIGGER ACTIVE"),   // for Hamamatsu
       READOUTTIME("ReadoutTime"),         // for Hamamatsu
+      SENSOR_MODE("SENSOR MODE"),         // for Hamamatsu
       TRIGGER_MODE("Triggermode"),        // for PCO
       TRIGGER_MODE_ANDOR("TriggerMode"),  // for Andor sCMOS
       FIRMWARE_VERSION("FirmwareVersion"),
@@ -160,12 +161,16 @@ public class Properties {
       DO_SSZ("Z - save settings to card (partial)"),
       INTERNAL("INTERNAL"),
       EXTERNAL("EXTERNAL"),
-      SYNCREADOUT("SYNCREADOUT"),
       INTERNAL_LC("Internal"),
       EXTERNAL_LC("External"),
       INTERNAL_ANDOR("Internal (Recommended for fast acquisitions)"),
       POSITIVE("POSITIVE"),
       NEGATIVE("NEGATIVE"),
+      AREA("AREA"),                // for Hamamatsu's SENSOR MODE
+      PROGRESSIVE("PROGRESSIVE"),  // for Hamamatsu's SENSOR MODE, the "lightsheet" mode
+      SYNCREADOUT("SYNCREADOUT"),  // for Hamamatsu's TRIGGER ACTIVE
+      LEVEL("LEVEL"),              // for Hamamatsu's TRIGGER ACTIVE
+      EDGE("EDGE"),                // for Hamamatsu's TRIGGER ACTIVE
       ;
       private final String text;
       Values(String text) {
