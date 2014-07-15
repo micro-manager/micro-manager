@@ -376,6 +376,7 @@ m4_define([device_adapter_dirs], [m4_strip([
    CSUW1
    Cobolt
    CoherentCube
+   CoherentOBIS
    Conix
    Corvus
    DTOpenLayer

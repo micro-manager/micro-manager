@@ -87,6 +87,7 @@ SUBDIRS = \
 	CSUW1 \
 	Cobolt \
 	CoherentCube \
+	CoherentOBIS \
 	Conix \
 	Corvus \
 	DTOpenLayer \
