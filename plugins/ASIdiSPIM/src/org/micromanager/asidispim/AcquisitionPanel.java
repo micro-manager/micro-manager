@@ -31,6 +31,7 @@ import org.micromanager.asidispim.Utils.ListeningJPanel;
 import org.micromanager.asidispim.Utils.PanelUtils;
 import org.micromanager.asidispim.Utils.StagePositionUpdater;
 
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Insets;
 import java.awt.Rectangle;
@@ -91,7 +92,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private final Prefs prefs_;
    private final CMMCore core_;
    private final ScriptInterface gui_;
-   private final JCheckBox sliceTimingEnabled_;
+   private final JCheckBox advancedSliceTimingCB_;
    private final JSpinner numSlices_;
    private final JSpinner numSides_;
    private final JComboBox firstSide_;
@@ -300,11 +301,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       volPanel_.add(desiredLightExposure_, "wrap");
       
       calculateSliceTiming_ = new JButton("Calculate slice timing");
-      
+      calculateSliceTiming_.setToolTipText("Must recalculate after changing the camera ROI.");
       calculateSliceTiming_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            recalculateSliceTiming();
+            recalculateSliceTiming(false, true);
          }
       });
       volPanel_.add(calculateSliceTiming_, "center, span 2, wrap");
@@ -326,17 +327,17 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             Properties.Keys.PLUGIN_ADVANCED_SLICE_TIMING, true);
       
       // special checkbox in titled border to enable/disable sub-panel plus more
-      sliceTimingEnabled_ = new JCheckBox("Slice Timing Settings (Advanced)", slicePanelEnabled); 
-      sliceTimingEnabled_.setFocusPainted(false); 
+      advancedSliceTimingCB_ = new JCheckBox("Slice Timing Settings (Advanced)", slicePanelEnabled); 
+      advancedSliceTimingCB_.setFocusPainted(false); 
       ComponentTitledBorder componentBorder = 
-              new ComponentTitledBorder(sliceTimingEnabled_, slicePanel_ 
+              new ComponentTitledBorder(advancedSliceTimingCB_, slicePanel_ 
               , BorderFactory.createLineBorder(ASIdiSPIM.borderColor)); 
 
       // this action listener takes care of enabling/disabling inputs
       // we call this to get GUI looking right
       ActionListener sliceTimingDisableGUIInputs = new ActionListener(){ 
          public void actionPerformed(ActionEvent e){ 
-            boolean enabled = sliceTimingEnabled_.isSelected(); 
+            boolean enabled = advancedSliceTimingCB_.isSelected(); 
             Component comp[] = slicePanel_.getComponents(); 
             for(int i = 0; i<comp.length; i++){ 
                comp[i].setEnabled(enabled); 
@@ -354,7 +355,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       // don't add this action listener until after GUI is set
       ActionListener sliceTimingCalculate = new ActionListener(){
         public void actionPerformed(ActionEvent e){
-           boolean enabled = sliceTimingEnabled_.isSelected(); 
+           boolean enabled = advancedSliceTimingCB_.isSelected(); 
            prefs_.putBoolean(panelName_,
                  Properties.Keys.PLUGIN_ADVANCED_SLICE_TIMING, enabled);
         }
@@ -578,10 +579,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       cameraResetTime_ = computeCameraResetTime();
       
       // properly initialize the advanced slice timing
-      sliceTimingEnabled_.addActionListener(sliceTimingDisableGUIInputs);
-      sliceTimingEnabled_.doClick();
-      sliceTimingEnabled_.doClick();
-      sliceTimingEnabled_.addActionListener(sliceTimingCalculate);
+      advancedSliceTimingCB_.addActionListener(sliceTimingDisableGUIInputs);
+      advancedSliceTimingCB_.doClick();
+      advancedSliceTimingCB_.doClick();
+      advancedSliceTimingCB_.addActionListener(sliceTimingCalculate);
       
       updateActualSlicePeriodLabel();
       updateActualVolumeDurationLabel();
@@ -591,20 +592,29 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    }//end constructor
 
    
-   
-   private SliceTiming getTimingFromPeriodAndLightExposure(float desiredPeriod, float desiredExposure) {
-      
-      // uses algorithm Jon worked out in Octave code
-      // each slice period goes like this:
+   /**
+    * 
+    * @param showWarnings true to warn user about needing to change slice period
+    * @return
+    */
+   private SliceTiming getTimingFromPeriodAndLightExposure(boolean showWarnings) {
+      // uses algorithm Jon worked out in Octave code; each slice period goes like this:
       // 1. camera readout time
       // 2. any extra delay time
       // 3. camera reset
       // 4. start scan and then slice (0.25 time on either end of the scan the laser is off)
       
       final float scanLaserBufferTime = (float) 0.25;
+      final Color foregroundColorOK = Color.BLACK;
+      final Color foregroundColorError = Color.RED;
+      final Component elementToColor  = desiredSlicePeriod_.getEditor().getComponent(0);
+      
       SliceTiming s = new SliceTiming();
       cameraResetTime_ = computeCameraResetTime();      // recalculate for safety
       cameraReadoutTime_ = computeCameraReadoutTime();  // recalculate for safety
+      
+      float desiredPeriod = PanelUtils.getSpinnerFloatValue(desiredSlicePeriod_);
+      float desiredExposure = PanelUtils.getSpinnerFloatValue(desiredLightExposure_);
       
       // this assumes "usual" camera mode, not Hamamatsu's "synchronous" or Zyla's "overlap" mode
       // TODO: add the ability to use these faster modes (will require changes in several places
@@ -620,13 +630,20 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       
       // if calculated delay is negative then we have to reduce exposure time in 1 sec increments
       if (globalDelay < 0) {
-         int extraTimeNeeded = (int) Math.ceil((float)-1*globalDelay);  // positive number
+         float extraTimeNeeded = PanelUtils.ceilToQuarterMs((float)-1*globalDelay);  // positive number
             globalDelay += extraTimeNeeded;
-            JOptionPane.showMessageDialog(null,
-                  "Slice timing: increased slice period to meet laser exposure"
-                  + " constraint (some time required for camera readout).",
-                  "Warning",
+            if (showWarnings) {
+               JOptionPane.showMessageDialog(null,
+                     "Increasing slice period to meet laser exposure constraint\n"
+                           + "(some time required for camera readout).\n",
+                           "Warning",
                   JOptionPane.WARNING_MESSAGE);
+               elementToColor.setForeground(foregroundColorError);
+               // considered actually changing the value, but decided against it because
+               // maybe the user just needs to set the ROI appropriately and recalculate
+            }
+      } else {
+         elementToColor.setForeground(foregroundColorOK);
       }
       
       s.scanDelay = cameraReadout_max + globalDelay + cameraReset_max;
@@ -640,17 +657,38 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       return s;
    }
    
+   
    /**
-    * Re-calculate the controller's timing settings when user changes 
-    * desired slice period or desired light exposure in "easy timing" mode.
+    * @return true if the slice timing matches the current user parameters and ROI
+    */
+   private boolean isSliceTimingUpToDate(boolean showWarnings) {
+      SliceTiming currentTiming = getCurrentSliceTiming();
+      SliceTiming newTiming = getTimingFromPeriodAndLightExposure(showWarnings);
+      return currentTiming.equals(newTiming);
+   }
+   
+   
+   /**
+    * Re-calculate the controller's timing settings for "easy timing" mode.
+    * If the values are the same nothing happens.  If they should be changed,
+    * then the controller's properties will be set.  Parameter sets whether or
+    * not user needs to give permission for change.
+    * @param promptBeforeChange true means user has to agree to change
+    * @param showWarnings will show warning if the user-specified slice period too short
     * @return true if any change actually made  
     */
-   private boolean recalculateSliceTiming() {
-      SliceTiming currentTiming = getCurrentSliceTiming();
-      SliceTiming newTiming = getTimingFromPeriodAndLightExposure(
-            PanelUtils.getSpinnerFloatValue(desiredSlicePeriod_),
-            PanelUtils.getSpinnerFloatValue(desiredLightExposure_));
-      if (!currentTiming.equals(newTiming)) {
+   private boolean recalculateSliceTiming(boolean promptBeforeChange, boolean showWarnings) {
+      if (!isSliceTimingUpToDate(showWarnings)) {
+         if (promptBeforeChange) {
+            int dialogResult = JOptionPane.showConfirmDialog(null,
+                  "OK to modify slice timing settings?", 
+                  "Warning",
+                  JOptionPane.OK_CANCEL_OPTION);
+            if (dialogResult != JOptionPane.OK_OPTION) {
+               return false;
+            }
+         }
+         SliceTiming newTiming = getTimingFromPeriodAndLightExposure(showWarnings);
          setCurrentSliceTiming(newTiming);
          return true;
       }
@@ -766,7 +804,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    /**
     * Gets an estimate of a specific camera's time between trigger and global exposure,
     * i.e. how long it takes for reset.  Will depend on whether we have/use global
-    * reset, etc.
+    * reset, the ROI size, etc.
     * @param camKey
     * @return
     */
@@ -821,7 +859,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       }
       switch (camLibrary) {
       case HAMCAM:
-         // device adapter provides rounded to nearest 0.1ms, here we calculate it ourselves instead
+         // device adapter provides readout time rounded to nearest 0.1ms; we calculate it ourselves instead
          // note that Flash4's ROI is always set in increments of 4 pixels
 //         readout = props_.getPropValueFloat(camKey, Properties.Keys.READOUTTIME) * (float) 1000;
          final double H1 = 2592/266e3;  // time to readout one row in ms (just under 10us) 
@@ -973,6 +1011,14 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       } else {
          firstCamera = cameraB;
          secondCamera = cameraA;
+      }
+      
+      // make sure slice timings are up to date 
+      if (!advancedSliceTimingCB_.isSelected()) {
+         if(!isSliceTimingUpToDate(false)) {
+            gui_.showError("Slice timing is not up to date, please recalculate.");
+            return false;
+         }
       }
       
       cameraReadoutTime_ = computeCameraReadoutTime();
