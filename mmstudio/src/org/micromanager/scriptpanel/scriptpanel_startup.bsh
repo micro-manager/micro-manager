@@ -192,8 +192,13 @@ inspect(obj) {
    }
 
    Vector getFieldRow(obj, cls, field) {
-      v = eval("obj." + field.getName());
-      value = (v != null ? v.toString() : "null");
+      try {
+         v = eval("obj." + field.getName());
+         value = (v != null ? v.toString() : "null");
+      }
+      catch (Exception e) {
+         value = "<inaccessible>";
+      }
 
       row = new Vector();
       row.add(field.getName());
