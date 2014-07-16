@@ -148,6 +148,10 @@ void CorePropertyCollection::Execute(const char* propName, const char* value)
    {
       core_->setSLMDevice(value);
    }
+   else if (strcmp(propName, MM::g_Keyword_CoreGalvo) == 0)
+   {
+      core_->setGalvoDevice(value);
+   }
    else if (strcmp(propName, MM::g_Keyword_CoreTimeoutMs) == 0)
    {
       core_->setTimeoutMs(atol(value));
@@ -227,6 +231,9 @@ void CorePropertyCollection::Refresh()
 
    // SLM
    Set(MM::g_Keyword_CoreSLM, core_->getSLMDevice().c_str());
+
+   // Galvo
+   Set(MM::g_Keyword_CoreGalvo, core_->getGalvoDevice().c_str());
 
    // Timeout for Device Busy checking
    Set(MM::g_Keyword_CoreTimeoutMs, CDeviceUtils::ConvertToString(core_->getTimeoutMs()));
