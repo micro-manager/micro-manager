@@ -604,6 +604,11 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       }
    }
 
+   @Subscribe
+   public void onUpdateTitleEvent(UpdateTitleEvent event) {
+      updateWindowTitleAndStatus();
+   }
+
    public void updateWindowTitleAndStatus() {
       if (controls_ == null) {
          return;

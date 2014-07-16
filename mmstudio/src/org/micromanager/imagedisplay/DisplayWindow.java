@@ -5,6 +5,8 @@ import com.google.common.eventbus.Subscribe;
 
 import ij.ImagePlus;
 import ij.gui.StackWindow;
+import ij.gui.Toolbar;
+
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.event.ComponentEvent;
@@ -48,7 +50,7 @@ public class DisplayWindow extends StackWindow {
    };
 
    public DisplayWindow(final ImagePlus ip, DisplayControls controls, 
-         EventBus bus) {
+         final EventBus bus) {
       super(ip);
       // HACK: hide ImageJ's native scrollbars; we provide our own.
       if (cSelector != null) {
@@ -70,8 +72,17 @@ public class DisplayWindow extends StackWindow {
 
       pack();
 
-      // Add a listener so we can update the histogram when an ROI is drawn.
+      // Add a listener so we can update the histogram when an ROI is drawn,
+      // and to override the title-setting behavior of ImagePlus when the 
+      // magnification tool is used.
       ic.addMouseListener(new MouseInputAdapter() {
+         @Override
+         public void mousePressed(MouseEvent me) {
+            if (Toolbar.getToolId() == 11) { // zoom tool selected
+               bus.post(new UpdateTitleEvent());
+            }
+         }
+
          @Override
          public void mouseReleased(MouseEvent me) {
             if (ip instanceof MMCompositeImage) {
