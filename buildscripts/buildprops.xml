@@ -3,16 +3,17 @@
 	<dirname property="mm.basedir" file="${ant.file.mm.props}/.."/>
 
 	<!-- Extra tasks from ant-contrib -->
+	<property name="mm.build.java.lib.ant-contrib" location="${mm.basedir}/dependencies/builddeps/ant-contrib-1.0b3.jar"/>
 	<condition property="mm.build.ant-contrib-available">
 		<resourceexists>
-			<file file="${mm.basedir}/lib/ant-contrib-1.0b3.jar"/>
+			<file file="${mm.build.java.lib.ant-contrib}"/>
 		</resourceexists>
 	</condition>
 	<fail unless="mm.build.ant-contrib-available"
 		message="Please run 'ant -f buildscripts/fetchdeps.xml' first"/>
 	<taskdef resource="net/sf/antcontrib/antcontrib.properties">
 		<classpath>
-			<pathelement location="${mm.basedir}/lib/ant-contrib-1.0b3.jar"/>
+			<pathelement location="${mm.build.java.lib.ant-contrib}"/>
 		</classpath>
 	</taskdef>
 

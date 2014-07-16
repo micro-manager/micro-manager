@@ -1,7 +1,7 @@
 <project xmlns:ivy="antlib:org.apache.ivy.ant" name="mm.fetchdeps" default="resolve">
 	<dirname property="mm.basedir" file="${ant.file.mm.fetchdeps}/.."/>
-	<property name="ivy.dep.file" location="${mm.basedir}/buildscripts/ivy.xml"/>
-	<property name="ivy.lib.dir" location="${mm.basedir}/lib"/>
+	<property name="ivy.dep.file" location="${mm.basedir}/buildscripts/ivy-builddeps.xml"/>
+	<property name="ivy.lib.dir" location="${mm.basedir}/dependencies/builddeps"/>
 
 	<target name="download-ivy" unless="offline">
 		<property name="ivy.install.version" value="2.3.0"/>
