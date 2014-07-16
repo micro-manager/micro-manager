@@ -23,11 +23,7 @@ package org.micromanager.acquisition;
 
 import java.nio.ByteOrder;
 import java.util.TreeMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import loci.common.DateTools;
-import loci.common.services.DependencyException;
-import loci.common.services.ServiceException;
 import loci.common.services.ServiceFactory;
 import loci.formats.MetadataTools;
 import loci.formats.meta.IMetadata;

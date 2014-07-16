@@ -24,7 +24,6 @@
 package org.micromanager.acquisition;
 
 import java.awt.Color;
-import java.lang.reflect.Method;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;

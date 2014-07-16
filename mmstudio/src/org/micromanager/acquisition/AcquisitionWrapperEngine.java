@@ -3,7 +3,6 @@ package org.micromanager.acquisition;
 
 import java.awt.Color;
 import java.io.File;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;

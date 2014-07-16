@@ -153,10 +153,12 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
       }
       progressBar.setVisible(false);
       //reset this static variable to false so the prompt is delivered if a new data set is opened
-      reader.fixIndexMapWithoutPrompt_ = false;
+      MultipageTiffReader.fixIndexMapWithoutPrompt_ = false;
 
-      setSummaryMetadata(reader.getSummaryMetadata(), true);
-      displayAndComments_ = reader.getDisplayAndComments();
+      if (reader != null) {
+         setSummaryMetadata(reader.getSummaryMetadata(), true);
+         displayAndComments_ = reader.getDisplayAndComments();
+      }
 
       progressBar.setProgress(1);
       progressBar.setVisible(false);
@@ -662,7 +664,7 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
       }
 
       private String createBaseFilename(JSONObject firstImageTags) {
-         String baseFilename = "";
+         String baseFilename;
          try {
             String prefix = summaryMetadata_.getString("Prefix");
             if (prefix.length() == 0) {
