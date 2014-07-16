@@ -104,7 +104,7 @@ using namespace std;
  */
 const int MMCore_versionMajor = 5;
 const int MMCore_versionMinor = 0;
-const int MMCore_versionPatch = 1;
+const int MMCore_versionPatch = 2;
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -2203,10 +2203,9 @@ void CMMCore::setShutterOpen(const char* shutterLabel, bool state) throw (CMMErr
 
       if (pShutter->HasProperty(MM::g_Keyword_State))
       {
-         std::string shutterLabel = shutter_->GetLabel();
          {
             MMThreadGuard scg(stateCacheLock_);
-            stateCache_.addSetting(PropertySetting(shutterLabel.c_str(), MM::g_Keyword_State, CDeviceUtils::ConvertToString(state)));
+            stateCache_.addSetting(PropertySetting(shutterLabel, MM::g_Keyword_State, CDeviceUtils::ConvertToString(state)));
          }
       }
    }
@@ -2518,8 +2517,8 @@ void CMMCore::stopSequenceAcquisition(const char* label) throw (CMMError)
    int nRet = pCam->StopSequenceAcquisition();
    if (nRet != DEVICE_OK)
    {
-      logError(getDeviceName(camera_).c_str(), getDeviceErrorText(nRet, camera_).c_str());
-      throw CMMError(getDeviceErrorText(nRet, camera_).c_str(), MMERR_DEVICE_GENERIC);
+      logError(label, getDeviceErrorText(nRet, pCam).c_str());
+      throw CMMError(getDeviceErrorText(nRet, pCam).c_str(), MMERR_DEVICE_GENERIC);
    }
 
    LOG_DEBUG(coreLogger_) << "Did stop sequence acquisition from camera " << label;
@@ -3785,7 +3784,7 @@ void CMMCore::setExposure(const char* label, double dExp) throw (CMMError)
          dExp << " ms";
 
       pCamera->SetExposure(dExp);
-      if (camera_->HasProperty(MM::g_Keyword_Exposure))
+      if (pCamera->HasProperty(MM::g_Keyword_Exposure))
       {
          {
             MMThreadGuard scg(stateCacheLock_);
