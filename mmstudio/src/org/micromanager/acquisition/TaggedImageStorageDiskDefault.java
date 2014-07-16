@@ -85,12 +85,11 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
    
    private String getPosition(JSONObject tags) {
       try {
-         String pos;
-         if (tags.has("PositionName") && !tags.isNull("PositionName")) {
-            return MDUtils.getPositionName(tags);
-         } else {
+         String pos = MDUtils.getPositionName(tags);
+         if (pos == null) {
             return "";
          }
+         return pos;
       } catch (Exception e) {
          return "";
       }
@@ -117,7 +116,8 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
          String fileName = tiffFileName;
          try {
             posName = positionNames_.get(MDUtils.getPositionIndex(md));
-            if (posName != null && posName.length() > 0 && !posName.contentEquals("null")) {
+            if (posName != null && posName.length() > 0 && 
+                  !posName.contentEquals("null")) {
                JavaUtils.createDirectory(dir_ + "/" + posName);
                fileName = posName + "/" + tiffFileName;
             } else {
@@ -137,7 +137,6 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
          writeFrameMetadata(md);
          String label = MDUtils.getLabel(md);
          filenameTable_.put(label, fileName);
-         //metadataTable_.put(label, md);
       } catch (Exception ex) {
          ReportingUtils.showError(ex);
       }
@@ -313,7 +312,7 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
       }
    }
    
-     private void applyPixelSizeCalibration(final ImagePlus ip) {
+   private void applyPixelSizeCalibration(final ImagePlus ip) {
       try {
          JSONObject summary = getSummaryMetadata();
          double pixSizeUm = summary.getDouble("PixelSize_um");
@@ -323,11 +322,13 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
             cal.pixelWidth = pixSizeUm;
             cal.pixelHeight = pixSizeUm;
             String intMs = "Interval_ms";
-            if (summary.has(intMs))
+            if (summary.has(intMs)) {
                cal.frameInterval = summary.getDouble(intMs) / 1000.0;
+            }
             String zStepUm = "z-step_um";
-            if (summary.has(zStepUm))
+            if (summary.has(zStepUm)) {
                cal.pixelDepth = summary.getDouble(zStepUm);
+            }
             ip.setCalibration(cal);
          }
       } catch (JSONException ex) {
