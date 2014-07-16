@@ -584,7 +584,7 @@ private:
    PixelSizeConfigGroup* pixelSizeGroup_;
    CircularBuffer* cbuf_;
 
-   std::vector< boost::shared_ptr<DeviceInstance> > imageSynchro_;
+   std::vector< boost::weak_ptr<DeviceInstance> > imageSynchroDevices_;
    CPluginManager pluginManager_;
    std::map<int, std::string> errorText_;
    CPropBlockMap propBlocks_;

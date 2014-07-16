@@ -878,8 +878,6 @@ void CMMCore::unloadDevice(const char* label///< the name of the device to unloa
 void CMMCore::unloadAllDevices() throw (CMMError)
 {
    try {
-      imageSynchro_.clear();
-      
       configGroups_->Clear();
 
       //selected channel group is no longer valid
@@ -1384,10 +1382,15 @@ void CMMCore::waitForConfig(const char* group, const char* configName) throw (CM
  */
 void CMMCore::waitForImageSynchro() throw (CMMError)
 {
-   for (size_t i=0; i<imageSynchro_.size(); i++)
+   for (std::vector< boost::weak_ptr<DeviceInstance> >::iterator
+         it = imageSynchroDevices_.begin(), end = imageSynchroDevices_.end();
+         it != end; ++it)
    {
-      // poll the device until it stops...
-      waitForDevice(imageSynchro_[i]);
+      boost::shared_ptr<DeviceInstance> device = it->lock();
+      if (device)
+      {
+         waitForDevice(device);
+      }
    }
 }
 
@@ -2084,6 +2087,26 @@ void CMMCore::snapImage() throw (CMMError)
 }
 
 
+// Predicate used by assignImageSynchro() and removeImageSynchro()
+namespace
+{
+   class DeviceWeakPtrInvalidOrMatches
+   {
+      boost::shared_ptr<DeviceInstance> theDevice_;
+   public:
+      explicit DeviceWeakPtrInvalidOrMatches(
+            boost::shared_ptr<DeviceInstance> theDevice) :
+         theDevice_(theDevice)
+      {}
+      DeviceWeakPtrInvalidOrMatches() {}
+      bool operator()(const boost::weak_ptr<DeviceInstance>& ptr)
+      {
+         boost::shared_ptr<DeviceInstance> aDevice = ptr.lock();
+         return (!aDevice || aDevice == theDevice_);
+      }
+   };
+} // anonymous namespace
+
 /**
  * Add device to the image-synchro list. Image acquistion waits for all devices
  * in this list.
@@ -2093,7 +2116,13 @@ void CMMCore::assignImageSynchro(const char* label) throw (CMMError)
 {
    boost::shared_ptr<DeviceInstance> pDevice = GetDeviceWithCheckedLabel(label);
 
-   imageSynchro_.push_back(pDevice);
+   imageSynchroDevices_.push_back(pDevice);
+
+   // Remove any dead references
+   imageSynchroDevices_.erase(std::remove_if(imageSynchroDevices_.begin(),
+            imageSynchroDevices_.end(), DeviceWeakPtrInvalidOrMatches()),
+         imageSynchroDevices_.end());
+
    LOG_DEBUG(coreLogger_) << "Added " << label << " to image-synchro list";
 }
 
@@ -2103,19 +2132,11 @@ void CMMCore::assignImageSynchro(const char* label) throw (CMMError)
  */
 void CMMCore::removeImageSynchro(const char* label) throw (CMMError)
 {
-   boost::shared_ptr<DeviceInstance> dev = GetDeviceWithCheckedLabel(label);
-
-   vector< boost::shared_ptr<DeviceInstance> >::iterator it = find(imageSynchro_.begin(), imageSynchro_.end(), dev);
-   if (it != imageSynchro_.end())
-   {
-      imageSynchro_.erase(it);
-      LOG_DEBUG(coreLogger_) << "Removed " << label << " from image-synchro list";
-   }
-   else
-   {
-      LOG_INFO(coreLogger_) << "Request to remove " << label <<
-         " from image-synchro list ignored (not in list)";
-   }
+   boost::shared_ptr<DeviceInstance> device = GetDeviceWithCheckedLabel(label);
+   imageSynchroDevices_.erase(std::remove_if(imageSynchroDevices_.begin(),
+            imageSynchroDevices_.end(), DeviceWeakPtrInvalidOrMatches(device)),
+         imageSynchroDevices_.end());
+   LOG_DEBUG(coreLogger_) << "Removed " << label << " from image-synchro list";
 }
 
 /**
@@ -2123,7 +2144,7 @@ void CMMCore::removeImageSynchro(const char* label) throw (CMMError)
  */
 void CMMCore::removeImageSynchroAll()
 {
-   imageSynchro_.clear();
+   imageSynchroDevices_.clear();
    LOG_DEBUG(coreLogger_) << "Cleared image-synchro list";
 }
 
