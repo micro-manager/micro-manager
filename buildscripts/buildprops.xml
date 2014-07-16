@@ -10,7 +10,7 @@
 		</resourceexists>
 	</condition>
 	<fail unless="mm.build.ant-contrib-available"
-		message="Please run 'ant -f buildscripts/fetchdeps.xml' first"/>
+		message="Please run 'ant -f buildscripts/fetchdeps.xml' first. (If you get errors, try deleting the 'dependencies' directory and starting over.)"/>
 	<taskdef resource="net/sf/antcontrib/antcontrib.properties">
 		<classpath>
 			<pathelement location="${mm.build.java.lib.ant-contrib}"/>
