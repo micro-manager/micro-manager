@@ -1839,6 +1839,11 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
          ImageCanvas canvas = curWin.getCanvas();
          Rectangle r = canvas.getBounds();
          canvas.zoomOut(r.width / 2, r.height / 2);
+         // Fix the window title, which IJ just mangled. 
+         VirtualAcquisitionDisplay display = VirtualAcquisitionDisplay.getDisplay(curWin.getImagePlus());
+         if (display != null) {
+            display.updateWindowTitleAndStatus();
+         }
       }
    }
 
@@ -1848,6 +1853,11 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
          ImageCanvas canvas = curWin.getCanvas();
          Rectangle r = canvas.getBounds();
          canvas.zoomIn(r.width / 2, r.height / 2);
+         // Fix the window title, which IJ just mangled. 
+         VirtualAcquisitionDisplay display = VirtualAcquisitionDisplay.getDisplay(curWin.getImagePlus());
+         if (display != null) {
+            display.updateWindowTitleAndStatus();
+         }
       }
    }
 
