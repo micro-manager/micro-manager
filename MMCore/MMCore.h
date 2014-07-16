@@ -564,15 +564,14 @@ private:
 
    bool everSnapped_;
 
-   // "Default" or "current" devices.
-   boost::shared_ptr<CameraInstance> camera_;
-   boost::shared_ptr<ShutterInstance> shutter_;
-   boost::shared_ptr<StageInstance> focusStage_;
-   boost::shared_ptr<XYStageInstance> xyStage_;
-   boost::shared_ptr<AutoFocusInstance> autoFocus_;
-   boost::shared_ptr<SLMInstance> slm_;
-   boost::shared_ptr<GalvoInstance> galvo_;
-   boost::shared_ptr<ImageProcessorInstance> imageProcessor_;
+   boost::weak_ptr<CameraInstance> currentCameraDevice_;
+   boost::weak_ptr<ShutterInstance> currentShutterDevice_;
+   boost::weak_ptr<StageInstance> currentFocusDevice_;
+   boost::weak_ptr<XYStageInstance> currentXYStageDevice_;
+   boost::weak_ptr<AutoFocusInstance> currentAutofocusDevice_;
+   boost::weak_ptr<SLMInstance> currentSLMDevice_;
+   boost::weak_ptr<GalvoInstance> currentGalvoDevice_;
+   boost::weak_ptr<ImageProcessorInstance> currentImageProcessor_;
 
    std::string channelGroup_;
    long pollingIntervalMs_;

@@ -810,32 +810,38 @@ void CMMCore::assignDefaultRole(boost::shared_ptr<DeviceInstance> pDevice)
    switch(pDevice->GetType())
    {
       case MM::CameraDevice:
-         camera_ = boost::static_pointer_cast<CameraInstance>(pDevice);
+         currentCameraDevice_ =
+            boost::static_pointer_cast<CameraInstance>(pDevice);
          LOG_INFO(coreLogger_) << "Default camera set to " << label;
          break;
 
       case MM::ShutterDevice:
-         shutter_ = boost::static_pointer_cast<ShutterInstance>(pDevice);
+         currentShutterDevice_ =
+            boost::static_pointer_cast<ShutterInstance>(pDevice);
          LOG_INFO(coreLogger_) << "Default shutter set to " << label;
          break;
 
       case MM::XYStageDevice:
-         xyStage_ = boost::static_pointer_cast<XYStageInstance>(pDevice);
+         currentXYStageDevice_ =
+            boost::static_pointer_cast<XYStageInstance>(pDevice);
          LOG_INFO(coreLogger_) << "Default xy stage set to " << label;
          break;
 
       case MM::AutoFocusDevice:
-         autoFocus_ = boost::static_pointer_cast<AutoFocusInstance>(pDevice);
+         currentAutofocusDevice_ =
+            boost::static_pointer_cast<AutoFocusInstance>(pDevice);
          LOG_INFO(coreLogger_) << "Default autofocus set to " << label;
          break;
 
       case MM::SLMDevice:
-         slm_ = boost::static_pointer_cast<SLMInstance>(pDevice);
+         currentSLMDevice_ =
+            boost::static_pointer_cast<SLMInstance>(pDevice);
          LOG_INFO(coreLogger_) << "Default SLM set to " << label;
          break;
 
       case MM::GalvoDevice:
-         galvo_ = boost::static_pointer_cast<GalvoInstance>(pDevice);
+         currentGalvoDevice_ =
+            boost::static_pointer_cast<GalvoInstance>(pDevice);
          LOG_INFO(coreLogger_) << "Default galvo set to " << label;
          break;
 
@@ -853,40 +859,6 @@ void CMMCore::unloadDevice(const char* label///< the name of the device to unloa
 {
    boost::shared_ptr<DeviceInstance> pDevice = GetDeviceWithCheckedLabel(label);
 
-   // Remove any references we might hold to the device.
-   if (pDevice == camera_)
-   {
-      camera_.reset();
-   }
-   else if (pDevice == shutter_)
-   {
-      shutter_.reset();
-   }
-   else if (pDevice == focusStage_)
-   {
-      focusStage_.reset();
-   }
-   else if (pDevice == xyStage_)
-   {
-      xyStage_.reset();
-   }
-   else if (pDevice == autoFocus_)
-   {
-      autoFocus_.reset();
-   }
-   else if (pDevice == slm_)
-   {
-      slm_.reset();
-   }
-   else if (pDevice == galvo_)
-   {
-      galvo_.reset();
-   }
-   else if (pDevice == imageProcessor_)
-   {
-      imageProcessor_.reset();
-   }
-   
    try {
       MMThreadGuard guard(pluginManager_.getModuleLock(pDevice));
       LOG_DEBUG(coreLogger_) << "Will unload device " << label;
@@ -906,16 +878,6 @@ void CMMCore::unloadDevice(const char* label///< the name of the device to unloa
 void CMMCore::unloadAllDevices() throw (CMMError)
 {
    try {
-      // clear all roles
-      camera_.reset();
-      shutter_.reset();
-      focusStage_.reset();
-      xyStage_.reset();
-      autoFocus_.reset();
-      slm_.reset();
-      galvo_.reset();
-      imageProcessor_.reset();
-
       imageSynchro_.clear();
       
       configGroups_->Clear();
@@ -2045,16 +2007,17 @@ void CMMCore::loadXYStageSequence(const char* label,
  */
 void CMMCore::snapImage() throw (CMMError)
 {
-   if (camera_)
+   boost::shared_ptr<CameraInstance> camera = currentCameraDevice_.lock();
+   if (camera)
    {
-      if(camera_->IsCapturing())
+      if(camera->IsCapturing())
       {
          throw CMMError(getCoreErrorText(
             MMERR_NotAllowedDuringSequenceAcquisition).c_str()
             ,MMERR_NotAllowedDuringSequenceAcquisition);
       }
 
-      MMThreadGuard guard(pluginManager_.getModuleLock(camera_));
+      MMThreadGuard guard(pluginManager_.getModuleLock(camera));
 
       int ret = DEVICE_OK;
       try {
@@ -2063,18 +2026,21 @@ void CMMCore::snapImage() throw (CMMError)
          waitForImageSynchro();
 
          // open the shutter
-         if (shutter_ && autoShutter_)
+         boost::shared_ptr<ShutterInstance> shutter =
+            currentShutterDevice_.lock();
+         if (autoShutter_ && shutter)
          {
-            int sret = shutter_->SetOpen(true);
+            int sret = shutter->SetOpen(true);
             if (DEVICE_OK != sret)
             {
-               logError("CMMCore::snapImage", getDeviceErrorText(sret, shutter_).c_str());
-               throw CMMError(getDeviceErrorText(sret, shutter_).c_str(), MMERR_DEVICE_GENERIC);
+               logError("CMMCore::snapImage", getDeviceErrorText(sret, shutter).c_str());
+               throw CMMError(getDeviceErrorText(sret, shutter).c_str(), MMERR_DEVICE_GENERIC);
             }               
-            waitForDevice(shutter_);
+            waitForDevice(shutter);
          }
+
          LOG_DEBUG(coreLogger_) << "Will snap image from current camera";
-         ret = camera_->SnapImage();
+         ret = camera->SnapImage();
          if (ret == DEVICE_OK)
          {
             LOG_DEBUG(coreLogger_) << "Did snap image from current camera";
@@ -2085,16 +2051,17 @@ void CMMCore::snapImage() throw (CMMError)
          }
 
 			everSnapped_ = true;
+
          // close the shutter
-         if (shutter_ && autoShutter_)
+         if (autoShutter_ && shutter)
          {
-            int sret  = shutter_->SetOpen(false);
+            int sret  = shutter->SetOpen(false);
             if (DEVICE_OK != sret)
             {
-               logError("CMMCore::snapImage", getDeviceErrorText(sret, shutter_).c_str());
-               throw CMMError(getDeviceErrorText(sret, shutter_).c_str(), MMERR_DEVICE_GENERIC);
+               logError("CMMCore::snapImage", getDeviceErrorText(sret, shutter).c_str());
+               throw CMMError(getDeviceErrorText(sret, shutter).c_str(), MMERR_DEVICE_GENERIC);
             }
-            waitForDevice(shutter_);
+            waitForDevice(shutter);
          }
 		}catch( CMMError& e){
 			throw e;
@@ -2106,8 +2073,8 @@ void CMMCore::snapImage() throw (CMMError)
 
       if (ret != DEVICE_OK)
       {
-         logError("CMMCore::snapImage", getDeviceErrorText(ret, camera_).c_str());
-         throw CMMError(getDeviceErrorText(ret, camera_).c_str(), MMERR_DEVICE_GENERIC);
+         logError("CMMCore::snapImage", getDeviceErrorText(ret, camera).c_str());
+         throw CMMError(getDeviceErrorText(ret, camera).c_str(), MMERR_DEVICE_GENERIC);
       }
    }
    else
@@ -2267,7 +2234,8 @@ bool CMMCore::getShutterOpen() throw (CMMError)
  */
 void* CMMCore::getImage() throw (CMMError)
 {
-   if (!camera_)
+   boost::shared_ptr<CameraInstance> camera = currentCameraDevice_.lock();
+   if (!camera)
       throw CMMError(getCoreErrorText(MMERR_CameraNotAvailable).c_str(), MMERR_CameraNotAvailable);
    else
    {
@@ -2292,12 +2260,14 @@ void* CMMCore::getImage() throw (CMMError)
 
       void* pBuf(0);
       try {
-         MMThreadGuard guard(pluginManager_.getModuleLock(camera_));
-         pBuf = const_cast<unsigned char*> (camera_->GetImageBuffer());
+         MMThreadGuard guard(pluginManager_.getModuleLock(camera));
+         pBuf = const_cast<unsigned char*> (camera->GetImageBuffer());
 		
-      	if (imageProcessor_)
+         boost::shared_ptr<ImageProcessorInstance> imageProcessor =
+            currentImageProcessor_.lock();
+         if (imageProcessor)
 	      {
-            imageProcessor_->Process((unsigned char*)pBuf, camera_->GetImageWidth(),  camera_->GetImageHeight(), camera_->GetImageBytesPerPixel() );
+            imageProcessor->Process((unsigned char*)pBuf, camera->GetImageWidth(),  camera->GetImageHeight(), camera->GetImageBytesPerPixel() );
 	      }
 		} catch( CMMError& e){
 			throw e;
@@ -2330,18 +2300,21 @@ void* CMMCore::getImage() throw (CMMError)
  */
 void* CMMCore::getImage(unsigned channelNr) throw (CMMError)
 {
-   if (!camera_)
+   boost::shared_ptr<CameraInstance> camera = currentCameraDevice_.lock();
+   if (!camera)
       throw CMMError(getCoreErrorText(MMERR_CameraNotAvailable).c_str(), MMERR_CameraNotAvailable);
    else
    {
       void* pBuf(0);
       try {
-         MMThreadGuard guard(pluginManager_.getModuleLock(camera_));
-         pBuf = const_cast<unsigned char*> (camera_->GetImageBuffer(channelNr));
+         MMThreadGuard guard(pluginManager_.getModuleLock(camera));
+         pBuf = const_cast<unsigned char*> (camera->GetImageBuffer(channelNr));
 		
-      	if (imageProcessor_)
+         boost::shared_ptr<ImageProcessorInstance> imageProcessor =
+            currentImageProcessor_.lock();
+         if (imageProcessor)
 	      {
-            imageProcessor_->Process((unsigned char*)pBuf, camera_->GetImageWidth(),  camera_->GetImageHeight(), camera_->GetImageBytesPerPixel() );
+            imageProcessor->Process((unsigned char*)pBuf, camera->GetImageWidth(),  camera->GetImageHeight(), camera->GetImageBytesPerPixel() );
 	      }
 		} catch( CMMError& e){
 			throw e;
@@ -2367,14 +2340,15 @@ void* CMMCore::getImage(unsigned channelNr) throw (CMMError)
 */
 long CMMCore::getImageBufferSize()
 {
-	if (camera_) {
-		MMThreadGuard guard(pluginManager_.getModuleLock(camera_));
-		return camera_->GetImageBufferSize();
-	}
-	else
-	{
-		return 0;
-	}
+   boost::shared_ptr<CameraInstance> camera = currentCameraDevice_.lock();
+   if (camera) {
+      MMThreadGuard guard(pluginManager_.getModuleLock(camera));
+      return camera->GetImageBufferSize();
+   }
+   else
+   {
+      return 0;
+   }
 }
 
 /**
@@ -2393,9 +2367,10 @@ void CMMCore::startSequenceAcquisition(long numImages, double intervalMs, bool s
       postedErrors_.clear();
    }
 
-   if (camera_)
+   boost::shared_ptr<CameraInstance> camera = currentCameraDevice_.lock();
+   if (camera)
    {
-      if(camera_->IsCapturing())
+      if(camera->IsCapturing())
       {
          throw CMMError(getCoreErrorText(
             MMERR_NotAllowedDuringSequenceAcquisition).c_str()
@@ -2404,18 +2379,18 @@ void CMMCore::startSequenceAcquisition(long numImages, double intervalMs, bool s
 
 		try
 		{
-			if (!cbuf_->Initialize(camera_->GetNumberOfChannels(), 1, camera_->GetImageWidth(), camera_->GetImageHeight(), camera_->GetImageBytesPerPixel()))
+			if (!cbuf_->Initialize(camera->GetNumberOfChannels(), 1, camera->GetImageWidth(), camera->GetImageHeight(), camera->GetImageBytesPerPixel()))
 			{
-				logError(getDeviceName(camera_).c_str(), getCoreErrorText(MMERR_CircularBufferFailedToInitialize).c_str());
+				logError(getDeviceName(camera).c_str(), getCoreErrorText(MMERR_CircularBufferFailedToInitialize).c_str());
 				throw CMMError(getCoreErrorText(MMERR_CircularBufferFailedToInitialize).c_str(), MMERR_CircularBufferFailedToInitialize);
 			}
 			cbuf_->Clear();
-         MMThreadGuard guard(pluginManager_.getModuleLock(camera_));
+         MMThreadGuard guard(pluginManager_.getModuleLock(camera));
 
          LOG_DEBUG(coreLogger_) << "Will start sequence acquisition from default camera";
-			int nRet = camera_->StartSequenceAcquisition(numImages, intervalMs, stopOnOverflow);
+			int nRet = camera->StartSequenceAcquisition(numImages, intervalMs, stopOnOverflow);
 			if (nRet != DEVICE_OK)
-				throw CMMError(getDeviceErrorText(nRet, camera_).c_str(), MMERR_DEVICE_GENERIC);
+				throw CMMError(getDeviceErrorText(nRet, camera).c_str(), MMERR_DEVICE_GENERIC);
 		}
 		catch( bad_alloc& ex)
 		{
@@ -2426,7 +2401,7 @@ void CMMCore::startSequenceAcquisition(long numImages, double intervalMs, bool s
    }
    else
    {
-      logError(getDeviceName(camera_).c_str(), getCoreErrorText(MMERR_CameraNotAvailable).c_str());
+      logError(getDeviceName(camera).c_str(), getCoreErrorText(MMERR_CameraNotAvailable).c_str());
       throw CMMError(getCoreErrorText(MMERR_CameraNotAvailable).c_str(), MMERR_CameraNotAvailable);
    }
    LOG_DEBUG(coreLogger_) << "Did start sequence acquisition from default camera";
@@ -2486,19 +2461,20 @@ void CMMCore::prepareSequenceAcquisition(const char* label) throw (CMMError)
  */
 void CMMCore::initializeCircularBuffer() throw (CMMError)
 {
-   if (camera_)
+   boost::shared_ptr<CameraInstance> camera = currentCameraDevice_.lock();
+   if (camera)
    {
-      MMThreadGuard guard(pluginManager_.getModuleLock(camera_));
-      if (!cbuf_->Initialize(camera_->GetNumberOfChannels(), 1, camera_->GetImageWidth(), camera_->GetImageHeight(), camera_->GetImageBytesPerPixel()))
+      MMThreadGuard guard(pluginManager_.getModuleLock(camera));
+      if (!cbuf_->Initialize(camera->GetNumberOfChannels(), 1, camera->GetImageWidth(), camera->GetImageHeight(), camera->GetImageBytesPerPixel()))
       {
-         logError(getDeviceName(camera_).c_str(), getCoreErrorText(MMERR_CircularBufferFailedToInitialize).c_str());
+         logError(getDeviceName(camera).c_str(), getCoreErrorText(MMERR_CircularBufferFailedToInitialize).c_str());
          throw CMMError(getCoreErrorText(MMERR_CircularBufferFailedToInitialize).c_str(), MMERR_CircularBufferFailedToInitialize);
       }
       cbuf_->Clear();
    }
    else
    {
-      logError(getDeviceName(camera_).c_str(), getCoreErrorText(MMERR_CameraNotAvailable).c_str());
+      logError(getDeviceName(camera).c_str(), getCoreErrorText(MMERR_CameraNotAvailable).c_str());
       throw CMMError(getCoreErrorText(MMERR_CameraNotAvailable).c_str(), MMERR_CameraNotAvailable);
    }
    LOG_DEBUG(coreLogger_) << "Circular buffer initialized based on current camera";
@@ -2530,26 +2506,27 @@ void CMMCore::stopSequenceAcquisition(const char* label) throw (CMMError)
  */
 void CMMCore::startContinuousSequenceAcquisition(double intervalMs) throw (CMMError)
 {
-   if (camera_)
+   boost::shared_ptr<CameraInstance> camera = currentCameraDevice_.lock();
+   if (camera)
    {
-      MMThreadGuard guard(pluginManager_.getModuleLock(camera_));
-      if(camera_->IsCapturing())
+      MMThreadGuard guard(pluginManager_.getModuleLock(camera));
+      if(camera->IsCapturing())
       {
          throw CMMError(getCoreErrorText(
             MMERR_NotAllowedDuringSequenceAcquisition).c_str()
             ,MMERR_NotAllowedDuringSequenceAcquisition);
       }
 
-      if (!cbuf_->Initialize(camera_->GetNumberOfChannels(), 1, camera_->GetImageWidth(), camera_->GetImageHeight(), camera_->GetImageBytesPerPixel()))
+      if (!cbuf_->Initialize(camera->GetNumberOfChannels(), 1, camera->GetImageWidth(), camera->GetImageHeight(), camera->GetImageBytesPerPixel()))
       {
-         logError(getDeviceName(camera_).c_str(), getCoreErrorText(MMERR_CircularBufferFailedToInitialize).c_str());
+         logError(getDeviceName(camera).c_str(), getCoreErrorText(MMERR_CircularBufferFailedToInitialize).c_str());
          throw CMMError(getCoreErrorText(MMERR_CircularBufferFailedToInitialize).c_str(), MMERR_CircularBufferFailedToInitialize);
       }
       cbuf_->Clear();
       LOG_DEBUG(coreLogger_) << "Will start continuous sequence acquisition from current camera";
-      int nRet = camera_->StartSequenceAcquisition(intervalMs);
+      int nRet = camera->StartSequenceAcquisition(intervalMs);
       if (nRet != DEVICE_OK)
-         throw CMMError(getDeviceErrorText(nRet, camera_).c_str(), MMERR_DEVICE_GENERIC);
+         throw CMMError(getDeviceErrorText(nRet, camera).c_str(), MMERR_DEVICE_GENERIC);
    }
    else
    {
@@ -2564,15 +2541,16 @@ void CMMCore::startContinuousSequenceAcquisition(double intervalMs) throw (CMMEr
  */
 void CMMCore::stopSequenceAcquisition() throw (CMMError)
 {
-   if (camera_)
+   boost::shared_ptr<CameraInstance> camera = currentCameraDevice_.lock();
+   if (camera)
    {
-      MMThreadGuard guard(pluginManager_.getModuleLock(camera_));
+      MMThreadGuard guard(pluginManager_.getModuleLock(camera));
       LOG_DEBUG(coreLogger_) << "Will stop sequence acquisition from current camera";
-      int nRet = camera_->StopSequenceAcquisition();
+      int nRet = camera->StopSequenceAcquisition();
       if (nRet != DEVICE_OK)
       {
-         logError(getDeviceName(camera_).c_str(), getDeviceErrorText(nRet, camera_).c_str());
-         throw CMMError(getDeviceErrorText(nRet, camera_).c_str(), MMERR_DEVICE_GENERIC);
+         logError(getDeviceName(camera).c_str(), getDeviceErrorText(nRet, camera).c_str());
+         throw CMMError(getDeviceErrorText(nRet, camera).c_str(), MMERR_DEVICE_GENERIC);
       }
    }
    else
@@ -2590,10 +2568,11 @@ void CMMCore::stopSequenceAcquisition() throw (CMMError)
  */
 bool CMMCore::isSequenceRunning() throw ()
 {
-   if (camera_)
+   boost::shared_ptr<CameraInstance> camera = currentCameraDevice_.lock();
+   if (camera)
    {
-       MMThreadGuard guard(pluginManager_.getModuleLock(camera_));
-	    return camera_->IsCapturing();
+       MMThreadGuard guard(pluginManager_.getModuleLock(camera));
+	    return camera->IsCapturing();
    }
    else
    {
@@ -2749,10 +2728,11 @@ void CMMCore::setCircularBufferMemoryFootprint(unsigned sizeMB ///< n megabytes
 	{
 
 		// attempt to initialize based on the current camera settings
-		if (camera_)
+      boost::shared_ptr<CameraInstance> camera = currentCameraDevice_.lock();
+      if (camera)
 		{
-   	        MMThreadGuard guard(pluginManager_.getModuleLock(camera_));
-			if (!cbuf_->Initialize(camera_->GetNumberOfChannels(), 1, camera_->GetImageWidth(), camera_->GetImageHeight(), camera_->GetImageBytesPerPixel()))
+         MMThreadGuard guard(pluginManager_.getModuleLock(camera));
+         if (!cbuf_->Initialize(camera->GetNumberOfChannels(), 1, camera->GetImageWidth(), camera->GetImageHeight(), camera->GetImageBytesPerPixel()))
 				throw CMMError(getCoreErrorText(MMERR_CircularBufferFailedToInitialize).c_str(), MMERR_CircularBufferFailedToInitialize);
 		}
 
@@ -2826,12 +2806,12 @@ bool CMMCore::isBufferOverflowed() const
  */
 string CMMCore::getCameraDevice()
 {
-   string deviceName;
-   if (camera_)
+   boost::shared_ptr<CameraInstance> camera = currentCameraDevice_.lock();
+   if (camera)
    {
-      deviceName = camera_->GetLabel();
+      return camera->GetLabel();
    }
-   return deviceName;
+   return std::string();
 }
 
 /**
@@ -2840,12 +2820,12 @@ string CMMCore::getCameraDevice()
  */
 string CMMCore::getShutterDevice()
 {
-   string deviceName;
-   if (shutter_)
+   boost::shared_ptr<ShutterInstance> shutter = currentShutterDevice_.lock();
+   if (shutter)
    {
-      deviceName = shutter_->GetLabel();
+      return shutter->GetLabel();
    }
-   return deviceName;
+   return std::string();
 }
 
 /**
@@ -2854,12 +2834,12 @@ string CMMCore::getShutterDevice()
  */
 string CMMCore::getFocusDevice()
 {
-   string deviceName;
-   if (focusStage_)
+   boost::shared_ptr<StageInstance> focus = currentFocusDevice_.lock();
+   if (focus)
    {
-      deviceName = focusStage_->GetLabel();
+      return focus->GetLabel();
    }
-   return deviceName;
+   return std::string();
 }
 
 /**
@@ -2867,12 +2847,12 @@ string CMMCore::getFocusDevice()
  */
 string CMMCore::getXYStageDevice()
 {
-   string deviceName;
-   if (xyStage_)
+   boost::shared_ptr<XYStageInstance> xyStage = currentXYStageDevice_.lock();
+   if (xyStage)
    {
-      deviceName = xyStage_->GetLabel();
+      return xyStage->GetLabel();
    }
-   return deviceName;
+   return std::string();
 }
 
 /**
@@ -2880,12 +2860,13 @@ string CMMCore::getXYStageDevice()
  */
 string CMMCore::getAutoFocusDevice()
 {
-   string deviceName;
-   if (autoFocus_)
+   boost::shared_ptr<AutoFocusInstance> autofocus =
+      currentAutofocusDevice_.lock();
+   if (autofocus)
    {
-      deviceName = autoFocus_->GetLabel();
+      return autofocus->GetLabel();
    }
-   return deviceName;
+   return std::string();
 }
 
 /**
@@ -2895,12 +2876,12 @@ void CMMCore::setAutoFocusDevice(const char* autofocusLabel) throw (CMMError)
 {
    if (autofocusLabel && strlen(autofocusLabel)>0)
    {
-      autoFocus_ = GetDeviceWithCheckedLabelAndType<AutoFocusInstance>(autofocusLabel);
+      currentAutofocusDevice_ = GetDeviceWithCheckedLabelAndType<AutoFocusInstance>(autofocusLabel);
       LOG_INFO(coreLogger_) << "Default autofocus set to " << autofocusLabel;
    }
    else
    {
-      autoFocus_.reset();
+      currentAutofocusDevice_.reset();
       LOG_INFO(coreLogger_) << "Default autofocus unset";
    }
    properties_->Refresh(); // TODO: more efficient
@@ -2916,12 +2897,13 @@ void CMMCore::setAutoFocusDevice(const char* autofocusLabel) throw (CMMError)
  */
 string CMMCore::getImageProcessorDevice()
 {
-   string deviceName;
-   if (imageProcessor_)
+   boost::shared_ptr<ImageProcessorInstance> imageProcessor =
+      currentImageProcessor_.lock();
+   if (imageProcessor)
    {
-      deviceName = imageProcessor_->GetLabel();
+      return imageProcessor->GetLabel();
    }
-   return deviceName;
+   return std::string();
 }
 
 /**
@@ -2930,12 +2912,12 @@ string CMMCore::getImageProcessorDevice()
  */
 string CMMCore::getSLMDevice()
 {
-   string deviceName;
-   if (slm_)
+   boost::shared_ptr<SLMInstance> slm = currentSLMDevice_.lock();
+   if (slm)
    {
-      deviceName = slm_->GetLabel();
+      return slm->GetLabel();
    }
-   return deviceName;
+   return std::string();
 }
 
 /**
@@ -2944,12 +2926,12 @@ string CMMCore::getSLMDevice()
  */
 string CMMCore::getGalvoDevice()
 {
-   string deviceName;
-   if (galvo_)
+   boost::shared_ptr<GalvoInstance> galvos = currentGalvoDevice_.lock();
+   if (galvos)
    {
-      deviceName = galvo_->GetLabel();
+      return galvos->GetLabel();
    }
-   return deviceName;
+   return std::string();
 }
 
 
@@ -2960,12 +2942,12 @@ void CMMCore::setImageProcessorDevice(const char* procLabel) throw (CMMError)
 {
    if (procLabel && strlen(procLabel)>0)
    {
-      imageProcessor_ = GetDeviceWithCheckedLabelAndType<ImageProcessorInstance>(procLabel);
+      currentImageProcessor_ = GetDeviceWithCheckedLabelAndType<ImageProcessorInstance>(procLabel);
       LOG_INFO(coreLogger_) << "Default image processor set to " << procLabel;
    }
    else
    {
-      imageProcessor_.reset();
+      currentImageProcessor_.reset();
       LOG_INFO(coreLogger_) << "Default image processor unset";
    }
    properties_->Refresh(); // TODO: more efficient
@@ -2983,12 +2965,12 @@ void CMMCore::setSLMDevice(const char* slmLabel) throw (CMMError)
 {
    if (slmLabel && strlen(slmLabel)>0)
    {
-      slm_ = GetDeviceWithCheckedLabelAndType<SLMInstance>(slmLabel);
+      currentSLMDevice_ = GetDeviceWithCheckedLabelAndType<SLMInstance>(slmLabel);
       LOG_INFO(coreLogger_) << "Default SLM set to " << slmLabel;
    }
    else
    {
-      slm_.reset();
+      currentSLMDevice_.reset();
       LOG_INFO(coreLogger_) << "Default SLM unset";
    }
    properties_->Refresh(); // TODO: more efficient
@@ -3007,12 +2989,12 @@ void CMMCore::setGalvoDevice(const char* galvoLabel) throw (CMMError)
 {
    if (galvoLabel && strlen(galvoLabel)>0)
    {
-      galvo_ = GetDeviceWithCheckedLabelAndType<GalvoInstance>(galvoLabel);
+      currentGalvoDevice_ = GetDeviceWithCheckedLabelAndType<GalvoInstance>(galvoLabel);
       LOG_INFO(coreLogger_) << "Default galvo set to " << galvoLabel;
    }
    else
    {
-      galvo_.reset();
+      currentGalvoDevice_.reset();
       LOG_INFO(coreLogger_) << "Default galvo unset";
    }
    properties_->Refresh(); // TODO: more efficient
@@ -3067,29 +3049,30 @@ void CMMCore::setShutterDevice(const char* shutterLabel) throw (CMMError)
       return;
 
    // To avoid confusion close the current shutter:
-   bool shutterOpen = false;
-   if (shutter_) {
-      shutterOpen = getShutterOpen();
-      if (shutterOpen)
-         setShutterOpen(false);
+   bool shutterWasOpen = false;
+   boost::shared_ptr<ShutterInstance> oldShutter =
+      currentShutterDevice_.lock();
+   if (oldShutter)
+   {
+      shutterWasOpen = getShutterOpen(oldShutter->GetLabel().c_str());
+      if (shutterWasOpen)
+      {
+         setShutterOpen(oldShutter->GetLabel().c_str(), false);
+      }
    }
 
-   if (shutterLabel && strlen(shutterLabel)>0)
+   if (strlen(shutterLabel) > 0)
    {
-      // Nothing to do if this is the current shutter device:
-      if (getShutterDevice().compare(shutterLabel) == 0)
-         return;
+      currentShutterDevice_ = GetDeviceWithCheckedLabelAndType<ShutterInstance>(shutterLabel);
 
-      shutter_ = GetDeviceWithCheckedLabelAndType<ShutterInstance>(shutterLabel);
-      // if old shutter was open, open the new one
-      if (shutterOpen)
+      if (shutterWasOpen)
          setShutterOpen(true);
 
       LOG_INFO(coreLogger_) << "Default shutter set to " << shutterLabel;
    }
    else
    {
-      shutter_.reset();
+      currentShutterDevice_.reset();
       LOG_INFO(coreLogger_) << "Default shutter unset";
    }
    properties_->Refresh(); // TODO: more efficient
@@ -3108,12 +3091,12 @@ void CMMCore::setFocusDevice(const char* focusLabel) throw (CMMError)
 {
    if (focusLabel && strlen(focusLabel)>0)
    {
-      focusStage_ = GetDeviceWithCheckedLabelAndType<StageInstance>(focusLabel);
+      currentFocusDevice_ = GetDeviceWithCheckedLabelAndType<StageInstance>(focusLabel);
       LOG_INFO(coreLogger_) << "Default stage set to " << focusLabel;
    }
    else
    {
-      focusStage_.reset();
+      currentFocusDevice_.reset();
       LOG_INFO(coreLogger_) << "Default stage unset";
    }
    properties_->Refresh(); // TODO: more efficient
@@ -3131,12 +3114,12 @@ void CMMCore::setXYStageDevice(const char* xyDeviceLabel) throw (CMMError)
 {
    if (xyDeviceLabel && strlen(xyDeviceLabel)>0)
    {
-      xyStage_ = GetDeviceWithCheckedLabelAndType<XYStageInstance>(xyDeviceLabel);
+      currentXYStageDevice_ = GetDeviceWithCheckedLabelAndType<XYStageInstance>(xyDeviceLabel);
       LOG_INFO(coreLogger_) << "Default xy stage set to " << xyDeviceLabel;
    }
    else
    {
-      xyStage_.reset();
+      currentXYStageDevice_.reset();
       LOG_INFO(coreLogger_) << "Default xy stage unset";
    }
    std::string newXYStageLabel = getXYStageDevice();
@@ -3154,12 +3137,13 @@ void CMMCore::setCameraDevice(const char* cameraLabel) throw (CMMError)
 {
    if (cameraLabel && strlen(cameraLabel) > 0)
    {
-      camera_ = GetDeviceWithCheckedLabelAndType<CameraInstance>(cameraLabel);
+      currentCameraDevice_ =
+         GetDeviceWithCheckedLabelAndType<CameraInstance>(cameraLabel);
       LOG_INFO(coreLogger_) << "Default camera set to " << cameraLabel;
    }
    else
    {
-      camera_.reset();
+      currentCameraDevice_.reset();
       LOG_INFO(coreLogger_) << "Default camera unset";
    }
    properties_->Refresh(); // TODO: more efficient
@@ -3659,11 +3643,14 @@ MM::PropertyType CMMCore::getPropertyType(const char* label, const char* propNam
  */
 unsigned CMMCore::getImageWidth()
 {
-   if (camera_ == 0)
+   boost::shared_ptr<CameraInstance> camera = currentCameraDevice_.lock();
+   if (!camera)
+   {
       return 0;
+   }
 
-   MMThreadGuard guard(pluginManager_.getModuleLock(camera_));
-   return camera_->GetImageWidth();
+   MMThreadGuard guard(pluginManager_.getModuleLock(camera));
+   return camera->GetImageWidth();
 }
 
 /**
@@ -3672,11 +3659,14 @@ unsigned CMMCore::getImageWidth()
  */
 unsigned CMMCore::getImageHeight()
 {
-   if (camera_ == 0)
+   boost::shared_ptr<CameraInstance> camera = currentCameraDevice_.lock();
+   if (!camera)
+   {
       return 0;
+   }
 
-   MMThreadGuard guard(pluginManager_.getModuleLock(camera_));
-   return camera_->GetImageHeight();
+   MMThreadGuard guard(pluginManager_.getModuleLock(camera));
+   return camera->GetImageHeight();
 }
 
 /**
@@ -3686,11 +3676,14 @@ unsigned CMMCore::getImageHeight()
  */
 unsigned CMMCore::getBytesPerPixel()
 {
-   if (camera_ == 0)
+   boost::shared_ptr<CameraInstance> camera = currentCameraDevice_.lock();
+   if (!camera)
+   {
       return 0;
+   }
 
-   MMThreadGuard guard(pluginManager_.getModuleLock(camera_));
-   return camera_->GetImageBytesPerPixel();
+   MMThreadGuard guard(pluginManager_.getModuleLock(camera));
+   return camera->GetImageBytesPerPixel();
 }
 
 /**
@@ -3702,11 +3695,14 @@ unsigned CMMCore::getBytesPerPixel()
  */
 unsigned CMMCore::getImageBitDepth()
 {
-   if (camera_)
-      return camera_->GetBitDepth();
+   boost::shared_ptr<CameraInstance> camera = currentCameraDevice_.lock();
+   if (!camera)
+   {
+      return 0;
+   }
 
-   MMThreadGuard guard(pluginManager_.getModuleLock(camera_));
-   return 0;
+   MMThreadGuard guard(pluginManager_.getModuleLock(camera));
+   return camera->GetBitDepth();
 }
 
 /**
@@ -3715,11 +3711,13 @@ unsigned CMMCore::getImageBitDepth()
  */
 unsigned CMMCore::getNumberOfComponents()
 {
-   if (camera_)
-      return camera_->GetNumberOfComponents();
-
-   MMThreadGuard guard(pluginManager_.getModuleLock(camera_));
-   return 0;
+   boost::shared_ptr<CameraInstance> camera = currentCameraDevice_.lock();
+   if (!camera)
+   {
+      return 0;
+   }
+   MMThreadGuard guard(pluginManager_.getModuleLock(camera));
+   return camera->GetNumberOfComponents();
 }
 
 /**
@@ -3727,24 +3725,29 @@ unsigned CMMCore::getNumberOfComponents()
  */
 unsigned CMMCore::getNumberOfCameraChannels()
 {
-   if (camera_)
-      return camera_->GetNumberOfChannels();
+   boost::shared_ptr<CameraInstance> camera = currentCameraDevice_.lock();
+   if (!camera)
+   {
+      return 0;
+   }
 
-   MMThreadGuard guard(pluginManager_.getModuleLock(camera_));
-   return 0;
+   MMThreadGuard guard(pluginManager_.getModuleLock(camera));
+   return camera->GetNumberOfChannels();
 }
 
 string CMMCore::getCameraChannelName(unsigned int channelNr)
 {
-   if (camera_)
+   boost::shared_ptr<CameraInstance> camera = currentCameraDevice_.lock();
+   if (!camera)
    {
-      MMThreadGuard guard(pluginManager_.getModuleLock(camera_));
-      char name[MM::MaxStrLength];
-      name[0] = '\0';
-      camera_->GetChannelName(channelNr, name);
-      return name;
+      return std::string();
    }
-   return "";
+
+   MMThreadGuard guard(pluginManager_.getModuleLock(camera));
+   char name[MM::MaxStrLength];
+   name[0] = '\0';
+   camera->GetChannelName(channelNr, name);
+   return name;
 }
 
 /**
@@ -3753,18 +3756,19 @@ string CMMCore::getCameraChannelName(unsigned int channelNr)
  */
 void CMMCore::setExposure(double dExp) throw (CMMError)
 {
-   if (camera_)
+   boost::shared_ptr<CameraInstance> camera = currentCameraDevice_.lock();
+   if (!camera)
    {
-      std::string cameraName;
-      {
-         MMThreadGuard guard(pluginManager_.getModuleLock(camera_));
-         cameraName = camera_->GetLabel();
-      }
-      setExposure(cameraName.c_str(), dExp);
+      throw CMMError(getCoreErrorText(MMERR_CameraNotAvailable).c_str(), MMERR_CameraNotAvailable);
    }
    else
    {
-      throw CMMError(getCoreErrorText(MMERR_CameraNotAvailable).c_str(), MMERR_CameraNotAvailable);
+      std::string cameraName;
+      {
+         MMThreadGuard guard(pluginManager_.getModuleLock(camera));
+         cameraName = camera->GetLabel();
+      }
+      setExposure(cameraName.c_str(), dExp);
    }
 }
 
@@ -3804,10 +3808,11 @@ void CMMCore::setExposure(const char* label, double dExp) throw (CMMError)
  */
 double CMMCore::getExposure() throw (CMMError)
 {
-   if (camera_)
+   boost::shared_ptr<CameraInstance> camera = currentCameraDevice_.lock();
+   if (camera)
    {
-      MMThreadGuard guard(pluginManager_.getModuleLock(camera_));
-      return camera_->GetExposure();
+      MMThreadGuard guard(pluginManager_.getModuleLock(camera));
+      return camera->GetExposure();
    }
    else
       //throw CMMError(getCoreErrorText(MMERR_CameraNotAvailable).c_str(), MMERR_CameraNotAvailable);
@@ -3825,15 +3830,16 @@ double CMMCore::getExposure() throw (CMMError)
  */
 void CMMCore::setROI(int x, int y, int xSize, int ySize) throw (CMMError)
 {
-   if (camera_)
+   boost::shared_ptr<CameraInstance> camera = currentCameraDevice_.lock();
+   if (camera)
    {
-      MMThreadGuard guard(pluginManager_.getModuleLock(camera_));
+      MMThreadGuard guard(pluginManager_.getModuleLock(camera));
       LOG_DEBUG(coreLogger_) << "Will set ROI of current camera to ("
          "left = " << x << ", top = " << y <<
          ", width = " << xSize << ", height = " << ySize << ")";
-      int nRet = camera_->SetROI(x, y, xSize, ySize);
+      int nRet = camera->SetROI(x, y, xSize, ySize);
       if (nRet != DEVICE_OK)
-         throw CMMError(getDeviceErrorText(nRet, camera_).c_str(), MMERR_DEVICE_GENERIC);
+         throw CMMError(getDeviceErrorText(nRet, camera).c_str(), MMERR_DEVICE_GENERIC);
    }
    else
       throw CMMError(getCoreErrorText(MMERR_CameraNotAvailable).c_str(), MMERR_CameraNotAvailable);
@@ -3854,12 +3860,13 @@ void CMMCore::setROI(int x, int y, int xSize, int ySize) throw (CMMError)
 void CMMCore::getROI(int& x, int& y, int& xSize, int& ySize) throw (CMMError)
 {
    unsigned uX(0), uY(0), uXSize(0), uYSize(0);
-   if (camera_)
+   boost::shared_ptr<CameraInstance> camera = currentCameraDevice_.lock();
+   if (camera)
    {
-      MMThreadGuard guard(pluginManager_.getModuleLock(camera_));
-      int nRet = camera_->GetROI(uX, uY, uXSize, uYSize);
+      MMThreadGuard guard(pluginManager_.getModuleLock(camera));
+      int nRet = camera->GetROI(uX, uY, uXSize, uYSize);
       if (nRet != DEVICE_OK)
-         throw CMMError(getDeviceErrorText(nRet, camera_).c_str(), MMERR_DEVICE_GENERIC);
+         throw CMMError(getDeviceErrorText(nRet, camera).c_str(), MMERR_DEVICE_GENERIC);
    }
 
    x = (int) uX;
@@ -3873,13 +3880,14 @@ void CMMCore::getROI(int& x, int& y, int& xSize, int& ySize) throw (CMMError)
  */
 void CMMCore::clearROI() throw (CMMError)
 {
-   if (camera_)
+   boost::shared_ptr<CameraInstance> camera = currentCameraDevice_.lock();
+   if (camera)
    {
       // effectively clears the current ROI setting
-      MMThreadGuard guard(pluginManager_.getModuleLock(camera_));
-      int nRet = camera_->ClearROI();
+      MMThreadGuard guard(pluginManager_.getModuleLock(camera));
+      int nRet = camera->ClearROI();
       if (nRet != DEVICE_OK)
-         throw CMMError(getDeviceErrorText(nRet, camera_).c_str(), MMERR_DEVICE_GENERIC);
+         throw CMMError(getDeviceErrorText(nRet, camera).c_str(), MMERR_DEVICE_GENERIC);
    }
 }
 
@@ -4689,14 +4697,16 @@ double CMMCore::getPixelSizeUm(bool cached)
 	 string resolutionID = getCurrentPixelSizeConfig(cached);
 
 	 if (resolutionID.length()>0) {
-		 // check which one matches the current state
-		 PixelSizeConfiguration* pCfg = pixelSizeGroup_->Find(resolutionID.c_str());
-		 double pixSize = pCfg->getPixelSizeUm();
-		 if (camera_)
-		 {
-			pixSize *= camera_->GetBinning() / getMagnificationFactor();
-		 }
-		 return pixSize;
+       // check which one matches the current state
+       PixelSizeConfiguration* pCfg = pixelSizeGroup_->Find(resolutionID.c_str());
+       double pixSize = pCfg->getPixelSizeUm();
+
+       boost::shared_ptr<CameraInstance> camera = currentCameraDevice_.lock();
+       if (camera)
+       {
+          pixSize *= camera->GetBinning() / getMagnificationFactor();
+       }
+       return pixSize;
 	 } else {
 		return 0.0;
 	 }
@@ -5681,17 +5691,20 @@ void CMMCore::saveSystemConfiguration(const char* fileName) throw (CMMError)
 
    // save device roles
    os << "# Roles" << endl;
-   if (camera_)
+   boost::shared_ptr<CameraInstance> camera = currentCameraDevice_.lock();
+   if (camera)
    {
-      os << MM::g_CFGCommand_Property << ',' << MM::g_Keyword_CoreDevice << ',' << MM::g_Keyword_CoreCamera << ',' << getCameraDevice() << endl; 
+      os << MM::g_CFGCommand_Property << ',' << MM::g_Keyword_CoreDevice << ',' << MM::g_Keyword_CoreCamera << ',' << camera->GetLabel() << endl;
    }
-   if (shutter_)
+   boost::shared_ptr<ShutterInstance> shutter = currentShutterDevice_.lock();
+   if (shutter)
    {
-      os << MM::g_CFGCommand_Property << ',' << MM::g_Keyword_CoreDevice << ',' << MM::g_Keyword_CoreShutter << ',' << getShutterDevice() << endl; 
+      os << MM::g_CFGCommand_Property << ',' << MM::g_Keyword_CoreDevice << ',' << MM::g_Keyword_CoreShutter << ',' << shutter->GetLabel() << endl;
    }
-   if (focusStage_)
+   boost::shared_ptr<StageInstance> focus = currentFocusDevice_.lock();
+   if (focus)
    {
-      os << MM::g_CFGCommand_Property << ',' << MM::g_Keyword_CoreDevice << ',' << MM::g_Keyword_CoreFocus << ',' << getFocusDevice() << endl; 
+      os << MM::g_CFGCommand_Property << ',' << MM::g_Keyword_CoreDevice << ',' << MM::g_Keyword_CoreFocus << ',' << focus->GetLabel() << endl;
    }
 }
 
@@ -5950,11 +5963,13 @@ void CMMCore::registerCallback(MMEventCallback* cb)
  */
 double CMMCore::getLastFocusScore()
 {
-   if (autoFocus_ != 0)
+   boost::shared_ptr<AutoFocusInstance> autofocus =
+      currentAutofocusDevice_.lock();
+   if (autofocus)
    {
-      MMThreadGuard guard(pluginManager_.getModuleLock(autoFocus_));
+      MMThreadGuard guard(pluginManager_.getModuleLock(autofocus));
       double score;
-      int ret = autoFocus_->GetLastFocusScore(score);
+      int ret = autofocus->GetLastFocusScore(score);
       if (ret != DEVICE_OK)
          return 0.0;
       return score;
@@ -5971,11 +5986,13 @@ double CMMCore::getLastFocusScore()
  */
 double CMMCore::getCurrentFocusScore()
 {
-   if (autoFocus_ != 0)
+   boost::shared_ptr<AutoFocusInstance> autofocus =
+      currentAutofocusDevice_.lock();
+   if (autofocus)
    {
-      MMThreadGuard guard(pluginManager_.getModuleLock(autoFocus_));
+      MMThreadGuard guard(pluginManager_.getModuleLock(autofocus));
       double score;
-      int ret = autoFocus_->GetCurrentFocusScore(score);
+      int ret = autofocus->GetCurrentFocusScore(score);
       if (ret != DEVICE_OK)
          return 0.0;
       return score;
@@ -5990,14 +6007,16 @@ double CMMCore::getCurrentFocusScore()
  */
 void CMMCore::enableContinuousFocus(bool enable) throw (CMMError)
 {
-   if (autoFocus_ != 0)
+   boost::shared_ptr<AutoFocusInstance> autofocus =
+      currentAutofocusDevice_.lock();
+   if (autofocus)
    {
-      MMThreadGuard guard(pluginManager_.getModuleLock(autoFocus_));
-	  int ret = autoFocus_->SetContinuousFocusing(enable);
+      MMThreadGuard guard(pluginManager_.getModuleLock(autofocus));
+	  int ret = autofocus->SetContinuousFocusing(enable);
       if (ret != DEVICE_OK)
       {
-         logError(getDeviceName(autoFocus_).c_str(), getDeviceErrorText(ret, autoFocus_).c_str());
-         throw CMMError(getDeviceErrorText(ret, autoFocus_).c_str(), MMERR_DEVICE_GENERIC);
+         logError(getDeviceName(autofocus).c_str(), getDeviceErrorText(ret, autofocus).c_str());
+         throw CMMError(getDeviceErrorText(ret, autofocus).c_str(), MMERR_DEVICE_GENERIC);
       }
 
       LOG_DEBUG(coreLogger_) << "Continuous autofocus turned " <<
@@ -6018,15 +6037,17 @@ void CMMCore::enableContinuousFocus(bool enable) throw (CMMError)
  */
 bool CMMCore::isContinuousFocusEnabled() throw (CMMError)
 {
-   if (autoFocus_ != 0)
+   boost::shared_ptr<AutoFocusInstance> autofocus =
+      currentAutofocusDevice_.lock();
+   if (autofocus)
    {
-      MMThreadGuard guard(pluginManager_.getModuleLock(autoFocus_));
-	  bool state;
-      int ret = autoFocus_->GetContinuousFocusing(state);
+      MMThreadGuard guard(pluginManager_.getModuleLock(autofocus));
+      bool state;
+      int ret = autofocus->GetContinuousFocusing(state);
       if (ret != DEVICE_OK)
       {
-         logError(getDeviceName(autoFocus_).c_str(), getDeviceErrorText(ret, autoFocus_).c_str());
-         throw CMMError(getDeviceErrorText(ret, autoFocus_).c_str(), MMERR_DEVICE_GENERIC);
+         logError(getDeviceName(autofocus).c_str(), getDeviceErrorText(ret, autofocus).c_str());
+         throw CMMError(getDeviceErrorText(ret, autofocus).c_str(), MMERR_DEVICE_GENERIC);
       }
       return state;
    }
@@ -6039,10 +6060,12 @@ bool CMMCore::isContinuousFocusEnabled() throw (CMMError)
 */
 bool CMMCore::isContinuousFocusLocked() throw (CMMError)
 {
-	if (autoFocus_ != 0)
+   boost::shared_ptr<AutoFocusInstance> autofocus =
+      currentAutofocusDevice_.lock();
+   if (autofocus)
 	{
-		MMThreadGuard guard(pluginManager_.getModuleLock(autoFocus_));
-		return autoFocus_->IsContinuousFocusLocked();
+      MMThreadGuard guard(pluginManager_.getModuleLock(autofocus));
+      return autofocus->IsContinuousFocusLocked();
 	}
 	else
 	{
@@ -6067,14 +6090,16 @@ bool CMMCore::isContinuousFocusDrive(const char* stageLabel) throw (CMMError)
  */
 void CMMCore::fullFocus() throw (CMMError)
 {
-   if (autoFocus_)
+   boost::shared_ptr<AutoFocusInstance> autofocus =
+      currentAutofocusDevice_.lock();
+   if (autofocus)
    {  
-	  MMThreadGuard guard(pluginManager_.getModuleLock(autoFocus_));
-      int ret = autoFocus_->FullFocus();
+      MMThreadGuard guard(pluginManager_.getModuleLock(autofocus));
+      int ret = autofocus->FullFocus();
       if (ret != DEVICE_OK)
       {
-         logError(getDeviceName(autoFocus_).c_str(), getDeviceErrorText(ret, autoFocus_).c_str());
-         throw CMMError(getDeviceErrorText(ret, autoFocus_).c_str(), MMERR_DEVICE_GENERIC);
+         logError(getDeviceName(autofocus).c_str(), getDeviceErrorText(ret, autofocus).c_str());
+         throw CMMError(getDeviceErrorText(ret, autofocus).c_str(), MMERR_DEVICE_GENERIC);
       }
    }
    else
@@ -6088,14 +6113,16 @@ void CMMCore::fullFocus() throw (CMMError)
  */
 void CMMCore::incrementalFocus() throw (CMMError)
 {
-   if (autoFocus_)
+   boost::shared_ptr<AutoFocusInstance> autofocus =
+      currentAutofocusDevice_.lock();
+   if (autofocus)
    {
-      MMThreadGuard guard(pluginManager_.getModuleLock(autoFocus_));
-      int ret = autoFocus_->IncrementalFocus();
+      MMThreadGuard guard(pluginManager_.getModuleLock(autofocus));
+      int ret = autofocus->IncrementalFocus();
       if (ret != DEVICE_OK)
       {
-         logError(getDeviceName(autoFocus_).c_str(), getDeviceErrorText(ret, autoFocus_).c_str());
-         throw CMMError(getDeviceErrorText(ret, autoFocus_).c_str(), MMERR_DEVICE_GENERIC);
+         logError(getDeviceName(autofocus).c_str(), getDeviceErrorText(ret, autofocus).c_str());
+         throw CMMError(getDeviceErrorText(ret, autofocus).c_str(), MMERR_DEVICE_GENERIC);
       }
    }
    else
@@ -6110,14 +6137,16 @@ void CMMCore::incrementalFocus() throw (CMMError)
  */
 void CMMCore::setAutoFocusOffset(double offset) throw (CMMError)
 {
-   if (autoFocus_)
+   boost::shared_ptr<AutoFocusInstance> autofocus =
+      currentAutofocusDevice_.lock();
+   if (autofocus)
    {
-      MMThreadGuard guard(pluginManager_.getModuleLock(autoFocus_));
-      int ret = autoFocus_->SetOffset(offset);
+      MMThreadGuard guard(pluginManager_.getModuleLock(autofocus));
+      int ret = autofocus->SetOffset(offset);
       if (ret != DEVICE_OK)
       {
-         logError(getDeviceName(autoFocus_).c_str(), getDeviceErrorText(ret, autoFocus_).c_str());
-         throw CMMError(getDeviceErrorText(ret, autoFocus_).c_str(), MMERR_DEVICE_GENERIC);
+         logError(getDeviceName(autofocus).c_str(), getDeviceErrorText(ret, autofocus).c_str());
+         throw CMMError(getDeviceErrorText(ret, autofocus).c_str(), MMERR_DEVICE_GENERIC);
       }
    }
    else
@@ -6131,15 +6160,17 @@ void CMMCore::setAutoFocusOffset(double offset) throw (CMMError)
  */
 double CMMCore::getAutoFocusOffset() throw (CMMError)
 {
-   if (autoFocus_)
+   boost::shared_ptr<AutoFocusInstance> autofocus =
+      currentAutofocusDevice_.lock();
+   if (autofocus)
    {
-      MMThreadGuard guard(pluginManager_.getModuleLock(autoFocus_));
+      MMThreadGuard guard(pluginManager_.getModuleLock(autofocus));
       double offset;
-      int ret = autoFocus_->GetOffset(offset);
+      int ret = autofocus->GetOffset(offset);
       if (ret != DEVICE_OK)
       {
-         logError(getDeviceName(autoFocus_).c_str(), getDeviceErrorText(ret, autoFocus_).c_str());
-         throw CMMError(getDeviceErrorText(ret, autoFocus_).c_str(), MMERR_DEVICE_GENERIC);
+         logError(getDeviceName(autofocus).c_str(), getDeviceErrorText(ret, autofocus).c_str());
+         throw CMMError(getDeviceErrorText(ret, autofocus).c_str(), MMERR_DEVICE_GENERIC);
       }
       return offset;
    }
@@ -6507,27 +6538,30 @@ void CMMCore::updateAllowedChannelGroups()
 
 void CMMCore::acqBeforeFrame() throw (CMMError)
 {
-
-   if (imageProcessor_)
+   boost::shared_ptr<ImageProcessorInstance> imageProcessor =
+      currentImageProcessor_.lock();
+   if (imageProcessor)
    {
-      int ret = imageProcessor_->AcqBeforeFrame();
+      int ret = imageProcessor->AcqBeforeFrame();
       if (ret != DEVICE_OK)
       {
-         logError(imageProcessor_->GetName().c_str(), getDeviceErrorText(ret, imageProcessor_).c_str());
-         throw CMMError(getDeviceErrorText(ret, imageProcessor_).c_str(), MMERR_DEVICE_GENERIC);
+         logError(imageProcessor->GetName().c_str(), getDeviceErrorText(ret, imageProcessor).c_str());
+         throw CMMError(getDeviceErrorText(ret, imageProcessor).c_str(), MMERR_DEVICE_GENERIC);
       }
    }
 }
 
 void CMMCore::acqAfterFrame() throw (CMMError)
 {
-   if (imageProcessor_)
+   boost::shared_ptr<ImageProcessorInstance> imageProcessor =
+      currentImageProcessor_.lock();
+   if (imageProcessor)
    {
-      int ret = imageProcessor_->AcqAfterFrame();
+      int ret = imageProcessor->AcqAfterFrame();
       if (ret != DEVICE_OK)
       {
-         logError(imageProcessor_->GetName().c_str(), getDeviceErrorText(ret, imageProcessor_).c_str());
-         throw CMMError(getDeviceErrorText(ret, imageProcessor_).c_str(), MMERR_DEVICE_GENERIC);
+         logError(imageProcessor->GetName().c_str(), getDeviceErrorText(ret, imageProcessor).c_str());
+         throw CMMError(getDeviceErrorText(ret, imageProcessor).c_str(), MMERR_DEVICE_GENERIC);
       }
    }
 }

@@ -159,25 +159,33 @@ int CoreCallback::CloseFrame(const MM::Device* /*caller*/)
 
 int CoreCallback::AcqFinished(const MM::Device* /*caller*/, int /*statusCode*/)
 {
-   // close the shutter if we are in auto mode
-   if (core_->autoShutter_ && core_->shutter_)
+   if (core_->autoShutter_)
    {
-      core_->shutter_->SetOpen(false);
-      // Don't wait for the shutter, because we typically call waitForDevice from
-      // a sequence thread and can cause a deadlock of shutter and camera
-      // are in the same module.
-      //core_->waitForDevice(core_->shutter_);
+      boost::shared_ptr<ShutterInstance> shutter =
+         core_->currentShutterDevice_.lock();
+      if (shutter)
+      {
+         shutter->SetOpen(false);
+
+         // Don't wait for the shutter, because we typically call waitForDevice
+         // from a sequence thread and can cause a deadlock of shutter and
+         // camera are in the same module.
+      }
    }
    return DEVICE_OK;
 }
 
 int CoreCallback::PrepareForAcq(const MM::Device* /*caller*/)
 {
-   // open the shutter if we are in auto mode
-   if (core_->autoShutter_ && core_->shutter_)
+   if (core_->autoShutter_)
    {
-      core_->shutter_->SetOpen(true);
-      core_->waitForDevice(core_->shutter_);
+      boost::shared_ptr<ShutterInstance> shutter =
+         core_->currentShutterDevice_.lock();
+      if (shutter)
+      {
+         shutter->SetOpen(true);
+         core_->waitForDevice(shutter);
+      }
    }
    return DEVICE_OK;
 }
@@ -551,9 +559,10 @@ int CoreCallback::GetImageDimensions(int& width, int& height, int& depth)
 
 int CoreCallback::GetFocusPosition(double& pos)
 {
-   if (core_->focusStage_)
+   boost::shared_ptr<StageInstance> focus = core_->currentFocusDevice_.lock();
+   if (focus)
    {
-      return core_->focusStage_->GetPositionUm(pos);
+      return focus->GetPositionUm(pos);
    }
    pos = 0.0;
    return DEVICE_CORE_FOCUS_STAGE_UNDEF;
@@ -561,12 +570,13 @@ int CoreCallback::GetFocusPosition(double& pos)
 
 int CoreCallback::SetFocusPosition(double pos)
 {
-   if (core_->focusStage_)
+   boost::shared_ptr<StageInstance> focus = core_->currentFocusDevice_.lock();
+   if (focus)
    {
-      int ret = core_->focusStage_->SetPositionUm(pos);
+      int ret = focus->SetPositionUm(pos);
       if (ret != DEVICE_OK)
          return ret;
-      core_->waitForDevice(core_->focusStage_);
+      core_->waitForDevice(focus);
       return DEVICE_OK;
    }
    return DEVICE_CORE_FOCUS_STAGE_UNDEF;
@@ -575,11 +585,11 @@ int CoreCallback::SetFocusPosition(double pos)
 
 int CoreCallback::MoveFocus(double velocity)
 {
-
-   if (core_->focusStage_)
+   boost::shared_ptr<StageInstance> focus = core_->currentFocusDevice_.lock();
+   if (focus)
    {
-      MMThreadGuard guard(core_->pluginManager_.getModuleLock(core_->focusStage_));
-      int ret = core_->focusStage_->Move(velocity);
+      MMThreadGuard guard(core_->pluginManager_.getModuleLock(focus));
+      int ret = focus->Move(velocity);
       if (ret != DEVICE_OK)
          return ret;
       return DEVICE_OK;
@@ -590,9 +600,11 @@ int CoreCallback::MoveFocus(double velocity)
 
 int CoreCallback::GetXYPosition(double& x, double& y)
 {
-   if (core_->xyStage_)
+   boost::shared_ptr<XYStageInstance> xyStage =
+      core_->currentXYStageDevice_.lock();
+   if (xyStage)
    {
-      return core_->xyStage_->GetPositionUm(x, y);
+      return xyStage->GetPositionUm(x, y);
    }
    x = 0.0;
    y = 0.0;
@@ -601,12 +613,14 @@ int CoreCallback::GetXYPosition(double& x, double& y)
 
 int CoreCallback::SetXYPosition(double x, double y)
 {
-   if (core_->xyStage_)
+   boost::shared_ptr<XYStageInstance> xyStage =
+      core_->currentXYStageDevice_.lock();
+   if (xyStage)
    {
-      int ret = core_->xyStage_->SetPositionUm(x, y);
+      int ret = xyStage->SetPositionUm(x, y);
       if (ret != DEVICE_OK)
          return ret;
-      core_->waitForDevice(core_->xyStage_);
+      core_->waitForDevice(xyStage);
       return DEVICE_OK;
    }
    return DEVICE_CORE_FOCUS_STAGE_UNDEF;
@@ -614,11 +628,12 @@ int CoreCallback::SetXYPosition(double x, double y)
 
 int CoreCallback::MoveXYStage(double vx, double vy)
 {
-
-   if (core_->xyStage_)
+   boost::shared_ptr<XYStageInstance> xyStage =
+      core_->currentXYStageDevice_.lock();
+   if (xyStage)
    {
-      MMThreadGuard guard(core_->pluginManager_.getModuleLock(core_->xyStage_));
-      int ret = core_->xyStage_->Move(vx, vy);
+      MMThreadGuard guard(core_->pluginManager_.getModuleLock(xyStage));
+      int ret = xyStage->Move(vx, vy);
       if (ret != DEVICE_OK)
          return ret;
       return DEVICE_OK;

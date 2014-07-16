@@ -183,8 +183,12 @@ public:
    // device management
    MM::ImageProcessor* GetImageProcessor(const MM::Device* /* caller */)
    {
-      if (core_->imageProcessor_)
-         return core_->imageProcessor_->GetRawPtr();
+      boost::shared_ptr<ImageProcessorInstance> imageProcessor =
+         core_->currentImageProcessor_.lock();
+      if (imageProcessor)
+      {
+         return imageProcessor->GetRawPtr();
+      }
       return 0;
    }
 
@@ -218,8 +222,12 @@ public:
 
    MM::AutoFocus* GetAutoFocus(const MM::Device* /* caller */)
    {
-      if (core_->autoFocus_)
-         return core_->autoFocus_->GetRawPtr();
+      boost::shared_ptr<AutoFocusInstance> autofocus =
+         core_->currentAutofocusDevice_.lock();
+      if (autofocus)
+      {
+         return autofocus->GetRawPtr();
+      }
       return 0;
    }
 
