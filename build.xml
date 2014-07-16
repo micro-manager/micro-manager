@@ -1,12 +1,12 @@
 <!-- Build all components of Micro-Manager -->
 <!-- Run 'ant -p' for usage -->
 <project name="mm" basedir="." default="build">
-	<include file="buildscripts/buildprops.xml"/>
-	<import file="buildscripts/version.xml"/>
-
 	<fail message="Micro-Manager Ant build files are currently designed for Windows only">
 		<condition><not><os family="winnt"/></not></condition>
 	</fail>
+
+	<include file="buildscripts/buildprops.xml"/>
+	<import file="buildscripts/version.xml"/>
 
 	<macrodef name="run-all-java-projects">
 		<attribute name="target"/>
