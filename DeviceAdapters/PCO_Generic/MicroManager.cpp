@@ -194,7 +194,15 @@ int CPCOCam::OnCameraType(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
   if (eAct == MM::BeforeGet)
   {
-    pProp->Set(m_pCamera->szCamName);
+    char sztype[500];
+    char szname[100];
+    int ilen = 100, icamtype = 0, iccdtype = 0, icamid = 0;
+    m_pCamera->GetCameraNameNType(szname, ilen, &icamtype, &iccdtype, &icamid);
+    if(m_pCamera->iCamClass == 3)
+      sprintf_s(sztype, 500, "%s - SN:%0X", szname, icamid);
+    else
+      sprintf_s(sztype, 500, "%s", szname);
+    pProp->Set(sztype);
   }
   return DEVICE_OK;
 }
@@ -204,7 +212,12 @@ int CPCOCam::OnCCDType(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
   if (eAct == MM::BeforeGet)
   {
-    pProp->Set("pco CCD");
+    char sztype[500];
+    if(m_pCamera->iCamClass == 3)
+      sprintf_s(sztype, 500, "max X %d - max Y %d", roiXMaxFull_, roiYMaxFull_);
+    else
+      sprintf_s(sztype, 500, "pco CCD");
+    pProp->Set(sztype);
   }
   return DEVICE_OK;
 }
@@ -273,10 +286,10 @@ int CPCOCam::OnTriggerMode( MM::PropertyBase* pProp, MM::ActionType eAct )
       if(m_nTrig == 0)
         pProp->Set("Internal");
       else
-        if(m_nTrig == 1)
-          pProp->Set("Software");
-        else
+        if(m_nTrig == 2)
           pProp->Set("External");
+        else
+          pProp->Set("External Exp. Ctrl.");
     }
     if(m_pCamera->iCamClass == 2)
     {
@@ -1316,6 +1329,10 @@ int CPCOCam::Initialize()
     //if (nRet != DEVICE_OK)
     //  return nRet;
     nRet = AddAllowedValue("Triggermode","External",2);
+    if (nRet != DEVICE_OK)
+      return nRet;
+
+    nRet = AddAllowedValue("Triggermode","External Exp. Ctrl.",3);
     if (nRet != DEVICE_OK)
       return nRet;
 

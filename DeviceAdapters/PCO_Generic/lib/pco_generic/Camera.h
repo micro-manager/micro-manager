@@ -132,6 +132,7 @@ public:
   PCO_Camera strCam;
   int GetCameraStruct(PCO_Camera *strCamera);
   int SetCameraStruct(PCO_Camera *strCamera);
+  int GetCameraNameNType(char* pname, int ilen, int *iCamTy, int *iCCDTy, int *iCamId) const;
 
 // Dialog related functions:
 
