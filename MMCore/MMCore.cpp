@@ -104,7 +104,7 @@ using namespace std;
  */
 const int MMCore_versionMajor = 5;
 const int MMCore_versionMinor = 0;
-const int MMCore_versionPatch = 2;
+const int MMCore_versionPatch = 3;
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -2098,7 +2098,7 @@ namespace
             boost::shared_ptr<DeviceInstance> theDevice) :
          theDevice_(theDevice)
       {}
-      DeviceWeakPtrInvalidOrMatches() {}
+
       bool operator()(const boost::weak_ptr<DeviceInstance>& ptr)
       {
          boost::shared_ptr<DeviceInstance> aDevice = ptr.lock();
@@ -2114,15 +2114,13 @@ namespace
  */
 void CMMCore::assignImageSynchro(const char* label) throw (CMMError)
 {
-   boost::shared_ptr<DeviceInstance> pDevice = GetDeviceWithCheckedLabel(label);
+   boost::shared_ptr<DeviceInstance> device = GetDeviceWithCheckedLabel(label);
 
-   imageSynchroDevices_.push_back(pDevice);
-
-   // Remove any dead references
    imageSynchroDevices_.erase(std::remove_if(imageSynchroDevices_.begin(),
-            imageSynchroDevices_.end(), DeviceWeakPtrInvalidOrMatches()),
+            imageSynchroDevices_.end(), DeviceWeakPtrInvalidOrMatches(device)),
          imageSynchroDevices_.end());
 
+   imageSynchroDevices_.push_back(device);
    LOG_DEBUG(coreLogger_) << "Added " << label << " to image-synchro list";
 }
 
