@@ -1,10 +1,10 @@
-package mmcorej;
+package org.micromanager.data;
 
+import java.awt.Color;
 import java.util.UUID;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.micromanager.api.MultiStagePosition;
+
 
 /**
  * This class holds the metadata for ImagePlanes. It is intended to be 
@@ -19,374 +19,326 @@ public class Metadata {
     * generate a Metadata.
     */
    public static class MetadataBuilder {
-      private UUID uuid_builder_ = null;
-      private String source_builder_ = null;
-      private String microManagerVersion_builder_ = null;
-      private String metadataVersion_builder_ = null;
-      private String acquisitionName_builder_ = null;
-      private String fileName_builder_ = null;
-      private String userName_builder_ = null;
-      private String computerName_builder_ = null;
-      private String prefix_builder_ = null;
-      private String directory_builder_ = null;
-      private String startTime_builder_ = null;
+      private UUID uuid_ = null;
+      private String source_ = null;
+      private String microManagerVersion_ = null;
+      private String metadataVersion_ = null;
+      private String acquisitionName_ = null;
+      private String fileName_ = null;
+      private String userName_ = null;
+      private String computerName_ = null;
+      private String prefix_ = null;
+      private String directory_ = null;
+      private String startTime_ = null;
       
-      private JSONArray channelNames_builder_ = null;
-      private JSONArray channelColors_builder_ = null;
-      private JSONArray channelContrastMins_builder_ = null;
-      private JSONArray channelContrastMaxes_builder_ = null;
-      private JSONArray initialPositionList_builder_ = null;
+      private String[] channelNames_ = null;
+      private Color[] channelColors_ = null;
+      private int[] channelContrastMins_ = null;
+      private int[] channelContrastMaxes_ = null;
+      private MultiStagePosition initialPositionList_ = null;
 
-      private int numChannels_builder_ = null;
-      private int numSlices_builder_ = null;
-      private int numFrames_builder_ = null;
-      private int numPositions_builder_ = null;
-      private double zStepUm_builder_ = null;
-      private double waitIntervalMs_builder_ = null;
-      private JSONArray customIntervalsMs_builder_ = null;
-      private boolean timeFirst_builder_ = null;
-      private boolean slicesFirst_builder_ = null;
-      private boolean keepShutterOpenSlices_builder_ = null;
-      private boolean keepShutterOpenChannels_builder_ = null;
+      private double zStepUm_ = null;
+      private double waitIntervalMs_ = null;
+      private double[] customIntervalsMs_ = null;
+      private boolean timeFirst_ = null;
+      private boolean slicesFirst_ = null;
+      private boolean keepShutterOpenSlices_ = null;
+      private boolean keepShutterOpenChannels_ = null;
 
-      private String pixelType_builder_ = null;
-      private int bitDepth_builder_ = null;
-      private int bytesPerPixel_builder_ = null;
-      private int numComponents_builder_ = null;
-      private int ijType_builder_ = null;
-      private int frame_builder_ = null;
-      private String channelName_builder_ = null;
-      private double exposureMs_builder_ = null;
-      private double elapsedTimeMs_builder_ = null;
-      private double startTimeMs_builder_ = null;
-      private int binning_builder_ = null;
+      private String pixelType_ = null;
+      private int bitDepth_ = null;
+      private int bytesPerPixel_ = null;
+      private int numComponents_ = null;
+      private int ijType_ = null;
+      private int frame_ = null;
+      private String channelName_ = null;
+      private double exposureMs_ = null;
+      private double elapsedTimeMs_ = null;
+      private double startTimeMs_ = null;
+      private int binning_ = null;
       
-      private int channelIndex_builder_ = null;
-      private int frameIndex_builder_ = null;
-      private int positionIndex_builder_ = null;
-      private int sliceIndex_builder_ = null;
-      private int imageNumber_builder_ = null;
-      private int gridRow_builder_ = null;
-      private int gridColumn_builder_ = null;
-      private String positionName_builder_ = null;
-      private double xPositionUm_builder_ = null;
-      private double yPositionUm_builder_ = null;
-      private double zPositionUm_builder_ = null;
+      private int imageNumber_ = null;
+      private int gridRow_ = null;
+      private int gridColumn_ = null;
+      private String positionName_ = null;
+      private double xPositionUm_ = null;
+      private double yPositionUm_ = null;
+      private double zPositionUm_ = null;
 
-      private double pixelSizeUm_builder_ = null;
-      private String camera_builder_ = null;
-      private String receivedTime_builder_ = null;
-      private String excitationLabel_builder_ = null;
-      private String emissionLabel_builder_ = null;
-      private String ROI_builder_ = null;
-      private String comments_builder_ = null;
+      private double pixelSizeUm_ = null;
+      private String camera_ = null;
+      private String receivedTime_ = null;
+      private String excitationLabel_ = null;
+      private String emissionLabel_ = null;
+      private String ROI_ = null;
+      private String comments_ = null;
 
-      private int pixelWidth_builder_ = null;
-      private int pixelHeight_builder_ = null;
-      private int color_builder_ = null;
-      private double pixelAspect_builder_ = null;
+      private int pixelWidth_ = null;
+      private int pixelHeight_ = null;
+      private int color_ = null;
+      private double pixelAspect_ = null;
 
       public Metadata build() {
          return new Metadata(this);
       }
 
       public MetadataBuilder uuid(UUID uuid) {
-         uuid_builder_ = uuid;
+         uuid_ = uuid;
          return this;
       }
 
       public MetadataBuilder source(String source) {
-         source_builder_ = source;
+         source_ = source;
          return this;
       }
 
       public MetadataBuilder microManagerVersion(String microManagerVersion) {
-         microManagerVersion_builder_ = microManagerVersion;
+         microManagerVersion_ = microManagerVersion;
          return this;
       }
 
       public MetadataBuilder metadataVersion(String metadataVersion) {
-         metadataVersion_builder_ = metadataVersion;
+         metadataVersion_ = metadataVersion;
          return this;
       }
 
       public MetadataBuilder acquisitionName(String acquisitionName) {
-         acquisitionName_builder_ = acquisitionName;
+         acquisitionName_ = acquisitionName;
          return this;
       }
 
       public MetadataBuilder fileName(String fileName) {
-         fileName_builder_ = fileName;
+         fileName_ = fileName;
          return this;
       }
 
       public MetadataBuilder userName(String userName) {
-         userName_builder_ = userName;
+         userName_ = userName;
          return this;
       }
 
       public MetadataBuilder computerName(String computerName) {
-         computerName_builder_ = computerName;
+         computerName_ = computerName;
          return this;
       }
 
       public MetadataBuilder prefix(String prefix) {
-         prefix_builder_ = prefix;
+         prefix_ = prefix;
          return this;
       }
 
       public MetadataBuilder directory(String directory) {
-         directory_builder_ = directory;
+         directory_ = directory;
          return this;
       }
 
       public MetadataBuilder startTime(String startTime) {
-         startTime_builder_ = startTime;
+         startTime_ = startTime;
          return this;
       }
 
-      public MetadataBuilder channelNames(JSONArray channelNames) {
-         channelNames_builder_ = channelNames;
+      public MetadataBuilder channelNames(String[] channelNames) {
+         channelNames_ = channelNames;
          return this;
       }
 
-      public MetadataBuilder channelColors(JSONArray channelColors) {
-         channelColors_builder_ = channelColors;
+      public MetadataBuilder channelColors(Color[] channelColors) {
+         channelColors_ = channelColors;
          return this;
       }
 
-      public MetadataBuilder channelContrastMins(JSONArray channelContrastMins) {
-         channelContrastMins_builder_ = channelContrastMins;
+      public MetadataBuilder channelContrastMins(int[] channelContrastMins) {
+         channelContrastMins_ = channelContrastMins;
          return this;
       }
 
-      public MetadataBuilder channelContrastMaxes(JSONArray channelContrastMaxes) {
-         channelContrastMaxes_builder_ = channelContrastMaxes;
+      public MetadataBuilder channelContrastMaxes(int[] channelContrastMaxes) {
+         channelContrastMaxes_ = channelContrastMaxes;
          return this;
       }
 
-      public MetadataBuilder initialPositionList(JSONArray initialPositionList) {
-         initialPositionList_builder_ = initialPositionList;
-         return this;
-      }
-
-      public MetadataBuilder numChannels(int numChannels) {
-         numChannels_builder_ = numChannels;
-         return this;
-      }
-
-      public MetadataBuilder numSlices(int numSlices) {
-         numSlices_builder_ = numSlices;
-         return this;
-      }
-
-      public MetadataBuilder numFrames(int numFrames) {
-         numFrames_builder_ = numFrames;
-         return this;
-      }
-
-      public MetadataBuilder numPositions(int numPositions) {
-         numPositions_builder_ = numPositions;
+      public MetadataBuilder initialPositionList(MultiStagePosition initialPositionList) {
+         initialPositionList_ = initialPositionList;
          return this;
       }
 
       public MetadataBuilder zStepUm(double zStepUm) {
-         zStepUm_builder_ = zStepUm;
+         zStepUm_ = zStepUm;
          return this;
       }
 
       public MetadataBuilder waitIntervalMs(double waitIntervalMs) {
-         waitIntervalMs_builder_ = waitIntervalMs;
+         waitIntervalMs_ = waitIntervalMs;
          return this;
       }
 
-      public MetadataBuilder customIntervalsMs(JSONArray customIntervalsMs) {
-         customIntervalsMs_builder_ = customIntervalsMs;
+      public MetadataBuilder customIntervalsMs(double[] customIntervalsMs) {
+         customIntervalsMs_ = customIntervalsMs;
          return this;
       }
 
       public MetadataBuilder timeFirst(boolean timeFirst) {
-         timeFirst_builder_ = timeFirst;
+         timeFirst_ = timeFirst;
          return this;
       }
 
       public MetadataBuilder slicesFirst(boolean slicesFirst) {
-         slicesFirst_builder_ = slicesFirst;
+         slicesFirst_ = slicesFirst;
          return this;
       }
 
       public MetadataBuilder keepShutterOpenSlices(boolean keepShutterOpenSlices) {
-         keepShutterOpenSlices_builder_ = keepShutterOpenSlices;
+         keepShutterOpenSlices_ = keepShutterOpenSlices;
          return this;
       }
 
       public MetadataBuilder keepShutterOpenChannels(boolean keepShutterOpenChannels) {
-         keepShutterOpenChannels_builder_ = keepShutterOpenChannels;
+         keepShutterOpenChannels_ = keepShutterOpenChannels;
          return this;
       }
 
       public MetadataBuilder pixelType(String pixelType) {
-         pixelType_builder_ = pixelType;
+         pixelType_ = pixelType;
          return this;
       }
 
       public MetadataBuilder bitDepth(int bitDepth) {
-         bitDepth_builder_ = bitDepth;
+         bitDepth_ = bitDepth;
          return this;
       }
 
       public MetadataBuilder bytesPerPixel(int bytesPerPixel) {
-         bytesPerPixel_builder_ = bytesPerPixel;
+         bytesPerPixel_ = bytesPerPixel;
          return this;
       }
 
       public MetadataBuilder numComponents(int numComponents) {
-         numComponents_builder_ = numComponents;
+         numComponents_ = numComponents;
          return this;
       }
 
       public MetadataBuilder ijType(int ijType) {
-         ijType_builder_ = ijType;
+         ijType_ = ijType;
          return this;
       }
 
       public MetadataBuilder frame(int frame) {
-         frame_builder_ = frame;
+         frame_ = frame;
          return this;
       }
 
       public MetadataBuilder channelName(String channelName) {
-         channelName_builder_ = channelName;
+         channelName_ = channelName;
          return this;
       }
 
       public MetadataBuilder exposureMs(double exposureMs) {
-         exposureMs_builder_ = exposureMs;
+         exposureMs_ = exposureMs;
          return this;
       }
 
       public MetadataBuilder elapsedTimeMs(double elapsedTimeMs) {
-         elapsedTimeMs_builder_ = elapsedTimeMs;
+         elapsedTimeMs_ = elapsedTimeMs;
          return this;
       }
 
       public MetadataBuilder startTimeMs(double startTimeMs) {
-         startTimeMs_builder_ = startTimeMs;
+         startTimeMs_ = startTimeMs;
          return this;
       }
 
       public MetadataBuilder binning(int binning) {
-         binning_builder_ = binning;
-         return this;
-      }
-
-      public MetadataBuilder channelIndex(int channelIndex) {
-         channelIndex_builder_ = channelIndex;
-         return this;
-      }
-
-      public MetadataBuilder frameIndex(int frameIndex) {
-         frameIndex_builder_ = frameIndex;
-         return this;
-      }
-
-      public MetadataBuilder positionIndex(int positionIndex) {
-         positionIndex_builder_ = positionIndex;
-         return this;
-      }
-
-      public MetadataBuilder sliceIndex(int sliceIndex) {
-         sliceIndex_builder_ = sliceIndex;
+         binning_ = binning;
          return this;
       }
 
       public MetadataBuilder imageNumber(int imageNumber) {
-         imageNumber_builder_ = imageNumber;
+         imageNumber_ = imageNumber;
          return this;
       }
 
       public MetadataBuilder gridRow(int gridRow) {
-         gridRow_builder_ = gridRow;
+         gridRow_ = gridRow;
          return this;
       }
 
       public MetadataBuilder gridColumn(int gridColumn) {
-         gridColumn_builder_ = gridColumn;
+         gridColumn_ = gridColumn;
          return this;
       }
 
       public MetadataBuilder positionName(String positionName) {
-         positionName_builder_ = positionName;
+         positionName_ = positionName;
          return this;
       }
 
       public MetadataBuilder xPositionUm(double xPositionUm) {
-         xPositionUm_builder_ = xPositionUm;
+         xPositionUm_ = xPositionUm;
          return this;
       }
 
       public MetadataBuilder yPositionUm(double yPositionUm) {
-         yPositionUm_builder_ = yPositionUm;
+         yPositionUm_ = yPositionUm;
          return this;
       }
 
       public MetadataBuilder zPositionUm(double zPositionUm) {
-         zPositionUm_builder_ = zPositionUm;
+         zPositionUm_ = zPositionUm;
          return this;
       }
 
       public MetadataBuilder pixelSizeUm(double pixelSizeUm) {
-         pixelSizeUm_builder_ = pixelSizeUm;
+         pixelSizeUm_ = pixelSizeUm;
          return this;
       }
 
       public MetadataBuilder camera(String camera) {
-         camera_builder_ = camera;
+         camera_ = camera;
          return this;
       }
 
       public MetadataBuilder receivedTime(String receivedTime) {
-         receivedTime_builder_ = receivedTime;
+         receivedTime_ = receivedTime;
          return this;
       }
 
       public MetadataBuilder excitationLabel(String excitationLabel) {
-         excitationLabel_builder_ = excitationLabel;
+         excitationLabel_ = excitationLabel;
          return this;
       }
 
       public MetadataBuilder emissionLabel(String emissionLabel) {
-         emissionLabel_builder_ = emissionLabel;
+         emissionLabel_ = emissionLabel;
          return this;
       }
 
       public MetadataBuilder ROI(String ROI) {
-         ROI_builder_ = ROI;
+         ROI_ = ROI;
          return this;
       }
 
       public MetadataBuilder comments(String comments) {
-         comments_builder_ = comments;
+         comments_ = comments;
          return this;
       }
 
       public MetadataBuilder pixelWidth(int pixelWidth) {
-         pixelWidth_builder_ = pixelWidth;
+         pixelWidth_ = pixelWidth;
          return this;
       }
 
       public MetadataBuilder pixelHeight(int pixelHeight) {
-         pixelHeight_builder_ = pixelHeight;
+         pixelHeight_ = pixelHeight;
          return this;
       }
 
       public MetadataBuilder color(int color) {
-         color_builder_ = color;
+         color_ = color;
          return this;
       }
 
       public MetadataBuilder pixelAspect(double pixelAspect) {
-         pixelAspect_builder_ = pixelAspect;
+         pixelAspect_ = pixelAspect;
          return this;
       }
    }
@@ -403,11 +355,11 @@ public class Metadata {
    private String directory_;
    private String startTime_;
    
-   private JSONArray channelNames_;
-   private JSONArray channelColors_;
-   private JSONArray channelContrastMins_;
-   private JSONArray channelContrastMaxes_;
-   private JSONArray initialPositionList_;
+   private String[] channelNames_;
+   private Color[] channelColors_;
+   private int[] channelContrastMins_;
+   private int[] channelContrastMaxes_;
+   private MultiStagePosition initialPositionList_;
 
    private int numChannels_;
    private int numSlices_;
@@ -415,7 +367,7 @@ public class Metadata {
    private int numPositions_;
    private double zStepUm_;
    private double waitIntervalMs_;
-   private JSONArray customIntervalsMs_;
+   private double[] customIntervalsMs_;
    private boolean timeFirst_;
    private boolean slicesFirst_;
    private boolean keepShutterOpenSlices_;
@@ -433,10 +385,6 @@ public class Metadata {
    private double startTimeMs_;
    private int binning_;
    
-   private int channelIndex_;
-   private int frameIndex_;
-   private int positionIndex_;
-   private int sliceIndex_;
    private int imageNumber_;
    private int gridRow_;
    private int gridColumn_;
@@ -459,72 +407,68 @@ public class Metadata {
    private double pixelAspect_;
 
    public Metadata(MetadataBuilder builder) {
-      uuid_ = builder.uuid_builder_;
-      source_ = builder.source_builder_;
-      microManagerVersion_ = builder.microManagerVersion_builder_;
-      metadataVersion_ = builder.metadataVersion_builder_;
-      acquisitionName_ = builder.acquisitionName_builder_;
-      fileName_ = builder.fileName_builder_;
-      userName_ = builder.userName_builder_;
-      computerName_ = builder.computerName_builder_;
-      prefix_ = builder.prefix_builder_;
-      directory_ = builder.directory_builder_;
-      startTime_ = builder.startTime_builder_;
+      uuid_ = builder.uuid_;
+      source_ = builder.source_;
+      microManagerVersion_ = builder.microManagerVersion_;
+      metadataVersion_ = builder.metadataVersion_;
+      acquisitionName_ = builder.acquisitionName_;
+      fileName_ = builder.fileName_;
+      userName_ = builder.userName_;
+      computerName_ = builder.computerName_;
+      prefix_ = builder.prefix_;
+      directory_ = builder.directory_;
+      startTime_ = builder.startTime_;
       
-      channelNames_ = builder.channelNames_builder_;
-      channelColors_ = builder.channelColors_builder_;
-      channelContrastMins_ = builder.channelContrastMins_builder_;
-      channelContrastMaxes_ = builder.channelContrastMaxes_builder_;
-      initialPositionList_ = builder.initialPositionList_builder_;
+      channelNames_ = builder.channelNames_;
+      channelColors_ = builder.channelColors_;
+      channelContrastMins_ = builder.channelContrastMins_;
+      channelContrastMaxes_ = builder.channelContrastMaxes_;
+      initialPositionList_ = builder.initialPositionList_;
 
-      numChannels_ = builder.numChannels_builder_;
-      numSlices_ = builder.numSlices_builder_;
-      numFrames_ = builder.numFrames_builder_;
-      numPositions_ = builder.numPositions_builder_;
-      zStepUm_ = builder.zStepUm_builder_;
-      waitIntervalMs_ = builder.waitIntervalMs_builder_;
-      customIntervalsMs_ = builder.customIntervalsMs_builder_;
-      timeFirst_ = builder.timeFirst_builder_;
-      slicesFirst_ = builder.slicesFirst_builder_;
-      keepShutterOpenSlices_ = builder.keepShutterOpenSlices_builder_;
-      keepShutterOpenChannels_ = builder.keepShutterOpenChannels_builder_;
+      numChannels_ = builder.numChannels_;
+      numSlices_ = builder.numSlices_;
+      numFrames_ = builder.numFrames_;
+      numPositions_ = builder.numPositions_;
+      zStepUm_ = builder.zStepUm_;
+      waitIntervalMs_ = builder.waitIntervalMs_;
+      customIntervalsMs_ = builder.customIntervalsMs_;
+      timeFirst_ = builder.timeFirst_;
+      slicesFirst_ = builder.slicesFirst_;
+      keepShutterOpenSlices_ = builder.keepShutterOpenSlices_;
+      keepShutterOpenChannels_ = builder.keepShutterOpenChannels_;
 
-      pixelType_ = builder.pixelType_builder_;
-      bitDepth_ = builder.bitDepth_builder_;
-      bytesPerPixel_ = builder.bytesPerPixel_builder_;
-      numComponents_ = builder.numComponents_builder_;
-      ijType_ = builder.ijType_builder_;
-      frame_ = builder.frame_builder_;
-      channelName_ = builder.channelName_builder_;
-      exposureMs_ = builder.exposureMs_builder_;
-      elapsedTimeMs_ = builder.elapsedTimeMs_builder_;
-      startTimeMs_ = builder.startTimeMs_builder_;
-      binning_ = builder.binning_builder_;
+      pixelType_ = builder.pixelType_;
+      bitDepth_ = builder.bitDepth_;
+      bytesPerPixel_ = builder.bytesPerPixel_;
+      numComponents_ = builder.numComponents_;
+      ijType_ = builder.ijType_;
+      frame_ = builder.frame_;
+      channelName_ = builder.channelName_;
+      exposureMs_ = builder.exposureMs_;
+      elapsedTimeMs_ = builder.elapsedTimeMs_;
+      startTimeMs_ = builder.startTimeMs_;
+      binning_ = builder.binning_;
       
-      channelIndex_ = builder.channelIndex_builder_;
-      frameIndex_ = builder.frameIndex_builder_;
-      positionIndex_ = builder.positionIndex_builder_;
-      sliceIndex_ = builder.sliceIndex_builder_;
-      imageNumber_ = builder.imageNumber_builder_;
-      gridRow_ = builder.gridRow_builder_;
-      gridColumn_ = builder.gridColumn_builder_;
-      positionName_ = builder.positionName_builder_;
-      xPositionUm_ = builder.xPositionUm_builder_;
-      yPositionUm_ = builder.yPositionUm_builder_;
-      zPositionUm_ = builder.zPositionUm_builder_;
+      imageNumber_ = builder.imageNumber_;
+      gridRow_ = builder.gridRow_;
+      gridColumn_ = builder.gridColumn_;
+      positionName_ = builder.positionName_;
+      xPositionUm_ = builder.xPositionUm_;
+      yPositionUm_ = builder.yPositionUm_;
+      zPositionUm_ = builder.zPositionUm_;
 
-      pixelSizeUm_ = builder.pixelSizeUm_builder_;
-      camera_ = builder.camera_builder_;
-      receivedTime_ = builder.receivedTime_builder_;
-      excitationLabel_ = builder.excitationLabel_builder_;
-      emissionLabel_ = builder.emissionLabel_builder_;
-      ROI_ = builder.ROI_builder_;
-      comments_ = builder.comments_builder_;
+      pixelSizeUm_ = builder.pixelSizeUm_;
+      camera_ = builder.camera_;
+      receivedTime_ = builder.receivedTime_;
+      excitationLabel_ = builder.excitationLabel_;
+      emissionLabel_ = builder.emissionLabel_;
+      ROI_ = builder.ROI_;
+      comments_ = builder.comments_;
 
-      pixelWidth_ = builder.pixelWidth_builder_;
-      pixelHeight_ = builder.pixelHeight_builder_;
-      color_ = builder.color_builder_;
-      pixelAspect_ = builder.pixelAspect_builder_;
+      pixelWidth_ = builder.pixelWidth_;
+      pixelHeight_ = builder.pixelHeight_;
+      color_ = builder.color_;
+      pixelAspect_ = builder.pixelAspect_;
    }
    
    public MetadataBuilder copy() {
@@ -567,10 +511,6 @@ public class Metadata {
             .elapsedTimeMs(elapsedTimeMs_)
             .startTimeMs(startTimeMs_)
             .binning(binning_)
-            .channelIndex(channelIndex_)
-            .frameIndex(frameIndex_)
-            .positionIndex(positionIndex_)
-            .sliceIndex(sliceIndex_)
             .imageNumber(imageNumber_)
             .gridRow(gridRow_)
             .gridColumn(gridColumn_)
@@ -635,40 +575,24 @@ public class Metadata {
       return startTime_;
    }
 
-   public JSONArray getChannelNames() {
+   public String[] getChannelNames() {
       return channelNames_;
    }
 
-   public JSONArray getChannelColors() {
+   public Color[] getChannelColors() {
       return channelColors_;
    }
 
-   public JSONArray getChannelContrastMins() {
+   public int[] getChannelContrastMins() {
       return channelContrastMins_;
    }
 
-   public JSONArray getChannelContrastMaxes() {
+   public int[] getChannelContrastMaxes() {
       return channelContrastMaxes_;
    }
 
-   public JSONArray getInitialPositionList() {
+   public MultiStagePosition getInitialPositionList() {
       return initialPositionList_;
-   }
-
-   public int getNumChannels() {
-      return numChannels_;
-   }
-
-   public int getNumSlices() {
-      return numSlices_;
-   }
-
-   public int getNumFrames() {
-      return numFrames_;
-   }
-
-   public int getNumPositions() {
-      return numPositions_;
    }
 
    public double getZStepUm() {
@@ -679,7 +603,7 @@ public class Metadata {
       return waitIntervalMs_;
    }
 
-   public JSONArray getCustomIntervalsMs() {
+   public double[] getCustomIntervalsMs() {
       return customIntervalsMs_;
    }
 
@@ -741,22 +665,6 @@ public class Metadata {
 
    public int getBinning() {
       return binning_;
-   }
-
-   public int getChannelIndex() {
-      return channelIndex_;
-   }
-
-   public int getFrameIndex() {
-      return frameIndex_;
-   }
-
-   public int getPositionIndex() {
-      return positionIndex_;
-   }
-
-   public int getSliceIndex() {
-      return sliceIndex_;
    }
 
    public int getImageNumber() {
