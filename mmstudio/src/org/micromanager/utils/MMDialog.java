@@ -64,7 +64,7 @@ public class MMDialog extends JDialog {
       }
    }
 
-   protected void loadPosition(int x, int y, int width, int height) {
+   private void ensureSafeWindowPosition(int x, int y) {
       // if a saved position exists then make sure it falls on the screen
       // (useful when screen size changes between invocations)
       Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
@@ -74,6 +74,10 @@ public class MMDialog extends JDialog {
       if (screenSize.height < prefs_.getInt(WINDOW_Y, 0)) {
          prefs_.putInt(WINDOW_Y, y);
       }
+   }
+
+   protected void loadPosition(int x, int y, int width, int height) {
+      ensureSafeWindowPosition(x, y);
       setBounds(prefs_.getInt(WINDOW_X, x),
                 prefs_.getInt(WINDOW_Y, y),
                 prefs_.getInt(WINDOW_WIDTH, width),
@@ -81,6 +85,7 @@ public class MMDialog extends JDialog {
    }
    
    protected void loadPosition(int x, int y) {
+      ensureSafeWindowPosition(x, y);
       setLocation(prefs_.getInt(WINDOW_X, x),
                 prefs_.getInt(WINDOW_Y, y));
    }

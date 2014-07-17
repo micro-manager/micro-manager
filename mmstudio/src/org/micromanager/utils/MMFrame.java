@@ -45,11 +45,8 @@ public class MMFrame extends JFrame {
    public MMFrame() {
       super();
    }
-   
-   public void loadPosition(int x, int y, int width, int height) {
-      if (prefs_ == null)
-         return;
 
+   private void ensureSafeWindowPosition(int x, int y) {
       // if a saved position exists then make sure it falls on the screen
       // (useful when screen size changes between invocations)
       Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
@@ -59,7 +56,13 @@ public class MMFrame extends JFrame {
       if (screenSize.height < prefs_.getInt(WINDOW_Y, 0)) {
          prefs_.putInt(WINDOW_Y, y);
       }
-      
+   }
+
+   public void loadPosition(int x, int y, int width, int height) {
+      if (prefs_ == null)
+         return;
+
+      ensureSafeWindowPosition(x, y);
       setBounds(prefs_.getInt(WINDOW_X, x),
                 prefs_.getInt(WINDOW_Y, y),
                 prefs_.getInt(WINDOW_WIDTH, width),
@@ -70,6 +73,7 @@ public class MMFrame extends JFrame {
       if (prefs_ == null)
          return;
       
+      ensureSafeWindowPosition(x, y);
       setBounds(prefs_.getInt(WINDOW_X, x),
                 prefs_.getInt(WINDOW_Y, y),
                 getWidth(),
