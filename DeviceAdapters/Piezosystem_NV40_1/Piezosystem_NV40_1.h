@@ -99,7 +99,7 @@ public:
    // action interface
    // ----------------
 	int OnPort(MM::PropertyBase* pProp, MM::ActionType pAct);
-	int IsStageSequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_UNSUPPORTED_COMMAND; }//DEVICE_OK;} 
+	int IsStageSequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;} 
 	bool IsContinuousFocusDrive() const {return false;}
 	int OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnLoop(MM::PropertyBase* pProp, MM::ActionType eAct);
