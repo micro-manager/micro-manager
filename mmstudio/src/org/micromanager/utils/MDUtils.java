@@ -218,23 +218,26 @@ public class MDUtils {
             return map.getString("PixelType");
       } catch (JSONException e) {
          try {
-            try {
-               int ijType = map.getInt("IJType");
-            } catch (JSONException e2) {
-               return "";
-            }
-            if (ijType == ImagePlus.GRAY8)
+            int ijType = map.getInt("IJType");
+            if (ijType == ImagePlus.GRAY8) {
                return "GRAY8";
-            else if (ijType == ImagePlus.GRAY16)
+            }
+            else if (ijType == ImagePlus.GRAY16) {
                return "GRAY16";
-            else if (ijType == ImagePlus.GRAY32)
+            }
+            else if (ijType == ImagePlus.GRAY32) {
                return "GRAY32";
-            else if (ijType == ImagePlus.COLOR_RGB)
+            }
+            else if (ijType == ImagePlus.COLOR_RGB) {
                return "RGB32";
-            else throw new MMScriptException("Can't figure out pixel type");
+            }
+            else {
+               throw new MMScriptException("Can't figure out pixel type");
+            }
             // There is no IJType for RGB64.
-         } catch (MMScriptException e2) {
-            throw new MMScriptException ("Can't figure out pixel type");
+         }
+         catch (JSONException e2) {
+            throw new MMScriptException("Can't figure out pixel type");
          }
       }
       return "";
