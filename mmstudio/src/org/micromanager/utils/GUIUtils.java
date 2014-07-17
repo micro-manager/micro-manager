@@ -172,7 +172,7 @@ public class GUIUtils {
    
    // ******* Utility methods for persisting windows *******
    
-   private static HashSet windowsWithPersistedPositions = new HashSet<Class>();
+   private static HashSet<Class> windowsWithPersistedPositions = new HashSet<Class>();
    
    private static void storePosition(final Window win) {
       Preferences prefs = Preferences.userRoot().node(win.getClass().getName());

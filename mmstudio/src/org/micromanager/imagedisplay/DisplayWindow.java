@@ -15,13 +15,8 @@ import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
 import java.awt.Point;
 import java.awt.Toolkit;
-import java.lang.StackTraceElement;
-import java.lang.Thread;
 
-import javax.swing.SwingConstants;
 import javax.swing.event.MouseInputAdapter;
-import javax.swing.JLabel;
-import javax.swing.plaf.basic.BasicArrowButton;
 
 import net.miginfocom.swing.MigLayout;
 
@@ -96,6 +91,7 @@ public class DisplayWindow extends StackWindow {
       // Repack on window size change, since our controls may have also changed
       // size.
       addComponentListener(new ComponentAdapter() {
+         @Override
          public void componentResized(ComponentEvent e) {
             pack();
          }
