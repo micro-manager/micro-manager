@@ -297,6 +297,7 @@ public class MMAcquisition {
                if (summary_ != null) {
                   summary_.put("Prefix", acqDirectory);
                   summary_.put("Channels", numChannels_);
+                  MDUtils.setPixelTypeFromByteDepth(summary_, byteDepth_);
                }
                dirName = rootDirectory_ + File.separator + acqDirectory;
             } catch (Exception ex) {
