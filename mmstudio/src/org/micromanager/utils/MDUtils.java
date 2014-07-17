@@ -218,7 +218,11 @@ public class MDUtils {
             return map.getString("PixelType");
       } catch (JSONException e) {
          try {
-            int ijType = map.getInt("IJType");
+            try {
+               int ijType = map.getInt("IJType");
+            } catch (JSONException e2) {
+               return "";
+            }
             if (ijType == ImagePlus.GRAY8)
                return "GRAY8";
             else if (ijType == ImagePlus.GRAY16)
