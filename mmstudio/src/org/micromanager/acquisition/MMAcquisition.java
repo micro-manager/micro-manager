@@ -174,7 +174,7 @@ public class MMAcquisition {
    public void setImagePhysicalDimensions(int width, int height,
            int byteDepth, int bitDepth, int multiCamNumCh) throws MMScriptException {
       if (initialized_) {
-         throw new MMScriptException("Can't image change dimensions - the acquisition is already initialized");
+         throw new MMScriptException("Can't change image dimensions - the acquisition is already initialized");
       }
       width_ = width;
       height_ = height;
