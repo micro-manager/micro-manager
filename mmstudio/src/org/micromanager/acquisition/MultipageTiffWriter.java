@@ -33,7 +33,6 @@ import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.CharBuffer;
-import java.nio.channels.ClosedChannelException;
 import java.nio.channels.FileChannel;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -87,9 +86,7 @@ public class MultipageTiffWriter {
    public static final char MM_METADATA = 51123;
    
    public static final int SUMMARY_MD_HEADER = 2355492;
-   
-   private static ThreadPoolExecutor writingExecutor_ = null;
-      
+         
    public static final ByteOrder BYTE_ORDER = ByteOrder.nativeOrder();
    
    final private boolean omeTiff_;
@@ -97,6 +94,7 @@ public class MultipageTiffWriter {
    private TaggedImageStorageMultipageTiff masterMPTiffStorage_;
    private RandomAccessFile raFile_;
    private FileChannel fileChannel_; 
+   private ThreadPoolExecutor writingExecutor_;
    private long filePosition_ = 0;
    private long indexMapPosition_; //current position of the dynamically written index map
    private long indexMapFirstEntry_; // mark position of first entry so that number of entries can be written at end
@@ -158,12 +156,7 @@ public class MultipageTiffWriter {
                 ReportingUtils.showError("Insufficent space on disk: no room to write data");
          }
          fileChannel_ = raFile_.getChannel();
-         if (writingExecutor_ == null) {
-            writingExecutor_ = fastStorageMode_
-                    ? new ThreadPoolExecutor(1, 1, 0, TimeUnit.NANOSECONDS, 
-                    new LinkedBlockingQueue<java.lang.Runnable>())
-                    : null;
-         }
+         writingExecutor_ = masterMPTiffStorage_.getWritingExecutor();
          indexMap_ = new HashMap<String, Long>();
          reader_.setFileChannel(fileChannel_);
          reader_.setIndexMap(indexMap_);
@@ -304,6 +297,8 @@ public class MultipageTiffWriter {
    /**
     * Called when there is no more data to be written. Write null offset after last image in accordance with TIFF
     * specification and set number of index map entries for backwards reading capability
+    * A file that has been finished should have everything it needs to be properly reopened in MM or
+    * by a basic TIFF reader
     */
    public void finish() throws IOException {
       writeNullOffsetAfterLastImage();
@@ -319,7 +314,9 @@ public class MultipageTiffWriter {
    }
 
    /**
-    * Called when entire set of files (i.e. acquisition) is finished. Writes OME/IJ metadata
+    * Called when entire set of files (i.e. acquisition) is finished. Adds in all the extra
+    * (but nonessential) stuff--comments, display settings, OME/IJ metadata, and truncates the
+    * file to a reasonable length
     */
    public void close(String omeXML) throws IOException {
       String summaryComment = "";

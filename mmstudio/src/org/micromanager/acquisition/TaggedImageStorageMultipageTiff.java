@@ -26,6 +26,9 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.*;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -57,6 +60,7 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
    private boolean fixIndexMap_ = false;
    private final boolean fastStorageMode_;
    private int lastAcquiredPosition_ = 0;
+   private ThreadPoolExecutor writingExecutor_;
 
    //map of position indices to objects associated with each
    private HashMap<Integer, FileSet> fileSets_;
@@ -106,6 +110,10 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
             ReportingUtils.logError("Error estimating total number of image planes");
          }
       }
+   }
+   
+   ThreadPoolExecutor getWritingExecutor() {
+      return writingExecutor_;
    }
    
    boolean slicesFirst() {
@@ -210,6 +218,11 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
       if (!newDataSet_) {
          ReportingUtils.showError("Tried to write image to a finished data set");
          throw new MMException("This ImageFileManager is read-only.");
+      }
+      //initialize writing executor
+      if (fastStorageMode_ && writingExecutor_ == null) {
+         writingExecutor_ = new ThreadPoolExecutor(1, 1, 0, TimeUnit.NANOSECONDS,
+                 new LinkedBlockingQueue<java.lang.Runnable>());
       }
       int fileSetIndex = 0;
       if (splitByXYPosition_) {
@@ -335,6 +348,13 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
                count++;
                progressBar.setProgress(count);
             }            
+            //shut down writing executor--pause here until all tasks have finished writing
+            //so that no attempt is made to close the dataset (and thus the FileChannel)
+            //before everything has finished writing
+            //mkae sure all images have finished writing if they are on seperate thread 
+            if (writingExecutor_ != null && !writingExecutor_.isShutdown()) {
+               writingExecutor_.shutdown();
+            }
             progressBar.setVisible(false);
          }
       } catch (IOException ex) {
