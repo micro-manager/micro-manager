@@ -1,0 +1,76 @@
+# Editors, etc.
+*~
+.*.swp
+tags
+.DS_Store
+*.log
+*.stamp
+*.dirstamp
+
+/SecretDeviceAdapters/
+
+# Visual Studio
+*.ncb
+*.opensdf
+*.sdf
+*.suo
+*.vcproj.*.user
+*.vcxproj.user
+
+# GNU build system
+*.la
+*.lo
+.deps/
+.libs/
+Makefile
+Makefile.in
+aclocal.m4
+autom4te.cache/
+compile
+config.guess
+config.log
+config.status
+config.sub
+configure
+depcomp
+install-sh
+libtool
+ltmain.sh
+m4/libtool.m4
+m4/ltoptions.m4
+m4/ltsugar.m4
+m4/ltversion.m4
+m4/lt~obsolete.m4
+missing
+test-driver
+
+# Python
+*.pyc
+*.pyo
+__pycache__/
+
+# Build
+*.class
+*.jar
+build/
+/doxygen/out/
+/dependencies/
+/dist/
+/stage/
+/symbols/
+
+# Testing
+/testing/gtest-*.zip
+/testing/gtest/
+
+# Generated source
+/buildscripts/launchers/micromanager
+/buildscripts/launchers/mmimagej
+/MMCoreJ_wrap/mmcorej/
+/MMCoreJ_wrap/MMCoreJ_wrap.cxx
+/MMCoreJ_wrap/MMCoreJ_wrap.h
+/MMCorePy_wrap/MMCorePy.py
+/MMCorePy_wrap/MMCorePy_wrap.cxx
+/MMCorePy_wrap/MMCorePy_wrap.h
+/DeviceAdapters/DirectElectron/src/DEMessaging/DEServer.pb.cc
+/DeviceAdapters/DirectElectron/src/DEMessaging/DEServer.pb.h
