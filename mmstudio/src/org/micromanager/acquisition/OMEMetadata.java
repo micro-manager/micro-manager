@@ -241,7 +241,7 @@ public class OMEMetadata {
                        ), position);
             }
          } catch (Exception e) {
-            ReportingUtils.logError("Problem adding System state cache metadata to OME Metadata: " + e);
+            ReportingUtils.logError(e, "Problem adding System state cache metadata to OME Metadata: " + e);
          }
       }
 
