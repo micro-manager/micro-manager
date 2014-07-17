@@ -206,7 +206,7 @@ public class MDUtils {
             } else {
                throw new MMScriptException("Can't figure out IJ type.");
             }
-         } catch (MMScriptException e2) {
+         } catch (JSONException e2) {
             throw new MMScriptException("Can't figure out IJ type");
          }
       }
