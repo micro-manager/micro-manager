@@ -50,9 +50,7 @@ public class CalibrationListDlg extends MMDialog {
    private JTable calTable_;
    private SpringLayout springLayout;
    private CMMCore core_;
-   //private MMOptions opts_;
    private Preferences prefs_;
-   //private GUIColors guiColors_;
    private CalibrationList calibrationList_;
    private ScriptInterface parentGUI_;
 
@@ -376,13 +374,21 @@ public class CalibrationListDlg extends MMDialog {
    }
 
    public boolean editPreset(String calibrationName, String pixelSize) {
-      CalibrationEditor dlg = new CalibrationEditor(calibrationName, pixelSize);
-      dlg.setCore(core_);
-      dlg.setVisible(true);
-      if (dlg.isChanged())
-         parentGUI_.setConfigChanged(true);
-
-      return dlg.isChanged();
+      int result = JOptionPane.showConfirmDialog(this,
+            "Devices will move to the settings being edited. Please make sure there is no danger of collision.",
+            TITLE,
+            JOptionPane.OK_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE);
+      if (result == JOptionPane.OK_OPTION) {
+         CalibrationEditor dlg =
+            new CalibrationEditor(calibrationName, pixelSize);
+         dlg.setCore(core_);
+         dlg.setVisible(true);
+         if (dlg.isChanged()) {
+            parentGUI_.setConfigChanged(true);
+         }
+         return dlg.isChanged();
+      }
+      return false;
    }
 
    private void handleException (Exception e) {
