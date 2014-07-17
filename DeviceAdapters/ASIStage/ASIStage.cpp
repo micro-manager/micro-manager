@@ -49,6 +49,7 @@ const char* g_ZStageDeviceName = "ZStage";
 const char* g_CRIFDeviceName = "CRIF";
 const char* g_CRISPDeviceName = "CRISP";
 const char* g_AZ100TurretName = "AZ100 Turret";
+const char* g_StateDeviceName = "State Device";
 const char* g_LEDName = "LED";
 const char* g_Open = "Open";
 const char* g_Closed = "Closed";
@@ -95,6 +96,7 @@ MODULE_API void InitializeModuleData()
    RegisterDevice(g_CRIFDeviceName, MM::AutoFocusDevice, "CRIF");
    RegisterDevice(g_CRISPDeviceName, MM::AutoFocusDevice, "CRISP");
    RegisterDevice(g_AZ100TurretName, MM::StateDevice, "AZ100 Turret");
+   RegisterDevice(g_StateDeviceName, MM::StateDevice, "State Device");
    RegisterDevice(g_LEDName, MM::ShutterDevice, "LED");
 }
 
@@ -124,6 +126,10 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
    else if (strcmp(deviceName, g_AZ100TurretName) == 0)
    {
       return  new AZ100Turret();
+   }
+   else if (strcmp(deviceName, g_StateDeviceName) == 0)
+   {
+      return  new StateDevice();
    }
    else if (strcmp(deviceName, g_LEDName) == 0)
    {
@@ -3605,6 +3611,242 @@ int AZ100Turret::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
       }
       else
          return ERR_UNRECOGNIZED_ANSWER;
+   }
+
+   return DEVICE_OK;
+}
+
+StateDevice::StateDevice() :
+   ASIBase(this, "" /* LX-4000 Prefix Unknown */),
+   axis_("F"),
+   numPos_(4),
+   position_(0),
+   answerTimeoutMs_(1000)
+{
+   InitializeDefaultErrorMessages();
+
+   // create pre-initialization properties
+   // ------------------------------------
+
+   // Name
+   CreateProperty(MM::g_Keyword_Name, g_StateDeviceName, MM::String, true);
+
+   // Description
+   CreateProperty(MM::g_Keyword_Description, "ASI State Device", MM::String, true);
+
+   // Port
+   CPropertyAction* pAct = new CPropertyAction (this, &StateDevice::OnPort);
+   CreateProperty(MM::g_Keyword_Port, "Undefined", MM::String, false, pAct, true);
+
+   // number of positions needs to be specified beforehand (later firmware allows querying)
+   pAct = new CPropertyAction (this, &StateDevice::OnNumPositions);
+   CreateProperty("NumPositions", "4", MM::Integer, false, pAct, true);
+
+   // Axis
+   pAct = new CPropertyAction (this, &StateDevice::OnAxis);
+   CreateProperty("Axis", "F", MM::String, false, pAct, true);
+   AddAllowedValue("Axis", "F");
+   AddAllowedValue("Axis", "Z");
+
+}
+
+StateDevice::~StateDevice()
+{
+   Shutdown();
+}
+
+MM::DeviceDetectionStatus StateDevice::DetectDevice(void)
+{
+   return ASICheckSerialPort(*this,*GetCoreCallback(), port_, answerTimeoutMs_);
+}
+
+void StateDevice::GetName(char* Name) const
+{
+   CDeviceUtils::CopyLimitedString(Name, g_StateDeviceName);
+}
+
+int StateDevice::Initialize()
+{
+   core_ = GetCoreCallback();
+
+   // state
+   CPropertyAction* pAct = new CPropertyAction (this, &StateDevice::OnState);
+   int ret = CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct);
+   if (ret != DEVICE_OK)
+      return ret;
+   char pos[3];
+   for (int i=0; i<numPos_; i++)
+   {
+      sprintf(pos, "%d", i);
+      AddAllowedValue(MM::g_Keyword_State, pos);
+   }
+
+   // Label
+   pAct = new CPropertyAction (this, &CStateBase::OnLabel);
+   ret = CreateProperty(MM::g_Keyword_Label, "", MM::String, false, pAct);
+   if (ret != DEVICE_OK)
+      return ret;
+   char state[11];
+   for (int i=0; i<numPos_; i++)
+   {
+      sprintf(state, "Position-%d", i);
+      SetPositionLabel(i,state);
+   }
+
+   // get current position
+   ret = UpdateCurrentPosition();  // updates position_
+   if (ret != DEVICE_OK)
+      return ret;
+
+   ret = UpdateStatus();
+   if (ret != DEVICE_OK)
+      return ret;
+
+   initialized_ = true;
+   return DEVICE_OK;
+}
+
+int StateDevice::Shutdown()
+{
+   if (initialized_)
+   {
+      initialized_ = false;
+   }
+   return DEVICE_OK;
+}
+
+bool StateDevice::Busy()
+{
+   // empty the Rx serial buffer before sending command
+   ClearPort();
+
+   const char* command = "/";
+   string answer;
+   // query command
+   int ret = QueryCommand(command, answer);
+   if (ret != DEVICE_OK)
+      return false;
+
+   if (answer.length() >= 1)
+   {
+     if (answer.substr(0,1) == "B") return true;
+     else if (answer.substr(0,1) == "N") return false;
+     else return false;
+   }
+
+   return false;
+}
+
+int StateDevice::OnNumPositions(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(numPos_);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      pProp->Get(numPos_);
+   }
+
+   return DEVICE_OK;
+}
+
+int StateDevice::OnAxis(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(axis_.c_str());
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      pProp->Get(axis_);
+   }
+
+   return DEVICE_OK;
+}
+
+int StateDevice::OnPort(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(port_.c_str());
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      if (initialized_)
+      {
+         // revert
+         pProp->Set(port_.c_str());
+         return ERR_PORT_CHANGE_FORBIDDEN;
+      }
+
+      pProp->Get(port_);
+   }
+
+   return DEVICE_OK;
+}
+
+int StateDevice::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(position_);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      long position;
+      pProp->Get(position);
+
+      ostringstream os;
+      os << "M " << axis_ << "=" << position + 1;
+
+      string answer;
+      // query command
+      int ret = QueryCommand(os.str().c_str(), answer);
+      if (ret != DEVICE_OK)
+         return ret;
+
+      if (answer.substr(0, 2).compare(":N") == 0 && answer.length() > 2)
+      {
+         int errNo = atoi(answer.substr(2,4).c_str());
+         return ERR_OFFSET + errNo;
+      }
+
+      if (answer.substr(0,2) == ":A") {
+         position_ = position;
+      }
+      else
+         return ERR_UNRECOGNIZED_ANSWER;
+   }
+
+   return DEVICE_OK;
+}
+
+int StateDevice::UpdateCurrentPosition()
+{
+   // find out what position we are currently in
+   ostringstream os;
+   os << "W " << axis_;
+
+   string answer;
+   // query command
+   int ret = QueryCommand(os.str().c_str(), answer);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   if (answer.substr(0, 2).compare(":N") == 0 && answer.length() > 2)
+   {
+      int errNo = atoi(answer.substr(2,4).c_str());
+      return ERR_OFFSET + errNo;
+   }
+
+   if (answer.substr(0,2) == ":A")
+   {
+      position_ = (long) atoi(answer.substr(3,2).c_str()) - 1;
+   }
+   else
+   {
+      return ERR_UNRECOGNIZED_ANSWER;
    }
 
    return DEVICE_OK;

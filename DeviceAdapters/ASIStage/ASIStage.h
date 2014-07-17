@@ -344,6 +344,35 @@ private:
    long position_; 
 };
 
+class StateDevice : public CStateDeviceBase<StateDevice>, public ASIBase
+{
+public:
+   StateDevice();
+   ~StateDevice();
+
+   //MMDevice API
+   bool Busy();
+   void GetName(char* pszName) const;
+   unsigned long GetNumberOfPositions()const {return numPos_;}
+
+   int Initialize();
+   int Shutdown();
+   MM::DeviceDetectionStatus DetectDevice(void);
+
+   int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnNumPositions(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnAxis(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+private:
+   long numPos_;
+   std::string axis_;
+   long position_;
+   double answerTimeoutMs_;
+
+   int UpdateCurrentPosition();
+};
+
 class LED : public CShutterBase<LED>, public ASIBase
 {
 public:
