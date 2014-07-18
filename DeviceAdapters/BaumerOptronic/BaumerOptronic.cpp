@@ -270,64 +270,58 @@ MMThreadLock BOImplementationThread::imageBufferLock_s;
 
 void BOImplementationThread::Snap()
 {
-   try
+   if (Ready == CameraState())
    {
-      if (Ready == CameraState())
       {
-         {
-            MMThreadGuard guard(BOImplementationThread::imageReadyLock_s);
-            imageReady_g = false;
-         }
-
-         MMThreadGuard g(stateMachineLock_);
-         WorkerState prevState = cameraState_;
-         cameraState_ = Snapping;
-
-         FX_CamStart(gCameraId[0], TRUE);
-         stopCameraAfterFirstImage_ = true;
-
-         tBoCameraType   dcBoType;               // Cameratype struct
-         tBoCameraStatus dcBoStatus;             // Camerastatus struct
-
-         dcBoType.iSizeof = sizeof(dcBoType);
-         dcBoStatus.iSizeof = sizeof(dcBoStatus);
-         FX_GetCameraInfo(gCameraId[0], &dcBoType, &dcBoStatus);
-
-         unsigned long sz = dcBoStatus.iNumImgCodeBytes;
-
-         {
-            // lock access to the static buffer, buffersize
-            MMThreadGuard g(BOImplementationThread::imageBufferLock_s);
-            if (sz != bufSize_)
-            {
-               if (NULL != pBuf_)
-               {
-                  free(pBuf_);
-                  pBuf_ = NULL;
-                  bufSize_ = 0;
-               }
-               // malloc is slightly faster than new
-               pBuf_ = malloc(sz);
-               if (NULL != pBuf_)
-               {
-                  bufSize_ = sz;
-               }
-            }
-
-            pStatic_g = pBuf_;
-            staticImgSize_g = bufSize_;
-         }
-
-
-         if (0 < bufSize_)
-         {
-            seqactive_g = true;
-         }
-         cameraState_ = prevState;
+         MMThreadGuard guard(BOImplementationThread::imageReadyLock_s);
+         imageReady_g = false;
       }
-   }
-   catch (...)
-   {
+
+      MMThreadGuard g(stateMachineLock_);
+      WorkerState prevState = cameraState_;
+      cameraState_ = Snapping;
+
+      FX_CamStart(gCameraId[0], TRUE);
+      stopCameraAfterFirstImage_ = true;
+
+      tBoCameraType   dcBoType;               // Cameratype struct
+      tBoCameraStatus dcBoStatus;             // Camerastatus struct
+
+      dcBoType.iSizeof = sizeof(dcBoType);
+      dcBoStatus.iSizeof = sizeof(dcBoStatus);
+      FX_GetCameraInfo(gCameraId[0], &dcBoType, &dcBoStatus);
+
+      unsigned long sz = dcBoStatus.iNumImgCodeBytes;
+
+      {
+         // lock access to the static buffer, buffersize
+         MMThreadGuard g(BOImplementationThread::imageBufferLock_s);
+         if (sz != bufSize_)
+         {
+            if (NULL != pBuf_)
+            {
+               free(pBuf_);
+               pBuf_ = NULL;
+               bufSize_ = 0;
+            }
+            // malloc is slightly faster than new
+            pBuf_ = malloc(sz);
+            if (NULL != pBuf_)
+            {
+               bufSize_ = sz;
+            }
+         }
+
+         pStatic_g = pBuf_;
+         staticImgSize_g = bufSize_;
+      }
+
+
+      if (0 < bufSize_)
+      {
+         seqactive_g = true;
+      }
+      cameraState_ = prevState;
    }
 
    return;
