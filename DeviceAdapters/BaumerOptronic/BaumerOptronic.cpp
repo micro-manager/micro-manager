@@ -1418,9 +1418,15 @@ unsigned int __stdcall mSeqEventHandler(void* pArguments)
    HANDLE imageNotificationEvent = (HANDLE)pArguments;
    tBoImgDataInfoHeader imgHeader;
    memset(&imgHeader, 0x00, sizeof(imgHeader));
-   while (mTerminateFlag_g == false)
+   for (;;)
    {
-      MMThreadGuard g(::acquisitionThreadTerminateLock_g); // have to wait for the event time-out !!
+      {
+         MMThreadGuard g(::acquisitionThreadTerminateLock_g);
+         if (mTerminateFlag_g)
+         {
+            break;
+         }
+      }
 
       DWORD waitStatus = WaitForSingleObject(imageNotificationEvent, imageTimeoutMs_g);
       if (waitStatus == WAIT_OBJECT_0)
