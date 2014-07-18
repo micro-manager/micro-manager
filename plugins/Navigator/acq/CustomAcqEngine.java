@@ -101,6 +101,8 @@ public class CustomAcqEngine {
                int sliceIndex = (int) ((z - zAbsoluteTop) / zStep);
                exploreAcquisition_.addEvent(new AcquisitionEvent(0, 0, sliceIndex, posIndices[i], z, x, y,
                        newPositionsAdded));
+               exploreAcquisition_.addEvent(new AcquisitionEvent(0, 1, sliceIndex, posIndices[i], z, x, y,
+                       newPositionsAdded));
             }
          }
       } catch (Exception e) {
@@ -174,11 +176,11 @@ public class CustomAcqEngine {
       
       //Channels
       if (lastEvent_ == null || event.channelIndex_ != lastEvent_.channelIndex_) {
-//         try {
-//            core_.setConfig("Channel", event.channelIndex_ == 0 ? "DAPI" : "FITC");
-//         } catch (Exception ex) {
-//            ReportingUtils.showError("Couldn't change channel group");
-//         }
+         try {
+            core_.setConfig("Channel", event.channelIndex_ == 0 ? "DAPI" : "FITC");
+         } catch (Exception ex) {
+            ReportingUtils.showError("Couldn't change channel group");
+         }
       }
    }
 

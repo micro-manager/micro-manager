@@ -13,6 +13,7 @@ import java.awt.event.*;
 import java.awt.geom.Rectangle2D;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import javax.swing.*;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
@@ -22,6 +23,7 @@ import org.micromanager.imagedisplay.VirtualAcquisitionDisplay;
 import org.micromanager.api.ImageCache;
 import org.micromanager.imagedisplay.IMMImagePlus;
 import org.micromanager.imagedisplay.MMCompositeImage;
+import org.micromanager.imageDisplay.NewImageEvent;
 
 
 import org.micromanager.internalinterfaces.DisplayControls;
@@ -392,6 +394,26 @@ public class DisplayPlus extends VirtualAcquisitionDisplay  {
       }
 
       if (!suspendUpdates_) {
+         //make sure scrollbars render properly even if event doesn't come through
+         int channel = 0, frame = 0, slice = 0, position = 0;
+         try {
+            frame = MDUtils.getFrameIndex(taggedImage.tags);
+            slice = MDUtils.getSliceIndex(taggedImage.tags);
+            channel = MDUtils.getChannelIndex(taggedImage.tags);
+            position = MDUtils.getPositionIndex(taggedImage.tags);
+            // Construct a mapping of axis to position so we can post an 
+            // event informing others of the new image.
+            HashMap<String, Integer> axisToPosition = new HashMap<String, Integer>();
+            axisToPosition.put("channel", channel);
+            axisToPosition.put("position", position);
+            axisToPosition.put("time", frame);
+            axisToPosition.put("z", slice);
+            this.getEventBus().post(new NewImageEvent(axisToPosition));
+         } catch (JSONException ex) {
+            ReportingUtils.logError(ex);
+         }
+
+
          super.imageReceived(taggedImage);
       } else {
 //         try {

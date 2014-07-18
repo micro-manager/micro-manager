@@ -50,7 +50,8 @@ public class Acquisition {
          //TODO: add limit to this queue in case saving and display goes much slower than acquisition?
          engineOutputQueue_ = new LinkedBlockingQueue<TaggedImage>();
 
-         JSONObject summaryMetadata = makeSummaryMD(1,(int)core_.getNumberOfCameraChannels());
+//         JSONObject summaryMetadata = makeSummaryMD(1,(int)core_.getNumberOfCameraChannels());
+         JSONObject summaryMetadata = makeSummaryMD(1,2);
          storage_ = new DynamicStitchingImageStorage(summaryMetadata, true);
          ImageCache imageCache = new MMImageCache(storage_) {
             @Override

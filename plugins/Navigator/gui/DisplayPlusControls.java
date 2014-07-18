@@ -6,6 +6,7 @@ package gui;
 
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
+import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
@@ -30,6 +31,8 @@ import org.micromanager.utils.ReportingUtils;
 public class DisplayPlusControls extends DisplayControls {
 
    private final static int DEFAULT_FPS = 10;
+   private final static int CONTROLS_HEIGHT = 60;
+   
    private EventBus bus_;
    private VirtualAcquisitionDisplay display_;
    private ScrollerPanel scrollerPanel_;
@@ -80,6 +83,7 @@ public class DisplayPlusControls extends DisplayControls {
       final JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
       this.add(panel);
       scrollerPanel_ = new ScrollerPanel(bus_, new String[]{"channel", "position", "time", "z"}, new Integer[]{1, 1, 1, 1}, DEFAULT_FPS);
+      this.setLayout(new BorderLayout());
 
       showFolderButton_ = new JButton();
       showFolderButton_.setBackground(new java.awt.Color(255, 255, 255));
@@ -203,6 +207,12 @@ public class DisplayPlusControls extends DisplayControls {
       });
       JLabel fpsLabel = new JLabel("Animation playback FPS: ");
 
+      final JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+      panel.setPreferredSize(new Dimension(700,CONTROLS_HEIGHT));
+      this.add(panel, BorderLayout.PAGE_END);
+      scrollerPanel_ = new ScrollerPanel(bus_, new String[]{"channel", "position", "time", "z"}, new Integer[]{1, 1, 1, 1}, DEFAULT_FPS);
+      this.add(scrollerPanel_, BorderLayout.CENTER);
+
       panel.add(abortButton_);
       panel.add(pauseButton_);
       panel.add(fpsLabel);
@@ -230,8 +240,12 @@ public class DisplayPlusControls extends DisplayControls {
 
    @Subscribe
    public void onLayoutChange(ScrollerPanel.LayoutChangedEvent event) {
+      int width = ((DisplayWindow) this.getParent()).getWidth();
+//      scrollerPanel_.setPreferredSize(new Dimension(width,scrollerPanel_.getPreferredSize().height));
+      this.setPreferredSize( new Dimension(width, CONTROLS_HEIGHT + event.getPreferredSize().height));
       invalidate();
       validate();
+      ((DisplayWindow) this.getParent()).pack();
    }
 
    private void showFolderButtonActionPerformed(java.awt.event.ActionEvent evt) {
