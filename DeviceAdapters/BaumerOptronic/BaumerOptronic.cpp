@@ -899,108 +899,104 @@ int BOImplementationThread::svc()
 int BOImplementationThread::BOInitializationSequence()
 {
    int fxReturn = 0;
-   try
+
+   MMThreadGuard g(stateMachineLock_);
+   char fxMess[500];
+   fxMess[0] = 0;
+
+   fxReturn = FX_DeleteLabelInfo();
+
+   // **** Init Library
+   fxReturn = FX_InitLibrary();
+   if (FXOK == fxReturn)
    {
-      MMThreadGuard g(stateMachineLock_);
-      char fxMess[500];
-      fxMess[0] = 0;
-
-      fxReturn = FX_DeleteLabelInfo();
-
-      // **** Init Library
-      fxReturn = FX_InitLibrary();
+      // **** Enumerate all 1394 devices ***************
+      int DevCount; // number of cameras
+      fxReturn = FX_EnumerateDevices(&DevCount);
       if (FXOK == fxReturn)
       {
-         // **** Enumerate all 1394 devices ***************
-         int DevCount; // number of cameras
-         fxReturn = FX_EnumerateDevices(&DevCount);
-         if (FXOK == fxReturn)
+         if (1 == DevCount)
          {
-            if (1 == DevCount)
+            // **** Label a special device **********************
+            gCameraId[0] = 0;
+            fxReturn = FX_LabelDevice(0, gCameraId[0]);
+            if (FXOK == fxReturn)
             {
-               // **** Label a special device **********************
-               gCameraId[0] = 0;
-               fxReturn = FX_LabelDevice(0, gCameraId[0]);
+               // **** Open a labeled device ********************
+               fxReturn = FX_OpenCamera(gCameraId[0]);
                if (FXOK == fxReturn)
                {
-                  // **** Open a labeled device ********************
-                  fxReturn = FX_OpenCamera(gCameraId[0]);
+                  std::ostringstream oss;
+                  oss << "Opened Leica / Baumer Optronic Camera # " << gCameraId[0];
+                  LLogMessage(oss.str().c_str(), false);
+
+                  imageNotificationEvent_ = ::CreateEvent(NULL,FALSE,FALSE,NULL);
+                  unsigned int tempthid = 0;
+                  // Install Image Event Handler Thread for incoming data
+                  acquisitionThread_ = (HANDLE)_beginthreadex(NULL, 0, &mSeqEventHandler,
+                        (PVOID)imageNotificationEvent_, 0, &tempthid);
+                  std::ostringstream s2;
+                  s2 << " BO acquistion thread id " << std::hex << acquisitionThread_ << " was started ... ";
+                  LLogMessage(s2.str().c_str(), true);
+                  ::SetThreadPriority(acquisitionThread_, THREAD_PRIORITY_TIME_CRITICAL); //?? really
+
+                  fxReturn = FX_DefineImageNotificationEvent(gCameraId[0], imageNotificationEvent_);
                   if (FXOK == fxReturn)
                   {
-                     std::ostringstream oss;
-                     oss << "Opened Leica / Baumer Optronic Camera # " << gCameraId[0];
-                     LLogMessage(oss.str().c_str(), false);
-
-                     imageNotificationEvent_ = ::CreateEvent(NULL,FALSE,FALSE,NULL);
-                     unsigned int tempthid = 0;
-                     // Install Image Event Handler Thread for incoming data
-                     acquisitionThread_ = (HANDLE)_beginthreadex(NULL, 0, &mSeqEventHandler,
-                           (PVOID)imageNotificationEvent_, 0, &tempthid);
-                     std::ostringstream s2;
-                     s2 << " BO acquistion thread id " << std::hex << acquisitionThread_ << " was started ... ";
-                     LLogMessage(s2.str().c_str(), true);
-                     ::SetThreadPriority(acquisitionThread_, THREAD_PRIORITY_TIME_CRITICAL); //?? really
-
-                     fxReturn = FX_DefineImageNotificationEvent(gCameraId[0], imageNotificationEvent_);
+                     // **** Allocate Buffers ********************
+                     fxReturn = FX_AllocateResources(gCameraId[0], 10, 0);
                      if (FXOK == fxReturn)
                      {
-                        // **** Allocate Buffers ********************
-                        fxReturn = FX_AllocateResources(gCameraId[0], 10, 0);
-                        if (FXOK == fxReturn)
+                        // **** Start capture process********************
+                        fxReturn = FX_StartDataCapture(gCameraId[0], TRUE);
+                        if (FXOK != fxReturn)
                         {
-                           // **** Start capture process********************
-                           fxReturn = FX_StartDataCapture(gCameraId[0], TRUE);
-                           if (FXOK != fxReturn)
-                           {
-                              sprintf(fxMess,"FX_StartDataCapture error: %08x", fxReturn);
-                              LLogMessage(fxMess);
-                           }
-                        }
-                        else
-                        {
-                           sprintf(fxMess,"FX_AllocateResources error: %08x", fxReturn);
+                           sprintf(fxMess,"FX_StartDataCapture error: %08x", fxReturn);
                            LLogMessage(fxMess);
                         }
                      }
                      else
                      {
-                        sprintf(fxMess,"FX_DefineImageNotificationEvent error: %08x", fxReturn);
+                        sprintf(fxMess,"FX_AllocateResources error: %08x", fxReturn);
                         LLogMessage(fxMess);
                      }
                   }
                   else
                   {
-                     sprintf(fxMess,"FX_OpenCamera error: %08x", fxReturn);
+                     sprintf(fxMess,"FX_DefineImageNotificationEvent error: %08x", fxReturn);
                      LLogMessage(fxMess);
                   }
                }
                else
                {
-                  sprintf(fxMess,"FX_LabelDevice error: %08x", fxReturn);
+                  sprintf(fxMess,"FX_OpenCamera error: %08x", fxReturn);
                   LLogMessage(fxMess);
                }
             }
             else
             {
-               sprintf(fxMess,"# cameras must be 1, but %d cameras found \n", DevCount);
+               sprintf(fxMess,"FX_LabelDevice error: %08x", fxReturn);
                LLogMessage(fxMess);
             }
          }
          else
          {
-            sprintf(fxMess,"FX_EnumerateDevices error: %08x", fxReturn);
+            sprintf(fxMess,"# cameras must be 1, but %d cameras found \n", DevCount);
             LLogMessage(fxMess);
          }
       }
       else
       {
-         sprintf(fxMess,"FX_InitLibrary error: %08x", fxReturn);
+         sprintf(fxMess,"FX_EnumerateDevices error: %08x", fxReturn);
          LLogMessage(fxMess);
       }
    }
-   catch (...)
+   else
    {
+      sprintf(fxMess,"FX_InitLibrary error: %08x", fxReturn);
+      LLogMessage(fxMess);
    }
+
    if (1 == fxReturn)
    {
       LLogMessage(" BO camera library initialized OK!", true);
