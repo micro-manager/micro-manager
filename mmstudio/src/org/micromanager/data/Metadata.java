@@ -46,8 +46,6 @@ public class Metadata {
       private boolean keepShutterOpenChannels_ = null;
 
       private String pixelType_ = null;
-      private int bitDepth_ = null;
-      private int bytesPerPixel_ = null;
       private int numComponents_ = null;
       private int ijType_ = null;
       private int frame_ = null;
@@ -73,8 +71,6 @@ public class Metadata {
       private String ROI_ = null;
       private String comments_ = null;
 
-      private int pixelWidth_ = null;
-      private int pixelHeight_ = null;
       private int color_ = null;
       private double pixelAspect_ = null;
 
@@ -202,16 +198,6 @@ public class Metadata {
          return this;
       }
 
-      public MetadataBuilder bitDepth(int bitDepth) {
-         bitDepth_ = bitDepth;
-         return this;
-      }
-
-      public MetadataBuilder bytesPerPixel(int bytesPerPixel) {
-         bytesPerPixel_ = bytesPerPixel;
-         return this;
-      }
-
       public MetadataBuilder numComponents(int numComponents) {
          numComponents_ = numComponents;
          return this;
@@ -322,16 +308,6 @@ public class Metadata {
          return this;
       }
 
-      public MetadataBuilder pixelWidth(int pixelWidth) {
-         pixelWidth_ = pixelWidth;
-         return this;
-      }
-
-      public MetadataBuilder pixelHeight(int pixelHeight) {
-         pixelHeight_ = pixelHeight;
-         return this;
-      }
-
       public MetadataBuilder color(int color) {
          color_ = color;
          return this;
@@ -374,8 +350,6 @@ public class Metadata {
    private boolean keepShutterOpenChannels_ = null;
 
    private String pixelType_ = null;
-   private int bitDepth_ = null;
-   private int bytesPerPixel_ = null;
    private int numComponents_ = null;
    private int ijType_ = null;
    private int frame_ = null;
@@ -401,8 +375,6 @@ public class Metadata {
    private String ROI_ = null;
    private String comments_ = null;
 
-   private int pixelWidth_ = null;
-   private int pixelHeight_ = null;
    private int color_ = null;
    private double pixelAspect_ = null;
 
@@ -438,8 +410,6 @@ public class Metadata {
       keepShutterOpenChannels_ = builder.keepShutterOpenChannels_;
 
       pixelType_ = builder.pixelType_;
-      bitDepth_ = builder.bitDepth_;
-      bytesPerPixel_ = builder.bytesPerPixel_;
       numComponents_ = builder.numComponents_;
       ijType_ = builder.ijType_;
       frame_ = builder.frame_;
@@ -465,8 +435,6 @@ public class Metadata {
       ROI_ = builder.ROI_;
       comments_ = builder.comments_;
 
-      pixelWidth_ = builder.pixelWidth_;
-      pixelHeight_ = builder.pixelHeight_;
       color_ = builder.color_;
       pixelAspect_ = builder.pixelAspect_;
    }
@@ -501,8 +469,6 @@ public class Metadata {
             .keepShutterOpenSlices(keepShutterOpenSlices_)
             .keepShutterOpenChannels(keepShutterOpenChannels_)
             .pixelType(pixelType_)
-            .bitDepth(bitDepth_)
-            .bytesPerPixel(bytesPerPixel_)
             .numComponents(numComponents_)
             .ijType(ijType_)
             .frame(frame_)
@@ -525,8 +491,6 @@ public class Metadata {
             .emissionLabel(emissionLabel_)
             .ROI(ROI_)
             .comments(comments_)
-            .pixelWidth(pixelWidth_)
-            .pixelHeight(pixelHeight_)
             .color(color_)
             .pixelAspect(pixelAspect_);
    }
@@ -627,14 +591,6 @@ public class Metadata {
       return pixelType_;
    }
 
-   public int getBitDepth() {
-      return bitDepth_;
-   }
-
-   public int getBytesPerPixel() {
-      return bytesPerPixel_;
-   }
-
    public int getNumComponents() {
       return numComponents_;
    }
@@ -721,14 +677,6 @@ public class Metadata {
 
    public String getComments() {
       return comments_;
-   }
-
-   public int getPixelWidth() {
-      return pixelWidth_;
-   }
-
-   public int getPixelHeight() {
-      return pixelHeight_;
    }
 
    public int getColor() {
