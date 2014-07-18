@@ -654,7 +654,7 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
 
       private void writeToMetadataFile(JSONObject md) throws JSONException {
          try {
-            mdWriter_.write(",\r\n\"FrameKey-" + MDUtils.getFrameIndex(md)
+            mdWriter_.write(",\n\"FrameKey-" + MDUtils.getFrameIndex(md)
                     + "-" + MDUtils.getChannelIndex(md) + "-" + MDUtils.getSliceIndex(md) + "\": ");
             mdWriter_.write(md.toString(2));
          } catch (IOException ex) {
@@ -666,7 +666,7 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
             metadataFileFullPath_ = directory_ + "/" + baseFilename_ + "_metadata.txt";
             try {
                mdWriter_ = new FileWriter(metadataFileFullPath_);
-               mdWriter_.write("{" + "\r\n");
+               mdWriter_.write("{" + "\n");
                mdWriter_.write("\"Summary\": ");
                mdWriter_.write(summaryMetadata_.toString(2));
             } catch (IOException ex) {
@@ -676,7 +676,7 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
 
       private void finishMetadataFile() throws JSONException {
          try {
-            mdWriter_.write("\r\n}\r\n");
+            mdWriter_.write("\n}\n");
             mdWriter_.close();
          } catch (IOException ex) {
             ReportingUtils.logError("Problem creating metadata.txt file");

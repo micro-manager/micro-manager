@@ -256,7 +256,7 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
       try {
          Writer metadataStream = metadataStreams_.get(pos);
          if (!firstElement_) {
-            metadataStream.write(",\r\n");
+            metadataStream.write(",\n");
          }
          metadataStream.write("\"" + title + "\": ");
          metadataStream.write(md.toString(2));
@@ -370,7 +370,7 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
       firstElement_ = true;
       Writer metadataStream = new BufferedWriter(new FileWriter(dir_ + "/" + posName + "/metadata.txt"));
       metadataStreams_.put(pos, metadataStream);
-      metadataStream.write("{" + "\r\n");
+      metadataStream.write("{" + "\n");
       JSONObject summaryMetadata = getSummaryMetadata();
       summaryMetadata.put("Time", time);
       summaryMetadata.put("Date", time.split(" ")[0]);
@@ -393,7 +393,7 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
       if (newDataSet_) {
          try {
             for (Writer metadataStream:metadataStreams_.values()) {
-               metadataStream.write("\r\n}\r\n");
+               metadataStream.write("\n}\n");
                metadataStream.close();
             }
          } catch (IOException ex) {
