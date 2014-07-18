@@ -126,6 +126,7 @@ unsigned short iCode_g;
 
 
 // turn acquisition on & off
+MMThreadLock seqActiveLock_g;
 bool seqactive_g = false;
 
 
@@ -320,6 +321,7 @@ void BOImplementationThread::Snap()
 
       if (0 < bufSize_)
       {
+         MMThreadGuard g(seqActiveLock_g);
          seqactive_g = true;
       }
       cameraState_ = prevState;
@@ -380,6 +382,7 @@ void BOImplementationThread::Acquire()
 
    if (0 < bufSize_)
    {
+      MMThreadGuard g(seqActiveLock_g);
       seqactive_g = true;
    }
 
@@ -394,6 +397,18 @@ void* BOImplementationThread::CurrentImage(unsigned short& xDim, unsigned short&
    unsigned short nCanals;
    void* bufferToReturn = NULL;
    *ppImageBufferGuard = NULL;
+
+   for (;;)
+   {
+      {
+         MMThreadGuard g(seqActiveLock_g);
+         if (seqactive_g)
+         {
+            break;
+         }
+      }
+      CDeviceUtils::SleepMs(1);
+   }
 
    MM::TimeoutMs timerOut(CurrentMMTimeMM(), (long)(2 * Exposure() + 5000));
    for (;;) // Wait for the image to become ready
@@ -422,7 +437,10 @@ void* BOImplementationThread::CurrentImage(unsigned short& xDim, unsigned short&
       stopCameraAfterFirstImage_ = false;
    }
 
-   seqactive_g = false;
+   {
+      MMThreadGuard g(seqActiveLock_g);
+      seqactive_g = false;
+   }
 
    {
       MMThreadGuard g(BOImplementationThread::imageBufferLock_s);
@@ -1426,40 +1444,45 @@ unsigned int __stdcall mSeqEventHandler(void* pArguments)
       DWORD waitStatus = WaitForSingleObject(imageNotificationEvent, imageTimeoutMs_g);
       if (waitStatus == WAIT_OBJECT_0)
       {
-         if (seqactive_g)
          {
-            imgHeader.sFlags.fFlipHori = false;
-            imgHeader.sFlags.fFlipVert = true;
-            imgHeader.sFlags.fSyncStamp = true;
-
-            bool bufferIsReady = false;
-            DWORD gotImage = FALSE;
-
+            MMThreadGuard g(seqActiveLock_g);
+            if (!seqactive_g)
             {
-               MMThreadGuard g(BOImplementationThread::imageBufferLock_s);
-               bufferIsReady = (0 < staticImgSize_g) && (NULL != pStatic_g);
+               continue;
             }
+         }
 
-            if (bufferIsReady)
+         imgHeader.sFlags.fFlipHori = false;
+         imgHeader.sFlags.fFlipVert = true;
+         imgHeader.sFlags.fSyncStamp = true;
+
+         bool bufferIsReady = false;
+         DWORD gotImage = FALSE;
+
+         {
+            MMThreadGuard g(BOImplementationThread::imageBufferLock_s);
+            bufferIsReady = (0 < staticImgSize_g) && (NULL != pStatic_g);
+         }
+
+         if (bufferIsReady)
+         {
+            MMThreadGuard g(BOImplementationThread::imageBufferLock_s);
+            gotImage = FX_GetImageData(gCameraId[0], &imgHeader, pStatic_g, staticImgSize_g);
+         }
+
+         if (gotImage == TRUE)
+         {
+            MMThreadGuard g(BOImplementationThread::imageBufferLock_s);
+            xDim_g = static_cast<unsigned short>(imgHeader.iSizeX);
+            yDim_g = static_cast<unsigned short>(imgHeader.iSizeY);
+            bitsInOneColor_g = static_cast<unsigned short>(imgHeader.sDataCode.iCanalBits);
+            nPlanes_g = static_cast<unsigned short>(imgHeader.sDataCode.iPlanes);
+            nCanals_g = static_cast<unsigned short>(imgHeader.sDataCode.iCanals);
+            iCode_g = static_cast<unsigned short>(imgHeader.sDataCode.iCode);
+
             {
-               MMThreadGuard g(BOImplementationThread::imageBufferLock_s);
-               gotImage = FX_GetImageData(gCameraId[0], &imgHeader, pStatic_g, staticImgSize_g);
-            }
-
-            if (gotImage == TRUE)
-            {
-               MMThreadGuard g(BOImplementationThread::imageBufferLock_s);
-               xDim_g = static_cast<unsigned short>(imgHeader.iSizeX);
-               yDim_g = static_cast<unsigned short>(imgHeader.iSizeY);
-               bitsInOneColor_g = static_cast<unsigned short>(imgHeader.sDataCode.iCanalBits);
-               nPlanes_g = static_cast<unsigned short>(imgHeader.sDataCode.iPlanes);
-               nCanals_g = static_cast<unsigned short>(imgHeader.sDataCode.iCanals);
-               iCode_g = static_cast<unsigned short>(imgHeader.sDataCode.iCode);
-
-               {
-                  MMThreadGuard guard(BOImplementationThread::imageReadyLock_s);
-                  imageReady_g = true;
-               }
+               MMThreadGuard guard(BOImplementationThread::imageReadyLock_s);
+               imageReady_g = true;
             }
          }
       }
