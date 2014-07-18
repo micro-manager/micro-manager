@@ -281,6 +281,7 @@ void BOImplementationThread::Snap()
       WorkerState prevState = cameraState_;
       cameraState_ = Snapping;
 
+      LLogMessage("FX_CamStart TRUE", true);
       FX_CamStart(gCameraId[0], TRUE);
       stopCameraAfterFirstImage_ = true;
 
@@ -416,6 +417,7 @@ void* BOImplementationThread::CurrentImage(unsigned short& xDim, unsigned short&
 
    if (stopCameraAfterFirstImage_)
    {
+      LLogMessage("FX_CamStart FALSE", true);
       FX_CamStart(gCameraId[0], FALSE);
       stopCameraAfterFirstImage_ = false;
    }
@@ -816,6 +818,7 @@ int BOImplementationThread::svc()
             if (StartSequence == Command())
             {
                Command(Noop);
+               LLogMessage("FX_CamStart TRUE", true);
                FX_CamStart(gCameraId[0], TRUE);
                CameraState(Acquiring);
             }
@@ -839,12 +842,14 @@ int BOImplementationThread::svc()
                   if (StopSequence == Command())
                   {
                      Command(Noop);
+                     LLogMessage("FX_CamStart FALSE", true);
                      FX_CamStart(gCameraId[0], FALSE);
                      CameraState(Ready);
                      break;
                   }
                   if (Exit == Command())
                   {
+                     LLogMessage("FX_CamStart FALSE", true);
                      FX_CamStart(gCameraId[0], FALSE);
                      CameraState(Ready);
                      break;
@@ -874,6 +879,7 @@ int BOImplementationThread::svc()
                   ++frameCount_;
                   if (numImages_ <= frameCount_)
                   {
+                     LLogMessage("FX_CamStart FALSE", true);
                      FX_CamStart(gCameraId[0], FALSE);
                      CameraState(Ready);
                   }
