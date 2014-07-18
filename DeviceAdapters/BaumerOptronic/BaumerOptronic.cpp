@@ -554,7 +554,6 @@ void* BOImplementationThread::CurrentImage(unsigned short& xDim, unsigned short&
 
 void BOImplementationThread::CurrentImageSize(unsigned short& xDim, unsigned short& yDim, unsigned short& bitsInOneColor, unsigned short& nColors, unsigned long& bufSize)
 {
-   MMThreadGuard g(mmCameraLock_);
    xDim = xDim_;
    yDim = yDim_;
    bitsInOneColor = bitsInOneColor_;
@@ -842,7 +841,6 @@ int BOImplementationThread::svc()
             }
             else if (SnapCommand == Command())
             {
-               MMThreadGuard(this->mmCameraLock_);
                Snap();
                Command(Noop);
             }
@@ -883,8 +881,6 @@ int BOImplementationThread::svc()
 
                if (CameraState() == Acquiring)
                {
-                  MMThreadGuard g(mmCameraLock_);
-
                   int ret = pCamera_->SendImageToCore();
                   if (ret != DEVICE_OK)
                   {
@@ -1039,7 +1035,6 @@ void BOImplementationThread::LLogMessage(const char* pMessage, const bool debugO
 {
    if (NULL != pCamera_)
    {
-      MMThreadGuard g(mmCameraLock_);
       pCamera_->LogMessage(pMessage, debugOnly);
    }
 }

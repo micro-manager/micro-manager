@@ -142,7 +142,6 @@ public:
 
    // a lock for each data section that will be modified or viewed in the other thread
    MMThreadLock stateMachineLock_;
-   MMThreadLock mmCameraLock_; // when we write data out of here onto the mm device.
 
    void TriggerMode(const bool v);
    void Exposure(int v);
