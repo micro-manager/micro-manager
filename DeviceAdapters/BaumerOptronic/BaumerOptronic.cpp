@@ -242,7 +242,7 @@ void BOImplementationThread::Exposure(int v)
    int fxr = FX_SetExposureTime(gCameraId[0], v, &m_Expo);
    if (CE_SUCCESS != fxr)
    {
-      LLogMessage(GetSDKErrorMessage(fxr).c_str());
+      LLogMessage(GetSDKErrorMessage(fxr));
    }
    else
    {
@@ -651,7 +651,7 @@ void BOImplementationThread::QueryCapabilities()
             oss << " error retrieving auxilliary capabilites";
          }
 
-         LLogMessage(oss.str().c_str(), true);
+         LLogMessage(oss.str(), true);
 
 
          CompleteFormat f0;
@@ -782,14 +782,14 @@ int BOImplementationThread::svc()
             {
                std::ostringstream oss;
                oss << "FX_CloseCamera error: 0x" << ios::hex << fxReturn;
-               LLogMessage(oss.str().c_str());
+               LLogMessage(oss.str());
             }
             fxReturn = FX_DeInitLibrary();
             if (1 != fxReturn)
             {
                std::ostringstream oss;
                oss << "FX_DeInitLibrary error: 0x" << ios::hex << fxReturn;
-               LLogMessage(oss.str().c_str());
+               LLogMessage(oss.str());
             }
          }
          break;
@@ -928,7 +928,7 @@ int BOImplementationThread::BOInitializationSequence()
                {
                   std::ostringstream oss;
                   oss << "Opened Leica / Baumer Optronic Camera # " << gCameraId[0];
-                  LLogMessage(oss.str().c_str(), false);
+                  LLogMessage(oss.str(), false);
 
                   imageNotificationEvent_ = ::CreateEvent(NULL,FALSE,FALSE,NULL);
                   unsigned int tempthid = 0;
@@ -937,7 +937,7 @@ int BOImplementationThread::BOInitializationSequence()
                         (PVOID)imageNotificationEvent_, 0, &tempthid);
                   std::ostringstream s2;
                   s2 << " BO acquistion thread id " << std::hex << acquisitionThread_ << " was started ... ";
-                  LLogMessage(s2.str().c_str(), true);
+                  LLogMessage(s2.str(), true);
                   ::SetThreadPriority(acquisitionThread_, THREAD_PRIORITY_TIME_CRITICAL); //?? really
 
                   fxReturn = FX_DefineImageNotificationEvent(gCameraId[0], imageNotificationEvent_);
