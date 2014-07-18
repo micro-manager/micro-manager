@@ -251,6 +251,7 @@ private:
    CBaumerOptronic* pCamera_;
    WorkerState cameraState_;
    WorkerCommand command_;
+   bool stopCameraAfterFirstImage_;
    bool triggerMode_;
    void* pBuf_; // raw buffer from camera library
    unsigned long bufSize_;
