@@ -213,7 +213,7 @@ public:
 
    int BinSize() const;
    void BinSize(const int v);
-   std::string IntelligentErrorString(int fxcode);
+   std::string GetSDKErrorMessage(int fxcode);
    static MMThreadLock imageReadyLock_s;
    static MMThreadLock imageBufferLock_s;
    void SetROI(const unsigned int x_a, const unsigned int y_a, const unsigned int xSize_a, const unsigned int ySize_a);

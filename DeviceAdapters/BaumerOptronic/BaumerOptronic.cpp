@@ -242,7 +242,7 @@ void BOImplementationThread::Exposure(int v)
    int fxr = FX_SetExposureTime(gCameraId[0], v, &m_Expo);
    if (CE_SUCCESS != fxr)
    {
-      LLogMessage(IntelligentErrorString(fxr).c_str());
+      LLogMessage(GetSDKErrorMessage(fxr).c_str());
    }
    else
    {
@@ -742,7 +742,7 @@ void BOImplementationThread::QueryCameraCurrentFormat()
    ::iCode_g = static_cast<unsigned short>(dcBoStatus.eCurImgCode.iCode);
    if (CE_SUCCESS != fxRet)
    {
-      PostError(DEVICE_ERR, IntelligentErrorString(fxRet).c_str());
+      PostError(DEVICE_ERR, GetSDKErrorMessage(fxRet).c_str());
    }
    else
    {
@@ -1092,7 +1092,7 @@ tBoImgCode BOImplementationThread::ImageCode()
 
    if (1 != fxRet)
    {
-      PostError(DEVICE_ERR, IntelligentErrorString(fxRet).c_str());
+      PostError(DEVICE_ERR, GetSDKErrorMessage(fxRet).c_str());
    }
 
    return dcBoStatus.eCurImgCode;
@@ -1325,16 +1325,16 @@ bool BOImplementationThread::Color()
 
 
 
-std::string BOImplementationThread::IntelligentErrorString(const int fxcode)
+std::string BOImplementationThread::GetSDKErrorMessage(const int fxcode)
 {
    char *pmess = FX_GetErrString(fxcode);
    std::ostringstream oss;
-   oss << "err: " << std::hex << fxcode;
+   oss << "FX error: " << std::hex << fxcode;
    if (NULL != pmess)
    {
-      oss << std::string(pmess);
+      oss << ' ' << std::string(pmess);
    }
-   return oss.str().c_str();
+   return oss.str();
 }
 
 
