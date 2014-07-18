@@ -763,39 +763,33 @@ int BOImplementationThread::svc()
       {
          if (Idle < CameraState())
          {
-            try
+            // kill the acquisition thread
             {
-               // kill the acquisition thread
-               {
-                  LLogMessage("Send termination request to BO acquisition thread ", true);
-                  MMThreadGuard g(::acquisitionThreadTerminateLock_g);
-                  mTerminateFlag_g = true;
-               }
-
-               LLogMessage("sent terminate request to BO acquisition thread ", true);
-               ::TerminateThread(acquisitionThread_, 0);
-               LLogMessage("BO acquisition thread terminated ", true);
-               CloseHandle(acquisitionThread_);
-               acquisitionThread_ = NULL;
-
-               MMThreadGuard g(stateMachineLock_);
-               int fxReturn = FX_CloseCamera(gCameraId[0]);
-               if (1 != fxReturn)
-               {
-                  std::ostringstream oss;
-                  oss << "FX_CloseCamera error: 0x" << ios::hex << fxReturn;
-                  LLogMessage(oss.str().c_str());
-               }
-               fxReturn = FX_DeInitLibrary();
-               if (1 != fxReturn)
-               {
-                  std::ostringstream oss;
-                  oss << "FX_DeInitLibrary error: 0x" << ios::hex << fxReturn;
-                  LLogMessage(oss.str().c_str());
-               }
+               LLogMessage("Send termination request to BO acquisition thread ", true);
+               MMThreadGuard g(::acquisitionThreadTerminateLock_g);
+               mTerminateFlag_g = true;
             }
-            catch (...)
+
+            LLogMessage("sent terminate request to BO acquisition thread ", true);
+            ::TerminateThread(acquisitionThread_, 0);
+            LLogMessage("BO acquisition thread terminated ", true);
+            CloseHandle(acquisitionThread_);
+            acquisitionThread_ = NULL;
+
+            MMThreadGuard g(stateMachineLock_);
+            int fxReturn = FX_CloseCamera(gCameraId[0]);
+            if (1 != fxReturn)
             {
+               std::ostringstream oss;
+               oss << "FX_CloseCamera error: 0x" << ios::hex << fxReturn;
+               LLogMessage(oss.str().c_str());
+            }
+            fxReturn = FX_DeInitLibrary();
+            if (1 != fxReturn)
+            {
+               std::ostringstream oss;
+               oss << "FX_DeInitLibrary error: 0x" << ios::hex << fxReturn;
+               LLogMessage(oss.str().c_str());
             }
          }
          break;
