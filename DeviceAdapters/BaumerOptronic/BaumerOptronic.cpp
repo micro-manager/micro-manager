@@ -189,6 +189,7 @@ BOImplementationThread::BOImplementationThread(CBaumerOptronic* pCamera) :
    intervalMs_(100.0),
    numImages_(1),
    acquisitionThread_(NULL),
+   imageNotificationEvent_(0),
    quantizedExposure_(0),
    quantizedGain_(0.),
    bitsInOneColor_(0),
@@ -205,8 +206,6 @@ BOImplementationThread::BOImplementationThread(CBaumerOptronic* pCamera) :
    pCamera_(pCamera),
    partialScanMode_(false)
 {
-   imageEventArray_[0] = NULL;
-   imageEventArray_[1] = NULL;
    memset(&roi_,0,sizeof(RECT));
 }
 
@@ -225,9 +224,9 @@ BOImplementationThread::~BOImplementationThread()
       free(pColorBuf_);
    }
 
-   if (NULL != imageEventArray_[0])
+   if (NULL != imageNotificationEvent_)
    {
-      ::CloseHandle(imageEventArray_[0]);
+      ::CloseHandle(imageNotificationEvent_);
    }
    mTerminateFlag_g = false;
 }
@@ -952,18 +951,17 @@ int BOImplementationThread::BOInitializationSequence()
                      oss << "Opened Leica / Baumer Optronic Camera # " << gCameraId[0];
                      LLogMessage(oss.str().c_str(), false);
 
-                     imageEventArray_[0] = ::CreateEvent(NULL,FALSE,FALSE,NULL);
-                     imageEventArray_[1] = NULL;
+                     imageNotificationEvent_ = ::CreateEvent(NULL,FALSE,FALSE,NULL);
                      unsigned int tempthid = 0;
                      // Install Image Event Handler Thread for incoming data
                      acquisitionThread_ = (HANDLE)_beginthreadex(NULL, 0, &mSeqEventHandler,
-                           (PVOID)imageEventArray_, 0, &tempthid);
+                           (PVOID)imageNotificationEvent_, 0, &tempthid);
                      std::ostringstream s2;
                      s2 << " BO acquistion thread id " << std::hex << acquisitionThread_ << " was started ... ";
                      LLogMessage(s2.str().c_str(), true);
                      ::SetThreadPriority(acquisitionThread_, THREAD_PRIORITY_TIME_CRITICAL); //?? really
 
-                     fxReturn = FX_DefineImageNotificationEvent(gCameraId[0], imageEventArray_[0]);
+                     fxReturn = FX_DefineImageNotificationEvent(gCameraId[0], imageNotificationEvent_);
                      if (FXOK == fxReturn)
                      {
                         // **** Allocate Buffers ********************
@@ -1436,7 +1434,7 @@ void BOImplementationThread::GetROI(unsigned int & x, unsigned int & y, unsigned
 // waits for the specified image ready event
 unsigned int __stdcall mSeqEventHandler(void* pArguments)
 {
-   HANDLE * aHandle = (HANDLE*)pArguments;
+   HANDLE imageNotificationEvent = (HANDLE)pArguments;
    tBoImgDataInfoHeader imgHeader;
    memset(&imgHeader, 0x00, sizeof(imgHeader));
    while (mTerminateFlag_g == false)
@@ -1444,7 +1442,7 @@ unsigned int __stdcall mSeqEventHandler(void* pArguments)
       Sleep(0);
       MMThreadGuard g(::acquisitionThreadTerminateLock_g); // have to wait for the event time-out !!
 
-      DWORD waitStatus = WaitForSingleObject(*aHandle, imageTimeoutMs_g);
+      DWORD waitStatus = WaitForSingleObject(imageNotificationEvent, imageTimeoutMs_g);
       if (waitStatus == WAIT_OBJECT_0)
       {
          if (seqactive_g)

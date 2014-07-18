@@ -235,7 +235,7 @@ public:
 private:
 
    HANDLE acquisitionThread_;
-   HANDLE imageEventArray_[2];
+   HANDLE imageNotificationEvent_;
 
    void CameraState(const WorkerState v)
    {
