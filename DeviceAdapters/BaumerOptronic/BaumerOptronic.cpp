@@ -860,6 +860,10 @@ int BOImplementationThread::svc()
                      Command(Noop);
                      LLogMessage("FX_CamStart FALSE (StopSequence)", true);
                      FX_CamStart(gCameraId[0], FALSE);
+                     {
+                        MMThreadGuard g(seqActiveLock_g);
+                        seqactive_g = false;
+                     }
                      CameraState(Ready);
                      break;
                   }
@@ -867,6 +871,10 @@ int BOImplementationThread::svc()
                   {
                      LLogMessage("FX_CamStart FALSE (Exit)", true);
                      FX_CamStart(gCameraId[0], FALSE);
+                     {
+                        MMThreadGuard g(seqActiveLock_g);
+                        seqactive_g = false;
+                     }
                      CameraState(Ready);
                      break;
                   }
@@ -895,6 +903,10 @@ int BOImplementationThread::svc()
                   {
                      LLogMessage("FX_CamStart FALSE (reached requested frame count)", true);
                      FX_CamStart(gCameraId[0], FALSE);
+                     {
+                        MMThreadGuard g(seqActiveLock_g);
+                        seqactive_g = false;
+                     }
                      CameraState(Ready);
                   }
                }
