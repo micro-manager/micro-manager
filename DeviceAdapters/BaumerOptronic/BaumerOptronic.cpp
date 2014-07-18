@@ -855,7 +855,7 @@ int BOImplementationThread::svc()
                   }
 
                   // Avoid hogging the CPU
-                  CDeviceUtils::SleepMs(5);
+                  CDeviceUtils::SleepMs(1);
                }
 
                if (CameraState() == Acquiring)
@@ -887,7 +887,7 @@ int BOImplementationThread::svc()
       }
 
       // Avoid hogging the CPU
-      CDeviceUtils::SleepMs(5);
+      CDeviceUtils::SleepMs(1);
    }
 
    Command(Noop);
@@ -1415,7 +1415,6 @@ unsigned int __stdcall mSeqEventHandler(void* pArguments)
    memset(&imgHeader, 0x00, sizeof(imgHeader));
    while (mTerminateFlag_g == false)
    {
-      Sleep(0);
       MMThreadGuard g(::acquisitionThreadTerminateLock_g); // have to wait for the event time-out !!
 
       DWORD waitStatus = WaitForSingleObject(imageNotificationEvent, imageTimeoutMs_g);
@@ -1455,10 +1454,6 @@ unsigned int __stdcall mSeqEventHandler(void* pArguments)
                   MMThreadGuard guard(BOImplementationThread::imageReadyLock_s);
                   imageReady_g = true;
                }
-            }
-            else
-            {
-               Sleep(0);
             }
          }
       }
@@ -2092,7 +2087,7 @@ int CBaumerOptronic::StartSequenceAcquisition(long numImages, double interval_ms
    MM::TimeoutMs timerOut(GetCurrentMMTime(), 1000);
    while (Ready != pWorkerThread_->CameraState())
    {
-      Sleep(0);
+      CDeviceUtils::SleepMs(1);
       if (timerOut.expired(GetCurrentMMTime()))
       {
          return DEVICE_SERIAL_TIMEOUT;
@@ -2148,7 +2143,7 @@ int CBaumerOptronic::StopSequenceAcquisition()
 
    while (Acquiring == pWorkerThread_->CameraState())
    {
-      Sleep(0);
+      CDeviceUtils::SleepMs(1);
       if (timerOut.expired(GetCurrentMMTime()))
       {
          return DEVICE_SERIAL_TIMEOUT;
