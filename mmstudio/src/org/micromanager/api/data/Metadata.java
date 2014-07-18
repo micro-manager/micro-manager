@@ -13,7 +13,7 @@ import org.micromanager.api.MultiStagePosition;
  * All fields of the Metadata that are not explicitly initialized will default
  * to null.
  */
-interface Metadata {
+public interface Metadata {
 
    interface MetadataBuilder {
       /**

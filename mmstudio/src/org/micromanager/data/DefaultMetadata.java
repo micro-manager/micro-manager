@@ -19,6 +19,7 @@ public class DefaultMetadata implements Metadata {
     * This class constructs Metadata objects. Use the build() method to 
     * generate a Metadata.
     */
+   @Override
    public static class DefaultMetadataBuilder implements Metadata.MetadataBuilder {
       private UUID uuid_ = null;
       private String source_ = null;
@@ -75,245 +76,294 @@ public class DefaultMetadata implements Metadata {
       private int color_ = null;
       private double pixelAspect_ = null;
 
+      @Override
       public Metadata build() {
          return new DefaultMetadata(this);
       }
 
+      @Override
       public MetadataBuilder uuid(UUID uuid) {
          uuid_ = uuid;
          return this;
       }
 
+      @Override
       public MetadataBuilder source(String source) {
          source_ = source;
          return this;
       }
 
+      @Override
       public MetadataBuilder microManagerVersion(String microManagerVersion) {
          microManagerVersion_ = microManagerVersion;
          return this;
       }
 
+      @Override
       public MetadataBuilder metadataVersion(String metadataVersion) {
          metadataVersion_ = metadataVersion;
          return this;
       }
 
+      @Override
       public MetadataBuilder acquisitionName(String acquisitionName) {
          acquisitionName_ = acquisitionName;
          return this;
       }
 
+      @Override
       public MetadataBuilder fileName(String fileName) {
          fileName_ = fileName;
          return this;
       }
 
+      @Override
       public MetadataBuilder userName(String userName) {
          userName_ = userName;
          return this;
       }
 
+      @Override
       public MetadataBuilder computerName(String computerName) {
          computerName_ = computerName;
          return this;
       }
 
+      @Override
       public MetadataBuilder prefix(String prefix) {
          prefix_ = prefix;
          return this;
       }
 
+      @Override
       public MetadataBuilder directory(String directory) {
          directory_ = directory;
          return this;
       }
 
+      @Override
       public MetadataBuilder startTime(String startTime) {
          startTime_ = startTime;
          return this;
       }
 
+      @Override
       public MetadataBuilder channelNames(String[] channelNames) {
          channelNames_ = channelNames;
          return this;
       }
 
+      @Override
       public MetadataBuilder channelColors(Color[] channelColors) {
          channelColors_ = channelColors;
          return this;
       }
 
+      @Override
       public MetadataBuilder channelContrastMins(int[] channelContrastMins) {
          channelContrastMins_ = channelContrastMins;
          return this;
       }
 
+      @Override
       public MetadataBuilder channelContrastMaxes(int[] channelContrastMaxes) {
          channelContrastMaxes_ = channelContrastMaxes;
          return this;
       }
 
+      @Override
       public MetadataBuilder initialPositionList(MultiStagePosition initialPositionList) {
          initialPositionList_ = initialPositionList;
          return this;
       }
 
+      @Override
       public MetadataBuilder zStepUm(double zStepUm) {
          zStepUm_ = zStepUm;
          return this;
       }
 
+      @Override
       public MetadataBuilder waitIntervalMs(double waitIntervalMs) {
          waitIntervalMs_ = waitIntervalMs;
          return this;
       }
 
+      @Override
       public MetadataBuilder customIntervalsMs(double[] customIntervalsMs) {
          customIntervalsMs_ = customIntervalsMs;
          return this;
       }
 
+      @Override
       public MetadataBuilder timeFirst(boolean timeFirst) {
          timeFirst_ = timeFirst;
          return this;
       }
 
+      @Override
       public MetadataBuilder slicesFirst(boolean slicesFirst) {
          slicesFirst_ = slicesFirst;
          return this;
       }
 
+      @Override
       public MetadataBuilder keepShutterOpenSlices(boolean keepShutterOpenSlices) {
          keepShutterOpenSlices_ = keepShutterOpenSlices;
          return this;
       }
 
+      @Override
       public MetadataBuilder keepShutterOpenChannels(boolean keepShutterOpenChannels) {
          keepShutterOpenChannels_ = keepShutterOpenChannels;
          return this;
       }
 
+      @Override
       public MetadataBuilder pixelType(String pixelType) {
          pixelType_ = pixelType;
          return this;
       }
 
+      @Override
       public MetadataBuilder numComponents(int numComponents) {
          numComponents_ = numComponents;
          return this;
       }
 
+      @Override
       public MetadataBuilder ijType(int ijType) {
          ijType_ = ijType;
          return this;
       }
 
+      @Override
       public MetadataBuilder frame(int frame) {
          frame_ = frame;
          return this;
       }
 
+      @Override
       public MetadataBuilder channelName(String channelName) {
          channelName_ = channelName;
          return this;
       }
 
+      @Override
       public MetadataBuilder exposureMs(double exposureMs) {
          exposureMs_ = exposureMs;
          return this;
       }
 
+      @Override
       public MetadataBuilder elapsedTimeMs(double elapsedTimeMs) {
          elapsedTimeMs_ = elapsedTimeMs;
          return this;
       }
 
+      @Override
       public MetadataBuilder startTimeMs(double startTimeMs) {
          startTimeMs_ = startTimeMs;
          return this;
       }
 
+      @Override
       public MetadataBuilder binning(int binning) {
          binning_ = binning;
          return this;
       }
 
+      @Override
       public MetadataBuilder imageNumber(int imageNumber) {
          imageNumber_ = imageNumber;
          return this;
       }
 
+      @Override
       public MetadataBuilder gridRow(int gridRow) {
          gridRow_ = gridRow;
          return this;
       }
 
+      @Override
       public MetadataBuilder gridColumn(int gridColumn) {
          gridColumn_ = gridColumn;
          return this;
       }
 
+      @Override
       public MetadataBuilder positionName(String positionName) {
          positionName_ = positionName;
          return this;
       }
 
+      @Override
       public MetadataBuilder xPositionUm(double xPositionUm) {
          xPositionUm_ = xPositionUm;
          return this;
       }
 
+      @Override
       public MetadataBuilder yPositionUm(double yPositionUm) {
          yPositionUm_ = yPositionUm;
          return this;
       }
 
+      @Override
       public MetadataBuilder zPositionUm(double zPositionUm) {
          zPositionUm_ = zPositionUm;
          return this;
       }
 
+      @Override
       public MetadataBuilder pixelSizeUm(double pixelSizeUm) {
          pixelSizeUm_ = pixelSizeUm;
          return this;
       }
 
+      @Override
       public MetadataBuilder camera(String camera) {
          camera_ = camera;
          return this;
       }
 
+      @Override
       public MetadataBuilder receivedTime(String receivedTime) {
          receivedTime_ = receivedTime;
          return this;
       }
 
+      @Override
       public MetadataBuilder excitationLabel(String excitationLabel) {
          excitationLabel_ = excitationLabel;
          return this;
       }
 
+      @Override
       public MetadataBuilder emissionLabel(String emissionLabel) {
          emissionLabel_ = emissionLabel;
          return this;
       }
 
+      @Override
       public MetadataBuilder ROI(String ROI) {
          ROI_ = ROI;
          return this;
       }
 
+      @Override
       public MetadataBuilder comments(String comments) {
          comments_ = comments;
          return this;
       }
 
+      @Override
       public MetadataBuilder color(int color) {
          color_ = color;
          return this;
       }
 
+      @Override
       public MetadataBuilder pixelAspect(double pixelAspect) {
          pixelAspect_ = pixelAspect;
          return this;
@@ -379,6 +429,7 @@ public class DefaultMetadata implements Metadata {
    private int color_ = null;
    private double pixelAspect_ = null;
 
+   @Override
    public DefaultMetadata(MetadataBuilder builder) {
       uuid_ = builder.uuid_;
       source_ = builder.source_;
@@ -440,6 +491,7 @@ public class DefaultMetadata implements Metadata {
       pixelAspect_ = builder.pixelAspect_;
    }
    
+   @Override
    public MetadataBuilder copy() {
       return new DefaultMetadataBuilder()
             .uuid(uuid_)
@@ -496,194 +548,242 @@ public class DefaultMetadata implements Metadata {
             .pixelAspect(pixelAspect_);
    }
 
+   @Override
    public UUID getUuid() {
       return uuid_;
    }
 
+   @Override
    public String getSource() {
       return source_;
    }
 
+   @Override
    public String getMicroManagerVersion() {
       return microManagerVersion_;
    }
 
+   @Override
    public String getMetadataVersion() {
       return metadataVersion_;
    }
 
+   @Override
    public String getAcquisitionName() {
       return acquisitionName_;
    }
 
+   @Override
    public String getFileName() {
       return fileName_;
    }
 
+   @Override
    public String getUserName() {
       return userName_;
    }
 
+   @Override
    public String getComputerName() {
       return computerName_;
    }
 
+   @Override
    public String getPrefix() {
       return prefix_;
    }
 
+   @Override
    public String getDirectory() {
       return directory_;
    }
 
+   @Override
    public String getStartTime() {
       return startTime_;
    }
 
+   @Override
    public String[] getChannelNames() {
       return channelNames_;
    }
 
+   @Override
    public Color[] getChannelColors() {
       return channelColors_;
    }
 
+   @Override
    public int[] getChannelContrastMins() {
       return channelContrastMins_;
    }
 
+   @Override
    public int[] getChannelContrastMaxes() {
       return channelContrastMaxes_;
    }
 
+   @Override
    public MultiStagePosition getInitialPositionList() {
       return initialPositionList_;
    }
 
+   @Override
    public double getZStepUm() {
       return zStepUm_;
    }
 
+   @Override
    public double getWaitIntervalMs() {
       return waitIntervalMs_;
    }
 
+   @Override
    public double[] getCustomIntervalsMs() {
       return customIntervalsMs_;
    }
 
+   @Override
    public boolean getTimeFirst() {
       return timeFirst_;
    }
 
+   @Override
    public boolean getSlicesFirst() {
       return slicesFirst_;
    }
 
+   @Override
    public boolean getKeepShutterOpenSlices() {
       return keepShutterOpenSlices_;
    }
 
+   @Override
    public boolean getKeepShutterOpenChannels() {
       return keepShutterOpenChannels_;
    }
 
+   @Override
    public String getPixelType() {
       return pixelType_;
    }
 
+   @Override
    public int getNumComponents() {
       return numComponents_;
    }
 
+   @Override
    public int getIjType() {
       return ijType_;
    }
 
+   @Override
    public int getFrame() {
       return frame_;
    }
 
+   @Override
    public String getChannelName() {
       return channelName_;
    }
 
+   @Override
    public double getExposureMs() {
       return exposureMs_;
    }
 
+   @Override
    public double getElapsedTimeMs() {
       return elapsedTimeMs_;
    }
 
+   @Override
    public double getStartTimeMs() {
       return startTimeMs_;
    }
 
+   @Override
    public int getBinning() {
       return binning_;
    }
 
+   @Override
    public int getImageNumber() {
       return imageNumber_;
    }
 
+   @Override
    public int getGridRow() {
       return gridRow_;
    }
 
+   @Override
    public int getGridColumn() {
       return gridColumn_;
    }
 
+   @Override
    public String getPositionName() {
       return positionName_;
    }
 
+   @Override
    public double getXPositionUm() {
       return xPositionUm_;
    }
 
+   @Override
    public double getYPositionUm() {
       return yPositionUm_;
    }
 
+   @Override
    public double getZPositionUm() {
       return zPositionUm_;
    }
 
+   @Override
    public double getPixelSizeUm() {
       return pixelSizeUm_;
    }
 
+   @Override
    public String getCamera() {
       return camera_;
    }
 
+   @Override
    public String getReceivedTime() {
       return receivedTime_;
    }
 
+   @Override
    public String getExcitationLabel() {
       return excitationLabel_;
    }
 
+   @Override
    public String getEmissionLabel() {
       return emissionLabel_;
    }
 
+   @Override
    public String getROI() {
       return ROI_;
    }
 
+   @Override
    public String getComments() {
       return comments_;
    }
 
+   @Override
    public int getColor() {
       return color_;
    }
 
+   @Override
    public double getPixelAspect() {
       return pixelAspect_;
    }
