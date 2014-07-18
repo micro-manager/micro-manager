@@ -4,7 +4,7 @@
 // SUBSYSTEM:     DeviceAdapters
 //-----------------------------------------------------------------------------
 // DESCRIPTION:   See BaumerOptronic.h
-//                
+//
 // AUTHOR:        Karl Hoover
 //                Made to work again by Nico Stuurman, Feb. 2012, copyright UCSF
 //
@@ -20,22 +20,21 @@
 //                IN NO EVENT SHALL THE COPYRIGHT OWNER OR
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
-// CVS:           $Id: $
 
-/**
+/*
 Notes from Nico Stuurman who is trying to understand how this code is supposed to work. (feb. 2012).
 
 Apart from the device adapter itself. there is a "WorkerThread" named
-BOImplementationThread.  This BOImplementationThread handles all communication with the camera.  
+BOImplementationThread. This BOImplementationThread handles all communication with the camera.
 
-The svc function of BOImplementationThread checks the value of flag cameraState_ and takes action 
-accordingly. Thus, the adapter communicates with the ImplementationThread by setting the state of 
+The svc function of BOImplementationThread checks the value of flag cameraState_ and takes action
+accordingly. Thus, the adapter communicates with the ImplementationThread by setting the state of
 flag cameraState_.
 
-On startup, the function BOImplementationThread::BOInitializationSequence() is called.  This function
+On startup, the function BOImplementationThread::BOInitializationSequence() is called. This function
 starts the thread mSeqEventHandler, which coninuously checks the camera for new data.
 When there is a new image, this thread will acquire the pixels through the call FX_GetImageData.
-Pixel data are stored in a global buffer pointed to by pStatic_g, lots of image size are also 
+Pixel data are stored in a global buffer pointed to by pStatic_g, lots of image size are also
 stored in globals.
 
 Since this function is a global, using this adapter with multiple cameras is not possible.
@@ -101,7 +100,7 @@ const char* g_PixelType_16bit = "16bit";
 const char* g_PixelType_32bitRGB = "32bitRGB";
 const char* g_PixelType_64bitRGB = "64bitRGB";
 
-int gCameraId[16] = { -1 };		// max 16 cameras
+int gCameraId[16] = { -1 }; // max 16 cameras
 
 // this appears to be used as a global pointer to memory used to deposit pixel data from the camera
 void* pStatic_g = NULL; // need a static pointer for the non-member event handler function -- todo class static
@@ -119,17 +118,17 @@ unsigned short xDim_g;
 unsigned short yDim_g;
 unsigned short bitsInOneColor_g;
 
-unsigned short BytesInOneComponent(unsigned short bitsInOneColor) 
+unsigned short BytesInOneComponent(unsigned short bitsInOneColor)
 {
    short ret = (short)(bitsInOneColor + 7);
    ret = (short)(ret/8);
    return ret;
 }
-   
+
 
 // BO library sends out two possible RGB formats, both with code BOIMF_RGB
 // if planes = 3 the R, G, and B images are sent out successively
-// if 'canals' =3, the RGB pixels are interleaved.
+// if 'canals' = 3, the RGB pixels are interleaved.
 unsigned short nPlanes_g;
 unsigned short nCanals_g;
 unsigned short iCode_g;
@@ -151,7 +150,9 @@ MODULE_API void InitializeModuleData()
 MODULE_API MM::Device* CreateDevice(const char* deviceName)
 {
    if (deviceName == 0)
+   {
       return 0;
+   }
 
    // decide which device class to create based on the deviceName parameter
    if (strcmp(deviceName, g_CameraDeviceName) == 0)
@@ -177,35 +178,35 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 // this runs on the thread that waits for images to be ready
 
 // forward declaration
-unsigned int __stdcall mSeqEventHandler( void*  );
+unsigned int __stdcall mSeqEventHandler(void*);
 unsigned long imageTimeoutMs_g = 5000; // milliseconds to wait for image ready event
 
 
 #define FXOK 1
 
 
-BOImplementationThread::BOImplementationThread(CBaumerOptronic* pCamera) : 
-   intervalMs_(100.0), 
-   numImages_(1), 
-   acquisitionThread_(NULL), 
-   quantizedExposure_(0), 
-   quantizedGain_(0.), 
-   bitsInOneColor_(0), 
-   nPlanes_(0), 
-   xDim_(0), 
-   yDim_(0), 
-   pBuf_(NULL), 
-   bufSize_(0), 
-   pColorBuf_(NULL), 
-   colorBufSize_(0), 
-   triggerMode_(false), 
-   command_(Noop), 
-   cameraState_(Idle), 
-   pCamera_(pCamera), 
-   partialScanMode_(false) 
+BOImplementationThread::BOImplementationThread(CBaumerOptronic* pCamera) :
+   intervalMs_(100.0),
+   numImages_(1),
+   acquisitionThread_(NULL),
+   quantizedExposure_(0),
+   quantizedGain_(0.),
+   bitsInOneColor_(0),
+   nPlanes_(0),
+   xDim_(0),
+   yDim_(0),
+   pBuf_(NULL),
+   bufSize_(0),
+   pColorBuf_(NULL),
+   colorBufSize_(0),
+   triggerMode_(false),
+   command_(Noop),
+   cameraState_(Idle),
+   pCamera_(pCamera),
+   partialScanMode_(false)
 {
-   imageEventArray_[0] = NULL; 
-   imageEventArray_[1] = NULL; 
+   imageEventArray_[0] = NULL;
+   imageEventArray_[1] = NULL;
    memset(&roi_,0,sizeof(RECT));
 }
 
@@ -213,68 +214,76 @@ BOImplementationThread::BOImplementationThread(CBaumerOptronic* pCamera) :
 BOImplementationThread::~BOImplementationThread()
 {
    bufSize_ = 0;
-   if(NULL!=pBuf_)
+   if (NULL != pBuf_)
+   {
       free(pBuf_);
+   }
 
    colorBufSize_ = 0;
-   if(NULL!= pColorBuf_)
+   if (NULL != pColorBuf_)
+   {
       free(pColorBuf_);
+   }
 
-   if(NULL !=  imageEventArray_[0])
-      ::CloseHandle( imageEventArray_[0]);
+   if (NULL != imageEventArray_[0])
+   {
+      ::CloseHandle(imageEventArray_[0]);
+   }
    mTerminateFlag_g = false;
 }
 
-void BOImplementationThread::TriggerMode( const bool v) 
-{  
-   MMThreadGuard g( stateMachineLock_); 
-   WorkerState prevState(cameraState_); 
-   cameraState_= Busy; 
-   triggerMode_ = v; 
-   (void)FX_SetTriggerMode(  gCameraId[0], triggerMode_, NULL );
-   cameraState_=prevState;
+void BOImplementationThread::TriggerMode(const bool v)
+{
+   MMThreadGuard g(stateMachineLock_);
+   WorkerState prevState(cameraState_);
+   cameraState_ = Busy;
+   triggerMode_ = v;
+   (void)FX_SetTriggerMode(gCameraId[0], triggerMode_, NULL);
+   cameraState_ = prevState;
 }
 
-void BOImplementationThread::Exposure( int v ) 
+void BOImplementationThread::Exposure(int v)
 {
-   MMThreadGuard g( stateMachineLock_); 
-   WorkerState prevState(cameraState_); 
-   cameraState_= Busy;
+   MMThreadGuard g(stateMachineLock_);
+   WorkerState prevState(cameraState_);
+   cameraState_ = Busy;
    tEXPO m_Expo;
-   int fxr = FX_SetExposureTime( gCameraId[0], v,  &m_Expo); 
-   if(CE_SUCCESS!=fxr) 
+   int fxr = FX_SetExposureTime(gCameraId[0], v, &m_Expo);
+   if (CE_SUCCESS != fxr)
+   {
       LLogMessage(IntelligentErrorString(fxr).c_str());
+   }
    else
    {
-      quantizedExposure_ = m_Expo.timeNear; 
-      LLogMessage(std::string("exposure set to ") + 
-         boost::lexical_cast<std::string,int>(quantizedExposure_), true);
+      quantizedExposure_ = m_Expo.timeNear;
+      LLogMessage(std::string("exposure set to ") +
+            boost::lexical_cast<std::string,int>(quantizedExposure_), true);
    }
-   cameraState_=prevState;
+   cameraState_ = prevState;
 }
 
-void BOImplementationThread::Gain(double v) 
-{ 
-   MMThreadGuard g( stateMachineLock_); 
-   WorkerState prevState(cameraState_); 
-   cameraState_= Busy; 
-   tGAIN m_Gain; 
-   (void)FX_SetGainFactor( gCameraId[0], v,  &m_Gain); 
-   quantizedGain_ = m_Gain.gainNear; 
-   cameraState_=prevState;
+void BOImplementationThread::Gain(double v)
+{
+   MMThreadGuard g(stateMachineLock_);
+   WorkerState prevState(cameraState_);
+   cameraState_ = Busy;
+   tGAIN m_Gain;
+   (void)FX_SetGainFactor(gCameraId[0], v, &m_Gain);
+   quantizedGain_ = m_Gain.gainNear;
+   cameraState_ = prevState;
 }
 
 
 MMThreadLock BOImplementationThread::imageReadyLock_s;
 MMThreadLock BOImplementationThread::imageBufferLock_s;
 
-void BOImplementationThread::Snap(void)
+void BOImplementationThread::Snap()
 {
    // XXX BUG: We can end up grabbing an image whose exposure started before
    // the SnapImage() call commenced.
    try
    {
-      if( Ready == CameraState())
+      if (Ready == CameraState())
       {
          {
             MMThreadGuard guard(BOImplementationThread::imageReadyLock_s);
@@ -282,34 +291,36 @@ void BOImplementationThread::Snap(void)
             imageReady_g = false;
          }
 
-         MMThreadGuard g( stateMachineLock_);
+         MMThreadGuard g(stateMachineLock_);
          WorkerState prevState = cameraState_;
          cameraState_ = Snapping;
-   
+
          tBoCameraType   dcBoType;               // Cameratype struct
          tBoCameraStatus dcBoStatus;             // Camerastatus struct
 
          dcBoType.iSizeof = sizeof(dcBoType);
          dcBoStatus.iSizeof = sizeof(dcBoStatus);
-         FX_GetCameraInfo( gCameraId[0], &dcBoType, &dcBoStatus );
+         FX_GetCameraInfo(gCameraId[0], &dcBoType, &dcBoStatus);
 
          unsigned long sz = dcBoStatus.iNumImgCodeBytes;
 
          {
             // lock access to the static buffer, buffersize
-            MMThreadGuard g( BOImplementationThread::imageBufferLock_s);
-            if( sz != bufSize_)
+            MMThreadGuard g(BOImplementationThread::imageBufferLock_s);
+            if (sz != bufSize_)
             {
-               if ( NULL != pBuf_)
+               if (NULL != pBuf_)
                {
-                  free( pBuf_);
+                  free(pBuf_);
                   pBuf_ = NULL;
                   bufSize_ = 0;
                }
                // malloc is slightly faster than new
-               pBuf_ = malloc( sz);
-               if ( NULL != pBuf_)
+               pBuf_ = malloc(sz);
+               if (NULL != pBuf_)
+               {
                   bufSize_ = sz;
+               }
             }
 
             pStatic_g = pBuf_;
@@ -317,14 +328,16 @@ void BOImplementationThread::Snap(void)
          }
 
 
-         if( 0 < bufSize_)
+         if (0 < bufSize_)
          {
             seqactive_g = true;
          }
          cameraState_ = prevState;
-
       }
-   } catch(...){}
+   }
+   catch (...)
+   {
+   }
 
    return;
 }
@@ -340,7 +353,7 @@ void BOImplementationThread::Snap(void)
  *  (Also compare the Snap() function, which ought to have been written to
  *  share code with this one.)
  */
-void BOImplementationThread::Acquire(void)
+void BOImplementationThread::Acquire()
 {
    try
    {
@@ -354,25 +367,27 @@ void BOImplementationThread::Acquire(void)
 
       dcBoType.iSizeof = sizeof(dcBoType);
       dcBoStatus.iSizeof = sizeof(dcBoStatus);
-      FX_GetCameraInfo( gCameraId[0], &dcBoType, &dcBoStatus );
+      FX_GetCameraInfo(gCameraId[0], &dcBoType, &dcBoStatus);
 
       unsigned long sz = dcBoStatus.iNumImgCodeBytes;
 
       {
          // lock access to the static buffer, buffersize
-         MMThreadGuard g( BOImplementationThread::imageBufferLock_s);
-         if( sz != bufSize_)
+         MMThreadGuard g(BOImplementationThread::imageBufferLock_s);
+         if (sz != bufSize_)
          {
-            if ( NULL != pBuf_)
+            if (NULL != pBuf_)
             {
-               free( pBuf_);
+               free(pBuf_);
                pBuf_ = NULL;
                bufSize_ = 0;
             }
             // malloc is slightly faster than new
-            pBuf_ = malloc( sz);
-            if ( NULL != pBuf_)
+            pBuf_ = malloc(sz);
+            if (NULL != pBuf_)
+            {
                bufSize_ = sz;
+            }
          }
 
          pStatic_g = pBuf_;
@@ -380,20 +395,22 @@ void BOImplementationThread::Acquire(void)
       }
 
 
-      if( 0 < bufSize_)
+      if (0 < bufSize_)
       {
          seqactive_g = true;
       }
-
-   } catch(...){}
+   }
+   catch (...)
+   {
+   }
 
    return;
 }
 
 
-void* BOImplementationThread::CurrentImage( unsigned short& xDim,  unsigned short& yDim, 
-                                          unsigned short& bitsInOneColor, unsigned short& nColors,  
-                                          unsigned long& bufSize, MMThreadGuard** ppImageBufferGuard)
+void* BOImplementationThread::CurrentImage(unsigned short& xDim, unsigned short& yDim,
+      unsigned short& bitsInOneColor, unsigned short& nColors,
+      unsigned long& bufSize, MMThreadGuard** ppImageBufferGuard)
 {
    unsigned short nCanals;
    void* bufferToReturn = NULL;
@@ -404,11 +421,13 @@ void* BOImplementationThread::CurrentImage( unsigned short& xDim,  unsigned shor
    {
       {
          MMThreadGuard guard(BOImplementationThread::imageReadyLock_s);
-         if(haveSkippedOneImage_g && imageReady_g)
+         if (haveSkippedOneImage_g && imageReady_g)
+         {
             break;
+         }
       }
 
-      if( timerOut.expired(CurrentMMTimeMM()))
+      if (timerOut.expired(CurrentMMTimeMM()))
       {
          PostError(DEVICE_SERIAL_TIMEOUT, "in CurrentImage");
          return NULL;
@@ -416,14 +435,14 @@ void* BOImplementationThread::CurrentImage( unsigned short& xDim,  unsigned shor
 
       CDeviceUtils::SleepMs(1);
    }
- 
+
    seqactive_g = false;
 
    {
       MMThreadGuard g(BOImplementationThread::imageBufferLock_s);
 
       bufSize = bufSize_ = staticImgSize_g;
-      xDim =  xDim_ = xDim_g;
+      xDim = xDim_ = xDim_g;
       yDim = yDim_ = yDim_g;
       bitsInOneColor = bitsInOneColor_ = bitsInOneColor_g;
       nPlanes_ = nPlanes_g;
@@ -433,108 +452,106 @@ void* BOImplementationThread::CurrentImage( unsigned short& xDim,  unsigned shor
    // color images need to be dithered with an empty color for gui
    if (BOIMF_RGB == ImageCode().iCode)
    {
-      nColors = 4;      
+      nColors = 4;
       const unsigned long ditheredSize = xDim * yDim * BytesInOneComponent(bitsInOneColor) * nColors;
       {
          colorBufSize_ = 0;
-         if(NULL!= pColorBuf_)
+         if (NULL != pColorBuf_)
          {
             free(pColorBuf_);
          }
          // malloc is slightly faster than new
-         pColorBuf_ = malloc( ditheredSize);
-         if( NULL != pColorBuf_)
+         pColorBuf_ = malloc(ditheredSize);
+         if (NULL != pColorBuf_)
          {
             colorBufSize_ = ditheredSize;
             bufSize = ditheredSize;
             bufferToReturn = pColorBuf_;
          }
-         else 
+         else
          {
             // TODO: handle error when no memory could be allocated
          }
       }
-      if( 0 != ditheredSize)   
+      if (0 != ditheredSize)
+      {
          memset(pColorBuf_, 0, ditheredSize);
+      }
 
       // start of access to image buffer
       *ppImageBufferGuard = new MMThreadGuard(BOImplementationThread::imageBufferLock_s);
 
-      if( 8 >= bitsInOneColor_) // pixels are 1 byte per color
+      if (8 >= bitsInOneColor_) // pixels are 1 byte per color
       {
          char* pInput = static_cast<char*>(pBuf_);
          char* pOutput = static_cast<char*>(pColorBuf_);
          unsigned long nPix = xDim * yDim;
          unsigned long thePixel;
-         if( (1 == nPlanes_) && (3 == nCanals)) // interleaved RGB
+         if ((1 == nPlanes_) && (3 == nCanals)) // interleaved RGB
          {
-            for( thePixel = 0; thePixel < nPix; ++thePixel)
+            for (thePixel = 0; thePixel < nPix; ++thePixel)
             {
-               *pOutput++ = *pInput++;// R
-               *pOutput++ = *pInput++;// G
-               *pOutput++ = *pInput++;// B
-               ++pOutput;             // empty
+               *pOutput++ = *pInput++; // R
+               *pOutput++ = *pInput++; // G
+               *pOutput++ = *pInput++; // B
+               ++pOutput;              // empty
             }
-
          }
-         else if ( (3 == nPlanes_) && (1 == nCanals)) // R plane G plane B plane
+         else if ((3 == nPlanes_) && (1 == nCanals)) // R plane G plane B plane
          {
-            for( thePixel = 0; thePixel < nPix; ++thePixel)
+            for (thePixel = 0; thePixel < nPix; ++thePixel)
             {
                *pOutput++ = pInput[thePixel]; // R
                *pOutput++ = pInput[thePixel + nPix];// G
-               *pOutput++ =  pInput[thePixel + 2*nPix];// B
+               *pOutput++ = pInput[thePixel + 2*nPix];// B
                ++pOutput;             // empty
             }
          }
       }
-      else  // pixels are 2 bytes per color
+      else // pixels are 2 bytes per color
       {
          short* pInput = static_cast<short*>(pBuf_);
          short* pOutput = static_cast<short*>(pColorBuf_);
          unsigned long nPix = xDim * yDim;
          unsigned long thePixel;
-         if( (1 == nPlanes_) && (3 == nCanals)) // interleaved RGB
+         if ((1 == nPlanes_) && (3 == nCanals)) // interleaved RGB
          {
-            for( thePixel = 0; thePixel < nPix; ++thePixel)
+            for (thePixel = 0; thePixel < nPix; ++thePixel)
             {
                *pOutput++ = *pInput++;// R
                *pOutput++ = *pInput++;// G
                *pOutput++ = *pInput++;// B
                ++pOutput;             // empty
             }
-
          }
-         else if ( (3 == nPlanes_) && (1 == nCanals)) // R plane G plane B plane
+         else if ((3 == nPlanes_) && (1 == nCanals)) // R plane G plane B plane
          {
-            for( thePixel = 0; thePixel < nPix; ++thePixel)
+            for (thePixel = 0; thePixel < nPix; ++thePixel)
             {
                *pOutput++ = pInput[thePixel]; // R
                *pOutput++ = pInput[thePixel + nPix];// G
-               *pOutput++ =  pInput[thePixel + 2*nPix];// B
+               *pOutput++ = pInput[thePixel + 2*nPix];// B
                ++pOutput;             // empty
             }
-
          }
       }
    }
-   else  // monochrome images
+   else // monochrome images
    {
       nColors = 1;
       // start of access to image buffer
       *ppImageBufferGuard = new MMThreadGuard(BOImplementationThread::imageBufferLock_s);
       bufferToReturn = pBuf_;
-
    }
 
    return bufferToReturn;
 }
 
 
-void BOImplementationThread::CurrentImageSize( unsigned short& xDim,  unsigned short& yDim, unsigned short& bitsInOneColor, unsigned short& nColors,  unsigned long& bufSize)
+void BOImplementationThread::CurrentImageSize(unsigned short& xDim, unsigned short& yDim, unsigned short& bitsInOneColor, unsigned short& nColors, unsigned long& bufSize)
 {
    MMThreadGuard g(mmCameraLock_);
-   xDim =  xDim_;
+   xDim = xDim_;
    yDim = yDim_;
    bitsInOneColor = bitsInOneColor_;
 
@@ -556,51 +573,51 @@ void BOImplementationThread::CurrentImageSize( unsigned short& xDim,  unsigned s
 // return the possible gain range
 std::pair<double, double> BOImplementationThread::GainLimits()
 {
-   std::pair< double, double> ret(0.,0.);
-   MMThreadGuard g( stateMachineLock_);
+   std::pair<double, double> ret(0.,0.);
+   MMThreadGuard g(stateMachineLock_);
    WorkerState prevState(cameraState_);
-   cameraState_= Busy; 
-   tGAIN m_Gain; 
+   cameraState_ = Busy;
+   tGAIN m_Gain;
    // specifying 0 returns gain range
-   (void)FX_SetGainFactor( gCameraId[0], 0.,  &m_Gain);
-   ret = std::make_pair( m_Gain.gainMin, m_Gain.gainMax);
-   cameraState_= prevState;
+   (void)FX_SetGainFactor(gCameraId[0], 0., &m_Gain);
+   ret = std::make_pair(m_Gain.gainMin, m_Gain.gainMax);
+   cameraState_ = prevState;
    return ret;
-};
+}
 
 // return possible exposure range (in micro-seconds)
 std::pair<int, int> BOImplementationThread::ExposureLimits()
 {
-   std::pair< int, int> ret(0,0);
-   MMThreadGuard g( stateMachineLock_);
+   std::pair<int, int> ret(0,0);
+   MMThreadGuard g(stateMachineLock_);
    WorkerState prevState(cameraState_);
-   cameraState_= Busy; 
-   tEXPO m_Exposure; 
+   cameraState_ = Busy;
+   tEXPO m_Exposure;
    // specifying 0 returns exposure range
-   (void)FX_SetExposureTime( gCameraId[0], 0,  &m_Exposure);
-   ret = std::make_pair( m_Exposure.timeMin, m_Exposure.timeMax);
-   cameraState_= prevState;
+   (void)FX_SetExposureTime(gCameraId[0], 0, &m_Exposure);
+   ret = std::make_pair(m_Exposure.timeMin, m_Exposure.timeMax);
+   cameraState_ = prevState;
    return ret;
-};
+}
 
 
-void BOImplementationThread::QueryCapabilities(void)
+void BOImplementationThread::QueryCapabilities()
 {
-   MMThreadGuard g( stateMachineLock_);
-	int nImgFormat;	
-	tpBoImgFormat*  aImgFormat;
+   MMThreadGuard g(stateMachineLock_);
+   int nImgFormat;
+   tpBoImgFormat* aImgFormat;
    //query image formats
-	int fxret = FX_GetCapability (gCameraId[0], BCAM_QUERYCAP_IMGFORMATS, 0/*UNUSED*/, (void**)&aImgFormat, &nImgFormat );
+   int fxret = FX_GetCapability (gCameraId[0], BCAM_QUERYCAP_IMGFORMATS, 0/*UNUSED*/, (void**)&aImgFormat, &nImgFormat);
 
 
 
-   if( 1 == fxret)
+   if (1 == fxret)
    {
       // copy out of library's local memory
 
-		for( int i = 0; i < nImgFormat; i++ ) 
+      for (int i = 0; i < nImgFormat; i++)
       {
-         NamedFormat f = std::make_pair( std::string(aImgFormat[i]->aName), *(aImgFormat[i])  );
+         NamedFormat f = std::make_pair(std::string(aImgFormat[i]->aName), *(aImgFormat[i]));
          formats.push_back(f);
 
          ImageCodesPerFormat theseCodes;
@@ -609,39 +626,38 @@ void BOImplementationThread::QueryCapabilities(void)
          int jj;
 
          //query image codes
-	      tpBoImgCode * 	 aImgCode;
-         fxret = FX_GetCapability( gCameraId[0], BCAM_QUERYCAP_IMGCODES, f.second.iFormat, (void**)&aImgCode, &nattributesAvailable );
-         if( 1 == fxret)
+         tpBoImgCode * aImgCode;
+         fxret = FX_GetCapability(gCameraId[0], BCAM_QUERYCAP_IMGCODES, f.second.iFormat, (void**)&aImgCode, &nattributesAvailable);
+         if (1 == fxret)
          {
-            for( jj = 0; jj < nattributesAvailable; ++jj)
+            for (jj = 0; jj < nattributesAvailable; ++jj)
             {
                tBoImgCode tvalue = *(aImgCode[jj]);
-               theseCodes.push_back( tvalue );
+               theseCodes.push_back(tvalue);
             }
-
          }
          // query image filters for this format
-	      tpBoImgFilter * 	 aImgFilter;
-	      int fxret = FX_GetCapability( gCameraId[0], BCAM_QUERYCAP_IMGFILTER, f.second.iFormat, (void**)&aImgFilter, &nattributesAvailable );
-         if( 1 == fxret)
+         tpBoImgFilter * aImgFilter;
+         int fxret = FX_GetCapability(gCameraId[0], BCAM_QUERYCAP_IMGFILTER, f.second.iFormat, (void**)&aImgFilter, &nattributesAvailable);
+         if (1 == fxret)
          {
-            for( jj = 0; jj < nattributesAvailable; ++jj)
+            for (jj = 0; jj < nattributesAvailable; ++jj)
             {
                tBoImgFilter tvalue = *(aImgFilter[jj]);
-               theseFilters.push_back( tvalue);
+               theseFilters.push_back(tvalue);
             }
          }
 
          // enumerate some more capabilities....
-         tpBoCamFunction *       aCamFunction;
+         tpBoCamFunction * aCamFunction;
          int nCamFunction;
-         fxret = FX_GetCapability(  0, BCAM_QUERYCAP_CAMFUNCTIONS, f.second.iFormat, (void**)&aCamFunction, &nCamFunction );
+         fxret = FX_GetCapability(0, BCAM_QUERYCAP_CAMFUNCTIONS, f.second.iFormat, (void**)&aCamFunction, &nCamFunction);
          std::ostringstream oss;
-         oss << " for format " << f.first << "  aux camera capabilites:";
+         oss << " for format " << f.first << " aux camera capabilites:";
 
-         if( 1 == fxret)
+         if (1 == fxret)
          {
-            for( int i = 0; i < nCamFunction; i++ ) 
+            for (int i = 0; i < nCamFunction; i++)
             {
                oss << "\n 0x" << std::hex << aCamFunction[i]->iFunction << "\t" << std::string(aCamFunction[i]->aName);
             }
@@ -660,31 +676,26 @@ void BOImplementationThread::QueryCapabilities(void)
          f0.name_ = f.first;
          f0.codes_ = theseCodes;
          f0.filters_ = theseFilters;
-         completeFormats_.push_back ( f0 );
-
-   	}
-
-
+         completeFormats_.push_back(f0);
+      }
    }
-
-
 }
 
 
 // iterate through formats and make vectors of properties
 
-void BOImplementationThread::ParseCapabilities(void)
+void BOImplementationThread::ParseCapabilities()
 {
-   MMThreadGuard g( stateMachineLock_);
-   std::vector< CompleteFormat >::iterator i;
+   MMThreadGuard g(stateMachineLock_);
+   std::vector<CompleteFormat>::iterator i;
 
-   for ( i = completeFormats_.begin(); i != completeFormats_.end(); ++i)
+   for (i = completeFormats_.begin(); i != completeFormats_.end(); ++i)
    {
       int thisBin = 1;
-      std::vector< std::string > tokens;
-      CDeviceUtils::Tokenize( i->name_, tokens, " ");
-      std::vector< std::string >::iterator ti;
-      for( ti = tokens.begin(); ti != tokens.end(); ++ti)
+      std::vector<std::string> tokens;
+      CDeviceUtils::Tokenize(i->name_, tokens, " ");
+      std::vector<std::string>::iterator ti;
+      for (ti = tokens.begin(); ti != tokens.end(); ++ti)
       {
          if (*ti == "Binning")
          {
@@ -692,127 +703,139 @@ void BOImplementationThread::ParseCapabilities(void)
             ts>>thisBin;
             break;
          }
-
       }
-      if( (3!= thisBin) && binSizes_.end() == std::find( binSizes_.begin(), binSizes_.end(), thisBin))
+      if ((3 != thisBin) && binSizes_.end() == std::find(binSizes_.begin(), binSizes_.end(), thisBin))
+      {
          binSizes_.push_back(thisBin);
-      
+      }
+
       int thisDepth = i->f_.iPixelBits;
-      if ( pixelDepths_.end() ==  std::find( pixelDepths_.begin(), pixelDepths_.end(), thisDepth))
-         pixelDepths_.push_back( thisDepth);
+      if (pixelDepths_.end() == std::find(pixelDepths_.begin(), pixelDepths_.end(), thisDepth))
+      {
+         pixelDepths_.push_back(thisDepth);
+      }
 
       ImageCodesPerFormat::iterator jj;
 
-      for ( jj = i->codes_.begin(); jj != i->codes_.end(); ++jj)
+      for (jj = i->codes_.begin(); jj != i->codes_.end(); ++jj)
       {
 
          int thisChannelBits = jj->iCanalBits;
-         if (possibleBitsInOneColor_.end() == std::find( possibleBitsInOneColor_.begin(), possibleBitsInOneColor_.end(), thisChannelBits))
+         if (possibleBitsInOneColor_.end() == std::find(possibleBitsInOneColor_.begin(), possibleBitsInOneColor_.end(), thisChannelBits))
+         {
             possibleBitsInOneColor_.push_back(thisChannelBits);
+         }
 
          int planes = jj->iPlanes;
-         if( this->possibleNPlanes_.end() == std::find( possibleNPlanes_.begin(), possibleNPlanes_.end(), planes))
-            possibleNPlanes_.push_back( planes);
+         if (this->possibleNPlanes_.end() == std::find(possibleNPlanes_.begin(), possibleNPlanes_.end(), planes))
+         {
+            possibleNPlanes_.push_back(planes);
+         }
       }
 
       ImageFiltersPerFormat::iterator kk;
 
-      for( kk = i->filters_.begin(); kk != i->filters_.end(); ++kk)
+      for (kk = i->filters_.begin(); kk != i->filters_.end(); ++kk)
       {
          std::string filterName = kk->aName;
          if (filters_.end() == filters_.find(kk->imgFilterCode))
+         {
             filters_[kk->imgFilterCode] = filterName;
-
+         }
       }
    }
    QueryCameraCurrentFormat();
 }
 
-void BOImplementationThread::QueryCameraCurrentFormat(void)
+void BOImplementationThread::QueryCameraCurrentFormat()
 {
    tBoCameraType   dcBoType;               // Cameratype struct
    tBoCameraStatus dcBoStatus;             // Camerastatus struct
 
    dcBoType.iSizeof = sizeof(dcBoType);
    dcBoStatus.iSizeof = sizeof(dcBoStatus);
-   int fxRet = FX_GetCameraInfo( gCameraId[0], &dcBoType, &dcBoStatus );
-   ::iCode_g = static_cast<unsigned short>(dcBoStatus.eCurImgCode.iCode); 
-   if( CE_SUCCESS != fxRet)
+   int fxRet = FX_GetCameraInfo(gCameraId[0], &dcBoType, &dcBoStatus);
+   ::iCode_g = static_cast<unsigned short>(dcBoStatus.eCurImgCode.iCode);
+   if (CE_SUCCESS != fxRet)
    {
       PostError(DEVICE_ERR, IntelligentErrorString(fxRet).c_str());
    }
    else
    {
       bitsInOneColor_ = static_cast<unsigned short>(dcBoStatus.eCurImgCode.iCanalBits);
-      nPlanes_ =  static_cast<unsigned short>(dcBoStatus.eCurImgCode.iPlanes);
+      nPlanes_ = static_cast<unsigned short>(dcBoStatus.eCurImgCode.iPlanes);
    }
 
    FindImageFormatInFormatCache(dcBoStatus.eCurImgFormat);
 }
 
 
-int BOImplementationThread::svc(void)
+int BOImplementationThread::svc()
 {
    // loop in this working thread until the camera is shutdown.
    for (;;)
    {
-      if( Exit == Command())
+      if (Exit == Command())
       {
-         if ( Idle < CameraState() )
+         if (Idle < CameraState())
          {
             try
-            { 
+            {
                // kill the acquisition thread
                {
-                  LLogMessage( "Send termination request to BO acquisition thread ", true);
+                  LLogMessage("Send termination request to BO acquisition thread ", true);
                   MMThreadGuard g(::acquisitionThreadTerminateLock_g);
-                  mTerminateFlag_g = true;	
+                  mTerminateFlag_g = true;
                }
 
-               LLogMessage( "sent terminate request to BO acquisition thread ", true);
-		         ::TerminateThread( acquisitionThread_, 0 );
-               LLogMessage( "BO acquisition thread terminated ", true);
-		         CloseHandle( acquisitionThread_ );
-               acquisitionThread_= NULL;
+               LLogMessage("sent terminate request to BO acquisition thread ", true);
+               ::TerminateThread(acquisitionThread_, 0);
+               LLogMessage("BO acquisition thread terminated ", true);
+               CloseHandle(acquisitionThread_);
+               acquisitionThread_ = NULL;
 
-               MMThreadGuard g( stateMachineLock_);
-               int fxReturn = FX_CloseCamera( gCameraId[0] );
-               if( 1 != fxReturn)
+               MMThreadGuard g(stateMachineLock_);
+               int fxReturn = FX_CloseCamera(gCameraId[0]);
+               if (1 != fxReturn)
                {
                   std::ostringstream oss;
                   oss << "FX_CloseCamera error: 0x" << ios::hex << fxReturn;
                   LLogMessage(oss.str().c_str());
                }
-      		   fxReturn = FX_DeInitLibrary();
-               if( 1 != fxReturn)
+               fxReturn = FX_DeInitLibrary();
+               if (1 != fxReturn)
                {
                   std::ostringstream oss;
                   oss << "FX_DeInitLibrary error: 0x" << ios::hex << fxReturn;
                   LLogMessage(oss.str().c_str());
                }
             }
-            catch(...){}
+            catch (...)
+            {
+            }
          }
          break;
       }
 
-      switch( CameraState())
+      switch (CameraState())
       {
 
          case Idle: // wait for initialization request
 
-            if( InitializeLibrary == Command())
+            if (InitializeLibrary == Command())
             {
                int fxReturn = BOInitializationSequence();
                TriggerMode(triggerMode_); // write the initialized value down to the HW
                Command(Noop);
-               if ( 1 == fxReturn)
+               if (1 == fxReturn)
+               {
                   CameraState(Ready); // camera is ready to take images.
+               }
             }
             break;
 
          case Ready: //ready for a operational command
-            if( StartSequence == Command())
+            if (StartSequence == Command())
             {
                {
                   MMThreadGuard g(imageReadyLock_s);
@@ -821,37 +844,39 @@ int BOImplementationThread::svc(void)
 
                Command(Noop);
                CameraState(Acquiring);
-            } 
-            else if ( SnapCommand == Command())
+            }
+            else if (SnapCommand == Command())
             {
-               MMThreadGuard( this->mmCameraLock_);
+               MMThreadGuard(this->mmCameraLock_);
                Snap();
                Command(Noop);
             }
             break;
 
-         case Acquiring:  // sequence Acquisition processing
+         case Acquiring: // sequence Acquisition processing
             {
                // checks size of buffer and allocates a new one if needed
                Acquire();
 
                // complicated way to wait for one exposure time
-               MM::TimeoutMs timerOut(CurrentMMTimeMM(), Exposure() / 1000 );
+               MM::TimeoutMs timerOut(CurrentMMTimeMM(), Exposure() / 1000);
                for (;;)
                {
-                  if( StopSequence == Command())
+                  if (StopSequence == Command())
                   {
                      Command(Noop);
                      CameraState(Ready);
                      break;
                   }
-                  if( Exit == Command())
+                  if (Exit == Command())
                   {
                      CameraState(Ready);
                      break;
                   }
-                  if (timerOut.expired(CurrentMMTimeMM())) 
+                  if (timerOut.expired(CurrentMMTimeMM()))
+                  {
                      break;
+                  }
 
                   // Avoid hogging the CPU
                   CDeviceUtils::SleepMs(5);
@@ -859,13 +884,13 @@ int BOImplementationThread::svc(void)
 
 
                MMThreadGuard g(mmCameraLock_);
-               
+
                int ret = pCamera_->SendImageToCore();
                if (ret != DEVICE_OK)
                {
                   ostringstream os;
                   os << "SendImageToCore failed with errorcode: " << ret;
-                  pCamera_->GetCoreCallback()->PostError(ret, os.str().c_str() );
+                  pCamera_->GetCoreCallback()->PostError(ret, os.str().c_str());
                   CameraState(Ready);
                   break;
                }
@@ -887,12 +912,12 @@ int BOImplementationThread::svc(void)
    }
 
    Command(Noop);
-   LLogMessage( "CCamera acquisition thread is exiting... ", true);
+   LLogMessage("CCamera acquisition thread is exiting... ", true);
    return 0;
 }
 
 
-int BOImplementationThread::BOInitializationSequence(void)
+int BOImplementationThread::BOInitializationSequence()
 {
    int fxReturn = 0;
    try
@@ -903,103 +928,105 @@ int BOImplementationThread::BOInitializationSequence(void)
 
       fxReturn = FX_DeleteLabelInfo();
 
-      // **** Init Library 
+      // **** Init Library
       fxReturn = FX_InitLibrary();
-      if( FXOK == fxReturn)
+      if (FXOK == fxReturn)
       {
          // **** Enumerate all 1394 devices ***************
          int DevCount; // number of cameras
-         fxReturn = FX_EnumerateDevices(  &DevCount );
-         if ( FXOK == fxReturn)
+         fxReturn = FX_EnumerateDevices(&DevCount);
+         if (FXOK == fxReturn)
          {
-            if( 1 == DevCount ) 
+            if (1 == DevCount)
             {
                // **** Label a special device **********************
                gCameraId[0] = 0;
-               fxReturn = FX_LabelDevice( 0, gCameraId[0] );  
-               if ( FXOK == fxReturn)
+               fxReturn = FX_LabelDevice(0, gCameraId[0]);
+               if (FXOK == fxReturn)
                {
                   // **** Open a labeled device ********************
-                  fxReturn = FX_OpenCamera(gCameraId[0]);   
-                  if ( FXOK == fxReturn)
+                  fxReturn = FX_OpenCamera(gCameraId[0]);
+                  if (FXOK == fxReturn)
                   {
                      std::ostringstream oss;
                      oss << "Opened Leica / Baumer Optronic Camera # " << gCameraId[0];
                      LLogMessage(oss.str().c_str(), false);
 
-                     imageEventArray_[0] = ::CreateEvent(NULL,FALSE,FALSE,NULL); 
+                     imageEventArray_[0] = ::CreateEvent(NULL,FALSE,FALSE,NULL);
                      imageEventArray_[1] = NULL;
                      unsigned int tempthid = 0;
                      // Install Image Event Handler Thread for incoming data
-		               acquisitionThread_ = (HANDLE)_beginthreadex( NULL, 0, &mSeqEventHandler, 
-                        (PVOID)imageEventArray_, 0, &tempthid);
+                     acquisitionThread_ = (HANDLE)_beginthreadex(NULL, 0, &mSeqEventHandler,
+                           (PVOID)imageEventArray_, 0, &tempthid);
                      std::ostringstream s2;
-                     s2 <<  " BO acquistion thread id " << std::hex << acquisitionThread_ << " was started ... ";
+                     s2 << " BO acquistion thread id " << std::hex << acquisitionThread_ << " was started ... ";
                      LLogMessage(s2.str().c_str(), true);
-                     ::SetThreadPriority(acquisitionThread_, THREAD_PRIORITY_TIME_CRITICAL);  //?? really
+                     ::SetThreadPriority(acquisitionThread_, THREAD_PRIORITY_TIME_CRITICAL); //?? really
 
-                     fxReturn = FX_DefineImageNotificationEvent( gCameraId[0], imageEventArray_[0] );
-                     if ( FXOK == fxReturn)
+                     fxReturn = FX_DefineImageNotificationEvent(gCameraId[0], imageEventArray_[0]);
+                     if (FXOK == fxReturn)
                      {
                         // **** Allocate Buffers ********************
-                        fxReturn = FX_AllocateResources( gCameraId[0], 10, 0 ); 
-                        if ( FXOK == fxReturn)
+                        fxReturn = FX_AllocateResources(gCameraId[0], 10, 0);
+                        if (FXOK == fxReturn)
                         {
                            // **** Start capture process********************
-                           fxReturn = FX_StartDataCapture(  gCameraId[0], TRUE  );
-                           if ( FXOK != fxReturn)
+                           fxReturn = FX_StartDataCapture(gCameraId[0], TRUE);
+                           if (FXOK != fxReturn)
                            {
-                              sprintf(fxMess,"FX_StartDataCapture error: %08x", fxReturn );
-                              LLogMessage( fxMess);
+                              sprintf(fxMess,"FX_StartDataCapture error: %08x", fxReturn);
+                              LLogMessage(fxMess);
                            }
                         }
                         else
                         {
-                           sprintf(fxMess,"FX_AllocateResources error: %08x", fxReturn );
-                           LLogMessage( fxMess);
+                           sprintf(fxMess,"FX_AllocateResources error: %08x", fxReturn);
+                           LLogMessage(fxMess);
                         }
                      }
                      else
                      {
-                        sprintf(fxMess,"FX_DefineImageNotificationEvent error: %08x", fxReturn );
-                        LLogMessage( fxMess);
+                        sprintf(fxMess,"FX_DefineImageNotificationEvent error: %08x", fxReturn);
+                        LLogMessage(fxMess);
                      }
                   }
                   else
                   {
-                     sprintf(fxMess,"FX_OpenCamera error: %08x", fxReturn );
-                     LLogMessage( fxMess);
+                     sprintf(fxMess,"FX_OpenCamera error: %08x", fxReturn);
+                     LLogMessage(fxMess);
                   }
                }
                else
                {
-                  sprintf(fxMess,"FX_LabelDevice error: %08x", fxReturn );
-                  LLogMessage( fxMess);
+                  sprintf(fxMess,"FX_LabelDevice error: %08x", fxReturn);
+                  LLogMessage(fxMess);
                }
             }
             else
             {
-               sprintf(fxMess,"# cameras must be 1, but %d cameras found \n", DevCount );	
-               LLogMessage( fxMess);
+               sprintf(fxMess,"# cameras must be 1, but %d cameras found \n", DevCount);
+               LLogMessage(fxMess);
             }
          }
          else
          {
-            sprintf(fxMess,"FX_EnumerateDevices error: %08x", fxReturn );
-            LLogMessage( fxMess);
+            sprintf(fxMess,"FX_EnumerateDevices error: %08x", fxReturn);
+            LLogMessage(fxMess);
          }
-
       }
       else
       {
-         sprintf(fxMess,"FX_InitLibrary error: %08x", fxReturn );
-         LLogMessage( fxMess);
+         sprintf(fxMess,"FX_InitLibrary error: %08x", fxReturn);
+         LLogMessage(fxMess);
       }
-
    }
-   catch(...){}
+   catch (...)
+   {
+   }
    if (1 == fxReturn)
+   {
       LLogMessage(" BO camera library initialized OK!", true);
+   }
    return fxReturn;
 }
 
@@ -1012,20 +1039,21 @@ void BOImplementationThread::LLogMessage(const std::string message, const bool d
 
 void BOImplementationThread::LLogMessage(const char* pMessage, const bool debugOnly)
 {
-   if( NULL != pCamera_)
+   if (NULL != pCamera_)
    {
       MMThreadGuard g(mmCameraLock_);
       pCamera_->LogMessage(pMessage, debugOnly);
    }
-
 }
 
 
 MM::MMTime BOImplementationThread::CurrentMMTimeMM() // MMTime as milliseconds
 {
    MM::MMTime ret(0);
-   if( 0 != pCamera_)
+   if (0 != pCamera_)
+   {
       ret = pCamera_->GetCurrentMMTime();
+   }
    return ret;
 }
 
@@ -1035,31 +1063,30 @@ MM::MMTime BOImplementationThread::CurrentMMTimeMM() // MMTime as milliseconds
 
 void BOImplementationThread::PostError(const int errorCode, const char* pMessage)
 {
-   if( NULL != pCamera_)
+   if (NULL != pCamera_)
    {
       MMThreadGuard g(mmCameraLock_);
-      pCamera_->GetCoreCallback()->PostError( errorCode, pMessage  );
+      pCamera_->GetCoreCallback()->PostError(errorCode, pMessage);
    }
 }
 
 
 
-int BOImplementationThread::BinSize(void) const
+int BOImplementationThread::BinSize() const
 {
    return BinSizeFromCompleteFormat(this->completeFormatIter_);
-
 }
 
 
-int BOImplementationThread::BinSizeFromCompleteFormat(std::vector< CompleteFormat >::iterator i) const
+int BOImplementationThread::BinSizeFromCompleteFormat(std::vector<CompleteFormat>::iterator i) const
 {
    int thisBin = 1;
    if (completeFormats_.end() != i)
    {
-      std::vector< std::string > tokens;
-      CDeviceUtils::Tokenize( i->name_, tokens, " ");
-      std::vector< std::string >::iterator ti;
-      for( ti = tokens.begin(); ti != tokens.end(); ++ti)
+      std::vector<std::string> tokens;
+      CDeviceUtils::Tokenize(i->name_, tokens, " ");
+      std::vector<std::string>::iterator ti;
+      for (ti = tokens.begin(); ti != tokens.end(); ++ti)
       {
          if (*ti == "Binning")
          {
@@ -1067,51 +1094,50 @@ int BOImplementationThread::BinSizeFromCompleteFormat(std::vector< CompleteForma
             ts>>thisBin;
             break;
          }
-
       }
    }
    return thisBin;
-
 }
 
 
 // N.B. This returns, for example, 12 even when the selected code specifies 8 !!!!
-int BOImplementationThread::BitDepthFromCompleteFormat(std::vector< CompleteFormat >::iterator i)
+int BOImplementationThread::BitDepthFromCompleteFormat(std::vector<CompleteFormat>::iterator i)
 {
    return i->f_.iPixelBits;
 }
 
-tBoImgCode BOImplementationThread::ImageCode(void)
+tBoImgCode BOImplementationThread::ImageCode()
 {
    tBoCameraType   dcBoType;               // Cameratype struct
    tBoCameraStatus dcBoStatus;             // Camerastatus struct
 
    dcBoType.iSizeof = sizeof(dcBoType);
    dcBoStatus.iSizeof = sizeof(dcBoStatus);
-   int fxRet = FX_GetCameraInfo( gCameraId[0], &dcBoType, &dcBoStatus );
-   ::iCode_g = static_cast<unsigned short>(dcBoStatus.eCurImgCode.iCode); 
+   int fxRet = FX_GetCameraInfo(gCameraId[0], &dcBoType, &dcBoStatus);
+   ::iCode_g = static_cast<unsigned short>(dcBoStatus.eCurImgCode.iCode);
 
-   if( 1 != fxRet)
+   if (1 != fxRet)
+   {
       PostError(DEVICE_ERR, IntelligentErrorString(fxRet).c_str());
+   }
 
    return dcBoStatus.eCurImgCode;
-
 }
 
 
-bool  BOImplementationThread::ImageFormat( int imageFormatIndex)
+bool BOImplementationThread::ImageFormat(int imageFormatIndex)
 {
    int fxret = 0;
    bool ret = false;
 
-   fxret = FX_SetImageFormat( gCameraId[0], imageFormatIndex);
+   fxret = FX_SetImageFormat(gCameraId[0], imageFormatIndex);
 
-   if( 1 == fxret)
+   if (1 == fxret)
    {
-      std::vector< CompleteFormat >::iterator i;
-      for ( i = completeFormats_.begin(); i != completeFormats_.end(); ++i)
+      std::vector<CompleteFormat>::iterator i;
+      for (i = completeFormats_.begin(); i != completeFormats_.end(); ++i)
       {
-         if( imageFormatIndex == i->formatIndex_)
+         if (imageFormatIndex == i->formatIndex_)
          {
             ret = true;
             completeFormatIter_ = i;
@@ -1120,19 +1146,19 @@ bool  BOImplementationThread::ImageFormat( int imageFormatIndex)
       }
    }
    return ret;
-
 }
 
 
-void BOImplementationThread::FindImageFormatInFormatCache( int imageFormatIndex)
+void BOImplementationThread::FindImageFormatInFormatCache(int imageFormatIndex)
 {
    completeFormatIter_ = completeFormats_.end();
-   std::vector< CompleteFormat >::iterator i;
-   for ( i = completeFormats_.begin(); i != completeFormats_.end(); ++i)
+   std::vector<CompleteFormat>::iterator i;
+   for (i = completeFormats_.begin(); i != completeFormats_.end(); ++i)
    {
-      if( imageFormatIndex == i->formatIndex_)
+      if (imageFormatIndex == i->formatIndex_)
       {
-         completeFormatIter_ = i;break;
+         completeFormatIter_ = i;
+         break;
       }
    }
 }
@@ -1145,28 +1171,28 @@ void BOImplementationThread::BinSize(const int v)
       // what image format parameters are selected?
       tBoImgCode currentCode = ImageCode();
 
-      //  don't understand meaning of 'valid bits' inside BitDepthFromCompleteFormat:
+      // don't understand meaning of 'valid bits' inside BitDepthFromCompleteFormat:
       //int currentBitDepth = BitDepthFromCompleteFormat(completeFormatIter_);
       //int currentBitDepth = currentCode.iCanalBits;
 
-      std::vector< CompleteFormat >::iterator i;
+      std::vector<CompleteFormat>::iterator i;
       bool foundMatch = false;
-      for ( i = completeFormats_.begin(); i != completeFormats_.end(); ++i)
+      for (i = completeFormats_.begin(); i != completeFormats_.end(); ++i)
       {
-         if( v == BinSizeFromCompleteFormat(i))
+         if (v == BinSizeFromCompleteFormat(i))
          {
             ImageCodesPerFormat::iterator jj;
-            for ( jj = i->codes_.begin(); jj != i->codes_.end(); ++jj)
+            for (jj = i->codes_.begin(); jj != i->codes_.end(); ++jj)
             {
                // todo don't really need same code, just same # bits would be good.
                if (currentCode == *jj)
                {
-                  if(ImageFormat( i->formatIndex_))
+                  if (ImageFormat(i->formatIndex_))
                   {
                      // N.B. TURNS OFF ROI at this point!! this could be improved to recalculated roi each time binsize is changed
                      partialScanMode_ = false;
-                     int fxr =  FX_SetImageCode( gCameraId[0], currentCode);
-                     if( 1 == fxr)
+                     int fxr = FX_SetImageCode(gCameraId[0], currentCode);
+                     if (1 == fxr)
                      {
                         foundMatch = true;
                         QueryCameraCurrentFormat();
@@ -1175,13 +1201,17 @@ void BOImplementationThread::BinSize(const int v)
                   }
                }
                if (foundMatch)
+               {
                   break;
+               }
             }
             if (foundMatch)
+            {
                break;
+            }
          }
       }
-      if( ! foundMatch)
+      if (!foundMatch)
       {
          std::ostringstream oss;
          oss << " in BinSize can not set bins to " << v;
@@ -1193,35 +1223,35 @@ void BOImplementationThread::BinSize(const int v)
 int BOImplementationThread::SetBitsInOneColor(const int bits)
 {
 
-   MMThreadGuard g( stateMachineLock_);
-   WorkerState prevState(cameraState_); 
-   cameraState_= Busy;
+   MMThreadGuard g(stateMachineLock_);
+   WorkerState prevState(cameraState_);
+   cameraState_ = Busy;
 
-      // what image format parameters are currently selected?
+   // what image format parameters are currently selected?
    tBoImgCode currentCode = ImageCode();
 
 
    int currentBits = currentCode.iCanalBits;
-   if( currentBits != bits)
+   if (currentBits != bits)
    {
       int currentBin = this->BinSize();
-      std::vector< CompleteFormat >::iterator i;
+      std::vector<CompleteFormat>::iterator i;
       bool foundMatch = false;
-      for ( i = completeFormats_.begin(); i != completeFormats_.end(); ++i)
+      for (i = completeFormats_.begin(); i != completeFormats_.end(); ++i)
       {
-         if( currentBin == BinSizeFromCompleteFormat(i))
+         if (currentBin == BinSizeFromCompleteFormat(i))
          {
             ImageCodesPerFormat::iterator jj;
-            for ( jj = i->codes_.begin(); jj != i->codes_.end(); ++jj)
+            for (jj = i->codes_.begin(); jj != i->codes_.end(); ++jj)
             {
                if (bits == jj->iCanalBits)
                {
-                  if(ImageFormat( i->formatIndex_))
+                  if (ImageFormat(i->formatIndex_))
                   {
                      //here do i need recalculate ROI??
 
-                     int fxr =  FX_SetImageCode( gCameraId[0], *jj);
-                     if( 1 == fxr)
+                     int fxr = FX_SetImageCode(gCameraId[0], *jj);
+                     if (1 == fxr)
                      {
                         foundMatch = true;
                         QueryCameraCurrentFormat();
@@ -1230,88 +1260,91 @@ int BOImplementationThread::SetBitsInOneColor(const int bits)
                   }
                }
                if (foundMatch)
+               {
                   break;
+               }
             }
             if (foundMatch)
+            {
                break;
+            }
          }
       }
-      if( ! foundMatch)
+      if (!foundMatch)
       {
          cameraState_ = prevState;
          return DEVICE_ERR;
       }
    }
-   cameraState_=prevState;
+   cameraState_ = prevState;
    return DEVICE_OK;
 }
 
 
 // check if current format is monochrome
 
-bool BOImplementationThread::MonoChrome(void)
+bool BOImplementationThread::MonoChrome()
 {
    bool ret = false;
-   switch( ImageCode().iCode)
+   switch (ImageCode().iCode)
    {
-      case BOIMF_PIXORG   :      ///<  use  only  the  information  of  tBoImgCode 
+      case BOIMF_PIXORG: // use only the information of tBoImgCode
          break;
-      case BOIMF_RAWMONO   :      ///<  raw  monochrome    pattern 
+      case BOIMF_RAWMONO: // raw monochrome pattern
          ret = true;
          break;
-      case BOIMF_RAWBAYER   :      ///<  raw  Bayer  pattern 
-      case BOIMF_RGB   :      ///<  rgbrgb...  allgemein 
+      case BOIMF_RAWBAYER: // raw Bayer pattern
+      case BOIMF_RGB: // rgbrgb... allgemein
          break;
-      case BOIMF_MONO   :      ///<  mm... 
+      case BOIMF_MONO: // mm...
          ret = true;
          break;
-      case BOIMF_RAWBAYER_GR     :      ///<  raw  Bayer  pattern  red  line  start  with  green 
-      case BOIMF_RAWBAYER_GB     :      ///<  raw  Bayer  pattern  blue  line  start  with  green 
-      case BOIMF_RAWBAYER_BG     :      ///<  raw  Bayer  pattern  blue  line  start  with  blue 
-      case BOIMF_RAW   :      ///<  raw  memory  image,  internal  usage 
-      case BOIMF_NOTDEF   :      ///<  not  defined     
-      case BOIMF_YUV444   :      //not  supported  yet 
-      case BOIMF_YUV422   :      //not  supported  yet 
-      case BOIMF_YUV411   :      //not  supported  yet 
+      case BOIMF_RAWBAYER_GR: // raw Bayer pattern red line start with green
+      case BOIMF_RAWBAYER_GB: // raw Bayer pattern blue line start with green
+      case BOIMF_RAWBAYER_BG: // raw Bayer pattern blue line start with blue
+      case BOIMF_RAW: // raw memory image, internal usage
+      case BOIMF_NOTDEF: // not defined
+      case BOIMF_YUV444: // not supported yet
+      case BOIMF_YUV422: // not supported yet
+      case BOIMF_YUV411: // not supported yet
          break;
       default:
          break;
-
    }
    return ret;
 }
 
 
 // check if current format is color
-bool BOImplementationThread::Color(void)
+bool BOImplementationThread::Color()
 {
    bool ret = false;
-   switch( ImageCode().iCode)
+   switch (ImageCode().iCode)
    {
-      case BOIMF_PIXORG   :      ///<  use  only  the  information  of  tBoImgCode 
+      case BOIMF_PIXORG: // use only the information of tBoImgCode
          break;
-      case BOIMF_RAWMONO   :      ///<  raw  monochrome    pattern 
+      case BOIMF_RAWMONO: // raw monochrome pattern
          break;
-      case BOIMF_RAWBAYER   :      ///<  raw  Bayer  pattern 
+      case BOIMF_RAWBAYER: // raw Bayer pattern
          break;
-      case BOIMF_RGB   :      ///<  rgbrgb...  allgemein 
+      case BOIMF_RGB: // rgbrgb... allgemein
          ret = true;
          break;
-      case BOIMF_MONO   :      ///<  mm... 
+      case BOIMF_MONO: // mm...
          break;
-      case BOIMF_RAWBAYER_GR     :      ///<  raw  Bayer  pattern  red  line  start  with  green 
-      case BOIMF_RAWBAYER_GB     :      ///<  raw  Bayer  pattern  blue  line  start  with  green 
-      case BOIMF_RAWBAYER_BG     :      ///<  raw  Bayer  pattern  blue  line  start  with  blue 
-      case BOIMF_RAW   :      ///<  raw  memory  image,  internal  usage 
-      case BOIMF_NOTDEF   :      ///<  not  defined     
-      case BOIMF_YUV444   :      //not  supported  yet 
-      case BOIMF_YUV422   :      //not  supported  yet 
-      case BOIMF_YUV411   :      //not  supported  yet 
+      case BOIMF_RAWBAYER_GR: // raw Bayer pattern red line start with green
+      case BOIMF_RAWBAYER_GB: // raw Bayer pattern blue line start with green
+      case BOIMF_RAWBAYER_BG: // raw Bayer pattern blue line start with blue
+      case BOIMF_RAW: // raw memory image, internal usage
+      case BOIMF_NOTDEF: // not defined
+      case BOIMF_YUV444: //not supported yet
+      case BOIMF_YUV422: //not supported yet
+      case BOIMF_YUV411: //not supported yet
          break;
       default:
          break;
    }
-  
+
    return ret;
 }
 
@@ -1323,21 +1356,25 @@ std::string BOImplementationThread::IntelligentErrorString(const int fxcode)
    char *pmess = FX_GetErrString(fxcode);
    std::ostringstream oss;
    oss << "err: " << std::hex << fxcode;
-   if( NULL != pmess)
+   if (NULL != pmess)
+   {
       oss << std::string(pmess);
+   }
    return oss.str().c_str();
 }
 
 
 
-void BOImplementationThread::CancelROI(void)
+void BOImplementationThread::CancelROI()
 {
 
    RECT returnedRect;
-   memset( &returnedRect, 0, sizeof( RECT));
-   int fxret = FX_SetPartialScanEx  (   gCameraId[0], false, &returnedRect,   &returnedRect);
-   if(1 == fxret)
+   memset(&returnedRect, 0, sizeof(RECT));
+   int fxret = FX_SetPartialScanEx(gCameraId[0], false, &returnedRect, &returnedRect);
+   if (1 == fxret)
+   {
       roi_ = returnedRect;
+   }
    partialScanMode_ = false;
    QueryCameraCurrentFormat();
 }
@@ -1345,16 +1382,18 @@ void BOImplementationThread::CancelROI(void)
 
 
 
-void BOImplementationThread::SetROI( const unsigned int  x, const unsigned int  y, const unsigned int  xSize, const unsigned int  ySize)
+void BOImplementationThread::SetROI(const unsigned int x, const unsigned int y, const unsigned int xSize, const unsigned int ySize)
 {
 
    RECT returnedRect;
-   if ( (0 == x) && (0 == y) && ( xSize == xDim_ )  && ( ySize == yDim_) ) // ROI is being cleared, use full image format
+   if ((0 == x) && (0 == y) && (xSize == xDim_) && (ySize == yDim_)) // ROI is being cleared, use full image format
    {
-      memset( &returnedRect, 0, sizeof( RECT));
-      int fxret = FX_SetPartialScanEx  (   gCameraId[0], false, &returnedRect,   &returnedRect);
-      if(1 == fxret)
+      memset(&returnedRect, 0, sizeof(RECT));
+      int fxret = FX_SetPartialScanEx(gCameraId[0], false, &returnedRect, &returnedRect);
+      if (1 == fxret)
+      {
          roi_ = returnedRect;
+      }
       partialScanMode_ = false;
    }
    else
@@ -1364,8 +1403,8 @@ void BOImplementationThread::SetROI( const unsigned int  x, const unsigned int  
       requestedRect.left = x;
       requestedRect.right = x + xSize;
       requestedRect.top = y;
-      int fxret = FX_SetPartialScanEx  (   gCameraId[0], true, &requestedRect,   &returnedRect);
-      if(1 == fxret)
+      int fxret = FX_SetPartialScanEx(gCameraId[0], true, &requestedRect, &returnedRect);
+      if (1 == fxret)
       {
          roi_ = returnedRect;
          partialScanMode_ = true;
@@ -1374,15 +1413,15 @@ void BOImplementationThread::SetROI( const unsigned int  x, const unsigned int  
    QueryCameraCurrentFormat();
 }
 
-void BOImplementationThread::GetROI( unsigned int & x, unsigned int & y, unsigned int & xSize, unsigned int & ySize)
+void BOImplementationThread::GetROI(unsigned int & x, unsigned int & y, unsigned int & xSize, unsigned int & ySize)
 {
 
-   if( partialScanMode_)  // subregion was successfully set and is in use
+   if (partialScanMode_) // subregion was successfully set and is in use
    {
-      x = static_cast<unsigned int >( roi_.left);
-      y = static_cast<unsigned int >( roi_.top);
-      ySize = static_cast<unsigned int >( roi_.bottom - roi_.top);
-      xSize = static_cast<unsigned int >( roi_.right - roi_.left);
+      x = static_cast<unsigned int>(roi_.left);
+      y = static_cast<unsigned int>(roi_.top);
+      ySize = static_cast<unsigned int>(roi_.bottom - roi_.top);
+      xSize = static_cast<unsigned int>(roi_.right - roi_.left);
    }
    else
    {
@@ -1395,12 +1434,12 @@ void BOImplementationThread::GetROI( unsigned int & x, unsigned int & y, unsigne
 }
 
 // waits for the specified image ready event
-unsigned int __stdcall mSeqEventHandler( void* pArguments )
+unsigned int __stdcall mSeqEventHandler(void* pArguments)
 {
    HANDLE * aHandle = (HANDLE*)pArguments;
    tBoImgDataInfoHeader imgHeader;
    memset(&imgHeader, 0x00, sizeof(imgHeader));
-   for( ; mTerminateFlag_g == false; ) 
+   while (mTerminateFlag_g == false)
    {
       Sleep(0);
       MMThreadGuard g(::acquisitionThreadTerminateLock_g); // have to wait for the event time-out !!
@@ -1408,35 +1447,35 @@ unsigned int __stdcall mSeqEventHandler( void* pArguments )
       DWORD waitStatus = WaitForSingleObject(*aHandle, imageTimeoutMs_g);
       if (waitStatus == WAIT_OBJECT_0)
       {
-         if( seqactive_g ) 
+         if (seqactive_g)
          {
-				imgHeader.sFlags.fFlipHori  = false;
-				imgHeader.sFlags.fFlipVert  = true;
-				imgHeader.sFlags.fSyncStamp = true;
+            imgHeader.sFlags.fFlipHori = false;
+            imgHeader.sFlags.fFlipVert = true;
+            imgHeader.sFlags.fSyncStamp = true;
 
             bool bufferIsReady = false;
             DWORD gotImage = FALSE;
 
             {
                MMThreadGuard g(BOImplementationThread::imageBufferLock_s);
-               bufferIsReady = ( 0 < staticImgSize_g) && ( NULL != pStatic_g);
+               bufferIsReady = (0 < staticImgSize_g) && (NULL != pStatic_g);
             }
 
-            if( bufferIsReady)
+            if (bufferIsReady)
             {
                MMThreadGuard g(BOImplementationThread::imageBufferLock_s);
-		         gotImage = FX_GetImageData(gCameraId[0], &imgHeader, pStatic_g, staticImgSize_g);
+               gotImage = FX_GetImageData(gCameraId[0], &imgHeader, pStatic_g, staticImgSize_g);
             }
 
             if (gotImage == TRUE)
             {
                MMThreadGuard g(BOImplementationThread::imageBufferLock_s);
-               xDim_g = static_cast<unsigned short> (imgHeader.iSizeX);
-               yDim_g = static_cast<unsigned short> (imgHeader.iSizeY);
-               bitsInOneColor_g = static_cast<unsigned short> (imgHeader.sDataCode.iCanalBits);
-               nPlanes_g = static_cast<unsigned short> (imgHeader.sDataCode.iPlanes);
-               nCanals_g = static_cast<unsigned short> (imgHeader.sDataCode.iCanals);
-               iCode_g = static_cast<unsigned short> (imgHeader.sDataCode.iCode);
+               xDim_g = static_cast<unsigned short>(imgHeader.iSizeX);
+               yDim_g = static_cast<unsigned short>(imgHeader.iSizeY);
+               bitsInOneColor_g = static_cast<unsigned short>(imgHeader.sDataCode.iCanalBits);
+               nPlanes_g = static_cast<unsigned short>(imgHeader.sDataCode.iPlanes);
+               nCanals_g = static_cast<unsigned short>(imgHeader.sDataCode.iCanals);
+               iCode_g = static_cast<unsigned short>(imgHeader.sDataCode.iCode);
 
                {
                   MMThreadGuard guard(BOImplementationThread::imageReadyLock_s);
@@ -1452,10 +1491,10 @@ unsigned int __stdcall mSeqEventHandler( void* pArguments )
                   }
                }
             }
-			   else 
+            else
             {
-			      Sleep(0);
-		      }
+               Sleep(0);
+            }
          }
       }
    }
@@ -1470,17 +1509,17 @@ unsigned int __stdcall mSeqEventHandler( void* pArguments )
 
 
 /**
-* CBaumerOptronic constructor.
-* Setup default all variables and create device properties required to exist
-* before intialization. In this case, no such properties were required. All
-* properties will be created in the Initialize() method.
-*
-* As a general guideline Micro-Manager devices do not access hardware in the
-* the constructor. We should do as little as possible in the constructor and
-* perform most of the initialization in the Initialize() method.
-*/
+ * CBaumerOptronic constructor.
+ * Setup default all variables and create device properties required to exist
+ * before intialization. In this case, no such properties were required. All
+ * properties will be created in the Initialize() method.
+ *
+ * As a general guideline Micro-Manager devices do not access hardware in the
+ * the constructor. We should do as little as possible in the constructor and
+ * perform most of the initialization in the Initialize() method.
+ */
 CBaumerOptronic::CBaumerOptronic() :
-   CCameraBase<CBaumerOptronic> (),
+   CCameraBase<CBaumerOptronic>(),
    initialized_(false),
    pWorkerThread_(NULL),
    stopOnOverflow_(false)
@@ -1490,46 +1529,45 @@ CBaumerOptronic::CBaumerOptronic() :
 }
 
 /**
-* CBaumerOptronic destructor.
-* If this device used as intended within the Micro-Manager system,
-* Shutdown() will be always called before the destructor. But in any case
-* we need to make sure that all resources are properly released even if
-* Shutdown() was not called.
-*/
+ * CBaumerOptronic destructor.
+ * If this device used as intended within the Micro-Manager system,
+ * Shutdown() will be always called before the destructor. But in any case
+ * we need to make sure that all resources are properly released even if
+ * Shutdown() was not called.
+ */
 CBaumerOptronic::~CBaumerOptronic()
 {
    Shutdown();
 }
 
 /**
-* Shuts down (unloads) the device.
-* Required by the MM::Device API.
-* Ideally this method will completely unload the device and release all resources.
-* Shutdown() may be called multiple times in a row.
-* After Shutdown() we should be allowed to call Initialize() again to load the device
-* without causing problems.
-*/
+ * Shuts down (unloads) the device.
+ * Required by the MM::Device API.
+ * Ideally this method will completely unload the device and release all resources.
+ * Shutdown() may be called multiple times in a row.
+ * After Shutdown() we should be allowed to call Initialize() again to load the device
+ * without causing problems.
+ */
 int CBaumerOptronic::Shutdown()
 {
-   
-   if ( initialized_ && (NULL != pWorkerThread_) )
+
+   if (initialized_ && (NULL != pWorkerThread_))
    {
-      LogMessage(" sending Exit command to implementation thread " , true);
+      LogMessage(" sending Exit command to implementation thread ", true);
       pWorkerThread_->Command(Exit);
-      LogMessage(  "deleting  BO camera implementation thread " , true);
+      LogMessage("deleting BO camera implementation thread ", true);
       pWorkerThread_->wait();
       delete pWorkerThread_;
       pWorkerThread_ = NULL;
-
    }
    initialized_ = false;
    return DEVICE_OK;
 }
 
 /**
-* Obtains device name.
-* Required by the MM::Device API.
-*/
+ * Obtains device name.
+ * Required by the MM::Device API.
+ */
 void CBaumerOptronic::GetName(char* name) const
 {
    // We just return the name we use for referring to this
@@ -1538,18 +1576,20 @@ void CBaumerOptronic::GetName(char* name) const
 }
 
 /**
-* Intializes the hardware.
-* Required by the MM::Device API.
-* Typically we access and initialize hardware at this point.
-* Device properties are typically created here as well, except
-* the ones we need to use for defining initialization parameters.
-* Such pre-initialization properties are created in the constructor.
-* (This device does not have any pre-initialization properties)
-*/
+ * Intializes the hardware.
+ * Required by the MM::Device API.
+ * Typically we access and initialize hardware at this point.
+ * Device properties are typically created here as well, except
+ * the ones we need to use for defining initialization parameters.
+ * Such pre-initialization properties are created in the constructor.
+ * (This device does not have any pre-initialization properties)
+ */
 int CBaumerOptronic::Initialize()
 {
    if (initialized_)
+   {
       return DEVICE_OK;
+   }
 
 
    // start the implementation thread
@@ -1561,11 +1601,13 @@ int CBaumerOptronic::Initialize()
 
    do
    {
-      if(timerOut.expired(GetCurrentMMTime()))
+      if (timerOut.expired(GetCurrentMMTime()))
+      {
          break;
+      }
       // yeild until the libaries have been loaded
       CDeviceUtils::SleepMs(10);
-   } while( Ready != pWorkerThread_->CameraState());
+   } while (Ready != pWorkerThread_->CameraState());
 
    // query the 'formats' structures
    pWorkerThread_->QueryCapabilities();
@@ -1573,36 +1615,40 @@ int CBaumerOptronic::Initialize()
    // march through the 'formats' structures and extract the possible physical property settings
    pWorkerThread_->ParseCapabilities();
    // Note: the camera uses microseconds for exposure, whereas we use milliseconds
-   std::pair< int, int> exposureLowHigh = pWorkerThread_->ExposureLimits();
-   std::pair< double, double> gainLowHigh = pWorkerThread_->GainLimits();
+   std::pair<int, int> exposureLowHigh = pWorkerThread_->ExposureLimits();
+   std::pair<double, double> gainLowHigh = pWorkerThread_->GainLimits();
 
    // set property list
    // -----------------
 
-   CPropertyAction *pAct = new CPropertyAction (this, &CBaumerOptronic::OnGain);
+   CPropertyAction *pAct = new CPropertyAction(this, &CBaumerOptronic::OnGain);
    std::ostringstream gainLimit;
    gainLimit << gainLowHigh.first;
    (void)CreateProperty(MM::g_Keyword_Gain, gainLimit.str().c_str(), MM::Float, false, pAct);
    (void)SetPropertyLimits(MM::g_Keyword_Gain, gainLowHigh.first, gainLowHigh.second);
 
-   pAct = new CPropertyAction (this, &CBaumerOptronic::OnExposure);
+   pAct = new CPropertyAction(this, &CBaumerOptronic::OnExposure);
    std::ostringstream oss;
    oss << exposureLowHigh.first;
    (void)CreateProperty(MM::g_Keyword_Exposure, oss.str().c_str(), MM::Float, false, pAct);
    (void)SetPropertyLimits(MM::g_Keyword_Exposure, exposureLowHigh.first/1000, exposureLowHigh.second/1000);
-   // We can not query from the camera.  To start in a known state, set the exposure time
+   // We can not query from the camera. To start in a known state, set the exposure time
    SetExposure(25.0);
 
 
    // Name
    int nRet = CreateProperty(MM::g_Keyword_Name, g_CameraDeviceName, MM::String, true);
    if (DEVICE_OK != nRet)
+   {
       return nRet;
+   }
 
    // Description
    nRet = CreateProperty(MM::g_Keyword_Description, "Baumer Optronic Adapter for Leica Cameras", MM::String, true);
    if (DEVICE_OK != nRet)
+   {
       return nRet;
+   }
 
    // CameraName
    nRet = CreateProperty(MM::g_Keyword_CameraName, "BaumerOptronic-MultiMode", MM::String, true);
@@ -1613,48 +1659,50 @@ int CBaumerOptronic::Initialize()
    assert(nRet == DEVICE_OK);
 
    // binning
-   pAct = new CPropertyAction (this, &CBaumerOptronic::OnBinning);
+   pAct = new CPropertyAction(this, &CBaumerOptronic::OnBinning);
    nRet = CreateProperty(MM::g_Keyword_Binning, "1", MM::Integer, false, pAct);
    assert(nRet == DEVICE_OK);
 
    std::vector<string> binss;
-   std::vector< int > binis = pWorkerThread_->BinSizes();
-   std::vector< int >::iterator viit;
+   std::vector<int> binis = pWorkerThread_->BinSizes();
+   std::vector<int>::iterator viit;
 
-   for( viit = binis.begin(); viit != binis.end(); ++viit)
+   for (viit = binis.begin(); viit != binis.end(); ++viit)
    {
       std::ostringstream osss;
       osss << *viit;
-      binss.push_back( osss.str().c_str());
+      binss.push_back(osss.str().c_str());
    }
 
    SetAllowedValues(MM::g_Keyword_Binning, binss);
 
    // pixel type
-   pAct = new CPropertyAction (this, &CBaumerOptronic::OnPixelType);
+   pAct = new CPropertyAction(this, &CBaumerOptronic::OnPixelType);
    nRet = CreateProperty(MM::g_Keyword_PixelType, g_PixelType_8bit, MM::String, true, pAct);
    assert(nRet == DEVICE_OK);
 
    vector<string> pixelTypeValues;
    pixelTypeValues.push_back(g_PixelType_8bit);
    pixelTypeValues.push_back(g_PixelType_16bit);
-	pixelTypeValues.push_back(g_PixelType_32bitRGB);
+   pixelTypeValues.push_back(g_PixelType_32bitRGB);
 
    nRet = SetAllowedValues(MM::g_Keyword_PixelType, pixelTypeValues);
    if (nRet != DEVICE_OK)
+   {
       return nRet;
+   }
 
    // Bit depth
-   pAct = new CPropertyAction (this, &CBaumerOptronic::OnBitDepth);
+   pAct = new CPropertyAction(this, &CBaumerOptronic::OnBitDepth);
    nRet = CreateProperty("BitDepth", "8", MM::Integer, false, pAct);
    assert(nRet == DEVICE_OK);
 
    vector<string> bitDepths;
 
-   std::vector< int> pbb = pWorkerThread_->PossibleBitsInOneColor();
-   std::vector< int>::iterator pbbi;
+   std::vector<int> pbb = pWorkerThread_->PossibleBitsInOneColor();
+   std::vector<int>::iterator pbbi;
 
-   for( pbbi=pbb.begin(); pbbi!=pbb.end(); ++pbbi)
+   for (pbbi = pbb.begin(); pbbi != pbb.end(); ++pbbi)
    {
       std::ostringstream osss;
       osss << *pbbi;
@@ -1663,13 +1711,17 @@ int CBaumerOptronic::Initialize()
 
    nRet = SetAllowedValues("BitDepth", bitDepths);
    if (nRet != DEVICE_OK)
+   {
       return nRet;
+   }
 
    // synchronize all properties
    // --------------------------
    nRet = UpdateStatus();
    if (nRet != DEVICE_OK)
+   {
       return nRet;
+   }
 
    // setup the buffer
    // ----------------
@@ -1677,22 +1729,21 @@ int CBaumerOptronic::Initialize()
    nRet = ResizeImageBuffer();
    if (nRet != DEVICE_OK)
    {
-      if ( NULL != pWorkerThread_)
+      if (NULL != pWorkerThread_)
       {
-         LogMessage(  " sending Exit command to implementation thread " , true);
+         LogMessage(" sending Exit command to implementation thread ", true);
          pWorkerThread_->Command(Exit);
          pWorkerThread_->wait();
-         LogMessage(  "deleting  BO camera implementation thread " , true);
+         LogMessage("deleting BO camera implementation thread ", true);
          delete pWorkerThread_;
          pWorkerThread_ = NULL;
       }
 
       return nRet;
-
    }
 
    initialized_ = true;
-   
+
    SnapImage();
 
    return DEVICE_OK;
@@ -1701,11 +1752,11 @@ int CBaumerOptronic::Initialize()
 
 
 /**
-* Performs exposure and grabs a single image.
-* This function should block during the actual exposure and return immediately afterwards 
-* (i.e., before readout).  This behavior is needed for proper synchronization with the shutter.
-* Required by the MM::Camera API.
-*/
+ * Performs exposure and grabs a single image.
+ * This function should block during the actual exposure and return immediately afterwards
+ * (i.e., before readout). This behavior is needed for proper synchronization with the shutter.
+ * Required by the MM::Camera API.
+ */
 int CBaumerOptronic::SnapImage()
 {
    pWorkerThread_->Command(SnapCommand);
@@ -1715,62 +1766,62 @@ int CBaumerOptronic::SnapImage()
 
 
 /**
-* Returns pixel data.
-* Required by the MM::Camera API.
-* The calling program will assume the size of the buffer based on the values
-* obtained from GetImageBufferSize(), which in turn should be consistent with
-* values returned by GetImageWidth(), GetImageHight() and GetImageBytesPerPixel().
-* The calling program allso assumes that camera never changes the size of
-* the pixel buffer on its own. In other words, the buffer can change only if
-* appropriate properties are set (such as binning, pixel type, etc.)
-*/
+ * Returns pixel data.
+ * Required by the MM::Camera API.
+ * The calling program will assume the size of the buffer based on the values
+ * obtained from GetImageBufferSize(), which in turn should be consistent with
+ * values returned by GetImageWidth(), GetImageHight() and GetImageBytesPerPixel().
+ * The calling program allso assumes that camera never changes the size of
+ * the pixel buffer on its own. In other words, the buffer can change only if
+ * appropriate properties are set (such as binning, pixel type, etc.)
+ */
 const unsigned char* CBaumerOptronic::GetImageBuffer()
 {
    return img_.GetPixels();
 }
 
 /**
-* Returns image buffer X-size in pixels.
-* Required by the MM::Camera API.
-*/
+ * Returns image buffer X-size in pixels.
+ * Required by the MM::Camera API.
+ */
 unsigned CBaumerOptronic::GetImageWidth() const
 {
    return img_.Width();
 }
 
 /**
-* Returns image buffer Y-size in pixels.
-* Required by the MM::Camera API.
-*/
+ * Returns image buffer Y-size in pixels.
+ * Required by the MM::Camera API.
+ */
 unsigned CBaumerOptronic::GetImageHeight() const
 {
    return img_.Height();
 }
 
 /**
-* Returns image buffer pixel depth in bytes.
-* Required by the MM::Camera API.
-*/
+ * Returns image buffer pixel depth in bytes.
+ * Required by the MM::Camera API.
+ */
 unsigned CBaumerOptronic::GetImageBytesPerPixel() const
 {
    return img_.Depth();
-} 
+}
 
 /**
-* Returns the bit depth (dynamic range) of the pixel.
-* This does not affect the buffer size, it just gives the client application
-* a guideline on how to interpret pixel values.
-* Required by the MM::Camera API.
-*/
+ * Returns the bit depth (dynamic range) of the pixel.
+ * This does not affect the buffer size, it just gives the client application
+ * a guideline on how to interpret pixel values.
+ * Required by the MM::Camera API.
+ */
 unsigned CBaumerOptronic::GetBitDepth() const
 {
    return pWorkerThread_->GetBitsInOneColor();
 }
 
 /**
-* Returns the size in bytes of the image buffer.
-* Required by the MM::Camera API.
-*/
+ * Returns the size in bytes of the image buffer.
+ * Required by the MM::Camera API.
+ */
 long CBaumerOptronic::GetImageBufferSize() const
 {
    return img_.Width() * img_.Height() * GetImageBytesPerPixel();
@@ -1778,25 +1829,25 @@ long CBaumerOptronic::GetImageBufferSize() const
 
 
 
-unsigned  CBaumerOptronic::GetNumberOfComponents() const 
+unsigned CBaumerOptronic::GetNumberOfComponents() const
 {
-   bool  col = pWorkerThread_->Color();
+   bool col = pWorkerThread_->Color();
    return (col?4:1);
 }
 
 
 
 /**
-* Sets the camera Region Of Interest.
-* Required by the MM::Camera API.
-* This command will change the dimensions of the image.
-* Depending on the hardware capabilities the camera may not be able to configure the
-* exact dimensions requested - but should try do as close as possible.
-* @param x - top-left corner coordinate
-* @param y - top-left corner coordinate
-* @param xSize - width
-* @param ySize - height
-*/
+ * Sets the camera Region Of Interest.
+ * Required by the MM::Camera API.
+ * This command will change the dimensions of the image.
+ * Depending on the hardware capabilities the camera may not be able to configure the
+ * exact dimensions requested - but should try do as close as possible.
+ * @param x - top-left corner coordinate
+ * @param y - top-left corner coordinate
+ * @param xSize - width
+ * @param ySize - height
+ */
 int CBaumerOptronic::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize)
 {
    if (xSize == 0 && ySize == 0)
@@ -1806,7 +1857,7 @@ int CBaumerOptronic::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySi
       unsigned short x,y,bits,colors;
       unsigned long bufs;
       pWorkerThread_->CurrentImageSize(x,y,bits,colors,bufs);
-      pWorkerThread_->SetROI( 0, 0, x, y);
+      pWorkerThread_->SetROI(0, 0, x, y);
       // effectively clear ROI
       ResizeImageBuffer();
    }
@@ -1820,70 +1871,74 @@ int CBaumerOptronic::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySi
 }
 
 /**
-* Returns the actual dimensions of the current ROI.
-* Required by the MM::Camera API.
-*/
+ * Returns the actual dimensions of the current ROI.
+ * Required by the MM::Camera API.
+ */
 int CBaumerOptronic::GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySize)
 {
 
-   pWorkerThread_->GetROI( x, y, xSize, ySize);
+   pWorkerThread_->GetROI(x, y, xSize, ySize);
 
    return DEVICE_OK;
 }
 
 /**
-* Resets the Region of Interest to full frame.
-* Required by the MM::Camera API.
-*/
+ * Resets the Region of Interest to full frame.
+ * Required by the MM::Camera API.
+ */
 int CBaumerOptronic::ClearROI()
 {
 
    pWorkerThread_->CancelROI();
 
    ResizeImageBuffer();
-      
+
    return DEVICE_OK;
 }
 
 /**
-* Returns the current exposure setting in milliseconds.
-* Required by the MM::Camera API.
-*/
+ * Returns the current exposure setting in milliseconds.
+ * Required by the MM::Camera API.
+ */
 double CBaumerOptronic::GetExposure() const
 {
    char buf[MM::MaxStrLength];
    int ret = GetProperty(MM::g_Keyword_Exposure, buf);
    if (ret != DEVICE_OK)
+   {
       return 0.0;
+   }
    return atof(buf);
 }
 
 /**
-* Sets exposure in milliseconds.
-* Required by the MM::Camera API.
-*/
+ * Sets exposure in milliseconds.
+ * Required by the MM::Camera API.
+ */
 void CBaumerOptronic::SetExposure(double exp)
 {
    SetProperty(MM::g_Keyword_Exposure, CDeviceUtils::ConvertToString(exp));
 }
 
 /**
-* Returns the current binning factor.
-* Required by the MM::Camera API.
-*/
+ * Returns the current binning factor.
+ * Required by the MM::Camera API.
+ */
 int CBaumerOptronic::GetBinning() const
 {
    char buf[MM::MaxStrLength];
    int ret = GetProperty(MM::g_Keyword_Binning, buf);
    if (ret != DEVICE_OK)
+   {
       return 1;
+   }
    return atoi(buf);
 }
 
 /**
-* Sets binning factor.
-* Required by the MM::Camera API.
-*/
+ * Sets binning factor.
+ * Required by the MM::Camera API.
+ */
 int CBaumerOptronic::SetBinning(int binFactor)
 {
    return SetProperty(MM::g_Keyword_Binning, CDeviceUtils::ConvertToString(binFactor));
@@ -1897,104 +1952,119 @@ int CBaumerOptronic::SetBinning(int binFactor)
 
 
 /**
-* Handles "Binning" property.
-*/
+ * Handles "Binning" property.
+ */
 int CBaumerOptronic::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    int ret = DEVICE_ERR;
-   switch(eAct)
+   switch (eAct)
    {
-   case MM::AfterSet:
-      {
-         bool liveMode = false;
-         if (IsCapturing())
-            liveMode = true;
+      case MM::AfterSet:
+         {
+            bool liveMode = false;
+            if (IsCapturing())
+            {
+               liveMode = true;
+            }
 
 
-         //if(IsCapturing())
-         //   return DEVICE_CAMERA_BUSY_ACQUIRING;
+            //if (IsCapturing())
+            //   return DEVICE_CAMERA_BUSY_ACQUIRING;
 
-         // the user just set the new value for the property, so we have to
-         // apply this value to the 'hardware'.
-         long binFactor;
-         pProp->Get(binFactor);
+            // the user just set the new value for the property, so we have to
+            // apply this value to the 'hardware'.
+            long binFactor;
+            pProp->Get(binFactor);
 
-         pWorkerThread_->BinSize(binFactor);
-         // needed so that everyone learns about the new image size
-         SnapImage();
-         unsigned short x,y,bits,colors;
-         unsigned long bufs;
-         pWorkerThread_->CurrentImageSize(x,y,bits,colors,bufs);
-         img_.Resize(x, y);
-         ret=DEVICE_OK;
-      }break;
-   case MM::BeforeGet:
-      {
-        pProp->Set((long)pWorkerThread_->BinSize());
-         ret=DEVICE_OK;
-      }break;
+            pWorkerThread_->BinSize(binFactor);
+            // needed so that everyone learns about the new image size
+            SnapImage();
+            unsigned short x,y,bits,colors;
+            unsigned long bufs;
+            pWorkerThread_->CurrentImageSize(x,y,bits,colors,bufs);
+            img_.Resize(x, y);
+            ret = DEVICE_OK;
+         }
+         break;
+      case MM::BeforeGet:
+         {
+            pProp->Set((long)pWorkerThread_->BinSize());
+            ret = DEVICE_OK;
+         }
+         break;
    }
-   return ret; 
+   return ret;
 }
 
 /**
-* Handles "PixelType" property.  N.B. current implementation requires this property whether or not it does anything.
-*/
+ * Handles "PixelType" property. N.B. current implementation requires this property whether or not it does anything.
+ */
 int CBaumerOptronic::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    int ret = DEVICE_OK;
-   switch(eAct)
+   switch (eAct)
    {
-   case MM::AfterSet:
-      {
-
-      } break;
-   case MM::BeforeGet:
-      {
+      case MM::AfterSet:
+         break;
+      case MM::BeforeGet:
          if (GetNumberOfComponents() == 4)
+         {
             if (bitsInOneColor_g > 8)
+            {
                pProp->Set(g_PixelType_64bitRGB);
+            }
             else
+            {
                pProp->Set(g_PixelType_32bitRGB);
+            }
+         }
          else if (GetImageBytesPerPixel() == 2)
+         {
             pProp->Set(g_PixelType_16bit);
+         }
          else
+         {
             pProp->Set(g_PixelType_8bit);
-      }break;
+         }
+         break;
    }
-   return ret; 
+   return ret;
 }
 
 /**
-* Handles "BitDepth" property.
-*/
+ * Handles "BitDepth" property.
+ */
 int CBaumerOptronic::OnBitDepth(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
 
    if (Ready != pWorkerThread_->CameraState())
+   {
       return DEVICE_CAMERA_BUSY_ACQUIRING;
+   }
 
    switch (eAct)
    {
-   case MM::AfterSet:    // property was written -> apply value to hardware
-      {
-         long bitDepth;
-         pProp->Get(bitDepth);
-         // if (GetNumberOfComponents() == 4)
-         //    bitDepth = 8; // We can not yet handle 64bitRGB
-         int ret = pWorkerThread_->SetBitsInOneColor(bitDepth);
-         if (ret != DEVICE_OK)
-            return ret;
-         bitsInOneColor_g = (unsigned short)bitDepth;
-         int bytesPerPixel = BytesInOneComponent(bitsInOneColor_g);
-         //todo is color image selected at this time?
-         img_.Resize(img_.Width(), img_.Height(), bytesPerPixel * GetNumberOfComponents());
-      }
-      break;
+      case MM::AfterSet: // property was written -> apply value to hardware
+         {
+            long bitDepth;
+            pProp->Get(bitDepth);
+            // if (GetNumberOfComponents() == 4)
+            //    bitDepth = 8; // We can not yet handle 64bitRGB
+            int ret = pWorkerThread_->SetBitsInOneColor(bitDepth);
+            if (ret != DEVICE_OK)
+            {
+               return ret;
+            }
+            bitsInOneColor_g = (unsigned short)bitDepth;
+            int bytesPerPixel = BytesInOneComponent(bitsInOneColor_g);
+            //todo is color image selected at this time?
+            img_.Resize(img_.Width(), img_.Height(), bytesPerPixel * GetNumberOfComponents());
+         }
+         break;
 
-   case MM::BeforeGet: // property will be read -> update property with value from hardware
-      pProp->Set((long)pWorkerThread_->GetBitsInOneColor());
-      break;
+      case MM::BeforeGet: // property will be read -> update property with value from hardware
+         pProp->Set((long)pWorkerThread_->GetBitsInOneColor());
+         break;
    }
    return DEVICE_OK;
 }
@@ -2049,19 +2119,23 @@ int CBaumerOptronic::StartSequenceAcquisition(long numImages, double interval_ms
 {
    GetCoreCallback()->ClearPostedErrors();
 
-   if( Acquiring == pWorkerThread_->CameraState())
+   if (Acquiring == pWorkerThread_->CameraState())
+   {
       return DEVICE_CAMERA_BUSY_ACQUIRING;
+   }
 
    MM::TimeoutMs timerOut(GetCurrentMMTime(), 1000);
-   while( Ready != pWorkerThread_->CameraState())
+   while (Ready != pWorkerThread_->CameraState())
    {
       Sleep(0);
-      if( timerOut.expired(GetCurrentMMTime()))
+      if (timerOut.expired(GetCurrentMMTime()))
+      {
          return DEVICE_SERIAL_TIMEOUT;
+      }
    }
 
    stopOnOverflow_ = stopOnOverflow;
-   pWorkerThread_->Interval( interval_ms);  
+   pWorkerThread_->Interval(interval_ms);
 
    LogMessage(" sequence starting, exposure is " + boost::lexical_cast<std::string, int>(pWorkerThread_->Exposure()), true);
 
@@ -2081,19 +2155,19 @@ int CBaumerOptronic::StartSequenceAcquisition(long numImages, double interval_ms
       return ret;
    }
 
-   unsigned short xDim;  
-   unsigned short yDim; 
-   unsigned short bitsInOneColor; 
-   unsigned short nColors;  
+   unsigned short xDim;
+   unsigned short yDim;
+   unsigned short bitsInOneColor;
+   unsigned short nColors;
    unsigned long bufSize;
 
-   pWorkerThread_->CurrentImageSize( xDim,  yDim,  bitsInOneColor,  nColors,   bufSize);
+   pWorkerThread_->CurrentImageSize(xDim, yDim, bitsInOneColor, nColors, bufSize);
 
    // make sure the circular buffer is properly sized
    GetCoreCallback()->InitializeImageBuffer(1, 1, xDim, yDim, BytesInOneComponent(bitsInOneColor) * nColors);
 
    pWorkerThread_->Command(::StartSequence);
-   
+
    LogMessage("Acquisition started");
    return DEVICE_OK;
 }
@@ -2107,19 +2181,24 @@ int CBaumerOptronic::StopSequenceAcquisition()
    pWorkerThread_->Command(StopSequence);
    MM::TimeoutMs timerOut(GetCurrentMMTime(), (long)(pWorkerThread_->Exposure() + 1000));
 
-   while( Acquiring  == pWorkerThread_->CameraState())
+   while (Acquiring == pWorkerThread_->CameraState())
    {
       Sleep(0);
-      if( timerOut.expired(GetCurrentMMTime()))
+      if (timerOut.expired(GetCurrentMMTime()))
+      {
          return DEVICE_SERIAL_TIMEOUT;
+      }
    }
-  // pWorkerThread_->cameraState_ = Ready;
+   // pWorkerThread_->cameraState_ = Ready;
    MM::Core* cb = GetCoreCallback();
    if (cb)
+   {
       return cb->AcqFinished(this, 0);
+   }
    else
+   {
       return DEVICE_OK;
-
+   }
 }
 
 int CBaumerOptronic::WaitForImageAndCopyToBuffer()
@@ -2133,7 +2212,7 @@ int CBaumerOptronic::WaitForImageAndCopyToBuffer()
 
    MMThreadGuard* pImageBufferGuard = NULL;
    void* p = pWorkerThread_->CurrentImage(xDim, yDim, bitsInOneColor, nPlanes,
-                                          bufSize, &pImageBufferGuard);
+         bufSize, &pImageBufferGuard);
 
    void* pixBuffer = NULL;
    if (p)
@@ -2148,7 +2227,9 @@ int CBaumerOptronic::WaitForImageAndCopyToBuffer()
 
    // release lock on image buffer
    if (pImageBufferGuard)
+   {
       delete pImageBufferGuard;
+   }
 
    return p ? DEVICE_OK : DEVICE_ERR;
 }
@@ -2164,7 +2245,8 @@ int CBaumerOptronic::SendImageToCore()
    md.put("Camera", label);
 
    int err = WaitForImageAndCopyToBuffer();
-   if (err != DEVICE_OK) {
+   if (err != DEVICE_OK)
+   {
       return err;
    }
 
@@ -2172,16 +2254,19 @@ int CBaumerOptronic::SendImageToCore()
    unsigned w = GetImageWidth();
    unsigned h = GetImageHeight();
    unsigned b = GetImageBytesPerPixel();
-   
+
    int ret = GetCoreCallback()->InsertImage(this, p, w, h, b, md.Serialize().c_str());
-                                                  
+
    if (!stopOnOverflow_ && ret == DEVICE_BUFFER_OVERFLOW)
    {
       // do not stop on overflow - just reset the buffer
       GetCoreCallback()->ClearImageBuffer(this);
       return GetCoreCallback()->InsertImage(this, p, w, h, b, md.Serialize().c_str());
-   } else
+   }
+   else
+   {
       return ret;
+   }
 }
 
 
@@ -2190,15 +2275,17 @@ int CBaumerOptronic::SendImageToCore()
 ///////////////////////////////////////////////////////////////////////////////
 
 /**
-* Sync internal image buffer size to the chosen property values.
-*/
+ * Sync internal image buffer size to the chosen property values.
+ */
 int CBaumerOptronic::ResizeImageBuffer()
 {
    char buf[MM::MaxStrLength];
 
    int ret = GetProperty(MM::g_Keyword_PixelType, buf);
    if (ret != DEVICE_OK)
+   {
       return ret;
+   }
 
 
    unsigned short xDim;
@@ -2206,22 +2293,24 @@ int CBaumerOptronic::ResizeImageBuffer()
    unsigned short bitsInOneColor;
    unsigned short colors;
    unsigned long bufSize;
-   pWorkerThread_->CurrentImageSize(xDim,  yDim, bitsInOneColor, colors,  bufSize);
+   pWorkerThread_->CurrentImageSize(xDim, yDim, bitsInOneColor, colors, bufSize);
 
-   if (( 0 == xDim) ||  (0 == yDim) || ( 0 == bitsInOneColor))
+   if ((0 == xDim) || (0 == yDim) || (0 == bitsInOneColor))
+   {
       return DEVICE_ERR;
+   }
 
    short nbytes = (short)(bitsInOneColor+7);
    nbytes /= 8;
 
 
-   img_.Resize(xDim, yDim, colors*nbytes );
+   img_.Resize(xDim, yDim, colors*nbytes);
    return DEVICE_OK;
 }
 
 
 
-bool CBaumerOptronic::IsCapturing(void)
+bool CBaumerOptronic::IsCapturing()
 {
-   return ( Acquiring == pWorkerThread_->CameraState());
+   return (Acquiring == pWorkerThread_->CameraState());
 }
