@@ -3,6 +3,7 @@ package org.micromanager.data;
 import java.awt.Color;
 import java.util.UUID;
 
+import org.micromanager.api.data.Metadata;
 import org.micromanager.api.MultiStagePosition;
 
 
@@ -12,13 +13,13 @@ import org.micromanager.api.MultiStagePosition;
  * the copy() method (which provides a MetadataBuilder). Any fields that are
  * not explicitly set will default to null.
  */
-public class Metadata {
+public class DefaultMetadata implements Metadata {
 
    /**
     * This class constructs Metadata objects. Use the build() method to 
     * generate a Metadata.
     */
-   public static class MetadataBuilder {
+   public static class DefaultMetadataBuilder implements Metadata.MetadataBuilder {
       private UUID uuid_ = null;
       private String source_ = null;
       private String microManagerVersion_ = null;
@@ -75,7 +76,7 @@ public class Metadata {
       private double pixelAspect_ = null;
 
       public Metadata build() {
-         return new Metadata(this);
+         return new DefaultMetadata(this);
       }
 
       public MetadataBuilder uuid(UUID uuid) {
@@ -378,7 +379,7 @@ public class Metadata {
    private int color_ = null;
    private double pixelAspect_ = null;
 
-   public Metadata(MetadataBuilder builder) {
+   public DefaultMetadata(MetadataBuilder builder) {
       uuid_ = builder.uuid_;
       source_ = builder.source_;
       microManagerVersion_ = builder.microManagerVersion_;
@@ -440,7 +441,7 @@ public class Metadata {
    }
    
    public MetadataBuilder copy() {
-      return new MetadataBuilder()
+      return new DefaultMetadataBuilder()
             .uuid(uuid_)
             .source(source_)
             .microManagerVersion(microManagerVersion_)
