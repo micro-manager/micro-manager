@@ -423,7 +423,7 @@ void* BOImplementationThread::CurrentImage(unsigned short& xDim, unsigned short&
 
       if (timerOut.expired(CurrentMMTimeMM()))
       {
-         PostError(DEVICE_SERIAL_TIMEOUT, "in CurrentImage");
+         LLogMessage("Timed out waiting for image to become ready");
          return NULL;
       }
 
@@ -762,7 +762,7 @@ void BOImplementationThread::QueryCameraCurrentFormat()
    ::iCode_g = static_cast<unsigned short>(dcBoStatus.eCurImgCode.iCode);
    if (CE_SUCCESS != fxRet)
    {
-      PostError(DEVICE_ERR, GetSDKErrorMessage(fxRet).c_str());
+      LLogMessage(GetSDKErrorMessage(fxRet));
    }
    else
    {
@@ -890,7 +890,7 @@ int BOImplementationThread::svc()
                   {
                      ostringstream os;
                      os << "SendImageToCore failed with errorcode: " << ret;
-                     pCamera_->GetCoreCallback()->PostError(ret, os.str().c_str());
+                     LLogMessage(os.str());
                      CameraState(Ready);
                      break;
                   }
@@ -1056,20 +1056,6 @@ MM::MMTime BOImplementationThread::CurrentMMTimeMM() // MMTime as milliseconds
 }
 
 
-
-
-
-void BOImplementationThread::PostError(const int errorCode, const char* pMessage)
-{
-   if (NULL != pCamera_)
-   {
-      MMThreadGuard g(mmCameraLock_);
-      pCamera_->GetCoreCallback()->PostError(errorCode, pMessage);
-   }
-}
-
-
-
 int BOImplementationThread::BinSize() const
 {
    return BinSizeFromCompleteFormat(this->completeFormatIter_);
@@ -1116,7 +1102,7 @@ tBoImgCode BOImplementationThread::ImageCode()
 
    if (1 != fxRet)
    {
-      PostError(DEVICE_ERR, GetSDKErrorMessage(fxRet).c_str());
+      LLogMessage(GetSDKErrorMessage(fxRet));
    }
 
    return dcBoStatus.eCurImgCode;
@@ -1213,7 +1199,7 @@ void BOImplementationThread::BinSize(const int v)
       {
          std::ostringstream oss;
          oss << " in BinSize can not set bins to " << v;
-         PostError(DEVICE_ERR, oss.str().c_str());
+         LLogMessage(oss.str());
       }
    }
 }
@@ -2106,8 +2092,6 @@ int CBaumerOptronic::OnGain(MM::PropertyBase* pProp, MM::ActionType eAct)
  */
 int CBaumerOptronic::StartSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow)
 {
-   GetCoreCallback()->ClearPostedErrors();
-
    if (Acquiring == pWorkerThread_->CameraState())
    {
       return DEVICE_CAMERA_BUSY_ACQUIRING;

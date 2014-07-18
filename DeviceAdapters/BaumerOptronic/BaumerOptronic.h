@@ -204,7 +204,6 @@ public:
 
    int SetBitsInOneColor(const int bits);
    int GetBitsInOneColor() { return bitsInOneColor_; }
-   void PostError(const int errorCode_a, const char* pMessage_a);
 
    typedef std::pair<std::string, tBoImgFormat> NamedFormat;
    typedef std::vector<tBoImgCode> ImageCodesPerFormat;
