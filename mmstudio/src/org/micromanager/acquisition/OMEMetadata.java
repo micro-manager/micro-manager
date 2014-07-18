@@ -235,10 +235,18 @@ public class OMEMetadata {
             //Add these tags in only once, but need to get them from image rather than summary metadata
             setOMEDetectorMetadata(tags);
             if (MDUtils.hasImageTime(tags)) {
-               metadata_.setImageAcquisitionDate(new Timestamp(
-                       DateTools.formatDate(MDUtils.getImageTime(tags), 
-                          "yyyy-MM-dd HH:mm:ss")
-                       ), position);
+               // Alas, the metadata "Time" field is in one of two formats.
+               String imageDate = MDUtils.getImageTime(tags);
+               String reformattedDate = DateTools.formatDate(imageDate,
+                       "yyyy-MM-dd HH:mm:ss Z", true);
+               if (reformattedDate == null) {
+                  reformattedDate = DateTools.formatDate(imageDate,
+                          "yyyy-MM-dd E HH:mm:ss Z", true);
+               }
+               if (reformattedDate != null) {
+                  metadata_.setImageAcquisitionDate(
+                          new Timestamp(reformattedDate), position);
+               }
             }
          } catch (Exception e) {
             ReportingUtils.logError(e, "Problem adding System state cache metadata to OME Metadata: " + e);
