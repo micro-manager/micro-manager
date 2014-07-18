@@ -3,6 +3,8 @@ package org.micromanager.data;
 import java.awt.Color;
 import java.util.UUID;
 
+import org.json.JSONObject;
+
 import org.micromanager.api.data.Metadata;
 import org.micromanager.api.MultiStagePosition;
 
@@ -75,6 +77,8 @@ public class DefaultMetadata implements Metadata {
 
       private int color_ = null;
       private double pixelAspect_ = null;
+
+      private JSONObject userMetadata_ = null;
 
       @Override
       public Metadata build() {
@@ -368,6 +372,12 @@ public class DefaultMetadata implements Metadata {
          pixelAspect_ = pixelAspect;
          return this;
       }
+
+      @Override
+      public MetadataBuilder userMetadata(JSONObject userMetadata) {
+         userMetadata_ = userMetadata;
+         return this;
+      }
    }
 
    private UUID uuid_ = null;
@@ -429,6 +439,8 @@ public class DefaultMetadata implements Metadata {
    private int color_ = null;
    private double pixelAspect_ = null;
 
+   private JSONObject userMetadata_ = null;
+
    @Override
    public DefaultMetadata(MetadataBuilder builder) {
       uuid_ = builder.uuid_;
@@ -489,6 +501,8 @@ public class DefaultMetadata implements Metadata {
 
       color_ = builder.color_;
       pixelAspect_ = builder.pixelAspect_;
+
+      userMetadata_ = builder.userMetadata_;
    }
    
    @Override
@@ -786,5 +800,10 @@ public class DefaultMetadata implements Metadata {
    @Override
    public double getPixelAspect() {
       return pixelAspect_;
+   }
+
+   @Override
+   public JSONObject getUserMetadata() {
+      return userMetadata_;
    }
 }
