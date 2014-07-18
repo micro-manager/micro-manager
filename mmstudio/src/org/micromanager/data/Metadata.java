@@ -9,7 +9,7 @@ import org.micromanager.api.MultiStagePosition;
 /**
  * This class holds the metadata for ImagePlanes. It is intended to be 
  * immutable; construct new Metadatas using a MetadataBuilder, or by using
- * the copy() method (which generates a MetadataBuilder). Any fields that are
+ * the copy() method (which provides a MetadataBuilder). Any fields that are
  * not explicitly set will default to null.
  */
 public class Metadata {
@@ -343,68 +343,68 @@ public class Metadata {
       }
    }
 
-   private UUID uuid_;
-   private String source_;
-   private String microManagerVersion_;
-   private String metadataVersion_;
-   private String acquisitionName_;
-   private String fileName_;
-   private String userName_;
-   private String computerName_;
-   private String prefix_;
-   private String directory_;
-   private String startTime_;
+   private UUID uuid_ = null;
+   private String source_ = null;
+   private String microManagerVersion_ = null;
+   private String metadataVersion_ = null;
+   private String acquisitionName_ = null;
+   private String fileName_ = null;
+   private String userName_ = null;
+   private String computerName_ = null;
+   private String prefix_ = null;
+   private String directory_ = null;
+   private String startTime_ = null;
    
-   private String[] channelNames_;
-   private Color[] channelColors_;
-   private int[] channelContrastMins_;
-   private int[] channelContrastMaxes_;
-   private MultiStagePosition initialPositionList_;
+   private String[] channelNames_ = null;
+   private Color[] channelColors_ = null;
+   private int[] channelContrastMins_ = null;
+   private int[] channelContrastMaxes_ = null;
+   private MultiStagePosition initialPositionList_ = null;
 
-   private int numChannels_;
-   private int numSlices_;
-   private int numFrames_;
-   private int numPositions_;
-   private double zStepUm_;
-   private double waitIntervalMs_;
-   private double[] customIntervalsMs_;
-   private boolean timeFirst_;
-   private boolean slicesFirst_;
-   private boolean keepShutterOpenSlices_;
-   private boolean keepShutterOpenChannels_;
+   private int numChannels_ = null;
+   private int numSlices_ = null;
+   private int numFrames_ = null;
+   private int numPositions_ = null;
+   private double zStepUm_ = null;
+   private double waitIntervalMs_ = null;
+   private double[] customIntervalsMs_ = null;
+   private boolean timeFirst_ = null;
+   private boolean slicesFirst_ = null;
+   private boolean keepShutterOpenSlices_ = null;
+   private boolean keepShutterOpenChannels_ = null;
 
-   private String pixelType_;
-   private int bitDepth_;
-   private int bytesPerPixel_;
-   private int numComponents_;
-   private int ijType_;
-   private int frame_;
-   private String channelName_;
-   private double exposureMs_;
-   private double elapsedTimeMs_;
-   private double startTimeMs_;
-   private int binning_;
+   private String pixelType_ = null;
+   private int bitDepth_ = null;
+   private int bytesPerPixel_ = null;
+   private int numComponents_ = null;
+   private int ijType_ = null;
+   private int frame_ = null;
+   private String channelName_ = null;
+   private double exposureMs_ = null;
+   private double elapsedTimeMs_ = null;
+   private double startTimeMs_ = null;
+   private int binning_ = null;
    
-   private int imageNumber_;
-   private int gridRow_;
-   private int gridColumn_;
-   private String positionName_;
-   private double xPositionUm_;
-   private double yPositionUm_;
-   private double zPositionUm_;
+   private int imageNumber_ = null;
+   private int gridRow_ = null;
+   private int gridColumn_ = null;
+   private String positionName_ = null;
+   private double xPositionUm_ = null;
+   private double yPositionUm_ = null;
+   private double zPositionUm_ = null;
 
-   private double pixelSizeUm_;
-   private String camera_;
-   private String receivedTime_;
-   private String excitationLabel_;
-   private String emissionLabel_;
-   private String ROI_;
-   private String comments_;
+   private double pixelSizeUm_ = null;
+   private String camera_ = null;
+   private String receivedTime_ = null;
+   private String excitationLabel_ = null;
+   private String emissionLabel_ = null;
+   private String ROI_ = null;
+   private String comments_ = null;
 
-   private int pixelWidth_;
-   private int pixelHeight_;
-   private int color_;
-   private double pixelAspect_;
+   private int pixelWidth_ = null;
+   private int pixelHeight_ = null;
+   private int color_ = null;
+   private double pixelAspect_ = null;
 
    public Metadata(MetadataBuilder builder) {
       uuid_ = builder.uuid_;
