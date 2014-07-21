@@ -135,8 +135,8 @@ const char* g_FastExternal = "Fast External";
 const char* g_Internal = "Internal";
 const char* g_Software = "Software";
 
-const int NUMCROPROIS = 9;
-AndorCamera::ROI g_UltraCropROIs[NUMCROPROIS] = {
+const int NUMULTRA897CROPROIS = 9;
+AndorCamera::ROI g_Ultra897CropROIs[NUMULTRA897CROPROIS] = {
    // left  bot   ht    width
    {  122,  127,  256,  256   },
    {  156,  159,  192,  192   },
@@ -147,6 +147,20 @@ AndorCamera::ROI g_UltraCropROIs[NUMCROPROIS] = {
    {  7,    248,  496,  16    },
    {  7,    251,  496,  8     },
    {  7,    253,  496,  4     }
+};
+
+const int NUMULTRA888CROPROIS = 9;
+AndorCamera::ROI g_Ultra888CropROIs[NUMULTRA888CROPROIS] = {
+   // left  bot   ht    width
+   {  240,  255,  512,  512   },
+   {  368,  383,  256,  256   },
+   {  432,  447,  128,  128   },
+   {  475,  479,  64,   64    },
+   {  486,  495,  32,   32    },
+   {  0,    495,  1024, 32    },
+   {  0,    503,  1024, 16    },
+   {  0,    507,  1024,  8     },
+   {  0,    509,  1024,  4     }
 };
 
 // singleton instance
@@ -4542,10 +4556,18 @@ unsigned int AndorCamera::PopulateROIDropdown()
    }
    else
    {//if centered add custom Ultra params
+      int numcroprois = NUMULTRA897CROPROIS;
+      ROI* UltraCropROIs = g_Ultra897CropROIs;
 
-      for(int i=0; i<NUMCROPROIS; i++)
+      if(IsIxonUltra888())
       {
-         ROI roi = g_UltraCropROIs[i];
+         numcroprois = NUMULTRA888CROPROIS;
+         UltraCropROIs = g_Ultra888CropROIs;
+      }
+
+      for(int i=0; i<numcroprois; i++)
+      {
+         ROI roi = UltraCropROIs[i];
          roiList.push_back(roi);
          char buffer[64];
          GetROIPropertyName(uiROICount, roi.xSize, roi.ySize, buffer,cropModeSwitch_);
@@ -4575,6 +4597,27 @@ unsigned int AndorCamera::PopulateROIDropdown()
          }
          vTriggerModes.push_back(GetTriggerModeString(mode));
          return DRV_SUCCESS;
+   }
+
+   bool AndorCamera::IsIxonUltra()
+   {
+      AndorCapabilities caps;
+      caps.ulSize = sizeof(AndorCapabilities);
+      GetCapabilities(&caps);
+      return AC_CAMERATYPE_IXONULTRA == caps.ulCameraType;
+   }
+
+   bool AndorCamera::IsIxonUltra888()
+   {
+      if(!IsIxonUltra()) return false;
+
+      char head[100] = "";
+      GetHeadModel(head);
+      std::string headStr = head;
+      if(headStr.find("888") != std::string::npos)
+         return true;
+
+      return false;
    }
 
 

@@ -206,6 +206,9 @@ private:
    unsigned int ApplyTriggerMode(int mode);
    int GetTriggerModeInt(std::string mode);
 
+   bool IsIxonUltra888();
+   bool IsIxonUltra();
+
    bool EMSwitch_;
 
    unsigned int ui_swVersion;
