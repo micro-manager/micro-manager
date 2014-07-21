@@ -1,23 +1,24 @@
 package org.micromanager.api.data;
+
+import net.imglib2.meta.ImgPlus;
+
 /**
  * An Image is a single image plane with associated metadata. Functionally 
- * similar to TaggedImage, but because it's abstract we can change the
- * underlying implementation without breaking things.
+ * similar to TaggedImage, but with more rigidly-defined metadata and 
+ * dataset positioning information.
  */
 public interface Image {
    /**
-    * Generate a new Image using the provided Object, which must be a Java
-    * array of bytes or shorts.
+    * Retrieve the ImgPlus that provides access to the image's pixel data.
     */
-   abstract public Image(Object pixels, int width, int height, int bytesPerPixel);
-
+   public ImgPlus getPixels();
    /**
     * Retrieve the Metadata for this Image.
     */
-   abstract public Metadata getMetadata();
+   public Metadata getMetadata();
 
    /**
     * Retrieve the Coords for this Image.
     */
-   abstract public Coords getCoords();
+   public Coords getCoords();
 }
