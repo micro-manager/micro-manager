@@ -75,6 +75,7 @@ import org.micromanager.acquisition.TaggedImageQueue;
 import org.micromanager.imagedisplay.VirtualAcquisitionDisplay;
 import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.FileDialogs;
+import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMScriptException;
 
 /**
@@ -816,7 +817,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          final double H1 = 2592/266e3;  // time to readout one row in ms (just under 10us) 
          // global reset mode not yet exposed in Micro-manager
          // when we get it then it will be 17+1 rows of overhead but nothing else
-         double numRowsOverhead = 0;
+         double numRowsOverhead;
          if (props_.getPropValueString(camKey, Properties.Keys.TRIGGER_ACTIVE, true)
                   .equals(Properties.Values.SYNCREADOUT.toString())) {
             numRowsOverhead = 18;  // overhead of 17 row times plus jitter of 1 row time
@@ -905,7 +906,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     * @return
     */
    private float computeCameraResetTime() {
-      float resetTime = 0;
+      float resetTime;
       if(((Integer) numSides_.getValue()) > 1) {
          resetTime = Math.max(computeCameraResetTime(Devices.Keys.CAMERAA),
                computeCameraResetTime(Devices.Keys.CAMERAB));
@@ -926,7 +927,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     * @return
     */
    private float computeCameraReadoutTime() {
-      float readoutTime = 0;
+      float readoutTime;
       if(((Integer) numSides_.getValue()) > 1) {
          readoutTime = Math.max(computeCameraReadoutTime(Devices.Keys.CAMERAA),
                computeCameraReadoutTime(Devices.Keys.CAMERAB));
@@ -1420,12 +1421,13 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
 
       // create required coordinate tags
       try {
-         tags.put(MMTags.Image.FRAME_INDEX, frame);
+         MDUtils.setFrameIndex(tags, frame);
          tags.put(MMTags.Image.FRAME, frame);
-         tags.put(MMTags.Image.CHANNEL_INDEX, channel);
-         tags.put(MMTags.Image.SLICE_INDEX, slice);
-         tags.put(MMTags.Image.POS_INDEX, position);
-         tags.put(MMTags.Image.ELAPSED_TIME_MS, ms);
+         MDUtils.setChannelIndex(tags, channel);
+         MDUtils.setSliceIndex(tags, slice);
+         MDUtils.setPositionIndex(tags, position);
+         MDUtils.setElapsedTimeMs(tags, ms);
+         MDUtils.setImageTime(tags, MDUtils.getCurrentTime());
 
          if (!tags.has(MMTags.Summary.SLICES_FIRST) && !tags.has(MMTags.Summary.TIME_FIRST)) {
             // add default setting
