@@ -1297,7 +1297,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                updateAcqusitionStatusDone();
 
                stagePosUpdater_.setAcqRunning(false);
-               bq.add(TaggedImageQueue.POISON);
+               bq.put(TaggedImageQueue.POISON);
                gui_.closeAcquisition(acqName);
                gui_.logMessage("Acquisition took: " + 
                        (System.currentTimeMillis() - acqStart) + "ms");
