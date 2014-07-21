@@ -509,7 +509,10 @@ int CDemoCamera::SnapImage()
       exp = GetSequenceExposure();
    }
 
-   GenerateSyntheticImage(img_, exp);
+   if (!fastImage_)
+   {
+      GenerateSyntheticImage(img_, exp);
+   }
 
    MM::MMTime s0(0,0);
    if( s0 < startTime )
