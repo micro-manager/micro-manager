@@ -3221,6 +3221,15 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       }
       return simpleDisplay_.getHyperImage().getWindow();
    }
+
+   @Override
+   public ImageCache getCacheForWindow(ImageWindow window) throws IllegalArgumentException {
+      VirtualAcquisitionDisplay display = VirtualAcquisitionDisplay.getDisplay(window.getImagePlus());
+      if (display == null) {
+         throw new IllegalArgumentException("No matching Micro-Manager display for this window");
+      }
+      return display.getImageCache();
+   }
    
    @Override
    public String runAcquisition() throws MMScriptException {

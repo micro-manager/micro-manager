@@ -434,6 +434,11 @@ public interface ScriptInterface {
    public ImageWindow getSnapLiveWin();
    
    /**
+    * Given an ImageWindow, return the ImageCache associated with it.
+    */
+   public ImageCache getCacheForWindow(ImageWindow window) throws IllegalArgumentException;
+
+   /**
    * Installs an autofocus plugin class from the class path.
    */
    public String installAutofocusPlugin(String className);
