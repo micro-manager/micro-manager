@@ -8,9 +8,9 @@ import java.util.Set;
 import org.micromanager.api.data.Coords;
 
 /**
- * ImageCoords indicate the position of a given image within a dataset.
+ * DefaultCoords indicate the position of a given image within a dataset.
  */
-public class ImageCoords implements Coords {
+public class DefaultCoords implements Coords {
    // Maps axis labels to our position along those axes.
    private HashMap<String, int> axisToPos_;
    // Axes for which we are the last image along that axis.
@@ -18,16 +18,16 @@ public class ImageCoords implements Coords {
    // Convenience/optimization: we maintain a sorted list of our axes.
    private ArrayList<String> sortedAxes_;
 
-   public ImageCoords() {
+   public DefaultCoords() {
       initMembers();
    }
 
    /**
-    * Generate a new ImageCoords that's a copy of the provided Coords. 
+    * Generate a new DefaultCoords that's a copy of the provided Coords. 
     * It may be null, in which case this is functionally identical to the
     * default constructor.
     */
-   public ImageCoords(Coords alt) {
+   public DefaultCoords(Coords alt) {
       initMembers();
       if (alt != null) {
          // Copy positional information over.
@@ -79,7 +79,7 @@ public class ImageCoords implements Coords {
    }
 
    public Coords makeOffsetCopy(HashMap<String, int> offsets) {
-      Coords result = new ImageCoords(this);
+      Coords result = new DefaultCoords(this);
       for (String axis : offsets.keys()) {
          result.setPosition(axis, 
                result.getPositionAt(axis) + offsets.get(axis));

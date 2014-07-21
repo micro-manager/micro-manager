@@ -8,6 +8,11 @@ import net.imglib2.type.numeric.ARGBType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 
+import org.json.JSONException;
+
+import org.micromanager.utils.MDUtils;
+import org.micromanager.utils.ReportingUtils;
+
 /**
  * This class represents a single image from a single camera. It contains
  * the image pixel data, metadata (in the form of a Metadata instance), and
@@ -18,7 +23,29 @@ public class DefaultImage extends org.micromanager.api.data.Image {
    private ImgPlus pixels_;
    private Metadata metadata_;
    private ImageCoords coords_;
-   
+
+   /**
+    * @param taggedImage A TaggedImage to base the Image on.
+    */
+   public DefaultImage(TaggedImage tagged) throws JSONException {
+      metadata_ = new Metadata.MetadataBuilder()
+            .camera(MDUtils.getChannelName(tagged.tags))
+            .ROI(MDUtils.getROI(tagged.tags))
+            .binning(MDUtils.getBinning(tagged.tags))
+            .pixelSizeUm(MDUtils.getPixelSizeUm(tagged.tags))
+            .build();
+
+      coords_ = new ImageCoords();
+      coords_.setPosition("time", MDUtils.getFrameIndex(tagged.tags));
+      coords_.setPosition("position", MDUtils.getPositionIndex(tagged.tags));
+      coords_.setPosition("slice", MDUtils.getSliceIndex(tagged.tags));
+      coords_.setPosition("channel", MDUtils.getChannelIndex(tagged.tags));
+
+      pixels_ = generateImgPlusFromPixels(tagged.pix, 
+            MDUtils.getWidth(tagged.tags), MDUtils.getHeight(tagged.tags),
+            MDUtils.getBytesPerPixel(tagged.tags));
+   }
+
    /**
     * @param pixels Assumed to be a Java array of either bytes or shorts.
     */
