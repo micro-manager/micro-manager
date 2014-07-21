@@ -734,6 +734,7 @@ public class MMAcquisition {
       if (outputQueue_ != null) {
          // Ensure our queue consumer cleans up after themselves.
          outputQueue_.add(TaggedImageQueue.POISON);
+         outputQueue_ = null;
       }
    }
 

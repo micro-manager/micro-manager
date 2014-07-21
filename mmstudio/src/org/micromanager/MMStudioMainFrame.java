@@ -3622,7 +3622,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
          throw new MMScriptException(e);
       }
 
-      // Acquisition is set up for synchronous (blocking) image insertion.
       acq.insertImage(taggedImg);
    }
 
