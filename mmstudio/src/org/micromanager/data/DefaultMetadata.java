@@ -22,7 +22,6 @@ public class DefaultMetadata implements Metadata {
     * This class constructs Metadata objects. Use the build() method to 
     * generate a Metadata.
     */
-   @Override
    public static class DefaultMetadataBuilder implements Metadata.MetadataBuilder {
       private UUID uuid_ = null;
       private String source_ = null;
@@ -38,37 +37,37 @@ public class DefaultMetadata implements Metadata {
       
       private String[] channelNames_ = null;
       private Color[] channelColors_ = null;
-      private int[] channelContrastMins_ = null;
-      private int[] channelContrastMaxes_ = null;
+      private Integer[] channelContrastMins_ = null;
+      private Integer[] channelContrastMaxes_ = null;
       private MultiStagePosition initialPositionList_ = null;
 
-      private double zStepUm_ = null;
-      private double waitIntervalMs_ = null;
-      private double[] customIntervalsMs_ = null;
-      private boolean timeFirst_ = null;
-      private boolean slicesFirst_ = null;
-      private boolean keepShutterOpenSlices_ = null;
-      private boolean keepShutterOpenChannels_ = null;
+      private Double zStepUm_ = null;
+      private Double waitIntervalMs_ = null;
+      private Double[] customIntervalsMs_ = null;
+      private Boolean timeFirst_ = null;
+      private Boolean slicesFirst_ = null;
+      private Boolean keepShutterOpenSlices_ = null;
+      private Boolean keepShutterOpenChannels_ = null;
 
       private String pixelType_ = null;
-      private int numComponents_ = null;
-      private int ijType_ = null;
-      private int frame_ = null;
+      private Integer numComponents_ = null;
+      private Integer ijType_ = null;
+      private Integer frame_ = null;
       private String channelName_ = null;
-      private double exposureMs_ = null;
-      private double elapsedTimeMs_ = null;
-      private double startTimeMs_ = null;
-      private int binning_ = null;
+      private Double exposureMs_ = null;
+      private Double elapsedTimeMs_ = null;
+      private Double startTimeMs_ = null;
+      private Integer binning_ = null;
       
-      private int imageNumber_ = null;
-      private int gridRow_ = null;
-      private int gridColumn_ = null;
+      private Integer imageNumber_ = null;
+      private Integer gridRow_ = null;
+      private Integer gridColumn_ = null;
       private String positionName_ = null;
-      private double xPositionUm_ = null;
-      private double yPositionUm_ = null;
-      private double zPositionUm_ = null;
+      private Double xPositionUm_ = null;
+      private Double yPositionUm_ = null;
+      private Double zPositionUm_ = null;
 
-      private double pixelSizeUm_ = null;
+      private Double pixelSizeUm_ = null;
       private String camera_ = null;
       private String receivedTime_ = null;
       private String excitationLabel_ = null;
@@ -76,8 +75,8 @@ public class DefaultMetadata implements Metadata {
       private Rectangle ROI_ = null;
       private String comments_ = null;
 
-      private int color_ = null;
-      private double pixelAspect_ = null;
+      private Integer color_ = null;
+      private Double pixelAspect_ = null;
 
       private JSONObject userMetadata_ = null;
 
@@ -165,13 +164,13 @@ public class DefaultMetadata implements Metadata {
       }
 
       @Override
-      public MetadataBuilder channelContrastMins(int[] channelContrastMins) {
+      public MetadataBuilder channelContrastMins(Integer[] channelContrastMins) {
          channelContrastMins_ = channelContrastMins;
          return this;
       }
 
       @Override
-      public MetadataBuilder channelContrastMaxes(int[] channelContrastMaxes) {
+      public MetadataBuilder channelContrastMaxes(Integer[] channelContrastMaxes) {
          channelContrastMaxes_ = channelContrastMaxes;
          return this;
       }
@@ -183,43 +182,43 @@ public class DefaultMetadata implements Metadata {
       }
 
       @Override
-      public MetadataBuilder zStepUm(double zStepUm) {
+      public MetadataBuilder zStepUm(Double zStepUm) {
          zStepUm_ = zStepUm;
          return this;
       }
 
       @Override
-      public MetadataBuilder waitIntervalMs(double waitIntervalMs) {
+      public MetadataBuilder waitIntervalMs(Double waitIntervalMs) {
          waitIntervalMs_ = waitIntervalMs;
          return this;
       }
 
       @Override
-      public MetadataBuilder customIntervalsMs(double[] customIntervalsMs) {
+      public MetadataBuilder customIntervalsMs(Double[] customIntervalsMs) {
          customIntervalsMs_ = customIntervalsMs;
          return this;
       }
 
       @Override
-      public MetadataBuilder timeFirst(boolean timeFirst) {
+      public MetadataBuilder timeFirst(Boolean timeFirst) {
          timeFirst_ = timeFirst;
          return this;
       }
 
       @Override
-      public MetadataBuilder slicesFirst(boolean slicesFirst) {
+      public MetadataBuilder slicesFirst(Boolean slicesFirst) {
          slicesFirst_ = slicesFirst;
          return this;
       }
 
       @Override
-      public MetadataBuilder keepShutterOpenSlices(boolean keepShutterOpenSlices) {
+      public MetadataBuilder keepShutterOpenSlices(Boolean keepShutterOpenSlices) {
          keepShutterOpenSlices_ = keepShutterOpenSlices;
          return this;
       }
 
       @Override
-      public MetadataBuilder keepShutterOpenChannels(boolean keepShutterOpenChannels) {
+      public MetadataBuilder keepShutterOpenChannels(Boolean keepShutterOpenChannels) {
          keepShutterOpenChannels_ = keepShutterOpenChannels;
          return this;
       }
@@ -231,19 +230,19 @@ public class DefaultMetadata implements Metadata {
       }
 
       @Override
-      public MetadataBuilder numComponents(int numComponents) {
+      public MetadataBuilder numComponents(Integer numComponents) {
          numComponents_ = numComponents;
          return this;
       }
 
       @Override
-      public MetadataBuilder ijType(int ijType) {
+      public MetadataBuilder ijType(Integer ijType) {
          ijType_ = ijType;
          return this;
       }
 
       @Override
-      public MetadataBuilder frame(int frame) {
+      public MetadataBuilder frame(Integer frame) {
          frame_ = frame;
          return this;
       }
@@ -255,43 +254,43 @@ public class DefaultMetadata implements Metadata {
       }
 
       @Override
-      public MetadataBuilder exposureMs(double exposureMs) {
+      public MetadataBuilder exposureMs(Double exposureMs) {
          exposureMs_ = exposureMs;
          return this;
       }
 
       @Override
-      public MetadataBuilder elapsedTimeMs(double elapsedTimeMs) {
+      public MetadataBuilder elapsedTimeMs(Double elapsedTimeMs) {
          elapsedTimeMs_ = elapsedTimeMs;
          return this;
       }
 
       @Override
-      public MetadataBuilder startTimeMs(double startTimeMs) {
+      public MetadataBuilder startTimeMs(Double startTimeMs) {
          startTimeMs_ = startTimeMs;
          return this;
       }
 
       @Override
-      public MetadataBuilder binning(int binning) {
+      public MetadataBuilder binning(Integer binning) {
          binning_ = binning;
          return this;
       }
 
       @Override
-      public MetadataBuilder imageNumber(int imageNumber) {
+      public MetadataBuilder imageNumber(Integer imageNumber) {
          imageNumber_ = imageNumber;
          return this;
       }
 
       @Override
-      public MetadataBuilder gridRow(int gridRow) {
+      public MetadataBuilder gridRow(Integer gridRow) {
          gridRow_ = gridRow;
          return this;
       }
 
       @Override
-      public MetadataBuilder gridColumn(int gridColumn) {
+      public MetadataBuilder gridColumn(Integer gridColumn) {
          gridColumn_ = gridColumn;
          return this;
       }
@@ -303,25 +302,25 @@ public class DefaultMetadata implements Metadata {
       }
 
       @Override
-      public MetadataBuilder xPositionUm(double xPositionUm) {
+      public MetadataBuilder xPositionUm(Double xPositionUm) {
          xPositionUm_ = xPositionUm;
          return this;
       }
 
       @Override
-      public MetadataBuilder yPositionUm(double yPositionUm) {
+      public MetadataBuilder yPositionUm(Double yPositionUm) {
          yPositionUm_ = yPositionUm;
          return this;
       }
 
       @Override
-      public MetadataBuilder zPositionUm(double zPositionUm) {
+      public MetadataBuilder zPositionUm(Double zPositionUm) {
          zPositionUm_ = zPositionUm;
          return this;
       }
 
       @Override
-      public MetadataBuilder pixelSizeUm(double pixelSizeUm) {
+      public MetadataBuilder pixelSizeUm(Double pixelSizeUm) {
          pixelSizeUm_ = pixelSizeUm;
          return this;
       }
@@ -363,13 +362,13 @@ public class DefaultMetadata implements Metadata {
       }
 
       @Override
-      public MetadataBuilder color(int color) {
+      public MetadataBuilder color(Integer color) {
          color_ = color;
          return this;
       }
 
       @Override
-      public MetadataBuilder pixelAspect(double pixelAspect) {
+      public MetadataBuilder pixelAspect(Double pixelAspect) {
          pixelAspect_ = pixelAspect;
          return this;
       }
@@ -395,41 +394,37 @@ public class DefaultMetadata implements Metadata {
    
    private String[] channelNames_ = null;
    private Color[] channelColors_ = null;
-   private int[] channelContrastMins_ = null;
-   private int[] channelContrastMaxes_ = null;
+   private Integer[] channelContrastMins_ = null;
+   private Integer[] channelContrastMaxes_ = null;
    private MultiStagePosition initialPositionList_ = null;
 
-   private int numChannels_ = null;
-   private int numSlices_ = null;
-   private int numFrames_ = null;
-   private int numPositions_ = null;
-   private double zStepUm_ = null;
-   private double waitIntervalMs_ = null;
-   private double[] customIntervalsMs_ = null;
-   private boolean timeFirst_ = null;
-   private boolean slicesFirst_ = null;
-   private boolean keepShutterOpenSlices_ = null;
-   private boolean keepShutterOpenChannels_ = null;
+   private Double zStepUm_ = null;
+   private Double waitIntervalMs_ = null;
+   private Double[] customIntervalsMs_ = null;
+   private Boolean timeFirst_ = null;
+   private Boolean slicesFirst_ = null;
+   private Boolean keepShutterOpenSlices_ = null;
+   private Boolean keepShutterOpenChannels_ = null;
 
    private String pixelType_ = null;
-   private int numComponents_ = null;
-   private int ijType_ = null;
-   private int frame_ = null;
+   private Integer numComponents_ = null;
+   private Integer ijType_ = null;
+   private Integer frame_ = null;
    private String channelName_ = null;
-   private double exposureMs_ = null;
-   private double elapsedTimeMs_ = null;
-   private double startTimeMs_ = null;
-   private int binning_ = null;
+   private Double exposureMs_ = null;
+   private Double elapsedTimeMs_ = null;
+   private Double startTimeMs_ = null;
+   private Integer binning_ = null;
    
-   private int imageNumber_ = null;
-   private int gridRow_ = null;
-   private int gridColumn_ = null;
+   private Integer imageNumber_ = null;
+   private Integer gridRow_ = null;
+   private Integer gridColumn_ = null;
    private String positionName_ = null;
-   private double xPositionUm_ = null;
-   private double yPositionUm_ = null;
-   private double zPositionUm_ = null;
+   private Double xPositionUm_ = null;
+   private Double yPositionUm_ = null;
+   private Double zPositionUm_ = null;
 
-   private double pixelSizeUm_ = null;
+   private Double pixelSizeUm_ = null;
    private String camera_ = null;
    private String receivedTime_ = null;
    private String excitationLabel_ = null;
@@ -437,13 +432,12 @@ public class DefaultMetadata implements Metadata {
    private Rectangle ROI_ = null;
    private String comments_ = null;
 
-   private int color_ = null;
-   private double pixelAspect_ = null;
+   private Integer color_ = null;
+   private Double pixelAspect_ = null;
 
    private JSONObject userMetadata_ = null;
 
-   @Override
-   public DefaultMetadata(MetadataBuilder builder) {
+   public DefaultMetadata(DefaultMetadataBuilder builder) {
       uuid_ = builder.uuid_;
       source_ = builder.source_;
       microManagerVersion_ = builder.microManagerVersion_;
@@ -462,10 +456,6 @@ public class DefaultMetadata implements Metadata {
       channelContrastMaxes_ = builder.channelContrastMaxes_;
       initialPositionList_ = builder.initialPositionList_;
 
-      numChannels_ = builder.numChannels_;
-      numSlices_ = builder.numSlices_;
-      numFrames_ = builder.numFrames_;
-      numPositions_ = builder.numPositions_;
       zStepUm_ = builder.zStepUm_;
       waitIntervalMs_ = builder.waitIntervalMs_;
       customIntervalsMs_ = builder.customIntervalsMs_;
@@ -525,10 +515,6 @@ public class DefaultMetadata implements Metadata {
             .channelContrastMins(channelContrastMins_)
             .channelContrastMaxes(channelContrastMaxes_)
             .initialPositionList(initialPositionList_)
-            .numChannels(numChannels_)
-            .numSlices(numSlices_)
-            .numFrames(numFrames_)
-            .numPositions(numPositions_)
             .zStepUm(zStepUm_)
             .waitIntervalMs(waitIntervalMs_)
             .customIntervalsMs(customIntervalsMs_)
@@ -629,12 +615,12 @@ public class DefaultMetadata implements Metadata {
    }
 
    @Override
-   public int[] getChannelContrastMins() {
+   public Integer[] getChannelContrastMins() {
       return channelContrastMins_;
    }
 
    @Override
-   public int[] getChannelContrastMaxes() {
+   public Integer[] getChannelContrastMaxes() {
       return channelContrastMaxes_;
    }
 
@@ -644,37 +630,37 @@ public class DefaultMetadata implements Metadata {
    }
 
    @Override
-   public double getZStepUm() {
+   public Double getZStepUm() {
       return zStepUm_;
    }
 
    @Override
-   public double getWaitIntervalMs() {
+   public Double getWaitIntervalMs() {
       return waitIntervalMs_;
    }
 
    @Override
-   public double[] getCustomIntervalsMs() {
+   public Double[] getCustomIntervalsMs() {
       return customIntervalsMs_;
    }
 
    @Override
-   public boolean getTimeFirst() {
+   public Boolean getTimeFirst() {
       return timeFirst_;
    }
 
    @Override
-   public boolean getSlicesFirst() {
+   public Boolean getSlicesFirst() {
       return slicesFirst_;
    }
 
    @Override
-   public boolean getKeepShutterOpenSlices() {
+   public Boolean getKeepShutterOpenSlices() {
       return keepShutterOpenSlices_;
    }
 
    @Override
-   public boolean getKeepShutterOpenChannels() {
+   public Boolean getKeepShutterOpenChannels() {
       return keepShutterOpenChannels_;
    }
 
@@ -684,17 +670,17 @@ public class DefaultMetadata implements Metadata {
    }
 
    @Override
-   public int getNumComponents() {
+   public Integer getNumComponents() {
       return numComponents_;
    }
 
    @Override
-   public int getIjType() {
+   public Integer getIjType() {
       return ijType_;
    }
 
    @Override
-   public int getFrame() {
+   public Integer getFrame() {
       return frame_;
    }
 
@@ -704,37 +690,37 @@ public class DefaultMetadata implements Metadata {
    }
 
    @Override
-   public double getExposureMs() {
+   public Double getExposureMs() {
       return exposureMs_;
    }
 
    @Override
-   public double getElapsedTimeMs() {
+   public Double getElapsedTimeMs() {
       return elapsedTimeMs_;
    }
 
    @Override
-   public double getStartTimeMs() {
+   public Double getStartTimeMs() {
       return startTimeMs_;
    }
 
    @Override
-   public int getBinning() {
+   public Integer getBinning() {
       return binning_;
    }
 
    @Override
-   public int getImageNumber() {
+   public Integer getImageNumber() {
       return imageNumber_;
    }
 
    @Override
-   public int getGridRow() {
+   public Integer getGridRow() {
       return gridRow_;
    }
 
    @Override
-   public int getGridColumn() {
+   public Integer getGridColumn() {
       return gridColumn_;
    }
 
@@ -744,22 +730,22 @@ public class DefaultMetadata implements Metadata {
    }
 
    @Override
-   public double getXPositionUm() {
+   public Double getXPositionUm() {
       return xPositionUm_;
    }
 
    @Override
-   public double getYPositionUm() {
+   public Double getYPositionUm() {
       return yPositionUm_;
    }
 
    @Override
-   public double getZPositionUm() {
+   public Double getZPositionUm() {
       return zPositionUm_;
    }
 
    @Override
-   public double getPixelSizeUm() {
+   public Double getPixelSizeUm() {
       return pixelSizeUm_;
    }
 
@@ -794,12 +780,12 @@ public class DefaultMetadata implements Metadata {
    }
 
    @Override
-   public int getColor() {
+   public Integer getColor() {
       return color_;
    }
 
    @Override
-   public double getPixelAspect() {
+   public Double getPixelAspect() {
       return pixelAspect_;
    }
 
