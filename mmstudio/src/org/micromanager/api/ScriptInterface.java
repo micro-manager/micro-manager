@@ -36,7 +36,10 @@ import mmcorej.TaggedImage;
 
 // These ought not be part of the public API and methods that refer to them are
 // deprecated.
+import org.json.JSONException;
 import org.json.JSONObject;
+
+import org.micromanager.api.data.Image;
 import org.micromanager.dialogs.AcqControlDlg;
 import org.micromanager.positionlist.PositionListDlg;
 import org.micromanager.acquisition.MMAcquisition;
@@ -89,6 +92,11 @@ public interface ScriptInterface {
     * Does not communicate with hardware, only checks Cache
     */
    public void refreshGUIFromCache();
+
+   /**
+    * Given a TaggedImage input, output an Image.
+    */
+   public Image convertTaggedImage(TaggedImage tagged) throws JSONException;
 
    /**
     * Snaps image and displays in AcqWindow.
