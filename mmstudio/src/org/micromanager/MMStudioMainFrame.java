@@ -3580,7 +3580,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
                  + "The channel number must not exceed declared number of positions.");
       }
 
-
       JSONObject tags = taggedImg.tags;
 
       // if the acquisition was not previously initialized, set physical dimensions of the image
@@ -3623,7 +3622,14 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
          throw new MMScriptException(e);
       }
 
+      // Acquisition is set up for synchronous (blocking) image insertion.
       acq.insertImage(taggedImg);
+   }
+
+   @Override
+   public void setAcquisitionAddImageAsynchronous(String name) throws MMScriptException {
+      MMAcquisition acq = acqMgr_.getAcquisition(name);
+      acq.setAsynchronous();
    }
 
    /**

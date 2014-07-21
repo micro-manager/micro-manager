@@ -29,6 +29,8 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.Iterator;
 import java.util.UUID;
 import java.util.prefs.Preferences;
@@ -61,6 +63,12 @@ public class MMAcquisition {
    public static final Color[] DEFAULT_COLORS = {Color.red, Color.green, Color.blue,
       Color.pink, Color.orange, Color.yellow};
    
+   /** 
+    * Final queue of images immediately prior to insertion into the ImageCache.
+    * Only used when running in asynchronous mode.
+    */
+   private BlockingQueue<TaggedImage> outputQueue_ = null;
+   private boolean isAsynchronous_ = false;
    private int numFrames_ = 0;
    private int numChannels_ = 0;
    private int numSlices_ = 0;
@@ -679,8 +687,20 @@ public class MMAcquisition {
          long elapsedTimeMillis = System.currentTimeMillis() - startTimeMs_;
          MDUtils.setElapsedTimeMs(tags, elapsedTimeMillis);
          MDUtils.setImageTime(tags, MDUtils.getCurrentTime());
-                  
-         imageCache_.putImage(taggedImg);
+         
+         if (isAsynchronous_) {
+            if (outputQueue_ == null) {
+               // Set up our output queue now.
+               outputQueue_ = new LinkedBlockingQueue<TaggedImage>(1);
+               DefaultTaggedImageSink sink = new DefaultTaggedImageSink(
+                     outputQueue_, imageCache_);
+               sink.start();
+            }
+            outputQueue_.add(taggedImg);
+         }
+         else {
+            imageCache_.putImage(taggedImg);
+         }
       } catch (Exception ex) {
          throw new MMScriptException(ex);
       }
@@ -710,6 +730,10 @@ public class MMAcquisition {
          if (virtAcq_.acquisitionIsRunning()) {
             virtAcq_.abort();
          }
+      }
+      if (outputQueue_ != null) {
+         // Ensure our queue consumer cleans up after themselves.
+         outputQueue_.add(TaggedImageQueue.POISON);
       }
    }
 
@@ -956,5 +980,9 @@ public class MMAcquisition {
 
    public VirtualAcquisitionDisplay getAcquisitionWindow() {
       return virtAcq_;
+   }
+
+   public void setAsynchronous() {
+      isAsynchronous_ = true;
    }
 }

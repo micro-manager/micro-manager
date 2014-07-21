@@ -147,6 +147,14 @@ public interface ScriptInterface {
    public void addImageToAcquisition(String name, int frame, int channel, int slice, int position, TaggedImage taggedImg) throws MMScriptException;   
 
    /**
+    * Change an acquisition so that adding images to it is done asynchronously.
+    * All calls to e.g. addImageToAcquisition() and other similar functions
+    * will return nearly-instantly.
+    * @throws MMScriptException if the specified acquisition does not exist.
+    */
+   public void setAcquisitionAddImageAsynchronous(String name) throws MMScriptException;
+
+   /**
     * Snaps an image with the current settings and places pixels in the specified position
     * of the Micro-Manager Image viewer
     * @param name Name of the acquisition.
