@@ -1218,32 +1218,36 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                long timeout2;
                timeout2 = Math.max(10000, Math.round(computeActualVolumeDuration()));
                start = System.currentTimeMillis();
-               while ((core_.getRemainingImageCount() > 0
-                       || core_.isSequenceRunning(firstCamera)
-                       || (secondCamera != null && core_.isSequenceRunning(secondCamera)))
-                       && !stop_.get() && !done) {
-                  now = System.currentTimeMillis();
-                  if (core_.getRemainingImageCount() > 0) {
-                     TaggedImage timg = core_.popNextTaggedImage();
-                     String camera = (String) timg.tags.get("Camera");
-                     int ch = 0;
-                     if (camera.equals(secondCamera)) {
-                        ch = 1;
+               try {
+                  while ((core_.getRemainingImageCount() > 0
+                          || core_.isSequenceRunning(firstCamera)
+                          || (secondCamera != null && core_.isSequenceRunning(secondCamera)))
+                          && !stop_.get() && !done) {
+                     now = System.currentTimeMillis();
+                     if (core_.getRemainingImageCount() > 0) {
+                        TaggedImage timg = core_.popNextTaggedImage();
+                        String camera = (String) timg.tags.get("Camera");
+                        int ch = 0;
+                        if (camera.equals(secondCamera)) {
+                           ch = 1;
+                        }
+                        addImageToAcquisition(acqName, f, ch, frNumber[ch], 0,
+                                now - acqStart, timg, bq);
+                        frNumber[ch]++;
+                     } else {
+                        Thread.sleep(1);
                      }
-                     addImageToAcquisition(acqName, f, ch, frNumber[ch], 0,
-                             now - acqStart, timg, bq);
-                     frNumber[ch]++;
-                  } else {
-                     Thread.sleep(1);
+                     if (frNumber[0] == frNumber[1] && frNumber[0] == nrSlices) {
+                        done = true;
+                     }
+                     if (now - start >= timeout2) {
+                        gui_.logError("No image arrived withing a reasonable period");
+                        // stop_.set(true);
+                        done = true;
+                     }
                   }
-                  if (frNumber[0] == frNumber[1] && frNumber[0] == nrSlices) {
-                     done = true;
-                  }
-                  if (now - start >= timeout2) {
-                     gui_.logError("No image arrived withing a reasonable period");
-                     // stop_.set(true);
-                     done = true;
-                  }
+               } catch (InterruptedException iex) {
+                  gui_.showError(iex);
                }
 
                if (core_.isSequenceRunning(firstCamera)) {
@@ -1394,7 +1398,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
            int position,
            long ms,
            TaggedImage taggedImg,
-           BlockingQueue<TaggedImage> bq) throws MMScriptException {
+           BlockingQueue<TaggedImage> bq) throws MMScriptException, InterruptedException {
 
       MMAcquisition acq = gui_.getAcquisition(name);
 
@@ -1451,7 +1455,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          throw new MMScriptException(e);
       }
 
-      bq.add(taggedImg);
+      bq.put(taggedImg);
    }
    
    
