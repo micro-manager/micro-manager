@@ -29,7 +29,7 @@
 
 
 #include "../../MMDevice/MMDevice.h"
-#include "CoherentObis.h"
+#include "CoherentOBIS.h"
 #include <string>
 #include <math.h>
 #include "../../MMDevice/ModuleInterface.h"
