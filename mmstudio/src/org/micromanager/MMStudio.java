@@ -70,6 +70,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.acquisition.*;
 import org.micromanager.api.Autofocus;
+import org.micromanager.api.data.Image;
 import org.micromanager.api.DataProcessor;
 import org.micromanager.api.IAcquisitionEngine2010;
 import org.micromanager.api.ImageCache;
@@ -82,6 +83,9 @@ import org.micromanager.api.events.ExposureChangedEvent;
 import org.micromanager.api.events.PropertiesChangedEvent;
 import org.micromanager.conf2.MMConfigFileException;
 import org.micromanager.conf2.MicroscopeModel;
+
+import org.micromanager.data.DefaultImage;
+
 import org.micromanager.dialogs.AcqControlDlg;
 import org.micromanager.dialogs.CalibrationListDlg;
 import org.micromanager.dialogs.MMIntroDlg;
@@ -1125,6 +1129,11 @@ public class MMStudio implements ScriptInterface {
    // //////////////////////////////////////////////////////////////////////////
    // public interface available for scripting access
    // //////////////////////////////////////////////////////////////////////////
+   @Override
+   public Image convertTaggedImage(TaggedImage tagged) throws JSONException {
+      return new DefaultImage(tagged);
+   }
+
    @Override
    public void snapSingleImage() {
       doSnap();
