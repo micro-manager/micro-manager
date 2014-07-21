@@ -96,7 +96,7 @@ public interface ScriptInterface {
    /**
     * Given a TaggedImage input, output an Image.
     */
-   public Image convertTaggedImage(TaggedImage tagged) throws JSONException;
+   public Image convertTaggedImage(TaggedImage tagged) throws JSONException, MMScriptException;
 
    /**
     * Snaps image and displays in AcqWindow.
