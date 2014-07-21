@@ -671,7 +671,7 @@ void CMMCore::setSystemState(const Configuration& conf)
          {
             setProperty(s.getDeviceLabel().c_str(), s.getPropertyName().c_str(), s.getPropertyValue().c_str());
          }
-         catch (CMMError& err)
+         catch (CMMError&)
          {
             // Do not give up yet.
          }
@@ -5557,7 +5557,7 @@ void CMMCore::loadSystemState(const char* fileName) throw (CMMError)
                // apply the command
                setProperty(tokens[1].c_str(), tokens[2].c_str(), tokens[3].c_str());
             }
-            catch (CMMError& err)
+            catch (CMMError&)
             {
                // Don't give up yet.
                // TODO Yes, do give up, unless cleanly recoverable.
