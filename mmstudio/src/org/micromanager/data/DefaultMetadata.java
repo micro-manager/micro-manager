@@ -351,7 +351,7 @@ public class DefaultMetadata implements Metadata {
       }
 
       @Override
-      public MetadataBuilder ROI(String ROI) {
+      public MetadataBuilder ROI(Rectangle ROI) {
          ROI_ = ROI;
          return this;
       }
@@ -434,7 +434,7 @@ public class DefaultMetadata implements Metadata {
    private String receivedTime_ = null;
    private String excitationLabel_ = null;
    private String emissionLabel_ = null;
-   private String ROI_ = null;
+   private Rectangle ROI_ = null;
    private String comments_ = null;
 
    private int color_ = null;
@@ -784,7 +784,7 @@ public class DefaultMetadata implements Metadata {
    }
 
    @Override
-   public String getROI() {
+   public Rectangle getROI() {
       return ROI_;
    }
 
