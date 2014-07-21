@@ -453,7 +453,14 @@ public interface ScriptInterface {
     * Returns the ImageJ ImageWindow instance that is used for Snap and Live display.
     */
    public ImageWindow getSnapLiveWin();
-   
+
+   /**
+    * Given an ImageWindow, retrieve the associated ImageCache. Throws an
+    * IllegalArgumentException if the window is not one that Micro-Manager
+    * controls.
+    */
+   public ImageCache getCacheForWindow(ImageWindow window) throws IllegalArgumentException;
+
    /**
     * Given an ImageWindow, return the ImageCache associated with it.
     */

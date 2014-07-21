@@ -2025,13 +2025,13 @@ public class MMStudio implements ScriptInterface {
       return snapLiveManager_.getSnapLiveWindow();
    }
 
-   @Override 
-   public ImageCache getCacheForWindow(ImageWindow window) throws IllegalArgumentException { 
-      VirtualAcquisitionDisplay display = VirtualAcquisitionDisplay.getDisplay(window.getImagePlus()); 
-      if (display == null) { 
-         throw new IllegalArgumentException("No matching Micro-Manager display for this window"); 
-      } 
-      return display.getImageCache(); 
+   @Override
+   public ImageCache getCacheForWindow(ImageWindow window) throws IllegalArgumentException {
+      VirtualAcquisitionDisplay display = VirtualAcquisitionDisplay.getDisplay(window.getImagePlus());
+      if (display == null) {
+         throw new IllegalArgumentException("No matching Micro-Manager display for this window");
+      }
+      return display.getImageCache();
    }
    
    @Override
