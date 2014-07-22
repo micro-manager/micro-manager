@@ -11,6 +11,7 @@ import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import org.micromanager.api.data.Coords;
 import org.micromanager.api.data.Image;
@@ -34,23 +35,28 @@ public class DefaultImage implements Image {
     * @param taggedImage A TaggedImage to base the Image on.
     */
    public DefaultImage(TaggedImage tagged) throws JSONException, MMScriptException {
+      JSONObject tags = tagged.tags;
       metadata_ = new DefaultMetadata.DefaultMetadataBuilder()
-            .camera(MDUtils.getChannelName(tagged.tags))
-            .ROI(MDUtils.getROI(tagged.tags))
-            .binning(MDUtils.getBinning(tagged.tags))
-            .pixelSizeUm(MDUtils.getPixelSizeUm(tagged.tags))
+            .camera(MDUtils.getChannelName(tags))
+            .ROI(MDUtils.getROI(tags))
+            .binning(MDUtils.getBinning(tags))
+            .pixelSizeUm(MDUtils.getPixelSizeUm(tags))
+            .uuid(MDUtils.getUUID(tags))
+            .zStepUm(MDUtils.getZStepUm(tags))
+            .elapsedTimeMs(MDUtils.getElapsedTimeMs(tags))
+            .comments(MDUtils.getComments(tags))
             .build();
 
       coords_ = new DefaultCoords.DefaultCoordsBuilder()
-            .position("time", MDUtils.getFrameIndex(tagged.tags))
-            .position("position", MDUtils.getPositionIndex(tagged.tags))
-            .position("slice", MDUtils.getSliceIndex(tagged.tags))
-            .position("channel", MDUtils.getChannelIndex(tagged.tags))
+            .position("time", MDUtils.getFrameIndex(tags))
+            .position("position", MDUtils.getPositionIndex(tags))
+            .position("slice", MDUtils.getSliceIndex(tags))
+            .position("channel", MDUtils.getChannelIndex(tags))
             .build();
 
       pixels_ = generateImgPlusFromPixels(tagged.pix, 
-            MDUtils.getWidth(tagged.tags), MDUtils.getHeight(tagged.tags),
-            MDUtils.getBytesPerPixel(tagged.tags));
+            MDUtils.getWidth(tags), MDUtils.getHeight(tags),
+            MDUtils.getBytesPerPixel(tags));
    }
 
    /**
