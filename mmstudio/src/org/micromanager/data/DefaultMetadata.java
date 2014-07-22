@@ -36,7 +36,6 @@ public class DefaultMetadata implements Metadata {
       private String pixelType_ = null;
       private Integer numComponents_ = null;
       private Integer ijType_ = null;
-      private Integer frame_ = null;
       private String channelName_ = null;
       private Double exposureMs_ = null;
       private Double elapsedTimeMs_ = null;
@@ -121,12 +120,6 @@ public class DefaultMetadata implements Metadata {
       @Override
       public MetadataBuilder ijType(Integer ijType) {
          ijType_ = ijType;
-         return this;
-      }
-
-      @Override
-      public MetadataBuilder frame(Integer frame) {
-         frame_ = frame;
          return this;
       }
 
@@ -281,7 +274,6 @@ public class DefaultMetadata implements Metadata {
    private String pixelType_ = null;
    private Integer numComponents_ = null;
    private Integer ijType_ = null;
-   private Integer frame_ = null;
    private String channelName_ = null;
    private Double exposureMs_ = null;
    private Double elapsedTimeMs_ = null;
@@ -323,7 +315,6 @@ public class DefaultMetadata implements Metadata {
       pixelType_ = builder.pixelType_;
       numComponents_ = builder.numComponents_;
       ijType_ = builder.ijType_;
-      frame_ = builder.frame_;
       channelName_ = builder.channelName_;
       exposureMs_ = builder.exposureMs_;
       elapsedTimeMs_ = builder.elapsedTimeMs_;
@@ -365,7 +356,6 @@ public class DefaultMetadata implements Metadata {
             .pixelType(pixelType_)
             .numComponents(numComponents_)
             .ijType(ijType_)
-            .frame(frame_)
             .channelName(channelName_)
             .exposureMs(exposureMs_)
             .elapsedTimeMs(elapsedTimeMs_)
@@ -432,11 +422,6 @@ public class DefaultMetadata implements Metadata {
    @Override
    public Integer getIjType() {
       return ijType_;
-   }
-
-   @Override
-   public Integer getFrame() {
-      return frame_;
    }
 
    @Override
