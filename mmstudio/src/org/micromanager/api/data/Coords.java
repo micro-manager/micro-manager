@@ -5,9 +5,39 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * The Coords class tracks the position of an image in the dataset.
+ * The Coords class tracks the position of an image in the dataset. They are
+ * immutable; construct a Coords using a CoordsBuilder.
  */
 public interface Coords {
+   
+   interface CoordsBuilder {
+      /**
+       * Construct a Coords from the CoordsBuilder. Call this once you have
+       * set all properties for the Coords.
+       */
+      Coords build();
+
+      /**
+       * Set the position of the Coords along the provided axis to the 
+       * specified value.
+       */
+      CoordsBuilder position(String axis, int position);
+
+      /**
+       * Apply an offset to a pre-existing position.
+       * @throws IllegalArgumentException If there is no pre-existing value for
+       *         this axis, or if adding the offset would result in a negative
+       *         position.
+       */
+      CoordsBuilder offset(String axis, int offset) throws IllegalArgumentException;
+
+      /**
+       * Indicate that this image is at the end of an axis of the dataset.
+       * For example, if you were collecting a Z-stack with 10 slices per
+       * stack, then the 10th image would have this set for the "Z" axis.
+       */
+      CoordsBuilder isAxisEndFor(String axis);
+   }
    
    /**
     * Given an axis label (for example "t" or "z" or "polarization"), returns
@@ -18,12 +48,6 @@ public interface Coords {
    public int getPositionAt(String axis);
 
    /**
-    * Set a position for the Coords along the specified axis. Overrides any
-    * previous value for that axis.
-    */
-   public void setPosition(String axis, int value);
-
-   /**
     * Returns true if this Coords marks the end of an axis of iteration in the
     * experiment, false otherwise. For example, if the experiment is collecting
     * Z-stacks with 10 images per stack, then any image with a value of Z=9
@@ -32,11 +56,6 @@ public interface Coords {
     * indicated by the position being 0 for that axis.
     */
    public boolean getIsAxisEndFor(String axis);
-
-   /**
-    * Marks this Coords as being at the end of an axis.
-    */
-   public void setIsAxisEndFor(String axis);
 
    /**
     * Returns a (possibly empty) set of all axes that this Coords is at the
@@ -50,11 +69,7 @@ public interface Coords {
    public List<String> getAxes();
 
    /**
-    * Generate a copy of this Coords, where each axis position is offset by
-    * the corresponding value in the input HashMap. If the HashMap does not
-    * have an entry for an axis, then that axis is left as-is; if the HashMap
-    * has entries for axes that are not in this Coords, then those entries are
-    * ignored.
+    * Generate a new CoordsBuilder based on the values for this Coords.
     */
-   public Coords makeOffsetCopy(HashMap<String, Integer> offsets);
+   public CoordsBuilder copy();
 }

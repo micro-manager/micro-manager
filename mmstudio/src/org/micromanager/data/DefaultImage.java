@@ -41,11 +41,12 @@ public class DefaultImage implements Image {
             .pixelSizeUm(MDUtils.getPixelSizeUm(tagged.tags))
             .build();
 
-      coords_ = new DefaultCoords();
-      coords_.setPosition("time", MDUtils.getFrameIndex(tagged.tags));
-      coords_.setPosition("position", MDUtils.getPositionIndex(tagged.tags));
-      coords_.setPosition("slice", MDUtils.getSliceIndex(tagged.tags));
-      coords_.setPosition("channel", MDUtils.getChannelIndex(tagged.tags));
+      coords_ = new DefaultCoords.DefaultCoordsBuilder()
+            .position("time", MDUtils.getFrameIndex(tagged.tags))
+            .position("position", MDUtils.getPositionIndex(tagged.tags))
+            .position("slice", MDUtils.getSliceIndex(tagged.tags))
+            .position("channel", MDUtils.getChannelIndex(tagged.tags))
+            .build();
 
       pixels_ = generateImgPlusFromPixels(tagged.pix, 
             MDUtils.getWidth(tagged.tags), MDUtils.getHeight(tagged.tags),
@@ -58,7 +59,7 @@ public class DefaultImage implements Image {
    public DefaultImage(Object pixels, int width, int height, int bytesPerPixel) 
          throws IllegalArgumentException {
       metadata_ = new DefaultMetadata.DefaultMetadataBuilder().build();
-      coords_ = new DefaultCoords();
+      coords_ = new DefaultCoords.DefaultCoordsBuilder().build();
 
       pixels_ = generateImgPlusFromPixels(pixels, width, height, bytesPerPixel);
    }
