@@ -35,7 +35,6 @@ public interface Metadata {
       MetadataBuilder pixelType(String pixelType);
       MetadataBuilder numComponents(Integer numComponents);
       MetadataBuilder ijType(Integer ijType);
-      MetadataBuilder frame(Integer frame);
       MetadataBuilder channelName(String channelName);
       MetadataBuilder exposureMs(Double exposureMs);
       MetadataBuilder elapsedTimeMs(Double elapsedTimeMs);
@@ -76,7 +75,6 @@ public interface Metadata {
    String getPixelType();
    Integer getNumComponents();
    Integer getIjType();
-   Integer getFrame();
    String getChannelName();
    Double getExposureMs();
    Double getElapsedTimeMs();
