@@ -666,4 +666,11 @@ public class MDUtils {
    public static void setSummary(JSONObject map, JSONObject summary) throws JSONException {
       map.put("Summary", summary);
    }
+
+   public static String getComments(JSONObject map) throws JSONException {
+      return map.getString("Comments");
+   }
+   public static void setComments(JSONObject map, String comments) throws JSONException {
+      map.put("Comments", comments);
+   }
 }
