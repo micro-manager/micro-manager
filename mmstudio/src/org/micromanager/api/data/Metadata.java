@@ -28,25 +28,8 @@ public interface Metadata {
       // The following functions each set the relevant value for the Metadata.
       MetadataBuilder uuid(UUID uuid);
       MetadataBuilder source(String source);
-      MetadataBuilder microManagerVersion(String microManagerVersion);
-      MetadataBuilder metadataVersion(String metadataVersion);
-      MetadataBuilder acquisitionName(String acquisitionName);
-      MetadataBuilder fileName(String fileName);
-      MetadataBuilder userName(String userName);
-      MetadataBuilder computerName(String computerName);
-      MetadataBuilder prefix(String prefix);
-      MetadataBuilder directory(String directory);
-      MetadataBuilder startTime(String startTime);
-      MetadataBuilder channelNames(String[] channelNames);
-      MetadataBuilder channelColors(Color[] channelColors);
-      MetadataBuilder channelContrastMins(Integer[] channelContrastMins);
-      MetadataBuilder channelContrastMaxes(Integer[] channelContrastMaxes);
       MetadataBuilder initialPositionList(MultiStagePosition initialPositionList);
       MetadataBuilder zStepUm(Double zStepUm);
-      MetadataBuilder waitIntervalMs(Double waitIntervalMs);
-      MetadataBuilder customIntervalsMs(Double[] customIntervalsMs);
-      MetadataBuilder timeFirst(Boolean timeFirst);
-      MetadataBuilder slicesFirst(Boolean slicesFirst);
       MetadataBuilder keepShutterOpenSlices(Boolean keepShutterOpenSlices);
       MetadataBuilder keepShutterOpenChannels(Boolean keepShutterOpenChannels);
       MetadataBuilder pixelType(String pixelType);
@@ -75,6 +58,7 @@ public interface Metadata {
       MetadataBuilder color(Integer color);
       MetadataBuilder pixelAspect(Double pixelAspect);
       MetadataBuilder userMetadata(JSONObject userMetadata);
+      MetadataBuilder summaryMetadata(SummaryMetadata summaryMetadata);
    }
 
    /**
@@ -85,25 +69,8 @@ public interface Metadata {
 
    UUID getUuid();
    String getSource();
-   String getMicroManagerVersion();
-   String getMetadataVersion();
-   String getAcquisitionName();
-   String getFileName();
-   String getUserName();
-   String getComputerName();
-   String getPrefix();
-   String getDirectory();
-   String getStartTime();
-   String[] getChannelNames();
-   Color[] getChannelColors();
-   Integer[] getChannelContrastMins();
-   Integer[] getChannelContrastMaxes();
    MultiStagePosition getInitialPositionList();
    Double getZStepUm();
-   Double getWaitIntervalMs();
-   Double[] getCustomIntervalsMs();
-   Boolean getTimeFirst();
-   Boolean getSlicesFirst();
    Boolean getKeepShutterOpenSlices();
    Boolean getKeepShutterOpenChannels();
    String getPixelType();
@@ -132,4 +99,5 @@ public interface Metadata {
    Integer getColor();
    Double getPixelAspect();
    JSONObject getUserMetadata();
+   SummaryMetadata getSummaryMetadata();
 }
