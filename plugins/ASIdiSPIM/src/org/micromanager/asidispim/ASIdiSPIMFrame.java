@@ -46,6 +46,8 @@ import org.micromanager.internalinterfaces.LiveModeListener;
 // TODO make sure acquisition works for single SPIM
 // TODO display center position in setup panel
 // TODO support demo cam for testing purposes
+// TODO handle camera binning
+// TODO add check for correct Hamamatsu model
 // TODO support for laser shutters (update device panel too?)
 // TODO display certain properties like positions, e.g. scan amplitudes/offsets
 // TODO resolve whether Home/Stop should be added to 1axis stage API, use here if possible

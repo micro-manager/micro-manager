@@ -72,7 +72,10 @@ import org.micromanager.acquisition.ComponentTitledBorder;
 import org.micromanager.acquisition.DefaultTaggedImageSink;
 import org.micromanager.acquisition.MMAcquisition;
 import org.micromanager.acquisition.TaggedImageQueue;
+import org.micromanager.acquisition.TaggedImageStorageDiskDefault;
+import org.micromanager.acquisition.TaggedImageStorageMultipageTiff;
 import org.micromanager.imagedisplay.VirtualAcquisitionDisplay;
+import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.FileDialogs;
 import org.micromanager.utils.MDUtils;
@@ -1089,6 +1092,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       stagePosUpdater_.setAcqRunning(true);
       
       numTimePointsDone_ = 0;
+      
+      // force saving as image stacks, not individual files
+      // implementation assumes just two options, either TaggedImageStorageDiskDefault.class or TaggedImageStorageMultipageTiff.class
+      boolean separateImageFiles = ImageUtils.getImageStorageClass().equals(TaggedImageStorageDiskDefault.class);
+      ImageUtils.setImageStorageClass(TaggedImageStorageMultipageTiff.class);
 
       for (int tp = 0; tp < nrRepeats && !stop_.get(); tp++) {
          BlockingQueue<TaggedImage> bq = new LinkedBlockingQueue<TaggedImage>(10);
@@ -1299,8 +1307,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                stagePosUpdater_.setAcqRunning(false);
                bq.put(TaggedImageQueue.POISON);
                gui_.closeAcquisition(acqName);
-               gui_.logMessage("Acquisition took: " + 
+               gui_.logMessage("diSPIM plugin acquisition took: " + 
                        (System.currentTimeMillis() - acqStart) + "ms");
+               
+               if (separateImageFiles) {
+                  ImageUtils.setImageStorageClass(TaggedImageStorageDiskDefault.class);
+               }
                
                // return camera trigger mode 
                cameras_.setSPIMCameraTriggerMode(Cameras.TriggerModes.INTERNAL);
