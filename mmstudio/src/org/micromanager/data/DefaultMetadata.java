@@ -7,6 +7,7 @@ import java.util.UUID;
 import org.json.JSONObject;
 
 import org.micromanager.api.data.Metadata;
+import org.micromanager.api.data.SummaryMetadata;
 import org.micromanager.api.MultiStagePosition;
 
 
@@ -25,27 +26,10 @@ public class DefaultMetadata implements Metadata {
    public static class DefaultMetadataBuilder implements Metadata.MetadataBuilder {
       private UUID uuid_ = null;
       private String source_ = null;
-      private String microManagerVersion_ = null;
-      private String metadataVersion_ = null;
-      private String acquisitionName_ = null;
-      private String fileName_ = null;
-      private String userName_ = null;
-      private String computerName_ = null;
-      private String prefix_ = null;
-      private String directory_ = null;
-      private String startTime_ = null;
       
-      private String[] channelNames_ = null;
-      private Color[] channelColors_ = null;
-      private Integer[] channelContrastMins_ = null;
-      private Integer[] channelContrastMaxes_ = null;
       private MultiStagePosition initialPositionList_ = null;
 
       private Double zStepUm_ = null;
-      private Double waitIntervalMs_ = null;
-      private Double[] customIntervalsMs_ = null;
-      private Boolean timeFirst_ = null;
-      private Boolean slicesFirst_ = null;
       private Boolean keepShutterOpenSlices_ = null;
       private Boolean keepShutterOpenChannels_ = null;
 
@@ -79,6 +63,7 @@ public class DefaultMetadata implements Metadata {
       private Double pixelAspect_ = null;
 
       private JSONObject userMetadata_ = null;
+      private SummaryMetadata summaryMetadata_ = null;
 
       @Override
       public Metadata build() {
@@ -98,84 +83,6 @@ public class DefaultMetadata implements Metadata {
       }
 
       @Override
-      public MetadataBuilder microManagerVersion(String microManagerVersion) {
-         microManagerVersion_ = microManagerVersion;
-         return this;
-      }
-
-      @Override
-      public MetadataBuilder metadataVersion(String metadataVersion) {
-         metadataVersion_ = metadataVersion;
-         return this;
-      }
-
-      @Override
-      public MetadataBuilder acquisitionName(String acquisitionName) {
-         acquisitionName_ = acquisitionName;
-         return this;
-      }
-
-      @Override
-      public MetadataBuilder fileName(String fileName) {
-         fileName_ = fileName;
-         return this;
-      }
-
-      @Override
-      public MetadataBuilder userName(String userName) {
-         userName_ = userName;
-         return this;
-      }
-
-      @Override
-      public MetadataBuilder computerName(String computerName) {
-         computerName_ = computerName;
-         return this;
-      }
-
-      @Override
-      public MetadataBuilder prefix(String prefix) {
-         prefix_ = prefix;
-         return this;
-      }
-
-      @Override
-      public MetadataBuilder directory(String directory) {
-         directory_ = directory;
-         return this;
-      }
-
-      @Override
-      public MetadataBuilder startTime(String startTime) {
-         startTime_ = startTime;
-         return this;
-      }
-
-      @Override
-      public MetadataBuilder channelNames(String[] channelNames) {
-         channelNames_ = channelNames;
-         return this;
-      }
-
-      @Override
-      public MetadataBuilder channelColors(Color[] channelColors) {
-         channelColors_ = channelColors;
-         return this;
-      }
-
-      @Override
-      public MetadataBuilder channelContrastMins(Integer[] channelContrastMins) {
-         channelContrastMins_ = channelContrastMins;
-         return this;
-      }
-
-      @Override
-      public MetadataBuilder channelContrastMaxes(Integer[] channelContrastMaxes) {
-         channelContrastMaxes_ = channelContrastMaxes;
-         return this;
-      }
-
-      @Override
       public MetadataBuilder initialPositionList(MultiStagePosition initialPositionList) {
          initialPositionList_ = initialPositionList;
          return this;
@@ -184,30 +91,6 @@ public class DefaultMetadata implements Metadata {
       @Override
       public MetadataBuilder zStepUm(Double zStepUm) {
          zStepUm_ = zStepUm;
-         return this;
-      }
-
-      @Override
-      public MetadataBuilder waitIntervalMs(Double waitIntervalMs) {
-         waitIntervalMs_ = waitIntervalMs;
-         return this;
-      }
-
-      @Override
-      public MetadataBuilder customIntervalsMs(Double[] customIntervalsMs) {
-         customIntervalsMs_ = customIntervalsMs;
-         return this;
-      }
-
-      @Override
-      public MetadataBuilder timeFirst(Boolean timeFirst) {
-         timeFirst_ = timeFirst;
-         return this;
-      }
-
-      @Override
-      public MetadataBuilder slicesFirst(Boolean slicesFirst) {
-         slicesFirst_ = slicesFirst;
          return this;
       }
 
@@ -378,31 +261,20 @@ public class DefaultMetadata implements Metadata {
          userMetadata_ = userMetadata;
          return this;
       }
+
+      @Override
+      public MetadataBuilder summaryMetadata(SummaryMetadata summaryMetadata) {
+         summaryMetadata_ = summaryMetadata;
+         return this;
+      }
    }
 
    private UUID uuid_ = null;
    private String source_ = null;
-   private String microManagerVersion_ = null;
-   private String metadataVersion_ = null;
-   private String acquisitionName_ = null;
-   private String fileName_ = null;
-   private String userName_ = null;
-   private String computerName_ = null;
-   private String prefix_ = null;
-   private String directory_ = null;
-   private String startTime_ = null;
    
-   private String[] channelNames_ = null;
-   private Color[] channelColors_ = null;
-   private Integer[] channelContrastMins_ = null;
-   private Integer[] channelContrastMaxes_ = null;
    private MultiStagePosition initialPositionList_ = null;
 
    private Double zStepUm_ = null;
-   private Double waitIntervalMs_ = null;
-   private Double[] customIntervalsMs_ = null;
-   private Boolean timeFirst_ = null;
-   private Boolean slicesFirst_ = null;
    private Boolean keepShutterOpenSlices_ = null;
    private Boolean keepShutterOpenChannels_ = null;
 
@@ -436,31 +308,15 @@ public class DefaultMetadata implements Metadata {
    private Double pixelAspect_ = null;
 
    private JSONObject userMetadata_ = null;
+   private SummaryMetadata summaryMetadata_ = null;
 
    public DefaultMetadata(DefaultMetadataBuilder builder) {
       uuid_ = builder.uuid_;
       source_ = builder.source_;
-      microManagerVersion_ = builder.microManagerVersion_;
-      metadataVersion_ = builder.metadataVersion_;
-      acquisitionName_ = builder.acquisitionName_;
-      fileName_ = builder.fileName_;
-      userName_ = builder.userName_;
-      computerName_ = builder.computerName_;
-      prefix_ = builder.prefix_;
-      directory_ = builder.directory_;
-      startTime_ = builder.startTime_;
       
-      channelNames_ = builder.channelNames_;
-      channelColors_ = builder.channelColors_;
-      channelContrastMins_ = builder.channelContrastMins_;
-      channelContrastMaxes_ = builder.channelContrastMaxes_;
       initialPositionList_ = builder.initialPositionList_;
 
       zStepUm_ = builder.zStepUm_;
-      waitIntervalMs_ = builder.waitIntervalMs_;
-      customIntervalsMs_ = builder.customIntervalsMs_;
-      timeFirst_ = builder.timeFirst_;
-      slicesFirst_ = builder.slicesFirst_;
       keepShutterOpenSlices_ = builder.keepShutterOpenSlices_;
       keepShutterOpenChannels_ = builder.keepShutterOpenChannels_;
 
@@ -494,6 +350,7 @@ public class DefaultMetadata implements Metadata {
       pixelAspect_ = builder.pixelAspect_;
 
       userMetadata_ = builder.userMetadata_;
+      summaryMetadata_ = builder.summaryMetadata_;
    }
    
    @Override
@@ -501,25 +358,8 @@ public class DefaultMetadata implements Metadata {
       return new DefaultMetadataBuilder()
             .uuid(uuid_)
             .source(source_)
-            .microManagerVersion(microManagerVersion_)
-            .metadataVersion(metadataVersion_)
-            .acquisitionName(acquisitionName_)
-            .fileName(fileName_)
-            .userName(userName_)
-            .computerName(computerName_)
-            .prefix(prefix_)
-            .directory(directory_)
-            .startTime(startTime_)
-            .channelNames(channelNames_)
-            .channelColors(channelColors_)
-            .channelContrastMins(channelContrastMins_)
-            .channelContrastMaxes(channelContrastMaxes_)
             .initialPositionList(initialPositionList_)
             .zStepUm(zStepUm_)
-            .waitIntervalMs(waitIntervalMs_)
-            .customIntervalsMs(customIntervalsMs_)
-            .timeFirst(timeFirst_)
-            .slicesFirst(slicesFirst_)
             .keepShutterOpenSlices(keepShutterOpenSlices_)
             .keepShutterOpenChannels(keepShutterOpenChannels_)
             .pixelType(pixelType_)
@@ -560,71 +400,6 @@ public class DefaultMetadata implements Metadata {
    }
 
    @Override
-   public String getMicroManagerVersion() {
-      return microManagerVersion_;
-   }
-
-   @Override
-   public String getMetadataVersion() {
-      return metadataVersion_;
-   }
-
-   @Override
-   public String getAcquisitionName() {
-      return acquisitionName_;
-   }
-
-   @Override
-   public String getFileName() {
-      return fileName_;
-   }
-
-   @Override
-   public String getUserName() {
-      return userName_;
-   }
-
-   @Override
-   public String getComputerName() {
-      return computerName_;
-   }
-
-   @Override
-   public String getPrefix() {
-      return prefix_;
-   }
-
-   @Override
-   public String getDirectory() {
-      return directory_;
-   }
-
-   @Override
-   public String getStartTime() {
-      return startTime_;
-   }
-
-   @Override
-   public String[] getChannelNames() {
-      return channelNames_;
-   }
-
-   @Override
-   public Color[] getChannelColors() {
-      return channelColors_;
-   }
-
-   @Override
-   public Integer[] getChannelContrastMins() {
-      return channelContrastMins_;
-   }
-
-   @Override
-   public Integer[] getChannelContrastMaxes() {
-      return channelContrastMaxes_;
-   }
-
-   @Override
    public MultiStagePosition getInitialPositionList() {
       return initialPositionList_;
    }
@@ -632,26 +407,6 @@ public class DefaultMetadata implements Metadata {
    @Override
    public Double getZStepUm() {
       return zStepUm_;
-   }
-
-   @Override
-   public Double getWaitIntervalMs() {
-      return waitIntervalMs_;
-   }
-
-   @Override
-   public Double[] getCustomIntervalsMs() {
-      return customIntervalsMs_;
-   }
-
-   @Override
-   public Boolean getTimeFirst() {
-      return timeFirst_;
-   }
-
-   @Override
-   public Boolean getSlicesFirst() {
-      return slicesFirst_;
    }
 
    @Override
@@ -792,5 +547,10 @@ public class DefaultMetadata implements Metadata {
    @Override
    public JSONObject getUserMetadata() {
       return userMetadata_;
+   }
+
+   @Override
+   public SummaryMetadata getSummaryMetadata() {
+      return summaryMetadata_;
    }
 }
