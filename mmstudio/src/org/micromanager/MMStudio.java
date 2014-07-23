@@ -2416,11 +2416,11 @@ public class MMStudio implements ScriptInterface {
       acq.insertImage(taggedImg);
    }
 
-   @Override 
-   public void setAcquisitionAddImageAsynchronous(String name) throws MMScriptException { 
-      MMAcquisition acq = acqMgr_.getAcquisition(name); 
-      acq.setAsynchronous(); 
-   } 
+   @Override
+   public void setAcquisitionAddImageAsynchronous(String name) throws MMScriptException {
+      MMAcquisition acq = acqMgr_.getAcquisition(name);
+      acq.setAsynchronous();
+   }
 
    /**
     * A quick way to implicitly snap an image and add it to the data set. Works
