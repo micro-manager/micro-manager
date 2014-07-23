@@ -263,48 +263,46 @@ public class PluginLoader {
       }
       
       for (String dir : dirs) {
-         try {
-            classes = JavaUtils.findClasses(new File(pluginRootDir, dir), 0);
-            for (Class<?> clazz : classes) {
-               PluginType pluginType = null;
-               for (Class<?> iface : clazz.getInterfaces()) {
-                  if (iface == MMPlugin.class) {
-                     pluginType = PluginType.PLUGIN_STANDARD;
-                  }
-                  else if (iface == MMProcessorPlugin.class) {
-                     pluginType = PluginType.PLUGIN_PROCESSOR;
-                  }
+         // Use recursion level of 0 for findAndLoadClasses, because we don't
+         // want to redundantly search subdirectories here.
+         classes = JavaUtils.findAndLoadClasses(new File(pluginRootDir, dir), 0);
+         for (Class<?> clazz : classes) {
+            PluginType pluginType = null;
+            for (Class<?> iface : clazz.getInterfaces()) {
+               if (iface == MMPlugin.class) {
+                  pluginType = PluginType.PLUGIN_STANDARD;
                }
-               if (pluginType != null) {
-                  // This class implements a valid plugin type; make a 
-                  // PluginItem out of it.
-                  try {
-                     ReportingUtils.logMessage("Attempting to install plugin " + clazz.getName());
-                     PluginItem pi = declarePlugin(clazz, dir, pluginType);
-                     if (pi == null) {
-                        // Declaring the plugin failed.
-                        continue;
-                     }
-                     if (pluginType == PluginType.PLUGIN_PROCESSOR) {
-                        // Register the plugin with the acquisition engine.
-                        AcquisitionEngine engine = MMStudioMainFrame.getInstance().getAcquisitionEngine();
-                        MMProcessorPlugin plugin = (MMProcessorPlugin) pi.getPlugin();
-                        String processorName = getNameForPluginClass(clazz);
-                        Class<? extends DataProcessor<TaggedImage>> processorClass = getProcessorClassForPluginClass(clazz);
-                        if (processorClass != null) {
-                           engine.registerProcessorClass(processorClass, processorName);
-                        }
-                     }
-                     if (pi != null && !pi.getClassName().isEmpty()) {
-                        pis.add(pi);
-                     }
-                  } catch (Exception e) {
-                     ReportingUtils.logError(e, "Failed to install the \"" + clazz.getName() + "\" plugin .");
-                  }
+               else if (iface == MMProcessorPlugin.class) {
+                  pluginType = PluginType.PLUGIN_PROCESSOR;
                }
             }
-         } catch (ClassNotFoundException e1) {
-            ReportingUtils.logError(e1);
+            if (pluginType != null) {
+               // This class implements a valid plugin type; make a
+               // PluginItem out of it.
+               try {
+                  ReportingUtils.logMessage("Installing plugin " + clazz.getName() + "...");
+                  PluginItem pi = declarePlugin(clazz, dir, pluginType);
+                  if (pi == null) {
+                     // Declaring the plugin failed.
+                     continue;
+                  }
+                  if (pluginType == PluginType.PLUGIN_PROCESSOR) {
+                     // Register the plugin with the acquisition engine.
+                     AcquisitionEngine engine = MMStudioMainFrame.getInstance().getAcquisitionEngine();
+                     MMProcessorPlugin plugin = (MMProcessorPlugin) pi.getPlugin();
+                     String processorName = getNameForPluginClass(clazz);
+                     Class<? extends DataProcessor<TaggedImage>> processorClass = getProcessorClassForPluginClass(clazz);
+                     if (processorClass != null) {
+                        engine.registerProcessorClass(processorClass, processorName);
+                     }
+                  }
+                  if (pi != null && !pi.getClassName().isEmpty()) {
+                     pis.add(pi);
+                  }
+               } catch (Exception e) {
+                  ReportingUtils.logError(e, "Failed to install the \"" + clazz.getName() + "\" plugin.");
+               }
+            }
          }
       }
 
@@ -317,22 +315,18 @@ public class PluginLoader {
 
 
       // Install Autofocus classes found in mmautofocus
-      try {
-         classes = JavaUtils.findClasses(autofocusRootDir, 2);
-         for (Class<?> clazz : classes) {
-            for (Class<?> iface : clazz.getInterfaces()) {
-               if (iface == Autofocus.class) {
-                  autofocusClasses.add(clazz);
-               }
+      classes = JavaUtils.findAndLoadClasses(autofocusRootDir, 2);
+      for (Class<?> clazz : classes) {
+         for (Class<?> iface : clazz.getInterfaces()) {
+            if (iface == Autofocus.class) {
+               autofocusClasses.add(clazz);
             }
          }
-      } catch (ClassNotFoundException e1) {
-         ReportingUtils.logError(e1);
       }
 
       for (Class<?> autofocus : autofocusClasses) {
          try {
-            ReportingUtils.logMessage("Attempting to install autofocus plugin " + autofocus.getName());
+            ReportingUtils.logMessage("Installing autofocus plugin " + autofocus.getName() + "...");
             MMStudioMainFrame.getInstance().installAutofocusPlugin(autofocus.getName());
          } catch (Exception e) {
             ReportingUtils.logError("Failed to install the \"" + autofocus.getName() + "\" autofocus plugin.");
