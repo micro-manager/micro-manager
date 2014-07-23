@@ -1,7 +1,5 @@
 package org.micromanager.api.data;
 
-import java.awt.Color;
-
 import org.micromanager.api.MultiStagePosition;
 
 /**
@@ -30,11 +28,6 @@ public interface SummaryMetadata {
       SummaryMetadataBuilder computerName(String computerName);
       SummaryMetadataBuilder directory(String directory);
       
-      SummaryMetadataBuilder channelNames(String[] channelNames);
-      SummaryMetadataBuilder channelColors(Color[] channelColors);
-      SummaryMetadataBuilder channelContrastMins(Integer[] channelContrastMins);
-      SummaryMetadataBuilder channelContrastMaxes(Integer[] channelContrastMaxes);
-      
       SummaryMetadataBuilder waitInterval(Double waitInterval);
       SummaryMetadataBuilder customIntervalsMs(Double[] customIntervalsMs);
       SummaryMetadataBuilder startDate(String startDate);
@@ -56,10 +49,6 @@ public interface SummaryMetadata {
    public String getMetadataVersion();
    public String getComputerName();
    public String getDirectory();
-   public String[] getChannelNames();
-   public Color[] getChannelColors();
-   public Integer[] getChannelContrastMins();
-   public Integer[] getChannelContrastMaxes();
    public Double getWaitInterval();
    public Double[] getCustomIntervalsMs();
    public String getStartDate();

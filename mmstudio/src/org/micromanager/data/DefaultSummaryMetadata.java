@@ -157,7 +157,7 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
    private Integer numComponents_ = null;
    private MultiStagePosition[] stagePositions_ = null;
 
-   public DefaultSummaryMetadata(DefaultSummaryMetadataBuilder builder {
+   public DefaultSummaryMetadata(DefaultSummaryMetadataBuilder builder) {
       acquisitionName_ = builder.acquisitionName_;
       fileName_ = builder.fileName_;
       prefix_ = builder.prefix_;
