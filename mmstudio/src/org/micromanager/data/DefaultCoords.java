@@ -14,7 +14,7 @@ import org.micromanager.utils.ReportingUtils;
  * DefaultCoords indicate the position of a given image within a dataset.
  * They are immutable, constructed using a Builder pattern.
  */
-public class DefaultCoords implements Coords {
+public class DefaultCoords implements Coords, Comparable<DefaultCoords> {
 
    public static class DefaultCoordsBuilder implements Coords.CoordsBuilder {
       // Maps axis labels to our position along those axes.
@@ -105,5 +105,60 @@ public class DefaultCoords implements Coords {
          result.isAxisEndFor(axis);
       }
       return result;
+   }
+
+   /**
+    * Compare us to the other DefaultCoords; useful for sorting. We go through
+    * our axes in alphabetical order and compare positions. Axes that we have
+    * and it does not are presumed "less than", so a DefaultCoords with no
+    * axes should be "greater than" all others.
+    */
+   @Override
+   public int compareTo(DefaultCoords alt) {
+      for (String axis : sortedAxes_) {
+         int ourPosition = getPositionAt(axis);
+         int altPosition = alt.getPositionAt(axis);
+         if (altPosition == -1) {
+            // They have no position along this axis, so we come first.
+            return -1;
+         }
+         else if (altPosition != ourPosition) {
+            // They have a position on this axis and it's different from ours.
+            return (ourPosition < altPosition) ? -1 : 1;
+         }
+      }
+      // Equal for all axes we care about.
+      return 0;
+   }
+
+   /**
+    * Generate a hash of this DefaultCoords. We want to be able to refer to
+    * images by their coordinates (e.g. in HashMaps), which requires a 
+    * consistent mechanism for identifying a specific coordinate value.
+    */
+   @Override
+   public int hashCode() {
+      int result = 0;
+      int multiplier = 23; // Semi-randomly-chosen prime number
+      for (String axis : sortedAxes_) {
+         result = result * multiplier + axis.hashCode();
+         result = result * multiplier + getPositionAt(axis);
+      }
+      return result;
+   }
+
+   /**
+    * Since we override hashCode, we should override equals as well.
+    */
+   @Override
+   public boolean equals(Object alt) {
+      if (!(alt instanceof DefaultCoords) || 
+            compareTo((DefaultCoords) alt) != 0) {
+         return false;
+      }
+      // Manually verify that we have the same set of axes.
+      HashSet<String> ourAxes = new HashSet(sortedAxes_);
+      HashSet<String> altAxes = new HashSet(((DefaultCoords) alt).getAxes());
+      return ourAxes.equals(altAxes);
    }
 }
