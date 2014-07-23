@@ -382,7 +382,8 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
     * Update our pixel info text.
     */
    private void setPixelInfo(int x, int y, int intensity) {
-      pixelInfoLabel_.setText(String.format("<%d, %d>: %d", x, y, intensity));
+      pixelInfoLabel_.setText(String.format("x=%d, y=%d, value=%d",
+               x, y, intensity));
    }
 
    /**
