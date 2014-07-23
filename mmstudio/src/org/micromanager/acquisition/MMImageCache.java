@@ -148,7 +148,7 @@ public class MMImageCache implements ImageCache {
       newImageFileManager.setSummaryMetadata(imageStorage_.getSummaryMetadata());
       newImageFileManager.setDisplayAndComments(this.getDisplayAndComments());
 
-      final String progressBarTitle = (newImageFileManager instanceof TaggedImageStorageRam) ? "Loading images..." : "Saving images...";
+      final String progressBarTitle = (newImageFileManager instanceof TaggedImageStorageRamFast) ? "Loading images..." : "Saving images...";
       final ProgressBar progressBar = new ProgressBar(progressBarTitle, 0, 100);
             ArrayList<String> keys = new ArrayList<String>(imageKeys());
             final int n = keys.size();
