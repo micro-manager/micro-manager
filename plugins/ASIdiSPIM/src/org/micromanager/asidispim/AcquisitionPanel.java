@@ -34,7 +34,6 @@ import org.micromanager.asidispim.Utils.StagePositionUpdater;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Insets;
-import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -136,7 +135,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    
    private float cameraReadoutTime_;
    private float cameraResetTime_;
-   
    
    
    /**
@@ -806,103 +804,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    }
    
    /**
-    * Gets an estimate of a specific camera's time between trigger and global exposure,
-    * i.e. how long it takes for reset.  Will depend on whether we have/use global
-    * reset, the ROI size, etc.
-    * @param camKey
-    * @return
-    */
-   private float computeCameraResetTime(Devices.Keys camKey) {
-      float reset = 10;
-      Devices.Libraries camLibrary = devices_.getMMDeviceLibrary(camKey);
-      switch (camLibrary) {
-      case HAMCAM:
-         final double H1 = 2592/266e3;  // time to readout one row in ms (just under 10us) 
-         // global reset mode not yet exposed in Micro-manager
-         // when we get it then it will be 17+1 rows of overhead but nothing else
-         double numRowsOverhead;
-         if (props_.getPropValueString(camKey, Properties.Keys.TRIGGER_ACTIVE, true)
-                  .equals(Properties.Values.SYNCREADOUT.toString())) {
-            numRowsOverhead = 18;  // overhead of 17 row times plus jitter of 1 row time
-         } else {  // for EDGE and LEVEL trigger modes
-            numRowsOverhead = 10;  // overhead of 9 row times plus jitter of 1 row time
-         }
-         reset = computeCameraReadoutTime(camKey);
-         reset += (float) (numRowsOverhead * H1);  
-         break;
-      case PCOCAM:
-         JOptionPane.showMessageDialog(null,
-               "Reset time for PCO cameras not yet implemented in plugin.",
-               "Warning",
-               JOptionPane.WARNING_MESSAGE);
-         break;
-      case ANDORCAM:
-         JOptionPane.showMessageDialog(null,
-               "Reset time for Andor cameras not yet implemented in plugin.",
-               "Warning",
-               JOptionPane.WARNING_MESSAGE);
-         break;
-      default: break;   
-      }
-      return reset;
-   }
-   
-   /**
-    * Gets an estimate of a specific camera's readout time based on ROI or otherwise.
-    * @param camKey device key for camera in question
-    * @return readout time in ms
-    */
-   private float computeCameraReadoutTime(Devices.Keys camKey) {
-      float readout = 10;
-      Devices.Libraries camLibrary = devices_.getMMDeviceLibrary(camKey);
-      Rectangle roi = new Rectangle();
-      try {
-         roi = core_.getROI();
-      } catch (Exception e) {
-         gui_.showError(e);
-      }
-      switch (camLibrary) {
-      case HAMCAM:
-         // device adapter provides readout time rounded to nearest 0.1ms; we calculate it ourselves instead
-         // note that Flash4's ROI is always set in increments of 4 pixels
-//         readout = props_.getPropValueFloat(camKey, Properties.Keys.READOUTTIME) * (float) 1000;
-         final double H1 = 2592/266e3;  // time to readout one row in ms (just under 10us) 
-         final Rectangle sensor = new Rectangle(0, 0, 2048, 2048);
-         int numReadoutRows;
-         if (props_.getPropValueString(camKey, Properties.Keys.SENSOR_MODE, true)
-               .equals(Properties.Values.PROGRESSIVE.toString())) {
-            numReadoutRows = roi.height;
-         } else {
-            if (props_.getPropValueString(camKey, Properties.Keys.TRIGGER_ACTIVE, true)
-                  .equals(Properties.Values.SYNCREADOUT.toString())) {
-               // with synchronous readout mode the readout time is included in reset time
-               numReadoutRows = 0;
-            } else { 
-               int roiVerticalOffset = (roi.y + roi.height/2) - (sensor.y + sensor.height/2);
-               numReadoutRows  = Math.abs(roiVerticalOffset) + roi.height/2;
-            }
-         }
-         readout = (float) (numReadoutRows * H1);
-         break;
-      case PCOCAM:
-         JOptionPane.showMessageDialog(null,
-               "Readout time for PCO cameras not yet implemented in plugin.",
-               "Warning",
-               JOptionPane.WARNING_MESSAGE);
-         break;
-      case ANDORCAM:
-         JOptionPane.showMessageDialog(null,
-               "Readout time for Andor cameras not yet implemented in plugin.",
-                  "Warning",
-               JOptionPane.WARNING_MESSAGE);
-         break;
-         
-      default: break;   
-      }
-      return readout;
-   }
-   
-   /**
     * Computes the reset time of the SPIM cameras set on Devices panel.
     * Handles single-side operation.
     * Needed for computing (semi-)optimized slice timing in "easy timing" mode.
@@ -911,13 +812,13 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private float computeCameraResetTime() {
       float resetTime;
       if(((Integer) numSides_.getValue()) > 1) {
-         resetTime = Math.max(computeCameraResetTime(Devices.Keys.CAMERAA),
-               computeCameraResetTime(Devices.Keys.CAMERAB));
+         resetTime = Math.max(cameras_.computeCameraResetTime(Devices.Keys.CAMERAA),
+               cameras_.computeCameraResetTime(Devices.Keys.CAMERAB));
       } else {
          if(firstSide_.getSelectedItem().equals("A")) {
-            resetTime = computeCameraResetTime(Devices.Keys.CAMERAA);
+            resetTime = cameras_.computeCameraResetTime(Devices.Keys.CAMERAA);
          } else {
-            resetTime = computeCameraResetTime(Devices.Keys.CAMERAB);
+            resetTime = cameras_.computeCameraResetTime(Devices.Keys.CAMERAB);
          }
       }
       return resetTime;
@@ -932,13 +833,13 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private float computeCameraReadoutTime() {
       float readoutTime;
       if(((Integer) numSides_.getValue()) > 1) {
-         readoutTime = Math.max(computeCameraReadoutTime(Devices.Keys.CAMERAA),
-               computeCameraReadoutTime(Devices.Keys.CAMERAB));
+         readoutTime = Math.max(cameras_.computeCameraReadoutTime(Devices.Keys.CAMERAA),
+               cameras_.computeCameraReadoutTime(Devices.Keys.CAMERAB));
       } else {
          if(firstSide_.getSelectedItem().equals("A")) {
-            readoutTime = computeCameraReadoutTime(Devices.Keys.CAMERAA);
+            readoutTime = cameras_.computeCameraReadoutTime(Devices.Keys.CAMERAA);
          } else {
-            readoutTime = computeCameraReadoutTime(Devices.Keys.CAMERAB);
+            readoutTime = cameras_.computeCameraReadoutTime(Devices.Keys.CAMERAB);
          }
       }
       return readoutTime;
@@ -997,13 +898,13 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          gui_.showError("An acquisition is already running");
          return false;
       }
-
+      
       // TODO check both ROIs
       
       boolean liveMode = gui_.isLiveModeOn();
       gui_.enableLiveMode(false);
       cameras_.setSPIMCameraTriggerMode(Cameras.TriggerModes.EXTERNAL_START);
-      
+
       // get MM device names for first/second cameras to acquire
       String cameraA = devices_.getMMDevice(Devices.Keys.CAMERAA);
       String cameraB = devices_.getMMDevice(Devices.Keys.CAMERAB);
@@ -1328,7 +1229,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
 
       return true;
    }
-   
 
    @Override
    public void saveSettings() {
