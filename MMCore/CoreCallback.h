@@ -57,8 +57,17 @@ public:
     */
    int LogMessage(const MM::Device* caller, const char* msg, bool debugOnly) const
    {
-      boost::shared_ptr<DeviceInstance> device =
-         core_->pluginManager_.GetDevice(caller);
+      boost::shared_ptr<DeviceInstance> device;
+      try
+      {
+         device = core_->pluginManager_.GetDevice(caller);
+      }
+      catch (const CMMError&)
+      {
+         LOG_ERROR(core_->coreLogger_) <<
+            "Attempt to log message from unregistered device: " << msg;
+         return DEVICE_OK;
+      }
       return device->LogMessage(msg, debugOnly);
    }
 
