@@ -9,6 +9,14 @@
 // COPYRIGHT:     
 // LICENSE:       
 
+// Change Log - Amitabh Verma - July. 23, 2014
+// 1. Replaced ',' comma with ';' semi-colon  in property names due to Micro-Manager warning during HW Config Wizard 'Contains reserved chars'
+// Note: This will break Pol-Acquisition (OpenPolScope) and requires compatible version which uses same name for Property
+
+// Change Log - Amitabh Verma - Apr. 02, 2014
+// 1. Variable time delay
+// 2. Absolute Retardance in nm. property
+
 // Change Log - Amitabh Verma, Grant Harris - Nov. 10, 2012
 // 1. Implemented Number of Active LCs, Total No. of LCs and baud value for searching appropriate VariLC (9600) or Abrio (115200)
 
@@ -98,8 +106,10 @@ int ClearPort(MM::Device& device, MM::Core& core, std::string port)
 ///////////////////////////////////////////////////////////////////////////////
 
 VariLC::VariLC() :
-  initialized_(false),
   answerTimeoutMs_(1000),
+  wavelength_(546),
+  initialized_(false),
+  initializedDelay_(false),
   numActiveLCs_(2),
   numTotalLCs_(2),
   numPalEls_(5),
@@ -259,7 +269,7 @@ int VariLC::Initialize()
       return ret;
 
    pAct = new CPropertyAction (this, &VariLC::OnBriefMode);
-   ret = CreateProperty("Mode, 1=Brief, 0=Standard", "", MM::String, true, pAct); 
+   ret = CreateProperty("Mode; 1=Brief; 0=Standard", "", MM::String, true, pAct); 
    if (ret != DEVICE_OK)
 	   return ret;
 
@@ -278,11 +288,17 @@ int VariLC::Initialize()
 
    // Wavelength
    pAct = new CPropertyAction (this, &VariLC::OnWavelength);
-   ret = CreateProperty("Wavelength", "546.0", MM::Float, false, pAct); 
+   ret = CreateProperty("Wavelength", DoubleToString(wavelength_).c_str(), MM::Float, false, pAct); 
    if (ret != DEVICE_OK)
       return ret;
    SetPropertyLimits("Wavelength", 400., 800.);
 
+   // Delay
+   pAct = new CPropertyAction (this, &VariLC::OnDelay);
+   ret = CreateProperty("Device Delay (ms.)", "200.0", MM::Float, false, pAct); 
+   if (ret != DEVICE_OK)
+      return ret;
+   SetPropertyLimits("Device Delay (ms.)", 0.0, 200.0);
    
    CPropertyActionEx *pActX = 0;
 //	 create an extended (i.e. array) properties 0 through 1
@@ -293,6 +309,14 @@ int VariLC::Initialize()
 	   pActX = new CPropertyActionEx(this, &VariLC::OnRetardance, i);
 	   CreateProperty(s.str().c_str(), "0.5", MM::Float, false, pActX);
 	   SetPropertyLimits(s.str().c_str(), 0.0001, 3);
+   }
+
+   // Absolute Retardance controls -- after Voltage controls
+   for (long i=0;i<numActiveLCs_;++i) {
+	   ostringstream s;
+	   s << "Retardance LC-" << char(65+i) << " [in nm.]";
+	   pActX = new CPropertyActionEx(this, &VariLC::OnAbsRetardance, i);
+	   CreateProperty(s.str().c_str(), "100", MM::Float, true, pActX);
    }
  
 //   for (long i=0;i<numPalEls_;++i) {
@@ -314,7 +338,7 @@ int VariLC::Initialize()
 		}
 	   
 
-	   s << "Pal. elem. " << number << ", enter 0 to define, 1 to activate";
+	   s << "Pal. elem. " << number << "; enter 0 to define; 1 to activate";
 	   pActX = new CPropertyActionEx(this, &VariLC::OnPalEl, i);
 	   CreateProperty(s.str().c_str(), "", MM::String, false, pActX);
    }
@@ -330,7 +354,7 @@ int VariLC::Initialize()
       return ret;
 
    // Needed for Busy flag
-   changedTime_ = GetCurrentMMTime();
+   // changedTime_ = GetCurrentMMTime();
    SetErrorText(99, "Device set busy for ");
 
    return DEVICE_OK;
@@ -513,8 +537,14 @@ int VariLC::OnRetardance(MM::PropertyBase* pProp, MM::ActionType eAct, long inde
 
      vector<double> numbers = getNumbersFromMessage(ans,briefModeQ_);
 	 if (index < (int) numbers.size()) {
-	    retardance_[index] = numbers[index];
+	   retardance_[index] = numbers[index];
 	   pProp->Set(retardance_[index]);
+
+	   ostringstream s;
+	   s << "Retardance LC-" << char(65+index) << " [in nm.]";
+	   std::string s2 = DoubleToString(retardance_[index]*wavelength_);
+	   SetProperty(s.str().c_str(), s2.c_str());
+
 	 } else {
 		 return DEVICE_INVALID_PROPERTY_VALUE;
 	 }
@@ -546,6 +576,23 @@ int VariLC::OnRetardance(MM::PropertyBase* pProp, MM::ActionType eAct, long inde
       retardance_[index] = retardance;
 
 	  changedTime_ = GetCurrentMMTime();
+   }
+   return DEVICE_OK;
+}
+
+int VariLC::OnAbsRetardance(MM::PropertyBase* pProp, MM::ActionType eAct, long index)
+{	       
+   if (eAct == MM::BeforeGet)
+   {	 
+     if (index+1 > 0) {	    
+	   pProp->Set(retardance_[index]*wavelength_);
+	 } else {
+		 return DEVICE_INVALID_PROPERTY_VALUE;
+	 }
+   }
+   else if (eAct == MM::AfterSet)
+   {
+	 
    }
    return DEVICE_OK;
 }
@@ -624,8 +671,8 @@ int VariLC::OnSendToVariLC(MM::PropertyBase* pProp, MM::ActionType eAct)
       pProp->Get(sendToVariLC_);
       // write retardance out to device....
 	  
-	  size_t len = strlen(sendToVariLC_.c_str());
-	  char state[6]; 
+	  int len = strlen(sendToVariLC_.c_str());
+	  char state[5]; 
 
 	  if (len > 5) {		  
 		  strncpy(state, sendToVariLC_.c_str(), 5);
@@ -653,7 +700,7 @@ int VariLC::OnSendToVariLC(MM::PropertyBase* pProp, MM::ActionType eAct)
 	  else if ((std::string)state=="State") {   
 		  	  
 			  std::vector<char> val(len-5);
-			  for (unsigned int i=5; i < len; i++) {				  
+			  for (int i=5; i < len; i++) {				  
 					val[5-i] = sendToVariLC_[i];
 			  }
 			  val[len] = '\0';
@@ -721,12 +768,32 @@ int VariLC::OnGetFromVariLC(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
+ int VariLC::OnDelay(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+	 double delay = GetDelayMs();
+	 initializedDelay_ = true;
+	 pProp->Set(delay);
+    }
+   else if (eAct == MM::AfterSet)
+   {
+	  double delayT;
+	  pProp->Get(delayT);
+	  if (initializedDelay_) {
+		SetDelayMs(delayT);
+	  }
+	  delay = delayT*1000;
+   }
+   
+   return DEVICE_OK;
+}
+
 bool VariLC::Busy()
 {
-   if (GetDelayMs() > 0.0) {
-      MM::MMTime interval = GetCurrentMMTime() - changedTime_;
-      MM::MMTime delay(GetDelayMs()*1000.0);
-      if (interval < delay ) {
+   if (delay.getMsec() > 0.0) {
+      MM::MMTime interval = GetCurrentMMTime() - changedTime_;      
+      if (interval.getMsec() < delay.getMsec() ) {
          return true;
       }
    }
@@ -734,6 +801,12 @@ bool VariLC::Busy()
    return false;
 }
 
+std::string VariLC::DoubleToString(double N)
+{
+    ostringstream ss("");
+    ss << N;
+    return ss.str();
+}
 
 std::vector<double> VariLC::getNumbersFromMessage(std::string variLCmessage, bool briefMode) {
    std::istringstream variStream(variLCmessage);
