@@ -55,6 +55,9 @@ public class ScrollerPanel extends JPanel {
    // A mapping of axis identifiers to their positions as of the last time
    // checkForImagePositionChanged() was called.
    private HashMap<String, Integer> lastImagePosition_ = null;
+   // This will get set to false in prepareForClose, in turn barring any more
+   // timers from getting created.
+   private boolean canMakeTimers_ = true;
    // Timer for handling animation.
    private Timer animationUpdateTimer_ = null;
    // Timer for restoring scrollbars after forcing their positions.
@@ -145,9 +148,11 @@ public class ScrollerPanel extends JPanel {
    }
 
    /**
-    * The window we're in is closing; cancel animations and timers.
+    * The window we're in is closing; cancel animations and timers, and ensure
+    * that no new ones can get created.
     */
    public void prepareForClose() {
+      canMakeTimers_ = false;
       for (AxisScroller scroller : scrollers_) {
          scroller.setIsAnimated(false);
       }
@@ -167,6 +172,10 @@ public class ScrollerPanel extends JPanel {
       if (animationUpdateTimer_ != null) {
          // Stop the previous timer.
          animationUpdateTimer_.cancel();
+      }
+      if (!canMakeTimers_) {
+         // Not allowed to make new timers because we'll be closing soon.
+         return;
       }
       // Enforce a maximum displayed framerate of 30FPS; for higher rates, we
       // instead skip over images in animation.
@@ -249,7 +258,7 @@ public class ScrollerPanel extends JPanel {
          // Post an event informing our masters that our layout has changed.
          bus_.post(new LayoutChangedEvent());
       }
-      if (canShowNewImage) {
+      if (canShowNewImage && canMakeTimers_) {
          // Start up a timer to restore the scrollers to their original
          // positions, if applicable. 
          if (snapBackTimer_ != null) {
