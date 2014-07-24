@@ -256,7 +256,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
                showImage(tags, true);
                imagesDisplayed_++;
                sendFPSUpdate(tags);
-            }
+            } // End while loop
          }
       });
       displayThread_.start();
@@ -1161,6 +1161,20 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       // Tell our display thread to stop what it's doing.
       shouldStopDisplayThread_.set(true);
       displayThread_.interrupt();
+      // Wait for the display thread to exit.
+      try {
+         displayThread_.join();
+      }
+      catch (InterruptedException e) {
+         // Wait, what? This should never happen.
+         ReportingUtils.logError(e, "Display thread interrupted while waiting for it to finish on its own");
+      }
+      // Remove us from the CanvasPaintPending system; prevents a memory leak.
+      // We could equivalently do this in the display thread, but it has
+      // multiple exit points depending on what it was doing when we
+      // interrupted it.
+      CanvasPaintPending.removePaintPending(
+            hyperImage_.getCanvas(), imageReceivedObject_);
       bus_.unregister(this);
       imageCache_.finished();
       imageCache_.close();
