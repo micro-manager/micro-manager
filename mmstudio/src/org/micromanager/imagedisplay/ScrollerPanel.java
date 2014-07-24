@@ -52,6 +52,9 @@ public class ScrollerPanel extends JPanel {
    private EventBus bus_;
    // All AxisScrollers we manage.
    private ArrayList<AxisScroller> scrollers_;
+   // A mapping of axis identifiers to their positions as of the last time
+   // checkForImagePositionChanged() was called.
+   private HashMap<String, Integer> lastImagePosition_ = null;
    // Timer for handling animation.
    private Timer animationUpdateTimer_ = null;
    // Timer for restoring scrollbars after forcing their positions.
@@ -103,15 +106,33 @@ public class ScrollerPanel extends JPanel {
     */
    @Subscribe
    public void onScrollPositionChanged(AxisScroller.ScrollPositionEvent event) {
-      postSetImageEvent();
+      checkForImagePositionChanged();
    }
 
-   private void postSetImageEvent() {
-      HashMap<String, Integer> axisToPosition = new HashMap<String, Integer>();
-      for (AxisScroller scroller : scrollers_) {
-         axisToPosition.put(scroller.getAxis(), scroller.getPosition());
+   /**
+    * Check to see if the image we are currently "pointing to" with the 
+    * scrollers is different from the image that we were last pointing to
+    * when this function was called. If so, then we need to post a
+    * SetImageEvent to the event bus so that the image display gets updated.
+    */
+   private void checkForImagePositionChanged() {
+      boolean shouldPostEvent = false;
+      if (lastImagePosition_ == null) {
+         lastImagePosition_ = new HashMap<String, Integer>();
       }
-      bus_.post(new SetImageEvent(axisToPosition));
+      for (AxisScroller scroller : scrollers_) {
+         String axis = scroller.getAxis();
+         Integer position = scroller.getPosition();
+         if (!lastImagePosition_.containsKey(axis) ||
+               lastImagePosition_.get(axis) != position) {
+            // Position along this axis has changed; we need to refresh.
+            shouldPostEvent = true;
+         }
+         lastImagePosition_.put(axis, position);
+      }
+      if (shouldPostEvent) {
+         bus_.post(new SetImageEvent(lastImagePosition_));
+      }
    }
 
    /**
@@ -147,7 +168,6 @@ public class ScrollerPanel extends JPanel {
          // Stop the previous timer.
          animationUpdateTimer_.cancel();
       }
-      animationUpdateTimer_ = new Timer();
       // Enforce a maximum displayed framerate of 30FPS; for higher rates, we
       // instead skip over images in animation.
       int stepSize = 1;
@@ -156,29 +176,37 @@ public class ScrollerPanel extends JPanel {
          interval = 33; 
          stepSize = (int) Math.round(framesPerSec_ * 33.0 / 1000.0);
       }
+      boolean isAnimated = false;
       // This is going to be how much we adjust each scroller's position each
       // tick of the animation.
       final int[] offsets = new int[scrollers_.size()];
       for (int i = 0; i < offsets.length; ++i) {
-         // Let me just take a moment to note here that Java
-         // can't cast a boolean to an int.
-         offsets[i] = (scrollers_.get(i).getIsAnimated() ? 1 : 0) * stepSize;
-      }
-      TimerTask task = new TimerTask() {
-         @Override
-         public void run() {
-            for (int i = 0; i < scrollers_.size(); ++i) {
-               if (offsets[i] != 0) {
-                  // Note that the scroller handles wrapping around to the 
-                  // beginning, and also whether or not to move at all due to
-                  // being locked. 
-                  scrollers_.get(i).advancePosition(offsets[i], false);
-               }
-            }
-            postSetImageEvent();
+         if (scrollers_.get(i).getIsAnimated()) {
+            isAnimated = true;
+            offsets[i] = stepSize;
          }
-      };
-      animationUpdateTimer_.schedule(task, 0, interval);
+         else {
+            offsets[i] = 0;
+         }
+      }
+      if (isAnimated) {
+         animationUpdateTimer_ = new Timer();
+         TimerTask task = new TimerTask() {
+            @Override
+            public void run() {
+               for (int i = 0; i < scrollers_.size(); ++i) {
+                  if (offsets[i] != 0) {
+                     // Note that the scroller handles wrapping around to the 
+                     // beginning, and also whether or not to move at all due to
+                     // being locked. 
+                     scrollers_.get(i).advancePosition(offsets[i], false);
+                  }
+               }
+               checkForImagePositionChanged();
+            }
+         };
+         animationUpdateTimer_.schedule(task, 0, interval);
+      }
    }
 
    /**
