@@ -73,6 +73,10 @@ public class CanvasPaintPending {
          }
       }
    }
-   
-   
+
+   public static synchronized void removeAllPaintPending(ImageCanvas canvas) {
+      if (requesters_.containsKey(canvas)) {
+         requesters_.remove(canvas);
+      }
+   }   
 }

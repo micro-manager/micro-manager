@@ -110,6 +110,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    private AcquisitionEngine eng_;
    private boolean isAcquisitionFinished_ = false;
    private boolean promptToSave_ = true;
+   private boolean amClosing_ = false;
    private String name_;
    private int numComponents_;
    // This queue holds images waiting to be displayed.
@@ -308,7 +309,9 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    // Prepare for a drawing event.
    @Subscribe
    public void onDraw(DrawEvent event) {
-      imageChangedUpdate();
+      if (!amClosing_) {
+         imageChangedUpdate();
+      }
    }
 
    /**
@@ -464,6 +467,10 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
     */
    @Override
    public void imagingFinished(String path) {
+      if (amClosing_) {
+         // Don't care, we'll be closing soon anyway.
+         return;
+      }
       updateDisplay(null);
       updateAndDraw(true);
       if (!(eng_ != null && eng_.abortRequested())) {
@@ -1158,6 +1165,8 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
          }
       }
 
+      // Go ahead with closing.
+      amClosing_ = true;
       // Tell our display thread to stop what it's doing.
       shouldStopDisplayThread_.set(true);
       displayThread_.interrupt();
@@ -1173,8 +1182,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       // We could equivalently do this in the display thread, but it has
       // multiple exit points depending on what it was doing when we
       // interrupted it.
-      CanvasPaintPending.removePaintPending(
-            hyperImage_.getCanvas(), imageReceivedObject_);
+      CanvasPaintPending.removeAllPaintPending(hyperImage_.getCanvas());
       bus_.unregister(this);
       imageCache_.finished();
       imageCache_.close();
