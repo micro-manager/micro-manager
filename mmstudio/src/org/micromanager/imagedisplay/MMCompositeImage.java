@@ -83,8 +83,8 @@ public class MMCompositeImage extends CompositeImage implements IMMImagePlus {
       super.reset();
    }
 
-   //Must be called on EDT so to prevent exception that occurs when currentChannel gets
-   //set to -1 while updateImage() is running
+   // Must be called on EDT so to prevent exception that occurs when
+   // currentChannel gets set to -1 while updateImage() is running
    @Override
    public void reset() {
       if (SwingUtilities.isEventDispatchThread()) {
@@ -123,19 +123,35 @@ public class MMCompositeImage extends CompositeImage implements IMMImagePlus {
    }
 
    private void superUpdateImage() {
-      //Need to set this field to null, or else an infinite loop can be 
+      // Need to set this field to null, or else an infinite loop can be 
       // entered when the imageJ contrast adjuster is open
+      Object curVal = null;
       try {
+         curVal = JavaUtils.getRestrictedFieldValue(null,
+               ContrastAdjuster.class, "instance");
          JavaUtils.setRestrictedFieldValue(null, ContrastAdjuster.class, "instance", null);
-      } catch (NoSuchFieldException ex) {
-         ReportingUtils.logError("ImageJ ContrastAdjuster doesn't have field named instance");
+      } catch (NoSuchFieldException e) {
+         ReportingUtils.logError(e, "ImageJ ContrastAdjuster doesn't have field named instance");
       }
       super.updateImage();
+
+      // Restore the value we had previously set. Bizarrely, not doing this
+      // creates significant memory leaks (several MB per file we open/close).
+      // I have no idea why.
+      try {
+         JavaUtils.setRestrictedFieldValue(null, ContrastAdjuster.class,
+               "instance", curVal);
+      }
+      catch (NoSuchFieldException e) {
+         ReportingUtils.logError(e, "Couldn't restore ImageJ ContrastAdjuster instance.");
+
+      }
    }
    
    public void updateAndDraw(boolean forceUpdateAndPaint) {
       if (forceUpdateAndPaint) {
-         //there may be a paint pending, but we want to make sure this update gets called regardless
+         // there may be a paint pending, but we want to make sure this update
+         // gets called regardless
          CanvasPaintPending.removePaintPending(hyperImage_.getCanvas(), this);
          updateAndDraw();
       } else {    
@@ -148,8 +164,7 @@ public class MMCompositeImage extends CompositeImage implements IMMImagePlus {
     */
    @Override
    public void updateAndDraw() {
-      if (CanvasPaintPending.isMyPaintPending(
-              super.getCanvas(), this) ) {
+      if (CanvasPaintPending.isMyPaintPending(super.getCanvas(), this)) {
          return;
       }
       CanvasPaintPending.setPaintPending(super.getCanvas(), this);
@@ -184,8 +199,8 @@ public class MMCompositeImage extends CompositeImage implements IMMImagePlus {
    }
 
    /*
-    * Doesn't get called during acquisition, animation, contrast adjustment, but 
-    * may get called sometimes by internal imageJ functions
+    * Doesn't get called during acquisition, animation, contrast adjustment,
+    * but may get called sometimes by internal imageJ functions
     */
    @Override
    public void draw() {
@@ -194,12 +209,14 @@ public class MMCompositeImage extends CompositeImage implements IMMImagePlus {
    }
 
    /*
-    * Called when images changes due to changes in contrast, but not pixels themselves
-    * Histogram controls tell image to update without LUTS without updating pixels, metadata, etc
+    * Called when images changes due to changes in contrast, but not pixels
+    * themselves Histogram controls tell image to update without LUTS without
+    * updating pixels, metadata, etc
     */
    @Override
    public void drawWithoutUpdate() {
-      //dont check for paint pending because always want this to reflect the most recent changes
+      // dont check for paint pending because always want this to reflect the
+      // most recent changes
       super.getCanvas().setPaintPending(true);
       getWindow().getCanvas().setImageUpdated();
       superDraw();
