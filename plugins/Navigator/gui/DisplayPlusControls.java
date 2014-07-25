@@ -7,14 +7,19 @@ package gui;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.text.ParseException;
 import javax.swing.*;
+import net.miginfocom.swing.MigLayout;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.micromanager.imagedisplay.DisplayWindow;
 import org.micromanager.imagedisplay.MouseIntensityEvent;
 import org.micromanager.imagedisplay.ScrollerPanel;
 import org.micromanager.imagedisplay.VirtualAcquisitionDisplay;
@@ -42,6 +47,8 @@ public class DisplayPlusControls extends DisplayControls {
    private JLabel zPosLabel_, timeStampLabel_, nextFrameLabel_, posNameLabel_;
    private JToggleButton gotoButton_, suspendUpdatesButton_;
    private boolean suspendUpdates_;
+   
+   private JLabel pixelInfoLabel_, countdownLabel_, imageInfoLabel_;
 
    public DisplayPlusControls(VirtualAcquisitionDisplay disp, EventBus bus) {
       super(new FlowLayout(FlowLayout.LEADING));
@@ -78,12 +85,33 @@ public class DisplayPlusControls extends DisplayControls {
    }
 
    private void initComponents() {
-      setPreferredSize(new java.awt.Dimension(700, 40));
-      this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-      final JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-      this.add(panel);
+
+      final JPanel controlsPanel = new JPanel(new MigLayout("insets 0, fillx, align center","","[]0[]0[]"));
+
+      JPanel labelsPanel = new JPanel(new MigLayout("insets 0"));
+
+      pixelInfoLabel_ = new JLabel("                                         ");
+      pixelInfoLabel_.setMinimumSize(new Dimension(150, 10));
+      pixelInfoLabel_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
+      labelsPanel.add(pixelInfoLabel_);
+
+      imageInfoLabel_ = new JLabel("                                         ");
+      imageInfoLabel_.setMinimumSize(new Dimension(150, 10));
+      imageInfoLabel_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
+      labelsPanel.add(imageInfoLabel_);
+
+      countdownLabel_ = new JLabel("                                         ");
+      countdownLabel_.setMinimumSize(new Dimension(150, 10));
+      countdownLabel_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
+      labelsPanel.add(countdownLabel_);
+
+      controlsPanel.add(labelsPanel, "span, growx, align center, wrap");
+           
       scrollerPanel_ = new ScrollerPanel(bus_, new String[]{"channel", "position", "time", "z"}, new Integer[]{1, 1, 1, 1}, DEFAULT_FPS);
-      this.setLayout(new BorderLayout());
+      controlsPanel.add(scrollerPanel_, "span, growx, wrap");
+
+      // Hacky layout to minimize gaps between components. 
+      JPanel buttonPanel = new JPanel(new MigLayout());
 
       showFolderButton_ = new JButton();
       showFolderButton_.setBackground(new java.awt.Color(255, 255, 255));
@@ -160,66 +188,73 @@ public class DisplayPlusControls extends DisplayControls {
 //               }
          }
       });
+      
+
+      
 
       //text area
-      zPosLabel_ = new JLabel("Z position:") {
+//      zPosLabel_ = new JLabel("Z:") {
+//
+//         @Override
+//         public void setText(String s) {
+//            DisplayPlusControls.this.invalidate();
+//            super.setText(s);
+//            DisplayPlusControls.this.validate();
+//         }
+//      };
+//      timeStampLabel_ = new JLabel("Elapsed time:") {
+//
+//         @Override
+//         public void setText(String s) {
+//            DisplayPlusControls.this.invalidate();
+//            super.setText(s);
+//            DisplayPlusControls.this.validate();
+//         }
+//      };
+//      nextFrameLabel_ = new JLabel("Next frame: ") {
+//
+//         @Override
+//         public void setText(String s) {
+//            DisplayPlusControls.this.invalidate();
+//            super.setText(s);
+//            DisplayPlusControls.this.validate();
+//         }
+//      };
+//      fpsField_ = new JTextField();
+//      fpsField_.setText("7");
+//      fpsField_.setToolTipText("Set the speed at which the acquisition is played back.");
+//      fpsField_.setPreferredSize(new Dimension(25, 18));
+//      fpsField_.addFocusListener(new java.awt.event.FocusAdapter() {
+//
+//         public void focusLost(java.awt.event.FocusEvent evt) {
+//            updateFPS();
+//         }
+//      });
+//      fpsField_.addKeyListener(new java.awt.event.KeyAdapter() {
+//
+//         public void keyReleased(java.awt.event.KeyEvent evt) {
+//            updateFPS();
+//         }
+//      });
+//      JLabel fpsLabel = new JLabel("Animation playback FPS: ");
 
-         @Override
-         public void setText(String s) {
-            DisplayPlusControls.this.invalidate();
-            super.setText(s);
-            DisplayPlusControls.this.validate();
-         }
-      };
-      timeStampLabel_ = new JLabel("Elapsed time:") {
+      buttonPanel.add(showFolderButton_);
+      buttonPanel.add(suspendUpdatesButton_);
+      buttonPanel.add(abortButton_);
+      buttonPanel.add(pauseButton_);
+      controlsPanel.add(buttonPanel);
+      this.setLayout(new BorderLayout());
+      this.add(controlsPanel,BorderLayout.CENTER);
 
-         @Override
-         public void setText(String s) {
-            DisplayPlusControls.this.invalidate();
-            super.setText(s);
-            DisplayPlusControls.this.validate();
-         }
-      };
-      nextFrameLabel_ = new JLabel("Next frame: ") {
-
-         @Override
-         public void setText(String s) {
-            DisplayPlusControls.this.invalidate();
-            super.setText(s);
-            DisplayPlusControls.this.validate();
-         }
-      };
-      fpsField_ = new JTextField();
-      fpsField_.setText("7");
-      fpsField_.setToolTipText("Set the speed at which the acquisition is played back.");
-      fpsField_.setPreferredSize(new Dimension(25, 18));
-      fpsField_.addFocusListener(new java.awt.event.FocusAdapter() {
-
-         public void focusLost(java.awt.event.FocusEvent evt) {
-            updateFPS();
+      // Propagate resizing through to our JPanel
+      this.addComponentListener(new ComponentAdapter() {
+         public void componentResized(ComponentEvent e) {
+            Dimension curSize = getSize();
+            controlsPanel.setPreferredSize(new Dimension(curSize.width, curSize.height));
+            invalidate();
+            validate();
          }
       });
-      fpsField_.addKeyListener(new java.awt.event.KeyAdapter() {
-
-         public void keyReleased(java.awt.event.KeyEvent evt) {
-            updateFPS();
-         }
-      });
-      JLabel fpsLabel = new JLabel("Animation playback FPS: ");
-
-      final JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-      panel.setPreferredSize(new Dimension(700,CONTROLS_HEIGHT));
-      this.add(panel, BorderLayout.PAGE_END);
-      scrollerPanel_ = new ScrollerPanel(bus_, new String[]{"channel", "position", "time", "z"}, new Integer[]{1, 1, 1, 1}, DEFAULT_FPS);
-      this.add(scrollerPanel_, BorderLayout.CENTER);
-
-      panel.add(abortButton_);
-      panel.add(pauseButton_);
-      panel.add(fpsLabel);
-      panel.add(fpsField_);
-      panel.add(zPosLabel_);
-      panel.add(timeStampLabel_);
-      panel.add(nextFrameLabel_);
    }
 
    /**
@@ -242,10 +277,10 @@ public class DisplayPlusControls extends DisplayControls {
    public void onLayoutChange(ScrollerPanel.LayoutChangedEvent event) {
       int width = ((DisplayWindow) this.getParent()).getWidth();
 //      scrollerPanel_.setPreferredSize(new Dimension(width,scrollerPanel_.getPreferredSize().height));
-      this.setPreferredSize( new Dimension(width, CONTROLS_HEIGHT + event.getPreferredSize().height));
+//      this.setPreferredSize( new Dimension(width, CONTROLS_HEIGHT + event.getPreferredSize().height));
       invalidate();
       validate();
-      ((DisplayWindow) this.getParent()).pack();
+//      ((DisplayWindow) this.getParent()).pack();
    }
 
    private void showFolderButtonActionPerformed(java.awt.event.ActionEvent evt) {
@@ -261,11 +296,6 @@ public class DisplayPlusControls extends DisplayControls {
    public void acquiringImagesUpdate(boolean acquiring) {
       abortButton_.setEnabled(acquiring);
       pauseButton_.setEnabled(acquiring);
-   }
-
-   @Override
-   public void setStatusLabel(String text) {
-      //nothing
    }
 
    @Override
@@ -306,7 +336,7 @@ public class DisplayPlusControls extends DisplayControls {
       } catch (Exception e) {
          // Do nothing...
       }
-      zPosLabel_.setText("Z Position: " + zPosition + " um ");
+//      zPosLabel_.setText("Z Position: " + zPosition + " um ");
 
       //time label
       try {
@@ -317,7 +347,7 @@ public class DisplayPlusControls extends DisplayControls {
 
          String time = twoDigitFormat(h) + ":" + twoDigitFormat(min % 60)
                  + ":" + twoDigitFormat(s % 60) + "." + threeDigitFormat(ms % 1000);
-         timeStampLabel_.setText("Elapsed time: " + time + " ");
+//         timeStampLabel_.setText("Elapsed time: " + time + " ");
       } catch (JSONException ex) {
 //            ReportingUtils.logError("MetaData did not contain ElapsedTime-ms field");
       }
@@ -339,5 +369,10 @@ public class DisplayPlusControls extends DisplayControls {
          ret = "0" + ret;
       }
       return ret;
+   }
+
+   @Override
+   public void setImageInfoLabel(String text) {
+      //Don't have one of these...
    }
 }

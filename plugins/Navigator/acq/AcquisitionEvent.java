@@ -7,8 +7,7 @@ package acq;
 import java.awt.geom.Point2D;
 
 /**
- * 
- * @author Henry
+ * Information about the acquisition of a single image
  */
 public class AcquisitionEvent {
    

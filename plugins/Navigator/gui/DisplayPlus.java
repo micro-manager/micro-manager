@@ -4,14 +4,14 @@ package gui;
  * Master stitched window to display real time stitched images, allow navigating of XY more easily
  */
 import acq.CustomAcqEngine;
-import acq.DynamicStitchingImageStorage;
+import acq.MultiResMultipageTiffStorage;
+import acq.PositionManager;
 import ij.CompositeImage;
 import ij.IJ;
 import ij.gui.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.Rectangle2D;
-import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import javax.swing.*;
@@ -21,19 +21,16 @@ import org.json.JSONObject;
 
 import org.micromanager.imagedisplay.VirtualAcquisitionDisplay;
 import org.micromanager.api.ImageCache;
-import org.micromanager.imagedisplay.IMMImagePlus;
 import org.micromanager.imagedisplay.MMCompositeImage;
-import org.micromanager.imageDisplay.NewImageEvent;
+import org.micromanager.imagedisplay.NewImageEvent;
 
 
-import org.micromanager.internalinterfaces.DisplayControls;
 import org.micromanager.utils.*;
 
 public class DisplayPlus extends VirtualAcquisitionDisplay  {
 
    private static final Color TRANSPARENT_BLUE = new Color(0, 0, 255, 100);
    private static final Color TRANSPARENT_MAGENTA = new Color(255, 0, 255, 100);
-   private DynamicStitchingImageStorage storage_;
    private ImageCanvas canvas_;
    private DisplayPlusControls controls_;
    private CustomAcqEngine eng_;
@@ -47,25 +44,20 @@ public class DisplayPlus extends VirtualAcquisitionDisplay  {
            zoomMode_ = false, zoomAreaSelectMode_ = false;
    private ZoomableVirtualStack zoomableStack_;
    private final boolean exploreMode_;
+   private PositionManager posManager_;
+   private int tileWidth_, tileHeight_;
 
    public DisplayPlus(final ImageCache stitchedCache, CustomAcqEngine eng, JSONObject summaryMD, 
-           DynamicStitchingImageStorage storage, boolean exploreMode) {
+           MultiResMultipageTiffStorage multiResStorage, boolean exploreMode) {
       super(stitchedCache, null, "test");
-      
+      tileWidth_ = multiResStorage.getTileWidth();
+      tileHeight_ = multiResStorage.getTileHeight();
+      posManager_ = multiResStorage.getPositionManager();
       exploreMode_ = exploreMode;
       //Set parameters for tile dimensions, num rows and columns, overlap, and image dimensions
       eng_ = eng;
 
-//      String name = "Untitled";
-//      try {
-//         String pre = summaryMD.getString("Prefix");
-//         if (pre != null && pre.length() > 0) {
-//            name = pre;
-//         }
-//      } catch (Exception e) {
-//      }
       
-      storage_ = storage;
       controls_ = new DisplayPlusControls(this, this.getEventBus());
 
       //Add in custom controls
@@ -77,8 +69,11 @@ public class DisplayPlus extends VirtualAcquisitionDisplay  {
 
       //add in customized zoomable acquisition virtual stack
       try {
+         //looks like nSlicess only really matters during display startup
          int nSlices = MDUtils.getNumChannels(summaryMD) * MDUtils.getNumFrames(summaryMD) * MDUtils.getNumSlices(summaryMD);
-         zoomableStack_ = new ZoomableVirtualStack(MDUtils.getIJType(summaryMD), stitchedCache, nSlices, this, storage);
+         int width = MDUtils.getWidth(summaryMD);
+         int height = MDUtils.getHeight(summaryMD);
+         zoomableStack_ = new ZoomableVirtualStack(MDUtils.getIJType(summaryMD), width, height, stitchedCache, nSlices, this, multiResStorage);
          this.show(zoomableStack_);
       } catch (Exception e) {
          ReportingUtils.showError("Problem with initialization due to missing summary metadata tags");
@@ -120,62 +115,62 @@ public class DisplayPlus extends VirtualAcquisitionDisplay  {
 
     
    private void drawZoomIndicatorOverlay() {
-      //draw zoom indicator
-      Overlay overlay = new Overlay();
-      Point zoomPos = zoomableStack_.getZoomPosition();      
-      int outerWidth = 100;
-      int outerHeight = (int) ((double) storage_.getFullResHeight() / (double) storage_.getFullResWidth() * outerWidth);
-      //draw outer rectangle representing full image
-      Roi outerRect = new Roi(10, 10, outerWidth, outerHeight);
-      outerRect.setStrokeColor(new Color(255, 0, 255)); //magenta
-      overlay.add(outerRect);
-      int innerX = (int) Math.round(( (double) outerWidth / (double) storage_.getFullResWidth() ) * zoomPos.x);
-      int innerY = (int) Math.round(( (double) outerHeight / (double) storage_.getFullResHeight() ) * zoomPos.y);
-      int innerWidth = (int) Math.round(((double) outerWidth / (double) storage_.getFullResWidth() ) * 
-              (storage_.getFullResWidth() / storage_.getDSFactor()));
-      int innerHeight = (int) Math.round(((double) outerHeight / (double) storage_.getFullResHeight() ) * 
-              (storage_.getFullResHeight() / storage_.getDSFactor()));
-      Roi innerRect = new Roi(10+innerX,10+innerY,innerWidth,innerHeight );
-      innerRect.setStrokeColor(new Color(255, 0, 255)); 
-      overlay.add(innerRect);
-      canvas_.setOverlay(overlay);
+//      //draw zoom indicator
+//      Overlay overlay = new Overlay();
+//      Point zoomPos = zoomableStack_.getZoomPosition();      
+//      int outerWidth = 100;
+//      int outerHeight = (int) ((double) storage_.getFullResHeight() / (double) storage_.getFullResWidth() * outerWidth);
+//      //draw outer rectangle representing full image
+//      Roi outerRect = new Roi(10, 10, outerWidth, outerHeight);
+//      outerRect.setStrokeColor(new Color(255, 0, 255)); //magenta
+//      overlay.add(outerRect);
+//      int innerX = (int) Math.round(( (double) outerWidth / (double) storage_.getFullResWidth() ) * zoomPos.x);
+//      int innerY = (int) Math.round(( (double) outerHeight / (double) storage_.getFullResHeight() ) * zoomPos.y);
+//      int innerWidth = (int) Math.round(((double) outerWidth / (double) storage_.getFullResWidth() ) * 
+//              (storage_.getFullResWidth() / storage_.getDSFactor()));
+//      int innerHeight = (int) Math.round(((double) outerHeight / (double) storage_.getFullResHeight() ) * 
+//              (storage_.getFullResHeight() / storage_.getDSFactor()));
+//      Roi innerRect = new Roi(10+innerX,10+innerY,innerWidth,innerHeight );
+//      innerRect.setStrokeColor(new Color(255, 0, 255)); 
+//      overlay.add(innerRect);
+//      canvas_.setOverlay(overlay);
    }
 
    private void zoomIn(Point p) {
-      zoomMode_ = true;
-      zoomAreaSelectMode_ = false;
-      //This assumes 100% display of tiled image
-      zoomableStack_.activateZoomMode(p.x, p.y);
-      this.getHyperImage().setOverlay(null);
-      redrawPixels();
-      drawZoomIndicatorOverlay();   
+//      zoomMode_ = true;
+//      zoomAreaSelectMode_ = false;
+//      //This assumes 100% display of tiled image
+//      zoomableStack_.activateZoomMode(p.x, p.y);
+//      this.getHyperImage().setOverlay(null);
+//      redrawPixels();
+//      drawZoomIndicatorOverlay();   
    }
    
    private void zoomOut() {
-      zoomMode_ = false;
-      zoomableStack_.activateFullImageMode();
-      redrawPixels();
-      canvas_.setOverlay(null);
+//      zoomMode_ = false;
+//      zoomableStack_.activateFullImageMode();
+//      redrawPixels();
+//      canvas_.setOverlay(null);
    }
 
    //TODO account for overlap?
    private void highlightTiles(int row1, int row2, int col1, int col2, Color color) {
       //need to convert from canvas coordinates to pixel coordinates
       final ImageCanvas canvas = this.getImagePlus().getCanvas();
-       double tileHeight = storage_.getTileHeight() / (double) storage_.getDSFactor(),
-               tileWidth = storage_.getTileWidth() / (double) storage_.getDSFactor();
-       int x = (int) Math.round(col1 * tileWidth);
-       int y = (int) Math.round(row1 * tileHeight);
-       int width = (int) Math.round(tileWidth * (col2 - col1 + 1));
-       int height = (int) Math.round(tileHeight * (row2 - row1 + 1));
+      double tileHeightAtZoom = tileHeight_ / (double) zoomableStack_.getDownsampleFactor();
+      double tileWidthAtZoom = tileWidth_ / (double) zoomableStack_.getDownsampleFactor();
+      int x = (int) Math.round(col1 * tileWidthAtZoom);
+      int y = (int) Math.round(row1 * tileHeightAtZoom);
+      int width = (int) Math.round(tileWidthAtZoom * (col2 - col1 + 1));
+      int height = (int) Math.round(tileHeightAtZoom * (row2 - row1 + 1));
       Roi rect = new Roi(x, y, width, height);
       rect.setFillColor(color);
       Overlay overlay = new Overlay();
       overlay.add(rect);
       canvas.setOverlay(overlay);
    }
-   
-   private void setupMouseListeners() {  
+
+   private void setupMouseListeners() {
       //remove channel switching scroll wheel listener
       this.getImagePlus().getWindow().removeMouseWheelListener(
               this.getImagePlus().getWindow().getMouseWheelListeners()[0]);
@@ -199,41 +194,41 @@ public class DisplayPlus extends VirtualAcquisitionDisplay  {
                   canvas_.paint(canvas_.getGraphics());
                }
             } else if  (zoomMode_ && e.isShiftDown()) {
-               zoomableStack_.translateZoomPosition(mouseDragStartPoint_.x - currentPoint.x, 
-                       mouseDragStartPoint_.y - currentPoint.y);
-               redrawPixels();
-               mouseDragStartPoint_ = currentPoint;
-               drawZoomIndicatorOverlay();               
+//               zoomableStack_.translateZoomPosition(mouseDragStartPoint_.x - currentPoint.x, 
+//                       mouseDragStartPoint_.y - currentPoint.y);
+//               redrawPixels();
+//               mouseDragStartPoint_ = currentPoint;
+//               drawZoomIndicatorOverlay();               
             } else if (exploreMode_ && !zoomMode_) {
-               Point p2 = e.getPoint();
-               //find top left row and column and number of columns spanned by drage event
-               Point topLeftTile = storage_.tileIndicesFromLoResPixel(Math.min(p2.x, mouseDragStartPoint_.x),
-                       Math.min(p2.y, mouseDragStartPoint_.y));
-               Point bottomRightTile = storage_.tileIndicesFromLoResPixel(Math.max(p2.x, mouseDragStartPoint_.x),
-                       Math.max(p2.y, mouseDragStartPoint_.y));
-               highlightTiles(topLeftTile.x, bottomRightTile.x, topLeftTile.y, bottomRightTile.y, TRANSPARENT_MAGENTA);              
+//               Point p2 = e.getPoint();
+//               //find top left row and column and number of columns spanned by drage event
+//               Point topLeftTile = storage_.tileIndicesFromLoResPixel(Math.min(p2.x, mouseDragStartPoint_.x),
+//                       Math.min(p2.y, mouseDragStartPoint_.y));
+//               Point bottomRightTile = storage_.tileIndicesFromLoResPixel(Math.max(p2.x, mouseDragStartPoint_.x),
+//                       Math.max(p2.y, mouseDragStartPoint_.y));
+//               highlightTiles(topLeftTile.x, bottomRightTile.x, topLeftTile.y, bottomRightTile.y, TRANSPARENT_MAGENTA);              
             }
          }
 
          @Override
          public void mouseMoved(MouseEvent e) {
             if (zoomAreaSelectMode_) {
-               //draw rectangle of area that will be zoomed in on
-               Overlay overlay = new Overlay();
-               int width = (int) Math.round(zoomableStack_.getWidth() / storage_.getDSFactor());
-               int height = (int) Math.round(zoomableStack_.getHeight() / storage_.getDSFactor());
-               Point center = e.getPoint();
-               Roi rect = new Roi(Math.min(Math.max(0,center.x - width / 2), canvas_.getWidth() - width),
-                       Math.min(Math.max(0,center.y - height / 2), canvas_.getHeight() - height),
-                       width, height);
-               rect.setFillColor(TRANSPARENT_BLUE);
-               overlay.add(rect);
-               canvas_.setOverlay(overlay);
+//               //draw rectangle of area that will be zoomed in on
+//               Overlay overlay = new Overlay();
+//               int width = (int) Math.round(zoomableStack_.getWidth() / storage_.getDSFactor());
+//               int height = (int) Math.round(zoomableStack_.getHeight() / storage_.getDSFactor());
+//               Point center = e.getPoint();
+//               Roi rect = new Roi(Math.min(Math.max(0,center.x - width / 2), canvas_.getWidth() - width),
+//                       Math.min(Math.max(0,center.y - height / 2), canvas_.getHeight() - height),
+//                       width, height);
+//               rect.setFillColor(TRANSPARENT_BLUE);
+//               overlay.add(rect);
+//               canvas_.setOverlay(overlay);
             } else if (exploreMode_ && !zoomMode_ && !newGridMode_) {
-               Point coords = storage_.tileIndicesFromLoResPixel(e.getPoint().x, e.getPoint().y);
-               int row = coords.x, col = coords.y;
-               //highlight tile(s)
-               highlightTiles(row, row, col, col, TRANSPARENT_MAGENTA);
+//               Point coords = storage_.tileIndicesFromLoResPixel(e.getPoint().x, e.getPoint().y);
+//               int row = coords.x, col = coords.y;
+//               //highlight tile(s)
+//               highlightTiles(row, row, col, col, TRANSPARENT_MAGENTA);
             }
          }
       });
@@ -288,18 +283,20 @@ public class DisplayPlus extends VirtualAcquisitionDisplay  {
 
                Point p2 = e.getPoint();
                //find top left row and column and number of columns spanned by drage event
-               final Point topLeftTile = storage_.tileIndicesFromLoResPixel(Math.min(p2.x, mouseDragStartPoint_.x),
-                       Math.min(p2.y, mouseDragStartPoint_.y));
-               final Point bottomRightTile = storage_.tileIndicesFromLoResPixel(Math.max(p2.x, mouseDragStartPoint_.x),
-                       Math.max(p2.y, mouseDragStartPoint_.y));
+               final Point topLeftTile = new Point(tileIndexFromPixel(Math.min(p2.x, mouseDragStartPoint_.x),true),
+                       tileIndexFromPixel(Math.min(p2.y, mouseDragStartPoint_.y),false));
+               final Point bottomRightTile = new Point(tileIndexFromPixel(Math.max(p2.x, mouseDragStartPoint_.x),true),
+                       tileIndexFromPixel(Math.max(p2.y, mouseDragStartPoint_.y),false));
                //create events to acquire one or more tiles
                eng_.acquireTiles(topLeftTile.x, topLeftTile.y, bottomRightTile.x, bottomRightTile.y);
 
+               //TODO: immediately redraw image to reflect updates positions in position manager
+               
                //redraw overlay to potentially reflect new grid   
-               Point coords = storage_.tileIndicesFromLoResPixel(e.getPoint().x, e.getPoint().y);
-               int row = coords.x, col = coords.y;
-               //highlight tile(s)
-               highlightTiles(row, row, col, col, TRANSPARENT_MAGENTA);
+//               Point coords = storage_.tileIndicesFromLoResPixel(e.getPoint().x, e.getPoint().y);
+//               int row = coords.x, col = coords.y;
+//               //highlight tile(s)
+//               highlightTiles(row, row, col, col, TRANSPARENT_MAGENTA);
             }
          }
 
@@ -317,6 +314,23 @@ public class DisplayPlus extends VirtualAcquisitionDisplay  {
          }
       });
    }
+   
+    private int tileIndexFromPixel(int i, boolean xDirection) {
+       //TODO: account for x and y offset in zoom
+      int fullResPix = (int) (i * zoomableStack_.getDownsampleFactor());
+      int tileIndex = fullResPix / (xDirection ? tileWidth_ : tileHeight_);
+      //tileIndex doesn't neccesasrily start at 0...
+      tileIndex += (xDirection ? posManager_.getMinCol() : posManager_.getMinRow());
+      for (int ds = 1; ds <= zoomableStack_.getDownsampleIndex(); ds++ ) {
+         if(tileIndex >= 0) {
+            tileIndex = tileIndex / 2;
+         } else {
+            tileIndex = (tileIndex - 1) / 2;
+         }         
+      }
+      return tileIndex;
+   }
+   
 
    private void createGrid() {
 //      try {
@@ -340,22 +354,22 @@ public class DisplayPlus extends VirtualAcquisitionDisplay  {
    }
 
    private void makeGridOverlay(int centerX, int centerY, int rows, int cols, int xOverlap, int yOverlap) {
-      Overlay overlay = this.getImagePlus().getOverlay();
-      if (overlay == null || overlay.size() == 0) {
-         overlay = new Overlay();
-      } else {
-         overlay.clear();
-      }
-
-      double dsTileWidth = storage_.getTileWidth() / (double) storage_.getDSFactor();
-      double dsTileHeight = storage_.getTileHeight() / (double) storage_.getDSFactor();
-      int roiWidth = (int) ((cols * dsTileWidth) - ((cols - 1) * xOverlap) / storage_.getDSFactor());
-      int roiHeight = (int) ((rows * dsTileHeight) - ((rows - 1) * yOverlap) / storage_.getDSFactor());
-
-      Roi rectangle = new Roi(centerX - roiWidth / 2, centerY - roiHeight / 2, roiWidth, roiHeight);
-      rectangle.setStrokeWidth(10f);
-      overlay.add(rectangle);
-      this.getImagePlus().setOverlay(overlay);
+//      Overlay overlay = this.getImagePlus().getOverlay();
+//      if (overlay == null || overlay.size() == 0) {
+//         overlay = new Overlay();
+//      } else {
+//         overlay.clear();
+//      }
+//
+//      double dsTileWidth = storage_.getTileWidth() / (double) storage_.getDSFactor();
+//      double dsTileHeight = storage_.getTileHeight() / (double) storage_.getDSFactor();
+//      int roiWidth = (int) ((cols * dsTileWidth) - ((cols - 1) * xOverlap) / storage_.getDSFactor());
+//      int roiHeight = (int) ((rows * dsTileHeight) - ((rows - 1) * yOverlap) / storage_.getDSFactor());
+//
+//      Roi rectangle = new Roi(centerX - roiWidth / 2, centerY - roiHeight / 2, roiWidth, roiHeight);
+//      rectangle.setStrokeWidth(10f);
+//      overlay.add(rectangle);
+//      this.getImagePlus().setOverlay(overlay);
    }
 
    public void resizeGrid(int rows, int cols, int xOverlap, int yOverlap) {
@@ -385,6 +399,7 @@ public class DisplayPlus extends VirtualAcquisitionDisplay  {
    @Override
    public void imageReceived(TaggedImage taggedImage) {
       try {
+         //TODO: can scrollbars be maniiulated to avoid this?
          //duplicate so image storage doesnt see incorrect tags
          JSONObject newTags = new JSONObject(taggedImage.tags.toString());
          MDUtils.setPositionIndex(newTags, 0);

@@ -6,16 +6,22 @@ package acq;
  */
 
 import ij.IJ;
+import java.awt.Point;
 import java.awt.geom.Point2D;
 import java.util.Arrays;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import main.Util;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.micromanager.MMStudioMainFrame;
 import org.micromanager.api.MMTags;
+import org.micromanager.api.ScriptInterface;
+import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.ReportingUtils;
 
 /**
@@ -53,7 +59,34 @@ public class CustomAcqEngine {
             exploreAcquisition_ = new Acquisition(true, CustomAcqEngine.this, zTop, zBottom, 1);           
 
             //acquire first tile
-            acquireTiles(1, 1, 1, 1);
+            acquireTiles(0,0,0,0);
+
+
+//            MultiResMultipageTiffStorage storage = new MultiResMultipageTiffStorage(
+//                    "C:/Users/Henry/Desktop/MultiRes/", true, Acquisition.makeSummaryMD(2, 2), 0, 0);
+//
+//            ScriptInterface app = MMStudioMainFrame.getInstance();
+//
+//            for (int position = 0; position < 5; position++) {
+//               for (int channel = 0; channel < 1; channel++) {
+//                  for (int slice = 0; slice < 1; slice++) {
+//                     try {
+//                        core_.snapImage();
+//                        TaggedImage img = core_.getTaggedImage();
+//                        //set tags
+//                        MDUtils.setFrameIndex(img.tags, 0);
+//                        MDUtils.setChannelIndex(img.tags, channel);
+//                        MDUtils.setSliceIndex(img.tags, slice);
+//                        MDUtils.setPositionIndex(img.tags, position);
+//                        storage.putImage(img);
+//                     } catch (Exception ex) {
+//                        ReportingUtils.showError("couldnt snap");
+//                     }
+//                  }
+//               }
+//            }
+            
+
          }
       }).start();
    }
@@ -69,18 +102,22 @@ public class CustomAcqEngine {
          int[] posIndices = null;
          boolean newPositionsAdded = false;
          try {
-            int numPositions = exploreAcquisition_.getPositionList().length();
-            //create metadata for new positions
-            JSONObject[] newPositions = new JSONObject[(row2 - row1 + 1) * (col2 - col1 + 1)];
+            int numPositions = exploreAcquisition_.getPositionManager().getNumPositions();
+            //Get position Indices from manager based on row and column
+            //it will create new metadata as needed
+            int[] newPositionRows = new int[(row2 - row1 + 1) * (col2 - col1 + 1)];
+            int[] newPositionCols = new int[(row2 - row1 + 1) * (col2 - col1 + 1)];
             for (int r = row1; r <= row2; r++) {
                for (int c = col1; c <= col2; c++) {
                   int i = (r - row1) + (1 + row2 - row1) * (c - col1);
-                  newPositions[i] = createPositionMetadata(r, c,
-                          exploreAcquisition_.getPositionList().getJSONObject(0));
+                  newPositionRows[i] = r;
+                  newPositionCols[i] = c;
                }
             }
-            posIndices = exploreAcquisition_.addPositionsIfNeeded(newPositions);
-            newPositionsAdded = numPositions != exploreAcquisition_.getPositionList().length();
+            
+            posIndices = exploreAcquisition_.getPositionManager().getPositionIndices(newPositionRows, newPositionCols);
+            
+            newPositionsAdded = numPositions != exploreAcquisition_.getPositionManager().getNumPositions();
          } catch (Exception e) {
             e.printStackTrace();
             ReportingUtils.showError("Problem with position metadata: couldn't add tile");
@@ -90,8 +127,8 @@ public class CustomAcqEngine {
          //create set of hardware instructions for an acquisition event
          for (int i = 0; i < posIndices.length; i++) {
             //get x and y coordinates of current position
-            double x = exploreAcquisition_.getXPosition(posIndices[i]);
-            double y = exploreAcquisition_.getYPosition(posIndices[i]);
+            double x = exploreAcquisition_.getPositionManager().getXCoordinate(posIndices[i]);
+            double y = exploreAcquisition_.getPositionManager().getYCoordinate(posIndices[i]);
             //Add events for each channel, slice
             double zTop = exploreAcquisition_.getZTop(), zBottom = exploreAcquisition_.getZBottom(),
                     zStep = exploreAcquisition_.getZStep(), zAbsoluteTop = exploreAcquisition_.getZAbsoluteTop(),
@@ -100,8 +137,6 @@ public class CustomAcqEngine {
                //move focus
                int sliceIndex = (int) ((z - zAbsoluteTop) / zStep);
                exploreAcquisition_.addEvent(new AcquisitionEvent(0, 0, sliceIndex, posIndices[i], z, x, y,
-                       newPositionsAdded));
-               exploreAcquisition_.addEvent(new AcquisitionEvent(0, 1, sliceIndex, posIndices[i], z, x, y,
                        newPositionsAdded));
             }
          }
@@ -129,7 +164,7 @@ public class CustomAcqEngine {
               img.tags.put(MMTags.Image.ZUM, event.zPosition_);
               if (event.posListToMD_) {
                   //write position list to metadata
-                  img.tags.put("PositionList", exploreAcquisition_.getPositionList());
+                  img.tags.put("PositionList", exploreAcquisition_.getPositionManager().getSerializedPositionList());
               }
                            
               //TODO: add elapsed time tag
@@ -177,35 +212,11 @@ public class CustomAcqEngine {
       //Channels
       if (lastEvent_ == null || event.channelIndex_ != lastEvent_.channelIndex_) {
          try {
-            core_.setConfig("Channel", event.channelIndex_ == 0 ? "DAPI" : "FITC");
+//            core_.setConfig("Channel", event.channelIndex_ == 0 ? "DAPI" : "FITC");
          } catch (Exception ex) {
             ReportingUtils.showError("Couldn't change channel group");
          }
       }
    }
-
-   private JSONObject createPositionMetadata(int row, int col, JSONObject exisitingPosition) {
-      try {
-         JSONArray xy = new JSONArray();
-         //TODO: change if overlap added
-         int xOverlap = 0;
-         int yOverlap = 0;         
-         Point2D.Double stageCoords = Util.getStageCoordinatesBasedOnExistingPosition(row, col, exisitingPosition, xOverlap, yOverlap);
-         
-         JSONObject coords = new JSONObject();
-         xy.put(stageCoords.x);
-         xy.put(stageCoords.y);
-         coords.put(core_.getXYStageDevice(), xy);
-         JSONObject pos = new JSONObject();
-         pos.put("DeviceCoordinatesUm", coords);
-         pos.put("GridColumnIndex", col);
-         pos.put("GridRowIndex", row);
-         return pos;
-      } catch (Exception e) {
-         ReportingUtils.showError("Couldn't create XY position");
-         return null;
-      }
-   }
-
 
 }

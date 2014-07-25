@@ -119,7 +119,7 @@ public class Util {
 //      }
 //   }
 
-   private static AffineTransform getAffineTransform(double xCenter, double yCenter) {
+   public static AffineTransform getAffineTransform(double xCenter, double yCenter) {
       //Get affine transform
       Preferences prefs = Preferences.userNodeForPackage(MMStudioMainFrame.class);
 
@@ -194,40 +194,6 @@ public class Util {
          list.notifyChangeListeners();
       } catch (MMScriptException e) {
          ReportingUtils.showError(e.getMessage());
-      }
-   }
-
-   /**
-    * Calculate the x and y stage coordinates of a new position given its row and column and the existing 
-    * metadata for another position
-    * @param row
-    * @param col
-    * @param existingPosition
-    * @return
-    */
-   public static Point2D.Double getStageCoordinatesBasedOnExistingPosition(int row, int col, 
-           JSONObject existingPosition, int pixelOverlapX, int pixelOverlapY) {
-      try {
-         ScriptInterface app = MMStudioMainFrame.getInstance();
-         String xyStage = app.getXYStageName();
-
-         double exisitngX = existingPosition.getJSONObject("DeviceCoordinatesUm").getJSONArray(xyStage).getDouble(0);
-         double exisitngY = existingPosition.getJSONObject("DeviceCoordinatesUm").getJSONArray(xyStage).getDouble(1);
-         int existingRow = existingPosition.getInt("GridRowIndex");
-         int existingColumn = existingPosition.getInt("GridColumnIndex");
-         long height = app.getMMCore().getImageHeight();
-         long width = app.getMMCore().getImageWidth();
-
-         double xPixelOffset = (col - existingColumn) * (width - pixelOverlapX);
-         double yPixelOffset = (row - existingRow) * (height - pixelOverlapY);
-
-         AffineTransform transform = getAffineTransform(exisitngX, exisitngY);
-         Point2D.Double stagePos = new Point2D.Double();
-         transform.transform(new Point2D.Double(xPixelOffset, yPixelOffset), stagePos);
-         return stagePos;
-      } catch (JSONException ex) {
-         ReportingUtils.showError("Problem with current position metadata");
-         return null;
       }
    }
    

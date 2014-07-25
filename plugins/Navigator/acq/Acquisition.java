@@ -28,16 +28,22 @@ import org.micromanager.utils.ReportingUtils;
  */
 public class Acquisition {
 
+   //TODO: delete
+   private static final String STORAGE_DIR = "C:/Users/Henry/Desktop/MultiRes/";
+   
    private final boolean explore_;
    private volatile double zTop_, zBottom_, zStep_ = 1, zAbsoluteTop_ = 0, zAbsoluteBottom_ = 50;
    private BlockingQueue<TaggedImage> engineOutputQueue_;
    private BlockingQueue<AcquisitionEvent> events_;
-   private DynamicStitchingImageStorage storage_;
    private CMMCore core_ = MMStudioMainFrame.getInstance().getCore();
    private CustomAcqEngine eng_;
    private String xyStage_, zStage_;
    private Thread acquisitionThread_;
+   private PositionManager posManager_;
 
+   /*
+    * Class that sets up thread to run acquisition and 
+    */
    public Acquisition(boolean explore, CustomAcqEngine eng, double zTop, double zBottom, double zStep) {
       eng_ = eng;
       explore_ = explore;
@@ -50,11 +56,12 @@ public class Acquisition {
          //TODO: add limit to this queue in case saving and display goes much slower than acquisition?
          engineOutputQueue_ = new LinkedBlockingQueue<TaggedImage>();
 
-//         JSONObject summaryMetadata = makeSummaryMD(1,(int)core_.getNumberOfCameraChannels());
-         JSONObject summaryMetadata = makeSummaryMD(1,2);
-         storage_ = new DynamicStitchingImageStorage(summaryMetadata, true);
-         ImageCache imageCache = new MMImageCache(storage_) {
+         JSONObject summaryMetadata = makeSummaryMD(1,(int)core_.getNumberOfCameraChannels());
+//         JSONObject summaryMetadata = makeSummaryMD(1,2);
+         MultiResMultipageTiffStorage storage = new MultiResMultipageTiffStorage(STORAGE_DIR, true, summaryMetadata, 0, 0);
+         ImageCache imageCache = new MMImageCache(storage) {
             @Override
+            //TODO: is this needed?
             public JSONObject getLastImageTags() {
                //So that display doesnt show a position scrollbar when imaging finished
                JSONObject newTags = null;
@@ -66,16 +73,11 @@ public class Acquisition {
                }
                return newTags;
             }
-
-            @Override
-            public void close() {
-               finish();
-               super.close();
-            }
          };
          imageCache.setSummaryMetadata(summaryMetadata);
 
-         new DisplayPlus(imageCache, eng_, summaryMetadata, storage_, true);
+         posManager_ = storage.getPositionManager();
+         new DisplayPlus(imageCache, eng_, summaryMetadata,storage,true);
 
          DefaultTaggedImageSink sink = new DefaultTaggedImageSink(engineOutputQueue_, imageCache);
          sink.start();
@@ -104,25 +106,18 @@ public class Acquisition {
          
       } else {
 
-      //TODO   
+      //TODO  non explore acquisition
       }
-      
-      
-      
+   }
+   
+   public PositionManager getPositionManager() {
+      return posManager_;
    }
    
    public void addEvent(AcquisitionEvent e) {
        events_.add(e); 
    }
   
-   public double getXPosition(int posIndex) throws JSONException {
-      return getPositionList().getJSONObject(posIndex).getJSONObject("DeviceCoordinatesUm").getJSONArray(xyStage_).getDouble(0);
-   }
-
-   public double getYPosition(int posIndex) throws JSONException {
-      return getPositionList().getJSONObject(posIndex).getJSONObject("DeviceCoordinatesUm").getJSONArray(xyStage_).getDouble(1);
-   }
-
    public double getZTop() {
       return zTop_;
    }
@@ -143,10 +138,6 @@ public class Acquisition {
       return zAbsoluteBottom_;
    }
    
-   public int[] addPositionsIfNeeded(JSONObject[] newPositions) throws JSONException {
-      return storage_.addPositionsIfNeeded(newPositions);
-   }
-   
    public void setZLimits(double zTop, double zBottom) {
       zTop_ = zTop;
       zBottom_ = zBottom;
@@ -164,15 +155,11 @@ public class Acquisition {
          //TODO: non explore acquisitions
       }
    }
-
-   public JSONArray getPositionList() {
-      return storage_.getPositionList();
-   }
-   
    
       //to be removed once this is factored out of acq engine in micromanager
-   private JSONObject makeSummaryMD(int numSlices, int numChannels) {
+   public static JSONObject makeSummaryMD(int numSlices, int numChannels) {
       try {
+         CMMCore core = MMStudioMainFrame.getInstance().getCore();
          JSONObject summary = new JSONObject();
          summary.put("Slices", numSlices);
          //TODO: set slices to maximum number given the z device so that file size is overestimated
@@ -183,36 +170,38 @@ public class Acquisition {
          summary.put("TimeFirst", false);
          summary.put("PixelType", "GRAY8");
          summary.put("BitDepth", 8);
-         summary.put("Width", core_.getImageWidth());
-         summary.put("Height", core_.getImageHeight());
+         summary.put("Width", core.getImageWidth());
+         summary.put("Height", core.getImageHeight());
          summary.put("Prefix", "ExplorerTest");
-         summary.put("Directory", DynamicStitchingImageStorage.HI_RES_SAVING_DIR);
+         summary.put("Directory", "C:/Users/Henry/Desktop/MultiRes/"); //TODO: delete this
 
-         //make intitial position list
+         //make intitial position list, with current position and 0,0 as coordinates
          JSONArray pList = new JSONArray();
          //create first position based on current XYStage position
          JSONObject coordinates = new JSONObject();
          JSONArray xy = new JSONArray();
-         xy.put(core_.getXPosition(core_.getXYStageDevice()));
-         xy.put(core_.getYPosition(core_.getXYStageDevice()));
-         coordinates.put(core_.getXYStageDevice(),xy );
+         xy.put(core.getXPosition(core.getXYStageDevice()));
+         xy.put(core.getYPosition(core.getXYStageDevice()));
+         coordinates.put(core.getXYStageDevice(),xy );
          JSONObject pos = new JSONObject();
          pos.put("DeviceCoordinatesUm", coordinates);
          //first position is 1,1
-         pos.put("GridColumnIndex", 1);
-         pos.put("GridRowIndex", 1);          
-         pList.put(pos);
+         pos.put("GridColumnIndex", 0);
+         pos.put("GridRowIndex", 0);   
+         pos.put("Properties",new JSONObject());
+         pList.put(pos);             
+         summary.put("InitialPositionList", pList);
+
          
           JSONArray chNames = new JSONArray();
           JSONArray chColors = new JSONArray();
-          for (int i = 0; i < core_.getNumberOfCameraChannels(); i++) {
-              chNames.put(core_.getCameraChannelName(i));
-              chColors.put(MMAcquisition.getMultiCamDefaultChannelColor(i, core_.getCameraChannelName(i)));
+          for (int i = 0; i < core.getNumberOfCameraChannels(); i++) {
+              chNames.put(core.getCameraChannelName(i));
+              chColors.put(MMAcquisition.getMultiCamDefaultChannelColor(i, core.getCameraChannelName(i)));
           }
           summary.put("ChNames", chNames);
           summary.put("ChColors", chColors);
          
-         summary.put("InitialPositionList", pList);
          
          //write pixel overlap into metadata
 //         summary.put("GridPixelOverlapX", SettingsDialog.getXOverlap());
