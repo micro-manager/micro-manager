@@ -590,7 +590,23 @@ int CAndorSDK3Camera::Initialize()
 
    initialized_ = true;
    ResizeImageBuffer();
-   snapShotController_->poiseForSnapShot();
+   try {
+      snapShotController_->poiseForSnapShot();
+   }
+   catch (ComException & e) {
+      string s("[Initialize] ComException thrown: ");
+      s += e.what();
+      LogMessage(s);
+      return DEVICE_ERR;
+   }
+   catch (exception & e)
+   {
+      string s("[Initialize] Caught Exception with message: ");
+      s += e.what();
+      LogMessage(s);
+      return DEVICE_ERR;
+   }
+   
    return DEVICE_OK;
 }
 
@@ -604,9 +620,22 @@ int CAndorSDK3Camera::Initialize()
 */
 int CAndorSDK3Camera::Shutdown()
 {
+   int retCode = DEVICE_OK;
    if (initialized_)
    {
-      snapShotController_->leavePoisedMode();
+      try {
+         snapShotController_->leavePoisedMode();
+      }
+      catch (ComException & e) {
+         LogMessage(e.what());
+         retCode = DEVICE_ERR;
+      }
+      catch (exception & e) {
+         string s("[Shutdown] Caught Exception with message: ");
+         s += e.what();
+         LogMessage(s);
+         retCode = DEVICE_ERR;
+      }
       delete binning_property;
       delete preAmpGain_property;
       delete electronicShutteringMode_property;
@@ -647,7 +676,7 @@ int CAndorSDK3Camera::Shutdown()
    }
 
    initialized_ = false;
-   return DEVICE_OK;
+   return retCode;
 }
 
 void CAndorSDK3Camera::UnpackDataWithPadding(unsigned char * _pucSrcBuffer)
@@ -1062,9 +1091,16 @@ int CAndorSDK3Camera::StartSequenceAcquisition(long numImages, double interval_m
    // This may be called twice, if e.g. out of memory first time is returned 
    // - a second attmept may be made. Need to ensure no memory issues or exceptions
 
-   if (snapShotController_->isPoised() )
-   {
-      snapShotController_->leavePoisedMode();
+   try {
+      if (snapShotController_->isPoised() )
+      {
+         snapShotController_->leavePoisedMode();
+      }
+   }
+   catch (ComException & e) {
+      string s("[StartSequenceAcquisition] ComException thrown: ");
+      s += e.what();
+      LogMessage(s);
    }
 
    if (IsCapturing())
@@ -1323,13 +1359,18 @@ void CAndorSDK3Camera::OnThreadExiting() throw()
    {
       LogMessage(g_Msg_SEQUENCE_ACQUISITION_THREAD_EXITING);
       GetCoreCallback() ? GetCoreCallback()->AcqFinished(this, 0) : DEVICE_OK;
+      //restart in SW trigger ready to snap
+      snapShotController_->poiseForSnapShot();
+   }
+   catch (ComException & e) {
+      string s("[OnThreadExiting] ComException thrown: ");
+      s += e.what();
+      LogMessage(s);
    }
    catch (...)
    {
       LogMessage(g_Msg_EXCEPTION_IN_ON_THREAD_EXITING, false);
    }
-   //restart in SW trigger ready to snap
-   snapShotController_->poiseForSnapShot();
 }
 
 
@@ -1429,9 +1470,9 @@ int MySequenceThread::svc(void) throw()
    {
       camera_->LogMessage(g_Msg_EXCEPTION_IN_THREAD, false);
    }
-   stop_ = true;
    actualDuration_ = camera_->GetCurrentMMTime() - startTime_;
    camera_->OnThreadExiting();
+   Stop();
    return ret;
 }
 
