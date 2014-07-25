@@ -3032,7 +3032,7 @@ void CMMCore::setChannelGroup(const char* chGroup) throw (CMMError)
    if (chGroup && strlen(chGroup)>0)
    {
       channelGroup_ = chGroup;
-      LOG_INFO(coreLogger_) << "Cannel group set to " << chGroup;
+      LOG_INFO(coreLogger_) << "Channel group set to " << chGroup;
    }
    else
    {
