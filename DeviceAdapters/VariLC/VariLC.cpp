@@ -106,14 +106,14 @@ int ClearPort(MM::Device& device, MM::Core& core, std::string port)
 ///////////////////////////////////////////////////////////////////////////////
 
 VariLC::VariLC() :
-  answerTimeoutMs_(1000),
-  wavelength_(546),
+  baud_(g_Baud9600),
   initialized_(false),
   initializedDelay_(false),
-  numActiveLCs_(2),
+  answerTimeoutMs_(1000),
+  wavelength_(546),
   numTotalLCs_(2),
-  numPalEls_(5),
-  baud_(g_Baud9600)
+  numActiveLCs_(2),
+  numPalEls_(5)
 {
    InitializeDefaultErrorMessages();
    
