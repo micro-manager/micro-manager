@@ -633,11 +633,11 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
             new Runnable() {
                @Override
                public void run() {
-                  // Needed for loading clojure-based jars:
-                  Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
                   pluginLoader_.loadPlugins();
                }
       });
+      // Needed for loading Clojure classes (acquisition engine and plugins)
+      loadThread.setContextClassLoader(getClass().getClassLoader());
       loadThread.start();
       return loadThread;
    }
@@ -1418,7 +1418,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
    }
  
    private void startLoadingPipelineClass() {
-      Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
       acquisitionEngine2010LoadingThread_ = new Thread("Pipeline Class loading thread") {
          @Override
          public void run() {
@@ -1430,6 +1429,8 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
             }
          }
       };
+      // Needed for loading Clojure classes (acquisition engine and plugins)
+      acquisitionEngine2010LoadingThread_.setContextClassLoader(getClass().getClassLoader());
       acquisitionEngine2010LoadingThread_.start();
    }
 
