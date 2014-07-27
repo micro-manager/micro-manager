@@ -360,7 +360,6 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       guiColors_ = new GUIColors();
 
       pluginLoader_ = new PluginLoader();
-      // plugins_ = new ArrayList<PluginItem>();
 
       gui_ = this;
 
@@ -571,10 +570,18 @@ public class MMStudioMainFrame extends JFrame implements ScriptInterface {
       
       // before loading the system configuration, we need to wait 
       // until the plugins are loaded
+      ReportingUtils.logMessage("Waiting for plugins to finish loading...");
       try {  
-         pluginInitializer.join(2000);
+         pluginInitializer.join(15000);
       } catch (InterruptedException ex) {
-         ReportingUtils.logError(ex, "Plugin loader thread was interupted");
+         ReportingUtils.logError(ex,
+               "Interrupted while waiting for plugin loading thread");
+      }
+      if (pluginInitializer.isAlive()) {
+         ReportingUtils.logMessage("Wanring: Plugin loading did not finish within 15 seconds; continuing anyway");
+      }
+      else {
+         ReportingUtils.logMessage("Finished waiting for plugins to load");
       }
       
       // if an error occurred during config loading, do not display more 
