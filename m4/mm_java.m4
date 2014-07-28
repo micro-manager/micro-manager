@@ -11,7 +11,7 @@ AC_DEFUN([MM_ARG_WITH_JAVA], [
 
    case $with_java in
       yes | no | auto) want_java="$with_java" ;;
-      *) JAVA_PREFIX="$want_java"
+      *) JAVA_PREFIX="$with_java"
          want_java=yes ;;
    esac
    AS_IF([test -n "$JAVA_PREFIX"],
