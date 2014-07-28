@@ -66,7 +66,7 @@ public interface Metadata {
     */
    MetadataBuilder copy();
 
-   UUID getUuid();
+   UUID getUUID();
    String getSource();
    MultiStagePosition getInitialPositionList();
    Double getZStepUm();
@@ -98,4 +98,9 @@ public interface Metadata {
    Double getPixelAspect();
    JSONObject getUserMetadata();
    SummaryMetadata getSummaryMetadata();
+
+   /**
+    * For legacy support only: convert to JSONObject.
+    */
+   public JSONObject legacyToJSON();
 }

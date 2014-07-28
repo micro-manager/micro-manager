@@ -16,7 +16,7 @@ import org.micromanager.utils.ReportingUtils;
  */
 public class DefaultCoords implements Coords, Comparable<DefaultCoords> {
 
-   public static class DefaultCoordsBuilder implements Coords.CoordsBuilder {
+   public static class Builder implements Coords.CoordsBuilder {
       // Maps axis labels to our position along those axes.
       private HashMap<String, Integer> axisToPos_;
       // Axes for which we are the last image along that axis.
@@ -24,7 +24,7 @@ public class DefaultCoords implements Coords, Comparable<DefaultCoords> {
       // Convenience/optimization: we maintain a sorted list of our axes.
       private ArrayList<String> sortedAxes_;
 
-      public DefaultCoordsBuilder() {
+      public Builder() {
          axisToPos_ = new HashMap<String, Integer>();
          terminalAxes_ = new HashSet<String>();
          sortedAxes_ = new ArrayList<String>();
@@ -71,7 +71,7 @@ public class DefaultCoords implements Coords, Comparable<DefaultCoords> {
    // Convenience/optimization: we maintain a sorted list of our axes.
    private ArrayList<String> sortedAxes_;
 
-   public DefaultCoords(DefaultCoordsBuilder builder) {
+   public DefaultCoords(Builder builder) {
       axisToPos_ = builder.axisToPos_;
       terminalAxes_ = builder.terminalAxes_;
       sortedAxes_ = builder.sortedAxes_;
@@ -97,7 +97,7 @@ public class DefaultCoords implements Coords, Comparable<DefaultCoords> {
    }
 
    public CoordsBuilder copy() {
-      DefaultCoordsBuilder result = new DefaultCoordsBuilder();
+      Builder result = new Builder();
       for (String axis : axisToPos_.keySet()) {
          result.position(axis, axisToPos_.get(axis));
       }
@@ -160,5 +160,21 @@ public class DefaultCoords implements Coords, Comparable<DefaultCoords> {
       HashSet<String> ourAxes = new HashSet(sortedAxes_);
       HashSet<String> altAxes = new HashSet(((DefaultCoords) alt).getAxes());
       return ourAxes.equals(altAxes);
+   }
+
+   /**
+    * Convert to string. Should only be used for debugging (?).
+    */
+   public String toString() {
+      String result = "<";
+      boolean isFirst = true;
+      for (String axis : sortedAxes_) {
+         if (!isFirst) {
+            result += ", ";
+         }
+         isFirst = false;
+         result += String.format("%s: %d", axis, getPositionAt(axis));
+      }
+      return result;
    }
 }

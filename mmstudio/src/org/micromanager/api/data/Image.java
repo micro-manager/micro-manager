@@ -2,6 +2,8 @@ package org.micromanager.api.data;
 
 import net.imglib2.meta.ImgPlus;
 
+import mmcorej.TaggedImage;
+
 /**
  * An Image is a single image plane with associated metadata. Functionally 
  * similar to TaggedImage, but with more rigidly-defined metadata and 
@@ -21,4 +23,9 @@ public interface Image {
     * Retrieve the Coords for this Image.
     */
    public Coords getCoords();
+
+   /**
+    * For legacy support only: convert to TaggedImage;
+    */
+   public TaggedImage legacyToTaggedImage();
 }

@@ -2,6 +2,8 @@ package org.micromanager.api.data;
 
 import java.awt.Color;
 
+import org.json.JSONObject;
+
 import org.micromanager.api.MultiStagePosition;
 
 /**
@@ -36,4 +38,9 @@ public interface DisplaySettings {
    public Color[] getChannelColors();
    public Integer[] getChannelContrastMins();
    public Integer[] getChannelContrastMaxes();
+
+   /**
+    * For legacy support only: convert to JSONObject.
+    */
+   public JSONObject legacyToJSON();
 }
