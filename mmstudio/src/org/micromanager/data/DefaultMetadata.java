@@ -4,12 +4,15 @@ import java.awt.Color;
 import java.awt.Rectangle;
 import java.util.UUID;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import org.micromanager.api.data.Metadata;
 import org.micromanager.api.data.SummaryMetadata;
 import org.micromanager.api.MultiStagePosition;
 
+import org.micromanager.utils.MDUtils;
+import org.micromanager.utils.ReportingUtils;
 
 /**
  * This class holds the metadata for ImagePlanes. It is intended to be 
@@ -23,7 +26,7 @@ public class DefaultMetadata implements Metadata {
     * This class constructs Metadata objects. Use the build() method to 
     * generate a Metadata.
     */
-   public static class DefaultMetadataBuilder implements Metadata.MetadataBuilder {
+   public static class Builder implements Metadata.MetadataBuilder {
       private UUID uuid_ = null;
       private String source_ = null;
       
@@ -65,7 +68,7 @@ public class DefaultMetadata implements Metadata {
       private SummaryMetadata summaryMetadata_ = null;
 
       @Override
-      public Metadata build() {
+      public DefaultMetadata build() {
          return new DefaultMetadata(this);
       }
 
@@ -302,7 +305,7 @@ public class DefaultMetadata implements Metadata {
    private JSONObject userMetadata_ = null;
    private SummaryMetadata summaryMetadata_ = null;
 
-   public DefaultMetadata(DefaultMetadataBuilder builder) {
+   public DefaultMetadata(Builder builder) {
       uuid_ = builder.uuid_;
       source_ = builder.source_;
       
@@ -346,7 +349,7 @@ public class DefaultMetadata implements Metadata {
    
    @Override
    public MetadataBuilder copy() {
-      return new DefaultMetadataBuilder()
+      return new Builder()
             .uuid(uuid_)
             .source(source_)
             .initialPositionList(initialPositionList_)
@@ -380,7 +383,7 @@ public class DefaultMetadata implements Metadata {
    }
 
    @Override
-   public UUID getUuid() {
+   public UUID getUUID() {
       return uuid_;
    }
 
@@ -537,5 +540,28 @@ public class DefaultMetadata implements Metadata {
    @Override
    public SummaryMetadata getSummaryMetadata() {
       return summaryMetadata_;
+   }
+
+   /**
+    * For backwards compatibility, convert our data into a JSONObject.
+    */
+   @Override
+   public JSONObject legacyToJSON() {
+      try {
+         JSONObject result = new JSONObject();
+         MDUtils.setChannelName(result, getCamera());
+         MDUtils.setROI(result, getROI());
+         MDUtils.setBinning(result, getBinning());
+         MDUtils.setPixelSizeUm(result, getPixelSizeUm());
+         MDUtils.setUUID(result, getUUID());
+         MDUtils.setZStepUm(result, getZStepUm());
+         MDUtils.setElapsedTimeMs(result, getElapsedTimeMs());
+         MDUtils.setComments(result, getComments());
+         return result;
+      }
+      catch (JSONException e) {
+         ReportingUtils.logError(e, "Couldn't convert DefaultMetadata to JSON.");
+         return null;
+      }
    }
 }

@@ -2,12 +2,17 @@ package org.micromanager.data;
 
 import java.awt.Color;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import org.micromanager.api.data.SummaryMetadata;
 import org.micromanager.api.MultiStagePosition;
 
+import org.micromanager.utils.ReportingUtils;
+
 public class DefaultSummaryMetadata implements SummaryMetadata {
 
-   public class DefaultSummaryMetadataBuilder implements SummaryMetadata.SummaryMetadataBuilder {
+   public static class Builder implements SummaryMetadata.SummaryMetadataBuilder {
 
       private String acquisitionName_ = null;
       private String fileName_ = null;
@@ -18,11 +23,6 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
       private String computerName_ = null;
       private String directory_ = null;
       
-      private String[] channelNames_ = null;
-      private Color[] channelColors_ = null;
-      private Integer[] channelContrastMins_ = null;
-      private Integer[] channelContrastMaxes_ = null;
-      
       private Double waitInterval_ = null;
       private Double[] customIntervalsMs_ = null;
       private String startDate_ = null;
@@ -30,7 +30,7 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
       private MultiStagePosition[] stagePositions_ = null;
 
       @Override
-      public SummaryMetadata build() {
+      public DefaultSummaryMetadata build() {
          return new DefaultSummaryMetadata(this);
       }
       
@@ -83,30 +83,6 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
       }
 
       @Override
-      public SummaryMetadataBuilder channelNames(String[] channelNames) {
-         channelNames_ = channelNames;
-         return this;
-      }
-
-      @Override
-      public SummaryMetadataBuilder channelColors(Color[] channelColors) {
-         channelColors_ = channelColors;
-         return this;
-      }
-
-      @Override
-      public SummaryMetadataBuilder channelContrastMins(Integer[] channelContrastMins) {
-         channelContrastMins_ = channelContrastMins;
-         return this;
-      }
-
-      @Override
-      public SummaryMetadataBuilder channelContrastMaxes(Integer[] channelContrastMaxes) {
-         channelContrastMaxes_ = channelContrastMaxes;
-         return this;
-      }
-
-      @Override
       public SummaryMetadataBuilder waitInterval(Double waitInterval) {
          waitInterval_ = waitInterval;
          return this;
@@ -146,18 +122,13 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
    private String computerName_ = null;
    private String directory_ = null;
    
-   private String[] channelNames_ = null;
-   private Color[] channelColors_ = null;
-   private Integer[] channelContrastMins_ = null;
-   private Integer[] channelContrastMaxes_ = null;
-
    private Double waitInterval_ = null;
    private Double[] customIntervalsMs_ = null;
    private String startDate_ = null;
    private Integer numComponents_ = null;
    private MultiStagePosition[] stagePositions_ = null;
 
-   public DefaultSummaryMetadata(DefaultSummaryMetadataBuilder builder) {
+   public DefaultSummaryMetadata(Builder builder) {
       acquisitionName_ = builder.acquisitionName_;
       fileName_ = builder.fileName_;
       prefix_ = builder.prefix_;
@@ -167,11 +138,6 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
       computerName_ = builder.computerName_;
       directory_ = builder.directory_;
       
-      channelNames_ = builder.channelNames_;
-      channelColors_ = builder.channelColors_;
-      channelContrastMins_ = builder.channelContrastMins_;
-      channelContrastMaxes_ = builder.channelContrastMaxes_;
-
       waitInterval_ = builder.waitInterval_;
       customIntervalsMs_ = builder.customIntervalsMs_;
       startDate_ = builder.startDate_;
@@ -220,26 +186,6 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
    }
 
    @Override
-   public String[] getChannelNames() {
-      return channelNames_;
-   }
-
-   @Override
-   public Color[] getChannelColors() {
-      return channelColors_;
-   }
-
-   @Override
-   public Integer[] getChannelContrastMins() {
-      return channelContrastMins_;
-   }
-
-   @Override
-   public Integer[] getChannelContrastMaxes() {
-      return channelContrastMaxes_;
-   }
-
-   @Override
    public Double getWaitInterval() {
       return waitInterval_;
    }
@@ -265,9 +211,9 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
    }
 
    @Override
-   public MetadataBuilder copy() {
-      return new DefaultMetadataBuilder()
-            .name(acquisitionName_)
+   public SummaryMetadataBuilder copy() {
+      return new Builder()
+            .acquisitionName(acquisitionName_)
             .fileName(fileName_)
             .prefix(prefix_)
             .userName(userName_)
@@ -275,14 +221,68 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
             .metadataVersion(metadataVersion_)
             .computerName(computerName_)
             .directory(directory_)
-            .channelNames(channelNames_)
-            .channelColors(channelColors_)
-            .channelContrastMins(channelContrastMins_)
-            .channelContrastMaxes(channelContrastMaxes_)
             .waitInterval(waitInterval_)
             .customIntervalsMs(customIntervalsMs_)
             .startDate(startDate_)
             .numComponents(numComponents_)
             .stagePositions(stagePositions_);
+   }
+
+   /**
+    * For temporary backwards compatibility, generate a new SummaryMetadata
+    * from a provided JSON object.
+    */
+   public static DefaultSummaryMetadata legacyFromJSON(JSONObject tags) {
+      // Most of these fields are not exposed in MDUtils and thus are 
+      // functionally read-only from the perspective of the Java layer, 
+      // excepting the acquisition engine (which is presumably what sets them
+      // in the first place).
+      try {
+         return new Builder()
+            .acquisitionName(tags.getString("Name"))
+            .prefix(tags.getString("Prefix"))
+            .userName(tags.getString("UserName"))
+            .microManagerVersion(tags.getString("MicroManagerVersion"))
+            .metadataVersion(tags.getString("MetadataVersion"))
+            .computerName(tags.getString("ComputerName"))
+            .directory(tags.getString("Directory"))
+            .waitInterval(tags.getDouble("WaitInterval"))
+            .customIntervalsMs(tags.getString("CustomIntervals_ms"))
+            .startDate(tags.getString("StartTime"))
+            .numComponents(tags.getString("NumComponents"))
+            .stagePositions(tags.getString("Positions"));
+      }
+      catch (JSONException e) {
+         ReportingUtils.logError(e, "Couldn't generate new DefaultSummaryMetadata from JSON");
+         return null;
+      }
+   }
+
+   /**
+    * For backwards compatibility, convert to a JSON representation.
+    */
+   @Override
+   public JSONObject legacyToJSON() {
+      try {
+         JSONObject result = new JSONObject();
+         result.put("FileName", fileName_);
+         result.put("Name", acquisitionName_);
+         result.put("Prefix", prefix_);
+         result.put("UserName", userName_);
+         result.put("MicroManagerVersion", microManagerVersion_);
+         result.put("MetadataVersion", metadataVersion_);
+         result.put("ComputerName", computerName_);
+         result.put("Directory", directory_);
+         result.put("WaitInterval", waitInterval_);
+         result.put("CustomIntervals_ms", customIntervalsMs_);
+         result.put("StartTime", startDate_);
+         result.put("NumComponents", numComponents_);
+         result.put("Positions", stagePositions_);
+         return result;
+      }
+      catch (JSONException e) {
+         ReportingUtils.logError(e, "Couldn't convert DefaultSummaryMetadata to JSON");
+         return null;
+      }
    }
 }
