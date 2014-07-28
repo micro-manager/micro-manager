@@ -254,6 +254,10 @@ public class MDUtils {
          return null;
    }
 
+   public static void setUUID(JSONObject map, UUID uuid) throws JSONException {
+      map.put("UUID", uuid);
+   }
+
    public static void setPixelType(JSONObject map, int type) throws JSONException {
       switch (type) {
          case ImagePlus.GRAY8:
@@ -490,6 +494,12 @@ public class MDUtils {
       w = Integer.parseInt(xywh[2]);
       h = Integer.parseInt(xywh[3]);
       return new Rectangle(x, y, w, h);
+   }
+
+   public static void setROI(JSONObject tags, Rectangle r) throws JSONException {
+      String roiString = String.format("%d-%d-%d-%d", 
+            r.getX(), r.getY(), r.getWidth(), r.getHeight());
+      tags.put("ROI", roiString);
    }
 
    public static int getDepth(JSONObject tags) throws MMScriptException, JSONException {
