@@ -124,6 +124,7 @@ public class DefaultImage implements Image {
     */
    @Override
    public TaggedImage legacyToTaggedImage() {
+      ReportingUtils.logError("Downconverting DefaultImage " + coords_ + "to TaggedImage");
       ArrayImg temp = (ArrayImg) pixels_.firstElement();
       ArrayDataAccess accessor = (ArrayDataAccess) temp.update(null);
       Object pixelData = accessor.getCurrentStorageArray();

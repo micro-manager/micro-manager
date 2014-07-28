@@ -232,12 +232,16 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
     * For temporary backwards compatibility, generate a new SummaryMetadata
     * from a provided JSON object.
     */
-   public static DefaultSummaryMetadata legacyFromJSON(JSONObject tags) {
+   public static SummaryMetadata legacyFromJSON(JSONObject tags) {
+      if (tags == null) {
+         return new Builder().build();
+      }
       // Most of these fields are not exposed in MDUtils and thus are 
       // functionally read-only from the perspective of the Java layer, 
       // excepting the acquisition engine (which is presumably what sets them
       // in the first place).
       try {
+         // TODO: not preserving the position-related metadata.
          return new Builder()
             .acquisitionName(tags.getString("Name"))
             .prefix(tags.getString("Prefix"))
@@ -247,10 +251,10 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
             .computerName(tags.getString("ComputerName"))
             .directory(tags.getString("Directory"))
             .waitInterval(tags.getDouble("WaitInterval"))
-            .customIntervalsMs(tags.getString("CustomIntervals_ms"))
+            .customIntervalsMs(new Double[] {Double.parseDouble(tags.getString("CustomIntervals_ms"))})
             .startDate(tags.getString("StartTime"))
-            .numComponents(tags.getString("NumComponents"))
-            .stagePositions(tags.getString("Positions"));
+            .numComponents(tags.getInt("NumComponents"))
+            .build();
       }
       catch (JSONException e) {
          ReportingUtils.logError(e, "Couldn't generate new DefaultSummaryMetadata from JSON");
