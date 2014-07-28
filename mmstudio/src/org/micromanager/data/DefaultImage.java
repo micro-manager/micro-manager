@@ -36,7 +36,7 @@ public class DefaultImage implements Image {
     */
    public DefaultImage(TaggedImage tagged) throws JSONException, MMScriptException {
       JSONObject tags = tagged.tags;
-      metadata_ = new DefaultMetadata.DefaultMetadataBuilder()
+      metadata_ = new DefaultMetadata.Builder()
             .camera(MDUtils.getChannelName(tags))
             .ROI(MDUtils.getROI(tags))
             .binning(MDUtils.getBinning(tags))
@@ -47,7 +47,7 @@ public class DefaultImage implements Image {
             .comments(MDUtils.getComments(tags))
             .build();
 
-      coords_ = new DefaultCoords.DefaultCoordsBuilder()
+      coords_ = new DefaultCoords.Builder()
             .position("time", MDUtils.getFrameIndex(tags))
             .position("position", MDUtils.getPositionIndex(tags))
             .position("slice", MDUtils.getSliceIndex(tags))
@@ -64,8 +64,8 @@ public class DefaultImage implements Image {
     */
    public DefaultImage(Object pixels, int width, int height, int bytesPerPixel) 
          throws IllegalArgumentException {
-      metadata_ = new DefaultMetadata.DefaultMetadataBuilder().build();
-      coords_ = new DefaultCoords.DefaultCoordsBuilder().build();
+      metadata_ = new DefaultMetadata.Builder().build();
+      coords_ = new DefaultCoords.Builder().build();
 
       pixels_ = generateImgPlusFromPixels(pixels, width, height, bytesPerPixel);
    }
@@ -117,5 +117,17 @@ public class DefaultImage implements Image {
    @Override
    public Coords getCoords() {
       return coords_;
+   }
+
+   /**
+    * For backwards compatibility, convert to TaggedImage.
+    */
+   @Override
+   public TaggedImage legacyToTaggedImage() {
+      ArrayImg temp = (ArrayImg) pixels_.firstElement();
+      ArrayDataAccess accessor = (ArrayDataAccess) temp.update(null);
+      Object pixelData = accessor.getCurrentStorageArray();
+      JSONObject tags = metadata_.legacyToJSON();
+      return new TaggedImage(pixelData, tags);
    }
 }

@@ -1,5 +1,7 @@
 package org.micromanager.api.data;
 
+import org.json.JSONObject;
+
 import org.micromanager.api.MultiStagePosition;
 
 /**
@@ -54,4 +56,9 @@ public interface SummaryMetadata {
    public String getStartDate();
    public Integer getNumComponents();
    public MultiStagePosition[] getStagePositions();
+
+   /**
+    * For legacy support only: convert to JSONObject.
+    */
+   public JSONObject legacyToJSON();
 }
