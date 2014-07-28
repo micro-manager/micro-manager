@@ -111,7 +111,10 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    private boolean isAcquisitionFinished_ = false;
    private boolean promptToSave_ = true;
    private boolean amClosing_ = false;
+   // Name of the acquisition we present.
    private String name_;
+   // First component of text displayed in our title bar.
+   private String title_;
    private int numComponents_;
    // This queue holds images waiting to be displayed.
    private LinkedBlockingQueue<JSONObject> imageTagsQueue_;
@@ -156,18 +159,15 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    }
 
    /**
-    * Constructor that doesn't provide a title; an automatically-generated one
-    * is used instead.
-    */
-   public VirtualAcquisitionDisplay(ImageCache imageCache, AcquisitionEngine eng) {
-      this(imageCache, eng, WindowManager.getUniqueName("Untitled"));
-   }
-
-   /**
     * Standard constructor.
     */
-   public VirtualAcquisitionDisplay(ImageCache imageCache, AcquisitionEngine eng, String name) {
+   public VirtualAcquisitionDisplay(ImageCache imageCache,
+         AcquisitionEngine eng, String name, boolean shouldUseNameAsTitle) {
       name_ = name;
+      title_ = name;
+      if (!shouldUseNameAsTitle) {
+         title_ = WindowManager.getUniqueName("Untitled");
+      }
       imageCache_ = imageCache;
       eng_ = eng;
       isMDA_ = eng != null;
@@ -326,6 +326,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    public VirtualAcquisitionDisplay(ImageCache imageCache, String name) throws MMScriptException {
       imageCache_ = imageCache;
       name_ = name;
+      title_ = name;
       isMDA_ = false;
       shouldUseSimpleControls_ = true;
       this.albumSaved_ = imageCache.isFinished();
@@ -665,7 +666,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
 
       controls_.imagesOnDiskUpdate(imageCache_.getDiskLocation() != null);
       String path = isDiskCached()
-              ? new File(imageCache_.getDiskLocation()).getName() : name_;
+              ? new File(imageCache_.getDiskLocation()).getName() : title_;
 
       if (hyperImage_.isVisible()) {
          int mag = (int) (100 * hyperImage_.getCanvas().getMagnification());
@@ -1114,7 +1115,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       mmIP.setNSlicesUnverified(slices);
       if (channels > 1) {        
          hyperImage = new MMCompositeImage(mmIP, imageCache_.getDisplayMode(), 
-               name_, bus_);
+               title_, bus_);
          hyperImage.setOpenAsHyperStack(true);
       } else {
          hyperImage = mmIP;
@@ -1386,8 +1387,8 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       return getNumChannels();
    }
 
-   public void setWindowTitle(String name) {
-      name_ = name;
+   public void setWindowTitle(String title) {
+      title_ = title;
       updateWindowTitleAndStatus();
    }
 

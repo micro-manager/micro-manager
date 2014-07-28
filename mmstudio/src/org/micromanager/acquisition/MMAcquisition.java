@@ -140,7 +140,7 @@ public class MMAcquisition {
   
       imageCache_.setSummaryMetadata(summaryMetadata);
       if (show_) {
-         virtAcq_ = new VirtualAcquisitionDisplay(imageCache_, eng);
+         virtAcq_ = new VirtualAcquisitionDisplay(imageCache_, eng, name, false);
          imageCache_.addImageCacheListener(virtAcq_);
       }
          this.summary_ = summaryMetadata;
@@ -367,7 +367,7 @@ public class MMAcquisition {
 
       if (imageCache_.getSummaryMetadata() != null) {
          if (show_) {
-            virtAcq_ = new VirtualAcquisitionDisplay(imageCache_, null, name);
+            virtAcq_ = new VirtualAcquisitionDisplay(imageCache_, null, name, true);
             imageCache_.addImageCacheListener(virtAcq_);
             virtAcq_.show();
          }
