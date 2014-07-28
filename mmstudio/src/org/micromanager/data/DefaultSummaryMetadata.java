@@ -240,26 +240,85 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
       // functionally read-only from the perspective of the Java layer, 
       // excepting the acquisition engine (which is presumably what sets them
       // in the first place).
+      // TODO: not preserving the position-related metadata.
+      Builder builder = new Builder();
       try {
-         // TODO: not preserving the position-related metadata.
-         return new Builder()
-            .acquisitionName(tags.getString("Name"))
-            .prefix(tags.getString("Prefix"))
-            .userName(tags.getString("UserName"))
-            .microManagerVersion(tags.getString("MicroManagerVersion"))
-            .metadataVersion(tags.getString("MetadataVersion"))
-            .computerName(tags.getString("ComputerName"))
-            .directory(tags.getString("Directory"))
-            .waitInterval(tags.getDouble("WaitInterval"))
-            .customIntervalsMs(new Double[] {Double.parseDouble(tags.getString("CustomIntervals_ms"))})
-            .startDate(tags.getString("StartTime"))
-            .numComponents(tags.getInt("NumComponents"))
-            .build();
+         builder.acquisitionName(tags.getString("Name"));
       }
       catch (JSONException e) {
-         ReportingUtils.logError(e, "Couldn't generate new DefaultSummaryMetadata from JSON");
-         return null;
+         ReportingUtils.logError("Failed to set field acquisitionName");
       }
+
+      try {
+         builder.prefix(tags.getString("Prefix"));
+      }
+      catch (JSONException e) {
+         ReportingUtils.logError("Failed to set field prefix");
+      }
+
+      try {
+         builder.userName(tags.getString("UserName"));
+      }
+      catch (JSONException e) {
+         ReportingUtils.logError("Failed to set field userName");
+      }
+
+      try {
+         builder.microManagerVersion(tags.getString("MicroManagerVersion"));
+      }
+      catch (JSONException e) {
+         ReportingUtils.logError("Failed to set field microManagerVersion");
+      }
+
+      try {
+         builder.metadataVersion(tags.getString("MetadataVersion"));
+      }
+      catch (JSONException e) {
+         ReportingUtils.logError("Failed to set field metadataVersion");
+      }
+
+      try {
+         builder.computerName(tags.getString("ComputerName"));
+      }
+      catch (JSONException e) {
+         ReportingUtils.logError("Failed to set field computerName");
+      }
+
+      try {
+         builder.directory(tags.getString("Directory"));
+      }
+      catch (JSONException e) {
+         ReportingUtils.logError("Failed to set field directory");
+      }
+
+      try {
+         builder.waitInterval(tags.getDouble("WaitInterval"));
+      }
+      catch (JSONException e) {
+         ReportingUtils.logError("Failed to set field waitInterval");
+      }
+
+      try {
+         builder.customIntervalsMs(new Double[] {Double.parseDouble(tags.getString("CustomIntervals_ms"))});
+      }
+      catch (JSONException e) {
+         ReportingUtils.logError("Failed to set field customIntervalsMs(new Double[] {Double.parseDouble");
+      }
+
+      try {
+         builder.startDate(tags.getString("StartTime"));
+      }
+      catch (JSONException e) {
+         ReportingUtils.logError("Failed to set field startDate");
+      }
+
+      try {
+         builder.numComponents(tags.getInt("NumComponents"));
+      }
+      catch (JSONException e) {
+         ReportingUtils.logError("Failed to set field numComponents");
+      }
+      return builder.build();
    }
 
    /**
