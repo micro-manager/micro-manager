@@ -8,6 +8,7 @@ import org.json.JSONObject;
 import org.micromanager.api.data.DisplaySettings;
 import org.micromanager.api.MultiStagePosition;
 
+import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.ReportingUtils;
 
 public class DefaultDisplaySettings implements DisplaySettings {
@@ -82,7 +83,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
    
    @Override
    public DisplaySettingsBuilder copy() {
-      return new DefaultMetadataBuilder()
+      return new Builder()
             .channelNames(channelNames_)
             .channelColors(channelColors_)
             .channelContrastMins(channelContrastMins_)
@@ -93,13 +94,24 @@ public class DefaultDisplaySettings implements DisplaySettings {
     * For backwards compatibility, generate a DefaultDisplaySettings from
     * a JSONObject.
     */
-   public static DefaultDisplaySettings legacyFromJSON(JSONObject tags) {
-      return new Builder()
-         .channelNames(new String[] {MDUtils.getChannelName(tags)})
-         .channelColors(new Color[] {MDUtils.getChannelColor(tags)})
-         .channelContrastMins(new Integer[] {tags.get("ChContrastMin")})
-         .channelContrastMaxes(new Integer[] {tags.get("ChContrastMaxes")})
-         .build();
+   public static DisplaySettings legacyFromJSON(JSONObject tags) {
+      if (tags == null) {
+         return new Builder().build();
+      }
+      try {
+         int color = MDUtils.getChannelColor(tags);
+         Color fakeColor = new Color(color, color, color);
+         return new Builder()
+            .channelNames(new String[] {MDUtils.getChannelName(tags)})
+            .channelColors(new Color[] {fakeColor})
+            .channelContrastMins(new Integer[] {tags.getInt("ChContrastMin")})
+            .channelContrastMaxes(new Integer[] {tags.getInt("ChContrastMax")})
+            .build();
+      }
+      catch (JSONException e) {
+         ReportingUtils.logError(e, "Couldn't convert JSON into DisplaySettings");
+         return null;
+      }
    }
 
    /**
@@ -109,12 +121,12 @@ public class DefaultDisplaySettings implements DisplaySettings {
    @Override
    public JSONObject legacyToJSON() {
       try {
-         result = new JSONObject();
-         MDUtils.setChannelName(channelNames_[0]);
+         JSONObject result = new JSONObject();
+         MDUtils.setChannelName(result, channelNames_[0]);
          // TODO: no idea how we represent a color with an int in the current
          // system, but at least using a hashCode() uniquely represents this
          // RGBA color!
-         MDUtils.setChannelColor(channelColors_[0].hashCode());
+         MDUtils.setChannelColor(result, channelColors_[0].hashCode());
          result.put("ChContrastMin", channelContrastMins_[0]);
          result.put("ChContrastMax", channelContrastMaxes_[0]);
          return result;
