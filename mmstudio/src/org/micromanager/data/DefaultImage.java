@@ -36,23 +36,59 @@ public class DefaultImage implements Image {
     */
    public DefaultImage(TaggedImage tagged) throws JSONException, MMScriptException {
       JSONObject tags = tagged.tags;
-      metadata_ = new DefaultMetadata.Builder()
-            .camera(MDUtils.getChannelName(tags))
-            .ROI(MDUtils.getROI(tags))
-            .binning(MDUtils.getBinning(tags))
-            .pixelSizeUm(MDUtils.getPixelSizeUm(tags))
-            .uuid(MDUtils.getUUID(tags))
-            .zStepUm(MDUtils.getZStepUm(tags))
-            .elapsedTimeMs(MDUtils.getElapsedTimeMs(tags))
-            .comments(MDUtils.getComments(tags))
-            .build();
+      DefaultMetadata.Builder builder = new DefaultMetadata.Builder();
+      try {
+         builder.camera(MDUtils.getChannelName(tags));
+      }
+      catch (JSONException e) {}
+      try {
+         builder.ROI(MDUtils.getROI(tags));
+      }
+      catch (JSONException e) {}
+      try {
+         builder.binning(MDUtils.getBinning(tags));
+      }
+      catch (JSONException e) {}
+      try {
+         builder.pixelSizeUm(MDUtils.getPixelSizeUm(tags));
+      }
+      catch (JSONException e) {}
+      try {
+         builder.uuid(MDUtils.getUUID(tags));
+      }
+      catch (JSONException e) {}
+      try {
+         builder.zStepUm(MDUtils.getZStepUm(tags));
+      }
+      catch (JSONException e) {}
+      try {
+         builder.elapsedTimeMs(MDUtils.getElapsedTimeMs(tags));
+      }
+      catch (JSONException e) {}
+      try {
+         builder.comments(MDUtils.getComments(tags));
+      }
+      catch (JSONException e) {}
+      metadata_ = builder.build();
 
-      coords_ = new DefaultCoords.Builder()
-            .position("time", MDUtils.getFrameIndex(tags))
-            .position("position", MDUtils.getPositionIndex(tags))
-            .position("slice", MDUtils.getSliceIndex(tags))
-            .position("channel", MDUtils.getChannelIndex(tags))
-            .build();
+      DefaultCoords.Builder cBuilder = new DefaultCoords.Builder();
+      try {
+         cBuilder.position("time", MDUtils.getFrameIndex(tags));
+      }
+      catch (JSONException e) {}
+      try {
+         cBuilder.position("position", MDUtils.getPositionIndex(tags));
+      }
+      catch (JSONException e) {}
+      try {
+         cBuilder.position("slice", MDUtils.getSliceIndex(tags));
+      }
+      catch (JSONException e) {}
+      try {
+         cBuilder.position("channel", MDUtils.getChannelIndex(tags));
+      }
+      catch (JSONException e) {}
+      coords_ = cBuilder.build();
 
       pixels_ = generateImgPlusFromPixels(tagged.pix, 
             MDUtils.getWidth(tags), MDUtils.getHeight(tags),
