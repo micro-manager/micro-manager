@@ -174,9 +174,6 @@ unsigned int __stdcall mSeqEventHandler(void*);
 unsigned long imageTimeoutMs_g = 5000; // milliseconds to wait for image ready event
 
 
-#define FXOK 1
-
-
 BOImplementationThread::BOImplementationThread(CBaumerOptronic* pCamera) :
    intervalMs_(100.0),
    numImages_(1),
@@ -614,7 +611,7 @@ void BOImplementationThread::QueryCapabilities()
 
 
 
-   if (1 == fxret)
+   if (fxret == CE_SUCCESS)
    {
       // copy out of library's local memory
 
@@ -631,7 +628,7 @@ void BOImplementationThread::QueryCapabilities()
          //query image codes
          tpBoImgCode * aImgCode;
          fxret = FX_GetCapability(gCameraId[0], BCAM_QUERYCAP_IMGCODES, f.second.iFormat, (void**)&aImgCode, &nattributesAvailable);
-         if (1 == fxret)
+         if (fxret == CE_SUCCESS)
          {
             for (jj = 0; jj < nattributesAvailable; ++jj)
             {
@@ -642,7 +639,7 @@ void BOImplementationThread::QueryCapabilities()
          // query image filters for this format
          tpBoImgFilter * aImgFilter;
          int fxret = FX_GetCapability(gCameraId[0], BCAM_QUERYCAP_IMGFILTER, f.second.iFormat, (void**)&aImgFilter, &nattributesAvailable);
-         if (1 == fxret)
+         if (fxret == CE_SUCCESS)
          {
             for (jj = 0; jj < nattributesAvailable; ++jj)
             {
@@ -658,7 +655,7 @@ void BOImplementationThread::QueryCapabilities()
          std::ostringstream oss;
          oss << " for format " << f.first << " aux camera capabilites:";
 
-         if (1 == fxret)
+         if (fxret == CE_SUCCESS)
          {
             for (int i = 0; i < nCamFunction; i++)
             {
@@ -752,14 +749,15 @@ void BOImplementationThread::ParseCapabilities()
 
 void BOImplementationThread::QueryCameraCurrentFormat()
 {
+   int fxRet = 0;
    tBoCameraType   dcBoType;               // Cameratype struct
    tBoCameraStatus dcBoStatus;             // Camerastatus struct
 
    dcBoType.iSizeof = sizeof(dcBoType);
    dcBoStatus.iSizeof = sizeof(dcBoStatus);
-   int fxRet = FX_GetCameraInfo(gCameraId[0], &dcBoType, &dcBoStatus);
+   fxRet = FX_GetCameraInfo(gCameraId[0], &dcBoType, &dcBoStatus);
    ::iCode_g = static_cast<unsigned short>(dcBoStatus.eCurImgCode.iCode);
-   if (CE_SUCCESS != fxRet)
+   if (fxRet != CE_SUCCESS)
    {
       LLogMessage(GetSDKErrorMessage(fxRet));
    }
@@ -768,7 +766,6 @@ void BOImplementationThread::QueryCameraCurrentFormat()
       bitsInOneColor_ = static_cast<unsigned short>(dcBoStatus.eCurImgCode.iCanalBits);
       nPlanes_ = static_cast<unsigned short>(dcBoStatus.eCurImgCode.iPlanes);
    }
-
    FindImageFormatInFormatCache(dcBoStatus.eCurImgFormat);
 }
 
@@ -824,7 +821,7 @@ int BOImplementationThread::svc()
                int fxReturn = BOInitializationSequence();
                TriggerMode(triggerMode_); // write the initialized value down to the HW
                Command(Noop);
-               if (1 == fxReturn)
+               if (fxReturn == CE_SUCCESS)
                {
                   CameraState(Ready); // camera is ready to take images.
                }
@@ -940,23 +937,23 @@ int BOImplementationThread::BOInitializationSequence()
 
    // **** Init Library
    fxReturn = FX_InitLibrary();
-   if (FXOK == fxReturn)
+   if (fxReturn == CE_SUCCESS)
    {
       // **** Enumerate all 1394 devices ***************
       int DevCount; // number of cameras
       fxReturn = FX_EnumerateDevices(&DevCount);
-      if (FXOK == fxReturn)
+      if (fxReturn == CE_SUCCESS)
       {
          if (1 == DevCount)
          {
             // **** Label a special device **********************
             gCameraId[0] = 0;
             fxReturn = FX_LabelDevice(0, gCameraId[0]);
-            if (FXOK == fxReturn)
+            if (fxReturn == CE_SUCCESS)
             {
                // **** Open a labeled device ********************
                fxReturn = FX_OpenCamera(gCameraId[0]);
-               if (FXOK == fxReturn)
+               if (fxReturn == CE_SUCCESS)
                {
                   std::ostringstream oss;
                   oss << "Opened Leica / Baumer Optronic Camera # " << gCameraId[0];
@@ -973,15 +970,15 @@ int BOImplementationThread::BOInitializationSequence()
                   ::SetThreadPriority(acquisitionThread_, THREAD_PRIORITY_TIME_CRITICAL); //?? really
 
                   fxReturn = FX_DefineImageNotificationEvent(gCameraId[0], imageNotificationEvent_);
-                  if (FXOK == fxReturn)
+                  if (fxReturn == CE_SUCCESS)
                   {
                      // **** Allocate Buffers ********************
                      fxReturn = FX_AllocateResources(gCameraId[0], 10, 0);
-                     if (FXOK == fxReturn)
+                     if (fxReturn == CE_SUCCESS)
                      {
                         // **** Start capture process********************
                         fxReturn = FX_StartDataCapture(gCameraId[0], TRUE);
-                        if (FXOK != fxReturn)
+                        if (fxReturn != CE_SUCCESS)
                         {
                            sprintf(fxMess,"FX_StartDataCapture error: %08x", fxReturn);
                            LLogMessage(fxMess);
@@ -1029,7 +1026,7 @@ int BOImplementationThread::BOInitializationSequence()
       LLogMessage(fxMess);
    }
 
-   if (1 == fxReturn)
+   if (fxReturn == CE_SUCCESS)
    {
       LLogMessage(" BO camera library initialized OK!", true);
    }
@@ -1123,7 +1120,7 @@ bool BOImplementationThread::ImageFormat(int imageFormatIndex)
 
    fxret = FX_SetImageFormat(gCameraId[0], imageFormatIndex);
 
-   if (1 == fxret)
+   if (fxret == CE_SUCCESS)
    {
       std::vector<CompleteFormat>::iterator i;
       for (i = completeFormats_.begin(); i != completeFormats_.end(); ++i)
@@ -1182,8 +1179,8 @@ void BOImplementationThread::BinSize(const int v)
                   {
                      // N.B. TURNS OFF ROI at this point!! this could be improved to recalculated roi each time binsize is changed
                      partialScanMode_ = false;
-                     int fxr = FX_SetImageCode(gCameraId[0], currentCode);
-                     if (1 == fxr)
+                     int fxret = FX_SetImageCode(gCameraId[0], currentCode);
+                     if (fxret == CE_SUCCESS)
                      {
                         foundMatch = true;
                         QueryCameraCurrentFormat();
@@ -1241,8 +1238,8 @@ int BOImplementationThread::SetBitsInOneColor(const int bits)
                   {
                      //here do i need recalculate ROI??
 
-                     int fxr = FX_SetImageCode(gCameraId[0], *jj);
-                     if (1 == fxr)
+                     int fxret = FX_SetImageCode(gCameraId[0], *jj);
+                     if (fxret == CE_SUCCESS)
                      {
                         foundMatch = true;
                         QueryCameraCurrentFormat();
@@ -1358,30 +1355,30 @@ std::string BOImplementationThread::GetSDKErrorMessage(const int fxcode)
 
 void BOImplementationThread::CancelROI()
 {
-
    RECT returnedRect;
    memset(&returnedRect, 0, sizeof(RECT));
    int fxret = FX_SetPartialScanEx(gCameraId[0], false, &returnedRect, &returnedRect);
-   if (1 == fxret)
+   if (fxret == CE_SUCCESS)
    {
       roi_ = returnedRect;
    }
    partialScanMode_ = false;
-   QueryCameraCurrentFormat();
+   QueryCameraCurrentFormat(); // Reset image xDim_, yDim_ to full size
 }
 
 
 
-
+// Issue 2014-07-25: an error raises if set or clear ROI sequentially 
+// (if run `clearROI` or `setROI` just after `setROI`). It needs some pause
+// to run smooth.
 void BOImplementationThread::SetROI(const unsigned int x, const unsigned int y, const unsigned int xSize, const unsigned int ySize)
 {
-
    RECT returnedRect;
    if ((0 == x) && (0 == y) && (xSize == xDim_) && (ySize == yDim_)) // ROI is being cleared, use full image format
    {
       memset(&returnedRect, 0, sizeof(RECT));
       int fxret = FX_SetPartialScanEx(gCameraId[0], false, &returnedRect, &returnedRect);
-      if (1 == fxret)
+      if (fxret == CE_SUCCESS)
       {
          roi_ = returnedRect;
       }
@@ -1395,7 +1392,7 @@ void BOImplementationThread::SetROI(const unsigned int x, const unsigned int y, 
       requestedRect.right = x + xSize;
       requestedRect.top = y;
       int fxret = FX_SetPartialScanEx(gCameraId[0], true, &requestedRect, &returnedRect);
-      if (1 == fxret)
+      if (fxret == CE_SUCCESS)
       {
          roi_ = returnedRect;
          partialScanMode_ = true;
@@ -1406,7 +1403,7 @@ void BOImplementationThread::SetROI(const unsigned int x, const unsigned int y, 
          xDim_ = static_cast<unsigned int>(roi_.right - roi_.left);
          yDim_ = static_cast<unsigned int>(roi_.bottom - roi_.top);
          std::ostringstream os;
-         os << "Image shape changed to xDim_: " << xDim_ << " yDim_: " << yDim_ << endl;
+         os << "Image shape changed by ROI to xDim_: " << xDim_ << " yDim_: " << yDim_ << endl;
          LLogMessage(os.str().c_str());
       }
    }
