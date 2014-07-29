@@ -747,11 +747,17 @@ void BOImplementationThread::ParseCapabilities()
    QueryCameraCurrentFormat();
 }
 
+/**
+ * @brief Function keeps up to date some private member variables describing
+ * current image format.
+ */
 void BOImplementationThread::QueryCameraCurrentFormat()
 {
    int fxRet = 0;
    tBoCameraType   dcBoType;               // Cameratype struct
    tBoCameraStatus dcBoStatus;             // Camerastatus struct
+   int nImgFormat;
+   tpBoImgFormat* aImgFormat;
 
    dcBoType.iSizeof = sizeof(dcBoType);
    dcBoStatus.iSizeof = sizeof(dcBoStatus);
@@ -767,6 +773,26 @@ void BOImplementationThread::QueryCameraCurrentFormat()
       nPlanes_ = static_cast<unsigned short>(dcBoStatus.eCurImgCode.iPlanes);
    }
    FindImageFormatInFormatCache(dcBoStatus.eCurImgFormat);
+
+   // Find frame dimersions (size) that camera assume for the current image format
+   if (partialScanMode_ == false)
+   {
+      fxRet = FX_GetCapability(gCameraId[0], BCAM_QUERYCAP_IMGFORMATS, 0/*UNUSED*/,
+           (void**)&aImgFormat, &nImgFormat);
+      for(int i = 0; i < nImgFormat; i++)
+      {
+         if (dcBoStatus.eCurImgFormat == aImgFormat[i]->iFormat)
+         {
+            MMThreadGuard g(BOImplementationThread::imageBufferLock_s);
+            xDim_ = aImgFormat[i]->iSizeX;
+            yDim_ = aImgFormat[i]->iSizeY;
+            std::ostringstream os;
+            os << "Image shape updated to xDim_: " << xDim_ << " yDim_: " << yDim_ << endl;
+            LLogMessage(os.str().c_str());
+            break;
+         }
+      }
+   }
 }
 
 
