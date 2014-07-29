@@ -39,6 +39,7 @@ import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import org.micromanager.api.data.Datastore;
 import org.micromanager.api.data.Image;
 import org.micromanager.dialogs.AcqControlDlg;
 import org.micromanager.positionlist.PositionListDlg;
@@ -861,4 +862,10 @@ public interface ScriptInterface {
     * "Auto" button had been clicked for each one.
     */
     public void autostretchCurrentWindow();
+
+    /**
+    * Generate a new, "blank" Datastore with no Reader or subscribers, and
+    * return it.
+    */
+   public Datastore createNewDatastore();
 }
