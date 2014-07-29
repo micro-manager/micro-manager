@@ -192,7 +192,7 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
 
    @Override
    public Double[] getCustomIntervalsMs() {
-      return customIntervalsMs_;
+      return customIntervalsMs_.clone();
    }
 
    @Override
@@ -207,7 +207,7 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
 
    @Override
    public MultiStagePosition[] getStagePositions() {
-      return stagePositions_;
+      return stagePositions_.clone();
    }
 
    @Override
