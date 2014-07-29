@@ -129,7 +129,7 @@ public class MMAcquisition {
                imageFileManager = ImageUtils.newImageStorageInstance(acqPath, true, (JSONObject) null);
                imageCache_ = new MMImageCache(imageFileManager);
                if (!virtual_) {
-                  imageCache_.saveAs(new ImageStorageRam(null), true);
+                  imageCache_.saveAs(new TaggedImageStorageRamFast(null), true);
                }
             } catch (Exception e) {
                ReportingUtils.showError(e, "Unable to create directory for saving images.");
@@ -137,7 +137,7 @@ public class MMAcquisition {
                imageCache_ = null;
             }
          } else {
-            imageFileManager = new ImageStorageRam(null);
+            imageFileManager = new TaggedImageStorageRamFast(null);
             imageCache_ = new MMImageCache(imageFileManager);
          }
   
@@ -257,7 +257,7 @@ public class MMAcquisition {
          throw new MMScriptException("Acquisition is already initialized");
       }
 
-      TaggedImageStorage imageFileManager = new ImageStorageRam(null);
+      TaggedImageStorage imageFileManager = new TaggedImageStorageRamFast(null);
       MMImageCache imageCache = new MMImageCache(imageFileManager);
 
       if (!existing_) {
@@ -321,7 +321,7 @@ public class MMAcquisition {
       }
 
       if (!virtual_ && !existing_) {
-         imageFileManager = new ImageStorageRam(null);
+         imageFileManager = new TaggedImageStorageRamFast(null);
          imageCache_ = new MMImageCache(imageFileManager);
       }
 
@@ -344,7 +344,7 @@ public class MMAcquisition {
          if (tempImageFileManager.getDataSetSize() > 0.9 * JavaUtils.getAvailableUnusedMemory()) {
             throw new MMScriptException("Not enough room in memory for this data set.\nTry opening as a virtual data set instead.");
          }
-         imageFileManager = new ImageStorageRam(null);
+         imageFileManager = new TaggedImageStorageRamFast(null);
          imageCache_.saveAs(imageFileManager);
       }
 
