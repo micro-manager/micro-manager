@@ -736,6 +736,9 @@ public class MMAcquisition {
          outputQueue_.add(TaggedImageQueue.POISON);
          outputQueue_ = null;
       }
+      if (!imageCache_.isFinished()) {
+         imageCache_.finished();
+      }
    }
 
    public boolean isInitialized() {
