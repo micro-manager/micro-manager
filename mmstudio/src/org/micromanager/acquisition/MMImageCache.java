@@ -21,7 +21,6 @@
 package org.micromanager.acquisition;
 
 import ij.CompositeImage;
-
 import java.awt.Color;
 import java.io.IOException;
 import java.util.ArrayList;
