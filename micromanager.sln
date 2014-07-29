@@ -336,6 +336,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pgFocus", "DeviceAdapters\p
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CoherentOBIS", "DeviceAdapters\CoherentOBIS\CoherentOBIS.vcxproj", "{D8296B7C-9580-4AD6-A79C-A5660680A9FF}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NikonEclipse90i", "SecretDeviceAdapters\NikonEclipse90i\NikonEclipse90i.vcxproj", "{7724C191-A199-426A-9CF8-FCBF12377B71}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -1653,6 +1655,14 @@ Global
 		{D8296B7C-9580-4AD6-A79C-A5660680A9FF}.Release|Win32.Build.0 = Release|Win32
 		{D8296B7C-9580-4AD6-A79C-A5660680A9FF}.Release|x64.ActiveCfg = Release|x64
 		{D8296B7C-9580-4AD6-A79C-A5660680A9FF}.Release|x64.Build.0 = Release|x64
+		{7724C191-A199-426A-9CF8-FCBF12377B71}.Debug|Win32.ActiveCfg = Debug|Win32
+		{7724C191-A199-426A-9CF8-FCBF12377B71}.Debug|Win32.Build.0 = Debug|Win32
+		{7724C191-A199-426A-9CF8-FCBF12377B71}.Debug|x64.ActiveCfg = Debug|x64
+		{7724C191-A199-426A-9CF8-FCBF12377B71}.Debug|x64.Build.0 = Debug|x64
+		{7724C191-A199-426A-9CF8-FCBF12377B71}.Release|Win32.ActiveCfg = Release|Win32
+		{7724C191-A199-426A-9CF8-FCBF12377B71}.Release|Win32.Build.0 = Release|Win32
+		{7724C191-A199-426A-9CF8-FCBF12377B71}.Release|x64.ActiveCfg = Release|x64
+		{7724C191-A199-426A-9CF8-FCBF12377B71}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
