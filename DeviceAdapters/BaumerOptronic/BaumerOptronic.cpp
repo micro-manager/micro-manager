@@ -1399,6 +1399,15 @@ void BOImplementationThread::SetROI(const unsigned int x, const unsigned int y, 
       {
          roi_ = returnedRect;
          partialScanMode_ = true;
+
+         // Set new image shape same as returnedRect,
+         // otherwise circular buffer would not initialized properly
+         MMThreadGuard g(BOImplementationThread::imageBufferLock_s);
+         xDim_ = static_cast<unsigned int>(roi_.right - roi_.left);
+         yDim_ = static_cast<unsigned int>(roi_.bottom - roi_.top);
+         std::ostringstream os;
+         os << "Image shape changed to xDim_: " << xDim_ << " yDim_: " << yDim_ << endl;
+         LLogMessage(os.str().c_str());
       }
    }
    QueryCameraCurrentFormat();
