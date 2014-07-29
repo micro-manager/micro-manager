@@ -1,6 +1,7 @@
 # Editors, etc.
 *~
 .*.swp
+.swp
 tags
 .DS_Store
 *.log
