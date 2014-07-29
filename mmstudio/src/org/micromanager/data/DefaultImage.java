@@ -62,10 +62,11 @@ public class DefaultImage implements Image {
    /**
     * @param pixels Assumed to be a Java array of either bytes or shorts.
     */
-   public DefaultImage(Object pixels, int width, int height, int bytesPerPixel) 
+   public DefaultImage(Object pixels, int width, int height, int bytesPerPixel,
+         Coords coords, Metadata metadata) 
          throws IllegalArgumentException {
-      metadata_ = new DefaultMetadata.Builder().build();
-      coords_ = new DefaultCoords.Builder().build();
+      metadata_ = metadata;
+      coords_ = coords;
 
       pixels_ = generateImgPlusFromPixels(pixels, width, height, bytesPerPixel);
    }
