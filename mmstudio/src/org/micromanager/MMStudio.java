@@ -70,6 +70,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.acquisition.*;
 import org.micromanager.api.Autofocus;
+import org.micromanager.api.data.Datastore;
 import org.micromanager.api.data.Image;
 import org.micromanager.api.DataProcessor;
 import org.micromanager.api.IAcquisitionEngine2010;
@@ -84,7 +85,11 @@ import org.micromanager.api.events.PropertiesChangedEvent;
 import org.micromanager.conf2.MMConfigFileException;
 import org.micromanager.conf2.MicroscopeModel;
 
+import org.micromanager.data.DefaultDatastore;
 import org.micromanager.data.DefaultImage;
+
+// HACK TODO FORCING COMPILATION OF THESE MODULES
+import org.micromanager.data.test.*;
 
 import org.micromanager.dialogs.AcqControlDlg;
 import org.micromanager.dialogs.CalibrationListDlg;
@@ -2924,5 +2929,18 @@ public class MMStudio implements ScriptInterface {
       if (display != null) {
          display.getHistograms().autoscaleAllChannels();
       }
+   
+   @Override
+   public Datastore createNewDatastore() {
+      return new DefaultDatastore();
+   }
+
+   // HACK TODO FORCING COMPILATION OF TEST MODULES.
+   public void loadTestModules() {
+      TestReader reader = new TestReader();
+      try {
+         TestConsumer consumer = new TestConsumer(null);
+      }
+      catch (NullPointerException e) {}
    }
 }
