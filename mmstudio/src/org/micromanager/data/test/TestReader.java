@@ -2,6 +2,8 @@ package org.micromanager.data.test;
 
 import java.util.HashMap;
 
+import mmcorej.TaggedImage;
+
 import org.micromanager.api.data.Coords;
 import org.micromanager.api.data.DisplaySettings;
 import org.micromanager.api.data.Image;
@@ -14,6 +16,8 @@ import org.micromanager.data.DefaultDisplaySettings;
 import org.micromanager.data.DefaultImage;
 import org.micromanager.data.DefaultMetadata;
 import org.micromanager.data.DefaultSummaryMetadata;
+
+import org.micromanager.MMStudio;
 
 import org.micromanager.utils.ReportingUtils;
 
@@ -29,24 +33,22 @@ public class TestReader implements Reader {
 
    @Override
    public Image getImage(Coords coords) {
-      ReportingUtils.logError("Asked for image at " + coords);
       if (coordsToImage_.containsKey(coords)) {
-         ReportingUtils.logError("Already have it");
          return coordsToImage_.get(coords);
       }
-      short[] pixelData = new short[4*4];
-      int index = coordsToImage_.size();
-      for (short i = 0; i < 4*4; ++i) {
-         pixelData[i] = (short) index;
+
+      MMStudio studio = MMStudio.getInstance();
+      try {
+         studio.snapSingleImage();
+         TaggedImage tagged = studio.getMMCore().getTaggedImage();
+         Image result = new DefaultImage(tagged);
+         coordsToImage_.put(coords, result);
+         return result;
       }
-      Metadata metadata = (new DefaultMetadata.Builder())
-            .imageNumber(index)
-            .build();
-      Image result = new DefaultImage(pixelData, 4, 4, 2,
-            coords, metadata);
-      coordsToImage_.put(coords, result);
-      ReportingUtils.logError("Generated it");
-      return result;
+      catch (Exception e) {
+         ReportingUtils.logError(e, "Failed to generate a new image");
+         return null;
+      }
    }
 
    @Override
