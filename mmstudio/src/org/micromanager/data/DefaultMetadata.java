@@ -394,7 +394,7 @@ public class DefaultMetadata implements Metadata {
 
    @Override
    public MultiStagePosition getInitialPositionList() {
-      return initialPositionList_;
+      return MultiStagePosition.newInstance(initialPositionList_);
    }
 
    @Override
@@ -514,7 +514,7 @@ public class DefaultMetadata implements Metadata {
 
    @Override
    public Rectangle getROI() {
-      return ROI_;
+      return new Rectangle(ROI_);
    }
 
    @Override
