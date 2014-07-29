@@ -31,8 +31,8 @@ import org.micromanager.api.MMTags;
  * track which bits of code are relying on which tags. 
  */
 public class MDUtils {
-   private final static SimpleDateFormat iso8601modified_ =
-           new SimpleDateFormat("yyyy-MM-dd E HH:mm:ss Z");
+   private final static SimpleDateFormat imageDateFormat_ =
+           new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z");
 
    /**
     * Helper function to test if a given key exists and has a non-null value.
@@ -461,7 +461,7 @@ public class MDUtils {
    }
 
    public static String getTime(Date time) {
-      return iso8601modified_.format(time);
+      return imageDateFormat_.format(time);
    }
 
    public static String getCurrentTime() {

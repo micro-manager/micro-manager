@@ -317,14 +317,14 @@
     (keyword? x) (name x)
     :else x))
 
-(def ^{:doc "the ISO8601 data standard format modified to make it
+(def ^{:doc "the ISO8601 standard date format modified to make it
              slightly more human-readable."}
-       iso8601modified (SimpleDateFormat. "yyyy-MM-dd HH:mm:ss Z"))
+       imageDateFormat (SimpleDateFormat. "yyyy-MM-dd HH:mm:ss Z"))
 
 (defn get-current-time-str 
-  "Get the current time and date in modified ISO8601 format."
+  "Get the current time and date in the format for image metadata."
   []
-  (. iso8601modified format (Date.)))
+  (. imageDateFormat format (Date.)))
 
 (defn get-pixel-type
   "Get the current pixel type."
