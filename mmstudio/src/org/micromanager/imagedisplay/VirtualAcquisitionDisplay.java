@@ -102,7 +102,6 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       }
    }
 
-   private static final int ANIMATION_AND_LOCK_RESTART_DELAY = 800;
    final ImageCache imageCache_;
    private AcquisitionEngine eng_;
    private boolean isAcquisitionFinished_ = false;
