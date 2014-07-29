@@ -175,6 +175,7 @@ public class DefaultCoords implements Coords, Comparable<DefaultCoords> {
          isFirst = false;
          result += String.format("%s: %d", axis, getPositionAt(axis));
       }
+      result += ">";
       return result;
    }
 }
