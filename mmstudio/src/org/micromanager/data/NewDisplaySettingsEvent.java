@@ -12,6 +12,7 @@ public class NewDisplaySettingsEvent implements org.micromanager.api.data.NewDis
       settings_ = settings;
    }
 
+   @Override
    public DisplaySettings getDisplaySettings() {
       return settings_;
    }
