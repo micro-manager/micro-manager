@@ -157,15 +157,19 @@ public class DefaultImage implements Image {
    }
 
    /**
+    * Return a raw Object of our pixel data.
+    */
+   public Object getRawPixels() {
+      ArrayImg temp = (ArrayImg) pixels_.firstElement();
+      ArrayDataAccess accessor = (ArrayDataAccess) temp.update(null);
+      return accessor.getCurrentStorageArray();
+   }
+
+   /**
     * For backwards compatibility, convert to TaggedImage.
     */
    @Override
    public TaggedImage legacyToTaggedImage() {
-      ReportingUtils.logError("Downconverting DefaultImage " + coords_ + "to TaggedImage");
-      ArrayImg temp = (ArrayImg) pixels_.firstElement();
-      ArrayDataAccess accessor = (ArrayDataAccess) temp.update(null);
-      Object pixelData = accessor.getCurrentStorageArray();
-      JSONObject tags = metadata_.legacyToJSON();
-      return new TaggedImage(pixelData, tags);
+      return new TaggedImage(getRawPixels(), metadata_.legacyToJSON());
    }
 }
