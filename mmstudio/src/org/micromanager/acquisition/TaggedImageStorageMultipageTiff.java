@@ -26,9 +26,9 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.*;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -215,6 +215,18 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
       fileSets_.get(position).overwritePixels(pix, channel, slice, frame, position); 
    }
    
+   public void putImage(TaggedImage taggedImage, boolean waitForWritingToFinish) throws MMException, InterruptedException, ExecutionException {      
+      putImage(taggedImage);
+      if (waitForWritingToFinish) {
+         Future f = writingExecutor_.submit(new Runnable() {
+            @Override
+            public void run() {
+            }
+         });
+         f.get();
+      }
+   }
+
    @Override
    public void putImage(TaggedImage taggedImage) throws MMException {
       if (!newDataSet_) {
