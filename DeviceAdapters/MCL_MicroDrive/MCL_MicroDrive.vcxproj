@@ -148,11 +148,20 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="HandleListType.cpp" />
+    <ClCompile Include="handle_list_if.cpp" />
+    <ClCompile Include="heap.cpp" />
     <ClCompile Include="MCL_MicroDrive.cpp" />
     <ClCompile Include="MicroDriveXYStage.cpp" />
+    <ClCompile Include="MicroDriveZStage.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="device_list.h" />
+    <ClInclude Include="HandleListType.h" />
+    <ClInclude Include="handle_list_if.h" />
+    <ClInclude Include="heap.h" />
     <ClInclude Include="MCL_MicroDrive.h" />
+    <ClInclude Include="MCL_MicroDrive_ZStage.h" />
     <ClInclude Include="MicroDrive.h" />
     <ClInclude Include="MicroDriveXYStage.h" />
     <ClInclude Include="..\MMDevice\DeviceBase.h" />

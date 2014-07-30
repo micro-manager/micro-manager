@@ -8,22 +8,31 @@ License:	Distributed under the BSD license.
 
 #define XAXIS 1
 #define YAXIS 2
+#define ZAXIS 3
 
-#define X_REVERSE_LIMIT 0x1
-#define X_FORWARD_LIMIT 0x2
-#define Y_REVERSE_LIMIT 0x4
-#define Y_FORWARD_LIMIT 0x8
+#define VALIDX 0x1
+#define VALIDY 0x2
+#define VALIDZ 0x4
+#define AXIS_MASK 0x7
+
+#define X_REVERSE_LIMIT 0x01
+#define X_FORWARD_LIMIT 0x02
+#define Y_REVERSE_LIMIT 0x04
+#define Y_FORWARD_LIMIT 0x08
+#define Z_REVERSE_LIMIT 0x10
+#define Z_FORWARD_LIMIT 0x20
 #define BOTH_FORWARD_LIMITS 0xA
 
+static const char* g_StageDeviceName = "MicroDrive Z Stage";
 static const char* g_XYStageDeviceName = "MicroDrive XY Stage";
 
 static const char* g_Keyword_SetPosXmm = "Set position X axis (mm)";
 static const char* g_Keyword_SetPosYmm = "Set position Y axis (mm)";
+static const char* g_Keyword_SetPosZmm = "Set position Z axis (mm)";
 static const char* g_Keyword_SetOriginHere = "Set origin here";
 static const char* g_Keyword_Calibrate = "Calibrate";
 static const char* g_Keyword_ReturnToOrigin = "Return to origin";
 static const char* g_Keyword_PositionTypeAbsRel = "Position type (absolute/relative)";
-static const char* g_Keyword_SetPosXYmm = "Set position XY axis (mm) (X= Y=)";
 static const char* g_Keyword_Encoded = "EncodersPresent";
 
 static const char* g_Listword_No = "No";

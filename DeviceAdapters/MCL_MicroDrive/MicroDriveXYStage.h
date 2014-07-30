@@ -6,11 +6,23 @@ License:	Distributed under the BSD license.
 #ifndef _MICRODRIVEXYSTAGE_H_
 #define _MICRODRIVEXYSTAGE_H_
 
+
+
+// MCL headers
+#include "MicroDrive.h"
+#include "MCL_MicroDrive.h"
+
+// MM headers
 #include "../../MMDevice/MMDevice.h"
 #include "../../MMDevice/DeviceBase.h"
 #include "../../MMDevice/ImgBuffer.h"
-#include "MCL_MicroDrive.h"
-#include "MicroDrive.h"
+#include "../../MMDevice/ModuleInterface.h"
+
+// List/heap headers
+#include "device_list.h"
+#include "handle_list_if.h"
+#include "HandleListType.h"
+#include "heap.h"
 
 #include <string>
 #include <map>
@@ -51,12 +63,12 @@ public:
    // Action interface
    int OnPositionXmm(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnPositionYmm(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnSetOriginHere(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnCalibrate(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnReturnToOrigin(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnPositionXYmm(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnVelocity(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnEncoded(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSetOriginHere(MM::PropertyBase* pProp, MM::ActionType eAct);  
+   int OnCalibrate(MM::PropertyBase* pProp, MM::ActionType eAct);      
+   int OnReturnToOrigin(MM::PropertyBase* pProp, MM::ActionType eAct);  
+   int OnPositionXYmm(MM::PropertyBase* pProp, MM::ActionType eAct);  
+   int OnVelocity(MM::PropertyBase* pProp, MM::ActionType eAct);  
+   int OnEncoded(MM::PropertyBase* pProp, MM::ActionType eAct);  
 
 private:
    /// Private methods
@@ -77,7 +89,7 @@ private:
    int ReturnToOrigin();
 
    // Pause devices
-   void PauseDevice();
+   void PauseDevice(); 
 
    // Check if blocked
    bool XMoveBlocked(double possNewPos);
@@ -92,6 +104,8 @@ private:
    bool initialized_;
    double encoderResolution_; 
    double maxVelocity_;
+   double maxVelocityTwoAxis_;
+   double maxVelocityThreeAxis_;
    double minVelocity_;
    double velocity_;
    int rounding_;
