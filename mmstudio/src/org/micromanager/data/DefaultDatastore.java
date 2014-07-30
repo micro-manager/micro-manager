@@ -6,13 +6,9 @@ import java.util.ArrayList;
 
 import org.micromanager.api.data.Coords;
 import org.micromanager.api.data.Datastore;
-import org.micromanager.api.data.DatastoreLockedEvent;
 import org.micromanager.api.data.DatastoreLockedException;
 import org.micromanager.api.data.DisplaySettings;
 import org.micromanager.api.data.Image;
-import org.micromanager.api.data.NewDisplaySettingsEvent;
-import org.micromanager.api.data.NewImageEvent;
-import org.micromanager.api.data.NewSummaryMetadataEvent;
 import org.micromanager.api.data.Reader;
 import org.micromanager.api.data.SummaryMetadata;
 
