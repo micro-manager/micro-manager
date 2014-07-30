@@ -455,7 +455,7 @@ public class MultipageTiffWriter {
    }
    
    public void overwritePixels(Object pixels, int channel, int slice, int frame, int position) throws IOException {
-      long byteOffset = indexMap_.get(MDUtils.generateLabel(channel, slice, frame, 0));      
+      long byteOffset = indexMap_.get(MDUtils.generateLabel(channel, slice, frame, position));      
       ByteBuffer buffer = ByteBuffer.allocate(2).order(BYTE_ORDER);
       fileChannel_.read(buffer, byteOffset);
       int numEntries = buffer.getChar(0);
