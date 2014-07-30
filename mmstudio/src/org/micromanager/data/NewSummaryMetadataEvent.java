@@ -12,6 +12,7 @@ public class NewSummaryMetadataEvent implements org.micromanager.api.data.NewSum
       metadata_ = metadata;
    }
 
+   @Override
    public SummaryMetadata getSummaryMetadata() {
       return metadata_;
    }
