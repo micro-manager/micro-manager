@@ -184,7 +184,9 @@ public class DisplayWindow extends StackWindow {
       canvasPanel_.setBackground(MMStudio.getInstance().getBackgroundColor());
       canvasPanel_.add(ic);
       add(canvasPanel_, "align center, wrap");
-      add(controls, "align center, wrap, growx");
+      if (controls != null) {
+         add(controls, "align center, wrap, growx");
+      }
 
       // Propagate resizing to the canvas, adjusting the view rectangle.
       // Note that this occasionally results in the canvas being 2px too
