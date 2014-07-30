@@ -15,10 +15,12 @@ public class NewImageEvent implements org.micromanager.api.data.NewImageEvent {
       coords_ = coords;
    }
 
+   @Override
    public Image getImage() {
       return image_;
    }
 
+   @Override
    public Coords getCoords() {
       return coords_;
    }
