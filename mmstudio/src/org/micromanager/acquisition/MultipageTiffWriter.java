@@ -454,7 +454,7 @@ public class MultipageTiffWriter {
       return val;
    }
    
-   public void overwritePixels(Object pixels, int channel, int slice, int frame) throws IOException {
+   public void overwritePixels(Object pixels, int channel, int slice, int frame, int position) throws IOException {
       long byteOffset = indexMap_.get(MDUtils.generateLabel(channel, slice, frame, 0));      
       ByteBuffer buffer = ByteBuffer.allocate(2).order(BYTE_ORDER);
       fileChannel_.read(buffer, byteOffset);
@@ -472,21 +472,21 @@ public class MultipageTiffWriter {
          if (type == 3 && count == 1) {
             value = entries.getChar(i*12 + 8);
          } else {
-            value = unsignInt(entries.getInt(i*12 + 8));
+            value = unsignInt(entries.getInt(i * 12 + 8));
          }
-        if (tag == STRIP_OFFSETS) {
+         if (tag == STRIP_OFFSETS) {
             pixelOffset = value;
          } else if (tag == STRIP_BYTE_COUNTS) {
             bytesPerImage = value;
-         } 
+         }
       }
       if (pixelOffset == -1 || bytesPerImage == -1) {
          ReportingUtils.showError("Couldn't overwrite pixel data");
          return;
       }
       
-      ByteBuffer pixBuff = ByteBuffer.wrap((byte[]) pixels);
-      fileChannel_.write(pixBuff, pixelOffset); 
+      ByteBuffer pixBuff = getPixelBuffer(pixels);
+      fileChannelWrite(pixBuff, pixelOffset); 
    }
 
    private void writeIFD(TaggedImage img) throws IOException {

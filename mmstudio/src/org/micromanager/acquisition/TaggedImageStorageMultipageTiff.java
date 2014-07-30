@@ -207,10 +207,12 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
    /*
     * Method that allows overwrting of pixels but not MD or TIFF tags
     * so that low res stitched images can be written tile by tile
+    * Not used by the TaggedImageStorage API, but can be useful for special applicaitons
+    * of this class (e.g. Navigator plugin)
     */
-   public void overwritePixels(Object pix, int channel, int slice, int frame) throws IOException {
+   public void overwritePixels(Object pix, int channel, int slice, int frame, int position) throws IOException {
       //asumes only one position
-      fileSets_.get(0).overwritePixels(pix, channel, slice, frame); 
+      fileSets_.get(position).overwritePixels(pix, channel, slice, frame, position); 
    }
    
    @Override
@@ -561,10 +563,10 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
          return tiffWriters_.getLast().getReader();
       }
       
-      public void overwritePixels(Object pixels, int channel, int slice, int frame) throws IOException {
+      public void overwritePixels(Object pixels, int channel, int slice, int frame, int position) throws IOException {
          for (MultipageTiffWriter w : tiffWriters_) {
-            if (w.getIndexMap().containsKey(MDUtils.generateLabel(channel, slice, frame, 0))) {
-               w.overwritePixels(pixels, channel, slice, frame);
+            if (w.getIndexMap().containsKey(MDUtils.generateLabel(channel, slice, frame, position))) {
+               w.overwritePixels(pixels, channel, slice, frame, position);
             }
          }
       }
