@@ -483,9 +483,6 @@ public class PanelUtils {
    }
    
    
-        
-   
-   
    /**
     * Creates field for user to type in new position for an axis, with default value of 0.
     * @param key

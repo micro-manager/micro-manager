@@ -264,7 +264,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       volPanel_.add(stepSize_, "wrap");
       
       // special field that is enabled/disabled depending on whether advanced timing is enabled
-      desiredSlicePeriodLabel_ = new JLabel("Desired slice period [ms]:"); 
+      desiredSlicePeriodLabel_ = new JLabel("Slice period [ms]:"); 
       volPanel_.add(desiredSlicePeriodLabel_);
       desiredSlicePeriod_ = pu.makeSpinnerFloat(5, 1000, 0.25, props_, devices_,
             new Devices.Keys[]{Devices.Keys.PLUGIN}, Properties.Keys.PLUGIN_DESIRED_SLICE_PERIOD, 30);
@@ -282,7 +282,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       });
       
       // special field that is enabled/disabled depending on whether advanced timing is enabled
-      desiredLightExposureLabel_ = new JLabel("Desired laser exposure [ms]:"); 
+      desiredLightExposureLabel_ = new JLabel("Laser exposure [ms]:"); 
       volPanel_.add(desiredLightExposureLabel_);
       desiredLightExposure_ = pu.makeSpinnerFloat(2.5, 1000.5, 1, props_, devices_,
             new Devices.Keys[]{Devices.Keys.PLUGIN}, Properties.Keys.PLUGIN_DESIRED_EXPOSURE, 8.5);
@@ -461,7 +461,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       int textFieldWidth = 20;
       savePanel_ = new JPanel(new MigLayout(
               "",
-              "[right]16[center]16[left]",
+              "[right]16[center]8[left]",
               "[]8[]"));
       savePanel_.setBorder(PanelUtils.makeTitledBorder("Data Saving Settings"));
       

@@ -120,6 +120,7 @@ public class Properties {
       PLUGIN_NAME_PREFIX("NamePrefix"),
       PLUGIN_SAVE_WHILE_ACQUIRING("SaveWhileAcquiring"),
       PLUGIN_SEPARATE_VIEWERS_FOR_TIMEPOINTS("SeparateViewersForTimePoints"),
+      PLUGIN_PIEZO_SHEET_INCREMENT("PiezoSheetIncrement"),  // piezo increment for moving piezo and galvo together
       PLUGIN_OFFSET_PIEZO_SHEET("OffsetPiezoSheet"),  // Offset in piezo/sheet relation
       PLUGIN_RATE_PIEZO_SHEET ("RatePiezoSheet"),     // Rate in piezo/sheet 
       PLUGIN_SETUP_PANEL_NAME ("Setup Path"),        // Setup Panel Name

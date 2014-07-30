@@ -75,6 +75,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
    private double sliceStartPos_;
    private double sliceStopPos_;
    private boolean illumPiezoHomeEnable_;
+   private final JFormattedTextField piezoDeltaField_;
    private final JFormattedTextField offsetField_;
    private final JFormattedTextField rateField_;
    // device keys, get assigned in constructor based on side
@@ -133,14 +134,14 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       MigLayout ml = new MigLayout(
               "",
               "[right]8[align center]8[right]8[]8[center]8[center]8[center]8[center]8[center]",
-              "[]10[]10[]6[]6[]10[]10[]10[]");
+              "[]10[]10[]10[]10[]10[]10[]10[]");
       JPanel sheetPanel = new JPanel(ml);
       
       offsetField_ = pu.makeFloatEntryField(panelName_, 
               Properties.Keys.PLUGIN_OFFSET_PIEZO_SHEET.toString(), 0, 6);  
 
       rateField_ = pu.makeFloatEntryField(panelName_, 
-              Properties.Keys.PLUGIN_RATE_PIEZO_SHEET.toString(), -80, 6);
+              Properties.Keys.PLUGIN_RATE_PIEZO_SHEET.toString(), 80, 6);
 
       sheetPanel.add(new JLabel("Imaging center: "));
       imagingCenterPosLabel_ = new JLabel("");
@@ -168,10 +169,10 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       } );
       sheetPanel.add(goToCenterButton, "span 2, center");
       
-      JButton setMiddleButton = new JButton("Set");
+      JButton setCenterButton = new JButton("Set");
       goToCenterButton.setToolTipText("Sets piezo center position for acquisition");
-      setMiddleButton.setBackground(Color.red);
-      setMiddleButton.addActionListener(new ActionListener() {
+      setCenterButton.setBackground(Color.red);
+      setCenterButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
             try {
@@ -185,24 +186,31 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
             }
          }
       });
-      sheetPanel.add(setMiddleButton);
+      sheetPanel.add(setCenterButton);
       
-      // TODO: let the user choose galvo delta
-      final double galvoDelta = 0.05;
+      piezoDeltaField_ = pu.makeFloatEntryField(panelName_, 
+            Properties.Keys.PLUGIN_PIEZO_SHEET_INCREMENT.toString(), 10, 2);
+      piezoDeltaField_.setToolTipText("Piezo increment used by up/down arrow buttons");
+      sheetPanel.add(new JLabel("\u0394"+"="), "split 2, right");
+      sheetPanel.add(piezoDeltaField_, "right");
+      sheetPanel.add(new JLabel("\u00B5"+"m"), "left");
       
       JButton upButton = new JButton();
       upButton.setIcon(SwingResourceManager.getIcon(MMStudioMainFrame.class, "icons/arrow_up.png"));
       upButton.setText("");
-      upButton.setToolTipText("Move sheet and piezo together");
+      upButton.setToolTipText("Move slice and piezo together");
       upButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
             try {
-               Point2D.Double pt = core_.getGalvoPosition(
-                    devices_.getMMDeviceException(micromirrorDeviceKey_));
-               double galvoPos = pt.y;
-               setGalvoAndPiezo(galvoPos + galvoDelta, 
-                       (Double) offsetField_.getValue(),(Double)rateField_.getValue() );
+               double piezoPos = core_.getPosition(
+                     devices_.getMMDeviceException(piezoImagingDeviceKey_));
+               piezoPos += (Double) piezoDeltaField_.getValue();
+               positions_.setPosition(piezoImagingDeviceKey_, 
+                     Joystick.Directions.NONE, piezoPos);
+               double galvoPos = computeGalvoFromPiezo(piezoPos);
+               positions_.setPosition(micromirrorDeviceKey_, 
+                     Joystick.Directions.Y, galvoPos);
             } catch (Exception ex) {
                gui_.showError(ex);
             }
@@ -212,31 +220,34 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       JButton downButton = new JButton();
       downButton.setIcon(SwingResourceManager.getIcon(MMStudioMainFrame.class, "icons/arrow_down.png"));
       downButton.setText("");
-      downButton.setToolTipText("Move sheet and piezo together");
+      downButton.setToolTipText("Move slice and piezo together");
       downButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
             try {
-               Point2D.Double pt = core_.getGalvoPosition(
-                    devices_.getMMDeviceException(micromirrorDeviceKey_));
-               double galvoPos = pt.y;
-               setGalvoAndPiezo(galvoPos - galvoDelta, 
-                       (Double) offsetField_.getValue(),(Double)rateField_.getValue() );
+               double piezoPos = core_.getPosition(
+                     devices_.getMMDeviceException(piezoImagingDeviceKey_));
+               piezoPos -= (Double) piezoDeltaField_.getValue();
+               positions_.setPosition(piezoImagingDeviceKey_, 
+                     Joystick.Directions.NONE, piezoPos);
+               double galvoPos = computeGalvoFromPiezo(piezoPos);
+               positions_.setPosition(micromirrorDeviceKey_, 
+                     Joystick.Directions.Y, galvoPos);
             } catch (Exception ex) {
                gui_.showError(ex);
             }
          }
       });
       
-      sheetPanel.add(upButton, "skip 2");
+      sheetPanel.add(upButton, "");
       sheetPanel.add(downButton, "wrap");
            
       sheetPanel.add(new JLabel("Piezo ="));
       sheetPanel.add(offsetField_);
-      sheetPanel.add(new JLabel("\u00B5"+"m" + " + Sheet *"), "span 2");
+      sheetPanel.add(new JLabel("\u00B5"+"m" + " + Slice *"), "span 2");
       sheetPanel.add(rateField_);
       
-      JButton tmp_but = new JButton("Compute piezo vs. sheet calibration");
+      JButton tmp_but = new JButton("Compute piezo vs. slice calibration");
       tmp_but.setToolTipText("Computes piezo vs. slice position from start and end positions");
       tmp_but.setBackground(Color.green);
       tmp_but.addActionListener(new ActionListener() {
@@ -260,12 +271,12 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       sheetPanel.add(new JLabel("Calibration Start Position"), "skip 3, span 3, center");
       sheetPanel.add(new JLabel("Calibration End Position"), "span 3, center, wrap");
       
-      sheetPanel.add(new JLabel("Sheet/slice position:"));
+      sheetPanel.add(new JLabel("Slice position:"));
       sheetPositionLabel_ = new JLabel("");
       sheetPanel.add(sheetPositionLabel_);
       sheetPanel.add(pu.makeSetPositionField(micromirrorDeviceKey_, Joystick.Directions.Y, positions_));
       
-      sheetPanel.add(new JSeparator(SwingConstants.VERTICAL), "spany 2, growy, shrinkx");
+      sheetPanel.add(new JSeparator(SwingConstants.VERTICAL), "spany 2, growy, shrinkx, center");
       sheetPanel.add(sheetStartPositionLabel_);
 
       // Go to start button
@@ -316,8 +327,6 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
             
       tmp_but = new JButton("Set");
       tmp_but.setToolTipText("Saves calibration start position for imaging piezo and scanner slice (should be focused)");
-//      tmp_but.setContentAreaFilled(false);
-//      tmp_but.setOpaque(true);
       tmp_but.setBackground(Color.red);
       tmp_but.addActionListener(new ActionListener() {
          @Override
@@ -342,8 +351,6 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       
       tmp_but = new JButton("Set");
       tmp_but.setToolTipText("Saves calibration end position for imaging piezo and scanner slice (should be focused)");
-//      tmp_but.setContentAreaFilled(false);
-//      tmp_but.setOpaque(true);
       tmp_but.setBackground(Color.red);
       tmp_but.addActionListener(new ActionListener() {
          @Override
@@ -475,23 +482,6 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
 
    }// end of SetupPanel constructor
 
-   
-   /**
-    * Utility function that moves the galvo and piezo together
-    * Calculates piezoposition based on establised offset and rate:
-    * 
-    * piezoPosition = offset + rate * newGalvoPos 
-    * 
-    * @param newGalvoPos - MicroMirror position to move to
-    * @param offset - See function description
-    * @param rate - See function description
-    */
-   public void setGalvoAndPiezo(double newGalvoPos, double offset, double rate) {
-       positions_.setPosition(micromirrorDeviceKey_, 
-                       Joystick.Directions.Y, newGalvoPos);
-       positions_.setPosition(piezoImagingDeviceKey_, 
-                       Joystick.Directions.NONE, offset + rate * newGalvoPos);   
-   }
    
    /**
     * Uses computed offset/rate to get galvo position for
