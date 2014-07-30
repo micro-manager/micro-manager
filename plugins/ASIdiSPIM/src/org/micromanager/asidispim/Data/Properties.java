@@ -105,8 +105,12 @@ public class Properties {
       TRIGGER_ACTIVE("TRIGGER ACTIVE"),   // for Hamamatsu
       READOUTTIME("ReadoutTime"),         // for Hamamatsu
       SENSOR_MODE("SENSOR MODE"),         // for Hamamatsu
+      SCAN_MODE("ScanMode"),              // for Hamamatsu, 1 = slow scan, 2 = fast scan
       TRIGGER_MODE("Triggermode"),        // for PCO
-      TRIGGER_MODE_ANDOR("TriggerMode"),  // for Andor sCMOS
+      TRIGGER_MODE_ANDOR("TriggerMode"),       // for Andor Zyla
+      CAMERA_NAME("CameraName"),               // for Andor Zyla
+      PIXEL_READOUT_RATE("PixelReadoutRate"),  // for Andor Zyla
+      ANDOR_OVERLAP("Overlap"),                // for Andor Zyla
       FIRMWARE_VERSION("FirmwareVersion"),
       CAMERA("Camera"),
       PLUGIN_POSITION_REFRESH_INTERVAL("PositionRefreshInterval(s)"),
@@ -171,6 +175,8 @@ public class Properties {
       SYNCREADOUT("SYNCREADOUT"),  // for Hamamatsu's TRIGGER ACTIVE
       LEVEL("LEVEL"),              // for Hamamatsu's TRIGGER ACTIVE
       EDGE("EDGE"),                // for Hamamatsu's TRIGGER ACTIVE
+      ON("On"),
+      OFF("Off"),
       ;
       private final String text;
       Values(String text) {

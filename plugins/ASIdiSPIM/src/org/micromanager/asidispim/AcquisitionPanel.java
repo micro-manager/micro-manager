@@ -133,9 +133,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private final JCheckBox separateTimePointsCB_;
    private final JCheckBox saveCB_;
    
-   private float cameraReadoutTime_;
-   private float cameraResetTime_;
-   
    
    /**
     * Associative container for slice timing information.
@@ -529,10 +526,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       buttonStart_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            //if (!cameras_.isCurrentCameraValid()) {
-            //   ReportingUtils.showError("Must set valid camera for acquisition!");
-            //   return;
-            //}
             stop_.set(false);
 
             class acqThread extends Thread {
@@ -577,9 +570,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       add(buttonStop_, "center");
       add(acquisitionStatusLabel_, "center");
       
-      cameraReadoutTime_ = computeCameraReadoutTime();
-      cameraResetTime_ = computeCameraResetTime();
-      
       // properly initialize the advanced slice timing
       advancedSliceTimingCB_.addActionListener(sliceTimingDisableGUIInputs);
       advancedSliceTimingCB_.doClick();
@@ -593,6 +583,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
 
    }//end constructor
 
+   
+   private boolean firstSideIsA() {
+      return ((String)firstSide_.getSelectedItem()).equals("A");
+   }
    
    /**
     * 
@@ -612,17 +606,17 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       final Component elementToColor  = desiredSlicePeriod_.getEditor().getComponent(0);
       
       SliceTiming s = new SliceTiming();
-      cameraResetTime_ = computeCameraResetTime();      // recalculate for safety
-      cameraReadoutTime_ = computeCameraReadoutTime();  // recalculate for safety
+      float cameraResetTime = computeCameraResetTime();      // recalculate for safety
+      float cameraReadoutTime = computeCameraReadoutTime();  // recalculate for safety
       
       float desiredPeriod = PanelUtils.getSpinnerFloatValue(desiredSlicePeriod_);
       float desiredExposure = PanelUtils.getSpinnerFloatValue(desiredLightExposure_);
       
       // this assumes "usual" camera mode, not Hamamatsu's "synchronous" or Zyla's "overlap" mode
       // TODO: add the ability to use these faster modes (will require changes in several places
-      // and a GUI setting for camera mode)
-      float cameraReadout_max = PanelUtils.ceilToQuarterMs(cameraReadoutTime_);
-      float cameraReset_max = PanelUtils.ceilToQuarterMs(cameraResetTime_);
+      // and a GUI setting for camera mode); do have Cameras.resetAndReadoutOverlap() to see
+      float cameraReadout_max = PanelUtils.ceilToQuarterMs(cameraReadoutTime);
+      float cameraReset_max = PanelUtils.ceilToQuarterMs(cameraResetTime);
       float slicePeriod = PanelUtils.roundToQuarterMs(desiredPeriod);
       int scanPeriod = Math.round(desiredExposure + 2*scanLaserBufferTime);
       // scan will be longer than laser by 0.25ms at both start and end
@@ -654,7 +648,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       s.laserDelay = cameraReadout_max + globalDelay + cameraReset_max + scanLaserBufferTime;
       s.laserDuration = laserDuration;
       s.cameraDelay = cameraReadout_max + globalDelay;
-      s.cameraDuration = cameraReset_max + scanPeriod;
+      s.cameraDuration = cameraReset_max + scanPeriod;  // approx. same as exposure, can be used in bulb mode
       
       return s;
    }
@@ -665,7 +659,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     */
    private boolean isSliceTimingUpToDate(boolean showWarnings) {
       SliceTiming currentTiming = getCurrentSliceTiming();
-      SliceTiming newTiming = getTimingFromPeriodAndLightExposure(showWarnings);
+      SliceTiming newTiming = getTimingFromPeriodAndLightExposure(false);
       return currentTiming.equals(newTiming);
    }
    
@@ -815,7 +809,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          resetTime = Math.max(cameras_.computeCameraResetTime(Devices.Keys.CAMERAA),
                cameras_.computeCameraResetTime(Devices.Keys.CAMERAB));
       } else {
-         if(firstSide_.getSelectedItem().equals("A")) {
+         if(firstSideIsA()) {
             resetTime = cameras_.computeCameraResetTime(Devices.Keys.CAMERAA);
          } else {
             resetTime = cameras_.computeCameraResetTime(Devices.Keys.CAMERAB);
@@ -836,7 +830,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          readoutTime = Math.max(cameras_.computeCameraReadoutTime(Devices.Keys.CAMERAA),
                cameras_.computeCameraReadoutTime(Devices.Keys.CAMERAB));
       } else {
-         if(firstSide_.getSelectedItem().equals("A")) {
+         if(firstSideIsA()) {
             readoutTime = cameras_.computeCameraReadoutTime(Devices.Keys.CAMERAA);
          } else {
             readoutTime = cameras_.computeCameraReadoutTime(Devices.Keys.CAMERAB);
@@ -899,23 +893,32 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          return false;
       }
       
-      // TODO check both ROIs
-      
-      boolean liveMode = gui_.isLiveModeOn();
-      gui_.enableLiveMode(false);
+      boolean liveModeOriginally = gui_.isLiveModeOn();
+      if (liveModeOriginally) {
+         gui_.enableLiveMode(false);
+      }
       cameras_.setSPIMCameraTriggerMode(Cameras.TriggerModes.EXTERNAL_START);
+      
+      boolean sideActiveA, sideActiveB;
+      if ( (Integer) numSides_.getValue() > 1 ) {
+         sideActiveA = true;
+         sideActiveB = true;
+      } else if (firstSideIsA()) {
+         sideActiveA = true;
+         sideActiveB = false;
+      } else {
+         sideActiveA = false;
+         sideActiveB = true;
+      }
 
       // get MM device names for first/second cameras to acquire
-      String cameraA = devices_.getMMDevice(Devices.Keys.CAMERAA);
-      String cameraB = devices_.getMMDevice(Devices.Keys.CAMERAB);
-      String firstSide = (String) firstSide_.getSelectedItem();
       String firstCamera, secondCamera;
-      if (firstSide.equals("A")) {
-         firstCamera = cameraA;
-         secondCamera = cameraB;
+      if (firstSideIsA()) {
+         firstCamera = devices_.getMMDevice(Devices.Keys.CAMERAA);
+         secondCamera = devices_.getMMDevice(Devices.Keys.CAMERAB);
       } else {
-         firstCamera = cameraB;
-         secondCamera = cameraA;
+         firstCamera = devices_.getMMDevice(Devices.Keys.CAMERAB);
+         secondCamera = devices_.getMMDevice(Devices.Keys.CAMERAA);
       }
       
       // make sure slice timings are up to date 
@@ -926,9 +929,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          }
       }
       
-      cameraReadoutTime_ = computeCameraReadoutTime();
-      double exposureTime = PanelUtils.getSpinnerFloatValue(durationCamera_)
-            - cameraResetTime_;
+      float cameraReadoutTime = computeCameraReadoutTime();
+      double exposureTime = PanelUtils.getSpinnerFloatValue(durationCamera_);
       
       // TODO: get these from the UI
       boolean show = true;
@@ -963,7 +965,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          return false;
       }
       double lineScanTime = computeActualSlicePeriod();
-      if (exposureTime + cameraReadoutTime_ > lineScanTime) {
+      if (exposureTime + cameraReadoutTime > lineScanTime) {
          gui_.showError("Exposure time is longer than time needed for a line scan.\n" +
                  "This will result in dropped frames.\n" +
                  "Please change input");
@@ -989,14 +991,16 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          return false;
       }
 
-      // disable the serial communication during acquisition
+      // stop the serial traffic for position updates during acquisition
       stagePosUpdater_.setAcqRunning(true);
       
       numTimePointsDone_ = 0;
       
       // force saving as image stacks, not individual files
-      // implementation assumes just two options, either TaggedImageStorageDiskDefault.class or TaggedImageStorageMultipageTiff.class
-      boolean separateImageFiles = ImageUtils.getImageStorageClass().equals(TaggedImageStorageDiskDefault.class);
+      // implementation assumes just two options, either 
+      //  TaggedImageStorageDiskDefault.class or TaggedImageStorageMultipageTiff.class
+      boolean separateImageFilesOriginally =
+            ImageUtils.getImageStorageClass().equals(TaggedImageStorageDiskDefault.class);
       ImageUtils.setImageStorageClass(TaggedImageStorageMultipageTiff.class);
 
       for (int tp = 0; tp < nrRepeats && !stop_.get(); tp++) {
@@ -1052,46 +1056,72 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                   core_.startSequenceAcquisition(secondCamera, nrSlices, 0, true);
                }
 
-               // get controller armed
-               // Need to calculate the sheet amplitude based on settings 
-               // in the Setup panels
+               // Set up controller SPIM parameters
+               // Calculate them from settings in the Setup panels
                // We get these through the preferences
 
                int numSlices = (Integer) numSlices_.getValue();
                float piezoAmplitude = (float) ( (numSlices - 1) * 
                        PanelUtils.getSpinnerFloatValue(stepSize_));
                
-               float sheetARate = prefs_.getFloat(
-                       Properties.Keys.PLUGIN_SETUP_PANEL_NAME.toString() + Devices.Sides.A, 
-                       Properties.Keys.PLUGIN_RATE_PIEZO_SHEET, -80);
-               // catch divide by 0 errors
-               float sheetAmplitudeA = piezoAmplitude / sheetARate;
-               float sheetBRate = prefs_.getFloat(
-                       Properties.Keys.PLUGIN_SETUP_PANEL_NAME.toString() + Devices.Sides.B, 
-                       Properties.Keys.PLUGIN_RATE_PIEZO_SHEET, -80);
-               float sheetAmplitudeB = piezoAmplitude / sheetBRate ;
+               if (sideActiveA) {
+                  float sliceARate = prefs_.getFloat(
+                        Properties.Keys.PLUGIN_SETUP_PANEL_NAME.toString() + Devices.Sides.A, 
+                        Properties.Keys.PLUGIN_RATE_PIEZO_SHEET, -80);
+                  float sliceAOffset = prefs_.getFloat(
+                        Properties.Keys.PLUGIN_SETUP_PANEL_NAME.toString() + Devices.Sides.A, 
+                        Properties.Keys.PLUGIN_OFFSET_PIEZO_SHEET, 0);
+                  if (PanelUtils.floatsEqual(sliceARate, (float) 0.0)) {
+                     gui_.showError("Rate for slice A cannot be zero. Re-do calibration on Setup tab.");
+                     return false;
+                  }
+                  float sliceAmplitudeA = piezoAmplitude / sliceARate;
+                  float piezoCenterA =  props_.getPropValueFloat(Devices.Keys.PIEZOA,
+                        Properties.Keys.SA_OFFSET); 
+                  float sliceCenterA = (piezoCenterA - sliceAOffset) / sliceARate;
+                  props_.setPropValue(Devices.Keys.GALVOA,
+                        Properties.Keys.SA_AMPLITUDE_Y_DEG, sliceAmplitudeA, true);
+                  props_.setPropValue(Devices.Keys.GALVOA,
+                        Properties.Keys.SA_OFFSET_Y_DEG, sliceCenterA, true);
+                  props_.setPropValue(Devices.Keys.GALVOA,
+                        Properties.Keys.BEAM_ENABLED, Properties.Values.NO, true);
+                  props_.setPropValue(Devices.Keys.PIEZOA,
+                        Properties.Keys.SPIM_NUM_SLICES, nrSlices, true);
+                  props_.setPropValue(Devices.Keys.PIEZOA,
+                        Properties.Keys.SA_AMPLITUDE, piezoAmplitude, true);
+                  props_.setPropValue(Devices.Keys.PIEZOA,
+                        Properties.Keys.SPIM_STATE, Properties.Values.SPIM_ARMED, true);
+               }
                
-               // set the appropriate properties on the controller
-               props_.setPropValue(Devices.Keys.GALVOA, Properties.Keys.SA_AMPLITUDE_Y_DEG,
-                       sheetAmplitudeA);
-               props_.setPropValue(Devices.Keys.GALVOA, Properties.Keys.BEAM_ENABLED,
-                       Properties.Values.NO, true);
-               props_.setPropValue(Devices.Keys.GALVOB, Properties.Keys.SA_AMPLITUDE_Y_DEG,
-                       sheetAmplitudeB);
-               props_.setPropValue(Devices.Keys.GALVOB, Properties.Keys.BEAM_ENABLED,
-                       Properties.Values.NO, true);
-               props_.setPropValue(Devices.Keys.PIEZOA, Properties.Keys.SPIM_NUM_SLICES,
-                       (Integer) numSlices_.getValue(), true);
-               props_.setPropValue(Devices.Keys.PIEZOA, Properties.Keys.SA_AMPLITUDE,
-                       piezoAmplitude );
-               props_.setPropValue(Devices.Keys.PIEZOB, Properties.Keys.SPIM_NUM_SLICES,
-                       (Integer) numSlices_.getValue(), true);
-               props_.setPropValue(Devices.Keys.PIEZOB, Properties.Keys.SA_AMPLITUDE,
-                       piezoAmplitude );
-               props_.setPropValue(Devices.Keys.PIEZOA, Properties.Keys.SPIM_STATE,
-                       Properties.Values.SPIM_ARMED, true);
-               props_.setPropValue(Devices.Keys.PIEZOB, Properties.Keys.SPIM_STATE,
-                       Properties.Values.SPIM_ARMED, true);
+               if (sideActiveB) {
+                  float sliceBRate = prefs_.getFloat(
+                        Properties.Keys.PLUGIN_SETUP_PANEL_NAME.toString() + Devices.Sides.B, 
+                        Properties.Keys.PLUGIN_RATE_PIEZO_SHEET, -80);
+                  float sliceBOffset = prefs_.getFloat(
+                        Properties.Keys.PLUGIN_SETUP_PANEL_NAME.toString() + Devices.Sides.B, 
+                        Properties.Keys.PLUGIN_OFFSET_PIEZO_SHEET, 0);
+                  if (PanelUtils.floatsEqual(sliceBRate, (float) 0.0)) {
+                     gui_.showError("Rate for slice B cannot be zero. Re-do calibration on Setup tab.");
+                     return false;
+                  }
+                  float sliceAmplitudeB = piezoAmplitude / sliceBRate;
+                  float piezoCenterB =  props_.getPropValueFloat(Devices.Keys.PIEZOB,
+                        Properties.Keys.SA_OFFSET); 
+                  float sliceCenterB = (piezoCenterB - sliceBOffset) / sliceBRate;
+                  props_.setPropValue(Devices.Keys.GALVOB,
+                        Properties.Keys.SA_AMPLITUDE_Y_DEG, sliceAmplitudeB, true);
+                  props_.setPropValue(Devices.Keys.GALVOB,
+                        Properties.Keys.SA_OFFSET_Y_DEG, sliceCenterB, true);
+                  props_.setPropValue(Devices.Keys.GALVOB,
+                        Properties.Keys.BEAM_ENABLED, Properties.Values.NO, true);
+                  props_.setPropValue(Devices.Keys.PIEZOB,
+                        Properties.Keys.SPIM_NUM_SLICES, nrSlices, true);
+                  props_.setPropValue(Devices.Keys.PIEZOB,
+                        Properties.Keys.SA_AMPLITUDE, piezoAmplitude, true);
+                  props_.setPropValue(Devices.Keys.PIEZOB,
+                        Properties.Keys.SPIM_STATE, Properties.Values.SPIM_ARMED, true);
+               }
+               
 
                // deal with shutter
                if (autoShutter) {
@@ -1104,8 +1134,15 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
 
                // trigger controller
                // TODO generalize this for different ways of running SPIM
-               props_.setPropValue(Devices.Keys.GALVOA, Properties.Keys.SPIM_STATE,
-                       Properties.Values.SPIM_RUNNING, true);
+               // only matters which device we trigger if there are two micro-mirror cards
+               if (firstSideIsA()) {
+                  props_.setPropValue(Devices.Keys.GALVOA, Properties.Keys.SPIM_STATE,
+                        Properties.Values.SPIM_RUNNING, true);
+               } else {
+                  props_.setPropValue(Devices.Keys.GALVOB, Properties.Keys.SPIM_STATE,
+                        Properties.Values.SPIM_RUNNING, true);
+               }
+                  
 
                // get images from camera and stick into acquisition
                // Wait for first image to create ImageWindow, so that we can be sure about image size
@@ -1193,7 +1230,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                   }
                }
                
-               // the controller will end with both beams disabled and scan off so reflect that here
+               // the controller will end with both beams disabled and scan off so reflect
+               // that in device properties
                props_.setPropValue(Devices.Keys.GALVOA, Properties.Keys.BEAM_ENABLED,
                      Properties.Values.NO, true);
                props_.setPropValue(Devices.Keys.GALVOB, Properties.Keys.BEAM_ENABLED,
@@ -1203,21 +1241,20 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                props_.setPropValue(Devices.Keys.GALVOB, Properties.Keys.SA_MODE_X,
                      Properties.Values.SAM_DISABLED, true);
                
+               // take care of cleanup tasks
                updateAcqusitionStatusDone();
-
                stagePosUpdater_.setAcqRunning(false);
                bq.put(TaggedImageQueue.POISON);
                gui_.closeAcquisition(acqName);
                gui_.logMessage("diSPIM plugin acquisition took: " + 
                        (System.currentTimeMillis() - acqStart) + "ms");
-               
-               if (separateImageFiles) {
+               if (separateImageFilesOriginally) {
                   ImageUtils.setImageStorageClass(TaggedImageStorageDiskDefault.class);
                }
-               
-               // return camera trigger mode 
                cameras_.setSPIMCameraTriggerMode(Cameras.TriggerModes.INTERNAL);
-               gui_.enableLiveMode(liveMode);
+               if (liveModeOriginally) {
+                  gui_.enableLiveMode(true);
+               }
                
             } catch (Exception ex) {
                // exception while stopping sequence acquisition, not sure what to do...

@@ -340,7 +340,7 @@ public class Positions {
       }
    }
    
-   private static String posToDisplayStringUm(Double pos) {
+   public static String posToDisplayStringUm(Double pos) {
       if (pos != null) {
          return NumberUtils.doubleToDisplayString(pos)
                + " \u00B5"+"m";
@@ -348,7 +348,7 @@ public class Positions {
       return "";
    }
    
-   private static String posToDisplayStringDeg(Double pos) {
+   public static String posToDisplayStringDeg(Double pos) {
       if (pos != null) {
          return NumberUtils.doubleToDisplayString(pos)
                + " \u00B0"; 

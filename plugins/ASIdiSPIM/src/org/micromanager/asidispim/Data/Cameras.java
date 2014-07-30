@@ -31,6 +31,7 @@ import javax.swing.JOptionPane;
 import mmcorej.CMMCore;
 
 import org.micromanager.api.ScriptInterface;
+import org.micromanager.utils.ReportingUtils;
 
 /**
  * Holds utility functions for cameras
@@ -47,8 +48,8 @@ public class Cameras {
    private Devices.Keys currentCameraKey_;
 
    public static enum TriggerModes {
-      EXTERNAL_START, 
-      EXTERNAL_BULB, 
+      EXTERNAL_START,
+      EXTERNAL_BULB,
       INTERNAL;
    }
 
@@ -247,15 +248,133 @@ public class Cameras {
     * Utility: calculates the number of rows that need to be read out
     * @param roi
     * @param sensor
-    * @param splitReadout true if 2 rows are read out at same time starting from center
     * @return
     */
-   private int roiReadoutRows(Rectangle roi, Rectangle sensor, boolean splitReadout) {
-      if (splitReadout) {
-         return Math.abs(roiVerticalOffset(roi, sensor)) + roi.height / 2;
-      } else {
-         return roi.height;
+   private int roiReadoutRowsSplitReadout(Rectangle roi, Rectangle sensor) {
+      return Math.abs(roiVerticalOffset(roi, sensor)) + roi.height / 2;
+   }
+   
+   /**
+    * Returns true if the camera is a Zyla 5.5
+    */
+   private boolean isZyla55(Devices.Keys camKey) {
+      return props_.getPropValueString(camKey, Properties.Keys.CAMERA_NAME)
+            .substring(0, 8).equals("Zyla 5.5");
+   }
+   
+   /**
+    * Goes to properties and sees if this camera has slow readout enabled
+    * (which affects row transfer speed and thus reset/readout time).
+    * @param camKey
+    * @return
+    */
+   private boolean isSlowReadout(Devices.Keys camKey) {
+      switch(devices_.getMMDeviceLibrary(camKey)) {
+      case HAMCAM:
+         return props_.getPropValueString(camKey, Properties.Keys.SCAN_MODE).equals("1");
+      case PCOCAM:
+         break;
+      case ANDORCAM:
+         if (isZyla55(camKey)) {
+            return props_.getPropValueString(camKey, Properties.Keys.PIXEL_READOUT_RATE)
+                  .substring(0, 3).equals("200");
+         } else {
+            return props_.getPropValueString(camKey, Properties.Keys.PIXEL_READOUT_RATE)
+                  .substring(0, 3).equals("216");
+         }
+      default:
+         break;
       }
+      return false;
+   }
+   
+   private Rectangle getSensorSize(Devices.Keys camKey) {
+      switch(devices_.getMMDeviceLibrary(camKey)) {
+      case HAMCAM:
+         return new Rectangle(0, 0, 2048, 2048);
+      case PCOCAM:
+         break;
+      case ANDORCAM:
+         if (isZyla55(camKey)) {
+            return new Rectangle(0, 0, 2560, 2160);
+         } else {
+            return new Rectangle(0, 0, 2048, 2048);
+         }
+      default:
+         break;
+      }
+      ReportingUtils.showError(
+            "Was not able to get sensor size of camera " 
+            + devices_.getMMDevice(camKey));
+      return new Rectangle(0, 0, 0, 0);
+   }
+   
+   
+   /**
+    * Gets the per-row readout time of the camera in ms.
+    * Assumes fast readout mode (should include slow readout too).
+    * 
+    * @param camKey
+    * @return
+    */
+   private double getRowReadoutTime(Devices.Keys camKey) {
+      switch(devices_.getMMDeviceLibrary(camKey)) {
+      case HAMCAM:
+         if (isSlowReadout(camKey)) {
+            return (2592 / 266e3 * (10/3)); 
+         } else {
+            return (2592 / 266e3);
+         }
+      case PCOCAM:
+         break;
+      case ANDORCAM:
+         if (isZyla55(camKey)) {
+            if (isSlowReadout(camKey)) {
+               return (2624 * 2 / 206.54e3);
+            } else {
+               return (2624 * 2 / 568e3);
+            }
+         } else {
+            if (isSlowReadout(camKey)) {
+               return (2592 * 2 / 216e3);
+            } else {
+               return (2592 * 2 / 540e3);
+            }
+         }
+      default:
+         break;
+      }
+      ReportingUtils.showError(
+            "Was not able to get per-row readout time of camera " 
+            + devices_.getMMDevice(camKey));
+      return 1;
+   }
+   
+   /**
+    * True if reset and readout occur at same time (synchronous or overlap mode)
+    * @param camKey
+    * @return
+    */
+   public boolean resetAndReadoutOverlap(Devices.Keys camKey) {
+      switch (devices_.getMMDeviceLibrary(camKey)) {
+      case HAMCAM:
+         if (props_.getPropValueString(camKey, Properties.Keys.TRIGGER_ACTIVE,
+               true).equals(Properties.Values.SYNCREADOUT.toString())) {
+            return true;
+         }
+         break;
+      case PCOCAM:
+         break;
+      case ANDORCAM:
+         if (props_.getPropValueString(camKey, Properties.Keys.ANDOR_OVERLAP,
+               true).equals(Properties.Values.ON.toString())) {
+            return true;
+         }
+         break;
+      default:
+         break;
+      }
+      return false;
    }
 
    /**
@@ -267,39 +386,36 @@ public class Cameras {
     * @return
     */
    public float computeCameraResetTime(Devices.Keys camKey) {
-      float reset = 10;
-      Devices.Libraries camLibrary = devices_.getMMDeviceLibrary(camKey);
-      switch (camLibrary) {
+      float resetTimeMs = 10;
+      double rowReadoutTime = getRowReadoutTime(camKey);
+      int numRowsOverhead;      
+      switch (devices_.getMMDeviceLibrary(camKey)) {
       case HAMCAM:
-         final double H1 = 2592 / 266e3; // time to readout one row in ms
          // global reset mode not yet exposed in Micro-manager
          // it will be 17+1 rows of overhead but nothing else
-         int numRowsOverhead;
          if (props_.getPropValueString(camKey, Properties.Keys.TRIGGER_ACTIVE,
                true).equals(Properties.Values.SYNCREADOUT.toString())) {
-            numRowsOverhead = 18; // overhead of 17 row times plus jitter of 1
-                                  // row time
+            numRowsOverhead = 18; // overhead of 17 rows plus jitter of 1 row
          } else { // for EDGE and LEVEL trigger modes
-            numRowsOverhead = 10; // overhead of 9 row times plus jitter of 1
-                                  // row time
+            numRowsOverhead = 10; // overhead of 9 rows plus jitter of 1 row
          }
-         reset = computeCameraReadoutTime(camKey);
-         reset += (float) (numRowsOverhead * H1);
+         resetTimeMs = computeCameraReadoutTime(camKey) + (float) (numRowsOverhead * rowReadoutTime);
          break;
       case PCOCAM:
          JOptionPane.showMessageDialog(null,
-               "Reset time for PCO cameras not yet implemented in plugin.",
+               "Easy timing mode for PCO cameras not yet implemented in plugin.",
                "Warning", JOptionPane.WARNING_MESSAGE);
          break;
       case ANDORCAM:
-         JOptionPane.showMessageDialog(null,
-               "Reset time for Andor cameras not yet implemented in plugin.",
-               "Warning", JOptionPane.WARNING_MESSAGE);
+         numRowsOverhead = 1;  // TODO make sure this is accurate; don't have sufficient documentation yet
+         resetTimeMs = computeCameraReadoutTime(camKey) + (float) (numRowsOverhead * rowReadoutTime);
          break;
       default:
          break;
       }
-      return reset;
+      core_.logMessage("camera reset time computed as " + resetTimeMs + 
+            " for camera" + devices_.getMMDevice(camKey), true);
+      return resetTimeMs;  // assume 10ms readout if not otherwise possible to calculate
    }
    
    /**
@@ -310,7 +426,7 @@ public class Cameras {
     * @return readout time in ms
     */
    public float computeCameraReadoutTime(Devices.Keys camKey) {
-      float readout = 10;
+      float readoutTimeMs = 10;
       Rectangle roi = new Rectangle();
       String origCamera = props_.getPropValueString(Devices.Keys.CORE, Properties.Keys.CAMERA, false);
       try {
@@ -324,45 +440,36 @@ public class Cameras {
          props_.setPropValue(Devices.Keys.CORE, Properties.Keys.CAMERA, origCamera);
       }
      
+      double rowReadoutTime = getRowReadoutTime(camKey);
+      int numReadoutRows;
       switch (devices_.getMMDeviceLibrary(camKey)) {
       case HAMCAM:
          // device adapter provides readout time rounded to nearest 0.1ms; we
          // calculate it ourselves instead
          // note that Flash4's ROI is always set in increments of 4 pixels
-         final double H1 = 2592 / 266e3; // time to readout one row in ms
-         final Rectangle sensor = new Rectangle(0, 0, 2048, 2048);
-         int numReadoutRows;
          if (props_.getPropValueString(camKey, Properties.Keys.SENSOR_MODE,
                true).equals(Properties.Values.PROGRESSIVE.toString())) {
             numReadoutRows = roi.height;
          } else {
-            if (props_.getPropValueString(camKey,
-                  Properties.Keys.TRIGGER_ACTIVE, true).equals(
-                  Properties.Values.SYNCREADOUT.toString())) {
-               // with synchronous readout mode the readout time is included in
-               // reset time
-               numReadoutRows = 0;
-            } else {
-               numReadoutRows = roiReadoutRows(roi, sensor, false);
-            }
+            numReadoutRows = roiReadoutRowsSplitReadout(roi, getSensorSize(camKey));
          }
-         readout = (float) (numReadoutRows * H1);
+         readoutTimeMs = ((float) (numReadoutRows * rowReadoutTime));
          break;
       case PCOCAM:
          JOptionPane.showMessageDialog(null,
-               "Readout time for PCO cameras not yet implemented in plugin.",
+               "Easy timing mode for PCO cameras not yet implemented.",
                "Warning", JOptionPane.WARNING_MESSAGE);
          break;
       case ANDORCAM:
-         JOptionPane.showMessageDialog(null,
-               "Readout time for Andor cameras not yet implemented in plugin.",
-               "Warning", JOptionPane.WARNING_MESSAGE);
+         numReadoutRows = roiReadoutRowsSplitReadout(roi, getSensorSize(camKey));
+         readoutTimeMs = ((float) (numReadoutRows * rowReadoutTime));
          break;
-
       default:
          break;
       }
-      return readout;
+      core_.logMessage("camera readout time computed as " + readoutTimeMs + 
+            " for camera" + devices_.getMMDevice(camKey), true);
+      return readoutTimeMs;  // assume 10ms readout if not otherwise possible to calculate
    }
 
    /**
