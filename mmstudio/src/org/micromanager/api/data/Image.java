@@ -14,6 +14,13 @@ public interface Image {
     * Retrieve the ImgPlus that provides access to the image's pixel data.
     */
    public ImgPlus getPixels();
+
+   /**
+    * Return a reference to whatever entity stores the actual pixel data for
+    * this Image. Is most likely a byte[] or short[] but could be of any
+    * non-primitive type.
+    */
+   public Object getRawPixels();
    /**
     * Retrieve the Metadata for this Image.
     */

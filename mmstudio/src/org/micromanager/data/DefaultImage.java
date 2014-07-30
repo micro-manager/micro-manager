@@ -159,6 +159,7 @@ public class DefaultImage implements Image {
    /**
     * Return a raw Object of our pixel data.
     */
+   @Override
    public Object getRawPixels() {
       ArrayDataAccess accessor = (ArrayDataAccess) ((ArrayImg) pixels_.getImg()).update(null);
       return accessor.getCurrentStorageArray();
