@@ -130,7 +130,7 @@ public:
     void Tokenize(const std::string& str, std::vector<std::string>& tokens, const std::string& delimiters);
 	int SendVersalaseCommand(std::ostringstream cmd);
 	int GetVersalaseAnswer(void);
-	void VersaLase::SetLaserAsInvalid(LASER_SLOT myLsr);
+	void SetLaserAsInvalid(LASER_SLOT myLsr);
 
 
 private:
