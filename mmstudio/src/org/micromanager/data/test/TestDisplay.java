@@ -42,6 +42,8 @@ public class TestDisplay {
       ReportingUtils.logError("Display caught new image");
       try {
          plus_.getProcessor().setPixels(event.getImage().getRawPixels());
+         ijImage_.getProcessor().setPixels(event.getImage().getRawPixels());
+
          ijImage_.reset();
          ijImage_.updateAndDraw();
       }
