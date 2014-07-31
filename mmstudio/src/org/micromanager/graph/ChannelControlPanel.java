@@ -399,14 +399,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    }
 
    public void autoButtonAction() {
-      if (display_.getHistogramControlsState().syncChannels) {
-         autostretch();
-         mcHistograms_.applyContrastToAllChannels(contrastMin_, contrastMax_, gamma_);
-      } else {
-         autostretch();
-         mcHistograms_.applyLUTToImage();
-         display_.drawWithoutUpdate();
-      }
+      autostretch();
+      applyLUT();
    }
 
    private void colorPickerLabelMouseClicked() {
@@ -780,12 +774,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       if (contrastMin_ > contrastMax_) {
          contrastMin_ = contrastMax_;
       }
-      if (display_.getHistogramControlsState().syncChannels) {
-         mcHistograms_.applyContrastToAllChannels(contrastMin_, contrastMax_, gamma_);
-      } else {
-         mcHistograms_.applyLUTToImage();
-         display_.drawWithoutUpdate();
-      }
+      applyLUT();
    }
    
    @Override
@@ -800,12 +789,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       if (contrastMax_ < contrastMin_) {
          contrastMax_ = contrastMin_ + 1;
       }
-      if (display_.getHistogramControlsState().syncChannels) {
-         mcHistograms_.applyContrastToAllChannels(contrastMin_, contrastMax_, gamma_);
-      } else {
-         mcHistograms_.applyLUTToImage();
-         display_.drawWithoutUpdate();
-      }
+      applyLUT();
    }
 
    public void onLeftCursor(double pos) {
@@ -816,12 +800,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       if (contrastMax_ < contrastMin_) {
          contrastMax_ = contrastMin_ + 1;
       }
-      if (display_.getHistogramControlsState().syncChannels) {
-         mcHistograms_.applyContrastToAllChannels(contrastMin_, contrastMax_, gamma_);
-      } else {
-         mcHistograms_.applyLUTToImage();
-         display_.drawWithoutUpdate();
-      }
+      applyLUT();
    }
 
    @Override
@@ -834,12 +813,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       if (contrastMin_ > contrastMax_) {
          contrastMin_ = contrastMax_;
       }
-      if (display_.getHistogramControlsState().syncChannels) {
-         mcHistograms_.applyContrastToAllChannels(contrastMin_, contrastMax_, gamma_);
-      } else {
-         mcHistograms_.applyLUTToImage();
-         display_.drawWithoutUpdate();
-      }
+      applyLUT();
    }
 
    @Override
@@ -850,12 +824,16 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          } else {
             gamma_ = gamma;
          }
-         if (display_.getHistogramControlsState().syncChannels) {
-            mcHistograms_.applyContrastToAllChannels(contrastMin_, contrastMax_, gamma_);
-         } else {
-            mcHistograms_.applyLUTToImage();
-            display_.drawWithoutUpdate();
-         }
+         applyLUT();
+      }
+   }
+
+   private void applyLUT() {
+      if (display_.getHistogramControlsState().syncChannels) {
+         mcHistograms_.applyContrastToAllChannels(contrastMin_, contrastMax_, gamma_);
+      } else {
+         mcHistograms_.applyLUTToImage();
+         display_.drawWithoutUpdate();
       }
    }
 }
