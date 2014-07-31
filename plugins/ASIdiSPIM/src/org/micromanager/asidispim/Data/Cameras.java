@@ -321,7 +321,7 @@ public class Cameras {
       switch(devices_.getMMDeviceLibrary(camKey)) {
       case HAMCAM:
          if (isSlowReadout(camKey)) {
-            return (2592 / 266e3 * (10/3)); 
+            return (2592 / 266e3 * (10./3)); 
          } else {
             return (2592 / 266e3);
          }
