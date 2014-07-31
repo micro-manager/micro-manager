@@ -13,6 +13,11 @@ public interface Reader {
    public Image getImage(Coords coords);
    
    /**
+    * Return the largest stored position along the specified axis.
+    */
+   public Integer getMaxExtent(String axis);
+
+   /**
     * Retrieve the SummaryMetadata associated with this dataset.
     */
    public SummaryMetadata getSummaryMetadata();
