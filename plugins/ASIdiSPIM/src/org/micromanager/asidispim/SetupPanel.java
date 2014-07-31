@@ -82,7 +82,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
    private Devices.Keys piezoImagingDeviceKey_;
    private Devices.Keys piezoIlluminationDeviceKey_;
    private Devices.Keys micromirrorDeviceKey_;
-   private final JLabel imagingCenterPosLabel_;
+   private final StoredFloatLabel imagingCenterPosLabel_;
    private final JLabel imagingPiezoPositionLabel_;
    private final JLabel illuminationPiezoPositionLabel_;
    private final JLabel sheetPositionLabel_;
@@ -118,16 +118,20 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       updatePort();
 
       sheetStartPositionLabel_ = new StoredFloatLabel(panelName_, 
-              Properties.Keys.PLUGIN_SHEET_START_POS.toString(), -1, prefs_, gui_);
+              Properties.Keys.PLUGIN_SHEET_START_POS.toString(), -1,
+              prefs_, gui_, " \u00B0");
       sliceStartPos_ = sheetStartPositionLabel_.getFloat();
       sheetStopPositionLabel_ = new StoredFloatLabel(panelName_, 
-              Properties.Keys.PLUGIN_SHEET_END_POS.toString(), 1, prefs_, gui_);
+              Properties.Keys.PLUGIN_SHEET_END_POS.toString(), 1,
+              prefs_, gui_, " \u00B0");
       sliceStopPos_ = sheetStopPositionLabel_.getFloat();
       imagingPiezoStartPositionLabel_ = new StoredFloatLabel(panelName_, 
-              Properties.Keys.PLUGIN_PIEZO_START_POS.toString(), -80, prefs_, gui_);
+              Properties.Keys.PLUGIN_PIEZO_START_POS.toString(), -80,
+              prefs_, gui_, " \u00B5" + "m");
       imagingPiezoStartPos_ = imagingPiezoStartPositionLabel_.getFloat();
       imagingPiezoStopPositionLabel_ = new StoredFloatLabel(panelName_, 
-              Properties.Keys.PLUGIN_PIEZO_END_POS.toString(), 80, prefs_, gui_);
+              Properties.Keys.PLUGIN_PIEZO_END_POS.toString(), 80,
+              prefs_, gui_, " \u00B5" + "m");
       imagingPiezoStopPos_ = imagingPiezoStopPositionLabel_.getFloat();
       
       // Create sheet Panel with sheet and piezo controls
@@ -144,9 +148,10 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
               Properties.Keys.PLUGIN_RATE_PIEZO_SHEET.toString(), 80, 6);
 
       sheetPanel.add(new JLabel("Imaging center: "));
-      imagingCenterPosLabel_ = new JLabel("");
+      imagingCenterPosLabel_ = new StoredFloatLabel(panelName_, 
+            Properties.Keys.PLUGIN_PIEZO_CENTER_POS.toString(), 0,
+            prefs_, gui_, " \u00B5" + "m");
       sheetPanel.add(imagingCenterPosLabel_);
-      updateImagingCenterPositionLabel();
       
       JButton goToCenterButton = new JButton("Go to");
       goToCenterButton.setToolTipText("Moves piezo to specified center and also slice");
@@ -180,7 +185,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
                     devices_.getMMDeviceException(piezoImagingDeviceKey_));
                props_.setPropValue(piezoImagingDeviceKey_, 
                         Properties.Keys.SA_OFFSET, (float) imagingCenterPos_);
-               updateImagingCenterPositionLabel();
+               imagingCenterPosLabel_.setFloat((float)imagingCenterPos_);
             } catch (Exception ex) {
                gui_.showError(ex);
             }
@@ -191,6 +196,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       piezoDeltaField_ = pu.makeFloatEntryField(panelName_, 
             Properties.Keys.PLUGIN_PIEZO_SHEET_INCREMENT.toString(), 10, 2);
       piezoDeltaField_.setToolTipText("Piezo increment used by up/down arrow buttons");
+      
       sheetPanel.add(new JLabel("\u0394"+"="), "split 2, right");
       sheetPanel.add(piezoDeltaField_, "right");
       sheetPanel.add(new JLabel("\u00B5"+"m"), "left");
@@ -495,11 +501,6 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       return ((piezoPos - offset)/rate);
       
    }
-   
-   private void updateImagingCenterPositionLabel() {
-      imagingCenterPosLabel_.setText(Positions.posToDisplayStringUm(imagingCenterPos_));
-   }
-   
    
    private JButton makeIncrementButton(Devices.Keys devKey, Properties.Keys propKey, 
          String label, float incrementAmount) {

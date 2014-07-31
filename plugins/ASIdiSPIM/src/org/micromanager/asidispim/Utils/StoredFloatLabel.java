@@ -39,6 +39,7 @@ public class StoredFloatLabel extends JLabel {
    private final String prefKey_;
    private final Prefs prefs_;
    private final ScriptInterface gui_;
+   private final String units_;
 
    /**
     * Creates a JLabel and overrides the setText methods so that 
@@ -50,15 +51,17 @@ public class StoredFloatLabel extends JLabel {
     * @param defaultValue - default value in case nothing is found in prefs
     * @param prefs - Global preferences object used in this plugin
     * @param gui - MM ScriptInterface instance
+    * @param units - string to be displayed after the float, usually containing units
     */
    public StoredFloatLabel(String prefNode, String prefKey, float defaultValue, 
-         Prefs prefs, ScriptInterface gui) {               
+         Prefs prefs, ScriptInterface gui, String units) {               
       super();
       prefNode_ = prefNode;
       prefKey_ = prefKey;
       prefs_ = prefs;
       gui_ = gui;
-      super.setText("" + (prefs_.getFloat(prefNode, prefKey, defaultValue)));
+      units_ = units;
+      super.setText("" + (prefs_.getFloat(prefNode, prefKey, defaultValue)) + units);
    }
 
    /**
@@ -83,7 +86,7 @@ public class StoredFloatLabel extends JLabel {
     * @param val 
     */
    public void setFloat(float val) {
-      super.setText(NumberUtils.doubleToDisplayString(val));
+      super.setText(NumberUtils.doubleToDisplayString(val) + units_);
       if (prefNode_ != null && prefKey_ != null) {
          prefs_.putFloat(prefNode_, prefKey_, val);
       }

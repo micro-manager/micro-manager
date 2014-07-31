@@ -123,11 +123,12 @@ public class Properties {
       PLUGIN_PIEZO_SHEET_INCREMENT("PiezoSheetIncrement"),  // piezo increment for moving piezo and galvo together
       PLUGIN_OFFSET_PIEZO_SHEET("OffsetPiezoSheet"),  // Offset in piezo/sheet relation
       PLUGIN_RATE_PIEZO_SHEET ("RatePiezoSheet"),     // Rate in piezo/sheet 
-      PLUGIN_SETUP_PANEL_NAME ("Setup Path"),        // Setup Panel Name
+      PLUGIN_SETUP_PANEL_NAME ("Setup Path"),         // Setup Panel Name
       PLUGIN_SHEET_START_POS ("SheetStartPosition"),  // Sheet start position for internal use
       PLUGIN_SHEET_END_POS ("SheetEndPosition"),      // Sheet end position for internal use
       PLUGIN_PIEZO_START_POS ("PiezoStartPosition"),  // Piezo start position for internal use
       PLUGIN_PIEZO_END_POS ("PiezoEndPosition"),      // Piezo end position for internal use
+      PLUGIN_PIEZO_CENTER_POS ("PiezoCenterPosition"),  // Piezo center position for acquisition
       PLUGIN_EXPORT_MIPAV_DATA_DIR ("ExportMipavDataDirectory"), 
                                                       // Place data are saved in mipav format
       PLUGIN_EXPORT_MIPAV_TRANSFORM_OPTION("ExportMipavTransformOption"),
