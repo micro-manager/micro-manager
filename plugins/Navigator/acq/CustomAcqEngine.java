@@ -6,22 +6,9 @@ package acq;
  */
 
 import ij.IJ;
-import java.awt.Point;
-import java.awt.geom.Point2D;
-import java.util.Arrays;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import main.Util;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
-import org.json.JSONArray;
-import org.json.JSONObject;
-import org.micromanager.MMStudioMainFrame;
 import org.micromanager.api.MMTags;
-import org.micromanager.api.ScriptInterface;
-import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.ReportingUtils;
 
 /**
@@ -49,43 +36,17 @@ public class CustomAcqEngine {
       zName_ = core_.getFocusDevice();
    }
    
-   public void newExploreWindow(final double zTop, final double zBottom) {
+   public void newExploreWindow() {
       new Thread(new Runnable() {
          @Override
          public void run() {
             //TODO: check if existing open explore that should be finished?
             lastEvent_ = null;
 
-            exploreAcquisition_ = new Acquisition(true, CustomAcqEngine.this, zTop, zBottom, 1);           
+            exploreAcquisition_ = new Acquisition(true, CustomAcqEngine.this, 1);           
 
             //acquire first tile
             acquireTiles(0,0,0,0);
-
-
-//            MultiResMultipageTiffStorage storage = new MultiResMultipageTiffStorage(
-//                    "C:/Users/Henry/Desktop/MultiRes/", true, Acquisition.makeSummaryMD(2, 2), 0, 0);
-//
-//            ScriptInterface app = MMStudioMainFrame.getInstance();
-//
-//            for (int position = 0; position < 5; position++) {
-//               for (int channel = 0; channel < 1; channel++) {
-//                  for (int slice = 0; slice < 1; slice++) {
-//                     try {
-//                        core_.snapImage();
-//                        TaggedImage img = core_.getTaggedImage();
-//                        //set tags
-//                        MDUtils.setFrameIndex(img.tags, 0);
-//                        MDUtils.setChannelIndex(img.tags, channel);
-//                        MDUtils.setSliceIndex(img.tags, slice);
-//                        MDUtils.setPositionIndex(img.tags, position);
-//                        storage.putImage(img);
-//                     } catch (Exception ex) {
-//                        ReportingUtils.showError("couldnt snap");
-//                     }
-//                  }
-//               }
-//            }
-            
 
          }
       }).start();
@@ -96,13 +57,25 @@ public class CustomAcqEngine {
         acquireImage(event);
     }
 
-   public void acquireTiles(final int row1, final int col1, final int row2, final int col2) {
+   public void acquireTiles(int row1, int col1, int row2, int col2) {
       try {
          //update positionList and get index
          int[] posIndices = null;
          boolean newPositionsAdded = false;
          try {
             int numPositions = exploreAcquisition_.getPositionManager().getNumPositions();
+            //order tile indices properly
+            if (row1 > row2) {
+               int temp = row1;
+               row1 = row2;
+               row2 = temp;
+            }
+            if (col1 > col2) {
+               int temp = col1;
+               col1 = col2;
+               col2 = temp;
+            }
+            
             //Get position Indices from manager based on row and column
             //it will create new metadata as needed
             int[] newPositionRows = new int[(row2 - row1 + 1) * (col2 - col1 + 1)];
@@ -157,6 +130,9 @@ public class CustomAcqEngine {
               //send to storage
               TaggedImage img = core_.getTaggedImage(c) ;
               //add tags
+              long gridRow = exploreAcquisition_.getPositionManager().getGridRow(event.positionIndex_, 0);
+              long gridCol = exploreAcquisition_.getPositionManager().getGridCol(event.positionIndex_, 0);
+              img.tags.put(MMTags.Image.POS_NAME, "Grid_" + gridRow + "_" + gridCol);
               img.tags.put(MMTags.Image.POS_INDEX, event.positionIndex_);
               img.tags.put(MMTags.Image.SLICE_INDEX, event.sliceIndex_);
               img.tags.put(MMTags.Image.FRAME_INDEX, event.frameIndex_);

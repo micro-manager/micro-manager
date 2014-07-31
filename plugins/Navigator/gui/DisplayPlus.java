@@ -29,6 +29,8 @@ import org.micromanager.utils.*;
 
 public class DisplayPlus extends VirtualAcquisitionDisplay  {
 
+   private static final int EXPLORE_PIXEL_BUFFER = 96;
+   
    private static final Color TRANSPARENT_BLUE = new Color(0, 0, 255, 100);
    private static final Color TRANSPARENT_MAGENTA = new Color(255, 0, 255, 100);
    private ImageCanvas canvas_;
@@ -38,27 +40,28 @@ public class DisplayPlus extends VirtualAcquisitionDisplay  {
    private Point clickStart_;
    private Point gridStart_, mouseDragStartPoint_;
    private boolean suspendUpdates_ = false;
-   private int mouseRowIndex_ = -1, mouseColIndex_ = -1;
    private ArrayList<Point> selectedPositions_ = new ArrayList<Point>();
-   private boolean gotoMode_ = false, newGridMode_ = false,
-           zoomMode_ = false, zoomAreaSelectMode_ = false;
+   private boolean gotoMode_ = false, newGridMode_ = false;
    private ZoomableVirtualStack zoomableStack_;
    private final boolean exploreMode_;
    private PositionManager posManager_;
    private int tileWidth_, tileHeight_;
+   private boolean spacebarDown_ = false;
+   private boolean cursorOverImage_;
 
    public DisplayPlus(final ImageCache stitchedCache, CustomAcqEngine eng, JSONObject summaryMD, 
            MultiResMultipageTiffStorage multiResStorage, boolean exploreMode) {
-      super(stitchedCache, null, "test");
+      super(stitchedCache, null, "test", true);
       tileWidth_ = multiResStorage.getTileWidth();
       tileHeight_ = multiResStorage.getTileHeight();
       posManager_ = multiResStorage.getPositionManager();
       exploreMode_ = exploreMode;
+      
       //Set parameters for tile dimensions, num rows and columns, overlap, and image dimensions
       eng_ = eng;
 
       
-      controls_ = new DisplayPlusControls(this, this.getEventBus());
+      controls_ = new DisplayPlusControls(this, this.getEventBus(), exploreMode, eng);
 
       //Add in custom controls
       try {
@@ -73,7 +76,13 @@ public class DisplayPlus extends VirtualAcquisitionDisplay  {
          int nSlices = MDUtils.getNumChannels(summaryMD) * MDUtils.getNumFrames(summaryMD) * MDUtils.getNumSlices(summaryMD);
          int width = MDUtils.getWidth(summaryMD);
          int height = MDUtils.getHeight(summaryMD);
-         zoomableStack_ = new ZoomableVirtualStack(MDUtils.getIJType(summaryMD), width, height, stitchedCache, nSlices, this, multiResStorage);
+         //25 pixel buffer for exploring
+         if (exploreMode_) {
+            width += 2*EXPLORE_PIXEL_BUFFER;
+            height += 2*EXPLORE_PIXEL_BUFFER;
+         }
+         zoomableStack_ = new ZoomableVirtualStack(MDUtils.getIJType(summaryMD), width, height, stitchedCache, nSlices, 
+                 this, multiResStorage, exploreMode_ ? EXPLORE_PIXEL_BUFFER : 0);
          this.show(zoomableStack_);
       } catch (Exception e) {
          ReportingUtils.showError("Problem with initialization due to missing summary metadata tags");
@@ -85,6 +94,7 @@ public class DisplayPlus extends VirtualAcquisitionDisplay  {
       //Zoom to 100%
       canvas_.unzoom();
 
+      setupKeyListeners();
       setupMouseListeners();
 
       IJ.setTool(Toolbar.SPARE6);
@@ -135,53 +145,81 @@ public class DisplayPlus extends VirtualAcquisitionDisplay  {
 //      overlay.add(innerRect);
 //      canvas_.setOverlay(overlay);
    }
-
-   private void zoomIn(Point p) {
-//      zoomMode_ = true;
-//      zoomAreaSelectMode_ = false;
-//      //This assumes 100% display of tiled image
-//      zoomableStack_.activateZoomMode(p.x, p.y);
-//      this.getHyperImage().setOverlay(null);
-//      redrawPixels();
-//      drawZoomIndicatorOverlay();   
-   }
    
-   private void zoomOut() {
-//      zoomMode_ = false;
-//      zoomableStack_.activateFullImageMode();
-//      redrawPixels();
-//      canvas_.setOverlay(null);
+   private void clearOverlay() {
+      canvas_.setOverlay(null);
    }
 
-   //TODO account for overlap?
    private void highlightTiles(int row1, int row2, int col1, int col2, Color color) {
-      //need to convert from canvas coordinates to pixel coordinates
-      final ImageCanvas canvas = this.getImagePlus().getCanvas();
-      double tileHeightAtZoom = tileHeight_ / (double) zoomableStack_.getDownsampleFactor();
-      double tileWidthAtZoom = tileWidth_ / (double) zoomableStack_.getDownsampleFactor();
-      int x = (int) Math.round(col1 * tileWidthAtZoom);
-      int y = (int) Math.round(row1 * tileHeightAtZoom);
-      int width = (int) Math.round(tileWidthAtZoom * (col2 - col1 + 1));
-      int height = (int) Math.round(tileHeightAtZoom * (row2 - row1 + 1));
-      Roi rect = new Roi(x, y, width, height);
+      Point topLeft = zoomableStack_.getDisplayedPixel(row1,col1);
+      int width = (int) Math.round(tileWidth_ / (double) zoomableStack_.getDownsampleFactor() * (col2 - col1 + 1));
+      int height = (int) Math.round(tileHeight_ / (double) zoomableStack_.getDownsampleFactor() * (row2 - row1 + 1));
+      Roi rect = new Roi(topLeft.x, topLeft.y, width, height);
       rect.setFillColor(color);
       Overlay overlay = new Overlay();
       overlay.add(rect);
-      canvas.setOverlay(overlay);
+      canvas_.setOverlay(overlay);
    }
 
+   private void setupKeyListeners() {
+      //remove ImageJ key listeners
+      ImageWindow window = this.getImagePlus().getWindow();
+      window.removeKeyListener(this.getImagePlus().getWindow().getKeyListeners()[0]);
+      canvas_.removeKeyListener(canvas_.getKeyListeners()[0]);     
+      
+      KeyListener kl = new KeyListener() {
+         @Override
+         public void keyTyped(KeyEvent ke) {
+             if (ke.getKeyChar() == '=') {
+                clearOverlay();
+               zoomableStack_.zoom(cursorOverImage_ ? canvas_.getCursorLoc() : null, -1);
+               redrawPixels();
+            } else if (ke.getKeyChar() == '-') {
+               clearOverlay();
+               zoomableStack_.zoom(cursorOverImage_ ? canvas_.getCursorLoc() : null, 1);
+               redrawPixels();
+            }            
+         }
+
+         @Override
+         public void keyPressed(KeyEvent ke) {
+            if (ke.getKeyCode() == KeyEvent.VK_SPACE) {
+               clearOverlay();
+               spacebarDown_ = true;
+            }
+         }
+
+         @Override
+         public void keyReleased(KeyEvent ke) {
+            if (ke.getKeyCode() == KeyEvent.VK_SPACE) {
+               spacebarDown_ = false;
+            }
+         }
+      };
+      
+      //add keylistener to window and all subscomponenets so it will fire whenever
+      //focus in anywhere in the window
+      addRecursively(window, kl);  
+   }
+   
+   private void addRecursively(Component c, KeyListener kl) {
+      c.addKeyListener(kl);
+      if (c instanceof Container) {
+         for (Component subC : ((Container) c).getComponents() ) {
+            addRecursively(subC, kl);
+         }
+      }      
+   }
+   
    private void setupMouseListeners() {
       //remove channel switching scroll wheel listener
       this.getImagePlus().getWindow().removeMouseWheelListener(
               this.getImagePlus().getWindow().getMouseWheelListeners()[0]);
       //remove canvas mouse listener and virtualacquisitiondisplay as mouse listener
-      this.getImagePlus().getCanvas().removeMouseListener(
-              this.getImagePlus().getCanvas().getMouseListeners()[0]);
-      this.getImagePlus().getCanvas().removeMouseListener(
-              this.getImagePlus().getCanvas().getMouseListeners()[0]);
+      canvas_.removeMouseListener(canvas_.getMouseListeners()[0]);
+      canvas_.removeMouseListener(canvas_.getMouseListeners()[0]);
       
       canvas_.addMouseMotionListener(new MouseMotionListener() {
-
          @Override
          public void mouseDragged(MouseEvent e) {               
             Point currentPoint = e.getPoint();
@@ -193,42 +231,27 @@ public class DisplayPlus extends VirtualAcquisitionDisplay  {
                   canvas_.setPaintPending(true);
                   canvas_.paint(canvas_.getGraphics());
                }
-            } else if  (zoomMode_ && e.isShiftDown()) {
-//               zoomableStack_.translateZoomPosition(mouseDragStartPoint_.x - currentPoint.x, 
-//                       mouseDragStartPoint_.y - currentPoint.y);
-//               redrawPixels();
-//               mouseDragStartPoint_ = currentPoint;
-//               drawZoomIndicatorOverlay();               
-            } else if (exploreMode_ && !zoomMode_) {
-//               Point p2 = e.getPoint();
-//               //find top left row and column and number of columns spanned by drage event
-//               Point topLeftTile = storage_.tileIndicesFromLoResPixel(Math.min(p2.x, mouseDragStartPoint_.x),
-//                       Math.min(p2.y, mouseDragStartPoint_.y));
-//               Point bottomRightTile = storage_.tileIndicesFromLoResPixel(Math.max(p2.x, mouseDragStartPoint_.x),
-//                       Math.max(p2.y, mouseDragStartPoint_.y));
-//               highlightTiles(topLeftTile.x, bottomRightTile.x, topLeftTile.y, bottomRightTile.y, TRANSPARENT_MAGENTA);              
+            } else if  ( spacebarDown_) {
+               zoomableStack_.translateView(mouseDragStartPoint_.x - currentPoint.x,mouseDragStartPoint_.y - currentPoint.y);
+               redrawPixels();
+               mouseDragStartPoint_ = currentPoint;
+               drawZoomIndicatorOverlay();               
+            } else if (exploreMode_) {
+               //find top left row and column and number of columns spanned by drage event          
+               Point p2Tiles = zoomableStack_.getTileIndicesFromDisplayedPixel(e.getPoint().x, e.getPoint().y),
+                       p1Tiles = zoomableStack_.getTileIndicesFromDisplayedPixel(mouseDragStartPoint_.x, mouseDragStartPoint_.y);
+               highlightTiles(Math.min(p1Tiles.y, p2Tiles.y), Math.max(p1Tiles.y, p2Tiles.y),
+                       Math.min(p1Tiles.x, p2Tiles.x), Math.max(p1Tiles.x, p2Tiles.x), TRANSPARENT_MAGENTA);
             }
          }
 
          @Override
          public void mouseMoved(MouseEvent e) {
-            if (zoomAreaSelectMode_) {
-//               //draw rectangle of area that will be zoomed in on
-//               Overlay overlay = new Overlay();
-//               int width = (int) Math.round(zoomableStack_.getWidth() / storage_.getDSFactor());
-//               int height = (int) Math.round(zoomableStack_.getHeight() / storage_.getDSFactor());
-//               Point center = e.getPoint();
-//               Roi rect = new Roi(Math.min(Math.max(0,center.x - width / 2), canvas_.getWidth() - width),
-//                       Math.min(Math.max(0,center.y - height / 2), canvas_.getHeight() - height),
-//                       width, height);
-//               rect.setFillColor(TRANSPARENT_BLUE);
-//               overlay.add(rect);
-//               canvas_.setOverlay(overlay);
-            } else if (exploreMode_ && !zoomMode_ && !newGridMode_) {
-//               Point coords = storage_.tileIndicesFromLoResPixel(e.getPoint().x, e.getPoint().y);
-//               int row = coords.x, col = coords.y;
-//               //highlight tile(s)
-//               highlightTiles(row, row, col, col, TRANSPARENT_MAGENTA);
+            if (exploreMode_ && !newGridMode_ && !spacebarDown_) {
+               Point coords = zoomableStack_.getTileIndicesFromDisplayedPixel(e.getPoint().x, e.getPoint().y);
+               int row = coords.y, col = coords.x;
+               //highlight tile(s)
+               highlightTiles(row, row, col, col, TRANSPARENT_MAGENTA);
             }
          }
       });
@@ -252,17 +275,7 @@ public class DisplayPlus extends VirtualAcquisitionDisplay  {
 //                  ReportingUtils.showError("Couldn't move xy stage");
 //               }
 //               controls_.clearSelectedButtons();
-            } else if (zoomAreaSelectMode_) {
-               zoomIn(e.getPoint());
-            } else {
-               if (e.getClickCount() > 1 && e.isShiftDown()) {
-                  if (zoomMode_) {
-                     zoomOut();
-                  } else {
-                     zoomIn(e.getPoint());
-                  }
-               }  
-            }
+            } 
          }
 
          @Override
@@ -272,23 +285,22 @@ public class DisplayPlus extends VirtualAcquisitionDisplay  {
                Roi rect = DisplayPlus.this.getImagePlus().getOverlay().get(0);
                Rectangle2D bounds = rect.getFloatBounds();
                gridStart_ = new Point((int) bounds.getX(), (int) bounds.getY());
-            } else if (zoomMode_ || exploreMode_) {
+            } else if ( exploreMode_) {
+               //used for both multiple tile selection and dragging to zoom
                mouseDragStartPoint_ = e.getPoint();
             } 
          }
 
          @Override
          public void mouseReleased(MouseEvent e) {
-            if (exploreMode_ && !e.isShiftDown() && !newGridMode_ && !zoomMode_) {
+            if (exploreMode_ && !newGridMode_  && !spacebarDown_) {
 
                Point p2 = e.getPoint();
                //find top left row and column and number of columns spanned by drage event
-               final Point topLeftTile = new Point(tileIndexFromPixel(Math.min(p2.x, mouseDragStartPoint_.x),true),
-                       tileIndexFromPixel(Math.min(p2.y, mouseDragStartPoint_.y),false));
-               final Point bottomRightTile = new Point(tileIndexFromPixel(Math.max(p2.x, mouseDragStartPoint_.x),true),
-                       tileIndexFromPixel(Math.max(p2.y, mouseDragStartPoint_.y),false));
+               Point tile1 = zoomableStack_.getTileIndicesFromDisplayedPixel(mouseDragStartPoint_.x, mouseDragStartPoint_.y);
+               Point tile2 = zoomableStack_.getTileIndicesFromDisplayedPixel(p2.x, p2.y);
                //create events to acquire one or more tiles
-               eng_.acquireTiles(topLeftTile.x, topLeftTile.y, bottomRightTile.x, bottomRightTile.y);
+               eng_.acquireTiles(tile1.y, tile1.x, tile2.y, tile2.x);
 
                //TODO: immediately redraw image to reflect updates positions in position manager
                
@@ -302,35 +314,18 @@ public class DisplayPlus extends VirtualAcquisitionDisplay  {
 
          @Override
          public void mouseEntered(MouseEvent e) {
+            cursorOverImage_ = true;
          }
 
          @Override
          public void mouseExited(MouseEvent e) {
+            cursorOverImage_ = false;
             if (!gotoMode_) {
                return;
             }
-            mouseRowIndex_ = -1;
-            mouseColIndex_ = -1;
          }
       });
    }
-   
-    private int tileIndexFromPixel(int i, boolean xDirection) {
-       //TODO: account for x and y offset in zoom
-      int fullResPix = (int) (i * zoomableStack_.getDownsampleFactor());
-      int tileIndex = fullResPix / (xDirection ? tileWidth_ : tileHeight_);
-      //tileIndex doesn't neccesasrily start at 0...
-      tileIndex += (xDirection ? posManager_.getMinCol() : posManager_.getMinRow());
-      for (int ds = 1; ds <= zoomableStack_.getDownsampleIndex(); ds++ ) {
-         if(tileIndex >= 0) {
-            tileIndex = tileIndex / 2;
-         } else {
-            tileIndex = (tileIndex - 1) / 2;
-         }         
-      }
-      return tileIndex;
-   }
-   
 
    private void createGrid() {
 //      try {

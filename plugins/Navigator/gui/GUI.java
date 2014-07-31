@@ -53,11 +53,6 @@ public class GUI extends javax.swing.JFrame implements ImageFocusListener {
       }
       //TODO enable GUI controls specific to window type
    }
-   
-   private void updateExploreSettings() {
-      eng_.updateExploreSettings(zTopSlider_.getValue(),zBottomSlider_.getValue());
-   }
-   
 
    /**
     * This method is called from within the constructor to initialize the form.
@@ -97,14 +92,6 @@ public class GUI extends javax.swing.JFrame implements ImageFocusListener {
         pixelOverlapYLabel_ = new javax.swing.JLabel();
         pixelOverlapYSpinner_ = new javax.swing.JSpinner();
         newGridButton_ = new javax.swing.JToggleButton();
-        jPanel1 = new javax.swing.JPanel();
-        jSeparator4 = new javax.swing.JSeparator();
-        jLabel3 = new javax.swing.JLabel();
-        jLabel4 = new javax.swing.JLabel();
-        zTopTextField_ = new javax.swing.JTextField();
-        zBottomTextField_ = new javax.swing.JTextField();
-        zTopSlider_ = new javax.swing.JSlider();
-        zBottomSlider_ = new javax.swing.JSlider();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -334,101 +321,11 @@ public class GUI extends javax.swing.JFrame implements ImageFocusListener {
                 .addComponent(fullResButton_))
         );
 
-        jLabel3.setText("Z top");
-
-        jLabel4.setText("Z bottom");
-
-        zTopTextField_.setText("jTextField1");
-        zTopTextField_.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                zTopTextField_ActionPerformed(evt);
-            }
-        });
-        zTopTextField_.addFocusListener(new java.awt.event.FocusAdapter() {
-            public void focusLost(java.awt.event.FocusEvent evt) {
-                zTopTextField_FocusLost(evt);
-            }
-        });
-
-        zBottomTextField_.setText("jTextField2");
-        zBottomTextField_.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                zBottomTextField_ActionPerformed(evt);
-            }
-        });
-        zBottomTextField_.addFocusListener(new java.awt.event.FocusAdapter() {
-            public void focusLost(java.awt.event.FocusEvent evt) {
-                zBottomTextField_FocusLost(evt);
-            }
-        });
-
-        zTopSlider_.setMajorTickSpacing(1);
-        zTopSlider_.setMaximum(50);
-        zTopSlider_.setSnapToTicks(true);
-        zTopSlider_.setValue(0);
-        zTopSlider_.addChangeListener(new javax.swing.event.ChangeListener() {
-            public void stateChanged(javax.swing.event.ChangeEvent evt) {
-                zTopSlider_StateChanged(evt);
-            }
-        });
-
-        zBottomSlider_.setMajorTickSpacing(1);
-        zBottomSlider_.setMaximum(50);
-        zBottomSlider_.setSnapToTicks(true);
-        zBottomSlider_.setValue(0);
-        zBottomSlider_.addChangeListener(new javax.swing.event.ChangeListener() {
-            public void stateChanged(javax.swing.event.ChangeEvent evt) {
-                zBottomSlider_StateChanged(evt);
-            }
-        });
-
-        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jSeparator4, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 481, Short.MAX_VALUE)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(jLabel3)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(zTopTextField_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(zTopSlider_, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(jLabel4)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(zBottomTextField_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(zBottomSlider_, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-                .addContainerGap())
-        );
-        jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addComponent(jSeparator4, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(jLabel3)
-                        .addComponent(zTopTextField_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(zTopSlider_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(jLabel4)
-                        .addComponent(zBottomTextField_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(zBottomSlider_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(32, Short.MAX_VALUE))
-        );
-
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(propertiesPanel_, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addComponent(windowControlsPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addGroup(layout.createSequentialGroup()
                 .addComponent(zSliderPanel_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -445,16 +342,14 @@ public class GUI extends javax.swing.JFrame implements ImageFocusListener {
                 .addComponent(exploreControlsPanel_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(windowControlsPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(70, 70, 70)
-                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(19, 19, 19))
+                .addGap(35, 35, 35))
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
    private void newExploreWindowButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newExploreWindowButton_ActionPerformed
-      eng_.newExploreWindow(zTopSlider_.getValue(),zBottomSlider_.getValue());
+      eng_.newExploreWindow();
    }//GEN-LAST:event_newExploreWindowButton_ActionPerformed
 
    private void fullResButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_fullResButton_ActionPerformed
@@ -502,40 +397,6 @@ public class GUI extends javax.swing.JFrame implements ImageFocusListener {
               (Integer) pixelOverlapYSpinner_.getValue());
    }//GEN-LAST:event_newGridButton_ActionPerformed
 
-   private void zTopSlider_StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_zTopSlider_StateChanged
-      if (zTopSlider_.getValue() > zBottomSlider_.getValue()) {
-         zTopSlider_.setValue(zBottomSlider_.getValue());
-      }
-      zTopTextField_.setText(""+zTopSlider_.getValue());
-      updateExploreSettings();
-   }//GEN-LAST:event_zTopSlider_StateChanged
-
-   private void zBottomSlider_StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_zBottomSlider_StateChanged
-      if (zTopSlider_.getValue() > zBottomSlider_.getValue()) {
-         zBottomSlider_.setValue(zTopSlider_.getValue());
-      }
-      zBottomTextField_.setText("" + zBottomSlider_.getValue());
-      updateExploreSettings();
-   }//GEN-LAST:event_zBottomSlider_StateChanged
-
-   private void zBottomTextField_FocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_zBottomTextField_FocusLost
-      zBottomTextField_.getActionListeners()[0].actionPerformed(null);
-   }//GEN-LAST:event_zBottomTextField_FocusLost
-
-   private void zTopTextField_FocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_zTopTextField_FocusLost
-      zTopTextField_.getActionListeners()[0].actionPerformed(null);
-   }//GEN-LAST:event_zTopTextField_FocusLost
-
-   private void zTopTextField_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_zTopTextField_ActionPerformed
-      zTopSlider_.setValue((int)Double.parseDouble(zTopTextField_.getText()));
-      zTopTextField_.setText(zTopSlider_.getValue() + "");
-   }//GEN-LAST:event_zTopTextField_ActionPerformed
-
-   private void zBottomTextField_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_zBottomTextField_ActionPerformed
-      zBottomSlider_.setValue((int)Double.parseDouble(zBottomTextField_.getText()));
-      zBottomTextField_.setText(zBottomSlider_.getValue() + "");
-   }//GEN-LAST:event_zBottomTextField_ActionPerformed
-
    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
       // TODO add your handling code here:
    }//GEN-LAST:event_jButton1ActionPerformed
@@ -548,16 +409,12 @@ public class GUI extends javax.swing.JFrame implements ImageFocusListener {
     private javax.swing.JButton fullResButton_;
     private javax.swing.JButton jButton1;
     private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel3;
-    private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
-    private javax.swing.JPanel jPanel1;
     private javax.swing.JSeparator jSeparator1;
     private javax.swing.JSeparator jSeparator2;
     private javax.swing.JSeparator jSeparator3;
-    private javax.swing.JSeparator jSeparator4;
     private javax.swing.JTextField jTextField1;
     private javax.swing.JTextField jTextField2;
     private javax.swing.JTextField jTextField3;
@@ -572,13 +429,9 @@ public class GUI extends javax.swing.JFrame implements ImageFocusListener {
     private javax.swing.JPanel propertiesPanel_;
     private javax.swing.JLabel rowsLabel_;
     private javax.swing.JPanel windowControlsPanel;
-    private javax.swing.JSlider zBottomSlider_;
-    private javax.swing.JTextField zBottomTextField_;
     private javax.swing.JPanel zSliderPanel_;
     private javax.swing.JSlider zSlider_;
     private javax.swing.JTextField zTextField_;
-    private javax.swing.JSlider zTopSlider_;
-    private javax.swing.JTextField zTopTextField_;
     // End of variables declaration//GEN-END:variables
 
 

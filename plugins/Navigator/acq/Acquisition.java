@@ -19,6 +19,7 @@ import org.micromanager.acquisition.DefaultTaggedImageSink;
 import org.micromanager.acquisition.MMAcquisition;
 import org.micromanager.acquisition.MMImageCache;
 import org.micromanager.api.ImageCache;
+import org.micromanager.utils.JavaUtils;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.ReportingUtils;
 
@@ -29,7 +30,9 @@ import org.micromanager.utils.ReportingUtils;
 public class Acquisition {
 
    //TODO: delete
-   private static final String STORAGE_DIR = "C:/Users/Henry/Desktop/MultiRes/";
+   private static final String STORAGE_DIR = JavaUtils.isMac() ? "/Users/henrypinkard/Desktop/multiRes" :
+           "C:/Users/Henry/Desktop/MultiRes/";
+   private static final String TESTING_NAME = "Explorer testing";
    
    private final boolean explore_;
    private volatile double zTop_, zBottom_, zStep_ = 1, zAbsoluteTop_ = 0, zAbsoluteBottom_ = 50;
@@ -44,11 +47,15 @@ public class Acquisition {
    /*
     * Class that sets up thread to run acquisition and 
     */
-   public Acquisition(boolean explore, CustomAcqEngine eng, double zTop, double zBottom, double zStep) {
+   public Acquisition(boolean explore, CustomAcqEngine eng, double zStep) {
       eng_ = eng;
       explore_ = explore;
-      zTop_ = zTop;
-      zBottom_ = zBottom;
+      try {
+         zTop_ = core_.getPosition(core_.getFocusDevice());
+         zBottom_ = core_.getPosition(core_.getFocusDevice());
+      } catch (Exception ex) {
+         ReportingUtils.showError("Couldn't get z positon from core");
+      }
       zStep_ = zStep;
       xyStage_ = core_.getXYStageDevice();
       zStage_ = core_.getFocusDevice();
@@ -58,7 +65,8 @@ public class Acquisition {
 
          JSONObject summaryMetadata = makeSummaryMD(1,(int)core_.getNumberOfCameraChannels());
 //         JSONObject summaryMetadata = makeSummaryMD(1,2);
-         MultiResMultipageTiffStorage storage = new MultiResMultipageTiffStorage(STORAGE_DIR, true, summaryMetadata, 0, 0);
+         MultiResMultipageTiffStorage storage = new MultiResMultipageTiffStorage(STORAGE_DIR,
+                 true, summaryMetadata, 0, 0);
          ImageCache imageCache = new MMImageCache(storage) {
             @Override
             //TODO: is this needed?
@@ -139,8 +147,9 @@ public class Acquisition {
    }
    
    public void setZLimits(double zTop, double zBottom) {
-      zTop_ = zTop;
-      zBottom_ = zBottom;
+      //Convention: z top should always be lower than zBottom
+      zBottom_ = Math.max(zTop, zBottom);
+      zTop_ = Math.min(zTop, zBottom);
    }
    
    public void addImage(TaggedImage img) {
@@ -157,6 +166,7 @@ public class Acquisition {
    }
    
       //to be removed once this is factored out of acq engine in micromanager
+   //TODO: mkae sure Prefix is in new summary MD
    public static JSONObject makeSummaryMD(int numSlices, int numChannels) {
       try {
          CMMCore core = MMStudioMainFrame.getInstance().getCore();
@@ -172,8 +182,7 @@ public class Acquisition {
          summary.put("BitDepth", 8);
          summary.put("Width", core.getImageWidth());
          summary.put("Height", core.getImageHeight());
-         summary.put("Prefix", "ExplorerTest");
-         summary.put("Directory", "C:/Users/Henry/Desktop/MultiRes/"); //TODO: delete this
+         summary.put("Prefix", TESTING_NAME);
 
          //make intitial position list, with current position and 0,0 as coordinates
          JSONArray pList = new JSONArray();

@@ -187,7 +187,7 @@ public class Util {
       try {
          PositionList list = app.getPositionList();
          list.clearAllPositions();
-         for (MultiStagePosition p : positions) {
+         for (MultiStagePosition p : positions ) {
             list.addPosition(p);
          }
 

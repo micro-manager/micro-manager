@@ -7,6 +7,7 @@ package acq;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
+import java.util.TreeMap;
 import java.util.TreeSet;
 import main.Util;
 import org.json.JSONArray;
@@ -34,13 +35,11 @@ public class PositionManager {
    private JSONArray positionList_;
    private int minRow_, maxRow_, minCol_, maxCol_; //For the lowest resolution level
    private String xyStageName_ = MMStudioMainFrame.getInstance().getCore().getXYStageDevice();
-   private TreeSet<MultiResPositionNode> positionNodes_;
-   private ArrayList<Integer> numPositionsByResLevel_;
+   //Map of Res level to set of nodes
+   private TreeMap<Integer,TreeSet<MultiResPositionNode>> positionNodes_; 
 
    public PositionManager(JSONObject summaryMD) {
-      numPositionsByResLevel_ = new ArrayList<Integer>();
-      numPositionsByResLevel_.add(0); //add 0 to full res position...we dont read this one, instead taking length of posList
-      positionNodes_ = new TreeSet<MultiResPositionNode>();
+      positionNodes_ = new TreeMap<Integer,TreeSet<MultiResPositionNode>>();
       readRowsAndColsFromPositionList(summaryMD);
    }
    
@@ -75,6 +74,28 @@ public class PositionManager {
    public int getMinCol() {
       return minCol_;
    }
+   
+   /**
+    * Return the position index of any one of the full res positions corresponding a low res position.
+    * There is at least one full res position corresponding to the low res one, but this function makes no
+    * guarantees about which one is returned if there are more than one.
+    * @param lowResPositionIndex
+    * @param resIndex - res index corresponding to the low res position
+    * @return position index of full res child of node or -1 if doesn't exist (which shouldn't ever happen)
+    */
+   public int getFullResPositionIndex(int lowResPositionIndex, int resIndex) {
+      for (MultiResPositionNode node : positionNodes_.get(resIndex)) {
+         if (node.positionIndex == lowResPositionIndex) {
+            while (node.child != null) {
+               node = node.child;
+            }
+            //now we have a full res node that is a descendent
+            return node.positionIndex;
+         }
+      }
+      ReportingUtils.showError("Could't find full resolution child of node");
+      return -1;
+   }
 
    public int getLowResPositionIndex(int fullResPosIndex, int resIndex) {
       try {
@@ -108,14 +129,20 @@ public class PositionManager {
          for (int i = 0; i < resIndex; i++) {
             node = node.parent;
          }
-         return node.gridRow;
+         return node.gridCol;
       } catch (JSONException e) {
          ReportingUtils.showError("Couldnt read position list correctly");
          return 0;
       }
    }
 
-   // return -1 if position doesn't exist
+   /**
+    * 
+    * @param dsIndex
+    * @param rowIndex
+    * @param colIndex
+    * @return position index given res level or -1 if it doesn't exist
+    */
    public int getPositionIndexFromTilePosition(int dsIndex, int rowIndex, int colIndex) {
       MultiResPositionNode nodeToFind = findExisitngNode(dsIndex, rowIndex, colIndex);
       if (nodeToFind != null) {
@@ -169,16 +196,12 @@ public class PositionManager {
    
    private void updateMinAndMaxRowsAndCols() throws JSONException {
       //Go through all positions to update numRows and numCols
-      minRow_ = Integer.MAX_VALUE;
-      minCol_ = Integer.MAX_VALUE;
-      maxRow_ = Integer.MIN_VALUE;
-      maxCol_ = Integer.MIN_VALUE;
       for (int i = 0; i < positionList_.length(); i++) {
          JSONObject pos = positionList_.getJSONObject(i);
          minRow_ = (int) Math.min(pos.getLong(ROW_KEY), minRow_);
          minCol_ = (int) Math.min(pos.getLong(COL_KEY), minCol_);
-         maxRow_ = (int) Math.min(pos.getLong(ROW_KEY), maxRow_);
-         maxCol_ = (int) Math.min(pos.getLong(COL_KEY), maxCol_);
+         maxRow_ = (int) Math.max(pos.getLong(ROW_KEY), maxRow_);
+         maxCol_ = (int) Math.max(pos.getLong(COL_KEY), maxCol_);
       }
    }
 
@@ -213,6 +236,7 @@ public class PositionManager {
          pos.put(COORDINATES_KEY, coords);
          pos.put(COL_KEY, col);
          pos.put(ROW_KEY, row);
+         pos.put(PROPERTIES_KEY, new JSONObject());
 
          return pos;
       } catch (Exception e) {
@@ -227,9 +251,13 @@ public class PositionManager {
       for (int i = 0; i < positionList_.length(); i++) {
          JSONObject position = positionList_.getJSONObject(i);
          if (!position.getJSONObject(PROPERTIES_KEY).has(MULTI_RES_NODE_KEY)) {
+            //make sure level 0 set exists
+            if (!positionNodes_.containsKey(0)) {
+               positionNodes_.put(0, new TreeSet<MultiResPositionNode>());
+            }
             //add node in case its a new position
             MultiResPositionNode n = new MultiResPositionNode(0,position.getLong(ROW_KEY),position.getLong(COL_KEY));
-            positionNodes_.add(n);
+            positionNodes_.get(0).add(n);
             n.positionIndex = i;
             position.getJSONObject(PROPERTIES_KEY).put(MULTI_RES_NODE_KEY, n);
          }
@@ -275,25 +303,26 @@ public class PositionManager {
          if (parentNode == null) {
             //parent node does not exist, so create it
             parentNode = new MultiResPositionNode(node.resLevel + 1, parentRow, parentCol);
-            positionNodes_.add(parentNode);
-            //count number of positions at this res level to get position index
-            if (numPositionsByResLevel_.size() <= parentNode.resLevel) {
-               numPositionsByResLevel_.add(0);
+            //add to list of all nodes, creating storage level if needed
+            if (!positionNodes_.containsKey(parentNode.resLevel)) {
+               positionNodes_.put(parentNode.resLevel, new TreeSet<MultiResPositionNode>());
             }
-            int numPositions = numPositionsByResLevel_.get(parentNode.resLevel);
-            parentNode.positionIndex = numPositions;
-            numPositionsByResLevel_.set(parentNode.resLevel, numPositions + 1);   
+            positionNodes_.get(parentNode.resLevel).add(parentNode);
+            //count number of positions at this res level to get position index
+            int numPositions = positionNodes_.get(parentNode.resLevel).size();
+            parentNode.positionIndex = numPositions - 1;
          }
          //link together child and parent
          node.parent = parentNode;
+         parentNode.child = node;
       }
       linkToParentNodes(node.parent, lowestResLevel); //keep traveling up the parent chanin
    }
    
    private MultiResPositionNode findExisitngNode(int resLevel, long gridRow, long gridCol ) {
       MultiResPositionNode nodeToFind = new MultiResPositionNode(resLevel, gridRow, gridCol);
-      if (positionNodes_.contains(nodeToFind)) {
-         return positionNodes_.ceiling(nodeToFind); //this should return the equal node if everything works properly
+      if (positionNodes_.containsKey(resLevel) && positionNodes_.get(resLevel).contains(nodeToFind)) {
+         return positionNodes_.get(resLevel).ceiling(nodeToFind); //this should return the equal node if everything works properly
       }
       return null;
    }
@@ -336,11 +365,14 @@ public class PositionManager {
 
    /*
     * This class is a data structure describing positions corresponding to one another at different
-    * resolution levels
+    * resolution levels.
+    * Full resolution is at the bottom of the tree, with pointers going up to lower resolotion
+    * forming a pyrimid shape
     */
 class MultiResPositionNode  implements Comparable<MultiResPositionNode> {
    
-   MultiResPositionNode parent;
+   MultiResPositionNode parent, child; 
+   //each node actually has 4 children, but only need one to trace down to full res
    long gridRow, gridCol;
    int resLevel;
    int positionIndex;
@@ -352,6 +384,7 @@ class MultiResPositionNode  implements Comparable<MultiResPositionNode> {
    }
    
    //TODO: serialize so this can be written to disk
+   
    @Override
    public int compareTo(MultiResPositionNode n) {
       if (this.resLevel != n.resLevel) {
